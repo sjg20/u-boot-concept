@@ -50,7 +50,9 @@ static void setup_initrd_tag (bd_t *bd, ulong initrd_start,
 static void setup_end_tag (bd_t *bd);
 
 # if defined (CONFIG_VFD) || defined (CONFIG_LCD)
+# if !defined(CONFIG_VIDEOFLB_ATAG_NOT_SUPPORTED)
 static void setup_videolfb_tag (gd_t *gd);
+# endif
 # endif
 
 static struct tag *params;
@@ -108,7 +110,9 @@ int do_bootm_linux(int flag, int argc, char *argv[], bootm_headers_t *images)
 		setup_initrd_tag (bd, images->rd_start, images->rd_end);
 #endif
 #if defined (CONFIG_VFD) || defined (CONFIG_LCD)
+#if !defined(CONFIG_VIDEOFLB_ATAG_NOT_SUPPORTED)
 	setup_videolfb_tag ((gd_t *) gd);
+#endif
 #endif
 	setup_end_tag (bd);
 #endif
@@ -224,6 +228,7 @@ static void setup_initrd_tag (bd_t *bd, ulong initrd_start, ulong initrd_end)
 
 
 #if defined (CONFIG_VFD) || defined (CONFIG_LCD)
+#if !defined(CONFIG_VIDEOFLB_ATAG_NOT_SUPPORTED)
 extern ulong calc_fbsize (void);
 static void setup_videolfb_tag (gd_t *gd)
 {
@@ -244,6 +249,7 @@ static void setup_videolfb_tag (gd_t *gd)
 
 	params = tag_next (params);
 }
+#endif /* CONFIG_VIDEOFLB_ATAG_NOT_SUPPORTED */
 #endif /* CONFIG_VFD || CONFIG_LCD */
 
 #ifdef CONFIG_SERIAL_TAG
