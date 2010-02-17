@@ -346,10 +346,14 @@ static int bootm_load_os(image_info_t os, ulong *load_end, int boot_progress)
 		} else {
 			printf ("   Loading %s ... ", type_name);
 
+#if defined(CONFIG_CHROMEOS_FASTBOOT) && defined(CONFIG_OMAP3_BEAGLE)
+			/* Skip this for Beagleboard fast boot. */
+#else
 			if (load != image_start) {
 				memmove_wd ((void *)load,
 						(void *)image_start, image_len, CHUNKSZ);
 			}
+#endif /* CONFIG_CHROMEOS_FASTBOOT && CONFIG_OMAP3_BEAGLE */
 		}
 		*load_end = load + image_len;
 		puts("OK\n");
@@ -712,6 +716,9 @@ static image_header_t *image_get_kernel (ulong img_addr, int verify)
 {
 	image_header_t *hdr = (image_header_t *)img_addr;
 
+#if defined(CONFIG_CHROMEOS_FASTBOOT) && defined(CONFIG_OMAP3_BEAGLE)
+	/* Skip various verifications for Beagleboard fast boot. */
+#else
 	if (!image_check_magic(hdr)) {
 		puts ("Bad Magic Number\n");
 		show_boot_progress (-1);
@@ -744,6 +751,7 @@ static image_header_t *image_get_kernel (ulong img_addr, int verify)
 		show_boot_progress (-4);
 		return NULL;
 	}
+#endif /* CONFIG_CHROMEOS_FASTBOOT && CONFIG_OMAP3_BEAGLE */
 	return hdr;
 }
 

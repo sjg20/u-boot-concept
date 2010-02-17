@@ -28,6 +28,8 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#undef CONFIG_CHROMEOS_FASTBOOT
+
 /*
  * High Level Configuration Options
  */
@@ -159,9 +161,13 @@
 							/* partition */
 
 /* Environment information */
+#ifdef CONFIG_CHROMEOS_FASTBOOT
+#define CONFIG_BOOTDELAY		0
+#else
 #define CONFIG_BOOTDELAY		10
+#endif
 
-#define CONFIG_EXTRA_ENV_SETTINGS \
+#define CONFIG_EXTRA_ENV_SETTINGS_COMMON \
 	"loadaddr=0x82000000\0" \
 	"console=ttyS2,115200n8\0" \
 	"vram=12M\0" \
@@ -197,6 +203,16 @@
 		"nand read ${loadaddr} 280000 400000; " \
 		"bootm ${loadaddr}\0" \
 
+#ifdef CONFIG_CHROMEOS_FASTBOOT
+#define CONFIG_EXTRA_ENV_SETTINGS CONFIG_EXTRA_ENV_SETTINGS_COMMON \
+	"bootargs=console=tty0 console=ttyS2,115200n8 root=/dev/mmcblk0p1 ro rootfstype=ext3 rootwait quiet psplash=false omapfb.mode=dvi:1280x768MR-16@60\0"
+#else
+#define CONFIG_EXTRA_ENV_SETTINGS CONFIG_EXTRA_ENV_SETTINGS_COMMON
+#endif
+
+#ifdef CONFIG_CHROMEOS_FASTBOOT
+#define CONFIG_BOOTCOMMAND "nand read 80007fc0 280000 2e0000; bootm 80007fc0"
+#else
 #define CONFIG_BOOTCOMMAND \
 	"if mmc init; then " \
 		"if run loadbootscript; then " \
@@ -208,6 +224,7 @@
 			"fi; " \
 		"fi; " \
 	"else run nandboot; fi"
+#endif
 
 #define CONFIG_AUTO_COMPLETE		1
 /*

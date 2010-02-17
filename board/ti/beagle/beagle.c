@@ -122,7 +122,9 @@ int misc_init_r(void)
 
 	beagle_identify();
 
+#ifndef CONFIG_CHROMEOS_FASTBOOT
 	dieid_num_r();
+#endif /* !CONFIG_CHROMEOS_FASTBOOT */
 
 	return 0;
 }

@@ -371,8 +371,12 @@ void start_armboot (void)
 	serial_initialize();
 #endif
 
+#if defined(CONFIG_CHROMEOS_FASTBOOT) && defined(CONFIG_OMAP3_BEAGLE)
+	/* Skip IP address for Beagleboard fast boot. */
+#else
 	/* IP Address */
 	gd->bd->bi_ip_addr = getenv_IPaddr ("ipaddr");
+#endif /* CONFIG_CHROMEOS_FASTBOOT && CONFIG_OMAP3_BEAGLE */
 
 	stdio_init ();	/* get the devices list going. */
 

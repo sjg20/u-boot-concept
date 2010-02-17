@@ -636,6 +636,9 @@ done:
 
 	gd->flags |= GD_FLG_DEVINIT;	/* device initialization completed */
 
+#if defined(CONFIG_CHROMEOS_FASTBOOT) && defined(CONFIG_OMAP3_BEAGLE)
+	/* Skip overwriting these variables for Beagleboard fast boot. */
+#else
 	stdio_print_current_devices();
 
 #ifdef CONFIG_SYS_CONSOLE_ENV_OVERWRITE
@@ -644,6 +647,7 @@ done:
 		setenv(stdio_names[i], stdio_devices[i]->name);
 	}
 #endif /* CONFIG_SYS_CONSOLE_ENV_OVERWRITE */
+#endif /* CONFIG_CHROMEOS_FASTBOOT && CONFIG_OMAP3_BEAGLE */
 
 #if 0
 	/* If nothing usable installed, use only the initial console */
@@ -707,12 +711,16 @@ int console_init_r(void)
 
 	gd->flags |= GD_FLG_DEVINIT;	/* device initialization completed */
 
+#if defined(CONFIG_CHROMEOS_FASTBOOT) && defined(CONFIG_OMAP3_BEAGLE)
+	/* Skip setting these variables for Beagleboard fast boot. */
+#else
 	stdio_print_current_devices();
 
 	/* Setting environment variables */
 	for (i = 0; i < 3; i++) {
 		setenv(stdio_names[i], stdio_devices[i]->name);
 	}
+#endif /* CONFIG_CHROMEOS_FASTBOOT && CONFIG_OMAP3_BEAGLE */
 
 #if 0
 	/* If nothing usable installed, use only the initial console */

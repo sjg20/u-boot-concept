@@ -73,6 +73,9 @@ void twl4030_power_init(void)
 {
 	unsigned char byte;
 
+#if defined(CONFIG_CHROMEOS_FASTBOOT) && defined(CONFIG_OMAP3_BEAGLE)
+	/* Skip this for Beagleboard fast boot. */
+#else
 	/* set VAUX3 to 2.8V */
 	byte = DEV_GRP_P1;
 	twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
@@ -80,6 +83,7 @@ void twl4030_power_init(void)
 	byte = VAUX3_VSEL_28;
 	twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
 			     TWL4030_PM_RECEIVER_VAUX3_DEDICATED);
+#endif /* CONFIG_CHROMEOS_FASTBOOT && CONFIG_OMAP3_BEAGLE */
 
 	/* set VPLL2 to 1.8V */
 	byte = DEV_GRP_ALL;
@@ -89,6 +93,9 @@ void twl4030_power_init(void)
 	twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
 			     TWL4030_PM_RECEIVER_VPLL2_DEDICATED);
 
+#if defined(CONFIG_CHROMEOS_FASTBOOT) && defined(CONFIG_OMAP3_BEAGLE)
+	/* Skip this for Beagleboard fast boot. */
+#else
 	/* set VDAC to 1.8V */
 	byte = DEV_GRP_P1;
 	twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
@@ -96,6 +103,7 @@ void twl4030_power_init(void)
 	byte = VDAC_VSEL_18;
 	twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
 			     TWL4030_PM_RECEIVER_VDAC_DEDICATED);
+#endif /* CONFIG_CHROMEOS_FASTBOOT && CONFIG_OMAP3_BEAGLE */
 }
 
 #define VMMC1_VSEL_30		0x02

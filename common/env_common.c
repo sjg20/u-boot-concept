@@ -218,7 +218,11 @@ void set_default_env(void)
 #ifdef CONFIG_SYS_REDUNDAND_ENVIRONMENT
 	env_ptr->flags = 0xFF;
 #endif
+#if defined(CONFIG_CHROMEOS_FASTBOOT) && defined(CONFIG_OMAP3_BEAGLE)
+	/* Skip updating CRC for Beagleboard fast boot. */
+#else
 	env_crc_update ();
+#endif /* CONFIG_CHROMEOS_FASTBOOT && CONFIG_OMAP3_BEAGLE */
 	gd->env_valid = 1;
 }
 
@@ -250,6 +254,10 @@ void env_relocate (void)
 	DEBUGF ("%s[%d] malloced ENV at %p\n", __FUNCTION__,__LINE__,env_ptr);
 #endif
 
+#if defined(CONFIG_CHROMEOS_FASTBOOT) && defined(CONFIG_OMAP3_BEAGLE)
+	/* Use hardcoded environment for Beagleboard fast boot. */
+	set_default_env();
+#else
 	if (gd->env_valid == 0) {
 #if defined(CONFIG_GTH)	|| defined(CONFIG_ENV_IS_NOWHERE)	/* Environment not changable */
 		puts ("Using default environment\n\n");
@@ -262,6 +270,7 @@ void env_relocate (void)
 	else {
 		env_relocate_spec ();
 	}
+#endif /* CONFIG_CHROMEOS_FASTBOOT && CONFIG_OMAP3_BEAGLE */
 	gd->env_addr = (ulong)&(env_ptr->data);
 
 #ifdef CONFIG_AMIGAONEG3SE
