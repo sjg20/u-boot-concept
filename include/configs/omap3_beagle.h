@@ -205,7 +205,7 @@
 
 #ifdef CONFIG_CHROMEOS_FASTBOOT
 #define CONFIG_EXTRA_ENV_SETTINGS CONFIG_EXTRA_ENV_SETTINGS_COMMON \
-	"bootargs=console=tty0 console=ttyS2,115200n8 root=/dev/mmcblk0p1 ro rootfstype=ext3 rootwait quiet psplash=false omapfb.mode=dvi:1280x768MR-16@60\0"
+	"bootargs=console=tty0 console=ttyS2,115200n8 root=/dev/mmcblk0p3 ro rootfstype=ext3 rootwait quiet psplash=false omapfb.mode=dvi:1280x768MR-16@60\0"
 #else
 #define CONFIG_EXTRA_ENV_SETTINGS CONFIG_EXTRA_ENV_SETTINGS_COMMON
 #endif
