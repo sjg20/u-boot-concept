@@ -3048,6 +3048,9 @@ smdk2400_config	:	unconfig
 smdk2410_config	:	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm920t smdk2410 samsung s3c24x0
 
+voguev210_config :	unconfig
+	@$(MKCONFIG) $(@:_config=) arm s5pv21x voguev210 samsung s5pv210
+
 SX1_stdout_serial_config \
 SX1_config:		unconfig
 	@mkdir -p $(obj)include
