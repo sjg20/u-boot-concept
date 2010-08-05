@@ -77,6 +77,24 @@ int do_mmc (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 		}
 
 		printf("mmc%d is current device\n", curr_device);
+	} else if (strcmp(argv[1], "part") == 0) {
+		if (argc == 2) {
+			if (curr_device < 0) {
+				puts("No MMC device available\n");
+				return 1;
+			}
+			dev = curr_device;
+		} else {
+			dev = simple_strtoul(argv[2], NULL, 10);
+
+#ifdef CONFIG_SYS_MMC_SET_DEV
+			if (mmc_set_dev(dev) != 0)
+				return 1;
+#endif
+			curr_device = dev;
+		}
+		print_part(mmc_get_dev(dev));
+		return 0;
 	} else {
 		cmd_usage(cmdtp);
 		return 1;
