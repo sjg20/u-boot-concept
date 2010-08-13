@@ -3175,6 +3175,9 @@ omap3_zoom2_config :	unconfig
 smdkc100_config:	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 smdkc100 samsung s5pc1xx
 
+tegra2_harmony_config:  unconfig
+	@$(MKCONFIG) $(@:_config=) arm arm_cortexa9 $$(echo $@ | cut -f2 -d_) tegra2 tegra2
+
 #########################################################################
 ## XScale Systems
 #########################################################################
