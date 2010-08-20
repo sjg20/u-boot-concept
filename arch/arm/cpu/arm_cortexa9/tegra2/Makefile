@@ -27,13 +27,16 @@ include $(TOPDIR)/config.mk
 
 LIB	=  $(obj)lib$(SOC).a
 
+START	:= start.o
+
 SOBJS	:= lowlevel_init.o
 COBJS	:= sys_info.o board.o interrupts.o ap20.o
 
-SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
+SRCS	:= $(START:.o=.S) $(SOBJS:.o=.S) $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS) $(SOBJS))
+START	:= $(addprefix $(obj),$(START))
 
-all:	 $(obj).depend $(LIB)
+all:	 $(obj).depend $(START) $(LIB)
 
 $(LIB):	$(OBJS)
 	$(AR) $(ARFLAGS) $@ $(OBJS)
