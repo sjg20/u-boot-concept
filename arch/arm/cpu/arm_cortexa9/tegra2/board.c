@@ -23,9 +23,9 @@
 
 #include <common.h>
 #include "cpu.h"
-#include <asm-arm/io.h>
-#include <asm-arm/arch-tegra2/sys_proto.h>
-#include <asm-arm/arch-tegra2/nv_hardware_access.h>
+#include <asm/io.h>
+#include <asm/arch/sys_proto.h>
+#include <asm/arch/nv_hardware_access.h>
 
 #ifdef CONFIG_CMDLINE
 extern ulong ATAGS_START;

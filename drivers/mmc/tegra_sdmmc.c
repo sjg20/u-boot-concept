@@ -18,9 +18,9 @@
 
 
 #include <common.h>
-#include <part.h> 
+#include <part.h>
 #include <malloc.h>
-#include <asm-arm/arch-tegra2/nv_sdmmc.h>
+#include <asm/arch/nv_sdmmc.h>
 
 #undef DEBUG
 #ifdef DEBUG

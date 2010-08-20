@@ -24,7 +24,7 @@
 #ifndef INCLUDED_CPU_H
 #define INCLUDED_CPU_H
 
-#include <asm-arm/arch-tegra2/tegra2.h>
+#include <asm/arch/tegra2.h>
 
 #define TIMER_USEC      ( 0x60005010 )
 #define TIMER_CFG       ( 0x60005014 )

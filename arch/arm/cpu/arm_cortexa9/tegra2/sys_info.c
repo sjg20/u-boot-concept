@@ -22,7 +22,7 @@
  */
 
 #include <common.h>
-#include <asm-arm/arch-tegra2/sys_proto.h>
+#include <asm/arch/sys_proto.h>
 
 /******************************************
  * get_cpu_type(void) - extract cpu info

@@ -63,7 +63,7 @@
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_DHCP
 
-#include <asm-arm/arch-tegra2/tegra2.h>            /* get chip and board defs */
+#include <asm/arch/tegra2.h>            /* get chip and board defs */
 
 /*
  * Display CPU and Board information

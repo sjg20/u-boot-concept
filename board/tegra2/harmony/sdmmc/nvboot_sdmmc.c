@@ -22,11 +22,11 @@
  */
 
 #include <common.h>
-#include <asm-arm/io.h>
-#include <asm-arm/arch-tegra2/nv_drf.h>
-#include <asm-arm/arch-tegra2/nvcommon.h>
-#include <asm-arm/arch-tegra2/tegra2.h>
-#include <asm-arm/arch-tegra2/nv_hardware_access.h>
+#include <asm/io.h>
+#include <asm/arch/nv_drf.h>
+#include <asm/arch/nvcommon.h>
+#include <asm/arch/tegra2.h>
+#include <asm/arch/nv_hardware_access.h>
 
 #define NV_SDMMC4
 //#undef NV_SDMMC4
