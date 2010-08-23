@@ -22,13 +22,13 @@
  */
 
 #include <common.h>
-#include <asm-arm/io.h>
-#include <asm-arm/arch-tegra2/sys_proto.h>
-#include <asm-arm/mach-types.h>
-#include <asm-arm/arch-tegra2/nvcommon.h>
-#include <asm-arm/arch-tegra2/nv_hardware_access.h>
-#include <asm-arm/arch-tegra2/nv_drf.h>
-#include <asm-arm/arch-tegra2/tegra2.h>
+#include <asm/io.h>
+#include <asm/arch/sys_proto.h>
+#include <asm/mach-types.h>
+#include <asm/arch/nvcommon.h>
+#include <asm/arch/nv_hardware_access.h>
+#include <asm/arch/nv_drf.h>
+#include <asm/arch/tegra2.h>
 #include "harmony.h"
 
 /*
@@ -84,16 +84,6 @@ void set_muxconf_regs(void)
 int board_nand_init(struct nand_chip *nand)
 {
     return -1;
-}
-
-int mmc_legacy_init(int verbose)
-{
-    return -1;
-}
-
-block_dev_desc_t *mmc_get_dev(int dev)
-{
-    return NULL;
 }
 
 int ehci_hcd_init(void)

@@ -21,16 +21,16 @@
  * MA 02111-1307 USA
  */
 #include "config.h"
-#include <asm-arm/arch-tegra2/nvcommon.h>
-#include <asm-arm/arch-tegra2/nv_drf.h>
-#include <asm-arm/arch-tegra2/tegra2.h>
-#include <asm-arm/arch-tegra2/nv_hardware_access.h>
-#include <asm-arm/arch-tegra2/nvboot_bit.h>
-#include <asm-arm/arch-tegra2/nvboot_osc.h>
-#include <asm-arm/arch-tegra2/nvboot_clocks.h>
-#include <asm-arm/arch-tegra2/nvbl_memmap_nvap.h>
-#include <asm-arm/arch-tegra2/nvbl_arm_cpsr.h>
-#include <asm-arm/arch-tegra2/nvbl_arm_cp15.h>
+#include <asm/arch/nvcommon.h>
+#include <asm/arch/nv_drf.h>
+#include <asm/arch/tegra2.h>
+#include <asm/arch/nv_hardware_access.h>
+#include <asm/arch/nvboot_bit.h>
+#include <asm/arch/nvboot_osc.h>
+#include <asm/arch/nvboot_clocks.h>
+#include <asm/arch/nvbl_memmap_nvap.h>
+#include <asm/arch/nvbl_arm_cpsr.h>
+#include <asm/arch/nvbl_arm_cp15.h>
 
 #define _AND_ &
 
