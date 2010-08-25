@@ -1,5 +1,5 @@
 /*
- *  (C) Copyright 2010 
+ *  (C) Copyright 2010
  *  NVIDIA Corporation <www.nvidia.com>
  *
  * See file CREDITS for list of people who contributed to this
@@ -22,6 +22,7 @@
  */
 
 #include <common.h>
+#include <nand.h>
 #include <asm/io.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/mach-types.h>
@@ -43,7 +44,7 @@ int board_init(void)
 	gd->bd->bi_boot_params = (NV_ADDRESS_MAP_SDRAM_BASE + 0x100);
 	/* board id for Linux */
 	gd->bd->bi_arch_number = MACH_TYPE_TEGRA_HARMONY;
-	
+
 	return 0;
 }
 
@@ -58,11 +59,11 @@ int misc_init_r(void)
 
 /*
  * Routine: timer_init
- *              
+ *
  * Description: init the timestamp and lastinc value
- *              
+ *
  */
-int timer_init (void)
+int timer_init(void)
 {
     reset_timer();
     return 0;
@@ -108,18 +109,19 @@ void NvBlUartClockInitA(void)
 
     // Avoid running this function more than once.
     static int initialized = 0;
-    if (initialized) return;
+    if (initialized)
+        return;
     initialized = 1;
 
     // 1. Assert Reset to UART A
     NV_CLK_RST_READ(RST_DEVICES_L, Reg);
-    Reg = NV_FLD_SET_DRF_DEF(CLK_RST_CONTROLLER, RST_DEVICES_L, 
+    Reg = NV_FLD_SET_DRF_DEF(CLK_RST_CONTROLLER, RST_DEVICES_L,
                              SWR_UARTA_RST, ENABLE, Reg);
     NV_CLK_RST_WRITE(RST_DEVICES_L, Reg);
 
     // 2. Enable clk to UART A
     NV_CLK_RST_READ(CLK_OUT_ENB_L, Reg);
-    Reg = NV_FLD_SET_DRF_DEF(CLK_RST_CONTROLLER, CLK_OUT_ENB_L, 
+    Reg = NV_FLD_SET_DRF_DEF(CLK_RST_CONTROLLER, CLK_OUT_ENB_L,
                              CLK_ENB_UARTA, ENABLE, Reg);
     NV_CLK_RST_WRITE(CLK_OUT_ENB_L, Reg);
 
@@ -131,31 +133,31 @@ void NvBlUartClockInitA(void)
           | NV_DRF_DEF(CLK_RST_CONTROLLER, PLLP_BASE, PLLP_BASE_OVRRIDE, ENABLE)
           | NV_DRF_NUM(CLK_RST_CONTROLLER, PLLP_BASE, PLLP_LOCK, 0x0)
           | NV_DRF_NUM(CLK_RST_CONTROLLER, PLLP_BASE, PLLP_DIVP, 0x1)
-          | NV_DRF_NUM(CLK_RST_CONTROLLER, PLLP_BASE, PLLP_DIVN, 
+          | NV_DRF_NUM(CLK_RST_CONTROLLER, PLLP_BASE, PLLP_DIVN,
                        NVRM_PLLP_FIXED_FREQ_KHZ/500)
           | NV_DRF_NUM(CLK_RST_CONTROLLER, PLLP_BASE, PLLP_DIVM, 0x0C);
     NV_CLK_RST_WRITE(PLLP_BASE, Reg);
 
-    Reg = NV_FLD_SET_DRF_DEF(CLK_RST_CONTROLLER, PLLP_BASE, 
+    Reg = NV_FLD_SET_DRF_DEF(CLK_RST_CONTROLLER, PLLP_BASE,
                              PLLP_ENABLE, ENABLE, Reg);
     NV_CLK_RST_WRITE(PLLP_BASE, Reg);
 
-    Reg = NV_FLD_SET_DRF_DEF(CLK_RST_CONTROLLER, PLLP_BASE, 
+    Reg = NV_FLD_SET_DRF_DEF(CLK_RST_CONTROLLER, PLLP_BASE,
                              PLLP_BYPASS, DISABLE, Reg);
     NV_CLK_RST_WRITE(PLLP_BASE, Reg);
 
     // Enable pllp_out0 to UARTA.
-    Reg = NV_DRF_DEF(CLK_RST_CONTROLLER, CLK_SOURCE_UARTA, 
+    Reg = NV_DRF_DEF(CLK_RST_CONTROLLER, CLK_SOURCE_UARTA,
                      UARTA_CLK_SRC, PLLP_OUT0);
     NV_CLK_RST_WRITE(CLK_SOURCE_UARTA, Reg);
 
 
     // wait for 2us
-    NvBlAvpStallUs (2);
+    NvBlAvpStallUs(2);
 
     // De-assert reset to UART A
     NV_CLK_RST_READ(RST_DEVICES_L, Reg);
-    Reg = NV_FLD_SET_DRF_DEF(CLK_RST_CONTROLLER, RST_DEVICES_L, 
+    Reg = NV_FLD_SET_DRF_DEF(CLK_RST_CONTROLLER, RST_DEVICES_L,
                              SWR_UARTA_RST, DISABLE, Reg);
     NV_CLK_RST_WRITE(RST_DEVICES_L, Reg);
 
@@ -167,13 +169,13 @@ void NvBlUartClockInitD(void)
 
     // 1. Assert Reset to UART D
     NV_CLK_RST_READ(RST_DEVICES_U, Reg);
-    Reg = NV_FLD_SET_DRF_DEF(CLK_RST_CONTROLLER, RST_DEVICES_U, 
+    Reg = NV_FLD_SET_DRF_DEF(CLK_RST_CONTROLLER, RST_DEVICES_U,
                              SWR_UARTD_RST, ENABLE, Reg);
     NV_CLK_RST_WRITE(RST_DEVICES_U, Reg);
 
     // 2. Enable clk to UART D
     NV_CLK_RST_READ(CLK_OUT_ENB_U, Reg);
-    Reg = NV_FLD_SET_DRF_DEF(CLK_RST_CONTROLLER, CLK_OUT_ENB_U, 
+    Reg = NV_FLD_SET_DRF_DEF(CLK_RST_CONTROLLER, CLK_OUT_ENB_U,
                              CLK_ENB_UARTD, ENABLE, Reg);
     NV_CLK_RST_WRITE(CLK_OUT_ENB_U, Reg);
 
@@ -184,30 +186,30 @@ void NvBlUartClockInitD(void)
           | NV_DRF_DEF(CLK_RST_CONTROLLER, PLLP_BASE, PLLP_BASE_OVRRIDE, ENABLE)
           | NV_DRF_NUM(CLK_RST_CONTROLLER, PLLP_BASE, PLLP_LOCK, 0x0)
           | NV_DRF_NUM(CLK_RST_CONTROLLER, PLLP_BASE, PLLP_DIVP, 0x1)
-          | NV_DRF_NUM(CLK_RST_CONTROLLER, PLLP_BASE, PLLP_DIVN, 
+          | NV_DRF_NUM(CLK_RST_CONTROLLER, PLLP_BASE, PLLP_DIVN,
                        NVRM_PLLP_FIXED_FREQ_KHZ/500)
           | NV_DRF_NUM(CLK_RST_CONTROLLER, PLLP_BASE, PLLP_DIVM, 0x0C);
     NV_CLK_RST_WRITE(PLLP_BASE, Reg);
 
-    Reg = NV_FLD_SET_DRF_DEF(CLK_RST_CONTROLLER, PLLP_BASE, 
+    Reg = NV_FLD_SET_DRF_DEF(CLK_RST_CONTROLLER, PLLP_BASE,
                              PLLP_ENABLE, ENABLE, Reg);
     NV_CLK_RST_WRITE(PLLP_BASE, Reg);
 
-    Reg = NV_FLD_SET_DRF_DEF(CLK_RST_CONTROLLER, PLLP_BASE, 
+    Reg = NV_FLD_SET_DRF_DEF(CLK_RST_CONTROLLER, PLLP_BASE,
                              PLLP_BYPASS, DISABLE, Reg);
     NV_CLK_RST_WRITE(PLLP_BASE, Reg);
 
     // Enable pllp_out0 to UARTD.
-    Reg = NV_DRF_DEF(CLK_RST_CONTROLLER, CLK_SOURCE_UARTD, 
+    Reg = NV_DRF_DEF(CLK_RST_CONTROLLER, CLK_SOURCE_UARTD,
                      UARTD_CLK_SRC, PLLP_OUT0);
     NV_CLK_RST_WRITE(CLK_SOURCE_UARTD, Reg);
 
     // wait for 2us
-    NvBlAvpStallUs (2);
+    NvBlAvpStallUs(2);
 
     // De-assert reset to UART D
     NV_CLK_RST_READ(RST_DEVICES_U, Reg);
-    Reg = NV_FLD_SET_DRF_DEF(CLK_RST_CONTROLLER, RST_DEVICES_U, 
+    Reg = NV_FLD_SET_DRF_DEF(CLK_RST_CONTROLLER, RST_DEVICES_U,
                              SWR_UARTD_RST, DISABLE, Reg);
     NV_CLK_RST_WRITE(RST_DEVICES_U, Reg);
 
@@ -222,18 +224,18 @@ NvBlAvpClockSetDivider(NvBool Enable, NvU32 Dividened, NvU32 Divisor)
     {
         // Set up divider for SCLK.
         // SCLK is used for AVP, AHB, and APB.
-        val = NV_DRF_DEF(CLK_RST_CONTROLLER, SUPER_SCLK_DIVIDER, 
+        val = NV_DRF_DEF(CLK_RST_CONTROLLER, SUPER_SCLK_DIVIDER,
                          SUPER_SDIV_ENB, ENABLE)
-              | NV_DRF_NUM(CLK_RST_CONTROLLER, SUPER_SCLK_DIVIDER, 
+              | NV_DRF_NUM(CLK_RST_CONTROLLER, SUPER_SCLK_DIVIDER,
                            SUPER_SDIV_DIVIDEND, Dividened - 1)
-              | NV_DRF_NUM(CLK_RST_CONTROLLER, SUPER_SCLK_DIVIDER, 
+              | NV_DRF_NUM(CLK_RST_CONTROLLER, SUPER_SCLK_DIVIDER,
                            SUPER_SDIV_DIVISOR, Divisor - 1);
         NV_CLK_RST_WRITE(SUPER_SCLK_DIVIDER, val);
     }
-    else 
+    else
     {
         // Disable divider for SCLK.
-        val = NV_DRF_DEF(CLK_RST_CONTROLLER, SUPER_SCLK_DIVIDER, 
+        val = NV_DRF_DEF(CLK_RST_CONTROLLER, SUPER_SCLK_DIVIDER,
                          SUPER_SDIV_ENB, DISABLE);
         NV_CLK_RST_WRITE(SUPER_SCLK_DIVIDER, val);
     }
@@ -318,7 +320,8 @@ NvBlUartInitA(void)
 
     // Avoid running this function more than once.
     static int initialized = 0;
-    if (initialized) return;
+    if (initialized)
+        return;
     initialized = 1;
 
     NvBlUartClockInitA();
@@ -346,7 +349,7 @@ NvBlUartInitA(void)
     NV_UARTA_WRITE(IIR_FCR,    0x31);
 
     // Flush any old characters out of the RX FIFO.
-    while(NvBlUartRxReadyA())
+    while (NvBlUartRxReadyA())
         (void)NvBlUartRxA();
 }
 
@@ -380,7 +383,7 @@ NvBlUartInitD(void)
     NV_UARTD_WRITE(IIR_FCR,    0x31);
 
     // Flush any old characters out of the RX FIFO.
-    while(NvBlUartRxReadyD())
+    while (NvBlUartRxReadyD())
         (void)NvBlUartRxD();
 }
 
@@ -397,7 +400,7 @@ NvBlUartPoll(void)
 }
 
 int NvBlUartWrite(const void *ptr);
-void NvBlPrintf( const char *format, ... );
+void NvBlPrintf(const char *format, ...);
 
 static void
 NvBlPrintU4(NvU8 byte)
@@ -422,26 +425,26 @@ NvBlPrintU32(NvU32 word)
 }
 
 void
-NvBlVprintf( const char *format, va_list ap )
+NvBlVprintf(const char *format, va_list ap)
 {
     char msg[256];
-    sprintf( msg, format, ap );
+    sprintf(msg, format, ap);
     NvBlUartWrite(msg);
 }
 
 void
-NvBlPrintf( const char *format, ... )
+NvBlPrintf(const char *format, ...)
 {
     va_list ap;
 
-    va_start( ap, format );
-    NvBlVprintf( format, ap );
-    va_end( ap );
+    va_start(ap, format);
+    NvBlVprintf(format, ap);
+    va_end(ap);
 }
 
 void uart_post(char c)
 {
-    while(!NvBlUartTxReadyA())
+    while (!NvBlUartTxReadyA())
         ;
     NvBlUartTxA(c);
 }
@@ -453,12 +456,12 @@ void PostZz(void)
     uart_post('Z');
     uart_post('z');
 
-    NvBlAvpStallUs (2000);
+    NvBlAvpStallUs(2000);
 }
 
 void PostYy(void)
 {
-    NvBlAvpStallMs (20);
+    NvBlAvpStallMs(20);
     uart_post(0x0d);
     uart_post(0x0a);
     uart_post('Y');
@@ -473,7 +476,7 @@ NvBlUartWrite(const void *ptr)
 {
     const NvU8 *p = ptr;
 
-    while(*p)
+    while (*p)
     {
         if (*p == '\n') {
             uart_post(0x0D);
@@ -484,7 +487,7 @@ NvBlUartWrite(const void *ptr)
     return 0;
 }
 
-void debug_trace (int i)
+void debug_trace(int i)
 {
     uart_post(i+'a');
     uart_post('.');
