@@ -129,7 +129,7 @@
 
 #define CONFIG_BOOTDELAY	0
 
-#define CONFIG_BOOTARGS "console=tty0 root=/dev/mmcblk1p3 rootwait init=/sbin/init pmem_kernel_ebi1_size=32M"
+#define CONFIG_BOOTARGS "console=tty0 root=/dev/mmcblk1p3 rootwait init=/sbin/init pmem_kernel_ebi1_size=96M"
 
 #define CONFIG_BOOTCOMMAND                                              \
         "if mmcinfo 1; then "                                           \
@@ -174,11 +174,11 @@
 #endif
 
 /*
- * SDRAM: Memory available for kernel: 510MB.
+ * SDRAM: Memory available for kernel: 1022MB.
  */
 #define CONFIG_NR_DRAM_BANKS	1
 #define PHYS_SDRAM_1		0x40200000
-#define PHYS_SDRAM_1_SIZE	0x1FE00000 /* 510MB */
+#define PHYS_SDRAM_1_SIZE	0x3FE00000 /* 1022MB */
 
 #define CONFIG_ARM_DCC
 #define CONFIG_ARM_DCC_MULTI
