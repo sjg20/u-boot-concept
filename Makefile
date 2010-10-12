@@ -3116,6 +3116,9 @@ versatilepb_config :	unconfig
 voiceblue_config:	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm925t voiceblue
 
+chromeos_qemu_recovery_config: unconfig
+	@$(MKCONFIG) chromeos/qemu/recovery arm arm926ejs versatile armltd versatile
+
 #########################################################################
 ## S3C44B0 Systems
 #########################################################################
