@@ -526,7 +526,7 @@ void reset_cmd_timeout(void)
 
 #define CTL_CH(c)		((c) - 'a' + 1)
 
-#define MAX_CMDBUF_SIZE		256
+#define MAX_CMDBUF_SIZE		CONFIG_SYS_CBSIZE
 
 #define CTL_BACKSPACE		('\b')
 #define DEL			((char)255)
@@ -546,7 +546,7 @@ static int hist_cur = -1;
 unsigned hist_num = 0;
 
 char* hist_list[HIST_MAX];
-char hist_lines[HIST_MAX][HIST_SIZE];
+char hist_lines[HIST_MAX][HIST_SIZE + 1];	/* Save room for NULL */
 
 #define add_idx_minus_one() ((hist_add_idx == 0) ? hist_max : hist_add_idx-1)
 
@@ -912,6 +912,9 @@ static int cread_line(const char *const prompt, char *buf, unsigned int *len)
 			break;
 		}
 #endif
+		case '\0':
+			continue;
+
 		default:
 			cread_add_char(ichar, insert, &num, &eol_num, buf, *len);
 			break;
