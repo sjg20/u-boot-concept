@@ -131,6 +131,7 @@ int board_init(void)
 #ifdef CONFIG_TEGRA2_LCD
 	gd->fb_base = LCD_FB_ADDR;
 #endif
+ 	board_pinmux_config();
 
 	board_spi_init();		/* do this early so UART mux is OK */
 	board_usb_init();
