@@ -77,8 +77,10 @@ void spi_init(void)
 	volatile spi_tegra_t *spi = (spi_tegra_t *)TEGRA2_SPI_BASE;
 	u32 val;
 
+#ifdef CONFIG_TEGRA2_SEABOARD
 	/* Enable UART via GPIO_PI3 (port 8, bit 3) so serial console works */
 	tg2_gpio_direction_output(UART_DISABLE_PORT, UART_DISABLE_BIT, 0);
+#endif
 
 	/*
 	 * SPI reset/clocks init - reset SPI, set clocks, release from reset
@@ -117,6 +119,7 @@ void spi_init(void)
 	 * SPI pins on Tegra2 are muxed - change pinmux last due to UART issue
 	 */
 
+#ifdef CONFIG_TEGRA2_SEABOARD
 	val = NV_READ32(NV_ADDRESS_MAP_APB_MISC_BASE + 0x88);
 	val |= 0xC0000000;
 	NV_WRITE32((NV_ADDRESS_MAP_APB_MISC_BASE + 0x88), val);
@@ -126,6 +129,7 @@ void spi_init(void)
 	val &= 0xFFFFFFFE;
 	NV_WRITE32((NV_ADDRESS_MAP_APB_MISC_BASE + 0x20), val);
 	debug("spi_init: TriStateReg = %08x\n", val);
+#endif
 
 	/*
 	 * DEBUG:
@@ -161,6 +165,7 @@ void spi_cs_activate(struct spi_slave *slave)
 	 */
 	udelay(1000);
 
+#ifdef CONFIG_TEGRA2_SEABOARD
 	/*
 	 * We need to dynamically change the pinmux, shared w/UART RXD/CTS!
 	 */
@@ -177,6 +182,7 @@ void spi_cs_activate(struct spi_slave *slave)
 
 	debug("spi_cs_activate: DISABLING UART!\n");
 	tg2_gpio_direction_output(UART_DISABLE_PORT, UART_DISABLE_BIT, 1);
+#endif
 
 	/*
 	 * CS is negated on Tegra, so drive a 1 to get a 0
@@ -198,6 +204,7 @@ void spi_cs_deactivate(struct spi_slave *slave)
 	 */
 	udelay(1000);
 
+#ifdef CONFIG_TEGRA2_SEABOARD
 	/*
 	 * Looks like we may also need to dynamically change the pinmux,
 	 *  shared w/UART RXD/CTS!
@@ -215,6 +222,8 @@ void spi_cs_deactivate(struct spi_slave *slave)
 
 	 tg2_gpio_direction_output(UART_DISABLE_PORT, UART_DISABLE_BIT, 0);
 	 debug("spi_cs_deactivate: ENABLED UART!\n");
+#endif
+
 	/*
 	 * CS is negated on Tegra, so drive a 0 to get a 1
 	*/
@@ -232,6 +241,7 @@ int spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
 	int numBytes = (bitlen + 7) / 8;
 	int ret, tm, isRead = 0;
 
+	/* FIXME: the debug here hangs the board */
 	debug("spi_xfer: slave %u:%u dout %08X din %08X bitlen %u\n",
 	      slave->bus, slave->cs, *(uint *) dout, *(uint *) din, bitlen);
 
