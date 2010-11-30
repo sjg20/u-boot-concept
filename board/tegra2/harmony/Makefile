@@ -35,6 +35,8 @@ LIB	= $(obj)lib$(BOARD).a
 
 COBJS	:= $(BOARD).o
 COBJS	+= ../common/board.o
+COBJS	+= ../common/pinmux.o
+COBJS	+= ../common/pinmux-t2-tables.o
 COBJS	+= ../common/sdmmc/nvboot_sdmmc.o
 COBJS	+= ../common/sdmmc/nvboot_reset.o
 COBJS	+= ../common/sdmmc/nvboot_util.o
@@ -42,6 +44,7 @@ COBJS	+= ../common/sdmmc/nvboot_clocks.o
 COBJS	+= ../common/sdmmc/nvboot_pads.o
 COBJS	+= ../common/sdmmc/nvboot_pinmux.o
 COBJS	+= ../common/sdmmc/nvboot_pinmux_tables.o
+COBJS	+= harmony-pinmux.o
 ifdef CONFIG_TEGRA2_LP0
 COBJS   += ../common/crypto/aes_ref.o
 COBJS   += ../common/crypto/crypto.o

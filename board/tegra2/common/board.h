@@ -194,4 +194,6 @@ NvU32 NvBlUartRxD(void);
 void NvBlAvpStallUs(NvU32 MicroSec);
 void NvBlAvpStallMs(NvU32 MilliSec);
 
+void board_pinmux_config(void);
+
 #endif /* _COMMON_BOARD_H_ */
