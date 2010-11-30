@@ -29,6 +29,7 @@
 /*
  * High Level Configuration Options
  */
+#define CONFIG_TEGRA2_SEABOARD		1	/* working with SeaBoard */
 #define TEGRA2_SYSMEM			"mem=384M@0M nvmem=128M@384M mem=512M@512M"
 #define V_PROMPT			"Tegra2 (SeaBoard) # "
 #define TEGRA_NFSPORT_DEFAULT		"usb0"
