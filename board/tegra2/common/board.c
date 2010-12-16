@@ -23,6 +23,7 @@
 
 #include <common.h>
 #include <nand.h>
+#include <spi.h>
 #include <asm/io.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/mach-types.h>
@@ -30,6 +31,8 @@
 #include <asm/arch/nv_hardware_access.h>
 #include <asm/arch/nv_drf.h>
 #include <asm/arch/tegra2.h>
+#include <asm/arch/nvboot_bit.h>
+#include <asm/arch/nvbl_memmap_nvap.h>
 #include "sdmmc/nvboot_clocks_int.h"
 #include "board.h"
 #include <asm/arch/gpio.h>
@@ -145,6 +148,7 @@ int board_init(void)
  */
 int misc_init_r(void)
 {
+	dump_boot_info_table((NvBootInfoTable*)(AP20_BASE_PA_BOOT_INFO));
 	return 0;
 }
 
