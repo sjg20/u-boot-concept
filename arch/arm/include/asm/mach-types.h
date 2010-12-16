@@ -3041,6 +3041,7 @@ extern unsigned int __machine_arch_type;
 #define MACH_TYPE_SPEAR900             3061
 #define MACH_TYPE_PCONTROL_G20         3062
 #define MACH_TYPE_KAEN                 3217
+#define MACH_TYPE_TRIMSLICE	       3333
 
 #ifdef CONFIG_ARCH_EBSA110
 # ifdef machine_arch_type
@@ -39388,6 +39389,18 @@ extern unsigned int __machine_arch_type;
 # define machine_is_kaen()	(machine_arch_type == MACH_TYPE_KAEN)
 #else
 # define machine_is_kaen()	(0)
+#endif
+
+#ifdef CONFIG_MACH_TRIMSLICE
+# ifdef machine_arch_type
+#  undef machine_arch_type
+#  define machine_arch_type	__machine_arch_type
+# else
+#  define machine_arch_type	MACH_TYPE_TRIMSLICE
+# endif
+# define machine_is_trimslice()	(machine_arch_type == MACH_TYPE_TRIMSLICE)
+#else
+# define machine_is_trimslice()	(0)
 #endif
 
 /*
