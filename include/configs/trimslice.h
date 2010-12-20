@@ -53,6 +53,7 @@
 #undef CONFIG_USE_IRQ
 #define CONFIG_ARCH_CPU_INIT
 #define CONFIG_MISC_INIT_R
+#define BOARD_LATE_INIT
 #define CONFIG_SKIP_LOWLEVEL_INIT
 
 #define CONFIG_CMDLINE_TAG		1	/* enable passing of ATAGs */
@@ -110,6 +111,7 @@
 #define CONFIG_NET_MULTI
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_DHCP
+#define CONFIG_CMD_PCI
 /*#define CONFIG_CMD_I2C		I2C serial bus support	*/
 
 #define CONFIG_CMD_MMC		/* MMC support			*/
@@ -271,6 +273,14 @@
 #undef CONFIG_DRIVER_TEGRA2_I2C
 
 /*
+ * RealTek 8169
+ */
+#define CONFIG_PCI
+#define CONFIG_PCI_PNP
+#define CONFIG_PCI_CONFIG_HOST_BRIDGE
+#define CONFIG_RTL8169
+
+/*
  * High Level Configuration Options
  */
 #define V_PROMPT			"TrimSlice # "
@@ -307,7 +317,7 @@
 #define CONFIG_BOOTCOMMAND              "run mmcboot ; run usbboot"
 
 /* #define CONFIG_RAM_DEBUG	1 */
-#define TEGRA2_TRACE	1
+/* #define TEGRA2_TRACE	1 */
 
 /* UARTA: debug board uart */
 #define CONFIG_SYS_NS16550_COM1		NV_ADDRESS_MAP_APB_UARTA_BASE

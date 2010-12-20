@@ -23,6 +23,7 @@
 
 #include <common.h>
 #include <nand.h>
+#include <netdev.h>
 #include <asm/io.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/mach-types.h>
@@ -154,3 +155,18 @@ NvBlUartInit(void)
 #endif
 }
 
+int board_late_init(void)
+{
+	return 0;
+}
+
+int board_eth_init(bd_t *bis)
+{
+	return pci_eth_init(bis);
+}
+
+extern int tegra_pcie_init(int init_port0, int init_port1);
+void pci_init_board(void)
+{
+	tegra_pcie_init(1, 0);
+}

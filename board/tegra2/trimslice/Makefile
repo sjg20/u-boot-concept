@@ -30,6 +30,7 @@ COBJS	:= $(BOARD).o
 COBJS	+= ../common/board.o
 COBJS	+= ../common/pinmux.o
 COBJS	+= ../common/pinmux-t2-tables.o
+COBJS	+= ../common/pcie.o
 COBJS	+= ../common/sdmmc/nvboot_sdmmc.o
 COBJS	+= ../common/sdmmc/nvboot_reset.o
 COBJS	+= ../common/sdmmc/nvboot_util.o
