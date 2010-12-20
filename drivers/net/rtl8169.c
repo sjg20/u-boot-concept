@@ -327,6 +327,7 @@ static const unsigned int rtl8169_rx_config =
 static struct pci_device_id supported[] = {
 	{PCI_VENDOR_ID_REALTEK, 0x8167},
 	{PCI_VENDOR_ID_REALTEK, 0x8169},
+	{PCI_VENDOR_ID_REALTEK, 0x8168},
 	{}
 };
 
