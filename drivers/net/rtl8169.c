@@ -111,7 +111,7 @@ static int media[MAX_UNITS] = { -1, -1, -1, -1, -1, -1, -1, -1 };
 #define ETH_ZLEN	60
 
 #define bus_to_phys(a)	pci_mem_to_phys((pci_dev_t)dev->priv, (pci_addr_t)a)
-#define phys_to_bus(a)	pci_phys_to_mem((pci_dev_t)dev->priv, (phys_addr_t)a)
+#define virt_to_bus(a)	pci_phys_to_mem((pci_dev_t)dev->priv, (phys_addr_t)a)
 
 enum RTL8169_registers {
 	MAC0 = 0,		/* Ethernet hardware address. */
@@ -442,7 +442,7 @@ static int rtl_recv(struct eth_device *dev)
 				tpc->RxDescArray[cur_rx].status =
 					cpu_to_le32(OWNbit + RX_BUF_SIZE);
 			tpc->RxDescArray[cur_rx].buf_addr =
-				cpu_to_le32(bus_to_phys(tpc->RxBufferRing[cur_rx]));
+				cpu_to_le32(virt_to_bus(tpc->RxBufferRing[cur_rx]));
 			flush_cache((unsigned long)tpc->RxBufferRing[cur_rx],
 					RX_BUF_SIZE);
 		} else {
@@ -492,7 +492,7 @@ static int rtl_send(struct eth_device *dev, void *packet, int length)
 		ptxb[len++] = '\0';
 
 	tpc->TxDescArray[entry].buf_Haddr = 0;
-	tpc->TxDescArray[entry].buf_addr = cpu_to_le32(bus_to_phys(ptxb));
+	tpc->TxDescArray[entry].buf_addr = cpu_to_le32(virt_to_bus(ptxb));
 	if (entry != (NUM_TX_DESC - 1)) {
 		tpc->TxDescArray[entry].status =
 			cpu_to_le32((OWNbit | FSbit | LSbit) |
@@ -597,9 +597,9 @@ static void rtl8169_hw_start(struct eth_device *dev)
 
 	tpc->cur_rx = 0;
 
-	RTL_W32(TxDescStartAddrLow, bus_to_phys(tpc->TxDescArray));
+	RTL_W32(TxDescStartAddrLow, virt_to_bus(tpc->TxDescArray));
 	RTL_W32(TxDescStartAddrHigh, (unsigned long)0);
-	RTL_W32(RxDescStartAddrLow, bus_to_phys(tpc->RxDescArray));
+	RTL_W32(RxDescStartAddrLow, virt_to_bus(tpc->RxDescArray));
 	RTL_W32(RxDescStartAddrHigh, (unsigned long)0);
 
 	/* RTL-8169sc/8110sc or later version */
@@ -650,7 +650,7 @@ static void rtl8169_init_ring(struct eth_device *dev)
 
 		tpc->RxBufferRing[i] = &rxb[i * RX_BUF_SIZE];
 		tpc->RxDescArray[i].buf_addr =
-			cpu_to_le32(bus_to_phys(tpc->RxBufferRing[i]));
+			cpu_to_le32(virt_to_bus(tpc->RxBufferRing[i]));
 		flush_cache((unsigned long)tpc->RxBufferRing[i], RX_BUF_SIZE);
 	}
 
