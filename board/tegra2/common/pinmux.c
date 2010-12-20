@@ -17,19 +17,8 @@
 #include <common.h>
 #include <asm-generic/errno.h>
 
+#include "compat.h"
 #include "pinmux.h"
-
-/* linux compatibility defines */
-#define DEFINE_SPINLOCK(a)	int a
-#define spin_lock_irqsave(a,b)	do { b = *a; } while (0)
-#define spin_unlock_irqrestore(a,b)	do { *a = b; } while (0)
-#define IO_TO_VIRT(a)	(a)
-#define WARN_ON(a)
-
-#define TEGRA_APB_MISC_BASE 0x70000000
-
-#define readl(addr) (*(volatile unsigned int *)(addr))
-#define writel(b, addr) ((*(volatile unsigned int *) (addr)) = (b))
 
 #define HSM_EN(reg)	(((reg) >> 2) & 0x1)
 #define SCHMT_EN(reg)	(((reg) >> 3) & 0x1)
