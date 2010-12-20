@@ -880,13 +880,19 @@ int rtl8169_initialize(bd_t *bis)
 	struct eth_device *dev;
 	u32 iobase;
 	int idx=0;
+	u16 device;
+	int region = PCI_BASE_ADDRESS_1;
 
 	while(1){
 		/* Find RTL8169 */
 		if ((devno = pci_find_devices(supported, idx++)) < 0)
 			break;
 
-		pci_read_config_dword(devno, PCI_BASE_ADDRESS_1, &iobase);
+		pci_read_config_word(devno, PCI_DEVICE_ID, &device);
+		if (device == 0x8168)
+			region = PCI_BASE_ADDRESS_2;
+
+		pci_read_config_dword(devno, region, &iobase);
 		iobase &= ~0xf;
 
 		debug ("rtl8169: REALTEK RTL8169 @0x%x\n", iobase);
