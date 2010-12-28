@@ -24,6 +24,11 @@
 
 include $(TOPDIR)/config.mk
 
+ifdef CONFIG_TEGRA2_LCD
+$(shell mkdir -p $(obj)../common/lcd)
+$(shell mkdir -p $(obj)../common/lcd/gpinit)
+endif
+
 LIB	= $(obj)lib$(BOARD).a
 
 COBJS	:= $(BOARD).o
@@ -40,6 +45,14 @@ COBJS	+= ../common/sdmmc/nvboot_pads.o
 #COBJS	+= ../common/sdmmc/nvboot_pinmux_tables.o
 COBJS	+= ../common/dump_boot_info.o
 COBJS	+= trimslice-pinmux.o
+
+ifdef CONFIG_TEGRA2_LCD
+COBJS	+= gpinit.o
+COBJS	+= ../common/lcd/gpinit/gp-util.o
+COBJS	+= ../common/lcd/gpinit/gp-dc.o
+COBJS	+= ../common/lcd/gpinit/gp-clk.o
+COBJS	+= ../common/lcd/nvboot_lcd.o
+endif
 
 SRCS	:= $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS))

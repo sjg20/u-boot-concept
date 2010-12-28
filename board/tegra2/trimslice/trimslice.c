@@ -24,6 +24,7 @@
 #include <common.h>
 #include <nand.h>
 #include <netdev.h>
+#include <spi.h>
 #include <asm/io.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/mach-types.h>
@@ -38,6 +39,7 @@
 
 void board_spi_init(void)
 {
+	spi_init();
 }
 
 /***************************************************************************
@@ -169,4 +171,9 @@ extern int tegra_pcie_init(int init_port0, int init_port1);
 void pci_init_board(void)
 {
 	tegra_pcie_init(1, 0);
+}
+
+int drv_keyboard_init(void)
+{
+	return drv_usb_kbd_init();
 }

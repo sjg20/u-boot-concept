@@ -47,11 +47,17 @@ static void panel_init(void)
 void gpinit(void)
 {
 	clk_init();
+	printf("%s: 1\n", __func__);
 	pinmux_init();
+	printf("%s: 2\n", __func__);
 	poweron_3d();
+	printf("%s: 3\n", __func__);
 	panel_init();
+	printf("%s: 4\n", __func__);
 	tegra_dc_register(tegra2_gp_panel_resources,
 			tegra2_gp_panel_modes,
 			&tegra2_gp_fb_data);
+	printf("%s: 5\n", __func__);
 	tegra_dc_probe();
+	printf("%s: 6\n", __func__);
 }

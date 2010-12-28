@@ -208,7 +208,6 @@ int drv_usb_kbd_init(void)
 	return -1;
 }
 
-
 /* deregistering the keyboard */
 int usb_kbd_deregister(void)
 {

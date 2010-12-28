@@ -42,7 +42,7 @@
 #endif
 #undef TEGRA2_TRACE
 
-#include <asm-arm/arch-tegra2/tegra2.h>            /* get chip and board defs */
+#include <asm/arch/tegra2.h>            /* get chip and board defs */
 
 /*
  * Display CPU and Board information
@@ -99,10 +99,23 @@
 #define CONFIG_SYS_BAUDRATE_TABLE	{4800, 9600, 19200, 38400, 57600,\
 					115200}
 
+#define CONFIG_CONSOLE_MUX		1
+#define CONFIG_SYS_CONSOLE_IS_IN_ENV	1
+#define CONFIG_STD_DEVICES_SETTINGS	"stdin=serial\0" \
+					"stdout=serial\0" \
+					"stderr=serial\0"
+
+
 #define CONFIG_MMC			1
 #define CONFIG_TEGRA2_MMC		1
 #define CONFIG_DOS_PARTITION		1
 #define CONFIG_EFI_PARTITION		1
+
+#define MMC_DEV_INSTANCES 1
+#define NvEmmcx_0	NvEmmc4
+#define NvEmmcx_1	0
+#define NvEmmcx_2	0
+#define NvEmmcx_3	0
 
 /* commands to include */
 #include <config_cmd_default.h>
@@ -150,12 +163,14 @@
 /*
  * USB Host.
  */
+#define USB_EHCI_TEGRA_BASE_ADDR_USB3   0xC5008000      /* USB3 base address */
+
 #define CONFIG_USB_EHCI
 #define CONFIG_USB_EHCI_TEGRA
-
-#ifdef CONFIG_USB_EHCI_TEGRA
-#   define USB_EHCI_TEGRA_BASE_ADDR         0xC5008000   /* USB3 base address */
-#endif
+#define NvUSBx_0	USB_EHCI_TEGRA_BASE_ADDR_USB3
+#define NvUSBx_1	0
+#define NvUSBx_2	0
+#define NvUSBx_3	0
 
 /*
  */
@@ -290,6 +305,7 @@
 #define CONFIG_TEGRA2_DEBUG_BAUD	115200
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
+	CONFIG_STD_DEVICES_SETTINGS \
 	"usbprobedelay=" TEGRA_EHCI_PROBE_DELAY_DEFAULT "\0" \
 	"usbhost=on\0" \
 	CONFIG_DEFAULT_ENV_SETTINGS \
@@ -351,5 +367,16 @@
 #define CONFIG_ENV_SECT_SIZE	0x10000	/* 4K sectors */
 #define CONFIG_ENV_OFFSET		SZ_512K
 
+#define CONFIG_LCD
+#define CONFIG_TEGRA2_LCD
+#define LCD_BPP             LCD_COLOR16
+#define LCD_FB_ADDR         0x1C022000   /* FB could be passed from bl */
+#define CONFIG_SYS_WHITE_ON_BLACK       /*Console colors*/
+
+#define LCD_vl_col	1024
+#define LCD_vl_row	768
+
+#define CONFIG_KEYBOARD		1
+#define CONFIG_USB_KEYBOARD	1
 
 #endif /* __CONFIG_H */
