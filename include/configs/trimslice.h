@@ -101,15 +101,17 @@
 
 #define CONFIG_CONSOLE_MUX		1
 #define CONFIG_SYS_CONSOLE_IS_IN_ENV	1
-#define CONFIG_STD_DEVICES_SETTINGS	"stdin=serial\0" \
-					"stdout=serial\0" \
-					"stderr=serial\0"
+#define CONFIG_STD_DEVICES_SETTINGS	"stdin=serial,usbkbd\0" \
+					"stdout=serial,lcd\0" \
+					"stderr=serial,lcd\0"
 
 
 #define CONFIG_MMC			1
 #define CONFIG_TEGRA2_MMC		1
+#define TEGRA2_MMC_DEFAULT_DEVICE	"0"
 #define CONFIG_DOS_PARTITION		1
 #define CONFIG_EFI_PARTITION		1
+#define CONFIG_TEGRA2_EMMC4_ALWAYS_INSERTED	1
 
 #define MMC_DEV_INSTANCES 1
 #define NvEmmcx_0	NvEmmc4
@@ -165,12 +167,18 @@
  */
 #define USB_EHCI_TEGRA_BASE_ADDR_USB3   0xC5008000      /* USB3 base address */
 
+#define CONFIG_USB_EHCI_DATA_ALIGN	4
+#define CONFIG_USB_EHCI_TXFIFO_THRESH	10
+#define CONFIG_LEGACY_USB_INIT_SEQ
+
 #define CONFIG_USB_EHCI
 #define CONFIG_USB_EHCI_TEGRA
 #define NvUSBx_0	USB_EHCI_TEGRA_BASE_ADDR_USB3
 #define NvUSBx_1	0
 #define NvUSBx_2	0
 #define NvUSBx_3	0
+
+#define CONFIG_USB_RESET_CLEARED_MS       3 * 1000
 
 /*
  */

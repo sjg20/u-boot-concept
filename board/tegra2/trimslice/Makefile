@@ -24,6 +24,7 @@
 
 include $(TOPDIR)/config.mk
 
+$(shell mkdir -p $(obj)../common/sdmmc)
 ifdef CONFIG_TEGRA2_LCD
 $(shell mkdir -p $(obj)../common/lcd)
 $(shell mkdir -p $(obj)../common/lcd/gpinit)
