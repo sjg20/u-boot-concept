@@ -249,6 +249,10 @@
 		"erase FFF00000 +${filesize};"				\
 		"cp.b 200000 FFF00000 ${filesize};"			\
 		"protect on FFF00000 +${filesize}\0"			\
+	"gatewayip=192.168.100.80\0"					\
+	"ipaddr=192.168.100.199\0"					\
+	"netmask=255.255.255.0\0"					\
+	"serverip=192.168.100.80\0"					\
 	""
 
 #define CONFIG_BOOTCOMMAND	"run mtcb_start"
