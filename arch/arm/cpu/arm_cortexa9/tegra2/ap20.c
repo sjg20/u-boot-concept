@@ -962,7 +962,9 @@ void cpu_start( void )
 
         switch( s_ChipId ) {
         case 0x20:
+#ifndef CONFIG_RAM_DEBUG
             ColdBoot_AP20();
+#endif
             break;
         default:
 //            NV_ASSERT( !"unknown chipid" );
