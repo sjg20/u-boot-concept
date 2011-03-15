@@ -32,6 +32,7 @@
 #include <asm/arch/nv_hardware_access.h>
 #include <asm/arch/nv_drf.h>
 #include <asm/arch/tegra2.h>
+#include <asm/arch/gpio.h>
 #include "../common/board.h"
 #include "../common/pinmux.h"
 
@@ -176,4 +177,10 @@ void pci_init_board(void)
 int drv_keyboard_init(void)
 {
 	return drv_usb_kbd_init();
+}
+
+void usb1_set_host_mode(void)
+{
+	tg2_gpio_direction_output(21, 2, 1);
+	tg2_gpio_direction_output(21, 3, 0);
 }

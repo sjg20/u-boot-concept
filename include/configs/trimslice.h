@@ -165,7 +165,9 @@
 /*
  * USB Host.
  */
+#define CONFIG_USB_CONTROLLER_INSTANCES	2
 #define USB_EHCI_TEGRA_BASE_ADDR_USB3   0xC5008000      /* USB3 base address */
+#define USB_EHCI_TEGRA_BASE_ADDR_USB1	0xC5000000   /* USB1 base address */
 
 #define CONFIG_USB_EHCI_DATA_ALIGN	4
 #define CONFIG_USB_EHCI_TXFIFO_THRESH	10
@@ -174,7 +176,7 @@
 #define CONFIG_USB_EHCI
 #define CONFIG_USB_EHCI_TEGRA
 #define NvUSBx_0	USB_EHCI_TEGRA_BASE_ADDR_USB3
-#define NvUSBx_1	0
+#define NvUSBx_1	USB_EHCI_TEGRA_BASE_ADDR_USB1
 #define NvUSBx_2	0
 #define NvUSBx_3	0
 
@@ -209,7 +211,7 @@
 
 #define CONFIG_IPADDR		10.0.0.2
 #define CONFIG_SERVERIP		10.0.0.1
-#define CONFIG_LOADADDR		0x4080000 /* free RAM to download kernel to */
+#define CONFIG_LOADADDR		0x408000 /* RAM to download bootscript to */
 #define CONFIG_BOOTFILE		vmlinux.uimg
 #define TEGRA_EHCI_PROBE_DELAY_DEFAULT	"5000"
 #define CONFIG_BOOTDELAY		5      /* -1 to disable auto boot */
@@ -312,29 +314,20 @@
 #define CONFIG_TEGRA2_ENABLE_UARTA	1
 #define CONFIG_TEGRA2_DEBUG_BAUD	115200
 
-#define CONFIG_EXTRA_ENV_SETTINGS \
+#define CONFIG_UPDATE_SETTINGS	\
+	"update_uboot=dhcp && tftp 4080000 192.168.11.77:u-boot.slice && " \
+	"sf probe 0 && sf erase 0 50000 && sf write 4080000 0 50000\0"
+
+#define CONFIG_EXTRA_ENV_SETTINGS   \
+	CONFIG_UPDATE_SETTINGS	    \
 	CONFIG_STD_DEVICES_SETTINGS \
-	"usbprobedelay=" TEGRA_EHCI_PROBE_DELAY_DEFAULT "\0" \
-	"usbhost=on\0" \
 	CONFIG_DEFAULT_ENV_SETTINGS \
-	"usbboot=usb start; " \
-		"ext2load usb 0:1 ${loadaddr} /uImage; " \
-		"setenv bootargs root=/dev/sdb1 rw rootwait " \
-                "${mem} " \
-		"console=${console} " \
-		"usbcore.old_scheme_first=1 " \
-		"tegraboot=${tegraboot} " \
-		"tegrap earlyprintk; "\
-		"bootm ${loadaddr}\0" \
-	"mmcboot=mmc init; " \
-		"ext2load mmc 0:2 ${loadaddr} /uImage; " \
-		"setenv bootargs root=/dev/sda1 rw rootwait " \
-                "${mem} " \
-		"console=${console} " \
-		"usbcore.old_scheme_first=1 " \
-		"tegraboot=${tegraboot} " \
-		"tegrap earlyprintk; "\
-		"bootm ${loadaddr}\0" \
+	"usbboot=usb start && "						\
+		"ext2load usb 0:1 ${loadaddr} /boot.scr && "		\
+		"source ${loadaddr}\0"					\
+	"mmcboot=mmc init 0 &&"						\
+		"ext2load mmc 0:1 ${loadaddr} /boot.scr && "		\
+		"source ${loadaddr}\0"
 
 /* #define CONFIG_BOOTARGS	"root=/dev/sdb1 rw rootwait mem=448M@0M mem=512M@512M video=tegrafb console=ttyS0,115200n8 tegraboot=nand earlyprintk" */
 

@@ -490,6 +490,8 @@ void usbf_reset_controller(NvU32 UsbBase)
 
 }
 
+#if ((LINUX_MACH_TYPE == MACH_TYPE_SEABOARD) || \
+     (LINUX_MACH_TYPE == MACH_TYPE_KAEN))
 void usb1_set_host_mode(void)
 {
 	int RegVal;
@@ -513,6 +515,9 @@ void usb1_set_host_mode(void)
 	writel(RegVal, NV_ADDRESS_MAP_APB_MISC_BASE + 
 			APB_MISC_PP_TRISTATE_REG_B_0);
 }
+#elif LINUX_MACH_TYPE == MACH_TYPE_TRIMSLICE
+extern void usb1_set_host_mode(void);
+#endif
 
 void board_usb_init(void)
 {
@@ -690,7 +695,8 @@ void board_usb_init(void)
 	writel(RegVal, NV_ADDRESS_MAP_USB3_BASE+UTMIP_XCVR_CFG1);
 
 #if ((LINUX_MACH_TYPE == MACH_TYPE_SEABOARD) || \
-     (LINUX_MACH_TYPE == MACH_TYPE_KAEN))
+     (LINUX_MACH_TYPE == MACH_TYPE_KAEN) || \
+     (LINUX_MACH_TYPE == MACH_TYPE_TRIMSLICE))
 	usb1_set_host_mode();
 #endif
 }
