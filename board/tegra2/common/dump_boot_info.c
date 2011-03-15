@@ -106,7 +106,7 @@ static void dump_boot_sdmmc_status(NvBootSdmmcStatus *sdmmc)
 	printf("\tBootModeReadSuccessful = %d\n", sdmmc->BootModeReadSuccessful);
 }
 
-#define DEBUG
+/* #define DEBUG */
 
 void dump_boot_info_table(void *_bit)
 {
