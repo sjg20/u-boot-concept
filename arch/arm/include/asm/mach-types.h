@@ -3041,7 +3041,7 @@ extern unsigned int __machine_arch_type;
 #define MACH_TYPE_SPEAR900             3061
 #define MACH_TYPE_PCONTROL_G20         3062
 #define MACH_TYPE_KAEN                 3217
-#define MACH_TYPE_TRIMSLICE	       3333
+#define MACH_TYPE_TRIMSLICE	       3209
 
 #ifdef CONFIG_ARCH_EBSA110
 # ifdef machine_arch_type
