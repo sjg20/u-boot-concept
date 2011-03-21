@@ -322,7 +322,7 @@
 	CONFIG_UPDATE_SETTINGS	    \
 	CONFIG_STD_DEVICES_SETTINGS \
 	CONFIG_DEFAULT_ENV_SETTINGS \
-	"usbboot=usb start && "						\
+	"usbboot=usb start 1 && "					\
 		"ext2load usb 0:1 ${loadaddr} /boot.scr && "		\
 		"source ${loadaddr}\0"					\
 	"mmcboot=mmc init 0 &&"						\
