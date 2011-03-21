@@ -99,7 +99,7 @@
 #define CONFIG_SYS_BAUDRATE_TABLE	{4800, 9600, 19200, 38400, 57600,\
 					115200}
 
-#define CONFIG_CONSOLE_MUX		1
+/* #define CONFIG_CONSOLE_MUX		1 */
 #define CONFIG_SYS_CONSOLE_IS_IN_ENV	1
 #define CONFIG_STD_DEVICES_SETTINGS	"stdin=serial,usbkbd\0" \
 					"stdout=serial,lcd\0" \
@@ -233,7 +233,7 @@
 #define CONFIG_SYS_PROMPT		V_PROMPT
 /* Increasing the size of the IO buffer as default nfsargs size is more than 256
   and so it is not possible to edit it */
-#define CONFIG_SYS_CBSIZE		(256 * 2) /* Console I/O Buffer Size */
+#define CONFIG_SYS_CBSIZE		1024 /* Console I/O Buffer Size */
 /* Print Buffer Size */
 #define CONFIG_SYS_PBSIZE		(CONFIG_SYS_CBSIZE + \
 					sizeof(CONFIG_SYS_PROMPT) + 16)
