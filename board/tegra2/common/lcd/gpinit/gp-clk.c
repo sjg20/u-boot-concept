@@ -165,7 +165,7 @@ static void clk_recalculate_rate(struct clk *c)
 	}
 
 	if (rate > c->max_rate)
-		printf("clocks: Set clock %s to rate %llu, max is %lu\n",
+		debug("clocks: Set clock %s to rate %llu, max is %lu\n",
 			c->name, rate, c->max_rate);
 
 	c->rate = rate;

@@ -130,6 +130,6 @@ static struct tegra_pingroup_config trimslice_pinmux[] = {
 
 void board_pinmux_config(void)
 {
-	printf("\nConfiguring pinmux\n");
+	debug("\nConfiguring pinmux\n");
 	tegra_pinmux_config_table(trimslice_pinmux, ARRAY_SIZE(trimslice_pinmux));
 }

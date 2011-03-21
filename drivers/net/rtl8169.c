@@ -399,8 +399,8 @@ static int rtl8169_init_board(struct eth_device *dev)
 	}
 
 	/* if unknown chip, assume array element #0, original RTL-8169 in this case */
-	printf("PCI device %s: unknown chip version, assuming RTL-8169\n", dev->name);
-	printf("PCI device: TxConfig = 0x%lX\n", (unsigned long) RTL_R32(TxConfig));
+	debug("PCI device %s: unknown chip version, assuming RTL-8169\n", dev->name);
+	debug("PCI device: TxConfig = 0x%lX\n", (unsigned long) RTL_R32(TxConfig));
 	tpc->chipset = 0;
 
 match:
