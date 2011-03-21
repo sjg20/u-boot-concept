@@ -110,8 +110,12 @@ static void dump_boot_sdmmc_status(NvBootSdmmcStatus *sdmmc)
 
 void dump_boot_info_table(void *_bit)
 {
-#ifdef DEBUG
 	NvBootInfoTable *bit = _bit;
+
+#ifndef DEBUG
+	printf("Boot:  %s\n", boot_dev_type[bit->SecondaryDevice]);
+#else
+
 	struct NvBootNandStatusRec *nand;
 	NvBootSpiFlashStatus *spi;
 	NvBootSdmmcStatus *sdmmc;
