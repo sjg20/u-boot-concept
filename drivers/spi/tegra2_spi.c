@@ -24,6 +24,7 @@
 #include <common.h>
 
 #include <malloc.h>
+#include <ns16550.h> /* for NS16550_drain and NS16550_clear */
 #include <spi.h>
 #include <asm/arch/tegra2_spi.h>
 #include <asm/arch/gpio.h>

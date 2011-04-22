@@ -743,7 +743,7 @@ __u8 do_fat_read_block[MAX_CLUSTSIZE];
 
 long
 do_fat_read (const char *filename, void *buffer, unsigned long maxsize,
-	     int dols, uint64_t *starting_lba_ptr)
+	     int dols)
 {
 	char fnamecopy[2048];
 	boot_sector bs;
@@ -1048,13 +1048,6 @@ rootdir_done:
 		}
 	}
 
-	if (starting_lba_ptr) {
-		*starting_lba_ptr = part_offset + mydata->data_begin +
-			START(dentptr) * mydata->clust_size;
-		debug("starting_lba=0x%x\n", (uint32_t) *starting_lba_ptr);
-		return 0;
-	}
-
 	ret = get_contents(mydata, dentptr, buffer, maxsize);
 	debug("Size: %d, got: %ld\n", FAT2CPU32(dentptr->size), ret);
 
@@ -1127,16 +1120,11 @@ int file_fat_detectfs (void)
 
 int file_fat_ls (const char *dir)
 {
-	return do_fat_read(dir, NULL, 0, LS_YES, NULL);
+	return do_fat_read(dir, NULL, 0, LS_YES);
 }
 
 long file_fat_read (const char *filename, void *buffer, unsigned long maxsize)
 {
 	printf("reading %s\n", filename);
-	return do_fat_read(filename, buffer, maxsize, LS_NO, NULL);
-}
-
-int file_fat_starting_lba(const char *filename, uint64_t *starting_lba_ptr)
-{
-	return do_fat_read(filename, NULL, 0, LS_NO, starting_lba_ptr);
+	return do_fat_read(filename, buffer, maxsize, LS_NO);
 }

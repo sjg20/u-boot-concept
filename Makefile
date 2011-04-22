@@ -2274,6 +2274,9 @@ tegra2_aebl_config:  unconfig
 tegra2_ventana_config:  unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm_cortexa9 generic tegra2 tegra2
 
+tegra2_arthur_config:  unconfig
+	@$(MKCONFIG) $(@:_config=) arm arm_cortexa9 generic tegra2 tegra2
+
 #########################################################################
 ## XScale Systems
 #########################################################################

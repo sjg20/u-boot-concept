@@ -741,6 +741,7 @@ LIST_ixp="		\
 
 LIST_tegra="		\
 	tegra2_kaen	\
+	tegra2_aebl	\
 	tegra2_harmony	\
 	tegra2_seaboard	\
 	tegra2_ventana	\
@@ -767,6 +768,11 @@ LIST_chromeos="					\
 	chromeos_tegra2_kaen_normal		\
 	chromeos_tegra2_kaen_recovery		\
 	chromeos_tegra2_kaen_stub		\
+	chromeos_tegra2_aebl_developer		\
+	chromeos_tegra2_aebl_flasher		\
+	chromeos_tegra2_aebl_normal		\
+	chromeos_tegra2_aebl_recovery		\
+	chromeos_tegra2_aebl_stub		\
 	chromeos_tegra2_wario_developer		\
 	chromeos_tegra2_wario_flasher		\
 	chromeos_tegra2_wario_normal		\

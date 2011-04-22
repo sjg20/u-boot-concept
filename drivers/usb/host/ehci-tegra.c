@@ -48,7 +48,8 @@ int USB_EHCI_TEGRA_BASE_ADDR=NvUSBx_0;
 
 #if ((LINUX_MACH_TYPE == MACH_TYPE_SEABOARD) || \
      (LINUX_MACH_TYPE == MACH_TYPE_KAEN) || \
-     (LINUX_MACH_TYPE == MACH_TYPE_AEBL))
+     (LINUX_MACH_TYPE == MACH_TYPE_AEBL) || \
+     (LINUX_MACH_TYPE == MACH_TYPE_ARTHUR))
 void usb1_set_host_mode(void);
 #endif
 
@@ -78,7 +79,8 @@ int ehci_hcd_stop(void)
 {
 #if ((LINUX_MACH_TYPE == MACH_TYPE_SEABOARD) || \
      (LINUX_MACH_TYPE == MACH_TYPE_KAEN) || \
-     (LINUX_MACH_TYPE == MACH_TYPE_AEBL))
+     (LINUX_MACH_TYPE == MACH_TYPE_AEBL) || \
+     (LINUX_MACH_TYPE == MACH_TYPE_ARTHUR))
         usb1_set_host_mode();
 #endif
 	ehci_writel(&hcor->or_usbcmd, 0);

@@ -4,6 +4,7 @@
  * modified to use CONFIG_SYS_ISA_MEM and new defines
  */
 
+#include <common.h> /* for udelay */
 #include <config.h>
 #include <ns16550.h>
 #include <watchdog.h>

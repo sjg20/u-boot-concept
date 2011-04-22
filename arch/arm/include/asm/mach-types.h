@@ -3043,6 +3043,8 @@ extern unsigned int __machine_arch_type;
 #define MACH_TYPE_KAEN                 3217
 #define MACH_TYPE_AEBL                 3287
 #define MACH_TYPE_WARIO                3288
+#define MACH_TYPE_ARTHUR               3474
+#define MACH_TYPE_DOORBOY              3475
 
 #ifdef CONFIG_ARCH_EBSA110
 # ifdef machine_arch_type
@@ -39414,6 +39416,30 @@ extern unsigned int __machine_arch_type;
 # define machine_is_wario()	(machine_arch_type == MACH_TYPE_WARIO)
 #else
 # define machine_is_wario()	(0)
+#endif
+
+#ifdef CONFIG_MACH_ARTHUR
+# ifdef machine_arch_type
+#  undef machine_arch_type
+#  define machine_arch_type	__machine_arch_type
+# else
+#  define machine_arch_type	MACH_TYPE_ARTHUR
+# endif
+# define machine_is_arthur()	(machine_arch_type == MACH_TYPE_ARTHUR)
+#else
+# define machine_is_arthur()	(0)
+#endif
+
+#ifdef CONFIG_MACH_DOORBOY
+# ifdef machine_arch_type
+#  undef machine_arch_type
+#  define machine_arch_type	__machine_arch_type
+# else
+#  define machine_arch_type	MACH_TYPE_DOORBOY
+# endif
+# define machine_is_doorboy()	(machine_arch_type == MACH_TYPE_DOORBOY)
+#else
+# define machine_is_doorboy()	(0)
 #endif
 
 /*
