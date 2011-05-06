@@ -699,6 +699,20 @@ int pci_hose_scan_bus(struct pci_controller *hose, int bus)
 
 int pci_hose_scan(struct pci_controller *hose)
 {
+#if defined(CONFIG_PCI_SCAN_DELAY)
+	const char *s;
+	int i;
+
+	/* wait "pci_scan_delay" ms, limit to max. 1 s */
+	s = getenv("pci_scan_delay");
+	if (s) {
+		int val = simple_strtoul(s, NULL, 10);
+		if (val > 1000)
+			val = 1000;
+		for (i = 0; i < val; i++)
+			udelay(1000);
+	}
+#endif
 	/* Start scan at current_busno.
 	 * PCIe will start scan at first_busno+1.
 	 */
