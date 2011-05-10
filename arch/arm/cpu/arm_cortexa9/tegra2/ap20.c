@@ -146,9 +146,15 @@ void NvBlSaveSdramParams(void)
 	NvU32			reg;		/* Module register contents */
 	NvU32			val;		/* Register field contents */
 	NvBootSdramParams	sdram_params;
+	NvU32			ram_code;
 
-	memcpy (&sdram_params, (char *)SDRAM_PARAMS_BASE_ADDR,
-				sizeof(NvBootSdramParams));
+	/* get ram code that is used as index to array SdramParams in BCT */
+	reg = NV_MISC_REGR(MISC_PA_BASE, PP_STRAPPING_OPT_A);
+	ram_code = NV_DRF_VAL(APB_MISC, PP_STRAPPING_OPT_A, RAM_CODE, reg) & 3;
+
+	memcpy(&sdram_params,
+	      (char *)((NvBootSdramParams *)SDRAM_PARAMS_BASE_ADDR + ram_code),
+		sizeof(NvBootSdramParams));
 
 	/* REG(s,d,r,f)
 	 *   s = destination Scratch register

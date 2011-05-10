@@ -386,6 +386,8 @@
 #define EVP_CPU_RESET_VECTOR_0                  _MK_ADDR_CONST(0x100)
 
 /* ap20/arapb_misc.h */
+#define APB_MISC_PP_STRAPPING_OPT_A_0                _MK_ADDR_CONST(0x8)
+#define APB_MISC_PP_STRAPPING_OPT_A_0_RAM_CODE_RANGE 7:4
 #define APB_MISC_PP_TRISTATE_REG_A_0                 _MK_ADDR_CONST(0x14)
 #define APB_MISC_PP_PIN_MUX_CTL_A_0                  _MK_ADDR_CONST(0x80)
 #define APB_MISC_PP_PIN_MUX_CTL_B_0                  _MK_ADDR_CONST(0x84)
