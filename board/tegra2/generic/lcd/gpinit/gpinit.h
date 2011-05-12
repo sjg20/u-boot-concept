@@ -205,6 +205,30 @@ struct tegra_gpio_init_table {
 	bool		set;
 };
 
+#ifdef TEGRA_PANEL_POWERON_SEQUENCE
+/*
+ * struct tegra_panel_sequence:
+ * It defines the power pins and delay requirements of panel.
+ * You can find out the definitions from your panel specification.
+ * lvds_enable        : tegra LVDS output enable pin
+ * backlight          : LCD signal enable pin
+ * backlight_vdd      : backlight power pin
+ * panel_power_enable : panel power pin
+ * T3                 : delay between Data and Backlight Rise
+ * T5                 : delay between Backlight and Vpwm Rise
+ * T6                 : delay between Vpwm and Ven Rise
+ */
+struct tegra_panel_sequence {
+	unsigned  lvds_enable;
+	unsigned  backlight;
+	unsigned  backlight_vdd;
+	unsigned  panel_power_enable;
+	unsigned  T3;
+	unsigned  T5;
+	unsigned  T6;
+};
+#endif
+
 /* GPIO */
 #define TEGRA_GPIO_NUMBER(port, bit) (((port) << 3) | ((bit) & 7))
 #define TEGRA_GPIO_PORT(gpio_number)	((gpio_number) >> 3)
