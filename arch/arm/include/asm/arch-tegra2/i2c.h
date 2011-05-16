@@ -34,7 +34,7 @@
 #define I2CSPEED 100
 
 /* Wait time to poll the status for completion. */
-enum { I2C_TIMEOUT_USEC = 1000};
+enum { I2C_TIMEOUT_USEC = 10000};
 
 /* I2C fifo depth. */
 enum { I2C_FIFO_DEPTH = 8};
