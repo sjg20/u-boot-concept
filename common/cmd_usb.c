@@ -536,6 +536,10 @@ int do_usb(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			extern int USB_base_addr[];
 			USB_EHCI_TEGRA_BASE_ADDR = USB_base_addr[i];
 #endif
+			if (i == 1) {
+                          printf("usb1: reset sata controller");
+			  board_sata_reset();
+                        }
 		}
 		printf("(Re)start USB...\n");
 		i = usb_init();

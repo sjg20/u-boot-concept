@@ -116,6 +116,7 @@ void NvBlUartClockInitA(void)
 }
 
 static struct tegra_pingroup_config trimslice_early_uarta_pinmux[] = {
+	{TEGRA_PINGROUP_DAP2,  TEGRA_MUX_DAP2,          TEGRA_PUPD_NORMAL,    TEGRA_TRI_NORMAL}, /* Normal */
 	{TEGRA_PINGROUP_GPU,   TEGRA_MUX_UARTA,           TEGRA_PUPD_NORMAL,    TEGRA_TRI_NORMAL},
 	{TEGRA_PINGROUP_UAC,   TEGRA_MUX_RSVD,         TEGRA_PUPD_NORMAL,    TEGRA_TRI_NORMAL},
 	{TEGRA_PINGROUP_IRRX,  TEGRA_MUX_UARTB,         TEGRA_PUPD_NORMAL,   TEGRA_TRI_TRISTATE},
@@ -194,4 +195,15 @@ void usb1_set_host_mode(void)
 {
 	tg2_gpio_direction_output(21, 2, 1);
 	tg2_gpio_direction_output(21, 3, 0);
+}
+
+#define mdelay(n) ({unsigned long msec=(n); while (msec--) udelay(1000);})
+void board_sata_reset(void)
+{
+	/*printf("performing SATA reset ...\n");*/
+
+	tg2_gpio_direction_output(0,3,0);
+	mdelay(500);
+	tg2_gpio_direction_output(0,3,1);
+	mdelay(3000);
 }
