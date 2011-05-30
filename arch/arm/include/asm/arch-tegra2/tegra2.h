@@ -711,6 +711,9 @@
 #define APBDEV_PMC_CNTRL_0_CPUPWRREQ_OE_RANGE                   16:16
 #define APBDEV_PMC_CNTRL_0_CPUPWRREQ_OE_ENABLE                  _MK_ENUM_CONST(1)
 
+#define APBDEV_PMC_PWR_DET_0                         _MK_ADDR_CONST(0x48)
+#define APBDEV_PMC_PWR_DET_LATCH_0                   _MK_ADDR_CONST(0x4c)
+
 /* ap20/arfic_dist.h */
 #define FIC_DIST_IC_TYPE_0                           _MK_ADDR_CONST(0x1004)
 #define FIC_DIST_IC_TYPE_0_IT_LINES_NUMBER_RANGE     4:0

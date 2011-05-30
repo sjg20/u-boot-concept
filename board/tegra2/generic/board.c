@@ -135,6 +135,10 @@ int board_init(void)
 	board_spi_init();		/* do this early so UART mux is OK */
 	board_usb_init();
 
+	/* turn off power detects */
+	writel(0, NV_ADDRESS_MAP_PMC_BASE + APBDEV_PMC_PWR_DET_LATCH_0);
+	writel(0, NV_ADDRESS_MAP_PMC_BASE + APBDEV_PMC_PWR_DET_0);
+
 	return 0;
 }
 
