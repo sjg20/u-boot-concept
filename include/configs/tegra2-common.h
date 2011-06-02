@@ -104,8 +104,16 @@
 
 /*
  * PllX Configuration
+ *
+ * the default CPU clock frequency in unit of KHz
  */
-#define CONFIG_SYS_CPU_OSC_FREQUENCY    1000000        /* Set CPU clock to 1GHz */
+#define CONFIG_SYS_CPU_OSC_FREQUENCY    1000000
+
+/*
+ * define the max cpu clock frequencies
+ */
+#define CONFIG_SYS_CPU_FREQUENCY_T20	(CONFIG_SYS_CPU_OSC_FREQUENCY)
+#define CONFIG_SYS_CPU_FREQUENCY_T25	1200000
 
 /*
  * NS16550 Configuration
@@ -526,5 +534,12 @@
         TEGRA_PANEL(v_back_porch,  4)                   \
         TEGRA_PANEL(h_front_porch, 58)                  \
         TEGRA_PANEL(v_front_porch, 4)
+
+#define TEGRA_CLOCK_INIT_CPU_T20			\
+	TEGRA_CLOCK("pll_x", "clk_m", CONFIG_SYS_CPU_FREQUENCY_T20*1000, true) \
+
+#define TEGRA_CLOCK_INIT_CPU_T25			\
+	TEGRA_CLOCK("pll_x", "clk_m", CONFIG_SYS_CPU_FREQUENCY_T25*1000, true) \
+
 
 #endif /* __CONFIG_H */

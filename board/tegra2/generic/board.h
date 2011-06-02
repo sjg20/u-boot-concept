@@ -176,4 +176,6 @@ NvU32 NvBlUartRx(NvU8 const * uart_base);
 void NvBlAvpStallUs(NvU32 MicroSec);
 void NvBlAvpStallMs(NvU32 MilliSec);
 
+int tegra_get_chip_type(void);
+
 #endif /* _COMMON_BOARD_H_ */

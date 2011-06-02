@@ -33,6 +33,9 @@
 #include "sdmmc/nvboot_clocks_int.h"
 #include "board.h"
 #include <asm/arch/gpio.h>
+#include "lcd/gpinit/gp-util.h"
+
+
 
 /******************************************************************************
  * PLL CONFIGURATION & PARAMETERS for different clock generators:
@@ -114,6 +117,7 @@ static const NvU8 s_UtmipHsSyncStartDelay = 9;
 
 void board_usb_init(void);
 void board_spi_init(void);
+void board_clock_init(void);
 
 /*
  * Routine: board_init
@@ -132,6 +136,7 @@ int board_init(void)
 	gd->fb_base = LCD_FB_ADDR;
 #endif
 
+	board_clock_init();
 	board_spi_init();		/* do this early so UART mux is OK */
 	board_usb_init();
 
@@ -140,6 +145,36 @@ int board_init(void)
 	writel(0, NV_ADDRESS_MAP_PMC_BASE + APBDEV_PMC_PWR_DET_0);
 
 	return 0;
+}
+
+/* init CPU clock */
+struct tegra_clk_init_table tegra2_t20_clk_init_table[] = {
+	TEGRA_CLOCK_INIT_CPU_T20
+	{ NULL,		NULL,		0,		0},
+};
+
+struct tegra_clk_init_table tegra2_t25_clk_init_table[] = {
+	TEGRA_CLOCK_INIT_CPU_T25
+	{ NULL,		NULL,		0,		0},
+};
+
+struct tegra_clk_init_table *cpu_clk_table[] = {
+	tegra2_t20_clk_init_table,
+	tegra2_t25_clk_init_table,
+};
+
+void board_clock_init(void)
+{
+	int chip_type;
+
+	/* init tegra clocks tree */
+	tegra_clk_common_init();
+
+	chip_type = tegra_get_chip_type();
+
+	/* set cpu clock according to tegra type */
+	if (chip_type != TEGRA_SOC_UNKNOWN)
+		tegra_clk_init_from_table(cpu_clk_table[chip_type]);
 }
 
 /*
