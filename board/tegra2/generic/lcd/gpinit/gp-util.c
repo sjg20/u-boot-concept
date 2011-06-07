@@ -40,6 +40,7 @@ struct tegra_panel_sequence tegra_panel_sequence_table = {
 
 static void clk_init(void)
 {
+	tegra_clk_common_init();
 	tegra_clk_init_from_table(tegra2_gp_clk_init_table);
 }
 
