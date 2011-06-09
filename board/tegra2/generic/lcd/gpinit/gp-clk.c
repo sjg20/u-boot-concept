@@ -90,6 +90,7 @@ static struct tegra_clk_init_table common_clk_init_table[] = {
 	/* name		parent		rate		enabled */
 	{ "clk_m",	NULL,		0,		true },
 	{ "pll_p",	"clk_m",	216000000,	true },
+	{ "pll_c",	"clk_m",	600000000,	true },
 	{ NULL,		NULL,		0,		0},
 };
 
@@ -764,6 +765,14 @@ static struct clk_pll_table tegra_pll_p_table[] = {
 	{ 0, 0, 0, 0, 0, 0 },
 };
 
+static struct clk_pll_table tegra_pll_c_table[] = {
+	{ 12000000, 600000000, 600, 12, 1, 8 },
+	{ 13000000, 600000000, 600, 13, 1, 8 },
+	{ 19200000, 600000000, 500, 16, 1, 6 },
+	{ 26000000, 600000000, 600, 26, 1, 8 },
+	{ 0, 0, 0, 0, 0, 0 },
+};
+
 static struct clk tegra_pll_p = {
 	.name      = "pll_p",
 	.flags     = ENABLE_ON_INIT | PLL_FIXED | PLL_HAS_CPCON,
@@ -780,6 +789,22 @@ static struct clk tegra_pll_p = {
 	.max_rate  = 432000000,
 };
 
+static struct clk tegra_pll_c = {
+	.name      = "pll_c",
+	.flags	   = PLL_HAS_CPCON,
+	.ops       = &tegra_pll_ops,
+	.reg       = 0x80,
+	.input_min = 2000000,
+	.input_max = 31000000,
+	.parent    = &tegra_clk_m,
+	.cf_min    = 1000000,
+	.cf_max    = 6000000,
+	.vco_min   = 20000000,
+	.vco_max   = 1400000000,
+	.pll_table = tegra_pll_c_table,
+	.max_rate  = 600000000,
+};
+
 static struct clk_mux_sel mux_pllm_pllc_pllp_plla[] = {
 	{ .input = &tegra_pll_m, .value = 0},
 	{ .input = &tegra_pll_p, .value = 2},
@@ -788,6 +813,7 @@ static struct clk_mux_sel mux_pllm_pllc_pllp_plla[] = {
 
 static struct clk_mux_sel mux_pllp_plld_pllc_clkm[] = {
 	{.input = &tegra_pll_p, .value = 0},
+	{.input = &tegra_pll_c, .value = 2},
 	{.input = &tegra_clk_m, .value = 3},
 	{ 0, 0},
 };
@@ -835,6 +861,7 @@ struct clk_lookup tegra_clk_lookups[] = {
 	CLK(NULL,	"clk_m",	&tegra_clk_m),
 	CLK(NULL,	"pll_m",	&tegra_pll_m),
 	CLK(NULL,	"pll_p",	&tegra_pll_p),
+	CLK(NULL,	"pll_c",	&tegra_pll_c),
 };
 
 void tegra2_init_clocks(void)
