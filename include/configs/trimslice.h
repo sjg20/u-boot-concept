@@ -112,10 +112,11 @@
 #define CONFIG_DOS_PARTITION		1
 #define CONFIG_EFI_PARTITION		1
 #define CONFIG_TEGRA2_EMMC4_ALWAYS_INSERTED	1
+#define CONFIG_TEGRA2_EMMC1_ALWAYS_INSERTED	1
 
-#define MMC_DEV_INSTANCES 1
+#define MMC_DEV_INSTANCES 2
 #define NvEmmcx_0	NvEmmc4
-#define NvEmmcx_1	0
+#define NvEmmcx_1	NvEmmc1
 #define NvEmmcx_2	0
 #define NvEmmcx_3	0
 

@@ -188,6 +188,9 @@ int mmc_legacy_init(int dev)
     case NvEmmc4:
         ParamIndex = 0x30;
         break;
+    case NvEmmc1:
+        ParamIndex = 0x12;
+        break;
     case NvEmmc2:
         ParamIndex = 0x12;
         break;

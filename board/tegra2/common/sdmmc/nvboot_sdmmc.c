@@ -349,6 +349,10 @@ static NvBootError HwSdmmcSetCardClock(NvEmmcDeviceId DevId, NvBootSdmmcCardCloc
 		NvBootClocksConfigureClock(NvBootClocksClockId_Sdmmc4Id,
         	NVBOOT_CLOCKS_7_1_DIVIDER_BY(ControllerClockDivisor, 0),
 		CLK_RST_CONTROLLER_CLK_SOURCE_SDMMC4_0_SDMMC4_CLK_SRC_PLLP_OUT0);
+	else if (DevId == NvEmmc1)
+		NvBootClocksConfigureClock(NvBootClocksClockId_Sdmmc1Id,
+		NVBOOT_CLOCKS_7_1_DIVIDER_BY(ControllerClockDivisor, 0),
+	        CLK_RST_CONTROLLER_CLK_SOURCE_SDMMC1_0_SDMMC1_CLK_SRC_PLLP_OUT0);
 	else if (DevId == NvEmmc2)
 		NvBootClocksConfigureClock(NvBootClocksClockId_Sdmmc2Id,
         	NVBOOT_CLOCKS_7_1_DIVIDER_BY(ControllerClockDivisor, 0),
@@ -1680,6 +1684,14 @@ static NvBool HwSdmmcIsCardPresent(NvEmmcDeviceId DevId)
 			CardInserted = 1;
 			break;
 		}
+	}
+	else if (DevId == NvEmmc1)
+	{
+	  #ifdef CONFIG_TEGRA2_EMMC1_ALWAYS_INSERTED
+	  /* TrimSlice platform - no Card Detect pin  for micro SD*/
+		CardInserted = 1;
+           #endif
+           break;
 	}
         NvBootUtilWaitUS(1);
         TimeOut--;
