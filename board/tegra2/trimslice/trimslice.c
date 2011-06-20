@@ -41,6 +41,8 @@
 void board_spi_init(void)
 {
 	spi_init();
+	/* Pull-up SPI1_MISO line - will be used for software shutdown monitoring*/
+	tg2_gpio_direction_output(23, 7, 1);
 }
 
 /***************************************************************************
