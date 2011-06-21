@@ -29,7 +29,6 @@
 /*
  * High Level Configuration Options
  */
-#define CONFIG_CMD_EXT2         1
 #define CONFIG_ARMCORTEXA9	1	/* This is an ARM V7 CPU core */
 #define CONFIG_TEGRA2		1	/* in a NVidia Tegra2 core */
 #define CONFIG_TEGRA2_TRIMSLICE		1	/* working with Harmony */
@@ -111,6 +110,8 @@
 #define TEGRA2_MMC_DEFAULT_DEVICE	"0"
 #define CONFIG_DOS_PARTITION		1
 #define CONFIG_EFI_PARTITION		1
+#define CONFIG_CMD_EXT2			1
+#define CONFIG_CMD_FAT			1
 #define CONFIG_TEGRA2_EMMC4_ALWAYS_INSERTED	1
 #define CONFIG_TEGRA2_EMMC1_ALWAYS_INSERTED	1
 
