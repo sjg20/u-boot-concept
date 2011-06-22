@@ -220,11 +220,6 @@
 
 /* no auto load */
 #define CONFIG_SYS_AUTOLOAD            "n"             /* No autoload */
-
-/* try load from usb first, then mmc */
-#undef CONFIG_BOOTCOMMAND	
-/* #define CONFIG_BOOTCOMMAND              "run usbboot ; run mmcboot" */
-
 #define CONFIG_AUTO_COMPLETE
 /*
  * Miscellaneous configurable options
@@ -317,23 +312,41 @@
 #define CONFIG_TEGRA2_DEBUG_BAUD	115200
 
 #define CONFIG_UPDATE_SETTINGS	\
-	"update_uboot=dhcp && tftp 4080000 192.168.11.77:u-boot.slice && " \
-	"sf probe 0 && sf erase 0 50000 && sf write 4080000 0 50000\0"
+	"update_uboot=dhcp && tftp 4080000 192.168.11.209:u-boot.slice && " \
+	"sf probe 0 && sf erase 0 50000 && sf write 4080000 0 50000\0"	
 
 #define CONFIG_EXTRA_ENV_SETTINGS   \
 	CONFIG_UPDATE_SETTINGS	    \
 	CONFIG_STD_DEVICES_SETTINGS \
 	CONFIG_DEFAULT_ENV_SETTINGS \
-	"usbboot=usb start 1 && "					\
-		"ext2load usb 0:1 ${loadaddr} /boot.scr && "		\
-		"source ${loadaddr}\0"					\
-	"mmcboot=mmc init 0 &&"						\
-		"ext2load mmc 0:1 ${loadaddr} /boot.scr && "		\
-		"source ${loadaddr}\0"
+	"boot_file=boot.scr \0"										\
+	"boot_file_load_cmd=source ${loadaddr}; \0"							\
+	"start_bus=${interface} ${interface_init_cmd} ${bus}; \0"					\
+	"scan_device=for i in / /boot/; do "								\
+		      "for j in fat ext2; do "								\
+			  "setenv prefix $i;"								\
+			  "setenv fs $j;"								\
+			  "echo Scanning ${fs} ${interface} ${device} on prefix ${prefix} ...;"		\
+			  "if ${fs}load ${interface} ${device} ${loadaddr} ${prefix}${boot_file}; then "\
+			      "echo ${boot_file} found! Executing ...;" 				\
+			      "run boot_file_load_cmd;" 						\
+			    "fi;"			      						\
+		      "done;"										\
+		     "done;\0"										\
+	"scan_boot=setenv interface mmc; setenv interface_init_cmd init; setenv device 0; "		\
+		    "echo Scanning MMC card ...; setenv bus 0; run start_bus; run scan_device; " 	\
+		    "setenv interface usb; setenv interface_init_cmd start; setenv device 0; "		\
+		    "echo Scanning USB key ...; setenv bus 0; run start_bus; run scan_device; " 	\
+		    "setenv interface mmc; setenv interface_init_cmd init; setenv device 1; "		\
+		    "echo Scanning microSD card ...; setenv bus 1; run start_bus; run scan_device; " 	\
+		    "setenv interface usb; setenv interface_init_cmd start; setenv device 0; "		\
+		    "echo Scanning SSD ...; setenv bus 1; run start_bus; run scan_device; \0"
 
-/* #define CONFIG_BOOTARGS	"root=/dev/sdb1 rw rootwait mem=448M@0M mem=512M@512M video=tegrafb console=ttyS0,115200n8 tegraboot=nand earlyprintk" */
+#undef CONFIG_BOOTCOMMAND
+#undef CONFIG_BOOTARGS
 
-#define CONFIG_BOOTCOMMAND              "run mmcboot ; run usbboot"
+#define CONFIG_BOOTARGS "mem=384M@0M mem=512M@512M nvmem=128M@384M vmalloc=248M video=tegrafb console=ttyS0,115200n8 rw root=/dev/sda1 nohdparm rootdelay=3"
+#define CONFIG_BOOTCOMMAND              "run scan_boot"
 
 /* #define CONFIG_RAM_DEBUG	1 */
 /* #define TEGRA2_TRACE	1 */
