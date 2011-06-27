@@ -125,6 +125,9 @@ endif
 ifeq ($(VENDOR),syteco)
 LOGO_BMP= logos/syteco.bmp
 endif
+ifeq ($(VENDOR),intercontrol)
+LOGO_BMP= logos/intercontrol.bmp
+endif
 
 # now $(obj) is defined
 HOSTSRCS += $(addprefix $(SRCTREE)/,$(EXT_OBJ_FILES-y:.o=.c))
