@@ -33,6 +33,7 @@ COBJS-$(CONFIG_TEGRA2_I2C) += pmu.o
 COBJS-$(CONFIG_TEGRA2_I2C) += emc.o
 COBJS-$(CONFIG_TEGRA2_LP0) += crypto/aes_ref.o
 COBJS-$(CONFIG_TEGRA2_LP0) += crypto/crypto.o
+COBJS-$(CONFIG_TEGRA2_NAND) += tegra2_nand.o
 
 COBJS	:= $(COBJS-y)
 SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)

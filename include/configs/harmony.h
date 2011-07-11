@@ -67,4 +67,65 @@
 #define CONFIG_CMD_TEGRA2_GPIO_INFO
 
 #define CONFIG_DEFAULT_DEVICE_TREE "tegra2-harmony"
+
+/* NAND support */
+#define CONFIG_CMD_NAND
+#define CONFIG_TEGRA2_NAND
+
+/*
+ * For HYNIX HY27UF4G2B NAND device.
+ * Get the following timing values from data sheet.
+ */
+
+/*
+ * non-EDO mode: value (in ns) = Max(tRP, tREA) + 6ns
+ * EDO mode: value (in ns) = tRP timing
+ */
+#define CONFIG_NAND_MAX_TRP_TREA	26
+
+#define CONFIG_NAND_TWB		100
+
+/* Value = Max(tCR, tAR, tRR) */
+#define CONFIG_NAND_MAX_TCR_TAR_TRR	20
+#define CONFIG_NAND_TWHR		80
+
+/* Value = Max(tCS, tCH, tALS, tALH) */
+#define CONFIG_NAND_MAX_TCS_TCH_TALS_TALH	20
+#define CONFIG_NAND_TWH			10
+#define CONFIG_NAND_TWP			12
+#define CONFIG_NAND_TRH			10
+#define CONFIG_NAND_TADL		70
+
+/* How many bytes for data area */
+#define CONFIG_NAND_PAGE_DATA_BYTES	2048
+
+/*
+ * How many bytes in spare area
+ * spare area = skipped bytes + ECC bytes of data area
+ * + tag bytes + ECC bytes of tag bytes
+ */
+#define CONFIG_NAND_PAGE_SPARE_BYTES	64
+
+#define CONFIG_NAND_SKIPPED_SPARE_BYTES	4
+
+/* How many ECC bytes for data area */
+#define CONFIG_NAND_RS_DATA_ECC_BYTES	36
+
+/* How many tag bytes in spare area */
+#define CONFIG_NAND_TAG_BYTES		20
+
+/* How many ECC bytes to be generated for tag bytes */
+#define CONFIG_NAND_TAG_ECC_BYTES	4
+
+/* n bits */
+#define CONFIG_NAND_BUS_WIDTH	8
+
+/* GPIO port C bit 7, C.07, GMI_WP->NAND_WP */
+#define CONFIG_NAND_WP_GPIO	GPIO_PC7
+
+/* physical address to access nand at CS0 */
+#define CONFIG_SYS_NAND_BASE	TEGRA2_NAND_BASE
+
+/* Max number of NAND devices */
+#define CONFIG_SYS_MAX_NAND_DEVICE	1
 #endif /* __CONFIG_H */
