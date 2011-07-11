@@ -33,6 +33,8 @@
 #include <asm/arch/nv_drf.h>
 #include <asm/arch/tegra2.h>
 #include <asm/arch/gpio.h>
+#include <asm/arch/nvboot_bit.h>
+#include <asm/arch/nvbl_memmap_nvap.h>
 #include "../common/board.h"
 #include "../common/pinmux.h"
 
@@ -45,6 +47,13 @@ void board_spi_init(void)
 	tg2_gpio_direction_output(23, 7, 1);
 }
 
+int is_mmc_boot()
+{
+  NvBootDevType dev_type = ((NvBootInfoTable*)(AP20_BASE_PA_BOOT_INFO))->SecondaryDevice;
+  if (dev_type == NvBootDevType_Sdmmc)
+    return 1;
+  return 0;
+}
 /***************************************************************************
  * Routines for SD/EMMC board specific configuration.
  ***************************************************************************/
@@ -162,7 +171,7 @@ NvBlUartInit(void)
 
 int board_late_init(void)
 {
-	return 0;
+  return 0;
 }
 
 int board_eth_init(bd_t *bis)

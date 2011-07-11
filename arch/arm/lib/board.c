@@ -412,6 +412,15 @@ void start_armboot (void)
 	/* initialize environment */
 	env_relocate ();
 
+#if defined(CONFIG_TEGRA2_TRIMSLICE)
+	extern int is_mmc_boot();
+	/* Do not load enviromnet from SPI if we boot from MMC */
+	if (is_mmc_boot()) {
+	  printf("MMC-BOOT: using default environment...\n");
+	  set_default_env();
+	}
+#endif
+
 #ifdef CONFIG_VFD
 	/* must do this after the framebuffer is allocated */
 	drv_vfd_init();
