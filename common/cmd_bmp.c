@@ -32,6 +32,8 @@
 #include <asm/byteorder.h>
 #include <malloc.h>
 
+DECLARE_GLOBAL_DATA_PTR;
+
 static int bmp_info (ulong addr);
 static int bmp_display (ulong addr, int x, int y);
 
@@ -47,6 +49,7 @@ static int bmp_display (ulong addr, int x, int y);
 #ifdef CONFIG_VIDEO_BMP_GZIP
 bmp_image_t *gunzip_bmp(unsigned long addr, unsigned long *lenp)
 {
+	unsigned long flash_end;
 	void *dst;
 	unsigned long len;
 	bmp_image_t *bmp;
@@ -55,6 +58,12 @@ bmp_image_t *gunzip_bmp(unsigned long addr, unsigned long *lenp)
 	 * Decompress bmp image
 	 */
 	len = CONFIG_SYS_VIDEO_LOGO_MAX_SIZE;
+	flash_end = gd->bd->bi_flashstart + gd->bd->bi_flashsize - 1;
+	if (addr >= gd->bd->bi_flashstart && addr <= flash_end) {
+		if (flash_end - addr < CONFIG_SYS_VIDEO_LOGO_MAX_SIZE)
+			len = flash_end - addr + 1;
+	}
+
 	dst = malloc(CONFIG_SYS_VIDEO_LOGO_MAX_SIZE);
 	if (dst == NULL) {
 		puts("Error: malloc in gunzip failed!\n");

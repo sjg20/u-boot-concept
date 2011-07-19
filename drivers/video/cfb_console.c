@@ -334,6 +334,7 @@ void	console_cursor (int state);
 #define PRINTD(x)
 #endif
 
+DECLARE_GLOBAL_DATA_PTR;
 
 #ifdef CONFIG_CONSOLE_EXTRA_INFO
 extern void video_get_info_str (    /* setup a board string: type, speed, etc. */
@@ -1043,7 +1044,16 @@ int video_display_bitmap (ulong bmp_image, int x, int y)
 		/*
 		 * Could be a gzipped bmp image, try to decrompress...
 		 */
+		unsigned long addr = (unsigned long)bmp;
+		unsigned long flash_end;
+
 		len = CONFIG_SYS_VIDEO_LOGO_MAX_SIZE;
+		flash_end = gd->bd->bi_flashstart + gd->bd->bi_flashsize - 1;
+		if (addr >= gd->bd->bi_flashstart && addr <= flash_end) {
+			if (flash_end - addr < CONFIG_SYS_VIDEO_LOGO_MAX_SIZE)
+				len = flash_end - addr + 1;
+		}
+
 		dst = malloc(CONFIG_SYS_VIDEO_LOGO_MAX_SIZE);
 		if (dst == NULL) {
 			printf("Error: malloc in gunzip failed!\n");
