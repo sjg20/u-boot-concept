@@ -58,7 +58,7 @@
 
 #define VDD_RELATION		0x02	/*  50mv */
 #define VDD_TRANSITION_STEP	0x06	/* 150mv */
-#define VDD_TRANSITION_RATE	0x07
+#define VDD_TRANSITION_RATE	0x06	/* 3.52mv/us */
 
 /*
  * SMn PWM/PFM Mode Selection
