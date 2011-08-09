@@ -56,6 +56,7 @@
 #define CONFIG_SKIP_LOWLEVEL_INIT
 
 #define CONFIG_CMDLINE_TAG		1	/* enable passing of ATAGs */
+#define CONFIG_INITRD_TAG               1
 
 /* Environment */
 /* #define CONFIG_ENV_IS_NOWHERE */
