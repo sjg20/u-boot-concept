@@ -94,3 +94,9 @@
 #define HALT_COP_EVENT_JTAG		(1 << 28)
 #define HALT_COP_EVENT_IRQ_1		(1 << 11)
 #define HALT_COP_EVENT_FIQ_1		(1 << 9)
+
+/* Called by the ARM7 to start up the Cortex-A9, and by the A9 to do init */
+void tegra_start(void);
+
+/* Returns 1 if the current CPU executing is a Cortex-A9, else 0 */
+int ap20_cpu_is_cortexa9(void);
