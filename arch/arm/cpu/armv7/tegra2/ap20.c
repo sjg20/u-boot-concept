@@ -64,8 +64,7 @@ static struct clk_pll_table tegra_pll_x_table[TEGRA_SOC_COUNT]
 	},
 };
 
-/* Returns 1 if the current CPU executing is a Cortex-A9, else 0 */
-static int ap20_cpu_is_cortexa9(void)
+int ap20_cpu_is_cortexa9(void)
 {
 	u32 id = readb(NV_PA_PG_UP_BASE + PG_UP_TAG_0);
 	return id == (PG_UP_TAG_0_PID_CPU & 0xff);
@@ -351,7 +350,7 @@ void init_pmc_scratch(void)
 #endif
 }
 
-void tegra2_start(void)
+void tegra_start(void)
 {
 	struct pmux_tri_ctlr *pmt = (struct pmux_tri_ctlr *)NV_PA_APB_MISC_BASE;
 

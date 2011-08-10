@@ -304,20 +304,6 @@ int board_early_init_f(void)
 }
 #endif	/* EARLY_INIT */
 
-#ifdef CONFIG_ARCH_CPU_INIT
-/*
- * Note this function is executed by the ARM7TDMI AVP. It does not return
- * in this case. It is also called once the A9 starts up, but does nothing in
- * that case.
- */
-int arch_cpu_init(void)
-{
-	/* Fire up the Cortex A9 */
-	tegra2_start();
-	return 0;
-}
-#endif
-
 #ifdef CONFIG_TEGRA2_MMC
 /* this is a weak define that we are overriding */
 int board_mmc_init(bd_t *bd)

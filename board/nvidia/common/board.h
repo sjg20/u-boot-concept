@@ -24,7 +24,6 @@
 #ifndef _BOARD_H_
 #define _BOARD_H_
 
-void tegra2_start(void);
 void gpio_config_uart(const void *blob);
 void gpio_early_init_uart(const void *blob);
 void gpio_config_mmc(void);
