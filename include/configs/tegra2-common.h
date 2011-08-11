@@ -149,6 +149,7 @@
 /* support USB ethernet adapters */
 #define CONFIG_USB_HOST_ETHER
 #define CONFIG_USB_ETHER_ASIX
+#define CONFIG_USB_ETHER_SMSC95XX
 
 /* include default commands */
 #include <config_cmd_default.h>
