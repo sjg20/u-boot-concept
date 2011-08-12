@@ -66,8 +66,8 @@ static int find_alias_node(const void *blob, const char *name)
 
 /**
  * Look up an address property in a node and return it as an address.
- * The property must hold exactly one address with no trailing data.
- * This is only tested on 32-bit machines.
+ * The property must hold either one address with no trailing data or
+ * one address with a length. This is only tested on 32-bit machines.
  *
  * @param blob	FDT blob
  * @param node	node to examine
@@ -80,7 +80,7 @@ static addr_t get_addr(const void *blob, int node, const char *prop_name)
 	int len;
 
 	cell = fdt_getprop(blob, node, prop_name, &len);
-	if (cell && len != sizeof(addr_t))
+	if (cell && (len == sizeof(addr_t) || len == sizeof(addr_t) * 2))
 		return addr_to_cpu(*cell);
 	return ADDR_T_NONE;
 }
