@@ -233,12 +233,21 @@ void lcd_ctrl_init(void *lcdbase)
 	}
 
 	/*
-	 * The device tree allows for the frame buffer to be specified if
-	 * needed, but for now, U-Boot will set this. This may change if
-	 * we find that Linux is unable to use the address that U-Boot picks,
-	 * and this causes screen flicker.
+	 * The framebuffer address should be specified in the device tree.
+	 * This FDT value should be the same as the one defined in Linux kernel;
+	 * otherwise, it causes screen flicker. The FDT value overrides the
+	 * framebuffer allocated at the top of memory by board_init_f().
+	 *
+	 * If the framebuffer address is not defined in the FDT, falls back to
+	 * use the address allocated by board_init_f().
 	 */
-	config.frame_buffer = (u32)lcd_base;
+	if (config.frame_buffer != ADDR_T_NONE) {
+		gd->fb_base = config.frame_buffer;
+		lcd_base = (void *)(gd->fb_base);
+	} else {
+		config.frame_buffer = (u32)lcd_base;
+	}
+
 	update_panel_size(&config);
 	size = lcd_get_size(&line_length),
 
