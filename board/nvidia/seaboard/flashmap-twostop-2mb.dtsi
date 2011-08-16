@@ -13,7 +13,8 @@
 * All sections will be marked static in the fmap.
 */
 
-/include/ "flashmap-ro.dtsi"
+/* Use the small 1MB flash map when we only have 2MB of SPI flash */
+/include/ "flashmap-ro-1mb.dtsi"
 
 / {
 	flash@0 {
