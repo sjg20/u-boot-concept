@@ -39,13 +39,24 @@
 			"chromeos,flashmap";
 		reg = <0x00000000 0x00400000>;
 
+		/*
+		 * Note: rw-a and rw-b are used by auto-update. They must be
+		 * the same size, and must include the vblock, boot and
+		 * firmware-id parts within them. There is no check on this
+		 * at present so you need to manually verify that it is
+		 * correct.
+		 *
+		 * The rw-b section must not overlap/include the rw-vpd
+		 * section.
+		 */
+
 		/* ---- Section: Rewritable slot A ---- */
-		rw-a@200000 {
+		rw-a {
 			label = "rw-section-a";
 			/* Alignment: 4k (for updating) */
-			reg = <0x00200000 0x00078000>;
+			reg = <0x00200000 0x000f0000>;
 		};
-		rw-a-vblock@200000 {
+		rw-a-vblock {
 			label = "vblock-a";
 			/* Alignment: 4k (for updating) and must be in start of
 			 * each RW_SECTION. */
@@ -57,31 +68,31 @@
 			kernelkey = "kernel_subkey.vbpubk";
 			preamble-flags = <1>;
 		};
-		rw-a-boot@202000 {
+		rw-a-boot {
 			/* Alignment: no requirement (yet). */
 			label = "fw-main-a";
-			reg = <0x00202000 0x00075000>;
+			reg = <0x00202000 0x000edf00>;
 			type = "blob boot";
 		};
-		rw-a-firmware-id@277f00 {
+		rw-a-firmware-id {
 			/* Alignment: no requirement. */
 			label = "rw-fwid-a";
-			reg = <0x00277f00 0x00000100>;
+			reg = <0x002eff00 0x00000100>;
 			read-only;
 			type = "blobstring fwid";
 		};
 
 		/* ---- Section: Rewritable slot B ---- */
-		rw-b@278000 {
+		rw-b {
 			label = "rw-section-b";
 			/* Alignment: 4k (for updating) */
-			reg = <0x00278000 0x00078000>;
+			reg = <0x00300000 0x000f0000>;
 		};
-		rw-b-vblock@278000 {
+		rw-b-vblock {
 			label = "vblock-b";
 			/* Alignment: 4k (for updating) and must be in start of
 			 * each RW_SECTION. */
-			reg = <0x00278000 0x00002000>;
+			reg = <0x00300000 0x00002000>;
 			type = "keyblock boot";
 			keyblock = "firmware.keyblock";
 			signprivate = "firmware_data_key.vbprivk";
@@ -89,55 +100,55 @@
 			kernelkey = "kernel_subkey.vbpubk";
 			preamble-flags = <1>;
 		};
-		rw-b-boot@27a000 {
+		rw-b-boot {
 			label = "fw-main-b";
 			/* Alignment: no requirement (yet). */
-			reg = <0x0027a000 0x00075000>;
+			reg = <0x00302000 0x000edf00>;
 			type = "blob boot";
 		};
-		rw-b-firmware-id@2eff00 {
+		rw-b-firmware-id {
 			label = "rw-fwid-b";
 			/* Alignment: no requirement. */
-			reg = <0x002eff00 0x00000100>;
+			reg = <0x003eff00 0x00000100>;
 			read-only;
 			type = "blobstring fwid";
 		};
 
 		/* ---- Section: Rewritable VPD 32 KB ---- */
-		rw-vpd@2f0000 {
+		rw-vpd {
 			label = "rw-vpd";
 			/* Alignment: 4k (for updating) */
-			reg = <0x002f0000 0x00008000>;
+			reg = <0x003f0000 0x00008000>;
 			type = "wiped";
 			wipe-value = [ff];
 		};
 
 		/* ---- Section: Rewritable shared 16 KB---- */
-		shared-section@2f8000 {
+		shared-section {
 			/* Alignment: 4k (for updating).
 			 * Anything in this range may be updated in recovery. */
 			label = "rw-shared";
-			reg = <0x002f8000 0x00004000>;
+			reg = <0x003f8000 0x00004000>;
 		};
-		shared-data@2f8000 {
+		shared-data {
 			label = "shared-data";
 			/* Alignment: 4k (for random read/write).
 			 * RW firmware can put calibration data here. */
-			reg = <0x002f8000 0x00004000>;
+			reg = <0x003f8000 0x00004000>;
 			type = "wiped";
 			wipe-value = [00];
 		};
 		/* ---- Section: Rewritable private 16 KB---- */
-		private-section@2fc000 {
+		private-section {
 			/* Anything in this range will never be updated */
 			label = "rw-private";
-			reg = <0x002fc000 0x00004000>;
+			reg = <0x003fc000 0x00004000>;
 		};
-		dev-cfg@2fe000 {
+		dev-cfg {
 			label = "dev-cfg";
 			/* Alignment: 4k, and must occupy bottom of U-Boot
 			 * firmware -- check CONFIG_ENV_OFFSET */
-			reg = <0x002fe000 0x00002000>;
+			reg = <0x003fe000 0x00002000>;
 
 			/*
 			 * We could put the dev environment here, but U-Boot has
