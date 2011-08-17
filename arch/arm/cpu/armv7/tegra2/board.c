@@ -98,3 +98,8 @@ int arch_cpu_init(void)
 	return 0;
 }
 #endif
+
+void arch_full_speed(void)
+{
+	ap20_init_pllx(0);
+}

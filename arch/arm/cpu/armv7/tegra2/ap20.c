@@ -70,15 +70,10 @@ int ap20_cpu_is_cortexa9(void)
 	return id == (PG_UP_TAG_0_PID_CPU & 0xff);
 }
 
-static int pllx_set_rate(u32 divn, u32 divm, u32 divp, u32 cpcon)
+static int pllx_set_rate(struct clk_pll *pll , u32 divn, u32 divm, u32 divp,
+			 u32 cpcon)
 {
-	struct clk_rst_ctlr *clkrst = (struct clk_rst_ctlr *)NV_PA_CLK_RST_BASE;
-	struct clk_pll *pll = &clkrst->crc_pll[CLOCK_ID_XCPU];
 	u32 reg;
-
-	/* If PLLX is already enabled, just return */
-	if (bf_readl(PLL_ENABLE, &pll->pll_base))
-		return 0;
 
 	/* Set BYPASS, m, n and p to PLLX_BASE */
 	reg = bf_pack(PLL_BYPASS, 1) | bf_pack(PLL_DIVM, divm);
@@ -100,15 +95,17 @@ static int pllx_set_rate(u32 divn, u32 divm, u32 divp, u32 cpcon)
 	return 0;
 }
 
-static void init_pllx(void)
+void ap20_init_pllx(int slow)
 {
+	struct clk_rst_ctlr *clkrst = (struct clk_rst_ctlr *)NV_PA_CLK_RST_BASE;
+	struct clk_pll *pll = &clkrst->crc_pll[CLOCK_ID_XCPU];
 	int chip_type;
 	enum clock_osc_freq osc;
 	struct clk_pll_table *sel;
 
 	/* get chip type. If unknown, assign to T20 */
 	chip_type = tegra_get_chip_type();
-	if (chip_type == TEGRA_SOC_UNKNOWN)
+	if (slow || chip_type == TEGRA_SOC_UNKNOWN)
 		chip_type = TEGRA_SOC_T20;
 
 	/* get osc freq */
@@ -116,7 +113,7 @@ static void init_pllx(void)
 
 	/* set pllx */
 	sel = &tegra_pll_x_table[chip_type][osc];
-	pllx_set_rate(sel->n, sel->m, sel->p, sel->cpcon);
+	pllx_set_rate(pll, sel->n, sel->m, sel->p, sel->cpcon);
 }
 
 static void enable_cpu_clock(int enable)
@@ -134,8 +131,11 @@ static void enable_cpu_clock(int enable)
 	 */
 
 	if (enable) {
-		/* Initialize PLLX */
-		init_pllx();
+		/*
+		 * Initialize PLLX to a safe speed, as we are running at
+		 * a lower voltage for now until we get i2c up in board_init().
+		 */
+		ap20_init_pllx(1);
 
 		/* Wait until all clocks are stable */
 		udelay(PLL_STABILIZATION_DELAY);
