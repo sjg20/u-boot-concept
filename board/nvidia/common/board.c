@@ -226,10 +226,13 @@ int board_init(void)
 	spi_init();
 #endif
 	power_det_init();
+
 #ifdef CONFIG_TEGRA2_I2C
+	/* Ramp up the core voltage, then change to full CPU speed */
 	i2c_init_board();
 
 	pmu_set_nominal();
+	arch_full_speed();
 #endif
 
 	/* board id for Linux */

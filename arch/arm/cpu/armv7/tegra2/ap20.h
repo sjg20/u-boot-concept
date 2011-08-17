@@ -100,3 +100,13 @@ void tegra_start(void);
 
 /* Returns 1 if the current CPU executing is a Cortex-A9, else 0 */
 int ap20_cpu_is_cortexa9(void);
+
+/**
+ * Init the PLLX which clocks the CPU.
+ *
+ * The 'slow' option is used when the CPU voltage has not yet been increased
+ * to allow running at full speed.
+ *
+ * @param slow	1 to run in safe/slow mode, 0 to run at full speed
+ */
+void ap20_init_pllx(int slow);

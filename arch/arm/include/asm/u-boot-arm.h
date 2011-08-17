@@ -50,6 +50,9 @@ int	cleanup_before_linux(void);
 int	arch_cpu_init(void);
 int	arch_misc_init(void);
 
+/* Run the CPU at full speed */
+void	arch_full_speed(void);
+
 /* board/.../... */
 int	board_init(void);
 int	dram_init (void);
