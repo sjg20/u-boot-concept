@@ -16,17 +16,6 @@
  */
 
 / {
-        chromeos-config {
-                twostop;                /* Two-stop boot */
-                twostop-optional;       /* One-stop optimization enabled */
-                textbase = <0xe08000>;  /* Address where U-Boot loads */
-
-                /*
-		 * Device and offset for second-stage firmware, in SPI for now
-                 * second-stage = <&emmc 0x00000080 0>;
-		 */
-        };
-
 	/*
 	 * Labels have been selected to be to compatible with existing tools,
 	 * even thought the terminology may be a little different on ARM.
