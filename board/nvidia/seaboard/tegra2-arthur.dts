@@ -64,7 +64,7 @@
 		bits_per_pixel = <16>;
 		pwfm = <&pwfm2>;
 		display = <&display1>;
-		frame-buffer = <0x18012000>;
+		frame-buffer = <0x37680000>;
 
 		pixel_clock = <82400000>;
 

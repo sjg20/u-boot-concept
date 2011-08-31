@@ -32,7 +32,7 @@
 #define CONFIG_SPI_UART_SWITCH
 
 /* High-level configuration options */
-#define TEGRA2_SYSMEM		"mem=384M@0M nvmem=128M@384M mem=512M@512M"
+#define TEGRA2_SYSMEM		"mem=1024M@0M"
 #define V_PROMPT		"Tegra2 # "
 
 #include "tegra2-common.h"
