@@ -1208,34 +1208,79 @@ U_BOOT_CMD(
 /* helper routines */
 /*******************************************************************/
 #ifdef CONFIG_SILENT_CONSOLE
-static void fixup_silent_linux ()
+
+/**
+ * Wrap malloc to print a warning (if in DEBUG mode) upon failure.
+ *
+ * Note that even though a warning will be printed, NULL can still be returned
+ * by this function.
+ *
+ * This is expected to be called through the macro chkmalloc(), which handles
+ * filling in the file and line parameters.
+ *
+ * @param size		Number of bytes to allocate
+ * @param file		File name; filled in by chkmalloc() wrapper.
+ * @param line		Line number; filled in by chkmalloc() wrapper.
+ * @return memory allocated, or NULL.
+ */
+static void *do_chkmalloc(size_t size, const char *file, unsigned int line)
 {
-	char buf[256], *start, *end;
-	char *cmdline = getenv ("bootargs");
+	void *p = malloc(size);
+	if (!p)
+		debug("WARNING: malloc of %lu bytes failed (%s:%u)\n",
+		      (unsigned long)size, file, line);
+	return p;
+}
+#define chkmalloc(size) do_chkmalloc(size, __FILE__, __LINE__)
+
+
+#define CONSOLE_ARG     "console="
+#define CONSOLE_ARG_LEN (sizeof(CONSOLE_ARG) - 1)
+
+static void fixup_silent_linux(void)
+{
+	char *buf;
+	char *cmdline = getenv("bootargs");
 
 	/* Only fix cmdline when requested */
 	if (!(gd->flags & GD_FLG_SILENT))
 		return;
 
-	debug ("before silent fix-up: %s\n", cmdline);
-	if (cmdline) {
-		if ((start = strstr (cmdline, "console=")) != NULL) {
-			end = strchr (start, ' ');
-			strncpy (buf, cmdline, (start - cmdline + 8));
+	debug("before silent fix-up: %s\n", cmdline);
+	if (cmdline && (cmdline[0] != '\0')) {
+		char *start = strstr(cmdline, "console=");
+		if (start) {
+			char *end = strchr(start, ' ');
+			int num_start_bytes = start - cmdline + CONSOLE_ARG_LEN;
+
+			/* We know cmdline bytes will be more than enough. */
+			buf = chkmalloc(strlen(cmdline) + 1);
+			if (!buf)
+				return;
+
+			strncpy(buf, cmdline, num_start_bytes);
 			if (end)
-				strcpy (buf + (start - cmdline + 8), end);
+				strcpy(buf + num_start_bytes, end);
 			else
-				buf[start - cmdline + 8] = '\0';
+				buf[num_start_bytes] = '\0';
 		} else {
-			strcpy (buf, cmdline);
-			strcat (buf, " console=");
+			buf = chkmalloc(strlen(cmdline) + 1 +
+					CONSOLE_ARG_LEN + 1);
+			if (!buf)
+				return;
+			sprintf(buf, "%s %s", cmdline, CONSOLE_ARG);
 		}
 	} else {
-		strcpy (buf, "console=");
+		buf = strdup("console=");
+		if (!buf) {
+			debug("WARNING: strdup failed in fixup_silent_linux\n");
+			return;
+		}
 	}
 
-	setenv ("bootargs", buf);
-	debug ("after silent fix-up: %s\n", buf);
+	setenv("bootargs", buf);
+	debug("after silent fix-up: %s\n", buf);
+	free(buf);
 }
 #endif /* CONFIG_SILENT_CONSOLE */
 
