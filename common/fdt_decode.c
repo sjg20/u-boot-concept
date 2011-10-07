@@ -344,12 +344,13 @@ int fdt_decode_get_spi_switch(const void *blob, struct fdt_spi_uart *config)
 	return 0;
 }
 
-int fdt_decode_memory(const void *blob, struct fdt_memory *config)
+int fdt_decode_memory(const void *blob, const char *name,
+		      struct fdt_memory *config)
 {
 	int node, len;
 	const addr_t *cell;
 
-	node = fdt_path_offset(blob, "/memory");
+	node = fdt_path_offset(blob, name);
 	if (node < 0)
 		return node;
 

@@ -218,12 +218,14 @@ struct fdt_i2c {
 };
 
 /**
- * Returns information from the FDT about the memory.
+ * Returns information from the FDT about memory for a given root
  *
  * @param blob          FDT blob to use
+ * @param name          Root name of alias to search for
  * @param config        structure to use to return information
  */
-int fdt_decode_memory(const void *blob, struct fdt_memory *config);
+int fdt_decode_memory(const void *blob, const char *name,
+		      struct fdt_memory *config);
 
 /**
  * Return information from the FDT about the console UART. This looks for

@@ -181,9 +181,9 @@ wipe_unused_memory(crossystem_data_t *cdata, VbCommonParams *cparams)
 #ifdef CONFIG_OF_CONTROL
 	int fb_size, lcd_line_length;
 	memory_wipe_t wipe;
-	struct fdt_memory config;
+	struct fdt_memory config, ramoops;
 
-	if (fdt_decode_memory(gd->blob, &config))
+	if (fdt_decode_memory(gd->blob, "/memory", &config))
 		VbExError(PREFIX "FDT decode memory section error\n");
 
 	memory_wipe_init(&wipe, config.start, config.end);
@@ -196,6 +196,12 @@ wipe_unused_memory(crossystem_data_t *cdata, VbCommonParams *cparams)
 			(uintptr_t)cdata + sizeof(*cdata));
 	memory_wipe_exclude(&wipe, (uintptr_t)cparams->gbb_data,
 			(uintptr_t)cparams->gbb_data + cparams->gbb_size);
+
+	/* Excludes kcrashmem if in FDT */
+	if (fdt_decode_memory(gd->blob, "/ramoops", &ramoops))
+		VBDEBUG(PREFIX "RAMOOPS not contained within FDT\n");
+	else
+		memory_wipe_exclude(&wipe, ramoops.start, ramoops.end);
 
 	/* Excludes the LP0 vector. */
 	memory_wipe_exclude(&wipe,
