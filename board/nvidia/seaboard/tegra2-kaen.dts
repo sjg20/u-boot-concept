@@ -80,7 +80,8 @@
 		bits_per_pixel = <16>;
 		pwfm = <&pwfm2>;
 		display = <&display1>;
-		frame-buffer = <0x37680000>;
+		/* frame-buffer location = top of memory - carveout - fb */
+		frame-buffer = <0x2f680000>;
 
 		pixel_clock = <62200000>;
 
