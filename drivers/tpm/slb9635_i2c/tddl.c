@@ -26,17 +26,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-
-/* This workaround applies to Kaen prototypes and is not expected to be needed
- * in the final products.  See crosbug.com/p/5442.
- */
-#define TEGRA_TPM_INIT_FAIL_WORKAROUND
-
 #include <exports.h>
-
-#ifdef TEGRA_TPM_INIT_FAIL_WORKAROUND
-#include <chromeos/power_management.h>
-#endif
 
 #include "tddl.h"
 #include "tpm.h"
@@ -51,10 +41,6 @@ TDDL_RESULT TDDL_Open(uint32_t dev_addr)
 	dbg_printf("INFO: initialising TPM\n");
 	rc = tpm_open(dev_addr);
 	if (rc < 0) {
-#ifdef TEGRA_TPM_INIT_FAIL_WORKAROUND
-		if (rc != -EBUSY)
-			cold_reboot();
-#endif
 		switch (rc) {
 			case -EBUSY:  return TDDL_E_ALREADY_OPENED;
 			case -ENODEV: return TDDL_E_COMPONENT_NOT_FOUND;
@@ -110,23 +96,5 @@ TDDL_RESULT TDDL_TransmitData(uint8_t *pbTransmitBuf, uint32_t dwTransmitBufLen,
 
 	dbg_printf("<-- xTDDL_TransmitData()\n");
 
-#ifdef TEGRA_TPM_INIT_FAIL_WORKAROUND
-	{
-		uint32_t tpmrc;
-		if (rc == TDDL_E_FAIL)
-			cold_reboot();
-		/* Check for TPM_IOERROR coming back from the TPM request.
-		 * The bytes are endian reversed, so we check the upper byte.
-		 */
-		if(*pdwReceiveBufLen >= 10) {
-			tpmrc = (uint32_t)pbReceiveBuf[6]
-				| ((uint32_t)pbReceiveBuf[7]<<8)
-				| ((uint32_t)pbReceiveBuf[8]<<16)
-				| ((uint32_t)pbReceiveBuf[9]<<24);
-			if(tpmrc == 0x0000001f)
-				cold_reboot();
-		}
-	}
-#endif
 	return rc;
 }
