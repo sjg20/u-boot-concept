@@ -84,7 +84,7 @@
 		/* Parameter 3 bit 0:1=output, 0=input; bit 1:1=high, 0=low */
 		backlight-enable = <&gpio 28 1>;	/* PD4 */
 		lvds-shutdown = <&gpio 10 1>;		/* PB2 */
-		backlight-vdd = <&gpio 165 1>;		/* PU5 */
+		/* Asymptote does not have backlight-vdd */
 		panel-vdd = <&gpio 22 1>;		/* PC6 */
 
 		/*

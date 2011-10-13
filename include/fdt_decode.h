@@ -102,7 +102,7 @@ struct fdt_gpio_state {
 };
 
 /* This tells us whether a fdt_gpio_state record is valid or not */
-#define fdt_gpio_isvalid(gpio) ((gpio)->gpio != FDT_GPIO_NONE)
+#define fdt_gpio_isvalid(x) ((x)->gpio != FDT_GPIO_NONE)
 
 #define FDT_LCD_TIMINGS	4
 

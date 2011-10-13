@@ -152,8 +152,10 @@ static void init_lcd_pwm(struct fdt_lcd *config)
 	if ((long)(config->panel_timings[1] * 1000) > pre_delay)
 		udelay((long)(config->panel_timings[1] * 1000) - pre_delay);
 
-	gpio_set_value(config->backlight_vdd.gpio, 1);
-	udelay(config->panel_timings[2] * 1000);
+	if (fdt_gpio_isvalid(&config->backlight_vdd)) {
+		gpio_set_value(config->backlight_vdd.gpio, 1);
+		udelay(config->panel_timings[2] * 1000);
+	}
 
 	/* Enable PWM at 15/16 high, divider 1 */
 	pwfm_setup(config->pwfm, 1, 0xdf, 1);
