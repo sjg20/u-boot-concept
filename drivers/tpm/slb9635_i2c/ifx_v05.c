@@ -3,15 +3,6 @@
  * found in the LICENSE file.
  */
 
-/* This workaround applies to Kaen prototypes and is not expected to be needed
- * in the final products.  See crosbug.com/p/5442.
- */
-#define TEGRA_TPM_INIT_FAIL_WORKAROUND
-
-#ifdef TEGRA_TPM_INIT_FAIL_WORKAROUND
-#include <chromeos/power_management.h>
-#endif
-
 #include <config.h>
 #include <common.h>
 #include <i2c.h>
@@ -48,10 +39,6 @@ int tpm_init_v05(void)
 
 	debug("%s: fail: i2c_probe(0x%x) return %d\n", __func__,
 			TPM_V05_ADDR, rc);
-#ifdef TEGRA_TPM_INIT_FAIL_WORKAROUND
-	/* Do not try to recover in case of TPM I2C failure */
-	cold_reboot();
-#endif
 	return rc;
 }
 
