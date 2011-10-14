@@ -220,8 +220,8 @@
  * - vmalloc >= carveout size + framebuffer size - 32MB
  */
 #define CONFIG_DIRECT_BOOTARGS \
-»       CONFIG_BOOTARGS " " \
-»       "vmalloc=234MB"
+	CONFIG_BOOTARGS " " \
+	"vmalloc=234MB"
 
 /*
  * Defines the regen_all variable, which is used by other commands
