@@ -38,6 +38,9 @@ int cros_gpio_fetch(enum cros_gpio_index index, cros_gpio_t *gpio)
 		"polarity_lid_switch",
 		"polarity_power_switch",
 	};
+	const int default_value[CROS_GPIO_MAX_GPIO] = {
+		FDT_GPIO_NONE, FDT_GPIO_NONE, FDT_GPIO_NONE, 1, 0,
+	};
 	int p;
 
 	if (index < 0 || index >= CROS_GPIO_MAX_GPIO) {
@@ -49,8 +52,16 @@ int cros_gpio_fetch(enum cros_gpio_index index, cros_gpio_t *gpio)
 
 	gpio->port = fdt_decode_get_config_int(gd->blob, port[index], -1);
 	if (gpio->port == -1) {
-		VBDEBUG(PREFIX "failed to decode gpio port\n");
-		return -1;
+		if (default_value[index] == FDT_GPIO_NONE) {
+			VBDEBUG(PREFIX "failed to decode gpio port\n");
+			return -1;
+		} else {
+			gpio->index = -1;
+			gpio->port = -1;
+			gpio->polarity = CROS_GPIO_ACTIVE_HIGH;
+			gpio->value = default_value[index];
+			return 0;
+		}
 	}
 
 	gpio_direction_input(gpio->port);

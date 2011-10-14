@@ -18,14 +18,13 @@
 		gpio_port_write_protect_switch	= <59>;
 		gpio_port_recovery_switch	= <56>;
 		gpio_port_developer_switch	= <168>;
-		gpio_port_lid_switch		= <23>;
 		gpio_port_power_switch		= <170>;
+		/* Seaboard's lid-switch is ignored */
 
 		/* GPIO polarity: 0=active_low, 1=active_high */
 		polarity_write_protect_switch	= <1>;
 		polarity_recovery_switch	= <0>;
 		polarity_developer_switch	= <1>;
-		polarity_lid_switch		= <0>;
 		polarity_power_switch		= <0>;
 	};
 
