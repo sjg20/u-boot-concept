@@ -17,6 +17,7 @@
 #include <asm/global_data.h>
 #include <chromeos/common.h>
 #include <chromeos/cros_gpio.h>
+#include <asm/arch/pinmux.h>
 
 #define PREFIX "cros_gpio: "
 
@@ -30,6 +31,7 @@ int cros_gpio_fetch(enum cros_gpio_index index, cros_gpio_t *gpio)
 		"gpio_port_developer_switch",
 		"gpio_port_lid_switch",
 		"gpio_port_power_switch",
+		"gpio_port_ec_reset",
 	};
 	const char const *polarity[CROS_GPIO_MAX_GPIO] = {
 		"polarity_write_protect_switch",
@@ -37,6 +39,7 @@ int cros_gpio_fetch(enum cros_gpio_index index, cros_gpio_t *gpio)
 		"polarity_developer_switch",
 		"polarity_lid_switch",
 		"polarity_power_switch",
+		"polarity_ec_reset",
 	};
 	const int default_value[CROS_GPIO_MAX_GPIO] = {
 		FDT_GPIO_NONE, FDT_GPIO_NONE, FDT_GPIO_NONE, 1, 0,
@@ -79,6 +82,56 @@ int cros_gpio_fetch(enum cros_gpio_index index, cros_gpio_t *gpio)
 	return 0;
 }
 
+int cros_gpio_set(enum cros_gpio_index index, int value)
+{
+	int gpio_pin;
+	int gpio_polarity;
+	const char const *port[CROS_GPIO_MAX_GPIO] = {
+		"gpio_port_write_protect_switch",
+		"gpio_port_recovery_switch",
+		"gpio_port_developer_switch",
+		"gpio_port_lid_switch",
+		"gpio_port_power_switch",
+		"gpio_port_ec_reset",
+	};
+	const char const *polarity[CROS_GPIO_MAX_GPIO] = {
+		"polarity_write_protect_switch",
+		"polarity_recovery_switch",
+		"polarity_developer_switch",
+		"polarity_lid_switch",
+		"polarity_power_switch",
+		"polarity_ec_reset",
+	};
+
+	if (index < 0 || index >= CROS_GPIO_MAX_GPIO) {
+		VBDEBUG(PREFIX "index out of range: %d\n", index);
+		return -1;
+	}
+
+	gpio_pin = fdt_decode_get_config_int(gd->blob, port[index], -1);
+	if (gpio_pin == -1) {
+		VBDEBUG(PREFIX "failed to decode gpio port\n");
+		return -1;
+	}
+
+	gpio_polarity =
+		fdt_decode_get_config_int(gd->blob, polarity[index], -1);
+	if (gpio_polarity == -1) {
+		VBDEBUG(PREFIX "failed to decode gpio polarity\n");
+		return -1;
+	}
+
+	/* Currently this assumes the GPIO is set in the pinmux.
+	 * TODO: Expand to support configuration for to enable pinmux
+	 * settings here.
+	 */
+	gpio_direction_output(gpio_pin, (gpio_polarity == value));
+	gpio_set_value(gpio_pin, (gpio_polarity == value));
+	VBDEBUG(PREFIX "Set GPIO %d to %d \n", gpio_pin, value);
+
+	return 0;
+}
+
 int cros_gpio_dump(cros_gpio_t *gpio)
 {
 #ifdef VBOOT_DEBUG
@@ -96,5 +149,23 @@ int cros_gpio_dump(cros_gpio_t *gpio)
 			name[gpio->index],
 			gpio->port, gpio->polarity, gpio->value);
 #endif
+	return 0;
+}
+
+int cros_check_for_ec_reset_gpio(){
+	int ec_reset;
+	ec_reset = fdt_decode_get_config_int(gd->blob,
+		"hold_ec_in_reset_during_uboot", -1);
+	if (ec_reset != 1) {
+		VBDEBUG(PREFIX "no EC reset flag present\n");
+		return -1;
+	}
+	/* Setup pin muxing for the EC reset pin, note that this assumes the
+	 * EC reset GPIO is on the DAP2 pingroup on Tegra2.
+	 * TODO find a better place or way of managing the pinmux.
+	 */
+	pinmux_set_func(PINGRP_DAP2, PMUX_FUNC_DAP2);
+	pinmux_set_pullupdown(PINGRP_DAP2, PMUX_PULL_NORMAL);
+	pinmux_set_tristate(PINGRP_DAP2, PMUX_TRI_NORMAL);
 	return 0;
 }

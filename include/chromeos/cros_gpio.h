@@ -19,6 +19,7 @@ enum cros_gpio_index {
 	CROS_GPIO_DEVSW,
 	CROS_GPIO_LIDSW,
 	CROS_GPIO_PWRSW,
+	CROS_GPIO_ECRST,
 
 	CROS_GPIO_MAX_GPIO
 };
@@ -37,6 +38,10 @@ typedef struct {
 
 int cros_gpio_fetch(enum cros_gpio_index index, cros_gpio_t *gpio);
 
+int cros_gpio_set(enum cros_gpio_index index, int value);
+
 int cros_gpio_dump(cros_gpio_t *gpio);
+
+int cros_check_for_ec_reset_gpio(void);
 
 #endif /* CROS_GPIO_H__ */
