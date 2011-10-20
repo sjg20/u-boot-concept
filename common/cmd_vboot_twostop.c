@@ -468,6 +468,19 @@ twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
 	cros_gpio_dump(&recsw);
 	cros_gpio_dump(&devsw);
 
+	/* Hold the EC in reset during U-boot.
+	 * This is a workaround for TPM communication errors on certain hw.
+	 */
+	if (cros_check_for_ec_reset_gpio()) {
+		VBDEBUG(PREFIX "no EC reset GPIO detected in FDT\n");
+	} else {
+		if (cros_gpio_set(CROS_GPIO_ECRST, 1)){
+			VBDEBUG(PREFIX "failed to set EC reset gpio\n");
+			return -1;
+		}
+		VBDEBUG(PREFIX "asserted EC reset per FDT\n");
+	}
+
 	if (decode_twostop_fmap(fmap)) {
 		VBDEBUG(PREFIX "failed to decode fmap\n");
 		return -1;
@@ -571,6 +584,15 @@ twostop_main_firmware(struct twostop_fmap *fmap, void *gbb,
 #endif /* VBOOT_DEBUG */
 
 	crossystem_data_dump(cdata);
+
+	if (!(cros_check_for_ec_reset_gpio())) {
+		if (cros_gpio_set(CROS_GPIO_ECRST, 0)){
+			VBDEBUG(PREFIX "failed to clear EC reset gpio\n");
+			return VB_SELECT_ERROR;
+		}
+		VBDEBUG(PREFIX "EC released from reset per FDT\n");
+	}
+
 	boot_kernel(&kparams, cdata);
 
 	/* It is an error if boot_kenel returns */
