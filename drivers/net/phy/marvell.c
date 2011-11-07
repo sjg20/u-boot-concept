@@ -43,6 +43,9 @@
 #define MIIM_88E1111_PHY_LED_DIRECT	0x4100
 #define MIIM_88E1111_PHY_LED_COMBINE	0x411C
 
+/* 88E1112 PHY defines */
+#define MIIM_88E1112_PHY_PAGE		22
+
 /* 88E1118 PHY defines */
 #define MIIM_88E1118_PHY_PAGE		22
 #define MIIM_88E1118_PHY_LED_PAGE	3
@@ -183,6 +186,98 @@ static int m88e1111s_config(struct phy_device *phydev)
 	return 0;
 }
 
+#define DEBUG
+
+#ifdef DEBUG
+struct m88e1112_regdump_t {
+	int reg;
+	int pages[8];
+};
+
+/* Marvell 88E1112 */
+static int m88e1112_dump(struct phy_device *phydev)
+{
+	int idx_reg, idx_page, reg_read, page_orig;
+
+	/* definition of all available registers within the PHY */
+	struct m88e1112_regdump_t m88e1112_regdump[] = {
+		{ 0, { 0,  1,  2, -1, -1, -1, -1, -1}},
+		{ 1, { 0,  1, -1, -1, -1, -1, -1, -1}},
+		{ 2, { 0, -1, -1, -1, -1, -1, -1, -1}},
+		{ 3, { 0, -1, -1, -1, -1, -1, -1, -1}},
+		{ 4, { 0,  1, -1, -1, -1, -1, -1, -1}},
+		{ 5, { 0,  1, -1, -1, -1, -1, -1, -1}},
+		{ 6, { 0,  1, -1, -1, -1, -1, -1, -1}},
+		{ 7, { 0,  1, -1, -1, -1, -1, -1, -1}},
+		{ 8, { 0,  1, -1, -1, -1, -1, -1, -1}},
+		{ 9, { 0, -1, -1, -1, -1, -1, -1, -1}},
+		{10, { 0, -1, -1, -1, -1, -1, -1, -1}},
+		{15, { 0,  1, -1, -1, -1, -1, -1, -1}},
+		{16, { 0,  1,  2,  3,  4,  5,  6, -1}},
+		{17, { 0,  1,  2,  3,  4,  5,  6, -1}},
+		{18, { 0,  1,  2,  3,  4,  5, -1, -1}},
+		{19, { 0,  1,  2, -1,  4,  5, -1, -1}},
+		{20, {-1, -1, -1, -1, -1,  5, -1, -1}},
+		{21, { 0,  1, -1, -1, -1,  5, -1, -1}},
+		{26, { 0,  1,  2, -1, -1,  5, -1, -1}}
+	};
+
+	/* read initial page to be able to restore it at the end */
+	page_orig = phy_read(phydev, MDIO_DEVAD_NONE, MIIM_88E1112_PHY_PAGE);
+
+	printf("***** Marvell 88E1112 Register Dump ******\n");
+	/* iterate over all register numbers */
+	for(idx_reg = 0;
+	    idx_reg < ARRAY_SIZE(m88e1112_regdump);
+	    idx_reg++) {
+		/* iterate over all pages */
+		for(idx_page = 0;
+		    idx_page < ARRAY_SIZE(m88e1112_regdump[0].pages);
+		    idx_page++) {
+			if (m88e1112_regdump[idx_reg].pages[idx_page] != -1) {
+				/* switch page within PHY */
+				phy_write(phydev, MDIO_DEVAD_NONE,
+					  MIIM_88E1112_PHY_PAGE, idx_page);
+
+				/* read and print register */
+				reg_read = phy_read(phydev,
+						MDIO_DEVAD_NONE,
+						m88e1112_regdump[idx_reg].reg);
+				printf("%2d_%d: 0x%04X   ",
+					m88e1112_regdump[idx_reg].reg,
+					idx_page, reg_read);
+			} else {
+				printf("               ");
+			}
+		}
+		printf("\n");
+	}
+
+	/* restore original page */
+	phy_write(phydev, MDIO_DEVAD_NONE, MIIM_88E1112_PHY_PAGE, page_orig);
+
+	return 0;
+}
+#else
+static inline int m88e1112_dump(struct phy_device *phydev) {
+	return 0;
+}
+#endif
+
+static int m88e1112_config(struct phy_device *phydev)
+{
+	printf("phydev->interface = %s\n",
+		phy_interface_strings[phydev->interface]);
+
+	genphy_config_aneg(phydev);
+
+	phy_reset(phydev);
+
+	m88e1112_dump(phydev);
+
+	return 0;
+}
+
 /* Marvell 88E1118 */
 static int m88e1118_config(struct phy_device *phydev)
 {
@@ -314,6 +409,16 @@ static struct phy_driver M88E1111S_driver = {
 	.shutdown = &genphy_shutdown,
 };
 
+static struct phy_driver M88E1112_driver = {
+	.name = "Marvell 88E1112",
+	.uid = 0x1410c97,
+	.mask = 0xffffff0,
+	.features = PHY_GBIT_FEATURES,
+	.config = &m88e1112_config,
+	.startup = &m88e1011s_startup,
+	.shutdown = &genphy_shutdown,
+};
+
 static struct phy_driver M88E1118_driver = {
 	.name = "Marvell 88E1118",
 	.uid = 0x1410e10,
@@ -362,6 +467,7 @@ int phy_marvell_init(void)
 	phy_register(&M88E1118_driver);
 	phy_register(&M88E1111S_driver);
 	phy_register(&M88E1011S_driver);
+	phy_register(&M88E1112_driver);
 
 	return 0;
 }
