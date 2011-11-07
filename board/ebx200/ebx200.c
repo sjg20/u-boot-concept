@@ -90,9 +90,15 @@ int board_early_init_r(void)
 	return 0;
 }
 
+/* 88E1112 PHY defines */
+#define MIIM_88E1112_PHY_PAGE		22
+#define MIIM_88E1112_PHY_LED_CTRL	16
+#define MIIM_88E1112_PHY_LED_PAGE	3
+
 int last_stage_init(void)
 {
 	unsigned short reg;
+	unsigned short led_cfg, page_orig;
 
 	/* Change LEDx settings for the Vitesse PHY */
 	miiphy_write(DEFAULT_MII_NAME, TSEC1_PHY_ADDR, 0x1F, 1);
@@ -103,6 +109,20 @@ int last_stage_init(void)
 	/* disable LED2, LED1 Link 100/1000, LED0 Activity */
 	miiphy_write(DEFAULT_MII_NAME, TSEC1_PHY_ADDR, 0x10, 0x0e4a);
 	miiphy_write(DEFAULT_MII_NAME, TSEC1_PHY_ADDR, 0x1F, 0);
+
+	/* Change LEDx settings for the Marvell PHY */
+	miiphy_read(DEFAULT_MII_NAME, TSEC2_PHY_ADDR,
+		    MIIM_88E1112_PHY_PAGE, &page_orig);
+	miiphy_write(DEFAULT_MII_NAME, TSEC2_PHY_ADDR,
+		     MIIM_88E1112_PHY_PAGE, MIIM_88E1112_PHY_LED_PAGE);
+	miiphy_read(DEFAULT_MII_NAME, TSEC2_PHY_ADDR,
+		    MIIM_88E1112_PHY_LED_CTRL, &led_cfg);
+	/* Green LED - Copper Link, Yellow LED - Activity */
+	led_cfg = (led_cfg & 0xff00) | 0x0046;
+	miiphy_write(DEFAULT_MII_NAME, TSEC2_PHY_ADDR,
+		     MIIM_88E1112_PHY_LED_CTRL, led_cfg);
+	miiphy_write(DEFAULT_MII_NAME, TSEC2_PHY_ADDR,
+		     MIIM_88E1112_PHY_PAGE, page_orig);
 	return 0;
 }
 
@@ -117,6 +137,7 @@ int last_stage_init(void)
 int board_eth_init(bd_t *bis)
 {
 	struct fsl_pq_mdio_info mdio_info;
+	struct fsl_pq_mdio_info mdio_info2;
 	struct tsec_info_struct tsec_info[2];
 	unsigned int num = 0;
 
@@ -136,6 +157,11 @@ int board_eth_init(bd_t *bis)
 	mdio_info.regs = (struct tsec_mii_mng *)CONFIG_SYS_MDIO_BASE_ADDR;
 	mdio_info.name = DEFAULT_MII_NAME;
 	fsl_pq_mdio_init(bis, &mdio_info);
+
+	mdio_info2.regs = (struct tsec_mii_mng *)(CONFIG_SYS_MDIO_BASE_ADDR +
+						  TSEC_MDIO_OFFSET);
+	mdio_info2.name = "FSL_MDIO2";
+	fsl_pq_mdio_init(bis, &mdio_info2);
 
 	return tsec_eth_init(bis, tsec_info, num);
 }

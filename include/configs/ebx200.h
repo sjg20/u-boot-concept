@@ -254,6 +254,19 @@
 #define CONFIG_ETHPRIME		"eTSEC1"
 
 #define CONFIG_PHY_GIGE		/* Include GbE speed/duplex detection */
+
+/*
+ * In-band SGMII auto-negotiation between TBI and Marvell PHY, force
+ * 1000mbps SGMII link
+ */
+#define CONFIG_TSEC_TBICR_SETTINGS ( \
+		TBICR_PHY_RESET \
+		| TBICR_ANEG_ENABLE \
+		| TBICR_FULL_DUPLEX \
+		| TBICR_SPEED1_SET \
+		)
+
+#define CONFIG_SYS_TBIPA_VALUE	0x10
 #endif
 
 /*

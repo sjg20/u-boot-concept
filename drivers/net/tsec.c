@@ -88,6 +88,11 @@ static struct tsec_info_struct tsec_info[] = {
 /* Configure the TBI for SGMII operation */
 static void tsec_configure_serdes(struct tsec_private *priv)
 {
+	if (priv->flags & TSEC_REDUCED) {
+		debug("skip tsec1 serdes cfg\n");
+		return;
+	}
+
 	/* Access TBI PHY registers at given TSEC register offset as opposed
 	 * to the register offset used for external PHY accesses */
 	tsec_local_mdio_write(priv->phyregs_sgmii, in_be32(&priv->regs->tbipa),
@@ -434,8 +439,12 @@ static phy_interface_t tsec_get_interface(struct tsec_private *priv)
 
 	ecntrl = in_be32(&regs->ecntrl);
 
-	if (ecntrl & ECNTRL_SGMII_MODE)
-		return PHY_INTERFACE_MODE_SGMII;
+	if (ecntrl & ECNTRL_SGMII_MODE) {
+		if (priv->flags & TSEC_SGMII)
+			return PHY_INTERFACE_MODE_SGMII;
+		else
+			return PHY_INTERFACE_MODE_RGMII;
+	}
 
 	if (ecntrl & ECNTRL_TBI_MODE) {
 		if (ecntrl & ECNTRL_REDUCED_MODE)
@@ -491,7 +500,8 @@ static int init_phy(struct eth_device *dev)
 	out_be32(&regs->tbipa, CONFIG_SYS_TBIPA_VALUE);
 
 	priv->interface = tsec_get_interface(priv);
-
+	debug("%s: phy interface %s\n",  dev->name,
+		phy_interface_strings[priv->interface]);
 	if (priv->interface == PHY_INTERFACE_MODE_SGMII)
 		tsec_configure_serdes(priv);
 
