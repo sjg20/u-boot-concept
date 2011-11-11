@@ -23,12 +23,27 @@
 #ifndef __RELOC_H
 #define __RELOC_H
 
+/* This is the prototype for the post-relocation init function */
+typedef void (*board_init_r_func)(gd_t *, ulong);
+
+/**
+ * Call the relocated U-Boot. This is the last thing that is done after
+ * relocation. This function does not return.
+ *
+ * @param new_gd		Pointer to the relocated global data
+ * @param dest_addr		Base code address of relocated U-Boot
+ * @param board_init_r_func	Pointer to relocated function to call
+ */
+void pivot_to_board_init_r(gd_t *new_gd, ulong dest_addr,
+		board_init_r_func board_init_r, ulong dest_addr_sp)
+		__attribute__ ((noreturn));
+
 /**
  * Relocate U-Boot and jump to the relocated coded
  *
  * This copies U-Boot to a new location, zeroes the BSS, sets up a new stack
  * and jumps to board_init_r() in the relocated code using the
- * proc_call_board_init_r() function. It does not return.
+ * pivot_to_board_init_r() function. It does not return.
  *
  * @param dest_sp	New stack pointer to use
  * @param new_gd	Pointer to the relocated global data

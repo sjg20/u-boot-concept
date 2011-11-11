@@ -189,6 +189,10 @@ COBJS-y += dlmalloc.o
 COBJS-y += memsize.o
 COBJS-y += stdio.o
 
+ifndef CONFIG_SYS_SKIP_RELOC
+COBJS-y += reloc.o
+endif
+
 
 COBJS	:= $(sort $(COBJS-y))
 XCOBJS	:= $(sort $(XCOBJS-y))
