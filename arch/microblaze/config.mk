@@ -33,3 +33,6 @@ PLATFORM_CPPFLAGS += -ffixed-r31 -D__microblaze__
 LDSCRIPT ?= $(SRCTREE)/$(CPUDIR)/u-boot.lds
 
 CONFIG_ARCH_DEVICE_TREE := microblaze
+
+# Move to unified board system later
+CONFIG_SYS_LEGACY_BOARD := y
