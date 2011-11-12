@@ -81,6 +81,3 @@ endif
 ifndef CONFIG_NAND_SPL
 LDFLAGS_u-boot += -pie
 endif
-
-# We use legacy relocation for now
-CONFIG_SYS_SKIP_RELOC := y
