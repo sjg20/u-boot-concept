@@ -29,3 +29,6 @@ PLATFORM_CPPFLAGS += -DCONFIG_M68K -D__M68K__
 PLATFORM_LDFLAGS  += -n
 PLATFORM_RELFLAGS              += -ffunction-sections -fdata-sections
 LDFLAGS_FINAL                  += --gc-sections
+
+# We use legacy relocation for now
+CONFIG_SYS_SKIP_RELOC := y

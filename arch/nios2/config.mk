@@ -31,3 +31,6 @@ PLATFORM_CPPFLAGS += -G0
 
 LDFLAGS_FINAL += --gc-sections
 PLATFORM_RELFLAGS += -ffunction-sections -fdata-sections
+
+# NIOS2 does not do relocation
+CONFIG_SYS_SKIP_RELOC := y

@@ -48,3 +48,6 @@ NORMAL_LIBGCC = $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
 PREFIXED_LIBGCC = $(OBJTREE)/arch/$(ARCH)/lib/$(shell basename $(NORMAL_LIBGCC))
 
 export USE_PRIVATE_LIBGCC=$(shell dirname $(PREFIXED_LIBGCC))
+
+# We use legacy relocation for now
+CONFIG_SYS_SKIP_RELOC := y

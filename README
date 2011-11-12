@@ -2770,6 +2770,10 @@ Configuration Settings:
 	cases. This setting can be used to tune behaviour; see
 	lib/hashtable.c for details.
 
+- CONFIG_SYS_SKIP_RELOC
+	This makes U-Boot skip relocation for those architectures which
+	don't support it. It is normally defined in arch/xxx/config.mk
+
 The following definitions that deal with the placement and management
 of environment data (variable area); in general, we support the
 following configurations:

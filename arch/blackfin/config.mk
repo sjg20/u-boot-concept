@@ -37,6 +37,9 @@ CONFIG_BFIN_BOOT_MODE := $(strip $(subst ",,$(CONFIG_BFIN_BOOT_MODE)))
 PLATFORM_RELFLAGS += -ffixed-P3 -fomit-frame-pointer -mno-fdpic
 PLATFORM_CPPFLAGS += -DCONFIG_BLACKFIN
 
+# Blackfin does not do relocation
+CONFIG_SYS_SKIP_RELOC := y
+
 LDFLAGS_FINAL += --gc-sections
 LDFLAGS += -m elf32bfin
 PLATFORM_RELFLAGS += -ffunction-sections -fdata-sections

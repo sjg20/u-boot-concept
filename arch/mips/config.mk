@@ -52,3 +52,6 @@ PLATFORM_CPPFLAGS		+= -msoft-float
 PLATFORM_LDFLAGS		+= -G 0 -static -n -nostdlib
 PLATFORM_RELFLAGS		+= -ffunction-sections -fdata-sections
 LDFLAGS_FINAL			+= --gc-sections
+
+# We use legacy relocation for now
+CONFIG_SYS_SKIP_RELOC := y

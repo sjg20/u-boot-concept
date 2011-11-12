@@ -31,3 +31,6 @@ PLATFORM_RELFLAGS	+= -ffunction-sections -fdata-sections
 LDFLAGS_u-boot		= --gc-sections --relax
 
 LDSCRIPT			= $(SRCTREE)/$(CPUDIR)/u-boot.lds
+
+# We use legacy relocation for now
+CONFIG_SYS_SKIP_RELOC := y

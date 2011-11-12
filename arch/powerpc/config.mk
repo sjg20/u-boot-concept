@@ -42,3 +42,6 @@ endif
 ifeq ($(CROSS_COMPILE),powerpc-openbsd-)
 PLATFORM_CPPFLAGS+= -D__PPC__
 endif
+
+# We use legacy relocation for now
+CONFIG_SYS_SKIP_RELOC := y

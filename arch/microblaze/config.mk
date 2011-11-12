@@ -29,3 +29,6 @@ CROSS_COMPILE ?= mb-
 CONFIG_STANDALONE_LOAD_ADDR ?= 0x80F00000
 
 PLATFORM_CPPFLAGS += -ffixed-r31 -D__microblaze__
+
+# Microblaze does not do relocation
+CONFIG_SYS_SKIP_RELOC := y

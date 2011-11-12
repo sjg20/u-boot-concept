@@ -19,3 +19,6 @@
 
 PLATFORM_CPPFLAGS += -DCONFIG_SANDBOX -D__SANDBOX__
 PLATFORM_LIBS += -lrt
+
+# Sandbox does not do relocation
+CONFIG_SYS_SKIP_RELOC := y
