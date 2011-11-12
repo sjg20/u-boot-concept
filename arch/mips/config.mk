@@ -41,6 +41,9 @@ ENDIANNESS ?= -EB
 
 PLATFORM_CPPFLAGS += -DCONFIG_MIPS -D__MIPS__
 
+# Move to unified board system later
+CONFIG_SYS_LEGACY_BOARD := y
+
 #
 # From Linux arch/mips/Makefile
 #
