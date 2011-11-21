@@ -515,12 +515,25 @@ int do_usb(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	int i;
 	struct usb_device *dev = NULL;
 	extern char usb_started;
+	static char sata_reset=0;
 #ifdef CONFIG_USB_STORAGE
 	block_dev_desc_t *stor_dev;
 #endif
 
 	if (argc < 2)
 		return cmd_usage(cmdtp);
+
+	if (strncmp(argv[1], "hwrst", 5) == 0) {
+		printf("usb1: reset sata controller");
+		board_sata_reset();
+		return 0;
+	}
+	if (strncmp(argv[1], "sata_reset", 10) == 0) {
+		if (argc == 3)
+			sata_reset = simple_strtoul(argv[2], NULL, 10);
+		printf("usb sata_reset is [%s]\n", (sata_reset ? "on" : "off"));
+		return 0;
+	}
 
 	if ((strncmp(argv[1], "reset", 5) == 0) ||
 		 (strncmp(argv[1], "start", 5) == 0)) {
@@ -536,10 +549,10 @@ int do_usb(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			extern int USB_base_addr[];
 			USB_EHCI_TEGRA_BASE_ADDR = USB_base_addr[i];
 #endif
-			if (i == 1) {
-                          printf("usb1: reset sata controller");
+			if ((i == 1) && (sata_reset)) {
+              printf("usb1: reset sata controller");
 			  board_sata_reset();
-                        }
+            }
 		}
 		printf("(Re)start USB...\n");
 		i = usb_init();
@@ -734,7 +747,9 @@ U_BOOT_CMD(
 	"usb read addr blk# cnt - read `cnt' blocks starting at block `blk#'\n"
 	"    to memory address `addr'\n"
 	"usb write addr blk# cnt - write `cnt' blocks starting at block `blk#'\n"
-	"    from memory address `addr'"
+	"    from memory address `addr'\n"
+	"usb  hwrst - reset sata controller\n"
+	"usb  sata_reset [1/0] - set/reset sata controller reset at usb start/reset\n"
 );
 
 
@@ -750,6 +765,8 @@ U_BOOT_CMD(
 	"USB sub-system",
 	"reset - reset (rescan) USB controller\n"
 	"usb  tree  - show USB device tree\n"
-	"usb  info [dev] - show available USB devices"
+	"usb  info [dev] - show available USB devices\n"
+	"usb  hwrst - reset sata controller\n"
+	"usb  sata_reset [1/0] - set/reset sata controller reset at usb start/reset\n"
 );
 #endif
