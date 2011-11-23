@@ -505,7 +505,6 @@ int do_usbboot(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 }
 #endif /* CONFIG_USB_STORAGE */
 
-
 /******************************************************************************
  * usb command intepreter
  */
@@ -515,28 +514,30 @@ int do_usb(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	int i;
 	struct usb_device *dev = NULL;
 	extern char usb_started;
-	static char sata_reset=0;
+	extern int usb2sata_spin_up;
+	char usb2sata_reset=1;
 #ifdef CONFIG_USB_STORAGE
 	block_dev_desc_t *stor_dev;
 #endif
+	char *env = NULL;
 
 	if (argc < 2)
 		return cmd_usage(cmdtp);
 
-	if (strncmp(argv[1], "hwrst", 5) == 0) {
-		printf("usb1: reset sata controller");
-		board_sata_reset();
-		return 0;
-	}
-	if (strncmp(argv[1], "sata_reset", 10) == 0) {
-		if (argc == 3)
-			sata_reset = simple_strtoul(argv[2], NULL, 10);
-		printf("usb sata_reset is [%s]\n", (sata_reset ? "on" : "off"));
-		return 0;
-	}
-
 	if ((strncmp(argv[1], "reset", 5) == 0) ||
 		 (strncmp(argv[1], "start", 5) == 0)) {
+
+		env = getenv("usb2sata_reset");
+		if (env)
+			usb2sata_reset = simple_strtoul(env, NULL, 10);
+
+		/* Reads the "usb2sata_spin_up" environment variable value HERE because of the fact that the "usb_start_thread"
+	   makes use of this value while sending test_unit_ready */
+
+		env = getenv("usb2sata_spin_up");
+		if (env)
+			usb2sata_spin_up = simple_strtoul(env, NULL, 10);
+
 		usb_stop();
 		if (argc == 3) {
 			i = simple_strtoul(argv[2], NULL, 10);
@@ -549,10 +550,13 @@ int do_usb(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			extern int USB_base_addr[];
 			USB_EHCI_TEGRA_BASE_ADDR = USB_base_addr[i];
 #endif
-			if ((i == 1) && (sata_reset)) {
-              printf("usb1: reset sata controller");
-			  board_sata_reset();
-            }
+			if ((i == 1) && (usb2sata_reset)) {
+				  printf("usb1: reset sata controller %d time(s) ", usb2sata_reset);
+				  while (usb2sata_reset) {
+					  board_sata_reset();
+					  usb2sata_reset--;
+				  }
+			}
 		}
 		printf("(Re)start USB...\n");
 		i = usb_init();
@@ -732,6 +736,50 @@ int do_usb(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	return cmd_usage(cmdtp);
 }
 
+int do_usb2sata(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	extern int usb2sata_spin_up;
+	char usb2sata_reset=1;
+	char *env = NULL;
+
+	if (argc < 2)
+		return cmd_usage(cmdtp);
+
+	if (strncmp(argv[1], "hwrst", 5) == 0) {
+		printf("usb1: reset sata controller");
+		board_sata_reset();
+		return 0;
+	}
+
+	if (strncmp(argv[1], "reset", 5) == 0) {
+		if (argc == 3) {
+			setenv("usb2sata_reset", argv[2]);
+			usb2sata_reset = simple_strtoul(argv[2], NULL, 10);
+		} else {
+			env = getenv("usb2sata_reset");
+			if (env)
+				usb2sata_reset = simple_strtoul(env, NULL, 10);
+		}
+		printf("usb2sata_reset is [%d]\n", usb2sata_reset);
+		return 0;
+	}
+
+	if (strncmp(argv[1], "spin_up", 7) == 0) {
+		if (argc == 3) {
+			setenv("usb2sata_spin_up", argv[2]);
+			usb2sata_spin_up = simple_strtoul(argv[2], NULL, 10);
+		} else {
+			env = getenv("usb2sata_spin_up");
+			if (env)
+				usb2sata_spin_up = simple_strtoul(env, NULL, 10);
+		}
+		printf("usb2sata_spin_up is [%s]\n", (usb2sata_spin_up ? "on" : "off"));
+		return 0;
+	}
+
+	return cmd_usage(cmdtp);
+}
+
 #ifdef CONFIG_USB_STORAGE
 U_BOOT_CMD(
 	usb,	5,	1,	do_usb,
@@ -748,8 +796,6 @@ U_BOOT_CMD(
 	"    to memory address `addr'\n"
 	"usb write addr blk# cnt - write `cnt' blocks starting at block `blk#'\n"
 	"    from memory address `addr'\n"
-	"usb  hwrst - reset sata controller\n"
-	"usb  sata_reset [1/0] - set/reset sata controller reset at usb start/reset\n"
 );
 
 
@@ -766,7 +812,13 @@ U_BOOT_CMD(
 	"reset - reset (rescan) USB controller\n"
 	"usb  tree  - show USB device tree\n"
 	"usb  info [dev] - show available USB devices\n"
-	"usb  hwrst - reset sata controller\n"
-	"usb  sata_reset [1/0] - set/reset sata controller reset at usb start/reset\n"
 );
 #endif
+
+U_BOOT_CMD(
+	usb2sata,	3,	1,	do_usb2sata,
+	"USB sub-system",
+	"reset   [#/0] - set # of sata resets while in usb start/reset\n"
+	"usb2sata spin_up [1/0] - enable/disable disk spin up\n"
+);
+

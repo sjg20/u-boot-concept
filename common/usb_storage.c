@@ -173,6 +173,7 @@ unsigned long usb_stor_write(int device, unsigned long blknr,
 			     unsigned long blkcnt, const void *buffer);
 struct usb_device * usb_get_dev_index(int index);
 void uhci_show_temp_int_td(void);
+int usb2sata_spin_up=1;
 
 block_dev_desc_t *usb_stor_get_dev(int index)
 {
@@ -957,10 +958,26 @@ static int usb_test_unit_ready(ccb *srb, struct us_data *ss)
 		srb->cmdlen = 12;
 		if (ss->transport(srb, ss) == USB_STOR_TRANSPORT_GOOD)
 			return 0;
+
 		result = usb_request_sense(srb, ss);
 		if (result == USB_EDEVCRITICAL)
 			return result;
+
 		wait_ms(100);
+
+		if (usb2sata_spin_up) {
+
+		  memset(&srb->cmd[0], 0, 12);
+		  srb->cmd[0] = SCSI_START_STP;
+		  srb->cmd[4] = 1; /*Start*/
+		  srb->datalen = 0;
+		  srb->cmdlen = 12;
+		  ss->transport(srb, ss); /* Ignores the result */
+
+		  wait_ms(100);
+
+		  }
+
 	} while (retries--);
 
 	return -1;
