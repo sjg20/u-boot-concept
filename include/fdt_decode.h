@@ -513,6 +513,16 @@ int fdt_decode_get_config_int(const void *blob, const char *prop_name,
 		int default_val);
 
 /**
+ * Look in the FDT for a config item with the given name
+ * and return whether it exists.
+ *
+ * @param blob		FDT blob
+ * @param prop_name	property name to look up
+ * @return 1, if it exists, or 0 if not
+ */
+int fdt_decode_get_config_bool(const void *blob, const char *prop_name);
+
+/**
  * Returns information from the FDT about an i2c controller. This function
  * reads out the following attributes:
  *
