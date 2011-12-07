@@ -36,6 +36,7 @@
 #include <chromeos/fdt_decode.h>
 #include <chromeos/firmware_storage.h>
 #include <chromeos/cros_gpio.h>
+#include <chromeos/crossystem_data.h>
 #include <chromeos/common.h>
 #include <asm/io.h>
 #include <asm/msr.h>
@@ -192,6 +193,22 @@ int board_i8042_skip(void)
 	if (devsw.value)
 		return 0;
 	return fdt_decode_get_config_int(gd->blob, "skip-i8042", 0);
+}
+
+int board_use_usb_keyboard(int boot_mode)
+{
+	cros_gpio_t devsw;
+
+	/* the keyboard is needed only in developer mode and recovery mode */
+	cros_gpio_fetch(CROS_GPIO_DEVSW, &devsw);
+	if (!devsw.value && (boot_mode != FIRMWARE_TYPE_RECOVERY))
+		return 0;
+
+	/* does this machine have a USB keyboard as primary input ? */
+	if (fdt_decode_get_config_bool(gd->blob, "usb-keyboard"))
+		return 1;
+
+	return 0;
 }
 
 #define MTRRphysBase_MSR(reg) (0x200 + 2 * (reg))
