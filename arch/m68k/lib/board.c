@@ -28,6 +28,7 @@
 #include <watchdog.h>
 #include <command.h>
 #include <malloc.h>
+#include <reloc.h>
 #include <stdio_dev.h>
 
 #include <asm/immap.h>

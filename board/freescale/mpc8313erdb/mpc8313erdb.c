@@ -27,6 +27,7 @@
 #include <libfdt.h>
 #endif
 #include <pci.h>
+#include <reloc.h>
 #include <mpc83xx.h>
 #include <vsc7385.h>
 #include <ns16550.h>

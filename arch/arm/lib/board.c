@@ -41,6 +41,7 @@
 #include <common.h>
 #include <command.h>
 #include <malloc.h>
+#include <reloc.h>
 #include <stdio_dev.h>
 #include <version.h>
 #include <net.h>

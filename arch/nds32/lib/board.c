@@ -28,6 +28,7 @@
 #include <common.h>
 #include <command.h>
 #include <malloc.h>
+#include <reloc.h>
 #include <stdio_dev.h>
 #include <timestamp.h>
 #include <version.h>

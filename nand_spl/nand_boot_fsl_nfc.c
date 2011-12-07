@@ -29,6 +29,7 @@
 #include <asm/arch/imx-regs.h>
 #include <asm/io.h>
 #include <fsl_nfc.h>
+#include <reloc.h>
 
 static struct fsl_nfc_regs *const nfc = (void *)NFC_BASE_ADDR;
 

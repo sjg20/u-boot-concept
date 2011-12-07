@@ -32,6 +32,7 @@
  */
 
 #include <common.h>
+#include <reloc.h>
 #include <watchdog.h>
 #include <stdio_dev.h>
 #include <asm/u-boot-x86.h>

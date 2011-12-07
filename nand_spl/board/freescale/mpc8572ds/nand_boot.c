@@ -23,6 +23,7 @@
 #include <ns16550.h>
 #include <asm/io.h>
 #include <nand.h>
+#include <reloc.h>
 
 u32 sysclk_tbl[] = {
 	33333000, 39999600, 49999500, 66666000,

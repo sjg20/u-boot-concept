@@ -479,7 +479,7 @@ int	dcache_status (void);
 void	dcache_enable (void);
 void	dcache_disable(void);
 void	mmu_disable(void);
-void	relocate_code (ulong, gd_t *, ulong) __attribute__ ((noreturn));
+#include <reloc.h>
 ulong	get_endaddr   (void);
 void	trap_init     (ulong);
 #if defined (CONFIG_4xx)	|| \

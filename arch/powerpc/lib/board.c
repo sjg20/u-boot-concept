@@ -25,6 +25,7 @@
 #include <watchdog.h>
 #include <command.h>
 #include <malloc.h>
+#include <reloc.h>
 #include <stdio_dev.h>
 #ifdef CONFIG_8xx
 #include <mpc8xx.h>

@@ -1,13 +1,5 @@
 /*
- * (C) Copyright 2002
- * Sysgo Real-Time Solutions, GmbH <www.elinos.com>
- * Marius Groeger <mgroeger@sysgo.de>
- *
- * (C) Copyright 2002
- * David Mueller, ELSOFT AG, <d.mueller@elsoft.ch>
- *
- * (C) Copyright 2008
- * Guennadi Liakhovetki, DENX Software Engineering, <lg@denx.de>
+ * Copyright (c) 2011 The Chromium OS Authors.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -28,11 +20,20 @@
  * MA 02111-1307 USA
  */
 
-#include <common.h>
-#include <reloc.h>
+#ifndef __RELOC_H
+#define __RELOC_H
 
-void board_init_f(unsigned long bootflag)
-{
-	relocate_code(CONFIG_SYS_TEXT_BASE - TOTAL_MALLOC_LEN, NULL,
-			CONFIG_SYS_TEXT_BASE);
-}
+/**
+ * Relocate U-Boot and jump to the relocated coded
+ *
+ * This copies U-Boot to a new location, zeroes the BSS, sets up a new stack
+ * and jumps to board_init_r() in the relocated code using the
+ * proc_call_board_init_r() function. It does not return.
+ *
+ * @param dest_sp	New stack pointer to use
+ * @param new_gd	Pointer to the relocated global data
+ * @param dest_addr		Base code address of relocated U-Boot
+ */
+void relocate_code(ulong dest_sp, gd_t *new_gd, ulong dest_addr)
+		__attribute__ ((noreturn));
+#endif

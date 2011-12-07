@@ -36,6 +36,7 @@
 #include <image.h>
 #include <malloc.h>
 #include <linux/compiler.h>
+#include <reloc.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

@@ -23,6 +23,7 @@
 #include <asm/io.h>
 #include <ns16550.h>
 #include <nand.h>
+#include <reloc.h>
 #include <asm/mmu.h>
 #include <asm/immap_85xx.h>
 #include <asm/fsl_ddr_sdram.h>

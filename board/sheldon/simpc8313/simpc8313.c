@@ -29,6 +29,7 @@
 #include <mpc83xx.h>
 #include <ns16550.h>
 #include <nand.h>
+#include <reloc.h>
 #include <asm/io.h>
 
 DECLARE_GLOBAL_DATA_PTR;

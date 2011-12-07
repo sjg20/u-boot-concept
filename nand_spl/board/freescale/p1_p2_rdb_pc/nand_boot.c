@@ -23,6 +23,7 @@
 #include <ns16550.h>
 #include <asm/io.h>
 #include <nand.h>
+#include <reloc.h>
 #include <asm/fsl_law.h>
 #include <asm/fsl_ddr_sdram.h>
 

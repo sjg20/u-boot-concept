@@ -24,6 +24,7 @@
 #include <ns16550.h>
 #include <asm/io.h>
 #include <nand.h>
+#include <reloc.h>
 #include <asm/fsl_law.h>
 
 /* Fixed sdram init -- doesn't use serial presence detect. */

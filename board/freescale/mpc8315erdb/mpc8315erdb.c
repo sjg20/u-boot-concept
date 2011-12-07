@@ -34,6 +34,7 @@
 #include <asm/io.h>
 #include <ns16550.h>
 #include <nand.h>
+#include <reloc.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
