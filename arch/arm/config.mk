@@ -49,9 +49,6 @@ ifneq ($(CONFIG_SPL_BUILD),y)
 ALL-$(CONFIG_SYS_THUMB_BUILD)	+= checkthumb
 endif
 
-# Move to unified board system later
-CONFIG_SYS_LEGACY_BOARD := y
-
 # Try if EABI is supported, else fall back to old API,
 # i. e. for example:
 # - with ELDK 4.2 (EABI supported), use:
