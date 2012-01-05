@@ -1261,19 +1261,17 @@ static int ohci_submit_rh_msg(struct usb_device *dev, unsigned long pipe,
 	int leni = transfer_len;
 	int len = 0;
 	int stat = 0;
-	__u32 datab[4];
+	u8 *dataptr = NULL;
 	union {
-		void *ptr;
-		__u8 *u8;
-		__u16 *u16;
-		__u32 *u32;
+		/* data will be in here when dataptr stays as NULL */
+		__u8 u8[16];
+		__u16 u16[8];
+		__u32 u32[3];
 	} databuf;
 	__u16 bmRType_bReq;
 	__u16 wValue;
 	__u16 wIndex;
 	__u16 wLength;
-
-	databuf.u32 = (__u32 *)datab;
 
 #ifdef DEBUG
 pkt_print(NULL, dev, pipe, buffer, transfer_len,
@@ -1381,14 +1379,14 @@ pkt_print(NULL, dev, pipe, buffer, transfer_len,
 					min_t(unsigned int,
 					sizeof(root_hub_dev_des),
 					wLength));
-			databuf.ptr = root_hub_dev_des; OK(len);
+			dataptr = root_hub_dev_des; OK(len);
 		case (0x02): /* configuration descriptor */
 			len = min_t(unsigned int,
 					leni,
 					min_t(unsigned int,
 					sizeof(root_hub_config_des),
 					wLength));
-			databuf.ptr = root_hub_config_des; OK(len);
+			dataptr = root_hub_config_des; OK(len);
 		case (0x03): /* string descriptors */
 			if (wValue == 0x0300) {
 				len = min_t(unsigned int,
@@ -1396,7 +1394,7 @@ pkt_print(NULL, dev, pipe, buffer, transfer_len,
 						min_t(unsigned int,
 						sizeof(root_hub_str_index0),
 						wLength));
-				databuf.ptr = root_hub_str_index0;
+				dataptr = root_hub_str_index0;
 				OK(len);
 			}
 			if (wValue == 0x0301) {
@@ -1405,7 +1403,7 @@ pkt_print(NULL, dev, pipe, buffer, transfer_len,
 						min_t(unsigned int,
 						sizeof(root_hub_str_index1),
 						wLength));
-				databuf.ptr = root_hub_str_index1;
+				dataptr = root_hub_str_index1;
 				OK(len);
 		}
 		default:
@@ -1469,8 +1467,10 @@ pkt_print(NULL, dev, pipe, buffer, transfer_len,
 #endif
 
 	len = min_t(int, len, leni);
-	if (data != databuf.ptr)
-		memcpy(data, databuf.ptr, len);
+	if (dataptr)
+		memcpy(data, dataptr, len);
+	else
+		memcpy(data, &databuf, len);
 	dev->act_len = len;
 	dev->status = stat;
 
