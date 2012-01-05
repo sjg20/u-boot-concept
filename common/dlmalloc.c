@@ -1487,11 +1487,11 @@ static mbinptr av_[NAV * 2 + 2] = {
 #ifdef CONFIG_NEEDS_MANUAL_RELOC
 void malloc_bin_reloc (void)
 {
-	unsigned long *p = (unsigned long *)(&av_[2]);
+	mbinptr *p = &av_[2];
 	int i;
-	for (i=2; i<(sizeof(av_)/sizeof(mbinptr)); ++i) {
-		*p++ += gd->reloc_off;
-	}
+
+	for (i = 2; i < ARRAY_SIZE(av_); ++i)
+		*p = (mbinptr)((ulong)*p + gd->reloc_off);
 }
 #endif
 
