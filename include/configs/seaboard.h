@@ -40,6 +40,8 @@
 #define CONFIG_OF_CONTROL
 #define CONFIG_OF_SEPARATE
 
+#define CONFIG_SYS_GENERIC_BOARD
+
 /* High-level configuration options */
 #define V_PROMPT		"Tegra20 (SeaBoard) # "
 #define CONFIG_TEGRA_BOARD_STRING	"NVIDIA Seaboard"
