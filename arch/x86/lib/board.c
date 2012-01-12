@@ -197,7 +197,7 @@ static int calculate_relocation_address(void)
 	ulong rel_offset;
 
 	/* Calculate destination RAM Address and relocation offset */
-	dest_addr = (void *)gd->ram_size;
+	dest_addr = (void *)(uintptr_t)gd->ram_size;
 	dest_addr -= (bss_end - text_start);
 	rel_offset = dest_addr - text_start;
 
