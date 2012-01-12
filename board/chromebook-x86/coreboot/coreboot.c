@@ -107,9 +107,10 @@ void setup_pcat_compatibility()
 #define MRC_DATA_ALIGN     0x1000
 
 struct mrc_data_container {
-	u32	mrc_signature;
+	u32	mrc_signature;	/* 'MRCD' */
 	u32	mrc_data_size;	/* Actual total size of this structure */
-	u16	mrc_checksum;
+	u32	mrc_checksum;	/* IP style checksum */
+	u32	reserved;	/* For header alignment */
 	u8	mrc_data[0];	/* Variable size, platform/run time dependent */
 } __packed;
 
