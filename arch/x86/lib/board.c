@@ -248,7 +248,7 @@ static int do_elf_reloc_fixups(void)
 			Elf32_Addr *addr = (Elf32_Addr *)
 				(re_src->r_offset + gd->reloc_off);
 			if (*addr >= CONFIG_SYS_TEXT_BASE &&
-				*addr < (CONFIG_SYS_TEXT_BASE + size)) {
+				*addr <= (CONFIG_SYS_TEXT_BASE + size)) {
 				*addr += gd->reloc_off;
 			}
 		}
