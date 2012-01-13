@@ -35,11 +35,13 @@
 #define DEV_FLAGS_SYSTEM 0x80000000	/* Device is a system device		*/
 #define DEV_EXT_VIDEO	 0x00000001	/* Video extensions supported		*/
 
+#define STDIO_NAME_SIZE  16
+
 /* Device information */
 struct stdio_dev {
 	int	flags;			/* Device flags: input/output/system	*/
 	int	ext;			/* Supported extensions			*/
-	char	name[16];		/* Device name				*/
+	char	name[STDIO_NAME_SIZE];	/* Device name				*/
 
 /* GENERAL functions */
 

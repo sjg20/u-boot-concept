@@ -160,7 +160,7 @@ int stdio_deregister(const char *devname)
 	int l;
 	struct list_head *pos;
 	struct stdio_dev *dev;
-	char temp_names[3][8];
+	char temp_names[MAX_FILES][STDIO_NAME_SIZE];
 
 	dev = stdio_get_by_name(devname);
 
