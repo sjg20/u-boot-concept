@@ -293,7 +293,8 @@ static void secure_boot_cmd(char *cmd)
 	int rc;
 
 	if (!cmd) {
-		printf("## Error: Secure boot command not specified\n");
+		fprintf(stderr,
+			"## Error: Secure boot command not specified\n");
 		goto err;
 	}
 
@@ -303,7 +304,7 @@ static void secure_boot_cmd(char *cmd)
 	/* Find the command directly. */
 	cmdtp = find_cmd(cmd);
 	if (!cmdtp) {
-		printf("## Error: \"%s\" not defined\n", cmd);
+		fprintf(stderr, "## Error: \"%s\" not defined\n", cmd);
 		goto err;
 	}
 
@@ -311,7 +312,7 @@ static void secure_boot_cmd(char *cmd)
 	rc = (cmdtp->cmd)(cmdtp, 0, 1, &cmd);
 
 	/* Shouldn't ever return from boot command. */
-	printf("## Error: \"%s\" returned (code %d)\n", cmd, rc);
+	fprintf(stderr, "## Error: \"%s\" returned (code %d)\n", cmd, rc);
 
 err:
 	/*
@@ -1485,7 +1486,8 @@ int do_run (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 		char *arg;
 
 		if ((arg = getenv (argv[i])) == NULL) {
-			printf ("## Error: \"%s\" not defined\n", argv[i]);
+			fprintf(stderr,
+				"## Error: \"%s\" not defined\n", argv[i]);
 			return 1;
 		}
 #ifndef CONFIG_SYS_HUSH_PARSER
