@@ -91,7 +91,7 @@ void VbExSleepMs(uint32_t msec)
 VbError_t VbExBeep(uint32_t msec, uint32_t frequency)
 {
 	if (frequency)
-		enable_beep();
+		enable_beep(frequency);
 	else
 		disable_beep();
 
