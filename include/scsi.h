@@ -185,6 +185,7 @@ void scsi_low_level_init(int busdevfunc);
  * functions residing inside cmd_scsi.c
  */
 void scsi_init(void);
+int scsi_get_disk_count(void);
 
 
 #define SCSI_IDENTIFY					0xC0  /* not used */
