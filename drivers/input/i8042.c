@@ -231,6 +231,11 @@ static const unsigned char usb_kbd_numkey_shifted[] = {
 	'\r', 0x1b, '\b', '\t', ' ', '_', '+', '{', '}',
 	'|', '~', ':', '"', '~', '<', '>', '?'
 };
+static const unsigned char usb_kbd_numkey_ctrled[] = {
+	'1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
+	'\n', 0x1b, '\b', '\t', ' ', '-', '=', '[', ']',
+	'\\', '#', ';', '\'', '`', ',', '.', '/'
+};
 
 
 
@@ -600,6 +605,9 @@ static int usb_cook_scan_code(unsigned char usb_scan_code)
 	/* Handle numeric keypad keys */
 	if ((usb_scan_code > 0x1d) && (usb_scan_code < 0x3a)) {
 		int shifted;
+
+		if (bits_modifiers & (LEFT_CNTR | RIGHT_CNTR))
+			return usb_kbd_numkey_ctrled[usb_scan_code - 0x1e];
 
 		/* Shift inverts Num Lock state */
 		shifted = (bits_modifiers & (LEFT_SHIFT | RIGHT_SHIFT)) != 0;
