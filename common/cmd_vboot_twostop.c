@@ -846,7 +846,15 @@ twostop_readwrite_main_firmware(void)
 		return TWOSTOP_SELECT_ERROR;
 	}
 
-	/* TODO Now, initialize device that bootstub did not initialize */
+#ifdef CONFIG_USB_KEYBOARD
+	if (board_use_usb_keyboard(FIRMWARE_TYPE_NORMAL)) {
+		int cnt;
+		/* enumerate USB devices to find the keyboard */
+		cnt = usb_init();
+		if (cnt >= 0)
+			drv_usb_kbd_init();
+	}
+#endif
 
 	return twostop_main_firmware(&fmap, gbb, cdata, cdata->vb_shared_data);
 }
