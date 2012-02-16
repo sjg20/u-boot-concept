@@ -93,6 +93,18 @@ _bss_end_ofs:
 _end_ofs:
 	.word _end - _start
 
+.globl _rel_dyn_start_ofs
+_rel_dyn_start_ofs:
+	.word __rel_dyn_start - _start
+
+.globl _rel_dyn_end_ofs
+_rel_dyn_end_ofs:
+	.word __rel_dyn_end - _start
+
+.globl _dynsym_start_ofs
+_dynsym_start_ofs:
+	.word __dynsym_start - _start
+
 #ifdef CONFIG_USE_IRQ
 /* IRQ stack memory (calculated at run-time) */
 .globl IRQ_STACK_START
@@ -267,13 +279,6 @@ clbss_l:str	r2, [r0]		/* clear loop...		    */
 
 _board_init_r_ofs:
 	.word board_init_r - _start
-
-_rel_dyn_start_ofs:
-	.word __rel_dyn_start - _start
-_rel_dyn_end_ofs:
-	.word __rel_dyn_end - _start
-_dynsym_start_ofs:
-	.word __dynsym_start - _start
 
 /*
  *************************************************************************
