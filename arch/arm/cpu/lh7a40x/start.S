@@ -280,6 +280,25 @@ clbss_l:str	r2, [r0]		/* clear loop...		    */
 _board_init_r_ofs:
 	.word board_init_r - _start
 
+/**
+ * Jump to board_init_r with a new stack pointer
+ *
+ * @param gd	Pointer to global data
+ * @param dest_addr	Destination address from global data
+ * @param func	Address of board_init_r function (relocated)
+ * @param sp	New stack pointer
+ */
+.globl pivot_to_board_init_r
+pivot_to_board_init_r:
+#ifndef CONFIG_SYS_ICACHE_OFF
+	mcr	p15, 0, r0, c7, c5, 0	@ invalidate icache
+	mcr     p15, 0, r0, c7, c10, 4	@ DSB
+	mcr     p15, 0, r0, c7, c5, 4	@ ISB
+#endif
+	mov	sp, r3
+	/* jump to it ... */
+	mov	pc, r2
+
 /*
  *************************************************************************
  *
