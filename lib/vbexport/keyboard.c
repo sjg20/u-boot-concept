@@ -26,16 +26,8 @@ uint32_t VbExKeyboardRead(void)
 		goto out;
 
 	/* Read a non-Escape character or a standalone Escape character. */
-	c = getc();
-	if (c != CSI_0 || !tstc()) {
-		/*
-		 * Special handle of Ctrl-Enter, which is converted into '\n'
-		 * by i8042 driver.
-		 */
-		if (c == '\n')
-			c = VB_KEY_CTRL_ENTER;
+	if ((c = getc()) != CSI_0 || !tstc())
 		goto out;
-	}
 
 	/* Filter out non- Escape-[ sequence. */
 	if (getc() != CSI_1) {
