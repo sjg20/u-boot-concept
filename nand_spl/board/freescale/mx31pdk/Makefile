@@ -13,6 +13,9 @@ CFLAGS	+= -DCONFIG_SPL_BUILD -DCONFIG_NAND_SPL
 
 SOBJS	= start.o lowlevel_init.o
 COBJS	= nand_boot_fsl_nfc.o
+ifndef CONFIG_SYS_SKIP_RELOC
+COBJS	+= reloc.o
+endif
 
 SRCS	:= $(SRCTREE)/nand_spl/nand_boot_fsl_nfc.c
 SRCS	+= $(SRCTREE)/arch/arm/cpu/arm1136/start.S
@@ -48,6 +51,9 @@ $(obj)%.o:	$(SRCTREE)/board/freescale/mx31pdk/%.S
 	$(CC) $(AFLAGS) -c -o $@ $<
 
 $(obj)%.o:	$(SRCTREE)/nand_spl/%.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(obj)%.o:	$(SRCTREE)/common/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 # defines $(obj).depend target
