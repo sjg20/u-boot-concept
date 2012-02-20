@@ -32,10 +32,12 @@
 
 #ifdef CONFIG_SPL_LIBCOMMON_SUPPORT
 
+#ifdef CONFIG_SPL_SPI_LOAD
 DECLARE_GLOBAL_DATA_PTR;
 /* Define global data structure pointer to it*/
 static gd_t gdata __attribute__ ((section(".data")));
 static bd_t bdata __attribute__ ((section(".data")));
+#endif
 
 #else
 
