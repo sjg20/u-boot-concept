@@ -58,6 +58,8 @@
 #define CONFIG_SKIP_LOWLEVEL_INIT
 #endif
 
+#define CONFIG_SPL_LIBGENERIC_SUPPORT
+
 #define CONFIG_DISPLAY_CPUINFO
 
 #define CONFIG_CMDLINE_TAG			/* enable passing of ATAGs */

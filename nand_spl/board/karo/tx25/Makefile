@@ -33,7 +33,10 @@ AFLAGS	+= -DCONFIG_SPL_BUILD -DCONFIG_NAND_SPL
 CFLAGS	+= -DCONFIG_SPL_BUILD -DCONFIG_NAND_SPL
 
 SOBJS	= start.o lowlevel_init.o
-COBJS	= nand_boot_fsl_nfc.o
+COBJS	= nand_boot_fsl_nfc.o membasic.o
+ifndef CONFIG_SYS_SKIP_RELOC
+COBJS	+= reloc.o
+endif
 
 SRCS	:= $(SRCTREE)/nand_spl/nand_boot_fsl_nfc.c
 SRCS	+= $(SRCTREE)/arch/arm/cpu/arm926ejs/start.S
@@ -69,6 +72,12 @@ $(obj)%.o:	$(SRCTREE)/board/karo/tx25/%.S
 	$(CC) $(AFLAGS) -c -o $@ $<
 
 $(obj)%.o:	$(SRCTREE)/nand_spl/%.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(obj)%.o:	$(SRCTREE)/common/%.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(obj)%.o:	$(SRCTREE)/lib/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 # defines $(obj).depend target
