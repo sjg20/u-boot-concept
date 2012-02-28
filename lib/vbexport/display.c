@@ -16,6 +16,8 @@
 #include <video.h>
 #endif
 #include <chromeos/common.h>
+#include <chromeos/crossystem_data.h>
+#include <chromeos/fdt_decode.h>
 #include <lzma/LzmaTypes.h>
 #include <lzma/LzmaDec.h>
 #include <lzma/LzmaTools.h>
@@ -171,8 +173,26 @@ VbError_t VbExDisplayImage(uint32_t x, uint32_t y,
 
 VbError_t VbExDisplayDebugInfo(const char *info_str)
 {
+	crossystem_data_t *cdata;
+	size_t size;
+
 	display_callbacks_.dc_position_cursor(0, 0);
 	display_callbacks_.dc_puts(info_str);
+
+
+	cdata = fdt_decode_chromeos_alloc_region(gd->blob, "cros-system-data",
+						 &size);
+	if (!cdata) {
+		VBDEBUG("cros-system-data missing "
+				"from fdt, or malloc failed\n");
+		return VBERROR_UNKNOWN;
+	}
+
+	display_callbacks_.dc_puts("read-only firmware id: ");
+	display_callbacks_.dc_puts((char *)cdata->readonly_firmware_id);
+	display_callbacks_.dc_puts("\nactive firmware id: ");
+	display_callbacks_.dc_puts((char *)cdata->firmware_id);
+	display_callbacks_.dc_puts("\n");
 	return VBERROR_SUCCESS;
 }
 
