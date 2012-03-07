@@ -32,8 +32,8 @@ LDFLAGS := -T $(nandobj)u-boot.lds -Ttext $(CONFIG_SYS_TEXT_BASE) $(LDFLAGS) \
 AFLAGS	+= -DCONFIG_SPL_BUILD -DCONFIG_NAND_SPL
 CFLAGS	+= -DCONFIG_SPL_BUILD -DCONFIG_NAND_SPL
 
-SOBJS	= start.o lowlevel_init.o
-COBJS	= nand_boot_fsl_nfc.o membasic.o
+SOBJS	= start.o lowlevel_init.o _udivsi3.o _divsi3.o div0.o
+COBJS	= nand_boot_fsl_nfc.o string.o dlmalloc.o ctype.o
 ifndef CONFIG_SYS_SKIP_RELOC
 COBJS	+= reloc.o
 endif
@@ -65,6 +65,8 @@ $(nandobj)u-boot.lds: $(LDSCRIPT)
 
 #########################################################################
 
+CFLAGS += -ffunction-sections
+
 $(obj)%.o:	$(SRCTREE)/arch/arm/cpu/arm926ejs/%.S
 	$(CC) $(AFLAGS) -c -o $@ $<
 
@@ -78,6 +80,12 @@ $(obj)%.o:	$(SRCTREE)/common/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(obj)%.o:	$(SRCTREE)/lib/%.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(obj)%.o:	$(SRCTREE)/arch/arm/lib/%.S
+	$(CC) $(AFLAGS) -c -o $@ $<
+
+$(obj)%.o:	$(SRCTREE)/arch/arm/lib/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 # defines $(obj).depend target
