@@ -57,7 +57,6 @@ endif
 
 COBJS-y += ctype.o
 COBJS-y += div64.o
-COBJS-y += membasic.o
 COBJS-y += string.o
 COBJS-y += time.o
 COBJS-$(CONFIG_BOOTP_PXE) += uuid.o
