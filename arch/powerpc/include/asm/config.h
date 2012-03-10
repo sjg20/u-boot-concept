@@ -110,5 +110,6 @@
 
 /* All PPC boards must swap IDE bytes */
 #define CONFIG_IDE_SWAP_IO
+#define CONFIG_SYS_GENERIC_BOARD
 
 #endif /* _ASM_CONFIG_H_ */
