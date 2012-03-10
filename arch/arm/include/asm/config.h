@@ -23,4 +23,5 @@
 
 #define CONFIG_LMB
 #define CONFIG_SYS_BOOT_RAMDISK_HIGH
+#define CONFIG_SYS_GENERIC_BOARD
 #endif
