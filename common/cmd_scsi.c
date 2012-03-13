@@ -84,8 +84,8 @@ void scsi_setup_inquiry(ccb * pccb);
 void scsi_ident_cpy (unsigned char *dest, unsigned char *src, unsigned int len);
 
 
-ulong scsi_read(int device, ulong blknr, ulong blkcnt, void *buffer);
-ulong scsi_write(int device, ulong blknr, ulong blkcnt, const void *buffer);
+ulong scsi_read(int device, ulong blknr, lbaint_t blkcnt, void *buffer);
+ulong scsi_write(int device, ulong blknr, lbaint_t blkcnt, const void *buffer);
 
 
 /*********************************************************************************
@@ -499,9 +499,10 @@ int do_scsi (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 #define SCSI_MAX_READ_BLK 0xFFFF /* almost the maximum amount of the scsi_ext command.. */
 
-ulong scsi_read(int device, ulong blknr, ulong blkcnt, void *buffer)
+ulong scsi_read(int device, ulong blknr, lbaint_t blkcnt, void *buffer)
 {
-	ulong start,blks, buf_addr;
+	lbaint_t start, blks;
+	uintptr_t buf_addr;
 	unsigned short smallblks;
 	ccb* pccb=(ccb *)&tempccb;
 	device&=0xff;
@@ -548,9 +549,10 @@ ulong scsi_read(int device, ulong blknr, ulong blkcnt, void *buffer)
 /* Almost the maximum amount of the scsi_ext command.. */
 #define SCSI_MAX_WRITE_BLK 0xFFFF
 
-ulong scsi_write(int device, ulong blknr, ulong blkcnt, const void *buffer)
+ulong scsi_write(int device, ulong blknr, lbaint_t blkcnt, const void *buffer)
 {
-	ulong start, blks, buf_addr;
+	lbaint_t start, blks;
+	uintptr_t buf_addr;
 	unsigned short smallblks;
 	ccb* pccb = (ccb *)&tempccb;
 	device &= 0xff;
