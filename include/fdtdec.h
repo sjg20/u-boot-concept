@@ -100,6 +100,7 @@ enum fdt_compat_id {
 	COMPAT_GOOGLE_GPIO_FLAG,	/* Google GPIO Flag-Input */
 	COMPAT_GOOGLE_CROS_EC_FLAG,	/* Google EC Flag-Input */
 	COMPAT_GOOGLE_SYSINFO_FLAG,	/* Google Sysinfo Flag-Input */
+	COMPAT_TI_TPS65090,		/* Texas Instrument TPS65090 */
 
 	COMPAT_COUNT,
 };
