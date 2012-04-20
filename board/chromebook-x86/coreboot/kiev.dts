@@ -1,0 +1,16 @@
+/dts-v1/;
+
+/include/ "skeleton.dtsi"
+/include/ "chromeos.dtsi"
+/include/ "flashmap-8mb.dtsi"
+
+/ {
+	model = "Google Kiev";
+	compatible = "google,kiev", "intel,celeron-sandybridge";
+
+	config {
+		hwid = "X86 KIEV TEST 5811";
+		skip-i8042 = <1>;
+		usb-keyboard;
+	};
+};
