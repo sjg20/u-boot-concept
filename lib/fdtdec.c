@@ -61,6 +61,7 @@ static const char * const compat_names[COMPAT_COUNT] = {
 	COMPAT(MAXIM_MAX77686_PMIC, "maxim,max77686_pmic"),
 	COMPAT(GENERIC_SPI_FLASH, "spi-flash"),
 	COMPAT(MAXIM_98095_CODEC, "maxim,max98095-codec"),
+	COMPAT(GOOGLE_BOARD_REV, "google,board-revision"),
 };
 
 const char *fdtdec_get_compatible(enum fdt_compat_id id)
