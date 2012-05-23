@@ -71,7 +71,7 @@
 	EXYNOS_DEVICE_SETTINGS \
 	CONFIG_CHROMEOS_EXTRA_ENV_SETTINGS \
 	CONFIG_CHROMEOS_SD_TO_SPI \
-	"dev_extras=daisy\0"
+	"dev_extras=snow\0"
 
 /* Replace default CONFIG_BOOTCOMMAND */
 #ifdef CONFIG_BOOTCOMMAND
