@@ -71,7 +71,7 @@
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	CONFIG_CHROMEOS_EXTRA_ENV_SETTINGS \
 	CONFIG_CHROMEOS_SD_TO_SPI \
-	"dev_extras=daisy\0" \
+	"dev_extras=snow\0" \
 	"stdout=serial,lcd\0" \
 	"stderr=serial,lcd\0" \
 	"stdin=serial\0"
