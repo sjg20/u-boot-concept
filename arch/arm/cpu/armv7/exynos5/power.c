@@ -89,6 +89,23 @@ int power_init(void)
 {
 	int error = 0;
 
+	/*
+	 * HACK: before turning up power, enable thermal HW thermal power off.
+	 * ...this hack will be removed when TMU stuff gets in U-Boot.
+	 */
+	/* Set THRESHOLD_TEMP_RISE[THRESH_LEVEL_RISE3] to 0x82 (105 C). */
+	*((u32*) 0x10060050) = ((*(u32*) 0x10060050) & 0x00ffffff) | 0x82000000;
+
+	/* Set TMU_CONTROL bits for THERM_TRIP_EN and CORE_EN */
+	*((u32*) 0x10060020) |= (1 << 0) | (1 << 12);
+
+	/* Set (undocumented) bit in PS_HOLD_CONTROL for ENABLE_HW_TRIP */
+	*((u32*) 0x1004330c) |= (1 << 31);
+
+	/*
+	 * END HACK
+	 */
+
 #ifdef CONFIG_SPL_BUILD
 	struct spl_machine_param *param = spl_get_machine_params();
 
