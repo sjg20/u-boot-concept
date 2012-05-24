@@ -52,7 +52,7 @@ static struct spl_machine_param machine_param
 
 	.boot_source	= BOOT_MODE_OM,
 	.frequency_mhz	= 800,
-	.arm_freq_mhz	= 1700,
+	.arm_freq_mhz	= 1000,
 	.serial_base	= 0x12c30000,
 	.i2c_base	= 0x12c60000,
 	.board_rev_gpios = GPIO_D00 | (GPIO_D01 << 16),
