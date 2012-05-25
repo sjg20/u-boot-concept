@@ -34,6 +34,8 @@ int is_processor_reset(void)
 void cold_reboot(void)
 {
 	/* TODO(chromium-os:28077) Implement cold_reboot */
+	printf("*** Board cannot reboot itself; please reboot the board ***\n");
+	power_off();
 }
 
 /* This function never returns */
