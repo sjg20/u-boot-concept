@@ -208,6 +208,12 @@ int board_init(void)
 	gpio_cfg_pin(GPIO_B20, GPIO_OUTPUT);
 	gpio_set_value(GPIO_B20, 1);
 
+/* Configure GPIO for LCD */
+	gpio_cfg_pin(GPIO_X15, GPIO_OUTPUT);
+	gpio_set_value(GPIO_X15, 1);
+	gpio_cfg_pin(GPIO_X30, GPIO_OUTPUT);
+	gpio_set_value(GPIO_X30, 1);
+
 	return 0;
 }
 
