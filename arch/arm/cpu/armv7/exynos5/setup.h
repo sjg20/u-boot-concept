@@ -447,6 +447,13 @@
 /* CLK_SRC_DISP1_0 */
 #define CLK_SRC_DISP1_0_VAL	0x6
 
+/* DIV_DISP1_0 */
+/* For DP, divisor should is 2 */
+#define CLK_DIV_DISP1_0_FIMD1	(2 << 0)
+
+/* CLK_GATE_IP_DISP1 */
+#define CLK_GATE_DP1_ALLOW	(1 << 4)
+
 /*
  * TZPC Register Value :
  * R0SIZE: 0x0 : Size of secured ram
