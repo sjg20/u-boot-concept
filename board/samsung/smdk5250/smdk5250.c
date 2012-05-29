@@ -203,6 +203,11 @@ int board_init(void)
 				 __func__);
 		return -1;
 	}
+
+	/* Configure GPIO for backlight */
+	gpio_cfg_pin(GPIO_B20, GPIO_OUTPUT);
+	gpio_set_value(GPIO_B20, 1);
+
 	return 0;
 }
 
