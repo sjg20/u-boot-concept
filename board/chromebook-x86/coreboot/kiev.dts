@@ -12,5 +12,6 @@
 		hwid = "X86 KIEV TEST 5811";
 		skip-i8042 = <1>;
 		usb-keyboard;
+		hda_codec_beep = <0>;
 	};
 };

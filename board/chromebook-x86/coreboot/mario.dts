@@ -10,5 +10,6 @@
 
 	config {
 	       hwid = "X86 MARIO TEST 1089";
+	       hda_codec_beep = <1>;
 	};
 };

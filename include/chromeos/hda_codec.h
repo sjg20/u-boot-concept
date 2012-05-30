@@ -14,7 +14,7 @@
 #define CHROMEOS_HDA_CODEC_H_
 
 /* Beep control */
-void enable_beep(uint32_t frequency);
-void disable_beep(void);
+void enable_beep_hda(uint32_t frequency);
+void disable_beep_hda(void);
 
 #endif /* CHROMEOS_PHDA_CODEC_H_ */

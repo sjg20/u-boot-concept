@@ -16,7 +16,7 @@
 #include <common.h>
 #include <malloc.h>
 #include <chromeos/common.h>
-#include <chromeos/hda_codec.h>
+#include <chromeos/pcbeep.h>
 #include <chromeos/power_management.h>
 
 /* Import the definition of vboot_wrapper interfaces. */

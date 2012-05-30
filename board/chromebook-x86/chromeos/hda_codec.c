@@ -126,7 +126,7 @@ static const u32 beep_cmd[] = {
 	0x0023B04B,			/* set DAC gain */
 };					/* and follow with BEEP_FREQ_MAGIC */
 
-void enable_beep(uint32_t frequency)
+void enable_beep_hda(uint32_t frequency)
 {
 	uint32_t base;
 	uint8_t divider_val;
@@ -149,7 +149,7 @@ void enable_beep(uint32_t frequency)
 	write_one_verb(base, BEEP_FREQ_MAGIC|divider_val);
 }
 
-void disable_beep(void)
+void disable_beep_hda(void)
 {
 	uint32_t base;
 
