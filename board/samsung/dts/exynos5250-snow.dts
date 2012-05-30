@@ -41,4 +41,8 @@
 		panel_interface = "eDP";
 	};
 
+	dp@145B0000 {
+		compatible = "samsung,exynos-dp";
+		reg = <0x145B0000 0x10000>;
+	};
 };
