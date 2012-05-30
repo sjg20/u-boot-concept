@@ -53,4 +53,8 @@
 	dmc@10C00000 {
 		mem-manuf = "samsung";
 	};
+
+	fimd@14400000 {
+		panel_interface = "mipi";
+	};
 };
