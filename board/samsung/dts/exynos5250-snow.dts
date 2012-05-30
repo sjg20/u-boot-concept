@@ -37,4 +37,8 @@
 		};
 	};
 
+	fimd@14400000 {
+		panel_interface = "eDP";
+	};
+
 };
