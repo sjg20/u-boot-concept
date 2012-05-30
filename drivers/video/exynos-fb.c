@@ -23,6 +23,7 @@
  */
 
 #include <common.h>
+#include <fdtdec.h>
 #include <asm/io.h>
 #include <asm/errno.h>
 #include <asm/arch/clk.h>
@@ -40,6 +41,8 @@
 #include <asm/arch-exynos/spl.h>
 #include "malloc.h"
 #include "s5p-dp-core.h"
+
+DECLARE_GLOBAL_DATA_PTR;
 
 /* MIPI DSI Processor-to-Peripheral transaction types */
 enum {
@@ -738,7 +741,7 @@ static int s5p_dp_set_link_train(struct s5p_dp_device *dp,
 /*
  * Initialize DP display
  */
-static int  dp_main_init()
+static int  dp_main_init(int node)
 {
 	struct video_info smdk5250_dp_config = {
 		.name			= "eDP-LVDS NXP PTN3460",
@@ -760,7 +763,12 @@ static int  dp_main_init()
 
 	int ret, reg = 0;
 
-	dp->base = (struct exynos5_dp *)samsung_get_base_dp();
+	dp->base = fdtdec_get_addr(gd->fdt_blob, node, "reg");
+	if (dp->base == FDT_ADDR_T_NONE) {
+		debug("%s: Missing dp-base\n", __func__);
+		return -1;
+	}
+
 	dp->video_info = &smdk5250_dp_config;
 
 	clock_init_dp_clock();
@@ -799,10 +807,14 @@ static int  dp_main_init()
 /*
  * Fill LCD timing data for DP or MIPI
  */
-static struct exynos5_fimd_panel *fill_panel_data()
+static struct exynos5_fimd_panel *fill_panel_data(node)
 {
-	struct spl_machine_param *params;
 	struct exynos5_fimd_panel *panel_data;
+	const char *panel_if;
+	int val;
+
+	panel_if = fdt_getprop(gd->fdt_blob, node, "panel_interface", NULL);
+	val = strcmp(panel_if, "mipi");
 
 	panel_data = malloc(sizeof(struct exynos5_fimd_panel));
 	if (!panel_data) {
@@ -813,9 +825,8 @@ static struct exynos5_fimd_panel *fill_panel_data()
 	panel_data->xres = panel_info.vl_col;
 	panel_data->yres = panel_info.vl_row;
 
-	params->panel_type = FIMD_DP_LCD;
-
-	if (params->panel_type == FIMD_DP_LCD) {
+	if (val) {
+		/* Display I/F is eDP */
 		panel_data->is_dp = 1;
 		panel_data->is_mipi = 0;
 		panel_data->fixvclk = 0;
@@ -828,6 +839,7 @@ static struct exynos5_fimd_panel *fill_panel_data()
 		panel_data->right_margin = 48;
 		panel_data->hsync = 32;
 	} else {
+		/* Display I/F is MIPI */
 		panel_data->is_dp = 0;
 		panel_data->is_mipi = 1;
 		panel_data->fixvclk = 1;
@@ -846,10 +858,19 @@ static struct exynos5_fimd_panel *fill_panel_data()
 void lcd_ctrl_init(void *lcdbase)
 {
 	struct exynos5_fimd_panel *panel_data;
+	int node;
+
+	/* Get the node from FDT for DP */
+	node = fdtdec_next_compatible(gd->fdt_blob, 0,
+					COMPAT_SAMSUNG_EXYNOS_DP);
+	if (node < 0) {
+		debug("EXYNOS_DP: No node for dp in device tree\n");
+		return -1;
+	}
 
 	pwm_init(0, MUX_DIV_2, 0);
 
-	panel_data = fill_panel_data();
+	panel_data = fill_panel_data(node);
 	if (!panel_data) {
 		debug("Unable to fill FIMD panel data\n");
 		return;
@@ -863,7 +884,7 @@ void lcd_ctrl_init(void *lcdbase)
 	fb_init(lcdbase, panel_data);
 
 	if (panel_data->is_dp) {
-		if (dp_main_init())
+		if (dp_main_init(node))
 			debug("DP initialization failed\n");
 	}
 }
