@@ -15,6 +15,12 @@
 
 uint32_t VbExIsShutdownRequested(void)
 {
+	/*
+	 * We will fetch power button and lid position from EC.  Until then,
+	 * this function complains a lot of misguiding error messages; so
+	 * comment them out for now!
+	 */
+#if 0
 	cros_gpio_t lidsw, pwrsw;
 
 	/* if lid is NOT OPEN */
@@ -31,5 +37,6 @@ uint32_t VbExIsShutdownRequested(void)
 	 * Either the gpios don't exist, or the lid is up and and power button
 	 * is not pressed. No-Shutdown-Requested.
 	 */
+#endif
 	return 0;
 }
