@@ -112,6 +112,27 @@ void set_ps_hold_ctrl(void)
 		exynos5_set_ps_hold_ctrl();
 }
 
+void power_reset(void)
+{
+	struct exynos5_power *power =
+		(struct exynos5_power *)samsung_get_base_power();
+
+	/* Clear inform1 so there's no chance we think we've got a wake reset */
+	power->inform1 = 0;
+
+	setbits_le32(&power->swreset, 1);
+}
+
+/* This function never returns */
+void power_shutdown(void)
+{
+	struct exynos5_power *power =
+		(struct exynos5_power *)samsung_get_base_power();
+
+	clrbits_le32(&power->ps_hold_control, EXYNOS_PS_HOLD_CONTROL_DATA_HIGH);
+
+	hang();
+}
 
 static void exynos5_set_xclkout(void)
 {
