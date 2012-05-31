@@ -874,6 +874,9 @@ void set_dp_phy_ctrl(unsigned int enable);
  */
 void set_ps_hold_ctrl(void);
 
+void power_reset(void);
+void power_shutdown(void);
+
 /* PMU_DEBUG bits [12:8] = 0x1000 selects XXTI clock source */
 #define PMU_DEBUG_XXTI                          0x1000
 /* Mask bit[12:8] for xxti clock selection */
