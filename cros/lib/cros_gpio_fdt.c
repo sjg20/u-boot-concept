@@ -111,7 +111,11 @@ int cros_gpio_fetch(enum cros_gpio_index index, cros_gpio_t *gpio)
 			udelay(10);
 	}
 
-	gpio->value = p ^ gpio_get_value(gpio->port);
+	/* Always turns on developer mode for now */
+	if (index == CROS_GPIO_DEVSW)
+		gpio->value = 1;
+	else
+		gpio->value = p ^ gpio_get_value(gpio->port);
 
 	return 0;
 }
