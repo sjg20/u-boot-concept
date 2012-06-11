@@ -108,5 +108,10 @@ VbError_t nvstorage_write_disk(const uint8_t *buf)
 	}
 
 	VbExFree(block_buf);
+
+	/* TODO(chromium-os:10250,10362): On Exynos we need this delay for
+	 * now.  See if we can remove after some more investigations. */
+	udelay(1000);
+
 	return VBERROR_SUCCESS;
 }
