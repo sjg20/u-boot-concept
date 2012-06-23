@@ -15,6 +15,7 @@
 /* TPS65090 register addresses */
 enum {
 	REG_CG_CTRL0 = 4,
+	REG_CG_CTRL5 = 9,
 	REG_CG_STATUS1 = 0xa,
 	REG_FET1_CTRL = 0x0f,
 	REG_FET2_CTRL,
@@ -248,6 +249,7 @@ int tps65090_get_status(void)
 
 int tps65090_init(void)
 {
+	unsigned char val;
 	int ret;
 
 	/* TODO(sjg): Move to fdt */
@@ -263,6 +265,14 @@ int tps65090_init(void)
 	if (ret)
 		debug("%s: failed to probe TPS65090 over I2C, returned %d\n",
 		      __func__, ret);
+
+	/* Hack to enable battery charging when discharged */
+	ret = tps65090_i2c_read(REG_CG_CTRL5, &val);
+	val |= 0x20;
+	ret = tps65090_i2c_write(REG_CG_CTRL5, val);
+	if (ret)
+		debug("%s: failed to set NOITERM, returned %d\n",
+			 __func__, ret);
 
 	return ret;
 }
