@@ -67,6 +67,7 @@ static const char * const compat_names[COMPAT_COUNT] = {
 	COMPAT(GOOGLE_BOARD_REV, "google,board-revision"),
 	COMPAT(NXP_PTN3460, "nxp,ptn3460"),
 	COMPAT(INFINEON_SLB9635_TPM, "infineon,slb9635-tpm"),
+	COMPAT(GOOGLE_ARBITRATOR, "google,arbitrator"),
 };
 
 const char *fdtdec_get_compatible(enum fdt_compat_id id)
