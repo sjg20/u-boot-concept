@@ -417,13 +417,24 @@ static int i2c_transfer(struct s3c24x0_i2c *i2c,
 	return result;
 }
 
+static struct s3c24x0_i2c_bus *get_bus(unsigned int bus_idx)
+{
+	if (bus_idx < i2c_busses)
+		return &i2c_bus[bus_idx];
+
+	debug("Undefined bus: %d\n", bus_idx);
+	return NULL;
+}
+
 int i2c_probe(uchar chip)
 {
-	struct s3c24x0_i2c *i2c;
+	struct s3c24x0_i2c_bus *i2c;
 	uchar buf[1];
 	int ret;
 
-	i2c = get_base_i2c();
+	i2c = get_bus(g_current_bus);
+	if (!i2c)
+		return -1;
 	buf[0] = 0;
 
 	/*
@@ -435,7 +446,7 @@ int i2c_probe(uchar chip)
 		debug("I2C cannot claim bus %d\n", i2c->bus_num);
 		return -1;
 	}
-	ret = i2c_transfer(i2c, I2C_READ, chip << 1, 0, 0, buf, 1);
+	ret = i2c_transfer(i2c->regs, I2C_READ, chip << 1, 0, 0, buf, 1);
 	board_i2c_release_bus(i2c->node);
 
 	return ret != I2C_OK;
@@ -443,7 +454,7 @@ int i2c_probe(uchar chip)
 
 int i2c_read(uchar chip, uint addr, int alen, uchar *buffer, int len)
 {
-	struct s3c24x0_i2c *i2c;
+	struct s3c24x0_i2c_bus *i2c;
 	uchar xaddr[4];
 	int ret;
 
@@ -475,15 +486,17 @@ int i2c_read(uchar chip, uint addr, int alen, uchar *buffer, int len)
 		chip |= ((addr >> (alen * 8)) &
 			 CONFIG_SYS_I2C_EEPROM_ADDR_OVERFLOW);
 #endif
-	i2c = get_base_i2c();
+	i2c = get_bus(g_current_bus);
+	if (!i2c)
+		return -1;
 	if (board_i2c_claim_bus(i2c->node)) {
 		debug("I2C cannot claim bus %d\n", i2c->bus_num);
 		return -1;
 	}
-	ret = i2c_transfer(i2c, I2C_READ, chip << 1, &xaddr[4 - alen], alen,
-			buffer, len);
+	ret = i2c_transfer(i2c->regs, I2C_READ, chip << 1, &xaddr[4 - alen],
+			   alen, buffer, len);
 	board_i2c_release_bus(i2c->node);
-	if (ret != 0) {
+	if (ret) {
 		debug("I2c read: failed %d\n", ret);
 		return 1;
 	}
@@ -492,7 +505,7 @@ int i2c_read(uchar chip, uint addr, int alen, uchar *buffer, int len)
 
 int i2c_write(uchar chip, uint addr, int alen, uchar *buffer, int len)
 {
-	struct s3c24x0_i2c *i2c;
+	struct s3c24x0_i2c_bus *i2c;
 	uchar xaddr[4];
 	int ret;
 
@@ -523,14 +536,15 @@ int i2c_write(uchar chip, uint addr, int alen, uchar *buffer, int len)
 		chip |= ((addr >> (alen * 8)) &
 			 CONFIG_SYS_I2C_EEPROM_ADDR_OVERFLOW);
 #endif
-	i2c = get_base_i2c();
+	i2c = get_bus(g_current_bus);
+	if (!i2c)
+		return -1;
 	if (board_i2c_claim_bus(i2c->node)) {
 		debug("I2C cannot claim bus %d\n", i2c->bus_num);
 		return -1;
 	}
-	ret = i2c_transfer
-		(i2c, I2C_WRITE, chip << 1, &xaddr[4 - alen], alen, buffer,
-		 len);
+	ret = i2c_transfer(i2c->regs, I2C_WRITE, chip << 1, &xaddr[4 - alen],
+			   alen, buffer, len);
 	board_i2c_release_bus(i2c->node);
 
 	return ret != 0;
@@ -560,15 +574,6 @@ void board_i2c_init(const void *blob)
 		bus->bus_num = i2c_busses++;
 		exynos_pinmux_config(bus->id, 0);
 	}
-}
-
-static struct s3c24x0_i2c_bus *get_bus(unsigned int bus_idx)
-{
-	if (bus_idx < i2c_busses)
-		return &i2c_bus[bus_idx];
-
-	debug("Undefined bus: %d\n", bus_idx);
-	return NULL;
 }
 
 int i2c_get_bus_num_fdt(int node)

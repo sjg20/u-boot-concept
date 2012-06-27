@@ -45,6 +45,18 @@ DECLARE_GLOBAL_DATA_PTR;
 struct local_info {
 	struct cros_ec_dev *cros_ec_dev;	/* Pointer to cros_ec device */
 	int cros_ec_err;			/* Error for cros_ec, 0 if ok */
+	int arbitrate_node;
+	struct fdt_gpio_state ap_claim;
+	struct fdt_gpio_state ec_claim;
+
+	/* Time between requesting bus and deciding that we have it */
+	unsigned slew_delay_us;
+
+	/* Time between retrying to see if the AP has released the bus */
+	unsigned wait_retry_ms;
+
+	/* Time to wait until the bus becomes free */
+	unsigned wait_free_ms;
 };
 
 static struct local_info local;
@@ -91,6 +103,55 @@ static int board_init_cros_ec_devices(const void *blob)
 	return 0;
 }
 
+static int board_i2c_arb_init(const void *blob)
+{
+	int node;
+
+	local.arbitrate_node = -1;
+	node = fdtdec_next_compatible(blob, 0, COMPAT_GOOGLE_ARBITRATOR);
+	node = -1; /* disable until GPIOs are working */
+	if (node < 0) {
+		debug("Cannot find bus arbitrator node\n");
+		return 0;
+	}
+
+	if (fdtdec_decode_gpio(blob, node, "google,ap-claim-gpios",
+				&local.ap_claim) ||
+			fdtdec_decode_gpio(blob, node, "google,ec-claim-gpios",
+				&local.ec_claim)) {
+		debug("Cannot find bus arbitrator GPIOs\n");
+		return 0;
+	}
+
+	if (fdtdec_setup_gpio(&local.ap_claim) ||
+			fdtdec_setup_gpio(&local.ec_claim)) {
+		debug("Cannot claim arbitration GPIOs\n");
+		return -1;
+	}
+
+	/* We are currently not claiming the bus */
+	gpio_direction_output(local.ap_claim.gpio, 1);
+	gpio_direction_input(local.ec_claim.gpio);
+
+	local.arbitrate_node = fdtdec_lookup_phandle(blob, node,
+						     "google,arbitrate-bus");
+	if (local.arbitrate_node < 0) {
+		debug("Cannot find bus to arbitrate\n");
+		return -1;
+	}
+
+	local.slew_delay_us = fdtdec_get_int(blob, node,
+					     "google,slew-delay-us", 10);
+	local.wait_retry_ms = fdtdec_get_int(blob, node,
+					     "google,wait-retry-us", 2000);
+	local.wait_free_ms = fdtdec_get_int(blob, node,
+					    "google,wait-free-us", 50000);
+	local.wait_free_ms = DIV_ROUND_UP(local.wait_free_ms, 1000);
+	debug("Bus arbitration ready on fdt node %d\n", local.arbitrate_node);
+
+	return 0;
+}
+
 int board_init(void)
 {
 	gd->bd->bi_boot_params = (PHYS_SDRAM_1 + 0x100UL);
@@ -99,6 +160,9 @@ int board_init(void)
 #endif
 
 	if (board_init_cros_ec_devices(gd->fdt_blob))
+		return -1;
+
+	if (board_i2c_arb_init(gd->fdt_blob))
 		return -1;
 
 #ifdef CONFIG_USB_EHCI_EXYNOS
@@ -693,6 +757,59 @@ int ft_system_setup(void *blob, bd_t *bd)
 __weak int ft_board_setup(void *blob, bd_t *bd)
 {
 	return ft_system_setup(blob, bd);
+}
+
+void board_i2c_release_bus(int node)
+{
+	/* If this is us, release the bus */
+	if (node == local.arbitrate_node) {
+		gpio_set_value(local.ap_claim.gpio, 1);
+		udelay(local.slew_delay_us);
+	}
+}
+
+int board_i2c_claim_bus(int node)
+{
+	unsigned start;
+
+	if (node != local.arbitrate_node)
+		return 0;
+
+// 	putc('c');
+
+	/* Start a round of trying to claim the bus */
+	start = get_timer(0);
+	do {
+		unsigned start_retry;
+		int waiting = 0;
+
+		/* Indicate that we want to claim the bus */
+		gpio_set_value(local.ap_claim.gpio, 0);
+		udelay(local.slew_delay_us);
+
+		/* Wait for the EC to release it */
+		start_retry = get_timer(0);
+		while (get_timer(start_retry) < local.wait_retry_ms) {
+			if (gpio_get_value(local.ec_claim.gpio)) {
+				/* We got it, so return */
+				return 0;
+			}
+
+			if (!waiting) {
+				waiting = 1;
+			}
+		}
+
+		/* It didn't release, so give up, wait, and try again */
+		gpio_set_value(local.ap_claim.gpio, 1);
+
+		mdelay(local.wait_retry_ms);
+	} while (get_timer(start) < local.wait_free_ms);
+
+	/* Give up, release our claim */
+	printf("I2C: Could not claim bus, timeout %lu\n", get_timer(start));
+
+	return -1;
 }
 
 #ifdef CONFIG_BOARD_LATE_INIT
