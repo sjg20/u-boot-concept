@@ -421,6 +421,7 @@ int i2c_probe(uchar chip)
 {
 	struct s3c24x0_i2c *i2c;
 	uchar buf[1];
+	int ret;
 
 	i2c = get_base_i2c();
 	buf[0] = 0;
@@ -430,7 +431,14 @@ int i2c_probe(uchar chip)
 	 * address was <ACK>ed (i.e. there was a chip at that address which
 	 * drove the data line low).
 	 */
-	return i2c_transfer(i2c, I2C_READ, chip << 1, 0, 0, buf, 1) != I2C_OK;
+	if (board_i2c_claim_bus(i2c->node)) {
+		debug("I2C cannot claim bus %d\n", i2c->bus_num);
+		return -1;
+	}
+	ret = i2c_transfer(i2c, I2C_READ, chip << 1, 0, 0, buf, 1);
+	board_i2c_release_bus(i2c->node);
+
+	return ret != I2C_OK;
 }
 
 int i2c_read(uchar chip, uint addr, int alen, uchar *buffer, int len)
@@ -468,8 +476,13 @@ int i2c_read(uchar chip, uint addr, int alen, uchar *buffer, int len)
 			 CONFIG_SYS_I2C_EEPROM_ADDR_OVERFLOW);
 #endif
 	i2c = get_base_i2c();
+	if (board_i2c_claim_bus(i2c->node)) {
+		debug("I2C cannot claim bus %d\n", i2c->bus_num);
+		return -1;
+	}
 	ret = i2c_transfer(i2c, I2C_READ, chip << 1, &xaddr[4 - alen], alen,
 			buffer, len);
+	board_i2c_release_bus(i2c->node);
 	if (ret != 0) {
 		debug("I2c read: failed %d\n", ret);
 		return 1;
@@ -481,6 +494,7 @@ int i2c_write(uchar chip, uint addr, int alen, uchar *buffer, int len)
 {
 	struct s3c24x0_i2c *i2c;
 	uchar xaddr[4];
+	int ret;
 
 	if (alen > 4) {
 		debug("I2C write: addr len %d not supported\n", alen);
@@ -510,9 +524,16 @@ int i2c_write(uchar chip, uint addr, int alen, uchar *buffer, int len)
 			 CONFIG_SYS_I2C_EEPROM_ADDR_OVERFLOW);
 #endif
 	i2c = get_base_i2c();
-	return (i2c_transfer
+	if (board_i2c_claim_bus(i2c->node)) {
+		debug("I2C cannot claim bus %d\n", i2c->bus_num);
+		return -1;
+	}
+	ret = i2c_transfer
 		(i2c, I2C_WRITE, chip << 1, &xaddr[4 - alen], alen, buffer,
-		 len) != 0);
+		 len);
+	board_i2c_release_bus(i2c->node);
+
+	return ret != 0;
 }
 
 #ifdef CONFIG_OF_CONTROL
