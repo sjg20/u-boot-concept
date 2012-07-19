@@ -32,6 +32,7 @@ LIB	= $(obj)lib$(BOARD).o
 
 COBJS	:= $(BOARD).o
 COBJS	+= ../../nvidia/common/board.o
+COBJS	+= ../../nvidia/common/pcie.o
 
 SRCS	:= $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS))

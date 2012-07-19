@@ -22,6 +22,7 @@
  */
 
 #include <common.h>
+#include <netdev.h>
 #include <i2c.h>
 #include <asm/io.h>
 #include <asm/arch/tegra2.h>
@@ -75,4 +76,17 @@ int board_mmc_init(bd_t *bd)
 	tegra2_mmc_init(3, 4, -1, -1);
 
 	return 0;
+}
+
+int board_eth_init(bd_t *bis)
+{
+	return pci_eth_init(bis);
+}
+
+extern int tegra_pcie_init(int init_port0, int init_port1);
+void pci_init_board(void)
+{
+	pinmux_set_func(PINGRP_GPV, PMUX_FUNC_PCIE);
+	pinmux_tristate_disable(PINGRP_GPV);
+	tegra_pcie_init(1, 0);
 }
