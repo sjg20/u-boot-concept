@@ -46,6 +46,13 @@ void ehci_powerup_fixup(uint32_t *status_reg, uint32_t *reg)
 		*reg |= EHCI_PS_CSC;
 }
 
+static inline int ehci_get_port() {
+	char *env = getenv("portnum");
+	unsigned portnum = 0;
+	if (env)
+		portnum = simple_strtoul(env, NULL, 10);
+	return portnum;
+}
 /*
  * Create the appropriate control structures to manage
  * a new EHCI host controller.
@@ -53,12 +60,12 @@ void ehci_powerup_fixup(uint32_t *status_reg, uint32_t *reg)
 int ehci_hcd_init(void)
 {
 	u32 our_hccr, our_hcor;
-
+	unsigned portnum = ehci_get_port();
 	/*
 	 * Select the first port, as we don't have a way of selecting others
 	 * yet
 	 */
-	if (tegrausb_start_port(0, &our_hccr, &our_hcor))
+	if (tegrausb_start_port(portnum, &our_hccr, &our_hcor))
 		return -1;
 
 	hccr = (struct ehci_hccr *)our_hccr;

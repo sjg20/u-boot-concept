@@ -517,6 +517,10 @@ int do_usb(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		bootstage_mark_name(BOOTSTAGE_ID_USB_START, "usb_start");
 		usb_stop();
 		printf("(Re)start USB...\n");
+		if (argc == 3) {
+			int portnum = (int)simple_strtoul(argv[2], NULL, 10);
+			setenv("portnum",argv[2]);
+		}
 		i = usb_init();
 		if (i >= 0) {
 #ifdef CONFIG_USB_STORAGE
@@ -703,7 +707,7 @@ int do_usb(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 U_BOOT_CMD(
 	usb,	5,	1,	do_usb,
 	"USB sub-system",
-	"start - start (scan) USB controller\n"
+	"start [0/1]- start (scan) USB controller\n"
 	"usb reset - reset (rescan) USB controller\n"
 	"usb stop [f] - stop USB [f]=force stop\n"
 	"usb tree - show USB device tree\n"
