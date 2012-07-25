@@ -26,6 +26,7 @@
 #include <i2c.h>
 #include <asm/io.h>
 #include <asm/arch/tegra2.h>
+#include <asm/arch/gpio.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/funcmux.h>
 #include <asm/arch/pinmux.h>
@@ -89,4 +90,34 @@ void pci_init_board(void)
 	pinmux_set_func(PINGRP_GPV, PMUX_FUNC_PCIE);
 	pinmux_tristate_disable(PINGRP_GPV);
 	tegra_pcie_init(1, 0);
+}
+
+static struct gpio_desc {
+	unsigned int gpio;
+	unsigned int pin_group;
+	unsigned int value;
+	char     name[16];
+} gpios[] = {
+	{GPIO_PV2, PINGRP_UAC,  1, "USB1_MUX_SEL"},
+	{GPIO_PV3, PINGRP_UAC,  0, "USB1_VBUS_EN"},
+	{GPIO_PA3, PINGRP_DAP2, 1, "SATA_nRST"}
+};
+
+static inline void board_gpio_set(struct gpio_desc *gpio_desc)
+{
+	pinmux_tristate_disable(gpio_desc->pin_group);
+	if (gpio_request(gpio_desc->gpio, gpio_desc->name)) {
+		printf("gpio: requesting pin %u failed\n", gpio_desc->gpio);
+		return;
+	}
+	debug("gpio: setting pin %u %d (%s)\n", gpio_desc->gpio, gpio_desc->value, gpio_desc->name);
+	gpio_direction_output(gpio_desc->gpio, gpio_desc->value);
+	gpio_free(gpio_desc->gpio);
+}
+
+void pin_mux_usb(void)
+{
+	int i = 0 ;
+	for (i = 0 ; i < (sizeof(gpios)/sizeof(struct gpio_desc)) ; i++)
+		board_gpio_set(&gpios[i]);
 }
