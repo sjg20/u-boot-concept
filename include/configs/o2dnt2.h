@@ -155,13 +155,13 @@
 #define	CONFIG_EXTRA_ENV_SETTINGS					\
 	"netdev=eth0\0"							\
 	"nfsargs=setenv bootargs root=/dev/nfs rw "			\
-		"nfsroot=$(serverip):$(rootpath)\0"			\
+		"nfsroot=${serverip}:${rootpath}\0"			\
 	"ramargs=setenv bootargs root=/dev/ram rw\0"			\
-	"addip=setenv bootargs $(bootargs) "				\
-		"ip=$(ipaddr):$(serverip):$(gatewayip):$(netmask)"	\
-		":$(hostname):$(netdev):off panic=1\0"			\
+	"addip=setenv bootargs ${bootargs} "				\
+		"ip=${ipaddr}:${serverip}:${gatewayip}:${netmask}"	\
+		":${hostname}:${netdev}:off panic=1\0"			\
 	"flash_nfs=run nfsargs addip;"					\
-		"bootm $(kernel_addr)\0"				\
+		"bootm ${kernel_addr}\0"				\
 	"rootpath=/opt/eldk/ppc_6xx\0"					\
 	"bootfile=o2dnt2/uImage\0"                                      \
 	"ethaddr=00:02:01:20:a2:ed\0"                                   \
@@ -172,41 +172,41 @@
 	"uboname=o2dnt2/u-boot.bin\0"                                   \
 	"ubobot=fc000000\0"                                             \
 	"ubotop=fc03ffff\0"                                             \
-	"progubo=tftp 200000 $(uboname);"                               \
-		"protect off $(ubobot) $(ubotop);"                      \
-		"erase $(ubobot) $(ubotop);"                            \
-		"cp.b $(fileaddr) $(ubobot) $(filesize)\0"              \
+	"progubo=tftp 200000 ${uboname};"                               \
+		"protect off ${ubobot} ${ubotop};"                      \
+		"erase ${ubobot} ${ubotop};"                            \
+		"cp.b ${fileaddr} ${ubobot} ${filesize}\0"              \
 	"linuxname=/O2DNT2/uLinux_O2DNT2_act\0"                         \
 	"linbot=fc060000\0"                                             \
 	"lintop=fc15ffff\0"                                             \
-	"progLinux=tftp 200000 $(linuxname);erase $(linbot) $(lintop);" \
-		"cp.b $(fileaddr) $(linbot) $(filesize)\0"              \
+	"progLinux=tftp 200000 ${linuxname};erase ${linbot} ${lintop};" \
+		"cp.b ${fileaddr} ${linbot} ${filesize}\0"              \
 	"ramname=/O2DNT2/uRamdisk_O2DNT2_act\0"                         \
 	"rambot=fc160000\0"                                             \
 	"ramtop=fc55ffff\0"                                             \
-	"progRam=tftp 200000 $(ramname);erase $(rambot) $(ramtop);"     \
-		"cp.b $(fileaddr) $(rambot) $(filesize)\0"              \
+	"progRam=tftp 200000 ${ramname};erase ${rambot} ${ramtop};"     \
+		"cp.b ${fileaddr} ${rambot} ${filesize}\0"              \
 	"jffname=/O2DNT2/uJFFS2_O2DNT2_act\0"                           \
 	"jffbot=fc560000\0"                                             \
 	"jfftop=fce5ffff\0"                                             \
-	"progJff=tftp 200000 $(jffname);erase $(jffbot) $(jfftop);"     \
-		"cp.b $(fileaddr) $(jffbot) $(filesize)\0"              \
+	"progJff=tftp 200000 ${jffname};erase ${jffbot} ${jfftop};"     \
+		"cp.b ${fileaddr} ${jffbot} ${filesize}\0"              \
 	"calname=/O2DNT2/uCal_O2DNT2_act\0"                             \
 	"calbot=fce60000\0"                                             \
 	"caltop=fcffffff\0"                                             \
-	"progCal=tftp 200000 $(calname);erase $(calbot) $(caltop);"     \
-		"cp.b $(fileaddr) $(calbot) $(filesize)\0"              \
+	"progCal=tftp 200000 ${calname};erase ${calbot} ${caltop};"     \
+		"cp.b ${fileaddr} ${calbot} ${filesize}\0"              \
 	"IOpin=0x64\0"                                                  \
-	"master=mw f0000b00 0x8005A006;mw f0000b0c $(IOpin);"           \
-		"mw f0000b04 $(IOpin);mw f0000b10 0x20\0"               \
+	"master=mw f0000b00 0x8005A006;mw f0000b0c ${IOpin};"           \
+		"mw f0000b04 ${IOpin};mw f0000b10 0x20\0"               \
 	"memlimit=mem=126M\0"                                           \
 	"memtest=mtest 0x00100000 0x07f00000 0 1\0"                     \
-	"addmem=setenv bootargs $(bootargs) $(memlimit)\0"              \
+	"addmem=setenv bootargs ${bootargs} ${memlimit}\0"              \
 	"ramdisk_addr=0xfc160000\0"                                     \
 	"kernel_addr=0xfc060000\0"                                      \
 	"flash_self=run ramargs addip addmem;"                          \
-		"bootm $(kernel_addr) $(ramdisk_addr)\0"                \
-	"net_nfs=tftp 200000 $(bootfile);"                              \
+		"bootm ${kernel_addr} ${ramdisk_addr}\0"                \
+	"net_nfs=tftp 200000 ${bootfile};"                              \
 		"run nfsargs addip addmem;bootm\0"                      \
 	"initrd_high=0x03e00000\0"                                      \
 	"unlock=yes\0"                                                  \
