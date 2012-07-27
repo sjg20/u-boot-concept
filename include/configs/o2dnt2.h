@@ -214,27 +214,20 @@
 
 #define CONFIG_BOOTCOMMAND	"run post"
 
-#if 0
-#if defined(CONFIG_MPC5200)
 /*
  * IPB Bus clocking configuration.
  */
-#undef CFG_IPBSPEED_133			/* define for 133MHz speed */
-/* HACK */
-#define CFG_IPBSPEED_133	1
+#define CONFIG_SYS_IPBCLK_EQUALS_XLBCLK		/* define for 133MHz speed */
 
-#if defined(CFG_IPBSPEED_133)
+#if defined(CONFIG_SYS_IPBCLK_EQUALS_XLBCLK)
 /*
  * PCI Bus clocking configuration
  *
  * Actually a PCI Clock of 66 MHz is only set (in cpu_init.c) if
- * CFG_IPBSPEED_133 is defined. This is because a PCI Clock of 66 MHz yet hasn't
- * been tested with a IPB Bus Clock of 66 MHz.
+ * CONFIG_SYS_IPBCLK_EQUALS_XLBCLK is defined. This is because a PCI Clock
+ * of 66 MHz yet hasn't been tested with a IPB Bus Clock of 66 MHz.
  */
-#define CFG_PCISPEED_66			/* define for 66MHz speed */
-#endif
-
-#endif
+#define CONFIG_SYS_PCICLK_EQUALS_IPBCLK_DIV2	/* define for 66MHz speed */
 #endif
 
 /*
