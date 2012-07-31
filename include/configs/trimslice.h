@@ -113,6 +113,9 @@
 #define CONFIG_CMD_NET
 #define CONFIG_CMD_DHCP
 
+/* rtl8169 recv timeout issue solution */
+#define NUM_RX_DESC 1
+
 #include "tegra2-common-post.h"
 
 #endif /* __CONFIG_H */
