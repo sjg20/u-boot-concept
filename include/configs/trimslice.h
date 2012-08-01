@@ -118,4 +118,54 @@
 
 #include "tegra2-common-post.h"
 
+#define TEGRA2_SYSMEM			"mem=384M@0M nvmem=128M@384M mem=512M@512M"
+
+/* Environment information */
+#define CONFIG_DEFAULT_ENV_SETTINGS \
+	"console=ttyS0,115200n8\0" \
+	"mem=" TEGRA2_SYSMEM "\0" \
+	"smpflag=smp\0" \
+	"videospec=tegrafb\0"
+
+#define CONFIG_STD_DEVICES_SETTINGS	"stdin=serial,usbkbd\0" \
+					"stdout=serial,lcd\0" \
+					"stderr=serial,lcd\0"
+
+#define CONFIG_NET_ENV_SETTINGS "autoload=n\0"
+
+#undef CONFIG_EXTRA_ENV_SETTINGS
+
+#define CONFIG_EXTRA_ENV_SETTINGS   \
+	CONFIG_STD_DEVICES_SETTINGS \
+	CONFIG_DEFAULT_ENV_SETTINGS \
+	CONFIG_NET_ENV_SETTINGS \
+	"boot_file=boot.scr\0" \
+	"boot_file_load_cmd=source ${loadaddr};\0" \
+	"start_bus=${interface} ${interface_init_cmd} ${bus}; \0" \
+	"scan_device=for i in / /boot/; do " \
+		      "for j in fat ext2; do " \
+			  "setenv prefix $i;" \
+			  "setenv fs $j;" \
+			  "echo Scanning ${fs} ${interface} ${device} on prefix ${prefix} ...;" \
+			  "if ${fs}load ${interface} ${device} ${loadaddr} ${prefix}${boot_file}; then " \
+			      "echo ${boot_file} found! Executing ...;" \
+			      "run boot_file_load_cmd;" \
+			    "fi;" \
+		      "done;" \
+		     "done;\0" \
+	"scan_boot=setenv interface mmc; setenv interface_init_cmd dev; setenv device 0; " \
+		    "echo Scanning MMC card ...; setenv bus 0; run start_bus; run scan_device; " \
+		    "setenv interface usb; setenv interface_init_cmd start; setenv device 0; " \
+		    "echo Scanning USB key ...; setenv bus 0; run start_bus; run scan_device; " \
+		    "setenv interface mmc; setenv interface_init_cmd dev; setenv device 1; " \
+		    "echo Scanning microSD card ...; setenv bus 1; run start_bus; run scan_device; " \
+		    "setenv interface usb; setenv interface_init_cmd start; setenv device 0; " \
+		    "echo Scanning SSD ...; setenv bus 1; run start_bus; run scan_device;\0"
+
+#undef CONFIG_BOOTCOMMAND
+#undef CONFIG_BOOTARGS
+
+#define CONFIG_BOOTARGS "mem=384M@0M mem=512M@512M nvmem=128M@384M vmalloc=248M video=tegrafb console=ttyS0,115200n8 rw root=/dev/sda1 nohdparm rootwait"
+#define CONFIG_BOOTCOMMAND "run scan_boot"
+
 #endif /* __CONFIG_H */
