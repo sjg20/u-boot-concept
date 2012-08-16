@@ -366,6 +366,7 @@
 
 /* TODO: Remove the second 'net_boot'. See crosbug/p/11152 */
 #define CONFIG_BOOTCOMMAND \
+	"vboot_load_oprom; "\
 	"netboot_acpi; "\
 	"run set_netbootargs; "\
 	"usb start; "\
