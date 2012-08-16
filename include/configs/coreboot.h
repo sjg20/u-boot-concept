@@ -361,12 +361,11 @@
 
 /* Boot options */
 
+#define CONFIG_ZERO_BOOTDELAY_CHECK
 #define CONFIG_BOOTDELAY     0
 #define CONFIG_BOOTARGS		""
 
 #ifdef CONFIG_FACTORY_IMAGE
-#undef CONFIG_ZERO_BOOTDELAY_CHECK
-
 #define CONFIG_BOOTCOMMAND \
 	"vboot_load_oprom; "\
 	"netboot_acpi; "\
@@ -402,7 +401,6 @@
 			"zboot 3000000; "\
 			"fi\0"
 #else
-#define CONFIG_ZERO_BOOTDELAY_CHECK
 #define CONFIG_BOOTCOMMAND \
 	"run set_bootargs; "\
 	"setenv bootargs ${bootargs} console=uart8250,mmio,0xe0401000,115200n8; "\
