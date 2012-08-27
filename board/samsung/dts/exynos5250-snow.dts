@@ -56,6 +56,14 @@
 		};
 	};
 
+	chrome-ec {
+		compatible = "google,chrome-ec";
+		flash@8000000 {
+			reg = <0x08000000 0x20000>;
+			erase-value = <0xff>;
+		};
+	};
+
 	dp@145b0000 {
 		samsung,interface = "edp";
 	};
