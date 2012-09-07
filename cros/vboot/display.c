@@ -84,25 +84,49 @@ VbError_t VbExDisplayBacklight(uint8_t enable)
 }
 
 #ifdef HAVE_DISPLAY
+/**
+ * Write out a line of characters to the display
+ *
+ * @param ch	Character to output
+ * @param len	Number of characters to output
+ */
+static void out_line(int ch, int len)
+{
+	char str[2];
+	int i;
+
+	str[0] = ch;
+	str[1] = '\0';
+	for (i = 0; i < len; i++)
+		display_callbacks_.dc_puts(str);
+}
+
 /* Print the message on the center of LCD. */
 static void print_on_center(const char *message)
 {
-	int i, room_before_text;
-	int screen_size = display_callbacks_.dc_get_screen_columns() *
-		display_callbacks_.dc_get_screen_rows();
-	int text_length = strlen(message);
-
-	room_before_text = (screen_size - text_length) / 2;
+	int cols = display_callbacks_.dc_get_screen_columns();
+	int rows = display_callbacks_.dc_get_screen_rows();
+	int row, len;
 
 	display_callbacks_.dc_position_cursor(0, 0);
 
-	for (i = 0; i < room_before_text; i++)
-		display_callbacks_.dc_puts(".");
+	for (row = 0; row < (rows - 4) / 2; row++)
+		out_line('.', cols);
+	out_line(' ', cols);
+	out_line(' ', cols);
 
+	/* Center the message on its line */
+	len = strlen(message);
+	out_line(' ', (cols - len) / 2);
 	display_callbacks_.dc_puts(message);
+	out_line(' ', (cols - len + 1) / 2);
 
-	for (i = i + text_length; i < screen_size; i++)
-		display_callbacks_.dc_puts(".");
+	out_line(' ', cols);
+	out_line(' ', cols);
+
+	/* Don't write to the last row, since that will cause a scroll */
+	for (row += 5; row < rows - 1; row++)
+		out_line('.', cols);
 }
 #endif
 
@@ -114,31 +138,34 @@ VbError_t VbExDisplayScreen(uint32_t screen_type)
 	 * when GBB does not contain a full set of bitmaps.
 	 */
 	switch (screen_type) {
-		case VB_SCREEN_BLANK:
-			/* clear the screen */
-			display_clear();
-			break;
-		case VB_SCREEN_DEVELOPER_WARNING:
-			print_on_center("developer mode warning");
-			break;
-		case VB_SCREEN_DEVELOPER_EGG:
-			print_on_center("easter egg");
-			break;
-		case VB_SCREEN_RECOVERY_REMOVE:
-			print_on_center("remove inserted devices");
-			break;
-		case VB_SCREEN_RECOVERY_INSERT:
-			print_on_center("insert recovery image");
-			break;
-		case VB_SCREEN_RECOVERY_NO_GOOD:
-			print_on_center("insert image invalid");
-			break;
-		default:
-			VBDEBUG("Not a valid screen type: %08x.\n",
-					screen_type);
-			return 1;
+	case VB_SCREEN_BLANK:
+		/* clear the screen */
+		display_clear();
+		break;
+	case VB_SCREEN_DEVELOPER_WARNING:
+		msg = "developer mode warning";
+		break;
+	case VB_SCREEN_DEVELOPER_EGG:
+		msg = "easter egg";
+		break;
+	case VB_SCREEN_RECOVERY_REMOVE:
+		msg = "remove inserted devices";
+		break;
+	case VB_SCREEN_RECOVERY_INSERT:
+		msg = "insert recovery image";
+		break;
+	case VB_SCREEN_RECOVERY_NO_GOOD:
+		msg = "insert image invalid";
+		break;
+	case VB_SCREEN_WAIT:
+		msg = "wait for ec update";
+		break;
+	default:
+		VBDEBUG("Not a valid screen type: %08x.\n",
+			screen_type);
+		return VBERROR_INVALID_SCREEN_INDEX;
 	}
-#endif
+
 	return VBERROR_SUCCESS;
 }
 
