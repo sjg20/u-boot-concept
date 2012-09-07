@@ -71,4 +71,11 @@ int display_clear(void);
 int cros_test_swsync(struct mkbp_dev *dev, int region_mask, int force,
 		     int verify);
 
+/**
+ * Ensure that bitmaps are loaded into our gbb area
+ *
+ * @return 0 if ok, -1 on error
+ */
+int cros_cboot_twostop_read_bmp_block(void);
+
 #endif /* CHROMEOS_COMMON_H_ */
