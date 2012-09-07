@@ -140,6 +140,8 @@ static void print_on_center(const char *message)
 VbError_t VbExDisplayScreen(uint32_t screen_type)
 {
 #ifdef HAVE_DISPLAY
+	const char *msg;
+
 	/*
 	 * Show the debug messages for development. It is a backup method
 	 * when GBB does not contain a full set of bitmaps.
@@ -173,6 +175,9 @@ VbError_t VbExDisplayScreen(uint32_t screen_type)
 		return VBERROR_INVALID_SCREEN_INDEX;
 	}
 
+	if (msg != NULL)
+		print_on_center(msg);
+#endif
 	return VBERROR_SUCCESS;
 }
 
