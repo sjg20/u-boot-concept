@@ -140,7 +140,7 @@ static void print_on_center(const char *message)
 VbError_t VbExDisplayScreen(uint32_t screen_type)
 {
 #ifdef HAVE_DISPLAY
-	const char *msg;
+	const char *msg = NULL;
 
 	/*
 	 * Show the debug messages for development. It is a backup method
