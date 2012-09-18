@@ -886,7 +886,6 @@ void clock_gate(void)
 					  CLK_PCM2_MASK |
 					  CLK_PCM1_MASK |
 					  CLK_I2S2_MASK |
-					  CLK_I2S1_MASK |
 					  CLK_SPI2_MASK |
 					  CLK_SPI0_MASK);
 
