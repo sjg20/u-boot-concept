@@ -94,6 +94,7 @@ enum {
 	TWOSTOP_SELECT_COMMAND_LINE
 };
 
+static struct twostop_fmap fmap;
 
 #if defined(VBOOT_DEBUG) || defined(DEBUG)
 #define MY_ENUM_TO_STR(a) #a
@@ -707,7 +708,8 @@ twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
 		oprom_matters = 1;
 	}
 
-	if (cros_fdtdec_flashmap(gd->fdt_blob, fmap)) {
+	if (!fmap->readonly.fmap.length &&
+	    cros_fdtdec_flashmap(gd->fdt_blob, fmap)) {
 		VBDEBUG("failed to decode fmap\n");
 		return -1;
 	}
@@ -896,7 +898,6 @@ static int setup_gbb_and_cdata(void **gbb, size_t *gbb_size,
 static uint32_t
 twostop_boot(int stop_at_select)
 {
-	struct twostop_fmap fmap;
 	firmware_storage_t file;
 	crossystem_data_t *cdata = NULL;
 	void *gbb;
@@ -971,12 +972,12 @@ twostop_boot(int stop_at_select)
 static uint32_t
 twostop_readwrite_main_firmware(void)
 {
-	struct twostop_fmap fmap;
 	crossystem_data_t *cdata;
 	void *gbb;
 	size_t gbb_size;
 
-	if (cros_fdtdec_flashmap(gd->fdt_blob, &fmap)) {
+	if (!fmap.readonly.fmap.length &&
+	    cros_fdtdec_flashmap(gd->fdt_blob, &fmap)) {
 		VBDEBUG("failed to decode fmap\n");
 		return TWOSTOP_SELECT_ERROR;
 	}
@@ -1012,13 +1013,17 @@ VbError_t VbExProtectFlash(enum VbProtectFlash_t region)
 #ifdef CONFIG_CAN_PROTECT_RW_FLASH
 	switch (region) {
 	case VBPROTECT_RW_A:
-		VBDEBUG("%s( VBPROTECT_RW_A )\n", __func__);
+		VBDEBUG("%s( VBPROTECT_RW_A ) => 0x%08x 0x%x\n", __func__,
+			fmap.readwrite_a.all.offset,
+			fmap.readwrite_a.all.length);
 		break;
 	case VBPROTECT_RW_B:
-		VBDEBUG("%s( VBPROTECT_RW_B )\n", __func__);
+		VBDEBUG("%s( VBPROTECT_RW_B ) => 0x%08x 0x%x\n", __func__,
+			fmap.readwrite_b.all.offset,
+			fmap.readwrite_b.all.length);
 		break;
 	case VBPROTECT_RW_DEVKEY:
-		VBDEBUG("%s( VBPROTECT_RW_DEVKEY )\n", __func__);
+		VBDEBUG("%s( VBPROTECT_RW_DEVKEY ) => HEY\n", __func__);
 		break;
 	default:
 		VBDEBUG("%s( %d ??? )\n", __func__, region);
