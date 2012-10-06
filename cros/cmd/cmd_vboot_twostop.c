@@ -1091,11 +1091,21 @@ do_vboot_twostop(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	 * it simply as:
 	 *   while (tstc())
 	 *     getc();
+	 *
+	 * TODO(chrome-os-partner:14430): It is more sad that if kernel has
+	 * crashed, U-Boot could be stuck in an infinite loop for cleaning
+	 * EC buffer, probably because EC is in some strange state.  So add
+	 * an (arbitrary chosen) maximum of 32 to the cleaning loop.
 	 */
+	int retries;
 	struct mkbp_dev *dev = board_get_mkbp_dev();
-	while (mkbp_interrupt_pending(dev)) {
-		if (tstc())
-			getc();
+	for (retries = 0; retries < 32; retries++) {
+		if (mkbp_interrupt_pending(dev)) {
+			if (tstc())
+				getc();
+		} else {
+			break;
+		}
 	}
 #endif /* CONFIG_MKBP */
 
