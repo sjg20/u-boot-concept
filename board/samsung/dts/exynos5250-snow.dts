@@ -20,6 +20,16 @@
 	compatible = "google,snow", "google,daisy", "samsung,smdk5250",
 		   "samsung,exynos5250";
 
+	/* Enable RW firmware */
+	flash@0 {
+		rw-a-vblock {
+			preamble-flags = <0>;
+		};
+		rw-b-vblock {
+			preamble-flags = <0>;
+		};
+	};
+
 	board-rev {
 		compatible = "google,board-revision";
 		google,board-rev-gpios = <&gpio 88 0>, <&gpio 89 0>;
