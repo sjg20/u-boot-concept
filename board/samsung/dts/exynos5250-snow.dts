@@ -25,6 +25,11 @@
 		google,board-rev-gpios = <&gpio 88 0>, <&gpio 89 0>;
 	};
 
+	/* Pre-init the eMMC */
+	mshci@12200000 {
+		samsung,pre-init;
+	};
+
 	i2c-arbitrator {
 		compatible = "google,arbitrator";
 		google,ap-claim-gpios = <&gpio 0xd3 0>;	/* F03 */
