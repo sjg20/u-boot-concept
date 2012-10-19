@@ -31,6 +31,10 @@
 #define CONFIG_BOOTSTAGE_USER_COUNT	20
 #endif
 
+#ifndef CONFIG_BOOTSTAGE_STASH_COUNT
+#define CONFIG_BOOTSTAGE_STASH_COUNT	20
+#endif
+
 /* Flags for each bootstage record */
 enum bootstage_flags {
 	BOOTSTAGEF_ERROR	= 1 << 0,	/* Error record */
@@ -210,7 +214,8 @@ enum bootstage_id {
 
 	/* a few spare for the user, from here */
 	BOOTSTAGE_ID_USER,
-	BOOTSTAGE_ID_COUNT = BOOTSTAGE_ID_USER + CONFIG_BOOTSTAGE_USER_COUNT,
+	BOOTSTAGE_ID_COUNT = BOOTSTAGE_ID_USER + CONFIG_BOOTSTAGE_USER_COUNT
+			+ CONFIG_BOOTSTAGE_STASH_COUNT,
 	BOOTSTAGE_ID_ALLOC,
 };
 

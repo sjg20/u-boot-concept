@@ -356,6 +356,7 @@ int bootstage_unstash(void *base, int size)
 	struct bootstage_record *rec;
 	char *ptr = base, *end = ptr + size;
 	uint rec_size;
+	int unstash_id = BOOTSTAGE_ID_USER + CONFIG_BOOTSTAGE_USER_COUNT;
 	int id;
 
 	if (size == -1)
@@ -389,10 +390,10 @@ int bootstage_unstash(void *base, int size)
 		return -1;
 	}
 
-	if (next_id + hdr->count > BOOTSTAGE_ID_COUNT) {
+	if (unstash_id + hdr->count > BOOTSTAGE_ID_COUNT) {
 		debug("%s: Bootstage has %d records, we have space for %d\n"
 			"- please increase CONFIG_BOOTSTAGE_USER_COUNT\n",
-		      __func__, hdr->count, BOOTSTAGE_ID_COUNT - next_id);
+		      __func__, hdr->count, BOOTSTAGE_ID_COUNT - unstash_id);
 		return -1;
 	}
 
@@ -400,11 +401,11 @@ int bootstage_unstash(void *base, int size)
 
 	/* Read the records */
 	rec_size = hdr->count * sizeof(*record);
-	memcpy(record + next_id, ptr, rec_size);
+	memcpy(record + unstash_id, ptr, rec_size);
 
 	/* Read the name strings */
 	ptr += rec_size;
-	for (rec = record + next_id, id = 0; id < hdr->count; id++, rec++) {
+	for (rec = record + unstash_id, id = 0; id < hdr->count; id++, rec++) {
 		rec->name = ptr;
 
 		/* Assume no data corruption here */
@@ -412,7 +413,6 @@ int bootstage_unstash(void *base, int size)
 	}
 
 	/* Mark the records as read */
-	next_id += hdr->count;
 	printf("Unstashed %d records\n", hdr->count);
 
 	return 0;
