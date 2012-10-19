@@ -46,6 +46,7 @@ struct fdt_mshci {
 	struct s5p_mshci *reg;	/* address of registers in physical memory */
 	int bus_width;		/* bus width  */
 	int removable;		/* removable device? */
+	int pre_init;		/* pre-init the device? */
 	enum periph_id periph_id;	/* Peripheral ID for this peripheral */
 	struct fdt_gpio_state enable_gpio;	/* How to enable it */
 };
@@ -636,6 +637,7 @@ static int s5p_mshci_initialize(struct fdt_mshci *config)
 	mmc_host->reg =  config->reg;
 	mmc_host->peripheral =  config->periph_id;
 	mmc_register(mmc);
+	mmc_set_preinit(mmc, config->pre_init);
 	mmc->block_dev.removable = config->removable;
 	debug("s5p_mshci: periph_id=%d, width=%d, reg=%p, enable=%d\n",
 	      config->periph_id, config->bus_width, config->reg,
@@ -657,6 +659,7 @@ int fdtdec_decode_mshci(const void *blob, int node, struct fdt_mshci *config)
 	fdtdec_decode_gpio(blob, node, "enable-gpios", &config->enable_gpio);
 
 	config->removable = fdtdec_get_bool(blob, node, "samsung,removable");
+	config->pre_init = fdtdec_get_bool(blob, node, "samsung,pre-init");
 
 	return 0;
 }
