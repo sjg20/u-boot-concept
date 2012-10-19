@@ -11,6 +11,7 @@
 #include <common.h>
 #include <config.h>
 #include <tpm.h>
+#include <cros/common.h>
 
 /* Import the header files from vboot_reference. */
 #include <tss_constants.h>
@@ -18,10 +19,17 @@
 
 VbError_t VbExTpmInit(void)
 {
-	if (tis_init())
+	int ret;
+
+	bootstage_start(BOOTSTAGE_VBOOT_TPM, "tpm init/xfer");
+	ret = tis_init();
+	if (ret)
 		return TPM_E_IOERROR;
 	/* tpm_lite lib doesn't call VbExTpmOpen after VbExTpmInit. */
-	return VbExTpmOpen();
+	ret = VbExTpmOpen();
+	bootstage_accum(BOOTSTAGE_VBOOT_TPM);
+
+	return ret;
 }
 
 VbError_t VbExTpmClose(void)
@@ -41,7 +49,12 @@ VbError_t VbExTpmOpen(void)
 VbError_t VbExTpmSendReceive(const uint8_t* request, uint32_t request_length,
 		uint8_t* response, uint32_t* response_length)
 {
-	if (tis_sendrecv(request, request_length, response, response_length))
+	int err;
+
+	bootstage_start(BOOTSTAGE_VBOOT_TPM, "tpm_send_recv");
+	err = tis_sendrecv(request, request_length, response, response_length);
+	bootstage_accum(BOOTSTAGE_VBOOT_TPM);
+	if (err)
 		return TPM_E_IOERROR;
 	return TPM_SUCCESS;
 }
