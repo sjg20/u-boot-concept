@@ -30,6 +30,7 @@
 
 #include <common.h>
 #include <libfdt.h>
+#include <malloc.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -235,22 +236,34 @@ static int add_bootstages_devicetree(struct fdt_header *blob)
 	return 0;
 }
 
-void bootstage_report(void)
+int bootstage_report(void)
 {
-	struct bootstage_record *rec = record;
+	struct bootstage_record *rec, *buff;
 	int id;
 	uint32_t prev;
+	int count, size;
+
+	/* Sort into a buffer */
+	count = ARRAY_SIZE(record);
+	size = sizeof(struct bootstage_record) * count;
+	buff = (struct bootstage_record *)malloc(size);
+	if (!buff) {
+		puts("Out of memory for bootstage report\n");
+		return -1;
+	}
 
 	puts("Timer summary in microseconds:\n");
 	printf("%11s%11s  %s\n", "Mark", "Elapsed", "Stage");
 
 	/* Fake the first record - we could get it from early boot */
+	memcpy(buff, record, size);
+	rec = buff;
 	rec->name = "reset";
 	rec->time_us = 0;
 	prev = print_time_record(BOOTSTAGE_ID_AWAKE, rec, 0);
 
 	/* Sort records by increasing time */
-	qsort(record, ARRAY_SIZE(record), sizeof(*rec), h_compare_record);
+	qsort(buff, count, sizeof(*rec), h_compare_record);
 
 	for (id = 0; id < BOOTSTAGE_ID_COUNT; id++, rec++) {
 		if (rec->time_us != 0 && !rec->start_us)
@@ -262,13 +275,16 @@ void bootstage_report(void)
 		       next_id - BOOTSTAGE_ID_COUNT);
 
 	puts("\nAccumulated time:\n");
-	for (id = 0, rec = record; id < BOOTSTAGE_ID_COUNT; id++, rec++) {
+	for (id = 0, rec = buff; id < BOOTSTAGE_ID_COUNT; id++, rec++) {
 		if (rec->start_us)
 			prev = print_time_record(id, rec, -1);
 	}
 
 	if (add_bootstages_devicetree(working_fdt))
 		puts("bootstage: Failed to add to device tree\n");
+	free(buff);
+
+	return -1;
 }
 
 /**

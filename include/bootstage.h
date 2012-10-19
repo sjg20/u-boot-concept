@@ -277,8 +277,11 @@ uint32_t bootstage_start(enum bootstage_id id, const char *name);
  */
 uint32_t bootstage_accum(enum bootstage_id id);
 
-/* Print a report about boot time */
-void bootstage_report(void);
+/** Print a report about boot time
+ *
+ * @return 0 if ok, -1 if out of memory
+ */
+int bootstage_report(void);
 
 /**
  * Stash bootstage data into memory
