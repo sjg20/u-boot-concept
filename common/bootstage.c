@@ -42,7 +42,8 @@ struct bootstage_record {
 	enum bootstage_id id;
 };
 
-static struct bootstage_record record[BOOTSTAGE_ID_COUNT] = { {1} };
+static struct bootstage_record record[BOOTSTAGE_ID_COUNT]
+		__attribute__((section(".data")));
 static int next_id = BOOTSTAGE_ID_USER;
 
 enum {
