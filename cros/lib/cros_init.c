@@ -13,6 +13,7 @@
 #include <cros/boot_device.h>
 #include <cros/nvstorage.h>
 #include <cros/vboot_flag.h>
+#include <cros/keyboard.h>
 
 int cros_init(void)
 {
@@ -28,6 +29,11 @@ int cros_init(void)
 
 	if (vboot_flag_init()) {
 		VBDEBUG("vboot_flag_init failed\n");
+		return -1;
+	}
+
+	if (vboot_keymap_init()) {
+		VBDEBUG("vboot_keyboard_init failed\n");
 		return -1;
 	}
 
