@@ -89,6 +89,7 @@ enum fdt_compat_id {
 	COMPAT_MAXIM_98095_CODEC,	/* MAX98095 Codec */
 	COMPAT_GOOGLE_BOARD_REV,	/* Google board revision number */
 	COMPAT_NXP_PTN3460,		/* NXP PTN3460 DP/LVDS bridge */
+	COMPAT_INFINEON_SLB9635_TPM,	/* Infineon SLB9635 TPM */
 
 	COMPAT_COUNT,
 };
