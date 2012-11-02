@@ -64,7 +64,27 @@ static inline void fdt_fixup_crypto_node(void *blob, int sec_rev) {}
 int fdt_pci_dma_ranges(void *blob, int phb_off, struct pci_controller *hose);
 #endif
 
-void ft_board_setup(void *blob, bd_t *bd);
+/**
+ * fdt_find_or_add_subnode - find or possibly add a subnode of a given node
+ * @fdt: pointer to the device tree blob
+ * @parentoffset: structure block offset of a node
+ * @name: name of the subnode to locate
+ *
+ * fdt_subnode_offset() finds a subnode of the node with a given name.
+ * If the subnode does not exist, it will be created.
+ */
+int fdt_find_or_add_subnode(void *fdt, int parentoffset, const char *name);
+
+/**
+ * Add board-specific data to the FDT before booting the OS.
+ *
+ * Use CONFIG_SYS_FDT_PAD to ensure there is sufficient space.
+ *
+ * @param blob		FDT blob to update
+ * @param bd_t		Pointer to board data
+ * @return 0 if ok, or -FDT_ERR_... on error
+ */
+int ft_board_setup(void *blob, bd_t *bd);
 /*
  * The keystone2 SOC requires all 32 bit aliased addresses to be converted
  * to their 36 physical format. This has to happen after all fdt nodes
@@ -74,6 +94,9 @@ void ft_board_setup(void *blob, bd_t *bd);
 void ft_board_setup_ex(void *blob, bd_t *bd);
 void ft_cpu_setup(void *blob, bd_t *bd);
 void ft_pci_setup(void *blob, bd_t *bd);
+
+/* Board-specific function to set up system information in fdt */
+int ft_system_setup(void *blob, bd_t *bd);
 
 void set_working_fdt_addr(void *addr);
 int fdt_shrink_to_minimum(void *blob);
