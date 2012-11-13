@@ -517,6 +517,9 @@ int clock_decode_periph_id(const void *blob, int node);
 /* Clock gate unused IP */
 void clock_gate(void);
 
+/* Ungate the I2S1 clock */
+void clock_ungate_i2s1(void);
+
 #endif
 
 #endif

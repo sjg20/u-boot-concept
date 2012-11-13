@@ -764,6 +764,13 @@ void system_clock_init()
 	writel(val, &clk->div_fsys2);
 }
 
+void clock_ungate_i2s1(void)
+{
+	struct exynos5_clock *clk = (struct exynos5_clock *)EXYNOS5_CLOCK_BASE;
+
+	setbits_le32(&clk->gate_ip_peric, CLK_I2S1_MASK);
+}
+
 void clock_gate(void)
 {
 	struct exynos5_clock *clk = (struct exynos5_clock *)EXYNOS5_CLOCK_BASE;
