@@ -19,6 +19,8 @@
 	chromeos-config {
 		virtual-dev-switch;
 		oprom-matters;
+		faft-key-remap-ascii = <0x76 0x0D 0 0 0 0>;
+		faft-key-remap-special = <0 0 0 0 0 0>;
 		vboot-flag-ec-in-rw {
 			compatible = "google,gpio-flag";
 			gpio = <&gpio 68 0>;
