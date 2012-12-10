@@ -44,6 +44,13 @@
 #define debug_trace(fmt, b...)
 #endif
 
+enum {
+	/* Timeout waiting for a flash erase command to complete */
+	MKBP_CMD_TIMEOUT_MS     = 5000,
+	/* Timeout waiting for a synchronous hash to be recomputed */
+	MKBP_CMD_HASH_TIMEOUT_MS = 2000,
+};
+
 static struct mkbp_dev static_dev, *last_dev;
 
 void mkbp_dump_data(const char *name, int cmd, const uint8_t *data, int len)
@@ -76,6 +83,42 @@ int mkbp_calc_checksum(const uint8_t *data, int size)
 	return csum & 0xff;
 }
 
+static int send_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
+			const void *dout, int dout_len,
+			uint8_t **dinp, int din_len)
+{
+	int ret;
+
+	switch (dev->interface) {
+#ifdef CONFIG_MKBP_SPI
+	case MKBPIF_SPI:
+		ret = mkbp_spi_command(dev, cmd, cmd_version,
+					(const uint8_t *)dout, dout_len,
+					dinp, din_len);
+		break;
+#endif
+#ifdef CONFIG_MKBP_I2C
+	case MKBPIF_I2C:
+		ret = mkbp_i2c_command(dev, cmd, cmd_version,
+					(const uint8_t *)dout, dout_len,
+					dinp, din_len);
+		break;
+#endif
+#ifdef CONFIG_MKBP_LPC
+	case MKBPIF_LPC:
+		ret = mkbp_lpc_command(dev, cmd, cmd_version,
+					(const uint8_t *)dout, dout_len,
+					dinp, din_len);
+		break;
+#endif
+	case MKBPIF_NONE:
+	default:
+		ret = -1;
+	}
+
+	return ret;
+}
+
 /**
  * Send a command to the MKBP device and return the reply.
  *
@@ -106,31 +149,36 @@ static int ec_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 		return -1;
 	}
 
-	switch (dev->interface) {
-#ifdef CONFIG_MKBP_SPI
-	case MKBPIF_SPI:
-		len = mkbp_spi_command(dev, cmd, cmd_version,
-					(const uint8_t *)dout, dout_len,
-					&din, din_len);
-		break;
-#endif
-#ifdef CONFIG_MKBP_I2C
-	case MKBPIF_I2C:
-		len = mkbp_i2c_command(dev, cmd, cmd_version,
-					(const uint8_t *)dout, dout_len,
-					&din, din_len);
-		break;
-#endif
-#ifdef CONFIG_MKBP_LPC
-	case MKBPIF_LPC:
-		len = mkbp_lpc_command(dev, cmd, cmd_version,
-					(const uint8_t *)dout, dout_len,
-					&din, din_len);
-		break;
-#endif
-	case MKBPIF_NONE:
-	default:
-		return -1;
+	len = send_command(dev, cmd, cmd_version, dout, dout_len,
+				&din, din_len);
+
+	/* If the command doesn't complete, wait a while */
+	if (len == -EC_RES_IN_PROGRESS) {
+		struct ec_response_get_comms_status *resp;
+		ulong start;
+
+		/* Wait for command to complete */
+		start = get_timer(0);
+		do {
+			int ret;
+
+			mdelay(50);	/* Insert some reasonable delay */
+			ret = send_command(dev, EC_CMD_GET_COMMS_STATUS, 0,
+					NULL, 0,
+					(uint8_t **)&resp, sizeof(*resp));
+			if (ret < 0)
+				return ret;
+
+			if (get_timer(start) > MKBP_CMD_TIMEOUT_MS) {
+				debug("%s: Command %#02x timeout\n",
+				      __func__, cmd);
+				return -EC_RES_TIMEOUT;
+			}
+		} while (resp->flags & EC_COMMS_STATUS_PROCESSING);
+
+		/* OK it completed, so read the status response */
+		len = send_command(dev, EC_CMD_RESEND_RESPONSE, 0,
+				NULL, 0, &din, 0);
 	}
 
 	/*
@@ -200,22 +248,95 @@ int mkbp_read_current_image(struct mkbp_dev *dev, enum ec_current_image *image)
 	return 0;
 }
 
+static int mkbp_wait_on_hash_done(struct mkbp_dev *dev,
+				  struct ec_response_vboot_hash *hash)
+{
+	struct ec_params_vboot_hash p;
+	ulong start;
+
+	start = get_timer(0);
+	while (hash->status == EC_VBOOT_HASH_STATUS_BUSY) {
+		mdelay(50);	/* Insert some reasonable delay */
+
+		p.cmd = EC_VBOOT_HASH_GET;
+		if (ec_command(dev, EC_CMD_VBOOT_HASH, 0, &p, sizeof(p),
+		       (uint8_t **)&hash, sizeof(*hash)) < 0)
+			return -1;
+
+		if (get_timer(start) > MKBP_CMD_HASH_TIMEOUT_MS) {
+			debug("%s: EC_VBOOT_HASH_GET timeout\n", __func__);
+			return -EC_RES_TIMEOUT;
+		}
+	}
+	return 0;
+}
+
+
 int mkbp_read_hash(struct mkbp_dev *dev, struct ec_response_vboot_hash *hash)
 {
 	struct ec_params_vboot_hash p;
+	int rv;
 
 	p.cmd = EC_VBOOT_HASH_GET;
+	if (ec_command(dev, EC_CMD_VBOOT_HASH, 0, &p, sizeof(p),
+		       (uint8_t **)&hash, sizeof(*hash)) < 0)
+		return -1;
+
+	/* If the EC is busy calculating the hash, fidget until it's done. */
+	rv = mkbp_wait_on_hash_done(dev, hash);
+	if (rv)
+		return rv;
+
+	/* If the hash is valid, we're done. Otherwise, we have to kick it off
+	 * again and wait for it to complete. Note that we explicitly assume
+	 * that hashing zero bytes is always wrong, even though that would
+	 * produce a valid hash value. */
+	if (hash->status == EC_VBOOT_HASH_STATUS_DONE && hash->size)
+		return 0;
+
+	debug("%s: No valid hash (status=%d size=%d). Compute one...\n",
+	      __func__, hash->status, hash->size);
+
+	p.cmd = EC_VBOOT_HASH_RECALC;
+	p.hash_type = EC_VBOOT_HASH_TYPE_SHA256;
+	p.nonce_size = 0;
+	p.offset = EC_VBOOT_HASH_OFFSET_RW;
 
 	if (ec_command(dev, EC_CMD_VBOOT_HASH, 0, &p, sizeof(p),
 		       (uint8_t **)&hash, sizeof(*hash)) < 0)
 		return -1;
 
-	if (hash->status != EC_VBOOT_HASH_STATUS_DONE) {
-		debug("%s: Hash status not done: %d\n", __func__,
-		      hash->status);
-		return -1;
-	}
+	rv = mkbp_wait_on_hash_done(dev, hash);
+	if (rv)
+		return rv;
 
+	debug("%s: hash done\n", __func__);
+
+	return 0;
+}
+
+static int mkbp_invalidate_hash(struct mkbp_dev *dev)
+{
+	struct ec_params_vboot_hash p;
+	struct ec_response_vboot_hash *hash = 0;
+
+	/* We don't have an explict command for the EC to discard its current
+	 * hash value, so we'll just tell it to calculate one that we know is
+	 * wrong (we claim that hashing zero bytes is always invalid).
+	 */
+	p.cmd = EC_VBOOT_HASH_RECALC;
+	p.hash_type = EC_VBOOT_HASH_TYPE_SHA256;
+	p.nonce_size = 0;
+	p.offset = 0;
+	p.size = 0;
+
+	debug("%s:\n", __func__);
+
+	if (ec_command(dev, EC_CMD_VBOOT_HASH, 0, &p, sizeof(p),
+		       (uint8_t **)&hash, sizeof(*hash)) < 0)
+		return -1;
+
+	/* No need to wait for it to finish */
 	return 0;
 }
 
@@ -457,6 +578,14 @@ int mkbp_flash_update_rw(struct mkbp_dev *dev,
 		return -1;
 	if (image_size > rw_size)
 		return -1;
+
+	/* Invalidate the existing hash, just in case the AP reboots
+	 * unexpectedly during the update. If that happened, the EC RW firmware
+	 * would be invalid, but the EC would still have the original hash.
+	 */
+	ret = mkbp_invalidate_hash(dev);
+	if (ret)
+		return ret;
 
 	/*
 	 * Erase the entire RW section, so that the EC doesn't see any garbage
