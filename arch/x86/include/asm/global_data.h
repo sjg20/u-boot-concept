@@ -29,6 +29,7 @@
 /* Architecture-specific global data */
 struct arch_global_data {
 	struct global_data *gd_addr;		/* Location of Global Data */
+	void		*new_fdt;	/* Relocated FDT */
 };
 
 #endif
