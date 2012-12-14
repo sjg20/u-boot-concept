@@ -37,7 +37,7 @@ struct timer_isr_function {
 
 static struct timer_isr_function *first_timer_isr;
 static unsigned long system_ticks;
-static uint64_t base_value;
+static uint64_t base_value __attribute__((section(".data")));
 
 /*
  * register_timer_isr() allows multiple architecture and board specific
