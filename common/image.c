@@ -39,9 +39,7 @@
 #include <logbuff.h>
 #endif
 
-#if defined(CONFIG_TIMESTAMP) || defined(CONFIG_CMD_DATE)
 #include <rtc.h>
-#endif
 
 #include <environment.h>
 #include <image.h>
@@ -161,10 +159,6 @@ static const table_entry_t uimage_comp[] = {
 	{	IH_COMP_LZO,	"lzo",		"lzo compressed",	},
 	{	-1,		"",		"",			},
 };
-
-#if defined(CONFIG_TIMESTAMP) || defined(CONFIG_CMD_DATE) || defined(USE_HOSTCC)
-static void genimg_print_time(time_t timestamp);
-#endif
 
 /*****************************************************************************/
 /* Legacy format routines */
@@ -311,10 +305,10 @@ void image_print_contents(const void *ptr)
 #endif
 
 	printf("%sImage Name:   %.*s\n", p, IH_NMLEN, image_get_name(hdr));
-#if defined(CONFIG_TIMESTAMP) || defined(CONFIG_CMD_DATE) || defined(USE_HOSTCC)
-	printf("%sCreated:      ", p);
-	genimg_print_time((time_t)image_get_time(hdr));
-#endif
+	if (IMAGE_ENABLE_TIMESTAMP) {
+		printf("%sCreated:      ", p);
+		genimg_print_time((time_t)image_get_time(hdr));
+	}
 	printf("%sImage Type:   ", p);
 	image_print_type(hdr);
 	printf("%sData Size:    ", p);
@@ -523,8 +517,8 @@ void genimg_print_size(uint32_t size)
 #endif
 }
 
-#if defined(CONFIG_TIMESTAMP) || defined(CONFIG_CMD_DATE) || defined(USE_HOSTCC)
-static void genimg_print_time(time_t timestamp)
+#if IMAGE_ENABLE_TIMESTAMP
+void genimg_print_time(time_t timestamp)
 {
 #ifndef USE_HOSTCC
 	struct rtc_time tm;
@@ -537,7 +531,7 @@ static void genimg_print_time(time_t timestamp)
 	printf("%s", ctime(&timestamp));
 #endif
 }
-#endif /* CONFIG_TIMESTAMP || CONFIG_CMD_DATE || USE_HOSTCC */
+#endif
 
 /**
  * get_table_entry_name - translate entry id to long name
@@ -1910,9 +1904,7 @@ void fit_print_contents(const void *fit)
 	int count = 0;
 	int ret;
 	const char *p;
-#if defined(CONFIG_TIMESTAMP) || defined(CONFIG_CMD_DATE) || defined(USE_HOSTCC)
 	time_t timestamp;
-#endif
 
 #ifdef USE_HOSTCC
 	p = "";
@@ -1928,14 +1920,14 @@ void fit_print_contents(const void *fit)
 	else
 		printf("%s\n", desc);
 
-#if defined(CONFIG_TIMESTAMP) || defined(CONFIG_CMD_DATE) || defined(USE_HOSTCC)
-	ret = fit_get_timestamp(fit, 0, &timestamp);
-	printf("%sCreated:         ", p);
-	if (ret)
-		printf("unavailable\n");
-	else
-		genimg_print_time(timestamp);
-#endif
+	if (IMAGE_ENABLE_TIMESTAMP) {
+		ret = fit_get_timestamp(fit, 0, &timestamp);
+		printf("%sCreated:         ", p);
+		if (ret)
+			printf("unavailable\n");
+		else
+			genimg_print_time(timestamp);
+	}
 
 	/* Find images parent node offset */
 	images_noffset = fdt_path_offset(fit, FIT_IMAGES_PATH);
@@ -3046,13 +3038,13 @@ int fit_check_format(const void *fit)
 		return 0;
 	}
 
-#if defined(CONFIG_TIMESTAMP) || defined(CONFIG_CMD_DATE) || defined(USE_HOSTCC)
-	/* mandatory / node 'timestamp' property */
-	if (fdt_getprop(fit, 0, FIT_TIMESTAMP_PROP, NULL) == NULL) {
-		debug("Wrong FIT format: no timestamp\n");
-		return 0;
+	if (IMAGE_ENABLE_TIMESTAMP) {
+		/* mandatory / node 'timestamp' property */
+		if (fdt_getprop(fit, 0, FIT_TIMESTAMP_PROP, NULL) == NULL) {
+			debug("Wrong FIT format: no timestamp\n");
+			return 0;
+		}
 	}
-#endif
 
 	/* mandatory subimages parent '/images' node */
 	if (fdt_path_offset(fit, FIT_IMAGES_PATH) < 0) {
