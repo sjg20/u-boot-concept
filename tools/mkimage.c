@@ -248,6 +248,11 @@ main (int argc, char **argv)
 				params.datafile = *++argv;
 				params.fflag = 1;
 				goto NXTARG;
+			case 'k':
+				if (--argc <= 0)
+					usage();
+				params.keydir = *++argv;
+				goto NXTARG;
 			case 'n':
 				if (--argc <= 0)
 					usage ();
@@ -623,8 +628,8 @@ usage ()
 			 "          -d ==> use image data from 'datafile'\n"
 			 "          -x ==> set XIP (execute in place)\n",
 		params.cmdname);
-	fprintf (stderr, "       %s [-D dtc_options] -f fit-image.its fit-image\n",
-		params.cmdname);
+	fprintf(stderr, "       %s [-k keydir] [-D dtc_options]"
+			" -f fit-image.its fit-image\n", params.cmdname);
 	fprintf (stderr, "       %s -V ==> print version information and exit\n",
 		params.cmdname);
 
