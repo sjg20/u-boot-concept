@@ -31,6 +31,7 @@
 #include <asm/global_data.h>
 #include <libfdt.h>
 #include <fdt_support.h>
+#include <asm/io.h>
 
 #define MAX_LEVEL	32		/* how deeply nested we will go */
 #define SCRATCHPAD	1024		/* bytes of scratchpad memory */
@@ -55,7 +56,10 @@ struct fdt_header *working_fdt;
 
 void set_working_fdt_addr(void *addr)
 {
-	working_fdt = addr;
+	void *buf;
+
+	buf = map_sysmem((ulong)addr, 0);
+	working_fdt = buf;
 	setenv_addr("fdtaddr", addr);
 }
 
@@ -131,14 +135,16 @@ static int do_fdt(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		}
 
 		addr = simple_strtoul(argv[0], NULL, 16);
-		blob = (void *)addr;
 		if (control) {
 #ifdef CONFIG_OF_CONTROL
+			blob = map_sysmem(addr, 0);
 			if (!fdt_valid(gd->fdt_blob))
 				return 1;
 			gd->fdt_blob = blob;
 #endif
 		} else {
+			blob = map_sysmem(addr, 0);
+
 			if (!fdt_valid(blob))
 				return 1;
 			set_working_fdt_addr((void *)addr);
