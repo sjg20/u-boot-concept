@@ -615,12 +615,26 @@ int fit_image_hash_get_value(const void *fit, int noffset, uint8_t **value,
 int fit_set_timestamp(void *fit, int noffset, time_t timestamp);
 
 /**
- * fit_add_verification_data() - Calculate and add hashes to FIT
+ * fit_add_verification_data() - add verification data to FIT image nodes
  *
- * @fit:	Fit image to process
- * @return 0 if ok, <0 for error
+ * @keydir:	Directory containing keys
+ * @kwydest:	FDT blob to write public key information to
+ * @fit:	Pointer to the FIT format image header
+ * @comment:	Comment to add to signature nodes
+ * @require_keys: Mark all keys as 'required'
+ *
+ * Adds hash values for all component images in the FIT blob.
+ * Hashes are calculated for all component images which have hash subnodes
+ * with algorithm property set to one of the supported hash algorithms.
+ *
+ * Also add signatures if signature nodes are present.
+ *
+ * returns
+ *     0, on success
+ *     libfdt error code, on failure
  */
-int fit_add_verification_data(void *fit);
+int fit_add_verification_data(const char *keydir, void *keydest, void *fit,
+			      const char *comment, int require_keys);
 
 int fit_image_verify(const void *fit, int noffset);
 int fit_all_image_verify(const void *fit);

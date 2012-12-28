@@ -125,7 +125,7 @@ static int fit_handle_file (struct mkimage_params *params)
 	}
 
 	/* set hashes for images in the blob */
-	if (fit_add_verification_data(ptr)) {
+	if (fit_add_verification_data(NULL, NULL, ptr, NULL, 0)) {
 		fprintf (stderr, "%s Can't add hashes to FIT blob",
 				params->cmdname);
 		unlink (tmpfile);
