@@ -39,13 +39,15 @@
 
 #include <common.h>
 #include <command.h>
+#include <fs.h>
+#include <fdtdec.h>
 #include <malloc.h>
+#include <os.h>
 #include <stdio_dev.h>
 #include <timestamp.h>
 #include <version.h>
 #include <serial.h>
-
-#include <os.h>
+#include <asm/state.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -89,6 +91,21 @@ static int display_dram_config(void)
 	return 0;
 }
 
+static int read_fdt_from_file(void)
+{
+	struct sandbox_state *state = state_get_current();
+	int size;
+
+	if (fs_set_blk_dev("host", NULL, FS_TYPE_SANDBOX))
+		return 1;
+	size = fs_read(state->fdt_fname, CONFIG_SYS_FDT_LOAD_ADDR, 0, 0);
+	if (size < 0)
+		return 1;
+	gd->fdt_blob = map_sysmem(CONFIG_SYS_FDT_LOAD_ADDR, size);
+
+	return 0;
+}
+
 /*
  * Breathe some life into the board...
  *
@@ -127,6 +144,9 @@ init_fnc_t *init_sequence[] = {
 #if defined(CONFIG_ARCH_CPU_INIT)
 	arch_cpu_init,		/* basic arch cpu dependent setup */
 #endif
+#ifdef CONFIG_OF_CONTROL
+	fdtdec_check_fdt,
+#endif
 #if defined(CONFIG_BOARD_EARLY_INIT_F)
 	board_early_init_f,
 #endif
@@ -156,6 +176,11 @@ void board_init_f(ulong bootflag)
 	assert(gd);
 
 	memset((void *)gd, 0, sizeof(gd_t));
+	size = CONFIG_SYS_SDRAM_SIZE;
+	mem = os_malloc(CONFIG_SYS_SDRAM_SIZE);
+
+	assert(mem);
+	gd->ram_buf = mem;
 
 #if defined(CONFIG_OF_EMBED)
 	/* Get a pointer to the FDT */
@@ -163,6 +188,8 @@ void board_init_f(ulong bootflag)
 #elif defined(CONFIG_OF_SEPARATE)
 	/* FDT is at end of image */
 	gd->fdt_blob = (void *)(_end_ofs + _TEXT_BASE);
+#elif defined(CONFIG_OF_HOSTFILE)
+	read_fdt_from_file();
 #endif
 
 	for (init_fnc_ptr = init_sequence; *init_fnc_ptr; ++init_fnc_ptr) {
@@ -170,8 +197,13 @@ void board_init_f(ulong bootflag)
 			hang();
 	}
 
-	size = CONFIG_SYS_SDRAM_SIZE;
-	mem = os_malloc(CONFIG_SYS_SDRAM_SIZE);
+#ifdef CONFIG_OF_CONTROL
+	/* For now, put this check after the console is ready */
+	if (fdtdec_prepare_fdt()) {
+		panic("** CONFIG_OF_CONTROL defined but no FDT - please see "
+			"doc/README.fdt-control");
+	}
+#endif
 
 	assert(mem);
 	gd->arch.ram_buf = mem;
