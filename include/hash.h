@@ -71,4 +71,19 @@ enum {
 int hash_command(const char *algo_name, int flags, cmd_tbl_t *cmdtp, int flag,
 		 int argc, char * const argv[]);
 
+/**
+ * hash_block() - Hash a block according to the requested algorithm
+ *
+ * @algo_name:		Hash algorithm to use
+ * @data:		Data to hash
+ * @len:		Lengh of data to hash in bytes
+ * @output:		Place to put hash value
+ * @output_size:	On entry, the number of bytes available in output,
+ *			On exit, the number of bytes used
+ * @return 0 if ok, -ve on error: -EPROTONOSUPPORT for an unknown algorithm,
+ * -ENOSPC if the output buffer is not large enough.
+ */
+int hash_block(const char *algo_name, const void *data, int len,
+	       uint8_t *output, int *output_size);
+
 #endif
