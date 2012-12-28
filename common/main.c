@@ -45,10 +45,6 @@
 #include <fdtdec.h>
 #endif
 
-#ifdef CONFIG_OF_LIBFDT
-#include <fdt_support.h>
-#endif /* CONFIG_OF_LIBFDT */
-
 #include <post.h>
 #include <linux/ctype.h>
 #include <menu.h>
@@ -499,10 +495,6 @@ void main_loop (void)
 	}
 #endif /* CONFIG_MENUKEY */
 #endif /* CONFIG_BOOTDELAY */
-
-#if defined CONFIG_OF_CONTROL
-	set_working_fdt_addr((void *)gd->fdt_blob);
-#endif /* CONFIG_OF_CONTROL */
 
 	/*
 	 * Main Loop for Monitor Command Processing
