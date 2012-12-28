@@ -984,6 +984,18 @@ static const void *boot_get_kernel(cmd_tbl_t *cmdtp, int flag, int argc,
 								NULL);
 			printf("   Using '%s' configuration\n",
 				images->fit_uname_cfg);
+			if (IMAGE_ENABLE_VERIFY && images->verify) {
+				puts("   Verifying Hash Integrity ... ");
+				if (!fit_config_verify(fit_hdr,
+						cfg_noffset)) {
+					puts("Bad Data Hash\n");
+					bootstage_error(
+						BOOTSTAGE_ID_FIT_CHECK_HASH);
+					return NULL;
+				}
+				puts("OK\n");
+			}
+
 			bootstage_mark(BOOTSTAGE_ID_FIT_CONFIG);
 
 			os_noffset = fit_conf_get_kernel_node(fit_hdr,
