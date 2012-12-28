@@ -79,6 +79,7 @@ BIN_FILES-$(CONFIG_KIRKWOOD) += kwboot$(SFX)
 EXT_OBJ_FILES-$(CONFIG_BUILD_ENVCRC) += common/env_embedded.o
 EXT_OBJ_FILES-y += common/image.o
 EXT_OBJ_FILES-$(CONFIG_FIT) += common/image-fit.o
+EXT_OBJ_FILES-$(CONFIG_FIT_SIGNATURE) += common/image-sig.o
 EXT_OBJ_FILES-y += lib/crc32.o
 EXT_OBJ_FILES-y += lib/md5.o
 EXT_OBJ_FILES-y += lib/sha1.o
@@ -214,6 +215,7 @@ $(obj)mkimage$(SFX):	$(obj)aisimage.o \
 			$(obj)image-fit.o \
 			$(obj)image.o \
 			$(obj)image-host.o \
+			$(obj)image-sig.o \
 			$(obj)imximage.o \
 			$(obj)kwbimage.o \
 			$(obj)pblimage.o \
