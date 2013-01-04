@@ -270,6 +270,9 @@ main (int argc, char **argv)
 					usage ();
 				params.imagename = *++argv;
 				goto NXTARG;
+			case 'r':
+				params.require_keys = 1;
+				break;
 			case 'R':
 				if (--argc <= 0)
 					usage();
@@ -641,8 +644,8 @@ usage ()
 			 "          -x ==> set XIP (execute in place)\n",
 		params.cmdname);
 	fprintf(stderr, "       %s [-k keydir] [-K dtb] [-D dtc_options]"
-			" [ -c <comment>] [-f fit-image.its|-F] fit-image\n",
-			params.cmdname);
+			" [ -c <comment>] [-f fit-image.its|-F] [-r]"
+			" fit-image\n", params.cmdname);
 	fprintf (stderr, "       %s -V ==> print version information and exit\n",
 		params.cmdname);
 
