@@ -240,12 +240,14 @@ main (int argc, char **argv)
 			case 'f':
 				if (--argc <= 0)
 					usage ();
+				params.datafile = *++argv;
+				/* no break */
+			case 'F':
 				/*
 				 * The flattened image tree (FIT) format
 				 * requires a flattened device tree image type
 				 */
 				params.type = IH_TYPE_FLATDT;
-				params.datafile = *++argv;
 				params.fflag = 1;
 				goto NXTARG;
 			case 'k':
@@ -634,7 +636,7 @@ usage ()
 			 "          -x ==> set XIP (execute in place)\n",
 		params.cmdname);
 	fprintf(stderr, "       %s [-k keydir] [-K dtb] [-D dtc_options]"
-			" -f fit-image.its fit-image\n", params.cmdname);
+			" [-f fit-image.its|-F] fit-image\n", params.cmdname);
 	fprintf (stderr, "       %s -V ==> print version information and exit\n",
 		params.cmdname);
 
