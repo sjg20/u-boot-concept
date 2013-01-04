@@ -183,6 +183,11 @@ main (int argc, char **argv)
 					genimg_get_arch_id (*++argv)) < 0)
 					usage ();
 				goto NXTARG;
+			case 'c':
+				if (--argc <= 0)
+					usage();
+				params.comment = *++argv;
+				goto NXTARG;
 			case 'C':
 				if ((--argc <= 0) ||
 					(params.comp =
@@ -636,7 +641,8 @@ usage ()
 			 "          -x ==> set XIP (execute in place)\n",
 		params.cmdname);
 	fprintf(stderr, "       %s [-k keydir] [-K dtb] [-D dtc_options]"
-			" [-f fit-image.its|-F] fit-image\n", params.cmdname);
+			" [ -c <comment>] [-f fit-image.its|-F] fit-image\n",
+			params.cmdname);
 	fprintf (stderr, "       %s -V ==> print version information and exit\n",
 		params.cmdname);
 
