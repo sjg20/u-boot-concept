@@ -24,6 +24,7 @@
 
 #define CONFIG_NR_DRAM_BANKS	1
 #define CONFIG_DRAM_SIZE	(128 << 20)
+#define CONFIG_SYS_TEXT_BASE	0
 
 /* Number of bits in a C 'long' on this architecture */
 #define CONFIG_SANDBOX_BITS_PER_LONG	64
@@ -107,8 +108,19 @@
 
 #define CONFIG_BOOTARGS ""
 
+#define CONFIG_SANDBOX_ENV \
+	"test=sb load host 0 100 test.fit; " \
+		"fdt addr 100;" \
+		"bootm 100;" \
+		"reset;" \
+		"\0"
+
 #define CONFIG_EXTRA_ENV_SETTINGS	"stdin=serial\0" \
 					"stdout=serial\0" \
-					"stderr=serial\0"
+					"stderr=serial\0" \
+					CONFIG_SANDBOX_ENV
+
+#define CONFIG_BOOTCOMMAND	"run test"
+#define CONFIG_BOOTDELAY	0		/* -1 to disable auto boot */
 
 #endif
