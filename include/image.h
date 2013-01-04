@@ -684,11 +684,19 @@ int calculate_hash(const void *data, int data_len, const char *algo,
 #elif defined(CONFIG_FIT_SIGNATURE)
 # define IMAGE_ENABLE_SIGN	0
 # define IMAGE_ENABLE_VERIFY	1
-# define gd_fdt_blob()		(gd->fdt_blob)
 #else
 # define IMAGE_ENABLE_SIGN	0
 # define IMAGE_ENABLE_VERIFY	0
-# define gd_fdt_blob()		(gd->fdt_blob)
+#endif
+
+/* For now only some archs have an fdt_blob */
+#ifndef USE_HOSTCC
+# if defined(CONFIG_ARM) || defined(CONFIG_X86) || defined(CONFIG_SANDBOX) \
+		|| defined(CONFIG_MICROBLAZE)
+#  define gd_fdt_blob()		(gd->fdt_blob)
+# else
+#  define gd_fdt_blob()		NULL
+# endif
 #endif
 
 /* Information passed to the signing routines */
@@ -768,6 +776,43 @@ struct image_sig_algo {
  * @return pointer to algorithm information, or NULL if not found
  */
 struct image_sig_algo *image_get_sig_algo(const char *name);
+
+/**
+ * fit_image_verify_required_sigs() - Verify signatures marked as 'required'
+ *
+ * @fit:		FIT to check
+ * @image_noffset:	Offset of image node to check
+ * @data:		Image data to check
+ * @size:		Size of image data
+ * @sig_blob:		FDT containing public keys
+ * @no_sigsp:		Returns 1 if no signatures were required, and
+ *			therefore nothing was checked. The caller may wish
+ *			to fall back to other mechanisms, or refuse to
+ *			boot.
+ * @return 0 if all verified ok, <0 on error
+ */
+int fit_image_verify_required_sigs(const void *fit, int image_noffset,
+		const char *data, size_t size, const void *sig_blob,
+		int *no_sigsp);
+
+/**
+ * fit_image_check_sig() - Check a single image signature node
+ *
+ * @fit:		FIT to check
+ * @noffset:		Offset of signature node to check
+ * @data:		Image data to check
+ * @size:		Size of image data
+ * @required_keynode:	Offset in the control FDT of the required key node,
+ *			if any. If this is given, then the image wil not
+ *			pass verification unless that key is used. If this is
+ *			-1 then any signature will do.
+ * @err_msgp:		In the event of an error, this will be pointed to a
+ *			help error string to display to the user.
+ * @return 0 if all verified ok, <0 on error
+ */
+int fit_image_check_sig(const void *fit, int noffset, const void *data,
+		size_t size, int required_keynode, char **err_msgp);
+
 
 #ifndef USE_HOSTCC
 static inline int fit_image_check_target_arch(const void *fdt, int node)
