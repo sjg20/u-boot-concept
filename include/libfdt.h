@@ -136,6 +136,23 @@ uint32_t fdt_next_tag(const void *fdt, int offset, int *nextoffset);
 
 int fdt_next_node(const void *fdt, int offset, int *depth);
 
+/**
+ * fdt_next_subnode() - get offset of next direct child
+ *
+ * Set depth to 0, offset to parent, then call this function repeatedly
+ * to get direct subnodes of a parent node.
+ *
+ * @fdt:	FDT blob
+ * @offset:	Set this to offset of parent for the first call. For
+ *		subsquent calls, pass in the value returns from the last
+ *		call.
+ * @depth:	Used internally to monitor depth - set this to 0 for the
+ *		first call.
+ * @return offset of next subnode, or -FDT_ERR_NOTFOUND if there are no more
+ * children
+ */
+int fdt_next_subnode(const void *fdt, int offset, int *depth);
+
 /**********************************************************************/
 /* General functions                                                  */
 /**********************************************************************/
