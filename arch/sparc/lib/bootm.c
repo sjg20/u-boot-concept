@@ -131,17 +131,16 @@ int do_bootm_linux(int flag, int argc, char * const argv[], bootm_headers_t * im
 	 * extracted and is writeable.
 	 */
 
+	ret = image_setup_boot(images);
+	if (ret) {
+		puts("### Failed to relocate RAM disk\n");
+		goto error;
+	}
+
 	/* Calc length of RAM disk, if zero no ramdisk available */
 	rd_len = images->rd_end - images->rd_start;
 
 	if (rd_len) {
-		ret = boot_ramdisk_high(lmb, images->rd_start, rd_len,
-					&initrd_start, &initrd_end);
-		if (ret) {
-			puts("### Failed to relocate RAM disk\n");
-			goto error;
-		}
-
 		/* Update SPARC kernel header so that Linux knows
 		 * what is going on and where to find RAM disk.
 		 *
