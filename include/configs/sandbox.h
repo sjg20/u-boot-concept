@@ -120,7 +120,6 @@
 					"stderr=serial\0" \
 					CONFIG_SANDBOX_ENV
 
-#define CONFIG_BOOTCOMMAND	"run test"
 #define CONFIG_BOOTDELAY	0		/* -1 to disable auto boot */
 
 #endif
