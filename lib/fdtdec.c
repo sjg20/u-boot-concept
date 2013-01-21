@@ -60,6 +60,7 @@ static const char * const compat_names[COMPAT_COUNT] = {
 	COMPAT(SAMSUNG_EXYNOS_USB_PHY, "samsung,exynos-usb-phy"),
 	COMPAT(MAXIM_MAX77686_PMIC, "maxim,max77686_pmic"),
 	COMPAT(GENERIC_SPI_FLASH, "spi-flash"),
+	COMPAT(MAXIM_98095_CODEC, "maxim,max98095-codec"),
 };
 
 const char *fdtdec_get_compatible(enum fdt_compat_id id)
