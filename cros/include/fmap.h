@@ -31,6 +31,8 @@ struct fmap_firmware_entry {
 
 	/* Sub-entry for EC binary, if present */
 	struct fmap_entry ec_bin;
+	const uint8_t *ec_hash;
+	int ec_hash_size;
 };
 
 /*

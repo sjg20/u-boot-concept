@@ -123,6 +123,8 @@ static int process_fmap_node(const void *blob, int node, int depth,
 	if (depth == 2) {
 		if (!rw || strcmp(name, "ecbin"))
 			return 0;
+		rw->ec_hash = fdt_getprop(blob, node, "hash",
+					  &rw->ec_hash_size);
 		if (read_entry(blob, node, name, &rw->ec_bin))
 			return -FDT_ERR_MISSING;
 
