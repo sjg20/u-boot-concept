@@ -122,4 +122,6 @@ int main(int argc, char *argv[])
 	 * never return.
 	 */
 	board_init_f(0);
+
+	return 0;
 }
