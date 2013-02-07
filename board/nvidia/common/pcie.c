@@ -833,7 +833,7 @@ static void tegra_pcie_register_hose(void)
 	/* System memory */
 	pci_set_region (pcie_hose.regions + 3,
 			PHYS_SDRAM_1, PHYS_SDRAM_1,
-			SZ_512K << 10,
+			SZ_1M << 10,
 			PCI_REGION_MEM | PCI_REGION_SYS_MEMORY);
 
 	pcie_hose.region_count = 4;
