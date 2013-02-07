@@ -47,7 +47,7 @@ void board_init_f(ulong bootflag)
 	initdram(0);
 
 	/* Clear bss */
-	memset(__bss_start, '\0', __bss_end__ - __bss_start);
+	memset(__bss_start, '\0', __bss_end - __bss_start);
 
 	/*
 	 * Init global_data pointer. Has to be done before calling
