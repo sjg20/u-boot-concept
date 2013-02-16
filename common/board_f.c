@@ -341,13 +341,14 @@ static int setup_dest_addr(void)
 	 */
 	gd->ram_size -= CONFIG_SYS_MEM_TOP_HIDE;
 #endif
-#ifdef CONFIG_NR_DRAM_BANKS
-	gd->ram_top = gd->bd->bi_dram[0].start + gd->bd->bi_dram[0].size;
-#else
+// #ifdef CONFIG_NR_DRAM_BANKS
+// 	gd->ram_top = gd->bd->bi_dram[0].start + gd->bd->bi_dram[0].size;
+// #else
 	gd->ram_top = CONFIG_SYS_SDRAM_BASE + get_effective_memsize();
-#endif
+// #endif
 	gd->ram_top = board_get_usable_ram_top(gd->mon_len);
 	gd->dest_addr = gd->ram_top;
+	debug("Ram top: %08lX\n", (ulong)gd->ram_top);
 #if defined(CONFIG_MP) && (defined(CONFIG_MPC86xx) || defined(CONFIG_E500))
 	/*
 	 * We need to make sure the location we intend to put secondary core
@@ -864,14 +865,12 @@ static init_fnc_t init_sequence_f[] = {
 #endif
 	announce_dram_init,
 	/* TODO: unify all these dram functions? */
-#ifdef CONFIG_ARM
-	dram_init,		/* configure available RAM banks */
-	setup_dram_config,
-#endif
 #ifdef CONFIG_PPC
 	init_func_ram,
 #endif
-	show_dram_config,
+#ifdef CONFIG_ARM
+	dram_init,		/* configure available RAM banks */
+#endif
 #ifdef CONFIG_POST
 	post_init_f,
 #endif
@@ -885,8 +884,6 @@ static init_fnc_t init_sequence_f[] = {
 	init_post,
 #endif
 	INIT_FUNC_WATCHDOG_RESET
-	setup_dram_config,
-
 	/*
 	 * Now that we have DRAM mapped and working, we can
 	 * relocate the code and continue running from DRAM.
@@ -932,6 +929,8 @@ static init_fnc_t init_sequence_f[] = {
 #else
 	reserve_stacks,
 #endif
+	setup_dram_config,
+	show_dram_config,
 #ifdef CONFIG_PPC
 	setup_board_part1,
 	INIT_FUNC_WATCHDOG_RESET
