@@ -195,6 +195,12 @@ else
 OPTFLAGS= -Os #-fomit-frame-pointer
 endif
 
+ifdef VBOOT_DEBUG
+DBGFLAGS += -DVBOOT_DEBUG
+endif
+ifdef VBOOT_PERFORMANCE
+DBGFLAGS += -DVBOOT_PERFORMANCE
+endif
 OBJCFLAGS += --gap-fill=0xff
 
 gccincdir := $(shell $(CC) -print-file-name=include)
@@ -243,6 +249,21 @@ endif
 CPPFLAGS += -I$(TOPDIR)/include
 CPPFLAGS += -fno-builtin -ffreestanding -nostdinc	\
 	-isystem $(gccincdir) -pipe $(PLATFORM_CPPFLAGS)
+
+ifeq ($(WERROR),y)
+CPPFLAGS += -Werror
+endif
+
+ifneq ($(CONFIG_CHROMEOS),)
+CPPFLAGS += -I$(TOPDIR)/cros/include
+endif
+
+ifdef CONFIG_CHROMEOS
+CPPFLAGS += -I$(if $(VBOOT_SOURCE),$(VBOOT_SOURCE)/firmware/include,\
+		$(VBOOT)/include/vboot) \
+	-I$(if $(VBOOT_SOURCE),$(VBOOT_SOURCE)/firmware/include,\
+		$(VBOOT)/include)
+endif
 
 ifdef BUILD_TAG
 CFLAGS := $(CPPFLAGS) -Wall -Wstrict-prototypes \
