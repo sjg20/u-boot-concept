@@ -1,8 +1,7 @@
 /*
- * SAMSUNG Snow board device tree source
+ * Google Snow board device tree source
  *
- * Copyright (c) 2012 Samsung Electronics Co., Ltd.
- *		http://www.samsung.com
+ * Copyright (c) 2012 Google, Inc
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -17,27 +16,17 @@
 /include/ "cros5250-common.dtsi"
 
 / {
-	model = "Google Snow";
-	compatible = "google,snow", "samsung,exynos5250";
+	model = "Google Spring";
+	compatible = "google,spring", "google,daisy", "samsung,smdk5250",
+		   "samsung,exynos5250";
+
+	aliases {
+		sdmmc1 = "/mshci@12210000";
+	};
 
 	board-rev {
 		compatible = "google,board-revision";
 		google,board-rev-gpios = <&gpio 88 0>, <&gpio 89 0>;
-	};
-
-	i2c-arbitrator {
-		compatible = "google,arbitrator";
-		google,ap-claim-gpios = <&gpio 0xd3 0>;	/* F03 */
-		google,ec-claim-gpios = <&gpio 0xc4 0>;	/* E04 */
-		google,slew-delay-us = <10>;
-		google,wait-retry-us = <2000>;
-
-		/*
-		 * TODO)sjg@chromium.org): Reduce to 50ms when EC I2C host
-		 * driver bugs are fixed.
-		 */
-		google,wait-free-us = <500000>;
-		google,arbitrate-bus = <&i2c4>;
 	};
 
 	dmc@10C00000 {
@@ -47,7 +36,7 @@
 	i2c3: i2c@12c90000 {
 		tpm@20 {
 			reg = <0x20>;
-			compatible = "infineon,slb9635-tpm";
+			compatible = "infineon,slb9645-tpm";
 		};
 	};
 
@@ -57,21 +46,35 @@
 			compatible = "google,cros-ec";
 			i2c-max-frequency = <100000>;
 			ec-interrupt = <&gpio 174 1>;
-		};
 
-		power-regulator@48 {
-			compatible = "ti,tps65090";
-			reg = <0x48>;
+			power-regulator@48 {
+				compatible = "ti,tps65090";
+				reg = <0x48>;
+			};
 		};
 	};
 
 	i2c7: i2c@12cd0000 {
-		ptn3460-bridge@20 {
-			compatible = "nxp,ptn3460";
-			reg = <0x20>;
-			powerdown-gpio = <&gpio 0x7d 1>;	/* Y25 */
-			reset-gpio = <&gpio 0xad 1>;		/* X15 */
-			hotplug-gpio = <&gpio 0xa7 0>;		/* X07 */
+		ps8622-bridge@8 {
+			compatible = "parade,ps8622";
+			reg = <0x8>;
+			powerdown-gpio = <&gpio 0x56 1>;	/* C36 */
+			reset-gpio = <&gpio 0x51 1>;		/* C31 */
+			hotplug-gpio = <&gpio 0x50 0>;		/* C30 */
+		};
+
+		/* TODO(sjg@chromium.org): Probably should be 0x11 */
+		soundcodec@22 {
+			reg = <0x22>;
+			compatible = "maxim,max98095-codec";
+			mclk-pin = <2>;
+		};
+
+		anx7805-bridge@72 {
+			compatible = "analogix,anx7805";
+			reg = <0x72>;
+			powerdown-gpio = <&gpio 0xc6 1>;	/* E06 */
+			reset-gpio = <&gpio 0xc7 1>;		/* E07 */
 		};
 	};
 
@@ -88,10 +91,21 @@
 		};
 	};
 
+	mshci@12210000 {
+		samsung,sdhci-bus-width = <4>;
+	};
+
+	mshci@12220000 {
+		/* MMC2 pins are used as GPIO for eDP bridge */
+		status = "disabled";
+	};
+
+	mshci@12230000 {
+		status = "disabled";
+	};
+
 	chrome-ec {
 		compatible = "google,chrome-ec";
-		#address-cells = <1>;
-		#size-cells = <1>;
 		flash@8000000 {
 			reg = <0x08000000 0x20000>;
 			erase-value = <0xff>;
@@ -103,27 +117,16 @@
 	};
 
 	ehci@12110000 {
-		port-enable-mask = <0x01>;
+		port-enable-mask = <0x02>;
 	};
 
 	sound@12d60000 {
 		samsung,codec-type = "max98095";
 	};
 
-	i2c@12cd0000 {
-		soundcodec@22 {
-			reg = <0x22>;
-			compatible = "maxim,max98095-codec";
-		};
+	hsichub@13400000 {
+		compatible = "smsc,usb3503";
+		reset-gpio = <&gpio 0xc8 0>;		/* E10 */
 	};
 
-	i2c@12c60000 {
-		pmic@9 {
-			reg = <0x9>;
-			compatible = "maxim,max77686_pmic";
-		};
-	};
-	usb@12000000 {
-		usb3-pll-gpio = <&gpio 0x71 0>;	/* Y11 */
-	};
 };
