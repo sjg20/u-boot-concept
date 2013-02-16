@@ -83,6 +83,7 @@ enum fdt_compat_id {
 	COMPAT_MAXIM_MAX77686_PMIC,	/* MAX77686 PMIC */
 	COMPAT_MAXIM_98095_CODEC,	/* MAX98095 Codec */
 	COMPAT_GOOGLE_BOARD_REV,	/* Google board revision number */
+	COMPAT_NXP_PTN3460,		/* NXP PTN3460 DP/LVDS bridge */
 
 	COMPAT_COUNT,
 };
