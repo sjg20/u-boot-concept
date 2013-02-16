@@ -54,6 +54,19 @@ static const char * const compat_names[COMPAT_COUNT] = {
 	COMPAT(SAMSUNG_EXYNOS_EHCI, "samsung,exynos-ehci"),
 	COMPAT(SAMSUNG_EXYNOS_USB_PHY, "samsung,exynos-usb-phy"),
 	COMPAT(MAXIM_MAX77686_PMIC, "maxim,max77686_pmic"),
+	COMPAT(GENERIC_SPI_FLASH, "spi-flash"),
+	COMPAT(INFINEON_SLB9635_TPM, "infineon,slb9635-tpm"),
+	COMPAT(SAMSUNG_EXYNOS5_DWMMC, "samsung,exynos5250-dwmmc"),
+	COMPAT(SAMSUNG_EXYNOS_SERIAL, "samsung,exynos4210-uart"),
+	COMPAT(MAXIM_98095_CODEC, "maxim,max98095-codec"),
+	COMPAT(GOOGLE_BOARD_REV, "google,board-revision"),
+	COMPAT(NXP_PTN3460, "nxp,ptn3460"),
+	COMPAT(GOOGLE_ARBITRATOR, "google,arbitrator"),
+	COMPAT(GOOGLE_CHROME_EC, "google,chrome-ec"),
+	COMPAT(GOOGLE_CONST_FLAG, "google,const-flag"),
+	COMPAT(GOOGLE_GPIO_FLAG, "google,gpio-flag"),
+	COMPAT(GOOGLE_CROS_EC_FLAG, "google,cros-ec-flag"),
+	COMPAT(GOOGLE_SYSINFO_FLAG, "google,sysinfo-flag"),
 };
 
 const char *fdtdec_get_compatible(enum fdt_compat_id id)

@@ -79,6 +79,19 @@ enum fdt_compat_id {
 	COMPAT_SAMSUNG_EXYNOS_EHCI,	/* Exynos EHCI controller */
 	COMPAT_SAMSUNG_EXYNOS_USB_PHY,	/* Exynos phy controller for usb2.0 */
 	COMPAT_MAXIM_MAX77686_PMIC,	/* MAX77686 PMIC */
+	COMPAT_GENERIC_SPI_FLASH,	/* Generic SPI Flash chip */
+	COMPAT_INFINEON_SLB9635_TPM,	/* Infineon SLB9635 TPM */
+	COMPAT_SAMSUNG_EXYNOS5_DWMMC,	/* Exynos5 DWMMC controller */
+	COMPAT_SAMSUNG_EXYNOS_SERIAL,	/* Exynos UART */
+	COMPAT_MAXIM_98095_CODEC,	/* MAX98095 Codec */
+	COMPAT_GOOGLE_BOARD_REV,	/* Google board revision number */
+	COMPAT_NXP_PTN3460,		/* NXP PTN3460 DP/LVDS bridge */
+	COMPAT_GOOGLE_ARBITRATOR,	/* Arbitrator a device between EC/AP */
+	COMPAT_GOOGLE_CHROME_EC,	/* Chrome Embedded Controller */
+	COMPAT_GOOGLE_CONST_FLAG,	/* Google Constant Flag-Input */
+	COMPAT_GOOGLE_GPIO_FLAG,	/* Google GPIO Flag-Input */
+	COMPAT_GOOGLE_CROS_EC_FLAG,	/* Google EC Flag-Input */
+	COMPAT_GOOGLE_SYSINFO_FLAG,	/* Google Sysinfo Flag-Input */
 
 	COMPAT_COUNT,
 };
