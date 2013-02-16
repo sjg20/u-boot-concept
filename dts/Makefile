@@ -35,10 +35,11 @@ $(if $(CONFIG_ARCH_DEVICE_TREE),,\
 $(error Your architecture does not have device tree support enabled. \
 Please define CONFIG_ARCH_DEVICE_TREE))
 
-# We preprocess the device tree file provide a useful define
-DTS_CPPFLAGS := -x assembler-with-cpp \
-		-DARCH_CPU_DTS=\"$(SRCTREE)/arch/$(ARCH)/dts/$(CONFIG_ARCH_DEVICE_TREE).dtsi\" \
-		-DBOARD_DTS=\"$(SRCTREE)/board/$(VENDOR)/$(BOARD)/dts/$(DEVICE_TREE).dts\"
+# Provide a list of include directories for dtc
+DTS_FLAGS := -i $(SRCTREE)/arch/$(ARCH)/dts
+
+# TODO(sjg): This should depend on CONFIG_CHROMEOS when we have it ready
+DTS_FLAGS += -i $(SRCTREE)/cros/dts
 
 all:	$(obj).depend $(LIB)
 
@@ -48,13 +49,7 @@ all:	$(obj).depend $(LIB)
 DT_BIN	:= $(obj)dt.dtb
 
 $(DT_BIN): $(TOPDIR)/board/$(VENDOR)/dts/$(DEVICE_TREE).dts
-	rc=$$( \
-		cat $< | $(CPP) -P $(DTS_CPPFLAGS) - | \
-		{ { $(DTC) -R 4 -p 0x1000 -O dtb -o ${DT_BIN} - 2>&1 ; \
-		    echo $$? >&3 ; } | \
-		  grep -v '^DTC: dts->dtb  on file' ; \
-	        } 3>&1 1>&2 ) ; \
-	exit $$rc
+	$(DTC) -R 4 -p 0x1000 -O dtb -o ${DT_BIN} $(DTS_FLAGS) $<
 
 process_lds = \
 	$(1) | sed -r -n 's/^OUTPUT_$(2)[ ("]*([^")]*).*/\1/p'
