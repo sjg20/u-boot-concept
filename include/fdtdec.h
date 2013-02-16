@@ -88,6 +88,11 @@ enum fdt_compat_id {
 	COMPAT_NXP_PTN3460,		/* NXP PTN3460 DP/LVDS bridge */
 	COMPAT_INFINEON_SLB9635_TPM,	/* Infineon SLB9635 TPM */
 	COMPAT_GOOGLE_ARBITRATOR,	/* Arbitrator a device between EC/AP */
+	COMPAT_GOOGLE_CHROME_EC,	/* Chrome Embedded Controller */
+	COMPAT_GOOGLE_CONST_FLAG,	/* Google Constant Flag-Input */
+	COMPAT_GOOGLE_GPIO_FLAG,	/* Google GPIO Flag-Input */
+	COMPAT_GOOGLE_CROS_EC_FLAG,	/* Google EC Flag-Input */
+	COMPAT_GOOGLE_SYSINFO_FLAG,	/* Google Sysinfo Flag-Input */
 
 	COMPAT_COUNT,
 };
