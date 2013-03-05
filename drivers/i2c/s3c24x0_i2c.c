@@ -550,11 +550,12 @@ int i2c_write(uchar chip, uint addr, int alen, uchar *buffer, int len)
 	return ret != 0;
 }
 
-#ifdef CONFIG_OF_CONTROL
 void board_i2c_init(const void *blob)
 {
+	int i;
+#ifdef CONFIG_OF_CONTROL
 	int node_list[CONFIG_MAX_I2C_NUM];
-	int count, i;
+	int count;
 
 	count = fdtdec_find_aliases_for_id(blob, "i2c",
 		COMPAT_SAMSUNG_S3C2440_I2C, node_list,
@@ -574,8 +575,15 @@ void board_i2c_init(const void *blob)
 		bus->bus_num = i2c_busses++;
 		exynos_pinmux_config(bus->id, 0);
 	}
+#else
+	for (i = 0; i < CONFIG_MAX_I2C_NUM; i++) {
+		exynos_pinmux_config((PERIPH_ID_I2C0 + i),
+					PINMUX_FLAG_NONE);
+	}
+#endif
 }
 
+#ifdef CONFIG_OF_CONTROL
 int i2c_get_bus_num_fdt(int node)
 {
 	int i;
