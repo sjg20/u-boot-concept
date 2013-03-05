@@ -61,11 +61,6 @@
 
 #define I2C_TIMEOUT 1		/* 1 second */
 
-/* The timeouts we live by */
-enum {
-	I2C_STOP_TIMEOUT_US	= 200,	/* waiting for stop events */
-};
-
 
 /*
  * For SPL boot some boards need i2c before SDRAM is initialised so force
@@ -206,35 +201,6 @@ unsigned int i2c_get_bus_num(void)
 }
 #endif
 
-/*
- * Verify the whether I2C ACK was received or not
- *
- * @param i2c	pointer to I2C register base
- * @param buf	array of data
- * @param len	length of data
- * return	I2C_OK when transmission done
- *		I2C_NACK otherwise
- */
-static int i2c_send_verify(struct s3c24x0_i2c *i2c, unsigned char buf[],
-			   unsigned char len)
-{
-	int i, result = I2C_OK;
-
-	if (IsACK(i2c)) {
-		for (i = 0; (i < len) && (result == I2C_OK); i++) {
-			writel(buf[i], &i2c->iicds);
-			ReadWriteByte(i2c);
-			result = WaitForXfer(i2c);
-			if (result == I2C_OK && !IsACK(i2c))
-				result = I2C_NACK;
-		}
-	} else {
-		result = I2C_NACK;
-	}
-
-	return result;
-}
-
 void i2c_init(int speed, int slaveadd)
 {
 	struct s3c24x0_i2c *i2c;
@@ -303,30 +269,6 @@ void i2c_init(int speed, int slaveadd)
 }
 
 /*
- * Send a STOP event and wait for it to have completed
- *
- * @param mode	If it is a master transmitter or receiver
- * @return I2C_OK if the line became idle before timeout I2C_NOK_TOUT otherwise
- */
-static int i2c_send_stop(struct s3c24x0_i2c *i2c, int mode)
-{
-	int timeout;
-
-	/* Setting the STOP event to fire */
-	writel(mode | I2C_TXRX_ENA, &i2c->iicstat);
-	ReadWriteByte(i2c);
-
-	/* Wait for the STOP to send and the bus to go idle */
-	for (timeout = I2C_STOP_TIMEOUT_US; timeout > 0; timeout -= 5) {
-		if (!(readl(&i2c->iicstat) & I2CSTAT_BSY))
-			return I2C_OK;
-		udelay(5);
-	}
-
-	return I2C_NOK_TOUT;
-}
-
-/*
  * cmd_type is 0 for write, 1 for read.
  *
  * addr_len can take any value from 0-255, it is only limited
@@ -341,7 +283,7 @@ static int i2c_transfer(struct s3c24x0_i2c *i2c,
 			unsigned char data[],
 			unsigned short data_len)
 {
-	int i, result, stop_bit_result;
+	int i, result;
 
 	if (data == 0 || data_len == 0) {
 		/*Don't support data transfer of no length or to address 0 */
@@ -360,83 +302,128 @@ static int i2c_transfer(struct s3c24x0_i2c *i2c,
 		return I2C_NOK_TOUT;
 
 	writel(readl(&i2c->iiccon) | I2CCON_ACKGEN, &i2c->iiccon);
-
-	if (addr && addr_len) {
-		writel(chip, &i2c->iicds);
-		/* send START */
-		writel(I2C_MODE_MT | I2C_TXRX_ENA | I2C_START_STOP,
-			&i2c->iicstat);
-		if (WaitForXfer(i2c) == I2C_OK)
-			result = i2c_send_verify(i2c, addr, addr_len);
-		else
-			result = I2C_NACK;
-	} else
-		result = I2C_NACK;
+	result = I2C_OK;
 
 	switch (cmd_type) {
 	case I2C_WRITE:
-		if (result == I2C_OK)
-			result = i2c_send_verify(i2c, data, data_len);
-		else {
+		if (addr && addr_len) {
 			writel(chip, &i2c->iicds);
 			/* send START */
 			writel(I2C_MODE_MT | I2C_TXRX_ENA | I2C_START_STOP,
-				&i2c->iicstat);
-			if (WaitForXfer(i2c) == I2C_OK)
-				result = i2c_send_verify(i2c, data, data_len);
+			       &i2c->iicstat);
+			i = 0;
+			while ((i < addr_len) && (result == I2C_OK)) {
+				result = WaitForXfer(i2c);
+				writel(addr[i], &i2c->iicds);
+				ReadWriteByte(i2c);
+				i++;
+			}
+			i = 0;
+			while ((i < data_len) && (result == I2C_OK)) {
+				result = WaitForXfer(i2c);
+				writel(data[i], &i2c->iicds);
+				ReadWriteByte(i2c);
+				i++;
+			}
+		} else {
+			writel(chip, &i2c->iicds);
+			/* send START */
+			writel(I2C_MODE_MT | I2C_TXRX_ENA | I2C_START_STOP,
+			       &i2c->iicstat);
+			i = 0;
+			while ((i < data_len) && (result = I2C_OK)) {
+				result = WaitForXfer(i2c);
+				writel(data[i], &i2c->iicds);
+				ReadWriteByte(i2c);
+				i++;
+			}
 		}
 
 		if (result == I2C_OK)
 			result = WaitForXfer(i2c);
 
-		stop_bit_result = i2c_send_stop(i2c, I2C_MODE_MT);
+		/* send STOP */
+		writel(I2C_MODE_MR | I2C_TXRX_ENA, &i2c->iicstat);
+		ReadWriteByte(i2c);
 		break;
 
 	case I2C_READ:
-	{
-		int was_ok = (result == I2C_OK);
-
-		writel(chip, &i2c->iicds);
-		/* resend START */
-		writel(I2C_MODE_MR | I2C_TXRX_ENA |
-					I2C_START_STOP, &i2c->iicstat);
-		ReadWriteByte(i2c);
-		result = WaitForXfer(i2c);
-
-		if (was_ok || IsACK(i2c)) {
-			i = 0;
-			while ((i < data_len) && (result == I2C_OK)) {
-				/* disable ACK for final READ */
-				if (i == data_len - 1) {
-					writel(readl(&i2c->iiccon) &
-					       ~I2CCON_ACKGEN,
-					       &i2c->iiccon);
+		if (addr && addr_len) {
+			writel(I2C_MODE_MT | I2C_TXRX_ENA, &i2c->iicstat);
+			writel(chip, &i2c->iicds);
+			/* send START */
+			writel(readl(&i2c->iicstat) | I2C_START_STOP,
+			       &i2c->iicstat);
+			result = WaitForXfer(i2c);
+			if (IsACK(i2c)) {
+				i = 0;
+				while ((i < addr_len) && (result == I2C_OK)) {
+					writel(addr[i], &i2c->iicds);
+					ReadWriteByte(i2c);
+					result = WaitForXfer(i2c);
+					i++;
 				}
+
+				writel(chip, &i2c->iicds);
+				/* resend START */
+				writel(I2C_MODE_MR | I2C_TXRX_ENA |
+				       I2C_START_STOP, &i2c->iicstat);
+			ReadWriteByte(i2c);
+			result = WaitForXfer(i2c);
+				i = 0;
+				while ((i < data_len) && (result == I2C_OK)) {
+					/* disable ACK for final READ */
+					if (i == data_len - 1)
+						writel(readl(&i2c->iiccon)
+							& ~I2CCON_ACKGEN,
+							&i2c->iiccon);
 				ReadWriteByte(i2c);
 				result = WaitForXfer(i2c);
-				data[i] = readl(&i2c->iicds);
-				i++;
+					data[i] = readl(&i2c->iicds);
+					i++;
+				}
+			} else {
+				result = I2C_NACK;
 			}
+
 		} else {
-			result = I2C_NACK;
+			writel(I2C_MODE_MR | I2C_TXRX_ENA, &i2c->iicstat);
+			writel(chip, &i2c->iicds);
+			/* send START */
+			writel(readl(&i2c->iicstat) | I2C_START_STOP,
+			       &i2c->iicstat);
+			result = WaitForXfer(i2c);
+
+			if (IsACK(i2c)) {
+				i = 0;
+				while ((i < data_len) && (result == I2C_OK)) {
+					/* disable ACK for final READ */
+					if (i == data_len - 1)
+						writel(readl(&i2c->iiccon) &
+							~I2CCON_ACKGEN,
+							&i2c->iiccon);
+					ReadWriteByte(i2c);
+					result = WaitForXfer(i2c);
+					data[i] = readl(&i2c->iicds);
+					i++;
+				}
+			} else {
+				result = I2C_NACK;
+			}
 		}
 
-		stop_bit_result = i2c_send_stop(i2c, I2C_MODE_MR);
+		/* send STOP */
+		writel(I2C_MODE_MR | I2C_TXRX_ENA, &i2c->iicstat);
+		ReadWriteByte(i2c);
 		break;
-	}
 
 	default:
 		debug("i2c_transfer: bad call\n");
-		result = stop_bit_result = I2C_NOK;
+		result = I2C_NOK;
 		break;
 	}
 
-	/*
-	 * If the transmission went fine, then only the stop bit was left to
-	 * fail.  Otherwise, the real failure we're interested in came before
-	 * that, during the actual transmission.
-	 */
-	return (result == I2C_OK) ? stop_bit_result : result;
+	return result;
 }
 
 static struct s3c24x0_i2c_bus *get_bus(unsigned int bus_idx)
