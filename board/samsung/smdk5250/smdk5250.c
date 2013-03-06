@@ -380,12 +380,12 @@ int board_eth_init(bd_t *bis)
 	smc_bw_conf = SROMC_DATA16_WIDTH(config.bank)
 			| SROMC_BYTE_ENABLE(config.bank);
 
-	smc_bc_conf = SROMC_BC_TACS(config.timing[FDT_SROM_TACS])   |\
-			SROMC_BC_TCOS(config.timing[FDT_SROM_TCOS]) |\
-			SROMC_BC_TACC(config.timing[FDT_SROM_TACC]) |\
-			SROMC_BC_TCOH(config.timing[FDT_SROM_TCOH]) |\
-			SROMC_BC_TAH(config.timing[FDT_SROM_TAH])   |\
-			SROMC_BC_TACP(config.timing[FDT_SROM_TACP]) |\
+	smc_bc_conf = SROMC_BC_TACS(config.timing[FDT_SROM_TACS])   |
+			SROMC_BC_TCOS(config.timing[FDT_SROM_TCOS]) |
+			SROMC_BC_TACC(config.timing[FDT_SROM_TACC]) |
+			SROMC_BC_TCOH(config.timing[FDT_SROM_TCOH]) |
+			SROMC_BC_TAH(config.timing[FDT_SROM_TAH])   |
+			SROMC_BC_TACP(config.timing[FDT_SROM_TACP]) |
 			SROMC_BC_PMC(config.timing[FDT_SROM_PMC]);
 
 	/* Select and configure the SROMC bank */
