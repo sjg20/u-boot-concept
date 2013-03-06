@@ -86,6 +86,11 @@
 #define MMC_CMD_APP_CMD			55
 #define MMC_CMD_SPI_READ_OCR		58
 #define MMC_CMD_SPI_CRC_ON_OFF		59
+#define MMC_CMD_RES_MAN			62
+
+#define MMC_CMD62_ARG1			0xefac62ec
+#define MMC_CMD62_ARG2			0xcbaea7
+
 
 #define SD_CMD_SEND_RELATIVE_ADDR	3
 #define SD_CMD_SWITCH_FUNC		6
@@ -153,6 +158,7 @@
  */
 #define EXT_CSD_PARTITIONING_SUPPORT	160	/* RO */
 #define EXT_CSD_ERASE_GROUP_DEF		175	/* R/W */
+#define EXT_CSD_BOOT_BUS_WIDTH		177
 #define EXT_CSD_PART_CONF		179	/* R/W */
 #define EXT_CSD_BUS_WIDTH		183	/* R/W */
 #define EXT_CSD_HS_TIMING		185	/* R/W */
@@ -177,6 +183,16 @@
 #define EXT_CSD_BUS_WIDTH_4	1	/* Card is in 4 bit mode */
 #define EXT_CSD_BUS_WIDTH_8	2	/* Card is in 8 bit mode */
 
+#define EXT_CSD_BOOT_ACK_ENABLE			(1 << 6)
+#define EXT_CSD_BOOT_PARTITION_ENABLE		(1 << 3)
+#define EXT_CSD_PARTITION_ACCESS_ENABLE		(1 << 0)
+#define EXT_CSD_PARTITION_ACCESS_DISABLE	(0 << 0)
+
+#define EXT_CSD_BOOT_ACK(x)		(x << 6)
+#define EXT_CSD_BOOT_PART_NUM(x)	(x << 3)
+#define EXT_CSD_PARTITION_ACCESS(x)	(x << 0)
+
+
 #define R1_ILLEGAL_COMMAND		(1 << 22)
 #define R1_APP_CMD			(1 << 5)
 
@@ -200,6 +216,11 @@
 #define MMCPART_NOAVAILABLE	(0xff)
 #define PART_ACCESS_MASK	(0x7)
 #define PART_SUPPORT		(0x1)
+
+/* The number of MMC physical partitions.  These consist of:
+ * boot partitions (2), general purpose partitions (4) in MMC v4.4.
+ */
+#define MMC_NUM_BOOT_PARTITION	2
 
 struct mmc_cid {
 	unsigned long psn;
@@ -277,6 +298,11 @@ int mmc_switch_part(int dev_num, unsigned int part_num);
 int mmc_getcd(struct mmc *mmc);
 int mmc_getwp(struct mmc *mmc);
 void spl_mmc_load(void) __noreturn;
+/* Function to change the size of boot partition and rpmb partitions */
+int mmc_boot_partition_size_change(struct mmc *mmc, unsigned long bootsize,
+					unsigned long rpmbsize);
+/* Function to send commands to open/close the specified boot partition */
+int mmc_boot_part_access(struct mmc *mmc, u32 ack, u32 part_num, u32 access);
 
 #ifdef CONFIG_GENERIC_MMC
 #define mmc_host_is_spi(mmc)	((mmc)->host_caps & MMC_MODE_SPI)
