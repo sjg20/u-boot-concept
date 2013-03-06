@@ -129,20 +129,19 @@ static int dwmci_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 	unsigned int timeout = 100000;
 	u32 retry = 10000;
 	u32 mask, ctrl;
+	ulong start = get_timer(0);
 
 	while (dwmci_readl(host, DWMCI_STATUS) & DWMCI_BUSY) {
-		if (timeout == 0) {
+		if (get_timer(start) > timeout) {
 			printf("Timeout on data busy\n");
 			return TIMEOUT;
 		}
-		timeout--;
 	}
 
 	dwmci_writel(host, DWMCI_RINTSTS, DWMCI_INTMSK_ALL);
 
 	if (data)
 		dwmci_prepare_data(host, data);
-
 
 	dwmci_writel(host, DWMCI_CMDARG, cmd->cmdarg);
 
@@ -314,7 +313,7 @@ static void dwmci_set_ios(struct mmc *mmc)
 static int dwmci_init(struct mmc *mmc)
 {
 	struct dwmci_host *host = (struct dwmci_host *)mmc->priv;
-	u32 fifo_size, fifoth_val;
+	u32 fifo_size, fifoth_val, ier;
 
 	dwmci_writel(host, DWMCI_PWREN, 1);
 
@@ -322,6 +321,14 @@ static int dwmci_init(struct mmc *mmc)
 		debug("%s[%d] Fail-reset!!\n",__func__,__LINE__);
 		return -1;
 	}
+
+	/* Enumerate at 400KHz */
+	dwmci_setup_bus(host, mmc->f_min);
+
+	/* Set auto stop command */
+	ier = dwmci_readl(host, DWMCI_CTRL);
+	ier |= DWMCI_CTRL_SEND_AS_CCSD;
+	dwmci_writel(host, DWMCI_CTRL, ier);
 
 	dwmci_writel(host, DWMCI_RINTSTS, 0xFFFFFFFF);
 	dwmci_writel(host, DWMCI_INTMASK, 0);
@@ -332,11 +339,13 @@ static int dwmci_init(struct mmc *mmc)
 	dwmci_writel(host, DWMCI_BMOD, 1);
 
 	fifo_size = dwmci_readl(host, DWMCI_FIFOTH);
-	if (host->fifoth_val)
+	fifo_size = ((fifo_size & RX_WMARK_MASK) >> RX_WMARK_SHIFT) + 1;
+	if (host->fifoth_val) {
 		fifoth_val = host->fifoth_val;
-	else
-		fifoth_val = MSIZE(0x2) | RX_WMARK(fifo_size/2 -1) |
-			TX_WMARK(fifo_size/2);
+	} else {
+		fifoth_val = MSIZE(0x2) | RX_WMARK(fifo_size / 2 - 1) |
+			TX_WMARK(fifo_size / 2);
+	}
 	dwmci_writel(host, DWMCI_FIFOTH, fifoth_val);
 
 	dwmci_writel(host, DWMCI_CLKENA, 0);
