@@ -21,6 +21,7 @@
  */
 
 #include <common.h>
+#include <cros_ec.h>
 #include <fdtdec.h>
 #include <asm/io.h>
 #include <errno.h>
@@ -39,6 +40,25 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+struct local_info {
+	struct cros_ec_dev *cros_ec_dev;	/* Pointer to cros_ec device */
+	int cros_ec_err;			/* Error for cros_ec, 0 if ok */
+	int arbitrate_node;
+	struct fdt_gpio_state ap_claim;
+	struct fdt_gpio_state ec_claim;
+
+	/* Time between requesting bus and deciding that we have it */
+	unsigned slew_delay_us;
+
+	/* Time between retrying to see if the AP has released the bus */
+	unsigned wait_retry_ms;
+
+	/* Time to wait until the bus becomes free */
+	unsigned wait_free_ms;
+};
+
+static struct local_info local;
+
 #ifdef CONFIG_USB_EHCI_EXYNOS
 int board_usb_vbus_init(void)
 {
@@ -55,12 +75,82 @@ int board_usb_vbus_init(void)
 }
 #endif
 
+struct cros_ec_dev *board_get_cros_ec_dev(void)
+{
+	return local.cros_ec_dev;
+}
+
+static int board_init_cros_ec_devices(const void *blob)
+{
+	local.cros_ec_err = cros_ec_init(blob, &local.cros_ec_dev);
+	if (local.cros_ec_err)
+		return -1;  /* Will report in board_late_init() */
+
+	return 0;
+}
+
+static int board_i2c_arb_init(const void *blob)
+{
+	int node;
+
+	local.arbitrate_node = -1;
+	node = fdtdec_next_compatible(blob, 0, COMPAT_GOOGLE_ARBITRATOR);
+	node = -1; /* disable until GPIOs are working */
+	if (node < 0) {
+		debug("Cannot find bus arbitrator node\n");
+		return 0;
+	}
+
+	if (fdtdec_decode_gpio(blob, node, "google,ap-claim-gpios",
+				&local.ap_claim) ||
+			fdtdec_decode_gpio(blob, node, "google,ec-claim-gpios",
+				&local.ec_claim)) {
+		debug("Cannot find bus arbitrator GPIOs\n");
+		return 0;
+	}
+
+	if (fdtdec_setup_gpio(&local.ap_claim) ||
+			fdtdec_setup_gpio(&local.ec_claim)) {
+		debug("Cannot claim arbitration GPIOs\n");
+		return -1;
+	}
+
+	/* We are currently not claiming the bus */
+	gpio_direction_output(local.ap_claim.gpio, 1);
+	gpio_direction_input(local.ec_claim.gpio);
+
+	local.arbitrate_node = fdtdec_lookup_phandle(blob, node,
+						     "google,arbitrate-bus");
+	if (local.arbitrate_node < 0) {
+		debug("Cannot find bus to arbitrate\n");
+		return -1;
+	}
+
+	local.slew_delay_us = fdtdec_get_int(blob, node,
+					     "google,slew-delay-us", 10);
+	local.wait_retry_ms = fdtdec_get_int(blob, node,
+					     "google,wait-retry-us", 2000);
+	local.wait_free_ms = fdtdec_get_int(blob, node,
+					    "google,wait-free-us", 50000);
+	local.wait_free_ms = DIV_ROUND_UP(local.wait_free_ms, 1000);
+	debug("Bus arbitration ready on fdt node %d\n", local.arbitrate_node);
+
+	return 0;
+}
+
 int board_init(void)
 {
 	gd->bd->bi_boot_params = (PHYS_SDRAM_1 + 0x100UL);
 #ifdef CONFIG_EXYNOS_SPI
 	spi_init();
 #endif
+
+	if (board_init_cros_ec_devices(gd->fdt_blob))
+		return -1;
+
+	if (board_i2c_arb_init(gd->fdt_blob))
+		return -1;
+
 #ifdef CONFIG_USB_EHCI_EXYNOS
 	board_usb_vbus_init();
 #endif
@@ -210,6 +300,38 @@ void dram_init_banksize(void)
 	}
 }
 
+/**
+ * Read and clear the marker value; then return the read value.
+ *
+ * This marker is set to EXYNOS5_SPL_MARKER when SPL runs. Then in U-Boot
+ * we can check (and clear) this marker to see if we were run from SPL.
+ * If we were called from another U-Boot, the marker will be clear.
+ *
+ * @return marker value (EXYNOS5_SPL_MARKER if we were run from SPL, else 0)
+ */
+static uint32_t exynos5_read_and_clear_spl_marker(void)
+{
+	uint32_t value, *marker = (uint32_t *)CONFIG_SPL_MARKER;
+
+	value = *marker;
+	*marker = 0;
+
+	return value;
+}
+
+int board_is_processor_reset(void)
+{
+	static uint8_t inited, is_reset;
+	uint32_t marker_value;
+
+	if (!inited) {
+		marker_value = exynos5_read_and_clear_spl_marker();
+		is_reset = marker_value == EXYNOS5_SPL_MARKER;
+		inited = 1;
+	}
+
+	return is_reset;
+}
 static int decode_sromc(const void *blob, struct fdt_sromc *config)
 {
 	int err;
@@ -288,7 +410,15 @@ int board_eth_init(bd_t *bis)
 #ifdef CONFIG_DISPLAY_BOARDINFO
 int checkboard(void)
 {
+#ifdef CONFIG_OF_CONTROL
+	const char *board_name;
+
+	board_name = fdt_getprop(gd->fdt_blob, 0, "model", NULL);
+	printf("\nBoard: %s, rev %d\n", board_name ? board_name : "<unknown>",
+	       board_get_revision());
+#else
 	printf("\nBoard: SMDK5250\n");
+#endif
 
 	return 0;
 }
@@ -335,5 +465,104 @@ int board_early_init_f(void)
 	board_i2c_init(gd->fdt_blob);
 #endif
 	return err;
+}
+#endif
+
+int board_get_revision(void)
+{
+	struct fdt_gpio_state gpios[CONFIG_BOARD_REV_GPIO_COUNT];
+	unsigned gpio_list[CONFIG_BOARD_REV_GPIO_COUNT];
+	int board_rev = -1;
+	int count = 0;
+	int node;
+
+	node = fdtdec_next_compatible(gd->fdt_blob, 0,
+				      COMPAT_GOOGLE_BOARD_REV);
+	if (node >= 0) {
+		count = fdtdec_decode_gpios(gd->fdt_blob, node,
+				"google,board-rev-gpios", gpios,
+				CONFIG_BOARD_REV_GPIO_COUNT);
+	}
+	if (count > 0) {
+		int i;
+
+		for (i = 0; i < count; i++)
+			gpio_list[i] = gpios[i].gpio;
+		board_rev = gpio_decode_number(gpio_list, count);
+	} else {
+		debug("%s: No board revision information in fdt\n", __func__);
+	}
+
+	return board_rev;
+}
+
+void board_i2c_release_bus(int node)
+{
+	/* If this is us, release the bus */
+	if (node == local.arbitrate_node) {
+		gpio_set_value(local.ap_claim.gpio, 1);
+		udelay(local.slew_delay_us);
+	}
+}
+
+int board_i2c_claim_bus(int node)
+{
+	unsigned start;
+
+	if (node != local.arbitrate_node)
+		return 0;
+
+// 	putc('c');
+
+	/* Start a round of trying to claim the bus */
+	start = get_timer(0);
+	do {
+		unsigned start_retry;
+		int waiting = 0;
+
+		/* Indicate that we want to claim the bus */
+		gpio_set_value(local.ap_claim.gpio, 0);
+		udelay(local.slew_delay_us);
+
+		/* Wait for the EC to release it */
+		start_retry = get_timer(0);
+		while (get_timer(start_retry) < local.wait_retry_ms) {
+			if (gpio_get_value(local.ec_claim.gpio)) {
+				/* We got it, so return */
+				return 0;
+			}
+
+			if (!waiting) {
+				waiting = 1;
+			}
+		}
+
+		/* It didn't release, so give up, wait, and try again */
+		gpio_set_value(local.ap_claim.gpio, 1);
+
+		mdelay(local.wait_retry_ms);
+	} while (get_timer(start) < local.wait_free_ms);
+
+	/* Give up, release our claim */
+	printf("I2C: Could not claim bus, timeout %lu\n", get_timer(start));
+
+	return -1;
+}
+
+#ifdef CONFIG_BOARD_LATE_INIT
+int board_late_init(void)
+{
+	stdio_print_current_devices();
+
+	if (local.cros_ec_err) {
+		/* Force console on */
+		gd->flags &= ~GD_FLG_SILENT;
+
+		printf("cros-ec communications failure %d\n", local.cros_ec_err);
+		puts("\nPlease reset with Power+Refresh\n\n");
+		panic("Cannot init cros-ec device");
+		return -1;
+	}
+	return 0;
 }
 #endif
