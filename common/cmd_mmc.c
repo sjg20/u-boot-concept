@@ -147,6 +147,31 @@ U_BOOT_CMD(
 	"- display info of the current MMC device"
 );
 
+static int boot_part_access(struct mmc *mmc, u32 ack, u32 part_num, u32 access)
+{
+	int err;
+	err = mmc_boot_part_access(mmc, ack, part_num, access);
+
+	if ((err == 0) && (access != 0)) {
+		printf("\t\t\t!!!Notice!!!\n");
+		printf("!You must close EMMC boot Partition after all"
+						"images are written\n");
+		printf("!EMMC boot partition has continuity at image"
+						"writing time.\n");
+		printf("!So, do not close the boot partition before all"
+						"images are written.\n");
+		return 0;
+	} else if ((err == 0) && (access == 0))
+		return 0;
+	else if ((err != 0) && (access != 0)) {
+		printf("EMMC boot partition-%d OPEN Failed.\n", part_num);
+		return 1;
+	} else {
+		printf("EMMC boot partition-%d CLOSE Failed.\n", part_num);
+		return 1;
+	}
+}
+
 static int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	enum mmc_state state;
@@ -248,6 +273,71 @@ static int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 				curr_device, mmc->part_num);
 
 		return 0;
+	} else if ((strcmp(argv[1], "open") == 0) ||
+			(strcmp(argv[1], "close") == 0)) {
+		int dev;
+		struct mmc *mmc;
+		u32 ack, part_num, access = 0;
+
+		if (argc == 4) {
+			dev = simple_strtoul(argv[2], NULL, 10);
+			part_num = simple_strtoul(argv[3], NULL, 10);
+		} else
+			return CMD_RET_USAGE;
+
+		mmc = find_mmc_device(dev);
+		if (!mmc) {
+			printf("no mmc device at slot %x\n", dev);
+			return 1;
+		}
+
+		if (IS_SD(mmc)) {
+			printf("SD device cannot be opened/closed\n");
+			return 1;
+		}
+
+		if ((part_num <= 0) || (part_num > MMC_NUM_BOOT_PARTITION)) {
+			printf("Invalid boot partition number:\n");
+			printf("Boot partition number cannot be <= 0\n");
+			printf("EMMC44 supports only 2 boot partitions\n");
+			return 1;
+		}
+
+		if (strcmp(argv[1], "open") == 0)
+			access = part_num; /* enable R/W access to boot part*/
+		if (strcmp(argv[1], "close") == 0)
+			access = 0; /* No access to boot partition */
+
+		/* acknowledge to be sent during boot operation */
+		ack = 1;
+		return boot_part_access(mmc, ack, part_num, access);
+
+	} else if (strcmp(argv[1], "bootpart") == 0) {
+		int dev;
+		dev = simple_strtoul(argv[2], NULL, 10);
+
+		u32 bootsize = simple_strtoul(argv[3], NULL, 10);
+		u32 rpmbsize = simple_strtoul(argv[4], NULL, 10);
+		struct mmc *mmc = find_mmc_device(dev);
+		if (!mmc) {
+			printf("no mmc device at slot %x\n", dev);
+			return 1;
+		}
+
+		if (IS_SD(mmc)) {
+			printf("It is not a EMMC device\n");
+			return 1;
+		}
+
+		if (0 == mmc_boot_partition_size_change(mmc,
+						bootsize, rpmbsize)) {
+			printf("EMMC boot partition Size %d MB\n", bootsize);
+			printf("EMMC RPMB partition Size %d MB\n", rpmbsize);
+			return 0;
+		} else {
+			printf("EMMC boot partition Size change Failed.\n");
+			return 1;
+		}
 	}
 
 	state = MMC_INVALID;
@@ -324,5 +414,11 @@ U_BOOT_CMD(
 	"mmc rescan\n"
 	"mmc part - lists available partition on current mmc device\n"
 	"mmc dev [dev] [part] - show or set current mmc device [partition]\n"
-	"mmc list - lists available devices");
+	"mmc list - lists available devices\n"
+	"mmc open <dev> <boot_partition>\n"
+	" - Enable boot_part for booting and enable R/W access of boot_part\n"
+	"mmc close <dev> <boot_partition>\n"
+	" - Enable boot_part for booting and disable access to boot_part\n"
+	"mmc bootpart <device num> <boot part size MB> <RPMB part size MB>\n"
+	" - change sizes of boot and RPMB partions of specified device\n");
 #endif
