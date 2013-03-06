@@ -29,6 +29,9 @@
 #define VPLL	4
 #define BPLL	5
 
+#define FSYS1_MMC0_DIV_MASK	0xff0f
+#define FSYS1_MMC0_DIV_VAL	0x0701
+
 unsigned long get_pll_clk(int pllreg);
 unsigned long get_arm_clk(void);
 unsigned long get_i2c_clk(void);
