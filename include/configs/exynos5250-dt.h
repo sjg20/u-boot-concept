@@ -116,6 +116,8 @@
 #define CONFIG_MMC
 #define CONFIG_SDHCI
 #define CONFIG_S5P_SDHCI
+#define CONFIG_DWMMC
+#define CONFIG_EXYNOS_DWMMC
 
 #define CONFIG_BOARD_EARLY_INIT_F
 
@@ -238,6 +240,10 @@
 
 #define CONFIG_DOS_PARTITION
 
+#define CONFIG_EFI_PARTITION
+#define CONFIG_CMD_PART
+#define CONFIG_PARTITION_UUIDS
+
 #define CONFIG_IRAM_TOP		0x02050000
 
 /* The place where we put our SPL marker */
@@ -345,6 +351,7 @@
 #define CONFIG_SHA256
 
 /* Display */
+#ifndef CONFIG_OF_CONTROL
 #define CONFIG_LCD
 #ifdef CONFIG_LCD
 #define CONFIG_EXYNOS_FB
@@ -353,6 +360,7 @@
 #define LCD_YRES			1600
 #define LCD_BPP			LCD_COLOR16
 #define CONFIG_CMD_BMP
+#endif
 #endif
 
 #endif	/* __CONFIG_H */
