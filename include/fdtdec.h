@@ -91,6 +91,7 @@ enum fdt_compat_id {
 	COMPAT_NXP_PTN3460,		/* NXP PTN3460 DP/LVDS bridge */
 	COMPAT_INFINEON_SLB9635_TPM,	/* Infineon SLB9635 TPM */
 	COMPAT_GOOGLE_ARBITRATOR,	/* Arbitrator a device between EC/AP */
+	COMPAT_SAMSUNG_EXYNOS5_DWMMC,	/* Exynos5 DWMMC controller */
 
 	COMPAT_COUNT,
 };
