@@ -21,6 +21,16 @@
 #include <cros/cros_fdtdec.h>
 #include <tlcl.h>
 
+#if 1 /* Not ported to upstream yet */
+
+int VbExLegacy(void)
+{
+	printf("Legacy mode not implemented.\n");
+	return 1;
+}
+
+#else
+
 int board_final_cleanup(void);
 
 /* VbExLegacy calls a payload (e.g. SeaBIOS) from an alternate CBFS
@@ -135,3 +145,4 @@ int VbExLegacy(void)
 	/* Make GCC happy. This point is never reached. */
 	return 0;
 }
+#endif

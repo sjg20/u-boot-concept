@@ -47,12 +47,16 @@
 #define CONFIG_OF_CONTROL
 #define CONFIG_OF_SEPARATE
 #define CONFIG_DEFAULT_DEVICE_TREE	link
+#define CONFIG_BOOTSTAGE
+#define CONFIG_BOOTSTAGE_REPORT
 
 /*-----------------------------------------------------------------------
  * Watchdog Configuration
  */
 #undef CONFIG_WATCHDOG
 #undef CONFIG_HW_WATCHDOG
+
+#define CONFIG_SYS_TEXT_BASE		0x01110000
 
 /* SATA AHCI storage */
 
