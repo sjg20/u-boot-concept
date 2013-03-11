@@ -19,6 +19,7 @@
  */
 
 #include <common.h>
+#include <errno.h>
 #include <pci.h>
 #include <usb.h>
 
