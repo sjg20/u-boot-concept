@@ -112,6 +112,14 @@ typedef unsigned int uint;
 #include <linux/types.h>
 #include <asm/byteorder.h>
 
+#ifdef CONFIG_USE_STDINT
+/* Provided by gcc. */
+#include <stdint.h>
+#else
+/* Type for `void *' pointers. */
+typedef unsigned long int uintptr_t;
+#endif
+
 #if __SIZEOF_LONG__ == 8
 # define __WORDSIZE	64
 #elif __SIZEOF_LONG__ == 4
@@ -123,9 +131,6 @@ typedef unsigned int uint;
  */
 #define __WORDSIZE	32
 #endif
-
-/* Type for `void *' pointers. */
-typedef unsigned long int uintptr_t;
 
 #endif /* USE_HOSTCC */
 
