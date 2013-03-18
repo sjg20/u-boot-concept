@@ -127,7 +127,7 @@ struct spi_slave *tegra20_spi_setup_slave(unsigned int bus, unsigned int cs,
 		return NULL;
 	}
 
-	spi = malloc(sizeof(struct tegra_spi_slave));
+	spi = spi_alloc_slave(struct tegra_spi_slave, bus, cs);
 	if (!spi) {
 		printf("SPI error: malloc of SPI structure failed\n");
 		return NULL;
