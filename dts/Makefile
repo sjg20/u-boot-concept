@@ -56,8 +56,8 @@ DT_BIN	:= $(obj)dt.dtb
 
 $(DT_BIN): $(TOPDIR)/board/$(VENDOR)/dts/$(DEVICE_TREE).dts
 	rc=$$( \
-		cat $< | $(CPP) -P $(DTS_CPPFLAGS) - | \
-		{ { $(DTC) -R 4 -p 0x1000 -O dtb -o ${DT_BIN} $(DTS_FLAGS) - 2>&1 ; \
+		cat $< | $(CPP) -P $(DTS_CPPFLAGS) - > $<.in; \
+		{ { $(DTC) -R 4 -p 0x1000 -O dtb -o ${DT_BIN} $(DTS_FLAGS) $<.in 2>&1 ; \
 		    echo $$? >&3 ; } | \
 		  grep -v '^DTC: dts->dtb  on file' ; \
 	        } 3>&1 1>&2 ) ; \
