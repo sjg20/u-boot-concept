@@ -37,6 +37,7 @@
 #include <asm/arch/sromc.h>
 #include <power/pmic.h>
 #include <power/max77686_pmic.h>
+#include <power/tps65090_pmic.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -189,16 +190,9 @@ static int pmic_reg_update(struct pmic *p, int reg, uint regval)
 	return 0;
 }
 
-int power_init_board(void)
+static int max77686_init(void)
 {
 	struct pmic *p;
-
-	set_ps_hold_ctrl();
-
-	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
-
-	if (pmic_init(I2C_PMIC))
-		return -1;
 
 	p = pmic_get("MAX77686_PMIC");
 	if (!p)
@@ -283,6 +277,29 @@ int power_init_board(void)
 		return -1;
 
 	return 0;
+}
+
+int power_init_board(void)
+{
+	int ret;
+
+	set_ps_hold_ctrl();
+
+	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
+
+	if (pmic_init(I2C_PMIC))
+		return -1;
+
+	if (max77686_init())
+		return -1;
+
+	/* The TPS65090 may not be in the device tree. If so, it is not
+	 * an error. */
+	ret = tps65090_init();
+	if (ret == 0 || ret == -ENODEV)
+		return 0;
+
+	return -1;
 }
 #endif
 
