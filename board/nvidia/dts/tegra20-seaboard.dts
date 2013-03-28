@@ -1,6 +1,9 @@
 /dts-v1/;
 
 /include/ "tegra20.dtsi"
+/include/ "flashmap-tegra-ro.dtsi"
+/include/ "flashmap-tegra-4mb-rw.dtsi"
+/include/ "chromeos-tegra.dtsi"
 
 / {
 	model = "NVIDIA Seaboard";
@@ -9,6 +12,10 @@
 	chosen {
 		bootargs = "vmalloc=192M video=tegrafb console=ttyS0,115200n8 root=/dev/mmcblk1p3 rw rootwait";
 	};
+
+	config {
+	       hwid = "NVIDIA Seaboard";
+       };
 
 	aliases {
 		/* This defines the order of our ports */
