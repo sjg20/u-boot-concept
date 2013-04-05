@@ -469,6 +469,7 @@ ALL-$(CONFIG_OF_SEPARATE) += $(obj)u-boot.dtb $(obj)u-boot-dtb.bin
 ifneq ($(CONFIG_TEGRA),)
 ifeq ($(CONFIG_OF_SEPARATE),y)
 ALL-y += $(obj)u-boot-dtb-tegra.bin
+ALL-y += $(obj)u-boot-nodtb-tegra.bin
 else
 ALL-y += $(obj)u-boot-nodtb-tegra.bin
 endif
@@ -588,18 +589,15 @@ $(obj)u-boot.spr:	$(obj)u-boot.img $(obj)spl/u-boot-spl.bin
 		cat $(obj)spl/u-boot-spl-pad.img $(obj)u-boot.img > $@
 
 ifneq ($(CONFIG_TEGRA),)
-ifeq ($(CONFIG_OF_SEPARATE),y)
-nodtb=dtb
-dtbfile=$(obj)u-boot.dtb
-else
-nodtb=nodtb
-dtbfile=
-endif
 
-$(obj)u-boot-$(nodtb)-tegra.bin: $(obj)spl/u-boot-spl.bin $(obj)u-boot.bin $(dtbfile)
+$(obj)u-boot-dtb-tegra.bin: $(obj)spl/u-boot-spl.bin $(obj)u-boot.bin $(dtbfile)
 		$(OBJCOPY) ${OBJCFLAGS} --pad-to=$(CONFIG_SYS_TEXT_BASE) -O binary $(obj)spl/u-boot-spl $(obj)spl/u-boot-spl-pad.bin
 		cat $(obj)spl/u-boot-spl-pad.bin $(obj)u-boot.bin $(dtbfile) > $@
-		rm $(obj)spl/u-boot-spl-pad.bin
+
+$(obj)u-boot-nodtb-tegra.bin: $(obj)spl/u-boot-spl.bin $(obj)u-boot.bin
+		$(OBJCOPY) ${OBJCFLAGS} --pad-to=$(CONFIG_SYS_TEXT_BASE) -O binary $(obj)spl/u-boot-spl $(obj)spl/u-boot-spl-pad.bin
+		cat $(obj)spl/u-boot-spl-pad.bin $(obj)u-boot.bin > $@
+
 endif
 
 $(obj)u-boot-img.bin: $(obj)spl/u-boot-spl.bin $(obj)u-boot.img
