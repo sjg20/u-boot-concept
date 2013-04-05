@@ -10,6 +10,7 @@
 
 #ifndef USE_HOSTCC
 #include <common.h>
+#include <asm/unaligned.h>
 #endif
 #include <compiler.h>
 #include <u-boot/crc.h>
@@ -256,5 +257,10 @@ void crc32_wd_buf(const unsigned char *input, unsigned int ilen,
 	uint32_t crc;
 
 	crc = crc32_wd(0, input, ilen, chunk_sz);
+#ifdef USE_HOSTCC
+	crc = htobe32(crc);
 	memcpy(output, &crc, sizeof(crc));
+#else
+	put_unaligned_be32(crc, output);
+#endif
 }
