@@ -10,6 +10,10 @@
 #include <env_callback.h>
 #include <linux/stringify.h>
 
+#ifndef USE_HOSTCC
+#include <generated/environment.h>
+#endif
+
 #ifdef DEFAULT_ENV_INSTANCE_EMBEDDED
 env_t embedded_environment __UBOOT_ENV_SECTION__(environment) = {
 	ENV_CRC,	/* CRC Sum */
@@ -112,6 +116,10 @@ const uchar default_environment[] = {
 #endif
 #ifdef	CONFIG_EXTRA_ENV_SETTINGS
 	CONFIG_EXTRA_ENV_SETTINGS
+#endif
+#ifdef CONFIG_EXTRA_ENV_TEXT
+	/* This is created in the Makefile */
+	CONFIG_EXTRA_ENV_TEXT
 #endif
 	"\0"
 #else /* CONFIG_USE_DEFAULT_ENV_FILE */

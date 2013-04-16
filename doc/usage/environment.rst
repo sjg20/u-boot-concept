@@ -16,6 +16,60 @@ environment is erased by accident, a default environment is provided.
 
 Some configuration options can be set using Environment Variables.
 
+The default environment is created in `include/env_default.h`, and can be
+augmented by various `CONFIG` defines. See that file for details. In
+particular you can define `CONFIG_EXTRA_ENV_SETTINGS` in your board file
+to add environment variables (see `CONFIG_EXTRA_ENV_SETTINGS` for details).
+
+It is also possible to create an environment file with the name
+`board/<vendor>/env/<board>.env` for your board. If that file is not present
+then U-Boot will look for `board/<vendor>/env/common.env` so that you can
+have a common environment for all vendor boards.
+
+To include the common.env file in your board.env file, use `#include`.
+
+This is a plain text file where you can type your environment variables in
+the form `var=value`. Blank lines and multi-line variables are supported.
+The conversion script looks for a line that starts in column 1 with a string
+and has an equals sign immediately afterwards. Spaces before the = are not
+permitted. It is a good idea to indent your scripts so that only the 'var='
+appears at the start of a line.
+
+To add additional text to a variable you can use var+=value. This text is
+merged into the variable during the make process and made available as a
+single value to U-Boot. To support this, environment variables may not end
+in `+`.
+
+This file can include C-style comments. Blank lines and multi-line
+variables are supported, and you can use normal C preprocessor directives
+and CONFIG defines from your board config also.
+
+For example, for snapper9260 you would create a text file called
+`board/bluewater/env/snapper9260.env` containing the environment text.
+
+Example::
+
+    stdout=serial
+    #ifdef CONFIG_LCD
+    stdout+=,lcd
+    #endif
+    bootcmd=
+        /* U-Boot script for booting */
+
+        if [ -z ${tftpserverip} ]; then
+            echo "Use 'setenv tftpserverip a.b.c.d' to set IP address."
+        fi
+
+        usb start; setenv autoload n; bootp;
+        tftpboot ${tftpserverip}:
+        bootm
+    failed=
+        /* Print a message when boot fails */
+        echo CONFIG_SYS_BOARD boot failed - please check your image
+        echo Load address is CONFIG_SYS_LOAD_ADDR
+
+Some configuration options can be set using Environment Variables.
+
 List of environment variables (most likely not complete):
 
 baudrate
