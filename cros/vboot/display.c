@@ -182,12 +182,13 @@ VbError_t VbExDisplayScreen(uint32_t screen_type)
 		return VBERROR_INVALID_SCREEN_INDEX;
 	}
 
-	if (msg != NULL)
+	if (msg != NULL) {
 #ifdef HAVE_DISPLAY
 		print_on_center(msg);
 #elif defined(CONFIG_SANDBOX)
 		VbExDebug("%s", msg);
 #endif
+	}
 	return VBERROR_SUCCESS;
 }
 
