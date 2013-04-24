@@ -34,4 +34,6 @@
 #define MAX_NUM_CPU		4
 #define MCB_EMEM_ARB_OVERRIDE	(NV_PA_MC_BASE + 0xE8)
 
+#define TEGRA_USB1_BASE		0x7D000000
+
 #endif /* TEGRA114_H */
