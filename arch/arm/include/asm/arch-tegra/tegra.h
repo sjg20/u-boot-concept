@@ -80,6 +80,10 @@ enum {
 	SKU_ID_T25E		= 0x1c,
 	SKU_ID_T30		= 0x81, /* Cardhu value */
 	SKU_ID_T114_ENG		= 0x00, /* Dalmore value, unfused */
+	SKU_ID_T40X		= 0x3,
+	SKU_ID_T40T		= 0x4,
+	SKU_ID_T40S		= 0x5,
+	SKU_ID_AP40		= 0x6,
 };
 
 /*

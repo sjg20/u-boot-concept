@@ -72,6 +72,10 @@ int tegra_get_chip_type(void)
 	case CHIPID_TEGRA114:
 		switch (tegra_sku_id) {
 		case SKU_ID_T114_ENG:
+		case SKU_ID_T40X:
+		case SKU_ID_T40T:
+		case SKU_ID_T40S:
+		case SKU_ID_AP40:
 			return TEGRA_SOC_T114;
 		}
 		break;
