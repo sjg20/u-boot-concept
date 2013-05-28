@@ -78,7 +78,6 @@ static inline void fdt_fixup_crypto_node(void *blob, int sec_rev) {}
 int fdt_pci_dma_ranges(void *blob, int phb_off, struct pci_controller *hose);
 #endif
 
-#ifdef CONFIG_OF_BOARD_SETUP
 /**
  * Add board-specific data to the FDT before booting the OS.
  *
@@ -95,7 +94,6 @@ int ft_pci_setup(void *blob, bd_t *bd);
 
 /* Board-specific function to set up system information in fdt */
 int ft_system_setup(void *blob, bd_t *bd);
-#endif
 
 void set_working_fdt_addr(void *addr);
 int fdt_resize(void *blob);
