@@ -24,7 +24,6 @@
 	"noinitrd usb_port_owner_info=0 " \
 	"usbcore.old_scheme_first=1 " \
 	"core_edp_mv=1120 core_edp_ma=4000 " \
-	"no_console_suspend=1 " \
 	"tegraid=35.1.1.0.0 " \
 	"mem=1980M@2048M vpr=32M@4063M tsec=32M@4031M " \
 	"otf_key=0 commchip_id=0 " \
