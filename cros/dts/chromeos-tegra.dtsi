@@ -6,6 +6,7 @@
 
 /*
  * This file holds Chrome OS-specific options, kept within a chromeos-config
+ * The addresses below are for T30-and-above SoCs, i.e. NOT T20!
  */
 
 / {
@@ -22,9 +23,9 @@
 		 */
 
 		/* Memory addresses for kernel, cros-system and gbb */
-		kernel = <0x00100000 0x00800000>;
-		cros-system-data = <0x00900000 0x8000>;
-		google-binary-block = <0x00908000 0x80000>;
+		kernel = <0x80408000 0x00800000>;
+		cros-system-data = <0x80C08000 0x8000>;
+		google-binary-block = <0x80C10000 0x80000>;
 
 		firmware-storage = <&firmware_storage_spi>;
 		nvstorage-media = "disk";

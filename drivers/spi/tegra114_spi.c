@@ -110,6 +110,7 @@ struct tegra_spi_ctrl {
 	unsigned int mode;
 	int periph_id;
 	int valid;
+	int node;
 };
 
 struct tegra_spi_slave {
@@ -214,6 +215,8 @@ int tegra114_spi_init(int *node_list, int count)
 		}
 		ctrl->valid = 1;
 		found = 1;
+
+		ctrl->node = node;
 
 		debug("%s: found controller at %p, freq = %u, periph_id = %d\n",
 		      __func__, ctrl->regs, ctrl->freq, ctrl->periph_id);
@@ -403,3 +406,27 @@ int tegra114_spi_xfer(struct spi_slave *slave, unsigned int bitlen,
 
 	return 0;
 }
+
+#ifdef CONFIG_OF_CONTROL
+/**
+ * Set up a new SPI slave for an fdt node
+ *
+ * @param blob          Device tree blob
+ * @param node          SPI peripheral node to use
+ * @return 0 if ok, -1 on error
+ */
+struct spi_slave *spi_setup_slave_fdt(const void *blob, int node,
+		unsigned int cs, unsigned int max_hz, unsigned int mode)
+{
+	int i;
+
+	for (i = 0; i < CONFIG_TEGRA114_SPI_CTRLS; i++) {
+		struct tegra_spi_ctrl *ctrl = &spi_ctrls[i];
+		if (ctrl->node == node)
+			return tegra114_spi_setup_slave(i, cs, max_hz, mode);
+	}
+
+	debug("%s: Failed to find SPI node %d\n", __func__, node);
+	return NULL;
+}
+#endif
