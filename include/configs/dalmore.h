@@ -103,6 +103,8 @@
 /* USB keyboard */
 #define CONFIG_USB_KEYBOARD
 
+#define CONFIG_CTRLC_POLL_S	1
+
 #include "tegra-common-post.h"
 
 #endif /* __CONFIG_H */

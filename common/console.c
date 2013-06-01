@@ -521,12 +521,29 @@ int vprintf(const char *fmt, va_list args)
 	return i;
 }
 
+#ifdef CONFIG_CTRLC_POLL_S
+/*
+ * Process Ctrl-C every CONFIG_CTRLC_POLL_S second(s) to improve performance
+ * (like TFTP boot) when interlaced with other tasks like USB KB
+ * polling.
+ */
+static unsigned long ctrlc_ts = (CONFIG_CTRLC_POLL_S * CONFIG_SYS_HZ);
+#endif
+
 /* test if ctrl-c was pressed */
 static int ctrlc_disabled = 0;	/* see disable_ctrl() */
 static int ctrlc_was_pressed = 0;
 int ctrlc(void)
 {
 	if (!ctrlc_disabled && gd->have_console) {
+#ifdef CONFIG_CTRLC_POLL_S
+		if (get_timer(ctrlc_ts) < (CONFIG_CTRLC_POLL_S
+				* CONFIG_SYS_HZ))
+			return 0;
+		else
+			ctrlc_ts = get_timer(0);
+#endif
+
 		if (tstc()) {
 			switch (getc()) {
 			case 0x03:		/* ^C - Control C */
