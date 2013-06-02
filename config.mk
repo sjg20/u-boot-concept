@@ -71,6 +71,22 @@ ifneq ($(CONFIG_CHROMEOS),)
 PLATFORM_CPPFLAGS += -I$(srctree)/cros/include
 endif
 
+ifdef CROS_RO
+PLATFORM_CPPFLAGS += -DCONFIG_CROS_RO
+endif
+
+ifdef CROS_RW
+PLATFORM_CPPFLAGS += -DCONFIG_CROS_RW
+endif
+
+ifdef CROS_SMALL
+PLATFORM_CPPFLAGS += -DCONFIG_CROS_SMALL
+endif
+
+ifdef CROS_FULL
+PLATFORM_CPPFLAGS += -DCONFIG_CROS_FULL
+endif
+
 ifdef CONFIG_CHROMEOS
 PLATFORM_CPPFLAGS += -I$(if $(VBOOT_SOURCE),$(VBOOT_SOURCE)/firmware/include,\
 		$(VBOOT)/include/vboot) \
