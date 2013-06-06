@@ -168,6 +168,16 @@ static inline u64 of_read_number(const fdt32_t *cell, int size)
 void of_bus_default_count_cells(void *blob, int parentoffset,
 					int *addrc, int *sizec);
 
+/**
+ * fdt_get_cells_len() - Get the length of a type of cell in top-level nodes
+ *
+ * Returns the length of the cell type in bytes (4 or 8).
+ *
+ * @blob: Pointer to device tree blob
+ * @nr_cells_name: Name to lookup, e.g. "#address-cells"
+ */
+int fdt_get_cells_len(const void *blob, char *nr_cells_name);
+
 #endif /* ifdef CONFIG_OF_LIBFDT */
 
 #ifdef USE_HOSTCC
