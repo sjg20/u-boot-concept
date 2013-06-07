@@ -258,4 +258,10 @@ int crossystem_data_update_acpi(crossystem_data_t *cdata);
  */
 void crossystem_data_dump(crossystem_data_t *cdata);
 
+/**
+ * Init crossystem_data cakked from non-verifed_boot
+ *
+ * @return crossystem_data location if it succeeds, NULL if it fails
+ */
+crossystem_data_t *cdata_init(void);
 #endif /* __CHROMEOS_CROSSYSTEM_DATA_H__ */

@@ -315,8 +315,18 @@ int ft_board_setup(void *fdt, bd_t *bd)
 		return err;
 	}
 	if (!g_crossystem_data) {
+#ifndef CONFIG_PUPPY_CROSSYSTEM_DATA_HACK
 		VBDEBUG("warning: g_crossystem_data is NULL\n");
 		return 0;
+#else
+		VBDEBUG("warning: non_verified_boot, try to fetch "
+			"crossystem_data\n");
+		g_crossystem_data = cdata_init();
+		if (!g_crossystem_data) {
+			VBDEBUG("warning: g_crossystem_data is NULL\n");
+			return 0;
+		}
+#endif
 	}
 
 	err = crossystem_data_embed_into_fdt(g_crossystem_data, fdt);

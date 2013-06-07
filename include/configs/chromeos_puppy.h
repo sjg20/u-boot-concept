@@ -39,6 +39,26 @@
 /* Add chromeos specific only for non spl build */
 #ifndef CONFIG_SPL_BUILD
 
+/*
+ * To provide crossystem_data to kernel, we must have the following
+ * two configs defined.
+ *
+ * TODO:
+ * Verify related implementation functions.
+ */
+/* Support vboot flag reading from GPIO hardwrae */
+#define CONFIG_CHROMEOS_GPIO_FLAG
+
+/* Support vboot flag reading from EC */
+#define CONFIG_CHROMEOS_CROS_EC_FLAG
+
+/* Support vboot flag reading from sysinfo struct and hardware pin */
+/* #define CONFIG_CHROMEOS_SYSINFO_FLAG */
+
+#define NVIDIA_PUPPY_RO_FWID	"Nvidia_Puppy_0000.100.0"
+#define NVIDIA_PUPPY_FWID	"Nvidia_Puppy_1000.120.0"
+#define NVIDIA_PUPPY_HWID	"PUPPY 1000"
+
 #define CONFIG_DIRECT_BOOTARGS ""
 #define CONFIG_STD_DEVICES_SETTINGS ""
 #include <configs/chromeos.h>
@@ -55,6 +75,8 @@
 #define CONFIG_CROS_EC_KEYB		/* CROS_EC keyboard input */
 #define CONFIG_CMD_CROS_EC
 #define CONFIG_KEYBOARD
+
+#define CONFIG_PUPPY_CROSSYSTEM_DATA_HACK
 
 #endif
 

@@ -891,6 +891,91 @@ out:
 	return ret;
 }
 
+#ifdef CONFIG_PUPPY_CROSSYSTEM_DATA_HACK
+crossystem_data_t *
+cdata_init(void)
+{
+	crossystem_data_t *cdata = NULL;
+
+	size_t size = 0;
+	struct vboot_flag_details wpsw, recsw, devsw, oprom;
+	uint8_t hardware_id[ID_LEN];
+	uint8_t  readonly_firmware_id[ID_LEN];
+	int oprom_matters = 0;
+	int firmware_type;
+	uint8_t firmware_id[ID_LEN];
+
+	cdata = cros_fdtdec_alloc_region(gd->fdt_blob,
+						  "cros-system-data", &size);
+	if (!cdata) {
+		VBDEBUG("cros-system-data missing "
+				"from fdt, or malloc failed\n");
+		goto out;
+	}
+
+	if (vboot_flag_fetch(VBOOT_FLAG_WRITE_PROTECT, &wpsw) ||
+	    vboot_flag_fetch(VBOOT_FLAG_RECOVERY, &recsw) ||
+	    vboot_flag_fetch(VBOOT_FLAG_DEVELOPER, &devsw) ||
+	    vboot_flag_fetch(VBOOT_FLAG_OPROM_LOADED, &oprom)) {
+		VBDEBUG("failed to fetch gpio\n");
+		return NULL;
+	}
+	vboot_flag_dump(VBOOT_FLAG_WRITE_PROTECT, &wpsw);
+	vboot_flag_dump(VBOOT_FLAG_RECOVERY, &recsw);
+	vboot_flag_dump(VBOOT_FLAG_DEVELOPER, &devsw);
+	vboot_flag_dump(VBOOT_FLAG_OPROM_LOADED, &oprom);
+
+	if (cros_fdtdec_config_has_prop(gd->fdt_blob, "oprom-matters")) {
+		VBDEBUG("FDT says oprom-matters\n");
+		oprom_matters = 1;
+	}
+
+	if (!fmap.readonly.fmap.length &&
+	    cros_fdtdec_flashmap(gd->fdt_blob, &fmap)) {
+		VBDEBUG("failed to decode fmap\n");
+		return NULL;
+	}
+	dump_fmap(&fmap);
+
+	/* HACK: fill in hardcoded firmware/hw ids */
+	strcpy((char *)readonly_firmware_id, NVIDIA_PUPPY_RO_FWID);
+	VBDEBUG("read-only firmware id: \"%s\"\n", readonly_firmware_id);
+
+	strcpy((char *)hardware_id, NVIDIA_PUPPY_HWID);
+	VBDEBUG("hardware id: \"%s\"\n", hardware_id);
+
+	firmware_type = FIRMWARE_TYPE_DEVELOPER;
+	strcpy((char *)firmware_id, NVIDIA_PUPPY_FWID);
+	VBDEBUG("active main firmware type : %d\n", firmware_type);
+	VBDEBUG("active main firmware id   : \"%s\"\n", firmware_id);
+
+	/* Initialize crossystem data */
+	/*
+	 * TODO There is no readwrite EC firmware on our current ARM boards. But
+	 * we should have a mechanism to probe (or acquire this information from
+	 * the device tree) whether the active EC firmware is R/O or R/W.
+	 */
+	if (crossystem_data_init(cdata,
+				 &wpsw, &recsw, &devsw, &oprom,
+				 oprom_matters,
+				 fmap.readonly.fmap.offset,
+				 ACTIVE_EC_FIRMWARE_RO,
+				 hardware_id,
+				 readonly_firmware_id)) {
+		VBDEBUG("failed to init crossystem data\n");
+		goto out;
+	}
+
+	crossystem_data_set_main_firmware(cdata,
+				firmware_type, firmware_id);
+
+	if (cdata)
+		crossystem_data_dump(cdata);
+out:
+	return cdata;
+}
+#endif
+
 static uint32_t
 twostop_main_firmware(struct twostop_fmap *fmap, void *gbb,
 		      crossystem_data_t *cdata, void *vb_shared_data)
