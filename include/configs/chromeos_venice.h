@@ -71,4 +71,6 @@
 #endif
 #define CONFIG_TEGRA_BOARD_STRING	"NVIDIA ChromeOS Venice"
 
+#define CONFIG_DEVICE_TREE_LIST		"tegra114-venice"
+
 #endif /* __CHROMEOS_VENICE_CONFIG_H */
