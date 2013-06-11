@@ -315,7 +315,7 @@ int ft_board_setup(void *fdt, bd_t *bd)
 		return err;
 	}
 	if (!g_crossystem_data) {
-#ifndef CONFIG_PUPPY_CROSSYSTEM_DATA_HACK
+#ifndef CONFIG_DALMORE_CROSSYSTEM_DATA_HACK
 		VBDEBUG("warning: g_crossystem_data is NULL\n");
 		return 0;
 #else

@@ -64,11 +64,11 @@
 #ifdef V_PROMPT
 #undef V_PROMPT
 #endif
-#define V_PROMPT		"Tegra114 (Venice) # "
+#define V_PROMPT		"Tegra114 (ChromeOS Venice) # "
 
 #ifdef CONFIG_TEGRA_BOARD_STRING
 #undef CONFIG_TEGRA_BOARD_STRING
 #endif
-#define CONFIG_TEGRA_BOARD_STRING	"NVIDIA Venice"
+#define CONFIG_TEGRA_BOARD_STRING	"NVIDIA ChromeOS Venice"
 
 #endif /* __CHROMEOS_VENICE_CONFIG_H */

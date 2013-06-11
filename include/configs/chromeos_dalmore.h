@@ -14,8 +14,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __CHROMEOS_PUPPY_CONFIG_H
-#define __CHROMEOS_PUPPY_CONFIG_H
+#ifndef __CHROMEOS_DALMORE_CONFIG_H
+#define __CHROMEOS_DALMORE_CONFIG_H
 
 #define CONFIG_EXTRA_BOOTARGS \
 	"console=ttyS0,115200n8 " \
@@ -55,9 +55,9 @@
 /* Support vboot flag reading from sysinfo struct and hardware pin */
 /* #define CONFIG_CHROMEOS_SYSINFO_FLAG */
 
-#define NVIDIA_PUPPY_RO_FWID	"Nvidia_Puppy_0000.100.0"
-#define NVIDIA_PUPPY_FWID	"Nvidia_Puppy_1000.120.0"
-#define NVIDIA_PUPPY_HWID	"PUPPY 1000"
+#define NVIDIA_DALMORE_RO_FWID	"Nvidia_Dalmore_0000.100.0"
+#define NVIDIA_DALMORE_FWID	"Nvidia_Dalmore_1000.120.0"
+#define NVIDIA_DALMORE_HWID	"DALMORE 1000"
 
 #define CONFIG_DIRECT_BOOTARGS ""
 #define CONFIG_STD_DEVICES_SETTINGS ""
@@ -76,7 +76,7 @@
 #define CONFIG_CMD_CROS_EC
 #define CONFIG_KEYBOARD
 
-#define CONFIG_PUPPY_CROSSYSTEM_DATA_HACK
+#define CONFIG_DALMORE_CROSSYSTEM_DATA_HACK
 
 #endif
 
@@ -86,11 +86,11 @@
 #ifdef V_PROMPT
 #undef V_PROMPT
 #endif
-#define V_PROMPT		"Tegra114 (Puppy) # "
+#define V_PROMPT		"Tegra114 (ChromeOS Dalmore) # "
 
 #ifdef CONFIG_TEGRA_BOARD_STRING
 #undef CONFIG_TEGRA_BOARD_STRING
 #endif
-#define CONFIG_TEGRA_BOARD_STRING	"NVIDIA Puppy"
+#define CONFIG_TEGRA_BOARD_STRING	"NVIDIA ChromeOS Dalmore"
 
-#endif /* __CHROMEOS_PUPPY_CONFIG_H */
+#endif /* __CHROMEOS_DALMORE_CONFIG_H */

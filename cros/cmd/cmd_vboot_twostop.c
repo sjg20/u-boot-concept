@@ -891,7 +891,7 @@ out:
 	return ret;
 }
 
-#ifdef CONFIG_PUPPY_CROSSYSTEM_DATA_HACK
+#ifdef CONFIG_DALMORE_CROSSYSTEM_DATA_HACK
 crossystem_data_t *
 cdata_init(void)
 {
@@ -938,14 +938,14 @@ cdata_init(void)
 	dump_fmap(&fmap);
 
 	/* HACK: fill in hardcoded firmware/hw ids */
-	strcpy((char *)readonly_firmware_id, NVIDIA_PUPPY_RO_FWID);
+	strcpy((char *)readonly_firmware_id, NVIDIA_DALMORE_RO_FWID);
 	VBDEBUG("read-only firmware id: \"%s\"\n", readonly_firmware_id);
 
-	strcpy((char *)hardware_id, NVIDIA_PUPPY_HWID);
+	strcpy((char *)hardware_id, NVIDIA_DALMORE_HWID);
 	VBDEBUG("hardware id: \"%s\"\n", hardware_id);
 
 	firmware_type = FIRMWARE_TYPE_DEVELOPER;
-	strcpy((char *)firmware_id, NVIDIA_PUPPY_FWID);
+	strcpy((char *)firmware_id, NVIDIA_DALMORE_FWID);
 	VBDEBUG("active main firmware type : %d\n", firmware_type);
 	VBDEBUG("active main firmware id   : \"%s\"\n", firmware_id);
 
