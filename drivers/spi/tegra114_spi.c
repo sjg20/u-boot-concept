@@ -21,6 +21,8 @@
  * MA 02111-1307 USA
  */
 
+//#define DEBUG
+
 #include <common.h>
 #include <malloc.h>
 #include <asm/io.h>
@@ -231,8 +233,17 @@ int tegra114_spi_claim_bus(struct spi_slave *slave)
 	struct spi_regs *regs = spi->ctrl->regs;
 
 	/* Change SPI clock to correct frequency, PLLP_OUT0 source */
+#if 0
+	/* this statement causes a CS be generated */
 	clock_start_periph_pll(spi->ctrl->periph_id, CLOCK_ID_PERIPH,
 			       spi->ctrl->freq);
+
+#else
+	clock_enable(spi->ctrl->periph_id);
+	clock_adjust_periph_pll_div(spi->ctrl->periph_id, CLOCK_ID_PERIPH,
+			spi->ctrl->freq, NULL);
+	reset_set_enable(spi->ctrl->periph_id, 0);
+#endif
 
 	/* Clear stale status here */
 	setbits_le32(&regs->fifo_status,
@@ -282,8 +293,8 @@ int tegra114_spi_xfer(struct spi_slave *slave, unsigned int bitlen,
 	int num_bytes;
 	int ret;
 
-	debug("%s: slave %u:%u dout %p din %p bitlen %u\n",
-	      __func__, slave->bus, slave->cs, dout, din, bitlen);
+	debug("%s: slave %u:%u dout %p din %p bitlen %u flags=0x%x\n",
+	      __func__, slave->bus, slave->cs, dout, din, bitlen, (unsigned int)flags);
 	if (bitlen % 8)
 		return -1;
 	num_bytes = bitlen / 8;
@@ -411,22 +422,22 @@ int tegra114_spi_xfer(struct spi_slave *slave, unsigned int bitlen,
 /**
  * Set up a new SPI slave for an fdt node
  *
- * @param blob          Device tree blob
- * @param node          SPI peripheral node to use
+ * @param blob		Device tree blob
+ * @param node		SPI peripheral node to use
  * @return 0 if ok, -1 on error
  */
 struct spi_slave *spi_setup_slave_fdt(const void *blob, int node,
 		unsigned int cs, unsigned int max_hz, unsigned int mode)
 {
-	int i;
+	struct tegra_spi_ctrl *ctrl;
+	unsigned int i;
 
-	for (i = 0; i < CONFIG_TEGRA114_SPI_CTRLS; i++) {
-		struct tegra_spi_ctrl *ctrl = &spi_ctrls[i];
+	for (i = 0, ctrl = spi_ctrls; i < CONFIG_TEGRA114_SPI_CTRLS; i++, ctrl++) {
 		if (ctrl->node == node)
-			return tegra114_spi_setup_slave(i, cs, max_hz, mode);
+			return spi_setup_slave(i, cs, max_hz, mode);
 	}
 
-	debug("%s: Failed to find SPI node %d\n", __func__, node);
+	debug("%s: Failed to find bus node %d\n", __func__, node);
 	return NULL;
 }
 #endif

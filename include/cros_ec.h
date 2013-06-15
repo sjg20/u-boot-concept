@@ -40,16 +40,19 @@ enum cros_ec_interface_t {
 /* Our configuration information */
 struct cros_ec_dev {
 	enum cros_ec_interface_t interface;
-	struct spi_slave *spi;		/* Our SPI slave, if using SPI */
-	int node;                       /* Our node */
-	int parent_node;		/* Our parent node (interface) */
-	unsigned int cs;		/* Our chip select */
-	unsigned int addr;		/* Device address (for I2C) */
-	unsigned int bus_num;		/* Bus number (for I2C) */
+	uint16_t node;			/* EC node offset */
+	uint16_t parent_node;		/* EC parent node (interface) offset */
+	union {
+		struct spi_slave *spi;	/* Our SPI slave, if using SPI */
+		struct {
+			uint8_t addr;	/* Device address (for I2C) */
+			uint8_t bus_num;	/* Bus number (for I2C) */
+		} i2c;
+	} u;
 	unsigned int max_frequency;	/* Maximum interface frequency */
 	struct fdt_gpio_state ec_int;	/* GPIO used as EC interrupt line */
-	int cmd_version_is_supported;   /* Device supports command versions */
-	int optimise_flash_write;	/* Don't write erased flash blocks */
+	int cmd_version_is_supported:1; /* Device supports command versions */
+	int optimise_flash_write:1;	/* Don't write erased flash blocks */
 
 	/*
 	 * These two buffers will always be dword-aligned and include enough
@@ -446,4 +449,36 @@ int cros_ec_set_ldo(struct cros_ec_dev *dev, uint8_t index, uint8_t state);
  * @return 0 if ok, -1 on error
  */
 int cros_ec_get_ldo(struct cros_ec_dev *dev, uint8_t index, uint8_t *state);
+
+/**
+ * Tunnel an I2C transfer to the EC
+ *
+ * @param dev		CROS-EC device
+ * @param chip		Chip address (7-bit I2C address)
+ * @param addr		Register address to read/write
+ * @param alen		Length of register address in bytes
+ * @param buffer	Buffer containing data to read/write
+ * @param len		Length of buffer
+ * @param is_read	1 if this is a read, 0 if this is a write
+ */
+int cros_ec_i2c_xfer(struct cros_ec_dev *dev, uchar chip, uint addr,
+		     int alen, uchar *buffer, int len, int is_read);
+
+/**
+ * Initialize the Chrome OS EC at board initialization time.
+ *
+ * @return 0 if ok, -ve on error
+ */
+int cros_ec_board_init(void);
+
+/**
+ * Get access to the error reported when cros_ec_board_init() was called
+ *
+ * This permits delayed reporting of the EC error if it failed during
+ * early init.
+ *
+ * @return error (0 if there was no error, -ve if there was an error)
+ */
+int cros_ec_get_error(void);
+
 #endif
