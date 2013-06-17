@@ -23,6 +23,8 @@
 
 /* Keep L2 cache disabled */
 #define CONFIG_SYS_DCACHE_OFF
+/* Use memory controller SDRAM size instead of ODMDATA */
+#define CONFIG_TEGRA_USE_EMC_DRAM_SIZE
 
 /* Enable fdt support for Venice. Flash the image in u-boot-dtb.bin */
 #define CONFIG_DEFAULT_DEVICE_TREE	tegra114-venice
