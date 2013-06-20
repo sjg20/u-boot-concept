@@ -89,7 +89,7 @@ struct clk_pll_table tegra_pll_x_table[TEGRA_SOC_CNT][CLOCK_OSC_FREQ_COUNT] = {
 	 { 700, 13, 0, 8},
 	},
 
-	/* T114: 1.9 GHz    */
+	/* T114: upto 1.9 GHz    */
 	/*
 	 * Field Bits Width
 	 *  n    15:8   8
@@ -98,7 +98,9 @@ struct clk_pll_table tegra_pll_x_table[TEGRA_SOC_CNT][CLOCK_OSC_FREQ_COUNT] = {
 	 */
 	{{ 108, 1, 1, 8},	/* actual: 702.0 MHz */
 	 { 73, 1, 1, 4},	/* actual: 700.8 MHz */
-	 { 116, 1, 1, 8},	/* actual: 696.0 MHz */
+	 { 200, 1, 1, 8},	/* 116 -> 696.0 MHz */
+				/* 166 -> 996.0 MHz */
+				/* 200 -> 1200.0 MHz */
 	 { 108, 2, 1, 8},	/* actual: 702.0 MHz */
 	},
 };
