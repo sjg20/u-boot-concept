@@ -15,6 +15,7 @@
  */
 
 #include <common.h>
+#include <asm/io.h>
 #include <asm-generic/gpio.h>
 #include <asm/arch/gpio.h>
 #include <asm/arch/gp_padctrl.h>
@@ -30,6 +31,25 @@
  * file(s) if the board has been reworked to tie the 65090 PMIC
  * directly to GEN1_I2C during bringup (i.e. bypassing the EC).
  */
+
+void hack_venice_display_for_demo(void)
+{
+	/* Set some display GPIOS */
+	gpio_request(GPIO_PG3, "EDP_EN");
+	gpio_direction_output(GPIO_PG3, 0);	/* pin 51 */
+	gpio_request(GPIO_PG4, "LCD_STDBY");
+	gpio_direction_output(GPIO_PG4, 1);	/* pin 52 */
+	gpio_request(GPIO_PH3, "LCD_RST");
+	gpio_direction_output(GPIO_PH3, 1);	/* pin 59 */
+
+	/* Change some PLL configs TBD - use actual clock_ calls for PLLD/D2 */
+	writel(0x40400C30, 0x600060dc);		/* PLLD_MISC: set LOCK, LFCON = 3 */
+	writel(0x40006302, 0x600064b8);		/* PLLD2_BASE: ENABLE, PLL_D SRC, DIVN 63, DIVM 2 */
+
+	/* Do some final misc DSI init TBD - someone should document what this does exactly*/
+	writel(0, 0x54300140);			/* DSI_PAD_CONTROL_2_0 */
+	writel(0, 0x54400140);			/* DSI_PAD_CONTROL_2_1 */
+}
 
 /*
  * Routine: pinmux_init
@@ -177,6 +197,8 @@ void board_vreg_init(void)
 #endif
 	/* Enable LCD backlight */
 	gpio_direction_output(DSI_PANEL_BL_EN_GPIO, 1);
+
+	hack_venice_display_for_demo();
 }
 
 /*
