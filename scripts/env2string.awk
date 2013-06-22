@@ -29,6 +29,12 @@ NF {
 		}
 		var = arr[1]
 		env = arr[2]
+
+		# Deal with +=
+		if (match(var, "(.*)[+]$", var_arr)) {
+			var = var_arr[1]
+			env = vars[var] env
+		}
 	} else {
 		# Change newline to \n
 		env = env "\\n" $0;

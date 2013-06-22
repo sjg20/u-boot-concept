@@ -39,12 +39,24 @@ and has an equals sign immediately afterwards. Spaces before the = are not
 permitted. It is a good idea to indent your scripts so that only the 'var='
 appears at the start of a line.
 
+To add additional text to a variable you can use var+=value. This text is
+merged into the variable during the make process and made available as a
+single value to U-Boot. To support this, environment variables may not end
+in `+`.
+
+This file can include C-style comments. Blank lines and multi-line
+variables are supported, and you can use normal C preprocessor directives
+and CONFIG defines from your board config also.
+
 For example, for snapper9260 you would create a text file called
 `board/bluewater/env/snapper9260.env` containing the environment text.
 
 Example::
 
     stdout=serial
+    #ifdef CONFIG_LCD
+    stdout+=,lcd
+    #endif
     bootcmd=
         /* U-Boot script for booting */
 

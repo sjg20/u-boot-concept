@@ -1796,7 +1796,12 @@ ENV_FILE := $(if $(wildcard $(ENV_FILE_BOARD)),$(ENV_FILE_BOARD),$(ENV_FILE_COMM
 quiet_cmd_gen_envp = ENVP    $@
       cmd_gen_envp = \
 	if [ -f "$(ENV_FILE)" ]; then \
-		cat $(ENV_FILE) >$@; \
+		$(CPP) -P $(CFLAGS) -x assembler-with-cpp -D__ASSEMBLY__ \
+			-D__UBOOT_CONFIG__ \
+			-I . -I include \
+			-I $(srctree)/include -include include/config.h \
+			-I$(srctree)/arch/$(ARCH)/include \
+			$(ENV_FILE) -o $@; \
 	else \
 		echo -n >$@ ; \
 	fi
