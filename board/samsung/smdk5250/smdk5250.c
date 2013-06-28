@@ -377,8 +377,9 @@ static void ft_board_setup_gpios(void *blob, bd_t *bd)
 	const struct fdt_property *prop;
 
 	/* Do nothing for newer boards */
+	/* rev 0,1,2,3,4,7 = PVT, MP1.0, MP1.1 or MP1.2, rev 6 is reserved */
 	rev = board_get_revision();
-	if (rev < 4 || rev == 6)
+	if (rev < 5 || rev == 6 || rev == 7)
 		return;
 
 	/*
@@ -422,8 +423,9 @@ static void ft_board_setup_tpm_resume(void *blob, bd_t *bd)
 	int err, node, rev;
 
 	/* Only apply fixup to MP machine */
+	/* rev 0 and 3 = MP1.0 or MP1.1, rev 4 or 7 = MP1.2, rev 6 = reserved */
 	rev = board_get_revision();
-	if (!(rev == 0 || rev == 3))
+	if (!(rev == 0 || rev == 3 || rev == 4 || rev == 6 || rev == 7))
 		return;
 
 	node = fdt_node_offset_by_compatible(blob, 0, kernel_tpm_compat);
@@ -481,9 +483,9 @@ static int board_dp_fill_gpios(const void *blob)
 		return ret;
 	}
 
-	/* If board is older, replace pd gpio with rst gpio */
+	/* If board is a DVT, replace pd gpio with rst gpio */
 	rev = board_get_revision();
-	if (rev >= 4 && rev != 6) {
+	if (rev == 5 || rev == 8) {
 		local.dp_pd = local.dp_rst;
 		local.dp_rst.gpio = FDT_GPIO_NONE;
 	}
