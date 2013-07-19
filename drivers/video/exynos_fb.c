@@ -176,6 +176,13 @@ static void lcd_panel_on(vidinfo_t *vid)
 
 	exynos_enable_ldo(1);
 
+	/* This is a temporary hack for Rev4 Pit boards
+	 * as discussed in crosbug.com/p/21128
+	 * Will be removed as proper timings.
+	*/
+	if (vid->dp_enabled)
+		exynos_init_dp();
+
 	if (vid->mipi_enabled)
 		exynos_mipi_dsi_init();
 }
