@@ -245,7 +245,12 @@ static unsigned int exynos_dp_handle_edid(struct edp_device_info *edp_info)
 	ret = exynos_dp_read_edid();
 	if (ret != EXYNOS_DP_SUCCESS) {
 		printf("DP exynos_dp_read_edid() failed\n");
-		return -EINVAL;
+		/*
+		 * This is a temporary hack for Rev4 Pit boards
+		 * as discussed in crosbug.com/p/21128
+		 * Clearly this should return -EINVAL
+		 */
+		return EXYNOS_DP_SUCCESS;
 	}
 
 	return ret;
