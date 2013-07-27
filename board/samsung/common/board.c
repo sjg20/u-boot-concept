@@ -23,6 +23,7 @@
 #include <common.h>
 #include <cros_ec.h>
 #include <errno.h>
+#include <fthread.h>
 #include <fdtdec.h>
 #include <i2c.h>
 #include <lcd.h>
@@ -517,6 +518,32 @@ int arch_early_init_r(void)
 	return 0;
 }
 
+#ifdef CONFIG_FTHREAD
+static struct {
+	unsigned int old_bus;
+	unsigned int bus;
+} fthread_i2c_state;
+
+static void panel_on_pre_start(void *unused)
+{
+	fthread_i2c_state.old_bus = i2c_get_bus_num();
+	i2c_set_bus_num(fthread_i2c_state.bus);
+}
+
+static void panel_on_post_stop(void *unused)
+{
+	fthread_i2c_state.bus = i2c_get_bus_num();
+	i2c_set_bus_num(fthread_i2c_state.old_bus);
+}
+
+static void *panel_on_wrapper(void *vid)
+{
+	exynos_lcd_panel_on((vidinfo_t *)vid);
+
+	return NULL;
+}
+#endif
+
 __weak int board_should_enable_lcd_panel(const void *blob)
 {
 	return true;
@@ -526,7 +553,17 @@ void board_lcd_panel_on(vidinfo_t *vid)
 {
 	if (board_should_enable_lcd_panel(gd->fdt_blob)) {
 		bootstage_start(BOOTSTAGE_ID_ACCUM_LCD, "LCD init");
+#ifdef CONFIG_FTHREAD
+		struct fthread *thread;
+
+		fthread_i2c_state.bus = i2c_get_bus_num();
+		fthread_spawn(panel_on_wrapper, (void *)vid, panel_on_pre_start,
+			      panel_on_post_stop, NULL, FTHREAD_PRIO_STD,
+			      "lcd_panel_on", FTHREAD_DEFAULT_STACKSIZE,
+			      &thread);
+#else
 		exynos_lcd_panel_on(vid);
+#endif
 		bootstage_accum(BOOTSTAGE_ID_ACCUM_LCD);
 	}
 }
