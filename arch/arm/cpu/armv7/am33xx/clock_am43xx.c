@@ -104,6 +104,7 @@ void enable_basic_clocks(void)
 		&cmper->gpio2clkctrl,
 		&cmper->gpio3clkctrl,
 		&cmper->i2c1clkctrl,
+		&cmper->cpgmac0clkctrl,
 		&cmper->emiffwclkctrl,
 		&cmper->emifclkctrl,
 		&cmper->otfaemifclkctrl,
