@@ -11,6 +11,21 @@
 #include <asm/arch/mux.h>
 #include "board.h"
 
+static struct module_pin_mux rmii1_pin_mux[] = {
+	{OFFSET(mii1_txen), MODE(1)},			/* RMII1_TXEN */
+	{OFFSET(mii1_txd1), MODE(1)},			/* RMII1_TD1 */
+	{OFFSET(mii1_txd0), MODE(1)},			/* RMII1_TD0 */
+	{OFFSET(mii1_rxd1), MODE(1) | RXACTIVE},	/* RMII1_RD1 */
+	{OFFSET(mii1_rxd0), MODE(1) | RXACTIVE},	/* RMII1_RD0 */
+	{OFFSET(mii1_rxdv), MODE(1) | RXACTIVE},	/* RMII1_RXDV */
+	{OFFSET(mii1_crs), MODE(1) | RXACTIVE},		/* RMII1_CRS_DV */
+	{OFFSET(mii1_rxerr), MODE(1) | RXACTIVE},	/* RMII1_RXERR */
+	{OFFSET(rmii1_refclk), MODE(0) | RXACTIVE},	/* RMII1_refclk */
+	{OFFSET(mdio_data), MODE(0) | RXACTIVE | PULLUP_EN},/* MDIO_DATA */
+	{OFFSET(mdio_clk), MODE(0) | PULLUP_EN},	/* MDIO_CLK */
+	{-1},
+};
+
 static struct module_pin_mux uart0_pin_mux[] = {
 	{OFFSET(uart0_rxd),
 	 (MODE(0) | PULLUP_EN | RXACTIVE | SLEWCTRL | DSPULLUDEN)},
@@ -55,4 +70,5 @@ void enable_board_pin_mux(void)
 	configure_module_pin_mux(mmc0_pin_mux);
 	configure_module_pin_mux(mmc1_pin_mux);
 	configure_module_pin_mux(i2c0_pin_mux);
+	configure_module_pin_mux(rmii1_pin_mux);
 }
