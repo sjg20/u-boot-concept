@@ -758,7 +758,7 @@ twostop_jump(crossystem_data_t *cdata, void *fw_blob, uint32_t fw_size,
 	void *dest = (void *)CONFIG_SYS_TEXT_BASE;
 
 	VBDEBUG("jump to readwrite main firmware at %#x, pos %p, size %#x\n",
-			dest, fw_blob, fw_size);
+			(unsigned)dest, fw_blob, fw_size);
 
 	/*
 	 * TODO: This version of U-Boot must be loaded at a fixed location. It
