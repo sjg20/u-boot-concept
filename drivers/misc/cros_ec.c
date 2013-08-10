@@ -597,7 +597,7 @@ int cros_ec_reboot(struct cros_ec_dev *dev, enum ec_reboot_cmd cmd,
 		 * better way to determine when the reboot is complete.  Could
 		 * we poll a memory-mapped LPC value?
 		 */
-		udelay(50000);
+		udelay(dev->reboot_delay_us);
 	}
 
 	return 0;
@@ -1161,6 +1161,8 @@ static int cros_ec_decode_fdt(const void *blob, int node,
 	fdtdec_decode_gpio(blob, node, "ec-interrupt", &static_dev.ec_int);
 	static_dev.optimise_flash_write =
 		fdtdec_get_bool(blob, node, "optimise-flash-write");
+	static_dev.reboot_delay_us =
+			fdtdec_get_int(blob, node, "reboot-delay-us", 0);
 	*devp = &static_dev;
 
 	return 0;

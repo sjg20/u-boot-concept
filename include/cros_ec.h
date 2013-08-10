@@ -44,6 +44,12 @@ struct cros_ec_dev {
 	struct fdt_gpio_state ec_int;	/* GPIO used as EC interrupt line */
 	int protocol_version;           /* Protocol version to use */
 	int optimise_flash_write:1;	/* Don't write erased flash blocks */
+	/*
+	 * Delay (in microseconds) between asking the EC to reboot
+	 * and sending it the next command. This is also used when the EC
+	 * jumps between RO and RW
+	 */
+	int reboot_delay_us;
 
 	/*
 	 * These two buffers will always be dword-aligned and include enough

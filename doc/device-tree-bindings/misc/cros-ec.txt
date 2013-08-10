@@ -17,6 +17,9 @@ Optional properties :
 - optimise-flash-write : Boolean property - if present then flash blocks
    containing all 0xff will not be written, since we assume that the EC
    uses that pattern for erased blocks
+- reboot-delay-us : Delay (in microseconds) between asking the EC to reboot
+   and sending it the next command. This is also used when the EC jumps
+   between RO and RW.
 
 The CROS_EC node should appear as a subnode of the interrupt that connects it
 to the EC (e.g. i2c, spi, lpc). The reg property (as usual) will indicate

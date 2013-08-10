@@ -73,6 +73,11 @@
 			flash@8000000 {
 				reg = <0x08000000 0x20000>;
 				erase-value = <0>;
+				/*
+				 * I2C EC needs a delay between telling the
+				 * EC to reboot and talking to it again.
+				 */
+				reboot-delay-us = <50000>;
 			};
 		};
 
