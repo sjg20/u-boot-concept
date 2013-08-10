@@ -66,6 +66,8 @@
 /* Enable vboot twostop with SPI flash */
 #define CONFIG_CHROMEOS_SPI
 
+#define CONFIG_VBOOT_REGION_READ
+
 #ifndef CONFIG_CROS_RO
 #define CONFIG_CHROMEOS_DISPLAY
 

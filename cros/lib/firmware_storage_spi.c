@@ -21,10 +21,6 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-enum {
-	SF_DEFAULT_SPEED = 1000000,
-};
-
 /*
  * Check the right-exclusive range [offset:offset+*count_ptr), and adjust
  * value pointed by <count_ptr> to form a valid range when needed.
@@ -55,7 +51,6 @@ static int read_spi(firmware_storage_t *file, uint32_t offset, uint32_t count,
 {
 	struct spi_flash *flash = file->context;
 
-	VBDEBUG("offset=%#x, count=%#x\n", offset, count);
 	if (border_check(flash, offset, count))
 		return -1;
 
