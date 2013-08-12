@@ -517,8 +517,16 @@ int arch_early_init_r(void)
 	return 0;
 }
 
+__weak int board_should_enable_lcd_panel(const void *blob)
+{
+	return true;
+}
+
 void board_lcd_panel_on(vidinfo_t *vid)
 {
-	if (board_is_processor_reset())
+	if (board_should_enable_lcd_panel(gd->fdt_blob)) {
+		bootstage_start(BOOTSTAGE_ID_ACCUM_LCD, "LCD init");
 		exynos_lcd_panel_on(vid);
+		bootstage_accum(BOOTSTAGE_ID_ACCUM_LCD);
+	}
 }
