@@ -159,6 +159,7 @@ uint64_t VbExGetTimer(void)
 
 int board_should_enable_lcd_panel(const void *blob)
 {
+	int use_efs;
 	int node;
 
 	/*
@@ -170,6 +171,8 @@ int board_should_enable_lcd_panel(const void *blob)
 	 * properly for now.
 	 */
 	node = cros_fdtdec_config_node(blob);
-	return node >= 0 &&
+	use_efs = node >= 0 &&
 		fdtdec_get_bool(blob, node, "early-firmware-selection");
+
+	return use_efs != is_processor_reset();
 }
