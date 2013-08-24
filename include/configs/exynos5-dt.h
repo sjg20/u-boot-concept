@@ -42,6 +42,13 @@
 #define CONFIG_SYS_ALLOW_NO_RELOC
 #define CONFIG_EXYNOS_LPDDR3
 
+#define CONFIG_STRING_TEST
+#define CONFIG_USE_ARCH_MEMSET
+/*
+#define CONFIG_USE_ARCH_MEMSET
+#define CONFIG_USE_ARCH_MEMCPY
+*/
+
 /* Allow tracing to be enabled */
 #ifdef FTRACE
 #define CONFIG_TRACE

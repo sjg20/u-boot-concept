@@ -48,8 +48,14 @@ COBJS-y += sections.o
 COBJS-y	+= bootm.o
 COBJS-$(CONFIG_OF_LIBFDT) += bootm-fdt.o
 COBJS-$(CONFIG_SYS_L2_PL310) += cache-pl310.o
-SOBJS-$(CONFIG_USE_ARCH_MEMSET) += memset.o
+
+# For testing, we include these implementations
+ifneq ($(CONFIG_USE_ARCH_MEMSET)$(CONFIG_STRING_TEST),)
+SOBJS-y += memset.o
+endif
+
 SOBJS-$(CONFIG_USE_ARCH_MEMCPY) += memcpy.o
+
 else
 COBJS-$(CONFIG_SPL_FRAMEWORK) += spl.o
 endif

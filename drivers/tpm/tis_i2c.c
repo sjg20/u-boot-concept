@@ -3,7 +3,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-
+#define DEBUG
 #include <config.h>
 #include <common.h>
 #include <fdtdec.h>
@@ -81,8 +81,10 @@ static int tpm_decode_config(struct tpm *dev)
 		return -1;
 	}
 	i2c_bus = i2c_get_bus_num_fdt(parent);
-	if (i2c_bus < 0)
+	if (i2c_bus < 0) {
+		debug("%s: Cannot find i2c bus\n", __func__);
 		return -1;
+	}
 	dev->i2c_bus = i2c_bus;
 	dev->slave_addr = fdtdec_get_addr(blob, node, "reg");
 #else
@@ -124,11 +126,15 @@ int tis_open(void)
 {
 	int rc;
 
-	if (!tpm.inited)
+	if (!tpm.inited) {
+		debug("%s: TPM not inited\n", __func__);
 		return -1;
+	}
 
-	if (tpm_select())
+	if (tpm_select()) {
+		debug("%s: Cannot select TPM\n", __func__);
 		return -1;
+	}
 
 	rc = tpm_open(tpm.slave_addr);
 

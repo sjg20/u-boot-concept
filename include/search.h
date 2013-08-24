@@ -49,7 +49,7 @@ typedef struct entry {
 	char *data;
 	int (*callback)(const char *name, const char *value, enum env_op op,
 		int flags);
-	int flags;
+	int flags;	/* Flags - see H_NOCLEAR etc. below */
 } ENTRY;
 
 /* Opaque type for internal use.  */

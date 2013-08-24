@@ -11,6 +11,7 @@
  */
 
 #include <asm/assembler.h>
+#include <linux/linkage.h>
 
 #define W(instr)	instr
 
@@ -45,25 +46,25 @@
 	str\cond\()b \reg, [\ptr], #1
 	.endm
 
-	.macro enter reg1 reg2
-	stmdb sp!, {r0, \reg1, \reg2}
+	.macro enter reg1
+	stmdb sp!, {r0, \reg1, lr}
 	.endm
 
-	.macro exit reg1 reg2
-	ldmfd sp!, {r0, \reg1, \reg2}
+	.macro exit reg1
+	ldmfd sp!, {r0, \reg1, lr}
+	bx	lr
 	.endm
 
 	.text
 
 /* Prototype: void *memcpy(void *dest, const void *src, size_t n); */
 
-.globl memcpy
-memcpy:
+ENTRY(memcpy)
 
 		cmp	r0, r1
-		moveq	pc, lr
+		bxeq	lr
 
-		enter	r4, lr
+		enter	r4
 
 		subs	r2, r2, #4
 		blt	8f
@@ -149,7 +150,7 @@ memcpy:
 		str1b	r0, r4, cs, abort=21f
 		str1b	r0, ip, cs, abort=21f
 
-		exit	r4, pc
+		exit	r4
 
 9:		rsb	ip, ip, #4
 		cmp	ip, #2

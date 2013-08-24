@@ -89,7 +89,7 @@ int fthread_init(void)
 	return 0;
 }
 
-int fthread_shutdown(void)
+__attribute__((no_instrument_function)) int fthread_shutdown(void)
 {
 	if (!fthread_initialized)
 		return -EPERM;
@@ -348,7 +348,7 @@ unsigned long fthread_usleep(unsigned long waittime)
 	return actualtime;
 }
 
-int fthread_join(struct fthread *tid, void **value)
+int __attribute__((no_instrument_function)) fthread_join(struct fthread *tid, void **value)
 {
 	debug("%s: joining thread \"%s\"\n", __func__, tid->name);
 	if (tid == NULL)
@@ -401,7 +401,7 @@ static int fthread_exit_main_cb(void)
 		return false;
 }
 
-void fthread_exit(void *value)
+void __attribute__((no_instrument_function)) fthread_exit(void *value)
 {
 	debug("%s: thread \"%s\" has terminated\n", __func__,
 	      fthread_current->name);

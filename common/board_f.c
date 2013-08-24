@@ -427,6 +427,11 @@ static int setup_dest_addr(void)
 	}
 #endif
 	gd->dest_addr_sp = gd->dest_addr;
+#ifdef CONFIG_SANDBOX
+	debug("RAM buffer from %p to %p\n", gd->arch.ram_buf,
+	      gd->arch.ram_buf + gd->ram_size - 1);
+#endif
+
 	return 0;
 }
 
@@ -470,6 +475,7 @@ static int reserve_mmu(void)
 	gd->arch.tlb_size = 4096 * 4;
 	if (dcache_status()) {
 		gd->arch.tlb_addr = get_ttbr();
+		printf("TLB table already at %08lx\n", gd->arch.tlb_addr);
 	} else {
 		/* reserve TLB table */
 		gd->dest_addr -= gd->arch.tlb_size;
@@ -670,7 +676,7 @@ static int display_new_sp(void)
 	debug("New Stack Pointer is: %08lx\n", gd->dest_addr_sp);
 #ifndef CONFIG_SANDBOX
 	if (gd_no_reloc()) {
-		debug("Available stack size %08lx\n", gd->dest_addr_sp -
+		printf("Available stack size %08lx\n", gd->dest_addr_sp -
 		      (ulong)&__bss_end);
 	}
 #endif

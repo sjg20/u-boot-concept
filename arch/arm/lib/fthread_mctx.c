@@ -21,19 +21,8 @@
 
 #include <common.h>
 #include <malloc.h>
+#include <asm/assembler.h>
 #include <linux/stddef.h>
-
-#ifdef CONFIG_SYS_THUMB_BUILD
-
-#define ARM(x...)
-#define THUMB(x...)	x
-
-#else
-
-#define ARM(x...)	x
-#define THUMB(x...)
-
-#endif /* CONFIG_SYS_THUMB_BUILD */
 
 struct fthread_mctx {
 	long uregs[10];		/* saved registers */
@@ -62,8 +51,9 @@ void fthread_mctx_free(struct fthread_mctx *mctx)
 	free(mctx);
 }
 
-int fthread_mctx_set(struct fthread_mctx *mctx, void (*func)(void),
-		     char *sk_addr_lo, char *sk_addr_hi)
+int __attribute__((no_instrument_function)) fthread_mctx_set(
+		struct fthread_mctx *mctx, void (*func)(void),
+		char *sk_addr_lo, char *sk_addr_hi)
 {
 	int stacksize = (sk_addr_hi - sk_addr_lo) / sizeof(long);
 	long *sp = (long *)sk_addr_lo + stacksize - 1;
@@ -82,8 +72,8 @@ int fthread_mctx_set(struct fthread_mctx *mctx, void (*func)(void),
 	return 0;
 }
 
-void fthread_mctx_switch(struct fthread_mctx *octx,
-			 struct fthread_mctx *nctx)
+void __attribute__((no_instrument_function)) fthread_mctx_switch(
+		struct fthread_mctx *octx, struct fthread_mctx *nctx)
 {
 	__asm__ __volatile__(
 	"add		ip, r0, %0\n"

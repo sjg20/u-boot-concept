@@ -337,6 +337,8 @@ int __attribute__((no_instrument_function)) trace_init(void *buff,
 
 	if (was_disabled)
 		memset(hdr, '\0', needed);
+	else
+		hdr->depth = 0;
 	hdr->func_count = func_count;
 	hdr->call_accum = (uintptr_t *)(hdr + 1);
 
@@ -346,9 +348,10 @@ int __attribute__((no_instrument_function)) trace_init(void *buff,
 	add_textbase();
 
 	puts("trace: enabled\n");
-	hdr->depth_limit = 15;
+	hdr->depth_limit = 40;
 	trace_enabled = 1;
 	trace_inited = 1;
+	trace_print_stats();
 	return 0;
 }
 

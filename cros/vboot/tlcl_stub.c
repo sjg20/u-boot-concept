@@ -15,6 +15,7 @@
 /* Import the header files from vboot_reference. */
 #include <tss_constants.h>
 #include <vboot_api.h>
+#include <cros/common.h>
 
 VbError_t VbExTpmInit(void)
 {
@@ -33,8 +34,10 @@ VbError_t VbExTpmClose(void)
 
 VbError_t VbExTpmOpen(void)
 {
-	if (tis_open())
+	if (tis_open()) {
+		VBDEBUG("tis_open() failed\n");
 		return TPM_E_IOERROR;
+	}
 	return TPM_SUCCESS;
 }
 

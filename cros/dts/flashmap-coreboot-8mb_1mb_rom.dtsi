@@ -289,9 +289,15 @@
 			ver-major = <1>;
 			ver-minor = <0>;
 		};
+		ro-fdtmap {
+			label = "fdtmap";
+			reg = <0x00610800 0x00007800>;
+			read-only;
+			type = "fdtmap";
+		};
 		ro-firmware-id {
 			label = "ro-frid";
-			reg = <0x00610800 0x00000040>;
+			reg = <0x00618000 0x00000040>;
 			read-only;
 			type = "blobstring fwid";
 		};
@@ -303,7 +309,7 @@
 		 */
 		ro-firmware-id-pad {
 			label = "ro-frid-pad";
-			reg = <0x00610840 0x000007c0>;
+			reg = <0x00618040 0x000007c0>;
 			type = "wiped";
 			wipe-value = [ff];
 		};
@@ -311,7 +317,7 @@
 			label = "gbb";
 
 			/* GBB offset must be aligned to 4K bytes */
-			reg = <0x00611000 0x000ef000>;
+			reg = <0x00619000 0x000e7000>;
 			read-only;
 			type = "blob gbb";
 		};

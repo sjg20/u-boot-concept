@@ -204,6 +204,7 @@ static int update_cmdline(char *src, int devnum, int partnum, uint8_t *guid,
 #undef CHECK_SPACE
 
 	*dst = '\0';
+// 	strcat(dst, " earlyprintk");
 	return 0;
 }
 
@@ -345,7 +346,7 @@ int ft_board_setup(void *fdt, bd_t *bd)
 			VBDEBUG("cdata_write_to_fdt() failed\n");
 			return err;
 		}
-	} else {
+	} else if (vboot_is_legacy()) {
 		/* Legacy code crosbug.com/p/21810 */
 		err = crossystem_data_embed_into_fdt(cdata, fdt);
 		if (err) {

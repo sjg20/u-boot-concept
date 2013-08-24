@@ -131,7 +131,7 @@ static int initr_reloc(void)
 #ifdef CONFIG_ARM
 static int initr_check_stack(void)
 {
-#ifdef CONFIG_SYS_INIT_SP_SIZE
+#ifdef CONFIG_SYS_INIT_SP_SIZEx
 	uint32_t *top = (uint32_t *)CONFIG_SYS_INIT_SP_ADDR;
 	uint32_t *base = (uint32_t *)(CONFIG_SYS_INIT_SP_ADDR -
 					CONFIG_SYS_INIT_SP_SIZE);
@@ -141,10 +141,10 @@ static int initr_check_stack(void)
 	for (ptr = base; ptr < top && *ptr == -1U; ptr++);
 
 	bytes_used = (uint32_t)top - (uint32_t)ptr;
-	if (bytes_used == CONFIG_SYS_INIT_SP_SIZE)
-		panic("Init stack overflow");
 	printf("SPL stack at %x, used %x, free %x\n", (uint32_t)base,
 	       bytes_used, CONFIG_SYS_INIT_SP_SIZE - bytes_used);
+	if (bytes_used == CONFIG_SYS_INIT_SP_SIZE)
+		panic("Init stack overflow");
 #endif
 
 	return 0;
@@ -743,7 +743,7 @@ static int elog_init_wrapper(void)
 	 * Always claim success. If it didn't work then we just won't have
 	 * eventlog this boot.
 	 */
-	return 0;
+// 	return 0;
 }
 #endif
 

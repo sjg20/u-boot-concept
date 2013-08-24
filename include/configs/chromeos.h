@@ -58,6 +58,9 @@
 /* Enable test codes */
 #ifdef CONFIG_CROS_FULL
 #define CONFIG_CHROMEOS_TEST
+
+/* Enable legacy vboot_twostop - crosbug.com/p/21810 */
+#define CONFIG_CROS_LEGACY_VBOOT
 #endif /* VBOOT_DEBUG */
 
 /* Support constant vboot flag from fdt */
@@ -71,21 +74,19 @@
 #ifndef CONFIG_CROS_RO
 #define CONFIG_CHROMEOS_DISPLAY
 
-/* Enable legacy vboot_twostop - crosbug.com/p/21810 */
-#define CONFIG_CROS_LEGACY_VBOOT
+/* Make sure that the safe version of printf() is compiled in. */
+#define CONFIG_SYS_VSNPRINTF
 #endif
 
 #ifndef CONFIG_CROS_FULL
 #undef CONFIG_CMDLINE
 #undef CONFIG_SYS_LONGHELP
-#undef CONFIG_SYS_CONSOLE_IS_IN_ENV
 #undef CONFIG_SYS_STDIO_DEREGISTER
 #undef CONFIG_SYS_HUSH_PARSER
 #undef CONFIG_CBMEM_CONSOLE
 #undef CONFIG_CMDLINE_EDITING
 #undef CONFIG_COMMAND_HISTORY
 #undef CONFIG_AUTOCOMPLETE
-#undef CONFIG_CONSOLE_MUX
 #undef CONFIG_SHOW_BOOT_PROGRESS
 
 #undef CONFIG_I8042_KBD
@@ -112,9 +113,6 @@
 #undef CONFIG_USB_ETHER_ASIX
 #undef CONFIG_USB_ETHER_SMSC95XX
 
-#undef CONFIG_GENERIC_MMC
-#undef CONFIG_MMC
-
 #define DYNAMIC_CRC_TABLE
 #undef CONFIG_BOOTDELAY
 
@@ -136,6 +134,10 @@
 #endif
 
 #ifdef CONFIG_CROS_RO
+#undef CONFIG_SYS_CONSOLE_IS_IN_ENV
+#undef CONFIG_CONSOLE_MUX
+#undef CONFIG_FTHREAD
+
 #undef CONFIG_USB_EHCI
 #undef CONFIG_USB_EHCI_PCI
 #undef CONFIG_SYS_USB_EHCI_MAX_ROOT_PORTS
@@ -152,10 +154,20 @@
 #undef CONFIG_FIT
 #define CONFIG_CRC32
 #undef CONFIG_LZO
+#undef CONFIG_I2C_EDID
+#undef CONFIG_ELOG
+
+/*
+#undef CONFIG_GENERIC_MMC
+#undef CONFIG_MMC
+*/
 
 /* Limited memory so use a smaller recorded console */
-#undef CONFIG_RECORDED_CONSOLE_SIZE
+#undef CONFIG_CONSOLE_RECORDING
+/*
 #define CONFIG_RECORDED_CONSOLE_SIZE 3000
+*/
+#undef CONFIG_TPM
 
 #else
 /* USB is used in recovery mode */
@@ -169,9 +181,6 @@
  */
 #define CONFIG_OF_BOARD_SETUP
 #define CONFIG_SYS_FDT_PAD	0x8000
-
-/* Make sure that the safe version of printf() is compiled in. */
-#define CONFIG_SYS_VSNPRINTF
 
 /*
  * This is the default kernel command line to a Chrome OS kernel. An ending
@@ -406,7 +415,7 @@
  *   directly.
  */
 
-#ifdef CONFIG_CROS_RO
+#ifdef CONFIG_CROS_SMALL
 #define CONFIG_CHROMEOS_EXTRA_ENV_SETTINGS \
 	CONFIG_STD_DEVICES_SETTINGS
 #else
@@ -443,6 +452,9 @@
 		"run mmc_setup; " \
 		"run tftp_ext2_boot\0" \
 	\
+	"serverip=192.168.4.118\0" \
+	"verify=no\0" \
+	"fakegocmd=trace pause; trace stats; usb start; set autoload n; bootp; trace calls 30000000 1000000; tftpput ${profbase} ${profoffset} 192.168.4.118:/var/lib/tftpboot/postload.profile\0" \
 	"non_verified_boot=" \
 		"usb start; " \
 		"run net_boot; " \
@@ -453,5 +465,10 @@
 #endif
 
 #define CONFIG_NON_VERIFIED_BOOTCOMMAND "run non_verified_boot"
+
+#if 0
+#undef CONFIG_NON_VERIFIED_BOOTCOMMAND
+#define CONFIG_NON_VERIFIED_BOOTCOMMAND "trace pause; usb start; set autoload n; bootp; trace calls 30000000 1000000; tftpput ${profbase} ${profoffset} 192.168.4.118:/var/lib/tftpboot/postload.profile"
+#endif
 
 #endif /* __configs_chromeos_h__ */

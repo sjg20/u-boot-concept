@@ -1337,20 +1337,24 @@ int mmc_start_init(struct mmc *mmc)
 	mmc_set_bus_width(mmc, 1);
 	mmc_set_clock(mmc, 1);
 
-	/* Reset the Card */
-	err = mmc_go_idle(mmc);
+	if (mmc->block_dev.removable) {
+		/* Reset the Card */
+		err = mmc_go_idle(mmc);
 
-	if (err)
-		return err;
+		if (err)
+			return err;
 
-	/* The internal partition reset to user partition(0) at every CMD0*/
-	mmc->part_num = 0;
+		/* The internal partition reset to user partition(0) at every CMD0*/
+		mmc->part_num = 0;
 
-	/* Test for SD version 2 */
-	err = mmc_send_if_cond(mmc);
+		/* Test for SD version 2 */
+		err = mmc_send_if_cond(mmc);
 
-	/* Now try to get the SD card's operating condition */
-	err = sd_send_op_cond(mmc);
+		/* Now try to get the SD card's operating condition */
+		err = sd_send_op_cond(mmc);
+	} else {
+		err = TIMEOUT;
+	}
 
 	/* If the command timed out, we check for an MMC card */
 	if (err == TIMEOUT) {

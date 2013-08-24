@@ -1011,6 +1011,11 @@ int lcd_display_bitmap(ulong bmp_image, int x, int y)
 	splash_align_axis(&y, panel_info.vl_row, height);
 #endif /* CONFIG_SPLASH_SCREEN_ALIGN */
 
+	if (x >= panel_info.vl_col || y >= panel_info.vl_row) {
+		debug("Bitmap pos %d, %d is off screen\n", x, y);
+		return 0;
+	}
+
 	if ((x + width) > pwidth)
 		width = pwidth - x;
 	if ((y + height) > panel_info.vl_row)

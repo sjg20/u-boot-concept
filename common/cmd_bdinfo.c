@@ -36,6 +36,7 @@ static void print_num(const char *name, ulong value)
 	printf("%-12s= 0x%08lX\n", name, value);
 }
 
+#if defined(CONFIG_CMD_NET)
 __maybe_unused
 static void print_eth(int idx)
 {
@@ -68,6 +69,7 @@ static void print_eths(void)
 	printf("current eth = %s\n", eth_get_name());
 	printf("ip_addr     = %s\n", getenv("ipaddr"));
 }
+#endif
 
 __maybe_unused
 static void print_lnum(const char *name, unsigned long long value)

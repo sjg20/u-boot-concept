@@ -79,24 +79,24 @@ enum bootstage_id {
 	BOOTSTAGE_ID_CHECK_CHECKSUM,	/* Checking image checksum */
 	BOOTSTAGE_ID_CHECK_ARCH,	/* Checking architecture */
 
-	BOOTSTAGE_ID_CHECK_IMAGETYPE = 5,/* Checking image type */
+	BOOTSTAGE_ID_CHECK_IMAGETYPE,	/* Checking image type */
 	BOOTSTAGE_ID_DECOMP_IMAGE,	/* Decompressing image */
 	BOOTSTAGE_ID_KERNEL_LOADED,	/* Kernel has been loaded */
-	BOOTSTAGE_ID_DECOMP_UNIMPL = 7,	/* Odd decompression algorithm */
+	BOOTSTAGE_ID_DECOMP_UNIMPL,	/* Odd decompression algorithm */
 	BOOTSTAGE_ID_CHECK_BOOT_OS,	/* Calling OS-specific boot function */
 	BOOTSTAGE_ID_BOOT_OS_RETURNED,	/* Tried to boot OS, but it returned */
-	BOOTSTAGE_ID_CHECK_RAMDISK = 9,	/* Checking ram disk */
+	BOOTSTAGE_ID_CHECK_RAMDISK,	/* Checking ram disk */
 
 	BOOTSTAGE_ID_RD_MAGIC,		/* Checking ram disk magic */
 	BOOTSTAGE_ID_RD_HDR_CHECKSUM,	/* Checking ram disk heder checksum */
 	BOOTSTAGE_ID_RD_CHECKSUM,	/* Checking ram disk checksum */
-	BOOTSTAGE_ID_COPY_RAMDISK = 12,	/* Copying ram disk into place */
+	BOOTSTAGE_ID_COPY_RAMDISK,	/* Copying ram disk into place */
 	BOOTSTAGE_ID_RAMDISK,		/* Checking for valid ramdisk */
 	BOOTSTAGE_ID_NO_RAMDISK,	/* No ram disk found (not an error) */
 
-	BOOTSTAGE_ID_RUN_OS	= 15,	/* Exiting U-Boot, entering OS */
+	BOOTSTAGE_ID_RUN_OS,		/* Exiting U-Boot, entering OS */
 
-	BOOTSTAGE_ID_NEED_RESET = 30,
+	BOOTSTAGE_ID_NEED_RESET,
 	BOOTSTAGE_ID_POST_FAIL,		/* Post failure */
 	BOOTSTAGE_ID_POST_FAIL_R,	/* Post failure reported after reloc */
 
@@ -121,7 +121,7 @@ enum bootstage_id {
 	/* ^^^ here ends the x86 sequence */
 
 	/* Boot stages related to loading a kernel from an IDE device */
-	BOOTSTAGE_ID_IDE_START = 41,
+	BOOTSTAGE_ID_IDE_START,
 	BOOTSTAGE_ID_IDE_ADDR,
 	BOOTSTAGE_ID_IDE_BOOT_DEVICE,
 	BOOTSTAGE_ID_IDE_TYPE,
@@ -132,37 +132,37 @@ enum bootstage_id {
 	BOOTSTAGE_ID_IDE_PART_READ,
 	BOOTSTAGE_ID_IDE_FORMAT,
 
-	BOOTSTAGE_ID_IDE_CHECKSUM,	/* 50 */
+	BOOTSTAGE_ID_IDE_CHECKSUM,
 	BOOTSTAGE_ID_IDE_READ,
 
 	/* Boot stages related to loading a kernel from an NAND device */
 	BOOTSTAGE_ID_NAND_PART,
 	BOOTSTAGE_ID_NAND_SUFFIX,
 	BOOTSTAGE_ID_NAND_BOOT_DEVICE,
-	BOOTSTAGE_ID_NAND_HDR_READ = 55,
-	BOOTSTAGE_ID_NAND_AVAILABLE = 55,
-	BOOTSTAGE_ID_NAND_TYPE = 57,
+	BOOTSTAGE_ID_NAND_HDR_READ,
+	BOOTSTAGE_ID_NAND_AVAILABLE,
+	BOOTSTAGE_ID_NAND_TYPE,
 	BOOTSTAGE_ID_NAND_READ,
 
 	/* Boot stages related to loading a kernel from an network device */
-	BOOTSTAGE_ID_NET_CHECKSUM = 60,
-	BOOTSTAGE_ID_NET_ETH_START = 64,
+	BOOTSTAGE_ID_NET_CHECKSUM,
+	BOOTSTAGE_ID_NET_ETH_START,
 	BOOTSTAGE_ID_NET_ETH_INIT,
 
-	BOOTSTAGE_ID_NET_START = 80,
+	BOOTSTAGE_ID_NET_START,
 	BOOTSTAGE_ID_NET_NETLOOP_OK,
 	BOOTSTAGE_ID_NET_LOADED,
 	BOOTSTAGE_ID_NET_DONE_ERR,
 	BOOTSTAGE_ID_NET_DONE,
 
-	BOOTSTAGE_ID_FIT_FDT_START = 90,
+	BOOTSTAGE_ID_FIT_FDT_START,
 	/*
 	 * Boot stages related to loading a FIT image. Some of these are a
 	 * bit wonky.
 	 */
-	BOOTSTAGE_ID_FIT_KERNEL_START = 100,
+	BOOTSTAGE_ID_FIT_KERNEL_START = BOOTSTAGE_ID_FIT_FDT_START + 10,
 
-	BOOTSTAGE_ID_FIT_CONFIG = 110,
+	BOOTSTAGE_ID_FIT_CONFIG = BOOTSTAGE_ID_FIT_KERNEL_START + 10,
 	BOOTSTAGE_ID_FIT_TYPE,
 	BOOTSTAGE_ID_FIT_KERNEL_INFO,
 
@@ -172,15 +172,15 @@ enum bootstage_id {
 	BOOTSTAGE_ID_OVERWRITTEN,
 
 	/* Next 10 IDs used by BOOTSTAGE_SUB_... */
-	BOOTSTAGE_ID_FIT_RD_START = 120,	/* Ramdisk stages */
+	BOOTSTAGE_ID_FIT_RD_START,	/* Ramdisk stages */
 
 	/* Next 10 IDs used by BOOTSTAGE_SUB_... */
-	BOOTSTAGE_ID_FIT_SETUP_START = 130,	/* x86 setup stages */
+	BOOTSTAGE_ID_FIT_SETUP_START = BOOTSTAGE_ID_FIT_RD_START + 10,
 
-	BOOTSTAGE_ID_IDE_FIT_READ = 140,
+	BOOTSTAGE_ID_IDE_FIT_READ = BOOTSTAGE_ID_FIT_SETUP_START + 10,
 	BOOTSTAGE_ID_IDE_FIT_READ_OK,
 
-	BOOTSTAGE_ID_NAND_FIT_READ = 150,
+	BOOTSTAGE_ID_NAND_FIT_READ = BOOTSTAGE_ID_IDE_FIT_READ + 10,
 	BOOTSTAGE_ID_NAND_FIT_READ_OK,
 
 	/*

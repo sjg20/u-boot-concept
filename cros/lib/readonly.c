@@ -707,7 +707,7 @@ int vboot_ro_prepare(struct vboot_info *vboot)
 	}
 
 	vboot->fw_dest = map_sysmem(fw_addr, fw->size);
-	if (!fw->cache) {
+	if (!fw->cache && selected_firmware != VB_SELECT_FIRMWARE_READONLY) {
 		VBDEBUG("firmware has not been loaded\n");
 		goto err;
 	}
@@ -721,35 +721,37 @@ int vboot_ro_prepare(struct vboot_info *vboot)
 	 * changed this address. It should be easy enough to make U-Boot
 	 * position-independent.
 	 */
-	switch (fw->entry->compress_algo) {
+	if (fw->entry) {
+		switch (fw->entry->compress_algo) {
 #ifdef CONFIG_LZO
-	case FMAP_COMPRESS_LZO: {
-		uint unc_len;
-		int ret;
+		case FMAP_COMPRESS_LZO: {
+			uint unc_len;
+			int ret;
 
-		bootstage_start(BOOTSTAGE_ID_ACCUM_DECOMP, "decompress_image");
-		ret = lzop_decompress(fw->cache, fw->size, vboot->fw_dest,
-				      &unc_len);
-		if (ret < 0) {
-			VBDEBUG("LZO: uncompress or overwrite error %d - must RESET board to recover\n",
-				ret);
-			goto err;
+			bootstage_start(BOOTSTAGE_ID_ACCUM_DECOMP,
+					"decompress_image");
+			ret = lzop_decompress(fw->cache, fw->size,
+					      vboot->fw_dest, &unc_len);
+			if (ret < 0) {
+				VBDEBUG("LZO: uncompress or overwrite error %d - must RESET board to recover\n",
+					ret);
+				goto err;
+			}
+			fw->uncomp_size = unc_len;
+			bootstage_accum(BOOTSTAGE_ID_ACCUM_DECOMP);
+			break;
 		}
-		fw->uncomp_size = unc_len;
-		bootstage_accum(BOOTSTAGE_ID_ACCUM_DECOMP);
-		break;
-	}
 #endif
-	case FMAP_COMPRESS_NONE:
-		/* Take this out for testing */
-		memmove(vboot->fw_dest, fw->cache, fw->size);
-		break;
-	default:
-		VBDEBUG("Unsupported compression type %d\n",
-			fw->entry->compress_algo);
-		return -1;
+		case FMAP_COMPRESS_NONE:
+			/* Take this out for testing */
+			memmove(vboot->fw_dest, fw->cache, fw->size);
+			break;
+		default:
+			VBDEBUG("Unsupported compression type %d\n",
+				fw->entry->compress_algo);
+			return -1;
+		}
 	}
-
 	/* Stash the RW SPL away if needed */
 	if (vboot->use_efs) {
 		if (vboot_stash_rw_spl(vboot, fw))

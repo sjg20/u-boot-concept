@@ -61,6 +61,9 @@ int power_init_board(void)
 {
 	int ret;
 
+	if (!board_is_processor_reset())
+		return 0;
+
 	set_ps_hold_ctrl();
 
 	/*

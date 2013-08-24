@@ -14,6 +14,8 @@
  *  assembler source.
  */
 
+#include <config.h>
+
 /*
  * Endian independent macros for shifting bytes within registers.
  */
@@ -58,3 +60,15 @@
  * Cache alligned
  */
 #define CALGN(code...) code
+
+#ifdef CONFIG_SYS_THUMB_BUILD
+
+#define ARM(x...)
+#define THUMB(x...)	x
+
+#else
+
+#define ARM(x...)	x
+#define THUMB(x...)
+
+#endif /* CONFIG_SYS_THUMB_BUILD */

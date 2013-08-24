@@ -26,6 +26,7 @@ int vboot_rw_init(struct vboot_info *vboot)
 	fdt_addr_t base;
 	const void *cdata_fdt;
 	fdt_size_t size;
+	VbError_t ret;
 
 	memset(vboot, '\0', sizeof(*vboot));
 	vboot->valid = true;
@@ -88,8 +89,9 @@ int vboot_rw_init(struct vboot_info *vboot)
 	 * initialize the TPM interface. Note that this only re-initializes the
 	 * interface, not the TPM itself.
 	 */
-	if (VbExTpmInit() != TPM_SUCCESS) {
-		VBDEBUG("failed to init tpm interface\n");
+	ret = VbExTpmInit();
+	if (ret != TPM_SUCCESS) {
+		VBDEBUG("failed to init tpm interface: ret=%d\n", ret);
 		return -1;
 	}
 

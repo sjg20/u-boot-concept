@@ -9,7 +9,9 @@
  *
  *  ASM optimised string functions
  */
+#include <config.h>
 #include <asm/assembler.h>
+#include <linux/linkage.h>
 
 	.text
 	.align	5
@@ -27,8 +29,11 @@
  * memset again.
  */
 
-.globl memset
-memset:
+#ifdef CONFIG_USE_ARCH_MEMSET
+ENTRY(memset)
+#else
+ENTRY(arch_memset_for_test)
+#endif
 	ands	r3, r0, #3		@ 1 unaligned?
 	bne	1b			@ 1
 /*
@@ -56,7 +61,8 @@ memset:
 	stmgeia	r0!, {r1, r3, ip, lr}
 	stmgeia	r0!, {r1, r3, ip, lr}
 	bgt	2b
-	ldmeqfd	sp!, {pc}		@ Now <64 bytes to go.
+	ldmeqfd	sp!, {lr}		@ Now <64 bytes to go.
+	bxeq	lr
 /*
  * No need to correct the count; we're only testing bits from now on
  */
@@ -100,7 +106,8 @@ memset:
 	stmgeia	r0!, {r1, r3-r7, ip, lr}
 	stmgeia	r0!, {r1, r3-r7, ip, lr}
 	bgt	3b
-	ldmeqfd	sp!, {r4-r7, pc}
+	ldmeqfd	sp!, {r4-r7, lr}
+	bxeq	lr
 
 	tst	r2, #32
 	stmneia	r0!, {r1, r3-r7, ip, lr}
@@ -123,4 +130,10 @@ memset:
 	strneb	r1, [r0], #1
 	tst	r2, #1
 	strneb	r1, [r0], #1
-	mov	pc, lr
+	bx	lr
+
+#ifdef CONFIG_USE_ARCH_MEMSET
+ENDPROC(memset)
+#else
+ENDPROC(arch_memset_for_test)
+#endif

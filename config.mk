@@ -196,7 +196,8 @@ endif
 ARFLAGS = $(error update your Makefile to use cmd_link_o_target and not AR)
 RELFLAGS= $(PLATFORM_RELFLAGS)
 DBGFLAGS= -g # -DDEBUG
-OPTFLAGS= -Os #-fomit-frame-pointer
+#OPTFLAGS= -Os #-fomit-frame-pointer
+OPTFLAGS= -O0
 
 ifdef VBOOT_DEBUG
 DBGFLAGS += -DVBOOT_DEBUG
@@ -326,7 +327,7 @@ ifeq ($(CONFIG_SPL_BUILD),)
 ifdef FTRACE
 CFLAGS += -finstrument-functions -DFTRACE \
 	-finstrument-functions-exclude-file-list=libfdt,fdt_,fdt.c \
-	-finstrument-functions-exclude-function-list=strlen,memcmp,memchr,env_get,get_timer,set_section_dcache,udelay,envmatch
+	-finstrument-functions-exclude-function-list=strlen,memcmp,memchr,env_get,get_timer,set_section_dcache,udelay,envmatch,dwmci_readl,Memcmp,IsUnusedEntry,montMulAdd,dwmci_set_idma_desc,spi_get_fifo_levels
 endif
 endif
 endif

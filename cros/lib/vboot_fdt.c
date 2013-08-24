@@ -143,10 +143,8 @@ int vboot_write_to_fdt(const struct vboot_info *vboot, void *blob)
 	((vboot->f) ? fdt_setprop(blob, node, name, NULL, 0) : 0)
 #define CALL(expr) \
 		do { err = (expr); \
-			if (err < 0) { \
-				VBDEBUG("Failure at %s\n", #expr); \
-				return err; \
-			} \
+			if (err < 0) \
+				goto fail; \
 		} while (0)
 	err = 0;
 	CALL(fdt_ensure_subnode(blob, 0, "firmware"));
@@ -212,6 +210,10 @@ int vboot_write_to_fdt(const struct vboot_info *vboot, void *blob)
 		fdt_totalsize(blob));
 
 	return 0;
+fail:
+	VBDEBUG("Failed to write crossytem data to FDT, err %d\n", err);
+
+	return -1;
 }
 
 #ifdef CONFIG_X86

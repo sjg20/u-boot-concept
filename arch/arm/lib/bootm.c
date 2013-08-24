@@ -93,7 +93,8 @@ static void announce_and_cleanup(int fake, void *dt)
 			       __func__, rv);
 	}
 #endif
-	cleanup_before_linux();
+	if (!fake)
+		cleanup_before_linux();
 }
 
 static void setup_start_tag (bd_t *bd)

@@ -251,6 +251,9 @@ int tis_sendrecv(const u8 *sendbuf, size_t send_size,
 		return -1;
 	}
 
+	printf("tpm: response recv_len %zd\n", *recv_len);
+	print_buffer(0, recvbuf, 1, *recv_len, 0);
+
 	return 0;
 }
 

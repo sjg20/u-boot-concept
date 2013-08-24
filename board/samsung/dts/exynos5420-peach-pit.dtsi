@@ -82,13 +82,13 @@
 		compatible = "samsung,iram";
 
 		/* Use IRAM between BL2 and the RW SPL stash */
-		reg = <0x02020000 0x0004d800>;
+		reg = <0x02020000 0x0004d000>;
 	};
 
 	config {
 		google,bad-wake-gpios = <&gpio 0x56 0>; /* gpx0-6 */
 		hwid = "PIT TEST A-A 7848";
-		malloc-len,efs = <48192>;
+		malloc-len,efs = <55296>;
 
 		samsung,bl1-offset = <0x2400>;
 		samsung,bl2-offset = <0x4400>;
@@ -111,7 +111,7 @@
 		 * how much IRAM RO U-Boot can use.
 		 */
 		u-boot-memory,efs = "/iram";
-		u-boot-offset,efs = <0xc000 0x44000>;
+		u-boot-offset,efs = <0x10000 0x44000>;
 	};
 
 	chromeos-config {
@@ -125,7 +125,7 @@
 		 * check it is valid and jump to it.
 		 */
 		rw-spl-memory,efs = "/iram";
-		rw-spl-offset,efs = <0x4d800 0x4000>;
+		rw-spl-offset,efs = <0x4d000 0x4800>;
 	};
 
 	dmc {
@@ -191,7 +191,7 @@
 	};
 
 	spi@12d40000 { /* spi2 */
-		spi-max-frequency = <4000000>;
+		spi-max-frequency = <1000000>;
 		spi-deactivate-delay = <200>;
 		cros-ec@0 {
 			reg = <0>;

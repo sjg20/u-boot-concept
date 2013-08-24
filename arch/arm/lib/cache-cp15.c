@@ -125,6 +125,17 @@ static inline void mmu_setup(void)
 		dram_bank_mmu_setup(i);
 	}
 
+#ifdef CONFIG_CROS_ROx
+	/* HACK */
+	for (i = 0x200; i < 0xa00; i++) {
+#if defined(CONFIG_SYS_ARM_CACHE_WRITETHROUGH)
+		set_section_dcache(i, DCACHE_WRITETHROUGH);
+#else
+		set_section_dcache(i, DCACHE_WRITEBACK);
+#endif
+	}
+#endif
+
 	/* Copy the page table address to cp15 */
 	asm volatile("mcr p15, 0, %0, c2, c0, 0"
 		     : : "r" (gd->arch.tlb_addr) : "memory");

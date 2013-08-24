@@ -39,7 +39,12 @@ COBJS-$(CONFIG_NS87308) += ns87308.o
 COBJS-$(CONFIG_PDSP188x) += pdsp188x.o
 COBJS-$(CONFIG_STATUS_LED) += status_led.o
 COBJS-$(CONFIG_TWL4030_LED) += twl4030_led.o
+
+ifdef CONFIG_SPL_BUILD
+COBJS-$(CONFIG_SPL_ELOG_SUPPORT) += elog.o
+else
 COBJS-$(CONFIG_ELOG) += elog.o
+endif
 
 COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)

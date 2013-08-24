@@ -44,7 +44,7 @@
 			/* Alignment: 4k (for updating) and must be in start of
 			 * each RW_SECTION. */
 			reg = <0x00200000 0x00002000>;
-			type = "keyblock boot,dtb";
+			type = "keyblock sm-boot,dtb";
 			type,efs = "keyblock exynos-bl2.rw";
 			keyblock = "firmware.keyblock";
 			signprivate = "firmware_data_key.vbprivk";
@@ -56,7 +56,7 @@
 		rw-a-spl {
 			label = "fw-spl-a";
 			size = <0x8000>;
-			type = "blob exynos-bl2.rw boot,dtb";
+			type = "blob exynos-bl2.rw sm-boot,dtb";
 			payload = "/flash/rw-a-boot";
 		};
 
@@ -64,7 +64,8 @@
 			/* Alignment: no requirement (yet). */
 			label = "fw-main-a";
 			size = <0xd2000>;
-			type = "blob boot,dtb";
+			type = "blob sm-boot,dtb";
+			compress = "lzo";
 		};
 		rw-a-ec {
 			label = "ec-rw-a";
@@ -92,7 +93,7 @@
 			/* Alignment: 4k (for updating) and must be in start of
 			 * each RW_SECTION. */
 			reg = <0x00300000 0x00002000>;
-			type = "keyblock boot,dtb";
+			type = "keyblock sm-boot,dtb";
 			type,efs = "keyblock exynos-bl2.rw";
 			keyblock = "firmware.keyblock";
 			signprivate = "firmware_data_key.vbprivk";
@@ -104,7 +105,7 @@
 		rw-b-spl {
 			label = "fw-spl-b";
 			size = <0x8000>;
-			type = "blob exynos-bl2.rw boot,dtb";
+			type = "blob exynos-bl2.rw sm-boot,dtb";
 			payload = "/flash/rw-b-boot";
 		};
 
@@ -112,7 +113,8 @@
 			label = "fw-main-b";
 			/* Alignment: no requirement (yet). */
 			size = <0xd2000>;
-			type = "blob boot,dtb";
+			type = "blob sm-boot,dtb";
+			compress = "lzo";
 		};
 		rw-b-ec {
 			label = "ec-rw-b";

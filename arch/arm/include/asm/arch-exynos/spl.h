@@ -99,6 +99,9 @@ struct spl_machine_param {
 	 *		this to a valid 16KB-aligned IRAM address to enable
 	 *		the cache in SPL.
 	 * z		compression type (SPL_COMPRESST_...)
+	 * t		translation table base register address (for MMU). Set
+	 *		this to a valid 16KB-aligned IRAM address to enable
+	 *		the cache in SPL.
 	 * \0		termination
 	 */
 	char		params[28];	/* Length must be word-aligned */

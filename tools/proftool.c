@@ -516,7 +516,9 @@ static int make_ftrace(void)
 		struct func_info *func = find_func_by_offset(call->func);
 		ulong time = call->flags & FUNCF_TIMESTAMP_MASK;
 
-		if (TRACE_CALL_TYPE(call) != FUNCF_ENTRY &&
+		if (TRACE_CALL_TYPE(call) == FUNCF_TEXTBASE)
+			text_offset = call->func;
+		else if (TRACE_CALL_TYPE(call) != FUNCF_ENTRY &&
 		    TRACE_CALL_TYPE(call) != FUNCF_EXIT)
 			continue;
 		if (!func) {

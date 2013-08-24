@@ -26,6 +26,19 @@
 #define __CONFIG_CHROMEOS_PEACH_H
 
 #define CONFIG_CROS_EC
+#define CONFIG_FTHREAD
+
+#define CONFIG_RTC_MAX77802
+/*
+#define CONFIG_ELOG
+#define CONFIG_SPL_ELOG_SUPPORT
+*/
+#define CONFIG_SPL_MAX77802_BUS 4
+#define CONFIG_SPL_MAX77802_ADDR 9
+#define CONFIG_SPL_RTC_SUPPORT
+#define CONFIG_SPL_I2C_SUPPORT
+#define CONFIG_ELOG_SIZE 0x4000
+#define CONFIG_ELOG_OFFSET (0x00400000 - CONFIG_ENV_SIZE - CONFIG_ELOG_SIZE)
 
 /*
  * For now we have to hard-code some additional settings for Exynos5420.
@@ -60,15 +73,6 @@
 #define CONFIG_EXTRA_BOOTARGS ""
 
 #define ANX1120_I2C_BUS		7
-#define CONFIG_RTC_MAX77802
-#define CONFIG_ELOG
-#define CONFIG_SPL_MAX77802_BUS 4
-#define CONFIG_SPL_MAX77802_ADDR 9
-#define CONFIG_SPL_RTC_SUPPORT
-#define CONFIG_SPL_I2C_SUPPORT
-#define CONFIG_SPL_ELOG_SUPPORT
-#define CONFIG_ELOG_SIZE 0x4000
-#define CONFIG_ELOG_OFFSET (0x00400000 - CONFIG_ENV_SIZE - CONFIG_ELOG_SIZE)
 
 #ifdef CONFIG_CHROMEOS_DISPLAY
 #define CONFIG_LCD
@@ -99,7 +103,12 @@
 #undef CONFIG_BOOTCOMMAND
 #endif
 #define CONFIG_BOOTCOMMAND CONFIG_NON_VERIFIED_BOOTCOMMAND
+/*
+trace pause; usb start; set autoload n; bootp; trace calls 30000000 100000; tftpput ${profbase} ${profoffset} 192.168.4.124:/tftpboot/postload.profile
+*/
 
 #define CONFIG_CROS_EC_SPI		/* Support CROS_EC over SPI */
+
+#undef CONFIG_EXYNOS_LPDDR3
 
 #endif	/* __CONFIG_CHROMEOS_PEACH_H */

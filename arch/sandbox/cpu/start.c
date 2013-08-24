@@ -92,8 +92,11 @@ int sandbox_main_loop_init(void)
 	/* Execute command if required */
 	if (state->cmd) {
 		run_command_list(state->cmd, -1, 0);
-		if (!state->interactive)
+		if (!state->interactive) {
+			if (state_uninit())
+				os_exit(2);
 			os_exit(state->exit_type);
+		}
 	}
 
 	return 0;
@@ -142,7 +145,8 @@ static int sandbox_cmdline_cb_memory(struct sandbox_state *state,
 	state->write_ram_buf = true;
 	state->ram_buf_fname = arg;
 
-	if (os_read_ram_buf(arg)) {
+	err = os_read_ram_buf(arg);
+	if (err) {
 		printf("Failed to read RAM buffer\n");
 		return err;
 	}
