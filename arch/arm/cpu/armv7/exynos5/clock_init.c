@@ -261,12 +261,12 @@ struct mem_timings mem_timings[] = {
 		.bpll_sdiv = 0x0,
 		.pclk_cdrex_ratio = 0x5,
 		.direct_cmd_msr = {
-			0x00020018, 0x00030000, 0x00010002, 0x00000d70
+			0x00020018, 0x00030000, 0x00010000, 0x00000d70
 		},
 		.timing_ref = 0x000000bb,
-		.timing_row = 0x6836650f,
+		.timing_row = 0x8c36660f,
 		.timing_data = 0x3630580b,
-		.timing_power = 0x41000a26,
+		.timing_power = 0x41000a44,
 		.phy0_dqs = 0x08080808,
 		.phy1_dqs = 0x08080808,
 		.phy0_dq = 0x08080808,
@@ -294,7 +294,7 @@ struct mem_timings mem_timings[] = {
 
 		.rd_fetch = 0x3,
 
-		.zq_mode_dds = 0x6,
+		.zq_mode_dds = 0x5,
 		.zq_mode_term = 0x1,
 		.zq_mode_noterm = 1,
 
