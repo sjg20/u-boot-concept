@@ -16,9 +16,9 @@
 /include/ "cros5250-common.dtsi"
 
 / {
-	model = "Google Snow";
-	compatible = "google,snow", "google,daisy", "samsung,smdk5250",
-		   "samsung,exynos5250";
+	model = "Google Snow Rev4";
+	compatible = "google,snow-rev4", "google,snow", "google,daisy",
+		   "samsung,smdk5250", "samsung,exynos5250";
 
 	board-rev {
 		compatible = "google,board-revision";
