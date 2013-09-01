@@ -49,6 +49,13 @@ enum rtc_t {
 	SPL_RTC_TYPE_MAX77802
 };
 
+enum spl_compress_t {
+	SPL_COMPRESST_NONE,
+	SPL_COMPRESST_LZO,
+
+	SPL_COMPRESST_COUNT,
+};
+
 /* Parameters of early board initialization in SPL */
 struct spl_machine_param {
 	/* Add fields as and when required */
@@ -68,6 +75,7 @@ struct spl_machine_param {
 	 * S		uboot_start
 	 * o		uboot_offset
 	 * u		uboot_size
+	 * C		uboot_comp_size
 	 * b		boot_source
 	 * f		frequency_mhz (memory frequency in MHz)
 	 * a		ARM clock frequency in MHz
@@ -90,21 +98,16 @@ struct spl_machine_param {
 	 * t		translation table base register address (for MMU). Set
 	 *		this to a valid 16KB-aligned IRAM address to enable
 	 *		the cache in SPL.
+	 * z		compression type (SPL_COMPRESST_...)
 	 * \0		termination
 	 */
-	char		params[24];	/* Length must be word-aligned */
+	char		params[28];	/* Length must be word-aligned */
 	u32		mem_iv_size;	/* Memory channel interleaving size */
 	enum ddr_mode	mem_type;	/* Type of on-board memory */
 	u32		uboot_start;	/* U-Boot start address */
 	u32		uboot_offset;	/* Offset of U-Boot in boot media */
-	/*
-	 * U-boot size - The iROM mmc copy function used by the SPL takes a
-	 * block count paramter to describe the u-boot size unlike the spi
-	 * boot copy function which just uses the u-boot size directly. Align
-	 * the u-boot size to block size (512 bytes) when populating the SPL
-	 * table only for mmc boot.
-	 */
-	u32		uboot_size;
+	u32		uboot_size;	/* Size of U-Boot */
+	u32		uboot_comp_size;/* Compressed size of U-Boot */
 	enum boot_mode	boot_source;	/* Boot device */
 	unsigned	frequency_mhz;	/* Frequency of memory in MHz */
 	unsigned	arm_freq_mhz;	/* ARM Frequency in MHz */
@@ -132,6 +135,7 @@ struct spl_machine_param {
 	u32		vboot_persist_start;	/* Vboot persistence area */
 	enum rtc_t	rtc_type;	/* Type of RTC */
 	u32		ttbr;		/* TTBR value (0 to keep dcache off) */
+	enum spl_compress_t compress_type;
 } __attribute__((__packed__));
 #endif
 

@@ -404,6 +404,7 @@
 
 /* We might use LZO compression */
 #define CONFIG_LZO
+#define CONFIG_SPL_LZO_SUPPORT
 
 #define CONFIG_CRC32_VERIFY
 #define CONFIG_CMD_TIME

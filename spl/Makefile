@@ -86,6 +86,7 @@ LIBS-$(CONFIG_SPL_USBETH_SUPPORT) += drivers/usb/gadget/libusb_gadget.o
 LIBS-$(CONFIG_SPL_CRYPTO_SUPPORT) += drivers/crypto/libcrypto.o
 LIBS-$(CONFIG_SPL_RTC_SUPPORT) += drivers/rtc/librtc.o
 LIBS-$(CONFIG_SPL_ELOG_SUPPORT) += drivers/misc/elog.o
+LIBS-$(CONFIG_SPL_LZO_SUPPORT) += lib/lzo/liblzo.o
 
 ifneq ($(CONFIG_AM33XX)$(CONFIG_OMAP34XX)$(CONFIG_OMAP44XX)$(CONFIG_OMAP54XX)$(CONFIG_TI814X),)
 LIBS-y += $(CPUDIR)/omap-common/libomap-common.o

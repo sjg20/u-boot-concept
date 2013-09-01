@@ -32,7 +32,7 @@ static struct spl_machine_param machine_param
 		__attribute__((section(".machine_param"))) = {
 	.signature	= SPL_SIGNATURE,
 	.version	= 1,
-	.params		= "vmSoubfasirRMwWjAUdDpct",
+	.params		= "vmSouCbfasirRMwWjAUdDpctz",
 	.size		= sizeof(machine_param),
 
 	.mem_iv_size	= 0x1f,
@@ -49,6 +49,7 @@ static struct spl_machine_param machine_param
 	 * section of output U-Boot image.
 	 */
 	.uboot_size	= 0x100000,
+	.uboot_comp_size = 0x100000,
 
 	.boot_source	= BOOT_MODE_OM,
 	.frequency_mhz	= 800,
@@ -59,6 +60,7 @@ static struct spl_machine_param machine_param
 	.bad_wake_gpio	= 0xffffffff,
 	.write_protect_gpio = 0xffffffff,
 	.rtc_type	= SPL_RTC_TYPE_UNKNOWN,
+	.compress_type	= SPL_COMPRESST_NONE,
 };
 
 struct spl_machine_param *spl_get_machine_params(void)

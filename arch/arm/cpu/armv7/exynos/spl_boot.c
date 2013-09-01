@@ -39,6 +39,8 @@
 #include <asm/arch/setup.h>
 #include <asm/arch/spi.h>
 #include <asm/arch/spl.h>
+#include <asm/arch/system.h>
+#include <linux/lzo.h>
 #include "clock_init.h"
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -313,10 +315,10 @@ static int check_and_set_wp(void)
 
 enum boot_mode copy_uboot_to_ram(ulong uboot_addr, ulong uboot_size,
 				 enum boot_mode bootmode, ulong uboot_offset,
-				 bool enable_debug)
+				 bool enable_debug,
+				 struct spl_machine_param *param)
 {
 	int is_cr_z_set;
-	unsigned int sec_boot_check;
 #ifndef CONFIG_EXYNOS_FAST_SPI_BOOT
 	u32 (*spi_copy)(u32 offset, u32 nblock, u32 dst);
 #endif
@@ -324,30 +326,44 @@ enum boot_mode copy_uboot_to_ram(ulong uboot_addr, ulong uboot_size,
 	u32 (*copy_bl2_from_emmc)(u32 nblock, u32 dst);
 	void (*end_bootop_from_emmc)(void);
 	u32 (*usb_copy)(void);
+	ulong load_addr;
+	ulong load_size, align_size;
 
-	/* Read iRAM location to check for secondary USB boot mode */
-	if (bootmode == BOOT_MODE_OM) {
-		sec_boot_check = readl(EXYNOS_IRAM_SECONDARY_BASE);
-		if (sec_boot_check == EXYNOS_USB_SECONDARY_BOOT)
-			bootmode = BOOT_MODE_USB;
-		else
-			bootmode = readl(EXYNOS5_POWER_BASE) & OM_STAT;
+	/*
+	 * When using compression, load U-Boot after the area where it will
+	 * end up.
+	 */
+	if (param->compress_type == SPL_COMPRESST_NONE) {
+		load_addr = uboot_addr;
+		load_size = uboot_size;
+	} else {
+		load_addr = uboot_addr + uboot_size;
+		load_size = param->uboot_comp_size, sizeof(uint32_t);
+
+		if (enable_debug)
+			puts("Compressed ");
+		if (load_addr < CONFIG_SYS_IRAM_LIMIT &&
+		    load_addr + load_size > CONFIG_SYS_IRAM_LIMIT) {
+			printf("No space: uboot_addr=%lx, uboot_size=%lx, load_addr=%lx, load_size=%lx, top=%lx, limit=%x",
+				uboot_addr, uboot_size, load_addr, load_size,
+				load_addr + load_size, CONFIG_SYS_IRAM_LIMIT);
+			hang();
+		}
 	}
 
-	if (enable_debug)
-		puts("\n");
+	align_size = ALIGN(load_size, sizeof(uint32_t));
 	switch (bootmode) {
 	case BOOT_MODE_SERIAL:
 #ifdef CONFIG_EXYNOS_FAST_SPI_BOOT
 		if (enable_debug)
 			puts("SPI fast...");
 		/* let us our own function to copy u-boot from SF */
-		exynos_spi_copy(uboot_size, uboot_addr, uboot_offset);
+		exynos_spi_copy(align_size, load_addr, uboot_offset);
 #else
 		if (enable_debug)
 			puts("SPI iROM...");
 		spi_copy = get_irom_func(SPI_INDEX);
-		spi_copy(uboot_offset, uboot_size, uboot_addr);
+		spi_copy(uboot_offset, align_size, load_addr);
 #endif
 		break;
 	case BOOT_MODE_MMC:
@@ -355,8 +371,8 @@ enum boot_mode copy_uboot_to_ram(ulong uboot_addr, ulong uboot_size,
 			puts("MMC...");
 		copy_bl2 = get_irom_func(MMC_INDEX);
 		copy_bl2(CONFIG_UBOOT_OFFSET / MMC_MAX_BLOCK_LEN,
-			 DIV_ROUND_UP(uboot_size, MMC_MAX_BLOCK_LEN),
-			 uboot_addr);
+			 DIV_ROUND_UP(align_size, MMC_MAX_BLOCK_LEN),
+			 load_addr);
 		break;
 	case BOOT_MODE_EMMC:
 		if (enable_debug)
@@ -376,8 +392,8 @@ enum boot_mode copy_uboot_to_ram(ulong uboot_addr, ulong uboot_size,
 		copy_bl2_from_emmc = get_irom_func(EMMC44_INDEX);
 		end_bootop_from_emmc = get_irom_func(EMMC44_END_INDEX);
 
-		copy_bl2_from_emmc(DIV_ROUND_UP(uboot_size, MMC_MAX_BLOCK_LEN),
-				   uboot_addr);
+		copy_bl2_from_emmc(DIV_ROUND_UP(align_size, MMC_MAX_BLOCK_LEN),
+				   load_addr);
 		end_bootop_from_emmc();
 
 #ifdef CONFIG_SPL_MMC_BOOT_WP
@@ -411,7 +427,40 @@ enum boot_mode copy_uboot_to_ram(ulong uboot_addr, ulong uboot_size,
 	}
 	if (enable_debug) {
 		printf("loaded from offset %lx to %lx, size %lx", uboot_offset,
-		       uboot_addr, uboot_size);
+		       load_addr, align_size);
+	}
+
+#ifdef CONFIG_SPL_VERIFY
+	if (!board_image_verify(running_firmware, load_addr, load_size,
+				enable_debug)) {
+		if (enable_debug)
+			puts(", verified");
+	} else {
+		if (enable_debug)
+			puts(", skip verify");
+	}
+#endif
+
+	if (param->compress_type == SPL_COMPRESST_LZO) {
+#if defined(CONFIG_SPL_LZO_SUPPORT)
+		const void *load = map_sysmem(load_addr, load_size);
+		size_t size;
+		int ret;
+
+		if (enable_debug) {
+			printf(", decomp to %lx, size %zx", uboot_addr,
+			       param->uboot_size);
+		}
+		ret = lzop_decompress(load, param->uboot_comp_size,
+				      (void *)uboot_addr, &size);
+		if (ret < 0) {
+			printf(", LZO: uncompress error -%u\n", -ret);
+			hang();
+		}
+#else
+		puts(", LZO not supported.\n");
+		hang();
+#endif
 	}
 
 	return bootmode;
@@ -505,6 +554,18 @@ void board_init_f(unsigned long bootflag)
 	param = spl_get_machine_params();
 	enable_debug = param->spl_debug;
 	boot_mode = param->boot_source;
+
+	/* Read iRAM location to check for secondary USB boot mode */
+	if (boot_mode == BOOT_MODE_OM) {
+		unsigned int sec_boot_check;
+
+		sec_boot_check = readl(EXYNOS_IRAM_SECONDARY_BASE);
+		if (sec_boot_check == EXYNOS_USB_SECONDARY_BOOT)
+			boot_mode = BOOT_MODE_USB;
+		else
+			boot_mode = readl(EXYNOS5_POWER_BASE) & OM_STAT;
+	}
+
 	setup_global_data();
 	arch_cpu_init();
 
@@ -537,19 +598,10 @@ void board_init_f(unsigned long bootflag)
 	}
 
 	offset = running_from_uboot ? uboot_load_offset : param->uboot_offset;
+	if (enable_debug)
+		puts("\n");
 	copy_uboot_to_ram(param->uboot_start, param->uboot_size, boot_mode,
-			  offset, enable_debug);
-
-#ifdef CONFIG_SPL_VERIFY
-	if (!board_image_verify(running_firmware, param->uboot_start,
-				param->uboot_size, enable_debug)) {
-		if (enable_debug)
-			puts(", verified");
-	} else {
-		if (enable_debug)
-			puts(", skip verify");
-	}
-#endif
+			  offset, enable_debug, param);
 
 	/* Hack for now - should probably have our own DO_CACHE */
 	if (!(actions & DO_WAKEUP) && boot_mode != BOOT_MODE_USB &&

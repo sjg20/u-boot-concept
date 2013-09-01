@@ -27,7 +27,11 @@ LIB	= $(obj)liblzo.o
 
 SOBJS	=
 
+ifdef CONFIG_SPL_BUILD
+COBJS-$(CONFIG_SPL_LZO_SUPPORT) += lzo1x_decompress.o
+else
 COBJS-$(CONFIG_LZO) += lzo1x_decompress.o
+endif
 
 COBJS	= $(COBJS-y)
 SRCS 	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
