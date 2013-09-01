@@ -162,8 +162,9 @@ static int read_system_map(FILE *fin)
 		if (func_count > 1)
 			func[-1].code_size = func->offset - func[-1].offset;
 	}
-	notice("%d functions found in map file\n", func_count);
 	text_offset = start;
+	notice("%d functions found in map file, text_offset = %lx\n",
+	       func_count, text_offset);
 	return 0;
 }
 

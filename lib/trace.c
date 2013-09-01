@@ -53,6 +53,11 @@ struct trace_hdr {
 
 static struct trace_hdr *hdr;	/* Pointer to start of trace buffer */
 
+static ulong __attribute__((no_instrument_function)) trace_text_size(void)
+{
+	return (ulong)&__image_copy_end - (ulong)_start;
+}
+
 static inline uintptr_t __attribute__((no_instrument_function))
 		func_ptr_to_num(void *func_ptr)
 {
@@ -223,8 +228,13 @@ int trace_list_calls(void *buff, int buff_size, unsigned *needed)
 			struct trace_call *call = &hdr->ftrace[rec];
 			struct trace_call *out = ptr;
 
-			out->func = call->func * FUNC_SITE_SIZE;
-			out->caller = call->caller * FUNC_SITE_SIZE;
+			if (TRACE_CALL_TYPE(call) == FUNCF_TEXTBASE) {
+				out->func = call->func;
+				out->caller = call->caller;
+			} else {
+				out->func = call->func * FUNC_SITE_SIZE;
+				out->caller = call->caller * FUNC_SITE_SIZE;
+			}
 			out->flags = call->flags;
 			upto++;
 		}
@@ -291,7 +301,7 @@ void __attribute__((no_instrument_function)) trace_set_enabled(int enabled)
 int __attribute__((no_instrument_function)) trace_init(void *buff,
 		size_t buff_size)
 {
-	ulong func_count = gd->mon_len / FUNC_SITE_SIZE;
+	ulong func_count = trace_text_size() / FUNC_SITE_SIZE;
 	size_t needed;
 	int was_disabled = !trace_enabled;
 
@@ -345,7 +355,7 @@ int __attribute__((no_instrument_function)) trace_init(void *buff,
 #ifdef CONFIG_TRACE_EARLY
 int __attribute__((no_instrument_function)) trace_early_init(void)
 {
-	ulong func_count = gd->mon_len / FUNC_SITE_SIZE;
+	ulong func_count = trace_text_size() / FUNC_SITE_SIZE;
 	size_t buff_size = CONFIG_TRACE_EARLY_SIZE;
 	size_t needed;
 

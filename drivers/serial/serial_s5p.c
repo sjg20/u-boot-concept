@@ -46,7 +46,8 @@ struct fdt_serial {
 	u8 enabled;     /* 1 if enabled, 0 if disabled */
 } config __attribute__ ((section(".data")));
 
-static inline struct s5p_uart *s5p_get_base_uart(int dev_index)
+static inline __attribute__((no_instrument_function)) struct s5p_uart *
+	s5p_get_base_uart(int dev_index)
 {
 #ifdef CONFIG_OF_CONTROL
 	return (struct s5p_uart *)(config.base_addr);

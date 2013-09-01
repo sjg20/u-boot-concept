@@ -78,6 +78,8 @@ static void exynos5420_uart_config(int peripheral)
 		start = EXYNOS5420_GPIO_A14;
 		count = 2;
 		break;
+	default:
+		return;
 	}
 	for (i = start; i < start + count; i++) {
 		gpio_set_pull(i, S5P_GPIO_PULL_NONE);

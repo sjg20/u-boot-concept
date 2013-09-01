@@ -41,6 +41,17 @@
 #define CONFIG_ARCH_EARLY_INIT_R
 #define CONFIG_SYS_ALLOW_NO_RELOC
 
+/* Allow tracing to be enabled */
+#ifdef FTRACE
+#define CONFIG_TRACE
+#define CONFIG_CMD_TRACE
+#define CONFIG_CMD_TFTPPUT
+#define CONFIG_TRACE_BUFFER_SIZE	(16 << 20)
+#define CONFIG_TRACE_EARLY_SIZE		(8 << 20)
+#define CONFIG_TRACE_EARLY
+#define CONFIG_TRACE_EARLY_ADDR		0x50000000
+#endif
+
 #define CONFIG_BOOTSTAGE
 #define CONFIG_BOOTSTAGE_REPORT
 #define CONFIG_CMD_BOOTSTAGE
@@ -265,6 +276,9 @@
  * SPL marker. This value is arbitrary, but gd_t is placed starting here.
  */
 #define CONFIG_SYS_INIT_SP_ADDR		CONFIG_EXYNOS_RELOCATE_CODE_BASE
+#ifdef CONFIG_TRACE
+#define CONFIG_SYS_INIT_SP_SIZE		0x800
+#else
 #define CONFIG_SYS_INIT_SP_SIZE		0x400
 
 /* I2C */

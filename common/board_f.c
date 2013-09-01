@@ -859,7 +859,6 @@ static const init_fnc_t init_sequence_f[] = {
 #ifdef CONFIG_SANDBOX
 	setup_ram_buf,
 #endif
-	trace_early_init,
 	setup_fdt,
 	setup_mon_len,
 #if defined(CONFIG_MPC85xx) || defined(CONFIG_MPC86xx)
@@ -873,6 +872,7 @@ static const init_fnc_t init_sequence_f[] = {
 	find_fdt,		/* TODO(sjg@chromium.org): remove */
 # endif
 #endif
+	trace_early_init,
 	mark_bootstage,
 #ifdef CONFIG_OF_CONTROL
 	fdtdec_check_fdt,

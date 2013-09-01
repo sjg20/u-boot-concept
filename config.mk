@@ -324,7 +324,9 @@ BCURDIR = $(subst $(SRCTREE)/,,$(CURDIR:$(obj)%=%))
 ifeq ($(findstring examples/,$(BCURDIR)),)
 ifeq ($(CONFIG_SPL_BUILD),)
 ifdef FTRACE
-CFLAGS += -finstrument-functions -DFTRACE
+CFLAGS += -finstrument-functions -DFTRACE \
+	-finstrument-functions-exclude-file-list=libfdt,fdt_,fdt.c \
+	-finstrument-functions-exclude-function-list=strlen,memcmp,memchr,env_get,get_timer,set_section_dcache,udelay,envmatch
 endif
 endif
 endif

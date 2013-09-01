@@ -239,12 +239,12 @@
 extern unsigned int s5p_cpu_id;
 extern unsigned int s5p_cpu_rev;
 
-static inline int s5p_get_cpu_rev(void)
+static inline __attribute__((no_instrument_function)) int s5p_get_cpu_rev(void)
 {
 	return s5p_cpu_rev;
 }
 
-static inline void s5p_set_cpu_id(void)
+static inline __attribute__((no_instrument_function)) void s5p_set_cpu_id(void)
 {
 	unsigned int pro_id = (readl(EXYNOS4_PRO_ID) & 0x00FFF000) >> 12;
 
@@ -273,7 +273,8 @@ static inline void s5p_set_cpu_id(void)
 	}
 }
 
-static inline char *s5p_get_cpu_name(void)
+static inline __attribute__((no_instrument_function))
+	char *s5p_get_cpu_name(void)
 {
 	return EXYNOS_CPU_NAME;
 }

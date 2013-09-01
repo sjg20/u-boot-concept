@@ -109,7 +109,8 @@ static __inline__ void __swab16s(__u16 *addr)
 	__arch__swab16s(addr);
 }
 
-static __inline__ __attribute__((const)) __u32 __fswab32(__u32 x)
+static __inline__ __attribute__((const)) __u32
+	__attribute__((no_instrument_function)) __fswab32(__u32 x)
 {
 	return __arch__swab32(x);
 }

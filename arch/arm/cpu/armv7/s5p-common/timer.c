@@ -35,7 +35,8 @@ DECLARE_GLOBAL_DATA_PTR;
 unsigned long get_current_tick(void);
 
 /* macro to read the 16 bit timer */
-static inline struct s5p_timer *s5p_get_base_timer(void)
+static inline __attribute__((no_instrument_function)) struct s5p_timer *
+	s5p_get_base_timer(void)
 {
 	return (struct s5p_timer *)samsung_get_base_timer();
 }
@@ -48,7 +49,8 @@ static inline struct s5p_timer *s5p_get_base_timer(void)
  *
  * @return current value of timer
  */
-static unsigned long timer_get_us_down(void)
+static unsigned long __attribute__((no_instrument_function))
+	timer_get_us_down(void)
 {
 	struct s5p_timer *const timer = s5p_get_base_timer();
 
