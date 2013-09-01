@@ -531,7 +531,7 @@ int clock_set_periph_rate(int periph_id, unsigned long rate)
 	struct clk_bit_info *bit_info = NULL;
 	int div;
 	unsigned int pre_div = 0;
-	unsigned long sclk, sub_clk;
+	unsigned long src, sclk, sub_clk;
 	unsigned long clk_base = samsung_get_base_clock();
 
 	bit_info = get_table_index(periph_id);
@@ -551,8 +551,11 @@ int clock_set_periph_rate(int periph_id, unsigned long rate)
 		div = div - 1;
 		pre_div = pre_div - 1;
 	} else {
-		sclk = clock_get_periph_rate(periph_id);
-		div = DIV_ROUND_UP(sclk, rate);
+		src = readl(clk_base + bit_info->src_offset);
+		src = (src >> bit_info->src_bit) & bit_info->src_mask;
+		sclk = get_src_clk(src);
+
+		div = DIV_ROUND_UP(sclk, rate) - 1;
 		if (bit_info->prediv_offset >= 0) {
 			sub_clk = sclk / (div + 1);
 			pre_div =  DIV_ROUND_UP(sub_clk, rate);
