@@ -469,6 +469,26 @@ static void reset_if_invalid_wakeup(void)
 	}
 }
 
+static void spl_enable_dcache(uint32_t ttbr)
+{
+	bd_t bd;
+
+	memset(&bd, '\0', sizeof(bd));
+
+	/* First bank is IRAM */
+	bd.bi_dram[0].start = CONFIG_PHY_IRAM_BASE;
+	bd.bi_dram[0].size = CONFIG_IRAM_TOP - CONFIG_PHY_IRAM_BASE;
+
+	/* Second is all of DRAM - 2GB for now */
+	bd.bi_dram[1].start = CONFIG_SYS_SDRAM_BASE;
+	bd.bi_dram[1].size = 2UL << 30;
+
+	gd->bd = &bd;
+	gd->arch.tlb_addr = ttbr;
+	dcache_enable();
+	gd->bd = NULL;
+}
+
 __weak void board_process_wakeup(void)
 {
 }
@@ -531,11 +551,20 @@ void board_init_f(unsigned long bootflag)
 	}
 #endif
 
+	/* Hack for now - should probably have our own DO_CACHE */
+	if (!(actions & DO_WAKEUP) && boot_mode != BOOT_MODE_USB &&
+	    !running_from_uboot && param->ttbr) {
+		if (enable_debug)
+			puts(", cache");
+		spl_enable_dcache(param->ttbr);
+	}
+
 	/* Jump to U-Boot image */
 	if (enable_debug)
 		puts(", jump\n");
 	uboot = map_sysmem(param->uboot_start, param->uboot_size);
-	(*uboot)(running_from_uboot ? SPL_RUNNING_FROM_UBOOT : 0);
+	(*uboot)(running_from_uboot ? SPL_RUNNING_FROM_UBOOT :
+					SPL_RUNNING_FROM_SPL);
 	/* Never returns Here */
 }
 

@@ -33,6 +33,7 @@
 #include <config.h>
 #include <version.h>
 #include <asm/system.h>
+#include <asm/u-boot.h>
 #include <linux/linkage.h>
 
 .globl _start
@@ -127,6 +128,7 @@ reset:
 #if defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_HEADER_SIZE)
 	bl	check_relocate
 #endif
+	mov	r4, r0
 	bl	save_boot_params
 	/*
 	 * disable interrupts (FIQ and IRQ), also set the cpu to SVC32 mode,
@@ -158,7 +160,11 @@ reset:
 
 	/* the mask ROM code should have PLL and others stable */
 #ifndef CONFIG_SKIP_LOWLEVEL_INIT
-	bl	cpu_init_cp15
+	ldr	r3, =SPL_RUNNING_FROM_UBOOT
+	cmp	r4, r3
+	ldr	r3, =SPL_RUNNING_FROM_SPL
+	cmpne	r4, r3
+	blne	cpu_init_cp15
 	bl	cpu_init_crit
 #endif
 

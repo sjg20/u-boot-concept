@@ -99,7 +99,11 @@
 
 		/* ...but early-firmware-selection puts RW SPL in IRAM */
 		u-boot-memory,spl = "/iram";
-		u-boot-offset,spl = <0x4400 0x8000>;
+		u-boot-offset,spl = <0x4400 0x7c00>;
+
+		/* MMU page table goes there if enabled */
+		ttbr-memory = "/iram";
+		ttbr-offset = <0xc000 0x4000>;
 
 		/*
 		 * and RO U-Boot goes there too. The size cell here is not

@@ -41,13 +41,14 @@ enum boot_mode {
 };
 
 #define SPL_SIGNATURE	0xdeadbeef
+
+#ifndef __ASSEMBLY__
 enum rtc_t {
 	SPL_RTC_TYPE_UNKNOWN,
 	SPL_RTC_TYPE_S5M8767,
 	SPL_RTC_TYPE_MAX77802
 };
 
-#ifndef __ASSEMBLY__
 /* Parameters of early board initialization in SPL */
 struct spl_machine_param {
 	/* Add fields as and when required */
@@ -86,6 +87,9 @@ struct spl_machine_param {
 	 * D		SPL debug
 	 * p		Vboot persist start
 	 * c		rtc (clock) type
+	 * t		translation table base register address (for MMU). Set
+	 *		this to a valid 16KB-aligned IRAM address to enable
+	 *		the cache in SPL.
 	 * \0		termination
 	 */
 	char		params[24];	/* Length must be word-aligned */
@@ -127,6 +131,7 @@ struct spl_machine_param {
 	u32		spl_debug;	/* Enable debug output in SPL */
 	u32		vboot_persist_start;	/* Vboot persistence area */
 	enum rtc_t	rtc_type;	/* Type of RTC */
+	u32		ttbr;		/* TTBR value (0 to keep dcache off) */
 } __attribute__((__packed__));
 #endif
 

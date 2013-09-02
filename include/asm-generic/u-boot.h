@@ -31,7 +31,8 @@
 #define __ASM_GENERIC_U_BOOT_H__
 
 /* Indicates that SPL is being run from a previous U-Boot, not a boot ROM */
-#define SPL_RUNNING_FROM_UBOOT	0x3afcb001UL
+#define SPL_RUNNING_FROM_UBOOT	0x3afcb001
+#define SPL_RUNNING_FROM_SPL	0x3afcb002
 
 /*
  * Board information passed to Linux kernel from U-Boot

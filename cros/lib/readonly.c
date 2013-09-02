@@ -805,7 +805,11 @@ int vboot_ro_jump(struct vboot_info *vboot)
 
 	VBDEBUG("Jump to rw %s at %x\n", vboot->use_efs ? "SPL" : "U-Boot",
 		(unsigned)map_to_sysmem(vboot->fw_dest));
+#ifdef CONFIG_ARM
+	cleanup_before_linux_select(0);
+#else
 	cleanup_before_linux();
+#endif
 #ifdef CONFIG_SANDBOX
 	os_jump_to_image(vboot->fw_dest, fw->uncomp_size);
 #else

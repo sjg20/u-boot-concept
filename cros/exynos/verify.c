@@ -74,6 +74,7 @@ int board_image_verify(int firmware_num, ulong start, ulong size,
 		return -1;
 	}
 
+	flush_dcache_range(start, start + size);
 	ret = ace_sha_hash_digest((void *)start, size, digest,
 				  ACE_SHA_TYPE_SHA256);
 	if (ret) {

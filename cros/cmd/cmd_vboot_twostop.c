@@ -764,12 +764,19 @@ twostop_jump(crossystem_data_t *cdata, void *fw_blob, uint32_t fw_size,
 		return TWOSTOP_SELECT_ERROR;
 	}
 
-	/*
-	 * TODO We need to reach the Point of Unification here, but I am not
-	 * sure whether the following function call flushes L2 cache or not. If
-	 * it does, we should avoid that.
-	 */
+#ifdef CONFIG_ARM
+	fdt_addr_t addr;
+	fdt_size_t size;
+	int flags = 0;
+
+	/* If we don't have a TTBR address, turn off the dcache */
+	if (fdtdec_decode_memory_region(gd->fdt_blob, -1, "ttbr", NULL,
+					&addr, &size))
+		flags = CBL_DISABLE_CACHES;
+	cleanup_before_linux_select(flags);
+#else
 	cleanup_before_linux();
+#endif
 
 	VBDEBUG("Jump to RW firmware\n");
 #ifdef CONFIG_SANDBOX
