@@ -157,10 +157,6 @@
 		power-regulator@9 {
 			compatible = "maxim,max77802-pmic";
 			reg = <0x9>;
-			max77xxx,pmic-buck-default-dvs-idx = <1>;
-			max77xxx,pmic-buck-dvs-gpios = <&gpio 78 0>, /* GPY76 */
-						       <&gpio 274 0>,/* GPJ42 */
-						       <&gpio 275 0>;/* GPJ43 */
 		};
 	};
 
