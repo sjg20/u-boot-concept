@@ -49,7 +49,6 @@
 #define EMIF4_1_CFG_BASE		0x4D000000
 
 /* PLL related registers */
-#define CM_DPLL				0x44E00500
 #define CM_DEVICE			0x44E00700
 #define CM_RTC				0x44E00800
 #define CM_CEFUSE			0x44E00A00

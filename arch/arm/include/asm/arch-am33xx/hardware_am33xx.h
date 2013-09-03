@@ -25,6 +25,7 @@
 /* Control Module Base Address */
 #define CTRL_BASE			0x44E10000
 #define CTRL_DEVICE_BASE		0x44E10600
+#define CM_DPLL				0x44E00500
 
 /* PRCM Base Address */
 #define PRCM_BASE			0x44E00000

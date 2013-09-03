@@ -27,6 +27,7 @@
 #define PRCM_BASE			0x48180000
 #define CM_PER				0x44E00000
 #define CM_WKUP				0x44E00400
+#define CM_DPLL				0x44E00500
 
 #define PRM_RSTCTRL			(PRCM_BASE + 0x00A0)
 #define PRM_RSTST			(PRM_RSTCTRL + 8)
