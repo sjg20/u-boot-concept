@@ -80,16 +80,6 @@
 #define I2S_TX_ON	1
 #define I2S_TX_OFF	0
 
-/* I2s Registers */
-struct exynos5_i2s {
-	unsigned int	con;		/* base + 0 , Control register */
-	unsigned int	mod;		/* Mode register */
-	unsigned int	fic;		/* FIFO control register */
-	unsigned int	psr;		/* Reserved */
-	unsigned int	txd;		/* Transmit data register */
-	unsigned int	rxd;		/* Receive Data Register */
-};
-
 /* This structure stores the i2s related information */
 struct i2stx_info {
 	unsigned int rfs;		/* LR clock frame size */

@@ -17,9 +17,9 @@
 #include <common.h>
 #include <div64.h>
 #include <i2c.h>
+#include <i2s.h>
 #include <fdtdec.h>
 #include <sound.h>
-#include "i2s.h"
 #include "max98095.h"
 
 enum max98095_type {

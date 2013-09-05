@@ -27,10 +27,10 @@
 #include <libfdt.h>
 #include <fdtdec.h>
 #include <i2c.h>
+#include <i2s.h>
 #include <sound.h>
 #include "wm8994.h"
 #include "max98095.h"
-#include "i2s.h"
 
 /* defines */
 #define SOUND_BITS_IN_BYTE 8

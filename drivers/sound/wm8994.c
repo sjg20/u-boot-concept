@@ -28,9 +28,9 @@
 #include <common.h>
 #include <div64.h>
 #include <i2c.h>
+#include <i2s.h>
 #include <sound.h>
 #include <fdtdec.h>
-#include "i2s.h"
 #include "wm8994.h"
 #include "wm8994_registers.h"
 

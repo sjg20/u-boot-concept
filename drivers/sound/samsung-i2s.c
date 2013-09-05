@@ -36,7 +36,19 @@
 #define FIC_RXCOUNT(x)		(((x) >>  0) & 0xf)
 #define FICS_TXCOUNT(x)		(((x) >>  8) & 0x7f)
 
+#define FIFO_LENGTH			64
+
 #define TIMEOUT_I2S_TX		100	/* i2s transfer timeout */
+
+/* I2S Registers */
+struct exynos5_i2s {
+	unsigned int	con;		/* base + 0 , Control register */
+	unsigned int	mod;		/* Mode register */
+	unsigned int	fic;		/* FIFO control register */
+	unsigned int	psr;		/* Reserved */
+	unsigned int	txd;		/* Transmit data register */
+	unsigned int	rxd;		/* Receive Data Register */
+};
 
 /*
  * Sets the frame size for I2S LR clock
@@ -284,17 +296,16 @@ int i2s_transfer_tx_data(struct i2stx_info *pi2s_tx, unsigned int *data,
 	struct exynos5_i2s *i2s_reg =
 				(struct exynos5_i2s *)pi2s_tx->base_address;
 
-	/* fifo length is 64 as per exynos specification */
-	if (data_size < 64) {
+	if (data_size < FIFO_LENGTH) {
 		debug("%s : Invalid data size\n", __func__);
 		return -1; /* invalid pcm data size */
 	}
 
 	/* fill the tx buffer before stating the tx transmit */
-	for (i = 0; i < 64; i++)
+	for (i = 0; i < FIFO_LENGTH; i++)
 		writel(*data++, &i2s_reg->txd);
 
-	data_size -= 64;
+	data_size -= FIFO_LENGTH;
 	i2s_txctrl(i2s_reg, I2S_TX_ON);
 
 	while (data_size > 0) {
