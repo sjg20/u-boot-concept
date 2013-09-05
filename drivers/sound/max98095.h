@@ -298,16 +298,14 @@
 /*
  * intialise max98095 sound codec device for the given configuration
  *
- * @param pcodec_info		pointer value of the sound codec info structure
- *				parsed from device tree
+ * @param blob                  FDT node for codec values
  * @param sampling_rate		Sampling rate (Hz)
  * @param mclk_freq		MCLK Frequency (Hz)
  * @param bits_per_sample	bits per Sample (must be 16 or 24)
  *
  * @returns -1 for error and 0 Success.
  */
-int max98095_init(struct sound_codec_info *pcodec_info,
-			int sampling_rate, int mclk_freq,
+int max98095_init(const void *blob, int sampling_rate, int mclk_freq,
 			int bits_per_sample);
 
 #endif

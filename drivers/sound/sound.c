@@ -21,7 +21,6 @@
  * MA 02111-1307 USA
  */
 
-#include <asm/arch/pinmux.h>
 #include <malloc.h>
 #include <common.h>
 #include <asm/io.h>
@@ -29,16 +28,15 @@
 #include <fdtdec.h>
 #include <i2c.h>
 #include <sound.h>
-#include "i2s.h"
 #include "wm8994.h"
 #include "max98095.h"
+#include "i2s.h"
 
 /* defines */
 #define SOUND_BITS_IN_BYTE 8
 
 /* Globals */
 struct i2stx_info g_i2stx_pri;
-struct sound_codec_info g_codec_info;
 
 /*
  * get_sound_fdt_values gets fdt values for i2s parameters
@@ -107,74 +105,17 @@ static int get_sound_i2s_fdt_values(struct i2stx_info *i2s, const void *blob)
 }
 
 /*
- * Gets fdt values for wm8994 config parameters
+ * Init codec
  *
- * @param pcodec_info	codec information structure
  * @param blob		FDT blob
- * @return		int value, 0 for success
+ * @param pi2s_tx	i2s parameters required by codec
+ * @return              int value, 0 for success
  */
-static int get_sound_fdt_values(struct sound_codec_info *pcodec_info,
-				const void *blob, enum fdt_compat_id compat_id)
+static int codec_init(const void *blob, struct i2stx_info *pi2s_tx)
 {
-	enum fdt_compat_id compat;
-	int node;
-	int error = 0;
-	int parent;
-
-	/* Get the node from FDT for codec */
-	node = fdtdec_next_compatible(blob, 0, compat_id);
-	if (node <= 0) {
-		debug("EXYNOS_SOUND: No node for codec in device tree\n");
-		debug("node = %d\n", node);
-		return -1;
-	}
-
-	parent = fdt_parent_offset(blob, node);
-	if (parent < 0) {
-		debug("%s: Cannot find node parent\n", __func__);
-		return -1;
-	}
-
-	compat = fdtdec_lookup(blob, parent);
-	switch (compat) {
-	case COMPAT_SAMSUNG_EXYNOS_SPI:
-		debug("%s: Support not added for SPI interface\n", __func__);
-		return -1;
-		break;
-	case COMPAT_SAMSUNG_S3C2440_I2C:
-		pcodec_info->i2c_bus = i2c_get_bus_num_fdt(blob, parent);
-		error |= pcodec_info->i2c_bus;
-		debug("i2c bus = %d\n", pcodec_info->i2c_bus);
-		pcodec_info->i2c_dev_addr = fdtdec_get_int(blob, node, "reg", 0);
-		error |= pcodec_info->i2c_dev_addr;
-		debug("i2c dev addr = %d\n", pcodec_info->i2c_dev_addr);
-		break;
-	default:
-		debug("%s: Unknown compat id %d\n", __func__, compat);
-		return -1;
-	}
-
-	if (error == -1) {
-		debug("fail to get codec node properties\n");
-		return -1;
-	}
-
-	return 0;
-}
-
-/*
- * Gets fdt values for codec config parameters
- *
- * @param pcodec_info	codec information structure
- * @param blob		FDT blob
- * @return		int value, 0 for success
- */
-static int get_sound_codec_fdt_values(struct sound_codec_info *pcodec_info,
-							const void *blob)
-{
-	int node;
-	int error = 0;
+	int ret;
 	const char *codectype;
+	int node;
 
 	/* Get the node from FDT for sound */
 	node = fdtdec_next_compatible(blob, 0, COMPAT_SAMSUNG_EXYNOS_SOUND);
@@ -193,18 +134,22 @@ static int get_sound_codec_fdt_values(struct sound_codec_info *pcodec_info,
 	debug("device = %s\n", codectype);
 
 	if (!strcmp(codectype, "wm8994")) {
-		pcodec_info->codec_type = CODEC_WM_8994;
-		error = get_sound_fdt_values(pcodec_info, blob,
-					     COMPAT_WOLFSON_WM8994_CODEC);
+		/* Check the codec type and initialise the same */
+		ret = wm8994_init(blob, WM8994_AIF2,
+			pi2s_tx->samplingrate,
+			(pi2s_tx->samplingrate * (pi2s_tx->rfs)),
+			pi2s_tx->bitspersample, pi2s_tx->channels);
 	} else if (!strcmp(codectype, "max98095")) {
-		pcodec_info->codec_type = CODEC_MAX_98095;
-		error = get_sound_fdt_values(pcodec_info, blob,
-					     COMPAT_MAXIM_98095_CODEC);
-	} else
-		error = -1;
+		ret = max98095_init(blob, pi2s_tx->samplingrate,
+				(pi2s_tx->samplingrate * (pi2s_tx->rfs)),
+				pi2s_tx->bitspersample);
+	} else {
+		debug("%s: Unknown codec type %s\n", __func__, codectype);
+		return -1;
+	}
 
-	if (error == -1) {
-		debug("fail to get sound codec node properties\n");
+	if (ret) {
+		debug("%s: Codec init failed\n", __func__);
 		return -1;
 	}
 
@@ -215,46 +160,21 @@ int sound_init(const void *blob)
 {
 	int ret;
 	struct i2stx_info *pi2s_tx = &g_i2stx_pri;
-	struct sound_codec_info *pcodec_info = &g_codec_info;
 
 	/* Get the I2S Values */
 	if (get_sound_i2s_fdt_values(pi2s_tx, blob) < 0)
 		return -1;
 
-	/* Get the codec Values */
-	if (get_sound_codec_fdt_values(pcodec_info, blob) < 0)
+	if (codec_init(blob, pi2s_tx) < 0) {
+		debug(" Codec init failed\n");
 		return -1;
+	}
 
 	ret = i2s_tx_init(pi2s_tx);
 	if (ret) {
 		debug("%s: Failed to init i2c transmit: ret=%d\n", __func__,
 		      ret);
 		return ret;
-	}
-
-	/* Check the codec type and initialise the same */
-	if (pcodec_info->codec_type == CODEC_WM_8994) {
-		ret = wm8994_init(pcodec_info, WM8994_AIF2,
-			pi2s_tx->samplingrate,
-			(pi2s_tx->samplingrate * (pi2s_tx->rfs)),
-			pi2s_tx->bitspersample, pi2s_tx->channels);
-	} else if (pcodec_info->codec_type == CODEC_MAX_98095) {
-#if defined CONFIG_SOUND_MAX98095
-		ret = max98095_init(pcodec_info, pi2s_tx->samplingrate,
-			(pi2s_tx->samplingrate * (pi2s_tx->rfs)),
-			pi2s_tx->bitspersample);
-#else
-		ret = -1;
-		debug("%s: max98095 codec support not built in.\n", __func__);
-#endif
-	} else {
-		debug("%s: Unknown code type %d\n", __func__,
-		      pcodec_info->codec_type);
-		return -1;
-	}
-	if (ret) {
-		debug("%s: Codec init failed\n", __func__);
-		return -1;
 	}
 
 	return ret;

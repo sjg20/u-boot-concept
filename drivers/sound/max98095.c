@@ -17,6 +17,7 @@
 #include <common.h>
 #include <div64.h>
 #include <i2c.h>
+#include <fdtdec.h>
 #include <sound.h>
 #include "i2s.h"
 #include "max98095.h"
@@ -32,6 +33,7 @@ struct max98095_priv {
 	unsigned int fmt;
 };
 
+static struct sound_codec_info g_codec_info;
 struct max98095_priv g_max98095_info;
 unsigned int g_max98095_i2c_dev_addr;
 
@@ -472,13 +474,64 @@ static int max98095_do_init(struct sound_codec_info *pcodec_info,
 	return ret;
 }
 
+static int get_max98095_codec_values(struct sound_codec_info *pcodec_info,
+				      const void *blob)
+{
+	int error = 0;
+	enum fdt_compat_id compat;
+	int node;
+	int parent;
+
+	/* Get the node from FDT for codec */
+	node = fdtdec_next_compatible(blob, 0, COMPAT_MAXIM_98095_CODEC);
+	if (node <= 0) {
+		debug("EXYNOS_SOUND: No node for codec in device tree\n");
+		debug("node = %d\n", node);
+		return -1;
+	}
+
+	parent = fdt_parent_offset(blob, node);
+	if (parent < 0) {
+		debug("%s: Cannot find node parent\n", __func__);
+		return -1;
+	}
+
+	compat = fdtdec_lookup(blob, parent);
+	switch (compat) {
+	case COMPAT_SAMSUNG_S3C2440_I2C:
+		pcodec_info->i2c_bus = i2c_get_bus_num_fdt(blob, node);
+		error |= pcodec_info->i2c_bus;
+		debug("i2c bus = %d\n", pcodec_info->i2c_bus);
+		pcodec_info->i2c_dev_addr = fdtdec_get_int(blob, node,
+							   "reg", 0);
+		error |= pcodec_info->i2c_dev_addr;
+		debug("i2c dev addr = %x\n", pcodec_info->i2c_dev_addr);
+		break;
+	default:
+		debug("%s: Unknown compat id %d\n", __func__, compat);
+		return -1;
+	}
+
+	pcodec_info->codec_type = CODEC_MAX_98095;
+	if (error == -1) {
+		debug("fail to get max98095 codec node properties\n");
+		return -1;
+	}
+	return 0;
+}
+
 /* max98095 Device Initialisation */
-int max98095_init(struct sound_codec_info *pcodec_info,
-			int sampling_rate, int mclk_freq,
-			int bits_per_sample)
+int max98095_init(const void *blob, int sampling_rate,
+			int mclk_freq,	int bits_per_sample)
 {
 	int ret;
 	int old_bus = i2c_get_bus_num();
+	struct sound_codec_info *pcodec_info = &g_codec_info;
+
+	if (get_max98095_codec_values(pcodec_info, blob) < 0) {
+		debug("FDT Codec values failed\n");
+		return -1;
+	}
 
 	i2c_set_bus_num(pcodec_info->i2c_bus);
 	ret = max98095_do_init(pcodec_info, sampling_rate, mclk_freq,
