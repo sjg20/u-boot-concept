@@ -83,6 +83,11 @@
 	};
 
 	i2c@12cd0000 {
+		/* Only one of the two codecs will probe on a given board */
+		soundcodec@20 {
+			reg = <0x20>;
+			compatible = "maxim,max98090-codec";
+		};
 		soundcodec@22 {
 			reg = <0x22>;
 			compatible = "maxim,max98095-codec";
