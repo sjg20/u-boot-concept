@@ -31,6 +31,7 @@
 #include <sound.h>
 #include "wm8994.h"
 #include "max98095.h"
+#include "maxim_codec.h"
 
 /* defines */
 #define SOUND_BITS_IN_BYTE 8
@@ -140,7 +141,7 @@ static int codec_init(const void *blob, struct i2stx_info *pi2s_tx)
 			(pi2s_tx->samplingrate * (pi2s_tx->rfs)),
 			pi2s_tx->bitspersample, pi2s_tx->channels);
 	} else if (!strcmp(codectype, "max98095")) {
-		ret = max98095_init(blob, pi2s_tx->samplingrate,
+		ret = maxim_codec_init(blob, pi2s_tx->samplingrate,
 				(pi2s_tx->samplingrate * (pi2s_tx->rfs)),
 				pi2s_tx->bitspersample);
 	} else {

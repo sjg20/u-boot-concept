@@ -11,6 +11,8 @@
 #ifndef _MAX98095_H
 #define _MAX98095_H
 
+#include "maxim_codec.h"
+
 /*
  * MAX98095 Registers Definition
  */
@@ -294,18 +296,17 @@
 #define M98095_17E_DAI2_BQ_BASE		0x7E
 
 /* function prototype */
-
 /*
- * intialise max98095 sound codec device for the given configuration
+ * intialise max98090 sound codec device for the given configuration
  *
- * @param blob                  FDT node for codec values
+ * @param pcodec_info		Codec information structure
  * @param sampling_rate		Sampling rate (Hz)
  * @param mclk_freq		MCLK Frequency (Hz)
  * @param bits_per_sample	bits per Sample (must be 16 or 24)
  *
  * @returns -1 for error and 0 Success.
  */
-int max98095_init(const void *blob, int sampling_rate, int mclk_freq,
+int max98095_do_init(struct maxim_codec_priv *pcodec_info,
+			int sampling_rate, int mclk_freq,
 			int bits_per_sample);
-
 #endif
