@@ -267,6 +267,11 @@
  * Field Definitions.
  */
 
+/* AIF1DAC1L_TO_DAC1L */
+#define WM8994_AIF1DAC1L_TO_DAC1L               0x0001
+
+/* AIF1DAC1R_TO_DAC1R */
+#define WM8994_AIF1DAC1R_TO_DAC1R               0x0001
 /*
  * R0 (0x00) - Software Reset
  */
@@ -1761,7 +1766,8 @@
  */
 #define WM8994_GPIO_DIR_OUTPUT                   0x8000  /* OUTPUT PIN */
 #define WM8994_GPIO_DIR_MASK                     0xFFE0  /* GPIO PIN MASK */
-#define WM8994_GPIO_FUNCTION_I2S_CLK             0x0000  /* I2S CLK */
+#define WM8994_GPIO_FUNCTION_I2S_CLK             0x0001  /* I2S CLK */
+#define WM8994_GPIO_INPUT_DEBOUNCE               0x0100
 #define WM8994_GPIO_FUNCTION_MASK                0x001F  /* GPn FN */
 
 
