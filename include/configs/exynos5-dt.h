@@ -40,6 +40,7 @@
 #define CONFIG_BOARD_COMMON
 #define CONFIG_ARCH_EARLY_INIT_R
 #define CONFIG_SYS_ALLOW_NO_RELOC
+#define CONFIG_EXYNOS_LPDDR3
 
 /* Allow tracing to be enabled */
 #ifdef FTRACE

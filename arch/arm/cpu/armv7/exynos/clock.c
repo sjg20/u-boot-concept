@@ -133,13 +133,13 @@ static struct set_epll_con_val exynos5_epll_div[] = {
 
 static struct clk_bit_info *get_table_index(int periph_id)
 {
-	int i, count;
+	int i, count = 0;
 	struct clk_bit_info *table;
 
 	if (proid_is_exynos5420()) {
 		table = exynos5420_bit_info_table;
 		count = ARRAY_SIZE(exynos5420_bit_info_table);
-	} else {
+	} else if (proid_is_exynos5250()) {
 		table = exynos5_bit_info_table;
 		count = ARRAY_SIZE(exynos5_bit_info_table);
 	}
@@ -403,8 +403,10 @@ static unsigned long get_src_clk(int src)
 {
 	if (proid_is_exynos5420())
 		return exynos5420_src_clk(src);
-	else
+	else if (proid_is_exynos5250())
 		return exynos5_src_clk(src);
+
+	return -1UL;
 }
 
 long clock_get_periph_rate(int peripheral)
@@ -1401,7 +1403,7 @@ void set_lcd_clk(void)
 		exynos4_set_lcd_clk();
 	else if (proid_is_exynos5420())
 		exynos5420_set_lcd_clk();
-	else
+	else if (proid_is_exynos5250())
 		exynos5_set_lcd_clk();
 }
 

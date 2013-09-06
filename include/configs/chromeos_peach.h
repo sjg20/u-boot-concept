@@ -46,6 +46,9 @@
 #define CONFIG_SYS_PROMPT	"Peach # "
 #define CONFIG_IDENT_STRING	" for Peach"
 
+/* We don't use this on peach - this saves a small about of SPL space */
+#undef CONFIG_EXYNOS_LPDDR3
+
 /*
  * Extra bootargs used for direct booting, but not for vboot.
  * - console of the board

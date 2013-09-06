@@ -181,7 +181,7 @@ void mem_ctrl_init(int reset)
 			while (1)
 				;
 		}
-#ifdef CONFIG_EXYNOS5420
+#ifdef CONFIG_EXYNOS_LPDDR3
 	} else if (param->mem_type == DDR_MODE_LPDDR3) {
 		ret = lpddr3_mem_ctrl_init(reset);
 		if (ret) {

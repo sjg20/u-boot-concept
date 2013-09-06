@@ -28,7 +28,7 @@
 #include <asm/arch/tzpc.h>
 
 /* Setting TZPC[TrustZone Protection Controller] */
-void exynos5250_tzpc_init(void)
+static void exynos5250_tzpc_init(void)
 {
 	struct exynos_tzpc *tzpc;
 	unsigned int addr;
@@ -49,7 +49,7 @@ void exynos5250_tzpc_init(void)
 	}
 }
 
-void exynos5420_tzpc_init(void)
+static void exynos5420_tzpc_init(void)
 {
 	struct exynos_tzpc *tzpc;
 	unsigned int addr;
@@ -71,6 +71,6 @@ void tzpc_init(void)
 {
 	if (proid_is_exynos5420())
 		exynos5420_tzpc_init();
-	else
+	else if (proid_is_exynos5250())
 		exynos5250_tzpc_init();
 }
