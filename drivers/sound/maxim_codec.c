@@ -20,6 +20,7 @@
 #include <sound.h>
 #include "maxim_codec.h"
 #include "max98095.h"
+#include "max98090.h"
 
 struct sound_codec_info g_codec_info;
 struct maxim_codec_priv g_maxim_codec_info;
@@ -110,7 +111,11 @@ static int maxim_codec_do_init(struct sound_codec_info *pcodec_info,
 	if (pcodec_info->codec_type == CODEC_MAX_98095) {
 		g_maxim_codec_info.devtype = MAX98095;
 		ret = max98095_do_init(&g_maxim_codec_info, sampling_rate,
-					mclk_freq, bits_per_sample);
+				       mclk_freq, bits_per_sample);
+	} else if (pcodec_info->codec_type == CODEC_MAX_98090) {
+		g_maxim_codec_info.devtype = MAX98090;
+		ret = max98090_do_init(&g_maxim_codec_info, sampling_rate,
+				       mclk_freq, bits_per_sample);
 	} else {
 		printf("%s: Codec id [%d] not defined\n", __func__,
 		       pcodec_info->codec_type);
@@ -126,7 +131,7 @@ static int maxim_codec_do_init(struct sound_codec_info *pcodec_info,
 }
 
 static int get_maxim_codec_values(struct sound_codec_info *pcodec_info,
-				const void *blob)
+				const void *blob, enum fdt_compat_id compat_id)
 {
 	int error = 0;
 	enum fdt_compat_id compat;
@@ -134,10 +139,10 @@ static int get_maxim_codec_values(struct sound_codec_info *pcodec_info,
 	int parent;
 
 	/* Get the node from FDT for codec */
-	node = fdtdec_next_compatible(blob, 0, COMPAT_MAXIM_98095_CODEC);
+	node = fdtdec_next_compatible(blob, 0, compat_id);
 	if (node <= 0) {
-		debug("EXYNOS_SOUND: No node for COMPAT_MAXIM_98095_CODEC \
-		      in device tree\n");
+		debug("EXYNOS_SOUND: No node for codec %d in device tree\n",
+		      compat_id);
 		debug("node = %d\n", node);
 		return -1;
 	}
@@ -165,10 +170,19 @@ static int get_maxim_codec_values(struct sound_codec_info *pcodec_info,
 		return -1;
 	}
 
-	pcodec_info->codec_type = CODEC_MAX_98095;
+	switch (compat_id) {
+	case COMPAT_MAXIM_98095_CODEC:
+		pcodec_info->codec_type = CODEC_MAX_98095;
+		break;
+	case COMPAT_MAXIM_98090_CODEC:
+		pcodec_info->codec_type = CODEC_MAX_98090;
+		break;
+	default:
+		return -1;
+	}
 
 	if (error == -1) {
-		debug("fail to get max98095 codec node properties\n");
+		debug("fail to get max9809x codec node properties\n");
 		return -1;
 	}
 
@@ -179,13 +193,26 @@ static int get_maxim_codec_values(struct sound_codec_info *pcodec_info,
 int maxim_codec_init(const void *blob, int sampling_rate, int mclk_freq,
 		     int bits_per_sample)
 {
-	int ret;
+	int ret = -1;
 	int old_bus = i2c_get_bus_num();
 	struct sound_codec_info *pcodec_info = &g_codec_info;
+	static const enum fdt_compat_id ids[] = {
+		COMPAT_MAXIM_98090_CODEC,
+		COMPAT_MAXIM_98095_CODEC,
+	};
+	int num_ids = ARRAY_SIZE(ids);
+	int i;
 
-	if (get_maxim_codec_values(pcodec_info, blob) < 0) {
-		debug("FDT Codec values failed\n");
-		 return -1;
+	for (i = 0; i < num_ids && ret; i++) {
+		if (get_maxim_codec_values(pcodec_info, blob, ids[i]) < 0) {
+			debug("FDT Codec values failed\n");
+			return -1;
+		}
+
+		i2c_set_bus_num(pcodec_info->i2c_bus);
+		ret = maxim_codec_do_init(pcodec_info, sampling_rate, mclk_freq,
+					  bits_per_sample);
+		i2c_set_bus_num(old_bus);
 	}
 
 	i2c_set_bus_num(pcodec_info->i2c_bus);

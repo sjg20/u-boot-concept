@@ -31,6 +31,7 @@
 #include <sound.h>
 #include "wm8994.h"
 #include "max98095.h"
+#include "max98090.h"
 #include "maxim_codec.h"
 
 /* defines */
@@ -233,7 +234,7 @@ int sound_play(uint32_t msec, uint32_t frequency)
 	}
 
 	sound_prepare_buffer((unsigned short *)data,
-				data_size / sizeof(unsigned short), frequency);
+			     data_size / sizeof(unsigned short), frequency);
 
 	while (msec >= 1000) {
 		ret = i2s_transfer_tx_data(&g_i2stx_pri, data,
