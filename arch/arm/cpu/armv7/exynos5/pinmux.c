@@ -293,6 +293,10 @@ int exynos_pinmux_config(enum periph_id peripheral, int flags)
 		for (i = 0; i < 5; i++)
 			gpio_cfg_pin(GPIO_B00 + i, EXYNOS_GPIO_FUNC(0x02));
 		break;
+	case PERIPH_ID_I2S0:
+		for (i = 0; i < 5; i++)
+			gpio_cfg_pin(GPIO_Z0 + i, EXYNOS_GPIO_FUNC(0x02));
+		break;
 	default:
 		debug("%s: invalid peripheral %d", __func__, peripheral);
 		return -1;

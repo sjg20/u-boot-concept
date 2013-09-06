@@ -587,8 +587,10 @@ void clock_select_i2s_clk_source(void)
 	struct exynos5_clock *clk =
 		(struct exynos5_clock *)samsung_get_base_clock();
 
-	clrsetbits_le32(&clk->src_peric1, AUDIO1_SEL_MASK,
+	setbits_le32(&clk->src_top2, CLK_SRC_MOUT_EPLL);
+	clrsetbits_le32(&clk->src_mau, AUDIO_SEL_MASK,
 			(CLK_SRC_SCLK_EPLL));
+	setbits_le32(EXYNOS_AUDSS, CLKMUX_ASS);
 }
 
 int clock_set_i2s_clk_prescaler(unsigned int src_frq, unsigned int dst_frq)
@@ -604,12 +606,12 @@ int clock_set_i2s_clk_prescaler(unsigned int src_frq, unsigned int dst_frq)
 	}
 
 	div = (src_frq / dst_frq);
-	if (div > AUDIO_1_RATIO_MASK) {
+	if (div > AUDIO_RATIO_MASK) {
 		debug("%s: Frequency ratio is out of range\n", __func__);
 		debug("src frq = %d des frq = %d ", src_frq, dst_frq);
 		return -1;
 	}
-	clrsetbits_le32(&clk->div_peric4, AUDIO_1_RATIO_MASK,
-				(div & AUDIO_1_RATIO_MASK));
+	clrsetbits_le32(&clk->div_mau, AUDIO_RATIO_MASK,
+				(div & AUDIO_RATIO_MASK));
 	return 0;
 }

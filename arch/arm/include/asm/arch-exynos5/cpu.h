@@ -25,6 +25,7 @@
 #include <asm/arch-exynos/cpu.h>
 
 /* EXYNOS5 */
+#define EXYNOS_AUDSS			0x03810000
 #define EXYNOS5_GPIO_PART6_BASE		0x03860000	/* Z<6:0> */
 #define EXYNOS5_PRO_ID			0x10000000
 #define EXYNOS5_CLOCK_BASE		0x10010000

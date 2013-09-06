@@ -445,14 +445,15 @@ struct exynos5_mct_regs {
 #define EPLL_SRC_CLOCK			24000000  /*24 MHz Cristal Input */
 #define TIMEOUT_EPLL_LOCK		1000
 
-#define AUDIO_0_RATIO_MASK		0x0f
-#define AUDIO_1_RATIO_MASK		0x0f
+#define AUDIO_RATIO_MASK		0x0f
 
 #define CLK_SRC_PERIC1			0x254
-#define AUDIO1_SEL_MASK			0xf
+#define AUDIO_SEL_MASK			0xf
 #define CLK_SRC_AUDIOCDCLK1		0x0
 #define CLK_SRC_XXTI			0x1
 #define CLK_SRC_SCLK_EPLL		0x7
+#define CLK_SRC_MOUT_EPLL		(1 << 12)
+#define CLKMUX_ASS			(1 << 0)
 
 /* CON0 bit-fields */
 #define EPLL_CON0_MDIV_MASK		0x1ff
