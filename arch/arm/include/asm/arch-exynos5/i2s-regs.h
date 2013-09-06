@@ -102,6 +102,7 @@
 #define MOD_BLC_MASK		(3 << 13)
 
 #define MOD_IMS_SYSMUX		(1 << 10)
+#define MOD_RCLKSRC		(0 << 10)
 #define MOD_SLAVE		(1 << 11)
 #define MOD_TXONLY		(0 << 8)
 #define MOD_RXONLY		(1 << 8)
@@ -128,6 +129,7 @@
 #define MOD_CDCLKCON		(1 << 12)
 
 #define PSR_PSREN		(1 << 15)
+#define PSR_VAL			(3 << 8)
 
 #define FIC_TXFLUSH		(1 << 15)
 #define FIC_RXFLUSH		(1 << 7)
