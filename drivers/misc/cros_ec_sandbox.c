@@ -335,8 +335,8 @@ static int process_cmd(struct ec_state *ec,
 			len = sizeof(*resp);
 			break;
 		case EC_VBNV_CONTEXT_OP_WRITE:
-			memcpy(ec->vbnv_context, resp->block,
-			       sizeof(resp->block));
+			memcpy(ec->vbnv_context, req->block,
+			       sizeof(req->block));
 			len = 0;
 			break;
 		default:
