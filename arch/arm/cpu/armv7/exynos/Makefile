@@ -32,7 +32,8 @@ COBJS-$(CONFIG_SPL_BUILD)	+= lowlevel_init.o
 ifdef CONFIG_SPL_BUILD
 COBJS-y	+= dmc_common.o
 COBJS-$(CONFIG_EXYNOS5250)	+= dmc_init_ddr3.o
-COBJS-$(CONFIG_EXYNOS5420)	+= dmc_init_lpddr3.o dmc_init_ddr3_exynos5420.o
+COBJS-$(CONFIG_EXYNOS5420)	+= dmc_init_ddr3_exynos5420.o
+COBJS-$(CONFIG_EXYNOS_LPDDR3)	+= dmc_init_lpddr3.o
 endif
 endif
 
