@@ -72,7 +72,7 @@ struct spl_machine_param *spl_get_machine_params(void)
 	return &machine_param;
 }
 
-int board_get_revision(void)
+static int board_get_raw_revision(void)
 {
 	struct spl_machine_param *params = spl_get_machine_params();
 	unsigned gpio[CONFIG_BOARD_REV_GPIO_COUNT];
@@ -80,6 +80,74 @@ int board_get_revision(void)
 	gpio[0] = params->board_rev_gpios & 0xffff;
 	gpio[1] = params->board_rev_gpios >> 16;
 	return gpio_decode_number(gpio, CONFIG_BOARD_REV_GPIO_COUNT);
+}
+
+/*
+ * NOTE: In ToT U-Boot, this table comes from device tree.
+ * NOTE: Table duplicated in smdk5250.c and smdk5250_spl.c
+ */
+void board_get_full_revision(int *board_rev_out, int *subrev_out)
+{
+	int board_rev, subrev;
+	int rev = board_get_raw_revision();
+
+	switch (rev) {
+	case 5:
+		/* DVT - Samsung */
+		board_rev = 1;
+		subrev = 0;
+		break;
+	case 8:
+		/* DVT - Elpida */
+		board_rev = 1;
+		subrev = 1;
+		break;
+	case 1:
+		/* PVT - Samsung */
+		board_rev = 2;
+		subrev = 0;
+		break;
+	case 2:
+		/* PVT - Elpida */
+		board_rev = 2;
+		subrev = 1;
+		break;
+	case 3:
+		/* 1.0 / 1.1 - Samsung (see ADC to tell 1.0 from 1.1) */
+		board_rev = 3;
+		subrev = 0;
+		break;
+	case 0:
+		/* 1.0 / 1.1 - Elpida (see ADC to tell 1.0 from 1.1) */
+		board_rev = 3;
+		subrev = 1;
+		break;
+	case 4:
+		/* 1.6 - Samsung */
+		board_rev = 4;
+		subrev = 0;
+		break;
+	case 7:
+		/* 2.0 - Samsung */
+		board_rev = 5;
+		subrev = 0;
+		break;
+	case 6:
+		/* 2.0 - Elpida (?) */
+		board_rev = 5;
+		subrev = 1;
+		break;
+
+	default:
+		board_rev = -1;
+		subrev = 0;
+		break;
+	}
+
+	if (board_rev_out)
+		*board_rev_out = board_rev;
+	if (subrev_out)
+		*subrev_out = subrev;
 }
 
 int board_wakeup_permitted(void)

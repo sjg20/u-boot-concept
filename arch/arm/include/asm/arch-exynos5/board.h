@@ -24,9 +24,13 @@
 #ifndef __EXYNOS5_BOARD_H
 #define __EXYNOS5_BOARD_H
 
-/* How to interpret values from board_get_revision */
-#define BOARD_REV_ELPIDA_MEMORY		3
-#define BOARD_REV_SAMSUNG_MEMORY	4
+/**
+ * Get the board revision information, including sub-revision
+ *
+ * @param board_rev	Returns board revision #, or -1 if not known; NULL OK.
+ * @param subrev	Returns subrev #, or 0 if not known; NULL OK.
+ */
+void board_get_full_revision(int *board_rev, int *subrev);
 
 /**
  * Get the board revision information

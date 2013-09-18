@@ -280,6 +280,8 @@ int board_wakeup_permitted(void)
 
 void board_init_f(unsigned long bootflag)
 {
+	int rev, subrev;
+
 	/*
 	 * The gd struct is only needed for serial initialization. Since this
 	 * function is called in SPL u-boot. We store the gd struct in the
@@ -302,7 +304,8 @@ void board_init_f(unsigned long bootflag)
 		power_exit_wakeup();
 	}
 
-	printf("\n\nU-Boot SPL, board rev %u\n", board_get_revision());
+	board_get_full_revision(&rev, &subrev);
+	printf("\n\nU-Boot SPL, board rev %u.%u\n", rev, subrev);
 
 	copy_uboot_to_ram();
 	/* Jump to U-Boot image */

@@ -342,33 +342,6 @@ struct mem_timings mem_timings[] = {
 	}
 };
 
-/**
- * Detect what memory is present based on board strappings
- *
- * Boards have various resistor stuff options that are supposed to match
- * which SDRAM is present (and which revision of the board this is).  This
- * uses the resistor stuff options to figure out what memory manufacturer
- * to use for matching in the memory tables.
- *
- * @return A MEM_MANUF_XXX constant, or -1 if an error occurred.
- */
-static int autodetect_memory(void)
-{
-	int board_rev = board_get_revision();
-
-	if (board_rev == -1)
-		return -1;
-
-	switch (board_rev) {
-	case BOARD_REV_SAMSUNG_MEMORY:
-		return MEM_MANUF_SAMSUNG;
-	case BOARD_REV_ELPIDA_MEMORY:
-		return MEM_MANUF_ELPIDA;
-	}
-
-	return -1;
-}
-
 #ifdef CONFIG_SPL_BUILD
 
 /**
@@ -392,13 +365,11 @@ static int clock_get_mem_selection(enum ddr_mode *mem_type,
 	*mem_type = params->mem_type;
 	*frequency_mhz = params->frequency_mhz;
 	*arm_freq = params->arm_freq_mhz;
-	if (params->mem_manuf == MEM_MANUF_AUTODETECT) {
-		*mem_manuf = autodetect_memory();
-		if (*mem_manuf == -1)
-			return -1;
-	} else {
+	if (params->mem_manuf == MEM_MANUF_AUTODETECT)
+		/* Unsupported */
+		return -1;
+	else
 		*mem_manuf = params->mem_manuf;
-	}
 
 	return 0;
 }
@@ -453,13 +424,11 @@ static int clock_get_mem_selection(enum ddr_mode *mem_type,
 	if (i == MEM_MANUF_COUNT)
 		panic("Invalid memory manufacturer in device tree");
 
-	if (i == MEM_MANUF_AUTODETECT) {
-		*mem_manuf = autodetect_memory();
-		if (*mem_manuf == -1)
-			return -1;
-	} else {
+	if (i == MEM_MANUF_AUTODETECT)
+		/* Unsupported */
+		return -1;
+	else
 		*mem_manuf = i;
-	}
 
 	*frequency_mhz = fdtdec_get_int(gd->fdt_blob, node, "clock-frequency",
 					0);

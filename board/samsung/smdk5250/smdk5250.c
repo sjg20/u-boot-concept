@@ -373,13 +373,11 @@ static int board_i2c_arb_init(const void *blob)
  */
 static void ft_board_setup_gpios(void *blob, bd_t *bd)
 {
-	int ret, rev, np, len;
+	int ret, np, len;
 	const struct fdt_property *prop;
 
-	/* Do nothing for newer boards */
-	/* rev 0,1,2,3,4,7 = PVT, MP1.0, MP1.1 or MP1.2, rev 6 is reserved */
-	rev = board_get_revision();
-	if (rev < 5 || rev == 6 || rev == 7)
+	/* Do nothing for PVT (rev2) and newer boards */
+	if (board_get_revision() >= 2)
 		return;
 
 	/*
@@ -420,12 +418,10 @@ static void ft_board_setup_tpm_resume(void *blob, bd_t *bd)
 {
 	const char kernel_tpm_compat[] = "infineon,slb9635tt";
 	const char prop_name[] = "powered-while-suspended";
-	int err, node, rev;
+	int err, node;
 
-	/* Only apply fixup to MP machine */
-	/* rev 0 and 3 = MP1.0 or MP1.1, rev 4 or 7 = MP1.2, rev 6 = reserved */
-	rev = board_get_revision();
-	if (!(rev == 0 || rev == 3 || rev == 4 || rev == 6 || rev == 7))
+	/* Don't apply fixup to anything before MP (rev3) */
+	if (board_get_revision() < 3)
 		return;
 
 	node = fdt_node_offset_by_compatible(blob, 0, kernel_tpm_compat);
@@ -458,7 +454,7 @@ int board_dp_lcd_vdd(const void *blob, unsigned *wait_ms)
 
 static int board_dp_fill_gpios(const void *blob)
 {
-	int np, ret, rev;
+	int np, ret;
 
 	np = fdtdec_next_compatible(blob, 0, COMPAT_NXP_PTN3460);
 	if (np < 0) {
@@ -483,9 +479,8 @@ static int board_dp_fill_gpios(const void *blob)
 		return ret;
 	}
 
-	/* If board is a DVT, replace pd gpio with rst gpio */
-	rev = board_get_revision();
-	if (rev == 5 || rev == 8) {
+	/* If board is a DVT (rev1) or older, replace pd gpio with rst gpio */
+	if (board_get_revision() <= 1) {
 		local.dp_pd = local.dp_rst;
 		local.dp_rst.gpio = FDT_GPIO_NONE;
 	}
@@ -766,13 +761,17 @@ void dram_init_banksize(void)
 				mem_config.end);
 }
 
-int board_get_revision(void)
+static int board_get_raw_revision(void)
 {
 	struct fdt_gpio_state gpios[CONFIG_BOARD_REV_GPIO_COUNT];
 	unsigned gpio_list[CONFIG_BOARD_REV_GPIO_COUNT];
-	int board_rev = -1;
+	static int board_rev = -1;
 	int count = 0;
 	int node;
+
+	/* It's a bit slow to run this too much; cache the value */
+	if (board_rev != -1)
+		return board_rev;
 
 	node = fdtdec_next_compatible(gd->fdt_blob, 0,
 				      COMPAT_GOOGLE_BOARD_REV);
@@ -792,6 +791,82 @@ int board_get_revision(void)
 	}
 
 	return board_rev;
+}
+
+/*
+ * NOTE: In ToT U-Boot, this table comes from device tree.
+ * NOTE: Table duplicated in smdk5250.c and smdk5250_spl.c
+ */
+void board_get_full_revision(int *board_rev_out, int *subrev_out)
+{
+	int board_rev, subrev;
+	int rev = board_get_raw_revision();
+
+	switch (rev) {
+	case 5:
+		/* DVT - Samsung */
+		board_rev = 1;
+		subrev = 0;
+		break;
+	case 8:
+		/* DVT - Elpida */
+		board_rev = 1;
+		subrev = 1;
+		break;
+	case 1:
+		/* PVT - Samsung */
+		board_rev = 2;
+		subrev = 0;
+		break;
+	case 2:
+		/* PVT - Elpida */
+		board_rev = 2;
+		subrev = 1;
+		break;
+	case 3:
+		/* 1.0 / 1.1 - Samsung (see ADC to tell 1.0 from 1.1) */
+		board_rev = 3;
+		subrev = 0;
+		break;
+	case 0:
+		/* 1.0 / 1.1 - Elpida (see ADC to tell 1.0 from 1.1) */
+		board_rev = 3;
+		subrev = 1;
+		break;
+	case 4:
+		/* 1.6 - Samsung */
+		board_rev = 4;
+		subrev = 0;
+		break;
+	case 7:
+		/* 2.0 - Samsung */
+		board_rev = 5;
+		subrev = 0;
+		break;
+	case 6:
+		/* 2.0 - Elpida (?) */
+		board_rev = 5;
+		subrev = 1;
+		break;
+
+	default:
+		board_rev = -1;
+		subrev = 0;
+		break;
+	}
+
+	if (board_rev_out)
+		*board_rev_out = board_rev;
+	if (subrev_out)
+		*subrev_out = subrev;
+}
+
+int board_get_revision(void)
+{
+	int rev;
+
+	board_get_full_revision(&rev, NULL);
+	return rev;
 }
 
 #ifdef CONFIG_DISPLAY_BOARDINFO
