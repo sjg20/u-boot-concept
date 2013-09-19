@@ -31,14 +31,19 @@ static unsigned int g_maxim_codec_i2c_dev_addr;
  * @param reg	reg number to be write
  * @param data	data to be writen to the above registor
  *
- * @return	int value 1 for change, 0 for no change or negative error code.
+ * @return	int value 0 for success, -1 in case of error.
  */
 int maxim_codec_i2c_write(unsigned int reg, unsigned char data)
 {
+	int ret;
 	debug("%s: Write Addr : 0x%02X, Data :  0x%02X\n",
 	      __func__, reg, data);
 
-	return i2c_write(g_maxim_codec_i2c_dev_addr, reg, 1, &data, 1);
+	ret = i2c_write(g_maxim_codec_i2c_dev_addr, reg, 1, &data, 1);
+	if (ret)
+		return -1;
+
+	return 0;
 }
 
 /*
