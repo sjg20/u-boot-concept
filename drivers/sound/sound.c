@@ -140,7 +140,7 @@ static int codec_init(const void *blob, struct i2stx_info *pi2s_tx)
 			pi2s_tx->samplingrate,
 			(pi2s_tx->samplingrate * (pi2s_tx->rfs)),
 			pi2s_tx->bitspersample, pi2s_tx->channels);
-	} else if (!strcmp(codectype, "max98095")) {
+	} else if (!strcmp(codectype, "max9809X")) {
 		ret = maxim_codec_init(blob, pi2s_tx->samplingrate,
 				(pi2s_tx->samplingrate * (pi2s_tx->rfs)),
 				pi2s_tx->bitspersample);

@@ -79,7 +79,7 @@
 	};
 
 	sound@3830000 {
-		samsung,codec-type = "max98095";
+		samsung,codec-type = "max9809X";
 	};
 
 	i2c@12cd0000 {
