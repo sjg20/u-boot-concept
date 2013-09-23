@@ -48,14 +48,17 @@ const struct dpll_regs dpll_ddr_regs = {
 	.cm_idlest_dpll		= CM_WKUP + 0x5A4,
 	.cm_clksel_dpll		= CM_WKUP + 0x5AC,
 	.cm_div_m2_dpll		= CM_WKUP + 0x5B0,
+	.cm_div_m4_dpll		= CM_WKUP + 0x5B8,
 };
 
+#define DPLL_N	24
+
 const struct dpll_params dpll_mpu = {
-		-1, -1, -1, -1, -1, -1, -1};
+		600, DPLL_N, 1, -1, -1, -1, -1};
 const struct dpll_params dpll_core = {
-		-1, -1, -1, -1, -1, -1, -1};
+		1000, DPLL_N, -1, -1, 10, 8, 4};
 const struct dpll_params dpll_per = {
-		-1, -1, -1, -1, -1, -1, -1};
+		960, DPLL_N, 5, -1, -1, -1, -1};
 
 void setup_clocks_for_console(void)
 {

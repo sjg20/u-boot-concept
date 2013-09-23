@@ -20,7 +20,7 @@ DECLARE_GLOBAL_DATA_PTR;
 #ifdef CONFIG_SPL_BUILD
 
 const struct dpll_params dpll_ddr = {
-		-1, -1, -1, -1, -1, -1, -1};
+		266, 24, 1, -1, 1, -1, -1};
 
 const struct dpll_params *get_dpll_ddr_params(void)
 {
