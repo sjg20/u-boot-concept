@@ -130,10 +130,10 @@ static void dwc_usb3_phy_init(struct omap_usb3_phy *phy_regs)
 	 * team.
 	 */
 	mdelay(100);
+
 	usb3_phy_power(1);
 }
-
-static void omap_enable_phy_clocks(struct omap_xhci *omap)
+static void omap_enable_usb3_phy(struct omap_xhci *omap)
 {
 	u32	val;
 
@@ -181,6 +181,42 @@ static void omap_enable_phy_clocks(struct omap_xhci *omap)
 	setbits_le32((*prcm)->cm_l3init_usb_otg_ss_clkctrl, val);
 
 };
+
+static void omap_enable_usb2_phy2(struct omap_xhci *omap)
+{
+	int reg;
+	int val;
+
+	/* CTRL_CORE_SRCOMP_NORTH_SIDE VAYU 0x4a002e74*/
+	reg = (*ctrl)->control_srcomp_north_side;
+	val = 0x2000F000;
+	writel(val, reg);
+
+	/* CM_COREAON_USB_PHY2_CORE_CLKCTRL */
+	val |= USBPHY_CORE_CLKCTRL_OPTFCLKEN_CLK32K;
+	setbits_le32((*prcm)->cm_coreaon_usb_phy2_core_clkctrl, val);
+
+	/* CM_L3INIT_USB_OTG_SS2_CLKCTRL */
+	val |= (USBPHY_CORE_CLKCTRL_OPTFCLKEN_CLK32K |
+			OTG_SS_CLKCTRL_MODULEMODE_HW);
+	setbits_le32((*prcm)->cm_l3init_hsusbhost_clkctrl, val);
+
+	/* Reserved */
+	reg = 0x4a0086c0;
+	val = readl(reg);
+	val |= 0x100;
+	writel(val, reg);
+}
+
+static void omap_enable_phy_clocks(struct omap_xhci *omap)
+{
+#ifdef CONFIG_OMAP_USB2PHY2_HOST
+	omap_enable_usb2_phy2(omap);
+#else
+	omap_enable_usb3_phy(omap);
+	dwc_usb3_phy_init(omap->usb3_phy);
+#endif
+}
 
 inline int __board_usb_init(void)
 {
@@ -265,8 +301,6 @@ static int omap_xhci_core_init(struct omap_xhci *omap)
 	int ret = 0;
 
 	omap_enable_phy_clocks(omap);
-
-	dwc_usb3_phy_init(omap->usb3_phy);
 
 	ret = dwc3_core_init(omap->dwc3_reg);
 	if (ret) {

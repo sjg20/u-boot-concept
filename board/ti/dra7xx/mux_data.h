@@ -51,5 +51,6 @@ const struct pad_conf_entry core_padconf_array_essential[] = {
 	{RGMII0_RXD2, (IEN | M0) },
 	{RGMII0_RXD1, (IEN | M0) },
 	{RGMII0_RXD0, (IEN | M0) },
+	{USB2_DRVVBUS, (M0 | IEN | FSC) },
 };
 #endif /* _MUX_DATA_DRA7XX_H_ */
