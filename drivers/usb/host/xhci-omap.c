@@ -15,10 +15,10 @@
 #include <asm/omap_common.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/sys_proto.h>
-#include <asm/arch/xhci-omap.h>
 
 #include <linux/compat.h>
 #include <linux/usb/dwc3.h>
+#include <linux/usb/xhci-omap.h>
 
 #include "xhci.h"
 
@@ -91,6 +91,7 @@ static void omap_usb_dpll_lock(struct omap_usb3_phy *phy_regs)
 	omap_usb_dpll_relock(phy_regs);
 }
 
+#ifdef CONFIG_OMAP_USB3PHY_HOST
 static void usb3_phy_partial_powerup(struct omap_usb3_phy *phy_regs)
 {
 	u32 rate = get_sys_clk_freq()/1000000;
@@ -133,6 +134,7 @@ static void dwc_usb3_phy_init(struct omap_usb3_phy *phy_regs)
 
 	usb3_phy_power(1);
 }
+
 static void omap_enable_usb3_phy(struct omap_xhci *omap)
 {
 	u32	val;
@@ -181,7 +183,26 @@ static void omap_enable_usb3_phy(struct omap_xhci *omap)
 	setbits_le32((*prcm)->cm_l3init_usb_otg_ss_clkctrl, val);
 
 };
+#endif
 
+#ifdef CONFIG_AM437X_USB2PHY2_HOST
+static void am437x_enable_usb2_phy2(struct omap_xhci *omap)
+{
+	/* PRCM settings
+	PRCM_CM_PER_USB_OTG_SS0_CLKCTRL(0x44df8a60) = 0x102
+	PRCM_CM_PER_USB_OTG_SS1_CLKCTRL (0x44df8a68) = 0x102
+	PRCM_CM_PER_USBPHYOCP2SCP0_CLKCTRL (0x44df8db8) = 0x2
+	PRCM_CM_PER_USBPHYOCP2SCP1_CLKCTRL (0x44df8dc0)= 0x2 */
+
+	writel(0x102, 0x44df8a60);
+	writel(0x102, 0x44df8a68);
+	writel(0x2, 0x44df8db8);
+	writel(0x2, 0x44df8dc0);
+
+}
+#endif
+
+#ifdef CONFIG_OMAP_USB2PHY2_HOST
 static void omap_enable_usb2_phy2(struct omap_xhci *omap)
 {
 	int reg;
@@ -207,11 +228,14 @@ static void omap_enable_usb2_phy2(struct omap_xhci *omap)
 	val |= 0x100;
 	writel(val, reg);
 }
+#endif
 
 static void omap_enable_phy_clocks(struct omap_xhci *omap)
 {
 #ifdef CONFIG_OMAP_USB2PHY2_HOST
 	omap_enable_usb2_phy2(omap);
+#elif defined CONFIG_AM437X_USB2PHY2_HOST
+	am437x_enable_usb2_phy2(omap);
 #else
 	omap_enable_usb3_phy(omap);
 	dwc_usb3_phy_init(omap->usb3_phy);
@@ -301,7 +325,6 @@ static int omap_xhci_core_init(struct omap_xhci *omap)
 	int ret = 0;
 
 	omap_enable_phy_clocks(omap);
-
 	ret = dwc3_core_init(omap->dwc3_reg);
 	if (ret) {
 		debug("%s:failed to initialize core\n", __func__);
@@ -316,7 +339,9 @@ static int omap_xhci_core_init(struct omap_xhci *omap)
 
 static void omap_xhci_core_exit(struct omap_xhci *omap)
 {
+#ifdef CONFIG_OMAP_USB3PHY_HOST
 	usb3_phy_power(0);
+#endif
 }
 
 int xhci_hcd_init(int index, struct xhci_hccr **hccr, struct xhci_hcor **hcor)

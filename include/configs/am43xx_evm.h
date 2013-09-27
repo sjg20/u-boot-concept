@@ -91,6 +91,15 @@
 #define CONFIG_PHYLIB
 #define CONFIG_PHY_ADDR			16
 
+#define CONFIG_CMD_USB
+#define CONFIG_USB_HOST
+#define CONFIG_USB_XHCI
+#define CONFIG_USB_XHCI_OMAP
+#define CONFIG_USB_STORAGE
+#define CONFIG_SYS_USB_XHCI_MAX_ROOT_PORTS 2
+
+#define CONFIG_AM437X_USB2PHY2_HOST
+
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"loadaddr=0x82000000\0" \
 	"console=ttyO0,115200n8\0" \
@@ -140,7 +149,6 @@
 			"run mmcboot; " \
 		"fi; " \
 	"fi"
-
 
 #endif
 #endif	/* __CONFIG_AM43XX_EVM_H */
