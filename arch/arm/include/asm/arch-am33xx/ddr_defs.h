@@ -126,6 +126,14 @@
 #define K4B2G1646EBIH9_PHY_WR_DATA		0xC1
 #define K4B2G1646EBIH9_IOCTRL_VALUE		0x18B
 
+#define  LPDDR2_ADDRCTRL_IOCTRL_VALUE   0x294
+#define  LPDDR2_ADDRCTRL_WD0_IOCTRL_VALUE 0x00000000
+#define  LPDDR2_ADDRCTRL_WD1_IOCTRL_VALUE 0x00000000
+#define  LPDDR2_DATA0_IOCTRL_VALUE   0x20000294
+#define  LPDDR2_DATA1_IOCTRL_VALUE   0x20000294
+#define  LPDDR2_DATA2_IOCTRL_VALUE   0x20000294
+#define  LPDDR2_DATA3_IOCTRL_VALUE   0x20000294
+
 /**
  * Configure DMM
  */
@@ -291,6 +299,10 @@ struct ddr_cmdtctrl {
 	unsigned int resv2[12];
 	unsigned int dt0ioctl;
 	unsigned int dt1ioctl;
+	unsigned int dt2ioctrl;
+	unsigned int dt3ioctrl;
+	unsigned int resv3[4];
+	unsigned int emif_sdram_config_ext;
 };
 
 /**
@@ -308,4 +320,5 @@ void config_ddr(unsigned int pll, unsigned int ioctrl,
 		const struct ddr_data *data, const struct cmd_control *ctrl,
 		const struct emif_regs *regs, int nr);
 
+void do_sdram_init(const struct emif_regs *regs);
 #endif  /* _DDR_DEFS_H */

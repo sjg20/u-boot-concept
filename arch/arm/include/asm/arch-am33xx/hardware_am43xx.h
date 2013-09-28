@@ -52,4 +52,6 @@
 /* RTC base address */
 #define RTC_BASE			0x44E3E000
 
+#define CM_DEVICE_INST			0x44df4100
+
 #endif /* __AM43XX_HARDWARE_AM43XX_H */

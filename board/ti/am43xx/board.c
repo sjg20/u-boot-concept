@@ -13,6 +13,8 @@
 #include <asm/arch/clock.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/mux.h>
+#include <asm/arch/ddr_defs.h>
+#include <asm/emif.h>
 #include "board.h"
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -21,6 +23,25 @@ DECLARE_GLOBAL_DATA_PTR;
 
 const struct dpll_params dpll_ddr = {
 		266, 24, 1, -1, 1, -1, -1};
+
+const struct emif_regs emif_regs = {
+	//.sdram_config_init		= 0x80800EBA,
+	.sdram_config			= 0x808012BA,
+	.ref_ctrl			= 0x0000040D,
+	.sdram_tim1			= 0xEA86B412,
+	.sdram_tim2			= 0x1025094A,
+	.sdram_tim3			= 0x0F6BA22F,
+	.read_idle_ctrl			= 0x00050000,
+	.zq_config			= 0xD00fFFFF,
+	.temp_alert_config		= 0x0,
+	//.emif_ddr_phy_ctlr_1_init	= 0x0E28420d,
+	.emif_ddr_phy_ctlr_1		= 0x0E084006,
+	.emif_ddr_ext_phy_ctrl_1	= 0x04010040,
+	.emif_ddr_ext_phy_ctrl_2	= 0x00500050,
+	.emif_ddr_ext_phy_ctrl_3	= 0x00500050,
+	.emif_ddr_ext_phy_ctrl_4	= 0x00500050,
+	.emif_ddr_ext_phy_ctrl_5	= 0x00500050
+};
 
 const struct dpll_params *get_dpll_ddr_params(void)
 {
@@ -39,6 +60,7 @@ void set_mux_conf_regs(void)
 
 void sdram_init(void)
 {
+	do_sdram_init(&emif_regs);
 }
 #endif
 
