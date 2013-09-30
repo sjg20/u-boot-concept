@@ -153,7 +153,7 @@ static void rtc32k_enable(void)
 	writel((1 << 3) | (1 << 6), &rtc->osc);
 }
 
-static void uart_soft_reset(void)
+static void noinline uart_soft_reset(void)
 {
 	struct uart_sys *uart_base = (struct uart_sys *)DEFAULT_UART_BASE;
 	u32 regval;
@@ -221,7 +221,7 @@ void s_init(void)
 	prcm_init();
 	set_mux_conf_regs();
 	/* Enable RTC32K clock */
-	rtc32k_enable();
+	//rtc32k_enable();
 	sdram_init();
 #endif
 }
