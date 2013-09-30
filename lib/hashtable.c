@@ -377,7 +377,7 @@ int hsearch_r(ENTRY item, ACTION action, ENTRY ** retval,
 		++htab->filled;
 
 		/* This is a new entry, so look up a possible callback */
-		env_callback_init(&htab->table[idx].entry);
+		//env_callback_init(&htab->table[idx].entry);
 		/* Also look for flags */
 		env_flags_init(&htab->table[idx].entry);
 
