@@ -33,11 +33,7 @@ void save_omap_boot_params(void)
 	 * encoding would be same as u-boot. So use the defined offsets.
 	 */
 	gd->arch.omap_boot_params.omap_bootdevice = boot_device =
-#ifdef CONFIG_AM43XX
-							BOOT_DEVICE_MMC1;
-#else
 				   *((u8 *)(rom_params + BOOT_DEVICE_OFFSET));
-#endif
 
 	gd->arch.omap_boot_params.ch_flags =
 				*((u8 *)(rom_params + CH_FLAGS_OFFSET));
@@ -56,11 +52,7 @@ void save_omap_boot_params(void)
 			dev_desc = *((u32 *)(rom_params + DEV_DESC_PTR_OFFSET));
 			dev_data = *((u32 *)(dev_desc + DEV_DATA_PTR_OFFSET));
 			gd->arch.omap_boot_params.omap_bootmode =
-#ifdef CONFIG_AM43XX
-					MMCSD_MODE_FAT;
-#else
 					*((u32 *)(dev_data + BOOT_MODE_OFFSET));
-#endif
 		}
 	}
 }
@@ -106,7 +98,7 @@ void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
 	image_entry_noargs_t image_entry =
 			(image_entry_noargs_t) spl_image->entry_point;
 
-	printf("image entry point: 0x%X\n", spl_image->entry_point);
+	debug("image entry point: 0x%X\n", spl_image->entry_point);
 	/* Pass the saved boot_params from rom code */
 	image_entry((u32 *)&gd->arch.omap_boot_params);
 }
