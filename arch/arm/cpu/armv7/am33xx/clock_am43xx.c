@@ -51,7 +51,7 @@ const struct dpll_regs dpll_ddr_regs = {
 	.cm_div_m4_dpll		= CM_WKUP + 0x5B8,
 };
 
-#define DPLL_N	24
+#define DPLL_N	23
 
 const struct dpll_params dpll_mpu = {
 		600, DPLL_N, 1, -1, -1, -1, -1};
