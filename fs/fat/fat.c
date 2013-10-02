@@ -1245,7 +1245,7 @@ long file_fat_read(const char *filename, void *buffer, unsigned long maxsize)
 	return file_fat_read_at(filename, 0, buffer, maxsize);
 }
 
-int fat_read_file(const char *filename, void *buf, int offset, int len)
+int inline fat_read_file(const char *filename, void *buf, int offset, int len)
 {
 	int len_read;
 
