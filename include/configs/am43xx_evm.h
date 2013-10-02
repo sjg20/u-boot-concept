@@ -78,5 +78,42 @@
 #define CONFIG_PHYLIB
 #define CONFIG_PHY_ADDR			16
 
+#define CONFIG_EXTRA_ENV_SETTINGS \
+	"loadaddr=0x82000000\0" \
+	"console=ttyO0,115200n8\0" \
+	"fdt_high=0xffffffff\0" \
+	"fdtaddr=0x80f80000\0" \
+	"fdtfile=am43x-epos-evm.dtb\0" \
+	"bootpart=0:2\0" \
+	"bootdir=/boot\0" \
+	"bootfile=zImage\0" \
+	"usbtty=cdc_acm\0" \
+	"vram=16M\0" \
+	"mmcdev=0\0" \
+	"mmcroot=/dev/mmcblk0p2 rw\0" \
+	"mmcrootfstype=ext3 rootwait\0" \
+	"mmcargs=setenv bootargs console=${console} " \
+		"vram=${vram} " \
+		"root=${mmcroot} " \
+		"rootfstype=${mmcrootfstype}\0" \
+	"loadbootscript=fatload mmc ${mmcdev} ${loadaddr} boot.scr\0" \
+	"bootscript=echo Running bootscript from mmc${mmcdev} ...; " \
+		"source ${loadaddr}\0" \
+	"loadbootenv=fatload mmc ${mmcdev} ${loadaddr} uEnv.txt\0" \
+	"importbootenv=echo Importing environment from mmc${mmcdev} ...; " \
+		"env import -t ${loadaddr} ${filesize}\0" \
+	"loadimage=load mmc ${bootpart} ${loadaddr} ${bootdir}/${bootfile}\0" \
+	"mmcboot=echo Booting from mmc${mmcdev} ...; " \
+		"run mmcargs; " \
+		"bootz ${loadaddr} - ${fdtaddr}\0" \
+	"loadfdt=load mmc ${bootpart} ${fdtaddr} ${bootdir}/${fdtfile}\0" \
+
+#define CONFIG_BOOTCOMMAND \
+	"setenv bootargs root=/dev/mmcblk0p2 rw rootwait console=ttyO0,115200n8 earlyprintk clocksource=gp_timer;" \
+	"mmc dev 0;" \
+	"fatload mmc 0 80300000 uImage.am43x-epos-evm;" \
+	"bootm 80300000"
+
+
 #endif
 #endif	/* __CONFIG_AM43XX_EVM_H */
