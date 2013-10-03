@@ -126,7 +126,7 @@ cmd_tbl_t *find_cmd (const char *cmd)
 	return find_cmd_tbl(cmd, start, len);
 }
 
-inline int cmd_usage(const cmd_tbl_t *cmdtp)
+int cmd_usage(const cmd_tbl_t *cmdtp)
 {
 	printf("%s - %s\n\n", cmdtp->name, cmdtp->usage);
 
