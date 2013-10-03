@@ -109,10 +109,24 @@
 	"loadfdt=load mmc ${bootpart} ${fdtaddr} ${bootdir}/${fdtfile}\0" \
 
 #define CONFIG_BOOTCOMMAND \
-	"setenv bootargs root=/dev/mmcblk0p2 rw rootwait console=ttyO0,115200n8 earlyprintk clocksource=gp_timer;" \
-	"mmc dev 0;" \
-	"fatload mmc 0 80300000 uImage.am43x-epos-evm;" \
-	"bootm 80300000"
+	"mmc dev ${mmcdev}; if mmc rescan; then " \
+		"echo SD/MMC found on device ${mmcdev};" \
+		"if run loadbootscript; then " \
+			"run bootscript; " \
+		"else " \
+			"if run loadbootenv; then " \
+				"run importbootenv; " \
+			"fi;" \
+			"if test -n ${uenvcmd}; then " \
+				"echo Running uenvcmd ...;" \
+				"run uenvcmd;" \
+			"fi;" \
+		"fi;" \
+		"if run loadimage; then " \
+			"run loadfdt;" \
+			"run mmcboot; " \
+		"fi; " \
+	"fi"
 
 
 #endif
