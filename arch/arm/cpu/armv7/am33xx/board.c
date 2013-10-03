@@ -153,7 +153,7 @@ static void rtc32k_enable(void)
 	writel((1 << 3) | (1 << 6), &rtc->osc);
 }
 
-static void noinline uart_soft_reset(void)
+static void uart_soft_reset(void)
 {
 	struct uart_sys *uart_base = (struct uart_sys *)DEFAULT_UART_BASE;
 	u32 regval;
