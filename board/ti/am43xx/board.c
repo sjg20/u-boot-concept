@@ -73,7 +73,7 @@ static int read_eeprom(struct am43xx_board_id *header)
 const struct dpll_params dpll_ddr = {
 		266, 24, 1, -1, 1, -1, -1};
 
-const struct emif_regs emif_regs = {
+const struct emif_regs eposevm_emif_regs = {
 	//.sdram_config_init		= 0x80800EBA,
 	.sdram_config			= 0x808012BA,
 	.ref_ctrl			= 0x0000040D,
@@ -109,7 +109,14 @@ void set_mux_conf_regs(void)
 
 void sdram_init(void)
 {
-	do_sdram_init(&emif_regs);
+	struct am43xx_board_id header;
+
+	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
+	if (read_eeprom(&header) < 0)
+		puts("Could not get board ID.\n");
+
+	if (board_is_eposevm(&header))
+		do_sdram_init(&eposevm_emif_regs);
 }
 #endif
 
@@ -123,6 +130,22 @@ int board_init(void)
 #ifdef CONFIG_BOARD_LATE_INIT
 int board_late_init(void)
 {
+#ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
+	char safe_string[HDR_NAME_LEN + 1];
+	struct am43xx_board_id header;
+
+	if (read_eeprom(&header) < 0)
+		puts("Could not get board ID.\n");
+
+	/* Now set variables based on the header. */
+	strncpy(safe_string, (char *)header.name, sizeof(header.name));
+	safe_string[sizeof(header.name)] = 0;
+	setenv("board_name", safe_string);
+
+	strncpy(safe_string, (char *)header.version, sizeof(header.version));
+	safe_string[sizeof(header.version)] = 0;
+	setenv("board_rev", safe_string);
+#endif
 	return 0;
 }
 #endif
