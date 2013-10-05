@@ -12,6 +12,29 @@
 #ifndef _BOARD_H_
 #define _BOARD_H_
 
+/*
+ * TI AM437x EVMs define a system EEPROM that defines certain sub-fields.
+ * We use these fields to in turn see what board we are on, and what
+ * that might require us to set or not set.
+ */
+#define HDR_NO_OF_MAC_ADDR	3
+#define HDR_ETH_ALEN		6
+#define HDR_NAME_LEN		8
+
+struct am43xx_board_id {
+	unsigned int  magic;
+	char name[HDR_NAME_LEN];
+	char version[4];
+	char serial[12];
+	char config[32];
+	char mac_addr[HDR_NO_OF_MAC_ADDR][HDR_ETH_ALEN];
+};
+
+static inline int board_is_eposevm(struct am43xx_board_id *header)
+{
+	return !strncmp(header->name, "AM43EPOS", HDR_NAME_LEN);
+}
+
 void enable_uart0_pin_mux(void);
 void enable_board_pin_mux(void);
 #endif
