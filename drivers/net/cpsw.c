@@ -278,6 +278,11 @@ DEFINE_ALE_FIELD(port_num,		66,	2)
 DEFINE_ALE_FIELD(blocked,		65,	1)
 DEFINE_ALE_FIELD(secure,		64,	1)
 DEFINE_ALE_FIELD(mcast,			40,	1)
+DEFINE_ALE_FIELD(vlan_id,		48,	12)
+DEFINE_ALE_FIELD(vlan_untag_force,	24,	3)
+DEFINE_ALE_FIELD(vlan_reg_mcast,	16,	3)
+DEFINE_ALE_FIELD(vlan_unreg_mcast,	8,	3)
+DEFINE_ALE_FIELD(vlan_member_list,	0,	3)
 
 /* The MAC address field in the ALE entry cannot be macroized as above */
 static inline void cpsw_ale_get_addr(u32 *ale_entry, u8 *addr)
@@ -339,6 +344,22 @@ static int cpsw_ale_match_addr(struct cpsw_priv *priv, u8* addr)
 	return -ENOENT;
 }
 
+static int cpsw_ale_match_vlan(struct cpsw_priv *priv, u16 vid)
+{
+	u32 ale_entry[ALE_ENTRY_WORDS];
+	int type, idx;
+
+	for (idx = 0; idx < priv->data.ale_entries; idx++) {
+		cpsw_ale_read(priv, idx, ale_entry);
+		type = cpsw_ale_get_entry_type(ale_entry);
+		if (type != ALE_TYPE_VLAN)
+			continue;
+		if (cpsw_ale_get_vlan_id(ale_entry) == vid)
+			return idx;
+	}
+	return -ENOENT;
+}
+
 static int cpsw_ale_match_free(struct cpsw_priv *priv)
 {
 	u32 ale_entry[ALE_ENTRY_WORDS];
@@ -371,6 +392,35 @@ static int cpsw_ale_find_ageable(struct cpsw_priv *priv)
 			return idx;
 	}
 	return -ENOENT;
+}
+
+static int cpsw_ale_add_vlan(struct cpsw_priv *priv, u16 vid, int port, int untag,
+		      int reg_mcast, int unreg_mcast)
+{
+	u32 ale_entry[ALE_ENTRY_WORDS] = {0, 0, 0};
+	int idx;
+
+	idx = cpsw_ale_match_vlan(priv, vid);
+	if (idx >= 0)
+		cpsw_ale_read(priv, idx, ale_entry);
+
+	cpsw_ale_set_entry_type(ale_entry, ALE_TYPE_VLAN);
+	cpsw_ale_set_vlan_id(ale_entry, vid);
+
+	cpsw_ale_set_vlan_untag_force(ale_entry, untag);
+	cpsw_ale_set_vlan_reg_mcast(ale_entry, reg_mcast);
+	cpsw_ale_set_vlan_unreg_mcast(ale_entry, unreg_mcast);
+	cpsw_ale_set_vlan_member_list(ale_entry, port);
+
+	if (idx < 0)
+		idx = cpsw_ale_match_free(priv);
+	if (idx < 0)
+		idx = cpsw_ale_find_ageable(priv);
+	if (idx < 0)
+		return -ENOMEM;
+
+	cpsw_ale_write(priv, idx, ale_entry);
+	return 0;
 }
 
 static int cpsw_ale_add_ucast(struct cpsw_priv *priv, u8 *addr,
@@ -632,6 +682,7 @@ static inline u32  cpsw_get_slave_port(struct cpsw_priv *priv, u32 slave_num)
 static void cpsw_slave_init(struct cpsw_slave *slave, struct cpsw_priv *priv)
 {
 	u32     slave_port;
+	u32	portmask;
 
 	setbit_and_wait_for_clear32(&slave->sliver->soft_reset);
 
@@ -650,6 +701,8 @@ static void cpsw_slave_init(struct cpsw_slave *slave, struct cpsw_priv *priv)
 	cpsw_ale_port_state(priv, slave_port, ALE_PORT_STATE_FORWARD);
 
 	cpsw_ale_add_mcast(priv, NetBcastAddr, 1 << slave_port);
+	portmask = 1 << priv->host_port | 1 << slave_port;
+	cpsw_ale_add_vlan(priv, 0, portmask, portmask, portmask, 0);
 
 	priv->phy_mask |= 1 << slave->data->phy_id;
 }
@@ -761,7 +814,7 @@ static int cpsw_init(struct eth_device *dev, bd_t *bis)
 	/* initialize and reset the address lookup engine */
 	cpsw_ale_enable(priv, 1);
 	cpsw_ale_clear(priv, 1);
-	cpsw_ale_vlan_aware(priv, 0); /* vlan unaware mode */
+	cpsw_ale_vlan_aware(priv, 1); /* vlan unaware mode */
 
 	/* setup host port priority mapping */
 	__raw_writel(0x76543210, &priv->host_port_regs->cpdma_tx_pri_map);
