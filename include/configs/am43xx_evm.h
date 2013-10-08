@@ -89,7 +89,7 @@
 #define CONFIG_NET_MULTI
 #define CONFIG_PHY_GIGE
 #define CONFIG_PHYLIB
-#define CONFIG_PHY_ADDR			16
+#define CONFIG_PHY_ADDR			0
 
 #define CONFIG_CMD_USB
 #define CONFIG_USB_HOST

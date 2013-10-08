@@ -510,9 +510,9 @@ int board_eth_init(bd_t *bis)
 			eth_setenv_enetaddr("ethaddr", mac_addr);
 	}
 
-	writel(RMII_MODE_ENABLE | RMII_CHIPCKL_ENABLE, &cdev->miisel);
+	writel(RGMII_MODE_ENABLE, &cdev->miisel);
 	cpsw_slaves[0].phy_if = cpsw_slaves[1].phy_if =
-				PHY_INTERFACE_MODE_RMII;
+				PHY_INTERFACE_MODE_RGMII;
 
 	rv = cpsw_register(&cpsw_data);
 	if (rv < 0)
