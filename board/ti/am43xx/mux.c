@@ -65,10 +65,14 @@ static struct module_pin_mux mmc0_pin_mux[] = {
 static struct module_pin_mux mmc1_pin_mux[] = {
 	{OFFSET(gpmc_csn1), (MODE(2) | PULLUDDIS | RXACTIVE | DSPULLUDEN)},
 	{OFFSET(gpmc_csn2), (MODE(2) | PULLUP_EN | RXACTIVE | DSPULLUDEN)},
-	{OFFSET(gpmc_ad8), (MODE(2) | PULLUP_EN | RXACTIVE | DSPULLUDEN)},
-	{OFFSET(gpmc_ad9), (MODE(2) | PULLUP_EN | RXACTIVE | DSPULLUDEN)},
-	{OFFSET(gpmc_ad10), (MODE(2) | PULLUP_EN | RXACTIVE | DSPULLUDEN)},
-	{OFFSET(gpmc_ad11), (MODE(2) | PULLUP_EN | RXACTIVE | DSPULLUDEN)},
+	{OFFSET(gpmc_ad0), (MODE(1) | PULLUP_EN | RXACTIVE | DSPULLUDEN)},
+	{OFFSET(gpmc_ad1), (MODE(1) | PULLUP_EN | RXACTIVE | DSPULLUDEN)},
+	{OFFSET(gpmc_ad2), (MODE(1) | PULLUP_EN | RXACTIVE | DSPULLUDEN)},
+	{OFFSET(gpmc_ad3), (MODE(1) | PULLUP_EN | RXACTIVE | DSPULLUDEN)},
+	{OFFSET(gpmc_ad4), (MODE(1) | PULLUP_EN | RXACTIVE | DSPULLUDEN)},
+	{OFFSET(gpmc_ad5), (MODE(1) | PULLUP_EN | RXACTIVE | DSPULLUDEN)},
+	{OFFSET(gpmc_ad6), (MODE(1) | PULLUP_EN | RXACTIVE | DSPULLUDEN)},
+	{OFFSET(gpmc_ad7), (MODE(1) | PULLUP_EN | RXACTIVE | DSPULLUDEN)},
 	{-1},
 };
 
