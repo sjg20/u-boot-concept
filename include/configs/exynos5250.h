@@ -37,7 +37,7 @@
 /* This defines maximum number of channels available for dwmmc */
 #define	DWMMC_MAX_CH_NUM		4
 #define CONFIG_DEVICE_TREE_LIST "exynos5250-smdk5250" \
-	" exynos5250-snow exynos5250-spring"
+	" exynos5250-snow exynos5250-skate exynos5250-spring"
 
 /* 32 K reserved for BL2 (SPL) */
 #define CONFIG_BL2_SIZE		(32 << 10)
