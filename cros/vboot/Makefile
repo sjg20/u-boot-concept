@@ -31,6 +31,7 @@ ifdef CONFIG_CROS_EC
 COBJS-$(CONFIG_CHROMEOS) += nvstorage_cros_ec.o
 endif
 COBJS-$(CONFIG_CHROMEOS) += stages.o
+COBJS-$(CONFIG_CHROMEOS) += switches.o
 COBJS-$(CONFIG_CHROMEOS) += tlcl_stub.o
 COBJS-$(CONFIG_CHROMEOS) += utility.o
 
