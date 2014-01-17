@@ -137,3 +137,11 @@ uint32_t VbExKeyboardRead(void)
 out:
 	return c;
 }
+
+uint32_t VbExKeyboardReadWithFlags(uint32_t *flags_ptr)
+{
+	if (flags_ptr)
+		/* We trust keyboards on u-boot legacy devices */
+		*flags_ptr = VB_KEY_FLAG_TRUSTED_KEYBOARD;
+	return VbExKeyboardRead();
+}
