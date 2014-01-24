@@ -43,4 +43,6 @@ int board_get_revision(void);
  */
 int board_is_processor_reset(void);
 
+int board_get_mem_manuf(void);
+
 #endif

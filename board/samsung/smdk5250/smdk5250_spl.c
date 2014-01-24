@@ -60,8 +60,8 @@ static struct spl_machine_param machine_param
 	.arm_freq_mhz	= 1700,
 	.serial_base	= 0x12c30000,
 	.i2c_base	= 0x12c60000,
-	.board_rev_gpios = { GPIO_D00 | (GPIO_D01 << 16), GPIO_D02 },
-	.mem_manuf	= MEM_MANUF_SAMSUNG,
+	.board_rev_gpios = { GPIO_D02 | (GPIO_D01 << 16), GPIO_D00 },
+	.mem_manuf	= MEM_MANUF_AUTODETECT,
 	.bad_wake_gpio	= GPIO_Y10,
 	.compress_type	= UBOOT_COMPRESS_NONE,
 	.rtc_type	= SPL_RTC_TYPE_UNKNOWN,
@@ -78,7 +78,7 @@ struct spl_machine_param *spl_get_machine_params(void)
 	return &machine_param;
 }
 
-int board_get_revision(void)
+static int raw_board_get_revision(void)
 {
 	struct spl_machine_param *params = spl_get_machine_params();
 	unsigned gpio[4];
@@ -88,6 +88,26 @@ int board_get_revision(void)
 	gpio[2] = params->board_rev_gpios[1] & 0xffff;
 	gpio[3] = params->board_rev_gpios[1] >> 16;
 	return gpio_decode_number(gpio, CONFIG_BOARD_REV_GPIO_COUNT);
+}
+
+int board_get_revision(void)
+{
+	/*
+	 * TODO: if needed, port over full table like in
+	 * https://chromium-review.googlesource.com/#/c/169907/
+	 */
+	int raw = raw_board_get_revision();
+	return (raw < 0) ? raw : raw / 3;
+}
+
+int board_get_mem_manuf(void)
+{
+	/*
+	 * TODO: if needed, port over full table like in
+	 * https://chromium-review.googlesource.com/#/c/169907/
+	 */
+	int raw = raw_board_get_revision();
+	return (raw < 0) ? raw : raw % 3;
 }
 
 int board_wakeup_permitted(void)

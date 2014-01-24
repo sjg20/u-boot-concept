@@ -40,7 +40,7 @@
         };
 
 	dmc@10C00000 {
-		mem-manuf = "elpida";
+		mem-manuf = "autodetect";
 	};
 
 	/*

@@ -342,11 +342,10 @@ struct mem_timings mem_timings[] = {
 		.send_zq_init = 1,
 		.impedance = IMP_OUTPUT_DRV_40_OHM,
 		.gate_leveling_enable = 1,
-	},
-	{
-		.mem_manuf = MEM_MANUF_ELPIDA,
+	}, {
+		.mem_manuf = MEM_MANUF_HYNIX,
 		.mem_type = DDR_MODE_DDR3,
-		.frequency_mhz = 780,
+		.frequency_mhz = 800,
 		.mpll_mdiv = 0x64,
 		.mpll_pdiv = 0x3,
 		.mpll_sdiv = 0x0,
@@ -363,10 +362,10 @@ struct mem_timings mem_timings[] = {
 		.vpll_pdiv = 0x3,
 		.vpll_sdiv = 0x2,
 
-		.bpll_mdiv = 0x82,
-		.bpll_pdiv = 0x4,
+		.bpll_mdiv = 0x64,
+		.bpll_pdiv = 0x3,
 		.bpll_sdiv = 0x0,
-		.use_bpll = 1,
+		.use_bpll = 0,
 		.pclk_cdrex_ratio = 0x5,
 		.direct_cmd_msr = {
 			0x00020018, 0x00030000, 0x00010042, 0x00000d70
@@ -448,9 +447,9 @@ struct mem_timings mem_timings[] = {
 		.impedance = IMP_OUTPUT_DRV_30_OHM,
 		.gate_leveling_enable = 0,
 	}, {
-		.mem_manuf = MEM_MANUF_SAMSUNG,
+		.mem_manuf = MEM_MANUF_MICRON,
 		.mem_type = DDR_MODE_DDR3,
-		.frequency_mhz = 780,
+		.frequency_mhz = 800,
 		.mpll_mdiv = 0x64,
 		.mpll_pdiv = 0x3,
 		.mpll_sdiv = 0x0,
@@ -467,10 +466,10 @@ struct mem_timings mem_timings[] = {
 		.vpll_pdiv = 0x3,
 		.vpll_sdiv = 0x2,
 
-		.bpll_mdiv = 0x82,
-		.bpll_pdiv = 0x4,
+		.bpll_mdiv = 0x64,
+		.bpll_pdiv = 0x3,
 		.bpll_sdiv = 0x0,
-		.use_bpll = 1,
+		.use_bpll = 0,
 		.pclk_cdrex_ratio = 0x5,
 		.direct_cmd_msr = {
 			0x00020018, 0x00030000, 0x00010000, 0x00000d70
@@ -566,15 +565,14 @@ struct mem_timings mem_timings[] = {
  */
 static int autodetect_memory(void)
 {
-	int board_rev = board_get_revision();
+	int board_mem = board_get_mem_manuf();
 
-	if (board_rev == -1)
-		return -1;
-
-	switch (board_rev) {
-	case BOARD_REV_SAMSUNG_MEMORY:
-		return MEM_MANUF_SAMSUNG;
-	case BOARD_REV_ELPIDA_MEMORY:
+	switch (board_mem) {
+	case 0:
+		return MEM_MANUF_MICRON;
+	case 1:
+		return MEM_MANUF_HYNIX;
+	case 2:
 		return MEM_MANUF_ELPIDA;
 	}
 

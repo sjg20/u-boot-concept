@@ -995,7 +995,7 @@ void dram_init_banksize(void)
 				mem_config.end);
 }
 
-int board_get_revision(void)
+static int raw_board_get_revision(void)
 {
 	struct fdt_gpio_state gpios[CONFIG_BOARD_REV_GPIO_COUNT];
 	unsigned gpio_list[CONFIG_BOARD_REV_GPIO_COUNT];
@@ -1023,6 +1023,26 @@ int board_get_revision(void)
 	return board_rev;
 }
 
+int board_get_revision(void)
+{
+	/*
+	 * TODO: if needed, port over full table like in
+	 * https://chromium-review.googlesource.com/#/c/169907/
+	 */
+	int raw = raw_board_get_revision();
+	return (raw < 0) ? raw : raw / 3;
+}
+
+int board_get_mem_manuf(void)
+{
+	/*
+	 * TODO: if needed, port over full table like in
+	 * https://chromium-review.googlesource.com/#/c/169907/
+	 */
+	int raw = raw_board_get_revision();
+	return (raw < 0) ? raw : raw % 3;
+}
+
 #ifdef CONFIG_DISPLAY_BOARDINFO
 int checkboard(void)
 {
@@ -1030,8 +1050,9 @@ int checkboard(void)
 	const char *board_name;
 
 	board_name = fdt_getprop(gd->fdt_blob, 0, "model", NULL);
-	printf("\nBoard: %s, rev %d\n", board_name ? board_name : "<unknown>",
-	       board_get_revision());
+	printf("\nBoard: %s, rev %d.%d\n",
+	       board_name ? board_name : "<unknown>",
+	       board_get_revision(), board_get_mem_manuf());
 #else
 	printf("\nBoard: SMDK5250\n");
 #endif

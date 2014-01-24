@@ -426,11 +426,11 @@ int gpio_decode_number(unsigned gpio_list[], int count)
 		low = gpio_get_value(gpio);
 
 		if (high && low) /* external pullup */
-			value = 2;
-		else if (!high && !low) /* external pulldown */
 			value = 1;
-		else /* floating */
+		else if (!high && !low) /* external pulldown */
 			value = 0;
+		else /* floating */
+			value = 2;
 
 		/*
 		 * Check if line is externally pulled high and
@@ -439,7 +439,7 @@ int gpio_decode_number(unsigned gpio_list[], int count)
 		 * configured with an internal pulldown from the
 		 * above test.
 		 */
-		if (value == 2)
+		if (value == 1)
 			gpio_set_pull(gpio, EXYNOS_GPIO_PULL_UP);
 
 		result += value * multiplier;
