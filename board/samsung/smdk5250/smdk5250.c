@@ -444,101 +444,13 @@ static int ft_board_setup_pmic(void *blob, bd_t *bd)
 	return 0;
 }
 
-/**
- * Fix-up the kernel device tree so the bridge pd_n and rst_n gpios accurately
- * reflect the current board rev.
- *
- * @param blob		Device tree blob
- * @param bd		Pointer to board information
- * @return 0 if ok, -1 on error (e.g. not enough space in fdt)
- */
-static int ft_board_setup_gpios(void *blob, bd_t *bd)
-{
-	int ret, rev, np, len;
-	const struct fdt_property *prop;
-
-	/* Do nothing for newer boards */
-	rev = board_get_revision();
-	if (rev < 4 || rev == 6)
-		return 0;
-
-	/*
-	 * If this is an older board, replace powerdown-gpio contents with that
-	 * of reset-gpio and delete reset-gpio from the dt.
-	 * Also do nothing if we have a Parade PS8622 bridge.
-	 */
-	np = fdtdec_next_compatible(blob, 0, COMPAT_NXP_PTN3460);
-	if (np < 0) {
-		debug("%s: Could not find COMPAT_NXP_PTN3460\n", __func__);
-		return 0;
-	}
-
-	prop = fdt_get_property(blob, np, "reset-gpio", &len);
-	if (!prop) {
-		debug("%s: Could not get property err=%d\n", __func__, len);
-		return -1;
-	}
-
-	ret = fdt_setprop_inplace(blob, np, "powerdown-gpio", prop->data,
-			len);
-	if (ret) {
-		debug("%s: Could not setprop inplace err=%d\n", __func__, ret);
-		return -1;
-	}
-
-	ret = fdt_delprop(blob, np, "reset-gpio");
-	if (ret) {
-		debug("%s: Could not delprop err=%d\n", __func__, ret);
-		return -1;
-	}
-
-	return 0;
-}
-
-/**
- * Fix-up the kernel device tree so the powered-while-resumed is added to MP
- * device tree.
- *
- * @param blob		Device tree blob
- * @param bd		Pointer to board information
- * @return 0 if ok, -1 on error (e.g. not enough space in fdt)
- */
-static int ft_board_setup_tpm_resume(void *blob, bd_t *bd)
-{
-	const char kernel_tpm_compat[] = "infineon,slb9635tt";
-	const char prop_name[] = "powered-while-suspended";
-	int err, node, rev;
-
-	/* Only apply fixup to MP machine */
-	rev = board_get_revision();
-	if (!(rev == 0 || rev == 3))
-		return 0;
-
-	node = fdt_node_offset_by_compatible(blob, 0, kernel_tpm_compat);
-	if (node < 0) {
-		debug("%s: fail to find %s: %d\n", __func__,
-				kernel_tpm_compat, node);
-		return -1;
-	}
-
-	err = fdt_setprop(blob, node, prop_name, NULL, 0);
-	if (err) {
-		debug("%s: fail to setprop: %d\n", __func__, err);
-		return -1;
-	}
-
-	return 0;
-}
-
 int ft_system_setup(void *blob, bd_t *bd)
 {
-	if (ft_board_setup_gpios(blob, bd))
-		return -1;
 	if (ft_board_setup_pmic(blob, bd))
 		return -1;
 	if (ft_board_max_cpu_freq(blob, bd))
 		return -1;
-	return ft_board_setup_tpm_resume(blob, bd);
+	return 0;
 }
 
 __weak int ft_board_setup(void *blob, bd_t *bd)
@@ -574,7 +486,7 @@ int board_dp_lcd_vdd(const void *blob, unsigned *wait_ms)
 
 static int board_dp_fill_gpios(const void *blob, int *is_ps8622)
 {
-	int np, ret = 0, rev;
+	int np, ret = 0;
 
 	np = fdtdec_next_compatible(blob, 0, COMPAT_NXP_PTN3460);
 	if (np < 0) {
@@ -607,12 +519,6 @@ static int board_dp_fill_gpios(const void *blob, int *is_ps8622)
 	if (*is_ps8622)
 		return 0;
 
-	/* If board is older, replace pd gpio with rst gpio */
-	rev = board_get_revision();
-	if (rev >= 4 && rev != 6) {
-		local.dp_pd = local.dp_rst;
-		local.dp_rst.gpio = FDT_GPIO_NONE;
-	}
 	return 0;
 }
 
@@ -1242,14 +1148,6 @@ int board_late_init(void)
 		 * panic("Cannot init mkbp device");
 		 */
 		return -1;
-	}
-
-	/*
-	 * Disable EC standby mode for early stage boards.
-	 */
-	if (board_get_revision() <= 12) {
-		debug("%s: disabling EC standby mode\n", __func__);
-		mkbp_set_hib_delay(board_get_mkbp_dev(), 0);
 	}
 
 	/*
