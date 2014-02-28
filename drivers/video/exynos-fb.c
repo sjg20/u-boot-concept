@@ -893,6 +893,8 @@ static int dp_start(const void *blob, unsigned *wait_ms)
 
 	/* DisplayPort, go to LCD_VDD */
 	if (ret > 0) {
+		/* LCD T4 timing correction (T4 >=400ms)*/
+		*wait_ms = 420;
 		stage = STAGE_LCD_VDD;
 		return 0;
 	}
