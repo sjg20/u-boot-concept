@@ -412,12 +412,13 @@ static void setup_iomux_enet(void)
 
 int board_eth_init(bd_t *bis)
 {
+#if 1
+	setup_iomux_enet();
+#else
 	uint32_t base = IMX_FEC_BASE;
 	struct mii_dev *bus = NULL;
 	struct phy_device *phydev = NULL;
 	int ret;
-
-	setup_iomux_enet();
 
 	bus = fec_get_miibus(base, -1);
 	if (!bus)
@@ -436,6 +437,7 @@ int board_eth_init(bd_t *bis)
 		free(phydev);
 		free(bus);
 	}
+#endif
 	return 0;
 }
 #endif
