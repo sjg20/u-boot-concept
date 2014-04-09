@@ -154,10 +154,11 @@
 #define CONFIG_EXTRA_ENV_SETTINGS \
     "addcons=setenv bootargs ${bootargs} console=${console},${baudrate}\0" \
     "addip=setenv bootargs ${bootargs} ip=${ipaddr}:${serverip}:${gatewayip}:${netmask}:${hostname}:${netdev}:off\0" \
+    "addmisc=setenv bootargs ${bootargs} ${miscargs}\0" \
     "addrecoverip=setenv bootargs ${bootargs} ip=${ipaddr}::${gatewayip}:${netmask}:recovery:${netdev}:off\0"\
-    "addr_dtb=107f0000\0"\
     "addr_kernel=10800000\0"\
     "addr_nor_env=0x80000\0"\
+    "bootdelay=5\0" \
     "ipaddr=192.168.10.54\0"\
     "gatewayip=192.168.10.1\0"\
     "netmask=255.255.255.0\0"\
@@ -165,25 +166,27 @@
     "netdev=eth0\0"\
     "altbootcmd=run recovery\0" \
     "baudrate=115200\0" \
-    "bootcmd=if test -n ${recovery_status};then run altbootcmd;fi;" \
-        "run stdboot;run altbootcmd\0" \
+    "bootcmd=run upd_uboot;setenv bootcmd echo done;saveenv\0" \
     "bootlimit=3\0" \
     "clearenv=sf probe;sf erase ${addr_nor_env} ${len_env} && echo restored environment to factory default\0" \
+    "miscargs=debug\0" \
     "console=ttymxc1\0" \
-    "hostname=goldeneye\0" \
+    "hostname=mx6qcom\0" \
     "len_env=0x20000\0" \
     "len_recovery=0x700000\0" \
     "loadaddr=0x12000000\0" \
-    "mtdids=nand0=gpmi_nand\0" \
-    "mtdparts=mtdparts=gpmi_nand:10m(kernel),-(ubicontainer)\0" \
-    "nandboot=ubi part kernel;ubi read ${addr_kernel} fitimage;run ubiargs addcons;bootm ${addr_kernel}\0" \
-    "offset_recovery=0xC0000\0"\
-    "post_normal= \0"\
-    "post_poweron= \0"\
+    "bootfile=mx6xcom/uImage\0" \
+    "fdtaddr=0x12500000\0" \
+    "fdtfile=mx6xcom/mx6qcom.dtb\0" \
+    "nfsroot=/opt/eldk-5.3/armv7a/rootfs-qte-sdk\0" \
+    "nfsargs=setenv bootargs ${bootargs} root=/dev/nfs nfsroot=${serverip}:${nfsroot},v3,tcp\0" \
+    "net_nfs=tftp ${loadaddr} ${bootfile};tftp ${fdtaddr} ${fdtfile};run nfsargs addcons addip addmisc;bootm ${loadaddr} - ${fdtaddr}\0" \
+    "uload=mmc rescan;fatload mmc 0:1 12000000 u-boot.imx\0" \
+    "update=sf probe;sf erase 0 46000; sf write 12000000 400 ${filesize}\0" \
+    "upd_uboot=if run uload;then run update;else echo stopping update...;fi\0" \
     "recoveryargs=setenv bootargs ${bootargs} root=/dev/ram0 rw eth=${ethaddr}\0"\
     "recovery=sf probe;sf read ${loadaddr} ${offset_recovery} ${len_recovery};run addrecoverip addcons recoveryargs;bootm\0"\
-    "stdboot=run nandboot\0" \
-    "ubiargs=setenv bootargs ubi.mtd=1 root=ubi0:rootfs rootfstype=ubifs rw rootwait enable_wait_mode=off\0" \
+    "\0" \
 
 
 /* Miscellaneous configurable options */
