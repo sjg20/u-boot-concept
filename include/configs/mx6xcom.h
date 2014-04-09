@@ -95,8 +95,16 @@
 /* MMC Configs */
 #define CONFIG_FSL_ESDHC
 #define CONFIG_FSL_USDHC
-#define CONFIG_SYS_FSL_ESDHC_ADDR      USDHC2_BASE_ADDR
-#define CONFIG_SYS_FSL_USDHC_NUM       1
+#define CONFIG_SYS_FSL_ESDHC_ADDR	0
+#define CONFIG_SYS_FSL_USDHC_NUM	2
+
+#define CONFIG_MMC
+#define CONFIG_CMD_MMC
+#define CONFIG_GENERIC_MMC
+#define CONFIG_BOUNCE_BUFFER
+#define CONFIG_CMD_EXT2
+#define CONFIG_CMD_FAT
+#define CONFIG_DOS_PARTITION
 
 /* Miscellaneous commands */
 #define CONFIG_CMD_BMODE
