@@ -12,6 +12,8 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#include "mx6_common.h"
+
 #define CONFIG_MX6
 #define CONFIG_DISPLAY_CPUINFO
 #define CONFIG_DISPLAY_BOARDINFO
@@ -259,8 +261,6 @@
 #define CONFIG_OF_LIBFDT
 #define CONFIG_OF_BOARD_SETUP
 #define CONFIG_CMD_BOOTZ
-
-#define CONFIG_SYS_DCACHE_OFF
 
 #ifndef CONFIG_SYS_DCACHE_OFF
 #define CONFIG_CMD_CACHE
