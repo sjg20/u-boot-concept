@@ -172,7 +172,7 @@
     "bootlimit=3\0" \
     "clearenv=sf probe;sf erase ${addr_nor_env} ${len_env} && echo restored environment to factory default\0" \
     "miscargs=debug\0" \
-    "console=ttymxc1\0" \
+    "console=ttymxc4\0" \
     "hostname=mx6qcom\0" \
     "len_env=0x20000\0" \
     "len_recovery=0x700000\0" \
@@ -180,16 +180,27 @@
     "bootfile=mx6xcom/uImage\0" \
     "fdtaddr=0x12500000\0" \
     "fdtfile=mx6xcom/mx6qcom.dtb\0" \
+    "mmcdev=0\0" \
+    "mmcpart=1\0" \
+    "mmcargs=setenv bootargs root=${mmcroot} rootwait rw\0" \
+    "mmcroot=/dev/mmcblk0p2\0" \
+    "loadkern=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${bootfile}\0" \
+    "loadfdt=fatload mmc ${mmcdev}:${mmcpart} ${fdtaddr} ${fdtfile}\0" \
+    "mmcboot=mmc dev ${mmcdev};" \
+	"if mmc rescan; then " \
+		"if run loadkern loadfdt; then " \
+			"run mmcargs addcons;bootm ${loadaddr} - ${fdtaddr};" \
+		"fi;" \
+	"fi\0" \
     "nfsroot=/opt/eldk-5.3/armv7a/rootfs-qte-sdk\0" \
     "nfsargs=setenv bootargs ${bootargs} root=/dev/nfs nfsroot=${serverip}:${nfsroot},v3,tcp\0" \
     "net_nfs=tftp ${loadaddr} ${bootfile};tftp ${fdtaddr} ${fdtfile};run nfsargs addcons addip addmisc;bootm ${loadaddr} - ${fdtaddr}\0" \
     "uload=mmc rescan;fatload mmc 0:1 12000000 u-boot.imx\0" \
-    "update=sf probe;sf erase 0 46000; sf write 12000000 400 ${filesize}\0" \
+    "update=sf probe;sf erase 0 4e000; sf write 12000000 400 ${filesize}\0" \
     "upd_uboot=if run uload;then run update;else echo stopping update...;fi\0" \
     "recoveryargs=setenv bootargs ${bootargs} root=/dev/ram0 rw eth=${ethaddr}\0"\
     "recovery=sf probe;sf read ${loadaddr} ${offset_recovery} ${len_recovery};run addrecoverip addcons recoveryargs;bootm\0"\
     "\0" \
-
 
 /* Miscellaneous configurable options */
 #define CONFIG_SYS_LONGHELP
