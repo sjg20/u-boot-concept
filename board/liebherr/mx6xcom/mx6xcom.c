@@ -78,6 +78,18 @@ DECLARE_GLOBAL_DATA_PTR;
 	PAD_CTL_DSE_40ohm | PAD_CTL_HYS |			\
 	PAD_CTL_ODE | PAD_CTL_SRE_FAST)
 
+#define WEAK_PULLUP	(PAD_CTL_PUS_100K_UP |			\
+	PAD_CTL_SPEED_MED | PAD_CTL_DSE_40ohm | PAD_CTL_HYS |	\
+	PAD_CTL_SRE_SLOW)
+
+#define WEAK_PULLDOWN	(PAD_CTL_PUS_100K_DOWN |		\
+	PAD_CTL_SPEED_MED | PAD_CTL_DSE_40ohm |			\
+	PAD_CTL_HYS | PAD_CTL_SRE_SLOW)
+
+#define OUTPUT_40OHM (PAD_CTL_SPEED_MED|PAD_CTL_DSE_40ohm)
+
+#define GP_USB_OTG_PWR  IMX_GPIO_NR(3, 22)
+
 #ifdef CONFIG_STATUS_LED
 
 void __led_set(led_id_t mask, int state)
@@ -257,12 +269,13 @@ iomux_v3_cfg_t const misc_pads[] = {
 	MX6_PAD_DISP0_DAT8__PWM1_OUT	| MUX_PAD_CTRL(NO_PAD_CTRL),
 	MX6_PAD_DISP0_DAT9__PWM2_OUT	| MUX_PAD_CTRL(NO_PAD_CTRL),
 	MX6_PAD_SD1_DAT1__PWM3_OUT	| MUX_PAD_CTRL(NO_PAD_CTRL),
-	/* USB */
+	/* USB
 	MX6_PAD_EIM_D30__USB_H1_OC	| MUX_PAD_CTRL(NO_PAD_CTRL),
 	MX6_PAD_EIM_D31__USB_H1_PWR	| MUX_PAD_CTRL(NO_PAD_CTRL),
 	MX6_PAD_GPIO_1__USB_OTG_ID	| MUX_PAD_CTRL(NO_PAD_CTRL),
 	MX6_PAD_KEY_COL4__USB_OTG_OC	| MUX_PAD_CTRL(NO_PAD_CTRL),
 	MX6_PAD_EIM_D22__USB_OTG_PWR	| MUX_PAD_CTRL(NO_PAD_CTRL),
+	 */
 	/* WDOG1 */
 	MX6_PAD_GPIO_9__WDOG1_B	| MUX_PAD_CTRL(NO_PAD_CTRL),
 	MX6_PAD_SD1_DAT2__WDOG1_RESET_B_DEB | MUX_PAD_CTRL(NO_PAD_CTRL),
@@ -453,9 +466,48 @@ int board_eth_init(bd_t *bis)
 }
 #endif
 
+
+iomux_v3_cfg_t const usb_pads[] = {
+	MX6_PAD_EIM_D30__USB_H1_OC | MUX_PAD_CTRL(NO_PAD_CTRL),
+	MX6_PAD_EIM_D31__USB_H1_PWR | MUX_PAD_CTRL(NO_PAD_CTRL),
+};
+
+static iomux_v3_cfg_t const otg_pads[] = {
+	MX6_PAD_GPIO_1__USB_OTG_ID              | MUX_PAD_CTRL(WEAK_PULLUP),
+	MX6_PAD_KEY_COL4__USB_OTG_OC            | MUX_PAD_CTRL(WEAK_PULLUP),
+	MX6_PAD_EIM_D30__USB_H1_OC              | MUX_PAD_CTRL(WEAK_PULLUP),
+	/* OTG Power enable */
+	MX6_PAD_EIM_D22__GPIO3_IO22             | MUX_PAD_CTRL(OUTPUT_40OHM),
+};
+
+#ifdef CONFIG_USB_EHCI_MX6
+int board_ehci_hcd_init(int port)
+{
+	/*printf("USB init\n");*/
+        imx_iomux_v3_setup_multiple_pads(usb_pads, ARRAY_SIZE(usb_pads));
+        /* Reset USB hub */
+	/*gpio_direction_output(IMX_GPIO_NR(x, x), 0);*/
+        mdelay(2);
+	/*gpio_set_value(IMX_GPIO_NR(x, x), 1);*/
+
+        return 0;
+}
+
+int board_ehci_power(int port, int on)
+{
+	/*printf("USB pwr\n");*/
+	if (port)
+		return 0;
+	gpio_set_value(GP_USB_OTG_PWR, on);
+	return 0;
+}
+#endif
+
 int board_early_init_f(void)
 {
 	setup_iomux_uart();
+
+	gpio_direction_output(GP_USB_OTG_PWR, 0); /* OTG power off */
 	return 0;
 }
 
@@ -482,6 +534,15 @@ static iomux_v3_cfg_t const led_pads[] = {
 
 int board_init(void)
 {
+	struct iomuxc_base_regs *const iomuxc_regs
+		= (struct iomuxc_base_regs *)IOMUXC_BASE_ADDR;
+
+	clrsetbits_le32(&iomuxc_regs->gpr[1],
+			IOMUXC_GPR1_OTG_ID_MASK,
+			IOMUXC_GPR1_OTG_ID_GPIO1);
+
+	imx_iomux_v3_setup_multiple_pads(otg_pads, ARRAY_SIZE(otg_pads));
+
 	/* address of boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM + 0x100;
 
