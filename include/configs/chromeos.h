@@ -228,6 +228,14 @@
 		"run tftp_setup; "\
 		"run regen_initramfs_install_bootargs; "\
 		"bootp; " \
+		"if test ${tftpserverip} == \"dhcp\"; " \
+		"then " \
+			"setenv tftpserverip ${serverip}; " \
+		"fi;" \
+		"if test ${omahaserver} == \"dhcp\"; " \
+		"then " \
+			"setenv omahaserver \"http://${serverip}:8080/\"; " \
+		"fi;" \
 		"if tftpboot ${loadaddr} ${tftpserverip}:${tftpkernelpath}; " \
 		"then " \
 			"bootm ${loadaddr}; "\
