@@ -227,11 +227,11 @@
 	"initramfs_boot=" \
 		"run tftp_setup; "\
 		"bootp; " \
-		"if test ${tftpserverip} == \"dhcp\"; " \
+		"if test ${tftpserverip} = \"dhcp\"; " \
 		"then " \
 			"setenv tftpserverip ${serverip}; " \
 		"fi;" \
-		"if test ${extra_bootargs} == \"omahaserver=dhcp\"; " \
+		"if test ${extra_bootargs} = \"omahaserver=dhcp\"; " \
 		"then " \
 			"setenv extra_bootargs \"omahaserver=http://${serverip}:8088/update\"; " \
 		"fi;" \
