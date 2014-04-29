@@ -231,10 +231,6 @@
 		"then " \
 			"setenv tftpserverip ${serverip}; " \
 		"fi;" \
-		"if test ${extra_bootargs} = \"omahaserver=dhcp\"; " \
-		"then " \
-			"setenv extra_bootargs \"omahaserver=http://${serverip}:8088/update\"; " \
-		"fi;" \
 		"setenv extra_bootargs \"${extra_bootargs} tftpserverip=${tftpserverip}\"; " \
 		"run regen_initramfs_install_bootargs; "\
 		"if tftpboot ${loadaddr} ${tftpserverip}:${tftpkernelpath}; " \
