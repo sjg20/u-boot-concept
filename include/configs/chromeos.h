@@ -206,7 +206,7 @@
 	\
 	"tftp_setup=" \
 		"setenv tftpkernelpath " \
-			"/tftpboot/vmlinux.uimg; " \
+			"/tftpboot/vmlinux_skate.uimg; " \
 		"setenv tftprootpath " \
 			"/tftpboot/initrd.uimg; " \
 		"setenv rootpath " \
