@@ -85,22 +85,7 @@ void VbExFree(void *ptr)
 
 void VbExSleepMs(uint32_t msec)
 {
-	uint32_t delay, start;
-
-	/*
-	 * Can't use entire UINT32_MAX range in the max delay, because it
-	 * pushes get_timer() too close to wraparound. So use /2.
-	 */
-	while(msec > MAX_MSEC_PER_LOOP) {
-		VbExSleepMs(MAX_MSEC_PER_LOOP);
-		msec -= MAX_MSEC_PER_LOOP;
-	}
-
-	delay = msec * TICKS_PER_MSEC;
-	start = get_timer(0);
-
-	while (get_timer(start) < delay)
-		udelay(100);
+	udelay(1000 * msec);
 }
 
 VbError_t VbExBeep(uint32_t msec, uint32_t frequency)
