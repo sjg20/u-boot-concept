@@ -107,6 +107,8 @@ int x86_cpu_init_f(void)
 	     "movl %%eax, %%cr0\n" \
 	     : : "i" (em_rst), "i" (mp_ne_set) : "eax");
 
+	disable_interrupts();
+
 	return 0;
 }
 int cpu_init_f(void) __attribute__((weak, alias("x86_cpu_init_f")));
