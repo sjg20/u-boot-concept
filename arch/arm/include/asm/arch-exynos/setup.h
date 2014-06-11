@@ -27,6 +27,7 @@
 
 #include <config.h>
 #include <asm/arch/dmc.h>
+#include <asm/arch/system.h>
 #include <asm/sizes.h>
 
 #define NOT_AVAILABLE		0
@@ -1014,4 +1015,56 @@ void tzpc_init(void);
  * @return 0 for a normal boot, non-zero for a resume
  */
 int do_lowlevel_init(void);
+
+enum l2_cache_params {
+	CACHE_ECC_AND_PARITY = (1 << 21),
+	CACHE_TAG_RAM_SETUP = (1 << 9),
+	CACHE_DATA_RAM_SETUP = (1 << 5),
+#ifndef CONFIG_EXYNOS5420
+	CACHE_TAG_RAM_LATENCY = (2 << 6),  /* 5250 */
+	CACHE_DATA_RAM_LATENCY = (2 << 0),
+#else
+	CACHE_TAG_RAM_LATENCY = (3 << 6),  /* 5420 and 5422 */
+	CACHE_DATA_RAM_LATENCY = (3 << 0),
+#endif
+};
+
+/*
+ * Configure L2CTLR to get timings that keep us from hanging/crashing.
+ *
+ * Must be inline here since low_power_start() is called without a
+ * stack (!).
+ */
+static inline void configure_l2_ctlr(void)
+{
+	uint32_t val;
+
+	mrc_l2_ctlr(val);
+	val |= CACHE_TAG_RAM_SETUP |
+		CACHE_DATA_RAM_SETUP |
+		CACHE_TAG_RAM_LATENCY |
+		CACHE_DATA_RAM_LATENCY |
+		CACHE_ECC_AND_PARITY;
+	mcr_l2_ctlr(val);
+}
+
+/*
+ * Configure L2ACTLR.
+ *
+ * Must be inline here since low_power_start() is called without a
+ * stack (!).
+ */
+static inline void configure_l2_actlr(void)
+{
+#ifdef CONFIG_EXYNOS5420
+	uint32_t val;
+
+	mrc_l2_aux_ctlr(val);
+	val |= (1 << 27) |	/* Prevents stopping the L2 logic clock */
+		(1 << 7) |	/* Enable hazard detect timeout for A15 */
+		(1 << 3);	/* Disable clean/evict push to external */
+	mcr_l2_aux_ctlr(val);
+#endif
+}
+
 #endif
