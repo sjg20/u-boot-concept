@@ -24,7 +24,7 @@
 #include <common.h>
 #include <asm/io.h>
 #include <asm/system.h>
-#include <asm/arch/system.h>
+#include <asm/arch/setup.h>
 
 void reset_cpu(ulong addr)
 {
@@ -39,3 +39,17 @@ void enable_caches(void)
 }
 #endif
 
+/**
+ * cpu_cache_initialization - Called just before the kernel to init the cache
+ *
+ * We'll call the L2 cache init functions again here so the kernel will get the
+ * updated parameters even if we're running RW U-Boot.  This is a good time to
+ * do it because L2 cache should be disabled.
+ */
+void cpu_cache_initialization(void)
+{
+	configure_l2_ctlr();
+	configure_l2_actlr();
+	dsb();
+	isb();
+}
