@@ -12,6 +12,8 @@
  * published by the Free Software Foundation.
 */
 
+#include "exynos5250-pinctrl-uboot.dtsi"
+
 / {
 	pinctrl@11400000 {
 		gpa0: gpa0 {
