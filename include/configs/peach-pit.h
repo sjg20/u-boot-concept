@@ -22,4 +22,6 @@
 #define CONFIG_SYS_PROMPT	"Peach # "
 #define CONFIG_IDENT_STRING	" for Peach"
 
+#define CONFIG_POWER_TPS65090_EC
+
 #endif	/* __CONFIG_PEACH_PIT_H */
