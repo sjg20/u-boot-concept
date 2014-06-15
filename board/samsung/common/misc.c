@@ -13,7 +13,6 @@
 #include <version.h>
 #include <linux/sizes.h>
 #include <asm/arch/cpu.h>
-#include <asm/arch/gpio.h>
 #include <asm/gpio.h>
 #include <linux/input.h>
 #include <power/pmic.h>
