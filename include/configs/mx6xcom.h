@@ -103,9 +103,11 @@
 #define CONFIG_MMC
 #define CONFIG_CMD_MMC
 #define CONFIG_GENERIC_MMC
+#define CONFIG_SUPPORT_EMMC_BOOT
 #define CONFIG_BOUNCE_BUFFER
 #define CONFIG_CMD_EXT2
 #define CONFIG_CMD_FAT
+#define CONFIG_FAT_WRITE
 #define CONFIG_DOS_PARTITION
 
 /* Miscellaneous commands */
@@ -282,7 +284,6 @@
 
 /* USB Configs */
 #define CONFIG_CMD_USB
-#define CONFIG_CMD_FAT
 #define CONFIG_USB_EHCI
 #define CONFIG_USB_EHCI_MX6
 #define CONFIG_USB_STORAGE
