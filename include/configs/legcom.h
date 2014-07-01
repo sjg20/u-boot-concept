@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2014 DENX Software Engineering
  *
- * Configuration settings for the mx6xcom board.
+ * Configuration settings for the legcom board.
  *
  * Based on mx6qsabrelite.h which is:
  * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
@@ -175,13 +175,13 @@
     "clearenv=sf probe;sf erase ${addr_nor_env} ${len_env} && echo restored environment to factory default\0" \
     "miscargs=debug\0" \
     "console=ttymxc4\0" \
-    "hostname=mx6qcom\0" \
+    "hostname=legcom\0" \
     "len_env=0x20000\0" \
     "len_recovery=0x700000\0" \
     "loadaddr=0x12000000\0" \
-    "bootfile=mx6xcom/uImage\0" \
+    "bootfile=legcom/uImage\0" \
     "fdtaddr=0x12500000\0" \
-    "fdtfile=mx6xcom/mx6qcom.dtb\0" \
+    "fdtfile=legcom/legcom.dtb\0" \
     "mmcdev=0\0" \
     "mmcpart=1\0" \
     "mmcargs=setenv bootargs root=${mmcroot} rootwait rw\0" \

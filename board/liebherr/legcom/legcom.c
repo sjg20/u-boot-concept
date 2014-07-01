@@ -621,7 +621,7 @@ static struct display_info_t const displays[] = {{
 		.name           = "LVDS1",
 		.refresh        = 60,
 		.xres           = 800,
-		.yres           = 601,
+		.yres           = 600,
 		.pixclock       = 25000,
 		.left_margin    = 120,
 		.right_margin   = 80,
@@ -835,7 +835,7 @@ int power_init_board(void)
 
 int checkboard(void)
 {
-	puts("Board: mx6qcom\n");
+	puts("Board: legcom\n");
 
 	return 0;
 }
