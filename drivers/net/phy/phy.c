@@ -480,6 +480,9 @@ int phy_init(void)
 #ifdef CONFIG_PHY_VITESSE
 	phy_vitesse_init();
 #endif
+#ifdef CONFIG_PHY_FIXED
+	phy_fixed_init();
+#endif
 
 	return 0;
 }
@@ -616,6 +619,13 @@ static struct phy_device *create_phy_by_mask(struct mii_dev *bus,
 		phy_mask &= ~(1 << addr);
 	}
 	return NULL;
+}
+
+struct phy_device *create_fixed_phy(struct mii_dev *bus,
+				unsigned phy_id, int devad,
+				phy_interface_t interface)
+{
+	return phy_device_create(bus, devad, phy_id, interface);
 }
 
 static struct phy_device *search_for_existing_phy(struct mii_dev *bus,
@@ -755,7 +765,9 @@ struct phy_device *phy_find_by_mask(struct mii_dev *bus, unsigned phy_mask,
 void phy_connect_dev(struct phy_device *phydev, struct eth_device *dev)
 {
 	/* Soft Reset the PHY */
+#ifndef CONFIG_PHY_FIXED
 	phy_reset(phydev);
+#endif
 	if (phydev->dev) {
 		printf("%s:%d is connected to %s.  Reconnecting to %s\n",
 				phydev->bus->name, phydev->addr,

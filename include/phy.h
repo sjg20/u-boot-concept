@@ -233,8 +233,12 @@ int phy_realtek_init(void);
 int phy_smsc_init(void);
 int phy_teranetics_init(void);
 int phy_vitesse_init(void);
+int phy_fixed_init(void);
 
 int board_phy_config(struct phy_device *phydev);
+struct phy_device *create_fixed_phy(struct mii_dev *bus,
+                                unsigned phy_id, int devad,
+                                phy_interface_t interface);
 
 /* PHY UIDs for various PHYs that are referenced in external code */
 #define PHY_UID_TN2020	0x00a19410
