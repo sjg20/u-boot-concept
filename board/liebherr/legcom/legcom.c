@@ -405,6 +405,9 @@ void setup_spi(void)
 					MXC_CCM_CCGR1_ECSPI3S_MASK);
 }
 
+#define ENET_PAD_CTRL_CLK  ((PAD_CTL_PUS_100K_UP & ~PAD_CTL_PKE) | \
+	PAD_CTL_SPEED_HIGH | PAD_CTL_DSE_40ohm | PAD_CTL_SRE_FAST)
+
 #ifdef CONFIG_FEC_MXC
 iomux_v3_cfg_t const enet_pads[] = {
 	MX6_PAD_ENET_TXD1__ENET_1588_EVENT0_IN	| MUX_PAD_CTRL(ENET_PAD_CTRL),
@@ -412,6 +415,9 @@ iomux_v3_cfg_t const enet_pads[] = {
 	MX6_PAD_ENET_MDIO__ENET_MDIO		| MUX_PAD_CTRL(ENET_PAD_CTRL),
 	MX6_PAD_ENET_MDC__ENET_MDC		| MUX_PAD_CTRL(ENET_PAD_CTRL),
 	MX6_PAD_ENET_REF_CLK__ENET_TX_CLK	| MUX_PAD_CTRL(ENET_PAD_CTRL),
+	/*MX6_PAD_ENET_REF_CLK__ENET_TX_CLK	| MUX_PAD_CTRL(ENET_PAD_CTRL_CLK),*/
+
+	/* for old evalboard with R159 present and R160 not populated */
 	MX6_PAD_GPIO_16__ENET_REF_CLK		| MUX_PAD_CTRL(NO_PAD_CTRL),
 
 	MX6_PAD_RGMII_TXC__RGMII_TXC		| MUX_PAD_CTRL(ENET_PAD_CTRL),
@@ -420,6 +426,9 @@ iomux_v3_cfg_t const enet_pads[] = {
 	MX6_PAD_RGMII_TD2__RGMII_TD2		| MUX_PAD_CTRL(ENET_PAD_CTRL),
 	MX6_PAD_RGMII_TD3__RGMII_TD3		| MUX_PAD_CTRL(ENET_PAD_CTRL),
 	MX6_PAD_RGMII_TX_CTL__RGMII_TX_CTL	| MUX_PAD_CTRL(ENET_PAD_CTRL),
+
+	/* temp. for 125 MHz clock messurement on the switch's P6_INDV(100) pin */
+	/*MX6_PAD_RGMII_TX_CTL__ENET_REF_CLK	| MUX_PAD_CTRL(ENET_PAD_CTRL),*/
 
 	MX6_PAD_RGMII_RXC__RGMII_RXC		| MUX_PAD_CTRL(ENET_PAD_CTRL),
 	MX6_PAD_RGMII_RD0__RGMII_RD0		| MUX_PAD_CTRL(ENET_PAD_CTRL),
@@ -437,38 +446,123 @@ static void setup_iomux_enet(void)
 	gpio_direction_input(IMX_GPIO_NR(1, 28)); /*INT#_GBE*/
 }
 
+int switch_fec_phy_read(struct mii_dev *bus, int phyAddr, int dev_addr, int regAddr);
+int switch_fec_phy_write(struct mii_dev *bus, int phyAddr, int dev_addr, int regAddr, u16 data);
+
+struct mii_dev *sw_get_miibus(uint32_t base_addr, int dev_id)
+{
+	struct mii_dev *bus;
+	int ret;
+
+	bus = mdio_alloc();
+	if (!bus) {
+		printf("mdio_alloc failed\n");
+		return NULL;
+	}
+	bus->read = switch_fec_phy_read;
+	bus->write = switch_fec_phy_write;
+	bus->priv = NULL;
+	sprintf(bus->name, "SW");
+
+	ret = mdio_register(bus);
+	if (ret) {
+		printf("mdio_register failed\n");
+		free(bus);
+		return NULL;
+	}
+	return bus;
+}
+
+int switch_init(void)
+{
+	int ret;
+	u16 val = 0;
+
+	ret = miiphy_read ("FEC", 0x16, 0, &val);
+	if (!ret && ((val & 0xf) == 0x7)) {
+		ret = miiphy_write ("FEC", 0x16, 1, 0x13);
+		if (ret) {
+			printf("PHY config failed %d\n", ret);
+			return -1;
+		}
+		udelay(1);
+		ret = miiphy_write ("FEC", 0x16, 1, 0xc0fe);
+		if (ret) {
+			printf("PHY config failed %d\n", ret);
+			return -1;
+		}
+	}
+	ret = miiphy_read ("FEC", 0x15, 0, &val);
+	if (!ret && ((val & 0xf) == 0x7)) {
+		ret = miiphy_write ("FEC", 0x15, 1, 0x13);
+		if (ret) {
+			printf("PHY config failed %d\n", ret);
+			return -1;
+		}
+		udelay(1);
+		ret = miiphy_write ("FEC", 0x15, 1, 0xc0fe);
+		if (ret) {
+			printf("PHY config failed %d\n", ret);
+			return -1;
+		}
+	}
+	return 0;
+}
+
 int board_eth_init(bd_t *bis)
 {
-#if 1
-	setup_iomux_enet();
-#else
 	uint32_t base = IMX_FEC_BASE;
 	struct mii_dev *bus = NULL;
 	struct phy_device *phydev = NULL;
+	struct mii_dev *sw_bus = NULL;
 	int ret;
+	u16 val = 0;
+	u32 reg;
+
+	setup_iomux_enet();
+
+	__raw_writel(0x000c0000, 0x020e0790);
+	__raw_writel(0x00002003, 0x020c80e0);
+        udelay(1);
+	/* enet refclk sel out */
+	reg = __raw_readl(0x020e0004);
+	reg |= (1 << 21);
+	__raw_writel(reg, 0x020e0004);
 
 	bus = fec_get_miibus(base, -1);
 	if (!bus)
 		return 0;
-	/* scan phy 4,5,6,7 */
-	phydev = phy_find_by_mask(bus, (0xf << 4), PHY_INTERFACE_MODE_RGMII);
+
+	ret = miiphy_read ("FEC", 0x16, 0, &val);
+	if (val != 0xffff) {
+		switch_init();
+
+		sw_bus = sw_get_miibus(0, 0);
+		if (!sw_bus) {
+			printf("no switch mii bus registered\n");
+			return 0;
+		}
+	}
+
+	phydev = create_fixed_phy(bus, 0xffffffff, 0, PHY_INTERFACE_MODE_RGMII);
 	if (!phydev) {
-		free(bus);
+		if (sw_bus)
+			free(sw_bus);
 		return 0;
 	}
-	debug("using phy at %d\n", phydev->addr);
-	printf("using phy at %d\n", phydev->addr);
+	debug("using fixed phy %d\n", phydev->addr);
+
 	ret  = fec_probe(bis, -1, base, bus, phydev);
 	if (ret) {
 		printf("FEC MXC: %s:failed\n", __func__);
 		free(phydev);
 		free(bus);
+		if (sw_bus)
+			free(sw_bus);
 	}
-#endif
 	return 0;
 }
 #endif
-
 
 iomux_v3_cfg_t const usb_pads[] = {
 	MX6_PAD_EIM_D30__USB_H1_OC | MUX_PAD_CTRL(NO_PAD_CTRL),

@@ -173,6 +173,24 @@ static inline int mv88e61xx_switch_miiphy_read(char *name, u32 phy,
 	return 0;
 }
 
+int switch_fec_phy_read(struct mii_dev *bus, int phyAddr,
+			int dev_addr, int regAddr)
+{
+	int ret;
+	u16 val;
+
+	ret = mv88e61xx_switch_miiphy_read("FEC", phyAddr, regAddr, &val);
+	if (ret < 0)
+		return ret;
+	return val;
+}
+
+int switch_fec_phy_write(struct mii_dev *bus, int phyAddr,
+			 int dev_addr, int regAddr, u16 data)
+{
+	return mv88e61xx_switch_miiphy_write("FEC", phyAddr, regAddr, data);
+}
+
 /*
  * Convenience macros for switch PHY reads/writes
  */

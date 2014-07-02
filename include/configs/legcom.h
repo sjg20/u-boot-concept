@@ -82,10 +82,15 @@
 #ifdef CONFIG_FEC_MXC
 #define IMX_FEC_BASE			ENET_BASE_ADDR
 #define CONFIG_FEC_XCV_TYPE		RGMII
+#define CONFIG_ETHPRIME			"FEC"
 #define CONFIG_FEC_MXC_PHYADDR		0
+#define CONFIG_MV88E61XX_SWITCH
+#define CONFIG_MV88E61XX_CMD
 #define CONFIG_MII
 #define CONFIG_PHYLIB
-/*#define CONFIG_PHY_MARVELL*/
+#define CONFIG_PHY_FIXED
+#define CONFIG_SYS_FIXED_PHY_SPEED	1000
+#define CONFIG_SYS_FIXED_PHY_DUPLEX	1
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_DHCP
 #define CONFIG_CMD_MII
@@ -170,7 +175,7 @@
     "netdev=eth0\0"\
     "altbootcmd=run recovery\0" \
     "baudrate=115200\0" \
-    "bootcmd=run upd_uboot;setenv bootcmd echo done;saveenv\0" \
+    "bootcmd=run mmcboot\0" \
     "bootlimit=3\0" \
     "clearenv=sf probe;sf erase ${addr_nor_env} ${len_env} && echo restored environment to factory default\0" \
     "miscargs=debug\0" \
@@ -198,7 +203,7 @@
     "nfsargs=setenv bootargs ${bootargs} root=/dev/nfs nfsroot=${serverip}:${nfsroot},v3,tcp\0" \
     "net_nfs=tftp ${loadaddr} ${bootfile};tftp ${fdtaddr} ${fdtfile};run nfsargs addcons addip addmisc;bootm ${loadaddr} - ${fdtaddr}\0" \
     "uload=mmc rescan;fatload mmc 0:1 12000000 u-boot.imx\0" \
-    "update=sf probe;sf erase 0 4e000; sf write 12000000 400 ${filesize}\0" \
+    "update=sf probe;sf erase 0 60000; sf write 12000000 400 ${filesize}\0" \
     "upd_uboot=if run uload;then run update;else echo stopping update...;fi\0" \
     "recoveryargs=setenv bootargs ${bootargs} root=/dev/ram0 rw eth=${ethaddr}\0"\
     "recovery=sf probe;sf read ${loadaddr} ${offset_recovery} ${len_recovery};run addrecoverip addcons recoveryargs;bootm\0"\
