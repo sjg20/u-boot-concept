@@ -54,11 +54,21 @@
 
 #define SPI_DEFAULT_WORDLEN 8
 
+#ifdef CONFIG_DM_SPI
+struct dm_spi_bus {
+	uint max_hz;
+};
+
+#endif /* CONFIG_DM_SPI */
+
 /**
  * struct spi_slave - Representation of a SPI slave
  *
  * Drivers are expected to extend this with controller-specific data.
  *
+ * @dev:		SPI slave device
+ * @max_hz:		Maximum speed for this slave
+ * @mode:		SPI mode to use for this slave (see SPI mode flags)
  * @bus:		ID of the bus that the slave is attached to.
  * @cs:			ID of the chip select connected to the slave.
  * @op_mode_rx:		SPI RX operation mode.
@@ -71,8 +81,14 @@
  * @flags:		Indication of SPI flags.
  */
 struct spi_slave {
+#ifdef CONFIG_DM_SPI
+	struct udevice *dev;	/* struct spi_slave is dev->parentdata */
+	uint max_hz;
+	uint mode;
+#else
 	unsigned int bus;
 	unsigned int cs;
+#endif
 	u8 op_mode_rx;
 	u8 op_mode_tx;
 	unsigned int wordlen;
@@ -220,6 +236,8 @@ int spi_set_wordlen(struct spi_slave *slave, unsigned int wordlen);
 int  spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
 		void *din, unsigned long flags);
 
+#ifndef CONFIG_DM_SPI
+
 /**
  * Determine if a SPI chipselect is valid.
  * This function is provided by the board if the low-level SPI driver
@@ -255,6 +273,7 @@ void spi_cs_deactivate(struct spi_slave *slave);
  * @hz:		The transfer speed
  */
 void spi_set_speed(struct spi_slave *slave, uint hz);
+#endif
 
 /**
  * Write 8 bits, then read 8 bits.
@@ -304,5 +323,126 @@ struct spi_slave *spi_setup_slave_fdt(const void *blob, int slave_node,
  */
 struct spi_slave *spi_base_setup_slave_fdt(const void *blob, int busnum,
 					   int node);
+
+#ifdef CONFIG_DM_SPI
+
+/**
+ * struct struct dm_spi_ops - Driver model SPI operations
+ *
+ * The uclass interface is implemented by all SPI devices which use
+ * driver model.
+ */
+struct dm_spi_ops {
+	/**
+	 * Claim the bus and prepare it for communication.
+	 *
+	 * The device privided is the slave device. It's parent controller
+	 * will be used to provide the communication.
+	 *
+	 * This must be called before doing any transfers with a SPI slave. It
+	 * will enable and initialize any SPI hardware as necessary, and make
+	 * sure that the SCK line is in the correct idle state. It is not
+	 * allowed to claim the same bus for several slaves without releasing
+	 * the bus in between.
+	 *
+	 * @bus:	The SPI slave
+	 *
+	 * Returns: 0 if the bus was claimed successfully, or a negative value
+	 * if it wasn't.
+	 */
+	int (*claim_bus)(struct udevice *bus);
+
+	/**
+	 * Release the SPI bus
+	 *
+	 * This must be called once for every call to spi_claim_bus() after
+	 * all transfers have finished. It may disable any SPI hardware as
+	 * appropriate.
+	 *
+	 * @bus:	The SPI slave
+	 */
+	int (*release_bus)(struct udevice *bus);
+
+	/**
+	 * Set the word length for SPI transactions
+	 *
+	 * Set the word length (number of bits per word) for SPI transactions.
+	 *
+	 * @bus:	The SPI slave
+	 * @wordlen:	The number of bits in a word
+	 *
+	 * Returns: 0 on success, -ve on failure.
+	 */
+	int (*set_wordlen)(struct udevice *bus, unsigned int wordlen);
+
+	/**
+	 * SPI transfer
+	 *
+	 * This writes "bitlen" bits out the SPI MOSI port and simultaneously
+	 * clocks "bitlen" bits in the SPI MISO port.  That's just the way SPI
+	 * works.
+	 *
+	 * The source of the outgoing bits is the "dout" parameter and the
+	 * destination of the input bits is the "din" parameter.  Note that
+	 * "dout" and "din" can point to the same memory location, in which
+	 * case the input data overwrites the output data (since both are
+	 * buffered by temporary variables, this is OK).
+	 *
+	 * spi_xfer() interface:
+	 * @dev:	The slave device to communicate with
+	 * @bitlen:	How many bits to write and read.
+	 * @dout:	Pointer to a string of bits to send out.  The bits are
+	 *		held in a byte array and are sent MSB first.
+	 * @din:	Pointer to a string of bits that will be filled in.
+	 * @flags:	A bitwise combination of SPI_XFER_* flags.
+	 *
+	 * Returns: 0 on success, not -1 on failure
+	 */
+	int (*xfer)(struct udevice *dev, unsigned int bitlen, const void *dout,
+		    void *din, unsigned long flags);
+
+	/**
+	 * Set transfer speed.
+	 * This sets a new speed to be applied for next spi_xfer().
+	 * @bus:	The SPI slave
+	 * @hz:		The transfer speed
+	 * @return 0 if OK, -ve on error
+	 */
+	int (*set_speed)(struct udevice *bus, uint hz);
+
+	/**
+	 * Set the SPI mode/flags
+	 *
+	 * It is unclear if we want to set speed and mode together instead
+	 * of separately.
+	 *
+	 * @bus:	The SPI slave
+	 * @mode:	Requested SPI mode (SPI_... flags)
+	 * @return 0 if OK, -ve on error
+	 */
+	int (*set_mode)(struct udevice *bus, uint mode);
+};
+
+int spi_find_bus_and_cs(int busnum, int cs, struct udevice **busp,
+			struct udevice **devp);
+
+int spi_get_bus_and_cs(int busnum, int cs, int speed, int mode,
+			const char *drv_name, const char *dev_name,
+			struct udevice **devp, struct spi_slave **slavep);
+
+int spi_bind_device(struct udevice *bus, int cs, const char *drv_name,
+		    const char *dev_name, struct udevice **slavep);
+
+int spi_ofdata_to_platdata(const void *blob, int node,
+			   struct spi_slave *spi);
+
+struct sandbox_state;
+int sandbox_spi_get_emul(struct sandbox_state *state,
+			 struct udevice *bus, struct udevice *slave,
+			 struct udevice **emulp);
+
+/* Access the serial operations for a device */
+#define spi_get_ops(dev)	((struct dm_spi_ops *)(dev)->driver->ops)
+#endif /* CONFIG_DM_SPI */
 
 #endif	/* _SPI_H_ */
