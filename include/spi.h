@@ -423,6 +423,35 @@ struct dm_spi_ops {
 	int (*set_mode)(struct udevice *bus, uint mode);
 };
 
+struct dm_spi_emul_ops {
+	/**
+	 * SPI transfer
+	 *
+	 * This writes "bitlen" bits out the SPI MOSI port and simultaneously
+	 * clocks "bitlen" bits in the SPI MISO port.  That's just the way SPI
+	 * works. Here the device is a slave.
+	 *
+	 * The source of the outgoing bits is the "dout" parameter and the
+	 * destination of the input bits is the "din" parameter.  Note that
+	 * "dout" and "din" can point to the same memory location, in which
+	 * case the input data overwrites the output data (since both are
+	 * buffered by temporary variables, this is OK).
+	 *
+	 * spi_xfer() interface:
+	 * @slave:	The SPI slave which will be sending/receiving the data.
+	 * @bitlen:	How many bits to write and read.
+	 * @dout:	Pointer to a string of bits sent to the device. The
+	 *		bits are held in a byte array and are sent MSB first.
+	 * @din:	Pointer to a string of bits that will be sent back to
+	 *		the master.
+	 * @flags:	A bitwise combination of SPI_XFER_* flags.
+	 *
+	 * Returns: 0 on success, not -1 on failure
+	 */
+	int (*xfer)(struct udevice *slave, unsigned int bitlen,
+		    const void *dout, void *din, unsigned long flags);
+};
+
 int spi_find_bus_and_cs(int busnum, int cs, struct udevice **busp,
 			struct udevice **devp);
 
@@ -443,6 +472,7 @@ int sandbox_spi_get_emul(struct sandbox_state *state,
 
 /* Access the serial operations for a device */
 #define spi_get_ops(dev)	((struct dm_spi_ops *)(dev)->driver->ops)
+#define spi_emul_get_ops(dev)	((struct dm_spi_emul_ops *)(dev)->driver->ops)
 #endif /* CONFIG_DM_SPI */
 
 #endif	/* _SPI_H_ */
