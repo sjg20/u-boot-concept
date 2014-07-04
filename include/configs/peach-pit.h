@@ -25,4 +25,14 @@
 #define CONFIG_POWER_TPS65090_EC
 #define CONFIG_CROS_EC_SPI		/* Support CROS_EC over SPI */
 
+#define CONFIG_VIDEO_PARADE
+
+/* Display */
+#define CONFIG_LCD
+#ifdef CONFIG_LCD
+#define CONFIG_EXYNOS_FB
+#define CONFIG_EXYNOS_DP
+#define LCD_BPP			LCD_COLOR16
+#endif
+
 #endif	/* __CONFIG_PEACH_PIT_H */
