@@ -25,6 +25,7 @@ enum uclass_id {
 	UCLASS_SERIAL,		/* Serial UART */
 	UCLASS_SPI,		/* SPI bus */
 	UCLASS_SPI_FLASH,	/* SPI flash */
+	UCLASS_CROS_EC,	/* Chrome OS EC */
 
 	UCLASS_COUNT,
 	UCLASS_INVALID = -1,
