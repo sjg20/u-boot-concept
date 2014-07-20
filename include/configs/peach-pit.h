@@ -9,15 +9,10 @@
 #ifndef __CONFIG_PEACH_PIT_H
 #define __CONFIG_PEACH_PIT_H
 
-#include <configs/exynos5-common.h>
-
-#include <configs/exynos5420.h>
+#include <configs/exynos5420-common.h>
 
 #undef CONFIG_DEFAULT_DEVICE_TREE
 #define CONFIG_DEFAULT_DEVICE_TREE	exynos5420-peach-pit
-
-/* select serial console configuration */
-#define CONFIG_SERIAL3		/* use SERIAL 3 */
 
 #define CONFIG_SYS_PROMPT	"Peach # "
 #define CONFIG_IDENT_STRING	" for Peach"

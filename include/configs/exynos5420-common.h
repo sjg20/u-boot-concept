@@ -9,7 +9,9 @@
 #ifndef __CONFIG_EXYNOS5420_H
 #define __CONFIG_EXYNOS5420_H
 
-#define CONFIG_EXYNOS5420		/* which is in a Exynos5 Family */
+#define CONFIG_EXYNOS5420
+
+#include <configs/exynos5-common.h>
 
 #define MACH_TYPE_SMDK5420	8002
 #define CONFIG_MACH_TYPE	MACH_TYPE_SMDK5420
@@ -31,10 +33,6 @@
 
 #define CONFIG_MAX_I2C_NUM	11
 
-/* Enable FIT support and comparison */
-#define CONFIG_FIT
-#define CONFIG_FIT_BEST_MATCH
-
 #define CONFIG_BOARD_REV_GPIO_COUNT	2
 
 #define CONFIG_BOOTCOMMAND	"mmc read 20007000 451 2000; bootm 20007000"
@@ -48,5 +46,8 @@
 /* DRAM Memory Banks */
 #define CONFIG_NR_DRAM_BANKS	7
 #define SDRAM_BANK_SIZE		(512UL << 20UL)	/* 512 MB */
+
+/* select serial console configuration */
+#define CONFIG_SERIAL3		/* use SERIAL 3 */
 
 #endif	/* __CONFIG_EXYNOS5420_H */
