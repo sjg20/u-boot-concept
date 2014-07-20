@@ -11,21 +11,15 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#include "exynos-common.h"
+
+#undef CONFIG_BOARD_COMMON
+#undef CONFIG_ARCH_EARLY_INIT_R
+#undef CONFIG_BOARD_EARLY_INIT_F
+
 /* High Level Configuration Options */
-#define CONFIG_SAMSUNG		1	/* in a SAMSUNG core */
-#define CONFIG_S5P		1	/* which is in a S5P Family */
 #define CONFIG_S5PC110		1	/* which is in a S5PC110 */
 #define CONFIG_MACH_GONI	1	/* working with Goni */
-
-#include <linux/sizes.h>
-#include <asm/arch/cpu.h>		/* get chip and board defs */
-
-#define CONFIG_ARCH_CPU_INIT
-#define CONFIG_DISPLAY_CPUINFO
-#define CONFIG_DISPLAY_BOARDINFO
-
-/* input clock of PLL: has 24MHz input clock at S5PC110 */
-#define CONFIG_SYS_CLK_FREQ_C110	24000000
 
 /* DRAM Base */
 #define CONFIG_SYS_SDRAM_BASE		0x30000000
@@ -33,32 +27,15 @@
 /* Text Base */
 #define CONFIG_SYS_TEXT_BASE		0x34800000
 
-#define CONFIG_SETUP_MEMORY_TAGS
-#define CONFIG_CMDLINE_TAG
 #define CONFIG_REVISION_TAG
-#define CONFIG_INITRD_TAG
-#define CONFIG_CMDLINE_EDITING
 
-/* Size of malloc() pool.*/
-#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 80 * SZ_1M)
+#undef CONFIG_EXYNOS_DWMMC
+#define SDHCI_MAX_HOSTS	2
 
 /*
  * select serial console configuration
  */
 #define CONFIG_SERIAL2			1	/* use SERIAL2 */
-#define CONFIG_BAUDRATE			115200
-
-/* MMC */
-#define CONFIG_GENERIC_MMC
-#define CONFIG_MMC
-#define CONFIG_SDHCI
-#define CONFIG_S5P_SDHCI
-
-/* PWM */
-#define CONFIG_PWM			1
-
-/* It should define before config_cmd_default.h */
-#define CONFIG_SYS_NO_FLASH		1
 
 /* Command definition */
 #include <config_cmd_default.h>
@@ -68,10 +45,8 @@
 #undef CONFIG_CMD_NET
 #undef CONFIG_CMD_NFS
 #undef CONFIG_CMD_XIMG
-#define CONFIG_CMD_CACHE
 #define CONFIG_CMD_REGINFO
 #define CONFIG_CMD_ONENAND
-#define CONFIG_CMD_MMC
 #define CONFIG_CMD_DFU
 #define CONFIG_CMD_GPT
 
@@ -106,7 +81,6 @@
 				",12m(modem)"\
 				",60m(qboot)\0"
 
-#define CONFIG_BOOTDELAY		1
 #define CONFIG_ZERO_BOOTDELAY_CHECK
 
 /* partitions definitions */
@@ -241,19 +215,8 @@
 #define CONFIG_SAMSUNG_ONENAND		1
 #define CONFIG_SYS_ONENAND_BASE		0xB0000000
 
-#define CONFIG_DOS_PARTITION		1
-
-#define CONFIG_CMD_FAT
-#define CONFIG_CMD_EXT4
-#define CONFIG_CMD_EXT4_WRITE
-
 /* write support for filesystems */
-#define CONFIG_FAT_WRITE
 #define CONFIG_EXT4_WRITE
-
-/* GPT */
-#define CONFIG_EFI_PARTITION
-#define CONFIG_PARTITION_UUIDS
 
 #define CONFIG_SYS_INIT_SP_ADDR	(CONFIG_SYS_LOAD_ADDR - 0x1000000)
 
@@ -282,5 +245,7 @@
 #define CONFIG_USB_GADGET_VBUS_DRAW 2
 #define CONFIG_CMD_USB_MASS_STORAGE
 #define CONFIG_USB_GADGET_MASS_STORAGE
+
+#define CONFIG_DEFAULT_DEVICE_TREE	s5pc1xx-goni
 
 #endif	/* __CONFIG_H */
