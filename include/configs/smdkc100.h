@@ -12,24 +12,23 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#include "exynos-common.h"
+
+#undef CONFIG_BOARD_COMMON
+#undef CONFIG_ARCH_EARLY_INIT_R
+#undef CONFIG_BOARD_EARLY_INIT_F
+#undef CONFIG_GENERIC_MMC
+#undef CONFIG_CMD_MMC
+#undef CONFIG_MMC
+#undef CONFIG_S5P_SDHCI
+#undef CONFIG_EXYNOS_DWMMC
+
 /*
  * High Level Configuration Options
  * (easy to change)
  */
-#define CONFIG_SAMSUNG		1	/* in a SAMSUNG core */
-#define CONFIG_S5P		1	/* which is in a S5P Family */
 #define CONFIG_S5PC100		1	/* which is in a S5PC100 */
 #define CONFIG_SMDKC100		1	/* working with SMDKC100 */
-
-#include <asm/arch/cpu.h>		/* get chip and board defs */
-
-#define CONFIG_ARCH_CPU_INIT
-
-#define CONFIG_DISPLAY_CPUINFO
-#define CONFIG_DISPLAY_BOARDINFO
-
-/* input clock of PLL: SMDKC100 has 12MHz input clock */
-#define CONFIG_SYS_CLK_FREQ		12000000
 
 /* DRAM Base */
 #define CONFIG_SYS_SDRAM_BASE		0x30000000
@@ -37,47 +36,26 @@
 /* Text Base */
 #define CONFIG_SYS_TEXT_BASE		0x34800000
 
-#define CONFIG_SETUP_MEMORY_TAGS
-#define CONFIG_CMDLINE_TAG
-#define CONFIG_INITRD_TAG
-#define CONFIG_CMDLINE_EDITING
-
-/*
- * Size of malloc() pool
- * 1MB = 0x100000, 0x100000 = 1024 * 1024
- */
-#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + (1 << 20))
 /*
  * select serial console configuration
  */
 #define CONFIG_SERIAL0			1	/* use SERIAL 0 on SMDKC100 */
 
-/* PWM */
-#define CONFIG_PWM			1
-
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
-#define CONFIG_BAUDRATE			115200
 
 /***********************************************************
  * Command definition
  ***********************************************************/
-#include <config_cmd_default.h>
 
 #undef CONFIG_CMD_FLASH
 #undef CONFIG_CMD_IMLS
 #undef CONFIG_CMD_NAND
 
-#define CONFIG_CMD_CACHE
 #define CONFIG_CMD_REGINFO
 #define CONFIG_CMD_ONENAND
 #define CONFIG_CMD_ELF
-#define CONFIG_CMD_FAT
 #define CONFIG_CMD_MTDPARTS
-
-#define CONFIG_BOOTDELAY	3
-
-#define CONFIG_ZERO_BOOTDELAY_CHECK
 
 #define CONFIG_MTD_DEVICE
 #define CONFIG_MTD_PARTITIONS
@@ -153,14 +131,7 @@
 /*
  * Miscellaneous configurable options
  */
-#define CONFIG_SYS_LONGHELP		/* undef to save memory */
-#define CONFIG_SYS_HUSH_PARSER		/* use "hush" command parser	*/
 #define CONFIG_SYS_PROMPT		"SMDKC100 # "
-#define CONFIG_SYS_CBSIZE	256	/* Console I/O Buffer Size */
-#define CONFIG_SYS_PBSIZE	384	/* Print Buffer Size */
-#define CONFIG_SYS_MAXARGS	16	/* max number of command args */
-/* Boot Argument Buffer Size */
-#define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
 /* memtest works on */
 #define CONFIG_SYS_MEMTEST_START	CONFIG_SYS_SDRAM_BASE
 #define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_SDRAM_BASE + 0x5e00000)
@@ -176,8 +147,6 @@
 /*-----------------------------------------------------------------------
  * FLASH and environment organization
  */
-#define CONFIG_SYS_NO_FLASH		1
-
 #define CONFIG_SYS_MONITOR_LEN		(256 << 10)	/* 256 KiB */
 #define CONFIG_IDENT_STRING		" for SMDKC100"
 
@@ -203,8 +172,6 @@
 #define CONFIG_SAMSUNG_ONENAND		1
 #define CONFIG_SYS_ONENAND_BASE		0xE7100000
 
-#define CONFIG_DOS_PARTITION		1
-
 #define CONFIG_SYS_INIT_SP_ADDR	(CONFIG_SYS_LOAD_ADDR - 0x1000000)
 
 /*
@@ -216,5 +183,7 @@
 #define CONFIG_SMC911X_BASE    0x98800300      /* SMC911X Drive Base   */
 #define CONFIG_ENV_SROM_BANK   3       /* Select SROM Bank-3 for Ethernet*/
 #endif /* CONFIG_CMD_NET */
+
+#define CONFIG_DEFAULT_DEVICE_TREE	s5pc1xx-smdkc100
 
 #endif	/* __CONFIG_H */
