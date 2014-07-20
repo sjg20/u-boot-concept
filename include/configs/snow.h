@@ -10,8 +10,12 @@
 #define __CONFIG_SNOW_H
 
 #include <configs/exynos5250-common.h>
+#include <configs/exynos5-dt-common.h>
 
 #undef CONFIG_DEFAULT_DEVICE_TREE
 #define CONFIG_DEFAULT_DEVICE_TREE	exynos5250-snow
+
+#define CONFIG_CROS_EC_I2C		/* Support CROS_EC over I2C */
+#define CONFIG_POWER_TPS65090_I2C
 
 #endif	/* __CONFIG_SNOW_H */
