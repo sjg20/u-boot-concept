@@ -6,6 +6,9 @@ choice
 config TARGET_JETSON_TK1
 	bool "NVIDIA Tegra124 Jetson TK1 board"
 
+config TARGET_NORRIN
+	bool "NVIDIA Tegra124 Norrin"
+
 config TARGET_VENICE2
 	bool "NVIDIA Tegra124 Venice2"
 
@@ -15,6 +18,7 @@ config SYS_SOC
 	default "tegra124"
 
 source "board/nvidia/jetson-tk1/Kconfig"
+source "board/nvidia/norrin/Kconfig"
 source "board/nvidia/venice2/Kconfig"
 
 endif
