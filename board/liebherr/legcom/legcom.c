@@ -225,10 +225,8 @@ iomux_v3_cfg_t const misc_pads[] = {
 	MX6_PAD_DISP0_DAT10__GPIO4_IO31	| MUX_PAD_CTRL(NO_PAD_CTRL),
 	MX6_PAD_DISP0_DAT11__GPIO5_IO05	| MUX_PAD_CTRL(NO_PAD_CTRL),
 	MX6_PAD_DISP0_DAT12__GPIO5_IO06	| MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_DISP0_DAT13__GPIO5_IO07	| MUX_PAD_CTRL(NO_PAD_CTRL),
 	MX6_PAD_DISP0_DAT14__GPIO5_IO08	| MUX_PAD_CTRL(NO_PAD_CTRL),
 	MX6_PAD_DISP0_DAT18__GPIO5_IO12	| MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_DISP0_DAT19__GPIO5_IO13	| MUX_PAD_CTRL(NO_PAD_CTRL),
 	MX6_PAD_CSI0_PIXCLK__GPIO5_IO18	| MUX_PAD_CTRL(NO_PAD_CTRL),
 	MX6_PAD_CSI0_DATA_EN__GPIO5_IO20 | MUX_PAD_CTRL(NO_PAD_CTRL),
 	MX6_PAD_CSI0_VSYNC__GPIO5_IO21	| MUX_PAD_CTRL(NO_PAD_CTRL),
@@ -242,7 +240,6 @@ iomux_v3_cfg_t const misc_pads[] = {
 	MX6_PAD_EIM_BCLK__GPIO6_IO31	| MUX_PAD_CTRL(NO_PAD_CTRL),
 	/*MX6_PAD_SD3_DAT5__GPIO7_IO00	| MUX_PAD_CTRL(NO_PAD_CTRL),*/
 	MX6_PAD_SD3_DAT4__GPIO7_IO01	| MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_SD3_DAT2__GPIO7_IO06	| MUX_PAD_CTRL(NO_PAD_CTRL),
 	MX6_PAD_SD3_DAT3__GPIO7_IO07	| MUX_PAD_CTRL(NO_PAD_CTRL),
 	MX6_PAD_SD3_RST__GPIO7_IO08	| MUX_PAD_CTRL(NO_PAD_CTRL),
 	/* GPT */
@@ -619,12 +616,24 @@ int board_ehci_power(int port, int on)
 
 #if defined(CONFIG_VIDEO_IPUV3)
 
-#define LVDS0_BACKLIGHT_GP IMX_GPIO_NR(5, 7)
+#define LCD0_BL_ON	IMX_GPIO_NR(5, 7)
+#define LCD0_BL_EN	IMX_GPIO_NR(5, 13)
+#define LCD0_VCC_EN	IMX_GPIO_NR(7, 6)
+/*
+#define LCD1_BL_ON	IMX_GPIO_NR(x, y)
+#define LCD1_BL_EN	IMX_GPIO_NR(x, y)
+#define LCD1_VCC_EN	IMX_GPIO_NR(x, y)
+*/
 
 static iomux_v3_cfg_t const backlight_pads[] = {
 
 	/* Backlight on LVDS connector: X47 and X49 */
-	MX6_PAD_DISP0_DAT13__GPIO5_IO07 | MUX_PAD_CTRL(NO_PAD_CTRL),
+	/* LVDS0 */
+	MX6_PAD_DISP0_DAT19__GPIO5_IO13	| MUX_PAD_CTRL(NO_PAD_CTRL), /* LCD0 BL PWR */
+	MX6_PAD_DISP0_DAT13__GPIO5_IO07 | MUX_PAD_CTRL(NO_PAD_CTRL), /* LCD0 BL ON */
+	MX6_PAD_SD3_DAT2__GPIO7_IO06	| MUX_PAD_CTRL(NO_PAD_CTRL), /* LCD0 VCC_EN */
+	/* LVDS1 */
+	/*TODO*/
 };
 
 struct display_info_t {
@@ -655,14 +664,35 @@ static int detect_i2c(struct display_info_t const *dev)
 		(0 == i2c_probe(dev->addr)));
 }
 
-static void enable_lvds(struct display_info_t const *dev)
+static void enable_lvds0(struct display_info_t const *dev)
 {
-	struct iomuxc *iomux = (struct iomuxc *)
-				IOMUXC_BASE_ADDR;
-	u32 reg = readl(&iomux->gpr[2]);
+	struct iomuxc *iomux = (struct iomuxc *)IOMUXC_BASE_ADDR;
+	struct pwm_regs *pwm = (struct pwm_regs*)PWM2_BASE_ADDR;
+	u32 reg;
+
+	debug("lcd0 en\n");
+	reg = readl(&iomux->gpr[2]);
 	reg |= IOMUXC_GPR2_DATA_WIDTH_CH0_24BIT;
 	writel(reg, &iomux->gpr[2]);
-	gpio_direction_output(LVDS0_BACKLIGHT_GP, 1);
+
+	gpio_direction_output(LCD0_VCC_EN, 1);
+	gpio_direction_output(LCD0_BL_EN, 1);
+	mdelay(200);
+	gpio_direction_output(LCD0_BL_ON, 1);
+	mdelay(10);
+
+	/* Enable backlight PWM with 90% duty cycle */
+	reg = 0x01c20050;
+	writel(reg, &pwm->cr);
+	writel(0x0000c15c, &pwm->sar);
+	writel(0x0000d6d6, &pwm->pr);
+	reg |= 1;
+	writel(reg, &pwm->cr);
+}
+
+static void enable_lvds1(struct display_info_t const *dev)
+{
+	debug("lcd1 en\n");
 }
 
 static struct display_info_t const displays[] = {{
@@ -690,7 +720,7 @@ static struct display_info_t const displays[] = {{
 	.addr	= 0x4,
 	.pixfmt	= IPU_PIX_FMT_LVDS666,
 	.detect	= detect_i2c,
-	.enable	= enable_lvds,
+	.enable	= enable_lvds0,
 	.mode	= {
 		.name           = "LVDS0",
 		.refresh        = 60,
@@ -710,7 +740,7 @@ static struct display_info_t const displays[] = {{
 	.addr	= 0x38,
 	.pixfmt	= IPU_PIX_FMT_LVDS666,
 	.detect	= detect_i2c,
-	.enable	= enable_lvds,
+	.enable	= enable_lvds1,
 	.mode	= {
 		.name           = "LVDS1",
 		.refresh        = 60,
@@ -821,10 +851,17 @@ static void setup_display(void)
 	       <<IOMUXC_GPR3_LVDS0_MUX_CTL_OFFSET);
 	writel(reg, &iomux->gpr[3]);
 
-	/* backlights off until needed */
 	imx_iomux_v3_setup_multiple_pads(backlight_pads,
 					 ARRAY_SIZE(backlight_pads));
-	gpio_direction_input(LVDS0_BACKLIGHT_GP);
+	/* backlights off until needed */
+	gpio_direction_input(LCD0_VCC_EN);
+	gpio_direction_input(LCD0_BL_EN);
+	gpio_direction_input(LCD0_BL_ON);
+	/*
+	gpio_direction_input(LCD1_VCC_EN);
+	gpio_direction_input(LCD1_BL_EN);
+	gpio_direction_input(LCD1_BL_ON);
+	*/
 }
 #endif
 

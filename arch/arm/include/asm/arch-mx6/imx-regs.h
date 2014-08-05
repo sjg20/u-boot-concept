@@ -665,5 +665,14 @@ struct wdog_regs {
 	u16	wmcr;	/* Miscellaneous Control */
 };
 
+struct pwm_regs {
+	u32	cr;
+	u32	sr;
+	u32	ir;
+	u32	sar;
+	u32	pr;
+	u32	cnr;
+};
+
 #endif /* __ASSEMBLER__*/
 #endif /* __ASM_ARCH_MX6_IMX_REGS_H__ */

@@ -207,6 +207,9 @@
     "upd_uboot=if run uload;then run update;else echo stopping update...;fi\0" \
     "recoveryargs=setenv bootargs ${bootargs} root=/dev/ram0 rw eth=${ethaddr}\0"\
     "recovery=sf probe;sf read ${loadaddr} ${offset_recovery} ${len_recovery};run addrecoverip addcons recoveryargs;bootm\0"\
+    "load_splash=usb start;ext2load usb 0:1 ${loadaddr} /boot/testimg.bmp\0" \
+    "if run load_splash;then echo Showing testimage;bmp disp ${loadaddr};else echo Cannot load BMP file...;fi\0" \
+    "panel=LVDS0\0" \
     "\0" \
 
 /* Miscellaneous configurable options */
