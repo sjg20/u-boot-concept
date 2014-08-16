@@ -45,8 +45,10 @@ extern int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
 DECLARE_GLOBAL_DATA_PTR;
 
 #if defined(CONFIG_IMAGE_FORMAT_LEGACY)
+#ifndef CONFIG_SPL_BUILD
 static const image_header_t *image_get_ramdisk(ulong rd_addr, uint8_t arch,
 						int verify);
+#endif
 #endif
 #else
 #include "mkimage.h"
@@ -62,6 +64,7 @@ static const image_header_t *image_get_ramdisk(ulong rd_addr, uint8_t arch,
 #endif
 
 static const table_entry_t uimage_arch[] = {
+#ifndef CONFIG_SPL_BUILD
 	{	IH_ARCH_INVALID,	NULL,		"Invalid ARCH",	},
 	{	IH_ARCH_ALPHA,		"alpha",	"Alpha",	},
 	{	IH_ARCH_ARM,		"arm",		"ARM",		},
@@ -86,10 +89,12 @@ static const table_entry_t uimage_arch[] = {
 	{	IH_ARCH_ARM64,		"arm64",	"AArch64",	},
 	{	IH_ARCH_ARC,		"arc",		"ARC",		},
 	{	IH_ARCH_X86_64,		"x86_64",	"AMD x86_64",	},
+#endif
 	{	-1,			"",		"",		},
 };
 
 static const table_entry_t uimage_os[] = {
+#ifndef CONFIG_SPL_BUILD
 	{	IH_OS_INVALID,	NULL,		"Invalid OS",		},
 	{	IH_OS_LINUX,	"linux",	"Linux",		},
 #if defined(CONFIG_LYNXKDI) || defined(USE_HOSTCC)
@@ -120,10 +125,12 @@ static const table_entry_t uimage_os[] = {
 	{	IH_OS_SOLARIS,	"solaris",	"Solaris",		},
 	{	IH_OS_SVR4,	"svr4",		"SVR4",			},
 #endif
+#endif
 	{	-1,		"",		"",			},
 };
 
 static const table_entry_t uimage_type[] = {
+#ifndef CONFIG_SPL_BUILD
 	{	IH_TYPE_AISIMAGE,   "aisimage",   "Davinci AIS image",},
 	{	IH_TYPE_FILESYSTEM, "filesystem", "Filesystem Image",	},
 	{	IH_TYPE_FIRMWARE,   "firmware",	  "Firmware",		},
@@ -145,15 +152,18 @@ static const table_entry_t uimage_type[] = {
 	{	IH_TYPE_MXSIMAGE,   "mxsimage",   "Freescale MXS Boot Image",},
 	{	IH_TYPE_ATMELIMAGE, "atmelimage", "ATMEL ROM-Boot Image",},
 	{	IH_TYPE_X86_SETUP,  "x86_setup",  "x86 setup.bin",    },
+#endif
 	{	-1,		    "",		  "",			},
 };
 
 static const table_entry_t uimage_comp[] = {
+#ifndef CONFIG_SPL_BUILD
 	{	IH_COMP_NONE,	"none",		"uncompressed",		},
 	{	IH_COMP_BZIP2,	"bzip2",	"bzip2 compressed",	},
 	{	IH_COMP_GZIP,	"gzip",		"gzip compressed",	},
 	{	IH_COMP_LZMA,	"lzma",		"lzma compressed",	},
 	{	IH_COMP_LZO,	"lzo",		"lzo compressed",	},
+#endif
 	{	-1,		"",		"",			},
 };
 
@@ -266,6 +276,7 @@ void image_multi_getimg(const image_header_t *hdr, ulong idx,
 	}
 }
 
+#ifndef CONFIG_SPL_BUILD
 static void image_print_type(const image_header_t *hdr)
 {
 	const char *os, *arch, *type, *comp;
@@ -332,10 +343,11 @@ void image_print_contents(const void *ptr)
 		}
 	}
 }
-
+#endif
 
 #ifndef USE_HOSTCC
 #if defined(CONFIG_IMAGE_FORMAT_LEGACY)
+#ifndef CONFIG_SPL_BUILD
 /**
  * image_get_ramdisk - get and verify ramdisk image
  * @rd_addr: ramdisk image start address
@@ -397,6 +409,7 @@ static const image_header_t *image_get_ramdisk(ulong rd_addr, uint8_t arch,
 
 	return rd_hdr;
 }
+#endif
 #endif
 #endif /* !USE_HOSTCC */
 
@@ -833,6 +846,7 @@ int genimg_has_config(bootm_headers_t *images)
 	return 0;
 }
 
+#ifndef CONFIG_SPL_BUILD
 /**
  * boot_get_ramdisk - main ramdisk handling routine
  * @argc: command argument count
@@ -1268,4 +1282,5 @@ int image_setup_linux(bootm_headers_t *images)
 	return 0;
 }
 #endif /* CONFIG_LMB */
+#endif
 #endif /* !USE_HOSTCC */
