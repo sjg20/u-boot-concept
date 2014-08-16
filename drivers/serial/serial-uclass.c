@@ -180,9 +180,11 @@ int serial_stub_tstc(struct stdio_dev *sdev)
 
 static int serial_post_probe(struct udevice *dev)
 {
-	struct stdio_dev sdev;
 	struct dm_serial_ops *ops = serial_get_ops(dev);
+#ifdef CONFIG_DM_STDIO
 	struct serial_dev_priv *upriv = dev->uclass_priv;
+	struct stdio_dev sdev;
+#endif
 	int ret;
 
 	/* Set the baud rate */
@@ -192,9 +194,9 @@ static int serial_post_probe(struct udevice *dev)
 			return ret;
 	}
 
+#ifdef CONFIG_DM_STDIO
 	if (!(gd->flags & GD_FLG_RELOC))
 		return 0;
-
 	memset(&sdev, '\0', sizeof(sdev));
 
 	strncpy(sdev.name, dev->name, sizeof(sdev.name));
@@ -205,7 +207,7 @@ static int serial_post_probe(struct udevice *dev)
 	sdev.getc = serial_stub_getc;
 	sdev.tstc = serial_stub_tstc;
 	stdio_register_dev(&sdev, &upriv->sdev);
-
+#endif
 	return 0;
 }
 
