@@ -118,7 +118,8 @@ static const struct pmux_pingrp_config norrin_pingrps[] = {
 	PINCFG(PI2,                    RSVD4,       DOWN,   TRISTATE, OUTPUT,  DEFAULT, DEFAULT),
 	PINCFG(PI3,                    SPI4,        NORMAL, NORMAL,   OUTPUT,  DEFAULT, DEFAULT),
 	PINCFG(PI4,                    GMI,         DOWN,   TRISTATE, OUTPUT,  DEFAULT, DEFAULT),
-	PINCFG(PI5,                    DEFAULT,     NORMAL, NORMAL,   OUTPUT,  DEFAULT, DEFAULT),
+// Causes nyan to reset after 4 seconds
+// 	PINCFG(PI5,                    DEFAULT,     NORMAL, NORMAL,   OUTPUT,  DEFAULT, DEFAULT),
 	PINCFG(PI6,                    DEFAULT,     NORMAL, NORMAL,   INPUT,   DEFAULT, DEFAULT),
 	PINCFG(PI7,                    DEFAULT,     NORMAL, NORMAL,   INPUT,   DEFAULT, DEFAULT),
 	PINCFG(PJ0,                    DEFAULT,     UP,     NORMAL,   INPUT,   DEFAULT, DEFAULT),
