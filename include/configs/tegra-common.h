@@ -49,6 +49,8 @@
 #ifdef CONFIG_SPL_BUILD
 #define CONFIG_SYS_MALLOC_SIMPLE
 #endif
+#define CONFIG_SYS_NONCACHED_MEMORY	(1 << 20)	/* 1 MiB */
+
 /*
  * NS16550 Configuration
  */
