@@ -14,7 +14,7 @@
 #include <hash.h>
 #include <malloc.h>
 #include <os.h>
-#include <sha256.h>
+#include <u-boot/sha256.h>
 #include <spi_flash.h>
 #include <asm/io.h>
 #include <linux/lzo.h>
@@ -729,7 +729,7 @@ int vboot_ro_prepare(struct vboot_info *vboot)
 		switch (fw->entry->compress_algo) {
 #ifdef CONFIG_LZO
 		case FMAP_COMPRESS_LZO: {
-			uint unc_len;
+			size_t unc_len;
 			int ret;
 
 			bootstage_start(BOOTSTAGE_ID_ACCUM_DECOMP,

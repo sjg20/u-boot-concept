@@ -740,7 +740,7 @@ twostop_jump(crossystem_data_t *cdata, void *fw_blob, uint32_t fw_size,
 	switch (entry->compress) {
 #ifdef CONFIG_LZO
 	case CROS_COMPRESS_LZO: {
-		uint unc_len;
+		size_t unc_len;
 		int ret;
 
 		bootstage_start(BOOTSTAGE_ID_ACCUM_DECOMP, "decompress_image");

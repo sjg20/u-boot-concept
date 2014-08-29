@@ -163,7 +163,7 @@ static int sw_wp_enabled_spi(firmware_storage_t *file)
 	uint8_t yes_it_is = 0;
 	int r = 0;
 
-	r = spi_flash_read_sw_wp_status(file->context, &yes_it_is);
+// 	r = spi_flash_read_sw_wp_status(file->context, &yes_it_is);
 	if (r) {
 		VBDEBUG("spi_flash_read_sw_wp_status() failed: %d\n", r);
 		return 0;
