@@ -447,8 +447,8 @@ static int reserve_mmu(void)
 	gd->arch.tlb_size = PGTABLE_SIZE;
 	gd->relocaddr -= gd->arch.tlb_size;
 
-	/* round down to next 64 kB limit */
-	gd->relocaddr &= ~(0x10000 - 1);
+	/* round down to next 16 kB limit */
+	gd->relocaddr &= ~(0x4000 - 1);
 
 	gd->arch.tlb_addr = gd->relocaddr;
 	debug("TLB table from %08lx to %08lx\n", gd->arch.tlb_addr,
@@ -498,6 +498,8 @@ static int reserve_video(void)
 
 static int reserve_uboot(void)
 {
+	if (gd_no_reloc())
+		return 0;
 	/*
 	 * reserve memory for U-Boot code, data & bss
 	 * round down to next 4 kB limit
@@ -740,6 +742,10 @@ static int setup_reloc(void)
 #ifdef CONFIG_SYS_TEXT_BASE
 	gd->reloc_off = gd->relocaddr - CONFIG_SYS_TEXT_BASE;
 #endif
+	if (gd_no_reloc()) {
+		debug("Relocation is disabled\n");
+		gd->relocaddr = CONFIG_SYS_TEXT_BASE;
+	}
 	memcpy(gd->new_gd, (char *)gd, sizeof(gd_t));
 
 	debug("Relocation Offset is: %08lx\n", gd->reloc_off);

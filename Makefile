@@ -727,6 +727,12 @@ CFLAGS_VBOOT = $(filter-out -Wstrict-prototypes, $(CFLAGS))
 #
 VBOOT_SUBMAKE_FIRMWARE_ARCH=$(filter-out sandbox,$(subst x86,i386,$(ARCH)))
 VBOOT_SUBMAKE_ARCH=$(subst sandbox,amd64,$(ARCH))
+
+# HACK: for sandbox, vboot 2014 seems to assume it is a host build
+ifdef CONFIG_SANDBOX
+VBOOT_SUBMAKE_FIRMWARE_ARCH=amd64
+endif
+
 .PHONY : vboot
 vboot:
 	FIRMWARE_ARCH=$(VBOOT_SUBMAKE_FIRMWARE_ARCH) \
