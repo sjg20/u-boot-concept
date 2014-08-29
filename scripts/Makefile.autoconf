@@ -92,6 +92,8 @@ ifneq ($(KBUILD_SRC),)
 endif
 	$(Q)ln -fsn $(srctree)/arch/$(ARCH)/include/asm/arch-$(if $(SOC),$(SOC),$(CPU)) \
 		$(if $(KBUILD_SRC),,arch/$(ARCH)/)include/asm/arch
+	$(Q)ln -fsn $(srctree)/cros/include \
+		include/cros
 
 PHONY += FORCE
 FORCE:
