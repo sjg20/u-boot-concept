@@ -11,6 +11,7 @@
 /* Implementation of vboot flag accessor from GPIO hardware */
 
 #include <common.h>
+#include <dm.h>
 #include <fdtdec.h>
 #include <asm-generic/gpio.h>
 #include <asm/global_data.h>
@@ -73,10 +74,16 @@ static int vboot_flag_setup_gpio(enum vboot_flag_id id,
 
 #ifdef CONFIG_SANDBOX
 	int value;
+	struct udevice *dev;
+
+	if (uclass_get_device(UCLASS_GPIO, 0, &dev)) {
+		VBDEBUG("Cannot find sandbox GPIO\n");
+		return -1;
+	}
 
 	value = fdtdec_get_int(blob, context->node, "sandbox-value", -1);
 	if (value != -1)
-		sandbox_gpio_set_value(context->gpio_state.gpio, value);
+		sandbox_gpio_set_value(dev, context->gpio_state.gpio, value);
 	printf("Sandbox gpio %d = %d\n", context->gpio_state.gpio, value);
 #endif
 
