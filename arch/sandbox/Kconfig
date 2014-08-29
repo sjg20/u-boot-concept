@@ -9,8 +9,17 @@ config SYS_BOARD
 	string
 	default "sandbox"
 
-config SYS_CONFIG_NAME
-	string
-	default "sandbox"
+choice
+	prompt "Target select"
+
+config TARGET_SANDBOX
+	bool "Support sandbox"
+
+config TARGET_CHROMEOS_SANDBOX
+	bool "Support Chrome OS sandbox"
+
+endchoice
+
+source "board/sandbox/Kconfig"
 
 endmenu
