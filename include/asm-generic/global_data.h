@@ -108,5 +108,12 @@ typedef struct global_data {
 #define GD_FLG_DISABLE_CONSOLE	0x00040	/* Disable console (in & out)	   */
 #define GD_FLG_ENV_READY	0x00080	/* Env. imported into hash table   */
 #define GD_FLG_SERIAL_READY	0x00100	/* Pre-reloc serial console ready  */
+#define GD_FLG_NO_RELOC		0x00200	/* Relocation is disabled	   */
+
+#ifdef CONFIG_SYS_ALLOW_NO_RELOC
+#define gd_no_reloc()	(gd->flags & GD_FLG_NO_RELOC)
+#else
+#define gd_no_reloc()	0
+#endif
 
 #endif /* __ASM_GENERIC_GBL_DATA_H */

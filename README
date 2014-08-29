@@ -4399,6 +4399,15 @@ use the "saveenv" command to store a valid environment.
 		build system checks that the actual size does not
 		exceed it.
 
+- CONFIG_SYS_ALLOW_NO_RELOC
+		Allows ARM boards to disable relocation by setting the
+		GD_FLG_NO_RELOC flag in their dram_init() function. This can
+		help with running U-Boot in memory-contrained environments,
+		such as on-chip SRAM, without using SPL. Memory is still
+		reserved for malloc(). The FDT is still relocated since it
+		typically resides where BSS data will end up.
+
+
 Low Level (hardware related) configuration options:
 ---------------------------------------------------
 
