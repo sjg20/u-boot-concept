@@ -94,6 +94,11 @@ enum fdt_compat_id {
 	COMPAT_SANDBOX_LCD_SDL,		/* Sandbox LCD emulation with SDL */
 	COMPAT_TI_TPS65090,		/* Texas Instrument TPS65090 */
 	COMPAT_NXP_PTN3460,		/* NXP PTN3460 DP/LVDS bridge */
+	COMPAT_GOOGLE_CONST_FLAG,	/* Google Constant Flag-Input */
+	COMPAT_GOOGLE_GPIO_FLAG,	/* Google GPIO Flag-Input */
+	COMPAT_GOOGLE_CROS_EC_FLAG,	/* Google EC Flag-Input */
+	COMPAT_GOOGLE_SYSINFO_FLAG,	/* Google Sysinfo Flag-Input */
+	COMPAT_GOOGLE_KEY_FLAG,		/* Google Key Flag-Input */
 
 	COMPAT_COUNT,
 };

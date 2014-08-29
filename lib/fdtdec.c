@@ -70,6 +70,11 @@ static const char * const compat_names[COMPAT_COUNT] = {
 	COMPAT(SANDBOX_LCD_SDL, "sandbox,lcd-sdl"),
 	COMPAT(TI_TPS65090, "ti,tps65090"),
 	COMPAT(COMPAT_NXP_PTN3460, "nxp,ptn3460"),
+	COMPAT(COMPAT_GOOGLE_CONST_FLAG, "google,const-flag"),
+	COMPAT(COMPAT_GOOGLE_GPIO_FLAG, "google,gpio-flag"),
+	COMPAT(COMPAT_GOOGLE_CROS_EC_FLAG, "google,cros-ec-flag"),
+	COMPAT(COMPAT_GOOGLE_SYSINFO_FLAG, "google,sysinfo-flag"),
+	COMPAT(COMPAT_GOOGLE_KEY_FLAG, "google,key-flag"),
 };
 
 const char *fdtdec_get_compatible(enum fdt_compat_id id)
