@@ -112,7 +112,7 @@ int vboot_ro_init(struct vboot_info *vboot)
 	/* Read read-only firmware ID */
 	if (vboot->file.read(&vboot->file,
 			     vboot->fmap.readonly.firmware_id.offset,
-			     MIN(sizeof(vboot->readonly_firmware_id),
+			     min(sizeof(vboot->readonly_firmware_id),
 			     vboot->fmap.readonly.firmware_id.length),
 			     vboot->readonly_firmware_id)) {
 		VBDEBUG("failed to read firmware ID\n");
@@ -133,7 +133,7 @@ int vboot_ro_init(struct vboot_info *vboot)
 	}
 	if (vboot->file.read(&vboot->file,
 			     vboot->fmap.readonly.gbb.offset + gbb.hwid_offset,
-			     MIN(sizeof(vboot->hardware_id), gbb.hwid_size),
+			     min(sizeof(vboot->hardware_id), gbb.hwid_size),
 			     &vboot->hardware_id)) {
 		VBDEBUG("failed to read hardware ID\n");
 		goto err;
@@ -599,7 +599,7 @@ int vboot_ro_select_firmware(struct vboot_info *vboot)
 	}
 
 	entry = &fw->fw_entry->firmware_id;
-	len = MIN(sizeof(vboot->firmware_id), entry->length);
+	len = min(sizeof(vboot->firmware_id), entry->length);
 	if (vboot->file.read(&vboot->file, entry->offset,
 			     len, vboot->firmware_id)) {
 		VBDEBUG("failed to read active firmware id\n");

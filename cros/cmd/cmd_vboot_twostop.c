@@ -695,7 +695,7 @@ twostop_select_and_set_main_firmware(struct twostop_fmap *fmap,
 	}
 
 	if (file->read(file, id_offset,
-		       MIN(sizeof(firmware_id), id_length),
+		       min(sizeof(firmware_id), id_length),
 		       firmware_id)) {
 		VBDEBUG("failed to read active firmware id\n");
 		firmware_id[0] = '\0';
@@ -824,7 +824,7 @@ twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
 
 					/* Read read-only firmware ID */
 	if (file->read(file, fmap->readonly.firmware_id.offset,
-		       MIN(sizeof(readonly_firmware_id),
+		       min(sizeof(readonly_firmware_id),
 		       fmap->readonly.firmware_id.length),
 		       readonly_firmware_id)) {
 		VBDEBUG("failed to read firmware ID\n");
@@ -841,7 +841,7 @@ twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
 
 	gbbh = (GoogleBinaryBlockHeader *)gbb;
 	memcpy(hardware_id, gbb + gbbh->hwid_offset,
-	       MIN(sizeof(hardware_id), gbbh->hwid_size));
+	       min(sizeof(hardware_id), gbbh->hwid_size));
 	VBDEBUG("hardware id: \"%s\"\n", hardware_id);
 
 	/* Initialize crossystem data */
