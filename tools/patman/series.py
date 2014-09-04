@@ -225,7 +225,7 @@ class Series(dict):
                                                raise_on_error=raise_on_error)
             list += gitutil.BuildEmailList(commit.cc_list,
                                            raise_on_error=raise_on_error)
-            list += get_maintainer.GetMaintainer(commit.patch)
+            #list += get_maintainer.GetMaintainer(commit.patch)
             all_ccs += list
             print >>fd, commit.patch, ', '.join(list)
             self._generated_cc[commit.patch] = list
