@@ -289,4 +289,6 @@
 #define CONFIG_OF_SEPARATE
 #define CONFIG_OF_LIBFDT
 
+#define CONFIG_SYS_GENERIC_BOARD
+
 #endif	/* __CONFIG_H */
