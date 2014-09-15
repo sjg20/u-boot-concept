@@ -71,8 +71,21 @@ static iomux_v3_cfg_t const sata_pads[] = {
 
 static int cm_fx6_setup_issd(void)
 {
+	int ret;
+	int i;
+
 	SETUP_IOMUX_PADS(sata_pads);
+
+	for (i = 0; i < ARRAY_SIZE(cm_fx6_issd_gpios); i++) {
+		ret = gpio_request(cm_fx6_issd_gpios[i], "sata");
+		if (ret)
+			return ret;
+	}
+
 	/* Make sure this gpio has logical 0 value */
+	ret = gpio_request(CM_FX6_SATA_PWLOSS_INT, "sata_pwloss_int");
+	if (ret)
+		return ret;
 	gpio_direction_output(CM_FX6_SATA_PWLOSS_INT, 0);
 	udelay(100);
 
@@ -350,12 +363,17 @@ static int handle_mac_address(void)
 
 int board_eth_init(bd_t *bis)
 {
-	int res = handle_mac_address();
-	if (res)
+	int err;
+
+	err = handle_mac_address();
+	if (err)
 		puts("No MAC address found\n");
 
 	SETUP_IOMUX_PADS(enet_pads);
 	/* phy reset */
+	err = gpio_request(CM_FX6_ENET_NRST, "enet_nrst");
+	if (err)
+		printf("Etnernet NRST gpio request failed: %d\n", err);
 	gpio_direction_output(CM_FX6_ENET_NRST, 0);
 	udelay(500);
 	gpio_set_value(CM_FX6_ENET_NRST, 1);
