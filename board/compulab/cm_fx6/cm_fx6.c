@@ -69,24 +69,52 @@ static iomux_v3_cfg_t const sata_pads[] = {
 	IOMUX_PADS(PAD_EIM_BCLK__GPIO6_IO31   | MUX_PAD_CTRL(NO_PAD_CTRL)),
 };
 
-static void cm_fx6_setup_issd(void)
+static int cm_fx6_setup_issd(void)
 {
-	SETUP_IOMUX_PADS(sata_pads);
-	/* Make sure this gpio has logical 0 value */
+	static bool init_done = false;
+	int ret;
+	int i;
+
+	if (!init_done) {
+		SETUP_IOMUX_PADS(sata_pads);
+
+		for (i = 0; i < ARRAY_SIZE(cm_fx6_issd_gpios); i++) {
+			ret = gpio_request(cm_fx6_issd_gpios[i], "sata");
+			if (ret)
+				return ret;
+		}
+
+		/* Make sure this gpio has logical 0 value */
+		ret = gpio_request(CM_FX6_SATA_PWLOSS_INT, "sata_pwloss_int");
+		if (ret)
+			return ret;
+		init_done = true;
+	}
+
 	gpio_direction_output(CM_FX6_SATA_PWLOSS_INT, 0);
 	udelay(100);
 
 	cm_fx6_sata_power(0);
 	mdelay(250);
 	cm_fx6_sata_power(1);
+
+	return 0;
 }
 
 #define CM_FX6_SATA_INIT_RETRIES	10
 int sata_initialize(void)
 {
-	int err, i;
+	int err, i, ret;
 
-	cm_fx6_setup_issd();
+	/*
+	 * cm-fx6 may have iSSD not assembled and in this case it has
+	 * bypasses for a (m)SATA socket on the baseboard. The socketed
+	 * device is not controlled by those GPIOs. So just print a warning
+	 * if the setup fails.
+	 */
+	ret = cm_fx6_setup_issd();
+	if (ret)
+		printf("Warning: iSSD setup failed!\n");
 	for (i = 0; i < CM_FX6_SATA_INIT_RETRIES; i++) {
 		err = setup_sata();
 		if (err) {
@@ -183,9 +211,9 @@ static int cm_fx6_usb_hub_reset(void)
 	int err;
 
 	err = gpio_request(CM_FX6_USB_HUB_RST, "usb hub rst");
-	if (err) {
+	if (err && err != -EBUSY) {
 		printf("USB hub rst gpio request failed: %d\n", err);
-		return -1;
+		return err;
 	}
 
 	SETUP_IOMUX_PAD(PAD_SD3_RST__GPIO7_IO08 | MUX_PAD_CTRL(NO_PAD_CTRL));
@@ -199,13 +227,13 @@ static int cm_fx6_usb_hub_reset(void)
 
 static int cm_fx6_init_usb_otg(void)
 {
-	int ret;
+	int err;
 	struct iomuxc *iomux = (struct iomuxc *)IOMUXC_BASE_ADDR;
 
-	ret = gpio_request(SB_FX6_USB_OTG_PWR, "usb-pwr");
-	if (ret) {
-		printf("USB OTG pwr gpio request failed: %d\n", ret);
-		return ret;
+	err = gpio_request(SB_FX6_USB_OTG_PWR, "usb-pwr");
+	if (err && err != -EBUSY) {
+		printf("err OTG pwr gpio request failed: %d\n", err);
+		return err;
 	}
 
 	SETUP_IOMUX_PAD(PAD_EIM_D22__GPIO3_IO22 | MUX_PAD_CTRL(NO_PAD_CTRL));
@@ -340,12 +368,17 @@ static int handle_mac_address(void)
 
 int board_eth_init(bd_t *bis)
 {
-	int res = handle_mac_address();
-	if (res)
+	int err;
+
+	err = handle_mac_address();
+	if (err)
 		puts("No MAC address found\n");
 
 	SETUP_IOMUX_PADS(enet_pads);
 	/* phy reset */
+	err = gpio_request(CM_FX6_ENET_NRST, "enet_nrst");
+	if (err)
+		printf("Etnernet NRST gpio request failed: %d\n", err);
 	gpio_direction_output(CM_FX6_ENET_NRST, 0);
 	udelay(500);
 	gpio_set_value(CM_FX6_ENET_NRST, 1);
