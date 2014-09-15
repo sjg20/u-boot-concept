@@ -79,6 +79,14 @@ void cm_fx6_set_ecspi_iomux(void)
 
 int board_spi_cs_gpio(unsigned bus, unsigned cs)
 {
+	/* DM does not support SPL yet and this function is not implemented */
+#ifndef CONFIG_SPL_BUILD
+	int ret;
+
+	ret = gpio_request(CM_FX6_ECSPI_BUS0_CS0, "ecspi_bus0_cs0");
+	if (ret)
+		return ret;
+#endif
 	return (bus == 0 && cs == 0) ? (CM_FX6_ECSPI_BUS0_CS0) : -1;
 }
 #endif
