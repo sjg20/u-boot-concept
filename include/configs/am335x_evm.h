@@ -22,6 +22,12 @@
 # define CONFIG_FIT
 # define CONFIG_TIMESTAMP
 # define CONFIG_LZO
+# define CONFIG_DM
+# define CONFIG_CMD_DM
+# define CONFIG_DM_GPIO
+# define CONFIG_DM_SERIAL
+# define CONFIG_OMAP_SERIAL
+# define CONFIG_SYS_MALLOC_F_LEN	(1 << 10)
 # ifdef CONFIG_ENABLE_VBOOT
 #  define CONFIG_OF_CONTROL
 #  define CONFIG_OF_SEPARATE
@@ -30,6 +36,8 @@
 #  define CONFIG_RSA
 # endif
 #endif
+
+#define CONFIG_CMD_CACHE
 
 #define CONFIG_SYS_BOOTM_LEN		(16 << 20)
 

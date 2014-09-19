@@ -22,10 +22,12 @@
 #include <asm/arch/omap.h>
 
 /* NS16550 Configuration */
-#define CONFIG_SYS_NS16550
+#ifdef CONFIG_SPL_BUILD
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	(-4)
+#endif
 #define CONFIG_SYS_NS16550_CLK		48000000
+#define CONFIG_SYS_NS16550
 
 /* Network defines. */
 #define CONFIG_CMD_NET			/* 'bootp' and 'tftp' */
@@ -33,7 +35,7 @@
 #define CONFIG_CMD_MII
 #define CONFIG_BOOTP_DNS		/* Configurable parts of CMD_DHCP */
 #define CONFIG_BOOTP_DNS2
-#define CONFIG_BOOTP_SEND_HOSTNAME
+#define CONFOIG_BOOTP_SEND_HOSTNAME
 #define CONFIG_BOOTP_GATEWAY
 #define CONFIG_BOOTP_SUBNETMASK
 #define CONFIG_NET_RETRY_COUNT         10
