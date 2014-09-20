@@ -285,7 +285,6 @@ int ns16550_serial_probe(struct udevice *dev)
 #ifdef CONFIG_OF_CONTROL
 int ns16550_serial_ofdata_to_platdata(struct udevice *dev)
 {
-	struct NS16550 *const com_port = dev_get_priv(dev);
 	struct ns16550_platdata *plat = dev->platdata;
 	fdt_addr_t addr;
 
