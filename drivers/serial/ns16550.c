@@ -276,11 +276,13 @@ int ns16550_serial_probe(struct udevice *dev)
 {
 	struct NS16550 *const com_port = dev_get_priv(dev);
 
+	com_port->plat = dev_get_platdata(dev);
 	NS16550_init(com_port, -1);
 
 	return 0;
 }
 
+#ifdef CONFIG_OF_CONTROL
 int ns16550_serial_ofdata_to_platdata(struct udevice *dev)
 {
 	struct NS16550 *const com_port = dev_get_priv(dev);
@@ -294,10 +296,10 @@ int ns16550_serial_ofdata_to_platdata(struct udevice *dev)
 	plat->base = addr;
 	plat->reg_shift = fdtdec_get_int(gd->fdt_blob, dev->of_offset,
 					 "reg-shift", 1);
-	com_port->plat = plat;
 
 	return 0;
 }
+#endif
 
 const struct dm_serial_ops ns16550_serial_ops = {
 	.putc = ns16550_serial_putc,
