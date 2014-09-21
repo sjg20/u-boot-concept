@@ -20,6 +20,7 @@
 #include <fdt_support.h>
 #include <lcd.h>
 #include <mmc.h>
+#include <serial_pl01x.h>
 #include <asm/gpio.h>
 #include <asm/arch/mbox.h>
 #include <asm/arch/sdhci.h>
@@ -34,6 +35,17 @@ static const struct bcm2835_gpio_platdata gpio_platdata = {
 U_BOOT_DEVICE(bcm2835_gpios) = {
 	.name = "gpio_bcm2835",
 	.platdata = &gpio_platdata,
+};
+
+static const struct pl01x_serial_platdata serial_platdata = {
+	.base = 0x20201000,
+	.type = TYPE_PL011,
+	.clock = 3000000,
+};
+
+U_BOOT_DEVICE(bcm2835_serials) = {
+	.name = "serial_pl01x",
+	.platdata = &serial_platdata,
 };
 
 struct msg_get_arm_mem {
