@@ -13,6 +13,9 @@
 #include <image.h>
 #include <linux/compiler.h>
 
+DECLARE_GLOBAL_DATA_PTR;
+gd_t gdata __attribute__ ((section(".data")));
+
 /*
  * In the context of SPL, board_init_f must ensure that any clocks/etc for
  * DDR are enabled, ensure that the stack pointer is valid, clear the BSS
