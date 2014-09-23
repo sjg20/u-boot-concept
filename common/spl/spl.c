@@ -136,7 +136,7 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 	u32 boot_device;
 	debug(">>spl:board_init_r()\n");
 
-#if defined(CONFIG_SYS_SPL_MALLOC_START)
+#if defined(CONFIG_SYS_SPL_MALLOC_SIZE)
 	mem_malloc_init(CONFIG_SYS_SPL_MALLOC_START,
 			CONFIG_SYS_SPL_MALLOC_SIZE);
 	gd->flags |= GD_FLG_FULL_MALLOC_INIT;
