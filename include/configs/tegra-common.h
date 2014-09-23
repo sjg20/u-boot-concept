@@ -19,13 +19,12 @@
 #include <asm/arch/tegra.h>		/* get chip and board defs */
 
 #define CONFIG_DM
+#define CONFIG_SPL_DM
 #define CONFIG_CMD_DM
-#define CONFIG_DM_GPIO
-#ifndef CONFIG_SPL_BUILD
 #define CONFIG_DM_SERIAL
-#endif
 #define CONFIG_DM_SPI
 #define CONFIG_DM_SPI_FLASH
+#define CONFIG_DM_GPIO
 
 #define CONFIG_SYS_TIMER_RATE		1000000
 #define CONFIG_SYS_TIMER_COUNTER	NV_PA_TMRUS_BASE
@@ -51,13 +50,7 @@
 /*
  * NS16550 Configuration
  */
-#ifdef CONFIG_SPL_BUILD
-#define CONFIG_SYS_NS16550_SERIAL
-#define CONFIG_SYS_NS16550_REG_SIZE	(-4)
-#define CONFIG_SYS_NS16550_CLK		V_NS16550_CLK
-#else
 #define CONFIG_TEGRA_SERIAL
-#endif
 #define CONFIG_SYS_NS16550
 
 /*
@@ -137,6 +130,7 @@
 						GENERATED_GBL_DATA_SIZE)
 
 #define CONFIG_TEGRA_GPIO
+
 #define CONFIG_CMD_GPIO
 #define CONFIG_CMD_ENTERRCM
 
