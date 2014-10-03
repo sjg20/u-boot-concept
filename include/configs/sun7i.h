@@ -39,6 +39,9 @@
 #if !defined(CONFIG_SPL_BUILD) && defined(CONFIG_DM)
 # define CONFIG_CMD_DM
 # define CONFIG_DM_GPIO
+# define CONFIG_DM_SERIAL
+# define CONFIG_SYS_MALLOC_F_LEN	(1 << 10)
+# define CONFIG_DW_SERIAL
 #endif
 
 /*
