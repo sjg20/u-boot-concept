@@ -36,6 +36,10 @@
 #define CONFIG_ARMV7_SECURE_BASE	SUNXI_SRAM_B_BASE
 #define CONFIG_SYS_CLK_FREQ		24000000
 
+#if !defined(CONFIG_SPL_BUILD) && defined(CONFIG_DM)
+# define CONFIG_CMD_DM
+#endif
+
 /*
  * Include common sunxi configuration where most the settings are
  */
