@@ -38,6 +38,7 @@
 
 #if !defined(CONFIG_SPL_BUILD) && defined(CONFIG_DM)
 # define CONFIG_CMD_DM
+# define CONFIG_DM_GPIO
 #endif
 
 /*
