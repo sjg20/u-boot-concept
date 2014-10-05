@@ -26,6 +26,10 @@
 #define CONFIG_PHYSMEM
 #define CONFIG_SYS_EARLY_PCI_INIT
 
+#define CONFIG_DM
+#define CONFIG_CMD_DM
+#define CONFIG_DM_GPIO
+
 #define CONFIG_LMB
 #define CONFIG_OF_LIBFDT
 
