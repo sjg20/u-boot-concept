@@ -7,6 +7,7 @@
  */
 
 #include <common.h>
+#include <dm.h>
 #include <asm/io.h>
 #include <asm/arch/at91_common.h>
 #include <asm/arch/at91_pmc.h>
@@ -207,3 +208,16 @@ void at91_mci_hw_init(void)
 #endif
 }
 #endif
+
+/* Platform data for the GPIOs */
+static const struct at91_port_platdata at91sam9260_plat[] = {
+	{ ATMEL_BASE_PIOA, "A" },
+	{ ATMEL_BASE_PIOB, "B" },
+	{ ATMEL_BASE_PIOC, "C" },
+};
+
+U_BOOT_DEVICES(at91sam9260_gpios) = {
+	{ "gpio_at91", &at91sam9260_plat[0] },
+	{ "gpio_at91", &at91sam9260_plat[1] },
+	{ "gpio_at91", &at91sam9260_plat[2] },
+};
