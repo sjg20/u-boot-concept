@@ -18,6 +18,291 @@
 #define _I2C_H_
 
 /*
+ * For now there are essentially two parts to this file - driver model
+ * here at the top, and the older code below (with CONFIG_SYS_I2C being
+ * most recent). The plan is to migrate everything to driver model.
+ * The driver model structures and API are separate as they are different
+ * enough as to be incompatible for compilation purposes.
+ */
+
+#ifdef CONFIG_DM_I2C
+
+/**
+ * struct dm_i2c_chip - information about an i2c chip
+ *
+ * An I2C chip is a device on the I2C bus. It sits at a particular address
+ * and normally supports 7-bit or 10-bit addressing.
+ *
+ * To obtain this structure, use dev_get_parentdata(dev) where dev is the
+ * chip to examine.
+ *
+ * @chip_addr: Chip address on bus
+ * @addr_len: Address length in bytes (normally 1 for 7-bit address)
+ * @emul: Emulator for this chip address (only used for emulation)
+ */
+struct dm_i2c_chip {
+	uint chip_addr;
+	uint addr_len;
+#ifdef CONFIG_SANDBOX
+	struct udevice *emul;
+#endif
+};
+
+/**
+ * struct dm_i2c_bus- information about an i2c bus
+ *
+ * An I2C bus contains 0 or more chips on it, each at its own address. The
+ * bus can operate at different speeds (measured in Hz, typically 100KHz
+ * or 400KHz).
+ *
+ * To obtain this structure, use bus->uclass_priv where bus is the I2C
+ * bus udevice.
+ *
+ * @speed_hz: Bus speed in hertz (typically 100000)
+ */
+struct dm_i2c_bus {
+	int speed_hz;
+};
+
+/**
+ * i2c_read() - read bytes from an I2C chip
+ *
+ * To obtain an I2C device (called a 'chip') given the I2C bus address you
+ * can use i2c_get_chip(). To obtain a bus by bus number use
+ * uclass_get_device_by_seq(UCLASS_I2C, <bus number>).
+ *
+ * To set the address length of a devce use i2c_set_addr_len(). It
+ * defaults to 1.
+ *
+ * @dev:	Chip to read from
+ * @offset:	Offset within chip to start reading
+ * @buffer:	Place to put data
+ * @len:	Number of bytes to read
+ *
+ * @return 0 on success, -ve on failure
+ */
+int i2c_read(struct udevice *dev, uint offset, uint8_t *buffer,
+	     int len);
+
+/**
+ * i2c_write() - write bytes to an I2C chip
+ *
+ * See notes for i2c_read() above.
+ *
+ * @dev:	Chip to write to
+ * @offset:	Offset within chip to start writing
+ * @buffer:	Buffer containing data to write
+ * @len:	Number of bytes to write
+ *
+ * @return 0 on success, -ve on failure
+ */
+int i2c_write(struct udevice *dev, uint offset, const uint8_t *buffer,
+	      int len);
+
+/**
+ * i2c_probe() - probe a particular chip address
+ *
+ * This can be useful to check for the existence of a chip on the bus.
+ * It is typically implemented by writing the chip address to the bus
+ * and checking that the chip replies with an ACK.
+ *
+ * @bus:	Bus to probe
+ * @chip_addr:	7-bit address to probe (10-bit and others are not supported)
+ * @devp:	Returns the device found, or NULL if none
+ * @return 0 if a chip was found at that address, -ve if not
+ */
+int i2c_probe(struct udevice *bus, uint chip_addr, struct udevice **devp);
+
+/**
+ * i2c_set_bus_speed() - set the speed of a bus
+ *
+ * @bus:	Bus to adjust
+ * @speed:	Requested speed in Hz
+ * @return 0 if OK, -EINVAL for invalid values
+ */
+int i2c_set_bus_speed(struct udevice *bus, unsigned int speed);
+
+/**
+ * i2c_get_bus_speed() - get the speed of a bus
+ *
+ * @bus:	Bus to check
+ * @return speed of selected I2C bus in Hz, -ve on error
+ */
+int i2c_get_bus_speed(struct udevice *bus);
+
+/**
+ * i2c_set_addr_len() - set the address length of a chip
+ *
+ * Typically addresses are 7 bits (so @addr_len should be 1 which is the
+ * default). For 10-bit addresses use a value of 2. Some drivers and
+ * chips may support 0 and 3 also.
+ *
+ * @dev:	Chip to adjust
+ * @addr_len:	New address length value (typically 1 or 2)
+ * @return 0 if OK, -EINVAL if value is unsupported, other -ve value on error
+ */
+int i2c_set_addr_len(struct udevice *dev, uint addr_len);
+
+/**
+ * i2c_deblock() - recover a bus that is in an unknown state
+ *
+ * See the deblock() method in 'struct dm_i2c_ops' for full information
+ *
+ * @bus:	Bus to recover
+ * @return 0 if OK, -ve on error
+ */
+int i2c_deblock(struct udevice *bus);
+
+/**
+ * struct dm_i2c_ops - driver operations for I2C uclass
+ *
+ * Drivers should support these operations unless otherwise noted. These
+ * operations are intended to be used by uclass code, not directly from
+ * other code.
+ */
+struct dm_i2c_ops {
+	/**
+	 * read() - read from a chip
+	 *
+	 * @bus:	Bus to read from
+	 * @chip_addr:	Chip address to read from
+	 * @alen:	Length of chip address in bytes
+	 * @offset:	Offset within chip to start reading
+	 * @buffer:	Place to put data
+	 * @len:	Number of bytes to read
+	 */
+	int (*read)(struct udevice *bus, uint chip_addr, uint alen,
+		    uint offset, uint8_t *buffer, int len);
+
+	/**
+	 * write() - write bytes to a chip
+	 *
+	 * @dev:	Device to write to
+	 * @chip_addr:	Chip address to read from
+	 * @alen:	Length of chip address in bytes
+	 * @offset:	Offset within chip to start writing
+	 * @buffer:	Buffer containing data to write
+	 * @len:	Number of bytes to write
+	 *
+	 * @return 0 on success, -ve on failure
+	 */
+	int (*write)(struct udevice *bus, uint chip_addr, uint alen,
+		     uint offset, const uint8_t *buffer, int len);
+
+	/**
+	 * probe() - probe a particular chip address (recommended)
+	 *
+	 * This function is optional but should be implemented since it is
+	 * an expected feature of the I2C subsystem.
+	 *
+	 * @bus:	Bus to probe
+	 * @chip_addr:	7-bit address to probe
+	 * @return 0 if a chip was found at that address, -ve if not
+	 */
+	int (*probe)(struct udevice *bus, uint chip_addr);
+
+	/**
+	 * set_bus_speed() - set the speed of a bus (optional)
+	 *
+	 * The bus speed value will be updated by the uclass if this function
+	 * does not return an error.
+	 *
+	 * @bus:	Bus to adjust
+	 * @speed:	Requested speed in Hz
+	 * @return 0 if OK, -INVAL for invalid values
+	 */
+	int (*set_bus_speed)(struct udevice *bus, unsigned int speed);
+
+	/**
+	 * get_bus_speed() - get the speed of a bus (optional)
+	 *
+	 * Normally this can be provided by the uclass, but if you want your
+	 * driver to check the bus speed by looking at the hardware, you can
+	 * implement that here.
+	 *
+	 * @bus:	Bus to check
+	 * @return speed of selected I2C bus in Hz, -ve on error
+	 */
+	int (*get_bus_speed)(struct udevice *bus);
+
+	/**
+	 * set_addr_len() - set the address length of a chip (optional)
+	 *
+	 * This is generally implemented by the uclass, but drivers can
+	 * check the value to ensure that unsupported options are not used.
+	 * If provided, this method will always be called when the address
+	 * length changes from the default of 1.
+	 *
+	 * @dev:	Chip to adjust
+	 * @addr_len:	New address length value (typically 1 or 2)
+	 * @return 0 if OK, -INVAL if value is unsupported
+	 */
+	int (*set_addr_len)(struct udevice *dev, uint addr_len);
+
+	/**
+	 * deblock() - recover a bus that is in an unknown state
+	 *
+	 * I2C is a synchronous protocol and resets of the processor in the
+	 * middle of an access can block the I2C Bus until a powerdown of
+	 * the full unit is done. This is because slaves can be stuck
+	 * waiting for addition bus transitions for a transaction that will
+	 * never complete. Resetting the I2C master does not help. The only
+	 * way is to force the bus through a series of transitions to make
+	 * sure that all slaves are done with the transaction. This method
+	 * performs this 'deblocking' if support by the driver.
+	 *
+	 * This method is optional.
+	 */
+	int (*deblock)(struct udevice *bus);
+};
+
+#define i2c_get_ops(dev)	((struct dm_i2c_ops *)(dev)->driver->ops)
+
+/**
+ * i2c_get_chip() - get a device to use to access a chip on a bus
+ *
+ * This returns the device for the given chip address. The device can then
+ * be used with calls to i2c_read(), i2c_write(), i2c_probe(), etc.
+ *
+ * @bus:	Bus to examine
+ * @chip_addr:	Chip address for the new device
+ * @devp:	Returns pointer to new device if found or -ENODEV if not
+ *		found
+ */
+int i2c_get_chip(struct udevice *bus, uint chip_addr, struct udevice **devp);
+
+/**
+ * i2c_get_chip() - get a device to use to access a chip on a bus number
+ *
+ * This returns the device for the given chip address on a particular bus
+ * number.
+ *
+ * @busnum:	Bus number to examine
+ * @chip_addr:	Chip address for the new device
+ * @devp:	Returns pointer to new device if found or -ENODEV if not
+ *		found
+ */
+int i2c_get_chip_for_busnum(int busnum, int chip_addr, struct udevice **devp);
+
+/**
+ * i2c_chip_ofdata_to_platdata() - Decode standard I2C platform data
+ *
+ * This decodes the chip address from a device tree node and puts it into
+ * its dm_i2c_chip structure. This should be called in your driver's
+ * ofdata_to_platdata() method.
+ *
+ * @blob:	Device tree blob
+ * @node:	Node offset to read from
+ * @spi:	Place to put the decoded information
+ */
+int i2c_chip_ofdata_to_platdata(const void *blob, int node,
+				struct dm_i2c_chip *chip);
+
+#endif
+
+#ifndef CONFIG_DM_I2C
+
+/*
  * WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
  *
  * The implementation MUST NOT use static or global variables if the
@@ -451,4 +736,7 @@ int i2c_get_bus_num_fdt(int node);
  * @return 0 if port was reset, -1 if not found
  */
 int i2c_reset_port_fdt(const void *blob, int node);
+
+#endif /* !CONFIG_DM_I2C */
+
 #endif	/* _I2C_H_ */
