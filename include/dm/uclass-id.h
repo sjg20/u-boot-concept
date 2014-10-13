@@ -31,6 +31,7 @@ enum uclass_id {
 	UCLASS_CROS_EC,	/* Chrome OS EC */
 	UCLASS_I2C,		/* I2C bus */
 	UCLASS_I2C_GENERIC,	/* Generic I2C device */
+	UCLASS_I2C_EEPROM,	/* I2C EEPROM device */
 
 	UCLASS_COUNT,
 	UCLASS_INVALID = -1,
