@@ -122,6 +122,7 @@ static int sandbox_i2c_child_pre_probe(struct udevice *dev)
 		return 0;
 	if (dev->of_offset == -1)
 		return 0;
+
 	return i2c_chip_ofdata_to_platdata(gd->fdt_blob, dev->of_offset,
 					   i2c_chip);
 }
