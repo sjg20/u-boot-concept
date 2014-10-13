@@ -213,5 +213,5 @@ int spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
 struct spi_slave *spi_setup_slave_fdt(const void *blob, int slave_node,
 				      int spi_node)
 {
-	return NULL;
+	return spi_base_setup_slave_fdt(blob, 0, slave_node);
 }

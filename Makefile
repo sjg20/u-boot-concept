@@ -736,7 +736,7 @@ endif
 .PHONY : vboot
 vboot:
 	FIRMWARE_ARCH=$(VBOOT_SUBMAKE_FIRMWARE_ARCH) \
-		CFLAGS="$(CFLAGS_VBOOT)" \
+		CFLAGS="$(CFLAGS_VBOOT)" REGION_READ=1 \
 		$(MAKE) -C $(VBOOT_SOURCE) \
 		BUILD=$(objtree)/include/generated/vboot \
 		ARCH=$(VBOOT_SUBMAKE_ARCH)

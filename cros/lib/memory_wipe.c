@@ -13,6 +13,7 @@
 #include <cros/memory_wipe.h>
 #include <malloc.h>
 #include <physmem.h>
+#include <asm/io.h>
 
 #include <vboot_api.h>
 
@@ -130,6 +131,6 @@ void memory_wipe_execute(struct memory_wipe *wipe)
 
 		VBDEBUG("\t[%#016llx, %#016llx)\n",
 			(unsigned long long)start, (unsigned long long)end);
-		arch_phys_memset(start, 0, end - start);
+// 		arch_phys_memset(map_sysmem(start, 0), 0, end - start);
 	}
 }

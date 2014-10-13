@@ -1,11 +1,9 @@
 /dts-v1/;
 
-#include "skeleton.dtsi"
-
 #ifdef CONFIG_CHROMEOS
-#include "chromeos-sandbox.dtsi"
-#include "flashmap-sandbox-ro.dtsi"
-#include "flashmap-16mb-rw.dtsi"
+/include/ "chromeos-sandbox.dtsi"
+/include/ "flashmap-sandbox-ro.dtsi"
+/include/ "flashmap-16mb-rw.dtsi"
 #endif
 
 / {
@@ -13,16 +11,6 @@
 
 	memory {
 		reg = <0 0x08000000>;
-	};
-
-	chosen {
-		stdout-path = "/serial";
-	};
-
-	/* Needs to be available prior to relocation */
-	uart0: serial {
-		compatible = "sandbox,serial";
-		sandbox,text-colour = "cyan";
 	};
 
 	triangle {
@@ -42,7 +30,6 @@
 		sides = <6>;
 	};
 	spi {
-		compatible = "sandbox,spi";
 		firmware_storage_spi: flash@0 {
 			reg = <0>;
 		};
@@ -52,8 +39,6 @@
 	};
 
 	host@0 {
-		#address-cells = <1>;
-		#size-cells = <0>;
 		compatible = "sandbox,host-emulation";
 		cros-ec@0 {
 			reg = <0>;
@@ -68,8 +53,6 @@
 			flash@8000000 {
 				reg = <0x08000000 0x20000>;
 				erase-value = <0>;
-				#address-cells = <1>;
-				#size-cells = <1>;
 
 				/* Information for sandbox */
 				ro {
@@ -87,8 +70,8 @@
 
 	lcd {
 		compatible = "sandbox,lcd-sdl";
-		xres = <800>;
-		yres = <600>;
+		xres = <1366>;
+		yres = <768>;
 	};
 
 	cros-ec-keyb {
@@ -144,14 +127,6 @@
 			0x07060016 0x07070036 0x07080019 0x07090018
 			/* UP      LEFT    */
 			0x070b0067 0x070c0069>;
-	};
-
-	gpio_a: gpios {
-		gpio-controller;
-		compatible = "sandbox,gpio";
-		#gpio-cells = <1>;
-		gpio-bank-name = "a";
-		num-gpios = <20>;
 	};
 
 };
