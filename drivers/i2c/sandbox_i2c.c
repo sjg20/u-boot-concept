@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <fdtdec.h>
 #include <i2c.h>
+#include <asm/test.h>
 #include <dm/lists.h>
 #include <dm/device-internal.h>
 
@@ -66,6 +67,10 @@ static int sandbox_i2c_probe_chip(struct udevice *bus, uint chip_addr)
 	struct dm_i2c_ops *ops;
 	struct udevice *emul;
 	int ret;
+
+	/* Special test code to return success but with no emulation */
+	if (chip_addr == SANDBOX_I2C_TEST_ADDR)
+		return 0;
 
 	ret = get_emul(bus, chip_addr, &emul, &ops);
 	if (ret)
@@ -129,6 +134,9 @@ static int sandbox_i2c_child_pre_probe(struct udevice *dev)
 {
 	struct dm_i2c_chip *i2c_chip = dev_get_parentdata(dev);
 
+	/* Ignore our test address */
+	if (i2c_chip->chip_addr == SANDBOX_I2C_TEST_ADDR)
+		return 0;
 	return i2c_chip_ofdata_to_platdata(gd->fdt_blob, dev->of_offset,
 					   i2c_chip);
 }
