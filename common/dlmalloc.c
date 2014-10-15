@@ -1,5 +1,8 @@
 #include <common.h>
 
+#include <asm/io.h>
+#include <asm/post.h>
+
 #ifdef CONFIG_SANDBOX
 #define DEBUG
 #endif
@@ -2185,10 +2188,16 @@ Void_t* mALLOc(bytes) size_t bytes;
 		ulong new_ptr;
 		void *ptr;
 
+	while (gd->malloc_base == 0)
+		;
 		new_ptr = gd->malloc_ptr + bytes;
-		if (new_ptr > gd->malloc_limit)
+		if (new_ptr > gd->malloc_limit) {
 			panic("Out of pre-reloc memory");
+			return NULL;
+		}
+		post_code(0x70);
 		ptr = map_sysmem(gd->malloc_base + gd->malloc_ptr, bytes);
+		post_code(0x71);
 		gd->malloc_ptr = ALIGN(new_ptr, sizeof(new_ptr));
 		return ptr;
 	}

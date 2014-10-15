@@ -14,8 +14,8 @@
 #include <asm/msr.h>
 #include <asm/cache.h>
 #include <asm/io.h>
-#include <asm/arch-coreboot/tables.h>
-#include <asm/arch-coreboot/sysinfo.h>
+#include <asm/arch/tables.h>
+#include <asm/arch/sysinfo.h>
 #include <asm/arch/timestamp.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -70,7 +70,7 @@ void show_boot_progress(int val)
 		gd->arch.tsc_prev = now;
 	}
 #endif
-	outb(val, 0x80);
+	outb(val, POST_PORT);
 }
 
 int last_stage_init(void)

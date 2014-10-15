@@ -9,6 +9,8 @@
 #ifndef _PCI_I386_H_
 #define _PCI_I386_H_
 
+#define CONFIG_MMCONF_BASE_ADDRESS		0xf0000000
+
 #define DEFINE_PCI_DEVICE_TABLE(_table) \
 	const struct pci_device_id _table[]
 

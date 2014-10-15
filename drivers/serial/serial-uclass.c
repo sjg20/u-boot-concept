@@ -14,13 +14,17 @@
 #include <watchdog.h>
 #include <dm/lists.h>
 #include <dm/device-internal.h>
+#include <asm/io.h>
+#include <asm/post.h>
 
 #include <ns16550.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
 /* The currently-selected console serial device */
-struct udevice *cur_dev __attribute__ ((section(".data")));
+/*
+struct udevice *gd->cur_serial_dev __attribute__ ((section(".data")));
+*/
 
 #ifndef CONFIG_SYS_MALLOC_F_LEN
 #error "Serial is required before relocation - define CONFIG_SYS_MALLOC_F_LEN to make this work"
@@ -31,22 +35,30 @@ static void serial_find_console_or_panic(void)
 #ifdef CONFIG_OF_CONTROL
 	int node;
 
+	post_code(0xa0);
 	/* Check for a chosen console */
 	node = fdtdec_get_chosen_node(gd->fdt_blob, "stdout-path");
+	post_code(0xa1);
 	if (node < 0)
 		node = fdtdec_get_alias_node(gd->fdt_blob, "console");
-	if (!uclass_get_device_by_of_offset(UCLASS_SERIAL, node, &cur_dev))
+	post_code(0xa2);
+	if (!uclass_get_device_by_of_offset(UCLASS_SERIAL, node, &gd->cur_serial_dev))
 		return;
+	post_code(0xa3);
 
 	/*
 	 * If the console is not marked to be bound before relocation, bind
 	 * it anyway.
 	 */
 	if (node > 0 &&
-	    !lists_bind_fdt(gd->dm_root, gd->fdt_blob, node, &cur_dev)) {
-		if (!device_probe(cur_dev))
+	    !lists_bind_fdt(gd->dm_root, gd->fdt_blob, node, &gd->cur_serial_dev)) {
+	post_code(0xa4);
+		if (!device_probe(gd->cur_serial_dev)) {
+	post_code(0xa5);
 			return;
-		cur_dev = NULL;
+		}
+	post_code(0xa6);
+		gd->cur_serial_dev = NULL;
 	}
 #endif
 	/*
@@ -61,11 +73,16 @@ static void serial_find_console_or_panic(void)
 #else
 #define INDEX 0
 #endif
-	if (uclass_get_device_by_seq(UCLASS_SERIAL, INDEX, &cur_dev) &&
-	    uclass_get_device(UCLASS_SERIAL, INDEX, &cur_dev) &&
-	    (uclass_first_device(UCLASS_SERIAL, &cur_dev) || !cur_dev))
+	post_code(0xa7);
+	if (uclass_get_device_by_seq(UCLASS_SERIAL, INDEX, &gd->cur_serial_dev) &&
+	    uclass_get_device(UCLASS_SERIAL, INDEX, &gd->cur_serial_dev) &&
+	    (uclass_first_device(UCLASS_SERIAL, &gd->cur_serial_dev) || !gd->cur_serial_dev)) {
+	post_code(0xa8);
 		panic("No serial driver found");
+		while(1);
+	}
 #undef INDEX
+	post_code(0xa9);
 }
 
 /* Called prior to relocation */
@@ -81,15 +98,16 @@ int serial_init(void)
 void serial_initialize(void)
 {
 	serial_find_console_or_panic();
+	gd->flags |= GD_FLG_SERIAL_READY;
 }
 
 static void serial_putc_dev(struct udevice *dev, char ch)
 {
-	struct dm_serial_ops *ops = serial_get_ops(cur_dev);
+	struct dm_serial_ops *ops = serial_get_ops(gd->cur_serial_dev);
 	int err;
 
 	do {
-		err = ops->putc(cur_dev, ch);
+		err = ops->putc(gd->cur_serial_dev, ch);
 	} while (err == -EAGAIN);
 	if (ch == '\n')
 		serial_putc('\r');
@@ -97,15 +115,15 @@ static void serial_putc_dev(struct udevice *dev, char ch)
 
 void serial_putc(char ch)
 {
-	serial_putc_dev(cur_dev, ch);
+	serial_putc_dev(gd->cur_serial_dev, ch);
 }
 
 void serial_setbrg(void)
 {
-	struct dm_serial_ops *ops = serial_get_ops(cur_dev);
+	struct dm_serial_ops *ops = serial_get_ops(gd->cur_serial_dev);
 
 	if (ops->setbrg)
-		ops->setbrg(cur_dev, gd->baudrate);
+		ops->setbrg(gd->cur_serial_dev, gd->baudrate);
 }
 
 void serial_puts(const char *str)
@@ -116,10 +134,10 @@ void serial_puts(const char *str)
 
 int serial_tstc(void)
 {
-	struct dm_serial_ops *ops = serial_get_ops(cur_dev);
+	struct dm_serial_ops *ops = serial_get_ops(gd->cur_serial_dev);
 
 	if (ops->pending)
-		return ops->pending(cur_dev, true);
+		return ops->pending(gd->cur_serial_dev, true);
 
 	return 1;
 }
@@ -140,7 +158,7 @@ static int serial_getc_dev(struct udevice *dev)
 
 int serial_getc(void)
 {
-	return serial_getc_dev(cur_dev);
+	return serial_getc_dev(gd->cur_serial_dev);
 }
 
 void serial_stdio_init(void)

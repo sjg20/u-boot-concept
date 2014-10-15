@@ -10,8 +10,44 @@ choice
 config TARGET_COREBOOT
 	bool "Support coreboot"
 
+config TARGET_CHROMEBOOK_LINK
+	bool "Support Chromebook link"
+
 endchoice
 
-source "board/chromebook-x86/coreboot/Kconfig"
+config RAMBASE
+	hex
+	default 0x100000
+
+config RAMTOP
+	hex
+	default 0x200000
+
+config XIP_ROM_SIZE
+	hex
+	default 0x10000
+
+config CPU_ADDR_BITS
+	int
+	default 36
+
+config HPET_ADDRESS
+	hex
+	default 0xfed00000 if !HPET_ADDRESS_OVERRIDE
+
+config SMM_TSEG
+	bool
+	default n
+
+config SMM_TSEG_SIZE
+	hex
+
+config ROM_SIZE
+	hex
+	default 0x800000
+
+source "arch/x86/cpu/ivybridge/Kconfig"
+
+source "board/google/chromebook_link/Kconfig"
 
 endmenu

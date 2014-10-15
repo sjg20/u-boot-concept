@@ -3397,7 +3397,7 @@ FIT uImage format:
 		to 128 or 256, although it does not have to be power of 2).
 
 		default: 4096
-		
+
 		CONFIG_MTD_UBI_BEB_LIMIT
 		This option specifies the maximum bad physical eraseblocks UBI
 		expects on the MTD device (per 1024 eraseblocks). If the
@@ -3843,7 +3843,8 @@ Configuration Settings:
 		Size of memory reserved for monitor code, used to
 		determine _at_compile_time_ (!) if the environment is
 		embedded within the U-Boot image, or in a separate
-		flash sector.
+		flash sector. On x86 this determins the output image
+		size.
 
 - CONFIG_SYS_MALLOC_LEN:
 		Size of DRAM reserved for malloc() use.

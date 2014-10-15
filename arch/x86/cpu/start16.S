@@ -12,6 +12,7 @@
 
 #include <asm/global_data.h>
 #include <asm/processor-flags.h>
+#include <asm/post.h>
 
 #define BOOT_SEG	0xffff0000	/* linear segment of boot code */
 #define a32		.byte 0x67;
@@ -24,15 +25,10 @@ start16:
 	/* Set the Cold Boot / Hard Reset flag */
 	movl	$GD_FLG_COLD_BOOT, %ebx
 
-	/*
-	 * First we let the BSP do some early initialization
-	 * this code have to map the flash to its final position
-	 */
-	jmp	board_init16
-.globl board_init16_ret
-board_init16_ret:
+	xorl	%eax, %eax
+	movl	%eax, %cr3    /* Invalidate TLB */
 
-	/* Turn of cache (this might require a 486-class CPU) */
+	/* Turn off cache (this might require a 486-class CPU) */
 	movl	%cr0, %eax
 	orl	$(X86_CR0_NW | X86_CR0_CD), %eax
 	movl	%eax, %cr0
@@ -58,7 +54,7 @@ o32 cs	ljmp	*(%bp)
 	/* 48-bit far pointer */
 code32start:
 	.long	_start		/* offset */
-	.word	0x10		/* segment */
+	.word	0x08		/* segment */
 
 idt_ptr:
 	.word	0		/* limit */
@@ -70,7 +66,7 @@ idt_ptr:
  * GDT is setup in a safe location in RAM
  */
 gdt_ptr:
-	.word	0x20		/* limit (32 bytes = 4 GDT entries) */
+	.word	0x17		/* limit (32 bytes = 4 GDT entries) */
 	.long	BOOT_SEG + gdt	/* base */
 
 /* Some CPUs are picky about GDT alignment... */
@@ -92,7 +88,7 @@ gdt:
 	.byte	0x00		/* access */
 	.byte	0x00		/* flags + limit_high */
 	.byte	0x00		/* base_high */
-
+#if 0
 	/* Unused Desciptor - (matches Linux) */
 	.word	0x0000		/* limit_low */
 	.word	0x0000		/* base_low */
@@ -100,7 +96,7 @@ gdt:
 	.byte	0x00		/* access */
 	.byte	0x00		/* flags + limit_high */
 	.byte	0x00		/* base_high */
-
+#endif
 	/*
 	 * The Code Segment Descriptor:
 	 * - Base   = 0x00000000

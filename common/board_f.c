@@ -9,6 +9,7 @@
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
+#define DEBUG
 
 #include <common.h>
 #include <linux/compiler.h>
@@ -823,18 +824,12 @@ static init_fnc_t init_sequence_f[] = {
 	probecpu,
 #endif
 	arch_cpu_init,		/* basic arch cpu dependent setup */
-#ifdef CONFIG_X86
-	cpu_init_f,		/* TODO(sjg@chromium.org): remove */
-# ifdef CONFIG_OF_CONTROL
-	find_fdt,		/* TODO(sjg@chromium.org): remove */
-# endif
-#endif
 	mark_bootstage,
 #ifdef CONFIG_OF_CONTROL
 	fdtdec_check_fdt,
 #endif
 	initf_malloc,
-	initf_dm,
+	initf_dm,		/* 0xa */
 #if defined(CONFIG_BOARD_EARLY_INIT_F)
 	board_early_init_f,
 #endif
@@ -879,7 +874,7 @@ static init_fnc_t init_sequence_f[] = {
 #ifdef CONFIG_OF_CONTROL
 	fdtdec_prepare_fdt,
 #endif
-	display_options,	/* say that we are here */
+	display_options,	/* say that we are here */  /* 0x10 */
 	display_text_info,	/* show debugging info if required */
 #if defined(CONFIG_MPC8260)
 	prt_8260_rsr,
@@ -909,13 +904,9 @@ static init_fnc_t init_sequence_f[] = {
 #if defined(CONFIG_HARD_SPI)
 	init_func_spi,
 #endif
-#ifdef CONFIG_X86
-	dram_init_f,		/* configure available RAM banks */
-	calculate_relocation_address,
-#endif
 	announce_dram_init,
 	/* TODO: unify all these dram functions? */
-#ifdef CONFIG_ARM
+#if defined(CONFIG_ARM) || defined(CONFIG_X86)
 	dram_init,		/* configure available RAM banks */
 #endif
 #if defined(CONFIG_MIPS) || defined(CONFIG_PPC)
@@ -1023,7 +1014,6 @@ void board_init_f(ulong boot_flags)
 	 */
 	zero_global_data();
 #endif
-
 	gd->flags = boot_flags;
 	gd->have_console = 0;
 

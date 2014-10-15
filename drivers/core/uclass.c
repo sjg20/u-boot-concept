@@ -17,6 +17,9 @@
 #include <dm/uclass-internal.h>
 #include <dm/util.h>
 
+#include <asm/io.h>
+#include <asm/post.h>
+
 DECLARE_GLOBAL_DATA_PTR;
 
 struct uclass *uclass_find(enum uclass_id key)
@@ -64,9 +67,14 @@ static int uclass_add(enum uclass_id id, struct uclass **ucp)
 		dm_warn("No ops for uclass id %d\n", id);
 		return -EINVAL;
 	}
+	post_code(0x60);
 	uc = calloc(1, sizeof(*uc));
-	if (!uc)
+	post_code(0x61);
+	if (!uc) {
+		post_code(0x62);
 		return -ENOMEM;
+	}
+	post_code(0x63);
 	if (uc_drv->priv_auto_alloc_size) {
 		uc->priv = calloc(1, uc_drv->priv_auto_alloc_size);
 		if (!uc->priv) {
@@ -74,10 +82,15 @@ static int uclass_add(enum uclass_id id, struct uclass **ucp)
 			goto fail_mem;
 		}
 	}
+	post_code(0x64);
 	uc->uc_drv = uc_drv;
+	post_code(0x65);
 	INIT_LIST_HEAD(&uc->sibling_node);
+	post_code(0x66);
 	INIT_LIST_HEAD(&uc->dev_head);
+	post_code(0x67);
 	list_add(&uc->sibling_node, &DM_UCLASS_ROOT_NON_CONST);
+	post_code(0x68);
 
 	if (uc_drv->init) {
 		ret = uc_drv->init(uc);
@@ -86,6 +99,7 @@ static int uclass_add(enum uclass_id id, struct uclass **ucp)
 	}
 
 	*ucp = uc;
+	post_code(0x69);
 
 	return 0;
 fail:

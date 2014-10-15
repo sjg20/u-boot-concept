@@ -33,6 +33,9 @@
 #include <pci.h>
 #include <asm/gpio.h>
 #include <asm/io.h>
+#include <asm/arch/pch.h>
+
+#define DEBUG
 
 #define GPIO_PER_BANK	32
 
@@ -57,16 +60,16 @@ static int gpio_ich6_ofdata_to_platdata(struct udevice *dev)
 	int offset;
 
 	/* Where should it be? */
-	pci_dev = PCI_BDF(0, 0x1f, 0);
+	pci_dev = PCI_BDF_CB(0, 0x1f, 0);
 
 	/* Is the device present? */
-	pci_read_config_word(pci_dev, PCI_VENDOR_ID, &tmpword);
+	tmpword = pci_read_config16(pci_dev, PCI_VENDOR_ID);
 	if (tmpword != PCI_VENDOR_ID_INTEL) {
 		debug("%s: wrong VendorID\n", __func__);
 		return -ENODEV;
 	}
 
-	pci_read_config_word(pci_dev, PCI_DEVICE_ID, &tmpword);
+	tmpword = pci_read_config16(pci_dev, PCI_DEVICE_ID);
 	debug("Found %04x:%04x\n", PCI_VENDOR_ID_INTEL, tmpword);
 	/*
 	 * We'd like to validate the Device ID too, but pretty much any
@@ -76,34 +79,34 @@ static int gpio_ich6_ofdata_to_platdata(struct udevice *dev)
 	 */
 
 	/* I/O should already be enabled (it's a RO bit). */
-	pci_read_config_word(pci_dev, PCI_COMMAND, &tmpword);
+	tmpword = pci_read_config16(pci_dev, PCI_COMMAND);
 	if (!(tmpword & PCI_COMMAND_IO)) {
 		debug("%s: device IO not enabled\n", __func__);
 		return -ENODEV;
 	}
 
 	/* Header Type must be normal (bits 6-0 only; see spec.) */
-	pci_read_config_byte(pci_dev, PCI_HEADER_TYPE, &tmpbyte);
+	tmpbyte = pci_read_config8(pci_dev, PCI_HEADER_TYPE);
 	if ((tmpbyte & 0x7f) != PCI_HEADER_TYPE_NORMAL) {
 		debug("%s: invalid Header type\n", __func__);
 		return -ENODEV;
 	}
 
 	/* Base Class must be a bridge device */
-	pci_read_config_byte(pci_dev, PCI_CLASS_CODE, &tmpbyte);
+	tmpbyte = pci_read_config8(pci_dev, PCI_CLASS_CODE);
 	if (tmpbyte != PCI_CLASS_CODE_BRIDGE) {
 		debug("%s: invalid class\n", __func__);
 		return -ENODEV;
 	}
 	/* Sub Class must be ISA */
-	pci_read_config_byte(pci_dev, PCI_CLASS_SUB_CODE, &tmpbyte);
+	tmpbyte = pci_read_config8(pci_dev, PCI_CLASS_SUB_CODE);
 	if (tmpbyte != PCI_CLASS_SUB_CODE_BRIDGE_ISA) {
 		debug("%s: invalid subclass\n", __func__);
 		return -ENODEV;
 	}
 
 	/* Programming Interface must be 0x00 (no others exist) */
-	pci_read_config_byte(pci_dev, PCI_CLASS_PROG, &tmpbyte);
+	tmpbyte = pci_read_config8(pci_dev, PCI_CLASS_PROG);
 	if (tmpbyte != 0x00) {
 		debug("%s: invalid interface type\n", __func__);
 		return -ENODEV;
@@ -114,7 +117,7 @@ static int gpio_ich6_ofdata_to_platdata(struct udevice *dev)
 	 * that it was unused (or undocumented). Check that it looks
 	 * okay: not all ones or zeros, and mapped to I/O space (bit 0).
 	 */
-	pci_read_config_dword(pci_dev, PCI_CFG_GPIOBASE, &tmplong);
+	tmplong = pci_read_config32(pci_dev, PCI_CFG_GPIOBASE);
 	if (tmplong == 0x00000000 || tmplong == 0xffffffff ||
 	    !(tmplong & 0x00000001)) {
 		debug("%s: unexpected GPIOBASE value\n", __func__);

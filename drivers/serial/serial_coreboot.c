@@ -23,6 +23,7 @@ static int coreboot_serial_ofdata_to_platdata(struct udevice *dev)
 	if (ret)
 		return ret;
 	plat->clock = 1843200;
+// 	plat->clock = 115200;
 
 	return 0;
 }

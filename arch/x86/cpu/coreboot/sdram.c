@@ -79,7 +79,7 @@ ulong board_get_usable_ram_top(ulong total_size)
 	return (ulong)dest_addr;
 }
 
-int dram_init_f(void)
+int dram_init(void)
 {
 	int i;
 	phys_size_t ram_size = 0;
@@ -94,7 +94,8 @@ int dram_init_f(void)
 	gd->ram_size = ram_size;
 	if (ram_size == 0)
 		return -1;
-	return 0;
+
+	return calculate_relocation_address();
 }
 
 int dram_init_banksize(void)

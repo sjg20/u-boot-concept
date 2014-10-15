@@ -10,14 +10,17 @@
 #include <version.h>
 #include <linux/ctype.h>
 #include <asm/io.h>
+#include <asm/post.h>
 
 int display_options (void)
 {
+	post_code(0xaf);
 #if defined(BUILD_TAG)
 	printf ("\n\n%s, Build: %s\n\n", version_string, BUILD_TAG);
 #else
 	printf ("\n\n%s\n\n", version_string);
 #endif
+	post_code(0x99);
 	return 0;
 }
 
@@ -153,8 +156,8 @@ int print_buffer(ulong addr, const void *data, uint width, uint count,
 		addr += thislinelen * width;
 		count -= thislinelen;
 
-		if (ctrlc())
-			return -1;
+// 		if (ctrlc())
+// 			return -1;
 	}
 
 	return 0;

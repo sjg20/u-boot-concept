@@ -59,4 +59,7 @@ static inline __attribute__((no_instrument_function)) uint64_t rdtsc(void)
 void timer_set_tsc_base(uint64_t new_base);
 uint64_t timer_get_tsc(void);
 
+void panic_if_bist_failure(void);
+void quick_ram_check(void);
+
 #endif	/* _U_BOOT_I386_H_ */

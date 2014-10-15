@@ -462,6 +462,11 @@ typedef int pci_dev_t;
 #define PCI_FUNC(d)	(((d) >> 8) & 0x7)
 #define PCI_BDF(b,d,f)	((b) << 16 | (d) << 11 | (f) << 8)
 
+#define PCI_BDF_CB(SEGBUS, DEV, FN) ( \
+        (((SEGBUS) & 0xFFF) << 20) | \
+        (((DEV) & 0x1F) << 15) | \
+        (((FN)  & 0x07) << 12))
+
 #define PCI_ANY_ID (~0)
 
 struct pci_device_id {

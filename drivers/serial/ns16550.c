@@ -13,6 +13,7 @@
 #include <watchdog.h>
 #include <linux/types.h>
 #include <asm/io.h>
+#include <asm/post.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -125,8 +126,13 @@ int ns16550_calc_divisor(NS16550_t port, int clock, int baudrate)
 static void NS16550_setbrg(NS16550_t com_port, int baud_divisor)
 {
 	serial_out(UART_LCR_BKSE | UART_LCRVAL, &com_port->lcr);
+	baud_divisor = 1;
 	serial_out(baud_divisor & 0xff, &com_port->dll);
 	serial_out((baud_divisor >> 8) & 0xff, &com_port->dlm);
+	if (baud_divisor != 1) {
+		post_code(0x0b);
+		while (1);
+	}
 	serial_out(UART_LCRVAL, &com_port->lcr);
 }
 
@@ -146,8 +152,10 @@ void NS16550_init(NS16550_t com_port, int baud_divisor)
 	}
 #endif
 
+	post_code(0x78);
 	while (!(serial_in(&com_port->lsr) & UART_LSR_TEMT))
 		;
+	post_code(0x79);
 
 	serial_out(CONFIG_SYS_NS16550_IER, &com_port->ier);
 #if defined(CONFIG_OMAP) || defined(CONFIG_AM33XX) || \

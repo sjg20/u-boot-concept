@@ -10,6 +10,13 @@
 
 #ifndef __ASSEMBLY__
 
+enum pei_boot_mode_t {
+	PEI_BOOT_NONE= 0,
+	PEI_BOOT_SOFT_RESET,
+	PEI_BOOT_RESUME,
+
+};
+
 /* Architecture-specific global data */
 struct arch_global_data {
 	struct global_data *gd_addr;		/* Location of Global Data */
@@ -17,6 +24,9 @@ struct arch_global_data {
 	uint32_t tsc_base_kclocks;	/* Initial tsc as a kclocks value */
 	uint32_t tsc_prev;		/* For show_boot_progress() */
 	void *new_fdt;			/* Relocated FDT */
+	uint32_t bist;			/* Built-in self test value */
+	uint32_t gdt_addr;		/* Global descriptor table */
+	enum pei_boot_mode_t pei_boot_mode;
 };
 
 #endif

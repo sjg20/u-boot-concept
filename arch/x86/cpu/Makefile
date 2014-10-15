@@ -9,5 +9,7 @@
 #
 
 extra-y	= start.o
-extra-$(CONFIG_X86_RESET_VECTOR) += resetvec.o start16.o
-obj-y	= interrupts.o cpu.o
+obj-$(CONFIG_X86_RESET_VECTOR) += resetvec.o start16.o
+obj-y	+= interrupts.o cpu.o
+obj-y += ip_checksum.o
+obj-$(CONFIG_PCI) += pci.o

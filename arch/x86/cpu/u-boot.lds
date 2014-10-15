@@ -70,9 +70,14 @@ SECTIONS
 	 * Reset Vector at the end of the Flash ROM
 	 */
 	. = START_16;
-	.start16 : AT (CONFIG_SYS_TEXT_BASE + (CONFIG_SYS_MONITOR_LEN - RESET_SEG_SIZE + START_16)) { KEEP(*(.start16)); }
+	.start16 : AT (RESET_BASE + START_16)) {
+		KEEP(*(.start16));
+	}
 
 	. = RESET_VEC_LOC;
-	.resetvec : AT (CONFIG_SYS_TEXT_BASE + (CONFIG_SYS_MONITOR_LEN - RESET_SEG_SIZE + RESET_VEC_LOC)) { KEEP(*(.resetvec)); }
+	.resetvec : AT (RESET_BASE + RESET_VEC_LOC)) {
+		KEEP(*(.resetvec));
+	}
 #endif
+
 }

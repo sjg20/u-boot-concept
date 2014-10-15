@@ -14,6 +14,9 @@
 #include <exports.h>
 #include <environment.h>
 
+#include <asm/io.h>
+#include <asm/post.h>
+
 DECLARE_GLOBAL_DATA_PTR;
 
 static int on_console(const char *name, const char *value, enum env_op op,
@@ -432,6 +435,8 @@ void putc(const char c)
 		return;
 #endif
 
+	if (!(gd->flags & GD_FLG_SERIAL_READY))
+		return;
 	if (!gd->have_console)
 		return pre_console_putc(c);
 
@@ -463,6 +468,8 @@ void puts(const char *s)
 		return;
 #endif
 
+	if (!(gd->flags & GD_FLG_SERIAL_READY))
+		return;
 	if (!gd->have_console)
 		return pre_console_puts(s);
 

@@ -13,7 +13,7 @@
 #include <pci.h>
 #include <asm/pci.h>
 
-static struct pci_controller coreboot_hose;
+static struct pci_controller x86_hose;
 
 static void config_pci_bridge(struct pci_controller *hose, pci_dev_t dev,
 			      struct pci_config_table *table)
@@ -33,17 +33,17 @@ static struct pci_config_table pci_coreboot_config_table[] = {
 
 void pci_init_board(void)
 {
-	coreboot_hose.config_table = pci_coreboot_config_table;
-	coreboot_hose.first_busno = 0;
-	coreboot_hose.last_busno = 0;
+	x86_hose.config_table = pci_coreboot_config_table;
+	x86_hose.first_busno = 0;
+	x86_hose.last_busno = 0;
 
-	pci_set_region(coreboot_hose.regions + 0, 0x0, 0x0, 0xffffffff,
+	pci_set_region(x86_hose.regions + 0, 0x0, 0x0, 0xffffffff,
 		PCI_REGION_MEM);
-	coreboot_hose.region_count = 1;
+	x86_hose.region_count = 1;
 
-	pci_setup_type1(&coreboot_hose);
+	pci_setup_type1(&x86_hose);
 
-	pci_register_hose(&coreboot_hose);
+	pci_register_hose(&x86_hose);
 
-	pci_hose_scan(&coreboot_hose);
+	pci_hose_scan(&x86_hose);
 }

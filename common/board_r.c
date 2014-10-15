@@ -56,6 +56,9 @@
 #include <linux/compiler.h>
 #include <linux/err.h>
 
+#include <asm/io.h>
+#include <asm/post.h>
+
 DECLARE_GLOBAL_DATA_PTR;
 
 ulong monitor_flash_len;
@@ -229,7 +232,7 @@ static int initr_unlock_ram_in_cache(void)
 #ifdef CONFIG_PCI
 static int initr_pci(void)
 {
-	pci_init();
+// 	pci_init();
 
 	return 0;
 }
@@ -267,6 +270,9 @@ static int initr_malloc(void)
 	malloc_start = gd->relocaddr - TOTAL_MALLOC_LEN;
 	mem_malloc_init((ulong)map_sysmem(malloc_start, TOTAL_MALLOC_LEN),
 			TOTAL_MALLOC_LEN);
+// 	printf("alloc\n");
+// 	printf("alloc = %p\n", malloc(128));
+
 	return 0;
 }
 
@@ -919,6 +925,8 @@ void board_init_r(gd_t *new_gd, ulong dest_addr)
 	gd = new_gd;
 #endif
 
+	gd->flags &= ~GD_FLG_SERIAL_READY;
+	post_code(0xc0);
 #ifdef CONFIG_NEEDS_MANUAL_RELOC
 	for (i = 0; i < ARRAY_SIZE(init_sequence_r); i++)
 		init_sequence_r[i] += gd->reloc_off;

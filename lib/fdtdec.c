@@ -2,7 +2,7 @@
  * Copyright (c) 2011 The Chromium OS Authors.
  * SPDX-License-Identifier:	GPL-2.0+
  */
-
+#define DEBUG
 #ifndef USE_HOSTCC
 #include <common.h>
 #include <errno.h>
@@ -12,6 +12,9 @@
 #include <linux/ctype.h>
 
 #include <asm/gpio.h>
+
+#include <asm/io.h>
+#include <asm/post.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -72,7 +75,9 @@ static const char * const compat_names[COMPAT_COUNT] = {
 	COMPAT(COMPAT_NXP_PTN3460, "nxp,ptn3460"),
 	COMPAT(SAMSUNG_EXYNOS_SYSMMU, "samsung,sysmmu-v3.3"),
 	COMPAT(PARADE_PS8625, "parade,ps8625"),
-	COMPAT(COMPAT_INTEL_LPC, "intel,lpc"),
+	COMPAT(INTEL_LPC, "intel,lpc"),
+	COMPAT(INTEL_MRC, "intel,mrc"),
+	COMPAT(MEMORY_SPD, "memory-spd"),
 };
 
 const char *fdtdec_get_compatible(enum fdt_compat_id id)
@@ -417,13 +422,16 @@ int fdtdec_check_fdt(void)
  */
 int fdtdec_prepare_fdt(void)
 {
+	post_code(0x85);
 	if (!gd->fdt_blob || ((uintptr_t)gd->fdt_blob & 3) ||
 	    fdt_check_header(gd->fdt_blob)) {
+	post_code(0x86);
 		printf("No valid FDT found - please append one to U-Boot "
 			"binary, use u-boot-dtb.bin or define "
 			"CONFIG_OF_EMBED. For sandbox, use -d <file.dtb>\n");
 		return -1;
 	}
+	post_code(0x87);
 	return 0;
 }
 

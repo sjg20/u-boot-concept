@@ -13,6 +13,7 @@
 #include <config.h>
 #include <version.h>
 #include <asm/global_data.h>
+#include <asm/post.h>
 #include <asm/processor.h>
 #include <asm/processor-flags.h>
 #include <generated/generic-asm-offsets.h>
@@ -58,13 +59,30 @@ _start:
 	movw	%ax, %es
 	movw	%ax, %ss
 
+	/* Enable post codes to EC */
+#if 1
+	mov    $0x1b,%ecx
+	rdmsr  
+	and    $0x100,%eax
+	test   %eax,%eax
+	je     2f
+
+	mov    $0x8000f8f0,%eax
+	mov    $0xcf8,%dx
+	out    %eax,(%dx)
+	mov    $0xfed1c001,%eax
+	mov    $0xcfc,%dx
+	out    %eax,(%dx)
+	mov    $0xfed1f410,%esp
+	mov    (%esp),%ebp
+	and    $0xfffffffb,%ebp
+	mov    %ebp,(%esp)
+#endif
+2:
+	post_code(POST_START)
+
 	/* Clear the interrupt vectors */
 	lidt	blank_idt_ptr
-
-	/* Early platform init (setup gpio, etc ) */
-	jmp	early_board_init
-.globl early_board_init_ret
-early_board_init_ret:
 
 	/* Initialise Cache-As-RAM */
 	jmp	car_init
@@ -75,15 +93,22 @@ car_init_ret:
 	 * or fully initialised SDRAM - we really don't care which)
 	 * starting at CONFIG_SYS_CAR_ADDR to be used as a temporary stack
 	 */
-
+#if 0
+	/* Enable SSE instructions. TODO: move to cpu.c */
+	movl	%cr4, %eax
+	orl	$(1 << 9), %eax
+	movl	%eax, %cr4
+#endif
 	/* Stack grows down from top of CAR */
-	movl	$(CONFIG_SYS_CAR_ADDR + CONFIG_SYS_CAR_SIZE), %esp
+	movl	$(CONFIG_SYS_CAR_ADDR + CONFIG_SYS_CAR_SIZE - \
+		CONFIG_DCACHE_RAM_MRC_VAR_SIZE - 4), %esp
 
 	/* Reserve space on stack for global data */
 	subl	$GENERATED_GBL_DATA_SIZE, %esp
 
 	/* Align global data to 16-byte boundary */
 	andl	$0xfffffff0, %esp
+	/*post_code(0x2a)*/
 
 	/* Zero the global data since it won't happen later */
 	xorl	%eax, %eax				# value
@@ -91,11 +116,15 @@ car_init_ret:
 	movl	%esp, %edi				# start
 	rep	stosb
 
-	/* Setup first parameter to setup_gdt */
+	/* Setup first parameter to setup_gdt, pointer to global_data */
 	movl	%esp, %eax
 
 	/* Reserve space for global descriptor table */
 	subl	$X86_GDT_SIZE, %esp
+
+	/* Align temporary global descriptor table to 16-byte boundary */
+	andl	$0xfffffff0, %esp
+	movl	%esp, %ecx
 
 #if defined(CONFIG_SYS_MALLOC_F_LEN)
 	subl	$CONFIG_SYS_MALLOC_F_LEN, %esp
@@ -103,19 +132,21 @@ car_init_ret:
 	addl	$GD_MALLOC_BASE, %edx
 	movl	%esp, (%edx)
 #endif
-
-	/* Align temporary global descriptor table to 16-byte boundary */
-	andl	$0xfffffff0, %esp
+	/* Store BIST */
+	movl	%eax, %edx
+	addl	$GD_BIST, %edx
+	movl	%ebp, (%edx)
 
 	/* Set second parameter to setup_gdt */
-	movl	%esp, %edx
+	movl	%ecx, %edx
 
 	/* Setup global descriptor table so gd->xyz works */
 	call	setup_gdt
 
 	/* Set parameter to board_init_f() to boot flags */
+	post_code(0x2d)
 	xorl	%eax, %eax
-	movw	%bx, %ax
+	/*movw	%bx, %ax*/
 
 	/* Enter, U-boot! */
 	call	board_init_f

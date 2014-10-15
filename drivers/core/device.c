@@ -22,6 +22,9 @@
 #include <linux/err.h>
 #include <linux/list.h>
 
+#include <asm/io.h>
+#include <asm/post.h>
+
 DECLARE_GLOBAL_DATA_PTR;
 
 /**
@@ -81,9 +84,11 @@ int device_bind(struct udevice *parent, struct driver *drv, const char *name,
 	if (!name)
 		return -EINVAL;
 
+	post_code(0x50);
 	ret = uclass_get(drv->id, &uc);
 	if (ret)
 		return ret;
+	post_code(0x58);
 
 	dev = calloc(1, sizeof(struct udevice));
 	if (!dev)

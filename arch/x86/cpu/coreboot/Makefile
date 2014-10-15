@@ -19,4 +19,3 @@ obj-$(CONFIG_SYS_COREBOOT) += tables.o
 obj-$(CONFIG_SYS_COREBOOT) += ipchecksum.o
 obj-$(CONFIG_SYS_COREBOOT) += sdram.o
 obj-$(CONFIG_SYS_COREBOOT) += timestamp.o
-obj-$(CONFIG_PCI) += pci.o

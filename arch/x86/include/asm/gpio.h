@@ -9,4 +9,9 @@
 #include <asm/arch/gpio.h>
 #include <asm-generic/gpio.h>
 
+struct ich6_bank_platdata {
+	uint32_t base_addr;
+	const char *bank_name;
+};
+
 #endif /* _X86_GPIO_H_ */

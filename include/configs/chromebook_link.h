@@ -1,0 +1,33 @@
+/*
+ * Copyright (c) 2011 The Chromium OS Authors.
+ * (C) Copyright 2008
+ * Graeme Russ, graeme.russ@gmail.com.
+ *
+ * SPDX-License-Identifier:	GPL-2.0+
+ */
+
+/*
+ * board/config.h - configuration options, board specific
+ */
+
+#ifndef __CONFIG_H
+#define __CONFIG_H
+
+#include <configs/x86-common.h>
+
+#define CONFIG_SYS_CAR_ADDR			0xff7e0000
+#define CONFIG_SYS_CAR_SIZE			(128 * 1024)
+#define CONFIG_SYS_MONITOR_LEN			(1 << 20)
+#define CONFIG_DCACHE_RAM_MRC_VAR_SIZE	0x4000
+
+#define CONFIG_X86_RESET_VECTOR
+#define CONFIG_NR_DRAM_BANKS			1
+
+
+#define CONFIG_STD_DEVICES_SETTINGS     "stdin=usbkbd,vga,serial\0" \
+					"stdout=vga,serial\0" \
+					"stderr=vga,serial\0"
+
+#define CONFIG_CACHE_MRC_SIZE_KB	512
+
+#endif	/* __CONFIG_H */
