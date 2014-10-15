@@ -14,14 +14,13 @@
 #include <common.h>
 #include <command.h>
 #include <rtc.h>
+#include <version.h>
 
 #if defined(__I386__) || defined(CONFIG_MALTA)
 #include <asm/io.h>
 #define in8(p) inb(p)
 #define out8(p, v) outb(v, p)
 #endif
-
-#if defined(CONFIG_CMD_DATE)
 
 static uchar rtc_read  (uchar reg);
 static void  rtc_write (uchar reg, uchar val);
@@ -42,6 +41,12 @@ static void  rtc_write (uchar reg, uchar val);
 #define RTC_CONFIG_C		0x0C
 #define RTC_CONFIG_D		0x0D
 
+#define RTC_CONFIG_A_REF_CLCK_32KHZ	(1 << 5)
+#define RTC_CONFIG_A_RATE_1024HZ	6
+
+#define RTC_CONFIG_B_24H		(1 << 1)
+
+#define RTC_CONFIG_D_VALID_RAM_AND_TIME	0x80
 
 /* ------------------------------------------------------------------------- */
 
@@ -149,4 +154,84 @@ static void rtc_write (uchar reg, uchar val)
 }
 #endif
 
+static void rtc_reset_build_date(void)
+{
+	struct rtc_time tmp = {
+		.tm_sec = 0,
+		.tm_min = 0,
+		.tm_hour = 1,
+		.tm_mday = U_BOOT_DAY,
+		.tm_mon = U_BOOT_MONTH,
+		.tm_year = U_BOOT_YEAR,
+		.tm_wday = U_BOOT_WEEKDAY
+	};
+
+	rtc_set(&tmp);
+}
+
+void rtc_init(bool invalid)
+{
+	int cmos_invalid = 0;
+	int checksum_invalid = 0;
+#if CONFIG_USE_OPTION_TABLE
+	unsigned char x;
 #endif
+
+	debug("RTC Init\n");
+
+#if CONFIG_USE_OPTION_TABLE
+	/* See if there has been a CMOS power problem. */
+	x = cmos_read(RTC_VALID);
+	cmos_invalid = !(x & RTC_VRT);
+
+	/* See if there is a CMOS checksum error */
+	checksum_invalid = !cmos_checksum_valid(PC_CKS_RANGE_START,
+			PC_CKS_RANGE_END,PC_CKS_LOC);
+
+#define CLEAR_CMOS 0
+#else
+#define CLEAR_CMOS 1
+#endif
+
+	if (invalid || cmos_invalid || checksum_invalid) {
+#if CLEAR_CMOS
+		int i;
+
+		rtc_write(0x01, 0);
+		rtc_write(0x03, 0);
+		rtc_write(0x05, 0);
+		for (i = 10; i < 128; i++)
+			rtc_write(i, 0);
+#endif
+		if (cmos_invalid)
+			rtc_reset_build_date();
+
+		printf("RTC:%s%s%s%s\n",
+			invalid?" Clear requested":"",
+			cmos_invalid?" Power Problem":"",
+			checksum_invalid?" Checksum invalid":"",
+			CLEAR_CMOS?" zeroing cmos":"");
+	}
+
+	/* Setup the real time clock */
+	rtc_write(RTC_CONFIG_B, RTC_CONFIG_B_24H);
+	/* Setup the frequency it operates at */
+	rtc_write(RTC_CONFIG_A, RTC_CONFIG_A_REF_CLCK_32KHZ |
+		  RTC_CONFIG_A_RATE_1024HZ);
+	/* Ensure all reserved bits are 0 in register D */
+	rtc_write(RTC_CONFIG_D, RTC_CONFIG_D_VALID_RAM_AND_TIME);
+
+#if CONFIG_USE_OPTION_TABLE
+	/* See if there is a LB CMOS checksum error */
+	checksum_invalid = !cmos_checksum_valid(LB_CKS_RANGE_START,
+			LB_CKS_RANGE_END,LB_CKS_LOC);
+	if (checksum_invalid)
+		debug("RTC: coreboot checksum invalid\n");
+
+	/* Make certain we have a valid checksum */
+	cmos_set_checksum(PC_CKS_RANGE_START, PC_CKS_RANGE_END, PC_CKS_LOC);
+#endif
+
+	/* Clear any pending interrupts */
+	rtc_read(RTC_CONFIG_C);
+}

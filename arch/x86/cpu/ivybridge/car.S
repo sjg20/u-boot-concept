@@ -125,6 +125,10 @@ clear_mtrrs:
 	/* Enable cache for our code in Flash because we do XIP here */
 	movl	$MTRRphysBase_MSR(1), %ecx
 	xorl	%edx, %edx
+	/*
+	 * IMPORTANT: The following calculation _must_ be done at runtime. See
+	 * http://www.coreboot.org/pipermail/coreboot/2010-October/060855.html
+	 */
 	movl    $car_init_ret, %eax
 	andl    $(~(CONFIG_XIP_ROM_SIZE - 1)), %eax
 	orl	$MTRR_TYPE_WRPROT, %eax
@@ -159,6 +163,154 @@ clear_mtrrs:
 	/* return */
 	jmp	car_init_ret
 
+
+#if 0 /* Not currently used */
+disable_car:
+	post_code(0x2f)
+
+	/* Copy global variable space (for USBDEBUG) to memory */
+#if CONFIG_USBDEBUG
+	cld
+	movl	$(CONFIG_DCACHE_RAM_BASE + CONFIG_DCACHE_RAM_SIZE - 24), %esi
+	movl	$(CONFIG_RAMTOP - 24), %edi
+	movl	$24, %ecx
+	rep	movsb
+#endif
+
+	post_code(0x30)
+
+	/* Disable cache. */
+	movl	%cr0, %eax
+	orl	$X86_CR0_CD, %eax
+	movl	%eax, %cr0
+
+	post_code(0x31)
+
+	/* Disable MTRR. */
+	movl	$MTRRdefType_MSR, %ecx
+	rdmsr
+	andl	$(~MTRRdefTypeEn), %eax
+	wrmsr
+
+	post_code(0x31)
+
+	/* Disable the no eviction run state */
+	movl    $NoEvictMod_MSR, %ecx
+	rdmsr
+	andl    $~2, %eax
+	wrmsr
+
+	invd
+
+	/* Disable the no eviction mode */
+	rdmsr
+	andl    $~1, %eax
+	wrmsr
+
+#ifdef CONFIG_CACHE_MRC_BIN
+	/* Clear MTRR that was used to cache MRC */
+	xorl	%eax, %eax
+	xorl	%edx, %edx
+	movl	$MTRRphysBase_MSR(2), %ecx
+	wrmsr
+	movl	$MTRRphysMask_MSR(2), %ecx
+	wrmsr
+#endif
+
+	post_code(0x33)
+
+	/* Enable cache. */
+	movl	%cr0, %eax
+	andl	$~(X86_CR0_CD | X86_CR0_NW), %eax
+	movl	%eax, %cr0
+
+	post_code(0x36)
+
+	/* Disable cache. */
+	movl	%cr0, %eax
+	orl	X86_CR0_CD, %eax
+	movl	%eax, %cr0
+
+	post_code(0x38)
+
+	/* Enable Write Back and Speculative Reads for the first MB
+	 * and ramstage.
+	 */
+	movl	$MTRRphysBase_MSR(0), %ecx
+	movl	$(0x00000000 | MTRR_TYPE_WRBACK), %eax
+	xorl	%edx, %edx
+	wrmsr
+	movl	$MTRRphysMask_MSR(0), %ecx
+	movl	$(~(CONFIG_RAMTOP - 1) | MTRRphysMaskValid), %eax
+	movl	$CPU_PHYSMASK_HI, %edx	// 36bit address space
+	wrmsr
+
+#if CONFIG_CACHE_ROM_SIZE
+	/* Enable Caching and speculative Reads for the
+	 * complete ROM now that we actually have RAM.
+	 */
+	movl	$MTRRphysBase_MSR(1), %ecx
+	movl	$(CACHE_ROM_BASE | MTRR_TYPE_WRPROT), %eax
+	xorl	%edx, %edx
+	wrmsr
+	movl	$MTRRphysMask_MSR(1), %ecx
+	movl	$(~(CONFIG_CACHE_ROM_SIZE - 1) | MTRRphysMaskValid), %eax
+	movl	$CPU_PHYSMASK_HI, %edx
+	wrmsr
+#endif
+
+	post_code(0x39)
+
+	/* And enable cache again after setting MTRRs. */
+	movl	%cr0, %eax
+	andl	$~(X86_CR0_CD | X86_CR0_NW), %eax
+	movl	%eax, %cr0
+
+	post_code(0x3a)
+
+	/* Enable MTRR. */
+	movl	$MTRRdefType_MSR, %ecx
+	rdmsr
+	orl	$MTRRdefTypeEn, %eax
+	wrmsr
+
+	post_code(0x3b)
+
+	/* Invalidate the cache again. */
+	invd
+
+	post_code(0x3c)
+
+#if CONFIG_HAVE_ACPI_RESUME
+	movl	CBMEM_BOOT_MODE, %eax
+	cmpl	$0x2, %eax // Resume?
+	jne	__acpi_resume_backup_done
+
+	/* copy 1MB - 64K to high tables ram_base to prevent memory corruption
+	 * through stage 2. We could keep stuff like stack and heap in high
+	 * tables memory completely, but that's a wonderful clean up task for
+	 * another day.
+	 */
+	cld
+	movl	$CONFIG_RAMBASE, %esi
+	movl	CBMEM_RESUME_BACKUP, %edi
+	movl	$HIGH_MEMORY_SAVE / 4, %ecx
+	rep	movsl
+
+__acpi_resume_backup_done:
+#endif
+
+	post_code(0x3d)
+
+	/* TODO: Return properly */
+	ret
+#endif
+
+.Lhlt:
+	post_code(0xee)
+	hlt
+	jmp	.Lhlt
+
 mtrr_table:
 	/* Fixed MTRRs */
 	.word 0x250, 0x258, 0x259
@@ -172,3 +324,4 @@ mtrr_table:
 	.word 0x20C, 0x20D, 0x20E, 0x20F
 	.word 0x210, 0x211, 0x212, 0x213
 mtrr_table_end:
+

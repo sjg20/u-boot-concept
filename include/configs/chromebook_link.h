@@ -18,38 +18,51 @@
 #define CONFIG_SYS_CAR_ADDR			0xff7e0000
 #define CONFIG_SYS_CAR_SIZE			(128 * 1024)
 #define CONFIG_SYS_MONITOR_LEN			(1 << 20)
+#define CONFIG_DCACHE_RAM_MRC_VAR_SIZE		0x4000
 #define CONFIG_SYS_X86_START16			0xfffff800
 #define CONFIG_BOARD_EARLY_INIT_R
+#define CONFIG_DISPLAY_CPUINFO
 
 #define CONFIG_X86_RESET_VECTOR
 #define CONFIG_NR_DRAM_BANKS			8
 
-/*
- * These common x86 features are not yet supported, but are added in
- * follow-on patches in this series. Add undefs here to avoid every patch
- * having to put things back into x86-common.h
- */
-#undef CONFIG_INTEL_ICH6_GPIO
-#undef CONFIG_DM_GPIO
-#undef CONFIG_CMD_GPIO
-#undef CONFIG_CROS_EC
-#undef CONFIG_CROS_EC_LPC
-#undef CONFIG_CMD_CROS_EC
-#undef CONFIG_ARCH_EARLY_INIT_R
-#undef CONFIG_VIDEO
-#undef CONFIG_CFB_CONSOLE
-#undef CONFIG_SYS_EARLY_PCI_INIT
-#undef CONFIG_PCI
-#undef CONFIG_ICH_SPI
-#undef CONFIG_SPI
-#undef CONFIG_CMD_SPI
-#undef CONFIG_CMD_SF
-#undef CONFIG_USB_EHCI
-#undef CONFIG_CMD_USB
-#undef CONFIG_CMD_SCSI
+#define CONFIG_X86_MRC_START			0xfffa0000
 
 #define CONFIG_STD_DEVICES_SETTINGS     "stdin=usbkbd,vga,serial\0" \
 					"stdout=vga,serial\0" \
 					"stderr=vga,serial\0"
+
+#define CONFIG_CACHE_MRC_SIZE_KB	512
+
+#define CONFIG_X86_OPTION_ROM_FILENAME		pci8086,0166.bin
+#define CONFIG_X86_OPTION_ROM_ADDR		0xfff90000
+#define CONFIG_BIOSEMU
+#define VIDEO_IO_OFFSET				0
+#define CONFIG_VIDEO_X86
+
+#define CONFIG_PCI_PNP
+#define CONFIG_SYS_PCI_64BIT
+
+#define CONFIG_PCI_MEM_BUS	0xe0000000
+#define CONFIG_PCI_MEM_PHYS	CONFIG_PCI_MEM_BUS
+#define CONFIG_PCI_MEM_SIZE	0x10000000
+
+#define CONFIG_PCI_PREF_BUS	0xd0000000
+#define CONFIG_PCI_PREF_PHYS	CONFIG_PCI_PREF_BUS
+#define CONFIG_PCI_PREF_SIZE	0x10000000
+
+#define CONFIG_PCI_IO_BUS	0x1000
+#define CONFIG_PCI_IO_PHYS	CONFIG_PCI_IO_BUS
+#define CONFIG_PCI_IO_SIZE	0xefff
+
+/*
+#define CONFIG_PCI_SCAN_SHOW
+*/
+
+#define CONFIG_CMD_CACHE
+#define CONFIG_X86EMU_RAW_IO
+
+#define CONFIG_RTC_MC146818
+#define CONFIG_CMD_DATE
 
 #endif	/* __CONFIG_H */

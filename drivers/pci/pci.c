@@ -11,7 +11,6 @@
 /*
  * PCI routines
  */
-
 #include <common.h>
 
 #include <command.h>
@@ -363,9 +362,14 @@ phys_addr_t pci_hose_bus_to_phys(struct pci_controller* hose,
 	return phys_addr;
 }
 
-/*
- *
- */
+void pci_config_fixed(struct pci_controller *hose, pci_dev_t dev, int barnum,
+		      uint32_t addr)
+{
+	int bar;
+
+	bar = PCI_BASE_ADDRESS_0 + barnum * 4;
+	pci_hose_write_config_dword(hose, dev, bar, addr);
+}
 
 int pci_hose_config_device(struct pci_controller *hose,
 			   pci_dev_t dev,
@@ -615,6 +619,7 @@ int pci_hose_scan_bus(struct pci_controller *hose, int bus)
 	static int indent = 0;
 #endif
 
+	debug("Scanning bus %d\n", bus);
 	sub_bus = bus;
 
 	for (dev =  PCI_BDF(bus,0,0);
@@ -679,6 +684,7 @@ int pci_hose_scan_bus(struct pci_controller *hose, int bus)
 		if (hose->fixup_irq)
 			hose->fixup_irq(hose, dev);
 	}
+	debug("Scan done\n");
 
 	return sub_bus;
 }

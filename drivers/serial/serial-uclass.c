@@ -78,6 +78,7 @@ int serial_init(void)
 void serial_initialize(void)
 {
 	serial_find_console_or_panic();
+	gd->flags |= GD_FLG_SERIAL_READY;
 }
 
 static void _serial_putc(struct udevice *dev, char ch)

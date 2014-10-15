@@ -785,7 +785,7 @@ static int initf_malloc(void)
 {
 #ifdef CONFIG_SYS_MALLOC_F_LEN
 	assert(gd->malloc_base);	/* Set up by crt0.S */
-	gd->malloc_limit = gd->malloc_base + CONFIG_SYS_MALLOC_F_LEN;
+	gd->malloc_limit = gd->malloc_base + CONFIG_SYS_MALLOC_F_LEN;  // BUG
 	gd->malloc_ptr = 0;
 #endif
 
@@ -804,6 +804,29 @@ static int initf_dm(void)
 
 	return 0;
 }
+
+#if 0
+static int initf_dm_serial(void)
+{
+#ifdef CONFIG_DM
+	int ret;
+
+	/* Save the pre-reloc driver model and start a new one */
+	gd->dm_root_f = gd->dm_root;
+	gd->dm_root = NULL;
+	gd->start_addr_sp -= CONFIG_SYS_MALLOC_F_LEN;
+	gd->malloc_base = gd->start_addr_sp;
+	gd->malloc_limit = CONFIG_SYS_MALLOC_F_LEN;
+	gd->malloc_ptr = 0;
+	ret = dm_init_and_scan(false);
+	if (ret)
+		return ret;
+	printf("hello\n");
+#endif
+
+	return 0;
+}
+#endif
 
 static init_fnc_t init_sequence_f[] = {
 #ifdef CONFIG_SANDBOX
@@ -966,6 +989,7 @@ static init_fnc_t init_sequence_f[] = {
 	setup_machine,
 	reserve_global_data,
 	reserve_fdt,
+// 	initf_dm_serial,
 	reserve_stacks,
 	setup_dram_config,
 	show_dram_config,

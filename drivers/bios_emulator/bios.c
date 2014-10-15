@@ -40,6 +40,7 @@
 *		video BIOS.
 *
 ****************************************************************************/
+#define DEBUG
 
 #define __io
 #include <asm/io.h>
@@ -84,14 +85,14 @@ static void X86API int42(int intno)
 			PM_outpb(0x3c2, PM_inpb(0x3cc) & (u8) ~ 0x02);
 			return;
 		}
-#ifdef  DEBUG
+#ifdef CONFIG_X86EMU_DEBUG
 		else {
 			printf("int42: unknown function AH=0x12, BL=0x32, AL=%#02x\n",
 			     M.x86.R_AL);
 		}
 #endif
 	}
-#ifdef  DEBUG
+#ifdef CONFIG_X86EMU_DEBUG
 	else {
 		printf("int42: unknown function AH=%#02x, AL=%#02x, BL=%#02x\n",
 		     M.x86.R_AH, M.x86.R_AL, M.x86.R_BL);
@@ -127,6 +128,90 @@ static void X86API int10(int intno)
 #define BAD_REGISTER_NUMBER 0x87
 #define SET_FAILED          0x88
 #define BUFFER_TOO_SMALL    0x89
+
+static void int15(int intno)
+{
+	int res = 0;
+
+	debug("%s: INT15 function %04x!\n", __func__, M.x86.R_AX);
+
+	switch(M.x86.R_AX) {
+	case 0x5f34:
+		/*
+		 * Set Panel Fitting Hook:
+		 *  bit 2 = Graphics Stretching
+		 *  bit 1 = Text Stretching
+		 *  bit 0 = Centering (do not set with bit1 or bit2)
+		 *  0     = video bios default
+		 */
+		M.x86.R_AX = 0x005f;
+		M.x86.R_CL = 0x00; /* Use video bios default */
+		res = 1;
+		break;
+	case 0x5f35:
+		/*
+		 * Boot Display Device Hook:
+		 *  bit 0 = CRT
+		 *  bit 1 = TV (eDP)
+		 *  bit 2 = EFP
+		 *  bit 3 = LFP
+		 *  bit 4 = CRT2
+		 *  bit 5 = TV2 (eDP)
+		 *  bit 6 = EFP2
+		 *  bit 7 = LFP2
+		 */
+		M.x86.R_AX = 0x005f;
+		M.x86.R_CX = 0x0000; /* Use video bios default */
+		res = 1;
+		break;
+	case 0x5f51:
+		/*
+		 * Hook to select active LFP configuration:
+		 *  00h = No LVDS, VBIOS does not enable LVDS
+		 *  01h = Int-LVDS, LFP driven by integrated LVDS decoder
+		 *  02h = SVDO-LVDS, LFP driven by SVDO decoder
+		 *  03h = eDP, LFP Driven by Int-DisplayPort encoder
+		 */
+		M.x86.R_AX = 0x005f;
+		M.x86.R_CX = 0x0003; /* eDP */
+		res = 1;
+		break;
+	case 0x5f70:
+		switch (M.x86.R_CH) {
+		case 0:
+			/* Get Mux */
+			M.x86.R_AX = 0x005f;
+			M.x86.R_CX = 0x0000;
+			res = 1;
+			break;
+		case 1:
+			/* Set Mux */
+			M.x86.R_AX = 0x005f;
+			M.x86.R_CX = 0x0000;
+			res = 1;
+			break;
+		case 2:
+			/* Get SG/Non-SG mode */
+			M.x86.R_AX = 0x005f;
+			M.x86.R_CX = 0x0000;
+			res = 1;
+			break;
+		default:
+			/* Interrupt was not handled */
+			debug("Unknown INT15 5f70 function: 0x%02x\n",
+			      M.x86.R_CH);
+			break;
+		}
+		break;
+	case 0x5fac:
+		res = 1;
+		break;
+        default:
+		debug("Unknown INT15 function %04x!\n", M.x86.R_AX);
+		break;
+	}
+	CONDITIONAL_SET_FLAG(res != 0, F_CF);
+}
 
 /****************************************************************************
 PARAMETERS:
@@ -317,6 +402,7 @@ void _BE_bios_init(u32 * intrTab)
 		bios_intr_tab[i] = undefined_intr;
 	}
 	bios_intr_tab[0x10] = int10;
+	bios_intr_tab[0x15] = int15;
 	bios_intr_tab[0x1A] = int1A;
 	bios_intr_tab[0x42] = int42;
 	bios_intr_tab[0x6D] = int10;

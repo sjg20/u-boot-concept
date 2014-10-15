@@ -10,6 +10,25 @@
 
 #ifndef __ASSEMBLY__
 
+enum pei_boot_mode_t {
+	PEI_BOOT_NONE= 0,
+	PEI_BOOT_SOFT_RESET,
+	PEI_BOOT_RESUME,
+
+};
+
+struct memory_area {
+	uint64_t start;
+	uint64_t size;
+};
+
+struct memory_info {
+	int num_areas;
+	uint64_t total_memory;
+	uint64_t total_32bit_memory;
+	struct memory_area area[CONFIG_NR_DRAM_BANKS];
+};
+
 /* Architecture-specific global data */
 struct arch_global_data {
 	struct global_data *gd_addr;		/* Location of Global Data */
@@ -18,6 +37,10 @@ struct arch_global_data {
 	uint32_t tsc_prev;		/* For show_boot_progress() */
 	void *new_fdt;			/* Relocated FDT */
 	uint32_t bist;			/* Built-in self test value */
+	uint32_t gdt_addr;		/* Global descriptor table */
+	struct pci_controller *hose;	/* PCI hose for early use */
+	enum pei_boot_mode_t pei_boot_mode;
+	struct memory_info meminfo;	/* Memory information */
 };
 
 #endif

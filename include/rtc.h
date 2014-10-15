@@ -50,4 +50,11 @@ void to_tm (int, struct rtc_time *);
 unsigned long mktime (unsigned int, unsigned int, unsigned int,
 		      unsigned int, unsigned int, unsigned int);
 
+/**
+ * rtc_init() - Set up the real time clock ready for use
+ *
+ * @rtc_failed:	true if time was lost (e.g. flat battery), else false
+ */
+void rtc_init(bool rtc_failed);
+
 #endif	/* _RTC_H_ */

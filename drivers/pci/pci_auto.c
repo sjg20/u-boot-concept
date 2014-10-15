@@ -14,7 +14,6 @@
 
 #include <pci.h>
 
-#undef DEBUG
 #ifdef DEBUG
 #define DEBUGF(x...) printf(x)
 #else
@@ -79,6 +78,22 @@ int pciauto_region_allocate(struct pci_region *res, pci_size_t size,
 /*
  *
  */
+#if 0
+void pciauto_setup_isa(struct pci_controller *hose, pci_dev_t dev)
+{
+	pci_config_fixed(hose, dev, 0, 0);
+	pci_config_fixed(hose, dev, 1, 0xff800000);
+	pci_config_fixed(hose, dev, 2, 0xfec00000);
+	pci_config_fixed(hose, dev, 3, 0x800);
+	pci_config_fixed(hose, dev, 4, 0x900);
+
+	pci_hose_write_config_word(hose, dev, PCI_COMMAND,
+		PCI_COMMAND_IO | PCI_COMMAND_MEMORY);
+	pci_hose_write_config_byte(hose, dev, PCI_CACHE_LINE_SIZE,
+		CONFIG_SYS_PCI_CACHE_LINE_SIZE);
+	pci_hose_write_config_byte(hose, dev, PCI_LATENCY_TIMER, 0x80);
+}
+#endif
 
 void pciauto_setup_device(struct pci_controller *hose,
 			  pci_dev_t dev, int bars_num,
@@ -90,10 +105,13 @@ void pciauto_setup_device(struct pci_controller *hose,
 	pci_size_t bar_size;
 	u16 cmdstat = 0;
 	int bar, bar_nr = 0;
-#ifndef CONFIG_PCI_ENUM_ONLY
 	pci_addr_t bar_value;
 	struct pci_region *bar_res;
 	int found_mem64 = 0;
+#ifdef CONFIG_PCI_ENUM_ONLY
+	bool setup = false;
+#else
+	bool setup = true;
 #endif
 
 	pci_hose_read_config_word(hose, dev, PCI_COMMAND, &cmdstat);
@@ -102,26 +120,24 @@ void pciauto_setup_device(struct pci_controller *hose,
 	for (bar = PCI_BASE_ADDRESS_0;
 		bar < PCI_BASE_ADDRESS_0 + (bars_num * 4); bar += 4) {
 		/* Tickle the BAR and get the response */
-#ifndef CONFIG_PCI_ENUM_ONLY
-		pci_hose_write_config_dword(hose, dev, bar, 0xffffffff);
-#endif
+		pci_hose_read_config_dword(hose, dev, bar, &bar_response);
+		if (setup)
+			pci_hose_write_config_dword(hose, dev, bar, 0xffffffff);
 		pci_hose_read_config_dword(hose, dev, bar, &bar_response);
 
 		/* If BAR is not implemented go to the next BAR */
 		if (!bar_response)
 			continue;
 
-#ifndef CONFIG_PCI_ENUM_ONLY
-		found_mem64 = 0;
-#endif
+		if (setup)
+			found_mem64 = 0;
 
 		/* Check the BAR type and set our address mask */
 		if (bar_response & PCI_BASE_ADDRESS_SPACE) {
 			bar_size = ((~(bar_response & PCI_BASE_ADDRESS_IO_MASK))
 				   & 0xffff) + 1;
-#ifndef CONFIG_PCI_ENUM_ONLY
-			bar_res = io;
-#endif
+			if (setup)
+				bar_res = io;
 
 			DEBUGF("PCI Autoconfig: BAR %d, I/O, size=0x%llx, ", bar_nr, (u64)bar_size);
 		} else {
@@ -130,59 +146,66 @@ void pciauto_setup_device(struct pci_controller *hose,
 				u32 bar_response_upper;
 				u64 bar64;
 
-#ifndef CONFIG_PCI_ENUM_ONLY
-				pci_hose_write_config_dword(hose, dev, bar + 4,
-					0xffffffff);
-#endif
+				if (setup)
+					pci_hose_write_config_dword(hose, dev, bar + 4,
+						0xffffffff);
 				pci_hose_read_config_dword(hose, dev, bar + 4,
 					&bar_response_upper);
 
 				bar64 = ((u64)bar_response_upper << 32) | bar_response;
 
 				bar_size = ~(bar64 & PCI_BASE_ADDRESS_MEM_MASK) + 1;
-#ifndef CONFIG_PCI_ENUM_ONLY
-				found_mem64 = 1;
-#endif
+				if (setup)
+					found_mem64 = 1;
 			} else {
 				bar_size = (u32)(~(bar_response & PCI_BASE_ADDRESS_MEM_MASK) + 1);
 			}
-#ifndef CONFIG_PCI_ENUM_ONLY
-			if (prefetch && (bar_response & PCI_BASE_ADDRESS_MEM_PREFETCH))
-				bar_res = prefetch;
-			else
-				bar_res = mem;
-#endif
+			if (setup) {
+				if (prefetch && (bar_response & PCI_BASE_ADDRESS_MEM_PREFETCH))
+					bar_res = prefetch;
+				else
+					bar_res = mem;
+			}
 
 			DEBUGF("PCI Autoconfig: BAR %d, Mem, size=0x%llx, ", bar_nr, (u64)bar_size);
 		}
 
-#ifndef CONFIG_PCI_ENUM_ONLY
-		if (pciauto_region_allocate(bar_res, bar_size, &bar_value) == 0) {
-			/* Write it out and update our limit */
-			pci_hose_write_config_dword(hose, dev, bar, (u32)bar_value);
+		if (setup) {
+			if (pciauto_region_allocate(bar_res, bar_size, &bar_value) == 0) {
+				/* Write it out and update our limit */
+				pci_hose_write_config_dword(hose, dev, bar, (u32)bar_value);
 
-			if (found_mem64) {
-				bar += 4;
+				if (found_mem64) {
+					bar += 4;
 #ifdef CONFIG_SYS_PCI_64BIT
-				pci_hose_write_config_dword(hose, dev, bar, (u32)(bar_value>>32));
+					pci_hose_write_config_dword(hose, dev, bar, (u32)(bar_value>>32));
 #else
-				/*
-				 * If we are a 64-bit decoder then increment to the
-				 * upper 32 bits of the bar and force it to locate
-				 * in the lower 4GB of memory.
-				 */
-				pci_hose_write_config_dword(hose, dev, bar, 0x00000000);
+					/*
+					* If we are a 64-bit decoder then increment to the
+					* upper 32 bits of the bar and force it to locate
+					* in the lower 4GB of memory.
+					*/
+					pci_hose_write_config_dword(hose, dev, bar, 0x00000000);
 #endif
-			}
+				}
 
+			}
 		}
-#endif
 		cmdstat |= (bar_response & PCI_BASE_ADDRESS_SPACE) ?
 			PCI_COMMAND_IO : PCI_COMMAND_MEMORY;
 
 		DEBUGF("\n");
 
 		bar_nr++;
+	}
+	bar_nr = 0;
+	for (bar = PCI_BASE_ADDRESS_0;
+			bar < PCI_BASE_ADDRESS_0 + (bars_num * 4);
+			bar += 4, bar_nr++) {
+		u32 bar_value;
+
+		pci_hose_read_config_dword(hose, dev, bar, &bar_value);
+		DEBUGF(" - BAR %d, bar=0x%x\n", bar_nr, bar_value);
 	}
 
 	pci_hose_write_config_word(hose, dev, PCI_COMMAND, cmdstat);
@@ -324,7 +347,7 @@ void pciauto_config_init(struct pci_controller *hose)
 		pciauto_region_init(hose->pci_mem);
 
 		DEBUGF("PCI Autoconfig: Bus Memory region: [0x%llx-0x%llx],\n"
-		       "\t\tPhysical Memory [%llx-%llxx]\n",
+		       "\t\tPhysical Memory [%llx-%llx]\n",
 		    (u64)hose->pci_mem->bus_start,
 		    (u64)(hose->pci_mem->bus_start + hose->pci_mem->size - 1),
 		    (u64)hose->pci_mem->phys_start,
@@ -376,7 +399,8 @@ int pciauto_config_device(struct pci_controller *hose, pci_dev_t dev)
 		pciauto_setup_device(hose, dev, 2, hose->pci_mem,
 			hose->pci_prefetch, hose->pci_io);
 
-		DEBUGF("PCI Autoconfig: Found P2P bridge, device %d\n", PCI_DEV(dev));
+		DEBUGF("PCI Autoconfig: Found P2P bridge, device %d, bus %d\n",
+		       PCI_DEV(dev), hose->current_busno);
 
 		/* Passing in current_busno allows for sibling P2P bridges */
 		pciauto_prescan_setup_bridge(hose, dev, hose->current_busno);
@@ -395,11 +419,12 @@ int pciauto_config_device(struct pci_controller *hose, pci_dev_t dev)
 
 	case PCI_CLASS_STORAGE_IDE:
 		pci_hose_read_config_byte(hose, dev, PCI_CLASS_PROG, &prg_iface);
+		/*
 		if (!(prg_iface & PCIAUTO_IDE_MODE_MASK)) {
 			DEBUGF("PCI Autoconfig: Skipping legacy mode IDE controller\n");
 			return sub_bus;
 		}
-
+		*/
 		pciauto_setup_device(hose, dev, 6, hose->pci_mem,
 			hose->pci_prefetch, hose->pci_io);
 		break;
@@ -440,8 +465,13 @@ int pciauto_config_device(struct pci_controller *hose, pci_dev_t dev)
 
 	case PCI_CLASS_PROCESSOR_POWERPC: /* an agent or end-point */
 		DEBUGF("PCI AutoConfig: Found PowerPC device\n");
+// 	case PCI_CLASS_BRIDGE_ISA:
+// 		DEBUGF("PCI AutoConfig: Found LPC\n");
+// 		pciauto_setup_isa(hose, dev);
+// 		break;
 
 	default:
+		DEBUGF("PCI AutoConfig: Found device class %04x\n", class);
 		pciauto_setup_device(hose, dev, 6, hose->pci_mem,
 			hose->pci_prefetch, hose->pci_io);
 		break;

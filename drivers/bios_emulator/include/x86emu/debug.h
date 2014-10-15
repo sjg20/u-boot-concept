@@ -36,8 +36,8 @@
 *
 ****************************************************************************/
 
-#ifndef __X86EMU_DEBUG_H
-#define __X86EMU_DEBUG_H
+#ifndef __CONFIG_X86EMU_DEBUG_H
+#define __CONFIG_X86EMU_DEBUG_H
 
 /*---------------------- Macros and type definitions ----------------------*/
 
@@ -48,7 +48,7 @@
 #define CHECK_MEM_ACCESS_F		0x4	/*using regular linear pointer */
 #define CHECK_DATA_ACCESS_F		0x8	/*using segment:offset */
 
-#ifdef DEBUG
+#ifdef CONFIG_X86EMU_DEBUG
 # define CHECK_IP_FETCH()		(M.x86.check & CHECK_IP_FETCH_F)
 # define CHECK_SP_ACCESS()		(M.x86.check & CHECK_SP_ACCESS_F)
 # define CHECK_MEM_ACCESS()		(M.x86.check & CHECK_MEM_ACCESS_F)
@@ -60,7 +60,7 @@
 # define CHECK_DATA_ACCESS()
 #endif
 
-#ifdef DEBUG
+#ifdef CONFIG_X86EMU_DEBUG
 # define DEBUG_INSTRUMENT()	(M.x86.debug & DEBUG_INSTRUMENT_F)
 # define DEBUG_DECODE()		(M.x86.debug & DEBUG_DECODE_F)
 # define DEBUG_TRACE()		(M.x86.debug & DEBUG_TRACE_F)
@@ -99,7 +99,7 @@
 # define DEBUG_DECODE_NOPRINT() 0
 #endif
 
-#ifdef DEBUG
+#ifdef CONFIG_X86EMU_DEBUG
 
 # define DECODE_PRINTF(x)	if (DEBUG_DECODE()) \
 				    x86emu_decode_printf(x)
@@ -129,7 +129,7 @@
 # define SAVE_IP_CS(x,y)
 #endif
 
-#ifdef DEBUG
+#ifdef CONFIG_X86EMU_DEBUG
 #define TRACE_REGS()					    \
     if (DEBUG_DISASSEMBLE()) {				    \
 	x86emu_just_disassemble();			    \
@@ -140,7 +140,7 @@
 # define TRACE_REGS()
 #endif
 
-#ifdef DEBUG
+#ifdef CONFIG_X86EMU_DEBUG
 # define SINGLE_STEP()	    if (DEBUG_STEP()) x86emu_single_step()
 #else
 # define SINGLE_STEP()
@@ -150,7 +150,7 @@
     TRACE_REGS();	    \
     SINGLE_STEP()
 
-#ifdef DEBUG
+#ifdef CONFIG_X86EMU_DEBUG
 # define START_OF_INSTR()
 # define END_OF_INSTR()	    EndOfTheInstructionProcedure: x86emu_end_instr();
 # define END_OF_INSTR_NO_TRACE()    x86emu_end_instr();
@@ -160,7 +160,7 @@
 # define END_OF_INSTR_NO_TRACE()
 #endif
 
-#ifdef DEBUG
+#ifdef CONFIG_X86EMU_DEBUG
 # define  CALL_TRACE(u,v,w,x,s)					\
     if (DEBUG_TRACECALLREGS())					\
 	x86emu_dump_regs();					\
@@ -176,7 +176,7 @@
 # define RETURN_TRACE(n,u,v)
 #endif
 
-#ifdef DEBUG
+#ifdef CONFIG_X86EMU_DEBUG
 #define DB(x)	x
 #else
 #define DB(x)
@@ -189,8 +189,8 @@ extern "C" {			/* Use "C" linkage when in C++ mode */
 #endif
 
 	extern void x86emu_inc_decoded_inst_len(int x);
-	extern void x86emu_decode_printf(char *x);
-	extern void x86emu_decode_printf2(char *x, int y);
+	extern void x86emu_decode_printf(const char *x);
+	extern void x86emu_decode_printf2(const char *x, int y);
 	extern void x86emu_just_disassemble(void);
 	extern void x86emu_single_step(void);
 	extern void x86emu_end_instr(void);
@@ -206,4 +206,4 @@ extern "C" {			/* Use "C" linkage when in C++ mode */
 #ifdef	__cplusplus
 }				/* End of "C" linkage for C++	    */
 #endif
-#endif				/* __X86EMU_DEBUG_H */
+#endif				/* __CONFIG_X86EMU_DEBUG_H */

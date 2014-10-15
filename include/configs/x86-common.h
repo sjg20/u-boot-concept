@@ -164,9 +164,10 @@
 #define CONFIG_CMD_ELF
 
 #define CONFIG_BOOTARGS		\
-	"root=/dev/sdb3 init=/sbin/init rootwait ro"
+	"root=/dev/sdb3 init=/sbin/init rootwait ro earlyprintk=serial,ttyS0,115200 console=ttyS0,115200"
 #define CONFIG_BOOTCOMMAND	\
-	"ext2load scsi 0:3 01000000 /boot/vmlinuz; zboot 01000000"
+	"setenv autoload n; usb start && bootp && " \
+	"setenv serverip 192.168.4.1 && tftp image.fit && bootm"
 
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_KGDB_BAUDRATE			115200

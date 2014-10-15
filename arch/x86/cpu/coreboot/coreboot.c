@@ -15,8 +15,8 @@
 #include <asm/cache.h>
 #include <asm/cpu.h>
 #include <asm/io.h>
-#include <asm/arch-coreboot/tables.h>
-#include <asm/arch-coreboot/sysinfo.h>
+#include <asm/arch/tables.h>
+#include <asm/arch/sysinfo.h>
 #include <asm/arch/timestamp.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -45,6 +45,11 @@ int board_early_init_r(void)
 	/* Crystal is 33.000MHz */
 	gd->bus_clk = 33000000;
 
+	return ret;
+}
+
+int board_early_init_f(void)
+{
 	return 0;
 }
 
@@ -68,7 +73,7 @@ void show_boot_progress(int val)
 		gd->arch.tsc_prev = now;
 	}
 #endif
-	outb(val, 0x80);
+	outb(val, POST_PORT);
 }
 
 int last_stage_init(void)

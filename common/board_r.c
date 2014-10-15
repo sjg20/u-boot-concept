@@ -837,9 +837,6 @@ init_fnc_t init_sequence_r[] = {
 #ifdef CONFIG_CMD_KGDB
 	initr_kgdb,
 #endif
-#ifdef CONFIG_X86
-	board_early_init_r,
-#endif
 	interrupt_init,
 #if defined(CONFIG_ARM) || defined(CONFIG_x86)
 	initr_enable_interrupts,
@@ -913,6 +910,7 @@ void board_init_r(gd_t *new_gd, ulong dest_addr)
 	gd = new_gd;
 #endif
 
+// 	gd->flags &= ~GD_FLG_SERIAL_READY;
 #ifdef CONFIG_NEEDS_MANUAL_RELOC
 	for (i = 0; i < ARRAY_SIZE(init_sequence_r); i++)
 		init_sequence_r[i] += gd->reloc_off;

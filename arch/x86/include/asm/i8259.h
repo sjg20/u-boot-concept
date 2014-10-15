@@ -69,4 +69,7 @@
 #define	ICW4_AEOI	0x02	/* Automatic EOI Mode */
 #define ICW4_PM		0x01	/* Microprocessor Mode */
 
+void i8259_setup(void);
+void i8259_configure_irq_trigger(int int_num, bool is_level_triggered);
+
 #endif

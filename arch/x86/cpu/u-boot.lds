@@ -44,7 +44,9 @@ SECTIONS
 
 	. = ALIGN(4);
 	__rel_dyn_start = .;
-	.rel.dyn : { *(.rel.dyn) }
+	.rel.dyn : {
+		*(.rel.*)
+	}
 	__rel_dyn_end = .;
 	. = ALIGN(4);
 	_end = .;
@@ -62,6 +64,15 @@ SECTIONS
 	/DISCARD/ : { *(.plt*) }
 	/DISCARD/ : { *(.interp*) }
 	/DISCARD/ : { *(.gnu*) }
+#if 0
+	/* 16bit realmode trampoline code */
+	.realmode REALMODE_BASE : AT ( LOADADDR(.rel.dyn) + SIZEOF(.rel.dyn) ) {
+		KEEP(*(.realmode))
+	}
+
+	__realmode_start = LOADADDR(.realmode);
+	__realmode_size = SIZEOF(.realmode);
+#endif
 
 #ifdef CONFIG_X86_RESET_VECTOR
 
@@ -69,10 +80,15 @@ SECTIONS
 	 * The following expressions place the 16-bit Real-Mode code and
 	 * Reset Vector at the end of the Flash ROM
 	 */
-	. = START_16;
-	.start16 : AT (CONFIG_SYS_TEXT_BASE + (CONFIG_SYS_MONITOR_LEN - RESET_SEG_SIZE + START_16)) { KEEP(*(.start16)); }
+	. = START_16 - RESET_SEG_START;
+	.start16 : AT (START_16 - RESET_SEG_START) {
+		KEEP(*(.start16));
+	}
 
-	. = RESET_VEC_LOC;
-	.resetvec : AT (CONFIG_SYS_TEXT_BASE + (CONFIG_SYS_MONITOR_LEN - RESET_SEG_SIZE + RESET_VEC_LOC)) { KEEP(*(.resetvec)); }
+	. = RESET_VEC_LOC - RESET_SEG_START;
+	.resetvec : AT (RESET_VEC_LOC - RESET_SEG_START) {
+		KEEP(*(.resetvec));
+	}
 #endif
+
 }

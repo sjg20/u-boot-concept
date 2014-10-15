@@ -433,6 +433,8 @@ void putc(const char c)
 		return;
 #endif
 
+	if (!(gd->flags & GD_FLG_SERIAL_READY))
+		return;
 	if (!gd->have_console)
 		return pre_console_putc(c);
 
@@ -464,6 +466,8 @@ void puts(const char *s)
 		return;
 #endif
 
+	if (!(gd->flags & GD_FLG_SERIAL_READY))
+		return;
 	if (!gd->have_console)
 		return pre_console_puts(s);
 
