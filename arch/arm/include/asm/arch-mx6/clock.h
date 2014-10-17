@@ -59,4 +59,5 @@ int enable_pcie_clock(void);
 int enable_i2c_clk(unsigned char enable, unsigned i2c_num);
 void enable_ipu_clock(void);
 int enable_fec_anatop_clock(enum enet_freq freq);
+int enable_video_pll(int div, int num, int denom);
 #endif /* __ASM_ARCH_CLOCK_H */

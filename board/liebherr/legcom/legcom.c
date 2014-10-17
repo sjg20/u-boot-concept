@@ -809,6 +809,11 @@ static void setup_display(void)
 	struct iomuxc *iomux = (struct iomuxc *)IOMUXC_BASE_ADDR;
 	int reg;
 
+	if (enable_video_pll(46, 0xa2c2a, 0xf4240)) {
+		printf("Can't enable PLL5.\n");
+		return;
+	}
+
 	enable_ipu_clock();
 	imx_setup_hdmi();
 	/* Turn on LDB0,IPU,IPU DI0 clocks */
@@ -816,12 +821,10 @@ static void setup_display(void)
 	reg |=  MXC_CCM_CCGR3_LDB_DI0_MASK;
 	writel(reg, &mxc_ccm->CCGR3);
 
-	/* set LDB0, LDB1 clk select to 011/011 */
+	/* set LDB0, LDB1 clk select to 000/000 (PLL5 src) */
 	reg = readl(&mxc_ccm->cs2cdr);
 	reg &= ~(MXC_CCM_CS2CDR_LDB_DI0_CLK_SEL_MASK
 		 |MXC_CCM_CS2CDR_LDB_DI1_CLK_SEL_MASK);
-	reg |= (3<<MXC_CCM_CS2CDR_LDB_DI0_CLK_SEL_OFFSET)
-	      |(3<<MXC_CCM_CS2CDR_LDB_DI1_CLK_SEL_OFFSET);
 	writel(reg, &mxc_ccm->cs2cdr);
 
 	reg = readl(&mxc_ccm->cscmr2);

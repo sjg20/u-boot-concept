@@ -18,6 +18,7 @@ enum pll_clocks {
 	PLL_BUS,	/* System Bus PLL*/
 	PLL_USBOTG,	/* OTG USB PLL */
 	PLL_ENET,	/* ENET PLL */
+	PLL_VIDEO,	/* VIDEO PLL */
 };
 
 struct mxc_ccm_reg *imx_ccm = (struct mxc_ccm_reg *)CCM_BASE_ADDR;
@@ -74,6 +75,7 @@ int enable_i2c_clk(unsigned char enable, unsigned i2c_num)
 static u32 decode_pll(enum pll_clocks pll, u32 infreq)
 {
 	u32 div;
+	u32 num, denom;
 
 	switch (pll) {
 	case PLL_SYS:
@@ -96,11 +98,19 @@ static u32 decode_pll(enum pll_clocks pll, u32 infreq)
 		div &= BM_ANADIG_PLL_ENET_DIV_SELECT;
 
 		return 25000000 * (div + (div >> 1) + 1);
+	case PLL_VIDEO:
+		div = __raw_readl(&imx_ccm->analog_pll_video);
+		div &= BM_ANADIG_PLL_VIDEO_DIV_SELECT;
+		num = __raw_readl(&imx_ccm->analog_pll_video_num);
+		denom = __raw_readl(&imx_ccm->analog_pll_video_denom);
+
+		return infreq * (div + num / denom);
 	default:
 		return 0;
 	}
 	/* NOTREACHED */
 }
+
 static u32 mxc_get_pll_pfd(enum pll_clocks pll, int pfd_num)
 {
 	u32 div;
@@ -437,6 +447,37 @@ static int enable_enet_pll(uint32_t en)
 	return 0;
 }
 
+int enable_video_pll(int div, int num, int denom)
+{
+	struct mxc_ccm_reg *const imx_ccm
+		= (struct mxc_ccm_reg *) CCM_BASE_ADDR;
+	s32 timeout = 100000;
+	u32 reg = 0;
+
+	writel(BF_ANADIG_PLL_VIDEO_NUM_A(num),
+		&imx_ccm->analog_pll_video_num);
+	writel(BF_ANADIG_PLL_VIDEO_DENOM_B(denom),
+		&imx_ccm->analog_pll_video_denom);
+
+	/* Enable PLL */
+	reg = readl(&imx_ccm->analog_pll_video);
+	reg &= ~(BM_ANADIG_PLL_VIDEO_POWERDOWN |
+		 BM_ANADIG_PLL_VIDEO_DIV_SELECT);
+	reg |= div & BM_ANADIG_PLL_VIDEO_DIV_SELECT;
+	writel(reg, &imx_ccm->analog_pll_video);
+	reg |= BM_ANADIG_PLL_VIDEO_ENABLE;
+	while (timeout--) {
+		if (readl(&imx_ccm->analog_pll_video) &
+		    BM_ANADIG_PLL_VIDEO_LOCK)
+			break;
+	}
+	if (timeout <= 0)
+		return -EIO;
+	reg &= ~BM_ANADIG_PLL_VIDEO_BYPASS;
+	writel(reg, &imx_ccm->analog_pll_video);
+	return 0;
+}
+
 static void ungate_sata_clock(void)
 {
 	struct mxc_ccm_reg *const imx_ccm =
@@ -553,6 +594,8 @@ int do_mx6_showclocks(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	printf("PLL_OTG    %8d MHz\n", freq / 1000000);
 	freq = decode_pll(PLL_ENET, MXC_HCLK);
 	printf("PLL_NET    %8d MHz\n", freq / 1000000);
+	freq = decode_pll(PLL_VIDEO, MXC_HCLK);
+	printf("PLL_VID    %8d MHz\n", freq / 1000000);
 
 	printf("\n");
 	printf("IPG        %8d kHz\n", mxc_get_clock(MXC_IPG_CLK) / 1000);
