@@ -725,8 +725,8 @@ static struct display_info_t const displays[] = {{
 		.name           = "LVDS0",
 		.refresh        = 60,
 		.xres           = 800,
-		.yres           = 600,
-		.pixclock       = 25000,
+		.yres           = 480,
+		.pixclock       = 33898,
 		.left_margin    = 120,
 		.right_margin   = 80,
 		.upper_margin   = 11,
@@ -745,8 +745,8 @@ static struct display_info_t const displays[] = {{
 		.name           = "LVDS1",
 		.refresh        = 60,
 		.xres           = 800,
-		.yres           = 600,
-		.pixclock       = 25000,
+		.yres           = 480,
+		.pixclock       = 33898,
 		.left_margin    = 120,
 		.right_margin   = 80,
 		.upper_margin   = 11,
@@ -809,7 +809,7 @@ static void setup_display(void)
 	struct iomuxc *iomux = (struct iomuxc *)IOMUXC_BASE_ADDR;
 	int reg;
 
-	if (enable_video_pll(46, 0xa2c2a, 0xf4240)) {
+	if (enable_video_pll(34, 0x65b9a, 0xf4240)) {
 		printf("Can't enable PLL5.\n");
 		return;
 	}
