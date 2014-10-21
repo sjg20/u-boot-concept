@@ -1,12 +1,11 @@
 /*
- * Copied from Coreboot
+ * From Coreboot
  *
  * Copyright (C) 2007-2010 coresystems GmbH
  * Copyright (C) 2011 Google Inc
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
-#define DEBUG
 
 #include <common.h>
 #include <asm/io.h>

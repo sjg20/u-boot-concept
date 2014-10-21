@@ -50,6 +50,8 @@ _start:
 	 */
 	movw	$GD_FLG_COLD_BOOT, %bx
 1:
+	/* Save BIST */
+	movl	%eax, %ebp
 
 	/* Load the segement registes to match the gdt loaded in start16.S */
 	movl	$(X86_GDT_ENTRY_32BIT_DS * X86_GDT_ENTRY_SIZE), %eax
@@ -60,25 +62,25 @@ _start:
 	movw	%ax, %ss
 
 	/* Enable post codes to EC */
-#if 1
-	mov    $0x1b,%ecx
+#ifdef CONFIG_EARLY_POST_CROS_EC
+	mov    $0x1b, %ecx
 	rdmsr  
-	and    $0x100,%eax
-	test   %eax,%eax
+	and    $0x100, %eax
+	test   %eax, %eax
 	je     2f
 
-	mov    $0x8000f8f0,%eax
-	mov    $0xcf8,%dx
-	out    %eax,(%dx)
-	mov    $0xfed1c001,%eax
-	mov    $0xcfc,%dx
-	out    %eax,(%dx)
-	mov    $0xfed1f410,%esp
-	mov    (%esp),%ebp
-	and    $0xfffffffb,%ebp
-	mov    %ebp,(%esp)
-#endif
+	mov    $0x8000f8f0, %eax
+	mov    $0xcf8, %dx
+	out    %eax, (%dx)
+	mov    $0xfed1c001, %eax
+	mov    $0xcfc, %dx
+	out    %eax, (%dx)
+	mov    $0xfed1f410, %esp
+	mov    (%esp), %eax
+	and    $0xfffffffb, %eax
+	mov    %eax, (%esp)
 2:
+#endif
 	post_code(POST_START)
 
 	/* Clear the interrupt vectors */
@@ -92,14 +94,18 @@ car_init_ret:
 	 * We now have CONFIG_SYS_CAR_SIZE bytes of Cache-As-RAM (or SRAM,
 	 * or fully initialised SDRAM - we really don't care which)
 	 * starting at CONFIG_SYS_CAR_ADDR to be used as a temporary stack
+	 * and early malloc area. The MRC requires some space at the top.
+	 *
+	 * Stack grows down from top of CAR. We have:
+	 *
+	 * top-> CONFIG_SYS_CAR_ADDR + CONFIG_SYS_CAR_SIZE
+	 *	MRC area
+	 *	global_data
+	 *	x86 global descriptor table
+	 *	early malloc area
+	 *	stack
+	 * bottom-> CONFIG_SYS_CAR_ADDR
 	 */
-#if 0
-	/* Enable SSE instructions. TODO: move to cpu.c */
-	movl	%cr4, %eax
-	orl	$(1 << 9), %eax
-	movl	%eax, %cr4
-#endif
-	/* Stack grows down from top of CAR */
 	movl	$(CONFIG_SYS_CAR_ADDR + CONFIG_SYS_CAR_SIZE - \
 		CONFIG_DCACHE_RAM_MRC_VAR_SIZE - 4), %esp
 
@@ -108,7 +114,7 @@ car_init_ret:
 
 	/* Align global data to 16-byte boundary */
 	andl	$0xfffffff0, %esp
-	/*post_code(0x2a)*/
+	post_code(0x2a)
 
 	/* Zero the global data since it won't happen later */
 	xorl	%eax, %eax				# value
@@ -146,7 +152,6 @@ car_init_ret:
 	/* Set parameter to board_init_f() to boot flags */
 	post_code(0x2d)
 	xorl	%eax, %eax
-	/*movw	%bx, %ax*/
 
 	/* Enter, U-boot! */
 	call	board_init_f

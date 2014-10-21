@@ -1,6 +1,6 @@
 /dts-v1/;
 
-/include/ "coreboot.dtsi"
+#include "coreboot.dtsi"
 
 / {
 	#address-cells = <1>;
@@ -185,15 +185,13 @@
 		};
 	};
 
-	mrc {
-		compatible = "intel,mrc";
-		test = <0 1 2 3 4 7 8 9 0xa 0xb>;
-		/*
-		data1 = /incbin/("mrc.bin");
-		data2 = /incbin/("mrc.bin");
-		data3 = /incbin/("mrc.bin");
-		*/
-		data = /incbin/("mrc.bin");
+	microcode {
+		update@0 {
+#include "m12206a7_00000028.dtsi"
+		};
+		update@1 {
+#include "m12306a9_00000017.dtsi"
+		};
 	};
 
 };

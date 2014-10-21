@@ -5,7 +5,6 @@
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
-#define DEBUG
 
 #include <common.h>
 #include <errno.h>
@@ -47,15 +46,9 @@ ulong board_get_usable_ram_top(ulong total_size)
 
 int dram_init_banksize(void)
 {
-	/* Base of TSEG is top of usable DRAM */
-	u32 tom = pci_read_config32(PCI_BDF_CB(0,0,0), TSEG);
-
-	printf("RAM top %x\n", tom);
-
 	/* TODO: Set up memory banks properly*/
 	gd->bd->bi_dram[0].start = 0x90000000;
 	gd->bd->bi_dram[0].size = 0x1d000000;
-	gd->ram_size = gd->bd->bi_dram[0].size;
 
 	return 0;
 }
@@ -233,11 +226,12 @@ static void post_system_agent_init(struct pei_data *pei_data)
 /* TODO: Fix up calling convention */
 static void console_tx_byte(unsigned char byte)
 {
+#ifdef DEBUG
 	ulong addr = cpu_get_sp() + 4;
 	char ch = *(char *)addr;
 
 	putc(ch);
-// 	post_code(0xb4);
+#endif
 }
 
 /**
@@ -247,10 +241,8 @@ static void console_tx_byte(unsigned char byte)
  */
 int sdram_initialise(struct pei_data *pei_data)
 {
-	const void *blob = gd->fdt_blob;
 	const char *data;
 	uint16_t done;
-	int node;
 	int ret;
 
 	report_platform_info();
@@ -281,38 +273,22 @@ int sdram_initialise(struct pei_data *pei_data)
 	}
 
 	/* Pass console handler in pei_data */
-// 	printf("size %d\n", sizeof(pei_data->tx_byte));
 	pei_data->tx_byte = console_tx_byte;
 
 	debug("PEI data at %p, size %x:\n", pei_data, sizeof(*pei_data));
-// 	print_buffer((ulong)pei_data, pei_data, 1, sizeof(*pei_data), 0);
 
-	node = fdtdec_next_compatible(blob, 0, COMPAT_INTEL_MRC);
-	data = fdt_getprop(blob, node, "data", NULL);
 	data = (char *)0xfffa0000;
 	if (data) {
 		int rv;
-// 		int (*func)(struct pei_data *);
+		int (*func)(struct pei_data *);
 		void setup_no_gdt(gd_t *id, u64 *gdt_addr);
 		void setup_gdt(gd_t *id, u64 *gdt_addr);
-// 		struct global_data *ptr;
 
-		printf("Calling MRC at %p\n", data);
+		debug("Calling MRC at %p\n", data);
 		post_code(0xb1);
-// 		ptr = gd;
-// 		setup_no_gdt(gd, (u64 *)gd->arch.gd_addr);
-		post_code(0xb2);
-#if 1
-		asm volatile (
-			      "call *%%ecx\n\t"
-			      :"=a" (rv) : "c" (data), "a" (pei_data));
-#endif
-// 		func = (int (*)(struct pei_data *))data;
-// 		rv = func(pei_data);
-		post_code(0xb5);
-// 		setup_gdt(ptr, (u64 *)ptr);
-		post_code(0xb7);
-// 		while (1);
+		func = (int (*)(struct pei_data *))data;
+		rv = func(pei_data);
+		post_code(0xb3);
 		if (rv) {
 			switch (rv) {
 			case -1:
@@ -515,6 +491,7 @@ int dram_init(void)
 			{ 0, 4, 0x0000 }, /* P13: Empty */
 		},
 	};
+	ulong top_of_memory;
 	int ret;
 
 	debug("Boot mode %d\n", gd->arch.pei_boot_mode);
@@ -564,6 +541,13 @@ int dram_init(void)
 #if CONFIG_CHROMEOS
 	init_chromeos(boot_mode);
 #endif
+
+	/* Base of TSEG is top of usable DRAM */
+	top_of_memory = pci_read_config32(PCI_BDF_CB(0,0,0), TSEG);
+
+	/* TODO: Set up memory size properly*/
+	debug("RAM top %lx\n", top_of_memory);
+	gd->ram_size = top_of_memory - 0x90000000;
 
 	return dram_init_banksize();
 }

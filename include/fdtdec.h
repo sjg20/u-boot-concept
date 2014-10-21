@@ -97,7 +97,7 @@ enum fdt_compat_id {
 	COMPAT_SAMSUNG_EXYNOS_SYSMMU,	/* Exynos sysmmu */
 	COMPAT_PARADE_PS8625,		/* Parade PS8622 EDP->LVDS bridge */
 	COMPAT_INTEL_LPC,		/* Intel Low Pin Count I/F */
-	COMPAT_INTEL_MRC,		/* Intel memory reference code */
+	COMPAT_INTEL_MICROCODE,		/* Intel microcode update */
 	COMPAT_MEMORY_SPD,		/* Memory SPD information */
 
 	COMPAT_COUNT,

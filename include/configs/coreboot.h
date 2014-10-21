@@ -63,4 +63,6 @@
 #define CONFIG_CMD_TRACE
 #define CONFIG_TRACE_BUFFER_SIZE	(16 << 20)
 
+#define CONFIG_BOOTDELAY	2
+
 #endif	/* __CONFIG_H */

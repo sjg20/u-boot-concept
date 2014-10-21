@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2014 Google, Inc
  *
- * This file was copied from the Coreboot of the same name
+ * From Coreboot file of the same name
  *
  * Copyright (C) 2007-2008 coresystems GmbH
  * Copyright (C) 2011 Google Inc.

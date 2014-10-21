@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2014 Google, Inc
  *
- * This file was copied from the Coreboot file of the same name
+ * From Coreboot file of the same name
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */

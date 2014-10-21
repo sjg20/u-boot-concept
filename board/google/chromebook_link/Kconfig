@@ -22,4 +22,8 @@ config MMCONF_BASE_ADDRESS
 	hex
 	default 0xf0000000
 
+config EARLY_POST_CROS_EC
+	bool "Enable early post to Chrome OS EC"
+	default y
+
 endif

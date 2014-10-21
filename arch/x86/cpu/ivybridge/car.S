@@ -1,8 +1,7 @@
 /*
  * Copyright (c) 2014 Google, Inc
  *
- * This file was copied from Coreboot file
- * cpu/intel/model_206ax/cache_as_ram.inc
+ * From Coreboot file cpu/intel/model_206ax/cache_as_ram.inc
  *
  * Copyright (C) 2000,2007 Ronald G. Minnich <rminnich@gmail.com>
  * Copyright (C) 2005 Tyan (written by Yinghai Lu for Tyan)

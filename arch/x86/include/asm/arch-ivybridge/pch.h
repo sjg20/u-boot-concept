@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2014 Google, Inc
  *
- * Copied from Coreboot src/southbridge/intel/bd82x6x/pch.h
+ * From Coreboot src/southbridge/intel/bd82x6x/pch.h
  *
  * Copyright (C) 2008-2009 coresystems GmbH
  * Copyright (C) 2012 The Chromium OS Authors.  All rights reserved.

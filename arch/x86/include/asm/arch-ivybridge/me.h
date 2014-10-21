@@ -1,5 +1,5 @@
 /*
- * Copied from coreboot src/southbridge/intel/bd82x6x/me.h
+ * From Coreboot src/southbridge/intel/bd82x6x/me.h
  *
  * Copyright (C) 2011 The Chromium OS Authors. All rights reserved.
  *

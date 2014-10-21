@@ -722,7 +722,10 @@ DO_STATIC_RELA =
 endif
 
 # Always append ALL so that arch config.mk's can add custom ones
-ALL-y += u-boot.srec u-boot.bin System.map binary_size_check
+ALL-y += u-boot.bin System.map binary_size_check
+ifeq ($(CONFIG_X86),)
+ALL-y += u-boot.srec
+endif
 
 ALL-$(CONFIG_ONENAND_U_BOOT) += u-boot-onenand.bin
 ifeq ($(CONFIG_SPL_FSL_PBL),y)
@@ -742,6 +745,7 @@ ifneq ($(CONFIG_SPL_TARGET),)
 ALL-$(CONFIG_SPL) += $(CONFIG_SPL_TARGET:"%"=%)
 endif
 ALL-$(CONFIG_REMAKE_ELF) += u-boot.elf
+ALL-$(CONFIG_X86_RESET_VECTOR) += u-boot.rom
 
 # enable combined SPL/u-boot/dtb rules for tegra
 ifneq ($(CONFIG_TEGRA),)
@@ -799,7 +803,8 @@ OBJCOPYFLAGS_u-boot.srec := -O srec
 u-boot.hex u-boot.srec: u-boot FORCE
 	$(call if_changed,objcopy)
 
-OBJCOPYFLAGS_u-boot.bin := -O binary
+OBJCOPYFLAGS_u-boot.bin := -O binary \
+		$(if $(CONFIG_X86_RESET_VECTOR),-R .start16 -R .resetvec)
 
 binary_size_check: u-boot.bin FORCE
 	@file_size=$(shell wc -c u-boot.bin | awk '{print $$1}') ; \
@@ -937,6 +942,33 @@ MKIMAGEFLAGS_u-boot-nand.gph = -A $(ARCH) -T gpimage -C none \
 u-boot-nand.gph: u-boot.bin FORCE
 	$(call if_changed,mkimage)
 	@dd if=/dev/zero bs=8 count=1 2>/dev/null >> $@
+
+# x86 uses a large ROM. We fill it with 0xff, put the 16-bit stuff (including
+# reset vector) at the top, Intel ME at the bottom, and U-Boot in the middle.
+ifneq ($(CONFIG_X86_RESET_VECTOR),)
+u-boot.rom: u-boot-x86-16bit.bin u-boot-dtb.bin \
+		$(srctree)/board/$(BOARDDIR)/mrc.bin \
+		$(srctree)/board/$(BOARDDIR)/descriptor.bin \
+		$(srctree)/board/$(BOARDDIR)/me.bin
+	$(objtree)/tools/ifdtool -c -r $(CONFIG_ROM_SIZE) \
+		-D $(srctree)/board/$(BOARDDIR)/descriptor.bin u-boot.tmp
+	$(objtree)/tools/ifdtool \
+		-i ME:$(srctree)/board/$(BOARDDIR)/me.bin u-boot.tmp
+	$(objtree)/tools/ifdtool -w \
+		$(CONFIG_SYS_TEXT_BASE):$(objtree)/u-boot-dtb.bin u-boot.tmp
+	$(objtree)/tools/ifdtool -w \
+		$(CONFIG_X86_MRC_START):$(srctree)/board/$(BOARDDIR)/mrc.bin \
+		u-boot.tmp
+	$(objtree)/tools/ifdtool -w \
+		$(CONFIG_SYS_X86_START16):$(objtree)/u-boot-x86-16bit.bin \
+		u-boot.tmp
+	mv u-boot.tmp $@
+
+OBJCOPYFLAGS_u-boot-x86-16bit.bin := -O binary -j .start16 -j .resetvec
+u-boot-x86-16bit.bin: u-boot FORCE
+	$(call if_changed,objcopy)
+
+endif
 
 ifneq ($(CONFIG_SUNXI),)
 OBJCOPYFLAGS_u-boot-sunxi-with-spl.bin = -I binary -O binary \

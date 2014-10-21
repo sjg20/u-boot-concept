@@ -1,5 +1,5 @@
 /*
- * Copied from Coreboot ip_checksum.h
+ * From Coreboot ip_checksum.h
  *
  * Copyright (c) 2014 Google, Inc
  *

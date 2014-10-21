@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2014 Google, Inc
  *
- * Copied from Coreboot src/lib/ramtest.c
+ * From Coreboot src/lib/ramtest.c
  *
  * SPDX-License-Identifier:	GPL-2.0
  */

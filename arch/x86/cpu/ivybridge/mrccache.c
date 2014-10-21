@@ -1,5 +1,5 @@
 /*
- * Copied from Coreboot src/southbridge/intel/bd82x6x/me_status.c
+ * From Coreboot src/southbridge/intel/bd82x6x/me_status.c
  *
  * Copyright (C) 2012 Google Inc.
  *

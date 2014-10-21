@@ -69,13 +69,13 @@ SECTIONS
 	 * The following expressions place the 16-bit Real-Mode code and
 	 * Reset Vector at the end of the Flash ROM
 	 */
-	. = START_16;
-	.start16 : AT (RESET_BASE + START_16)) {
+	. = START_16 - RESET_SEG_START;
+	.start16 : AT (START_16 - RESET_SEG_START) {
 		KEEP(*(.start16));
 	}
 
-	. = RESET_VEC_LOC;
-	.resetvec : AT (RESET_BASE + RESET_VEC_LOC)) {
+	. = RESET_VEC_LOC - RESET_SEG_START;
+	.resetvec : AT (RESET_VEC_LOC - RESET_SEG_START) {
 		KEEP(*(.resetvec));
 	}
 #endif

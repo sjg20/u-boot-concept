@@ -9,9 +9,9 @@
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
-#define DEBUG
 
 #include <common.h>
+#include <errno.h>
 #include <fdtdec.h>
 #include <flash.h>
 #include <netdev.h>
@@ -20,33 +20,17 @@
 #include <asm/msr.h>
 #include <asm/cache.h>
 #include <asm/io.h>
+#include <asm/mtrr.h>
 #include <asm/pci.h>
 #include <asm/post.h>
 #include <asm/processor.h>
 #include <asm/u-boot-x86.h>
+#include <asm/arch/model_206ax.h>
+#include <asm/arch/microcode.h>
 #include <asm/arch/pch.h>
 #include <asm/arch/sandybridge.h>
 
 DECLARE_GLOBAL_DATA_PTR;
-
-/*
- * Miscellaneous platform dependent initializations
- */
-int board_early_init_f(void)
-{
-	return 0;
-}
-
-int board_early_init_r(void)
-{
-	/* CPU Speed to 100MHz */
-	gd->cpu_clk = 100000000;
-
-	/* Crystal is 33.000MHz */
-	gd->bus_clk = 33000000;
-
-	return 0;
-}
 
 static void enable_lapic(void)
 {
@@ -366,38 +350,142 @@ void setup_pch_gpios(const struct pch_gpio_map *gpio)
 		outl(*((u32*)gpio->set3.reset), gpiobase + GP_RST_SEL3);
 }
 
+static void enable_port80_on_lpc(void)
+{
+	pci_dev_t dev = PCI_BDF_CB(0, 0x1f, 0);
+
+	/* Enable port 80 POST on LPC */
+	pci_write_config32(dev, RCBA, DEFAULT_RCBA | 1);
+	clrbits_le32(DEFAULT_RCBA + GCS, 4);
+}
+
+/*
+ * Enable Prefetching and Caching.
+ */
+static void enable_spi_prefetch(void)
+{
+	pci_dev_t dev;
+	u8 reg8;
+
+	dev = PCI_BDF_CB(0, 0x1f, 0);
+
+	reg8 = pci_read_config8(dev, 0xdc);
+	reg8 &= ~(3 << 2);
+	reg8 |= (2 << 2); /* Prefetching and Caching Enabled */
+	pci_write_config8(dev, 0xdc, reg8);
+}
+
+static void set_var_mtrr(
+	unsigned reg, unsigned base, unsigned size, unsigned type)
+
+{
+	/* Bit Bit 32-35 of MTRRphysMask should be set to 1 */
+	/* FIXME: It only support 4G less range */
+	wrmsr(MTRRphysBase_MSR(reg), base | type, 0);
+	wrmsr(MTRRphysMask_MSR(reg), ~(size - 1) | MTRRphysMaskValid,
+	      (1 << (CONFIG_CPU_ADDR_BITS - 32)) - 1);
+}
+
+static void enable_rom_caching(void)
+{
+	disable_caches();
+	set_var_mtrr(1, 0xffc00000, 4 << 20, MTRR_TYPE_WRPROT);
+	enable_caches();
+
+	/* Enable Variable MTRRs */
+	wrmsr(MTRRdefType_MSR, 0x800, 0);
+}
+
+static int set_flex_ratio_to_tdp_nominal(void)
+{
+	unsigned low, high;
+	u8 nominal_ratio;
+	struct cpuid_result result;
+
+	/* Minimum CPU revision for configurable TDP support */
+	result = cpuid(1);
+	if (result.eax < IVB_CONFIG_TDP_MIN_CPUID)
+		return -EINVAL;
+
+	/* Check for Flex Ratio support */
+	rdmsr(MSR_FLEX_RATIO, low, high);
+	if (!(low & FLEX_RATIO_EN))
+		return -EINVAL;
+
+	/* Check for >0 configurable TDPs */
+	rdmsr(MSR_PLATFORM_INFO, low, high);
+	if (((high >> 1) & 3) == 0)
+		return -EINVAL;
+
+	/* Use nominal TDP ratio for flex ratio */
+	rdmsr(MSR_CONFIG_TDP_NOMINAL, low, high);
+	nominal_ratio = low & 0xff;
+
+	/* See if flex ratio is already set to nominal TDP ratio */
+	rdmsr(MSR_FLEX_RATIO, low, high);
+	if (((low >> 8) & 0xff) == nominal_ratio)
+		return 0;
+
+	/* Set flex ratio to nominal TDP ratio */
+	low &= ~0xff00;
+	low |= nominal_ratio << 8;
+	low |= FLEX_RATIO_LOCK;
+	wrmsr(MSR_FLEX_RATIO, low, high);
+
+	/* Set flex ratio in soft reset data register bits 11:6.
+	 * RCBA region is enabled in southbridge bootblock */
+	clrsetbits_le32(&RCBA32(SOFT_RESET_DATA), 0x3f << 6,
+			(nominal_ratio & 0x3f) << 6);
+
+	/* Set soft reset control to use register value */
+	setbits_le32(&RCBA32(SOFT_RESET_CTRL), 1);
+
+	/* Issue warm reset, will be "CPU only" due to soft reset data */
+	outb(0x0, 0xcf9);
+	outb(0x6, 0xcf9);
+	asm("hlt");
+
+	/* Not reached */
+	return -EINVAL;
+}
+
+static void set_spi_speed(void)
+{
+	u32 fdod;
+	u8 ssfc;
+
+	/* Observe SPI Descriptor Component Section 0 */
+	RCBA32(0x38b0) = 0x1000;
+
+	/* Extract the Write/Erase SPI Frequency from descriptor */
+	fdod = RCBA32(0x38b4);
+	fdod >>= 24;
+	fdod &= 7;
+
+	/* Set Software Sequence frequency to match */
+	ssfc = RCBA8(0x3893);
+	ssfc &= ~7;
+	ssfc |= fdod;
+	RCBA8(0x3893) = ssfc;
+}
+
 int arch_cpu_init(void)
 {
 	int ret;
+
+	timer_set_base(rdtsc());
 
 	ret = x86_cpu_init_f();
 	if (ret)
 		return ret;
 
-	post_code(0x40);
-// 	if (gd->arch.bist)
-		enable_lapic();
-	post_code(0x41);
+	enable_spi_prefetch();
+	enable_port80_on_lpc();
+	set_spi_speed();
 
-	ret = pch_enable_lpc();
+	ret = set_flex_ratio_to_tdp_nominal();
 	if (ret)
 		return ret;
-	post_code(0x42);
-
-	/* TODO: We don't have a real timer yet */
-	timer_set_base(1);
-
-	/* Enable GPIOs */
-	pci_write_config32(PCH_LPC_DEV, GPIO_BASE, DEFAULT_GPIOBASE|1);
-	pci_write_config32(PCH_LPC_DEV, GPIO_CNTL, 0x10);
-	post_code(0x43);
-
-	/* TODO: Do this later in the GPIO driver */
-	setup_pch_gpios(&link_gpio_map);
-
-	/* TODO: bootblock_cpu_init - model_206ax */
-
-	/* TODO: cmos_post_init() */
 
 	return 0;
 }
@@ -478,6 +566,16 @@ static void enable_usb_bar(void)
 	pci_write_config32(usb3, PCI_COMMAND, cmd);
 }
 
+static int report_bist_failure(void)
+{
+	if (gd->arch.bist != 0) {
+		printf("BIST failed: %08x\n", gd->arch.bist);
+		return -EFAULT;
+	}
+
+	return 0;
+}
+
 int print_cpuinfo(void)
 {
 	enum pei_boot_mode_t boot_mode = PEI_BOOT_NONE;
@@ -486,7 +584,34 @@ int print_cpuinfo(void)
 	int ret;
 
 	/* Halt if there was a built in self test failure */
-// 	panic_if_bist_failure();
+	ret = report_bist_failure();
+	if (ret)
+		return ret;
+
+// 	enable_rom_caching();
+
+	/* Enable GPIOs - needed for UART */
+	pci_write_config32(PCH_LPC_DEV, GPIO_BASE, DEFAULT_GPIOBASE|1);
+	pci_write_config32(PCH_LPC_DEV, GPIO_CNTL, 0x10);
+
+	/* TODO: Do this later in the GPIO driver */
+	setup_pch_gpios(&link_gpio_map);
+
+	if (gd->arch.bist == 0)
+		enable_lapic();
+
+	ret = pch_enable_lpc();
+	if (ret)
+		return ret;
+
+	ret = microcode_update_intel();
+	if (ret && ret != -ENOENT && ret != -EEXIST)
+		return ret;
+
+	/* Enable upper 128bytes of CMOS */
+	RCBA32(RC) = (1 << 2);
+
+	/* TODO: cmos_post_init() */
 	if (MCHBAR16(SSKPD) == 0xCAFE) {
 		debug("soft reset detected\n");
 		boot_mode = PEI_BOOT_SOFT_RESET;
@@ -539,23 +664,6 @@ int print_cpuinfo(void)
 
 	gd->arch.pei_boot_mode = boot_mode;
 
-#define CACHE_AS_RAM_SIZE	CONFIG_DCACHE_RAM_SIZE
-#define CACHE_AS_RAM_BASE	CONFIG_DCACHE_RAM_BASE
-
-/* Cache 4GB - MRC_SIZE_KB for MRC */
-#define CACHE_MRC_BYTES	((CONFIG_CACHE_MRC_SIZE_KB << 10) - 1)
-#define CACHE_MRC_BASE		(0xFFFFFFFF - CACHE_MRC_BYTES)
-#define CACHE_MRC_MASK		(~CACHE_MRC_BYTES)
-	printf("CAR at %x, size %x\n", CACHE_AS_RAM_BASE, CACHE_AS_RAM_SIZE);
-	printf("MRC at %x, size %dKB, bytes %x, mask %x\n", CACHE_MRC_BASE, 
-	       CONFIG_CACHE_MRC_SIZE_KB, CACHE_MRC_BYTES, CACHE_MRC_MASK);
-	printf("RAMTOP %x\n", CONFIG_RAMTOP);
-	printf("top=%x, gd=%lx, gdt=%lx, malloc_f=%lx to %lx\n",
-	       CONFIG_SYS_CAR_ADDR + CONFIG_SYS_CAR_SIZE -
-			CONFIG_DCACHE_RAM_MRC_VAR_SIZE, (ulong)gd,
-	       (ulong)gd->arch.gdt_addr, (ulong)gd->malloc_base,
-	       (ulong)gd->malloc_limit);
-	printf("sp=%lx\n", cpu_get_sp());
 	post_code(0x39);
 
 	return 0;
@@ -581,7 +689,7 @@ void show_boot_progress(int val)
 		gd->arch.tsc_prev = now;
 	}
 #endif
-// 	post_code(val);
+	post_code(val);
 }
 
 int board_eth_init(bd_t *bis)
@@ -590,9 +698,6 @@ int board_eth_init(bd_t *bis)
 }
 
 #define MTRR_TYPE_WP          5
-#define MTRRcap_MSR           0xfe
-#define MTRRphysBase_MSR(reg) (0x200 + 2 * (reg))
-#define MTRRphysMask_MSR(reg) (0x200 + 2 * (reg) + 1)
 
 int board_final_cleanup(void)
 {

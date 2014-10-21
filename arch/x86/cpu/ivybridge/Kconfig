@@ -1,5 +1,5 @@
 #
-# Copied from Coreboot src/northbridge/intel/sandybridge/Kconfig
+# From Coreboot src/northbridge/intel/sandybridge/Kconfig
 #
 # Copyright (C) 2010 Google Inc.
 #

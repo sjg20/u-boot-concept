@@ -2,7 +2,6 @@
  * Copyright (c) 2011 The Chromium OS Authors.
  * SPDX-License-Identifier:	GPL-2.0+
  */
-#define DEBUG
 #ifndef USE_HOSTCC
 #include <common.h>
 #include <errno.h>
@@ -76,7 +75,7 @@ static const char * const compat_names[COMPAT_COUNT] = {
 	COMPAT(SAMSUNG_EXYNOS_SYSMMU, "samsung,sysmmu-v3.3"),
 	COMPAT(PARADE_PS8625, "parade,ps8625"),
 	COMPAT(INTEL_LPC, "intel,lpc"),
-	COMPAT(INTEL_MRC, "intel,mrc"),
+	COMPAT(INTEL_MICROCODE, "intel,microcode"),
 	COMPAT(MEMORY_SPD, "memory-spd"),
 };
 
