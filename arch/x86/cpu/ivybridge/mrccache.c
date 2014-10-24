@@ -80,7 +80,7 @@ static struct mrc_data_container *find_current_mrc_cache_local
 	}
 
 	if (entry_id == 0) {
-		printf("%s: No valid MRC cache found.\n", __func__);
+		debug("%s: No valid MRC cache found.\n", __func__);
 		return NULL;
 	}
 

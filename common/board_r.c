@@ -232,7 +232,7 @@ static int initr_unlock_ram_in_cache(void)
 #ifdef CONFIG_PCI
 static int initr_pci(void)
 {
-// 	pci_init();
+	pci_init();
 
 	return 0;
 }

@@ -19,9 +19,13 @@ static void config_pci_bridge(struct pci_controller *hose, pci_dev_t dev,
 			      struct pci_config_table *table)
 {
 	u8 secondary;
+
+	pciauto_config_device(hose, dev);
 	hose->read_byte(hose, dev, PCI_SECONDARY_BUS, &secondary);
+// 	printf("Secondary = %d\n", secondary);
 	hose->last_busno = max(hose->last_busno, secondary);
-	pci_hose_scan_bus(hose, secondary);
+	if (secondary != 0)
+		pci_hose_scan_bus(hose, secondary);
 }
 
 static struct pci_config_table pci_coreboot_config_table[] = {
@@ -45,5 +49,11 @@ void pci_init_board(void)
 
 	pci_register_hose(&x86_hose);
 
+#ifdef CONFIG_X86_RESET_VECTOR
+	pciauto_config_init(&x86_hose);
+	pciauto_config_device(&x86_hose, 0);
+#else
 	pci_hose_scan(&x86_hose);
+#endif
+	x86_hose.last_busno = pci_hose_scan(&x86_hose);
 }

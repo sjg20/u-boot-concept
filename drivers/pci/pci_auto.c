@@ -14,7 +14,7 @@
 
 #include <pci.h>
 
-#undef DEBUG
+#define DEBUG
 #ifdef DEBUG
 #define DEBUGF(x...) printf(x)
 #else
@@ -324,7 +324,7 @@ void pciauto_config_init(struct pci_controller *hose)
 		pciauto_region_init(hose->pci_mem);
 
 		DEBUGF("PCI Autoconfig: Bus Memory region: [0x%llx-0x%llx],\n"
-		       "\t\tPhysical Memory [%llx-%llxx]\n",
+		       "\t\tPhysical Memory [%llx-%llx]\n",
 		    (u64)hose->pci_mem->bus_start,
 		    (u64)(hose->pci_mem->bus_start + hose->pci_mem->size - 1),
 		    (u64)hose->pci_mem->phys_start,

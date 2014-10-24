@@ -701,7 +701,8 @@ int board_eth_init(bd_t *bis)
 
 int board_final_cleanup(void)
 {
-	/* Un-cache the ROM so the kernel has one
+	/*
+	 * Un-cache the ROM so the kernel has one
 	 * more MTRR available.
 	 *
 	 * Coreboot should have assigned this to the

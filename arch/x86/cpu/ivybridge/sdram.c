@@ -72,34 +72,6 @@ static void save_mrc_data(struct pei_data *pei_data)
 {
 	u16 c1, c2, checksum;
 
-#if CONFIG_EARLY_CBMEM_INIT
-	struct mrc_data_container *mrcdata;
-	int output_len = ALIGN(pei_data->mrc_output_len, 16);
-
-	/* Save the MRC S3 restore data to cbmem */
-	cbmem_initialize();
-	mrcdata = cbmem_add
-		(CBMEM_ID_MRCDATA,
-		 output_len + sizeof(struct mrc_data_container));
-
-	debug("Relocate MRC DATA from %p to %p (%u bytes)\n",
-	      pei_data->mrc_output, mrcdata, output_len);
-
-	mrcdata->mrc_signature = MRC_DATA_SIGNATURE;
-	mrcdata->mrc_data_size = output_len;
-	mrcdata->reserved = 0;
-	memcpy(mrcdata->mrc_data, pei_data->mrc_output,
-	       pei_data->mrc_output_len);
-
-	/* Zero the unused space in aligned buffer. */
-	if (output_len > pei_data->mrc_output_len)
-		memset(mrcdata->mrc_data+pei_data->mrc_output_len, 0,
-		       output_len - pei_data->mrc_output_len);
-
-	mrcdata->mrc_checksum = compute_ip_checksum(mrcdata->mrc_data,
-						    mrcdata->mrc_data_size);
-#endif
-
 	/* Save the MRC seed values to CMOS */
 	cmos_write32(CMOS_OFFSET_MRC_SEED, pei_data->scrambler_seed);
 	debug("Save scrambler seed    0x%08x to CMOS 0x%02x\n",
@@ -234,6 +206,11 @@ static void console_tx_byte(unsigned char byte)
 #endif
 }
 
+static int recovery_mode_enabled(void)
+{
+	return false;
+}
+
 /**
  * Find PEI executable in coreboot filesystem and execute it.
  *
@@ -261,8 +238,7 @@ int sdram_initialise(struct pei_data *pei_data)
 	 * Do not pass MRC data in for recovery mode boot,
 	 * Always pass it in for S3 resume.
 	 */
-// 	if (!recovery_mode_enabled() || pei_data->boot_mode == PEI_BOOT_RESUME)
-	if (0)
+	if (!recovery_mode_enabled() || pei_data->boot_mode == PEI_BOOT_RESUME)
 		prepare_mrc_cache(pei_data);
 
 	/* If MRC data is not found we cannot continue S3 resume. */

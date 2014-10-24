@@ -11,7 +11,7 @@
 /*
  * PCI routines
  */
-
+#define CONFIG_PCI_SCAN_SHOW
 #include <common.h>
 
 #include <command.h>
@@ -619,6 +619,7 @@ int pci_hose_scan_bus(struct pci_controller *hose, int bus)
 	static int indent = 0;
 #endif
 
+	debug("Scanning bus %d\n", bus);
 	sub_bus = bus;
 
 	for (dev =  PCI_BDF(bus,0,0);
@@ -683,6 +684,7 @@ int pci_hose_scan_bus(struct pci_controller *hose, int bus)
 		if (hose->fixup_irq)
 			hose->fixup_irq(hose, dev);
 	}
+	debug("Scan done\n");
 
 	return sub_bus;
 }

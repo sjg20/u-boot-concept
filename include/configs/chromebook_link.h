@@ -31,5 +31,5 @@
 					"stderr=vga,serial\0"
 
 #define CONFIG_CACHE_MRC_SIZE_KB	512
-
+					
 #endif	/* __CONFIG_H */
