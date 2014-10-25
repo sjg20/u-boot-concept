@@ -11,7 +11,6 @@
 /*
  * PCI routines
  */
-#define CONFIG_PCI_SCAN_SHOW
 #include <common.h>
 
 #include <command.h>

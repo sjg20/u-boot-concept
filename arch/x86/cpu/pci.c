@@ -99,6 +99,4 @@ void pci_init_board(void)
 	pci_hose_scan(hose);
 	hose->last_busno = pci_hose_scan(hose);
 	bd82x6x_init_pci_devices();
-	pci_hose_config_device(hose, PCI_BDF(0, 0, 0), 0, 0,
-			       PCI_COMMAND_IO | PCI_COMMAND_MEMORY); //| PCI_COMMAND_MASTER);
 }

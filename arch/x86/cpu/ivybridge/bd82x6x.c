@@ -19,14 +19,12 @@ int bd82x6x_init(void)
 {
 	bd82x6x_pci_init(0);
 	bd82x6x_sata_enable(sata_dev, &sconfig);
-// 	ich_pci_bus_enable_resources(main_dev)
 
 	return 0;
 }
 
 void bd82x6x_init_pci_devices(void)
 {
-	printf("%s\n", __func__);
 	bd82x6x_sata_init(sata_dev, &sconfig);
 	bd82x6x_usb_ehci_init(PCI_BDF_CB(0, 0x1d, 0));
 	bd82x6x_usb_ehci_init(PCI_BDF_CB(0, 0x1a, 0));

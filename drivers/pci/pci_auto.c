@@ -14,7 +14,7 @@
 
 #include <pci.h>
 
-#define DEBUG
+#undef DEBUG
 #ifdef DEBUG
 #define DEBUGF(x...) printf(x)
 #else
