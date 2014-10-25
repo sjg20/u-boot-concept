@@ -94,8 +94,14 @@ void bd82x6x_sata_enable(pci_dev_t dev, struct southbridge_intel_bd82x6x_config 
 void bd82x6x_pci_init(pci_dev_t dev);
 void bd82x6x_usb_ehci_init(pci_dev_t dev);
 void bd82x6x_usb_xhci_init(pci_dev_t dev);
+int gma_pm_init_pre_vbios(pci_dev_t dev);
+int gma_pm_init_post_vbios(pci_dev_t dev);
+void gma_func0_init(pci_dev_t dev);
 
 int bd82x6x_init(void);
-void bd82x6x_init_pci_devices(void);
+int bd82x6x_init_pci_devices(void);
+
+struct x86_cpu_priv;
+int model_206ax_init(struct x86_cpu_priv *cpu);
 
 #endif

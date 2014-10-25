@@ -46,6 +46,18 @@ config ROM_SIZE
 	hex
 	default 0x800000
 
+config HAVE_ACPI_RESUME
+	bool
+	default n
+
+config SMP
+	bool
+	default y if MAX_CPUS != 1
+	default n
+	help
+	  This option is used to enable certain functions to make coreboot
+	  work correctly on symmetric multi processor (SMP) systems.
+
 source "arch/x86/cpu/ivybridge/Kconfig"
 
 source "board/google/chromebook_link/Kconfig"

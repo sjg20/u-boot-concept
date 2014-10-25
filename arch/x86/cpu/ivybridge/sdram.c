@@ -245,7 +245,7 @@ int sdram_initialise(struct pei_data *pei_data)
 	if (pei_data->boot_mode == PEI_BOOT_RESUME && !pei_data->mrc_input) {
 		debug("Giving up in sdram_initialize: No MRC data\n");
 		outb(0x6, 0xcf9);
-		hlt();
+		cpu_hlt();
 	}
 
 	/* Pass console handler in pei_data */
@@ -489,7 +489,8 @@ int dram_init(void)
 
 	MCHBAR16(SSKPD) = 0xCAFE;
 
-#if CONFIG_HAVE_ACPI_RESUME
+/* TODO: Figure this out */
+#if CONFIG_HAVE_ACPI_RESUME && 0
 	/* If there is no high memory area, we didn't boot before, so
 	 * this is not a resume. In that case we just create the cbmem toc.
 	 */
@@ -508,7 +509,7 @@ int dram_init(void)
 	} else if (boot_mode == 2) {
 		/* Failed S3 resume, reset to come up cleanly */
 		outb(0x6, 0xcf9);
-		hlt();
+		cpu_hlt();
 	} else {
 		pci_write_config32(PCI_BDF_CB(0, 0x00, 0), SKPAD, 0xcafebabe);
 	}

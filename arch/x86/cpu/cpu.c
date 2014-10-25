@@ -283,3 +283,38 @@ void panic_if_bist_failure(void)
 		panic("Fatal error");
 	}
 }
+
+char *cpu_get_name(char *name)
+{
+	unsigned int *name_as_ints = (unsigned int *)name;
+	struct cpuid_result regs;
+	char *ptr;
+	int i;
+
+	/* This bit adds up to 48 bytes */
+	for (i = 0; i < 3; i++) {
+		regs = cpuid(0x80000002 + i);
+		name_as_ints[i * 4 + 0] = regs.eax;
+		name_as_ints[i * 4 + 1] = regs.ebx;
+		name_as_ints[i * 4 + 2] = regs.ecx;
+		name_as_ints[i * 4 + 3] = regs.edx;
+	}
+	name[CPU_MAX_NAME_LEN - 1] = '\0';
+
+	/* Skip leading spaces. */
+	ptr = name;
+	while (*ptr == ' ')
+		ptr++;
+
+	return ptr;
+}
+
+/* TODO: Implement ACPI tables for passing to Linux */
+int acpi_get_slp_type(void)
+{
+	return 0;
+}
+
+void apci_set_slp_type(int type)
+{
+}

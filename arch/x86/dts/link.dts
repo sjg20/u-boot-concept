@@ -8,6 +8,21 @@
 	model = "Google Link";
 	compatible = "google,link", "intel,celeron-ivybridge";
 
+	cpu-cluster {
+		cpu {
+			compatible = "intel,model-206ax";
+			pstate-coord-type = <0xfe>;
+
+			c1-acpower = <1>;	/* ACPI(C1) = MWAIT(C1) */
+			c2-acpower = <3>;	/* ACPI(C2) = MWAIT(C3) */
+			c3-acpower = <5>;	/* ACPI(C3) = MWAIT(C7) */
+
+			c1-battery = <1>;	/* ACPI(C1) = MWAIT(C1) */
+			c2-battery = <3>;	/* ACPI(C2) = MWAIT(C3) */
+			c3-battery = <5>;	/* ACPI(C3) = MWAIT(C7) */
+		};
+	};
+
 	config {
 	       silent_console = <0>;
 	};

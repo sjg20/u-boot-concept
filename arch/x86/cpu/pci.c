@@ -51,6 +51,7 @@ static inline void sir_write(pci_dev_t dev, int idx, u32 value)
 void pci_init_board(void)
 {
 	struct pci_controller *hose = &x86_hose;
+	int ret;
 
 	hose->config_table = pci_coreboot_config_table;
 	hose->first_busno = 0;
@@ -88,5 +89,9 @@ void pci_init_board(void)
 
 	pci_hose_scan(hose);
 	hose->last_busno = pci_hose_scan(hose);
-	bd82x6x_init_pci_devices();
+	ret = bd82x6x_init_pci_devices();
+	if (ret) {
+		printf("bd82x6x_init_pci_devices() failed: %d\n", ret);
+		panic("Cannot init");
+	}
 }

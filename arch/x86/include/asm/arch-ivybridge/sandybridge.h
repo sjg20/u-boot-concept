@@ -190,6 +190,22 @@ struct ied_header {
 #define PCI_DEVICE_ID_SB 0x0104
 #define PCI_DEVICE_ID_IB 0x0154
 
+struct northbridge_intel_sandybridge_config {
+	u8 gpu_dp_b_hotplug; /* Digital Port B Hotplug Config */
+	u8 gpu_dp_c_hotplug; /* Digital Port C Hotplug Config */
+	u8 gpu_dp_d_hotplug; /* Digital Port D Hotplug Config */
+
+	u8 gpu_panel_port_select; /* 0=LVDS 1=DP_B 2=DP_C 3=DP_D */
+	u8 gpu_panel_power_cycle_delay;          /* T4 time sequence */
+	u16 gpu_panel_power_up_delay;            /* T1+T2 time sequence */
+	u16 gpu_panel_power_down_delay;          /* T3 time sequence */
+	u16 gpu_panel_power_backlight_on_delay;  /* T5 time sequence */
+	u16 gpu_panel_power_backlight_off_delay; /* Tx time sequence */
+
+	u32 gpu_cpu_backlight;	/* CPU Backlight PWM value */
+	u32 gpu_pch_backlight;	/* PCH Backlight PWM value */
+};
+
 #ifdef __SMM__
 void intel_sandybridge_finalize_smm(void);
 #else /* !__SMM__ */
@@ -229,5 +245,9 @@ void intel_early_me_status(void);
 int intel_early_me_init(void);
 int intel_early_me_uma_size(void);
 int intel_early_me_init_done(u8 status);
+
+void northbridge_enable(pci_dev_t dev);
+void northbridge_init(pci_dev_t dev);
+void northbridge_set_resources(pci_dev_t dev);
 
 #endif

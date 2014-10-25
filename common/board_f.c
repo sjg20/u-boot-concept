@@ -811,6 +811,7 @@ static int initf_dm(void)
 	return 0;
 }
 
+#if 0
 static int initf_dm_serial(void)
 {
 #ifdef CONFIG_DM
@@ -831,6 +832,7 @@ static int initf_dm_serial(void)
 
 	return 0;
 }
+#endif
 
 static init_fnc_t init_sequence_f[] = {
 #ifdef CONFIG_SANDBOX

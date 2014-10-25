@@ -621,7 +621,7 @@ int print_cpuinfo(void)
 		/* System is not happy after keyboard reset... */
 		debug("Issuing CF9 warm reset\n");
 		outb(0x6, 0xcf9);
-		hlt();
+		cpu_hlt();
 	}
 
 	/* Perform some early chipset initialization required
