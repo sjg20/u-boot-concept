@@ -197,7 +197,7 @@ void disable_caches(void) __attribute__((weak, alias("x86_disable_caches")));
 
 int x86_init_cache(void)
 {
-	enable_caches();
+// 	enable_caches();
 
 	return 0;
 }

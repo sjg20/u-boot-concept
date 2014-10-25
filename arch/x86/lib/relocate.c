@@ -29,6 +29,7 @@ int copy_uboot_to_ram(void)
 {
 	size_t len = (size_t)&__data_end - (size_t)&__text_start;
 
+	printf("%s\n", __func__);
 	memcpy((void *)gd->relocaddr, (void *)&__text_start, len);
 
 	return 0;
@@ -56,6 +57,7 @@ int clear_bss(void)
 	size_t len = (size_t)&__bss_end - (size_t)&__bss_start;
 
 	memset((void *)dst_addr, 0x00, len);
+	printf("%s\n", __func__);
 
 	return 0;
 }

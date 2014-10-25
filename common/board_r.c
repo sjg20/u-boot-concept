@@ -9,7 +9,7 @@
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
-
+#define DEBUG
 #include <common.h>
 /* TODO: can we just include all these headers whether needed or not? */
 #if defined(CONFIG_CMD_BEDBUG)
@@ -270,8 +270,8 @@ static int initr_malloc(void)
 	malloc_start = gd->relocaddr - TOTAL_MALLOC_LEN;
 	mem_malloc_init((ulong)map_sysmem(malloc_start, TOTAL_MALLOC_LEN),
 			TOTAL_MALLOC_LEN);
-// 	printf("alloc\n");
-// 	printf("alloc = %p\n", malloc(128));
+	printf("alloc %lx %x\n", malloc_start, TOTAL_MALLOC_LEN);
+	printf("alloc = %p\n", malloc(128));
 
 	return 0;
 }
@@ -279,6 +279,8 @@ static int initr_malloc(void)
 #ifdef CONFIG_DM
 static int initr_dm(void)
 {
+	printf("malloc %p\n", malloc(100));
+
 	/* Save the pre-reloc driver model and start a new one */
 	gd->dm_root_f = gd->dm_root;
 	gd->dm_root = NULL;
@@ -922,7 +924,8 @@ void board_init_r(gd_t *new_gd, ulong dest_addr)
 	gd = new_gd;
 #endif
 
-	gd->flags &= ~GD_FLG_SERIAL_READY;
+// 	gd->flags &= ~GD_FLG_SERIAL_READY;
+	printf("hi\n");
 	post_code(0xc0);
 #ifdef CONFIG_NEEDS_MANUAL_RELOC
 	for (i = 0; i < ARRAY_SIZE(init_sequence_r); i++)

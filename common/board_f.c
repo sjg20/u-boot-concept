@@ -770,6 +770,7 @@ static int jump_to_copy(void)
 	 * with the stack in SDRAM and Global Data in temporary memory
 	 * (CPU cache)
 	 */
+	printf("%s\n", __func__);
 	board_init_f_r_trampoline(gd->start_addr_sp);
 #else
 	relocate_code(gd->start_addr_sp, gd->new_gd, gd->relocaddr);
@@ -791,7 +792,7 @@ static int initf_malloc(void)
 {
 #ifdef CONFIG_SYS_MALLOC_F_LEN
 	assert(gd->malloc_base);	/* Set up by crt0.S */
-	gd->malloc_limit = gd->malloc_base + CONFIG_SYS_MALLOC_F_LEN;
+	gd->malloc_limit = CONFIG_SYS_MALLOC_F_LEN;
 	gd->malloc_ptr = 0;
 #endif
 
@@ -806,6 +807,27 @@ static int initf_dm(void)
 	ret = dm_init_and_scan(true);
 	if (ret)
 		return ret;
+#endif
+
+	return 0;
+}
+
+static int initf_dm_serial(void)
+{
+#ifdef CONFIG_DM
+	int ret;
+
+	/* Save the pre-reloc driver model and start a new one */
+	gd->dm_root_f = gd->dm_root;
+	gd->dm_root = NULL;
+	gd->start_addr_sp -= CONFIG_SYS_MALLOC_F_LEN;
+	gd->malloc_base = gd->start_addr_sp;
+	gd->malloc_limit = CONFIG_SYS_MALLOC_F_LEN;
+	gd->malloc_ptr = 0;
+	ret = dm_init_and_scan(false);
+	if (ret)
+		return ret;
+	printf("hello\n");
 #endif
 
 	return 0;
@@ -972,6 +994,7 @@ static init_fnc_t init_sequence_f[] = {
 	setup_machine,
 	reserve_global_data,
 	reserve_fdt,
+// 	initf_dm_serial,
 	reserve_stacks,
 	setup_dram_config,
 	show_dram_config,
@@ -1054,6 +1077,7 @@ static init_fnc_t init_sequence_f_r[] = {
 
 void board_init_f_r(void)
 {
+	printf("%s\n", __func__);
 	if (initcall_run_list(init_sequence_f_r))
 		hang();
 

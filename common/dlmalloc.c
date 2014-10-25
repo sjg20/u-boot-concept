@@ -2188,8 +2188,6 @@ Void_t* mALLOc(bytes) size_t bytes;
 		ulong new_ptr;
 		void *ptr;
 
-	while (gd->malloc_base == 0)
-		;
 		new_ptr = gd->malloc_ptr + bytes;
 		if (new_ptr > gd->malloc_limit) {
 			panic("Out of pre-reloc memory");
