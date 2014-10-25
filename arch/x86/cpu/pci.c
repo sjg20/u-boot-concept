@@ -8,12 +8,21 @@
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
+#define DEBUG
 
 #include <common.h>
 #include <pci.h>
 #include <asm/pci.h>
+#include <asm/arch/pch.h>
 
 static struct pci_controller x86_hose;
+
+/* System RAM mapped over PCI */
+/*
+#define CONFIG_PCI_MEMORY_BUS	CONFIG_SYS_SDRAM_BASE
+#define CONFIG_PCI_MEMORY_PHYS	CONFIG_SYS_SDRAM_BASE
+#define CONFIG_PCI_MEMORY_SIZE	(1024 * 1024 * 1024)
+*/
 
 static void config_pci_bridge(struct pci_controller *hose, pci_dev_t dev,
 			      struct pci_config_table *table)
@@ -22,7 +31,6 @@ static void config_pci_bridge(struct pci_controller *hose, pci_dev_t dev,
 
 	pciauto_config_device(hose, dev);
 	hose->read_byte(hose, dev, PCI_SECONDARY_BUS, &secondary);
-// 	printf("Secondary = %d\n", secondary);
 	hose->last_busno = max(hose->last_busno, secondary);
 	if (secondary != 0)
 		pci_hose_scan_bus(hose, secondary);
@@ -35,25 +43,57 @@ static struct pci_config_table pci_coreboot_config_table[] = {
 	{}
 };
 
+static inline u32 sir_read(pci_dev_t dev, int idx)
+{
+	pci_write_config32(dev, SATA_SIRI, idx);
+	return pci_read_config32(dev, SATA_SIRD);
+}
+
+static inline void sir_write(pci_dev_t dev, int idx, u32 value)
+{
+	pci_write_config32(dev, SATA_SIRI, idx);
+	pci_write_config32(dev, SATA_SIRD, value);
+}
+
 void pci_init_board(void)
 {
-	x86_hose.config_table = pci_coreboot_config_table;
-	x86_hose.first_busno = 0;
-	x86_hose.last_busno = 0;
+	struct pci_controller *hose = &x86_hose;
 
-	pci_set_region(x86_hose.regions + 0, 0x0, 0x0, 0xffffffff,
+	hose->config_table = pci_coreboot_config_table;
+	hose->first_busno = 0;
+	hose->last_busno = 0;
+
+	pci_set_region(hose->regions + 0, 0x0, 0x0, 0xffffffff,
 		PCI_REGION_MEM);
-	x86_hose.region_count = 1;
+	hose->region_count = 1;
 
 	pci_setup_type1(&x86_hose);
+#ifdef CONFIG_PCI_PNP
+	/* System space */
+	/*
+	pci_set_region(hose->regions + 0,
+		       CONFIG_PCI_MEMORY_BUS,
+		       CONFIG_PCI_MEMORY_PHYS,
+		       CONFIG_PCI_MEMORY_SIZE,
+		       PCI_REGION_MEM | PCI_REGION_SYS_MEMORY);
+	*/
+	/* PCI memory space */
+	pci_set_region(hose->regions + 0,
+		       CONFIG_PCI_MEM_BUS,
+		       CONFIG_PCI_MEM_PHYS,
+		       CONFIG_PCI_MEM_SIZE,
+		       PCI_REGION_MEM);
 
+	/* PCI IO space */
+	pci_set_region(hose->regions + 1,
+		       CONFIG_PCI_IO_BUS,
+		       CONFIG_PCI_IO_PHYS,
+		       CONFIG_PCI_IO_SIZE,
+		       PCI_REGION_IO);
+	hose->region_count = 2;
+#endif
 	pci_register_hose(&x86_hose);
 
-#ifdef CONFIG_X86_RESET_VECTOR
-	pciauto_config_init(&x86_hose);
-	pciauto_config_device(&x86_hose, 0);
-#else
 	pci_hose_scan(&x86_hose);
-#endif
-	x86_hose.last_busno = pci_hose_scan(&x86_hose);
+	hose->last_busno = pci_hose_scan(&x86_hose);
 }

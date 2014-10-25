@@ -395,11 +395,12 @@ int pciauto_config_device(struct pci_controller *hose, pci_dev_t dev)
 
 	case PCI_CLASS_STORAGE_IDE:
 		pci_hose_read_config_byte(hose, dev, PCI_CLASS_PROG, &prg_iface);
+		/*
 		if (!(prg_iface & PCIAUTO_IDE_MODE_MASK)) {
 			DEBUGF("PCI Autoconfig: Skipping legacy mode IDE controller\n");
 			return sub_bus;
 		}
-
+		*/
 		pciauto_setup_device(hose, dev, 6, hose->pci_mem,
 			hose->pci_prefetch, hose->pci_io);
 		break;

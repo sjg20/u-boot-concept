@@ -386,6 +386,7 @@ static void set_var_mtrr(
 	      (1 << (CONFIG_CPU_ADDR_BITS - 32)) - 1);
 }
 
+#if 0
 static void enable_rom_caching(void)
 {
 	disable_caches();
@@ -395,6 +396,7 @@ static void enable_rom_caching(void)
 	/* Enable Variable MTRRs */
 	wrmsr(MTRRdefType_MSR, 0x800, 0);
 }
+#endif
 
 static int set_flex_ratio_to_tdp_nominal(void)
 {

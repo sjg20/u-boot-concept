@@ -7,6 +7,8 @@
  *
  * with the reference on libata and ahci drvier in kernel
  */
+#define DEBUG
+
 #include <common.h>
 
 #include <command.h>
