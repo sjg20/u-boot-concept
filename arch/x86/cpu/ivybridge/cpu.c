@@ -209,7 +209,7 @@ int get_gpio(int gpio_num);
  */
 unsigned get_gpios(const int *gpio_num_array);
 
-const struct pch_gpio_set1 pch_gpio_set1_mode = {
+static const struct pch_gpio_set1 pch_gpio_set1_mode = {
 	.gpio0 = GPIO_MODE_GPIO,  /* NMI_DBG# */
 	.gpio3 = GPIO_MODE_GPIO,  /* ALS_INT# */
 	.gpio5 = GPIO_MODE_GPIO,  /* SIM_DET */
@@ -226,7 +226,7 @@ const struct pch_gpio_set1 pch_gpio_set1_mode = {
 	.gpio28 = GPIO_MODE_GPIO, /* SLP_ME_CSW_DEV# */
 };
 
-const struct pch_gpio_set1 pch_gpio_set1_direction = {
+static const struct pch_gpio_set1 pch_gpio_set1_direction = {
 	.gpio0 = GPIO_DIR_INPUT,
 	.gpio3 = GPIO_DIR_INPUT,
 	.gpio5 = GPIO_DIR_INPUT,
@@ -243,13 +243,13 @@ const struct pch_gpio_set1 pch_gpio_set1_direction = {
 	.gpio28 = GPIO_DIR_INPUT,
 };
 
-const struct pch_gpio_set1 pch_gpio_set1_level = {
+static const struct pch_gpio_set1 pch_gpio_set1_level = {
 	.gpio1 = GPIO_LEVEL_HIGH,
 	.gpio6 = GPIO_LEVEL_HIGH,
 	.gpio24 = GPIO_LEVEL_LOW,
 };
 
-const struct pch_gpio_set1 pch_gpio_set1_invert = {
+static const struct pch_gpio_set1 pch_gpio_set1_invert = {
 	.gpio7 = GPIO_INVERT,
 	.gpio8 = GPIO_INVERT,
 	.gpio12 = GPIO_INVERT,
@@ -257,7 +257,7 @@ const struct pch_gpio_set1 pch_gpio_set1_invert = {
 	.gpio15 = GPIO_INVERT,
 };
 
-const struct pch_gpio_set2 pch_gpio_set2_mode = {
+static const struct pch_gpio_set2 pch_gpio_set2_mode = {
 	.gpio36 = GPIO_MODE_GPIO, /* W_DISABLE_L */
 	.gpio41 = GPIO_MODE_GPIO, /* SPD vector D0 */
 	.gpio42 = GPIO_MODE_GPIO, /* SPD vector D1 */
@@ -266,7 +266,7 @@ const struct pch_gpio_set2 pch_gpio_set2_mode = {
 	.gpio60 = GPIO_MODE_GPIO, /* DRAMRST_CNTRL_PCH */
 };
 
-const struct pch_gpio_set2 pch_gpio_set2_direction = {
+static const struct pch_gpio_set2 pch_gpio_set2_direction = {
 	.gpio36 = GPIO_DIR_OUTPUT,
 	.gpio41 = GPIO_DIR_INPUT,
 	.gpio42 = GPIO_DIR_INPUT,
@@ -275,21 +275,21 @@ const struct pch_gpio_set2 pch_gpio_set2_direction = {
 	.gpio60 = GPIO_DIR_OUTPUT,
 };
 
-const struct pch_gpio_set2 pch_gpio_set2_level = {
+static const struct pch_gpio_set2 pch_gpio_set2_level = {
 	.gpio36 = GPIO_LEVEL_HIGH,
 	.gpio60 = GPIO_LEVEL_HIGH,
 };
 
-const struct pch_gpio_set3 pch_gpio_set3_mode = {
+static const struct pch_gpio_set3 pch_gpio_set3_mode = {
 };
 
-const struct pch_gpio_set3 pch_gpio_set3_direction = {
+static const struct pch_gpio_set3 pch_gpio_set3_direction = {
 };
 
-const struct pch_gpio_set3 pch_gpio_set3_level = {
+static const struct pch_gpio_set3 pch_gpio_set3_level = {
 };
 
-const struct pch_gpio_map link_gpio_map = {
+static const struct pch_gpio_map link_gpio_map = {
 	.set1 = {
 		.mode      = &pch_gpio_set1_mode,
 		.direction = &pch_gpio_set1_direction,
@@ -375,6 +375,7 @@ static void enable_spi_prefetch(void)
 	pci_write_config8(dev, 0xdc, reg8);
 }
 
+#if 0
 static void set_var_mtrr(
 	unsigned reg, unsigned base, unsigned size, unsigned type)
 
@@ -386,7 +387,6 @@ static void set_var_mtrr(
 	      (1 << (CONFIG_CPU_ADDR_BITS - 32)) - 1);
 }
 
-#if 0
 static void enable_rom_caching(void)
 {
 	disable_caches();

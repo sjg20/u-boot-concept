@@ -258,6 +258,8 @@ static int initr_barrier(void)
 	return 0;
 }
 
+static int fred = 1234;
+
 static int initr_malloc(void)
 {
 	ulong malloc_start;
@@ -271,6 +273,7 @@ static int initr_malloc(void)
 	mem_malloc_init((ulong)map_sysmem(malloc_start, TOTAL_MALLOC_LEN),
 			TOTAL_MALLOC_LEN);
 	printf("alloc %lx %x\n", malloc_start, TOTAL_MALLOC_LEN);
+	printf("fred = %d\n", fred);
 	printf("alloc = %p\n", malloc(128));
 
 	return 0;
@@ -925,7 +928,6 @@ void board_init_r(gd_t *new_gd, ulong dest_addr)
 #endif
 
 // 	gd->flags &= ~GD_FLG_SERIAL_READY;
-	printf("hi\n");
 	post_code(0xc0);
 #ifdef CONFIG_NEEDS_MANUAL_RELOC
 	for (i = 0; i < ARRAY_SIZE(init_sequence_r); i++)
