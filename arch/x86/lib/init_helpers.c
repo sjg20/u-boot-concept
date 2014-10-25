@@ -66,7 +66,6 @@ int calculate_relocation_address(void)
 
 int init_cache_f_r(void)
 {
-	printf("%s\n", __func__);
 	/* Initialise the CPU cache(s) */
 	return init_cache();
 }

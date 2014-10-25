@@ -2203,11 +2203,9 @@ Void_t* mALLOc(bytes) size_t bytes;
 
   /* check if mem_malloc_init() was run */
   if ((mem_malloc_start == 0) && (mem_malloc_end == 0)) {
-    printf("%s: Not inited\n", __func__);
     /* not initialized yet */
     return NULL;
   }
-  printf("malloc %d\n", bytes);
 
   if ((long)bytes < 0) return NULL;
 
@@ -2236,7 +2234,6 @@ Void_t* mALLOc(bytes) size_t bytes;
       unlink(victim, bck, fwd);
       set_inuse_bit_at_offset(victim, victim_size);
       check_malloced_chunk(victim, nb);
-      printf("1\n");
       return chunk2mem(victim);
     }
 
@@ -2264,7 +2261,6 @@ Void_t* mALLOc(bytes) size_t bytes;
 	unlink(victim, bck, fwd);
 	set_inuse_bit_at_offset(victim, victim_size);
 	check_malloced_chunk(victim, nb);
-      printf("2\n");
 	return chunk2mem(victim);
       }
     }
@@ -2288,7 +2284,6 @@ Void_t* mALLOc(bytes) size_t bytes;
       set_head(remainder, remainder_size | PREV_INUSE);
       set_foot(remainder, remainder_size);
       check_malloced_chunk(victim, nb);
-      printf("3\n");
       return chunk2mem(victim);
     }
 
@@ -2298,7 +2293,6 @@ Void_t* mALLOc(bytes) size_t bytes;
     {
       set_inuse_bit_at_offset(victim, victim_size);
       check_malloced_chunk(victim, nb);
-      printf("4\n");
       return chunk2mem(victim);
     }
 
@@ -2354,7 +2348,6 @@ Void_t* mALLOc(bytes) size_t bytes;
 	    set_head(remainder, remainder_size | PREV_INUSE);
 	    set_foot(remainder, remainder_size);
 	    check_malloced_chunk(victim, nb);
-      printf("5\n");
 	    return chunk2mem(victim);
 	  }
 
@@ -2363,7 +2356,6 @@ Void_t* mALLOc(bytes) size_t bytes;
 	    set_inuse_bit_at_offset(victim, victim_size);
 	    unlink(victim, bck, fwd);
 	    check_malloced_chunk(victim, nb);
-      printf("6\n");
 	    return chunk2mem(victim);
 	  }
 
@@ -2417,10 +2409,8 @@ Void_t* mALLOc(bytes) size_t bytes;
 
     /* Try to extend */
     malloc_extend_top(nb);
-    if ( (remainder_size = chunksize(top) - nb) < (long)MINSIZE) {
-      printf("7\n");
+    if ( (remainder_size = chunksize(top) - nb) < (long)MINSIZE)
       return NULL; /* propagate failure */
-    }
   }
 
   victim = top;
@@ -2428,7 +2418,6 @@ Void_t* mALLOc(bytes) size_t bytes;
   top = chunk_at_offset(victim, nb);
   set_head(top, remainder_size | PREV_INUSE);
   check_malloced_chunk(victim, nb);
-      printf("8\n");
   return chunk2mem(victim);
 
 }

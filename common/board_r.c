@@ -9,7 +9,7 @@
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
-#define DEBUG
+
 #include <common.h>
 /* TODO: can we just include all these headers whether needed or not? */
 #if defined(CONFIG_CMD_BEDBUG)
@@ -258,8 +258,6 @@ static int initr_barrier(void)
 	return 0;
 }
 
-static int fred = 1234;
-
 static int initr_malloc(void)
 {
 	ulong malloc_start;
@@ -272,9 +270,8 @@ static int initr_malloc(void)
 	malloc_start = gd->relocaddr - TOTAL_MALLOC_LEN;
 	mem_malloc_init((ulong)map_sysmem(malloc_start, TOTAL_MALLOC_LEN),
 			TOTAL_MALLOC_LEN);
-	printf("alloc %lx %x\n", malloc_start, TOTAL_MALLOC_LEN);
-	printf("fred = %d\n", fred);
-	printf("alloc = %p\n", malloc(128));
+// 	printf("alloc\n");
+// 	printf("alloc = %p\n", malloc(128));
 
 	return 0;
 }
@@ -282,8 +279,6 @@ static int initr_malloc(void)
 #ifdef CONFIG_DM
 static int initr_dm(void)
 {
-	printf("malloc %p\n", malloc(100));
-
 	/* Save the pre-reloc driver model and start a new one */
 	gd->dm_root_f = gd->dm_root;
 	gd->dm_root = NULL;
