@@ -18,7 +18,7 @@ int arch_early_init_r(void)
 
 int board_early_init_r(void)
 {
-// 	bd82x6x_init();
+	bd82x6x_init();
 
 	return 0;
 }
