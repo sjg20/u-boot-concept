@@ -17,11 +17,6 @@
 
 static struct pci_controller x86_hose;
 
-int pci_skip_dev(struct pci_controller *hose, pci_dev_t dev)
-{
-	return dev == PCI_BDF(0, 2, 0);
-}
-
 static void config_pci_bridge(struct pci_controller *hose, pci_dev_t dev,
 			      struct pci_config_table *table)
 {
@@ -80,7 +75,14 @@ void pci_init_board(void)
 		       CONFIG_PCI_IO_PHYS,
 		       CONFIG_PCI_IO_SIZE,
 		       PCI_REGION_IO);
-	hose->region_count = 2;
+
+	pci_set_region(hose->regions + 2,
+		       CONFIG_PCI_PREF_BUS,
+		       CONFIG_PCI_PREF_PHYS,
+		       CONFIG_PCI_PREF_SIZE,
+		       PCI_REGION_PREFETCH);
+
+	hose->region_count = 3;
 #endif
 	pci_register_hose(hose);
 
