@@ -13,16 +13,20 @@
 #include <common.h>
 #include <pci.h>
 #include <asm/pci.h>
+#include <asm/arch/bd82x6x.h>
 #include <asm/arch/pch.h>
 
 static struct pci_controller x86_hose;
 
 /* System RAM mapped over PCI */
-/*
-#define CONFIG_PCI_MEMORY_BUS	CONFIG_SYS_SDRAM_BASE
-#define CONFIG_PCI_MEMORY_PHYS	CONFIG_SYS_SDRAM_BASE
-#define CONFIG_PCI_MEMORY_SIZE	(1024 * 1024 * 1024)
-*/
+#define CONFIG_PCI_MEMORY_BUS	0
+#define CONFIG_PCI_MEMORY_PHYS	CONFIG_PCI_MEMORY_BUS
+#define CONFIG_PCI_MEMORY_SIZE	(2 << 30)
+
+int pci_skip_dev(struct pci_controller *hose, pci_dev_t dev)
+{
+	return dev == PCI_BDF(0, 2, 0);
+}
 
 static void config_pci_bridge(struct pci_controller *hose, pci_dev_t dev,
 			      struct pci_config_table *table)
@@ -67,33 +71,34 @@ void pci_init_board(void)
 		PCI_REGION_MEM);
 	hose->region_count = 1;
 
-	pci_setup_type1(&x86_hose);
+	pci_setup_type1(hose);
 #ifdef CONFIG_PCI_PNP
 	/* System space */
-	/*
 	pci_set_region(hose->regions + 0,
 		       CONFIG_PCI_MEMORY_BUS,
 		       CONFIG_PCI_MEMORY_PHYS,
 		       CONFIG_PCI_MEMORY_SIZE,
 		       PCI_REGION_MEM | PCI_REGION_SYS_MEMORY);
-	*/
 	/* PCI memory space */
-	pci_set_region(hose->regions + 0,
+	pci_set_region(hose->regions + 1,
 		       CONFIG_PCI_MEM_BUS,
 		       CONFIG_PCI_MEM_PHYS,
 		       CONFIG_PCI_MEM_SIZE,
 		       PCI_REGION_MEM);
 
 	/* PCI IO space */
-	pci_set_region(hose->regions + 1,
+	pci_set_region(hose->regions + 2,
 		       CONFIG_PCI_IO_BUS,
 		       CONFIG_PCI_IO_PHYS,
 		       CONFIG_PCI_IO_SIZE,
 		       PCI_REGION_IO);
-	hose->region_count = 2;
+	hose->region_count = 3;
 #endif
-	pci_register_hose(&x86_hose);
+	pci_register_hose(hose);
 
-	pci_hose_scan(&x86_hose);
-	hose->last_busno = pci_hose_scan(&x86_hose);
+	pci_hose_scan(hose);
+	hose->last_busno = pci_hose_scan(hose);
+	bd82x6x_init_pci_devices();
+	pci_hose_config_device(hose, PCI_BDF(0, 0, 0), 0, 0,
+			       PCI_COMMAND_IO | PCI_COMMAND_MEMORY); //| PCI_COMMAND_MASTER);
 }

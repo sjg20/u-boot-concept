@@ -4,7 +4,7 @@
  *
  * SPDX-License-Identifier:	GPL-2.0
  */
-
+#define DEBUG
 #include <common.h>
 #include <asm/arch/pch.h>
 #include <asm/arch/bd82x6x.h>
@@ -106,7 +106,7 @@ void bd82x6x_sata_init(pci_dev_t dev, struct southbridge_intel_bd82x6x_config *c
 			   ((config->sata_port_map ^ 0x3f) << 24) | 0x183);
 
 		/* Initialize AHCI memory-mapped space */
-		abar = pci_read_config32(dev, PCI_BASE_ADDRESS_5);
+		abar = pci_read_config32(dev, PCI_BASE_ADDRESS_5) & ~1;
 		debug("ABAR: %08X\n", abar);
 		/* CAP (HBA Capabilities) : enable power management */
 		reg32 = readl(abar + 0x00);

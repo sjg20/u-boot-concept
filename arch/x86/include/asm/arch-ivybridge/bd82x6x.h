@@ -8,6 +8,7 @@
 #define _ASM_ARCH_BD82X6X_H
 
 struct southbridge_intel_bd82x6x_config {
+#if 0
 	/**
 	 * Interrupt Routing configuration
 	 * If bit7 is 1, the interrupt is disabled.
@@ -49,7 +50,7 @@ struct southbridge_intel_bd82x6x_config {
 
 	uint32_t gpe0_en;
 	uint16_t alt_gp_smi_en;
-
+#endif
 	/* IDE configuration */
 	uint32_t ide_legacy_combined;
 	uint32_t sata_ahci;
@@ -67,7 +68,7 @@ struct southbridge_intel_bd82x6x_config {
 	 * 11 - 6.0 Gb/s maximum speed
 	 */
 	uint8_t sata_interface_speed_support;
-
+#if 0
 	uint32_t gen1_dec;
 	uint32_t gen2_dec;
 	uint32_t gen3_dec;
@@ -85,6 +86,7 @@ struct southbridge_intel_bd82x6x_config {
 	uint8_t pcie_aspm_f5;
 	uint8_t pcie_aspm_f6;
 	uint8_t pcie_aspm_f7;
+#endif
 };
 
 void bd82x6x_sata_init(pci_dev_t dev, struct southbridge_intel_bd82x6x_config *config);
@@ -94,5 +96,6 @@ void bd82x6x_usb_ehci_init(pci_dev_t dev);
 void bd82x6x_usb_xhci_init(pci_dev_t dev);
 
 int bd82x6x_init(void);
+void bd82x6x_init_pci_devices(void);
 
 #endif

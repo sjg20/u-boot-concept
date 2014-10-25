@@ -47,17 +47,16 @@ void bd82x6x_pci_init(pci_dev_t dev)
 	pci_write_config16(dev, SECSTS, reg16);
 }
 
-#if 0
-#undef PCI_BRIDGE_UPDATE_COMMAND
-static void ich_pci_dev_enable_resources(struct device *dev)
+#define PCI_BRIDGE_UPDATE_COMMAND
+void ich_pci_dev_enable_resources(pci_dev_t dev)
 {
-	const struct pci_operations *ops;
+// 	const struct pci_operations *ops;
 	uint16_t command;
-
+#if 0
 	/* Set the subsystem vendor and device id for mainboard devices */
 	ops = ops_pci(dev);
 	if (dev->on_mainboard && ops && ops->set_subsystem) {
-		printk(BIOS_DEBUG, "%s subsystem <- %02x/%02x\n",
+		debug("%s subsystem <- %02x/%02x\n",
 			dev_path(dev),
 			CONFIG_MAINBOARD_PCI_SUBSYSTEM_VENDOR_ID,
 			CONFIG_MAINBOARD_PCI_SUBSYSTEM_DEVICE_ID);
@@ -65,39 +64,39 @@ static void ich_pci_dev_enable_resources(struct device *dev)
 			CONFIG_MAINBOARD_PCI_SUBSYSTEM_VENDOR_ID,
 			CONFIG_MAINBOARD_PCI_SUBSYSTEM_DEVICE_ID);
 	}
-
+#endif
 	command = pci_read_config16(dev, PCI_COMMAND);
-	command |= dev->command;
+	command |= PCI_COMMAND_IO;
 #ifdef PCI_BRIDGE_UPDATE_COMMAND
 	/* If we write to PCI_COMMAND, on some systems
 	 * this will cause the ROM and APICs not being visible
 	 * anymore.
 	 */
-	printk(BIOS_DEBUG, "%s cmd <- %02x\n", dev_path(dev), command);
+// 	debug("%s cmd <- %02x\n", dev_path(dev), command);
 	pci_write_config16(dev, PCI_COMMAND, command);
 #else
-	printk(BIOS_DEBUG, "%s cmd <- %02x (NOT WRITTEN!)\n", dev_path(dev), command);
+	debug("%s cmd <- %02x (NOT WRITTEN!)\n", dev_path(dev), command);
 #endif
 }
 
-static void ich_pci_bus_enable_resources(struct device *dev)
+void ich_pci_bus_enable_resources(pci_dev_t dev)
 {
 	uint16_t ctrl;
 	/* enable IO in command register if there is VGA card
 	 * connected with (even it does not claim IO resource)
 	 */
-	if (dev->link_list->bridge_ctrl & PCI_BRIDGE_CTL_VGA)
-		dev->command |= PCI_COMMAND_IO;
+// 	if (dev->link_list->bridge_ctrl & PCI_BRIDGE_CTL_VGA)
+// 		dev->command |= PCI_COMMAND_IO;
 	ctrl = pci_read_config16(dev, PCI_BRIDGE_CONTROL);
-	ctrl |= dev->link_list->bridge_ctrl;
+// 	ctrl |= dev->link_list->bridge_ctrl;
 	ctrl |= (PCI_BRIDGE_CTL_PARITY + PCI_BRIDGE_CTL_SERR); /* error check */
-	printk(BIOS_DEBUG, "%s bridge ctrl <- %04x\n", dev_path(dev), ctrl);
+// 	debug("%s bridge ctrl <- %04x\n", dev_path(dev), ctrl);
 	pci_write_config16(dev, PCI_BRIDGE_CONTROL, ctrl);
 
 	/* This is the reason we need our own pci_bus_enable_resources */
 	ich_pci_dev_enable_resources(dev);
 }
-
+#if 0
 static void set_subsystem(device_t dev, unsigned vendor, unsigned device)
 {
 	/* NOTE: This is not the default position! */
