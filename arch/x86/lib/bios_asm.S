@@ -17,6 +17,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+#include <asm/processor.h>
+
 #define REALMODE_BASE		0x600
 #define RELOCATED(x)	(x - __realmode_code + REALMODE_BASE)
 
@@ -106,9 +108,10 @@ __realmode_call:
 	movl	%eax, __registers + 16 /* esi */
 	movl	64(%ebp), %eax
 	movl	%eax, __registers + 20 /* edi */
+	ljmp	$0x08, $RELOCATED(5f)
 
 	/* Activate the right segment descriptor real mode. */
-	ljmp	$0x28, $RELOCATED(1f)
+	ljmp	$X86_GDT_ENTRY_16BIT_CS, $RELOCATED(1f)
 1:
 .code16
 	/* 16 bit code from here on... */
@@ -118,7 +121,7 @@ __realmode_call:
 	 * configurations (limits, writability, etc.) once
 	 * protected mode is turned off.
 	 */
-	mov	$0x30, %ax
+	mov	$X86_GDT_ENTRY_16BIT_DS, %ax
 	mov	%ax, %ds
 	mov	%ax, %es
 	mov	%ax, %fs
@@ -154,7 +157,6 @@ __realmode_call:
 	movl	__registers + 12, %edx
 	movl	__registers + 16, %esi
 	movl	__registers + 20, %edi
-	ljmp	$0x08, $RELOCATED(5f)
 
 	/* Set all segments to 0x0000, ds to 0x0040 */
 	push	%ax
@@ -185,15 +187,15 @@ __lcall_instr = RELOCATED(.)
 	/* Now that we are in protected mode
 	 * jump to a 32 bit code segment.
 	 */
-	data32	ljmp	$0x10, $RELOCATED(1f)
+	data32	ljmp	$X86_GDT_ENTRY_32BIT_CS, $RELOCATED(1f)
 1:
 	.code32
-	mov	$0x10, %ax
+	mov	$X86_GDT_ENTRY_32BIT_DS, %ax
 	mov	%ax, %ds
 	mov	%ax, %es
 	mov	%ax, %gs
 	mov	%ax, %ss
-	mov	$0x18, %ax
+	mov	$X86_GDT_ENTRY_32BIT_FS, %ax
 	mov	%ax, %fs
 
 	/* restore proper idt */
@@ -241,7 +243,7 @@ __realmode_interrupt:
 	movl	%eax, __registers + 20 /* edi */
 
 	/*  This configures CS properly for real mode. */
-	ljmp 	$0x28, $RELOCATED(1f)
+	ljmp 	$X86_GDT_ENTRY_16BIT_CS, $RELOCATED(1f)
 1:
 	.code16 /* 16 bit code from here on... */
 
@@ -306,7 +308,7 @@ __intXX_instr = RELOCATED(.)
 	movl	%eax, %cr0
 
 	/* Now that we are in protected mode jump to a 32-bit code segment. */
-	data32	ljmp	$0x10, $RELOCATED(1f)
+	data32	ljmp	$X86_GDT_ENTRY_32BIT_CS, $RELOCATED(1f)
 1:
 	.code32
 	mov	$0x18, %ax
@@ -353,7 +355,7 @@ __interrupt_handler_16bit = RELOCATED(.)
 	movl	%eax, %cr0
 
 	/* ... and jump to a 32 bit code segment. */
-	data32 ljmp    $0x08, $RELOCATED(1f)
+	data32 ljmp    $X86_GDT_ENTRY_32BIT_CS, $RELOCATED(1f)
 1:
 	.code32
 	mov	$0x18, %ax
@@ -370,7 +372,7 @@ __interrupt_handler_16bit = RELOCATED(.)
 	call	*%eax
 
 	/* Now return to real mode ... */
-	ljmp	$0x28, $RELOCATED(1f)
+	ljmp	$X86_GDT_ENTRY_16BIT_CS, $RELOCATED(1f)
 1:
 	.code16
 	/* Load the segment registers with properly configured segment

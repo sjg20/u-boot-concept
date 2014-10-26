@@ -71,7 +71,7 @@ idt_ptr:
  * GDT is setup in a safe location in RAM
  */
 gdt_ptr:
-	.word	0x17		/* limit (32 bytes = 4 GDT entries) */
+	.word	0x2f		/* limit (40 bytes = 4 GDT entries) */
 	.long	BOOT_SEG + gdt	/* base */
 
 /* Some CPUs are picky about GDT alignment... */
@@ -129,3 +129,30 @@ gdt:
 	.byte	0x93		/* access */
 	.byte	0xcf		/* flags + limit_high */
 	.byte	0x00		/* base_high */
+
+	/*
+	 * The Frame Segment Descriptor:
+	 * - Base   = 0x00000000
+	 * - Size   = 4GB
+	 * - Access = Present, Ring 0, Non-Exec (Data), Writable
+	 * - Flags  = 4kB Granularity, 32-bit
+	 */
+	.word	0xffff		/* limit_low */
+	.word	0x0000		/* base_low */
+	.byte	0x00		/* base_middle */
+	.byte	0x93		/* access */
+	.byte	0xcf		/* flags + limit_high */
+	.byte	0x00		/* base_high */
+
+	/* 16 bit 64k code at 0x00000000 */
+	.word   0xffff, 0x0000
+	.byte   0, 0x9a, 0, 0
+
+	/* 16 bit 64k data at 0x00000000 */
+	.word   0xffff, 0x0000
+	.word	0x0000, 0x0000		/* dummy */
+	.byte	0x00, 0x93, 0x8f, 0x00 /* G=1 and 0x0f, So we get 4Gbytes for limit */
+
+	/* 0x40, flat code segment 16 bit */
+	.word	0xffff, 0x0000
+	.byte	0x00, 0x9b, 0x8f, 0x00 /* G=1 and 0x0f, So we get 4Gbytes for limit */
