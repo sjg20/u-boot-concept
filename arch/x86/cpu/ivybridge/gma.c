@@ -631,9 +631,32 @@ int gma_pm_init_post_vbios(pci_dev_t dev)
 	return 0;
 }
 
+/*
+ * Some vga option roms are used for several chipsets but they only have one
+ * PCI ID in their header. If we encounter such an option rom, we need to do
+ * the mapping ourselves.
+ */
+
+uint32_t board_map_oprom_vendev(uint32_t vendev)
+{
+	printf("vendev = %x\n", vendev);
+	switch (vendev) {
+	case 0x80860102:		/* GT1 Desktop */
+	case 0x8086010a:		/* GT1 Server */
+	case 0x80860112:		/* GT2 Desktop */
+	case 0x80860116:		/* GT2 Mobile */
+	case 0x80860122:		/* GT2 Desktop >=1.3GHz */
+	case 0x80860126:		/* GT2 Mobile >=1.3GHz */
+	case 0x80860156:                /* IVB */
+	case 0x80860166:                /* IVB */
+		return 0x80860106;	/* GT1 Mobile */
+	}
+
+	return vendev;
+}
+
 int gma_func0_init(pci_dev_t dev)
 {
-	struct pci_controller *hose;
 	u32 reg32;
 	int ret;
 
@@ -647,7 +670,6 @@ int gma_func0_init(pci_dev_t dev)
 	if (ret)
 		return ret;
 
-	printf("Rom addr %x\n", pci_read_config32(dev, PCI_ROM_ADDRESS));
 	ret = pci_run_vga_bios(PCI_BDF(0, 2, 0));
 
 	/* Post VBIOS init */

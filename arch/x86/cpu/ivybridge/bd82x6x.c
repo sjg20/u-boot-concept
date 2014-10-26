@@ -50,6 +50,9 @@ int bd82x6x_init_pci_devices(void)
 	model_206ax_init(cpu);
 
 	ret = gma_func0_init(video);
+	printf("ret=%d\n", ret);
+	while (ret)
+		;
 	if (ret)
 		return ret;
 

@@ -41,4 +41,6 @@ struct pci_rom_data {
  */
 int pci_run_vga_bios(pci_dev_t dev);
 
+uint32_t board_map_oprom_vendev(uint32_t vendev);
+
 #endif

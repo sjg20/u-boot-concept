@@ -55,6 +55,7 @@ static bool should_load_oprom(pci_dev_t dev)
 
 __weak uint32_t board_map_oprom_vendev(uint32_t vendev)
 {
+	debug("here\n");
 	return vendev;
 }
 
@@ -71,11 +72,14 @@ static int pci_rom_probe(pci_dev_t dev, uint class,
 	pci_read_config_word(dev, PCI_VENDOR_ID, &vendor);
 	pci_read_config_word(dev, PCI_DEVICE_ID, &device);
 	vendev = vendor << 16 | device;
-
 	mapped_vendev = board_map_oprom_vendev(vendev);
+	if (vendev != mapped_vendev)
+		debug("Device ID mapped to %#08x\n", mapped_vendev);
 
+#ifdef CONFIG_X86_OPTION_ROM_ADDR
+	rom_address = CONFIG_X86_OPTION_ROM_ADDR;
+#else
 	pci_read_config_dword(dev, PCI_ROM_ADDRESS, &rom_address);
-
 	if (rom_address == 0x00000000 || rom_address == 0xffffffff) {
 		debug("%s: rom_address=%x\n", __func__, rom_address);
 		return -ENOENT;
@@ -84,12 +88,12 @@ static int pci_rom_probe(pci_dev_t dev, uint class,
 	/* Enable expansion ROM address decoding. */
 	pci_write_config_dword(dev, PCI_ROM_ADDRESS,
 			       rom_address | PCI_ROM_ADDRESS_ENABLE);
-
+#endif
 	debug("Option ROM address %x\n", rom_address);
 	rom_header = (struct pci_rom_header *)rom_address;
 
-	debug("PCI expansion ROM, signature 0x%04x, "
-	       "INIT size 0x%04x, data ptr 0x%04x\n",
+	debug("PCI expansion ROM, signature %#04x, "
+	       "INIT size %#04x, data ptr %#04x\n",
 	       le32_to_cpu(rom_header->signature),
 	       rom_header->size * 512, le32_to_cpu(rom_header->data));
 
@@ -121,7 +125,6 @@ static int pci_rom_probe(pci_dev_t dev, uint class,
 		debug("Class Code mismatch ROM %08x, dev %08x\n",
 		       (rom_data->class_hi << 8) | rom_data->class_lo,
 		       class);
-		// return NULL;
 	}
 	*hdrp = rom_header;
 
@@ -151,14 +154,6 @@ int pci_rom_load(pci_dev_t dev, uint16_t class,
 		return -EACCES;
 
 	rom_size = rom_header->size * 512;
-
-	/*
-	 * We check to see if the device thinks it is a VGA device not
-	 * whether the ROM image is for a VGA device because some
-	 * devices have a mismatch between the hardware and the ROM.
-	 */
- 	if (PCI_CLASS_DISPLAY_VGA != (class >> 8))
-		return -EPERM;
 
 	if ((void *)PCI_VGA_RAM_IMAGE_START != rom_header) {
 		debug("Copying VGA ROM Image from %p to "
