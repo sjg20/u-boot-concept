@@ -45,9 +45,13 @@
 *		Jason ported this file to u-boot to run the ATI video card
 *		BIOS in u-boot.
 ****************************************************************************/
+#define DEBUG
+
 #include <common.h>
-#include "biosemui.h"
+#include <bios_emul.h>
+#include <errno.h>
 #include <malloc.h>
+#include "biosemui.h"
 
 /* Length of the BIOS image */
 #define MAX_BIOSLEN	    (128 * 1024L)
@@ -87,7 +91,9 @@ static void PCI_doBIOSPOST(pci_dev_t pcidev, BE_VGAInfo * VGAInfo)
 	BE_setVGA(VGAInfo);
 
 	/*Execute the BIOS POST code*/
+	debug("callrealmode\n");
 	BE_callRealMode(0xC000, 0x0003, &regs, &sregs);
+	debug("callrealmode done\n");
 
 	/*Cleanup and exit*/
 	BE_getVGA(VGAInfo);
@@ -244,27 +250,35 @@ REMARKS:
 Loads and POST's the display controllers BIOS, directly from the BIOS
 image we can extract over the PCI bus.
 ****************************************************************************/
-static int PCI_postController(pci_dev_t pcidev, BE_VGAInfo * VGAInfo)
+static int PCI_postController(pci_dev_t pcidev, uchar *bios_rom, int bios_len,
+			      BE_VGAInfo * VGAInfo)
 {
 	u32 BIOSImageLen;
 	uchar *mappedBIOS;
 	uchar *copyOfBIOS;
 
-	/*Allocate memory to store copy of BIOS from display controller*/
-	if ((mappedBIOS = PCI_mapBIOSImage(pcidev)) == NULL) {
-		printf("videoboot: Video ROM failed to map!\n");
-		return false;
+	if (bios_rom) {
+		copyOfBIOS = bios_rom;
+		BIOSImageLen = bios_len;
+	} else {
+		/*
+		 * Allocate memory to store copy of BIOS from display
+		 * controller
+		 */
+		if ((mappedBIOS = PCI_mapBIOSImage(pcidev)) == NULL) {
+			printf("videoboot: Video ROM failed to map!\n");
+			return false;
+		}
+
+		BIOSImageLen = mappedBIOS[2] * 512;
+
+		if ((copyOfBIOS = malloc(BIOSImageLen)) == NULL) {
+			printf("videoboot: Out of memory!\n");
+			return false;
+		}
+		memcpy(copyOfBIOS, mappedBIOS, BIOSImageLen);
+		PCI_unmapBIOSImage(pcidev, mappedBIOS);
 	}
-
-	BIOSImageLen = mappedBIOS[2] * 512;
-
-	if ((copyOfBIOS = malloc(BIOSImageLen)) == NULL) {
-		printf("videoboot: Out of memory!\n");
-		return false;
-	}
-	memcpy(copyOfBIOS, mappedBIOS, BIOSImageLen);
-
-	PCI_unmapBIOSImage(pcidev, mappedBIOS);
 
 	/*Save information in VGAInfo structure*/
 	VGAInfo->function = PCI_FUNC(pcidev);
@@ -280,6 +294,7 @@ static int PCI_postController(pci_dev_t pcidev, BE_VGAInfo * VGAInfo)
 		return false;
 	}
 
+	debug("Do post\n");
 	PCI_doBIOSPOST(pcidev, VGAInfo);
 
 	/*Reset the size of the BIOS image to the final size*/
@@ -297,7 +312,8 @@ REMARKS:
 Boots the PCI/AGP video card on the bus using the Video ROM BIOS image
 and the X86 BIOS emulator module.
 ****************************************************************************/
-int BootVideoCardBIOS(pci_dev_t pcidev, BE_VGAInfo ** pVGAInfo, int cleanUp)
+int BootVideoCardBIOS(pci_dev_t pcidev, uchar *bios_rom, int bios_len,
+		      BE_VGAInfo **pVGAInfo, int cleanUp)
 {
 	BE_VGAInfo *VGAInfo;
 
@@ -305,15 +321,18 @@ int BootVideoCardBIOS(pci_dev_t pcidev, BE_VGAInfo ** pVGAInfo, int cleanUp)
 	     PCI_BUS(pcidev), PCI_FUNC(pcidev), PCI_DEV(pcidev));
 
 	/*Initialise the x86 BIOS emulator*/
+	debug("1\n");
 	if ((VGAInfo = malloc(sizeof(*VGAInfo))) == NULL) {
 		printf("videoboot: Out of memory!\n");
 		return false;
 	}
+	debug("2\n");
 	memset(VGAInfo, 0, sizeof(*VGAInfo));
+	debug("init\n");
 	BE_init(0, 65536, VGAInfo, 0);
 
 	/*Post all the display controller BIOS'es*/
-	if (!PCI_postController(pcidev, VGAInfo))
+	if (!PCI_postController(pcidev, bios_rom, bios_len, VGAInfo))
 		return false;
 
 	/*Cleanup and exit the emulator if requested. If the BIOS emulator

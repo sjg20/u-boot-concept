@@ -10,9 +10,6 @@
 
 #define X86_GDT_ENTRY_SIZE	8
 
-#define ROM_CODE_SEG 0x10
-#define ROM_DATA_SEG 0x18
-
 #ifndef __ASSEMBLY__
 
 enum {

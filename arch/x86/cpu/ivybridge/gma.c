@@ -655,6 +655,10 @@ uint32_t board_map_oprom_vendev(uint32_t vendev)
 	return vendev;
 }
 
+void int15_handler(void *ptr)
+{
+}
+
 int gma_func0_init(pci_dev_t dev)
 {
 	u32 reg32;
@@ -669,6 +673,8 @@ int gma_func0_init(pci_dev_t dev)
 	ret = gma_pm_init_pre_vbios(dev);
 	if (ret)
 		return ret;
+
+	mainboard_interrupt_handlers(0x15, int15_handler);
 
 	ret = pci_run_vga_bios(PCI_BDF(0, 2, 0));
 

@@ -64,6 +64,15 @@ SECTIONS
 	/DISCARD/ : { *(.plt*) }
 	/DISCARD/ : { *(.interp*) }
 	/DISCARD/ : { *(.gnu*) }
+#if 0
+	/* 16bit realmode trampoline code */
+	.realmode REALMODE_BASE : AT ( LOADADDR(.rel.dyn) + SIZEOF(.rel.dyn) ) {
+		KEEP(*(.realmode))
+	}
+
+	__realmode_start = LOADADDR(.realmode);
+	__realmode_size = SIZEOF(.realmode);
+#endif
 
 #ifdef CONFIG_X86_RESET_VECTOR
 

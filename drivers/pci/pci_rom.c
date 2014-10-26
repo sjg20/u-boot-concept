@@ -26,7 +26,9 @@
 #define DEBUG
 
 #include <common.h>
+#include <bios_emul.h>
 #include <errno.h>
+#include <malloc.h>
 #include <pci.h>
 #include <pci_rom.h>
 
@@ -138,6 +140,7 @@ int pci_rom_load(pci_dev_t dev, uint16_t class,
 	struct pci_rom_data *rom_data;
 	unsigned int rom_size;
 	unsigned int image_size = 0;
+	void *target;
 
 	do {
 		/* Get next image. */
@@ -155,14 +158,18 @@ int pci_rom_load(pci_dev_t dev, uint16_t class,
 
 	rom_size = rom_header->size * 512;
 
-	if ((void *)PCI_VGA_RAM_IMAGE_START != rom_header) {
-		debug("Copying VGA ROM Image from %p to "
-			"0x%x, 0x%x bytes\n", rom_header,
-			PCI_VGA_RAM_IMAGE_START, rom_size);
-		memcpy((void *)PCI_VGA_RAM_IMAGE_START, rom_header,
-			rom_size);
+	target = (void *)PCI_VGA_RAM_IMAGE_START;
+// 	target = malloc(1 << 16);
+	if (target != rom_header) {
+		debug("Copying VGA ROM Image from %p to %p, 0x%x bytes\n",
+		      rom_header, target, rom_size);
+		memcpy(target, rom_header, rom_size);
+		if (memcmp(target, rom_header, rom_size)) {
+			printf("VGA ROM copy failed\n");
+			return -EFAULT;
+		}
 	}
-	*ram_headerp = (struct pci_rom_header *)PCI_VGA_RAM_IMAGE_START;
+	*ram_headerp = target;
 
 	return 0;
 }
@@ -195,7 +202,11 @@ int pci_run_vga_bios(pci_dev_t dev)
 	if (!board_should_run_oprom(dev))
 		return -ENXIO;
 
-// 	run_bios(dev, (unsigned long)ram);
+// 	BE_VGAInfo *info;
+
+// 	BootVideoCardBIOS(dev, (uchar *)ram, 1 << 16, &info, true);
+
+	bios_run_on_x86(dev, (unsigned long)ram);
 
 	return 0;
 }

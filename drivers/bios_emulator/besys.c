@@ -46,7 +46,10 @@
 *		16 bit of the io port.
 *
 ****************************************************************************/
+#define DEBUG
 
+#include <common.h>
+#include <bios_emul.h>
 #define __io
 #include <asm/io.h>
 #include <common.h>
@@ -80,7 +83,7 @@ static u8 *BE_memaddr(u32 addr)
 	if (addr >= 0xC0000 && addr <= _BE_env.biosmem_limit) {
 		return (u8*)(_BE_env.biosmem_base + addr - 0xC0000);
 	} else if (addr > _BE_env.biosmem_limit && addr < 0xD0000) {
-		DB(printf("BE_memaddr: address %#lx may be invalid!\n", addr);)
+		DB(printf("BE_memaddr: address %#x may be invalid!\n", addr);)
 		return M.mem_base;
 	} else if (addr >= 0xA0000 && addr <= 0xBFFFF) {
 		return (u8*)(_BE_env.busmem_base + addr - 0xA0000);
@@ -88,8 +91,8 @@ static u8 *BE_memaddr(u32 addr)
 #ifdef __i386__
 	else if (addr >= 0xD0000 && addr <= 0xFFFFF) {
 		/* We map the real System BIOS directly on real PC's */
-		DB(printf("BE_memaddr: System BIOS address %#lx\n", addr);)
-		    return _BE_env.busmem_base + addr - 0xA0000;
+		DB(printf("BE_memaddr: System BIOS address %#x\n", addr);)
+		    return (u8 *)(_BE_env.busmem_base + addr - 0xA0000);
 	}
 #else
 	else if (addr >= 0xFFFF5 && addr < 0xFFFFE) {
