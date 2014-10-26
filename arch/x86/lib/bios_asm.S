@@ -25,6 +25,8 @@
 /* CR0 bits */
 #define PE		(1 << 0)
 
+#define SEG(segment)	$segment * X86_GDT_ENTRY_SIZE
+
 /* This is the intXX interrupt handler stub code. It gets copied
  * to the IDT and to some fixed addresses in the F segment. Before
  * the code can used, it gets patched up by the C function copying
@@ -108,10 +110,9 @@ __realmode_call:
 	movl	%eax, __registers + 16 /* esi */
 	movl	64(%ebp), %eax
 	movl	%eax, __registers + 20 /* edi */
-	ljmp	$0x08, $RELOCATED(5f)
 
 	/* Activate the right segment descriptor real mode. */
-	ljmp	$X86_GDT_ENTRY_16BIT_CS, $RELOCATED(1f)
+	ljmp	SEG(X86_GDT_ENTRY_16BIT_CS), $RELOCATED(1f)
 1:
 .code16
 	/* 16 bit code from here on... */
@@ -121,7 +122,7 @@ __realmode_call:
 	 * configurations (limits, writability, etc.) once
 	 * protected mode is turned off.
 	 */
-	mov	$X86_GDT_ENTRY_16BIT_DS, %ax
+	mov	SEG(X86_GDT_ENTRY_16BIT_DS), %ax
 	mov	%ax, %ds
 	mov	%ax, %es
 	mov	%ax, %fs
@@ -164,7 +165,7 @@ __realmode_call:
 	mov	%ax, %es
 	mov	%ax, %fs
 	mov	%ax, %gs
-	mov	$0x40, %ax
+	mov	SEG(X86_GDT_ENTRY_16BIT_FLAT_DS), %ax
 	mov	%ax, %ds
 	pop	%ax
 
@@ -187,20 +188,20 @@ __lcall_instr = RELOCATED(.)
 	/* Now that we are in protected mode
 	 * jump to a 32 bit code segment.
 	 */
-	data32	ljmp	$X86_GDT_ENTRY_32BIT_CS, $RELOCATED(1f)
+	data32	ljmp	SEG(X86_GDT_ENTRY_32BIT_CS), $RELOCATED(1f)
 1:
 	.code32
-	mov	$X86_GDT_ENTRY_32BIT_DS, %ax
+	mov	SEG(X86_GDT_ENTRY_32BIT_DS), %ax
 	mov	%ax, %ds
 	mov	%ax, %es
 	mov	%ax, %gs
 	mov	%ax, %ss
-	mov	$X86_GDT_ENTRY_32BIT_FS, %ax
+	mov	SEG(X86_GDT_ENTRY_32BIT_FS), %ax
 	mov	%ax, %fs
 
 	/* restore proper idt */
 	lidt	idt_ptr
-5:
+
 	/* restore stack pointer, eflags and register values */
 	movl	__stack, %esp
 	popf
@@ -243,7 +244,7 @@ __realmode_interrupt:
 	movl	%eax, __registers + 20 /* edi */
 
 	/*  This configures CS properly for real mode. */
-	ljmp 	$X86_GDT_ENTRY_16BIT_CS, $RELOCATED(1f)
+	ljmp 	SEG(X86_GDT_ENTRY_16BIT_CS), $RELOCATED(1f)
 1:
 	.code16 /* 16 bit code from here on... */
 
@@ -251,7 +252,7 @@ __realmode_interrupt:
 	 * descriptors.  They will retain these configurations (limits,
 	 * writability, etc.) once protected mode is turned off.
 	 */
-	mov	$0x30, %ax
+	mov	SEG(X86_GDT_ENTRY_16BIT_DS), %ax
 	mov	%ax, %ds
 	mov	%ax, %es
 	mov	%ax, %fs
@@ -308,15 +309,16 @@ __intXX_instr = RELOCATED(.)
 	movl	%eax, %cr0
 
 	/* Now that we are in protected mode jump to a 32-bit code segment. */
-	data32	ljmp	$X86_GDT_ENTRY_32BIT_CS, $RELOCATED(1f)
+	data32	ljmp	SEG(X86_GDT_ENTRY_32BIT_CS), $RELOCATED(1f)
 1:
 	.code32
-	mov	$0x18, %ax
+	mov	SEG(X86_GDT_ENTRY_32BIT_DS), %ax
 	mov	%ax, %ds
 	mov	%ax, %es
-	mov	%ax, %fs
 	mov	%ax, %gs
 	mov	%ax, %ss
+	mov	SEG(X86_GDT_ENTRY_32BIT_FS), %ax
+	mov	%ax, %fs
 
 	/* restore coreboot's 32-bit IDT */
 	lidt	idt_ptr
@@ -355,15 +357,16 @@ __interrupt_handler_16bit = RELOCATED(.)
 	movl	%eax, %cr0
 
 	/* ... and jump to a 32 bit code segment. */
-	data32 ljmp    $X86_GDT_ENTRY_32BIT_CS, $RELOCATED(1f)
+	data32 ljmp    SEG(X86_GDT_ENTRY_32BIT_CS), $RELOCATED(1f)
 1:
 	.code32
-	mov	$0x18, %ax
+	mov	SEG(X86_GDT_ENTRY_32BIT_DS), %ax
 	mov	%ax, %ds
 	mov	%ax, %es
-	mov	%ax, %fs
 	mov	%ax, %gs
 	mov	%ax, %ss
+	mov	SEG(X86_GDT_ENTRY_32BIT_FS), %ax
+	mov	%ax, %fs
 
 	lidt	idt_ptr
 
@@ -372,14 +375,14 @@ __interrupt_handler_16bit = RELOCATED(.)
 	call	*%eax
 
 	/* Now return to real mode ... */
-	ljmp	$X86_GDT_ENTRY_16BIT_CS, $RELOCATED(1f)
+	ljmp	SEG(X86_GDT_ENTRY_16BIT_CS), $RELOCATED(1f)
 1:
 	.code16
 	/* Load the segment registers with properly configured segment
 	 * descriptors.  They will retain these configurations (limits,
 	 * writability, etc.) once protected mode is turned off.
 	 */
-	mov	$0x30, %ax
+	mov	SEG(X86_GDT_ENTRY_16BIT_DS), %ax
 	mov	%ax, %ds
 	mov	%ax, %es
 	mov	%ax, %fs
