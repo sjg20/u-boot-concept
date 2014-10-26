@@ -5,9 +5,11 @@
  *
  * SPDX-License-Identifier:	GPL-2.0
  */
+#define DEBUG
 
 #include <common.h>
 #include <errno.h>
+#include <pci_rom.h>
 #include <asm/io.h>
 #include <asm/arch/pch.h>
 #include <asm/arch/sandybridge.h>
@@ -348,48 +350,51 @@ static int gtt_poll(void *bar, u32 reg, u32 mask, u32 value)
 
 int gma_pm_init_pre_vbios(pci_dev_t dev)
 {
-	void *git_bar;
+	void *gtt_bar;
 	u32 reg32;
 
 	debug("GT Power Management Init\n");
 
-	git_bar = pci_map_bar(dev, PCI_BASE_ADDRESS_0, PCI_REGION_MEM);
-	if (git_bar)
-		return -ENOENT;
+// 	gtt_bar = pci_map_bar(dev, PCI_BASE_ADDRESS_0, PCI_REGION_MEM);
+// 	if (gtt_bar)
+// 		return -ENOENT;
+	// TODO: Read address fropm PCI
+	gtt_bar = (void *)0xe0000000;
 
+	debug("GT bar %p\n", gtt_bar);
 	if (bridge_silicon_revision() < IVB_STEP_C0) {
 		/* 1: Enable force wake */
-		gtt_write(git_bar, 0xa18c, 0x00000001);
-		gtt_poll(git_bar, 0x130090, (1 << 0), (1 << 0));
+		gtt_write(gtt_bar, 0xa18c, 0x00000001);
+		gtt_poll(gtt_bar, 0x130090, (1 << 0), (1 << 0));
 	} else {
-		gtt_write(git_bar, 0xa180, 1 << 5);
-		gtt_write(git_bar, 0xa188, 0xffff0001);
-		gtt_poll(git_bar, 0x130040, (1 << 0), (1 << 0));
+		gtt_write(gtt_bar, 0xa180, 1 << 5);
+		gtt_write(gtt_bar, 0xa188, 0xffff0001);
+		gtt_poll(gtt_bar, 0x130040, (1 << 0), (1 << 0));
 	}
 
 	if ((bridge_silicon_revision() & BASE_REV_MASK) == BASE_REV_SNB) {
 		/* 1d: Set GTT+0x42004 [15:14]=11 (SnB C1+) */
-		reg32 = gtt_read(git_bar, 0x42004);
+		reg32 = gtt_read(gtt_bar, 0x42004);
 		reg32 |= (1 << 14) | (1 << 15);
-		gtt_write(git_bar, 0x42004, reg32);
+		gtt_write(gtt_bar, 0x42004, reg32);
 	}
 
 	if (bridge_silicon_revision() >= IVB_STEP_A0) {
 		/* Display Reset Acknowledge Settings */
-		reg32 = gtt_read(git_bar, 0x45010);
+		reg32 = gtt_read(gtt_bar, 0x45010);
 		reg32 |= (1 << 1) | (1 << 0);
-		gtt_write(git_bar, 0x45010, reg32);
+		gtt_write(gtt_bar, 0x45010, reg32);
 	}
 
 	/* 2: Get GT SKU from GTT+0x911c[13] */
-	reg32 = gtt_read(git_bar, 0x911c);
+	reg32 = gtt_read(gtt_bar, 0x911c);
 	if ((bridge_silicon_revision() & BASE_REV_MASK) == BASE_REV_SNB) {
 		if (reg32 & (1 << 13)) {
 			debug("SNB GT1 Power Meter Weights\n");
-			gtt_write_powermeter(git_bar, snb_pm_gt1);
+			gtt_write_powermeter(gtt_bar, snb_pm_gt1);
 		} else {
 			debug("SNB GT2 Power Meter Weights\n");
-			gtt_write_powermeter(git_bar, snb_pm_gt2);
+			gtt_write_powermeter(gtt_bar, snb_pm_gt2);
 		}
 	} else {
 		u32 unit = MCHBAR32(0x5938) & 0xf;
@@ -397,7 +402,7 @@ int gma_pm_init_pre_vbios(pci_dev_t dev)
 		if (reg32 & (1 << 13)) {
 			/* GT1 SKU */
 			debug("IVB GT1 Power Meter Weights\n");
-			gtt_write_powermeter(git_bar, ivb_pm_gt1);
+			gtt_write_powermeter(gtt_bar, ivb_pm_gt1);
 		} else {
 			/* GT2 SKU */
 			u32 tdp = MCHBAR32(0x5930) & 0x7fff;
@@ -407,101 +412,101 @@ int gma_pm_init_pre_vbios(pci_dev_t dev)
 				/* <=17W ULV */
 				debug("IVB GT2 17W "
 				       "Power Meter Weights\n");
-				gtt_write_powermeter(git_bar, ivb_pm_gt2_17w);
+				gtt_write_powermeter(gtt_bar, ivb_pm_gt2_17w);
 			} else if ((tdp >= 25) && (tdp <= 35)) {
 				/* 25W-35W */
 				debug("IVB GT2 25W-35W "
 				       "Power Meter Weights\n");
-				gtt_write_powermeter(git_bar, ivb_pm_gt2_35w);
+				gtt_write_powermeter(gtt_bar, ivb_pm_gt2_35w);
 			} else {
 				/* All others */
 				debug("IVB GT2 35W "
 				       "Power Meter Weights\n");
-				gtt_write_powermeter(git_bar, ivb_pm_gt2_35w);
+				gtt_write_powermeter(gtt_bar, ivb_pm_gt2_35w);
 			}
 		}
 	}
 
 	/* 3: Gear ratio map */
-	gtt_write(git_bar, 0xa004, 0x00000010);
+	gtt_write(gtt_bar, 0xa004, 0x00000010);
 
 	/* 4: GFXPAUSE */
-	gtt_write(git_bar, 0xa000, 0x00070020);
+	gtt_write(gtt_bar, 0xa000, 0x00070020);
 
 	/* 5: Dynamic EU trip control */
-	gtt_write(git_bar, 0xa080, 0x00000004);
+	gtt_write(gtt_bar, 0xa080, 0x00000004);
 
 	/* 6: ECO bits */
-	reg32 = gtt_read(git_bar, 0xa180);
+	reg32 = gtt_read(gtt_bar, 0xa180);
 	reg32 |= (1 << 26) | (1 << 31);
 	/* (bit 20=1 for SNB step D1+ / IVB A0+) */
 	if (bridge_silicon_revision() >= SNB_STEP_D1)
 		reg32 |= (1 << 20);
-	gtt_write(git_bar, 0xa180, reg32);
+	gtt_write(gtt_bar, 0xa180, reg32);
 
 	/* 6a: for SnB step D2+ only */
 	if (((bridge_silicon_revision() & BASE_REV_MASK) == BASE_REV_SNB) &&
 		(bridge_silicon_revision() >= SNB_STEP_D2)) {
-		reg32 = gtt_read(git_bar, 0x9400);
+		reg32 = gtt_read(gtt_bar, 0x9400);
 		reg32 |= (1 << 7);
-		gtt_write(git_bar, 0x9400, reg32);
+		gtt_write(gtt_bar, 0x9400, reg32);
 
-		reg32 = gtt_read(git_bar, 0x941c);
+		reg32 = gtt_read(gtt_bar, 0x941c);
 		reg32 &= 0xf;
 		reg32 |= (1 << 1);
-		gtt_write(git_bar, 0x941c, reg32);
-		gtt_poll(git_bar, 0x941c, (1 << 1), (0 << 1));
+		gtt_write(gtt_bar, 0x941c, reg32);
+		gtt_poll(gtt_bar, 0x941c, (1 << 1), (0 << 1));
 	}
 
 	if ((bridge_silicon_revision() & BASE_REV_MASK) == BASE_REV_IVB) {
-		reg32 = gtt_read(git_bar, 0x907c);
+		reg32 = gtt_read(gtt_bar, 0x907c);
 		reg32 |= (1 << 16);
-		gtt_write(git_bar, 0x907c, reg32);
+		gtt_write(gtt_bar, 0x907c, reg32);
 
 		/* 6b: Clocking reset controls */
-		gtt_write(git_bar, 0x9424, 0x00000001);
+		gtt_write(gtt_bar, 0x9424, 0x00000001);
 	} else {
 		/* 6b: Clocking reset controls */
-		gtt_write(git_bar, 0x9424, 0x00000000);
+		gtt_write(gtt_bar, 0x9424, 0x00000000);
 	}
 
 	/* 7 */
-	if (gtt_poll(git_bar, 0x138124, (1 << 31), (0 << 31))) {
-		gtt_write(git_bar, 0x138128, 0x00000029); /* Mailbox Data */
-		gtt_write(git_bar, 0x138124, 0x80000004); /* Mailbox Cmd for RC6 VID */
-		if (gtt_poll(git_bar, 0x138124, (1 << 31), (0 << 31)))
-			gtt_write(git_bar, 0x138124, 0x8000000a);
-		gtt_poll(git_bar, 0x138124, (1 << 31), (0 << 31));
+	if (gtt_poll(gtt_bar, 0x138124, (1 << 31), (0 << 31))) {
+		gtt_write(gtt_bar, 0x138128, 0x00000029); /* Mailbox Data */
+		gtt_write(gtt_bar, 0x138124, 0x80000004); /* Mailbox Cmd for RC6 VID */
+		if (gtt_poll(gtt_bar, 0x138124, (1 << 31), (0 << 31)))
+			gtt_write(gtt_bar, 0x138124, 0x8000000a);
+		gtt_poll(gtt_bar, 0x138124, (1 << 31), (0 << 31));
 	}
 
 	/* 8 */
-	gtt_write(git_bar, 0xa090, 0x00000000); /* RC Control */
-	gtt_write(git_bar, 0xa098, 0x03e80000); /* RC1e Wake Rate Limit */
-	gtt_write(git_bar, 0xa09c, 0x0028001e); /* RC6/6p Wake Rate Limit */
-	gtt_write(git_bar, 0xa0a0, 0x0000001e); /* RC6pp Wake Rate Limit */
-	gtt_write(git_bar, 0xa0a8, 0x0001e848); /* RC Evaluation Interval */
-	gtt_write(git_bar, 0xa0ac, 0x00000019); /* RC Idle Hysteresis */
+	gtt_write(gtt_bar, 0xa090, 0x00000000); /* RC Control */
+	gtt_write(gtt_bar, 0xa098, 0x03e80000); /* RC1e Wake Rate Limit */
+	gtt_write(gtt_bar, 0xa09c, 0x0028001e); /* RC6/6p Wake Rate Limit */
+	gtt_write(gtt_bar, 0xa0a0, 0x0000001e); /* RC6pp Wake Rate Limit */
+	gtt_write(gtt_bar, 0xa0a8, 0x0001e848); /* RC Evaluation Interval */
+	gtt_write(gtt_bar, 0xa0ac, 0x00000019); /* RC Idle Hysteresis */
 
 	/* 9 */
-	gtt_write(git_bar, 0x2054, 0x0000000a); /* Render Idle Max Count */
-	gtt_write(git_bar, 0x12054,0x0000000a); /* Video Idle Max Count */
-	gtt_write(git_bar, 0x22054,0x0000000a); /* Blitter Idle Max Count */
+	gtt_write(gtt_bar, 0x2054, 0x0000000a); /* Render Idle Max Count */
+	gtt_write(gtt_bar, 0x12054,0x0000000a); /* Video Idle Max Count */
+	gtt_write(gtt_bar, 0x22054,0x0000000a); /* Blitter Idle Max Count */
 
 	/* 10 */
-	gtt_write(git_bar, 0xa0b0, 0x00000000); /* Unblock Ack to Busy */
-	gtt_write(git_bar, 0xa0b4, 0x000003e8); /* RC1e Threshold */
-	gtt_write(git_bar, 0xa0b8, 0x0000c350); /* RC6 Threshold */
-	gtt_write(git_bar, 0xa0bc, 0x000186a0); /* RC6p Threshold */
-	gtt_write(git_bar, 0xa0c0, 0x0000fa00); /* RC6pp Threshold */
+	gtt_write(gtt_bar, 0xa0b0, 0x00000000); /* Unblock Ack to Busy */
+	gtt_write(gtt_bar, 0xa0b4, 0x000003e8); /* RC1e Threshold */
+	gtt_write(gtt_bar, 0xa0b8, 0x0000c350); /* RC6 Threshold */
+	gtt_write(gtt_bar, 0xa0bc, 0x000186a0); /* RC6p Threshold */
+	gtt_write(gtt_bar, 0xa0c0, 0x0000fa00); /* RC6pp Threshold */
 
 	/* 11 */
-	gtt_write(git_bar, 0xa010, 0x000f4240); /* RP Down Timeout */
-	gtt_write(git_bar, 0xa014, 0x12060000); /* RP Interrupt Limits */
-	gtt_write(git_bar, 0xa02c, 0x00015f90); /* RP Up Threshold */
-	gtt_write(git_bar, 0xa030, 0x000186a0); /* RP Down Threshold */
-	gtt_write(git_bar, 0xa068, 0x000186a0); /* RP Up EI */
-	gtt_write(git_bar, 0xa06c, 0x000493e0); /* RP Down EI */
-	gtt_write(git_bar, 0xa070, 0x0000000a); /* RP Idle Hysteresis */
+	gtt_write(gtt_bar, 0xa010, 0x000f4240); /* RP Down Timeout */
+	gtt_write(gtt_bar, 0xa014, 0x12060000); /* RP Interrupt Limits */
+	gtt_write(gtt_bar, 0xa02c, 0x00015f90); /* RP Up Threshold */
+	gtt_write(gtt_bar, 0xa030, 0x000186a0); /* RP Down Threshold */
+	gtt_write(gtt_bar, 0xa068, 0x000186a0); /* RP Up EI */
+	gtt_write(gtt_bar, 0xa06c, 0x000493e0); /* RP Down EI */
+	gtt_write(gtt_bar, 0xa070, 0x0000000a); /* RP Idle Hysteresis */
 
 	/* 11a: Enable Render Standby (RC6) */
 	if ((bridge_silicon_revision() & BASE_REV_MASK) == BASE_REV_IVB) {
@@ -511,9 +516,9 @@ int gma_pm_init_pre_vbios(pci_dev_t dev)
 		 * Unfortunately it does not work reliably on all SKUs so
 		 * disable it here and it can be enabled by the kernel.
 		 */
-		gtt_write(git_bar, 0xa090, 0x88040000); /* HW RC Control */
+		gtt_write(gtt_bar, 0xa090, 0x88040000); /* HW RC Control */
 	} else {
-		gtt_write(git_bar, 0xa090, 0x88040000); /* HW RC Control */
+		gtt_write(gtt_bar, 0xa090, 0x88040000); /* HW RC Control */
 	}
 
 	/* 12: Normal Frequency Request */
@@ -522,25 +527,25 @@ int gma_pm_init_pre_vbios(pci_dev_t dev)
 	reg32 >>= 16;
 	reg32 &= 0xef;
 	reg32 <<= 25;
-	gtt_write(git_bar, 0xa008, reg32);
+	gtt_write(gtt_bar, 0xa008, reg32);
 
 	/* 13: RP Control */
-	gtt_write(git_bar, 0xa024, 0x00000592);
+	gtt_write(gtt_bar, 0xa024, 0x00000592);
 
 	/* 14: Enable PM Interrupts */
-	gtt_write(git_bar, 0x4402c, 0x03000076);
+	gtt_write(gtt_bar, 0x4402c, 0x03000076);
 
 	/* Clear 0x6c024 [8:6] */
-	reg32 = gtt_read(git_bar, 0x6c024);
+	reg32 = gtt_read(gtt_bar, 0x6c024);
 	reg32 &= ~0x000001c0;
-	gtt_write(git_bar, 0x6c024, reg32);
+	gtt_write(gtt_bar, 0x6c024, reg32);
 
 	return 0;
 }
 
 int gma_pm_init_post_vbios(pci_dev_t dev)
 {
-	void *git_bar;
+	void *gtt_bar;
 	struct northbridge_intel_sandybridge_config sconf = {
 		.gpu_dp_d_hotplug = 0x06,
 
@@ -561,73 +566,76 @@ int gma_pm_init_post_vbios(pci_dev_t dev)
 
 	debug("GT Power Management Init (post VBIOS)\n");
 
-	git_bar = pci_map_bar(dev, PCI_BASE_ADDRESS_0, PCI_REGION_MEM);
-	if (git_bar)
-		return -ENOENT;
+// 	gtt_bar = pci_map_bar(dev, PCI_BASE_ADDRESS_0, PCI_REGION_MEM);
+// 	if (gtt_bar)
+// 		return -ENOENT;
+	gtt_bar = (void *)0xe0000000;
 
 	/* 15: Deassert Force Wake */
 	if (bridge_silicon_revision() < IVB_STEP_C0) {
-		gtt_write(git_bar, 0xa18c, gtt_read(git_bar, 0xa18c) & ~1);
-		gtt_poll(git_bar, 0x130090, (1 << 0), (0 << 0));
+		gtt_write(gtt_bar, 0xa18c, gtt_read(gtt_bar, 0xa18c) & ~1);
+		gtt_poll(gtt_bar, 0x130090, (1 << 0), (0 << 0));
 	} else {
-		gtt_write(git_bar, 0xa188, 0x1fffe);
-		if (gtt_poll(git_bar, 0x130040, (1 << 0), (0 << 0)))
-			gtt_write(git_bar, 0xa188, gtt_read(git_bar, 0xa188) | 1);
+		gtt_write(gtt_bar, 0xa188, 0x1fffe);
+		if (gtt_poll(gtt_bar, 0x130040, (1 << 0), (0 << 0)))
+			gtt_write(gtt_bar, 0xa188, gtt_read(gtt_bar, 0xa188) | 1);
 	}
 
 	/* 16: SW RC Control */
-	gtt_write(git_bar, 0xa094, 0x00060000);
+	gtt_write(gtt_bar, 0xa094, 0x00060000);
 
 	/* Setup Digital Port Hotplug */
-	reg32 = gtt_read(git_bar, 0xc4030);
+	reg32 = gtt_read(gtt_bar, 0xc4030);
 	if (!reg32) {
 		reg32 = (conf->gpu_dp_b_hotplug & 0x7) << 2;
 		reg32 |= (conf->gpu_dp_c_hotplug & 0x7) << 10;
 		reg32 |= (conf->gpu_dp_d_hotplug & 0x7) << 18;
-		gtt_write(git_bar, 0xc4030, reg32);
+		gtt_write(gtt_bar, 0xc4030, reg32);
 	}
 
 	/* Setup Panel Power On Delays */
-	reg32 = gtt_read(git_bar, 0xc7208);
+	reg32 = gtt_read(gtt_bar, 0xc7208);
 	if (!reg32) {
 		reg32 = (conf->gpu_panel_port_select & 0x3) << 30;
 		reg32 |= (conf->gpu_panel_power_up_delay & 0x1fff) << 16;
 		reg32 |= (conf->gpu_panel_power_backlight_on_delay & 0x1fff);
-		gtt_write(git_bar, 0xc7208, reg32);
+		gtt_write(gtt_bar, 0xc7208, reg32);
 	}
 
 	/* Setup Panel Power Off Delays */
-	reg32 = gtt_read(git_bar, 0xc720c);
+	reg32 = gtt_read(gtt_bar, 0xc720c);
 	if (!reg32) {
 		reg32 = (conf->gpu_panel_power_down_delay & 0x1fff) << 16;
 		reg32 |= (conf->gpu_panel_power_backlight_off_delay & 0x1fff);
-		gtt_write(git_bar, 0xc720c, reg32);
+		gtt_write(gtt_bar, 0xc720c, reg32);
 	}
 
 	/* Setup Panel Power Cycle Delay */
 	if (conf->gpu_panel_power_cycle_delay) {
-		reg32 = gtt_read(git_bar, 0xc7210);
+		reg32 = gtt_read(gtt_bar, 0xc7210);
 		reg32 &= ~0xff;
 		reg32 |= conf->gpu_panel_power_cycle_delay & 0xff;
-		gtt_write(git_bar, 0xc7210, reg32);
+		gtt_write(gtt_bar, 0xc7210, reg32);
 	}
 
 	/* Enable Backlight if needed */
 	if (conf->gpu_cpu_backlight) {
-		gtt_write(git_bar, 0x48250, (1 << 31));
-		gtt_write(git_bar, 0x48254, conf->gpu_cpu_backlight);
+		gtt_write(gtt_bar, 0x48250, (1 << 31));
+		gtt_write(gtt_bar, 0x48254, conf->gpu_cpu_backlight);
 	}
 	if (conf->gpu_pch_backlight) {
-		gtt_write(git_bar, 0xc8250, (1 << 31));
-		gtt_write(git_bar, 0xc8254, conf->gpu_pch_backlight);
+		gtt_write(gtt_bar, 0xc8250, (1 << 31));
+		gtt_write(gtt_bar, 0xc8254, conf->gpu_pch_backlight);
 	}
 
 	return 0;
 }
 
-void gma_func0_init(pci_dev_t dev)
+int gma_func0_init(pci_dev_t dev)
 {
+	struct pci_controller *hose;
 	u32 reg32;
+	int ret;
 
 	/* IGD needs to be Bus Master */
 	reg32 = pci_read_config32(dev, PCI_COMMAND);
@@ -635,13 +643,19 @@ void gma_func0_init(pci_dev_t dev)
 	pci_write_config32(dev, PCI_COMMAND, reg32);
 
 	/* Init graphics power management */
-	gma_pm_init_pre_vbios(dev);
+	ret = gma_pm_init_pre_vbios(dev);
+	if (ret)
+		return ret;
 
-	/* PCI Init, will run VBIOS */
-// 	pci_dev_init(dev);
+	printf("Rom addr %x\n", pci_read_config32(dev, PCI_ROM_ADDRESS));
+	ret = pci_run_vga_bios(PCI_BDF(0, 2, 0));
 
 	/* Post VBIOS init */
-	gma_pm_init_post_vbios(dev);
+// 	ret = gma_pm_init_post_vbios(dev);
+	if (ret)
+		return ret;
+
+	return 0;
 }
 
 #if 0

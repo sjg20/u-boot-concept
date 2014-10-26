@@ -965,8 +965,23 @@ static inline phys_addr_t map_to_sysmem(const void *ptr)
 }							\
 )
 
+/**
+ * ALIGN() - return an aligned value not less than the given value
+ *
+ * @x:	Value to align
+ * @a:	Alignment to use, e.g. 4 to align to multiples of 4
+ */
 #define ALIGN(x,a)		__ALIGN_MASK((x),(typeof(x))(a)-1)
+
 #define __ALIGN_MASK(x,mask)	(((x)+(mask))&~(mask))
+
+/**
+ * ALIGN_DOWN() - return an aligned value not greater than the given value
+ *
+ * @x:	Value to align
+ * @a:	Alignment to use, e.g. 4 to align to multiples of 4
+ */
+#define ALIGN_DOWN(x,a)         ((x) & ~((typeof(x))(a) - 1UL))
 
 /*
  * ARCH_DMA_MINALIGN is defined in asm/cache.h for each architecture.  It

@@ -14,12 +14,14 @@
  */
 
 #include <common.h>
-#if CONFIG_X86_AMD_FIXED_MTRRS
-#include <cpu/amd/mtrr.h>
-#define MTRR_FIXED_WRBACK_BITS (MTRR_READ_MEM | MTRR_WRITE_MEM)
-#else
+#include <asm/io.h>
+#include <asm/memrange.h>
+#include <asm/msr.h>
+#include <asm/mtrr.h>
+#include <asm/post.h>
+#include <asm/resource.h>
+
 #define MTRR_FIXED_WRBACK_BITS 0
-#endif
 
 /* 2 MTRRS are reserved for the operating system */
 #define BIOS_MTRRS 6
@@ -39,14 +41,13 @@ static void detect_var_mtrrs(void)
 {
 	msr_t msr;
 
-	msr = rdmsr(MTRRcap_MSR);
+	msr = msr_read(MTRRcap_MSR);
 
 	total_mtrrs = msr.lo & 0xff;
 
 	if (total_mtrrs > NUM_MTRR_STATIC_STORAGE) {
-		printk(BIOS_WARNING,
-			"MTRRs detected (%d) > NUM_MTRR_STATIC_STORAGE (%d)\n",
-			total_mtrrs, NUM_MTRR_STATIC_STORAGE);
+		printf("MTRRs detected (%d) > NUM_MTRR_STATIC_STORAGE (%d)\n",
+		       total_mtrrs, NUM_MTRR_STATIC_STORAGE);
 		total_mtrrs = NUM_MTRR_STATIC_STORAGE;
 	}
 	bios_mtrrs = total_mtrrs - OS_MTRRS;
@@ -56,19 +57,19 @@ void enable_fixed_mtrr(void)
 {
 	msr_t msr;
 
-	msr = rdmsr(MTRRdefType_MSR);
+	msr = msr_read(MTRRdefType_MSR);
 	msr.lo |= MTRRdefTypeEn | MTRRdefTypeFixEn;
-	wrmsr(MTRRdefType_MSR, msr);
+	msr_write(MTRRdefType_MSR, msr);
 }
 
 static void enable_var_mtrr(unsigned char deftype)
 {
 	msr_t msr;
 
-	msr = rdmsr(MTRRdefType_MSR);
+	msr = msr_read(MTRRdefType_MSR);
 	msr.lo &= ~0xff;
 	msr.lo |= MTRRdefTypeEn | deftype;
-	wrmsr(MTRRdefType_MSR, msr);
+	msr_write(MTRRdefType_MSR, msr);
 }
 
 /* fms: find most sigificant bit set, stolen from Linux Kernel Source. */
@@ -79,18 +80,6 @@ static inline unsigned int fms(unsigned int x)
 	__asm__("bsrl %1,%0\n\t"
 	        "jnz 1f\n\t"
 	        "movl $0,%0\n"
-	        "1:" : "=r" (r) : "g" (x));
-	return r;
-}
-
-/* fls: find least sigificant bit set */
-static inline unsigned int fls(unsigned int x)
-{
-	int r;
-
-	__asm__("bsfl %1,%0\n\t"
-	        "jnz 1f\n\t"
-	        "movl $32,%0\n"
 	        "1:" : "=r" (r) : "g" (x));
 	return r;
 }
@@ -150,7 +139,7 @@ static struct memranges *get_physical_address_space(void)
 
 	/* In order to handle some chipsets not being able to pre-determine
 	 *  uncacheable ranges, such as graphics memory, at resource inseration
-	 * time remove unacheable regions from the cacheable ones. */
+	 * time remove uncacheable regions from the cacheable ones. */
 	if (addr_space == NULL) {
 		struct range_entry *r;
 		unsigned long mask;
@@ -193,10 +182,9 @@ static struct memranges *get_physical_address_space(void)
 		                           RANGE_TO_PHYS_ADDR(RANGE_4GB),
 		                           MTRR_TYPE_UNCACHEABLE);
 
-		printk(BIOS_DEBUG, "MTRR: Physical address space:\n");
+		debug("MTRR: Physical address space:\n");
 		memranges_each_entry(r, addr_space)
-			printk(BIOS_DEBUG,
-			       "0x%016llx - 0x%016llx size 0x%08llx type %ld\n",
+			debug("0x%016llx - 0x%016llx size 0x%08llx type %ld\n",
 			       range_entry_base(r), range_entry_end(r),
 			       range_entry_size(r), range_entry_tag(r));
 	}
@@ -273,8 +261,7 @@ static void calc_fixed_mtrrs(void)
 			unsigned char type;
 
 			type = range_entry_tag(r);
-			printk(MTRR_VERBOSE_LEVEL,
-			       "MTRR addr 0x%x-0x%x set to %d type @ %d\n",
+			debug("MTRR addr 0x%x-0x%x set to %d type @ %d\n",
 			       begin, begin + desc->step, type, type_index);
 			if (type == MTRR_TYPE_WRBACK)
 				type |= MTRR_FIXED_WRBACK_BITS;
@@ -332,13 +319,13 @@ static void commit_fixed_mtrrs(void)
 	}
 
 	for (i = 0; i < ARRAY_SIZE(fixed_msrs); i++)
-		printk(BIOS_DEBUG, "MTRR: Fixed MSR 0x%lx 0x%08x%08x\n",
+		debug("MTRR: Fixed MSR 0x%lx 0x%08x%08x\n",
 		       msr_index[i], fixed_msrs[i].hi, fixed_msrs[i].lo);
 
-	disable_cache();
+	disable_caches();
 	for (i = 0; i < ARRAY_SIZE(fixed_msrs); i++)
-		wrmsr(msr_index[i], fixed_msrs[i]);
-	enable_cache();
+		msr_write(msr_index[i], fixed_msrs[i]);
+	enable_caches();
 }
 
 void x86_setup_fixed_mtrrs_no_enable(void)
@@ -351,7 +338,7 @@ void x86_setup_fixed_mtrrs(void)
 {
 	x86_setup_fixed_mtrrs_no_enable();
 
-	printk(BIOS_SPEW, "call enable_fixed_mtrr()\n");
+	debug("call enable_fixed_mtrr()\n");
 	enable_fixed_mtrr();
 }
 
@@ -374,10 +361,10 @@ void x86_mtrr_enable_rom_caching(void)
 
 	index = rom_cache_mtrr;
 	disable_cache();
-	msr_val = rdmsr(MTRRphysBase_MSR(index));
+	msr_val = msr_read(MTRRphysBase_MSR(index));
 	msr_val.lo &= ~0xff;
 	msr_val.lo |= MTRR_TYPE_WRPROT;
-	wrmsr(MTRRphysBase_MSR(index), msr_val);
+	msr_write(MTRRphysBase_MSR(index), msr_val);
 	enable_cache();
 }
 
@@ -391,9 +378,9 @@ void x86_mtrr_disable_rom_caching(void)
 
 	index = rom_cache_mtrr;
 	disable_cache();
-	msr_val = rdmsr(MTRRphysBase_MSR(index));
+	msr_val = msr_read(MTRRphysBase_MSR(index));
 	msr_val.lo &= ~0xff;
-	wrmsr(MTRRphysBase_MSR(index), msr_val);
+	msr_write(MTRRphysBase_MSR(index), msr_val);
 	enable_cache();
 }
 
@@ -438,9 +425,9 @@ static void clear_var_mtrr(int index)
 {
 	msr_t msr_val;
 
-	msr_val = rdmsr(MTRRphysMask_MSR(index));
+	msr_val = msr_read(MTRRphysMask_MSR(index));
 	msr_val.lo &= ~MTRRphysMaskValid;
-	wrmsr(MTRRphysMask_MSR(index), msr_val);
+	msr_write(MTRRphysMask_MSR(index), msr_val);
 }
 
 static void prep_var_mtrr(struct var_mtrr_state *var_state,
@@ -455,9 +442,9 @@ static void prep_var_mtrr(struct var_mtrr_state *var_state,
 	 * However, it's more important to try to map the full address space
 	 * properly. */
 	if (var_state->mtrr_index >= bios_mtrrs)
-		printk(BIOS_WARNING, "Taking a reserved OS MTRR.\n");
+		printf("Taking a reserved OS MTRR.\n");
 	if (var_state->mtrr_index >= total_mtrrs) {
-		printk(BIOS_ERR, "ERROR: Not enough MTTRs available!\n");
+		printf("ERROR: Not enough MTTRs available!\n");
 		return;
 	}
 
@@ -482,7 +469,7 @@ static void prep_var_mtrr(struct var_mtrr_state *var_state,
 	}
 #endif
 
-	printk(BIOS_DEBUG, "MTRR: %d base 0x%016llx mask 0x%016llx type %d\n",
+	debug("MTRR: %d base 0x%016llx mask 0x%016llx type %d\n",
 	       var_state->mtrr_index, rbase, rsize, mtrr_type);
 
 	regs = &var_state->regs[var_state->mtrr_index];
@@ -585,7 +572,7 @@ static void calc_var_mtrrs_with_hole(struct var_mtrr_state *var_state,
 	}
 
 	/* Handle the min alignment roundup case. */
-	b2 = ALIGN_UP(a2, MTRR_MIN_ALIGN);
+	b2 = ALIGN(a2, MTRR_MIN_ALIGN);
 
 	/* Check against the next range. If the current range_entry is the
 	 * last entry then carving a hole is no problem. If the current entry
@@ -653,7 +640,7 @@ static void calc_var_mtrrs_without_hole(struct var_mtrr_state *var_state,
 		return;
 	}
 
-	b1 = a2 = ALIGN_UP(a1, MTRR_MIN_ALIGN);
+	b1 = a2 = ALIGN(a1, MTRR_MIN_ALIGN);
 	b2 = c1 = ALIGN_DOWN(c2, MTRR_MIN_ALIGN);
 
 	calc_var_mtrr_range(var_state, a1, a2 - a1, mtrr_type);
@@ -739,14 +726,14 @@ static int calc_var_mtrrs(struct memranges *addr_space,
 		}
 	}
 
-	printk(BIOS_DEBUG, "MTRR: default type WB/UC MTRR counts: %d/%d.\n",
+	debug("MTRR: default type WB/UC MTRR counts: %d/%d.\n",
 	       wb_deftype_count, uc_deftype_count);
 
 	if (wb_deftype_count < uc_deftype_count) {
-		printk(BIOS_DEBUG, "MTRR: WB selected as default type.\n");
+		debug("MTRR: WB selected as default type.\n");
 		return MTRR_TYPE_WRBACK;
 	}
-	printk(BIOS_DEBUG, "MTRR: UC selected as default type.\n");
+	debug("MTRR: UC selected as default type.\n");
 	return MTRR_TYPE_UNCACHEABLE;
 }
 
@@ -786,15 +773,15 @@ static void commit_var_mtrrs(const struct var_mtrr_solution *sol)
 	int i;
 
 	/* Write out the variable MTTRs. */
-	disable_cache();
+	disable_caches();
 	for (i = 0; i < sol->num_used; i++) {
-		wrmsr(MTRRphysBase_MSR(i), sol->regs[i].base);
-		wrmsr(MTRRphysMask_MSR(i), sol->regs[i].mask);
+		msr_write(MTRRphysBase_MSR(i), sol->regs[i].base);
+		msr_write(MTRRphysMask_MSR(i), sol->regs[i].mask);
 	}
 	/* Clear the ones that are unused. */
 	for (; i < total_mtrrs; i++)
 		clear_var_mtrr(i);
-	enable_cache();
+	enable_caches();
 
 }
 
@@ -819,38 +806,29 @@ void x86_setup_var_mtrrs(unsigned int address_bits, unsigned int above4gb)
 	enable_var_mtrr(sol->mtrr_default_type);
 }
 
-void x86_setup_mtrrs(void)
-{
-	int address_size;
-	x86_setup_fixed_mtrrs();
-	address_size = cpu_phys_address_size();
-	printk(BIOS_DEBUG, "CPU physical address size: %d bits\n", address_size);
-	x86_setup_var_mtrrs(address_size, 1);
-}
-
 int x86_mtrr_check(void)
 {
 	/* Only Pentium Pro and later have MTRR */
 	msr_t msr;
-	printk(BIOS_DEBUG, "\nMTRR check\n");
+	debug("\nMTRR check\n");
 
-	msr = rdmsr(0x2ff);
+	msr = msr_read(0x2ff);
 	msr.lo >>= 10;
 
-	printk(BIOS_DEBUG, "Fixed MTRRs   : ");
-	if (msr.lo & 0x01)
-		printk(BIOS_DEBUG, "Enabled\n");
+	debug("Fixed MTRRs   : ");
+	if (msr.lo & 1)
+		debug("Enabled\n");
 	else
-		printk(BIOS_DEBUG, "Disabled\n");
+		debug("Disabled\n");
 
-	printk(BIOS_DEBUG, "Variable MTRRs: ");
-	if (msr.lo & 0x02)
-		printk(BIOS_DEBUG, "Enabled\n");
+	debug("Variable MTRRs: ");
+	if (msr.lo & 2)
+		debug("Enabled\n");
 	else
-		printk(BIOS_DEBUG, "Disabled\n");
+		debug("Disabled\n");
 
-	printk(BIOS_DEBUG, "\n");
+	debug("\n");
 
 	post_code(0x93);
-	return ((int) msr.lo);
+	return (int)msr.lo;
 }

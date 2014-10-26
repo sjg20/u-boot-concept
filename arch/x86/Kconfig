@@ -58,6 +58,14 @@ config SMP
 	  This option is used to enable certain functions to make coreboot
 	  work correctly on symmetric multi processor (SMP) systems.
 
+config MARK_GRAPHICS_MEM_WRCOMB
+	bool "Mark graphics memory as write-combining."
+	default n
+	help
+	 The graphics performance may increase if the graphics
+	 memory is set as write-combining cache type. This option
+	 enables marking the graphics memory as write-combining.
+
 source "arch/x86/cpu/ivybridge/Kconfig"
 
 source "board/google/chromebook_link/Kconfig"

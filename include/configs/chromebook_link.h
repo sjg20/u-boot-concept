@@ -47,4 +47,6 @@
 #define CONFIG_PCI_IO_PHYS	CONFIG_PCI_IO_BUS
 #define CONFIG_PCI_IO_SIZE	0xefff
 
+#define CONFIG_PCI_SCAN_SHOW
+
 #endif	/* __CONFIG_H */

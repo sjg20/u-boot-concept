@@ -1,7 +1,7 @@
 /*
  * From Coreboot
  * Copyright (C) 2008-2009 coresystems GmbH
- * Copyright (C) 2012 The Chromium OS Authors.  All rights reserved.
+ * Copyright (C) 2012 The Chromium OS Authors.
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */

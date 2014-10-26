@@ -34,14 +34,12 @@ int bd82x6x_init(void)
 int bd82x6x_init_pci_devices(void)
 {
 	struct x86_cpu_priv *cpu;
+	pci_dev_t video = PCI_BDF_CB(0, 2, 0);
 	int ret;
 
 	bd82x6x_sata_init(sata_dev, &sconfig);
 	bd82x6x_usb_ehci_init(PCI_BDF_CB(0, 0x1d, 0));
 	bd82x6x_usb_ehci_init(PCI_BDF_CB(0, 0x1a, 0));
-	ret = gma_pm_init_pre_vbios(PCI_BDF_CB(0, 2, 0));
-	if (ret)
-		return ret;
 	northbridge_enable(northbridge_dev);
 	northbridge_init(northbridge_dev);
 	northbridge_set_resources(northbridge_dev);
@@ -50,6 +48,10 @@ int bd82x6x_init_pci_devices(void)
 	if (!cpu)
 		return -ENOMEM;
 	model_206ax_init(cpu);
+
+	ret = gma_func0_init(video);
+	if (ret)
+		return ret;
 
 	return 0;
 }

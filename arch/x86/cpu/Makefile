@@ -13,5 +13,7 @@ obj-$(CONFIG_X86_RESET_VECTOR) += resetvec.o start16.o
 obj-y	+= interrupts.o cpu.o
 obj-y += ip_checksum.o
 obj-y += lapic.o
+obj-y += memrange.o
+obj-y += mtrr.o
 obj-y += turbo.o
 obj-$(CONFIG_PCI) += pci.o
