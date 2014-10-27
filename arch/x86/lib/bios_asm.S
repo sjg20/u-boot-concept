@@ -1,20 +1,9 @@
 /*
- * This file is part of the coreboot project.
+ * From coreboot x86_asm.S
  *
  * Copyright (C) 2009-2010 coresystems GmbH
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; version 2 of the License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
+ * SPDX-License-Identifier:	GPL-2.0
  */
 
 #include <asm/processor.h>
@@ -169,8 +158,10 @@ __realmode_call:
 	mov	%ax, %ds
 	pop	%ax
 
-	xor	%ax, %ax
-	jz	2f
+/* 	int	$16 */
+/* 	mov    %cs:-0x780c,%ds */
+/* 	xor	%ax, %ax */
+/* 	jz	2f */
 
 	/* ************************************ */
 __lcall_instr = RELOCATED(.)
@@ -214,6 +205,7 @@ __lcall_instr = RELOCATED(.)
 	.globl __realmode_interrupt
 __realmode_interrupt:
 	/* save all registers to the stack */
+	iret
 	pusha
 	pushf
 

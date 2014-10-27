@@ -7,6 +7,7 @@
  * SPDX-License-Identifier:	GPL-2.0
  */
 #define DEBUG
+#define CONFIG_REALMODE_DEBUG
 
 #include <common.h>
 #include <asm/i8259.h>
@@ -149,7 +150,8 @@ static void setup_interrupt_handlers(void)
 static void write_idt_stub(void *target, u8 intnum)
 {
 	unsigned char *codeptr;
-	codeptr = (unsigned char *) target;
+
+	codeptr = (unsigned char *)target;
 	memcpy(codeptr, &__idt_handler, __idt_handler_size);
 	codeptr[3] = intnum; /* modify int# in the code stub. */
 }
@@ -248,19 +250,6 @@ void vbe_set_graphics(void)
 	}
 
 	vbe_set_mode(&mode_info);
-#if CONFIG_BOOTSPLASH
-	struct jpeg_decdata *decdata;
-	decdata = malloc(sizeof(*decdata));
-	unsigned char *jpeg = cbfs_get_file_content(CBFS_DEFAULT_MEDIA,
-						    "bootsplash.jpg",
-						    CBFS_TYPE_BOOTSPLASH);
-	if (!jpeg) {
-		debug("VBE: No bootsplash found.\n");
-		return;
-	}
-	int ret = 0;
-	ret = jpeg_decode(jpeg, framebuffer, 1024, 768, 16, decdata);
-#endif
 }
 
 void vbe_textmode_console(void)
@@ -309,85 +298,6 @@ void bios_run_on_x86(pci_dev_t pcidev, unsigned long addr)
 #endif
 }
 
-#if CONFIG_GEODE_VSA
-#include <cpu/amd/lxdef.h>
-#include <cpu/amd/vr.h>
-#include <cbfs.h>
-
-#define VSA2_BUFFER		0x60000
-#define VSA2_ENTRY_POINT	0x60020
-
-// TODO move to a header file.
-void do_vsmbios(void);
-
-/* VSA virtual register helper */
-static u32 VSA_vrRead(u16 classIndex)
-{
-	u32 eax, ebx, ecx, edx;
-	asm volatile (
-		"movw	$0x0AC1C, %%dx\n"
-		"orl	$0x0FC530000, %%eax\n"
-		"outl	%%eax, %%dx\n"
-		"addb	$2, %%dl\n"
-		"inw	%%dx, %%ax\n"
-		: "=a" (eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
-		: "a"(classIndex)
-	);
-
-	return eax;
-}
-
-void do_vsmbios(void)
-{
-	debug("Preparing for VSA...\n");
-
-	/* Set up C interrupt handlers */
-	setup_interrupt_handlers();
-
-	/* Setting up realmode IDT */
-	setup_realmode_idt();
-
-	/* Make sure the code is placed. */
-	setup_realmode_code();
-
-	if ((unsigned int)cbfs_load_stage(CBFS_DEFAULT_MEDIA, "vsa") !=
-	    VSA2_ENTRY_POINT) {
-		printk(BIOS_ERR, "Failed to load VSA.\n");
-		return;
-	}
-
-	unsigned char *buf = (unsigned char *)VSA2_BUFFER;
-	debug("VSA: Buffer @%p *[0k]=%02x\n", buf, buf[0]);
-	debug("VSA: Signature *[0x20-0x23] is %02x:%02x:%02x:%02x\n",
-		     buf[0x20], buf[0x21], buf[0x22], buf[0x23]);
-
-	/* Check for code to emit POST code at start of VSA. */
-	if ((buf[0x20] != 0xb0) || (buf[0x21] != 0x10) ||
-	    (buf[0x22] != 0xe6) || (buf[0x23] != 0x80)) {
-		printk(BIOS_WARNING, "VSA: Signature incorrect. Install failed.\n");
-		return;
-	}
-
-	debug("Calling VSA module...\n");
-
-	/* ECX gets SMM, EDX gets SYSMEM */
-	realmode_call(VSA2_ENTRY_POINT, 0x0, 0x0, MSR_GLIU0_SMM,
-			MSR_GLIU0_SYSMEM, 0x0, 0x0);
-
-	debug("... VSA module returned.\n");
-
-	/* Restart timer 1 */
-	outb(0x56, 0x43);
-	outb(0x12, 0x41);
-
-	/* Check that VSA is running OK */
-	if (VSA_vrRead(SIGNATURE) == VSA2_SIGNATURE)
-		debug("VSM: VSA2 VR signature verified.\n");
-	else
-		printk(BIOS_ERR, "VSM: VSA2 VR signature not valid. Install failed.\n");
-}
-#endif
-
 /* interrupt_handler() is called from assembler code only,
  * so there is no use in putting the prototype into a header file.
  */
@@ -416,7 +326,7 @@ int asmlinkage interrupt_handler(u32 intnumber,
 	cs = cs_ip >> 16;
 	flags = stackflags;
 
-#if CONFIG_REALMODE_DEBUG
+#ifdef CONFIG_REALMODE_DEBUG
 	debug("oprom: INT# 0x%x\n", intnumber);
 	debug("oprom: eax: %08x ebx: %08x ecx: %08x edx: %08x\n",
 		      eax, ebx, ecx, edx);

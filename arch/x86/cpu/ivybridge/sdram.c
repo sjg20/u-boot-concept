@@ -257,8 +257,6 @@ int sdram_initialise(struct pei_data *pei_data)
 	if (data) {
 		int rv;
 		int (*func)(struct pei_data *);
-		void setup_no_gdt(gd_t *id, u64 *gdt_addr);
-		void setup_gdt(gd_t *id, u64 *gdt_addr);
 
 		debug("Calling MRC at %p\n", data);
 		post_code(0xb1);

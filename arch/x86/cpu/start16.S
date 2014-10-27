@@ -156,3 +156,7 @@ gdt:
 	/* 0x40, flat code segment 16 bit */
 	.word	0xffff, 0x0000
 	.byte	0x00, 0x9b, 0x8f, 0x00 /* G=1 and 0x0f, So we get 4Gbytes for limit */
+
+	/* 0x38, flat data segment 16 bit */
+	.word	0x0000, 0x0000		/* dummy */
+	.byte	0x00, 0x93, 0x8f, 0x00 /* G=1 and 0x0f, So we get 4Gbytes for limit */
