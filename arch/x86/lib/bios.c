@@ -12,6 +12,7 @@
 #include <common.h>
 #include <asm/i8259.h>
 #include <asm/io.h>
+#include <asm/post.h>
 #include <asm/processor.h>
 #include <asm/vbe.h>
 #include "bios.h"
@@ -286,11 +287,14 @@ void bios_run_on_x86(pci_dev_t pcidev, unsigned long addr)
 	/* Make sure the code is placed. */
 	setup_realmode_code();
 
+	disable_caches();
 	debug("Calling Option ROM at %lx, pci device %#x...\n", addr, num_dev);
 	/* TODO ES:DI Pointer to System BIOS PnP Installation Check Structure */
 	/* Option ROM entry point is at OPROM start + 3 */
+	post_code(0xd1);
 	realmode_call(addr + 0x0003, num_dev, 0xffff, 0x0000, 0xffff, 0x0,
 		      0x0);
+	post_code(0xd2);
 	debug("... Option ROM returned.\n");
 
 #if CONFIG_FRAMEBUFFER_SET_VESA_MODE

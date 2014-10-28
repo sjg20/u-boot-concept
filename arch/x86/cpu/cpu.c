@@ -77,26 +77,27 @@ static void load_gdt(const u64 *boot_gdt, u16 num_entries)
 
 void setup_gdt(gd_t *id, u64 *gdt_addr)
 {
+	// TODO: Remove bit 0
 	/* CS: code, read/execute, 4 GB, base 0 */
-	gdt_addr[X86_GDT_ENTRY_32BIT_CS] = GDT_ENTRY(0xc09a, 0, 0xfffff);
+	gdt_addr[X86_GDT_ENTRY_32BIT_CS] = GDT_ENTRY(0xc09b, 0, 0xfffff);
 
 	/* DS: data, read/write, 4 GB, base 0 */
-	gdt_addr[X86_GDT_ENTRY_32BIT_DS] = GDT_ENTRY(0xc092, 0, 0xfffff);
+	gdt_addr[X86_GDT_ENTRY_32BIT_DS] = GDT_ENTRY(0xc093, 0, 0xfffff);
 
 	/* FS: data, read/write, 4 GB, base (Global Data Pointer) */
 	id->arch.gd_addr = id;
 	id->arch.gdt_addr = (ulong)gdt_addr;
-	gdt_addr[X86_GDT_ENTRY_32BIT_FS] = GDT_ENTRY(0xc092,
+	gdt_addr[X86_GDT_ENTRY_32BIT_FS] = GDT_ENTRY(0xc093,
 		     (ulong)&id->arch.gd_addr, 0xfffff);
 
 	/* 16-bit CS: code, read/execute, 64 kB, base 0 */
-	gdt_addr[X86_GDT_ENTRY_16BIT_CS] = GDT_ENTRY(0x009a, 0, 0x0ffff);
+	gdt_addr[X86_GDT_ENTRY_16BIT_CS] = GDT_ENTRY(0x009b, 0, 0x0ffff);
 
 	/* 16-bit DS: data, read/write, 64 kB, base 0 */
-	gdt_addr[X86_GDT_ENTRY_16BIT_DS] = GDT_ENTRY(0x0092, 0, 0x0ffff);
+	gdt_addr[X86_GDT_ENTRY_16BIT_DS] = GDT_ENTRY(0x0093, 0, 0x0ffff);
 
-	gdt_addr[X86_GDT_ENTRY_16BIT_FLAT_CS] = GDT_ENTRY(0x809a, 0, 0xfffff);
-	gdt_addr[X86_GDT_ENTRY_16BIT_FLAT_DS] = GDT_ENTRY(0x8092, 0, 0xfffff);
+	gdt_addr[X86_GDT_ENTRY_16BIT_FLAT_CS] = GDT_ENTRY(0x809b, 0, 0xfffff);
+	gdt_addr[X86_GDT_ENTRY_16BIT_FLAT_DS] = GDT_ENTRY(0x8093, 0, 0xfffff);
 
 	load_gdt(gdt_addr, X86_GDT_NUM_ENTRIES);
 	load_ds(X86_GDT_ENTRY_32BIT_DS);

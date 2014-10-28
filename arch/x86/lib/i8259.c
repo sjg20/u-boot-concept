@@ -5,6 +5,7 @@
  *
  * SPDX-License-Identifier:	GPL-2.0
  */
+#define DEBUG
 
 #include <common.h>
 #include <asm/io.h>
@@ -87,6 +88,7 @@ void i8259_setup(void)
 	 */
 	outb(ALL_IRQS, SLAVE_PIC_OCW1);
 	outb(ALL_IRQS & ~IRQ2, MASTER_PIC_OCW1);
+	debug("i8259 inited\n");
 }
 
 /**

@@ -86,6 +86,8 @@ __realmode_call:
 	shrl	$4, %eax
 	mov	%ax, __lcall_instr + 3
 
+	wbinvd
+
 	/* initial register values */
 	movl	44(%ebp), %eax
 	movl	%eax, __registers +  0 /* eax */
@@ -156,6 +158,10 @@ __realmode_call:
 	mov	%ax, %gs
 	mov	SEG(X86_GDT_ENTRY_16BIT_FLAT_DS), %ax
 	mov	%ax, %ds
+
+	movb	$0xf3, %al
+	outb	%al, $0x80
+
 	pop	%ax
 
 /* 	int	$16 */
@@ -169,6 +175,10 @@ __lcall_instr = RELOCATED(.)
 	.word 0x0000, 0x0000
 	/* ************************************ */
 2:
+	// TODO: Remove
+	movb	$0xf4, %al
+	outb	%al, $0x80
+
 	/* If we got here, we are just about done.
 	 * Need to get back to protected mode.
 	 */
