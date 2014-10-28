@@ -359,6 +359,7 @@ int gma_pm_init_pre_vbios(pci_dev_t dev)
 // 	if (gtt_bar)
 // 		return -ENOENT;
 	// TODO: Read address fropm PCI
+	gtt_bar = (void *)pci_read_config32(dev, PCI_BASE_ADDRESS_0);
 	gtt_bar = (void *)0xe0000000;
 
 	debug("GT bar %p\n", gtt_bar);

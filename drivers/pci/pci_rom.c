@@ -78,9 +78,10 @@ static int pci_rom_probe(pci_dev_t dev, uint class,
 	if (vendev != mapped_vendev)
 		debug("Device ID mapped to %#08x\n", mapped_vendev);
 
-#ifdef CONFIG_X86_OPTION_ROM_ADDR
+#ifdef CONFIG_X86_OPTION_ROM_ADDRx
 	rom_address = CONFIG_X86_OPTION_ROM_ADDR;
 #else
+	pci_write_config_dword(dev, PCI_ROM_ADDRESS, 0xffffffff);
 	pci_read_config_dword(dev, PCI_ROM_ADDRESS, &rom_address);
 	if (rom_address == 0x00000000 || rom_address == 0xffffffff) {
 		debug("%s: rom_address=%x\n", __func__, rom_address);
