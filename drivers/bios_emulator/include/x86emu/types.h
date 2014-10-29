@@ -32,14 +32,47 @@
 * Environment:	Any
 * Developer:    Kendall Bennett
 *
-* Description:  Header file for operand decoding functions.
+* Description:  Header file for x86 emulator type definitions.
 *
 ****************************************************************************/
 
-#ifndef __X86EMU_OPS_H
-#define __X86EMU_OPS_H
+#ifndef __X86EMU_TYPES_H
+#define __X86EMU_TYPES_H
 
-extern void (*x86emu_optab[0x100]) (u8 op1);
-extern void (*x86emu_optab2[0x100]) (u8 op2);
+#ifndef __KERNEL__
+#include <sys/types.h>
+#endif
 
-#endif                          /* __X86EMU_OPS_H */
+/*
+ * The following kludge is an attempt to work around typedef conflicts with
+ * <sys/types.h>.
+ */
+#define u8   x86emuu8
+#define u16  x86emuu16
+#define u32  x86emuu32
+#define u64  x86emuu64
+#define s8   x86emus8
+#define s16  x86emus16
+#define s32  x86emus32
+#define s64  x86emus64
+#define uint x86emuuint
+#define sint x86emusint
+
+/*---------------------- Macros and type definitions ----------------------*/
+
+typedef uint8_t u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef uint64_t u64;
+
+typedef int8_t s8;
+typedef int16_t s16;
+typedef int32_t s32;
+typedef int64_t s64;
+
+typedef unsigned int uint;
+typedef int sint;
+
+typedef u16 X86EMU_pioAddr;
+
+#endif                          /* __X86EMU_TYPES_H */
