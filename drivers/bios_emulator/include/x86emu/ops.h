@@ -1,10 +1,10 @@
 /****************************************************************************
 *
-*						Realmode X86 Emulator Library
+*                       Realmode X86 Emulator Library
 *
-*            	Copyright (C) 1996-1999 SciTech Software, Inc.
-* 				     Copyright (C) David Mosberger-Tang
-* 					   Copyright (C) 1999 Egbert Eich
+*               Copyright (C) 1991-2004 SciTech Software, Inc.
+*                    Copyright (C) David Mosberger-Tang
+*                      Copyright (C) 1999 Egbert Eich
 *
 *  ========================================================================
 *
@@ -28,8 +28,8 @@
 *
 *  ========================================================================
 *
-* Language:		ANSI C
-* Environment:	Any
+* Language:     ANSI C
+* Environment:  Any
 * Developer:    Kendall Bennett
 *
 * Description:  Header file for operand decoding functions.
@@ -39,7 +39,7 @@
 #ifndef __X86EMU_OPS_H
 #define __X86EMU_OPS_H
 
-extern void (*x86emu_optab[0x100]) (u8 op1);
-extern void (*x86emu_optab2[0x100]) (u8 op2);
+extern void (*x86emu_optab[0x100])(u8 op1);
+extern void (*x86emu_optab2[0x100])(u8 op2);
 
-#endif                          /* __X86EMU_OPS_H */
+#endif /* __X86EMU_OPS_H */

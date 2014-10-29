@@ -3,24 +3,24 @@
 
 #include <asm/types.h>
 
-#define REBX 0
-#define RECX 1
-#define REDX 2
-#define RESI 3
-#define REDI 4
-#define REBP 5
-#define REAX 6
-#define RDS 7
-#define RES 8
-#define RFS 9
-#define RGS 10
-#define RORIG_EAX 11
-#define REIP 12
-#define RCS  13
-#define REFL 14
-#define RUESP 15
-#define RSS   16
-#define RFRAME_SIZE 17
+#define EBX 0
+#define ECX 1
+#define EDX 2
+#define ESI 3
+#define EDI 4
+#define EBP 5
+#define EAX 6
+#define DS 7
+#define ES 8
+#define FS 9
+#define GS 10
+#define ORIG_EAX 11
+#define EIP 12
+#define CS  13
+#define EFL 14
+#define UESP 15
+#define SS   16
+#define FRAME_SIZE 17
 
 /* this struct defines the way the registers are stored on the
    stack during a system call. */

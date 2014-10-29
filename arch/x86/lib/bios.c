@@ -6,11 +6,14 @@
  *
  * SPDX-License-Identifier:	GPL-2.0
  */
+#define DEBUG
+#define CONFIG_REALMODE_DEBUG
 
 #include <common.h>
 #include <asm/i8259.h>
 #include <asm/io.h>
 #include <asm/post.h>
+#include <asm/processor.h>
 #include <asm/vbe.h>
 #include "bios.h"
 #include "../../../drivers/bios_emulator/include/x86emu/regs.h"
@@ -65,19 +68,19 @@ static int intXX_exception_handler(void)
 {
 	/* compatibility shim */
 	struct eregs reg_info = {
-		.eax=M.x86.R_EAX,
-		.ecx=M.x86.R_ECX,
-		.edx=M.x86.R_EDX,
-		.ebx=M.x86.R_EBX,
-		.esp=M.x86.R_ESP,
-		.ebp=M.x86.R_EBP,
-		.esi=M.x86.R_ESI,
-		.edi=M.x86.R_EDI,
+		.eax=X86_EAX,
+		.ecx=X86_ECX,
+		.edx=X86_EDX,
+		.ebx=X86_EBX,
+		.esp=X86_ESP,
+		.ebp=X86_EBP,
+		.esi=X86_ESI,
+		.edi=X86_EDI,
 		.vector=M.x86.intno,
 		.error_code=0, // FIXME: fill in
-		.eip=M.x86.R_EIP,
-		.cs=M.x86.R_CS,
-		.eflags=M.x86.R_EFLG
+		.eip=X86_EIP,
+		.cs=X86_CS,
+		.eflags=X86_EFLAGS
 	};
 	struct eregs *regs = &reg_info;
 
@@ -91,7 +94,7 @@ static int intXX_exception_handler(void)
 static int intXX_unknown_handler(void)
 {
 	debug("Unsupported software interrupt #0x%x eax 0x%x\n",
-			M.x86.intno, M.x86.R_EAX);
+			M.x86.intno, X86_EAX);
 
 	return -1;
 }
@@ -339,19 +342,19 @@ int asmlinkage interrupt_handler(u32 intnumber,
 
 	// Fetch arguments from the stack and put them to a place
 	// suitable for the interrupt handlers
-	M.x86.R_EAX = eax;
-	M.x86.R_ECX = ecx;
-	M.x86.R_EDX = edx;
-	M.x86.R_EBX = ebx;
-	M.x86.R_ESP = esp;
-	M.x86.R_EBP = ebp;
-	M.x86.R_ESI = esi;
-	M.x86.R_EDI = edi;
+	X86_EAX = eax;
+	X86_ECX = ecx;
+	X86_EDX = edx;
+	X86_EBX = ebx;
+	X86_ESP = esp;
+	X86_EBP = ebp;
+	X86_ESI = esi;
+	X86_EDI = edi;
 	M.x86.intno = intnumber;
 	/* TODO: error_code must be stored somewhere */
-	M.x86.R_EIP = ip;
-	M.x86.R_CS = cs;
-	M.x86.R_EFLG = flags;
+	X86_EIP = ip;
+	X86_CS = cs;
+	X86_EFLAGS = flags;
 
 	// Call the interrupt handler for this int#
 	ret = intXX_handler[intnumber]();
@@ -362,13 +365,13 @@ int asmlinkage interrupt_handler(u32 intnumber,
 	// the values of the parameters of this function. We do this
 	// because we know that they stay alive on the stack after
 	// we leave this function. Don't say this is bollocks.
-	*(volatile u32 *)&eax = M.x86.R_EAX;
-	*(volatile u32 *)&ecx = M.x86.R_ECX;
-	*(volatile u32 *)&edx = M.x86.R_EDX;
-	*(volatile u32 *)&ebx = M.x86.R_EBX;
-	*(volatile u32 *)&esi = M.x86.R_ESI;
-	*(volatile u32 *)&edi = M.x86.R_EDI;
-	flags = M.x86.R_EFLG;
+	*(volatile u32 *)&eax = X86_EAX;
+	*(volatile u32 *)&ecx = X86_ECX;
+	*(volatile u32 *)&edx = X86_EDX;
+	*(volatile u32 *)&ebx = X86_EBX;
+	*(volatile u32 *)&esi = X86_ESI;
+	*(volatile u32 *)&edi = X86_EDI;
+	flags = X86_EFLAGS;
 
 	/* Pass success or error back to our caller via the CARRY flag */
 	if (ret) {
