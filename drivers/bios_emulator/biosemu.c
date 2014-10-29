@@ -145,6 +145,7 @@ void X86API BE_setVGA(BE_VGAInfo * info)
 		_BE_env.biosmem_base = _BE_env.busmem_base + 0x20000;
 		_BE_env.biosmem_limit = 0xC7FFF;
 	}
+	printf("biosmem %x - %x\n", _BE_env.biosmem_base, _BE_env.biosmem_limit);
 	if ((info->LowMem[0] == 0) && (info->LowMem[1] == 0) &&
 	    (info->LowMem[2] == 0) && (info->LowMem[3] == 0))
 		_BE_bios_init((u32 *) info->LowMem);

@@ -91,7 +91,7 @@ static void PCI_doBIOSPOST(pci_dev_t pcidev, BE_VGAInfo * VGAInfo)
 	BE_setVGA(VGAInfo);
 
 	/*Execute the BIOS POST code*/
-	debug("callrealmode\n");
+	debug("callrealmode, ax=%#x\n", regs.x.ax);
 	BE_callRealMode(0xC000, 0x0003, &regs, &sregs);
 	debug("callrealmode done\n");
 
@@ -329,7 +329,7 @@ int BootVideoCardBIOS(pci_dev_t pcidev, uchar *bios_rom, int bios_len,
 	debug("2\n");
 	memset(VGAInfo, 0, sizeof(*VGAInfo));
 	debug("init\n");
-	BE_init(0, 65536, VGAInfo, 0);
+	BE_init(DEBUG_DECODE_F | DEBUG_TRACE_F, 65536, VGAInfo, 0);
 
 	/*Post all the display controller BIOS'es*/
 	if (!PCI_postController(pcidev, bios_rom, bios_len, VGAInfo))

@@ -41,6 +41,8 @@
 #ifndef __X86EMU_X86EMUI_H
 #define __X86EMU_X86EMUI_H
 
+#define DEBUG
+
 /* If we are compiling in C++ mode, we can compile some functions as
  * inline to increase performance (however the code size increases quite
  * dramatically in this case).

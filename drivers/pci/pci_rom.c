@@ -78,10 +78,10 @@ static int pci_rom_probe(pci_dev_t dev, uint class,
 	if (vendev != mapped_vendev)
 		debug("Device ID mapped to %#08x\n", mapped_vendev);
 
-#ifdef CONFIG_X86_OPTION_ROM_ADDRx
+#ifdef CONFIG_X86_OPTION_ROM_ADDR
 	rom_address = CONFIG_X86_OPTION_ROM_ADDR;
 #else
-	pci_write_config_dword(dev, PCI_ROM_ADDRESS, 0xffffffff);
+	pci_write_config_dword(dev, PCI_ROM_ADDRESS, (u32)PCI_ROM_ADDRESS_MASK);
 	pci_read_config_dword(dev, PCI_ROM_ADDRESS, &rom_address);
 	if (rom_address == 0x00000000 || rom_address == 0xffffffff) {
 		debug("%s: rom_address=%x\n", __func__, rom_address);
@@ -134,8 +134,7 @@ static int pci_rom_probe(pci_dev_t dev, uint class,
 	return 0;
 }
 
-int pci_rom_load(pci_dev_t dev, uint16_t class,
-		 struct pci_rom_header *rom_header,
+int pci_rom_load(uint16_t class, struct pci_rom_header *rom_header,
 		 struct pci_rom_header **ram_headerp)
 {
 	struct pci_rom_data *rom_data;
@@ -196,18 +195,18 @@ int pci_run_vga_bios(pci_dev_t dev)
 	if (ret)
 		return ret;
 
-	ret = pci_rom_load(dev, class, rom, &ram);
+	ret = pci_rom_load(class, rom, &ram);
 	if (ret)
 		return ret;
 
 	if (!board_should_run_oprom(dev))
 		return -ENXIO;
 
-// 	BE_VGAInfo *info;
+	BE_VGAInfo *info;
 
-// 	BootVideoCardBIOS(dev, (uchar *)ram, 1 << 16, &info, true);
+	BootVideoCardBIOS(dev, (uchar *)ram, 1 << 16, &info, true);
 
-	bios_run_on_x86(dev, (unsigned long)ram);
+// 	bios_run_on_x86(dev, (unsigned long)ram);
 
 	return 0;
 }

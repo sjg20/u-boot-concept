@@ -57,4 +57,6 @@
 
 #define CONFIG_PCI_SCAN_SHOW
 
+#define CONFIG_X86EMU_DEBUG
+
 #endif	/* __CONFIG_H */

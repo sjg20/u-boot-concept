@@ -38,7 +38,7 @@
 
 #ifndef __X86EMU_REGS_H
 #define __X86EMU_REGS_H
-
+#define DEBUG
 /*---------------------- Macros and type definitions ----------------------*/
 
 #pragma pack(1)

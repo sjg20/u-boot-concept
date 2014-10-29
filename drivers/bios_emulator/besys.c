@@ -46,7 +46,6 @@
 *		16 bit of the io port.
 *
 ****************************************************************************/
-#define DEBUG
 
 #include <common.h>
 #include <bios_emul.h>
@@ -233,7 +232,7 @@ void X86API BE_wrl(u32 addr, u32 val)
 	}
 }
 
-#if defined(DEBUG) || !defined(__i386__)
+#if defined(CONFIG_X86EMU_DEBUG) || !defined(__i386__)
 
 /* For Non-Intel machines we may need to emulate some I/O port accesses that
  * the BIOS may try to access, such as the PCI config registers.
@@ -424,6 +423,8 @@ static u32 BE_accessReg(int regOffset, u32 value, int func)
 	device = (_BE_env.configAddress >> 11) & 0x1F;
 	bus = (_BE_env.configAddress >> 16) & 0xFF;
 
+	printf("pci access bus=%x, dev=%x, funcion=%x, func=%x, offset=%x\n",
+	       bus, device, function, func, regOffset);
 	/* Ignore accesses to all devices other than the one we're POSTing */
 	if ((function == _BE_env.vgaInfo.function) &&
 	    (device == _BE_env.vgaInfo.device) &&
@@ -436,6 +437,7 @@ static u32 BE_accessReg(int regOffset, u32 value, int func)
 		case REG_READ_WORD:
 			pci_read_config_word(_BE_env.vgaInfo.pcidev, regOffset,
 					     &val16);
+			printf("val16=%x\n", val16);
 			return val16;
 		case REG_READ_DWORD:
 			pci_read_config_dword(_BE_env.vgaInfo.pcidev, regOffset,
@@ -457,6 +459,8 @@ static u32 BE_accessReg(int regOffset, u32 value, int func)
 
 			return 0;
 		}
+	} else {
+		printf("   - ignored\n");
 	}
 	return 0;
 #else
@@ -563,7 +567,7 @@ u8 X86API BE_inb(X86EMU_pioAddr port)
 {
 	u8 val = 0;
 
-#if defined(DEBUG) || !defined(__i386__)
+#if defined(CONFIG_X86EMU_DEBUG) || !defined(__i386__)
 	if (IS_VGA_PORT(port)){
 		/*seems reading port 0x3c3 return the high 16 bit of io port*/
 		if(port == 0x3c3)
@@ -604,7 +608,7 @@ u16 X86API BE_inw(X86EMU_pioAddr port)
 {
 	u16 val = 0;
 
-#if defined(DEBUG) || !defined(__i386__)
+#if defined(CONFIG_X86EMU_DEBUG) || !defined(__i386__)
 	if (IS_PCI_PORT(port))
 		val = PCI_inp(port, REG_READ_WORD);
 	else if (port < 0x100) {
@@ -632,7 +636,7 @@ u32 X86API BE_inl(X86EMU_pioAddr port)
 {
 	u32 val = 0;
 
-#if defined(DEBUG) || !defined(__i386__)
+#if defined(CONFIG_X86EMU_DEBUG) || !defined(__i386__)
 	if (IS_PCI_PORT(port))
 		val = PCI_inp(port, REG_READ_DWORD);
 	else if (port < 0x100) {
@@ -655,7 +659,7 @@ through to the real hardware if we don't need to special case it.
 ****************************************************************************/
 void X86API BE_outb(X86EMU_pioAddr port, u8 val)
 {
-#if defined(DEBUG) || !defined(__i386__)
+#if defined(CONFIG_X86EMU_DEBUG) || !defined(__i386__)
 	if (IS_VGA_PORT(port))
 		VGA_outpb(port, val);
 	else if (IS_TIMER_PORT(port))
@@ -686,7 +690,7 @@ through to the real hardware if we don't need to special case it.
 ****************************************************************************/
 void X86API BE_outw(X86EMU_pioAddr port, u16 val)
 {
-#if defined(DEBUG) || !defined(__i386__)
+#if defined(CONFIG_X86EMU_DEBUG) || !defined(__i386__)
 		if (IS_VGA_PORT(port)) {
 			VGA_outpb(port, val);
 			VGA_outpb(port + 1, val >> 8);
@@ -713,7 +717,7 @@ through to the real hardware if we don't need to special case it.
 ****************************************************************************/
 void X86API BE_outl(X86EMU_pioAddr port, u32 val)
 {
-#if defined(DEBUG) || !defined(__i386__)
+#if defined(CONFIG_X86EMU_DEBUG) || !defined(__i386__)
 	if (IS_PCI_PORT(port))
 		PCI_outp(port, val, REG_WRITE_DWORD);
 	else if (port < 0x100) {
