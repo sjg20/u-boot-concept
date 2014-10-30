@@ -4,6 +4,7 @@
  *
  * SPDX-License-Identifier:	GPL-2.0
  */
+#define DEBUG
 
 #include <common.h>
 #include <asm/arch/pch.h>
@@ -72,7 +73,7 @@ void ich_pci_dev_enable_resources(pci_dev_t dev)
 	 * this will cause the ROM and APICs not being visible
 	 * anymore.
 	 */
-// 	debug("%s cmd <- %02x\n", dev_path(dev), command);
+	debug("%x cmd <- %02x\n", dev, command);
 	pci_write_config16(dev, PCI_COMMAND, command);
 #else
 	debug("%s cmd <- %02x (NOT WRITTEN!)\n", dev_path(dev), command);
@@ -90,6 +91,8 @@ void ich_pci_bus_enable_resources(pci_dev_t dev)
 	ctrl = pci_read_config16(dev, PCI_BRIDGE_CONTROL);
 // 	ctrl |= dev->link_list->bridge_ctrl;
 	ctrl |= (PCI_BRIDGE_CTL_PARITY + PCI_BRIDGE_CTL_SERR); /* error check */
+	ctrl |= PCI_COMMAND_IO;
+	ctrl |= PCI_BRIDGE_CTL_VGA;
 // 	debug("%s bridge ctrl <- %04x\n", dev_path(dev), ctrl);
 	pci_write_config16(dev, PCI_BRIDGE_CONTROL, ctrl);
 

@@ -87,7 +87,8 @@ void pci_init_board(void)
 #endif
 	pci_register_hose(hose);
 
-	pci_hose_scan(hose);
+	pciauto_write_bar(hose, PCI_BDF(0, 0, 0), 0, 0xf0000000);
+// 	pciauto_config_device(hose, PCI_BDF(0, 0, 0));
 	hose->last_busno = pci_hose_scan(hose);
 	ret = bd82x6x_init_pci_devices();
 	if (ret) {
@@ -95,3 +96,10 @@ void pci_init_board(void)
 		panic("Cannot init");
 	}
 }
+
+/* TODO
+ *
+ * Invalid memory
+ * DOMAIN: 0000 resource base 20000000 size 200000 align 0 gran 0 limit 0 flags f0004200 index b
+ * DOMAIN: 0000 resource base 40000000 size 200000 align 0 gran 0 limit 0 flags f0004200 index c
+ */

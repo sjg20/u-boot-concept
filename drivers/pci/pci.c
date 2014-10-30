@@ -11,6 +11,7 @@
 /*
  * PCI routines
  */
+#define DEBUG
 #include <common.h>
 
 #include <command.h>

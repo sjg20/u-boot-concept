@@ -669,6 +669,8 @@ int gma_func0_init(pci_dev_t dev)
 	reg32 = pci_read_config32(dev, PCI_COMMAND);
 	reg32 |= PCI_COMMAND_MASTER | PCI_COMMAND_MEMORY | PCI_COMMAND_IO;
 	pci_write_config32(dev, PCI_COMMAND, reg32);
+	ich_pci_bus_enable_resources(PCI_BDF_CB(0, 0, 0));
+	ich_pci_bus_enable_resources(dev);
 
 	/* Init graphics power management */
 	ret = gma_pm_init_pre_vbios(dev);

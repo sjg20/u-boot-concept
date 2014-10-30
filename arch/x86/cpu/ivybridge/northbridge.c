@@ -48,7 +48,6 @@ int bridge_silicon_revision(void)
 static const int legacy_hole_base_k = 0xa0000 / 1024;
 static const int legacy_hole_size_k = 384;
 
-#if 0
 static int get_pcie_bar(u32 *base, u32 *len)
 {
 	pci_dev_t dev = PCI_BDF_CB(0, 0, 0);
@@ -80,9 +79,8 @@ static int get_pcie_bar(u32 *base, u32 *len)
 	return 0;
 }
 
-static void add_fixed_resources(pci_dev_tdev, int index)
+static void add_fixed_resources(pci_dev_t dev, int index)
 {
-	struct resource *resource;
 	u32 pcie_config_base, pcie_config_size;
 
 	/* Using uma_resource() here would fail as base & size cannot
@@ -96,18 +94,19 @@ static void add_fixed_resources(pci_dev_tdev, int index)
 	 * The resources can be changed to use separate mmio_resource()
 	 * calls after MTRR code is able to merge them wisely.
 	 */
-	mmio_resource(dev, index++, uma_memory_base >> 10, uma_memory_size >> 10);
+// 	mmio_resource(dev, index++, uma_memory_base >> 10, uma_memory_size >> 10);
 
 	if (get_pcie_bar(&pcie_config_base, &pcie_config_size)) {
 		debug("Adding PCIe config bar base=0x%08x "
 		       "size=0x%x\n", pcie_config_base, pcie_config_size);
-		resource = new_resource(dev, index++);
+	}
+#if 0
+`		resource = new_resource(dev, index++);
 		resource->base = (resource_t) pcie_config_base;
 		resource->size = (resource_t) pcie_config_size;
 		resource->flags = IORESOURCE_MEM | IORESOURCE_RESERVE |
 		    IORESOURCE_FIXED | IORESOURCE_STORED | IORESOURCE_ASSIGNED;
 	}
-
 	mmio_resource(dev, index++, legacy_hole_base_k,
 			(0xc0000 >> 10) - legacy_hole_base_k);
 	reserved_ram_resource(dev, index++, 0xc0000 >> 10,
@@ -122,8 +121,8 @@ static void add_fixed_resources(pci_dev_tdev, int index)
 	/* Required for SandyBridge sighting 3715511 */
 	bad_ram_resource(dev, index++, 0x20000000 >> 10, 0x00200000 >> 10);
 	bad_ram_resource(dev, index++, 0x40000000 >> 10, 0x00200000 >> 10);
-}
 #endif
+}
 
 void northbridge_set_resources(pci_dev_t dev)
 {
@@ -239,9 +238,8 @@ void northbridge_set_resources(pci_dev_t dev)
 		printf("Available memory above 4GB: %lluM\n",
 		       (touud >> 20) - 4096);
 	}
-#if 0
 	add_fixed_resources(dev, 6);
-
+#if 0
 	assign_resources(dev->link_list);
 
 	/* Leave some space for ACPI, PIRQ and MP tables */

@@ -39,7 +39,7 @@
 #define CONFIG_X86_OPTION_ROM_FILENAME		try.bin
 #define CONFIG_X86_OPTION_ROM_ADDR		0xfff90000
 #define CONFIG_BIOSEMU
-#define VIDEO_IO_OFFSET				0x1000
+#define VIDEO_IO_OFFSET				0
 
 #define CONFIG_PCI_PNP
 
@@ -59,5 +59,6 @@
 
 #define CONFIG_X86EMU_DEBUG
 #define CONFIG_REALMODE_DEBUG
+#define CONFIG_X86EMU_RAW_IO
 
 #endif	/* __CONFIG_H */

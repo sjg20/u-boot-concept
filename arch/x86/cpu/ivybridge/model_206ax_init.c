@@ -231,6 +231,7 @@ int cpu_config_tdp_levels(void)
  * Configure processor power limits if possible
  * This must be done AFTER set of BIOS_RESET_CPL
  */
+// TODO: Check that we do this after BIOS_RESET_CPL
 void set_power_limits(u8 power_limit_1_time)
 {
 	msr_t msr = msr_read(MSR_PLATFORM_INFO);

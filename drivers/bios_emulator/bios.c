@@ -40,6 +40,7 @@
 *		video BIOS.
 *
 ****************************************************************************/
+#define DEBUG
 
 #define __io
 #include <asm/io.h>
@@ -128,13 +129,13 @@ static void X86API int10(int intno)
 #define SET_FAILED          0x88
 #define BUFFER_TOO_SMALL    0x89
 
-static int int15_handler(int intno)
+static void int15(int intno)
 {
 	int res = 0;
 
-	debug("%s: INT15 function %04x!\n", __func__, X86_AX);
+	debug("%s: INT15 function %04x!\n", __func__, M.x86.R_AX);
 
-	switch(X86_AX) {
+	switch(M.x86.R_AX) {
 	case 0x5f34:
 		/*
 		 * Set Panel Fitting Hook:
@@ -143,8 +144,8 @@ static int int15_handler(int intno)
 		 *  bit 0 = Centering (do not set with bit1 or bit2)
 		 *  0     = video bios default
 		 */
-		X86_AX = 0x005f;
-		X86_CL = 0x00; /* Use video bios default */
+		M.x86.R_AX = 0x005f;
+		M.x86.R_CL = 0x00; /* Use video bios default */
 		res = 1;
 		break;
 	case 0x5f35:
@@ -159,8 +160,8 @@ static int int15_handler(int intno)
 		 *  bit 6 = EFP2
 		 *  bit 7 = LFP2
 		 */
-		X86_AX = 0x005f;
-		X86_CX = 0x0000; /* Use video bios default */
+		M.x86.R_AX = 0x005f;
+		M.x86.R_CX = 0x0000; /* Use video bios default */
 		res = 1;
 		break;
 	case 0x5f51:
@@ -171,34 +172,34 @@ static int int15_handler(int intno)
 		 *  02h = SVDO-LVDS, LFP driven by SVDO decoder
 		 *  03h = eDP, LFP Driven by Int-DisplayPort encoder
 		 */
-		X86_AX = 0x005f;
-		X86_CX = 0x0003; /* eDP */
+		M.x86.R_AX = 0x005f;
+		M.x86.R_CX = 0x0003; /* eDP */
 		res = 1;
 		break;
 	case 0x5f70:
-		switch (X86_CH) {
+		switch (M.x86.R_CH) {
 		case 0:
 			/* Get Mux */
-			X86_AX = 0x005f;
-			X86_CX = 0x0000;
+			M.x86.R_AX = 0x005f;
+			M.x86.R_CX = 0x0000;
 			res = 1;
 			break;
 		case 1:
 			/* Set Mux */
-			X86_AX = 0x005f;
-			X86_CX = 0x0000;
+			M.x86.R_AX = 0x005f;
+			M.x86.R_CX = 0x0000;
 			res = 1;
 			break;
 		case 2:
 			/* Get SG/Non-SG mode */
-			X86_AX = 0x005f;
-			X86_CX = 0x0000;
+			M.x86.R_AX = 0x005f;
+			M.x86.R_CX = 0x0000;
 			res = 1;
 			break;
 		default:
 			/* Interrupt was not handled */
-			printk(BIOS_DEBUG, "Unknown INT15 5f70 function: 0x%02x\n",
-				X86_CH);
+			debug("Unknown INT15 5f70 function: 0x%02x\n",
+			      M.x86.R_CH);
 			break;
 		}
 		break;
@@ -206,10 +207,10 @@ static int int15_handler(int intno)
 		res = 1;
 		break;
         default:
-		printk(BIOS_DEBUG, "Unknown INT15 function %04x!\n", X86_AX);
+		debug("Unknown INT15 function %04x!\n", M.x86.R_AX);
 		break;
 	}
-	return res;
+	CONDITIONAL_SET_FLAG(res != 0, F_CF);
 }
 
 /****************************************************************************
