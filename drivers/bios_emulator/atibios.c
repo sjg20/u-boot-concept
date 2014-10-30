@@ -329,7 +329,8 @@ int BootVideoCardBIOS(pci_dev_t pcidev, uchar *bios_rom, int bios_len,
 	debug("2\n");
 	memset(VGAInfo, 0, sizeof(*VGAInfo));
 	debug("init\n");
-	BE_init(DEBUG_DECODE_F | DEBUG_TRACE_F, 65536, VGAInfo, 0);
+// 	BE_init(DEBUG_DECODE_F | DEBUG_TRACE_F, 65536, VGAInfo, 0);
+	BE_init(DEBUG_IO_TRACE_F, 65536, VGAInfo, 0);
 
 	/*Post all the display controller BIOS'es*/
 	if (!PCI_postController(pcidev, bios_rom, bios_len, VGAInfo))

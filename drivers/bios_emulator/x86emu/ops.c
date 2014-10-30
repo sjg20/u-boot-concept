@@ -70,6 +70,7 @@
 *
 ****************************************************************************/
 
+#include <common.h>
 #include "x86emu/x86emui.h"
 
 /*----------------------------- Implementation ----------------------------*/
@@ -10189,8 +10190,8 @@ Handles opcode 0xe8
 static void
 x86emuOp_call_near_IMM(u8 X86EMU_UNUSED(op1))
 {
-    s16 ip16;
-    s32 ip32;
+    s16 ip16 = 0;
+    s32 ip32 = 0;
 
     START_OF_INSTR();
     DECODE_PRINTF("CALL\t");

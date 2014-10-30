@@ -37,6 +37,7 @@
 *
 ****************************************************************************/
 
+#include <common.h>
 #include "x86emu/x86emui.h"
 
 /*----------------------------- Implementation ----------------------------*/
@@ -51,7 +52,7 @@ x86emuOp_esc_coprocess_d8(u8 X86EMU_UNUSED(op1))
     END_OF_INSTR_NO_TRACE();
 }
 
-#ifdef DEBUG
+#ifdef CONFIG_X86EMU_DEBUG
 
 static const char *x86emu_fpu_op_d9_tab[] = {
     "FLD\tDWORD PTR ", "ESC_D9\t", "FST\tDWORD PTR ", "FSTP\tDWORD PTR ",
@@ -102,7 +103,7 @@ x86emuOp_esc_coprocess_d9(u8 X86EMU_UNUSED(op1))
 
     START_OF_INSTR();
     FETCH_DECODE_MODRM(mod, rh, rl);
-#ifdef DEBUG
+#ifdef CONFIG_X86EMU_DEBUG
     if (mod != 3) {
         DECODE_PRINTINSTR32(x86emu_fpu_op_d9_tab, mod, rh, rl);
     }
@@ -301,7 +302,7 @@ x86emuOp_esc_coprocess_d9(u8 X86EMU_UNUSED(op1))
     END_OF_INSTR_NO_TRACE();
 }
 
-#ifdef DEBUG
+#ifdef CONFIG_X86EMU_DEBUG
 
 static const char *x86emu_fpu_op_da_tab[] = {
     "FIADD\tDWORD PTR ", "FIMUL\tDWORD PTR ", "FICOM\tDWORD PTR ",
@@ -395,7 +396,7 @@ x86emuOp_esc_coprocess_da(u8 X86EMU_UNUSED(op1))
     END_OF_INSTR_NO_TRACE();
 }
 
-#ifdef DEBUG
+#ifdef CONFIG_X86EMU_DEBUG
 
 static const char *x86emu_fpu_op_db_tab[] = {
     "FILD\tDWORD PTR ", "ESC_DB\t19", "FIST\tDWORD PTR ", "FISTP\tDWORD PTR ",
@@ -419,7 +420,7 @@ x86emuOp_esc_coprocess_db(u8 X86EMU_UNUSED(op1))
 
     START_OF_INSTR();
     FETCH_DECODE_MODRM(mod, rh, rl);
-#ifdef DEBUG
+#ifdef CONFIG_X86EMU_DEBUG
     if (mod != 3) {
         DECODE_PRINTINSTR32(x86emu_fpu_op_db_tab, mod, rh, rl);
     }
@@ -520,7 +521,7 @@ x86emuOp_esc_coprocess_db(u8 X86EMU_UNUSED(op1))
     END_OF_INSTR_NO_TRACE();
 }
 
-#ifdef DEBUG
+#ifdef CONFIG_X86EMU_DEBUG
 static const char *x86emu_fpu_op_dc_tab[] = {
     "FADD\tQWORD PTR ", "FMUL\tQWORD PTR ", "FCOM\tQWORD PTR ",
     "FCOMP\tQWORD PTR ",
@@ -638,7 +639,7 @@ x86emuOp_esc_coprocess_dc(u8 X86EMU_UNUSED(op1))
     END_OF_INSTR_NO_TRACE();
 }
 
-#ifdef DEBUG
+#ifdef CONFIG_X86EMU_DEBUG
 
 static const char *x86emu_fpu_op_dd_tab[] = {
     "FLD\tQWORD PTR ", "ESC_DD\t29,", "FST\tQWORD PTR ", "FSTP\tQWORD PTR ",
@@ -742,7 +743,7 @@ x86emuOp_esc_coprocess_dd(u8 X86EMU_UNUSED(op1))
     END_OF_INSTR_NO_TRACE();
 }
 
-#ifdef DEBUG
+#ifdef CONFIG_X86EMU_DEBUG
 
 static const char *x86emu_fpu_op_de_tab[] = {
     "FIADD\tWORD PTR ", "FIMUL\tWORD PTR ", "FICOM\tWORD PTR ",
@@ -864,7 +865,7 @@ x86emuOp_esc_coprocess_de(u8 X86EMU_UNUSED(op1))
     END_OF_INSTR_NO_TRACE();
 }
 
-#ifdef DEBUG
+#ifdef CONFIG_X86EMU_DEBUG
 
 static const char *x86emu_fpu_op_df_tab[] = {
     /* mod == 00 */

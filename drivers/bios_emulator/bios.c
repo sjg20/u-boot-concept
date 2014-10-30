@@ -128,6 +128,90 @@ static void X86API int10(int intno)
 #define SET_FAILED          0x88
 #define BUFFER_TOO_SMALL    0x89
 
+static int int15_handler(int intno)
+{
+	int res = 0;
+
+	debug("%s: INT15 function %04x!\n", __func__, X86_AX);
+
+	switch(X86_AX) {
+	case 0x5f34:
+		/*
+		 * Set Panel Fitting Hook:
+		 *  bit 2 = Graphics Stretching
+		 *  bit 1 = Text Stretching
+		 *  bit 0 = Centering (do not set with bit1 or bit2)
+		 *  0     = video bios default
+		 */
+		X86_AX = 0x005f;
+		X86_CL = 0x00; /* Use video bios default */
+		res = 1;
+		break;
+	case 0x5f35:
+		/*
+		 * Boot Display Device Hook:
+		 *  bit 0 = CRT
+		 *  bit 1 = TV (eDP)
+		 *  bit 2 = EFP
+		 *  bit 3 = LFP
+		 *  bit 4 = CRT2
+		 *  bit 5 = TV2 (eDP)
+		 *  bit 6 = EFP2
+		 *  bit 7 = LFP2
+		 */
+		X86_AX = 0x005f;
+		X86_CX = 0x0000; /* Use video bios default */
+		res = 1;
+		break;
+	case 0x5f51:
+		/*
+		 * Hook to select active LFP configuration:
+		 *  00h = No LVDS, VBIOS does not enable LVDS
+		 *  01h = Int-LVDS, LFP driven by integrated LVDS decoder
+		 *  02h = SVDO-LVDS, LFP driven by SVDO decoder
+		 *  03h = eDP, LFP Driven by Int-DisplayPort encoder
+		 */
+		X86_AX = 0x005f;
+		X86_CX = 0x0003; /* eDP */
+		res = 1;
+		break;
+	case 0x5f70:
+		switch (X86_CH) {
+		case 0:
+			/* Get Mux */
+			X86_AX = 0x005f;
+			X86_CX = 0x0000;
+			res = 1;
+			break;
+		case 1:
+			/* Set Mux */
+			X86_AX = 0x005f;
+			X86_CX = 0x0000;
+			res = 1;
+			break;
+		case 2:
+			/* Get SG/Non-SG mode */
+			X86_AX = 0x005f;
+			X86_CX = 0x0000;
+			res = 1;
+			break;
+		default:
+			/* Interrupt was not handled */
+			printk(BIOS_DEBUG, "Unknown INT15 5f70 function: 0x%02x\n",
+				X86_CH);
+			break;
+		}
+		break;
+	case 0x5fac:
+		res = 1;
+		break;
+        default:
+		printk(BIOS_DEBUG, "Unknown INT15 function %04x!\n", X86_AX);
+		break;
+	}
+	return res;
+}
+
 /****************************************************************************
 PARAMETERS:
 intno   - Interrupt number being serviced
@@ -317,6 +401,7 @@ void _BE_bios_init(u32 * intrTab)
 		bios_intr_tab[i] = undefined_intr;
 	}
 	bios_intr_tab[0x10] = int10;
+	bios_intr_tab[0x15] = int15;
 	bios_intr_tab[0x1A] = int1A;
 	bios_intr_tab[0x42] = int42;
 	bios_intr_tab[0x6D] = int10;
