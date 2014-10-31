@@ -51,12 +51,15 @@ static inline void sir_write(pci_dev_t dev, int idx, u32 value)
 void pci_init_board(void)
 {
 	struct pci_controller *hose = &x86_hose;
+	pci_dev_t dev;
+	u16 reg16;
 	int ret;
 
 	hose->config_table = pci_coreboot_config_table;
 	hose->first_busno = 0;
-	hose->last_busno = 0;
+	hose->last_busno = 0xff;
 
+	// FIXME: Sort out with code below
 	pci_set_region(hose->regions + 0, 0x0, 0x0, 0xffffffff,
 		PCI_REGION_MEM);
 	hose->region_count = 1;
@@ -86,6 +89,19 @@ void pci_init_board(void)
 	hose->region_count = 3;
 #endif
 	pci_register_hose(hose);
+
+	reg16 = 0xff;
+	dev = PCI_BDF(hose->first_busno, 0, 0);
+	pci_hose_read_config_word(hose, dev, PCI_COMMAND, &reg16);
+	reg16 |= PCI_COMMAND_SERR | PCI_COMMAND_MASTER | PCI_COMMAND_MEMORY;
+	pci_hose_write_config_word(hose, dev, PCI_COMMAND, reg16);
+
+	/*
+	 * Clear non-reserved bits in status register.
+	 */
+	pci_hose_write_config_word(hose, dev, PCI_STATUS, 0xffff);
+	pci_hose_write_config_byte(hose, dev, PCI_LATENCY_TIMER, 0x80);
+	pci_hose_write_config_byte(hose, dev, PCI_CACHE_LINE_SIZE, 0x08);
 
 	pciauto_write_bar(hose, PCI_BDF(0, 0, 0), 0, 0xf0000000);
 // 	pciauto_config_device(hose, PCI_BDF(0, 0, 0));

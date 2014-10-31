@@ -12,7 +12,6 @@
 /* SandyBridge/IvyBridge bus clock is fixed at 100MHz */
 #define SANDYBRIDGE_BCLK		100
 
-#define IA32_FEATURE_CONTROL		0x3a
 #define  CPUID_VMX			(1 << 5)
 #define  CPUID_SMX			(1 << 6)
 #define MSR_FEATURE_CONFIG		0x13c

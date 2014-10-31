@@ -115,7 +115,7 @@ static void enable_vmx(void)
 	if (!((regs.ecx & CPUID_VMX) || (regs.ecx & CPUID_SMX)))
 		return;
 
-	msr = msr_read(IA32_FEATURE_CONTROL);
+	msr = msr_read(MSR_IA32_FEATURE_CONTROL);
 
 	if (msr.lo & (1 << 0)) {
 		printf("VMX is locked, so %s will do nothing\n", __func__);
@@ -151,7 +151,7 @@ static void enable_vmx(void)
 			msr.lo |= (1 << 1);
 	}
 
-	msr_write(IA32_FEATURE_CONTROL, msr);
+	msr_write(MSR_IA32_FEATURE_CONTROL, msr);
 }
 
 /* Convert time in seconds to POWER_LIMIT_1_TIME MSR value */

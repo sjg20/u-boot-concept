@@ -90,10 +90,10 @@ void ich_pci_bus_enable_resources(pci_dev_t dev)
 // 		dev->command |= PCI_COMMAND_IO;
 	ctrl = pci_read_config16(dev, PCI_BRIDGE_CONTROL);
 // 	ctrl |= dev->link_list->bridge_ctrl;
-	ctrl |= (PCI_BRIDGE_CTL_PARITY + PCI_BRIDGE_CTL_SERR); /* error check */
+// 	ctrl |= (PCI_BRIDGE_CTL_PARITY + PCI_BRIDGE_CTL_SERR); /* error check */
 	ctrl |= PCI_COMMAND_IO;
 	ctrl |= PCI_BRIDGE_CTL_VGA;
-// 	debug("%s bridge ctrl <- %04x\n", dev_path(dev), ctrl);
+	debug("%x bridge ctrl <- %04x\n", dev, ctrl);
 	pci_write_config16(dev, PCI_BRIDGE_CONTROL, ctrl);
 
 	/* This is the reason we need our own pci_bus_enable_resources */

@@ -106,15 +106,15 @@ static u8 *BE_memaddr(u32 addr)
 #else
 	else if (addr >= 0xFFFF5 && addr < 0xFFFFE) {
 		/* Return a faked BIOS date string for non-x86 machines */
-		debug_io("BE_memaddr - Returning BIOS date\n");)
+		debug_io("BE_memaddr - Returning BIOS date\n");
 		return (u8 *)(BE_biosDate + addr - 0xFFFF5);
 	} else if (addr == 0xFFFFE) {
 		/* Return system model identifier for non-x86 machines */
-		debug_io("BE_memaddr - Returning model\n");)
+		debug_io("BE_memaddr - Returning model\n");
 		return &BE_model;
 	} else if (addr == 0xFFFFF) {
 		/* Return system submodel identifier for non-x86 machines */
-		debug_io("BE_memaddr - Returning submodel\n");)
+		debug_io("BE_memaddr - Returning submodel\n");
 		return &BE_submodel;
 	}
 #endif

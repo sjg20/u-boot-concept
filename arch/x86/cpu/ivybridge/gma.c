@@ -353,7 +353,8 @@ int gma_pm_init_pre_vbios(pci_dev_t dev)
 	void *gtt_bar;
 	u32 reg32;
 
-	debug("GT Power Management Init\n");
+	debug("GT Power Management Init, silicon = %#x\n",
+	      bridge_silicon_revision());
 
 // 	gtt_bar = pci_map_bar(dev, PCI_BASE_ADDRESS_0, PCI_REGION_MEM);
 // 	if (gtt_bar)
@@ -669,8 +670,8 @@ int gma_func0_init(pci_dev_t dev)
 	reg32 = pci_read_config32(dev, PCI_COMMAND);
 	reg32 |= PCI_COMMAND_MASTER | PCI_COMMAND_MEMORY | PCI_COMMAND_IO;
 	pci_write_config32(dev, PCI_COMMAND, reg32);
-	ich_pci_bus_enable_resources(PCI_BDF_CB(0, 0, 0));
-	ich_pci_bus_enable_resources(dev);
+// 	ich_pci_bus_enable_resources(PCI_BDF_CB(0, 0, 0));
+// 	ich_pci_bus_enable_resources(dev);
 
 	/* Init graphics power management */
 	ret = gma_pm_init_pre_vbios(dev);

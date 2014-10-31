@@ -405,11 +405,9 @@ void northbridge_init(pci_dev_t dev)
 	 * in MCHBAR.  Use same values from MSR_PKG_POWER_LIMIT.
 	 */
 	if (cpu_config_tdp_levels()) {
-		uint32_t low, high;
-
-		rdmsr(MSR_PKG_POWER_LIMIT, low, high);
-		MCHBAR32(0x59A0) = low;
-		MCHBAR32(0x59A4) = high;
+		msr_t msr = msr_read(MSR_PKG_POWER_LIMIT);
+		MCHBAR32(0x59A0) = msr.lo;
+		MCHBAR32(0x59A4) = msr.hi;
 	}
 
 	/* Set here before graphics PM init */
