@@ -208,6 +208,15 @@ void pciauto_setup_device(struct pci_controller *hose,
 
 		bar_nr++;
 	}
+	bar_nr = 0;
+	for (bar = PCI_BASE_ADDRESS_0;
+			bar < PCI_BASE_ADDRESS_0 + (bars_num * 4);
+			bar += 4, bar_nr++) {
+		u32 bar_value;
+
+		pci_hose_read_config_dword(hose, dev, bar, &bar_value);
+		DEBUGF(" - BAR %d, bar=0x%x\n", bar_nr, bar_value);
+	}
 
 	pci_hose_write_config_word(hose, dev, PCI_COMMAND, cmdstat);
 	pci_hose_write_config_byte(hose, dev, PCI_CACHE_LINE_SIZE,
