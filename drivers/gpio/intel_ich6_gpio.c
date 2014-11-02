@@ -140,7 +140,7 @@ static int gpio_ich6_ofdata_to_platdata(struct udevice *dev)
 	return 0;
 }
 
-int ich6_gpio_probe(struct udevice *dev)
+static int ich6_gpio_probe(struct udevice *dev)
 {
 	struct ich6_bank_platdata *plat = dev_get_platdata(dev);
 	struct gpio_dev_priv *uc_priv = dev->uclass_priv;
@@ -155,7 +155,8 @@ int ich6_gpio_probe(struct udevice *dev)
 	return 0;
 }
 
-int ich6_gpio_request(struct udevice *dev, unsigned offset, const char *label)
+static int ich6_gpio_request(struct udevice *dev, unsigned offset,
+			     const char *label)
 {
 	struct ich6_bank_priv *bank = dev_get_priv(dev);
 	u32 tmplong;
