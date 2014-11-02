@@ -13,6 +13,7 @@
 #include <config.h>
 #include <version.h>
 #include <asm/global_data.h>
+#include <asm/post.h>
 #include <asm/processor.h>
 #include <asm/processor-flags.h>
 #include <generated/generic-asm-offsets.h>
@@ -60,6 +61,28 @@ _start:
 	movw	%ax, %es
 	movw	%ax, %ss
 
+	/* Enable post codes to EC */
+#ifdef CONFIG_EARLY_POST_CROS_EC
+	mov    $0x1b, %ecx
+	rdmsr  
+	and    $0x100, %eax
+	test   %eax, %eax
+	je     2f
+
+	mov    $0x8000f8f0, %eax
+	mov    $0xcf8, %dx
+	out    %eax, (%dx)
+	mov    $0xfed1c001, %eax
+	mov    $0xcfc, %dx
+	out    %eax, (%dx)
+	mov    $0xfed1f410, %esp
+	mov    (%esp), %eax
+	and    $0xfffffffb, %eax
+	mov    %eax, (%esp)
+2:
+#endif
+	post_code(POST_START)
+
 	/* Clear the interrupt vectors */
 	lidt	blank_idt_ptr
 
@@ -91,6 +114,7 @@ car_init_ret:
 
 	/* Align global data to 16-byte boundary */
 	andl	$0xfffffff0, %esp
+	post_code(POST_START_STACK)
 
 	/* Zero the global data since it won't happen later */
 	xorl	%eax, %eax
@@ -126,6 +150,7 @@ car_init_ret:
 	call	setup_gdt
 
 	/* Set parameter to board_init_f() to boot flags */
+	post_code(POST_START_DONE)
 	xorl	%eax, %eax
 
 	/* Enter, U-boot! */
