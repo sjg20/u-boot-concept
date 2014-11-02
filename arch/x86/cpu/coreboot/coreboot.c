@@ -20,10 +20,7 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-/*
- * Miscellaneous platform dependent initializations
- */
-int cpu_init_f(void)
+int arch_cpu_init(void)
 {
 	int ret = get_coreboot_info(&lib_sysinfo);
 	if (ret != 0)
