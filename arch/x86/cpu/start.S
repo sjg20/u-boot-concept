@@ -61,11 +61,6 @@ _start:
 	/* Clear the interrupt vectors */
 	lidt	blank_idt_ptr
 
-	/* Early platform init (setup gpio, etc ) */
-	jmp	early_board_init
-.globl early_board_init_ret
-early_board_init_ret:
-
 	/* Initialise Cache-As-RAM */
 	jmp	car_init
 .globl car_init_ret
