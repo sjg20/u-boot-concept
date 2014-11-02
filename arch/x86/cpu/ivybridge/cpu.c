@@ -11,6 +11,8 @@
  */
 
 #include <common.h>
+#include <errno.h>
+#include <fdtdec.h>
 #include <asm/post.h>
 #include <asm/processor.h>
 
@@ -18,12 +20,21 @@ DECLARE_GLOBAL_DATA_PTR;
 
 int arch_cpu_init(void)
 {
+	const void *blob = gd->fdt_blob;
+	int node;
 	int ret;
 
 	post_code(POST_CPU_INIT);
 	timer_set_base(rdtsc());
 
 	ret = x86_cpu_init_f();
+	if (ret)
+		return ret;
+
+	node = fdtdec_next_compatible(blob, 0, COMPAT_INTEL_LPC);
+	if (node < 0)
+		return -ENOENT;
+	ret = lpc_early_init(gd->fdt_blob, node, PCH_LPC_DEV);
 	if (ret)
 		return ret;
 
