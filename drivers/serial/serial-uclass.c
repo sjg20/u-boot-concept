@@ -19,9 +19,6 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-/* The currently-selected console serial device */
-struct udevice *cur_dev __attribute__ ((section(".data")));
-
 #ifndef CONFIG_SYS_MALLOC_F_LEN
 #error "Serial is required before relocation - define CONFIG_SYS_MALLOC_F_LEN to make this work"
 #endif
@@ -35,7 +32,7 @@ static void serial_find_console_or_panic(void)
 	node = fdtdec_get_chosen_node(gd->fdt_blob, "stdout-path");
 	if (node < 0)
 		node = fdtdec_get_alias_node(gd->fdt_blob, "console");
-	if (!uclass_get_device_by_of_offset(UCLASS_SERIAL, node, &cur_dev))
+	if (!uclass_get_device_by_of_offset(UCLASS_SERIAL, node, &gd->cur_serial_dev))
 		return;
 
 	/*
@@ -43,10 +40,10 @@ static void serial_find_console_or_panic(void)
 	 * it anyway.
 	 */
 	if (node > 0 &&
-	    !lists_bind_fdt(gd->dm_root, gd->fdt_blob, node, &cur_dev)) {
-		if (!device_probe(cur_dev))
+	    !lists_bind_fdt(gd->dm_root, gd->fdt_blob, node, &gd->cur_serial_dev)) {
+		if (!device_probe(gd->cur_serial_dev))
 			return;
-		cur_dev = NULL;
+		gd->cur_serial_dev = NULL;
 	}
 #endif
 	/*
@@ -61,9 +58,9 @@ static void serial_find_console_or_panic(void)
 #else
 #define INDEX 0
 #endif
-	if (uclass_get_device_by_seq(UCLASS_SERIAL, INDEX, &cur_dev) &&
-	    uclass_get_device(UCLASS_SERIAL, INDEX, &cur_dev) &&
-	    (uclass_first_device(UCLASS_SERIAL, &cur_dev) || !cur_dev))
+	if (uclass_get_device_by_seq(UCLASS_SERIAL, INDEX, &gd->cur_serial_dev) &&
+	    uclass_get_device(UCLASS_SERIAL, INDEX, &gd->cur_serial_dev) &&
+	    (uclass_first_device(UCLASS_SERIAL, &gd->cur_serial_dev) || !gd->cur_serial_dev))
 		panic("No serial driver found");
 #undef INDEX
 }
@@ -127,30 +124,30 @@ static int _serial_tstc(struct udevice *dev)
 
 void serial_putc(char ch)
 {
-	_serial_putc(cur_dev, ch);
+	_serial_putc(gd->cur_serial_dev, ch);
 }
 
 void serial_puts(const char *str)
 {
-	_serial_puts(cur_dev, str);
+	_serial_puts(gd->cur_serial_dev, str);
 }
 
 int serial_getc(void)
 {
-	return _serial_getc(cur_dev);
+	return _serial_getc(gd->cur_serial_dev);
 }
 
 int serial_tstc(void)
 {
-	return _serial_tstc(cur_dev);
+	return _serial_tstc(gd->cur_serial_dev);
 }
 
 void serial_setbrg(void)
 {
-	struct dm_serial_ops *ops = serial_get_ops(cur_dev);
+	struct dm_serial_ops *ops = serial_get_ops(gd->cur_serial_dev);
 
 	if (ops->setbrg)
-		ops->setbrg(cur_dev, gd->baudrate);
+		ops->setbrg(gd->cur_serial_dev, gd->baudrate);
 }
 
 void serial_stdio_init(void)
