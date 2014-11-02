@@ -334,13 +334,6 @@ int cpu_has_64bit(void)
 		has_long_mode();
 }
 
-int print_cpuinfo(void)
-{
-	printf("CPU:   %s\n", cpu_has_64bit() ? "x86_64" : "x86");
-
-	return 0;
-}
-
 #define PAGETABLE_SIZE		(6 * 4096)
 
 /**
@@ -381,4 +374,29 @@ int cpu_jump_to_64bit(ulong setup_base, ulong target)
 	free(pgtable);
 
 	return -EFAULT;
+}
+
+char *cpu_get_name(char *name)
+{
+	unsigned int *name_as_ints = (unsigned int *)name;
+	struct cpuid_result regs;
+	char *ptr;
+	int i;
+
+	/* This bit adds up to 48 bytes */
+	for (i = 0; i < 3; i++) {
+		regs = cpuid(0x80000002 + i);
+		name_as_ints[i * 4 + 0] = regs.eax;
+		name_as_ints[i * 4 + 1] = regs.ebx;
+		name_as_ints[i * 4 + 2] = regs.ecx;
+		name_as_ints[i * 4 + 3] = regs.edx;
+	}
+	name[CPU_MAX_NAME_LEN - 1] = '\0';
+
+	/* Skip leading spaces. */
+	ptr = name;
+	while (*ptr == ' ')
+		ptr++;
+
+	return ptr;
 }

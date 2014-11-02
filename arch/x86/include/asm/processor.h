@@ -149,6 +149,18 @@ static inline unsigned int cpuid_edx(unsigned int op)
 		: "ecx", "edi");
 	return edx;
 }
+
+#define CPU_MAX_NAME_LEN	49
+
+/**
+ * cpu_get_name() - Get the name of the current cpu
+ *
+ * @name: Place to put name, which must be CPU_MAX_NAME_LEN bytes including
+ * @return pointer to name, which will likely be a few bytes after the start
+ * of @name
+ * \0 terminator
+ */
+char *cpu_get_name(char *name);
 #endif /* __ASSEMBLY__ */
 
 #endif

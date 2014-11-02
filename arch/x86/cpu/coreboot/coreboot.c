@@ -13,6 +13,7 @@
 #include <ns16550.h>
 #include <asm/msr.h>
 #include <asm/cache.h>
+#include <asm/cpu.h>
 #include <asm/io.h>
 #include <asm/arch-coreboot/tables.h>
 #include <asm/arch-coreboot/sysinfo.h>
@@ -126,4 +127,11 @@ void panic_puts(const char *str)
 	NS16550_init(port, 1);
 	while (*str)
 		NS16550_putc(port, *str++);
+}
+
+int print_cpuinfo(void)
+{
+	printf("CPU:   %s\n", cpu_has_64bit() ? "x86_64" : "x86");
+
+	return 0;
 }

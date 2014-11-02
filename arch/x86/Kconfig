@@ -13,8 +13,15 @@ choice
 config TARGET_COREBOOT
 	bool "Support coreboot"
 
+config TARGET_CHROMEBOOK_LINK
+	bool "Support Chromebook link"
+
 endchoice
 
+source "arch/x86/cpu/ivybridge/Kconfig"
+
 source "board/chromebook-x86/coreboot/Kconfig"
+
+source "board/google/chromebook_link/Kconfig"
 
 endmenu
