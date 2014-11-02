@@ -18,6 +18,10 @@ config TARGET_CHROMEBOOK_LINK
 
 endchoice
 
+config ROM_SIZE
+	hex
+	default 0x800000
+
 source "arch/x86/cpu/ivybridge/Kconfig"
 
 source "board/chromebook-x86/coreboot/Kconfig"
