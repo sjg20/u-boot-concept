@@ -146,7 +146,7 @@
 
 
 /* mod it to enable console commands.	*/
-#define CONFIG_BOOTDELAY		0
+#define CONFIG_BOOTDELAY		3
 
 
 /*
@@ -158,7 +158,8 @@
  * else just do as:
  *	#define CONFIG_PREBOOT
  */
-#define CONFIG_PREBOOT
+
+#define CONFIG_PREBOOT "setenv bootdelay 3"
 #define CONFIG_CMD_BOOTI
 #define CONFIG_BOOTCOMMAND		"booti"
 
@@ -251,6 +252,8 @@
  * 1MB = 0x100000, 0x100000 = 1024 * 1024
  */
 #define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + (1 << 20))
+
+#define DEBUG
 
 
 #endif /* __CONFIG_H */

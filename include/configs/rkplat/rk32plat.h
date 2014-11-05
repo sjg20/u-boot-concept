@@ -257,14 +257,14 @@
 #define CONFIG_POWER
 #define CONFIG_POWER_RK
 #define CONFIG_POWER_I2C
-#define CONFIG_POWER_RICOH619
+//#define CONFIG_POWER_RICOH619
 //#define CONFIG_POWER_RK_SAMPLE
-#define CONFIG_POWER_RK808
-#define CONFIG_POWER_RK818
+//#define CONFIG_POWER_RK808
+//#define CONFIG_POWER_RK818
 #define CONFIG_POWER_ACT8846
 #define CONFIG_SCREEN_ON_VOL_THRESD	0
 #define CONFIG_SYSTEM_ON_VOL_THRESD	0
-#define CONFIG_POWER_FG_CW201X
+//#define CONFIG_POWER_FG_CW201X
 
 
 /********************************** battery driver ********************************/
