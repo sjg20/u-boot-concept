@@ -87,11 +87,9 @@ int board_late_init(void)
 	/* Make sure the environment variables needed are set */
 	if (!(kernel_addr_str && initrd_addr_str && fdt_addr_str)) {
 		printf("%s: Define {kernel/initrd/fdt}_addr_r\n", __func__);
-		return -1;
 	}
 	if (!(kernel_name && initrd_name && fdt_name)) {
 		printf("%s: Define {kernel/initrd/fdt}_name\n", __func__);
-		return -1;
 	}
 
 	/* Get exact initrd_size */
@@ -99,7 +97,6 @@ int board_late_init(void)
 	if (initrd_size == -1) {
 		printf("%s: Can't get file size for \'%s\'\n", __func__,
 		       initrd_name);
-		return -1;
 	}
 
 	/* Set initrd_end */
@@ -119,7 +116,6 @@ int board_late_init(void)
 	avail = fdt_addr_r - kernel_addr_r;
 	if (avail < 0) {
 		printf("%s: fdt must be after kernel\n", __func__);
-		return -1;
 	}
 	smh_load(kernel_name, kernel_addr_r, avail, 1);
 
