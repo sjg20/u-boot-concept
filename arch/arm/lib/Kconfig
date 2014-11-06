@@ -1,0 +1,6 @@
+config SEMIHOSTING
+        bool "Semihosting"
+	depends on ARCH_HAVE_SEMIHOSTING
+        help
+          Add semihosting support. This allows u-boot to load binaries
+	  from host via semihost.

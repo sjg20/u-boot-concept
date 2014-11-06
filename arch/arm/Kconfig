@@ -7,6 +7,9 @@ config SYS_ARCH
 config ARM64
 	bool
 
+config ARCH_HAVE_SEMIHOSTING
+	bool
+
 choice
 	prompt "Target select"
 
@@ -467,6 +470,7 @@ config TEGRA
 config TARGET_VEXPRESS_AEMV8A
 	bool "Support vexpress_aemv8a"
 	select ARM64
+	select ARCH_HAVE_SEMIHOSTING
 
 config TARGET_LS2085A_EMU
 	bool "Support ls2085a_emu"
@@ -559,6 +563,8 @@ source "arch/arm/cpu/armv7/uniphier/Kconfig"
 source "arch/arm/cpu/arm926ejs/versatile/Kconfig"
 
 source "arch/arm/cpu/armv7/zynq/Kconfig"
+
+source "arch/arm/lib/Kconfig"
 
 source "board/aristainetos/Kconfig"
 source "board/BuR/kwb/Kconfig"
