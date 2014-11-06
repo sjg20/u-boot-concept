@@ -1,0 +1,13 @@
+menu "Network Device Support"
+
+if !SPL_BUILD
+
+config SMC91111
+	bool "SMSC's LAN91C111"
+	depends on NET
+	help
+	  Add SMSC's LAN91C111 Ethernet driver
+
+endif
+
+endmenu
