@@ -11,7 +11,9 @@
 #include <fdtdec.h>
 #include <linux/ctype.h>
 
+#ifdef CONFIG_GPIO
 #include <asm/gpio.h>
+#endif
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -505,6 +507,7 @@ int fdtdec_get_bool(const void *blob, int node, const char *prop_name)
 	return cell != NULL;
 }
 
+#ifdef CONFIG_GPIO
 /**
  * Decode a list of GPIOs from an FDT. This creates a list of GPIOs with no
  * terminating item.
@@ -599,6 +602,7 @@ int fdtdec_setup_gpio(struct fdt_gpio_state *gpio)
 		return -1;
 	return 0;
 }
+#endif /* CONFIG_GPIO */
 
 int fdtdec_get_byte_array(const void *blob, int node, const char *prop_name,
 		u8 *array, int count)
