@@ -9,4 +9,9 @@ config SYS_VENDOR
 config SYS_CONFIG_NAME
 	default "vexpress_aemv8a"
 
+config BASE_FVP
+	bool "Fast Models (FVP Base and/or VE)"
+	help
+	  Select Fast Models (FVP Base and/or VE).
+
 endif
