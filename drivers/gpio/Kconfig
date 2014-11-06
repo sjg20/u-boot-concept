@@ -1,0 +1,6 @@
+config GPIO
+	bool
+
+menu "GPIO Support"
+
+endmenu
