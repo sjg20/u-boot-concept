@@ -45,6 +45,8 @@
 *		Jason ported this file to u-boot to run the ATI video card
 *		BIOS in u-boot.
 ****************************************************************************/
+#define DEBUG
+
 #include <common.h>
 #include <bios_emul.h>
 #include <errno.h>
@@ -470,13 +472,15 @@ int biosemu_setup(pci_dev_t pcidev, BE_VGAInfo **vga_infop)
 	     PCI_BUS(pcidev), PCI_FUNC(pcidev), PCI_DEV(pcidev));
 
 	/*Initialise the x86 BIOS emulator*/
+	debug("1\n");
 	if ((VGAInfo = malloc(sizeof(*VGAInfo))) == NULL) {
 		printf("videoboot: Out of memory!\n");
 		return -ENOMEM;
 	}
+	debug("2\n");
 	memset(VGAInfo, 0, sizeof(*VGAInfo));
 // 	DEBUG_DECODE_F | DEBUG_TRACE_F | DEBUG_MEM_TRACE_F | DEBUG_IO_TRACE_F
-	BE_init(DEBUG_DECODE_F
+	BE_init(0
 	, 65536, VGAInfo, 0);
 	*vga_infop = VGAInfo;
 

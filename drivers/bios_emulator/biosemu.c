@@ -45,8 +45,9 @@
 *
 ****************************************************************************/
 
-#include <malloc.h>
 #include <common.h>
+#include <malloc.h>
+#include <bios_emul.h>
 #include "biosemui.h"
 
 BE_sysEnv _BE_env = {{0}};
@@ -93,9 +94,9 @@ int X86API BE_init(u32 debugFlags, int memSize, BE_VGAInfo * info, int shared)
 		return 0;
 	}
 
-	M.mem_base = malloc(memSize);
+	M.mem_base = (ulong)malloc(memSize);
 
-	if (M.mem_base == NULL){
+	if (M.mem_base == 0) {
 		printf("Biosemu:Out of memory!");
 		return 0;
 	}
@@ -144,6 +145,7 @@ void X86API BE_setVGA(BE_VGAInfo * info)
 		_BE_env.biosmem_base = _BE_env.busmem_base + 0x20000;
 		_BE_env.biosmem_limit = 0xC7FFF;
 	}
+	printf("biosmem %lx - %lx\n", _BE_env.biosmem_base, _BE_env.biosmem_limit);
 	if ((info->LowMem[0] == 0) && (info->LowMem[1] == 0) &&
 	    (info->LowMem[2] == 0) && (info->LowMem[3] == 0))
 		_BE_bios_init((u32 *) info->LowMem);
@@ -227,7 +229,7 @@ Cleans up and exits the emulator.
 ****************************************************************************/
 void X86API BE_exit(void)
 {
-	free(M.mem_base);
+	free((void *)M.mem_base);
 	free((void *)_BE_env.busmem_base);
 }
 

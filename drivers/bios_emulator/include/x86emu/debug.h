@@ -36,8 +36,8 @@
 *
 ****************************************************************************/
 
-#ifndef __X86EMU_DEBUG_H
-#define __X86EMU_DEBUG_H
+#ifndef __CONFIG_X86EMU_DEBUG_H
+#define __CONFIG_X86EMU_DEBUG_H
 
 /*---------------------- Macros and type definitions ----------------------*/
 
@@ -193,8 +193,8 @@ extern "C" {			/* Use "C" linkage when in C++ mode */
 #endif
 
 	extern void x86emu_inc_decoded_inst_len(int x);
-	extern void x86emu_decode_printf(char *x);
-	extern void x86emu_decode_printf2(char *x, int y);
+	extern void x86emu_decode_printf(const char *x);
+	extern void x86emu_decode_printf2(const char *x, int y);
 	extern void x86emu_just_disassemble(void);
 	extern void x86emu_single_step(void);
 	extern void x86emu_end_instr(void);
@@ -210,4 +210,4 @@ extern "C" {			/* Use "C" linkage when in C++ mode */
 #ifdef	__cplusplus
 }				/* End of "C" linkage for C++	    */
 #endif
-#endif				/* __X86EMU_DEBUG_H */
+#endif				/* __CONFIG_X86EMU_DEBUG_H */

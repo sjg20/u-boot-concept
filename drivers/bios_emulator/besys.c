@@ -47,6 +47,8 @@
 *
 ****************************************************************************/
 
+#include <common.h>
+#include <bios_emul.h>
 #define __io
 #include <common.h>
 #include <asm/io.h>
@@ -93,16 +95,14 @@ static u8 *BE_memaddr(u32 addr)
 		return (u8 *)M.mem_base;
 	} else if (addr >= 0xA0000 && addr <= 0xBFFFF) {
 		return (u8*)(_BE_env.busmem_base + addr - 0xA0000);
-	}
 #ifdef CONFIG_X86EMU_RAW_IO
-	else if (addr >= 0xD0000 && addr <= 0xFFFFF) {
+	} else if (addr >= 0xD0000 && addr <= 0xFFFFF) {
 		/* We map the real System BIOS directly on real PC's */
 		DB(printf("BE_memaddr: System BIOS address %#lx\n",
 			  (ulong)addr);)
 		    return (u8 *)_BE_env.busmem_base + addr - 0xA0000;
-	}
 #else
-	else if (addr >= 0xFFFF5 && addr < 0xFFFFE) {
+	} else if (addr >= 0xFFFF5 && addr < 0xFFFFE) {
 		/* Return a faked BIOS date string for non-x86 machines */
 		debug_io("BE_memaddr - Returning BIOS date\n");
 		return (u8 *)(BE_biosDate + addr - 0xFFFF5);
@@ -432,6 +432,8 @@ static u32 BE_accessReg(int regOffset, u32 value, int func)
 	device = (_BE_env.configAddress >> 11) & 0x1F;
 	bus = (_BE_env.configAddress >> 16) & 0xFF;
 
+	printf("pci access bus=%x, dev=%x, function=%x, func=%x, offset=%x\n",
+	       bus, device, function, func, regOffset);
 	/* Ignore accesses to all devices other than the one we're POSTing */
 	if ((function == _BE_env.vgaInfo.function) &&
 	    (device == _BE_env.vgaInfo.device) &&
@@ -440,14 +442,17 @@ static u32 BE_accessReg(int regOffset, u32 value, int func)
 		case REG_READ_BYTE:
 			pci_read_config_byte(_BE_env.vgaInfo.pcidev, regOffset,
 					     &val8);
+			printf("val8=%x\n", val8);
 			return val8;
 		case REG_READ_WORD:
 			pci_read_config_word(_BE_env.vgaInfo.pcidev, regOffset,
 					     &val16);
+			printf("val16=%x\n", val16);
 			return val16;
 		case REG_READ_DWORD:
 			pci_read_config_dword(_BE_env.vgaInfo.pcidev, regOffset,
 					      &val32);
+			printf("val32=%x\n", val32);
 			return val32;
 		case REG_WRITE_BYTE:
 			pci_write_config_byte(_BE_env.vgaInfo.pcidev, regOffset,
@@ -465,6 +470,8 @@ static u32 BE_accessReg(int regOffset, u32 value, int func)
 
 			return 0;
 		}
+	} else {
+		printf("   - ignored\n");
 	}
 	return 0;
 #else
@@ -580,11 +587,11 @@ u8 X86API BE_inb(X86EMU_pioAddr port)
 			val = VGA_inpb(port);
 	}
 	else if (IS_TIMER_PORT(port))
-		DB(printf("Can not interept TIMER port now!\n");)
+		DB(printf("Can not intercept TIMER port now!\n");)
 	else if (IS_SPKR_PORT(port))
-		DB(printf("Can not interept SPEAKER port now!\n");)
+		DB(printf("Can not intercept SPEAKER port now!\n");)
 	else if (IS_CMOS_PORT(port))
-		DB(printf("Can not interept CMOS port now!\n");)
+		DB(printf("Can not intercept CMOS port now!\n");)
 	else if (IS_PCI_PORT(port))
 		val = PCI_inp(port, REG_READ_BYTE);
 	else if (port < 0x100) {
@@ -682,11 +689,11 @@ void X86API BE_outb(X86EMU_pioAddr port, u8 val)
 	if (IS_VGA_PORT(port))
 		VGA_outpb(port, val);
 	else if (IS_TIMER_PORT(port))
-		DB(printf("Can not interept TIMER port now!\n");)
+		DB(printf("Can not intercaept TIMER port now!\n");)
 	else if (IS_SPKR_PORT(port))
-		DB(printf("Can not interept SPEAKER port now!\n");)
+		DB(printf("Can not intercaept SPEAKER port now!\n");)
 	else if (IS_CMOS_PORT(port))
-		DB(printf("Can not interept CMOS port now!\n");)
+		DB(printf("Can not intercaept CMOS port now!\n");)
 	else if (IS_PCI_PORT(port))
 		PCI_outp(port, val, REG_WRITE_BYTE);
 	else if (port < 0x100) {
