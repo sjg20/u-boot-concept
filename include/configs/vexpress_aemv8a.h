@@ -8,6 +8,9 @@
 #ifndef __VEXPRESS_AEMV8A_H
 #define __VEXPRESS_AEMV8A_H
 
+/* by aka */
+#define DEBUG
+
 #ifdef CONFIG_BASE_FVP
 #define CONFIG_BOARD_LATE_INIT
 #define CONFIG_ARMV8_SWITCH_TO_EL1
@@ -198,6 +201,9 @@
 /* Initial environment variables */
 #ifdef CONFIG_BASE_FVP
 #define CONFIG_EXTRA_ENV_SETTINGS	\
+				"ipaddr=192.168.10.2\0"	\
+				"netmask=255.255.255.0\0"	\
+				"serverip=192.168.10.1\0"	\
 				"kernel_name=uImage\0"	\
 				"kernel_addr_r=0x80000000\0"	\
 				"initrd_name=ramdisk.img\0"	\
@@ -207,15 +213,18 @@
 				"fdt_high=0xffffffffffffffff\0"	\
 				"initrd_high=0xffffffffffffffff\0"
 
-#define CONFIG_BOOTARGS		"console=ttyAMA0 earlyprintk=pl011,"\
+#define CONFIG_BOOTARGS		"console=ttyAMA0 earlyprintk earlycon=pl011,"\
 				"0x1c090000 debug user_debug=31 "\
+				"kgdboc=ttyAMA1 kgdbcon "\
+				"ip=dhcp "\
+			"root=/dev/nfs nfsroot=192.168.10.1:/opt/nfsroot rw "\
 				"loglevel=9"
 
 #define CONFIG_BOOTCOMMAND	"fdt addr $fdt_addr_r; fdt resize; " \
 				"fdt chosen $initrd_addr_r $initrd_end; " \
 				"bootm $kernel_addr_r - $fdt_addr_r"
 
-#define CONFIG_BOOTDELAY		1
+#define CONFIG_BOOTDELAY		5
 
 #else
 
