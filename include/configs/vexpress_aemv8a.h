@@ -69,7 +69,11 @@
 #define V2M_SYSCTL			(V2M_PA_CS3 + V2M_PERIPH_OFFSET(2))
 #define V2M_SERIAL_BUS_PCI		(V2M_PA_CS3 + V2M_PERIPH_OFFSET(3))
 
+#if 1 /* aka */
+#define V2M_BASE			0x880000000
+#else
 #define V2M_BASE			0x80000000
+#endif
 
 /*
  * Physical addresses, offset from V2M_PA_CS0-3
@@ -182,8 +186,13 @@
 
 /* Physical Memory Map */
 #define CONFIG_NR_DRAM_BANKS		1
+#if 1 /* by aka */
+#define PHYS_SDRAM_1			0x880000000	/* SDRAM Bank #1 */
+#define PHYS_SDRAM_1_SIZE		0x80000000	/* 2048 MB */
+#else
 #define PHYS_SDRAM_1			(V2M_BASE)	/* SDRAM Bank #1 */
 #define PHYS_SDRAM_1_SIZE		0x80000000	/* 2048 MB */
+#endif
 #define CONFIG_SYS_SDRAM_BASE		PHYS_SDRAM_1
 
 /* Initial environment variables */

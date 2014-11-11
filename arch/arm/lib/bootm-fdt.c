@@ -28,12 +28,16 @@ int arch_fixup_fdt(void *blob)
 	u64 start[CONFIG_NR_DRAM_BANKS];
 	u64 size[CONFIG_NR_DRAM_BANKS];
 
+#ifdef CONFIG_ARM64
+	ret = 0;
+#else
 	for (bank = 0; bank < CONFIG_NR_DRAM_BANKS; bank++) {
 		start[bank] = bd->bi_dram[bank].start;
 		size[bank] = bd->bi_dram[bank].size;
 	}
 
 	ret = fdt_fixup_memory_banks(blob, start, size, CONFIG_NR_DRAM_BANKS);
+#endif
 #if defined(CONFIG_ARMV7_NONSEC) || defined(CONFIG_ARMV7_VIRT)
 	if (ret)
 		return ret;
