@@ -258,8 +258,13 @@ typedef struct image_header {
 	__be32		ih_hcrc;	/* Image Header CRC Checksum	*/
 	__be32		ih_time;	/* Image Creation Timestamp	*/
 	__be32		ih_size;	/* Image Data Size		*/
+#if 1
+	__be64		ih_load;	/* Data	 Load  Address		*/
+	__be64		ih_ep;		/* Entry Point Address		*/
+#else
 	__be32		ih_load;	/* Data	 Load  Address		*/
 	__be32		ih_ep;		/* Entry Point Address		*/
+#endif
 	__be32		ih_dcrc;	/* Image Data CRC Checksum	*/
 	uint8_t		ih_os;		/* Operating System		*/
 	uint8_t		ih_arch;	/* CPU architecture		*/
@@ -366,6 +371,8 @@ extern bootm_headers_t images;
 
 #define uimage_to_cpu(x)		be32_to_cpu(x)
 #define cpu_to_uimage(x)		cpu_to_be32(x)
+#define uimage_to_cpu64(x)		be64_to_cpu(x)
+#define cpu64_to_uimage(x)		cpu_to_be64(x)
 
 /*
  * Translation table for entries of a specific type; used by
@@ -535,8 +542,19 @@ image_get_hdr_l(magic)		/* image_get_magic */
 image_get_hdr_l(hcrc)		/* image_get_hcrc */
 image_get_hdr_l(time)		/* image_get_time */
 image_get_hdr_l(size)		/* image_get_size */
+#if 1
+static inline uint64_t image_get_load(const image_header_t *hdr)
+{
+	return uimage_to_cpu64(hdr->ih_load);
+}
+static inline uint64_t image_get_ep(const image_header_t *hdr)
+{
+	return uimage_to_cpu64(hdr->ih_ep);
+}
+#else
 image_get_hdr_l(load)		/* image_get_load */
 image_get_hdr_l(ep)		/* image_get_ep */
+#endif
 image_get_hdr_l(dcrc)		/* image_get_dcrc */
 
 #define image_get_hdr_b(f) \
@@ -593,8 +611,19 @@ image_set_hdr_l(magic)		/* image_set_magic */
 image_set_hdr_l(hcrc)		/* image_set_hcrc */
 image_set_hdr_l(time)		/* image_set_time */
 image_set_hdr_l(size)		/* image_set_size */
+#if 1
+static inline void image_set_load(image_header_t *hdr, uint64_t val)
+{
+	hdr->ih_load = cpu64_to_uimage(val);
+}
+static inline void image_set_ep(image_header_t *hdr, uint64_t val)
+{
+	hdr->ih_ep = cpu64_to_uimage(val);
+}
+#else
 image_set_hdr_l(load)		/* image_set_load */
 image_set_hdr_l(ep)		/* image_set_ep */
+#endif
 image_set_hdr_l(dcrc)		/* image_set_dcrc */
 
 #define image_set_hdr_b(f) \
