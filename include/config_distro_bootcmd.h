@@ -91,7 +91,11 @@
 
 #ifdef CONFIG_CMD_USB
 #define BOOTENV_RUN_USB_INIT "run usb_init; "
+#ifndef BOOTENV_PREBOOT_INITS_USB
 #define BOOTENV_SET_USB_NEED_INIT "setenv usb_need_init; "
+#else
+#define BOOTENV_SET_USB_NEED_INIT "setenv usb_need_init false; "
+#endif
 #define BOOTENV_SHARED_USB \
 	"usb_init=" \
 		"if ${usb_need_init}; then " \
