@@ -302,12 +302,11 @@
 	func(PXE, pxe, na) \
 	func(DHCP, dhcp, na)
 
-#include <config_distro_bootcmd.h>
-
 #ifdef CONFIG_USB_KEYBOARD
 #define CONSOLE_STDIN_SETTINGS \
 	"preboot=usb start\0" \
 	"stdin=serial,usbkbd\0"
+#define BOOTENV_PREBOOT_INITS_USB
 #else
 #define CONSOLE_STDIN_SETTINGS \
 	"stdin=serial\0"
@@ -326,6 +325,8 @@
 #define CONSOLE_ENV_SETTINGS \
 	CONSOLE_STDIN_SETTINGS \
 	CONSOLE_STDOUT_SETTINGS
+
+#include <config_distro_bootcmd.h>
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	CONSOLE_ENV_SETTINGS \
