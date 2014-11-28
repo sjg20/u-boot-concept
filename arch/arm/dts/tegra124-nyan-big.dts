@@ -308,6 +308,10 @@
 		};
 	};
 
+	gpio@6000d000 {
+		u-boot,dm-pre-reloc;
+	};
+
 	gpio-keys {
 		compatible = "gpio-keys";
 
