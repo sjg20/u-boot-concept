@@ -99,6 +99,11 @@ int checkboard(void)
 }
 #endif	/* CONFIG_DISPLAY_BOARDINFO */
 
+__weak int tegra_lcd_pmic_init(int board_it)
+{
+	return 0;
+}
+
 /*
  * Routine: board_init
  * Description: Early hardware init.
@@ -106,6 +111,7 @@ int checkboard(void)
 int board_init(void)
 {
 	__maybe_unused int err;
+	__maybe_unused int board_id;
 
 	/* Do clocks and UART first so that printf() works */
 	clock_init();
@@ -146,6 +152,10 @@ int board_init(void)
 #endif
 
 #ifdef CONFIG_LCD
+	board_id = tegra_board_id();
+	err = tegra_lcd_pmic_init(board_id);
+	if (err)
+		return err;
 	tegra_lcd_check_next_stage(gd->fdt_blob, 0);
 #endif
 
