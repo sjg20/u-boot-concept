@@ -7,5 +7,4 @@
 # SPDX-License-Identifier:	GPL-2.0+
 #
 
-obj-$(CONFIG_PWM_TEGRA) += pwm.o
 obj-$(CONFIG_VIDEO_TEGRA) += display.o
