@@ -336,7 +336,7 @@ struct dm_i2c_ops {
 int i2c_get_chip(struct udevice *bus, uint chip_addr, struct udevice **devp);
 
 /**
- * i2c_get_chip() - get a device to use to access a chip on a bus number
+ * i2c_get_chip_for_busnum() - get access to a chip on a bus number
  *
  * This returns the device for the given chip address on a particular bus
  * number.
