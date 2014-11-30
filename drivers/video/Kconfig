@@ -1,0 +1,6 @@
+config DISPLAY_PORT
+	bool "Enable DisplayPort support"
+	help
+	   eDP (Embedded DisplayPort) is a standard widely used in laptops
+	   to drive LCD panels. This framework provides support for enabling
+	   these displays where supported by the video hardware.
