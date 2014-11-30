@@ -61,6 +61,21 @@ endchoice
 config SYS_SOC
 	default "exynos"
 
+config DM
+	default y
+
+config DM_SERIAL
+	default y
+
+config DM_SPI
+	default y
+
+config DM_SPI_FLASH
+	default y
+
+config DM_GPIO
+	default y
+
 source "board/samsung/smdkv310/Kconfig"
 source "board/samsung/trats/Kconfig"
 source "board/samsung/universal_c210/Kconfig"
