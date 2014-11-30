@@ -57,6 +57,23 @@ static inline void tegra_sor_write_field(struct tegra_dc_sor_data *sor,
 	tegra_sor_writel(sor, reg, reg_val);
 }
 
+void tegra_dp_disable_tx_pu(struct tegra_dc_sor_data *sor)
+{
+	tegra_sor_write_field(sor, DP_PADCTL(sor->portnum),
+			      DP_PADCTL_TX_PU_MASK, DP_PADCTL_TX_PU_DISABLE);
+}
+
+void tegra_dp_set_pe_vs_pc(struct tegra_dc_sor_data *sor, u32 mask, u32 pe_reg,
+			   u32 vs_reg, u32 pc_reg, u8 pc_supported)
+{
+	tegra_sor_write_field(sor, PR(sor->portnum), mask, pe_reg);
+	tegra_sor_write_field(sor, DC(sor->portnum), mask, vs_reg);
+	if (pc_supported) {
+		tegra_sor_write_field(sor, POSTCURSOR(sor->portnum), mask,
+				      pc_reg);
+	}
+}
+
 static u32 tegra_dc_sor_poll_register(struct tegra_dc_sor_data *sor, u32 reg,
 				      u32 mask, u32 exp_val,
 				      u32 poll_interval_us, u32 timeout_us)
@@ -809,12 +826,36 @@ void tegra_dc_sor_set_lane_parm(struct tegra_dc_sor_data *sor,
 	tegra_sor_write_field(sor, DP_PADCTL(sor->portnum), 0xf0, 0x0);
 }
 
+int tegra_dc_sor_set_voltage_swing(struct tegra_dc_sor_data *sor,
+				    const struct tegra_dp_link_config *link_cfg)
+{
+	u32 drive_current = 0;
+	u32 pre_emphasis = 0;
+
+	/* Set to a known-good pre-calibrated setting */
+	switch (link_cfg->link_bw) {
+	case SOR_LINK_SPEED_G1_62:
+	case SOR_LINK_SPEED_G2_7:
+		drive_current = 0x13131313;
+		pre_emphasis = 0;
+		break;
+	case SOR_LINK_SPEED_G5_4:
+		debug("T124 does not support 5.4G link clock.\n");
+	default:
+		debug("Invalid sor link bandwidth: %d\n", link_cfg->link_bw);
+		return -ENOLINK;
+	}
+
+	tegra_sor_writel(sor, LANE_DRIVE_CURRENT(sor->portnum), drive_current);
+	tegra_sor_writel(sor, PR(sor->portnum), pre_emphasis);
+
+	return 0;
+}
+
 void tegra_dc_sor_power_down_unused_lanes(struct tegra_dc_sor_data *sor,
 			const struct tegra_dp_link_config *link_cfg)
 {
 	u32 pad_ctrl = 0;
-	u32 drive_current = 0;
-	u32 pre_emphasis = 0;
 	int err = 0;
 
 	switch (link_cfg->lane_count) {
@@ -849,25 +890,38 @@ void tegra_dc_sor_power_down_unused_lanes(struct tegra_dc_sor_data *sor,
 		debug("Wait for lane power down failed: %d\n", err);
 		return;
 	}
+}
 
-	/* Set to a known-good pre-calibrated setting */
-	switch (link_cfg->link_bw) {
-	case SOR_LINK_SPEED_G1_62:
-	case SOR_LINK_SPEED_G2_7:
-		drive_current = 0x13131313;
-		pre_emphasis = 0;
+int tegra_sor_precharge_lanes(struct tegra_dc_sor_data *sor,
+			      const struct tegra_dp_link_config *cfg)
+{
+	u32 val = 0;
+
+	switch (cfg->lane_count) {
+	case 4:
+		val |= (DP_PADCTL_PD_TXD_3_NO |
+			DP_PADCTL_PD_TXD_2_NO);
+		/* fall through */
+	case 2:
+		val |= DP_PADCTL_PD_TXD_1_NO;
+		/* fall through */
+	case 1:
+		val |= DP_PADCTL_PD_TXD_0_NO;
 		break;
-	case SOR_LINK_SPEED_G5_4:
-		drive_current = 0x19191919;
-		pre_emphasis = 0x09090909;
 	default:
-		printf("Invalid sor link bandwidth: %d\n", link_cfg->link_bw);
-		return;
+		debug("dp: invalid lane number %d\n", cfg->lane_count);
+		return -EINVAL;
 	}
 
-	tegra_sor_writel(sor, LANE_DRIVE_CURRENT(sor->portnum),
-			 drive_current);
-	tegra_sor_writel(sor, PR(sor->portnum), pre_emphasis);
+	tegra_sor_write_field(sor, DP_PADCTL(sor->portnum),
+			      (0xf << DP_PADCTL_COMODE_TXD_0_DP_TXD_2_SHIFT),
+			      (val << DP_PADCTL_COMODE_TXD_0_DP_TXD_2_SHIFT));
+	udelay(100);
+	tegra_sor_write_field(sor, DP_PADCTL(sor->portnum),
+			      (0xf << DP_PADCTL_COMODE_TXD_0_DP_TXD_2_SHIFT),
+			      0);
+
+	return 0;
 }
 
 int tegra_dc_sor_init(struct tegra_dc_sor_data **sorp)
