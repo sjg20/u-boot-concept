@@ -12,6 +12,9 @@ config SYS_CONFIG_NAME
 	string
 	default "peach-pi"
 
+config DM_CROS_EC
+	default y
+
 endif
 
 if TARGET_PEACH_PIT
@@ -24,6 +27,9 @@ config SYS_VENDOR
 
 config SYS_CONFIG_NAME
 	default "peach-pit"
+
+config DM_CROS_EC
+	default y
 
 endif
 
