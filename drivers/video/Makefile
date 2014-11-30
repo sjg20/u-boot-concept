@@ -50,3 +50,5 @@ obj-$(CONFIG_VIDEO_X86) += x86_fb.o
 obj-$(CONFIG_FORMIKE) += formike.o
 obj-$(CONFIG_AM335X_LCD) += am335x-fb.o
 obj-$(CONFIG_VIDEO_PARADE) += parade.o
+
+obj-${CONFIG_VIDEO_TEGRA124} += tegra124/
