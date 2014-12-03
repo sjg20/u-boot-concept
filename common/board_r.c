@@ -922,6 +922,10 @@ void board_init_r(gd_t *new_gd, ulong dest_addr)
 	gd = new_gd;
 #endif
 
+	ulong bss_start = (ulong)&__bss_start;
+	ulong bss_end = (ulong)&__bss_end;
+	memset((void *)bss_start, 0, bss_end - bss_start);
+
 #ifdef CONFIG_NEEDS_MANUAL_RELOC
 	for (i = 0; i < ARRAY_SIZE(init_sequence_r); i++)
 		init_sequence_r[i] += gd->reloc_off;

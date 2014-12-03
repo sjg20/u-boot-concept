@@ -108,6 +108,7 @@ DECLARE_GLOBAL_DATA_PTR;
 extern ulong __init_end;
 extern ulong __bss_end;
 ulong monitor_flash_len;
+extern ulong __bss_start;
 
 #if defined(CONFIG_CMD_BEDBUG)
 #include <bedbug/type.h>
@@ -610,6 +611,8 @@ void board_init_r(gd_t *id, ulong dest_addr)
 
 	/* The Malloc area is immediately below the monitor copy in DRAM */
 	malloc_start = dest_addr - TOTAL_MALLOC_LEN;
+
+	memset(&__bss_start, 0, &__bss_end - &__bss_start);
 
 #if defined(CONFIG_MPC85xx) || defined(CONFIG_MPC86xx)
 	/*
