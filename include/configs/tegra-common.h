@@ -37,7 +37,6 @@
  * Size of malloc() pool
  */
 #define CONFIG_SYS_MALLOC_LEN		(4 << 20)	/* 4MB  */
-#define CONFIG_SYS_MALLOC_F_LEN	(4 << 10)
 #ifdef CONFIG_SPL_BUILD
 #define CONFIG_SYS_MALLOC_SIMPLE
 #endif
