@@ -5,6 +5,7 @@
  */
 
 #include <common.h>
+#include <debug_uart.h>
 #include <dm.h>
 #include <errno.h>
 #include <fdtdec.h>
@@ -106,10 +107,15 @@ static int ns16550_readb(NS16550_t port, int offset)
 	ns16550_readb(com_port, addr - (unsigned char *)com_port)
 #endif
 
-int ns16550_calc_divisor(NS16550_t port, int clock, int baudrate)
+static inline int calc_divisor(NS16550_t port, int clock, int baudrate)
 {
 	const unsigned int mode_x_div = 16;
 
+	return DIV_ROUND_CLOSEST(clock, mode_x_div * baudrate);
+}
+
+int ns16550_calc_divisor(NS16550_t port, int clock, int baudrate)
+{
 #ifdef CONFIG_OMAP1510
 	/* If can't cleanly clock 115200 set div to 1 */
 	if ((clock == 12000000) && (baudrate == 115200)) {
@@ -119,7 +125,7 @@ int ns16550_calc_divisor(NS16550_t port, int clock, int baudrate)
 	port->osc_12m_sel = 0;			/* clear if previsouly set */
 #endif
 
-	return DIV_ROUND_CLOSEST(clock, mode_x_div * baudrate);
+	return calc_divisor(port, clock, baudrate);
 }
 
 static void NS16550_setbrg(NS16550_t com_port, int baud_divisor)
@@ -217,6 +223,38 @@ int NS16550_tstc(NS16550_t com_port)
 }
 
 #endif /* CONFIG_NS16550_MIN_FUNCTIONS */
+
+#ifdef CONFIG_DEBUG_UART_NS16550
+void debug_uart_init(void)
+{
+	struct NS16550 *com_port = (struct NS16550 *)CONFIG_DEBUG_UART_BASE;
+	int baud_divisor;
+
+	baud_divisor = calc_divisor(com_port, CONFIG_DEBUG_UART_CLOCK,
+				    CONFIG_BAUDRATE);
+
+	writeb(CONFIG_SYS_NS16550_IER, &com_port->ier);
+	writeb(UART_MCRVAL, &com_port->mcr);
+	writeb(UART_FCRVAL, &com_port->fcr);
+
+	writeb(UART_LCR_BKSE | UART_LCRVAL, &com_port->lcr);
+	writeb(baud_divisor & 0xff, &com_port->dll);
+	writeb((baud_divisor >> 8) & 0xff, &com_port->dlm);
+	writeb(UART_LCRVAL, &com_port->lcr);
+}
+
+static inline void _debug_uart_putc(int ch)
+{
+	struct NS16550 *com_port = (struct NS16550 *)CONFIG_DEBUG_UART_BASE;
+
+	while (!(readb(&com_port->lsr) & UART_LSR_THRE))
+		;
+	writeb(ch, &com_port->thr);
+}
+
+DEBUG_UART_FUNCS
+
+#endif
 
 #ifdef CONFIG_DM_SERIAL
 static int ns16550_serial_putc(struct udevice *dev, const char ch)
