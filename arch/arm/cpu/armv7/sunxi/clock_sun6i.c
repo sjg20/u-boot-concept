@@ -144,12 +144,10 @@ void clock_set_pll3(unsigned int clk)
 	       &ccm->pll3_cfg);
 }
 
-void clock_set_pll5(unsigned int clk, bool sigma_delta_enable)
+void clock_set_pll5(unsigned int clk, int k, int m, bool sigma_delta_enable)
 {
 	struct sunxi_ccm_reg * const ccm =
 		(struct sunxi_ccm_reg *)SUNXI_CCM_BASE;
-	const int k = 2;
-	const int m = 1;
 
 	if (sigma_delta_enable)
 		writel(CCM_PLL5_PATTERN, &ccm->pll5_pattern_cfg);

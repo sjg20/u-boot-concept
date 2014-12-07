@@ -311,6 +311,6 @@ struct sunxi_ccm_reg {
 #define CCM_DE_CTRL_PLL10		(5 << 24)
 #define CCM_DE_CTRL_GATE		(1 << 31)
 
-void clock_set_pll5(unsigned int clk, bool sigma_delta_enable);
+void clock_set_pll5(unsigned int clk, int k, int m, bool sigma_delta_enable);
 
 #endif /* _SUNXI_CLOCK_SUN6I_H */
