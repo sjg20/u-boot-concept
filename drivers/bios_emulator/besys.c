@@ -60,7 +60,7 @@ static u8 BE_model = 0xFC;
 static u8 BE_submodel = 0x00;
 #endif
 
-#undef DEBUG_IO_ACCESS
+#define DEBUG_IO_ACCESS
 
 #ifdef DEBUG_IO_ACCESS
 #define debug_io(fmt, ...)	printf(fmt, ##__VA_ARGS__)
