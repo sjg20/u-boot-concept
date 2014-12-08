@@ -475,7 +475,9 @@ int biosemu_setup(pci_dev_t pcidev, BE_VGAInfo **vga_infop)
 		return -ENOMEM;
 	}
 	memset(VGAInfo, 0, sizeof(*VGAInfo));
-	BE_init(0, 65536, VGAInfo, 0);
+// 	DEBUG_DECODE_F | DEBUG_TRACE_F | DEBUG_MEM_TRACE_F | DEBUG_IO_TRACE_F
+	BE_init(DEBUG_DECODE_F
+	, 65536, VGAInfo, 0);
 	*vga_infop = VGAInfo;
 
 	return 0;

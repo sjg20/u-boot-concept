@@ -184,6 +184,8 @@ static void print_encoded_bytes(u16 s, u16 o)
 {
 	int i;
 	char buf1[64];
+
+	*buf1 = '\0';
 	for (i = 0; i < M.x86.enc_pos; i++) {
 		sprintf(buf1 + 2 * i, "%02x", fetch_data_byte_abs(s, o + i));
 	}

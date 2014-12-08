@@ -15,7 +15,7 @@
 #define CONFIG_SYS_SDRAM_BASE		0x00000000	/* _must_ be 0		*/
 #define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE	/* Start of U-Boot	*/
 #define CONFIG_SYS_MONITOR_LEN		(0xFFFFFFFF - CONFIG_SYS_MONITOR_BASE + 1)
-#define CONFIG_SYS_MALLOC_LEN		(1 << 20)	/* Reserved for malloc	*/
+#define CONFIG_SYS_MALLOC_LEN		(8 << 20)	/* Reserved for malloc	*/
 
 /*
  * UART
