@@ -673,4 +673,21 @@
 }
 #endif
 
+#define CONFIG_VIDEO
+
+#ifdef CONFIG_VIDEO
+#define CONFIG_BIOSEMU			/* x86 bios emulator for vga bios */
+#define CONFIG_VIDEO_VESA
+#define VIDEO_IO_OFFSET			0xe8000000
+#define CONFIG_SYS_ISA_IO_BASE_ADDRESS		VIDEO_IO_OFFSET
+#define CONFIG_VIDEO_SW_CURSOR
+#define CONFIG_VIDEO_LOGO
+#define CONFIG_CFB_CONSOLE
+#define CONFIG_SPLASH_SCREEN
+#define CONFIG_VGA_AS_SINGLE_DEVICE
+#define CONFIG_CMD_BMP
+#endif
+
+#define CONFIG_X86EMU_DEBUG
+
 #endif	/* __CONFIG_H */

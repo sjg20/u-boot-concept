@@ -9,12 +9,12 @@
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
-
+#define DEBUG
 #include <common.h>
 #include <errno.h>
 #include <pci.h>
 
-#undef DEBUG
+// #undef DEBUG
 #ifdef DEBUG
 #define DEBUGF(x...) printf(x)
 #else
@@ -183,6 +183,19 @@ void pciauto_setup_device(struct pci_controller *hose,
 		DEBUGF("\n");
 
 		bar_nr++;
+	}
+
+	pci_hose_write_config_dword(hose, dev, PCI_ROM_ADDRESS, -2);
+	pci_hose_read_config_dword(hose, dev, PCI_ROM_ADDRESS, &bar_response);
+	if (bar_response) {
+		bar_size = -(bar_response & ~1);
+		DEBUGF("PCI Autoconfig: ROM, size=%#x, ", bar_size);
+		if (pciauto_region_allocate(mem, bar_size, &bar_value) == 0) {
+			pci_hose_write_config_dword(hose, dev, PCI_ROM_ADDRESS,
+						    bar_value);
+		}
+		DEBUGF("\n");
+		cmdstat |= PCI_COMMAND_MEMORY | PCI_COMMAND_MASTER;
 	}
 
 	pci_hose_write_config_word(hose, dev, PCI_COMMAND, cmdstat);
