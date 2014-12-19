@@ -212,6 +212,7 @@
 #define CONFIG_CFB_CONSOLE
 #define CONFIG_VIDEO_SW_CURSOR
 #define CONFIG_VIDEO_LOGO
+#define CONFIG_VIDEO_STD_TIMINGS
 
 /* allow both serial and cfb console. */
 #define CONFIG_CONSOLE_MUX
