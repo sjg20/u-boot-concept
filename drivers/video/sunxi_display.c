@@ -561,10 +561,6 @@ static void sunxi_mode_set(const struct ctfb_res_modes *mode, char *monitor,
 	int clk_div, clk_double;
 	bool hdmi_mode = strcmp(monitor, "hdmi") == 0;
 
-	clrbits_le32(&hdmi->video_ctrl, SUNXI_HDMI_VIDEO_CTRL_ENABLE);
-	clrbits_le32(&lcdc->ctrl, SUNXI_LCDC_CTRL_TCON_ENABLE);
-	clrbits_le32(&de_be->mode, SUNXI_DE_BE_MODE_START);
-
 	sunxi_composer_mode_set(mode, address);
 	sunxi_lcdc_mode_set(mode, &clk_div, &clk_double);
 	sunxi_hdmi_mode_set(mode, hdmi_mode, clk_div, clk_double);
