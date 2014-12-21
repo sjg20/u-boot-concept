@@ -399,8 +399,8 @@ static void sunxi_lcdc_init(void)
 	writel(0xffffffff, &lcdc->tcon1_io_tristate);
 }
 
-static void sunxi_lcdc_mode_set(const struct ctfb_res_modes *mode,
-				int *clk_div, int *clk_double)
+static void sunxi_lcdc_tcon1_mode_set(const struct ctfb_res_modes *mode,
+				      int *clk_div, int *clk_double)
 {
 	struct sunxi_lcdc_reg * const lcdc =
 		(struct sunxi_lcdc_reg *)SUNXI_LCD0_BASE;
@@ -569,16 +569,28 @@ static void sunxi_mode_set(const struct ctfb_res_modes *mode,
 	int clk_div, clk_double;
 
 	sunxi_composer_mode_set(mode, address);
-	sunxi_lcdc_mode_set(mode, &clk_div, &clk_double);
-	sunxi_hdmi_mode_set(mode, clk_div, clk_double);
+	switch (sunxi_display.monitor) {
+	case sunxi_monitor_none:
+		break;
+	case sunxi_monitor_dvi:
+	case sunxi_monitor_hdmi:
+		sunxi_lcdc_tcon1_mode_set(mode, &clk_div, &clk_double);
+		sunxi_hdmi_mode_set(mode, clk_div, clk_double);
+		break;
+	case sunxi_monitor_lcd:
+		/* TODO */
+		break;
+	}
 
 	setbits_le32(&de_be->reg_ctrl, SUNXI_DE_BE_REG_CTRL_LOAD_REGS);
 	setbits_le32(&de_be->mode, SUNXI_DE_BE_MODE_START);
 	setbits_le32(&lcdc->ctrl, SUNXI_LCDC_CTRL_TCON_ENABLE);
 
-	udelay(100);
-
-	setbits_le32(&hdmi->video_ctrl, SUNXI_HDMI_VIDEO_CTRL_ENABLE);
+	if (sunxi_display.monitor == sunxi_monitor_dvi ||
+	    sunxi_display.monitor == sunxi_monitor_hdmi) {
+		udelay(100);
+		setbits_le32(&hdmi->video_ctrl, SUNXI_HDMI_VIDEO_CTRL_ENABLE);
+	}
 }
 
 void *video_hw_init(void)
@@ -612,19 +624,27 @@ void *video_hw_init(void)
 	if (i == ARRAY_SIZE(mon_desc))
 		printf("Unknown monitor: '%s', falling back to 'dvi'\n", mon);
 
-	/* Always call hdp_detect, as it also enables various clocks, etc. */
-	ret = sunxi_hdmi_hpd_detect();
-	if (hpd && !ret) {
+	switch (sunxi_display.monitor) {
+	case sunxi_monitor_none:
+		return NULL;
+	case sunxi_monitor_dvi:
+	case sunxi_monitor_hdmi:
+		/* Always call hdp_detect, as it also enables clocks, etc. */
+		ret = sunxi_hdmi_hpd_detect();
+		if (ret) {
+			printf("HDMI connected: ");
+			if (edid && sunxi_hdmi_edid_get_mode(&edid_mode) == 0)
+				mode = &edid_mode;
+			break;
+		}
+		if (!hpd)
+			break; /* User has requested to ignore hpd */
+
 		sunxi_hdmi_shutdown();
 		return NULL;
-	}
-	if (ret)
-		printf("HDMI connected: ");
-
-	/* Check edid if requested and we've a cable plugged in */
-	if (edid && ret) {
-		if (sunxi_hdmi_edid_get_mode(&edid_mode) == 0)
-			mode = &edid_mode;
+	case sunxi_monitor_lcd:
+		printf("LCD not supported on this board\n");
+		return NULL;
 	}
 
 	if (mode->vmode != FB_VMODE_NONINTERLACED) {
