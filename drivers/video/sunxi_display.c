@@ -11,7 +11,9 @@
 
 #include <asm/arch/clock.h>
 #include <asm/arch/display.h>
+#include <asm/arch/gpio.h>
 #include <asm/global_data.h>
+#include <asm/gpio.h>
 #include <asm/io.h>
 #include <errno.h>
 #include <fdtdec.h>
@@ -32,6 +34,7 @@ struct sunxi_display {
 	GraphicDevice graphic_device;
 	bool enabled;
 	enum sunxi_monitor monitor;
+	unsigned int depth;
 } sunxi_display;
 
 /*
@@ -416,6 +419,90 @@ static void sunxi_lcdc_init(void)
 	writel(0xffffffff, &lcdc->tcon1_io_tristate);
 }
 
+static int sunxi_lcdc_get_clk_delay(const struct ctfb_res_modes *mode)
+{
+	int delay;
+
+	delay = mode->lower_margin + mode->vsync_len + mode->upper_margin - 2;
+	return (delay > 30) ? 30 : delay;
+}
+
+static void sunxi_lcdc_tcon0_mode_set(const struct ctfb_res_modes *mode)
+{
+	struct sunxi_lcdc_reg * const lcdc =
+		(struct sunxi_lcdc_reg *)SUNXI_LCD0_BASE;
+	int bp, clk_delay, clk_div, clk_double, pin, total;
+
+	for (pin = SUNXI_GPD(0); pin <= SUNXI_GPD(27); pin++)
+		sunxi_gpio_set_cfgpin(pin, SUNXI_GPD0_LCD0);
+
+	pin = sunxi_name_to_gpio(CONFIG_VIDEO_LCD_POWER);
+	if (pin != -1) {
+		gpio_request(pin, "lcd_power");
+		gpio_direction_output(pin, 1);
+	}
+
+	pin = sunxi_name_to_gpio(CONFIG_VIDEO_LCD_BL_PWM);
+	if (pin != -1) {
+		gpio_request(pin, "lcd_backlight_pwm");
+		/* backlight pwm is inverted, set to 0 to enable backlight */
+		gpio_direction_output(pin, 0);
+	}
+
+	sunxi_lcdc_pll_set(0, mode->pixclock_khz, &clk_div, &clk_double);
+
+	/* Use tcon0 */
+	clrsetbits_le32(&lcdc->ctrl, SUNXI_LCDC_CTRL_IO_MAP_MASK,
+			SUNXI_LCDC_CTRL_IO_MAP_TCON0);
+
+	clk_delay = sunxi_lcdc_get_clk_delay(mode);
+	writel(SUNXI_LCDC_TCON0_CTRL_ENABLE |
+	       SUNXI_LCDC_TCON0_CTRL_CLK_DELAY(clk_delay), &lcdc->tcon0_ctrl);
+
+	writel(SUNXI_LCDC_TCON0_DCLK_ENABLE |
+	       SUNXI_LCDC_TCON0_DCLK_DIV(clk_div), &lcdc->tcon0_dclk);
+
+	writel(SUNXI_LCDC_X(mode->xres) | SUNXI_LCDC_Y(mode->yres),
+	       &lcdc->tcon0_timing_active);
+
+	bp = mode->hsync_len + mode->left_margin;
+	total = mode->xres + mode->right_margin + bp;
+	writel(SUNXI_LCDC_TCON0_TIMING_H_TOTAL(total) |
+	       SUNXI_LCDC_TCON0_TIMING_H_BP(bp), &lcdc->tcon0_timing_h);
+
+	bp = mode->vsync_len + mode->upper_margin;
+	total = mode->yres + mode->lower_margin + bp;
+	writel(SUNXI_LCDC_TCON0_TIMING_V_TOTAL(total) |
+	       SUNXI_LCDC_TCON0_TIMING_V_BP(bp), &lcdc->tcon0_timing_v);
+
+	writel(SUNXI_LCDC_X(mode->hsync_len) | SUNXI_LCDC_Y(mode->vsync_len),
+	       &lcdc->tcon0_timing_sync);
+
+	/* We only support hv-sync parallel lcd-s for now */
+	writel(0, &lcdc->tcon0_hv_intf);
+	writel(0, &lcdc->tcon0_cpu_intf);
+
+	if (sunxi_display.depth == 18 || sunxi_display.depth == 17) {
+		writel(SUNXI_LCDC_FRAME_CTRL_DITHER0, &lcdc->frame_ctrl[1]);
+		writel(SUNXI_LCDC_FRAME_CTRL_DITHER0, &lcdc->frame_ctrl[2]);
+		writel(SUNXI_LCDC_FRAME_CTRL_DITHER0, &lcdc->frame_ctrl[3]);
+		writel(SUNXI_LCDC_FRAME_CTRL_DITHER0, &lcdc->frame_ctrl[4]);
+		writel(SUNXI_LCDC_FRAME_CTRL_DITHER0, &lcdc->frame_ctrl[5]);
+		writel(SUNXI_LCDC_FRAME_CTRL_DITHER0, &lcdc->frame_ctrl[6]);
+		writel(SUNXI_LCDC_FRAME_CTRL_DITHER1, &lcdc->frame_ctrl[7]);
+		writel(SUNXI_LCDC_FRAME_CTRL_DITHER2, &lcdc->frame_ctrl[8]);
+		writel(SUNXI_LCDC_FRAME_CTRL_DITHER3, &lcdc->frame_ctrl[9]);
+		writel(SUNXI_LCDC_FRAME_CTRL_DITHER4, &lcdc->frame_ctrl[10]);
+		writel(((sunxi_display.depth == 18) ?
+			SUNXI_LCDC_FRAME_CTRL0_RGB666 :
+			SUNXI_LCDC_FRAME_CTRL0_RGB656),
+		       &lcdc->frame_ctrl[0]);
+	}
+
+	writel(0, &lcdc->tcon0_io_polarity);
+	writel(0, &lcdc->tcon0_io_tristate);
+}
+
 static void sunxi_lcdc_tcon1_mode_set(const struct ctfb_res_modes *mode,
 				      int *clk_div, int *clk_double)
 {
@@ -595,7 +682,7 @@ static void sunxi_mode_set(const struct ctfb_res_modes *mode,
 		sunxi_hdmi_mode_set(mode, clk_div, clk_double);
 		break;
 	case sunxi_monitor_lcd:
-		/* TODO */
+		sunxi_lcdc_tcon0_mode_set(mode);
 		break;
 	}
 
@@ -614,12 +701,12 @@ void *video_hw_init(void)
 {
 	static GraphicDevice *graphic_device = &sunxi_display.graphic_device;
 	const struct ctfb_res_modes *mode;
-	struct ctfb_res_modes edid_mode;
+	struct ctfb_res_modes custom;
 	const char *options;
-	unsigned int depth;
 	int i, ret, hpd, edid;
 	char mon[16];
 	const char *mon_desc[] = { "none", "dvi", "hdmi", "lcd" };
+	char *lcd_mode = CONFIG_VIDEO_LCD_MODE;
 
 	memset(&sunxi_display, 0, sizeof(struct sunxi_display));
 
@@ -627,7 +714,8 @@ void *video_hw_init(void)
 	       CONFIG_SUNXI_FB_SIZE >> 10);
 	gd->fb_base = gd->ram_top;
 
-	video_get_ctfb_res_modes(RES_MODE_1024x768, 24, &mode, &depth, &options);
+	video_get_ctfb_res_modes(RES_MODE_1024x768, 24, &mode,
+				 &sunxi_display.depth, &options);
 	hpd = video_get_option_int(options, "hpd", 1);
 	edid = video_get_option_int(options, "edid", 1);
 	video_get_option_string(options, "monitor", mon, sizeof(mon), "dvi");
@@ -650,16 +738,26 @@ void *video_hw_init(void)
 		ret = sunxi_hdmi_hpd_detect();
 		if (ret) {
 			printf("HDMI connected: ");
-			if (edid && sunxi_hdmi_edid_get_mode(&edid_mode) == 0)
-				mode = &edid_mode;
+			if (edid && sunxi_hdmi_edid_get_mode(&custom) == 0)
+				mode = &custom;
 			break;
 		}
 		if (!hpd)
 			break; /* User has requested to ignore hpd */
 
 		sunxi_hdmi_shutdown();
-		return NULL;
+
+		if (lcd_mode[0] == 0)
+			return NULL; /* No LCD, bail */
+
+		/* Fall back / through to LCD */
+		sunxi_display.monitor = sunxi_monitor_lcd;
 	case sunxi_monitor_lcd:
+		if (lcd_mode[0]) {
+			sunxi_display.depth = video_get_params(&custom, lcd_mode);
+			mode = &custom;
+			break;
+		}
 		printf("LCD not supported on this board\n");
 		return NULL;
 	}
@@ -698,16 +796,29 @@ int sunxi_simplefb_setup(void *blob)
 {
 	static GraphicDevice *graphic_device = &sunxi_display.graphic_device;
 	int offset, ret;
+	const char *pipeline = NULL;
 
 	if (!sunxi_display.enabled)
 		return 0;
+
+	switch (sunxi_display.monitor) {
+	case sunxi_monitor_none:
+		return 0;
+	case sunxi_monitor_dvi:
+	case sunxi_monitor_hdmi:
+		pipeline = "de_be0-lcd0-hdmi";
+		break;
+	case sunxi_monitor_lcd:
+		pipeline = "de_be0-lcd0";
+		break;
+	}
 
 	/* Find a framebuffer node, with pipeline == "de_be0-lcd0-hdmi" */
 	offset = fdt_node_offset_by_compatible(blob, -1,
 					       "allwinner,simple-framebuffer");
 	while (offset >= 0) {
 		ret = fdt_find_string(blob, offset, "allwinner,pipeline",
-				      "de_be0-lcd0-hdmi");
+				      pipeline);
 		if (ret == 0)
 			break;
 		offset = fdt_node_offset_by_compatible(blob, offset,

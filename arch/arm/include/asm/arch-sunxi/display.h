@@ -57,14 +57,13 @@ struct sunxi_lcdc_reg {
 	u32 int0;			/* 0x04 */
 	u32 int1;			/* 0x08 */
 	u8 res0[0x04];			/* 0x0c */
-	u32 frame_ctrl;			/* 0x10 */
-	u8 res1[0x2c];			/* 0x14 */
+	u32 frame_ctrl[12];		/* 0x10 */
 	u32 tcon0_ctrl;			/* 0x40 */
 	u32 tcon0_dclk;			/* 0x44 */
-	u32 tcon0_basic_timing0;	/* 0x48 */
-	u32 tcon0_basic_timing1;	/* 0x4c */
-	u32 tcon0_basic_timing2;	/* 0x50 */
-	u32 tcon0_basic_timing3;	/* 0x54 */
+	u32 tcon0_timing_active;	/* 0x48 */
+	u32 tcon0_timing_h;		/* 0x4c */
+	u32 tcon0_timing_v;		/* 0x50 */
+	u32 tcon0_timing_sync;		/* 0x54 */
 	u32 tcon0_hv_intf;		/* 0x58 */
 	u8 res2[0x04];			/* 0x5c */
 	u32 tcon0_cpu_intf;		/* 0x60 */
@@ -179,7 +178,21 @@ struct sunxi_hdmi_reg {
 #define SUNXI_LCDC_CTRL_IO_MAP_TCON0		(0 << 0)
 #define SUNXI_LCDC_CTRL_IO_MAP_TCON1		(1 << 0)
 #define SUNXI_LCDC_CTRL_TCON_ENABLE		(1 << 31)
+#define SUNXI_LCDC_FRAME_CTRL0_RGB666		((1 << 31) | (0 << 4))
+#define SUNXI_LCDC_FRAME_CTRL0_RGB656		((1 << 31) | (5 << 4))
+#define SUNXI_LCDC_FRAME_CTRL_DITHER0		0x11111111
+#define SUNXI_LCDC_FRAME_CTRL_DITHER1		0x01010000
+#define SUNXI_LCDC_FRAME_CTRL_DITHER2		0x15151111
+#define SUNXI_LCDC_FRAME_CTRL_DITHER3		0x57575555
+#define SUNXI_LCDC_FRAME_CTRL_DITHER4		0x7f7f7777
+#define SUNXI_LCDC_TCON0_CTRL_CLK_DELAY(n)	(((n) & 0x1f) << 4)
+#define SUNXI_LCDC_TCON0_CTRL_ENABLE		(1 << 31)
+#define SUNXI_LCDC_TCON0_DCLK_DIV(n)		((n) << 0)
 #define SUNXI_LCDC_TCON0_DCLK_ENABLE		(0xf << 28)
+#define SUNXI_LCDC_TCON0_TIMING_H_BP(n)		(((n) - 1) << 0)
+#define SUNXI_LCDC_TCON0_TIMING_H_TOTAL(n)	(((n) - 1) << 16)
+#define SUNXI_LCDC_TCON0_TIMING_V_BP(n)		(((n) - 1) << 0)
+#define SUNXI_LCDC_TCON0_TIMING_V_TOTAL(n)	(((n) * 2) << 16)
 #define SUNXI_LCDC_TCON1_CTRL_CLK_DELAY(n)	(((n) & 0x1f) << 4)
 #define SUNXI_LCDC_TCON1_CTRL_ENABLE		(1 << 31)
 #define SUNXI_LCDC_TCON1_TIMING_H_BP(n)		(((n) - 1) << 0)
