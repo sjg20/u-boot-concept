@@ -17,24 +17,20 @@
 DECLARE_GLOBAL_DATA_PTR;
 
 /*
- * WARNING: This is going away very soon. Don't use it and don't submit
- * pafches that rely on it. The global_data area is set up in crt0.S.
- */
-gd_t gdata __attribute__ ((section(".data")));
-
-/*
  * In the context of SPL, board_init_f must ensure that any clocks/etc for
  * DDR are enabled, ensure that the stack pointer is valid, clear the BSS
- * and call board_init_f.  We provide this version by default but mark it
+ * and call board_init_r.  We provide this version by default but mark it
  * as __weak to allow for platforms to do this in their own way if needed.
+ *
+ * Note that DRAM will not yet be set up, so this version will not normally
+ * be useful if BSS is located in DRAM.
  */
 void __weak board_init_f(ulong dummy)
 {
+	/* If overriding this function, set up DRAM here */
+
 	/* Clear the BSS. */
 	memset(__bss_start, 0, __bss_end - __bss_start);
-
-	/* TODO: Remove settings of the global data pointer here */
-	gd = &gdata;
 
 	board_init_r(NULL, 0);
 }
