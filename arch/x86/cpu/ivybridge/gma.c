@@ -15,6 +15,13 @@
 #include <asm/pci.h>
 #include <asm/arch/pch.h>
 #include <asm/arch/sandybridge.h>
+#include <linux/kconfig.h>
+
+#ifdef CONFIG_VIDEO
+#define RUN_VIDEO_BIOS		1
+#else
+#define RUN_VIDEO_BIOS		1
+#endif
 
 struct gt_powermeter {
 	u16 reg;
@@ -745,7 +752,15 @@ int gma_func0_init(pci_dev_t dev, struct pci_controller *hose,
 	if (ret)
 		return ret;
 
-	ret = pci_run_vga_bios(dev, int15_handler, false);
+	/*
+	 * TODO: Change to IS_ENABLED(CONFIG_VIDEO) when Kconfig supports
+	 * CONFIG_VIDEO.
+	 */
+	if (RUN_VIDEO_BIOS) {
+		start = get_timer(0);
+		ret = pci_run_vga_bios(dev, int15_handler, false);
+		debug("BIOS ran in %lums\n", get_timer(start));
+	}
 
 	/* Post VBIOS init */
 	ret = gma_pm_init_post_vbios(gtt_bar, blob, node);
