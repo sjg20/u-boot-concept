@@ -413,7 +413,7 @@ static void process_boot_delay(void)
 }
 #endif /* CONFIG_BOOTDELAY */
 
-#ifdef CONFIG_ROCKCHIP
+#if 0
 void main_loop (void)
 {
     char *p;
