@@ -120,6 +120,7 @@ int microcode_update_intel(void)
 	int count;
 	int node;
 	int ret;
+	int rev;
 
 	microcode_read_cpu(&cpu);
 	node = 0;
@@ -147,12 +148,16 @@ int microcode_update_intel(void)
 			skipped++;
 			continue;
 		}
-		ret = microcode_read_rev();
 		wrmsr(0x79, (ulong)update.data, 0);
+		rev = microcode_read_rev();
 		debug("microcode: updated to revision 0x%x date=%04x-%02x-%02x\n",
-		      microcode_read_rev(), update.date_code & 0xffff,
+		      rev, update.date_code & 0xffff,
 		      (update.date_code >> 24) & 0xff,
 		      (update.date_code >> 16) & 0xff);
+		if (update.update_revision != rev) {
+			printf("Microcode update failed\n");
+			return -EFAULT;
+		}
 		count++;
 	} while (1);
 }

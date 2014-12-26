@@ -45,6 +45,14 @@ car_init:
 	movl	$0xFEE00300, %esi
 	movl	%eax, (%esi)
 
+	/* TODO: Load microcode later - the 'no eviction' mode breaks this */
+	movl	$0x79, %ecx
+	xorl	%edx, %edx
+	movl	$_dt_ucode_base_size, %eax
+	movl	(%eax), %eax
+	addl	$0x30, %eax
+	wrmsr
+
 	post_code(POST_CAR_SIPI)
 	/* Zero out all fixed range and variable range MTRRs */
 	movl	$mtrr_table, %esi
@@ -228,3 +236,9 @@ mtrr_table:
 	.word 0x20C, 0x20D, 0x20E, 0x20F
 	.word 0x210, 0x211, 0x212, 0x213
 mtrr_table_end:
+
+	.align 4
+_dt_ucode_base_size:
+	/* These next two fields are filled in by ifdtool */
+	.long	0			/* microcode base */
+	.long	0			/* microcode size */
