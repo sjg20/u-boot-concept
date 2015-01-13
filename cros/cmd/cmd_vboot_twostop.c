@@ -14,6 +14,7 @@
 #include <lcd.h>
 #include <malloc.h>
 #include <mkbp.h>
+#include <cros/2x_refresh.h>
 #include <cros/boot_kernel.h>
 #include <cros/common.h>
 #include <cros/crossystem_data.h>
@@ -824,6 +825,9 @@ twostop_main_firmware(struct twostop_fmap *fmap, void *gbb,
 		VBDEBUG("failed to init cparams\n");
 		return TWOSTOP_SELECT_ERROR;
 	}
+
+	/* Enable 2x Refresh */
+	enable_2x_refresh();
 
 	/*
 	 * Note that in case "kernel" is not found in the device tree, the
