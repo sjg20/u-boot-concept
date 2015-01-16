@@ -275,8 +275,30 @@ static void watchdog_disable(void)
 		;
 }
 
+#ifdef CONFIG_SPL_BUILD
+void board_init_f(ulong dummy)
+{
+	watchdog_disable();
+	set_uart_mux_conf();
+	setup_clocks_for_console();
+	uart_soft_reset();
+#if defined(CONFIG_SPL_AM33XX_ENABLE_RTC32K_OSC)
+	/* Enable RTC32K clock */
+	rtc32k_enable();
+#endif
+	board_early_init_f();
+	sdram_init();
+
+	/* Clear the BSS. */
+	memset(__bss_start, 0, __bss_end - __bss_start);
+
+	board_init_r(NULL, 0);
+}
+#endif
+
 void s_init(void)
 {
+#ifndef CONFIG_SPL_BUILD
 	/*
 	 * The ROM will only have set up sufficient pinmux to allow for the
 	 * first 4KiB NOR to be read, we must finish doing what we know of
@@ -298,9 +320,6 @@ void s_init(void)
 	/* Enable RTC32K clock */
 	rtc32k_enable();
 #endif
-#ifdef CONFIG_SPL_BUILD
-	board_early_init_f();
-	sdram_init();
 #endif
 }
 #endif
