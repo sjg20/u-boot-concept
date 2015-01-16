@@ -15,9 +15,7 @@
 #include <netdev.h>
 #include <miiphy.h>
 #include <serial.h>
-#ifdef CONFIG_SPL_BUILD
 #include <spl.h>
-#endif
 #include <asm/gpio.h>
 #include <asm/io.h>
 #include <asm/arch/clock.h>
@@ -26,10 +24,6 @@
 #include <asm/arch/timer.h>
 
 #include <linux/compiler.h>
-
-#ifdef CONFIG_SPL_BUILD
-/* Pointer to the global data structure for SPL */
-DECLARE_GLOBAL_DATA_PTR;
 
 /* The sunxi internal brom will try to loader external bootloader
  * from mmc0, nand flash, mmc2.
@@ -91,14 +85,6 @@ void board_init_f(ulong dummy)
 	/* Magic (undocmented) value taken from boot0, without this DRAM
 	 * access gets messed up (seems cache related) */
 	setbits_le32(SUNXI_SRAMC_BASE + 0x44, 0x1800);
-#endif
-#if !defined CONFIG_SPL_BUILD && (defined CONFIG_MACH_SUN7I || \
-		defined CONFIG_MACH_SUN6I || defined CONFIG_MACH_SUN8I)
-	/* Enable SMP mode for CPU0, by setting bit 6 of Auxiliary Ctl reg */
-	asm volatile(
-		"mrc p15, 0, r0, c1, c0, 1\n"
-		"orr r0, r0, #1 << 6\n"
-		"mcr p15, 0, r0, c1, c0, 1\n");
 #endif
 
 	clock_init();
@@ -186,4 +172,3 @@ int cpu_eth_init(bd_t *bis)
 
 	return 0;
 }
-#endif

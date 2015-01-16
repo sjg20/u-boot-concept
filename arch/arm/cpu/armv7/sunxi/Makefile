@@ -8,7 +8,6 @@
 # SPDX-License-Identifier:	GPL-2.0+
 #
 obj-y	+= timer.o
-obj-y	+= board.o
 obj-y	+= clock.o
 obj-y	+= cpu_info.o
 obj-y	+= pinmux.o
@@ -30,6 +29,7 @@ endif
 endif
 
 ifdef CONFIG_SPL_BUILD
+obj-y	+= board.o
 obj-$(CONFIG_MACH_SUN4I)	+= dram_sun4i.o
 obj-$(CONFIG_MACH_SUN5I)	+= dram_sun4i.o
 obj-$(CONFIG_MACH_SUN6I)	+= dram_sun6i.o
