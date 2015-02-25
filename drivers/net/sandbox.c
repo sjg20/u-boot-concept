@@ -49,8 +49,13 @@ static int sb_eth_send(struct udevice *dev, void *packet, int length)
 {
 	struct eth_sandbox_priv *priv = dev_get_priv(dev);
 	struct ethernet_hdr *eth = packet;
+	char varname[32];
 
 	debug("eth_sandbox: Send packet %d\n", length);
+
+	sprintf(varname, "eth_sandbox_disable_%d", dev->seq);
+	if (getenv_yesno(varname) > 0)
+		return 0;
 
 	if (ntohs(eth->et_protlen) == PROT_ARP) {
 		struct arp_hdr *arp = packet + ETHER_HDR_SIZE;
