@@ -184,5 +184,6 @@
 	eth@10002000 {
 		compatible = "sandbox,eth";
 		reg = <0x10002000 0x1000>;
+		fake-host-hwaddr = <0x00 0x00 0x66 0x44 0x22 0x00>;
 	};
 };
