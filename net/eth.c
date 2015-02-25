@@ -225,7 +225,7 @@ int eth_unregister(struct eth_device *dev)
 
 	/* No device */
 	if (!eth_devices)
-		return -1;
+		return -ENODEV;
 
 	for (cur = eth_devices; cur->next != eth_devices && cur->next != dev;
 	     cur = cur->next)
@@ -233,7 +233,7 @@ int eth_unregister(struct eth_device *dev)
 
 	/* Device not found */
 	if (cur->next != dev)
-		return -1;
+		return -ENODEV;
 
 	cur->next = dev->next;
 
@@ -366,7 +366,7 @@ int eth_init(bd_t *bis)
 
 	if (!eth_current) {
 		puts("No ethernet found.\n");
-		return -1;
+		return -ENODEV;
 	}
 
 	/* Sync environment with network devices */
@@ -395,7 +395,7 @@ int eth_init(bd_t *bis)
 		eth_try_another(0);
 	} while (old_current != eth_current);
 
-	return -1;
+	return -ETIMEDOUT;
 }
 
 void eth_halt(void)
@@ -411,7 +411,7 @@ void eth_halt(void)
 int eth_send(void *packet, int length)
 {
 	if (!eth_current)
-		return -1;
+		return -ENODEV;
 
 	return eth_current->send(eth_current, packet, length);
 }
@@ -419,7 +419,7 @@ int eth_send(void *packet, int length)
 int eth_rx(void)
 {
 	if (!eth_current)
-		return -1;
+		return -ENODEV;
 
 	return eth_current->recv(eth_current);
 }
