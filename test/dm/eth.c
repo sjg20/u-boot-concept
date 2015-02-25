@@ -104,3 +104,26 @@ static int dm_test_eth_rotate(struct dm_test_state *dms)
 	return 0;
 }
 DM_TEST(dm_test_eth_rotate, DM_TESTF_SCAN_FDT);
+
+static int dm_test_net_retry(struct dm_test_state *dms)
+{
+	NetPingIP = string_to_ip("1.1.2.2");
+
+	setenv("eth_sandbox_disable_1", "yes");
+	setenv("ethact", "eth@10004000");
+	setenv("netretry", "yes");
+	ut_assertok(NetLoop(PING));
+	ut_asserteq_str("eth@10002000", getenv("ethact"));
+
+	setenv("ethact", "eth@10004000");
+	setenv("netretry", "no");
+	ut_asserteq(-1, NetLoop(PING));
+	ut_asserteq_str("eth@10004000", getenv("ethact"));
+
+	/* Restore the env */
+	setenv("netretry", NULL);
+	setenv("eth_sandbox_disable_1", NULL);
+
+	return 0;
+}
+DM_TEST(dm_test_net_retry, DM_TESTF_SCAN_FDT);
