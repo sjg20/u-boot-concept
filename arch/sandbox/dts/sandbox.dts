@@ -186,4 +186,10 @@
 		reg = <0x10002000 0x1000>;
 		fake-host-hwaddr = <0x00 0x00 0x66 0x44 0x22 0x00>;
 	};
+
+	eth@80000000 {
+		compatible = "sandbox,eth-raw";
+		reg = <0x80000000 0x1000>;
+		host-raw-interface = "eth0";
+	};
 };

@@ -20,4 +20,9 @@ config ETH_SANDBOX
 	default y
 	bool "Sandbox: Mocked Ethernet driver"
 
+config ETH_SANDBOX_RAW
+	depends on DM_ETH && SANDBOX
+	default y
+	bool "Sandbox: Bridge to Linux Raw Sockets"
+
 endif # NETDEVICES

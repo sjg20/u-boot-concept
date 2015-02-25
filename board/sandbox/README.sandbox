@@ -190,6 +190,19 @@ Also sandbox uses generic board (CONFIG_SYS_GENERIC_BOARD) and supports
 driver model (CONFIG_DM) and associated commands.
 
 
+Linux RAW Networking Bridge
+---------------------------
+
+The sandbox_eth_raw driver bridges traffic between the bottom of the network
+stack and the RAW sockets API in Linux. This allows much of the u-boot network
+functionality to be tested in sandbox against real network traffic.
+
+The RAW sockets Ethernet API requires elevated privileges in Linux. You can
+either run as root, or you can add the capability needed like so:
+
+sudo /sbin/setcap "CAP_NET_RAW+ep" u-boot
+
+
 SPI Emulation
 -------------
 
