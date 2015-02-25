@@ -27,4 +27,12 @@ int cleanup_before_linux(void);
 /* drivers/video/sandbox_sdl.c */
 int sandbox_lcd_sdl_early_init(void);
 
+/**
+ * sandbox_read_fdt_from_file() - Read a device tree from a file
+ *
+ * Read a device tree file from a host file and set it up for use as the
+ * control FDT.
+ */
+int sandbox_read_fdt_from_file(void);
+
 #endif	/* _U_BOOT_SANDBOX_H_ */
