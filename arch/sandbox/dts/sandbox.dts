@@ -4,6 +4,10 @@
 	#address-cells = <1>;
 	#size-cells = <0>;
 
+	aliases {
+		eth5 = "/eth@90000000";
+	};
+
 	chosen {
 		stdout-path = "/serial";
 	};
@@ -191,5 +195,11 @@
 		compatible = "sandbox,eth-raw";
 		reg = <0x80000000 0x1000>;
 		host-raw-interface = "eth0";
+	};
+
+	eth@90000000 {
+		compatible = "sandbox,eth-raw";
+		reg = <0x90000000 0x1000>;
+		host-raw-interface = "lo";
 	};
 };
