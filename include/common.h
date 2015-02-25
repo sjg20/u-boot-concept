@@ -846,7 +846,9 @@ int cpu_release(int nr, int argc, char * const argv[]);
 #endif
 
 /* Define a null map_sysmem() if the architecture doesn't use it */
-# ifndef CONFIG_ARCH_MAP_SYSMEM
+# ifdef CONFIG_ARCH_MAP_SYSMEM
+#include <asm/io.h>
+# else
 static inline void *map_sysmem(phys_addr_t paddr, unsigned long len)
 {
 	return (void *)(uintptr_t)paddr;
