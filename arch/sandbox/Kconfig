@@ -34,4 +34,13 @@ config DM_I2C
 config DM_TEST
 	default y
 
+config NET
+	default y
+
+config NETDEVICES
+	default y
+
+config DM_ETH
+	default y
+
 endmenu

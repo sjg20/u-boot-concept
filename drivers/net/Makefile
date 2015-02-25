@@ -49,6 +49,7 @@ obj-$(CONFIG_NS8382X) += ns8382x.o
 obj-$(CONFIG_PCNET) += pcnet.o
 obj-$(CONFIG_RTL8139) += rtl8139.o
 obj-$(CONFIG_RTL8169) += rtl8169.o
+obj-$(CONFIG_ETH_SANDBOX) += sandbox.o
 obj-$(CONFIG_SH_ETHER) += sh_eth.o
 obj-$(CONFIG_SMC91111) += smc91111.o
 obj-$(CONFIG_SMC911X) += smc911x.o
