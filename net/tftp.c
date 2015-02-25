@@ -184,7 +184,7 @@ store_block(int block, uchar *src, unsigned len)
 	} else
 #endif /* CONFIG_SYS_DIRECT_FLASH_TFTP */
 	{
-		(void)memcpy((void *)(load_addr + offset), src, len);
+		memcpy((void *)(map_sysmem(load_addr, 0) + offset), src, len);
 	}
 #ifdef CONFIG_MCAST_TFTP
 	if (Multicast)
