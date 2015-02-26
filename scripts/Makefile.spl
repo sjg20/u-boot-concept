@@ -31,9 +31,13 @@ endif
 
 ifeq ($(CONFIG_TPL_BUILD),y)
 SPL_BIN := u-boot-tpl
+DTB_PATH := tpl/
 else
 SPL_BIN := u-boot-spl
+DTB_PATH := spl/
 endif
+
+export DTB_PATH
 
 include $(srctree)/config.mk
 include $(srctree)/arch/$(ARCH)/Makefile
@@ -50,6 +54,7 @@ HAVE_VENDOR_COMMON_LIB = $(if $(wildcard $(srctree)/board/$(VENDOR)/common/Makef
 
 libs-y += $(if $(BOARDDIR),board/$(BOARDDIR)/)
 libs-$(HAVE_VENDOR_COMMON_LIB) += board/$(VENDOR)/common/
+libs-$(CONFIG_OF_EMBED) += dts/
 
 libs-$(CONFIG_SPL_FRAMEWORK) += common/spl/
 libs-$(CONFIG_SPL_LIBCOMMON_SUPPORT) += common/
@@ -151,6 +156,8 @@ boot.bin: $(obj)/u-boot-spl.bin
 
 ALL-y	+= $(obj)/$(SPL_BIN).bin $(obj)/$(SPL_BIN).cfg
 
+ALL-$(CONFIG_OF_SEPARATE) += $(obj)/$(SPL_BIN)-pad.bin $(obj)/$(SPL_BIN)-dtb.bin
+
 ifdef CONFIG_SAMSUNG
 ALL-y	+= $(obj)/$(BOARD)-spl.bin
 endif
@@ -163,7 +170,35 @@ ifeq ($(CONFIG_SYS_SOC),"at91")
 ALL-y	+= boot.bin
 endif
 
+checkdtc:
+	@if test $(call dtc-version) -lt 0104; then \
+		echo '*** Your dtc is too old, please upgrade to dtc 1.4 or newer'; \
+		false; \
+	fi
+
 all:	$(ALL-y)
+
+quiet_cmd_cat = CAT     $@
+cmd_cat = cat $(filter-out $(PHONY), $^) > $@
+
+$(obj)/$(SPL_BIN)-dtb.bin: $(obj)/$(SPL_BIN).bin $(obj)/$(SPL_BIN)-pad.bin \
+		$(obj)/$(SPL_BIN).dtb FORCE
+	$(call if_changed,cat)
+
+# Create a file that provings pads from the end of u-boot-spl.bin to bss_end
+$(obj)/$(SPL_BIN)-pad.bin: $(obj)/$(SPL_BIN)
+	@bss_size_str=$(shell $(NM) $< | awk 'BEGIN {size = 0} /__bss_size/ {size = $$1} END {print "ibase=16; " size}' | bc); \
+	dd if=/dev/zero of=$@ bs=1 count=$${bss_size_str} 2>/dev/null;
+
+quiet_cmd_copy = COPY    $@
+      cmd_copy = cp $< $@
+
+$(obj)/$(SPL_BIN).dtb: $(obj)/dts/dt.dtb
+	$(call cmd,copy)
+
+PHONY += dtbs
+dtbs $(obj)/dts/dt.dtb: checkdtc $(obj)/$(SPL_BIN)
+	$(Q)$(MAKE) $(build)=$(obj)/dts DTB_PATH=$(DTB_PATH) dtbs
 
 quiet_cmd_cpp_cfg = CFG     $@
 cmd_cpp_cfg = $(CPP) -Wp,-MD,$(depfile) $(cpp_flags) $(LDPPFLAGS) -ansi \

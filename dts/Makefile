@@ -6,6 +6,7 @@
 
 # This Makefile builds the internal U-Boot fdt if CONFIG_OF_CONTROL is
 # enabled. See doc/README.fdt-control for more details.
+# DTB_PATH is empty for U-Boot proper, and "spl/" for SPL
 
 DEVICE_TREE ?= $(CONFIG_DEFAULT_DEVICE_TREE:"%"=%)
 ifeq ($(DEVICE_TREE),)
@@ -13,10 +14,12 @@ DEVICE_TREE := unset
 endif
 
 ifneq ($(EXT_DTB),)
-DTB := $(EXT_DTB)
+BASE_DTB := $(EXT_DTB)
 else
-DTB := arch/$(ARCH)/dts/$(DEVICE_TREE).dtb
+BASE_DTB := arch/$(ARCH)/dts/$(DEVICE_TREE).dtb
 endif
+
+DTB	:= $(DTB_PATH)$(BASE_DTB)
 
 $(obj)/dt.dtb: $(DTB) FORCE
 	$(call if_changed,shipped)
@@ -33,7 +36,7 @@ $(DTB): arch-dtbs
 	/bin/false)
 
 arch-dtbs:
-	$(Q)$(MAKE) $(build)=arch/$(ARCH)/dts dtbs
+	$(Q)$(MAKE) $(build)=arch/$(ARCH)/dts DTB_PATH=$(DTB_PATH) dtbs
 
 .SECONDARY: $(obj)/dt.dtb.S
 

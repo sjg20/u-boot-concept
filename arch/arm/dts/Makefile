@@ -56,7 +56,7 @@ targets += $(dtb-y)
 DTC_FLAGS += -R 4
 
 PHONY += dtbs
-dtbs: $(addprefix $(obj)/, $(dtb-y))
+dtbs: $(addprefix $(DTB_PATH)$(obj)/, $(dtb-y))
 	@:
 
 clean-files := *.dtb
