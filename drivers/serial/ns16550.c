@@ -64,6 +64,8 @@ static inline void serial_out_shift(void *addr, int shift, int value)
 	out_le32(addr, value);
 #elif defined(CONFIG_SYS_NS16550_MEM32) && defined(CONFIG_SYS_BIG_ENDIAN)
 	out_be32(addr, value);
+#elif defined(CONFIG_SYS_NS16550_MEM32)
+	writel(value, addr);
 #elif defined(CONFIG_SYS_BIG_ENDIAN)
 	writeb(value, addr + (1 << shift) - 1);
 #else
@@ -79,6 +81,8 @@ static inline int serial_in_shift(void *addr, int shift)
 	return in_le32(addr);
 #elif defined(CONFIG_SYS_NS16550_MEM32) && defined(CONFIG_SYS_BIG_ENDIAN)
 	return in_be32(addr);
+#elif defined(CONFIG_SYS_NS16550_MEM32)
+	return readl(addr);
 #elif defined(CONFIG_SYS_BIG_ENDIAN)
 	return readb(addr + (1 << reg_shift) - 1);
 #else
@@ -91,7 +95,9 @@ static void ns16550_writeb(NS16550_t port, int offset, int value)
 	struct ns16550_platdata *plat = port->plat;
 	unsigned char *addr;
 
+#ifndef CONFIG_SYS_NS16550_MEM32
 	offset *= 1 << plat->reg_shift;
+#endif
 	addr = map_sysmem(plat->base, 0) + offset;
 	/*
 	 * As far as we know it doesn't make sense to support selection of
@@ -105,7 +111,9 @@ static int ns16550_readb(NS16550_t port, int offset)
 	struct ns16550_platdata *plat = port->plat;
 	unsigned char *addr;
 
+#ifndef CONFIG_SYS_NS16550_MEM32
 	offset *= 1 << plat->reg_shift;
+#endif
 	addr = map_sysmem(plat->base, 0) + offset;
 
 	return serial_in_shift(addr, plat->reg_shift);
