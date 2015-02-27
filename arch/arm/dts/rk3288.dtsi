@@ -22,8 +22,11 @@
 / {
 	compatible = "rockchip,rk3288";
 
+#ifndef CONFIG_SPL_BUILD
 	interrupt-parent = <&gic>;
+#endif
 	aliases {
+#ifndef CONFIG_SPL_BUILD
 		i2c0 = &i2c0;
 		i2c1 = &i2c1;
 		i2c2 = &i2c2;
@@ -38,16 +41,22 @@
 		mshc1 = &sdmmc;
 		mshc2 = &sdio0;
 		mshc3 = &sdio1;
+#endif
+#ifndef CONFIG_SPL_BUILD
 		serial0 = &uart0;
 		serial1 = &uart1;
+#endif
 		serial2 = &uart2;
+#ifndef CONFIG_SPL_BUILD
 		serial3 = &uart3;
 		serial4 = &uart4;
 		spi0 = &spi0;
 		spi1 = &spi1;
 		spi2 = &spi2;
+#endif
 	};
 
+#ifndef CONFIG_SPL_BUILD
 	cpus {
 		#address-cells = <1>;
 		#size-cells = <0>;
@@ -342,6 +351,7 @@
 		pinctrl-0 = <&uart1_xfer>;
 		status = "disabled";
 	};
+#endif
 
 	uart2: serial@ff690000 {
 		compatible = "rockchip,rk3288-uart", "snps,dw-apb-uart";
@@ -349,12 +359,15 @@
 		interrupts = <GIC_SPI 57 IRQ_TYPE_LEVEL_HIGH>;
 		reg-shift = <2>;
 		reg-io-width = <4>;
+#ifndef CONFIG_SPL_BUILD
 		clocks = <&cru SCLK_UART2>, <&cru PCLK_UART2>;
 		clock-names = "baudclk", "apb_pclk";
 		pinctrl-names = "default";
 		pinctrl-0 = <&uart2_xfer>;
+#endif
 		status = "disabled";
 	};
+#ifndef CONFIG_SPL_BUILD
 	uart3: serial@ff1b0000 {
 		compatible = "rockchip,rk3288-uart", "snps,dw-apb-uart";
 		reg = <0xff1b0000 0x100>;
@@ -1463,4 +1476,5 @@
 				 <&cru HCLK_VCODEC>;
 		};
 	};
+#endif
 };
