@@ -693,6 +693,13 @@ config ARCH_UNIPHIER
 	select OF_CONTROL
 	select SPL_DISABLE_OF_CONTROL
 
+config ARCH_ROCKCHIP
+	bool "Support Rockchip SoCs"
+	select SUPPORT_SPL
+	select SPL
+	select OF_CONTROL
+	select CPU_V7
+
 endchoice
 
 source "arch/arm/mach-at91/Kconfig"
@@ -720,6 +727,8 @@ source "arch/arm/cpu/armv7/omap5/Kconfig"
 source "arch/arm/mach-orion5x/Kconfig"
 
 source "arch/arm/cpu/armv7/rmobile/Kconfig"
+
+source "arch/arm/mach-rockchip/Kconfig"
 
 source "arch/arm/cpu/armv7/s5pc1xx/Kconfig"
 
