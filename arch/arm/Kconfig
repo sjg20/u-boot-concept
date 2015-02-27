@@ -597,6 +597,7 @@ config TEGRA
 	select SUPPORT_SPL
 	select SPL
 	select OF_CONTROL
+	select SPL_DISABLE_OF_CONTROL
 	select CPU_V7
 
 config TARGET_VEXPRESS64_AEMV8A
@@ -690,6 +691,7 @@ config ARCH_UNIPHIER
 	select SUPPORT_SPL
 	select SPL
 	select OF_CONTROL
+	select SPL_DISABLE_OF_CONTROL
 
 endchoice
 
