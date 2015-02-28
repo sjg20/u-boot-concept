@@ -88,6 +88,7 @@ dumpimage-mkimage-objs := aisimage.o \
 			os_support.o \
 			pblimage.o \
 			pbl_crc32.o \
+			rkimage.o \
 			socfpgaimage.o \
 			lib/sha1.o \
 			lib/sha256.o \
