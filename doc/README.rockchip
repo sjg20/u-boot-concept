@@ -1,0 +1,83 @@
+#
+# Copyright (C) 2015 Google. Inc
+# Written by Simon Glass <sjg@chromium.org>
+#
+# SPDX-License-Identifier:	GPL-2.0+
+#
+
+U-Boot on Rockchip
+==================
+
+There are several repositories available with versions of U-Boot that support
+many Rockchip devices [1] [2].
+
+The current mainline support is experimental only and is not useful for
+anything. It should provide a base on which to build.
+
+
+Prerequisites
+=============
+
+You will need:
+
+   - Firefly RK3288 baord
+   - Power connection to 5V using the supplied micro-USB power cable
+   - Separate USB serial cable attached to your computer and the Firefly
+        (connect to the micro-USB connector below the logo)
+   - rkflashtool [3]
+   - openssl (sudo apt-get install openssl)
+   - Serial UART connection [4]
+   - Suitable ARM cross compiler, e.g.:
+        sudo apt-get install gcc-4.7-arm-linux-gnueabi
+
+
+Building
+========
+
+At present, only Firefly RK3288 is supported. You can use the firefly-rk3288
+configuration for this.
+
+   CROSS_COMPILE=arm-linux-gnueabi- make O=firefly firefly-rk3288_defconfig all
+
+(or you can use another cross compiler if you prefer)
+
+
+Writing to the board
+====================
+
+Only USB is supported. For this to work you must get your board into ROM
+boot mode, either by erasing your MMC or (perhaps) holding the recovery
+button when you boot the board. To erase your MMC, you can boot into Linux
+and type (as root) 'dd if=/dev/zero of=/dev/mmcblk0 bs=1M'.
+
+To create a suitable image and write it to the board:
+
+   ./firefly/tools/mkimage -T rockchip -d firefly/spl/u-boot-spl-dtb.bin out
+   cat out | openssl rc4 -K 7c4e0304550509072d2c7b38170d1711 |  rkflashtool l
+
+If all goes well you should something like:
+
+   U-Boot SPL 2015.04-rc2-00123-gc5b539a-dirty (Feb 27 2015 - 09:35:31)
+   SPL: Unsupported Boot Device!
+   ### ERROR ### Please RESET the board ###
+
+You will need to reset the board before each time you try. Yes, that's all
+it does so far.
+
+
+Future work
+===========
+
+Immediate priorities are:
+
+- Support SPL clock init
+- Support loading U-Boot from MMC
+- Boot U-Boot to a prompt
+
+There are plenty of patches in the links below to help with this work.
+
+
+[1] https://github.com/rkchrome/uboot.git
+[2] https://github.com/linux-rockchip/u-boot-rockchip.git branch u-boot-rk3288
+[3] https://github.com/linux-rockchip/rkflashtool.git
+[4] http://wiki.t-firefly.com/index.php/Firefly-RK3288/Serial_debug/en
