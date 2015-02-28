@@ -243,6 +243,8 @@ struct lmb;
 #define IH_TYPE_SOCFPGAIMAGE	19	/* Altera SOCFPGA Preloader	*/
 #define IH_TYPE_X86_SETUP	20	/* x86 setup.bin Image		*/
 
+#define IH_TYPE_COUNT		21	/* Number of image types */
+
 /*
  * Compression Types
  */
@@ -408,6 +410,15 @@ char *get_table_entry_name(const table_entry_t *table, char *msg, int id);
 const char *genimg_get_os_name(uint8_t os);
 const char *genimg_get_arch_name(uint8_t arch);
 const char *genimg_get_type_name(uint8_t type);
+
+/**
+ * genimg_get_type_short_name() - get the short name for an image type
+ *
+ * @param type	Image type (IH_TYPE_...)
+ * @return image short name, or "unknown" if unknown
+ */
+const char *genimg_get_type_short_name(uint8_t type);
+
 const char *genimg_get_comp_name(uint8_t comp);
 int genimg_get_os_id(const char *name);
 int genimg_get_arch_id(const char *name);
