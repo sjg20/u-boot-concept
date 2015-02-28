@@ -914,7 +914,7 @@ void eth_set_current(void)
 
 	if (act == NULL) {
 		char *ethprime = getenv("ethprime");
-		struct udevice *dev = NULL;
+		void *dev = NULL;
 
 		if (ethprime)
 			dev = eth_get_dev_by_name(ethprime);
