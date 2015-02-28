@@ -397,7 +397,7 @@ def move_config(config_attr, jobs=1):
 
 def main():
     try:
-        cpu_count = multiprocessing.cpu_count() + 2
+        cpu_count = multiprocessing.cpu_count() + 4
     except NotImplementedError:
         cpu_count = 1
 
