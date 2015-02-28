@@ -11,13 +11,13 @@ CONFIG_SYS_BIG_ENDIAN = 1
 endif
 
 ifdef CONFIG_SYS_LITTLE_ENDIAN
-ARC_CROSS_COMPILE := arc-buildroot-linux-uclibc-
+ARC_CROSS_COMPILE := /opt/arc/usr/bin/arc-buildroot-linux-uclibc-
 PLATFORM_LDFLAGS += -EL
 PLATFORM_CPPFLAGS += -mlittle-endian
 endif
 
 ifdef CONFIG_SYS_BIG_ENDIAN
-ARC_CROSS_COMPILE := arceb-buildroot-linux-uclibc-
+ARC_CROSS_COMPILE := /opt/arc/usr/bin/arceb-buildroot-linux-uclibc-
 PLATFORM_LDFLAGS += -EB
 PLATFORM_CPPFLAGS += -mbig-endian
 endif

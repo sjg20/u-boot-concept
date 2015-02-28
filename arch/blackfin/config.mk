@@ -29,7 +29,7 @@ LDFLAGS_FINAL += --gc-sections
 LDFLAGS += -m elf32bfin
 PLATFORM_RELFLAGS += -ffunction-sections -fdata-sections
 
-PLATFORM_RELFLAGS += -mcpu=$(CONFIG_BFIN_CPU)
+#PLATFORM_RELFLAGS += -mcpu=$(CONFIG_BFIN_CPU)
 
 ifneq ($(CONFIG_BFIN_BOOT_MODE),BFIN_BOOT_BYPASS)
 ALL-y += u-boot.ldr
