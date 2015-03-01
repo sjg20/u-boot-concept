@@ -10,6 +10,7 @@
  */
 
 #include <common.h>
+#include <dm.h>
 #include <errno.h>
 #include <miiphy.h>
 #include <malloc.h>
@@ -17,6 +18,8 @@
 #include <linux/err.h>
 #include <asm/io.h>
 #include "designware.h"
+
+DECLARE_GLOBAL_DATA_PTR;
 
 #if !defined(CONFIG_PHYLIB)
 # error "DesignWare Ether MAC requires PHYLIB - missing CONFIG_PHYLIB"
@@ -405,6 +408,7 @@ static int dw_phy_init(struct dw_eth_dev *priv, void *dev)
 	return 0;
 }
 
+#ifndef CONFIG_DM_ETH
 static int dw_eth_init(struct eth_device *dev, bd_t *bis)
 {
 	return _dw_eth_init(dev->priv, dev->enetaddr);
@@ -477,3 +481,106 @@ int designware_initialize(ulong base_addr, u32 interface)
 
 	return dw_phy_init(priv, dev);
 }
+#endif
+
+#ifdef CONFIG_DM_ETH
+static int designware_eth_start(struct udevice *dev)
+{
+	struct eth_pdata *pdata = dev_get_platdata(dev);
+
+	return _dw_eth_init(dev->priv, pdata->enetaddr);
+}
+
+static int designware_eth_send(struct udevice *dev, void *packet, int length)
+{
+	struct dw_eth_dev *priv = dev_get_priv(dev);
+
+	return _dw_eth_send(priv, packet, length);
+}
+
+static int designware_eth_recv(struct udevice *dev)
+{
+	struct dw_eth_dev *priv = dev_get_priv(dev);
+
+	return _dw_eth_recv(priv);
+}
+
+static void designware_eth_stop(struct udevice *dev)
+{
+	struct dw_eth_dev *priv = dev_get_priv(dev);
+
+	return _dw_eth_halt(priv);
+}
+
+static int designware_eth_write_hwaddr(struct udevice *dev)
+{
+	struct eth_pdata *pdata = dev_get_platdata(dev);
+	struct dw_eth_dev *priv = dev_get_priv(dev);
+
+	return _dw_write_hwaddr(priv, pdata->enetaddr);
+}
+
+static int designware_eth_probe(struct udevice *dev)
+{
+	struct eth_pdata *pdata = dev_get_platdata(dev);
+	struct dw_eth_dev *priv = dev_get_priv(dev);
+	int ret;
+
+	debug("%s, iobase=%lx, priv=%p\n", __func__, pdata->iobase, priv);
+	priv->mac_regs_p = (struct eth_mac_regs *)pdata->iobase;
+	priv->dma_regs_p = (struct eth_dma_regs *)(pdata->iobase +
+			DW_DMA_BASE_OFFSET);
+	priv->interface = pdata->phy_interface;
+
+	dw_mdio_init(dev->name, priv->mac_regs_p);
+	priv->bus = miiphy_get_dev_by_name(dev->name);
+
+	ret = dw_phy_init(priv, dev);
+	debug("%s, ret=%d\n", __func__, ret);
+
+	return ret;
+}
+
+static const struct eth_ops designware_eth_ops = {
+	.start			= designware_eth_start,
+	.send			= designware_eth_send,
+	.recv			= designware_eth_recv,
+	.stop			= designware_eth_stop,
+	.write_hwaddr		= designware_eth_write_hwaddr,
+};
+
+static int designware_eth_ofdata_to_platdata(struct udevice *dev)
+{
+	struct eth_pdata *pdata = dev_get_platdata(dev);
+	const char *phy_mode;
+
+	pdata->iobase = dev_get_addr(dev);
+	pdata->phy_interface = -1;
+	phy_mode = fdt_getprop(gd->fdt_blob, dev->of_offset, "phy-mode", NULL);
+	if (phy_mode)
+		pdata->phy_interface = phy_get_interface_by_name(phy_mode);
+	if (pdata->phy_interface == -1) {
+		debug("%s: Invalid PHY interface '%s'\n", __func__, phy_mode);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+static const struct udevice_id designware_eth_ids[] = {
+	{ .compatible = "allwinner,sun7i-a20-gmac" },
+	{ }
+};
+
+U_BOOT_DRIVER(eth_sandbox) = {
+	.name	= "eth_designware",
+	.id	= UCLASS_ETH,
+	.of_match = designware_eth_ids,
+	.ofdata_to_platdata = designware_eth_ofdata_to_platdata,
+	.probe	= designware_eth_probe,
+	.ops	= &designware_eth_ops,
+	.priv_auto_alloc_size = sizeof(struct dw_eth_dev),
+	.platdata_auto_alloc_size = sizeof(struct eth_pdata),
+	.flags = DM_FLAG_ALLOC_PRIV_DMA,
+};
+#endif
