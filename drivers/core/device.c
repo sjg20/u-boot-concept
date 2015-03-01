@@ -190,7 +190,16 @@ int device_probe_child(struct udevice *dev, void *parent_priv)
 
 	/* Allocate private data if requested */
 	if (drv->priv_auto_alloc_size) {
-		dev->priv = calloc(1, drv->priv_auto_alloc_size);
+		if (drv->flags & DM_FLAG_ALLOC_PRIV_DMA) {
+			dev->priv = memalign(ARCH_DMA_MINALIGN,
+					     drv->priv_auto_alloc_size);
+			if (dev->priv) {
+				memset(dev->priv, '\0',
+				       drv->priv_auto_alloc_size);
+			}
+		} else {
+			dev->priv = calloc(1, drv->priv_auto_alloc_size);
+		}
 		if (!dev->priv) {
 			ret = -ENOMEM;
 			goto fail;
