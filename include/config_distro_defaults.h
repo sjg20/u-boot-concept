@@ -23,9 +23,9 @@
 #if defined(__arm__)
 #define CONFIG_BOOTP_PXE_CLIENTARCH     0x100
 #if defined(__ARM_ARCH_7__) || defined(__ARM_ARCH_7A__)
-#define CONFIG_BOOTP_VCI_STRING         "U-boot.armv7"
+#define CONFIG_BOOTP_VCI_STRING         "U-Boot.armv7"
 #else
-#define CONFIG_BOOTP_VCI_STRING         "U-boot.arm"
+#define CONFIG_BOOTP_VCI_STRING         "U-Boot.arm"
 #endif
 #endif
 

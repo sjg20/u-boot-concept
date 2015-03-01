@@ -38,7 +38,7 @@
 #define CONFIG_SYS_ICACHE_OFF
 
 #define CONFIG_IDENT_STRING		" vexpress_aemv8a"
-#define CONFIG_BOOTP_VCI_STRING		"U-boot.armv8.vexpress_aemv8a"
+#define CONFIG_BOOTP_VCI_STRING		"U-Boot.armv8.vexpress_aemv8a"
 
 /* Link Definitions */
 #ifdef CONFIG_TARGET_VEXPRESS64_BASE_FVP
