@@ -70,7 +70,7 @@ struct cros_ec_dev;
 void *cros_memalign_cache(size_t n);
 
 /* this function is implemented along with vboot_api */
-int display_clear(void);
+int cros_display_clear(void);
 
 /**
  * Test code for performing a software sync

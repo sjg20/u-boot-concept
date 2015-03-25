@@ -8,6 +8,8 @@
  * Software Foundation.
  */
 
+#include <cros/vboot.h>
+
 struct vboot_info;
 
 enum vboot_stage_t {

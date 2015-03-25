@@ -70,8 +70,9 @@ static struct display_callbacks display_callbacks_ = {
 
 VbError_t VbExDisplayInit(uint32_t *width, uint32_t *height)
 {
+#ifdef CONFIG_CHROMEOS_DISPLAY
 	lcd_init_if_needed(); /* just in case it was deferred */
-
+#endif
 	/*
 	* crosbug.com/p/13492
 	* This may be an unexpected display init request - probably due to a
@@ -163,7 +164,7 @@ VbError_t VbExDisplayScreen(uint32_t screen_type)
 	case VB_SCREEN_BLANK:
 		/* clear the screen */
 #ifdef CONFIG_CHROMEOS_DISPLAY
-		display_clear();
+		cros_display_clear();
 #endif
 		break;
 	case VB_SCREEN_DEVELOPER_WARNING:
@@ -355,7 +356,7 @@ VbError_t VbExDisplayDebugInfo(const char *info_str)
 }
 
 /* this function is not technically part of the vboot interface */
-int display_clear(void)
+int cros_display_clear(void)
 {
 #ifdef CONFIG_CHROMEOS_DISPLAY
 	display_callbacks_.dc_display_clear();

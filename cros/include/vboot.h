@@ -19,6 +19,10 @@
 #include <vboot_flag.h>
 #include <cros/common.h>
 
+typedef int bool;
+#define true 1
+#define false 0
+
 /* Magic number in the vboot persist header */
 #define VBOOT_PERSIST_MAGIC	0xfeed1a3b
 

@@ -68,7 +68,9 @@ static int do_vbexport_test_malloc_size(uint32_t size)
 	char *mem = VbExMalloc(size);
 	int i, line_size;
 
-#if CONFIG_ARM
+#ifdef CONFIG_ARMADA_38X
+	line_size = 32;
+#elif CONFIG_ARM
 	line_size = dcache_get_line_size();
 #elif defined CACHE_LINE_SIZE
 	line_size = CACHE_LINE_SIZE;
@@ -700,22 +702,22 @@ static int do_vbexport_init(cmd_tbl_t *cmdtp, int flag,
 }
 
 U_BOOT_SUBCMD_START(cmd_vbexport_test_sub)
-	U_BOOT_CMD_MKENT(init, 0, 1, do_vbexport_init, "", "")
-	U_BOOT_CMD_MKENT(all, 0, 1, do_vbexport_test_all, "", "")
-	U_BOOT_CMD_MKENT(debug, 0, 1, do_vbexport_test_debug, "", "")
-	U_BOOT_CMD_MKENT(malloc, 0, 1, do_vbexport_test_malloc, "", "")
-	U_BOOT_CMD_MKENT(sleep, 0, 1, do_vbexport_test_sleep, "", "")
-	U_BOOT_CMD_MKENT(longsleep, 0, 1, do_vbexport_test_longsleep, "", "")
-	U_BOOT_CMD_MKENT(beep, 0, 1, do_vbexport_test_beep, "", "")
-	U_BOOT_CMD_MKENT(diskinfo, 0, 1, do_vbexport_test_diskinfo, "", "")
-	U_BOOT_CMD_MKENT(diskrw, 0, 1, do_vbexport_test_diskrw, "", "")
-	U_BOOT_CMD_MKENT(nvrw, 0, 1, do_vbexport_test_nvrw, "", "")
-	U_BOOT_CMD_MKENT(nvclear, 0, 1, do_vbexport_test_nvclear, "", "")
-	U_BOOT_CMD_MKENT(key, 0, 1, do_vbexport_test_key, "", "")
-	U_BOOT_CMD_MKENT(display, 0, 1, do_vbexport_test_display, "", "")
-	U_BOOT_CMD_MKENT(isshutdown, 0, 1, do_vbexport_test_isshutdown, "", "")
-	U_BOOT_CMD_MKENT(image, 0, 1, do_vbexport_test_image, "", "")
-	U_BOOT_CMD_MKENT(flags, 0, 1, do_vbexport_test_flags, "", "")
+	U_BOOT_CMD_MKENT(init, 0, 1, do_vbexport_init, "", ""),
+	U_BOOT_CMD_MKENT(all, 0, 1, do_vbexport_test_all, "", ""),
+	U_BOOT_CMD_MKENT(debug, 0, 1, do_vbexport_test_debug, "", ""),
+	U_BOOT_CMD_MKENT(malloc, 0, 1, do_vbexport_test_malloc, "", ""),
+	U_BOOT_CMD_MKENT(sleep, 0, 1, do_vbexport_test_sleep, "", ""),
+	U_BOOT_CMD_MKENT(longsleep, 0, 1, do_vbexport_test_longsleep, "", ""),
+	U_BOOT_CMD_MKENT(beep, 0, 1, do_vbexport_test_beep, "", ""),
+	U_BOOT_CMD_MKENT(diskinfo, 0, 1, do_vbexport_test_diskinfo, "", ""),
+	U_BOOT_CMD_MKENT(diskrw, 0, 1, do_vbexport_test_diskrw, "", ""),
+	U_BOOT_CMD_MKENT(nvrw, 0, 1, do_vbexport_test_nvrw, "", ""),
+	U_BOOT_CMD_MKENT(nvclear, 0, 1, do_vbexport_test_nvclear, "", ""),
+	U_BOOT_CMD_MKENT(key, 0, 1, do_vbexport_test_key, "", ""),
+	U_BOOT_CMD_MKENT(display, 0, 1, do_vbexport_test_display, "", ""),
+	U_BOOT_CMD_MKENT(isshutdown, 0, 1, do_vbexport_test_isshutdown, "", ""),
+	U_BOOT_CMD_MKENT(image, 0, 1, do_vbexport_test_image, "", ""),
+	U_BOOT_CMD_MKENT(flags, 0, 1, do_vbexport_test_flags, "", ""),
 U_BOOT_SUBCMD_END
 
 static int do_vbexport_test(cmd_tbl_t *cmdtp, int flag,

@@ -116,8 +116,8 @@ static int do_vboot_list(cmd_tbl_t *cmdtp, int flag, int argc,
 }
 
 U_BOOT_SUBCMD_START(cmd_vboot_sub)
-	U_BOOT_CMD_MKENT(go, 4, 0, do_vboot_go, "", "")
-	U_BOOT_CMD_MKENT(list, 4, 0, do_vboot_list, "", "")
+	U_BOOT_CMD_MKENT(go, 4, 0, do_vboot_go, "", ""),
+	U_BOOT_CMD_MKENT(list, 4, 0, do_vboot_list, "", ""),
 U_BOOT_SUBCMD_END
 
 /*

@@ -76,6 +76,7 @@ int boot_device_present_and_matches(const block_dev_desc_t *dev,
 
 /* Declare a boot device, capable of loading a kernel */
 #define CROS_BOOT_DEVICE(_name) \
-	ll_entry_declare(struct boot_interface, _name, boot_interface)
+	ll_entry_declare(struct boot_interface, _name, boot_interface, \
+			boot_interface)
 
 #endif /* CHROMEOS_BOOT_DEVICE_H_ */

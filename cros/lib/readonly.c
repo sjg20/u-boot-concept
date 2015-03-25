@@ -9,6 +9,7 @@
  */
 
 #include <common.h>
+#include <bootstage.h>
 #include <cros_ec.h>
 #include <errno.h>
 #include <hash.h>
@@ -157,9 +158,9 @@ err:
 int vboot_ro_vbinit(struct vboot_info *vboot)
 {
 	VbInitParams *iparams = &vboot->iparams;
+	VbError_t err;
 #ifdef CONFIG_CROS_EC
 	struct cros_ec_dev *cros_ec = board_get_cros_ec_dev();
-	VbError_t err;
 
 	if (cros_ec) {
 		uint32_t ec_events = 0;
@@ -282,6 +283,7 @@ static void setup_arch_unused_memory(struct vboot_info *vboot,
 }
 #endif
 
+#ifndef CONFIG_ARMADA_38X
 static uintptr_t get_current_sp(void)
 {
 #ifdef CONFIG_SANDBOX
@@ -293,6 +295,7 @@ static uintptr_t get_current_sp(void)
 	return addr;
 #endif
 }
+#endif
 
 static void wipe_unused_memory(struct vboot_info *vboot)
 {
@@ -304,11 +307,12 @@ static void wipe_unused_memory(struct vboot_info *vboot)
 	} else {
 		setup_arch_unused_memory(vboot, &wipe);
 
+#ifndef CONFIG_ARMADA_38X
 		/* Exclude relocated u-boot structures. */
 		memory_wipe_sub(&wipe,
 				get_current_sp() - MEMORY_WIPE_STACK_MARGIN,
 				gd->ram_top);
-
+#endif
 		if (gd_no_reloc()) {
 			memory_wipe_sub(&wipe, CONFIG_SYS_TEXT_BASE,
 					CONFIG_SYS_TEXT_BASE + gd->mon_len);

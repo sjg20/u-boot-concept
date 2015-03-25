@@ -81,6 +81,7 @@ int vboot_rw_init(struct vboot_info *vboot)
 		return -1;
 	}
 
+#ifdef CONFIG_TPM
 	/*
 	 * VbSelectAndLoadKernel() assumes the TPM interface has already been
 	 * initialized by VbSelectFirmware(). Since we haven't called
@@ -92,6 +93,7 @@ int vboot_rw_init(struct vboot_info *vboot)
 		VBDEBUG("failed to init tpm interface\n");
 		return -1;
 	}
+#endif
 
 	return 0;
 }

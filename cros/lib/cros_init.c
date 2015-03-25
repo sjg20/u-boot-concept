@@ -33,7 +33,7 @@ int cros_init(void)
 	while (tstc())
 		getc();
 
-	display_clear();
+	cros_display_clear();
 
 	if (nvstorage_init()) {
 		VBDEBUG("nvstorage_init failed\n");

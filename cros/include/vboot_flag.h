@@ -112,6 +112,7 @@ int vboot_flag_init(void);
 
 /* Declare a verified boot flag driver */
 #define CROS_VBOOT_FLAG_DRIVER(_name) \
-	ll_entry_declare(struct vboot_flag_driver, _name, vboot_flag_driver)
+	ll_entry_declare(struct vboot_flag_driver, _name, vboot_flag_driver, \
+		vboot_flag_driver)
 
 #endif /* __VBOOT_FLAG_H__ */

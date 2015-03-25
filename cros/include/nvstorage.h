@@ -107,6 +107,7 @@ int nvstorage_set_name(const char *name);
  * reason.
  */
 #define CROS_NVSTORAGE_METHOD(_name) \
-	ll_entry_declare(struct nvstorage_method, _name, nvstorage_method)
+	ll_entry_declare(struct nvstorage_method, _name, nvstorage_method, \
+			nvstorage_method)
 
 #endif /* CHROMEOS_NVSTORAGE_H_ */
