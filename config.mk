@@ -227,6 +227,11 @@ ifeq ($(CONFIG_SPL_BUILD),y)
 CPPFLAGS += -DCONFIG_SPL_BUILD
 endif
 
+# Allow use of stdint.h if available
+ifneq ($(USE_STDINT),)
+CPPFLAGS += -DCONFIG_USE_STDINT
+endif
+
 ifneq ($(RESET_VECTOR_ADDRESS),)
 CPPFLAGS += -DRESET_VECTOR_ADDRESS=$(RESET_VECTOR_ADDRESS)
 endif
