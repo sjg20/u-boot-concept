@@ -163,6 +163,12 @@ int cmd_process(int flag, int argc, char * const argv[],
 # define _CMD_HELP(x)
 #endif
 
+#define U_BOOT_SUBCMD_START(_name)	\
+	static cmd_tbl_t _name[] = {
+
+#define U_BOOT_SUBCMD_END \
+	};
+
 #define U_BOOT_CMD_MKENT_COMPLETE(_name, _maxargs, _rep, _cmd,		\
 				_usage, _help, _comp)			\
 		{ #_name, _maxargs, _rep, _cmd, _usage,			\
