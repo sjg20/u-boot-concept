@@ -38,6 +38,11 @@
 
 #include <config.h>
 
+/* Added to get things building */
+#define MV_SPI_BOOT
+#define MV_INCLUDE_SPI
+#define MV_INCLUDE_NOR
+
 /*
  * Plaform
  */
