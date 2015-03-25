@@ -99,4 +99,6 @@ typedef	struct	global_data {
 
 #define DECLARE_GLOBAL_DATA_PTR     register volatile gd_t *gd asm ("r8")
 
+#define gd_no_reloc() 0
+
 #endif /* __ASM_GBL_DATA_H */
