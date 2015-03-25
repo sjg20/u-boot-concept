@@ -445,7 +445,7 @@ vboot:
 		CFLAGS="$(CFLAGS_VBOOT)" \
 		$(MAKE) -C $(VBOOT_SOURCE) \
 		BUILD=$(OBJTREE)/include/generated/vboot \
-		ARCH=$(VBOOT_SUBMAKE_ARCH)
+		ARCH=$(VBOOT_SUBMAKE_ARCH) fwlib
 
 __LIBS += $(obj)include/generated/vboot/vboot_fw.a
 VBOOT_TARGET := vboot
