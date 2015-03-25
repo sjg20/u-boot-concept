@@ -28,6 +28,7 @@
  */
 #include <common.h>
 #include <command.h>
+#include <dm.h>
 #include <asm/processor.h>
 #include <linux/compiler.h>
 #include <linux/ctype.h>
@@ -41,11 +42,12 @@
 
 #define USB_BUFSIZ	512
 
+static int asynch_allowed;
+char usb_started; /* flag for the started/stopped USB status */
+
+#ifndef CONFIG_DM_USB
 static struct usb_device usb_dev[USB_MAX_DEVICE];
 static int dev_index;
-static int asynch_allowed;
-
-char usb_started; /* flag for the started/stopped USB status */
 
 #ifndef CONFIG_USB_MAX_CONTROLLER_COUNT
 #define CONFIG_USB_MAX_CONTROLLER_COUNT 1
@@ -152,6 +154,7 @@ int usb_disable_asynch(int disable)
 	asynch_allowed = !disable;
 	return old_value;
 }
+#endif /* !CONFIG_DM_USB */
 
 
 /*-------------------------------------------------------------------
@@ -815,6 +818,7 @@ int usb_string(struct usb_device *dev, int index, char *buf, size_t size)
  * the USB device are static allocated [USB_MAX_DEVICE].
  */
 
+#ifndef CONFIG_DM_USB
 
 /* returns a pointer to the device with the index [index].
  * if the device is not assigned (dev->devnum==-1) returns NULL
@@ -871,7 +875,9 @@ __weak int usb_alloc_device(struct usb_device *udev)
 {
 	return 0;
 }
+#endif /* !CONFIG_DM_USB */
 
+#ifndef CONFIG_DM_USB
 int usb_legacy_port_reset(struct usb_device *hub, int portnr)
 {
 	if (hub) {
@@ -890,6 +896,7 @@ int usb_legacy_port_reset(struct usb_device *hub, int portnr)
 
 	return 0;
 }
+#endif
 
 static int get_descriptor_len(struct usb_device *dev, int len)
 {
@@ -1007,7 +1014,7 @@ static int usb_prepare_device(struct usb_device *dev, int addr, bool do_read,
 	return 0;
 }
 
-static int usb_select_config(struct usb_device *dev)
+int usb_select_config(struct usb_device *dev)
 {
 	ALLOC_CACHE_ALIGN_BUFFER(unsigned char, tmpbuf, USB_BUFSIZ);
 	int err;
@@ -1065,8 +1072,8 @@ static int usb_select_config(struct usb_device *dev)
 	return 0;
 }
 
-static int usb_setup_device(struct usb_device *dev, bool do_read,
-			    struct usb_device *parent, int portnr)
+int usb_setup_device(struct usb_device *dev, bool do_read,
+		     struct usb_device *parent, int portnr)
 {
 	int addr;
 	int ret;
@@ -1083,6 +1090,7 @@ static int usb_setup_device(struct usb_device *dev, bool do_read,
 	return ret;
 }
 
+#ifndef CONFIG_DM_USB
 /*
  * By the time we get here, the device has gotten a new device ID
  * and is in the default state. We need to identify the thing and
@@ -1118,10 +1126,21 @@ int usb_new_device(struct usb_device *dev)
 
 	return count;
 }
+#endif
 
 __weak
 int board_usb_init(int index, enum usb_init_type init)
 {
 	return 0;
 }
+
+bool usb_device_has_child_on_port(struct usb_device *parent, int port)
+{
+#ifdef CONFIG_DM_USB
+	return false;
+#else
+	return parent->children[port] != NULL;
+#endif
+}
+
 /* EOF */
