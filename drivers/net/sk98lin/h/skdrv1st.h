@@ -157,10 +157,12 @@ typedef struct s_DrvRlmtMbuf SK_MBUF;
 
 #define __CONCAT__(A,B) A##B
 
+#ifndef UINT64_C
 #define INT32_C(a)		__CONCAT__(a,L)
 #define INT64_C(a)		__CONCAT__(a,LL)
 #define UINT32_C(a)		__CONCAT__(a,UL)
 #define UINT64_C(a)		__CONCAT__(a,ULL)
+#endif
 
 #ifdef DEBUG
 #define SK_DBG_PRINTF		printk
