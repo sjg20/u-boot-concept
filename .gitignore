@@ -88,3 +88,6 @@ GTAGS
 /output
 /sx-at91
 /examples/api/marvell/mon_ext/monext
+
+# Chrome OS things
+include/cros
