@@ -147,13 +147,6 @@ static void print_time(unsigned long us_time)
 static const char *get_record_name(char *buf, int len,
 				   struct bootstage_record *rec)
 {
-	if (prev == -1U) {
-		printf("%11s", "");
-		print_time(rec->time_us);
-	} else {
-		print_time(rec->time_us);
-		print_time(rec->time_us - prev);
-	}
 	if (rec->name)
 		return rec->name;
 	else if (rec->id >= BOOTSTAGE_ID_USER)
