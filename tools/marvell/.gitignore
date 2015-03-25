@@ -32,3 +32,4 @@ setparams
 /bin_hdr/src_ddr/ddr3lib/
 linker.scr
 linker_sec.scr
+/doimage

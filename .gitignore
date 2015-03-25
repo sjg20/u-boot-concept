@@ -85,5 +85,5 @@ GTAGS
 \#*#
 
 # Marvell things
-/tools/marvell/doimage
 /output
+/sx-at91
