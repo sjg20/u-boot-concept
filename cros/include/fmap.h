@@ -24,6 +24,12 @@ enum cros_compress_t {
 /* struct fmap_entry is now defined in fdtdec.h */
 #include <fdtdec.h>
 
+struct fmap_ec_image {
+	struct fmap_entry image;
+	const uint8_t *hash;
+	int hash_size;
+};
+
 struct fmap_firmware_entry {
 	struct fmap_entry all;		/* how big is the whole section? */
 	struct fmap_entry boot;		/* U-Boot */
