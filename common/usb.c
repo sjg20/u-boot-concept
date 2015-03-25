@@ -891,6 +891,71 @@ int usb_legacy_port_reset(struct usb_device *hub, int portnr)
 	return 0;
 }
 
+static int usb_setup_descriptor(struct usb_device *dev, bool do_read)
+{
+	__maybe_unused struct usb_device_descriptor *desc;
+	ALLOC_CACHE_ALIGN_BUFFER(unsigned char, tmpbuf, USB_BUFSIZ);
+
+	/*
+	 * This is a Windows scheme of initialization sequence, with double
+	 * reset of the device (Linux uses the same sequence)
+	 * Some equipment is said to work only with such init sequence; this
+	 * patch is based on the work by Alan Stern:
+	 * http://sourceforge.net/mailarchive/forum.php?
+	 * thread_id=5729457&forum_id=5398
+	 */
+
+	/*
+	 * send 64-byte GET-DEVICE-DESCRIPTOR request.  Since the descriptor is
+	 * only 18 bytes long, this will terminate with a short packet.  But if
+	 * the maxpacket size is 8 or 16 the device may be waiting to transmit
+	 * some more, or keeps on retransmitting the 8 byte header. */
+
+	desc = (struct usb_device_descriptor *)tmpbuf;
+	dev->descriptor.bMaxPacketSize0 = 64;	    /* Start off at 64 bytes  */
+	/* Default to 64 byte max packet size */
+	dev->maxpacketsize = PACKET_SIZE_64;
+	dev->epmaxpacketin[0] = 64;
+	dev->epmaxpacketout[0] = 64;
+
+	if (do_read) {
+		int err;
+
+		err = usb_get_descriptor(dev, USB_DT_DEVICE, 0, desc, 64);
+		if (err < sizeof(dev->descriptor)) {
+			if (err < 0) {
+				printf("unable to get device descriptor (error=%d)\n",
+				       err);
+				return err;
+			} else {
+				printf("USB device descriptor short read (expected %i, got %i)\n",
+				       (int)sizeof(dev->descriptor), err);
+				return -EIO;
+			}
+		}
+		memcpy(&dev->descriptor, tmpbuf, sizeof(dev->descriptor));
+	}
+
+	dev->epmaxpacketin[0] = dev->descriptor.bMaxPacketSize0;
+	dev->epmaxpacketout[0] = dev->descriptor.bMaxPacketSize0;
+	switch (dev->descriptor.bMaxPacketSize0) {
+	case 8:
+		dev->maxpacketsize  = PACKET_SIZE_8;
+		break;
+	case 16:
+		dev->maxpacketsize = PACKET_SIZE_16;
+		break;
+	case 32:
+		dev->maxpacketsize = PACKET_SIZE_32;
+		break;
+	case 64:
+		dev->maxpacketsize = PACKET_SIZE_64;
+		break;
+	}
+
+	return 0;
+}
+
 /*
  * By the time we get here, the device has gotten a new device ID
  * and is in the default state. We need to identify the thing and
@@ -900,6 +965,7 @@ int usb_legacy_port_reset(struct usb_device *hub, int portnr)
  */
 int usb_new_device(struct usb_device *dev)
 {
+	bool do_read = true;
 	int addr, err;
 	int tmp;
 	ALLOC_CACHE_ALIGN_BUFFER(unsigned char, tmpbuf, USB_BUFSIZ);
@@ -920,70 +986,21 @@ int usb_new_device(struct usb_device *dev)
 	dev->devnum = 0;
 
 	/*
-	 * This is a Windows scheme of initialization sequence, with double
-	 * reset of the device (Linux uses the same sequence)
-	 * Some equipment is said to work only with such init sequence; this
-	 * patch is based on the work by Alan Stern:
-	 * http://sourceforge.net/mailarchive/forum.php?
-	 * thread_id=5729457&forum_id=5398
-	 */
-
-	/*
-	 * send 64-byte GET-DEVICE-DESCRIPTOR request.  Since the descriptor is
-	 * only 18 bytes long, this will terminate with a short packet.  But if
-	 * the maxpacket size is 8 or 16 the device may be waiting to transmit
-	 * some more, or keeps on retransmitting the 8 byte header. */
-
-	dev->descriptor.bMaxPacketSize0 = 64;	    /* Start off at 64 bytes  */
-	/* Default to 64 byte max packet size */
-	dev->maxpacketsize = PACKET_SIZE_64;
-	dev->epmaxpacketin[0] = 64;
-	dev->epmaxpacketout[0] = 64;
-
-	/*
 	 * XHCI needs to issue a Address device command to setup
 	 * proper device context structures, before it can interact
 	 * with the device. So a get_descriptor will fail before any
 	 * of that is done for XHCI unlike EHCI.
 	 */
-#ifndef CONFIG_USB_XHCI
-	struct usb_device_descriptor *desc;
-
-	desc = (struct usb_device_descriptor *)tmpbuf;
-	err = usb_get_descriptor(dev, USB_DT_DEVICE, 0, desc, 64);
-	if (err < 0) {
-		debug("usb_new_device: usb_get_descriptor() failed\n");
-		return 1;
-	}
-
-	dev->descriptor.bMaxPacketSize0 = desc->bMaxPacketSize0;
-	/*
-	 * Fetch the device class, driver can use this info
-	 * to differentiate between HUB and DEVICE.
-	 */
-	dev->descriptor.bDeviceClass = desc->bDeviceClass;
+#ifdef CONFIG_USB_XHCI
+	do_read = false;
 #endif
-
+	err = usb_setup_descriptor(dev, do_read);
+	if (err)
+		return err;
 	err = usb_legacy_port_reset(dev->parent, dev->portnr);
 	if (err)
 		return err;
 
-	dev->epmaxpacketin[0] = dev->descriptor.bMaxPacketSize0;
-	dev->epmaxpacketout[0] = dev->descriptor.bMaxPacketSize0;
-	switch (dev->descriptor.bMaxPacketSize0) {
-	case 8:
-		dev->maxpacketsize  = PACKET_SIZE_8;
-		break;
-	case 16:
-		dev->maxpacketsize = PACKET_SIZE_16;
-		break;
-	case 32:
-		dev->maxpacketsize = PACKET_SIZE_32;
-		break;
-	case 64:
-		dev->maxpacketsize = PACKET_SIZE_64;
-		break;
-	}
 	dev->devnum = addr;
 
 	err = usb_set_address(dev); /* set address */
