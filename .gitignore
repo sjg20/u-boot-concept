@@ -87,3 +87,4 @@ GTAGS
 # Marvell things
 /output
 /sx-at91
+/examples/api/marvell/mon_ext/monext
