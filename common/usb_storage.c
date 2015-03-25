@@ -1178,6 +1178,7 @@ int usb_storage_probe(struct usb_device *dev, unsigned int ifnum,
 			iface->desc.bInterfaceClass != USB_CLASS_MASS_STORAGE ||
 			iface->desc.bInterfaceSubClass < US_SC_MIN ||
 			iface->desc.bInterfaceSubClass > US_SC_MAX) {
+		debug("Not mass storage\n");
 		/* if it's not a mass storage, we go no further */
 		return 0;
 	}
@@ -1293,9 +1294,9 @@ int usb_stor_get_info(struct usb_device *dev, struct us_data *ss,
 		      block_dev_desc_t *dev_desc)
 {
 	unsigned char perq, modi;
-	ALLOC_CACHE_ALIGN_BUFFER(unsigned long, cap, 2);
+	ALLOC_CACHE_ALIGN_BUFFER(uint32_t, cap, 2);
 	ALLOC_CACHE_ALIGN_BUFFER(unsigned char, usb_stor_buf, 36);
-	unsigned long *capacity, *blksz;
+	uint32_t *capacity, *blksz;
 	ccb *pccb = &usb_ccb;
 
 	pccb->pdata = usb_stor_buf;
@@ -1304,8 +1305,10 @@ int usb_stor_get_info(struct usb_device *dev, struct us_data *ss,
 	pccb->lun = dev_desc->lun;
 	debug(" address %d\n", dev_desc->target);
 
-	if (usb_inquiry(pccb, ss))
+	if (usb_inquiry(pccb, ss)) {
+		debug("%s: usb_inquiry() failed\n", __func__);
 		return -1;
+	}
 
 	perq = usb_stor_buf[0];
 	modi = usb_stor_buf[1];
@@ -1315,6 +1318,7 @@ int usb_stor_get_info(struct usb_device *dev, struct us_data *ss,
 	 * they would not respond to test_unit_ready .
 	 */
 	if (((perq & 0x1f) == 0x1f) || ((perq & 0x1f) == 0x0d)) {
+		debug("%s: unknown/unsupported device\n", __func__);
 		return 0;
 	}
 	if ((modi&0x80) == 0x80) {
@@ -1352,19 +1356,19 @@ int usb_stor_get_info(struct usb_device *dev, struct us_data *ss,
 		cap[1] = 0x200;
 	}
 	ss->flags &= ~USB_READY;
-	debug("Read Capacity returns: 0x%lx, 0x%lx\n", cap[0], cap[1]);
+	debug("Read Capacity returns: 0x%x, 0x%x\n", cap[0], cap[1]);
 #if 0
 	if (cap[0] > (0x200000 * 10)) /* greater than 10 GByte */
 		cap[0] >>= 16;
 #endif
-	cap[0] = cpu_to_be32(cap[0]);
-	cap[1] = cpu_to_be32(cap[1]);
+	cap[0] = be32_to_cpu(cap[0]);
+	cap[1] = be32_to_cpu(cap[1]);
 
 	/* this assumes bigendian! */
 	cap[0] += 1;
 	capacity = &cap[0];
 	blksz = &cap[1];
-	debug("Capacity = 0x%lx, blocksz = 0x%lx\n", *capacity, *blksz);
+	debug("Capacity = 0x%x, blocksz = 0x%x\n", *capacity, *blksz);
 	dev_desc->lba = *capacity;
 	dev_desc->blksz = *blksz;
 	dev_desc->log2blksz = LOG2(dev_desc->blksz);
