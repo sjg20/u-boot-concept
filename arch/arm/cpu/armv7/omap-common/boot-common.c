@@ -162,3 +162,13 @@ void arch_preboot_os(void)
 	ahci_reset((void __iomem *)DWC_AHSATA_BASE);
 }
 #endif
+
+#ifdef CONFIG_CMD_FASTBOOT
+int fb_set_reboot_flag(void)
+{
+	printf("Setting reboot to fastboot flag ...\n");
+	setenv("dofastboot", "1");
+	saveenv();
+	return 0;
+}
+#endif
