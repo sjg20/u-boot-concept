@@ -73,4 +73,15 @@
 #undef CONFIG_ENV_IS_IN_SPI_FLASH
 #define CONFIG_ENV_IS_NOWHERE
 
+#undef CONFIG_BOOTCOMMAND
+
+#define CONFIG_BOOTCOMMAND \
+	"setenv stdout serial; " \
+	"setenv autoload n; bootp; setenv serverip 192.168.4.1; " \
+	"tftp 100000 192.168.4.1:vmlinuz-3.13.0-49-generic; " \
+	"tftp 3000000 192.168.4.1:initrd.img-3.13.0-49-generic; " \
+	"zboot 100000 0 3000000 124c000"
+
+#define CONFIG_BOOTDELAY	1
+
 #endif	/* __CONFIG_H */

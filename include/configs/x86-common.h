@@ -142,7 +142,7 @@
 #define CONFIG_CMD_ELF
 
 #define CONFIG_BOOTARGS		\
-	"root=/dev/sdb3 init=/sbin/init rootwait ro"
+	"initcall_debug show_lapic=all init=/sbin/init rootwait ro"
 #define CONFIG_BOOTCOMMAND	\
 	"ext2load scsi 0:3 01000000 /boot/vmlinuz; zboot 01000000"
 
