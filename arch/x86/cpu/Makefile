@@ -11,6 +11,7 @@
 extra-y	= start.o
 obj-$(CONFIG_X86_RESET_VECTOR) += resetvec.o start16.o
 obj-y	+= interrupts.o cpu.o call64.o
+obj-y += cpu-uclass.o
 
 obj-$(CONFIG_INTEL_BAYTRAIL) += baytrail/
 obj-$(CONFIG_SYS_COREBOOT) += coreboot/
@@ -19,6 +20,8 @@ obj-$(CONFIG_NORTHBRIDGE_INTEL_IVYBRIDGE) += ivybridge/
 obj-$(CONFIG_INTEL_QUARK) += quark/
 obj-$(CONFIG_INTEL_QUEENSBAY) += queensbay/
 obj-y += lapic.o
+obj-$(CONFIG_SMP) += mp_init.o
 obj-y += mtrr.o
 obj-$(CONFIG_PCI) += pci.o
+obj-$(CONFIG_SMP) += sipi.o
 obj-y += turbo.o

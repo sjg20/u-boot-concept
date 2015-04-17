@@ -21,6 +21,7 @@
 
 #include <common.h>
 #include <command.h>
+#include <dm.h>
 #include <errno.h>
 #include <malloc.h>
 #include <asm/control_regs.h>
@@ -133,6 +134,7 @@ static void load_gdt(const u64 *boot_gdt, u16 num_entries)
 
 void setup_gdt(gd_t *id, u64 *gdt_addr)
 {
+	id->arch.gdt = gdt_addr;
 	/* CS: code, read/execute, 4 GB, base 0 */
 	gdt_addr[X86_GDT_ENTRY_32BIT_CS] = GDT_ENTRY(0xc09b, 0, 0xfffff);
 
@@ -599,3 +601,81 @@ int last_stage_init(void)
 	return 0;
 }
 #endif
+
+void cpu_init_ap(unsigned int index)
+{
+// 	struct cpu_info *info;
+// 	struct cpuinfo_x86 c;
+
+// 	info = cpu_info();
+
+	debug("Initialising CPU #%d\n", index);
+#if 0
+	cpu = info->cpu;
+	if (!cpu) {
+		die("CPU: missing cpu device structure");
+	}
+
+	post_log_path(cpu);
+
+	/* Find what type of cpu we are dealing with */
+	identify_cpu(cpu);
+	debug("CPU: vendor %s device %x\n",
+	      cpu_vendor_name(cpu->vendor), cpu->device);
+
+	get_fms(&c, cpu->device);
+
+	debug("CPU: family %02x, model %02x, stepping %02x\n",
+	      c.x86, c.x86_model, c.x86_mask);
+
+	/* Lookup the cpu's operations */
+	set_cpu_ops(cpu);
+
+	if(!cpu->ops) {
+		/* mask out the stepping and try again */
+		cpu->device -= c.x86_mask;
+		set_cpu_ops(cpu);
+		cpu->device += c.x86_mask;
+		if(!cpu->ops) die("Unknown cpu");
+		debug("Using generic cpu ops (good)\n");
+	}
+
+	/* Initialize the cpu */
+	if (cpu->ops && cpu->ops->init) {
+		cpu->enabled = 1;
+		cpu->initialized = 1;
+		cpu->ops->init(cpu);
+	}
+	post_log_clear();
+#endif
+	debug("CPU #%d initialized\n", index);
+
+	return;
+}
+
+static int cpu_ofdata_to_platdata(struct udevice *dev)
+{
+	struct cpu_info *cpu = dev_get_priv(dev);
+
+	cpu->apic_id = fdtdec_get_int(gd->fdt_blob, dev->of_offset,
+				      "intel,apic-id", -1);
+
+	return 0;
+}
+
+static const struct dm_cpu_ops cpu_x86_ops = {
+};
+
+static const struct udevice_id cpu_x86_ids[] = {
+	{ .compatible = "cpu-x86" },
+	{ }
+};
+
+U_BOOT_DRIVER(cpu_x86_drv) = {
+	.name		= "cpu_x86",
+	.id		= UCLASS_CPU,
+	.of_match	= cpu_x86_ids,
+	.ops		= &cpu_x86_ops,
+	.ofdata_to_platdata	= cpu_ofdata_to_platdata,
+	.priv_auto_alloc_size	= sizeof(struct cpu_info),
+};

@@ -7,6 +7,7 @@
 #include <common.h>
 #include <dm.h>
 #include <dm/root.h>
+#include <asm/cpu.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

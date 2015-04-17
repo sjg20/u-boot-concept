@@ -747,7 +747,7 @@ int gma_func0_init(pci_dev_t dev, struct pci_controller *hose,
 
 	/* Use write-combining for the graphics memory, 256MB */
 	base = pci_read_bar32(hose, dev, 2);
-	mtrr_add_request(MTRR_TYPE_WRCOMB, base, 256 << 20);
+// 	mtrr_add_request(MTRR_TYPE_WRCOMB, base, 256 << 20);
 	mtrr_commit(true);
 
 	gtt_bar = (void *)pci_read_bar32(pci_bus_to_hose(0), dev, 0);

@@ -151,6 +151,53 @@ static inline int flag_is_changeable_p(uint32_t flag)
 	return ((f1^f2) & flag) != 0;
 }
 
+struct dm_cpu_ops {
+};
+
+#ifndef __SIMPLE_DEVICE__
+
+struct device;
+
+struct cpu_driver {
+	struct device_operations *ops;
+	struct cpu_device_id *id_table;
+	struct acpi_cstate *cstates;
+};
+
+struct cpu_driver *find_cpu_driver(struct device *cpu);
+
+struct thread;
+
+struct cpu_info {
+// 	struct device *cpu;
+	unsigned int index;
+#if CONFIG_COOP_MULTITASKING
+// 	struct thread *thread;
+#endif
+	int apic_id;
+};
+
+static inline struct cpu_info *cpu_info(void)
+{
+	struct cpu_info *ci;
+	__asm__("andl %%esp,%0; "
+		"orl  %2, %0 "
+		:"=r" (ci)
+		: "0" (~(CONFIG_STACK_SIZE - 1)),
+		"r" (CONFIG_STACK_SIZE - sizeof(struct cpu_info))
+	);
+	return ci;
+}
+
+static inline unsigned long cpu_index(void)
+{
+	struct cpu_info *ci;
+
+	ci = cpu_info();
+	return ci->index;
+}
+#endif
+
 /**
  * cpu_enable_paging_pae() - Enable PAE-paging
  *
@@ -216,5 +263,7 @@ void cpu_call64(ulong pgtable, ulong setup_base, ulong target);
  * @target:	Pointer to the start of the kernel image
  */
 int cpu_jump_to_64bit(ulong setup_base, ulong target);
+
+void cpu_init_ap(unsigned int index);
 
 #endif

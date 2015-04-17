@@ -535,7 +535,7 @@ static int reserve_stacks(void)
 	gd->start_addr_sp &= ~0xf;
 
 	/*
-	 * let the architecture specific code tailor gd->start_addr_sp and
+	 * let the architecture-specific code tailor gd->start_addr_sp and
 	 * gd->irq_sp
 	 */
 	return arch_reserve_stacks();

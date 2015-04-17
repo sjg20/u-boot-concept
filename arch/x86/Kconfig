@@ -422,6 +422,22 @@ source "arch/x86/cpu/quark/Kconfig"
 
 source "arch/x86/cpu/queensbay/Kconfig"
 
+config MAX_CPUS
+        int
+        default 4
+
+config SMP
+	bool "Enable Symmetric Multiprocessing"
+	default n
+	help
+	  Enable use of more than one CPU in U-Boot and the Operating System
+	  when loaded. Each CPU will be started up and information can be
+	  obtained using the 'cpu' command.
+
+config STACK_SIZE
+	hex
+	default 0x1000
+
 config TSC_CALIBRATION_BYPASS
 	bool "Bypass Time-Stamp Counter (TSC) calibration"
 	default n

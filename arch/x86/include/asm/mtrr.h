@@ -34,6 +34,20 @@
 /* Number of MTRRs supported */
 #define MTRR_COUNT		8
 
+#define NUM_FIXED_RANGES 88
+#define RANGES_PER_FIXED_MTRR 8
+#define MTRRfix64K_00000_MSR 0x250
+#define MTRRfix16K_80000_MSR 0x258
+#define MTRRfix16K_A0000_MSR 0x259
+#define MTRRfix4K_C0000_MSR 0x268
+#define MTRRfix4K_C8000_MSR 0x269
+#define MTRRfix4K_D0000_MSR 0x26a
+#define MTRRfix4K_D8000_MSR 0x26b
+#define MTRRfix4K_E0000_MSR 0x26c
+#define MTRRfix4K_E8000_MSR 0x26d
+#define MTRRfix4K_F0000_MSR 0x26e
+#define MTRRfix4K_F8000_MSR 0x26f
+
 #if !defined(__ASSEMBLER__)
 
 /**
