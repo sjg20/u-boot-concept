@@ -758,7 +758,7 @@ int gma_func0_init(pci_dev_t dev, struct pci_controller *hose,
 
 #ifdef CONFIG_VIDEO
 	start = get_timer(0);
-	ret = pci_run_vga_bios(dev, int15_handler, PCI_ROM_USE_NATIVE |
+	ret = pci_run_vga_bios(dev, int15_handler, PCI_ROM_EMULATE |
 			       PCI_ROM_ALLOW_FALLBACK);
 	debug("BIOS ran in %lums\n", get_timer(start));
 #endif

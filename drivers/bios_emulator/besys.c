@@ -62,7 +62,7 @@ static u8 BE_model = 0xFC;
 static u8 BE_submodel = 0x00;
 #endif
 
-#define DEBUG_IO_ACCESS
+#undef DEBUG_IO_ACCESS
 
 #ifdef DEBUG_IO_ACCESS
 #define debug_io(fmt, ...)	printf(fmt, ##__VA_ARGS__)
@@ -116,7 +116,7 @@ static u8 *BE_memaddr(u32 addr)
 		return &BE_submodel;
 	}
 #endif
-	else if (addr > M.mem_size - 1) {
+	} else if (addr > M.mem_size - 1) {
 		HALT_SYS();
 		return (u8 *)M.mem_base;
 	}

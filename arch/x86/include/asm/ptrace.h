@@ -10,16 +10,16 @@
 #define EDI 4
 #define EBP 5
 #define EAX 6
-#define DS 7
-#define ES 8
-#define FS 9
-#define GS 10
+#define REG_DS 7
+#define REG_ES 8
+#define REG_FS 9
+#define REG_GS 10
 #define ORIG_EAX 11
 #define EIP 12
-#define CS  13
+#define REG_CS  13
 #define EFL 14
 #define UESP 15
-#define SS   16
+#define REG_SS   16
 #define FRAME_SIZE 17
 
 /* this struct defines the way the registers are stored on the
