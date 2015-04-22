@@ -644,7 +644,7 @@ int mp_init(struct bus *cpu_bus, struct mp_params *p)
 	ret = load_sipi_vector(p, &ap_count);
 	if (ap_count == NULL)
 		return -1;
-	return 0;
+
 	/*
 	 * Make sure SIPI data hits RAM so the APs that come up will see
 	 * the startup code even if the caches are disabled

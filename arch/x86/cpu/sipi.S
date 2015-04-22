@@ -24,12 +24,13 @@
  * C code. */
 
 #include <asm/global_data.h>
+#include <asm/processor.h>
 #include <asm/processor-flags.h>
 #include <asm/smm.h>
 
 /* These segment selectors need to match the gdt entries in c_start.S. */
-#define CODE_SEG 0x10
-#define DATA_SEG 0x18
+#define CODE_SEG	(X86_GDT_ENTRY_32BIT_CS * X86_GDT_ENTRY_SIZE)
+#define DATA_SEG	(X86_GDT_ENTRY_32BIT_DS * X86_GDT_ENTRY_SIZE)
 
 #define IA32_UPDT_TRIG 0x79
 #define IA32_BIOS_SIGN_ID 0x8b
@@ -72,7 +73,7 @@ sipi_params_16bit:
 .globl ap_start32_jmp
 ap_start32_jmp:
 	.long	0		/* offset set to ap_start32 by U-Boot */
-	.word	0x10		/* segment */
+	.word	CODE_SEG	/* segment */
 
 	.word	0		/* padding */
 gdtaddr:
@@ -95,12 +96,11 @@ ap_start32:
 	mov	$flag, %ebx
 	incl	(%ebx)
 
-	jmp	.
-
 	/* Load the Interrupt descriptor table */
 	mov	idt_ptr, %ebx
 	lidt	(%ebx)
 
+	jmp	.
 	movl	$ap_continue_addr, %ebx
 	jmp	*(%ebx)
 
@@ -199,6 +199,7 @@ halt_jump:
 	hlt
 	jmp	halt_jump
 
+	.align	4
 .globl	sipi_params
 sipi_params:
 flag:
