@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston,
  * MA 02110-1301 USA
  */
-
+#define DEBUG
 #include <common.h>
 #include <dm.h>
 #include <errno.h>
@@ -58,8 +58,7 @@
 #include <thread.h>
 */
 
-static struct sipi_params sipi_params;
-static char msr_save[256];
+static char msr_save[512];
 
 #define MAX_APIC_IDS 256
 #if 0
@@ -339,25 +338,44 @@ static int load_sipi_vector(struct mp_params *mp_params, atomic_t **ap_countp)
 {
 	struct sipi_params_16bit *params16;
 	struct sipi_params *params;
+	ulong addr;
+	int code_len;
+	int ret;
 
-	params16 = (struct sipi_params_16bit *)SIPI_PARAM_AREA;
+	/* Copy in the code */
+	code_len = ap_code_end - ap_start;
+	debug("Copying SIPI code to %x: %d bytes\n", SMM_DEFAULT_BASE,
+	      code_len);
+	memcpy((void *)SMM_DEFAULT_BASE, ap_start, code_len);
+
+	addr = SMM_DEFAULT_BASE + (ulong)sipi_params_16bit - (ulong)ap_start;
+// 	addr = ALIGN(addr, 16);
+	printf("SIPI 16-bit params at %lx, ap_start32=%p\n", addr, ap_start32);
+	params16 = (struct sipi_params_16bit *)addr;
 	params16->ap_start32 = (uint32_t)ap_start32;
-	params16->gdt = (uint32_t)&gd->arch.gdt;
+	params16->gdt = (uint32_t)gd->arch.gdt;
 	params16->gdt_limit = X86_GDT_SIZE - 1;
-	params16->idt_ptr = (uint32_t)x86_get_idt();
-	params16->ap_continue_addr = (u32)ap_continue;
+	debug("struct sipi_params_16bit %d\n", sizeof(struct sipi_params_16bit));
+	debug("gdt = %x, gdt_limit = %x\n", params16->gdt, params16->gdt_limit);
 
-	params = &sipi_params;
+	params = (struct sipi_params *)sipi_params;
+	printf("SIPI 32-bit params at %p\n", params);
+	params->idt_ptr = (uint32_t)x86_get_idt();
 	params->stack_top = 0;
 	params->stack_size = 0;
 	params->microcode_ptr = 0;
 	params->msr_table_ptr = (u32)msr_save;
-	params->msr_count = save_bsp_msrs(msr_save, sizeof(msr_save));
+	params->ap_continue_addr = (u32)ap_continue;
+	ret = save_bsp_msrs(msr_save, sizeof(msr_save));
+	if (ret < 0)
+		return ret;
+	params->msr_count = ret;
 ;
 	params->c_handler = (uint32_t)&ap_init;
 
 	*ap_countp = &params->ap_count;
 	atomic_set(*ap_countp, 0);
+	debug("SIPI vector is ready\n");
 
 	return 0;
 }
@@ -370,8 +388,8 @@ static int allocate_cpu_devices(struct bus *cpu_bus, struct mp_params *p)
 	max_cpus = p->num_cpus;
 
 	for (i = 0; i < max_cpus; i++) {
+		struct cpu_platdata *plat;
 		struct udevice *dev;
-		struct cpu_info *cpu;
 		int ret;
 
 		ret = uclass_get_device(UCLASS_CPU, i, &dev);
@@ -379,8 +397,8 @@ static int allocate_cpu_devices(struct bus *cpu_bus, struct mp_params *p)
 			printf("Cannot find CPU %d in device tree\n", i);
 			return ret;
 		}
-		cpu = dev_get_priv(dev);
-		debug("Allocated CPU %d with APIC ID %d\n", i, cpu->apic_id);
+		plat = dev_get_parent_platdata(dev);
+		debug("Allocated CPU %d with APIC ID %d\n", i, plat->apic_id);
 	}
 
 	return max_cpus;
@@ -533,9 +551,9 @@ static int find_cpu_by_apid_id(int apic_id, struct udevice **devp)
 	for (uclass_find_first_device(UCLASS_CPU, &dev);
 	     dev;
 	     uclass_find_next_device(&dev)) {
-		struct cpu_info *cpu = dev_get_priv(dev);
+		struct cpu_platdata *plat = dev_get_parent_platdata(dev);
 
-		if (cpu->apic_id == apic_id) {
+		if (plat->apic_id == apic_id) {
 			*devp = dev;
 			return 0;
 		}
@@ -618,7 +636,7 @@ int mp_init(struct bus *cpu_bus, struct mp_params *p)
 		return -1;
 	}
 
-	/* Copy needed parameters so that APs have a reference to the plan. */
+	/* Copy needed parameters so that APs have a reference to the plan */
 	mp_info.num_records = p->num_records;
 	mp_info.records = p->flight_plan;
 
@@ -626,9 +644,11 @@ int mp_init(struct bus *cpu_bus, struct mp_params *p)
 	ret = load_sipi_vector(p, &ap_count);
 	if (ap_count == NULL)
 		return -1;
-
-	/* Make sure SIPI data hits RAM so the APs that come up will see
-	 * the startup code even if the caches are disabled.  */
+	return 0;
+	/*
+	 * Make sure SIPI data hits RAM so the APs that come up will see
+	 * the startup code even if the caches are disabled
+	 */
 	wbinvd();
 
 	/* Start the APs providing number of APs and the cpus_entered field. */
@@ -640,13 +660,13 @@ int mp_init(struct bus *cpu_bus, struct mp_params *p)
 		return -1;
 	}
 
-	/* Walk the flight plan for the BSP. */
+	/* Walk the flight plan for the BSP */
 	return bsp_do_flight_plan(p);
 }
 
 void mp_initialize_cpu(void *unused)
 {
-	/* Call back into driver infrastructure for the AP initialization.   */
+	/* Call back into driver infrastructure for the AP initialization */
 	struct cpu_info *info = cpu_info();
 
 	cpu_init_ap(info->index);

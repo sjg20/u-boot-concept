@@ -13,12 +13,7 @@
 
 int print_cpuinfo(void)
 {
-	int ret;
-
 	post_code(POST_CPU_INFO);
-	ret = x86_init_cpus();
-	if (ret)
-		return ret;
 
 	return default_print_cpuinfo();
 }

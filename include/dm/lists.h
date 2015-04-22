@@ -73,4 +73,8 @@ int lists_bind_fdt(struct udevice *parent, const void *blob, int offset,
 int device_bind_driver(struct udevice *parent, const char *drv_name,
 		       const char *dev_name, struct udevice **devp);
 
+int device_bind_driver_to_node(struct udevice *parent, const char *drv_name,
+			       const char *dev_name, int node,
+			       struct udevice **devp);
+
 #endif

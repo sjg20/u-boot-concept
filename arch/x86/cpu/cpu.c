@@ -653,14 +653,9 @@ void cpu_init_ap(unsigned int index)
 	return;
 }
 
-static int cpu_ofdata_to_platdata(struct udevice *dev)
+int cpu_init_r(void)
 {
-	struct cpu_info *cpu = dev_get_priv(dev);
-
-	cpu->apic_id = fdtdec_get_int(gd->fdt_blob, dev->of_offset,
-				      "intel,apic-id", -1);
-
-	return 0;
+	return x86_init_cpus();
 }
 
 static const struct dm_cpu_ops cpu_x86_ops = {
@@ -676,6 +671,5 @@ U_BOOT_DRIVER(cpu_x86_drv) = {
 	.id		= UCLASS_CPU,
 	.of_match	= cpu_x86_ids,
 	.ops		= &cpu_x86_ops,
-	.ofdata_to_platdata	= cpu_ofdata_to_platdata,
 	.priv_auto_alloc_size	= sizeof(struct cpu_info),
 };

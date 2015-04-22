@@ -25,6 +25,7 @@
 
 #include <asm/global_data.h>
 #include <asm/processor-flags.h>
+#include <asm/smm.h>
 
 /* These segment selectors need to match the gdt entries in c_start.S. */
 #define CODE_SEG 0x10
@@ -59,10 +60,12 @@ ap_start:
 	movl	%eax, %cr0
 
 	movl	$ap_start32_jmp, %eax
+	subl	$ap_start, %eax
 	movw	%ax, %bp
-	movl	%ecx, %eax
+
 o32 cs	ljmp	*(%bp)
 
+	.align	4
 .globl sipi_params_16bit
 sipi_params_16bit:
 	/* 48-bit far pointer */
@@ -76,6 +79,8 @@ gdtaddr:
 .word 0 /* limit */
 .long 0 /* table */
 .word 0 /* unused */
+test:
+.long 0
 
 .globl ap_start32
 ap_start32:
@@ -87,11 +92,16 @@ ap_start32:
 	movw	%ax, %fs
 	movw	%ax, %gs
 
+	mov	$flag, %ebx
+	incl	(%ebx)
+
+	jmp	.
+
 	/* Load the Interrupt descriptor table */
 	mov	idt_ptr, %ebx
 	lidt	(%ebx)
 
-	movl	$ap_continue_ptr, %ebx
+	movl	$ap_continue_addr, %ebx
 	jmp	*(%ebx)
 
 .globl ap_continue
@@ -189,9 +199,13 @@ halt_jump:
 	hlt
 	jmp	halt_jump
 
+.globl	sipi_params
+sipi_params:
+flag:
+.long 0
 idt_ptr:
 .long 0
-ap_continue_ptr:
+ap_continue_addr:
 .long 0
 stack_top:
 .long 0
@@ -210,3 +224,5 @@ c_handler:
 ap_count:
 .long 0
 
+.globl ap_code_end
+ap_code_end:

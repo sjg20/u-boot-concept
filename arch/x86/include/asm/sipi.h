@@ -8,9 +8,7 @@
 #ifndef _ASM_SIPI_H
 #define _ASM_SIPI_H
 
-#define SIPI_PARAM_AREA		0x1000
-
-struct sipi_params_16bit {
+struct __packed sipi_params_16bit {
 	u32 ap_start32;
 	u16 segment;
 	u16 pad;
@@ -18,11 +16,12 @@ struct sipi_params_16bit {
 	u16 gdt_limit;
 	u32 gdt;
 	u16 unused;
-	u32 idt_ptr;
-	u32 ap_continue_addr;
 };
 
 struct sipi_params {
+	u32 flag;
+	u32 idt_ptr;
+	u32 ap_continue_addr;
 	u32 stack_top;
 	u32 stack_size;
 	u32 microcode_lock;
@@ -33,7 +32,12 @@ struct sipi_params {
 	atomic_t ap_count;
 };
 
-void ap_start32();
+void ap_start(void);
+void ap_start32(void);
 void ap_continue(void);
+void ap_code_end(void);
+
+extern char sipi_params_16bit[];
+extern char sipi_params[];
 
 #endif

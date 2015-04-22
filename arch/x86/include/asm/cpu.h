@@ -174,6 +174,9 @@ struct cpu_info {
 #if CONFIG_COOP_MULTITASKING
 // 	struct thread *thread;
 #endif
+};
+
+struct cpu_platdata {
 	int apic_id;
 };
 
