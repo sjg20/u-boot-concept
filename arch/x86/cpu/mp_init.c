@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston,
  * MA 02110-1301 USA
  */
-#define DEBUG
+
 #include <common.h>
 #include <dm.h>
 #include <errno.h>
@@ -59,6 +59,7 @@
 */
 
 static char msr_save[512];
+static char stack[4096];
 
 #define MAX_APIC_IDS 256
 #if 0
@@ -166,6 +167,7 @@ static void asmlinkage ap_init(unsigned int cpu)
 	struct cpu_info *info;
 	int apic_id;
 
+	printf("hello\n");
 	/* Ensure the local apic is enabled */
 	enable_lapic();
 
@@ -179,7 +181,7 @@ static void asmlinkage ap_init(unsigned int cpu)
 // 	info->cpu->path.apic.apic_id = apic_id;
 	cpus[cpu].apic_id = apic_id;
 
-	debug("AP: slot %d apic_id %x.\n", cpu, apic_id);
+	printf("AP: slot %d apic_id %x.\n", cpu, apic_id);
 
 	/* Walk the flight plan */
 	ap_do_flight_plan();
@@ -350,7 +352,7 @@ static int load_sipi_vector(struct mp_params *mp_params, atomic_t **ap_countp)
 
 	addr = SMM_DEFAULT_BASE + (ulong)sipi_params_16bit - (ulong)ap_start;
 // 	addr = ALIGN(addr, 16);
-	printf("SIPI 16-bit params at %lx, ap_start32=%p\n", addr, ap_start32);
+	debug("SIPI 16-bit params at %lx, ap_start32=%p\n", addr, ap_start32);
 	params16 = (struct sipi_params_16bit *)addr;
 	params16->ap_start32 = (uint32_t)ap_start32;
 	params16->gdt = (uint32_t)gd->arch.gdt;
@@ -359,10 +361,10 @@ static int load_sipi_vector(struct mp_params *mp_params, atomic_t **ap_countp)
 	debug("gdt = %x, gdt_limit = %x\n", params16->gdt, params16->gdt_limit);
 
 	params = (struct sipi_params *)sipi_params;
-	printf("SIPI 32-bit params at %p\n", params);
+	debug("SIPI 32-bit params at %p\n", params);
 	params->idt_ptr = (uint32_t)x86_get_idt();
-	params->stack_top = 0;
-	params->stack_size = 0;
+	params->stack_top = (u32)(stack + sizeof(stack));
+	params->stack_size = sizeof(stack);
 	params->microcode_ptr = 0;
 	params->msr_table_ptr = (u32)msr_save;
 	params->ap_continue_addr = (u32)ap_continue;

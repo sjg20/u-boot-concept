@@ -90,8 +90,10 @@ ap_start32:
 	movw	%ax, %ds
 	movw	%ax, %es
 	movw	%ax, %ss
-	movw	%ax, %fs
 	movw	%ax, %gs
+
+	movw	$(X86_GDT_ENTRY_32BIT_FS * X86_GDT_ENTRY_SIZE), %ax
+	movw	%ax, %fs
 
 	mov	$flag, %ebx
 	incl	(%ebx)
@@ -100,7 +102,6 @@ ap_start32:
 	mov	idt_ptr, %ebx
 	lidt	(%ebx)
 
-	jmp	.
 	movl	$ap_continue_addr, %ebx
 	jmp	*(%ebx)
 

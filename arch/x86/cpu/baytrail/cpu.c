@@ -97,7 +97,7 @@ static int baytrail_init_cpus(void)
 
 int x86_init_cpus(void)
 {
-	printf("Init additional CPUs\n");
+	debug("Init additional CPUs\n");
 	baytrail_init_cpus();
 
 	return 0;
