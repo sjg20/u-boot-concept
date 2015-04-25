@@ -27,6 +27,17 @@
 
 #define PORT_RESET		0xcf9
 
+enum {
+	SYS_RST		= 1 << 1,	/* clear for soft reset, set for hard */
+	RST_CPU		= 1 << 2,	/* initiate reset */
+	FULL_RST	= 1 << 3,	/* full power cycle */
+};
+
+/**
+ * x86_full_reset() - reset everything: perform a full power cycle
+ */
+void x86_full_reset(void);
+
 static inline __attribute__((always_inline)) void cpu_hlt(void)
 {
 	asm("hlt");
