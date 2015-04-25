@@ -183,9 +183,8 @@ int intel_early_me_init_done(u8 status)
 	}
 
 	/* Perform the requested reset */
-	if (reset) {
-		outb(reset, 0xcf9);
-		cpu_hlt();
-	}
+	if (reset)
+		reset_cpu();
+
 	return -1;
 }
