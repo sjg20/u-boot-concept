@@ -515,6 +515,20 @@ config PCIE_ECAM_BASE
 	  assigned to PCI devices - i.e. the memory and prefetch regions, as
 	  passed to pci_set_region().
 
+menuconfig SFI
+	bool "SFI (Simple Firmware Interface) Support"
+	---help---
+	The Simple Firmware Interface (SFI) provides a lightweight method
+	for platform firmware to pass information to the operating system
+	via static tables in memory.  Kernel SFI support is required to
+	boot on SFI-only platforms.  If you have ACPI tables then these are
+	used instead.
+
+	For more information, see http://simplefirmware.org
+
+	Say 'Y' here to enable the kernel to boot properly on SFI-only
+	platforms.
+
 config BOOTSTAGE
 	default y
 
