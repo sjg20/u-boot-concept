@@ -15,7 +15,6 @@
 
 void lapic_setup(void)
 {
-#if NEED_LAPIC == 1
 	/* Only Pentium Pro and later have those MSR stuff */
 	debug("Setting up local apic: ");
 
@@ -46,12 +45,17 @@ void lapic_setup(void)
 		(LAPIC_LVT_REMOTE_IRR | LAPIC_SEND_PENDING |
 			LAPIC_DELIVERY_MODE_NMI));
 
-	debug("apic_id: 0x%02lx, ", lapicid());
-#else /* !NEED_LLAPIC */
-	/* Only Pentium Pro and later have those MSR stuff */
-	debug("Disabling local apic: ");
-	disable_lapic();
-#endif /* !NEED_LAPIC */
-	debug("done.\n");
+	debug("apic_id: 0x%02lx\n", lapicid());
 	post_code(POST_LAPIC);
+}
+
+void lapic_enable(void)
+{
+	msr_t msr;
+
+	msr = msr_read(LAPIC_BASE_MSR);
+	msr.hi &= 0xffffff00;
+	msr.lo &= 0x000007ff;
+	msr.lo |= LAPIC_DEFAULT_BASE | LAPIC_BASE_MSR_ENABLE;
+	msr_write(LAPIC_BASE_MSR, msr);
 }

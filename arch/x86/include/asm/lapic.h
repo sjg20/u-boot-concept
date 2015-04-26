@@ -14,13 +14,6 @@
 #include <asm/msr.h>
 #include <asm/processor.h>
 
-/* See if I need to initialize the local apic */
-#if CONFIG_SMP || CONFIG_IOAPIC
-#  define NEED_LAPIC 1
-#else
-#  define NEED_LAPIC 0
-#endif
-
 static inline __attribute__((always_inline))
 		unsigned long lapic_read(unsigned long reg)
 {
