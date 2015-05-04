@@ -339,6 +339,16 @@ static inline ulong bootstage_mark_name(enum bootstage_id id, const char *name)
 	return 0;
 }
 
+static inline uint32_t bootstage_start(enum bootstage_id id, const char *name)
+{
+	return 0;
+}
+
+static inline uint32_t bootstage_accum(enum bootstage_id id)
+{
+	return 0;
+}
+
 static inline int bootstage_stash(void *base, int size)
 {
 	return 0;	/* Pretend to succeed */
