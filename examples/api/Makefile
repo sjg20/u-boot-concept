@@ -66,7 +66,7 @@ OBJS	+= $(addprefix $(obj),$(notdir $(EXT_SOBJ_FILES-y)))
 
 CPPFLAGS += -I..
 
-all:	$(obj).depend $(OUTPUT) marvell/monext.bin
+all:	$(obj).depend $(OUTPUT) #marvell/monext.bin
 
 #########################################################################
 

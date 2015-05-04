@@ -105,8 +105,8 @@ OBJ_FILES-$(CONFIG_SHA1_CHECK_UB_IMG) += ubsha1.o
 NOPED_OBJ_FILES-y += ublimage.o
 OBJ_FILES-$(CONFIG_KIRKWOOD) += kwboot.o
 
-TOOLSUBDIRS += marvell/doimage_mv
-TOOLSUBDIRS += marvell/bin_hdr
+#TOOLSUBDIRS += marvell/doimage_mv
+#TOOLSUBDIRS += marvell/bin_hdr
 
 clean:
 	$(RM) doimage
