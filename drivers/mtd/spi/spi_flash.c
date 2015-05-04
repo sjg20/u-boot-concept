@@ -8,6 +8,7 @@
  */
 
 #include <common.h>
+#include <bootstage.h>
 #include <malloc.h>
 #include <spi.h>
 #include <spi_flash.h>
