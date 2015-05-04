@@ -103,7 +103,7 @@ static int mv_fdt_remove_prop(void *fdt, const char *path,
 		}							\
 	} while (0)
 
-void ft_board_setup(void *blob, bd_t *bd)
+void ft_system_setup(void *blob, bd_t *bd)
 {
 	int err;		/* error number */
 	char *env;		/* env value */
