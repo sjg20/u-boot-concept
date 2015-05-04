@@ -445,6 +445,7 @@ vboot:
 		CFLAGS="$(CFLAGS_VBOOT)" \
 		$(MAKE) -C $(VBOOT_SOURCE) \
 		BUILD=$(OBJTREE)/include/generated/vboot \
+		$(if $(CONFIG_TPM),,MOCK_TPM=1) \
 		ARCH=$(VBOOT_SUBMAKE_ARCH) fwlib
 
 __LIBS += $(obj)include/generated/vboot/vboot_fw.a
