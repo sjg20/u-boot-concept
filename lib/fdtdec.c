@@ -505,6 +505,7 @@ int fdtdec_decode_gpio(const void *blob, int node, const char *prop_name,
 	return err == 1 ? 0 : err;
 }
 
+#if CONFIG_CMD_GPIO
 int fdtdec_get_gpio(struct fdt_gpio_state *gpio)
 {
 	int val;
@@ -538,6 +539,7 @@ int fdtdec_setup_gpio(struct fdt_gpio_state *gpio)
 		return -1;
 	return 0;
 }
+#endif
 
 int fdtdec_get_byte_array(const void *blob, int node, const char *prop_name,
 		u8 *array, int count)
