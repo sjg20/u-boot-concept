@@ -46,10 +46,25 @@ struct spi_flash {
 				size_t len, const void *buf);
 	int		(*erase)(struct spi_flash *flash, u32 offset,
 				size_t len);
+	int		(*read_sw_wp_status)(struct spi_flash *flash,
+				u8 *result);
 };
 
 struct spi_flash *spi_flash_probe(unsigned int bus, unsigned int cs,
 		unsigned int max_hz, unsigned int spi_mode);
+
+/**
+ * Set up a new SPI flash from an fdt node
+ *
+ * @param blob		Device tree blob
+ * @param slave_node	Pointer to this SPI slave node in the device tree
+ * @param spi_node	Cached pointer to the SPI interface this node belongs
+ *			to
+ * @return 0 if ok, -1 on error
+ */
+struct spi_flash *spi_flash_probe_fdt(const void *blob, int slave_node,
+				      int spi_node);
+
 void spi_flash_free(struct spi_flash *flash);
 
 static inline int spi_flash_read(struct spi_flash *flash, u32 offset,
@@ -68,6 +83,14 @@ static inline int spi_flash_erase(struct spi_flash *flash, u32 offset,
 		size_t len)
 {
 	return flash->erase(flash, offset, len);
+}
+
+static inline int spi_flash_read_sw_wp_status(struct spi_flash *flash,
+					      u8 *result)
+{
+	if (flash->read_sw_wp_status)
+		return flash->read_sw_wp_status(flash, result);
+	return 1;				/* else not implemented */
 }
 
 void spi_boot(void) __noreturn;
