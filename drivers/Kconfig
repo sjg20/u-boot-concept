@@ -36,6 +36,8 @@ source "drivers/pinctrl/Kconfig"
 
 source "drivers/power/Kconfig"
 
+source "drivers/ram/Kconfig"
+
 source "drivers/hwmon/Kconfig"
 
 source "drivers/watchdog/Kconfig"

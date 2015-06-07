@@ -12,6 +12,7 @@ obj-y += misc/
 obj-y += pcmcia/
 obj-y += dfu/
 obj-$(CONFIG_PINCTRL) += pinctrl/
+obj-$(CONFIG_RAM) += ram/
 obj-y += rtc/
 obj-y += sound/
 obj-y += tpm/
