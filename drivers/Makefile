@@ -11,6 +11,7 @@ obj-$(CONFIG_LED) += led/
 obj-y += misc/
 obj-y += pcmcia/
 obj-y += dfu/
+obj-$(CONFIG_PINCTRL) += pinctrl/
 obj-y += rtc/
 obj-y += sound/
 obj-y += tpm/

@@ -1,0 +1,19 @@
+config PINCTRL
+	bool "Pin multiplexing driver support"
+	help
+	  Support pin multiplexing control in U-Boot. Most SoCs have their own
+	  own multiplexing arrangement where a single pin can be used for
+	  several functions. An SoC pinctrl driver allows the required
+	  function to be selected for each pin. The driver is typically
+	  controlled by the device tree.
+
+config SPL_PINCTRL_SUPPORT
+	bool "Enable pin multiplexing (pinctrl) support in SPL"
+	depends on PINCTRL
+	help
+	  The pinctrl subsystem can add a substantial overhead to the SPL
+	  image since it typically requires quite a few tables either in the
+	  driver or in the device tree. If this is acceptable and you need
+	  to adjust pin multiplexing in SPL in order to boot into U-Boot,
+	  enable this option. You will need to enable device tree in SPL
+	  for this to work.
