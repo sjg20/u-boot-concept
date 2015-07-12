@@ -1,0 +1,16 @@
+config EFI
+	bool "Support EFI header"
+
+config ARCH_EFI
+	bool "Support running as an EFI application"
+	depends on X86
+
+config EFI_RAM_SIZE
+	hex "Amount of EFI RAM for U-Boot"
+	depends on ARCH_EFI
+	default 0x2000000
+	help
+	  Set the amount of EFI RAM which is claimed by U-Boot for its own
+	  use. U-Boot allocates this from EFI on start-up (along with a few
+	  other smaller amounts) and it can never be increased after that.
+	  It is used as the RAM size in withU-Boot.
