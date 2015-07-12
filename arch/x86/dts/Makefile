@@ -1,6 +1,7 @@
 dtb-y += chromebook_link.dtb \
 	chromebox_panther.dtb \
 	crownbay.dtb \
+	efi.dtb \
 	galileo.dtb \
 	minnowmax.dtb \
 	qemu-x86_i440fx.dtb \
