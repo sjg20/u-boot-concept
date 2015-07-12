@@ -5,6 +5,12 @@
 # SPDX-License-Identifier:	GPL-2.0+
 #
 
+ifeq ($(CONFIG_X86_64),)
+obj-$(CONFIG_ARCH_EFI) += crt0-efi-ia32.o reloc_ia32.o
+else
+obj-$(CONFIG_ARCH_EFI) += crt0-efi-ia64.o reloc_ia64.o
+endif
+
 obj-y += bios.o
 obj-y += bios_asm.o
 obj-y += bios_interrupts.o
