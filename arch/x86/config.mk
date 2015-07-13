@@ -12,6 +12,10 @@ PLATFORM_CPPFLAGS += -fomit-frame-pointer
 PF_CPPFLAGS_X86   := $(call cc-option, -fno-toplevel-reorder, \
 		       $(call cc-option, -fno-unit-at-a-time)) \
 		     $(call cc-option, -mpreferred-stack-boundary=2)
+ifeq ($(CONFIG_ARCH_EFI),y)
+PF_CPPFLAGS_X86   += $(call cc-option, -mno-red-zone)
+endif
+
 PLATFORM_CPPFLAGS += $(PF_CPPFLAGS_X86)
 PLATFORM_CPPFLAGS += -fno-dwarf2-cfi-asm
 PLATFORM_CPPFLAGS += -march=i386 -m32
