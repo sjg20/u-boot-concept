@@ -752,6 +752,7 @@ ALL-$(CONFIG_SPL) += $(CONFIG_SPL_TARGET:"%"=%)
 endif
 ALL-$(CONFIG_REMAKE_ELF) += u-boot.elf
 ALL-$(CONFIG_ARCH_EFI) += u-boot.efi
+ALL-$(CONFIG_EFI_STUB) += u-boot-payload.efi
 
 ifneq ($(BUILD_ROM),)
 ALL-$(CONFIG_X86_RESET_VECTOR) += u-boot.rom
@@ -1076,6 +1077,36 @@ endif
 
 OBJCOPYFLAGS_u-boot.efi := $(OBJCOPYFLAGS_EFI)
 u-boot.efi: u-boot FORCE
+	$(call if_changed,objcopy)
+
+# Generate an assembly file to wrap a binary file
+quiet_cmd_bin_S = BIN     $@
+cmd_bin_S =						\
+(							\
+	echo '.section .u_boot_bin.init.rodata,"a"';	\
+	echo '.balign 16';				\
+	echo '.global __u_boot_bin_begin';	\
+	echo '__u_boot_bin_begin:';		\
+	echo '.incbin "$<" ';				\
+	echo '__u_boot_bin_end:';			\
+	echo '.global __u_boot_bin_end';		\
+	echo '.balign 16';				\
+) > $@
+
+u-boot-dtb.bin.S: u-boot-dtb.bin FORCE
+	$(call if_changed,bin_S)
+
+u-boot-payload.lds: $(LDSCRIPT_EFI) FORCE
+	$(call if_changed_dep,cpp_lds)
+
+u-boot-payload: u-boot-dtb.bin.o u-boot-payload.lds \
+		FORCE
+	$(LD) $(LDFLAGS_EFI) -o $@ \
+      -T u-boot-payload.lds lib/efi/efi_stub.o u-boot-dtb.bin.o \
+      $(addprefix arch/$(ARCH)/lib/,$(EFISTUB))
+
+OBJCOPYFLAGS_u-boot-payload.efi := $(OBJCOPYFLAGS_EFI)
+u-boot-payload.efi: u-boot-payload FORCE
 	$(call if_changed,objcopy)
 
 u-boot-img.bin: spl/u-boot-spl.bin u-boot.img FORCE
