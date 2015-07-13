@@ -4,6 +4,15 @@ menu "x86 architecture"
 config SYS_ARCH
 	default "x86"
 
+config X86_64
+	bool "Build 64-bit U-Boot"
+	help
+	  Build U-Boot as a 64-bit binary for running in 64-bit mode on a
+	  suitable x86 CPU.
+
+	  Note: This is experimental. Build warnings and functional errors
+	  are likel.y
+
 choice
 	prompt "Mainboard vendor"
 	default VENDOR_EMULATION
