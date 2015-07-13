@@ -57,6 +57,9 @@ SECTIONS
 		KEEP(*(SORT(.u_boot_list*)));
 		. = ALIGN(8);
 		KEEP(*(.dtb*));
+		/* Keep U-Boot payload */
+		. = ALIGN(8);
+		KEEP(*(.u_boot_bin.*));
 	}
 	.dynamic  : { *(.dynamic) }
 	. = ALIGN(4096);
