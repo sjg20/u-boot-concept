@@ -1078,6 +1078,7 @@ endif
 OBJCOPYFLAGS_u-boot.efi := $(OBJCOPYFLAGS_EFI)
 u-boot.efi: u-boot FORCE
 	$(call if_changed,objcopy)
+	cp $@ /tmp/uefi
 
 # Generate an assembly file to wrap a binary file
 quiet_cmd_bin_S = BIN     $@
@@ -1108,6 +1109,7 @@ u-boot-payload: u-boot-dtb.bin.o u-boot-payload.lds \
 OBJCOPYFLAGS_u-boot-payload.efi := $(OBJCOPYFLAGS_EFI)
 u-boot-payload.efi: u-boot-payload FORCE
 	$(call if_changed,objcopy)
+	cp $@ /tmp/uefi
 
 u-boot-img.bin: spl/u-boot-spl.bin u-boot.img FORCE
 	$(call if_changed,cat)

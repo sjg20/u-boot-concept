@@ -1,0 +1,13 @@
+#
+# Copyright (C) 2015, Google, Inc. Ben Stoltz <stoltz@google.com>
+# TODO(stoltz) appropriate copyright?
+#
+
+Build prerequisites:
+	sudo apt get install gnu-efi
+
+Configure and build:
+	OUTDIR=build-uefi
+	rm -fr $OUTDIR
+	make O=$OUTDIR V=1 uefi-x86_defconfig || exit $?
+	make O=$OUTDIR V=1 all

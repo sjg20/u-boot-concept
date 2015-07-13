@@ -294,6 +294,10 @@ $(obj)/%.lst: $(src)/%.c FORCE
 # Compile assembler sources (.S)
 # ---------------------------------------------------------------------------
 
+# TODO(sjg@chromium.org): Move this to a sensible place
+AFLAGS_REMOVE_u-boot-dtb.bin.o += -mregparm=3 -march=i386 -m32
+AFLAGS_u-boot-dtb.bin.o += -fpic -fshort-wchar
+
 modkern_aflags := $(KBUILD_AFLAGS_KERNEL) $(AFLAGS_KERNEL)
 
 $(real-objs-m)      : modkern_aflags := $(KBUILD_AFLAGS_MODULE) $(AFLAGS_MODULE)

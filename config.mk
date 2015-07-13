@@ -73,7 +73,7 @@ endif
 
 RELFLAGS := $(PLATFORM_RELFLAGS)
 
-OBJCOPYFLAGS += --gap-fill=0xff
+#OBJCOPYFLAGS += --gap-fill=0xff
 
 PLATFORM_CPPFLAGS += $(RELFLAGS)
 PLATFORM_CPPFLAGS += -pipe
