@@ -27,7 +27,7 @@ bool pirq_check_irq_routed(int link, u8 irq)
 		pirq = x86_pci_read_config8(irq_router.bdf,
 					    LINK_N2V(link, base));
 	else
-		pirq = readb(irq_router.ibase + LINK_N2V(link, base));
+		pirq = readb((ulong)irq_router.ibase + LINK_N2V(link, base));
 
 	pirq &= 0xf;
 
@@ -55,7 +55,7 @@ void pirq_assign_irq(int link, u8 irq)
 		x86_pci_write_config8(irq_router.bdf,
 				      LINK_N2V(link, base), irq);
 	else
-		writeb(irq, irq_router.ibase + LINK_N2V(link, base));
+		writeb(irq, (ulong)irq_router.ibase + LINK_N2V(link, base));
 }
 
 static struct irq_info *check_dup_entry(struct irq_info *slot_base,
