@@ -18,7 +18,10 @@ endif
 
 PLATFORM_CPPFLAGS += $(PF_CPPFLAGS_X86)
 PLATFORM_CPPFLAGS += -fno-dwarf2-cfi-asm
+
+ifeq ($(CONFIG_X86_64),)
 PLATFORM_CPPFLAGS += -march=i386 -m32
+endif
 
 PLATFORM_RELFLAGS += -ffunction-sections -fvisibility=hidden
 
@@ -32,18 +35,16 @@ OBJCOPYFLAGS_EFI := -j .text -j .sdata -j .data -j .dynamic -j .dynsym \
 
 ifeq ($(CONFIG_ARCH_EFI),y)
 
-ifeq ($(ARCH),x86)
-EFILIB=/usr/lib32
+ifeq ($(CONFIG_X86_64)$(CONFIG_EFI_STUB_64BIT),)
 EFIARCH=ia32
 else
-EFILIB=/usr/lib
 EFIARCH=x86_64
 endif
 
 PLATFORM_CPPFLAGS += -fpic -fshort-wchar
 LDFLAGS_FINAL += -znocombreloc -shared
 LDSCRIPT := $(srctree)/$(CPUDIR)/efi/elf_ia32_efi.lds
-OBJCOPYFLAGS_EFI += --target=efi-app-ia32
+OBJCOPYFLAGS_EFI += --target=efi-app-$(EFIARCH)
 
 else
 
