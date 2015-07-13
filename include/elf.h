@@ -28,6 +28,16 @@ typedef int32_t		Elf32_Sword;	/* Signed large integer */
 typedef uint32_t	Elf32_Word;	/* Unsigned large integer */
 typedef uint16_t	Elf32_Half;	/* Unsigned medium integer */
 
+/* 64-bit ELF base types. */
+typedef __u64	Elf64_Addr;
+typedef __u16	Elf64_Half;
+typedef __s16	Elf64_SHalf;
+typedef __u64	Elf64_Off;
+typedef __s32	Elf64_Sword;
+typedef __u32	Elf64_Word;
+typedef __u64	Elf64_Xword;
+typedef __s64	Elf64_Sxword;
+
 /* e_ident[] identification indexes */
 #define EI_MAG0		0		/* file ID */
 #define EI_MAG1		1		/* file ID */
@@ -379,6 +389,11 @@ typedef struct
 	Elf32_Sword	r_addend;
 } Elf32_Rela;
 
+ struct elf64_rel {
+  Elf64_Addr r_offset;	/* Location at which to apply the action */
+  Elf64_Xword r_info;	/* index and type of relocation */
+};
+
 /* Extract relocation info - r_info */
 #define ELF32_R_SYM(i)		((i) >> 8)
 #define ELF32_R_TYPE(i)		((unsigned char) (i))
@@ -430,6 +445,17 @@ typedef struct
 } Elf32_Dyn;
 
 extern Elf32_Dyn	_DYNAMIC[];
+
+typedef struct {
+  Elf64_Sxword d_tag;		/* entry tag value */
+  union {
+    Elf64_Xword d_val;
+    Elf64_Addr d_ptr;
+  } d_un;
+} Elf64_Dyn;
+
+#define ELF64_R_SYM(i)			((i) >> 32)
+#define ELF64_R_TYPE(i)			((i) & 0xffffffff)
 
 /* Dynamic Array Tags - d_tag */
 #define DT_NULL		0		/* marks end of _DYNAMIC array */
