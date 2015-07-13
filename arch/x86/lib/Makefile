@@ -11,6 +11,20 @@ else
 obj-$(CONFIG_ARCH_EFI) += crt0-efi-ia64.o reloc_ia64.o
 endif
 
+ifneq ($(CONFIG_EFI_STUB),)
+CFLAGS_REMOVE_reloc_ia32.o += -mregparm=3
+CFLAGS_reloc_ia32.o += -fpic -fshort-wchar
+
+CFLAGS_REMOVE_reloc_x86_64.o += -mregparm=3 -march=i386 -m32
+CFLAGS_reloc_x86_64.o += -fpic -fshort-wchar
+
+AFLAGS_REMOVE_crt0-efi-x86_64.o += -mregparm=3 -march=i386 -m32
+AFLAGS_crt0-efi-x86_64.o += -fpic -fshort-wchar
+
+extra-$(CONFIG_EFI_STUB_32BIT) += crt0-efi-ia32.o reloc_ia32.o
+extra-$(CONFIG_EFI_STUB_64BIT) += crt0-efi-x86_64.o reloc_x86_64.o
+endif
+
 obj-y += bios.o
 obj-y += bios_asm.o
 obj-y += bios_interrupts.o
@@ -40,7 +54,7 @@ obj-$(CONFIG_SYS_X86_TSC_TIMER)	+= tsc_timer.o
 obj-$(CONFIG_CMD_ZBOOT)	+= zimage.o
 obj-$(CONFIG_HAVE_FSP) += fsp/
 
-extra-$(CONFIG_USE_PRIVATE_LIBGCC) := lib.a
+extra-$(CONFIG_USE_PRIVATE_LIBGCC) += lib.a
 
 NORMAL_LIBGCC = $(shell $(CC) $(PLATFORM_CPPFLAGS) -print-libgcc-file-name)
 OBJCOPYFLAGS := --prefix-symbols=__normal_
