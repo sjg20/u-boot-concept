@@ -298,6 +298,11 @@ def update_cross_compile():
         cross_compile = os.environ.get(env)
         if cross_compile:
             CROSS_COMPILE[arch] = cross_compile
+        elif arch != 'sandbox':
+            CROSS_COMPILE[arch] = ('/home/sglass/.buildman-toolchains/gcc-4.9.0-nolibc/' +
+                CROSS_COMPILE[arch][:-1] + '/bin/' + CROSS_COMPILE[arch])
+            print CROSS_COMPILE[arch]
+
 
 def cleanup_one_header(header_path, patterns, dry_run):
     """Clean regex-matched lines away from a file.
