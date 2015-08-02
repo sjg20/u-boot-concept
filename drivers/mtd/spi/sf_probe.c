@@ -269,26 +269,27 @@ static int spi_flash_validate_params(struct spi_slave *spi, u8 *idcode,
 #ifdef CONFIG_OF_CONTROL
 int spi_flash_decode_fdt(const void *blob, struct spi_flash *flash)
 {
-	fdt_addr_t addr;
-	fdt_size_t size;
+	u32 array[2];
 	int node;
+	int ret;
 
 	/* If there is no node, do nothing */
 	node = fdtdec_next_compatible(blob, 0, COMPAT_GENERIC_SPI_FLASH);
 	if (node < 0)
 		return 0;
 
-	addr = fdtdec_get_addr_size(blob, node, "memory-map", &size);
-	if (addr == FDT_ADDR_T_NONE) {
+	ret = fdtdec_get_int_array(blob, node, "memory-map", array,
+				   ARRAY_SIZE(array));
+	if (ret) {
 		debug("%s: Cannot decode address\n", __func__);
 		return 0;
 	}
 
-	if (flash->size != size) {
+	if (flash->size != array[1]) {
 		debug("%s: Memory map must cover entire device\n", __func__);
 		return -1;
 	}
-	flash->memory_map = map_sysmem(addr, size);
+	flash->memory_map = map_sysmem(array[0], array[1]);
 
 	return 0;
 }
