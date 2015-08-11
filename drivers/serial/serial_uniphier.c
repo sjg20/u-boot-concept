@@ -124,7 +124,7 @@ static int uniphier_serial_ofdata_to_platdata(struct udevice *dev)
 	struct uniphier_serial_platform_data *plat = dev_get_platdata(dev);
 	DECLARE_GLOBAL_DATA_PTR;
 
-	plat->base = fdtdec_get_addr(gd->fdt_blob, dev->of_offset, "reg");
+	plat->base = dev_get_addr(dev);
 	plat->uartclk = fdtdec_get_int(gd->fdt_blob, dev->of_offset,
 				       "clock-frequency", 0);
 
