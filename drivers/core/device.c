@@ -591,6 +591,24 @@ fdt_addr_t dev_get_addr(struct udevice *dev)
 #endif
 }
 
+fdt_addr_t dev_get_addr_index(struct udevice *dev, int index)
+{
+#if CONFIG_IS_ENABLED(OF_CONTROL)
+	fdt_addr_t addr;
+
+	addr = fdtdec_get_addr_size_index(gd->fdt_blob, dev->of_offset,
+					  "reg", NULL, index);
+	if (addr != FDT_ADDR_T_NONE) {
+		if (device_get_uclass_id(dev->parent) == UCLASS_SIMPLE_BUS)
+			addr = simple_bus_translate(dev->parent, addr);
+	}
+
+	return addr;
+#else
+	return FDT_ADDR_T_NONE;
+#endif
+}
+
 bool device_has_children(struct udevice *dev)
 {
 	return !list_empty(&dev->child_head);

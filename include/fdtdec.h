@@ -321,6 +321,20 @@ fdt_addr_t fdtdec_get_addr_size(const void *blob, int node,
 		const char *prop_name, fdt_size_t *sizep);
 
 /**
+ * Look up an address property in a node and return it as an address.
+ * The property must hold one address with a length. This is only tested
+ * on 32-bit machines.
+ *
+ * @param blob	FDT blob
+ * @param node	node to examine
+ * @param prop_name	name of property to find
+ * @param index		index of the address
+ * @return address, if found, or FDT_ADDR_T_NONE if not
+ */
+fdt_addr_t fdtdec_get_addr_size_index(const void *blob, int node,
+		const char *prop_name, fdt_size_t *sizep, int index);
+
+/**
  * Look at an address property in a node and return the pci address which
  * corresponds to the given type in the form of fdt_pci_addr.
  * The property must hold one fdt_pci_addr with a lengh.

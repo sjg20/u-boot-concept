@@ -119,6 +119,41 @@ fdt_addr_t fdtdec_get_addr(const void *blob, int node,
 	return fdtdec_get_addr_size(blob, node, prop_name, NULL);
 }
 
+fdt_addr_t fdtdec_get_addr_size_index(const void *blob, int node,
+		const char *prop_name, fdt_size_t *sizep, int index)
+{
+	const fdt_addr_t *cell;
+	int len;
+
+	debug("%s: %s: ", __func__, prop_name);
+	cell = fdt_getprop(blob, node, prop_name, &len);
+	if (len < sizeof(fdt_addr_t) * 2 * (index + 1)) {
+		debug("(not found)\n");
+		return FDT_ADDR_T_NONE;
+	}
+
+	len -= sizeof(fdt_addr_t) * 2 * index;
+	cell += index * 2;
+	if (cell && ((!sizep && len >= sizeof(fdt_addr_t)) ||
+		     len >= sizeof(fdt_addr_t) * 2)) {
+		fdt_addr_t addr = fdt_addr_to_cpu(*cell);
+		if (sizep) {
+			const fdt_size_t *size;
+
+			size = (fdt_size_t *)((char *)cell +
+					sizeof(fdt_addr_t));
+			*sizep = fdt_size_to_cpu(*size);
+			debug("addr=%08lx, size=%llx\n",
+			      (ulong)addr, (u64)*sizep);
+		} else {
+			debug("%08lx\n", (ulong)addr);
+		}
+		return addr;
+	}
+	debug("(not found)\n");
+	return FDT_ADDR_T_NONE;
+}
+
 #ifdef CONFIG_PCI
 int fdtdec_get_pci_addr(const void *blob, int node, enum fdt_pci_space type,
 		const char *prop_name, struct fdt_pci_addr *addr)
