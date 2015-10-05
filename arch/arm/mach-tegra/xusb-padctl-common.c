@@ -13,8 +13,6 @@
 
 #include <asm/arch/clock.h>
 
-#include <dt-bindings/pinctrl/pinctrl-tegra-xusb.h>
-
 int tegra_xusb_phy_prepare(struct tegra_xusb_phy *phy)
 {
 	if (phy && phy->ops && phy->ops->prepare)
@@ -49,21 +47,17 @@ int tegra_xusb_phy_unprepare(struct tegra_xusb_phy *phy)
 
 struct tegra_xusb_phy *tegra_xusb_phy_get(unsigned int type)
 {
-	struct tegra_xusb_phy *phy = NULL;
+	struct tegra_xusb_phy *phy;
+	int i;
 
-	switch (type) {
-	case TEGRA_XUSB_PADCTL_PCIE:
-		phy = &padctl->phys[0];
-		phy->padctl = padctl;
-		break;
-
-	case TEGRA_XUSB_PADCTL_SATA:
-		phy = &padctl->phys[1];
-		phy->padctl = padctl;
-		break;
+	for (i = 0; i < padctl.socdata->num_phys; i++) {
+		phy = &padctl.socdata->phys[i];
+		if (phy->type != type)
+			continue;
+		return phy;
 	}
 
-	return phy;
+	return NULL;
 }
 
 static const struct tegra_xusb_padctl_lane *
@@ -71,9 +65,9 @@ tegra_xusb_padctl_find_lane(struct tegra_xusb_padctl *padctl, const char *name)
 {
 	unsigned int i;
 
-	for (i = 0; i < padctl->num_lanes; i++)
-		if (strcmp(name, padctl->lanes[i].name) == 0)
-			return &padctl->lanes[i];
+	for (i = 0; i < padctl->socdata->num_lanes; i++)
+		if (strcmp(name, padctl->socdata->lanes[i].name) == 0)
+			return &padctl->socdata->lanes[i];
 
 	return NULL;
 }
@@ -123,8 +117,8 @@ static int tegra_xusb_padctl_find_function(struct tegra_xusb_padctl *padctl,
 {
 	unsigned int i;
 
-	for (i = 0; i < padctl->num_functions; i++)
-		if (strcmp(name, padctl->functions[i]) == 0)
+	for (i = 0; i < padctl->socdata->num_functions; i++)
+		if (strcmp(name, padctl->socdata->functions[i]) == 0)
 			return i;
 
 	return -ENOENT;
@@ -198,7 +192,7 @@ tegra_xusb_padctl_group_apply(struct tegra_xusb_padctl *padctl,
 	return 0;
 }
 
-int
+static int
 tegra_xusb_padctl_config_apply(struct tegra_xusb_padctl *padctl,
 			       struct tegra_xusb_padctl_config *config)
 {
@@ -250,7 +244,7 @@ tegra_xusb_padctl_config_parse_dt(struct tegra_xusb_padctl *padctl,
 	return 0;
 }
 
-int tegra_xusb_padctl_parse_dt(struct tegra_xusb_padctl *padctl,
+static int tegra_xusb_padctl_parse_dt(struct tegra_xusb_padctl *padctl,
 				      const void *fdt, int node)
 {
 	int subnode, err;
@@ -271,6 +265,44 @@ int tegra_xusb_padctl_parse_dt(struct tegra_xusb_padctl *padctl,
 			      config->name, err);
 			continue;
 		}
+	}
+
+	return 0;
+}
+
+struct tegra_xusb_padctl padctl;
+
+int tegra_xusb_process_nodes(const void *fdt, int nodes[], unsigned int count,
+	const struct tegra_xusb_padctl_soc *socdata)
+{
+	unsigned int i;
+	int err;
+
+	for (i = 0; i < count; i++) {
+		if (!fdtdec_get_is_enabled(fdt, nodes[i]))
+			continue;
+
+		padctl.socdata = socdata;
+
+		err = tegra_xusb_padctl_parse_dt(&padctl, fdt, nodes[i]);
+		if (err < 0) {
+			error("tegra-xusb-padctl: failed to parse DT: %d",
+			      err);
+			continue;
+		}
+
+		/* deassert XUSB padctl reset */
+		reset_set_enable(PERIPH_ID_XUSB_PADCTL, 0);
+
+		err = tegra_xusb_padctl_config_apply(&padctl, &padctl.config);
+		if (err < 0) {
+			error("tegra-xusb-padctl: failed to apply pinmux: %d",
+			      err);
+			continue;
+		}
+
+		/* only a single instance is supported */
+		break;
 	}
 
 	return 0;
