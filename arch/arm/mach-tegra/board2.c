@@ -387,6 +387,8 @@ void dram_init_banksize(void)
 		gd->bd->bi_dram[1].start = 0;
 		gd->bd->bi_dram[1].size = 0;
 	}
+	/* DM PCI code uses this as RAM size, not RAM top */
+	gd->pci_ram_top = 0x80000000;
 }
 
 /*

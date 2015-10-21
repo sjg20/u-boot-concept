@@ -462,6 +462,11 @@ static int tegra_pcie_parse_dt(const void *fdt, int node, enum tegra_pci_id id,
 
 	pcie->phy = tegra_xusb_phy_get(TEGRA_XUSB_PADCTL_PCIE);
 	if (pcie->phy) {
+		/*
+		 * FIXME: This should probably move into probe() so that
+		 * pci_tegra_ofdata_to_platdata()'s call to
+		 * tegra_pcie_board_init() could move there too.
+		 */
 		err = tegra_xusb_phy_prepare(pcie->phy);
 		if (err < 0) {
 			error("failed to prepare PHY: %d", err);
@@ -977,6 +982,8 @@ static int pci_tegra_ofdata_to_platdata(struct udevice *dev)
 	pcie->soc = &pci_tegra_soc[id];
 
 	INIT_LIST_HEAD(&pcie->ports);
+
+	tegra_pcie_board_init();
 
 	if (tegra_pcie_parse_dt(gd->fdt_blob, dev->of_offset, id, pcie))
 		return -EINVAL;
