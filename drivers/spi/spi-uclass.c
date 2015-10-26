@@ -138,6 +138,7 @@ static int spi_child_pre_probe(struct udevice *dev)
 	slave->max_hz = plat->max_hz;
 	slave->mode = plat->mode;
 
+
 	return 0;
 }
 
@@ -258,17 +259,42 @@ int spi_get_bus_and_cs(int busnum, int cs, int speed, int mode,
 	 * SPI flash chip - we will bind to the correct driver.
 	 */
 	if (ret == -ENODEV && drv_name) {
-		struct dm_spi_slave_platdata *plat;
+		const void *fdt = gd->fdt_blob;
+		int node = bus->of_offset;
+		int subnode = -1;
+		int slave_cs = -1;
 
 		debug("%s: Binding new device '%s', busnum=%d, cs=%d, driver=%s\n",
 		      __func__, dev_name, busnum, cs, drv_name);
-		ret = device_bind_driver(bus, drv_name, dev_name, &dev);
+
+		fdt_for_each_subnode(fdt, subnode, node) {
+			slave_cs = fdtdec_get_int(fdt, subnode, "reg", -1);
+			if(cs == slave_cs)
+				break;
+		}
+
+		if(cs != slave_cs) {
+			printf("%s: device not found in device tree blob\n",
+			       __func__);
+			subnode = -1;
+		}
+
+		ret = device_bind_driver_to_node(bus, drv_name, dev_name,
+						 subnode, &dev);
 		if (ret)
 			return ret;
-		plat = dev_get_parent_platdata(dev);
-		plat->cs = cs;
-		plat->max_hz = speed;
-		plat->mode = mode;
+		/*
+		 * If a Device tree spi slave is found, then use settings
+		 * from Device tree.
+		 */
+		if (subnode < 0) {
+			struct dm_spi_slave_platdata *plat;
+
+			plat = dev_get_parent_platdata(dev);
+			plat->cs = cs;
+			plat->max_hz = speed;
+			plat->mode = mode;
+		}
 		created = true;
 	} else if (ret) {
 		printf("Invalid chip select %d:%d (err=%d)\n", busnum, cs,
