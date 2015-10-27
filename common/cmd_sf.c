@@ -15,6 +15,7 @@
 #include <spi_flash.h>
 #include <jffs2/jffs2.h>
 #include <linux/mtd/mtd.h>
+#include <linux/math64.h>
 
 #include <asm/io.h>
 #include <dm/device-internal.h>
@@ -266,6 +267,7 @@ static int do_spi_flash_read_write(int argc, char * const argv[])
 	int ret = 1;
 	int dev = 0;
 	loff_t offset, len, maxsize;
+	unsigned long time;
 
 	if (argc < 3)
 		return -1;
@@ -298,17 +300,27 @@ static int do_spi_flash_read_write(int argc, char * const argv[])
 		int read;
 
 		read = strncmp(argv[0], "read", 4) == 0;
+
+		time = get_timer(0);
 		if (read)
 			ret = spi_flash_read(flash, offset, len, buf);
 		else
 			ret = spi_flash_write(flash, offset, len, buf);
+		time = get_timer(time);
 
 		printf("SF: %zu bytes @ %#x %s: ", (size_t)len, (u32)offset,
 		       read ? "Read" : "Written");
-		if (ret)
+		if (ret) {
 			printf("ERROR %d\n", ret);
-		else
-			printf("OK\n");
+		} else {
+			printf("OK in %lu ms", time);
+			if (time > 0) {
+				puts(" (");
+				print_size(div_u64(len, time) * 1000, "/s");
+				puts(")");
+			}
+			puts("\n");
+		}
 	}
 
 	unmap_physmem(buf, len);
