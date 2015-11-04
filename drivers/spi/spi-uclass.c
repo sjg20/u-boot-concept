@@ -349,6 +349,7 @@ int spi_slave_ofdata_to_platdata(const void *blob, int node,
 				 struct dm_spi_slave_platdata *plat)
 {
 	int mode = 0;
+	int value;
 
 	plat->cs = fdtdec_get_int(blob, node, "reg", -1);
 	plat->max_hz = fdtdec_get_int(blob, node, "spi-max-frequency", 0);
@@ -360,6 +361,38 @@ int spi_slave_ofdata_to_platdata(const void *blob, int node,
 		mode |= SPI_CS_HIGH;
 	if (fdtdec_get_bool(blob, node, "spi-half-duplex"))
 		mode |= SPI_PREAMBLE;
+
+	/* Device DUAL/QUAD mode */
+	value = fdtdec_get_uint(blob, node, "spi-tx-bus-width", 1);
+	switch (value) {
+	case 1:
+		break;
+	case 2:
+		mode |= SPI_TX_DUAL;
+		break;
+	case 4:
+		mode |= SPI_TX_QUAD;
+		break;
+	default:
+		error("spi-tx-bus-width %d not supported\n", value);
+		break;
+	}
+
+	value = fdtdec_get_uint(blob, node, "spi-rx-bus-width", 1);
+	switch (value) {
+	case 1:
+		break;
+	case 2:
+		mode |= SPI_RX_DUAL;
+		break;
+	case 4:
+		mode |= SPI_RX_QUAD;
+		break;
+	default:
+		error("spi-rx-bus-width %d not supported\n", value);
+		break;
+	}
+
 	plat->mode = mode;
 
 	return 0;
