@@ -12,6 +12,7 @@ config TEGRA_ARMV7_COMMON
 	select DM_I2C
 	select DM_SPI
 	select DM_GPIO
+	select DM_PCI
 
 choice
 	prompt "Tegra SoC select"
@@ -43,6 +44,7 @@ config TEGRA210
 	select DM_I2C
 	select DM_SPI
 	select DM_GPIO
+	select DM_PCI
 
 endchoice
 
