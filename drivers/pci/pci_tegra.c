@@ -433,6 +433,11 @@ static int tegra_pcie_parse_port_info(const void *fdt, int node,
 	return 0;
 }
 
+int __weak tegra_pcie_board_init(void)
+{
+	return 0;
+}
+
 static int tegra_pcie_parse_dt(const void *fdt, int node, enum tegra_pci_id id,
 			       struct tegra_pcie *pcie)
 {
@@ -459,6 +464,8 @@ static int tegra_pcie_parse_dt(const void *fdt, int node, enum tegra_pci_id id,
 		error("resource \"cs\" not found");
 		return err;
 	}
+
+	tegra_pcie_board_init();
 
 	pcie->phy = tegra_xusb_phy_get(TEGRA_XUSB_PADCTL_PCIE);
 	if (pcie->phy) {
@@ -512,11 +519,6 @@ static int tegra_pcie_parse_dt(const void *fdt, int node, enum tegra_pci_id id,
 	return 0;
 }
 
-int __weak tegra_pcie_board_init(void)
-{
-	return 0;
-}
-
 static int tegra_pcie_power_on(struct tegra_pcie *pcie)
 {
 	const struct tegra_pcie_soc *soc = pcie->soc;
@@ -533,8 +535,6 @@ static int tegra_pcie_power_on(struct tegra_pcie *pcie)
 		error("failed to power off PCIe partition: %d", err);
 		return err;
 	}
-
-	tegra_pcie_board_init();
 
 	err = tegra_powergate_sequence_power_up(TEGRA_POWERGATE_PCIE,
 						PERIPH_ID_PCIE);
