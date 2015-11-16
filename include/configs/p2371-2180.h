@@ -54,6 +54,7 @@
 #define CONFIG_USB_ETHER_ASIX
 
 /* PCI host support */
+#define CONFIG_SYS_PCI_64BIT
 #define CONFIG_PCI
 #define CONFIG_PCI_PNP
 #define CONFIG_CMD_PCI
