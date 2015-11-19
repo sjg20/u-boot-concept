@@ -38,11 +38,15 @@ struct dm_spi_bus {
  * @cs:		Chip select number (0..n-1)
  * @max_hz:	Maximum bus speed that this slave can tolerate
  * @mode:	SPI mode to use for this device (see SPI mode flags)
+ * @mode_rx:	SPI RX operation mode.
+ * @mode_tx:	SPI TX operation mode.
  */
 struct dm_spi_slave_platdata {
 	unsigned int cs;
 	uint max_hz;
 	uint mode;
+	u8 mode_rx;
+	u8 mode_tx;
 };
 
 #endif /* CONFIG_DM_SPI */
