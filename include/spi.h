@@ -35,6 +35,8 @@
 /* SPI TX operation modes */
 #define SPI_OPM_TX_QPP		(1 << 0)
 #define SPI_OPM_TX_BP		(1 << 1)
+#define	SPI_OPM_TX_DUAL		(1 << 2)	/* transmit with 2 wires */
+#define	SPI_OPM_TX_QUAD		(1 << 3)	/* transmit with 4 wires */
 
 /* SPI RX operation modes */
 #define SPI_OPM_RX_AS		(1 << 0)
@@ -46,6 +48,8 @@
 #define SPI_OPM_RX_EXTN	(SPI_OPM_RX_AS | SPI_OPM_RX_AF | SPI_OPM_RX_DOUT | \
 				SPI_OPM_RX_DIO | SPI_OPM_RX_QOF | \
 				SPI_OPM_RX_QIOF)
+#define	SPI_OPM_RX_DUAL		(1 << 6)		/* receive with 2 wires */
+#define	SPI_OPM_RX_QUAD		(1 << 7)		/* receive with 4 wires */
 
 /* SPI bus connection options - see enum spi_dual_flash */
 #define SPI_CONN_DUAL_SHARED		(1 << 0)
@@ -75,11 +79,15 @@ struct dm_spi_bus {
  * @cs:		Chip select number (0..n-1)
  * @max_hz:	Maximum bus speed that this slave can tolerate
  * @mode:	SPI mode to use for this device (see SPI mode flags)
+ * @op_mode_rx:	SPI RX operation mode.
+ * @op_mode_tx:	SPI TX operation mode.
  */
 struct dm_spi_slave_platdata {
 	unsigned int cs;
 	uint max_hz;
 	uint mode;
+	u8 op_mode_rx;
+	u8 op_mode_tx;
 };
 
 #endif /* CONFIG_DM_SPI */
