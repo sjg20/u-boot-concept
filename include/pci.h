@@ -1167,6 +1167,17 @@ int pci_get_regions(struct udevice *dev, struct pci_region **iop,
 		    struct pci_region **memp, struct pci_region **prefp);
 
 /**
+ * dm_pci_write_bar32() - Write the address of a BAR including control bits
+ *
+ * This writes a raw address (with control bits) to a bar
+ *
+ * @dev:	PCI device to update
+ * @barnum:	BAR number (0-5)
+ * @addr:	BAR address with control bits
+ */
+void dm_pci_write_bar32(struct udevice *dev, int barnum, u32 addr_and_ctrl);
+
+/**
  * dm_pci_read_bar32() - read a base address register from a device
  *
  * @dev:	Device to check
