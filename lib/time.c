@@ -47,6 +47,11 @@ static int notrace dm_timer_init(void)
 	int ret;
 
 	if (!gd->timer) {
+		/* Check if we have a chosen timer */
+		timer_init();
+		if (gd->timer)
+			return 0;
+
 		ret = uclass_first_device(UCLASS_TIMER, &dev);
 		if (ret)
 			return ret;

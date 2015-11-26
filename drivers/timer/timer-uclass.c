@@ -6,8 +6,12 @@
 
 #include <common.h>
 #include <dm.h>
+#include <dm/lists.h>
+#include <dm/device-internal.h>
 #include <errno.h>
 #include <timer.h>
+
+DECLARE_GLOBAL_DATA_PTR;
 
 /*
  * Implement a Timer uclass to work with lib/time.c. The timer is usually
@@ -33,6 +37,36 @@ unsigned long timer_get_rate(struct udevice *dev)
 	struct timer_dev_priv *uc_priv = dev_get_uclass_priv(dev);
 
 	return uc_priv->clock_rate;
+}
+
+int timer_init(void)
+{
+	const void *blob = gd->fdt_blob;
+	struct udevice *dev;
+	int node;
+
+	if (CONFIG_IS_ENABLED(OF_CONTROL) && blob) {
+		/* Check for a chosen timer to be used for tick */
+		node = fdtdec_get_chosen_node(blob, "tick-timer");
+		if (node < 0)
+			return -ENODEV;
+
+		if (uclass_get_device_by_of_offset(UCLASS_TIMER, node, &dev)) {
+			/*
+			 * If the timer is not marked to be bound before
+			 * relocation, bind it anyway.
+			 */
+			if (node > 0 &&
+			    !lists_bind_fdt(gd->dm_root, blob, node, &dev)) {
+				int ret = device_probe(dev);
+				if (ret)
+					return ret;
+			}
+		}
+	}
+
+	gd->timer = dev;
+	return 0;
 }
 
 UCLASS_DRIVER(timer) = {
