@@ -43,17 +43,8 @@ extern unsigned long __weak timer_read_counter(void);
 #ifdef CONFIG_TIMER
 static int notrace dm_timer_init(void)
 {
-	struct udevice *dev;
-	int ret;
-
-	if (!gd->timer) {
-		ret = uclass_first_device(UCLASS_TIMER, &dev);
-		if (ret)
-			return ret;
-		if (!dev)
-			return -ENODEV;
-		gd->timer = dev;
-	}
+	if (!gd->timer)
+		return timer_init();
 
 	return 0;
 }
