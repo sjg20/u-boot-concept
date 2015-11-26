@@ -72,5 +72,6 @@ int timer_init(void)
 UCLASS_DRIVER(timer) = {
 	.id		= UCLASS_TIMER,
 	.name		= "timer",
+	.flags		= DM_UC_FLAG_SEQ_ALIAS,
 	.per_device_auto_alloc_size = sizeof(struct timer_dev_priv),
 };
