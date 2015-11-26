@@ -6,6 +6,8 @@
 
 #include <common.h>
 #include <dm.h>
+#include <dm/lists.h>
+#include <dm/device-internal.h>
 #include <errno.h>
 #include <timer.h>
 
@@ -54,6 +56,46 @@ u64 timer_conv_64(u32 count)
 		gd->timebase_h++;
 	gd->timebase_l = count;
 	return ((u64)gd->timebase_h << 32) | gd->timebase_l;
+}
+
+int timer_init(void)
+{
+	const void *blob = gd->fdt_blob;
+	struct udevice *dev;
+	int node;
+	int ret;
+
+	/* Check for a chosen timer to be used for tick */
+	node = fdtdec_get_chosen_node(blob, "tick-timer");
+	if (node < 0)
+		return -ENODEV;
+
+	if (uclass_get_device_by_of_offset(UCLASS_TIMER, node, &dev)) {
+		/*
+		 * If the timer is not marked to be bound before
+		 * relocation, bind it anyway.
+		 */
+		if (node > 0 &&
+		    !lists_bind_fdt(gd->dm_root, blob, node, &dev)) {
+			int ret = device_probe(dev);
+			if (ret)
+				return ret;
+		}
+	}
+
+	if (dev) {
+		gd->timer = dev;
+		return 0;
+	}
+
+	ret = uclass_first_device(UCLASS_TIMER, &dev);
+	if (ret)
+		return ret;
+	if (!dev)
+		return -ENODEV;
+
+	gd->timer = dev;
+	return 0;
 }
 
 UCLASS_DRIVER(timer) = {
