@@ -23,4 +23,10 @@ config SANDBOX_TIMER
 	  Select this to enable an emulated timer for sandbox. It gets
 	  time from host os.
 
+config OMAP_TIMER
+	bool "Omap Timer support"
+	depends on TIMER
+	help
+	  Select this to enable an timer for Omap devices.
+
 endmenu
