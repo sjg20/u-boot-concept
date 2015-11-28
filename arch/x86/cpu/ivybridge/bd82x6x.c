@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <fdtdec.h>
 #include <malloc.h>
+#include <pch.h>
 #include <asm/lapic.h>
 #include <asm/pci.h>
 #include <asm/arch/bd82x6x.h>
@@ -116,6 +117,15 @@ int bd82x6x_init(void)
 	return 0;
 }
 
+static int bd82x6x_pch_get_version(struct udevice *dev)
+{
+	return 9;
+}
+
+static const struct pch_ops bd82x6x_pch_ops = {
+	.get_version	= bd82x6x_pch_get_version,
+};
+
 static const struct udevice_id bd82x6x_ids[] = {
 	{ .compatible = "intel,bd82x6x" },
 	{ }
@@ -126,4 +136,5 @@ U_BOOT_DRIVER(bd82x6x_drv) = {
 	.id		= UCLASS_PCH,
 	.of_match	= bd82x6x_ids,
 	.probe		= bd82x6x_probe,
+	.ops		= &bd82x6x_pch_ops,
 };
