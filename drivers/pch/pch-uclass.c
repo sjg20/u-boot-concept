@@ -7,9 +7,41 @@
 
 #include <common.h>
 #include <dm.h>
+#include <pch.h>
 #include <dm/root.h>
 
 DECLARE_GLOBAL_DATA_PTR;
+
+int pch_init(struct udevice *dev)
+{
+	struct pch_ops *ops = pch_get_ops(dev);
+
+	if (!ops->init)
+		return -ENOSYS;
+
+	return ops->init(dev);
+}
+
+int pch_get_sbase(struct udevice *dev, ulong *sbasep)
+{
+	struct pch_ops *ops = pch_get_ops(dev);
+
+	*sbasep = 0;
+	if (!ops->get_sbase)
+		return -ENOSYS;
+
+	return ops->get_sbase(dev, sbasep);
+}
+
+int pch_get_version(struct udevice *dev)
+{
+	struct pch_ops *ops = pch_get_ops(dev);
+
+	if (!ops->get_version)
+		return -ENOSYS;
+
+	return ops->get_version(dev);
+}
 
 static int pch_uclass_post_bind(struct udevice *bus)
 {
