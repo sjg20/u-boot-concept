@@ -83,11 +83,6 @@ static inline void fill_irq_info(struct irq_info *slot, int bus, int device,
 	slot->irq[pin - 1].bitmap = irq_router.irq_mask;
 }
 
-__weak void cpu_irq_init(void)
-{
-	return;
-}
-
 static int create_pirq_routing_table(void)
 {
 	const void *blob = gd->fdt_blob;
@@ -234,8 +229,6 @@ static int create_pirq_routing_table(void)
 int irq_router_common_init(struct udevice *dev)
 {
 	int ret;
-
-	cpu_irq_init();
 
 	ret = create_pirq_routing_table();
 	if (ret) {
