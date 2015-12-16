@@ -102,10 +102,10 @@ struct spi_slave {
 #define SPI_TX_BYTE	BIT(8)			/* transmit with 1 wire byte */
 #define SPI_TX_QUAD	BIT(9)			/* transmit with 4 wires */
 	u8 mode_rx;
-#define SPI_RX_SLOW		BIT(0)
-#define SPI_RX_FAST		BIT(1)
-#define SPI_RX_DUAL		BIT(2)
-#define SPI_RX_QUAD		BIT(4)
+#define SPI_RX_SLOW	BIT(0)			/* receive with 1 wire slow */
+#define SPI_RX_FAST	BIT(1)			/* receive with 1 wire fast */
+#define SPI_RX_DUAL	BIT(2)			/* receive with 2 wires */
+#define SPI_RX_QUAD	BIT(4)			/* receive with 4 wires */
 
 	unsigned int wordlen;
 	unsigned int max_write_size;
@@ -113,11 +113,11 @@ struct spi_slave {
 	u8 option;
 
 	u8 flags;
-#define SPI_XFER_BEGIN		BIT(0)	/* Assert CS before transfer */
-#define SPI_XFER_END		BIT(1)	/* Deassert CS after transfer */
+#define SPI_XFER_BEGIN		BIT(0)		/* Assert CS before transfer */
+#define SPI_XFER_END		BIT(1)		/* Deassert CS after transfer */
 #define SPI_XFER_ONCE		(SPI_XFER_BEGIN | SPI_XFER_END)
-#define SPI_XFER_MMAP		BIT(2)	/* Memory Mapped start */
-#define SPI_XFER_MMAP_END	BIT(3)	/* Memory Mapped End */
+#define SPI_XFER_MMAP		BIT(2)		/* Memory Mapped start */
+#define SPI_XFER_MMAP_END	BIT(3)		/* Memory Mapped End */
 #define SPI_XFER_U_PAGE		BIT(4)
 };
 
