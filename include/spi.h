@@ -10,36 +10,6 @@
 #ifndef _SPI_H_
 #define _SPI_H_
 
-/* SPI mode flags */
-#define	SPI_CPHA	0x01			/* clock phase */
-#define	SPI_CPOL	0x02			/* clock polarity */
-#define	SPI_MODE_0	(0|0)			/* (original MicroWire) */
-#define	SPI_MODE_1	(0|SPI_CPHA)
-#define	SPI_MODE_2	(SPI_CPOL|0)
-#define	SPI_MODE_3	(SPI_CPOL|SPI_CPHA)
-#define	SPI_CS_HIGH	0x04			/* CS active high */
-#define	SPI_LSB_FIRST	0x08			/* per-word bits-on-wire */
-#define	SPI_3WIRE	0x10			/* SI/SO signals shared */
-#define	SPI_LOOP	0x20			/* loopback mode */
-#define	SPI_SLAVE	0x40			/* slave mode */
-#define	SPI_PREAMBLE	0x80			/* Skip preamble bytes */
-#define SPI_TX_BYTE	0x100			/* transmit with 1 wire byte */
-#define SPI_TX_QUAD	0x200			/* transmit with 4 wires */
-
-/* SPI transfer flags */
-#define SPI_XFER_BEGIN		0x01	/* Assert CS before transfer */
-#define SPI_XFER_END		0x02	/* Deassert CS after transfer */
-#define SPI_XFER_MMAP		0x08	/* Memory Mapped start */
-#define SPI_XFER_MMAP_END	0x10	/* Memory Mapped End */
-#define SPI_XFER_ONCE		(SPI_XFER_BEGIN | SPI_XFER_END)
-#define SPI_XFER_U_PAGE	(1 << 5)
-
-/* SPI RX operation modes */
-#define SPI_RX_SLOW		(1 << 0)
-#define SPI_RX_FAST		(1 << 1)
-#define SPI_RX_DUAL		(1 << 2)
-#define SPI_RX_QUAD		(1 << 4)
-
 /* SPI bus connection options - see enum spi_dual_flash */
 #define SPI_CONN_DUAL_SHARED		(1 << 0)
 #define SPI_CONN_DUAL_SEPARATED	(1 << 1)
@@ -117,12 +87,38 @@ struct spi_slave {
 	unsigned int cs;
 #endif
 	uint mode;
+#define SPI_CPHA	0x01			/* clock phase */
+#define SPI_CPOL	0x02			/* clock polarity */
+#define SPI_MODE_0	(0|0)			/* (original MicroWire) */
+#define SPI_MODE_1	(0|SPI_CPHA)
+#define SPI_MODE_2	(SPI_CPOL|0)
+#define SPI_MODE_3	(SPI_CPOL|SPI_CPHA)
+#define SPI_CS_HIGH	0x04			/* CS active high */
+#define SPI_LSB_FIRST	0x08			/* per-word bits-on-wire */
+#define SPI_3WIRE	0x10			/* SI/SO signals shared */
+#define SPI_LOOP	0x20			/* loopback mode */
+#define SPI_SLAVE	0x40			/* slave mode */
+#define SPI_PREAMBLE	0x80			/* Skip preamble bytes */
+#define SPI_TX_BYTE	0x100			/* transmit with 1 wire byte */
+#define SPI_TX_QUAD	0x200			/* transmit with 4 wires */
 	u8 mode_rx;
+#define SPI_RX_SLOW		(1 << 0)
+#define SPI_RX_FAST		(1 << 1)
+#define SPI_RX_DUAL		(1 << 2)
+#define SPI_RX_QUAD		(1 << 4)
+
 	unsigned int wordlen;
 	unsigned int max_write_size;
 	void *memory_map;
 	u8 option;
+
 	u8 flags;
+#define SPI_XFER_BEGIN		0x01	/* Assert CS before transfer */
+#define SPI_XFER_END		0x02	/* Deassert CS after transfer */
+#define SPI_XFER_MMAP		0x08	/* Memory Mapped start */
+#define SPI_XFER_MMAP_END	0x10	/* Memory Mapped End */
+#define SPI_XFER_ONCE		(SPI_XFER_BEGIN | SPI_XFER_END)
+#define SPI_XFER_U_PAGE		(1 << 5)
 };
 
 /**
