@@ -49,6 +49,16 @@ struct clk_ops {
 	 * @return new clock rate in Hz, or -ve error code
 	 */
 	ulong (*set_periph_rate)(struct udevice *dev, int periph, ulong rate);
+
+	/**
+	 * get_id() - Get peripheral ID
+	 *
+	 * @dev:	clock provider
+	 * @args_count:	number of arguments
+	 * @args:	arguments.  The meaning is driver specific.
+	 * @return peripheral ID, or -ve error code
+	 */
+	int (*get_id)(struct udevice *dev, int args_count, uint32_t *args);
 };
 
 #define clk_get_ops(dev)	((struct clk_ops *)(dev)->driver->ops)
@@ -86,5 +96,29 @@ ulong clk_get_periph_rate(struct udevice *dev, int periph);
  * @return new clock rate in Hz, or -ve error code
  */
 ulong clk_set_periph_rate(struct udevice *dev, int periph, ulong rate);
+
+/**
+ * clk_get_id() - Get peripheral ID
+ *
+ * @dev:	clock provider
+ * @args_count:	number of arguments
+ * @args:	arguments.  The meaning is driver specific.
+ * @return peripheral ID, or -ve error code
+ */
+int clk_get_id(struct udevice *dev, int args_count, uint32_t *args);
+
+/**
+ * clk_get_id_simple() - Simple implementation of get_id() callback
+ *
+ * @dev:	clock provider
+ * @args_count:	number of arguments
+ * @args:	arguments.
+ * @return peripheral ID, or -ve error code
+ */
+static inline int clk_get_id_simple(struct udevice *dev, int args_count,
+				    uint32_t *args)
+{
+	return args_count > 0 ? args[0] : 0;
+}
 
 #endif /* _CLK_H_ */
