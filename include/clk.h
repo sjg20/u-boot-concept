@@ -121,4 +121,24 @@ static inline int clk_get_id_simple(struct udevice *dev, int args_count,
 	return args_count > 0 ? args[0] : 0;
 }
 
+#if CONFIG_IS_ENABLED(OF_CONTROL)
+/**
+ * fdt_clk_get() - Get peripheral ID from device tree
+ *
+ * @fdt:	FDT blob
+ * @periph:	Offset of clock consumer node
+ * @index:	index of a phandle to parse out in "clocks" property
+ * @dev:	if not NULL, filled with pointer of clock provider
+ * @return peripheral ID, or -ve error code
+ */
+int fdt_clk_get(const void *fdt, int nodeoffset, int index,
+		struct udevice **dev);
+#else
+static inline int fdt_clk_get(const void *fdt, int nodeoffset, int index,
+			      struct udevice **dev);
+{
+	return -ENOSYS;
+}
+#endif
+
 #endif /* _CLK_H_ */

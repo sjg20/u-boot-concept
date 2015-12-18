@@ -6,6 +6,7 @@
 #
 
 obj-$(CONFIG_CLK) += clk-uclass.o
+obj-$(CONFIG_$(SPL_)OF_CONTROL) += clk-fdt.o
 obj-$(CONFIG_ROCKCHIP_RK3036) += clk_rk3036.o
 obj-$(CONFIG_ROCKCHIP_RK3288) += clk_rk3288.o
 obj-$(CONFIG_SANDBOX) += clk_sandbox.o
