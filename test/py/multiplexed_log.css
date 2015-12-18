@@ -9,6 +9,11 @@ body {
     color: #ffffff;
 }
 
+pre {
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
 .implicit {
     color: #808080;
 }
