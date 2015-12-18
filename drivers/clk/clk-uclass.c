@@ -52,6 +52,16 @@ ulong clk_set_periph_rate(struct udevice *dev, int periph, ulong rate)
 	return ops->set_periph_rate(dev, periph, rate);
 }
 
+int clk_get_id(struct udevice *dev, int args_count, uint32_t *args)
+{
+	struct clk_ops *ops = clk_get_ops(dev);
+
+	if (!ops->get_id)
+		return -ENOSYS;
+
+	return ops->get_id(dev, args_count, args);
+}
+
 UCLASS_DRIVER(clk) = {
 	.id		= UCLASS_CLK,
 	.name		= "clk",
