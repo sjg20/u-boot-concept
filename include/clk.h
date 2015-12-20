@@ -150,4 +150,19 @@ static inline int fdt_clk_get(const void *fdt, int nodeoffset, int index,
 }
 #endif
 
+/**
+ * clk_get_by_index() - look up a clock referenced by a device
+ *
+ * Parse a device's 'clocks' list, returning information on the indexed clock,
+ * ensuring that it is activated.
+ *
+ * @dev:	Device containing the clock reference
+ * @index:	Clock index to return (0 = first)
+ * @clk_devp:	Returns clock device
+ * @periphp:	Returns peripheral ID for the device to control. This is the
+ *		first argument after the clock node phandle.
+ * @return 0 if OK, or -ve error code
+ */
+int clk_get_by_index(struct udevice *dev, int index, struct udevice **clk_devp,
+		     int *periphp);
 #endif /* _CLK_H_ */
