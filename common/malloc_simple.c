@@ -21,8 +21,11 @@ void *malloc_simple(size_t bytes)
 	new_ptr = gd->malloc_ptr + bytes;
 	debug("%s: size=%zx, ptr=%lx, limit=%lx\n", __func__, bytes, new_ptr,
 	      gd->malloc_limit);
-	if (new_ptr > gd->malloc_limit)
+	if (new_ptr > gd->malloc_limit) {
+		printf("Out of memory (%zu bytes, %lx requested)\n", bytes,
+		       new_ptr);
 		return NULL;
+	}
 	ptr = map_sysmem(gd->malloc_base + gd->malloc_ptr, bytes);
 	gd->malloc_ptr = ALIGN(new_ptr, sizeof(new_ptr));
 
