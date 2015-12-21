@@ -20,7 +20,7 @@ DECLARE_GLOBAL_DATA_PTR;
 
 struct rockchip_dwmmc_priv {
 	struct udevice *clk;
-	struct rk3288_grf *grf;
+	int periph;
 	struct dwmci_host host;
 };
 
@@ -30,8 +30,7 @@ static uint rockchip_dwmmc_get_mmc_clk(struct dwmci_host *host, uint freq)
 	struct rockchip_dwmmc_priv *priv = dev_get_priv(dev);
 	int ret;
 
-	ret = clk_set_periph_rate(priv->clk, PERIPH_ID_SDMMC0 + host->dev_index,
-				  freq);
+	ret = clk_set_periph_rate(priv->clk, priv->periph, freq);
 	if (ret < 0) {
 		debug("%s: err=%d\n", __func__, ret);
 		return ret;
@@ -69,10 +68,7 @@ static int rockchip_dwmmc_probe(struct udevice *dev)
 	int ret;
 	int fifo_depth;
 
-	priv->grf = syscon_get_first_range(ROCKCHIP_SYSCON_GRF);
-	if (IS_ERR(priv->grf))
-		return PTR_ERR(priv->grf);
-	ret = uclass_get_device(UCLASS_CLK, CLK_GENERAL, &priv->clk);
+	ret = clk_get_by_index(dev, 0, &priv->clk, &priv->periph);
 	if (ret)
 		return ret;
 
