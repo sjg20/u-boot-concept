@@ -849,7 +849,7 @@ static int macronix_quad_enable(struct spi_flash *flash)
 
 	/* read SR and check it */
 	ret = read_sr(flash, &qeb_status);
-	if (!(ret > 0 && (qeb_status & STATUS_QEB_MXIC))) {
+	if (!(ret >= 0 && (qeb_status & STATUS_QEB_MXIC))) {
 		printf("SF: Macronix SR Quad bit not clear\n");
 		return -EINVAL;
 	}
