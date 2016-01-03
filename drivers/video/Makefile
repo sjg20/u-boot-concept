@@ -7,7 +7,7 @@
 
 ifdef CONFIG_DM
 obj-$(CONFIG_DISPLAY_PORT) += dp-uclass.o
-obj-$(CONFIG_DM_VIDEO) += panel-uclass.o
+obj-$(CONFIG_DM_VIDEO) += panel-uclass.o simple_panel.o
 obj-$(CONFIG_DM_VIDEO) += backlight-uclass.o pwm_backlight.o
 obj-$(CONFIG_DM_VIDEO) += video-uclass.o vidconsole-uclass.o console_normal.o
 obj-$(CONFIG_DM_VIDEO) += video_bmp.o
