@@ -67,8 +67,25 @@ int clk_get_id(struct udevice *dev, int args_count, uint32_t *args)
 int clk_get_by_index(struct udevice *dev, int index, struct udevice **clk_devp,
 		     int *periphp)
 {
-	struct fdtdec_phandle_args args;
 	int ret;
+
+#ifdef CONFIG_SPL_BUILD
+	u32 cell[2];
+
+	if (index != 0)
+		return -ENOSYS;
+	ret = uclass_get_device(UCLASS_CLK, 0, clk_devp);
+	if (ret)
+		return ret;
+	ret = fdtdec_get_int_array(gd->fdt_blob, dev->of_offset, "clocks",
+				   cell, 2);
+	if (ret)
+		return ret;
+	*periphp = cell[1];
+
+	return 0;
+#else
+	struct fdtdec_phandle_args args;
 
 	ret = fdtdec_parse_phandle_with_args(gd->fdt_blob, dev->of_offset,
 					     "clocks", "#clock-cells", 0, index,
@@ -86,6 +103,7 @@ int clk_get_by_index(struct udevice *dev, int index, struct udevice **clk_devp,
 		return ret;
 	}
 	*periphp = args.args_count > 0 ? args.args[0] : -1;
+#endif
 
 	return 0;
 }
