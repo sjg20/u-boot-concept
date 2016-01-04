@@ -883,7 +883,7 @@
 		};
 
 		dwc3_2: omap_dwc3@483c0000 {
-			compatible = "ti,am437x-dwc3";
+			compatible = "ti,am437x-dwc3", "ti,am437x-xhci";
 			ti,hwmods = "usb_otg_ss1";
 			reg = <0x483c0000 0x10000>;
 			interrupts = <GIC_SPI 178 IRQ_TYPE_LEVEL_HIGH>;
