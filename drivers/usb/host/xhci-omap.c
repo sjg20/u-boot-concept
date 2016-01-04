@@ -20,6 +20,8 @@
 #include <linux/usb/dwc3.h>
 #include <linux/usb/xhci-omap.h>
 
+#include <dm.h>
+
 #include "xhci.h"
 
 /* Declare global data pointer */
@@ -98,3 +100,78 @@ void xhci_hcd_stop(int index)
 	omap_xhci_core_exit(ctx);
 	board_usb_cleanup(index, USB_INIT_HOST);
 }
+
+#ifdef CONFIG_DM_USB
+
+static int xhci_omap_ofdata_to_platdata(struct udevice *dev)
+{
+	struct omap_xhci *ctx = dev_get_priv(dev);
+	const void *fdt = gd->fdt_blob;
+	int usbnode;
+	int physnode;
+
+	usbnode = fdt_subnode_offset(fdt, dev->of_offset, "usb");
+
+	ctx->hcd = (struct xhci_hccr *)fdtdec_get_addr(fdt, usbnode, "reg");
+	ctx->dwc3_reg = (struct dwc3 *)((char *)(ctx->hcd) + DWC3_REG_OFFSET);
+
+	physnode = fdtdec_lookup_phandle(fdt, usbnode, "phys");
+	ctx->usb3_phy = (struct omap_usb3_phy *)fdtdec_get_addr(fdt, physnode,
+								"reg");
+
+	ctx->usb3_phy = (struct omap_usb3_phy *)OMAP_OCP1_SCP_BASE;
+	ctx->otg_wrapper = (struct omap_dwc_wrapper *)ctx->dwc3_reg;
+
+	return 0;
+}
+
+static int xhci_omap_probe(struct udevice *dev)
+{
+	struct omap_xhci *ctx = dev_get_priv(dev);
+	struct xhci_hcor *hcor;
+	int ret;
+
+	enable_usb_clocks(1);
+
+	hcor = (struct xhci_hcor *)((uint32_t)ctx->hcd +
+			HC_LENGTH(xhci_readl(&ctx->hcd->cr_capbase)));
+
+	ret = omap_xhci_core_init(ctx);
+	if (ret) {
+		puts("XHCI: failed to initialize controller\n");
+		return -EINVAL;
+	}
+
+	return xhci_register(dev, ctx->hcd, hcor);
+}
+
+static int xhci_omap_remove(struct udevice *dev)
+{
+	struct omap_xhci *ctx = dev_get_priv(dev);
+	int ret;
+
+	ret = xhci_deregister(dev);
+	if (ret)
+		return ret;
+	omap_xhci_core_exit(ctx);
+
+	return 0;
+}
+
+static const struct udevice_id xhci_omap_ids[] = {
+	{ .compatible = "ti,am437x-xhci" },
+	{ }
+};
+
+U_BOOT_DRIVER(usb_ehci) = {
+	.name	= "xhci_omap",
+	.id	= UCLASS_USB,
+	.of_match = xhci_omap_ids,
+	.ofdata_to_platdata = xhci_omap_ofdata_to_platdata,
+	.probe = xhci_omap_probe,
+	.remove = xhci_omap_remove,
+	.ops	= &xhci_usb_ops,
+	.priv_auto_alloc_size = sizeof(struct omap_xhci),
+	.flags	= DM_FLAG_ALLOC_PRIV_DMA,
+};
+#endif /* CONFIG_DM_USB */
