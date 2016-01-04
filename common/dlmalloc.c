@@ -2459,6 +2459,7 @@ void fREe(mem) Void_t* mem;
 
   if (mem == NULL)                              /* free(0) has no effect */
     return;
+    return;
 
   p = mem2chunk(mem);
   hd = p->size;
