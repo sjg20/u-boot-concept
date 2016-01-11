@@ -19,6 +19,7 @@
 #include <dwc3-uboot.h>
 #include <asm/dma-mapping.h>
 #include <linux/ioport.h>
+#include <dm.h>
 
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
