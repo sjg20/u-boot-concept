@@ -41,14 +41,6 @@ extern unsigned long __weak timer_read_counter(void);
 #endif
 
 #ifdef CONFIG_TIMER
-static int notrace dm_timer_init(void)
-{
-	if (!gd->timer)
-		return timer_init();
-
-	return 0;
-}
-
 ulong notrace get_tbclk(void)
 {
 	int ret;
