@@ -55,6 +55,7 @@ enum uclass_id {
 	UCLASS_RESET,		/* Reset device */
 	UCLASS_REMOTEPROC,	/* Remote Processor device */
 	UCLASS_RTC,		/* Real time clock device */
+	UCLASS_SATA,		/* SATA devices */
 	UCLASS_SERIAL,		/* Serial UART */
 	UCLASS_SPI,		/* SPI bus */
 	UCLASS_SPI_FLASH,	/* SPI flash */

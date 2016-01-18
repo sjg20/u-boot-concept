@@ -1,0 +1,10 @@
+menu "SATA Device Support"
+
+config SATA
+	bool "Enable driver model for SATA drivers"
+	depends on DM
+	help
+	  Enable driver model for block devices like SCSI. It uses the
+	  same API as block, but now implemented by the uclass.
+
+endmenu
