@@ -40,6 +40,7 @@ int enable_sata_phy(void)
 	return phy_pipe3_power_on(&sata_phy);
 }
 
+#ifndef CONFIG_SATA
 int init_sata(int dev)
 {
 	int ret;
@@ -73,3 +74,4 @@ void scsi_bus_reset(void)
 	ahci_reset((void __iomem *)DWC_AHSATA_BASE);
 	ahci_init((void __iomem *)DWC_AHSATA_BASE);
 }
+#endif

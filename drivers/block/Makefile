@@ -6,6 +6,7 @@
 #
 
 obj-$(CONFIG_SATA) += sata-uclass.o
+obj-$(CONFIG_DWC_AHCI) += dwc_ahci.o
 
 obj-$(CONFIG_SCSI_AHCI) += ahci.o
 obj-$(CONFIG_DWC_AHSATA) += dwc_ahsata.o

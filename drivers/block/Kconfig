@@ -7,4 +7,11 @@ config SATA
 	  Enable driver model for block devices like SCSI. It uses the
 	  same API as block, but now implemented by the uclass.
 
+config DWC_AHCI
+	bool "Enable Synopsys DWC AHCI driver support"
+	depends on SATA
+	help
+	  Enable this driver to support Sata devices through
+	  Synopsys DWC AHCI module.
+
 endmenu
