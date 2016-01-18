@@ -7,3 +7,10 @@ config DISK
 	  types can use this, such as AHCI/SATA. It does not provide any standard
 	  operations at present. The block device interface has not been converted
 	  to driver model.
+
+config DWC_AHCI
+	bool "Enable Synopsys DWC AHCI driver support"
+	depends on DISK
+	help
+	  Enable this driver to support Sata devices through
+	  Synopsys DWC AHCI module.
