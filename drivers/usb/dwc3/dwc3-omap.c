@@ -20,11 +20,19 @@
 #include <dwc3-omap-uboot.h>
 #include <linux/usb/dwc3-omap.h>
 #include <linux/ioport.h>
+#include <dm.h>
+#include <dm/uclass-internal.h>
 
+#include <linux/usb/ch9.h>
+#include <linux/usb/gadget.h>
 #include <linux/usb/otg.h>
 #include <linux/compat.h>
 
+#include <asm/omap_common.h>
+
 #include "linux-compat.h"
+#include "core.h"
+#include "gadget.h"
 
 /*
  * All these registers belong to OMAP's Wrapper around the
@@ -360,6 +368,7 @@ static void dwc3_omap_set_utmi_mode(struct dwc3_omap *omap, int utmi_mode)
 	dwc3_omap_write_utmi_status(omap, reg);
 }
 
+#ifndef CONFIG_DM_USB
 /**
  * dwc3_omap_uboot_init - dwc3 omap uboot initialization code
  * @dev: struct dwc3_omap_device containing initialization data
@@ -449,3 +458,206 @@ MODULE_ALIAS("platform:omap-dwc3");
 MODULE_AUTHOR("Felipe Balbi <balbi@ti.com>");
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("DesignWare USB3 OMAP Glue Layer");
+
+#else	/* !CONFIG_DM_USB */
+
+#include <linux/usb/ch9.h>
+#include <linux/usb/gadget.h>
+#include <ti-usb-phy-uboot.h>
+#include <usb.h>
+#include "core.h"
+
+DECLARE_GLOBAL_DATA_PTR;
+
+struct omap_dwc3_priv {
+	struct dwc3_omap omap;
+	struct dwc3 dwc3;
+	struct ti_usb_phy_device phy_device;
+//	struct omap_xhci xhci;
+};
+
+static const char *const usb_dr_modes[] = {
+	[USB_DR_MODE_UNKNOWN]		= "",
+	[USB_DR_MODE_HOST]		= "host",
+	[USB_DR_MODE_PERIPHERAL]	= "peripheral",
+	[USB_DR_MODE_OTG]		= "otg",
+};
+
+enum usb_dr_mode usb_get_dr_mode(const char *dr_mode)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(usb_dr_modes); i++)
+		if (!strcmp(dr_mode, usb_dr_modes[i]))
+			return i;
+
+	return USB_DR_MODE_UNKNOWN;
+}
+
+static const char *const speed_names[] = {
+	[USB_SPEED_UNKNOWN] = "UNKNOWN",
+	[USB_SPEED_LOW] = "low-speed",
+	[USB_SPEED_FULL] = "full-speed",
+	[USB_SPEED_HIGH] = "high-speed",
+	[USB_SPEED_WIRELESS] = "wireless",
+	[USB_SPEED_SUPER] = "super-speed",
+};
+
+enum usb_device_speed usb_get_maximum_speed(const char *maximum_speed)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(speed_names); i++)
+		if (!strcmp(maximum_speed, speed_names[i]))
+			return i;
+
+	return USB_SPEED_UNKNOWN;
+}
+
+static int dwc3_omap_usb_ofdata_to_platdata(struct udevice *dev)
+{
+	struct omap_dwc3_priv *priv = dev_get_priv(dev);
+	const void *fdt = gd->fdt_blob;
+	const char *dr_mode;
+	const char *max_speed;
+	int usbnode;
+	int physnode;
+	int ctrlmodnode;
+
+	priv->omap.base = (void *)dev_get_addr(dev);
+
+	usbnode = fdt_subnode_offset(fdt, dev->of_offset, "usb");
+
+	priv->dwc3.regs = (void *)fdtdec_get_addr(fdt, usbnode, "reg");
+	priv->dwc3.regs += DWC3_GLOBALS_REGS_START;
+
+	physnode = fdtdec_lookup_phandle(fdt, usbnode, "phys");
+	ctrlmodnode = fdtdec_lookup_phandle(fdt, physnode, "ctrl-module");
+	priv->phy_device.usb2_phy_power = (void *)fdtdec_get_addr(fdt,
+								  ctrlmodnode,
+								  "reg");
+	priv->phy_device.index = 0;
+
+	dr_mode = fdt_getprop(fdt, usbnode, "dr_mode", NULL);
+	if (!dr_mode) {
+		error("usb dr_mode not found\n");
+		return -ENOENT;
+	}
+	priv->dwc3.dr_mode = usb_get_dr_mode(dr_mode);
+	if (priv->dwc3.dr_mode < 0) {
+		error("Invalid usb dr_mode\n");
+		return priv->dwc3.dr_mode;
+	}
+
+	max_speed = fdt_getprop(fdt, usbnode, "maximum-speed", NULL);
+	if (!max_speed) {
+		error("usb max_speed not found\n");
+		return -ENOENT;
+	}
+	priv->dwc3.maximum_speed = usb_get_maximum_speed(max_speed);
+	if (priv->dwc3.maximum_speed < 0) {
+		error("Invalid usb maximum speed\n");
+		return priv->dwc3.maximum_speed;
+	}
+
+	return 0;
+}
+
+int dwc3_init(struct dwc3 *dwc);
+
+static int dwc3_omap_usb_probe(struct udevice *dev)
+{
+	struct omap_dwc3_priv *priv = dev_get_priv(dev);
+	struct dwc3_omap *omap = &priv->omap;
+	struct dwc3 *dwc = &priv->dwc3;
+	u32 reg;
+	int ret;
+
+	enable_usb_clocks(0);
+	printf("%s:%d\n", __func__, __LINE__);
+
+	/* Initialize usb phy */
+	ret = ti_usb_phy_uboot_init(&priv->phy_device);
+	if (ret)
+		return ret;
+
+	dwc3_omap_map_offset(omap);
+	dwc3_omap_set_utmi_mode(omap, DWC3_OMAP_UTMI_MODE_SW);
+
+	/* check the DMA Status */
+	reg = dwc3_omap_readl(omap->base, USBOTGSS_SYSCONFIG);
+	omap->dma_status = !!(reg & USBOTGSS_SYSCONFIG_DMADISABLE);
+
+	dwc3_omap_enable_irqs(omap);
+
+	if (priv->dwc3.dr_mode == USB_DR_MODE_HOST) {
+		dwc3_omap_set_mailbox(omap, OMAP_DWC3_ID_GROUND);
+	} else { /* device */
+		dwc3_omap_set_mailbox(omap, OMAP_DWC3_VBUS_VALID);
+	}
+
+	/* default to highest possible threshold */
+	dwc->lpm_nyet_threshold = 0xff;
+	/*
+	 * default to assert utmi_sleep_n and use maximum allowed HIRD
+	 * threshold value of 0b1100
+	 */
+	dwc->hird_threshold = 12;
+	/* default to -3.5dB de-emphasis */
+	dwc->tx_de_emphasis = 1;
+
+	dwc->needs_fifo_resize = false;
+	dwc->index = 0;
+
+	return dwc3_init(dwc);
+}
+
+int dwc3_omap_uboot_interrupt_status(int index)
+{
+	struct omap_dwc3_priv *priv;
+	struct dwc3_omap *omap;
+	struct dwc3 *dwc;
+	struct udevice *dev = NULL;
+	int ret;
+
+	ret = uclass_find_first_device(UCLASS_USB_DEV_GENERIC, &dev);
+	if (ret) {
+		error("usb device not found\n");
+		return ret;
+	}
+	priv = dev_get_priv(dev);
+	omap = &priv->omap;
+	dwc = &priv->dwc3;
+
+	dwc3_omap_interrupt(-1, omap);
+
+	dwc3_gadget_uboot_handle_interrupt(dwc);
+
+	return 0;
+}
+
+
+static int dwc3_omap_usb_remove(struct udevice *dev)
+{
+	return 0;
+}
+
+static const struct udevice_id dwc3_omap_usb_ids[] = {
+	{ .compatible = "ti,am437x-dwc3", },
+	{ }
+};
+
+U_BOOT_DRIVER(usb_dwc3_omap) = {
+	.name	= "dwc3-omap",
+	.id	= UCLASS_USB_DEV_GENERIC,
+	.of_match = dwc3_omap_usb_ids,
+	.ofdata_to_platdata = dwc3_omap_usb_ofdata_to_platdata,
+	.probe = dwc3_omap_usb_probe,
+	.remove = dwc3_omap_usb_remove,
+//	.ops	= &xhci_usb_ops,
+	.platdata_auto_alloc_size = sizeof(struct usb_platdata),
+	.priv_auto_alloc_size = sizeof(struct omap_dwc3_priv),
+	.flags	= DM_FLAG_ALLOC_PRIV_DMA,
+};
+
+#endif /* !CONFIG_DM_USB */

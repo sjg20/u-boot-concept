@@ -675,6 +675,7 @@ int board_late_init(void)
 #endif
 
 #ifdef CONFIG_USB_DWC3
+#ifndef CONFIG_DM_USB
 static struct dwc3_device usb_otg_ss1 = {
 	.maximum_speed = USB_SPEED_HIGH,
 	.base = USB_OTG_SS1_BASE,
@@ -764,16 +765,19 @@ int board_usb_cleanup(int index, enum usb_init_type init)
 
 	return 0;
 }
+#endif
 
 int usb_gadget_handle_interrupts(int index)
 {
 	u32 status;
 
 	status = dwc3_omap_uboot_interrupt_status(index);
+#ifndef CONFIG_DM_USB
 	if (status)
 		dwc3_uboot_handle_interrupt(index);
+#endif
 
-	return 0;
+	return status;
 }
 #endif
 

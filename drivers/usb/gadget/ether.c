@@ -101,6 +101,9 @@ struct eth_dev {
 	struct usb_gadget	*gadget;
 	struct usb_request	*req;		/* for control responses */
 	struct usb_request	*stat_req;	/* for cdc & rndis status */
+#ifdef CONFIG_DM_USB
+	struct udevice		*usb_udev;
+#endif
 
 	u8			config;
 	struct usb_ep		*in_ep, *out_ep, *status_ep;
@@ -2303,6 +2306,36 @@ fail:
 
 /*-------------------------------------------------------------------------*/
 
+#ifdef CONFIG_DM_USB
+#include <dm.h>
+#include <dm/uclass-internal.h>
+#include <dm/device-internal.h>
+int dm_usb_init(void)
+{
+	struct eth_dev *e_dev = &l_ethdev;
+	struct udevice *dev = NULL;
+	int ret;
+
+	ret = uclass_find_first_device(UCLASS_USB_DEV_GENERIC, &dev);
+	if (dev && !ret) {
+		ret = device_probe(dev);
+		if (ret) {
+			error("usb device probe error\n");
+			return ret;
+		}
+	}
+
+	if (!dev) {
+		error("No USB device found\n");
+		return -ENODEV;
+	}
+
+	e_dev->usb_udev = dev;
+
+	return ret;
+}
+#endif
+
 static int usb_eth_init(struct eth_device *netdev, bd_t *bd)
 {
 	struct eth_dev *dev = &l_ethdev;
@@ -2315,7 +2348,15 @@ static int usb_eth_init(struct eth_device *netdev, bd_t *bd)
 		goto fail;
 	}
 
+#ifdef CONFIG_DM_USB
+	if (dm_usb_init()) {
+		error("USB ether not found\n");
+		return -ENODEV;
+	}
+#else
 	board_usb_init(0, USB_INIT_DEVICE);
+#endif
+	printf("%s:%d:\n", __func__, __LINE__);
 
 	/* Configure default mac-addresses for the USB ethernet device */
 #ifdef CONFIG_USBNET_DEV_ADDR
