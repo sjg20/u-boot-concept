@@ -76,16 +76,27 @@ err_keydest:
  */
 static int fit_calc_size(struct image_tool_params *params)
 {
-	int size;
+	struct content_info *cont;
+	int size, total_size;
 
 	size = imagetool_get_filesize(params, params->datafile);
 	if (size < 0)
 		return -1;
 
-	/* Add plenty space for headers, properties, nodes, etc. */
-	size += 4096;
+	total_size = size;
+	for (cont = params->content_head; cont; cont = cont->next) {
+		size = imagetool_get_filesize(params, cont->fname);
+		if (size < 0)
+			return -1;
 
-	return size;
+		/* Add space for properties */
+		total_size += size + 300;
+	}
+
+	/* Add plenty of space for headers, properties, nodes, etc. */
+	total_size += 4096;
+
+	return total_size;
 }
 
 static int fdt_property_file(struct image_tool_params *params,
@@ -136,17 +147,24 @@ static int fdt_property_strf(void *fdt, const char *name, const char *fmt, ...)
 	return fdt_property_string(fdt, name, str);
 }
 
-static void fit_write_images(struct image_tool_params *params, char *fdt)
+static int fit_write_images(struct image_tool_params *params, char *fdt)
 {
+	struct content_info *cont;
 	const char *typename;
-	char str[50];
+	char str[100];
+	int upto;
+	int ret;
 
 	fdt_begin_node(fdt, "images");
 
+	/* First the main image */
 	typename = genimg_get_type_short_name(params->fit_image_type);
 	snprintf(str, sizeof(str), "%s@1", typename);
 	fdt_begin_node(fdt, str);
-	fdt_property_file(params, fdt, "data", params->datafile);
+	fdt_property_string(fdt, "name", params->imagename);
+	ret = fdt_property_file(params, fdt, "data", params->datafile);
+	if (ret)
+		return ret;
 	fdt_property_string(fdt, "type", typename);
 	fdt_property_string(fdt, "arch", genimg_get_arch_name(params->arch));
 	fdt_property_string(fdt, "os", genimg_get_os_name(params->os));
@@ -156,23 +174,77 @@ static void fit_write_images(struct image_tool_params *params, char *fdt)
 	fdt_property_u32(fdt, "entry", params->ep);
 	fdt_end_node(fdt);
 
+	/* Now the device tree files if available */
+	upto = 0;
+	for (cont = params->content_head; cont; cont = cont->next) {
+		const char *p, *start, *end;
+		int len;
+
+		if (cont->type != IH_TYPE_FLATDT)
+			continue;
+		snprintf(str, sizeof(str), "%s@%d", FIT_FDT_PROP, ++upto);
+		fdt_begin_node(fdt, str);
+
+		/* Use the base name as the 'name' field */
+		p = strrchr(cont->fname, '/');
+		start = p ? p + 1 : cont->fname;
+		p = strrchr(cont->fname, '.');
+		end = p ? p : cont->fname + strlen(cont->fname);
+		len = end - start;
+		if (len >= sizeof(str))
+			len = sizeof(str) - 1;
+		memcpy(str, start, len);
+		str[len] = '\0';
+		fdt_property_string(fdt, "name", str);
+		ret = fdt_property_file(params, fdt, "data", cont->fname);
+		if (ret)
+			return ret;
+		fdt_property_string(fdt, "type", typename);
+		fdt_property_string(fdt, "arch",
+				    genimg_get_arch_name(params->arch));
+		fdt_property_string(fdt, "compression",
+				    genimg_get_comp_name(IH_COMP_NONE));
+		fdt_end_node(fdt);
+	}
+
 	fdt_end_node(fdt);
+
+	return 0;
 }
 
 static void fit_write_configs(struct image_tool_params *params, char *fdt)
 {
+	struct content_info *cont;
 	const char *typename;
 	char str[50];
+	int upto;
 
 	fdt_begin_node(fdt, "configurations");
 	fdt_property_string(fdt, "default", "conf@1");
 
-	typename = genimg_get_type_short_name(params->fit_image_type);
-	snprintf(str, sizeof(str), "%s@1", typename);
+	upto = 0;
+	for (cont = params->content_head; cont; cont = cont->next) {
+		if (cont->type != IH_TYPE_FLATDT)
+			continue;
+		typename = genimg_get_type_short_name(cont->type);
+		snprintf(str, sizeof(str), "conf@%d", ++upto);
+		fdt_begin_node(fdt, str);
 
-	fdt_begin_node(fdt, "conf@1");
-	fdt_property_string(fdt, typename, str);
-	fdt_end_node(fdt);
+		typename = genimg_get_type_short_name(params->fit_image_type);
+		snprintf(str, sizeof(str), "%s@1", typename);
+		fdt_property_string(fdt, typename, str);
+
+		snprintf(str, sizeof(str), FIT_FDT_PROP "@%d", upto);
+		fdt_property_string(fdt, FIT_FDT_PROP, str);
+		fdt_end_node(fdt);
+	}
+	if (!upto) {
+		fdt_begin_node(fdt, "conf@1");
+		typename = genimg_get_type_short_name(params->fit_image_type);
+		snprintf(str, sizeof(str), "%s@1", typename);
+		fdt_property_string(fdt, typename, str);
+		fdt_end_node(fdt);
+	}
 
 	fdt_end_node(fdt);
 }
@@ -191,7 +263,9 @@ static int fit_build_fdt(struct image_tool_params *params, char *fdt, int size)
 			  genimg_get_type_name(params->fit_image_type));
 	fdt_property_strf(fdt, "creator", "U-Boot mkimage %s", PLAIN_VERSION);
 	fdt_property_u32(fdt, "#address-cells", 1);
-	fit_write_images(params, fdt);
+	ret = fit_write_images(params, fdt);
+	if (ret)
+		return ret;
 	fit_write_configs(params, fdt);
 	fdt_end_node(fdt);
 	ret = fdt_finish(fdt);

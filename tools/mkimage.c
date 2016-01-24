@@ -109,15 +109,35 @@ static void usage(const char *msg)
 	exit(EXIT_FAILURE);
 }
 
+static int add_content(int type, const char *fname)
+{
+	struct content_info *cont;
+
+	cont = calloc(1, sizeof(*cont));
+	if (!cont)
+		return -1;
+	cont->type = type;
+	cont->fname = fname;
+	if (params.content_tail)
+		params.content_tail->next = cont;
+	else
+		params.content_head = cont;
+	params.content_tail = cont;
+
+	return 0;
+}
+
 static void process_args(int argc, char **argv)
 {
 	char *ptr;
 	int type = IH_TYPE_INVALID;
 	char *datafile = NULL;
+	int expecting;
 	int opt;
 
+	expecting = IH_TYPE_COUNT;	/* Unknown */
 	while ((opt = getopt(argc, argv,
-			     "a:A:cC:d:D:e:f:Fk:K:ln:O:rR:sT:vVx")) != -1) {
+			     "-a:A:bcC:d:D:e:f:Fik:K:ln:O:rR:sT:vVx")) != -1) {
 		switch (opt) {
 		case 'a':
 			params.addr = strtoul(optarg, &ptr, 16);
@@ -131,6 +151,9 @@ static void process_args(int argc, char **argv)
 			params.arch = genimg_get_arch_id(optarg);
 			if (params.arch < 0)
 				usage("Invalid architecture");
+			break;
+		case 'b':
+			expecting = IH_TYPE_FLATDT;
 			break;
 		case 'c':
 			params.comment = optarg;
@@ -169,6 +192,9 @@ static void process_args(int argc, char **argv)
 			params.type = IH_TYPE_FLATDT;
 			params.fflag = 1;
 			break;
+		case 'i':
+			expecting = type;
+			break;
 		case 'k':
 			params.keydir = optarg;
 			break;
@@ -205,6 +231,7 @@ static void process_args(int argc, char **argv)
 				show_image_types();
 				usage("Invalid image type");
 			}
+			expecting = type;
 			break;
 		case 'v':
 			params.vflag++;
@@ -214,6 +241,24 @@ static void process_args(int argc, char **argv)
 			exit(EXIT_SUCCESS);
 		case 'x':
 			params.xflag++;
+			break;
+		case 1:
+			if (expecting == type) {
+				params.imagefile = optarg;
+				expecting = IH_TYPE_INVALID;
+			} else if (expecting == IH_TYPE_INVALID) {
+				fprintf(stderr,
+					"%s: Unknown content type: use -b before device tree files",
+					params.cmdname);
+				exit(EXIT_FAILURE);
+			} else {
+				if (add_content(expecting, optarg)) {
+					fprintf(stderr,
+						"%s: Out of memory adding content '%s'",
+						params.cmdname, optarg);
+					exit(EXIT_FAILURE);
+				}
+			}
 			break;
 		default:
 			usage("Invalid option");
@@ -233,9 +278,8 @@ static void process_args(int argc, char **argv)
 		params.type = type;
 	}
 
-	if (optind >= argc)
+	if (!params.imagefile)
 		usage("Missing output filename");
-	params.imagefile = argv[optind];
 }
 
 
