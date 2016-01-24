@@ -61,6 +61,8 @@ struct image_tool_params {
 	int require_keys;	/* 1 to mark signing keys as 'required' */
 	int file_size;		/* Total size of output file */
 	int orig_file_size;	/* Original size for file before padding */
+	bool auto_its;		/* Automatically create the .its file */
+	int fit_image_type;	/* Image type to put into the FIT */
 };
 
 /*
@@ -179,6 +181,8 @@ int imagetool_save_subimage(
 	const char *file_name,
 	ulong file_data,
 	ulong file_len);
+
+int imagetool_get_filesize(struct image_tool_params *params, const char *fname);
 
 /*
  * There is a c file associated with supported image type low level code

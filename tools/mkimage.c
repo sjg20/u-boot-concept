@@ -85,7 +85,7 @@ static void usage(const char *msg)
 		"          -x ==> set XIP (execute in place)\n",
 		params.cmdname);
 	fprintf(stderr,
-		"       %s [-D dtc_options] [-f fit-image.its|-F] fit-image\n",
+		"       %s [-D dtc_options] [-f fit-image.its|-f auto|-F] fit-image\n",
 		params.cmdname);
 	fprintf(stderr,
 		"          -D => set all options for device tree compiler\n"
@@ -112,6 +112,8 @@ static void usage(const char *msg)
 static void process_args(int argc, char **argv)
 {
 	char *ptr;
+	int type = IH_TYPE_INVALID;
+	char *datafile = NULL;
 	int opt;
 
 	while ((opt = getopt(argc, argv,
@@ -155,13 +157,15 @@ static void process_args(int argc, char **argv)
 			params.eflag = 1;
 			break;
 		case 'f':
-			params.datafile = optarg;
+			datafile = optarg;
+			params.auto_its = !strcmp(datafile, "auto");
 			/* no break */
 		case 'F':
 			/*
 			 * The flattened image tree (FIT) format
 			 * requires a flattened device tree image type
 			 */
+			params.fit_image_type = params.type;
 			params.type = IH_TYPE_FLATDT;
 			params.fflag = 1;
 			break;
@@ -196,8 +200,8 @@ static void process_args(int argc, char **argv)
 			params.skipcpy = 1;
 			break;
 		case 'T':
-			params.type = genimg_get_type_id(optarg);
-			if (params.type < 0) {
+			type = genimg_get_type_id(optarg);
+			if (type < 0) {
 				show_image_types();
 				usage("Invalid image type");
 			}
@@ -214,6 +218,19 @@ static void process_args(int argc, char **argv)
 		default:
 			usage("Invalid option");
 		}
+	}
+
+	/*
+	 * For auto-generated FIT images we need to know the image type to put
+	 * in the FIT, which is separatee from the file's image type (which
+	 * will always be IH_TYPE_FLATDT in this case).
+	 */
+	if (params.type == IH_TYPE_FLATDT) {
+		params.fit_image_type = type;
+		if (!params.auto_its)
+			params.datafile = datafile;
+	} else {
+		params.type = type;
 	}
 
 	if (optind >= argc)

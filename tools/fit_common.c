@@ -67,6 +67,7 @@ int mmap_fdt(const char *cmdname, const char *fname, size_t size_inc,
 		goto err;
 		}
 	}
+	fprintf(stderr, "file %s, size %ld\n", fname, sbuf->st_size);
 
 	errno = 0;
 	ptr = mmap(0, sbuf->st_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
