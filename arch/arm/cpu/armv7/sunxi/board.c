@@ -103,6 +103,11 @@ static int gpio_init(void)
 	return 0;
 }
 
+int board_fit_config_name_match(const char *name)
+{
+	return strcmp(name, "sun7i-a20-pcduino3");
+}
+
 int spl_board_load_image(void)
 {
 	debug("Returning to FEL sp=%x, lr=%x\n", fel_stash.sp, fel_stash.lr);
