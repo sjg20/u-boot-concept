@@ -6,6 +6,7 @@
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
+#define DEBUG
 #include <common.h>
 #include <dm.h>
 #include <spl.h>
@@ -18,28 +19,13 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-static int mmc_load_image_raw_sector(struct mmc *mmc, unsigned long sector)
+static int mmc_load_legacy(struct mmc *mmc, ulong sector,
+			   struct image_header *header)
 {
-	unsigned long count;
 	u32 image_size_sectors;
-	struct image_header *header;
-
-	header = (struct image_header *)(CONFIG_SYS_TEXT_BASE -
-					 sizeof(struct image_header));
-
-	/* read image header to find the image size & load address */
-	count = mmc->block_dev.block_read(&mmc->block_dev, sector, 1, header);
-	debug("read sector %lx, count=%lu\n", sector, count);
-	if (count == 0)
-		goto end;
-
-	if (image_get_magic(header) != IH_MAGIC) {
-		puts("bad magic\n");
-		return -1;
-	}
+	unsigned long count;
 
 	spl_parse_image_header(header);
-
 	/* convert size to sectors - round up */
 	image_size_sectors = (spl_image.size + mmc->read_bl_len - 1) /
 			     mmc->read_bl_len;
@@ -50,9 +36,84 @@ static int mmc_load_image_raw_sector(struct mmc *mmc, unsigned long sector)
 					  (void *)(ulong)spl_image.load_addr);
 	debug("read %x sectors to %x\n", image_size_sectors,
 	      spl_image.load_addr);
+	if (count != image_size_sectors)
+		return -EIO;
+
+	return 0;
+}
+
+static int mmc_load_fit(struct mmc *mmc, ulong sector, void *fdt)
+{
+	u32 image_size_sectors;
+	uint64_t addr64, size64;
+	ulong load, size, base;
+	unsigned long count;
+	int offset;
+	int ret;
+
+	size = fdt_totalsize(fdt);
+	debug("size=%lu\n", size);
+	if (!fdt_num_mem_rsv(fdt)) {
+		/* fit_build_fit() does this correctly. What is wrong? */
+		printf("FIT: missing image offset\n");
+		return -EINVAL;
+	}
+	ret = fdt_get_mem_rsv(fdt, 0, &addr64, &size64);
+	if (ret)
+		return ret;
+	offset = addr64;
+	load = size64;
+	base = load - offset;
+
+	/* convert size to sectors - round up */
+	image_size_sectors = (size + mmc->read_bl_len - 1) / mmc->read_bl_len;
+
+	/* Read the header too to avoid extra memcpy */
+	count = mmc->block_dev.block_read(&mmc->block_dev, sector,
+					  image_size_sectors,
+					  (void *)base);
+	debug("read %x sectors to %x\n", image_size_sectors,
+	      spl_image.load_addr);
+	if (count != image_size_sectors)
+		return -EIO;
+
+	return 0;
+}
+
+static int mmc_load_image_raw_sector(struct mmc *mmc, unsigned long sector)
+{
+	unsigned long count;
+	struct image_header *header;
+	int ret = 0;
+
+	header = (struct image_header *)(CONFIG_SYS_TEXT_BASE -
+					 sizeof(struct image_header));
+
+	/* read image header to find the image size & load address */
+	count = mmc->block_dev.block_read(&mmc->block_dev, sector, 1, header);
+	debug("read sector %lx, count=%lu\n", sector, count);
+	if (count == 0) {
+		ret = -EIO;
+		goto end;
+	}
+
+	switch (image_get_magic(header)) {
+	case IH_MAGIC:
+		ret = mmc_load_legacy(mmc, sector, header);
+		break;
+#ifdef CONFIG_SPL_LOAD_FIT
+	case FDT_MAGIC:
+		debug("Found FIT\n");
+		ret = mmc_load_fit(mmc, sector, header);
+		break;
+#endif
+	default:
+		printf("bad magic %x\n", image_get_magic(header));
+		return -1;
+	}
 
 end:
-	if (count == 0) {
+	if (ret) {
 #ifdef CONFIG_SPL_LIBCOMMON_SUPPORT
 		puts("spl: mmc block read error\n");
 #endif

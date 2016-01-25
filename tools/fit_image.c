@@ -147,6 +147,12 @@ static int fdt_property_strf(void *fdt, const char *name, const char *fmt, ...)
 	return fdt_property_string(fdt, name, str);
 }
 
+/**
+ * fit_write_images() - Write out a list of images to the FIT
+ *
+ * We always include the main image (params->datafile). If there are device
+ * tree files, we include an fdt@ node for each of those too.
+ */
 static int fit_write_images(struct image_tool_params *params, char *fdt)
 {
 	struct content_info *cont;
@@ -170,7 +176,7 @@ static int fit_write_images(struct image_tool_params *params, char *fdt)
 	fdt_property_string(fdt, "os", genimg_get_os_name(params->os));
 	fdt_property_string(fdt, "compression",
 			    genimg_get_comp_name(params->comp));
-	fdt_property_u32(fdt, "load", params->addr);;
+	fdt_property_u32(fdt, "load", params->addr);
 	fdt_property_u32(fdt, "entry", params->ep);
 	fdt_end_node(fdt);
 
@@ -185,7 +191,12 @@ static int fit_write_images(struct image_tool_params *params, char *fdt)
 		snprintf(str, sizeof(str), "%s@%d", FIT_FDT_PROP, ++upto);
 		fdt_begin_node(fdt, str);
 
-		/* Use the base name as the 'name' field */
+		/*
+		 * Use the base name as the 'name' field. So for example:
+		 *
+		 * "arch/arm/dts/sun7i-a20-bananapro.dtb"
+		 * becomes "sun7i-a20-bananapro"
+		 */
 		p = strrchr(cont->fname, '/');
 		start = p ? p + 1 : cont->fname;
 		p = strrchr(cont->fname, '.');
@@ -212,6 +223,15 @@ static int fit_write_images(struct image_tool_params *params, char *fdt)
 	return 0;
 }
 
+/**
+ * fit_write_configs() - Write out a list of configurations to the FIT
+ *
+ * If there are device tree files, we include a configuration for each, which
+ * selects the main image (params->datafile) and its corresponding device
+ * tree file.
+ *
+ * Otherwise we just create a configuration with the main image in it.
+ */
 static void fit_write_configs(struct image_tool_params *params, char *fdt)
 {
 	struct content_info *cont;
@@ -251,7 +271,8 @@ static void fit_write_configs(struct image_tool_params *params, char *fdt)
 
 static int fit_build_fdt(struct image_tool_params *params, char *fdt, int size)
 {
-	int ret;
+	int ret, node, len;
+	const char *ptr;
 
 	ret = fdt_create(fdt, size);
 	if (ret)
@@ -271,6 +292,39 @@ static int fit_build_fdt(struct image_tool_params *params, char *fdt, int size)
 	ret = fdt_finish(fdt);
 	if (ret)
 		return ret;
+
+	ret = fdt_open_into(fdt, fdt, size);
+	if (ret) {
+		fprintf(stderr, "%s: Cannot expand FDT space: %s\n",
+			params->cmdname, fdt_strerror(ret));
+		return -1;
+	}
+
+	/* store the position of the first byte of the image */
+	node = fdt_path_offset(fdt, FIT_IMAGES_PATH);
+	if (node < 0) {
+		fprintf(stderr, "%s: Cannot find /images node: %s\n",
+			params->cmdname, fdt_strerror(node));
+		return -1;
+	}
+	node = fdt_first_subnode(fdt, node);
+	if (node < 0) {
+		fprintf(stderr, "%s: Cannot find first image node: %s\n",
+			params->cmdname, fdt_strerror(node));
+		return -1;
+	}
+	ptr = fdt_getprop(fdt, node, "data", &len);
+	if (!ptr) {
+		fprintf(stderr, "%s: Cannot find data property: %s\n",
+			params->cmdname, fdt_strerror(len));
+		return len;
+	}
+	ret = fdt_add_mem_rsv(fdt, ptr - fdt, params->addr);
+	if (ret) {
+		fprintf(stderr, "%s: Cannot add image position: %s\n",
+			params->cmdname, fdt_strerror(ret));
+		return ret;
+	}
 
 	return fdt_totalsize(fdt);
 }
