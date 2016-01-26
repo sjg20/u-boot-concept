@@ -71,7 +71,6 @@
 
 #define CONFIG_FIT
 #define CONFIG_FIT_BEST_MATCH
-#define CONFIG_OF_LIBFDT
 
 #define CONFIG_KEYBOARD
 
