@@ -137,7 +137,7 @@ static void process_args(int argc, char **argv)
 
 	expecting = IH_TYPE_COUNT;	/* Unknown */
 	while ((opt = getopt(argc, argv,
-			     "-a:A:bcC:d:D:e:f:Fik:K:ln:O:rR:sT:vVx")) != -1) {
+			     "-a:A:bcC:d:D:e:Ef:Fik:K:ln:O:rR:sT:vVx")) != -1) {
 		switch (opt) {
 		case 'a':
 			params.addr = strtoul(optarg, &ptr, 16);
@@ -178,6 +178,9 @@ static void process_args(int argc, char **argv)
 				exit(EXIT_FAILURE);
 			}
 			params.eflag = 1;
+			break;
+		case 'E':
+			params.external_data = true;
 			break;
 		case 'f':
 			datafile = optarg;
