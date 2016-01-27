@@ -97,6 +97,10 @@ Set XIP (execute in place) flag.
 .B Create FIT image:
 
 .TP
+.BI "\-b
+Specifies that the following arguments are device tree binary files (.dtb).
+
+.TP
 .BI "\-c [" "comment" "]"
 Specifies a comment to be added when signing. This is typically a useful
 message which describes how the image was signed or some other useful
@@ -123,6 +127,10 @@ Indicates that an existing FIT image should be modified. No dtc
 compilation is performed and the \-f flag should not be given.
 This can be used to sign images with additional keys after initial image
 creation.
+
+.TP
+.BI "\-i
+Specifies that the following arguments are image files.
 
 .TP
 .BI "\-k [" "key_directory" "]"
@@ -190,6 +198,15 @@ is required.
 .B mkimage -f auto -A arm -O linux -T kernel -C none -a 43e00000 -e 0 \\\\
 .br
 .B -c """Kernel 4.4 image for production devices""" -d vmlinuz kernel.itb
+.fi
+.P
+Create a FIT image containing a kernel and some device tree files, using
+automatic mode. No .its file is required.
+.nf
+.B mkimage -f auto -A arm -O linux -T kernel -C none -a 43e00000 -e 0 \\\\
+.br
+.B -c """Kernel 4.4 image for production devices""" -d vmlinuz \\\\
+.B -b rk3288-firefly.dts rk3288-jerry.dts -i kernel.itb
 .fi
 
 .SH HOMEPAGE
