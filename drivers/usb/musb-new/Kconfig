@@ -13,6 +13,15 @@ config USB_MUSB_GADGET
 	help
 	  Enables the MUSB USB dual-role controller in gadget mode.
 
+config USB_MUSB_TI
+	bool "Enable TI OTG USB controller"
+	depends on DM_USB
+	default y
+	help
+	  Say y here to enable support for the TI OTG USB controller
+	  used on TI SoCs. fadsf fa fad af adf adf asf adfa fad fd af
+	   asdf asdf fadsf asf s
+
 if USB_MUSB_HOST || USB_MUSB_GADGET
 
 config USB_MUSB_SUNXI
