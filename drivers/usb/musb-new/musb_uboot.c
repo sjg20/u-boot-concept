@@ -371,6 +371,7 @@ struct dm_usb_ops musb_usb_ops = {
 #endif /* CONFIG_DM_USB */
 #endif /* CONFIG_USB_MUSB_HOST */
 
+#ifndef CONFIG_DM_USB
 #ifdef CONFIG_USB_MUSB_GADGET
 static struct musb *gadget;
 
@@ -451,3 +452,4 @@ int musb_register(struct musb_hdrc_platform_data *plat, void *bdata,
 
 	return 0;
 }
+#endif /* CONFIG_DM_USB */
