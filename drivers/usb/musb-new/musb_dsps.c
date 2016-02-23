@@ -451,8 +451,13 @@ static int dsps_musb_init(struct musb *musb)
 	dsps_writel(reg_base, wrp->control, (1 << wrp->reset));
 
 	/* Start the on-chip PHY and its PLL. */
+#ifndef CONFIG_DM_USB
 	if (data->set_phy_power)
 		data->set_phy_power(1);
+#else
+	if (data->set_phy_power)
+		data->set_phy_power(data->dev, 1);
+#endif
 
 	musb->isr = dsps_interrupt;
 
@@ -492,8 +497,13 @@ static int dsps_musb_exit(struct musb *musb)
 #endif
 
 	/* Shutdown the on-chip PHY and its PLL. */
+#ifndef CONFIG_DM_USB
 	if (data->set_phy_power)
 		data->set_phy_power(0);
+#else
+	if (data->set_phy_power)
+		data->set_phy_power(data->dev, 0);
+#endif
 
 #ifndef __UBOOT__
 	/* NOP driver needs change if supporting dual instance */
@@ -692,8 +702,13 @@ static int dsps_suspend(struct device *dev)
 	struct omap_musb_board_data *data = plat->board_data;
 
 	/* Shutdown the on-chip PHY and its PLL. */
+#ifndef CONFIG_DM_USB
 	if (data->set_phy_power)
 		data->set_phy_power(0);
+#else
+	if (data->set_phy_power)
+		data->set_phy_power(data->dev, 0);
+#endif
 
 	return 0;
 }
@@ -704,8 +719,13 @@ static int dsps_resume(struct device *dev)
 	struct omap_musb_board_data *data = plat->board_data;
 
 	/* Start the on-chip PHY and its PLL. */
+#ifndef CONFIG_DM_USB
 	if (data->set_phy_power)
 		data->set_phy_power(1);
+#else
+	if (data->set_phy_power)
+		data->set_phy_power(data->dev, 1);
+#endif
 
 	return 0;
 }

@@ -335,8 +335,13 @@ eoi:
 	/* EOI needs to be written for the IRQ to be re-asserted. */
 	if (ret == IRQ_HANDLED || epintr || usbintr) {
 		/* clear level interrupt */
+#ifndef CONFIG_DM_USB
 		if (data->clear_irq)
 			data->clear_irq();
+#else
+		if (data->clear_irq)
+			data->clear_irq(data->dev);
+#endif
 		/* write EOI */
 		musb_writel(reg_base, USB_END_OF_INTR_REG, 0);
 	}
@@ -400,23 +405,38 @@ static int am35x_musb_init(struct musb *musb)
 #endif
 
 	/* Reset the musb */
+#ifndef CONFIG_DM_USB
 	if (data->reset)
 		data->reset();
+#else
+	if (data->reset)
+		data->reset(data->dev);
+#endif
 
 	/* Reset the controller */
 	musb_writel(reg_base, USB_CTRL_REG, AM35X_SOFT_RESET_MASK);
 
 	/* Start the on-chip PHY and its PLL. */
+#ifndef CONFIG_DM_USB
 	if (data->set_phy_power)
 		data->set_phy_power(1);
+#else
+	if (data->set_phy_power)
+		data->set_phy_power(data->dev, 1);
+#endif
 
 	msleep(5);
 
 	musb->isr = am35x_musb_interrupt;
 
 	/* clear level interrupt */
+#ifndef CONFIG_DM_USB
 	if (data->clear_irq)
 		data->clear_irq();
+#else
+		if (data->clear_irq)
+			data->clear_irq(data->dev);
+#endif
 
 	return 0;
 }
@@ -437,9 +457,14 @@ static int am35x_musb_exit(struct musb *musb)
 		del_timer_sync(&otg_workaround);
 #endif
 
+#ifndef CONFIG_DM_USB
 	/* Shutdown the on-chip PHY and its PLL. */
 	if (data->set_phy_power)
 		data->set_phy_power(0);
+#else
+	if (data->set_phy_power)
+		data->set_phy_power(data->dev, 0);
+#endif
 
 #ifndef __UBOOT__
 	usb_put_phy(musb->xceiv);
@@ -628,9 +653,14 @@ static int am35x_suspend(struct device *dev)
 	struct musb_hdrc_platform_data *plat = dev->platform_data;
 	struct omap_musb_board_data *data = plat->board_data;
 
+#ifndef CONFIG_DM_USB
 	/* Shutdown the on-chip PHY and its PLL. */
 	if (data->set_phy_power)
 		data->set_phy_power(0);
+#else
+	if (data->set_phy_power)
+		data->set_phy_power(data->dev, 0);
+#endif
 
 	clk_disable(glue->phy_clk);
 	clk_disable(glue->clk);
@@ -645,9 +675,14 @@ static int am35x_resume(struct device *dev)
 	struct omap_musb_board_data *data = plat->board_data;
 	int			ret;
 
+#ifndef CONFIG_DM_USB
 	/* Start the on-chip PHY and its PLL. */
 	if (data->set_phy_power)
 		data->set_phy_power(1);
+#else
+	if (data->set_phy_power)
+		data->set_phy_power(data->dev, 1);
+#endif
 
 	ret = clk_enable(glue->phy_clk);
 	if (ret) {
