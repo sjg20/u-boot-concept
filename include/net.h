@@ -238,6 +238,13 @@ int eth_getenv_enetaddr(const char *name, uchar *enetaddr);
 int eth_setenv_enetaddr(const char *name, const uchar *enetaddr);
 
 /*
+ * Initialize USB ethernet device with CONFIG_DM_ETH
+ * Returns:
+ *	0 is success, non-zero is error status.
+ */
+int usb_ether_init(void);
+
+/*
  * Get the hardware address for an ethernet interface .
  * Args:
  *	base_name - base name for device (normally "eth")
