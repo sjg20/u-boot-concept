@@ -13,7 +13,7 @@
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
-
+#define DEBUG
 /**
  * This file gives the xhci stack for usb3.0 looking into
  * xhci specification Rev1.0 (5/21/10).
@@ -31,8 +31,10 @@
 #include <asm-generic/errno.h>
 #include "xhci.h"
 
-#ifndef CONFIG_USB_MAX_CONTROLLER_COUNT
-#define CONFIG_USB_MAX_CONTROLLER_COUNT 1
+#ifndef CONFIG_DM_USB
+# ifndef CONFIG_USB_MAX_CONTROLLER_COUNT
+#  define CONFIG_USB_MAX_CONTROLLER_COUNT 1
+# endif
 #endif
 
 static struct descriptor {
@@ -44,7 +46,7 @@ static struct descriptor {
 	struct usb_ss_ep_comp_descriptor ep_companion;
 } __attribute__ ((packed)) descriptor = {
 	{
-		0xc,		/* bDescLength */
+		0xb,		/* bDescLength */
 		0x2a,		/* bDescriptorType: hub descriptor */
 		2,		/* bNrPorts -- runtime modified */
 		cpu_to_le16(0x8), /* wHubCharacteristics */
@@ -179,11 +181,14 @@ static int xhci_start(struct xhci_hcor *hcor)
 	 * running.
 	 */
 	ret = handshake(&hcor->or_usbsts, STS_HALT, 0, XHCI_MAX_HALT_USEC);
-	if (ret)
-		debug("Host took too long to start, "
-				"waited %u microseconds.\n",
-				XHCI_MAX_HALT_USEC);
-	return ret;
+	if (ret) {
+		debug("Host took too long to start, waited %u microseconds.\n",
+		      XHCI_MAX_HALT_USEC);
+		return ret;
+	}
+	debug("Controller started\n");
+
+	return 0;
 }
 
 /**
@@ -197,6 +202,12 @@ int xhci_reset(struct xhci_hcor *hcor)
 	u32 cmd;
 	u32 state;
 	int ret;
+
+	ret = handshake(&hcor->or_usbsts, STS_CNR, 0, 100000);
+	if (ret) {
+		printf("Host not ready %u microseconds.\n", 100000);
+		return -EBUSY;
+	}
 
 	/* Halting the Host first */
 	debug("// Halt the HC: %p\n", hcor);
@@ -489,7 +500,7 @@ int _xhci_alloc_device(struct usb_device *udev)
 
 	/*
 	 * Root hub will be first device to be initailized.
-	 * If this device is root-hub, don't do any xHC related
+	 * If this device is root-hub, don't do any xHC-related
 	 * stuff.
 	 */
 	if (ctrl->rootdev == 0) {
@@ -497,6 +508,7 @@ int _xhci_alloc_device(struct usb_device *udev)
 		return 0;
 	}
 
+	debug("%s\n", __func__);
 	xhci_queue_command(ctrl, NULL, 0, 0, TRB_ENABLE_SLOT);
 	event = xhci_wait_for_event(ctrl, TRB_COMPLETION);
 	BUG_ON(GET_COMP_CODE(le32_to_cpu(event->event_cmd.status))
@@ -507,6 +519,7 @@ int _xhci_alloc_device(struct usb_device *udev)
 	xhci_acknowledge_event(ctrl);
 
 	ret = xhci_alloc_virt_device(ctrl, udev->slot_id);
+	debug("%s ret=%d\n", __func__, ret);
 	if (ret < 0) {
 		/*
 		 * TODO: Unsuccessful Address Device command shall leave
@@ -669,6 +682,7 @@ static int xhci_submit_root(struct usb_device *udev, unsigned long pipe,
 	volatile uint32_t *status_reg;
 	struct xhci_ctrl *ctrl = xhci_get_ctrl(udev);
 	struct xhci_hcor *hcor = ctrl->hcor;
+	int val;
 
 	if ((req->requesttype & USB_RT_PORT) &&
 	    le16_to_cpu(req->index) > CONFIG_SYS_USB_XHCI_MAX_ROOT_PORTS) {
@@ -697,8 +711,9 @@ static int xhci_submit_root(struct usb_device *udev, unsigned long pipe,
 			srclen = 0x19;
 			break;
 		case USB_DT_STRING:
-			debug("USB_DT_STRING config\n");
-			switch (le16_to_cpu(req->value) & 0xff) {
+			val = le16_to_cpu(req->value) & 0xff;
+			debug("USB_DT_STRING config %d\n", val);
+			switch (val) {
 			case 0:	/* Language */
 				srcptr = "\4\3\11\4";
 				srclen = 4;
@@ -729,7 +744,7 @@ static int xhci_submit_root(struct usb_device *udev, unsigned long pipe,
 		case USB_DT_HUB:
 			debug("USB_DT_HUB config\n");
 			srcptr = &descriptor.hub;
-			srclen = 0x8;
+			srclen = descriptor.hub.bLength;
 			break;
 		default:
 			printf("unknown value %x\n", le16_to_cpu(req->value));
@@ -744,6 +759,7 @@ static int xhci_submit_root(struct usb_device *udev, unsigned long pipe,
 		/* Do nothing */
 		break;
 	case USB_REQ_GET_STATUS | ((USB_DIR_IN | USB_RT_HUB) << 8):
+		debug("USB_RT_HUB status\n");
 		tmpbuf[0] = 1;	/* USB_STATUS_SELFPOWERED */
 		tmpbuf[1] = 0;
 		srcptr = tmpbuf;
@@ -810,14 +826,17 @@ static int xhci_submit_root(struct usb_device *udev, unsigned long pipe,
 		case USB_PORT_FEAT_ENABLE:
 			reg |= PORT_PE;
 			xhci_writel(status_reg, reg);
+			debug("SET FEAT_ENABLE %x\n", reg);
 			break;
 		case USB_PORT_FEAT_POWER:
 			reg |= PORT_POWER;
 			xhci_writel(status_reg, reg);
+			debug("SET FEAT_POWER %x\n", reg);
 			break;
 		case USB_PORT_FEAT_RESET:
 			reg |= PORT_RESET;
 			xhci_writel(status_reg, reg);
+			debug("SET FEAT_RESET %x\n", reg);
 			break;
 		default:
 			printf("unknown feature %x\n", le16_to_cpu(req->value));
@@ -830,14 +849,17 @@ static int xhci_submit_root(struct usb_device *udev, unsigned long pipe,
 		switch (le16_to_cpu(req->value)) {
 		case USB_PORT_FEAT_ENABLE:
 			reg &= ~PORT_PE;
+			debug("CLEAR FEAT_ENABLE %x\n", reg);
 			break;
 		case USB_PORT_FEAT_POWER:
 			reg &= ~PORT_POWER;
+			debug("CLEAR FEAT_POWER %x\n", reg);
 			break;
 		case USB_PORT_FEAT_C_RESET:
 		case USB_PORT_FEAT_C_CONNECTION:
 		case USB_PORT_FEAT_C_OVER_CURRENT:
 		case USB_PORT_FEAT_C_ENABLE:
+			debug("CLEAR FEAT_C_... %x\n", reg);
 			xhci_clear_port_change_bit((le16_to_cpu(req->value)),
 							le16_to_cpu(req->index),
 							status_reg, reg);
@@ -853,15 +875,14 @@ static int xhci_submit_root(struct usb_device *udev, unsigned long pipe,
 		goto unknown;
 	}
 
-	debug("scrlen = %d\n req->length = %d\n",
-		srclen, le16_to_cpu(req->length));
-
 	len = min(srclen, (int)le16_to_cpu(req->length));
+	debug("scrlen = %d, req->length = %d, len = %d\n",
+		srclen, le16_to_cpu(req->length), len);
 
 	if (srcptr != NULL && len > 0)
 		memcpy(buffer, srcptr, len);
-	else
-		debug("Len is 0\n");
+// 	else
+// 		debug("Len is 0\n");
 
 	udev->act_len = len;
 	udev->status = 0;
@@ -1140,8 +1161,8 @@ static int xhci_submit_control_msg(struct udevice *dev, struct usb_device *udev,
 	struct udevice *hub;
 	int root_portnr = 0;
 
-	debug("%s: dev='%s', udev=%p, udev->dev='%s', portnr=%d\n", __func__,
-	      dev->name, udev, udev->dev->name, udev->portnr);
+	debug("%s: %s, udev->dev='%s', pipe=%lx, portnr=%d\n", __func__,
+	      dev->name, udev->dev->name, pipe, udev->portnr);
 	hub = udev->dev;
 	if (device_get_uclass_id(hub) == UCLASS_USB_HUB) {
 		/* Figure out our port number on the root hub */
@@ -1207,14 +1228,18 @@ int xhci_register(struct udevice *dev, struct xhci_hccr *hccr,
 	priv->desc_before_addr = false;
 
 	ret = xhci_reset(hcor);
-	if (ret)
+	if (ret) {
+		debug("xhci_reset failed()\n");
 		goto err;
+	}
 
 	ctrl->hccr = hccr;
 	ctrl->hcor = hcor;
 	ret = xhci_lowlevel_init(ctrl);
-	if (ret)
+	if (ret) {
+		debug("xhci_lowlevel_init() failed\n");
 		goto err;
+	}
 
 	return 0;
 err:

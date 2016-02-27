@@ -287,6 +287,8 @@ void xhci_queue_command(struct xhci_ctrl *ctrl, u8 *ptr, u32 slot_id,
 
 	/* Ring the command ring doorbell */
 	xhci_writel(&ctrl->dba->doorbell[0], DB_VALUE_HOST);
+	/* Flush PCI posted writes */
+	xhci_readl(&ctrl->dba->doorbell[0]);
 }
 
 /**
@@ -464,7 +466,8 @@ union xhci_trb *xhci_wait_for_event(struct xhci_ctrl *ctrl, trb_type expected)
 		return NULL;
 
 	printf("XHCI timeout on event type %d... cannot recover.\n", expected);
-	BUG();
+	hang();
+// 	BUG();
 }
 
 /*

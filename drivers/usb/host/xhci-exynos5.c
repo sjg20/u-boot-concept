@@ -34,6 +34,7 @@
 DECLARE_GLOBAL_DATA_PTR;
 
 struct exynos_xhci_platdata {
+	struct usb_platdata usb_plat;
 	fdt_addr_t hcd_base;
 	fdt_addr_t phy_base;
 	struct gpio_desc vbus_gpio;
@@ -44,7 +45,6 @@ struct exynos_xhci_platdata {
  * for the usb controller.
  */
 struct exynos_xhci {
-	struct usb_platdata usb_plat;
 	struct xhci_ctrl ctrl;
 	struct exynos_usb3_phy *usb3_phy;
 	struct xhci_hccr *hcd;

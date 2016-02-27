@@ -735,8 +735,11 @@ int cpu_init_r(void)
 	 * may have had some limited pre-relocation init if they were probed
 	 * before relocation, but this is post relocation.
 	 */
+	debug("init northbridge\n");
 	uclass_first_device(UCLASS_NORTHBRIDGE, &dev);
+	debug("init PCH\n");
 	uclass_first_device(UCLASS_PCH, &dev);
+	debug("init LPC\n");
 	uclass_first_device(UCLASS_LPC, &dev);
 
 	return 0;

@@ -83,3 +83,19 @@ config USB_EHCI_GENERIC
 	  Enables support for generic EHCI controller.
 
 endif
+
+config USB_XHCI_BROADWELL
+	bool "Support for broadwell XHCI controller"
+	depends on DM_USB
+	---help---
+	  Enables support for the broadwell XHCI controller as used on Intel
+	  broadwell chips.
+
+config USB_XHCI_PCI
+	bool "Support for generic XHCI USB controllers on PCI"
+	depends on DM_USB
+	---help---
+	  Enables support for a generic XHCI USB controller. This does not
+	  work correctly at present on any boards. More work is needed to
+	  figure out what is wrong. So far it probes but the controller does
+	  not respond to messages.

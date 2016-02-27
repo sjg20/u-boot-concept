@@ -501,13 +501,14 @@
 
 		usb_1: usb@14,0 {
 			reg = <0x0000a000 0 0 0 0>;
-			compatible = "xhci-pci";
+			compatible = "intel,broadwell-xhci";
+			u-boot,dm-pre-reloc;
 		};
 
 		usb_0: usb@1d,0 {
-			status = "disabled";
 			reg = <0x0000e800 0 0 0 0>;
 			compatible = "ehci-pci";
+			status = "disabled";
 		};
 
 		pch@1f,0 {
