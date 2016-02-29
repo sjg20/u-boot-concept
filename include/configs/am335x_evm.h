@@ -39,6 +39,12 @@
 /* Custom script for NOR */
 #define CONFIG_SYS_LDSCRIPT		"board/ti/am335x/u-boot.lds"
 
+#ifdef CONFIG_ENV_IS_IN_FAT
+#define FAT_ENV_INTERFACE		"mmc"
+#define FAT_ENV_DEVICE_AND_PART		"0:1"
+#define FAT_ENV_FILE			"uboot.env"
+#endif
+
 /* Always 128 KiB env size */
 #define CONFIG_ENV_SIZE			(128 << 10)
 
