@@ -23,6 +23,7 @@
 
 #include <linux/usb/otg.h>
 #include <linux/compat.h>
+#include <dwc3-uboot.h>
 
 #include "linux-compat.h"
 
@@ -441,6 +442,17 @@ int dwc3_omap_uboot_interrupt_status(int index)
 	list_for_each_entry(omap, &dwc3_omap_list, list)
 		if (omap->index == index)
 			return dwc3_omap_interrupt(-1, omap);
+
+	return 0;
+}
+
+int usb_gadget_handle_interrupts(int index)
+{
+	u32 status;
+
+	status = dwc3_omap_uboot_interrupt_status(index);
+	if (status)
+		dwc3_uboot_handle_interrupt(index);
 
 	return 0;
 }
