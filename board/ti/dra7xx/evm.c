@@ -118,7 +118,7 @@ int board_mmc_init(bd_t *bis)
 }
 #endif
 
-#ifdef CONFIG_USB_DWC3
+#if defined(CONFIG_USB_DWC3) && !defined(CONFIG_DM_USB)
 static struct dwc3_device usb_otg_ss1 = {
 	.maximum_speed = USB_SPEED_SUPER,
 	.base = DRA7_USB_OTG_SS1_BASE,
