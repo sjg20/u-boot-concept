@@ -27,6 +27,11 @@
 
 #include "linux-compat.h"
 
+#include <libfdt.h>
+#include <dm/device.h>
+
+DECLARE_GLOBAL_DATA_PTR;
+
 /*
  * All these registers belong to OMAP's Wrapper around the
  * DesignWare USB3 Core.
@@ -133,6 +138,8 @@ struct dwc3_omap {
 	struct list_head	list;
 	u32			index;
 };
+
+#ifndef CONFIG_DM_USB
 
 static LIST_HEAD(dwc3_omap_list);
 
@@ -461,3 +468,48 @@ MODULE_ALIAS("platform:omap-dwc3");
 MODULE_AUTHOR("Felipe Balbi <balbi@ti.com>");
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("DesignWare USB3 OMAP Glue Layer");
+
+#else
+
+static int ti_dwc3_wrapper_bind(struct udevice *parent)
+{
+	const void *fdt = gd->fdt_blob;
+	int node;
+
+	for (node = fdt_first_subnode(fdt, parent->of_offset); node > 0;
+	     node = fdt_next_subnode(fdt, node)) {
+		const char *name = fdt_get_name(fdt, node, NULL);
+		enum usb_dr_mode dr_mode;
+
+		if (strncmp(name, "usb@", 4))
+			continue;
+
+		dr_mode = usb_get_dr_mode(node);
+		switch (dr_mode) {
+		case USB_DR_MODE_PERIPHERAL:
+		case USB_DR_MODE_OTG:
+			/* Bind MUSB device */
+			break;
+		case USB_DR_MODE_HOST:
+			/* Bind MUSB host */
+			break;
+		default:
+			break;
+		};
+	}
+	return 0;
+}
+
+static const struct udevice_id ti_dwc3_ids[] = {
+	{ .compatible = "ti,am437x-dwc3" },
+	{ }
+};
+
+U_BOOT_DRIVER(ti_dwc3_wrapper) = {
+	.name	= "ti-dwc3-wrapper",
+	.id	= UCLASS_MISC,
+	.of_match = ti_dwc3_ids,
+	.bind = ti_dwc3_wrapper_bind,
+};
+
+#endif /* CONFIG_DM_USB */
