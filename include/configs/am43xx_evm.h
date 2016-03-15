@@ -102,6 +102,7 @@
 
 #define CONFIG_SPL_LDSCRIPT		"$(CPUDIR)/omap-common/u-boot-spl.lds"
 
+#define CONFIG_ARCH_MISC_INIT
 /* SPL USB Support */
 #ifdef CONFIG_SPL_USB_HOST_SUPPORT
 #define CONFIG_SPL_USB_SUPPORT

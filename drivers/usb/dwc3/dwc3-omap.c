@@ -26,9 +26,21 @@
 #include <dwc3-uboot.h>
 
 #include "linux-compat.h"
+#include <linux/usb/ch9.h>
+#include <linux/usb/gadget.h>
+#include <ti-usb-phy-uboot.h>
+#include <usb.h>
+
+#include "core.h"
 
 #include <libfdt.h>
 #include <dm/device.h>
+#include <dm/uclass.h>
+#include <dm/lists.h>
+#include <dwc3-uboot.h>
+
+#include <asm/omap_common.h>
+#include "gadget.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -139,7 +151,11 @@ struct dwc3_omap {
 	u32			index;
 };
 
-#ifndef CONFIG_DM_USB
+struct omap_dwc3_priv {
+	struct dwc3_omap omap;
+	struct dwc3 dwc3;
+	struct ti_usb_phy_device phy_device;
+};
 
 static LIST_HEAD(dwc3_omap_list);
 
@@ -368,6 +384,8 @@ static void dwc3_omap_set_utmi_mode(struct dwc3_omap *omap, int utmi_mode)
 	dwc3_omap_write_utmi_status(omap, reg);
 }
 
+#ifndef CONFIG_DM_USB
+
 /**
  * dwc3_omap_uboot_init - dwc3 omap uboot initialization code
  * @dev: struct dwc3_omap_device containing initialization data
@@ -471,15 +489,154 @@ MODULE_DESCRIPTION("DesignWare USB3 OMAP Glue Layer");
 
 #else
 
+int usb_gadget_handle_interrupts(int index)
+{
+	struct omap_dwc3_priv *priv;
+	struct dwc3_omap *omap;
+	struct dwc3 *dwc;
+	struct udevice *dev;
+	u32 status;
+	int ret;
+
+	ret = uclass_first_device(UCLASS_USB_DEV_GENERIC, &dev);
+	if (!dev || ret) {
+		error("No USB device found\n");
+		return -ENODEV;
+	}
+
+	priv = dev_get_priv(dev);
+	omap = &priv->omap;
+	dwc = &priv->dwc3;
+
+	status = dwc3_omap_interrupt(-1, omap);
+	if (status)
+		dwc3_gadget_uboot_handle_interrupt(dwc);
+
+	return 0;
+}
+
+static int dwc3_omap_peripheral_probe(struct udevice *dev)
+{
+	struct omap_dwc3_priv *priv = dev_get_priv(dev);
+	struct dwc3_omap *omap = &priv->omap;
+	struct dwc3 *dwc = &priv->dwc3;
+	u32 reg;
+	int ret;
+
+	enable_usb_clocks(0);
+
+	/* Initialize usb phy */
+	ret = ti_usb_phy_uboot_init(&priv->phy_device);
+	if (ret)
+		return ret;
+
+	dwc3_omap_map_offset(omap);
+	dwc3_omap_set_utmi_mode(omap, DWC3_OMAP_UTMI_MODE_SW);
+
+	/* check the DMA Status */
+	reg = dwc3_omap_readl(omap->base, USBOTGSS_SYSCONFIG);
+	omap->dma_status = !!(reg & USBOTGSS_SYSCONFIG_DMADISABLE);
+
+	dwc3_omap_enable_irqs(omap);
+
+	dwc3_omap_set_mailbox(omap, OMAP_DWC3_ID_GROUND);
+
+	/* default to highest possible threshold */
+	dwc->lpm_nyet_threshold = 0xff;
+	/*
+	 * default to assert utmi_sleep_n and use maximum allowed HIRD
+	 * threshold value of 0b1100
+	 */
+	dwc->hird_threshold = 12;
+	/* default to -3.5dB de-emphasis */
+	dwc->tx_de_emphasis = 1;
+
+	dwc->needs_fifo_resize = false;
+	dwc->index = 0;
+
+	return dwc3_init(dwc);
+}
+
+static int dwc3_omap_peripheral_remove(struct udevice *dev)
+{
+	struct omap_dwc3_priv *priv = dev_get_priv(dev);
+	struct dwc3_omap *omap = &priv->omap;
+	struct dwc3 *dwc = &priv->dwc3;
+
+	dwc3_omap_disable_irqs(omap);
+	dwc3_remove(dwc);
+
+	return 0;
+}
+
+static int dwc3_omap_ofdata_to_platdata(struct udevice *dev)
+{
+	struct omap_dwc3_priv *priv = dev_get_priv(dev);
+	const void *fdt = gd->fdt_blob;
+	int node = dev->of_offset;
+	int ctrlmodnode;
+	int physnode;
+
+	priv->omap.base = (void *)fdtdec_get_addr(fdt, dev->parent->of_offset,
+						  "reg");
+
+	priv->dwc3.regs = (void *)dev_get_addr(dev);
+	priv->dwc3.regs += DWC3_GLOBALS_REGS_START;
+
+	physnode = fdtdec_lookup_phandle(fdt, node, "phys");
+	ctrlmodnode = fdtdec_lookup_phandle(fdt, physnode, "ctrl-module");
+	priv->phy_device.usb2_phy_power = (void *)fdtdec_get_addr(fdt,
+								  ctrlmodnode,
+								  "reg");
+	priv->phy_device.index = 0;
+
+	priv->dwc3.maximum_speed = usb_get_maximum_speed(node);
+	if (priv->dwc3.maximum_speed < 0) {
+		error("Invalid usb maximum speed\n");
+		return priv->dwc3.maximum_speed;
+	}
+
+	return 0;
+}
+
+static int dwc3_omap_peripheral_ofdata_to_platdata(struct udevice *dev)
+{
+	struct omap_dwc3_priv *priv = dev_get_priv(dev);
+	int ret;
+
+	ret = dwc3_omap_ofdata_to_platdata(dev);
+	if (ret) {
+		error("platform dt parse error\n");
+		return ret;
+	}
+
+	priv->dwc3.dr_mode = USB_DR_MODE_PERIPHERAL;
+
+	return 0;
+}
+
+U_BOOT_DRIVER(dwc3_omap_peripheral) = {
+	.name	= "dwc3-omap-peripheral",
+	.id	= UCLASS_USB_DEV_GENERIC,
+	.ofdata_to_platdata = dwc3_omap_peripheral_ofdata_to_platdata,
+	.probe = dwc3_omap_peripheral_probe,
+	.remove = dwc3_omap_peripheral_remove,
+	.platdata_auto_alloc_size = sizeof(struct usb_platdata),
+	.priv_auto_alloc_size = sizeof(struct omap_dwc3_priv),
+	.flags	= DM_FLAG_ALLOC_PRIV_DMA,
+};
+
 static int ti_dwc3_wrapper_bind(struct udevice *parent)
 {
 	const void *fdt = gd->fdt_blob;
 	int node;
+	int ret;
 
 	for (node = fdt_first_subnode(fdt, parent->of_offset); node > 0;
 	     node = fdt_next_subnode(fdt, node)) {
 		const char *name = fdt_get_name(fdt, node, NULL);
 		enum usb_dr_mode dr_mode;
+		struct udevice *dev;
 
 		if (strncmp(name, "usb@", 4))
 			continue;
@@ -489,6 +646,13 @@ static int ti_dwc3_wrapper_bind(struct udevice *parent)
 		case USB_DR_MODE_PERIPHERAL:
 		case USB_DR_MODE_OTG:
 			/* Bind MUSB device */
+			ret = device_bind_driver_to_node(parent,
+							 "dwc3-omap-peripheral",
+							 name, node, &dev);
+			if (ret) {
+				error("dwc3 - not able to bind usb device node\n");
+				return ret;
+			}
 			break;
 		case USB_DR_MODE_HOST:
 			/* Bind MUSB host */
