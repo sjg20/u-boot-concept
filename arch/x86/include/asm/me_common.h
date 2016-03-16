@@ -15,6 +15,7 @@
 
 #include <linux/compiler.h>
 #include <linux/types.h>
+#include <pci.h>
 
 #define MCHBAR_PEI_VERSION	0x5034
 
