@@ -586,7 +586,7 @@
 
 #if defined(CONFIG_PCI)
 #define CONFIG_CMD_PCI
-#define CONFIG_CMD_SCSI
+#define CONFIG_SCSI
 #define CONFIG_CMD_EXT2
 #endif
 

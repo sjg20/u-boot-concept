@@ -60,7 +60,7 @@
 #define CONFIG_CMD_READ		/* Read data from partition	*/
 #define CONFIG_CMD_SANDBOX	/* sb command to access sandbox features */
 #define CONFIG_CMD_SAVES	/* save S record dump		*/
-#define CONFIG_CMD_SCSI		/* SCSI Support			*/
+#define CONFIG_SCSI		/* SCSI Support			*/
 #define CONFIG_CMD_SDRAM	/* SDRAM DIMM SPD info printout */
 #define CONFIG_CMD_SNTP		/* SNTP support			*/
 #define CONFIG_CMD_SPI		/* SPI utility			*/

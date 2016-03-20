@@ -49,7 +49,7 @@
 #define CONFIG_CMD_I2C
 #define CONFIG_CMD_REGINFO
 #define CONFIG_CMD_FDC
-#define CONFIG_CMD_SCSI
+#define CONFIG_SCSI
 #define CONFIG_CMD_FAT
 #define CONFIG_CMD_DATE
 #define CONFIG_CMD_USB
