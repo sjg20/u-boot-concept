@@ -1,4 +1,12 @@
-menu "NAND Device Support"
+menuconfig NAND
+	bool "NAND device support"
+	help
+	  You must select Y to enable any NAND device support
+	  Generally if you have any NAND devices this is a given
+
+	  If unsure, say Y
+
+if NAND
 
 config SYS_NAND_SELF_INIT
 	bool
@@ -118,4 +126,4 @@ config SPL_NAND_DENALI
 
 endif
 
-endmenu
+endif
