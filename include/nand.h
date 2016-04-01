@@ -10,6 +10,7 @@
 #define _NAND_H_
 
 #include <config.h>
+#include <dm.h>
 
 /*
  * All boards using a given driver must convert to self-init
@@ -144,6 +145,7 @@ int spl_nand_erase_one(int block, int page);
  *
  * returns pointer to the nand device info structure or NULL on failure.
  */
+#ifndef CONFIG_DM_NAND
 static inline nand_info_t *get_nand_dev_by_index(int dev)
 {
 	if (dev < 0 || dev >= CONFIG_SYS_MAX_NAND_DEVICE ||
@@ -154,5 +156,8 @@ static inline nand_info_t *get_nand_dev_by_index(int dev)
 
 	return &nand_info[dev];
 }
+#else
+nand_info_t *get_nand_dev_by_index(int idx);
+#endif
 
 #endif /* _NAND_H_ */

@@ -21,7 +21,7 @@ int nand_curr_device = -1;
 
 nand_info_t nand_info[CONFIG_SYS_MAX_NAND_DEVICE];
 
-#ifndef CONFIG_SYS_NAND_SELF_INIT
+#if !defined(CONFIG_SYS_NAND_SELF_INIT) && !defined(CONFIG_DM_NAND)
 static struct nand_chip nand_chip[CONFIG_SYS_MAX_NAND_DEVICE];
 static ulong base_address[CONFIG_SYS_MAX_NAND_DEVICE] = CONFIG_SYS_NAND_BASE_LIST;
 #endif
@@ -63,8 +63,10 @@ int nand_register(int devnum)
 static void nand_init_chip(int i)
 {
 	struct mtd_info *mtd;
+#ifndef CONFIG_DM_NAND
 	struct nand_chip *nand = &nand_chip[i];
 	ulong base_addr = base_address[i];
+#endif
 	int maxchips = CONFIG_SYS_NAND_MAX_CHIPS;
 
 	if (maxchips < 1)
@@ -74,11 +76,13 @@ static void nand_init_chip(int i)
 	if (!mtd)
 		return;
 
+#ifndef CONFIG_DM_NAND
 	mtd->priv = nand;
 	nand->IO_ADDR_R = nand->IO_ADDR_W = (void  __iomem *)base_addr;
 
 	if (board_nand_init(nand))
 		return;
+#endif
 
 	if (nand_scan(mtd, maxchips))
 		return;
