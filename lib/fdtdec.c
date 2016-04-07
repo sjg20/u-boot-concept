@@ -88,15 +88,20 @@ fdt_addr_t fdtdec_get_addr_size_fixed(const void *blob, int node,
 	const fdt32_t *prop_addr, *prop_size, *prop_after_size;
 	int len;
 	fdt_addr_t addr;
+	int parent;
 
 	debug("%s: %s: ", __func__, prop_name);
 
-	if (na > (sizeof(fdt_addr_t) / sizeof(fdt32_t))) {
+	parent = fdt_parent_offset(blob, node);
+
+	na = fdt_address_cells(blob, parent);
+	if (na < 1) {
 		debug("(na too large for fdt_addr_t type)\n");
 		return FDT_ADDR_T_NONE;
 	}
 
-	if (ns > (sizeof(fdt_size_t) / sizeof(fdt32_t))) {
+	ns = fdt_size_cells(blob, parent);
+	if (ns < 0) {
 		debug("(ns too large for fdt_size_t type)\n");
 		return FDT_ADDR_T_NONE;
 	}
