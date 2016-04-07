@@ -691,3 +691,30 @@ int device_set_name(struct udevice *dev, const char *name)
 
 	return 0;
 }
+
+bool of_device_is_compatible(int offset, const char *compat)
+{
+	const void *fdt = gd->fdt_blob;
+	const char *str;
+	int str_len;
+	int len = 0;
+
+	str = fdt_getprop(fdt, 0, "compatible", &str_len);
+	if(!str) {
+		debug("compatible field not found in node(%d)\n", offset);
+		return false;
+	}
+
+	while (len < str_len) {
+		if (!strcmp(compat, &str[len]))
+			return true;
+		len += strlen(&str[len]) + 1;
+	}
+
+	return false;
+}
+
+bool of_machine_is_compatible(const char *compat)
+{
+	return of_device_is_compatible(0, compat);
+}
