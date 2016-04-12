@@ -383,3 +383,9 @@ VbError_t VbExEcVbootDone(int in_recovery)
 
 	return VBERROR_SUCCESS;
 }
+
+VbError_t VbExEcBatteryCutOff(void)
+{
+	VBDEBUG("EC battery cut-off not supported.\n");
+	return VBERROR_UNKNOWN;
+}
