@@ -1,0 +1,11 @@
+if ROCKCHIP_RK3368
+
+config TARGET_GEEKBOX
+	bool "GeekBox"
+
+config SYS_SOC
+	default "rockchip"
+
+source "board/geekbuying/geekbox/Kconfig"
+
+endif
