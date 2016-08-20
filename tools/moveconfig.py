@@ -203,17 +203,17 @@ SLEEP_TIME=0.03
 # nios2: https://sourcery.mentor.com/GNUToolchain/subscription42545
 # sh: http://sourcery.mentor.com/public/gnu_toolchain/sh-linux-gnu
 CROSS_COMPILE = {
-    'arc': 'arc-linux-',
+    'arc': '/opt/arc/usr/bin/arc-linux-',
     'aarch64': 'aarch64-linux-',
     'arm': 'arm-unknown-linux-gnueabi-',
-    'avr32': 'avr32-linux-',
+    'avr32': '/home/sglass/.buildman-toolchains/gcc-4.2.4-nolibc/avr32-linux/bin/avr32-linux-',
     'm68k': 'm68k-linux-',
     'microblaze': 'microblaze-linux-',
     'mips': 'mips-linux-',
-    'nds32': 'nds32le-linux-',
-    'nios2': 'nios2-linux-gnu-',
+    'nds32': '/opt/nds32le-linux-glibc-v1f/bin/nds32le-linux-',
+    'nios2': '/opt/nios2/bin/nios2-linux-gnu-',
     'powerpc': 'powerpc-linux-',
-    'sh': 'sh-linux-gnu-',
+    'sh': '/opt/sh/renesas-2012.09/bin/sh-linux-gnu-',
     'x86': 'i386-linux-',
     'xtensa': 'xtensa-linux-'
 }
@@ -371,16 +371,17 @@ def update_cross_compile(color_enabled):
         cross_compile = os.environ.get(env)
         if not cross_compile:
             cross_compile = CROSS_COMPILE.get(arch, '')
+        if arch != 'sandbox' and cross_compile[:1] != '/':
+            cross_compile = ('/home/sglass/.buildman-toolchains/gcc-4.9.0-nolibc/' +
+                CROSS_COMPILE[arch][:-1] + '/bin/' + CROSS_COMPILE[arch])
+            #print cross_compile
 
-        for path in os.environ["PATH"].split(os.pathsep):
-            gcc_path = os.path.join(path, cross_compile + 'gcc')
-            if os.path.isfile(gcc_path) and os.access(gcc_path, os.X_OK):
-                break
-        else:
-            print >> sys.stderr, color_text(color_enabled, COLOR_YELLOW,
-                 'warning: %sgcc: not found in PATH.  %s architecture boards will be skipped'
-                                            % (cross_compile, arch))
-            cross_compile = None
+            gcc_path = os.path.join(cross_compile + 'gcc')
+            if not os.path.isfile(gcc_path) or not os.access(gcc_path, os.X_OK):
+                print >> sys.stderr, color_text(color_enabled, COLOR_YELLOW,
+                    'warning: %sgcc: not found in PATH.  %s architecture boards will be skipped'
+                                                % (cross_compile, arch))
+                cross_compile = None
 
         CROSS_COMPILE[arch] = cross_compile
 
