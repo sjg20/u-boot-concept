@@ -144,4 +144,12 @@ void spl_board_init(void);
  */
 bool spl_was_boot_source(void);
 
+/**
+ * Board-specific load method for boards that have a special way of loading
+ * U-Boot, which does not fit with the existing SPL code.
+ *
+ * @return 0 on success, negative errno value on failure.
+ */
+int spl_board_load_image(void);
+
 #endif
