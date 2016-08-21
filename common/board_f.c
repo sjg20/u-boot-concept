@@ -768,7 +768,8 @@ static int setup_reloc(void)
 }
 
 /* ARM calls relocate_code from its crt0.S */
-#if !defined(CONFIG_ARM) && !defined(CONFIG_SANDBOX)
+#if !defined(CONFIG_ARM) && !defined(CONFIG_SANDBOX) && \
+		!CONFIG_IS_ENABLED(X86_64)
 
 static int jump_to_copy(void)
 {
@@ -1048,7 +1049,8 @@ static init_fnc_t init_sequence_f[] = {
 #if defined(CONFIG_XTENSA)
 	clear_bss,
 #endif
-#if !defined(CONFIG_ARM) && !defined(CONFIG_SANDBOX)
+#if !defined(CONFIG_ARM) && !defined(CONFIG_SANDBOX) && \
+		!CONFIG_IS_ENABLED(X86_64)
 	jump_to_copy,
 #endif
 	NULL,
@@ -1082,7 +1084,7 @@ void board_init_f(ulong boot_flags)
 		hang();
 
 #if !defined(CONFIG_ARM) && !defined(CONFIG_SANDBOX) && \
-		!defined(CONFIG_EFI_APP)
+		!defined(CONFIG_EFI_APP) && !CONFIG_IS_ENABLED(X86_64)
 	/* NOTREACHED - jump_to_copy() does not return */
 	hang();
 #endif
@@ -1107,7 +1109,9 @@ void board_init_f(ulong boot_flags)
  * all archs will move to this when generic relocation is implemented.
  */
 static init_fnc_t init_sequence_f_r[] = {
+#if !CONFIG_IS_ENABLED(X86_64)
 	init_cache_f_r,
+#endif
 
 	NULL,
 };
