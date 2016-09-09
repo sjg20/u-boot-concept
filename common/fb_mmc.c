@@ -14,15 +14,6 @@
 #include <mmc.h>
 #include <div64.h>
 
-#if defined(CONFIG_EFI_PARTITION) && !defined(CONFIG_FASTBOOT_GPT_NAME)
-#define CONFIG_FASTBOOT_GPT_NAME GPT_ENTRY_NAME
-#endif
-
-
-#if defined(CONFIG_DOS_PARTITION) && !defined(CONFIG_FASTBOOT_MBR_NAME)
-#define CONFIG_FASTBOOT_MBR_NAME "mbr"
-#endif
-
 struct fb_mmc_sparse {
 	struct blk_desc	*dev_desc;
 };
@@ -108,6 +99,10 @@ void fb_mmc_flash_write(const char *cmd, void *download_buffer,
 		return;
 	}
 
+/* FIXME: Once EFI_PARTITION is moved to Kconfig this must be removed. */
+#ifndef CONFIG_FASTBOOT_GPT_NAME
+#define CONFIG_FASTBOOT_GPT_NAME "gpt"
+#endif
 #ifdef CONFIG_EFI_PARTITION
 	if (strcmp(cmd, CONFIG_FASTBOOT_GPT_NAME) == 0) {
 		printf("%s: updating MBR, Primary and Backup GPT(s)\n",
