@@ -32,7 +32,6 @@
 #undef CONFIG_SCSI
 
 /* Video is not supported in Quark SoC */
-#undef CONFIG_VIDEO
 #undef CONFIG_CFB_CONSOLE
 
 /* SD/MMC support */

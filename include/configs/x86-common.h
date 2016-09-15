@@ -129,7 +129,6 @@
 /*-----------------------------------------------------------------------
  * Video Configuration
  */
-#define CONFIG_VIDEO
 #define CONFIG_VIDEO_SW_CURSOR
 #define VIDEO_FB_16BPP_WORD_SWAP
 #define CONFIG_VGA_AS_SINGLE_DEVICE
