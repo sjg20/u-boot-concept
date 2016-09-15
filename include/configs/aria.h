@@ -40,7 +40,6 @@
 /* video */
 
 #if defined(CONFIG_VIDEO)
-#define CONFIG_CFB_CONSOLE
 #define CONFIG_VGA_AS_SINGLE_DEVICE
 #endif
 

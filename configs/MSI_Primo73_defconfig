@@ -15,3 +15,4 @@ CONFIG_SPL=y
 # CONFIG_CMD_IMLS is not set
 # CONFIG_CMD_FLASH is not set
 # CONFIG_CMD_FPGA is not set
+CONFIG_CFB_CONSOLE=y
