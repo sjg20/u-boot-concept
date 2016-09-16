@@ -41,7 +41,6 @@
 /* Video */
 
 #if defined(CONFIG_VIDEO)
-#define CONFIG_VGA_AS_SINGLE_DEVICE
 #define CONFIG_SPLASH_SCREEN
 #define CONFIG_VIDEO_LOGO
 #define CONFIG_VIDEO_BMP_RLE8

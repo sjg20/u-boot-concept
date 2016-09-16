@@ -298,7 +298,6 @@ extern int soft_i2c_gpio_scl;
 
 /* allow both serial and cfb console. */
 /* stop x86 thinking in cfbconsole from trying to init a pc keyboard */
-#define CONFIG_VGA_AS_SINGLE_DEVICE
 
 #endif /* CONFIG_VIDEO */
 
