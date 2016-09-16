@@ -58,11 +58,6 @@
  *					info);
  *				that fills a info buffer at i=row.
  *				s.a: board/eltec/bab7xx.
- *
- * CONFIG_VIDEO_SW_CURSOR:    - Draws a cursor after the last
- *				character. No blinking is provided.
- *				Uses the macros CURSOR_SET and
- *				CURSOR_OFF.
  */
 
 #include <common.h>
@@ -140,21 +135,6 @@
 #include <bmp_layout.h>
 #include <splash.h>
 #endif
-
-#if !defined(CONFIG_VIDEO_SW_CURSOR)
-/* no Cursor defined */
-#define CURSOR_ON
-#define CURSOR_OFF
-#define CURSOR_SET
-#endif
-
-#if defined(CONFIG_VIDEO_SW_CURSOR)
-void console_cursor(int state);
-
-#define CURSOR_ON  console_cursor(1)
-#define CURSOR_OFF console_cursor(0)
-#define CURSOR_SET video_set_cursor()
-#endif /* CONFIG_VIDEO_SW_CURSOR */
 
 #ifdef	CONFIG_VIDEO_LOGO
 #ifdef	CONFIG_VIDEO_BMP_LOGO
@@ -529,14 +509,6 @@ static void video_putchar(int xx, int yy, unsigned char c)
 	video_drawchars(xx, yy + video_logo_height, &c, 1);
 }
 
-#if defined(CONFIG_VIDEO_SW_CURSOR)
-static void video_set_cursor(void)
-{
-	if (cursor_state)
-		console_cursor(0);
-	console_cursor(1);
-}
-
 static void video_invertchar(int xx, int yy)
 {
 	int firstx = xx * VIDEO_PIXEL_SIZE;
@@ -552,7 +524,7 @@ static void video_invertchar(int xx, int yy)
 	}
 }
 
-void console_cursor(int state)
+static void console_cursor(int state)
 {
 	if (cursor_state != state) {
 		if (cursor_state) {
@@ -573,7 +545,13 @@ void console_cursor(int state)
 	if (cfb_do_flush_cache)
 		flush_cache(VIDEO_FB_ADRS, VIDEO_SIZE);
 }
-#endif
+
+static void video_set_cursor(void)
+{
+	if (cursor_state)
+		console_cursor(0);
+	console_cursor(1);
+}
 
 #ifndef VIDEO_HW_RECTFILL
 static void memsetl(int *p, int c, int v)
@@ -779,7 +757,7 @@ static void parse_putc(const char c)
 	static int nl = 1;
 
 	if (console_cursor_is_visible())
-		CURSOR_OFF;
+		console_cursor(0);
 
 	switch (c) {
 	case 13:		/* back to first column */
@@ -820,7 +798,7 @@ static void parse_putc(const char c)
 	}
 
 	if (console_cursor_is_visible())
-		CURSOR_SET;
+		video_set_cursor();
 }
 
 static void video_putc(struct stdio_dev *dev, const char c)
@@ -951,7 +929,7 @@ static void video_putc(struct stdio_dev *dev, const char c)
 
 		if (flush) {
 			if (!ansi_cursor_hidden)
-				CURSOR_OFF;
+				console_cursor(0);
 			ansi_buf_size = 0;
 			switch (cchar) {
 			case 'A':
@@ -1025,7 +1003,7 @@ static void video_putc(struct stdio_dev *dev, const char c)
 				break;
 			}
 			if (!ansi_cursor_hidden)
-				CURSOR_SET;
+				video_set_cursor();
 		}
 	} else {
 		parse_putc(c);
