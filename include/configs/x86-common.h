@@ -129,7 +129,6 @@
 /*-----------------------------------------------------------------------
  * Video Configuration
  */
-#define CONFIG_VIDEO_SW_CURSOR
 #define VIDEO_FB_16BPP_WORD_SWAP
 #define CONFIG_CONSOLE_SCROLL_LINES 5
 
