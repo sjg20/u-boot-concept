@@ -389,10 +389,6 @@ static int spl_load_image(u32 boot_device)
 		bootdev.boot_device_name = "usb_ether";
 		return spl_net_load_image(&bootdev);
 #endif
-#ifdef CONFIG_SPL_USB_SUPPORT
-	case BOOT_DEVICE_USB:
-		return spl_usb_load_image(&bootdev);
-#endif
 #ifdef CONFIG_SPL_SATA_SUPPORT
 	case BOOT_DEVICE_SATA:
 		return spl_sata_load_image(&bootdev);
