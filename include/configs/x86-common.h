@@ -130,7 +130,6 @@
  * Video Configuration
  */
 #define VIDEO_FB_16BPP_WORD_SWAP
-#define CONFIG_CONSOLE_SCROLL_LINES 5
 
 /*-----------------------------------------------------------------------
  * CPU Features
