@@ -340,8 +340,6 @@
 
 #define CONFIG_SYS_EXTRA_ENV_RELOC
 
-#define CONFIG_SYS_CONSOLE_IS_IN_ENV
-
 /*
  * Command line configuration.
  */

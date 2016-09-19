@@ -101,7 +101,6 @@
 /***************************************************************
  * defines if the console is stored in the environment
  ***************************************************************/
-#define CONFIG_SYS_CONSOLE_IS_IN_ENV	/* stdin, stdout and stderr are in evironment */
 /***************************************************************
  * defines if an overwrite_console function exists
  *************************************************************/
