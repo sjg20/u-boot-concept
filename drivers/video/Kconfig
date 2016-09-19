@@ -540,4 +540,12 @@ config SYS_CONSOLE_FG_COL
 	  the background and foreground to the same colour or you will see
 	  nothing.
 
+config LCD
+	bool "Enable legacy LCD support"
+	help
+	  Define this to enable LCD support (for output to LCD display).
+	  You will also need to select an LCD driver using an additional
+	  CONFIG option. See the README for details. Drives which have been
+	  converted to driver model will instead used CONFIG_DM_VIDEO.
+
 endmenu
