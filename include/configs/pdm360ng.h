@@ -37,7 +37,6 @@
 
 /* Used for silent command in environment */
 #define CONFIG_SYS_DEVICE_NULLDEV
-#define CONFIG_SILENT_CONSOLE
 
 /* Video */
 #define CONFIG_VIDEO

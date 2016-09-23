@@ -43,8 +43,6 @@
 #define CONFIG_DISPLAY_CPUINFO
 #define CONFIG_DISPLAY_BOARDINFO
 
-#define CONFIG_SILENT_CONSOLE
-
 /* Clock Defines */
 #define V_OSCK				26000000 /* Clock output from T2 */
 #define V_SCLK				(V_OSCK >> 1)

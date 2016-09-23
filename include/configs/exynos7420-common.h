@@ -54,7 +54,6 @@
 
 /* select serial console configuration */
 #define CONFIG_BAUDRATE			115200
-#define CONFIG_SILENT_CONSOLE
 #define CONFIG_SYS_CONSOLE_IS_IN_ENV
 #define CONFIG_CONSOLE_MUX
 
