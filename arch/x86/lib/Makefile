@@ -17,6 +17,7 @@ obj-y	+= gcc.o
 obj-y	+= init_helpers.o
 obj-y	+= interrupts.o
 obj-y	+= lpc-uclass.o
+obj-y	+= memmove.o
 obj-y	+= mpspec.o
 obj-$(CONFIG_ENABLE_MRC_CACHE) += mrccache.o
 obj-y += cmd_mtrr.o
