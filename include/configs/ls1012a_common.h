@@ -98,8 +98,6 @@
 #define CONFIG_HWCONFIG
 #define HWCONFIG_BUFFER_SIZE		128
 
-#define CONFIG_DISPLAY_CPUINFO
-
 /* Initial environment variables */
 #define CONFIG_EXTRA_ENV_SETTINGS		\
 	"verify=no\0"				\
