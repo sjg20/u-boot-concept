@@ -15,8 +15,12 @@
 
 #define CONFIG_SYS_FSL_CLK
 
+<<<<<<< HEAD
 #define CONFIG_DISPLAY_BOARDINFO
 
+=======
+#define CONFIG_SKIP_LOWLEVEL_INIT
+>>>>>>> common: Add DISPLAY_BOARDINFO
 #define CONFIG_BOARD_EARLY_INIT_F
 
 #define CONFIG_DEEP_SLEEP
