@@ -88,7 +88,6 @@
 #ifndef CONFIG_SPL_BUILD
 #define CONFIG_PCI
 #define CONFIG_PCI_MVEBU
-#define CONFIG_PCI_PNP
 #define CONFIG_BOARD_LATE_INIT		/* for PEX switch test */
 #endif
 #endif

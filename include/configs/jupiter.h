@@ -47,7 +47,6 @@
 /*#define CONFIG_PCI		*/
 
 #if defined(CONFIG_PCI)
-#define CONFIG_PCI_PNP		1
 #define CONFIG_PCI_SCAN_SHOW	1
 #define CONFIG_PCIAUTO_SKIP_HOST_BRIDGE	1
 

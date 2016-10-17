@@ -27,7 +27,6 @@
 #endif
 
 #define CONFIG_PCI		1	/* Enable PCI/PCIE */
-#define CONFIG_PCI_PNP		1	/* do pci plug-and-play */
 #define CONFIG_PCI_SCAN_SHOW	1	/* show pci devices on startup */
 #define CONFIG_PCI1		1	/* PCI controller 1 */
 #define CONFIG_FSL_PCI_INIT	1	/* Use common FSL init code */

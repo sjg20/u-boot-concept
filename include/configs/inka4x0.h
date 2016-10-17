@@ -48,7 +48,6 @@
  * 0x50000000 - 0x50ffffff - PCI IO Space
  */
 #define CONFIG_PCI		1
-#define CONFIG_PCI_PNP		1
 #define CONFIG_PCI_SCAN_SHOW	1
 #define CONFIG_PCIAUTO_SKIP_HOST_BRIDGE	1
 

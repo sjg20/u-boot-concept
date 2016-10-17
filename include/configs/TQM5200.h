@@ -78,7 +78,6 @@
  */
 #if defined(CONFIG_CHARON) || defined(CONFIG_STK52XX)
 #define CONFIG_PCI		1
-#define CONFIG_PCI_PNP		1
 /* #define CONFIG_PCI_SCAN_SHOW	1 */
 
 #define CONFIG_PCI_MEM_BUS	0x40000000

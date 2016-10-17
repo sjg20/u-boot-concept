@@ -46,7 +46,6 @@
 
 #define CONFIG_PCI
 #define CONFIG_CMD_PCI
-#define CONFIG_PCI_PNP
 
 #define CONFIG_TULIP
 #define CONFIG_EEPRO100

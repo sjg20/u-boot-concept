@@ -167,8 +167,6 @@
 #define CONFIG_PCI			/* include pci support		*/
 #define CONFIG_PCI_INDIRECT_BRIDGE	/* indirect PCI bridge support */
 #define CONFIG_PCI_HOST PCI_HOST_FORCE	/* configure as pci-host	*/
-#define CONFIG_PCI_PNP			/* pci plug-and-play		*/
-					/* resource configuration	*/
 #define CONFIG_SYS_PCI_SUBSYS_VENDORID 0x0000	/* PCI Vendor ID: to-do!!!	*/
 #define CONFIG_SYS_PCI_SUBSYS_DEVICEID 0x0000	/* PCI Device ID: to-do!!!	*/
 #define CONFIG_SYS_PCI_PTM1LA	0x00000000	/* point to sdram		*/
