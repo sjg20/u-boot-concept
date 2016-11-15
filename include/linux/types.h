@@ -96,13 +96,17 @@ typedef		__s8		int8_t;
 typedef		__u16		u_int16_t;
 typedef		__s16		int16_t;
 typedef		__u32		u_int32_t;
+#ifndef CONFIG_USE_STDINT
 typedef		__s32		int32_t;
+#endif
 
 #endif /* !(__BIT_TYPES_DEFINED__) */
 
 typedef		__u8		uint8_t;
 typedef		__u16		uint16_t;
+#ifndef CONFIG_USE_STDINT
 typedef		__u32		uint32_t;
+#endif
 
 #if defined(__GNUC__) && !defined(__STRICT_ANSI__) && \
 	(!defined(CONFIG_USE_STDINT) || !defined(__INT64_TYPE__))
