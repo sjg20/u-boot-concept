@@ -9,33 +9,37 @@
  *
  * Undefined if no set bit exists, so code should check against 0 first.
  */
+#if BITS_PER_LONG == 64
+static __always_inline unsigned long long __fls(unsigned long long word)
+#else
 static __always_inline unsigned long __fls(unsigned long word)
+#endif
 {
 	int num = BITS_PER_LONG - 1;
 
 #if BITS_PER_LONG == 64
-	if (!(word & (~0ul << 32))) {
+	if (!(word & (~0ull << 32))) {
 		num -= 32;
 		word <<= 32;
 	}
 #endif
-	if (!(word & (~0ul << (BITS_PER_LONG-16)))) {
+	if (!(word & (~0ull << (BITS_PER_LONG-16)))) {
 		num -= 16;
 		word <<= 16;
 	}
-	if (!(word & (~0ul << (BITS_PER_LONG-8)))) {
+	if (!(word & (~0ull << (BITS_PER_LONG-8)))) {
 		num -= 8;
 		word <<= 8;
 	}
-	if (!(word & (~0ul << (BITS_PER_LONG-4)))) {
+	if (!(word & (~0ull << (BITS_PER_LONG-4)))) {
 		num -= 4;
 		word <<= 4;
 	}
-	if (!(word & (~0ul << (BITS_PER_LONG-2)))) {
+	if (!(word & (~0ull << (BITS_PER_LONG-2)))) {
 		num -= 2;
 		word <<= 2;
 	}
-	if (!(word & (~0ul << (BITS_PER_LONG-1))))
+	if (!(word & (~0ull << (BITS_PER_LONG-1))))
 		num -= 1;
 	return num;
 }
