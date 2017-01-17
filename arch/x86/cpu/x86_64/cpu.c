@@ -31,7 +31,9 @@ void arch_setup_gd(gd_t *new_gd)
 	 *
 	 * U-Boot SPL 2017.01
 	 */
+#if CONFIG_IS_ENABLED(DEBUG_UART)
 	printch(' ');
+#endif
 }
 
 int cpu_has_64bit(void)
