@@ -254,7 +254,7 @@ int cpu_init_r(void)
 }
 
 #ifndef CONFIG_EFI_STUB
-int reserve_arch(void)
+static int cpu_x86_reserve_arch(void)
 {
 #ifdef CONFIG_ENABLE_MRC_CACHE
 	mrccache_reserve();
@@ -266,4 +266,43 @@ int reserve_arch(void)
 
 	return 0;
 }
+
+#ifndef CONFIG_BOARD_ENABLE
+int reserve_arch(void)
+{
+	return cpu_x86_reserve_arch();
+}
 #endif
+
+#endif /* !CONFIG_EFI_STUB */
+
+static int cpu_x86_phase(struct udevice *dev, enum board_phase_t phase)
+{
+#ifndef CONFIG_EFI_STUB
+	return cpu_x86_reserve_arch();
+#else
+	return 0;
+#endif
+}
+
+static int cpu_x86_board_probe(struct udevice *dev)
+{
+	return board_support_phase(dev, BOARD_F_RESERVE_ARCH);
+}
+
+static const struct board_ops cpu_x86_board_ops = {
+	.phase		= cpu_x86_phase,
+};
+
+/* Name this starting with underscore so it will be called last */
+U_BOOT_DRIVER(_cpu_x86_board_drv) = {
+	.name		= "cpu_x86_board",
+	.id		= UCLASS_BOARD,
+	.ops		= &cpu_x86_board_ops,
+	.probe		= cpu_x86_board_probe,
+	.flags		= DM_FLAG_PRE_RELOC,
+};
+
+U_BOOT_DEVICE(cpu_x86_board) = {
+	.name		= "cpu_x86_board",
+};
