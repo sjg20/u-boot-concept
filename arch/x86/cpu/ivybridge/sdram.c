@@ -559,10 +559,3 @@ int ivybridge_dram_init(void)
 
 	return 0;
 }
-
-#ifndef CONFIG_BOARD_ENABLE
-int dram_init(void)
-{
-	return ivybridge_dram_init();
-}
-#endif

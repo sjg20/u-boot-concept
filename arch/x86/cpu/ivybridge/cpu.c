@@ -84,13 +84,6 @@ static int do_arch_cpu_init_dm(void)
 	return 0;
 }
 
-#ifndef CONFIG_BOARD_ENABLE
-int arch_cpu_init_dm(void)
-{
-	return do_arch_cpu_init_dm();
-}
-#endif
-
 #define PCH_EHCI0_TEMP_BAR0 0xe8000000
 #define PCH_EHCI1_TEMP_BAR0 0xe8000400
 #define PCH_XHCI_TEMP_BAR0  0xe8001000
@@ -133,7 +126,7 @@ static void enable_usb_bar(struct udevice *bus)
 	pci_bus_write_config(bus, usb3, PCI_COMMAND, cmd, PCI_SIZE_32);
 }
 
-static int ivybridge_checkcpu(void)
+int ivybridge_checkcpu(void)
 {
 	enum pei_boot_mode_t boot_mode = PEI_BOOT_NONE;
 	struct udevice *dev, *lpc;
@@ -191,13 +184,6 @@ static int ivybridge_checkcpu(void)
 
 	return 0;
 }
-
-#ifndef CONFIG_BOARD_ENABLE
-int print_cpuinfo(void)
-{
-	return ivybridge_checkcpu();
-}
-#endif
 
 void board_debug_uart_init(void)
 {

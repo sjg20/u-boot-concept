@@ -18,13 +18,6 @@ int nop_dram_init(void)
 	return 0;
 }
 
-#ifndef CONFIG_BOARD_ENABLE
-int dram_init(void)
-{
-	return nop_dram_init();
-}
-#endif
-
 static int cpu_x86_nop_phase(struct udevice *dev, enum board_phase_t phase)
 {
 	switch (phase) {
