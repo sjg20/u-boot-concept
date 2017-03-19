@@ -126,6 +126,14 @@ config CMD_BDI
 	help
 	  Print board info
 
+config CMD_BOARD
+	bool "board"
+	default y if BOARD
+	help
+	  Provides access to board-specific drivers. This includes information
+	  about which board init was completed as well as the board
+	  description.
+
 config CMD_CONFIG
 	bool "config"
 	select BUILD_BIN2C

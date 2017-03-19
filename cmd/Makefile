@@ -16,6 +16,7 @@ obj-y += version.o
 obj-$(CONFIG_CMD_AES) += aes.o
 obj-$(CONFIG_CMD_AMBAPP) += ambapp.o
 obj-$(CONFIG_CMD_ARMFLASH) += armflash.o
+obj-$(CONFIG_CMD_BOARD) += board.o
 obj-$(CONFIG_SOURCE) += source.o
 obj-$(CONFIG_CMD_SOURCE) += source.o
 obj-$(CONFIG_CMD_BDI) += bdinfo.o
