@@ -124,4 +124,9 @@ int cpu_get_count(struct udevice *dev);
  */
 int cpu_get_vendor(struct udevice *dev, char *buf, int size);
 
+/**
+ * cpu_print_info() - Print information about the first CPU
+ */
+int cpu_print_info(void);
+
 #endif

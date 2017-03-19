@@ -54,6 +54,25 @@ int cpu_get_vendor(struct udevice *dev, char *buf, int size)
 	return ops->get_vendor(dev, buf, size);
 }
 
+int cpu_print_info(void)
+{
+	struct udevice *dev;
+	char name[60];
+	int ret;
+
+	ret = uclass_first_device(UCLASS_CPU, &dev);
+	if (ret)
+		return ret;
+	if (!dev)
+		return 0;
+	ret = cpu_get_desc(dev, name, sizeof(name));
+	if (ret)
+		return ret;
+	printf("CPU:   %s\n", name);
+
+	return 0;
+}
+
 U_BOOT_DRIVER(cpu_bus) = {
 	.name	= "cpu_bus",
 	.id	= UCLASS_SIMPLE_BUS,

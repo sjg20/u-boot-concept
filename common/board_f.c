@@ -852,6 +852,15 @@ int reserve_arch(void)
 	return board_walk_opt_phase(BOARD_F_RESERVE_ARCH);
 }
 
+int print_cpuinfo(void)
+{
+#ifdef CONFIG_CPU
+	return cpu_print_info();
+#else
+	return 0;
+#endif
+}
+
 #else
 
 /* Architecture-specific memory reservation */
@@ -938,7 +947,7 @@ static const init_fnc_t init_sequence_f[] = {
 		defined(CONFIG_BOARD_ENABLE)
 	checkcpu,
 #endif
-#if defined(CONFIG_DISPLAY_CPUINFO)
+#if defined(CONFIG_DISPLAY_CPUINFO) || defined(CONFIG_BOARD_ENABLED)
 	print_cpuinfo,		/* display cpu info (and speed) */
 #endif
 #if defined(CONFIG_DISPLAY_BOARDINFO)
