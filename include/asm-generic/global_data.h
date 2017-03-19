@@ -21,6 +21,7 @@
  */
 
 #ifndef __ASSEMBLY__
+#include <board.h>
 #include <membuff.h>
 #include <linux/list.h>
 
@@ -106,6 +107,10 @@ typedef struct global_data {
 #ifdef CONFIG_DM_VIDEO
 	ulong video_top;		/* Top of video frame buffer area */
 	ulong video_bottom;		/* Bottom of video frame buffer area */
+#endif
+#ifdef CONFIG_BOARD
+	/* number of drivers which handled each phase */
+	uint8_t phase_count[BOARD_PHASE_COUNT];
 #endif
 } gd_t;
 #endif

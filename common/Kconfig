@@ -395,6 +395,36 @@ config DISPLAY_BOARDINFO
 
 menu "Start-up hooks"
 
+config BOARD
+	bool "Support using driver model for board start-up hooks, etc."
+	help
+	  This adds support for the board uclass and associated functions. With
+	  this you can create and use BOARD drivers. However unless
+	  BOARD_ENABLE is also set, the existing init sequence will continue
+	  to be used. This is designed to ease migration of boards, since
+	  support for both methods can be provided during the transition
+	  period.
+
+config SPL_BOARD
+	bool "Support using driver model for board start-up hooks, etc. in SPL"
+	help
+	  This adds support for the board uclass and associated functions in
+	  SPL. With this you can create and use BOARD drivers. However unless
+	  BOARD_ENABLE is also set, the existing init sequence will continue
+	  to be used. This is designed to ease migration of boards, since
+	  support for both methods can be provided during the transition
+	  period.
+
+config BOARD_ENABLE
+	bool "Use driver model instead of ad-hoc board init functions"
+	depends on BOARD
+	help
+	  This replaces the ad-hoc start-up functions like board_early_init_f()
+	  with a driver-model-based interface. With this enabled, boards
+	  provide one or more drivers which implement these phases of init as
+	  well as access to the board decription. Existing init functions are
+	  no-longer called.
+
 config ARCH_EARLY_INIT_R
 	bool "Call arch-specific init soon after relocation"
 	default y if X86
@@ -414,6 +444,7 @@ config ARCH_MISC_INIT
 
 config BOARD_EARLY_INIT_F
 	bool "Call board-specific init before relocation"
+	depends on !BOARD_ENABLE
 	default y if X86
 	help
 	  Some boards need to perform initialisation as soon as possible
