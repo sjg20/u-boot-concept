@@ -67,7 +67,9 @@ int misc_init_r(void)
 	return 0;
 }
 
+#ifndef CONFIG_BOARD_ENABLE
 int print_cpuinfo(void)
 {
 	return 0;
 }
+#endif

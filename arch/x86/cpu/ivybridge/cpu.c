@@ -12,6 +12,7 @@
  */
 
 #include <common.h>
+#include <board.h>
 #include <dm.h>
 #include <errno.h>
 #include <fdtdec.h>
@@ -50,10 +51,10 @@ int arch_cpu_init(void)
 	return x86_cpu_init_f();
 }
 
-int arch_cpu_init_dm(void)
+static int do_arch_cpu_init_dm(void)
 {
 	struct pci_controller *hose;
-	struct udevice *bus, *dev;
+	struct udevice *bus, *lpc_dev;
 	int ret;
 
 	post_code(0x70);
@@ -67,7 +68,7 @@ int arch_cpu_init_dm(void)
 	/* TODO(sjg@chromium.org): Get rid of gd->hose */
 	gd->hose = hose;
 
-	ret = uclass_first_device_err(UCLASS_LPC, &dev);
+	ret = uclass_first_device_err(UCLASS_LPC, &lpc_dev);
 	if (ret)
 		return ret;
 
@@ -82,6 +83,13 @@ int arch_cpu_init_dm(void)
 
 	return 0;
 }
+
+#ifndef CONFIG_BOARD_ENABLE
+int arch_cpu_init_dm(void)
+{
+	return do_arch_cpu_init_dm();
+}
+#endif
 
 #define PCH_EHCI0_TEMP_BAR0 0xe8000000
 #define PCH_EHCI1_TEMP_BAR0 0xe8000400
@@ -125,12 +133,10 @@ static void enable_usb_bar(struct udevice *bus)
 	pci_bus_write_config(bus, usb3, PCI_COMMAND, cmd, PCI_SIZE_32);
 }
 
-int print_cpuinfo(void)
+static int ivybridge_checkcpu(void)
 {
 	enum pei_boot_mode_t boot_mode = PEI_BOOT_NONE;
-	char processor_name[CPU_MAX_NAME_LEN];
 	struct udevice *dev, *lpc;
-	const char *name;
 	uint32_t pm1_cnt;
 	uint16_t pm1_sts;
 	int ret;
@@ -181,15 +187,17 @@ int print_cpuinfo(void)
 	}
 
 	gd->arch.pei_boot_mode = boot_mode;
-
-	/* Print processor name */
-	name = cpu_get_name(processor_name);
-	printf("CPU:   %s\n", name);
-
 	post_code(POST_CPU_INFO);
 
 	return 0;
 }
+
+#ifndef CONFIG_BOARD_ENABLE
+int print_cpuinfo(void)
+{
+	return ivybridge_checkcpu();
+}
+#endif
 
 void board_debug_uart_init(void)
 {
@@ -197,3 +205,44 @@ void board_debug_uart_init(void)
 	pci_x86_write_config(NULL, PCH_LPC_DEV, LPC_EN, COMA_LPC_EN,
 			     PCI_SIZE_16);
 }
+
+static int cpu_x86_ivybridge_phase(struct udevice *dev,
+				   enum board_phase_t phase)
+{
+	switch (phase) {
+	case BOARD_F_ARCH_CPU_INIT_DM:
+		return do_arch_cpu_init_dm();
+	case BOARD_F_CHECKCPU:
+		return ivybridge_checkcpu();
+	case BOARD_F_DRAM_INIT:
+		return ivybridge_dram_init();
+	default:
+		return -ENOSYS;
+	}
+
+	return 0;
+}
+
+static int cpu_x86_ivybridge_board_probe(struct udevice *dev)
+{
+	return board_support_phase_mask(dev,
+			board_phase_mask(BOARD_F_ARCH_CPU_INIT_DM) |
+			board_phase_mask(BOARD_F_CHECKCPU) |
+			board_phase_mask(BOARD_F_DRAM_INIT));
+}
+
+static const struct board_ops cpu_x86_ivybridge_board_ops = {
+	.phase		= cpu_x86_ivybridge_phase,
+};
+
+U_BOOT_DRIVER(cpu_x86_ivybridge_board_drv) = {
+	.name		= "cpu_x86_ivybridge_board",
+	.id		= UCLASS_BOARD,
+	.ops		= &cpu_x86_ivybridge_board_ops,
+	.probe		= cpu_x86_ivybridge_board_probe,
+	.flags		= DM_FLAG_PRE_RELOC,
+};
+
+U_BOOT_DEVICE(cpu_x86_ivybridge_board) = {
+	.name		= "cpu_x86_ivybridge_board",
+};

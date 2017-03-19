@@ -401,7 +401,7 @@ static void rcba_config(void)
 	setbits_le32(RCB_REG(FD), PCH_DISABLE_ALWAYS);
 }
 
-int dram_init(void)
+int ivybridge_dram_init(void)
 {
 	struct pei_data _pei_data __aligned(8) = {
 		.pei_version = PEI_VERSION,
@@ -541,8 +541,8 @@ int dram_init(void)
 	/* S3 resume: don't save scrambler seed or MRC data */
 	if (pei_data->boot_mode != PEI_BOOT_RESUME) {
 		/*
-		 * This will be copied to SDRAM in reserve_arch(), then written
-		 * to SPI flash in mrccache_save()
+		 * This will be copied to SDRAM in the BOARD_F_RESERVE_ARCH
+		 * call, then written to SPI flash in mrccache_save()
 		 */
 		gd->arch.mrc_output = (char *)pei_data->mrc_output;
 		gd->arch.mrc_output_len = pei_data->mrc_output_len;
@@ -559,3 +559,10 @@ int dram_init(void)
 
 	return 0;
 }
+
+#ifndef CONFIG_BOARD_ENABLE
+int dram_init(void)
+{
+	return ivybridge_dram_init();
+}
+#endif

@@ -17,7 +17,9 @@ int arch_early_init_r(void)
 	return 0;
 }
 
+#ifndef CONFIG_BOARD_ENABLE
 int board_early_init_f(void)
 {
 	return 0;
 }
+#endif

@@ -113,4 +113,11 @@
  */
 int bridge_silicon_revision(struct udevice *dev);
 
+/**
+ * ivybridge_dram_init() - Set up SDRAM
+ *
+ * @return 0 if OK, -ve on error
+ */
+int ivybridge_dram_init(void);
+
 #endif

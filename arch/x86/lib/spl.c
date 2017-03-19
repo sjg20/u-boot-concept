@@ -48,6 +48,18 @@ static int x86_spl_init(void)
 		return ret;
 	}
 	preloader_console_init();
+#ifdef CONFIG_BOARD_ENABLE
+	ret = board_walk_phase(BOARD_F_CHECKCPU);
+	if (ret) {
+		debug("%s: BOARD_F_CHECKCPU failed\n", __func__);
+		return ret;
+	}
+	ret = board_walk_phase(BOARD_F_DRAM_INIT);
+	if (ret) {
+		debug("%s: BOARD_F_DRAM_INIT failed\n", __func__);
+		return ret;
+	}
+#else
 	ret = print_cpuinfo();
 	if (ret) {
 		debug("%s: print_cpuinfo() failed\n", __func__);
@@ -58,6 +70,7 @@ static int x86_spl_init(void)
 		debug("%s: dram_init() failed\n", __func__);
 		return ret;
 	}
+#endif
 	memset(&__bss_start, 0, (ulong)&__bss_end - (ulong)&__bss_start);
 
 	/* TODO(sjg@chromium.org): Consider calling cpu_init_r() here */

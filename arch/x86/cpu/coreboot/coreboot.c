@@ -29,6 +29,7 @@ int arch_cpu_init(void)
 	return x86_cpu_init_f();
 }
 
+#ifndef CONFIG_BOARD_ENABLE
 int board_early_init_f(void)
 {
 	return 0;
@@ -38,6 +39,7 @@ int print_cpuinfo(void)
 {
 	return default_print_cpuinfo();
 }
+#endif
 
 static void board_final_cleanup(void)
 {
