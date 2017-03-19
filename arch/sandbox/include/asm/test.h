@@ -79,4 +79,13 @@ long sandbox_i2c_rtc_get_set_base_time(struct udevice *dev, long base_time);
 
 int sandbox_usb_keyb_add_string(struct udevice *dev, const char *str);
 
+/* For testing the BOARD uclass */
+enum {
+	BOARD_TEST0,
+	BOARD_TEST1,
+	BOARD_TEST2,
+
+	BOARD_TEST_COUNT,
+};
+
 #endif

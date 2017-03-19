@@ -9,6 +9,7 @@
 #include <config.h>
 #include <sysreset.h>
 #include <stdbool.h>
+#include <asm/test.h>
 #include <linux/stringify.h>
 
 /**
@@ -65,6 +66,8 @@ struct sandbox_state {
 	enum state_terminal_raw term_raw;	/* Terminal raw/cooked */
 	bool skip_delays;		/* Ignore any time delays (for test) */
 	bool show_test_output;		/* Don't suppress stdout in tests */
+	/* Return values for board_sandbox */
+	int board_sandbox_ret[BOARD_TEST_COUNT];
 
 	/* Pointer to information for each SPI bus/cs */
 	struct sandbox_spi_info spi[CONFIG_SANDBOX_SPI_MAX_BUS]

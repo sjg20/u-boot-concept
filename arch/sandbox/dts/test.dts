@@ -52,6 +52,18 @@
 		reg = <2 1>;
 	};
 
+	board-test0 {
+		compatible = "sandbox,board-test0";
+	};
+
+	board-test1 {
+		compatible = "sandbox,board-test1";
+	};
+
+	board-test2 {
+		compatible = "sandbox,board-test2";
+	};
+
 	b-test {
 		reg = <3 1>;
 		compatible = "denx,u-boot-fdt-test";
