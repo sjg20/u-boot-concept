@@ -64,6 +64,9 @@ config SANDBOX
 	bool "Sandbox"
 	select BOARD_LATE_INIT
 	select SUPPORT_OF_CONTROL
+	select BOARD
+	select SPL_BOARD
+	select BOARD_ENABLE
 	select DM
 	select DM_KEYBOARD
 	select DM_SPI_FLASH
