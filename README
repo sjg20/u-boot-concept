@@ -222,6 +222,9 @@ See board/sandbox/README.sandbox for more details.
 Board Initialisation Flow:
 --------------------------
 
+Note: An effort to organise and perhaps rationalise the many init hooks in the
+init sequence has started. See doc/driver-model/board-info.txt for details.
+
 This is the intended start-up flow for boards. This should apply for both
 SPL and U-Boot proper (i.e. they both follow the same rules).
 
