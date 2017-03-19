@@ -1,0 +1,181 @@
+How to handle board init with Driver Model
+==========================================
+
+Motivation
+----------
+
+At present U-Boot has a lot of ad-hoc init functions related to boards, for
+board_early_init_f, board_misc_init_f() and dram_init().
+
+There are used in different ways by different boards as useful hooks to
+do the required init and sequence it correctly. Some functions are always
+enabled but have a __weak default. Some are controlled by the existence
+of a CONFIG.
+
+There are two main init sequences: board_init_f() (f for running from
+read-only flash) which runs before relocation and board_init_r() (r for
+relocated) which runs afterwards.
+
+One problem with the current sequence is that it has a lot of
+arch-specific #ifdefs around various functions. There are also #ifdefs
+for various features. With a driver-model based approach it should be
+possible to remove these over time since the board-specific code can move into
+drivers and does not need to be called from the init sequence.
+
+
+Design
+------
+
+A new uclass (UCLASS_BOARD) is defined. The uclass has one important method:
+phase(). This is called to handle a particular phase of board init. Phases are
+defined by enum board_phase_t. For example, the existing board_early_init_f()
+function is replaced by the BOARD_F_EARLY_INIT_F phase.
+
+When the init sequence wants to initiate the BOARD_F_EARLY_INIT_F phase it
+calls the phase() method of all the devices that implement that phase. It
+knows which ones implement it because they call board_support_phase() or
+board_support_phase_mask() in their probe method to register which phases they
+support.
+
+Multiple devices can implement the same phase. The init sequence calls these
+devices one by one. It is also possible for a device to 'claim' a phase, such
+that no further devices are called. The ordering of devices is as per the
+usual driver-model approach: the same order as the device tree nodes, or
+ordered by device name in the case of U_BOOT_DEVICE() declarations.
+
+With this approach a call to board_early_init_f() is replaced with a call to
+board_walk_opt_phase() which handles the phase but does not complain if no
+device handles it. For a mandatory phase, board_walk_phase() can be used.
+
+After starting up you can use the 'board phases' command to see what phases
+were executed:
+
+	=> board phases
+	1 arch_cpu_init_dm
+	0 board_early_init_f
+	1 checkcpu
+	0 misc_init_f
+	1 dram_init
+	1 reserve_arch
+
+This shows that four phases were executed and each had a single device which
+handled that phase.
+
+
+Example
+-------
+
+Below is an example with sandbox:
+
+
+static int sandbox_phase(struct udevice *dev, enum board_phase_t phase)
+{
+	struct sandbox_state *state = state_get_current();
+
+	switch (phase) {
+	case BOARD_F_DRAM_INIT:
+		gd->ram_size = state->ram_size;
+		return 0;
+	default:
+		return -ENOSYS;
+	}
+
+	return 0;
+}
+
+static int sandbox_board_probe(struct udevice *dev)
+{
+	return board_support_phase(dev, BOARD_F_DRAM_INIT);
+}
+
+static const struct board_ops sandbox_board_ops = {
+	.phase		= sandbox_phase,
+};
+
+/* Name this starting with underscore so it will be called last */
+U_BOOT_DRIVER(_sandbox_board_drv) = {
+	.name		= "sandbox_board",
+	.id		= UCLASS_BOARD,
+	.ops		= &sandbox_board_ops,
+	.probe		= sandbox_board_probe,
+	.flags		= DM_FLAG_PRE_RELOC,
+};
+
+U_BOOT_DEVICE(sandbox_board) = {
+	.name		= "sandbox_board",
+};
+
+
+This is a normal driver which supports the phase() method. The U_BOOT_DEVICE()
+declaration instantiates the device. It supports only one phase:
+BOARD_F_DRAM_INIT.
+
+If you look at common/board_f.c you will see how dram_init() uses this:
+
+int dram_init(void)
+{
+	return board_walk_phase(BOARD_F_DRAM_INIT);
+}
+
+That call will end up calling:
+
+	sandbox_phase(dev, BOARD_F_DRAM_INIT)
+
+There is quite a bit of boilerplate with the driver declaration. It would be
+quite easy to replace most of it with a macro, like:
+
+U_BOOT_BOARD_DRV(_sandbox_board, _sandbox_board_drv);
+
+but for now this is not attempted, to keep everything in the open.
+
+
+Porting suggestions
+-------------------
+
+You may find that you have all of your init handlers in a single file in your
+board directory. If so you can simply add a driver similar to the above that
+handles all the phases you use, and make your phase() method call the existing
+functions in that file. You should rename the functions to avoid confusion
+with the legacy method names and make them static since they will not be called
+from outside your file.
+
+If you have handlers in multiple files you can either:
+
+- Add a separate driver in each file
+- Use a single driver and have it call out to functions in other files for some
+    of the phases.
+
+Probably the first approach is better.
+
+You can perform the work in three patches:
+
+- one to add the board drivers and support
+- one to switch on CONFIG_BOARD_ENABLE
+- one to remove the now-unused legacy code
+
+This allows you to bisect easily if you find problems later.
+
+
+Required work
+-------------
+
+Before this feature can be applied to mainline it must support all phases. If
+we do not do thing up front then adding a new method may require porting all
+boards over to use that method. There is only a single control on whether or
+not to use this features (CONFIG_BOARD_ENABLE) so it is all or nothing.
+
+The post-relocation init phases therefore need to be added, and a review of
+pre-relocation phases needs to be completed to find anything that is missing.
+
+
+Future work
+-----------
+
+Apart from the required work, once all boards are ported to this framework we
+should be able to clean up the init sequences to remove all the #ifdefs.
+
+
+--
+Simon Glass
+sjg@chromium.org
+20-Mar-17
