@@ -11,7 +11,8 @@
  */
 
 #include <common.h>
-#include <linux/compiler.h>
+#include <board.h>
+#include <cpu.h>
 #include <version.h>
 #include <console.h>
 #include <environment.h>
@@ -819,6 +820,40 @@ static int initf_dm(void)
 	return 0;
 }
 
+#ifdef CONFIG_BOARD_ENABLE
+
+int arch_cpu_init_dm(void)
+{
+	return board_walk_opt_phase(BOARD_F_ARCH_CPU_INIT_DM);
+}
+
+int board_early_init_f(void)
+{
+	return board_walk_opt_phase(BOARD_F_EARLY_INIT_F);
+}
+
+int checkcpu(void)
+{
+	return board_walk_opt_phase(BOARD_F_CHECKCPU);
+}
+
+int misc_init_f(void)
+{
+	return board_walk_opt_phase(BOARD_F_MISC_INIT_F);
+}
+
+int dram_init(void)
+{
+	return board_walk_phase(BOARD_F_DRAM_INIT);
+}
+
+int reserve_arch(void)
+{
+	return board_walk_opt_phase(BOARD_F_RESERVE_ARCH);
+}
+
+#else
+
 /* Architecture-specific memory reservation */
 __weak int reserve_arch(void)
 {
@@ -829,6 +864,7 @@ __weak int arch_cpu_init_dm(void)
 {
 	return 0;
 }
+#endif /* !CONFIG_BOARD_ENABLE_ENABLED */
 
 static const init_fnc_t init_sequence_f[] = {
 #ifdef CONFIG_SANDBOX
@@ -851,7 +887,7 @@ static const init_fnc_t init_sequence_f[] = {
 	initf_dm,
 	arch_cpu_init_dm,
 	mark_bootstage,		/* need timer, go after init dm */
-#if defined(CONFIG_BOARD_EARLY_INIT_F)
+#if defined(CONFIG_BOARD_EARLY_INIT_F) || defined(CONFIG_BOARD_ENABLE)
 	board_early_init_f,
 #endif
 	/* TODO: can any of this go into arch_cpu_init()? */
@@ -898,7 +934,8 @@ static const init_fnc_t init_sequence_f[] = {
 #if defined(CONFIG_MPC83xx)
 	prt_83xx_rsr,
 #endif
-#if defined(CONFIG_PPC) || defined(CONFIG_M68K) || defined(CONFIG_SH)
+#if defined(CONFIG_PPC) || defined(CONFIG_M68K) || defined(CONFIG_SH) || \
+		defined(CONFIG_BOARD_ENABLE)
 	checkcpu,
 #endif
 #if defined(CONFIG_DISPLAY_CPUINFO)
@@ -908,7 +945,7 @@ static const init_fnc_t init_sequence_f[] = {
 	show_board_info,
 #endif
 	INIT_FUNC_WATCHDOG_INIT
-#if defined(CONFIG_MISC_INIT_F)
+#if defined(CONFIG_MISC_INIT_F) || defined(CONFIG_BOARD_ENABLE)
 	misc_init_f,
 #endif
 	INIT_FUNC_WATCHDOG_RESET
@@ -922,7 +959,7 @@ static const init_fnc_t init_sequence_f[] = {
 	/* TODO: unify all these dram functions? */
 #if defined(CONFIG_ARM) || defined(CONFIG_X86) || defined(CONFIG_NDS32) || \
 		defined(CONFIG_MICROBLAZE) || defined(CONFIG_AVR32) || \
-		defined(CONFIG_SH)
+		defined(CONFIG_SH) || defined(CONFIG_SANDBOX)
 	dram_init,		/* configure available RAM banks */
 #endif
 #if defined(CONFIG_MIPS) || defined(CONFIG_PPC) || defined(CONFIG_M68K)
