@@ -395,6 +395,21 @@ config DISPLAY_BOARDINFO
 
 menu "Start-up hooks"
 
+config BOARD_HOOK
+	bool "Board hook support"
+	default y
+
+config SPL_BOARD_HOOK
+	bool "Board hook support in SPL"
+	default y
+
+config BOARD_HOOK_NAMES
+	bool "Enable storing of board hook names"
+	default y
+
+config SPL_BOARD_HOOK_NAMES
+	bool "Enable storing of board hook names"
+
 config BOARD
 	bool "Support using driver model for board start-up hooks, etc."
 	help

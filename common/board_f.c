@@ -820,36 +820,36 @@ static int initf_dm(void)
 	return 0;
 }
 
-#ifdef CONFIG_BOARD_ENABLE
+#if defined(CONFIG_BOARD_ENABLE) || defined(CONFIG_BOARD_HOOK_NAMES)
 
 int arch_cpu_init_dm(void)
 {
-	return board_walk_opt_phase(BOARD_F_ARCH_CPU_INIT_DM);
+	return board_hook_walk_opt_phase(BOARD_F_ARCH_CPU_INIT_DM);
 }
 
 int board_early_init_f(void)
 {
-	return board_walk_opt_phase(BOARD_F_EARLY_INIT_F);
+	return board_hook_walk_opt_phase(BOARD_F_EARLY_INIT_F);
 }
 
 int checkcpu(void)
 {
-	return board_walk_opt_phase(BOARD_F_CHECKCPU);
+	return board_hook_walk_opt_phase(BOARD_F_CHECKCPU);
 }
 
 int misc_init_f(void)
 {
-	return board_walk_opt_phase(BOARD_F_MISC_INIT_F);
+	return board_hook_walk_opt_phase(BOARD_F_MISC_INIT_F);
 }
 
 int dram_init(void)
 {
-	return board_walk_phase(BOARD_F_DRAM_INIT);
+	return board_hook_walk_phase(BOARD_F_DRAM_INIT);
 }
 
 int reserve_arch(void)
 {
-	return board_walk_opt_phase(BOARD_F_RESERVE_ARCH);
+	return board_hook_walk_opt_phase(BOARD_F_RESERVE_ARCH);
 }
 
 int print_cpuinfo(void)

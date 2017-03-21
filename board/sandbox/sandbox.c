@@ -4,6 +4,7 @@
  */
 
 #include <common.h>
+#include <board.h>
 #include <cros_ec.h>
 #include <dm.h>
 #include <os.h>
@@ -59,6 +60,17 @@ int board_late_init(void)
 }
 #endif
 
+static int sandbox_dram_init(void)
+{
+	struct sandbox_state *state = state_get_current();
+
+	gd->ram_size = state->ram_size;
+
+	return 0;
+}
+U_BOOT_BOARD_HOOK_SINGLE(sandbox_board, sandbox_dram_init, BOARD_F_DRAM_INIT);
+
+#ifdef CONFIG_BOARD
 static int sandbox_phase(struct udevice *dev, enum board_phase_t phase)
 {
 	struct sandbox_state *state = state_get_current();
@@ -95,3 +107,4 @@ U_BOOT_DRIVER(_sandbox_board_drv) = {
 U_BOOT_DEVICE(sandbox_board) = {
 	.name		= "sandbox_board",
 };
+#endif

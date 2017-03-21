@@ -8,7 +8,9 @@
 obj-$(CONFIG_MISC) += misc-uclass.o
 obj-$(CONFIG_ALI152X) += ali512x.o
 obj-$(CONFIG_ALTERA_SYSID) += altera_sysid.o
+ifdef CONFIG_BOARD
 obj-$(CONFIG_SANDBOX) += board_sandbox.o
+endif
 obj-$(CONFIG_DS4510)  += ds4510.o
 obj-$(CONFIG_CBMEM_CONSOLE) += cbmem_console.o
 ifndef CONFIG_SPL_BUILD

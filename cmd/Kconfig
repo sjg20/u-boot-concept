@@ -128,7 +128,7 @@ config CMD_BDI
 
 config CMD_BOARD
 	bool "board"
-	default y if BOARD
+	default y if BOARD || BOARD_HOOK
 	help
 	  Provides access to board-specific drivers. This includes information
 	  about which board init was completed as well as the board

@@ -108,7 +108,7 @@ typedef struct global_data {
 	ulong video_top;		/* Top of video frame buffer area */
 	ulong video_bottom;		/* Bottom of video frame buffer area */
 #endif
-#ifdef CONFIG_BOARD
+#if CONFIG_IS_ENABLED(BOARD_ENABLE) || CONFIG_IS_ENABLED(BOARD_HOOK)
 	/* number of drivers which handled each phase */
 	uint8_t phase_count[BOARD_PHASE_COUNT];
 #endif

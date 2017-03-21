@@ -52,10 +52,35 @@ enum board_phase_t {
 	BOARD_PHASE_INVALID,	/* For sandbox testing */
 };
 
-static inline ulong board_phase_mask(enum board_phase_t phase)
-{
-	return 1UL << (ulong)phase;
-}
+#define board_phase_mask(phase)		(1UL << (ulong)(phase))
+
+struct board_hook {
+#if CONFIG_IS_ENABLED(BOARD_HOOK_NAMES)
+	const char *name;
+#define _BOARD_HOOK_NAME_FIELD(_name)	.name = #_name,
+#else
+#define _BOARD_HOOK_NAME_FIELD(_name)
+#endif
+	int (*hook)(void);
+	ulong phase_mask;
+};
+
+#define U_BOOT_BOARD_HOOK(_name)					\
+	ll_entry_declare(struct board_hook, _name, board_hook)
+
+#define U_BOOT_BOARD_HOOK_SINGLE(_name, _hook, _phase)			\
+	U_BOOT_BOARD_HOOK(_name) = {			\
+		_BOARD_HOOK_NAME_FIELD(_name)				\
+		.hook = _hook,						\
+		.phase_mask = board_phase_mask(_phase),			\
+	}
+
+#define U_BOOT_BOARD_HOOK_MASK(_name, _hook, _phase_mask)		\
+	static const U_BOOT_BOARD_HOOK(_name) = {			\
+		_BOARD_HOOK_NAME_FIELD(_name)				\
+		.hook = _hook,						\
+		.phase_mask = _phase_mask,				\
+	}
 
 /*
  * Return this from phase() to indicate that no more devices should handle this
@@ -166,5 +191,11 @@ int board_support_phase(struct udevice *dev, enum board_phase_t phase);
  * @return 0
  */
 int board_support_phase_mask(struct udevice *dev, ulong phase_mask);
+
+int board_hook_walk_phase_count(enum board_phase_t phase);
+
+int board_hook_walk_phase(enum board_phase_t phase);
+
+int board_hook_walk_opt_phase(enum board_phase_t phase);
 
 #endif
