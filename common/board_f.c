@@ -846,10 +846,8 @@ static const init_fnc_t init_sequence_f[] = {
 #ifdef CONFIG_PPC
 	/* get CPU and bus clocks according to the environment variable */
 	get_clocks,		/* get CPU and bus clocks (etc.) */
-	/* TODO: can we rename this to timer_init()? */
-	init_timebase,
 #endif
-#if defined(CONFIG_ARM) || defined(CONFIG_MIPS) || \
+#if defined(CONFIG_ARM) || defined(CONFIG_MIPS) || defined(CONFIG_PPC) || \
 		defined(CONFIG_BLACKFIN) || defined(CONFIG_NDS32) || \
 		defined(CONFIG_SH) || defined(CONFIG_SPARC)
 	timer_init,		/* initialize timer */
