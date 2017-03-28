@@ -345,13 +345,16 @@ static int reserve_prom(void)
 }
 #endif
 
-#if defined(CONFIG_LOGBUFFER) && !defined(CONFIG_ALT_LB_ADDR)
+#if defined(CONFIG_LOGBUFFER)
 static int reserve_logbuffer(void)
 {
+#ifndef CONFIG_ALT_LB_ADDR
 	/* reserve kernel log buffer */
 	gd->relocaddr -= LOGBUFF_RESERVE;
 	debug("Reserving %dk for kernel logbuffer at %08lx\n", LOGBUFF_LEN,
 		gd->relocaddr);
+#endif
+
 	return 0;
 }
 #endif
@@ -894,7 +897,7 @@ static const init_fnc_t init_sequence_f[] = {
 #if defined(CONFIG_SPARC)
 	reserve_prom,
 #endif
-#if defined(CONFIG_LOGBUFFER) && !defined(CONFIG_ALT_LB_ADDR)
+#if defined(CONFIG_LOGBUFFER)
 	reserve_logbuffer,
 #endif
 #ifdef CONFIG_PRAM
