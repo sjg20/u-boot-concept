@@ -796,7 +796,7 @@ phys_size_t __fsl_ddr_sdram(fsl_ddr_info_t *pinfo)
 
 /*
  * fsl_ddr_sdram(void) -- this is the main function to be
- * called by initdram() in the board file.
+ * called by dram_init() in the board file.
  *
  * It returns amount of memory configured in bytes.
  */

@@ -158,7 +158,7 @@ int fsl_ddr_get_dimm_params(dimm_params_t *pdimm,
 	return 0;
 }
 #endif
-int initdram(void)
+int dram_init(void)
 {
 	puts("Initializing DDR....");
 

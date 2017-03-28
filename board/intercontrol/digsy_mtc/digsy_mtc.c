@@ -79,7 +79,7 @@ static void sdram_start(int hi_addr)
  *            CONFIG_SYS_SDRAM_BASE is something other than 0x00000000.
  */
 
-int initdram(void)
+int dram_init(void)
 {
 	ulong dramsize = 0;
 	ulong dramsize2 = 0;

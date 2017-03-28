@@ -19,7 +19,7 @@ int checkboard (void) {
 	return 0;
 	};
 
-int initdram(void) {
+int dram_init(void) {
 	sdramctrl_t * sdp = (sdramctrl_t *)(MMAP_SDRAM);
 
 	out_be16(&sdp->sdram_sdtr, 0xf539);

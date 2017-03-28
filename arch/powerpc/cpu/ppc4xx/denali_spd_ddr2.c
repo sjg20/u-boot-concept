@@ -1000,7 +1000,7 @@ static void program_ddr0_44(unsigned long dimm_ranks[],
  *		 banks appropriately. If Auto Memory Configuration is
  *		 not used, it is assumed that no DIMM is plugged
  *-----------------------------------------------------------------------------*/
-int initdram(void)
+int dram_init(void)
 {
 	unsigned char const iic0_dimm_addr[] = SPD_EEPROM_ADDRESS;
 	unsigned long dimm_ranks[MAXDIMMS];
@@ -1014,7 +1014,7 @@ int initdram(void)
 	unsigned long cas_latency = 0;	/* to quiet initialization warning */
 	unsigned long dram_size;
 
-	debug("\nEntering initdram()\n");
+	debug("\nEntering dram_init()\n");
 
 	/*------------------------------------------------------------------
 	 * Stop the DDR-SDRAM controller.

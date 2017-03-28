@@ -33,7 +33,7 @@ extern void denali_core_search_data_eye(void);
  * initdram -- 440EPx's DDR controller is a DENALI Core
  *
  ************************************************************************/
-int initdram(void)
+int dram_init(void)
 {
 #if !defined(CONFIG_SYS_RAMBOOT)
 	ulong speed = get_bus_freq(0);

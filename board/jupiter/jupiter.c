@@ -78,7 +78,7 @@ static void sdram_start (int hi_addr)
  *            is something else than 0x00000000.
  */
 
-int initdram(void)
+int dram_init(void)
 {
 	ulong dramsize = 0;
 	ulong dramsize2 = 0;

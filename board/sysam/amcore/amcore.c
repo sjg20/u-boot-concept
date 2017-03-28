@@ -51,7 +51,7 @@ void fudelay(int usec)
 		asm volatile ("nop");
 }
 
-int initdram(void)
+int dram_init(void)
 {
 	u32 dramsize, RC;
 
