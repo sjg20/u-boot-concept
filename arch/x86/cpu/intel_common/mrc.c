@@ -66,6 +66,8 @@ void mrc_common_dram_init_banksize(void)
 		gd->bd->bi_dram[num_banks].size = area->size;
 		num_banks++;
 	}
+
+	return 0;
 }
 
 int mrc_add_memory_area(struct memory_info *info, uint64_t start,

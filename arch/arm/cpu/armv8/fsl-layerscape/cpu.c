@@ -610,7 +610,7 @@ phys_size_t get_effective_memsize(void)
 	return ea_size;
 }
 
-void dram_init_banksize(void)
+int dram_init_banksize(void)
 {
 #ifdef CONFIG_SYS_DP_DDR_BASE_PHY
 	phys_size_t dp_ddr_size;
@@ -719,6 +719,8 @@ void dram_init_banksize(void)
 		}
 	}
 #endif
+
+	return 0;
 }
 
 #if defined(CONFIG_EFI_LOADER) && !defined(CONFIG_SPL_BUILD)

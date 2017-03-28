@@ -92,7 +92,7 @@ int dram_init(void)
 	return 0;
 }
 
-void dram_init_banksize(void)
+int dram_init_banksize(void)
 {
 	struct efi_mem_desc *desc, *end;
 	struct efi_entry_memmap *map;
@@ -123,6 +123,8 @@ void dram_init_banksize(void)
 			EFI_PAGE_SHIFT;
 		num_banks++;
 	}
+
+	return 0;
 }
 
 int checkcpu(void)
