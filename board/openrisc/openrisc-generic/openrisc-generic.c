@@ -21,7 +21,7 @@ int checkboard(void)
 	return 0;
 }
 
-phys_size_t initdram(void)
+int initdram(void)
 {
 	return 0;
 }
