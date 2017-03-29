@@ -15,58 +15,29 @@
 #define BEAGLE_LED_USR0	150
 #define BEAGLE_LED_USR1	149
 
-#ifdef CONFIG_LED_STATUS_GREEN
-void green_led_off(void)
-{
-	__led_set(CONFIG_LED_STATUS_GREEN, 0);
-}
+static int gpio_for_colour[LED_COLOUR_COUNT] = {
+	[LED_RED] = BEAGLE_LED_USR0,
+	[LED_GREEN] = BEAGLE_LED_USR1,
+};
 
-void green_led_on(void)
+int led_set_state(enum led_colour_t colour, enum led_action_t action)
 {
-	__led_set(CONFIG_LED_STATUS_GREEN, 1);
-}
-#endif
+	int gpio = gpio_for_colour[colour];
+	int state;
 
-static int get_led_gpio(led_id_t mask)
-{
-#ifdef CONFIG_LED_STATUS0
-	if (CONFIG_LED_STATUS_BIT & mask)
-		return BEAGLE_LED_USR0;
-#endif
-#ifdef CONFIG_LED_STATUS1
-	if (CONFIG_LED_STATUS_BIT1 & mask)
-		return BEAGLE_LED_USR1;
-#endif
+	if (!gpio)
+		return -EINVAL;
+	switch (action) {
+	case LED_OFF:
+	case LED_ON:
+		gpio_direction_output(gpio, action);
+		break;
+	case LED_TOGGLE:
+		state = gpio_get_value(gpio);
+		gpio_direction_output(gpio, !state);
+	default:
+		return -ENOSYS;
+	}
 
 	return 0;
-}
-
-void __led_init (led_id_t mask, int state)
-{
-	int toggle_gpio;
-
-	toggle_gpio = get_led_gpio(mask);
-
-	if (toggle_gpio && !gpio_request(toggle_gpio, "led"))
-		__led_set(mask, state);
-}
-
-void __led_toggle (led_id_t mask)
-{
-	int state, toggle_gpio;
-
-	toggle_gpio = get_led_gpio(mask);
-	if (toggle_gpio) {
-		state = gpio_get_value(toggle_gpio);
-		gpio_direction_output(toggle_gpio, !state);
-	}
-}
-
-void __led_set (led_id_t mask, int state)
-{
-	int toggle_gpio;
-
-	toggle_gpio = get_led_gpio(mask);
-	if (toggle_gpio)
-		gpio_direction_output(toggle_gpio, state);
 }

@@ -40,67 +40,32 @@ void status_led_init(void);
 void status_led_tick (unsigned long timestamp);
 void status_led_set  (int led, int state);
 
-/*****  TQM8xxL  ********************************************************/
-#if defined(CONFIG_TQM8xxL)
-# define STATUS_LED_PAR		im_cpm.cp_pbpar
-# define STATUS_LED_DIR		im_cpm.cp_pbdir
-# define STATUS_LED_ODR		im_cpm.cp_pbodr
-# define STATUS_LED_DAT		im_cpm.cp_pbdat
-
-# define STATUS_LED_ACTIVE	1		/* LED on for bit == 1	*/
-
-/*****  MVS v1  **********************************************************/
-#elif (defined(CONFIG_MVS) && CONFIG_MVS < 2)
-# define STATUS_LED_PAR		im_ioport.iop_pdpar
-# define STATUS_LED_DIR		im_ioport.iop_pddir
-# undef  STATUS_LED_ODR
-# define STATUS_LED_DAT		im_ioport.iop_pddat
-
-# define STATUS_LED_ACTIVE	1		/* LED on for bit == 1	*/
-
-/*****  Someone else defines these  *************************************/
-#elif defined(STATUS_LED_PAR)
-  /*
-   * ADVICE: Define in your board configuration file rather than
-   * filling this file up with lots of custom board stuff.
-   */
-
-#elif defined(CONFIG_V38B)
-
-# define STATUS_LED_ACTIVE	0		/* LED on for bit == 0 */
-
-#elif defined(CONFIG_LED_STATUS_BOARD_SPECIFIC)
-/* led_id_t is unsigned long mask */
-typedef unsigned long led_id_t;
-
-extern void __led_toggle (led_id_t mask);
-extern void __led_init (led_id_t mask, int state);
-extern void __led_set (led_id_t mask, int state);
-void __led_blink(led_id_t mask, int freq);
-#else
-# error Status LED configuration missing
-#endif
-/************************************************************************/
-
-#ifndef CONFIG_LED_STATUS_BOARD_SPECIFIC
-# include <asm/status_led.h>
-#endif
-
 #endif	/* CONFIG_LED_STATUS	*/
 
 /*
  * Coloured LEDs API
  */
 #ifndef	__ASSEMBLY__
-void coloured_LED_init(void);
-void red_led_on(void);
-void red_led_off(void);
-void green_led_on(void);
-void green_led_off(void);
-void yellow_led_on(void);
-void yellow_led_off(void);
-void blue_led_on(void);
-void blue_led_off(void);
+enum led_id_t {
+	LED_RED,
+	LED_GREEN,
+	LED_YELLOW,
+	LED_BLUE,
+
+	LED_COLOUR_COUNT,
+};
+
+enum led_action_t {
+	LED_OFF = 0,
+	LED_ON = 1,
+	LED_TOGGLE,
+	LED_BLINK,
+
+	LED_NONE = -1,
+};
+
+void coloured_led_init(void);
+int led_set_state(enum led_colour_t colour, enum led_action_t action);
 #else
 	.extern LED_init
 	.extern red_led_on

@@ -11,7 +11,7 @@
 #include <asm/arch/gpio.h>
 #include <status_led.h>
 
-void coloured_LED_init(void)
+void coloured_led_init(void)
 {
 	/* Clock is enabled in board_early_init_f() */
 	at91_set_gpio_output(CONFIG_RED_LED, 1);

@@ -119,7 +119,6 @@ struct led_trigger {};
 
 #define DEFINE_LED_TRIGGER(x)		static struct led_trigger *x;
 enum led_brightness {
-	LED_OFF		= 0,
 	LED_HALF	= 127,
 	LED_FULL	= 255,
 };

@@ -13,7 +13,7 @@
 #include <asm/arch/clk.h>
 #include <asm/io.h>
 
-void coloured_LED_init(void)
+void coloured_led_init(void)
 {
 	/* Enable clock */
 	at91_periph_clk_enable(ATMEL_ID_PIOA);

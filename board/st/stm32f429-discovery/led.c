@@ -8,7 +8,7 @@
 #include <common.h>
 #include <asm-generic/gpio.h>
 
-void coloured_LED_init(void)
+void coloured_led_init(void)
 {
 	gpio_direction_output(CONFIG_RED_LED, 0);
 	gpio_direction_output(CONFIG_GREEN_LED, 0);

@@ -59,7 +59,7 @@ Colour LED's are at present only used by ARM.
 
 The functions names explain their purpose.
 
-coloured_LED_init
+coloured_led_init
 red_LED_on
 red_LED_off
 green_LED_on

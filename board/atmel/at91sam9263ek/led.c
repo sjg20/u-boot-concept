@@ -12,7 +12,7 @@
 #include <asm/arch/at91sam9263.h>
 #include <asm/arch/clk.h>
 
-void coloured_LED_init(void)
+void coloured_led_init(void)
 {
 	at91_periph_clk_enable(ATMEL_ID_PIOB);
 	at91_periph_clk_enable(ATMEL_ID_PIOB);

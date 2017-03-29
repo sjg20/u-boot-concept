@@ -57,7 +57,7 @@ void	red_led_off(void)
 	writel(RED_LED, &pio->piob.sodr);
 }
 
-void coloured_LED_init (void)
+void coloured_led_init (void)
 {
 	at91_pio_t *pio = (at91_pio_t *)ATMEL_BASE_PIO;
 

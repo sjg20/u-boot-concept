@@ -17,10 +17,7 @@
 
 struct led_tbl_s {
 	char		*string;	/* String for use in the command */
-	led_id_t	mask;		/* Mask used for calling __led_set() */
-	void		(*off)(void);	/* Optional function for turning LED off */
-	void		(*on)(void);	/* Optional function for turning LED on */
-	void		(*toggle)(void);/* Optional function for toggling LED */
+	enum led_id_t	id;
 };
 
 typedef struct led_tbl_s led_tbl_t;
@@ -28,43 +25,40 @@ typedef struct led_tbl_s led_tbl_t;
 static const led_tbl_t led_commands[] = {
 #ifdef CONFIG_LED_STATUS_BOARD_SPECIFIC
 #ifdef CONFIG_LED_STATUS0
-	{ "0", CONFIG_LED_STATUS_BIT, NULL, NULL, NULL },
+	{ "0", CONFIG_LED_STATUS_BIT },
 #endif
 #ifdef CONFIG_LED_STATUS1
-	{ "1", CONFIG_LED_STATUS_BIT1, NULL, NULL, NULL },
+	{ "1", CONFIG_LED_STATUS_BIT1 },
 #endif
 #ifdef CONFIG_LED_STATUS2
-	{ "2", CONFIG_LED_STATUS_BIT2, NULL, NULL, NULL },
+	{ "2", CONFIG_LED_STATUS_BIT2 },
 #endif
 #ifdef CONFIG_LED_STATUS3
-	{ "3", CONFIG_LED_STATUS_BIT3, NULL, NULL, NULL },
+	{ "3", CONFIG_LED_STATUS_BIT3 },
 #endif
 #ifdef CONFIG_LED_STATUS4
-	{ "4", CONFIG_LED_STATUS_BIT4, NULL, NULL, NULL },
+	{ "4", CONFIG_LED_STATUS_BIT4 },
 #endif
 #ifdef CONFIG_LED_STATUS5
-	{ "5", CONFIG_LED_STATUS_BIT5, NULL, NULL, NULL },
+	{ "5", CONFIG_LED_STATUS_BIT5 },
 #endif
 #endif
 #ifdef CONFIG_LED_STATUS_GREEN
-	{ "green", CONFIG_LED_STATUS_GREEN, green_led_off, green_led_on, NULL },
+	{ "green", LED_GREEN },
 #endif
 #ifdef CONFIG_LED_STATUS_YELLOW
-	{ "yellow", CONFIG_LED_STATUS_YELLOW, yellow_led_off, yellow_led_on,
-	  NULL },
+	{ "yellow", LED_YELLOW },
 #endif
 #ifdef CONFIG_LED_STATUS_RED
-	{ "red", CONFIG_LED_STATUS_RED, red_led_off, red_led_on, NULL },
+	{ "red", LED_RED },
 #endif
 #ifdef CONFIG_LED_STATUS_BLUE
-	{ "blue", CONFIG_LED_STATUS_BLUE, blue_led_off, blue_led_on, NULL },
+	{ "blue", LED_BLUE },
 #endif
-	{ NULL, 0, NULL, NULL, NULL }
+	{ NULL, 0 }
 };
 
-enum led_cmd { LED_ON, LED_OFF, LED_TOGGLE, LED_BLINK };
-
-enum led_cmd get_led_cmd(char *var)
+enum led_action_t get_led_cmd(char *var)
 {
 	if (strcmp(var, "off") == 0)
 		return LED_OFF;
@@ -75,22 +69,22 @@ enum led_cmd get_led_cmd(char *var)
 	if (strcmp(var, "blink") == 0)
 		return LED_BLINK;
 
-	return -1;
+	return LED_NONE;
 }
 
 /*
  * LED drivers providing a blinking LED functionality, like the
  * PCA9551, can override this empty weak function
  */
-void __weak __led_blink(led_id_t mask, int freq)
+void __weak led_set_blink(enum led_colour_t colour, int freq)
 {
 }
 
 int do_led (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	int i, match = 0;
-	enum led_cmd cmd;
-	int freq;
+	enum led_action_t cmd;
+	int freq = 0;
 
 	/* Validate arguments */
 	if ((argc < 3) || (argc > 4))
@@ -99,40 +93,23 @@ int do_led (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	cmd = get_led_cmd(argv[2]);
 	if (cmd < 0) {
 		return CMD_RET_USAGE;
+	} else if (cmd == LED_BLINK) {
+		if (argc != 4)
+			return CMD_RET_USAGE;
+		freq = simple_strtoul(argv[3], NULL, 10);
 	}
 
 	for (i = 0; led_commands[i].string; i++) {
-		if ((strcmp("all", argv[1]) == 0) ||
-		    (strcmp(led_commands[i].string, argv[1]) == 0)) {
-			match = 1;
-			switch (cmd) {
-			case LED_ON:
-				if (led_commands[i].on)
-					led_commands[i].on();
-				else
-					__led_set(led_commands[i].mask,
-							  CONFIG_LED_STATUS_ON);
-				break;
-			case LED_OFF:
-				if (led_commands[i].off)
-					led_commands[i].off();
-				else
-					__led_set(led_commands[i].mask,
-						  CONFIG_LED_STATUS_OFF);
-				break;
-			case LED_TOGGLE:
-				if (led_commands[i].toggle)
-					led_commands[i].toggle();
-				else
-					__led_toggle(led_commands[i].mask);
-				break;
-			case LED_BLINK:
-				if (argc != 4)
-					return CMD_RET_USAGE;
+		const struct led_tbl_s *led = &led_commands[i];
 
-				freq = simple_strtoul(argv[3], NULL, 10);
-				__led_blink(led_commands[i].mask, freq);
-			}
+		if ((strcmp("all", argv[1]) == 0) ||
+		    (strcmp(led->string, argv[1]) == 0)) {
+			match = 1;
+			if (cmd == LED_BLINK)
+				led_set_blink(led->mask, freq);
+			else
+				led_set_state(led->mask, cmd);
+
 			/* Need to set only 1 led if led_name wasn't 'all' */
 			if (strcmp("all", argv[1]) != 0)
 				break;
