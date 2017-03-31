@@ -29,6 +29,7 @@ $(DTB): arch-dtbs
 	echo >&2 "Device Tree Source is not correctly specified.";	\
 	echo >&2 "Please define 'CONFIG_DEFAULT_DEVICE_TREE'";		\
 	echo >&2 "or build with 'DEVICE_TREE=<device_tree>' argument";	\
+	echo >&2 "Current .dtb is \"$@\"";	\
 	echo >&2;							\
 	/bin/false)
 
