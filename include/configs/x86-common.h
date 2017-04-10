@@ -30,7 +30,7 @@
 #define CONFIG_SYS_BOOTM_LEN		(16 << 20)
 
 /* SATA AHCI storage */
-
+#if 0
 #define CONFIG_SCSI_AHCI
 #ifdef CONFIG_SCSI_AHCI
 #define CONFIG_LIBATA
@@ -41,6 +41,7 @@
 #define CONFIG_SYS_SCSI_MAX_LUN		1
 #define CONFIG_SYS_SCSI_MAX_DEVICE	(CONFIG_SYS_SCSI_MAX_SCSI_ID * \
 					 CONFIG_SYS_SCSI_MAX_LUN)
+#endif
 #endif
 
 /* Generic TPM interfaced through LPC bus */
@@ -82,8 +83,9 @@
 #define CONFIG_CMD_IRQ
 #define CONFIG_CMD_PCI
 #define CONFIG_CMD_GETTIME
+/*
 #define CONFIG_SCSI
-
+*/
 #define CONFIG_CMD_ZBOOT
 
 #define CONFIG_BOOTARGS		\
