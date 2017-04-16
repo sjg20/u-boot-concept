@@ -1096,7 +1096,7 @@ cmd_ldr = $(LD) $(LDFLAGS_$(@F)) \
 
 u-boot.rom: u-boot-x86-16bit.bin u-boot.bin \
 		$(if $(CONFIG_SPL_X86_16BIT_INIT),spl/u-boot-spl.bin) \
-		$(if $(CONFIG_HAVE_REFCODE),refcode.bin) FORCE
+		$(if $(CONFIG_HAVE_REFCODE),refcode.bin) checkbinman FORCE
 	$(call if_changed,binman)
 
 OBJCOPYFLAGS_u-boot-x86-16bit.bin := -O binary -j .start16 -j .resetvec
@@ -1105,7 +1105,8 @@ u-boot-x86-16bit.bin: u-boot FORCE
 endif
 
 ifneq ($(CONFIG_ARCH_SUNXI),)
-u-boot-sunxi-with-spl.bin: spl/sunxi-spl.bin u-boot.img u-boot.dtb FORCE
+u-boot-sunxi-with-spl.bin: spl/sunxi-spl.bin u-boot.img u-boot.dtb \
+		checkbinman FORCE
 	$(call if_changed,binman)
 endif
 
@@ -1333,6 +1334,17 @@ $(version_h): include/config/uboot.release FORCE
 
 $(timestamp_h): $(srctree)/Makefile FORCE
 	$(call filechk,timestamp.h)
+
+checkbinman: tools
+	@if ! ( echo 'import libfdt' | ( PYTHONPATH=tools python )); then \
+		echo '*** binman needs the Python libfdt library. Either '; \
+		echo '*** install it on your system, or try:'; \
+		echo '***'; \
+		echo '*** sudo apt-get install swig libpython-dev'; \
+		echo '***'; \
+		echo '*** to have U-Boot build its own version.'; \
+		false; \
+	fi
 
 # ---------------------------------------------------------------------------
 quiet_cmd_cpp_lds = LDS     $@
