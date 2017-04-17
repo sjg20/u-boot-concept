@@ -63,6 +63,11 @@ FIT_SIG_OBJS-$(CONFIG_FIT_SIGNATURE) := common/image-sig.o
 LIBFDT_CSRCS := fdt.c fdt_ro.c fdt_wip.c fdt_sw.c fdt_rw.c fdt_strerror.c  \
 			fdt_empty_tree.c fdt_addresses.c fdt_overlay.c \
 			fdt_region.c
+
+libfdt_tree := $(srctree)/lib/libfdt
+
+LIBFDT_SRCS := $(addprefix $(libfdt_tree)/, $(LIBFDT_CSRCS))
+LIBFDT_SWIG := $(addprefix $(libfdt_tree)/, pylibfdt/libfdt.i)
 LIBFDT_OBJS := $(addprefix lib/libfdt/, $(patsubst %.c, %.o, $(LIBFDT_CSRCS)))
 
 RSA_OBJS-$(CONFIG_FIT_SIGNATURE) := $(addprefix lib/rsa/, \
@@ -113,6 +118,15 @@ dumpimage-objs := $(dumpimage-mkimage-objs) dumpimage.o
 mkimage-objs   := $(dumpimage-mkimage-objs) mkimage.o
 fit_info-objs   := $(dumpimage-mkimage-objs) fit_info.o
 fit_check_sign-objs   := $(dumpimage-mkimage-objs) fit_check_sign.o
+
+tools/_libfdt.so: $(LIBFDT_SRCS) $(LIBFDT_SWIG)
+	LDFLAGS="$(HOSTLDFLAGS)" CFLAGS= VERSION=u-boot-$(UBOOTVERSION) \
+		CPPFLAGS="$(_hostc_flags)" OBJDIR=tools \
+		SOURCES="$(LIBFDT_SRCS) $(LIBFDT_SWIG)" \
+		SWIG_OPTS="-I$(srctree)/lib/libfdt -I$(srctree)/lib" \
+		$(libfdt_tree)/pylibfdt/setup.py --quiet build_ext --inplace
+	mv $(libfdt_tree)/pylibfdt/libfdt.py tools/.
+	rm $(libfdt_tree)/pylibfdt/libfdt_wrap.c
 
 # Build a libfdt Python module if swig is available
 # Use 'sudo apt-get install swig libpython-dev' to enable this
@@ -218,6 +232,10 @@ $(obj)/lib/%.c $(obj)/common/%.c:
 clean-dirs := lib common
 
 always := $(hostprogs-y)
+
+# Build a libfdt Python module if swig is available
+# Use 'sudo apt-get install swig libpython-dev' to enable this
+always += $(if $(shell which swig 2> /dev/null),_libfdt.so)
 
 # Generated LCD/video logo
 LOGO_H = $(objtree)/include/bmp_logo.h
