@@ -125,7 +125,9 @@ fit_info-objs   := $(dumpimage-mkimage-objs) fit_info.o
 fit_check_sign-objs   := $(dumpimage-mkimage-objs) fit_check_sign.o
 
 tools/_libfdt.so: $(LIBFDT_SRCS) $(LIBFDT_SWIG)
-	LDFLAGS="$(HOSTLDFLAGS)" CFLAGS= VERSION=u-boot-$(UBOOTVERSION) \
+	unset CC; \
+	unset CROSS_COMPILE; \
+	LDFLAGS="$(HOSTLDFLAGS)" CFLAGS= VERSION="u-boot-$(UBOOTVERSION)" \
 		CPPFLAGS="$(_hostc_flags)" OBJDIR=tools \
 		SOURCES="$(LIBFDT_SRCS) $(LIBFDT_SWIG)" \
 		SWIG_OPTS="-I$(srctree)/lib/libfdt -I$(srctree)/lib" \
