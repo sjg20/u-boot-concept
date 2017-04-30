@@ -6,9 +6,9 @@
  */
 
 #include <common.h>
+#include <dm.h>
 #include <linux/io.h>
 #include <linux/sizes.h>
-#include <dm/device.h>
 #include <mmc.h>
 #include <sdhci.h>
 
