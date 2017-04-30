@@ -72,7 +72,7 @@ static int atmel_sdhci_probe(struct udevice *dev)
 		return ret;
 
 	host->name = dev->name;
-	host->ioaddr = (void *)dev_get_addr(dev);
+	host->ioaddr = (void *)devfdt_get_addr(dev);
 
 	host->quirks = 0;
 	host->bus_width	= fdtdec_get_int(gd->fdt_blob, dev_of_offset(dev),
