@@ -69,6 +69,7 @@ config SANDBOX
 	select DM_GPIO
 	select DM_MMC
 	imply CMD_HASH
+	imply CMD_IO
 
 config SH
 	bool "SuperH architecture"
@@ -88,6 +89,7 @@ config X86
 	select USB_EHCI_HCD
 	imply CMD_FPGA_LOADMK
 	imply CMD_GETTIME
+	imply CMD_IO
 
 config XTENSA
 	bool "Xtensa architecture"
