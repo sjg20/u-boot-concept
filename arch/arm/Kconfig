@@ -549,6 +549,7 @@ config ARCH_KEYSTONE
 	select SYS_THUMB_BUILD
 	select CMD_POWEROFF
 	imply FIT
+	imply CMD_EEPROM
 
 config ARCH_OMAP2PLUS
 	bool "TI OMAP2+"

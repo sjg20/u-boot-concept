@@ -125,6 +125,7 @@ config AM43XX
 	imply SPL_SEPARATE_BSS
 	imply SPL_SYS_MALLOC_SIMPLE
 	imply SYS_THUMB_BUILD
+	imply CMD_EEPROM
 	help
 	  Support for AM43xx SOC from Texas Instruments.
 	  The AM43xx high performance SOC features a Cortex-A9
