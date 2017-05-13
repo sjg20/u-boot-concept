@@ -33,7 +33,6 @@
 /*
  * Commands configuration
  */
-#define CONFIG_CMD_ENV
 #define CONFIG_CMD_I2C
 #define CONFIG_CMD_PCI
 #define CONFIG_CMD_SCSI
