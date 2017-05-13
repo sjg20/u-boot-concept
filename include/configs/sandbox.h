@@ -109,8 +109,6 @@
 
 #define CONFIG_CMD_SANDBOX
 
-#define CONFIG_CMD_ENV_FLAGS
-
 #define CONFIG_BOOTARGS ""
 
 #ifndef SANDBOX_NO_SDL
