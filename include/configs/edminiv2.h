@@ -140,7 +140,7 @@
 /*
  * IDE
  */
-#ifdef CONFIG_CMD_IDE
+#ifdef CONFIG_IDE
 #define __io
 #define CONFIG_IDE_PREINIT
 /* ED Mini V has an IDE-compatible SATA connector for port 1 */
