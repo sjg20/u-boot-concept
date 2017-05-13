@@ -120,7 +120,6 @@
 /*
  * Commands configuration
  */
-#define CONFIG_CMD_IDE
 
 /*
  * Network
