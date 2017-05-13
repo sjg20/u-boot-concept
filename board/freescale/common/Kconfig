@@ -1,6 +1,7 @@
 config CHAIN_OF_TRUST
 	depends on !FIT_SIGNATURE && SECURE_BOOT
 	imply CMD_BLOB
+	imply CMD_HASH
 	select FSL_CAAM
 	bool
 	default y
