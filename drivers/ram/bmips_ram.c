@@ -9,10 +9,10 @@
  */
 
 #include <common.h>
+#include <dm.h>
 #include <errno.h>
 #include <ram.h>
 #include <asm/io.h>
-#include <dm/device.h>
 
 #define MEMC_CFG_REG		0x4
 #define MEMC_CFG_32B_SHIFT	1
