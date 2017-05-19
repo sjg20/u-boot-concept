@@ -18,6 +18,7 @@
 #include <asm/gpio.h>
 #include <linux/input.h>
 #include <dm.h>
+#include <power/max77686_pmic.h>
 #include <power/pmic.h>
 #include <mmc.h>
 
