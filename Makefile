@@ -1357,12 +1357,13 @@ $(timestamp_h): $(srctree)/Makefile FORCE
 
 checkbinman: tools
 	@if ! ( echo 'import libfdt' | ( PYTHONPATH=tools python )); then \
-		echo '*** binman needs the Python libfdt library. Either '; \
-		echo '*** install it on your system, or try:'; \
-		echo '***'; \
-		echo '*** sudo apt-get install swig libpython-dev'; \
-		echo '***'; \
-		echo '*** to have U-Boot build its own version.'; \
+		echo >&2; \
+		echo >&2 '*** binman needs the Python libfdt library.'; \
+		echo >&2 '*** Either install it on your system, or try:'; \
+		echo >&2 '***'; \
+		echo >&2 '*** sudo apt-get install swig libpython-dev'; \
+		echo >&2 '***'; \
+		echo >&2 '*** to have U-Boot build its own version.'; \
 		false; \
 	fi
 
