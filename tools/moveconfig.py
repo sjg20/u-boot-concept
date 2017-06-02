@@ -203,11 +203,13 @@ import glob
 import multiprocessing
 import optparse
 import os
+import Queue
 import re
 import shutil
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 
 SHOW_GNU_MAKE = 'scripts/show-gnu-make'
@@ -264,6 +266,7 @@ COLOR_LIGHT_CYAN   = '1;36'
 COLOR_WHITE        = '1;37'
 
 AUTO_CONF_PATH = 'include/config/auto.conf'
+CONFIG_DATABASE = 'moveconfig.db'
 
 
 ### helper functions ###
@@ -941,6 +944,34 @@ class KconfigParser:
 
         return log
 
+
+class DatabaseThread(threading.Thread):
+    """This thread processes results from Slot threads.
+
+    It collects the data in the master config directary. There is only one
+    result thread, and this helps to serialise the build output.
+    """
+    def __init__(self, config_db, db_queue):
+        """Set up a new result thread
+
+        Args:
+            builder: Builder which will be sent each result
+        """
+        threading.Thread.__init__(self)
+        self.config_db = config_db
+        self.db_queue= db_queue
+
+    def run(self):
+        """Called to start up the result thread.
+
+        We collect the next result job and pass it on to the build.
+        """
+        while True:
+            defconfig, configs = self.db_queue.get()
+            self.config_db[defconfig] = configs
+            self.db_queue.task_done()
+
+
 class Slot:
 
     """A slot to store a subprocess.
@@ -950,7 +981,8 @@ class Slot:
     for faster processing.
     """
 
-    def __init__(self, configs, options, progress, devnull, make_cmd, reference_src_dir):
+    def __init__(self, configs, options, progress, devnull, make_cmd,
+                 reference_src_dir, db_queue):
         """Create a new process slot.
 
         Arguments:
@@ -961,6 +993,7 @@ class Slot:
           make_cmd: command name of GNU Make.
           reference_src_dir: Determine the true starting config state from this
                              source tree.
+          db_queue: output queue to write config info for the database
         """
         self.options = options
         self.progress = progress
@@ -968,6 +1001,7 @@ class Slot:
         self.devnull = devnull
         self.make_cmd = (make_cmd, 'O=' + self.build_dir)
         self.reference_src_dir = reference_src_dir
+        self.db_queue = db_queue
         self.parser = KconfigParser(configs, options, self.build_dir)
         self.state = STATE_IDLE
         self.failed_boards = set()
@@ -1043,6 +1077,8 @@ class Slot:
             if self.current_src_dir:
                 self.current_src_dir = None
                 self.do_defconfig()
+            elif self.options.build_db:
+                self.do_build_db()
             else:
                 self.do_savedefconfig()
         elif self.state == STATE_SAVEDEFCONFIG:
@@ -1091,6 +1127,17 @@ class Slot:
                                    stderr=subprocess.PIPE,
                                    cwd=self.current_src_dir)
         self.state = STATE_AUTOCONF
+
+    def do_build_db(self):
+        """Add the board to the database"""
+        configs = {}
+        with open(os.path.join(self.build_dir, AUTO_CONF_PATH)) as fd:
+            for line in fd.readlines():
+                if line.startswith('CONFIG'):
+                    config, value = line.split('=', 1)
+                    configs[config] = value.rstrip()
+        self.db_queue.put([self.defconfig, configs])
+        self.finish(True)
 
     def do_savedefconfig(self):
         """Update the .config and run 'make savedefconfig'."""
@@ -1174,7 +1221,7 @@ class Slots:
 
     """Controller of the array of subprocess slots."""
 
-    def __init__(self, configs, options, progress, reference_src_dir):
+    def __init__(self, configs, options, progress, reference_src_dir, db_queue):
         """Create a new slots controller.
 
         Arguments:
@@ -1183,6 +1230,7 @@ class Slots:
           progress: A progress indicator.
           reference_src_dir: Determine the true starting config state from this
                              source tree.
+          db_queue: output queue to write config info for the database
         """
         self.options = options
         self.slots = []
@@ -1190,7 +1238,7 @@ class Slots:
         make_cmd = get_make_cmd()
         for i in range(options.jobs):
             self.slots.append(Slot(configs, options, progress, devnull,
-                                   make_cmd, reference_src_dir))
+                                   make_cmd, reference_src_dir, db_queue))
 
     def add(self, defconfig):
         """Add a new subprocess if a vacant slot is found.
@@ -1302,7 +1350,7 @@ class ReferenceSource:
 
         return self.src_dir
 
-def move_config(configs, options):
+def move_config(configs, options, db_queue):
     """Move config options to defconfig files.
 
     Arguments:
@@ -1312,6 +1360,8 @@ def move_config(configs, options):
     if len(configs) == 0:
         if options.force_sync:
             print 'No CONFIG is specified. You are probably syncing defconfigs.',
+        elif options.build_db:
+            print 'Building %s database' % CONFIG_DATABASE
         else:
             print 'Neither CONFIG nor --force-sync is specified. Nothing will happen.',
     else:
@@ -1330,7 +1380,7 @@ def move_config(configs, options):
         defconfigs = get_all_defconfigs()
 
     progress = Progress(len(defconfigs))
-    slots = Slots(configs, options, progress, reference_src_dir)
+    slots = Slots(configs, options, progress, reference_src_dir, db_queue)
 
     # Main loop to process defconfig files:
     #  Add a new subprocess into a vacant slot.
@@ -1357,6 +1407,8 @@ def main():
 
     parser = optparse.OptionParser()
     # Add options here
+    parser.add_option('-b', '--build-db', action='store_true', default=False,
+                      help='build a CONFIG database')
     parser.add_option('-c', '--color', action='store_true', default=False,
                       help='display the log in color')
     parser.add_option('-C', '--commit', action='store_true', default=False,
@@ -1389,7 +1441,7 @@ def main():
 
     (options, configs) = parser.parse_args()
 
-    if len(configs) == 0 and not options.force_sync:
+    if len(configs) == 0 and not any((options.force_sync, options.build_db)):
         parser.print_usage()
         sys.exit(1)
 
@@ -1399,10 +1451,17 @@ def main():
 
     check_top_directory()
 
+    config_db = {}
+    db_queue = Queue.Queue()
+    t = DatabaseThread(config_db, db_queue)
+    t.setDaemon(True)
+    t.start()
+
     if not options.cleanup_headers_only:
         check_clean_directory()
         update_cross_compile(options.color)
-        move_config(configs, options)
+        move_config(configs, options, db_queue)
+        db_queue.join()
 
     if configs:
         cleanup_headers(configs, options)
@@ -1421,6 +1480,14 @@ def main():
             msg = 'configs: Resync with savedefconfig'
             msg += '\n\nRsync all defconfig files using moveconfig.py'
         subprocess.call(['git', 'commit', '-s', '-m', msg])
+
+    if options.build_db:
+        with open(CONFIG_DATABASE, 'w') as fd:
+            for defconfig, configs in config_db.iteritems():
+                print >>fd, '%s' % defconfig
+                for config in sorted(configs.keys()):
+                    print >>fd, '   %s=%s' % (config, configs[config])
+                print >>fd
 
 if __name__ == '__main__':
     main()
