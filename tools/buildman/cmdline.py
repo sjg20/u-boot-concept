@@ -65,6 +65,8 @@ def ParseArgs():
           default=False, help='Show a list of boards next to each error/warning')
     parser.add_option('--list-tool-chains', action='store_true', default=False,
           help='List available tool chains')
+    parser.add_option('-m', '--master', action='store_true',
+          default=False, help='Start up in master mode and use workers')
     parser.add_option('-n', '--dry-run', action='store_true', dest='dry_run',
           default=False, help="Do a dry run (describe actions, but do nothing)")
     parser.add_option('-N', '--no-subdirs', action='store_true', dest='no_subdirs',
@@ -94,6 +96,8 @@ def ParseArgs():
           default=False, help='Show build results while the build progresses')
     parser.add_option('-V', '--verbose-build', action='store_true',
           default=False, help='Run make with V=1, logging all output')
+    parser.add_option('-w', '--worker', action='store_true',
+          default=False, help='Start up in worker mode and wait for requests')
     parser.add_option('-x', '--exclude', dest='exclude',
           type='string', action='append',
           help='Specify a list of boards to exclude, separated by comma')

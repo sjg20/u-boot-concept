@@ -6,18 +6,20 @@
 import multiprocessing
 import os
 import shutil
+import subprocess
 import sys
 
 import board
 import bsettings
 from builder import Builder
+import command
 import gitutil
+import master
 import patchstream
 import terminal
 from terminal import Print
 import toolchain
-import command
-import subprocess
+import worker
 
 def GetPlural(count):
     """Returns a plural 's' if count is not 1"""
@@ -107,6 +109,12 @@ def DoBuildman(options, args, toolchains=None, make_func=None, boards=None,
                              'README')
         command.Run(pager, fname)
         return 0
+
+    if options.worker:
+        return worker.Run()
+
+    if options.master:
+        return master.Run()
 
     gitutil.Setup()
     col = terminal.Color()
