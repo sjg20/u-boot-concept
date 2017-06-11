@@ -97,16 +97,6 @@ class Master:
         #print 'out of loop'
         return data
 
-    def cmd_ping(self):
-        cmd = net_cmd.CmdPing(self)
-        cmd.send()
-        return self.recv()
-
-    def cmd_set_boards(self, boards):
-        cmd = net_cmd.CmdSetBoards(self, boards)
-        cmd.send()
-        return self.recv()
-
 
 def Run():
     master = Master()

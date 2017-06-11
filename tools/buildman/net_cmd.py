@@ -25,6 +25,10 @@ class Cmd(object):
                 cmd.parse()
                 return cmd
 
+    def req(self):
+        self.send()
+        return self.sender.recv()
+
 
 class CmdPing(Cmd):
     def __init__(self, sender):
@@ -60,4 +64,23 @@ class CmdSetBoards(Cmd):
         self.sender.send('ok')
 
 
-commands = [CmdPing, CmdSetBoards]
+class CmdSetCommits(Cmd):
+    def __init__(self, sender, commits=None):
+        super(self.__class__, self).__init__(sender)
+        self.commits = commits
+
+    @staticmethod
+    def get_name():
+        return 'set_commits'
+
+    def send(self):
+        self.sender.send('set_commits %s' % ' '.join(self.commits))
+
+    def parse(self):
+        self.commits = self.rest.split()
+
+    def run(self):
+        self.sender.send('ok')
+
+
+commands = [CmdPing, CmdSetBoards, CmdSetCommits]

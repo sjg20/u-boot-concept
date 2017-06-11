@@ -9,6 +9,7 @@ import time
 import unittest
 
 import master
+import net_cmd
 import worker
 
 
@@ -37,7 +38,7 @@ class TestNet(unittest.TestCase):
 
     def testEcho(self):
         self.mast.open(HOST)
-        resp = self.mast.cmd_ping()
+        resp = net_cmd.CmdPing(self.mast).req()
         self.assertEqual(bytearray('pong\n'), resp)
         self.mast.close()
 
@@ -45,12 +46,18 @@ class TestNet(unittest.TestCase):
         """Check we can timeout when the worker does not respond"""
         with worker.play_dead(self.wkr):
             self.mast.open(HOST)
-            resp = self.mast.cmd_ping()
+            resp = net_cmd.CmdPing(self.mast).req()
             self.assertEqual(None, resp)
             self.mast.close()
 
-    def testSetBoard(self):
+    def testSetBoards(self):
         self.mast.open(HOST)
-        resp = self.mast.cmd_set_boards(['snow'])
+        resp = net_cmd.CmdSetBoards(self.mast, ['snow', 'rpi']).req()
+        self.assertEqual('ok\n', str(resp))
+        self.mast.close()
+
+    def xtestSetCommits(self):
+        self.mast.open(HOST)
+        resp = net_cmd.CmdSetCommits(self.mast, ['3b74cc4', '283b738']).req()
         self.assertEqual('ok\n', str(resp))
         self.mast.close()
