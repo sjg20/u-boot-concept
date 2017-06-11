@@ -5,7 +5,7 @@
 # Master controller for buildman. It sends build requests to workers, receives
 # the results and records them.
 
-
+import errno
 import socket
 import sys
 import time
@@ -40,45 +40,57 @@ class Master:
                 print "Received: {}".format(received)
             '''
         except Exception as e:
-            print e
+            print 'master exception', e
             self.timeout('connect')
             self.sock = None
+        self.sock.setblocking(0)
 
     def close(self):
-        self.sock.close()
+        if self.sock:
+            self.sock.close()
 
     def timeout(self, msg):
-        print 'timeout', msg
+        #print 'master timeout', msg
         self.timed_out = True
         self.close()
 
     def send(self, cmd):
         data = bytearray(cmd + '\n')
-        #print "sending data '%s'" % data
+        #print "master sending data '%s'" % data
         tosend = len(data)
-        stop_time = time.clock() + self.send_timeout_ms / 1000.0
+        stop_time = time.time() + self.send_timeout_ms / 1000.0
         upto = 0
         while upto < tosend:
-            if time.clock() > stop_time:
+            if time.time() > stop_time:
                 self.timeout('send')
                 return False
             done = self.sock.send(data[upto:])
             upto += done
+        #print 'master sent %s' % upto
         return True
 
     def recv(self):
         done = False
         data = bytearray()
-        stop_time = time.clock() + self.recv_timeout_ms / 1000
+        stop_time = time.time() + self.recv_timeout_ms / 1000.0
         #print 'start recv'
         while not done:
-            if time.clock() > stop_time:
+            #print time.time(), stop_time
+            if time.time() > stop_time:
                 self.timeout('recv')
                 return None
-            recv = self.sock.recv(4096)
+            try:
+                recv = self.sock.recv(4096)
+            except IOError as e:
+                if e.errno == errno.EAGAIN:
+                    recv = ''
+                else:
+                    raise
+
+            #if recv:
             #print 'master recv', recv
             data += recv
-            if data[-1] == 10:
+            if data and data[-1] == 10:
                 done = True
                 #print 'done'
             time.sleep(.1)

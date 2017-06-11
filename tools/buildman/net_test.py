@@ -41,8 +41,16 @@ class TestNet(unittest.TestCase):
         self.assertEqual(bytearray('pong\n'), resp)
         self.mast.close()
 
+    def testDeadWorker(self):
+        """Check we can timeout when the worker does not respond"""
+        with worker.play_dead(self.wkr):
+            self.mast.open(HOST)
+            resp = self.mast.cmd_ping()
+            self.assertEqual(None, resp)
+            self.mast.close()
+
     def testSetBoard(self):
         self.mast.open(HOST)
         resp = self.mast.cmd_set_boards(['snow'])
-        self.assertEqual(bytearray('ok\n'), resp)
+        self.assertEqual('ok\n', str(resp))
         self.mast.close()

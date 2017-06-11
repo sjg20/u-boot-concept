@@ -5,17 +5,20 @@
 # Worker server for buildman. It accepts build requests, does a build and
 # returns the results
 
+from contextlib import contextmanager
 import SocketServer
 import threading
 import time
 
 import bsettings
+import net_cmd
 
 
 class WorkerRequestHandler(SocketServer.BaseRequestHandler):
     def __init__(self, request, client_address, server):
         self.data = bytearray()
         self.boards = []
+        self.server = server
         SocketServer.BaseRequestHandler.__init__(self, request, client_address,
                                                  server)
 
@@ -23,19 +26,8 @@ class WorkerRequestHandler(SocketServer.BaseRequestHandler):
         self.request.sendall(data + '\n')
 
     def process(self):
-        line = str(self.data.strip())
-        parts = line.split(' ', 1)
-        cmd = parts[0]
-        rest = parts[1] if len(parts) > 1 else ''
-        #print 'got cmd', cmd
-        if cmd == 'ping':
-            self.send('pong')
-        elif cmd == 'set_boards':
-            self.boards = rest.split()
-            print 'boards', self.boards
-            self.send('ok')
-        else:
-            self.send('unknown command')
+        cmd = net_cmd.Cmd.parse_to_cmd(self, self.data)
+        cmd.run()
 
     """
     The request handler class for our server.
@@ -48,18 +40,25 @@ class WorkerRequestHandler(SocketServer.BaseRequestHandler):
         # self.request is the TCP socket connected to the client
         cur_thread = threading.current_thread()
         #print 'new', cur_thread
-        while True:
-            data = self.request.recv(1024)
-            if not data:
-                break
-            self.data += data
-            #print 'worker data', self.data, self.data[-1]
-            if self.data[-1] == 10:
-                self.process()
-            #print '{} wrote:'.format(self.client_address[0])
-            #print cur_thread, self.data
-            # just send back the same data, but upper-cased
-            #self.request.sendall(self.data.upper())
+        try:
+            while True:
+                data = self.request.recv(1024)
+                if not data:
+                    break
+                self.data += data
+                #print 'worker data %d %s %d' % (self.server.play_dead, self.data, self.data[-1])
+                if self.server.play_dead:
+                    data = ''
+                    #print 'play dead'
+                    continue
+                if self.data[-1] == 10:
+                    self.process()
+                #print '{} wrote:'.format(self.client_address[0])
+                #print cur_thread, self.data
+                # just send back the same data, but upper-cased
+                #self.request.sendall(self.data.upper())
+        except Exception as e:
+            print e
         #print 'die', threading.active_count()
 
 
@@ -74,6 +73,7 @@ class Worker:
         self.server = WorkerServer(
                 (bsettings.worker_host, bsettings.worker_port),
                 WorkerRequestHandler)
+        self.server.play_dead = False
 
         self.server_thread = threading.Thread(target=self.server.serve_forever)
         self.server_thread.daemon = True
@@ -82,6 +82,13 @@ class Worker:
     def stop(self):
         self.server.shutdown()
         self.server.server_close()
+
+
+@contextmanager
+def play_dead(wkr):
+    wkr.server.play_dead = True
+    yield wkr
+    wkr.server.play_dead = False
 
 
 def Run():
