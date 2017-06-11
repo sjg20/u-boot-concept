@@ -312,50 +312,58 @@ class TestBuild(unittest.TestCase):
     def testBoardSingle(self):
         """Test single board selection"""
         self.assertEqual(self.boards.SelectBoards(['sandbox']),
-                         {'all': 1, 'sandbox': 1})
+                         {'all': ['board4'], 'sandbox': ['board4']})
 
     def testBoardArch(self):
         """Test single board selection"""
         self.assertEqual(self.boards.SelectBoards(['arm']),
-                         {'all': 2, 'arm': 2})
+                {'all': ['board0', 'board1'], 'arm': ['board0', 'board1']})
 
     def testBoardArchSingle(self):
         """Test single board selection"""
         self.assertEqual(self.boards.SelectBoards(['arm sandbox']),
-                         {'all': 3, 'arm': 2, 'sandbox' : 1})
+                {'all': ['board0', 'board1', 'board4'],
+                 'arm': ['board0', 'board1'],
+                 'sandbox': ['board4']})
 
     def testBoardArchSingleMultiWord(self):
         """Test single board selection"""
         self.assertEqual(self.boards.SelectBoards(['arm', 'sandbox']),
-                         {'all': 3, 'arm': 2, 'sandbox' : 1})
+                {'all': ['board0', 'board1', 'board4'],
+                 'arm': ['board0', 'board1'],
+                 'sandbox': ['board4']})
 
     def testBoardSingleAnd(self):
         """Test single board selection"""
         self.assertEqual(self.boards.SelectBoards(['Tester & arm']),
-                         {'all': 2, 'Tester&arm': 2})
+                {'Tester&arm': ['board0', 'board1'],
+                 'all': ['board0', 'board1']})
 
     def testBoardTwoAnd(self):
         """Test single board selection"""
         self.assertEqual(self.boards.SelectBoards(['Tester', '&', 'arm',
                                                    'Tester' '&', 'powerpc',
                                                    'sandbox']),
-                         {'all': 5, 'Tester&powerpc': 2, 'Tester&arm': 2,
-                          'sandbox' : 1})
+                {'Tester&arm': ['board0', 'board1'],
+                 'Tester&powerpc': ['board2', 'board3'],
+                 'all': ['board0', 'board1', 'board2', 'board3', 'board4'],
+                 'sandbox': ['board4']})
 
     def testBoardAll(self):
         """Test single board selection"""
-        self.assertEqual(self.boards.SelectBoards([]), {'all': 5})
+        self.assertEqual(self.boards.SelectBoards([]),
+                {'all': ['board0', 'board1', 'board2', 'board3', 'board4']})
 
     def testBoardRegularExpression(self):
         """Test single board selection"""
         self.assertEqual(self.boards.SelectBoards(['T.*r&^Po']),
-                         {'T.*r&^Po': 2, 'all': 2})
+                {'T.*r&^Po': ['board2', 'board3'], 'all': ['board2', 'board3']})
 
     def testBoardDuplicate(self):
         """Test single board selection"""
         self.assertEqual(self.boards.SelectBoards(['sandbox sandbox',
                                                    'sandbox']),
-                         {'all': 1, 'sandbox': 1})
+                         {'all': ['board4'], 'sandbox': ['board4']})
     def CheckDirs(self, build, dirname):
         self.assertEqual('base%s' % dirname, build._GetOutputDir(1))
         self.assertEqual('base%s/fred' % dirname,
