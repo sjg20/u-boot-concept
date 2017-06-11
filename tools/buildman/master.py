@@ -11,6 +11,7 @@ import sys
 import time
 
 import bsettings
+import net_cmd
 
 
 class Master:
@@ -85,11 +86,13 @@ class Master:
         return data
 
     def cmd_ping(self):
-        self.send('ping')
+        cmd = net_cmd.CmdPing(self)
+        cmd.send()
         return self.recv()
 
     def cmd_set_boards(self, boards):
-        self.send('set_boards %s' % ' '.join(boards))
+        cmd = net_cmd.CmdSetBoards(self, boards)
+        cmd.send()
         return self.recv()
 
 
