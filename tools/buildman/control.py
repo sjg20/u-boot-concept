@@ -113,9 +113,6 @@ def DoBuildman(options, args, toolchains=None, make_func=None, boards=None,
     if options.worker:
         return worker.Run()
 
-    if options.master:
-        return master.Run()
-
     gitutil.Setup()
     col = terminal.Color()
 
@@ -309,9 +306,11 @@ def DoBuildman(options, args, toolchains=None, make_func=None, boards=None,
         if options.summary:
             builder.ShowSummary(commits, board_selected)
         else:
-            builder.SetupThreads()
+            if not options.master:
+                builder.SetupThreads()
             fail, warned = builder.BuildBoards(commits, board_selected,
-                                options.keep_outputs, options.verbose)
+                                options.keep_outputs, options.verbose,
+                                options.master)
             if fail:
                 return 128
             elif warned:

@@ -1425,33 +1425,7 @@ class Builder:
             for dirname in to_remove:
                 shutil.rmtree(dirname)
 
-    def BuildBoards(self, commits, board_selected, keep_outputs, verbose):
-        """Build all commits for a list of boards
-
-        Args:
-            commits: List of commits to be build, each a Commit object
-            boards_selected: Dict of selected boards, key is target name,
-                    value is Board object
-            keep_outputs: True to save build output files
-            verbose: Display build results as they are completed
-        Returns:
-            Tuple containing:
-                - number of boards that failed to build
-                - number of boards that issued warnings
-        """
-        self.commit_count = len(commits) if commits else 1
-        self.commits = commits
-        self._verbose = verbose
-
-        self.ResetResultSummary(board_selected)
-        builderthread.Mkdir(self.base_dir, parents = True)
-        self._PrepareWorkingSpace(min(self.num_threads, len(board_selected)),
-                commits is not None)
-        self._PrepareOutputSpace()
-        Print('\rStarting build...', newline=False)
-        self.SetupBuild(board_selected, commits)
-        self.ProcessResult(None)
-
+    def BuildLocal(self, commits, board_selected, keep_outputs):
         # Create jobs to build all commits for each board
         for brd in board_selected.itervalues():
             job = builderthread.BuilderJob()
@@ -1469,6 +1443,45 @@ class Builder:
 
         # Wait until we have processed all output
         self.out_queue.join()
+
+    def BuildCloud(self, commits, board_selected, keep_outputs):
+        for brd in board_selected.itervalues():
+            pass
+
+    def BuildBoards(self, commits, board_selected, keep_outputs, verbose,
+                    master):
+        """Build all commits for a list of boards
+
+        Args:
+            commits: List of commits to be build, each a Commit object
+            boards_selected: Dict of selected boards, key is target name,
+                    value is Board object
+            keep_outputs: True to save build output files
+            verbose: Display build results as they are completed
+            master: True to build using workers in the cloud
+        Returns:
+            Tuple containing:
+                - number of boards that failed to build
+                - number of boards that issued warnings
+        """
+        self.commit_count = len(commits) if commits else 1
+        self.commits = commits
+        self._verbose = verbose
+
+        self.ResetResultSummary(board_selected)
+        builderthread.Mkdir(self.base_dir, parents = True)
+        if not master:
+            self._PrepareWorkingSpace(
+                min(self.num_threads, len(board_selected)), commits is not None)
+        self._PrepareOutputSpace()
+        Print('\rStarting build...', newline=False)
+        self.SetupBuild(board_selected, commits)
+        self.ProcessResult(None)
+
+        if master:
+            self.BuildCloud(commits, board_selected, keep_outputs)
+        else:
+            self.BuildLocal(commits, board_selected, keep_outputs)
         Print()
         self.ClearLine(0)
         return (self.fail, self.warned)
