@@ -277,23 +277,11 @@ class Builder:
         self._re_warning = re.compile('(.*):(\d*):(\d*): warning: .*')
         self._re_note = re.compile('(.*):(\d*):(\d*): note: this is the location of the previous.*')
 
-        self.queue = Queue.Queue()
-        self.out_queue = Queue.Queue()
-        for i in range(self.num_threads):
-            t = builderthread.BuilderThread(self, i, incremental,
-                    per_board_out_dir)
-            t.setDaemon(True)
-            t.start()
-            self.threads.append(t)
-
         self.last_line_len = 0
-        t = builderthread.ResultThread(self)
-        t.setDaemon(True)
-        t.start()
-        self.threads.append(t)
-
         ignore_lines = ['(make.*Waiting for unfinished)', '(Segmentation fault)']
         self.re_make_err = re.compile('|'.join(ignore_lines))
+        self._incremental = incremental
+        self._per_board_out_dir = per_board_out_dir
 
         # Handle existing graceful with SIGINT / Ctrl-C
         signal.signal(signal.SIGINT, self.signal_handler)
@@ -305,6 +293,21 @@ class Builder:
 
     def signal_handler(self, signal, frame):
         sys.exit(1)
+
+    def SetupThreads(self):
+        self.queue = Queue.Queue()
+        self.out_queue = Queue.Queue()
+        for i in range(self.num_threads):
+            t = builderthread.BuilderThread(self, i, self._incremental,
+                                            self._per_board_out_dir)
+            t.setDaemon(True)
+            t.start()
+            self.threads.append(t)
+
+        t = builderthread.ResultThread(self)
+        t.setDaemon(True)
+        t.start()
+        self.threads.append(t)
 
     def SetDisplayOptions(self, show_errors=False, show_sizes=False,
                           show_detail=False, show_bloat=False,

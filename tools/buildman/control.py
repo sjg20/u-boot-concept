@@ -309,6 +309,7 @@ def DoBuildman(options, args, toolchains=None, make_func=None, boards=None,
         if options.summary:
             builder.ShowSummary(commits, board_selected)
         else:
+            builder.SetupThreads()
             fail, warned = builder.BuildBoards(commits, board_selected,
                                 options.keep_outputs, options.verbose)
             if fail:
