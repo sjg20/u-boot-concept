@@ -5,13 +5,30 @@
 # Worker server for buildman. It accepts build requests, does a build and
 # returns the results
 
-import threading
 import SocketServer
+import threading
+import time
 
+import bsettings
 
-HOST, PORT = '', 1968
 
 class WorkerRequestHandler(SocketServer.BaseRequestHandler):
+    def __init__(self, request, client_address, server):
+        self.data = bytearray()
+        SocketServer.BaseRequestHandler.__init__(self, request, client_address,
+                                                 server)
+
+    def send(self, data):
+        self.request.sendall(data + '\n')
+
+    def process(self):
+        cmd = self.data.strip()
+        #print 'got cmd', cmd
+        if cmd == 'ping':
+            self.send('pong')
+        else:
+            self.send('unknown command')
+
     """
     The request handler class for our server.
 
@@ -22,15 +39,20 @@ class WorkerRequestHandler(SocketServer.BaseRequestHandler):
     def handle(self):
         # self.request is the TCP socket connected to the client
         cur_thread = threading.current_thread()
+        #print 'new', cur_thread
         while True:
-            self.data = self.request.recv(1024).strip()
-            if not self.data:
+            data = self.request.recv(1024)
+            if not data:
                 break
-            print '{} wrote:'.format(self.client_address[0])
-            print cur_thread, self.data
+            self.data += data
+            #print 'worker data', self.data, self.data[-1]
+            if self.data[-1] == 10:
+                self.process()
+            #print '{} wrote:'.format(self.client_address[0])
+            #print cur_thread, self.data
             # just send back the same data, but upper-cased
-            self.request.sendall(self.data.upper())
-        print 'die', threading.active_count()
+            #self.request.sendall(self.data.upper())
+        #print 'die', threading.active_count()
 
 
 class WorkerServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
@@ -40,13 +62,22 @@ class WorkerServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
 class Worker:
     def start(self):
         # Create the server, binding to localhost on port 9999
-        server = WorkerServer((HOST, PORT), WorkerRequestHandler)
+        SocketServer.TCPServer.allow_reuse_address = True
+        self.server = WorkerServer(
+                (bsettings.worker_host, bsettings.worker_port),
+                WorkerRequestHandler)
 
-        # Activate the server; this will keep running until you
-        # interrupt the program with Ctrl-C
-        server.serve_forever()
+        self.server_thread = threading.Thread(target=self.server.serve_forever)
+        self.server_thread.daemon = True
+        self.server_thread.start()
+
+    def stop(self):
+        self.server.shutdown()
+        self.server.server_close()
 
 
 def Run():
     worker = Worker()
-    return worker.start()
+    worker.start()
+    while True:
+        time.sleep(1)

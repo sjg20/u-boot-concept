@@ -32,6 +32,7 @@ import toolchain
 
 def RunTests():
     import func_test
+    import net_test
     import test
     import doctest
 
@@ -41,7 +42,7 @@ def RunTests():
         suite.run(result)
 
     sys.argv = [sys.argv[0]]
-    for module in (test.TestBuild, func_test.TestFunctional):
+    for module in (test.TestBuild, func_test.TestFunctional, net_test.TestNet):
         suite = unittest.TestLoader().loadTestsFromTestCase(module)
         suite.run(result)
 
@@ -56,6 +57,8 @@ options, args = cmdline.ParseArgs()
 
 # Run our meagre tests
 if options.test:
+    if options.test > 1:
+        bsettings.run_large_tests = True
     RunTests()
 
 # Build selected commits for selected boards

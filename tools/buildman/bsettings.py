@@ -7,6 +7,13 @@ import ConfigParser
 import os
 import StringIO
 
+# Global variable which is set in buildman.py
+run_large_tests = False
+
+# Host and port for worker connection
+worker_host= ''
+worker_port = 1968
+
 
 def Setup(fname=''):
     """Set up the buildman settings module by reading config files

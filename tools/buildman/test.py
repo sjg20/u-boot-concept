@@ -417,6 +417,8 @@ class TestBuild(unittest.TestCase):
         self.toolchains.Add('i386-linux-gcc', test=False)
         self.assertTrue(self.toolchains.Select('x86') != None)
 
+    @unittest.skipUnless(bsettings.run_large_tests,
+                         'disabled as it is a large test')
     def testToolchainDownload(self):
         """Test that we can download toolchains"""
         self.assertEqual('https://www.kernel.org/pub/tools/crosstool/files/bin/x86_64/4.9.0/x86_64-gcc-4.9.0-nolibc_arm-unknown-linux-gnueabi.tar.xz',

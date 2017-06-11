@@ -86,8 +86,8 @@ def ParseArgs():
           default=False, help='Show image size variation in summary')
     parser.add_option('--step', type='int',
           default=1, help='Only build every n commits (0=just first and last)')
-    parser.add_option('-t', '--test', action='store_true', dest='test',
-                      default=False, help='run tests')
+    parser.add_option('-t', '--test', action='count', dest='test',
+          default=0, help='run tests (use twice to run large tests)')
     parser.add_option('-T', '--threads', type='int',
           default=None, help='Number of builder threads to use')
     parser.add_option('-u', '--show_unknown', action='store_true',
