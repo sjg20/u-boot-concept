@@ -15,6 +15,7 @@ class Cmd(object):
     @classmethod
     def parse_to_cmd(self, sender, data):
         #print 'parse %s' % data
+        self.worker = sender.worker
         line = str(data.strip())
         parts = line.split(' ', 1)
         cmd_name = parts[0]
@@ -58,7 +59,7 @@ class CmdSetBoards(Cmd):
         self.sender.send('set_boards %s' % ' '.join(self.boards))
 
     def parse(self):
-        self.boards = self.rest.split()
+        self.worker.boards = self.rest.split()
 
     def run(self):
         self.sender.send('ok')
@@ -77,7 +78,7 @@ class CmdSetCommits(Cmd):
         self.sender.send('set_commits %s' % ' '.join(self.commits))
 
     def parse(self):
-        self.commits = self.rest.split()
+        self.worker.commits = self.rest.split()
 
     def run(self):
         self.sender.send('ok')

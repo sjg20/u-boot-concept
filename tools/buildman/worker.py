@@ -17,8 +17,8 @@ import net_cmd
 class WorkerRequestHandler(SocketServer.BaseRequestHandler):
     def __init__(self, request, client_address, server):
         self.data = bytearray()
-        self.boards = []
         self.server = server
+        self.worker = server.worker
         SocketServer.BaseRequestHandler.__init__(self, request, client_address,
                                                  server)
 
@@ -74,6 +74,9 @@ class Worker:
                 (bsettings.worker_host, bsettings.worker_port),
                 WorkerRequestHandler)
         self.server.play_dead = False
+        self.server.worker = self
+        self.boards = []
+        self.commits = []
 
         self.server_thread = threading.Thread(target=self.server.serve_forever)
         self.server_thread.daemon = True

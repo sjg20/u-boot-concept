@@ -14,6 +14,8 @@ import worker
 
 
 HOST = 'localhost'
+BOARDS = ['snow', 'rpi']
+COMMITS = ['3b74cc4', '283b738']
 
 
 class TestNet(unittest.TestCase):
@@ -52,12 +54,14 @@ class TestNet(unittest.TestCase):
 
     def testSetBoards(self):
         self.mast.open(HOST)
-        resp = net_cmd.CmdSetBoards(self.mast, ['snow', 'rpi']).req()
+        resp = net_cmd.CmdSetBoards(self.mast, BOARDS).req()
         self.assertEqual('ok\n', str(resp))
         self.mast.close()
+        self.assertEqual(BOARDS, self.wkr.boards)
 
-    def xtestSetCommits(self):
+    def testSetCommits(self):
         self.mast.open(HOST)
-        resp = net_cmd.CmdSetCommits(self.mast, ['3b74cc4', '283b738']).req()
+        resp = net_cmd.CmdSetCommits(self.mast, COMMITS).req()
         self.assertEqual('ok\n', str(resp))
         self.mast.close()
+        self.assertEqual(COMMITS, self.wkr.commits)
