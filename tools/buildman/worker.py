@@ -15,6 +15,7 @@ import bsettings
 class WorkerRequestHandler(SocketServer.BaseRequestHandler):
     def __init__(self, request, client_address, server):
         self.data = bytearray()
+        self.boards = []
         SocketServer.BaseRequestHandler.__init__(self, request, client_address,
                                                  server)
 
@@ -22,10 +23,17 @@ class WorkerRequestHandler(SocketServer.BaseRequestHandler):
         self.request.sendall(data + '\n')
 
     def process(self):
-        cmd = self.data.strip()
+        line = str(self.data.strip())
+        parts = line.split(' ', 1)
+        cmd = parts[0]
+        rest = parts[1] if len(parts) > 1 else ''
         #print 'got cmd', cmd
         if cmd == 'ping':
             self.send('pong')
+        elif cmd == 'set_boards':
+            self.boards = rest.split()
+            print 'boards', self.boards
+            self.send('ok')
         else:
             self.send('unknown command')
 

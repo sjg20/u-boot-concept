@@ -40,3 +40,9 @@ class TestNet(unittest.TestCase):
         resp = self.mast.cmd_ping()
         self.assertEqual(bytearray('pong\n'), resp)
         self.mast.close()
+
+    def testSetBoard(self):
+        self.mast.open(HOST)
+        resp = self.mast.cmd_set_boards(['snow'])
+        self.assertEqual(bytearray('ok\n'), resp)
+        self.mast.close()

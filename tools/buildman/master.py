@@ -88,6 +88,10 @@ class Master:
         self.send('ping')
         return self.recv()
 
+    def cmd_set_boards(self, boards):
+        self.send('set_boards %s' % ' '.join(boards))
+        return self.recv()
+
 
 def Run():
     master = Master()
