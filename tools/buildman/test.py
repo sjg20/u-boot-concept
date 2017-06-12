@@ -190,8 +190,9 @@ class TestBuild(unittest.TestCase):
         build.do_make = self.Make
         board_selected = self.boards.GetSelectedDict()
 
+        build.SetupThreads()
         build.BuildBoards(self.commits, board_selected, keep_outputs=False,
-                          verbose=False)
+                          verbose=False, master=False)
         lines = terminal.GetPrintTestLines()
         count = 0
         for line in lines:
