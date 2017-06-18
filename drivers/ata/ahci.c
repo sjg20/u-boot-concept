@@ -1181,11 +1181,6 @@ int ahci_probe_scsi(struct udevice *ahci_dev, ulong base)
 	if (ret)
 		return ret;
 
-	debug("Scanning %s\n", dev->name);
-	ret = scsi_scan_dev(dev, true);
-	if (ret)
-		return ret;
-
 	return 0;
 }
 
