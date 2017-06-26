@@ -131,7 +131,6 @@
  * USB configuration
  */
 #define CONFIG_USB_EHCI_PCI
-#define CONFIG_SYS_USB_EVENT_POLL
 
 #define CONFIG_USB_HOST_ETHER
 #define CONFIG_USB_ETHER_ASIX
