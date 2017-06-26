@@ -890,11 +890,32 @@ unknown:
 static int _xhci_submit_int_msg(struct usb_device *udev, unsigned long pipe,
 				void *buffer, int length, int interval)
 {
+	if (usb_pipetype(pipe) != PIPE_INTERRUPT) {
+		printf("non-interrupt pipe (type=%lu)", usb_pipetype(pipe));
+		return -EINVAL;
+	}
+
 	/*
-	 * TODO: Not addressing any interrupt type transfer requests
-	 * Add support for it later.
+	 * xHCI uses normal TRBs for both bulk and interrupt. When the
+	 * interrupt endpoint is to be serviced, the xHC will consume
+	 * (at most) one TD. A TD (comprised of sg list entries) can
+	 * take several service intervals to transmit.
+	 *
+	 * Note: when interrupt transfer complets, the xHC generates an
+	 * event TRB with TRB type 'Transfer Event', which is exactly
+	 * the same as a control or bulk transfer. In our xHCI driver,
+	 * xhci_wait_for_event() checks the event TRB type and depending
+	 * on the timing, it may wrongly return an event TRB to the caller
+	 * which originates from another USB device (different slot ID is
+	 * checked by the driver and if different a "BUG" will be thrown).
+	 *
+	 * The following situation can cerntainly trigger such a "BUG":
+	 * - a USB keyboard is connected to xHC
+	 * - USB keyboard driver is successfully probed
+	 * - adding some debug output after a control or bulk transfer
+	 *   is initiated, but before xHC event is checked
 	 */
-	return -EINVAL;
+	return xhci_bulk_tx(udev, pipe, length, buffer);
 }
 
 /**
