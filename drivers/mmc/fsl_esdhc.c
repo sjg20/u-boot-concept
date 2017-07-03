@@ -763,7 +763,6 @@ static int fsl_esdhc_init(struct fsl_esdhc_priv *priv,
 {
 	struct mmc_config *cfg;
 	struct fsl_esdhc *regs;
-	struct mmc *mmc;
 	u32 caps, voltage_caps;
 	int ret;
 
@@ -851,12 +850,6 @@ static int fsl_esdhc_init(struct fsl_esdhc_priv *priv,
 
 	cfg->b_max = CONFIG_SYS_MMC_MAX_BLK_COUNT;
 
-	mmc = mmc_create(cfg, priv);
-	if (mmc == NULL)
-		return -1;
-
-	priv->mmc = mmc;
-
 	return 0;
 }
 
@@ -879,6 +872,7 @@ int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg)
 {
 	struct fsl_esdhc_plat *plat;
 	struct fsl_esdhc_priv *priv;
+	struct mmc *mmc;
 	int ret;
 
 	if (!cfg)
@@ -908,6 +902,12 @@ int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg)
 		free(priv);
 		return ret;
 	}
+
+	mmc = mmc_create(&plat->cfg, priv);
+	if (!mmc)
+		return -EIO;
+
+	priv->mmc = mmc;
 
 	return 0;
 }
