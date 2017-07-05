@@ -1,5 +1,5 @@
 #!/bin/sh
-CROSS_COMPILE=aarch64-linux-gnu- CFLAGS='-gdwarf-3' make evb-rk3399_defconfig all -j8
+CROSS_COMPILE=aarch64-linux-gnu- CFLAGS='-gdwarf-3' make firefly-rk3399_defconfig all -j8
 tools/mkimage -n rk3399 -T rksd -d spl/u-boot-spl.bin idbspl.img
 #truncate --size %512 u-boot.dtb
 #truncate --size %512 u-boot-nodtb.bin

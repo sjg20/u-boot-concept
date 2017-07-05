@@ -260,6 +260,7 @@
 	};
 
 	sdmmc: dwmmc@fe320000 {
+		u-boot,dm-pre-reloc;
 		compatible = "rockchip,rk3399-dw-mshc",
 			     "rockchip,rk3288-dw-mshc";
 		reg = <0x0 0xfe320000 0x0 0x4000>;
