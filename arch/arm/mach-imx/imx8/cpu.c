@@ -7,10 +7,13 @@
 #include <clk.h>
 #include <cpu.h>
 #include <dm.h>
+#include <dm/device.h>
 #include <dm/device-internal.h>
 #include <dm/lists.h>
 #include <dm/uclass.h>
+#include <dm/uclass-internal.h>
 #include <errno.h>
+#include <power-domain.h>
 #include <thermal.h>
 #include <asm/arch/sci/sci.h>
 #include <asm/arch/sys_proto.h>
@@ -18,6 +21,7 @@
 #include <asm/armv8/cpu.h>
 #include <asm/armv8/mmu.h>
 #include <asm/mach-imx/boot_mode.h>
+
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -712,3 +716,34 @@ int ft_system_setup(void *blob, bd_t *bd)
 	return 0;
 }
 #endif
+
+static bool check_device_power_off(struct udevice *dev,
+	const char* permanent_on_devices[], int size)
+{
+	int i;
+
+	for (i = 0; i < size; i++) {
+		if (!strcmp(dev->name, permanent_on_devices[i]))
+			return false;
+	}
+
+	return true;
+}
+
+void power_off_pd_devices(const char* permanent_on_devices[], int size)
+{
+	struct udevice *dev;
+	struct power_domain pd;
+
+	for (uclass_find_first_device(UCLASS_POWER_DOMAIN, &dev); dev;
+		uclass_find_next_device(&dev)) {
+
+		if (device_active(dev)) {
+			/* Power off active pd devices except the permanent power on devices */
+			if (check_device_power_off(dev, permanent_on_devices, size)) {
+				pd.dev = dev;
+				power_domain_off(&pd);
+			}
+		}
+	}
+}
