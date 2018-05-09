@@ -1532,6 +1532,10 @@ tags ctags:
 etags:
 		etags -a -o etags `$(FIND) $(FINDFLAGS) $(TAG_SUBDIRS) \
 						-name '*.[chS]' -print`
+gtags:
+		$(FIND) $(FINDFLAGS) $(TAG_SUBDIRS) -name '*.[chS]' -print | \
+			gtags -f -
+
 cscope:
 		$(FIND) $(FINDFLAGS) $(TAG_SUBDIRS) -name '*.[chS]' -print > \
 						cscope.files
