@@ -170,6 +170,7 @@ config CMD_CONSOLE
 
 config CMD_CPU
 	bool "cpu"
+	select CPU
 	help
 	  Print information about available CPUs. This normally shows the
 	  number of CPUs, type (e.g. manufacturer, architecture, product or
@@ -829,6 +830,7 @@ config CMD_LOADS
 
 config CMD_MMC
 	bool "mmc"
+	select DM_MMC
 	help
 	  MMC memory mapped support.
 
