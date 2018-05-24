@@ -36,6 +36,11 @@
 #define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_FLASH_BASE0
 #define CONFIG_SYS_FLASH_BASE		CONFIG_SYS_FLASH_BASE0
 
+/* PCI */
+/*
+ * #define CONFIG_SYS_PCI_64BIT		1
+ */
+
 /* Environment options */
 #define CONFIG_ENV_OFFSET		(SZ_1M * 63)
 #define CONFIG_ENV_SECT_SIZE		SZ_1M
