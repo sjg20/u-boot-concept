@@ -686,6 +686,15 @@ config STACK_SIZE
 	  Estimated U-Boot's runtime stack size that needs to be reserved
 	  during an ACPI S3 resume.
 
+config DISCRETE_PIRQ_ROUT
+	bool
+	help
+	  This variable indicates that the chipset's PIRQ routing control
+	  registers are not consecutive. If this is the case, the platform
+	  codes must provide two inline functions for the IRQ router driver
+	  to convert PIRQ routing control register offset to link number.
+	  See pirq_reg_to_linkno() and pirq_linkno_to_reg().
+
 config MAX_PIRQ_LINKS
 	int
 	default 8

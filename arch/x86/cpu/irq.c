@@ -13,6 +13,9 @@
 #include <asm/pci.h>
 #include <asm/pirq_routing.h>
 #include <asm/tables.h>
+#ifdef CONFIG_DISCRETE_PIRQ_ROUT
+#include <asm/arch/irq.h>
+#endif
 
 DECLARE_GLOBAL_DATA_PTR;
 

@@ -52,6 +52,7 @@ struct pirq_routing {
 	int pirq;
 };
 
+#ifndef CONFIG_DISCRETE_PIRQ_ROUT
 /**
  * pirq_reg_to_linkno() - Convert a PIRQ routing register offset to link number
  *
@@ -75,6 +76,7 @@ static inline int pirq_linkno_to_reg(int linkno, int base)
 {
 	return linkno + base;
 }
+#endif
 
 #define PIRQ_BITMAP		0xdef8
 
