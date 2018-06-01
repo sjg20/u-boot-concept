@@ -58,6 +58,10 @@ config ENABLE_VMX
 	  will be unable to support virtualisation, or it will run very
 	  slowly.
 
+config DISCRETE_PIRQ_ROUT
+	bool
+	default y
+
 config FSP_ADDR
 	hex
 	default 0xfff80000
