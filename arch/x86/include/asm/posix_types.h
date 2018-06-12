@@ -16,7 +16,7 @@ typedef int		__kernel_pid_t;
 typedef unsigned short	__kernel_ipc_pid_t;
 typedef unsigned short	__kernel_uid_t;
 typedef unsigned short	__kernel_gid_t;
-#if CONFIG_IS_ENABLED(X86_64)
+#if defined __x86_64__
 typedef unsigned long	__kernel_size_t;
 typedef long		__kernel_ssize_t;
 #else
