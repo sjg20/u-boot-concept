@@ -112,6 +112,18 @@ void *memset(void *inptr, int ch, size_t size)
 	return ptr;
 }
 
+int memcmp(const void * cs, const void * ct, size_t count)
+{
+	const unsigned char *su1, *su2;
+	int res = 0;
+
+	for (su1 = cs, su2 = ct; 0 < count; ++su1, ++su2, count--)
+		if ((res = *su1 - *su2) != 0)
+			break;
+
+	return res;
+}
+
 static void jump_to_uboot(ulong cs32, ulong addr, ulong info)
 {
 #ifdef CONFIG_EFI_STUB_32BIT
@@ -277,10 +289,15 @@ efi_status_t EFIAPI efi_main(efi_handle_t image,
 	struct efi_entry_memmap map;
 	struct efi_gop *gop;
 	struct efi_entry_gopmode mode;
+	struct efi_entry_cfgtable table;
+	struct efi_configuration_table *cfg;
 	efi_guid_t efi_gop_guid = EFI_GOP_GUID;
+	efi_guid_t efi_acpi_guid = ACPI_20_TABLE_GUID;
+	efi_guid_t efi_smbios_guid = SMBIOS_TABLE_GUID;
 	efi_uintn_t key, desc_size, size;
 	efi_status_t ret;
 	u32 version;
+	int i;
 	int cs32;
 
 	ret = efi_init(priv, "Payload", image, sys_table);
@@ -334,6 +351,31 @@ efi_status_t EFIAPI efi_main(efi_handle_t image,
 		puts(" Can't get memory map\n");
 		return ret;
 	}
+
+	memset(&table, 0, sizeof(struct efi_entry_cfgtable));
+	for (i = 0; i < sys_table->nr_tables; i++) {
+		cfg = &(sys_table->tables[i]);
+		if (memcmp(&efi_acpi_guid, &(cfg->guid),
+			   sizeof(efi_guid_t)) == 0)
+			table.acpi = (uintptr_t)(cfg->table);
+		if (memcmp(&efi_smbios_guid, &(cfg->guid),
+			   sizeof(efi_guid_t)) == 0)
+			table.smbios = (uintptr_t)(cfg->table);
+		if (table.acpi && table.smbios)
+			break;
+	}
+	if (!table.acpi) {
+		efi_acpi_guid = ACPI_TABLE_GUID;
+		for (i = 0; i < sys_table->nr_tables; i++) {
+			cfg = &(sys_table->tables[i]);
+			if (memcmp(&efi_acpi_guid, &(cfg->guid),
+				   sizeof(efi_guid_t)) == 0) {
+				table.acpi = (uintptr_t)(cfg->table);
+				break;
+			}
+		}
+	}
+	add_entry_addr(priv, EFIET_CFG_TABLE, &table, sizeof(table), NULL, 0);
 
 	ret = boot->exit_boot_services(image, key);
 	if (ret) {
