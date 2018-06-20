@@ -26,6 +26,7 @@ config MMC_BROKEN_CD
 config DM_MMC
 	bool "Enable MMC controllers using Driver Model"
 	depends on DM
+	default y && !SANDBOX  # Allow sandbox_noblk to work
 	help
 	  This enables the MultiMediaCard (MMC) uclass which supports MMC and
 	  Secure Digital I/O (SDIO) cards. Both removable (SD, micro-SD, etc.)
@@ -36,7 +37,6 @@ config DM_MMC
 config SPL_DM_MMC
 	bool "Enable MMC controllers using Driver Model in SPL"
 	depends on SPL_DM && DM_MMC
-	default y
 	help
 	  This enables the MultiMediaCard (MMC) uclass which supports MMC and
 	  Secure Digital I/O (SDIO) cards. Both removable (SD, micro-SD, etc.)
