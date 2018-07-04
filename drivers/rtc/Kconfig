@@ -62,6 +62,12 @@ config RTC_MV
 	  Enable Marvell RTC driver. This driver supports the rtc that is present
 	  on some Marvell SoCs.
 
+config RTC_PL031
+	bool "Enable ARM PL031 driver"
+	depends on DM_RTC
+	help
+	  Enable ARM PL031 driver.
+
 config RTC_S35392A
 	bool "Enable S35392A driver"
 	select BITREVERSE
