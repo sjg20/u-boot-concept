@@ -205,6 +205,7 @@ int fat_read_file(const char *filename, void *buf, loff_t offset, loff_t len,
 int fat_opendir(const char *filename, struct fs_dir_stream **dirsp);
 int fat_readdir(struct fs_dir_stream *dirs, struct fs_dirent **dentp);
 void fat_closedir(struct fs_dir_stream *dirs);
+int fat_mkdir(const char *dirname);
 void fat_close(void);
 #endif /* CONFIG_FS_FAT */
 #endif /* _FAT_H_ */
