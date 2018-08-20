@@ -9,6 +9,8 @@
 #ifndef _FAT_H_
 #define _FAT_H_
 
+#ifdef CONFIG_FS_FAT
+
 #include <asm/byteorder.h>
 #include <fs.h>
 
@@ -202,4 +204,5 @@ int fat_opendir(const char *filename, struct fs_dir_stream **dirsp);
 int fat_readdir(struct fs_dir_stream *dirs, struct fs_dirent **dentp);
 void fat_closedir(struct fs_dir_stream *dirs);
 void fat_close(void);
+#endif /* CONFIG_FS_FAT */
 #endif /* _FAT_H_ */
