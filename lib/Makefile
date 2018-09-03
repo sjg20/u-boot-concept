@@ -5,10 +5,10 @@
 
 ifndef CONFIG_SPL_BUILD
 
-obj-$(CONFIG_EFI) += efi/
-obj-$(CONFIG_EFI_LOADER) += efi_driver/
-obj-$(CONFIG_EFI_LOADER) += efi_loader/
-obj-$(CONFIG_EFI_LOADER) += efi_selftest/
+obj-$(CONFIG_$(SPL_TPL_)EFI) += efi/
+obj-$(CONFIG_$(SPL_TPL_)EFI_LOADER) += efi_driver/
+obj-$(CONFIG_$(SPL_TPL_)EFI_LOADER) += efi_loader/
+obj-$(CONFIG_$(SPL_TPL_)EFI_LOADER) += efi_selftest/
 obj-$(CONFIG_LZMA) += lzma/
 obj-$(CONFIG_BZIP2) += bzip2/
 obj-$(CONFIG_TIZEN) += tizen/

@@ -1,5 +1,13 @@
 /dts-v1/;
 
+#include "skeleton.dtsi"
+
+#ifdef CONFIG_CHROMEOS
+#include "chromeos-sandbox.dtsi"
+#include "flashmap-sandbox-ro.dtsi"
+#include "flashmap-16mb-rw.dtsi"
+#endif
+
 #define USB_CLASS_HUB			9
 
 / {
@@ -7,11 +15,18 @@
 	#size-cells = <1>;
 	model = "sandbox";
 
+	model = "Sandbox test environment";
+
 	aliases {
 		i2c0 = &i2c_0;
 		pci0 = &pci;
 		rtc0 = &rtc_0;
 		axi0 = &axi;
+		spi0 = "/spi@0";
+	};
+
+	memory {
+		reg = <0 0x08000000>;
 	};
 
 	chosen {
@@ -20,6 +35,7 @@
 
 	cros_ec: cros-ec {
 		reg = <0 0>;
+		u-boot,dm-pre-reloc;
 		compatible = "google,cros-ec-sandbox";
 
 		/*
@@ -27,6 +43,7 @@
 		 * that the STM32L flash erases to 0, not 0xff.
 		 */
 		flash {
+			u-boot,dm-pre-reloc;
 			image-pos = <0x08000000>;
 			size = <0x20000>;
 			erase-value = <0>;
@@ -45,6 +62,11 @@
 				size = <0x10000>;
 			};
 		};
+
+		nvdata {
+			u-boot,dm-pre-reloc;
+			compatible = "google,cros-ec-nvdata";
+		};
 	};
 
 	ethrawbus {
@@ -59,6 +81,7 @@
 	};
 
 	gpio_a: gpios@0 {
+		u-boot,dm-pre-reloc;
 		gpio-controller;
 		compatible = "sandbox,gpio";
 		#gpio-cells = <1>;
@@ -67,6 +90,7 @@
 	};
 
 	gpio_b: gpios@1 {
+		u-boot,dm-pre-reloc;
 		gpio-controller;
 		compatible = "sandbox,gpio";
 		#gpio-cells = <2>;
@@ -178,16 +202,21 @@
 	};
 
 	spi@0 {
+		u-boot,dm-pre-reloc;
 		#address-cells = <1>;
 		#size-cells = <0>;
 		reg = <0 0>;
 		compatible = "sandbox,spi";
 		cs-gpios = <0>, <&gpio_a 0>;
-		firmware_storage_spi: flash@0 {
+		fwstore_spi: flash@0 {
+			u-boot,dm-pre-reloc;
 			reg = <0>;
-			compatible = "spansion,m25p16", "sandbox,spi-flash";
+			compatible = "spansion,m25p128", "spi-flash";
 			spi-max-frequency = <40000000>;
 			sandbox,filename = "spi.bin";
+			emul {
+				compatible = "sandbox,spi-flash-emul";
+			};
 		};
 	};
 
@@ -239,7 +268,12 @@
 	};
 
 	tpm {
+		u-boot,dm-pre-reloc;
 		compatible = "google,sandbox-tpm";
+		secdata {
+			u-boot,dm-pre-reloc;
+			compatible = "google,tpm-secdata";
+		};
 	};
 
 	tpm2 {
@@ -256,6 +290,7 @@
 
 	/* Needs to be available prior to relocation */
 	uart0: serial {
+		u-boot,dm-spl;
 		compatible = "sandbox,serial";
 		sandbox,text-colour = "cyan";
 		pinctrl-names = "default";
@@ -350,3 +385,10 @@
 
 #include "cros-ec-keyboard.dtsi"
 #include "sandbox_pmic.dtsi"
+
+&cros_ec {
+	u-boot,dm-pre-reloc;
+	keyboard-controller {
+		u-boot,dm-pre-reloc;
+	};
+};

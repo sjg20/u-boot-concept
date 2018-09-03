@@ -90,7 +90,7 @@ struct misc_ops {
 	 * @buf: pointer to data buffer
 	 * @size: data size in bytes to read the device
 	 *
-	 * Return: 0 if OK, -ve on error
+	 * Return: number of bytes read if OK (may be 0 if EOF), -ve on error
 	 */
 	int (*read)(struct udevice *dev, int offset, void *buf, int size);
 

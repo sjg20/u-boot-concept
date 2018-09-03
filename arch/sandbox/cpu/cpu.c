@@ -288,3 +288,12 @@ ulong timer_get_boot_us(void)
 
 	return (count - base_count) / 1000;
 }
+
+struct sysinfo_t *lib_sysinfo_get(void)
+{
+	/*
+	 * We don't actually have this structure, so this is only for
+	 * compile-testing
+	 */
+	return NULL;
+}

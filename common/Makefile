@@ -69,6 +69,7 @@ obj-$(CONFIG_DFU_OVER_USB) += dfu.o
 endif
 obj-$(CONFIG_SPL_DFU_SUPPORT) += cli_hush.o
 obj-$(CONFIG_SPL_HASH_SUPPORT) += hash.o
+obj-$(CONFIG_TPL_HASH_SUPPORT) += hash.o
 obj-$(CONFIG_SPL_YMODEM_SUPPORT) += xyzModem.o
 obj-$(CONFIG_SPL_LOAD_FIT) += common_fit.o
 obj-$(CONFIG_SPL_NET_SUPPORT) += miiphyutil.o
@@ -77,7 +78,8 @@ ifdef CONFIG_SPL_USB_HOST_SUPPORT
 obj-$(CONFIG_SPL_USB_SUPPORT) += usb.o usb_hub.o
 obj-$(CONFIG_USB_STORAGE) += usb_storage.o
 endif
-endif
+endif # CONFIG_SPL_BUILD
+
 #others
 obj-$(CONFIG_DDR_SPD) += ddr_spd.o
 obj-$(CONFIG_SPD_EEPROM) += ddr_spd.o
@@ -91,14 +93,16 @@ obj-$(CONFIG_SPL_SERIAL_SUPPORT) += console.o
 endif
 else
 obj-y += console.o
-endif
+endif # CONFIG_SPL_BUILD
+
 obj-$(CONFIG_CROS_EC) += cros_ec.o
 obj-y += dlmalloc.o
 ifdef CONFIG_SYS_MALLOC_F
-ifneq ($(CONFIG_$(SPL_)SYS_MALLOC_F_LEN),0)
+ifneq ($(CONFIG_$(SPL_TPL_)SYS_MALLOC_F_LEN),0)
 obj-y += malloc_simple.o
 endif
 endif
+
 obj-y += image.o
 obj-$(CONFIG_ANDROID_BOOT_IMAGE) += image-android.o
 obj-$(CONFIG_$(SPL_TPL_)OF_LIBFDT) += image-fdt.o

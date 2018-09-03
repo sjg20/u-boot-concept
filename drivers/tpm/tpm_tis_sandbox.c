@@ -187,9 +187,9 @@ static int sandbox_tpm_xfer(struct udevice *dev, const uint8_t *sendbuf,
 
 	code = get_unaligned_be32(sendbuf + sizeof(uint16_t) +
 				  sizeof(uint32_t));
-	printf("tpm: %zd bytes, recv_len %zd, cmd = %x\n", send_size,
-	       *recv_len, code);
-	print_buffer(0, sendbuf, 1, send_size, 0);
+// 	printf("tpm: tx %zd bytes, recv_len %zd, cmd = %x\n", send_size,
+// 	       *recv_len, code);
+// 	print_buffer(0, sendbuf, 1, send_size, 0);
 	switch (code) {
 	case TPM_CMD_GET_CAPABILITY:
 		type = get_unaligned_be32(sendbuf + 14);
@@ -306,6 +306,8 @@ static int sandbox_tpm_xfer(struct udevice *dev, const uint8_t *sendbuf,
 		printf("Unknown tpm command %02x\n", code);
 		return -ENOSYS;
 	}
+// 	printf("tpm: rx recv_len %zd\n", *recv_len);
+// 	print_buffer(0, recvbuf, 1, *recv_len, 0);
 
 	return 0;
 }

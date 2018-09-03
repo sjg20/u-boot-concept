@@ -274,6 +274,12 @@ unsigned long blk_dwrite(struct blk_desc *block_dev, lbaint_t start,
 unsigned long blk_derase(struct blk_desc *block_dev, lbaint_t start,
 			 lbaint_t blkcnt);
 
+unsigned long blk_read(struct udevice *dev, lbaint_t start, lbaint_t blkcnt,
+		       void *buffer);
+unsigned long blk_write(struct udevice *dev, lbaint_t start, lbaint_t blkcnt,
+			const void *buffer);
+unsigned long blk_erase(struct udevice *dev, lbaint_t start, lbaint_t blkcnt);
+
 /**
  * blk_find_device() - Find a block device
  *

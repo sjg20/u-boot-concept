@@ -26,6 +26,8 @@ enum tpm_duration {
 /* Max buffer size supported by our tpm */
 #define TPM_DEV_BUFSIZE		1260
 
+#define TPM_PCR_MINIMUM_DIGEST_SIZE 20
+
 /**
  * enum tpm_version - The version of the TPM stack to be used
  * @TPM_V1:		Use TPM v1.x stack
@@ -178,6 +180,24 @@ int do_##cmd(cmd_tbl_t *cmdtp, int flag,		\
 		return CMD_RET_USAGE;			\
 	return report_return_code(cmd());		\
 }
+
+/**
+ * tpm_open() - Request access to locality 0 for the caller
+ *
+ * After all commands have been completed the caller is supposed to
+ * call tpm_close().
+ *
+ * Returns 0 on success, -ve on failure.
+ */
+int tpm_open(struct udevice *dev);
+
+/**
+ * tpm_close() - Close the current session
+ *
+ * Releasing the locked locality. Returns 0 on success, -ve 1 on
+ * failure (in case lock removal did not succeed).
+ */
+int tpm_close(struct udevice *dev);
 
 /**
  * tpm_get_desc() - Get a text description of the TPM

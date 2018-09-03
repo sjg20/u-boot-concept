@@ -42,12 +42,12 @@ static void do_print_trace(void)
 	for (int i = 0; i < count; i++) {
 		if (cur_record->flags & IOT_WRITE)
 			printf("%08llu: 0x%08lx --> 0x%08llx\n",
-			       cur_record->timestamp,
+			       (unsigned long long)cur_record->timestamp,
 					cur_record->value,
 					(unsigned long long)cur_record->addr);
 		else
 			printf("%08llu: 0x%08lx <-- 0x%08llx\n",
-			       cur_record->timestamp,
+			       (unsigned long long)cur_record->timestamp,
 					cur_record->value,
 					(unsigned long long)cur_record->addr);
 
