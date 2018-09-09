@@ -494,7 +494,7 @@ int blk_find_max_devnum(enum if_type if_type)
 	return max_devnum;
 }
 
-static int blk_next_free_devnum(enum if_type if_type)
+int blk_next_free_devnum(enum if_type if_type)
 {
 	int ret;
 
