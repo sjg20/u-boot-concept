@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: GPL-2.0+
+#
+# Copyright (C) 2018, Tuomas Tynkkynen <tuomas.tynkkynen@iki.fi>
+# Copyright (C) 2018, Bin Meng <bmeng.cn@gmail.com>
+
+menu "VirtIO Drivers"
+
+config VIRTIO
+	bool
+	help
+	  This option is selected by any driver which implements the virtio
+	  bus, such as CONFIG_VIRTIO_MMIO or CONFIG_VIRTIO_PCI.
+
+endmenu
