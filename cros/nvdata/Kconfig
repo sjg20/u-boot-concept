@@ -1,0 +1,14 @@
+config NVDATA_CROS_EC
+	bool "Non-volatile data driver that uses the Chrome OS EC"
+
+config NVDATA_TPM
+	bool "Non-volatile data driver that uses the TPM"
+
+config SPL_NVDATA_TPM
+	bool "Non-volatile data driver that uses the TPM"
+
+config TPL_NVDATA_TPM
+	bool "Non-volatile data driver that uses the TPM"
+
+config NVDATA_CMOS
+	bool "Non-volatile data driver that uses CMOS RAM"

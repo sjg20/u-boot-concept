@@ -1,0 +1,18 @@
+config CROS_FLAG
+	bool "Chrome OS verified boot flags"
+	depends on DM
+	help
+	  CHrome OS includes...
+
+config CROS_FLAG_GPIO
+	bool "Flags controlled by a GPIO"
+
+config CROS_FLAG_CONST
+	bool "Flags controlled by a constant"
+
+config CROS_FLAG_KEY
+	bool "Flags controlled by a keypress"
+	depends on SANDBOX
+
+config CROS_FLAG_SYSINFO
+	bool "Flags controlled by coreboot sysinfo"

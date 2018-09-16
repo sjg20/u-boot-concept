@@ -1,0 +1,111 @@
+config CHROMEOS
+	bool "Enable Chrome OS verified boot support"
+	select BINMAN
+	imply CHROMEOS_SPI
+	imply NVDATA_CROS_EC
+	imply NVDATA_TPM
+	imply CROS_FLAG
+	imply CROS_FLAG_GPIO
+	imply CROS_FLAG_CONST
+	imply CROS_FLAG_KEY
+	imply LZ4
+	imply BLOBLIST
+	imply NVDATA_CMOS if X86
+
+config VBOOT2
+	bool "Use Chrome OS vboot2 API where possible"
+	depends on CHROMEOS
+	default y
+	help
+	  Use vboot 2 API. This currently (August 2018) only supports the
+	  firmware selection process. It cannot be used for selecing and
+	  booting a kernel. The current U-Boot implementation only supports
+	  the vboot 2 API for firmware, so this option is required to be
+	  enabled.
+
+config VBOOT2_WORK_BUF_SIZE
+	hex "Size of vboot2 work buffer"
+	depends on CHROMEOS
+	default 0x3000
+
+config VBOOT_DISABLE_DEV_ON_RECOVERY
+	bool "Disable developer mode when going into recovery"
+	depends on CHROMEOS
+
+config VBOOT_DEBUG
+	bool "Enable debugging for vboot"
+	depends on CHROMEOS
+	default y
+
+config SPL_CHROMEOS
+	bool "Enable Chrome OS verified boot support in SPL"
+	depends on CHROMEOS
+	select SUPPORT_SPL
+	imply SPL
+	imply SPL_SEPARATE_BSS
+	imply SPL_DRIVERS_MISC_SUPPORT
+	imply SPL_GPIO_SUPPORT
+	imply SPL_LIBCOMMON_SUPPORT
+	imply SPL_LIBGENERIC_SUPPORT
+	imply SPL_SERIAL_SUPPORT
+	imply SPL_SPI_FLASH_SUPPORT
+	imply SPL_SPI_SUPPORT
+	imply SPL_LOG
+	imply SPL_BLOBLIST
+	imply SPL_BOARD_INIT
+	imply SPL_ENV_SUPPORT
+	imply SPL_OF_CONTROL
+	imply SPL_DM
+	imply SPL_REGMAP
+	imply SPL_SYSCON
+	imply SPL_CROS_EC
+	imply SPL_TIMER
+
+config TPL_CHROMEOS
+	bool "Enable Chrome OS verified boot support in TPL"
+	depends on CHROMEOS
+	select SUPPORT_TPL
+	imply TPL
+	imply TPL_LIBCOMMON_SUPPORT
+	imply TPL_LIBGENERIC_SUPPORT
+	imply TPL_LOG
+	imply TPL_BLOBLIST
+	imply TPL_SYS_MALLOC_SIMPLE
+	imply TPL_HASH_SUPPORT
+	imply TPL_GPIO_SUPPORT
+	imply TPL_BOARD_INIT
+	imply TPL_DRIVERS_MISC_SUPPORT
+	imply TPL_ENV_SUPPORT
+	imply TPL_SERIAL_SUPPORT
+	imply TPL_SPI_FLASH_SUPPORT
+	imply TPL_SPI_SUPPORT
+	imply TPL_REGMAP
+	imply TPL_SYSCON
+	imply TPL_OF_CONTROL
+	imply TPL_DM
+	imply TPL_INPUT
+	imply TPL_DM_KEYBOARD
+	imply TPL_CROS_EC_KEYB
+	imply TPL_CROS_EC
+	imply TPL_TIMER
+	imply TPL_TPM
+	imply TPL_CHROMEOS
+	imply TPL_NVDATA_TPM
+
+config CROS_FULL
+	bool "Build full Chrome OS support"
+	default y
+
+config CHROMEOS_TEST
+	bool "Enable Chrome OS tets"
+
+config CHROMEOS_SPI
+	bool "Enable support for Chrome OS firmware in SPI flash"
+
+config CROS_EC_RW_FILE
+	string "Chrome OS EC read-write image filename"
+	default "ec-rw.bin"
+
+source "cros/cmd/Kconfig"
+source "cros/nvdata/Kconfig"
+source "cros/flag/Kconfig"

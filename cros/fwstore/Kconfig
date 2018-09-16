@@ -1,0 +1,2 @@
+config FWSTORE_SPI_FLASH
+	bool "Firmware storage driver that uses SPI flash"

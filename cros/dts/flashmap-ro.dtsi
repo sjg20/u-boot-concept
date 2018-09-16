@@ -1,0 +1,66 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * Copyright (c) 2018 Google, Inc
+ */
+
+/ {
+	binman {
+		read-only {
+			prefix = "ro-";
+			read-only;
+			type = "section";
+			size = <0xf0000>;
+
+			boot {
+				label = "boot-stub";
+				reg = <0x00000000 0x000c0000>; /* 1 MB */
+				read-only;
+				type = "blob signed";
+			};
+			recovery {
+				label = "recovery";
+				reg = <0x000c0000 0x00000000>;
+				read-only;
+			};
+			fmap {
+				label = "fmap";
+
+				/* We encourage to align FMAP partition in as large
+				* block as possible so that flashrom can find it soon.
+				* For example, aligning to 512KB is better than to
+				* 256KB. */
+
+				reg = <0x000c0000 0x00001000>;
+				read-only;
+				type = "fmap";
+				ver-major = <1>;
+				ver-minor = <0>;
+			};
+			firmware-id {
+				label = "frid";
+				reg = <0x000c1000 0x00000100>;
+				read-only;
+				type = "blobstring fwid";
+			};
+			gbb {
+				label = "gbb";
+
+				/* GBB offset must be aligned to 4K bytes */
+				reg = <0x000d0000 0x00120000>;
+				read-only;
+				type = "blob gbb";
+			};
+
+			/* ---- Section: Vital-product data (VPD) ---- */
+			vpd {
+				label = "vpd";
+
+				/* VPD offset must be aligned to 4K bytes */
+				align = <0x1000>;
+                                size = <0x10000>;
+				type = "erase";
+				erase-value = [ff];
+			};
+		};
+	};
+};

@@ -1,0 +1,83 @@
+/*
+ * Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/*
+ * This file holds Chrome OS-specific options for sandbox, kept within a
+ * chromeos-config node.
+ */
+
+#include "factory-friendly.dtsi"
+
+/ {
+	config {
+		hwid = "SANDBOX TEST A-A 1968";
+		silent-console = <0>;
+		u-boot-memory = "/memory";
+		u-boot-offset = <0 0x300000>;
+	};
+
+	chromeos-config {
+		u-boot,dm-pre-reloc;
+		twostop;		/* Two-stop boot */
+		twostop-optional;       /* One-stop optimization enabled */
+		vblock-read-size = <8192>;
+
+		textbase = <0>;/* Address where U-Boot loads */
+		nvstorage-media = "cros-ec";
+		ec-software-sync;       /* EC firmware in sync with BIOS */
+
+		/* Kernel start address and size */
+		kernel-addr = <0x01008000 0x2000000>;
+
+		virtual-dev-switch;
+	};
+
+	chromeos {
+		u-boot,dm-pre-reloc;
+		compatible = "simple-bus";
+		fwstore-spi {
+			u-boot,dm-pre-reloc;
+			compatible = "cros,fwstore-spi";
+			firmware-storage = <&fwstore_spi>;
+		};
+		write-protect {
+			u-boot,dm-pre-reloc;
+			compatible = "google,gpio-flag";
+			gpio = <&gpio_a 1>;
+		};
+		developer {
+			u-boot,dm-pre-reloc;
+			compatible = "google,const-flag";
+			value = <1>;
+		};
+		lid-open {
+			u-boot,dm-pre-reloc;
+			compatible = "google,gpio-flag";
+			gpio = <&gpio_a 2>;
+			sandbox-value = <1>;
+		};
+		power-off {
+			u-boot,dm-pre-reloc;
+			compatible = "google,key-flag";
+			/* Use KEY_PAUSE to similate power button */
+			key = <116>;
+		};
+		oprom-loaded {
+			u-boot,dm-pre-reloc;
+			compatible = "google,const-flag";
+			value = <0>;
+		};
+		ec-in-rw {
+			u-boot,dm-pre-reloc;
+			compatible = "google,gpio-flag";
+			gpio = <&gpio_a 3>;
+		};
+	};
+
+	chosen {
+		bootargs = "";
+	};
+};
