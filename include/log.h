@@ -47,6 +47,7 @@ enum log_category_t {
 	LOGC_DT,	/* Device-tree */
 	LOGC_EFI,	/* EFI implementation */
 	LOGC_ALLOC,	/* Memory allocation */
+	LOGC_BLOBLIST,	/* Bloblist */
 
 	LOGC_COUNT,	/* Number of log categories */
 	LOGC_END,	/* Sentinel value for a list of log categories */
