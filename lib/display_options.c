@@ -7,6 +7,7 @@
 #include <common.h>
 #include <console.h>
 #include <div64.h>
+#include <inttypes.h>
 #include <version.h>
 #include <linux/ctype.h>
 #include <asm/io.h>
@@ -64,7 +65,7 @@ void print_freq(uint64_t freq, const char *s)
 	}
 
 	if (!c) {
-		printf("%llu Hz%s", freq, s);
+		printf("%" PRIu64 " Hz%s", freq, s);
 		return;
 	}
 
@@ -104,7 +105,7 @@ void print_size(uint64_t size, const char *s)
 	}
 
 	if (!c) {
-		printf("%llu Bytes%s", size, s);
+		printf("%" PRIu64 " Bytes%s", size, s);
 		return;
 	}
 

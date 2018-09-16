@@ -36,6 +36,7 @@
 #include <command.h>
 #include <dm.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <mapmem.h>
 #include <memalign.h>
 #include <asm/byteorder.h>
@@ -1163,8 +1164,8 @@ static unsigned long usb_stor_read(struct blk_desc *block_dev, lbaint_t blknr,
 	start = blknr;
 	blks = blkcnt;
 
-	debug("\nusb_read: dev %d startblk " LBAF ", blccnt " LBAF " buffer %lx\n",
-	      block_dev->devnum, start, blks, buf_addr);
+	debug("\nusb_read: dev %d startblk " LBAF ", blccnt " LBAF " buffer %"
+	      PRIxPTR "\n", block_dev->devnum, start, blks, buf_addr);
 
 	do {
 		/* XXX need some comment here */
@@ -1193,7 +1194,8 @@ retry_it:
 	} while (blks != 0);
 	ss->flags &= ~USB_READY;
 
-	debug("usb_read: end startblk " LBAF ", blccnt %x buffer %lx\n",
+	debug("usb_read: end startblk " LBAF
+	      ", blccnt %x buffer %" PRIxPTR "\n",
 	      start, smallblks, buf_addr);
 
 	usb_disable_asynch(0); /* asynch transfer allowed */
@@ -1246,8 +1248,8 @@ static unsigned long usb_stor_write(struct blk_desc *block_dev, lbaint_t blknr,
 	start = blknr;
 	blks = blkcnt;
 
-	debug("\nusb_write: dev %d startblk " LBAF ", blccnt " LBAF " buffer %lx\n",
-	      block_dev->devnum, start, blks, buf_addr);
+	debug("\nusb_write: dev %d startblk " LBAF ", blccnt " LBAF " buffer %"
+	      PRIxPTR "\n", block_dev->devnum, start, blks, buf_addr);
 
 	do {
 		/* If write fails retry for max retry count else
@@ -1278,8 +1280,8 @@ retry_it:
 	} while (blks != 0);
 	ss->flags &= ~USB_READY;
 
-	debug("usb_write: end startblk " LBAF ", blccnt %x buffer %lx\n",
-	      start, smallblks, buf_addr);
+	debug("usb_write: end startblk " LBAF ", blccnt %x buffer %"
+	      PRIxPTR "\n", start, smallblks, buf_addr);
 
 	usb_disable_asynch(0); /* asynch transfer allowed */
 	if (blkcnt >= ss->max_xfer_blk)

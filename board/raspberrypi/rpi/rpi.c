@@ -4,6 +4,7 @@
  */
 
 #include <common.h>
+#include <inttypes.h>
 #include <config.h>
 #include <dm.h>
 #include <environment.h>
@@ -383,7 +384,7 @@ static void set_serial_number(void)
 		return;
 	}
 
-	snprintf(serial_string, sizeof(serial_string), "%016llx",
+	snprintf(serial_string, sizeof(serial_string), "%016" PRIx64,
 		 msg->get_board_serial.body.resp.serial);
 	env_set("serial#", serial_string);
 }

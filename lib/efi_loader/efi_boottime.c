@@ -13,6 +13,7 @@
 #include <linux/libfdt_env.h>
 #include <u-boot/crc.h>
 #include <bootm.h>
+#include <inttypes.h>
 #include <watchdog.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -329,7 +330,7 @@ static efi_status_t EFIAPI efi_free_pages_ext(uint64_t memory,
 {
 	efi_status_t r;
 
-	EFI_ENTRY("%llx, 0x%zx", memory, pages);
+	EFI_ENTRY("%" PRIx64 ", 0x%zx", memory, pages);
 	r = efi_free_pages(memory, pages);
 	return EFI_EXIT(r);
 }
@@ -780,7 +781,7 @@ static efi_status_t EFIAPI efi_set_timer_ext(struct efi_event *event,
 					     enum efi_timer_delay type,
 					     uint64_t trigger_time)
 {
-	EFI_ENTRY("%p, %d, %llx", event, type, trigger_time);
+	EFI_ENTRY("%p, %d, %" PRIx64, event, type, trigger_time);
 	return EFI_EXIT(efi_set_timer(event, type, trigger_time));
 }
 
@@ -1917,7 +1918,7 @@ static efi_status_t EFIAPI efi_set_watchdog_timer(unsigned long timeout,
 						  unsigned long data_size,
 						  uint16_t *watchdog_data)
 {
-	EFI_ENTRY("%ld, 0x%llx, %ld, %p", timeout, watchdog_code,
+	EFI_ENTRY("%ld, 0x%" PRIx64 ", %ld, %p", timeout, watchdog_code,
 		  data_size, watchdog_data);
 	return EFI_EXIT(efi_set_watchdog(timeout));
 }

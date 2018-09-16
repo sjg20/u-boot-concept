@@ -13,6 +13,7 @@
 #include <usb.h>
 #include <mmc.h>
 #include <efi_loader.h>
+#include <inttypes.h>
 #include <part.h>
 
 /* template END node: */
