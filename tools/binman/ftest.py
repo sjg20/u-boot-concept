@@ -421,6 +421,111 @@ class TestFunctional(unittest.TestCase):
         AddNode(dtb.GetRoot(), '')
         return tree
 
+    def _RunMicrocodeTest(self, dts_fname, nodtb_data, ucode_second=False):
+        """Handle running a test for insertion of microcode
+
+        Args:
+            dts_fname: Name of test .dts file
+            nodtb_data: Data that we expect in the first section
+            ucode_second: True if the microsecond entry is second instead of
+                third
+
+        Returns:
+            Tuple:
+                Contents of first region (U-Boot or SPL)
+                Offset and size components of microcode pointer, as inserted
+                    in the above (two 4-byte words)
+        """
+        data = self._DoReadFile(dts_fname, True)
+
+        # Now check the device tree has no microcode
+        if ucode_second:
+            ucode_content = data[len(nodtb_data):]
+            ucode_pos = len(nodtb_data)
+            dtb_with_ucode = ucode_content[16:]
+            fdt_len = self.GetFdtLen(dtb_with_ucode)
+        else:
+            dtb_with_ucode = data[len(nodtb_data):]
+            fdt_len = self.GetFdtLen(dtb_with_ucode)
+            ucode_content = dtb_with_ucode[fdt_len:]
+            ucode_pos = len(nodtb_data) + fdt_len
+        fname = tools.GetOutputFilename('test.dtb')
+        with open(fname, 'wb') as fd:
+            fd.write(dtb_with_ucode)
+        dtb = fdt.FdtScan(fname)
+        ucode = dtb.GetNode('/microcode')
+        self.assertTrue(ucode)
+        for node in ucode.subnodes:
+            self.assertFalse(node.props.get('data'))
+
+        # Check that the microcode appears immediately after the Fdt
+        # This matches the concatenation of the data properties in
+        # the /microcode/update@xxx nodes in 34_x86_ucode.dts.
+        ucode_data = struct.pack('>4L', 0x12345678, 0x12345679, 0xabcd0000,
+                                 0x78235609)
+        self.assertEqual(ucode_data, ucode_content[:len(ucode_data)])
+
+        # Check that the microcode pointer was inserted. It should match the
+        # expected offset and size
+        pos_and_size = struct.pack('<2L', 0xfffffe00 + ucode_pos,
+                                   len(ucode_data))
+        u_boot = data[:len(nodtb_data)]
+        return u_boot, pos_and_size
+
+    def _RunPackUbootSingleMicrocode(self):
+        """Test that x86 microcode can be handled correctly
+
+        We expect to see the following in the image, in order:
+            u-boot-nodtb.bin with a microcode pointer inserted at the correct
+                place
+            u-boot.dtb with the microcode
+            an empty microcode region
+        """
+        # We need the libfdt library to run this test since only that allows
+        # finding the offset of a property. This is required by
+        # Entry_u_boot_dtb_with_ucode.ObtainContents().
+        data = self._DoReadFile('35_x86_single_ucode.dts', True)
+
+        second = data[len(U_BOOT_NODTB_DATA):]
+
+        fdt_len = self.GetFdtLen(second)
+        third = second[fdt_len:]
+        second = second[:fdt_len]
+
+        ucode_data = struct.pack('>2L', 0x12345678, 0x12345679)
+        self.assertIn(ucode_data, second)
+        ucode_pos = second.find(ucode_data) + len(U_BOOT_NODTB_DATA)
+
+        # Check that the microcode pointer was inserted. It should match the
+        # expected offset and size
+        pos_and_size = struct.pack('<2L', 0xfffffe00 + ucode_pos,
+                                   len(ucode_data))
+        first = data[:len(U_BOOT_NODTB_DATA)]
+        self.assertEqual('nodtb with microcode' + pos_and_size +
+                         ' somewhere in here', first)
+
+    def _PackUbootSplMicrocode(self, dts, ucode_second=False):
+        """Helper function for microcode tests
+
+        We expect to see the following in the image, in order:
+            u-boot-spl-nodtb.bin with a microcode pointer inserted at the
+                correct place
+            u-boot.dtb with the microcode removed
+            the microcode
+
+        Args:
+            dts: Device tree file to use for test
+            ucode_second: True if the microsecond entry is second instead of
+                third
+        """
+        # ELF file with a '_dt_ucode_base_size' symbol
+        with open(self.TestFile('u_boot_ucode_ptr')) as fd:
+            TestFunctional._MakeInputFile('spl/u-boot-spl', fd.read())
+        first, pos_and_size = self._RunMicrocodeTest(dts, U_BOOT_SPL_NODTB_DATA,
+                                                     ucode_second=ucode_second)
+        self.assertEqual('splnodtb with microc' + pos_and_size +
+                         'ter somewhere in here', first)
+
     def testRun(self):
         """Test a basic run with valid args"""
         result = self._RunBinman('-h')
@@ -808,57 +913,6 @@ class TestFunctional(unittest.TestCase):
         data = self._DoReadFile('33_x86-start16.dts')
         self.assertEqual(X86_START16_DATA, data[:len(X86_START16_DATA)])
 
-    def _RunMicrocodeTest(self, dts_fname, nodtb_data, ucode_second=False):
-        """Handle running a test for insertion of microcode
-
-        Args:
-            dts_fname: Name of test .dts file
-            nodtb_data: Data that we expect in the first section
-            ucode_second: True if the microsecond entry is second instead of
-                third
-
-        Returns:
-            Tuple:
-                Contents of first region (U-Boot or SPL)
-                Offset and size components of microcode pointer, as inserted
-                    in the above (two 4-byte words)
-        """
-        data = self._DoReadFile(dts_fname, True)
-
-        # Now check the device tree has no microcode
-        if ucode_second:
-            ucode_content = data[len(nodtb_data):]
-            ucode_pos = len(nodtb_data)
-            dtb_with_ucode = ucode_content[16:]
-            fdt_len = self.GetFdtLen(dtb_with_ucode)
-        else:
-            dtb_with_ucode = data[len(nodtb_data):]
-            fdt_len = self.GetFdtLen(dtb_with_ucode)
-            ucode_content = dtb_with_ucode[fdt_len:]
-            ucode_pos = len(nodtb_data) + fdt_len
-        fname = tools.GetOutputFilename('test.dtb')
-        with open(fname, 'wb') as fd:
-            fd.write(dtb_with_ucode)
-        dtb = fdt.FdtScan(fname)
-        ucode = dtb.GetNode('/microcode')
-        self.assertTrue(ucode)
-        for node in ucode.subnodes:
-            self.assertFalse(node.props.get('data'))
-
-        # Check that the microcode appears immediately after the Fdt
-        # This matches the concatenation of the data properties in
-        # the /microcode/update@xxx nodes in 34_x86_ucode.dts.
-        ucode_data = struct.pack('>4L', 0x12345678, 0x12345679, 0xabcd0000,
-                                 0x78235609)
-        self.assertEqual(ucode_data, ucode_content[:len(ucode_data)])
-
-        # Check that the microcode pointer was inserted. It should match the
-        # expected offset and size
-        pos_and_size = struct.pack('<2L', 0xfffffe00 + ucode_pos,
-                                   len(ucode_data))
-        u_boot = data[:len(nodtb_data)]
-        return u_boot, pos_and_size
-
     def testPackUbootMicrocode(self):
         """Test that x86 microcode can be handled correctly
 
@@ -870,38 +924,6 @@ class TestFunctional(unittest.TestCase):
         """
         first, pos_and_size = self._RunMicrocodeTest('34_x86_ucode.dts',
                                                      U_BOOT_NODTB_DATA)
-        self.assertEqual('nodtb with microcode' + pos_and_size +
-                         ' somewhere in here', first)
-
-    def _RunPackUbootSingleMicrocode(self):
-        """Test that x86 microcode can be handled correctly
-
-        We expect to see the following in the image, in order:
-            u-boot-nodtb.bin with a microcode pointer inserted at the correct
-                place
-            u-boot.dtb with the microcode
-            an empty microcode region
-        """
-        # We need the libfdt library to run this test since only that allows
-        # finding the offset of a property. This is required by
-        # Entry_u_boot_dtb_with_ucode.ObtainContents().
-        data = self._DoReadFile('35_x86_single_ucode.dts', True)
-
-        second = data[len(U_BOOT_NODTB_DATA):]
-
-        fdt_len = self.GetFdtLen(second)
-        third = second[fdt_len:]
-        second = second[:fdt_len]
-
-        ucode_data = struct.pack('>2L', 0x12345678, 0x12345679)
-        self.assertIn(ucode_data, second)
-        ucode_pos = second.find(ucode_data) + len(U_BOOT_NODTB_DATA)
-
-        # Check that the microcode pointer was inserted. It should match the
-        # expected offset and size
-        pos_and_size = struct.pack('<2L', 0xfffffe00 + ucode_pos,
-                                   len(ucode_data))
-        first = data[:len(U_BOOT_NODTB_DATA)]
         self.assertEqual('nodtb with microcode' + pos_and_size +
                          ' somewhere in here', first)
 
@@ -1019,28 +1041,6 @@ class TestFunctional(unittest.TestCase):
         """Test that an image with an x86 start16 SPL region can be created"""
         data = self._DoReadFile('48_x86-start16-spl.dts')
         self.assertEqual(X86_START16_SPL_DATA, data[:len(X86_START16_SPL_DATA)])
-
-    def _PackUbootSplMicrocode(self, dts, ucode_second=False):
-        """Helper function for microcode tests
-
-        We expect to see the following in the image, in order:
-            u-boot-spl-nodtb.bin with a microcode pointer inserted at the
-                correct place
-            u-boot.dtb with the microcode removed
-            the microcode
-
-        Args:
-            dts: Device tree file to use for test
-            ucode_second: True if the microsecond entry is second instead of
-                third
-        """
-        # ELF file with a '_dt_ucode_base_size' symbol
-        with open(self.TestFile('u_boot_ucode_ptr')) as fd:
-            TestFunctional._MakeInputFile('spl/u-boot-spl', fd.read())
-        first, pos_and_size = self._RunMicrocodeTest(dts, U_BOOT_SPL_NODTB_DATA,
-                                                     ucode_second=ucode_second)
-        self.assertEqual('splnodtb with microc' + pos_and_size +
-                         'ter somewhere in here', first)
 
     def testPackUbootSplMicrocode(self):
         """Test that x86 microcode can be handled correctly in SPL"""
@@ -1324,19 +1324,18 @@ class TestFunctional(unittest.TestCase):
         self.assertIn("'fill' entry must have a size property",
                       str(e.exception))
 
-    def _HandleGbbCommand(self, pipe_list):
-        """Fake calls to the futility utility"""
-        if pipe_list[0][0] == 'futility':
-            fname = pipe_list[0][-1]
-            # Append our GBB data to the file, which will happen every time the
-            # futility command is called.
-            with open(fname, 'a') as fd:
-                fd.write(GBB_DATA)
-            return command.CommandResult()
-
     def testGbb(self):
         """Test for the Chromium OS Google Binary Block"""
-        command.test_result = self._HandleGbbCommand
+        def _HandleGbbCommand(pipe_list):
+            """Fake calls to the futility utility"""
+            if pipe_list[0][0] == 'futility':
+                fname = pipe_list[0][-1]
+                # Append our GBB data to the file, which will happen every time
+                # the futility command is called.
+                with open(fname, 'a') as fd:
+                    fd.write(GBB_DATA)
+                return command.CommandResult()
+        command.test_result = _HandleGbbCommand
         entry_args = {
             'keydir': 'devkeys',
             'bmpblk': 'bmpblk.bin',
@@ -1361,17 +1360,17 @@ class TestFunctional(unittest.TestCase):
         self.assertIn("Node '/binman/gbb': GBB must have a fixed size",
                       str(e.exception))
 
-    def _HandleVblockCommand(self, pipe_list):
-        """Fake calls to the futility utility"""
-        if pipe_list[0][0] == 'futility':
-            fname = pipe_list[0][3]
-            with open(fname, 'wb') as fd:
-                fd.write(VBLOCK_DATA)
-            return command.CommandResult()
-
     def testVblock(self):
         """Test for the Chromium OS Verified Boot Block"""
-        command.test_result = self._HandleVblockCommand
+        def _HandleVblockCommand(pipe_list):
+            """Fake calls to the futility utility"""
+            if pipe_list[0][0] == 'futility':
+                fname = pipe_list[0][3]
+                with open(fname, 'wb') as fd:
+                    fd.write(VBLOCK_DATA)
+                return command.CommandResult()
+
+        command.test_result = _HandleVblockCommand
         entry_args = {
             'keydir': 'devkeys',
         }
