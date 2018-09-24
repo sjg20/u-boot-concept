@@ -273,6 +273,15 @@ static int sandbox_cmdline_cb_verbose(struct sandbox_state *state,
 }
 SANDBOX_CMDLINE_OPT_SHORT(verbose, 'v', 0, "Show test output");
 
+static int sandbox_cmdline_cb_show_of_platdata(struct sandbox_state *state,
+					       const char *arg)
+{
+	state->show_of_platdata = true;
+
+	return 0;
+}
+SANDBOX_CMDLINE_OPT(show_of_platdata, 0, "Show of-platdata in SPL");
+
 int board_run_command(const char *cmdline)
 {
 	printf("## Commands are disabled. Please enable CONFIG_CMDLINE.\n");
