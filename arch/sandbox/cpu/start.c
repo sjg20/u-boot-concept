@@ -282,6 +282,16 @@ static int sandbox_cmdline_cb_show_of_platdata(struct sandbox_state *state,
 }
 SANDBOX_CMDLINE_OPT(show_of_platdata, 0, "Show of-platdata in SPL");
 
+static int sandbox_cmdline_cb_log_level(struct sandbox_state *state,
+					const char *arg)
+{
+	state->default_log_level = simple_strtol(arg, NULL, 10);
+
+	return 0;
+}
+SANDBOX_CMDLINE_OPT_SHORT(log_level, 'L', 1,
+			  "Set log level (0=panic, 7=debug)");
+
 int board_run_command(const char *cmdline)
 {
 	printf("## Commands are disabled. Please enable CONFIG_CMDLINE.\n");
@@ -331,6 +341,9 @@ int main(int argc, char *argv[])
 	gd = &data;
 #if CONFIG_VAL(SYS_MALLOC_F_LEN)
 	gd->malloc_base = CONFIG_MALLOC_F_ADDR;
+#endif
+#if CONFIG_IS_ENABLED(LOG)
+	gd->default_log_level = state->default_log_level;
 #endif
 	setup_ram_buf(state);
 
