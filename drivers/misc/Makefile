@@ -3,17 +3,18 @@
 # (C) Copyright 2000-2007
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 
-obj-$(CONFIG_MISC) += misc-uclass.o
+obj-$(CONFIG_$(SPL_TPL_)CROS_EC) += cros_ec.o
+obj-$(CONFIG_$(SPL_TPL_)CROS_EC_SANDBOX) += cros_ec_sandbox.o
+obj-$(CONFIG_$(SPL_TPL_)CROS_EC_LPC) += cros_ec_lpc.o
+
+obj-$(CONFIG_$(SPL_TPL_)MISC) += misc-uclass.o
 obj-$(CONFIG_ALI152X) += ali512x.o
 obj-$(CONFIG_ALTERA_SYSID) += altera_sysid.o
 obj-$(CONFIG_ATSHA204A) += atsha204a-i2c.o
 obj-$(CONFIG_DS4510)  += ds4510.o
 obj-$(CONFIG_CBMEM_CONSOLE) += cbmem_console.o
 ifndef CONFIG_SPL_BUILD
-obj-$(CONFIG_CROS_EC) += cros_ec.o
-obj-$(CONFIG_CROS_EC_LPC) += cros_ec_lpc.o
 obj-$(CONFIG_CROS_EC_I2C) += cros_ec_i2c.o
-obj-$(CONFIG_CROS_EC_SANDBOX) += cros_ec_sandbox.o
 obj-$(CONFIG_CROS_EC_SPI) += cros_ec_spi.o
 endif
 obj-$(CONFIG_FSL_IIM) += fsl_iim.o
