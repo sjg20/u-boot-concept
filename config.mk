@@ -67,6 +67,19 @@ ifneq ($(USE_STDINT),)
 PLATFORM_CPPFLAGS += -DCONFIG_USE_STDINT
 endif
 
+ifeq ($(WERROR),y)
+PLATFORM_CPPFLAGS += -Werror
+endif
+
+ifdef CONFIG_CHROMEOS
+PLATFORM_CPPFLAGS += -I$(srctree)/cros/include
+PLATFORM_CPPFLAGS += -DVBOOT_DEBUG
+PLATFORM_CPPFLAGS += -I$(if $(VBOOT_SOURCE),$(VBOOT_SOURCE)/firmware/include,\
+		$(VBOOT)/include/vboot) \
+	-I$(if $(VBOOT_SOURCE),$(VBOOT_SOURCE)/firmware/include,\
+		$(VBOOT)/include)
+endif
+
 #########################################################################
 
 RELFLAGS := $(PLATFORM_RELFLAGS)
