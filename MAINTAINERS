@@ -498,6 +498,22 @@ T:	git git://git.denx.de/u-boot-dfu.git
 F:	drivers/clk/
 F:	drivers/clk/imx/
 
+CHROMIUM OS
+M:	Simon Glass <sjg@chromium.org>
+S:	Maintained
+F:	cros/
+F:	include/configs/chromeos.h
+F:	configs/chromeos_sandbox_defconfig
+F:	doc/README.chromium
+F:	doc/README.chromium-chainload
+
+CLOCK
+M:	Lukasz Majewski <lukma@denx.de>
+S:	Maintained
+T:	git git://git.denx.de/u-boot-dfu.git
+F:	drivers/clk/
+F:	drivers/clk/imx/
+
 COLDFIRE
 M:	Huan Wang <alison.wang@nxp.com>
 M:	Angelo Dureghello <angelo@sysam.it>
