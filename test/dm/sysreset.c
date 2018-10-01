@@ -90,3 +90,22 @@ static int dm_test_sysreset_walk(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_sysreset_walk, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+
+static int dm_test_sysreset_get_last(struct unit_test_state *uts)
+{
+	struct udevice *dev;
+
+	/* Device 1 is the warm sysreset device */
+	ut_assertok(uclass_get_device(UCLASS_SYSRESET, 1, &dev));
+	ut_asserteq(SYSRESET_WARM, sysreset_get_last(dev));
+
+	/* Device 2 is the cold sysreset device */
+	ut_assertok(uclass_get_device(UCLASS_SYSRESET, 2, &dev));
+	ut_asserteq(SYSRESET_COLD, sysreset_get_last(dev));
+
+	/* This is device 0, the non-DT one */
+	ut_asserteq(SYSRESET_COLD, sysreset_get_last_walk());
+
+	return 0;
+}
+DM_TEST(dm_test_sysreset_get_last, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
