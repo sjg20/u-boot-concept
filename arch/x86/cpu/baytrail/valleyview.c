@@ -21,7 +21,7 @@ int arch_cpu_init(void)
 {
 	post_code(POST_CPU_INIT);
 
-	return x86_cpu_init_f();
+	return x86_cpu_init_f(true);
 }
 
 int arch_misc_init(void)

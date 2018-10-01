@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2016 Google, Inc
  */
+#define DEBUG
 
 #include <common.h>
 #include <dm.h>
@@ -171,13 +172,6 @@ int mrc_locate_spd(struct udevice *dev, int size, const void **spd_datap)
 
 	printf("No SPD data found for index %d\n", spd_index);
 	return -ENOENT;
-}
-
-asmlinkage void sdram_console_tx_byte(unsigned char byte)
-{
-#ifdef DEBUG
-	putc(byte);
-#endif
 }
 
 /**

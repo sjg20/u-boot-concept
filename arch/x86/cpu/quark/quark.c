@@ -214,7 +214,7 @@ int arch_cpu_init(void)
 
 	post_code(POST_CPU_INIT);
 
-	ret = x86_cpu_init_f();
+	ret = x86_cpu_init_f(true);
 	if (ret)
 		return ret;
 

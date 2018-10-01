@@ -17,6 +17,7 @@
  * Part of this file is adapted from coreboot
  * src/arch/x86/lib/cpu.c
  */
+#define DEBUG
 
 #include <common.h>
 #include <command.h>
@@ -212,8 +213,10 @@ int last_stage_init(void)
 static int x86_init_cpus(void)
 {
 #ifdef CONFIG_SMP
+# if CONFIG_IS_ENABLED(X86_32BIT_INIT) || !defined(CONFIG_X86_RUN_64BIT)
 	debug("Init additional CPUs\n");
 	x86_mp_init();
+# endif
 #else
 	struct udevice *dev;
 
@@ -233,12 +236,14 @@ int cpu_init_r(void)
 	struct udevice *dev;
 	int ret;
 
+	printf("%s: start\n", __func__);
 	if (!ll_boot_init())
 		return 0;
 
 	ret = x86_init_cpus();
-	if (ret)
-		return ret;
+#warning "skip"
+// 	if (ret)
+// 		return ret;
 
 	/*
 	 * Set up the northbridge, PCH and LPC if available. Note that these

@@ -309,12 +309,12 @@ u32 cpu_get_stepping(void)
 	return gd->arch.x86_mask;
 }
 
-int x86_cpu_init_f(void)
+int x86_cpu_init_f(bool full_init)
 {
 	const u32 em_rst = ~X86_CR0_EM;
 	const u32 mp_ne_set = X86_CR0_MP | X86_CR0_NE;
 
-	if (ll_boot_init()) {
+	if (full_init && ll_boot_init()) {
 		/* initialize FPU, reset EM, set MP and NE */
 		asm ("fninit\n" \
 		"movl %%cr0, %%eax\n" \
@@ -343,7 +343,7 @@ int x86_cpu_init_f(void)
 	gd->pci_ram_top = 0x80000000U;
 
 	/* Configure fixed range MTRRs for some legacy regions */
-	if (gd->arch.has_mtrr) {
+	if (full_init && gd->arch.has_mtrr) {
 		u64 mtrr_cap;
 
 		mtrr_cap = native_read_msr(MTRR_CAP_MSR);
@@ -377,7 +377,8 @@ int x86_cpu_init_f(void)
 
 #ifdef CONFIG_I8254_TIMER
 	/* Set up the i8254 timer if required */
-	i8254_init();
+	if (full_init)
+		i8254_init();
 #endif
 
 	return 0;

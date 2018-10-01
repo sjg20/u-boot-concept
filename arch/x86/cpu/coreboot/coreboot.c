@@ -26,7 +26,7 @@ int arch_cpu_init(void)
 
 	timestamp_init();
 
-	return x86_cpu_init_f();
+	return x86_cpu_init_f(true);
 }
 
 int checkcpu(void)

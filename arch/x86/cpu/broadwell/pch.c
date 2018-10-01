@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2016 Google, Inc
  */
+#define DEBUG
 
 #include <common.h>
 #include <dm.h>
@@ -38,6 +39,7 @@ static int broadwell_pch_early_init(struct udevice *dev)
 	pci_dev_t bdf;
 	int ret;
 
+	debug("%s: start\n", __func__);
 	dm_pci_write_config32(dev, PCH_RCBA, RCB_BASE_ADDRESS | 1);
 
 	dm_pci_write_config32(dev, PMBASE, ACPI_BASE_ADDRESS | 1);
@@ -75,6 +77,7 @@ static int broadwell_pch_early_init(struct udevice *dev)
 	pci_bus_clrset_config32(bus, bdf, 0xf4, 0x60, 0);
 	pci_bus_clrset_config32(bus, bdf, 0xf4, 0x80, 0x80);
 	pci_bus_clrset_config32(bus, bdf, 0xe2, 0x30, 0x30);
+	debug("%s: done\n", __func__);
 
 	return 0;
 }
@@ -460,6 +463,7 @@ static int broadwell_pch_init(struct udevice *dev)
 {
 	int ret;
 
+	debug("%s: start\n", __func__);
 	/* Enable upper 128 bytes of CMOS */
 	setbits_le32(RCB_REG(RC), 1 << 2);
 
@@ -483,16 +487,23 @@ static int broadwell_pch_init(struct udevice *dev)
 	pch_pm_init(dev);
 	pch_cg_init(dev);
 	systemagent_init();
+	debug("%s: done\n", __func__);
 
 	return 0;
 }
 
 static int broadwell_pch_probe(struct udevice *dev)
 {
-	if (!(gd->flags & GD_FLG_RELOC))
-		return broadwell_pch_early_init(dev);
-	else
+	if (CONFIG_IS_ENABLED(X86_32BIT_INIT)) {
+		if (!(gd->flags & GD_FLG_RELOC))
+			return broadwell_pch_early_init(dev);
+		else
+			return broadwell_pch_init(dev);
+	} else if (IS_ENABLED(CONFIG_SPL) && !IS_ENABLED(CONFIG_SPL_BUILD)) {
 		return broadwell_pch_init(dev);
+	} else {
+		return 0;
+	}
 }
 
 static int broadwell_pch_get_spi_base(struct udevice *dev, ulong *sbasep)

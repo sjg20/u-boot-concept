@@ -13,7 +13,15 @@ extern char gdt_rom[];
 
 /* cpu/.../cpu.c */
 int arch_cpu_init(void);
-int x86_cpu_init_f(void);
+
+/**
+ * x86_cpu_init_f() - Set up basic features of the x86 CPU
+ *
+ * @full_init: true if this is the first time this function is called. Set to
+ *	false if (for example) TPL has called it already and this call is for
+ *	SPL.
+ */
+int x86_cpu_init_f(bool full_init);
 int cpu_init_f(void);
 void setup_gdt(struct global_data *id, u64 *gdt_addr);
 /*

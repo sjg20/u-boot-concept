@@ -34,7 +34,7 @@
 #define CONFIG_ENV_OFFSET		0x003f8000
 
 #define CONFIG_STD_DEVICES_SETTINGS	"stdin=usbkbd,i8042-kbd,serial\0" \
-					"stdout=vidconsole,serial\0" \
-					"stderr=vidconsole,serial\0"
+					"stdout=serial\0" \
+					"stderr=serial\0"
 
 #endif

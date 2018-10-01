@@ -6,9 +6,23 @@
 
 #include <config.h>
 
-#ifdef CONFIG_ROM_SIZE
+#ifdef CONFIG_CHROMEOS
 / {
 	binman {
+		multiple-images;
+		rom: rom {
+		};
+	};
+};
+#else
+/ {
+	rom: binman {
+	};
+};
+#endif
+
+#ifdef CONFIG_ROM_SIZE
+&rom {
 		filename = "u-boot.rom";
 		end-at-4gb;
 		sort-by-offset;
@@ -22,7 +36,21 @@
 			filename = CONFIG_INTEL_ME_FILE;
 		};
 #endif
-#ifdef CONFIG_SPL
+#ifdef CONFIG_TPL
+		u-boot-spl {
+			offset = <CONFIG_SPL_TEXT_BASE>;
+		};
+		u-boot-spl-dtb {
+		};
+		u-boot-tpl-with-ucode-ptr {
+			offset = <CONFIG_TPL_TEXT_BASE>;
+		};
+		u-boot-tpl-dtb {
+		};
+		u-boot {
+			offset = <CONFIG_SYS_TEXT_BASE>;
+		};
+#elif defined(CONFIG_SPL)
 		u-boot-spl-with-ucode-ptr {
 			offset = <CONFIG_SPL_TEXT_BASE>;
 		};
@@ -31,7 +59,7 @@
 			type = "u-boot-dtb-with-ucode";
 		};
 		u-boot {
-			offset = <0xfff00000>;
+			offset = <CONFIG_SYS_TEXT_BASE>;
 		};
 #else
 		u-boot-with-ucode-ptr {
@@ -77,7 +105,11 @@
 			offset = <CONFIG_X86_REFCODE_ADDR>;
 		};
 #endif
-#ifdef CONFIG_SPL
+#ifdef CONFIG_TPL
+		x86-start16-tpl {
+			offset = <CONFIG_SYS_X86_START16>;
+		};
+#elif defined(CONFIG_SPL)
 		x86-start16-spl {
 			offset = <CONFIG_SYS_X86_START16>;
 		};
@@ -86,6 +118,5 @@
 			offset = <CONFIG_SYS_X86_START16>;
 		};
 #endif
-	};
 };
 #endif
