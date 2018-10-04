@@ -534,7 +534,7 @@
 			compatible = "ehci-pci";
 		};
 
-		pch@1f,0 {
+		pch: pch@1f,0 {
 			reg = <0x0000f800 0 0 0 0>;
 			compatible = "intel,broadwell-pch";
 			u-boot,dm-pre-reloc;
@@ -640,6 +640,11 @@
 			reg = <0x0000fb00 0 0 0 0>;
 			u-boot,dm-pre-reloc;
 		};
+	};
+
+	pch-reset {
+		compatible = "intel,pch-reset";
+		intel,pch = <&pch>;
 	};
 
 	tpm {

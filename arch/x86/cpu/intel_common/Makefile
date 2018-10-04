@@ -17,6 +17,7 @@ ifndef CONFIG_$(SPL_)X86_64
 obj-y += microcode.o
 endif
 obj-y += pch.o
+obj-y += sysreset_pch.o
 
 ifdef CONFIG_SPL
 ifndef CONFIG_SPL_BUILD

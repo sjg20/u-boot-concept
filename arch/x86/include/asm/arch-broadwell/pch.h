@@ -108,6 +108,23 @@
 #define SATA_DTLE_DATA_SHIFT	24
 #define SATA_DTLE_EDGE_SHIFT	16
 
+/* ICH PMBASE */
+#define PM1_STS                 0x00
+#define  WAK_STS                (1 << 15)
+#define  PCIEXPWAK_STS          (1 << 14)
+#define  PRBTNOR_STS            (1 << 11)
+#define  RTC_STS                (1 << 10)
+#define  PWRBTN_STS             (1 << 8)
+#define  GBL_STS                (1 << 5)
+#define  BM_STS                 (1 << 4)
+#define  TMROF_STS              (1 << 0)
+#define PM1_EN                  0x02
+#define  PCIEXPWAK_DIS          (1 << 14)
+#define  RTC_EN                 (1 << 10)
+#define  PWRBTN_EN              (1 << 8)
+#define  GBL_EN                 (1 << 5)
+#define  TMROF_EN               (1 << 0)
+
 /* Power Management */
 #define GEN_PMCON_1		0xa0
 #define  SMI_LOCK		(1 << 4)
