@@ -5,6 +5,8 @@
  * SPDX-License-Identifier:	GPL-2.0+
  */
 
+#define LOG_CATEGORY UCLASS_CROS_VBOOT_FLAG
+
 #include <common.h>
 #include <dm.h>
 #include <cros/vboot_flag.h>
@@ -25,11 +27,12 @@ static int flag_const_read(struct udevice *dev)
 static int flag_const_ofdata_to_platdata(struct udevice *dev)
 {
 	struct flag_const_priv *priv = dev_get_priv(dev);
+	u32 value;
 	int ret;
 
-	ret = fdtdec_get_int(gd->fdt_blob, dev_of_offset(dev), "value", -1);
-	if (ret == -1) {
-		debug("%s: Missing flag value in '%s'", __func__, dev->name);
+	ret = dev_read_u32(dev, "value", &value);
+	if (ret) {
+		log_warning("Missing flag value in '%s'", dev->name);
 		return ret;
 	}
 	priv->value = ret != 0;

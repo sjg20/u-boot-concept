@@ -293,8 +293,7 @@ VbError_t VbExEcGetExpectedImage(int devidx, enum VbSelectFirmware_t select,
 	if (!entry)
 		return VBERROR_UNKNOWN;
 
-	ret = fwstore_load_image(vboot->fwstore, entry->offset, entry->length,
-				 FMAP_COMPRESS_NONE, 0, &image, image_sizep);
+	ret = fwstore_load_image(vboot->fwstore, entry, &image, image_sizep);
 	if (ret) {
 		vboot_log(LOGL_ERR, "Cannot locate image: err=%d\n", ret);
 		return VBERROR_UNKNOWN;
@@ -650,8 +649,7 @@ static int do_aux_fw_update(struct vboot_info *vboot, struct udevice *dev,
 		return ret;
 
 	vboot_log(LOGL_INFO, "Update aux fw '%s'\n", dev->name);
-	ret = fwstore_load_image(dev, entry.offset, entry.length,
-				 FMAP_COMPRESS_NONE, 0, &image, &size);
+	ret = fwstore_load_image(dev, &entry, &image, &size);
 	
 	ret = aux_fw_update_image(dev, image, size);
 	if (ret == ERESTARTSYS)

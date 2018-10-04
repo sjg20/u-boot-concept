@@ -14,7 +14,7 @@ int vboot_ver6_jump_fw(struct vboot_info *vboot)
 	int ret;
 
 	entry = &vboot->blob->spl_entry;
-	ret = fwstore_jump(vboot, entry->offset, vboot->fw_size);
+	ret = fwstore_jump(vboot, entry);
 	if (ret)
 		return log_msg_ret("Jump via fwstore", ret);
 

@@ -9,6 +9,7 @@ config CHROMEOS
 	imply CROS_FLAG_CONST
 	imply CROS_FLAG_KEY
 	imply LZ4
+	imply SPL_LZ4
 	imply BLOBLIST
 	imply NVDATA_CMOS if X86
 

@@ -18,7 +18,7 @@ int vboot_spl_jump_u_boot(struct vboot_info *vboot)
 	/* TODO(sjg@chromium.org): Verify the hash here */
 	bloblist_finish();
 	entry = &vboot->blob->u_boot_entry;
-	ret = fwstore_jump(vboot, entry->offset, entry->length);
+	ret = fwstore_jump(vboot, entry);
 	if (ret)
 		return log_msg_ret("Jump via fwstore", ret);
 

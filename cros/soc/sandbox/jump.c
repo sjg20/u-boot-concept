@@ -12,17 +12,23 @@
 #include <cros/fwstore.h>
 #include <cros/vboot.h>
 
-int fwstore_jump(struct vboot_info *vboot, int offset, int size)
+int fwstore_jump(struct vboot_info *vboot, struct fmap_entry *entry)
 {
-	char *buf;
+	u8 *buf;
+	int size;
 	int ret;
 
+	/*
+	 * Allocate a buffer - if using compression, add a margin so that
+	 * decompression does not overwrite the compressed data.
+	 */
+	size = entry->unc_length ? entry->unc_length * 2 : entry->length;
 	buf = os_malloc(size);
 	if (!buf)
 		return log_msg_ret("Allocate fwstore space", -ENOMEM);
-	vboot_log(LOGL_INFO, "Reading firmware offset %x, size %x\n", offset,
-		  size);
-	ret = cros_fwstore_read(vboot->fwstore, offset, size, buf);
+	vboot_log(LOGL_INFO, "Reading firmware offset %x, length %x\n",
+		  entry->offset, entry->length);
+	ret = cros_fwstore_read_decomp(vboot->fwstore, entry, buf, size);
 	if (ret)
 		return log_msg_ret("Read fwstore", ret);
 	ret = os_jump_to_image(buf, size);

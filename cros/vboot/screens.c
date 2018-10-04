@@ -103,9 +103,7 @@ static int load_archive(const char *str, struct directory **dest)
 		return VBERROR_INVALID_BMPFV;
 	}
 
-        ret = fwstore_load_image(vboot->fwstore, fentry.offset, fentry.length,
-				 fentry.compress_algo, fentry.unc_length,
-				 &data, &size);
+        ret = fwstore_load_image(vboot->fwstore, &fentry, &data, &size);
 
 	/* convert endianness of archive header */
 	dir = (struct directory *)data;
@@ -1086,9 +1084,7 @@ static int vboot_init_locale(struct vboot_info *vboot)
 	locale_data.count = 0;
 
 	/* Load locale list */
-	ret = fwstore_load_image(vboot->fwstore, fentry.offset, fentry.length,
-				 FMAP_COMPRESS_LZ4, fentry.unc_length,
-				 &locales, &size);
+	ret = fwstore_load_image(vboot->fwstore, &fentry, &locales, &size);
 	if (ret)
 		return log_msg_ret("locale list not found", ret);
 

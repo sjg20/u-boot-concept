@@ -65,8 +65,7 @@ struct cros_fwstore_ops {
  * @buf:	Buffer to place data
  * @return 0 if OK, -ve on error
  */
-int cros_fwstore_read(struct udevice *dev, uint32_t offset, uint32_t count,
-		      void *buf);
+int cros_fwstore_read(struct udevice *dev, int offset, int count, void *buf);
 
 /**
  * cros_fwstore_write() - write data
@@ -77,8 +76,7 @@ int cros_fwstore_read(struct udevice *dev, uint32_t offset, uint32_t count,
  * @buf:	Buffer containg data to write
  * @return 0 if OK, -ve on error
  */
-int cros_fwstore_write(struct udevice *dev, uint32_t offset, uint32_t count,
-		       void *buf);
+int cros_fwstore_write(struct udevice *dev, int offset, int count, void *buf);
 
 /**
  * cros_fwstore_sw_wp_enabled() - see if software write protect is enabled
@@ -113,18 +111,17 @@ int fwstore_get_reader_dev(struct udevice *fwstore, int offset, int size,
  * This allocates memory for the image and returns a pointer to it.
  *
  * @dev: Device to load from
- * @offset:	Offset within device to read from in bytes
- * @compress_algo:	Compression algorithm to use
- * @unc_size:	Uncompressed size of data, ignored if @compress_algo is
- *		FMAP_COMPRESS_NONE
- * @count:	Number of bytes to read
+ * @entry:	Flash entry to load (provides offset, size, compression,
+ *		uncompressed size)
  * @imagep:	Returns a pointer to the data (must be freed by caller)
  * @image_sizep: Returns image size
  * @return 0 if OK, -ENOENT if the image has a zero size, -ENOMEM if there is
  *	not enough memory for the buffer, other error on read failre
  */
-int fwstore_load_image(struct udevice *dev, int offset, int size,
-		       enum fmap_compress_t compress_algo, int unc_size,
-		       uint8_t **imagep, int *image_sizep);
+int fwstore_load_image(struct udevice *dev, struct fmap_entry *entry,
+		       u8 **imagep, int *image_sizep);
+
+int cros_fwstore_read_decomp(struct udevice *dev, struct fmap_entry *entry,
+			     void *buf, int buf_size);
 
 #endif /* CROS_FWSTORE_H_ */

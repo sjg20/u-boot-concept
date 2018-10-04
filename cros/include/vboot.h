@@ -385,7 +385,7 @@ void vboot_set_selected_region(struct vboot_info *vboot,
 			       const struct fmap_entry *spl,
 			       const struct fmap_entry *u_boot);
 
-int fwstore_jump(struct vboot_info *vboot, int offset, int size);
+int fwstore_jump(struct vboot_info *vboot, struct fmap_entry *entry);
 
 int vboot_wants_oprom(struct vboot_info *vboot);
 int resource_read(struct vboot_info *vboot, enum vb2_resource_index index,
