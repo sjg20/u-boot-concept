@@ -77,6 +77,8 @@ int vboot_ec_entering_mode(struct udevice *dev, enum VbEcBootMode_t mode)
 {
 	struct vboot_ec_ops *ops = vboot_ec_get_ops(dev);
 
+	if (device_get_uclass_id(dev) != UCLASS_CROS_VBOOT_EC)
+		return -EXDEV;
 	if (!ops->entering_mode)
 		return -ENOSYS;
 
