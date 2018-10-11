@@ -900,6 +900,48 @@ static VbError_t vboot_draw_languages_menu(struct vboot_info *vboot,
 	return VBERROR_SUCCESS;
 }
 
+static void cons_string(struct udevice *cons, const char *str)
+{
+	while (*str)
+		vidconsole_put_char(cons, *str++);
+}
+
+static void cons_text(struct vboot_info *vboot, int linenum, int seqnum,
+		      const char *name, const char *desc)
+{
+	struct vidconsole_priv *uc_priv = dev_get_uclass_priv(vboot->console);
+	char seq[2] = {'0' + seqnum, '\0'};
+	int x, y;
+
+	x = uc_priv->cols / 3;
+	y = uc_priv->rows / 2 + linenum;
+	vidconsole_position_cursor(vboot->console, x, y);
+	if (seqnum != -1)
+		cons_string(vboot->console, seq);
+
+	vidconsole_position_cursor(vboot->console, x + 3, y);
+	cons_string(vboot->console, name);
+
+	vidconsole_position_cursor(vboot->console, x + 10, y);
+	cons_string(vboot->console, desc);
+}
+
+static VbError_t vboot_draw_alt_fw_menu(struct vboot_info *vboot,
+					struct params *p)
+{
+	char msg[60];
+
+	RETURN_ON_ERROR(vboot_draw_base_screen(vboot, p));
+	RETURN_ON_ERROR(draw_icon("VerificationOff.bmp"));
+	sprintf(msg, "Press key 1-%c to select alternative boot loader:",
+	        '2');
+	cons_text(vboot, 0, -1, msg, "");
+	cons_text(vboot, 2, 1, "U-Boot", "U-Boot Boot Loader v2018.09");
+	cons_text(vboot, 3, 2, "TianoCore", "TianoCore v3.32");
+
+	return VBERROR_SUCCESS;
+}
+
 static VbError_t vboot_draw_options_menu(struct vboot_info *vboot,
 					 struct params *p)
 {
@@ -1003,6 +1045,11 @@ static const struct vboot_ui_descriptor vboot_screens[] = {
 		.id = VB_SCREEN_OPTIONS_MENU,
 		.draw = vboot_draw_options_menu,
 		.mesg = "Options Menu",
+	},
+	{
+		.id = VB_SCREEN_ALT_FW_PICK,
+		.draw = vboot_draw_alt_fw_menu,
+		.mesg = "Alternative Firmware Menu",
 	},
 };
 

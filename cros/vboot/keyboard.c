@@ -81,7 +81,6 @@ uint32_t VbExKeyboardRead(void)
 
 	/* Read a non-Escape character or a standalone Escape character. */
 	c = getc();
-	printf("c = %d\n", c);
 	if (c != CSI_0 || !tstc()) {
 		/* Handle normal asci keys for FAFT keyboard matrix */
 		if (faft_key_remap(&c, KEY_TYPE_ASCII) >= 0)

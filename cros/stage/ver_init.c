@@ -123,8 +123,10 @@ int vboot_ver_init(struct vboot_info *vboot)
 
 	bootstage_mark(BOOTSTAGE_VBOOT_END_TPMINIT);
 
-	if (vboot_flag_read_walk(VBOOT_FLAG_DEVELOPER) == 1)
+	if (vboot_flag_read_walk(VBOOT_FLAG_DEVELOPER) == 1) {
 		ctx->flags |= VB2_CONTEXT_FORCE_DEVELOPER_MODE;
+		vboot_log(LOGL_INFO, "Enabled developer mode\n");
+	}
 
 	if (vboot_flag_read_walk(VBOOT_FLAG_RECOVERY) == 1) {
 		if (IS_ENABLED(CONFIG_VBOOT_DISABLE_DEV_ON_RECOVERY))

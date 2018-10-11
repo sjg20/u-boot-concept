@@ -35,7 +35,7 @@ static int flag_const_ofdata_to_platdata(struct udevice *dev)
 		log_warning("Missing flag value in '%s'", dev->name);
 		return ret;
 	}
-	priv->value = ret != 0;
+	priv->value = value != 0;
 
 	return 0;
 }

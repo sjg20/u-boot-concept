@@ -139,6 +139,9 @@ VbError_t VbExDisplayScreen(uint32_t screen_type, uint32_t locale)
 	case VB_SCREEN_OPTIONS_MENU:
 		msg = "options menu";
 		break;
+	case VB_SCREEN_ALT_FW_PICK:
+		msg = "altfw menu";
+		break;
 	default:
 		VB2_DEBUG("Not a valid screen type: %08x.\n",
 			screen_type);
