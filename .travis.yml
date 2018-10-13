@@ -37,7 +37,7 @@ before_install:
 
 install:
  # Clone uboot-test-hooks
- - git clone --depth=1 git://github.com/swarren/uboot-test-hooks.git /tmp/uboot-test-hooks
+ - git clone --depth=1 -b qemu git://github.com/lbmeng/uboot-test-hooks.git /tmp/uboot-test-hooks
  - ln -s travis-ci /tmp/uboot-test-hooks/bin/`hostname`
  - ln -s travis-ci /tmp/uboot-test-hooks/py/`hostname`
  # prepare buildman environment
