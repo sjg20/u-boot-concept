@@ -107,6 +107,9 @@ config CROS_EC_RW_FILE
 	string "Chrome OS EC read-write image filename"
 	default "ec-rw.bin"
 
+config DETACHABLE_UI
+	bool "Support a menu for use with devices with a detachable keyboard"
+
 source "cros/cmd/Kconfig"
 source "cros/nvdata/Kconfig"
 source "cros/flag/Kconfig"

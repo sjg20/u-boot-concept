@@ -231,7 +231,7 @@ static int draw_bitmap_v3(const struct vector *top_left,
 		return CBGFX_ERROR_BITMAP_FORMAT;
 	}
 	if (bpp >= 16) {
-		LOG("Non-palette bitmaps are not supported\n");
+		LOG("Non-palette bitmaps are not supported, bpp=%d\n", bpp);
 		return CBGFX_ERROR_BITMAP_FORMAT;
 	}
 	if (bpp != 8) {

@@ -32,7 +32,8 @@ int vboot_rw_select_kernel(struct vboot_info *vboot)
 	kparams->kernel_buffer = map_sysmem(kaddr, ksize);
 	kparams->kernel_buffer_size = ksize;
 
-	if (IS_ENABLED(CONFIG_DETACHABLE_UI)) {
+	if (IS_ENABLED(CONFIG_DETACHABLE_UI) &&
+	    vboot_config_bool(vboot, "detachable-ui")) {
 		kparams->inflags = VB_SALK_INFLAGS_ENABLE_DETACHABLE_UI;
 		if (IS_ENABLED(CONFIG_X86) &&
 		    CONFIG_IS_ENABLED(CROS_EC)) {

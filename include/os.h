@@ -350,4 +350,6 @@ int os_mprotect_allow(void *start, size_t len);
  */
 int os_write_file(const char *name, const void *buf, int size);
 
+int os_read_file(const char *name, void **bufp, int *sizep);
+
 #endif
