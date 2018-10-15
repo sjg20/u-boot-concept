@@ -82,16 +82,10 @@ struct params {
 	uint32_t redraw_base;
 };
 
-struct image {
-	const char *bitmap;
-	int size;
-};
-
-/* struct for passing around menu string arrays or images */
+/* struct for passing around menu string arrays */
 struct menu {
 	const char *const *strings;
 	uint32_t count;
-	const struct image *images;
 };
 
 static int load_archive(const char *str, struct directory **dest)
@@ -212,43 +206,6 @@ static struct dentry *find_file_in_archive(const struct directory *dir,
 	return NULL;
 }
 
-static VbError_t _draw(const void *bitmap, int size, const char *image_name,
-		       int32_t x, int32_t y, int32_t width, int32_t height,
-		       uint32_t flags)
-{
-	struct scale pos = {
-		.x = { .n = x, .d = VB_SCALE, },
-		.y = { .n = y, .d = VB_SCALE, },
-	};
-	struct scale dim = {
-		.x = { .n = width, .d = VB_SCALE, },
-		.y = { .n = height, .d = VB_SCALE, },
-	};
-
-	if (get_bitmap_dimension(bitmap, size, &dim))
-		return VBERROR_UNKNOWN;
-
-	if ((int64_t)dim.x.n * VB_SCALE <= (int64_t)dim.x.d * VB_DIVIDER_WIDTH)
-		return draw_bitmap(bitmap, size, &pos, &dim, flags);
-
-	/*
-	 * If we get here the image is too wide, so fit it to the content width.
-	 * This only works if it is horizontally centered (x == VB_SCALE_HALF
-	 * and flags & PIVOT_H_CENTER), but that applies to our current stuff
-	 * which might be too wide (locale-dependent strings). Only exception is
-	 * the "For help" footer, which was already fitted in its own function.
-	 */
-	if (image_name)
-		printf("vbgfx: '%s' too wide, fitting to content width\n",
-		       image_name);
-	dim.x.n = VB_DIVIDER_WIDTH;
-	dim.x.d = VB_SCALE;
-	dim.y.n = VB_SIZE_AUTO;
-	dim.y.d = VB_SCALE;
-
-	return draw_bitmap(bitmap, size, &pos, &dim, flags);
-}
-
 /*
  * Find and draw image in archive
  */
@@ -264,8 +221,36 @@ static VbError_t draw(struct directory *dir, const char *image_name,
 		return VBERROR_NO_IMAGE_PRESENT;
 	bitmap = (uint8_t *)dir + file->offset;
 
-	return _draw(bitmap, file->size, image_name, x, y, width, height,
-		     flags);
+	struct scale pos = {
+		.x = { .n = x, .d = VB_SCALE, },
+		.y = { .n = y, .d = VB_SCALE, },
+	};
+	struct scale dim = {
+		.x = { .n = width, .d = VB_SCALE, },
+		.y = { .n = height, .d = VB_SCALE, },
+	};
+
+	if (get_bitmap_dimension(bitmap, file->size, &dim))
+		return VBERROR_UNKNOWN;
+
+	if ((int64_t)dim.x.n * VB_SCALE <= (int64_t)dim.x.d * VB_DIVIDER_WIDTH)
+		return draw_bitmap((uint8_t *)dir + file->offset, file->size,
+				   &pos, &dim, flags);
+
+	/*
+	 * If we get here the image is too wide, so fit it to the content width.
+	 * This only works if it is horizontally centered (x == VB_SCALE_HALF
+	 * and flags & PIVOT_H_CENTER), but that applies to our current stuff
+	 * which might be too wide (locale-dependent strings). Only exception is
+	 * the "For help" footer, which was already fitted in its own function.
+	 */
+	printf("vbgfx: '%s' too wide, fitting to content width\n", image_name);
+	dim.x.n = VB_DIVIDER_WIDTH;
+	dim.x.d = VB_SCALE;
+	dim.y.n = VB_SIZE_AUTO;
+	dim.y.d = VB_SCALE;
+	return draw_bitmap((uint8_t *)dir + file->offset, file->size,
+			   &pos, &dim, flags);
 }
 
 static VbError_t draw_image(const char *image_name,
@@ -283,13 +268,6 @@ static VbError_t draw_image_locale(const char *image_name, uint32_t locale,
 	return draw(locale_data.archive, image_name, x, y, w, h, flags);
 }
 
-static VbError_t draw_image_bmp(const char *bmp, int size,
-				const char *image_name, int32_t x, int32_t y,
-				int32_t w, int32_t h, uint32_t flags)
-{
-	return _draw(bmp, size, image_name, x, y, w, h, flags);
-}
-
 static VbError_t get_image_size(struct directory *dir, const char *image_name,
 				int32_t *width, int32_t *height)
 {
@@ -305,8 +283,8 @@ static VbError_t get_image_size(struct directory *dir, const char *image_name,
 		.y = { .n = *height, .d = VB_SCALE, },
 	};
 
-	rv = get_bitmap_dimension((uint8_t *)dir + file->offset, file->size,
-				  &dim);
+	rv = get_bitmap_dimension((uint8_t *)dir + file->offset,
+				  file->size, &dim);
 	if (rv)
 		return VBERROR_UNKNOWN;
 
@@ -591,20 +569,13 @@ static VbError_t vboot_draw_menu(struct params *p, const struct menu *m)
 	uint32_t flags;
 
 	/* find starting point y offset */
-	for (i = 0, yoffset = 0 - m->count/2; i < m->count; i++, yoffset++) {
+	yoffset = 0 - m->count/2;
+	for (i = 0; i < m->count; i++) {
 		if ((p->disabled_idx_mask & (1 << i)) != 0)
 			continue;
 		flags = PIVOT_H_CENTER|PIVOT_V_TOP;
 		if (p->selected_index == i)
 			flags |= INVERT_COLORS;
-		if (m->images) {
-			RETURN_ON_ERROR(draw_image_bmp(m->images[i].bitmap,
-				m->images[i].size, NULL,
-				VB_SCALE_HALF,
-				VB_SCALE_HALF + VB_TEXT_HEIGHT * yoffset,
-				VB_SIZE_AUTO, VB_TEXT_HEIGHT, flags));
-			continue;
-		}
 		RETURN_ON_ERROR(draw_image_locale(m->strings[i], p->locale,
 			VB_SCALE_HALF, VB_SCALE_HALF + VB_TEXT_HEIGHT * yoffset,
 			VB_SIZE_AUTO, VB_TEXT_HEIGHT,
@@ -619,6 +590,7 @@ static VbError_t vboot_draw_menu(struct params *p, const struct menu *m)
 				VB_SIZE_AUTO, VB_TEXT_HEIGHT,
 				PIVOT_H_LEFT | PIVOT_V_TOP));
 		}
+		yoffset++;
 	}
 
 	RETURN_ON_ERROR(draw_image_locale("navigate.bmp", p->locale,
@@ -992,7 +964,6 @@ static VbError_t vboot_draw_altfw_menu(struct vboot_info *vboot,
 				       struct params *p)
 {
 	struct vidconsole_priv *uc_priv = dev_get_uclass_priv(vboot->console);
-	struct image *images;
 	VbAltFwItem *items;
 	uint32_t count;
 	int i, ret;
@@ -1002,13 +973,6 @@ static VbError_t vboot_draw_altfw_menu(struct vboot_info *vboot,
 	ret = VbExGetAltFWList(&items, &count);
 	if (ret)
 		return ret;
-	images = malloc(sizeof(struct image) * count);
-	for (i = 0; i < count; i++) {
-		images[i].bitmap = items[i].image;
-		images[i].size = items[i].image_size;
-	}
-// 	const struct menu m = { NULL, count, images };
-// 	return vboot_draw_menu(p, &m);
 	int yoffset;
 	uint32_t flags;
 
