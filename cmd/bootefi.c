@@ -279,6 +279,31 @@ static void bootefi_run_finish(struct efi_loaded_image_obj *image_obj,
 	efi_delete_handle(&image_obj->header);
 }
 
+static int efi_handle_fdt(char *fdt_opt)
+{
+	unsigned long fdt_addr;
+	efi_status_t r;
+
+	if (fdt_opt) {
+		fdt_addr = simple_strtoul(fdt_opt, NULL, 16);
+		if (!fdt_addr && *fdt_opt != '0')
+			return CMD_RET_USAGE;
+
+		/* Install device tree */
+		r = efi_install_fdt(fdt_addr);
+		if (r != EFI_SUCCESS) {
+			printf("ERROR: failed to install device tree\n");
+			return CMD_RET_FAILURE;
+		}
+	} else {
+		/* Remove device tree. EFI_NOT_FOUND can be ignored here */
+		efi_install_configuration_table(&efi_guid_fdt, NULL);
+		printf("WARNING: booting without device tree\n");
+	}
+
+	return CMD_RET_SUCCESS;
+}
+
 /**
  * do_bootefi_exec() - execute EFI binary
  *
@@ -474,7 +499,6 @@ static int do_bootefi(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	unsigned long addr;
 	char *saddr;
 	efi_status_t r;
-	unsigned long fdt_addr;
 
 	/* Allow unaligned memory access */
 	allow_unaligned();
@@ -490,21 +514,6 @@ static int do_bootefi(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	if (argc < 2)
 		return CMD_RET_USAGE;
 
-	if (argc > 2) {
-		fdt_addr = simple_strtoul(argv[2], NULL, 16);
-		if (!fdt_addr && *argv[2] != '0')
-			return CMD_RET_USAGE;
-		/* Install device tree */
-		r = efi_install_fdt(fdt_addr);
-		if (r != EFI_SUCCESS) {
-			printf("ERROR: failed to install device tree\n");
-			return CMD_RET_FAILURE;
-		}
-	} else {
-		/* Remove device tree. EFI_NOT_FOUND can be ignored here */
-		efi_install_configuration_table(&efi_guid_fdt, NULL);
-		printf("WARNING: booting without device tree\n");
-	}
 #ifdef CONFIG_CMD_BOOTEFI_HELLO
 	if (!strcmp(argv[1], "hello")) {
 		ulong size = __efi_helloworld_end - __efi_helloworld_begin;
@@ -522,6 +531,9 @@ static int do_bootefi(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		struct efi_loaded_image_obj *image_obj;
 		struct efi_loaded_image *loaded_image_info;
 
+		if (efi_handle_fdt(argc > 2 ? argv[2] : NULL))
+			return CMD_RET_FAILURE;
+
 		if (bootefi_test_prepare(&image_obj, &loaded_image_info,
 					 "\\selftest", (uintptr_t)&efi_selftest,
 					 "efi_selftest"))
@@ -534,6 +546,9 @@ static int do_bootefi(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	} else
 #endif
 	if (!strcmp(argv[1], "bootmgr")) {
+		if (efi_handle_fdt(argc > 2 ? argv[2] : NULL))
+			return CMD_RET_FAILURE;
+
 		return do_bootefi_bootmgr_exec();
 	} else {
 		saddr = argv[1];
@@ -543,6 +558,8 @@ static int do_bootefi(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		if (!addr && *saddr != '0')
 			return CMD_RET_USAGE;
 
+		if (efi_handle_fdt(argc > 2 ? argv[2] : NULL))
+			return CMD_RET_FAILURE;
 	}
 
 	printf("## Starting EFI application at %08lx ...\n", addr);
