@@ -203,6 +203,7 @@ static int vboot_do_init_out_flags(struct vboot_info *vboot, uint32_t out_flags)
 static int vboot_init_handoff(struct vboot_info *vboot)
 {
 	struct vboot_handoff *handoff;
+	VbSharedDataHeader *vdat;
 	int ret;
 
 	handoff = bloblist_find(BLOBLISTT_VBOOT_HANDOFF, sizeof(*handoff));
@@ -216,6 +217,8 @@ static int vboot_init_handoff(struct vboot_info *vboot)
 	if (ret)
 		return ret;
 
+	vdat = vboot->cparams.shared_data_blob;
+// 	vdat->flags |= VBSD_NVDATA_V2;
 	/*
 	 * If the lid is closed, don't count down the boot
 	 * tries for updates, since the OS will shut down
@@ -225,7 +228,6 @@ static int vboot_init_handoff(struct vboot_info *vboot)
 	 * to update the vboot internal flags ourself.
 	 */
 	if (vboot_flag_read_walk(VBOOT_FLAG_LID_OPEN) == 0) {
-		VbSharedDataHeader *vdat = vboot->cparams.shared_data_blob;
 
 		/* Tell kernel selection to not count down */
 		vdat->flags |= VBSD_NOFAIL_BOOT;
@@ -248,6 +250,7 @@ int vboot_rw_init(struct vboot_info *vboot)
 	vboot->ctx = ctx;
 	ctx->non_vboot_context = vboot;
 	printf("ctx = %p\n", ctx);
+	print_buffer(0, ctx->nvdata, 1, sizeof (ctx->nvdata), 0);
 	vboot->valid = true;
 	vboot_log(LOGL_WARNING, "flags %x %d\n", ctx->flags,
 		  ((ctx->flags & VB2_CONTEXT_RECOVERY_MODE) != 0));
@@ -277,6 +280,7 @@ int vboot_rw_init(struct vboot_info *vboot)
 		return log_msg_ret("Cannot locate Chromium OS EC", ret);
 	printf("EC=%p\n", vboot->cros_ec);
 #endif
+#if 0
 	ret = cros_nvdata_read_walk(CROS_NV_SECDATA, ctx->nvdata,
 				    sizeof(ctx->nvdata));
 	if (ret == -ENOENT)
@@ -289,6 +293,7 @@ int vboot_rw_init(struct vboot_info *vboot)
 	};
 	memset(ctx->nvdata, '\0', sizeof(*ctx->nvdata));
 	memcpy(ctx->nvdata, data, sizeof(data));
+#endif
 	ret = vboot_init_handoff(vboot);
 	if (ret)
 		return log_msg_ret("Cannot init vboot handoff", ret);

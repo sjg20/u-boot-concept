@@ -5,6 +5,8 @@
  * SPDX-License-Identifier:     GPL-2.0+
  */
 
+#define NEED_VB20_INTERNALS
+
 #include <common.h>
 #include <bloblist.h>
 #include <dm.h>
@@ -78,10 +80,16 @@ int vboot_ver_init(struct vboot_info *vboot)
 	ret = uclass_first_device_err(UCLASS_CROS_NVDATA, &vboot->nvdata_dev);
 	if (ret)
 		return log_msg_ret("Cannot find nvdata", ret);
-	ret = cros_nvdata_read_walk(CROS_NV_DATA, ctx->nvdata,
-				    sizeof(ctx->nvdata));
+	ret = cros_nvdata_read_walk(CROS_NV_DATA, ctx->nvdata, 16);
+// 				    sizeof(ctx->nvdata));
 	if (ret)
 		return log_msg_ret("Cannot read nvdata", ret);
+
+	/* Force legacy mode */
+	ctx->nvdata[VB2_NV_OFFS_HEADER] = VB2_NV_HEADER_SIGNATURE_V1;
+	ctx->nvdata[VB2_NV_OFFS_DEV] |= VB2_NV_DEV_FLAG_LEGACY;
+	vb2_nv_regen_crc(ctx);
+
 	print_buffer(0, ctx->nvdata, 1, sizeof (ctx->nvdata), 0);
 
 	ret = cros_ofnode_flashmap(&vboot->fmap);

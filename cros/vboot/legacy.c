@@ -19,6 +19,14 @@ int VbExLegacy(int altfw_num)
 	return 1;
 }
 
+VbError_t VbExGetAltFwCount(uint32_t *count)
+{
+	*count = 2;
+
+	return 0;
+}
+
+#if 0
 VbError_t VbExGetAltFWList(VbAltFwItem **item, uint32_t *count)
 {
 	void *u_boot, *tianocore;
@@ -44,3 +52,4 @@ VbError_t VbExGetAltFWList(VbAltFwItem **item, uint32_t *count)
 
 	return 0;
 }
+#endif

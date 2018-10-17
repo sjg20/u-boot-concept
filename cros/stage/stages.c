@@ -116,6 +116,7 @@ static int save_if_needed(struct vboot_info *vboot)
 
 	if (ctx->flags & VB2_CONTEXT_NVDATA_CHANGED) {
 		log(LOGC_VBOOT, LOGL_INFO, "Saving nvdata\n");
+		print_buffer(0, ctx->nvdata, 1, sizeof (ctx->nvdata), 0);
 		ret = cros_nvdata_write_walk(CROS_NV_DATA, ctx->nvdata,
 					     sizeof(ctx->nvdata));
 		if (ret)

@@ -929,16 +929,17 @@ static void cons_text(struct vboot_info *vboot, int linenum, int seqnum,
 static VbError_t vboot_draw_altfw_pick(struct vboot_info *vboot,
 				       struct params *p)
 {
-	VbAltFwItem *altfw;
-	uint32_t count;
+// 	VbAltFwItem *altfw;
+// 	uint32_t count;
 	char msg[60];
-	int ret, i;
+// 	int ret, i;
 
 	RETURN_ON_ERROR(vboot_draw_base_screen(vboot, p));
 	RETURN_ON_ERROR(draw_icon("VerificationOff.bmp"));
 	sprintf(msg, "Press key 1-%c to select alternative boot loader:",
 	        '2');
 	cons_text(vboot, 0, -1, msg, "");
+/*
 	ret = VbExGetAltFWList(&altfw, &count);
 	if (ret)
 		return ret;
@@ -946,7 +947,7 @@ static VbError_t vboot_draw_altfw_pick(struct vboot_info *vboot,
 		cons_text(vboot, 2 + i, altfw->seqnum, altfw->name,
 			  altfw->desc);
 	}
-
+*/
 	return VBERROR_SUCCESS;
 }
 
@@ -963,18 +964,19 @@ static VbError_t vboot_draw_options_menu(struct vboot_info *vboot,
 static VbError_t vboot_draw_altfw_menu(struct vboot_info *vboot,
 				       struct params *p)
 {
-	struct vidconsole_priv *uc_priv = dev_get_uclass_priv(vboot->console);
-	VbAltFwItem *items;
-	uint32_t count;
-	int i, ret;
+// 	struct vidconsole_priv *uc_priv = dev_get_uclass_priv(vboot->console);
+// 	VbAltFwItem *items;
+// 	uint32_t count;
+	int i;
 
 	if (p->redraw_base)
 		RETURN_ON_ERROR(vboot_draw_base_screen(vboot, p));
+	int yoffset = 0;
+	uint32_t flags;
+#if 0
 	ret = VbExGetAltFWList(&items, &count);
 	if (ret)
 		return ret;
-	int yoffset;
-	uint32_t flags;
 
 	int x = uc_priv->cols / 3;
 	int y = uc_priv->rows / 2;
@@ -992,6 +994,9 @@ static VbError_t vboot_draw_altfw_menu(struct vboot_info *vboot,
 		cons_string(vboot->console, item->desc);
 		video_set_default_colors(vboot->video, false);
 	}
+#endif
+	i = 2;
+	yoffset = 0;
 	flags = PIVOT_H_CENTER | PIVOT_V_TOP;
 	if (p->selected_index == i)
 		flags |= INVERT_COLORS;

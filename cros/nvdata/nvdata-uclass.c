@@ -105,6 +105,7 @@ VbError_t VbExNvStorageRead(uint8_t* buf)
 	ret = cros_nvdata_read_walk(CROS_NV_DATA, buf, EC_VBNV_BLOCK_SIZE);
 	if (ret)
 		return VBERROR_UNKNOWN;
+	print_buffer(0, buf, 1, EC_VBNV_BLOCK_SIZE, 0);
 
 	return 0;
 }
@@ -113,6 +114,8 @@ VbError_t VbExNvStorageWrite(const uint8_t* buf)
 {
 	int ret;
 
+	printf("write\n");
+	print_buffer(0, buf, 1, EC_VBNV_BLOCK_SIZE, 0);
 	ret = cros_nvdata_write_walk(CROS_NV_DATA, buf, EC_VBNV_BLOCK_SIZE);
 	if (ret)
 		return VBERROR_UNKNOWN;

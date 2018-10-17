@@ -142,6 +142,9 @@ static int cros_ec_write_state(void *blob, int node)
 	fdt_setprop_u32(blob, node, "current-image", ec->current_image);
 	fdt_setprop(blob, node, "vbnv-context", ec->vbnv_context,
 		    sizeof(ec->vbnv_context));
+	printf("write state\n");
+	print_buffer(0, ec->vbnv_context, 1, sizeof(ec->vbnv_context), 0);
+
 	return state_setprop(node, "flash-data", ec->flash_data,
 			     ec->ec_config.flash.length);
 }
@@ -313,13 +316,17 @@ static int process_cmd(struct ec_state *ec,
 
 		switch (req->op) {
 		case EC_VBNV_CONTEXT_OP_READ:
-			memcpy(resp->block, ec->vbnv_context,
-			       sizeof(resp->block));
-			len = sizeof(*resp);
+			memcpy(resp->block, ec->vbnv_context, EC_VBNV_BLOCK_SIZE);
+// 			       sizeof(resp->block));
+// 			len = sizeof(*resp);
+			len = 16;
 			break;
 		case EC_VBNV_CONTEXT_OP_WRITE:
-			memcpy(ec->vbnv_context, resp->block,
-			       sizeof(resp->block));
+			printf("write EC_VBNV_CONTEXT_OP_WRITE\n");
+			print_buffer(0, req->block, 1, EC_VBNV_BLOCK_SIZE, 0);
+
+			memcpy(ec->vbnv_context, req->block, EC_VBNV_BLOCK_SIZE);
+// 			       sizeof(req->block));
 			len = 0;
 			break;
 		default:
