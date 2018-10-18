@@ -1,16 +1,15 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2016 Carlo Caione <carlo@caione.org>
- *
- * SPDX-License-Identifier:    GPL-2.0+
  */
 
 #include <common.h>
+#include <dm.h>
 #include <fdtdec.h>
 #include <malloc.h>
 #include <mmc.h>
 #include <asm/io.h>
 #include <asm/arch/sd_emmc.h>
-#include <dm/device.h>
 #include <linux/log2.h>
 
 static inline void *get_regbase(const struct mmc *mmc)
@@ -34,6 +33,9 @@ static void meson_mmc_config_clock(struct mmc *mmc)
 {
 	uint32_t meson_mmc_clk = 0;
 	unsigned int clk, clk_src, clk_div;
+
+	if (!mmc->clock)
+		return;
 
 	/* 1GHz / CLK_MAX_DIV = 15,9 MHz */
 	if (mmc->clock > 16000000) {
@@ -221,7 +223,7 @@ static int meson_mmc_ofdata_to_platdata(struct udevice *dev)
 	struct meson_mmc_platdata *pdata = dev_get_platdata(dev);
 	fdt_addr_t addr;
 
-	addr = dev_get_addr(dev);
+	addr = devfdt_get_addr(dev);
 	if (addr == FDT_ADDR_T_NONE)
 		return -EINVAL;
 
@@ -244,13 +246,13 @@ static int meson_mmc_probe(struct udevice *dev)
 			MMC_MODE_HS_52MHz | MMC_MODE_HS;
 	cfg->f_min = DIV_ROUND_UP(SD_EMMC_CLKSRC_24M, CLK_MAX_DIV);
 	cfg->f_max = 100000000; /* 100 MHz */
-	cfg->b_max = 256; /* max 256 blocks */
+	cfg->b_max = 511; /* max 512 - 1 blocks */
 	cfg->name = dev->name;
 
 	mmc->priv = pdata;
 	upriv->mmc = mmc;
 
-	mmc_set_clock(mmc, cfg->f_min);
+	mmc_set_clock(mmc, cfg->f_min, MMC_CLK_ENABLE);
 
 	/* reset all status bits */
 	meson_write(mmc, STATUS_MASK, MESON_SD_EMMC_STATUS);

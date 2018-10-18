@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2003
  * Texas Instruments <www.ti.com>
@@ -15,11 +16,10 @@
  *
  * (C) Copyright 2004
  * Philippe Robin, ARM Ltd. <philippe.robin@arm.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
+#include <efi_loader.h>
 #include <asm/proc-armv/ptrace.h>
 #include <asm/u-boot-arm.h>
 #include <efi_loader.h>
@@ -49,6 +49,35 @@ void bad_mode (void)
 {
 	panic ("Resetting CPU ...\n");
 	reset_cpu (0);
+}
+
+static void show_efi_loaded_images(struct pt_regs *regs)
+{
+	efi_print_image_infos((void *)instruction_pointer(regs));
+}
+
+static void dump_instr(struct pt_regs *regs)
+{
+	unsigned long addr = instruction_pointer(regs);
+	const int thumb = thumb_mode(regs);
+	const int width = thumb ? 4 : 8;
+	int i;
+
+	if (thumb)
+		addr &= ~1L;
+	else
+		addr &= ~3L;
+	printf("Code: ");
+	for (i = -4; i < 1 + !!thumb; i++) {
+		unsigned int val;
+
+		if (thumb)
+			val = ((u16 *)addr)[i];
+		else
+			val = ((u32 *)addr)[i];
+		printf(i == 0 ? "(%0*x) " : "%0*x ", width, val);
+	}
+	printf("\n");
 }
 
 void show_regs (struct pt_regs *regs)
@@ -91,13 +120,23 @@ void show_regs (struct pt_regs *regs)
 		fast_interrupts_enabled (regs) ? "on" : "off",
 		processor_modes[processor_mode (regs)],
 		thumb_mode (regs) ? " (T)" : "");
+	dump_instr(regs);
+}
+
+/* fixup PC to point to the instruction leading to the exception */
+static inline void fixup_pc(struct pt_regs *regs, int offset)
+{
+	uint32_t pc = instruction_pointer(regs) + offset;
+	regs->ARM_pc = pc | (regs->ARM_pc & PCMASK);
 }
 
 void do_undefined_instruction (struct pt_regs *pt_regs)
 {
 	efi_restore_gd();
 	printf ("undefined instruction\n");
+	fixup_pc(pt_regs, -4);
 	show_regs (pt_regs);
+	show_efi_loaded_images(pt_regs);
 	bad_mode ();
 }
 
@@ -105,7 +144,9 @@ void do_software_interrupt (struct pt_regs *pt_regs)
 {
 	efi_restore_gd();
 	printf ("software interrupt\n");
+	fixup_pc(pt_regs, -4);
 	show_regs (pt_regs);
+	show_efi_loaded_images(pt_regs);
 	bad_mode ();
 }
 
@@ -113,7 +154,9 @@ void do_prefetch_abort (struct pt_regs *pt_regs)
 {
 	efi_restore_gd();
 	printf ("prefetch abort\n");
+	fixup_pc(pt_regs, -8);
 	show_regs (pt_regs);
+	show_efi_loaded_images(pt_regs);
 	bad_mode ();
 }
 
@@ -121,7 +164,9 @@ void do_data_abort (struct pt_regs *pt_regs)
 {
 	efi_restore_gd();
 	printf ("data abort\n");
+	fixup_pc(pt_regs, -8);
 	show_regs (pt_regs);
+	show_efi_loaded_images(pt_regs);
 	bad_mode ();
 }
 
@@ -129,7 +174,9 @@ void do_not_used (struct pt_regs *pt_regs)
 {
 	efi_restore_gd();
 	printf ("not used\n");
+	fixup_pc(pt_regs, -8);
 	show_regs (pt_regs);
+	show_efi_loaded_images(pt_regs);
 	bad_mode ();
 }
 
@@ -137,7 +184,9 @@ void do_fiq (struct pt_regs *pt_regs)
 {
 	efi_restore_gd();
 	printf ("fast interrupt request\n");
+	fixup_pc(pt_regs, -8);
 	show_regs (pt_regs);
+	show_efi_loaded_images(pt_regs);
 	bad_mode ();
 }
 
@@ -145,6 +194,8 @@ void do_irq (struct pt_regs *pt_regs)
 {
 	efi_restore_gd();
 	printf ("interrupt request\n");
+	fixup_pc(pt_regs, -8);
 	show_regs (pt_regs);
+	show_efi_loaded_images(pt_regs);
 	bad_mode ();
 }

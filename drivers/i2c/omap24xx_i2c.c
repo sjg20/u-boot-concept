@@ -47,8 +47,6 @@
 
 #include "omap24xx_i2c.h"
 
-DECLARE_GLOBAL_DATA_PTR;
-
 #define I2C_TIMEOUT	1000
 
 /* Absolutely safe for status update at 100 kHz I2C: */
@@ -122,7 +120,7 @@ static int wait_for_bb(struct i2c *i2c_base, int waitdelay)
 	u16 stat;
 
 	writew(0xFFFF, &i2c_base->stat);	/* clear current interrupts...*/
-#if defined(CONFIG_OMAP243X) || defined(CONFIG_OMAP34XX)
+#if defined(CONFIG_OMAP34XX)
 	while ((stat = readw(&i2c_base->stat) & I2C_STAT_BB) && timeout--) {
 #else
 	/* Read RAW status */
@@ -153,7 +151,7 @@ static u16 wait_for_event(struct i2c *i2c_base, int waitdelay)
 
 	do {
 		udelay(waitdelay);
-#if defined(CONFIG_OMAP243X) || defined(CONFIG_OMAP34XX)
+#if defined(CONFIG_OMAP34XX)
 		status = readw(&i2c_base->stat);
 #else
 		/* Read RAW status */
@@ -338,7 +336,7 @@ retry:
 	/* own address */
 	writew(slaveadd, &i2c_base->oa);
 
-#if defined(CONFIG_OMAP243X) || defined(CONFIG_OMAP34XX)
+#if defined(CONFIG_OMAP34XX)
 	/*
 	 * Have to enable interrupts for OMAP2/3, these IPs don't have
 	 * an 'irqstatus_raw' register and we shall have to poll 'stat'
@@ -706,15 +704,15 @@ static struct i2c *omap24_get_base(struct i2c_adapter *adap)
 	case 1:
 		return (struct i2c *)I2C_BASE2;
 		break;
-#if (I2C_BUS_MAX > 2)
+#if (CONFIG_SYS_I2C_BUS_MAX > 2)
 	case 2:
 		return (struct i2c *)I2C_BASE3;
 		break;
-#if (I2C_BUS_MAX > 3)
+#if (CONFIG_SYS_I2C_BUS_MAX > 3)
 	case 3:
 		return (struct i2c *)I2C_BASE4;
 		break;
-#if (I2C_BUS_MAX > 4)
+#if (CONFIG_SYS_I2C_BUS_MAX > 4)
 	case 4:
 		return (struct i2c *)I2C_BASE5;
 		break;
@@ -755,7 +753,7 @@ static uint omap24_i2c_setspeed(struct i2c_adapter *adap, uint speed)
 
 	ret = __omap24_i2c_setspeed(i2c_base, speed, &adap->waitdelay);
 	if (ret) {
-		error("%s: set i2c speed failed\n", __func__);
+		pr_err("%s: set i2c speed failed\n", __func__);
 		return ret;
 	}
 
@@ -795,7 +793,7 @@ U_BOOT_I2C_ADAP_COMPLETE(omap24_1, omap24_i2c_init, omap24_i2c_probe,
 			 CONFIG_SYS_OMAP24_I2C_SPEED1,
 			 CONFIG_SYS_OMAP24_I2C_SLAVE1,
 			 1)
-#if (I2C_BUS_MAX > 2)
+#if (CONFIG_SYS_I2C_BUS_MAX > 2)
 #if !defined(CONFIG_SYS_OMAP24_I2C_SPEED2)
 #define CONFIG_SYS_OMAP24_I2C_SPEED2 CONFIG_SYS_OMAP24_I2C_SPEED
 #endif
@@ -808,7 +806,7 @@ U_BOOT_I2C_ADAP_COMPLETE(omap24_2, omap24_i2c_init, omap24_i2c_probe,
 			 CONFIG_SYS_OMAP24_I2C_SPEED2,
 			 CONFIG_SYS_OMAP24_I2C_SLAVE2,
 			 2)
-#if (I2C_BUS_MAX > 3)
+#if (CONFIG_SYS_I2C_BUS_MAX > 3)
 #if !defined(CONFIG_SYS_OMAP24_I2C_SPEED3)
 #define CONFIG_SYS_OMAP24_I2C_SPEED3 CONFIG_SYS_OMAP24_I2C_SPEED
 #endif
@@ -821,7 +819,7 @@ U_BOOT_I2C_ADAP_COMPLETE(omap24_3, omap24_i2c_init, omap24_i2c_probe,
 			 CONFIG_SYS_OMAP24_I2C_SPEED3,
 			 CONFIG_SYS_OMAP24_I2C_SLAVE3,
 			 3)
-#if (I2C_BUS_MAX > 4)
+#if (CONFIG_SYS_I2C_BUS_MAX > 4)
 #if !defined(CONFIG_SYS_OMAP24_I2C_SPEED4)
 #define CONFIG_SYS_OMAP24_I2C_SPEED4 CONFIG_SYS_OMAP24_I2C_SPEED
 #endif
@@ -896,7 +894,7 @@ static int omap_i2c_ofdata_to_platdata(struct udevice *bus)
 {
 	struct omap_i2c *priv = dev_get_priv(bus);
 
-	priv->regs = map_physmem(dev_get_addr(bus), sizeof(void *),
+	priv->regs = map_physmem(devfdt_get_addr(bus), sizeof(void *),
 				 MAP_NOCACHE);
 	priv->speed = CONFIG_SYS_OMAP24_I2C_SPEED;
 
@@ -910,6 +908,7 @@ static const struct dm_i2c_ops omap_i2c_ops = {
 };
 
 static const struct udevice_id omap_i2c_ids[] = {
+	{ .compatible = "ti,omap3-i2c" },
 	{ .compatible = "ti,omap4-i2c" },
 	{ }
 };

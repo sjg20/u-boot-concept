@@ -1,10 +1,9 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2009
  * Marek Vasut <marek.vasut@gmail.com>
  *
  * Heavily based on pxa255_idp platform
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -16,6 +15,7 @@
 #include <spi.h>
 #include <asm/io.h>
 #include <usb.h>
+#include <asm/mach-types.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

@@ -1,9 +1,7 @@
+# SPDX-License-Identifier: GPL-2.0+
 #
 # (C) Copyright 2000-2002
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
-#
-# SPDX-License-Identifier:	GPL-2.0+
-#
 
 ifndef CONFIG_STANDALONE_LOAD_ADDR
 ifneq ($(CONFIG_ARCH_OMAP2PLUS),)
@@ -23,12 +21,17 @@ PLATFORM_RELFLAGS += $(call cc-option, -msoft-float) \
       $(call cc-option,-mshort-load-bytes,$(call cc-option,-malignment-traps,))
 
 # LLVM support
-LLVMS_RELFLAGS		:= $(call cc-option,-mllvm,) \
-			$(call cc-option,-target arm-none-eabi,) \
-			$(call cc-option,-arm-use-movt=0,)
+LLVM_RELFLAGS		:= $(call cc-option,-mllvm,) \
+			$(call cc-option,-mno-movt,)
 PLATFORM_RELFLAGS	+= $(LLVM_RELFLAGS)
 
 PLATFORM_CPPFLAGS += -D__ARM__
+
+ifdef CONFIG_ARM64
+PLATFORM_ELFFLAGS += -B aarch64 -O elf64-littleaarch64
+else
+PLATFORM_ELFFLAGS += -B arm -O elf32-littlearm
+endif
 
 # Choose between ARM/Thumb instruction sets
 ifeq ($(CONFIG_$(SPL_)SYS_THUMB_BUILD),y)
@@ -62,8 +65,8 @@ endif
 checkgcc6:
 	@if test "$(call cc-name)" = "gcc" -a \
 			"$(call cc-version)" -lt "0600"; then \
-		echo -n '*** Your GCC is older than 6.0 and will not be '; \
-		echo 'supported starting in v2018.01.'; \
+		echo '*** Your GCC is older than 6.0 and is not supported'; \
+		false; \
 	fi
 
 
@@ -130,15 +133,19 @@ endif
 # limit ourselves to the sections we want in the .bin.
 ifdef CONFIG_ARM64
 OBJCOPYFLAGS += -j .text -j .secure_text -j .secure_data -j .rodata -j .data \
-		-j .u_boot_list -j .rela.dyn -j .got -j .got.plt
+		-j .u_boot_list -j .rela.dyn -j .got -j .got.plt \
+		-j .binman_sym_table -j .text_rest
 else
 OBJCOPYFLAGS += -j .text -j .secure_text -j .secure_data -j .rodata -j .hash \
-		-j .data -j .got -j .got.plt -j .u_boot_list -j .rel.dyn
+		-j .data -j .got -j .got.plt -j .u_boot_list -j .rel.dyn \
+		-j .binman_sym_table -j .text_rest
 endif
 
-ifdef CONFIG_OF_EMBED
+# if a dtb section exists we always have to include it
+# there are only two cases where it is generated
+# 1) OF_EMBEDED is turned on
+# 2) unit tests include device tree blobs
 OBJCOPYFLAGS += -j .dtb.init.rodata
-endif
 
 ifdef CONFIG_EFI_LOADER
 OBJCOPYFLAGS += -j .efi_runtime -j .efi_runtime_rel

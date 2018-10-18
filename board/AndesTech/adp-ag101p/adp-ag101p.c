@@ -1,16 +1,18 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2011 Andes Technology Corporation
  * Shawn Lin, Andes Technology Corporation <nobuhiro@andestech.com>
  * Macpaul Lin, Andes Technology Corporation <macpaul@andestech.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
+#if defined(CONFIG_FTMAC100) && !defined(CONFIG_DM_ETH)
 #include <netdev.h>
+#endif
+#include <linux/io.h>
 #include <asm/io.h>
+#include <asm/mach-types.h>
 
-#include <faraday/ftsdc010.h>
 #include <faraday/ftsmc020.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -25,6 +27,7 @@ int board_init(void)
 	 * refer to BOOT_PARAMETER_PA_BASE within
 	 * "linux/arch/nds32/include/asm/misc_spec.h"
 	 */
+	printf("Board: %s\n" , CONFIG_SYS_BOARD);
 	gd->bd->bi_arch_number = MACH_TYPE_ADPAG101P;
 	gd->bd->bi_boot_params = PHYS_SDRAM_0 + 0x400;
 
@@ -59,10 +62,12 @@ int dram_init_banksize(void)
 	return 0;
 }
 
+#if defined(CONFIG_FTMAC100) && !defined(CONFIG_DM_ETH)
 int board_eth_init(bd_t *bd)
 {
 	return ftmac100_initialize(bd);
 }
+#endif
 
 ulong board_flash_get_legacy(ulong base, int banknum, flash_info_t *info)
 {
@@ -74,10 +79,4 @@ ulong board_flash_get_legacy(ulong base, int banknum, flash_info_t *info)
 	} else {
 		return 0;
 	}
-}
-
-int board_mmc_init(bd_t *bis)
-{
-	ftsdc010_mmc_init(0);
-	return 0;
 }

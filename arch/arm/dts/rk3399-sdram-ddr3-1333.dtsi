@@ -1,7 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) 2017 Theobroma Systems Design und Consulting GmbH
- *
- * SPDX-License-Identifier:     GPL-2.0+
  */
 
 &dmc {
@@ -39,22 +38,22 @@
 		666
 		3
 		2
-/*		13 */ 9
+		9
 		1
 		0x00000600
 		0x00000000
 		0x00000000
 		0x00000000
 		0x00000000
-/*		0xaae60 */ 7
+		0x00000007
 		0x00000000
 		0x00000000
 		0x00000000
-/* 		0xaae60 */ 7
+		0x00000007
 		0x00000000
 		0x00000000
 		0x00000000
-/*		0xaae60 */ 7
+		0x00000007
 		0x00000000
 		0x00000000
 		0x01000000

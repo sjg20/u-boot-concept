@@ -1,8 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2003
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 /*
@@ -28,7 +27,7 @@ static void print_eth(int idx)
 		sprintf(name, "eth%iaddr", idx);
 	else
 		strcpy(name, "ethaddr");
-	val = getenv(name);
+	val = env_get(name);
 	if (!val)
 		val = "(not set)";
 	printf("%-12s= %s\n", name, val);
@@ -51,7 +50,7 @@ static void print_eths(void)
 	} while (dev);
 
 	printf("current eth = %s\n", eth_get_name());
-	printf("ip_addr     = %s\n", getenv("ipaddr"));
+	printf("ip_addr     = %s\n", env_get("ipaddr"));
 }
 #endif
 
@@ -83,9 +82,6 @@ static inline void print_bi_mem(const bd_t *bd)
 #elif defined(CONFIG_ARC)
 	print_num("mem start",		(ulong)bd->bi_memstart);
 	print_lnum("mem size",		(u64)bd->bi_memsize);
-#elif defined(CONFIG_AVR32)
-	print_num("memstart",		(ulong)bd->bi_dram[0].start);
-	print_lnum("memsize",		(u64)bd->bi_dram[0].size);
 #else
 	print_num("memstart",		(ulong)bd->bi_memstart);
 	print_lnum("memsize",		(u64)bd->bi_memsize);
@@ -144,7 +140,7 @@ static inline void print_eth_ip_addr(void)
 #if defined(CONFIG_HAS_ETH5)
 	print_eth(5);
 #endif
-	printf("IP addr     = %s\n", getenv("ipaddr"));
+	printf("IP addr     = %s\n", env_get("ipaddr"));
 #endif
 }
 
@@ -157,7 +153,7 @@ static inline void print_baudrate(void)
 #endif
 }
 
-static inline void print_std_bdinfo(const bd_t *bd)
+static inline void __maybe_unused print_std_bdinfo(const bd_t *bd)
 {
 	print_bi_boot_params(bd);
 	print_bi_mem(bd);
@@ -169,7 +165,7 @@ static inline void print_std_bdinfo(const bd_t *bd)
 #if defined(CONFIG_PPC)
 void __weak board_detail(void)
 {
-	/* Please define boot_detail() for your platform */
+	/* Please define board_detail() for your platform */
 }
 
 int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
@@ -183,26 +179,10 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	print_bi_flash(bd);
 	print_num("sramstart",		bd->bi_sramstart);
 	print_num("sramsize",		bd->bi_sramsize);
-#if	defined(CONFIG_5xx)  || defined(CONFIG_8xx) || \
-	defined(CONFIG_MPC8260) || defined(CONFIG_E500)
+#if	defined(CONFIG_MPC8xx) || defined(CONFIG_E500)
 	print_num("immr_base",		bd->bi_immr_base);
 #endif
 	print_num("bootflags",		bd->bi_bootflags);
-#if	defined(CONFIG_405EP) || \
-	defined(CONFIG_405GP) || \
-	defined(CONFIG_440EP) || defined(CONFIG_440EPX) || \
-	defined(CONFIG_440GR) || defined(CONFIG_440GRX) || \
-	defined(CONFIG_440SP) || defined(CONFIG_440SPE) || \
-	defined(CONFIG_XILINX_405)
-	print_mhz("procfreq",		bd->bi_procfreq);
-	print_mhz("plb_busfreq",	bd->bi_plb_busfreq);
-#if	defined(CONFIG_405EP) || defined(CONFIG_405GP) || \
-	defined(CONFIG_440EP) || defined(CONFIG_440EPX) || \
-	defined(CONFIG_440GR) || defined(CONFIG_440GRX) || \
-	defined(CONFIG_440SPE) || defined(CONFIG_XILINX_405)
-	print_mhz("pci_busfreq",	bd->bi_pci_busfreq);
-#endif
-#else	/* ! CONFIG_405GP, CONFIG_405EP, CONFIG_XILINX_405, CONFIG_440EP CONFIG_440GR */
 #if defined(CONFIG_CPM2)
 	print_mhz("vco",		bd->bi_vco);
 	print_mhz("sccfreq",		bd->bi_sccfreq);
@@ -213,7 +193,6 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	print_mhz("cpmfreq",		bd->bi_cpmfreq);
 #endif
 	print_mhz("busfreq",		bd->bi_busfreq);
-#endif /* CONFIG_405GP, CONFIG_405EP, CONFIG_XILINX_405, CONFIG_440EP CONFIG_440GR */
 
 #ifdef CONFIG_ENABLE_36BIT_PHYS
 #ifdef CONFIG_PHYS_64BIT
@@ -317,14 +296,6 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	return 0;
 }
 
-#elif defined(CONFIG_AVR32)
-
-int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
-{
-	print_std_bdinfo(gd->bd);
-	return 0;
-}
-
 #elif defined(CONFIG_ARM)
 
 static int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc,
@@ -372,10 +343,12 @@ static int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc,
 #ifdef CONFIG_BOARD_TYPES
 	printf("Board Type  = %ld\n", gd->board_type);
 #endif
-#ifdef CONFIG_SYS_MALLOC_F
+#if CONFIG_VAL(SYS_MALLOC_F_LEN)
 	printf("Early malloc usage: %lx / %x\n", gd->malloc_ptr,
-	       CONFIG_SYS_MALLOC_F_LEN);
+	       CONFIG_VAL(SYS_MALLOC_F_LEN));
 #endif
+	if (gd->fdt_blob)
+		printf("fdt_blob = %p\n", gd->fdt_blob);
 
 	return 0;
 }
@@ -403,6 +376,8 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 	print_bi_dram(bd);
 
+	print_num("relocaddr", gd->relocaddr);
+	print_num("reloc off", gd->reloc_off);
 #if defined(CONFIG_CMD_NET)
 	print_eth_ip_addr();
 	print_mhz("ethspeed",	    bd->bi_ethspeed);
@@ -435,6 +410,21 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	bd_t *bd = gd->bd;
 
 	print_num("arch_number",	bd->bi_arch_number);
+	print_bi_boot_params(bd);
+	print_bi_dram(bd);
+	print_eth_ip_addr();
+	print_baudrate();
+
+	return 0;
+}
+
+#elif defined(CONFIG_RISCV)
+
+int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	bd_t *bd = gd->bd;
+
+	print_num("arch_number", bd->bi_arch_number);
 	print_bi_boot_params(bd);
 	print_bi_dram(bd);
 	print_eth_ip_addr();

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2012
  * Konstantin Kozhevnikov, Cogent Embedded
@@ -6,8 +7,6 @@
  *
  * (C) Copyright 2006-2008
  * Stefan Roese, DENX Software Engineering, sr@denx.de.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -198,53 +197,6 @@ static int nand_read_page(int block, int page, void *dst)
 	return 0;
 }
 
-int nand_spl_load_image(uint32_t offs, unsigned int size, void *dst)
-{
-	unsigned int block, lastblock;
-	unsigned int page, page_offset;
-
-	/*
-	 * offs has to be aligned to a page address!
-	 */
-	block = offs / CONFIG_SYS_NAND_BLOCK_SIZE;
-	lastblock = (offs + size - 1) / CONFIG_SYS_NAND_BLOCK_SIZE;
-	page = (offs % CONFIG_SYS_NAND_BLOCK_SIZE) / CONFIG_SYS_NAND_PAGE_SIZE;
-	page_offset = offs % CONFIG_SYS_NAND_PAGE_SIZE;
-
-	while (block <= lastblock) {
-		if (!nand_is_bad_block(block)) {
-			/*
-			 * Skip bad blocks
-			 */
-			while (page < CONFIG_SYS_NAND_PAGE_COUNT) {
-				nand_read_page(block, page, dst);
-				/*
-				 * When offs is not aligned to page address the
-				 * extra offset is copied to dst as well. Copy
-				 * the image such that its first byte will be
-				 * at the dst.
-				 */
-				if (unlikely(page_offset)) {
-					memmove(dst, dst + page_offset,
-						CONFIG_SYS_NAND_PAGE_SIZE);
-					dst = (void *)((int)dst - page_offset);
-					page_offset = 0;
-				}
-				dst += CONFIG_SYS_NAND_PAGE_SIZE;
-				page++;
-			}
-
-			page = 0;
-		} else {
-			lastblock++;
-		}
-
-		block++;
-	}
-
-	return 0;
-}
-
 /* nand_init() - initialize data to make nand usable by SPL */
 void nand_init(void)
 {
@@ -269,3 +221,5 @@ void nand_deselect(void)
 	if (nand_chip.select_chip)
 		nand_chip.select_chip(mtd, -1);
 }
+
+#include "nand_spl_loaders.c"

@@ -1,11 +1,12 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2012
  * Texas Instruments, <www.ti.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 #ifndef	_SPL_H_
 #define	_SPL_H_
+
+#include <binman_sym.h>
 
 /* Platform-specific defines */
 #include <linux/compiler.h>
@@ -23,10 +24,15 @@
 struct spl_image_info {
 	const char *name;
 	u8 os;
-	ulong load_addr;
-	ulong entry_point;
+	uintptr_t load_addr;
+	uintptr_t entry_point;
+#if CONFIG_IS_ENABLED(LOAD_FIT)
+	void *fdt_addr;
+#endif
+	u32 boot_device;
 	u32 size;
 	u32 flags;
+	void *arg;
 };
 
 /*
@@ -46,6 +52,15 @@ struct spl_load_info {
 	ulong (*read)(struct spl_load_info *load, ulong sector, ulong count,
 		      void *buf);
 };
+
+/*
+ * We need to know the position of U-Boot in memory so we can jump to it. We
+ * allow any U-Boot binary to be used (u-boot.bin, u-boot-nodtb.bin,
+ * u-boot.img), hence the '_any'. These is no checking here that the correct
+ * image is found. For * example if u-boot.img is used we don't check that
+ * spl_parse_image_header() can parse a valid header.
+ */
+binman_sym_extern(ulong, u_boot_any, image_pos);
 
 /**
  * spl_load_simple_fit() - Loads a fit image from a device.
@@ -67,6 +82,8 @@ int spl_load_simple_fit(struct spl_image_info *spl_image,
 void preloader_console_init(void);
 u32 spl_boot_device(void);
 u32 spl_boot_mode(const u32 boot_device);
+int spl_boot_partition(const u32 boot_device);
+void spl_set_bd(void);
 
 /**
  * spl_set_header_raw_uboot() - Set up a standard SPL image structure
@@ -106,10 +123,8 @@ int spl_board_ubi_load_image(u32 boot_device);
  * This jumps into a Linux kernel using the information in @spl_image.
  *
  * @spl_image: Image description to set up
- * @arg: Argument to pass to Linux (typically a device tree pointer)
  */
-void __noreturn jump_to_image_linux(struct spl_image_info *spl_image,
-				    void *arg);
+void __noreturn jump_to_image_linux(struct spl_image_info *spl_image);
 
 /**
  * spl_start_uboot() - Check if SPL should start the kernel or U-Boot
@@ -268,4 +283,24 @@ int spl_dfu_cmd(int usbctrl, char *dfu_alt_info, char *interface, char *devstr);
 int spl_mmc_load_image(struct spl_image_info *spl_image,
 		       struct spl_boot_device *bootdev);
 
+/**
+ * spl_invoke_atf - boot using an ARM trusted firmware image
+ */
+void spl_invoke_atf(struct spl_image_info *spl_image);
+
+/**
+ * board_return_to_bootrom - allow for boards to continue with the boot ROM
+ *
+ * If a board (e.g. the Rockchip RK3368 boards) provide some
+ * supporting functionality for SPL in their boot ROM and the SPL
+ * stage wants to return to the ROM code to continue booting, boards
+ * can implement 'board_return_to_bootrom'.
+ */
+void board_return_to_bootrom(void);
+
+/**
+ * spl_perform_fixups() - arch/board-specific callback before processing
+ *                        the boot-payload
+ */
+void spl_perform_fixups(struct spl_image_info *spl_image);
 #endif

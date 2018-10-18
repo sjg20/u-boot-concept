@@ -1,7 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) Marvell International Ltd. and its affiliates
- *
- * SPDX-License-Identifier:	GPL-2.0
  */
 
 #include <common.h>
@@ -14,7 +13,7 @@
 #include "high_speed_env_spec.h"
 #include "board_env_spec.h"
 
-#define	SERDES_VERION	"2.1.5"
+#define	SERDES_VERSION	"2.1.5"
 #define ENDED_OK	"High speed PHY - Ended Successfully\n"
 
 static const u8 serdes_cfg[][SERDES_LAST_UNIT] = BIN_SERDES_CFG;
@@ -285,12 +284,12 @@ int serdes_phy_config(void)
 	if (reg_read(REG_BOOTROM_ROUTINE_ADDR) &
 	    (1 << REG_BOOTROM_ROUTINE_DRAM_INIT_OFFS)) {
 		DEBUG_INIT_S("High speed PHY - Version: ");
-		DEBUG_INIT_S(SERDES_VERION);
+		DEBUG_INIT_S(SERDES_VERSION);
 		DEBUG_INIT_S(" - 2nd boot - Skip\n");
 		return MV_OK;
 	}
 	DEBUG_INIT_S("High speed PHY - Version: ");
-	DEBUG_INIT_S(SERDES_VERION);
+	DEBUG_INIT_S(SERDES_VERSION);
 	DEBUG_INIT_S(" (COM-PHY-V20)\n");
 
 	/*
@@ -354,16 +353,16 @@ int serdes_phy_config(void)
 	}
 
 	info = board_serdes_cfg_get(PEX_MODE_GET(satr11));
-	DEBUG_INIT_FULL_S("info->line0_7= 0x");
-	DEBUG_INIT_FULL_D(info->line0_7, 8);
-	DEBUG_INIT_FULL_S("   info->line8_15= 0x");
-	DEBUG_INIT_FULL_D(info->line8_15, 8);
-	DEBUG_INIT_FULL_S("\n");
 
 	if (info == NULL) {
 		DEBUG_INIT_S("Hight speed PHY Error #1\n");
 		return MV_ERROR;
 	}
+	DEBUG_INIT_FULL_S("info->line0_7= 0x");
+	DEBUG_INIT_FULL_D(info->line0_7, 8);
+	DEBUG_INIT_FULL_S("   info->line8_15= 0x");
+	DEBUG_INIT_FULL_D(info->line8_15, 8);
+	DEBUG_INIT_FULL_S("\n");
 
 	if (config_module & ETM_MODULE_DETECT) {	/* step 0.9 ETM */
 		DEBUG_INIT_FULL_S("ETM module detect Step 0.9:\n");

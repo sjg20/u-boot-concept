@@ -1,11 +1,10 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2017 Weidmüller Interface GmbH & Co. KG
  * Stefan Herbrechtsmeier <stefan.herbrechtsmeier@weidmueller.com>
  *
  * Copyright (C) 2013 Soren Brinkmann <soren.brinkmann@xilinx.com>
  * Copyright (C) 2013 Xilinx, Inc. All rights reserved.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -394,7 +393,7 @@ static ulong zynq_clk_get_rate(struct clk *clk)
 		return zynq_clk_get_peripheral_rate(priv, id, two_divs);
 	case dma_clk:
 		return zynq_clk_get_cpu_rate(priv, cpu_2x_clk);
-	case usb0_aper_clk ... smc_aper_clk:
+	case usb0_aper_clk ... swdt_clk:
 		return zynq_clk_get_cpu_rate(priv, cpu_1x_clk);
 	default:
 		return -ENXIO;
@@ -459,14 +458,14 @@ static int zynq_clk_probe(struct udevice *dev)
 	for (i = 0; i < 2; i++) {
 		sprintf(name, "gem%d_emio_clk", i);
 		ret = clk_get_by_name(dev, name, &priv->gem_emio_clk[i]);
-		if (ret < 0 && ret != -FDT_ERR_NOTFOUND) {
+		if (ret < 0 && ret != -ENODATA) {
 			dev_err(dev, "failed to get %s clock\n", name);
 			return ret;
 		}
 	}
 #endif
 
-	priv->ps_clk_freq = fdtdec_get_uint(gd->fdt_blob, dev->of_offset,
+	priv->ps_clk_freq = fdtdec_get_uint(gd->fdt_blob, dev_of_offset(dev),
 					    "ps-clk-frequency", 33333333UL);
 
 	return 0;

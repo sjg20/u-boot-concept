@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2012 Henrik Nordstrom <henrik@henriknordstrom.net>
  *
@@ -6,17 +7,13 @@
  * Tom Cubie <tangliang@allwinnertech.com>
  *
  * Some init for sunxi platform.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
 #include <mmc.h>
 #include <i2c.h>
 #include <serial.h>
-#ifdef CONFIG_SPL_BUILD
 #include <spl.h>
-#endif
 #include <asm/gpio.h>
 #include <asm/io.h>
 #include <asm/arch/clock.h>
@@ -110,6 +107,10 @@ static int gpio_init(void)
 	sunxi_gpio_set_cfgpin(SUNXI_GPB(8), SUN50I_GPB_UART0);
 	sunxi_gpio_set_cfgpin(SUNXI_GPB(9), SUN50I_GPB_UART0);
 	sunxi_gpio_set_pull(SUNXI_GPB(9), SUNXI_GPIO_PULL_UP);
+#elif CONFIG_CONS_INDEX == 1 && defined(CONFIG_MACH_SUN50I_H6)
+	sunxi_gpio_set_cfgpin(SUNXI_GPH(0), SUN50I_H6_GPH_UART0);
+	sunxi_gpio_set_cfgpin(SUNXI_GPH(1), SUN50I_H6_GPH_UART0);
+	sunxi_gpio_set_pull(SUNXI_GPH(1), SUNXI_GPIO_PULL_UP);
 #elif CONFIG_CONS_INDEX == 1 && defined(CONFIG_MACH_SUN8I_A83T)
 	sunxi_gpio_set_cfgpin(SUNXI_GPB(9), SUN8I_A83T_GPB_UART0);
 	sunxi_gpio_set_cfgpin(SUNXI_GPB(10), SUN8I_A83T_GPB_UART0);
@@ -204,17 +205,16 @@ void s_init(void)
 	clock_init();
 	timer_init();
 	gpio_init();
+#ifndef CONFIG_DM_I2C
 	i2c_init_board();
+#endif
 	eth_init_board();
 }
-
-#ifdef CONFIG_SPL_BUILD
-DECLARE_GLOBAL_DATA_PTR;
 
 /* The sunxi internal brom will try to loader external bootloader
  * from mmc0, nand flash, mmc2.
  */
-u32 spl_boot_device(void)
+uint32_t sunxi_get_boot_device(void)
 {
 	int boot_source;
 
@@ -253,10 +253,10 @@ u32 spl_boot_device(void)
 	return -1;		/* Never reached */
 }
 
-/* No confirmation data available in SPL yet. Hardcode bootmode */
-u32 spl_boot_mode(const u32 boot_device)
+#ifdef CONFIG_SPL_BUILD
+u32 spl_boot_device(void)
 {
-	return MMCSD_MODE_RAW;
+	return sunxi_get_boot_device();
 }
 
 void board_init_f(ulong dummy)
@@ -286,7 +286,7 @@ void reset_cpu(ulong addr)
 		/* sun5i sometimes gets stuck without this */
 		writel(WDT_MODE_RESET_EN | WDT_MODE_EN, &wdog->mode);
 	}
-#elif defined(CONFIG_SUNXI_GEN_SUN6I)
+#elif defined(CONFIG_SUNXI_GEN_SUN6I) || defined(CONFIG_MACH_SUN50I_H6)
 	static const struct sunxi_wdog *wdog =
 		 ((struct sunxi_timer_reg *)SUNXI_TIMER_BASE)->wdog;
 

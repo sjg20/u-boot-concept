@@ -1,15 +1,15 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Atmel PIO pinctrl driver
  *
  * Copyright (C) 2016 Atmel Corporation
  *               Wenyou.Yang <wenyou.yang@atmel.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
-#include <dm/device.h>
+#include <dm.h>
 #include <dm/pinctrl.h>
+#include <asm/hardware.h>
 #include <linux/io.h>
 #include <linux/err.h>
 #include <mach/at91_pio.h>
@@ -364,7 +364,7 @@ static int at91_pinctrl_set_state(struct udevice *dev, struct udevice *config)
 {
 	struct at91_pinctrl_priv *priv = dev_get_priv(dev);
 	const void *blob = gd->fdt_blob;
-	int node = config->of_offset;
+	int node = dev_of_offset(config);
 	u32 cells[MAX_PINMUX_ENTRIES];
 	const u32 *list = cells;
 	u32 bank, pin;
@@ -424,7 +424,7 @@ static int at91_pinctrl_probe(struct udevice *dev)
 	int index;
 
 	for (index = 0; index < MAX_GPIO_BANKS; index++) {
-		addr_base = dev_get_addr_index(dev, index);
+		addr_base = devfdt_get_addr_index(dev, index);
 		if (addr_base == FDT_ADDR_T_NONE)
 			break;
 

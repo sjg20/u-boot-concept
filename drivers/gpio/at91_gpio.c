@@ -1,11 +1,10 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2013 Bo Shen <voice.shen@atmel.com>
  *
  * Copyright (C) 2009 Jens Scharsig (js_at_ng@scharsoft.de)
  *
  *  Copyright (C) 2005 HP Labs
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <config.h>
@@ -587,7 +586,7 @@ static int at91_gpio_probe(struct udevice *dev)
 	uc_priv->gpio_count = GPIO_PER_BANK;
 
 #if CONFIG_IS_ENABLED(OF_CONTROL)
-	plat->base_addr = (uint32_t)dev_get_addr_ptr(dev);
+	plat->base_addr = (uint32_t)devfdt_get_addr_ptr(dev);
 #endif
 	port->regs = (struct at91_port *)plat->base_addr;
 

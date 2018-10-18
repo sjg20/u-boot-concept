@@ -1,19 +1,20 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Display driver for Allwinner SoCs.
  *
  * (C) Copyright 2013-2014 Luc Verhaegen <libv@skynet.be>
  * (C) Copyright 2014-2015 Hans de Goede <hdegoede@redhat.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
+#include <efi_loader.h>
 
 #include <asm/arch/clock.h>
 #include <asm/arch/display.h>
 #include <asm/arch/gpio.h>
 #include <asm/arch/lcdc.h>
 #include <asm/arch/pwm.h>
+#include <asm/arch/tve.h>
 #include <asm/global_data.h>
 #include <asm/gpio.h>
 #include <asm/io.h>
@@ -28,6 +29,7 @@
 #include "../anx9804.h"
 #include "../hitachi_tx18d42vm_lcd.h"
 #include "../ssd2828.h"
+#include "simplefb_common.h"
 
 #ifdef CONFIG_VIDEO_LCD_BL_PWM_ACTIVE_LOW
 #define PWM_ON 0
@@ -514,119 +516,6 @@ static void sunxi_composer_enable(void)
 	setbits_le32(&de_be->mode, SUNXI_DE_BE_MODE_START);
 }
 
-/*
- * LCDC, what allwinner calls a CRTC, so timing controller and serializer.
- */
-static void sunxi_lcdc_pll_set(int tcon, int dotclock,
-			       int *clk_div, int *clk_double)
-{
-	struct sunxi_ccm_reg * const ccm =
-		(struct sunxi_ccm_reg *)SUNXI_CCM_BASE;
-	int value, n, m, min_m, max_m, diff;
-	int best_n = 0, best_m = 0, best_diff = 0x0FFFFFFF;
-	int best_double = 0;
-	bool use_mipi_pll = false;
-
-	if (tcon == 0) {
-#ifdef CONFIG_VIDEO_LCD_IF_PARALLEL
-		min_m = 6;
-		max_m = 127;
-#endif
-#ifdef CONFIG_VIDEO_LCD_IF_LVDS
-		min_m = max_m = 7;
-#endif
-	} else {
-		min_m = 1;
-		max_m = 15;
-	}
-
-	/*
-	 * Find the lowest divider resulting in a matching clock, if there
-	 * is no match, pick the closest lower clock, as monitors tend to
-	 * not sync to higher frequencies.
-	 */
-	for (m = min_m; m <= max_m; m++) {
-		n = (m * dotclock) / 3000;
-
-		if ((n >= 9) && (n <= 127)) {
-			value = (3000 * n) / m;
-			diff = dotclock - value;
-			if (diff < best_diff) {
-				best_diff = diff;
-				best_m = m;
-				best_n = n;
-				best_double = 0;
-			}
-		}
-
-		/* These are just duplicates */
-		if (!(m & 1))
-			continue;
-
-		n = (m * dotclock) / 6000;
-		if ((n >= 9) && (n <= 127)) {
-			value = (6000 * n) / m;
-			diff = dotclock - value;
-			if (diff < best_diff) {
-				best_diff = diff;
-				best_m = m;
-				best_n = n;
-				best_double = 1;
-			}
-		}
-	}
-
-#ifdef CONFIG_MACH_SUN6I
-	/*
-	 * Use the MIPI pll if we've been unable to find any matching setting
-	 * for PLL3, this happens with high dotclocks because of min_m = 6.
-	 */
-	if (tcon == 0 && best_n == 0) {
-		use_mipi_pll = true;
-		best_m = 6;  /* Minimum m for tcon0 */
-	}
-
-	if (use_mipi_pll) {
-		clock_set_pll3(297000000); /* Fix the video pll at 297 MHz */
-		clock_set_mipi_pll(best_m * dotclock * 1000);
-		debug("dotclock: %dkHz = %dkHz via mipi pll\n",
-		      dotclock, clock_get_mipi_pll() / best_m / 1000);
-	} else
-#endif
-	{
-		clock_set_pll3(best_n * 3000000);
-		debug("dotclock: %dkHz = %dkHz: (%d * 3MHz * %d) / %d\n",
-		      dotclock,
-		      (best_double + 1) * clock_get_pll3() / best_m / 1000,
-		      best_double + 1, best_n, best_m);
-	}
-
-	if (tcon == 0) {
-		u32 pll;
-
-		if (use_mipi_pll)
-			pll = CCM_LCD_CH0_CTRL_MIPI_PLL;
-		else if (best_double)
-			pll = CCM_LCD_CH0_CTRL_PLL3_2X;
-		else
-			pll = CCM_LCD_CH0_CTRL_PLL3;
-
-		writel(CCM_LCD_CH0_CTRL_GATE | CCM_LCD_CH0_CTRL_RST | pll,
-		       &ccm->lcd0_ch0_clk_cfg);
-	} else {
-		writel(CCM_LCD_CH1_CTRL_GATE |
-		       (best_double ? CCM_LCD_CH1_CTRL_PLL3_2X :
-				      CCM_LCD_CH1_CTRL_PLL3) |
-		       CCM_LCD_CH1_CTRL_M(best_m), &ccm->lcd0_ch1_clk_cfg);
-		if (sunxi_is_composite())
-			setbits_le32(&ccm->lcd0_ch1_clk_cfg,
-				     CCM_LCD_CH1_CTRL_HALF_SCLK1);
-	}
-
-	*clk_div = best_m;
-	*clk_double = best_double;
-}
-
 static void sunxi_lcdc_init(void)
 {
 	struct sunxi_ccm_reg * const ccm =
@@ -736,6 +625,8 @@ static void sunxi_ctfb_mode_to_display_timing(const struct ctfb_res_modes *mode,
 	timing->vback_porch.typ = mode->upper_margin;
 	timing->vsync_len.typ = mode->vsync_len;
 
+	timing->flags = 0;
+
 	if (mode->sync & FB_SYNC_HOR_HIGH_ACT)
 		timing->flags |= DISPLAY_FLAGS_HSYNC_HIGH;
 	else
@@ -753,6 +644,8 @@ static void sunxi_lcdc_tcon0_mode_set(const struct ctfb_res_modes *mode,
 {
 	struct sunxi_lcdc_reg * const lcdc =
 		(struct sunxi_lcdc_reg *)SUNXI_LCD0_BASE;
+	struct sunxi_ccm_reg * const ccm =
+		(struct sunxi_ccm_reg *)SUNXI_CCM_BASE;
 	int clk_div, clk_double, pin;
 	struct display_timing timing;
 
@@ -772,7 +665,8 @@ static void sunxi_lcdc_tcon0_mode_set(const struct ctfb_res_modes *mode,
 #endif
 	}
 
-	sunxi_lcdc_pll_set(0, mode->pixclock_khz, &clk_div, &clk_double);
+	lcdc_pll_set(ccm, 0, mode->pixclock_khz, &clk_div, &clk_double,
+		     sunxi_is_composite());
 
 	sunxi_ctfb_mode_to_display_timing(mode, &timing);
 	lcdc_tcon0_mode_set(lcdc, &timing, clk_div, for_ext_vga_dac,
@@ -786,6 +680,8 @@ static void sunxi_lcdc_tcon1_mode_set(const struct ctfb_res_modes *mode,
 {
 	struct sunxi_lcdc_reg * const lcdc =
 		(struct sunxi_lcdc_reg *)SUNXI_LCD0_BASE;
+	struct sunxi_ccm_reg * const ccm =
+		(struct sunxi_ccm_reg *)SUNXI_CCM_BASE;
 	struct display_timing timing;
 
 	sunxi_ctfb_mode_to_display_timing(mode, &timing);
@@ -797,7 +693,8 @@ static void sunxi_lcdc_tcon1_mode_set(const struct ctfb_res_modes *mode,
 		sunxi_gpio_set_cfgpin(SUNXI_GPD(27), SUNXI_GPD_LCD0);
 	}
 
-	sunxi_lcdc_pll_set(1, mode->pixclock_khz, clk_div, clk_double);
+	lcdc_pll_set(ccm, 1, mode->pixclock_khz, clk_div, clk_double,
+		     sunxi_is_composite());
 }
 #endif /* CONFIG_VIDEO_HDMI || defined CONFIG_VIDEO_VGA || CONFIG_VIDEO_COMPOSITE */
 
@@ -929,63 +826,19 @@ static void sunxi_tvencoder_mode_set(void)
 
 	switch (sunxi_display.monitor) {
 	case sunxi_monitor_vga:
-		writel(SUNXI_TVE_GCTRL_DAC_INPUT(0, 1) |
-		       SUNXI_TVE_GCTRL_DAC_INPUT(1, 2) |
-		       SUNXI_TVE_GCTRL_DAC_INPUT(2, 3), &tve->gctrl);
-		writel(SUNXI_TVE_CFG0_VGA, &tve->cfg0);
-		writel(SUNXI_TVE_DAC_CFG0_VGA, &tve->dac_cfg0);
-		writel(SUNXI_TVE_UNKNOWN1_VGA, &tve->unknown1);
+		tvencoder_mode_set(tve, tve_mode_vga);
 		break;
 	case sunxi_monitor_composite_pal_nc:
-		writel(SUNXI_TVE_CHROMA_FREQ_PAL_NC, &tve->chroma_freq);
-		/* Fall through */
+		tvencoder_mode_set(tve, tve_mode_composite_pal_nc);
+		break;
 	case sunxi_monitor_composite_pal:
-		writel(SUNXI_TVE_GCTRL_DAC_INPUT(0, 1) |
-		       SUNXI_TVE_GCTRL_DAC_INPUT(1, 2) |
-		       SUNXI_TVE_GCTRL_DAC_INPUT(2, 3) |
-		       SUNXI_TVE_GCTRL_DAC_INPUT(3, 4), &tve->gctrl);
-		writel(SUNXI_TVE_CFG0_PAL, &tve->cfg0);
-		writel(SUNXI_TVE_DAC_CFG0_COMPOSITE, &tve->dac_cfg0);
-		writel(SUNXI_TVE_FILTER_COMPOSITE, &tve->filter);
-		writel(SUNXI_TVE_PORCH_NUM_PAL, &tve->porch_num);
-		writel(SUNXI_TVE_LINE_NUM_PAL, &tve->line_num);
-		writel(SUNXI_TVE_BLANK_BLACK_LEVEL_PAL, &tve->blank_black_level);
-		writel(SUNXI_TVE_UNKNOWN1_COMPOSITE, &tve->unknown1);
-		writel(SUNXI_TVE_CBR_LEVEL_PAL, &tve->cbr_level);
-		writel(SUNXI_TVE_BURST_WIDTH_COMPOSITE, &tve->burst_width);
-		writel(SUNXI_TVE_UNKNOWN2_PAL, &tve->unknown2);
-		writel(SUNXI_TVE_ACTIVE_NUM_COMPOSITE, &tve->active_num);
-		writel(SUNXI_TVE_CHROMA_BW_GAIN_COMP, &tve->chroma_bw_gain);
-		writel(SUNXI_TVE_NOTCH_WIDTH_COMPOSITE, &tve->notch_width);
-		writel(SUNXI_TVE_RESYNC_NUM_PAL, &tve->resync_num);
-		writel(SUNXI_TVE_SLAVE_PARA_COMPOSITE, &tve->slave_para);
+		tvencoder_mode_set(tve, tve_mode_composite_pal);
 		break;
 	case sunxi_monitor_composite_pal_m:
-		writel(SUNXI_TVE_CHROMA_FREQ_PAL_M, &tve->chroma_freq);
-		writel(SUNXI_TVE_COLOR_BURST_PAL_M, &tve->color_burst);
-		/* Fall through */
+		tvencoder_mode_set(tve, tve_mode_composite_pal_m);
+		break;
 	case sunxi_monitor_composite_ntsc:
-		writel(SUNXI_TVE_GCTRL_DAC_INPUT(0, 1) |
-		       SUNXI_TVE_GCTRL_DAC_INPUT(1, 2) |
-		       SUNXI_TVE_GCTRL_DAC_INPUT(2, 3) |
-		       SUNXI_TVE_GCTRL_DAC_INPUT(3, 4), &tve->gctrl);
-		writel(SUNXI_TVE_CFG0_NTSC, &tve->cfg0);
-		writel(SUNXI_TVE_DAC_CFG0_COMPOSITE, &tve->dac_cfg0);
-		writel(SUNXI_TVE_FILTER_COMPOSITE, &tve->filter);
-		writel(SUNXI_TVE_PORCH_NUM_NTSC, &tve->porch_num);
-		writel(SUNXI_TVE_LINE_NUM_NTSC, &tve->line_num);
-		writel(SUNXI_TVE_BLANK_BLACK_LEVEL_NTSC, &tve->blank_black_level);
-		writel(SUNXI_TVE_UNKNOWN1_COMPOSITE, &tve->unknown1);
-		writel(SUNXI_TVE_CBR_LEVEL_NTSC, &tve->cbr_level);
-		writel(SUNXI_TVE_BURST_PHASE_NTSC, &tve->burst_phase);
-		writel(SUNXI_TVE_BURST_WIDTH_COMPOSITE, &tve->burst_width);
-		writel(SUNXI_TVE_UNKNOWN2_NTSC, &tve->unknown2);
-		writel(SUNXI_TVE_SYNC_VBI_LEVEL_NTSC, &tve->sync_vbi_level);
-		writel(SUNXI_TVE_ACTIVE_NUM_COMPOSITE, &tve->active_num);
-		writel(SUNXI_TVE_CHROMA_BW_GAIN_COMP, &tve->chroma_bw_gain);
-		writel(SUNXI_TVE_NOTCH_WIDTH_COMPOSITE, &tve->notch_width);
-		writel(SUNXI_TVE_RESYNC_NUM_NTSC, &tve->resync_num);
-		writel(SUNXI_TVE_SLAVE_PARA_COMPOSITE, &tve->slave_para);
+		tvencoder_mode_set(tve, tve_mode_composite_ntsc);
 		break;
 	case sunxi_monitor_none:
 	case sunxi_monitor_dvi:
@@ -993,14 +846,6 @@ static void sunxi_tvencoder_mode_set(void)
 	case sunxi_monitor_lcd:
 		break;
 	}
-}
-
-static void sunxi_tvencoder_enable(void)
-{
-	struct sunxi_tve_reg * const tve =
-		(struct sunxi_tve_reg *)SUNXI_TVE0_BASE;
-
-	setbits_le32(&tve->gctrl, SUNXI_TVE_GCTRL_ENABLE);
 }
 
 #endif /* CONFIG_VIDEO_VGA || defined CONFIG_VIDEO_COMPOSITE */
@@ -1080,6 +925,8 @@ static void sunxi_mode_set(const struct ctfb_res_modes *mode,
 	int __maybe_unused clk_div, clk_double;
 	struct sunxi_lcdc_reg * const lcdc =
 		(struct sunxi_lcdc_reg *)SUNXI_LCD0_BASE;
+	struct sunxi_tve_reg * __maybe_unused const tve =
+		(struct sunxi_tve_reg *)SUNXI_TVE0_BASE;
 
 	switch (sunxi_display.monitor) {
 	case sunxi_monitor_none:
@@ -1134,7 +981,7 @@ static void sunxi_mode_set(const struct ctfb_res_modes *mode,
 		sunxi_tvencoder_mode_set();
 		sunxi_composer_enable();
 		lcdc_enable(lcdc, sunxi_display.depth);
-		sunxi_tvencoder_enable();
+		tvencoder_enable(tve);
 #elif defined CONFIG_VIDEO_VGA_VIA_LCD
 		sunxi_composer_mode_set(mode, address);
 		sunxi_lcdc_tcon0_mode_set(mode, true);
@@ -1153,7 +1000,7 @@ static void sunxi_mode_set(const struct ctfb_res_modes *mode,
 		sunxi_tvencoder_mode_set();
 		sunxi_composer_enable();
 		lcdc_enable(lcdc, sunxi_display.depth);
-		sunxi_tvencoder_enable();
+		tvencoder_enable(tve);
 #endif
 		break;
 	}
@@ -1360,6 +1207,13 @@ void *video_hw_init(void)
 		      gd->bd->bi_dram[0].size - sunxi_display.fb_size;
 	sunxi_engines_init();
 
+#ifdef CONFIG_EFI_LOADER
+	efi_add_memory_map(gd->fb_base,
+			   ALIGN(sunxi_display.fb_size, EFI_PAGE_SIZE) >>
+			   EFI_PAGE_SHIFT,
+			   EFI_RESERVED_MEMORY_TYPE, false);
+#endif
+
 	fb_dma_addr = gd->fb_base - CONFIG_SYS_SDRAM_BASE;
 	sunxi_display.fb_addr = gd->fb_base;
 	if (overscan_offset) {
@@ -1426,17 +1280,7 @@ int sunxi_simplefb_setup(void *blob)
 		break;
 	}
 
-	/* Find a prefilled simpefb node, matching out pipeline config */
-	offset = fdt_node_offset_by_compatible(blob, -1,
-					       "allwinner,simple-framebuffer");
-	while (offset >= 0) {
-		ret = fdt_stringlist_search(blob, offset, "allwinner,pipeline",
-					    pipeline);
-		if (ret == 0)
-			break;
-		offset = fdt_node_offset_by_compatible(blob, offset,
-					       "allwinner,simple-framebuffer");
-	}
+	offset = sunxi_simplefb_fdt_match(blob, pipeline);
 	if (offset < 0) {
 		eprintf("Cannot setup simplefb: node not found\n");
 		return 0; /* Keep older kernels working */

@@ -1,11 +1,10 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2000-2003
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
  * Copyright (C) 2004-2007, 2012 Freescale Semiconductor, Inc.
  * Hayden Fraser (Hayden.Fraser@freescale.com)
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -88,7 +87,7 @@ int testdram(void)
 	return (0);
 }
 
-#ifdef CONFIG_CMD_IDE
+#ifdef CONFIG_IDE
 #include <ata.h>
 int ide_preinit(void)
 {
@@ -133,7 +132,7 @@ void ide_set_reset(int idereset)
 		setbits_8(&ata->cr, 0x01);
 	}
 }
-#endif				/* CONFIG_CMD_IDE */
+#endif				/* CONFIG_IDE */
 
 
 #ifdef CONFIG_DRIVER_DM9000

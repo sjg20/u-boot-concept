@@ -1,9 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (c) 2015 Google, Inc
  * Copyright 2014 Rockchip Inc.
  * Copyright 2017 Jernej Skrabec <jernej.skrabec@siol.net>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -402,11 +401,11 @@ static void hdmi_av_composer(struct dw_hdmi *hdmi,
 	/* set up hdmi_fc_invidconf */
 	inv_val = HDMI_FC_INVIDCONF_HDCP_KEEPOUT_INACTIVE;
 
-	inv_val |= (edid->flags & DISPLAY_FLAGS_HSYNC_HIGH ?
+	inv_val |= (edid->flags & DISPLAY_FLAGS_VSYNC_HIGH ?
 		   HDMI_FC_INVIDCONF_VSYNC_IN_POLARITY_ACTIVE_HIGH :
 		   HDMI_FC_INVIDCONF_VSYNC_IN_POLARITY_ACTIVE_LOW);
 
-	inv_val |= (edid->flags & DISPLAY_FLAGS_VSYNC_HIGH ?
+	inv_val |= (edid->flags & DISPLAY_FLAGS_HSYNC_HIGH ?
 		   HDMI_FC_INVIDCONF_HSYNC_IN_POLARITY_ACTIVE_HIGH :
 		   HDMI_FC_INVIDCONF_HSYNC_IN_POLARITY_ACTIVE_LOW);
 
@@ -414,13 +413,9 @@ static void hdmi_av_composer(struct dw_hdmi *hdmi,
 		   HDMI_FC_INVIDCONF_DE_IN_POLARITY_ACTIVE_HIGH :
 		   HDMI_FC_INVIDCONF_DE_IN_POLARITY_ACTIVE_LOW);
 
-	/*
-	 * TODO(sjg@chromium.org>: Need to check for HDMI / DVI
-	 * inv_val |= (edid->hdmi_monitor_detected ?
-	 *	   HDMI_FC_INVIDCONF_DVI_MODEZ_HDMI_MODE :
-	 *	   HDMI_FC_INVIDCONF_DVI_MODEZ_DVI_MODE);
-	 */
-	inv_val |= HDMI_FC_INVIDCONF_DVI_MODEZ_HDMI_MODE;
+	inv_val |= (edid->hdmi_monitor ?
+		   HDMI_FC_INVIDCONF_DVI_MODEZ_HDMI_MODE :
+		   HDMI_FC_INVIDCONF_DVI_MODEZ_DVI_MODE);
 
 	inv_val |= HDMI_FC_INVIDCONF_R_V_BLANK_IN_OSC_ACTIVE_LOW;
 
@@ -459,7 +454,7 @@ static void hdmi_av_composer(struct dw_hdmi *hdmi,
 }
 
 /* hdmi initialization step b.4 */
-static void hdmi_enable_video_path(struct dw_hdmi *hdmi)
+static void hdmi_enable_video_path(struct dw_hdmi *hdmi, bool audio)
 {
 	uint clkdis;
 
@@ -484,8 +479,10 @@ static void hdmi_enable_video_path(struct dw_hdmi *hdmi)
 	clkdis &= ~HDMI_MC_CLKDIS_TMDSCLK_DISABLE;
 	hdmi_write(hdmi, clkdis, HDMI_MC_CLKDIS);
 
-	clkdis &= ~HDMI_MC_CLKDIS_AUDCLK_DISABLE;
-	hdmi_write(hdmi, clkdis, HDMI_MC_CLKDIS);
+	if (audio) {
+		clkdis &= ~HDMI_MC_CLKDIS_AUDCLK_DISABLE;
+		hdmi_write(hdmi, clkdis, HDMI_MC_CLKDIS);
+	}
 }
 
 /* workaround to clear the overflow condition */
@@ -716,7 +713,8 @@ int dw_hdmi_enable(struct dw_hdmi *hdmi, const struct display_timing *edid)
 {
 	int ret;
 
-	debug("hdmi, mode info : clock %d hdis %d vdis %d\n",
+	debug("%s, mode info : clock %d hdis %d vdis %d\n",
+	      edid->hdmi_monitor ? "hdmi" : "dvi",
 	      edid->pixelclock.typ, edid->hactive.typ, edid->vactive.typ);
 
 	hdmi_av_composer(hdmi, edid);
@@ -725,11 +723,13 @@ int dw_hdmi_enable(struct dw_hdmi *hdmi, const struct display_timing *edid)
 	if (ret)
 		return ret;
 
-	hdmi_enable_video_path(hdmi);
+	hdmi_enable_video_path(hdmi, edid->hdmi_monitor);
 
-	hdmi_audio_fifo_reset(hdmi);
-	hdmi_audio_set_format(hdmi);
-	hdmi_audio_set_samplerate(hdmi, edid->pixelclock.typ);
+	if (edid->hdmi_monitor) {
+		hdmi_audio_fifo_reset(hdmi);
+		hdmi_audio_set_format(hdmi);
+		hdmi_audio_set_samplerate(hdmi, edid->pixelclock.typ);
+	}
 
 	hdmi_video_packetize(hdmi);
 	hdmi_video_sample(hdmi);

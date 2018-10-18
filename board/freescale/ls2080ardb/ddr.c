@@ -1,13 +1,13 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2015 Freescale Semiconductor, Inc.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
 #include <fsl_ddr_sdram.h>
 #include <fsl_ddr_dimm_params.h>
 #include <asm/arch/soc.h>
+#include <asm/arch/clock.h>
 #include "ddr.h"
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -84,6 +84,8 @@ found:
 		pbsp->wrlvl_ctl_3);
 #ifdef CONFIG_SYS_FSL_HAS_DP_DDR
 	if (ctrl_num == CONFIG_DP_DDR_CTRL) {
+		if (popts->registered_dimm_en)
+			printf("WARN: RDIMM not supported.\n");
 		/* force DDR bus width to 32 bits */
 		popts->data_bus_width = 1;
 		popts->otf_burst_chop_en = 0;

@@ -1,16 +1,15 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2013 Gateworks Corporation
  *
  * Author: Tim Harvey <tharvey@gateworks.com>
- *
- * SPDX-License-Identifier: GPL-2.0+
  */
 
 #include <asm/arch/clock.h>
 #include <asm/arch/mx6-pins.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/gpio.h>
-#include <asm/imx-common/mxc_i2c.h>
+#include <asm/mach-imx/mxc_i2c.h>
 #include <fsl_esdhc.h>
 #include <hwconfig.h>
 #include <power/pmic.h>
@@ -180,33 +179,6 @@ void setup_ventana_i2c(void)
 /*
  * Baseboard specific GPIO
  */
-
-/* prototype */
-static iomux_v3_cfg_t const gwproto_gpio_pads[] = {
-	/* RS232_EN# */
-	IOMUX_PADS(PAD_SD4_DAT3__GPIO2_IO11 | DIO_PAD_CFG),
-	/* PANLEDG# */
-	IOMUX_PADS(PAD_KEY_COL0__GPIO4_IO06 | DIO_PAD_CFG),
-	/* PANLEDR# */
-	IOMUX_PADS(PAD_KEY_ROW0__GPIO4_IO07 | DIO_PAD_CFG),
-	/* LOCLED# */
-	IOMUX_PADS(PAD_KEY_ROW4__GPIO4_IO15 | DIO_PAD_CFG),
-	/* RS485_EN */
-	IOMUX_PADS(PAD_SD3_DAT4__GPIO7_IO01 | DIO_PAD_CFG),
-	/* IOEXP_PWREN# */
-	IOMUX_PADS(PAD_EIM_A19__GPIO2_IO19 | DIO_PAD_CFG),
-	/* IOEXP_IRQ# */
-	IOMUX_PADS(PAD_EIM_A20__GPIO2_IO18 | MUX_PAD_CTRL(IRQ_PAD_CTRL)),
-	/* VID_EN */
-	IOMUX_PADS(PAD_EIM_D31__GPIO3_IO31 | DIO_PAD_CFG),
-	/* DIOI2C_DIS# */
-	IOMUX_PADS(PAD_GPIO_19__GPIO4_IO05 | DIO_PAD_CFG),
-	/* PCICK_SSON */
-	IOMUX_PADS(PAD_SD1_CLK__GPIO1_IO20 | DIO_PAD_CFG),
-	/* PCI_RST# */
-	IOMUX_PADS(PAD_ENET_TXD1__GPIO1_IO29 | DIO_PAD_CFG),
-};
-
 static iomux_v3_cfg_t const gw51xx_gpio_pads[] = {
 	/* PANLEDG# */
 	IOMUX_PADS(PAD_KEY_COL0__GPIO4_IO06 | DIO_PAD_CFG),
@@ -1187,7 +1159,7 @@ void setup_board_gpio(int board, struct ventana_board_info *info)
 	char arg[10];
 	size_t len;
 	int i;
-	int quiet = simple_strtol(getenv("quiet"), NULL, 10);
+	int quiet = simple_strtol(env_get("quiet"), NULL, 10);
 
 	if (board >= GW_UNKNOWN)
 		return;

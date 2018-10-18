@@ -1,8 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (c) 2017 Google, Inc
  * Written by Simon Glass <sjg@chromium.org>
- *
- * SPDX-License-Identifier:     GPL-2.0+
  */
 
 #include <common.h>
@@ -90,8 +89,6 @@ int do_led(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		return list_leds();
 
 	cmd = argc > 2 ? get_led_cmd(argv[2]) : LEDST_COUNT;
-	if (cmd < 0)
-		return CMD_RET_USAGE;
 #ifdef CONFIG_LED_BLINK
 	if (cmd == LEDST_BLINK) {
 		if (argc < 4)

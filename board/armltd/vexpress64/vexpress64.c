@@ -1,17 +1,16 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2013
  * David Feng <fenghua@phytium.com.cn>
  * Sharma Bhupesh <bhupesh.sharma@freescale.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 #include <common.h>
+#include <dm.h>
 #include <malloc.h>
 #include <errno.h>
 #include <netdev.h>
 #include <asm/io.h>
 #include <linux/compiler.h>
-#include <dm/platdata.h>
 #include <dm/platform_data/serial_pl01x.h>
 #include "pcie.h"
 #include <asm/armv8/mmu.h>

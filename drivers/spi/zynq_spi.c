@@ -1,10 +1,9 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2013 Xilinx, Inc.
  * (C) Copyright 2015 Jagan Teki <jteki@openedev.com>
  *
  * Xilinx Zynq PS SPI controller driver (master mode only)
- *
- * SPDX-License-Identifier:     GPL-2.0+
  */
 
 #include <common.h>
@@ -76,7 +75,7 @@ static int zynq_spi_ofdata_to_platdata(struct udevice *bus)
 	const void *blob = gd->fdt_blob;
 	int node = dev_of_offset(bus);
 
-	plat->regs = (struct zynq_spi_regs *)dev_get_addr(bus);
+	plat->regs = (struct zynq_spi_regs *)devfdt_get_addr(bus);
 
 	/* FIXME: Use 250MHz as a suitable default */
 	plat->frequency = fdtdec_get_int(blob, node, "spi-max-frequency",

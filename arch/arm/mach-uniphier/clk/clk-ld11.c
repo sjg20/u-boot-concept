@@ -1,7 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2016 Socionext Inc.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -33,14 +32,14 @@ void uniphier_ld11_clk_init(void)
 	/* TODO: use "mmc-pwrseq-emmc" */
 	writel(1, SDCTRL_EMMC_HW_RESET);
 
-#ifdef CONFIG_USB_EHCI
+#ifdef CONFIG_USB_EHCI_HCD
 	{
 		/* FIXME: the current clk driver can not handle parents */
 		u32 tmp;
 		int ch;
 
 		tmp = readl(SC_CLKCTRL4);
-		tmp |= SC_CLKCTRL4_MIO | SC_CLKCTRL4_STDMAC;
+		tmp |= BIT(10) | BIT(8);	/* MIO, STDMAC */
 		writel(tmp, SC_CLKCTRL4);
 
 		for (ch = 0; ch < 3; ch++) {

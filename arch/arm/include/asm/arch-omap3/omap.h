@@ -1,10 +1,9 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2006-2008
  * Texas Instruments, <www.ti.com>
  * Richard Woodruff <r-woodruff2@ti.com>
  * Syed Mohammed Khasim <x0khasim@ti.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef _OMAP3_H_
@@ -90,6 +89,9 @@ struct s32ktimer {
 	unsigned char res[0x10];
 	unsigned int s32k_cr;		/* 0x10 */
 };
+
+#define DEVICE_TYPE_SHIFT		0x8
+#define DEVICE_TYPE_MASK		(0x7 << DEVICE_TYPE_SHIFT)
 
 #endif /* __ASSEMBLY__ */
 

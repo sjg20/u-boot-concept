@@ -1,7 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2011 Samsung Electronics
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -87,7 +86,7 @@ int checkboard(void)
 }
 #endif
 
-#ifdef CONFIG_GENERIC_MMC
+#ifdef CONFIG_MMC
 int board_mmc_init(bd_t *bis)
 {
 	int i, err;

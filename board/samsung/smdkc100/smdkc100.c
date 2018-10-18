@@ -1,9 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  *  Copyright (C) 2008-2009 Samsung Electronics
  *  Minkyu Kang <mk7.kang@samsung.com>
  *  Kyungmin Park <kyungmin.park@samsung.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -11,6 +10,7 @@
 #include <asm/io.h>
 #include <asm/arch/sromc.h>
 #include <netdev.h>
+#include <asm/mach-types.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

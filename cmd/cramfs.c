@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * SPDX-License-Identifier:	GPL-2.0+
  *
  * based on: cmd_jffs2.c
  *
@@ -39,7 +39,7 @@
 # define OFFSET_ADJUSTMENT	(flash_info[id.num].start[0])
 #endif
 
-#ifndef CONFIG_CMD_JFFS2
+#ifndef CONFIG_FS_JFFS2
 #include <linux/stat.h>
 char *mkmodestr(unsigned long mode, char *str)
 {
@@ -70,7 +70,7 @@ char *mkmodestr(unsigned long mode, char *str)
 	str[10] = '\0';
 	return str;
 }
-#endif /* CONFIG_CMD_JFFS2 */
+#endif /* CONFIG_FS_JFFS2 */
 
 extern int cramfs_check (struct part_info *info);
 extern int cramfs_load (char *loadoffset, struct part_info *info, char *filename);
@@ -104,7 +104,7 @@ int do_cramfs_load(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	struct mtdids id;
 
 	ulong addr;
-	addr = simple_strtoul(getenv("cramfsaddr"), NULL, 16);
+	addr = simple_strtoul(env_get("cramfsaddr"), NULL, 16);
 
 	/* hack! */
 	/* cramfs_* only supports NOR flash chips */
@@ -117,9 +117,9 @@ int do_cramfs_load(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	part.offset = (u64)(uintptr_t) map_sysmem(addr - OFFSET_ADJUSTMENT, 0);
 
 	/* pre-set Boot file name */
-	if ((filename = getenv("bootfile")) == NULL) {
+	filename = env_get("bootfile");
+	if (!filename)
 		filename = "uImage";
-	}
 
 	if (argc == 2) {
 		filename = argv[1];
@@ -138,7 +138,7 @@ int do_cramfs_load(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	if (size > 0) {
 		printf("### CRAMFS load complete: %d bytes loaded to 0x%lx\n",
 			size, offset);
-		setenv_hex("filesize", size);
+		env_set_hex("filesize", size);
 	} else {
 		printf("### CRAMFS LOAD ERROR<%x> for %s!\n", size, filename);
 	}
@@ -169,7 +169,7 @@ int do_cramfs_ls(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	struct mtdids id;
 
 	ulong addr;
-	addr = simple_strtoul(getenv("cramfsaddr"), NULL, 16);
+	addr = simple_strtoul(env_get("cramfsaddr"), NULL, 16);
 
 	/* hack! */
 	/* cramfs_* only supports NOR flash chips */

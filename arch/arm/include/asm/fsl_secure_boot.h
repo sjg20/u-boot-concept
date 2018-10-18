@@ -1,19 +1,15 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright 2015 Freescale Semiconductor, Inc.
- *
- * SPDX-License-Identifier:	GPL-2.0+
+ * Copyright 2017 NXP
  */
 
 #ifndef __FSL_SECURE_BOOT_H
 #define __FSL_SECURE_BOOT_H
 
 #ifdef CONFIG_CHAIN_OF_TRUST
-#define CONFIG_CMD_ESBC_VALIDATE
 #define CONFIG_FSL_SEC_MON
-#define CONFIG_SHA_HW_ACCEL
-#define CONFIG_SHA_PROG_HW_ACCEL
 
-#define CONFIG_SPL_BOARD_INIT
 #ifdef CONFIG_SPL_BUILD
 /*
  * Define the key hash for U-Boot here if public/private key pair used to
@@ -29,8 +25,15 @@
 
 #define CONFIG_KEY_REVOCATION
 
+#if defined(CONFIG_FSL_LAYERSCAPE)
+/*
+ * For fsl layerscape based platforms, ESBC image Address in Header
+ * is 64 bit.
+ */
+#define CONFIG_ESBC_ADDR_64BIT
+#endif
+
 #ifndef CONFIG_SPL_BUILD
-#define CONFIG_CMD_HASH
 #ifndef CONFIG_SYS_RAMBOOT
 /* The key used for verification of next level images
  * is picked up from an Extension Table which has
@@ -44,14 +47,6 @@
  */
 #define CONFIG_FSL_ISBC_KEY_EXT
 
-#endif
-
-#if defined(CONFIG_FSL_LAYERSCAPE)
-/*
- * For fsl layerscape based platforms, ESBC image Address in Header
- * is 64 bit.
- */
-#define CONFIG_ESBC_ADDR_64BIT
 #endif
 
 #ifdef CONFIG_ARCH_LS2080A
@@ -76,55 +71,49 @@
  * DDR memory map
  */
 #ifdef CONFIG_FSL_LSCH3
-#define CONFIG_BS_HDR_ADDR_DEVICE	0x580d00000
-#define CONFIG_BS_ADDR_DEVICE		0x580e00000
-#define CONFIG_BS_HDR_ADDR_RAM		0xa0d00000
-#define CONFIG_BS_ADDR_RAM		0xa0e00000
-#define CONFIG_BS_HDR_SIZE		0x00002000
+#ifdef CONFIG_QSPI_BOOT
+#define CONFIG_BS_ADDR_DEVICE		0x20600000
+#define CONFIG_BS_HDR_ADDR_DEVICE	0x20640000
+#else /* NOR BOOT */
+#define CONFIG_BS_ADDR_DEVICE		0x580600000
+#define CONFIG_BS_HDR_ADDR_DEVICE	0x580640000
+#endif /*ifdef CONFIG_QSPI_BOOT */
 #define CONFIG_BS_SIZE			0x00001000
+#define CONFIG_BS_HDR_SIZE		0x00004000
+#define CONFIG_BS_ADDR_RAM		0xa0600000
+#define CONFIG_BS_HDR_ADDR_RAM		0xa0640000
 #else
 #ifdef CONFIG_SD_BOOT
 /* For SD boot address and size are assigned in terms of sector
  * offset and no. of sectors respectively.
  */
-#if defined(CONFIG_ARCH_LS1043A) || defined(CONFIG_ARCH_LS1046A)
-#define CONFIG_BS_HDR_ADDR_DEVICE	0x00000920
-#else
-#define CONFIG_BS_HDR_ADDR_DEVICE       0x00000900
-#endif
-#define CONFIG_BS_ADDR_DEVICE		0x00000940
-#define CONFIG_BS_HDR_SIZE		0x00000010
+#define CONFIG_BS_ADDR_DEVICE		0x00003000
+#define CONFIG_BS_HDR_ADDR_DEVICE	0x00003200
 #define CONFIG_BS_SIZE			0x00000008
+#define CONFIG_BS_HDR_SIZE		0x00000010
 #elif defined(CONFIG_NAND_BOOT)
-#define CONFIG_BS_HDR_ADDR_DEVICE      0x00800000
-#define CONFIG_BS_ADDR_DEVICE          0x00802000
-#define CONFIG_BS_HDR_SIZE             0x00002000
-#define CONFIG_BS_SIZE                 0x00001000
+#define CONFIG_BS_ADDR_DEVICE		0x00600000
+#define CONFIG_BS_HDR_ADDR_DEVICE	0x00640000
+#define CONFIG_BS_SIZE			0x00001000
+#define CONFIG_BS_HDR_SIZE		0x00002000
 #elif defined(CONFIG_QSPI_BOOT)
-#ifdef CONFIG_ARCH_LS1046A
-#define CONFIG_BS_HDR_ADDR_DEVICE	0x40780000
-#define CONFIG_BS_ADDR_DEVICE		0x40800000
-#elif defined(CONFIG_ARCH_LS1012A)
-#define CONFIG_BS_HDR_ADDR_DEVICE      0x400c0000
-#define CONFIG_BS_ADDR_DEVICE          0x40060000
-#else
-#error "Platform not supported"
-#endif
-#define CONFIG_BS_HDR_SIZE		0x00002000
+#define CONFIG_BS_ADDR_DEVICE		0x40600000
+#define CONFIG_BS_HDR_ADDR_DEVICE	0x40640000
 #define CONFIG_BS_SIZE			0x00001000
+#define CONFIG_BS_HDR_SIZE		0x00002000
 #else /* Default NOR Boot */
-#define CONFIG_BS_HDR_ADDR_DEVICE	0x600a0000
-#define CONFIG_BS_ADDR_DEVICE		0x60060000
-#define CONFIG_BS_HDR_SIZE		0x00002000
+#define CONFIG_BS_ADDR_DEVICE		0x60600000
+#define CONFIG_BS_HDR_ADDR_DEVICE	0x60640000
 #define CONFIG_BS_SIZE			0x00001000
+#define CONFIG_BS_HDR_SIZE		0x00002000
 #endif
-#define CONFIG_BS_HDR_ADDR_RAM		0x81000000
-#define CONFIG_BS_ADDR_RAM		0x81020000
+#define CONFIG_BS_ADDR_RAM		0x81000000
+#define CONFIG_BS_HDR_ADDR_RAM		0x81020000
 #endif
 
 #ifdef CONFIG_BOOTSCRIPT_COPY_RAM
-#define CONFIG_BOOTSCRIPT_HDR_ADDR	CONFIG_BS_HDR_ADDR_RAM
 #define CONFIG_BOOTSCRIPT_ADDR		CONFIG_BS_ADDR_RAM
+#define CONFIG_BOOTSCRIPT_HDR_ADDR	CONFIG_BS_HDR_ADDR_RAM
 #else
 #define CONFIG_BOOTSCRIPT_HDR_ADDR	CONFIG_BS_HDR_ADDR_DEVICE
 /* BOOTSCRIPT_ADDR is not required */

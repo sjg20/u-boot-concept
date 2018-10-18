@@ -1,8 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * (C) Copyright 2017
- * Vikas Manocha, ST Micoelectronics, vikas.manocha@st.com.
- *
- * SPDX-License-Identifier:	GPL-2.0+
+ * Copyright (C) 2017, STMicroelectronics - All Rights Reserved
+ * Author(s): Vikas Manocha, <vikas.manocha@st.com> for STMicroelectronics.
  */
 
 #include <common.h>
@@ -253,6 +252,21 @@ void flush_dcache_range(unsigned long start, unsigned long stop)
 		return;
 	}
 }
+void flush_dcache_all(void)
+{
+	if (action_dcache_all(FLUSH_SET_WAY)) {
+		printf("ERR: D-cache not flushed\n");
+		return;
+	}
+}
+
+void invalidate_dcache_all(void)
+{
+	if (action_dcache_all(INVALIDATE_SET_WAY)) {
+		printf("ERR: D-cache not invalidated\n");
+		return;
+	}
+}
 #else
 void dcache_enable(void)
 {
@@ -267,6 +281,14 @@ void dcache_disable(void)
 int dcache_status(void)
 {
 	return 0;
+}
+
+void flush_dcache_all(void)
+{
+}
+
+void invalidate_dcache_all(void)
+{
 }
 #endif
 

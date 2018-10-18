@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * MUSB OTG driver register I/O
  *
@@ -8,8 +9,6 @@
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * version 2 as published by the Free Software Foundation.
- *
- * SPDX-License-Identifier:	GPL-2.0
  */
 
 #ifndef __MUSB_LINUX_PLATFORM_ARCH_H__
@@ -22,7 +21,7 @@
 #endif
 
 #if !defined(CONFIG_ARM) && !defined(CONFIG_SUPERH) \
-	&& !defined(CONFIG_AVR32) && !defined(CONFIG_PPC32) \
+	&& !defined(CONFIG_PPC32) \
 	&& !defined(CONFIG_PPC64) && !defined(CONFIG_MIPS) \
 	&& !defined(CONFIG_M68K)
 static inline void readsl(const void __iomem *addr, void *buf, int len)

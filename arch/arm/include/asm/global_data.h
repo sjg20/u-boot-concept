@@ -1,8 +1,7 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * (C) Copyright 2002-2010
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #ifndef	__ASM_GBL_DATA_H
@@ -32,8 +31,8 @@ struct arch_global_data {
 #endif
 	/* "static data" needed by most of timer.c on ARM platforms */
 	unsigned long timer_rate_hz;
-	unsigned long tbu;
-	unsigned long tbl;
+	unsigned int tbu;
+	unsigned int tbl;
 	unsigned long lastinc;
 	unsigned long long timer_reset_value;
 #if !(defined(CONFIG_SYS_ICACHE_OFF) && defined(CONFIG_SYS_DCACHE_OFF))

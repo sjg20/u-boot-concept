@@ -1,9 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2007, Guennadi Liakhovetski <lg@denx.de>
  *
  * (C) Copyright 2008-2010 Freescale Semiconductor, Inc.
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -24,6 +23,7 @@
 #include <asm/gpio.h>
 #include <asm/arch/sys_proto.h>
 #include <netdev.h>
+#include <asm/mach-types.h>
 
 #ifndef CONFIG_BOARD_LATE_INIT
 #error "CONFIG_BOARD_LATE_INIT must be set for this board"

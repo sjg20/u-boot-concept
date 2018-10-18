@@ -1,8 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2013 SAMSUNG Electronics
  * Rajeshwari Shinde <rajeshwari.s@samsung.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <common.h>
@@ -250,7 +249,7 @@ int board_eth_init(bd_t *bis)
 	return 0;
 }
 
-#ifdef CONFIG_GENERIC_MMC
+#ifdef CONFIG_MMC
 static int init_mmc(void)
 {
 #ifdef CONFIG_MMC_SDHCI
@@ -351,8 +350,8 @@ void reset_misc(void)
 	if (node < 0)
 		return;
 
-	gpio_request_by_name_nodev(gd->fdt_blob, node, "reset-gpio", 0, &gpio,
-				   GPIOD_IS_OUT);
+	gpio_request_by_name_nodev(offset_to_ofnode(node), "reset-gpio", 0,
+				   &gpio, GPIOD_IS_OUT);
 
 	if (dm_gpio_is_valid(&gpio)) {
 		/*

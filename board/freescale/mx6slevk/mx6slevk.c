@@ -1,9 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2013 Freescale Semiconductor, Inc.
  *
  * Author: Fabio Estevam <fabio.estevam@freescale.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
 #include <asm/arch/clock.h>
@@ -14,9 +13,9 @@
 #include <asm/arch/mx6-pins.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/gpio.h>
-#include <asm/imx-common/iomux-v3.h>
-#include <asm/imx-common/mxc_i2c.h>
-#include <asm/imx-common/spi.h>
+#include <asm/mach-imx/iomux-v3.h>
+#include <asm/mach-imx/mxc_i2c.h>
+#include <asm/mach-imx/spi.h>
 #include <asm/io.h>
 #include <linux/sizes.h>
 #include <common.h>
@@ -27,8 +26,6 @@
 #include <power/pmic.h>
 #include <power/pfuze100_pmic.h>
 #include "../common/pfuze.h"
-#include <usb.h>
-#include <usb/ehci-ci.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -66,6 +63,7 @@ static iomux_v3_cfg_t const uart1_pads[] = {
 	MX6_PAD_UART1_RXD__UART1_RXD | MUX_PAD_CTRL(UART_PAD_CTRL),
 };
 
+#ifdef CONFIG_SPL_BUILD
 static iomux_v3_cfg_t const usdhc1_pads[] = {
 	/* 8 bit SD */
 	MX6_PAD_SD1_CLK__USDHC1_CLK | MUX_PAD_CTRL(USDHC_PAD_CTRL),
@@ -106,6 +104,7 @@ static iomux_v3_cfg_t const usdhc3_pads[] = {
 	/*CD pin*/
 	MX6_PAD_REF_CLK_32K__GPIO_3_22 | MUX_PAD_CTRL(NO_PAD_CTRL),
 };
+#endif
 
 static iomux_v3_cfg_t const fec_pads[] = {
 	MX6_PAD_FEC_MDC__FEC_MDC | MUX_PAD_CTRL(ENET_PAD_CTRL),
@@ -221,49 +220,6 @@ static int setup_fec(void)
 }
 #endif
 
-#ifdef CONFIG_USB_EHCI_MX6
-#define USB_OTHERREGS_OFFSET	0x800
-#define UCTRL_PWR_POL		(1 << 9)
-
-static iomux_v3_cfg_t const usb_otg_pads[] = {
-	/* OTG1 */
-	MX6_PAD_KEY_COL4__USB_USBOTG1_PWR | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_EPDC_PWRCOM__ANATOP_USBOTG1_ID | MUX_PAD_CTRL(OTGID_PAD_CTRL),
-	/* OTG2 */
-	MX6_PAD_KEY_COL5__USB_USBOTG2_PWR | MUX_PAD_CTRL(NO_PAD_CTRL)
-};
-
-static void setup_usb(void)
-{
-	imx_iomux_v3_setup_multiple_pads(usb_otg_pads,
-					 ARRAY_SIZE(usb_otg_pads));
-}
-
-int board_usb_phy_mode(int port)
-{
-	if (port == 1)
-		return USB_INIT_HOST;
-	else
-		return usb_phy_mode(port);
-}
-
-int board_ehci_hcd_init(int port)
-{
-	u32 *usbnc_usb_ctrl;
-
-	if (port > 1)
-		return -EINVAL;
-
-	usbnc_usb_ctrl = (u32 *)(USB_BASE_ADDR + USB_OTHERREGS_OFFSET +
-				 port * 4);
-
-	/* Set Power polarity */
-	setbits_le32(usbnc_usb_ctrl, UCTRL_PWR_POL);
-
-	return 0;
-}
-#endif
-
 int board_early_init_f(void)
 {
 	setup_iomux_uart();
@@ -285,10 +241,6 @@ int board_init(void)
 	setup_fec();
 #endif
 
-#ifdef CONFIG_USB_EHCI_MX6
-	setup_usb();
-#endif
-
 	return 0;
 }
 
@@ -301,7 +253,7 @@ int checkboard(void)
 
 #ifdef CONFIG_SPL_BUILD
 #include <spl.h>
-#include <libfdt.h>
+#include <linux/libfdt.h>
 
 #define USDHC1_CD_GPIO	IMX_GPIO_NR(4, 7)
 #define USDHC2_CD_GPIO	IMX_GPIO_NR(5, 0)
@@ -320,12 +272,15 @@ int board_mmc_getcd(struct mmc *mmc)
 
 	switch (cfg->esdhc_base) {
 	case USDHC1_BASE_ADDR:
+		gpio_request(USDHC1_CD_GPIO, "cd1_gpio");
 		ret = !gpio_get_value(USDHC1_CD_GPIO);
 		break;
 	case USDHC2_BASE_ADDR:
+		gpio_request(USDHC2_CD_GPIO, "cd2_gpio");
 		ret = !gpio_get_value(USDHC2_CD_GPIO);
 		break;
 	case USDHC3_BASE_ADDR:
+		gpio_request(USDHC3_CD_GPIO, "cd3_gpio");
 		ret = !gpio_get_value(USDHC3_CD_GPIO);
 		break;
 	}

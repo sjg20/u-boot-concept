@@ -120,7 +120,7 @@
 
 			cps_pinctl: cps-pinctl@440000 {
 				compatible = "marvell,mvebu-pinctrl",
-					     "marvell,a80x0-cp1-pinctrl";
+					     "marvell,armada-8k-cps-pinctrl";
 				bank-name ="cp1-110";
 				reg = <0x440000 0x20>;
 				pin-count = <63>;
@@ -254,7 +254,7 @@
 				reg = <0x580000 0x1000>,	/* utmi-unit */
 				      <0x440420 0x4>,		/* usb-cfg */
 				      <0x440440 0x4>;		/* utmi-cfg */
-				utmi-port = <UTMI_PHY_TO_USB_HOST0>;
+				utmi-port = <UTMI_PHY_TO_USB3_HOST0>;
 				status = "disabled";
 			};
 		};

@@ -1,10 +1,10 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2017 Masahiro Yamada <yamada.masahiro@socionext.com>
- *
- * SPDX-License-Identifier:	GPL-2.0+
  */
 
-#include <dm/device.h>
+#include <common.h>
+#include <dm.h>
 #include <sysreset.h>
 #include <linux/errno.h>
 #include <linux/psci.h>
