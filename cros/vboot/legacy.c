@@ -19,9 +19,9 @@ int VbExLegacy(int altfw_num)
 	return 1;
 }
 
-VbError_t VbExGetAltFwCount(uint32_t *count)
+VbError_t VbExGetAltFwIdxMask(uint32_t *mask)
 {
-	*count = 2;
+	*mask = 3;
 
 	return 0;
 }
