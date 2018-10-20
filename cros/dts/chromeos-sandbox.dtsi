@@ -33,7 +33,7 @@
 		kernel-addr = <0x01008000 0x2000000>;
 
 		virtual-dev-switch;
-		/* detachable-ui; */
+		detachable-ui;
 	};
 
 	chromeos {

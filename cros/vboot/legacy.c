@@ -21,35 +21,7 @@ int VbExLegacy(int altfw_num)
 
 VbError_t VbExGetAltFwIdxMask(uint32_t *mask)
 {
-	*mask = 3;
+	*mask = 3 << 1;
 
 	return 0;
 }
-
-#if 0
-VbError_t VbExGetAltFWList(VbAltFwItem **item, uint32_t *count)
-{
-	void *u_boot, *tianocore;
-	int u_boot_size, tianocore_size;
-
-	if (os_read_file("/home/sglass/u/tools/logos/u-boot_logo_rgb.bmp", &u_boot, &u_boot_size))
-		return VBERROR_UNKNOWN;
-	if (os_read_file("/home/sglass/u/cros/data/tianocore.bmp", &tianocore, &tianocore_size))
-		return VBERROR_UNKNOWN;
-
-	/* TODO(sjg@chromium.org): Read from SPI flash */
-	static VbAltFwItem items[] = {
-		{ 1, "u-boot.bin", "U-Boot", "U-Boot Boot Loader v2018.09" },
-		{ 2, "tianocore.bin", "TianoCore", "TianoCore v3.32" },
-	};
-	items[0].image = u_boot;
-	items[0].image_size = u_boot_size;
-	items[1].image = tianocore;
-	items[1].image_size = tianocore_size;
-
-	*count = ARRAY_SIZE(items);
-	*item = items;
-
-	return 0;
-}
-#endif
