@@ -492,6 +492,37 @@ static int do_bootefi_bootmgr_exec(int boot_id)
 	return CMD_RET_SUCCESS;
 }
 
+/* Called by "run" command */
+int do_bootefi_run(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	int boot_id = -1;
+	char *endp;
+
+	if (argc > 2)
+		return CMD_RET_USAGE;
+
+	if (argc == 2) {
+		if (!strcmp(argv[1], "BootOrder")) {
+			boot_id = -1;
+		} else if (!strncmp(argv[2], "Boot", 4)) {
+			boot_id = (int)simple_strtoul(&argv[2][4], &endp, 0);
+			if ((argv[2] + strlen(argv[2]) != endp) ||
+			    boot_id > 0xffff)
+				return CMD_RET_USAGE;
+		} else {
+			return CMD_RET_USAGE;
+		}
+	}
+
+	if (efi_init_obj_list())
+		return CMD_RET_FAILURE;
+
+	if (efi_handle_fdt(NULL))
+		return CMD_RET_FAILURE;
+
+	return do_bootefi_bootmgr_exec(boot_id);
+}
+
 /* Interpreter command to boot an arbitrary EFI image from memory */
 static int do_bootefi(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
