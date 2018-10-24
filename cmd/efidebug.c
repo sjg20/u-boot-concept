@@ -15,6 +15,102 @@
 #include <search.h>
 #include <linux/ctype.h>
 
+#define BS systab.boottime
+
+static int efi_get_handles_by_proto(efi_guid_t *guid, efi_handle_t **handlesp,
+				    int *num)
+{
+	efi_handle_t *handles = NULL;
+	efi_uintn_t size = 0;
+	efi_status_t ret;
+
+	if (guid) {
+		ret = BS->locate_handle(BY_PROTOCOL, guid, NULL, &size,
+					handles);
+		if (ret == EFI_BUFFER_TOO_SMALL) {
+			handles = calloc(1, size);
+			if (!handles)
+				return -1;
+
+			ret = BS->locate_handle(BY_PROTOCOL, guid, NULL, &size,
+						handles);
+		}
+		if (ret != EFI_SUCCESS) {
+			free(handles);
+			return -1;
+		}
+	} else {
+		ret = BS->locate_handle(ALL_HANDLES, NULL, NULL, &size, NULL);
+		if (ret == EFI_BUFFER_TOO_SMALL) {
+			handles = calloc(1, size);
+			if (!handles)
+				return -1;
+
+			ret = BS->locate_handle(ALL_HANDLES, NULL, NULL, &size,
+						handles);
+		}
+		if (ret != EFI_SUCCESS) {
+			free(handles);
+			return -1;
+		}
+	}
+
+	*handlesp = handles;
+	*num = size / sizeof(efi_handle_t);
+
+	return 0;
+}
+
+static int efi_get_device_handle_info(efi_handle_t handle, u16 **dev_path_text)
+{
+	struct efi_device_path *dp;
+	efi_status_t ret;
+
+	ret = BS->open_protocol(handle, &efi_guid_device_path,
+				(void **)&dp, NULL /* FIXME */, NULL,
+				EFI_OPEN_PROTOCOL_GET_PROTOCOL);
+	if (ret == EFI_SUCCESS) {
+		*dev_path_text = efi_dp_str(dp);
+		return 0;
+	} else {
+		return -1;
+	}
+}
+
+#define EFI_HANDLE_WIDTH ((int)sizeof(efi_handle_t) * 2)
+
+static const char spc[] = "                ";
+static const char sep[] = "================";
+
+static int do_efi_show_devices(cmd_tbl_t *cmdtp, int flag,
+			       int argc, char * const argv[])
+{
+	efi_handle_t *handles;
+	u16 *dev_path_text;
+	int num, i;
+
+	handles = NULL;
+	num = 0;
+	if (efi_get_handles_by_proto(NULL, &handles, &num))
+		return CMD_RET_FAILURE;
+
+	if (!num)
+		return CMD_RET_SUCCESS;
+
+	printf("Device%.*s Device Path\n", EFI_HANDLE_WIDTH - 6, spc);
+	printf("%.*s ====================\n", EFI_HANDLE_WIDTH, sep);
+	for (i = 0; i < num; i++) {
+		if (!efi_get_device_handle_info(handles[i], &dev_path_text)) {
+			printf("%p %ls\n", handles[i], dev_path_text);
+			efi_free_pool(dev_path_text);
+		}
+	}
+
+	free(handles);
+
+	return CMD_RET_SUCCESS;
+}
+
 static int do_efi_boot_add(cmd_tbl_t *cmdtp, int flag,
 			   int argc, char * const argv[])
 {
@@ -406,6 +502,8 @@ static int do_efi_boot_opt(cmd_tbl_t *cmdtp, int flag,
 
 static cmd_tbl_t cmd_efidebug_sub[] = {
 	U_BOOT_CMD_MKENT(boot, CONFIG_SYS_MAXARGS, 1, do_efi_boot_opt, "", ""),
+	U_BOOT_CMD_MKENT(devices, CONFIG_SYS_MAXARGS, 1, do_efi_show_devices,
+			 "", ""),
 };
 
 /* Interpreter command to configure UEFI environment */
@@ -451,7 +549,9 @@ static char efidebug_help_text[] =
 	"  - set UEFI BootNext variable\n"
 	"efidebug boot order [<bootid#1> [<bootid#2> [<bootid#3> [...]]]]\n"
 	"  - set/show UEFI boot order\n"
-	"\n";
+	"\n"
+	"efidebug devices\n"
+	"  - show uefi devices\n";
 #endif
 
 U_BOOT_CMD(
