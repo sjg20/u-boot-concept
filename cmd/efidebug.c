@@ -301,6 +301,14 @@ static int do_efi_show_handles(cmd_tbl_t *cmdtp, int flag,
 	return CMD_RET_SUCCESS;
 }
 
+static int do_efi_show_images(cmd_tbl_t *cmdtp, int flag,
+			      int argc, char * const argv[])
+{
+	efi_print_image_infos(NULL);
+
+	return CMD_RET_SUCCESS;
+}
+
 static int do_efi_boot_add(cmd_tbl_t *cmdtp, int flag,
 			   int argc, char * const argv[])
 {
@@ -698,6 +706,8 @@ static cmd_tbl_t cmd_efidebug_sub[] = {
 			 "", ""),
 	U_BOOT_CMD_MKENT(dh, CONFIG_SYS_MAXARGS, 1, do_efi_show_handles,
 			 "", ""),
+	U_BOOT_CMD_MKENT(images, CONFIG_SYS_MAXARGS, 1, do_efi_show_images,
+			 "", ""),
 };
 
 /* Interpreter command to configure UEFI environment */
@@ -749,7 +759,9 @@ static char efidebug_help_text[] =
 	"efidebug drivers\n"
 	"  - show uefi drivers\n"
 	"efidebug dh\n"
-	"  - show uefi handles\n";
+	"  - show uefi handles\n"
+	"efidebug images\n"
+	"  - show loaded images\n";
 #endif
 
 U_BOOT_CMD(
