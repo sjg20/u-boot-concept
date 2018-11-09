@@ -147,8 +147,10 @@ cc-fullversion = $(shell $(CONFIG_SHELL) \
 cc-ifversion = $(shell [ $(cc-version) $(1) $(2) ] && echo $(3) || echo $(4))
 
 # added for U-Boot
+# $1: min_version
+# #2: build_dtc
 binutils-version = $(shell $(CONFIG_SHELL) $(srctree)/scripts/binutils-version.sh $(AS))
-dtc-version = $(shell $(CONFIG_SHELL) $(srctree)/scripts/dtc-version.sh $(DTC))
+dtc-version = $(shell $(CONFIG_SHELL) $(srctree)/scripts/dtc-version.sh $(DTC) $1 $2)
 
 # cc-ldoption
 # Usage: ldflags += $(call cc-ldoption, -Wl$(comma)--hash-style=both)
