@@ -410,7 +410,12 @@ PERL		= perl
 PYTHON		?= python
 PYTHON2		= python2
 PYTHON3		= python3
-DTC		?= $(objtree)/scripts/dtc/dtc
+
+# DTC is automatically built if the version of $(DTC) is older that needed.
+# Use the system dtc if it is new enough.
+DTC		?= dtc
+DTC_MIN_VERSION	:= 010406
+
 CHECK		= sparse
 
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
@@ -1797,12 +1802,12 @@ include/config/uboot.release: include/config/auto.conf FORCE
 # version.h and scripts_basic is processed / created.
 
 # Listed in dependency order
-PHONY += prepare archprepare prepare0 prepare1 prepare2 prepare3
+PHONY += prepare archprepare prepare0 prepare1 prepare2 prepare3 prepare4
 
 # prepare3 is used to check if we are building in a separate output directory,
 # and if so do:
 # 1) Check that make has not been executed in the kernel src $(srctree)
-prepare3: include/config/uboot.release
+prepare4: include/config/uboot.release
 ifneq ($(KBUILD_SRC),)
 	@$(kecho) '  Using $(srctree) as source for U-Boot'
 	$(Q)if [ -f $(srctree)/.config -o -d $(srctree)/include/config ]; then \
@@ -1811,6 +1816,14 @@ ifneq ($(KBUILD_SRC),)
 		/bin/false; \
 	fi;
 endif
+
+# Checks for dtc and builds it if needed
+prepare3: prepare4
+	$(eval DTC := $(call dtc-version,010406,$(build_dtc),$(CONFIG_PYLIBFDT)))
+	echo here $(DTC) $(build_dtc)
+	if test "$(DTC)" = "$(build_dtc)"; then \
+		$(MAKE) $(build)=scripts/dtc; \
+	fi
 
 # prepare2 creates a makefile if using a separate output directory
 prepare2: prepare3 outputmakefile cfg
@@ -1962,6 +1975,8 @@ SYSTEM_MAP = \
 		LC_ALL=C sort
 System.map:	u-boot
 		@$(call SYSTEM_MAP,$<) > $@
+
+build_dtc	:= $(objtree)/scripts/dtc/dtc
 
 #########################################################################
 
