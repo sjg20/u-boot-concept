@@ -410,7 +410,12 @@ PERL		= perl
 PYTHON		?= python
 PYTHON2		= python2
 PYTHON3		= python3
-DTC		?= $(objtree)/scripts/dtc/dtc
+
+# DTC is automatically built if the version of $(DTC) is older that needed.
+# Use the system dtc if it is new enough.
+DTC		?= dtc
+DTC_MIN_VERSION	:= 010406
+
 CHECK		= sparse
 
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
@@ -1134,7 +1139,7 @@ endif
 PHONY += dtbs
 dtbs: dts/dt.dtb
 	@:
-dts/dt.dtb: u-boot
+dts/dt.dtb: checkdtc u-boot
 	$(Q)$(MAKE) $(build)=dts dtbs
 
 quiet_cmd_copy = COPY    $@
@@ -1962,6 +1967,14 @@ SYSTEM_MAP = \
 		LC_ALL=C sort
 System.map:	u-boot
 		@$(call SYSTEM_MAP,$<) > $@
+
+build_dtc	:= $(objtree)/scripts/dtc/dtc
+
+checkdtc:
+	$(eval DTC := $(call dtc-version,010406,$(build_dtc),$(CONFIG_PYLIBFDT)))
+	if test "$(DTC)" = "$(build_dtc)"; then \
+		$(MAKE) $(build)=scripts/dtc; \
+	fi
 
 #########################################################################
 
