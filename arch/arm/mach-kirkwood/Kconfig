@@ -71,7 +71,6 @@ config SYS_SOC
 	default "kirkwood"
 
 source "board/Marvell/openrd/Kconfig"
-source "board/buffalo/lsxl/Kconfig"
 source "board/cloudengines/pogo_e02/Kconfig"
 source "board/d-link/dns325/Kconfig"
 source "board/iomega/iconnect/Kconfig"
