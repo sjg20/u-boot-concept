@@ -550,7 +550,6 @@ source "board/solidrun/mx6cuboxi/Kconfig"
 source "board/technexion/pico-imx6ul/Kconfig"
 source "board/tqc/tqma6/Kconfig"
 source "board/toradex/colibri-imx6ull/Kconfig"
-source "board/k+p/kp_imx6q_tpc/Kconfig"
 source "board/udoo/Kconfig"
 source "board/warp/Kconfig"
 
