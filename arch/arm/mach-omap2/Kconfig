@@ -182,7 +182,6 @@ source "board/siemens/pxm2/Kconfig"
 source "board/siemens/rut/Kconfig"
 source "board/ti/ti814x/Kconfig"
 source "board/ti/ti816x/Kconfig"
-source "board/ti/am43xx/Kconfig"
 
 config SPL_LDSCRIPT
         default "arch/arm/mach-omap2/u-boot-spl.lds"
