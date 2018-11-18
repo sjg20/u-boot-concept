@@ -73,7 +73,6 @@ config SYS_SOC
 source "board/Marvell/openrd/Kconfig"
 source "board/Marvell/dreamplug/Kconfig"
 source "board/Synology/ds109/Kconfig"
-source "board/Marvell/guruplug/Kconfig"
 source "board/Marvell/sheevaplug/Kconfig"
 source "board/buffalo/lsxl/Kconfig"
 source "board/cloudengines/pogo_e02/Kconfig"
