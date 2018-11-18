@@ -209,6 +209,5 @@ source "board/logicpd/omap3som/Kconfig"
 source "board/nokia/rx51/Kconfig"
 source "board/technexion/tao3530/Kconfig"
 source "board/technexion/twister/Kconfig"
-source "board/quipos/cairo/Kconfig"
 
 endif
