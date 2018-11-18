@@ -65,7 +65,6 @@ endchoice
 config SYS_SOC
 	default "mx7"
 
-source "board/compulab/cl-som-imx7/Kconfig"
 source "board/freescale/mx7dsabresd/Kconfig"
 source "board/toradex/colibri_imx7/Kconfig"
 
