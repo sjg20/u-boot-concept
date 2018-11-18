@@ -9,6 +9,7 @@
 #ifndef _DM_UCLASS_ID_H
 #define _DM_UCLASS_ID_H
 
+
 /* TODO(sjg@chromium.org): this could be compile-time generated */
 enum uclass_id {
 	/* These are used internally by driver model */

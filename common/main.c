@@ -57,8 +57,17 @@ void main_loop(void)
 	if (cli_process_fdt(&s))
 		cli_secure_boot_cmd(s);
 
+	fdtdec_get_int_default(blah);
+
 	autoboot_command(s);
 
 	cli_loop();
 	panic("No CLI available");
 }
+
+#ifdef CONFIG_FRED
+static int do_acpi_list(struct cmd_tbl *cmdtp, int flag, int argc,
+			char *const argv[])
+{
+}
+#endif
