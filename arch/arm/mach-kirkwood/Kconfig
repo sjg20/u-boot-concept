@@ -72,7 +72,6 @@ config SYS_SOC
 
 source "board/Marvell/openrd/Kconfig"
 source "board/cloudengines/pogo_e02/Kconfig"
-source "board/d-link/dns325/Kconfig"
 source "board/iomega/iconnect/Kconfig"
 source "board/keymile/km_arm/Kconfig"
 source "board/LaCie/net2big_v2/Kconfig"
