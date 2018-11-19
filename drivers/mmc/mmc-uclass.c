@@ -379,7 +379,7 @@ U_BOOT_DRIVER(mmc_blk) = {
 	.ops		= &mmc_blk_ops,
 	.probe		= mmc_blk_probe,
 };
-#endif /* CONFIG_BLK */
+#endif /* CONFIG_IS_ENABLED(BLK) */
 
 U_BOOT_DRIVER(mmc) = {
 	.name	= "mmc",

@@ -182,7 +182,7 @@ struct dwmci_host {
 	 * @freq:	Frequency the host is trying to achieve
 	 */
 	unsigned int (*get_mmc_clk)(struct dwmci_host *host, uint freq);
-#ifndef CONFIG_BLK
+#if !CONFIG_IS_ENABLED(BLK)
 	struct mmc_config cfg;
 #endif
 
@@ -226,7 +226,7 @@ static inline u8 dwmci_readb(struct dwmci_host *host, int reg)
 	return readb(host->ioaddr + reg);
 }
 
-#ifdef CONFIG_BLK
+#if CONFIG_IS_ENABLED(BLK)
 /**
  * dwmci_setup_cfg() - Set up the configuration for DWMMC
  *
@@ -291,7 +291,7 @@ int dwmci_bind(struct udevice *dev, struct mmc *mmc, struct mmc_config *cfg);
  * @return 0 if OK, -ve on error
  */
 int add_dwmci(struct dwmci_host *host, u32 max_clk, u32 min_clk);
-#endif /* !CONFIG_BLK */
+#endif /* CONFIG_IS_ENABLED(BLK) */
 
 #ifdef CONFIG_DM_MMC
 /* Export the operations to drivers */
