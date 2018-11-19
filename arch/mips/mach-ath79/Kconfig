@@ -50,7 +50,6 @@ config BOARD_TPLINK_WDR4300
 
 endchoice
 
-source "board/qca/ap121/Kconfig"
 source "board/tplink/wdr4300/Kconfig"
 
 endmenu
