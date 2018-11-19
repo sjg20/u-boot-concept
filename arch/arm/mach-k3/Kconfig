@@ -65,5 +65,4 @@ config SYS_K3_SPL_ATF
 	  Enabling this will try to start Cortex-A (typically with ATF)
 	  after SPL from R5.
 
-source "board/ti/am65x/Kconfig"
 endif
