@@ -54,9 +54,11 @@ class Toolchain:
         arch: Architecture of toolchain as determined from the first
                 component of the filename. E.g. arm-linux-gcc becomes arm
         priority: Toolchain priority (0=highest, 20=lowest)
+        override_toolchain: Toolchain to use for sandbox, overriding the normal
+                one
     """
     def __init__(self, fname, test, verbose=False, priority=PRIORITY_CALC,
-                 arch=None):
+                 arch=None, override_toolchain=None):
         """Create a new toolchain object.
 
         Args:
@@ -68,6 +70,7 @@ class Toolchain:
         """
         self.gcc = fname
         self.path = os.path.dirname(fname)
+        self.override_toolchain = override_toolchain
 
         # Find the CROSS_COMPILE prefix to use for U-Boot. For example,
         # 'arm-linux-gnueabihf-gcc' turns into 'arm-linux-gnueabihf-'.
@@ -81,6 +84,8 @@ class Toolchain:
             self.arch = arch
         else:
             self.arch = self.cross[:pos] if pos != -1 else 'sandbox'
+        if self.arch == 'sandbox' and override_toolchain:
+            self.gcc = override_toolchain
 
         env = self.MakeEnvironment(False)
 
@@ -154,7 +159,10 @@ class Toolchain:
         env = dict(os.environ)
         wrapper = self.GetWrapper()
 
-        if full_path:
+        if self.override_toolchain:
+            env['HOSTCC'] = self.override_toolchain
+            env['CC'] = self.override_toolchain
+        elif full_path:
             env['CROSS_COMPILE'] = wrapper + os.path.join(self.path, self.cross)
         else:
             env['CROSS_COMPILE'] = wrapper + self.cross
@@ -180,10 +188,11 @@ class Toolchains:
         paths: List of paths to check for toolchains (may contain wildcards)
     """
 
-    def __init__(self):
+    def __init__(self, override_toolchain=None):
         self.toolchains = {}
         self.prefixes = {}
         self.paths = []
+        self.override_toolchain = override_toolchain
         self._make_flags = dict(bsettings.GetItems('make-flags'))
 
     def GetPathList(self, show_warning=True):
@@ -234,7 +243,8 @@ class Toolchains:
             priority: Priority to use for this toolchain
             arch: Toolchain architecture, or None if not known
         """
-        toolchain = Toolchain(fname, test, verbose, priority, arch)
+        toolchain = Toolchain(fname, test, verbose, priority, arch,
+                              self.override_toolchain)
         add_it = toolchain.ok
         if toolchain.arch in self.toolchains:
             add_it = (toolchain.priority <
