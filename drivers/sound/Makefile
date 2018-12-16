@@ -11,5 +11,6 @@ obj-$(CONFIG_I2S_SAMSUNG)	+= samsung-i2s.o
 obj-$(CONFIG_SOUND_SANDBOX)	+= sandbox.o
 obj-$(CONFIG_I2S_SAMSUNG)	+= samsung_sound.o
 obj-$(CONFIG_SOUND_WM8994)	+= wm8994.o
+obj-$(CONFIG_SOUND_MAX98088)	+= max98088.o maxim_codec.o
 obj-$(CONFIG_SOUND_MAX98090)	+= max98090.o maxim_codec.o
 obj-$(CONFIG_SOUND_MAX98095)	+= max98095.o maxim_codec.o
