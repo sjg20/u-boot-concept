@@ -471,16 +471,15 @@ static efi_status_t bootefi_test_prepare
 
 #endif /* CONFIG_CMD_BOOTEFI_SELFTEST */
 
-static int do_bootefi_bootmgr_exec(void)
+static int do_bootefi_bootmgr_exec(int boot_id)
 {
 	struct efi_device_path *device_path, *file_path;
 	void *addr;
 	efi_status_t r;
 
-	addr = efi_bootmgr_load(EFI_BOOTMGR_DEFAULT_ORDER,
-				&device_path, &file_path);
+	addr = efi_bootmgr_load(boot_id, &device_path, &file_path);
 	if (!addr)
-		return 1;
+		return CMD_RET_FAILURE;
 
 	printf("## Starting EFI application at %p ...\n", addr);
 	r = do_bootefi_exec(addr, device_path, file_path);
@@ -488,9 +487,9 @@ static int do_bootefi_bootmgr_exec(void)
 	       r & ~EFI_ERROR_MASK);
 
 	if (r != EFI_SUCCESS)
-		return 1;
+		return CMD_RET_FAILURE;
 
-	return 0;
+	return CMD_RET_SUCCESS;
 }
 
 /* Interpreter command to boot an arbitrary EFI image from memory */
@@ -546,10 +545,28 @@ static int do_bootefi(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	} else
 #endif
 	if (!strcmp(argv[1], "bootmgr")) {
-		if (efi_handle_fdt(argc > 2 ? argv[2] : NULL))
-			return CMD_RET_FAILURE;
+		char *fdtstr, *endp;
+		int boot_id = EFI_BOOTMGR_DEFAULT_ORDER;
 
-		return do_bootefi_bootmgr_exec();
+		if (argc > 2) {
+			fdtstr = argv[2];
+			 /* Special address "-" means no device tree */
+			if (fdtstr[0] == '-')
+				fdtstr = NULL;
+
+			r = efi_handle_fdt(fdtstr);
+			if (r)
+				return CMD_RET_FAILURE;
+		}
+
+		if (argc > 3) {
+			boot_id = (int)simple_strtoul(argv[3], &endp, 0);
+			if ((argv[3] + strlen(argv[3]) != endp) ||
+			    boot_id > 0xffff)
+				return CMD_RET_USAGE;
+		}
+
+		return do_bootefi_bootmgr_exec(boot_id);
 	} else {
 		saddr = argv[1];
 
@@ -590,7 +607,7 @@ static char bootefi_help_text[] =
 	"    Use environment variable efi_selftest to select a single test.\n"
 	"    Use 'setenv efi_selftest list' to enumerate all tests.\n"
 #endif
-	"bootefi bootmgr [fdt addr]\n"
+	"bootefi bootmgr [<fdt addr>|'-' [<boot id>]]\n"
 	"  - load and boot EFI payload based on BootOrder/BootXXXX variables.\n"
 	"\n"
 	"    If specified, the device tree located at <fdt address> gets\n"
@@ -598,7 +615,7 @@ static char bootefi_help_text[] =
 #endif
 
 U_BOOT_CMD(
-	bootefi, 3, 0, do_bootefi,
+	bootefi, 5, 0, do_bootefi,
 	"Boots an EFI payload from memory",
 	bootefi_help_text
 );
