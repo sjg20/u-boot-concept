@@ -68,4 +68,5 @@ int misc_set_enabled(struct udevice *dev, bool val)
 UCLASS_DRIVER(misc) = {
 	.id		= UCLASS_MISC,
 	.name		= "misc",
+	.post_bind	= dm_scan_fdt_dev,
 };
