@@ -1100,7 +1100,7 @@ void uart_tx_byte(int idx, unsigned char data)
 void uart_init(int idx)
 {
 	gpio_output(UART_TX_PIN, 1);
-	uart_tx_byte(0, 'a');
+	uart_tx_byte(0, 'b');
 	while (1);
 }
 
