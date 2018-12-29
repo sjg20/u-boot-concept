@@ -1,0 +1,6 @@
+SDM845 MTP BOARD
+M:	Simon Glass <sjg@chromium.org>
+S:	Maintained
+F:	board/qualcomm/sdm845_mtp/
+F:	include/configs/sdm845_mtp.h
+F:	configs/sdm845_mtp_defconfig

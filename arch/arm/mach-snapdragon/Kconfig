@@ -15,6 +15,7 @@ choice
 config TARGET_DRAGONBOARD410C
 	bool "96Boards Dragonboard 410C"
 	select BOARD_LATE_INIT
+	select SOC_APQ8016
 	help
 	  Support for 96Boards Dragonboard 410C. This board complies with
 	  96Board Open Platform Specifications. Features:
@@ -28,6 +29,7 @@ config TARGET_DRAGONBOARD410C
 
 config TARGET_DRAGONBOARD820C
 	bool "96Boards Dragonboard 820C"
+	select SOC_APQ8096
 	help
 	  Support for 96Boards Dragonboard 820C. This board complies with
 	  96Board Open Platform Specifications. Features:
@@ -35,9 +37,32 @@ config TARGET_DRAGONBOARD820C
 	  - 3GiB RAM
 	  - 32GiB UFS drive
 
+config TARGET_SDM845_MTP
+	bool "Snapdragon 845 Mobile Technology Platform"
+	select SOC_SDA845
+	help
+	  Support for Qualcomm's MTP for the 845 SoC, including quad-core
+	  Kryo 385 CPU, Adreno 630 GPU, Hexagon 685 DSP, 6GB SDRAM, 128GB UFS
+	  storage, Wi-Fi and Bluetooth. This kit provides a development
+	  platform for the Qualcomm Snapdragon 845 SoC.
+
 endchoice
+
+config SOC_APQ8016
+	bool
+	select SOC_APQ
+
+config SOC_APQ8096
+	bool
+
+config SOC_APQ
+	bool
+
+config SOC_SDA845
+	bool
 
 source "board/qualcomm/dragonboard410c/Kconfig"
 source "board/qualcomm/dragonboard820c/Kconfig"
+source "board/qualcomm/sdm845_mtp/Kconfig"
 
 endif

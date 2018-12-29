@@ -1,0 +1,15 @@
+if TARGET_SDM845_MTP
+
+config SYS_BOARD
+	default "sdm845_mtp"
+
+config SYS_VENDOR
+	default "qualcomm"
+
+config SYS_SOC
+	default "sda845"
+
+config SYS_CONFIG_NAME
+	default "sdm845_mtp"
+
+endif
