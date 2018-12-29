@@ -477,6 +477,8 @@ __weak void board_boot_order(u32 *spl_boot_list)
 
 static struct spl_image_loader *spl_ll_find_loader(uint boot_device)
 {
+	return NULL;
+#if 0
 	struct spl_image_loader *drv =
 		ll_entry_start(struct spl_image_loader, spl_image_loader);
 	const int n_ents =
@@ -487,7 +489,7 @@ static struct spl_image_loader *spl_ll_find_loader(uint boot_device)
 		if (boot_device == entry->boot_device)
 			return entry;
 	}
-
+#endif
 	/* Not found */
 	return NULL;
 }
@@ -533,6 +535,10 @@ static int boot_from_devices(struct spl_image_info *spl_image,
 	}
 
 	return -ENODEV;
+}
+
+void fred(char *s)
+{
 }
 
 void board_init_r(gd_t *dummy1, ulong dummy2)

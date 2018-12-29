@@ -40,6 +40,8 @@ config TARGET_DRAGONBOARD820C
 config TARGET_SDM845_MTP
 	bool "Snapdragon 845 Mobile Technology Platform"
 	select SOC_SDA845
+	select SUPPORT_SPL
+	select SPL
 	help
 	  Support for Qualcomm's MTP for the 845 SoC, including quad-core
 	  Kryo 385 CPU, Adreno 630 GPU, Hexagon 685 DSP, 6GB SDRAM, 128GB UFS

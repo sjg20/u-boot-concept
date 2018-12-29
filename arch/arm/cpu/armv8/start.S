@@ -18,10 +18,13 @@
 
 .globl	_start
 _start:
+#ifdef CONFIG_SPL_BUILD
 	/* Initialize PSTATE, SCTLR and caches to clean state, set up stack. */
 	bl	arm64_init_cpu
 
 	bl	cb_main
+#endif
+
 #if defined(LINUX_KERNEL_IMAGE_HEADER)
 #include <asm/boot0-linux-kernel-header.h>
 #elif defined(CONFIG_ENABLE_ARM_SOC_BOOT0_HOOK)
@@ -50,11 +53,11 @@ _end_ofs:
 
 .globl	_bss_start_ofs
 _bss_start_ofs:
-	.quad	__bss_start - _start
+	.quad	0 /*__bss_start - _start */
 
 .globl	_bss_end_ofs
 _bss_end_ofs:
-	.quad	__bss_end - _start
+	.quad	0 /* __bss_end - _start */
 
 reset:
 	/* Allow the board to save important registers */
@@ -423,8 +426,8 @@ ENTRY(arm64_init_cpu)
 
 	/* Initialize stack with sentinel value to later check overflow. */
 	ldr	x2, =0xdeadbeefdeadbeef
-	ldr	x0, =_stack
-	ldr	x1, =_estack
+	ldr	x0, =CONFIG_SYS_TEXT_BASE + 0x100000 - 0x10000
+	ldr	x1, =CONFIG_SYS_TEXT_BASE + 0x100000
 1:
 	stp	x2, x2, [x0], #16
 	cmp	x0, x1
@@ -496,6 +499,3 @@ ENTRY(dcache_invalidate_all)
 	dcache_apply_all crm=isw
 ENDPROC(dcache_invalidate_all)
 
-_estack:
-	.space 0x1000;
-_stack:
