@@ -1,6 +1,35 @@
-#include <common.h>
-#include <asm/io.h>
-#include <spl.h>
+#include <linux/types.h>
+
+typedef unsigned long		uintptr_t;
+
+void *gd;
+
+#define BIT(x)				(1ul << (x))
+
+#define cpu_to_le32(x) ((uint32_t)(x))
+#define le32_to_cpu(x) ((uint32_t)(x))
+
+#define dmb()		asm volatile("dmb sy" : : : "memory")
+
+static inline uint32_t read32(const void *addr)
+{
+	dmb();
+	return *(volatile uint32_t *)addr;
+}
+
+static inline void write32(void *addr, uint32_t val)
+{
+	dmb();
+	*(volatile uint32_t *)addr = val;
+	dmb();
+}
+
+#define __clrsetbits(endian, bits, addr, clear, set) \
+	write##bits(addr, cpu_to_##endian##bits((endian##bits##_to_cpu( \
+		read##bits(addr)) & ~((uint##bits##_t)(clear))) | (set)))
+
+#define setbits_le32(addr, set)		__clrsetbits(le, 32, addr, 0, set)
+
 
 #define EL0               0
 #define EL1               1
@@ -417,14 +446,14 @@ static int clock_configure_mnd(struct sdm845_clock *clk, uint32_t m, uint32_t n,
 	uint32_t reg_val;
 
 	/* Configure Root Clock Generator(RCG) for Dual Edge Mode */
-	reg_val = readl(&clk->cfg_rcgr);
+	reg_val = read32(&clk->cfg_rcgr);
 	reg_val |= (2 << CLK_CTL_CFG_MODE_SHFT);
-	writel(reg_val, &clk->cfg_rcgr);
+	write32(&clk->cfg_rcgr, reg_val);
 
 	/* Set M/N/D config */
-	writel(m & CLK_CTL_RCG_MND_BMSK, &clk->m);
-	writel(~(n-m) & CLK_CTL_RCG_MND_BMSK, &clk->n);
-	writel(~(d_2) & CLK_CTL_RCG_MND_BMSK, &clk->d_2);
+	write32(&clk->m, m & CLK_CTL_RCG_MND_BMSK);
+	write32(&clk->n, ~(n-m) & CLK_CTL_RCG_MND_BMSK);
+	write32(&clk->d_2, ~(d_2) & CLK_CTL_RCG_MND_BMSK);
 
 	return 0;
 }
@@ -444,7 +473,7 @@ static int clock_configure(struct sdm845_clock *clk,
 			(clk_cfg[idx].div << CLK_CTL_CFG_SRC_DIV_SHFT);
 
 	/* Set clock config */
-	writel(reg_val, &clk->cfg_rcgr);
+	write32(&clk->cfg_rcgr, reg_val);
 
 	if (clk_cfg[idx].m != 0)
 		clock_configure_mnd(clk, clk_cfg[idx].m, clk_cfg[idx].n,
@@ -463,7 +492,7 @@ static struct sdm845_clock *const qupv3_wrap1_s1_clk =
 
 #define DIV(div) (div ? (2*div - 1) : 0)
 
-struct clock_config uart_cfg[] = {
+static struct clock_config uart_cfg[] = {
 	{
 		.hz = 7372800,
 		.hw_ctl = 0x0,
@@ -475,19 +504,18 @@ struct clock_config uart_cfg[] = {
 	}
 };
 
-void clock_init(void)
+static void clock_init(void)
 {
-	clock_configure(qupv3_wrap1_s1_clk, uart_cfg, 7372800,
-			ARRAY_SIZE(uart_cfg));
+	clock_configure(qupv3_wrap1_s1_clk, uart_cfg, 7372800, 1);
 }
 
-void bootblock_soc_early_init(void)
+static void cb_bootblock_soc_early_init(void)
 {
 	clock_init();
 }
 
-#define KHz 1000
-#define MHz (1000 * 1000)
+#define KHz (1000)
+#define MHz (1000*KHz)
 
 typedef struct {
 	u32 addr;
@@ -821,7 +849,7 @@ struct tlmm_gpio {
 	uint32_t in_out;
 };
 
-void gpio_configure(gpio_t gpio, uint32_t func, uint32_t pull,
+static void gpio_configure(gpio_t gpio, uint32_t func, uint32_t pull,
 				uint32_t drive_str, uint32_t enable)
 {
 	uint32_t reg_val;
@@ -832,53 +860,20 @@ void gpio_configure(gpio_t gpio, uint32_t func, uint32_t pull,
 		  ((func & GPIO_CFG_FUNC_BMSK) << GPIO_CFG_FUNC_SHFT) |
 		  ((pull & GPIO_CFG_PULL_BMSK) << GPIO_CFG_PULL_SHFT);
 
-	writel(reg_val, &regs->cfg);
+	write32(&regs->cfg, reg_val);
 }
 
-void gpio_set(gpio_t gpio, int value)
+static void gpio_set(gpio_t gpio, int value)
 {
 	struct tlmm_gpio *regs = (void *)(uintptr_t)gpio.addr;
-	writel((!!value) << GPIO_IO_OUT_SHFT, &regs->in_out);
+	write32(&regs->in_out, (!!value) << GPIO_IO_OUT_SHFT);
 }
 
-int gpio_get(gpio_t gpio)
-{
-	struct tlmm_gpio *regs = (void *)(uintptr_t)gpio.addr;
-
-	return ((readl(&regs->in_out) >> GPIO_IO_IN_SHFT) &
-		GPIO_IO_IN_BMSK);
-}
-
-void gpio_input_pulldown(gpio_t gpio)
-{
-	gpio_configure(gpio, GPIO_FUNC_DISABLE,
-				GPIO_PULL_DOWN, GPIO_2MA, GPIO_DISABLE);
-}
-
-void gpio_input_pullup(gpio_t gpio)
-{
-	gpio_configure(gpio, GPIO_FUNC_DISABLE,
-				GPIO_PULL_UP, GPIO_2MA, GPIO_DISABLE);
-}
-
-void gpio_input(gpio_t gpio)
-{
-	gpio_configure(gpio, GPIO_FUNC_DISABLE,
-				GPIO_NO_PULL, GPIO_2MA, GPIO_DISABLE);
-}
-
-void gpio_output(gpio_t gpio, int value)
+static void gpio_output(gpio_t gpio, int value)
 {
 	gpio_set(gpio, value);
 	gpio_configure(gpio, GPIO_FUNC_DISABLE,
 				GPIO_NO_PULL, GPIO_2MA, GPIO_ENABLE);
-}
-
-/* Calculate divisor. Do not floor but round to nearest integer. */
-unsigned int uart_baudrate_divisor(unsigned int baudrate,
-	unsigned int refclk, unsigned int oversample)
-{
-	return (1 + (2 * refclk) / (baudrate * oversample)) / 2;
 }
 
 struct mono_time {
@@ -897,7 +892,7 @@ static inline void mono_time_set_usecs(struct mono_time *mt, long us)
 	mt->microseconds = us;
 }
 
-void timer_monotonic_get(struct mono_time *mt)
+static void timer_monotonic_get(struct mono_time *mt)
 {
 	uint64_t tvalue = raw_read_cntpct_el0();
 	uint32_t tfreq  = raw_read_cntfrq_el0();
@@ -963,7 +958,7 @@ static inline long stopwatch_duration_usecs(struct stopwatch *sw)
 }
 
 /* Helper function to allow bitbanging an 8n1 UART. */
-void uart_bitbang_tx_byte(unsigned char data, void (*set_tx)(int line_state))
+static void uart_bitbang_tx_byte(unsigned char data, void (*set_tx)(int line_state))
 {
 	const int baud_rate = 115200; // get_uart_baudrate();
 	int i;
@@ -996,19 +991,19 @@ static void set_tx(int line_state)
 	gpio_set(UART_TX_PIN, line_state);
 }
 
-void uart_tx_byte(int idx, unsigned char data)
+static void uart_tx_byte(int idx, unsigned char data)
 {
 	uart_bitbang_tx_byte(data, set_tx);
 }
 
-void uart_init(int idx)
+static void uart_init(int idx)
 {
 	gpio_output(UART_TX_PIN, 1);
-	uart_tx_byte(0, 'b');
+	uart_tx_byte(0, 'a');
 	while (1);
 }
 
-void bootblock_main_with_timestamp(uint64_t base_timestamp,
+static void cb_bootblock_main_with_timestamp(uint64_t base_timestamp,
 	struct timestamp_entry *timestamps, size_t num_timestamps)
 {
 #if 0
@@ -1024,15 +1019,17 @@ void bootblock_main_with_timestamp(uint64_t base_timestamp,
 	sanitize_cmos();
 	cmos_post_init();
 #endif
-	bootblock_soc_early_init();
+	cb_bootblock_soc_early_init();
 // 	bootblock_mainboard_early_init();
 	uart_init(0);
 }
 
-void init_timer(void)
+static void init_timer(void)
 {
 	raw_write_cntfrq_el0(19200*KHz);
 }
+
+void cb_main(void);
 
 void cb_main(void)
 {
@@ -1043,7 +1040,7 @@ void cb_main(void)
 // 	if (IS_ENABLED(CONFIG_COLLECT_TIMESTAMPS))
 // 		base_timestamp = timestamp_get();
 
-	bootblock_main_with_timestamp(base_timestamp, NULL, 0);
+	cb_bootblock_main_with_timestamp(base_timestamp, NULL, 0);
 }
 
 u32 spl_boot_device(void)

@@ -20,10 +20,28 @@
 _start:
 #ifdef CONFIG_SPL_BUILD
 	/* Initialize PSTATE, SCTLR and caches to clean state, set up stack. */
-	bl	arm64_init_cpu
+/* 	bl	arm64_init_cpu */
 
 	bl	cb_main
 #endif
+	.section ".id", "a", %progbits
+
+	.globl __id_start
+__id_start:
+ver:
+	.asciz "version"
+vendor:
+	.asciz "vendor"
+part:
+	.asciz "part#"
+.long __id_end - ver  /* Reverse offset to the vendor id */
+.long __id_end - vendor  /* Reverse offset to the vendor id */
+.long __id_end - part    /* Reverse offset to the part number */
+.long 0x1000000                               /* Size of this romimage */
+	.globl __id_end
+
+__id_end:
+.previous
 
 #if defined(LINUX_KERNEL_IMAGE_HEADER)
 #include <asm/boot0-linux-kernel-header.h>
@@ -438,7 +456,6 @@ ENTRY(arm64_init_cpu)
 
 	ret	x23
 ENDPROC(arm64_init_cpu)
-
 
 .macro	dcache_apply_all crm
 	dsb	sy

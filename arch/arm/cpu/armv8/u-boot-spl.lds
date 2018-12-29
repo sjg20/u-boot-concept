@@ -11,9 +11,6 @@
  *	Aneesh V <aneesh@ti.com>
  */
 
-MEMORY { .sram : ORIGIN = CONFIG_SPL_TEXT_BASE,
-		LENGTH = CONFIG_SPL_MAX_SIZE }
-
 OUTPUT_FORMAT("elf64-littleaarch64", "elf64-littleaarch64", "elf64-littleaarch64")
 OUTPUT_ARCH(aarch64)
 ENTRY(_start)
@@ -23,14 +20,15 @@ SECTIONS
 		. = ALIGN(8);
 		*(.__image_copy_start)
 		CPUDIR/start.o (.text*)
+		*(.id*)
 		*(.text*)
-	} >.sram
+	}
 
 	.data : {
 		. = ALIGN(8);
 		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*)))
 		*(.data*)
-	} >.sram
+	}
 
 	/DISCARD/ : {
 		*(.u_boot_list*);
@@ -44,7 +42,7 @@ SECTIONS
 		*(.bss*)
 		KEEP(*(.__bss_end));
 		 . = ALIGN(8);
-	} >.sram
+	}
 
 	/DISCARD/ : { *(.dynsym) }
 	/DISCARD/ : { *(.dynstr*) }

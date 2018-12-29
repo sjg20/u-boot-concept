@@ -64,3 +64,5 @@ void main_loop(void)
 	cli_loop();
 	panic("No CLI available");
 }
+
+void *gd;
