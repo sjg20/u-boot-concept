@@ -13,11 +13,10 @@ void invalidate_icache_all(void)
 
 void flush_dcache_all(void)
 {
-	asm volatile ("fence" :::"memory");
 }
+
 void flush_dcache_range(unsigned long start, unsigned long end)
 {
-	flush_dcache_all();
 }
 
 void invalidate_icache_range(unsigned long start, unsigned long end)
@@ -31,7 +30,6 @@ void invalidate_icache_range(unsigned long start, unsigned long end)
 
 void invalidate_dcache_range(unsigned long start, unsigned long end)
 {
-	flush_dcache_all();
 }
 
 void cache_flush(void)
