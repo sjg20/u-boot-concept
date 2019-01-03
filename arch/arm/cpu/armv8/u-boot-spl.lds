@@ -25,7 +25,7 @@ SECTIONS
 	}
 
 	.data : {
-		. = ALIGN(8);
+		. = ALIGN(4);
 		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*)))
 		*(.data*)
 	}
@@ -36,7 +36,7 @@ SECTIONS
 
 	_image_binary_end = .;
 
-	.bss (NOLOAD) : {
+	.bss (NOLOAD) ALIGN(4) : {
 		*(.__end)
 		KEEP(*(.__bss_start));
 		*(.bss*)
