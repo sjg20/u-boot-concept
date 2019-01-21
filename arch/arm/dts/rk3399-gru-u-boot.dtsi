@@ -24,3 +24,7 @@
 &cros_ec {
 	ec-interrupt = <&gpio0 RK_PA1 GPIO_ACTIVE_LOW>;
 };
+
+&edp {
+	rockchip,panel = <&edp_panel>;
+};
