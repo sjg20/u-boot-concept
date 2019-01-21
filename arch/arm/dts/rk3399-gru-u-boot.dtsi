@@ -14,3 +14,13 @@
 &spi_flash {
 	u-boot,dm-pre-reloc;
 };
+
+&spi5 {
+	spi-activate-delay = <100>;
+	spi-max-frequency = <3000000>;
+	spi-deactivate-delay = <200>;
+};
+
+&cros_ec {
+	ec-interrupt = <&gpio0 RK_PA1 GPIO_ACTIVE_LOW>;
+};
