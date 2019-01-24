@@ -1,0 +1,319 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ *  Integrate UEFI variables to u-boot env interface
+ *
+ *  Copyright (c) 2018 AKASHI Takahiro, Linaro Limited
+ */
+
+#include <charset.h>
+#include <common.h>
+#include <command.h>
+#include <efi_loader.h>
+#include <exports.h>
+#include <hexdump.h>
+#include <malloc.h>
+#include <linux/kernel.h>
+
+static const struct {
+	u32 mask;
+	char *text;
+} efi_var_attrs[] = {
+	{EFI_VARIABLE_NON_VOLATILE, "NV"},
+	{EFI_VARIABLE_BOOTSERVICE_ACCESS, "BS"},
+	{EFI_VARIABLE_RUNTIME_ACCESS, "RT"},
+	{EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS, "AW"},
+	{EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS, "AT"},
+};
+
+static int print_variable_info(u16 *name, efi_guid_t *guid)
+{
+	u32 attributes;
+	u8 *data;
+	efi_uintn_t size;
+	int count, i;
+	efi_status_t ret;
+
+	data = NULL;
+	size = 0;
+	ret = efi_get_variable(name, guid, &attributes, &size, data);
+	if (ret == EFI_BUFFER_TOO_SMALL) {
+		data = malloc(size);
+		if (!data)
+			return -1;
+
+		ret = efi_get_variable(name, guid, &attributes, &size, data);
+	}
+	if (ret == EFI_NOT_FOUND) {
+		printf("Error: \"%ls\" not defined\n", name);
+		goto out;
+	}
+	if (ret != EFI_SUCCESS)
+		goto out;
+
+	printf("%ls:", name);
+	for (count = 0, i = 0; i < ARRAY_SIZE(efi_var_attrs); i++)
+		if (attributes & efi_var_attrs[i].mask) {
+			if (count)
+				putc('|');
+			else
+				putc(' ');
+			count++;
+			puts(efi_var_attrs[i].text);
+		}
+	printf(", DataSize = 0x%lx\n", size);
+	print_hex_dump("    ", DUMP_PREFIX_OFFSET, 16, 1, data, size, true);
+
+	return 0;
+out:
+	free(data);
+	return -1;
+}
+
+/*
+ * From efi_variable.c,
+ *
+ * Mapping between UEFI variables and u-boot variables:
+ *
+ *   efi_$guid_$varname = {attributes}(type)value
+ */
+static int efi_dump_var(cmd_tbl_t *cmdtp, int flag,
+			int argc, char * const argv[])
+{
+	u16 *var_name16, *p;
+	efi_uintn_t buf_size, size;
+	efi_guid_t guid;
+	efi_status_t ret;
+
+	buf_size = 128;
+	var_name16 = malloc(buf_size);
+	if (!var_name16)
+		return CMD_RET_FAILURE;
+
+	if (argc > 1) {
+		argc--;
+		argv++;
+
+		for (; argc > 0; argc--, argv++) {
+			size = (strlen(argv[0]) + 1) * 2;
+			if (buf_size < size) {
+				buf_size = size;
+				p = realloc(var_name16, buf_size);
+				if (!p) {
+					free(var_name16);
+					return CMD_RET_FAILURE;
+				}
+				var_name16 = p;
+			}
+
+			p = var_name16;
+			utf8_utf16_strcpy(&p, argv[0]);
+			guid = efi_global_variable_guid;
+
+			print_variable_info(var_name16, &guid);
+		}
+
+		free(var_name16);
+
+		return CMD_RET_SUCCESS;
+	}
+
+	var_name16[0] = 0;
+	for (;;) {
+		size = buf_size;
+		ret = efi_get_next_variable_name(&size, var_name16, &guid);
+		if (ret == EFI_NOT_FOUND)
+			break;
+		if (ret == EFI_BUFFER_TOO_SMALL) {
+			buf_size = size;
+			p = realloc(var_name16, buf_size);
+			if (!p) {
+				free(var_name16);
+				return CMD_RET_FAILURE;
+			}
+			var_name16 = p;
+			ret = efi_get_next_variable_name(&size, var_name16,
+							 &guid);
+		}
+		if (ret != EFI_SUCCESS) {
+			free(var_name16);
+			return CMD_RET_FAILURE;
+		}
+
+		print_variable_info(var_name16, &guid);
+	}
+
+	free(var_name16);
+
+	return CMD_RET_SUCCESS;
+}
+
+int do_env_print_efi(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	efi_status_t r;
+
+	/* Initialize EFI drivers */
+	r = efi_init_obj_list();
+	if (r != EFI_SUCCESS) {
+		printf("Error: Cannot initialize UEFI sub-system, r = %lu\n",
+		       r & ~EFI_ERROR_MASK);
+		return CMD_RET_FAILURE;
+	}
+
+	return efi_dump_var(cmdtp, flag, argc, argv);
+}
+
+static int append_value(char **bufp, unsigned long *sizep, char *data)
+{
+	char *tmp_buf = NULL, *new_buf = NULL, *value;
+	unsigned long len = 0;
+
+	if (!strncmp(data, "=0x", 2)) { /* hexadecimal number */
+		union {
+			u8 u8;
+			u16 u16;
+			u32 u32;
+			u64 u64;
+		} tmp_data;
+		unsigned long hex_value;
+		void *hex_ptr;
+
+		data += 3;
+		len = strlen(data);
+		if ((len & 0x1)) /* not multiple of two */
+			return -1;
+
+		len /= 2;
+		if (len > 8)
+			return -1;
+		else if (len > 4)
+			len = 8;
+		else if (len > 2)
+			len = 4;
+
+		/* convert hex hexadecimal number */
+		if (strict_strtoul(data, 16, &hex_value) < 0)
+			return -1;
+
+		tmp_buf = malloc(len);
+		if (!tmp_buf)
+			return -1;
+
+		if (len == 1) {
+			tmp_data.u8 = hex_value;
+			hex_ptr = &tmp_data.u8;
+		} else if (len == 2) {
+			tmp_data.u16 = hex_value;
+			hex_ptr = &tmp_data.u16;
+		} else if (len == 4) {
+			tmp_data.u32 = hex_value;
+			hex_ptr = &tmp_data.u32;
+		} else {
+			tmp_data.u64 = hex_value;
+			hex_ptr = &tmp_data.u64;
+		}
+		memcpy(tmp_buf, hex_ptr, len);
+		value = tmp_buf;
+
+	} else if (!strncmp(data, "=H", 2)) { /* hexadecimal-byte array */
+		data += 2;
+		len = strlen(data);
+		if (len & 0x1) /* not multiple of two */
+			return -1;
+
+		len /= 2;
+		tmp_buf = malloc(len);
+		if (!tmp_buf)
+			return -1;
+
+		if (hex2bin((u8 *)tmp_buf, data, len) < 0)
+			return -1;
+
+		value = tmp_buf;
+	} else { /* string */
+		if (!strncmp(data, "=\"", 2) || !strncmp(data, "=S\"", 3)) {
+			if (data[1] == '"')
+				data += 2;
+			else
+				data += 3;
+			value = data;
+			len = strlen(data) - 1;
+			if (data[len] != '"')
+				return -1;
+		} else {
+			value = data;
+			len = strlen(data);
+		}
+	}
+
+	new_buf = realloc(*bufp, *sizep + len);
+	if (!new_buf)
+		goto out;
+
+	memcpy(new_buf + *sizep, value, len);
+	*bufp = new_buf;
+	*sizep += len;
+
+out:
+	free(tmp_buf);
+
+	return 0;
+}
+
+static int efi_set_var(cmd_tbl_t *cmdtp, int flag,
+		       int argc, char * const argv[])
+{
+	char *var_name, *value = NULL;
+	efi_uintn_t size = 0;
+	u16 *var_name16 = NULL, *p;
+	efi_guid_t guid;
+	efi_status_t ret;
+
+	if (argc == 1)
+		return CMD_RET_SUCCESS;
+
+	var_name = argv[1];
+	if (argc == 2) {
+		/* remove */
+		value = NULL;
+		size = 0;
+	} else { /* set */
+		argc -= 2;
+		argv += 2;
+
+		for ( ; argc > 0; argc--, argv++)
+			if (append_value(&value, &size, argv[0]) < 0) {
+				ret = CMD_RET_FAILURE;
+				goto out;
+			}
+	}
+
+	var_name16 = malloc((strlen(var_name) + 1) * 2);
+	p = var_name16;
+	utf8_utf16_strncpy(&p, var_name, strlen(var_name) + 1);
+
+	guid = efi_global_variable_guid;
+	ret = efi_set_variable(var_name16, &guid,
+			       EFI_VARIABLE_BOOTSERVICE_ACCESS |
+			       EFI_VARIABLE_RUNTIME_ACCESS, size, value);
+	ret = (ret == EFI_SUCCESS ? CMD_RET_SUCCESS : CMD_RET_FAILURE);
+out:
+	free(value);
+	free(var_name16);
+
+	return ret;
+}
+
+int do_env_set_efi(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	efi_status_t r;
+
+	/* Initialize EFI drivers */
+	r = efi_init_obj_list();
+	if (r != EFI_SUCCESS) {
+		printf("Error: Cannot initialize UEFI sub-system, r = %lu\n",
+		       r & ~EFI_ERROR_MASK);
+		return CMD_RET_FAILURE;
+	}
+
+	return efi_set_var(cmdtp, flag, argc, argv);
+}

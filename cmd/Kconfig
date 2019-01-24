@@ -53,6 +53,12 @@ config SYS_PROMPT
 	  This string is displayed in the command line to the left of the
 	  cursor.
 
+config CMD_NVEDIT_EFI
+	bool
+	depends on EFI_LOADER
+	default y if EFI_LOADER
+	imply HEXDUMP
+
 menu "Autoboot options"
 
 config AUTOBOOT

@@ -60,6 +60,10 @@ extern int do_run(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
 #if defined(CONFIG_CMD_BOOTEFI)
 extern int do_bootefi_run(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
 #endif
+#if defined(CONFIG_CMD_NVEDIT_EFI)
+int do_env_print_efi(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
+int do_env_set_efi(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
+#endif
 
 /* common/command.c */
 int _do_help (cmd_tbl_t *cmd_start, int cmd_items, cmd_tbl_t * cmdtp, int
