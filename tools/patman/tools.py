@@ -396,7 +396,9 @@ def Compress(indata, algo, with_header=True):
 
     Args:
         indata: Input data to compress
-        algo: Algorithm to use ('none', 'gzip', 'lz4' or 'lzma')
+        algo: Algorithm to use ('none', 'gzip', 'lz4', 'lz4-cb' or 'lzma').
+            the -cb suffix means a special version for coreboot
+        with_header: Add a header which indicates the compressed size
 
     Returns:
         Compressed data
@@ -406,6 +408,8 @@ def Compress(indata, algo, with_header=True):
     fname = GetOutputFilename('%s.comp.tmp' % algo)
     WriteFile(fname, indata)
     if algo == 'lz4':
+        data = Run('lz4', '-c', fname)
+    elif algo == 'lz4-cb':
         data = Run('lz4', '--no-frame-crc', '-c', fname)
     # cbfstool uses a very old version of lzma
     elif algo == 'lzma':
@@ -433,6 +437,7 @@ def Decompress(indata, algo, with_header=True):
     Args:
         indata: Input data to decompress
         algo: Algorithm to use ('none', 'gzip', 'lz4' or 'lzma')
+        with_header: Assume a header which indicates the compressed size
 
     Returns:
         Compressed data
@@ -446,6 +451,8 @@ def Decompress(indata, algo, with_header=True):
     with open(fname, 'wb') as fd:
         fd.write(indata)
     if algo == 'lz4':
+        data = Run('lz4', '-dc', fname)
+    elif algo == 'lz4-cb':
         data = Run('lz4', '-dc', fname)
     elif algo == 'lzma':
         outfname = GetOutputFilename('%s.decomp.otmp' % algo)

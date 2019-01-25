@@ -48,8 +48,7 @@
  */
 
 #ifndef CONFIG_BOOTCOMMAND
-#define CONFIG_BOOTCOMMAND	\
-	"ext2load scsi 0:3 01000000 /boot/vmlinuz; zboot 01000000"
+#define CONFIG_BOOTCOMMAND	"vboot go auto"
 #endif
 
 #if defined(CONFIG_CMD_KGDB)

@@ -172,7 +172,7 @@ int vboot_run_stages(struct vboot_info *vboot, enum vboot_stage_t start,
 		log_warning("flags %x %d\n", ctx->flags,
 			    (ctx->flags & VB2_CONTEXT_RECOVERY_MODE) != 0);
 		ctx->flags |= VB2_CONTEXT_RECOVERY_MODE;
-		sysreset_walk_halt(SYSRESET_COLD);
+// 		sysreset_walk_halt(SYSRESET_COLD);
 		return -ENOENT;  /* Try next boot method (which is recovery) */
 	}
 

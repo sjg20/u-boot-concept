@@ -1691,7 +1691,7 @@ class TestFunctional(unittest.TestCase):
             self._ResetDtbs()
 
     def _decompress(self, data):
-        return tools.Decompress(data, 'lz4')
+        return tools.Decompress(data, 'lz4-cb')
 
     def testCompress(self):
         """Test compression of blobs"""

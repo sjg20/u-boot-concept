@@ -242,7 +242,7 @@ class CbfsFile(object):
         """Handle decompressing data if necessary"""
         indata = self.data
         if self.compress == COMPRESS_LZ4:
-            data = tools.Decompress(indata, 'lz4', with_header=False)
+            data = tools.Decompress(indata, 'lz4-cb', with_header=False)
         elif self.compress == COMPRESS_LZMA:
             data = tools.Decompress(indata, 'lzma', with_header=False)
         else:
@@ -363,7 +363,7 @@ class CbfsFile(object):
         elif self.ftype == TYPE_RAW:
             orig_data = data
             if self.compress == COMPRESS_LZ4:
-                data = tools.Compress(orig_data, 'lz4', with_header=False)
+                data = tools.Compress(orig_data, 'lz4-cb', with_header=False)
             elif self.compress == COMPRESS_LZMA:
                 data = tools.Compress(orig_data, 'lzma', with_header=False)
             self.memlen = len(orig_data)

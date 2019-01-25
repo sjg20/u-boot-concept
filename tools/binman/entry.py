@@ -274,6 +274,14 @@ class Entry(object):
         self.data = data
         self.contents_size = len(self.data)
 
+    def AvoidShrink(self):
+        """Check if this entry should not be shrunk when contents shrink
+
+        Returns:
+            True if shrinking should be avoided, False otherwise
+        """
+        return False
+
     def ProcessContentsUpdate(self, data):
         """Update the contents of an entry, after the size is fixed
 
@@ -301,8 +309,9 @@ class Entry(object):
                         (self.contents_size, new_size))
 
             # Don't let the data shrink. Pad it if necessary
-            if size_ok and new_size < self.contents_size:
-                data += tools.GetBytes(0, self.contents_size - new_size)
+            if new_size < self.contents_size:
+                if not self.AvoidShrink():
+                    data += tools.GetBytes(0, self.contents_size - new_size)
 
         if not size_ok:
             tout.Debug("Entry '%s' size change from %s to %s" % (

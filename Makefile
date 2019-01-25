@@ -1008,7 +1008,7 @@ ifneq ($(CONFIG_DM_SPI)$(CONFIG_OF_CONTROL),yy)
 endif
 endif
 endif
-ifeq ($(CONFIG_DM_I2C_COMPAT)$(CONFIG_SANDBOX),y)
+ifneq ($(CONFIG_DM),y)
 	@echo >&2 "===================== WARNING ======================"
 	@echo >&2 "This board does not use CONFIG_DM. CONFIG_DM will be"
 	@echo >&2 "compulsory starting with the v2020.01 release."

@@ -64,3 +64,6 @@ class Entry_blob_dtb(Entry_blob):
         # will still return the old contents
         state.UpdateFdtContents(self.GetFdtEtype(), data)
         return ok
+
+    def AvoidShrink(self):
+        return True

@@ -47,7 +47,7 @@ int fwstore_read_decomp(struct udevice *dev, struct fmap_entry *entry,
 	if (entry->compress_algo == FMAP_COMPRESS_LZ4) {
 		size_t out_size = buf_size;
 
-		ret = ulz4fn(start, entry->length, buf, &out_size);
+		ret = ulz4fn(start + 4, entry->length - 4, buf, &out_size);
 		if (ret)
 			return log_msg_ret("decompress lz4", ret);
 	}
@@ -104,7 +104,7 @@ int fwstore_load_image(struct udevice *dev, struct fmap_entry *entry,
 		buf = malloc(buf_size);
 		if (!buf)
 			return log_msg_ret("allocate decomp buf", -ENOMEM);
-		ret = ulz4fn(data, entry->length, buf, &buf_size);
+		ret = ulz4fn(data + 4, entry->length - 4, buf, &buf_size);
 		if (ret)
 			return log_msg_ret("decompress lz4", ret);
 		*imagep = buf;

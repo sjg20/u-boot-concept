@@ -27,6 +27,7 @@
 
 			boot-recovery {
 				type = "u-boot";
+				compress = "lz4";
 			};
 
 			gbb {
@@ -46,6 +47,9 @@
 				require-matches;
 				compress = "lz4";
 			};
+		};
+
+		fdtmap {
 		};
 
 		/* ---- Section: Vital-product data (VPD) ---- */
