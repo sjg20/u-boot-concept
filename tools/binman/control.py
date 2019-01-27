@@ -319,7 +319,7 @@ def ReplaceEntries(image_fname, input_fname, indir, entry_paths,
     return image
 
 
-def PrepareImagesAndDtbs(dtb_fname, select_images, update_fdt):
+def PrepareImagesAndDtbs(dtb_fname, select_images, update_fdt, verbosity):
     """Prepare the images to be processed and select the device tree
 
     This function:
@@ -333,6 +333,7 @@ def PrepareImagesAndDtbs(dtb_fname, select_images, update_fdt):
         dtb_fname: Filename of the device tree file to use (.dts or .dtb)
         selected_images: List of images to output, or None for all
         update_fdt: True to update the FDT wth entry offsets, etc.
+        verbosity: Verbosity level
     """
     # Import these here in case libfdt.py is not available, in which case
     # the above help option still works.
@@ -364,7 +365,8 @@ def PrepareImagesAndDtbs(dtb_fname, select_images, update_fdt):
             else:
                 skip.append(name)
         images = new_images
-        tout.Notice('Skipping images: %s' % ', '.join(skip))
+        if skip and verbosity >= 2:
+            tout.Notice('Skipping images: %s' % ', '.join(skip))
 
     state.Prepare(images, dtb)
 
@@ -523,7 +525,7 @@ def Binman(args):
             state.SetEntryArgs(args.entry_arg)
 
             images = PrepareImagesAndDtbs(dtb_fname, args.image,
-                                          args.update_fdt)
+                                          args.update_fdt, args.verbosity)
             for image in images.values():
                 ProcessImage(image, args.update_fdt, args.map)
 
