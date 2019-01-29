@@ -7,6 +7,7 @@
 
 #include <common.h>
 #include <charset.h>
+#include <dm.h>
 #include <efi_loader.h>
 #include <malloc.h>
 #include <mapmem.h>
@@ -708,3 +709,16 @@ efi_simple_file_system(struct blk_desc *desc, int part,
 
 	return &fs->base;
 }
+
+static int efi_simple_file_system_probe(struct udevice *dev)
+{
+	device_set_name(dev, "SIMPLE_FILE_SYSTEM");
+
+	return 0;
+}
+
+U_BOOT_DRIVER(efi_simple_file_system) = {
+	.name = "efi_simple_file_system",
+	.id = UCLASS_EFI_PROTOCOL,
+	.probe = efi_simple_file_system_probe,
+};

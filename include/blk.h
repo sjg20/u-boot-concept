@@ -8,6 +8,7 @@
 #define BLK_H
 
 #include <efi.h>
+#include <efi_api.h>
 
 #ifdef CONFIG_SYS_64BIT_LBA
 typedef uint64_t lbaint_t;
@@ -53,6 +54,26 @@ enum sig_type {
 	SIG_TYPE_COUNT			/* Number of signature types */
 };
 
+/* FIXME */
+/**
+ * struct efi_disk_obj - EFI disk object
+ *
+ * @ops:	EFI disk I/O protocol interface
+ * @media:	block I/O media information
+ * @dp:		device path to the block device
+ * @part:	partition
+ * @volume:	simple file system protocol of the partition
+ * @offset:	offset into disk for simple partition
+ */
+struct efi_disk_obj {
+	struct efi_block_io ops;
+	struct efi_block_io_media media;
+	struct efi_device_path *dp;
+	unsigned int part;
+	struct efi_simple_file_system_protocol *volume;
+	lbaint_t offset;
+};
+
 /*
  * With driver model (CONFIG_BLK) this is uclass platform data, accessible
  * with dev_get_uclass_platdata(dev)
@@ -92,6 +113,9 @@ struct blk_desc {
 	 * device. Once these functions are removed we can drop this field.
 	 */
 	struct udevice *bdev;
+#ifdef CONFIG_EFI_LOADER
+	struct efi_disk_obj efi_disk;
+#endif
 #else
 	unsigned long	(*block_read)(struct blk_desc *block_dev,
 				      lbaint_t start,

@@ -657,6 +657,9 @@ UCLASS_DRIVER(blk) = {
 	.per_device_platdata_auto_alloc_size = sizeof(struct blk_desc),
 };
 
+/* FIXME */
+extern int efi_disk_create(struct udevice *dev);
+
 U_BOOT_DRIVER(blk_partition) = {
 	.name		= "blk_partition",
 	.id		= UCLASS_PARTITION,
@@ -694,6 +697,12 @@ int blk_create_partitions(struct udevice *parent)
 		part_data = dev_get_uclass_platdata(dev);
 		part_data->partnum = part;
 		part_data->gpt_part_info = info;
+
+		ret = efi_disk_create(dev);
+		if (ret) {
+			device_unbind(dev);
+			return ret;
+		}
 
 		disks++;
 	}
