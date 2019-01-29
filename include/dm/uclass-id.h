@@ -68,6 +68,7 @@ enum uclass_id {
 	UCLASS_NVME,		/* NVM Express device */
 	UCLASS_PANEL,		/* Display panel, such as an LCD */
 	UCLASS_PANEL_BACKLIGHT,	/* Backlight controller for panel */
+	UCLASS_PARTITION,	/* Logical disk partition device */
 	UCLASS_PCH,		/* x86 platform controller hub */
 	UCLASS_PCI,		/* PCI bus */
 	UCLASS_PCI_GENERIC,	/* Generic PCI bus device */

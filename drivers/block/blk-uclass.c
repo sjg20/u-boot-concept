@@ -10,6 +10,8 @@
 #include <dm/device-internal.h>
 #include <dm/lists.h>
 #include <dm/uclass-internal.h>
+#include <part.h>
+#include <string.h>
 
 static const char *if_typename_str[IF_TYPE_COUNT] = {
 	[IF_TYPE_IDE]		= "ide",
@@ -654,3 +656,53 @@ UCLASS_DRIVER(blk) = {
 	.post_probe	= blk_post_probe,
 	.per_device_platdata_auto_alloc_size = sizeof(struct blk_desc),
 };
+
+U_BOOT_DRIVER(blk_partition) = {
+	.name		= "blk_partition",
+	.id		= UCLASS_PARTITION,
+	.platdata_auto_alloc_size = sizeof(struct disk_part),
+};
+
+UCLASS_DRIVER(partition) = {
+	.id		= UCLASS_PARTITION,
+	.name		= "partition",
+};
+
+#if defined(CONFIG_PARTITIONS) && defined(CONFIG_HAVE_BLOCK_DEVICE)
+int blk_create_partitions(struct udevice *parent)
+{
+	int part;
+	struct blk_desc *desc = dev_get_uclass_platdata(parent);
+	disk_partition_t info;
+	struct disk_part *part_data;
+	char devname[32];
+	struct udevice *dev;
+	int disks = 0, ret;
+
+	/* Add devices for each partition */
+	for (part = 1; part <= MAX_SEARCH_PARTITIONS; part++) {
+		if (part_get_info(desc, part, &info))
+			continue;
+		snprintf(devname, sizeof(devname), "%s:%d", parent->name,
+			 part);
+
+		ret = device_bind_driver(parent, "blk_partition",
+					 strdup(devname), &dev);
+		if (ret)
+			return ret;
+
+		part_data = dev_get_uclass_platdata(dev);
+		part_data->partnum = part;
+		part_data->gpt_part_info = info;
+
+		disks++;
+	}
+
+	return disks;
+}
+#else
+int blk_create_partitions(struct udevice *dev)
+{
+	return 0;
+}
+#endif
