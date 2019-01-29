@@ -11,6 +11,10 @@
 #include <dm/device-internal.h>
 #include <dm/uclass-internal.h>
 
+/* FIXME */
+int efi_disk_create(struct udevice *dev);
+int blk_create_partitions(struct udevice *parent);
+
 #if !defined(CONFIG_DM_SCSI)
 # ifdef CONFIG_SCSI_DEV_LIST
 #  define SCSI_DEV_LIST CONFIG_SCSI_DEV_LIST
@@ -593,9 +597,27 @@ static int do_scsi_scan_one(struct udevice *dev, int id, int lun, bool verbose)
 	memcpy(&bdesc->product, &bd.product, sizeof(bd.product));
 	memcpy(&bdesc->revision, &bd.revision,	sizeof(bd.revision));
 
+	ret = efi_disk_create(bdev);
+	if (ret) {
+		debug("Can't create efi_disk device\n");
+		ret = device_unbind(bdev);
+
+		return ret;
+	}
+	ret = blk_create_partitions(bdev);
+	if (ret < 0) {
+		debug("Can't create efi_disk partitions\n");
+		/* TODO: undo create */
+
+		ret = device_unbind(bdev);
+
+		return ret;
+	}
+
 	if (verbose) {
 		printf("  Device %d: ", 0);
 		dev_print(bdesc);
+		debug("Found %d partitions\n", ret);
 	}
 	return 0;
 }

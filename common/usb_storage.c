@@ -46,6 +46,10 @@
 #include <part.h>
 #include <usb.h>
 
+/* FIXME */
+extern int efi_disk_create(struct udevice *dev);
+extern int blk_create_partitions(struct udevice *parent);
+
 #undef BBB_COMDAT_TRACE
 #undef BBB_XPORT_TRACE
 
@@ -227,8 +231,27 @@ static int usb_stor_probe_device(struct usb_device *udev)
 
 		ret = usb_stor_get_info(udev, data, blkdev);
 		if (ret == 1) {
-			usb_max_devs++;
-			debug("%s: Found device %p\n", __func__, udev);
+			ret = efi_disk_create(dev);
+			if (ret) {
+				debug("Cannot create efi_disk device\n");
+				ret = device_unbind(dev);
+				if (ret)
+					return ret;
+			} else {
+				usb_max_devs++;
+				ret = blk_create_partitions(dev);
+				if (ret < 0) {
+					debug("Cannot create disk partition device\n");
+					/* TODO: undo create */
+
+					ret = device_unbind(dev);
+					if (ret)
+						return ret;
+				}
+				usb_max_devs += ret;
+				debug("%s: Found device %p, partitions:%d\n",
+				      __func__, udev, ret);
+			}
 		} else {
 			debug("usb_stor_get_info: Invalid device\n");
 			ret = device_unbind(dev);

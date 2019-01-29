@@ -32,6 +32,10 @@
 #include <dm/device-internal.h>
 #include <dm/root.h>
 
+/* FIXME */
+extern int efi_disk_create(struct udevice *dev);
+extern int blk_create_partitions(struct udevice *parent);
+
 /*
  * EFI attributes of the udevice handled by this driver.
  *
@@ -103,24 +107,6 @@ static ulong efi_bl_write(struct udevice *dev, lbaint_t blknr, lbaint_t blkcnt,
 }
 
 /*
- * Create partions for the block device.
- *
- * @handle	EFI handle of the block device
- * @dev		udevice of the block device
- */
-static int efi_bl_bind_partitions(efi_handle_t handle, struct udevice *dev)
-{
-	struct blk_desc *desc;
-	const char *if_typename;
-
-	desc = dev_get_uclass_platdata(dev);
-	if_typename = blk_get_if_type_name(desc->if_type);
-
-	return efi_disk_create_partitions(handle, desc, if_typename,
-					  desc->devnum, dev->name);
-}
-
-/*
  * Create a block device for a handle
  *
  * @handle	handle
@@ -168,15 +154,17 @@ static int efi_bl_bind(efi_handle_t handle, void *interface)
 	platdata->handle = handle;
 	platdata->io = interface;
 
+	ret = efi_disk_create(bdev);
+	if (ret)
+		return ret;
+
 	ret = device_probe(bdev);
 	if (ret)
 		return ret;
 	EFI_PRINT("%s: block device '%s' created\n", __func__, bdev->name);
-
 	/* Create handles for the partions of the block device */
-	disks = efi_bl_bind_partitions(handle, bdev);
+	disks = blk_create_partitions(bdev);
 	EFI_PRINT("Found %d partitions\n", disks);
-
 	return 0;
 }
 
