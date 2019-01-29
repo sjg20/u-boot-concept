@@ -12,6 +12,7 @@
 #include <log.h>
 #include <malloc.h>
 #include <part.h>
+#include <string.h>
 #include <dm/device-internal.h>
 #include <dm/lists.h>
 #include <dm/uclass-internal.h>
@@ -695,6 +696,44 @@ int blk_unbind_all(int if_type)
 	return 0;
 }
 
+int blk_create_partitions(struct udevice *parent)
+{
+	int part, count;
+	struct blk_desc *desc = dev_get_uclass_plat(parent);
+	struct disk_partition info;
+	struct disk_part *part_data;
+	char devname[32];
+	struct udevice *dev;
+	int ret;
+
+	if (!CONFIG_IS_ENABLED(PARTITIONS) ||
+	    !CONFIG_IS_ENABLED(HAVE_BLOCK_DEVICE))
+		return 0;
+
+	/* Add devices for each partition */
+	for (count = 0, part = 1; part <= MAX_SEARCH_PARTITIONS; part++) {
+		if (part_get_info(desc, part, &info))
+			continue;
+		snprintf(devname, sizeof(devname), "%s:%d", parent->name,
+			 part);
+
+		ret = device_bind_driver(parent, "blk_partition",
+					 strdup(devname), &dev);
+		if (ret)
+			return ret;
+
+		part_data = dev_get_uclass_plat(dev);
+		part_data->partnum = part;
+		part_data->gpt_part_info = info;
+		count++;
+
+		device_probe(dev);
+	}
+	debug("%s: %d partitions found in %s\n", __func__, count, parent->name);
+
+	return 0;
+}
+
 static int blk_post_probe(struct udevice *dev)
 {
 	if (IS_ENABLED(CONFIG_PARTITIONS) &&
@@ -712,4 +751,76 @@ UCLASS_DRIVER(blk) = {
 	.name		= "blk",
 	.post_probe	= blk_post_probe,
 	.per_device_plat_auto	= sizeof(struct blk_desc),
+};
+
+static ulong blk_part_read(struct udevice *dev, lbaint_t start,
+			   lbaint_t blkcnt, void *buffer)
+{
+	struct udevice *parent;
+	struct disk_part *part;
+	const struct blk_ops *ops;
+
+	parent = dev_get_parent(dev);
+	ops = blk_get_ops(parent);
+	if (!ops->read)
+		return -ENOSYS;
+
+	part = dev_get_uclass_plat(dev);
+	start += part->gpt_part_info.start;
+
+	return ops->read(parent, start, blkcnt, buffer);
+}
+
+static ulong blk_part_write(struct udevice *dev, lbaint_t start,
+			    lbaint_t blkcnt, const void *buffer)
+{
+	struct udevice *parent;
+	struct disk_part *part;
+	const struct blk_ops *ops;
+
+	parent = dev_get_parent(dev);
+	ops = blk_get_ops(parent);
+	if (!ops->write)
+		return -ENOSYS;
+
+	part = dev_get_uclass_plat(dev);
+	start += part->gpt_part_info.start;
+
+	return ops->write(parent, start, blkcnt, buffer);
+}
+
+static ulong blk_part_erase(struct udevice *dev, lbaint_t start,
+			    lbaint_t blkcnt)
+{
+	struct udevice *parent;
+	struct disk_part *part;
+	const struct blk_ops *ops;
+
+	parent = dev_get_parent(dev);
+	ops = blk_get_ops(parent);
+	if (!ops->erase)
+		return -ENOSYS;
+
+	part = dev_get_uclass_plat(dev);
+	start += part->gpt_part_info.start;
+
+	return ops->erase(parent, start, blkcnt);
+}
+
+static const struct blk_ops blk_part_ops = {
+	.read	= blk_part_read,
+	.write	= blk_part_write,
+	.erase	= blk_part_erase,
+};
+
+U_BOOT_DRIVER(blk_partition) = {
+	.name		= "blk_partition",
+	.id		= UCLASS_PARTITION,
+	.ops		= &blk_part_ops,
+};
+
+UCLASS_DRIVER(partition) = {
+	.id		= UCLASS_PARTITION,
+	.per_device_plat_auto	= sizeof(struct disk_part),
+	.name		= "partition",
 };

@@ -367,6 +367,15 @@ int blk_create_devicef(struct udevice *parent, const char *drv_name,
 		       lbaint_t lba, struct udevice **devp);
 
 /**
+ * blk_create_partitions - Create block devices for disk partitions
+ *
+ * Create UCLASS_PARTITION udevices for each of disk partitions in @parent
+ *
+ * @parent:	Whole disk device
+ */
+int blk_create_partitions(struct udevice *parent);
+
+/**
  * blk_unbind_all() - Unbind all device of the given interface type
  *
  * The devices are removed and then unbound.
