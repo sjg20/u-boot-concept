@@ -60,11 +60,6 @@ static efi_status_t efi_system_init(void)
 	if (ret != EFI_SUCCESS)
 		goto out;
 #endif
-#ifdef CONFIG_NET
-	ret = efi_net_register();
-	if (ret != EFI_SUCCESS)
-		goto out;
-#endif
 #ifdef CONFIG_GENERATE_ACPI_TABLE
 	ret = efi_acpi_register();
 	if (ret != EFI_SUCCESS)

@@ -87,6 +87,11 @@ void eth_set_dev(struct udevice *dev)
 	}
 
 	eth_get_uclass_priv()->current = dev;
+#if CONFIG_IS_ENABLED(EFI_LOADER)
+	extern int efi_net_register(void);
+
+	efi_net_register();
+#endif
 }
 
 /*

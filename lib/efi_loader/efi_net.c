@@ -6,11 +6,12 @@
  */
 
 #include <common.h>
+#include <dm.h>
 #include <efi_loader.h>
 #include <malloc.h>
 
-static const efi_guid_t efi_net_guid = EFI_SIMPLE_NETWORK_GUID;
-static const efi_guid_t efi_pxe_guid = EFI_PXE_GUID;
+const efi_guid_t efi_net_guid = EFI_SIMPLE_NETWORK_GUID;
+const efi_guid_t efi_pxe_guid = EFI_PXE_GUID;
 static struct efi_pxe_packet *dhcp_ack;
 static bool new_rx_packet;
 static void *new_tx_packet;
@@ -26,17 +27,16 @@ static struct efi_event *network_timer_event;
  */
 static struct efi_event *wait_for_packet;
 
+/* FIXME: move this to somewhere else, like struct eth_device? */
 /**
  * struct efi_net_obj - EFI object representing a network interface
  *
- * @header:	EFI object header
  * @net:	simple network protocol interface
  * @net_mode:	status of the network interface
  * @pxe:	PXE base code protocol interface
  * @pxe_mode:	status of the PXE base code protocol
  */
 struct efi_net_obj {
-	struct efi_object header;
 	struct efi_simple_network net;
 	struct efi_simple_network_mode net_mode;
 	struct efi_pxe pxe;
@@ -588,10 +588,12 @@ out:
  */
 efi_status_t efi_net_register(void)
 {
+	struct udevice *dev;
 	struct efi_net_obj *netobj = NULL;
 	efi_status_t r;
 
-	if (!eth_get_dev()) {
+	dev = eth_get_dev();
+	if (!dev) {
 		/* No network device active, don't expose any */
 		return EFI_SUCCESS;
 	}
@@ -608,18 +610,22 @@ efi_status_t efi_net_register(void)
 	transmit_buffer = (void *)ALIGN((uintptr_t)transmit_buffer, PKTALIGN);
 
 	/* Hook net up to the device list */
-	efi_add_handle(&netobj->header);
+	r = efi_add_handle(dev);
+	if (r != EFI_SUCCESS) {
+		printf("ERROR: Failure adding net handle\n");
+		return r;
+	}
 
 	/* Fill in object data */
-	r = efi_add_protocol(&netobj->header, &efi_net_guid,
+	r = efi_add_protocol(dev, &efi_net_guid,
 			     &netobj->net);
 	if (r != EFI_SUCCESS)
 		goto failure_to_add_protocol;
-	r = efi_add_protocol(&netobj->header, &efi_guid_device_path,
+	r = efi_add_protocol(dev, &efi_guid_device_path,
 			     efi_dp_from_eth());
 	if (r != EFI_SUCCESS)
 		goto failure_to_add_protocol;
-	r = efi_add_protocol(&netobj->header, &efi_pxe_guid,
+	r = efi_add_protocol(dev, &efi_pxe_guid,
 			     &netobj->pxe);
 	if (r != EFI_SUCCESS)
 		goto failure_to_add_protocol;
@@ -691,3 +697,29 @@ out_of_resources:
 	printf("ERROR: Out of memory\n");
 	return EFI_OUT_OF_RESOURCES;
 }
+
+static int efi_net_probe(struct udevice *dev)
+{
+	device_set_name(dev, "SIMPLE_NETWORK");
+
+	return 0;
+}
+
+U_BOOT_DRIVER(efi_net) = {
+	.name = "efi_net",
+	.id = UCLASS_EFI_PROTOCOL,
+	.probe = efi_net_probe,
+};
+
+static int efi_pex_probe(struct udevice *dev)
+{
+	device_set_name(dev, "PXE");
+
+	return 0;
+}
+
+U_BOOT_DRIVER(efi_pex) = {
+	.name = "efi_pex",
+	.id = UCLASS_EFI_PROTOCOL,
+	.probe = efi_pex_probe,
+};
