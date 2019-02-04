@@ -14,20 +14,19 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-static const efi_guid_t efi_gop_guid = EFI_GOP_GUID;
+const efi_guid_t efi_gop_guid = EFI_GOP_GUID;
 
+/* FIXME: move this to somewhere else, like struct video_priv? */
 /**
  * struct efi_gop_obj - graphical output protocol object
  *
- * @header:	EFI object header
  * @ops:	graphical output protocol interface
  * @info:	graphical output mode information
  * @mode:	graphical output mode
  * @bpix:	bits per pixel
  * @fb:		frame buffer
  */
-struct efi_gop_obj {
-	struct efi_object header;
+static struct efi_gop_obj {
 	struct efi_gop ops;
 	struct efi_gop_mode_info info;
 	struct efi_gop_mode mode;
@@ -446,10 +445,14 @@ efi_status_t efi_gop_register(void)
 	}
 
 	/* Hook up to the device list */
-	efi_add_handle(&gopobj->header);
+	ret = efi_add_handle(vdev);
+	if (ret != EFI_SUCCESS) {
+		printf("ERROR: Failure adding GOP handle\n");
+		return ret;
+	}
 
 	/* Fill in object data */
-	ret = efi_add_protocol(&gopobj->header, &efi_gop_guid,
+	ret = efi_add_protocol(vdev, &efi_gop_guid,
 			       &gopobj->ops);
 	if (ret != EFI_SUCCESS) {
 		printf("ERROR: Failure adding GOP protocol\n");
@@ -489,3 +492,16 @@ efi_status_t efi_gop_register(void)
 
 	return EFI_SUCCESS;
 }
+
+static int efi_gop_probe(struct udevice *dev)
+{
+	device_set_name(dev, "GOP");
+
+	return 0;
+}
+
+U_BOOT_DRIVER(efi_gop) = {
+	.name = "efi_gop",
+	.id = UCLASS_EFI_PROTOCOL,
+	.probe = efi_gop_probe,
+};

@@ -55,7 +55,8 @@ static efi_status_t efi_system_init(void)
 	if (ret != EFI_SUCCESS)
 		goto out;
 #endif
-#if defined(CONFIG_LCD) || defined(CONFIG_DM_VIDEO)
+#if defined(CONFIG_LCD)
+	/* for !DM_VIDEO */
 	ret = efi_gop_register();
 	if (ret != EFI_SUCCESS)
 		goto out;

@@ -276,6 +276,15 @@ static int video_post_probe(struct udevice *dev)
 		return ret;
 	}
 
+#ifdef CONFIG_EFI_LOADER
+	extern efi_gop_register(void);
+	ret = efi_gop_register()
+	if (ret) {
+		debug("%s: Cannot register efi gop\n", __func__);
+		return ret;
+	}
+#endif
+
 	return 0;
 };
 
