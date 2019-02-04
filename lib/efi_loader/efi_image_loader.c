@@ -8,6 +8,7 @@
  */
 
 #include <common.h>
+#include <dm.h>
 #include <efi_loader.h>
 #include <pe.h>
 
@@ -66,6 +67,7 @@ static efi_status_t efi_print_image_info(struct efi_loaded_image_obj *obj,
 	if (image->file_path)
 		printf(" '%pD'", image->file_path);
 	printf("\n");
+
 	return EFI_SUCCESS;
 }
 
@@ -76,17 +78,27 @@ static efi_status_t efi_print_image_info(struct efi_loaded_image_obj *obj,
  */
 void efi_print_image_infos(void *pc)
 {
-	struct efi_object *efiobj;
+	struct uclass *uc;
+	struct udevice *dev, *protocol;
+	struct efi_loaded_image_obj *obj;
 	struct efi_handler *handler;
+	efi_status_t ret;
 
-	list_for_each_entry(efiobj, &efi_obj_list, link) {
-		list_for_each_entry(handler, &efiobj->protocols, link) {
-			if (!guidcmp(handler->guid, &efi_guid_loaded_image)) {
-				efi_print_image_info(
-					(struct efi_loaded_image_obj *)efiobj,
-					handler->protocol_interface, pc);
-			}
-		}
+	if (uclass_get(UCLASS_EFI_OBJECT, &uc))
+		return;
+
+	uclass_foreach_dev(dev, uc) {
+		if (strcmp(dev->driver->name, "efi_loaded_image"))
+			continue;
+
+		ret = efi_search_protocol(dev, &efi_guid_loaded_image,
+					  &protocol);
+		if (ret != EFI_SUCCESS)
+			continue;
+
+		obj = dev->platdata;
+		handler = protocol->uclass_platdata;
+		efi_print_image_info(obj, handler->protocol_interface, pc);
 	}
 }
 
@@ -198,8 +210,8 @@ static void efi_set_code_and_data_type(
  * piece of memory. On successful load it then returns the entry point for
  * the binary. Otherwise NULL.
  */
-void *efi_load_pe(struct efi_loaded_image_obj *handle, void *efi,
-		  struct efi_loaded_image *loaded_image_info)
+efi_status_t efi_load_pe(struct efi_loaded_image_obj *obj, void *efi,
+			 struct efi_loaded_image *loaded_image_info)
 {
 	IMAGE_NT_HEADERS32 *nt;
 	IMAGE_DOS_HEADER *dos;
@@ -215,17 +227,18 @@ void *efi_load_pe(struct efi_loaded_image_obj *handle, void *efi,
 	uint64_t image_size;
 	unsigned long virt_size = 0;
 	int supported = 0;
+	efi_status_t ret;
 
 	dos = efi;
 	if (dos->e_magic != IMAGE_DOS_SIGNATURE) {
 		printf("%s: Invalid DOS Signature\n", __func__);
-		return NULL;
+		return EFI_INVALID_PARAMETER;
 	}
 
 	nt = (void *) ((char *)efi + dos->e_lfanew);
 	if (nt->Signature != IMAGE_NT_SIGNATURE) {
 		printf("%s: Invalid NT Signature\n", __func__);
-		return NULL;
+		return EFI_INVALID_PARAMETER;
 	}
 
 	for (i = 0; machines[i]; i++)
@@ -237,7 +250,7 @@ void *efi_load_pe(struct efi_loaded_image_obj *handle, void *efi,
 	if (!supported) {
 		printf("%s: Machine type 0x%04x is not supported\n",
 		       __func__, nt->FileHeader.Machine);
-		return NULL;
+		return EFI_UNSUPPORTED;
 	}
 
 	/* Calculate upper virtual address boundary */
@@ -263,7 +276,7 @@ void *efi_load_pe(struct efi_loaded_image_obj *handle, void *efi,
 		if (!efi_reloc) {
 			printf("%s: Could not allocate %lu bytes\n",
 			       __func__, virt_size);
-			return NULL;
+			return EFI_OUT_OF_RESOURCES;
 		}
 		entry = efi_reloc + opt->AddressOfEntryPoint;
 		rel_size = opt->DataDirectory[rel_idx].Size;
@@ -279,7 +292,7 @@ void *efi_load_pe(struct efi_loaded_image_obj *handle, void *efi,
 		if (!efi_reloc) {
 			printf("%s: Could not allocate %lu bytes\n",
 			       __func__, virt_size);
-			return NULL;
+			return EFI_OUT_OF_RESOURCES;
 		}
 		entry = efi_reloc + opt->AddressOfEntryPoint;
 		rel_size = opt->DataDirectory[rel_idx].Size;
@@ -288,7 +301,7 @@ void *efi_load_pe(struct efi_loaded_image_obj *handle, void *efi,
 	} else {
 		printf("%s: Invalid optional header magic %x\n", __func__,
 		       nt->OptionalHeader.Magic);
-		return NULL;
+		return EFI_INVALID_PARAMETER;
 	}
 
 	/* Load sections into RAM */
@@ -302,11 +315,12 @@ void *efi_load_pe(struct efi_loaded_image_obj *handle, void *efi,
 	}
 
 	/* Run through relocations */
-	if (efi_loader_relocate(rel, rel_size, efi_reloc,
-				(unsigned long)image_base) != EFI_SUCCESS) {
+	ret = efi_loader_relocate(rel, rel_size, efi_reloc,
+				  (unsigned long)image_base);
+	if (ret != EFI_SUCCESS) {
 		efi_free_pages((uintptr_t) efi_reloc,
 			       (virt_size + EFI_PAGE_MASK) >> EFI_PAGE_SHIFT);
-		return NULL;
+		return ret;
 	}
 
 	/* Flush cache */
@@ -317,8 +331,9 @@ void *efi_load_pe(struct efi_loaded_image_obj *handle, void *efi,
 	/* Populate the loaded image interface bits */
 	loaded_image_info->image_base = efi;
 	loaded_image_info->image_size = image_size;
-	handle->reloc_base = efi_reloc;
-	handle->reloc_size = virt_size;
+	obj->reloc_base = efi_reloc;
+	obj->reloc_size = virt_size;
+	obj->entry = entry;
 
-	return entry;
+	return EFI_SUCCESS;
 }

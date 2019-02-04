@@ -249,12 +249,12 @@ static efi_status_t efi_install_fdt(ulong fdt_addr)
 static efi_status_t bootefi_run_prepare(const char *load_options_path,
 		struct efi_device_path *device_path,
 		struct efi_device_path *image_path,
-		struct efi_loaded_image_obj **image_objp,
+		efi_handle_t *handlep,
 		struct efi_loaded_image **loaded_image_infop)
 {
 	efi_status_t ret;
 
-	ret = efi_setup_loaded_image(device_path, image_path, image_objp,
+	ret = efi_setup_loaded_image(device_path, image_path, handlep,
 				     loaded_image_infop);
 	if (ret != EFI_SUCCESS)
 		return ret;
@@ -268,15 +268,15 @@ static efi_status_t bootefi_run_prepare(const char *load_options_path,
 /**
  * bootefi_run_finish() - finish up after running an EFI test
  *
+ * @handle: Handle to the loaded image object
  * @loaded_image_info: Pointer to a struct which holds the loaded image info
- * @image_objj: Pointer to a struct which holds the loaded image object
  */
-static void bootefi_run_finish(struct efi_loaded_image_obj *image_obj,
+static void bootefi_run_finish(efi_handle_t handle,
 			       struct efi_loaded_image *loaded_image_info)
 {
 	efi_restore_gd();
 	free(loaded_image_info->load_options);
-	efi_delete_handle(&image_obj->header);
+	efi_delete_handle(handle);
 }
 
 static int efi_handle_fdt(char *fdt_opt)
@@ -319,10 +319,10 @@ static efi_status_t do_bootefi_exec(void *efi,
 				    struct efi_device_path *device_path,
 				    struct efi_device_path *image_path)
 {
-	efi_handle_t mem_handle = NULL;
 	struct efi_device_path *memdp = NULL;
+	efi_handle_t handle;
 	efi_status_t ret;
-	struct efi_loaded_image_obj *image_obj = NULL;
+	struct efi_loaded_image_obj *image_obj;
 	struct efi_loaded_image *loaded_image_info = NULL;
 
 	EFIAPI efi_status_t (*entry)(efi_handle_t image_handle,
@@ -342,28 +342,27 @@ static efi_status_t do_bootefi_exec(void *efi,
 		 * Grub expects that the device path of the loaded image is
 		 * installed on a handle.
 		 */
-		ret = efi_create_handle(&mem_handle);
-		if (ret != EFI_SUCCESS)
-			return ret; /* TODO: leaks device_path */
-		ret = efi_add_protocol(mem_handle, &efi_guid_device_path,
-				       device_path);
-		if (ret != EFI_SUCCESS)
-			goto err_add_protocol;
+		/*
+		 * CHECK: device path protocol will be added to handle
+		 * in efi_setup_loaded_image() anyway.
+		 */
 	} else {
 		assert(device_path && image_path);
 	}
 
 	ret = bootefi_run_prepare("bootargs", device_path, image_path,
-				  &image_obj, &loaded_image_info);
+				  &handle, &loaded_image_info);
 	if (ret)
 		goto err_prepare;
 
 	/* Load the EFI payload */
-	entry = efi_load_pe(image_obj, efi, loaded_image_info);
-	if (!entry) {
+	image_obj = handle->platdata;
+	ret = efi_load_pe(image_obj, efi, loaded_image_info);
+	if (ret) {
 		ret = EFI_LOAD_ERROR;
 		goto err_prepare;
 	}
+	entry = image_obj->entry;
 
 	if (memdp) {
 		struct efi_device_path_memory *mdp = (void *)memdp;
@@ -393,7 +392,7 @@ static efi_status_t do_bootefi_exec(void *efi,
 
 		/* Move into EL2 and keep running there */
 		armv8_switch_to_el2((ulong)entry,
-				    (ulong)&image_obj->header,
+				    0,
 				    (ulong)&systab, 0, (ulong)efi_run_in_el2,
 				    ES_TO_AARCH64);
 
@@ -410,7 +409,7 @@ static efi_status_t do_bootefi_exec(void *efi,
 		secure_ram_addr(_do_nonsec_entry)(
 					efi_run_in_hyp,
 					(uintptr_t)entry,
-					(uintptr_t)&image_obj->header,
+					0,
 					(uintptr_t)&systab);
 
 		/* Should never reach here, efi exits with longjmp */
@@ -418,15 +417,11 @@ static efi_status_t do_bootefi_exec(void *efi,
 	}
 #endif
 
-	ret = efi_do_enter(&image_obj->header, &systab, entry);
+	ret = efi_do_enter(handle, &systab, entry);
 
 err_prepare:
 	/* image has returned, loaded-image obj goes *poof*: */
-	bootefi_run_finish(image_obj, loaded_image_info);
-
-err_add_protocol:
-	if (mem_handle)
-		efi_delete_handle(mem_handle);
+	bootefi_run_finish(handle, loaded_image_info);
 
 	return ret;
 }
@@ -438,9 +433,7 @@ err_add_protocol:
  * This sets things up so we can call EFI functions. This involves preparing
  * the 'gd' pointer and setting up the load ed image data structures.
  *
- * @image_objp: loaded_image_infop: Pointer to a struct which will hold the
- *    loaded image object. This struct will be inited by this function before
- *    use.
+ * @handlep: Pointer to a handle of the loaded image object
  * @loaded_image_infop: Pointer to a struct which will hold the loaded image
  *    info. This struct will be inited by this function before use.
  * @path: File path to the test being run (often just the test name with a
@@ -450,7 +443,7 @@ err_add_protocol:
  * @return 0 if OK, -ve on error
  */
 static efi_status_t bootefi_test_prepare
-		(struct efi_loaded_image_obj **image_objp,
+		(efi_handle_t *handlep,
 		struct efi_loaded_image **loaded_image_infop, const char *path,
 		ulong test_func, const char *load_options_path)
 {
@@ -465,7 +458,7 @@ static efi_status_t bootefi_test_prepare
 		return EFI_OUT_OF_RESOURCES;
 
 	return bootefi_run_prepare(load_options_path, bootefi_device_path,
-				   bootefi_image_path, image_objp,
+				   bootefi_image_path, handlep,
 				   loaded_image_infop);
 }
 
@@ -558,20 +551,20 @@ static int do_bootefi(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 #endif
 #ifdef CONFIG_CMD_BOOTEFI_SELFTEST
 	if (!strcmp(argv[1], "selftest")) {
-		struct efi_loaded_image_obj *image_obj;
+		efi_handle_t handle;
 		struct efi_loaded_image *loaded_image_info;
 
 		if (efi_handle_fdt(argc > 2 ? argv[2] : NULL))
 			return CMD_RET_FAILURE;
 
-		if (bootefi_test_prepare(&image_obj, &loaded_image_info,
+		if (bootefi_test_prepare(&handle, &loaded_image_info,
 					 "\\selftest", (uintptr_t)&efi_selftest,
 					 "efi_selftest"))
 			return CMD_RET_FAILURE;
 
 		/* Execute the test */
-		r = efi_selftest(&image_obj->header, &systab);
-		bootefi_run_finish(image_obj, loaded_image_info);
+		r = efi_selftest(handle, &systab);
+		bootefi_run_finish(handle, loaded_image_info);
 		return r != EFI_SUCCESS;
 	} else
 #endif
