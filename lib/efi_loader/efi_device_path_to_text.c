@@ -6,6 +6,7 @@
  */
 
 #include <common.h>
+#include <dm.h>
 #include <efi_loader.h>
 
 #define MAC_OUTPUT_LEN 22
@@ -295,6 +296,47 @@ out:
 	return text;
 }
 
+/* Temprarily used in probe() for device path protocol driver */
+char *efi_convert_device_path_to_str(struct efi_device_path *device_path,
+				     bool display_only,
+				     bool allow_shortcuts)
+{
+	char *text = NULL;
+	char buffer[MAX_PATH_LEN];
+	char *str = buffer;
+
+	if (!device_path)
+		goto out;
+
+	while (device_path &&
+	       str + MAX_NODE_LEN < buffer + MAX_PATH_LEN) {
+		if (display_only) {
+			/* Only first 8 characters */
+			struct efi_device_path *next;
+
+			next = efi_dp_next(device_path);
+			if (next) {
+				device_path = next;
+				continue;
+			}
+
+			str = efi_convert_single_device_node_to_text(str,
+								device_path);
+			str[9] = '\0';
+			break;
+		}
+
+		*str++ = '/';
+		str = efi_convert_single_device_node_to_text(str, device_path);
+		device_path = efi_dp_next(device_path);
+	}
+
+	text = strdup(buffer);
+
+out:
+	return text;
+}
+
 /*
  * This function implements the ConvertDevicePathToText service of the
  * EFI_DEVICE_PATH_TO_TEXT_PROTOCOL.
@@ -343,4 +385,17 @@ uint16_t *efi_dp_str(struct efi_device_path *dp)
 const struct efi_device_path_to_text_protocol efi_device_path_to_text = {
 	.convert_device_node_to_text = efi_convert_device_node_to_text,
 	.convert_device_path_to_text = efi_convert_device_path_to_text,
+};
+
+static int efi_device_path_to_text_probe(struct udevice *dev)
+{
+	device_set_name(dev, "DEVICE_PATH_TO_TEXT");
+
+	return 0;
+}
+
+U_BOOT_DRIVER(efi_device_path_to_text) = {
+	.name = "efi_device_path_to_text",
+	.id = UCLASS_EFI_PROTOCOL,
+	.probe = efi_device_path_to_text_probe,
 };

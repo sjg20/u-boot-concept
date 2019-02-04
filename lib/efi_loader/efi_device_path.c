@@ -140,69 +140,92 @@ static struct efi_device_path *shorten_path(struct efi_device_path *dp)
 	return dp;
 }
 
-static struct efi_object *find_obj(struct efi_device_path *dp, bool short_path,
-				   struct efi_device_path **rem)
+struct dp_param {
+	struct efi_device_path *dp;
+	bool short_path;
+	struct efi_device_path **rem;
+	struct udevice *dev;
+};
+
+static int find_obj_cb(struct udevice *dev, void *arg)
 {
-	struct efi_object *efiobj;
+	struct dp_param *param = arg;
+	struct efi_device_path *dp = param->dp;
+	bool short_path = param->short_path;
+	struct efi_device_path **rem = param->rem;
 	efi_uintn_t dp_size = efi_dp_instance_size(dp);
 
-	list_for_each_entry(efiobj, &efi_obj_list, link) {
-		struct efi_handler *handler;
-		struct efi_device_path *obj_dp;
-		efi_status_t ret;
+	struct udevice *protocol;
+	struct efi_handler *handler;
+	struct efi_device_path *obj_dp;
+	efi_status_t ret;
 
-		ret = efi_search_protocol(efiobj,
-					  &efi_guid_device_path, &handler);
-		if (ret != EFI_SUCCESS)
-			continue;
-		obj_dp = handler->protocol_interface;
+	ret = efi_search_protocol(dev, &efi_guid_device_path, &protocol);
+	if (ret != EFI_SUCCESS)
+		return 0;
 
-		do {
-			if (efi_dp_match(dp, obj_dp) == 0) {
-				if (rem) {
-					/*
-					 * Allow partial matches, but inform
-					 * the caller.
-					 */
-					*rem = ((void *)dp) +
-						efi_dp_instance_size(obj_dp);
-					return efiobj;
-				} else {
-					/* Only return on exact matches */
-					if (efi_dp_instance_size(obj_dp) ==
-					    dp_size)
-						return efiobj;
-				}
+	handler = protocol->uclass_platdata;
+	obj_dp = handler->protocol_interface;
+	do {
+		if (efi_dp_match(dp, obj_dp) == 0) {
+			if (rem) {
+				/*
+				 * Allow partial matches, but inform
+				 * the caller.
+				 */
+				*rem = ((void *)dp) +
+					efi_dp_instance_size(obj_dp);
+				param->dev = dev;
+				return 1;
 			}
 
-			obj_dp = shorten_path(efi_dp_next(obj_dp));
-		} while (short_path && obj_dp);
-	}
+			/* Only return on exact matches */
+			if (efi_dp_instance_size(obj_dp) == dp_size) {
+				param->dev = dev;
+				return 1;
+			}
+		}
 
-	return NULL;
+		obj_dp = shorten_path(efi_dp_next(obj_dp));
+	} while (short_path && obj_dp);
+
+	return 0;
+}
+
+static struct udevice *find_obj(struct efi_device_path *dp, bool short_path,
+				struct efi_device_path **rem)
+{
+	struct dp_param dp_param;
+	efi_status_t ret;
+
+	ret = efi_foreach_dev(find_obj_cb, &dp_param);
+	if (ret)
+		return NULL;
+
+	return dp_param.dev;
 }
 
 /*
  * Find an efiobj from device-path, if 'rem' is not NULL, returns the
  * remaining part of the device path after the matched object.
  */
-struct efi_object *efi_dp_find_obj(struct efi_device_path *dp,
-				   struct efi_device_path **rem)
+efi_handle_t efi_dp_find_obj(struct efi_device_path *dp,
+			     struct efi_device_path **rem)
 {
-	struct efi_object *efiobj;
+	struct udevice *dev;
 
 	/* Search for an exact match first */
-	efiobj = find_obj(dp, false, NULL);
+	dev = find_obj(dp, false, NULL);
 
 	/* Then for a fuzzy match */
-	if (!efiobj)
-		efiobj = find_obj(dp, false, rem);
+	if (!dev)
+		dev = find_obj(dp, false, rem);
 
 	/* And now for a fuzzy short match */
-	if (!efiobj)
-		efiobj = find_obj(dp, true, rem);
+	if (!dev)
+		dev = find_obj(dp, true, rem);
 
-	return efiobj;
+	return dev;
 }
 
 /*
@@ -992,3 +1015,30 @@ efi_status_t efi_dp_from_name(const char *dev, const char *devnr,
 
 	return EFI_SUCCESS;
 }
+
+extern
+char *efi_convert_device_path_to_str(struct efi_device_path *device_path,
+				     bool display_only,
+				     bool allow_shortcuts);
+
+static int efi_device_path_probe(struct udevice *dev)
+{
+	struct efi_handler *handler;
+	struct efi_device_path *dp;
+	char *name;
+
+	handler = dev->uclass_platdata;
+	dp = handler->protocol_interface;
+	name = efi_convert_device_path_to_str(dp, true, true);
+	device_set_name(dev, name);
+
+	/* TODO: free at unprobe */
+
+	return 0;
+}
+
+U_BOOT_DRIVER(efi_device_path) = {
+	.name = "efi_device_path",
+	.id = UCLASS_EFI_PROTOCOL,
+	.probe = efi_device_path_probe,
+};

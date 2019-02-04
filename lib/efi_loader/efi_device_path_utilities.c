@@ -6,6 +6,7 @@
  */
 
 #include <common.h>
+#include <dm.h>
 #include <efi_loader.h>
 
 const efi_guid_t efi_guid_device_path_utilities_protocol =
@@ -196,4 +197,17 @@ const struct efi_device_path_utilities_protocol efi_device_path_utilities = {
 	.get_next_device_path_instance = get_next_device_path_instance,
 	.is_device_path_multi_instance = is_device_path_multi_instance,
 	.create_device_node = create_device_node,
+};
+
+static int efi_device_path_utils_probe(struct udevice *dev)
+{
+	device_set_name(dev, "DEVICE_PATH_UTILITIES");
+
+	return 0;
+}
+
+U_BOOT_DRIVER(efi_device_path_utils) = {
+	.name = "efi_device_path_utils",
+	.id = UCLASS_EFI_PROTOCOL,
+	.probe = efi_device_path_utils_probe,
 };
