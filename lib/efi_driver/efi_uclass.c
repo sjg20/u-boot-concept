@@ -18,6 +18,8 @@
  */
 
 #include <efi_driver.h>
+#include <dm/device-internal.h>
+#include <dm/lists.h>
 
 /**
  * check_node_type() - check node type
@@ -272,8 +274,18 @@ static efi_status_t efi_add_driver(struct driver *drv)
 	bp->bp.version = 0xffffffff;
 	bp->ops = drv->ops;
 
-	ret = efi_create_handle(&bp->bp.driver_binding_handle);
+	ret = device_bind_driver(efi_root, drv->name, drv->name,
+				 &bp->bp.driver_binding_handle);
+	if (ret) {
+		free(bp);
+		goto out;
+	}
+
+	ret = efi_add_handle(bp->bp.driver_binding_handle);
 	if (ret != EFI_SUCCESS) {
+#ifdef CONFIG_DM_DEVICE_REMOVE
+		device_unbind(bp->bp.driver_binding_handle);
+#endif
 		free(bp);
 		goto out;
 	}
@@ -348,4 +360,17 @@ UCLASS_DRIVER(efi_driver) = {
 	.id		= UCLASS_EFI_DRIVER,
 	.init		= efi_uc_init,
 	.destroy	= efi_uc_destroy,
+};
+
+static int efi_driver_binding_probe(struct udevice *dev)
+{
+	device_set_name(dev, "DRIVER_BINDING");
+
+	return 0;
+}
+
+U_BOOT_DRIVER(efi_driver_binding) = {
+	.name = "efi_driver_binding",
+	.id = UCLASS_EFI_PROTOCOL,
+	.probe = efi_driver_binding_probe,
 };

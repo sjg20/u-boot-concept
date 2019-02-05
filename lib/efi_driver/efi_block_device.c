@@ -118,15 +118,11 @@ static int efi_bl_bind(efi_handle_t handle, void *interface)
 	struct udevice *bdev, *parent = dm_root();
 	int ret, devnum;
 	char *name;
-	struct efi_object *obj = efi_search_obj(handle);
 	struct efi_block_io *io = interface;
 	int disks;
 	struct efi_blk_platdata *platdata;
 
 	EFI_PRINT("%s: handle %p, interface %p\n", __func__, handle, io);
-
-	if (!obj)
-		return -ENOENT;
 
 	devnum = blk_find_max_devnum(IF_TYPE_EFI);
 	if (devnum == -ENODEV)
