@@ -8,6 +8,7 @@
 #include <charset.h>
 #include <common.h>
 #include <command.h>
+#include <dm.h>
 #include <efi_loader.h>
 #include <environment.h>
 #include <exports.h>
@@ -114,6 +115,7 @@ static int do_efi_show_devices(cmd_tbl_t *cmdtp, int flag,
 static int efi_get_driver_handle_info(efi_handle_t handle, u16 **driver_name,
 				      u16 **image_path)
 {
+	struct udevice *protocol;
 	struct efi_handler *handler;
 	struct efi_loaded_image *image;
 	efi_status_t ret;
@@ -125,12 +127,13 @@ static int efi_get_driver_handle_info(efi_handle_t handle, u16 **driver_name,
 	*driver_name = NULL;
 
 	/* image name */
-	ret = efi_search_protocol(handle, &efi_guid_loaded_image, &handler);
+	ret = efi_search_protocol(handle, &efi_guid_loaded_image, &protocol);
 	if (ret != EFI_SUCCESS) {
 		*image_path = NULL;
 		return 0;
 	}
 
+	handler = protocol->uclass_platdata;
 	image = handler->protocol_interface;
 	*image_path = efi_dp_str(image->file_path);
 
