@@ -146,6 +146,9 @@ struct udevice {
 #ifdef CONFIG_DEVRES
 	struct list_head devres_head;
 #endif
+#ifdef CONFIG_EFI_LOADER
+	void *efi_obj;
+#endif
 };
 
 /* Maximum sequence number supported */

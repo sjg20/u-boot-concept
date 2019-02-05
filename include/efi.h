@@ -96,7 +96,9 @@ typedef struct {
 typedef unsigned long efi_status_t;
 typedef u64 efi_physical_addr_t;
 typedef u64 efi_virtual_addr_t;
-typedef struct efi_object *efi_handle_t;
+/* Eventually this should be 'void *' */
+struct udevice;
+typedef struct udevice *efi_handle_t;
 
 #define EFI_GUID(a, b, c, d0, d1, d2, d3, d4, d5, d6, d7) \
 	{{ (a) & 0xff, ((a) >> 8) & 0xff, ((a) >> 16) & 0xff, \

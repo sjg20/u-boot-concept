@@ -167,36 +167,10 @@ struct efi_open_protocol_info_item {
  * protocol GUID to the respective protocol interface
  */
 struct efi_handler {
-	/* Link to the list of protocols of a handle */
-	struct list_head link;
 	const efi_guid_t *guid;
 	void *protocol_interface;
 	/* Link to the list of open protocol info items */
 	struct list_head open_infos;
-};
-
-/**
- * struct efi_object - dereferenced EFI handle
- *
- * @link:	pointers to put the handle into a linked list
- * @protocols:	linked list with the protocol interfaces installed on this
- *		handle
- *
- * UEFI offers a flexible and expandable object model. The objects in the UEFI
- * API are devices, drivers, and loaded images. struct efi_object is our storage
- * structure for these objects.
- *
- * When including this structure into a larger structure always put it first so
- * that when deleting a handle the whole encompassing structure can be freed.
- *
- * A pointer to this structure is referred to as a handle. Typedef efi_handle_t
- * has been created for such pointers.
- */
-struct efi_object {
-	/* Every UEFI object is part of a global object list */
-	struct list_head link;
-	/* The list of protocols */
-	struct list_head protocols;
 };
 
 /**
@@ -209,7 +183,6 @@ struct efi_object {
  * @entry:		entry address of the relocated image
  */
 struct efi_loaded_image_obj {
-	struct efi_object header;
 	void *reloc_base;
 	aligned_u64 reloc_size;
 	efi_status_t exit_status;
@@ -312,18 +285,18 @@ void efi_restore_gd(void);
 void efi_runtime_relocate(ulong offset, struct efi_mem_desc *map);
 /* Call this to set the current device name */
 void efi_set_bootdev(const char *dev, const char *devnr, const char *path);
+/* Go through all the efi objects and call func() for each */
+efi_status_t efi_foreach_dev(int (*func)(struct udevice *, void *), void *arg);
 /* Add a new object to the object list. */
-void efi_add_handle(efi_handle_t obj);
+efi_status_t efi_add_handle(struct udevice *dev);
 /* Create handle */
-efi_status_t efi_create_handle(efi_handle_t *handle);
+efi_status_t efi_create_handle(efi_handle_t *handle, char *name);
 /* Delete handle */
 void efi_delete_handle(efi_handle_t obj);
-/* Call this to validate a handle and find the EFI object for it */
-struct efi_object *efi_search_obj(const efi_handle_t handle);
 /* Find a protocol on a handle */
 efi_status_t efi_search_protocol(const efi_handle_t handle,
 				 const efi_guid_t *protocol_guid,
-				 struct efi_handler **handler);
+				 struct udevice **protocol);
 /* Install new protocol on a handle */
 efi_status_t efi_add_protocol(const efi_handle_t handle,
 			      const efi_guid_t *protocol,

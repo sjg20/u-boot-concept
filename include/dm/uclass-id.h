@@ -40,6 +40,8 @@ enum uclass_id {
 	UCLASS_DISPLAY,		/* Display (e.g. DisplayPort, HDMI) */
 	UCLASS_DMA,		/* Direct Memory Access */
 	UCLASS_EFI,		/* EFI managed devices */
+	UCLASS_EFI_OBJECT,	/* EFI managed objects */
+	UCLASS_EFI_PROTOCOL,	/* EFI managed protocols */
 	UCLASS_ETH,		/* Ethernet device */
 	UCLASS_FIRMWARE,	/* Firmware */
 	UCLASS_FS_FIRMWARE_LOADER,		/* Generic loader */
