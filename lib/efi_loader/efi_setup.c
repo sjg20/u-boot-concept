@@ -7,6 +7,10 @@
  */
 
 #include <common.h>
+#include <dm.h>
+#include <dm/device-internal.h>
+#include <dm/lists.h>
+#include <dm/root.h>
 #include <efi_loader.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -16,7 +20,7 @@ DECLARE_GLOBAL_DATA_PTR;
 static efi_status_t efi_obj_list_initialized = OBJ_LIST_NOT_INITIALIZED;
 
 /* Initialize and populate EFI object list */
-efi_status_t efi_init_obj_list(void)
+static efi_status_t efi_system_init(void)
 {
 	efi_status_t ret = EFI_SUCCESS;
 
@@ -87,3 +91,46 @@ out:
 	efi_obj_list_initialized = ret;
 	return ret;
 }
+
+/* For backward compatibility */
+efi_status_t efi_init_obj_list(void)
+{
+	int ret;
+	extern struct udevice *efi_root;
+
+	if (efi_root)
+		return EFI_SUCCESS;
+
+	ret = device_bind_driver(dm_root(), "efi_root", "UEFI sub system",
+				 &efi_root);
+	if (ret)
+		return EFI_OUT_OF_RESOURCES;
+
+	ret = device_probe(efi_root);
+	if (ret)
+		return EFI_OUT_OF_RESOURCES;
+
+	return EFI_SUCCESS;
+}
+
+static int efi_system_probe(struct udevice *dev)
+{
+	efi_status_t ret;
+
+	ret = efi_system_init();
+	if (ret != EFI_SUCCESS)
+		return -1;
+
+	return 0;
+}
+
+U_BOOT_DRIVER(efi_root) = {
+	.name = "efi_root",
+	.id = UCLASS_EFI,
+	.probe = efi_system_probe,
+};
+
+UCLASS_DRIVER(efi) = {
+	.name = "efi",
+	.id = UCLASS_EFI,
+};

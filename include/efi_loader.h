@@ -225,6 +225,9 @@ extern struct list_head efi_obj_list;
 /* List of all events */
 extern struct list_head efi_events;
 
+/* Root device */
+extern efi_handle_t efi_root;
+
 /* Initialize efi execution environment */
 efi_status_t efi_init_obj_list(void);
 /* Called by bootefi to initialize root node */

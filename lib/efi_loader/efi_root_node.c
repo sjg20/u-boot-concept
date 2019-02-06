@@ -16,6 +16,8 @@ struct efi_root_dp {
 	struct efi_device_path end;
 } __packed;
 
+efi_handle_t efi_root;
+
 /**
  * efi_root_node_register() - create root node
  *
@@ -26,12 +28,11 @@ struct efi_root_dp {
  */
 efi_status_t efi_root_node_register(void)
 {
-	efi_handle_t root;
 	efi_status_t ret;
 	struct efi_root_dp *dp;
 
 	/* Create handle */
-	ret = efi_create_handle(&root);
+	ret = efi_add_handle(efi_root);
 	if (ret != EFI_SUCCESS)
 		return ret;
 
@@ -52,24 +53,25 @@ efi_status_t efi_root_node_register(void)
 	dp->end.length = sizeof(struct efi_device_path);
 
 	/* Install device path protocol */
-	ret = efi_add_protocol(root, &efi_guid_device_path, dp);
+	ret = efi_add_protocol(efi_root, &efi_guid_device_path, dp);
 	if (ret != EFI_SUCCESS)
 		goto failure;
 
 	/* Install device path to text protocol */
-	ret = efi_add_protocol(root, &efi_guid_device_path_to_text_protocol,
+	ret = efi_add_protocol(efi_root, &efi_guid_device_path_to_text_protocol,
 			       (void *)&efi_device_path_to_text);
 	if (ret != EFI_SUCCESS)
 		goto failure;
 
 	/* Install device path utilities protocol */
-	ret = efi_add_protocol(root, &efi_guid_device_path_utilities_protocol,
+	ret = efi_add_protocol(efi_root,
+			       &efi_guid_device_path_utilities_protocol,
 			       (void *)&efi_device_path_utilities);
 	if (ret != EFI_SUCCESS)
 		goto failure;
 
 	/* Install Unicode collation protocol */
-	ret = efi_add_protocol(root, &efi_guid_unicode_collation_protocol,
+	ret = efi_add_protocol(efi_root, &efi_guid_unicode_collation_protocol,
 			       (void *)&efi_unicode_collation_protocol);
 	if (ret != EFI_SUCCESS)
 		goto failure;
