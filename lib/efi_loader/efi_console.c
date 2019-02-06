@@ -12,6 +12,8 @@
 #include <stdio_dev.h>
 #include <video_console.h>
 
+DECLARE_GLOBAL_DATA_PTR;
+
 #define EFI_COUT_MODE_2 2
 #define EFI_MAX_COUT_MODE 3
 
@@ -1051,34 +1053,29 @@ static void EFIAPI efi_key_notify(struct efi_event *event, void *context)
 efi_status_t efi_console_register(void)
 {
 	efi_status_t r;
-	efi_handle_t console_output_handle;
-	efi_handle_t console_input_handle;
+	efi_handle_t handle;
 
 	/* Set up mode information */
 	query_console_size();
 
 	/* Create handles */
-	r = efi_create_handle(&console_output_handle);
+	handle = gd->cur_serial_dev;
+	r = efi_add_handle(handle);
 	if (r != EFI_SUCCESS)
 		goto out_of_memory;
 
-	r = efi_add_protocol(console_output_handle,
+	r = efi_add_protocol(handle,
 			     &efi_guid_text_output_protocol, &efi_con_out);
 	if (r != EFI_SUCCESS)
 		goto out_of_memory;
-	systab.con_out_handle = console_output_handle;
-	systab.stderr_handle = console_output_handle;
-
-	r = efi_create_handle(&console_input_handle);
-	if (r != EFI_SUCCESS)
-		goto out_of_memory;
-
-	r = efi_add_protocol(console_input_handle,
+	systab.con_out_handle = handle;
+	systab.stderr_handle = handle;
+	r = efi_add_protocol(handle,
 			     &efi_guid_text_input_protocol, &efi_con_in);
 	if (r != EFI_SUCCESS)
 		goto out_of_memory;
-	systab.con_in_handle = console_input_handle;
-	r = efi_add_protocol(console_input_handle,
+	systab.con_in_handle = handle;
+	r = efi_add_protocol(handle,
 			     &efi_guid_text_input_ex_protocol, &efi_con_in_ex);
 	if (r != EFI_SUCCESS)
 		goto out_of_memory;
@@ -1107,3 +1104,42 @@ out_of_memory:
 	printf("ERROR: Out of memory\n");
 	return r;
 }
+
+static int efi_simple_text_input_ex_probe(struct udevice *dev)
+{
+	device_set_name(dev, "SIMPLE_TEXT_INPUT_EX");
+
+	return 0;
+}
+
+U_BOOT_DRIVER(efi_simple_text_input_ex) = {
+	.name = "efi_simple_text_input_ex",
+	.id = UCLASS_EFI_PROTOCOL,
+	.probe = efi_simple_text_input_ex_probe,
+};
+
+static int efi_simple_text_input_probe(struct udevice *dev)
+{
+	device_set_name(dev, "SIMPLE_TEXT_INPUT");
+
+	return 0;
+}
+
+U_BOOT_DRIVER(efi_simple_text_input) = {
+	.name = "efi_simple_text_input",
+	.id = UCLASS_EFI_PROTOCOL,
+	.probe = efi_simple_text_input_probe,
+};
+
+static int efi_simple_text_output_probe(struct udevice *dev)
+{
+	device_set_name(dev, "SIMPLE_TEXT_OUTPUT");
+
+	return 0;
+}
+
+U_BOOT_DRIVER(efi_simple_text_output) = {
+	.name = "efi_simple_text_output",
+	.id = UCLASS_EFI_PROTOCOL,
+	.probe = efi_simple_text_output_probe,
+};

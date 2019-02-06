@@ -168,6 +168,12 @@ int serial_init(void)
 void serial_initialize(void)
 {
 	serial_init();
+#if CONFIG_IS_ENABLED(EFI_LOADER)
+	extern int efi_console_register(void);
+
+	if (gd->cur_serial_dev)
+		efi_console_register();
+#endif
 }
 
 static void _serial_putc(struct udevice *dev, char ch)
