@@ -9,6 +9,7 @@
 #include <charset.h>
 #include <cp1250.h>
 #include <cp437.h>
+#include <dm.h>
 #include <efi_loader.h>
 
 /* Characters that may not be used in file names */
@@ -326,4 +327,22 @@ const struct efi_unicode_collation_protocol efi_unicode_collation_protocol = {
 	.fat_to_str = efi_fat_to_str,
 	.str_to_fat = efi_str_to_fat,
 	.supported_languages = "en",
+};
+
+static int efi_unicode_collation_probe(struct udevice *dev)
+{
+	struct efi_handler *handler;
+	struct efi_unicode_collation_protocol *col;
+
+	handler = dev->uclass_platdata;
+	col = handler->protocol_interface;
+	device_set_name(dev, col->supported_languages);
+
+	return 0;
+}
+
+U_BOOT_DRIVER(efi_unicode_collation) = {
+	.name = "efi_unicode_collation",
+	.id = UCLASS_EFI_PROTOCOL,
+	.probe = efi_unicode_collation_probe,
 };
