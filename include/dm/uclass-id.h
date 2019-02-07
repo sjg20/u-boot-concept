@@ -39,7 +39,8 @@ enum uclass_id {
 	UCLASS_CROS_EC,		/* Chrome OS EC */
 	UCLASS_DISPLAY,		/* Display (e.g. DisplayPort, HDMI) */
 	UCLASS_DMA,		/* Direct Memory Access */
-	UCLASS_EFI,		/* EFI managed devices */
+	UCLASS_EFI,		/* EFI sub system */
+	UCLASS_EFI_DRIVER,	/* EFI managed drivers */
 	UCLASS_EFI_OBJECT,	/* EFI managed objects */
 	UCLASS_EFI_PROTOCOL,	/* EFI managed protocols */
 	UCLASS_ETH,		/* Ethernet device */

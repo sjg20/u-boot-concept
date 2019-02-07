@@ -204,6 +204,6 @@ static const struct efi_driver_ops driver_ops = {
 /* Identify as EFI driver */
 U_BOOT_DRIVER(efi_block) = {
 	.name		= "EFI block driver",
-	.id		= UCLASS_EFI,
+	.id		= UCLASS_EFI_DRIVER,
 	.ops		= &driver_ops,
 };
