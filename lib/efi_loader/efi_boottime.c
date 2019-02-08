@@ -1690,29 +1690,29 @@ static efi_status_t EFIAPI efi_install_configuration_table_ext(efi_guid_t *guid,
  */
 efi_status_t efi_setup_loaded_image(struct efi_device_path *device_path,
 				    struct efi_device_path *file_path,
-				    struct efi_loaded_image_obj **handle_ptr,
+				    efi_handle_t *handle_ptr,
 				    struct efi_loaded_image **info_ptr)
 {
 	efi_status_t ret;
 	struct efi_loaded_image *info;
-	struct efi_loaded_image_obj *obj;
+	struct udevice *dev;
 
 	info = calloc(1, sizeof(*info));
 	if (!info)
 		return EFI_OUT_OF_RESOURCES;
-	obj = calloc(1, sizeof(*obj));
-	if (!obj) {
+
+	ret = device_bind_driver(dm_root(), "efi_loaded_image", "(IMG)", &dev);
+	if (ret) {
 		free(info);
 		return EFI_OUT_OF_RESOURCES;
 	}
 
-	/* Add internal object to object list */
-	efi_add_handle(&obj->header);
+	efi_add_handle(dev);
 
 	if (info_ptr)
 		*info_ptr = info;
 	if (handle_ptr)
-		*handle_ptr = obj;
+		*handle_ptr = dev;
 
 	info->revision =  EFI_LOADED_IMAGE_PROTOCOL_REVISION;
 	info->file_path = file_path;
@@ -1724,7 +1724,7 @@ efi_status_t efi_setup_loaded_image(struct efi_device_path *device_path,
 		 * When asking for the device path interface, return
 		 * bootefi_device_path
 		 */
-		ret = efi_add_protocol(&obj->header,
+		ret = efi_add_protocol(dev,
 				       &efi_guid_device_path, device_path);
 		if (ret != EFI_SUCCESS)
 			goto failure;
@@ -1734,24 +1734,24 @@ efi_status_t efi_setup_loaded_image(struct efi_device_path *device_path,
 	 * When asking for the loaded_image interface, just
 	 * return handle which points to loaded_image_info
 	 */
-	ret = efi_add_protocol(&obj->header,
+	ret = efi_add_protocol(dev,
 			       &efi_guid_loaded_image, info);
 	if (ret != EFI_SUCCESS)
 		goto failure;
 
-	ret = efi_add_protocol(&obj->header,
+	ret = efi_add_protocol(dev,
 			       &efi_guid_hii_string_protocol,
 			       (void *)&efi_hii_string);
 	if (ret != EFI_SUCCESS)
 		goto failure;
 
-	ret = efi_add_protocol(&obj->header,
+	ret = efi_add_protocol(dev,
 			       &efi_guid_hii_database_protocol,
 			       (void *)&efi_hii_database);
 	if (ret != EFI_SUCCESS)
 		goto failure;
 
-	ret = efi_add_protocol(&obj->header,
+	ret = efi_add_protocol(dev,
 			       &efi_guid_hii_config_routing_protocol,
 			       (void *)&efi_hii_config_routing);
 	if (ret != EFI_SUCCESS)
@@ -1835,9 +1835,8 @@ static efi_status_t EFIAPI efi_load_image(bool boot_policy,
 					  efi_uintn_t source_size,
 					  efi_handle_t *image_handle)
 {
+	struct efi_loaded_image_obj *obj;
 	struct efi_loaded_image *info = NULL;
-	struct efi_loaded_image_obj **image_obj =
-		(struct efi_loaded_image_obj **)image_handle;
 	efi_status_t ret;
 
 	EFI_ENTRY("%d, %p, %pD, %p, %zd, %p", boot_policy, parent_image,
@@ -1864,24 +1863,29 @@ static efi_status_t EFIAPI efi_load_image(bool boot_policy,
 		 * file parts:
 		 */
 		efi_dp_split_file_path(file_path, &dp, &fp);
-		ret = efi_setup_loaded_image(dp, fp, image_obj, &info);
+		ret = efi_setup_loaded_image(dp, fp, image_handle, &info);
 		if (ret != EFI_SUCCESS)
 			goto failure;
 	} else {
 		/* In this case, file_path is the "device" path, i.e.
 		 * something like a HARDWARE_DEVICE:MEMORY_MAPPED
 		 */
-		ret = efi_setup_loaded_image(file_path, NULL, image_obj, &info);
+		ret = efi_setup_loaded_image(file_path, NULL, image_handle,
+					     &info);
 		if (ret != EFI_SUCCESS)
 			goto error;
 	}
-	(*image_obj)->entry = efi_load_pe(*image_obj, source_buffer, info);
-	if (!(*image_obj)->entry) {
+
+	obj = (*image_handle)->platdata;
+	ret = efi_load_pe(obj, source_buffer, info);
+	if (ret != EFI_SUCCESS) {
 		ret = EFI_UNSUPPORTED;
 		goto failure;
 	}
+
 	info->system_table = &systab;
 	info->parent_handle = parent_image;
+
 	return EFI_EXIT(EFI_SUCCESS);
 failure:
 	efi_delete_handle(*image_handle);
@@ -1908,8 +1912,8 @@ static efi_status_t EFIAPI efi_start_image(efi_handle_t image_handle,
 					   unsigned long *exit_data_size,
 					   s16 **exit_data)
 {
-	struct efi_loaded_image_obj *image_obj =
-		(struct efi_loaded_image_obj *)image_handle;
+	struct udevice *dev = image_handle;
+	struct efi_loaded_image_obj *image_obj = dev->platdata;
 	efi_status_t ret;
 
 	EFI_ENTRY("%p, %p, %p", image_handle, exit_data_size, exit_data);
@@ -1975,12 +1979,12 @@ static efi_status_t EFIAPI efi_exit(efi_handle_t image_handle,
 				    unsigned long exit_data_size,
 				    int16_t *exit_data)
 {
+	struct udevice *dev = image_handle;
+	struct efi_loaded_image_obj *image_obj = dev->platdata;
 	/*
 	 * TODO: We should call the unload procedure of the loaded
 	 *	 image protocol.
 	 */
-	struct efi_loaded_image_obj *image_obj =
-		(struct efi_loaded_image_obj *)image_handle;
 
 	EFI_ENTRY("%p, %ld, %ld, %p", image_handle, exit_status,
 		  exit_data_size, exit_data);
@@ -2013,12 +2017,9 @@ static efi_status_t EFIAPI efi_exit(efi_handle_t image_handle,
  */
 static efi_status_t EFIAPI efi_unload_image(efi_handle_t image_handle)
 {
-	struct efi_object *efiobj;
-
 	EFI_ENTRY("%p", image_handle);
-	efiobj = efi_search_obj(image_handle);
-	if (efiobj)
-		list_del(&efiobj->link);
+
+	efi_remove_handle(image_handle);
 
 	return EFI_EXIT(EFI_SUCCESS);
 }
@@ -3396,6 +3397,12 @@ efi_status_t efi_initialize_system_table(void)
 U_BOOT_DRIVER(efi_dumb_obj) = {
 	.name = "efi_dumb_object",
 	.id = UCLASS_EFI_OBJECT,
+};
+
+U_BOOT_DRIVER(efi_image_obj) = {
+	.name = "efi_loaded_image",
+	.id = UCLASS_EFI_OBJECT,
+	.platdata_auto_alloc_size = sizeof(struct efi_loaded_image_obj),
 };
 
 UCLASS_DRIVER(efi_obj) = {

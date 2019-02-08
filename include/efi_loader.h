@@ -367,7 +367,7 @@ efi_status_t efi_install_configuration_table(const efi_guid_t *guid, void *table
 /* Sets up a loaded image */
 efi_status_t efi_setup_loaded_image(struct efi_device_path *device_path,
 				    struct efi_device_path *file_path,
-				    struct efi_loaded_image_obj **handle_ptr,
+				    efi_handle_t *handle_ptr,
 				    struct efi_loaded_image **info_ptr);
 efi_status_t efi_load_image_from_path(struct efi_device_path *file_path,
 				      void **buffer);
