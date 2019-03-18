@@ -1800,6 +1800,16 @@ config CMD_BLOB
 	  generation/use as key for cryptographic operation. Key
 	  modifier should be 16 byte long.
 
+config CMD_CRYPTO
+	bool "Support 'crypto' command"
+	depends on X509_CERTIFICATE_PARSER
+	depends on PKCS7_MESSAGE_PARSER
+	help
+	  This enables 'crypto' command.
+	  This command reads x509 certificate or PE image (with pkcs7)
+	  and prints the contents of parsed data.
+	  Mainly for testing.
+
 config CMD_HASH
 	bool "Support 'hash' command"
 	select HASH
