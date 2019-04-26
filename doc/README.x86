@@ -195,6 +195,8 @@ Flash map for samus / broadwell:
    ffed0000	SYS_TEXT_BASE
    ffea0000	X86_REFCODE_ADDR
    ffe70000	SPL_TEXT_BASE
+   ffbf8000	CONFIG_ENV_OFFSET (environemnt offset)
+   ffbe0000	rw-mrc-cache (Memory-reference-code cache)
    ffa00000	<spare>
    ff801000	intel-me (address set by descriptor.bin)
    ff800000	intel-descriptor
