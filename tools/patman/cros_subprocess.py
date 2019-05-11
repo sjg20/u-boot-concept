@@ -156,11 +156,11 @@ class Popen(subprocess.Popen):
                 self.stdin.close()
         if self.stdout:
             read_set.append(self.stdout)
-            stdout = []
+            stdout = bytearray()
         if self.stderr and self.stderr != self.stdout:
             read_set.append(self.stderr)
-            stderr = []
-        combined = []
+            stderr = bytearray()
+        combined = bytearray()
 
         input_offset = 0
         while read_set or write_set:
@@ -192,12 +192,12 @@ class Popen(subprocess.Popen):
                     data = os.read(self.stdout.fileno(), 1024)
                 except OSError:
                     pass
-                if data == "":
+                if not len(data):
                     self.stdout.close()
                     read_set.remove(self.stdout)
                 else:
-                    stdout.append(data)
-                    combined.append(data)
+                    stdout += data
+                    combined += data
                     if output:
                         output(sys.stdout, data)
             if self.stderr in rlist:
@@ -207,25 +207,34 @@ class Popen(subprocess.Popen):
                     data = os.read(self.stderr.fileno(), 1024)
                 except OSError:
                     pass
-                if data == "":
+                if not len(data):
                     self.stderr.close()
                     read_set.remove(self.stderr)
                 else:
-                    stderr.append(data)
-                    combined.append(data)
+                    stderr += data
+                    combined += data
                     if output:
                         output(sys.stderr, data)
 
         # All data exchanged.    Translate lists into strings.
         if stdout is not None:
-            stdout = ''.join(stdout)
+            try:
+                stdout = stdout.decode('utf-8')
+            except UnicodeDecodeError:
+                stdout = stdout.decode('utf-8', 'ignore')
         else:
             stdout = ''
         if stderr is not None:
-            stderr = ''.join(stderr)
+            try:
+                stderr = stderr.decode('utf-8')
+            except UnicodeDecodeError:
+                stderr = stderr.decode('utf-8', 'ignore')
         else:
             stderr = ''
-        combined = ''.join(combined)
+        try:
+            combined = combined.decode('utf-8')
+        except UnicodeDecodeError:
+            combined = combined.decode('utf-8', 'ignore')
 
         # Translate newlines, if requested.    We cannot let the file
         # object do the translation: It is based on stdio, which is
