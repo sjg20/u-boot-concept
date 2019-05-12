@@ -65,9 +65,12 @@
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_SYS_UART_PORT		(1)
 
+#ifdef CONFIG_BROKEN
+/* Driver not converted to Kconfig */
 #define CONFIG_FSL_USDHC
 #define CONFIG_SYS_FSL_ESDHC_ADDR	USDHC_BASE_ADDR
 #define CONFIG_SYS_FSL_ESDHC_NUM	1
+#endif
 
 #define CONFIG_CMD_MMC
 /* #define CONFIG_CMD_EXT2 EXT2 Support */

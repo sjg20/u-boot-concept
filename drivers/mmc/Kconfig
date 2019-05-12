@@ -667,6 +667,7 @@ config TEGRA124_MMC_DISABLE_EXT_LOOPBACK
 
 config FSL_ESDHC
 	bool "Freescale/NXP eSDHC controller support"
+	depends on !TARGET_S32V234EVB || BROKEN
 	help
 	  This selects support for the eSDHC (enhanced secure digital host
 	  controller) found on numerous Freescale/NXP SoCs.
