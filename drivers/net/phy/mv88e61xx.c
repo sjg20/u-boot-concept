@@ -119,16 +119,12 @@
 
 #define SERDES_REG_CTRL_1_FORCE_LINK	BIT(10)
 
-#define PHY_REG_CTRL1_ENERGY_DET_SHIFT	8
-#define PHY_REG_CTRL1_ENERGY_DET_WIDTH	2
-
 /* Field values */
 #define PORT_REG_CTRL_PSTATE_DISABLED	0
 #define PORT_REG_CTRL_PSTATE_FORWARD	3
 
 #define PHY_REG_CTRL1_ENERGY_DET_OFF	0
 #define PHY_REG_CTRL1_ENERGY_DET_SENSE_ONLY	2
-#define PHY_REG_CTRL1_ENERGY_DET_SENSE_XMIT	3
 
 /* PHY Status Register */
 #define PHY_REG_STATUS1_SPEED		0xc000
@@ -194,6 +190,9 @@ struct mv88e61xx_phy_priv {
 	u16 port_stat_link_mask;
 	u16 port_stat_dup_mask;
 	u8 port_stat_speed_width;
+	u8 phy_ctrl1_en_det_shift;
+	u8 phy_ctrl1_en_det_width;
+	u8 phy_ctrl1_en_det_sense_xmit;
 	u8 global1;
 	u8 global2;
 };
@@ -841,6 +840,7 @@ static int mv88e61xx_phy_enable(struct phy_device *phydev, u8 phy)
 
 static int mv88e61xx_phy_setup(struct phy_device *phydev, u8 phy)
 {
+	struct mv88e61xx_phy_priv *priv = phydev->priv;
 	int val;
 
 	/*
@@ -850,9 +850,9 @@ static int mv88e61xx_phy_setup(struct phy_device *phydev, u8 phy)
 	val = mv88e61xx_phy_read(phydev, phy, PHY_REG_CTRL1);
 	if (val < 0)
 		return val;
-	val = bitfield_replace(val, PHY_REG_CTRL1_ENERGY_DET_SHIFT,
-			       PHY_REG_CTRL1_ENERGY_DET_WIDTH,
-			       PHY_REG_CTRL1_ENERGY_DET_SENSE_XMIT);
+	val = bitfield_replace(val, priv->phy_ctrl1_en_det_shift,
+			       priv->phy_ctrl1_en_det_width,
+			       priv->phy_ctrl1_en_det_sense_xmit);
 	val = mv88e61xx_phy_write(phydev, phy, PHY_REG_CTRL1, val);
 	if (val < 0)
 		return val;
@@ -962,12 +962,18 @@ static int mv88e61xx_probe(struct phy_device *phydev)
 		priv->port_stat_link_mask = BIT(11);
 		priv->port_stat_dup_mask = BIT(10);
 		priv->port_stat_speed_width = 2;
+		priv->phy_ctrl1_en_det_shift = 8;
+		priv->phy_ctrl1_en_det_width = 2;
+		priv->phy_ctrl1_en_det_sense_xmit = 3;
 		break;
 	case PORT_SWITCH_ID_6071:
 		priv->port_count = 7;
 		priv->port_stat_link_mask = BIT(12);
 		priv->port_stat_dup_mask = BIT(9);
 		priv->port_stat_speed_width = 1;
+		priv->phy_ctrl1_en_det_shift = 14;
+		priv->phy_ctrl1_en_det_width = 1;
+		priv->phy_ctrl1_en_det_sense_xmit = 1;
 		break;
 	default:
 		free(priv);
