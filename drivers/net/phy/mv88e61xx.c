@@ -85,9 +85,6 @@
 #define GLOBAL1_MON_CTRL_CPUDEST_SHIFT	4
 #define GLOBAL1_MON_CTRL_CPUDEST_WIDTH	4
 
-#define PORT_REG_STATUS_LINK		BIT(11)
-#define PORT_REG_STATUS_DUPLEX		BIT(10)
-
 #define PORT_REG_STATUS_SPEED_SHIFT	8
 #define PORT_REG_STATUS_SPEED_WIDTH	2
 #define PORT_REG_STATUS_SPEED_10	0
@@ -108,6 +105,7 @@
 #define PORT_REG_PHYS_CTRL_DUPLEX_VALUE	BIT(3)
 #define PORT_REG_PHYS_CTRL_DUPLEX_FORCE	BIT(2)
 #define PORT_REG_PHYS_CTRL_SPD1000	BIT(1)
+#define PORT_REG_PHYS_CTRL_SPD100	BIT(0)
 #define PORT_REG_PHYS_CTRL_SPD_MASK	(BIT(1) | BIT(0))
 
 #define PORT_REG_CTRL_PSTATE_SHIFT	0
@@ -193,6 +191,9 @@ struct mv88e61xx_phy_priv {
 	int id;
 	int port_count;
 	int port_reg_base;
+	u16 port_stat_link_mask;
+	u16 port_stat_dup_mask;
+	u8 port_stat_speed_width;
 	u8 global1;
 	u8 global2;
 };
@@ -638,6 +639,7 @@ static int mv88e61xx_port_set_vlan(struct phy_device *phydev, u8 port,
 
 static int mv88e61xx_read_port_config(struct phy_device *phydev, u8 port)
 {
+	struct mv88e61xx_phy_priv *priv = phydev->priv;
 	int res;
 	int val;
 	bool forced = false;
@@ -645,7 +647,7 @@ static int mv88e61xx_read_port_config(struct phy_device *phydev, u8 port)
 	val = mv88e61xx_port_read(phydev, port, PORT_REG_STATUS);
 	if (val < 0)
 		return val;
-	if (!(val & PORT_REG_STATUS_LINK)) {
+	if (!(val & priv->port_stat_link_mask)) {
 		/* Temporarily force link to read port configuration */
 		u32 timeout = 100;
 		forced = true;
@@ -668,7 +670,7 @@ static int mv88e61xx_read_port_config(struct phy_device *phydev, u8 port)
 				res = -EIO;
 				goto unforce;
 			}
-			if (val & PORT_REG_STATUS_LINK)
+			if (val & priv->port_stat_link_mask)
 				break;
 		} while (--timeout);
 
@@ -678,13 +680,13 @@ static int mv88e61xx_read_port_config(struct phy_device *phydev, u8 port)
 		}
 	}
 
-	if (val & PORT_REG_STATUS_DUPLEX)
+	if (val & priv->port_stat_dup_mask)
 		phydev->duplex = DUPLEX_FULL;
 	else
 		phydev->duplex = DUPLEX_HALF;
 
 	val = bitfield_extract(val, PORT_REG_STATUS_SPEED_SHIFT,
-			       PORT_REG_STATUS_SPEED_WIDTH);
+			       priv->port_stat_speed_width);
 	switch (val) {
 	case PORT_REG_STATUS_SPEED_1000:
 		phydev->speed = SPEED_1000;
@@ -717,6 +719,7 @@ unforce:
 
 static int mv88e61xx_fixed_port_setup(struct phy_device *phydev, u8 port)
 {
+	struct mv88e61xx_phy_priv *priv = phydev->priv;
 	int val;
 
 	val = mv88e61xx_port_read(phydev, port, PORT_REG_PHYS_CTRL);
@@ -724,13 +727,19 @@ static int mv88e61xx_fixed_port_setup(struct phy_device *phydev, u8 port)
 		return val;
 
 	val &= ~(PORT_REG_PHYS_CTRL_SPD_MASK |
-		 PORT_REG_PHYS_CTRL_FC_VALUE);
-	val |= PORT_REG_PHYS_CTRL_PCS_AN_EN |
-	       PORT_REG_PHYS_CTRL_PCS_AN_RST |
-	       PORT_REG_PHYS_CTRL_FC_FORCE |
+		 PORT_REG_PHYS_CTRL_FC_VALUE |
+		 PORT_REG_PHYS_CTRL_FC_FORCE);
+	val |= PORT_REG_PHYS_CTRL_FC_FORCE |
 	       PORT_REG_PHYS_CTRL_DUPLEX_VALUE |
-	       PORT_REG_PHYS_CTRL_DUPLEX_FORCE |
-	       PORT_REG_PHYS_CTRL_SPD1000;
+	       PORT_REG_PHYS_CTRL_DUPLEX_FORCE;
+
+	if (priv->id == PORT_SWITCH_ID_6071) {
+		val |= PORT_REG_PHYS_CTRL_SPD100;
+	} else {
+		val |= PORT_REG_PHYS_CTRL_PCS_AN_EN |
+		       PORT_REG_PHYS_CTRL_PCS_AN_RST |
+		       PORT_REG_PHYS_CTRL_SPD1000;
+	}
 
 	if (port == CONFIG_MV88E61XX_CPU_PORT)
 		val |= PORT_REG_PHYS_CTRL_LINK_VALUE |
@@ -950,9 +959,15 @@ static int mv88e61xx_probe(struct phy_device *phydev)
 	case PORT_SWITCH_ID_6240:
 	case PORT_SWITCH_ID_6352:
 		priv->port_count = 11;
+		priv->port_stat_link_mask = BIT(11);
+		priv->port_stat_dup_mask = BIT(10);
+		priv->port_stat_speed_width = 2;
 		break;
 	case PORT_SWITCH_ID_6071:
 		priv->port_count = 7;
+		priv->port_stat_link_mask = BIT(12);
+		priv->port_stat_dup_mask = BIT(9);
+		priv->port_stat_speed_width = 1;
 		break;
 	default:
 		free(priv);
