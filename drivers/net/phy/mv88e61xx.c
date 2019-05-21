@@ -39,15 +39,12 @@
 
 #define PHY_AUTONEGOTIATE_TIMEOUT	5000
 
-#define PORT_COUNT			11
-#define PORT_MASK			((1 << PORT_COUNT) - 1)
+#define PORT_MASK(port_count)		((1 << (port_count)) - 1)
 
 /* Device addresses */
 #define DEVADDR_PHY(p)			(p)
-#define DEVADDR_PORT(p)			(0x10 + (p))
+#define DEVADDR_PORT(p)			(priv->port_reg_base + (p))
 #define DEVADDR_SERDES			0x0F
-#define DEVADDR_GLOBAL_1		0x1B
-#define DEVADDR_GLOBAL_2		0x1C
 
 /* SMI indirection registers for multichip addressing mode */
 #define SMI_CMD_REG			0x00
@@ -188,11 +185,16 @@
 #define PORT_SWITCH_ID_6176		0x1760
 #define PORT_SWITCH_ID_6240		0x2400
 #define PORT_SWITCH_ID_6352		0x3520
+#define PORT_SWITCH_ID_6071		0x0710
 
 struct mv88e61xx_phy_priv {
 	struct mii_dev *mdio_bus;
 	int smi_addr;
 	int id;
+	int port_count;
+	int port_reg_base;
+	u8 global1;
+	u8 global2;
 };
 
 static inline int smi_cmd(int cmd, int addr, int reg)
@@ -329,11 +331,12 @@ static int mv88e61xx_reg_write(struct phy_device *phydev, int dev, int reg,
 
 static int mv88e61xx_phy_wait(struct phy_device *phydev)
 {
+	struct mv88e61xx_phy_priv *priv = phydev->priv;
 	int val;
 	u32 timeout = 100;
 
 	do {
-		val = mv88e61xx_reg_read(phydev, DEVADDR_GLOBAL_2,
+		val = mv88e61xx_reg_read(phydev, priv->global2,
 					 GLOBAL2_REG_PHY_CMD);
 		if (val >= 0 && (val & SMI_BUSY) == 0)
 			return 0;
@@ -347,13 +350,15 @@ static int mv88e61xx_phy_wait(struct phy_device *phydev)
 static int mv88e61xx_phy_read_indirect(struct mii_dev *smi_wrapper, int dev,
 		int devad, int reg)
 {
+	struct mv88e61xx_phy_priv *priv;
 	struct phy_device *phydev;
 	int res;
 
 	phydev = (struct phy_device *)smi_wrapper->priv;
+	priv = phydev->priv;
 
 	/* Issue command to read */
-	res = mv88e61xx_reg_write(phydev, DEVADDR_GLOBAL_2,
+	res = mv88e61xx_reg_write(phydev, priv->global2,
 				  GLOBAL2_REG_PHY_CMD,
 				  smi_cmd_read(dev, reg));
 
@@ -363,25 +368,27 @@ static int mv88e61xx_phy_read_indirect(struct mii_dev *smi_wrapper, int dev,
 		return res;
 
 	/* Read retrieved data */
-	return mv88e61xx_reg_read(phydev, DEVADDR_GLOBAL_2,
+	return mv88e61xx_reg_read(phydev, priv->global2,
 				  GLOBAL2_REG_PHY_DATA);
 }
 
 static int mv88e61xx_phy_write_indirect(struct mii_dev *smi_wrapper, int dev,
 		int devad, int reg, u16 data)
 {
+	struct mv88e61xx_phy_priv *priv;
 	struct phy_device *phydev;
 	int res;
 
 	phydev = (struct phy_device *)smi_wrapper->priv;
+	priv = phydev->priv;
 
 	/* Set the data to write */
-	res = mv88e61xx_reg_write(phydev, DEVADDR_GLOBAL_2,
+	res = mv88e61xx_reg_write(phydev, priv->global2,
 				  GLOBAL2_REG_PHY_DATA, data);
 	if (res < 0)
 		return res;
 	/* Issue the write command */
-	res = mv88e61xx_reg_write(phydev, DEVADDR_GLOBAL_2,
+	res = mv88e61xx_reg_write(phydev, priv->global2,
 				  GLOBAL2_REG_PHY_CMD,
 				  smi_cmd_write(dev, reg));
 	if (res < 0)
@@ -408,12 +415,14 @@ static int mv88e61xx_phy_write(struct phy_device *phydev, int phy,
 
 static int mv88e61xx_port_read(struct phy_device *phydev, u8 port, u8 reg)
 {
+	struct mv88e61xx_phy_priv *priv = phydev->priv;
 	return mv88e61xx_reg_read(phydev, DEVADDR_PORT(port), reg);
 }
 
 static int mv88e61xx_port_write(struct phy_device *phydev, u8 port, u8 reg,
 								u16 val)
 {
+	struct mv88e61xx_phy_priv *priv = phydev->priv;
 	return mv88e61xx_reg_write(phydev, DEVADDR_PORT(port), reg, val);
 }
 
@@ -515,12 +524,13 @@ static int mv88e61xx_parse_status(struct phy_device *phydev)
 
 static int mv88e61xx_switch_reset(struct phy_device *phydev)
 {
+	struct mv88e61xx_phy_priv *priv = phydev->priv;
 	int time;
 	int val;
 	u8 port;
 
 	/* Disable all ports */
-	for (port = 0; port < PORT_COUNT; port++) {
+	for (port = 0; port < priv->port_count; port++) {
 		val = mv88e61xx_port_read(phydev, port, PORT_REG_CTRL);
 		if (val < 0)
 			return val;
@@ -536,18 +546,18 @@ static int mv88e61xx_switch_reset(struct phy_device *phydev)
 	udelay(2000);
 
 	/* Reset switch */
-	val = mv88e61xx_reg_read(phydev, DEVADDR_GLOBAL_1, GLOBAL1_CTRL);
+	val = mv88e61xx_reg_read(phydev, priv->global1, GLOBAL1_CTRL);
 	if (val < 0)
 		return val;
 	val |= GLOBAL1_CTRL_SWRESET;
-	val = mv88e61xx_reg_write(phydev, DEVADDR_GLOBAL_1,
+	val = mv88e61xx_reg_write(phydev, priv->global1,
 				     GLOBAL1_CTRL, val);
 	if (val < 0)
 		return val;
 
 	/* Wait up to 1 second for switch reset complete */
 	for (time = 1000; time; time--) {
-		val = mv88e61xx_reg_read(phydev, DEVADDR_GLOBAL_1,
+		val = mv88e61xx_reg_read(phydev, priv->global1,
 					    GLOBAL1_CTRL);
 		if (val >= 0 && ((val & GLOBAL1_CTRL_SWRESET) == 0))
 			break;
@@ -732,22 +742,23 @@ static int mv88e61xx_fixed_port_setup(struct phy_device *phydev, u8 port)
 
 static int mv88e61xx_set_cpu_port(struct phy_device *phydev)
 {
+	struct mv88e61xx_phy_priv *priv = phydev->priv;
 	int val;
 
 	/* Set CPUDest */
-	val = mv88e61xx_reg_read(phydev, DEVADDR_GLOBAL_1, GLOBAL1_MON_CTRL);
+	val = mv88e61xx_reg_read(phydev, priv->global1, GLOBAL1_MON_CTRL);
 	if (val < 0)
 		return val;
 	val = bitfield_replace(val, GLOBAL1_MON_CTRL_CPUDEST_SHIFT,
 			       GLOBAL1_MON_CTRL_CPUDEST_WIDTH,
 			       CONFIG_MV88E61XX_CPU_PORT);
-	val = mv88e61xx_reg_write(phydev, DEVADDR_GLOBAL_1,
+	val = mv88e61xx_reg_write(phydev, priv->global1,
 				     GLOBAL1_MON_CTRL, val);
 	if (val < 0)
 		return val;
 
 	/* Allow CPU to route to any port */
-	val = PORT_MASK & ~(1 << CONFIG_MV88E61XX_CPU_PORT);
+	val = PORT_MASK(priv->port_count) & ~(1 << CONFIG_MV88E61XX_CPU_PORT);
 	val = mv88e61xx_port_set_vlan(phydev, CONFIG_MV88E61XX_CPU_PORT, val);
 	if (val < 0)
 		return val;
@@ -856,6 +867,24 @@ static int mv88e61xx_phy_config_port(struct phy_device *phydev, u8 phy)
 	return 0;
 }
 
+static void mv88e61xx_priv_reg_offs_pre_init(struct mv88e61xx_phy_priv *priv)
+{
+	/*
+	 * Initial 'port_reg_base' value must be in the port register,
+	 * map and the global_N register offsets must be correct,
+	 * otherwise detection of switch ID won't work!
+	 */
+#ifndef CONFIG_MV88E61XX_88E6020_FAMILY
+	priv->global1 = 0x1B;
+	priv->global2 = 0x1C;
+	priv->port_reg_base = 0x10;
+#else
+	priv->global1 = 0x0F;
+	priv->global2 = 0x07;
+	priv->port_reg_base = 0x08;
+#endif
+}
+
 static int mv88e61xx_probe(struct phy_device *phydev)
 {
 	struct mii_dev *smi_wrapper;
@@ -910,13 +939,36 @@ static int mv88e61xx_probe(struct phy_device *phydev)
 
 	phydev->priv = priv;
 
+	mv88e61xx_priv_reg_offs_pre_init(priv);
+
 	priv->id = mv88e61xx_get_switch_id(phydev);
+	debug("%s ID 0x%x\n", __func__, priv->id);
+
+	switch (priv->id) {
+	case PORT_SWITCH_ID_6172:
+	case PORT_SWITCH_ID_6176:
+	case PORT_SWITCH_ID_6240:
+	case PORT_SWITCH_ID_6352:
+		priv->port_count = 11;
+		break;
+	case PORT_SWITCH_ID_6071:
+		priv->port_count = 7;
+		break;
+	default:
+		free(priv);
+		return -ENODEV;
+	}
+
+	res = mdio_register(smi_wrapper);
+	if (res)
+		printf("Failed to register SMI bus\n");
 
 	return 0;
 }
 
 static int mv88e61xx_phy_config(struct phy_device *phydev)
 {
+	struct mv88e61xx_phy_priv *priv = phydev->priv;
 	int res;
 	int i;
 	int ret = -1;
@@ -925,7 +977,7 @@ static int mv88e61xx_phy_config(struct phy_device *phydev)
 	if (res < 0)
 		return res;
 
-	for (i = 0; i < PORT_COUNT; i++) {
+	for (i = 0; i < priv->port_count; i++) {
 		if ((1 << i) & CONFIG_MV88E61XX_PHY_PORTS) {
 			phydev->addr = i;
 
@@ -988,13 +1040,14 @@ static int mv88e61xx_phy_is_connected(struct phy_device *phydev)
 
 static int mv88e61xx_phy_startup(struct phy_device *phydev)
 {
+	struct mv88e61xx_phy_priv *priv = phydev->priv;
 	int i;
 	int link = 0;
 	int res;
 	int speed = phydev->speed;
 	int duplex = phydev->duplex;
 
-	for (i = 0; i < PORT_COUNT; i++) {
+	for (i = 0; i < priv->port_count; i++) {
 		if ((1 << i) & CONFIG_MV88E61XX_PHY_PORTS) {
 			phydev->addr = i;
 			if (!mv88e61xx_phy_is_connected(phydev))
@@ -1067,6 +1120,8 @@ int get_phy_id(struct mii_dev *bus, int smi_addr, int devad, u32 *phy_id)
 	temp_priv.smi_addr = smi_addr;
 	temp_phy.priv = &temp_priv;
 	temp_mii.priv = &temp_phy;
+
+	mv88e61xx_priv_reg_offs_pre_init(&temp_priv);
 
 	val = mv88e61xx_phy_read_indirect(&temp_mii, 0, devad, MII_PHYSID1);
 	if (val < 0)
