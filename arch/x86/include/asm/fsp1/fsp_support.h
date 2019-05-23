@@ -8,6 +8,7 @@
 #define __FSP_SUPPORT_H__
 
 #include <asm/fsp/fsp_fv.h>
+#include <asm/fsp/fsp_hob.h>
 #include <asm/fsp/fsp_types.h>
 #include "fsp_hob.h"
 #include "fsp_ffs.h"
