@@ -1157,6 +1157,12 @@ int get_phy_id(struct mii_dev *bus, int smi_addr, int devad, u32 *phy_id)
 	mv88e61xx_priv_reg_offs_pre_init(&temp_priv);
 
 	val = mv88e61xx_phy_read_indirect(&temp_mii, 0, devad, MII_PHYSID1);
+	/* Hack to allow FEC init on PXC5 boards with SMSC switch */
+	if (val == -ETIMEDOUT) {
+		*phy_id = 0;
+		return 0;
+	}
+
 	if (val < 0)
 		return -EIO;
 
