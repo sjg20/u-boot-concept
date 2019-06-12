@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0+
 #include <common.h>
 #include <asm/arch/sci/sci.h>
+#include <asm/arch/sys_proto.h>
+
+DECLARE_GLOBAL_DATA_PTR;
 
 int sc_pm_setup_uart(sc_rsrc_t uart_rsrc, sc_pm_clock_rate_t clk_rate)
 {
@@ -25,9 +28,28 @@ int sc_pm_setup_uart(sc_rsrc_t uart_rsrc, sc_pm_clock_rate_t clk_rate)
 	return 0;
 }
 
+#define FSL_SIP_BUILDINFO			0xC2000003
+#define FSL_SIP_BUILDINFO_GET_COMMITHASH	0x00
+extern uint32_t _end_ofs;
+
+static void set_buildinfo_to_env(uint32_t scfw, uint32_t secofw,
+				 char *mkimage, char *atf)
+{
+	if (!mkimage || !atf)
+		return;
+
+	env_set("commit_mkimage", mkimage);
+	env_set("commit_atf", atf);
+	env_set_hex("commit_scfw", (ulong)scfw);
+	env_set_hex("commit_secofw", (ulong)secofw);
+}
+
 void build_info(void)
 {
+	u32 seco_build = 0, seco_commit = 0;
 	u32 sc_build = 0, sc_commit = 0;
+	ulong atf_commit = 0;
+	char *mkimage_commit, *temp;
 
 	/* Get SCFW build and commit id */
 	sc_misc_build_info(-1, &sc_build, &sc_commit);
@@ -35,5 +57,42 @@ void build_info(void)
 		printf("SCFW does not support build info\n");
 		sc_commit = 0; /* Display 0 if build info not supported */
 	}
-	printf("Build: SCFW %x\n", sc_commit);
+
+	/* Get SECO FW build and commit id */
+	sc_misc_seco_build_info(-1, &seco_build, &seco_commit);
+	if (!seco_build) {
+		debug("SECO FW does not support build info\n");
+		/* Display 0 when the build info is not supported */
+		seco_commit = 0;
+	}
+
+	/*
+	 * Get imx-mkimage commit id.
+	 * The imx-mkimage puts the commit hash behind the end of u-boot.bin
+	 */
+	mkimage_commit = (char *)(ulong)(CONFIG_SYS_TEXT_BASE + _end_ofs +
+					 fdt_totalsize(gd->fdt_blob));
+	temp = mkimage_commit + 8;
+	*temp = '\0';
+
+	if (strlen(mkimage_commit) == 0) {
+		debug("IMX-MKIMAGE does not support build info\n");
+		mkimage_commit = "0"; /* Display 0 */
+	}
+
+	/* Get ARM Trusted Firmware commit id */
+	atf_commit = call_imx_sip(FSL_SIP_BUILDINFO,
+				  FSL_SIP_BUILDINFO_GET_COMMITHASH, 0, 0, 0);
+	if (atf_commit == 0xffffffff) {
+		debug("ATF does not support build info\n");
+		atf_commit = 0x30; /* Display 0 */
+	}
+
+	printf("Build: SCFW %08x, SECO-FW %08x\n"
+	       "       IMX-MKIMAGE %s, ATF %s\n",
+	       sc_commit, seco_commit, mkimage_commit, (char *)&atf_commit);
+
+	/* Set all to env */
+	set_buildinfo_to_env(sc_commit, seco_commit, mkimage_commit,
+			     (char *)&atf_commit);
 }
