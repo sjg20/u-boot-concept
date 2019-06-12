@@ -349,6 +349,33 @@ void sc_misc_build_info(sc_ipc_t ipc, u32 *build, u32 *commit)
 		*commit = RPC_U32(&msg, 4);
 }
 
+void sc_misc_seco_build_info(sc_ipc_t ipc, u32 *version, u32 *commit)
+{
+	struct udevice *dev = gd->arch.scu_dev;
+	int size = sizeof(struct sc_rpc_msg_s);
+	struct sc_rpc_msg_s msg;
+	int ret;
+
+	if (!dev)
+		hang();
+
+	RPC_VER(&msg) = SC_RPC_VERSION;
+	RPC_SVC(&msg) = SC_RPC_SVC_MISC;
+	RPC_FUNC(&msg) = MISC_FUNC_SECO_BUILD_INFO;
+	RPC_SIZE(&msg) = 1;
+
+	ret = misc_call(dev, SC_FALSE, &msg, size, &msg, size);
+	if (ret < 0) {
+		printf("%s: err: %d\n", __func__, ret);
+		return;
+	}
+
+	if (version)
+		*version = RPC_U32(&msg, 0);
+	if (commit)
+		*commit = RPC_U32(&msg, 4);
+}
+
 int sc_misc_otp_fuse_read(sc_ipc_t ipc, u32 word, u32 *val)
 {
 	struct udevice *dev = gd->arch.scu_dev;
