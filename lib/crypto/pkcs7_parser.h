@@ -14,6 +14,15 @@
 #define kleave(FMT, ...) \
 	pr_devel("<== %s()"FMT"\n", __func__, ##__VA_ARGS__)
 
+#ifdef __UBOOT__
+struct attribute {
+	struct attribute *next;
+	enum OID oid;
+	const void *data;
+	size_t size;
+};
+#endif
+
 struct pkcs7_signed_info {
 	struct pkcs7_signed_info *next;
 	struct x509_certificate *signer; /* Signing certificate (in msg->certs) */
@@ -36,6 +45,13 @@ struct pkcs7_signed_info {
 #define	sinfo_has_ms_opus_info		4
 #define	sinfo_has_ms_statement_type	5
 	time64_t	signing_time;
+#ifdef __UBOOT__
+	/* Unauthenticated Attribute data (or NULL) */
+	unsigned	unauthattrs_len;
+	const void	*unauthattrs;
+	struct attribute *ua_next; /* currently for debug */
+	struct attribute *counter_signature;
+#endif
 
 	/* Message signature.
 	 *

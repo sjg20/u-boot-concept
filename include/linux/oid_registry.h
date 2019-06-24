@@ -41,7 +41,9 @@ enum OID {
 	OID_messageDigest,		/* 1.2.840.113549.1.9.4 */
 	OID_signingTime,		/* 1.2.840.113549.1.9.5 */
 	OID_smimeCapabilites,		/* 1.2.840.113549.1.9.15 */
+	OID_timeStampToken,		/* 1.2.840.113549.1.9.16.1.4 */
 	OID_smimeAuthenticatedAttrs,	/* 1.2.840.113549.1.9.16.2.11 */
+	OID_smimeSigningCertificate,	/* 1.2.840.113549.1.9.16.2.12 */
 
 	/* {iso(1) member-body(2) us(840) rsadsi(113549) digestAlgorithm(2)} */
 	OID_md2,			/* 1.2.840.113549.2.2 */
@@ -54,6 +56,7 @@ enum OID {
 	OID_msSpOpusInfo,		/* 1.3.6.1.4.1.311.2.1.12 */
 	OID_msPeImageDataObjId,		/* 1.3.6.1.4.1.311.2.1.15 */
 	OID_msIndividualSPKeyPurpose,	/* 1.3.6.1.4.1.311.2.1.21 */
+	OID_msRfc3161TimeStamp,		/* 1.3.6.1.4.1.311.3.3.1 */
 	OID_msOutlookExpress,		/* 1.3.6.1.4.1.311.16.4 */
 
 	OID_certAuthInfoAccess,		/* 1.3.6.1.5.5.7.1.1 */

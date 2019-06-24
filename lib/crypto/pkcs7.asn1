@@ -83,8 +83,10 @@ SignerInfo ::= SEQUENCE {
 				DigestEncryptionAlgorithmIdentifier ({ pkcs7_sig_note_pkey_algo }),
 	encryptedDigest		EncryptedDigest,
 	unauthenticatedAttributes CHOICE {
-		uaSet		[1] IMPLICIT SET OF UnauthenticatedAttribute,
-		uaSequence	[3] IMPLICIT SEQUENCE OF UnauthenticatedAttribute
+		uaSet		[1] IMPLICIT SetOfUnauthenticatedAttribute
+					({ pkcs7_sig_note_set_of_unauthattrs }),
+		uaSequence	[3] EXPLICIT SEQUENCE OF
+					UnauthenticatedAttribute
 	} OPTIONAL
 } ({ pkcs7_note_signed_info })
 
@@ -110,9 +112,12 @@ AuthenticatedAttribute ::= SEQUENCE {
 	values			SET OF ANY ({ pkcs7_sig_note_authenticated_attr })
 }
 
+SetOfUnauthenticatedAttribute ::= SET OF UnauthenticatedAttribute
+
 UnauthenticatedAttribute ::= SEQUENCE {
-	type			OBJECT IDENTIFIER,
+	type			OBJECT IDENTIFIER ({ pkcs7_note_OID }),
 	values			SET OF ANY
+				({ pkcs7_sig_note_unauthenticated_attr })
 }
 
 DigestEncryptionAlgorithmIdentifier ::= SEQUENCE {

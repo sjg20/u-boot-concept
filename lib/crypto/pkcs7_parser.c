@@ -51,6 +51,15 @@ struct pkcs7_parse_context {
 static void pkcs7_free_signed_info(struct pkcs7_signed_info *sinfo)
 {
 	if (sinfo) {
+#ifdef __UBOOT__
+		struct attribute *attr, *attr_next;
+
+		for (attr = sinfo->ua_next; attr; ) {
+			attr_next = attr->next;
+			free(attr);
+			attr = attr_next;
+		}
+#endif
 		public_key_signature_free(sinfo->sig);
 		kfree(sinfo);
 	}
@@ -353,7 +362,16 @@ int pkcs7_note_signerinfo_version(void *context, size_t hdrlen,
 		 * CMS ver 1 SignerInfo [RFC5652 sec 5.3]
 		 */
 		if (ctx->msg->version != 1)
+#ifdef __UBOOT__
+			/*
+			 * NOTE: In case of counterSignature,
+			 * this check is not correct.
+			 */
+			pr_warn("SignedData-SignerInfo version mismatch: %d\n",
+				ctx->msg->version);
+#else
 			goto version_mismatch;
+#endif
 		ctx->expect_skid = false;
 		break;
 	case 3:
@@ -444,7 +462,8 @@ int pkcs7_note_content(void *context, size_t hdrlen,
 	struct pkcs7_parse_context *ctx = context;
 
 	if (ctx->last_oid != OID_data &&
-	    ctx->last_oid != OID_msIndirectData) {
+	    ctx->last_oid != OID_msIndirectData &&
+	    ctx->last_oid != OID_timeStampToken) {
 		pr_warn("Unsupported data type %d\n", ctx->last_oid);
 		return -EINVAL;
 	}
@@ -586,6 +605,69 @@ int pkcs7_sig_note_set_of_authattrs(void *context, size_t hdrlen,
 	sinfo->authattrs_len = vlen + (hdrlen - 1);
 	return 0;
 }
+
+#ifdef __UBOOT__
+/*
+ * Note the set of unauth attributes
+ */
+int pkcs7_sig_note_set_of_unauthattrs(void *context, size_t hdrlen,
+				      unsigned char tag,
+				      const void *value, size_t vlen)
+{
+	struct pkcs7_parse_context *ctx = context;
+	struct pkcs7_signed_info *sinfo = ctx->sinfo;
+
+	/*
+	 * NOTE:
+	 * We don't need 'CONT 0' unlike authenticated attribute
+	 */
+	sinfo->unauthattrs = value;
+	sinfo->unauthattrs_len = vlen;
+
+	return 0;
+}
+
+/*
+ * Parse unauthenticated attributes.
+ */
+int pkcs7_sig_note_unauthenticated_attr(void *context, size_t hdrlen,
+					unsigned char tag,
+					const void *value, size_t vlen)
+{
+	struct pkcs7_parse_context *ctx = context;
+	struct pkcs7_signed_info *sinfo = ctx->sinfo;
+	struct attribute *attr;
+
+	pr_devel("UnauthAttr: %02x %zu [%*ph]\n", tag, vlen,
+		 (unsigned)vlen, value);
+
+	switch (ctx->last_oid) {
+	case OID_msRfc3161TimeStamp:
+		attr = kzalloc(sizeof(*attr), GFP_KERNEL);
+		if (!attr) {
+			printk("Out of memory\n");
+			return 0;
+		}
+		attr->oid = ctx->last_oid;
+		/*
+		 * NOTE: We need CONS/SEQ to make use of
+		 * pkcs7_parse_message(), so move the pointer back.
+		 */
+		attr->data = value - hdrlen;
+		attr->size = vlen + hdrlen;
+		attr->next = sinfo->ua_next;
+		sinfo->ua_next = attr;
+		sinfo->counter_signature = attr;
+
+		return 0;
+	default:
+		printk("Unknown Unauthenticated attribute: 0x%x\n",
+		       ctx->last_oid);
+
+		return 0;
+	}
+}
+#endif /* __UBOOT__ */
 
 /*
  * Note the issuing certificate serial number
