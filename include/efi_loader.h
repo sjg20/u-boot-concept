@@ -624,6 +624,10 @@ efi_status_t EFIAPI efi_query_variable_info(
 			u64 *remaining_variable_storage_size,
 			u64 *maximum_variable_size);
 
+#ifdef CONFIG_EFI_RUNTIME_GET_VARIABLE_CACHING
+efi_status_t efi_freeze_variable_table(void);
+#endif /* CONFIG_EFI_RUNTIME_GET_VARIABLE_CACHING */
+
 /*
  * See section 3.1.3 in the v2.7 UEFI spec for more details on
  * the layout of EFI_LOAD_OPTION.  In short it is:

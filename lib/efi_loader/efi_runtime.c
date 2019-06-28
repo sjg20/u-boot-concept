@@ -106,6 +106,11 @@ efi_status_t efi_init_runtime_supported(void)
 #ifdef CONFIG_EFI_HAVE_RUNTIME_RESET
 	efi_runtime_services_supported |= EFI_RT_SUPPORTED_RESET_SYSTEM;
 #endif
+#ifdef CONFIG_EFI_RUNTIME_GET_VARIABLE_CACHING
+	efi_runtime_services_supported |=
+				(EFI_RT_SUPPORTED_GET_VARIABLE |
+				 EFI_RT_SUPPORTED_GET_NEXT_VARIABLE_NAME);
+#endif
 
 	return EFI_CALL(efi_set_variable(L"RuntimeServicesSupported",
 					 &efi_global_variable_guid,

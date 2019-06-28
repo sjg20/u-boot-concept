@@ -560,7 +560,7 @@ out:
  *					selected type
  * Returns:				status code
  */
-efi_status_t __efi_runtime EFIAPI efi_query_variable_info(
+efi_status_t EFIAPI efi_query_variable_info(
 			u32 attributes,
 			u64 *maximum_variable_storage_size,
 			u64 *remaining_variable_storage_size,

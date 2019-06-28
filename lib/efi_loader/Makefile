@@ -35,6 +35,7 @@ obj-y += efi_runtime.o
 obj-y += efi_setup.o
 obj-$(CONFIG_EFI_UNICODE_COLLATION_PROTOCOL2) += efi_unicode_collation.o
 obj-y += efi_variable.o
+obj-$(CONFIG_EFI_RUNTIME_GET_VARIABLE_CACHING) += efi_variable_runtime.o
 obj-y += efi_watchdog.o
 obj-$(CONFIG_LCD) += efi_gop.o
 obj-$(CONFIG_DM_VIDEO) += efi_gop.o

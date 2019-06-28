@@ -1981,6 +1981,13 @@ static efi_status_t EFIAPI efi_exit_boot_services(efi_handle_t image_handle,
 	/* Notify variable services */
 	efi_variables_boot_exit_notify();
 
+#ifdef CONFIG_EFI_RUNTIME_GET_VARIABLE_CACHING
+	/* No more variable update */
+	ret = efi_freeze_variable_table();
+	if (ret != EFI_SUCCESS)
+		goto out;
+#endif
+
 	/* Remove all events except EVT_SIGNAL_VIRTUAL_ADDRESS_CHANGE */
 	list_for_each_entry_safe(evt, next_event, &efi_events, link) {
 		if (evt->type != EVT_SIGNAL_VIRTUAL_ADDRESS_CHANGE)
