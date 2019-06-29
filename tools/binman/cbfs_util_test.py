@@ -47,6 +47,12 @@ class TestCbfs(unittest.TestCase):
         # compressing files
         tools.PrepareOutputDir(None)
 
+        cls.have_cbfstool = True
+        try:
+            tools.Run('which', 'cbfstool')
+        except:
+            cls.have_cbfstool = False
+
     @classmethod
     def tearDownClass(cls):
         """Remove the temporary input directory and its contents"""
@@ -152,6 +158,19 @@ class TestCbfs(unittest.TestCase):
         self._check_dtb(cbfs)
 
     def _get_expected_cbfs(self, size, arch='x86', compress=None, base=None):
+        """Get the file created by cbfstool for a particular scenario
+
+        Args:
+            size: Size of the CBFS in bytes
+            arch: Architecture of the CBFS, as a string
+            compress: Compression to use, e.g. cbfs_util.COMPRESS_LZMA
+            base: Base address of file, or None to put it anywhere
+
+        Returns:
+            Resulting CBFS file, or None if cbfstool is not available
+        """
+        if not self.have_cbfstool:
+            return None
         cbfs_fname = os.path.join(self._indir, 'test.cbfs')
         cbfs_util.cbfstool(cbfs_fname, 'create', '-m', arch, '-s', '%#x' % size)
         if base:
@@ -178,6 +197,8 @@ class TestCbfs(unittest.TestCase):
             data: CBFS created by binman
             cbfstool_fname: CBFS created by cbfstool
         """
+        if not self.have_cbfstool:
+            return
         expect = tools.ReadFile(cbfstool_fname)
         if expect != data:
             tools.WriteFile('/tmp/expect', expect)
@@ -195,6 +216,8 @@ class TestCbfs(unittest.TestCase):
 
     def test_cbfstool_failure(self):
         """Test failure to run cbfstool"""
+        if not self.have_cbfstool:
+            self.skipTest('No cbfstool available')
         try:
             # In verbose mode this test fails since stderr is not captured. Fix
             # this by turning off verbosity.
@@ -467,12 +490,6 @@ class TestCbfs(unittest.TestCase):
         cbw = CbfsWriter(size)
         cbw.add_file_stage('u-boot', tools.ReadFile(elf_fname))
 
-        cbfs_fname = os.path.join(self._indir, 'test.cbfs')
-        cbfs_util.cbfstool(cbfs_fname, 'create', '-m', 'x86', '-s',
-                           '%#x' % size)
-        cbfs_util.cbfstool(cbfs_fname, 'add-stage', '-n', 'u-boot',
-                           '-f', elf_fname)
-
         data = cbw.get_data()
         cbfs = self._check_hdr(data, size)
         load = 0xfef20000
@@ -487,7 +504,13 @@ class TestCbfs(unittest.TestCase):
                          cfile.data_len)
 
         # Compare against what cbfstool creates
-        self._compare_expected_cbfs(data, cbfs_fname)
+        if self.have_cbfstool:
+            cbfs_fname = os.path.join(self._indir, 'test.cbfs')
+            cbfs_util.cbfstool(cbfs_fname, 'create', '-m', 'x86', '-s',
+                               '%#x' % size)
+            cbfs_util.cbfstool(cbfs_fname, 'add-stage', '-n', 'u-boot',
+                               '-f', elf_fname)
+            self._compare_expected_cbfs(data, cbfs_fname)
 
     def test_cbfs_raw_compress(self):
         """Test base handling of compressing raw files"""
