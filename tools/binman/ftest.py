@@ -2057,6 +2057,56 @@ class TestFunctional(unittest.TestCase):
         self.assertIn("Cannot locate node for path '/binman-suffix'",
                       str(e.exception))
 
+    def testFdtmapHeader(self):
+        """Test an FDT map and image header can be inserted in the image"""
+        data = self._DoReadFileDtb('116_fdtmap_hdr.dts', use_real_dtb=True,
+                                   update_dtb=True)[0]
+        fdtmap_pos = len(U_BOOT_DATA)
+        fdtmap_data = data[fdtmap_pos:]
+        fdt_data = fdtmap_data[16:]
+        dtb = fdt.Fdt.FromData(fdt_data)
+        fdt_size = dtb.GetFdtObj().totalsize()
+        hdr_data = data[-8:]
+        self.assertEqual('BinM', hdr_data[:4])
+        offset = struct.unpack('<I', hdr_data[4:])[0] & 0xffffffff
+        self.assertEqual(fdtmap_pos - 0x400, offset - (1 << 32))
+
+    def testFdtmapHeaderStart(self):
+        """Test an image header can be inserted at the image start"""
+        data = self._DoReadFileDtb('117_fdtmap_hdr_start.dts',
+                                   use_real_dtb=True, update_dtb=True)[0]
+        fdtmap_pos = 0x100 + len(U_BOOT_DATA)
+        hdr_data = data[:8]
+        self.assertEqual('BinM', hdr_data[:4])
+        offset = struct.unpack('<I', hdr_data[4:])[0]
+        self.assertEqual(fdtmap_pos, offset)
+
+    def testFdtmapHeaderPos(self):
+        """Test an image header can be inserted at a chosen position"""
+        data = self._DoReadFileDtb('118_fdtmap_hdr_pos.dts',
+                                   use_real_dtb=True, update_dtb=True)[0]
+        fdtmap_pos = 0x100 + len(U_BOOT_DATA)
+        hdr_data = data[0x80:0x88]
+        self.assertEqual('BinM', hdr_data[:4])
+        offset = struct.unpack('<I', hdr_data[4:])[0]
+        self.assertEqual(fdtmap_pos, offset)
+
+    def testHeaderMissingFdtmap(self):
+        """Test an image header requires an fdtmap"""
+        with self.assertRaises(ValueError) as e:
+            self._DoReadFileDtb('119_fdtmap_hdr_missing.dts',
+                                use_real_dtb=True, update_dtb=True)
+        self.assertIn("'image_header' section must have an 'fdtmap' sibling",
+                      str(e.exception))
+
+    def testHeaderNoLocation(self):
+        """Test an image header with a no specified location is detected"""
+        with self.assertRaises(ValueError) as e:
+            self._DoReadFileDtb('120_hdr_no_location.dts',
+                                use_real_dtb=True, update_dtb=True)
+        self.assertIn("Invalid location 'None', expected 'start' or 'end'",
+                      str(e.exception))
+
 
 if __name__ == "__main__":
     unittest.main()
