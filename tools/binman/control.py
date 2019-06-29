@@ -67,6 +67,75 @@ def WriteEntryDocs(modules, test_missing=None):
     from entry import Entry
     Entry.WriteDocs(modules, test_missing)
 
+def EntryToStrings(entry):
+    """Convert an entry to a list of strings, one for each column
+
+    Args:
+        entry: EntryInfo object containing information to output
+
+    Returns:
+        List of strings, one for each field in entry
+    """
+    def _AppendHex(val):
+        """Append a hex value, or an empty string if val is None
+
+        Args:
+            val: Integer value, or None if none
+        """
+        args.append('' if val is None else '>%x' % val)
+
+    args = ['  ' * entry.indent + entry.name]
+    _AppendHex(entry.image_pos)
+    _AppendHex(entry.size)
+    args.append(entry.etype)
+    _AppendHex(entry.offset)
+    _AppendHex(entry.uncomp_size)
+    return args
+
+def ListEntries(fname):
+    """List the entries in an image
+
+    This decodes the supplied image and displays a table of entries from that
+    image, preceded by a header.
+
+    Args:
+        fname: Filename to process
+    """
+    def _DoLine(line):
+        out = []
+        for i, item in enumerate(line):
+            lengths[i] = max(lengths[i], len(item))
+            out.append(item)
+        return out
+
+    image = Image.FromFile(fname)
+
+    # Check for error
+    if isinstance(image, str):
+        print("Unable to read image '%s' (%s)" % (fname, image))
+        return
+    entries = image.ListEntries()
+
+    num_columns = 6
+    lines = []
+    lengths = [0] * num_columns
+    lines.append(_DoLine(['Name', 'Image-pos', 'Size', 'Entry-type',
+                          'Offset', 'Uncomp-size']))
+    for entry in entries:
+        lines.append(_DoLine(EntryToStrings(entry)))
+    for linenum, line in enumerate(lines):
+        if linenum == 1:
+            print('-' * (sum(lengths) + num_columns * 2))
+        out = ''
+        for i, item in enumerate(line):
+            width = -lengths[i]
+            if item.startswith('>'):
+                width = -width
+                item = item[1:]
+            txt = '%*s  ' % (width, item)
+            out += txt
+        print(out.rstrip())
+
 def Binman(args):
     """The main control code for binman
 
@@ -85,6 +154,10 @@ def Binman(args):
         fname = os.path.join(os.path.dirname(os.path.realpath(sys.argv[0])),
                             'README')
         command.Run(pager, fname)
+        return 0
+
+    if args.cmd == 'list':
+        ListEntries(args.fname)
         return 0
 
     # Try to figure out which device tree contains our image description

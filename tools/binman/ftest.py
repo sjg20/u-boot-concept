@@ -2336,5 +2336,36 @@ class TestFunctional(unittest.TestCase):
         self.assertTrue(isinstance(image, str))
         self.assertEqual('Cannot find FDT map in image', image)
 
+    def testListCmd(self):
+        """Test listing the files in an image using an Fdtmap"""
+        data = self._DoReadFileDtb('129_list_fdtmap.dts', use_real_dtb=True,
+                                   update_dtb=True)[0]
+        image_fname = tools.GetOutputFilename('image.bin')
+        with test_util.capture_sys_output() as (stdout, stderr):
+            self._DoBinman('list', image_fname)
+        lines = stdout.getvalue().splitlines()
+        expected = [
+            'Name              Image-pos  Size  Entry-type    Offset  Uncomp-size',
+'----------------------------------------------------------------------',
+'main-section                  c00  section            0',
+'  u-boot                  0     4  u-boot             0',
+'  section                     5ff  section            4',
+'    cbfs                100   400  cbfs               0',
+'      u-boot            138     4  u-boot            38',
+'      u-boot-dtb        180   108  u-boot-dtb        80          3b5',
+'    u-boot-dtb          500   1ff  u-boot-dtb       400          3b5',
+'  fdtmap                6ff   381  fdtmap           6ff',
+'  image-header          bf8     8  image-header     bf8',
+            ]
+        self.assertEqual(expected, lines)
+
+    def testListCmdFail(self):
+        """Test failing to list an image"""
+        self._DoReadFile('005_simple.dts')
+        image_fname = tools.GetOutputFilename('image.bin')
+        with test_util.capture_sys_output() as (stdout, stderr):
+            self._DoBinman('list', image_fname)
+
+
 if __name__ == "__main__":
     unittest.main()
