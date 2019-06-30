@@ -170,21 +170,30 @@ def Binman(args):
                 # completed and written, but that does not seem important.
                 image.GetEntryContents()
                 image.GetEntryOffsets()
-                try:
-                    image.PackEntries()
-                    image.CheckSize()
-                    image.CheckEntries()
-                except Exception as e:
-                    if args.map:
-                        fname = image.WriteMap()
-                        print("Wrote map file '%s' to show errors"  % fname)
-                    raise
-                image.SetImagePos()
-                if args.update_fdt:
-                    image.SetCalculatedProperties()
-                    for dtb_item in state.GetFdts():
-                        dtb_item.Sync()
-                image.ProcessEntryContents()
+                passes = 2
+                for pack_pass in range(passes):
+                    try:
+                        image.PackEntries()
+                        image.CheckSize()
+                        image.CheckEntries()
+                    except Exception as e:
+                        if args.map:
+                            fname = image.WriteMap()
+                            print("Wrote map file '%s' to show errors"  % fname)
+                        raise
+                    image.SetImagePos()
+                    if args.update_fdt:
+                        image.SetCalculatedProperties()
+                        for dtb_item in state.GetFdts():
+                            dtb_item.Sync()
+                    sizes_ok = image.ProcessEntryContents()
+                    if sizes_ok:
+                        break
+                    image.ResetForPack()
+                if not sizes_ok:
+                    image.Raise('Entries expanded after packing (tried %s passes' %
+                                passes)
+
                 image.WriteSymbols()
                 image.BuildImage()
                 if args.map:
