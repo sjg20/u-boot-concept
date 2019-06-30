@@ -595,6 +595,18 @@ class TestCbfs(unittest.TestCase):
             cbw.get_data()
         self.assertIn('No space for data before pad offset', str(e.exception))
 
+    def test_cbfs_check_offset(self):
+        """Test that we can discover the offset of a file after writing it"""
+        size = 0xb0
+        cbw = CbfsWriter(size)
+        cbw.add_file_raw('u-boot', U_BOOT_DATA)
+        cbw.add_file_raw('u-boot-dtb', U_BOOT_DTB_DATA)
+        data = cbw.get_data()
+
+        cbfs = cbfs_util.CbfsReader(data)
+        self.assertEqual(0x38, cbfs.files['u-boot'].cbfs_offset)
+        self.assertEqual(0x78, cbfs.files['u-boot-dtb'].cbfs_offset)
+
 
 if __name__ == '__main__':
     unittest.main()
