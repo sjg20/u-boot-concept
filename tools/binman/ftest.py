@@ -2003,7 +2003,11 @@ class TestFunctional(unittest.TestCase):
                       str(e.exception))
 
     def testCbfsOffset(self):
-        """Test a CBFS with files at particular offsets"""
+        """Test a CBFS with files at particular offsets
+
+        Like all CFBS tests, this is just checking the logic that calls
+        cbfs_util. See cbfs_util_test for fully tests (e.g. test_cbfs_offset()).
+        """
         data = self._DoReadFile('114_cbfs_offset.dts')
         size = 0x200
 
