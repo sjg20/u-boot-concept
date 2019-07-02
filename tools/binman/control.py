@@ -156,7 +156,7 @@ def Binman(args):
         command.Run(pager, fname)
         return 0
 
-    if args.cmd == 'list':
+    if args.cmd == 'ls':
         ListEntries(args.fname)
         return 0
 

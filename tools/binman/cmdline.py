@@ -69,7 +69,7 @@ controlled by a description in the board device tree.'''
     entry_parser = subparsers.add_parser('entry-docs',
         help='Write out entry documentation (see README.entries)')
 
-    list_parser = subparsers.add_parser('list', help='List files in an image')
+    list_parser = subparsers.add_parser('ls', help='List files in an image')
     list_parser.add_argument('fname', type=str, help='Image file to list')
 
     test_parser = subparsers.add_parser('test', help='Run tests',

@@ -496,7 +496,7 @@ Listing images
 It is possible to list the entries in an existing firmware image created by
 binman. For example:
 
-    $ binman list image.bin
+    $ binman ls image.bin
     Name              Image-pos  Size  Entry-type    Offset  Uncomp-size
     ----------------------------------------------------------------------
     main-section                  c00  section            0

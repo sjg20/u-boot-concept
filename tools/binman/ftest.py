@@ -2342,7 +2342,7 @@ class TestFunctional(unittest.TestCase):
                                    update_dtb=True)[0]
         image_fname = tools.GetOutputFilename('image.bin')
         with test_util.capture_sys_output() as (stdout, stderr):
-            self._DoBinman('list', image_fname)
+            self._DoBinman('ls', image_fname)
         lines = stdout.getvalue().splitlines()
         expected = [
             'Name              Image-pos  Size  Entry-type    Offset  Uncomp-size',
@@ -2364,7 +2364,7 @@ class TestFunctional(unittest.TestCase):
         self._DoReadFile('005_simple.dts')
         image_fname = tools.GetOutputFilename('image.bin')
         with test_util.capture_sys_output() as (stdout, stderr):
-            self._DoBinman('list', image_fname)
+            self._DoBinman('ls', image_fname)
 
 
 if __name__ == "__main__":
