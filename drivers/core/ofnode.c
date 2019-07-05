@@ -876,5 +876,5 @@ int ofnode_set_enabled(ofnode node, bool value)
 	if (value)
 		return ofnode_write_string(node, "status", "okay");
 	else
-		return ofnode_write_string(node, "status", "disable");
+		return ofnode_write_string(node, "status", "disabled");
 }
