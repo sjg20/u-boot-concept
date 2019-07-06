@@ -532,7 +532,25 @@ or with wildcards:
           u-boot-dtb        180   108  u-boot-dtb        80          3b5
       image-header          bf8     8  image-header     bf8
 
-    
+
+Logging
+-------
+
+Binman normally operates silently unless there is an error, in which case it
+just displays the error. The -D/--debug option can be used to create a full
+backtrace when errors occur.
+
+Internally binman logs some output while it is running. This can be displayed
+by increasing the -v/--verbosity from the default of 1:
+
+   0: silent
+   1: warnings only
+   2: notices (important messages)
+   3: info about major operations
+   4: detailed information about each operation
+   5: debug (all output)
+
+
 Hashing Entries
 ---------------
 
