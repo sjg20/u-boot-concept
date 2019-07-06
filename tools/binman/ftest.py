@@ -69,6 +69,8 @@ FILES_DATA            = (b"sorry I'm late\nOh, don't bother apologising, I'm " +
 COMPRESS_DATA         = b'compress xxxxxxxxxxxxxxxxxxxxxx data'
 REFCODE_DATA          = b'refcode'
 
+EXTRACT_DTB_SIZE = 0x3c9
+
 
 class TestFunctional(unittest.TestCase):
     """Functional tests for binman
@@ -2413,6 +2415,42 @@ class TestFunctional(unittest.TestCase):
     def testListCmdPath(self):
         """Test listing the files in a sub-entry of a section"""
         self._RunListCmd(['section/cbfs'], ['cbfs', 'u-boot', 'u-boot-dtb'])
+
+    def _RunExtractCmd(self, entry_name, decomp=True):
+        """List out entries and check the result
+
+        Args:
+            paths: List of paths to pass to the list command
+            decomp: True to decompress the data if compressed, False to leave
+                it in its raw uncompressed format
+        """
+        self._DoReadFileRealDtb('130_list_fdtmap.dts')
+        image_fname = tools.GetOutputFilename('image.bin')
+        return control.ReadEntry(image_fname, entry_name, decomp)
+
+    def testExtractSimple(self):
+        """Test extracting the files in a section"""
+        data = self._RunExtractCmd('u-boot')
+        self.assertEqual(U_BOOT_DATA, data)
+
+    def testExtractBadEntry(self):
+        """Test extracting a bad section path"""
+        with self.assertRaises(ValueError) as e:
+            self._RunExtractCmd('section/does-not-exist')
+        self.assertIn("Entry 'does-not-exist' not found in '/section'",
+                      str(e.exception))
+
+    def testExtractMissingFile(self):
+        """Test extracting file that does not exist"""
+        with self.assertRaises(IOError) as e:
+            control.ReadEntry('missing-file', 'name')
+
+    def testExtractBadFile(self):
+        """Test extracting an invalid file"""
+        fname = os.path.join(self._indir, 'badfile')
+        tools.WriteFile(fname, b'')
+        with self.assertRaises(ValueError) as e:
+            control.ReadEntry(fname, 'name')
 
 
 if __name__ == "__main__":
