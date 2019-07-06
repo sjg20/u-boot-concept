@@ -2357,12 +2357,12 @@ class TestFunctional(unittest.TestCase):
 '----------------------------------------------------------------------',
 'main-section              0   c00  section            0',
 '  u-boot                  0     4  u-boot             0',
-'  section               100   5f5  section          100',
+'  section               100   5fc  section          100',
 '    cbfs                100   400  cbfs               0',
 '      u-boot            138     4  u-boot            38',
-'      u-boot-dtb        180   108  u-boot-dtb        80          3b5',
-'    u-boot-dtb          500   1f5  u-boot-dtb       400          3b5',
-'  fdtmap                6f5   381  fdtmap           6f5',
+'      u-boot-dtb        180   10f  u-boot-dtb        80          3c9',
+'    u-boot-dtb          500   1fc  u-boot-dtb       400          3c9',
+'  fdtmap                6fc   395  fdtmap           6fc',
 '  image-header          bf8     8  image-header     bf8',
             ]
         self.assertEqual(expected, lines)
