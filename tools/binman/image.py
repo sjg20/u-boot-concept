@@ -96,12 +96,18 @@ class Image(section.Entry_section):
         fdt_data = fdtmap_data[fdtmap.FDTMAP_HDR_LEN:]
         out_fname = tools.GetOutputFilename('fdtmap.in.dtb')
         tools.WriteFile(out_fname, fdt_data)
-        dtb = fdt.Fdt.FromData(fdt_data, out_fname)
+        dtb = fdt.Fdt(out_fname)
         dtb.Scan()
 
         # Return an Image with the associated nodes
         root = dtb.GetRoot()
         image = Image('image', root, copy_to_orig=False)
+        #dtbs = probe_image.GetFdts()
+        #real_dtb_entry = dtbs.get('u-boot-dtb')
+        #if not real_dtb_entry:
+            #raise ValueError('Image does not contain a u-boot-dtb entry')
+        #real_dtb_entry = real_dtb_entry
+
         image.image_node = fdt_util.GetString(root, 'image-node', 'image')
         image.fdtmap_dtb = dtb
         image.fdtmap_data = fdtmap_data

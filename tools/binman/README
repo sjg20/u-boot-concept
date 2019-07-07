@@ -589,7 +589,21 @@ that there is an 'fdtmap' entry in the image. For example:
     $ binman replace -i image.bin section/cbfs/u-boot
 
 which will write the contents of the file 'u-boot' from the current directory
-to the that entry. The file must be the same size as the entry being replaced.
+to the that entry, compressing if necessary. You can also use a particular file,
+in this case u-boot.bin:
+
+    $ binman replace -i image.bin section/cbfs/u-boot -f u-boot.bin
+
+It is possible to replace all files from a source directory which uses the same
+hierarchy as the entries:
+
+    $ binman replace -i image.bin -I indir
+
+Files that are missing will generate a warning.
+
+You can also replace just a selection of entries:
+
+    $ binman replace -i image.bin "*u-boot*" -O outdir
 
 
 Logging

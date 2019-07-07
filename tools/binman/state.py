@@ -182,20 +182,27 @@ def PrepareFromLoadedData(image):
     """
     global output_fdt_info, fdt_path_prefix
 
+    tout.Info('Preparing device trees')
     output_fdt_info.clear()
     output_fdt_info['fdtmap'] = [image.fdtmap_dtb, 'u-boot.dtb', None]
+    tout.Info("   Found device tree type 'fdtmap' '%s'" % image.fdtmap_dtb.name)
     for etype, value in image.GetFdts().items():
         entry, fname = value
         entry._filename = entry.GetDefaultFilename()
         data = entry.ReadData()
-        dtb = fdt.Fdt.FromData(data, entry.GetPath())
+
+        out_fname = tools.GetOutputFilename('%s.dtb' % entry.etype)
+        tools.WriteFile(out_fname, data)
+        dtb = fdt.Fdt(out_fname)
         dtb.Scan()
         image_node = dtb.GetNode('/binman')
         if 'multiple-images' in image_node.props:
             image_node = dtb.GetNode('/binman/%s' % image.image_node)
-        fdt_path_prefix =  image_node.path + '/'
+        fdt_path_prefix =  image_node.path
         output_fdt_info[etype] = [dtb, None, entry]
-        tout.Info("Found device tree %s '%s'" % (fname, entry.GetPath()))
+        tout.Info("   Found device tree type '%s' at '%s' path '%s'" %
+                  (etype, out_fname, entry.GetPath()))
+    tout.Info("   FDT path prefix '%s'" % fdt_path_prefix)
 
 
 def GetAllFdts():
@@ -233,6 +240,7 @@ def GetUpdateNodes(node, for_repack=False):
             if for_repack and entry.etype != 'u-boot-dtb':
                 continue
             other_node = dtb.GetNode(fdt_path_prefix + node.path)
+            #print('   try', fdt_path_prefix + node.path, other_node)
             if other_node:
                 yield other_node
 
@@ -284,7 +292,7 @@ def SetInt(node, prop, value, for_repack=False):
     """
     for n in GetUpdateNodes(node, for_repack):
         tout.Detail("File %s: Update node '%s' prop '%s' to %#x" %
-                    (node.GetFdt().name, node.path, prop, value))
+                    (n.GetFdt().name, n.path, prop, value))
         n.SetInt(prop, value)
 
 def CheckAddHashProp(node):
