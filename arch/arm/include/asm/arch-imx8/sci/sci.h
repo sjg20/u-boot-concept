@@ -68,6 +68,9 @@ int sc_pm_clock_enable(sc_ipc_t ipc, sc_rsrc_t resource, sc_pm_clk_t clk,
 /* MISC API */
 int sc_misc_get_control(sc_ipc_t ipc, sc_rsrc_t resource, sc_ctrl_t ctrl,
 			u32 *val);
+int sc_misc_set_control(sc_ipc_t ipc, sc_rsrc_t resource, sc_ctrl_t ctrl,
+			u32 val);
+
 void sc_misc_get_boot_dev(sc_ipc_t ipc, sc_rsrc_t *boot_dev);
 void sc_misc_boot_status(sc_ipc_t ipc, sc_misc_boot_status_t status);
 void sc_misc_build_info(sc_ipc_t ipc, u32 *build, u32 *commit);

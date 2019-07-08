@@ -175,6 +175,33 @@ int sc_misc_get_control(sc_ipc_t ipc, sc_rsrc_t resource, sc_ctrl_t ctrl,
 	return ret;
 }
 
+int sc_misc_set_control(sc_ipc_t ipc, sc_rsrc_t resource, sc_ctrl_t ctrl,
+			u32 val)
+{
+	struct udevice *dev = gd->arch.scu_dev;
+	int size = sizeof(struct sc_rpc_msg_s);
+	struct sc_rpc_msg_s msg;
+	int ret;
+
+	if (!dev)
+		hang();
+
+	RPC_VER(&msg) = SC_RPC_VERSION;
+	RPC_SVC(&msg) = (u8)SC_RPC_SVC_MISC;
+	RPC_FUNC(&msg) = (u8)MISC_FUNC_SET_CONTROL;
+	RPC_U32(&msg, 0U) = (u32)ctrl;
+	RPC_U32(&msg, 4U) = (u32)val;
+	RPC_U16(&msg, 8U) = (u16)resource;
+	RPC_SIZE(&msg) = 4U;
+
+	ret = misc_call(dev, SC_FALSE, &msg, size, &msg, size);
+	if (ret)
+		printf("%s: ctrl:%d resource:%d: res:%d\n",
+		       __func__, ctrl, resource, RPC_R8(&msg));
+
+	return ret;
+}
+
 void sc_misc_get_boot_dev(sc_ipc_t ipc, sc_rsrc_t *boot_dev)
 {
 	struct udevice *dev = gd->arch.scu_dev;
