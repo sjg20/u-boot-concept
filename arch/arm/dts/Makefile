@@ -614,7 +614,9 @@ dtb-$(CONFIG_ARCH_IMX8) += \
 	fsl-imx8qm-apalis.dtb \
 	fsl-imx8qm-mek.dtb \
 	fsl-imx8qxp-colibri.dtb \
-	fsl-imx8qxp-mek.dtb
+	fsl-imx8qxp-mek.dtb \
+	imx8-deneb.dtb \
+	imx8-giedi.dtb
 
 dtb-$(CONFIG_ARCH_IMX8M) += fsl-imx8mq-evk.dtb
 
