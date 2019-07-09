@@ -696,3 +696,19 @@ U_BOOT_DRIVER(cpu_imx8_drv) = {
 	.flags		= DM_FLAG_PRE_RELOC,
 };
 #endif
+
+#if CONFIG_IS_ENABLED(OF_SYSTEM_SETUP)
+int ft_system_setup(void *blob, bd_t *bd)
+{
+#ifdef BOOTAUX_RESERVED_MEM_BASE
+	int off;
+
+	off = fdt_add_mem_rsv(blob, BOOTAUX_RESERVED_MEM_BASE,
+			      BOOTAUX_RESERVED_MEM_SIZE);
+	if (off < 0)
+		printf("Failed to reserve memory for bootaux: %s\n",
+		       fdt_strerror(off));
+#endif
+	return 0;
+}
+#endif
