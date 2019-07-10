@@ -47,3 +47,14 @@ pkcs7_message-y := \
 
 $(obj)/pkcs7_parser.o: $(obj)/pkcs7.asn1.h
 $(obj)/pkcs7.asn1.o: $(obj)/pkcs7.asn1.c $(obj)/pkcs7.asn1.h
+
+#
+# TSTInfo parser
+#
+obj-$(CONFIG_TSTINFO_PARSER) += tst_info_parser.o
+tst_info_parser-y := \
+	tstinfo.asn1.o \
+	tstinfo_parser.o
+
+$(obj)/tstinfo_parser.o: $(obj)/tstinfo.asn1.h
+$(obj)/tstinfo.asn1.o: $(obj)/tstinfo.asn1.c $(obj)/tstinfo.asn1.h

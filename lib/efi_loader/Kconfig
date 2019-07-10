@@ -127,6 +127,7 @@ config EFI_SECURE_BOOT
 	select ASYMMETRIC_PUBLIC_KEY_SUBTYPE
 	select X509_CERTIFICATE_PARSER
 	select PKCS7_MESSAGE_PARSER
+	select TSTINFO_PARSER
 	default n
 	help
 	  Select this option to enable EFI secure boot support.

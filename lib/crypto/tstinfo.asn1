@@ -1,0 +1,216 @@
+-- The timestamp token info resulting from a successful timestamp request,
+-- as defined in RFC 3161.
+
+TSTInfo ::= SEQUENCE {
+	version			INTEGER ({tstinfo_note_version}),
+	policy			TSAPolicyId,
+	messageImprint		MessageImprint,
+	  -- MUST have the same value as the similar field in
+	  -- TimeStampReq
+	serialNumber		INTEGER ({tstinfo_note_serial}),
+	  -- Time-Stamping users MUST be ready to accommodate integers
+	  -- up to 160 bits.
+	genTime			GeneralizedTime ({tstinfo_note_time}),
+	-- FIXME
+	-- accuracy		ACCURACY	OPTIONAL,
+	accuracy		ANY		OPTIONAL,
+	ordering		BOOLEAN		DEFAULT,
+	nonce			INTEGER		OPTIONAL,
+	  -- MUST be present if the similar field was present
+	  -- in TimeStampReq.  In that case it MUST have the same value.
+	tsa			[0] GeneralName	OPTIONAL ({tstinfo_note_tsa}),
+	extensions		[1] IMPLICIT Extensions	OPTIONAL
+}
+
+TSAPolicyId ::= OBJECT IDENTIFIER ({tstinfo_note_policy})
+
+-- The messageImprint field SHOULD contain the hash of the datum to be
+-- time-stamped.  The hash is represented as an OCTET STRING.  Its
+-- length MUST match the length of the hash value for that algorithm
+-- (e.g., 20 bytes for SHA-1 or 16 bytes for MD5).
+
+MessageImprint ::= SEQUENCE {
+	hashAlgorithm		AlgorithmIdentifier ({tstinfo_note_hash_algo}),
+	hashedMessage		OCTET STRING ({tstinfo_note_hash_msg})
+}
+
+AlgorithmIdentifier ::= SEQUENCE {
+	algorithm		OBJECT IDENTIFIER ({tstinfo_note_OID}),
+	parameters		ANY			OPTIONAL
+}
+
+-- Accuracy represents the time deviation around the UTC time contained
+-- in GeneralizedTime of time-stamp token.
+
+Accuracy ::= SEQUENCE {
+	seconds			INTEGER	OPTIONAL ({tstinfo_note_accuracy}),
+	millis			[0] INTEGER OPTIONAL ({tstinfo_note_accuracy}),
+	micros			[1] INTEGER OPTIONAL ({tstinfo_note_accuracy})
+}
+
+-- GeneralName
+-- RFC3280
+
+GeneralName ::= CHOICE {
+	otherName			[0] OtherName,
+	rfc822Name			[1] IA5String,
+	dNSName				[2] IA5String,
+	x400Address			[3] ORAddress,
+	directoryName			[4] Name,
+	ediPartyName			[5] EDIPartyName,
+	uniformResourceIdentifier	[6] IA5String,
+	iPAddress			[7] OCTET STRING,
+	registeredID			[8] OBJECT IDENTIFIER
+}
+
+OtherName ::= SEQUENCE {
+	type-id			OBJECT IDENTIFIER,
+	value			[0] EXPLICIT ANY
+}
+
+Name ::= CHOICE { RDNSequence }
+
+RDNSequence ::= SEQUENCE OF RelativeDistinguishedName
+
+RelativeDistinguishedName ::= SET OF AttributeTypeAndValue
+
+AttributeTypeAndValue ::= SEQUENCE {
+	type			AttributeType,
+	value			AttributeValue
+}
+
+AttributeType ::= OBJECT IDENTIFIER
+
+AttributeValue ::= ANY
+
+EDIPartyName ::= SEQUENCE {
+	nameAssigner		[0] DirectoryString OPTIONAL,
+	partyName		[1] DirectoryString
+}
+
+-- RFC3280 says,
+-- The UTF8String encoding [RFC 2279] is the preferred encoding, and all
+-- certificates issued after December 31, 2003 MUST use the UTF8String
+-- encoding of DirectoryString (except as noted below).
+--
+-- DirectoryString ::= CHOICE {
+-- 	teletexString		TeletexString (SIZE (1..MAX)),
+-- 	printableString		PrintableString (SIZE (1..MAX)),
+-- 	universalString		UniversalString (SIZE (1..MAX)),
+-- 	utf8String		UTF8String (SIZE (1..MAX)),
+-- 	bmpString		BMPString (SIZE (1..MAX))
+-- }
+-- So,
+
+DirectoryString ::= CHOICE {
+	utf8String		UTF8String
+}
+
+ORAddress ::= SEQUENCE {
+	built-in-standard-attributes BuiltInStandardAttributes,
+	built-in-domain-defined-attributes
+				BuiltInDomainDefinedAttributes OPTIONAL,
+	  -- see also teletex-domain-defined-attributes
+	extension-attributes ExtensionAttributes OPTIONAL
+}
+
+-- Built-in Standard Attributes
+
+BuiltInStandardAttributes ::= SEQUENCE {
+	country-name			CountryName OPTIONAL,
+	administration-domain-name	AdministrationDomainName OPTIONAL,
+	network-address			[0] IMPLICIT NetworkAddress OPTIONAL,
+	  -- see also extended-network-address
+	terminal-identifier		[1] IMPLICIT TerminalIdentifier
+								OPTIONAL,
+	private-domain-name		[2] PrivateDomainName OPTIONAL,
+	organization-name		[3] IMPLICIT OrganizationName OPTIONAL,
+	  -- see also teletex-organization-name
+	numeric-user-identifier		[4] IMPLICIT NumericUserIdentifier
+								OPTIONAL,
+	personal-name			[5] IMPLICIT PersonalName OPTIONAL,
+	  -- see also teletex-personal-name
+	organizational-unit-names	[6] IMPLICIT OrganizationalUnitNames
+								OPTIONAL
+	  -- see also teletex-organizational-unit-names
+}
+
+CountryName ::= [APPLICATION 1] CHOICE {
+	x121-dcc-code		NumericString,
+	iso-3166-alpha2-code	PrintableString
+}
+
+AdministrationDomainName ::= [APPLICATION 2] CHOICE {
+	numeric			NumericString,
+	printable		PrintableString
+}
+
+NetworkAddress ::= X121Address
+  -- see also extended-network-address
+
+X121Address ::= NumericString
+
+TerminalIdentifier ::= PrintableString
+
+PrivateDomainName ::= CHOICE {
+	numeric			NumericString,
+	printable		PrintableString
+}
+
+OrganizationName ::= PrintableString
+  -- see also teletex-organization-name
+
+NumericUserIdentifier ::= NumericString
+
+-- NOTE:
+-- SET is not supported by asn1 compiler, so
+-- PersonalName ::= SET OF {
+--	surname			[0] IMPLICIT PrintableString,
+--	given-name		[1] IMPLICIT PrintableString OPTIONAL,
+--	initials		[2] IMPLICIT PrintableString OPTIONAL,
+--	generation-qualifier	[3] IMPLICIT PrintableString OPTIONAL
+-- }
+  -- see also teletex-personal-name
+
+PersonalName ::= SET OF PrintableString
+
+OrganizationalUnitNames ::= SEQUENCE OF OrganizationalUnitName
+  -- see also teletex-organizational-unit-names
+
+OrganizationalUnitName ::= PrintableString
+
+-- Built-in Domain-defined Attributes
+
+BuiltInDomainDefinedAttributes ::= SEQUENCE OF BuiltInDomainDefinedAttribute
+
+BuiltInDomainDefinedAttribute ::= SEQUENCE {
+	type			PrintableString,
+	value			PrintableString
+}
+
+-- Extension Attributes
+
+ExtensionAttributes ::= SET OF ExtensionAttribute
+
+ExtensionAttribute ::=  SEQUENCE {
+	extension-attribute-type	[0] IMPLICIT INTEGER,
+	extension-attribute-value	[1] ANY
+}
+
+-- Extension types and attribute values
+--   bunch of definitions continue, but can be omitted now
+--
+-- common-name INTEGER ::= 1
+-- ...
+-- terminal-type  INTEGER ::= 23
+
+-- Extensions
+-- part of x509/RFC2459, which includes TBSCertificate
+
+Extensions ::= SEQUENCE OF Extension
+
+Extension ::= SEQUENCE {
+	extnid			OBJECT IDENTIFIER ({tstinfo_note_OID}),
+	critical		BOOLEAN DEFAULT ({tstinfo_note_ext_crit}),
+	extnValue		OCTET STRING ({tstinfo_note_extension})
+}
