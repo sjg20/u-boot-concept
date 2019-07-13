@@ -96,6 +96,7 @@ class Image(section.Entry_section):
         image.fdtmap_dtb = dtb
         image.fdtmap_data = fdtmap_data
         image._data = data
+        image._filename = fname
         return image
 
     def Raise(self, msg):

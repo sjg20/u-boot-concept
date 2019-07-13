@@ -8,13 +8,18 @@
 import hashlib
 import re
 
+import fdt
 import os
 import tools
+import tout
 
 # Records the device-tree files known to binman, keyed by entry type (e.g.
 # 'u-boot-spl-dtb'). These are the output FDT files, which can be updated by
 # binman. They have been copied to <xxx>.out files.
 output_fdt_info = {}
+
+# Prefix to add to an fdtmap path to turn it into a path to the /binman node
+fdt_path_prefix = ''
 
 # Arguments passed to binman to provide arguments to entries
 entry_args = {}
@@ -48,24 +53,6 @@ def GetFdtForEtype(etype):
     if not value:
         return None
     return value[0]
-
-def GetEntryForEtype(etype):
-    """Get the Entry for a particular device-tree filename
-
-    Binman keeps track of at least one device-tree file called u-boot.dtb but
-    can also have others (e.g. for SPL). This function looks up the given
-    filename and returns the associated Fdt object.
-
-    Args:
-        etype: Entry type of device tree (e.g. 'u-boot-dtb')
-
-    Returns:
-        Entry object associated with the entry type, if present in the image
-    """
-    value = output_fdt_info.get(etype);
-    if not value:
-        return None
-    return value[2]
 
 def GetFdtPath(etype):
     """Get the full pathname of a particular Fdt object
@@ -147,7 +134,7 @@ def Prepare(images, dtb):
         images: List of images being used
         dtb: Main dtb
     """
-    global output_fdt_info, main_dtb
+    global output_fdt_info, main_dtb, fdt_path_prefix
     # Import these here in case libfdt.py is not available, in which case
     # the above help option still works.
     import fdt
@@ -159,6 +146,7 @@ def Prepare(images, dtb):
     # was handled just above.
     main_dtb = dtb
     output_fdt_info.clear()
+    fdt_path_prefix = ''
     output_fdt_info['u-boot-dtb'] = [dtb, 'u-boot.dtb', None]
     output_fdt_info['u-boot-spl-dtb'] = [dtb, 'spl/u-boot-spl.dtb', None]
     output_fdt_info['u-boot-tpl-dtb'] = [dtb, 'tpl/u-boot-tpl.dtb', None]
@@ -175,6 +163,40 @@ def Prepare(images, dtb):
             tools.WriteFile(out_fname, tools.ReadFile(other_fname_dtb))
             other_dtb = fdt.FdtScan(out_fname)
             output_fdt_info[etype] = [other_dtb, other_fname, entry]
+
+def PrepareFromLoadedData(image):
+    """Get device tree files ready for use with a loaded image
+
+    Loaded images are different from images that are being created by binman,
+    since there is generally already an fdtmap and we read the description from
+    that. This provides the position and size of every entry in the image with
+    no calculation required.
+
+    This function uses the same output_fdt_info[] as Prepare(). It finds the
+    device tree files, adds a reference to the fdtmap and sets the FDT path
+    prefix to translate from the fdtmap (where the root node is the image node)
+    to the normal device tree (where the image node is under a /binman node).
+
+    Args:
+        images: List of images being used
+    """
+    global output_fdt_info, fdt_path_prefix
+
+    output_fdt_info.clear()
+    output_fdt_info['fdtmap'] = [image.fdtmap_dtb, 'u-boot.dtb', None]
+    for etype, value in image.GetFdts().items():
+        entry, fname = value
+        entry._filename = entry.GetDefaultFilename()
+        data = entry.ReadData()
+        dtb = fdt.Fdt.FromData(data, entry.GetPath())
+        dtb.Scan()
+        image_node = dtb.GetNode('/binman')
+        if 'multiple-images' in image_node.props:
+            image_node = dtb.GetNode('/binman/%s' % image.image_node)
+        fdt_path_prefix =  image_node.path + '/'
+        output_fdt_info[etype] = [dtb, None, entry]
+        tout.Info("Found device tree %s '%s'" % (fname, entry.GetPath()))
+
 
 def GetAllFdts():
     """Yield all device tree files being used by binman
@@ -205,7 +227,7 @@ def GetUpdateNodes(node):
     yield node
     for dtb, fname, _ in output_fdt_info.values():
         if dtb != node.GetFdt():
-            other_node = dtb.GetNode(node.path)
+            other_node = dtb.GetNode(fdt_path_prefix + node.path)
             if other_node:
                 yield other_node
 
