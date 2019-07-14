@@ -2973,6 +2973,19 @@ class TestFunctional(unittest.TestCase):
         self.assertEqual(U_BOOT_DATA, data[2:2 + len(U_BOOT_DATA)])
         self.assertEqual(b'a\0', data[-2:])
 
+    def xtestReplaceCbfs(self):
+        """Test replacing a single file in CBFS"""
+        expected = U_BOOT_DATA + b'x'
+        data = self._DoReadFileDtb('141_replace_cbfs.dts', use_real_dtb=True,
+                                   update_dtb=True)[0]
+        updated_fname = tools.GetOutputFilename('image-updated.bin')
+        tools.WriteFile(updated_fname, data)
+        entry_name = 'section/cbfs/u-boot'
+        control.WriteEntry(updated_fname, entry_name, expected,
+                           allow_resize=True)
+        data = control.ReadEntry(updated_fname, entry_name)
+        self.assertEqual(expected, data)
+
 
 if __name__ == "__main__":
     unittest.main()

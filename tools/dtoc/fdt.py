@@ -346,8 +346,9 @@ class Node:
         Args:
             prop_name: Name of property
         """
-        self.props[prop_name] = Prop(self, None, prop_name,
-                                     tools.GetBytes(0, 4))
+        if prop_name not in self.props:
+            self.props[prop_name] = Prop(self, None, prop_name,
+                                         tools.GetBytes(0, 4))
 
     def AddEmptyProp(self, prop_name, len):
         """Add a property with a fixed data size, for filling in later

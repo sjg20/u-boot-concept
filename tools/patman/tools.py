@@ -398,7 +398,13 @@ def Compress(indata, algo):
     fname = GetOutputFilename('%s.comp.tmp' % algo)
     WriteFile(fname, indata)
     if algo == 'lz4':
+        #outfname = GetOutputFilename('%s.comp.otmp' % algo)
         data = Run('lz4', '--no-frame-crc', '-c', fname, binary=True)
+        #WriteFile(outfname, indata)
+        #Run('lz4', '--no-frame-crc', fname, fname + '.lz4')
+        #data2 = ReadFile(fname + '.lz4')
+        #os.remove(fname + '.lz4')
+        #print('out len', len(data), len(data2))
     # cbfstool uses a very old version of lzma
     elif algo == 'lzma':
         outfname = GetOutputFilename('%s.comp.otmp' % algo)
@@ -428,11 +434,20 @@ def Decompress(indata, algo):
     """
     if algo == 'none':
         return indata
-    fname = GetOutputFilename('%s.decomp.tmp' % algo)
+    fname = GetOutputFilename('%s.decomp.tmp.%s' % (algo, algo))
     with open(fname, 'wb') as fd:
         fd.write(indata)
     if algo == 'lz4':
+        #outfname = GetOutputFilename('%s.decomp.otmp' % algo)
+        #other = GetOutputFilename('%s.decomp.tmp' % algo)
+        #if os.path.exists(other):
+            #os.remove(other)
+        #Run('lz4', '-d', fname, other)
+        #data2 = ReadFile(outfname + '.lz4')
+        #print('len', len(data2))
         data = Run('lz4', '-dc', fname, binary=True)
+        #print()
+        #print('len', len(data), len(data2))
     elif algo == 'lzma':
         outfname = GetOutputFilename('%s.decomp.otmp' % algo)
         Run('lzma_alone', 'd', fname, outfname)
