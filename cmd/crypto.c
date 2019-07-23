@@ -22,6 +22,9 @@
  */
 #include "../lib/crypto/pkcs7_parser.h"
 #include "../lib/crypto/tstinfo_parser.h"
+#if 1 /* DEBUG */
+#include <hash.h>
+#endif
 
 static struct x509_certificate *cur_cert;
 static struct pkcs7_message *cur_message;
@@ -212,6 +215,9 @@ void print_pkcs7_signed_info(struct pkcs7_signed_info *info)
 		printf("        sig enc algo:%s\n", info->sig->pkey_algo);
 		printf("        calc'ed digest:%p\n", info->sig->digest);
 		printf("        digest size:%x\n", info->sig->digest_size);
+		if (dump_data)
+			print_hex_dump("      ", DUMP_PREFIX_OFFSET, 16, 1,
+				       info->sig->s, info->sig->s_size, false);
 	}
 
 	printf("    unauthenticated attr:\n");
@@ -237,12 +243,83 @@ void print_pkcs7_signed_info(struct pkcs7_signed_info *info)
 			tst = tstinfo_parse(cnt_sig->data, cnt_sig->data_len);
 			if (!IS_ERR(tst)) {
 				print_tstinfo(tst);
-				tstinfo_free(tst);
 			} else {
 				printf("Err: parsing tstinfo failed.\n");
 				goto out;
 			}
+#if 1 /* DEBUG */
+	/*
+	 * TODO:
+	 * must be verified with one of TSA certificates.
+	 * In this case, pkcs7's content is data to be signed.
+	 */
+{
+	struct efi_image_regions regs;
+	struct x509_certificate *cert;
+	int i;
+	extern bool efi_signature_verify(struct efi_image_regions *regs,
+					 struct pkcs7_signed_info *info,
+					 struct x509_certificate *cert,
+					 struct efi_signature_store *untrusted);
+
+	memset(&regs, 0, sizeof(regs));
+	if (cnt_sig->data) {
+		efi_image_region_add(&regs, cnt_sig->data,
+				     cnt_sig->data + cnt_sig->data_len,
+				     1);
+	} else {
+		printf("No content in signed Data\n");
+		goto err;
+	}
+
+        for (cert = cnt_sig->certs, i = 1; cert; cert = cert->next, i++) {
+		printf("Trying certifcate %d\n", i);
+		if (!efi_signature_verify(&regs, cnt_sig->signed_infos,
+					  cert, NULL)) {
+			printf("Verifying counter signature failed\n");
+		} else {
+			printf("Verifying counter signature succeeded!\n");
+			break;
+		}
+	}
+	printf("End of verification: %d\n", i);
+
+{
+	u8 *buf;
+	int len;
+	const char *algo;
+
+	/* TODO: check TSTInfo's digest */
+	if (tst->digest.algo == OID_sha1) {
+		algo = "sha1";
+	} else if (tst->digest.algo == OID_sha256) {
+		algo = "sha256";
+	} else {
+		printf("Checking TSTInfo: unknown digest type:0x%x\n",
+		       tst->digest.algo);
+		goto err2;
+	}
+
+	buf = malloc(HASH_MAX_DIGEST_SIZE);
+	len = HASH_MAX_DIGEST_SIZE;
+	hash_block(algo, info->sig->s, info->sig->s_size, buf, &len);
+	printf("------hash(%s) of TSTInfo:\n", algo);
+	print_hex_dump("      ", DUMP_PREFIX_OFFSET, 16, 1,
+		       buf, len, false);
+	printf("------hash in TSTInfo:\n");
+	print_hex_dump("      ", DUMP_PREFIX_OFFSET, 16, 1,
+		       tst->digest.data, tst->digest.size, false);
+	printf("------end of TSTInfo check\n");
+err2:
+	;
+}
+
+err:
+	;
+}
+#endif
 out:
+			tstinfo_free(tst);
 			pkcs7_free_message(cnt_sig);
 		} else {
 			printf("Err: parsing counter signature failed.\n");
@@ -277,6 +354,7 @@ void print_pkcs7_message(struct pkcs7_message *message)
 	for (info = message->signed_infos, i = 1; info;
 	     info = info->next, i++) {
 		printf("--- signed info (%d) ---\n", i);
+		printf("--- signed info (addr: %p) ---\n", info);
 		print_pkcs7_signed_info(info);
 	}
 }
