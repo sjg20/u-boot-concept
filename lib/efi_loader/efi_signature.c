@@ -7,6 +7,7 @@
 #include <common.h>
 #include <charset.h>
 #include <efi_loader.h>
+#include <hash.h>
 #include <image.h>
 #include <hexdump.h>
 #include <malloc.h>
@@ -20,6 +21,7 @@
  * #include "../lib/crypto/x509_parser.h"
  */
 #include "../lib/crypto/pkcs7_parser.h"
+#include "../lib/crypto/tstinfo_parser.h"
 
 const efi_guid_t efi_guid_image_security_database =
 		EFI_IMAGE_SECURITY_DATABASE_GUID;
@@ -453,9 +455,157 @@ out:
 }
 
 /**
+ * efi_signature_verify_timestamp - verify a signature of timestamp
+ * @signed_info:	Pointer to PKCS7's signed_info
+ * @tsa_cert:		Certificate for TSA
+ * @timestamp:		Pointer to buffer to return a verified timestamp
+ *
+ * Signature pointed to by @signed_info is verified by a certificate
+ * pointed to by @tsa_cert. If verified, a value of timestamp will be
+ * returned in @timestamp.
+ *
+ * Return:	true if signature is verified, false if not
+ */
+static bool efi_signature_verify_timestamp(struct pkcs7_signed_info *info,
+					   struct x509_certificate *tsa_cert,
+					   time64_t *timestamp)
+{
+	struct pkcs7_message *cnt_sig;
+	struct tstinfo *tst = NULL;
+	struct efi_image_regions regs;
+	u8 *digest;
+	int digest_len;
+	const char *algo;
+	bool verified = false;
+
+	if (!info->counter_signature) {
+		debug("No counter signature\n");
+		return false;
+	}
+
+	/* 1-a.parse counter signature */
+	cnt_sig = pkcs7_parse_message(info->counter_signature->data,
+				      info->counter_signature->size);
+	if (IS_ERR(cnt_sig)) {
+		debug("Parsing counter signature failed\n");
+		return false;
+	}
+
+	/* 1-b.parse tstinfo, which is stored in unauthenticated attributes */
+	tst = tstinfo_parse(cnt_sig->data, cnt_sig->data_len);
+	if (IS_ERR(tst)) {
+		debug("Parsing TSTInfo failed\n");
+		tst = NULL;
+		goto err;
+	}
+
+	/*
+	 * 2.verify counter signature with TSA certificate.
+	 * In this case, pkcs7's content is data to be signed.
+	 */
+	if (cnt_sig->data) {
+		memset(&regs, 0, sizeof(regs));
+		efi_image_region_add(&regs, cnt_sig->data,
+				     cnt_sig->data + cnt_sig->data_len,
+				     1);
+	} else {
+		debug("No content in counter signature\n");
+		goto err;
+	}
+
+	if (!cnt_sig->signed_infos) {
+		debug("No signed info in counter signature\n");
+		goto err;
+	}
+
+	if (!efi_signature_verify(&regs, cnt_sig, cnt_sig->signed_infos,
+				  tsa_cert)) {
+		debug("Verifying counter signature failed\n");
+		goto err;
+	}
+
+	/* 3.check TSTInfo's digest */
+	if (tst->digest.algo == OID_sha1) {
+		algo = "sha1";
+	} else if (tst->digest.algo == OID_sha256) {
+		algo = "sha256";
+	} else {
+		debug("Checking TSTInfo: unknown digest type:0x%x\n",
+		      tst->digest.algo);
+		goto err;
+	}
+
+	digest = malloc(HASH_MAX_DIGEST_SIZE);
+	if (!digest) {
+		debug("Out of memory\n");
+		goto err;
+	}
+	digest_len = HASH_MAX_DIGEST_SIZE;
+	hash_block(algo, info->sig->s, info->sig->s_size, digest, &digest_len);
+	if ((tst->digest.size == digest_len) &&
+	    !memcmp(tst->digest.data, digest, digest_len)) {
+		verified = true;
+
+		/* 4. return authenticated timestamp */
+		if (timestamp)
+			*timestamp = tst->time;
+	} else {
+		debug("Digest of TSTInfo doesn't match\n");
+	}
+#if 0 /* DEBUG */
+	printf("------hash(%s) of TSTInfo:\n", algo);
+	print_hex_dump("      ", DUMP_PREFIX_OFFSET, 16, 1,
+		       digest, digest_len, false);
+	printf("------hash in TSTInfo:\n");
+	print_hex_dump("      ", DUMP_PREFIX_OFFSET, 16, 1,
+		       tst->digest.data, tst->digest.size, false);
+	printf("------end of TSTInfo check\n");
+#endif
+	free(digest);
+
+err:
+	tstinfo_free(tst);
+	pkcs7_free_message(cnt_sig);
+
+	return verified;
+}
+
+static bool efi_check_timestamp(struct pkcs7_signed_info *info,
+				time64_t revoc_time,
+				struct efi_signature_store *dbt)
+{
+	struct efi_signature_store *siglist;
+	struct efi_sig_data *sig_data;
+	struct x509_certificate *cert;
+	time64_t timestamp;
+
+	/* go through the revocation list */
+	for (siglist = dbt; siglist; siglist = siglist->next) {
+		if (guidcmp(&siglist->sig_type, &efi_guid_cert_x509))
+			continue;
+
+		for (sig_data = siglist->sig_data_list; sig_data;
+		     sig_data = sig_data->next) {
+			/* verify TSTInfo in counter signature */
+			cert = (struct x509_certificate *) sig_data->data;
+			if (!efi_signature_verify_timestamp(info, cert,
+							    &timestamp))
+				continue;
+
+			/* compare signing time with revocation time */
+			if (timestamp >= revoc_time)
+				return true;
+		}
+	}
+
+	return false;
+}
+
+/**
  * efi_signature_verify_cert - verify a certificate with dbx
  * @cert:	x509 certificate
  * @dbx:	Signature database
+ * @dbt:	Signature database for Timestamp Authority
  *
  * Search signature database pointed to by @dbx and find a certificate
  * pointed to by @cert.
@@ -463,8 +613,10 @@ out:
  *
  * Return:	true if a certificate is not rejected, false otherwise.
  */
-bool efi_signature_verify_cert(struct x509_certificate *cert,
-			       struct efi_signature_store *dbx)
+bool efi_signature_verify_cert(struct pkcs7_message *msg,
+			       struct x509_certificate *cert,
+			       struct efi_signature_store *dbx,
+			       struct efi_signature_store *dbt)
 {
 	struct efi_signature_store *siglist;
 	time64_t revoc_time;
@@ -476,10 +628,12 @@ bool efi_signature_verify_cert(struct x509_certificate *cert,
 		return false;
 
 	for (siglist = dbx; siglist; siglist = siglist->next) {
-		if (efi_search_siglist(cert, siglist, &revoc_time)) {
-			/* TODO */
-			/* compare signing time with revocation time */
+		if (!efi_search_siglist(cert, siglist, &revoc_time))
+			continue;
 
+		/* TODO: double-check the semantics */
+	       /* compare signing time with revocation time */
+		if (efi_check_timestamp(msg->signed_infos, revoc_time, dbt)) {
 			found = true;
 			break;
 		}
@@ -493,6 +647,7 @@ bool efi_signature_verify_cert(struct x509_certificate *cert,
  * efi_signature_verify_signers - verify signers' certificates with dbx
  * @msg:	Signature
  * @dbx:	Signature database
+ * @dbt:	Signature database for Timestamp Authority
  *
  * Determine if any of signers' certificates in @msg may be verified
  * by any of certificates in signature database pointed to by @dbx.
@@ -501,7 +656,8 @@ bool efi_signature_verify_cert(struct x509_certificate *cert,
  * Return:	true if none of certificates is rejected, false otherwise.
  */
 bool efi_signature_verify_signers(struct pkcs7_message *msg,
-				  struct efi_signature_store *dbx)
+				  struct efi_signature_store *dbx,
+				  struct efi_signature_store *dbt)
 {
 	struct pkcs7_signed_info *info;
 	bool found = false;
@@ -513,7 +669,7 @@ bool efi_signature_verify_signers(struct pkcs7_message *msg,
 
 	for (info = msg->signed_infos; info; info = info->next) {
 		if (info->signer &&
-		    !efi_signature_verify_cert(info->signer, dbx)) {
+		    !efi_signature_verify_cert(msg, info->signer, dbx, dbt)) {
 			found = true;
 			goto out;
 		}

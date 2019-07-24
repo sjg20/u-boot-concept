@@ -711,10 +711,13 @@ struct efi_signature_store {
 struct x509_certificate;
 struct pkcs7_message;
 
-bool efi_signature_verify_cert(struct x509_certificate *cert,
-			       struct efi_signature_store *dbx);
+bool efi_signature_verify_cert(struct pkcs7_message *msg,
+			       struct x509_certificate *cert,
+			       struct efi_signature_store *dbx,
+			       struct efi_signature_store *dbt);
 bool efi_signature_verify_signers(struct pkcs7_message *msg,
-				  struct efi_signature_store *dbx);
+				  struct efi_signature_store *dbx,
+				  struct efi_signature_store *dbt);
 bool efi_signature_verify_with_sigdb(struct efi_image_regions *regs,
 				     struct pkcs7_message *msg,
 				  struct efi_signature_store *db,
