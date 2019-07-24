@@ -284,6 +284,16 @@ int pkcs7_sig_note_pkey_algo(void *context, size_t hdrlen,
 		ctx->sinfo->sig->pkey_algo = "rsa";
 		ctx->sinfo->sig->encoding = "pkcs1";
 		break;
+	/* FIXME: necessary Shell.efi.signed signed by Entrust */
+	case OID_sha1WithRSAEncryption:
+		ctx->sinfo->sig->pkey_algo = "sha1,rsa";
+		ctx->sinfo->sig->encoding = "pkcs1";
+		break;
+	/* FIXME: necessary shimaa64.efi.signed */
+	case OID_sha256WithRSAEncryption:
+		ctx->sinfo->sig->pkey_algo = "sha256,rsa";
+		ctx->sinfo->sig->encoding = "pkcs1";
+		break;
 	default:
 		printk("Unsupported pkey algo: %u\n", ctx->last_oid);
 		return -ENOPKG;
@@ -407,7 +417,12 @@ int pkcs7_extract_cert(void *context, size_t hdrlen,
 	if (tag != ((ASN1_UNIV << 6) | ASN1_CONS_BIT | ASN1_SEQ)) {
 		pr_debug("Cert began with tag %02x at %lu\n",
 			 tag, (unsigned long)ctx - ctx->data);
+#if 1 /* FIXME: illegal tag, 0xa1, in counter signature? */
+		printf("+++     returned any way\n");
+		return 0;
+#else
 		return -EBADMSG;
+#endif
 	}
 
 	/* We have to correct for the header so that the X.509 parser can start
