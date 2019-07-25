@@ -579,7 +579,7 @@ efi_status_t __efi_runtime EFIAPI efi_query_variable_info(
  * @data:		buffer to which the variable value is copied
  * Return:		status code
  */
-static efi_status_t __efi_runtime EFIAPI
+efi_status_t __weak __efi_runtime EFIAPI
 efi_get_variable_runtime(u16 *variable_name, const efi_guid_t *vendor,
 			 u32 *attributes, efi_uintn_t *data_size, void *data)
 {
@@ -595,7 +595,7 @@ efi_get_variable_runtime(u16 *variable_name, const efi_guid_t *vendor,
  * @vendor:		vendor's guid
  * Return: status code
  */
-static efi_status_t __efi_runtime EFIAPI
+efi_status_t __weak __efi_runtime EFIAPI
 efi_get_next_variable_name_runtime(efi_uintn_t *variable_name_size,
 				   u16 *variable_name, const efi_guid_t *vendor)
 {
@@ -612,7 +612,7 @@ efi_get_next_variable_name_runtime(efi_uintn_t *variable_name_size,
  * @data:		buffer with the variable value
  * Return:		status code
  */
-static efi_status_t __efi_runtime EFIAPI
+efi_status_t __weak __efi_runtime EFIAPI
 efi_set_variable_runtime(u16 *variable_name, const efi_guid_t *vendor,
 			 u32 attributes, efi_uintn_t data_size,
 			 const void *data)
