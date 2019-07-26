@@ -296,6 +296,205 @@ static int do_crypto_x509(cmd_tbl_t *cmdtp, int flag,
 	return CMD_RET_SUCCESS;
 }
 
+#if 0 /* FIXME */
+/**
+ * dump_efi_signature() - show information about signatures
+ *
+ * @prefix:	Prefix string
+ * @sigstore:	List of signatures
+ *
+ * Iterate signatures and show information of each signature
+ */
+static void dump_efi_signature(const char *prefix,
+			       struct efi_signature_store *sigstore)
+{
+	efi_signature *sig;
+	struct x509_certificate *certs, *cert;
+	extern void print_x509_certificate(struct x509_certificate *);
+	int i;
+
+	for (i = 0; i < sigstore->num; i++) {
+		printf("%s--- signature (%d) ---\n", prefix, i + 1);
+		sig = &sigstore->sig[i];
+		printf("%stype: %s\n", prefix, efi_guid_to_str(&sig->type));
+		printf("%sdata size: 0x%lx\n", prefix, sig->datalen);
+		printf("%sattrs size: 0x%lx\n", prefix, sig->attrslen);
+		printf("%sdigest size: 0x%lx\n", prefix, sig->digestlen);
+
+		if (!guidcmp(&sig->type, &efi_guid_cert_x509)) {
+			printf(">>> as x509 certificate\n");
+			certs = x509_cert_parse(sig->data, sig->datalen);
+			if (certs) {
+				for (cert = certs; cert; cert = cert->next)
+					print_x509_certificate(cert);
+				x509_free_certificate(certs);
+			}
+			printf("<<<\n");
+		}
+	}
+}
+
+/**
+ * parse_and_print_authinfo() - parse and show information about
+ * variable's authentication data
+ *
+ * @data:	Address of data
+ * @data_size:	Size of data
+ * @verbose:	if true, dump signature database
+ * Return:	0 on success, error code on failure
+ *
+ * Parse the data in pkcs7 SignedData and return 0 if no format problem,
+ * optionally show information as variable's authentication data
+ * if verbose is specified
+ */
+static int parse_and_print_authinfo(u8 **data, efi_uintn_t *data_size,
+				    bool verbose)
+{
+	struct efi_variable_authentication_2 *auth;
+	struct efi_signature_store *sigstore;
+	struct efi_time *timestamp;
+	efi_status_t ret;
+
+	sigstore = calloc(sizeof(*sigstore), 1);
+	if (!sigstore) {
+		printf("## Out of memory\n");
+		return -ENOMEM;
+	}
+
+	if (*data_size < sizeof(struct efi_variable_authentication_2))
+		goto err;
+
+	auth = (typeof(auth))*data;
+	if (*data_size < (sizeof(auth->time_stamp)
+				+ auth->auth_info.hdr.dwLength))
+		goto err;
+
+	if (verbose)
+		printf("    signature type: %s\n",
+		       efi_guid_to_str(&auth->auth_info.cert_type));
+	if (guidcmp(&auth->auth_info.cert_type, &efi_guid_cert_type_pkcs7))
+		goto err;
+
+	timestamp = &auth->time_stamp;
+	if (verbose)
+		printf("    signed time: %02d-%02d-%02d %02d:%02d:%02d\n",
+		       timestamp->year, timestamp->month, timestamp->day,
+		       timestamp->hour, timestamp->minute, timestamp->second);
+
+	if (auth->auth_info.hdr.dwLength < sizeof(auth->auth_info))
+		goto err;
+	ret = efi_sigstore_parse_variable_authdata(sigstore,
+						   auth->auth_info.cert_data,
+						   auth->auth_info.hdr.dwLength
+						    - sizeof(auth->auth_info));
+	if (ret != EFI_SUCCESS)
+		goto err;
+
+	if (verbose)
+		dump_efi_signature("    ", sigstore);
+	efi_sigstore_free(sigstore);
+
+	*data += sizeof(auth->time_stamp) + auth->auth_info.hdr.dwLength;
+	*data_size -= (sizeof(auth->time_stamp)
+				+ auth->auth_info.hdr.dwLength);
+
+	return 0;
+
+err:
+	printf("Parsing time-based signature data failed\n");
+
+	return -EINVAL;
+}
+#endif
+
+/**
+ * do_crypto_db() - dump signature database
+ *
+ * @cmdtp:	Command table
+ * @flag:	Command flag
+ * @argc:	Number of arguments
+ * @argv:	Argument array
+ * Return:	CMD_RET_SUCCESS on success, CMD_RET_RET_FAILURE on failure
+ *
+ * (description)
+ */
+static int do_crypto_db(cmd_tbl_t *cmdtp, int flag,
+			int argc, char * const argv[])
+{
+	u16 *name, *p;
+	struct efi_signature_store *sigstore, *siglist;
+	struct efi_sig_data *sig_data;
+	struct x509_certificate *certs, *cert;
+	int i, j, k;
+	efi_status_t ret;
+
+	if (argc != 2)
+		return CMD_RET_USAGE;
+
+	ret = efi_init_obj_list();
+	if (ret != EFI_SUCCESS) {
+		printf("Cannot initialize UEFI sub-system, ret = %lu\n",
+		       ret & ~EFI_ERROR_MASK);
+		return CMD_RET_FAILURE;
+	}
+
+	name = malloc(utf8_utf16_strnlen(argv[1], strlen(argv[1])) + 2);
+	if (!name) {
+		printf("out of memory\n");
+		return CMD_RET_FAILURE;
+	}
+	p = name;
+	utf8_utf16_strncpy(&p, argv[1], strlen(argv[1]) + 1);
+
+	sigstore = efi_sigstore_parse_sigdb(name);
+	free(name);
+	if (!sigstore) {
+		printf("retrieving \"%s\" failed\n", argv[1]);
+		return CMD_RET_FAILURE;
+	}
+
+	for (siglist = sigstore, i = 1; siglist; siglist = siglist->next, i++) {
+		printf("=== signature list (%d) ===\n", i);
+		if (!guidcmp(&siglist->sig_type, &efi_guid_cert_x509))
+			printf("type: x509 certificate\n");
+		else
+			/* TODO */
+			printf("type: signature\n");
+
+		for (sig_data = siglist->sig_data_list, j = 1; sig_data;
+		     sig_data = sig_data->next, j++) {
+			printf("  === signature (%d) ===\n", j);
+			printf("  owner: %pUl\n", &sig_data->owner);
+
+			if (!guidcmp(&siglist->sig_type, &efi_guid_cert_x509)) {
+				certs = x509_cert_parse(sig_data->data,
+							sig_data->size);
+				if (!certs) {
+					printf("parsing certificate failed\n");
+					continue;
+				}
+
+				for (cert = certs, k = 1; cert;
+				     cert = cert->next, k++) {
+					printf("  --- certificate (%d) ---\n",
+					       k);
+					print_x509_certificate(cert);
+				}
+				x509_free_certificate(certs);
+			} else {
+				/* TODO */
+				print_hex_dump("  ", DUMP_PREFIX_OFFSET,
+					       16, 1,
+					       sig_data->data, sig_data->size,
+					       false);
+			}
+		}
+	}
+	efi_sigstore_free(sigstore);
+
+	return CMD_RET_SUCCESS;
+}
+
 /**
  * do_crypto_verify() - verify signature
  *
@@ -323,6 +522,7 @@ static cmd_tbl_t cmd_crypto_sub[] = {
 	U_BOOT_CMD_MKENT(pkcs7, CONFIG_SYS_MAXARGS, 1, do_crypto_pkcs7, "", ""),
 	U_BOOT_CMD_MKENT(x509, CONFIG_SYS_MAXARGS, 1, do_crypto_x509,
 			 "", ""),
+	U_BOOT_CMD_MKENT(db, CONFIG_SYS_MAXARGS, 1, do_crypto_db, "", ""),
 	U_BOOT_CMD_MKENT(verify, CONFIG_SYS_MAXARGS, 1, do_crypto_verify,
 			 "", ""),
 };
@@ -363,6 +563,8 @@ static char crypto_help_text[] =
 	"  - parse and dump pkcs7 message\n"
 	"crypto x509 <address> <size>\n"
 	"  - parse and dump x509 certificate\n"
+	"crypto db <database>\n"
+	"  - dump signature database\n"
 	"crypto verify\n"
 	"  - verify signature loaded at previous command\n"
 	;
