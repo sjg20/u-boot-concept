@@ -1,5 +1,51 @@
 menu "Environment"
 
+config ENV_DRV_NONE
+	bool
+	default y if !ENV_DRV_EEPROM && !ENV_DRV_EXT4 && \
+		     !ENV_DRV_FAT && !ENV_DRV_FLASH && \
+		     !ENV_DRV_MMC && !ENV_DRV_NAND && \
+		     !ENV_DRV_NVRAM && !ENV_DRV_ONENAND && \
+		     !ENV_DRV_REMOTE && !ENV_DRV_SPI_FLASH && \
+		     !ENV_DRV_UBI
+
+config ENV_DRV_EEPROM
+	bool
+
+config ENV_DRV_FAT
+	bool
+	select FS_FAT
+	select FAT_WRITE
+
+config ENV_DRV_EXT4
+	bool
+	select EXT4_WRITE
+
+config ENV_DRV_FLASH
+	bool
+
+config ENV_DRV_MMC
+	bool
+	depends on MMC
+
+config ENV_DRV_NAND
+	bool
+
+config ENV_DRV_NVRAM
+	bool
+
+config ENV_DRV_ONENAND
+	bool
+
+config ENV_DRV_REMOTE
+	bool
+
+config ENV_DRV_SPI_FLASH
+	bool
+
+config ENV_DRV_UBI
+	bool
+
 config ENV_IS_NOWHERE
 	bool "Environment is not stored"
 	default y if !ENV_IS_IN_EEPROM && !ENV_IS_IN_EXT4 && \
@@ -18,6 +64,7 @@ config ENV_IS_NOWHERE
 config ENV_IS_IN_EEPROM
 	bool "Environment in EEPROM"
 	depends on !CHAIN_OF_TRUST
+	select ENV_DRV_EEPROM
 	help
 	  Use this if you have an EEPROM or similar serial access
 	  device and a driver for it.
@@ -52,21 +99,21 @@ config ENV_IS_IN_FAT
 	default y if ARCH_BCM283X
 	default y if ARCH_SUNXI && MMC
 	default y if MMC_OMAP_HS && TI_COMMON_CMD_OPTIONS
-	select FS_FAT
-	select FAT_WRITE
+	select ENV_DRV_FAT
 	help
 	  Define this if you want to use the FAT file system for the environment.
 
 config ENV_IS_IN_EXT4
 	bool "Environment is in a EXT4 filesystem"
 	depends on !CHAIN_OF_TRUST
-	select EXT4_WRITE
+	select ENV_DRV_EXT4
 	help
 	  Define this if you want to use the EXT4 file system for the environment.
 
 config ENV_IS_IN_FLASH
 	bool "Environment in flash memory"
 	depends on !CHAIN_OF_TRUST
+	select ENV_DRV_FLASH
 	default y if ARCH_CINTEGRATOR
 	default y if ARCH_INTEGRATOR_CP
 	default y if M548x || M547x || M5282 || MCF547x_8x
@@ -147,6 +194,7 @@ config ENV_IS_IN_MMC
 	bool "Environment in an MMC device"
 	depends on !CHAIN_OF_TRUST
 	depends on MMC
+	select ENV_DRV_MMC
 	default y if ARCH_EXYNOS4
 	default y if MX6SX || MX7D
 	default y if TEGRA30 || TEGRA124
@@ -204,6 +252,7 @@ config ENV_IS_IN_MMC
 config ENV_IS_IN_NAND
 	bool "Environment in a NAND device"
 	depends on !CHAIN_OF_TRUST
+	select ENV_DRV_NAND
 	help
 	  Define this if you have a NAND device which you want to use for the
 	  environment.
@@ -242,6 +291,7 @@ config ENV_IS_IN_NAND
 config ENV_IS_IN_NVRAM
 	bool "Environment in a non-volatile RAM"
 	depends on !CHAIN_OF_TRUST
+	select ENV_DRV_NVRAM
 	help
 	  Define this if you have some non-volatile memory device
 	  (NVRAM, battery buffered SRAM) which you want to use for the
@@ -258,6 +308,7 @@ config ENV_IS_IN_NVRAM
 config ENV_IS_IN_ONENAND
 	bool "Environment is in OneNAND"
 	depends on !CHAIN_OF_TRUST
+	select ENV_DRV_ONENAND
 	help
 	  Define this if you want to put your local device's environment in
 	  OneNAND.
@@ -273,6 +324,7 @@ config ENV_IS_IN_ONENAND
 config ENV_IS_IN_REMOTE
 	bool "Environment is in remote memory space"
 	depends on !CHAIN_OF_TRUST
+	select ENV_DRV_REMOTE
 	help
 	  Define this if you have a remote memory space which you
 	  want to use for the local device's environment.
@@ -288,6 +340,7 @@ config ENV_IS_IN_REMOTE
 config ENV_IS_IN_SPI_FLASH
 	bool "Environment is in SPI flash"
 	depends on !CHAIN_OF_TRUST && SPI
+	select ENV_DRV_SPI_FLASH
 	default y if ARMADA_XP
 	default y if INTEL_BAYTRAIL
 	default y if INTEL_BRASWELL
@@ -373,6 +426,7 @@ config ENV_SPI_MODE
 config ENV_IS_IN_UBI
 	bool "Environment in a UBI volume"
 	depends on !CHAIN_OF_TRUST
+	select ENV_DRV_UBI
 	help
 	  Define this if you have an UBI volume that you want to use for the
 	  environment.  This has the benefit of wear-leveling the environment

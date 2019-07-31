@@ -18,15 +18,6 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-/************************************************************************
- * Default settings to be used when no valid environment is found
- */
-#include <env_default.h>
-
-struct hsearch_data env_htab = {
-	.change_ok = env_flags_validate,
-};
-
 /*
  * Read an environment variable as a boolean
  * Return -1 if variable does not exist (default to true)
@@ -46,59 +37,90 @@ int env_get_yesno(const char *var)
  */
 char *env_get_default(const char *name)
 {
-	char *ret_val;
-	unsigned long really_valid = gd->env_valid;
-	unsigned long real_gd_flags = gd->flags;
+	struct env_context *ctx = env_ctx_get();
 
-	/* Pretend that the image is bad. */
-	gd->flags &= ~GD_FLG_ENV_READY;
-	gd->env_valid = ENV_INVALID;
-	ret_val = env_get(name);
-	gd->env_valid = really_valid;
-	gd->flags = real_gd_flags;
-	return ret_val;
+	if (ctx->get_default)
+		return ctx->get_default(ctx, name);
+
+	/* no default action */
+	return NULL;
 }
 
 void env_set_default(const char *s, int flags)
 {
-	if (sizeof(default_environment) > ENV_SIZE) {
-		puts("*** Error - default environment is too large\n\n");
-		return;
-	}
+	struct env_context *ctx = env_ctx_get();
 
-	if (s) {
-		if ((flags & H_INTERACTIVE) == 0) {
-			printf("*** Warning - %s, "
-				"using default environment\n\n", s);
-		} else {
-			puts(s);
-		}
-	} else {
-		debug("Using default environment\n");
-	}
+	if (ctx->set_default)
+		ctx->set_default(ctx, s, flags);
 
-	if (himport_r(&env_htab, (char *)default_environment,
-			sizeof(default_environment), '\0', flags, 0,
-			0, NULL) == 0)
-		pr_err("## Error: Environment import failed: errno = %d\n",
-		       errno);
-
-	gd->flags |= GD_FLG_ENV_READY;
-	gd->flags |= GD_FLG_ENV_DEFAULT;
+	/* no default action */
 }
-
 
 /* [re]set individual variables to their value in the default environment */
 int env_set_default_vars(int nvars, char * const vars[], int flags)
 {
-	/*
-	 * Special use-case: import from default environment
-	 * (and use \0 as a separator)
-	 */
-	flags |= H_NOCLEAR;
-	return himport_r(&env_htab, (const char *)default_environment,
-				sizeof(default_environment), '\0',
-				flags, 0, nvars, vars);
+	struct env_context *ctx = env_ctx_get();
+
+	if (ctx->set_default_vars)
+		return ctx->set_default_vars(ctx, nvars, vars, flags);
+
+	/* no default action */
+	return 1;
+}
+
+void env_set_ready(struct env_context *ctx)
+{
+	if (ctx->set_ready)
+		ctx->set_ready(ctx);
+	else
+		/* TODO: define another macro? */
+		ctx->flags |= GD_FLG_ENV_READY;
+}
+
+bool env_is_ready(struct env_context *ctx)
+{
+	if (ctx->is_ready)
+		return ctx->is_ready(ctx);
+
+	return ctx->flags & GD_FLG_ENV_READY;
+}
+
+bool env_is_default(struct env_context *ctx)
+{
+	if (ctx->is_default)
+		return ctx->is_default(ctx);
+
+	return ctx->flags & GD_FLG_ENV_DEFAULT;
+}
+
+void env_set_valid(struct env_context *ctx, enum env_valid valid)
+{
+	if (ctx->set_valid)
+		ctx->set_valid(ctx, valid);
+	else
+		ctx->valid = valid;
+}
+
+enum env_valid env_get_valid(struct env_context *ctx)
+{
+	if (ctx->get_valid)
+		return ctx->get_valid(ctx);
+
+	return ctx->valid;
+}
+
+void env_set_env_addr(struct env_context *ctx, ulong env_addr)
+{
+	if (ctx->set_addr)
+		ctx->set_addr(ctx, env_addr);
+}
+
+ulong env_get_env_addr(struct env_context *ctx)
+{
+	if (ctx->get_addr)
+		return ctx->get_addr(ctx);
+
+	return 0; /* FIXME: invalid value */
 }
 
 /*
@@ -107,22 +129,23 @@ int env_set_default_vars(int nvars, char * const vars[], int flags)
  */
 int env_import(const char *buf, int check)
 {
-	env_t *ep = (env_t *)buf;
+	struct env_context *ctx = env_ctx_get();
+	struct environment_hdr *ep = (struct environment_hdr *)buf;
 
 	if (check) {
 		uint32_t crc;
 
 		memcpy(&crc, &ep->crc, sizeof(crc));
 
-		if (crc32(0, ep->data, ENV_SIZE) != crc) {
+		if (crc32(0, ep->data, ctx->env_size) != crc) {
 			env_set_default("bad CRC", 0);
 			return -ENOMSG; /* needed for env_load() */
 		}
 	}
 
-	if (himport_r(&env_htab, (char *)ep->data, ENV_SIZE, '\0', 0, 0,
-			0, NULL)) {
-		gd->flags |= GD_FLG_ENV_READY;
+	if (himport_r(ctx->htab, (char *)ep->data, ctx->env_size, '\0', 0, 0,
+		      0, NULL)) {
+		env_set_ready(ctx);
 		return 0;
 	}
 
@@ -134,16 +157,15 @@ int env_import(const char *buf, int check)
 }
 
 #ifdef CONFIG_SYS_REDUNDAND_ENVIRONMENT
-static unsigned char env_flags;
-
 int env_import_redund(const char *buf1, int buf1_read_fail,
 		      const char *buf2, int buf2_read_fail)
 {
+	struct env_context *ctx = env_ctx_get();
 	int crc1_ok, crc2_ok;
-	env_t *ep, *tmp_env1, *tmp_env2;
+	struct environment_hdr *ep, *tmp_env1, *tmp_env2;
 
-	tmp_env1 = (env_t *)buf1;
-	tmp_env2 = (env_t *)buf2;
+	tmp_env1 = (struct environment_hdr *)buf1;
+	tmp_env2 = (struct environment_hdr *)buf2;
 
 	if (buf1_read_fail && buf2_read_fail) {
 		puts("*** Error - No Valid Environment Area found\n");
@@ -156,95 +178,80 @@ int env_import_redund(const char *buf1, int buf1_read_fail,
 		env_set_default("bad env area", 0);
 		return -EIO;
 	} else if (!buf1_read_fail && buf2_read_fail) {
-		gd->env_valid = ENV_VALID;
+		env_set_valid(ctx, ENV_VALID);
 		return env_import((char *)tmp_env1, 1);
 	} else if (buf1_read_fail && !buf2_read_fail) {
-		gd->env_valid = ENV_REDUND;
+		env_set_valid(ctx, ENV_REDUND);
 		return env_import((char *)tmp_env2, 1);
 	}
 
-	crc1_ok = crc32(0, tmp_env1->data, ENV_SIZE) ==
+	crc1_ok = crc32(0, tmp_env1->data, ctx->env_size) ==
 			tmp_env1->crc;
-	crc2_ok = crc32(0, tmp_env2->data, ENV_SIZE) ==
+	crc2_ok = crc32(0, tmp_env2->data, ctx->env_size) ==
 			tmp_env2->crc;
 
 	if (!crc1_ok && !crc2_ok) {
 		env_set_default("bad CRC", 0);
 		return -ENOMSG; /* needed for env_load() */
 	} else if (crc1_ok && !crc2_ok) {
-		gd->env_valid = ENV_VALID;
+		env_set_valid(ctx, ENV_VALID);
 	} else if (!crc1_ok && crc2_ok) {
-		gd->env_valid = ENV_REDUND;
+		env_set_valid(ctx, ENV_REDUND);
 	} else {
 		/* both ok - check serial */
 		if (tmp_env1->flags == 255 && tmp_env2->flags == 0)
-			gd->env_valid = ENV_REDUND;
+			env_set_valid(ctx, ENV_REDUND);
 		else if (tmp_env2->flags == 255 && tmp_env1->flags == 0)
-			gd->env_valid = ENV_VALID;
+			env_set_valid(ctx, ENV_VALID);
 		else if (tmp_env1->flags > tmp_env2->flags)
-			gd->env_valid = ENV_VALID;
+			env_set_valid(ctx, ENV_VALID);
 		else if (tmp_env2->flags > tmp_env1->flags)
-			gd->env_valid = ENV_REDUND;
+			env_set_valid(ctx, ENV_REDUND);
 		else /* flags are equal - almost impossible */
-			gd->env_valid = ENV_VALID;
+			env_set_valid(ctx, ENV_VALID);
 	}
 
-	if (gd->env_valid == ENV_VALID)
+	if (env_get_valid(ctx) == ENV_VALID)
 		ep = tmp_env1;
 	else
 		ep = tmp_env2;
 
-	env_flags = ep->flags;
+	/* FIXME: functionize? */
+	ctx->env_flags = ep->flags;
 	return env_import((char *)ep, 0);
 }
 #endif /* CONFIG_SYS_REDUNDAND_ENVIRONMENT */
 
 /* Export the environment and generate CRC for it. */
-int env_export(env_t *env_out)
+int env_export(struct environment_s *env_out)
 {
+	struct env_context *ctx = env_ctx_get();
+	struct environment_hdr *env_hdr;
 	char *res;
 	ssize_t	len;
 
-	res = (char *)env_out->data;
-	len = hexport_r(&env_htab, '\0', 0, &res, ENV_SIZE, 0, NULL);
+	env_hdr = (struct environment_hdr *)env_out;
+	res = (char *)env_hdr->data;
+	len = hexport_r(ctx->htab, '\0', 0, &res, ctx->env_size, 0, NULL);
 	if (len < 0) {
 		pr_err("Cannot export environment: errno = %d\n", errno);
 		return 1;
 	}
 
-	env_out->crc = crc32(0, env_out->data, ENV_SIZE);
+	env_hdr->crc = crc32(0, env_hdr->data, ctx->env_size);
 
 #ifdef CONFIG_SYS_REDUNDAND_ENVIRONMENT
-	env_out->flags = ++env_flags; /* increase the serial */
+	env_hdr->flags = ++ctx->env_flags; /* increase the serial */
 #endif
 
 	return 0;
-}
-
-void env_relocate(void)
-{
-#if defined(CONFIG_NEEDS_MANUAL_RELOC)
-	env_reloc();
-	env_fix_drivers();
-	env_htab.change_ok += gd->reloc_off;
-#endif
-	if (gd->env_valid == ENV_INVALID) {
-#if defined(CONFIG_ENV_IS_NOWHERE) || defined(CONFIG_SPL_BUILD)
-		/* Environment not changable */
-		env_set_default(NULL, 0);
-#else
-		bootstage_error(BOOTSTAGE_ID_NET_CHECKSUM);
-		env_set_default("bad CRC", 0);
-#endif
-	} else {
-		env_load();
-	}
 }
 
 #ifdef CONFIG_AUTO_COMPLETE
 int env_complete(char *var, int maxv, char *cmdv[], int bufsz, char *buf,
 		 bool dollar_comp)
 {
+	struct env_context *ctx = env_ctx_get();
 	struct env_entry *match;
 	int found, idx;
 
@@ -274,7 +281,7 @@ int env_complete(char *var, int maxv, char *cmdv[], int bufsz, char *buf,
 	cmdv[0] = NULL;
 
 
-	while ((idx = hmatch_r(var, idx, &match, &env_htab))) {
+	while ((idx = hmatch_r(var, idx, &match, ctx->htab))) {
 		int vallen = strlen(match->key) + 1;
 
 		if (found >= maxv - 2 ||
