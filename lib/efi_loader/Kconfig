@@ -18,6 +18,8 @@ config EFI_LOADER
 
 if EFI_LOADER
 
+source "lib/efi_loader/Kconfig.env"
+
 config EFI_GET_TIME
 	bool "GetTime() runtime service"
 	depends on DM_RTC
