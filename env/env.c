@@ -10,6 +10,8 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+struct env_context *ctx_uboot;
+
 #if defined(CONFIG_NEEDS_MANUAL_RELOC)
 void env_fix_drivers(void)
 {

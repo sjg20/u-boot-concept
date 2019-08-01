@@ -345,6 +345,8 @@ extern struct hsearch_data env_htab;
 
 DECLARE_GLOBAL_DATA_PTR;
 
+extern struct env_context *ctx_uboot;
+
 /* Accessor functions */
 void env_set_ready(struct env_context *ctx);
 bool env_is_ready(struct env_context *ctx);
