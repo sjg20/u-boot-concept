@@ -400,6 +400,16 @@ inline struct env_context *env_ctx_set(struct env_context *ctx)
 
 	return old_ctx;
 }
+
+/*
+ * driver parameters initialization
+ */
+int env_flash_init_params(struct env_context *ctx,
+			  struct environment_hdr *env_ptr,
+			  struct environment_hdr *flash_addr, ulong end_addr,
+			  struct environment_hdr *flash_addr_new,
+			  ulong end_addr_new,
+			  ulong default_env_addr);
 #endif /* USE_HOSTCC */
 #endif /* DO_DEPS_ONLY */
 
