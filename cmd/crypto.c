@@ -14,15 +14,37 @@
 #include <mapmem.h>
 #include <pe.h>
 #include <rtc.h>
+#include <linux/compat.h>
 #include <u-boot/rsa-mod-exp.h>
 /*
  * avoid duplicated inclusion:
  * #include "../lib/crypto/x509_parser.h"
  */
 #include "../lib/crypto/pkcs7_parser.h"
+#include "../lib/crypto/tstinfo_parser.h"
 
 static struct x509_certificate *cur_cert;
 static struct pkcs7_message *cur_message;
+static int dump_data;
+
+struct oid_table {
+	enum OID oid;
+	const char *name;
+} oid_table[] = {
+	{OID_sha1, "sha1"},
+	{OID_sha256, "sha256"},
+};
+
+static const char *oid_to_name(enum OID oid)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(oid_table); i++)
+		if (oid_table[i].oid == oid)
+			return oid_table[i].name;
+
+	return "Unknown";
+}
 
 void print_x509_certificate(struct x509_certificate *cert)
 {
@@ -42,8 +64,9 @@ void print_x509_certificate(struct x509_certificate *cert)
 	printf("public key: %p\n", cert->pub);
 	if (cert->pub) {
 		printf("    keylen: %x\n", cert->pub->keylen);
-		print_hex_dump("    ", DUMP_PREFIX_OFFSET, 16, 1,
-			       cert->pub->key, cert->pub->keylen,
+		if (dump_data)
+			print_hex_dump("    ", DUMP_PREFIX_OFFSET, 16, 1,
+				       cert->pub->key, cert->pub->keylen,
 			       false);
 		printf("    id_type: %s\n", cert->pub->id_type);
 		printf("    pkey algo: %s\n", cert->pub->pkey_algo);
@@ -51,24 +74,30 @@ void print_x509_certificate(struct x509_certificate *cert)
 		if (prop) {
 			printf("    parameters:\n");
 			printf("        exp_len: %d\n", prop->exp_len);
-			print_hex_dump("        ", DUMP_PREFIX_OFFSET, 16, 1,
-				       prop->public_exponent, prop->exp_len,
-				       false);
+			if (dump_data)
+				print_hex_dump("        ", DUMP_PREFIX_OFFSET,
+					       16, 1,
+					       prop->public_exponent,
+					       prop->exp_len, false);
 			printf("        num_bits(mod len): %d\n",
 			       prop->num_bits);
 			printf("        modulus: %p (%x)\n", prop->modulus,
 			       *(uint32_t *)prop->modulus);
-			print_hex_dump("        ", DUMP_PREFIX_OFFSET, 16, 1,
-				       prop->modulus,
-				       (prop->num_bits + 7) >> 3,
-				       false);
+			if (dump_data)
+				print_hex_dump("        ", DUMP_PREFIX_OFFSET,
+					       16, 1,
+					       prop->modulus,
+					       (prop->num_bits + 7) >> 3,
+					       false);
 			printf("        n0inv: %x\n", prop->n0inv);
 			printf("        rr: %p (%x)\n", prop->rr,
 			       *(uint32_t *)prop->rr);
-			print_hex_dump("        ", DUMP_PREFIX_OFFSET, 16, 1,
-				       prop->rr,
-				       (prop->num_bits + 7) >> 3,
-				       false);
+			if (dump_data)
+				print_hex_dump("        ", DUMP_PREFIX_OFFSET,
+					       16, 1,
+					       prop->rr,
+					       (prop->num_bits + 7) >> 3,
+					       false);
 		}
 	}
 	printf("signature params: %p\n", cert->sig);
@@ -96,22 +125,55 @@ void print_x509_certificate(struct x509_certificate *cert)
 	printf("tbs: %p, size: %x\n", cert->tbs, cert->tbs_size);
 }
 
+static void print_tstinfo(struct tstinfo *info)
+{
+	struct extension *ext;
+	struct rtc_time time;
+	int i;
+
+	printf("    version: %x\n", info->version);
+	printf("    policy: %x\n", info->policy);
+	printf("    digest:\n");
+	printf("      algo: %s(%x)\n", oid_to_name(info->digest.algo),
+	       info->digest.algo);
+	printf("      len: %lx\n", info->digest.size);
+	if (dump_data)
+		print_hex_dump("      ", DUMP_PREFIX_OFFSET, 16, 1,
+			       info->digest.data, info->digest.size, false);
+	if (info->serial_hi)
+		printf("    serial#: %llx%016llx\n",
+		       info->serial_hi, info->serial_lo);
+	else
+		printf("    serial#: %llx\n", info->serial_lo);
+	rtc_to_tm(info->time, &time);
+	printf("    time: %04d-%02d-%02d %02d:%02d:%02d\n",
+	       time.tm_year, time.tm_mon, time.tm_mday,
+	       time.tm_hour, time.tm_min, time.tm_sec);
+	printf("    accuracy: %d:%d:%d\n",
+	       info->accuracy.sec, info->accuracy.msec, info->accuracy.usec);
+	printf("    tsa: %p, size: %lx\n", info->tsa.data, info->tsa.size);
+	if (info->tsa.size && dump_data)
+		print_hex_dump("    ", DUMP_PREFIX_OFFSET, 16, 1,
+			       info->tsa.data, info->tsa.size, true);
+	for (i = 0, ext = info->ext_next; ext; i++, ext = ext->next) {
+		printf("    ext[%d]: %x\n", i, ext->oid);
+		printf("      crit:%d\n", ext->critical);
+		printf("      data:%p, size:%lx\n", ext->data, ext->size);
+	}
+}
+
 void print_pkcs7_signed_info(struct pkcs7_signed_info *info)
 {
 	struct rtc_time time;
 
 	printf("    next: %p\n", info->next);
 	printf("    signer: %p\n", info->signer);
-	printf("    msgdigest_len: %x\n",
-	       info->msgdigest_len);
-	print_hex_dump("    ", DUMP_PREFIX_OFFSET, 16, 1,
-		       info->msgdigest,
-		       info->msgdigest_len, false);
 	printf("    authattrs_len: %x\n",
 	       info->authattrs_len);
-	print_hex_dump("    ", DUMP_PREFIX_OFFSET, 16, 1,
-		       info->authattrs,
-		       info->authattrs_len, false);
+	if (info->authattrs_len && dump_data)
+		print_hex_dump("    ", DUMP_PREFIX_OFFSET, 16, 1,
+			       info->authattrs,
+			       info->authattrs_len, false);
 	printf("    aa_set: %lx\n", info->aa_set);
 	printf("      Content Type: %s\n", test_bit(sinfo_has_content_type,
 						    &info->aa_set) ?
@@ -135,15 +197,58 @@ void print_pkcs7_signed_info(struct pkcs7_signed_info *info)
 	printf("    time: %04d-%02d-%02d %02d:%02d:%02d\n",
 	       time.tm_year, time.tm_mon, time.tm_mday,
 	       time.tm_hour, time.tm_min, time.tm_sec);
-	printf("    pkey sig: %p\n", info->sig);
+	printf("    msgdigest in auth: len: %x\n",
+	       info->msgdigest_len);
+	if (info->msgdigest_len && dump_data)
+		print_hex_dump("    ", DUMP_PREFIX_OFFSET, 16, 1,
+			       info->msgdigest,
+			       info->msgdigest_len, false);
+	printf("    signature: %p\n", info->sig);
 	if (info->sig) {
-		printf("        signature:%p\n", info->sig->s);
-		printf("        sig size:%x\n", info->sig->s_size);
-		printf("        digest:%p\n", info->sig->digest);
-		printf("        digest size:%x\n", info->sig->digest_size);
-		printf("        pkey algo:%s\n", info->sig->pkey_algo);
-		printf("        hash algo:%s\n", info->sig->hash_algo);
 		printf("        encoding:%s\n", info->sig->encoding);
+		printf("        digest algo:%s\n", info->sig->hash_algo);
+		printf("        signature:%p\n", info->sig->s);
+		printf("        signature size:%x\n", info->sig->s_size);
+		printf("        sig enc algo:%s\n", info->sig->pkey_algo);
+		printf("        calc'ed digest:%p\n", info->sig->digest);
+		printf("        digest size:%x\n", info->sig->digest_size);
+	}
+
+	printf("    unauthenticated attr:\n");
+	printf("      len: %x\n", info->unauthattrs_len);
+	if (info->ua_next) {
+		struct attribute *uattr;
+
+		for (uattr = info->ua_next; uattr; uattr = uattr->next)
+			printf("      oid:%x val:%p size:%lx\n",
+			       uattr->oid, uattr->data, uattr->size);
+	}
+
+	if (info->counter_signature) {
+		struct pkcs7_message *cnt_sig;
+		struct tstinfo *tst;
+		void print_pkcs7_message(struct pkcs7_message *);
+
+		printf("=== counter signature of timestamp ===\n");
+		cnt_sig = pkcs7_parse_message(info->counter_signature->data,
+					      info->counter_signature->size);
+		if (!IS_ERR(cnt_sig)) {
+			print_pkcs7_message(cnt_sig);
+			tst = tstinfo_parse(cnt_sig->data, cnt_sig->data_len);
+			if (!IS_ERR(tst)) {
+				print_tstinfo(tst);
+				tstinfo_free(tst);
+			} else {
+				printf("Err: parsing tstinfo failed.\n");
+				goto out;
+			}
+out:
+			pkcs7_free_message(cnt_sig);
+		} else {
+			printf("Err: parsing counter signature failed.\n");
+		}
+	} else {
+		printf("=== No counterSignature (timestamp) ===\n");
 	}
 }
 
