@@ -458,13 +458,13 @@ static inline bool clk_valid(struct clk *clk)
 int clk_get_by_id(ulong id, struct clk **clkp);
 
 /**
- * clk_dev_binded() - Check whether the clk has a device binded
+ * clk_dev_bound() - Check whether the clk has a device bound
  *
  * @clk		A pointer to the clk
  *
- * @return true on binded, or false on no
+ * @return true when bound, or false otherwise
  */
-bool clk_dev_binded(struct clk *clk);
+bool clk_dev_bound(struct clk *clk);
 #endif
 
 #define clk_prepare_enable(clk) clk_enable(clk)

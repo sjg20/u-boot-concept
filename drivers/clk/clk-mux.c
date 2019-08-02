@@ -35,7 +35,7 @@
 int clk_mux_val_to_index(struct clk *clk, u32 *table, unsigned int flags,
 			 unsigned int val)
 {
-	struct clk_mux *mux = to_clk_mux(clk_dev_binded(clk) ?
+	struct clk_mux *mux = to_clk_mux(clk_dev_bound(clk) ?
 			dev_get_clk_ptr(clk->dev) : clk);
 	int num_parents = mux->num_parents;
 
@@ -79,7 +79,7 @@ unsigned int clk_mux_index_to_val(u32 *table, unsigned int flags, u8 index)
 
 u8 clk_mux_get_parent(struct clk *clk)
 {
-	struct clk_mux *mux = to_clk_mux(clk_dev_binded(clk) ?
+	struct clk_mux *mux = to_clk_mux(clk_dev_bound(clk) ?
 			dev_get_clk_ptr(clk->dev) : clk);
 	u32 val;
 
@@ -97,7 +97,7 @@ u8 clk_mux_get_parent(struct clk *clk)
 static int clk_fetch_parent_index(struct clk *clk,
 				  struct clk *parent)
 {
-	struct clk_mux *mux = to_clk_mux(clk_dev_binded(clk) ?
+	struct clk_mux *mux = to_clk_mux(clk_dev_bound(clk) ?
 			dev_get_clk_ptr(clk->dev) : clk);
 
 	int i;
@@ -115,7 +115,7 @@ static int clk_fetch_parent_index(struct clk *clk,
 
 static int clk_mux_set_parent(struct clk *clk, struct clk *parent)
 {
-	struct clk_mux *mux = to_clk_mux(clk_dev_binded(clk) ?
+	struct clk_mux *mux = to_clk_mux(clk_dev_bound(clk) ?
 			dev_get_clk_ptr(clk->dev) : clk);
 	int index;
 	u32 val;

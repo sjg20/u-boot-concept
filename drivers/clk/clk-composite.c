@@ -18,7 +18,7 @@
 
 static u8 clk_composite_get_parent(struct clk *clk)
 {
-	struct clk_composite *composite = to_clk_composite(clk_dev_binded(clk) ?
+	struct clk_composite *composite = to_clk_composite(clk_dev_bound(clk) ?
 		(struct clk *)dev_get_clk_ptr(clk->dev) : clk);
 	struct clk *mux = composite->mux;
 
@@ -27,7 +27,7 @@ static u8 clk_composite_get_parent(struct clk *clk)
 
 static int clk_composite_set_parent(struct clk *clk, struct clk *parent)
 {
-	struct clk_composite *composite = to_clk_composite(clk_dev_binded(clk) ?
+	struct clk_composite *composite = to_clk_composite(clk_dev_bound(clk) ?
 		(struct clk *)dev_get_clk_ptr(clk->dev) : clk);
 	const struct clk_ops *mux_ops = composite->mux_ops;
 	struct clk *mux = composite->mux;
@@ -37,7 +37,7 @@ static int clk_composite_set_parent(struct clk *clk, struct clk *parent)
 
 static unsigned long clk_composite_recalc_rate(struct clk *clk)
 {
-	struct clk_composite *composite = to_clk_composite(clk_dev_binded(clk) ?
+	struct clk_composite *composite = to_clk_composite(clk_dev_bound(clk) ?
 		(struct clk *)dev_get_clk_ptr(clk->dev) : clk);
 	const struct clk_ops *rate_ops = composite->rate_ops;
 	struct clk *rate = composite->rate;
@@ -47,7 +47,7 @@ static unsigned long clk_composite_recalc_rate(struct clk *clk)
 
 static ulong clk_composite_set_rate(struct clk *clk, unsigned long rate)
 {
-	struct clk_composite *composite = to_clk_composite(clk_dev_binded(clk) ?
+	struct clk_composite *composite = to_clk_composite(clk_dev_bound(clk) ?
 		(struct clk *)dev_get_clk_ptr(clk->dev) : clk);
 	const struct clk_ops *rate_ops = composite->rate_ops;
 	struct clk *clk_rate = composite->rate;
@@ -57,7 +57,7 @@ static ulong clk_composite_set_rate(struct clk *clk, unsigned long rate)
 
 static int clk_composite_enable(struct clk *clk)
 {
-	struct clk_composite *composite = to_clk_composite(clk_dev_binded(clk) ?
+	struct clk_composite *composite = to_clk_composite(clk_dev_bound(clk) ?
 		(struct clk *)dev_get_clk_ptr(clk->dev) : clk);
 	const struct clk_ops *gate_ops = composite->gate_ops;
 	struct clk *gate = composite->gate;
@@ -67,7 +67,7 @@ static int clk_composite_enable(struct clk *clk)
 
 static int clk_composite_disable(struct clk *clk)
 {
-	struct clk_composite *composite = to_clk_composite(clk_dev_binded(clk) ?
+	struct clk_composite *composite = to_clk_composite(clk_dev_bound(clk) ?
 		(struct clk *)dev_get_clk_ptr(clk->dev) : clk);
 	const struct clk_ops *gate_ops = composite->gate_ops;
 	struct clk *gate = composite->gate;
