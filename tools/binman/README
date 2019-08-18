@@ -978,6 +978,9 @@ Some ideas:
 - Support for ARM Trusted Firmware (ATF)
 - Detect invalid properties in nodes
 - Sort the fdtmap by offset
+- Fix image-pos for u-boot-tpl-elf in coral
+- Allow binman symbols in ifwi regions
+- Check that binman symbols work in sections
 
 --
 Simon Glass <sjg@chromium.org>
