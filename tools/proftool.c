@@ -489,7 +489,7 @@ static void out_func(ulong func_offset, int is_caller, const char *suffix)
  * #           bash-4251  [01] 10152.583855: dput <-path_put
  * #           bash-4251  [01] 10152.583855: _atomic_dec_and_lock <-dput
  */
-static int make_ftrace(void)
+static int make_old_ftrace(void)
 {
 	struct trace_call *call;
 	int missing_count = 0, skip_count = 0;
@@ -532,6 +532,62 @@ static int make_ftrace(void)
 	return 0;
 }
 
+/*
+ * cpus=32
+ *            <...>-110707 [024] 1933619.634682: funcgraph_entry:                   |  __d_path() {
+ *            <...>-110708 [027] 1933619.634682: funcgraph_entry:                   |  file_ra_state_init() {
+ *            <...>-110705 [009] 1933619.634682: funcgraph_entry:                   |  mutex_lock() {
+ *            <...>-110709 [031] 1933619.634682: funcgraph_entry:                   |  __do_page_fault() {
+ *            <...>-110706 [017] 1933619.634682: funcgraph_entry:                   |  seq_putc() {
+ *            <...>-110674 [006] 1933619.634682: funcgraph_entry:                   |  mutex_unlock() {
+ *            <idle>-0     [008] 1933619.634682: funcgraph_entry:                   |  sched_idle_set_state() {
+ *            <...>-110707 [024] 1933619.634684: funcgraph_entry:                   |  smp_irq_work_interrupt() {
+ *            <...>-110708 [027] 1933619.634684: funcgraph_entry:                   |  smp_irq_work_interrupt() {
+ *            <idle>-0     [008] 1933619.634684: funcgraph_exit:         0.270 us   |  }
+ */
+static int make_ftrace(void)
+{
+	struct trace_call *call;
+	int missing_count = 0, skip_count = 0;
+	int i;
+
+	printf("cpus=1\n");
+	for (i = 0, call = call_list; i < call_count; i++, call++) {
+		struct func_info *func = find_func_by_offset(call->func);
+		ulong time = call->flags & FUNCF_TIMESTAMP_MASK;
+
+		if (TRACE_CALL_TYPE(call) != FUNCF_ENTRY &&
+		    TRACE_CALL_TYPE(call) != FUNCF_EXIT)
+			continue;
+		if (!func) {
+			warn("Cannot find function at %lx\n",
+			     text_offset + call->func);
+			missing_count++;
+			continue;
+		}
+
+		if (!(func->flags & FUNCF_TRACE)) {
+			debug("Funcion '%s' is excluded from trace\n",
+			      func->name);
+			skip_count++;
+			continue;
+		}
+
+		printf("%11s<u-boot>-1 [0] %lu.%06lu: funcgraph_", "",
+		       time / 1000000, time % 1000000);
+		if (TRACE_CALL_TYPE(call) == FUNCF_ENTRY) {
+			printf("entry:%19s|  ", "");
+			out_func(call->func, 0, " {\n");
+		} else {
+			printf("exit:%10lu.%03lu us   |  }\n", 0L, 270L);
+		}
+	}
+	info("ftrace: %d functions not found, %d excluded\n", missing_count,
+	     skip_count);
+
+	return 0;
+}
+
 static int prof_tool(int argc, char * const argv[],
 		     const char *prof_fname, const char *map_fname,
 		     const char *trace_config_fname)
@@ -550,6 +606,8 @@ static int prof_tool(int argc, char * const argv[],
 	for (; argc; argc--, argv++) {
 		const char *cmd = *argv;
 
+		if (0 == strcmp(cmd, "dump-old-ftrace"))
+			err = make_old_ftrace();
 		if (0 == strcmp(cmd, "dump-ftrace"))
 			err = make_ftrace();
 		else
