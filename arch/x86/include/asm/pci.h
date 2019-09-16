@@ -61,6 +61,17 @@ int pci_x86_clrset_config(pci_dev_t bdf, uint offset, ulong clr, ulong set,
 			  enum pci_size_t size);
 
 /**
+ * pci_x86_ofplat_get_devfn() - Get the PCI dev/fn from ofplat reg data
+ *
+ * @reg: reg value from dt-platdata.c array (first member)
+ * @return device/function for that device
+ */
+static inline pci_dev_t pci_x86_ofplat_get_devfn(u32 reg)
+{
+	return reg & 0xff00;
+}
+
+/**
  * Assign IRQ number to a PCI device
  *
  * This function assigns IRQ for a PCI device. If the device does not exist
