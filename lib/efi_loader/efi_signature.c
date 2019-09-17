@@ -113,7 +113,11 @@ static bool efi_hash_msg_content(struct pkcs7_message *msg, void **hash,
  *
  * Return:	true if signature is verified, false if not
  */
+#if 1 /* TEMPORARILY */
+bool efi_signature_verify(struct efi_image_regions *regs,
+#else
 static bool efi_signature_verify(struct efi_image_regions *regs,
+#endif
 				 struct pkcs7_message *msg,
 				 struct pkcs7_signed_info *ps_info,
 				 struct x509_certificate *cert)
