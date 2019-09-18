@@ -606,7 +606,8 @@ static efi_status_t efi_variable_authenticate(u16 *variable,
 		if (!truststore)
 			goto err;
 	} else if (u16_strcmp(variable, L"db") == 0 ||
-		   u16_strcmp(variable, L"dbx") == 0) {
+		   u16_strcmp(variable, L"dbx") == 0 ||
+		   u16_strcmp(variable, L"dbt") == 0) {
 		/* with PK and KEK */
 		truststore = efi_sigstore_parse_sigdb(L"KEK");
 		truststore2 = efi_sigstore_parse_sigdb(L"PK");
@@ -1037,7 +1038,8 @@ efi_status_t EFIAPI efi_set_variable_common(u16 *variable_name,
 	      !u16_strcmp(variable_name, L"KEK")) &&
 		!guidcmp(vendor, &efi_global_variable_guid)) ||
 	    ((!u16_strcmp(variable_name, L"db") ||
-	      !u16_strcmp(variable_name, L"dbx")) &&
+	      !u16_strcmp(variable_name, L"dbx") ||
+	      !u16_strcmp(variable_name, L"dbt")) &&
 		!guidcmp(vendor, &efi_guid_image_security_database))) {
 		/* authentication is mandatory */
 		if (!(attributes &
