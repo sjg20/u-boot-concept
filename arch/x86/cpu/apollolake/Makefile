@@ -4,3 +4,4 @@
 
 obj-y += lpss.o
 obj-y += pmc.o
+obj-y += uart.o
