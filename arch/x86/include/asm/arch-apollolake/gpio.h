@@ -177,4 +177,15 @@ int gpio_config_pads(struct udevice *dev, int num_cfgs, u32 *pads,
  */
 int gpio_gpi_clear_int_cfg(void);
 
+/**
+ * hostbridge_config_pads_for_node() - Configure GPIO pads
+ *
+ * Set up the pads using the data in a given node
+ *
+ * @dev: Hostbridge device
+ * @node: Node containing the 'pads' property with the data in it
+ * @return 0 if OK, -ve on error
+ */
+int hostbridge_config_pads_for_node(struct udevice *dev, ofnode node);
+
 #endif
