@@ -2,4 +2,5 @@
 #
 # Copyright (c) 2016 Google, Inc
 
+obj-y += lpss.o
 obj-y += pmc.o
