@@ -703,6 +703,9 @@ static init_fnc_t init_sequence_r[] = {
 	efi_memory_init,
 #endif
 	initr_binman,
+#ifdef CONFIG_FSP_VERSION2
+	arch_fsp_init_r,
+#endif
 	stdio_init_tables,
 	initr_serial,
 	initr_announce,
