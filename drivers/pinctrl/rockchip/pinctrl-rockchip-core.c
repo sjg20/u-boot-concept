@@ -383,8 +383,8 @@ static int rockchip_pinconf_prop_name_to_param(const char *property,
 	return -EPERM;
 }
 
-static int rockchip_pinctrl_set_state(struct udevice *dev,
-				      struct udevice *config)
+static int __maybe_unused rockchip_pinctrl_set_state(struct udevice *dev,
+						     struct udevice *config)
 {
 	struct rockchip_pinctrl_priv *priv = dev_get_priv(dev);
 	struct rockchip_pin_ctrl *ctrl = priv->ctrl;
@@ -474,7 +474,9 @@ static int rockchip_pinctrl_set_state(struct udevice *dev,
 }
 
 const struct pinctrl_ops rockchip_pinctrl_ops = {
+#if !CONFIG_IS_ENABLED(PLATDATA)
 	.set_state			= rockchip_pinctrl_set_state,
+#endif
 	.get_gpio_mux			= rockchip_pinctrl_get_gpio_mux,
 };
 

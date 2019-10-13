@@ -671,6 +671,10 @@ static int rk3328_gmac2io_set_parent(struct clk *clk, struct clk *parent)
 		return 0;
 	}
 
+	/* FIXME: Device tree should be read in ofdata_to_platdata() */
+	if (CONFIG_IS_ENABLED(OF_PLATDATA))
+		return -EDEADLK;
+
 	/*
 	 * Otherwise, we need to check the clock-output-names of the
 	 * requested parent to see if the requested id is "gmac_clkin".
@@ -707,6 +711,10 @@ static int rk3328_gmac2io_ext_set_parent(struct clk *clk, struct clk *parent)
 		rk_clrreg(&grf->soc_con[4], BIT(14));
 		return 0;
 	}
+
+	/* FIXME: Device tree should be read in ofdata_to_platdata() */
+	if (CONFIG_IS_ENABLED(OF_PLATDATA))
+		return -EDEADLK;
 
 	/*
 	 * Otherwise, we need to check the clock-output-names of the
@@ -764,9 +772,11 @@ static int rk3328_clk_probe(struct udevice *dev)
 
 static int rk3328_clk_ofdata_to_platdata(struct udevice *dev)
 {
-	struct rk3328_clk_priv *priv = dev_get_priv(dev);
+	if (!CONFIG_IS_ENABLED(OF_PLATDATA)) {
+		struct rk3328_clk_priv *priv = dev_get_priv(dev);
 
-	priv->cru = dev_read_addr_ptr(dev);
+		priv->cru = dev_read_addr_ptr(dev);
+	}
 
 	return 0;
 }
