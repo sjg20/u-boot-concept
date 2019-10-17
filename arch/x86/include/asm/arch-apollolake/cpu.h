@@ -10,7 +10,7 @@
 #define CTC_FREQ		19200000
 
 /* Set to true to use the fast SPI driver to boot, instead of mapped SPI */
-#define BOOT_FROM_FAST_SPI_FLASH	false
+#define BOOT_FROM_FAST_SPI_FLASH	true
 
 /*
  * We need to read well past the end of the region in order for execution from

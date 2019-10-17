@@ -22,7 +22,7 @@
  * @flashp: Pointer to place to put flash info, which may be NULL if the
  * space should be allocated
  */
-static int spi_flash_probe_slave(struct spi_flash *flash)
+int spi_flash_probe_slave(struct spi_flash *flash)
 {
 	struct spi_slave *spi = flash->spi;
 	int ret;
@@ -119,7 +119,7 @@ static int spi_flash_std_erase(struct udevice *dev, u32 offset, size_t len)
 	struct erase_info instr;
 
 	if (offset % mtd->erasesize || len % mtd->erasesize) {
-		printf("SF: Erase offset/length not multiple of erase size\n");
+		debug("SF: Erase offset/length not multiple of erase size\n");
 		return -EINVAL;
 	}
 

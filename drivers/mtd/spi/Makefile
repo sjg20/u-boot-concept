@@ -8,7 +8,7 @@ spi-nor-y := sf_probe.o spi-nor-ids.o
 
 ifdef CONFIG_SPL_BUILD
 obj-$(CONFIG_SPL_SPI_BOOT)	+= fsl_espi_spl.o
-ifeq ($(CONFIG_SPL_SPI_FLASH_TINY),y)
+ifeq ($(CONFIG_$(SPL_TPL_)SPI_FLASH_TINY),y)
 spi-nor-y += spi-nor-tiny.o
 else
 spi-nor-y += spi-nor-core.o
@@ -19,6 +19,6 @@ endif
 
 obj-$(CONFIG_SPI_FLASH) += spi-nor.o
 obj-$(CONFIG_SPI_FLASH_DATAFLASH) += sf_dataflash.o
-obj-$(CONFIG_SPI_FLASH_INTEL_FAST) += intel_fast_spi.o
+#obj-$(CONFIG_SPI_FLASH_INTEL_FAST) += intel_fast_spi.o
 obj-$(CONFIG_SPI_FLASH_MTD) += sf_mtd.o
 obj-$(CONFIG_SPI_FLASH_SANDBOX) += sandbox.o sandbox_direct.o

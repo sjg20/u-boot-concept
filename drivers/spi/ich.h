@@ -54,6 +54,36 @@ struct ich9_spi_regs {
 	uint32_t bcr;
 } __packed;
 
+/* Register offsets from the MMIO region base (PCI_BASE_ADDRESS_0) */
+struct fast_spi_regs {
+	u32 bfp;
+	u32 hsfsts_ctl;
+	u32 faddr;
+	u32 dlock;
+
+	u32 fdata[0x10];
+
+	u32 fracc;
+	u32 freg[12];
+	u32 fpr[5];
+	u32 gpr0;
+	u32 spare2;
+	u32 sts_ctl;
+	u16 preop;		/* a4 */
+	u16 optype;
+	u8 opmenu[8];
+
+	u32 spare3;
+	u32 fdoc;
+	u32 fdod;
+	u32 spare4;
+	u32 afc;
+	u32 vscc[2];
+	u32 ptinx;
+	u32 ptdata;
+};
+check_member(fast_spi_regs, ptdata, 0xd0);
+
 enum {
 	SPIS_SCIP =		0x0001,
 	SPIS_GRANT =		0x0002,
@@ -77,6 +107,9 @@ enum {
 
 	/* Mask for speed byte, biuts 23:16 of SSFC */
 	SSFC_SCF_33MHZ	=	0x01,
+
+	/* Shift the above values left this much for APL */
+	SPIC_APL_SHIFT =	8,
 };
 
 enum {
@@ -163,14 +196,56 @@ struct spi_trans {
 
 #define ICH_BOUNDARY	0x1000
 
+/* PCI configuration registers */
+#define SPIBAR_BIOS_CONTROL			0xdc
+#define SPIBAR_BIOS_CONTROL_WPD			BIT(0)
+#define SPIBAR_BIOS_CONTROL_LOCK_ENABLE		BIT(1)
+#define SPIBAR_BIOS_CONTROL_CACHE_DISABLE	BIT(2)
+#define SPIBAR_BIOS_CONTROL_PREFETCH_ENABLE	BIT(3)
+#define SPIBAR_BIOS_CONTROL_EISS		BIT(5)
+#define SPIBAR_BIOS_CONTROL_BILD		BIT(7)
+
+#define SPIBAR_HSFSTS_FDBC_MASK	(0x3f << 24)
+#define SPIBAR_HSFSTS_FDBC(n)		(((n) << 24) & SPIBAR_HSFSTS_FDBC_MASK)
+#define SPIBAR_HSFSTS_WET		BIT(21)
+#define SPIBAR_HSFSTS_FCYCLE_MASK	(0xf << 17)
+#define SPIBAR_HSFSTS_FCYCLE(cyc)	(((cyc) << 17) \
+					& SPIBAR_HSFSTS_FCYCLE_MASK)
+
+/* Supported flash cycle types */
+#define SPIBAR_HSFSTS_CYCLE_READ	SPIBAR_HSFSTS_FCYCLE(0)
+#define SPIBAR_HSFSTS_CYCLE_WRITE	SPIBAR_HSFSTS_FCYCLE(2)
+#define SPIBAR_HSFSTS_CYCLE_4K_ERASE	SPIBAR_HSFSTS_FCYCLE(3)
+#define SPIBAR_HSFSTS_CYCLE_64K_ERASE	SPIBAR_HSFSTS_FCYCLE(4)
+#define SPIBAR_HSFSTS_CYCLE_RDID	SPIBAR_HSFSTS_FCYCLE(6)
+#define SPIBAR_HSFSTS_CYCLE_WR_STATUS	SPIBAR_HSFSTS_FCYCLE(7)
+#define SPIBAR_HSFSTS_CYCLE_RD_STATUS	SPIBAR_HSFSTS_FCYCLE(8)
+
+#define SPIBAR_HSFSTS_FGO		BIT(16)
+#define SPIBAR_HSFSTS_FLOCKDN		BIT(15)
+#define SPIBAR_HSFSTS_FDV		BIT(14)
+#define SPIBAR_HSFSTS_FDOPSS		BIT(13)
+#define SPIBAR_HSFSTS_WRSDIS		BIT(11)
+#define SPIBAR_HSFSTS_SAF_CE		BIT(8)
+#define SPIBAR_HSFSTS_SAF_ACTIVE	BIT(7)
+#define SPIBAR_HSFSTS_SAF_LE		BIT(6)
+#define SPIBAR_HSFSTS_SCIP		BIT(5)
+#define SPIBAR_HSFSTS_SAF_DLE		BIT(4)
+#define SPIBAR_HSFSTS_SAF_ERROR		BIT(3)
+#define SPIBAR_HSFSTS_AEL		BIT(2)
+#define SPIBAR_HSFSTS_FCERR		BIT(1)
+#define SPIBAR_HSFSTS_FDONE		BIT(0)
+#define SPIBAR_HSFSTS_W1C_BITS		0xff
+
+/* Maximum bytes of data that can fit in FDATAn (0x10) registers */
+#define SPIBAR_FDATA_FIFO_SIZE		0x40
+
+#define SPIBAR_HWSEQ_XFER_TIMEOUT_MS	500
+
 enum ich_version {
 	ICHV_7,
 	ICHV_9,
-};
-
-struct ich_spi_platdata {
-	enum ich_version ich_version;	/* Controller version, 7 or 9 */
-	bool lockdown;			/* lock down controller settings? */
+	ICHV_APL,
 };
 
 struct ich_spi_priv {

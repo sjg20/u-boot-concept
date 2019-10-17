@@ -128,4 +128,6 @@ void cpu_set_eist(bool eist_status);
  */
 void cpu_set_p_state_to_turbo_ratio(void);
 
+int fast_spi_get_bios_mmap(ulong *map_basep, uint *map_sizep, uint *offsetp);
+
 #endif

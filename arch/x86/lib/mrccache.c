@@ -212,8 +212,8 @@ int mrccache_get_region(enum mrc_type_t type, struct udevice **devp,
 	struct udevice *dev;
 	ofnode mrc_node;
 	ulong map_base;
-	size_t map_size;
-	u32 offset;
+	uint map_size;
+	uint offset;
 	u32 reg[2];
 	int ret;
 
@@ -225,7 +225,7 @@ int mrccache_get_region(enum mrc_type_t type, struct udevice **devp,
 	ret = uclass_find_first_device(UCLASS_SPI_FLASH, &dev);
 	if (ret)
 		return log_msg_ret("Cannot find SPI flash\n", ret);
-	ret = spi_flash_get_mmap(dev, &map_base, &map_size, &offset);
+	ret = dm_spi_get_mmap(dev, &map_base, &map_size, &offset);
 	if (!ret) {
 		entry->base = map_base;
 	} else {

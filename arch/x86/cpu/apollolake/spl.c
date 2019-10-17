@@ -5,13 +5,14 @@
 
 #include <common.h>
 #include <binman_sym.h>
+#include <dm.h>
+#include <spi.h>
 #include <spl.h>
+#include <spi_flash.h>
 #include <asm/spl.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/fast_spi.h>
-
-#include <dm.h>
-#include <spi_flash.h>
+#include <dm/device-internal.h>
 
 /*
  * We need to read well past the end of the region in order for execution from
@@ -70,6 +71,70 @@ SPL_LOAD_IMAGE_METHOD("Mapped SPI", 2, BOOT_DEVICE_SPI_MMAP, rom_load_image);
 
 #if CONFIG_IS_ENABLED(SPI_FLASH_SUPPORT)
 
+static int apl_flash_std_read(struct udevice *dev, u32 offset, size_t len,
+			      void *buf)
+{
+	struct spi_flash *flash = dev_get_uclass_priv(dev);
+	struct mtd_info *mtd = &flash->mtd;
+	size_t retlen;
+
+	return log_ret(mtd->_read(mtd, offset, len, &retlen, buf));
+}
+static int apl_flash_std_probe(struct udevice *dev)
+{
+	struct dm_spi_slave_platdata *plat;
+	struct udevice *spi;
+	struct spi_slave *slave;
+	struct spi_flash *flash;
+	int ret;
+
+	ret = uclass_first_device_err(UCLASS_SPI, &spi);
+	if (ret)
+		return ret;
+	dev->parent = spi;
+	ret = device_probe(spi);
+	if (ret)
+		return ret;
+	if (CONFIG_IS_ENABLED(OF_PLATDATA)) {
+		plat = calloc(sizeof(*plat), 1);
+		if (!plat)
+			return -ENOMEM;
+		dev->parent_platdata = plat;
+		slave = calloc(sizeof(*slave), 1);
+		if (!slave)
+			return -ENOMEM;
+		dev->parent_priv = slave;
+	} else {
+		plat = dev_get_parent_platdata(dev);
+		slave = dev_get_parent_priv(spi);
+	}
+	flash = dev_get_uclass_priv(dev);
+
+	flash->dev = dev;
+	flash->spi = slave;
+	slave->dev = dev;
+
+	return spi_flash_probe_slave(flash);
+}
+
+static const struct dm_spi_flash_ops apl_flash_std_ops = {
+	.read = apl_flash_std_read,
+};
+
+static const struct udevice_id apl_flash_std_ids[] = {
+	{ .compatible = "jedec,spi-nor" },
+	{ }
+};
+
+U_BOOT_DRIVER(winbond_w25q128fw) = {
+	.name		= "winbond_w25q128fw",
+	.id		= UCLASS_SPI_FLASH,
+	.of_match	= apl_flash_std_ids,
+	.probe		= apl_flash_std_probe,
+	.priv_auto_alloc_size = sizeof(struct spi_flash),
+	.ops		= &apl_flash_std_ops,
+};
+
 /* This uses a SPI flash device to read the next phase */
 static int spl_fast_spi_load_image(struct spl_image_info *spl_image,
 				   struct spl_boot_device *bootdev)
@@ -84,8 +149,9 @@ static int spl_fast_spi_load_image(struct spl_image_info *spl_image,
 		return ret;
 
 	spl_image->size = CONFIG_SYS_MONITOR_LEN;  /* We don't know SPL size */
-	spl_image->entry_point = CONFIG_SPL_TEXT_BASE;
-	spl_image->load_addr = CONFIG_SPL_TEXT_BASE;
+	spl_image->entry_point = spl_phase() == PHASE_TPL ?
+		CONFIG_SPL_TEXT_BASE : CONFIG_SYS_TEXT_BASE;
+	spl_image->load_addr = spl_image->entry_point;
 	spl_image->os = IH_OS_U_BOOT;
 	spl_image->name = "U-Boot";
 	spl_pos &= ~0xff000000;

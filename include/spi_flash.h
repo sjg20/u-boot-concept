@@ -9,7 +9,6 @@
 #ifndef _SPI_FLASH_H_
 #define _SPI_FLASH_H_
 
-#include <dm.h>	/* Because we dereference struct udevice here */
 #include <linux/types.h>
 #include <linux/mtd/spi-nor.h>
 
@@ -128,6 +127,8 @@ int spi_flash_get_mmap(struct udevice *dev, ulong *map_basep, size_t *map_sizep,
  *	other -ve value on error
  */
 int spl_flash_get_sw_write_prot(struct udevice *dev);
+
+int spi_flash_probe_slave(struct spi_flash *flash);
 
 int spi_flash_probe_bus_cs(unsigned int busnum, unsigned int cs,
 			   unsigned int max_hz, unsigned int spi_mode,

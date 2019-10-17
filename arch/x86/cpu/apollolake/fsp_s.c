@@ -624,9 +624,12 @@ int arch_fsp_init_r(void)
 
 	/*
 	 * This must be called before any devices are probed. Put any probing
-	 * into arch_fsp_s_preinit() above
+	 * into arch_fsp_s_preinit() above.
+	 *
+	 * We don't use BOOT_FROM_FAST_SPI_FLASH here since it will force PCI
+	 * to be probed.
 	 */
-	ret = fsp_silicon_init(s3wake, BOOT_FROM_FAST_SPI_FLASH);
+	ret = fsp_silicon_init(s3wake, false);
 	if (ret)
 		return ret;
 

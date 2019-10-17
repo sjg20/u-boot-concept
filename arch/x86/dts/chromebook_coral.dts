@@ -27,6 +27,7 @@
 	aliases {
 		cros-ec0 = &cros_ec;
 		fsp = &fsp_s;
+		spi0 = &spi;
 	};
 
 	config {
@@ -183,26 +184,33 @@
 			gpe0-en = <0x30>;
 		};
 
-		fast-spi@d,2 {
+		spi: fast-spi@d,2 {
 			u-boot,dm-pre-reloc;
 			reg = <0x02006a10 0 0 0 0>;
 			#address-cells = <1>;
-			#size-cells = <1>;
+			#size-cells = <0>;
 			compatible = "intel,fast-spi";
 			early-regs = <IOMAP_SPI_BASE 0x1000>;
-			memory-map = <0xff800000 0x00800000>;
+			intel,hardware-seq = <1>;
 
-			rw-mrc-cache {
-				label = "rw-mrc-cache";
-				reg = <0x003e0000 0x00010000>;
+			spi-flash@0 {
+				#size-cells = <1>;
+				#address-cells = <1>;
 				u-boot,dm-pre-reloc;
+				reg = <0>;
+				compatible = "winbond,w25q128fw",
+					 "jedec,spi-nor";
+				rw-mrc-cache {
+					label = "rw-mrc-cache";
+					reg = <0x003e0000 0x00010000>;
+					u-boot,dm-pre-reloc;
+				};
+				rw-var-mrc-cache {
+					label = "rw-mrc-cache";
+					reg = <0x003f0000 0x0001000>;
+					u-boot,dm-pre-reloc;
+				};
 			};
-			rw-var-mrc-cache {
-				label = "rw-mrc-cache";
-				reg = <0x003f0000 0x0001000>;
-				u-boot,dm-pre-reloc;
-			};
-
 		};
 
 		serial: serial@18,2 {

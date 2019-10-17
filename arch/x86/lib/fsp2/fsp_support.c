@@ -33,15 +33,21 @@ int fsp_get_header(ulong offset, ulong size, bool use_spi_flash,
 	/* You are in a maze of twisty headers all alike */
 	debug("offset=%x buf=%x\n", (uint)offset, (uint)buf);
 	if (use_spi_flash) {
+		printf("1\n");
 		ret = uclass_first_device_err(UCLASS_SPI_FLASH, &dev);
+		printf("2\n");
 		if (ret)
 			return log_msg_ret("Cannot find flash device", ret);
+		printf("3\n");
 		ret = spi_flash_read_dm(dev, offset, PROBE_BUF_SIZE, buf);
+		printf("4\n");
 		if (ret)
 			return log_msg_ret("Cannot read flash", ret);
+		printf("5\n");
 	} else {
 		memcpy(buf, (void *)offset, PROBE_BUF_SIZE);
 	}
+	printf("finished read\n");
 
 	/* Initalise the FSP base */
 	ptr = buf;

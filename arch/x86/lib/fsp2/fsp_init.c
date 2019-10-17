@@ -9,6 +9,7 @@
 #include <cbfs.h>
 #include <dm.h>
 #include <init.h>
+#include <spi.h>
 #include <spl.h>
 #include <spi_flash.h>
 #include <asm/arch/gpio.h>
@@ -75,11 +76,11 @@ int fsp_locate_fsp(enum fsp_type_t type, struct binman_entry *entry,
 		   struct fsp_header **hdrp, ulong *rom_offsetp)
 {
 	ulong mask = CONFIG_ROM_SIZE - 1;
-	struct udevice *dev, *sf;
+	struct udevice *dev;
 	ulong rom_offset = 0;
-	size_t map_size;
+	uint map_size;
 	ulong map_base;
-	u32 offset;
+	uint offset;
 	int ret;
 
 	/*
@@ -89,12 +90,18 @@ int fsp_locate_fsp(enum fsp_type_t type, struct binman_entry *entry,
 	ret = uclass_find_first_device(UCLASS_NORTHBRIDGE, &dev);
 	if (ret)
 		return log_msg_ret("Cannot get northbridge", ret);
-	ret = uclass_find_first_device(UCLASS_SPI_FLASH, &sf);
-	if (ret)
-		return log_msg_ret("Cannot get SPI flash", ret);
-	ret = spi_flash_get_mmap(sf, &map_base, &map_size, &offset);
-	if (ret)
-		return log_msg_ret("Could not get flash mmap", ret);
+	printf("find flash\n");
+	if (!use_spi_flash) {
+		struct udevice *sf;
+
+		ret = uclass_find_first_device(UCLASS_SPI_FLASH, &sf);
+		if (ret)
+			return log_msg_ret("Cannot get SPI flash", ret);
+		printf("find flash done\n");
+		ret = dm_spi_get_mmap(sf, &map_base, &map_size, &offset);
+		if (ret)
+			return log_msg_ret("Could not get flash mmap", ret);
+	}
 
 	if (spl_phase() >= PHASE_BOARD_F) {
 		if (type != FSP_S)
@@ -133,8 +140,10 @@ int fsp_locate_fsp(enum fsp_type_t type, struct binman_entry *entry,
 	entry->image_pos += rom_offset;
 
 	/* Use memory-mapped SPI flash by default as it is simpler */
+	printf("get_header\n");
 	ret = fsp_get_header(entry->image_pos, entry->size, use_spi_flash,
 			     hdrp);
+	printf("get_header done\n");
 	if (ret)
 		return log_msg_ret("fsp_get_header", ret);
 	*devp = dev;

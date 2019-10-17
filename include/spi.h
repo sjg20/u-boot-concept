@@ -113,8 +113,6 @@ struct spi_slave {
 #define SPI_XFER_BEGIN		BIT(0)	/* Assert CS before transfer */
 #define SPI_XFER_END		BIT(1)	/* Deassert CS after transfer */
 #define SPI_XFER_ONCE		(SPI_XFER_BEGIN | SPI_XFER_END)
-#define SPI_XFER_MMAP		BIT(2)	/* Memory Mapped start */
-#define SPI_XFER_MMAP_END	BIT(3)	/* Memory Mapped End */
 };
 
 /**
@@ -462,6 +460,19 @@ struct dm_spi_ops {
 	 *	   is invalid, other -ve value on error
 	 */
 	int (*cs_info)(struct udevice *bus, uint cs, struct spi_cs_info *info);
+
+	/**
+	 * get_mmap() - Get memory-mapped SPI
+	 *
+	 * @dev:	The SPI flash slave device
+	 * @map_basep:	Returns base memory address for mapped SPI
+	 * @map_sizep:	Returns size of mapped SPI
+	 * @offsetp:	Returns start offset of SPI flash where the map works
+	 *	correctly (offsets before this are not visible)
+	 * @return 0 if OK, -EFAULT if memory mapping is not available
+	 */
+	int (*get_mmap)(struct udevice *dev, ulong *map_basep,
+			uint *map_sizep, uint *offsetp);
 };
 
 struct dm_spi_emul_ops {
@@ -649,6 +660,20 @@ void dm_spi_release_bus(struct udevice *dev);
  */
 int dm_spi_xfer(struct udevice *dev, unsigned int bitlen,
 		const void *dout, void *din, unsigned long flags);
+
+/**
+ * spi_get_mmap() - Get memory-mapped SPI
+ *
+ * @dev:	SPI slave device to check
+ * @map_basep:	Returns base memory address for mapped SPI
+ * @map_sizep:	Returns size of mapped SPI
+ * @offsetp:	Returns start offset of SPI flash where the map works
+ *	correctly (offsets before this are not visible)
+ * @return 0 if OK, -ENOSYS if no operation, -EFAULT if memory mapping is not
+ *	available
+ */
+int dm_spi_get_mmap(struct udevice *dev, ulong *map_basep, uint *map_sizep,
+		    uint *offsetp);
 
 /* Access the operations for a SPI device */
 #define spi_get_ops(dev)	((struct dm_spi_ops *)(dev)->driver->ops)

@@ -39,17 +39,22 @@ struct fast_spi_regs {
 
 	u32 fdata[0x10];
 
-	u8 spare[0x84 - 0x50];
-	u32 fpr[8];
-	u16 preop;
+	u32 fracc;
+	u32 freg[12];
+	u32 fpr[5];
+	u32 gpr0;
+	u32 spare2;
+	u32 sts_ctl;
+	u16 preop;		/* a4 */
 	u16 optype;
-	u32 opmenu_lower;
-	u32 opmenu_upper;
+	u8 opmenu[8];
 
-	u32 space2;
+	u32 spare3;
 	u32 fdoc;
 	u32 fdod;
-	u32 spare3[4];
+	u32 spare4;
+	u32 afc;
+	u32 vscc[2];
 	u32 ptinx;
 	u32 ptdata;
 };

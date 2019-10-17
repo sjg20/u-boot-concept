@@ -143,13 +143,15 @@ int fspm_update_config(struct udevice *dev, struct fspm_upd *upd)
 	arch->nvs_buffer_ptr = NULL;
 	prepare_mrc_cache(upd);
 	arch->stack_base = (void *)0xfef96000;
-	arch->boot_loader_tolum_size = 0x2000;
+	arch->boot_loader_tolum_size = 0;
 
 	arch->boot_mode = FSP_BOOT_WITH_FULL_CONFIGURATION;
+/*
 	cfg->serial_debug_port_type = 2;
 	cfg->serial_debug_port_device = 2;
 	cfg->serial_debug_port_stride_size = 2;
 	cfg->serial_debug_port_address = 0;
+*/
 
 	cfg->package = 1;
 	/* Don't enforce a memory size limit */

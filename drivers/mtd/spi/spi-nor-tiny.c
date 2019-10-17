@@ -37,11 +37,15 @@
 static int spi_nor_read_write_reg(struct spi_nor *nor, struct spi_mem_op
 		*op, void *buf)
 {
+	int ret;
+
 	if (op->data.dir == SPI_MEM_DATA_IN)
 		op->data.buf.in = buf;
 	else
 		op->data.buf.out = buf;
-	return spi_mem_exec_op(nor->spi, op);
+	ret = spi_mem_exec_op(nor->spi, op);
+
+	return ret;
 }
 
 static int spi_nor_read_reg(struct spi_nor *nor, u8 code, u8 *val, int len)
@@ -375,7 +379,7 @@ static const struct flash_info *spi_nor_read_id(struct spi_nor *nor)
 	}
 	dev_dbg(nor->dev, "unrecognized JEDEC id bytes: %02x, %02x, %02x\n",
 		id[0], id[1], id[2]);
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-EMEDIUMTYPE);
 }
 
 static int spi_nor_read(struct mtd_info *mtd, loff_t from, size_t len,
@@ -731,7 +735,7 @@ int spi_nor_scan(struct spi_nor *nor)
 
 	info = spi_nor_read_id(nor);
 	if (IS_ERR_OR_NULL(info))
-		return -ENOENT;
+		return PTR_ERR(info);
 	/* Parse the Serial Flash Discoverable Parameters table. */
 	ret = spi_nor_init_params(nor, info, &params);
 	if (ret)

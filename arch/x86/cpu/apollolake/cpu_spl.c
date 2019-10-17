@@ -91,6 +91,7 @@ static void init_for_uart(void)
 	pch_uart_init();
 }
 
+/*
 static int fast_spi_cache_bios_region(struct udevice *sf)
 {
 	ulong map_base;
@@ -109,6 +110,7 @@ static int fast_spi_cache_bios_region(struct udevice *sf)
 
 	return 0;
 }
+*/
 
 static void enable_pm_timer_emulation(struct udevice *pmc)
 {
@@ -167,7 +169,7 @@ static void early_ec_init(void)
 
 static int arch_cpu_init_tpl(void)
 {
-	struct udevice *pmc, *sa, *p2sb, *gpio, *serial, *sf, *lpc;
+	struct udevice *pmc, *sa, *p2sb, *gpio, *serial, *spi, *lpc;
 	int ret;
 
 	ret = uclass_first_device_err(UCLASS_ACPI_PMC, &pmc);
@@ -194,12 +196,12 @@ static int arch_cpu_init_tpl(void)
 	ret = uclass_first_device_err(UCLASS_SERIAL, &serial);
 	if (ret)
 		return log_msg_ret("Cannot set up serial", ret);
-	ret = uclass_first_device_err(UCLASS_SPI_FLASH, &sf);
+	ret = uclass_first_device_err(UCLASS_SPI, &spi);
 	if (ret)
 		return log_msg_ret("Cannot set up SPI flash", ret);
-	ret = fast_spi_cache_bios_region(sf);
-	if (ret)
-		return log_msg_ret("Cannot set up BIOS cache", ret);
+// 	ret = fast_spi_cache_bios_region(sf);
+// 	if (ret)
+// 		return log_msg_ret("Cannot set up BIOS cache", ret);
 	ret = pmc_disable_tco(pmc);
 	if (ret)
 		return log_msg_ret("Could not disable TCO", ret);

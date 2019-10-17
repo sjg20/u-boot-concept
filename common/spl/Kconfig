@@ -1020,6 +1020,16 @@ config SPL_SPI_FLASH_TINY
 	 this if you have SPL size limitations and don't need full
 	 fledged SPI flash support.
 
+config TPL_SPI_FLASH_TINY
+	bool "Enable low footprint SPL SPI Flash support"
+	depends on TPL && !SPI_FLASH_BAR
+	default y if SPI_FLASH
+	help
+	 Enable lightweight SPL SPI Flash support that supports just reading
+	 data/images from flash. No support to write/erase flash. Enable
+	 this if you have SPL size limitations and don't need full
+	 fledged SPI flash support.
+
 config SPL_SPI_FLASH_SFDP_SUPPORT
 	bool "SFDP table parsing support for SPI NOR flashes"
 	depends on !SPI_FLASH_BAR && !SPL_SPI_FLASH_TINY
