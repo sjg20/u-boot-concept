@@ -65,6 +65,33 @@ static int splash_nand_read_raw(u32 bmp_load_addr, int offset, size_t read_size)
 }
 #endif
 
+#ifdef CONFIG_CMD_MMC
+static int splash_mmc_read_raw(u32 bmp_load_addr, struct splash_location *location,
+			       size_t read_size)
+{
+	struct disk_partition partition;
+	struct blk_desc *desc;
+	lbaint_t blkcnt;
+	int ret, n;
+
+	ret = part_get_info_by_dev_and_name_or_num("mmc", location->devpart, &desc,
+						   &partition, 1);
+	if (ret < 0)
+		return ret;
+
+	blkcnt = DIV_ROUND_UP(read_size, partition.blksz);
+	n = blk_dread(desc, partition.start, blkcnt, (void *)(uintptr_t)bmp_load_addr);
+
+	return (n == blkcnt) ? 0 : -EINVAL;
+}
+#else
+static int splash_mmc_read_raw(u32 bmp_load_addr, int offset, size_t read_size)
+{
+	debug("%s: mmc support not available\n", __func__);
+	return -ENOSYS;
+}
+#endif
+
 static int splash_storage_read_raw(struct splash_location *location,
 			       u32 bmp_load_addr, size_t read_size)
 {
@@ -75,6 +102,8 @@ static int splash_storage_read_raw(struct splash_location *location,
 
 	offset = location->offset;
 	switch (location->storage) {
+	case SPLASH_STORAGE_MMC:
+		return splash_mmc_read_raw(bmp_load_addr, location, read_size);
 	case SPLASH_STORAGE_NAND:
 		return splash_nand_read_raw(bmp_load_addr, offset, read_size);
 	case SPLASH_STORAGE_SF:
@@ -127,6 +156,9 @@ static int splash_select_fs_dev(struct splash_location *location)
 	case SPLASH_STORAGE_SATA:
 		res = fs_set_blk_dev("sata", location->devpart, FS_TYPE_ANY);
 		break;
+	case SPLASH_STORAGE_SCSI:
+		res = fs_set_blk_dev("scsi", location->devpart, FS_TYPE_ANY);
+		break;
 	case SPLASH_STORAGE_NAND:
 		if (location->ubivol != NULL)
 			res = fs_set_blk_dev("ubi", NULL, FS_TYPE_UBIFS);
@@ -176,6 +208,19 @@ static int splash_init_sata(void)
 static inline int splash_init_sata(void)
 {
 	printf("Cannot load splash image: no SATA support\n");
+	return -ENOSYS;
+}
+#endif
+
+#ifdef CONFIG_SCSI
+static int splash_init_scsi(void)
+{
+	return scsi_scan(true);
+}
+#else
+static inline int splash_init_scsi(void)
+{
+	printf("Cannot load splash image: no SCSI support\n");
 	return -ENOSYS;
 }
 #endif
@@ -243,6 +288,9 @@ static int splash_load_fs(struct splash_location *location, u32 bmp_load_addr)
 
 	if (location->storage == SPLASH_STORAGE_SATA)
 		res = splash_init_sata();
+
+	if (location->storage == SPLASH_STORAGE_SCSI)
+		res = splash_init_scsi();
 
 	if (location->storage == SPLASH_STORAGE_VIRTIO)
 		res = splash_init_virtio();
@@ -422,6 +470,7 @@ int splash_source_load(struct splash_location *locations, uint size)
 {
 	struct splash_location *splash_location;
 	char *env_splashimage_value;
+	char *env_splashdevpart_value;
 	u32 bmp_load_addr;
 
 	env_splashimage_value = env_get("splashimage");
@@ -437,6 +486,10 @@ int splash_source_load(struct splash_location *locations, uint size)
 	splash_location = select_splash_location(locations, size);
 	if (!splash_location)
 		return -EINVAL;
+
+	env_splashdevpart_value = env_get("splashdevpart");
+	if (env_splashdevpart_value)
+		splash_location->devpart = env_splashdevpart_value;
 
 	if (splash_location->flags == SPLASH_STORAGE_RAW)
 		return splash_load_raw(splash_location, bmp_load_addr);

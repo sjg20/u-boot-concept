@@ -495,6 +495,17 @@ static int initr_scsi(void)
 }
 #endif
 
+#if CONFIG_IS_ENABLED(UFS_MEDIATEK) && CONFIG_IS_ENABLED(MTK_SNOR)
+static int initr_scsi_scan(void)
+{
+	puts("SCSI:  ");
+	scsi_scan(true);
+	puts("\n");
+
+	return 0;
+}
+#endif
+
 #ifdef CONFIG_CMD_NET
 static int initr_net(void)
 {
@@ -699,6 +710,9 @@ static init_fnc_t init_sequence_r[] = {
 #endif
 #ifdef CONFIG_MMC
 	initr_mmc,
+#endif
+#if CONFIG_IS_ENABLED(UFS_MEDIATEK) && CONFIG_IS_ENABLED(MTK_SNOR)
+	initr_scsi_scan,
 #endif
 #ifdef CONFIG_XEN
 	xen_init,

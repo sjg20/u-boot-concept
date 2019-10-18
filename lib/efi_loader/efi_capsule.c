@@ -15,6 +15,7 @@
 #include <fdtdec.h>
 #include <fs.h>
 #include <hang.h>
+#include <iot_ab.h>
 #include <malloc.h>
 #include <mapmem.h>
 #include <sort.h>
@@ -533,6 +534,9 @@ efi_status_t EFIAPI efi_update_capsule(
 	struct efi_capsule_header *capsule;
 	unsigned int i;
 	efi_status_t ret;
+#if IS_ENABLED(CONFIG_MEDIATEK_IOT_AB_BOOT_SUPPORT)
+	unsigned int boot_ab = 0;
+#endif
 
 	EFI_ENTRY("%p, %zu, %llu\n", capsule_header_array, capsule_count,
 		  scatter_gather_list);
@@ -565,7 +569,16 @@ efi_status_t EFIAPI efi_update_capsule(
 
 		if (ret != EFI_SUCCESS)
 			goto out;
+
+#if IS_ENABLED(CONFIG_MEDIATEK_IOT_AB_BOOT_SUPPORT)
+		boot_ab++;
+#endif
 	}
+
+#if IS_ENABLED(CONFIG_MEDIATEK_IOT_AB_BOOT_SUPPORT)
+	if (boot_ab == capsule_count)
+		iot_ab_boot_select();
+#endif
 
 	if (IS_ENABLED(CONFIG_EFI_ESRT)) {
 		/* Rebuild the ESRT to reflect any updated FW images. */
@@ -1104,6 +1117,9 @@ efi_status_t efi_launch_capsules(void)
 	u16 **files;
 	unsigned int nfiles, index, i;
 	efi_status_t ret;
+#if IS_ENABLED(CONFIG_MEDIATEK_IOT_AB_BOOT_SUPPORT)
+	unsigned int boot_ab = 0;
+#endif
 
 	if (check_run_capsules() != EFI_SUCCESS)
 		return EFI_SUCCESS;
@@ -1135,9 +1151,16 @@ efi_status_t efi_launch_capsules(void)
 				log_err("Applying capsule %ls failed.\n",
 					files[i]);
 			else
+#if !IS_ENABLED(CONFIG_MEDIATEK_IOT_AB_BOOT_SUPPORT)
 				log_info("Applying capsule %ls succeeded.\n",
 					 files[i]);
-
+#else
+			{
+				log_info("Applying capsule %ls succeeded.\n",
+					 files[i]);
+				boot_ab++;
+			}
+#endif
 			/* create CapsuleXXXX */
 			set_capsule_result(index, capsule, ret);
 
@@ -1152,6 +1175,10 @@ efi_status_t efi_launch_capsules(void)
 				files[i]);
 	}
 	efi_capsule_scan_done();
+#if IS_ENABLED(CONFIG_MEDIATEK_IOT_AB_BOOT_SUPPORT)
+	if (boot_ab == nfiles)
+		iot_ab_boot_select();
+#endif
 
 	for (i = 0; i < nfiles; i++)
 		free(files[i]);

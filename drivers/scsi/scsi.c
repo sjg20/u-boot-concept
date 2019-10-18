@@ -5,6 +5,7 @@
  */
 
 #include <common.h>
+#include <cpu_func.h>
 #include <blk.h>
 #include <bootstage.h>
 #include <dm.h>
@@ -39,7 +40,7 @@ const struct pci_device_id scsi_device_list[] = { SCSI_DEV_LIST };
 #endif
 static struct scsi_cmd tempccb;	/* temporary scsi command buffer */
 
-static unsigned char tempbuff[512]; /* temporary data buffer */
+static unsigned char tempbuff[512] __aligned(ARCH_DMA_MINALIGN); /* temporary data buffer */
 
 #if !defined(CONFIG_DM_SCSI)
 static int scsi_max_devs; /* number of highest available scsi device */
@@ -63,7 +64,7 @@ void scsi_setup_read16(struct scsi_cmd *pccb, lbaint_t start,
 		       unsigned long blocks)
 {
 	pccb->cmd[0] = SCSI_READ16;
-	pccb->cmd[1] = pccb->lun << 5;
+	pccb->cmd[1] = 0;
 	pccb->cmd[2] = (unsigned char)(start >> 56) & 0xff;
 	pccb->cmd[3] = (unsigned char)(start >> 48) & 0xff;
 	pccb->cmd[4] = (unsigned char)(start >> 40) & 0xff;
@@ -91,7 +92,7 @@ void scsi_setup_read16(struct scsi_cmd *pccb, lbaint_t start,
 static void scsi_setup_inquiry(struct scsi_cmd *pccb)
 {
 	pccb->cmd[0] = SCSI_INQUIRY;
-	pccb->cmd[1] = pccb->lun << 5;
+	pccb->cmd[1] = 0;
 	pccb->cmd[2] = 0;
 	pccb->cmd[3] = 0;
 	if (pccb->datalen > 255)
@@ -108,7 +109,10 @@ static void scsi_setup_read_ext(struct scsi_cmd *pccb, lbaint_t start,
 				unsigned short blocks)
 {
 	pccb->cmd[0] = SCSI_READ10;
-	pccb->cmd[1] = pccb->lun << 5;
+	pccb->cmd[1] = 0;
+#ifdef CONFIG_EFI_LOADER
+	pccb->cmd[1] = (1 << 3);  /* flags, FUA = 1 */
+#endif
 	pccb->cmd[2] = (unsigned char)(start >> 24) & 0xff;
 	pccb->cmd[3] = (unsigned char)(start >> 16) & 0xff;
 	pccb->cmd[4] = (unsigned char)(start >> 8) & 0xff;
@@ -129,7 +133,10 @@ static void scsi_setup_write_ext(struct scsi_cmd *pccb, lbaint_t start,
 				 unsigned short blocks)
 {
 	pccb->cmd[0] = SCSI_WRITE10;
-	pccb->cmd[1] = pccb->lun << 5;
+	pccb->cmd[1] = 0;
+#ifdef CONFIG_EFI_LOADER
+	pccb->cmd[1] = (1 << 3);  /* flags, FUA = 1 */
+#endif
 	pccb->cmd[2] = (unsigned char)(start >> 24) & 0xff;
 	pccb->cmd[3] = (unsigned char)(start >> 16) & 0xff;
 	pccb->cmd[4] = (unsigned char)(start >> 8) & 0xff;
@@ -210,6 +217,8 @@ static ulong scsi_read(struct udevice *dev, lbaint_t blknr, lbaint_t blkcnt,
 	} while (blks != 0);
 	debug("scsi_read_ext: end startblk " LBAF
 	      ", blccnt %x buffer %lX\n", start, smallblks, buf_addr);
+	invalidate_dcache_range((unsigned long)buffer,
+				(unsigned long)buffer + block_dev->blksz * blkcnt);
 	return blkcnt;
 }
 
@@ -356,7 +365,7 @@ static int scsi_read_capacity(struct udevice *dev, struct scsi_cmd *pccb,
 
 	memset(pccb->cmd, '\0', sizeof(pccb->cmd));
 	pccb->cmd[0] = SCSI_RD_CAPAC10;
-	pccb->cmd[1] = pccb->lun << 5;
+	pccb->cmd[1] = 0;
 	pccb->cmdlen = 10;
 	pccb->msgout[0] = SCSI_IDENTIFY; /* NOT USED */
 
@@ -418,7 +427,7 @@ static int scsi_read_capacity(struct udevice *dev, struct scsi_cmd *pccb,
 static void scsi_setup_test_unit_ready(struct scsi_cmd *pccb)
 {
 	pccb->cmd[0] = SCSI_TST_U_RDY;
-	pccb->cmd[1] = pccb->lun << 5;
+	pccb->cmd[1] = 0;
 	pccb->cmd[2] = 0;
 	pccb->cmd[3] = 0;
 	pccb->cmd[4] = 0;
@@ -692,6 +701,15 @@ int scsi_scan(bool verbose)
 	return 0;
 }
 #endif
+
+__weak int scsi_get_env_dev(void)
+{
+#ifdef CONFIG_SYS_SCSI_ENV_DEV
+	return CONFIG_SYS_SCSI_ENV_DEV;
+#else
+	return 0;
+#endif
+}
 
 #ifdef CONFIG_BLK
 static const struct blk_ops scsi_blk_ops = {

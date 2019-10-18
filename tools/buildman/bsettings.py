@@ -15,7 +15,7 @@ def Setup(fname=''):
     global settings
     global config_fname
 
-    settings = configparser.SafeConfigParser()
+    settings = configparser.ConfigParser()
     if fname is not None:
         config_fname = fname
         if config_fname == '':
@@ -28,7 +28,7 @@ def Setup(fname=''):
             settings.read(config_fname)
 
 def AddFile(data):
-    settings.readfp(io.StringIO(data))
+    settings.read_file(io.StringIO(data))
 
 def GetItems(section):
     """Get the items from a section of the config.

@@ -1,0 +1,278 @@
+// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+/*
+ * Copyright (C) 2023 MediaTek Inc.
+ * Author: Howard Lin <howard-yh.lin@mediatek.com>
+ */
+
+#include <blk.h>
+#include <log.h>
+#include <part.h>
+#include <malloc.h>
+#include <common.h>
+#include <iot_ab.h>
+
+#if (IS_ENABLED(CONFIG_MTD))
+#include <mtd.h>
+#endif
+
+static uint32_t iot_ab_handle_chk(struct mtk_bl_ctrl *bctrl)
+{
+	return crc32(0, (void *)bctrl, offsetof(typeof(*bctrl), crc32_le));
+}
+
+static void iot_ab_handle_init(struct mtk_bl_ctrl *bctrl)
+{
+	memset(bctrl, 0, sizeof(struct mtk_bl_ctrl));
+	bctrl->magic = BOOTCTRL_MAGIC;
+	bctrl->version = BOOTCTRL_VERSION;
+	bctrl->slot_suffix = PART_BOOT_A;
+	bctrl->tries[PART_BOOT_A] = BOOTCTRL_SRC;
+	bctrl->tries[PART_BOOT_B] = BOOTCTRL_SRC;
+}
+
+static int iot_ab_handle_blctrl(struct blk_desc *dev_desc, struct disk_partition *part_info,
+				struct mtk_bl_ctrl *bctrl)
+{
+	struct mtk_bl_ctrl *bctrl_st = NULL;
+	u32 blocks;
+	int ret = -1;
+
+	blocks = DIV_ROUND_UP(sizeof(struct mtk_bl_ctrl), part_info->blksz);
+	bctrl->crc32_le = iot_ab_handle_chk(bctrl);
+	ret = blk_dwrite(dev_desc, part_info->start, blocks, bctrl);
+	if (ret < 0) {
+		log_err("Could not handle boot control.\n");
+		return ret;
+	}
+
+	bctrl_st = malloc_cache_aligned(blocks * part_info->blksz);
+	if (!bctrl_st)
+		return ret;
+
+	ret = blk_dread(dev_desc, part_info->start, blocks, bctrl_st);
+	if (ret < 0 || memcmp(bctrl, bctrl_st, sizeof(struct mtk_bl_ctrl))) {
+		log_err("Handle boot control failure.\n");
+		free(bctrl_st);
+		return ret;
+	}
+	free(bctrl_st);
+	return 0;
+}
+
+#if (!IS_ENABLED(CONFIG_MTD))
+static int iot_ab_handle_slot(int type, struct blk_desc *dev_desc, struct disk_partition *part_info)
+{
+	struct mtk_bl_ctrl *bctrl = NULL;
+	u32 crc32_le, blocks;
+	int ret = -1;
+
+	blocks = DIV_ROUND_UP(sizeof(struct mtk_bl_ctrl), part_info->blksz);
+	bctrl = malloc_cache_aligned(blocks * part_info->blksz);
+	if (!bctrl)
+		return ret;
+
+	ret = blk_dread(dev_desc, part_info->start, blocks, bctrl);
+	if (ret < 0) {
+		log_err("Could not handle boot control.\n");
+		free(bctrl);
+		return -1;
+	}
+
+	crc32_le = iot_ab_handle_chk(bctrl);
+	if (bctrl->magic != BOOTCTRL_MAGIC || bctrl->crc32_le != crc32_le) {
+		log_err("Invalid crc, expected %.8x .\n", crc32_le);
+		iot_ab_handle_init(bctrl);
+		iot_ab_handle_blctrl(dev_desc, part_info, bctrl);
+		ret = -1;
+		goto exit;
+	}
+
+	if (type == BOOTCTRL_SET) {
+		bctrl->slot_suffix = (bctrl->slot_suffix == PART_BOOT_A)
+							? PART_BOOT_B : PART_BOOT_A;
+		bctrl->tries[bctrl->slot_suffix] = BOOTCTRL_SRC;
+		iot_ab_handle_blctrl(dev_desc, part_info, bctrl);
+	} else if (type == BOOTCTRL_FINISH) {
+		bctrl->tries[bctrl->slot_suffix] = BOOTCTRL_BOOT_SUCCESS;
+		iot_ab_handle_blctrl(dev_desc, part_info, bctrl);
+	}
+	ret = bctrl->slot_suffix;
+
+exit:
+	free(bctrl);
+	return ret;
+}
+#else
+static int iot_ab_init_mtd(struct mtd_info *info, u32 len)
+{
+	struct erase_info einfo = {};
+	u32 off = 0;
+	int ret = -1;
+
+	einfo.mtd = info;
+	einfo.addr = off;
+	einfo.len = info->erasesize;
+	einfo.scrub = NULL;
+
+	while (len) {
+		ret = mtd_erase(info, &einfo);
+		if (ret) {
+			if (ret != -EIO)
+				break;
+		}
+		len -= info->erasesize;
+		einfo.addr += info->erasesize;
+	}
+	return ret;
+}
+
+static int iot_ab_handle_mtd(int type, struct mtd_info *info, struct mtk_bl_ctrl *dat)
+{
+	struct mtd_oob_ops mops = {};
+	u32 len, off = 0;
+	int ret = -1;
+
+	dat->crc32_le = iot_ab_handle_chk(dat);
+	len = info->size;
+	mops.len = info->size;
+	mops.ooblen = 0;
+	mops.oobbuf = NULL;
+	mops.mode = MTD_OPS_RAW;
+	mops.datbuf = (u8 *)dat;
+
+	while (len) {
+		if (!do_div(off, info->erasesize) && mtd_block_isbad(info, off)) {
+			off += info->erasesize;
+			continue;
+		}
+
+		if (!type)
+			ret = mtd_read_oob(info, off, &mops);
+		else
+			ret = mtd_write_oob(info, off, &mops);
+
+		if (ret)
+			break;
+
+		off += mops.retlen;
+		len -= mops.retlen;
+		mops.datbuf += mops.retlen;
+		mops.oobbuf += mops.oobretlen;
+	}
+	return ret;
+}
+
+static int iot_ab_handle_slot(int type)
+{
+	struct mtk_bl_ctrl *bctrl = NULL;
+	struct mtd_info *minfo = NULL;
+	u32 crc32_le = 0;
+	int ret = -1;
+
+	mtd_probe_devices();
+	minfo = get_mtd_device_nm(BOOTCTRL_PART);
+	if (!minfo)
+		return ret;
+
+	bctrl = malloc_cache_aligned(minfo->size);
+	if (!bctrl)
+		return ret;
+
+	ret = iot_ab_handle_mtd(BOOTCTRL_GET, minfo, bctrl);
+	if (ret < 0) {
+		free(bctrl);
+		return -1;
+	}
+
+	crc32_le = iot_ab_handle_chk(bctrl);
+	if (bctrl->magic != BOOTCTRL_MAGIC || bctrl->crc32_le != crc32_le) {
+		log_err("Invalid crc, expected %.8x .\n", crc32_le);
+		iot_ab_handle_init(bctrl);
+		iot_ab_init_mtd(minfo, minfo);
+		ret = iot_ab_handle_mtd(BOOTCTRL_SET, minfo, bctrl);
+		goto exit;
+	}
+
+	if (type == BOOTCTRL_SET) {
+		bctrl->slot_suffix = (bctrl->slot_suffix == PART_BOOT_A)
+							? PART_BOOT_B : PART_BOOT_A;
+		bctrl->tries[bctrl->slot_suffix] = BOOTCTRL_SRC;
+		iot_ab_init_mtd(minfo, minfo);
+		iot_ab_handle_mtd(BOOTCTRL_SET, minfo, bctrl);
+	} else if (type == BOOTCTRL_FINISH && bctrl->tries[bctrl->slot_suffix] > 0) {
+		bctrl->tries[bctrl->slot_suffix] = BOOTCTRL_BOOT_SUCCESS;
+		iot_ab_init_mtd(minfo, minfo);
+		iot_ab_handle_mtd(BOOTCTRL_SET, minfo, bctrl);
+	}
+	ret = bctrl->slot_suffix;
+exit:
+	free(bctrl);
+	return ret;
+}
+#endif
+
+int iot_ab_boot_slot(int type)
+{
+	char slot[2];
+	int ret = -1;
+#if (!IS_ENABLED(CONFIG_MTD))
+	struct blk_desc *dev_desc;
+	struct disk_partition part_info;
+
+	if (CONFIG_IS_ENABLED(UFS_MEDIATEK)) {
+		if (scsi_scan(false)) {
+			log_err("Request failed.\n");
+			return ret;
+		}
+	}
+
+	ret = part_get_info_by_dev_and_name_or_num(BOOTCTRL_DEV, BOOTCTRL_PART,
+						   &dev_desc, &part_info, false);
+	if (ret < 0) {
+		log_err("Invalid boot control partition.\n");
+		return ret;
+	}
+#endif
+
+#if (!IS_ENABLED(CONFIG_MTD))
+	ret = iot_ab_handle_slot(type, dev_desc, &part_info);
+#else
+	ret = iot_ab_handle_slot(type);
+#endif
+
+	if (ret < 0) {
+		log_err("Invalid boot control.\n");
+		return ret;
+	}
+
+	slot[0] = BOOT_SLOT_NAME(ret);
+	slot[1] = '\0';
+	env_set(BOOTCTRL_ENV, slot);
+	slot[0] = BOOT_DTS_NUM(ret);
+	env_set(BOOTCTRL_ENV_DTS, slot);
+	return ret;
+}
+
+void iot_ab_boot_select(void)
+{
+	char slot[2];
+	int ret = iot_ab_boot_slot(BOOTCTRL_SET);
+
+	if (ret < 0) {
+		log_err("Invalid boot select, reset slot.\n");
+		ret = 0;
+	}
+
+	slot[0] = BOOT_SLOT_NAME(ret);
+	slot[1] = '\0';
+	env_set(BOOTCTRL_ENV, slot);
+	slot[0] = BOOT_DTS_NUM(ret);
+	env_set(BOOTCTRL_ENV_DTS, slot);
+}
+
+void iot_ab_boot_complete(void)
+{
+	if (iot_ab_boot_slot(BOOTCTRL_FINISH) < 0)
+		log_err("Invalid boot complete.\n");
+}
+
