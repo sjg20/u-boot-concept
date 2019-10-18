@@ -13,6 +13,7 @@
 #include <common.h>
 #include <dm.h>
 #include <efi_loader.h>
+#include <spl.h>
 #include <asm/control_regs.h>
 #include <asm/i8259.h>
 #include <asm/interrupt.h>
@@ -22,6 +23,10 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#ifndef CONFIG_TPL_BUILD
+#define FULL_EXCEPTIONS
+#endif
+
 #define DECLARE_INTERRUPT(x) \
 	".globl irq_"#x"\n" \
 	".hidden irq_"#x"\n" \
@@ -30,6 +35,7 @@ DECLARE_GLOBAL_DATA_PTR;
 	"pushl $"#x"\n" \
 	"jmp.d32 irq_common_entry\n"
 
+#ifdef FULL_EXCEPTIONS
 static char *exceptions[] = {
 	"Divide Error",
 	"Debug",
@@ -64,7 +70,9 @@ static char *exceptions[] = {
 	"Reserved",
 	"Reserved"
 };
+#endif
 
+#ifdef FULL_EXCEPTIONS
 /**
  * show_efi_loaded_images() - show loaded UEFI images
  *
@@ -159,11 +167,16 @@ static void dump_regs(struct irq_regs *regs)
 	}
 	show_efi_loaded_images(eip);
 }
+#endif
 
 static void do_exception(struct irq_regs *regs)
 {
+#ifdef FULL_EXCEPTIONS
 	printf("%s\n", exceptions[regs->irq_id]);
 	dump_regs(regs);
+#else
+	printf("Exception %d\n", (int)regs->irq_id);
+#endif
 	hang();
 }
 
