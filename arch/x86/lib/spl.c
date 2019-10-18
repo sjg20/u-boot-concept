@@ -102,6 +102,11 @@ static int x86_spl_init(void)
 	}
 	mtrr_commit(true);
 #endif
+	gd->bd = calloc(sizeof(bd_t), 1);
+	if (!gd->bd) {
+		debug("Could not allocate bd\n");
+		return -ENOMEM;
+	}
 
 	return 0;
 }
