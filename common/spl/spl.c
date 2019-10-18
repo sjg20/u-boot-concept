@@ -39,8 +39,10 @@ u32 *boot_params_ptr = NULL;
 /* See spl.h for information about this */
 binman_sym_declare(ulong, u_boot_any, image_pos);
 
+#ifdef CONFIG_STATIC_BDATA
 /* Define board data structure */
 static bd_t bdata __attribute__ ((section(".data")));
+#endif
 
 /*
  * Board-specific Platform code can reimplement show_boot_progress () if needed
@@ -431,6 +433,7 @@ static int spl_common_init(bool setup_malloc)
 	return 0;
 }
 
+#ifdef CONFIG_STATIC_BDATA
 void spl_set_bd(void)
 {
 	/*
@@ -440,6 +443,7 @@ void spl_set_bd(void)
 	if (!gd->bd)
 		gd->bd = &bdata;
 }
+#endif
 
 int spl_early_init(void)
 {
@@ -587,7 +591,9 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 
 	debug(">>" SPL_TPL_PROMPT "board_init_r()\n");
 
+#ifdef CONFIG_STATIC_BDATA
 	spl_set_bd();
+#endif
 
 #if defined(CONFIG_SYS_SPL_MALLOC_START)
 	mem_malloc_init(CONFIG_SYS_SPL_MALLOC_START,

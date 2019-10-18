@@ -91,6 +91,15 @@ config SPL_SYS_REPORT_STACK_F_USAGE
 	  occurrence of non 0xaa bytes.
 	  This default implementation works for stacks growing down only.
 
+config STATIC_BDATA
+	bool "Allow bdata (gd->bd) to be in the .data section"
+	default y if FSL_LAYERSCAPE
+	help
+	  This causes SPL to declare a space for the board data in the data
+	  section. It is used when bd is not set up by the board. Assuming
+	  that this is in SRAM then will create a usable bd region for use
+	  in TPL/SPL.
+
 menu "PowerPC SPL Boot options"
 	depends on PPC && (SUPPORT_SPL && !SPL_FRAMEWORK)
 
