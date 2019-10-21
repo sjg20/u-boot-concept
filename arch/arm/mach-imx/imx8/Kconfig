@@ -65,6 +65,11 @@ config TARGET_GIEDI
 	select BOARD_LATE_INIT
 	select IMX8QXP
 
+config TARGET_DENEB
+	bool "Support i.MX8QXP Capricorn Deneb board"
+	select BOARD_LATE_INIT
+	select IMX8QXP
+
 endchoice
 
 source "board/freescale/imx8qm_mek/Kconfig"
