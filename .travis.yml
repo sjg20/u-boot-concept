@@ -162,4 +162,4 @@ matrix:
       env:
         - TEST_PY_BD="sandbox"
           BUILDMAN="^sandbox$"
-          OVERRIDE="clang-7"
+          OVERRIDE="-O clang-7"
