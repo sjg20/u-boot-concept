@@ -540,7 +540,6 @@ static int designware_i2c_ofdata_to_platdata(struct udevice *bus)
 {
 	struct dw_i2c *priv = dev_get_priv(bus);
 
-	printf("bad\n");
 	priv->regs = (struct i2c_regs *)devfdt_get_addr_ptr(bus);
 
 	return 0;
