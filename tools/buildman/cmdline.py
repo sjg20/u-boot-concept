@@ -72,7 +72,7 @@ def ParseArgs():
     parser.add_option('-N', '--no-subdirs', action='store_true', dest='no_subdirs',
           default=False, help="Don't create subdirectories when building current source for a single board")
     parser.add_option('-o', '--output-dir', type='string',
-          dest='output_dir', default='..',
+          dest='output_dir', default='/tmp/buildman',
           help='Directory where all builds happen and buildman has its workspace (default is ../)')
     parser.add_option('-O', '--override-toolchain', type='string',
           help="Override host toochain to use for sandbox (e.g. 'clang-7')")
