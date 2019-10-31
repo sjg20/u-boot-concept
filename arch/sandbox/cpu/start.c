@@ -400,6 +400,11 @@ static int sandbox_cmdline_cb_signals(struct sandbox_state *state,
 SANDBOX_CMDLINE_OPT_SHORT(signals, 'S', 0,
 			  "Handle signals (such as SIGSEGV) in sandbox");
 
+__weak int board_run_command(const char *cmdline)
+{
+	return 0;
+}
+
 static void setup_ram_buf(struct sandbox_state *state)
 {
 	/* Zero the RAM buffer if we didn't read it, to keep valgrind happy */
