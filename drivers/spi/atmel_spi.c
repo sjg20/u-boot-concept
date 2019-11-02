@@ -17,7 +17,7 @@
 #ifdef CONFIG_DM_SPI
 #include <asm/arch/at91_spi.h>
 #endif
-#if CONFIG_IS_ENABLED(DM_GPIO)
+#ifdef CONFIG_DM_GPIO
 #include <asm/gpio.h>
 #endif
 
@@ -228,7 +228,7 @@ struct atmel_spi_priv {
 	unsigned int freq;		/* Default frequency */
 	unsigned int mode;
 	ulong bus_clk_rate;
-#if CONFIG_IS_ENABLED(DM_GPIO)
+#ifdef CONFIG_DM_GPIO
 	struct gpio_desc cs_gpios[MAX_CS_COUNT];
 #endif
 };
@@ -285,7 +285,7 @@ static int atmel_spi_release_bus(struct udevice *dev)
 
 static void atmel_spi_cs_activate(struct udevice *dev)
 {
-#if CONFIG_IS_ENABLED(DM_GPIO)
+#ifdef CONFIG_DM_GPIO
 	struct udevice *bus = dev_get_parent(dev);
 	struct atmel_spi_priv *priv = dev_get_priv(bus);
 	struct dm_spi_slave_platdata *slave_plat = dev_get_parent_platdata(dev);
@@ -300,7 +300,7 @@ static void atmel_spi_cs_activate(struct udevice *dev)
 
 static void atmel_spi_cs_deactivate(struct udevice *dev)
 {
-#if CONFIG_IS_ENABLED(DM_GPIO)
+#ifdef CONFIG_DM_GPIO
 	struct udevice *bus = dev_get_parent(dev);
 	struct atmel_spi_priv *priv = dev_get_priv(bus);
 	struct dm_spi_slave_platdata *slave_plat = dev_get_parent_platdata(dev);
@@ -468,7 +468,7 @@ static int atmel_spi_probe(struct udevice *bus)
 
 	bus_plat->regs = (struct at91_spi *)devfdt_get_addr(bus);
 
-#if CONFIG_IS_ENABLED(DM_GPIO)
+#ifdef CONFIG_DM_GPIO
 	struct atmel_spi_priv *priv = dev_get_priv(bus);
 	int i;
 

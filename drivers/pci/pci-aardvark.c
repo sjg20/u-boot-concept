@@ -610,7 +610,7 @@ static int pcie_advk_probe(struct udevice *dev)
 {
 	struct pcie_advk *pcie = dev_get_priv(dev);
 
-#if CONFIG_IS_ENABLED(DM_GPIO)
+#ifdef CONFIG_DM_GPIO
 	struct gpio_desc reset_gpio;
 
 	gpio_request_by_name(dev, "reset-gpio", 0, &reset_gpio,
@@ -636,7 +636,7 @@ static int pcie_advk_probe(struct udevice *dev)
 	}
 #else
 	dev_dbg(pcie->dev, "PCIE Reset on GPIO support is missing\n");
-#endif /* DM_GPIO */
+#endif /* CONFIG_DM_GPIO */
 
 	pcie->first_busno = dev->seq;
 	pcie->dev = pci_get_controller(dev);
