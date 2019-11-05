@@ -15,7 +15,9 @@ GUID='11111111-2222-3333-4444-123456789abc'
 
 # v1.5.1 or earlier of efitools has a bug in sha256 calculation, and
 # you need build a newer version on your own.
-EFITOOLS_PATH=''
+EFITOOLS_PATH='/home/akashi/x86/efitools/'
 
 # Hello World application for sandbox
+#HELLO_PATH='/home/akashi/arm/armv8/linaro/uefi/efi_apps/helloworld/hello.efi'
+#HELLO_PATH='/home/akashi/x86/build/uboot_qemu/lib/efi_loader/helloworld.efi'
 HELLO_PATH=''
