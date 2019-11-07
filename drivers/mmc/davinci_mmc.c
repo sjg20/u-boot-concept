@@ -493,6 +493,12 @@ static int davinci_mmc_probe(struct udevice *dev)
 	cfg->b_max = DAVINCI_MAX_BLOCKS;
 	cfg->name = "da830-mmc";
 
+	/* FIXME: Cannot read from device tree with of-platdata */
+	if (CONFIG_IS_ENABLED(OF_PLATDATA)) {
+		printf("Please fix this driver to use of-platdata");
+		return -ENOSYS;
+	}
+
 	priv->reg_base = (struct davinci_mmc_regs *)dev_read_addr(dev);
 	priv->input_clk = clk_get(DAVINCI_MMCSD_CLKID);
 
