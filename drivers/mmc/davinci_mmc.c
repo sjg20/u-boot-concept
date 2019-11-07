@@ -506,6 +506,12 @@ static int davinci_mmc_of_to_plat(struct udevice *dev)
 	struct davinci_mmc_plat *plat = dev_get_plat(dev);
 	struct mmc_config *cfg = &plat->cfg;
 
+	/* FIXME: Cannot read from device tree with of-platdata */
+	if (CONFIG_IS_ENABLED(OF_PLATDATA)) {
+		printf("Please fix this driver to use of-platdata");
+		return -ENOSYS;
+	}
+
 	plat->reg_base = (struct davinci_mmc_regs *)dev_read_addr(dev);
 	cfg->f_min = 200000;
 	cfg->f_max = 25000000;
