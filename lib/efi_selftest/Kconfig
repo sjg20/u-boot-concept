@@ -1,6 +1,7 @@
 config CMD_BOOTEFI_SELFTEST
 	bool "UEFI unit tests"
 	depends on CMD_BOOTEFI
+	default y if SANDBOX
 	imply FAT
 	imply FAT_WRITE
 	help
