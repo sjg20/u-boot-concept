@@ -471,7 +471,7 @@ static bool efi_image_authenticate(void *efi, size_t len)
 	WIN_CERTIFICATE *wincerts = NULL, *wincert;
 	size_t wincerts_len;
 	struct pkcs7_message *msg = NULL;
-	struct efi_signature_store *db = NULL, *dbx = NULL;
+	struct efi_signature_store *db = NULL, *dbx = NULL, *dbt = NULL;
 	struct x509_certificate *cert = NULL;
 	bool ret = false;
 
@@ -507,6 +507,12 @@ static bool efi_image_authenticate(void *efi, size_t len)
 		goto err;
 	}
 
+	dbt = efi_sigstore_parse_sigdb(L"dbt");
+	if (!dbt) {
+		debug("Getting signature database(dbt) failed\n");
+		goto err;
+	}
+
 	/* go through WIN_CERTIFICATE list */
 	for (wincert = wincerts;
 	     (void *)wincert < (void *)wincerts + wincerts_len;
@@ -529,7 +535,7 @@ static bool efi_image_authenticate(void *efi, size_t len)
 			goto err;
 		}
 
-		if (!efi_signature_verify_signers(msg, dbx)) {
+		if (!efi_signature_verify_signers(msg, dbx, dbt)) {
 			debug("Signer was rejected by \"dbx\"\n");
 			goto err;
 		} else {
@@ -544,7 +550,7 @@ static bool efi_image_authenticate(void *efi, size_t len)
 			ret = true;
 		}
 
-		if (!efi_signature_verify_cert(cert, dbx)) {
+		if (!efi_signature_verify_cert(msg, cert, dbx, dbt)) {
 			debug("Certificate was rejected by \"dbx\"\n");
 			goto err;
 		} else {
@@ -556,6 +562,7 @@ err:
 	x509_free_certificate(cert);
 	efi_sigstore_free(db);
 	efi_sigstore_free(dbx);
+	efi_sigstore_free(dbt);
 	pkcs7_free_message(msg);
 	free(regs);
 
