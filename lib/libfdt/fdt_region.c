@@ -5,6 +5,7 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
+#include <fdt_support.h>
 #include <linux/libfdt_env.h>
 
 #ifndef USE_HOSTCC
