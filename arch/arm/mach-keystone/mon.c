@@ -5,6 +5,7 @@
  * Copyright (C) 2012-2019 Texas Instruments Incorporated - http://www.ti.com/
  */
 
+#include <bootstage.h>
 #include <hang.h>
 #include <asm/unaligned.h>
 #include <common.h>

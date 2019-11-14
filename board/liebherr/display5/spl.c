@@ -5,7 +5,9 @@
  */
 
 #include <common.h>
+#include <bootstage.h>
 #include <cpu_func.h>
+
 #include <env.h>
 #include <serial.h>
 #include <spl.h>

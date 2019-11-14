@@ -9,6 +9,7 @@
 
 #include "mkimage.h"
 #include "imximage.h"
+#include <bootstage.h>
 #include <image.h>
 #include <version.h>
 

@@ -3,6 +3,7 @@
  * Copyright 2017-2018 NXP
  */
 #include <common.h>
+#include <bootstage.h>
 #include <dm.h>
 #include <spl.h>
 #include <fsl_esdhc.h>

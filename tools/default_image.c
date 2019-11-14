@@ -15,6 +15,7 @@
 
 #include "imagetool.h"
 #include "mkimage.h"
+#include <bootstage.h>
 #include <u-boot/crc.h>
 
 #include <image.h>

@@ -7,6 +7,7 @@
  */
 
 #include <common.h>
+#include <bootstage.h>
 #include <spl.h>
 #include <malloc.h>
 #include <remoteproc.h>

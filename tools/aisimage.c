@@ -6,6 +6,7 @@
 
 #include "imagetool.h"
 #include "aisimage.h"
+#include <bootstage.h>
 #include <image.h>
 
 #define IS_FNC_EXEC(c)	(cmd_table[c].AIS_cmd == AIS_CMD_FNLOAD)

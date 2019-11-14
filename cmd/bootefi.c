@@ -6,6 +6,7 @@
  */
 
 #include <common.h>
+#include <bootstage.h>
 #include <charset.h>
 #include <command.h>
 #include <dm.h>

@@ -7,6 +7,7 @@
 
 
 #include "imagetool.h"
+#include <bootstage.h>
 #include <image.h>
 #include "imximage.h"
 #include "compiler.h"

@@ -4,7 +4,9 @@
  */
 
 #include <common.h>
+#include <bootstage.h>
 #include <cpu_func.h>
+
 #include <hang.h>
 #include <spl.h>
 #include <asm/io.h>

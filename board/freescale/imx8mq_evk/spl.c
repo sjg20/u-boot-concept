@@ -6,6 +6,7 @@
  */
 
 #include <common.h>
+#include <bootstage.h>
 #include <hang.h>
 #include <asm/io.h>
 #include <errno.h>

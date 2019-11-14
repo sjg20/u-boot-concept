@@ -8,6 +8,7 @@
  */
 
 #include <common.h>
+#include <bootstage.h>
 #include <dm.h>
 #include <init.h>
 #include <net.h>

@@ -6,6 +6,7 @@
  */
 
 #include "dumpimage.h"
+#include <bootstage.h>
 #include <image.h>
 #include <version.h>
 

@@ -3,6 +3,7 @@
  * (C) Copyright 2014 - 2017 Xilinx, Inc. Michal Simek
  */
 #include <common.h>
+#include <bootstage.h>
 #include <debug_uart.h>
 #include <hang.h>
 #include <spl.h>

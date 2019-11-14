@@ -6,6 +6,7 @@
  */
 
 #include <common.h>
+#include <bootstage.h>
 #include <init.h>
 #include <net.h>
 #include <asm/io.h>

@@ -6,6 +6,7 @@
  */
 
 #include <common.h>
+#include <bootstage.h>
 #include <dm.h>
 #include <eeprom.h>
 #include <init.h>

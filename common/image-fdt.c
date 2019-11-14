@@ -9,6 +9,7 @@
  */
 
 #include <common.h>
+#include <bootstage.h>
 #include <fdt_support.h>
 #include <fdtdec.h>
 #include <env.h>

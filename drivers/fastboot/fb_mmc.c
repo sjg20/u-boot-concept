@@ -3,6 +3,7 @@
  * Copyright 2014 Broadcom Corporation.
  */
 
+#include <bootstage.h>
 #include <config.h>
 #include <common.h>
 #include <blk.h>

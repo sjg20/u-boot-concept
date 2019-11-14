@@ -8,6 +8,7 @@
  */
 
 #include <common.h>
+#include <bootstage.h>
 #include <eeprom.h>
 #include <dm/uclass.h>
 #include <env.h>

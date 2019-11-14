@@ -10,6 +10,7 @@
 
 #include "mkimage.h"
 #include <bootm.h>
+#include <bootstage.h>
 #include <image.h>
 #include <version.h>
 #include <uboot_aes.h>
