@@ -28,7 +28,6 @@
 #include <linux/kernel.h>
 #include <linux/printk.h>
 #include <linux/string.h>
-#include <linux/stringify.h>
 #include <linux/types.h>
 #endif	/* __ASSEMBLY__ */
 
