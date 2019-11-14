@@ -26,6 +26,7 @@
 #include <dm.h>
 #include <errno.h>
 #include <init.h>
+#include <log.h>
 #include <malloc.h>
 #include <syscon.h>
 #include <asm/acpi.h>

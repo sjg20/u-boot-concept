@@ -7,6 +7,7 @@
 #include <common.h>
 #include <dm.h>
 #include <generic-phy.h>
+#include <log.h>
 
 static inline struct phy_ops *phy_dev_ops(struct udevice *dev)
 {

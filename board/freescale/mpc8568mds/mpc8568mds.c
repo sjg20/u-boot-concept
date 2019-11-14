@@ -8,6 +8,7 @@
 #include <common.h>
 #include <flash.h>
 #include <init.h>
+#include <log.h>
 #include <pci.h>
 #include <asm/processor.h>
 #include <asm/mmu.h>
@@ -303,7 +304,7 @@ void pci_init_board(void)
 	porpllsr = in_be32(&gur->porpllsr);
 	io_sel = (pordevsr & MPC85xx_PORDEVSR_IO_SEL) >> 19;
 
-	debug ("   pci_init_board: devdisr=%x, io_sel=%x\n", devdisr, io_sel);
+	debug("   %s: devdisr=%x, io_sel=%x\n", __func__, devdisr, io_sel);
 
 	pci_speed = 66666000;
 	pci_32 = 1;
