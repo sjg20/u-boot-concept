@@ -8,6 +8,7 @@
 #include <common.h>
 #include <bootstage.h>
 #include <hang.h>
+#include <init.h>
 #include <asm/io.h>
 #include <errno.h>
 #include <asm/io.h>

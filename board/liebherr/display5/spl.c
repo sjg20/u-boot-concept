@@ -9,6 +9,7 @@
 #include <cpu_func.h>
 
 #include <env.h>
+#include <init.h>
 #include <serial.h>
 #include <spl.h>
 #include <linux/libfdt.h>

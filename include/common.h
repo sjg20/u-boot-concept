@@ -17,7 +17,6 @@
 #include <linux/types.h>
 #include <display_options.h>
 #include <errno.h>
-#include <init.h>
 #include <log.h>
 #include <stdarg.h>
 #include <stdio.h>
