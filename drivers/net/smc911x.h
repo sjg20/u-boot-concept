@@ -497,4 +497,5 @@ static void smc911x_reset(struct eth_device *dev)
 	smc911x_reg_write(dev, GPIO_CFG, 0x70070000);
 }
 
+#include <linux/delay.h>
 #endif
