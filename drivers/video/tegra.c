@@ -9,6 +9,7 @@
 #include <panel.h>
 #include <pwm.h>
 #include <video.h>
+#include <asm/global_data.h>
 #include <asm/system.h>
 #include <asm/gpio.h>
 #include <asm/io.h>

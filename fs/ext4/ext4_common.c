@@ -24,6 +24,7 @@
 #include <malloc.h>
 #include <memalign.h>
 #include <stddef.h>
+#include <asm/global_data.h>
 #include <linux/stat.h>
 #include <linux/time.h>
 #include <asm/byteorder.h>

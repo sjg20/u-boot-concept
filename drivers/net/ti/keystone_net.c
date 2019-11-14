@@ -9,6 +9,7 @@
 #include <command.h>
 #include <console.h>
 #include <stdio.h>
+#include <asm/global_data.h>
 
 #include <dm.h>
 #include <dm/lists.h>

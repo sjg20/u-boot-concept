@@ -19,6 +19,7 @@
 #include <post.h>
 #include <stdio.h>
 #include <time.h>
+#include <asm/global_data.h>
 #include <u-boot/sha256.h>
 #include <bootcount.h>
 

@@ -5,6 +5,7 @@
 
 #include <common.h>
 #include <asm/arch/clock.h>
+#include <asm/global_data.h>
 #include <asm/io.h>
 #include <miiphy.h>
 #include <netdev.h>

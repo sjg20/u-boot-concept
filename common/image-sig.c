@@ -8,6 +8,7 @@
 #include <bootstage.h>
 #include <stdio.h>
 #include <time.h>
+#include <asm/global_data.h>
 #else
 #include <common.h>
 #include <malloc.h>

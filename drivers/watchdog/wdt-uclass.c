@@ -9,6 +9,7 @@
 #include <hang.h>
 #include <time.h>
 #include <wdt.h>
+#include <asm/global_data.h>
 #include <dm/device-internal.h>
 #include <dm/lists.h>
 

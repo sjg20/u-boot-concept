@@ -34,6 +34,7 @@
 #endif
 #include <malloc.h>
 #include <watchdog.h>
+#include <asm/global_data.h>
 #include <dm/devres.h>
 #include <linux/bitops.h>
 #include <linux/bug.h>

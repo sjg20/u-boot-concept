@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <wait_bit.h>
 #include <watchdog.h>
+#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/fpga_manager.h>
 #include <asm/arch/misc.h>

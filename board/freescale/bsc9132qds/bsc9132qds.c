@@ -9,6 +9,7 @@
 #include <init.h>
 #include <net.h>
 #include <stdio.h>
+#include <asm/global_data.h>
 #include <asm/processor.h>
 #include <asm/mmu.h>
 #include <asm/cache.h>

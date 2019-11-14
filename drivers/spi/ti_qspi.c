@@ -7,6 +7,7 @@
 
 #include <common.h>
 #include <cpu_func.h>
+#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/omap.h>
 #include <malloc.h>

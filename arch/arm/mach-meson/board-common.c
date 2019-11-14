@@ -8,6 +8,7 @@
 #include <init.h>
 #include <asm/arch/boot.h>
 #include <env.h>
+#include <asm/global_data.h>
 #include <linux/libfdt.h>
 #include <linux/err.h>
 #include <asm/arch/mem.h>

@@ -8,6 +8,7 @@
 #include <dm.h>
 #include <env.h>
 #include <stdio.h>
+#include <asm/global_data.h>
 #include <dm/device_compat.h>
 #include <linux/errno.h>
 #include <malloc.h>

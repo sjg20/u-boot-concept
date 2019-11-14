@@ -9,6 +9,7 @@
 
 #include <common.h>
 #include <i2c.h>
+#include <asm/global_data.h>
 #include <asm/io.h>
 
 DECLARE_GLOBAL_DATA_PTR;

@@ -14,6 +14,7 @@
 #include <pci_msc01.h>
 #include <rtc.h>
 #include <stdio.h>
+#include <asm/global_data.h>
 
 #include <asm/addrspace.h>
 #include <asm/io.h>

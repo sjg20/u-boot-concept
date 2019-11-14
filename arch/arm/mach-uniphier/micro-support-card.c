@@ -9,6 +9,7 @@
 #include <fdt_support.h>
 #include <net.h>
 #include <stdio.h>
+#include <asm/global_data.h>
 #include <dm/of.h>
 #include <linux/ctype.h>
 #include <linux/io.h>

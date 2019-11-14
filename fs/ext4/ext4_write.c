@@ -24,6 +24,7 @@
 #include <common.h>
 #include <malloc.h>
 #include <memalign.h>
+#include <asm/global_data.h>
 #include <linux/stat.h>
 #include <div64.h>
 #include "ext4_common.h"

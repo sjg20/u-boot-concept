@@ -11,6 +11,7 @@
 #include <cpu_func.h>
 #include <image.h>
 #include <stdio.h>
+#include <asm/global_data.h>
 #include <linux/bitops.h>
 
 #include <dm.h>

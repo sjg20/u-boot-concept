@@ -20,6 +20,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <uuid.h>
+#include <asm/global_data.h>
 #include <dm/device-internal.h>
 #include <u-boot/crc.h>
 

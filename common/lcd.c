@@ -14,6 +14,7 @@
 #include <env_callback.h>
 #include <init.h>
 #include <stdio.h>
+#include <asm/global_data.h>
 #include <linux/types.h>
 #include <stdio_dev.h>
 #include <lcd.h>

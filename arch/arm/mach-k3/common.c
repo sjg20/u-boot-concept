@@ -13,6 +13,7 @@
 #include "common.h"
 #include <dm.h>
 #include <remoteproc.h>
+#include <asm/global_data.h>
 #include <linux/soc/ti/ti_sci_protocol.h>
 #include <fdt_support.h>
 #include <asm/arch/sys_proto.h>

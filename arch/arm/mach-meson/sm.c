@@ -7,6 +7,7 @@
 
 #include <common.h>
 #include <asm/arch/sm.h>
+#include <asm/global_data.h>
 #include <linux/bitops.h>
 #include <linux/err.h>
 #include <linux/kernel.h>

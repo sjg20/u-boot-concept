@@ -7,6 +7,7 @@
 #include <common.h>
 #include <cpu_func.h>
 #include <init.h>
+#include <asm/global_data.h>
 #include <linux/usb/otg.h>
 #include <dwc3-sti-glue.h>
 #include <dwc3-uboot.h>

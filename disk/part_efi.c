@@ -11,6 +11,7 @@
  */
 #include <part.h>
 #include <uuid.h>
+#include <asm/global_data.h>
 #include <asm/unaligned.h>
 #include <common.h>
 #include <command.h>

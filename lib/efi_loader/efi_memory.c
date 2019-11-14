@@ -11,6 +11,7 @@
 #include <malloc.h>
 #include <mapmem.h>
 #include <watchdog.h>
+#include <asm/global_data.h>
 #include <linux/list_sort.h>
 #include <linux/sizes.h>
 

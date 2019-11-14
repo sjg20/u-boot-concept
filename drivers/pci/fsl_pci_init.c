@@ -9,6 +9,7 @@
 #include <malloc.h>
 #include <stdio.h>
 #include <asm/fsl_serdes.h>
+#include <asm/global_data.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

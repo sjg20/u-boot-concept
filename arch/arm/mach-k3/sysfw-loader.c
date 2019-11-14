@@ -12,6 +12,7 @@
 #include <spl.h>
 #include <malloc.h>
 #include <remoteproc.h>
+#include <asm/global_data.h>
 #include <linux/soc/ti/ti_sci_protocol.h>
 #include <g_dnl.h>
 #include <usb.h>

@@ -20,6 +20,7 @@
 #include <miiphy.h>
 #include <command.h>
 #include <stdio.h>
+#include <asm/global_data.h>
 #include <linux/libfdt.h>
 #include <u-boot/crc.h>
 #if defined(CONFIG_PCI)

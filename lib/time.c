@@ -13,6 +13,7 @@
 #include <timer.h>
 #include <watchdog.h>
 #include <div64.h>
+#include <asm/global_data.h>
 #include <asm/io.h>
 
 #ifndef CONFIG_WD_PERIOD

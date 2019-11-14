@@ -44,6 +44,7 @@
 #include <video.h>
 #include <watchdog.h>
 #ifdef CONFIG_MACH_TYPE
+#include <asm/global_data.h>
 #include <asm/mach-types.h>
 #endif
 #if defined(CONFIG_MP) && defined(CONFIG_PPC)

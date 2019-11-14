@@ -6,6 +6,7 @@
 #include <common.h>
 #include "tdx-cfg-block.h"
 #include <stdio.h>
+#include <asm/global_data.h>
 
 #if defined(CONFIG_TARGET_APALIS_IMX6) || \
 	defined(CONFIG_TARGET_APALIS_IMX8) || \

@@ -8,6 +8,7 @@
 #include <mpc83xx.h>
 #include <stdio.h>
 #include <time.h>
+#include <asm/global_data.h>
 
 #include "lblaw/lblaw.h"
 #include "elbc/elbc.h"

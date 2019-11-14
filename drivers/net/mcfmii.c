@@ -8,6 +8,7 @@
 #include <config.h>
 #include <net.h>
 #include <netdev.h>
+#include <asm/global_data.h>
 
 #ifdef CONFIG_MCF547x_8x
 #include <asm/fsl_mcdmafec.h>

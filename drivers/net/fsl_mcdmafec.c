@@ -19,6 +19,7 @@
 #include <net.h>
 #include <miiphy.h>
 #include <stdio.h>
+#include <asm/global_data.h>
 #include <linux/mii.h>
 #include <asm/immap.h>
 #include <asm/fsl_mcdmafec.h>

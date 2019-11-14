@@ -9,6 +9,7 @@
 #include <cpu_func.h>
 #include <image.h>
 #include <stdio.h>
+#include <asm/global_data.h>
 
 #include <env.h>
 #include <init.h>

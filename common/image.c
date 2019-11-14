@@ -14,6 +14,7 @@
 #include <env.h>
 #include <malloc.h>
 #include <stdio.h>
+#include <asm/global_data.h>
 #include <u-boot/crc.h>
 #include <watchdog.h>
 

@@ -10,6 +10,7 @@
 #include <malloc.h>
 #include <asm/arcregs.h>
 #include "axs10x.h"
+#include <asm/global_data.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

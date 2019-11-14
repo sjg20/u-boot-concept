@@ -19,6 +19,7 @@
 #include <hwconfig.h>
 #include <mmc.h>
 #include <part.h>
+#include <asm/global_data.h>
 #include <dm/device_compat.h>
 #include <linux/bitops.h>
 #include <linux/err.h>

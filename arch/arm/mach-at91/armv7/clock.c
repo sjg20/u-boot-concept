@@ -10,6 +10,7 @@
  */
 
 #include <common.h>
+#include <asm/global_data.h>
 #include <linux/errno.h>
 #include <asm/io.h>
 #include <asm/arch/hardware.h>

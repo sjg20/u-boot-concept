@@ -12,6 +12,7 @@
 #include <hang.h>
 #include <image.h>
 #include <spl.h>
+#include <asm/global_data.h>
 #include <asm/smp.h>
 #include <opensbi.h>
 

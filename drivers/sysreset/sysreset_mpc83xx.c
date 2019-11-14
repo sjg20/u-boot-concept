@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <sysreset.h>
 #include <wait_bit.h>
+#include <asm/global_data.h>
 
 #include "sysreset_mpc83xx.h"
 

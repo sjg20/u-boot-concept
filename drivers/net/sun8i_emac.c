@@ -11,6 +11,7 @@
 */
 
 #include <cpu_func.h>
+#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/gpio.h>

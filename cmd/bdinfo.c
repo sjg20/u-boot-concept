@@ -13,6 +13,7 @@
 #include <net.h>
 #include <stdio.h>
 #include <vsprintf.h>
+#include <asm/global_data.h>
 #include <linux/compiler.h>
 
 DECLARE_GLOBAL_DATA_PTR;
