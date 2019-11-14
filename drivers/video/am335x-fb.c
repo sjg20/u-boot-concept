@@ -18,6 +18,7 @@
 #include <asm/arch/clock.h>
 #include <asm/arch/sys_proto.h>
 #include <lcd.h>
+#include <linux/delay.h>
 #include "am335x-fb.h"
 
 #if !defined(LCD_CNTL_BASE)
