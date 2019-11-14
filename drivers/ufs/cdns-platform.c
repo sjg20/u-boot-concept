@@ -9,8 +9,12 @@
 #include <common.h>
 #include <dm.h>
 #include <ufs.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
 #include <linux/err.h>
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 
 #include "ufs.h"
 

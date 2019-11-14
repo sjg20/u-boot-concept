@@ -18,7 +18,11 @@
 #include <miiphy.h>
 #include <net.h>
 #include <wait_bit.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 #include <linux/io.h>
 #include <linux/iopoll.h>
 

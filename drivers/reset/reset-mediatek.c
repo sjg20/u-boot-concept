@@ -13,7 +13,11 @@
 #include <regmap.h>
 #include <reset-uclass.h>
 #include <syscon.h>
+<<<<<<< HEAD
 #include <linux/err.h>
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 
 struct mediatek_reset_priv {
 	struct regmap *regmap;

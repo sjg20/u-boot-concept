@@ -8,7 +8,11 @@
  */
 
 #ifndef __UBOOT__
+<<<<<<< HEAD
 #include <malloc.h>
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 #include <linux/device.h>
 #include <linux/kernel.h>
 #endif

@@ -21,6 +21,7 @@
 #include <asm/mach-imx/mxc_i2c.h>
 #include <asm/arch/clock.h>
 #include <spl.h>
+#include <linux/bitops.h>
 #include <linux/delay.h>
 #include <power/pmic.h>
 #include <power/pfuze100_pmic.h>

@@ -13,6 +13,7 @@
 #include <asm/io.h>
 
 #include "meson_vpu.h"
+#include <linux/bitops.h>
 
 /* HHI Registers */
 #define HHI_VDAC_CNTL0		0x2F4 /* 0xbd offset in data sheet */

@@ -5,6 +5,7 @@
 
 #include <common.h>
 #include <asm/io.h>
+#include <linux/bitops.h>
 #include <linux/delay.h>
 
 #define RWTM_CMD_PARAM(i)	(size_t)(0xd00b0000 + (i) * 4)

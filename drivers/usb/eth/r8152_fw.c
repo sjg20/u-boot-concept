@@ -8,6 +8,7 @@
 #include <errno.h>
 #include "usb_ether.h"
 #include "r8152.h"
+#include <linux/bitops.h>
 #include <linux/delay.h>
 
 static u8 r8152b_pla_patch_a[] = {

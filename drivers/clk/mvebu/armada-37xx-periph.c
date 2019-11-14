@@ -15,7 +15,11 @@
 #include <dm.h>
 #include <asm/io.h>
 #include <asm/arch/cpu.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 
 #define TBG_SEL		0x0
 #define DIV_SEL0	0x4

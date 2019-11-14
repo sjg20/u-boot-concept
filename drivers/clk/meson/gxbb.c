@@ -15,7 +15,11 @@
 #include <syscon.h>
 #include <dt-bindings/clock/gxbb-clkc.h>
 #include "clk_meson.h"
+<<<<<<< HEAD
 #include <linux/err.h>
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 
 /* This driver support only basic clock tree operations :
  * - Can calculate clock frequency on a limited tree

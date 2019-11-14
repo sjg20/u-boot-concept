@@ -12,7 +12,11 @@
 #include <fdtdec.h>
 #include <watchdog.h>
 #include <asm/io.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 #include <linux/compiler.h>
 #include <serial.h>
 #include <linux/err.h>

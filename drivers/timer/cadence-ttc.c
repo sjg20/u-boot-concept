@@ -10,7 +10,11 @@
 #include <init.h>
 #include <timer.h>
 #include <asm/io.h>
+<<<<<<< HEAD
 #include <linux/err.h>
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 
 #define CNT_CNTRL_RESET		BIT(4)
 

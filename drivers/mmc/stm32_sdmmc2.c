@@ -10,8 +10,12 @@
 #include <dm.h>
 #include <fdtdec.h>
 <<<<<<< HEAD
+<<<<<<< HEAD
 #include <malloc.h>
 =======
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 #include <linux/delay.h>
 >>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 #include <linux/libfdt.h>

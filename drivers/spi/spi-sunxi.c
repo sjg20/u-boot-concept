@@ -26,7 +26,11 @@
 #include <fdt_support.h>
 #include <reset.h>
 #include <wait_bit.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 
 #include <asm/bitops.h>
 #include <asm/gpio.h>

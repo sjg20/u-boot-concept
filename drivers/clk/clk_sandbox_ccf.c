@@ -12,7 +12,11 @@
 #include <malloc.h>
 #include <asm/clk.h>
 #include <clk-uclass.h>
+<<<<<<< HEAD
 #include <dm/devres.h>
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 #include <linux/clk-provider.h>
 #include <sandbox-clk.h>
 #include <linux/err.h>

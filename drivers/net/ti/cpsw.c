@@ -14,7 +14,11 @@
 #include <net.h>
 #include <netdev.h>
 #include <cpsw.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 #include <linux/errno.h>
 #include <asm/gpio.h>
 #include <asm/io.h>

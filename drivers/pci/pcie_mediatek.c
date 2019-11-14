@@ -15,7 +15,11 @@
 #include <pci.h>
 #include <reset.h>
 #include <asm/io.h>
+<<<<<<< HEAD
 #include <dm/devres.h>
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 #include <linux/iopoll.h>
 #include <linux/list.h>
 

@@ -17,7 +17,11 @@
 #include <asm/omap_gpio.h>
 #include <asm/omap_common.h>
 #include <asm/ti-common/ti-edma3.h>
+<<<<<<< HEAD
 #include <linux/err.h>
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 #include <linux/kernel.h>
 #include <regmap.h>
 #include <syscon.h>

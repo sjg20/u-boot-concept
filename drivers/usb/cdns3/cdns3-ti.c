@@ -9,7 +9,11 @@
 #include <asm-generic/io.h>
 #include <clk.h>
 #include <dm.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 #include <linux/io.h>
 #include <linux/usb/otg.h>
 #include <malloc.h>

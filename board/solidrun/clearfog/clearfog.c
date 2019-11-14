@@ -13,8 +13,12 @@
 #include <asm/arch/cpu.h>
 #include <asm/arch/soc.h>
 <<<<<<< HEAD
+<<<<<<< HEAD
 #include "../common/tlv_data.h"
 =======
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 #include <linux/delay.h>
 >>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 

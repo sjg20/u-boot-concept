@@ -7,8 +7,12 @@
 #include <clk.h>
 #include <common.h>
 #include <dm.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
 #include <linux/err.h>
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 
 #define UFS_SS_CTRL             0x4
 #define UFS_SS_RST_N_PCS        BIT(0)

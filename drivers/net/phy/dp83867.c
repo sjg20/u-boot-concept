@@ -5,7 +5,11 @@
  */
 #include <common.h>
 #include <phy.h>
+<<<<<<< HEAD:drivers/net/phy/dp83867.c
 #include <dm/devres.h>
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header:drivers/net/phy/ti.c
 #include <linux/compat.h>
 #include <malloc.h>
 

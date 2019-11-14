@@ -12,7 +12,11 @@
 #include <clk.h>
 #include <wait_bit.h>
 #include <asm/io.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 
 DECLARE_GLOBAL_DATA_PTR;
 

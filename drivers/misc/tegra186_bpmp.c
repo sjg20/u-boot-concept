@@ -13,7 +13,11 @@
 #include <misc.h>
 #include <asm/arch-tegra/bpmp_abi.h>
 #include <asm/arch-tegra/ivc.h>
+<<<<<<< HEAD
 #include <linux/err.h>
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 
 #define BPMP_IVC_FRAME_COUNT 1
 #define BPMP_IVC_FRAME_SIZE 128

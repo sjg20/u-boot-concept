@@ -18,10 +18,14 @@
 #include <nand.h>
 #include <clk.h>
 <<<<<<< HEAD
+<<<<<<< HEAD
 #include <dm/device_compat.h>
 #include <dm/devres.h>
 #include <linux/err.h>
 =======
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 #include <linux/bug.h>
 >>>>>>> 1ce8706054d... common: Drop linux/bug.h from common header
 #include <linux/ioport.h>

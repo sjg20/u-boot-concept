@@ -13,7 +13,11 @@
 #include <syscon.h>
 #include <asm/io.h>
 #include <asm/processor.h>
+<<<<<<< HEAD
 #include <linux/err.h>
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 #include <linux/iopoll.h>
 
 #include <dt-bindings/power/mt7623-power.h>

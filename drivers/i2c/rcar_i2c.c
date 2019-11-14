@@ -18,8 +18,12 @@
 #include <asm/io.h>
 #include <wait_bit.h>
 <<<<<<< HEAD
+<<<<<<< HEAD
 #include <dm/device_compat.h>
 =======
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 #include <linux/delay.h>
 >>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 

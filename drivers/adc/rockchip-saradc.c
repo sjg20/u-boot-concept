@@ -11,7 +11,11 @@
 #include <dm.h>
 #include <errno.h>
 #include <asm/io.h>
+<<<<<<< HEAD
 #include <linux/err.h>
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 
 #define SARADC_CTRL_CHN_MASK		GENMASK(2, 0)
 #define SARADC_CTRL_POWER_CTRL		BIT(3)

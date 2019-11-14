@@ -13,7 +13,11 @@
 #include <errno.h>
 #include <clk-uclass.h>
 #include <i2c.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 
 #define MAX_NUMBER_OF_PLLS		4
 #define MAX_NUMER_OF_OUTPUTS		9

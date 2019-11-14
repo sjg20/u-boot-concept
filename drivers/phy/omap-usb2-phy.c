@@ -13,7 +13,11 @@
 #include <generic-phy.h>
 #include <regmap.h>
 #include <syscon.h>
+<<<<<<< HEAD
 #include <linux/err.h>
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 
 #define OMAP_USB2_CALIBRATE_FALSE_DISCONNECT	BIT(0)
 

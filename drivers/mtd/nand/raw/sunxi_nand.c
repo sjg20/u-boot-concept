@@ -30,10 +30,14 @@
 #include <memalign.h>
 #include <nand.h>
 <<<<<<< HEAD
+<<<<<<< HEAD
 #include <dm/device_compat.h>
 #include <dm/devres.h>
 #include <linux/err.h>
 =======
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 #include <linux/delay.h>
 >>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 

@@ -12,7 +12,11 @@
 #include <malloc.h>
 #include <usb.h>
 #include <wait_bit.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 
 #include <usb/xhci.h>
 #include "xhci-rcar-r8a779x_usb3_v3.h"

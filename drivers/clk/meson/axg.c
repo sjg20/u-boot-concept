@@ -15,7 +15,11 @@
 #include <div64.h>
 #include <dt-bindings/clock/axg-clkc.h>
 #include "clk_meson.h"
+<<<<<<< HEAD
 #include <linux/err.h>
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 
 #define XTAL_RATE 24000000
 

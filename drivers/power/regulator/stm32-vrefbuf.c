@@ -10,7 +10,11 @@
 #include <clk.h>
 #include <dm.h>
 #include <asm/io.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 #include <linux/iopoll.h>
 #include <linux/kernel.h>
 #include <power/regulator.h>

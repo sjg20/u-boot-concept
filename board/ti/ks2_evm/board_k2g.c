@@ -20,6 +20,7 @@
 #include <remoteproc.h>
 #include "mux-k2g.h"
 #include "../common/board_detect.h"
+#include <linux/bitops.h>
 #include <linux/delay.h>
 
 #define K2G_GP_AUDIO_CODEC_ADDRESS	0x1B

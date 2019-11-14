@@ -12,6 +12,7 @@
 #include <linux/bitfield.h>
 
 #include "meson_vpu.h"
+#include <linux/bitops.h>
 
 /* OSDx_BLKx_CFG */
 #define OSD_CANVAS_SEL		16

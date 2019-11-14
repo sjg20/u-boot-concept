@@ -26,7 +26,11 @@
 #include <malloc.h>
 #include <clk-uclass.h>
 #include <dm/device.h>
+<<<<<<< HEAD
 #include <dm/devres.h>
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 #include <linux/clk-provider.h>
 #include <clk.h>
 #include "clk.h"

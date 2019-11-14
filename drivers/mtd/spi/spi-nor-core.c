@@ -11,8 +11,12 @@
 
 #include <common.h>
 #include <log.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
 #include <dm/devres.h>
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 #include <linux/err.h>
 #include <linux/errno.h>
 #include <linux/log2.h>

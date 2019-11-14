@@ -8,8 +8,12 @@
 #include <errno.h>
 #include <regmap.h>
 #include <syscon.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
 #include <linux/err.h>
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 #include <power/pmic.h>
 #include <power/regulator.h>
 

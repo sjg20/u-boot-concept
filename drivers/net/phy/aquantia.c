@@ -9,6 +9,7 @@
 #include <common.h>
 #include <dm.h>
 #include <phy.h>
+#include <linux/bitops.h>
 #include <linux/delay.h>
 #include <u-boot/crc.h>
 #include <malloc.h>

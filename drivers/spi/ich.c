@@ -27,6 +27,7 @@
 #include <linux/sizes.h>
 =======
 #include <div64.h>
+#include <linux/bitops.h>
 #include <linux/delay.h>
 >>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 

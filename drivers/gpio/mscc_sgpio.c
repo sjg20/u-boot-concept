@@ -13,8 +13,12 @@
 #include <asm/io.h>
 #include <errno.h>
 #include <clk.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
 #include <linux/err.h>
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 
 #define MSCC_SGPIOS_PER_BANK	32
 #define MSCC_SGPIO_BANK_DEPTH	4

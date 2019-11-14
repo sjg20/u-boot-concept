@@ -18,7 +18,11 @@
 #include <spi.h>
 #include <fdtdec.h>
 #include <reset.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 #include <linux/compat.h>
 #include <linux/iopoll.h>
 #include <asm/io.h>

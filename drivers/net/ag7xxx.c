@@ -14,6 +14,7 @@
 #include <miiphy.h>
 #include <malloc.h>
 #include <net.h>
+#include <linux/bitops.h>
 #include <linux/compiler.h>
 #include <linux/delay.h>
 #include <linux/err.h>

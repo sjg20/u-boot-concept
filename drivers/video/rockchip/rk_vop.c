@@ -19,7 +19,11 @@
 #include <asm/arch-rockchip/vop_rk3288.h>
 #include <dm/device-internal.h>
 #include <dm/uclass-internal.h>
+<<<<<<< HEAD
 #include <linux/err.h>
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 #include <power/regulator.h>
 #include "rk_vop.h"
 

@@ -8,7 +8,11 @@
 #include <malloc.h>
 #include <rtc.h>
 #include <asm/io.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 #include <linux/iopoll.h>
 
 #define STM32_RTC_TR		0x00

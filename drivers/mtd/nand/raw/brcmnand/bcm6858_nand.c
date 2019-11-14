@@ -4,7 +4,11 @@
 #include <asm/io.h>
 #include <memalign.h>
 #include <nand.h>
+<<<<<<< HEAD
 #include <linux/err.h>
+=======
+#include <linux/bitops.h>
+>>>>>>> 032bab566df... common: Drop linux/bitops.h from common header
 #include <linux/errno.h>
 #include <linux/io.h>
 #include <linux/ioport.h>
