@@ -13,6 +13,7 @@
 
 #include <configs/bur_cfg_common.h>
 #include <configs/bur_am335x_common.h>
+#include <linux/stringify.h>
 /* ------------------------------------------------------------------------- */
 #define CONFIG_AM335X_LCD
 #define LCD_BPP				LCD_COLOR32
