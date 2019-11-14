@@ -13,6 +13,7 @@
  */
 #include <common.h>
 #include <dm.h>
+#include <log.h>
 #include <asm/io.h>
 #include <asm/arch/hardware.h>
 #include <asm/arch/omap.h>

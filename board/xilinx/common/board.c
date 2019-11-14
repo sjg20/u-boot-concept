@@ -5,6 +5,7 @@
  */
 
 #include <common.h>
+#include <log.h>
 #include <asm/sections.h>
 #include <dm/uclass.h>
 #include <i2c.h>
