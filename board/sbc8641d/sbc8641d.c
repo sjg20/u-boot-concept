@@ -14,6 +14,7 @@
 #include <common.h>
 #include <command.h>
 #include <init.h>
+#include <log.h>
 #include <pci.h>
 #include <asm/processor.h>
 #include <asm/immap_86xx.h>
@@ -49,7 +50,7 @@ int dram_init(void)
 	dram_size = fixed_sdram ();
 #endif
 
-	debug ("    DDR: ");
+	debug("    DDR: ");
 	gd->ram_size = dram_size;
 
 	return 0;

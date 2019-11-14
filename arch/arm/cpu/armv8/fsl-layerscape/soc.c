@@ -10,6 +10,7 @@
 #include <fsl_immap.h>
 #include <fsl_ifc.h>
 #include <init.h>
+#include <log.h>
 #include <asm/arch/fsl_serdes.h>
 #include <asm/arch/soc.h>
 #include <asm/cache.h>
