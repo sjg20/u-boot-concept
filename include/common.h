@@ -14,32 +14,33 @@
 
 #ifndef __ASSEMBLY__		/* put C only stuff in this section */
 #include <config.h>
+#include <linux/types.h>
+#include <bootstage.h>
+#include <display_options.h>
 #include <errno.h>
+#include <flash.h>
+#include <image.h>
+#include <init.h>
+#include <log.h>
+#include <net.h>
+#include <part.h>
+#include <stdarg.h>
+#include <stdio.h>
 #include <time.h>
+#include <uuid.h>
+#include <vsprintf.h>
 #include <asm-offsets.h>
+#include <asm/global_data.h>	/* global data used for startup functions */
+#include <asm/ptrace.h>
+#include <asm/u-boot.h> /* boot information for Linux kernel */
 #include <linux/bitops.h>
 #include <linux/bug.h>
 #include <linux/delay.h>
-#include <linux/types.h>
+#include <linux/kernel.h>
 #include <linux/printk.h>
 #include <linux/string.h>
 #include <linux/stringify.h>
-#include <asm/ptrace.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <linux/kernel.h>
-#include <part.h>
-#include <flash.h>
-#include <image.h>
-#include <log.h>
-#include <asm/u-boot.h> /* boot information for Linux kernel */
-#include <asm/global_data.h>	/* global data used for startup functions */
-#include <init.h>
-#include <display_options.h>
-#include <uuid.h>
-#include <vsprintf.h>
-#include <net.h>
-#include <bootstage.h>
+#include <linux/types.h>
 #endif	/* __ASSEMBLY__ */
 
 /* Pull in stuff for the build system */
