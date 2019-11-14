@@ -23,7 +23,6 @@
 #include <vsprintf.h>
 #include <asm-offsets.h>
 #include <asm/global_data.h>	/* global data used for startup functions */
-#include <asm/ptrace.h>
 #include <asm/u-boot.h> /* boot information for Linux kernel */
 #include <linux/bitops.h>
 #include <linux/bug.h>
