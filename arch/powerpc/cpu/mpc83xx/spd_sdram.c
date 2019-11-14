@@ -23,6 +23,7 @@
 #include <spd.h>
 #include <asm/mmu.h>
 #include <spd_sdram.h>
+#include <linux/delay.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -846,6 +847,7 @@ long int spd_sdram()
 	debug("DDR:sdram_cfg=0x%08x\n", ddr->sdram_cfg);
 	return memsize; /*in MBytes*/
 }
+#include <linux/delay.h>
 #endif /* CONFIG_SPD_EEPROM */
 
 #if defined(CONFIG_DDR_ECC) && !defined(CONFIG_ECC_INIT_VIA_DDRCONTROLLER)

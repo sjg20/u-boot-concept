@@ -7,6 +7,7 @@
 #ifndef DEBUG
 #define DEBUG
 #endif
+#include <linux/delay.h>
 #endif
 
 #include <config.h>
