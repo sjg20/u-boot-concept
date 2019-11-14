@@ -27,7 +27,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <time.h>
-#include <uuid.h>
 #include <vsprintf.h>
 #include <asm-offsets.h>
 #include <asm/global_data.h>	/* global data used for startup functions */
