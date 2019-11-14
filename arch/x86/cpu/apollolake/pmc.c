@@ -12,6 +12,7 @@
 #include <acpi_s3.h>
 #include <dt-structs.h>
 #include <dm.h>
+#include <log.h>
 #include <spl.h>
 #include <asm/io.h>
 #include <asm/pci.h>

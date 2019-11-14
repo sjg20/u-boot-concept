@@ -11,6 +11,7 @@
  * - starts output DMA from gd->fb_base buffer
  */
 #include <common.h>
+#include <log.h>
 #include <asm/io.h>
 #include <asm/arch/hardware.h>
 #include <asm/arch/omap.h>

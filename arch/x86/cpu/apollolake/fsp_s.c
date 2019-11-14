@@ -10,6 +10,7 @@
 #include <bootstage.h>
 #include <dm.h>
 #include <irq.h>
+#include <log.h>
 #include <malloc.h>
 #include <asm/intel_pinctrl.h>
 #include <asm/io.h>
