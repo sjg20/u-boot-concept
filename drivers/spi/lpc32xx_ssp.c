@@ -7,6 +7,7 @@
  */
 
 #include <common.h>
+#include <log.h>
 #include <linux/compat.h>
 #include <asm/io.h>
 #include <malloc.h>
