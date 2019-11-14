@@ -6,7 +6,11 @@
 #include <asm/gic.h>
 #include <asm/gic-v3.h>
 #include <asm/io.h>
+<<<<<<< HEAD
 #include <linux/sizes.h>
+=======
+#include <linux/bitops.h>
+>>>>>>> common: Drop linux/bitops.h from common header
 
 static u32 lpi_id_bits;
 
