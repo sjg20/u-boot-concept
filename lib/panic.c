@@ -14,6 +14,7 @@
 #if !defined(CONFIG_PANIC_HANG)
 #include <command.h>
 #endif
+#include <stdarg.h>
 
 static void panic_finish(void) __attribute__ ((noreturn));
 
