@@ -13,8 +13,14 @@
 #include <dm/device_compat.h>
 #include <dm/pinctrl.h>
 #include <linux/compat.h>
+<<<<<<< HEAD
 #include <linux/dma-mapping.h>
+=======
+#include <linux/delay.h>
+#include <linux/dma-direction.h>
+>>>>>>> common: Drop linux/delay.h from common header
 #include <linux/io.h>
+#include <linux/printk.h>
 #include <linux/sizes.h>
 #include <power/regulator.h>
 #include <asm/unaligned.h>

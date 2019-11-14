@@ -15,7 +15,19 @@
 #include <mmc.h>
 #include <sdhci.h>
 #include <dm.h>
+<<<<<<< HEAD
 #include <linux/dma-mapping.h>
+=======
+#include <asm/cache.h>
+#include <linux/delay.h>
+#include <linux/printk.h>
+
+#if defined(CONFIG_FIXED_SDHCI_ALIGNED_BUFFER)
+void *aligned_buffer = (void *)CONFIG_FIXED_SDHCI_ALIGNED_BUFFER;
+#else
+void *aligned_buffer;
+#endif
+>>>>>>> common: Drop linux/delay.h from common header
 
 static void sdhci_reset(struct sdhci_host *host, u8 mask)
 {
