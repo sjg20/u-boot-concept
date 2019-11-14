@@ -7,6 +7,7 @@
  */
 
 #include <common.h>
+#include <part.h>
 
 #include <command.h>
 #include <env.h>
