@@ -40,6 +40,7 @@
  * If you want to boot from the SODIMM flash, instead of the soldered
  * on flash, set this, and change JP12, SW2:8 accordingly.
  */
+#include <linux/stringify.h>
 #undef CONFIG_SYS_ALT_BOOT
 
 #undef CONFIG_RIO

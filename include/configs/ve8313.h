@@ -115,6 +115,7 @@
 #define CONFIG_SYS_RAMBOOT
 #endif
 
+#include <linux/stringify.h>
 #define CONFIG_SYS_INIT_RAM_LOCK	1
 #define CONFIG_SYS_INIT_RAM_ADDR	0xFD000000 /* Initial RAM address */
 #define CONFIG_SYS_INIT_RAM_SIZE	0x1000	/* Size of used area in RAM*/

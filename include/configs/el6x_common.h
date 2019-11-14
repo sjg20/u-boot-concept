@@ -71,6 +71,7 @@
 	func(DHCP, dhcp, na)
 
 #include <config_distro_bootcmd.h>
+#include <linux/stringify.h>
 
 #define CONFIG_ARP_TIMEOUT     200UL
 

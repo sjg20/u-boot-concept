@@ -15,6 +15,7 @@
 #else
 #define CONFIG_SYS_CBSIZE		512	/* Console I/O Buffer Size  */
 #endif
+#include <linux/stringify.h>
 #define CONFIG_SYS_MAXARGS		32 /* max number of command args */
 #define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
 

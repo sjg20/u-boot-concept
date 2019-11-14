@@ -45,6 +45,7 @@
 #	define CONFIG_SYS_ATA_STRIDE		4	/* Interval between registers */
 #endif
 
+#include <linux/stringify.h>
 #define CONFIG_DRIVER_DM9000
 #ifdef CONFIG_DRIVER_DM9000
 #	define CONFIG_DM9000_BASE	(CONFIG_SYS_CS1_BASE | 0x300)

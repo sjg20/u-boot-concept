@@ -223,6 +223,7 @@
 #define CONFIG_SYS_EEPROM_PAGE_WRITE_BITS	3
 #define CONFIG_SYS_EEPROM_PAGE_WRITE_DELAY_MS	10	/* msec */
 #endif /* CONFIG_CMD_EEPROM */
+#include <linux/stringify.h>
 #endif /* CONFIG_CMD_I2C */
 
 /*

@@ -30,6 +30,7 @@
 #define CONFIG_SPL_COMMON_INIT_DDR
 #define CONFIG_SYS_CCSR_DO_NOT_RELOCATE
 #endif
+#include <linux/stringify.h>
 #endif
 #endif
 

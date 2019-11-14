@@ -149,4 +149,5 @@
 
 #define CONFIG_IMX_THERMAL
 
+#include <linux/stringify.h>
 #endif

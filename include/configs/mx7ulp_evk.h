@@ -150,4 +150,5 @@
 #define CONFIG_CMD_CACHE
 #endif
 
+#include <linux/stringify.h>
 #endif	/* __CONFIG_H */

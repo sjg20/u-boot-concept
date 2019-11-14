@@ -56,6 +56,7 @@
 #elif defined(CONFIG_ARCH_T2081)
 #define CONFIG_SYS_FSL_PBL_RCW board/freescale/t208xqds/t2081_nand_rcw.cfg
 #endif
+#include <linux/stringify.h>
 #endif
 
 #ifdef CONFIG_SPIFLASH

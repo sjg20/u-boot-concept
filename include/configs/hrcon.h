@@ -119,6 +119,7 @@
 #define CONFIG_SYS_FLASH_LEGACY_512Kx16
 #endif
 
+#include <linux/stringify.h>
 #define CONFIG_SYS_FLASH_BASE		0xFE000000 /* FLASH base address */
 #define CONFIG_SYS_FLASH_SIZE		8 /* FLASH size is up to 8M */
 

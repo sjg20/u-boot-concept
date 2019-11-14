@@ -190,4 +190,5 @@
 #define CONFIG_FEC_XCV_TYPE		RGMII
 #define FEC_QUIRK_ENET_MAC
 
+#include <linux/stringify.h>
 #endif /* __IMX8QM_MEK_H */

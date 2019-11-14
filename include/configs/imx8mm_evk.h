@@ -154,4 +154,5 @@
 
 #define IMX_FEC_BASE			0x30BE0000
 
+#include <linux/stringify.h>
 #endif

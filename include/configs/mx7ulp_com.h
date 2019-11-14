@@ -96,4 +96,5 @@
 #endif
 
 #define CONFIG_MXC_USB_PORTSC		(PORT_PTS_UTMI | PORT_PTS_PTW)
+#include <linux/stringify.h>
 #endif	/* __CONFIG_H */

@@ -155,4 +155,5 @@
 
 /* UBI/UBIFS config options */
 
+#include <linux/stringify.h>
 #endif			       /* __CONFIG_H */

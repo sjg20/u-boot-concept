@@ -35,6 +35,7 @@
 #endif
 
 /* High Level Configuration Options */
+#include <linux/stringify.h>
 #define CONFIG_CONTROLCENTERD
 
 #define CONFIG_ENABLE_36BIT_PHYS

@@ -58,6 +58,7 @@
 /*
  * DDR Setup
  */
+#include <linux/stringify.h>
 #define CONFIG_SYS_SDRAM_BASE		0x00000000 /* DDR is system memory */
 #define CONFIG_SYS_DDR_SDRAM_CLK_CNTL	0x03000000
 #define CONFIG_SYS_83XX_DDR_USES_CS0

@@ -23,6 +23,7 @@
 #define CONFIG_NS16550_MIN_FUNCTIONS
 #endif
 
+#include <linux/stringify.h>
 #define CONFIG_SYS_TEXT_BASE_SPL 0xfff00000
 #define CONFIG_SPL_MAX_SIZE	(4 * 1024)
 #define CONFIG_SPL_PAD_TO	0x4000

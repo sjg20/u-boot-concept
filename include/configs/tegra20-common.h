@@ -83,4 +83,5 @@
 #define CONFIG_SYS_NAND_SELF_INIT
 #define CONFIG_SYS_NAND_ONFI_DETECTION
 
+#include <linux/stringify.h>
 #endif /* _TEGRA20_COMMON_H_ */

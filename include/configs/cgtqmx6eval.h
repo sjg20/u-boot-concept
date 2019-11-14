@@ -209,4 +209,5 @@
 #define CONFIG_SYS_MMC_ENV_DEV		0
 #endif
 
+#include <linux/stringify.h>
 #endif			       /* __CONFIG_CGTQMX6EVAL_H */

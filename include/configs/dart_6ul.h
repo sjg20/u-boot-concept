@@ -33,6 +33,7 @@
 #define CONFIG_FEC_XCV_TYPE		RMII
 #define CONFIG_ETHPRIME			"eth1"
 #endif
+#include <linux/stringify.h>
 #endif
 
 /* Size of malloc() pool */

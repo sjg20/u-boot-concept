@@ -268,6 +268,7 @@
 #define CONFIG_HAS_ETH1
 #endif
 
+#include <linux/stringify.h>
 #define CONFIG_LOADADDR	800000	/* default location for tftp and bootm */
 
 
