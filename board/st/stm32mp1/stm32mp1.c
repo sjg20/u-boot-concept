@@ -18,6 +18,7 @@
 #include <i2c.h>
 #include <init.h>
 #include <led.h>
+#include <log.h>
 #include <malloc.h>
 #include <memalign.h>
 #include <misc.h>
