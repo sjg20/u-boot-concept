@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <linux/bitops.h>
 #include <linux/dma-mapping.h>
+#include <linux/printk.h>
 
 static void sdhci_reset(struct sdhci_host *host, u8 mask)
 {

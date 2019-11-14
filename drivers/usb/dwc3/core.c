@@ -25,6 +25,7 @@
 #include <linux/ioport.h>
 #include <dm.h>
 #include <generic-phy.h>
+#include <linux/printk.h>
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
 

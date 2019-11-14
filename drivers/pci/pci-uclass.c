@@ -20,6 +20,7 @@
 #include <asm/fsp/fsp_support.h>
 #endif
 #include "pci_internal.h"
+#include <linux/printk.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

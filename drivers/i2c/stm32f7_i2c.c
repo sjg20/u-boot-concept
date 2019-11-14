@@ -10,6 +10,7 @@
 #include <malloc.h>
 #include <reset.h>
 #include <linux/bitops.h>
+#include <linux/printk.h>
 
 #include <dm/device.h>
 #include <linux/io.h>

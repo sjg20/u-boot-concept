@@ -11,6 +11,7 @@
 #include <asm/io.h>
 #include <asm/arch/psc_defs.h>
 #include <linux/bitops.h>
+#include <linux/printk.h>
 
 /* USB PHY control register offsets */
 #define USB_PHY_CTL_UTMI		0x0000

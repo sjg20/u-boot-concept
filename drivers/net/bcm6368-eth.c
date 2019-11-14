@@ -17,6 +17,7 @@
 #include <wait_bit.h>
 #include <asm/io.h>
 #include <dm/device_compat.h>
+#include <linux/printk.h>
 
 #define ETH_PORT_STR			"brcm,enetsw-port"
 

@@ -43,6 +43,7 @@
 #include <asm/gpio.h>
 #include <asm/io.h>
 #include <linux/bitops.h>
+#include <linux/printk.h>
 
 /* Core registers */
 

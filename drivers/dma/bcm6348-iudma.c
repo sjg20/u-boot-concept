@@ -25,6 +25,7 @@
 #include <reset.h>
 #include <asm/io.h>
 #include <linux/bitops.h>
+#include <linux/printk.h>
 
 #define DMA_RX_DESC	6
 #define DMA_TX_DESC	1

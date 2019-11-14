@@ -7,6 +7,7 @@
 #include <malloc.h>
 #include <net.h>
 #include <config.h>
+#include <linux/printk.h>
 
 #include <phy.h>
 #include <miiphy.h>

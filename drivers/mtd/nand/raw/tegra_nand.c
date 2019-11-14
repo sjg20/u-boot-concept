@@ -22,6 +22,7 @@
 #include <bouncebuf.h>
 #include <dm.h>
 #include "tegra_nand.h"
+#include <linux/printk.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

@@ -19,6 +19,7 @@
 #include <asm/arch/sys_proto.h>
 #include <lcd.h>
 #include "am335x-fb.h"
+#include <linux/printk.h>
 
 #if !defined(LCD_CNTL_BASE)
 #error "hw-base address of LCD-Controller (LCD_CNTL_BASE) not defined!"

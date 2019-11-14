@@ -13,6 +13,7 @@
 #include <linux/bug.h>
 #include <linux/kernel.h>
 #include <linux/list.h>
+#include <linux/printk.h>
 #include <linux/timer.h>
 #include <linux/spinlock.h>
 #include <linux/device.h>

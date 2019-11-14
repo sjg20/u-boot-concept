@@ -11,6 +11,7 @@
 #include <i2c.h>
 #include <asm/global_data.h>
 #include <asm/gpio.h>
+#include <linux/printk.h>
 
 #define DEFAULT_UDELAY	5
 #define RETRIES		0

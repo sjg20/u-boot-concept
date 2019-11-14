@@ -21,6 +21,7 @@
 #include <asm/arch-rockchip/sdram_rk3288.h>
 #include <linux/bitops.h>
 #include <linux/err.h>
+#include <linux/printk.h>
 
 struct dram_info {
 	struct ram_info info;

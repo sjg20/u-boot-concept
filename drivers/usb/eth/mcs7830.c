@@ -17,6 +17,7 @@
 #include <malloc.h>
 #include <memalign.h>
 #include <usb.h>
+#include <linux/printk.h>
 
 #include "usb_ether.h"
 

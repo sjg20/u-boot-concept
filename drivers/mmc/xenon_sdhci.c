@@ -22,6 +22,7 @@
 #include <linux/libfdt.h>
 #include <malloc.h>
 #include <sdhci.h>
+#include <linux/printk.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

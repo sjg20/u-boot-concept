@@ -17,6 +17,7 @@
 #include <reset.h>
 #include <bitfield.h>
 #include <generic-phy.h>
+#include <linux/printk.h>
 
 #include <linux/bitops.h>
 #include <linux/compat.h>

@@ -21,6 +21,7 @@
 #include "miiphy.h"
 #include <fsl_qe.h>
 #include <phy.h>
+#include <linux/printk.h>
 
 #define ugphy_printk(format, arg...)  \
 	printf(format "\n", ## arg)

@@ -17,6 +17,7 @@
 #include "sor.h"
 #include <linux/bug.h>
 #include <linux/err.h>
+#include <linux/printk.h>
 
 #define DEBUG_SOR 0
 

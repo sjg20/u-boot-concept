@@ -11,6 +11,7 @@
 #include <libtizen.h>
 #include <stdio.h>
 #include <asm/global_data.h>
+#include <linux/printk.h>
 #include <samsung/misc.h>
 #include <errno.h>
 #include <version.h>

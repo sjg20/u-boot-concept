@@ -61,6 +61,7 @@
 #include <dm/devres.h>
 #include <linux/bitops.h>
 #include <linux/err.h>
+#include <linux/printk.h>
 #include <linux/usb/gadget.h>
 #include <linux/compat.h>
 #include <linux/iopoll.h>

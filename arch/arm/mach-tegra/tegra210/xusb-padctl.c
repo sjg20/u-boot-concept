@@ -10,6 +10,7 @@
 #include <asm/global_data.h>
 #include <dm/of_access.h>
 #include <dm/ofnode.h>
+#include <linux/printk.h>
 
 #include "../xusb-padctl-common.h"
 

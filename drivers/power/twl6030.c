@@ -5,6 +5,7 @@
  */
 #include <config.h>
 #include <stdio.h>
+#include <linux/printk.h>
 
 #include <twl6030.h>
 

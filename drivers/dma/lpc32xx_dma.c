@@ -16,6 +16,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/io.h>
 #include <linux/bitops.h>
+#include <linux/printk.h>
 
 /* DMA controller channel register structure */
 struct dmac_chan_reg {

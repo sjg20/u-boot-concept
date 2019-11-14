@@ -7,6 +7,7 @@
 #include <config.h>
 #include <common.h>
 #include <flash.h>
+#include <linux/printk.h>
 
 #include <fastboot.h>
 #include <image-sparse.h>

@@ -16,6 +16,7 @@
 #include <linux/bitops.h>
 #include <linux/bug.h>
 #include <linux/io.h>
+#include <linux/printk.h>
 
 /*
  * Synopsys ARC HSDK clock tree.

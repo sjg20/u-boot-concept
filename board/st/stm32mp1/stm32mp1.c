@@ -40,6 +40,7 @@
 #include <jffs2/load_kernel.h>
 #include <linux/bitops.h>
 #include <linux/err.h>
+#include <linux/printk.h>
 #include <power/regulator.h>
 #include <usb/dwc2_udc.h>
 

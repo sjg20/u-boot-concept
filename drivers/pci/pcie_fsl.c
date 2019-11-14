@@ -17,6 +17,7 @@
 #include <asm/io.h>
 #include "pcie_fsl.h"
 #include <dm/device_compat.h>
+#include <linux/printk.h>
 
 LIST_HEAD(fsl_pcie_list);
 

@@ -17,6 +17,7 @@
 #include <linux/bitops.h>
 #include <linux/math64.h>
 #include <linux/bitfield.h>
+#include <linux/printk.h>
 
 #define MESON_SAR_ADC_REG0					0x00
 	#define MESON_SAR_ADC_REG0_PANEL_DETECT			BIT(31)
