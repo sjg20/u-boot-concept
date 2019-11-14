@@ -10,6 +10,7 @@
 #include <log.h>
 #include <malloc.h>
 #include <reset.h>
+#include <linux/bitops.h>
 #include <linux/delay.h>
 
 #include <dm/device.h>
