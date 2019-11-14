@@ -192,4 +192,5 @@ ulong get_tbclk(void)
 	return CONFIG_SYS_CLK_FREQ;
 #endif
 }
+#include <linux/delay.h>
 #endif /* CONFIG_TIMER */

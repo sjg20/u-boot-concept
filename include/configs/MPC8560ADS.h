@@ -52,6 +52,7 @@
 /*
  * These can be toggled for performance analysis, otherwise use default.
  */
+#include <linux/delay.h>
 #define CONFIG_L2_CACHE			/* toggle L2 cache */
 #define CONFIG_BTB			/* toggle branch predition */
 
