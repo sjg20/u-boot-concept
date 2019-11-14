@@ -60,6 +60,7 @@
 #include <common.h>
 #include <malloc.h>
 #include <dm/devres.h>
+#include <linux/bug.h>
 #include <linux/compat.h>
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/bbm.h>

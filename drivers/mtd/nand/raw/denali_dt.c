@@ -7,6 +7,7 @@
 #include <clk.h>
 #include <dm.h>
 #include <dm/device_compat.h>
+#include <linux/bug.h>
 #include <linux/io.h>
 #include <linux/ioport.h>
 #include <linux/printk.h>

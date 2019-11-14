@@ -16,6 +16,7 @@
 #include "yaffs_trace.h"
 #include "yportenv.h"
 #include <dm/devres.h>
+#include <linux/bug.h>
 
 /*
  * Each entry in yaffs_tnode_list and yaffs_obj_list hold blocks

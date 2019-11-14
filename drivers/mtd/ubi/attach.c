@@ -71,6 +71,7 @@
 
 #ifndef __UBOOT__
 #include <dm/devres.h>
+#include <linux/bug.h>
 #include <linux/err.h>
 #include <linux/slab.h>
 #include <linux/crc32.h>

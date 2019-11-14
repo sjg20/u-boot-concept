@@ -25,6 +25,7 @@
 #include <config.h>
 #include <malloc.h>
 #include <asm/io.h>
+#include <linux/bug.h>
 #include <linux/err.h>
 #include <linux/errno.h>
 #include <phy.h>

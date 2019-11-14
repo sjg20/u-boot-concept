@@ -270,6 +270,7 @@ struct device_attribute { int i; };
 
 #include <usb_mass_storage.h>
 #include <dm/device_compat.h>
+#include <linux/bug.h>
 
 /*-------------------------------------------------------------------------*/
 
