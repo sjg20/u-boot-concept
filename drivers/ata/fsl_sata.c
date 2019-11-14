@@ -6,8 +6,12 @@
  */
 
 #include <common.h>
+<<<<<<< HEAD:drivers/ata/fsl_sata.c
 #include <command.h>
 #include <console.h>
+=======
+#include <blk.h>
+>>>>>>> common: Drop part.h from common header:drivers/ata/fsl_ahci.c
 #include <cpu_func.h>
 #include <asm/io.h>
 #include <asm/processor.h>
