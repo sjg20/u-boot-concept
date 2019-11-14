@@ -23,6 +23,7 @@
  */
 
 #include <common.h>
+#include <linux/delay.h>
 
 #include <errno.h>
 #include <malloc.h>

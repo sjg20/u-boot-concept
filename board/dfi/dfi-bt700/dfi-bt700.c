@@ -9,6 +9,7 @@
 #include <asm/gpio.h>
 #include <asm/ibmpc.h>
 #include <asm/pnp_def.h>
+#include <linux/delay.h>
 
 int board_early_init_f(void)
 {

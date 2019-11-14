@@ -7,7 +7,11 @@
 #include <common.h>
 #include <dm.h>
 #include <env.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 #include <linux/errno.h>
 #include <malloc.h>
 #include <video.h>

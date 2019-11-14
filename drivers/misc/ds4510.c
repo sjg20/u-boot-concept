@@ -12,6 +12,7 @@
 #include <i2c.h>
 #include <command.h>
 #include "ds4510.h"
+#include <linux/delay.h>
 
 enum {
 	DS4510_CMD_INFO,

@@ -27,7 +27,11 @@
 
 #include <common.h>
 #include <asm/io.h>
+<<<<<<< HEAD
 #include <dma.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 #include <linux/errno.h>
 #include <wait_bit.h>
 #include <spi.h>

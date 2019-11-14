@@ -13,7 +13,11 @@
 #include <asm/io.h>
 #include <asm/arch/stm32.h>
 #include "serial_stm32.h"
+<<<<<<< HEAD
 #include <dm/device_compat.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 
 static void _stm32_serial_setbrg(fdt_addr_t base,
 				 struct stm32_uart_info *uart_info,

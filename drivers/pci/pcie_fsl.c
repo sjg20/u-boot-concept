@@ -15,7 +15,11 @@
 #include <asm/fsl_serdes.h>
 #include <asm/io.h>
 #include "pcie_fsl.h"
+<<<<<<< HEAD
 #include <dm/device_compat.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 
 LIST_HEAD(fsl_pcie_list);
 

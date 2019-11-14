@@ -12,6 +12,7 @@
 #include <wait_bit.h>
 #include <asm/io.h>
 #include "pic32_eth.h"
+#include <linux/delay.h>
 
 static int pic32_mdio_write(struct mii_dev *bus,
 			    int addr, int dev_addr,

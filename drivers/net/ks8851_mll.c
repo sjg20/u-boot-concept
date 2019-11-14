@@ -10,6 +10,7 @@
 #include <malloc.h>
 #include <net.h>
 #include <miiphy.h>
+#include <linux/delay.h>
 
 #include "ks8851_mll.h"
 

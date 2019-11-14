@@ -9,6 +9,7 @@
 #include <asm/io.h>
 #include <usb.h>
 #include "ehci.h"
+#include <linux/delay.h>
 #include <linux/mbus.h>
 #include <asm/arch/cpu.h>
 #include <dm.h>

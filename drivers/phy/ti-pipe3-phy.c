@@ -12,7 +12,11 @@
 #include <asm/arch/sys_proto.h>
 #include <syscon.h>
 #include <regmap.h>
+<<<<<<< HEAD
 #include <linux/err.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 
 /* PLLCTRL Registers */
 #define PLL_STATUS              0x00000004

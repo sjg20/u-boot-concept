@@ -10,6 +10,7 @@
 #include <env.h>
 #include <init.h>
 #include <irq_func.h>
+#include <linux/delay.h>
 #include <linux/printk.h>
 #include <linux/kernel.h>
 #include <linux/io.h>

@@ -13,6 +13,7 @@
 #include <asm/arch/cpu.h>
 #include <asm/arch/pinmux.h>
 #include "s3c24x0_i2c.h"
+#include <linux/delay.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

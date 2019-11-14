@@ -9,7 +9,11 @@
 #include <dm.h>
 #include <nand.h>
 #include <reset.h>
+<<<<<<< HEAD
 #include <linux/err.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 #include <linux/iopoll.h>
 #include <linux/ioport.h>
 

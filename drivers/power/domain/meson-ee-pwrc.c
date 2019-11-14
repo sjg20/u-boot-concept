@@ -14,7 +14,11 @@
 #include <clk.h>
 #include <dt-bindings/power/meson-g12a-power.h>
 #include <dt-bindings/power/meson-sm1-power.h>
+<<<<<<< HEAD
 #include <linux/err.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 
 /* AO Offsets */
 

@@ -18,6 +18,7 @@
 #endif
 #include <asm/mmu.h>
 #if defined(CONFIG_OF_LIBFDT)
+#include <linux/delay.h>
 #include <linux/libfdt.h>
 #endif
 #if defined(CONFIG_PQ_MDS_PIB)

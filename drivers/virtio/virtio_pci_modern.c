@@ -14,7 +14,11 @@
 #include <dm/device.h>
 #include <linux/bug.h>
 #include <linux/compat.h>
+<<<<<<< HEAD
 #include <linux/err.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 #include <linux/io.h>
 #include "virtio_pci.h"
 

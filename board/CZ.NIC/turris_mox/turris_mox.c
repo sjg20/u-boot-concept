@@ -12,6 +12,7 @@
 #include <clk.h>
 #include <env.h>
 #include <spi.h>
+#include <linux/delay.h>
 #include <mvebu/comphy.h>
 #include <miiphy.h>
 #include <linux/string.h>

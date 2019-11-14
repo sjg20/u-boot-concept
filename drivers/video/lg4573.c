@@ -12,7 +12,11 @@
 #include <dm/uclass-internal.h>
 #include <errno.h>
 #include <spi.h>
+<<<<<<< HEAD
 #include <asm/gpio.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 
 #define PWR_ON_DELAY_MSECS  120
 

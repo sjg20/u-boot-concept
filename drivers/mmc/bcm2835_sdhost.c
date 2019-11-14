@@ -42,6 +42,7 @@
 #include <linux/bug.h>
 >>>>>>> 1ce8706054d... common: Drop linux/bug.h from common header
 #include <linux/compat.h>
+#include <linux/delay.h>
 #include <linux/io.h>
 #include <linux/iopoll.h>
 #include <linux/sizes.h>

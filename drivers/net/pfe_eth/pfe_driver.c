@@ -4,7 +4,11 @@
  * Copyright 2017 NXP
  */
 
+<<<<<<< HEAD
 #include <malloc.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 #include <net/pfe_eth/pfe_eth.h>
 #include <net/pfe_eth/pfe_firmware.h>
 

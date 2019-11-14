@@ -10,6 +10,7 @@
 #include <malloc.h>
 #include <net.h>
 #include <miiphy.h>
+#include <linux/delay.h>
 
 #include "smc911x.h"
 

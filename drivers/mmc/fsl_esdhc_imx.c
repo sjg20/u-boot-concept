@@ -19,8 +19,12 @@
 #include <hwconfig.h>
 #include <mmc.h>
 #include <part.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
 #include <linux/err.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 #include <power/regulator.h>
 #include <malloc.h>
 #include <fsl_esdhc_imx.h>

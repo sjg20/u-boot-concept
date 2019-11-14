@@ -15,6 +15,7 @@
 #include <asm/mmu.h>
 #include <pci.h>
 #include <flash.h>
+#include <linux/delay.h>
 #include <mtd/cfi_flash.h>
 
 DECLARE_GLOBAL_DATA_PTR;

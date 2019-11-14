@@ -10,7 +10,11 @@
 #include <dm.h>
 #include <usb.h>
 #include <asm/io.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 #include <linux/iopoll.h>
 #include <power/regulator.h>
 

@@ -24,6 +24,7 @@
 #include <asm/io.h>
 #include <asm/mach-types.h>
 #include <asm/arch/ep93xx.h>
+#include <linux/delay.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

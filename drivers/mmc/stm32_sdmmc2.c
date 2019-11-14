@@ -9,7 +9,11 @@
 #include <cpu_func.h>
 #include <dm.h>
 #include <fdtdec.h>
+<<<<<<< HEAD
 #include <malloc.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 #include <linux/libfdt.h>
 #include <mmc.h>
 #include <reset.h>

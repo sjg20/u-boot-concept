@@ -17,6 +17,7 @@
 #include <malloc.h>
 #include <memalign.h>
 #include <fis.h>
+#include <linux/delay.h>
 
 #include "fsl_sata.h"
 

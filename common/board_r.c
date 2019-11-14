@@ -19,6 +19,7 @@
 #include <image.h>
 #include <irq_func.h>
 #include <net.h>
+#include <linux/delay.h>
 #include <u-boot/crc.h>
 /* TODO: can we just include all these headers whether needed or not? */
 #if defined(CONFIG_CMD_BEDBUG)

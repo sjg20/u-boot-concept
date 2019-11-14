@@ -18,7 +18,11 @@
 #include <wait_bit.h>
 #include <asm/gpio.h>
 #include <asm/io.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 #include <linux/err.h>
 #include <linux/ioport.h>
 #include <linux/mdio.h>

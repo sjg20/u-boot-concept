@@ -18,6 +18,7 @@
 #include <menu.h>
 #include <post.h>
 #include <time.h>
+#include <linux/delay.h>
 #include <u-boot/sha256.h>
 #include <bootcount.h>
 

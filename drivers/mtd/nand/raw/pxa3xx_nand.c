@@ -10,6 +10,12 @@
 #include <malloc.h>
 #include <fdtdec.h>
 #include <nand.h>
+<<<<<<< HEAD
+=======
+#include <linux/bug.h>
+#include <linux/delay.h>
+#include <linux/errno.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 #include <asm/io.h>
 #include <asm/arch/cpu.h>
 #include <dm/device_compat.h>

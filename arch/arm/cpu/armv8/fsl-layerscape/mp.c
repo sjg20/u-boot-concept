@@ -11,6 +11,7 @@
 #include <asm/arch/soc.h>
 #include "cpu.h"
 #include <asm/arch-fsl-layerscape/soc.h>
+#include <linux/delay.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

@@ -16,6 +16,7 @@
 #include <phy.h>
 #include <miiphy.h>
 #include <fdtdec.h>
+#include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>
 #include <asm/io.h>

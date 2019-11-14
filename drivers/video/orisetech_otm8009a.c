@@ -13,7 +13,11 @@
 #include <mipi_dsi.h>
 #include <panel.h>
 #include <asm/gpio.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 #include <power/regulator.h>
 
 #define OTM8009A_BACKLIGHT_DEFAULT	240

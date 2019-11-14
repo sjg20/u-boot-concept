@@ -6,7 +6,11 @@
  */
 
 #include <common.h>
+<<<<<<< HEAD
 #include <malloc.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 
 #include <asm/gpio.h>
 #include <errno.h>

@@ -10,6 +10,7 @@
 #include <common.h>
 #include <usb.h>
 #include "musb_hcd.h"
+#include <linux/delay.h>
 
 /* MSC control transfers */
 #define USB_MSC_BBB_RESET 	0xFF

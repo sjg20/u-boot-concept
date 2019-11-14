@@ -16,6 +16,7 @@
 #include <i2c.h>
 #include <pci_tegra.h>
 #include "../common/tdx-common.h"
+#include <linux/delay.h>
 
 #include "pinmux-config-apalis_t30.h"
 

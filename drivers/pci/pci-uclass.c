@@ -17,6 +17,7 @@
 #include <asm/fsp/fsp_support.h>
 #endif
 #include "pci_internal.h"
+#include <linux/delay.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

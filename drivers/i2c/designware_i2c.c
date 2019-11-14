@@ -13,8 +13,40 @@
 #include <reset.h>
 #include <asm/io.h>
 #include "designware_i2c.h"
+<<<<<<< HEAD
 #include <dm/device_compat.h>
 #include <linux/err.h>
+=======
+#include <linux/delay.h>
+
+struct dw_scl_sda_cfg {
+	u32 ss_hcnt;
+	u32 fs_hcnt;
+	u32 ss_lcnt;
+	u32 fs_lcnt;
+	u32 sda_hold;
+};
+
+#ifdef CONFIG_X86
+/* BayTrail HCNT/LCNT/SDA hold time */
+static struct dw_scl_sda_cfg byt_config = {
+	.ss_hcnt = 0x200,
+	.fs_hcnt = 0x55,
+	.ss_lcnt = 0x200,
+	.fs_lcnt = 0x99,
+	.sda_hold = 0x6,
+};
+#endif
+
+struct dw_i2c {
+	struct i2c_regs *regs;
+	struct dw_scl_sda_cfg *scl_sda_cfg;
+	struct reset_ctl_bulk resets;
+#if CONFIG_IS_ENABLED(CLK)
+	struct clk clk;
+#endif
+};
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 
 #ifdef CONFIG_SYS_I2C_DW_ENABLE_STATUS_UNSUPPORTED
 static int  dw_i2c_enable(struct i2c_regs *i2c_base, bool enable)

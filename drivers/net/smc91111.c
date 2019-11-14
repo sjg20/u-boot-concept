@@ -53,6 +53,7 @@
 #include <malloc.h>
 #include "smc91111.h"
 #include <net.h>
+#include <linux/delay.h>
 
 /* Use power-down feature of the chip */
 #define POWER_DOWN	0

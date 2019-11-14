@@ -14,7 +14,11 @@
 #include <syscon.h>
 #include <div64.h>
 #include <dt-bindings/clock/g12a-clkc.h>
+<<<<<<< HEAD
 #include <linux/err.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 #include <linux/kernel.h>
 #include "clk_meson.h"
 

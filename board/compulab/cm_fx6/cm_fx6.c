@@ -38,6 +38,7 @@
 #include "common.h"
 #include "../common/eeprom.h"
 #include "../common/common.h"
+#include <linux/delay.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

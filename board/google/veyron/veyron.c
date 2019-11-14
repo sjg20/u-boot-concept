@@ -9,7 +9,11 @@
 #include <init.h>
 #include <asm/arch-rockchip/clock.h>
 #include <dt-bindings/clock/rk3288-cru.h>
+<<<<<<< HEAD
 #include <linux/err.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 #include <power/regulator.h>
 
 /*

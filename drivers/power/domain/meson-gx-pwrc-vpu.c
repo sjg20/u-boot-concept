@@ -14,7 +14,11 @@
 #include <syscon.h>
 #include <reset.h>
 #include <clk.h>
+<<<<<<< HEAD
 #include <linux/err.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 
 enum {
 	VPU_PWRC_COMPATIBLE_GX		= 0,

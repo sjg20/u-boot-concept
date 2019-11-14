@@ -21,6 +21,7 @@
 #include <asm/arch-tegra/dc.h>
 #include <dm/uclass-internal.h>
 #include "displayport.h"
+#include <linux/delay.h>
 
 /* return in 1000ths of a Hertz */
 static int tegra_dc_calc_refresh(const struct display_timing *timing)

@@ -13,6 +13,7 @@
 #include <dm.h>
 #include <mapmem.h>
 #include <misc.h>
+#include <linux/delay.h>
 
 #include "mpc83xx_serdes.h"
 

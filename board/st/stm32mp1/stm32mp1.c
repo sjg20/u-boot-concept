@@ -34,7 +34,11 @@
 #include <asm/arch/stm32.h>
 #include <asm/arch/sys_proto.h>
 #include <jffs2/load_kernel.h>
+<<<<<<< HEAD
 #include <linux/err.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 #include <power/regulator.h>
 #include <usb/dwc2_udc.h>
 

@@ -18,7 +18,11 @@
 #include <clk.h>
 #include <dm.h>
 #include <fdt_support.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 #include <linux/err.h>
 #include <malloc.h>
 #include <miiphy.h>

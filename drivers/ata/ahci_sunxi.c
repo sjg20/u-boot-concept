@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <asm/io.h>
 #include <asm/gpio.h>
+#include <linux/delay.h>
 
 #define AHCI_PHYCS0R 0x00c0
 #define AHCI_PHYCS1R 0x00c4

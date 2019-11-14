@@ -11,6 +11,7 @@
 #include <part.h>
 #include <watchdog.h>
 #include <asm/io.h>
+#include <linux/delay.h>
 
 #ifdef __PPC__
 # define EIEIO		__asm__ volatile ("eieio")

@@ -17,7 +17,11 @@
 #include <os.h>
 #include <fdt_support.h>
 #include <clk.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 #include <linux/sizes.h>
 
 #define MALIDP_CORE_ID		0x0018

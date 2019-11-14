@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <dm/of_access.h>
 #include <dm/ofnode.h>
+#include <linux/delay.h>
 
 #include "../xusb-padctl-common.h"
 

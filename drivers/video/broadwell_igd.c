@@ -20,6 +20,7 @@
 #include <asm/arch/iomap.h>
 #include <asm/arch/pch.h>
 #include "i915_reg.h"
+#include <linux/delay.h>
 
 struct broadwell_igd_priv {
 	u8 *regs;

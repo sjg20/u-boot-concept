@@ -8,6 +8,7 @@
  */
 #include <config.h>
 #include <common.h>
+#include <linux/delay.h>
 
 #include <asm/arch/cpu.h>
 #include <asm/arch/cpucfg.h>

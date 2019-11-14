@@ -12,7 +12,11 @@
 #include <dm/device.h>
 #include <dm/devres.h>
 #include <linux/clk-provider.h>
+<<<<<<< HEAD
 #include <linux/err.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 #include <linux/iopoll.h>
 #include <clk.h>
 #include <div64.h>

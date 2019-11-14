@@ -11,6 +11,7 @@
 #include <axi.h>
 #include <dm.h>
 #include <regmap.h>
+#include <linux/delay.h>
 
 /**
  * struct ihs_axi_regs - Structure for the register map of a IHS AXI device

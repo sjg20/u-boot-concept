@@ -15,6 +15,7 @@
 #include <errno.h>
 #include <generic-phy.h>
 #include <regmap.h>
+#include <linux/delay.h>
 #include <power/regulator.h>
 #include <reset.h>
 #include <clk.h>

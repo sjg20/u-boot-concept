@@ -9,6 +9,7 @@
  * @brief PFE utility commands
  */
 
+#include <linux/delay.h>
 #include <net/pfe_eth/pfe_eth.h>
 
 static inline void pfe_command_help(void)

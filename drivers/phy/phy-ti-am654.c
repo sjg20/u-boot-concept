@@ -19,7 +19,11 @@
 #include <power-domain.h>
 #include <regmap.h>
 #include <syscon.h>
+<<<<<<< HEAD
 #include <linux/err.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 
 #define CMU_R07C		0x7c
 #define CMU_MASTER_CDN_O	BIT(24)

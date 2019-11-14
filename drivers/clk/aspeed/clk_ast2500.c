@@ -10,7 +10,11 @@
 #include <asm/arch/scu_ast2500.h>
 #include <dm/lists.h>
 #include <dt-bindings/clock/ast2500-scu.h>
+<<<<<<< HEAD
 #include <linux/err.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 
 /*
  * MAC Clock Delay settings, taken from Aspeed SDK

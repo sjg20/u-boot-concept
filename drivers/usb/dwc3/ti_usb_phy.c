@@ -19,8 +19,12 @@
 #include <common.h>
 #include <malloc.h>
 #include <ti-usb-phy-uboot.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
 #include <dm/devres.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 #include <linux/ioport.h>
 #include <asm/io.h>
 #include <asm/arch/sys_proto.h>

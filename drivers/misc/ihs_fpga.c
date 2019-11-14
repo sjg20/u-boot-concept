@@ -13,6 +13,7 @@
 #include <dm.h>
 #include <regmap.h>
 #include <asm/gpio.h>
+#include <linux/delay.h>
 
 #include "ihs_fpga.h"
 

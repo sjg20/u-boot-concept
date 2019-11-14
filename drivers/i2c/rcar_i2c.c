@@ -17,7 +17,11 @@
 #include <i2c.h>
 #include <asm/io.h>
 #include <wait_bit.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 
 #define RCAR_I2C_ICSCR			0x00 /* slave ctrl */
 #define RCAR_I2C_ICMCR			0x04 /* master ctrl */

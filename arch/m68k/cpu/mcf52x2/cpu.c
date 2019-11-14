@@ -23,6 +23,7 @@
 #include <asm/io.h>
 #include <netdev.h>
 #include "cpu.h"
+#include <linux/delay.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

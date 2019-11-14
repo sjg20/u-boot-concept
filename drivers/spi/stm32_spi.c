@@ -11,7 +11,11 @@
 #include <malloc.h>
 #include <reset.h>
 #include <spi.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 
 #include <asm/io.h>
 #include <asm/gpio.h>

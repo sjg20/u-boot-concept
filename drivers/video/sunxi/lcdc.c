@@ -8,6 +8,7 @@
  */
 
 #include <common.h>
+#include <linux/delay.h>
 
 #include <asm/arch/clock.h>
 #include <asm/arch/lcdc.h>

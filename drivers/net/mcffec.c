@@ -14,6 +14,11 @@
 #include <env.h>
 #include <hang.h>
 #include <malloc.h>
+<<<<<<< HEAD
+=======
+#include <linux/delay.h>
+
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 #include <command.h>
 #include <net.h>
 #include <miiphy.h>

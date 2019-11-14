@@ -14,6 +14,7 @@
 #include <dm/device_compat.h>
 #include <dm/pinctrl.h>
 #include <linux/compat.h>
+#include <linux/delay.h>
 #include <linux/dma-direction.h>
 #include <linux/io.h>
 #include <linux/sizes.h>

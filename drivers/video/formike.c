@@ -8,6 +8,7 @@
 #include <common.h>
 #include <errno.h>
 #include <spi.h>
+#include <linux/delay.h>
 
 #define TAG_READ	0x80
 #define TAG_WRITE	0x00

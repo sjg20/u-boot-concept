@@ -6,6 +6,7 @@
 
 #include <common.h>
 #include <miiphy.h>
+#include <linux/delay.h>
 #include <linux/errno.h>
 #include <mv88e6352.h>
 

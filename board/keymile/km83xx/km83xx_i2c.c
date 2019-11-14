@@ -9,6 +9,7 @@
 #include <asm/io.h>
 #include <linux/ctype.h>
 #include "../common/common.h"
+#include <linux/delay.h>
 
 static void i2c_write_start_seq(void)
 {

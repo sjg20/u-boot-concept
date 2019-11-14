@@ -10,7 +10,11 @@
 
 #include <common.h>
 #include <usb.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 #include <linux/errno.h>
 #include <asm/omap_common.h>
 #include <asm/arch/cpu.h>

@@ -14,6 +14,7 @@
 #include <asm/io.h>
 #include <asm/processor.h>
 #include <asm/fsl_law.h>
+#include <linux/delay.h>
 #include <linux/errno.h>
 #include "fsl_corenet_serdes.h"
 

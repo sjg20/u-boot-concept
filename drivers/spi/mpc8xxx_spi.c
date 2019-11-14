@@ -11,6 +11,7 @@
 #include <spi.h>
 #include <asm/mpc8xxx_spi.h>
 #include <asm-generic/gpio.h>
+#include <linux/delay.h>
 
 enum {
 	SPI_EV_NE = BIT(31 - 22),	/* Receiver Not Empty */

@@ -9,6 +9,7 @@
 #include <common.h>
 #include <asm/io.h>
 #include <usb.h>
+#include <linux/delay.h>
 #include <usb/fusbh200.h>
 #include <usb/fotg210.h>
 

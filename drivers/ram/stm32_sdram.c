@@ -10,7 +10,11 @@
 #include <init.h>
 #include <ram.h>
 #include <asm/io.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 
 #define MEM_MODE_MASK	GENMASK(2, 0)
 #define SWP_FMC_OFFSET 10

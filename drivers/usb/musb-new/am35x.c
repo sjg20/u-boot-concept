@@ -13,6 +13,7 @@
 
 #ifndef __UBOOT__
 #include <linux/bug.h>
+#include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/clk.h>

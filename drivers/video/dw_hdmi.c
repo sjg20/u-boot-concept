@@ -11,6 +11,7 @@
 #include <i2c.h>
 #include <media_bus_format.h>
 #include "dw_hdmi.h"
+#include <linux/delay.h>
 
 struct tmds_n_cts {
 	u32 tmds;

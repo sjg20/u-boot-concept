@@ -47,8 +47,12 @@
 #include <asm/arch/mux.h>
 #endif
 #include <dm.h>
+<<<<<<< HEAD
 #include <dm/devres.h>
 #include <linux/err.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 #include <power/regulator.h>
 #include <thermal.h>
 

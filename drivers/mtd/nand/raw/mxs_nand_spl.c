@@ -7,7 +7,11 @@
 #include <nand.h>
 #include <malloc.h>
 #include <mxs_nand.h>
+<<<<<<< HEAD
 #include <linux/err.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 
 static struct mtd_info *mtd;
 static struct nand_chip nand_chip;

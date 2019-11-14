@@ -32,6 +32,7 @@
 #include <fsl_qe.h>
 #endif
 #include <fsl_validate.h>
+#include <linux/delay.h>
 
 
 DECLARE_GLOBAL_DATA_PTR;

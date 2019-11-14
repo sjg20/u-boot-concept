@@ -10,8 +10,12 @@
 #include <dm.h>
 #include <fdtdec.h>
 #include "mmc_private.h"
+<<<<<<< HEAD
 #include <dm/device_compat.h>
 #include <linux/err.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 #include <linux/libfdt.h>
 #include <malloc.h>
 #include <sdhci.h>

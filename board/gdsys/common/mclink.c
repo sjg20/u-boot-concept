@@ -9,6 +9,7 @@
 #include <common.h>
 #include <asm/io.h>
 #include <errno.h>
+#include <linux/delay.h>
 
 #include <gdsys_fpga.h>
 

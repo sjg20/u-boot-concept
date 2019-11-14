@@ -8,6 +8,7 @@
 #include <common.h>
 #include <net.h>
 #include <linux/ctype.h>
+#include <linux/delay.h>
 #include <linux/io.h>
 
 #include "micro-support-card.h"

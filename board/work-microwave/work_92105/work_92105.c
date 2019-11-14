@@ -17,6 +17,7 @@
 #include <asm/gpio.h>
 #include <spl.h>
 #include "work_92105_display.h"
+#include <linux/delay.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

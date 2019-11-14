@@ -24,6 +24,7 @@
 #include <asm/arch/cpu.h>
 #include <asm/arch/soc.h>
 #include <asm/arch/mpp.h>
+#include <linux/delay.h>
 
 #include "../common/common.h"
 

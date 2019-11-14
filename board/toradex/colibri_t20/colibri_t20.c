@@ -16,6 +16,7 @@
 #include <i2c.h>
 #include <nand.h>
 #include "../common/tdx-common.h"
+#include <linux/delay.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

@@ -26,7 +26,11 @@
 #include <malloc.h>
 #include <asm/io.h>
 #include <linux/bug.h>
+<<<<<<< HEAD
 #include <linux/err.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 #include <linux/errno.h>
 #include <phy.h>
 #include <miiphy.h>

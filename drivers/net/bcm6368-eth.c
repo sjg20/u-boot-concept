@@ -16,7 +16,11 @@
 #include <reset.h>
 #include <wait_bit.h>
 #include <asm/io.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 
 #define ETH_PORT_STR			"brcm,enetsw-port"
 

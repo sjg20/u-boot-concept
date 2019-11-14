@@ -22,7 +22,11 @@
 #include <fdt_support.h>
 #include <asm/io.h>
 #include <dm.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 
 DECLARE_GLOBAL_DATA_PTR;
 

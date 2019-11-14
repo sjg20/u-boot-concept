@@ -17,6 +17,11 @@
 #include <common.h>
 #include <i2c.h>
 #include <miiphy.h>
+<<<<<<< HEAD
+=======
+#include <netdev.h>
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 #include <power/pmic.h>
 #include <power/pfuze3000_pmic.h>
 #include "../../freescale/common/pfuze.h"

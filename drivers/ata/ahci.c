@@ -10,6 +10,7 @@
  */
 #include <common.h>
 #include <cpu_func.h>
+#include <linux/delay.h>
 
 #include <command.h>
 #include <dm.h>

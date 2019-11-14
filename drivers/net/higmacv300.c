@@ -9,6 +9,7 @@
 #include <common.h>
 #include <console.h>
 #include <linux/bug.h>
+#include <linux/delay.h>
 #include <linux/mii.h>
 #include <miiphy.h>
 #include <net.h>

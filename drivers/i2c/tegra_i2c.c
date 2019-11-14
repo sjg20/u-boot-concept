@@ -18,7 +18,11 @@
 #endif
 #include <asm/arch/gpio.h>
 #include <asm/arch-tegra/tegra_i2c.h>
+<<<<<<< HEAD
 #include <linux/err.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 
 enum i2c_type {
 	TYPE_114,

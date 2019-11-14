@@ -11,6 +11,7 @@
 #include <linux/bitops.h>
 #include <pci_ids.h>
 #include "pcie.h"
+#include <linux/delay.h>
 
 /* XpressRICH3 support */
 #define XR3_CONFIG_BASE			0x7ff30000

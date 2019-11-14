@@ -29,9 +29,13 @@
 #include <malloc.h>
 #include <memalign.h>
 #include <nand.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
 #include <dm/devres.h>
 #include <linux/err.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 
 #include <linux/kernel.h>
 #include <linux/mtd/mtd.h>

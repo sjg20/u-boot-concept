@@ -8,6 +8,7 @@
 #include <common.h>
 #include <errno.h>
 #include <asm/arch/me.h>
+#include <linux/delay.h>
 
 static inline void me_read_dword_ptr(struct udevice *dev, void *ptr, int offset)
 {

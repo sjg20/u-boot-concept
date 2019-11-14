@@ -41,6 +41,7 @@
 #include <wait_bit.h>
 #include <asm/gpio.h>
 #include <asm/io.h>
+#include <linux/delay.h>
 
 /* Core registers */
 

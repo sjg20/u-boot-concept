@@ -12,7 +12,11 @@
 #include <asm/io.h>
 #include <asm/unaligned.h>
 #include <errno.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 #include <mach/jz4780.h>
 #include <wait_bit.h>
 

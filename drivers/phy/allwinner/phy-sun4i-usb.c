@@ -21,8 +21,12 @@
 #include <asm/io.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/cpu.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
 #include <linux/err.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 
 #define REG_ISCR			0x00
 #define REG_PHYCTL_A10			0x04

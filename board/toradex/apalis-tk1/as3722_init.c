@@ -7,6 +7,7 @@
 #include <asm/io.h>
 #include <asm/arch-tegra/tegra_i2c.h>
 #include "as3722_init.h"
+#include <linux/delay.h>
 
 /* AS3722-PMIC-specific early init code - get CPU rails up, etc */
 

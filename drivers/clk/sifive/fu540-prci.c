@@ -35,7 +35,11 @@
 #include <div64.h>
 #include <dm.h>
 #include <errno.h>
+<<<<<<< HEAD
 #include <linux/err.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 
 #include <linux/math64.h>
 #include <linux/clk/analogbits-wrpll-cln28hpc.h>

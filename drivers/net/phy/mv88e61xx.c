@@ -30,6 +30,7 @@
  */
 
 #include <common.h>
+#include <linux/delay.h>
 
 #include <bitfield.h>
 #include <errno.h>

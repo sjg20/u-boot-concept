@@ -10,7 +10,11 @@
  */
 
 #include <common.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 #include <linux/usb/musb.h>
 #include "linux-compat.h"
 #include "musb_core.h"

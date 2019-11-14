@@ -13,7 +13,11 @@
 #include <i2c.h>
 #include <asm/io.h>
 #include <asm/arch/scu_ast2500.h>
+<<<<<<< HEAD
 #include <linux/err.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 
 #include "ast_i2c.h"
 

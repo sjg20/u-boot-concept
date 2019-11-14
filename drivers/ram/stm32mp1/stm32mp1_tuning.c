@@ -8,6 +8,7 @@
 #include <ram.h>
 #include <reset.h>
 #include <asm/io.h>
+#include <linux/delay.h>
 
 #include "stm32mp1_ddr_regs.h"
 #include "stm32mp1_ddr.h"

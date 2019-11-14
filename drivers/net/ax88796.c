@@ -4,6 +4,7 @@
  */
 #include <common.h>
 #include "ax88796.h"
+#include <linux/delay.h>
 
 /*
  * Set 1 bit data

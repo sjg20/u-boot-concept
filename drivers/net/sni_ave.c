@@ -8,7 +8,13 @@
 #include <cpu_func.h>
 #include <dm.h>
 #include <fdt_support.h>
+<<<<<<< HEAD
 #include <malloc.h>
+=======
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <linux/iopoll.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 #include <miiphy.h>
 #include <net.h>
 #include <regmap.h>

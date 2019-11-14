@@ -23,6 +23,7 @@
 #include <usb.h>
 #include <asm/mach-types.h>
 #include "../common/tdx-common.h"
+#include <linux/delay.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

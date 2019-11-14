@@ -13,6 +13,7 @@
 #include <dm.h>
 #include <init.h>
 #include <net.h>
+#include <linux/delay.h>
 
 #include <ahci.h>
 #include <asm/arch/clock.h>

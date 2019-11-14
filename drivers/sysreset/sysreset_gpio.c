@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <sysreset.h>
 #include <asm/gpio.h>
+#include <linux/delay.h>
 
 struct gpio_reboot_priv {
 	struct gpio_desc gpio;

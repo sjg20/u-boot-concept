@@ -38,7 +38,11 @@
 #include <dm/devres.h>
 =======
 #include <linux/bug.h>
+<<<<<<< HEAD
 >>>>>>> 1ce8706054d... common: Drop linux/bug.h from common header
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 #include <linux/err.h>
 #include <linux/compat.h>
 #include <linux/mtd/mtd.h>

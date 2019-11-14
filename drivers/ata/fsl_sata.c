@@ -17,6 +17,7 @@
 #include <fis.h>
 #include <sata.h>
 #include "fsl_sata.h"
+#include <linux/delay.h>
 
 #if CONFIG_IS_ENABLED(BLK)
 #include <dm.h>

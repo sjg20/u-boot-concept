@@ -12,8 +12,12 @@
 #include <malloc.h>
 #include <mapmem.h>
 #include <asm/io.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
 #include <dm/devres.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 
 #include <dt-bindings/phy/phy.h>
 

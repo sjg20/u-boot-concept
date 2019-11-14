@@ -25,6 +25,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/mach-types.h>
 #include "pandora.h"
+#include <linux/delay.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

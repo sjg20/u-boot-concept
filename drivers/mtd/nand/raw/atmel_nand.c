@@ -11,6 +11,14 @@
  */
 
 #include <common.h>
+<<<<<<< HEAD
+=======
+#include <asm/gpio.h>
+#include <asm/arch/gpio.h>
+#include <linux/bug.h>
+#include <linux/delay.h>
+
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 #include <malloc.h>
 #include <nand.h>
 #include <watchdog.h>

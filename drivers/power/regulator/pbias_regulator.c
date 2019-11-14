@@ -7,7 +7,11 @@
 #include <common.h>
 #include <errno.h>
 #include <dm.h>
+<<<<<<< HEAD
 #include <linux/err.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 #include <power/pmic.h>
 #include <power/regulator.h>
 #include <regmap.h>

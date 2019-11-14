@@ -32,6 +32,7 @@
 #include <asm/byteorder.h>
 #include <dm.h>
 #include <errno.h>
+#include <linux/delay.h>
 
 #if defined(CONFIG_PCI_OHCI)
 # include <pci.h>

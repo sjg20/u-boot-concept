@@ -37,6 +37,7 @@
 #include "board.h"
 #include "../common/factoryset.h"
 #include "../../../drivers/video/da8xx-fb.h"
+#include <linux/delay.h>
 
 /*
  * Read header information from EEPROM into global structure.

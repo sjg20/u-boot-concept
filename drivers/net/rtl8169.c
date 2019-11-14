@@ -51,6 +51,7 @@
 #endif
 #include <asm/io.h>
 #include <pci.h>
+#include <linux/delay.h>
 
 #undef DEBUG_RTL8169
 #undef DEBUG_RTL8169_TX

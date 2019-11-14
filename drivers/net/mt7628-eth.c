@@ -23,6 +23,7 @@
 #include <wait_bit.h>
 #include <asm/io.h>
 #include <linux/bitfield.h>
+#include <linux/delay.h>
 #include <linux/err.h>
 
 /* Ethernet frame engine register */

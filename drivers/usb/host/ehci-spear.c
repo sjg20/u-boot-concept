@@ -14,6 +14,7 @@
 #include "ehci.h"
 #include <asm/arch/hardware.h>
 #include <asm/arch/spr_misc.h>
+#include <linux/delay.h>
 
 static void spear6xx_usbh_stop(void)
 {

@@ -38,6 +38,7 @@ tested on both gig copper and gig fiber boards
 #include <net.h>
 #include <pci.h>
 #include "e1000.h"
+#include <linux/delay.h>
 
 #define TOUT_LOOP   100000
 

@@ -11,6 +11,7 @@
 
 #include <common.h>
 #include <hang.h>
+#include <linux/delay.h>
 #include <linux/types.h>
 #include <api_public.h>
 

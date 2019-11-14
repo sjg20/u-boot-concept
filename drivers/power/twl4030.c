@@ -23,6 +23,7 @@
  */
 
 #include <twl4030.h>
+#include <linux/delay.h>
 
 /*
  * Power Reset

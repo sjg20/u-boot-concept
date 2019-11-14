@@ -19,11 +19,16 @@
 #include <spi.h>
 #include <spi_flash.h>
 #include <spi-mem.h>
+<<<<<<< HEAD
 #include <spl.h>
 #include <asm/fast_spi.h>
 #include <asm/io.h>
 #include <asm/mtrr.h>
 #include <linux/sizes.h>
+=======
+#include <div64.h>
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 
 #include "ich.h"
 

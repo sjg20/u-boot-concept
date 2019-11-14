@@ -20,7 +20,11 @@
 #include <asm/arch/clock.h>
 #include <common.h>
 #include <dm.h>
+<<<<<<< HEAD
 #include <dm/device_compat.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 #include <linux/io.h>
 #include <w1.h>
 

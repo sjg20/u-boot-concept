@@ -7,7 +7,11 @@
 #include <clk.h>
 #include <dm.h>
 #include <i2c.h>
+<<<<<<< HEAD
 #include <linux/err.h>
+=======
+#include <linux/delay.h>
+>>>>>>> a38fd884840... common: Drop linux/delay.h from common header
 
 #define I2C_TIMEOUT_MS		100
 

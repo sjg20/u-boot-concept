@@ -11,6 +11,7 @@
 #include <time.h>
 #include <asm/microblaze_timer.h>
 #include <asm/microblaze_intc.h>
+#include <linux/delay.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

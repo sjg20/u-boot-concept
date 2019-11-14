@@ -24,6 +24,7 @@
 #include <fdtdec.h>
 #include <i2c.h>
 #include <tpm-v1.h>
+#include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/compiler.h>
 #include <linux/types.h>

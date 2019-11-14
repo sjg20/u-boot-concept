@@ -15,6 +15,7 @@
 #include <asm/arch-tegra/pmc.h>
 #include <asm/arch-tegra/ap.h>
 #include "../cpu.h"
+#include <linux/delay.h>
 
 /* Tegra124-specific CPU init code */
 
