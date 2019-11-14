@@ -8,7 +8,9 @@
  */
 
 #include <common.h>
+#include <bootstage.h>
 #include <cpu_func.h>
+
 #include <malloc.h>
 #include <netdev.h>
 #include <dm.h>

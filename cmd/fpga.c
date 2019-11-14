@@ -8,6 +8,7 @@
  *  FPGA support
  */
 #include <common.h>
+#include <bootstage.h>
 #include <command.h>
 #include <env.h>
 #include <fpga.h>

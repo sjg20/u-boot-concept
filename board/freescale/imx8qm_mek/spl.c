@@ -5,6 +5,7 @@
  */
 
 #include <common.h>
+#include <bootstage.h>
 #include <dm.h>
 #include <spl.h>
 #include <dm/uclass.h>

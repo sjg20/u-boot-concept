@@ -5,6 +5,7 @@
  */
 
 #include <common.h>
+#include <bootstage.h>
 #include <errno.h>
 #include <image.h>
 #include <linux/libfdt.h>

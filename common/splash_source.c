@@ -7,6 +7,7 @@
 
 #include <common.h>
 #include <bmp_layout.h>
+#include <bootstage.h>
 #include <command.h>
 #include <env.h>
 #include <errno.h>

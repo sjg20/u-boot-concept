@@ -5,6 +5,7 @@
  */
 
 #include <common.h>
+#include <bootstage.h>
 #include <errno.h>
 #include <board.h>
 #include <fpga.h>

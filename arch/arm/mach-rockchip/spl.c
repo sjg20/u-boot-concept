@@ -4,6 +4,7 @@
  */
 
 #include <common.h>
+#include <bootstage.h>
 #include <debug_uart.h>
 #include <dm.h>
 #include <hang.h>

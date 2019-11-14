@@ -8,6 +8,7 @@
  */
 
 #include <common.h>
+#include <bootstage.h>
 #include <init.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/hardware.h>

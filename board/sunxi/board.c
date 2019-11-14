@@ -11,6 +11,7 @@
  */
 
 #include <common.h>
+#include <bootstage.h>
 #include <dm.h>
 #include <env.h>
 #include <hang.h>

@@ -6,6 +6,7 @@
 
 #include <common.h>
 #include <bootm.h>
+#include <bootstage.h>
 #include <command.h>
 #include <image.h>
 #include <irq_func.h>

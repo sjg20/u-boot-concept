@@ -10,6 +10,7 @@
  */
 
 #include "imagetool.h"
+#include <bootstage.h>
 #include <limits.h>
 #include <image.h>
 #include <stdarg.h>

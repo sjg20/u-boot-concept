@@ -13,6 +13,7 @@
  */
 
 #include "imagetool.h"
+#include <bootstage.h>
 #include <image.h>
 #include "ublimage.h"
 

@@ -6,6 +6,7 @@
  *     Texas Instruments Incorporated, <www.ti.com>
  */
 #include <common.h>
+#include <bootstage.h>
 #include <eeprom.h>
 #include <env.h>
 #include <hang.h>

@@ -7,6 +7,7 @@
  */
 
 #include <common.h>
+#include <bootstage.h>
 #include <mapmem.h>
 #include <errno.h>
 #include <linux/sizes.h>

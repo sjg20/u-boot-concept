@@ -5,6 +5,7 @@
  */
 
 #include <common.h>
+#include <bootstage.h>
 #include <env.h>
 #include <image.h>
 #include <malloc.h>

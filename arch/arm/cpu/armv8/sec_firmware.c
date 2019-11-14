@@ -4,6 +4,7 @@
  */
 
 #include <common.h>
+#include <bootstage.h>
 #include <cpu_func.h>
 #include <errno.h>
 #include <linux/kernel.h>

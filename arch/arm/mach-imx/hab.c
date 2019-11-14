@@ -4,6 +4,7 @@
  */
 
 #include <common.h>
+#include <bootstage.h>
 #include <config.h>
 #include <fuse.h>
 #include <mapmem.h>

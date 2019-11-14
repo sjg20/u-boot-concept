@@ -5,6 +5,7 @@
 
 #include <common.h>
 #include <bootm.h>
+#include <bootstage.h>
 #include <command.h>
 #include <gzip.h>
 #include <lz4.h>
