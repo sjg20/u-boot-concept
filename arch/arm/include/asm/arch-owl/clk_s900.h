@@ -11,6 +11,9 @@
 #define _OWL_CLK_S900_H_
 
 #include <clk-uclass.h>
+#ifndef __ASSEMBLY__
+#include <linux/bitops.h>
+#endif
 
 struct owl_clk_priv {
 	phys_addr_t base;
