@@ -12,6 +12,8 @@
 #include <part_efi.h>
 #include <efi_api.h>
 
+struct blk_desc;
+
 static inline int guidcmp(const void *g1, const void *g2)
 {
 	return memcmp(g1, g2, sizeof(efi_guid_t));
