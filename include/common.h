@@ -15,7 +15,6 @@
 #ifndef __ASSEMBLY__		/* put C only stuff in this section */
 #include <config.h>
 #include <linux/types.h>
-#include <display_options.h>
 #include <errno.h>
 #include <stdio.h>
 #include <time.h>

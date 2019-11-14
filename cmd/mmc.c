@@ -7,6 +7,7 @@
 #include <common.h>
 #include <command.h>
 #include <console.h>
+#include <display_options.h>
 #include <mmc.h>
 #include <part.h>
 #include <sparse_format.h>

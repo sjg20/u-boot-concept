@@ -11,6 +11,7 @@
 
 #include "imagetool.h"
 #include <bootstage.h>
+#include <display_options.h>
 #include <limits.h>
 #include <image.h>
 #include <stdarg.h>
