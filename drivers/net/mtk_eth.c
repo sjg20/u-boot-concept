@@ -11,6 +11,7 @@
 #include <dm.h>
 #include <malloc.h>
 #include <miiphy.h>
+#include <net.h>
 #include <regmap.h>
 #include <reset.h>
 #include <syscon.h>

@@ -15,6 +15,7 @@
 #include <errno.h>
 #include <miiphy.h>
 #include <malloc.h>
+#include <net.h>
 #include <pci.h>
 #include <reset.h>
 #include <dm/device_compat.h>

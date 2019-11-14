@@ -15,6 +15,7 @@
 #include <lmb.h>
 #include <malloc.h>
 #include <mapmem.h>
+#include <net.h>
 #include <asm/io.h>
 #if defined(CONFIG_CMD_USB)
 #include <usb.h>

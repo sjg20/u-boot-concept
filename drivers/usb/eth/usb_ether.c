@@ -7,6 +7,7 @@
 #include <dm.h>
 #include <errno.h>
 #include <malloc.h>
+#include <net.h>
 #include <usb.h>
 #include <dm/device-internal.h>
 

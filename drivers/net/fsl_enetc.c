@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <malloc.h>
 #include <memalign.h>
+#include <net.h>
 #include <asm/io.h>
 #include <pci.h>
 #include <miiphy.h>

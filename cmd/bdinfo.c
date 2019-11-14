@@ -10,6 +10,7 @@
 #include <common.h>
 #include <command.h>
 #include <env.h>
+#include <net.h>
 #include <vsprintf.h>
 #include <linux/compiler.h>
 

@@ -8,6 +8,7 @@
 #include <cpu_func.h>
 #include <env.h>
 #include <init.h>
+#include <net.h>
 #include <sata.h>
 #include <ahci.h>
 #include <scsi.h>
