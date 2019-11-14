@@ -8,7 +8,11 @@
 #include <common.h>
 #include <fdt_support.h>
 #include <net.h>
+<<<<<<< HEAD
 #include <dm/of.h>
+=======
+#include <stdio.h>
+>>>>>>> common: Drop stdio.h from common header
 #include <linux/ctype.h>
 #include <linux/delay.h>
 #include <linux/io.h>

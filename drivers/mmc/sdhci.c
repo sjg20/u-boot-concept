@@ -16,8 +16,12 @@
 #include <sdhci.h>
 #include <dm.h>
 <<<<<<< HEAD
+<<<<<<< HEAD
 #include <linux/dma-mapping.h>
 =======
+=======
+#include <stdio.h>
+>>>>>>> common: Drop stdio.h from common header
 #include <asm/cache.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>

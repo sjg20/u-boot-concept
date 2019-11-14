@@ -14,6 +14,7 @@
 #include <malloc.h>
 #include <mapmem.h>
 #include <search.h>
+#include <stdio.h>
 #include <linux/ctype.h>
 
 #define BS systab.boottime
