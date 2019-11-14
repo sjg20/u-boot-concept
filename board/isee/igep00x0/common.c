@@ -7,6 +7,7 @@
 #include <asm/omap_mmc.h>
 #include <asm/arch/mux.h>
 #include <asm/arch/sys_proto.h>
+#include <asm/u-boot.h>
 #include <jffs2/load_kernel.h>
 #include <linux/mtd/rawnand.h>
 #include "igep00x0.h"

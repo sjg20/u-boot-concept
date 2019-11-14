@@ -15,6 +15,7 @@
 #include <status_led.h>
 #include <cpsw.h>
 #include <asm/global_data.h>
+#include <asm/u-boot.h>
 
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/hardware_am33xx.h>

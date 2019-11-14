@@ -18,6 +18,7 @@
 #include <asm/gpio.h>
 #include <spl.h>
 #include "work_92105_display.h"
+#include <asm/u-boot.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

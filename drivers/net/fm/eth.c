@@ -15,6 +15,7 @@
 #include <fsl_dtsec.h>
 #include <fsl_tgec.h>
 #include <fsl_memac.h>
+#include <asm/u-boot.h>
 
 #include "fm.h"
 

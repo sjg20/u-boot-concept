@@ -16,6 +16,7 @@
 #include <palmas.h>
 #include <spl.h>
 #include <asm/global_data.h>
+#include <asm/u-boot.h>
 
 #include <asm/gpio.h>
 #include <asm/arch/sys_proto.h>

@@ -19,6 +19,7 @@
 #include <asm/io.h>
 #include <asm/mach-imx/mxc_i2c.h>
 #include <env.h>
+#include <asm/u-boot.h>
 #include <linux/sizes.h>
 #include <common.h>
 #include <fsl_esdhc_imx.h>

@@ -21,6 +21,7 @@
 #include <common.h>
 #include <miiphy.h>
 #include <netdev.h>
+#include <asm/u-boot.h>
 #include <linux/sizes.h>
 #include <usb.h>
 #include <power/pmic.h>

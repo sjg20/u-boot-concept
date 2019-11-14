@@ -5,6 +5,7 @@
  */
 
 #include <malloc.h>
+#include <asm/u-boot.h>
 #include <net/pfe_eth/pfe_eth.h>
 #include <net/pfe_eth/pfe_firmware.h>
 

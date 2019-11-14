@@ -13,6 +13,7 @@
 #include <clk.h>
 #include <env.h>
 #include <spi.h>
+#include <asm/u-boot.h>
 #include <mvebu/comphy.h>
 #include <miiphy.h>
 #include <linux/string.h>

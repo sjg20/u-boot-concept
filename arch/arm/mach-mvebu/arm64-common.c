@@ -8,6 +8,7 @@
 #include <fdtdec.h>
 #include <init.h>
 #include <asm/global_data.h>
+#include <asm/u-boot.h>
 #include <linux/libfdt.h>
 #include <linux/sizes.h>
 #include <pci.h>

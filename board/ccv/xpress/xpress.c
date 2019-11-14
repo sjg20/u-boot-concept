@@ -27,6 +27,7 @@
 #include <mmc.h>
 #include <netdev.h>
 #include <usb.h>
+#include <asm/u-boot.h>
 #include <usb/ehci-ci.h>
 
 DECLARE_GLOBAL_DATA_PTR;

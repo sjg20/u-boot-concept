@@ -19,6 +19,7 @@
 #include <asm/arch/fdt.h>
 #include <asm/arch/ppa.h>
 #include <asm/arch/soc.h>
+#include <asm/u-boot.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

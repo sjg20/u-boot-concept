@@ -18,7 +18,6 @@
 #include <errno.h>
 #include <time.h>
 #include <vsprintf.h>
-#include <asm/u-boot.h> /* boot information for Linux kernel */
 #include <linux/kernel.h>
 #include <linux/printk.h>
 #include <linux/string.h>

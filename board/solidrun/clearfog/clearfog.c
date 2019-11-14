@@ -15,6 +15,7 @@
 #include <asm/arch/cpu.h>
 #include <asm/arch/soc.h>
 #include "../common/tlv_data.h"
+#include <asm/u-boot.h>
 #include <linux/bitops.h>
 
 #include "../drivers/ddr/marvell/a38x/ddr3_init.h"

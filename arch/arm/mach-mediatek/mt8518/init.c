@@ -17,6 +17,7 @@
 #include <asm/armv8/mmu.h>
 #include <asm/global_data.h>
 #include <asm/sections.h>
+#include <asm/u-boot.h>
 #include <dm/uclass.h>
 #include <dt-bindings/clock/mt8518-clk.h>
 

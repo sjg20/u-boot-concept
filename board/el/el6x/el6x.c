@@ -14,6 +14,7 @@
 #include <asm/arch/mx6-pins.h>
 #include <env.h>
 #include <asm/global_data.h>
+#include <asm/u-boot.h>
 #include <linux/errno.h>
 #include <asm/gpio.h>
 #include <asm/mach-imx/mxc_i2c.h>

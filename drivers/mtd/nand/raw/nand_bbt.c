@@ -59,6 +59,7 @@
 
 #include <common.h>
 #include <malloc.h>
+#include <asm/u-boot.h>
 #include <dm/devres.h>
 #include <linux/bug.h>
 #include <linux/compat.h>

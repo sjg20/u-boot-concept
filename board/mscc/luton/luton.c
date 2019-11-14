@@ -11,6 +11,7 @@
 #include <asm/io.h>
 #include <led.h>
 #include <miiphy.h>
+#include <asm/u-boot.h>
 
 enum {
 	BOARD_TYPE_PCB090 = 0xAABBCD00,

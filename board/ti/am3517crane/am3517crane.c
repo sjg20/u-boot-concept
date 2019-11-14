@@ -20,6 +20,7 @@
 #include <asm/mach-types.h>
 #include <i2c.h>
 #include "am3517crane.h"
+#include <asm/u-boot.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

@@ -18,6 +18,7 @@
 #include <netdev.h>
 #include <stdio.h>
 #include <asm/global_data.h>
+#include <asm/u-boot.h>
 #include <power/regulator.h>
 
 #include <asm/io.h>

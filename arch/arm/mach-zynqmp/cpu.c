@@ -14,6 +14,7 @@
 #include <asm/global_data.h>
 #include <asm/io.h>
 #include <zynqmp_firmware.h>
+#include <asm/u-boot.h>
 
 #define ZYNQ_SILICON_VER_MASK	0xF000
 #define ZYNQ_SILICON_VER_SHIFT	12
