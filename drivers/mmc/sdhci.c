@@ -17,6 +17,7 @@
 #include <sdhci.h>
 #include <dm.h>
 #include <asm/cache.h>
+#include <linux/delay.h>
 #include <linux/dma-mapping.h>
 
 static void sdhci_reset(struct sdhci_host *host, u8 mask)

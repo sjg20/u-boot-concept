@@ -23,6 +23,7 @@
 #include <linux/err.h>
 #include <lcd.h>
 #include <video.h>
+#include <linux/delay.h>
 #include "am335x-fb.h"
 
 #define LCDC_FMAX				200000000
