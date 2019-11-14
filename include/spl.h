@@ -22,6 +22,7 @@
 #define MMCSD_MODE_FS		2
 #define MMCSD_MODE_EMMCBOOT	3
 
+struct blk_desc;
 struct image_header;
 
 /*
