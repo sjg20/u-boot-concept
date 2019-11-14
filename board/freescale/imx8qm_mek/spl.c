@@ -10,6 +10,7 @@
 #include <image.h>
 #include <init.h>
 #include <spl.h>
+#include <stdio.h>
 #include <dm/uclass.h>
 #include <dm/device.h>
 #include <dm/uclass-internal.h>

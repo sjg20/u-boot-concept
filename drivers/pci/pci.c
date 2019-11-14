@@ -16,6 +16,7 @@
 
 #include <common.h>
 #include <init.h>
+#include <stdio.h>
 
 #include <command.h>
 #include <env.h>

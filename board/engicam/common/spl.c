@@ -11,6 +11,7 @@
 #include <init.h>
 #include <serial.h>
 #include <spl.h>
+#include <stdio.h>
 
 #include <asm/io.h>
 #include <asm/gpio.h>

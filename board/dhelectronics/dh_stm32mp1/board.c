@@ -5,6 +5,7 @@
 
 #include <common.h>
 #include <adc.h>
+#include <stdio.h>
 #include <asm/arch/stm32.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/gpio.h>

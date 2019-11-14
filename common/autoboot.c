@@ -17,6 +17,7 @@
 #include <memalign.h>
 #include <menu.h>
 #include <post.h>
+#include <stdio.h>
 #include <time.h>
 #include <u-boot/sha256.h>
 #include <bootcount.h>

@@ -8,6 +8,7 @@
 #include <common.h>
 #include <errno.h>
 #include <phy.h>
+#include <stdio.h>
 #include <linux/bitops.h>
 
 #define PHY_AUTONEGOTIATE_TIMEOUT 5000

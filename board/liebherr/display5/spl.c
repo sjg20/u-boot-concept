@@ -8,6 +8,7 @@
 #include <bootstage.h>
 #include <cpu_func.h>
 #include <image.h>
+#include <stdio.h>
 
 #include <env.h>
 #include <init.h>

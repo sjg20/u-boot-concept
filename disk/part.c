@@ -11,6 +11,7 @@
 #include <ide.h>
 #include <malloc.h>
 #include <part.h>
+#include <stdio.h>
 #include <ubifs_uboot.h>
 
 #undef	PART_DEBUG

@@ -5,6 +5,7 @@
  * Author: Tim Harvey <tharvey@gateworks.com>
  */
 
+#include <stdio.h>
 #include <linux/errno.h>
 #include <common.h>
 #include <i2c.h>

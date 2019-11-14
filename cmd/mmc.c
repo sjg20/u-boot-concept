@@ -12,6 +12,7 @@
 #include <part.h>
 #include <sparse_format.h>
 #include <image-sparse.h>
+#include <stdio.h>
 
 static int curr_device = -1;
 

@@ -14,6 +14,7 @@
 #include <env.h>
 #include <efi_loader.h>
 #include <net.h>
+#include <stdio.h>
 #include <uuid.h>
 #include <net/tftp.h>
 #include "bootp.h"

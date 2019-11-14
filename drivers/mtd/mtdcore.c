@@ -9,6 +9,7 @@
  */
 
 #ifndef __UBOOT__
+#include <stdio.h>
 #include <dm/devres.h>
 #include <linux/bitops.h>
 #include <linux/bug.h>

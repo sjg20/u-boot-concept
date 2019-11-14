@@ -15,6 +15,7 @@
 #include <command.h>
 #endif
 #include <stdarg.h>
+#include <stdio.h>
 
 static void panic_finish(void) __attribute__ ((noreturn));
 

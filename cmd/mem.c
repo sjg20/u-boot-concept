@@ -20,6 +20,7 @@
 #include <flash.h>
 #include <hash.h>
 #include <mapmem.h>
+#include <stdio.h>
 #include <watchdog.h>
 #include <asm/io.h>
 #include <linux/compiler.h>

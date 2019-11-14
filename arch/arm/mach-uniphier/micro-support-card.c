@@ -8,6 +8,7 @@
 #include <common.h>
 #include <fdt_support.h>
 #include <net.h>
+#include <stdio.h>
 #include <dm/of.h>
 #include <linux/ctype.h>
 #include <linux/io.h>

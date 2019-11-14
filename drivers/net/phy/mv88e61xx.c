@@ -30,6 +30,7 @@
  */
 
 #include <common.h>
+#include <stdio.h>
 #include <linux/bitops.h>
 
 #include <bitfield.h>

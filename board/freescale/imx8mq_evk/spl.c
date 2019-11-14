@@ -10,6 +10,7 @@
 #include <hang.h>
 #include <image.h>
 #include <init.h>
+#include <stdio.h>
 #include <asm/io.h>
 #include <errno.h>
 #include <asm/io.h>

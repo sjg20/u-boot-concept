@@ -11,6 +11,7 @@
 
 #include <common.h>
 #include <hang.h>
+#include <stdio.h>
 #include <linux/types.h>
 #include <api_public.h>
 

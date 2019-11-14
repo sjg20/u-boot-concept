@@ -10,6 +10,7 @@
  */
 
 #include <common.h>
+#include <stdio.h>
 #include <linux/errno.h>
 #include <asm/gpio.h>
 #include <asm/io.h>

@@ -12,6 +12,7 @@
 
 /* #define DEBUG */
 #include <common.h>
+#include <stdio.h>
 #include <linux/types.h>
 #include <linux/err.h>
 #include <asm/io.h>

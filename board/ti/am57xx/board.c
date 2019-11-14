@@ -18,6 +18,7 @@
 #include <palmas.h>
 #include <sata.h>
 #include <serial.h>
+#include <stdio.h>
 #include <usb.h>
 #include <errno.h>
 #include <asm/omap_common.h>

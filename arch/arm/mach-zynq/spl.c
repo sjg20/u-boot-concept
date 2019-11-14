@@ -9,6 +9,7 @@
 #include <image.h>
 #include <init.h>
 #include <spl.h>
+#include <stdio.h>
 
 #include <asm/io.h>
 #include <asm/spl.h>

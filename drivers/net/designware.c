@@ -18,6 +18,7 @@
 #include <net.h>
 #include <pci.h>
 #include <reset.h>
+#include <stdio.h>
 #include <dm/device_compat.h>
 #include <dm/devres.h>
 #include <linux/compiler.h>

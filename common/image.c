@@ -13,6 +13,7 @@
 #include <display_options.h>
 #include <env.h>
 #include <malloc.h>
+#include <stdio.h>
 #include <u-boot/crc.h>
 #include <watchdog.h>
 

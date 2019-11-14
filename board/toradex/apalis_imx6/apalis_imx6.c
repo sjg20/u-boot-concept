@@ -10,6 +10,7 @@
 #include <bootstage.h>
 #include <cpu_func.h>
 #include <image.h>
+#include <stdio.h>
 #include <linux/bitops.h>
 
 #include <dm.h>

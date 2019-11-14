@@ -18,6 +18,7 @@
 #include <spi_flash.h>
 #include <search.h>
 #include <errno.h>
+#include <stdio.h>
 #include <uuid.h>
 #include <dm/device-internal.h>
 #include <u-boot/crc.h>

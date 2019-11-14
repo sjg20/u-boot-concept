@@ -9,6 +9,7 @@
 #include <common.h>
 #include <console.h>
 #include <cpu_func.h>
+#include <stdio.h>
 #include <asm/io.h>
 #include <fs.h>
 #include <zynqpl.h>

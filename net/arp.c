@@ -11,6 +11,7 @@
 
 #include <common.h>
 #include <net.h>
+#include <stdio.h>
 
 #include "arp.h"
 

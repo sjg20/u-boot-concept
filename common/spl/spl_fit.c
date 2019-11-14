@@ -13,6 +13,7 @@
 #include <image.h>
 #include <malloc.h>
 #include <spl.h>
+#include <stdio.h>
 #include <linux/libfdt.h>
 
 DECLARE_GLOBAL_DATA_PTR;

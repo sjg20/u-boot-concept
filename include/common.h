@@ -16,7 +16,6 @@
 #include <config.h>
 #include <linux/types.h>
 #include <errno.h>
-#include <stdio.h>
 #include <time.h>
 #include <vsprintf.h>
 #include <asm/global_data.h>	/* global data used for startup functions */

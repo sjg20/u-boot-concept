@@ -21,6 +21,7 @@
 #include <init.h>
 #include <malloc.h>
 #include <memalign.h>
+#include <stdio.h>
 #include <version.h>
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>

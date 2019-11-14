@@ -8,6 +8,7 @@
 #include <bootstage.h>
 #include <image.h>
 #include <mapmem.h>
+#include <stdio.h>
 #include <linux/bitops.h>
 #include <linux/sizes.h>
 

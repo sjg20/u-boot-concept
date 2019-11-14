@@ -6,6 +6,7 @@
 
 #include <common.h>
 #include <hang.h>
+#include <stdio.h>
 #include <linux/types.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/mx6-ddr.h>

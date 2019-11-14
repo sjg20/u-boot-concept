@@ -10,6 +10,7 @@
 #include <env.h>
 #include <spi.h>
 #include <spi_flash.h>
+#include <stdio.h>
 #include <linux/mtd/mtd.h>
 
 #include <asm/io.h>

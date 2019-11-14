@@ -9,6 +9,7 @@
 #include <dm.h>
 #include <ide.h>
 #include <part.h>
+#include <stdio.h>
 #include <watchdog.h>
 #include <asm/io.h>
 

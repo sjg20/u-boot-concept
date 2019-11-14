@@ -8,6 +8,7 @@
 #include <command.h>
 #include <init.h>
 #include <malloc.h>
+#include <stdio.h>
 #include <asm/immap.h>
 
 DECLARE_GLOBAL_DATA_PTR;

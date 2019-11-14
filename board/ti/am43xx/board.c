@@ -11,6 +11,7 @@
 #include <bootstage.h>
 #include <eeprom.h>
 #include <image.h>
+#include <stdio.h>
 #include <dm/uclass.h>
 #include <env.h>
 #include <fdt_support.h>

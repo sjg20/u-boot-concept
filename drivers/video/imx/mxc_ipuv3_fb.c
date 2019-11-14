@@ -11,6 +11,7 @@
  */
 
 #include <common.h>
+#include <stdio.h>
 #include <linux/errno.h>
 #include <asm/global_data.h>
 #include <linux/string.h>

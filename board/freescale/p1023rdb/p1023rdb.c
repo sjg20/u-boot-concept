@@ -14,6 +14,7 @@
 #include <init.h>
 #include <net.h>
 #include <pci.h>
+#include <stdio.h>
 #include <asm/io.h>
 #include <asm/cache.h>
 #include <asm/processor.h>
