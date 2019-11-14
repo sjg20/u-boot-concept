@@ -17,7 +17,12 @@
 #include <miiphy.h>
 #include <net.h>
 #include <asm/cache.h>
+<<<<<<< HEAD
 #include <linux/dma-mapping.h>
+=======
+#include <asm/dma-mapping.h>
+#include <asm/global_data.h>
+>>>>>>> common: Drop asm/global_data.h from common header
 #include <asm/io.h>
 #include "altera_tse.h"
 

@@ -12,7 +12,11 @@
 #include <dm/of.h>
 =======
 #include <stdio.h>
+<<<<<<< HEAD
 >>>>>>> common: Drop stdio.h from common header
+=======
+#include <asm/global_data.h>
+>>>>>>> common: Drop asm/global_data.h from common header
 #include <linux/ctype.h>
 #include <linux/delay.h>
 #include <linux/io.h>
