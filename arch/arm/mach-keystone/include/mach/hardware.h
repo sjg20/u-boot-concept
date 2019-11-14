@@ -9,6 +9,7 @@
 #define __ASM_ARCH_HARDWARE_H
 
 #include <config.h>
+#include <linux/bitops.h>
 
 #ifndef __ASSEMBLY__
 

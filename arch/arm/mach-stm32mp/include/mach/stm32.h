@@ -10,6 +10,7 @@
  * Peripheral memory map
  * only address used before device tree parsing
  */
+#include <linux/bitops.h>
 #define STM32_RCC_BASE			0x50000000
 #define STM32_PWR_BASE			0x50001000
 #define STM32_DBGMCU_BASE		0x50081000

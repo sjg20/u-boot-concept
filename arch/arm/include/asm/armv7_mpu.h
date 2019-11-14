@@ -23,6 +23,7 @@
 #define B_SHIFT				0
 #endif /* CONFIG_CPU_V7R */
 
+#include <linux/bitops.h>
 #define CACHEABLE			BIT(C_SHIFT)
 #define BUFFERABLE			BIT(B_SHIFT)
 #define SHAREABLE			BIT(S_SHIFT)

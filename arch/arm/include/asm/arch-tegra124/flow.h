@@ -7,6 +7,7 @@
 #ifndef _TEGRA124_FLOW_H_
 #define _TEGRA124_FLOW_H_
 
+#include <linux/bitops.h>
 struct flow_ctlr {
 	u32 halt_cpu_events;	/* offset 0x00 */
 	u32 halt_cop_events;	/* offset 0x04 */

@@ -15,6 +15,7 @@
 #endif /* !(__KERNEL_STRICT_NAMES || __ASSEMBLY__) */
 
 #include <asm/arch/hardware.h>
+#include <linux/bitops.h>
 
 #define CL_BIT(x)			(0 << x)
 

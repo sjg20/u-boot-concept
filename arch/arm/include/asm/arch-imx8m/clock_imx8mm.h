@@ -8,6 +8,7 @@
 #ifndef _ASM_ARCH_IMX8MM_CLOCK_H
 #define _ASM_ARCH_IMX8MM_CLOCK_H
 
+#include <linux/bitops.h>
 #define PLL_1443X_RATE(_rate, _m, _p, _s, _k)			\
 	{							\
 		.rate	=	(_rate),			\

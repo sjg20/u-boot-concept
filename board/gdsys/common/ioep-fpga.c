@@ -443,6 +443,7 @@ static int get_features(unsigned int fpga, struct fpga_features *features)
 	return 0;
 }
 
+#include <linux/bitops.h>
 #endif
 
 bool ioep_fpga_has_osd(unsigned int fpga)

@@ -5,10 +5,12 @@
  */
 
 #ifndef __STM32_PWR_H_
+#define __STM32_PWR_H_
 
 /*
  * Offsets of some PWR registers
  */
+#include <linux/bitops.h>
 #define PWR_CR1_ODEN			BIT(16)
 #define PWR_CR1_ODSWEN			BIT(17)
 #define PWR_CSR1_ODRDY			BIT(16)

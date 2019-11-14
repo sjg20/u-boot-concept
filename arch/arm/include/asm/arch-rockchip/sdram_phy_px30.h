@@ -7,6 +7,7 @@
 #define _ASM_ARCH_SDRAM_PHY_PX30_H
 #include <asm/arch-rockchip/sdram_common.h>
 #include <asm/arch-rockchip/sdram_phy_ron_rtt_px30.h>
+#include <linux/bitops.h>
 
 struct ddr_phy_regs {
 	u32 phy[5][2];

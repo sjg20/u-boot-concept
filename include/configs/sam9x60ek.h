@@ -11,6 +11,7 @@
 #define __CONFIG_H__
 
 /* ARM asynchronous clock */
+#include <linux/bitops.h>
 #define CONFIG_SYS_AT91_SLOW_CLOCK	32768
 #define CONFIG_SYS_AT91_MAIN_CLOCK	24000000	/* 24 MHz crystal */
 

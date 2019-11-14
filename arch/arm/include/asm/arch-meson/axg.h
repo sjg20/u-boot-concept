@@ -7,6 +7,7 @@
 #ifndef __AXG_H__
 #define __AXG_H__
 
+#include <linux/bitops.h>
 #define AXG_AOBUS_BASE		0xff800000
 #define AXG_PERIPHS_BASE	0xff634400
 #define AXG_HIU_BASE		0xff63c000

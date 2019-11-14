@@ -7,6 +7,7 @@
 #ifndef __STI_SDHCI_H__
 #define __STI_SDHCI_H__
 
+#include <linux/bitops.h>
 #define FLASHSS_MMC_CORE_CONFIG_1			0x400
 #define FLASHSS_MMC_CORECFG_TIMEOUT_CLK_UNIT_MHZ	BIT(24)
 #define FLASHSS_MMC_CORECFG_TIMEOUT_CLK_FREQ_MIN	BIT(12)

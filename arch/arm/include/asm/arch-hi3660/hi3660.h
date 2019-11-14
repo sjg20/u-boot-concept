@@ -7,6 +7,7 @@
 #ifndef __HI3660_H__
 #define __HI3660_H__
 
+#include <linux/bitops.h>
 #define HI3660_UART6_BASE			0xfff32000
 
 #define PMU_REG_BASE                            0xfff34000

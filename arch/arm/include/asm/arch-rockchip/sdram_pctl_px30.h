@@ -6,6 +6,7 @@
 #ifndef _ASM_ARCH_SDRAM_PCTL_PX30_H
 #define _ASM_ARCH_SDRAM_PCTL_PX30_H
 #include <asm/arch-rockchip/sdram_common.h>
+#include <linux/bitops.h>
 
 struct ddr_pctl_regs {
 	u32 pctl[30][2];

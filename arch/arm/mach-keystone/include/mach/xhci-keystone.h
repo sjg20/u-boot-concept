@@ -6,6 +6,7 @@
  *     Texas Instruments Incorporated, <www.ti.com>
  */
 
+#include <linux/bitops.h>
 #define USB3_PHY_REF_SSP_EN		BIT(29)
 #define USB3_PHY_OTG_VBUSVLDECTSEL	BIT(16)
 

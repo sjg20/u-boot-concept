@@ -8,6 +8,7 @@
 #ifndef _ASM_ARCH_IMX8M_CLOCK_H
 #define _ASM_ARCH_IMX8M_CLOCK_H
 
+#include <linux/bitops.h>
 enum pll_clocks {
 	ANATOP_ARM_PLL,
 	ANATOP_GPU_PLL,

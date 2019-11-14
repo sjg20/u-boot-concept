@@ -154,6 +154,7 @@
 #define RISCV_PGSHIFT 12
 #define RISCV_PGSIZE BIT(RISCV_PGSHIFT)
 
+#include <linux/bitops.h>
 #endif /* __riscv */
 
 #endif /* RISCV_CSR_ENCODING_H */

@@ -10,6 +10,7 @@
 #define _SUNXI_DRAM_SUN50I_H6_H
 
 #include <stdbool.h>
+#include <linux/bitops.h>
 
 enum sunxi_dram_type {
 	SUNXI_DRAM_TYPE_DDR3 = 3,

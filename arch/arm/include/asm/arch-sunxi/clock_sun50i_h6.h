@@ -9,6 +9,7 @@
 #ifndef _SUNXI_CLOCK_SUN50I_H6_H
 #define _SUNXI_CLOCK_SUN50I_H6_H
 
+#include <linux/bitops.h>
 struct sunxi_ccm_reg {
 	u32 pll1_cfg;		/* 0x000 pll1 (cpux) control */
 	u8 reserved_0x004[12];

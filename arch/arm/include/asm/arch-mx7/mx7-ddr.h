@@ -11,6 +11,7 @@
 #define __ASM_ARCH_MX7_DDR_H__
 
 /* DDRC Registers (DDRC_IPS_BASE_ADDR) */
+#include <linux/bitops.h>
 struct ddrc {
 	u32 mstr;		/* 0x0000 */
 	u32 reserved1[0x18];

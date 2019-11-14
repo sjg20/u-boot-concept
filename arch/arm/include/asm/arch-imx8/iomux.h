@@ -11,6 +11,7 @@
  * High 32bits are used for padring register value,
  * low 16bits are used for pin index.
  */
+#include <linux/bitops.h>
 typedef u64 iomux_cfg_t;
 
 #define PADRING_IFMUX_EN_SHIFT		31

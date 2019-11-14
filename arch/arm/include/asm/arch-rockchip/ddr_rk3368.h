@@ -11,6 +11,7 @@
  * in a few details. Most notably, it has an additional field to track
  * tREFI in controller cycles (i.e. trefi_mem_ddr3).
  */
+#include <linux/bitops.h>
 struct rk3368_ddr_pctl {
 	u32 scfg;
 	u32 sctl;

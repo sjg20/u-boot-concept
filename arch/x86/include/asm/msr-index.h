@@ -12,6 +12,7 @@
 /* CPU model specific register (MSR) numbers */
 
 /* x86-64 specific MSRs */
+#include <linux/bitops.h>
 #define MSR_EFER		0xc0000080 /* extended feature register */
 #define MSR_STAR		0xc0000081 /* legacy mode SYSCALL target */
 #define MSR_LSTAR		0xc0000082 /* long mode SYSCALL target */

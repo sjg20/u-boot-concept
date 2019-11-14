@@ -109,6 +109,7 @@ int cm_basic_init(const struct cm_config * const cfg);
 const struct cm_config * const cm_get_default_config(void);
 #endif /* __ASSEMBLER__ */
 
+#include <linux/bitops.h>
 #define LOCKED_MASK \
 	(CLKMGR_INTER_SDRPLLLOCKED_MASK  | \
 	CLKMGR_INTER_PERPLLLOCKED_MASK  | \

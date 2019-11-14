@@ -8,6 +8,7 @@
 #define __ASM_ARCH_J721E_HARDWARE_H
 
 #include <config.h>
+#include <linux/bitops.h>
 
 #define CTRL_MMR0_BASE					0x00100000
 #define CTRLMMR_MAIN_DEVSTAT				(CTRL_MMR0_BASE + 0x30)

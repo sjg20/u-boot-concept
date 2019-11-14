@@ -9,6 +9,7 @@
 #ifndef __ASM_ARCH_HARDWARE_K2L_H
 #define __ASM_ARCH_HARDWARE_K2L_H
 
+#include <linux/bitops.h>
 #define KS2_ARM_PLL_EN			BIT(13)
 
 /* PA SS Registers */

@@ -14,6 +14,7 @@
 #endif
 
 /* CRU_GLB_RST_ST */
+#include <linux/bitops.h>
 enum {
 	GLB_POR_RST,
 	FST_GLB_RST_ST		= BIT(0),

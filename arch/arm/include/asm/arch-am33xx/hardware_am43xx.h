@@ -13,6 +13,7 @@
 /* Module base addresses */
 
 /* L3 Fast Configuration Bandwidth Limiter Base Address */
+#include <linux/bitops.h>
 #define L3F_CFG_BWLIMITER		0x44005200
 
 /* UART Base Address */

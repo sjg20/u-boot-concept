@@ -8,6 +8,7 @@
 
 #include <asm/cache.h>
 #include <config.h>
+#include <linux/bitops.h>
 
 /*
  * ARC architecture has additional address space - auxiliary registers.

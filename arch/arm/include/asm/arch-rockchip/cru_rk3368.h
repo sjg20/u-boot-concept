@@ -7,6 +7,7 @@
 #define _ASM_ARCH_CRU_RK3368_H
 
 /* RK3368 clock numbers */
+#include <linux/bitops.h>
 enum rk3368_pll_id {
 	APLLB,
 	APLLL,

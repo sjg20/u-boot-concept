@@ -7,6 +7,7 @@
 #ifndef _ASM_ARMV8_FSL_LAYERSCAPE_CONFIG_H_
 #define _ASM_ARMV8_FSL_LAYERSCAPE_CONFIG_H_
 
+#include <linux/bitops.h>
 #include <linux/kconfig.h>
 #include <fsl_ddrc_version.h>
 

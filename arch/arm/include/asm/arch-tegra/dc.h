@@ -10,6 +10,7 @@
 /* Register definitions for the Tegra display controller */
 
 /* CMD register 0x000 ~ 0x43 */
+#include <linux/bitops.h>
 struct dc_cmd_reg {
 	/* Address 0x000 ~ 0x002 */
 	uint gen_incr_syncpt;		/* _CMD_GENERAL_INCR_SYNCPT_0 */
