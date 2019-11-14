@@ -10,6 +10,7 @@
 #include <log.h>
 #include <asm/cache.h>
 #include <dm/device_compat.h>
+#include <linux/delay.h>
 #include <linux/errno.h>
 #include <malloc.h>
 #include <video.h>

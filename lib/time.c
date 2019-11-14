@@ -14,6 +14,7 @@
 #include <watchdog.h>
 #include <div64.h>
 #include <asm/io.h>
+#include <linux/delay.h>
 
 #ifndef CONFIG_WD_PERIOD
 # define CONFIG_WD_PERIOD	(10 * 1000 * 1000)	/* 10 seconds default */
@@ -183,7 +184,7 @@ void udelay(unsigned long usec)
 	do {
 		WATCHDOG_RESET();
 		kv = usec > CONFIG_WD_PERIOD ? CONFIG_WD_PERIOD : usec;
-		__udelay (kv);
+		__udelay(kv);
 		usec -= kv;
 	} while(usec);
 }
