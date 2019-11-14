@@ -12,6 +12,7 @@
 #include <common.h>
 #include <ahci.h>
 #include <dm.h>
+#include <part.h>
 #include <sata.h>
 
 #ifndef CONFIG_AHCI

@@ -8,6 +8,7 @@
 #include <ata.h>
 #include <dm.h>
 #include <ide.h>
+#include <part.h>
 #include <watchdog.h>
 #include <asm/io.h>
 

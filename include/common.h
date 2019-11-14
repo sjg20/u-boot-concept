@@ -21,7 +21,6 @@
 #include <image.h>
 #include <init.h>
 #include <log.h>
-#include <part.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <time.h>

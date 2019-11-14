@@ -14,6 +14,7 @@
 #include <env.h>
 #include <malloc.h>
 #include <command.h>
+#include <part.h>
 #include <part_efi.h>
 #include <exports.h>
 #include <uuid.h>

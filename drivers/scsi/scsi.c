@@ -7,6 +7,7 @@
 #include <common.h>
 #include <dm.h>
 #include <env.h>
+#include <part.h>
 #include <pci.h>
 #include <scsi.h>
 #include <dm/device-internal.h>
