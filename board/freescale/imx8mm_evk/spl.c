@@ -6,6 +6,7 @@
 #include <common.h>
 #include <bootstage.h>
 #include <cpu_func.h>
+#include <image.h>
 
 #include <hang.h>
 #include <init.h>

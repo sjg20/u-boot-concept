@@ -9,6 +9,7 @@
 #include <bootstage.h>
 #include <dm.h>
 #include <eeprom.h>
+#include <image.h>
 #include <init.h>
 #include <dm/device-internal.h>
 #include <asm/arch/clock.h>

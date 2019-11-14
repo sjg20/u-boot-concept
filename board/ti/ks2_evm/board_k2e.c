@@ -8,6 +8,7 @@
 
 #include <common.h>
 #include <bootstage.h>
+#include <image.h>
 #include <init.h>
 #include <asm/arch/ddr3.h>
 #include <asm/arch/hardware.h>

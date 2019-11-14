@@ -10,6 +10,7 @@
 #include <common.h>
 #include <bootstage.h>
 #include <cpu_func.h>
+#include <image.h>
 #include <init.h>
 #include <malloc.h>
 #include <netdev.h>

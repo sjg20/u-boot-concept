@@ -12,6 +12,7 @@
 
 #include <common.h>
 #include <bootstage.h>
+#include <image.h>
 #include <malloc.h>
 #include <net/pfe_eth/pfe_eth.h>
 #include <net/pfe_eth/pfe_firmware.h>

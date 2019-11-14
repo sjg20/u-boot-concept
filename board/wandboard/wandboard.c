@@ -7,6 +7,7 @@
  */
 
 #include <bootstage.h>
+#include <image.h>
 #include <init.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/crm_regs.h>

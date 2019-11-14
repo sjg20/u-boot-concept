@@ -9,6 +9,7 @@
 #include <command.h>
 #include <errno.h>
 #include <fdt_support.h>
+#include <image.h>
 #include <malloc.h>
 
 #include <linux/sizes.h>

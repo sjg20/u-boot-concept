@@ -14,6 +14,7 @@
 #include <bootstage.h>
 #include <cpu_func.h>
 #include <errno.h>
+#include <image.h>
 #include <spl.h>
 
 static struct bl2_to_bl31_params_mem bl31_params_mem;

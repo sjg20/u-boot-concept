@@ -7,6 +7,7 @@
 #include <common.h>
 #include <bootstage.h>
 #include <cpu_func.h>
+#include <image.h>
 
 #include <env.h>
 #include <init.h>

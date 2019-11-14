@@ -24,7 +24,6 @@
 #include <asm/global_data.h>	/* global data used for startup functions */
 #include <asm/u-boot.h> /* boot information for Linux kernel */
 #include <linux/bitops.h>
-#include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/printk.h>
 #include <linux/string.h>

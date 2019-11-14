@@ -13,6 +13,7 @@
  * Ported to SolidRun microSOM by Rabeeh Khoury <rabeeh@solid-run.com>
  */
 
+#include <image.h>
 #include <init.h>
 #include <net.h>
 #include <asm/arch/clock.h>

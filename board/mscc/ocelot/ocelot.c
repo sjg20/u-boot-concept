@@ -5,6 +5,7 @@
 
 #include <common.h>
 #include <bootstage.h>
+#include <image.h>
 #include <init.h>
 #include <asm/io.h>
 #include <asm/addrspace.h>

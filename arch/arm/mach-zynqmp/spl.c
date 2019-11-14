@@ -8,6 +8,7 @@
 #include <common.h>
 #include <bootstage.h>
 #include <debug_uart.h>
+#include <image.h>
 #include <init.h>
 #include <spl.h>
 

@@ -14,6 +14,7 @@
 #include <fpga.h>
 #include <fs.h>
 #include <gzip.h>
+#include <image.h>
 #include <malloc.h>
 
 static long do_fpga_get_device(char *arg)

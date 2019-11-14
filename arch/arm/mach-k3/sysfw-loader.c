@@ -8,6 +8,7 @@
 
 #include <common.h>
 #include <bootstage.h>
+#include <image.h>
 #include <spl.h>
 #include <malloc.h>
 #include <remoteproc.h>

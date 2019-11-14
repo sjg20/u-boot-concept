@@ -13,6 +13,7 @@
 #include <fb_mmc.h>
 #include <flash.h>
 #include <image-sparse.h>
+#include <image.h>
 #include <part.h>
 #include <mmc.h>
 #include <div64.h>

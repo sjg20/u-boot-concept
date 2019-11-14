@@ -5,6 +5,7 @@
 
 #include <common.h>
 #include <bootstage.h>
+#include <image.h>
 #include <init.h>
 #include <net.h>
 #include <asm/processor.h>

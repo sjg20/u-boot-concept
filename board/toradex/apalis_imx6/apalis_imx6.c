@@ -9,6 +9,7 @@
 #include <common.h>
 #include <bootstage.h>
 #include <cpu_func.h>
+#include <image.h>
 
 #include <dm.h>
 #include <init.h>
