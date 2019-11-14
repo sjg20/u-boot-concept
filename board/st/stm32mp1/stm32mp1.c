@@ -35,6 +35,7 @@
 #include <asm/arch/stm32.h>
 #include <asm/arch/sys_proto.h>
 #include <jffs2/load_kernel.h>
+#include <linux/bitops.h>
 #include <linux/err.h>
 #include <power/regulator.h>
 #include <usb/dwc2_udc.h>

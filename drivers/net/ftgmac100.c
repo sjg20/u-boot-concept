@@ -19,6 +19,7 @@
 #include <net.h>
 #include <wait_bit.h>
 #include <dm/device_compat.h>
+#include <linux/bitops.h>
 #include <linux/io.h>
 #include <linux/iopoll.h>
 

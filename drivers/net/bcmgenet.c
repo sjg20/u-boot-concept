@@ -21,6 +21,7 @@
 #include <cpu_func.h>
 #include <dm.h>
 #include <fdt_support.h>
+#include <linux/bitops.h>
 #include <linux/err.h>
 #include <malloc.h>
 #include <miiphy.h>

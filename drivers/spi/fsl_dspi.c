@@ -21,6 +21,7 @@
 #include <asm/arch/clock.h>
 #endif
 #include <fsl_dspi.h>
+#include <linux/bitops.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

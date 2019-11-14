@@ -25,6 +25,7 @@
 #include <memalign.h>
 #include <div64.h>
 #include <dm/devres.h>
+#include <linux/bitops.h>
 
 #include <linux/errno.h>
 #include <linux/mtd/mtd.h>

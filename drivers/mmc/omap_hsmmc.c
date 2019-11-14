@@ -48,6 +48,7 @@
 #endif
 #include <dm.h>
 #include <dm/devres.h>
+#include <linux/bitops.h>
 #include <linux/err.h>
 #include <power/regulator.h>
 #include <thermal.h>

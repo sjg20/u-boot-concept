@@ -18,6 +18,7 @@
 #include <fs_loader.h>
 #include <wait_bit.h>
 #include <watchdog.h>
+#include <linux/bitops.h>
 
 #define CFGWDTH_32	1
 #define MIN_BITSTREAM_SIZECHECK	230

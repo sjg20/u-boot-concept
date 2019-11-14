@@ -7,6 +7,7 @@
 #include <nand.h>
 #include <malloc.h>
 #include <mxs_nand.h>
+#include <linux/bitops.h>
 #include <linux/err.h>
 
 static struct mtd_info *mtd;

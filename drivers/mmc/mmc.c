@@ -14,6 +14,7 @@
 #include <errno.h>
 #include <mmc.h>
 #include <part.h>
+#include <linux/bitops.h>
 #include <power/regulator.h>
 #include <malloc.h>
 #include <memalign.h>

@@ -13,6 +13,7 @@
 #include <malloc.h>
 #include <nand.h>
 #include <dm/devres.h>
+#include <linux/bitops.h>
 #include <linux/bug.h>
 
 #include <asm/io.h>

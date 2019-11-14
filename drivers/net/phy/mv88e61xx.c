@@ -30,6 +30,7 @@
  */
 
 #include <common.h>
+#include <linux/bitops.h>
 
 #include <bitfield.h>
 #include <errno.h>

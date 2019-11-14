@@ -17,6 +17,7 @@
 #include <malloc.h>
 #include <memalign.h>
 #include <spi.h>
+#include <linux/bitops.h>
 #include <linux/errno.h>
 #include <asm/io.h>
 #include <asm/arch/clock.h>

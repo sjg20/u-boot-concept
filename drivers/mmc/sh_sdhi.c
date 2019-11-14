@@ -14,6 +14,7 @@
 #include <mmc.h>
 #include <dm.h>
 #include <dm/device_compat.h>
+#include <linux/bitops.h>
 #include <linux/errno.h>
 #include <linux/compat.h>
 #include <linux/io.h>

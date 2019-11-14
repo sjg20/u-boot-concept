@@ -12,6 +12,7 @@
 
 #include <cpu_func.h>
 #include <dm/device_compat.h>
+#include <linux/bitops.h>
 #include <linux/usb/composite.h>
 #include <linux/iopoll.h>
 

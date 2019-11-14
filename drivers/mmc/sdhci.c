@@ -15,6 +15,7 @@
 #include <mmc.h>
 #include <sdhci.h>
 #include <dm.h>
+#include <linux/bitops.h>
 #include <linux/dma-mapping.h>
 
 static void sdhci_reset(struct sdhci_host *host, u8 mask)

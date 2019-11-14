@@ -15,6 +15,7 @@
 #include <sound.h>
 #include <asm/io.h>
 #include <dt-bindings/sound/azalia.h>
+#include <linux/bitops.h>
 
 /**
  * struct hda_regs - HDA registers

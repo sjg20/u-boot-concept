@@ -15,6 +15,7 @@
 #include <reset.h>
 #include <syscon.h>
 #include <dm/device_compat.h>
+#include <linux/bitops.h>
 #include <linux/err.h>
 #include <linux/io.h>
 #include <linux/iopoll.h>

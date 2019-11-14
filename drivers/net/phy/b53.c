@@ -23,6 +23,7 @@
  */
 
 #include <common.h>
+#include <linux/bitops.h>
 
 #include <errno.h>
 #include <malloc.h>

@@ -23,6 +23,7 @@
 #include <asm/fast_spi.h>
 #include <asm/io.h>
 #include <asm/mtrr.h>
+#include <linux/bitops.h>
 #include <linux/sizes.h>
 
 #include "ich.h"

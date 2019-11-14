@@ -13,6 +13,7 @@
 #include <asm/arch/cpu.h>
 #include <asm/arch/soc.h>
 #include "../common/tlv_data.h"
+#include <linux/bitops.h>
 
 #include "../drivers/ddr/marvell/a38x/ddr3_init.h"
 #include <../serdes/a38x/high_speed_env_spec.h>

@@ -19,6 +19,7 @@
 #include <dm.h>
 #include <fdt_support.h>
 #include <dm/device_compat.h>
+#include <linux/bitops.h>
 #include <linux/err.h>
 #include <malloc.h>
 #include <miiphy.h>

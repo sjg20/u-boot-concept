@@ -17,6 +17,7 @@
 #include <malloc.h>
 #include <mmc.h>
 #include <dm/device_compat.h>
+#include <linux/bitops.h>
 
 #include <asm/io.h>
 #include <asm-generic/gpio.h>

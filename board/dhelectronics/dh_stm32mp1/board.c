@@ -30,6 +30,7 @@
 #include <mtd_node.h>
 #include <netdev.h>
 #include <phy.h>
+#include <linux/bitops.h>
 #include <power/regulator.h>
 #include <remoteproc.h>
 #include <reset.h>
