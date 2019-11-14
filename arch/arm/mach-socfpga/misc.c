@@ -5,7 +5,11 @@
 
 #include <common.h>
 #include <cpu_func.h>
+<<<<<<< HEAD
 #include <hang.h>
+=======
+#include <init.h>
+>>>>>>> d74d95b1ea5... common: Drop init.h from common header
 #include <asm/io.h>
 #include <errno.h>
 #include <fdtdec.h>

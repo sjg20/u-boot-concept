@@ -6,6 +6,7 @@
 #include <bootstage.h>
 #include <debug_uart.h>
 #include <hang.h>
+#include <init.h>
 #include <spl.h>
 
 #include <asm/io.h>
