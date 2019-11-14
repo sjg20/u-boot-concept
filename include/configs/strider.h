@@ -199,6 +199,7 @@
 /*
  * Software (bit-bang) I2C driver configuration
  */
+#include <linux/stringify.h>
 #define CONFIG_SYS_I2C_SOFT
 #define CONFIG_SOFT_I2C_READ_REPEATED_START
 #define CONFIG_SYS_I2C_SOFT_SPEED		50000

@@ -57,6 +57,7 @@
 	func(MMC, mmc, 0) \
 	func(DHCP, dhcp, na)
 #include <config_distro_bootcmd.h>
+#include <linux/stringify.h>
 #undef BOOTENV_RUN_NET_USB_START
 #define BOOTENV_RUN_NET_USB_START ""
 

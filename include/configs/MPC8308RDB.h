@@ -24,6 +24,7 @@
  * TSEC1 is SoC TSEC
  * TSEC2 is VSC switch
  */
+#include <linux/stringify.h>
 #define CONFIG_TSEC1
 #define CONFIG_VSC7385_ENET
 

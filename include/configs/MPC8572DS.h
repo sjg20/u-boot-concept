@@ -257,6 +257,7 @@
 #else
 #define CONFIG_SYS_NAND_BASE_PHYS	CONFIG_SYS_NAND_BASE
 #endif
+#include <linux/stringify.h>
 #else
 #define CONFIG_SYS_NAND_BASE		0xfff00000
 #ifdef CONFIG_PHYS_64BIT

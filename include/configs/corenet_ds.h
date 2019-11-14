@@ -19,6 +19,7 @@
 #define CONFIG_RAMBOOT_NAND
 #endif
 #define CONFIG_BOOTSCRIPT_COPY_RAM
+#include <linux/stringify.h>
 #else
 #define CONFIG_RAMBOOT_TEXT_BASE	CONFIG_SYS_TEXT_BASE
 #define CONFIG_RESET_VECTOR_ADDRESS	0xfffffffc

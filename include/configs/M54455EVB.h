@@ -57,6 +57,7 @@
 #	endif			/* CONFIG_SYS_DISCOVER_PHY */
 #endif
 
+#include <linux/stringify.h>
 #define CONFIG_HOSTNAME		"M54455EVB"
 #ifdef CONFIG_SYS_STMICRO_BOOT
 /* ST Micro serial flash */

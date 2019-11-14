@@ -330,4 +330,5 @@
 
 /* Support at least the sensor on TQMa6 SOM */
 
+#include <linux/stringify.h>
 #endif /* __CONFIG_H */

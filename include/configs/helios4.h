@@ -108,6 +108,7 @@
 #ifdef CONFIG_SPL_BUILD
 #define CONFIG_FIXED_SDHCI_ALIGNED_BUFFER	0x00180000	/* in SDRAM */
 #endif
+#include <linux/stringify.h>
 #endif
 /*
  * mv-common.h should be defined after CMD configs since it used them

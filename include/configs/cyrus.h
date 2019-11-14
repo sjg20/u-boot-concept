@@ -462,5 +462,6 @@
 #define CONFIG_BOOTCOMMAND		CONFIG_HDBOOT
 
 #include <asm/fsl_secure_boot.h>
+#include <linux/stringify.h>
 
 #endif	/* __CONFIG_H */

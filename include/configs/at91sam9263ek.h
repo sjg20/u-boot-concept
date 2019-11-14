@@ -178,6 +178,7 @@
 		 AT91_WDT_MR_WDD(0xfff))
 
 #endif
+#include <linux/stringify.h>
 #endif
 
 /* NAND flash */

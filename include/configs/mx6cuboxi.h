@@ -129,4 +129,5 @@
 
 /* Environment organization */
 
+#include <linux/stringify.h>
 #endif                         /* __MX6CUBOXI_CONFIG_H */

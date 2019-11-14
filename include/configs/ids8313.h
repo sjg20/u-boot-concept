@@ -189,6 +189,7 @@
 #define TSEC2_FLAGS			TSEC_GIGABIT
 #define TSEC2_PHYIDX			0
 #endif
+#include <linux/stringify.h>
 #define CONFIG_ETHPRIME		"TSEC1"
 
 /*

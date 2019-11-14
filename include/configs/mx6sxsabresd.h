@@ -184,6 +184,7 @@
 #define FSL_QSPI_FLASH_SIZE		SZ_32M
 #endif
 #define FSL_QSPI_FLASH_NUM		2
+#include <linux/stringify.h>
 #endif
 
 #ifndef CONFIG_SPL_BUILD

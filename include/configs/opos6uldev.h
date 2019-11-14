@@ -16,6 +16,7 @@
 #ifdef CONFIG_SPL_BUILD
 #undef CONFIG_DM_REGULATOR
 #endif
+#include <linux/stringify.h>
 #endif
 
 /* Size of malloc() pool */

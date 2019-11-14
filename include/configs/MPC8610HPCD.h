@@ -30,6 +30,7 @@
  * virtual address to be used for temporary mappings.  There
  * should be 128k free at this VA.
  */
+#include <linux/stringify.h>
 #define CONFIG_SYS_SCRATCH_VA	0xc0000000
 
 #define CONFIG_PCI1		1	/* PCI controller 1 */

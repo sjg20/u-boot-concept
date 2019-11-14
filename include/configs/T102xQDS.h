@@ -58,6 +58,7 @@
 #define CONFIG_SYS_MPC85XX_NO_RESETVEC
 #endif
 #define CONFIG_SYS_FSL_PBL_RCW board/freescale/t102xqds/t1024_spi_rcw.cfg
+#include <linux/stringify.h>
 #endif
 
 #ifdef CONFIG_SDCARD

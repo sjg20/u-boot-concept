@@ -161,6 +161,7 @@
 
 #define KEY_VOL_UP_GPIO			EXYNOS4X12_GPIO_X22
 #define KEY_VOL_DOWN_GPIO		EXYNOS4X12_GPIO_X33
+#include <linux/stringify.h>
 #endif /* __ASSEMBLY__ */
 
 /* LCD console */
