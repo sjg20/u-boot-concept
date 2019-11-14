@@ -18,7 +18,6 @@
 #include <bootstage.h>
 #include <display_options.h>
 #include <errno.h>
-#include <flash.h>
 #include <image.h>
 #include <init.h>
 #include <log.h>
