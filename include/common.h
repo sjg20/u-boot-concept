@@ -21,7 +21,6 @@
 #include <stdio.h>
 #include <time.h>
 #include <vsprintf.h>
-#include <asm-offsets.h>
 #include <asm/global_data.h>	/* global data used for startup functions */
 #include <asm/u-boot.h> /* boot information for Linux kernel */
 #include <linux/bitops.h>
