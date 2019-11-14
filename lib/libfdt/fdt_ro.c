@@ -3,6 +3,7 @@
  * libfdt - Flat Device Tree manipulation
  * Copyright (C) 2006 David Gibson, IBM Corporation.
  */
+#include <fdt_support.h>
 #include <linux/libfdt_env.h>
 
 #ifndef USE_HOSTCC
