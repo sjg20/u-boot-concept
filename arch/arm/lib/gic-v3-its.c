@@ -10,7 +10,11 @@
 #include <linux/sizes.h>
 =======
 #include <linux/bitops.h>
+<<<<<<< HEAD
 >>>>>>> common: Drop linux/bitops.h from common header
+=======
+#include <linux/printk.h>
+>>>>>>> common: Drop linux/printk.h from common header
 
 static u32 lpi_id_bits;
 

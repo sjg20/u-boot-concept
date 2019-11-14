@@ -7,8 +7,12 @@
 #include <adc.h>
 #include <asm/io.h>
 #include <asm/arch-rockchip/boot_mode.h>
+<<<<<<< HEAD
 #include <dm/device.h>
 #include <dm/uclass.h>
+=======
+#include <linux/printk.h>
+>>>>>>> common: Drop linux/printk.h from common header
 
 #if (CONFIG_ROCKCHIP_BOOT_MODE_REG == 0)
 
