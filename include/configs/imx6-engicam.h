@@ -193,4 +193,5 @@
 # include "imx6_spl.h"
 #endif
 
+#include <linux/stringify.h>
 #endif /* __IMX6_ENGICAM_CONFIG_H */

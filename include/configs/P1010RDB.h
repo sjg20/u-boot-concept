@@ -26,6 +26,7 @@
 #ifdef CONFIG_SPL_BUILD
 #define CONFIG_SPL_COMMON_INIT_DDR
 #endif
+#include <linux/stringify.h>
 #endif
 
 #ifdef CONFIG_SPIFLASH

@@ -36,6 +36,7 @@
 #define CONFIG_SYS_MPC85XX_NO_RESETVEC
 #endif
 #define CONFIG_SYS_FSL_PBL_RCW $(SRCTREE)/board/freescale/t4rdb/t4_sd_rcw.cfg
+#include <linux/stringify.h>
 #endif
 
 #ifdef CONFIG_SPL_BUILD

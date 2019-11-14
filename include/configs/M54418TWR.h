@@ -71,6 +71,7 @@
 #ifndef CONFIG_SYS_FAULT_ECHO_LINK_DOWN
 #define CONFIG_SYS_FAULT_ECHO_LINK_DOWN
 #endif
+#include <linux/stringify.h>
 #endif			/* CONFIG_SYS_DISCOVER_PHY */
 #endif
 

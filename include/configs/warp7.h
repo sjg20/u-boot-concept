@@ -165,4 +165,5 @@
 /* Environment variable name to represent HAB enable state */
 #define HAB_ENABLED_ENVNAME		"hab_enabled"
 
+#include <linux/stringify.h>
 #endif

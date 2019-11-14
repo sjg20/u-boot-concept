@@ -84,6 +84,7 @@
 #endif
 
 /* Realtime clock */
+#include <linux/stringify.h>
 #define CONFIG_MCFRTC
 #undef RTC_DEBUG
 #define CONFIG_SYS_RTC_OSCILLATOR	(32 * CONFIG_SYS_HZ)

@@ -66,6 +66,7 @@ $(SRCTREE)/board/freescale/t104xrdb/t1040d4_nand_rcw.cfg
 #define CONFIG_SYS_FSL_PBL_RCW \
 $(SRCTREE)/board/freescale/t104xrdb/t1042d4_nand_rcw.cfg
 #endif
+#include <linux/stringify.h>
 #endif
 
 #ifdef CONFIG_SPIFLASH

@@ -19,6 +19,7 @@
 
 /* High Level Configuration Options */
 
+#include <linux/stringify.h>
 #define CONFIG_PCI_INDIRECT_BRIDGE     /* indirect PCI bridge support */
 #define CONFIG_PCIE1		/* PCIE controller 1 (slot 1) */
 #define CONFIG_PCIE2		/* PCIE controller 2 (slot 2) */

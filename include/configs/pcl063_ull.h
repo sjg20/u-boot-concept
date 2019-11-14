@@ -107,5 +107,6 @@
 	func(DHCP, dhcp, na)
 
 #include <config_distro_bootcmd.h>
+#include <linux/stringify.h>
 
 #endif /* __PCL063_ULL_H */

@@ -31,6 +31,7 @@
 #else
 #define CONFIG_SYS_FSL_USDHC_NUM	2
 #endif
+#include <linux/stringify.h>
 #endif
 
 /* I2C configs */

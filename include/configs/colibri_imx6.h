@@ -219,4 +219,5 @@
 
 #define CONFIG_CMD_TIME
 
+#include <linux/stringify.h>
 #endif	/* __CONFIG_H */

@@ -194,4 +194,5 @@
 #define CONFIG_ENV_RANGE		(512 * 1024)
 #endif
 
+#include <linux/stringify.h>
 #endif

@@ -228,4 +228,5 @@
 #define CONFIG_DM_PMIC
 #endif
 
+#include <linux/stringify.h>
 #endif

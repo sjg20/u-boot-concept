@@ -32,6 +32,7 @@
 					 CONFIG_SYS_SPL_MALLOC_SIZE)
 #define CONFIG_SYS_SPL_MALLOC_START	(CONFIG_SYS_INIT_RAM_ADDR + \
 					 CONFIG_SYS_INIT_RAM_SIZE)
+#include <linux/stringify.h>
 #endif
 
 /*

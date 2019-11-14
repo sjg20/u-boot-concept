@@ -33,6 +33,7 @@
 #ifndef CONFIG_SYS_MMC_ENV_DEV
 #define CONFIG_SYS_MMC_ENV_DEV 1
 #endif
+#include <linux/stringify.h>
 #define FWENV_ADDR1 -1
 #define FWENV_ADDR2 -1
 #define FWENV_ADDR3 -1

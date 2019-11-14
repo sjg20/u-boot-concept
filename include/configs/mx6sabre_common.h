@@ -184,4 +184,5 @@
 
 #define CONFIG_USBD_HS
 
+#include <linux/stringify.h>
 #endif                         /* __MX6QSABRE_COMMON_CONFIG_H */

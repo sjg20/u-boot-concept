@@ -52,6 +52,7 @@
 #elif defined(CONFIG_TARGET_T1023RDB)
 #define CONFIG_SYS_FSL_PBL_RCW board/freescale/t102xrdb/t1023_nand_rcw.cfg
 #endif
+#include <linux/stringify.h>
 #endif
 
 #ifdef CONFIG_SPIFLASH

@@ -42,6 +42,7 @@
 #	endif			/* CONFIG_SYS_DISCOVER_PHY */
 #endif
 
+#include <linux/stringify.h>
 #define CONFIG_MCFRTC
 #undef RTC_DEBUG
 

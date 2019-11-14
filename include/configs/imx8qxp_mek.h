@@ -201,4 +201,5 @@
 #define CONFIG_SYS_MAXARGS	64
 #define CONFIG_SYS_BARGSIZE	CONFIG_SYS_CBSIZE
 
+#include <linux/stringify.h>
 #endif /* __IMX8QXP_MEK_H */
