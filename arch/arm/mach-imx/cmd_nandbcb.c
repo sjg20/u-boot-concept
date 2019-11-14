@@ -11,6 +11,7 @@
 
 #include <common.h>
 #include <command.h>
+#include <log.h>
 #include <malloc.h>
 #include <nand.h>
 #include <dm/devres.h>

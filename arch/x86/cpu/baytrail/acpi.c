@@ -7,6 +7,7 @@
 #include <acpi_s3.h>
 #include <cpu.h>
 #include <dm.h>
+#include <log.h>
 #include <dm/uclass-internal.h>
 #include <asm/acpi_table.h>
 #include <asm/io.h>
