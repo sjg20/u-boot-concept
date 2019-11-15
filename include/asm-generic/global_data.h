@@ -24,6 +24,8 @@
 #include <membuff.h>
 #include <linux/list.h>
 
+struct env_context;
+
 typedef struct global_data {
 	bd_t *bd;
 	unsigned long flags;
@@ -140,6 +142,7 @@ typedef struct global_data {
 #if CONFIG_IS_ENABLED(WDT)
 	struct udevice *watchdog_dev;
 #endif
+	struct env_context *cur_ctx;
 } gd_t;
 #endif
 
