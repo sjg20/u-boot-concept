@@ -7,12 +7,16 @@
 
 #include <common.h>
 #include <efi_loader.h>
+#include <env_flags.h>
 #include <env_internal.h>
 #include <hexdump.h>
 #include <malloc.h>
 #include <search.h>
 
 #define READ_ONLY BIT(31)
+
+static struct env_context *ctx_efi;
+static struct env_context *ctx_efi_volatile;
 
 /*
  * Mapping between EFI variables and u-boot variables:
@@ -165,6 +169,7 @@ efi_status_t EFIAPI efi_get_variable(u16 *variable_name,
 				     const efi_guid_t *vendor, u32 *attributes,
 				     efi_uintn_t *data_size, void *data)
 {
+	struct env_context *old_ctx;
 	char *native_name;
 	efi_status_t ret;
 	unsigned long in_size;
@@ -183,7 +188,13 @@ efi_status_t EFIAPI efi_get_variable(u16 *variable_name,
 
 	EFI_PRINT("get '%s'\n", native_name);
 
+	old_ctx = env_ctx_set(ctx_efi);
 	val = env_get(native_name);
+	if (!val) {
+		env_ctx_set(ctx_efi_volatile);
+		val = env_get(native_name);
+	}
+	env_ctx_set(old_ctx);
 	free(native_name);
 	if (!val)
 		return EFI_EXIT(EFI_NOT_FOUND);
@@ -386,12 +397,48 @@ efi_status_t EFIAPI efi_get_next_variable_name(efi_uintn_t *variable_name_size,
 		efi_cur_variable = NULL;
 
 		snprintf(regex, 256, "efi_.*-.*-.*-.*-.*_.*");
-		list_len = hexport_r(&env_htab, '\n',
+		list_len = hexport_r(ctx_efi->htab, '\n',
 				     H_MATCH_REGEX | H_MATCH_KEY,
 				     &efi_variables_list, 0, 1, regexlist);
-		/* 1 indicates that no match was found */
-		if (list_len <= 1)
-			return EFI_EXIT(EFI_NOT_FOUND);
+		/* '1' indicates that no match was found */
+		if (list_len <= 1) {
+			list_len = hexport_r(ctx_efi_volatile->htab, '\n',
+					     H_MATCH_REGEX | H_MATCH_KEY,
+					     &efi_variables_list, 0, 1,
+					     regexlist);
+
+			if (list_len <= 1)
+				return EFI_EXIT(EFI_NOT_FOUND);
+		} else {
+			char *list_volatile, *list_tmp;
+			size_t total_len;
+
+			list_volatile = NULL;
+			total_len = list_len;
+			list_len = hexport_r(ctx_efi_volatile->htab, '\n',
+					     H_MATCH_REGEX | H_MATCH_KEY,
+					     &list_volatile, 0, 1,
+					     regexlist);
+
+			/* concatenate two lists */
+			if (list_len > 1) {
+				total_len += list_len - 1;
+				list_tmp = efi_variables_list;
+
+				efi_variables_list = malloc(total_len);
+				if (efi_variables_list) {
+					strcpy(efi_variables_list, list_tmp);
+					strcat(efi_variables_list,
+					       list_volatile);
+				}
+
+				free(list_tmp);
+				free(list_volatile);
+
+				if (!efi_variables_list)
+					return EFI_EXIT(EFI_OUT_OF_RESOURCES);
+			}
+		}
 
 		variable = efi_variables_list;
 	}
@@ -421,6 +468,7 @@ efi_status_t EFIAPI efi_set_variable(u16 *variable_name,
 				     const efi_guid_t *vendor, u32 attributes,
 				     efi_uintn_t data_size, const void *data)
 {
+	struct env_context *ctx, *old_ctx;
 	char *native_name = NULL, *val = NULL, *s;
 	const char *old_val;
 	size_t old_size;
@@ -441,7 +489,13 @@ efi_status_t EFIAPI efi_set_variable(u16 *variable_name,
 	if (ret)
 		goto out;
 
+	if (attributes & EFI_VARIABLE_NON_VOLATILE)
+		ctx = ctx_efi;
+	else
+		ctx = ctx_efi_volatile;
+	old_ctx = env_ctx_set(ctx);
 	old_val = env_get(native_name);
+	env_ctx_set(old_ctx);
 	if (old_val) {
 		old_val = parse_attr(old_val, &attr);
 
@@ -455,9 +509,8 @@ efi_status_t EFIAPI efi_set_variable(u16 *variable_name,
 		     !(attributes & EFI_VARIABLE_APPEND_WRITE)) ||
 		    !attributes) {
 			/* delete the variable: */
-			env_set(native_name, NULL);
 			ret = EFI_SUCCESS;
-			goto out;
+			goto save_out;
 		}
 
 		/* attributes won't be changed */
@@ -529,10 +582,16 @@ efi_status_t EFIAPI efi_set_variable(u16 *variable_name,
 	s = bin2hex(s, data, data_size);
 	*s = '\0';
 
+save_out:
 	EFI_PRINT("setting: %s=%s\n", native_name, val);
 
+	/* set and save if non-volatile */
+	old_ctx = env_ctx_set(ctx);
 	if (env_set(native_name, val))
 		ret = EFI_DEVICE_ERROR;
+	else if (ctx == ctx_efi && env_save())
+		ret = EFI_DEVICE_ERROR;
+	env_ctx_set(old_ctx);
 
 out:
 	free(native_name);
@@ -631,6 +690,117 @@ void efi_variables_boot_exit_notify(void)
 	efi_update_table_header_crc32(&efi_runtime_services.hdr);
 }
 
+/*
+ * Environment context for UEFI variables
+ */
+struct hsearch_data efi_htab = {
+#if CONFIG_IS_ENABLED(ENV_SUPPORT)
+	/* defined in flags.c, only compile with ENV_SUPPORT */
+	.change_ok = env_flags_validate,
+#endif
+};
+
+struct hsearch_data efi_volatile_htab = {
+#if CONFIG_IS_ENABLED(ENV_SUPPORT)
+	/* defined in flags.c, only compile with ENV_SUPPORT */
+	.change_ok = env_flags_validate,
+#endif
+};
+
+static int env_drv_init_efi(struct env_context *ctx, enum env_location loc)
+{
+	__maybe_unused int ret;
+
+	switch (loc) {
+#ifdef CONFIG_ENV_EFI_IS_IN_FLASH
+	case ENVL_FLASH: {
+		struct environment_hdr *env_ptr;
+		struct environment_hdr *flash_addr;
+		ulong end_addr;
+		struct environment_hdr *flash_addr_new;
+		ulong end_addr_new;
+
+#if defined(CONFIG_ENV_EFI_ADDR_REDUND) && defined(CMD_SAVEENV) || \
+	!defined(CONFIG_ENV_EFI_ADDR_REDUND) && defined(INITENV)
+#ifdef ENV_IS_EMBEDDED
+		/* FIXME: not allowed */
+		env_ptr = NULL;
+#else /* ! ENV_IS_EMBEDDED */
+
+		env_ptr = (struct environment_hdr *)CONFIG_ENV_EFI_ADDR;
+#endif /* ENV_IS_EMBEDDED */
+#else
+		env_ptr = NULL;
+#endif
+		flash_addr = (struct environment_hdr *)CONFIG_ENV_EFI_ADDR;
+
+/* CONFIG_ENV_EFI_ADDR is supposed to be on sector boundary */
+		end_addr = CONFIG_ENV_EFI_ADDR + CONFIG_ENV_EFI_SECT_SIZE - 1;
+
+#ifdef CONFIG_ENV_EFI_ADDR_REDUND
+		flash_addr_new = (struct environment_hdr *)CONFIG_ENV_EFI_ADDR_REDUND;
+/* CONFIG_ENV_EFI_ADDR_REDUND is supposed to be on sector boundary */
+		end_addr_new = CONFIG_ENV_EFI_ADDR_REDUND
+					+ CONFIG_ENV_EFI_SECT_SIZE - 1;
+#else
+		flash_addr_new = NULL;
+		end_addr_new = 0;
+#endif /* CONFIG_ENV_EFI_ADDR_REDUND */
+
+		ret = env_flash_init_params(ctx, env_ptr, flash_addr, end_addr,
+					    flash_addr_new, end_addr_new,
+					    NULL);
+		if (ret)
+			return -ENOENT;
+
+		return 0;
+		}
+#endif
+#ifdef CONFIG_ENV_EFI_IS_IN_FAT
+	case ENVL_FAT: {
+		ret = env_fat_init_params(ctx,
+					  CONFIG_ENV_EFI_FAT_INTERFACE,
+					  CONFIG_ENV_EFI_FAT_DEVICE_AND_PART,
+					  CONFIG_ENV_EFI_FAT_FILE);
+
+		return 0;
+		}
+#endif
+#ifdef CONFIG_ENV_DRV_NONE
+	case ENVL_NOWHERE:
+#ifdef CONFIG_ENV_EFI_IS_NOWHERE
+		/* TODO: what we should do */
+
+		return -ENOENT;
+#else
+		return -ENOENT;
+#endif
+#endif
+	default:
+		return -ENOENT;
+	}
+}
+
+/*
+ * Env context for UEFI variables
+ */
+U_BOOT_ENV_CONTEXT(efi) = {
+	.name = "efi",
+	.htab = &efi_htab,
+#ifdef CONFIG_ENV_EFI_IS_NOWHERE
+	.env_size = 0,
+#else
+	.env_size = CONFIG_ENV_EFI_SIZE,
+#endif
+	.drv_init = env_drv_init_efi,
+};
+
+U_BOOT_ENV_CONTEXT(efi_volatile) = {
+	.name = "efi_volatile",
+	.htab = &efi_volatile_htab,
+	.env_size = 0,
+};
+
 /**
  * efi_init_variables() - initialize variable services
  *
@@ -638,5 +808,40 @@ void efi_variables_boot_exit_notify(void)
  */
 efi_status_t efi_init_variables(void)
 {
+	struct env_context *old_ctx;
+	int ret;
+
+	/* Non-Volatile variables */
+	ctx_efi = ll_entry_get(struct env_context, efi, env_contexts);
+	ret = env_ctx_init(ctx_efi);
+	if (ret) {
+		printf("Initializing efi variables(non volatile) failed\n");
+
+		return EFI_DEVICE_ERROR;
+	}
+
+	/*
+	 * Volatile variables:
+	 * Context for volatile variables has no backing storage.
+	 */
+	ctx_efi_volatile = ll_entry_get(struct env_context, efi_volatile,
+       					env_contexts);
+	ret = env_ctx_init(ctx_efi_volatile);
+	if (ret) {
+		printf("Initializing efi variables(volatile) failed\n");
+
+		return EFI_DEVICE_ERROR;
+	}
+
+	/* Load initial variables from backing storage */
+	old_ctx = env_ctx_set(ctx_efi);
+	ret = env_load();
+	env_ctx_set(old_ctx);
+	if (ret && ret != -ENODEV) {
+		printf("Loading efi variables failed\n");
+
+		return EFI_DEVICE_ERROR;
+	}
+
 	return EFI_SUCCESS;
 }
