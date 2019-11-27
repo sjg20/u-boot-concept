@@ -3,12 +3,15 @@
  * Copyright (C) 2017, Bin Meng <bmeng.cn@gmail.com>
  */
 
+#define LOG_CATEGORY UCLASS_VIDEO
+
 #include <common.h>
 #include <acpi.h>
 #include <dm.h>
 #include <vbe.h>
 #include <video.h>
 #include <asm/fsp/fsp_support.h>
+#include <asm/intel_opregion.h>
 #include <asm/mtrr.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -114,21 +117,19 @@ err:
 
 static int fsp_video_acpi_write_tables(struct udevice *dev, struct acpi_ctx *ctx)
 {
-#if 0
-	igd_opregion_t *opregion;
+	struct igd_opregion *opregion;
+	int ret;
 
-	printk(BIOS_DEBUG, "ACPI:    * IGD OpRegion\n");
-	opregion = (igd_opregion_t *)current;
+	log_debug("ACPI:    * IGD OpRegion\n");
+	opregion = (struct igd_opregion *)ctx->current;
 
-	if (intel_gma_init_igd_opregion(opregion) != CB_SUCCESS)
-		return current;
+	ret = intel_gma_init_igd_opregion(dev, opregion);
+	if (ret)
+		return ret;
 
-	/* FIXME: Add platform specific mailbox initialization */
+	ctx->current += sizeof(struct igd_opregion);
+	acpi_align(ctx);
 
-	current += sizeof(igd_opregion_t);
-
-	return acpi_align_current(current);
-#endif
 	return 0;
 }
 

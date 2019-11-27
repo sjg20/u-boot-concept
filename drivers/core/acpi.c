@@ -18,7 +18,7 @@ int acpi_return_name(char *out_name, const char *name)
 	return 0;
 }
 
-int ctx_align(struct acpi_ctx *ctx)
+int acpi_align(struct acpi_ctx *ctx)
 {
 	ctx->current = ALIGN(ctx->current, 16);
 

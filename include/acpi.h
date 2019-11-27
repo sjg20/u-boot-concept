@@ -29,7 +29,7 @@ struct acpi_ops {
 
 int acpi_return_name(char *out_name, const char *name);
 
-int ctx_align(struct acpi_ctx *ctx);
+int acpi_align(struct acpi_ctx *ctx);
 
 int acpi_dev_write_tables(struct acpi_ctx *ctx);
 

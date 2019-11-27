@@ -211,9 +211,9 @@ static int apl_acpi_hb_write_tables(struct udevice *dev, struct acpi_ctx *ctx)
 	header->length = ctx->current - (unsigned long)dmar;
 	header->checksum = acpi_checksum((void *)dmar, header->length);
 
-	ctx_align(ctx);
+	acpi_align(ctx);
 	acpi_add_table(ctx->rsdp, dmar);
-	ctx_align(ctx);
+	acpi_align(ctx);
 
 	return 0;
 }
