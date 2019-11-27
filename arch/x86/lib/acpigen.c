@@ -586,7 +586,7 @@ int acpigen_write_indexfield(const char *idx, const char *data,
 	return 0;
 }
 
-void acpigen_write_empty_PCT(void)
+void acpigen_write_empty_pct(void)
 {
 /*
 	Name (_PCT, Package (0x02)
@@ -628,7 +628,7 @@ void acpigen_write_empty_PCT(void)
 	acpigen_emit_stream(stream, ARRAY_SIZE(stream));
 }
 
-void acpigen_write_empty_PTC(void)
+void acpigen_write_empty_ptc(void)
 {
 /*
 	Name (_PTC, Package (0x02)
@@ -700,7 +700,7 @@ void acpigen_write_device(const char *name)
 	acpigen_emit_namestring(name);
 }
 
-void acpigen_write_STA(uint8_t status)
+void acpigen_write_sta(uint8_t status)
 {
 	/*
 	 * Method (_STA, 0, NotSerialized) { Return (status) }
@@ -714,7 +714,7 @@ void acpigen_write_STA(uint8_t status)
 /*
  * Generates a func with max supported P-states.
  */
-void acpigen_write_PPC(u8 nr)
+void acpigen_write_ppc(u8 nr)
 {
 /*
 	Method (_PPC, 0, NotSerialized)
@@ -733,7 +733,7 @@ void acpigen_write_PPC(u8 nr)
  * Generates a func with max supported P-states saved
  * in the variable PPCM.
  */
-void acpigen_write_PPC_NVS(void)
+void acpigen_write_ppc_nvs(void)
 {
 /*
 	Method (_PPC, 0, NotSerialized)
@@ -748,7 +748,7 @@ void acpigen_write_PPC_NVS(void)
 	acpigen_pop_len();
 }
 
-void acpigen_write_TPC(const char *gnvs_tpc_limit)
+void acpigen_write_tpc(const char *gnvs_tpc_limit)
 {
 /*
 	// Sample _TPC method
@@ -763,7 +763,7 @@ void acpigen_write_TPC(const char *gnvs_tpc_limit)
 	acpigen_pop_len();
 }
 
-void acpigen_write_PRW(u32 wake, u32 level)
+void acpigen_write_prw(u32 wake, u32 level)
 {
 	/*
 	 * Name (_PRW, Package () { wake, level }
@@ -775,7 +775,7 @@ void acpigen_write_PRW(u32 wake, u32 level)
 	acpigen_pop_len();
 }
 
-void acpigen_write_PSS_package(u32 coreFreq, u32 power, u32 transLat,
+void acpigen_write_pss_package(u32 coreFreq, u32 power, u32 transLat,
 			      u32 busmLat, u32 control, u32 status)
 {
 	acpigen_write_package(6);
@@ -806,7 +806,7 @@ void acpigen_write_psd_package(u32 domain, u32 numprocs,
 	acpigen_pop_len();
 }
 
-void acpigen_write_CST_package_entry(struct acpi_cstate *cstate)
+void acpigen_write_cst_package_entry(struct acpi_cstate *cstate)
 {
 	acpigen_write_package(4);
 	acpigen_write_register_resource(&cstate->resource);
@@ -816,7 +816,7 @@ void acpigen_write_CST_package_entry(struct acpi_cstate *cstate)
 	acpigen_pop_len();
 }
 
-void acpigen_write_CST_package(struct acpi_cstate *cstate, int nentries)
+void acpigen_write_cst_package(struct acpi_cstate *cstate, int nentries)
 {
 	int i;
 	acpigen_write_name("_CST");
@@ -824,12 +824,12 @@ void acpigen_write_CST_package(struct acpi_cstate *cstate, int nentries)
 	acpigen_write_dword(nentries);
 
 	for (i = 0; i < nentries; i++)
-		acpigen_write_CST_package_entry(cstate + i);
+		acpigen_write_cst_package_entry(cstate + i);
 
 	acpigen_pop_len();
 }
 
-void acpigen_write_CSD_package(u32 domain, u32 numprocs, CSD_coord coordtype,
+void acpigen_write_csd_package(u32 domain, u32 numprocs, CSD_coord coordtype,
 	u32 index)
 {
 	acpigen_write_name("_CSD");
@@ -845,7 +845,7 @@ void acpigen_write_CSD_package(u32 domain, u32 numprocs, CSD_coord coordtype,
 	acpigen_pop_len();
 }
 
-void acpigen_write_TSS_package(int entries, struct acpi_tstate *tstate_list)
+void acpigen_write_tss_package(int entries, struct acpi_tstate *tstate_list)
 {
 /*
 	Sample _TSS package with 100% and 50% duty cycles

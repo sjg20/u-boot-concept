@@ -22,6 +22,7 @@
 #include <asm/acpigen.h>
 #include <asm/cpu.h>
 #include <asm/cpu_common.h>
+#include <asm/intel_acpi.h>
 #include <asm/ioapic.h>
 #include <asm/mpspec.h>
 #include <asm/smm.h>
@@ -343,10 +344,10 @@ void generate_p_state_entries(int core, int cores_per_package)
 	power_max = cpu_get_power_max();
 
 	/* Write _PCT indicating use of FFixedHW */
-	acpigen_write_empty_PCT();
+	acpigen_write_empty_pct();
 
 	/* Write _PPC with no limit on supported P-state */
-	acpigen_write_PPC_NVS();
+	acpigen_write_ppc_nvs();
 	/* Write PSD indicating configured coordination type */
 	acpigen_write_psd_package(core, 1, coord_type);
 
@@ -373,7 +374,7 @@ void generate_p_state_entries(int core, int cores_per_package)
 		ratio_turbo = cpu_get_max_turbo_ratio();
 
 		/* Add entry for Turbo ratio */
-		acpigen_write_PSS_package(clock_max + 1,	/* MHz */
+		acpigen_write_pss_package(clock_max + 1,	/* MHz */
 					  power_max,		/* mW */
 					  PSS_LATENCY_TRANSITION,/* lat1 */
 					  PSS_LATENCY_BUSMASTER,/* lat2 */
@@ -383,7 +384,7 @@ void generate_p_state_entries(int core, int cores_per_package)
 	}
 
 	/* First regular entry is max non-turbo ratio */
-	acpigen_write_PSS_package(clock_max,		/* MHz */
+	acpigen_write_pss_package(clock_max,		/* MHz */
 				  power_max,		/* mW */
 				  PSS_LATENCY_TRANSITION,/* lat1 */
 				  PSS_LATENCY_BUSMASTER,/* lat2 */
@@ -399,7 +400,7 @@ void generate_p_state_entries(int core, int cores_per_package)
 		power = calculate_power(power_max, ratio_max, ratio);
 		clock = (ratio * cpu_get_bus_clock()) / 1000;
 
-		acpigen_write_PSS_package(clock,		/* MHz */
+		acpigen_write_pss_package(clock,		/* MHz */
 					  power,		/* mW */
 					  PSS_LATENCY_TRANSITION,/* lat1 */
 					  PSS_LATENCY_BUSMASTER,/* lat2 */
@@ -427,16 +428,16 @@ void generate_t_state_entries(int core, int cores_per_package)
 		return;
 
 	/* Indicate SW_ALL coordination for T-states */
-	acpigen_write_TSD_package(core, cores_per_package, SW_ALL);
+	acpigen_write_tsd_package(core, cores_per_package, SW_ALL);
 
 	/* Indicate FixedHW so OS will use MSR */
-	acpigen_write_empty_PTC();
+	acpigen_write_empty_ptc();
 
 	/* Set NVS controlled T-state limit */
-	acpigen_write_TPC("\\TLVL");
+	acpigen_write_tpc("\\TLVL");
 
 	/* Write TSS table for MSR access */
-	acpigen_write_TSS_package(entries, soc_tss_table);
+	acpigen_write_tss_package(entries, soc_tss_table);
 }
 
 __weak void soc_power_states_generation(int core_id,
@@ -444,19 +445,15 @@ __weak void soc_power_states_generation(int core_id,
 {
 }
 
-int generate_cpu_entries(struct device *device)
+int generate_cpu_entries(struct udevice *dev, struct acpi_ctx *ctx)
 {
 	int core_id, cpu_id, pcontrol_blk = ACPI_BASE_ADDRESS;
-	struct udevice *dev;
 	int plen = 6;
 	int totalcores;
 	int cores_per_package;
 	int numcpus;
 	int ret;
 
-	ret = uclass_first_device_err(UCLASS_CPU, &dev);
-	if (ret)
-		return log_msg_ret("cpu", ret);
 	ret = cpu_get_count(dev);
 	if (ret < 0)
 		return log_msg_ret("count", ret);

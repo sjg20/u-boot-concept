@@ -4,10 +4,12 @@
  */
 
 #include <common.h>
+#include <acpi.h>
 #include <cpu.h>
 #include <dm.h>
 #include <asm/cpu_common.h>
 #include <asm/cpu_x86.h>
+#include <asm/intel_acpi.h>
 #include <asm/msr.h>
 
 struct cpu_apl_priv {
@@ -27,6 +29,26 @@ static int cpu_x86_apl_probe(struct udevice *dev)
 {
 	return 0;
 }
+
+static int acpi_cpu_fill_ssdt_generator(struct udevice *dev,
+					struct acpi_ctx *ctx)
+{
+	struct cpu_platdata *plat = dev_get_platdata(dev);
+	int ret;
+
+	/* Trigger of the first CPU */
+	if (!plat->cpu_id) {
+		ret = generate_cpu_entries(dev, ctx);
+		if (ret)
+			return log_msg_ret("generate", ret);
+	}
+
+	return 0;
+}
+
+struct acpi_ops apl_cpu_acpi_ops = {
+	.fill_ssdt_generator	= acpi_cpu_fill_ssdt_generator,
+};
 
 static const struct cpu_ops cpu_x86_apl_ops = {
 	.get_desc	= cpu_x86_get_desc,
@@ -48,5 +70,6 @@ U_BOOT_DRIVER(cpu_x86_apl_drv) = {
 	.probe		= cpu_x86_apl_probe,
 	.ops		= &cpu_x86_apl_ops,
 	.priv_auto_alloc_size	= sizeof(struct cpu_apl_priv),
+	acpi_ops_ptr(&apl_cpu_acpi_ops )
 	.flags		= DM_FLAG_PRE_RELOC,
 };

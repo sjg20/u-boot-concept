@@ -328,15 +328,15 @@ void acpigen_write_scope(const char *name);
 void acpigen_write_method(const char *name, int nargs);
 void acpigen_write_method_serialized(const char *name, int nargs);
 void acpigen_write_device(const char *name);
-void acpigen_write_PPC(u8 nr);
-void acpigen_write_PPC_NVS(void);
-void acpigen_write_empty_PCT(void);
-void acpigen_write_empty_PTC(void);
-void acpigen_write_PRW(u32 wake, u32 level);
-void acpigen_write_STA(uint8_t status);
-void acpigen_write_TPC(const char *gnvs_tpc_limit);
-void acpigen_write_PSS_package(u32 coreFreq, u32 power, u32 transLat,
-			u32 busmLat, u32 control, u32 status);
+void acpigen_write_ppc(u8 nr);
+void acpigen_write_ppc_nvs(void);
+void acpigen_write_empty_pct(void);
+void acpigen_write_empty_ptc(void);
+void acpigen_write_prw(u32 wake, u32 level);
+void acpigen_write_sta(uint8_t status);
+void acpigen_write_tpc(const char *gnvs_tpc_limit);
+void acpigen_write_pss_package(u32 corefreq, u32 power, u32 translat,
+			u32 busmlat, u32 control, u32 status);
 enum psd_coord {
 	SW_ALL = 0xfc,
 	SW_ANY = 0xfd,
@@ -354,8 +354,8 @@ void acpigen_write_processor_package(const char *name,
 				     unsigned int first_core,
 				     unsigned int core_count);
 void acpigen_write_processor_cnot(const unsigned int number_of_cores);
-void acpigen_write_TSS_package(int entries, struct acpi_tstate *tstate_list);
-void acpigen_write_TSD_package(u32 domain, u32 numprocs, enum psd_coord coordtype);
+void acpigen_write_tss_package(int entries, struct acpi_tstate *tstate_list);
+void acpigen_write_tsd_package(u32 domain, u32 numprocs, enum psd_coord coordtype);
 void acpigen_write_mem32fixed(int readwrite, u32 base, u32 size);
 void acpigen_write_io16(u16 min, u16 max, u8 align, u8 len, u8 decode16);
 void acpigen_write_register_resource(const struct acpi_gen_regaddr *addr);

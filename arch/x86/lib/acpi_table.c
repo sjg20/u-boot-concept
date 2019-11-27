@@ -17,6 +17,7 @@
 #include <serial.h>
 #include <version.h>
 #include <asm/acpi/global_nvs.h>
+#include <asm/acpigen.h>
 #include <asm/acpi_device.h>
 #include <asm/acpi_table.h>
 #include <asm/cpu.h>
@@ -817,6 +818,30 @@ ulong acpi_get_rsdp_addr(void)
 	return acpi_rsdp_addr;
 }
 
+void acpi_create_ssdt_generator(struct acpi_table_header *ssdt,
+				const char *oem_table_id)
+{
+	ulong current = (ulong)ssdt + sizeof(struct acpi_table_header);
+
+	memset((void *)ssdt, '\0', sizeof(struct acpi_table_header));
+
+	acpi_fill_header(ssdt, "SSDT");
+	ssdt->revision = get_acpi_table_revision(SSDT);
+	ssdt->aslc_revision = 1;
+	ssdt->length = sizeof(struct acpi_table_header);
+
+	acpigen_set_current((char *)current);
+
+	/* Write object to declare coreboot tables */
+// 	acpi_ssdt_write_cbtable();
+	acpi_fill_ssdt_generator(NULL);
+	current = (ulong)acpigen_get_current();
+
+	/* (Re)calculate length and checksum. */
+	ssdt->length = current - (unsigned long)ssdt;
+	ssdt->checksum = acpi_checksum((void *)ssdt, ssdt->length);
+}
+
 int get_acpi_table_revision(enum acpi_tables table)
 {
 	switch (table) {
@@ -879,6 +904,7 @@ ulong write_acpi_tables(ulong start)
 	struct acpi_facs *facs;
 	struct acpi_table_header *dsdt;
 	struct acpi_fadt *fadt;
+	struct acpi_table_header *ssdt;
 	struct acpi_mcfg *mcfg;
 	struct acpi_madt *madt;
 	struct acpi_csrt *csrt;
@@ -957,6 +983,15 @@ ulong write_acpi_tables(ulong start)
 	current = ALIGN(current, 16);
 	acpi_create_fadt(fadt, facs, dsdt);
 	acpi_add_table(rsdp, fadt);
+
+	debug("ACPI:     * SSDT\n");
+	ssdt = (struct acpi_table_header *)current;
+	acpi_create_ssdt_generator(ssdt, ACPI_TABLE_CREATOR);
+	if (ssdt->length > sizeof(struct acpi_table_header)) {
+		current += ssdt->length;
+		acpi_add_table(rsdp, ssdt);
+		current = ALIGN(current, 16);
+	}
 
 	debug("ACPI:    * MADT\n");
 	madt = (struct acpi_madt *)current;
