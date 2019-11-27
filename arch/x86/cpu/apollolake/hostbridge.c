@@ -45,7 +45,9 @@ enum {
 
 	PCIEXBAR_PCIEXBAREN	= 1 << 0,
 
+	BGSM			= 0xb4,  /* Base GTT Stolen Memory */
 	TSEG			= 0xb8,  /* TSEG base */
+	TOLUD			= 0xbc,
 };
 
 static int apl_hostbridge_early_init_pinctrl(struct udevice *dev)

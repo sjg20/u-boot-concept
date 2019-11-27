@@ -267,14 +267,18 @@ void acpi_create_fadt(struct acpi_fadt *fadt, struct acpi_facs *facs,
 
 int apl_acpi_fill_dmar(struct acpi_ctx *ctx)
 {
-	struct udevice *dev;
+	struct udevice *dev, *sa_dev;
 	uint64_t gfxvtbar = readq(MCHBAR_REG(GFXVTBAR)) & VTBAR_MASK;
 	uint64_t defvtbar = readq(MCHBAR_REG(DEFVTBAR)) & VTBAR_MASK;
 	bool gfxvten = readl(MCHBAR_REG(GFXVTBAR)) & VTBAR_ENABLED;
 	bool defvten = readl(MCHBAR_REG(DEFVTBAR)) & VTBAR_ENABLED;
 	unsigned long tmp;
+	int ret;
 
 	uclass_find_first_device(UCLASS_VIDEO, &dev);
+	ret = uclass_first_device_err(UCLASS_NORTHBRIDGE, &sa_dev);
+	if (ret)
+		return log_msg_ret("no sa", ret);
 
 	/* IGD has to be enabled, GFXVTBAR set and enabled. */
 	if (dev && device_active(dev) && gfxvtbar && gfxvten) {
