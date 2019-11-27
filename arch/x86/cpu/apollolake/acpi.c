@@ -52,10 +52,11 @@
 #include <asm/acpi_table.h>
 #include <asm/cpu_common.h>
 #include <asm/intel_pinctrl.h>
+#include <asm/intel_pinctrl_defs.h>
 #include <asm/intel_regs.h>
 #include <asm/io.h>
 #include <asm/mpspec.h>
-#include <asm/intel_pinctrl_defs.h>
+#include <asm/tables.h>
 #include <asm/arch/iomap.h>
 #include <asm/arch/global_nvs.h>
 #include <asm/arch/gpio.h>
@@ -275,6 +276,8 @@ int apl_acpi_fill_dmar(struct acpi_ctx *ctx)
 	unsigned long tmp;
 	int ret;
 
+	printf("apl_acpi_fill_dmar start\n");
+
 	uclass_find_first_device(UCLASS_VIDEO, &dev);
 	ret = uclass_first_device_err(UCLASS_NORTHBRIDGE, &sa_dev);
 	if (ret)
@@ -284,6 +287,7 @@ int apl_acpi_fill_dmar(struct acpi_ctx *ctx)
 	if (dev && device_active(dev) && gfxvtbar && gfxvten) {
 		tmp = ctx->current;
 
+		printf("dev %s %s\n", dev->name, sa_dev->name);
 		ctx->current += acpi_create_dmar_drhd(ctx->current, 0, 0,
 						      gfxvtbar);
 		ctx->current += acpi_create_dmar_ds_pci(ctx->current, 0, 2, 0);
@@ -292,7 +296,8 @@ int apl_acpi_fill_dmar(struct acpi_ctx *ctx)
 		/* Add RMRR entry */
 		tmp = ctx->current;
 		ctx->current += acpi_create_dmar_rmrr(ctx->current, 0,
-				sa_get_gsm_base(), sa_get_tolud_base() - 1);
+				sa_get_gsm_base(sa_dev),
+				sa_get_tolud_base(sa_dev) - 1);
 		ctx->current += acpi_create_dmar_ds_pci(ctx->current, 0, 2, 0);
 		acpi_dmar_rmrr_fixup(tmp, ctx->current);
 	}
