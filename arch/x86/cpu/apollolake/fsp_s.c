@@ -410,6 +410,7 @@ int fsps_update_config(struct udevice *dev, ulong rom_offset,
 	cfg->spi1_enable = 0;
 	cfg->spi2_enable = 0;
 	cfg->sdio_enabled = 0;
+	printf("pei_graphics_peim_init=%d\n", cfg->pei_graphics_peim_init);
 
 	memcpy(cfg->pcie_rp_clk_req_number, apl->pcie_rp_clkreq_pin,
 	       sizeof(cfg->pcie_rp_clk_req_number));

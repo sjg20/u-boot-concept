@@ -18,12 +18,6 @@
 #include <spi_flash.h>
 #include <asm/intel_opregion.h>
 
-__weak
-const char *mainboard_vbt_filename(void)
-{
-	return "vbt.bin";
-}
-
 static char vbt_data[8 << 10];
 
 static int locate_vbt(char **vbtp, int *sizep)
