@@ -9,6 +9,7 @@ stages:
   - testsuites
   - test.py
   - world build
+  - hwlab
 
 .buildman_and_testpy_template: &buildman_and_testpy_dfn
   tags: [ 'all' ]
@@ -340,3 +341,34 @@ xtfpga test.py:
     TEST_PY_ID: "--id qemu"
     BUILDMAN: "^xtfpga$"
   <<: *buildman_and_testpy_dfn
+
+sjg_rpi3b:
+  tags: [ 'rpi3b' ]
+  stage: hwlab
+  script:
+    # Environment:
+    #   SRC  - source tree
+    #   ROOT - directory above that
+    #   OUT  - output directory for builds
+    - export SRC="$(pwd)"
+    - ROOT="$(dirname ${SRC})"
+    - export BUILDMAN="${SRC}/tools/buildman/buildman"
+    - export OUT="${ROOT}/out"
+    - export PATH=$PATH:~/bin
+    - export PATH=$PATH:/home/gitlabber/u-boot-test-hooks/bin
+    - export b=rpi_3_32b
+
+    # Do the build
+    - ret=0;
+      ${BUILDMAN} -o ${OUT} --board $b -k || ret=$?;
+      if [[ $ret -ne 0 && $ret -ne 129 ]]; then
+        ./tools/buildman/buildman -o ${OUT} -sdeP;
+        exit $ret;
+      fi;
+
+    # Load it on the device
+    - ${SRC}/test/py/test.py -B $b --id sjg-rpi_3b
+        --build-dir ${OUT}/current/$b -k help
+
+  after_script:
+    - echo done
