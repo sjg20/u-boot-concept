@@ -8,6 +8,7 @@
 #include <common.h>
 #include <bootm.h>
 #include <efi_loader.h>
+#include <malloc.h>
 
 #define OBJ_LIST_NOT_INITIALIZED 1
 
@@ -83,6 +84,60 @@ out:
 }
 
 #ifdef CONFIG_EFI_SECURE_BOOT
+static efi_status_t efi_install_default_secure_variable(u16 *name)
+{
+	const efi_guid_t *guid;
+	u16 def_name[11];
+	void *data;
+	efi_uintn_t size;
+	u32 attributes;
+	efi_status_t ret;
+
+	/* check if a variable exists */
+	if (!u16_strcmp(name, L"db") || !u16_strcmp(name, L"dbx"))
+		guid = &efi_guid_image_security_database;
+	else
+		guid = &efi_global_variable_guid;
+
+	size = 0;
+	ret = EFI_CALL(efi_get_variable(name, guid, NULL, &size, NULL));
+	if (ret == EFI_OUT_OF_RESOURCES)
+		return EFI_SUCCESS;
+
+	if (ret != EFI_NOT_FOUND)
+		return ret;
+
+	/* get default value, xxDefault */
+	u16_strcpy(def_name, name);
+	u16_strcpy(def_name + u16_strlen(name), L"Default");
+	size = 0;
+	ret = EFI_CALL(efi_get_variable(def_name, &efi_global_variable_guid,
+					NULL, &size, NULL));
+	if (ret == EFI_NOT_FOUND)
+		return ret;
+
+	if (ret != EFI_OUT_OF_RESOURCES)
+		return ret;
+
+	data = malloc(size);
+	if (!data)
+		return EFI_OUT_OF_RESOURCES;
+	ret = EFI_CALL(efi_get_variable(def_name, &efi_global_variable_guid,
+					NULL, &size, data));
+	if (ret != EFI_SUCCESS)
+		goto err;
+
+	attributes = (EFI_VARIABLE_NON_VOLATILE
+		 | EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS
+		 | EFI_VARIABLE_BOOTSERVICE_ACCESS
+		 | EFI_VARIABLE_RUNTIME_ACCESS);
+	ret = EFI_CALL(efi_set_variable(name, guid, attributes, size, data));
+
+err:
+	free(data);
+	return ret;
+}
+
 /**
  * efi_init_secure_boot - initialize secure boot state
  *
@@ -106,6 +161,32 @@ static efi_status_t efi_init_secure_boot(void)
 	if (ret != EFI_SUCCESS)
 		printf("EFI: cannot initialize SignatureSupport variable\n");
 
+	/* default secure variables */
+	ret = efi_install_default_secure_variable(L"PK");
+	if (ret != EFI_SUCCESS && ret != EFI_NOT_FOUND) {
+		printf("EFI: initializing %ls to dfault failed\n", L"PK");
+		goto out;
+	}
+
+	ret = efi_install_default_secure_variable(L"KEK");
+	if (ret != EFI_SUCCESS && ret != EFI_NOT_FOUND) {
+		printf("EFI: initializing %ls to dfault failed\n", L"KEK");
+		goto out;
+	}
+
+	ret = efi_install_default_secure_variable(L"db");
+	if (ret != EFI_SUCCESS && ret != EFI_NOT_FOUND) {
+		printf("EFI: initializing %ls to dfault failed\n", L"db");
+		goto out;
+	}
+
+	ret = efi_install_default_secure_variable(L"dbx");
+	if (ret != EFI_SUCCESS && ret != EFI_NOT_FOUND) {
+		printf("EFI: initializing %ls to dfault failed\n", L"dbx");
+		goto out;
+	}
+
+out:
 	return ret;
 }
 #else
