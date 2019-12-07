@@ -84,6 +84,12 @@
 	};
 	fdtmap {
 	};
+#ifdef CONFIG_HAVE_X86_FIT
+	intel-fit {
+	};
+	intel-fit-ptr {
+	};
+#endif
 #ifdef CONFIG_HAVE_MRC
 	intel-mrc {
 		offset = <CONFIG_X86_MRC_ADDR>;
