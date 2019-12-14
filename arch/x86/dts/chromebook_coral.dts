@@ -126,7 +126,7 @@
 				u-boot,dm-pre-reloc;
 				intel,p2sb-port-id = <PID_GPIO_N>;
 				gpio_n: gpio-n {
-					compatible = "intel,apl-gpio";
+					compatible = "intel,gpio";
 					u-boot,dm-pre-reloc;
 					gpio-controller;
 					#gpio-cells = <2>;
@@ -139,7 +139,7 @@
 				intel,p2sb-port-id = <PID_GPIO_NW>;
 				#gpio-cells = <2>;
 				gpio_nw: gpio-nw {
-					compatible = "intel,apl-gpio";
+					compatible = "intel,gpio";
 					u-boot,dm-pre-reloc;
 					gpio-controller;
 					#gpio-cells = <2>;
@@ -152,7 +152,7 @@
 				intel,p2sb-port-id = <PID_GPIO_W>;
 				#gpio-cells = <2>;
 				gpio_w: gpio-w {
-					compatible = "intel,apl-gpio";
+					compatible = "intel,gpio";
 					u-boot,dm-pre-reloc;
 					gpio-controller;
 					#gpio-cells = <2>;
@@ -165,7 +165,7 @@
 				intel,p2sb-port-id = <PID_GPIO_SW>;
 				#gpio-cells = <2>;
 				gpio_sw: gpio-sw {
-					compatible = "intel,apl-gpio";
+					compatible = "intel,gpio";
 					u-boot,dm-pre-reloc;
 					gpio-controller;
 					#gpio-cells = <2>;
@@ -265,6 +265,7 @@
 				reg = <0x50>;
 				compatible = "google,cr50";
 				u-boot,i2c-offset-len = <0>;
+				ready-gpio = <&gpio_n 28 GPIO_ACTIVE_LOW>;
 			};
 		};
 
