@@ -1,0 +1,38 @@
+# Copyright 2019 Google LLC. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+
+# Designed for using flashrom with a servo2 board
+# https://flashrom.org/Flashrom
+# https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/refs/heads/master/README.md
+
+# It requires these tools:
+# flashrom as above
+# servod and dit-control at https://chromium.googlesource.com/chromiumos/platform/standalone-hdctools
+
+# Switch over to allow SPI programming
+${DUT_CONTROL} -p ${servo_port} cold_reset:on spi2_buf_en:on \
+    spi2_buf_on_flex_en:on spi2_vref:pp1800
+
+writer.${flash_writer} ${U_BOOT_BUILD_DIR}
+
+${DUT_CONTROL} -p ${servo_port} spi2_buf_en:off spi2_buf_on_flex_en:off \
+    spi2_vref:off cold_reset:off
+
+# Switch off SPI programming
