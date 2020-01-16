@@ -21,12 +21,14 @@
 enum gen_type_t {
 	TYPE_NONE,
 	TYPE_SSDT,
+	TYPE_DSDT,
 };
 
 /* Type of method to call */
 enum method_t {
 	METHOD_WRITE_TABLES,
 	METHOD_FILL_SSDT,
+	METHOD_INJECT_DSDT,
 };
 
 /* Prototype for all methods */
@@ -130,7 +132,9 @@ static int build_type(struct acpi_ctx *ctx, void *start, enum gen_type_t type)
 	void *end = ctx->current;
 
 	ptr = start;
-	order = ofnode_read_chosen_prop("u-boot,acpi-ssdt-order", &size);
+	order = ofnode_read_chosen_prop(type == TYPE_DSDT ?
+					"u-boot,acpi-dsdt-order" :
+					"u-boot,acpi-ssdt-order", &size);
 	if (!order) {
 		log_warning("Failed to find ordering, leaving as is\n");
 		return 0;
@@ -175,6 +179,8 @@ acpi_method acpi_get_method(struct udevice *dev, enum method_t method)
 			return aops->write_tables;
 		case METHOD_FILL_SSDT:
 			return aops->fill_ssdt;
+		case METHOD_INJECT_DSDT:
+			return aops->inject_dsdt;
 		}
 	}
 
@@ -227,6 +233,23 @@ int acpi_fill_ssdt(struct acpi_ctx *ctx)
 	ret = acpi_recurse_method(ctx, dm_root(), METHOD_FILL_SSDT, TYPE_SSDT);
 	log_debug("Writing SSDT finished, err=%d\n", ret);
 	ret = build_type(ctx, start, TYPE_SSDT);
+	if (ret)
+		return log_msg_ret("build", ret);
+
+	return ret;
+}
+
+int acpi_inject_dsdt(struct acpi_ctx *ctx)
+{
+	void *start = ctx->current;
+	int ret;
+
+	log_debug("Writing DSDT tables\n");
+	item_count = 0;
+	ret = acpi_recurse_method(ctx, dm_root(), METHOD_INJECT_DSDT,
+				  TYPE_DSDT);
+	log_debug("Writing DSDT finished, err=%d\n", ret);
+	ret = build_type(ctx, start, TYPE_DSDT);
 	if (ret)
 		return log_msg_ret("build", ret);
 
