@@ -87,6 +87,7 @@ static int dm_test_irq_get_acpi(struct unit_test_state *uts)
 	ut_assertok(uclass_first_device_err(UCLASS_TEST_FDT, &dev));
 	ut_assertok(irq_get_by_index(dev, 0, &irq));
 
+	/* see sandbox_get_acpi() */
 	ut_assertok(irq_get_acpi(&irq, &airq));
 	ut_asserteq(3, airq.pin);
 	ut_asserteq(ACPI_IRQ_LEVEL_TRIGGERED, airq.mode);
