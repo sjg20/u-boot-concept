@@ -108,6 +108,63 @@ static int acpi_add_item(struct acpi_ctx *ctx, struct udevice *dev,
 	return 0;
 }
 
+struct acpi_item *find_item(const char *devname)
+{
+	int i;
+
+	for (i = 0; i < item_count; i++) {
+		struct acpi_item *item = &acpi_item[i];
+
+		if (!strcmp(devname, item->dev->name))
+			return item;
+	}
+
+	return NULL;
+}
+
+static int build_type(struct acpi_ctx *ctx, void *start, enum gen_type_t type)
+{
+	const u32 *order;
+	int size;
+	int count;
+	void *ptr;
+	void *end = ctx->current;
+
+	ptr = start;
+	order = ofnode_read_chosen_prop("u-boot,acpi-ssdt-order", &size);
+	if (!order) {
+		log_warning("Failed to find ordering, leaving as is\n");
+		return 0;
+	}
+
+	count = size / sizeof(u32);
+	while (count--) {
+		struct acpi_item *item;
+		const char *name;
+		ofnode node;
+
+		node = ofnode_get_by_phandle(fdt32_to_cpu(*order++));
+		name = ofnode_get_name(node);
+		item = find_item(name);
+		if (!item) {
+			log_err("Failed to find item '%s'\n", name);
+			return log_msg_ret("find", -ENOENT);
+		}
+		if (item->type == type) {
+			log_debug("   - add %s\n", item->dev->name);
+			memcpy(ptr, item->buf, item->size);
+			ptr += item->size;
+		}
+	}
+
+	if (ptr != end) {
+		log_warning("*** Missing bytes: ptr=%p, end=%p\n", ptr, end);
+		return -ENXIO;
+	}
+
+	return 0;
+}
+
 acpi_method acpi_get_method(struct udevice *dev, enum method_t method)
 {
 	struct acpi_ops *aops;
@@ -163,11 +220,16 @@ int acpi_recurse_method(struct acpi_ctx *ctx, struct udevice *parent,
 
 int acpi_fill_ssdt(struct acpi_ctx *ctx)
 {
+	void *start = ctx->current;
 	int ret;
 
 	log_debug("Writing SSDT tables\n");
+	item_count = 0;
 	ret = acpi_recurse_method(ctx, dm_root(), METHOD_FILL_SSDT, TYPE_SSDT);
 	log_debug("Writing SSDT finished, err=%d\n", ret);
+	ret = build_type(ctx, start, TYPE_SSDT);
+	if (ret)
+		return log_msg_ret("build", ret);
 
 	return ret;
 }
