@@ -17,6 +17,7 @@
 /* Type of method to call */
 enum method_t {
 	METHOD_WRITE_TABLES,
+	METHOD_FILL_SDDT,
 };
 
 /* Prototype for all methods */
@@ -49,6 +50,8 @@ acpi_method acpi_get_method(struct udevice *dev, enum method_t method)
 		switch (method) {
 		case METHOD_WRITE_TABLES:
 			return aops->write_tables;
+		case METHOD_FILL_SDDT:
+			return aops->fill_ssdt;
 		}
 	}
 
@@ -79,6 +82,17 @@ int acpi_recurse_method(struct acpi_ctx *ctx, struct udevice *parent,
 	}
 
 	return 0;
+}
+
+int acpi_fill_ssdt(struct acpi_ctx *ctx)
+{
+	int ret;
+
+	log_debug("Writing SSDT tables\n");
+	ret = acpi_recurse_method(ctx, dm_root(), METHOD_FILL_SDDT);
+	log_debug("Writing SSDT finished, err=%d\n", ret);
+
+	return ret;
 }
 
 int acpi_write_dev_tables(struct acpi_ctx *ctx)
