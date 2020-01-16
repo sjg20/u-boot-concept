@@ -129,13 +129,11 @@ int acpi_add_table(struct acpi_ctx *ctx, void *table)
 {
 	int i, entries_num;
 	struct acpi_rsdt *rsdt;
-	struct acpi_xsdt *xsdt = NULL;
+	struct acpi_xsdt *xsdt;
 
 	/* The RSDT is mandatory while the XSDT is not */
 	rsdt = ctx->rsdt;
-
-	if (ctx->rsdp->xsdt_address)
-		xsdt = map_sysmem(ctx->rsdp->xsdt_address, 0);
+	xsdt = ctx->xsdt;
 
 	/* This should always be MAX_ACPI_TABLES */
 	entries_num = ARRAY_SIZE(rsdt->entry);
@@ -166,19 +164,17 @@ int acpi_add_table(struct acpi_ctx *ctx, void *table)
 	 * And now the same thing for the XSDT. We use the same index as for
 	 * now we want the XSDT and RSDT to always be in sync in U-Boot
 	 */
-	if (xsdt) {
-		/* Add table to the XSDT */
-		xsdt->entry[i] = map_to_sysmem(table);
+	/* Add table to the XSDT */
+	xsdt->entry[i] = map_to_sysmem(table);
 
-		/* Fix XSDT length */
-		xsdt->header.length = sizeof(struct acpi_table_header) +
-			(sizeof(u64) * (i + 1));
+	/* Fix XSDT length */
+	xsdt->header.length = sizeof(struct acpi_table_header) +
+		(sizeof(u64) * (i + 1));
 
-		/* Re-calculate checksum */
-		xsdt->header.checksum = 0;
-		xsdt->header.checksum =
-			table_compute_checksum(xsdt, xsdt->header.length);
-	}
+	/* Re-calculate checksum */
+	xsdt->header.checksum = 0;
+	xsdt->header.checksum = table_compute_checksum(xsdt,
+						       xsdt->header.length);
 
 	return 0;
 }
@@ -237,8 +233,6 @@ static void acpi_write_xsdt(struct acpi_xsdt *xsdt)
 
 void acpi_setup_base_tables(struct acpi_ctx *ctx, void *start)
 {
-	struct acpi_xsdt *xsdt;
-
 	ctx->current = start;
 
 	/* Align ACPI tables to 16 byte */
@@ -249,13 +243,13 @@ void acpi_setup_base_tables(struct acpi_ctx *ctx, void *start)
 	acpi_inc_align(ctx, sizeof(struct acpi_rsdp));
 	ctx->rsdt = ctx->current;
 	acpi_inc_align(ctx, sizeof(struct acpi_rsdt));
-	xsdt = ctx->current;
+	ctx->xsdt = ctx->current;
 	acpi_inc_align(ctx, sizeof(struct acpi_xsdt));
 
 	/* clear all table memory */
 	memset((void *)start, '\0', ctx->current - start);
 
-	acpi_write_rsdp(ctx->rsdp, ctx->rsdt, xsdt);
+	acpi_write_rsdp(ctx->rsdp, ctx->rsdt, ctx->xsdt);
 	acpi_write_rsdt(ctx->rsdt);
-	acpi_write_xsdt(xsdt);
+	acpi_write_xsdt(ctx->xsdt);
 }
