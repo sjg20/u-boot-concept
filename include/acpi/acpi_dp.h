@@ -280,6 +280,4 @@ int acpi_dp_dev_copy_int(const struct udevice *dev, struct acpi_dp *dp,
 int acpi_dp_dev_copy_str(const struct udevice *dev, struct acpi_dp *dp,
 			 const char *prop);
 
-=======
->>>>>>> d1bdff8c8d1... acpi: Support writing Device Properties objects via _DSD
 #endif
