@@ -375,11 +375,6 @@ ulong write_acpi_tables(ulong start_addr)
 	debug("ACPI: Writing ACPI tables at %lx\n", start_addr);
 
 	acpi_setup_base_tables(ctx, start);
-	/*
-	 * Per ACPI spec, the FACS table address must be aligned to a 64 byte
-	 * boundary (Windows checks this, but Linux does not).
-	 */
-	acpi_align64(ctx);
 
 	debug("ACPI:    * FACS\n");
 	facs = ctx->current;

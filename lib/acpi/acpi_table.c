@@ -145,7 +145,7 @@ int acpi_add_table(struct acpi_ctx *ctx, void *table)
 	}
 
 	if (i >= entries_num) {
-		debug("ACPI: Error: too many tables\n");
+		log_err("ACPI: Error: too many tables\n");
 		return -E2BIG;
 	}
 
@@ -256,4 +256,9 @@ void acpi_setup_base_tables(struct acpi_ctx *ctx, void *start)
 	acpi_write_rsdp(ctx->rsdp, ctx->rsdt, ctx->xsdt);
 	acpi_write_rsdt(ctx->rsdt);
 	acpi_write_xsdt(ctx->xsdt);
+	/*
+	 * Per ACPI spec, the FACS table address must be aligned to a 64 byte
+	 * boundary (Windows checks this, but Linux does not).
+	 */
+	acpi_align64(ctx);
 }
