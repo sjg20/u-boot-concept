@@ -13,6 +13,10 @@
 #include <acpigen.h>
 #include <acpi_device.h>
 #include <asm-generic/gpio.h>
+#ifdef CONFIG_X86
+#include <asm/acpi_nhlt.h>
+#endif
+#include <dt-bindings/sound/nhlt.h>
 #include <dm/acpi.h>
 
 #define DA7219_ACPI_HID		"DLGS7219"
@@ -64,6 +68,8 @@ static int da7219_acpi_fill_ssdt(const struct udevice *dev,
 		return log_msg_ret("aad", -ENOMEM);
 
 	node = ofnode_find_subnode(dev_ofnode(dev), "da7219_aad");
+	if (!ofnode_valid(node))
+		return log_msg_ret("da7219_aad", -EINVAL);
 	acpi_dp_ofnode_copy_int(node, aad, "dlg,btn-cfg");
 	acpi_dp_ofnode_copy_int(node, aad, "dlg,mic-det-thr");
 	acpi_dp_ofnode_copy_int(node, aad, "dlg,jack-ins-deb");
@@ -98,8 +104,74 @@ static int da7219_acpi_fill_ssdt(const struct udevice *dev,
 	return 0;
 }
 
+#ifdef CONFIG_X86
+static const struct nhlt_format_config da7219_formats[] = {
+	/* 48 KHz 24-bits per sample. */
+	{
+		.num_channels = 2,
+		.sample_freq_khz = 48,
+		.container_bits_per_sample = 32,
+		.valid_bits_per_sample = 24,
+		.settings_file = "dialog-2ch-48khz-24b.dat",
+	},
+};
+
+static const struct nhlt_tdm_config tdm_config = {
+	.virtual_slot = 0,
+	.config_type = NHLT_TDM_BASIC,
+};
+
+static const struct nhlt_endp_descriptor da7219_descriptors[] = {
+	/* Render Endpoint */
+	{
+		.link = NHLT_LINK_SSP,
+		.device = NHLT_SSP_DEV_I2S,
+		.direction = NHLT_DIR_RENDER,
+		.vid = NHLT_VID,
+		.did = NHLT_DID_SSP,
+		.cfg = &tdm_config,
+		.cfg_size = sizeof(tdm_config),
+		.formats = da7219_formats,
+		.num_formats = ARRAY_SIZE(da7219_formats),
+	},
+	/* Capture Endpoint */
+	{
+		.link = NHLT_LINK_SSP,
+		.device = NHLT_SSP_DEV_I2S,
+		.direction = NHLT_DIR_CAPTURE,
+		.vid = NHLT_VID,
+		.did = NHLT_DID_SSP,
+		.cfg = &tdm_config,
+		.cfg_size = sizeof(tdm_config),
+		.formats = da7219_formats,
+		.num_formats = ARRAY_SIZE(da7219_formats),
+	},
+};
+
+static int da7219_acpi_setup_nhlt(const struct udevice *dev,
+				  struct acpi_ctx *ctx)
+{
+	u32 hwlink;
+	int ret;
+
+	if (dev_read_u32(dev, "acpi,audio-link", &hwlink))
+		return log_msg_ret("link", -EINVAL);
+
+	/* Virtual bus id of SSP links are the hardware port ids proper. */
+	ret = nhlt_add_ssp_endpoints(ctx->nhlt, hwlink, da7219_descriptors,
+				     ARRAY_SIZE(da7219_descriptors));
+	if (ret)
+		return log_msg_ret("add", ret);
+
+	return 0;
+}
+#endif
+
 struct acpi_ops da7219_acpi_ops = {
 	.fill_ssdt	= da7219_acpi_fill_ssdt,
+#ifdef CONFIG_X86
+	.setup_nhlt	= da7219_acpi_setup_nhlt,
+#endif
 };
 
 static const struct udevice_id da7219_ids[] = {

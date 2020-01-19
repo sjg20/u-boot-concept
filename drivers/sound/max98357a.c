@@ -13,26 +13,33 @@
 #include <dm.h>
 #include <sound.h>
 #include <asm-generic/gpio.h>
+#ifdef CONFIG_X86
+#include <asm/acpi_nhlt.h>
+#endif
+#include <dt-bindings/sound/nhlt.h>
 #include <dm/acpi.h>
 
-struct max97357a_priv {
+struct max98357a_priv {
 	struct gpio_desc sdmode_gpio;
 };
 
-static int max97357a_ofdata_to_platdata(struct udevice *dev)
+static int max98357a_ofdata_to_platdata(struct udevice *dev)
 {
-	struct max97357a_priv *priv = dev_get_priv(dev);
+	struct max98357a_priv *priv = dev_get_priv(dev);
+	int ret;
 
-	gpio_request_by_name(dev, "sdmode-gpios", 0, &priv->sdmode_gpio,
-			     GPIOD_IS_IN);
+	ret = gpio_request_by_name(dev, "sdmode-gpios", 0, &priv->sdmode_gpio,
+				   GPIOD_IS_IN);
+	if (ret)
+		return log_msg_ret("gpio", ret);
 
 	return 0;
 }
 
-static int max97357a_acpi_fill_ssdt(const struct udevice *dev,
+static int max98357a_acpi_fill_ssdt(const struct udevice *dev,
 				    struct acpi_ctx *ctx)
 {
-	struct max97357a_priv *priv = dev_get_priv(dev);
+	struct max98357a_priv *priv = dev_get_priv(dev);
 	char scope[ACPI_PATH_MAX];
 	char name[ACPI_NAME_MAX];
 	char path[ACPI_PATH_MAX];
@@ -55,10 +62,6 @@ static int max97357a_acpi_fill_ssdt(const struct udevice *dev,
 	acpigen_write_name_string(ctx, "_DDN",
 				  dev_read_string(dev, "acpi,desc"));
 	acpigen_write_sta(ctx, acpi_device_status(dev));
-
-	ret = acpi_device_write_gpio_desc(ctx, &priv->sdmode_gpio);
-	if (ret)
-		return log_msg_ret("gpio", ret);
 
 	/* Resources */
 	acpigen_write_name(ctx, "_CRS");
@@ -87,8 +90,54 @@ static int max97357a_acpi_fill_ssdt(const struct udevice *dev,
 	return 0;
 }
 
-struct acpi_ops max97357a_acpi_ops = {
-	.fill_ssdt	= max97357a_acpi_fill_ssdt,
+#ifdef CONFIG_X86
+static const struct nhlt_format_config max98357a_formats[] = {
+	/* 48 KHz 24-bits per sample. */
+	{
+		.num_channels = 2,
+		.sample_freq_khz = 48,
+		.container_bits_per_sample = 32,
+		.valid_bits_per_sample = 24,
+		.settings_file = "max98357-render-2ch-48khz-24b.dat",
+	},
+};
+
+static const struct nhlt_endp_descriptor max98357a_descriptors[] = {
+	{
+		.link = NHLT_LINK_SSP,
+		.device = NHLT_SSP_DEV_I2S,
+		.direction = NHLT_DIR_RENDER,
+		.vid = NHLT_VID,
+		.did = NHLT_DID_SSP,
+		.formats = max98357a_formats,
+		.num_formats = ARRAY_SIZE(max98357a_formats),
+	},
+};
+
+static int max98357a_acpi_setup_nhlt(const struct udevice *dev,
+				  struct acpi_ctx *ctx)
+{
+	u32 hwlink;
+	int ret;
+
+	if (dev_read_u32(dev, "acpi,audio-link", &hwlink))
+		return log_msg_ret("link", -EINVAL);
+
+	/* Virtual bus id of SSP links are the hardware port ids proper. */
+	ret = nhlt_add_ssp_endpoints(ctx->nhlt, hwlink, max98357a_descriptors,
+				     ARRAY_SIZE(max98357a_descriptors));
+	if (ret)
+		return log_msg_ret("add", ret);
+
+	return 0;
+}
+#endif
+
+struct acpi_ops max98357a_acpi_ops = {
+	.fill_ssdt	= max98357a_acpi_fill_ssdt,
+#ifdef CONFIG_X86
+	.setup_nhlt	= max98357a_acpi_setup_nhlt,
+#endif
 };
 
 static const struct audio_codec_ops max98357a_ops = {
@@ -103,7 +152,7 @@ U_BOOT_DRIVER(max98357a) = {
 	.name		= "max98357a",
 	.id		= UCLASS_AUDIO_CODEC,
 	.of_match	= max98357a_ids,
-	.ofdata_to_platdata	= max97357a_ofdata_to_platdata,
+	.ofdata_to_platdata	= max98357a_ofdata_to_platdata,
 	.ops		= &max98357a_ops,
-	acpi_ops_ptr(&max97357a_acpi_ops)
+	acpi_ops_ptr(&max98357a_acpi_ops)
 };

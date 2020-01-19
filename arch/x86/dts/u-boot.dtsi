@@ -141,6 +141,10 @@
 #endif
 	fdtmap {
 	};
+	private_files: private-files {
+		type = "files";
+		pattern = "*.dat";
+	};
 	rw-mrc-cache {
 		type = "blob";
 		offset = <0xff8e0000>;
