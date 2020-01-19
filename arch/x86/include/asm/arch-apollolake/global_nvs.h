@@ -30,7 +30,15 @@ struct __packed acpi_global_nvs {
 	u64	emna; /* 0x2D - 0x34 EPC base address */
 	u64	elng; /* 0x35 - 0x3C EPC Length */
 	u8	unused[195];
+#ifdef CONFIG_CHROMEOS
+	/* ChromeOS specific (0x100 - 0xfff) */
+	struct chromeos_acpi chromeos;
+#else
 	u8		unused2[0xf00];
+#endif
 };
+#ifdef CONFIG_CHROMEOS
+check_member(acpi_global_nvs, chromeos, GNVS_CHROMEOS_ACPI_OFFSET);
+#endif
 
 #endif /* _GLOBAL_NVS_H_ */
