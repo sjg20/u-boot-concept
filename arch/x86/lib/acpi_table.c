@@ -6,6 +6,8 @@
  * Copyright (C) 2016, Bin Meng <bmeng.cn@gmail.com>
  */
 
+#define LOG_CATEGORY LOGC_ACPI
+
 #include <common.h>
 #include <bloblist.h>
 #include <cpu.h>
@@ -18,13 +20,19 @@
 #include <acpi/acpi_device.h>
 #include <acpi/acpi_table.h>
 #include <asm/acpi/global_nvs.h>
+#include <asm/cpu.h>
 #include <asm/ioapic.h>
 #include <asm/lapic.h>
 #include <asm/mpspec.h>
+#include <asm/processor.h>
+#include <asm/smm.h>
 #include <asm/tables.h>
 #include <asm/arch/global_nvs.h>
+#include <asm/arch/iomap.h>
+#include <asm/arch/pm.h>
 #include <dm/acpi.h>
 #include <linux/err.h>
+#include <power/acpi_pmc.h>
 
 /*
  * IASL compiles the dsdt entries and writes the hex values
@@ -645,11 +653,13 @@ ulong write_acpi_tables(ulong start_addr)
 		acpi_add_table(ctx, csrt);
 	}
 
-	debug("ACPI:    * SPCR\n");
-	spcr = ctx->current;
-	acpi_create_spcr(spcr);
-	acpi_inc_align(ctx, spcr->header.length);
-	acpi_add_table(ctx, spcr);
+	if (0) {
+		debug("ACPI:    * SPCR\n");
+		spcr = ctx->current;
+		acpi_create_spcr(spcr);
+		acpi_inc_align(ctx, spcr->header.length);
+		acpi_add_table(ctx, spcr);
+	}
 
 	acpi_write_dev_tables(ctx);
 
