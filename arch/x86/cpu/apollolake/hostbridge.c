@@ -283,6 +283,7 @@ static int apl_acpi_hb_get_name(const struct udevice *dev, char *out_name)
 	return acpi_copy_name(out_name, "RHUB");
 }
 
+#ifdef CONFIG_GENERATE_ACPI_TABLE
 static int apl_acpi_hb_write_tables(const struct udevice *dev,
 				    struct acpi_ctx *ctx)
 {
@@ -323,6 +324,7 @@ static int apl_acpi_hb_write_tables(const struct udevice *dev,
 
 	return 0;
 }
+#endif
 
 static int apl_acpi_setup_nhlt(const struct udevice *dev, struct acpi_ctx *ctx)
 {
@@ -385,7 +387,9 @@ ulong sa_get_tseg_base(struct udevice *dev)
 
 struct acpi_ops apl_hostbridge_acpi_ops = {
 	.get_name	= apl_acpi_hb_get_name,
+#ifdef CONFIG_GENERATE_ACPI_TABLE
 	.write_tables	= apl_acpi_hb_write_tables,
+#endif
 	.setup_nhlt	= apl_acpi_setup_nhlt,
 };
 
