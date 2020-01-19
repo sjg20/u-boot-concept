@@ -29,8 +29,16 @@ struct __packed acpi_global_nvs {
 	u8	ecps; /* 0x2c - SGX Enabled status */
 	u64	emna; /* 0x2d - 0x34 EPC base address */
 	u64	elng; /* 0x35 - 0x3c EPC Length */
-	u8	unused[0x100 - 0x3d];		/* Pad out to 0x100 */
+	u8	unused[0x100 - 0x3d];	/* Pad out to 0x100 */
+#ifdef CONFIG_CHROMEOS
+	/* ChromeOS-specific (0x100 - 0xfff) */
+	struct chromeos_acpi chromeos;
+#else
 	u8	unused2[0x1000 - 0x100];	/* Pad out to 4KB */
+#endif
 };
+#ifdef CONFIG_CHROMEOS
+check_member(acpi_global_nvs, chromeos, GNVS_CHROMEOS_ACPI_OFFSET);
+#endif
 
 #endif /* _GLOBAL_NVS_H_ */
