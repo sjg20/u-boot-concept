@@ -17,6 +17,8 @@ the acpi,compatible property.
     System) Device Name)
  - acpi,hid : Contains the string to use as the HID (Hardware ID)
     identifier _HID
+ - acpi,path : Specifies the full ACPI path for a device. This overrides the
+    normal path built from the driver-model hierarchy
  - acpi,probed : Tells U-Boot to add 'linux,probed' to the ACPI tables so that
     Linux will only load the driver if the device can be detected (e.g. on I2C
     bus)
@@ -47,3 +49,24 @@ pcie-a0@14,0 {
 		interrupts-extended = <&acpi_gpe 0x3c 0>;
 	};
 };
+
+p2sb: p2sb@d,0 {
+	u-boot,dm-pre-reloc;
+	reg = <0x02006810 0 0 0 0>;
+	compatible = "intel,apl-p2sb";
+	early-regs = <IOMAP_P2SB_BAR 0x100000>;
+	pci,no-autoconfig;
+
+	n {
+		compatible = "intel,apl-pinctrl";
+		u-boot,dm-pre-reloc;
+		intel,p2sb-port-id = <PID_GPIO_N>;
+		acpi,path = "\\_SB.GPO0";
+		gpio_n: gpio-n {
+			compatible = "intel,gpio";
+			u-boot,dm-pre-reloc;
+			gpio-controller;
+			#gpio-cells = <2>;
+			linux-name = "INT3452:00";
+		};
+	};
