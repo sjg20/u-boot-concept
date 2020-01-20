@@ -14,6 +14,7 @@
 #include <serial.h>
 #include <version.h>
 #include <acpi/acpigen.h>
+#include <acpi/acpi_device.h>
 #include <acpi/acpi_table.h>
 #include <asm/acpi/global_nvs.h>
 #include <asm/ioapic.h>
