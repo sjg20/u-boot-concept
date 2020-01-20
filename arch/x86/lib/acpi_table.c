@@ -8,6 +8,8 @@
 
 #include <common.h>
 #include <acpigen.h>
+#include <acpi_device.h>
+#include <acpi_table.h>
 #include <cpu.h>
 #include <dm.h>
 #include <dm/uclass-internal.h>
@@ -15,7 +17,6 @@
 #include <serial.h>
 #include <version.h>
 #include <asm/acpi/global_nvs.h>
-#include <acpi_table.h>
 #include <asm/ioapic.h>
 #include <asm/lapic.h>
 #include <asm/mpspec.h>

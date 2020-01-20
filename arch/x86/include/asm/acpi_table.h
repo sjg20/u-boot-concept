@@ -31,6 +31,9 @@ int acpi_write_hpet(struct acpi_ctx *ctx, const struct udevice *dev);
 
 int acpi_create_hpet(struct acpi_hpet *hpet);
 
+int acpi_write_dbg2_pci_uart(struct acpi_ctx *ctx, struct udevice *dev,
+			     uint access_size);
+
 /**
  * acpi_create_gnvs() - Create a GNVS (Global Non Volatile Storage) table
  *
