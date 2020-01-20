@@ -27,6 +27,10 @@ int acpi_create_mcfg_mmconfig(struct acpi_mcfg_mmconfig *mmconfig, u32 base,
 u32 acpi_fill_mcfg(u32 current);
 u32 acpi_fill_csrt(u32 current);
 
+int acpi_write_hpet(struct acpi_ctx *ctx, const struct udevice *dev);
+
+int acpi_create_hpet(struct acpi_hpet *hpet);
+
 /**
  * acpi_create_gnvs() - Create a GNVS (Global Non Volatile Storage) table
  *
