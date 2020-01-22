@@ -504,6 +504,10 @@
 	 * GPIO for SD card detect
 	 * sdcard-cd-gpio = <GPIO_177>;
 	 */
+	prt0-gpio = <GPIO_122>;
+
+	/* GPIO for SD card detect */
+	sdcard-cd-gpio = <GPIO_177>;
 
 	/*
 	 * Order is emmc-tx-data-cntl1, emmc-tx-data-cntl2,
