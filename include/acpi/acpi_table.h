@@ -425,6 +425,26 @@ enum acpi_upc_type {
 	UPC_TYPE_HUB
 };
 
+enum dev_scope_type {
+	SCOPE_PCI_ENDPOINT = 1,
+	SCOPE_PCI_SUB = 2,
+	SCOPE_IOAPIC = 3,
+	SCOPE_MSI_HPET = 4,
+	SCOPE_ACPI_NAMESPACE_DEVICE = 5
+};
+
+struct __packed dev_scope {
+	u8 type;
+	u8 length;
+	u8 reserved[2];
+	u8 enumeration;
+	u8 start_bus;
+	struct {
+		u8 dev;
+		u8 fn;
+	} __packed path[0];
+};
+
 enum dmar_type {
 	DMAR_DRHD = 0,
 	DMAR_RMRR = 1,
