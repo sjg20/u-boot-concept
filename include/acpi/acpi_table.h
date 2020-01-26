@@ -25,6 +25,12 @@
 
 struct acpi_ctx;
 
+/* List of ACPI HID that use the coreboot ACPI ID */
+enum coreboot_acpi_ids {
+	COREBOOT_ACPI_ID_CBTABLE	= 0x0000, /* BOOT0000 */
+	COREBOOT_ACPI_ID_MAX		= 0xFFFF, /* BOOTFFFF */
+};
+
 /*
  * RSDP (Root System Description Pointer)
  * Note: ACPI 1.0 didn't have length, xsdt_address, and ext_checksum
