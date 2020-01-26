@@ -58,4 +58,21 @@ int arch_write_sci_irq_select(uint scis);
 int arch_madt_sci_irq_polarity(int sci);
 struct acpi_cstate *arch_get_cstate_map(size_t *entries);
 
+int acpi_create_dmar_drhd(struct acpi_ctx *ctx, uint flags, uint segment,
+			  u64 bar);
+int acpi_create_dmar_rmrr(struct acpi_ctx *ctx, uint segment, u64 bar,
+			  u64 limit);
+void acpi_dmar_rmrr_fixup(struct acpi_ctx *ctx, void *base);
+void acpi_dmar_drhd_fixup(struct acpi_ctx *ctx, void *base);
+
+int acpi_create_dmar_ds_pci_br(struct acpi_ctx *ctx, pci_dev_t bdf);
+int acpi_create_dmar_ds_pci(struct acpi_ctx *ctx, pci_dev_t bdf);
+int acpi_create_dmar_ds_ioapic(struct acpi_ctx *ctx, uint enumeration_id,
+			       pci_dev_t bdf);
+int acpi_create_dmar_ds_msi_hpet(struct acpi_ctx *ctx, uint enumeration_id,
+				 pci_dev_t bdf);
+void acpi_fadt_common(struct acpi_fadt *fadt, struct acpi_facs *facs,
+		      void *dsdt);
+void intel_acpi_fill_fadt(struct acpi_fadt *fadt);
+
 #endif /* __ASM_ACPI_TABLE_H__ */
