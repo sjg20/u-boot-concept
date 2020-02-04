@@ -8,7 +8,7 @@ from __future__ import print_function
 
 import sys
 
-import terminal
+from patman import terminal
 
 # Output verbosity levels that we support
 ERROR, WARNING, NOTICE, INFO, DETAIL, DEBUG = range(6)

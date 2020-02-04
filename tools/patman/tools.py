@@ -5,7 +5,6 @@
 
 from __future__ import print_function
 
-import command
 import glob
 import os
 import shutil
@@ -13,7 +12,8 @@ import struct
 import sys
 import tempfile
 
-import tout
+from patman import command
+from patman import tout
 
 # Output directly (generally this is temporary)
 outdir = None
