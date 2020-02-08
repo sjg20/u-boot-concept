@@ -4,6 +4,7 @@
  */
 
 #include <errno.h>
+#include <mouse.h>
 #include <unistd.h>
 #include <stdbool.h>
 #include <sysreset.h>
@@ -67,15 +68,11 @@ static struct sdl_info {
 	SDL_Renderer *renderer;
 	SDL_Window *screen;
 	int src_depth;
+	struct mouse_event mouse;
 } sdl;
 
 static void sandbox_sdl_poll_events(void)
 {
-	/*
-	 * We don't want to include cpu_func.h in this file since it uses
-	 * system headers. So add a declation here.
-	 */
-	extern void reset_cpu(void);
 	SDL_Event event;
 
 	while (SDL_PollEvent(&event)) {
@@ -84,8 +81,48 @@ static void sandbox_sdl_poll_events(void)
 			puts("LCD window closed - quitting\n");
 			sysreset_walk(SYSRESET_POWER_OFF);
 			break;
+		case SDL_MOUSEMOTION: {
+			struct mouse_event *m = &sdl.mouse;
+
+			m->type = MOUSE_EV_MOTION;
+			m->motion.state = 0;
+			m->motion.x = event.motion.x;
+			m->motion.y = event.motion.y;
+			m->motion.xrel = event.motion.xrel;
+			m->motion.yrel = event.motion.yrel;
+			break;
+		}
+		case SDL_MOUSEBUTTONDOWN :
+		case SDL_MOUSEBUTTONUP : {
+			struct mouse_event *m = &sdl.mouse;
+
+			m->type = MOUSE_EV_BUTTON;
+			if (event.button.button == SDL_BUTTON_LEFT)
+				m->button.button = BUTTON_LEFT;
+			else if (event.button.button == SDL_BUTTON_MIDDLE)
+				m->button.button = BUTTON_MIDDLE;
+			else if (event.button.button == SDL_BUTTON_RIGHT)
+				m->button.button = BUTTON_RIGHT;
+			m->button.press_state = event.type ==
+				SDL_MOUSEBUTTONDOWN ?
+				BUTTON_PRESSED : BUTTON_RELEASED;
+			m->button.x = event.button.x;
+			m->button.y = event.motion.y;
+			break;
+		}
 		}
 	}
+}
+
+int sandbox_sdl_get_mouse_event(struct mouse_event *evt)
+{
+	if (sdl.mouse.type == MOUSE_EV_NULL)
+		return -EAGAIN;
+
+	*evt = sdl.mouse;
+	sdl.mouse.type = MOUSE_EV_NULL;
+
+	return 0;
 }
 
 static int sandbox_sdl_ensure_init(void)
@@ -521,6 +558,7 @@ int sandbox_sdl_sound_init(int rate, int channels)
 	sdl.sample_rate = wanted.freq;
 	sdl.cur_buf = 0;
 	sdl.running = false;
+	sdl.mouse.type = MOUSE_EV_NULL;
 
 	return 0;
 
