@@ -155,6 +155,7 @@ obj-y += vsprintf.o strto.o
 obj-$(CONFIG_SSCANF) += sscanf.o
 endif
 obj-$(CONFIG_$(PHASE_)OID_REGISTRY) += oid_registry.o
+obj-$(CONFIG_FLOAT) += strtof.o
 
 obj-y += abuf.o
 obj-y += alist.o
