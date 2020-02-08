@@ -9,6 +9,8 @@
 #include <errno.h>
 #include <video.h>
 
+struct mouse_event;
+
 #ifdef CONFIG_SANDBOX_SDL
 
 /**
@@ -103,6 +105,8 @@ int sandbox_sdl_sound_init(int rate, int channels);
  * after the change
  */
 int sandbox_sdl_set_bpp(struct udevice *dev, enum video_log2_bpp l2bpp);
+
+int sandbox_sdl_get_mouse_event(struct mouse_event *evt);
 
 #else
 static inline int sandbox_sdl_init_display(int width, int height, int log2_bpp,
