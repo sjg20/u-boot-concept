@@ -189,6 +189,8 @@ struct sandbox_state {
 	struct list_head mapmem_head;	/* struct sandbox_mapmem_entry */
 	bool hwspinlock;		/* Hardware Spinlock status */
 	bool allow_memio;		/* Allow readl() etc. to work */
+	/* Title to use for LCD window, NULL for default */
+	const char *window_title;
 
 	void *other_fdt_buf;		/* 'other' FDT blob used by tests */
 	int other_size;			/* size of other FDT blob */

@@ -157,7 +157,8 @@ int sandbox_sdl_init_display(int width, int height, int log2_bpp,
 		log2_bpp = 5;
 	sdl.depth = 1 << log2_bpp;
 	sdl.pitch = sdl.width * sdl.depth / 8;
-	sdl.screen = SDL_CreateWindow("U-Boot", SDL_WINDOWPOS_UNDEFINED,
+	sdl.screen = SDL_CreateWindow(state->window_title ? : "U-Boot",
+				      SDL_WINDOWPOS_UNDEFINED,
 				      SDL_WINDOWPOS_UNDEFINED, sdl.vis_width,
 				      sdl.vis_height, SDL_WINDOW_RESIZABLE);
 	if (!sdl.screen) {
