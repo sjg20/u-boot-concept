@@ -10,9 +10,10 @@ language: c
 
 addons:
   apt:
+    update: true
     sources:
-    - ubuntu-toolchain-r-test
-    - llvm-toolchain-bionic-7
+    - sourceline: 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main'
+      key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
     packages:
     - cppcheck
     - sloccount
@@ -36,7 +37,7 @@ addons:
     - liblz4-tool
     - lzma-alone
     - libisl15
-    - clang-7
+    - clang-10
     - srecord
 
 install:
@@ -392,7 +393,7 @@ matrix:
       env:
         - TEST_PY_BD="sandbox"
           BUILDMAN="^sandbox$"
-          OVERRIDE="-O clang-7"
+          OVERRIDE="-O clang-10"
     - name: "test/py sandbox_spl"
       env:
         - TEST_PY_BD="sandbox_spl"
