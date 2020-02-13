@@ -20,3 +20,4 @@ obj-$(CONFIG_MOUSE) += mouse-uclass.o
 ifdef CONFIG_MOUSE
 obj-$(CONFIG_SANDBOX) += sandbox_mouse.o
 endif
+obj-$(CONFIG_USB_MOUSE) += usb_mouse.o
