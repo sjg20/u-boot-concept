@@ -120,7 +120,7 @@ int apl_p2sb_ofdata_to_platdata(struct udevice *dev)
 
 static int apl_p2sb_probe(struct udevice *dev)
 {
-	if (spl_phase() == PHASE_TPL) {
+	if (spl_phase() == PHASE_TPL)
 		return apl_p2sb_early_init(dev);
 	else if (spl_phase() == PHASE_SPL)
 		return apl_p2sb_spl_init(dev);

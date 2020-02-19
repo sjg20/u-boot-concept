@@ -130,7 +130,7 @@ unsigned int install_e820_map(unsigned int max_entries,
 	entries[num_entries].type = E820_RESERVED;
 	num_entries++;
 #endif
-	prop = ofnode_get_chosen_prop("e820-entries", &size);
+	prop = ofnode_read_chosen_prop("e820-entries", &size);
 	if (prop) {
 		int count = size / (sizeof(u64) * 3);
 		int i;

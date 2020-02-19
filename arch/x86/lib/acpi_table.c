@@ -31,6 +31,7 @@
 #include <asm/arch/iomap.h>
 #include <asm/arch/pm.h>
 #include <dm/acpi.h>
+#include <linux/err.h>
 #include <power/acpi_pmc.h>
 
 /*
@@ -61,6 +62,11 @@ int acpi_write_hpet(struct acpi_ctx *ctx, const struct udevice *dev)
 
 	return 0;
 }
+
+void acpi_create_dbg2(struct acpi_dbg2_header *dbg2,
+		      int port_type, int port_subtype,
+		      struct acpi_gen_regaddr *address, u32 address_size,
+		      const char *device_path);
 
 int acpi_write_dbg2_pci_uart(struct acpi_ctx *ctx, struct udevice *dev,
 			     uint access_size)

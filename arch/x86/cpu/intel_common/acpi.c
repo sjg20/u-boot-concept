@@ -26,6 +26,7 @@
 #include <asm/arch/pm.h>
 #include <asm/arch/systemagent.h>
 #include <dm/acpi.h>
+#include <linux/err.h>
 #include <power/acpi_pmc.h>
 
 __weak u32 acpi_fill_mcfg(u32 current)

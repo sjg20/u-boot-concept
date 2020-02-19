@@ -163,9 +163,9 @@ static int build_type(struct acpi_ctx *ctx, void *start, enum gen_type_t type)
 	void *end = ctx->current;
 
 	ptr = start;
-	order = ofnode_get_chosen_prop(type == TYPE_DSDT ?
-				       "u-boot,acpi-dsdt-order" :
-				       "u-boot,acpi-ssdt-order", &size);
+	order = ofnode_read_chosen_prop(type == TYPE_DSDT ?
+					"u-boot,acpi-dsdt-order" :
+					"u-boot,acpi-ssdt-order", &size);
 	if (!order) {
 		log_warning("Failed to find ordering, leaving as is\n");
 		return 0;
