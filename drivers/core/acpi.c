@@ -10,6 +10,7 @@
 
 #include <common.h>
 #include <acpi_device.h>
+#include <malloc.h>
 #include <dm.h>
 #include <dm/acpi.h>
 #include <dm/device-internal.h>

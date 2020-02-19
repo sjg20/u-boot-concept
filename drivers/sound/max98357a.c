@@ -22,9 +22,12 @@ struct max97357a_priv {
 static int max97357a_ofdata_to_platdata(struct udevice *dev)
 {
 	struct max97357a_priv *priv = dev_get_priv(dev);
+	int ret;
 
-	gpio_request_by_name(dev, "sdmode-gpios", 0, &priv->sdmode_gpio,
-			     GPIOD_IS_IN);
+	ret = gpio_request_by_name(dev, "sdmode-gpios", 0, &priv->sdmode_gpio,
+				   GPIOD_IS_IN);
+	if (ret)
+		return log_msg_ret("gpio", ret);
 
 	return 0;
 }
@@ -56,6 +59,7 @@ static int max97357a_acpi_fill_ssdt(const struct udevice *dev,
 				  dev_read_string(dev, "acpi,desc"));
 	acpigen_write_sta(ctx, acpi_device_status(dev));
 
+	printf("is valid: %d\n", dm_gpio_is_valid(&priv->sdmode_gpio));
 	ret = acpi_device_write_gpio_desc(ctx, &priv->sdmode_gpio);
 	if (ret)
 		return log_msg_ret("gpio", ret);
