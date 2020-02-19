@@ -347,19 +347,21 @@
 					(IRQ_TYPE_LEVEL_LOW | X86_IRQ_TYPE_SHARED)>;
 				acpi,name = "DLG7";
 				acpi,desc = "Dialog Semiconductor DA7219 Audio Codec";
-				dlg,btn-cfg = <50>;
-				dlg,mic-det-thr = <500>;
-				dlg,jack-ins-deb = <20>;
-				dlg,jack-det-rate = "32ms_64ms";
-				dlg,jack-rem-deb = <1>;
-				dlg,a-d-btn-thr = <0xa>;
-				dlg,d-b-btn-thr = <0x16>;
-				dlg,b-c-btn-thr = <0x21>;
-				dlg,c-mic-btn-thr = <0x3e>;
-				dlg,btn-avg = <4>;
-				dlg,adc-1bit-rpt = <1>;
 				dlg,micbias-lvl = <2600>;
 				dlg,mic-amp-in-sel = "diff";
+				da7219_aad {
+					dlg,btn-cfg = <50>;
+					dlg,mic-det-thr = <500>;
+					dlg,jack-ins-deb = <20>;
+					dlg,jack-det-rate = "32ms_64ms";
+					dlg,jack-rem-deb = <1>;
+					dlg,a-d-btn-thr = <0xa>;
+					dlg,d-b-btn-thr = <0x16>;
+					dlg,b-c-btn-thr = <0x21>;
+					dlg,c-mic-btn-thr = <0x3e>;
+					dlg,btn-avg = <4>;
+					dlg,adc-1bit-rpt = <1>;
+				};
 			};
 		};
 

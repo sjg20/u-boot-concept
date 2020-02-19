@@ -59,11 +59,6 @@ static int max97357a_acpi_fill_ssdt(const struct udevice *dev,
 				  dev_read_string(dev, "acpi,desc"));
 	acpigen_write_sta(ctx, acpi_device_status(dev));
 
-	printf("is valid: %d\n", dm_gpio_is_valid(&priv->sdmode_gpio));
-	ret = acpi_device_write_gpio_desc(ctx, &priv->sdmode_gpio);
-	if (ret)
-		return log_msg_ret("gpio", ret);
-
 	/* Resources */
 	acpigen_write_name(ctx, "_CRS");
 	acpigen_write_resourcetemplate_header(ctx);

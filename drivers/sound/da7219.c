@@ -64,6 +64,8 @@ static int da7219_acpi_fill_ssdt(const struct udevice *dev,
 		return log_msg_ret("aad", -ENOMEM);
 
 	node = ofnode_find_subnode(dev_ofnode(dev), "da7219_aad");
+	if (!ofnode_valid(node))
+		return log_msg_ret("da7219_aad", -EINVAL);
 	acpi_dp_ofnode_copy_int(node, aad, "dlg,btn-cfg");
 	acpi_dp_ofnode_copy_int(node, aad, "dlg,mic-det-thr");
 	acpi_dp_ofnode_copy_int(node, aad, "dlg,jack-ins-deb");

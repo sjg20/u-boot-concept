@@ -91,7 +91,7 @@ static int intel_wifi_acpi_fill_ssdt(const struct udevice *dev,
 	bool have_config;
 	int ret;
 
-	ret = dev_read_u32(dev, "gpe-wake", &config.wake);
+	ret = dev_read_u32(dev, "acpi,wake", &config.wake);
 	have_config = !ret;
 	/* By default, all intel wifi chips wake from S3 */
 	config.maxsleep = 3;
