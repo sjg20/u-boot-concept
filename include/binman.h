@@ -20,6 +20,10 @@ struct binman_entry {
 	u32 size;
 };
 
+void binman_set_rom_offset(int rom_offset);
+
+int binman_entry_map(const char *name, void **bufp, int *sizep);
+
 /**
  * binman_entry_find() - Find a binman symbol
  *

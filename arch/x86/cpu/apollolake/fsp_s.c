@@ -362,27 +362,19 @@ int fsps_update_config(struct udevice *dev, ulong rom_offset,
 {
 	struct fsp_s_config *cfg = &upd->config;
 	struct apl_config *apl;
-	struct binman_entry vbt;
 	void *buf;
 	int ret;
 
-	ret = binman_entry_find("intel-vbt", &vbt);
+	ret = binman_entry_map("intel-vbt", &buf, NULL);
 	if (ret)
 		return log_msg_ret("Cannot find VBT", ret);
-	vbt.image_pos += rom_offset;
-	buf = malloc(vbt.size);
-	if (!buf)
-		return log_msg_ret("Alloc VBT", -ENOMEM);
+	if (*(u32 *)buf != VBT_SIGNATURE)
+		return log_msg_ret("VBT signature", -EINVAL);
 
 	/*
 	 * Load VBT before devicetree-specific config. This only supports
 	 * memory-mapped SPI at present.
 	 */
-	bootstage_start(BOOTSTAGE_ID_ACCUM_MMAP_SPI, "mmap_spi");
-	memcpy(buf, (void *)vbt.image_pos, vbt.size);
-	bootstage_accum(BOOTSTAGE_ID_ACCUM_MMAP_SPI);
-	if (*(u32 *)buf != VBT_SIGNATURE)
-		return log_msg_ret("VBT signature", -EINVAL);
 	cfg->graphics_config_ptr = (ulong)buf;
 
 	apl = malloc(sizeof(*apl));

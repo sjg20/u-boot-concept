@@ -5,9 +5,11 @@
 
 #include <common.h>
 #include <acpigen.h>
+#include <bloblist.h>
 #include <dm.h>
 #include <asm-generic/gpio.h>
 #include <asm/acpi_nhlt.h>
+#include <asm/intel_gnvs.h>
 #include <asm/intel_pinctrl.h>
 #include <dm/acpi.h>
 #include "variant_gpio.h"
@@ -102,22 +104,33 @@ static int chromeos_acpi_gpio_generate(const struct udevice *dev,
 static int coral_write_acpi_tables(const struct udevice *dev,
 				   struct acpi_ctx *ctx)
 {
+	struct acpi_global_nvs *gnvs;
 	struct nhlt *nhlt;
 	const char *oem_id = "coral";
 	const char *oem_table_id = "coral";
 	uint32_t oem_revision = 2;
+	ofnode node;
 	int ret;
+
+	gnvs = bloblist_find(BLOBLISTT_ACPI_GNVS, sizeof(*gnvs));
+	if (!gnvs)
+		return log_msg_ret("bloblist", -ENOENT);
 
 	nhlt = nhlt_init();
 	if (!nhlt)
 		return -ENOMEM;
 
-	ret = nhlt_setup(nhlt, dev);
+	node = ofnode_find_subnode(dev_ofnode(dev), "nhlt");
+	ret = nhlt_setup(nhlt, node);
 	if (ret)
 		return log_msg_ret("setup", ret);
 
-	ret = nhlt_soc_serialise_oem_overrides(ctx, nhlt, oem_id, oem_table_id,
-					       oem_revision);
+	/* Update NHLT GNVS Data */
+	gnvs->nhla = (uintptr_t)ctx->current;
+	gnvs->nhll = nhlt_current_size(nhlt);
+
+	ret = nhlt_serialise_oem_overrides(ctx, nhlt, oem_id, oem_table_id,
+					   oem_revision);
 	if (ret)
 		return log_msg_ret("serialise", ret);
 

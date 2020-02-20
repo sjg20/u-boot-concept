@@ -11,6 +11,7 @@
 #include <acpigen.h>
 #include <dm.h>
 #include <irq.h>
+#include <malloc.h>
 #include <usb.h>
 #include <asm-generic/gpio.h>
 #include <dm/acpi.h>

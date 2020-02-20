@@ -10,10 +10,22 @@
 #include <binman.h>
 #include <dm.h>
 #include <malloc.h>
+#include <mapmem.h>
 
+/**
+ * struct binman_info - Information needed by the binman library
+ *
+ * @image: Node describing the image we are running from
+ * @rom_offset: Offset from an image_pos to the memory-mapped address, or
+ *	ROM_OFFSET_NONE if the ROM is not memory-mapped. Can be positive or
+ *	negative
+ */
 struct binman_info {
 	ofnode image;
+	int rom_offset;
 };
+
+#define ROM_OFFSET_NONE		(-1)
 
 static struct binman_info *binman;
 
@@ -36,6 +48,28 @@ int binman_entry_find(const char *name, struct binman_entry *entry)
 	return 0;
 }
 
+int binman_entry_map(const char *name, void **bufp, int *sizep)
+{
+	struct binman_entry entry;
+	int ret;
+
+	if (binman->rom_offset == ROM_OFFSET_NONE)
+		return -EPERM;
+	ret = binman_entry_find(name, &entry);
+	if (ret)
+		return log_msg_ret("entry", ret);
+	if (sizep)
+		*sizep = entry.size;
+	*bufp = map_sysmem(entry.image_pos + binman->rom_offset, entry.size);
+
+	return 0;
+}
+
+void binman_set_rom_offset(int rom_offset)
+{
+	binman->rom_offset = rom_offset;
+}
+
 int binman_init(void)
 {
 	binman = malloc(sizeof(struct binman_info));
@@ -44,6 +78,7 @@ int binman_init(void)
 	binman->image = ofnode_path("/binman");
 	if (!ofnode_valid(binman->image))
 		return log_msg_ret("binman node", -EINVAL);
+	binman->rom_offset = ROM_OFFSET_NONE;
 
 	return 0;
 }
