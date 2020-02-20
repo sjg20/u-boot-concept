@@ -7,6 +7,7 @@
 #include <acpigen.h>
 #include <dm.h>
 #include <asm-generic/gpio.h>
+#include <asm/acpi_nhlt.h>
 #include <asm/intel_pinctrl.h>
 #include <dm/acpi.h>
 #include "variant_gpio.h"
@@ -101,7 +102,25 @@ static int chromeos_acpi_gpio_generate(const struct udevice *dev,
 static int coral_write_acpi_tables(const struct udevice *dev,
 				   struct acpi_ctx *ctx)
 {
-	/* Add NHLT here */
+	struct nhlt *nhlt;
+	const char *oem_id = "coral";
+	const char *oem_table_id = "coral";
+	uint32_t oem_revision = 2;
+	int ret;
+
+	nhlt = nhlt_init();
+	if (!nhlt)
+		return -ENOMEM;
+
+	ret = nhlt_setup(nhlt, dev);
+	if (ret)
+		return log_msg_ret("setup", ret);
+
+	ret = nhlt_soc_serialise_oem_overrides(ctx, nhlt, oem_id, oem_table_id,
+					       oem_revision);
+	if (ret)
+		return log_msg_ret("serialise", ret);
+
 	return 0;
 }
 
