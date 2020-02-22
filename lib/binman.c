@@ -29,12 +29,13 @@ struct binman_info {
 
 static struct binman_info *binman;
 
-int binman_entry_find(const char *name, struct binman_entry *entry)
+int binman_entry_find_(ofnode node, const char *name, struct binman_entry *entry)
 {
-	ofnode node;
 	int ret;
 
-	node = ofnode_find_subnode(binman->image, name);
+	if (!ofnode_valid(node))
+		node = binman->image;
+	node = ofnode_find_subnode(node, name);
 	if (!ofnode_valid(node))
 		return log_msg_ret("node", -ENOENT);
 
@@ -48,14 +49,19 @@ int binman_entry_find(const char *name, struct binman_entry *entry)
 	return 0;
 }
 
-int binman_entry_map(const char *name, void **bufp, int *sizep)
+int binman_entry_find(const char *name, struct binman_entry *entry)
+{
+	return binman_entry_find_(binman->image, name, entry);
+}
+
+int binman_entry_map(ofnode parent, const char *name, void **bufp, int *sizep)
 {
 	struct binman_entry entry;
 	int ret;
 
 	if (binman->rom_offset == ROM_OFFSET_NONE)
 		return -EPERM;
-	ret = binman_entry_find(name, &entry);
+	ret = binman_entry_find_(parent, name, &entry);
 	if (ret)
 		return log_msg_ret("entry", ret);
 	if (sizep)
@@ -63,6 +69,11 @@ int binman_entry_map(const char *name, void **bufp, int *sizep)
 	*bufp = map_sysmem(entry.image_pos + binman->rom_offset, entry.size);
 
 	return 0;
+}
+
+ofnode binman_section_find_node(const char *name)
+{
+	return ofnode_find_subnode(binman->image, name);
 }
 
 void binman_set_rom_offset(int rom_offset)

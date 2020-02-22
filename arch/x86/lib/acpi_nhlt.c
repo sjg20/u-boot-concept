@@ -148,7 +148,10 @@ int nhlt_endpoint_add_formats(struct nhlt_endpoint *endp,
 				const struct nhlt_format_config *formats,
 				size_t num_formats)
 {
+	ofnode node;
 	size_t i;
+
+	node = binman_section_find_node("private-files");
 
 	for (i = 0; i < num_formats; i++) {
 		const struct nhlt_format_config *cfg = &formats[i];
@@ -169,7 +172,7 @@ int nhlt_endpoint_add_formats(struct nhlt_endpoint *endp,
 		if (!cfg->settings_file)
 			continue;
 
-		ret = binman_entry_map(cfg->settings_file, &data, &size);
+		ret = binman_entry_map(node, cfg->settings_file, &data, &size);
 		if (ret) {
 			log_warning("Failed to find settings file %s\n",
 				    cfg->settings_file);

@@ -365,7 +365,7 @@ int fsps_update_config(struct udevice *dev, ulong rom_offset,
 	void *buf;
 	int ret;
 
-	ret = binman_entry_map("intel-vbt", &buf, NULL);
+	ret = binman_entry_map(ofnode_null(), "intel-vbt", &buf, NULL);
 	if (ret)
 		return log_msg_ret("Cannot find VBT", ret);
 	if (*(u32 *)buf != VBT_SIGNATURE)
