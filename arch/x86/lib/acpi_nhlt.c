@@ -460,6 +460,7 @@ int nhlt_add_endpoints(struct nhlt *nhlt,
 			size_t num_epds)
 {
 	int ret;
+
 	ret = _nhlt_add_endpoints(nhlt, DEFAULT_VIRTUAL_BUS_ID, epds, num_epds);
 	return ret;
 }
@@ -476,26 +477,3 @@ int nhlt_add_ssp_endpoints(struct nhlt *nhlt, int virtual_bus_id,
 
 	return ret;
 }
-#if 0
-int nhlt_setup(struct nhlt *nhlt, ofnode node)
-{
-	u32 channels;
-
-	ret = nhlt_soc_add_dmic_array(nhlt, channels);
-	if (ret)
-		return log_msg_ret("add", -EINVAL);
-
-	/* Dialog for Headset codec.
-	 * Headset codec is bi-directional but uses the same configuration
-	 * settings for render and capture endpoints.
-	 */
-	if (!nhlt_soc_add_da7219(nhlt, AUDIO_LINK_SSP1))
-		printk(BIOS_ERR, "Added Dialog_7219 codec.\n");
-
-	/* MAXIM Smart Amps for left and right speakers. */
-	if (!nhlt_soc_add_max98357(nhlt, AUDIO_LINK_SSP5))
-		printk(BIOS_ERR, "Added Maxim_98357 codec.\n");
-
-	return 0;
-}
-#endif

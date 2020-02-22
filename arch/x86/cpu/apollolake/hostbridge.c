@@ -23,8 +23,8 @@
 #include <asm/io.h>
 #include <asm/pci.h>
 #include <asm/arch/acpi.h>
-#include <asm/arch/nhlt.h>
 #include <asm/arch/systemagent.h>
+#include <dt-bindings/sound/nhlt.h>
 #include <dm/acpi.h>
 
 static const struct nhlt_format_config dmic_1ch_formats[] = {
@@ -335,16 +335,16 @@ static int apl_acpi_setup_nhlt(const struct udevice *dev, struct acpi_ctx *ctx)
 	switch (channels) {
 	case 1:
 		return nhlt_add_endpoints(nhlt, dmic_1ch_descriptors,
-			ARRAY_SIZE(dmic_1ch_descriptors));
+					  ARRAY_SIZE(dmic_1ch_descriptors));
 	case 2:
 		return nhlt_add_endpoints(nhlt, dmic_2ch_descriptors,
-			ARRAY_SIZE(dmic_2ch_descriptors));
+					  ARRAY_SIZE(dmic_2ch_descriptors));
 	case 4:
 		return nhlt_add_endpoints(nhlt, dmic_4ch_descriptors,
-			ARRAY_SIZE(dmic_4ch_descriptors));
-	default:
-		return -1;
+					  ARRAY_SIZE(dmic_4ch_descriptors));
 	}
+
+	return log_msg_ret("channels", -EINVAL);
 }
 
 static int apl_hostbridge_remove(struct udevice *dev)
