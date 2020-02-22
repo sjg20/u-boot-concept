@@ -109,7 +109,6 @@ static int coral_write_acpi_tables(const struct udevice *dev,
 	const char *oem_id = "coral";
 	const char *oem_table_id = "coral";
 	uint32_t oem_revision = 2;
-	ofnode node;
 	int ret;
 
 	gnvs = bloblist_find(BLOBLISTT_ACPI_GNVS, sizeof(*gnvs));
@@ -120,8 +119,7 @@ static int coral_write_acpi_tables(const struct udevice *dev,
 	if (!nhlt)
 		return -ENOMEM;
 
-	node = ofnode_find_subnode(dev_ofnode(dev), "nhlt");
-	ret = nhlt_setup(nhlt, node);
+	ret = acpi_setup_nhlt(ctx, nhlt);
 	if (ret)
 		return log_msg_ret("setup", ret);
 

@@ -281,36 +281,6 @@ int acpi_fill_ssdt(struct acpi_ctx *ctx)
 	return ret;
 }
 
-int _acpi_inject_dsdt(struct acpi_ctx *ctx, struct udevice *parent)
-{
-	struct acpi_ops *aops;
-	struct udevice *dev;
-	int ret;
-
-	aops = device_get_acpi_ops(parent);
-	if (aops && aops->inject_dsdt) {
-		void *start = ctx->current;
-
-		log_debug("- %s %p\n", parent->name, aops->inject_dsdt);
-		ret = device_ofdata_to_platdata(parent);
-		if (ret)
-			return log_msg_ret("ofdata", ret);
-		ret = aops->inject_dsdt(parent, ctx);
-		if (ret)
-			return ret;
-		ret = acpi_add_item(ctx, parent, TYPE_DSDT, start);
-		if (ret)
-			return ret;
-	}
-	device_foreach_child(dev, parent) {
-		ret = _acpi_inject_dsdt(ctx, dev);
-		if (ret)
-			return ret;
-	}
-
-	return 0;
-}
-
 int acpi_inject_dsdt(struct acpi_ctx *ctx)
 {
 	void *start = ctx->current;
@@ -318,7 +288,7 @@ int acpi_inject_dsdt(struct acpi_ctx *ctx)
 
 	log_debug("Writing DSDT tables\n");
 	item_count = 0;
-	ret = _acpi_inject_dsdt(ctx, dm_root());
+	ret = acpi_recurse_method(ctx, dm_root(), METHOD_INJECT_DSDT);
 	log_debug("Writing DSDT finished, err=%d\n", ret);
 	ret = build_type(ctx, start, TYPE_DSDT);
 	if (ret)
@@ -327,35 +297,25 @@ int acpi_inject_dsdt(struct acpi_ctx *ctx)
 	return ret;
 }
 
-int _acpi_write_dev_tables(struct acpi_ctx *ctx, const struct udevice *parent)
-{
-	struct acpi_ops *aops;
-	struct udevice *dev;
-	int ret;
-
-	aops = device_get_acpi_ops(parent);
-	if (aops && aops->write_tables) {
-		log_debug("- %s\n", parent->name);
-		ret = aops->write_tables(parent, ctx);
-		if (ret)
-			return ret;
-	}
-	device_foreach_child(dev, parent) {
-		ret = _acpi_write_dev_tables(ctx, dev);
-		if (ret)
-			return ret;
-	}
-
-	return 0;
-}
-
 int acpi_write_dev_tables(struct acpi_ctx *ctx)
 {
 	int ret;
 
 	log_debug("Writing device tables\n");
-	ret = _acpi_write_dev_tables(ctx, dm_root());
+	ret = acpi_recurse_method(ctx, dm_root(), METHOD_WRITE_TABLES);
 	log_debug("Writing finished, err=%d\n", ret);
+
+	return ret;
+}
+
+int acpi_setup_nhlt(struct acpi_ctx *ctx, struct nhlt *nhlt)
+{
+	int ret;
+
+	log_debug("Setup NHLT\n");
+	ctx->nhlt = nhlt;
+	ret = acpi_recurse_method(ctx, dm_root(), METHOD_SETUP_NHLT);
+	log_debug("Setup finished, err=%d\n", ret);
 
 	return ret;
 }
