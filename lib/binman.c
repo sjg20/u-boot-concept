@@ -36,14 +36,14 @@ int binman_entry_find(const char *name, struct binman_entry *entry)
 
 	node = ofnode_find_subnode(binman->image, name);
 	if (!ofnode_valid(node))
-		return log_msg_ret("no binman node", -ENOENT);
+		return log_msg_ret("node", -ENOENT);
 
 	ret = ofnode_read_u32(node, "image-pos", &entry->image_pos);
 	if (ret)
-		return log_msg_ret("bad binman node1", ret);
+		return log_msg_ret("import-pos", ret);
 	ret = ofnode_read_u32(node, "size", &entry->size);
 	if (ret)
-		return log_msg_ret("bad binman node2", ret);
+		return log_msg_ret("size", ret);
 
 	return 0;
 }

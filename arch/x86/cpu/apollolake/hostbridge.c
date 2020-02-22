@@ -34,7 +34,7 @@ static const struct nhlt_format_config dmic_1ch_formats[] = {
 		.sample_freq_khz = 48,
 		.container_bits_per_sample = 16,
 		.valid_bits_per_sample = 16,
-		.settings_file = "dmic-1ch-48khz-16b.bin",
+		.settings_file = "dmic-1ch-48khz-16b.dat",
 	},
 };
 
@@ -66,7 +66,7 @@ static const struct nhlt_format_config dmic_2ch_formats[] = {
 		.sample_freq_khz = 48,
 		.container_bits_per_sample = 16,
 		.valid_bits_per_sample = 16,
-		.settings_file = "dmic-2ch-48khz-16b.bin",
+		.settings_file = "dmic-2ch-48khz-16b.dat",
 	},
 };
 
@@ -98,7 +98,7 @@ static const struct nhlt_format_config dmic_4ch_formats[] = {
 		.sample_freq_khz = 48,
 		.container_bits_per_sample = 16,
 		.valid_bits_per_sample = 16,
-		.settings_file = "dmic-4ch-48khz-16b.bin",
+		.settings_file = "dmic-4ch-48khz-16b.dat",
 	},
 };
 

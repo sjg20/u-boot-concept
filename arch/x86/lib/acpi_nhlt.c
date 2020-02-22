@@ -170,8 +170,11 @@ int nhlt_endpoint_add_formats(struct nhlt_endpoint *endp,
 			continue;
 
 		ret = binman_entry_map(cfg->settings_file, &data, &size);
-		if (ret)
+		if (ret) {
+			log_warning("Failed to find settings file %s\n",
+				    cfg->settings_file);
 			return log_msg_ret("settings", ret);
+		}
 
 		ret = nhlt_format_append_config(fmt, data, size);
 		if (ret)

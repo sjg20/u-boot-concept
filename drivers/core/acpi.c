@@ -20,6 +20,7 @@
 
 /* Type of table that we collected */
 enum gen_type_t {
+	TYPE_NONE,
 	TYPE_DSDT,
 	TYPE_SSDT,
 };
@@ -233,7 +234,7 @@ acpi_method acpi_get_method(struct udevice *dev, enum method_t method)
 }
 
 int acpi_recurse_method(struct acpi_ctx *ctx, struct udevice *parent,
-			enum method_t method)
+			enum method_t method, enum gen_type_t type)
 {
 	struct udevice *dev;
 	acpi_method func;
@@ -252,12 +253,14 @@ int acpi_recurse_method(struct acpi_ctx *ctx, struct udevice *parent,
 			return log_msg_ret("func", ret);
 
 		/* Add the item to the internal list */
-		ret = acpi_add_item(ctx, parent, TYPE_SSDT, start);
-		if (ret)
-			return log_msg_ret("add", ret);
+		if (type != TYPE_NONE) {
+			ret = acpi_add_item(ctx, parent, type, start);
+			if (ret)
+				return log_msg_ret("add", ret);
+		}
 	}
 	device_foreach_child(dev, parent) {
-		ret = acpi_recurse_method(ctx, dev, method);
+		ret = acpi_recurse_method(ctx, dev, method, type);
 		if (ret)
 			return log_msg_ret("recurse", ret);
 	}
@@ -272,7 +275,7 @@ int acpi_fill_ssdt(struct acpi_ctx *ctx)
 
 	log_debug("Writing SSDT tables\n");
 	item_count = 0;
-	ret = acpi_recurse_method(ctx, dm_root(), METHOD_FILL_SDDT);
+	ret = acpi_recurse_method(ctx, dm_root(), METHOD_FILL_SDDT, TYPE_SSDT);
 	log_debug("Writing SSDT finished, err=%d\n", ret);
 	ret = build_type(ctx, start, TYPE_SSDT);
 	if (ret)
@@ -288,7 +291,8 @@ int acpi_inject_dsdt(struct acpi_ctx *ctx)
 
 	log_debug("Writing DSDT tables\n");
 	item_count = 0;
-	ret = acpi_recurse_method(ctx, dm_root(), METHOD_INJECT_DSDT);
+	ret = acpi_recurse_method(ctx, dm_root(), METHOD_INJECT_DSDT,
+				  TYPE_DSDT);
 	log_debug("Writing DSDT finished, err=%d\n", ret);
 	ret = build_type(ctx, start, TYPE_DSDT);
 	if (ret)
@@ -302,7 +306,8 @@ int acpi_write_dev_tables(struct acpi_ctx *ctx)
 	int ret;
 
 	log_debug("Writing device tables\n");
-	ret = acpi_recurse_method(ctx, dm_root(), METHOD_WRITE_TABLES);
+	ret = acpi_recurse_method(ctx, dm_root(), METHOD_WRITE_TABLES,
+				  TYPE_NONE);
 	log_debug("Writing finished, err=%d\n", ret);
 
 	return ret;
@@ -314,7 +319,7 @@ int acpi_setup_nhlt(struct acpi_ctx *ctx, struct nhlt *nhlt)
 
 	log_debug("Setup NHLT\n");
 	ctx->nhlt = nhlt;
-	ret = acpi_recurse_method(ctx, dm_root(), METHOD_SETUP_NHLT);
+	ret = acpi_recurse_method(ctx, dm_root(), METHOD_SETUP_NHLT, TYPE_NONE);
 	log_debug("Setup finished, err=%d\n", ret);
 
 	return ret;
