@@ -43,6 +43,13 @@ int x86_cpu_reinit_f(void);
  */
 int x86_cpu_init_tpl(void);
 
+/**
+ * x86_detect_coreboot() - See if U-Boot is being started from coreboot
+ *
+ * @return true if coreboot is running, false if U-Boot is running 'bare-metal'
+ */
+bool x86_detect_coreboot(void);
+
 int cpu_init_f(void);
 void setup_gdt(struct global_data *id, u64 *gdt_addr);
 /*
