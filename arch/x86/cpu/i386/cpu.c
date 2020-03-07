@@ -447,10 +447,25 @@ int x86_cpu_init_f(void)
 	return 0;
 }
 
+bool x86_detect_coreboot(void)
+{
+	u32 *ptr, *end;
+
+	/* We look for LBIO in the first 4K of RAM */
+	for (ptr = NULL, end = ptr + 0x400; ptr < end; ptr += 4) {
+		if (*ptr == 0x4f49424c) /* "LBIO" */
+			return true;
+	}
+
+	return false;
+}
+
 int x86_cpu_reinit_f(void)
 {
 	setup_identity();
 	setup_pci_ram_top();
+	if (x86_detect_coreboot())
+		gd->flags |= GD_FLG_NO_LL_INIT;
 
 	return 0;
 }
