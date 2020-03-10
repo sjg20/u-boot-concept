@@ -24,6 +24,7 @@
 #include <asm/tables.h>
 #include <asm/arch/global_nvs.h>
 #include <dm/acpi.h>
+#include <linux/err.h>
 
 /*
  * IASL compiles the dsdt entries and writes the hex values
@@ -578,7 +579,7 @@ ulong write_acpi_tables(ulong start_addr)
 
 	debug("ACPI:     * SSDT\n");
 	ssdt = (struct acpi_table_header *)ctx->current;
-	acpi_create_ssdt(ctx, ssdt, ACPI_TABLE_CREATOR);
+	acpi_create_ssdt(ctx, ssdt, OEM_TABLE_ID);
 	if (ssdt->length > sizeof(struct acpi_table_header)) {
 		acpi_inc_align(ctx, ssdt->length);
 		acpi_add_table(ctx, ssdt);

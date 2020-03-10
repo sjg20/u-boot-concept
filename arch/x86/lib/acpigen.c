@@ -185,7 +185,7 @@ void acpi_fadt_common(struct acpi_fadt *fadt, struct acpi_facs *facs,
 	header->length = sizeof(struct acpi_fadt);
 	header->revision = 4;
 	memcpy(header->oem_id, OEM_ID, 6);
-	memcpy(header->oem_table_id, OEM_ID, 8);
+	memcpy(header->oem_table_id, OEM_TABLE_ID, 8);
 	memcpy(header->aslc_id, ASLC_ID, 4);
 	header->aslc_revision = 1;
 

@@ -13,7 +13,7 @@ DefinitionBlock(
 	"DSDT",
 	0x02,		// DSDT revision: ACPI v2.0 and up
 	OEM_ID,
-	ACPI_TABLE_CREATOR,
+	OEM_TABLE_ID,
 	0x20110725	// OEM revision
 )
 {
