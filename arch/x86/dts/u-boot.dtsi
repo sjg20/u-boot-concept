@@ -141,6 +141,10 @@
 #endif
 	fdtmap {
 	};
+	private_files: private-files {
+		type = "files";
+		pattern = "*.dat";
+	};
 #ifdef CONFIG_HAVE_MRC
 	rw-mrc-cache {
 		type = "blob";
