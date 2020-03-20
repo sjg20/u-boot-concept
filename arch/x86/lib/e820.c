@@ -9,6 +9,9 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#define PAGETABLE_BASE		0x9000000
+#define PAGETABLE_SIZE		(6 * 4096)
+
 /*
  * Install a default e820 table with 4 entries as follows:
  *
@@ -33,7 +36,11 @@ __weak unsigned int install_e820_map(unsigned int max_entries,
 	entries[3].size = CONFIG_PCIE_ECAM_SIZE;
 	entries[3].type = E820_RESERVED;
 
-	return 4;
+	entries[4].addr = PAGETABLE_BASE;
+	entries[4].size = PAGETABLE_SIZE;
+	entries[4].type = E820_RESERVED;
+
+	return 5;
 }
 
 #if CONFIG_IS_ENABLED(EFI_LOADER)
