@@ -537,7 +537,7 @@ int cpu_has_64bit(void)
 		has_long_mode();
 }
 
-#define PAGETABLE_BASE		0x80000
+#define PAGETABLE_BASE		0x9000000
 #define PAGETABLE_SIZE		(6 * 4096)
 
 /**
