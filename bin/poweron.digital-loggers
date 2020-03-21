@@ -18,5 +18,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
+echo "digi power on"
 curl --data ${power_port}=ON -o /dev/null --silent \
 	http://${power_user:-admin}:${power_pass:-1234}@${power_ip}/outlet
