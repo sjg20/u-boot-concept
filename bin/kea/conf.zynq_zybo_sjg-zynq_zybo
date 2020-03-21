@@ -18,14 +18,20 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
+set -ex
+
+relay_type=6QMBS_
+
 console_dev=/dev/ttyusb_port5
 console_wait=1
 
-reset_impl=digital-loggers
-flash_impl=sdwire_digital-loggers_mount
+reset_impl=usbrelay
+flash_impl=sdwire_relay_mount
 power_impl=digital-loggers
 
 flash_writer=zynq_mount
+
+usbrelay_reset=6
 
 power_ip="192.168.4.19"
 power_user="admin"

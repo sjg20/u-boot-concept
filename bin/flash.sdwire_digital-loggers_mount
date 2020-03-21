@@ -27,7 +27,6 @@
 # curl to control the power switch
 
 # Power off
-curl --data ${power_port}=OFF -o /dev/null --silent \
-	http://${power_user:-admin}:${power_pass:-1234}@${power_ip}/outlet
-
+poweroff.${power_impl}
 . flash.sdwire_common_mount
+

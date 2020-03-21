@@ -22,6 +22,8 @@
 
 set -e
 
+echo "u-boot power on"
+
 bin_dir="`dirname $0`"
 board_type="$1"
 board_ident="$2"
