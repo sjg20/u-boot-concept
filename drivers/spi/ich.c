@@ -637,7 +637,10 @@ static int ich_get_mmap(struct udevice *dev, ulong *map_basep, uint *map_sizep,
 			uint *offsetp)
 {
 	struct udevice *bus = dev_get_parent(dev);
+	struct ich_spi_platdata *plat = dev_get_platdata(bus);
 
+	if (plat->ich_version != ICHV_APL)
+		return -ENOENT;
 	return ich_get_mmap_bus(bus, map_basep, map_sizep, offsetp);
 }
 
