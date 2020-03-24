@@ -638,6 +638,10 @@ static int ich_get_mmap(struct udevice *dev, ulong *map_basep, uint *map_sizep,
 {
 	struct udevice *bus = dev_get_parent(dev);
 
+	/* If called before the device is probed, platdata is not available */
+	if (dev_get_driver_data(bus) != ICHV_APL)
+		return -ENOENT;
+
 	return ich_get_mmap_bus(bus, map_basep, map_sizep, offsetp);
 }
 
