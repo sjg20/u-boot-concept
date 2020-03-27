@@ -37,4 +37,4 @@ echo "Writing to ${mount} from build at ${build}"
 cp ${build}/u-boot.bin ${mount}/rpi3-u-boot.bin
 zynq-boot-bin.py -o ${tmp}/boot.bin -u ${build}/spl/u-boot-spl-dtb.bin
 cp ${tmp}/boot.bin ${mount}/BOOT.bin
-cp ${build}/u-boot-dtb.img ${mount}/.
+cp ${build}/u-boot.img ${mount}/.

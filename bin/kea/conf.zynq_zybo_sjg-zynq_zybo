@@ -40,5 +40,5 @@ power_port=5
 
 sdwire_serial=202001064001
 
-mount_uuid=A097-A1D5
+mount_uuid=5203-DB74
 mount_point=zynq_zybo_boot
