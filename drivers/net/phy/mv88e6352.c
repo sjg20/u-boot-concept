@@ -5,6 +5,7 @@
  */
 
 #include <common.h>
+#include <command.h>
 #include <miiphy.h>
 #include <linux/errno.h>
 #include <mv88e6352.h>
@@ -261,7 +262,7 @@ int do_mvsw_reg_write(const char *name, int argc, char * const argv[])
 }
 
 
-int do_mvsw_reg(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_mvsw_reg(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
 {
 	int ret;
 	const char *cmd, *ethname;

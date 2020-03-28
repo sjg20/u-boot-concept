@@ -8,7 +8,7 @@
 #include <common.h>
 #include <command.h>
 
-static int do_conitrace(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_conitrace(struct cmd_tbl *cmdtp, int flag, int argc,
 			char * const argv[])
 {
 	bool first = true;

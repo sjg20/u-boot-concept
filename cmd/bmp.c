@@ -91,7 +91,7 @@ struct bmp_image *gunzip_bmp(unsigned long addr, unsigned long *lenp,
 }
 #endif
 
-static int do_bmp_info(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
+static int do_bmp_info(struct cmd_tbl * cmdtp, int flag, int argc, char * const argv[])
 {
 	ulong addr;
 
@@ -109,7 +109,7 @@ static int do_bmp_info(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[
 	return (bmp_info(addr));
 }
 
-static int do_bmp_display(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
+static int do_bmp_display(struct cmd_tbl * cmdtp, int flag, int argc, char * const argv[])
 {
 	ulong addr;
 	int x = 0, y = 0;
@@ -141,7 +141,7 @@ static int do_bmp_display(cmd_tbl_t * cmdtp, int flag, int argc, char * const ar
 	 return (bmp_display(addr, x, y));
 }
 
-static cmd_tbl_t cmd_bmp_sub[] = {
+static struct cmd_tbl cmd_bmp_sub[] = {
 	U_BOOT_CMD_MKENT(info, 3, 0, do_bmp_info, "", ""),
 	U_BOOT_CMD_MKENT(display, 5, 0, do_bmp_display, "", ""),
 };
@@ -162,9 +162,9 @@ void bmp_reloc(void) {
  * Return:      None
  *
  */
-static int do_bmp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_bmp(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
 {
-	cmd_tbl_t *c;
+	struct cmd_tbl *c;
 
 	/* Strip off leading 'bmp' command argument */
 	argc--;

@@ -135,7 +135,7 @@ cleanup:
 	return ret;
 }
 
-static int do_usb_mass_storage(cmd_tbl_t *cmdtp, int flag,
+static int do_usb_mass_storage(struct cmd_tbl *cmdtp, int flag,
 			       int argc, char * const argv[])
 {
 	const char *usb_controller;

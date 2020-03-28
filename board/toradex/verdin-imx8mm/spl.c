@@ -4,6 +4,7 @@
  */
 
 #include <common.h>
+#include <command.h>
 #include <image.h>
 #include <init.h>
 #include <asm/arch/clock.h>
@@ -172,7 +173,7 @@ void board_init_f(ulong dummy)
 	board_init_r(NULL, 0);
 }
 
-int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_reset(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
 {
 	puts("resetting ...\n");
 

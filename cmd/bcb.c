@@ -109,7 +109,7 @@ static int bcb_field_get(char *name, char **fieldp, int *sizep)
 	return 0;
 }
 
-static int do_bcb_load(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_bcb_load(struct cmd_tbl *cmdtp, int flag, int argc,
 		       char * const argv[])
 {
 	struct blk_desc *desc;
@@ -162,7 +162,7 @@ err:
 	return CMD_RET_FAILURE;
 }
 
-static int do_bcb_set(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_bcb_set(struct cmd_tbl *cmdtp, int flag, int argc,
 		      char * const argv[])
 {
 	int size, len;
@@ -189,7 +189,7 @@ static int do_bcb_set(cmd_tbl_t *cmdtp, int flag, int argc,
 	return CMD_RET_SUCCESS;
 }
 
-static int do_bcb_clear(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_bcb_clear(struct cmd_tbl *cmdtp, int flag, int argc,
 			char * const argv[])
 {
 	int size;
@@ -208,7 +208,7 @@ static int do_bcb_clear(cmd_tbl_t *cmdtp, int flag, int argc,
 	return CMD_RET_SUCCESS;
 }
 
-static int do_bcb_test(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_bcb_test(struct cmd_tbl *cmdtp, int flag, int argc,
 		       char * const argv[])
 {
 	int size;
@@ -235,7 +235,7 @@ static int do_bcb_test(cmd_tbl_t *cmdtp, int flag, int argc,
 	return CMD_RET_FAILURE;
 }
 
-static int do_bcb_dump(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_bcb_dump(struct cmd_tbl *cmdtp, int flag, int argc,
 		       char * const argv[])
 {
 	int size;
@@ -249,7 +249,7 @@ static int do_bcb_dump(cmd_tbl_t *cmdtp, int flag, int argc,
 	return CMD_RET_SUCCESS;
 }
 
-static int do_bcb_store(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_bcb_store(struct cmd_tbl *cmdtp, int flag, int argc,
 			char * const argv[])
 {
 	struct blk_desc *desc;
@@ -281,7 +281,7 @@ err:
 	return CMD_RET_FAILURE;
 }
 
-static cmd_tbl_t cmd_bcb_sub[] = {
+static struct cmd_tbl cmd_bcb_sub[] = {
 	U_BOOT_CMD_MKENT(load, CONFIG_SYS_MAXARGS, 1, do_bcb_load, "", ""),
 	U_BOOT_CMD_MKENT(set, CONFIG_SYS_MAXARGS, 1, do_bcb_set, "", ""),
 	U_BOOT_CMD_MKENT(clear, CONFIG_SYS_MAXARGS, 1, do_bcb_clear, "", ""),
@@ -290,9 +290,9 @@ static cmd_tbl_t cmd_bcb_sub[] = {
 	U_BOOT_CMD_MKENT(store, CONFIG_SYS_MAXARGS, 1, do_bcb_store, "", ""),
 };
 
-static int do_bcb(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
+static int do_bcb(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {
-	cmd_tbl_t *c;
+	struct cmd_tbl *c;
 
 	if (argc < 2)
 		return CMD_RET_USAGE;

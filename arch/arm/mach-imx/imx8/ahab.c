@@ -4,6 +4,7 @@
  */
 
 #include <common.h>
+#include <command.h>
 #include <errno.h>
 #include <asm/io.h>
 #include <asm/arch/sci/sci.h>
@@ -150,7 +151,7 @@ exit:
 	return ret;
 }
 
-static int do_authenticate(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_authenticate(struct cmd_tbl *cmdtp, int flag, int argc,
 			   char * const argv[])
 {
 	ulong addr;
@@ -251,7 +252,7 @@ static void display_ahab_auth_event(u32 event)
 	}
 }
 
-static int do_ahab_status(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_ahab_status(struct cmd_tbl *cmdtp, int flag, int argc,
 			  char * const argv[])
 {
 	int err;
@@ -298,7 +299,7 @@ static int confirm_close(void)
 	return 0;
 }
 
-static int do_ahab_close(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_ahab_close(struct cmd_tbl *cmdtp, int flag, int argc,
 			 char * const argv[])
 {
 	int err;

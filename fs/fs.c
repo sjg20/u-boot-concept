@@ -3,6 +3,7 @@
  * Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <command.h>
 #include <config.h>
 #include <errno.h>
 #include <common.h>
@@ -644,7 +645,7 @@ int fs_ln(const char *fname, const char *target)
 	return ret;
 }
 
-int do_size(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[],
+int do_size(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[],
 		int fstype)
 {
 	loff_t size;
@@ -663,7 +664,7 @@ int do_size(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[],
 	return 0;
 }
 
-int do_load(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[],
+int do_load(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[],
 		int fstype)
 {
 	unsigned long addr;
@@ -737,7 +738,7 @@ int do_load(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[],
 	return 0;
 }
 
-int do_ls(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[],
+int do_ls(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[],
 	int fstype)
 {
 	if (argc < 2)
@@ -763,7 +764,7 @@ int file_exists(const char *dev_type, const char *dev_part, const char *file,
 	return fs_exists(file);
 }
 
-int do_save(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[],
+int do_save(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[],
 		int fstype)
 {
 	unsigned long addr;
@@ -805,7 +806,7 @@ int do_save(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[],
 	return 0;
 }
 
-int do_fs_uuid(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[],
+int do_fs_uuid(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[],
 		int fstype)
 {
 	int ret;
@@ -830,7 +831,7 @@ int do_fs_uuid(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[],
 	return CMD_RET_SUCCESS;
 }
 
-int do_fs_type(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_fs_type(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
 {
 	struct fstype_info *info;
 
@@ -852,7 +853,7 @@ int do_fs_type(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	return CMD_RET_SUCCESS;
 }
 
-int do_rm(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[],
+int do_rm(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[],
 	  int fstype)
 {
 	if (argc != 4)
@@ -867,7 +868,7 @@ int do_rm(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[],
 	return 0;
 }
 
-int do_mkdir(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[],
+int do_mkdir(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[],
 	     int fstype)
 {
 	int ret;
@@ -887,7 +888,7 @@ int do_mkdir(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[],
 	return 0;
 }
 
-int do_ln(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[],
+int do_ln(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[],
 	  int fstype)
 {
 	if (argc != 5)

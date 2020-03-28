@@ -5,6 +5,7 @@
 
 #include <common.h>
 #include "tdx-cfg-block.h"
+#include <command.h>
 #include <asm/cache.h>
 
 #if defined(CONFIG_TARGET_APALIS_IMX6) || \
@@ -514,7 +515,7 @@ static int get_cfgblock_barcode(char *barcode)
 	return 0;
 }
 
-static int do_cfgblock_create(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_cfgblock_create(struct cmd_tbl *cmdtp, int flag, int argc,
 			      char * const argv[])
 {
 	u8 *config_block;
@@ -643,7 +644,7 @@ out:
 	return ret;
 }
 
-static int do_cfgblock(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_cfgblock(struct cmd_tbl *cmdtp, int flag, int argc,
 		       char * const argv[])
 {
 	int ret;

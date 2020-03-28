@@ -17,7 +17,7 @@
 /*
  * Image booting support
  */
-static int booti_start(cmd_tbl_t *cmdtp, int flag, int argc,
+static int booti_start(struct cmd_tbl *cmdtp, int flag, int argc,
 			char * const argv[], bootm_headers_t *images)
 {
 	int ret;
@@ -64,7 +64,7 @@ static int booti_start(cmd_tbl_t *cmdtp, int flag, int argc,
 	return 0;
 }
 
-int do_booti(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_booti(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
 {
 	int ret;
 

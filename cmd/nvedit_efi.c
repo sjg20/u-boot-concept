@@ -270,7 +270,7 @@ static int efi_dump_var_all(int argc,  char * const argv[],
  * If one or more variable names are specified, show information
  * named UEFI variables, otherwise show all the UEFI variables.
  */
-int do_env_print_efi(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_env_print_efi(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
 {
 	efi_guid_t guid;
 	const efi_guid_t *guid_p;
@@ -460,7 +460,7 @@ out:
  * Encode values specified and set given UEFI variable.
  * If no value is specified, delete the variable.
  */
-int do_env_set_efi(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_env_set_efi(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
 {
 	char *var_name, *value, *ep;
 	ulong addr;
