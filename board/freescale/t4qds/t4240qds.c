@@ -869,7 +869,7 @@ void qixis_dump_switch(void)
 	}
 }
 
-static int do_vdd_adjust(cmd_tbl_t *cmdtp,
+static int do_vdd_adjust(struct cmd_tbl *cmdtp,
 			 int flag, int argc,
 			 char * const argv[])
 {

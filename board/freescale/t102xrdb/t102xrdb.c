@@ -305,7 +305,7 @@ static u32 t1023rdb_ctrl(u32 ctrl_type)
 	return 0;
 }
 
-static int switch_cmd(cmd_tbl_t *cmdtp, int flag, int argc,
+static int switch_cmd(struct cmd_tbl *cmdtp, int flag, int argc,
 		    char * const argv[])
 {
 	if (argc < 2)

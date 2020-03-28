@@ -6,6 +6,7 @@
  */
 
 #include <common.h>
+#include <command.h>
 #include <div64.h>
 #include <env.h>
 #include <net.h>
@@ -195,7 +196,7 @@ static int do_syno_clk_gate(int argc, char * const argv[])
 	return 0;
 }
 
-static int do_syno(cmd_tbl_t *cmdtp, int flag,
+static int do_syno(struct cmd_tbl *cmdtp, int flag,
                    int argc, char * const argv[])
 {
 	const char *cmd;

@@ -47,7 +47,7 @@
 #include <lzma/LzmaTools.h>
 
 #ifdef CONFIG_CMD_BDI
-extern int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
+extern int do_bdinfo(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[]);
 #endif
 
 DECLARE_GLOBAL_DATA_PTR;

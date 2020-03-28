@@ -72,7 +72,7 @@ void timer_interrupt_cpu (struct pt_regs *regs)
  */
 
 void
-do_irqinfo(cmd_tbl_t *cmdtp, bd_t *bd, int flag, int argc, char * const argv[])
+do_irqinfo(struct cmd_tbl *cmdtp, bd_t *bd, int flag, int argc, char * const argv[])
 {
 }
 

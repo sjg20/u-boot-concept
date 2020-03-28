@@ -5,6 +5,7 @@
  * Eugeniu Rosca <rosca.eugeniu@gmail.com>
  */
 
+#include <command.h>
 #include <env.h>
 #include <image-android-dt.h>
 #include <common.h>
@@ -17,7 +18,7 @@
  */
 static ulong working_img;
 
-static int do_adtimg_addr(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_adtimg_addr(struct cmd_tbl *cmdtp, int flag, int argc,
 			  char * const argv[])
 {
 	char *endp;
@@ -56,7 +57,7 @@ static int adtimg_check_working_img(void)
 	return CMD_RET_SUCCESS;
 }
 
-static int do_adtimg_dump(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_adtimg_dump(struct cmd_tbl *cmdtp, int flag, int argc,
 			  char * const argv[])
 {
 	if (argc != 1)
@@ -181,7 +182,7 @@ static int adtimg_get_dt(int argc, char * const argv[])
 	return CMD_RET_FAILURE;
 }
 
-static int do_adtimg_get(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_adtimg_get(struct cmd_tbl *cmdtp, int flag, int argc,
 			 char * const argv[])
 {
 	if (argc < 2) {
@@ -203,15 +204,15 @@ static int do_adtimg_get(cmd_tbl_t *cmdtp, int flag, int argc,
 	return CMD_RET_FAILURE;
 }
 
-static cmd_tbl_t cmd_adtimg_sub[] = {
+static struct cmd_tbl cmd_adtimg_sub[] = {
 	U_BOOT_CMD_MKENT(addr, CONFIG_SYS_MAXARGS, 1, do_adtimg_addr, "", ""),
 	U_BOOT_CMD_MKENT(dump, CONFIG_SYS_MAXARGS, 1, do_adtimg_dump, "", ""),
 	U_BOOT_CMD_MKENT(get, CONFIG_SYS_MAXARGS, 1, do_adtimg_get, "", ""),
 };
 
-static int do_adtimg(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_adtimg(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
 {
-	cmd_tbl_t *cp;
+	struct cmd_tbl *cp;
 
 	cp = find_cmd_tbl(argv[1], cmd_adtimg_sub, ARRAY_SIZE(cmd_adtimg_sub));
 

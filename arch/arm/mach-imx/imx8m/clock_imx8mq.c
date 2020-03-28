@@ -6,6 +6,7 @@
  */
 
 #include <common.h>
+#include <command.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/imx-regs.h>
 #include <asm/io.h>
@@ -740,7 +741,7 @@ int clock_init(void)
  * Dump some clockes.
  */
 #ifndef CONFIG_SPL_BUILD
-static int do_imx8m_showclocks(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_imx8m_showclocks(struct cmd_tbl *cmdtp, int flag, int argc,
 		       char * const argv[])
 {
 	u32 freq;

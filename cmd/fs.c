@@ -9,7 +9,7 @@
 #include <command.h>
 #include <fs.h>
 
-static int do_size_wrapper(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_size_wrapper(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
 {
 	return do_size(cmdtp, flag, argc, argv, FS_TYPE_ANY);
 }
@@ -22,7 +22,7 @@ U_BOOT_CMD(
 	"      and determine its size."
 );
 
-static int do_load_wrapper(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_load_wrapper(struct cmd_tbl *cmdtp, int flag, int argc,
 				char * const argv[])
 {
 	return do_load(cmdtp, flag, argc, argv, FS_TYPE_ANY);
@@ -40,7 +40,7 @@ U_BOOT_CMD(
 	"      If 'pos' is 0 or omitted, the file is read from the start."
 )
 
-static int do_save_wrapper(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_save_wrapper(struct cmd_tbl *cmdtp, int flag, int argc,
 				char * const argv[])
 {
 	return do_save(cmdtp, flag, argc, argv, FS_TYPE_ANY);
@@ -57,7 +57,7 @@ U_BOOT_CMD(
 	"      If 'pos' is 0 or omitted, the file is written from the start."
 )
 
-static int do_ls_wrapper(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_ls_wrapper(struct cmd_tbl *cmdtp, int flag, int argc,
 				char * const argv[])
 {
 	return do_ls(cmdtp, flag, argc, argv, FS_TYPE_ANY);
@@ -71,7 +71,7 @@ U_BOOT_CMD(
 	"      device type 'interface' instance 'dev'."
 )
 
-static int do_ln_wrapper(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_ln_wrapper(struct cmd_tbl *cmdtp, int flag, int argc,
 			 char * const argv[])
 {
 	return do_ln(cmdtp, flag, argc, argv, FS_TYPE_ANY);
@@ -85,7 +85,7 @@ U_BOOT_CMD(
 	"      device type 'interface' instance 'dev'."
 )
 
-static int do_fstype_wrapper(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_fstype_wrapper(struct cmd_tbl *cmdtp, int flag, int argc,
 				char * const argv[])
 {
 	return do_fs_type(cmdtp, flag, argc, argv);

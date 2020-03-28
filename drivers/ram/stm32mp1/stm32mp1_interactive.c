@@ -4,6 +4,7 @@
  */
 
 #include <common.h>
+#include <command.h>
 #include <console.h>
 #include <cli.h>
 #include <clk.h>

@@ -1065,7 +1065,7 @@ static void command_def_init(struct ethsw_command_def *parsed_cmd)
 }
 
 /* function to interpret commands starting with "ethsw " */
-static int do_ethsw(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_ethsw(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
 {
 	struct ethsw_command_def parsed_cmd;
 	int rc = CMD_RET_SUCCESS;

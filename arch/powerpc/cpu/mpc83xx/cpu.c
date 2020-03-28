@@ -124,7 +124,7 @@ int checkcpu(void)
 
 #ifndef CONFIG_SYSRESET
 int
-do_reset (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
+do_reset (struct cmd_tbl * cmdtp, int flag, int argc, char * const argv[])
 {
 	ulong msr;
 #ifndef MPC83xx_RESET

@@ -9,6 +9,7 @@
  * @brief PFE utility commands
  */
 
+#include <command.h>
 #include <net/pfe_eth/pfe_eth.h>
 
 static inline void pfe_command_help(void)
@@ -462,7 +463,7 @@ static void pfe_command_stop(int argc, char * const argv[])
 }
 #endif
 
-static int pfe_command(cmd_tbl_t *cmdtp, int flag, int argc,
+static int pfe_command(struct cmd_tbl *cmdtp, int flag, int argc,
 		       char * const argv[])
 {
 	if (argc == 1 || strcmp(argv[1], "help") == 0) {

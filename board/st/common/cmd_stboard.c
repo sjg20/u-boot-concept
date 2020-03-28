@@ -5,6 +5,7 @@
 
 #ifndef CONFIG_SPL_BUILD
 #include <common.h>
+#include <command.h>
 #include <console.h>
 #include <misc.h>
 #include <dm/device.h>
@@ -38,7 +39,7 @@ static void display_stboard(u32 otp)
 	       otp & 0xF);
 }
 
-static int do_stboard(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_stboard(struct cmd_tbl *cmdtp, int flag, int argc,
 		      char * const argv[])
 {
 	int ret;

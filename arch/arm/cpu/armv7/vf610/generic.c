@@ -5,6 +5,7 @@
 
 #include <common.h>
 #include <clock_legacy.h>
+#include <command.h>
 #include <cpu_func.h>
 #include <init.h>
 #include <net.h>
@@ -240,7 +241,7 @@ unsigned int mxc_get_clock(enum mxc_clock clk)
 }
 
 /* Dump some core clocks */
-int do_vf610_showclocks(cmd_tbl_t *cmdtp, int flag, int argc,
+int do_vf610_showclocks(struct cmd_tbl *cmdtp, int flag, int argc,
 			 char * const argv[])
 {
 	printf("\n");

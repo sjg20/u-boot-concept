@@ -6,6 +6,7 @@
 
 #include <android_image.h>
 #include <common.h>
+#include <command.h>
 #include <image.h>
 #include <mapmem.h>
 
@@ -151,7 +152,7 @@ static int abootimg_get_dtb(int argc, char * const argv[])
 	return CMD_RET_USAGE;
 }
 
-static int do_abootimg_addr(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_abootimg_addr(struct cmd_tbl *cmdtp, int flag, int argc,
 			    char * const argv[])
 {
 	char *endp;
@@ -170,7 +171,7 @@ static int do_abootimg_addr(cmd_tbl_t *cmdtp, int flag, int argc,
 	return CMD_RET_SUCCESS;
 }
 
-static int do_abootimg_get(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_abootimg_get(struct cmd_tbl *cmdtp, int flag, int argc,
 			   char * const argv[])
 {
 	const char *param;
@@ -193,7 +194,7 @@ static int do_abootimg_get(cmd_tbl_t *cmdtp, int flag, int argc,
 	return CMD_RET_USAGE;
 }
 
-static int do_abootimg_dump(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_abootimg_dump(struct cmd_tbl *cmdtp, int flag, int argc,
 			    char * const argv[])
 {
 	if (argc != 2)
@@ -209,16 +210,16 @@ static int do_abootimg_dump(cmd_tbl_t *cmdtp, int flag, int argc,
 	return CMD_RET_SUCCESS;
 }
 
-static cmd_tbl_t cmd_abootimg_sub[] = {
+static struct cmd_tbl cmd_abootimg_sub[] = {
 	U_BOOT_CMD_MKENT(addr, 2, 1, do_abootimg_addr, "", ""),
 	U_BOOT_CMD_MKENT(dump, 2, 1, do_abootimg_dump, "", ""),
 	U_BOOT_CMD_MKENT(get, 5, 1, do_abootimg_get, "", ""),
 };
 
-static int do_abootimg(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_abootimg(struct cmd_tbl *cmdtp, int flag, int argc,
 		       char * const argv[])
 {
-	cmd_tbl_t *cp;
+	struct cmd_tbl *cp;
 
 	cp = find_cmd_tbl(argv[1], cmd_abootimg_sub,
 			  ARRAY_SIZE(cmd_abootimg_sub));

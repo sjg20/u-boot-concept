@@ -386,7 +386,7 @@ static int upgrade_failure_fallback(void)
 	return 0;
 }
 
-static int do_upgrade_available(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_upgrade_available(struct cmd_tbl *cmdtp, int flag, int argc,
 			char * const argv[])
 {
 	unsigned long upgrade_available = 0;

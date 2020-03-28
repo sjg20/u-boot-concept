@@ -269,7 +269,7 @@ flash_fill_sect_ranges (ulong addr_first, ulong addr_last,
 }
 #endif /* CONFIG_MTD_NOR_FLASH */
 
-static int do_flinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_flinfo(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
 {
 #ifdef CONFIG_MTD_NOR_FLASH
 	ulong bank;
@@ -297,7 +297,7 @@ static int do_flinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	return 0;
 }
 
-static int do_flerase(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_flerase(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
 {
 #ifdef CONFIG_MTD_NOR_FLASH
 	flash_info_t *info = NULL;
@@ -430,7 +430,7 @@ int flash_sect_erase(ulong addr_first, ulong addr_last)
 }
 #endif /* CONFIG_MTD_NOR_FLASH */
 
-static int do_protect(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_protect(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
 {
 	int rcode = 0;
 #ifdef CONFIG_MTD_NOR_FLASH

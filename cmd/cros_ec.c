@@ -93,7 +93,7 @@ static int do_read_write(struct udevice *dev, int is_write, int argc,
 	return 0;
 }
 
-static int do_cros_ec(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_cros_ec(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
 {
 	struct udevice *dev;
 	const char *cmd;

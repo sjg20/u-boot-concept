@@ -8,6 +8,7 @@
 
 #include <common.h>
 #include <clock_legacy.h>
+#include <command.h>
 #include <div64.h>
 #include <init.h>
 #include <net.h>
@@ -379,7 +380,7 @@ u32 imx_get_fecclk(void)
 }
 #endif
 
-int do_mx35_showclocks(cmd_tbl_t *cmdtp,
+int do_mx35_showclocks(struct cmd_tbl *cmdtp,
 	int flag, int argc, char * const argv[])
 {
 	u32 cpufreq = get_mcu_main_clk();

@@ -355,7 +355,7 @@ static int eeprom_execute_command(enum eeprom_action action, int i2c_bus,
 }
 
 #define NEXT_PARAM(argc, index)	{ (argc)--; (index)++; }
-int do_eeprom(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_eeprom(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
 {
 	int layout_ver = LAYOUT_VERSION_AUTODETECT;
 	enum eeprom_action action = EEPROM_ACTION_INVALID;
