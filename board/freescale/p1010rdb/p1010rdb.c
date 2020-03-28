@@ -4,6 +4,7 @@
  */
 
 #include <common.h>
+#include <command.h>
 #include <image.h>
 #include <init.h>
 #include <net.h>
@@ -554,8 +555,8 @@ int misc_init_r(void)
 }
 
 #ifndef CONFIG_SPL_BUILD
-static int pin_mux_cmd(cmd_tbl_t *cmdtp, int flag, int argc,
-				char * const argv[])
+static int pin_mux_cmd(struct cmd_tbl *cmdtp, int flag, int argc,
+		       char *const argv[])
 {
 	if (argc < 2)
 		return CMD_RET_USAGE;

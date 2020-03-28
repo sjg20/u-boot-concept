@@ -30,7 +30,7 @@ DECLARE_GLOBAL_DATA_PTR;
 #define CONFIG_SYS_MEMTEST_SCRATCH 0
 #endif
 
-static int mod_mem(cmd_tbl_t *, int, int, int, char * const []);
+static int mod_mem(struct cmd_tbl *, int, int, int, char * const []);
 
 /* Display values from last command.
  * Memory modify remembered values are different from display memory.
@@ -47,7 +47,8 @@ static	ulong	base_address = 0;
  *	md{.b, .w, .l, .q} {addr} {len}
  */
 #define DISP_LINE_LEN	16
-static int do_mem_md(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_mem_md(struct cmd_tbl *cmdtp, int flag, int argc,
+		     char *const argv[])
 {
 	ulong	addr, length, bytes;
 	const void *buf;
@@ -97,16 +98,20 @@ static int do_mem_md(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	return (rc);
 }
 
-static int do_mem_mm(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_mem_mm(struct cmd_tbl *cmdtp, int flag, int argc,
+		     char *const argv[])
 {
 	return mod_mem (cmdtp, 1, flag, argc, argv);
 }
-static int do_mem_nm(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+
+static int do_mem_nm(struct cmd_tbl *cmdtp, int flag, int argc,
+		     char *const argv[])
 {
 	return mod_mem (cmdtp, 0, flag, argc, argv);
 }
 
-static int do_mem_mw(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_mem_mw(struct cmd_tbl *cmdtp, int flag, int argc,
+		     char *const argv[])
 {
 #ifdef MEM_SUPPORT_64BIT_DATA
 	u64 writeval;
@@ -167,7 +172,8 @@ static int do_mem_mw(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 }
 
 #ifdef CONFIG_CMD_MX_CYCLIC
-static int do_mem_mdc(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_mem_mdc(struct cmd_tbl *cmdtp, int flag, int argc,
+		      char *const argv[])
 {
 	int i;
 	ulong count;
@@ -194,7 +200,8 @@ static int do_mem_mdc(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	return 0;
 }
 
-static int do_mem_mwc(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_mem_mwc(struct cmd_tbl *cmdtp, int flag, int argc,
+		      char *const argv[])
 {
 	int i;
 	ulong count;
@@ -222,7 +229,8 @@ static int do_mem_mwc(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 }
 #endif /* CONFIG_CMD_MX_CYCLIC */
 
-static int do_mem_cmp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_mem_cmp(struct cmd_tbl *cmdtp, int flag, int argc,
+		      char *const argv[])
 {
 	ulong	addr1, addr2, count, ngood, bytes;
 	int	size;
@@ -302,7 +310,8 @@ static int do_mem_cmp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	return rcode;
 }
 
-static int do_mem_cp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_mem_cp(struct cmd_tbl *cmdtp, int flag, int argc,
+		     char *const argv[])
 {
 	ulong	addr, dest, count;
 	void	*src, *dst;
@@ -360,8 +369,8 @@ static int do_mem_cp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	return 0;
 }
 
-static int do_mem_base(cmd_tbl_t *cmdtp, int flag, int argc,
-		       char * const argv[])
+static int do_mem_base(struct cmd_tbl *cmdtp, int flag, int argc,
+		       char *const argv[])
 {
 	if (argc > 1) {
 		/* Set new base address.
@@ -374,8 +383,8 @@ static int do_mem_base(cmd_tbl_t *cmdtp, int flag, int argc,
 	return 0;
 }
 
-static int do_mem_loop(cmd_tbl_t *cmdtp, int flag, int argc,
-		       char * const argv[])
+static int do_mem_loop(struct cmd_tbl *cmdtp, int flag, int argc,
+		       char *const argv[])
 {
 	ulong	addr, length, i, bytes;
 	int	size;
@@ -472,8 +481,8 @@ static int do_mem_loop(cmd_tbl_t *cmdtp, int flag, int argc,
 }
 
 #ifdef CONFIG_LOOPW
-static int do_mem_loopw(cmd_tbl_t *cmdtp, int flag, int argc,
-			char * const argv[])
+static int do_mem_loopw(struct cmd_tbl *cmdtp, int flag, int argc,
+			char *const argv[])
 {
 	ulong	addr, length, i, bytes;
 	int	size;
@@ -866,8 +875,8 @@ static ulong mem_test_quick(vu_long *buf, ulong start_addr, ulong end_addr,
  * configured using CONFIG_SYS_ALT_MEMTEST. The complete test loops until
  * interrupted by ctrl-c or by a failure of one of the sub-tests.
  */
-static int do_mem_mtest(cmd_tbl_t *cmdtp, int flag, int argc,
-			char * const argv[])
+static int do_mem_mtest(struct cmd_tbl *cmdtp, int flag, int argc,
+			char *const argv[])
 {
 	ulong start, end;
 	vu_long *buf, *dummy;
@@ -966,7 +975,8 @@ static int do_mem_mtest(cmd_tbl_t *cmdtp, int flag, int argc,
  *	nm{.b, .w, .l, .q} {addr}
  */
 static int
-mod_mem(cmd_tbl_t *cmdtp, int incrflag, int flag, int argc, char * const argv[])
+mod_mem(struct cmd_tbl *cmdtp, int incrflag, int flag, int argc,
+	char *const argv[])
 {
 	ulong	addr;
 #ifdef MEM_SUPPORT_64BIT_DATA
@@ -1070,7 +1080,8 @@ mod_mem(cmd_tbl_t *cmdtp, int incrflag, int flag, int argc, char * const argv[])
 
 #ifdef CONFIG_CMD_CRC32
 
-static int do_mem_crc(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_mem_crc(struct cmd_tbl *cmdtp, int flag, int argc,
+		      char *const argv[])
 {
 	int flags = 0;
 	int ac;
@@ -1095,7 +1106,8 @@ static int do_mem_crc(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 #endif
 
 #ifdef CONFIG_CMD_RANDOM
-static int do_random(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_random(struct cmd_tbl *cmdtp, int flag, int argc,
+		     char *const argv[])
 {
 	unsigned long addr, len;
 	unsigned long seed; // NOT INITIALIZED ON PURPOSE
@@ -1224,8 +1236,8 @@ U_BOOT_CMD(
 #endif
 
 #ifdef CONFIG_CMD_MEMINFO
-static int do_mem_info(cmd_tbl_t *cmdtp, int flag, int argc,
-		       char * const argv[])
+static int do_mem_info(struct cmd_tbl *cmdtp, int flag, int argc,
+		       char *const argv[])
 {
 	puts("DRAM:  ");
 	print_size(gd->ram_size, "\n");
