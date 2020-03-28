@@ -43,7 +43,7 @@ struct rockchip_efuse_platdata {
 };
 
 #if defined(DEBUG)
-static int dump_efuses(cmd_tbl_t *cmdtp, int flag,
+static int dump_efuses(struct cmd_tbl *cmdtp, int flag,
 		       int argc, char * const argv[])
 {
 	/*

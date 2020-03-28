@@ -14,7 +14,7 @@
 #include <common.h>
 #include <command.h>
 
-static int do_gettime(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_gettime(struct cmd_tbl *cmdtp, int flag, int argc,
 		      char * const argv[])
 {
 	unsigned long int val = get_timer(0);

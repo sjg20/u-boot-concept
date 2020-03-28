@@ -8,7 +8,7 @@
 #include <command.h>
 #include <asm/ppc.h>
 
-static int do_reginfo(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_reginfo(struct cmd_tbl *cmdtp, int flag, int argc,
 		       char * const argv[])
 {
 	print_reginfo();

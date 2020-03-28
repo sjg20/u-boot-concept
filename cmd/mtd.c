@@ -195,7 +195,7 @@ static bool mtd_oob_write_is_empty(struct mtd_oob_ops *op)
 	return true;
 }
 
-static int do_mtd_list(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_mtd_list(struct cmd_tbl *cmdtp, int flag, int argc,
 		       char * const argv[])
 {
 	struct mtd_info *mtd;
@@ -240,7 +240,7 @@ static int mtd_special_write_oob(struct mtd_info *mtd, u64 off,
 	return ret;
 }
 
-static int do_mtd_io(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_mtd_io(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
 {
 	bool dump, read, raw, woob, write_empty_pages, has_pages = false;
 	u64 start_off, off, len, remaining, default_len;
@@ -382,7 +382,7 @@ out_put_mtd:
 	return ret;
 }
 
-static int do_mtd_erase(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_mtd_erase(struct cmd_tbl *cmdtp, int flag, int argc,
 			char * const argv[])
 {
 	struct erase_info erase_op = {};
@@ -454,7 +454,7 @@ out_put_mtd:
 	return ret;
 }
 
-static int do_mtd_bad(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_mtd_bad(struct cmd_tbl *cmdtp, int flag, int argc,
 		      char * const argv[])
 {
 	struct mtd_info *mtd;

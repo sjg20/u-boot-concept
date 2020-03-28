@@ -21,6 +21,7 @@
  */
 
 #include <common.h>
+#include <command.h>
 #include <cpu_func.h>
 #include <irq_func.h>
 
@@ -28,7 +29,7 @@ __weak void reset_misc(void)
 {
 }
 
-int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_reset(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
 {
 	puts ("resetting ...\n");
 

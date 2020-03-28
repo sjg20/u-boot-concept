@@ -10,6 +10,7 @@
  */
 
 #include <common.h>
+#include <command.h>
 #include <malloc.h>
 #include <nand.h>
 #include <dm/devres.h>
@@ -557,7 +558,7 @@ static int do_nandbcb_update(int argc, char * const argv[])
 	return ret == 0 ? CMD_RET_SUCCESS : CMD_RET_FAILURE;
 }
 
-static int do_nandbcb(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_nandbcb(struct cmd_tbl *cmdtp, int flag, int argc,
 		      char * const argv[])
 {
 	const char *cmd;

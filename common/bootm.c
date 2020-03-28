@@ -42,7 +42,7 @@ DECLARE_GLOBAL_DATA_PTR;
 
 bootm_headers_t images;		/* pointers to os/initrd/fdt images */
 
-static const void *boot_get_kernel(cmd_tbl_t *cmdtp, int flag, int argc,
+static const void *boot_get_kernel(struct cmd_tbl *cmdtp, int flag, int argc,
 				   char * const argv[], bootm_headers_t *images,
 				   ulong *os_data, ulong *os_len);
 
@@ -67,7 +67,7 @@ static void boot_start_lmb(bootm_headers_t *images)
 static inline void boot_start_lmb(bootm_headers_t *images) { }
 #endif
 
-static int bootm_start(cmd_tbl_t *cmdtp, int flag, int argc,
+static int bootm_start(struct cmd_tbl *cmdtp, int flag, int argc,
 		       char * const argv[])
 {
 	memset((void *)&images, 0, sizeof(images));
@@ -81,7 +81,7 @@ static int bootm_start(cmd_tbl_t *cmdtp, int flag, int argc,
 	return 0;
 }
 
-static int bootm_find_os(cmd_tbl_t *cmdtp, int flag, int argc,
+static int bootm_find_os(struct cmd_tbl *cmdtp, int flag, int argc,
 			 char * const argv[])
 {
 	const void *os_hdr;
@@ -285,7 +285,7 @@ int bootm_find_images(int flag, int argc, char * const argv[])
 	return 0;
 }
 
-static int bootm_find_other(cmd_tbl_t *cmdtp, int flag, int argc,
+static int bootm_find_other(struct cmd_tbl *cmdtp, int flag, int argc,
 			    char * const argv[])
 {
 	if (((images.os.type == IH_TYPE_KERNEL) ||
@@ -520,7 +520,7 @@ static void fixup_silent_linux(void)
  *	then the intent is to boot an OS, so this function will not return
  *	unless the image type is standalone.
  */
-int do_bootm_states(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[],
+int do_bootm_states(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[],
 		    int states, bootm_headers_t *images, int boot_progress)
 {
 	boot_os_fn *boot_fn;
@@ -704,7 +704,7 @@ static image_header_t *image_get_kernel(ulong img_addr, int verify)
  *     pointer to image header if valid image was found, plus kernel start
  *     address and length, otherwise NULL
  */
-static const void *boot_get_kernel(cmd_tbl_t *cmdtp, int flag, int argc,
+static const void *boot_get_kernel(struct cmd_tbl *cmdtp, int flag, int argc,
 				   char * const argv[], bootm_headers_t *images,
 				   ulong *os_data, ulong *os_len)
 {

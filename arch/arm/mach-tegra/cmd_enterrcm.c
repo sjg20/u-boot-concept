@@ -25,12 +25,13 @@
  */
 
 #include <common.h>
+#include <command.h>
 #include <cpu_func.h>
 #include <irq_func.h>
 #include <asm/arch/tegra.h>
 #include <asm/arch-tegra/pmc.h>
 
-static int do_enterrcm(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_enterrcm(struct cmd_tbl *cmdtp, int flag, int argc,
 		       char * const argv[])
 {
 	puts("Entering RCM...\n");
