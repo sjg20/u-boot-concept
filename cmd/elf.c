@@ -226,7 +226,7 @@ static unsigned long load_elf_image_shdr(unsigned long addr)
 
 /* Allow ports to override the default behavior */
 static unsigned long do_bootelf_exec(ulong (*entry)(int, char * const[]),
-				     int argc, char * const argv[])
+				     int argc, char *const argv[])
 {
 	unsigned long ret;
 
@@ -264,7 +264,7 @@ int valid_elf_image(unsigned long addr)
 }
 
 /* Interpreter command to boot an arbitrary ELF image from memory */
-int do_bootelf(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_bootelf(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {
 	unsigned long addr; /* Address of the ELF image */
 	unsigned long rc; /* Return value from user code */
@@ -320,7 +320,7 @@ int do_bootelf(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
  * be either an ELF image or a raw binary.  Will attempt to setup the
  * bootline and other parameters correctly.
  */
-int do_bootvx(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+int do_bootvx(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {
 	unsigned long addr; /* Address of image */
 	unsigned long bootaddr = 0; /* Address to put the bootline */
