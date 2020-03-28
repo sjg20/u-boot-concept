@@ -5,6 +5,7 @@
  */
 
 #include <common.h>
+#include <command.h>
 #include <config.h>
 #include <cpu_func.h>
 #include <env.h>
@@ -756,7 +757,8 @@ static int hsdk_go_prepare_and_run(void)
 	return hsdk_go_run(reg);
 }
 
-static int do_hsdk_go(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
+static int do_hsdk_go(struct cmd_tbl *cmdtp, int flag, int argc,
+		      char *const argv[])
 {
 	int ret;
 
@@ -795,7 +797,8 @@ U_BOOT_CMD(
 	"hsdk_go halt - Boot stand-alone application on HSDK, halt CPU just before application run\n"
 );
 
-static int do_hsdk_init(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
+static int do_hsdk_init(struct cmd_tbl *cmdtp, int flag, int argc,
+			char *const argv[])
 {
 	static bool done = false;
 	int ret;
@@ -819,7 +822,7 @@ U_BOOT_CMD(
 	"- Init HSDK HW\n"
 );
 
-static int do_hsdk_clock_set(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_hsdk_clock_set(struct cmd_tbl *cmdtp, int flag, int argc,
 			     char *const argv[])
 {
 	int ret = 0;
@@ -851,7 +854,7 @@ static int do_hsdk_clock_set(cmd_tbl_t *cmdtp, int flag, int argc,
 	return CMD_RET_SUCCESS;
 }
 
-static int do_hsdk_clock_get(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_hsdk_clock_get(struct cmd_tbl *cmdtp, int flag, int argc,
 			     char *const argv[])
 {
 	ulong rate;
@@ -879,7 +882,7 @@ static int do_hsdk_clock_get(cmd_tbl_t *cmdtp, int flag, int argc,
 	return CMD_RET_SUCCESS;
 }
 
-static int do_hsdk_clock_print(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_hsdk_clock_print(struct cmd_tbl *cmdtp, int flag, int argc,
 			       char *const argv[])
 {
 	/* Main clocks */
@@ -891,7 +894,7 @@ static int do_hsdk_clock_print(cmd_tbl_t *cmdtp, int flag, int argc,
 	return CMD_RET_SUCCESS;
 }
 
-static int do_hsdk_clock_print_all(cmd_tbl_t *cmdtp, int flag, int argc,
+static int do_hsdk_clock_print_all(struct cmd_tbl *cmdtp, int flag, int argc,
 				   char *const argv[])
 {
 	/*
@@ -945,16 +948,17 @@ static int do_hsdk_clock_print_all(cmd_tbl_t *cmdtp, int flag, int argc,
 	return CMD_RET_SUCCESS;
 }
 
-cmd_tbl_t cmd_hsdk_clock[] = {
+struct cmd_tbl cmd_hsdk_clock[] = {
 	U_BOOT_CMD_MKENT(set, 3, 0, do_hsdk_clock_set, "", ""),
 	U_BOOT_CMD_MKENT(get, 3, 0, do_hsdk_clock_get, "", ""),
 	U_BOOT_CMD_MKENT(print, 4, 0, do_hsdk_clock_print, "", ""),
 	U_BOOT_CMD_MKENT(print_all, 4, 0, do_hsdk_clock_print_all, "", ""),
 };
 
-static int do_hsdk_clock(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
+static int do_hsdk_clock(struct cmd_tbl *cmdtp, int flag, int argc,
+			 char *const argv[])
 {
-	cmd_tbl_t *c;
+	struct cmd_tbl *c;
 
 	if (argc < 2)
 		return CMD_RET_USAGE;
