@@ -1,0 +1,21 @@
+Labman - Lab Manager
+====================
+
+A lab is a collection of test devices, servers and associated equipment to
+connect them together. The purpose of a lab is to build and run tests and
+provide access to the test devices for general use.
+
+Labman is a program for keeping track of your lab.
+
+You can use labman to:
+- define available boards and how they are connected. E.g. a LinkSprite pcduino3
+    may have an uSD connection to an SDwire, a UART connection to a USB UART
+    dongle, a relay for reset and a YKUSH board for power.
+- generate a list of avalable boards
+- check that a board is working correctly
+- generate a list of things to do to get all boards working fully
+- generate board config files for tbot
+- generate board config files for pytest
+- launch tbot or pytest
+
+
