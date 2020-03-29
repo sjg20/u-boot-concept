@@ -15,6 +15,7 @@ class Lab:
     """
     def __init__(self):
         self._name = None
+        self._desc = None
         self._duts = {}
 
     def read(self, fname):
@@ -29,3 +30,8 @@ class Lab:
             dutt = dut.Dut(name)
             dutt.load(dut_yam)
             self._duts[name] = dutt
+
+    def show_list(self):
+        print('DUTs: ')
+        for dutt in sorted(self._duts):
+            dutt.show()

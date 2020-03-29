@@ -2,6 +2,7 @@
 
 duts:
     rpi_3_32b:
+        description: Raspberry Pi 3b
         console:
           connection-type: usb
           port: /dev/ttyusb_port1

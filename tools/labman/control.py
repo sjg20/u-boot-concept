@@ -14,4 +14,4 @@ def Labman(args):
         lab.read(args.lab)
 
     if args.cmd == 'ls':
-        print('list')
+        lab.show_list()

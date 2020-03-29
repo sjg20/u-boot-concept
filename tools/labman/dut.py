@@ -15,11 +15,13 @@ class Dut:
     have connections with in the lab (e.g. for serial UART).
 
     Properties:
-        _name: Name of the DUT (e.g. rpi_3)
-        _cons: Console to talk to the DUT (typically a UART)
+        _name: Name of the DUT (e.g. 'rpi_3')
+        _desc: Description of the DUT (e.g. 'Raspberry Pi 3b')
+        _cons: Console to talk to the DUT
     """
     def __init__(self, name):
         self._name = name
+        self._desc = None
         self._cons = None
 
     def load(self, yam):
@@ -27,3 +29,6 @@ class Dut:
         if cons_yam:
             self._cons = console.Console()
             self._cons.load(cons_yam)
+
+    def show(self):
+        print('%10  %s' % (self.name, self.desc))
