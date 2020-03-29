@@ -120,6 +120,7 @@ def RunTests(debug, verbosity, processes, test_preserve_dirs, args, toolpath):
     # errors are included in the errors accumulated by result.errors.
     if test_name:
         errors = []
+
         for test, err in result.errors:
             if ("has no attribute '%s'" % test_name) not in err:
                 errors.append((test, err))

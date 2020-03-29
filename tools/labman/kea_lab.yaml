@@ -1,0 +1,5 @@
+# Kea lab
+
+duts:
+    rpi_3_32b:
+        console: /dev/ttyusb_port1
