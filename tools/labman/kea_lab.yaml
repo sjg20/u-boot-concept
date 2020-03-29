@@ -2,4 +2,6 @@
 
 duts:
     rpi_3_32b:
-        console: /dev/ttyusb_port1
+        console:
+          connection-type: usb
+          port: /dev/ttyusb_port1

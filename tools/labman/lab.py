@@ -4,14 +4,28 @@
 
 import yaml
 
+from tools.labman import dut
+
 class Lab:
-    """A colection of DUTs, builders and the infrastructure to connect them"""
+    """A colection of DUTs, builders and the infrastructure to connect them
+
+    Properties:
+        _name: Name of the lab. This should be short, ideally a nickname.
+        _duts: List of available DUTs
+    """
     def __init__(self):
         self._name = None
+        self._duts = {}
 
     def read(self, fname):
         with open(fname) as inf:
             data = inf.read()
         yam = yaml.load(data, Loader=yaml.SafeLoader)
-        load_duts(yam)
-        print('yam', yam)
+        self.load_duts(yam['duts'])
+        #print('yam', yam)
+
+    def load_duts(self, yam):
+        for name, dut_yam in yam.items():
+            dutt = dut.Dut(name)
+            dutt.load(dut_yam)
+            self._duts[name] = dutt

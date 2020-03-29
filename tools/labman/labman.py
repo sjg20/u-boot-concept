@@ -12,8 +12,8 @@ import traceback
 our_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(our_path, '..', '..'))
 
-import cmdline
-import control
+from tools.labman import cmdline
+from tools.labman import control
 
 def RunLabman(args):
     """Main entry point to labman once arguments are parsed
