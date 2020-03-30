@@ -12,16 +12,23 @@ class Console:
         _type: Type of console (CONS_TYPES)
         _port: Device to use as a console (e.g. '/dev/ttyusb_port1')
     """
+    CTYPE_NONE, CTYPE_USB_UART = range(2)
+
     CONS_TYPES = {
-        'none': 0,
-        'usb-uart': 1,
+        'none': CTYPE_NONE,
+        'usb-uart': CTYPE_USB_UART,
         }
 
     def __init__(self, parent):
-        self._parent_= parent
+        self._parent = parent
+        self._type = 0
+        self._port = None
+
+    def __str__(self):
+        return 'console %s/%s' % (self._type, self._port)
 
     def Raise(self, msg):
-
+        self._parent.Raise('%s: %s' % (str(self), msg))
 
     def load(self, yam):
         cname = yam.get('connection-type')
@@ -31,3 +38,6 @@ class Console:
         if self._type is None:
             self.Raise("Invalid connection-type '%s'" % cname)
         self._port = yam['port']
+
+    def get_uart(self):
+        return self._port

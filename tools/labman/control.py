@@ -15,3 +15,5 @@ def Labman(args):
 
     if args.cmd == 'ls':
         lab.show_list()
+    elif args.cmd == 'emit':
+        lab.emit(args.dut, args.ftype)

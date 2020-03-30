@@ -1,8 +1,9 @@
 # Kea lab
 
+name: kea
 duts:
-    rpi_3_32b:
-        description: Raspberry Pi 3b
+    rpi_3:
+        desc: Raspberry Pi 3b
         console:
-          connection-type: usb
+          connection-type: usb-uart
           port: /dev/ttyusb_port1

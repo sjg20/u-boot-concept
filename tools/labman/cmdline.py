@@ -25,7 +25,13 @@ def ParseArgs(argv):
     parser.add_argument('-l', '--lab', type=str,
         help='Select the lab description to use (yaml file)')
 
-    subparsers = parser.add_subparsers(dest='cmd')
-    build_parser = subparsers.add_parser('ls', help='Show lab info')
+    subparser = parser.add_subparsers(dest='cmd')
+    ls_parser = subparser.add_parser('ls', help='Show lab info')
+
+    emit_parser = subparser.add_parser('emit', help='Emit scripts')
+    emit_parser.add_argument('-d', '--dut', type=str,
+                             help='Select the DUT to emit')
+    emit_parser.add_argument('-f', '--ftype', type=str,
+                             help='Select the script type to emit (only tbot)')
 
     return parser.parse_args(argv)

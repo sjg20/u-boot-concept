@@ -41,7 +41,7 @@ def RunLabman(args):
         try:
             ret_code = control.Labman(args)
         except Exception as e:
-            print('binman: %s' % e)
+            print('labman: %s' % e)
             if args.debug:
                 print()
                 traceback.print_exc()
