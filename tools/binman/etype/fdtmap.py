@@ -9,7 +9,7 @@ image.
 """
 
 from entry import Entry
-import tools
+import patman.tools
 import tout
 
 FDTMAP_MAGIC   = b'_FDTMAP_'

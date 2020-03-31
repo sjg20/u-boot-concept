@@ -8,7 +8,6 @@
 from __future__ import print_function
 
 from collections import namedtuple, OrderedDict
-import command
 import io
 import os
 import re
@@ -16,8 +15,9 @@ import shutil
 import struct
 import tempfile
 
-import tools
-import tout
+import patman.command
+import patman.tools
+import patman.tout
 
 ELF_TOOLS = True
 try:

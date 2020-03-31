@@ -10,12 +10,12 @@ from __future__ import print_function
 from collections import OrderedDict
 import os
 import sys
-import tools
+import patman.tools
 
 import cbfs_util
-import command
 import elf
-import tout
+import patman.command
+import patman.tout
 
 # List of images we plan to create
 # Make this global so that it can be referenced from tests

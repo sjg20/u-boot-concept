@@ -10,7 +10,7 @@ import glob
 import os
 import sys
 
-import command
+import patman.command
 
 try:
   from StringIO import StringIO

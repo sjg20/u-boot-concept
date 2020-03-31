@@ -11,7 +11,7 @@ import os
 
 from section import Entry_section
 import fdt_util
-import tools
+import patman.tools
 
 
 class Entry_files(Entry_section):

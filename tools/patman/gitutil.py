@@ -12,7 +12,7 @@ from patman import command
 from patman import series
 from patman import settings
 from patman import terminal
-from patman import tools
+from patman import patman.tools
 
 # True to use --no-decorate - we check this in Setup()
 use_no_decorate = True

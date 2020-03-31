@@ -11,7 +11,7 @@ import command
 import elf
 from entry import Entry
 from blob import Entry_blob
-import tools
+import patman.tools
 
 class Entry_u_boot_spl_bss_pad(Entry_blob):
     """U-Boot SPL binary padded with a BSS region

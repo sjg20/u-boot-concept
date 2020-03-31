@@ -12,7 +12,7 @@ import command
 from entry import Entry, EntryArg
 
 import fdt_util
-import tools
+import patman.tools
 
 # Build GBB flags.
 # (src/platform/vboot_reference/firmware/include/gbb_header.h)

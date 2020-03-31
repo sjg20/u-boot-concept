@@ -9,7 +9,7 @@ from entry import Entry
 from blob import Entry_blob
 
 import fdt_util
-import tools
+import patman.tools
 
 class Entry_u_boot_elf(Entry_blob):
     """U-Boot ELF image

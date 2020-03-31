@@ -10,7 +10,7 @@ import re
 
 import fdt
 import os
-import tools
+import patman.tools
 import tout
 
 # Records the device-tree files known to binman, keyed by entry type (e.g.

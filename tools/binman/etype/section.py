@@ -16,7 +16,7 @@ import sys
 
 from entry import Entry
 import fdt_util
-import tools
+import patman.tools
 import tout
 
 

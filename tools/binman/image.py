@@ -20,7 +20,7 @@ from etype import image_header
 from etype import section
 import fdt
 import fdt_util
-import tools
+import patman.tools
 import tout
 
 class Image(section.Entry_section):

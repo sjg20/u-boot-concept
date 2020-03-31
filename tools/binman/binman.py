@@ -23,7 +23,7 @@ import unittest
 # Bring in the patman and dtoc libraries (but don't override the first path
 # in PYTHONPATH)
 our_path = os.path.dirname(os.path.realpath(__file__))
-for dirname in ['../patman', '../dtoc', '..', '../concurrencytest']:
+for dirname in ['..']:
     sys.path.insert(2, os.path.join(our_path, dirname))
 
 # Bring in the libfdt module
@@ -38,14 +38,14 @@ sys.path.insert(2, os.path.join(our_path,
 sys.path.append(get_python_lib())
 
 import cmdline
-import command
+import patman.command
 use_concurrent = True
 try:
     from concurrencytest import ConcurrentTestSuite, fork_for_tests
 except:
     use_concurrent = False
 import control
-import test_util
+import patman.test_util
 
 def RunTests(debug, verbosity, processes, test_preserve_dirs, args, toolpath):
     """Run the functional tests and any embedded doctests

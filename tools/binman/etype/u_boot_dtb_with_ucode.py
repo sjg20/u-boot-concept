@@ -7,7 +7,7 @@
 
 from entry import Entry
 from blob_dtb import Entry_blob_dtb
-import tools
+import patman.tools
 
 class Entry_u_boot_dtb_with_ucode(Entry_blob_dtb):
     """A U-Boot device tree file, with the microcode removed

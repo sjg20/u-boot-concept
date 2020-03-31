@@ -7,7 +7,7 @@
 
 from entry import Entry
 from blob import Entry_blob
-import tools
+import patman.tools
 
 class Entry_u_boot_ucode(Entry_blob):
     """U-Boot microcode block

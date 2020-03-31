@@ -7,7 +7,7 @@
 
 from entry import Entry
 import fmap_util
-import tools
+import patman.tools
 from tools import ToHexSize
 import tout
 

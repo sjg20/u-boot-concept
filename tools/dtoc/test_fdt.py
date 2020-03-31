@@ -26,7 +26,7 @@ import fdt_util
 from fdt_util import fdt32_to_cpu
 import libfdt
 import test_util
-import tools
+import patman.tools
 
 def _GetPropertyValue(dtb, node, prop_name):
     """Low-level function to get the property value based on its offset

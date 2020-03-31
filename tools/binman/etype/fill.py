@@ -5,7 +5,7 @@
 
 from entry import Entry
 import fdt_util
-import tools
+import patman.tools
 
 class Entry_fill(Entry):
     """An entry which is filled to a particular byte value

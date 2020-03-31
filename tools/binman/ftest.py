@@ -20,20 +20,20 @@ import unittest
 import binman
 import cbfs_util
 import cmdline
-import command
+import patman.command
 import control
 import elf
 import elf_test
-import fdt
+import dtoc.fdt
 from etype import fdtmap
 from etype import image_header
-import fdt_util
+import dtoc.fdt_util
 import fmap_util
-import test_util
+import patman.test_util
 import gzip
 from image import Image
 import state
-import tools
+import patman.tools
 import tout
 
 # Contents of test files, corresponding to different entry types

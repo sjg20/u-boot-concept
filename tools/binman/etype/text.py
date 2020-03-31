@@ -7,7 +7,7 @@ from collections import OrderedDict
 
 from entry import Entry, EntryArg
 import fdt_util
-import tools
+import patman.tools
 
 
 class Entry_text(Entry):

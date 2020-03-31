@@ -13,7 +13,7 @@ import urllib.request, urllib.error, urllib.parse
 import bsettings
 import command
 import terminal
-import tools
+import patman.tools
 
 (PRIORITY_FULL_PREFIX, PRIORITY_PREFIX_GCC, PRIORITY_PREFIX_GCC_PATH,
     PRIORITY_CALC) = list(range(4))

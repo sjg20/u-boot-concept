@@ -17,7 +17,7 @@ import sys
 
 import fdt
 import fdt_util
-import tools
+import patman.tools
 
 # When we see these properties we ignore them - i.e. do not create a structure member
 PROP_IGNORE_LIST = [

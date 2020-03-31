@@ -24,7 +24,7 @@ from dtb_platdata import tab_to
 import fdt
 import fdt_util
 import test_util
-import tools
+import patman.tools
 
 our_path = os.path.dirname(os.path.realpath(__file__))
 
