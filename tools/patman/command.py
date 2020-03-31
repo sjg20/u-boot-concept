@@ -4,8 +4,8 @@
 
 import os
 
-from patman import cros_subprocess
-from patman import tools
+from tools.patman import cros_subprocess
+from tools.patman import tools
 
 """Shell command ease-ups for Python."""
 

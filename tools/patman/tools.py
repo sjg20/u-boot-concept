@@ -3,8 +3,6 @@
 # Copyright (c) 2016 Google, Inc
 #
 
-from __future__ import print_function
-
 import glob
 import os
 import shutil
@@ -12,8 +10,8 @@ import struct
 import sys
 import tempfile
 
-from patman import command
-from patman import tout
+from tools.patman import command
+from tools.patman import tout
 
 # Output directly (generally this is temporary)
 outdir = None
