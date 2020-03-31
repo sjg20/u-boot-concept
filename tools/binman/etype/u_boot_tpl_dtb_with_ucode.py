@@ -8,7 +8,7 @@
 import control
 from entry import Entry
 from u_boot_dtb_with_ucode import Entry_u_boot_dtb_with_ucode
-import patman.tools
+from patman import tools
 
 class Entry_u_boot_tpl_dtb_with_ucode(Entry_u_boot_dtb_with_ucode):
     """U-Boot TPL with embedded microcode pointer

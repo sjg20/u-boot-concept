@@ -8,8 +8,8 @@
 from collections import OrderedDict
 
 from entry import Entry, EntryArg
-import fdt_util
-import patman.tools
+from dtoc import fdt_util
+from patman import tools
 
 
 class Entry__testing(Entry):

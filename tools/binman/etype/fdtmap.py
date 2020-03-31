@@ -9,8 +9,8 @@ image.
 """
 
 from entry import Entry
-import patman.tools
-import tout
+from patman import tools
+from patman import tout
 
 FDTMAP_MAGIC   = b'_FDTMAP_'
 FDTMAP_HDR_LEN = 16
@@ -83,7 +83,7 @@ class Entry_fdtmap(Entry):
 
         import libfdt
         import state
-        from fdt import Fdt
+        from dtoc import fdt
 
         Entry.__init__(self, section, etype, node)
 

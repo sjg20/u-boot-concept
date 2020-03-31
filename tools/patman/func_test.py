@@ -20,7 +20,7 @@ except ImportError:
 from patman import gitutil
 from patman import patchstream
 from patman import settings
-from patman import patman.tools
+from patman import tools
 
 
 @contextlib.contextmanager

@@ -20,13 +20,13 @@ for dirname in ['../patman', '..']:
     sys.path.insert(0, os.path.join(our_path, dirname))
 
 import command
-import fdt
+from dtoc import fdt
 from fdt import TYPE_BYTE, TYPE_INT, TYPE_STRING, TYPE_BOOL, BytesToValue
-import fdt_util
-from fdt_util import fdt32_to_cpu
+from dtoc import fdt_util
+from fdt_util from dtoc import fdt32_to_cpu
 import libfdt
 import test_util
-import patman.tools
+from patman import tools
 
 def _GetPropertyValue(dtb, node, prop_name):
     """Low-level function to get the property value based on its offset

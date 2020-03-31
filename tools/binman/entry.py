@@ -11,10 +11,10 @@ import importlib
 import os
 import sys
 
-import dtoc.fdt_util
-import patman.tools
+from dtoc import fdt_util
+from patman import tools
 from patman.tools import ToHex, ToHexSize
-import patman.tout
+from patman import tout
 
 modules = {}
 

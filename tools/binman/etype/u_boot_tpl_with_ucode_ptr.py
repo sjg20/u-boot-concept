@@ -11,7 +11,7 @@ import command
 from entry import Entry
 from blob import Entry_blob
 from u_boot_with_ucode_ptr import Entry_u_boot_with_ucode_ptr
-import patman.tools
+from patman import tools
 
 class Entry_u_boot_tpl_with_ucode_ptr(Entry_u_boot_with_ucode_ptr):
     """U-Boot TPL with embedded microcode pointer

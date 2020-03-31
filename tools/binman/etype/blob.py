@@ -6,9 +6,9 @@
 #
 
 from entry import Entry
-import fdt_util
-import patman.tools
-import tout
+from dtoc import fdt_util
+from patman import tools
+from patman import tout
 
 class Entry_blob(Entry):
     """Entry containing an arbitrary binary blob

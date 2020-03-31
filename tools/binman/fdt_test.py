@@ -9,10 +9,10 @@ import sys
 import tempfile
 import unittest
 
-import dtoc.fdt
+from dtoc import fdt
+from dtoc import fdt_util
 from dtoc.fdt import FdtScan
-import dtoc.fdt_util
-import patman.tools
+from patman import tools
 
 class TestFdt(unittest.TestCase):
     @classmethod

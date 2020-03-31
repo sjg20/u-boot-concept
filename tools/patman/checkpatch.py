@@ -10,7 +10,7 @@ import sys
 from patman import command
 from patman import gitutil
 from patman import terminal
-from patman import patman.tools
+from patman import tools
 
 def FindCheckPatch():
     top_level = gitutil.GetTopLevel()

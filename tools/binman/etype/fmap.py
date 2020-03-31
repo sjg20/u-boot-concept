@@ -7,9 +7,9 @@
 
 from entry import Entry
 import fmap_util
-import patman.tools
+from patman import tools
 from tools import ToHexSize
-import tout
+from patman import tout
 
 
 class Entry_fmap(Entry):

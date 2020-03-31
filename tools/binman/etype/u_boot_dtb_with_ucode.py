@@ -7,7 +7,7 @@
 
 from entry import Entry
 from blob_dtb import Entry_blob_dtb
-import patman.tools
+from patman import tools
 
 class Entry_u_boot_dtb_with_ucode(Entry_blob_dtb):
     """A U-Boot device tree file, with the microcode removed
@@ -44,7 +44,7 @@ class Entry_u_boot_dtb_with_ucode(Entry_blob_dtb):
 
     def ProcessFdt(self, fdt):
         # So the module can be loaded without it
-        import fdt
+        from dtoc import fdt
 
         # If the section does not need microcode, there is nothing to do
         ucode_dest_entry = self.section.FindEntryType(

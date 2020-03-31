@@ -20,7 +20,6 @@ import unittest
 import binman
 import cbfs_util
 import cmdline
-import patman.command
 import control
 import elf
 import elf_test
@@ -29,12 +28,13 @@ from etype import fdtmap
 from etype import image_header
 import dtoc.fdt_util
 import fmap_util
-import patman.test_util
 import gzip
 from image import Image
+from patman import command
+from patman import test_util
+from patman import tools
+from patman import tout
 import state
-import patman.tools
-import tout
 
 # Contents of test files, corresponding to different entry types
 U_BOOT_DATA           = b'1234'

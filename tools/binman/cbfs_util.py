@@ -22,9 +22,9 @@ import io
 import struct
 import sys
 
-import patman.command
 import elf
-import patman.tools
+from patman import command
+from patman import tools
 
 # Set to True to enable printing output while working
 DEBUG = False

@@ -18,10 +18,10 @@ from entry import Entry
 from etype import fdtmap
 from etype import image_header
 from etype import section
-import fdt
-import fdt_util
-import patman.tools
-import tout
+from dtoc import fdt
+from dtoc import fdt_util
+from patman import tools
+from patman import tout
 
 class Image(section.Entry_section):
     """A Image, representing an output from binman

@@ -10,9 +10,9 @@ import sys
 import unittest
 
 import entry
-import dtoc.fdt
-import dtoc.fdt_util
-import patman.tools
+from dtoc import fdt
+from dtoc import fdt_util
+from patman import tools
 
 class TestEntry(unittest.TestCase):
     def setUp(self):

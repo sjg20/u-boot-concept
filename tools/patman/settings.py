@@ -14,7 +14,7 @@ import re
 
 from patman import command
 from patman import gitutil
-from patman import patman.tools
+from patman import tools
 
 """Default settings per-project.
 

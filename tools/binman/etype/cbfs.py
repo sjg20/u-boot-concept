@@ -10,7 +10,7 @@ from collections import OrderedDict
 import cbfs_util
 from cbfs_util import CbfsWriter
 from entry import Entry
-import fdt_util
+from dtoc import fdt_util
 
 class Entry_cbfs(Entry):
     """Entry containing a Coreboot Filesystem (CBFS)

@@ -8,8 +8,8 @@
 from entry import Entry
 from blob import Entry_blob
 
-import fdt_util
-import patman.tools
+from dtoc import fdt_util
+from patman import tools
 
 class Entry_u_boot_elf(Entry_blob):
     """U-Boot ELF image

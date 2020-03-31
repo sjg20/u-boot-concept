@@ -10,12 +10,12 @@ from __future__ import print_function
 from collections import OrderedDict
 import os
 import sys
-import patman.tools
+from patman import tools
 
 import cbfs_util
 import elf
-import patman.command
-import patman.tout
+from patman import command
+from patman import tout
 
 # List of images we plan to create
 # Make this global so that it can be referenced from tests
@@ -336,8 +336,8 @@ def PrepareImagesAndDtbs(dtb_fname, select_images, update_fdt):
     """
     # Import these here in case libfdt.py is not available, in which case
     # the above help option still works.
-    import fdt
-    import fdt_util
+    from dtoc import fdt
+    from dtoc import fdt_util
     global images
 
     # Get the device tree ready by compiling it and copying the compiled

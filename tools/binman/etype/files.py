@@ -10,8 +10,8 @@ import glob
 import os
 
 from section import Entry_section
-import fdt_util
-import patman.tools
+from dtoc import fdt_util
+from patman import tools
 
 
 class Entry_files(Entry_section):
