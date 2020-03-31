@@ -90,3 +90,33 @@ def capture_sys_output():
         yield capture_out, capture_err
     finally:
         sys.stdout, sys.stderr = old_out, old_err
+
+
+def ReportResult(toolname:str, result: unittest.TestResult):
+    # Remove errors which just indicate a missing test. Since Python v3.5 If an
+    # ImportError or AttributeError occurs while traversing name then a
+    # synthetic test that raises that error when run will be returned. These
+    # errors are included in the errors accumulated by result.errors.
+    if test_name:
+        errors = []
+
+        for test, err in result.errors:
+            if ("has no attribute '%s'" % test_name) not in err:
+                errors.append((test, err))
+            result.testsRun -= 1
+        result.errors = errors
+
+    print(result)
+    for test, err in result.errors:
+        print(test.id(), err)
+    for test, err in result.failures:
+        print(err, result.failures)
+    if result.skipped:
+        print('%d binman test%s SKIPPED:' %
+              (len(result.skipped), 's' if len(result.skipped) > 1 else ''))
+        for skip_info in result.skipped:
+            print('%s: %s' % (skip_info[0], skip_info[1]))
+    if result.errors or result.failures:
+        print('binman tests FAILED')
+        return 1
+    return 0
