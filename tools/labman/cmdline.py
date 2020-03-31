@@ -22,8 +22,15 @@ def ParseArgs(argv):
     parser = ArgumentParser(epilog=epilog)
     parser.add_argument('-D', '--debug', action='store_true',
         help='Enabling debugging (provides a full traceback on error)')
+    parser.add_argument('-H', '--full-help', action='store_true',
+        default=False, help='Display the README file')
     parser.add_argument('-l', '--lab', type=str,
         help='Select the lab description to use (yaml file)')
+    parser.add_argument('--toolpath', type=str, action='append',
+        help='Add a path to the directories containing tools')
+    parser.add_argument('-v', '--verbosity', default=1,
+        type=int, help='Control verbosity: 0=silent, 1=warnings, 2=notices, '
+        '3=info, 4=detail, 5=debug')
 
     subparser = parser.add_subparsers(dest='cmd')
     ls_parser = subparser.add_parser('ls', help='Show lab info')

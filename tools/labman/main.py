@@ -8,9 +8,12 @@
 import os
 import sys
 import traceback
+import unittest
 
 our_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(our_path, '..'))
+
+from patman import test_util
 
 import cmdline
 import control
@@ -31,7 +34,7 @@ def RunTests(debug, verbosity, processes, test_preserve_dirs, args, toolpath):
             name to execute (as in 'binman test testSections', for example)
         toolpath: List of paths to use for tools
     """
-    from tools.labman.test.sdwire import SdwireTest
+    from labman.test.sdwire_test import SdwireTest
     import doctest
 
     result = unittest.TestResult()
@@ -51,7 +54,7 @@ def RunTests(debug, verbosity, processes, test_preserve_dirs, args, toolpath):
     test_name = args and args[0] or None
     suite = unittest.TestSuite()
     loader = unittest.TestLoader()
-    for module in (SdwireTest):
+    for module in (SdwireTest,):
         # Test the test module about our arguments, if it is interested
         if hasattr(module, 'setup_test_args'):
             setup_test_args = getattr(module, 'setup_test_args')
@@ -65,7 +68,7 @@ def RunTests(debug, verbosity, processes, test_preserve_dirs, args, toolpath):
                 continue
         else:
             suite.addTests(loader.loadTestsFromTestCase(module))
-    if use_concurrent and processes != 1:
+    if test_util.use_concurrent and processes != 1:
         concurrent_suite = ConcurrentTestSuite(suite,
                 fork_for_tests(processes or multiprocessing.cpu_count()))
         concurrent_suite.run(result)

@@ -26,6 +26,8 @@ our_path = os.path.dirname(os.path.realpath(__file__))
 for dirname in ['..']:
     sys.path.insert(2, os.path.join(our_path, dirname))
 
+from patman import test_util
+
 # Bring in the libfdt module
 sys.path.insert(2, 'scripts/dtc/pylibfdt')
 sys.path.insert(2, os.path.join(our_path,
@@ -39,11 +41,6 @@ sys.path.append(get_python_lib())
 
 import cmdline
 import patman.command
-use_concurrent = True
-try:
-    from concurrencytest import ConcurrentTestSuite, fork_for_tests
-except:
-    use_concurrent = False
 import control
 import patman.test_util
 
@@ -73,46 +70,15 @@ def RunTests(debug, verbosity, processes, test_preserve_dirs, args, toolpath):
     import doctest
 
     result = unittest.TestResult()
-    for module in []:
-        suite = doctest.DocTestSuite(module)
-        suite.run(result)
-
-    sys.argv = [sys.argv[0]]
-    if debug:
-        sys.argv.append('-D')
-    if verbosity:
-        sys.argv.append('-v%d' % verbosity)
-    if toolpath:
-        for path in toolpath:
-            sys.argv += ['--toolpath', path]
+    test_name = args and args[0] or None
 
     # Run the entry tests first ,since these need to be the first to import the
     # 'entry' module.
-    test_name = args and args[0] or None
-    suite = unittest.TestSuite()
-    loader = unittest.TestLoader()
-    for module in (entry_test.TestEntry, ftest.TestFunctional, fdt_test.TestFdt,
-                   elf_test.TestElf, image_test.TestImage,
-                   cbfs_util_test.TestCbfs):
-        # Test the test module about our arguments, if it is interested
-        if hasattr(module, 'setup_test_args'):
-            setup_test_args = getattr(module, 'setup_test_args')
-            setup_test_args(preserve_indir=test_preserve_dirs,
-                preserve_outdirs=test_preserve_dirs and test_name is not None,
-                toolpath=toolpath, verbosity=verbosity)
-        if test_name:
-            try:
-                suite.addTests(loader.loadTestsFromName(test_name, module))
-            except AttributeError:
-                continue
-        else:
-            suite.addTests(loader.loadTestsFromTestCase(module))
-    if use_concurrent and processes != 1:
-        concurrent_suite = ConcurrentTestSuite(suite,
-                fork_for_tests(processes or multiprocessing.cpu_count()))
-        concurrent_suite.run(result)
-    else:
-        suite.run(result)
+    test_util.RunTestSuites(
+        result, debug, verbosity, processes, test_preserve_dirs, test_name,
+         toolpath,
+        [entry_test.TestEntry, ftest.TestFunctional, fdt_test.TestFdt,
+         elf_test.TestElf, image_test.TestImage, cbfs_util_test.TestCbfs])
 
     return test_util.ReportResult('binman', test_name, result)
 

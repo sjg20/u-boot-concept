@@ -4,3 +4,7 @@
 
 # Tests for Sdwire class
 
+import unittest
+
+class SdwireTest(unittest.TestCase):
+    pass

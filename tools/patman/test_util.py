@@ -11,12 +11,16 @@ import os
 import sys
 import unittest
 
-import patman.command
+from patman import command
+from patman import test_util
 
+from io import StringIO
+
+use_concurrent = True
 try:
-  from StringIO import StringIO
-except ImportError:
-  from io import StringIO
+    from concurrencytest import ConcurrentTestSuite, fork_for_tests
+except:
+    use_concurrent = False
 
 PYTHON = 'python%d' % sys.version_info[0]
 
@@ -121,3 +125,42 @@ def ReportResult(toolname:str, test_name: str, result: unittest.TestResult):
         print('binman tests FAILED')
         return 1
     return 0
+
+
+def RunTestSuites(result, debug, verbosity, processes, test_preserve_dirs,
+                  test_name, toolpath, test_class_list):
+    for module in []:
+        suite = doctest.DocTestSuite(module)
+        suite.run(result)
+
+    sys.argv = [sys.argv[0]]
+    if debug:
+        sys.argv.append('-D')
+    if verbosity:
+        sys.argv.append('-v%d' % verbosity)
+    if toolpath:
+        for path in toolpath:
+            sys.argv += ['--toolpath', path]
+
+    suite = unittest.TestSuite()
+    loader = unittest.TestLoader()
+    for module in test_class_list:
+        # Test the test module about our arguments, if it is interested
+        if hasattr(module, 'setup_test_args'):
+            setup_test_args = getattr(module, 'setup_test_args')
+            setup_test_args(preserve_indir=test_preserve_dirs,
+                preserve_outdirs=test_preserve_dirs and test_name is not None,
+                toolpath=toolpath, verbosity=verbosity)
+        if test_name:
+            try:
+                suite.addTests(loader.loadTestsFromName(test_name, module))
+            except AttributeError:
+                continue
+        else:
+            suite.addTests(loader.loadTestsFromTestCase(module))
+    if test_util.use_concurrent and processes != 1:
+        concurrent_suite = ConcurrentTestSuite(suite,
+                fork_for_tests(processes or multiprocessing.cpu_count()))
+        concurrent_suite.run(result)
+    else:
+        suite.run(result)
