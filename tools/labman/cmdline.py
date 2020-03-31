@@ -34,4 +34,12 @@ def ParseArgs(argv):
     emit_parser.add_argument('-f', '--ftype', type=str,
                              help='Select the script type to emit (only tbot)')
 
+    prov_parser = subparser.add_parser('prov', help='Provision a lab component')
+    prov_parser.add_argument('-c', '--component', type=str,
+                             help='Select the component to provision')
+    prov_parser.add_argument('-n', '--name', type=str,
+                             help='Name to provision with')
+    prov_parser.add_argument('-s', '--serial', type=str,
+                             help='Serial number to provision with')
+
     return parser.parse_args(argv)

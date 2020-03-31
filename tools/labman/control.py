@@ -17,3 +17,5 @@ def Labman(args):
         lab.show_list()
     elif args.cmd == 'emit':
         lab.emit(args.dut, args.ftype)
+    elif args.cmd == 'prov':
+        lab.provision(args.component, args.name, args.serial)

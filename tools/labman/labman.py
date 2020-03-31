@@ -34,9 +34,6 @@ def RunLabman(args):
                                 args.test_preserve_dirs, args.tests,
                                 args.toolpath)
 
-    elif args.cmd == 'entry-docs':
-        control.WriteEntryDocs(GetEntryModules())
-
     else:
         try:
             ret_code = control.Labman(args)

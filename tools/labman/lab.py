@@ -5,6 +5,7 @@
 import yaml
 
 from tools.labman import dut
+from tools.labman import sdwire
 
 class Lab:
     """A colection of DUTs, builders and the infrastructure to connect them
@@ -50,3 +51,10 @@ class Lab:
             dutt.emit_tbot()
         else:
             self.Raise("Invalid ftype '%s'" % ftype)
+
+    def provision(self, component, name, serial):
+        if component == 'sdwire':
+            sdw = sdwire.Sdwire(name)
+            sdw.provision(serial)
+        else:
+            self.Raise("Unknown component '%s'" % component)
