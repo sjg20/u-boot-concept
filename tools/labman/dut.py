@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0+
 # Copyright 2020 Google LLC
 
-from tools.labman import console
+import console
 
 class Dut:
     """Individual board in the lab, upon which we want to run tests.

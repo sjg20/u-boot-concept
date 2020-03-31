@@ -2,7 +2,7 @@
 # Copyright 2020 Google LLC
 # Written by Simon Glass <sjg@chromium.org>
 
-from tools.patman import command
+from patman import command
 
 class Sdwire:
     """An Sdwire board which can switch a uSD card between DUT and test system

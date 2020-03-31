@@ -10,10 +10,10 @@ import sys
 import traceback
 
 our_path = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.join(our_path, '..', '..'))
+sys.path.append(os.path.join(our_path, '..'))
 
-from tools.labman import cmdline
-from tools.labman import control
+import cmdline
+import control
 
 def RunLabman(args):
     """Main entry point to labman once arguments are parsed

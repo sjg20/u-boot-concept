@@ -42,4 +42,18 @@ def ParseArgs(argv):
     prov_parser.add_argument('-s', '--serial', type=str,
                              help='Serial number to provision with')
 
+    test_parser = subparser.add_parser('test', help='Run tests')
+    test_parser.add_argument('-c', '--component', type=str,
+                             help='Run tests for labman')
+    test_parser.add_argument('-P', '--processes', type=int,
+        help='set number of processes to use for running tests')
+    test_parser.add_argument('-T', '--test-coverage', action='store_true',
+        default=False, help='run tests and check for 100%% coverage')
+    test_parser.add_argument('-X', '--test-preserve-dirs', action='store_true',
+        help='Preserve and display test-created input directories; also '
+             'preserve the output directory if a single test is run (pass test '
+             'name at the end of the command line')
+    test_parser.add_argument('tests', nargs='*',
+                             help='Test names to run (omit for all)')
+
     return parser.parse_args(argv)

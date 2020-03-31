@@ -4,8 +4,8 @@
 
 import yaml
 
-from tools.labman import dut
-from tools.labman import sdwire
+import dut
+import sdwire
 
 class Lab:
     """A colection of DUTs, builders and the infrastructure to connect them

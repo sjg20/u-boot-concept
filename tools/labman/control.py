@@ -5,7 +5,7 @@
 # Main control for labman
 #
 
-from tools.labman.lab import Lab
+from lab import Lab
 
 def Labman(args):
     lab = None
