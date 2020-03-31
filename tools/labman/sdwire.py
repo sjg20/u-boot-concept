@@ -15,9 +15,13 @@ class Sdwire:
         _serial: Serial number of the Sdwire
     """
     ORIG_IDS = ['--vendor=0x0403', '--product=0x6015']
+    TIMEOUT_S = 30
 
-    def __init__(self, name):
+    def __init__(self, name, sd_mux_ctl=None, print=None, sleep=None):
         self._name = name
+        self._sd_mux_ctl = sd_mux_ctl
+        self._print = print
+        self._sleep = sleep
 
     def __str__(self):
         return 'sdwire %s' % self._name
@@ -28,11 +32,26 @@ class Sdwire:
     def sdmux_ctrl(self, *args):
         while True:
             try:
-                out = command.Output('sd-mux-ctrl', *args)
+                if self._sd_mux_ctl:
+                    out = self._sd_mux_ctl(args)
+                else:
+                    out = command.Output('sd-mux-ctrl', *args)
                 return out
             except Exception as e:
-                print('Error: %s' % e)
-            time.sleep(1)
+                self.print('Error: %s' % e)
+            self.sleep(1)
+
+    def sleep(self, seconds):
+        if self._sleep:
+            self._sleep(seconds)
+        else:
+            time.sleep(seconds)
+
+    def print(self, *args, **kwargs):
+        if self._print:
+            self._print(*args)
+        else:
+            print(*args)
 
     def parse_serial(self, line):
         m = re.search(r'Serial: ([A-Z0-9a-z]+),', line)
@@ -44,9 +63,10 @@ class Sdwire:
     def list_matching(self, ids):
         out = self.sdmux_ctrl(*ids, '--list')
         lines = out.splitlines()
-        m = re.search('Number of FTDI devices found: ([0-9]+)', lines[0])
+        m = re.search('Number of FTDI devices found: ([0-9]+)',
+                      lines and lines[0] or '')
         if not m:
-            self.Raise("Expected device count in first line" % lines)
+            self.Raise("Expected device count in first line '%s'" % lines)
         found = int(m.group(1))
         serial = None
         if found == 1:
@@ -73,20 +93,25 @@ class Sdwire:
                               '--set-serial=%s' % new_serial)
 
         # Wait for the device to re-appear with the new details
-        print('Unplug the SDwire...', end='', flush=True)
-        while True:
+        self.print('Unplug the SDwire...', end='', flush=True)
+        for i in range(self.TIMEOUT_S):
             found, serial = self.list_matching(self.ORIG_IDS)
             if not found:
                 break
-            time.sleep(1)
+            self.sleep(1)
+        if found:
+            self.Raise('gave up waiting')
 
-        print('\nInsert the SDwire...', end='', flush=True)
-        while True:
+        self.print('\nInsert the SDwire...', end='', flush=True)
+        for i in range(self.TIMEOUT_S):
             found, serial = self.list_matching([])
             if found == 1:
                 break
-            time.sleep(1)
+            self.sleep(1)
+        if found != 1:
+            self.Raise('gave up waiting')
+
         if serial != new_serial:
             self.Raise("Expected serial '%s' but got '%s'" %
                        (new_serial, serial))
-        print('\nProvision complete')
+        self.print('\nProvision complete')
