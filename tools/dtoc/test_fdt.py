@@ -19,7 +19,7 @@ our_path = os.path.dirname(os.path.realpath(__file__))
 for dirname in ['../patman', '..']:
     sys.path.insert(0, os.path.join(our_path, dirname))
 
-import command
+from patman import command
 from dtoc import fdt
 from fdt import TYPE_BYTE, TYPE_INT, TYPE_STRING, TYPE_BOOL, BytesToValue
 from dtoc import fdt_util

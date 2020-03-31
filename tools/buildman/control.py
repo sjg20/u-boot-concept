@@ -15,7 +15,7 @@ import patchstream
 import terminal
 from terminal import Print
 import toolchain
-import command
+from patman import command
 import subprocess
 
 def GetPlural(count):

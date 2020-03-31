@@ -23,10 +23,10 @@ import cmdline
 import control
 import elf
 import elf_test
-import dtoc.fdt
+from dtoc import fdt
+from dtoc import fdt_util
 from etype import fdtmap
 from etype import image_header
-import dtoc.fdt_util
 import fmap_util
 import gzip
 from image import Image

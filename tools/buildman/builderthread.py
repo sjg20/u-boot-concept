@@ -9,7 +9,7 @@ import shutil
 import sys
 import threading
 
-import command
+from patman import command
 import gitutil
 
 RETURN_CODE_RETRY = -1

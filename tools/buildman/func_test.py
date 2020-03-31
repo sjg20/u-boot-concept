@@ -11,7 +11,7 @@ import unittest
 import board
 import bsettings
 import cmdline
-import command
+from patman import command
 import control
 import gitutil
 import terminal

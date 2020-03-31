@@ -11,7 +11,7 @@ import tempfile
 import urllib.request, urllib.error, urllib.parse
 
 import bsettings
-import command
+from patman import command
 import terminal
 from patman import tools
 

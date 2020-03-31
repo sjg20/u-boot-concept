@@ -7,7 +7,7 @@
 # to it will appear to SPL to be at the end of BSS rather than the start.
 #
 
-import command
+from patman import command
 import elf
 from entry import Entry
 from blob import Entry_blob

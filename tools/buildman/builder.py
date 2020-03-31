@@ -18,7 +18,7 @@ import threading
 import time
 
 import builderthread
-import command
+from patman import command
 import gitutil
 import terminal
 from terminal import Print

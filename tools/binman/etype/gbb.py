@@ -8,7 +8,7 @@
 
 from collections import OrderedDict
 
-import command
+from patman import command
 from entry import Entry, EntryArg
 
 from dtoc import fdt_util

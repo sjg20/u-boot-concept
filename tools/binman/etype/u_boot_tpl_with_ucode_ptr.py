@@ -7,7 +7,7 @@
 
 import struct
 
-import command
+from patman import command
 from entry import Entry
 from blob import Entry_blob
 from u_boot_with_ucode_ptr import Entry_u_boot_with_ucode_ptr

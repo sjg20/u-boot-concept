@@ -83,7 +83,7 @@ class Entry_fdtmap(Entry):
 
         import libfdt
         import state
-        from dtoc import fdt
+        from dtoc.fdt import Fdt
 
         Entry.__init__(self, section, etype, node)
 

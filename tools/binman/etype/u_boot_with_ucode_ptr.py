@@ -7,7 +7,7 @@
 
 import struct
 
-import command
+from patman import command
 import elf
 from entry import Entry
 from blob import Entry_blob

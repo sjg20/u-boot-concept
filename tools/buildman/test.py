@@ -17,7 +17,7 @@ import board
 import bsettings
 import builder
 import control
-import command
+from patman import command
 import commit
 import terminal
 import test_util
