@@ -10,8 +10,8 @@ import struct
 import sys
 import tempfile
 
-from tools.patman import command
-from tools.patman import tout
+from patman import command
+from patman import tout
 
 # Output directly (generally this is temporary)
 outdir = None

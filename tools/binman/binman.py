@@ -114,7 +114,7 @@ def RunTests(debug, verbosity, processes, test_preserve_dirs, args, toolpath):
     else:
         suite.run(result)
 
-    return test_util.ReportResult('binman', result)
+    return test_util.ReportResult('binman', test_name, result)
 
 def GetEntryModules(include_testing=True):
     """Get a set of entry class implementations

@@ -9,6 +9,7 @@ from contextlib import contextmanager
 import glob
 import os
 import sys
+import unittest
 
 import patman.command
 
@@ -92,7 +93,7 @@ def capture_sys_output():
         sys.stdout, sys.stderr = old_out, old_err
 
 
-def ReportResult(toolname:str, result: unittest.TestResult):
+def ReportResult(toolname:str, test_name: str, result: unittest.TestResult):
     # Remove errors which just indicate a missing test. Since Python v3.5 If an
     # ImportError or AttributeError occurs while traversing name then a
     # synthetic test that raises that error when run will be returned. These
