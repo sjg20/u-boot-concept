@@ -22,8 +22,6 @@ try:
 except:
     use_concurrent = False
 
-PYTHON = 'python%d' % sys.version_info[0]
-
 
 def RunTestCoverage(prog, filter_fname, exclude_list, build_dir, required=None):
     """Run tests and check that we get 100% coverage
@@ -51,12 +49,15 @@ def RunTestCoverage(prog, filter_fname, exclude_list, build_dir, required=None):
         glob_list = []
     glob_list += exclude_list
     glob_list += ['*libfdt.py', '*site-packages*', '*dist-packages*']
-    test_cmd = 'test' if 'binman.py' in prog else '-t'
-    cmd = ('PYTHONPATH=$PYTHONPATH:%s/sandbox_spl/tools %s-coverage run '
-           '--omit "%s" %s %s -P1' % (build_dir, PYTHON, ','.join(glob_list),
+    test_cmd = 'test' if 'binman' in prog or 'labman' in prog else '-t'
+    prefix = ''
+    if build_dir:
+        prefix = 'PYTHONPATH=$PYTHONPATH:%s/sandbox_spl/tools ' % build_dir
+    cmd = ('%spython3-coverage run '
+           '--omit "%s" %s %s -P1' % (prefix, ','.join(glob_list),
                                       prog, test_cmd))
     os.system(cmd)
-    stdout = command.Output('%s-coverage' % PYTHON, 'report')
+    stdout = command.Output('python3-coverage', 'report')
     lines = stdout.splitlines()
     if required:
         # Convert '/path/to/name.py' just the module name 'name'
@@ -75,8 +76,8 @@ def RunTestCoverage(prog, filter_fname, exclude_list, build_dir, required=None):
     print(coverage)
     if coverage != '100%':
         print(stdout)
-        print("Type '%s-coverage html' to get a report in "
-              'htmlcov/index.html' % PYTHON)
+        print("Type 'python3-coverage html' to get a report in "
+              'htmlcov/index.html')
         print('Coverage error: %s, but should be 100%%' % coverage)
         ok = False
     if not ok:

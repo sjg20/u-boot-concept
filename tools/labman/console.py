@@ -33,11 +33,13 @@ class Console:
     def load(self, yam):
         cname = yam.get('connection-type')
         if not cname:
-            Raise('Missing connection-type')
+            self.Raise('Missing connection-type')
         self._type = self.CONS_TYPES.get(cname)
         if self._type is None:
             self.Raise("Invalid connection-type '%s'" % cname)
-        self._port = yam['port']
+        self._port = yam.get('port')
+        if self._port is None:
+            self.Raise("Missing port '%s'" % cname)
 
     def get_uart(self):
         return self._port
