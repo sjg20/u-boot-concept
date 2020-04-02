@@ -6,13 +6,18 @@
 
 import unittest
 
-from labman. console import Console
+from labman.console import Console
 
 PORT = '/dev/ttyusb_port0'
 
 class ConsoleTest(unittest.TestCase):
+    @classmethod
+    def get_yaml(cls):
+        return {'connection-type': 'usb-uart', 'port': PORT}
+
     def testLoad(self):
-        yam = {'connection-type': 'usb-uart', 'port': PORT}
+        """Test loading a yaml description"""
+        yam = self.get_yaml()
         con = Console(self)
         con.load(yam)
         self.assertEqual(Console.CTYPE_USB_UART, con._type)
@@ -24,7 +29,8 @@ class ConsoleTest(unittest.TestCase):
     def Raise(self, msg):
         raise ValueError('test: %s' % msg)
 
-    def testNoConnectionType(self):
+    def testBadConnectionType(self):
+        """Test handling an invalid connection type"""
         yam = {'connection-type': 'blather', 'port': PORT}
         con = Console(self)
         with self.assertRaises(ValueError) as e:
@@ -32,7 +38,8 @@ class ConsoleTest(unittest.TestCase):
         self.assertIn("test: console None/None: Invalid connection-type",
                       str(e.exception))
 
-    def testBadConnectionType(self):
+    def testNoConnectionType(self):
+        """Test handling a missing connection type"""
         yam = {'port': PORT}
         con = Console(self)
         with self.assertRaises(ValueError) as e:
@@ -41,6 +48,7 @@ class ConsoleTest(unittest.TestCase):
                       str(e.exception))
 
     def testNoPort(self):
+        """Test handling a missing porte"""
         yam = {'connection-type': 'usb-uart'}
         con = Console(self)
         with self.assertRaises(ValueError) as e:

@@ -34,8 +34,11 @@ def RunTests(debug, verbosity, processes, test_preserve_dirs, args, toolpath):
             name to execute (as in 'binman test testSections', for example)
         toolpath: List of paths to use for tools
     """
-    from labman.test.sdwire_test import SdwireTest
     from labman.test.console_test import ConsoleTest
+    from labman.test.control_test import ControlTest
+    from labman.test.dut_test import DutTest
+    from labman.test.lab_test import LabTest
+    from labman.test.sdwire_test import SdwireTest
     import doctest
 
     result = unittest.TestResult()
@@ -55,7 +58,7 @@ def RunTests(debug, verbosity, processes, test_preserve_dirs, args, toolpath):
     test_name = args and args[0] or None
     suite = unittest.TestSuite()
     loader = unittest.TestLoader()
-    for module in (SdwireTest,ConsoleTest):
+    for module in (ControlTest, ConsoleTest, DutTest, LabTest, SdwireTest):
         # Test the test module about our arguments, if it is interested
         if hasattr(module, 'setup_test_args'):
             setup_test_args = getattr(module, 'setup_test_args')
@@ -107,7 +110,7 @@ def RunTests(debug, verbosity, processes, test_preserve_dirs, args, toolpath):
 def RunTestCoverage():
     """Run the tests and check that we get 100% coverage"""
     test_util.RunTestCoverage('tools/labman/main.py', None,
-            ['*test/*', '*main.py'], None)
+            ['tools/patman/*.py', '*test/*', '*main.py'], None)
 
 def RunLabman(args):
     """Main entry point to labman once arguments are parsed

@@ -7,14 +7,19 @@
 
 from lab import Lab
 
-def Labman(args):
-    lab = None
+# Used to access the lab for testing
+test_lab = None
+
+def Labman(args, lab=None):
     if args.lab:
-        lab = Lab()
+        if not lab:
+            global test_lab
+            lab = Lab()
+            test_lab = lab
         lab.read(args.lab)
 
     if args.cmd == 'ls':
-        lab.show_list()
+        lab.show()
     elif args.cmd == 'emit':
         lab.emit(args.dut, args.ftype)
     elif args.cmd == 'prov':
