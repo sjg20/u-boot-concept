@@ -19,7 +19,7 @@ class Sdwire:
 
     def __init__(self, name, sd_mux_ctl=None, print=None, sleep=None):
         self._name = name
-        self._sd_mux_ctl = sd_mux_ctl
+        self._sd_mux_ctl = sd_mux_ctl or command.Output
         self._print = print
         self._sleep = sleep
 
@@ -29,13 +29,11 @@ class Sdwire:
     def Raise(self, msg):
         raise ValueError('%s: %s' % (str(self), msg))
 
-    def sdmux_ctrl(self, *args):
+    def sdmux_ctrl(self, *in_args):
+        args = ['sd-mux-ctrl'] + list(in_args)
         while True:
             try:
-                if self._sd_mux_ctl:
-                    out = self._sd_mux_ctl(args)
-                else:
-                    out = command.Output('sd-mux-ctrl', *args)
+                out = self._sd_mux_ctl(*args)
                 return out
             except Exception as e:
                 self.print('Error: %s' % e)

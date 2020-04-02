@@ -27,7 +27,7 @@ class SdwireTest(unittest.TestCase):
                      serial)
         return resp
 
-    def sd_mux_ctl(self, args):
+    def sd_mux_ctl(self, *args):
         # Make sure it can handle an error from sd-mux-ctrl
         if self._raise:
             self._raise -= 1
