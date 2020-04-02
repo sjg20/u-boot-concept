@@ -14,8 +14,14 @@ from labman.test import dut_test
 
 LAB_NAME = 'my-lab'
 LAB_DESC = 'My description'
+PROVISION_NAME = 'fred'
+PROVISION_SERIAL = 'serial1234'
 
 class LabTest(unittest.TestCase):
+    def setUp(self):
+        self._provision_args = None
+        self._provision_name = None
+
     @staticmethod
     def get_yaml():
         return {
@@ -88,6 +94,23 @@ class LabTest(unittest.TestCase):
             lab.load(yam)
         self.assertIn("Missing name", str(e.exception))
 
+    def get_sdwire(self, name):
+        self._provision_name = name
+        return self
+
+    def provision(self, *args):
+        self._provision_args = args
+
     def testProvision(self):
         lab = Lab()
-        #lab.provision('sdwire', 'fred', 'serial1')
+        lab.provision('sdwire', PROVISION_NAME, PROVISION_SERIAL,
+                      test_obj=self.get_sdwire)
+        self.assertEqual(PROVISION_NAME, self._provision_name)
+        self.assertIsNotNone(self._provision_args)
+        self.assertSequenceEqual([PROVISION_SERIAL], self._provision_args)
+
+    def testBadProvision(self):
+        lab = Lab()
+        with self.assertRaises(ValueError) as e:
+            lab.provision('unknown', PROVISION_NAME, PROVISION_SERIAL)
+        self.assertIn("Unknown component 'unknown'", str(e.exception))

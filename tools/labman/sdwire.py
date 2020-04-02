@@ -17,11 +17,12 @@ class Sdwire:
     ORIG_IDS = ['--vendor=0x0403', '--product=0x6015']
     TIMEOUT_S = 30
 
-    def __init__(self, name, sd_mux_ctl=None, print=None, sleep=None):
+    def __init__(self, name, test_sd_mux_ctl=None, test_print=None,
+                 test_sleep=None):
         self._name = name
-        self._sd_mux_ctl = sd_mux_ctl or command.Output
-        self._print = print
-        self._sleep = sleep
+        self._sd_mux_ctl = test_sd_mux_ctl or command.Output
+        self._print = test_print or print
+        self._sleep = test_sleep or time.sleep
 
     def __str__(self):
         return 'sdwire %s' % self._name
@@ -36,20 +37,8 @@ class Sdwire:
                 out = self._sd_mux_ctl(*args)
                 return out
             except Exception as e:
-                self.print('Error: %s' % e)
-            self.sleep(1)
-
-    def sleep(self, seconds):
-        if self._sleep:
-            self._sleep(seconds)
-        else:
-            time.sleep(seconds)
-
-    def print(self, *args, **kwargs):
-        if self._print:
-            self._print(*args)
-        else:
-            print(*args)
+                self._print('Error: %s' % e)
+            self._sleep(1)
 
     def parse_serial(self, line):
         m = re.search(r'Serial: ([A-Z0-9a-z]+),', line)
@@ -91,25 +80,25 @@ class Sdwire:
                               '--set-serial=%s' % new_serial)
 
         # Wait for the device to re-appear with the new details
-        self.print('Unplug the SDwire...', end='', flush=True)
+        self._print('Unplug the SDwire...', end='', flush=True)
         for i in range(self.TIMEOUT_S):
             found, serial = self.list_matching(self.ORIG_IDS)
             if not found:
                 break
-            self.sleep(1)
+            self._sleep(1)
         if found:
             self.Raise('gave up waiting')
 
-        self.print('\nInsert the SDwire...', end='', flush=True)
+        self._print('\nInsert the SDwire...', end='', flush=True)
         for i in range(self.TIMEOUT_S):
             found, serial = self.list_matching([])
             if found == 1:
                 break
-            self.sleep(1)
+            self._sleep(1)
         if found != 1:
             self.Raise('gave up waiting')
 
         if serial != new_serial:
             self.Raise("Expected serial '%s' but got '%s'" %
                        (new_serial, serial))
-        self.print('\nProvision complete')
+        self._print('\nProvision complete')

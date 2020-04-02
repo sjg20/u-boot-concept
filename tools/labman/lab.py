@@ -59,9 +59,9 @@ class Lab:
         else:
             self.Raise("Invalid ftype '%s'" % ftype)
 
-    def provision(self, component, name, serial):
+    def provision(self, component, name, serial, test_obj=None):
         if component == 'sdwire':
-            sdw = sdwire.Sdwire(name)
+            sdw = test_obj and test_obj(name) or sdwire.Sdwire(name)
             sdw.provision(serial)
         else:
             self.Raise("Unknown component '%s'" % component)
