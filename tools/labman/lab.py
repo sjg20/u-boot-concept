@@ -23,7 +23,7 @@ class Lab:
     def read(self, fname):
         with open(fname) as inf:
             data = inf.read()
-        yam = yaml.load(data, Loader=yaml.SafeLoader)
+        yam = yaml.load(data, Loader=yaml.FullLoader)
         self.load(yam)
 
     def load(self, yam):

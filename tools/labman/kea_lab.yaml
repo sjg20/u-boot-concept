@@ -1,9 +1,55 @@
 # Kea lab
 
 name: kea
+sdwires:
+    - sdwire0: &sdwire0
+        serial: sdwire-18
+        symlink: /dev/sdcard0
+
+    - sdwire1: &sdwire1
+        serial: 202001064004
+        symlink: /dev/sdcard1
+
+digital-loggers:
+    - name: dli_main
+      ip: 192.168.4.19
+      user: admin
+      password: 1234
+
+ykushs:
+    - name: ukush_first
+        serial: YK17698
+        symlink: /dev/ykusb0
+
+uarts:
+    - usbport1: &tty_usbport1
+        type: usb-uart
+        port: /dev/tty_usbport1
+        kernel-usb-port: 1-5.2.4
+    - usbport4: &tty_usbport4
+        type: usb-uart
+        port: /dev/tty_usbport4
+        kernel-usb-port: 1-5.3.3
+
 duts:
     rpi_3:
         desc: Raspberry Pi 3b
-        console:
-          connection-type: usb-uart
-          port: /dev/ttyusb_port1
+        console: *tty_usbport4
+        bootdev:
+            connection: *sdwire0
+            access: mount
+            mount-uuid: B529-9710
+            mount-point: rpi3_b_boot
+        power:
+            connection: &ukush_first
+            port: 1
+
+    opi_pc:
+        desc: Orange Pi PC
+        console: *tty_usbport4
+        bootdev:
+            connection: *sdwire1
+            access: raw
+        power:
+            connection: &dli_main
+            power-port: 1
