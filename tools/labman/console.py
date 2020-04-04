@@ -31,12 +31,12 @@ class Console:
         self._parent.Raise('%s: %s' % (str(self), msg))
 
     def load(self, yam):
-        cname = yam.get('connection-type')
+        cname = yam.get('type')
         if not cname:
-            self.Raise('Missing connection-type')
+            self.Raise('Missing type')
         self._type = self.CONS_TYPES.get(cname)
         if self._type is None:
-            self.Raise("Invalid connection-type '%s'" % cname)
+            self.Raise("Invalid type '%s'" % cname)
         self._port = yam.get('port')
         if self._port is None:
             self.Raise("Missing port '%s'" % cname)
