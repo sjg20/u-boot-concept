@@ -1024,7 +1024,7 @@ static const char *sunxi_get_mon_desc(enum sunxi_monitor monitor)
 	case sunxi_monitor_composite_pal_m:	return "composite-pal-m";
 	case sunxi_monitor_composite_pal_nc:	return "composite-pal-nc";
 	}
-	return NULL; /* never reached */
+	return "none"; /* never reached */
 }
 
 ulong board_get_usable_ram_top(ulong total_size)
