@@ -237,7 +237,7 @@ int rtl8139_initialize(bd_t *bis)
 
 		pci_write_config_byte (devno, PCI_LATENCY_TIMER, 0x20);
 
-		udelay (10 * 1000);
+		udelay(10 * 1000);
 	}
 
 	return card_number;
@@ -357,7 +357,7 @@ static void rtl_reset(struct eth_device *dev)
 	/* Give the chip 10ms to finish the reset. */
 	for (i=0; i<100; ++i){
 		if ((inb(ioaddr + ChipCmd) & CmdReset) == 0) break;
-		udelay (100); /* wait 100us */
+		udelay(100); /* wait 100us */
 	}
 
 
@@ -528,6 +528,6 @@ static void rtl_disable(struct eth_device *dev)
 	/* Give the chip 10ms to finish the reset. */
 	for (i=0; i<100; ++i){
 		if ((inb(ioaddr + ChipCmd) & CmdReset) == 0) break;
-		udelay (100); /* wait 100us */
+		udelay(100); /* wait 100us */
 	}
 }
