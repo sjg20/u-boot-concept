@@ -21,6 +21,7 @@
 #include <asm/arch-apollolake/iomap.h>
 #include <asm/arch-apollolake/pm.h>
 #include <dt-bindings/clock/intel-clock.h>
+#include <asm/arch-apollolake/fsp/fsp_s_upd.h>
 
 / {
 	model = "Google Coral";
@@ -484,8 +485,19 @@
 &fsp_s {
 	u-boot,dm-pre-proper;
 
+	fsps,disable-ish;
+	fsps,disable-sata;
+	fsps,enable-pcie-root-port = [00 00 00 00 00 01];
+	fsps,pcie-rp-hot-plug = [00 00 00 00 00 01];
+	fsps,enable-i2c6 = <I2CX_ENABLE_DISABLED>;
+	fsps,enable-i2c7 = <I2CX_ENABLE_DISABLED>;
+	fsps,enable-hsuart3 = <HSUARTX_ENABLE_DISABLED>;
+	fsps,enable-spi1 = <SPIX_ENABLE_DISABLED>;
+	fsps,enable-spi2 = <SPIX_ENABLE_DISABLED>;
+	fsps,disable-sdio;
+
 	/* Disable unused clkreq of PCIe root ports */
-	pcie-rp-clkreq-pin = /bits/ 8 <0 /* wifi/bt */
+	fsps,pcie-rp-clk-req-number = /bits/ 8 <0 /* wifi/bt */
 		CLKREQ_DISABLED
 		CLKREQ_DISABLED
 		CLKREQ_DISABLED
@@ -539,18 +551,27 @@
 	 * [14:8] steps of delay for Auto Tuning Mode, each 125ps
 	 * [6:0] steps of delay for HS200, each 125ps
 	 */
-	emmc = <0x0c16 0x28162828 0x00181717 0x10008>;
-
 	/* Enable DPTF */
 	dptf-enable;
+	fsps,emmc-tx-data-cntl1 = <0x0c16>;
+	fsps,emmc-tx-data-cntl2 = <0x28162828>;
+	fsps,emmc-rx-cmd-data-cntl1 = <0x00181717>;
+	fsps,emmc-rx-cmd-data-cntl2 = <0x10008>;
 
 	/* Enable Audio Clock and Power gating */
-	hdaudio-clk-gate-enable;
-	hdaudio-pwr-gate-enable;
-	hdaudio-bios-config-lockdown;
+	fsps,enable-hd-audio-clk-gate;
+	fsps,enable-hd-audio-pwr-gate;
+	fsps,enable-bios-cfg-lock-down;
 
 	/* Enable lpss s0ix */
-	lpss-s0ix-enable;
+	fsps,enable-lpss-s0ix;
+
+	fsps,enable-skip-mp-init;
+	fsps,disable-spi-eiss;
+	fsps,disable-rtc-lock;
+
+	fsps,port-usb20-per-port-pe-txi-set = [07 07 06 06 07 07 07 01];
+	fsps,port-usb20-per-port-txi-set = [00 02 00 00 00 00 00 03];
 
 	/*
 	 * TODO(sjg@chromium.org): Move this to the I2C nodes
