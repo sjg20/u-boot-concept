@@ -3,7 +3,6 @@
 
 / {
 	aliases {
-		ethernet0 = &ethernet;
 	};
 };
 
