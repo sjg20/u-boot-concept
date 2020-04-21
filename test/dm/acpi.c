@@ -14,13 +14,26 @@
 #include <version.h>
 #include <tables_csum.h>
 #include <version.h>
+#include <acpi/acpi_device.h>
 #include <acpi/acpi_table.h>
 #include <dm/acpi.h>
 #include <dm/test.h>
 #include <test/ut.h>
 
 #define ACPI_TEST_DEV_NAME	"ABCD"
+#define ACPI_TEST_CHILD_NAME	"EFGH"
 #define BUF_SIZE		4096
+
+/**
+ * struct testacpi_platdata - Platform data for the test ACPI device
+ *
+ * @no_name: true to emit an empty ACPI name from testacpi_get_name()
+ * @return_error: true to return an error instead of a name
+ */
+struct testacpi_platdata {
+	bool return_error;
+	bool no_name;
+};
 
 static int testacpi_write_tables(const struct udevice *dev,
 				 struct acpi_ctx *ctx)
@@ -40,7 +53,18 @@ static int testacpi_write_tables(const struct udevice *dev,
 
 static int testacpi_get_name(const struct udevice *dev, char *out_name)
 {
-	return acpi_copy_name(out_name, ACPI_TEST_DEV_NAME);
+	struct testacpi_platdata *plat = dev_get_platdata(dev);
+
+	if (plat->return_error)
+		return -EINVAL;
+	if (plat->no_name) {
+		*out_name = '\0';
+		return 0;
+	}
+	if (device_get_uclass_id(dev->parent) == UCLASS_TEST_ACPI)
+		return acpi_copy_name(out_name, ACPI_TEST_CHILD_NAME);
+	else
+		return acpi_copy_name(out_name, ACPI_TEST_DEV_NAME);
 }
 
 struct acpi_ops testacpi_ops = {
@@ -57,6 +81,8 @@ U_BOOT_DRIVER(testacpi_drv) = {
 	.name	= "testacpi_drv",
 	.of_match	= testacpi_ids,
 	.id	= UCLASS_TEST_ACPI,
+	.bind	= dm_scan_fdt_dev,
+	.platdata_auto_alloc_size	= sizeof(struct testacpi_platdata),
 	ACPI_OPS_PTR(&testacpi_ops)
 };
 
@@ -315,3 +341,40 @@ static int dm_test_acpi_cmd_dump(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_acpi_cmd_dump, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+
+/* Test acpi_device_path() */
+static int dm_test_acpi_device_path(struct unit_test_state *uts)
+{
+	struct testacpi_platdata *plat;
+	char buf[ACPI_PATH_MAX];
+	struct udevice *dev, *child;
+
+	ut_assertok(uclass_first_device_err(UCLASS_TEST_ACPI, &dev));
+	ut_assertok(acpi_device_path(dev, buf, sizeof(buf)));
+	ut_asserteq_str("\\_SB." ACPI_TEST_DEV_NAME, buf);
+
+	/* Test running out of space */
+	buf[5] = '\0';
+	ut_asserteq(-ENOSPC, acpi_device_path(dev, buf, 5));
+	ut_asserteq('\0', buf[5]);
+
+	/* Test a three-component name */
+	ut_assertok(device_first_child_err(dev, &child));
+	ut_assertok(acpi_device_path(child, buf, sizeof(buf)));
+	ut_asserteq_str("\\_SB." ACPI_TEST_DEV_NAME "." ACPI_TEST_CHILD_NAME,
+			buf);
+
+	/* Test handling of a device which doesn't produce a name */
+	plat = dev_get_platdata(dev);
+	plat->no_name = true;
+	ut_assertok(acpi_device_path(child, buf, sizeof(buf)));
+	ut_asserteq_str("\\_SB." ACPI_TEST_CHILD_NAME, buf);
+
+	/* Test handling of a device which returns an error */
+	plat = dev_get_platdata(dev);
+	plat->return_error = true;
+	ut_asserteq(-EINVAL, acpi_device_path(child, buf, sizeof(buf)));
+
+	return 0;
+}
+DM_TEST(dm_test_acpi_device_path, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
