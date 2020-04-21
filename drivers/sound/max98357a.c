@@ -12,6 +12,7 @@
 #include <sound.h>
 #include <acpi/acpigen.h>
 #include <acpi/acpi_device.h>
+#include <acpi/acpi_dp.h>
 #include <asm-generic/gpio.h>
 #ifdef CONFIG_X86
 #include <asm/acpi_nhlt.h>

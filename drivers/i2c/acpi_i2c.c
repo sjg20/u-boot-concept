@@ -8,6 +8,10 @@
 #include <i2c.h>
 #include <acpi/acpi_device.h>
 #include <acpi/acpigen.h>
+#include <acpi/acpi_dp.h>
+#ifdef CONFIG_X86
+#include <asm/intel_pinctrl_defs.h>
+#endif
 #include <asm-generic/gpio.h>
 #include <dm/acpi.h>
 
@@ -49,9 +53,17 @@ int acpi_i2c_fill_ssdt(const struct udevice *dev, struct acpi_ctx *ctx)
 	struct acpi_dp *dsd = NULL;
 	char scope[ACPI_PATH_MAX];
 	char name[ACPI_NAME_MAX];
+	int tx_state_val;
 	int curindex = 0;
 	int ret;
 
+#ifdef CONFIG_X86
+	tx_state_val = PAD_CFG0_TX_STATE;
+#elif defined(CONFIG_SANDBOX)
+	tx_state_val = BIT(7);  /* test value */
+#else
+#error "Not supported on this architecture"
+#endif
 	ret = acpi_get_name(dev, name);
 	if (ret)
 		return log_msg_ret("name", ret);
@@ -132,31 +144,18 @@ int acpi_i2c_fill_ssdt(const struct udevice *dev, struct acpi_ctx *ctx)
 					 priv->enable_gpio.flags &
 					 GPIOD_ACTIVE_LOW ?
 					 ACPI_GPIO_ACTIVE_LOW : 0);
-		/* Add generic property list (not supported) */
-		assert(!priv->property_count);
-		acpi_dp_add_property_list(dsd, NULL, priv->property_count);
+		/* Generic property list is not supported */
 		acpi_dp_write(ctx, dsd);
 	}
 
 	/* Power Resource */
 	if (priv->has_power_resource) {
-		struct acpi_gpio reset_gpio, enable_gpio, stop_gpio;
-
-		gpio_get_acpi(&priv->reset_gpio, &reset_gpio);
-		gpio_get_acpi(&priv->enable_gpio, &enable_gpio);
-		gpio_get_acpi(&priv->stop_gpio, &stop_gpio);
-		const struct acpi_power_res_params power_res_params = {
-			&reset_gpio,
-			priv->reset_delay_ms,
-			priv->reset_off_delay_ms,
-			&enable_gpio,
-			priv->enable_delay_ms,
-			priv->enable_off_delay_ms,
-			&stop_gpio,
-			priv->stop_delay_ms,
-			priv->stop_off_delay_ms
-		};
-		ret = acpi_device_add_power_res(ctx, &power_res_params);
+		ret = acpi_device_add_power_res(
+			ctx, tx_state_val, "\\_SB.GPC0", &priv->reset_gpio,
+			priv->reset_delay_ms, priv->reset_off_delay_ms,
+			&priv->enable_gpio, priv->enable_delay_ms,
+			priv->enable_off_delay_ms, &priv->stop_gpio,
+			priv->stop_delay_ms,  priv->stop_off_delay_ms);
 		if (ret)
 			return log_msg_ret("power", ret);
 	}

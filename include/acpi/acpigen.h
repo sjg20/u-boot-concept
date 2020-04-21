@@ -567,7 +567,6 @@ void acpigen_write_zero(struct acpi_ctx *ctx);
 void acpigen_write_one(struct acpi_ctx *ctx);
 void acpigen_write_ones(struct acpi_ctx *ctx);
 void acpigen_write_byte(struct acpi_ctx *ctx, unsigned int data);
-void acpigen_emit_ext_op(struct acpi_ctx *ctx, u8 op);
 void acpigen_emit_namestring(struct acpi_ctx *ctx, const char *namepath);
 void acpigen_emit_eisaid(struct acpi_ctx *ctx, const char *eisaid);
 void acpigen_write_word(struct acpi_ctx *ctx, unsigned int data);
@@ -597,7 +596,6 @@ void acpigen_write_ppc_nvs(struct acpi_ctx *ctx);
 void acpigen_write_empty_pct(struct acpi_ctx *ctx);
 void acpigen_write_empty_ptc(struct acpi_ctx *ctx);
 void acpigen_write_prw(struct acpi_ctx *ctx, u32 wake, u32 level);
-void acpigen_write_sta(struct acpi_ctx *ctx, u8 status);
 void acpigen_write_tpc(struct acpi_ctx *ctx, const char *gnvs_tpc_limit);
 void acpigen_write_pss_package(struct acpi_ctx *ctx, u32 corefreq, u32 power,
 			       u32 translat,
@@ -638,9 +636,6 @@ void acpigen_write_irq(struct acpi_ctx *ctx, u16 mask);
 void acpigen_write_resourcetemplate_header(struct acpi_ctx *ctx);
 void acpigen_write_resourcetemplate_footer(struct acpi_ctx *ctx);
 int acpigen_write_uuid(struct acpi_ctx *ctx, const char *uuid);
-void acpigen_write_power_res(struct acpi_ctx *ctx, const char *name, u8 level,
-			     u16 order, const char *const dev_states[],
-			     size_t dev_states_count);
 void acpigen_write_sleep(struct acpi_ctx *ctx, u64 sleep_ms);
 void acpigen_write_store(struct acpi_ctx *ctx);
 void acpigen_write_store_ops(struct acpi_ctx *ctx, u8 src, u8 dst);

@@ -12,10 +12,11 @@
 #include <irq.h>
 #include <acpi/acpigen.h>
 #include <acpi/acpi_device.h>
-#include <asm-generic/gpio.h>
+#include <acpi/acpi_dp.h>
 #ifdef CONFIG_X86
 #include <asm/acpi_nhlt.h>
 #endif
+#include <asm-generic/gpio.h>
 #include <dt-bindings/sound/nhlt.h>
 #include <dm/acpi.h>
 
