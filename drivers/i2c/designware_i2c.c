@@ -340,6 +340,7 @@ int dw_i2c_gen_speed_config(const struct udevice *dev, int speed_hz,
 			    struct dw_i2c_speed_config *config)
 {
 	struct dw_i2c *priv = dev_get_priv(dev);
+	struct i2c_regs *regs = priv->regs;
 	ulong rate;
 	int ret;
 
@@ -602,8 +603,6 @@ static int __dw_i2c_init(struct i2c_regs *i2c_base, int speed, int slaveaddr)
 
 	/* Enable i2c */
 	ret = dw_i2c_enable(i2c_base, true);
-	if (ret)
-		return ret;
 
 	return 0;
 }
