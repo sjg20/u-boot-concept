@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright (C) 2019 Intel Corporation <www.intel.com>
+ * Copyright (C) 2019-2020 Intel Corporation <www.intel.com>
  */
 
 #include <common.h>
@@ -43,11 +43,23 @@ static void tsc_init(void)
 
 int arch_cpu_init(void)
 {
+	int ret = 0;
+
 	tsc_init();
 
-	return x86_cpu_init_f();
+#if !CONFIG_IS_ENABLED(X86_64)
+	ret = x86_cpu_init_f();
+#endif
+	return ret;
 }
 
+#if CONFIG_IS_ENABLED(X86_64)
+int set_hob_list(void *hob_list)
+{
+	gd->arch.hob_list = hob_list;
+	return 0;
+}
+#else
 int checkcpu(void)
 {
 	return 0;
@@ -57,3 +69,4 @@ int print_cpuinfo(void)
 {
 	return default_print_cpuinfo();
 }
+#endif
