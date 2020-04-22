@@ -74,6 +74,7 @@ static int boot_prep_linux(bootm_headers_t *images)
 	void *data = NULL;
 	size_t len;
 	int ret;
+	bool image_64bit;
 
 #ifdef CONFIG_OF_LIBFDT
 	if (images->ft_len) {
@@ -116,7 +117,8 @@ static int boot_prep_linux(bootm_headers_t *images)
 		ulong load_address;
 		char *base_ptr;
 
-		base_ptr = (char *)load_zimage(data, len, &load_address);
+		base_ptr = (char *)load_zimage(data, len, &load_address,
+					       &image_64bit);
 		if (!base_ptr) {
 			puts("## Kernel loading failed ...\n");
 			goto error;
@@ -124,6 +126,10 @@ static int boot_prep_linux(bootm_headers_t *images)
 		images->os.load = load_address;
 		cmd_line_dest = base_ptr + COMMAND_LINE_OFFSET;
 		images->ep = (ulong)base_ptr;
+#if CONFIG_IS_ENABLED(X86_64)
+		if (image_64bit)
+			images->os.arch = IH_ARCH_X86_64;
+#endif
 	} else if (images->ep) {
 		cmd_line_dest = (void *)images->ep + COMMAND_LINE_OFFSET;
 	} else {
@@ -164,9 +170,7 @@ int boot_linux_kernel(ulong setup_base, ulong load_address, bool image_64bit)
 		 * TODO(sjg@chromium.org): Support booting both 32-bit and
 		 * 64-bit kernels from 64-bit U-Boot.
 		 */
-#if !CONFIG_IS_ENABLED(X86_64)
 		return cpu_jump_to_64bit(setup_base, load_address);
-#endif
 	} else {
 		/*
 		* Set %ebx, %ebp, and %edi to 0, %esi to point to the

@@ -31,7 +31,7 @@
 #define ZIMAGE_LOAD_ADDR   0x10000
 
 struct boot_params *load_zimage(char *image, unsigned long kernel_size,
-				ulong *load_addressp);
+				ulong *load_addressp, bool *image_64bit);
 int setup_zimage(struct boot_params *setup_base, char *cmd_line, int auto_boot,
 		 unsigned long initrd_addr, unsigned long initrd_size);
 void setup_video(struct screen_info *screen_info);

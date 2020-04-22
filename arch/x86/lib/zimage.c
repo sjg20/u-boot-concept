@@ -129,7 +129,7 @@ static int setup_device_tree(struct setup_header *hdr, const void *fdt_blob)
 }
 
 struct boot_params *load_zimage(char *image, unsigned long kernel_size,
-				ulong *load_addressp)
+				ulong *load_addressp, bool *image_64bit)
 {
 	struct boot_params *setup_base;
 	int setup_size;
@@ -178,6 +178,9 @@ struct boot_params *load_zimage(char *image, unsigned long kernel_size,
 	/* Determine image type */
 	big_image = (bootproto >= 0x0200) &&
 		    (hdr->loadflags & BIG_KERNEL_FLAG);
+
+	/* Determine 64-bit kernel */
+	*image_64bit = (hdr->xloadflags & XLF_KERNEL_64) ? true : false;
 
 	/* Determine load address */
 	if (big_image)
@@ -313,12 +316,13 @@ void __setup_pcat_compatibility(void)
 int do_zboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
 	struct boot_params *base_ptr;
-	void *bzImage_addr = NULL;
+	void *bzimage_addr = NULL;
 	ulong load_address;
 	char *s;
-	ulong bzImage_size = 0;
+	ulong bzimage_size = 0;
 	ulong initrd_addr = 0;
 	ulong initrd_size = 0;
+	bool image_64bit;
 
 	disable_interrupts();
 
@@ -333,11 +337,11 @@ int do_zboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	}
 
 	if (s)
-		bzImage_addr = (void *)simple_strtoul(s, NULL, 16);
+		bzimage_addr = (void *)simple_strtoul(s, NULL, 16);
 
 	if (argc >= 3) {
 		/* argv[2] holds the size of the bzImage */
-		bzImage_size = simple_strtoul(argv[2], NULL, 16);
+		bzimage_size = simple_strtoul(argv[2], NULL, 16);
 	}
 
 	if (argc >= 4)
@@ -346,8 +350,13 @@ int do_zboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 		initrd_size = simple_strtoul(argv[4], NULL, 16);
 
 	/* Lets look for */
-	base_ptr = load_zimage(bzImage_addr, bzImage_size, &load_address);
+	base_ptr = load_zimage(bzimage_addr, bzimage_size, &load_address,
+			       &image_64bit);
+#if !CONFIG_IS_ENABLED(X86_64)
+	image_64bit = false;
+#endif
 
+	/* we assume that the kernel is in place */
 	if (!base_ptr) {
 		puts("## Kernel loading failed ...\n");
 		return -1;
@@ -358,8 +367,7 @@ int do_zboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 		return -1;
 	}
 
-	/* we assume that the kernel is in place */
-	return boot_linux_kernel((ulong)base_ptr, load_address, false);
+	return boot_linux_kernel((ulong)base_ptr, load_address, image_64bit);
 }
 
 U_BOOT_CMD(

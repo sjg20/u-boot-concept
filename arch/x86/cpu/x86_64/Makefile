@@ -3,4 +3,4 @@
 # Written by Simon Glass <sjg@chromium.org>
 #
 
-obj-y += cpu.o interrupts.o setjmp.o
+obj-y += cpu.o interrupts.o setjmp.o call64.o

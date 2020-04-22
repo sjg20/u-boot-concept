@@ -7,6 +7,7 @@
 #include <common.h>
 #include <cpu_func.h>
 #include <debug_uart.h>
+#include <asm/cpu.h>
 
 /*
  * Global declaration of gd.
@@ -68,4 +69,13 @@ int print_cpuinfo(void)
 int x86_cpu_reinit_f(void)
 {
 	return 0;
+}
+
+int cpu_jump_to_64bit(ulong setup_base, ulong load_address)
+{
+	ulong target = load_address + 0x200;
+
+	cpu_call64(0, setup_base, target);
+
+	return -EFAULT;
 }

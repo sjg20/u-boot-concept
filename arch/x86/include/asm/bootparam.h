@@ -59,7 +59,15 @@ struct setup_header {
 	__u32	initrd_addr_max;
 	__u32	kernel_alignment;
 	__u8	relocatable_kernel;
-	__u8	_pad2[3];
+	__u8	min_alignment;
+	__u16	xloadflags;
+#define XLF_KERNEL_64			BIT(0)
+#define XLF_CAN_BE_LOADED_ABOVE_4G	BIT(1)
+#define XLF_EFI_HANDOVER_32		BIT(2)
+#define XLF_EFI_HANDOVER_64		BIT(3)
+#define XLF_EFI_KEXEC			BIT(4)
+#define XLF_5LEVEL			BIT(5)
+#define XLF_5LEVEL_ENABLED		BIT(6)
 	__u32	cmdline_size;
 	__u32	hardware_subarch;
 	__u64	hardware_subarch_data;
