@@ -36,14 +36,14 @@ static int do_hob(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 	hdr = gd->arch.hob_list;
 
-	printf("HOB list address: 0x%08x\n\n", (unsigned int)hdr);
+	printf("HOB list address: 0x%p\n\n", hdr);
 
-	printf("#  | Address  | Type      | Len  | ");
+	printf("#  |          Address | Type      | Len  | ");
 	printf("%36s\n", "GUID");
-	printf("---|----------|-----------|------|-");
+	printf("---|------------------|-----------|------|-");
 	printf("------------------------------------\n");
 	while (!end_of_hob(hdr)) {
-		printf("%02x | %08x | ", i, (unsigned int)hdr);
+		printf("%02x | %p | ", i, hdr);
 		type = hdr->type;
 		if (type == HOB_TYPE_UNUSED)
 			desc = "*Unused*";
