@@ -25,6 +25,11 @@ init_64bit_entry_ret:
 
 	call	board_init_f_init_reserve
 
+#if defined(CONFIG_X86_RUN_64BIT_ONLY) && defined(CONFIG_USE_HOB)
+	mov	%r10, %rdi
+	call	set_hob_list
+#endif
+
 	xor	%rdi, %rdi
 	call	board_init_f
 	call	board_init_f_r
