@@ -13,6 +13,11 @@
 .globl _start
 .type _start, @function
 _start:
+#if defined(CONFIG_X86_RUN_64BIT_ONLY)
+	jmp	init_64bit_entry
+.globl init_64bit_entry_ret
+init_64bit_entry_ret:
+#endif
 	/* Set up memory using the existing stack */
 	mov	%rsp, %rdi
 	call	board_init_f_alloc_reserve
