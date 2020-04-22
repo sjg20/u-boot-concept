@@ -1,0 +1,39 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * Generation of ACPI (Advanced Configuration and Power Interface) tables
+ *
+ * Copyright 2019 Google LLC
+ * Mostly taken from coreboot
+ */
+
+#define LOG_CATEGORY LOGC_ACPI
+
+#include <common.h>
+#include <dm.h>
+#include <acpi/acpigen.h>
+#include <dm/acpi.h>
+
+void acpigen_emit_byte(struct acpi_ctx *ctx, unsigned char b)
+{
+	*(u8 *)ctx->current++ = b;
+}
+
+char *acpigen_get_current(struct acpi_ctx *ctx)
+{
+	return ctx->current;
+}
+
+void acpigen_emit_word(struct acpi_ctx *ctx, unsigned int data)
+{
+	acpigen_emit_byte(ctx, data & 0xff);
+	acpigen_emit_byte(ctx, (data >> 8) & 0xff);
+}
+
+void acpigen_emit_dword(struct acpi_ctx *ctx, unsigned int data)
+{
+	acpigen_emit_byte(ctx, data & 0xff);
+	acpigen_emit_byte(ctx, (data >> 8) & 0xff);
+	acpigen_emit_byte(ctx, (data >> 16) & 0xff);
+	acpigen_emit_byte(ctx, (data >> 24) & 0xff);
+}
+
