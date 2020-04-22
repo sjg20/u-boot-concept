@@ -145,6 +145,35 @@ Also, the PayloadId needs to be set for APL board.
 
    Use DediProg to flash IFWI. You should reach at U-Boot serial console.
 
+Build Instruction for 64-bit Slim Bootloader & U-Boot on QEMU target
+--------------------------------------------------------------------
+
+1. Build 64-bit U-Boot and obtain u-boot-dtb.bin::
+
+   $ make distclean
+   $ make slimbootloader-x86_64_defconfig
+   $ make all
+
+2. Copy u-boot-dtb.bin to Slim Bootloader::
+
+   $ mkdir -p <Slim Bootloader Dir>/PayloadPkg/PayloadBins/
+   $ cp <U-Boot Dir>/u-boot-dtb.bin <Slim Bootloader Dir>/PayloadPkg/PayloadBins/u-boot-dtb.bin
+
+3. Update PayloadId with 'U-BT'::
+
+    $ vi Platform/QemuBoardPkg/CfgData/CfgDataExt_Brd1.dlt
+    -GEN_CFG_DATA.PayloadId                     | 'AUTO'
+    +GEN_CFG_DATA.PayloadId                     | 'U-BT'
+
+4. Update payload text base::
+
+    $ vi Platform/QemuBoardPkg/BoardConfig.py
+    +               self.PAYLOAD_LOAD_HIGH    = 0
+    +               self.PAYLOAD_EXE_BASE     = 0x00100000
+
+5. Build QEMU target::
+
+   $ python BuildLoader.py build qemu -a x64 -p "OsLoader.efi:LLDR:Lz4;u-boot-dtb.bin:U-BT:Lzma"
 
 Build Instruction to use ELF U-Boot
 -----------------------------------
