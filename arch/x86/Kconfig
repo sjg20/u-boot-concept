@@ -40,6 +40,14 @@ config X86_RUN_64BIT
 	  runs through the 16-bit and 32-bit init, then switches to 64-bit
 	  mode and jumps to U-Boot proper.
 
+config X86_RUN_64BIT_ONLY
+	bool "64-bit only"
+	select X86_64
+	help
+	  Build U-Boot as a pure 64-bit binary with no 32-bit SPL. This can
+	  be used with a pre-stage boot firmware which has already done
+	  16-bit, 32-bit and 64-bit init.
+
 endchoice
 
 config X86_64
