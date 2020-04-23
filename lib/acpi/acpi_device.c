@@ -9,11 +9,14 @@
 #include <common.h>
 #include <dm.h>
 #include <irq.h>
+#include <malloc.h>
 #include <usb.h>
 #include <acpi/acpigen.h>
 #include <acpi/acpi_device.h>
 #include <asm-generic/gpio.h>
 #include <dm/acpi.h>
+
+#define ACPI_DSM_I2C_HID_UUID	"3cdff6f7-4267-4555-ad05-b30a3d8938de"
 
 /**
  * acpi_device_path_fill() - Find the root device and build a path from there
@@ -479,6 +482,49 @@ int acpi_device_add_power_res(struct acpi_ctx *ctx, u32 tx_state_val,
 	acpigen_pop_len(ctx);		/* PowerResource PRIC */
 
 	return 0;
+}
+
+static void i2c_hid_func0_cb(struct acpi_ctx *ctx, void *arg)
+{
+	/* ToInteger (Arg1, Local2) */
+	acpigen_write_to_integer(ctx, ARG1_OP, LOCAL2_OP);
+	/* If (LEqual (Local2, 0x0)) */
+	acpigen_write_if_lequal_op_int(ctx, LOCAL2_OP, 0x0);
+	/*   Return (Buffer (One) { 0x1f }) */
+	acpigen_write_return_singleton_buffer(ctx, 0x1f);
+	acpigen_pop_len(ctx);	/* Pop : If */
+	/* Else */
+	acpigen_write_else(ctx);
+	/*   If (LEqual (Local2, 0x1)) */
+	acpigen_write_if_lequal_op_int(ctx, LOCAL2_OP, 0x1);
+	/*     Return (Buffer (One) { 0x3f }) */
+	acpigen_write_return_singleton_buffer(ctx, 0x3f);
+	acpigen_pop_len(ctx);	/* Pop : If */
+	/*   Else */
+	acpigen_write_else(ctx);
+	/*     Return (Buffer (One) { 0x0 }) */
+	acpigen_write_return_singleton_buffer(ctx, 0x0);
+	acpigen_pop_len(ctx);	/* Pop : Else */
+	acpigen_pop_len(ctx);	/* Pop : Else */
+}
+
+static void i2c_hid_func1_cb(struct acpi_ctx *ctx, void *arg)
+{
+	struct dsm_i2c_hid_config *config = arg;
+
+	acpigen_write_return_byte(ctx, config->hid_desc_reg_offset);
+}
+
+static hid_callback_func i2c_hid_callbacks[2] = {
+	i2c_hid_func0_cb,
+	i2c_hid_func1_cb,
+};
+
+void acpi_device_write_dsm_i2c_hid(struct acpi_ctx *ctx,
+				   struct dsm_i2c_hid_config *config)
+{
+	acpigen_write_dsm(ctx, ACPI_DSM_I2C_HID_UUID, i2c_hid_callbacks,
+			  ARRAY_SIZE(i2c_hid_callbacks), config);
 }
 
 /* ACPI 6.3 section 6.4.3.8.2.1 - I2cSerialBus() */

@@ -10,7 +10,9 @@
 #define __ACPI_DEVICE_H
 
 #include <i2c.h>
+#include <irq.h>
 #include <spi.h>
+#include <asm-generic/gpio.h>
 
 struct acpi_ctx;
 struct gpio_desc;
@@ -22,6 +24,18 @@ struct udevice;
 #define ACPI_DESCRIPTOR_INTERRUPT	(ACPI_DESCRIPTOR_LARGE | 9)
 #define ACPI_DESCRIPTOR_GPIO		(ACPI_DESCRIPTOR_LARGE | 12)
 #define ACPI_DESCRIPTOR_SERIAL_BUS	(ACPI_DESCRIPTOR_LARGE | 14)
+
+/*
+ * PRP0001 is a special DT namespace link device ID. It provides a means to use
+ * existing DT-compatible device identification in ACPI. When this _HID is used
+ * by an ACPI device, the ACPI subsystem in OS looks up "compatible" property in
+ * the device object's _DSD and will use the value of that property to identify
+ * the corresponding device in analogy with the original DT device
+ * identification algorithm.
+ * More details can be found in Linux kernel documentation:
+ * Documentation/acpi/enumeration.txt
+ */
+#define ACPI_DT_NAMESPACE_HID		"PRP0001"
 
 /* Length of a full path to an ACPI device */
 #define ACPI_PATH_MAX		30
@@ -231,6 +245,68 @@ struct acpi_spi {
 };
 
 /**
+ * struct acpi_i2c_priv - Information read from device tree
+ *
+ * This is used by devices which want to specify various pieces of ACPI
+ * information, including power control. It allows a generic function to
+ * generate the information for ACPI, based on device-tree properties.
+ *
+ * @disable_gpio_export_in_crs: Don't export GPIOs in the CRS
+ * @reset_gpio: GPIO used to assert reset to the device
+ * @enable_gpio: GPIO used to enable the device
+ * @stop_gpio: GPIO used to stop the device
+ * @irq_gpio: GPIO used for interrupt (if @irq is not used)
+ * @irq: IRQ used for interrupt (if @irq_gpio is not used)
+ * @hid: _HID value for device (required)
+ * @uid: _UID value for device
+ * @desc: _DDN value for device
+ * @wake: Wake event, e.g. GPE0_DW1_15; 0 if none
+ * @property_count: Number of other DSD properties (currently always 0)
+ * @probed: true set set 'linux,probed' property
+ * @compat_string: Device tree compatible string to report through ACPI
+ * @has_power_resource: true if this device has a power resource
+ * @reset_delay_ms: Delay after de-asserting reset, in ms
+ * @reset_off_delay_ms: Delay after asserting reset (during power off)
+ * @enable_delay_ms: Delay after asserting enable
+ * @enable_off_delay_ms: Delay after de-asserting enable (during power off)
+ * @stop_delay_ms: Delay after de-aserting stop
+ * @stop_off_delay_ms: Delay after asserting stop (during power off)
+ * @hid_desc_reg_offset: HID register offset (for Human Interface Devices)
+ */
+struct acpi_i2c_priv {
+	bool disable_gpio_export_in_crs;
+	struct gpio_desc reset_gpio;
+	struct gpio_desc enable_gpio;
+	struct gpio_desc irq_gpio;
+	struct gpio_desc stop_gpio;
+	struct irq irq;
+	const char *hid;
+	u32 uid;
+	const char *desc;
+	u32 wake;
+	u32 property_count;
+	bool probed;
+	const char *compat_string;
+	bool has_power_resource;
+	u32 reset_delay_ms;
+	u32 reset_off_delay_ms;
+	u32 enable_delay_ms;
+	u32 enable_off_delay_ms;
+	u32 stop_delay_ms;
+	u32 stop_off_delay_ms;
+	u32 hid_desc_reg_offset;
+};
+
+/**
+ * I2C Human-Interface Devices configuration
+ *
+ * @hid_desc_reg_offset: HID register offset
+ */
+struct dsm_i2c_hid_config {
+	u8 hid_desc_reg_offset;
+};
+
+/**
  * acpi_device_path() - Get the full path to an ACPI device
  *
  * This gets the full path in the form XXXX.YYYY.ZZZZ where XXXX is the root
@@ -316,6 +392,17 @@ int acpi_device_write_gpio_desc(struct acpi_ctx *ctx,
  */
 int acpi_device_write_interrupt_or_gpio(struct acpi_ctx *ctx,
 					struct udevice *dev, const char *prop);
+
+/**
+ * acpi_device_write_dsm_i2c_hid() - Write a device-specific method for HID
+ *
+ * This writes a DSM for an I2C Human-Interface Device based on the config
+ * provided
+ *
+ * @config: Config information to write
+ */
+void acpi_device_write_dsm_i2c_hid(struct acpi_ctx *ctx,
+				   struct dsm_i2c_hid_config *config);
 
 /**
  * acpi_device_write_i2c_dev() - Write an I2C device to ACPI
