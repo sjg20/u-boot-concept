@@ -15,6 +15,9 @@
 #include <acpi/acpigen.h>
 #include <dm/acpi.h>
 
+/* CPU path format */
+#define ACPI_CPU_STRING "\\_PR.CP%02d"
+
 u8 *acpigen_get_current(struct acpi_ctx *ctx)
 {
 	return ctx->current;
