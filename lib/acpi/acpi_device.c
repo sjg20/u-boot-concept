@@ -9,10 +9,14 @@
 #include <common.h>
 #include <dm.h>
 #include <irq.h>
+#include <malloc.h>
+#include <usb.h>
 #include <acpi/acpigen.h>
 #include <acpi/acpi_device.h>
 #include <asm-generic/gpio.h>
 #include <dm/acpi.h>
+
+#define ACPI_DSM_I2C_HID_UUID	"3cdff6f7-4267-4555-ad05-b30a3d8938de"
 
 /**
  * acpi_device_path_fill() - Find the root device and build a path from there
@@ -351,6 +355,233 @@ int acpi_device_write_gpio_desc(struct acpi_ctx *ctx,
 	ret = acpi_device_write_gpio(ctx, &gpio);
 	if (ret)
 		return log_msg_ret("gpio", ret);
+
+	return 0;
+}
+
+/* PowerResource() with Enable and/or Reset control */
+int acpi_device_add_power_res(struct acpi_ctx *ctx,
+			      const struct acpi_power_res_params *params)
+{
+	static const char *const power_res_dev_states[] = { "_PR0", "_PR3" };
+	unsigned int reset_gpio = params->reset_gpio->pins[0];
+	unsigned int enable_gpio = params->enable_gpio->pins[0];
+	unsigned int stop_gpio = params->stop_gpio->pins[0];
+	int ret;
+
+	if (!reset_gpio && !enable_gpio && !stop_gpio)
+		return -EINVAL;
+
+	/* PowerResource (PRIC, 0, 0) */
+	acpigen_write_power_res(ctx, "PRIC", 0, 0, power_res_dev_states,
+				ARRAY_SIZE(power_res_dev_states));
+
+	/* Method (_STA, 0, NotSerialized) { Return (0x1) } */
+	acpigen_write_sta(ctx, 0x1);
+
+	/* Method (_ON, 0, Serialized) */
+	acpigen_write_method_serialized(ctx, "_ON", 0);
+	if (reset_gpio) {
+		ret = acpigen_enable_tx_gpio(ctx, params->reset_gpio);
+		if (ret)
+			return log_msg_ret("reset1", ret);
+	}
+	if (enable_gpio) {
+		ret = acpigen_enable_tx_gpio(ctx, params->enable_gpio);
+		if (ret)
+			return log_msg_ret("enable1", ret);
+		if (params->enable_delay_ms)
+			acpigen_write_sleep(ctx, params->enable_delay_ms);
+	}
+	if (reset_gpio) {
+		ret = acpigen_disable_tx_gpio(ctx, params->reset_gpio);
+		if (ret)
+			return log_msg_ret("reset2", ret);
+		if (params->reset_delay_ms)
+			acpigen_write_sleep(ctx, params->reset_delay_ms);
+	}
+	if (stop_gpio) {
+		ret = acpigen_disable_tx_gpio(ctx, params->stop_gpio);
+		if (ret)
+			return log_msg_ret("stop1", ret);
+		if (params->stop_delay_ms)
+			acpigen_write_sleep(ctx, params->stop_delay_ms);
+	}
+	acpigen_pop_len(ctx);		/* _ON method */
+
+	/* Method (_OFF, 0, Serialized) */
+	acpigen_write_method_serialized(ctx, "_OFF", 0);
+	if (stop_gpio) {
+		ret = acpigen_enable_tx_gpio(ctx, params->stop_gpio);
+		if (ret)
+			return log_msg_ret("stop2", ret);
+		if (params->stop_off_delay_ms)
+			acpigen_write_sleep(ctx, params->stop_off_delay_ms);
+	}
+	if (reset_gpio) {
+		ret = acpigen_enable_tx_gpio(ctx, params->reset_gpio);
+		if (ret)
+			return log_msg_ret("reset3", ret);
+		if (params->reset_off_delay_ms)
+			acpigen_write_sleep(ctx, params->reset_off_delay_ms);
+	}
+	if (enable_gpio) {
+		ret = acpigen_disable_tx_gpio(ctx, params->enable_gpio);
+		if (ret)
+			return log_msg_ret("enable2", ret);
+		if (params->enable_off_delay_ms)
+			acpigen_write_sleep(ctx, params->enable_off_delay_ms);
+	}
+	acpigen_pop_len(ctx);		/* _OFF method */
+
+	acpigen_pop_len(ctx);		/* PowerResource PRIC */
+
+	return 0;
+}
+
+static void i2c_hid_func0_cb(struct acpi_ctx *ctx, void *arg)
+{
+	/* ToInteger (Arg1, Local2) */
+	acpigen_write_to_integer(ctx, ARG1_OP, LOCAL2_OP);
+	/* If (LEqual (Local2, 0x0)) */
+	acpigen_write_if_lequal_op_int(ctx, LOCAL2_OP, 0x0);
+	/*   Return (Buffer (One) { 0x1f }) */
+	acpigen_write_return_singleton_buffer(ctx, 0x1f);
+	acpigen_pop_len(ctx);	/* Pop : If */
+	/* Else */
+	acpigen_write_else(ctx);
+	/*   If (LEqual (Local2, 0x1)) */
+	acpigen_write_if_lequal_op_int(ctx, LOCAL2_OP, 0x1);
+	/*     Return (Buffer (One) { 0x3f }) */
+	acpigen_write_return_singleton_buffer(ctx, 0x3f);
+	acpigen_pop_len(ctx);	/* Pop : If */
+	/*   Else */
+	acpigen_write_else(ctx);
+	/*     Return (Buffer (One) { 0x0 }) */
+	acpigen_write_return_singleton_buffer(ctx, 0x0);
+	acpigen_pop_len(ctx);	/* Pop : Else */
+	acpigen_pop_len(ctx);	/* Pop : Else */
+}
+
+static void i2c_hid_func1_cb(struct acpi_ctx *ctx, void *arg)
+{
+	struct dsm_i2c_hid_config *config = arg;
+
+	acpigen_write_return_byte(ctx, config->hid_desc_reg_offset);
+}
+
+static hid_callback_func i2c_hid_callbacks[2] = {
+	i2c_hid_func0_cb,
+	i2c_hid_func1_cb,
+};
+
+void acpi_device_write_dsm_i2c_hid(struct acpi_ctx *ctx,
+				   struct dsm_i2c_hid_config *config)
+{
+	acpigen_write_dsm(ctx, ACPI_DSM_I2C_HID_UUID, i2c_hid_callbacks,
+			  ARRAY_SIZE(i2c_hid_callbacks), config);
+}
+
+static const char *acpi_name_from_id(enum uclass_id id)
+{
+	switch (id) {
+	case UCLASS_USB_HUB:
+		/* Root Hub */
+		return "RHUB";
+	/* DSDT: acpi/northbridge.asl */
+	case UCLASS_NORTHBRIDGE:
+		return "MCHC";
+	/* DSDT: acpi/lpc.asl */
+	case UCLASS_LPC:
+		return "LPCB";
+	/* DSDT: acpi/xhci.asl */
+	case UCLASS_USB:
+		return "XHCI";
+	case UCLASS_PWM:
+		return "PWM";
+	default:
+		return NULL;
+	}
+}
+
+static int acpi_check_seq(const struct udevice *dev)
+{
+	if (dev->req_seq == -1) {
+		log_warning("Device '%s' has no seq\n", dev->name);
+		return log_msg_ret("no seq", -ENXIO);
+	}
+
+	return dev->req_seq;
+}
+
+/* If you change this function, add test cases to dm_test_acpi_get_name() */
+int acpi_device_get_name(const struct udevice *dev, char *out_name)
+{
+	enum uclass_id parent_id = UCLASS_INVALID;
+	enum uclass_id id;
+	const char *name = NULL;
+
+	id = device_get_uclass_id(dev);
+	if (dev_get_parent(dev))
+		parent_id = device_get_uclass_id(dev_get_parent(dev));
+
+	if (id == UCLASS_SOUND)
+		name = "HDAS";
+	else if (id == UCLASS_PCI)
+		name = "PCI0";
+	else if (device_is_on_pci_bus(dev))
+		name = acpi_name_from_id(id);
+	if (!name) {
+		switch (parent_id) {
+		case UCLASS_USB: {
+			struct usb_device *udev = dev_get_parent_priv(dev);
+
+			sprintf(out_name, udev->speed >= USB_SPEED_SUPER ?
+				"HS%02d" : "FS%02d",
+				udev->portnr);
+			name = out_name;
+			break;
+		}
+		default:
+			break;
+		}
+	}
+	if (!name) {
+		int num;
+
+		switch (id) {
+		/* DSDT: acpi/lpss.asl */
+		case UCLASS_SERIAL:
+			num = acpi_check_seq(dev);
+			if (num < 0)
+				return num;
+			sprintf(out_name, "URT%d", num);
+			name = out_name;
+			break;
+		case UCLASS_I2C:
+			num = acpi_check_seq(dev);
+			if (num < 0)
+				return num;
+			sprintf(out_name, "I2C%d", num);
+			name = out_name;
+			break;
+		case UCLASS_SPI:
+			num = acpi_check_seq(dev);
+			if (num < 0)
+				return num;
+			sprintf(out_name, "SPI%d", num);
+			name = out_name;
+			break;
+		default:
+			break;
+		}
+	}
+	if (!name) {
+		log_warning("No name for device '%s'\n", dev->name);
+		return -ENOENT;
+	}
+	if (name != out_name)
+		memcpy(out_name, name, ACPI_NAME_MAX);
 
 	return 0;
 }
