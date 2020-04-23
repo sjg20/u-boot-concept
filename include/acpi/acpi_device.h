@@ -9,6 +9,8 @@
 #ifndef __ACPI_DEVICE_H
 #define __ACPI_DEVICE_H
 
+#include <i2c.h>
+
 struct acpi_ctx;
 struct gpio_desc;
 struct irq;
@@ -178,6 +180,29 @@ struct acpi_gpio {
 	enum acpi_gpio_polarity polarity;
 };
 
+/* ACPI Descriptors for Serial Bus interfaces */
+#define ACPI_SERIAL_BUS_TYPE_I2C		1
+#define ACPI_SERIAL_BUS_TYPE_SPI		2
+#define ACPI_I2C_SERIAL_BUS_REVISION_ID		1 /* TODO: upgrade to 2 */
+#define ACPI_I2C_TYPE_SPECIFIC_REVISION_ID	1
+#define ACPI_SPI_SERIAL_BUS_REVISION_ID		1
+#define ACPI_SPI_TYPE_SPECIFIC_REVISION_ID	1
+
+/**
+ * struct acpi_i2c - representation of an ACPI I2C device
+ *
+ * @address: 7-bit or 10-bit I2C address
+ * @mode_10bit: Which address size is used
+ * @speed: Bus speed in Hz
+ * @resource: Resource name for the I2C controller
+ */
+struct acpi_i2c {
+	u16 address;
+	enum i2c_address_mode mode_10bit;
+	enum i2c_speed_rate speed;
+	const char *resource;
+};
+
 /**
  * acpi_device_path() - Get the full path to an ACPI device
  *
@@ -249,5 +274,17 @@ int acpi_device_write_gpio(struct acpi_ctx *ctx, const struct acpi_gpio *gpio);
  */
 int acpi_device_write_gpio_desc(struct acpi_ctx *ctx,
 				const struct gpio_desc *desc);
+
+/**
+ * acpi_device_write_i2c_dev() - Write an I2C device to ACPI
+ *
+ * This creates a I2cSerialBus descriptor for an I2C device, including
+ * information ACPI needs to use it.
+ *
+ * @ctx: ACPI context pointer
+ * @dev: I2C device to write
+ * @return 0 if OK, -ve on error
+ */
+int acpi_device_write_i2c_dev(struct acpi_ctx *ctx, const struct udevice *dev);
 
 #endif
