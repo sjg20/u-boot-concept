@@ -9,6 +9,7 @@
 #include <i2c.h>
 #include <rtc.h>
 #include <asm/rtc.h>
+#include <dm/acpi.h>
 
 #define REG_COUNT 0x80
 
@@ -84,6 +85,17 @@ static int sandbox_rtc_write8(struct udevice *dev, unsigned int reg, int val)
 	return dm_i2c_reg_write(dev, reg, val);
 }
 
+#if CONFIG_IS_ENABLED(ACPIGEN)
+static int sandbox_rtc_get_name(const struct udevice *dev, char *out_name)
+{
+	return acpi_copy_name(out_name, "RTCC");
+}
+
+struct acpi_ops sandbox_rtc_acpi_ops = {
+	.get_name	= sandbox_rtc_get_name,
+};
+#endif
+
 static const struct rtc_ops sandbox_rtc_ops = {
 	.get = sandbox_rtc_get,
 	.set = sandbox_rtc_set,
@@ -102,4 +114,5 @@ U_BOOT_DRIVER(rtc_sandbox) = {
 	.id	= UCLASS_RTC,
 	.of_match = sandbox_rtc_ids,
 	.ops	= &sandbox_rtc_ops,
+	ACPI_OPS_PTR(&sandbox_rtc_acpi_ops)
 };
