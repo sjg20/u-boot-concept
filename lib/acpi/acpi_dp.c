@@ -320,3 +320,24 @@ struct acpi_dp *acpi_dp_add_integer_array(struct acpi_dp *dp, const char *name,
 
 	return dp_array;
 }
+
+struct acpi_dp *acpi_dp_add_gpio(struct acpi_dp *dp, const char *name,
+				 const char *ref, int index, int pin,
+				 bool active_low)
+{
+	struct acpi_dp *gpio;
+
+	assert(dp);
+	gpio = acpi_dp_new_table(name);
+	if (!gpio)
+		return NULL;
+
+	acpi_dp_add_reference(gpio, NULL, ref);
+	acpi_dp_add_integer(gpio, NULL, index);
+	acpi_dp_add_integer(gpio, NULL, pin);
+	acpi_dp_add_integer(gpio, NULL, active_low);
+
+	acpi_dp_add_array(dp, gpio);
+
+	return gpio;
+}
