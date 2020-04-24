@@ -65,4 +65,7 @@ void acpigen_emit_stream(struct acpi_ctx *ctx, const char *data, int size);
  */
 void acpigen_emit_string(struct acpi_ctx *ctx, const char *str);
 
+void acpigen_write_len_f(struct acpi_ctx *ctx);
+void acpigen_pop_len(struct acpi_ctx *ctx);
+
 #endif
