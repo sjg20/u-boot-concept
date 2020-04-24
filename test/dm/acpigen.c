@@ -791,3 +791,71 @@ static int dm_test_acpi_gpio_toggle(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_acpi_gpio_toggle, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+
+/* Test writing ACPI code to output power-sequence info */
+static int dm_test_acpi_power_seq(struct unit_test_state *uts)
+{
+	struct gpio_desc reset, enable, stop;
+	const uint addr = 0xc00dc, addr_act_low = 0x80012;
+	const int txbit = BIT(2);
+	struct acpi_ctx *ctx;
+	struct udevice *dev;
+	u8 *ptr;
+
+	ut_assertok(alloc_context_size(&ctx, 400));
+
+	ut_assertok(uclass_get_device(UCLASS_TEST_FDT, 0, &dev));
+	ut_asserteq_str("a-test", dev->name);
+	ut_assertok(gpio_request_by_name(dev, "test2-gpios", 0, &reset, 0));
+	ut_assertok(gpio_request_by_name(dev, "test2-gpios", 1, &enable, 0));
+	ut_assertok(gpio_request_by_name(dev, "test2-gpios", 2, &stop, 0));
+	ptr = acpigen_get_current(ctx);
+
+	ut_assertok(acpi_device_add_power_res(ctx, txbit, "\\_SB.GPC0",
+					      &reset, 2, 3, &enable, 4, 5,
+					      &stop, 6, 7));
+	ut_asserteq(0x16a, acpigen_get_current(ctx) - ptr);
+	ut_asserteq_strn("PRIC", (char *)ptr + 0x18);
+
+	/* First the 'ON' sequence - spot check */
+	ut_asserteq_strn("_ON_", (char *)ptr + 0x38);
+
+	/* reset set */
+	ut_asserteq(addr + reset.offset, get_unaligned((u32 *)(ptr + 0x49)));
+	ut_asserteq(OR_OP, ptr[0x4e]);
+
+	/* enable set */
+	ut_asserteq(addr + enable.offset, get_unaligned((u32 *)(ptr + 0x6e)));
+	ut_asserteq(OR_OP, ptr[0x73]);
+
+	/* reset clear */
+	ut_asserteq(addr + reset.offset, get_unaligned((u32 *)(ptr + 0x97)));
+	ut_asserteq(NOT_OP, ptr[0x9c]);
+
+	/* stop set (disable, active low) */
+	ut_asserteq(addr_act_low + stop.offset,
+		    get_unaligned((u32 *)(ptr + 0xc3)));
+	ut_asserteq(OR_OP, ptr[0xc8]);
+
+	/* Now the 'OFF' sequence */
+	ut_asserteq_strn("_OFF", (char *)ptr + 0xe4);
+
+	/* stop clear (enable, active low) */
+	ut_asserteq(addr_act_low + stop.offset,
+		    get_unaligned((u32 *)(ptr + 0xf5)));
+	ut_asserteq(NOT_OP, ptr[0xfa]);
+
+	/* reset clear */
+	ut_asserteq(addr + reset.offset, get_unaligned((u32 *)(ptr + 0x121)));
+	ut_asserteq(OR_OP, ptr[0x126]);
+
+	/* enable clear */
+	ut_asserteq(addr + enable.offset, get_unaligned((u32 *)(ptr + 0x14a)));
+	ut_asserteq(NOT_OP, ptr[0x14f]);
+
+	free_context(&ctx);
+
+	return 0;
+}
+
+DM_TEST(dm_test_acpi_power_seq, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
