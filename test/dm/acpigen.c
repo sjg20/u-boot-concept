@@ -737,3 +737,57 @@ static int dm_test_acpi_power_res(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_acpi_power_res, 0);
+
+/* Test writing ACPI code to toggle a GPIO */
+static int dm_test_acpi_gpio_toggle(struct unit_test_state *uts)
+{
+	const uint addr = 0x80012;
+	const int txbit = BIT(2);
+	struct gpio_desc desc;
+	struct acpi_gpio gpio;
+	struct acpi_ctx *ctx;
+	struct udevice *dev;
+	u8 *ptr;
+
+	ut_assertok(alloc_context(&ctx));
+
+	ut_assertok(uclass_get_device(UCLASS_TEST_FDT, 0, &dev));
+	ut_asserteq_str("a-test", dev->name);
+	ut_assertok(gpio_request_by_name(dev, "test2-gpios", 2, &desc, 0));
+	ut_assertok(gpio_get_acpi(&desc, &gpio));
+
+	/* Spot-check the results - see sb_gpio_get_acpi() */
+	ptr = acpigen_get_current(ctx);
+	acpigen_set_enable_tx_gpio(ctx, txbit, "\\_SB.GPC0", &gpio, true);
+	acpigen_set_enable_tx_gpio(ctx, txbit, "\\_SB.GPC0", &gpio, false);
+
+	/* Since this GPIO is active low, we expect it to be cleared here */
+	ut_asserteq(STORE_OP, ptr[0]);
+	ut_asserteq_strn("_SB_GPC0", (char *)ptr + 3);
+	ut_asserteq(addr + desc.offset, get_unaligned((u32 *)(ptr + 0xc)));
+	ut_asserteq(LOCAL5_OP, ptr[0x10]);
+
+	ut_asserteq(NOT_OP, ptr[0x11]);
+	ut_asserteq(txbit, ptr[0x12]);
+	ut_asserteq(AND_OP, ptr[0x14]);
+	ut_asserteq_strn("_SB_GPC0", (char *)ptr + 0x1a);
+	ut_asserteq(addr + desc.offset, get_unaligned((u32 *)(ptr + 0x23)));
+	ut_asserteq(LOCAL5_OP, ptr[0x27]);
+
+	/* Now the second one, which should be set */
+	ut_asserteq_strn("_SB_GPC0", (char *)ptr + 0x2b);
+	ut_asserteq(addr + desc.offset, get_unaligned((u32 *)(ptr + 0x34)));
+	ut_asserteq(LOCAL5_OP, ptr[0x38]);
+
+	ut_asserteq(OR_OP, ptr[0x39]);
+	ut_asserteq(txbit, ptr[0x3b]);
+	ut_asserteq_strn("_SB_GPC0", (char *)ptr + 0x3f);
+	ut_asserteq(addr + desc.offset, get_unaligned((u32 *)(ptr + 0x48)));
+	ut_asserteq(LOCAL5_OP, ptr[0x4c]);
+	ut_asserteq(0x4d, acpigen_get_current(ctx) - ptr);
+
+	free_context(&ctx);
+
+	return 0;
+}
+DM_TEST(dm_test_acpi_gpio_toggle, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
