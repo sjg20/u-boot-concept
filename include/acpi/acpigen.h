@@ -13,6 +13,7 @@
 #include <linux/types.h>
 
 struct acpi_ctx;
+struct acpi_gpio;
 
 /* Top 4 bits of the value used to indicate a three-byte length value */
 #define ACPI_PKG_LEN_3_BYTES	0x80
@@ -339,5 +340,16 @@ void acpigen_write_not(struct acpi_ctx *ctx, u8 arg, u8 res);
 void acpigen_write_power_res(struct acpi_ctx *ctx, const char *name, uint level,
 			     uint order, const char *const dev_states[],
 			     size_t dev_states_count);
+
+/*
+ * Helper functions for enabling/disabling Tx GPIOs based on the GPIO
+ * polarity. These functions end up calling acpigen_soc_{set,clear}_tx_gpio to
+ * make callbacks into SoC acpigen code.
+ *
+ * Returns 0 on success and -1 on error.
+ */
+int acpigen_set_enable_tx_gpio(struct acpi_ctx *ctx, u32 tx_state_val,
+			       const char *dw0_name, struct acpi_gpio *gpio,
+			       bool enable);
 
 #endif
