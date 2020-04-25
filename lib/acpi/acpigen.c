@@ -13,6 +13,7 @@
 #include <log.h>
 #include <uuid.h>
 #include <acpi/acpigen.h>
+#include <acpi/acpi_device.h>
 #include <dm/acpi.h>
 
 /* CPU path format */
@@ -394,4 +395,83 @@ void acpigen_write_debug_string(struct acpi_ctx *ctx, const char *str)
 	acpigen_write_store(ctx);
 	acpigen_write_string(ctx, str);
 	acpigen_emit_ext_op(ctx, DEBUG_OP);
+}
+
+/**
+ * acpigen_get_dw0_in_local5() - Generate code to put dw0 cfg0 in local5
+ *
+ * @ctx: ACPI context pointer
+ * @dw0_name: Name to use (e.g. "\\_SB.GPC0")
+ * @addr: GPIO pin configuration register address
+ *
+ * Store (\_SB.GPC0 (addr), Local5)
+ * \_SB.GPC0 is used to read cfg0 value from dw0. It is typically defined in
+ * the board's gpiolib.asl
+ */
+static void acpigen_get_dw0_in_local5(struct acpi_ctx *ctx,
+				      const char *dw0_name, ulong addr)
+{
+	acpigen_write_store(ctx);
+	acpigen_emit_namestring(ctx, dw0_name);
+	acpigen_write_integer(ctx, addr);
+	acpigen_emit_byte(ctx, LOCAL5_OP);
+}
+
+/**
+ * acpigen_set_gpio_val() - Set value of TX GPIO to on/off
+ *
+ * @ctx: ACPI context pointer
+ * @dw0_name: Name to use (e.g. "\\_SB.GPC0")
+ * @gpio_num: GPIO number to adjust
+ * @vaL: true to set on, false to set off
+ */
+static int acpigen_set_gpio_val(struct acpi_ctx *ctx, u32 tx_state_val,
+				const char *dw0_name, struct acpi_gpio *gpio,
+				bool val)
+{
+	acpigen_get_dw0_in_local5(ctx, dw0_name, gpio->pin0_addr);
+
+	if (val) {
+		/* Or (Local5, PAD_CFG0_TX_STATE, Local5) */
+		acpigen_write_or(ctx, LOCAL5_OP, tx_state_val, LOCAL5_OP);
+	} else {
+		/* Not (PAD_CFG0_TX_STATE, Local6) */
+		acpigen_write_not(ctx, tx_state_val, LOCAL6_OP);
+
+		/* And (Local5, Local6, Local5) */
+		acpigen_write_and(ctx, LOCAL5_OP, LOCAL6_OP, LOCAL5_OP);
+	}
+
+	/*
+	 * \_SB.SPC0 (addr, Local5)
+	 * \_SB.SPC0 is used to write cfg0 value in dw0. It is defined in
+	 * gpiolib.asl.
+	 */
+	acpigen_emit_namestring(ctx, dw0_name);
+	acpigen_write_integer(ctx, gpio->pin0_addr);
+	acpigen_emit_byte(ctx, LOCAL5_OP);
+
+	return 0;
+}
+
+/*
+ * Helper functions for enabling/disabling Tx GPIOs based on the GPIO
+ * polarity. These functions end up calling acpigen_{set,clear}_tx_gpio to
+ * make callbacks into SoC acpigen code.
+ *
+ * Returns 0 on success and -1 on error.
+ */
+int acpigen_set_enable_tx_gpio(struct acpi_ctx *ctx, u32 tx_state_val,
+			       const char *dw0_name, struct acpi_gpio *gpio,
+			       bool enable)
+{
+	bool set;
+	int ret;
+
+	set = gpio->polarity == ACPI_GPIO_ACTIVE_HIGH ? enable : !enable;
+	ret = acpigen_set_gpio_val(ctx, tx_state_val, dw0_name, gpio, set);
+	if (ret)
+		return log_msg_ret("call", ret);
+
+	return 0;
 }
