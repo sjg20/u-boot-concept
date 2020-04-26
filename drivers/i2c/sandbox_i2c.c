@@ -83,15 +83,6 @@ static int sandbox_i2c_xfer(struct udevice *bus, struct i2c_msg *msg,
 	return ops->xfer(emul, msg, nmsgs);
 }
 
-static int sandbox_i2c_get_name(const struct udevice *dev, char *out_name)
-{
-	return acpi_copy_name(out_name, "SI2C");
-}
-
-struct acpi_ops sandbox_i2c_acpi_ops = {
-	.get_name	= sandbox_i2c_get_name,
-};
-
 static const struct dm_i2c_ops sandbox_i2c_ops = {
 	.xfer		= sandbox_i2c_xfer,
 };
@@ -107,5 +98,4 @@ U_BOOT_DRIVER(i2c_sandbox) = {
 	.of_match = sandbox_i2c_ids,
 	.ops	= &sandbox_i2c_ops,
 	.priv_auto_alloc_size = sizeof(struct sandbox_i2c_priv),
-	ACPI_OPS_PTR(&sandbox_i2c_acpi_ops)
 };
