@@ -42,11 +42,13 @@ MAJOR=$($dtc -v | head -1 | awk '{print $NF}' | cut -d . -f 1)
 MINOR=$($dtc -v | head -1 | awk '{print $NF}' | cut -d . -f 2)
 PATCH=$($dtc -v | head -1 | awk '{print $NF}' | cut -d . -f 3 | cut -d - -f 1)
 
+echo $build_dtc
+exit 0
 version="$(printf "%02d%02d%02d" $MAJOR $MINOR $PATCH)"
 if test $version -lt $min_version; then \
-	echo $build_dtc >>/tmp/asc
+	echo "build $dtc $version $min_version" >>/tmp/asc
 	echo $build_dtc
 else
-	echo $dtc >>/tmp/asc
+	echo "no build $dtc" >>/tmp/asc
 	echo $dtc
 fi

@@ -1141,7 +1141,7 @@ PHONY += dtbs
 dtbs: dts/dt.dtb
 	$(warning fred2)
 	@:
-dts/dt.dtb: checkdtc u-boot
+dts/dt.dtb: u-boot
 	$(warning build)
 	$(Q)$(MAKE) $(build)=dts dtbs
 
@@ -1805,12 +1805,12 @@ include/config/uboot.release: include/config/auto.conf FORCE
 # version.h and scripts_basic is processed / created.
 
 # Listed in dependency order
-PHONY += prepare archprepare prepare0 prepare1 prepare2 prepare3
+PHONY += prepare archprepare prepare0 prepare1 prepare2 prepare3 prepare4
 
 # prepare3 is used to check if we are building in a separate output directory,
 # and if so do:
 # 1) Check that make has not been executed in the kernel src $(srctree)
-prepare3: include/config/uboot.release
+prepare4: include/config/uboot.release
 ifneq ($(KBUILD_SRC),)
 	@$(kecho) '  Using $(srctree) as source for U-Boot'
 	$(Q)if [ -f $(srctree)/.config -o -d $(srctree)/include/config ]; then \
@@ -1819,6 +1819,14 @@ ifneq ($(KBUILD_SRC),)
 		/bin/false; \
 	fi;
 endif
+
+# Checks for dtc and builds it if needed
+prepare3: prepare4
+	$(eval DTC := $(call dtc-version,010406,$(build_dtc),$(CONFIG_PYLIBFDT)))
+	echo here $(DTC) $(build_dtc)
+	if test "$(DTC)" = "$(build_dtc)"; then \
+		$(MAKE) $(build)=scripts/dtc; \
+	fi
 
 # prepare2 creates a makefile if using a separate output directory
 prepare2: prepare3 outputmakefile cfg
@@ -1972,13 +1980,6 @@ System.map:	u-boot
 		@$(call SYSTEM_MAP,$<) > $@
 
 build_dtc	:= $(objtree)/scripts/dtc/dtc
-
-checkdtc:
-	$(warning here)
-	$(eval DTC := $(call dtc-version,010406,$(build_dtc),$(CONFIG_PYLIBFDT)))
-	if test "$(DTC)" = "$(build_dtc)"; then \
-		$(MAKE) $(build)=scripts/dtc; \
-	fi
 
 #########################################################################
 
