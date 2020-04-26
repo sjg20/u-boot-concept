@@ -388,7 +388,7 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	print_mhz("ethspeed",	    bd->bi_ethspeed);
 #endif
 	print_baudrate();
-	printf("Build: %d-bit\n", CONFIG_IS_ENABLED(X86_64) ? 64 : 32);
+	printf("%-12s= %d-bit\n", "Build", CONFIG_IS_ENABLED(X86_64) ? 64 : 32);
 
 	return 0;
 }
