@@ -303,7 +303,7 @@ static int dm_test_acpi_i2c(struct unit_test_state *uts)
 	ut_asserteq(6, get_unaligned((u16 *)(ptr + 10)));
 	ut_asserteq(100000, get_unaligned((u32 *)(ptr + 12)));
 	ut_asserteq(0x43, get_unaligned((u16 *)(ptr + 16)));
-	ut_asserteq_str("\\_SB.SI2C", (char *)ptr + 18);
+	ut_asserteq_str("\\_SB.I2C0", (char *)ptr + 18);
 
 	free_context(&ctx);
 
@@ -339,7 +339,7 @@ static int dm_test_acpi_spi(struct unit_test_state *uts)
 	ut_asserteq(0, ptr[17]);
 	ut_asserteq(0, ptr[18]);
 	ut_asserteq(0, get_unaligned((u16 *)(ptr + 19)));
-	ut_asserteq_str("\\_SB.SSPI", (char *)ptr + 21);
+	ut_asserteq_str("\\_SB.SPI0", (char *)ptr + 21);
 
 	free_context(&ctx);
 
