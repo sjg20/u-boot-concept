@@ -26,11 +26,13 @@ echo "$@" >/tmp/asc
 if [ ${#dtc} -eq 0 ]; then
 	echo "Error: No dtc command specified."
 	printf "Usage:\n\t$0 <dtc-command>\n"
+	echo py >>/tmp/asc
 	exit 1
 fi
 
 if [ -n "${need_pylibfdt}" ]; then
 	if ! echo "import libfdt" | python3 2>/dev/null; then
+		echo py $build_dtc >>/tmp/asc
 		echo $build_dtc
 		exit 0
 	fi
@@ -42,7 +44,9 @@ PATCH=$($dtc -v | head -1 | awk '{print $NF}' | cut -d . -f 3 | cut -d - -f 1)
 
 version="$(printf "%02d%02d%02d" $MAJOR $MINOR $PATCH)"
 if test $version -lt $min_version; then \
+	echo $build_dtc >>/tmp/asc
 	echo $build_dtc
 else
+	echo $dtc >>/tmp/asc
 	echo $dtc
 fi
