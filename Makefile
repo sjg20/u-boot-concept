@@ -1014,6 +1014,7 @@ cmd_cfgcheck = $(srctree)/scripts/check-config.sh $2 \
 		$(srctree)/scripts/config_whitelist.txt $(srctree)
 
 all:		$(ALL-y)
+	$(warning 123)
 ifeq ($(CONFIG_DEPRECATED),y)
 	$(warning "You have deprecated configuration options enabled in your .config! Please check your configuration.")
 ifeq ($(CONFIG_SPI),y)
@@ -1138,8 +1139,10 @@ endif
 
 PHONY += dtbs
 dtbs: dts/dt.dtb
+	$(warning fred2)
 	@:
 dts/dt.dtb: checkdtc u-boot
+	$(warning build)
 	$(Q)$(MAKE) $(build)=dts dtbs
 
 quiet_cmd_copy = COPY    $@
@@ -1971,6 +1974,7 @@ System.map:	u-boot
 build_dtc	:= $(objtree)/scripts/dtc/dtc
 
 checkdtc:
+	$(warning here)
 	$(eval DTC := $(call dtc-version,010406,$(build_dtc),$(CONFIG_PYLIBFDT)))
 	if test "$(DTC)" = "$(build_dtc)"; then \
 		$(MAKE) $(build)=scripts/dtc; \

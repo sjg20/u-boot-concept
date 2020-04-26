@@ -335,6 +335,13 @@ $(obj)/%.dtb: $(src)/%.dts FORCE
 pre-tmp = $(subst $(comma),_,$(dot-target).pre.tmp)
 dtc-tmp = $(subst $(comma),_,$(dot-target).dts.tmp)
 
+checkdtc:
+	$(warning here)
+	$(eval DTC := $(call dtc-version,010406,$(build_dtc),$(CONFIG_PYLIBFDT)))
+	if test "$(DTC)" = "$(build_dtc)"; then \
+		$(MAKE) $(build)=scripts/dtc; \
+	fi
+
 # DTCO
 # ---------------------------------------------------------------------------
 

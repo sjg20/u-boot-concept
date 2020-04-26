@@ -24,6 +24,7 @@ $(obj)/dt.dtb: $(DTB) $(objtree)/tools/fdtgrep FORCE
 	$(call if_changed,fdt_rm_props)
 else
 $(obj)/dt.dtb: $(DTB) FORCE
+	$(warning fred)
 	$(call if_changed,shipped)
 endif
 
@@ -45,7 +46,7 @@ arch-dtbs:
 ifeq ($(CONFIG_SPL_BUILD),y)
 obj-$(CONFIG_OF_EMBED) := dt-spl.dtb.o
 # support "out-of-tree" build for dtb-spl
-$(obj)/dt-spl.dtb.o: $(obj)/dt-spl.dtb.S FORCE
+$(obj)/dt-spl.dtb.o: checkdtc $(obj)/dt-spl.dtb.S FORCE
 	$(call if_changed_dep,as_o_S)
 else
 obj-$(CONFIG_OF_EMBED) := dt.dtb.o
