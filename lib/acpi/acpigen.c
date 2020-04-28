@@ -1628,12 +1628,17 @@ static int acpigen_set_gpio_val(struct acpi_ctx *ctx, u32 tx_state_val,
 {
 	acpigen_get_dw0_in_local5(ctx, dw0_name, gpio->pin0_addr);
 
+	/* Store (0x40, Local0) */
+	acpigen_write_store();
+	acpigen_write_integer(tx_state_val);
+	acpigen_emit_byte(LOCAL0_OP);
+
 	if (val) {
 		/* Or (Local5, PAD_CFG0_TX_STATE, Local5) */
-		acpigen_write_or(ctx, LOCAL5_OP, tx_state_val, LOCAL5_OP);
+		acpigen_write_or(ctx, LOCAL5_OP, LOCAL0_OP, LOCAL5_OP);
 	} else {
 		/* Not (PAD_CFG0_TX_STATE, Local6) */
-		acpigen_write_not(ctx, tx_state_val, LOCAL6_OP);
+		acpigen_write_not(ctx, LOCAL0_OP, LOCAL6_OP);
 
 		/* And (Local5, Local6, Local5) */
 		acpigen_write_and(ctx, LOCAL5_OP, LOCAL6_OP, LOCAL5_OP);
