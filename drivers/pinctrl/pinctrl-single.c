@@ -6,9 +6,25 @@
 #include <common.h>
 #include <dm.h>
 #include <dm/device_compat.h>
+#include <dm/devres.h>
+#include <dm/of_access.h>
 #include <dm/pinctrl.h>
 #include <linux/libfdt.h>
 #include <asm/io.h>
+
+/**
+ * struct single_gpiofunc_range - pin ranges with same mux value of gpio fun
+ * @offset:	offset base of pins
+ * @npins:	number pins with the same mux value of gpio function
+ * @gpiofunc:	mux value of gpio function
+ * @node:	list node
+ */
+struct single_gpiofunc_range {
+	u32 offset;
+	u32 npins;
+	u32 gpiofunc;
+	struct list_head node;
+};
 
 /**
  * struct single_pdata - pinctrl device instance
@@ -17,6 +33,8 @@
  * @mask	configuration-value mask bits
  * @width	configuration register bit width
  * @bits_per_mux
+ * @mutex	mutex protecting the list
+ * @gpiofuncs	list of gpio functions
  * @read	register read function to use
  * @write	register write function to use
  */
@@ -26,6 +44,8 @@ struct single_pdata {
 	u32 mask;		/* configuration-value mask bits */
 	int width;		/* configuration register bit width */
 	bool bits_per_mux;
+	struct mutex mutex;
+	struct list_head gpiofuncs;
 	u32 (*read)(phys_addr_t reg);
 	void (*write)(u32 val, phys_addr_t reg);
 };
@@ -171,9 +191,42 @@ static int single_set_state(struct udevice *dev,
 	return len;
 }
 
+static int single_add_gpio_func(struct udevice *dev,
+				struct single_pdata *pdata)
+{
+	const char *propname = "pinctrl-single,gpio-range";
+	const char *cellname = "#pinctrl-single,gpio-range-cells";
+	struct single_gpiofunc_range *range;
+	struct ofnode_phandle_args gpiospec;
+	int ret, i;
+
+	for (i = 0; ; i++) {
+		ret = ofnode_parse_phandle_with_args(dev->node, propname,
+						     cellname, 0, i, &gpiospec);
+		/* Do not treat it as error. Only treat it as end condition. */
+		if (ret) {
+			ret = 0;
+			break;
+		}
+		range = devm_kzalloc(dev, sizeof(*range), GFP_KERNEL);
+		if (!range) {
+			ret = -ENOMEM;
+			break;
+		}
+		range->offset = gpiospec.args[0];
+		range->npins = gpiospec.args[1];
+		range->gpiofunc = gpiospec.args[2];
+		mutex_lock(&pdata->mutex);
+		list_add_tail(&range->node, &pdata->gpiofuncs);
+		mutex_unlock(&pdata->mutex);
+	}
+	return ret;
+}
+
 static int single_probe(struct udevice *dev)
 {
 	struct single_pdata *pdata = dev->platdata;
+	int ret;
 
 	switch (pdata->width) {
 	case 8:
@@ -194,7 +247,14 @@ static int single_probe(struct udevice *dev)
 		return -EINVAL;
 	}
 
-	return 0;
+	mutex_init(&pdata->mutex);
+	INIT_LIST_HEAD(&pdata->gpiofuncs);
+
+	ret = single_add_gpio_func(dev, pdata);
+	if (ret < 0)
+		dev_err(dev, "%s: Failed to add gpio functions\n", __func__);
+
+	return ret;
 }
 
 static int single_ofdata_to_platdata(struct udevice *dev)
