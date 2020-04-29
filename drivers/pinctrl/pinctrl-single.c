@@ -130,6 +130,34 @@ static int single_configure_pins(struct udevice *dev,
 	return 0;
 }
 
+static int single_request(struct udevice *dev, int pin, int flags)
+{
+	struct single_pdata *pdata = dev->platdata;
+	struct single_gpiofunc_range *frange = NULL;
+	struct list_head *pos, *tmp;
+	int mux_bytes = 0;
+	u32 data;
+
+	if (!pdata->mask)
+		return -ENOTSUPP;
+
+	list_for_each_safe(pos, tmp, &pdata->gpiofuncs) {
+		frange = list_entry(pos, struct single_gpiofunc_range, node);
+		if ((pin >= frange->offset + frange->npins) ||
+		    pin < frange->offset)
+			continue;
+
+		mux_bytes = pdata->width / BITS_PER_BYTE;
+		data = pdata->read(pdata->base + pin * mux_bytes);
+		data &= ~pdata->mask;
+		data |= frange->gpiofunc;
+		pdata->write(data, pdata->base + pin * mux_bytes);
+		break;
+	}
+
+	return 0;
+}
+
 static int single_configure_bits(struct udevice *dev,
 				 const struct single_fdt_bits_cfg *pins,
 				 int size)
@@ -288,6 +316,7 @@ static int single_ofdata_to_platdata(struct udevice *dev)
 
 const struct pinctrl_ops single_pinctrl_ops = {
 	.set_state = single_set_state,
+	.request = single_request,
 };
 
 static const struct udevice_id single_pinctrl_match[] = {
