@@ -10,18 +10,60 @@
 #include <linux/libfdt.h>
 #include <asm/io.h>
 
+/**
+ * struct single_pdata - pinctrl device instance
+ * @base	first configuration register
+ * @offset	index of last configuration register
+ * @mask	configuration-value mask bits
+ * @width	configuration register bit width
+ * @bits_per_mux
+ * @read	register read function to use
+ * @write	register write function to use
+ */
 struct single_pdata {
 	fdt_addr_t base;	/* first configuration register */
 	int offset;		/* index of last configuration register */
 	u32 mask;		/* configuration-value mask bits */
 	int width;		/* configuration register bit width */
 	bool bits_per_mux;
+	u32 (*read)(phys_addr_t reg);
+	void (*write)(u32 val, phys_addr_t reg);
 };
 
 struct single_fdt_pin_cfg {
 	fdt32_t reg;		/* configuration register offset */
 	fdt32_t val;		/* configuration register value */
 };
+
+static u32 __maybe_unused single_readb(phys_addr_t reg)
+{
+	return readb(reg);
+}
+
+static u32 __maybe_unused single_readw(phys_addr_t reg)
+{
+	return readw(reg);
+}
+
+static u32 __maybe_unused single_readl(phys_addr_t reg)
+{
+	return readl(reg);
+}
+
+static void __maybe_unused single_writeb(u32 val, phys_addr_t reg)
+{
+	writeb(val, reg);
+}
+
+static void __maybe_unused single_writew(u32 val, phys_addr_t reg)
+{
+	writew(val, reg);
+}
+
+static void __maybe_unused single_writel(u32 val, phys_addr_t reg)
+{
+	writel(val, reg);
+}
 
 struct single_fdt_bits_cfg {
 	fdt32_t reg;		/* configuration register offset */
@@ -60,18 +102,9 @@ static int single_configure_pins(struct udevice *dev,
 		}
 		reg += pdata->base;
 		val = fdt32_to_cpu(pins->val) & pdata->mask;
-		switch (pdata->width) {
-		case 16:
-			writew((readw(reg) & ~pdata->mask) | val, reg);
-			break;
-		case 32:
-			writel((readl(reg) & ~pdata->mask) | val, reg);
-			break;
-		default:
-			dev_warn(dev, "unsupported register width %i\n",
-				 pdata->width);
-			continue;
-		}
+		val |= (pdata->read(reg) & ~pdata->mask);
+		pdata->write(val, reg);
+
 		dev_dbg(dev, "  reg/val 0x%pa/0x%08x\n", &reg, val);
 	}
 	return 0;
@@ -97,18 +130,8 @@ static int single_configure_bits(struct udevice *dev,
 		mask = fdt32_to_cpu(pins->mask);
 		val = fdt32_to_cpu(pins->val) & mask;
 
-		switch (pdata->width) {
-		case 16:
-			writew((readw(reg) & ~mask) | val, reg);
-			break;
-		case 32:
-			writel((readl(reg) & ~mask) | val, reg);
-			break;
-		default:
-			dev_warn(dev, "unsupported register width %i\n",
-				 pdata->width);
-			continue;
-		}
+		val |= (pdata->read(reg) & ~mask);
+		pdata->write(val, reg);
 		dev_dbg(dev, "  reg/val 0x%pa/0x%08x\n", &reg, val);
 	}
 	return 0;
@@ -146,6 +169,32 @@ static int single_set_state(struct udevice *dev,
 
 	/* Neither 'pinctrl-single,pins' nor 'pinctrl-single,bits' were found */
 	return len;
+}
+
+static int single_probe(struct udevice *dev)
+{
+	struct single_pdata *pdata = dev->platdata;
+
+	switch (pdata->width) {
+	case 8:
+		pdata->read = single_readb;
+		pdata->write = single_writeb;
+		break;
+	case 16:
+		pdata->read = single_readw;
+		pdata->write = single_writew;
+		break;
+	case 32:
+		pdata->read = single_readl;
+		pdata->write = single_writel;
+		break;
+	default:
+		dev_warn(dev, "%s: unsupported register width %d\n",
+			 __func__, pdata->width);
+		return -EINVAL;
+	}
+
+	return 0;
 }
 
 static int single_ofdata_to_platdata(struct udevice *dev)
@@ -193,4 +242,5 @@ U_BOOT_DRIVER(single_pinctrl) = {
 	.ops = &single_pinctrl_ops,
 	.platdata_auto_alloc_size = sizeof(struct single_pdata),
 	.ofdata_to_platdata = single_ofdata_to_platdata,
+	.probe = single_probe,
 };
