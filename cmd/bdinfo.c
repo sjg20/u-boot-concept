@@ -60,7 +60,6 @@ static void print_eths(void)
 }
 #endif
 
-__maybe_unused
 static void print_lnum(const char *name, unsigned long long value)
 {
 	printf("%-12s= 0x%.8llX\n", name, value);
@@ -74,12 +73,12 @@ static void print_mhz(const char *name, unsigned long hz)
 }
 
 
-static inline void print_bi_boot_params(const bd_t *bd)
+static void print_bi_boot_params(const bd_t *bd)
 {
 	print_num("boot_params",	(ulong)bd->bi_boot_params);
 }
 
-static inline void print_bi_mem(const bd_t *bd)
+static void print_bi_mem(const bd_t *bd)
 {
 #if defined(CONFIG_SH)
 	print_num("mem start      ",	(ulong)bd->bi_memstart);
@@ -93,7 +92,7 @@ static inline void print_bi_mem(const bd_t *bd)
 #endif
 }
 
-static inline void print_bi_dram(const bd_t *bd)
+static void print_bi_dram(const bd_t *bd)
 {
 #ifdef CONFIG_NR_DRAM_BANKS
 	int i;
@@ -108,14 +107,14 @@ static inline void print_bi_dram(const bd_t *bd)
 #endif
 }
 
-static inline void print_bi_flash(const bd_t *bd)
+static void print_bi_flash(const bd_t *bd)
 {
 	print_num("flashstart", (ulong)bd->bi_flashstart);
 	print_num("flashsize", (ulong)bd->bi_flashsize);
 	print_num("flashoffset", (ulong)bd->bi_flashoffset);
 }
 
-static inline void print_eth_ip_addr(void)
+static void print_eth_ip_addr(void)
 {
 #if defined(CONFIG_CMD_NET)
 	print_eth(0);
@@ -138,7 +137,7 @@ static inline void print_eth_ip_addr(void)
 #endif
 }
 
-static inline void print_baudrate(void)
+static void print_baudrate(void)
 {
 #if defined(CONFIG_PPC)
 	printf("baudrate    = %6u bps\n", gd->baudrate);
@@ -147,7 +146,7 @@ static inline void print_baudrate(void)
 #endif
 }
 
-static inline void print_std_bdinfo(const bd_t *bd)
+static void print_std_bdinfo(const bd_t *bd)
 {
 	print_bi_boot_params(bd);
 	print_bi_mem(bd);
