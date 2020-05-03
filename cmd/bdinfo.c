@@ -34,26 +34,10 @@ static void print_eth(int idx)
 	printf("%-12s= %s\n", name, val);
 }
 
-#ifndef CONFIG_DM_ETH
-__maybe_unused
 static void print_eths(void)
 {
-	struct eth_device *dev;
-	int i = 0;
-
-	do {
-		dev = eth_get_dev_by_index(i);
-		if (dev) {
-			printf("eth%dname    = %s\n", i, dev->name);
-			print_eth(i);
-			i++;
-		}
-	} while (dev);
-
 	printf("current eth = %s\n", eth_get_name());
-	printf("ip_addr     = %s\n", env_get("ipaddr"));
 }
-#endif
 
 static void print_lnum(const char *name, unsigned long long value)
 {
@@ -116,9 +100,8 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	print_num("relocaddr", gd->relocaddr);
 	print_num("reloc off", gd->reloc_off);
 	printf("%-12s= %u-bit\n", "Build", (uint)sizeof(void *) * 8);
-#if defined(CONFIG_CMD_NET) && !defined(CONFIG_DM_ETH)
-	print_eths();
-#endif
+	if (IS_ENABLED(CONFIG_CMD_NET))
+		print_eths();
 	print_num("fdt_blob", (ulong)gd->fdt_blob);
 	print_num("new_fdt", (ulong)gd->new_fdt);
 	print_num("fdt_size", (ulong)gd->fdt_size);
