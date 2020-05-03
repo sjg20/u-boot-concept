@@ -38,7 +38,7 @@ static void print_lnum(const char *name, unsigned long long value)
 	printf("%-12s= 0x%.8llX\n", name, value);
 }
 
-static void print_mhz(const char *name, unsigned long hz)
+void bdinfo_print_mhz(const char *name, unsigned long hz)
 {
 	char buf[32];
 
@@ -58,11 +58,6 @@ static void print_bi_dram(const bd_t *bd)
 		}
 	}
 #endif
-}
-
-void __weak board_detail(void)
-{
-	/* Please define board_detail() for your PPC platform */
 }
 
 __weak void arch_print_bdinfo(void)
@@ -103,48 +98,26 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 
 	arch_print_bdinfo();
 
-	/* This section is used only by ppc */
-#if defined(CONFIG_MPC8xx) || defined(CONFIG_E500)
-	bdinfo_print_num("immr_base", bd->bi_immr_base);
-#endif
-	if (IS_ENABLED(CONFIG_PPC)) {
-		bdinfo_print_num("bootflags", bd->bi_bootflags);
-		print_mhz("intfreq", bd->bi_intfreq);
-#ifdef CONFIG_ENABLE_36BIT_PHYS
-		if (IS_ENABLED(CONFIG_PHYS_64BIT))
-			puts("addressing  = 36-bit\n");
-		else
-			puts("addressing  = 32-bit\n");
-#endif
-		board_detail();
-	}
-#if defined(CONFIG_CPM2)
-	print_mhz("cpmfreq", bd->bi_cpmfreq);
-	print_mhz("vco", bd->bi_vco);
-	print_mhz("sccfreq", bd->bi_sccfreq);
-	print_mhz("brgfreq", bd->bi_brgfreq);
-#endif
-
 	/* This is used by m68k and ppc */
 #if defined(CONFIG_SYS_INIT_RAM_ADDR)
 	bdinfo_print_num("sramstart", (ulong)bd->bi_sramstart);
 	bdinfo_print_num("sramsize", (ulong)bd->bi_sramsize);
 #endif
 	if (IS_ENABLED(CONFIG_PPC) || IS_ENABLED(CONFIG_M68K))
-		print_mhz("busfreq", bd->bi_busfreq);
+		bdinfo_print_mhz("busfreq", bd->bi_busfreq);
 
 	/* The rest are used only by m68k */
 #ifdef CONFIG_M68K
 #if defined(CONFIG_SYS_MBAR)
 	bdinfo_print_num("mbar", bd->bi_mbar_base);
 #endif
-	print_mhz("cpufreq", bd->bi_intfreq);
+	bdinfo_print_mhz("cpufreq", bd->bi_intfreq);
 	if (IS_ENABLED(CONFIG_PCI))
-		print_mhz("pcifreq", bd->bi_pcifreq);
+		bdinfo_print_mhz("pcifreq", bd->bi_pcifreq);
 #ifdef CONFIG_EXTRA_CLOCK
-	print_mhz("flbfreq", bd->bi_flbfreq);
-	print_mhz("inpfreq", bd->bi_inpfreq);
-	print_mhz("vcofreq", bd->bi_vcofreq);
+	bdinfo_print_mhz("flbfreq", bd->bi_flbfreq);
+	bdinfo_print_mhz("inpfreq", bd->bi_inpfreq);
+	bdinfo_print_mhz("vcofreq", bd->bi_vcofreq);
 #endif
 #endif
 
