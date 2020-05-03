@@ -329,25 +329,7 @@ static int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc,
 
 #elif defined(CONFIG_X86)
 
-int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
-{
-	bd_t *bd = gd->bd;
-
-	print_bi_boot_params(bd);
-
-	print_bi_dram(bd);
-
-	print_num("relocaddr", gd->relocaddr);
-	print_num("reloc off", gd->reloc_off);
-#if defined(CONFIG_CMD_NET)
-	print_eth_ip_addr();
-	print_mhz("ethspeed",	    bd->bi_ethspeed);
-#endif
-	print_baudrate();
-	print_cpu_word_size();
-
-	return 0;
-}
+#define USE_GENERIC
 
 #elif defined(CONFIG_SANDBOX)
 
@@ -426,6 +408,7 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 #ifdef USE_GENERIC
 int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
+	print_bi_dram(gd->bd);
 	print_std_bdinfo(gd->bd);
 	print_num("relocaddr", gd->relocaddr);
 	print_num("reloc off", gd->reloc_off);
