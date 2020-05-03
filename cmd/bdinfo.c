@@ -228,35 +228,7 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 #elif defined(CONFIG_M68K)
 
-int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
-{
-	bd_t *bd = gd->bd;
-
-	print_bi_mem(bd);
-	print_bi_flash(bd);
-#if defined(CONFIG_SYS_INIT_RAM_ADDR)
-	print_num("sramstart",		(ulong)bd->bi_sramstart);
-	print_num("sramsize",		(ulong)bd->bi_sramsize);
-#endif
-#if defined(CONFIG_SYS_MBAR)
-	print_num("mbar",		bd->bi_mbar_base);
-#endif
-	print_mhz("cpufreq",		bd->bi_intfreq);
-	print_mhz("busfreq",		bd->bi_busfreq);
-#ifdef CONFIG_PCI
-	print_mhz("pcifreq",		bd->bi_pcifreq);
-#endif
-#ifdef CONFIG_EXTRA_CLOCK
-	print_mhz("flbfreq",		bd->bi_flbfreq);
-	print_mhz("inpfreq",		bd->bi_inpfreq);
-	print_mhz("vcofreq",		bd->bi_vcofreq);
-#endif
-	print_eth_ip_addr();
-	print_baudrate();
-	print_cpu_word_size();
-
-	return 0;
-}
+#define USE_GENERIC
 
 #elif defined(CONFIG_MIPS)
 
@@ -359,8 +331,10 @@ static int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc,
 #ifdef USE_GENERIC
 int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
-	print_std_bdinfo(gd->bd);
-	print_bi_dram(gd->bd);
+	bd_t *bd = gd->bd;
+
+	print_std_bdinfo(bd);
+	print_bi_dram(bd);
 	print_num("relocaddr", gd->relocaddr);
 	print_num("reloc off", gd->reloc_off);
 	print_cpu_word_size();
@@ -370,6 +344,26 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	print_num("fdt_blob", (ulong)gd->fdt_blob);
 	print_num("new_fdt", (ulong)gd->new_fdt);
 	print_num("fdt_size", (ulong)gd->fdt_size);
+
+	/* The rest are used only by m68k */
+#if defined(CONFIG_SYS_INIT_RAM_ADDR)
+	print_num("sramstart", (ulong)bd->bi_sramstart);
+	print_num("sramsize", (ulong)bd->bi_sramsize);
+#endif
+#ifdef CONFIG_M68K
+#if defined(CONFIG_SYS_MBAR)
+	print_num("mbar", bd->bi_mbar_base);
+#endif
+	print_mhz("cpufreq", bd->bi_intfreq);
+	print_mhz("busfreq", bd->bi_busfreq);
+	if (IS_ENABLED(CONFIG_PCI))
+		print_mhz("pcifreq", bd->bi_pcifreq);
+#ifdef CONFIG_EXTRA_CLOCK
+	print_mhz("flbfreq", bd->bi_flbfreq);
+	print_mhz("inpfreq", bd->bi_inpfreq);
+	print_mhz("vcofreq", bd->bi_vcofreq);
+#endif
+#endif
 
 	return 0;
 }
