@@ -170,53 +170,8 @@ static inline void __maybe_unused print_std_bdinfo(const bd_t *bd)
 }
 
 #if defined(CONFIG_PPC)
-void __weak board_detail(void)
-{
-	/* Please define board_detail() for your platform */
-}
 
-int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
-{
-	bd_t *bd = gd->bd;
-
-#ifdef DEBUG
-	print_num("bd address",		(ulong)bd);
-#endif
-	print_bi_mem(bd);
-	print_bi_flash(bd);
-	print_num("sramstart",		bd->bi_sramstart);
-	print_num("sramsize",		bd->bi_sramsize);
-#if	defined(CONFIG_MPC8xx) || defined(CONFIG_E500)
-	print_num("immr_base",		bd->bi_immr_base);
-#endif
-	print_num("bootflags",		bd->bi_bootflags);
-#if defined(CONFIG_CPM2)
-	print_mhz("vco",		bd->bi_vco);
-	print_mhz("sccfreq",		bd->bi_sccfreq);
-	print_mhz("brgfreq",		bd->bi_brgfreq);
-#endif
-	print_mhz("intfreq",		bd->bi_intfreq);
-#if defined(CONFIG_CPM2)
-	print_mhz("cpmfreq",		bd->bi_cpmfreq);
-#endif
-	print_mhz("busfreq",		bd->bi_busfreq);
-
-#ifdef CONFIG_ENABLE_36BIT_PHYS
-#ifdef CONFIG_PHYS_64BIT
-	puts("addressing  = 36-bit\n");
-#else
-	puts("addressing  = 32-bit\n");
-#endif
-#endif
-
-	print_eth_ip_addr();
-	print_baudrate();
-	print_num("relocaddr", gd->relocaddr);
-	board_detail();
-	print_cpu_word_size();
-
-	return 0;
-}
+#define USE_GENERIC
 
 #elif defined(CONFIG_NIOS2)
 
@@ -228,35 +183,7 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 #elif defined(CONFIG_M68K)
 
-int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
-{
-	bd_t *bd = gd->bd;
-
-	print_bi_mem(bd);
-	print_bi_flash(bd);
-#if defined(CONFIG_SYS_INIT_RAM_ADDR)
-	print_num("sramstart",		(ulong)bd->bi_sramstart);
-	print_num("sramsize",		(ulong)bd->bi_sramsize);
-#endif
-#if defined(CONFIG_SYS_MBAR)
-	print_num("mbar",		bd->bi_mbar_base);
-#endif
-	print_mhz("cpufreq",		bd->bi_intfreq);
-	print_mhz("busfreq",		bd->bi_busfreq);
-#ifdef CONFIG_PCI
-	print_mhz("pcifreq",		bd->bi_pcifreq);
-#endif
-#ifdef CONFIG_EXTRA_CLOCK
-	print_mhz("flbfreq",		bd->bi_flbfreq);
-	print_mhz("inpfreq",		bd->bi_inpfreq);
-	print_mhz("vcofreq",		bd->bi_vcofreq);
-#endif
-	print_eth_ip_addr();
-	print_baudrate();
-	print_cpu_word_size();
-
-	return 0;
-}
+#define USE_GENERIC
 
 #elif defined(CONFIG_MIPS)
 
@@ -264,64 +191,7 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 #elif defined(CONFIG_ARM)
 
-static int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc,
-			char * const argv[])
-{
-	bd_t *bd = gd->bd;
-
-	print_num("arch_number",	bd->bi_arch_number);
-	print_bi_boot_params(bd);
-	print_bi_dram(bd);
-
-#ifdef CONFIG_SYS_MEM_RESERVE_SECURE
-	if (gd->arch.secure_ram & MEM_RESERVE_SECURE_SECURED) {
-		print_num("Secure ram",
-			  gd->arch.secure_ram & MEM_RESERVE_SECURE_ADDR_MASK);
-	}
-#endif
-#ifdef CONFIG_RESV_RAM
-	if (gd->arch.resv_ram)
-		print_num("Reserved ram", gd->arch.resv_ram);
-#endif
-#if defined(CONFIG_CMD_NET) && !defined(CONFIG_DM_ETH)
-	print_eths();
-#endif
-	print_baudrate();
-#if !(CONFIG_IS_ENABLED(SYS_ICACHE_OFF) && CONFIG_IS_ENABLED(SYS_DCACHE_OFF))
-	print_num("TLB addr", gd->arch.tlb_addr);
-#endif
-	print_num("relocaddr", gd->relocaddr);
-	print_num("reloc off", gd->reloc_off);
-	print_num("irq_sp", gd->irq_sp);	/* irq stack pointer */
-	print_num("sp start ", gd->start_addr_sp);
-#if defined(CONFIG_LCD) || defined(CONFIG_VIDEO) || defined(CONFIG_DM_VIDEO)
-	print_num("FB base  ", gd->fb_base);
-#endif
-	/*
-	 * TODO: Currently only support for davinci SOC's is added.
-	 * Remove this check once all the board implement this.
-	 */
-#ifdef CONFIG_CLOCKS
-	printf("ARM frequency = %ld MHz\n", gd->bd->bi_arm_freq);
-	printf("DSP frequency = %ld MHz\n", gd->bd->bi_dsp_freq);
-	printf("DDR frequency = %ld MHz\n", gd->bd->bi_ddr_freq);
-#endif
-#ifdef CONFIG_BOARD_TYPES
-	printf("Board Type  = %ld\n", gd->board_type);
-#endif
-#if CONFIG_VAL(SYS_MALLOC_F_LEN)
-	printf("Early malloc usage: %lx / %x\n", gd->malloc_ptr,
-	       CONFIG_VAL(SYS_MALLOC_F_LEN));
-#endif
-#if CONFIG_IS_ENABLED(MULTI_DTB_FIT)
-	print_num("multi_dtb_fit", (ulong)gd->multi_dtb_fit);
-#endif
-	if (gd->fdt_blob)
-		print_num("fdt_blob", (ulong)gd->fdt_blob);
-	print_cpu_word_size();
-
-	return 0;
-}
+#define USE_GENERIC
 
 #elif defined(CONFIG_SH)
 
@@ -345,17 +215,7 @@ static int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc,
 
 #elif defined(CONFIG_ARC)
 
-int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
-{
-	bd_t *bd = gd->bd;
-
-	print_bi_mem(bd);
-	print_eth_ip_addr();
-	print_baudrate();
-	print_cpu_word_size();
-
-	return 0;
-}
+#define USE_GENERIC
 
 #elif defined(CONFIG_XTENSA)
 
@@ -367,10 +227,22 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 /* Temporary check for archs that use generic bdinfo. Eventually all will */
 #ifdef USE_GENERIC
+void __weak board_detail(void)
+{
+	/* Please define board_detail() for your PPC platform */
+}
+
 int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
-	print_bi_dram(gd->bd);
-	print_std_bdinfo(gd->bd);
+	bd_t *bd = gd->bd;
+
+#ifdef DEBUG
+	print_num("bd address", (ulong)bd);
+#endif
+	if (IS_ENABLED(CONFIG_ARM))
+		print_num("arch_number", bd->bi_arch_number);
+	print_bi_dram(bd);
+	print_std_bdinfo(bd);
 	print_num("relocaddr", gd->relocaddr);
 	print_num("reloc off", gd->reloc_off);
 	print_cpu_word_size();
@@ -380,6 +252,92 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	print_num("fdt_blob", (ulong)gd->fdt_blob);
 	print_num("new_fdt", (ulong)gd->new_fdt);
 	print_num("fdt_size", (ulong)gd->fdt_size);
+#if defined(CONFIG_LCD) || defined(CONFIG_VIDEO) || defined(CONFIG_DM_VIDEO)
+	print_num("FB base  ", gd->fb_base);
+#endif
+
+	/* This section is used only by ARM */
+#ifdef CONFIG_ARM
+#ifdef CONFIG_SYS_MEM_RESERVE_SECURE
+	if (gd->arch.secure_ram & MEM_RESERVE_SECURE_SECURED) {
+		print_num("Secure ram",
+			  gd->arch.secure_ram & MEM_RESERVE_SECURE_ADDR_MASK);
+	}
+#endif
+#ifdef CONFIG_RESV_RAM
+	if (gd->arch.resv_ram)
+		print_num("Reserved ram", gd->arch.resv_ram);
+#endif
+#if !(CONFIG_IS_ENABLED(SYS_ICACHE_OFF) && CONFIG_IS_ENABLED(SYS_DCACHE_OFF))
+	print_num("TLB addr", gd->arch.tlb_addr);
+#endif
+	print_num("irq_sp", gd->irq_sp);	/* irq stack pointer */
+	print_num("sp start ", gd->start_addr_sp);
+	/*
+	 * TODO: Currently only support for davinci SOC's is added.
+	 * Remove this check once all the board implement this.
+	 */
+#ifdef CONFIG_CLOCKS
+	printf("ARM frequency = %ld MHz\n", gd->bd->bi_arm_freq);
+	printf("DSP frequency = %ld MHz\n", gd->bd->bi_dsp_freq);
+	printf("DDR frequency = %ld MHz\n", gd->bd->bi_ddr_freq);
+#endif
+#ifdef CONFIG_BOARD_TYPES
+	printf("Board Type  = %ld\n", gd->board_type);
+#endif
+#if CONFIG_VAL(SYS_MALLOC_F_LEN)
+	printf("Early malloc usage: %lx / %x\n", gd->malloc_ptr,
+	       CONFIG_VAL(SYS_MALLOC_F_LEN));
+#endif
+#if CONFIG_IS_ENABLED(MULTI_DTB_FIT)
+	print_num("multi_dtb_fit", (ulong)gd->multi_dtb_fit);
+#endif
+#endif /* CONFIG_ARM */
+
+	/* This section is used only by ppc */
+#if defined(CONFIG_MPC8xx) || defined(CONFIG_E500)
+	print_num("immr_base", bd->bi_immr_base);
+#endif
+	if (IS_ENABLED(CONFIG_PPC)) {
+		print_num("bootflags", bd->bi_bootflags);
+		print_mhz("intfreq", bd->bi_intfreq);
+#ifdef CONFIG_ENABLE_36BIT_PHYS
+		if (IS_ENABLED(CONFIG_PHYS_64BIT))
+			puts("addressing  = 36-bit\n");
+		else
+			puts("addressing  = 32-bit\n");
+#endif
+		board_detail();
+	}
+#if defined(CONFIG_CPM2)
+	print_mhz("cpmfreq", bd->bi_cpmfreq);
+	print_mhz("vco", bd->bi_vco);
+	print_mhz("sccfreq", bd->bi_sccfreq);
+	print_mhz("brgfreq", bd->bi_brgfreq);
+#endif
+
+	/* This is used by m68k and ppc */
+#if defined(CONFIG_SYS_INIT_RAM_ADDR)
+	print_num("sramstart", (ulong)bd->bi_sramstart);
+	print_num("sramsize", (ulong)bd->bi_sramsize);
+#endif
+	if (IS_ENABLED(CONFIG_PPC) || IS_ENABLED(CONFIG_M68K))
+		print_mhz("busfreq", bd->bi_busfreq);
+
+	/* The rest are used only by m68k */
+#ifdef CONFIG_M68K
+#if defined(CONFIG_SYS_MBAR)
+	print_num("mbar", bd->bi_mbar_base);
+#endif
+	print_mhz("cpufreq", bd->bi_intfreq);
+	if (IS_ENABLED(CONFIG_PCI))
+		print_mhz("pcifreq", bd->bi_pcifreq);
+#ifdef CONFIG_EXTRA_CLOCK
+	print_mhz("flbfreq", bd->bi_flbfreq);
+	print_mhz("inpfreq", bd->bi_inpfreq);
+	print_mhz("vcofreq", bd->bi_vcofreq);
+#endif
+#endif
 
 	return 0;
 }
