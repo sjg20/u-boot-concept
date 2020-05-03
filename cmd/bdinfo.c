@@ -170,53 +170,8 @@ static inline void __maybe_unused print_std_bdinfo(const bd_t *bd)
 }
 
 #if defined(CONFIG_PPC)
-void __weak board_detail(void)
-{
-	/* Please define board_detail() for your platform */
-}
 
-int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
-{
-	bd_t *bd = gd->bd;
-
-#ifdef DEBUG
-	print_num("bd address",		(ulong)bd);
-#endif
-	print_bi_mem(bd);
-	print_bi_flash(bd);
-	print_num("sramstart",		bd->bi_sramstart);
-	print_num("sramsize",		bd->bi_sramsize);
-#if	defined(CONFIG_MPC8xx) || defined(CONFIG_E500)
-	print_num("immr_base",		bd->bi_immr_base);
-#endif
-	print_num("bootflags",		bd->bi_bootflags);
-#if defined(CONFIG_CPM2)
-	print_mhz("vco",		bd->bi_vco);
-	print_mhz("sccfreq",		bd->bi_sccfreq);
-	print_mhz("brgfreq",		bd->bi_brgfreq);
-#endif
-	print_mhz("intfreq",		bd->bi_intfreq);
-#if defined(CONFIG_CPM2)
-	print_mhz("cpmfreq",		bd->bi_cpmfreq);
-#endif
-	print_mhz("busfreq",		bd->bi_busfreq);
-
-#ifdef CONFIG_ENABLE_36BIT_PHYS
-#ifdef CONFIG_PHYS_64BIT
-	puts("addressing  = 36-bit\n");
-#else
-	puts("addressing  = 32-bit\n");
-#endif
-#endif
-
-	print_eth_ip_addr();
-	print_baudrate();
-	print_num("relocaddr", gd->relocaddr);
-	board_detail();
-	print_cpu_word_size();
-
-	return 0;
-}
+#define USE_GENERIC
 
 #elif defined(CONFIG_NIOS2)
 
@@ -329,10 +284,18 @@ static int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc,
 
 /* Temporary check for archs that use generic bdinfo. Eventually all will */
 #ifdef USE_GENERIC
+void __weak board_detail(void)
+{
+	/* Please define board_detail() for your PPC platform */
+}
+
 int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
 	bd_t *bd = gd->bd;
 
+#ifdef DEBUG
+	print_num("bd address", (ulong)bd);
+#endif
 	print_std_bdinfo(bd);
 	print_bi_dram(bd);
 	print_num("relocaddr", gd->relocaddr);
@@ -345,17 +308,42 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	print_num("new_fdt", (ulong)gd->new_fdt);
 	print_num("fdt_size", (ulong)gd->fdt_size);
 
-	/* The rest are used only by m68k */
+	/* This section is used only by ppc */
+#if defined(CONFIG_MPC8xx) || defined(CONFIG_E500)
+	print_num("immr_base", bd->bi_immr_base);
+#endif
+	if (IS_ENABLED(CONFIG_PPC)) {
+		print_num("bootflags", bd->bi_bootflags);
+		print_mhz("intfreq", bd->bi_intfreq);
+#ifdef CONFIG_ENABLE_36BIT_PHYS
+		if (IS_ENABLED(CONFIG_PHYS_64BIT))
+			puts("addressing  = 36-bit\n");
+		else
+			puts("addressing  = 32-bit\n");
+#endif
+		board_detail();
+	}
+#if defined(CONFIG_CPM2)
+	print_mhz("cpmfreq", bd->bi_cpmfreq);
+	print_mhz("vco", bd->bi_vco);
+	print_mhz("sccfreq", bd->bi_sccfreq);
+	print_mhz("brgfreq", bd->bi_brgfreq);
+#endif
+
+	/* This is used by m68k and ppc */
 #if defined(CONFIG_SYS_INIT_RAM_ADDR)
 	print_num("sramstart", (ulong)bd->bi_sramstart);
 	print_num("sramsize", (ulong)bd->bi_sramsize);
 #endif
+	if (IS_ENABLED(CONFIG_PPC) || IS_ENABLED(CONFIG_M68K))
+		print_mhz("busfreq", bd->bi_busfreq);
+
+	/* The rest are used only by m68k */
 #ifdef CONFIG_M68K
 #if defined(CONFIG_SYS_MBAR)
 	print_num("mbar", bd->bi_mbar_base);
 #endif
 	print_mhz("cpufreq", bd->bi_intfreq);
-	print_mhz("busfreq", bd->bi_busfreq);
 	if (IS_ENABLED(CONFIG_PCI))
 		print_mhz("pcifreq", bd->bi_pcifreq);
 #ifdef CONFIG_EXTRA_CLOCK
