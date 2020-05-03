@@ -34,11 +34,6 @@ static void print_eth(int idx)
 	printf("%-12s= %s\n", name, val);
 }
 
-static void print_eths(void)
-{
-	printf("current eth = %s\n", eth_get_name());
-}
-
 static void print_lnum(const char *name, unsigned long long value)
 {
 	printf("%-12s= 0x%.8llX\n", name, value);
@@ -101,7 +96,7 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	print_num("reloc off", gd->reloc_off);
 	printf("%-12s= %u-bit\n", "Build", (uint)sizeof(void *) * 8);
 	if (IS_ENABLED(CONFIG_CMD_NET))
-		print_eths();
+		printf("current eth = %s\n", eth_get_name());
 	print_num("fdt_blob", (ulong)gd->fdt_blob);
 	print_num("new_fdt", (ulong)gd->new_fdt);
 	print_num("fdt_size", (ulong)gd->fdt_size);
