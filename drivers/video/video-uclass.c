@@ -103,6 +103,7 @@ int video_reserve(ulong *addrp)
 		*addrp -= CONFIG_VIDEO_PCI_DEFAULT_FB_SIZE;
 
 	gd->video_bottom = *addrp;
+	gd->fb_base = *addrp;
 	debug("Video frame buffers from %lx to %lx\n", gd->video_bottom,
 	      gd->video_top);
 
