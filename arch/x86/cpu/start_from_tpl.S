@@ -15,6 +15,8 @@
 .type _start, @function
 _start:
 	/* Set up memory using the existing stack */
+	mov	$65, %eax
+	call	printch
 	mov	%esp, %eax
 	call	board_init_f_alloc_reserve
 	mov	%eax, %esp
