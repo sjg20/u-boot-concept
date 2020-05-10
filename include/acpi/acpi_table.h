@@ -13,6 +13,8 @@
 #ifndef __ACPI_TABLE_H__
 #define __ACPI_TABLE_H__
 
+#include <dm/acpi.h>
+
 #define RSDP_SIG		"RSD PTR "	/* RSDP pointer signature */
 #define OEM_ID			"U-BOOT"	/* U-Boot */
 #define OEM_TABLE_ID		"U-BOOTBL"	/* U-Boot Table */
@@ -58,7 +60,7 @@ struct acpi_rsdp {
 
 /* Generic ACPI header, provided by (almost) all tables */
 struct __packed acpi_table_header {
-	char signature[4];	/* ACPI signature (4 ASCII characters) */
+	char signature[ACPI_NAME_LEN];	/* ACPI signature (4 ASCII chars) */
 	u32 length;		/* Table length in bytes (incl. header) */
 	u8 revision;		/* Table version (not ACPI version!) */
 	volatile u8 checksum;	/* To make sum of entire table == 0 */
@@ -273,7 +275,7 @@ struct __packed acpi_fadt {
 
 /* FACS (Firmware ACPI Control Structure) */
 struct acpi_facs {
-	char signature[4];		/* "FACS" */
+	char signature[ACPI_NAME_LEN];	/* "FACS" */
 	u32 length;			/* Length in bytes (>= 64) */
 	u32 hardware_signature;		/* Hardware signature */
 	u32 firmware_waking_vector;	/* Firmware waking vector */
