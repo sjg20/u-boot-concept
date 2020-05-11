@@ -6,6 +6,7 @@
 
 #include <common.h>
 #include <binman.h>
+#include <cbfs.h>
 #include <dm.h>
 #include <irq.h>
 #include <malloc.h>
@@ -119,7 +120,22 @@ int fsps_update_config(struct udevice *dev, ulong rom_offset,
 	void *buf;
 	int ret;
 
-	ret = binman_entry_map(ofnode_null(), "intel-vbt", &buf, NULL);
+	log_debug("rom_offset=%lx\n", rom_offset);
+	if (IS_ENABLED(CONFIG_FSP_FROM_CBFS)) {
+		struct cbfs_cachenode node;
+		ulong cbfs_base;
+
+		cbfs_base = IF_ENABLED_INT(CONFIG_FSP_FROM_CBFS,
+					   CONFIG_FSP_CBFS_BASE);
+		ret = file_cbfs_find_uncached_base(rom_offset + cbfs_base,
+						   "vbt.bin", &node);
+		if (!ret) {
+			buf = node.data;
+			log_debug("Found VBT at %p\n", buf);
+		}
+	} else {
+		ret = binman_entry_map(ofnode_null(), "intel-vbt", &buf, NULL);
+	}
 	if (ret)
 		return log_msg_ret("Cannot find VBT", ret);
 	if (*(u32 *)buf != VBT_SIGNATURE)
