@@ -79,6 +79,18 @@
  */
 #define CONFIG_VAL(option)  config_val(option)
 
+/* This use a similar mechanism to config_enabled() above */
+#define config_opt_enabled(cfg, opt_cfg) _config_opt_enabled(cfg, opt_cfg)
+#define _config_opt_enabled(cfg_val, opt_value) \
+	__config_opt_enabled(__ARG_PLACEHOLDER_##cfg_val, opt_value)
+#define __config_opt_enabled(arg1_or_junk, arg2) \
+	___config_opt_enabled(arg1_or_junk arg2, 0)
+#define ___config_opt_enabled(__ignored, val, ...) val
+
+/* Evaluates to 0 if option is not defined, int_option if it is defined */
+#define IF_ENABLED_INT(option, int_option) \
+	config_opt_enabled(option, int_option)
+
 /*
  * CONFIG_IS_ENABLED(FOO) evaluates to
  *  1 if CONFIG_SPL_BUILD is undefined and CONFIG_FOO is set to 'y' or 'm',
