@@ -24,8 +24,10 @@ int fsp_silicon_init(bool s3wake, bool use_spi_flash)
 	struct binman_entry entry;
 	struct udevice *dev;
 	ulong rom_offset = 0;
+	u32 init_addr;
 	int ret;
 
+	log_debug("Locating FSP\n");
 	ret = fsp_locate_fsp(FSP_S, &entry, use_spi_flash, &dev, &hdr,
 			     &rom_offset);
 	if (ret)
@@ -42,9 +44,10 @@ int fsp_silicon_init(bool s3wake, bool use_spi_flash)
 	ret = fsps_update_config(dev, rom_offset, &upd);
 	if (ret)
 		return log_msg_ret("Could not setup config", ret);
-	log_debug("Silicon init...");
+	init_addr = hdr->img_base + hdr->fsp_silicon_init;
+	log_debug("Silicon init @ %x...", init_addr);
 	bootstage_start(BOOTSTATE_ID_ACCUM_FSP_S, "fsp-s");
-	func = (fsp_silicon_init_func)(hdr->img_base + hdr->fsp_silicon_init);
+	func = (fsp_silicon_init_func)init_addr;
 	ret = func(&upd);
 	bootstage_accum(BOOTSTATE_ID_ACCUM_FSP_S);
 	if (ret)
