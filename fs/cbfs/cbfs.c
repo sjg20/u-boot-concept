@@ -12,7 +12,7 @@ static const u32 good_magic = 0x4f524243;
 static const u8 good_file_magic[] = "LARCHIVE";
 
 struct cbfs_priv {
-	int initialized;
+	bool initialised;
 	struct cbfs_header header;
 	struct cbfs_cachenode *file_cache;
 	enum cbfs_result result;
@@ -25,8 +25,8 @@ const char *file_cbfs_error(void)
 	switch (cbfs_s.result) {
 	case CBFS_SUCCESS:
 		return "Success";
-	case CBFS_NOT_INITIALIZED:
-		return "CBFS not initialized";
+	case CBFS_NOT_INITIALISED:
+		return "CBFS not initialised";
 	case CBFS_BAD_HEADER:
 		return "Bad CBFS header";
 	case CBFS_BAD_FILE:
@@ -207,7 +207,7 @@ static void cbfs_init(struct cbfs_priv *priv, ulong end_of_rom)
 {
 	u8 *start_of_rom;
 
-	priv->initialized = 0;
+	priv->initialised = false;
 
 	if (file_cbfs_load_header(end_of_rom, &priv->header))
 		return;
@@ -217,7 +217,7 @@ static void cbfs_init(struct cbfs_priv *priv, ulong end_of_rom)
 	file_cbfs_fill_cache(priv, start_of_rom, priv->header.rom_size,
 			     priv->header.align);
 	if (priv->result == CBFS_SUCCESS)
-		priv->initialized = 1;
+		priv->initialised = true;
 }
 
 void file_cbfs_init(ulong end_of_rom)
@@ -244,7 +244,7 @@ int cbfs_init_mem(ulong base, ulong size, struct cbfs_priv **privp)
 	if (priv->result != CBFS_SUCCESS)
 		return -EINVAL;
 
-	priv->initialized = 1;
+	priv->initialised = true;
 	priv = malloc(sizeof(priv_s));
 	if (!priv)
 		return -ENOMEM;
@@ -258,11 +258,11 @@ const struct cbfs_header *file_cbfs_get_header(void)
 {
 	struct cbfs_priv *priv = &cbfs_s;
 
-	if (priv->initialized) {
+	if (priv->initialised) {
 		priv->result = CBFS_SUCCESS;
 		return &priv->header;
 	} else {
-		priv->result = CBFS_NOT_INITIALIZED;
+		priv->result = CBFS_NOT_INITIALISED;
 		return NULL;
 	}
 }
@@ -271,8 +271,8 @@ const struct cbfs_cachenode *file_cbfs_get_first(void)
 {
 	struct cbfs_priv *priv = &cbfs_s;
 
-	if (!priv->initialized) {
-		priv->result = CBFS_NOT_INITIALIZED;
+	if (!priv->initialised) {
+		priv->result = CBFS_NOT_INITIALISED;
 		return NULL;
 	} else {
 		priv->result = CBFS_SUCCESS;
@@ -284,8 +284,8 @@ void file_cbfs_get_next(const struct cbfs_cachenode **file)
 {
 	struct cbfs_priv *priv = &cbfs_s;
 
-	if (!priv->initialized) {
-		priv->result = CBFS_NOT_INITIALIZED;
+	if (!priv->initialised) {
+		priv->result = CBFS_NOT_INITIALISED;
 		*file = NULL;
 		return;
 	}
@@ -300,8 +300,8 @@ const struct cbfs_cachenode *cbfs_find_file(struct cbfs_priv *priv,
 {
 	struct cbfs_cachenode *cache_node = priv->file_cache;
 
-	if (!priv->initialized) {
-		priv->result = CBFS_NOT_INITIALIZED;
+	if (!priv->initialised) {
+		priv->result = CBFS_NOT_INITIALISED;
 		return NULL;
 	}
 
