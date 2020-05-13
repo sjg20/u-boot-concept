@@ -163,17 +163,15 @@ int cbfs_init_mem(ulong base, ulong size, struct cbfs_priv **privp);
 /***************************************************************************/
 
 /**
- * file_cbfs_find_uncached() - Find a file with a particular name in CBFS
- * without using the heap.
+ * file_cbfs_find_uncached() - Find a file in CBFS without using the heap
  *
- * @end_of_rom:		Points to the end of the ROM the CBFS should be read
- *                      from.
- * @name:		The name to search for.
- *
- * @return A handle to the file, or NULL on error.
+ * @end_of_rom: Points to the end of the ROM the CBFS should be read from
+ * @name: The name to search for
+ * @node: Returns the node if found
+ * @return 0 on success, -ENOENT if not found, -EFAULT on bad header
  */
-const struct cbfs_cachenode *file_cbfs_find_uncached(ulong end_of_rom,
-						     const char *name);
+int file_cbfs_find_uncached(ulong end_of_rom, const char *name,
+			    struct cbfs_cachenode *node);
 
 /**
  * file_cbfs_name() - Get the name of a file in CBFS.
