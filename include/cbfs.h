@@ -174,6 +174,17 @@ int file_cbfs_find_uncached(ulong end_of_rom, const char *name,
 			    struct cbfs_cachenode *node);
 
 /**
+ * file_cbfs_find_uncached() - Find a file in CBFS without using the heap
+ *
+ * @base: Points to the base of the CBFS
+ * @name: The name to search for
+ * @node: Returns the node if found
+ * @return 0 on success, -ENOENT if not found, -EFAULT on bad header
+ */
+int file_cbfs_find_uncached_base(ulong base, const char *name,
+				 struct cbfs_cachenode *node);
+
+/**
  * file_cbfs_name() - Get the name of a file in CBFS.
  *
  * @file:		The handle to the file.
