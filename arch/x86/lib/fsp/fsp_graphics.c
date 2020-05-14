@@ -101,11 +101,8 @@ static int fsp_video_probe(struct udevice *dev)
 	if (ret)
 		goto err;
 
-	mtrr_add_request(MTRR_TYPE_WRCOMB, vesa->phys_base_ptr, 256 << 20);
-	mtrr_commit(true);
-
-	printf("%dx%dx%d\n", uc_priv->xsize, uc_priv->ysize,
-	       vesa->bits_per_pixel);
+	printf("%dx%dx%d @ %x\n", uc_priv->xsize, uc_priv->ysize,
+	       vesa->bits_per_pixel, vesa->phys_base_ptr);
 
 	return 0;
 
@@ -113,6 +110,27 @@ err:
 	printf("No video mode configured in FSP!\n");
 	return ret;
 }
+
+static int fsp_video_locate_fb(struct udevice *dev)
+{
+	struct video_uc_platdata *uc_plat = dev_get_uclass_platdata(dev);
+
+	/*
+	 * The framebuffer base address in the FSP graphics info HOB reflects
+	 * the value assigned by the FSP. After PCI enumeration the framebuffer
+	 * base address may be relocated. Let's get the updated one from device.
+	 *
+	 * For IGD, it seems to be always on BAR2.
+	 */
+	uc_plat->base = dm_pci_read_bar32(dev, 2);
+	uc_plat->size = 256 << 20;
+
+	return 0;
+}
+
+struct video_ops fsp_video_ops = {
+	.locate_fb	= fsp_video_locate_fb,
+};
 
 static const struct udevice_id fsp_video_ids[] = {
 	{ .compatible = "fsp-fb" },
@@ -124,6 +142,7 @@ U_BOOT_DRIVER(fsp_video) = {
 	.id	= UCLASS_VIDEO,
 	.of_match = fsp_video_ids,
 	.probe	= fsp_video_probe,
+	.ops	= &fsp_video_ops,
 };
 
 static struct pci_device_id fsp_video_supported[] = {

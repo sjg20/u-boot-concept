@@ -26,6 +26,7 @@
 #include <init.h>
 #include <malloc.h>
 #include <syscon.h>
+#include <video.h>
 #include <acpi/acpi_s3.h>
 #include <acpi/acpi_table.h>
 #include <asm/acpi.h>
@@ -43,6 +44,7 @@
 #include <asm/processor-flags.h>
 #include <asm/interrupt.h>
 #include <asm/tables.h>
+#include <dm/uclass-internal.h>
 #include <linux/compiler.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -234,6 +236,28 @@ static int x86_init_cpus(void)
 	return 0;
 }
 
+static int setup_video_mtrr(void)
+{
+	struct video_uc_platdata *uc_plat;
+	struct udevice *dev;
+	int ret;
+
+	uclass_find_first_device(UCLASS_VIDEO, &dev);
+	if (!dev)
+		return log_msg_ret("dev", -ENODEV);
+
+	ret = video_locate_fb(dev);
+	if (ret)
+		return log_msg_ret("locate", ret);
+	uc_plat = dev_get_uclass_platdata(dev);
+
+	ret = mtrr_add_request(MTRR_TYPE_WRCOMB, uc_plat->base, uc_plat->size);
+	if (ret)
+		return log_msg_ret("add", ret);
+
+	return mtrr_commit(true);
+}
+
 int cpu_init_r(void)
 {
 	struct udevice *dev;
@@ -242,6 +266,12 @@ int cpu_init_r(void)
 	if (!ll_boot_init()) {
 		uclass_first_device(UCLASS_PCI, &dev);
 		return 0;
+	}
+
+	ret = setup_video_mtrr();
+	if (ret) {
+		printf("Warning: No MTRR for video; expect it to be slow (err=%d)\n",
+		       ret);
 	}
 
 	ret = x86_init_cpus();
