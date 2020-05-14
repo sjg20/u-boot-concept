@@ -12,7 +12,9 @@
 #include <os.h>
 #include <video.h>
 #include <video_console.h>
+#include <asm/test.h>
 #include <dm/test.h>
+#include <dm/device-internal.h>
 #include <dm/uclass-internal.h>
 #include <test/ut.h>
 
@@ -375,3 +377,27 @@ static int dm_test_video_truetype_bs(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_video_truetype_bs, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+
+/* Test video_locate_fb() */
+static int dm_test_video_locate_fb(struct unit_test_state *uts)
+{
+	struct video_uc_platdata *uc_plat;
+	struct udevice *dev;
+
+	/* Get the video but don't probe it */
+	ut_assertok(uclass_first_device(UCLASS_VIDEO, &dev));
+	ut_assertnonnull(dev);
+
+	/* Make sure the frame buffer address is not set */
+	uc_plat = dev_get_uclass_platdata(dev);
+	ut_assertnonnull(uc_plat);
+	uc_plat->base = 0;
+	ut_asserteq(0, uc_plat->base);
+
+	/* Ask the device to locate it */
+	ut_assertok(video_locate_fb(dev));
+	ut_asserteq(SANDBOX_VIDEO_FB_ADDR, uc_plat->base);
+
+	return 0;
+}
+DM_TEST(dm_test_video_locate_fb, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);

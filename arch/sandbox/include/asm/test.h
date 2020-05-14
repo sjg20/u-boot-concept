@@ -45,6 +45,9 @@
 #define PCI_EA_BAR2_MAGIC		0x72727272
 #define PCI_EA_BAR4_MAGIC		0x74747474
 
+/* Used to test video_locate_fb() */
+#define SANDBOX_VIDEO_FB_ADDR		1234
+
 enum {
 	SANDBOX_IRQN_PEND = 1,	/* Interrupt number for 'pending' test */
 };

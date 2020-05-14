@@ -110,11 +110,34 @@ struct video_priv {
 	u8 bg_col_idx;
 };
 
-/* Placeholder - there are no video operations at present */
+/* Operations for video devices*/
 struct video_ops {
+	/**
+	 * locate_fb() - Locate the frame buffer before probing (optional)
+	 *
+	 * This method may be called before the device is probed to find out the
+	 * address of its frame buffer. If known, the driver should update the
+	 * uclass platdata with the address (in ->base).
+	 *
+	 * @dev: Device to check
+	 * @return 0 if OK, -ve if not known
+	 */
+	int (*locate_fb)(struct udevice *dev);
 };
 
 #define video_get_ops(dev)        ((struct video_ops *)(dev)->driver->ops)
+
+/**
+ * video_locate_fb() - Locate the frame buffer before probing (optional)
+ *
+ * This method may be called before the device is probed to find out the
+ * address of its frame buffer. If known, the driver should update the
+ * uclass platdata with the address (in ->base).
+ *
+ * @dev: Device to check
+ * @return 0 if OK, -ve if not known
+ */
+int video_locate_fb(struct udevice *dev);
 
 /**
  * video_reserve() - Reserve frame-buffer memory for video devices

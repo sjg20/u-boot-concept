@@ -9,6 +9,7 @@
 #include <video.h>
 #include <asm/sdl.h>
 #include <asm/state.h>
+#include <asm/test.h>
 #include <asm/u-boot-sandbox.h>
 #include <dm/test.h>
 
@@ -19,6 +20,16 @@ enum {
 	LCD_MAX_WIDTH		= 1366,
 	LCD_MAX_HEIGHT		= 768,
 };
+
+static int sandbox_sdl_locate_fb(struct udevice *dev)
+{
+	struct video_uc_platdata *uc_plat = dev_get_uclass_platdata(dev);
+
+	/* For testing only - see dm_test_video_locate_fb() */
+	uc_plat->base = SANDBOX_VIDEO_FB_ADDR;
+
+	return 0;
+}
 
 static int sandbox_sdl_probe(struct udevice *dev)
 {
@@ -58,6 +69,10 @@ static int sandbox_sdl_bind(struct udevice *dev)
 	return ret;
 }
 
+static struct video_ops sandbox_sdl_ops = {
+	.locate_fb	= sandbox_sdl_locate_fb,
+};
+
 static const struct udevice_id sandbox_sdl_ids[] = {
 	{ .compatible = "sandbox,lcd-sdl" },
 	{ }
@@ -67,6 +82,7 @@ U_BOOT_DRIVER(sdl_sandbox) = {
 	.name	= "sdl_sandbox",
 	.id	= UCLASS_VIDEO,
 	.of_match = sandbox_sdl_ids,
+	.ops	= &sandbox_sdl_ops,
 	.bind	= sandbox_sdl_bind,
 	.probe	= sandbox_sdl_probe,
 	.platdata_auto_alloc_size	= sizeof(struct sandbox_sdl_plat),
