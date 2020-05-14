@@ -141,9 +141,12 @@ int fspm_update_config(struct udevice *dev, struct fspm_upd *upd)
 {
 	struct fsp_m_config *cfg = &upd->config;
 	struct fspm_arch_upd *arch = &upd->arch;
+	int cache_ret = 0;
 
 	arch->nvs_buffer_ptr = NULL;
-	prepare_mrc_cache(upd);
+	cache_ret = prepare_mrc_cache(upd);
+	if (cache_ret && cache_ret != -ENOENT)
+		return log_msg_ret("mrc", cache_ret);
 	arch->stack_base = (void *)0xfef96000;
 	arch->boot_loader_tolum_size = 0;
 
@@ -184,7 +187,7 @@ int fspm_update_config(struct udevice *dev, struct fspm_upd *upd)
 	cfg->periodic_retraining_disable = 0;
 	cfg->enable_s3_heci2 = 0;
 
-	return 0;
+	return cache_ret;
 }
 
 /*
