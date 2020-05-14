@@ -43,6 +43,16 @@
  */
 DECLARE_GLOBAL_DATA_PTR;
 
+int video_locate_fb(struct udevice *dev)
+{
+	struct video_ops *ops = video_get_ops(dev);
+
+        if (!ops->locate_fb)
+                return -ENOSYS;
+
+        return ops->locate_fb(dev);
+}
+
 void video_set_flush_dcache(struct udevice *dev, bool flush)
 {
 	struct video_priv *priv = dev_get_uclass_priv(dev);

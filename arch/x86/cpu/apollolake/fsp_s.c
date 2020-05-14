@@ -11,12 +11,14 @@
 #include <irq.h>
 #include <malloc.h>
 #include <p2sb.h>
+#include <video.h>
 #include <acpi/acpi_s3.h>
 #include <asm/intel_pinctrl.h>
 #include <asm/io.h>
 #include <asm/intel_regs.h>
 #include <asm/msr.h>
 #include <asm/msr-index.h>
+#include <asm/mtrr.h>
 #include <asm/pci.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/soc_config.h>
@@ -352,6 +354,28 @@ int arch_fsps_preinit(void)
 	return 0;
 }
 
+static int setup_video_mtrr(void)
+{
+	struct video_uc_platdata *uc_plat;
+	struct udevice *dev;
+	int ret;
+
+	uclass_find_first_device(UCLASS_VIDEO, &dev);
+	if (!dev)
+		return log_msg_ret("dev", -ENODEV);
+
+	ret = video_locate_fb(dev);
+	if (ret)
+		return log_msg_ret("locate", ret);
+	uc_plat = dev_get_uclass_platdata(dev);
+
+	ret = mtrr_add_request(MTRR_TYPE_WRCOMB, uc_plat->base, uc_plat->size);
+	if (ret)
+		return log_msg_ret("add", ret);
+
+	return mtrr_commit(true);
+}
+
 int arch_fsp_init_r(void)
 {
 #ifdef CONFIG_HAVE_ACPI_RESUME
@@ -397,6 +421,8 @@ int arch_fsp_init_r(void)
 	 * select another IRQ for SCI.
 	 */
 	set_sci_irq();
+
+	setup_video_mtrr();
 
 	return 0;
 }

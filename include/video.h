@@ -100,9 +100,12 @@ struct video_priv {
 
 /* Placeholder - there are no video operations at present */
 struct video_ops {
+	int (*locate_fb)(struct udevice *dev);
 };
 
 #define video_get_ops(dev)        ((struct video_ops *)(dev)->driver->ops)
+
+int video_locate_fb(struct udevice *dev);
 
 /**
  * video_reserve() - Reserve frame-buffer memory for video devices
