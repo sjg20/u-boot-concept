@@ -121,6 +121,8 @@ def CheckPatch(fname, verbose=False):
         elif file_match:
             item['file'] = file_match.group(1)
             item['line'] = int(file_match.group(2))
+        else:
+            print('bad line "%s", %d' % (line, len(line)))
 
     return result
 
