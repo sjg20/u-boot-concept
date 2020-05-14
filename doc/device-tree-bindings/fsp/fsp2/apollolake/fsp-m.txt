@@ -1,0 +1,9 @@
+* Intel FSP-M configuration
+
+(placeholder until the FSP DT series is merged)
+
+Optional properties:
+- fspm,training-delay: Time taken to train DDR memory if there is no cached MRC
+    data, in seconds. This is used to show a message if possible. For Intel APL
+    this is typicaly 21 seconds.
+
