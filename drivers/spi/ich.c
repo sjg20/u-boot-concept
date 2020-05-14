@@ -26,6 +26,7 @@
 #include <asm/io.h>
 #include <dm/uclass-internal.h>
 #include <asm/mtrr.h>
+#include <dm/uclass-internal.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
 #include <linux/sizes.h>
