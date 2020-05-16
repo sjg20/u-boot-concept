@@ -308,13 +308,13 @@ static int apic_wait_timeout(int total_delay, const char *msg)
 	return 0;
 }
 
-static int start_aps(int ap_count, atomic_t *num_aps)
+static int start_aps(int num_aps, atomic_t *ap_count)
 {
 	int sipi_vector;
 	/* Max location is 4KiB below 1MiB */
 	const int max_vector_loc = ((1 << 20) - (1 << 12)) >> 12;
 
-	if (ap_count == 0)
+	if (num_aps == 0)
 		return 0;
 
 	/* The vector is sent as a 4k aligned address in one byte */
@@ -326,7 +326,7 @@ static int start_aps(int ap_count, atomic_t *num_aps)
 		return -ENOSPC;
 	}
 
-	debug("Attempting to start %d APs\n", ap_count);
+	debug("Attempting to start %d APs\n", num_aps);
 
 	if (apic_wait_timeout(1000, "ICR not to be busy"))
 		return -ETIMEDOUT;
@@ -349,7 +349,7 @@ static int start_aps(int ap_count, atomic_t *num_aps)
 		return -ETIMEDOUT;
 
 	/* Wait for CPUs to check in up to 200 us */
-	wait_for_aps(num_aps, ap_count, 200, 15);
+	wait_for_aps(ap_count, num_aps, 200, 15);
 
 	/* Send 2nd SIPI */
 	if (apic_wait_timeout(1000, "ICR not to be busy"))
@@ -362,9 +362,9 @@ static int start_aps(int ap_count, atomic_t *num_aps)
 		return -ETIMEDOUT;
 
 	/* Wait for CPUs to check in */
-	if (wait_for_aps(num_aps, ap_count, 10000, 50)) {
+	if (wait_for_aps(ap_count, num_aps, 10000, 50)) {
 		debug("Not all APs checked in: %d/%d\n",
-		      atomic_read(num_aps), ap_count);
+		      atomic_read(ap_count), num_aps);
 		return -EIO;
 	}
 
