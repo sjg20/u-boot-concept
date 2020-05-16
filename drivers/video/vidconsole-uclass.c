@@ -8,11 +8,12 @@
  */
 
 #include <common.h>
-#include <linux/ctype.h>
+#include <console.h>
 #include <dm.h>
 #include <video.h>
 #include <video_console.h>
 #include <video_font.h>		/* Bitmap font for code page 437 */
+#include <linux/ctype.h>
 
 /*
  * Structure to describe a console color
@@ -554,16 +555,26 @@ int vidconsole_put_string(struct udevice *dev, const char *str)
 static void vidconsole_putc(struct stdio_dev *sdev, const char ch)
 {
 	struct udevice *dev = sdev->priv;
+	int ret;
 
-	vidconsole_put_char(dev, ch);
+	ret = vidconsole_put_char(dev, ch);
+	if (ret)
+		console_puts_select_stderr(true, "[vc err: putc]");
 	video_sync(dev->parent, false);
 }
 
 static void vidconsole_puts(struct stdio_dev *sdev, const char *s)
 {
 	struct udevice *dev = sdev->priv;
+	int ret;
 
-	vidconsole_put_string(dev, s);
+	ret = vidconsole_put_string(dev, s);
+	if (ret) {
+		char str[30];
+
+		snprintf(str, sizeof(str), "[vc err: puts %d]", ret);
+		console_puts_select_stderr(true, str);
+	}
 	video_sync(dev->parent, false);
 }
 
@@ -610,6 +621,71 @@ UCLASS_DRIVER(vidconsole) = {
 	.post_probe	= vidconsole_post_probe,
 	.per_device_auto_alloc_size	= sizeof(struct vidconsole_priv),
 };
+
+#ifdef CONFIG_VIDEO_COPY
+int vidconsole_sync_copy(struct udevice *dev, void *from, void *to)
+{
+	struct udevice *vid = dev_get_parent(dev);
+	struct video_priv *priv = dev_get_uclass_priv(vid);
+
+	if (priv->copy_fb) {
+		long offset, size;
+
+		/* Find the offset of the first byte to copy */
+		if ((ulong)to > (ulong)from) {
+			size = to - from;
+			offset = from - priv->fb;
+		} else {
+			size = from - to;
+			offset = to - priv->fb;
+		}
+
+		/*
+		 * Allow a bit of leeway for valid requests somewhere near the
+		 * frame buffer
+		 */
+		if (offset < -priv->fb_size || offset > 2 * priv->fb_size) {
+			char str[80];
+
+			snprintf(str, sizeof(str),
+				 "[sync_copy fb=%p, from=%p, to=%p, offset=%lx]",
+				 priv->fb, from, to, offset);
+			console_puts_select_stderr(true, str);
+			return -EFAULT;
+		}
+
+		/*
+		 * Silently crop the memcpy. This allows callers to avoid doing
+		 * this themselves. It is common for the end pointer to go a
+		 * few lines after the end of the frame buffer, since most of
+		 * the update algorithms terminate a line after their last write
+		 */
+		if (offset + size > priv->fb_size) {
+			size = priv->fb_size - offset;
+		} else if (offset < 0) {
+			size += offset;
+			offset = 0;
+		}
+
+		memcpy(priv->copy_fb + offset, priv->fb + offset, size);
+	}
+
+	return 0;
+}
+
+int vidconsole_memmove(struct udevice *dev, void *dst, const void *src,
+		       int size)
+{
+	int ret;
+
+	memmove(dst, src, size);
+	ret = vidconsole_sync_copy(dev, dst, dst + size);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+#endif
 
 void vidconsole_position_cursor(struct udevice *dev, unsigned col, unsigned row)
 {

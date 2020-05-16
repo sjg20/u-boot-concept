@@ -93,6 +93,7 @@ int fsp_memory_init(bool s3wake, bool use_spi_flash)
 	bootstage_start(BOOTSTATE_ID_ACCUM_FSP_M, "fsp-m");
 	func = (fsp_memory_init_func)(hdr->img_base + hdr->fsp_mem_init);
 	ret = func(&upd, &hob);
+	cpu_reinit_fpu();
 	bootstage_accum(BOOTSTATE_ID_ACCUM_FSP_M);
 	if (delay)
 		printf("done\n");

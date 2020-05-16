@@ -71,6 +71,26 @@ struct mtrr_state {
 };
 
 /**
+ * struct mtrr - Information about a single MTRR
+ *
+ * @base: Base address and MTRR_BASE_TYPE_MASK
+ * @mask: Mask and MTRR_PHYS_MASK_VALID
+ */
+struct mtrr {
+	u64 base;
+	u64 mask;
+};
+
+/**
+ * struct mtrr_info - Information about all MTRRs
+ *
+ * @mtrr: Information about each mtrr
+ */
+struct mtrr_info {
+	struct mtrr mtrr[MTRR_COUNT];
+};
+
+/**
  * mtrr_open() - Prepare to adjust MTRRs
  *
  * Use mtrr_open() passing in a structure - this function will init it. Then

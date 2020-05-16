@@ -30,11 +30,14 @@ struct udevice;
  *	buffer should start on. If 0, 1MB is assumed
  * @size: Frame-buffer size, in bytes
  * @base: Base address of frame buffer, 0 if not yet known
+ * @copy_base: Base address of a hardware copy of the frame buffer. See
+ *	CONFIG_VIDEO_COPY.
  */
 struct video_uc_platdata {
 	uint align;
 	uint size;
 	ulong base;
+	ulong copy_base;
 };
 
 enum video_polarity {
@@ -75,6 +78,8 @@ enum video_log2_bpp {
  * @font_size:	Font size in pixels (0 to use a default value)
  * @fb:		Frame buffer
  * @fb_size:	Frame buffer size
+ * @copy_fb:	Copy of the frame buffer to keep up to date; see struct
+ *		video_uc_platdata
  * @line_length:	Length of each frame buffer line, in bytes. This can be
  *		set by the driver, but if not, the uclass will set it after
  *		probing
@@ -101,6 +106,7 @@ struct video_priv {
 	 */
 	void *fb;
 	int fb_size;
+	void *copy_fb;
 	int line_length;
 	u32 colour_fg;
 	u32 colour_bg;

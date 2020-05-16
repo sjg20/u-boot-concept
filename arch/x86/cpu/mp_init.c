@@ -41,13 +41,26 @@ struct mp_flight_plan {
 	struct mp_flight_record *records;
 };
 
-static struct mp_flight_plan mp_info;
-
 struct cpu_map {
 	struct udevice *dev;
 	int apic_id;
 	int err_code;
 };
+
+struct mp_callback {
+	/**
+	 * func() - Function to call on the AP
+	 *
+	 * @arg: Argument to pass
+	 */
+	void (*func)(void *arg);
+	void *arg;
+	int logical_cpu_number;
+};
+
+static struct mp_flight_plan mp_info;
+
+static struct mp_callback **ap_callbacks;
 
 static inline void barrier_wait(atomic_t *b)
 {
@@ -374,7 +387,7 @@ static int start_aps(int num_aps, atomic_t *ap_count)
  * @cpu: Device for the main CPU
  * @plan: Flight plan to run
  * @num_aps: Number of APs (CPUs other than the BSP)
- * @returns 0 on success, -ETIMEDOUT if an AP failed to come up
+ * @return 0 on success, -ETIMEDOUT if an AP failed to come up
  */
 static int bsp_do_flight_plan(struct udevice *cpu, struct mp_flight_plan *plan,
 			      int num_aps)
@@ -440,6 +453,100 @@ static int get_bsp(struct udevice **devp, int *cpu_countp)
 	return dev->req_seq;
 }
 
+static struct mp_callback *read_callback(struct mp_callback **slot)
+{
+	struct mp_callback *ret;
+
+	asm volatile ("mov	%1, %0\n"
+		: "=r" (ret)
+		: "m" (*slot)
+		: "memory"
+	);
+	return ret;
+}
+
+static void store_callback(struct mp_callback **slot, struct mp_callback *val)
+{
+	asm volatile ("mov	%1, %0\n"
+		: "=m" (*slot)
+		: "r" (val)
+		: "memory"
+	);
+}
+
+static int run_ap_work(struct mp_callback *callback, struct udevice *bsp,
+		       int num_cpus, ulong expire_ms)
+{
+	int cur_cpu = bsp->req_seq;
+	int num_aps = num_cpus - 1; /* number of non-BSPs to get this message */
+	int cpus_accepted;
+	ulong start;
+	int i;
+
+	/* Signal to all the APs to run the func. */
+	for (i = 0; i < num_cpus; i++) {
+		if (cur_cpu != i)
+			store_callback(&ap_callbacks[i], callback);
+	}
+	mfence();
+
+	/* Wait for all the APs to signal back that call has been accepted. */
+	start = get_timer(0);
+
+	do {
+		mdelay(1);
+		cpus_accepted = 0;
+
+		for (i = 0; i < num_cpus; i++) {
+			if (cur_cpu == i)
+				continue;
+			if (!read_callback(&ap_callbacks[i]))
+				cpus_accepted++;
+		}
+
+		if (expire_ms && get_timer(start) >= expire_ms) {
+			log(UCLASS_CPU, LOGL_CRIT,
+			    "AP call expired; %d/%d CPUs accepted\n",
+			    cpus_accepted, num_aps);
+			return -ETIMEDOUT;
+		}
+	} while (cpus_accepted != num_aps);
+
+	/* Make sure we can see any data written by the APs */
+	mfence();
+
+	return 0;
+}
+
+static int ap_wait_for_instruction(struct udevice *cpu, void *unused)
+{
+	struct mp_callback lcb;
+	struct mp_callback **per_cpu_slot;
+
+	per_cpu_slot = &ap_callbacks[cpu->req_seq];
+
+	while (1) {
+		struct mp_callback *cb = read_callback(per_cpu_slot);
+
+		if (!cb) {
+			asm ("pause");
+			continue;
+		}
+
+		/* Copy to local variable before using the value */
+		memcpy(&lcb, cb, sizeof(lcb));
+		mfence();
+		if (lcb.logical_cpu_number == MP_SELECT_ALL ||
+		    cpu->req_seq == lcb.logical_cpu_number)
+			lcb.func(lcb.arg);
+
+		/* Indicate we are finished */
+		store_callback(per_cpu_slot, NULL);
+	}
+
+	return 0;
+}
+
 static int mp_init_cpu(struct udevice *cpu, void *unused)
 {
 	struct cpu_platdata *plat = dev_get_parent_platdata(cpu);
@@ -452,7 +559,117 @@ static int mp_init_cpu(struct udevice *cpu, void *unused)
 
 static struct mp_flight_record mp_steps[] = {
 	MP_FR_BLOCK_APS(mp_init_cpu, NULL, mp_init_cpu, NULL),
+	MP_FR_BLOCK_APS(ap_wait_for_instruction, NULL, NULL, NULL),
 };
+
+int mp_run_on_aps(void (*func)(void *), void *arg, int logical_cpu_num,
+		  long expire_ms)
+{
+	struct mp_callback lcb = {
+		.func = func,
+		.arg = arg,
+		.logical_cpu_number = logical_cpu_num
+	};
+	struct udevice *dev;
+	int num_cpus;
+	int ret;
+
+	ret = get_bsp(&dev, &num_cpus);
+	if (ret < 0)
+		return log_msg_ret("bsp", ret);
+
+	return run_ap_work(&lcb, dev, num_cpus, expire_ms);
+}
+
+int mp_run_on_cpus(int cpu, void (*func)(void *arg), void *arg)
+{
+	struct udevice *dev;
+	int ret;
+
+	ret = get_bsp(&dev, NULL);
+	if (ret < 0)
+		return log_msg_ret("bsp", ret);
+	if (cpu == MP_SELECT_ALL || cpu == MP_SELECT_BSP || cpu == ret) {
+		/* Run on BSP first */
+		func(arg);
+	}
+
+	/* Allow up to 1 second for all APs to finish */
+	return mp_run_on_aps(func, arg, cpu, 1000 /* ms */);
+}
+
+static void park_this_cpu(void *unused)
+{
+	stop_this_cpu();
+}
+
+int mp_park_aps(void)
+{
+	unsigned long start;
+	int ret;
+
+	start = get_timer(0);
+	ret = mp_run_on_aps(park_this_cpu, NULL, MP_SELECT_ALL, 1000);
+	if (ret)
+		return ret;
+
+	return get_timer(start);
+}
+
+int mp_first_cpu(int cpu_select)
+{
+	struct udevice *dev;
+	int num_cpus;
+	int ret;
+
+	if (cpu_select == MP_SELECT_ALL)
+		return 0;   /* start with the first one */
+
+	ret = get_bsp(&dev, &num_cpus);
+	if (ret < 0)
+		return log_msg_ret("bsp", ret);
+
+	if (cpu_select == MP_SELECT_BSP)
+		return ret;
+
+	if (cpu_select == MP_SELECT_APS && num_cpus > 1)
+		return ret == 0 ? 1 : 0;
+
+	if (cpu_select < 0 || cpu_select >= num_cpus)
+		return -EINVAL;
+
+	return cpu_select;  /* return the only selected one */
+}
+
+int mp_next_cpu(int cpu_select, int prev_cpu)
+{
+	struct udevice *dev;
+	int num_cpus;
+	int ret;
+	int bsp;
+
+	/* If we selected the BSP or a particular single CPU, we are done */
+	if (cpu_select == MP_SELECT_BSP || cpu_select >= 0)
+		return -EFBIG;
+
+	/* Must be doing MP_SELECT_ALL or MP_SELECT_APS; return the next CPU */
+	ret = get_bsp(&dev, &num_cpus);
+	if (ret < 0)
+		return log_msg_ret("bsp", ret);
+	bsp = ret;
+
+	/* Move to the next CPU */
+	assert(prev_cpu >= 0);
+	ret = prev_cpu + 1;
+
+	/* Skip the BSP if needed */
+	if (cpu_select == MP_SELECT_APS && ret == bsp)
+		ret++;
+	if (ret >= num_cpus)
+		return -EFBIG;
+
+	return ret;
+}
 
 int mp_init(void)
 {
@@ -488,6 +705,10 @@ int mp_init(void)
 	ret = check_cpu_devices(num_cpus);
 	if (ret)
 		log_warning("Warning: Device tree does not describe all CPUs. Extra ones will not be started correctly\n");
+
+	ap_callbacks = calloc(num_cpus, sizeof(struct mp_callback *));
+	if (!ap_callbacks)
+		return -ENOMEM;
 
 	/* Copy needed parameters so that APs have a reference to the plan */
 	mp_info.num_records = ARRAY_SIZE(mp_steps);

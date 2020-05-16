@@ -5,6 +5,7 @@
 
 #include <common.h>
 #include <asm/msr.h>
+#include <asm/mp.h>
 #include <asm/mtrr.h>
 
 static const char *const mtrr_type_name[MTRR_TYPE_COUNT] = {
@@ -17,19 +18,38 @@ static const char *const mtrr_type_name[MTRR_TYPE_COUNT] = {
 	"Back",
 };
 
-static int do_mtrr_list(void)
+static void save_mtrrs(void *arg)
 {
+	struct mtrr_info *info = arg;
+	int i;
+
+	for (i = 0; i < MTRR_COUNT; i++) {
+		info->mtrr[i].base = native_read_msr(MTRR_PHYS_BASE_MSR(i));
+		info->mtrr[i].mask = native_read_msr(MTRR_PHYS_MASK_MSR(i));
+	}
+}
+
+static int do_mtrr_list(int cpu)
+{
+	struct mtrr_info info;
+	int ret;
 	int i;
 
 	printf("Reg Valid Write-type   %-16s %-16s %-16s\n", "Base   ||",
 	       "Mask   ||", "Size   ||");
+	memset(&info, '\0', sizeof(info));
+	ret = mp_run_on_cpus(cpu, save_mtrrs, &info);
+	if (ret) {
+		printf("Failed to run on CPU (err=%d)\n", ret);
+		return CMD_RET_FAILURE;
+	}
 	for (i = 0; i < MTRR_COUNT; i++) {
 		const char *type = "Invalid";
 		uint64_t base, mask, size;
 		bool valid;
 
-		base = native_read_msr(MTRR_PHYS_BASE_MSR(i));
-		mask = native_read_msr(MTRR_PHYS_MASK_MSR(i));
+		base = info.mtrr[i].base;
+		mask = info.mtrr[i].mask;
 		size = ~mask & ((1ULL << CONFIG_CPU_ADDR_BITS) - 1);
 		size |= (1 << 12) - 1;
 		size += 1;
@@ -99,29 +119,68 @@ static int mtrr_set_valid(int reg, bool valid)
 
 static int do_mtrr(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
-	const char *cmd;
+	bool first;
+	int cmd;
+	int cpu;
 	uint reg;
+	int i;
+	int ret;
 
-	cmd = argv[1];
-	if (argc < 2 || *cmd == 'l')
-		return do_mtrr_list();
-	argc -= 2;
-	argv += 2;
-	if (argc <= 0)
-		return CMD_RET_USAGE;
-	reg = simple_strtoul(argv[0], NULL, 16);
-	if (reg >= MTRR_COUNT) {
-		printf("Invalid register number\n");
-		return CMD_RET_USAGE;
+	cpu = MP_SELECT_BSP;
+	if (argc >= 3 && !strcmp("-c", argv[1])) {
+		const char *cpustr;
+
+		cpustr = argv[2];
+		if (*cpustr == 'a')
+			cpu = MP_SELECT_ALL;
+		else
+			cpu = simple_strtol(cpustr, NULL, 16);
+		argc -= 2;
+		argv += 2;
 	}
-	if (*cmd == 'e')
-		return mtrr_set_valid(reg, true);
-	else if (*cmd == 'd')
-		return mtrr_set_valid(reg, false);
-	else if (*cmd == 's')
-		return do_mtrr_set(reg, argc - 1, argv + 1);
-	else
-		return CMD_RET_USAGE;
+	argc--;
+	argv++;
+	cmd = argv[0] ? *argv[0] : 0;
+	if (argc < 1 || !cmd) {
+		cmd = 'l';
+		reg = 0;
+	} else {
+		if (argc < 2)
+			return CMD_RET_USAGE;
+		reg = simple_strtoul(argv[1], NULL, 16);
+		if (reg >= MTRR_COUNT) {
+			printf("Invalid register number\n");
+			return CMD_RET_USAGE;
+		}
+	}
+	i = mp_first_cpu(cpu);
+	if (i < 0) {
+		printf("Invalid CPU (err=%d)\n", i);
+		return CMD_RET_FAILURE;
+	}
+	first = true;
+	for (; i >= 0; i = mp_next_cpu(cpu, i)) {
+		if (!first)
+			printf("\n");
+		printf("CPU %d:\n", i);
+		switch (cmd) {
+		case 'l':
+			ret = do_mtrr_list(i);
+			break;
+		case 'e':
+			ret = mtrr_set_valid(reg, true);
+			break;
+		case 'd':
+			ret = mtrr_set_valid(reg, false);
+			break;
+		case 's':
+			ret = do_mtrr_set(reg, argc - 2, argv + 2);
+			break;
+		default:
+			return CMD_RET_USAGE;
+		}
+		first = false;
+	}
 
 	return 0;
 }
@@ -133,5 +192,8 @@ U_BOOT_CMD(
 	"set <reg> <type> <start> <size>   - set a register\n"
 	"\t<type> is Uncacheable, Combine, Through, Protect, Back\n"
 	"disable <reg>      - disable a register\n"
-	"enable <reg>       - enable a register"
+	"enable <reg>       - enable a register\n"
+	"\n"
+	"Preceed command with '-c <n>' to access a particular CPU, e.g.\n"
+	"   mtrr -c all list; mtrr -c 2e list"
 );

@@ -10,6 +10,17 @@
 
 #include <asm/atomic.h>
 
+enum {
+	/* Indicates that the function should run on all CPUs */
+	MP_SELECT_ALL	= -1,
+
+	/* Run on boot CPUs */
+	MP_SELECT_BSP	= -2,
+
+	/* Run on non-boot CPUs */
+	MP_SELECT_APS	= -3,
+};
+
 typedef int (*mp_callback_t)(struct udevice *cpu, void *arg);
 
 /*
@@ -73,5 +84,21 @@ int mp_init(void);
 
 /* Set up additional CPUs */
 int x86_mp_init(void);
+
+/**
+ * mp_run_on_cpus() - Run a function on one or all CPUs
+ *
+ * @cpu: CPU to run on, or MP_SELECT_ALL for all, or MP_SELECT_BSP for BSP
+ * @func: Function to run
+ * @arg: Argument to pass to the function
+ * @return 0 on success, -ve on error
+ */
+int mp_run_on_cpus(int cpu, void (*func)(void *arg), void *arg);
+
+int mp_park_aps(void);
+
+int mp_first_cpu(int cpu_select);
+
+int mp_next_cpu(int cpu_select, int prev_cpu);
 
 #endif /* _X86_MP_H_ */

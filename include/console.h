@@ -72,6 +72,17 @@ int console_record_avail(void);
  */
 int console_announce_r(void);
 
+/**
+ * console_puts_select_stderr() - Output a string to selected console devices
+ *
+ * This writes to stderr only. It is useful for outputting errors
+ *
+ * @serial_only: true to output only to serial, false to output to everything
+ *	else
+ * @s: String to output
+ */
+void console_puts_select_stderr(bool serial_only, const char *s);
+
 /*
  * CONSOLE multiplexing.
  */

@@ -22,6 +22,8 @@
  * Copyright 1997 -- 1999 Martin Mares <mj@atrey.karlin.mff.cuni.cz>
  */
 
+#define LOG_CATEGORY UCLASS_PCI
+
 #include <common.h>
 #include <bios_emul.h>
 #include <dm.h>
@@ -342,7 +344,13 @@ int vbe_setup_video_priv(struct vesa_mode_info *vesa,
 	default:
 		return -EPROTONOSUPPORT;
 	}
-	plat->base = vesa->phys_base_ptr;
+
+	/* Use double buffering if enabled */
+	if (IS_ENABLED(CONFIG_VIDEO_COPY))
+		plat->copy_base = vesa->phys_base_ptr;
+	else
+		plat->base = vesa->phys_base_ptr;
+	log_debug("base = %lx, copy_base = %lx\n", plat->copy_base, plat->base);
 	plat->size = vesa->bytes_per_scanline * vesa->y_resolution;
 
 	return 0;
