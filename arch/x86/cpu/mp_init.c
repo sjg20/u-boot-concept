@@ -406,9 +406,17 @@ static int bsp_do_flight_plan(struct udevice *cpu, struct mp_flight_plan *plan,
 	return ret;
 }
 
-static int init_bsp(struct udevice **devp)
+/**
+ * get_bsp() - Get information about the bootstrap processor
+ *
+ * @devp: If non-NULL, returns CPU device corresponding to the BSP
+ * @cpu_countp: If non-NULL, returns the total number of CPUs
+ * @return CPU number of the BSP
+ */
+static int get_bsp(struct udevice **devp, int *cpu_countp)
 {
 	char processor_name[CPU_MAX_NAME_LEN];
+	struct udevice *dev;
 	int apic_id;
 	int ret;
 
@@ -416,13 +424,20 @@ static int init_bsp(struct udevice **devp)
 	debug("CPU: %s\n", processor_name);
 
 	apic_id = lapicid();
-	ret = find_cpu_by_apic_id(apic_id, devp);
-	if (ret) {
+	ret = find_cpu_by_apic_id(apic_id, &dev);
+	if (ret < 0) {
 		printf("Cannot find boot CPU, APIC ID %d\n", apic_id);
 		return ret;
 	}
+	ret = cpu_get_count(dev);
+	if (ret < 0)
+		return log_msg_ret("count", ret);
+	if (devp)
+		*devp = dev;
+	if (cpu_countp)
+		*cpu_countp = ret;
 
-	return 0;
+	return dev->req_seq;
 }
 
 static int mp_init_cpu(struct udevice *cpu, void *unused)
@@ -461,16 +476,10 @@ int mp_init(void)
 	uclass_id_foreach_dev(UCLASS_CPU, cpu, uc)
 		cpu->req_seq = dev_read_u32_default(cpu, "reg", -1);
 
-	ret = init_bsp(&cpu);
-	if (ret) {
+	ret = get_bsp(&cpu, &num_cpus);
+	if (ret < 0) {
 		debug("Cannot init boot CPU: err=%d\n", ret);
 		return ret;
-	}
-
-	num_cpus = cpu_get_count(cpu);
-	if (num_cpus < 0) {
-		debug("Cannot get number of CPUs: err=%d\n", num_cpus);
-		return num_cpus;
 	}
 
 	if (num_cpus < 2)
@@ -478,7 +487,7 @@ int mp_init(void)
 
 	ret = check_cpu_devices(num_cpus);
 	if (ret)
-		debug("Warning: Device tree does not describe all CPUs. Extra ones will not be started correctly\n");
+		log_warning("Warning: Device tree does not describe all CPUs. Extra ones will not be started correctly\n");
 
 	/* Copy needed parameters so that APs have a reference to the plan */
 	mp_info.num_records = ARRAY_SIZE(mp_steps);
