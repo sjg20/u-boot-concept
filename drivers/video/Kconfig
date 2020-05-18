@@ -14,6 +14,18 @@ config DM_VIDEO
 	  option compiles in the video uclass and routes all LCD/video access
 	  through this.
 
+config VIDEO_COPY
+	bool "Enable copying the frame buffer to a hardware copy"
+	depends on DM_VIDEO
+	help
+	  On some machines (e.g. x86), reading from the frame buffer is very
+	  slow because it is uncached. To improve performance, this feature
+	  allows the frame buffer to be kept in cached memory (allocated by
+	  U-Boot) and then copied to the hardware frame-buffer as needed.
+
+	  To use this, your video driver must set @copy_base in
+	  struct video_uc_platdata.
+
 config BACKLIGHT_PWM
 	bool "Generic PWM based Backlight Driver"
 	depends on DM_VIDEO && DM_PWM
