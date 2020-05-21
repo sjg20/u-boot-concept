@@ -609,6 +609,24 @@ int mp_run_on_cpus(int cpu_select, mp_run_func func, void *arg)
 	return 0;
 }
 
+static void park_this_cpu(void *unused)
+{
+	stop_this_cpu();
+}
+
+int mp_park_aps(void)
+{
+	unsigned long start;
+	int ret;
+
+	start = get_timer(0);
+	ret = mp_run_on_cpus(MP_SELECT_APS, park_this_cpu, NULL);
+	if (ret)
+		return ret;
+
+	return get_timer(start);
+}
+
 int mp_init(void)
 {
 	int num_aps, num_cpus;
