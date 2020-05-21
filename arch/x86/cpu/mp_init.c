@@ -609,6 +609,7 @@ int mp_init(void)
 		debug("CPU init failed: err=%d\n", ret);
 		return ret;
 	}
+	gd->flags |= GD_FLG_SMP_INIT;
 
 	return 0;
 }
