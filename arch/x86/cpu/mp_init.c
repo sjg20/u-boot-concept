@@ -50,12 +50,7 @@ struct cpu_map {
 };
 
 struct mp_callback {
-	/**
-	 * func() - Function to call on the AP
-	 *
-	 * @arg: Argument to pass
-	 */
-	void (*func)(void *arg);
+	mp_run_func func;
 	void *arg;
 	int logical_cpu_number;
 };
@@ -483,6 +478,50 @@ static void store_callback(struct mp_callback **slot, struct mp_callback *val)
 	);
 }
 
+static int run_ap_work(struct mp_callback *callback, struct udevice *bsp,
+		       int num_cpus, uint expire_ms)
+{
+	int cur_cpu = bsp->req_seq;
+	int num_aps = num_cpus - 1; /* number of non-BSPs to get this message */
+	int cpus_accepted;
+	ulong start;
+	int i;
+
+	/* Signal to all the APs to run the func. */
+	for (i = 0; i < num_cpus; i++) {
+		if (cur_cpu != i)
+			store_callback(&ap_callbacks[i], callback);
+	}
+	mfence();
+
+	/* Wait for all the APs to signal back that call has been accepted. */
+	start = get_timer(0);
+
+	do {
+		mdelay(1);
+		cpus_accepted = 0;
+
+		for (i = 0; i < num_cpus; i++) {
+			if (cur_cpu == i)
+				continue;
+			if (!read_callback(&ap_callbacks[i]))
+				cpus_accepted++;
+		}
+
+		if (expire_ms && get_timer(start) >= expire_ms) {
+			log(UCLASS_CPU, LOGL_CRIT,
+			    "AP call expired; %d/%d CPUs accepted\n",
+			    cpus_accepted, num_aps);
+			return -ETIMEDOUT;
+		}
+	} while (cpus_accepted != num_aps);
+
+	/* Make sure we can see any data written by the APs */
+	mfence();
+
+	return 0;
+}
+
 /**
  * ap_wait_for_instruction() - Wait for and process requests from the main CPU
  *
@@ -538,6 +577,37 @@ static struct mp_flight_record mp_steps[] = {
 	MP_FR_BLOCK_APS(mp_init_cpu, NULL, mp_init_cpu, NULL),
 	MP_FR_BLOCK_APS(ap_wait_for_instruction, NULL, NULL, NULL),
 };
+
+int mp_run_on_cpus(int cpu_select, mp_run_func func, void *arg)
+{
+	struct mp_callback lcb = {
+		.func = func,
+		.arg = arg,
+		.logical_cpu_number = cpu_select,
+	};
+	struct udevice *dev;
+	int num_cpus;
+	int ret;
+
+	if (!(gd->flags & GD_FLG_SMP_INIT))
+		return -ENXIO;
+
+	ret = get_bsp(&dev, &num_cpus);
+	if (ret < 0)
+		return log_msg_ret("bsp", ret);
+	if (cpu_select == MP_SELECT_ALL || cpu_select == MP_SELECT_BSP ||
+	    cpu_select == ret) {
+		/* Run on BSP first */
+		func(arg);
+	}
+
+	/* Allow up to 1 second for all APs to finish */
+	ret = run_ap_work(&lcb, dev, num_cpus, 1000 /* ms */);
+	if (ret)
+		return log_msg_ret("aps", ret);
+
+	return 0;
+}
 
 int mp_init(void)
 {
