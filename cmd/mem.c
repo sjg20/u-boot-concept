@@ -1343,7 +1343,7 @@ U_BOOT_CMD(
 	ms,	255,	1,	do_mem_search,
 	"memory search",
 	"[.b, .w, .l" HELP_Q ", .s] [-q | -<n>] address #-of-objects <value>..."
-	"  -q = quiet, -l<val> = match limit" :
+	"  -q = quiet, -l<val> = match limit"
 );
 #endif
 
