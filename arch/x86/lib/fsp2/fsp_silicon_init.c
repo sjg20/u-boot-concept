@@ -43,7 +43,7 @@ int fsp_silicon_init(bool s3wake, bool use_spi_flash)
 	ret = fsps_update_config(dev, rom_offset, &upd);
 	if (ret)
 		return log_msg_ret("Could not setup config", ret);
-	print_buffer(0, &upd, 1, sizeof(upd), 0);
+// 	print_buffer(0, &upd, 1, sizeof(upd), 0);
 	log_debug("Silicon init...");
 	bootstage_start(BOOTSTAGE_ID_ACCUM_FSP_S, "fsp-s");
 	func = (fsp_silicon_init_func)(hdr->img_base + hdr->fsp_silicon_init);
