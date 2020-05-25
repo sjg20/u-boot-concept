@@ -470,8 +470,9 @@ static void acpi_create_spcr(struct acpi_spcr *spcr)
 	header->checksum = table_compute_checksum((void *)spcr, header->length);
 }
 
-void acpi_create_ssdt(struct acpi_ctx *ctx, struct acpi_table_header *ssdt,
-		      const char *oem_table_id)
+static int acpi_create_ssdt(struct acpi_ctx *ctx,
+			    struct acpi_table_header *ssdt,
+			    const char *oem_table_id)
 {
 	memset((void *)ssdt, '\0', sizeof(struct acpi_table_header));
 
@@ -484,9 +485,19 @@ void acpi_create_ssdt(struct acpi_ctx *ctx, struct acpi_table_header *ssdt,
 
 	acpi_fill_ssdt(ctx);
 
-	/* (Re)calculate length and checksum. */
+	/* (Re)calculate length and checksum */
 	ssdt->length = ctx->current - (void *)ssdt;
 	ssdt->checksum = table_compute_checksum((void *)ssdt, ssdt->length);
+	log_debug("SSDT at %p, length %x\n", ssdt, ssdt->length);
+
+	/* Drop the table if it is empty */
+	if (ssdt->length == sizeof(struct acpi_table_header)) {
+		ctx->current = ssdt;
+		return -ENOENT;
+	}
+	acpi_align(ctx);
+
+	return 0;
 }
 
 /*
@@ -494,6 +505,7 @@ void acpi_create_ssdt(struct acpi_ctx *ctx, struct acpi_table_header *ssdt,
  */
 ulong write_acpi_tables(ulong start_addr)
 {
+	const int thl = sizeof(struct acpi_table_header);
 	struct acpi_ctx *ctx;
 	struct acpi_facs *facs;
 	struct acpi_table_header *dsdt;
@@ -505,6 +517,7 @@ ulong write_acpi_tables(ulong start_addr)
 	struct acpi_csrt *csrt;
 	struct acpi_spcr *spcr;
 	void *start;
+	int aml_len;
 	ulong addr;
 	int ret;
 	int i;
@@ -518,6 +531,7 @@ ulong write_acpi_tables(ulong start_addr)
 
 	debug("ACPI: Writing ACPI tables at %lx\n", start_addr);
 
+	acpi_reset_items();
 	acpi_setup_base_tables(ctx, start);
 
 	debug("ACPI:    * FACS\n");
@@ -530,21 +544,30 @@ ulong write_acpi_tables(ulong start_addr)
 	dsdt = ctx->current;
 
 	/* Put the table header first */
-	memcpy(dsdt, &AmlCode, sizeof(struct acpi_table_header));
-	acpi_inc(ctx, sizeof(struct acpi_table_header));
+	memcpy(dsdt, &AmlCode, thl);
+	acpi_inc(ctx, thl);
+	log_debug("DSDT starts at %p, hdr ends at %p\n", dsdt, ctx->current);
 
 	/* If the table is not empty, allow devices to inject things */
-	if (dsdt->length >= sizeof(struct acpi_table_header))
+	aml_len = dsdt->length - thl;
+	if (aml_len) {
+		void *base = ctx->current;
+
 		acpi_inject_dsdt(ctx);
+		log_debug("Added %x bytes from inject_dsdt, now at %p\n",
+			  ctx->current - base, ctx->current);
+		print_buffer(thl, base, 1, ctx->current - base, 0);
+		log_debug("Copy AML code size %x to %p\n", aml_len,
+			  ctx->current);
+		print_buffer((ulong)ctx->current, AmlCode + thl, 1, 0x40, 0);
+		memcpy(ctx->current, AmlCode + thl, aml_len);
+		acpi_inc(ctx, aml_len);
+	}
 
-	/* Copy in the AML code itself if any (after the header) */
-	memcpy(ctx->current,
-	       (char *)&AmlCode + sizeof(struct acpi_table_header),
-	       dsdt->length - sizeof(struct acpi_table_header));
-
-	acpi_inc(ctx, dsdt->length - sizeof(struct acpi_table_header));
 	dsdt->length = ctx->current - (void *)dsdt;
-	acpi_align(ctx);
+        acpi_align(ctx);
+	log_debug("Updated DSDT length to %x, total %x\n", dsdt->length,
+		  ctx->current - (void *)dsdt);
 
 	if (!IS_ENABLED(CONFIG_ACPI_GNVS_EXTERNAL)) {
 		/* Pack GNVS into the ACPI table area */
@@ -597,11 +620,8 @@ ulong write_acpi_tables(ulong start_addr)
 
 	debug("ACPI:     * SSDT\n");
 	ssdt = (struct acpi_table_header *)ctx->current;
-	acpi_create_ssdt(ctx, ssdt, OEM_TABLE_ID);
-	if (ssdt->length > sizeof(struct acpi_table_header)) {
-		acpi_inc_align(ctx, ssdt->length);
+	if (!acpi_create_ssdt(ctx, ssdt, OEM_TABLE_ID))
 		acpi_add_table(ctx, ssdt);
-	}
 
 	debug("ACPI:    * MCFG\n");
 	mcfg = ctx->current;
@@ -631,12 +651,14 @@ ulong write_acpi_tables(ulong start_addr)
 
 	debug("ACPI:    * TCPA\n");
 	tcpa = (struct acpi_tcpa *)ctx->current;
-	ret = acpi_create_tcpa(tcpa);
-	if (ret) {
-		log_warning("Failed to create TCPA table (err=%d)\n", ret);
-	} else {
-		acpi_inc_align(ctx, tcpa->header.length);
-		acpi_add_table(ctx, tcpa);
+	if (0) {
+		ret = acpi_create_tcpa(tcpa);
+		if (ret) {
+			log_warning("Failed to create TCPA table (err=%d)\n", ret);
+		} else {
+			acpi_inc_align(ctx, tcpa->header.length);
+			acpi_add_table(ctx, tcpa);
+		}
 	}
 
 	debug("ACPI:    * CSRT\n");
@@ -740,6 +762,7 @@ int acpi_write_dbg2_pci_uart(struct acpi_ctx *ctx, struct udevice *dev,
 		log_info("Device not enabled\n");
 		return -EACCES;
 	}
+	log_debug("ACPI:    * DBG2\n");
 	/*
 	 * PCI devices don't remember their resource allocation information in
 	 * U-Boot at present. We assume that MMIO is used for the UART and that

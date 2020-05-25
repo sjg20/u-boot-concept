@@ -13,20 +13,21 @@
  */
 
 #include <common.h>
+#include <bloblist.h>
 #include <command.h>
 #include <env.h>
+#include <init.h>
 #include <irq_func.h>
+#include <log.h>
 #include <malloc.h>
 #include <acpi/acpi_table.h>
+#include <asm/intel_gnvs.h>
 #include <asm/io.h>
 #include <asm/ptrace.h>
 #include <asm/zimage.h>
 #include <asm/byteorder.h>
 #include <asm/bootm.h>
 #include <asm/bootparam.h>
-#ifdef CONFIG_SYS_COREBOOT
-#include <asm/arch/timestamp.h>
-#endif
 #include <linux/compiler.h>
 #include <linux/libfdt.h>
 
@@ -104,8 +105,6 @@ static void build_command_line(char *command_line, int auto_boot)
 
 	if (env_command_line)
 		strcat(command_line, env_command_line);
-
-	printf("Kernel command line: \"%s\"\n", command_line);
 }
 
 static int kernel_magic_ok(struct setup_header *hdr)
@@ -286,14 +285,55 @@ struct boot_params *load_zimage(char *image, unsigned long kernel_size,
 	return setup_base;
 }
 
+static void add_entry(struct e820_entry *entries, int pos, u64 addr, u64 size,
+		      uint type)
+{
+	struct e820_entry *entry = &entries[pos];
+
+	entry->addr = addr;
+	entry->size = size;
+	entry->type = type;
+}
+
+static unsigned int do_install_e820_map(unsigned int max_entries,
+					struct e820_entry *entries)
+{
+	ulong base, size, alloced;
+	int i;
+
+	i = 0;
+	add_entry(entries, i++, 0, 0x1000, E820_RESERVED);
+	add_entry(entries, i++, 0x1000, 0x9f000, E820_RAM);
+	add_entry(entries, i++, 0xa0000, 0x60000, E820_RESERVED);
+	add_entry(entries, i++, 0x100000, 0xff00000, E820_RAM);
+	add_entry(entries, i++, 0x10000000, 0x2151000, E820_RESERVED);
+
+	bloblist_get_stats(&base, &size, &alloced);
+	add_entry(entries, i++, 0x12151000, base - 0x12151000,
+		  E820_RAM);
+	add_entry(entries, i++, base, 0x7b000000 - base, E820_RESERVED);
+	add_entry(entries, i++, 0x7b000000, 0x5000000, E820_RESERVED);
+	add_entry(entries, i++, 0xd0000000, 0x1000000, E820_RESERVED);
+	add_entry(entries, i++, 0xe0000000, 0x10000000, E820_RESERVED);
+
+	add_entry(entries, i++, 0xfe042000, 0x2000, E820_RESERVED);
+	add_entry(entries, i++, 0xfed10000, 0x8000, E820_RESERVED);
+	add_entry(entries, i++, 0x100000000, 0x80000000, E820_RAM);
+
+	return i;
+}
+
 int setup_zimage(struct boot_params *setup_base, char *cmd_line, int auto_boot,
 		 ulong initrd_addr, ulong initrd_size, ulong cmdline_force)
 {
 	struct setup_header *hdr = &setup_base->hdr;
 	int bootproto = get_boot_protocol(hdr, false);
 
-	setup_base->e820_entries = install_e820_map(
+	log_debug("Setup E820 entries\n");
+	setup_base->e820_entries = do_install_e820_map(
 		ARRAY_SIZE(setup_base->e820_map), setup_base->e820_map);
+
+	log_debug("Write Chrome OS stuff\n");
 
 	if (bootproto == 0x0100) {
 		setup_base->screen_info.cl_magic = COMMAND_LINE_MAGIC;
@@ -317,6 +357,7 @@ int setup_zimage(struct boot_params *setup_base, char *cmd_line, int auto_boot,
 	}
 
 	if (cmd_line) {
+		log_debug("Setup cmdline\n");
 		if (bootproto >= 0x0202) {
 			hdr->cmd_line_ptr = (uintptr_t)cmd_line;
 		} else if (bootproto >= 0x0200) {
@@ -332,6 +373,12 @@ int setup_zimage(struct boot_params *setup_base, char *cmd_line, int auto_boot,
 			strcpy(cmd_line, (char *)cmdline_force);
 		else
 			build_command_line(cmd_line, auto_boot);
+// 		strcpy(cmd_line, "console=uart8250 loglevel=7 init=/sbin/init oops=panic panic=-1 root=PARTUUID=35c775e7-3735-d745-93e5-d9e0238f7ed0/PARTNROFF=1 rootwait rw noinitrd vt.global_cursor_default=0 add_efi_memmap boot=local noresume noswap i915.modeset=1 nmi_watchdog=panic,lapic disablevmx=off");
+// 		strcpy(cmd_line, "earlycon=uart8250,mmio32,0xde000000,115200n8  keep_bootcon loglevel=9 init=/sbin/init oops=panic panic=-1 root=PARTUUID=35c775e7-3735-d745-93e5-d9e0238f7ed0/PARTNROFF=1 rootwait rw noinitrd vt.global_cursor_default=0 add_efi_memmap boot=local noresume noswap i915.modeset=1 nmi_watchdog=panic,lapic disablevmx=off");
+		strcpy(cmd_line, "console=ttyS2,115200n8 loglevel=9 init=/sbin/init oops=panic panic=-1 root=PARTUUID=35c775e7-3735-d745-93e5-d9e0238f7ed0/PARTNROFF=1 rootwait rw noinitrd vt.global_cursor_default=0 add_efi_memmap boot=local noresume noswap i915.modes et=1 nmi_watchdog=panic,lapic disablevmx=off");
+		printf("Kernel command line: \"");
+		puts(cmd_line);
+		printf("\"\n");
 	}
 
 	if (IS_ENABLED(CONFIG_INTEL_MID) && bootproto >= 0x0207)
@@ -340,6 +387,7 @@ int setup_zimage(struct boot_params *setup_base, char *cmd_line, int auto_boot,
 	if (IS_ENABLED(CONFIG_GENERATE_ACPI_TABLE))
 		setup_base->acpi_rsdp_addr = acpi_get_rsdp_addr();
 
+	log_debug("Setup devicetree\n");
 	setup_device_tree(hdr, (const void *)env_get_hex("fdtaddr", 0));
 	setup_video(&setup_base->screen_info);
 
