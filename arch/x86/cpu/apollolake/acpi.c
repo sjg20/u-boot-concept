@@ -125,7 +125,7 @@ int acpi_create_gnvs(struct acpi_global_nvs *gnvs)
 
 	/* TODO(sjg@chromium.org): Add the console log to gnvs->cbmc */
 
-#ifdef CONFIG_CHROMEOS
+#ifdef CONFIG_CHROMEOSx
 	/* Initialise Verified Boot data */
 	chromeos_init_acpi(&gnvs->chromeos);
 	gnvs->chromeos.vbt2 = ACTIVE_ECFW_RO;
@@ -146,7 +146,7 @@ int acpi_create_gnvs(struct acpi_global_nvs *gnvs)
 	gnvs->dpte = cfg->dptf_enable;
 
 	/* Assign address of PERST_0 if GPIO is defined in devicetree */
-	if (cfg->prt0_gpio != GPIO_PRT0_UDEF) {
+	if (0 && cfg->prt0_gpio != GPIO_PRT0_UDEF) {
 		ret = intel_pinctrl_get_pad(cfg->prt0_gpio, &pinctrl, &offset);
 		if (ret)
 			return log_msg_ret("prt0", ret);
@@ -157,11 +157,11 @@ int acpi_create_gnvs(struct acpi_global_nvs *gnvs)
 	 * Get sdcard cd GPIO portid if GPIO is defined in devicetree.
 	 * Get offset of sdcard cd pin.
 	 */
-	if (cfg->sdcard_cd_gpio) {
+	if (0 && cfg->sdcard_cd_gpio) {
 		ret = intel_pinctrl_get_pad(cfg->sdcard_cd_gpio, &pinctrl,
 					    &offset);
 		if (ret)
-			return log_msg_ret("prt0", ret);
+			return log_msg_ret("sdcd", ret);
 		gnvs->scdp = p2sb_get_port_id(pinctrl);
 		gnvs->scdo = intel_pinctrl_get_acpi_pin(pinctrl, offset);
 	}

@@ -20,6 +20,9 @@
 #include <dm/acpi.h>
 #include <linux/ioport.h>
 
+/* CPU path format */
+#define ACPI_CPU_STRING "\\_PR.CP%02d"
+
 u8 *acpigen_get_current(struct acpi_ctx *ctx)
 {
 	return ctx->current;
@@ -1596,7 +1599,7 @@ int acpigen_write_rom(struct acpi_ctx *ctx, void *bios, const size_t length)
  * acpigen_get_dw0_in_local5() - Generate code to put dw0 cfg0 in local5
  *
  * @ctx: ACPI context pointer
- * @dw0_name: Name to use (e.g. "\\_SB.GPC0")
+ * @dw0_read: Name to use to read dw0, e.g. "\\_SB.GPC0"
  * @addr: GPIO pin configuration register address
  *
  * Store (\_SB.GPC0 (addr), Local5)
@@ -1604,10 +1607,10 @@ int acpigen_write_rom(struct acpi_ctx *ctx, void *bios, const size_t length)
  * the board's gpiolib.asl
  */
 static void acpigen_get_dw0_in_local5(struct acpi_ctx *ctx,
-				      const char *dw0_name, ulong addr)
+				      const char *dw0_read, ulong addr)
 {
 	acpigen_write_store(ctx);
-	acpigen_emit_namestring(ctx, dw0_name);
+	acpigen_emit_namestring(ctx, dw0_read);
 	acpigen_write_integer(ctx, addr);
 	acpigen_emit_byte(ctx, LOCAL5_OP);
 }
@@ -1616,27 +1619,34 @@ static void acpigen_get_dw0_in_local5(struct acpi_ctx *ctx,
  * acpigen_set_gpio_val() - Set value of TX GPIO to on/off
  *
  * @ctx: ACPI context pointer
- * @dw0_name: Name to use (e.g. "\\_SB.GPC0")
+ * @dw0_read: Name to use to read dw0, e.g. "\\_SB.GPC0"
+ * @dw0_write: Name to use to read dw0, e.g. "\\_SB.SPC0"
  * @gpio_num: GPIO number to adjust
  * @vaL: true to set on, false to set off
  */
 static int acpigen_set_gpio_val(struct acpi_ctx *ctx, u32 tx_state_val,
-				const char *dw0_name, struct acpi_gpio *gpio,
-				bool val)
+				const char *dw0_read, const char *dw0_write,
+				struct acpi_gpio *gpio, bool val)
 {
-	acpigen_get_dw0_in_local5(ctx, dw0_name, gpio->pin0_addr);
+	bool broken = true;  /* Matches master, but is broken */
 
-	/* Store (0x40, Local0) */
-	acpigen_write_store(ctx);
-	acpigen_write_integer(ctx, tx_state_val);
-	acpigen_emit_byte(ctx, LOCAL0_OP);
+	acpigen_get_dw0_in_local5(ctx, dw0_read, gpio->pin0_addr);
+
+	if (!broken) {
+		/* Store (0x40, Local0) */
+		acpigen_write_store(ctx);
+		acpigen_write_integer(ctx, tx_state_val);
+		acpigen_emit_byte(ctx, LOCAL0_OP);
+	}
 
 	if (val) {
 		/* Or (Local5, PAD_CFG0_TX_STATE, Local5) */
-		acpigen_write_or(ctx, LOCAL5_OP, LOCAL0_OP, LOCAL5_OP);
+		acpigen_write_or(ctx, LOCAL5_OP,
+				 broken ? tx_state_val : LOCAL0_OP, LOCAL5_OP);
 	} else {
 		/* Not (PAD_CFG0_TX_STATE, Local6) */
-		acpigen_write_not(ctx, LOCAL0_OP, LOCAL6_OP);
+		acpigen_write_not(ctx, broken ? tx_state_val : LOCAL0_OP,
+				  LOCAL6_OP);
 
 		/* And (Local5, Local6, Local5) */
 		acpigen_write_and(ctx, LOCAL5_OP, LOCAL6_OP, LOCAL5_OP);
@@ -1647,7 +1657,7 @@ static int acpigen_set_gpio_val(struct acpi_ctx *ctx, u32 tx_state_val,
 	 * \_SB.SPC0 is used to write cfg0 value in dw0. It is defined in
 	 * gpiolib.asl.
 	 */
-	acpigen_emit_namestring(ctx, dw0_name);
+	acpigen_emit_namestring(ctx, dw0_write);
 	acpigen_write_integer(ctx, gpio->pin0_addr);
 	acpigen_emit_byte(ctx, LOCAL5_OP);
 
@@ -1662,14 +1672,15 @@ static int acpigen_set_gpio_val(struct acpi_ctx *ctx, u32 tx_state_val,
  * Returns 0 on success and -1 on error.
  */
 int acpigen_set_enable_tx_gpio(struct acpi_ctx *ctx, u32 tx_state_val,
-			       const char *dw0_name, struct acpi_gpio *gpio,
-			       bool enable)
+			       const char *dw0_read, const char *dw0_write,
+			       struct acpi_gpio *gpio, bool enable)
 {
 	bool set;
 	int ret;
 
 	set = gpio->polarity == ACPI_GPIO_ACTIVE_HIGH ? enable : !enable;
-	ret = acpigen_set_gpio_val(ctx, tx_state_val, dw0_name, gpio, set);
+	ret = acpigen_set_gpio_val(ctx, tx_state_val, dw0_read, dw0_write, gpio,
+				   set);
 	if (ret)
 		return log_msg_ret("call", ret);
 

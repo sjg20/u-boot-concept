@@ -353,7 +353,7 @@ enum acpi_dev_status acpi_device_status(const struct udevice *dev);
  *
  * @ctx: ACPI context pointer
  * @req_irq: Interrupt to output
- * @return 0 if OK, -ve on error
+ * @return IRQ pin number if OK, -ve on error
  */
 int acpi_device_write_interrupt_irq(struct acpi_ctx *ctx,
 				    const struct irq *req_irq);
@@ -362,7 +362,7 @@ int acpi_device_write_interrupt_irq(struct acpi_ctx *ctx,
  * acpi_device_write_gpio() - Write GpioIo() or GpioInt() descriptor
  *
  * @gpio: GPIO information to write
- * @return 0 if OK, -ve on error
+ * @return GPIO pin number of first GPIO if OK, -ve on error
  */
 int acpi_device_write_gpio(struct acpi_ctx *ctx, const struct acpi_gpio *gpio);
 
@@ -388,8 +388,8 @@ int acpi_device_write_gpio_desc(struct acpi_ctx *ctx,
  * If an interrupt is found, an ACPI interrupt descriptor is written to the ACPI
  * output. If not, but if a GPIO is found, a GPIO descriptor is written.
  *
- * @return 0 if OK, -ve if neither an interrupt nor a GPIO could be found, or
- * some other error occurred
+ * @return irq or GPIO pin number if OK, -ve if neither an interrupt nor a GPIO
+ *	could be found, or some other error occurred
  */
 int acpi_device_write_interrupt_or_gpio(struct acpi_ctx *ctx,
 					struct udevice *dev, const char *prop);
@@ -413,7 +413,7 @@ void acpi_device_write_dsm_i2c_hid(struct acpi_ctx *ctx,
  *
  * @ctx: ACPI context pointer
  * @dev: I2C device to write
- * @return 0 if OK, -ve on error
+ * @return I2C address of device if OK, -ve on error
  */
 int acpi_device_write_i2c_dev(struct acpi_ctx *ctx, const struct udevice *dev);
 
@@ -444,7 +444,8 @@ int acpi_device_write_spi_dev(struct acpi_ctx *ctx, const struct udevice *dev);
  * @ctx: ACPI context pointer
  * @tx_state_val: Mask to use to toggle the TX state on the GPIO pin, e,g.
  *	PAD_CFG0_TX_STATE
- * @dw0_name: Name to use for access to dw0, e.g. "\\_SB.GPC0"
+ * @dw0_read: Name to use to read dw0, e.g. "\\_SB.GPC0"
+ * @dw0_write: Name to use to read dw0, e.g. "\\_SB.SPC0"
  * @reset_gpio: GPIO used to take device out of reset or to put it into reset
  * @reset_delay_ms: Delay to be inserted after device is taken out of reset
  *	(_ON method delay)
@@ -462,7 +463,7 @@ int acpi_device_write_spi_dev(struct acpi_ctx *ctx, const struct udevice *dev);
  * @return 0 if OK, -ve if at least one GPIO is not provided
  */
 int acpi_device_add_power_res(struct acpi_ctx *ctx, u32 tx_state_val,
-			      const char *dw0_name,
+			      const char *dw0_read, const char *dw0_write,
 			      const struct gpio_desc *reset_gpio,
 			      uint reset_delay_ms, uint reset_off_delay_ms,
 			      const struct gpio_desc *enable_gpio,

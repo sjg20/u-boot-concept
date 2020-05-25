@@ -208,7 +208,7 @@ int acpi_device_write_interrupt_irq(struct acpi_ctx *ctx,
 	if (ret)
 		return log_msg_ret("write", ret);
 
-	return 0;
+	return irq.pin;
 }
 
 /* ACPI 6.3 section 6.4.3.8.1 - GPIO Interrupt or I/O */
@@ -342,7 +342,7 @@ int acpi_device_write_gpio(struct acpi_ctx *ctx, const struct acpi_gpio *gpio)
 	/* Fill in GPIO Descriptor Length (account for len word) */
 	acpi_device_fill_len(ctx, desc_length);
 
-	return 0;
+	return gpio->pins[0];
 }
 
 int acpi_device_write_gpio_desc(struct acpi_ctx *ctx,
@@ -355,23 +355,25 @@ int acpi_device_write_gpio_desc(struct acpi_ctx *ctx,
 	if (ret)
 		return log_msg_ret("desc", ret);
 	ret = acpi_device_write_gpio(ctx, &gpio);
-	if (ret)
+	if (ret < 0)
 		return log_msg_ret("gpio", ret);
 
-	return 0;
+	return ret;
 }
 
 int acpi_device_write_interrupt_or_gpio(struct acpi_ctx *ctx,
 					struct udevice *dev, const char *prop)
 {
 	struct irq req_irq;
+	int pin;
 	int ret;
 
 	ret = irq_get_by_index(dev, 0, &req_irq);
 	if (!ret) {
 		ret = acpi_device_write_interrupt_irq(ctx, &req_irq);
-		if (ret)
+		if (ret < 0)
 			return log_msg_ret("irq", ret);
+		pin = ret;
 	} else {
 		struct gpio_desc req_gpio;
 
@@ -380,16 +382,17 @@ int acpi_device_write_interrupt_or_gpio(struct acpi_ctx *ctx,
 		if (ret)
 			return log_msg_ret("no gpio", ret);
 		ret = acpi_device_write_gpio_desc(ctx, &req_gpio);
-		if (ret)
+		if (ret < 0)
 			return log_msg_ret("gpio", ret);
+		pin = ret;
 	}
 
-	return 0;
+	return pin;
 }
 
 /* PowerResource() with Enable and/or Reset control */
 int acpi_device_add_power_res(struct acpi_ctx *ctx, u32 tx_state_val,
-			      const char *dw0_name,
+			      const char *dw0_read, const char *dw0_write,
 			      const struct gpio_desc *reset_gpio,
 			      uint reset_delay_ms, uint reset_off_delay_ms,
 			      const struct gpio_desc *enable_gpio,
@@ -422,30 +425,30 @@ int acpi_device_add_power_res(struct acpi_ctx *ctx, u32 tx_state_val,
 	/* Method (_ON, 0, Serialized) */
 	acpigen_write_method_serialized(ctx, "_ON", 0);
 	if (reset_gpio) {
-		ret = acpigen_set_enable_tx_gpio(ctx, tx_state_val, dw0_name,
-						 &reset, true);
+		ret = acpigen_set_enable_tx_gpio(ctx, tx_state_val, dw0_read,
+						 dw0_write, &reset, true);
 		if (ret)
 			return log_msg_ret("reset1", ret);
 	}
 	if (has_enable) {
-		ret = acpigen_set_enable_tx_gpio(ctx, tx_state_val, dw0_name,
-						 &enable, true);
+		ret = acpigen_set_enable_tx_gpio(ctx, tx_state_val, dw0_read,
+						 dw0_write, &enable, true);
 		if (ret)
 			return log_msg_ret("enable1", ret);
 		if (enable_delay_ms)
 			acpigen_write_sleep(ctx, enable_delay_ms);
 	}
 	if (has_reset) {
-		ret = acpigen_set_enable_tx_gpio(ctx, tx_state_val, dw0_name,
-						 &reset, false);
+		ret = acpigen_set_enable_tx_gpio(ctx, tx_state_val, dw0_read,
+						 dw0_write, &reset, false);
 		if (ret)
 			return log_msg_ret("reset2", ret);
 		if (reset_delay_ms)
 			acpigen_write_sleep(ctx, reset_delay_ms);
 	}
 	if (has_stop) {
-		ret = acpigen_set_enable_tx_gpio(ctx, tx_state_val, dw0_name,
-						 &stop, false);
+		ret = acpigen_set_enable_tx_gpio(ctx, tx_state_val, dw0_read,
+						 dw0_write, &stop, false);
 		if (ret)
 			return log_msg_ret("stop1", ret);
 		if (stop_delay_ms)
@@ -456,24 +459,24 @@ int acpi_device_add_power_res(struct acpi_ctx *ctx, u32 tx_state_val,
 	/* Method (_OFF, 0, Serialized) */
 	acpigen_write_method_serialized(ctx, "_OFF", 0);
 	if (has_stop) {
-		ret = acpigen_set_enable_tx_gpio(ctx, tx_state_val, dw0_name,
-						 &stop, true);
+		ret = acpigen_set_enable_tx_gpio(ctx, tx_state_val, dw0_read,
+						 dw0_write, &stop, true);
 		if (ret)
 			return log_msg_ret("stop2", ret);
 		if (stop_off_delay_ms)
 			acpigen_write_sleep(ctx, stop_off_delay_ms);
 	}
 	if (has_reset) {
-		ret = acpigen_set_enable_tx_gpio(ctx, tx_state_val, dw0_name,
-						 &reset, true);
+		ret = acpigen_set_enable_tx_gpio(ctx, tx_state_val, dw0_read,
+						 dw0_write, &reset, true);
 		if (ret)
 			return log_msg_ret("reset3", ret);
 		if (reset_off_delay_ms)
 			acpigen_write_sleep(ctx, reset_off_delay_ms);
 	}
 	if (has_enable) {
-		ret = acpigen_set_enable_tx_gpio(ctx, tx_state_val, dw0_name,
-						 &enable, false);
+		ret = acpigen_set_enable_tx_gpio(ctx, tx_state_val, dw0_read,
+						 dw0_write, &enable, false);
 		if (ret)
 			return log_msg_ret("enable2", ret);
 		if (enable_off_delay_ms)
@@ -596,7 +599,7 @@ static void acpi_device_write_i2c(struct acpi_ctx *ctx,
  * @dev: I2C device to convert
  * @i2c: Place to put the new structure
  * @scope: Scope of the I2C device (this is the controller path)
- * @return 0 (always)
+ * @return chip address of device
  */
 static int acpi_device_set_i2c(const struct udevice *dev, struct acpi_i2c *i2c,
 			       const char *scope)
@@ -616,7 +619,7 @@ static int acpi_device_set_i2c(const struct udevice *dev, struct acpi_i2c *i2c,
 					  I2C_SPEED_STANDARD_RATE);
 	i2c->resource = scope;
 
-	return 0;
+	return i2c->address;
 }
 
 int acpi_device_write_i2c_dev(struct acpi_ctx *ctx, const struct udevice *dev)
@@ -629,11 +632,11 @@ int acpi_device_write_i2c_dev(struct acpi_ctx *ctx, const struct udevice *dev)
 	if (ret)
 		return log_msg_ret("scope", ret);
 	ret = acpi_device_set_i2c(dev, &i2c, scope);
-	if (ret)
+	if (ret < 0)
 		return log_msg_ret("set", ret);
 	acpi_device_write_i2c(ctx, &i2c);
 
-	return 0;
+	return ret;
 }
 
 #ifdef CONFIG_SPI

@@ -616,11 +616,11 @@ static int cr50_acpi_fill_ssdt(const struct udevice *dev, struct acpi_ctx *ctx)
 	acpigen_write_name(ctx, "_CRS");
 	acpigen_write_resourcetemplate_header(ctx);
 	ret = acpi_device_write_i2c_dev(ctx, dev);
-	if (ret)
+	if (ret < 0)
 		return log_msg_ret("i2c", ret);
 	ret = acpi_device_write_interrupt_or_gpio(ctx, (struct udevice *)dev,
 						  "ready-gpios");
-	if (ret)
+	if (ret < 0)
 		return log_msg_ret("irq_gpio", ret);
 
 	acpigen_write_resourcetemplate_footer(ctx);

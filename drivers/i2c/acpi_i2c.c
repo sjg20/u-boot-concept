@@ -93,7 +93,7 @@ int acpi_i2c_fill_ssdt(const struct udevice *dev, struct acpi_ctx *ctx)
 						     &curindex);
 	} else {
 		ret = acpi_device_write_interrupt_irq(ctx, &priv->irq);
-		if (ret)
+		if (ret < 0)
 			return log_msg_ret("irq", ret);
 	}
 
@@ -152,11 +152,12 @@ int acpi_i2c_fill_ssdt(const struct udevice *dev, struct acpi_ctx *ctx)
 	/* Power Resource */
 	if (priv->has_power_resource) {
 		ret = acpi_device_add_power_res(
-			ctx, tx_state_val, "\\_SB.GPC0", &priv->reset_gpio,
-			priv->reset_delay_ms, priv->reset_off_delay_ms,
-			&priv->enable_gpio, priv->enable_delay_ms,
-			priv->enable_off_delay_ms, &priv->stop_gpio,
-			priv->stop_delay_ms,  priv->stop_off_delay_ms);
+			ctx, tx_state_val, "\\_SB.GPC0", "\\_SB.SPC0",
+			&priv->reset_gpio, priv->reset_delay_ms,
+			priv->reset_off_delay_ms, &priv->enable_gpio,
+			priv->enable_delay_ms, priv->enable_off_delay_ms,
+			&priv->stop_gpio, priv->stop_delay_ms,
+			priv->stop_off_delay_ms);
 		if (ret)
 			return log_msg_ret("power", ret);
 	}
@@ -196,15 +197,13 @@ int acpi_i2c_ofdata_to_platdata(struct udevice *dev)
 	priv->compat_string = dev_read_string(dev, "acpi,compatible");
 	priv->has_power_resource = dev_read_bool(dev,
 						 "acpi,has-power-resource");
-	dev_read_u32(dev, "hid-descr-addr",
-		     &priv->hid_desc_reg_offset);
+	dev_read_u32(dev, "hid-descr-addr", &priv->hid_desc_reg_offset);
 	dev_read_u32(dev, "reset-delay-ms", &priv->reset_delay_ms);
 	dev_read_u32(dev, "reset-off-delay-ms", &priv->reset_off_delay_ms);
 	dev_read_u32(dev, "enable-delay-ms", &priv->enable_delay_ms);
 	dev_read_u32(dev, "enable-off-delay-ms", &priv->enable_off_delay_ms);
 	dev_read_u32(dev, "stop-delay-ms", &priv->stop_delay_ms);
 	dev_read_u32(dev, "stop-off-delay-ms", &priv->stop_off_delay_ms);
-	dev_read_u32(dev, "stop-off-delay-ms", &priv->hid_desc_reg_offset);
 
 	return 0;
 }
