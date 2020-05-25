@@ -6,6 +6,8 @@
  * Parts taken from coreboot
  */
 
+#define LOG_DEBUG
+
 #include <common.h>
 #include <dm.h>
 #include <i2c.h>
@@ -30,6 +32,7 @@ static int da7219_acpi_fill_ssdt(const struct udevice *dev,
 	char name[ACPI_NAME_MAX];
 	struct acpi_dp *dsd, *aad;
 	ofnode node;
+	int addr, pin;
 	u32 val;
 	int ret;
 
@@ -54,14 +57,16 @@ static int da7219_acpi_fill_ssdt(const struct udevice *dev,
 	acpigen_write_name(ctx, "_CRS");
 	acpigen_write_resourcetemplate_header(ctx);
 	ret = acpi_device_write_i2c_dev(ctx, dev);
-	if (ret)
+	if (ret < 0)
 		return log_msg_ret("i2c", ret);
+	addr = ret;
 
 	/* Use either Interrupt() or GpioInt() */
 	ret = acpi_device_write_interrupt_or_gpio(ctx, (struct udevice *)dev,
 						  "req-gpios");
-	if (ret)
+	if (ret < 0)
 		return log_msg_ret("irq_gpio", ret);
+	pin = ret;
 	acpigen_write_resourcetemplate_footer(ctx);
 
 	/* AAD Child Device Properties */
@@ -102,6 +107,9 @@ static int da7219_acpi_fill_ssdt(const struct udevice *dev,
 
 	acpigen_pop_len(ctx); /* Device */
 	acpigen_pop_len(ctx); /* Scope */
+
+	acpi_device_path(dev, scope, sizeof(scope));
+	log_debug("%s: %s address %x irq %d\n", scope, dev->name, addr, pin);
 
 	return 0;
 }

@@ -1608,6 +1608,10 @@ int acpigen_write_rom(struct acpi_ctx *ctx, void *bios, const size_t length)
 /**
  * acpigen_get_dw0_in_local5() - Generate code to put dw0 cfg0 in local5
  *
+ * @ctx: ACPI context pointer
+ * @dw0_read: Name to use to read dw0, e.g. "\\_SB.GPC0"
+ * @addr: GPIO pin configuration register address
+ *
  * Store (\_SB.GPC0 (addr), Local5)
  *
  * \_SB.GPC0 is used to read cfg0 value from dw0. It is typically defined in
@@ -1643,6 +1647,8 @@ static int acpigen_set_gpio_val(struct acpi_ctx *ctx, u32 tx_state_val,
 				const char *dw0_read, const char *dw0_write,
 				struct acpi_gpio *gpio, bool val)
 {
+	bool broken = true;  /* Matches master, but is broken */
+
 	acpigen_get_dw0_in_local5(ctx, dw0_read, gpio->pin0_addr);
 
 	/* Store (0x40, Local0) */
@@ -1650,17 +1656,23 @@ static int acpigen_set_gpio_val(struct acpi_ctx *ctx, u32 tx_state_val,
 	acpigen_write_integer(ctx, tx_state_val);
 	acpigen_emit_byte(ctx, LOCAL0_OP);
 
-	/* Store (0x40, Local0) */
-	acpigen_write_store(ctx);
-	acpigen_write_integer(ctx, tx_state_val);
-	acpigen_emit_byte(ctx, LOCAL0_OP);
+	acpigen_get_dw0_in_local5(ctx, dw0_read, gpio->pin0_addr);
+
+	if (!broken) {
+		/* Store (0x40, Local0) */
+		acpigen_write_store(ctx);
+		acpigen_write_integer(ctx, tx_state_val);
+		acpigen_emit_byte(ctx, LOCAL0_OP);
+	}
 
 	if (val) {
 		/* Or (Local5, PAD_CFG0_TX_STATE, Local5) */
-		acpigen_write_or(ctx, LOCAL5_OP, LOCAL0_OP, LOCAL5_OP);
+		acpigen_write_or(ctx, LOCAL5_OP,
+				 broken ? tx_state_val : LOCAL0_OP, LOCAL5_OP);
 	} else {
 		/* Not (PAD_CFG0_TX_STATE, Local6) */
-		acpigen_write_not(ctx, LOCAL0_OP, LOCAL6_OP);
+		acpigen_write_not(ctx, broken ? tx_state_val : LOCAL0_OP,
+				  LOCAL6_OP);
 
 		/* And (Local5, Local6, Local5) */
 		acpigen_write_and(ctx, LOCAL5_OP, LOCAL6_OP, LOCAL5_OP);
