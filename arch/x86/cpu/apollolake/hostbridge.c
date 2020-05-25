@@ -319,7 +319,6 @@ static int apl_acpi_hb_write_tables(const struct udevice *dev,
 
 	acpi_align(ctx);
 	acpi_add_table(ctx, dmar);
-	acpi_align(ctx);
 
 	return 0;
 }

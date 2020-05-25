@@ -46,6 +46,7 @@ enum acpi_dump_option {
  *	adding a new table. The RSDP holds pointers to the RSDT and XSDT.
  * @rsdt: Pointer to the Root System Description Table
  * @xsdt: Pointer to the Extended System Description Table
+ * @fadt: Pointer to the ...
  * @nhlt: Intel Non-High-Definition-Audio Link Table (NHLT) pointer, used to
  *	build up information that audio codecs need to provide in the NHLT ACPI
  *	table
@@ -58,6 +59,7 @@ struct acpi_ctx {
 	struct acpi_rsdp *rsdp;
 	struct acpi_rsdt *rsdt;
 	struct acpi_xsdt *xsdt;
+	struct acpi_fadt *fadt;
 	struct nhlt *nhlt;
 	char *len_stack[ACPIGEN_LENSTACK_SIZE];
 	int ltop;
@@ -225,6 +227,15 @@ void acpi_dump_items(enum acpi_dump_option option);
  * @return 0 if OK, -ve on error
  */
 int acpi_get_path(const struct udevice *dev, char *out_path, int maxlen);
+
+/**
+ * acpi_reset_items() - Reset the list of ACPI items to empty
+ *
+ * This list keeps track of DSDT and SSDT items that are generated
+ * programmatically. The 'acpi items' command shows the list. Use this function
+ * to empty the list, before writing new items.
+ */
+void acpi_reset_items(void);
 
 #endif /* __ACPI__ */
 

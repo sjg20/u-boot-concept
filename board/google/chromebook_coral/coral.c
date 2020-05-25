@@ -110,7 +110,7 @@ static int coral_write_acpi_tables(const struct udevice *dev,
 	struct nhlt *nhlt;
 	const char *oem_id = "coral";
 	const char *oem_table_id = "coral";
-	u32 oem_revision = 2;
+	u32 oem_revision = 3;
 	int ret;
 
 	gnvs = bloblist_find(BLOBLISTT_ACPI_GNVS, sizeof(*gnvs));
@@ -121,6 +121,7 @@ static int coral_write_acpi_tables(const struct udevice *dev,
 	if (!nhlt)
 		return -ENOMEM;
 
+	log_debug("Setting up NHLT\n");
 	ret = acpi_setup_nhlt(ctx, nhlt);
 	if (ret)
 		return log_msg_ret("setup", ret);
