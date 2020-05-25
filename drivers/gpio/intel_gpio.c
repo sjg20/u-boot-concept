@@ -149,6 +149,8 @@ static int intel_gpio_get_acpi(const struct gpio_desc *desc,
 	gpio->polarity = ACPI_GPIO_ACTIVE_HIGH;
 	gpio->pin_count = 1;
 	gpio->pins[0] = intel_pinctrl_get_acpi_pin(pinctrl, desc->offset);
+	gpio->pin0_addr = intel_pinctrl_get_config_reg_addr(pinctrl,
+							    desc->offset);
 	ret = acpi_get_path(pinctrl, gpio->resource, sizeof(gpio->resource));
 	if (ret)
 		return log_msg_ret("resource", ret);

@@ -444,7 +444,8 @@ int acpi_device_write_spi_dev(struct acpi_ctx *ctx, const struct udevice *dev);
  * @ctx: ACPI context pointer
  * @tx_state_val: Mask to use to toggle the TX state on the GPIO pin, e,g.
  *	PAD_CFG0_TX_STATE
- * @dw0_name: Name to use for access to dw0, e.g. "\\_SB.GPC0"
+ * @dw0_read: Name to use to read dw0, e.g. "\\_SB.GPC0"
+ * @dw0_write: Name to use to read dw0, e.g. "\\_SB.SPC0"
  * @reset_gpio: GPIO used to take device out of reset or to put it into reset
  * @reset_delay_ms: Delay to be inserted after device is taken out of reset
  *	(_ON method delay)
@@ -462,7 +463,7 @@ int acpi_device_write_spi_dev(struct acpi_ctx *ctx, const struct udevice *dev);
  * @return 0 if OK, -ve if at least one GPIO is not provided
  */
 int acpi_device_add_power_res(struct acpi_ctx *ctx, u32 tx_state_val,
-			      const char *dw0_name,
+			      const char *dw0_read, const char *dw0_write,
 			      const struct gpio_desc *reset_gpio,
 			      uint reset_delay_ms, uint reset_off_delay_ms,
 			      const struct gpio_desc *enable_gpio,
