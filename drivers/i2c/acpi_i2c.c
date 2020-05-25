@@ -152,11 +152,12 @@ int acpi_i2c_fill_ssdt(const struct udevice *dev, struct acpi_ctx *ctx)
 	/* Power Resource */
 	if (priv->has_power_resource) {
 		ret = acpi_device_add_power_res(
-			ctx, tx_state_val, "\\_SB.GPC0", &priv->reset_gpio,
-			priv->reset_delay_ms, priv->reset_off_delay_ms,
-			&priv->enable_gpio, priv->enable_delay_ms,
-			priv->enable_off_delay_ms, &priv->stop_gpio,
-			priv->stop_delay_ms,  priv->stop_off_delay_ms);
+			ctx, tx_state_val, "\\_SB.GPC0", "\\_SB.SPC0",
+			&priv->reset_gpio, priv->reset_delay_ms,
+			priv->reset_off_delay_ms, &priv->enable_gpio,
+			priv->enable_delay_ms, priv->enable_off_delay_ms,
+			&priv->stop_gpio, priv->stop_delay_ms,
+			priv->stop_off_delay_ms);
 		if (ret)
 			return log_msg_ret("power", ret);
 	}

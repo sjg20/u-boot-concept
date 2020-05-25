@@ -389,7 +389,7 @@ int acpi_device_write_interrupt_or_gpio(struct acpi_ctx *ctx,
 
 /* PowerResource() with Enable and/or Reset control */
 int acpi_device_add_power_res(struct acpi_ctx *ctx, u32 tx_state_val,
-			      const char *dw0_name,
+			      const char *dw0_read, const char *dw0_write,
 			      const struct gpio_desc *reset_gpio,
 			      uint reset_delay_ms, uint reset_off_delay_ms,
 			      const struct gpio_desc *enable_gpio,
@@ -422,30 +422,30 @@ int acpi_device_add_power_res(struct acpi_ctx *ctx, u32 tx_state_val,
 	/* Method (_ON, 0, Serialized) */
 	acpigen_write_method_serialized(ctx, "_ON", 0);
 	if (reset_gpio) {
-		ret = acpigen_set_enable_tx_gpio(ctx, tx_state_val, dw0_name,
-						 &reset, true);
+		ret = acpigen_set_enable_tx_gpio(ctx, tx_state_val, dw0_read,
+						 dw0_write, &reset, true);
 		if (ret)
 			return log_msg_ret("reset1", ret);
 	}
 	if (has_enable) {
-		ret = acpigen_set_enable_tx_gpio(ctx, tx_state_val, dw0_name,
-						 &enable, true);
+		ret = acpigen_set_enable_tx_gpio(ctx, tx_state_val, dw0_read,
+						 dw0_write, &enable, true);
 		if (ret)
 			return log_msg_ret("enable1", ret);
 		if (enable_delay_ms)
 			acpigen_write_sleep(ctx, enable_delay_ms);
 	}
 	if (has_reset) {
-		ret = acpigen_set_enable_tx_gpio(ctx, tx_state_val, dw0_name,
-						 &reset, false);
+		ret = acpigen_set_enable_tx_gpio(ctx, tx_state_val, dw0_read,
+						 dw0_write, &reset, false);
 		if (ret)
 			return log_msg_ret("reset2", ret);
 		if (reset_delay_ms)
 			acpigen_write_sleep(ctx, reset_delay_ms);
 	}
 	if (has_stop) {
-		ret = acpigen_set_enable_tx_gpio(ctx, tx_state_val, dw0_name,
-						 &stop, false);
+		ret = acpigen_set_enable_tx_gpio(ctx, tx_state_val, dw0_read,
+						 dw0_write, &stop, false);
 		if (ret)
 			return log_msg_ret("stop1", ret);
 		if (stop_delay_ms)
@@ -456,24 +456,24 @@ int acpi_device_add_power_res(struct acpi_ctx *ctx, u32 tx_state_val,
 	/* Method (_OFF, 0, Serialized) */
 	acpigen_write_method_serialized(ctx, "_OFF", 0);
 	if (has_stop) {
-		ret = acpigen_set_enable_tx_gpio(ctx, tx_state_val, dw0_name,
-						 &stop, true);
+		ret = acpigen_set_enable_tx_gpio(ctx, tx_state_val, dw0_read,
+						 dw0_write, &stop, true);
 		if (ret)
 			return log_msg_ret("stop2", ret);
 		if (stop_off_delay_ms)
 			acpigen_write_sleep(ctx, stop_off_delay_ms);
 	}
 	if (has_reset) {
-		ret = acpigen_set_enable_tx_gpio(ctx, tx_state_val, dw0_name,
-						 &reset, true);
+		ret = acpigen_set_enable_tx_gpio(ctx, tx_state_val, dw0_read,
+						 dw0_write, &reset, true);
 		if (ret)
 			return log_msg_ret("reset3", ret);
 		if (reset_off_delay_ms)
 			acpigen_write_sleep(ctx, reset_off_delay_ms);
 	}
 	if (has_enable) {
-		ret = acpigen_set_enable_tx_gpio(ctx, tx_state_val, dw0_name,
-						 &enable, false);
+		ret = acpigen_set_enable_tx_gpio(ctx, tx_state_val, dw0_read,
+						 dw0_write, &enable, false);
 		if (ret)
 			return log_msg_ret("enable2", ret);
 		if (enable_off_delay_ms)

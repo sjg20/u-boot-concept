@@ -162,7 +162,7 @@ static void acpi_create_madt(struct acpi_madt *madt)
 	/* Fill out header fields */
 	acpi_fill_header(header, "APIC");
 	header->length = sizeof(struct acpi_madt);
-	header->revision = 4;
+	header->revision = 2;
 
 	madt->lapic_addr = LAPIC_DEFAULT_BASE;
 	madt->flags = ACPI_MADT_PCAT_COMPAT;
@@ -633,12 +633,14 @@ ulong write_acpi_tables(ulong start_addr)
 
 	debug("ACPI:    * TCPA\n");
 	tcpa = (struct acpi_tcpa *)ctx->current;
-	ret = acpi_create_tcpa(tcpa);
-	if (ret) {
-		log_warning("Failed to create TCPA table (err=%d)\n", ret);
-	} else {
-		acpi_inc_align(ctx, tcpa->header.length);
-		acpi_add_table(ctx, tcpa);
+	if (0) {
+		ret = acpi_create_tcpa(tcpa);
+		if (ret) {
+			log_warning("Failed to create TCPA table (err=%d)\n", ret);
+		} else {
+			acpi_inc_align(ctx, tcpa->header.length);
+			acpi_add_table(ctx, tcpa);
+		}
 	}
 
 	debug("ACPI:    * CSRT\n");

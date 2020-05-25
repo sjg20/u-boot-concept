@@ -736,8 +736,8 @@ int acpigen_soc_clear_tx_gpio(struct acpi_ctx *ctx, uint gpio_num);
  * Returns 0 on success and -1 on error.
  */
 int acpigen_set_enable_tx_gpio(struct acpi_ctx *ctx, u32 tx_state_val,
-			       const char *dw0_name, struct acpi_gpio *gpio,
-			       bool enable);
+			       const char *dw0_read, const char *dw0_write,
+			       struct acpi_gpio *gpio, bool enable);
 
 void acpigen_write_len_f(struct acpi_ctx *ctx);
 void acpigen_pop_len(struct acpi_ctx *ctx);
