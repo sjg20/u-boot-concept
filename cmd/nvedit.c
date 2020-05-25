@@ -266,7 +266,7 @@ static int _do_env_set(int flag, int argc, char *const argv[], int env_flag)
 	/* Delete only ? */
 	if (argc < 3 || argv[2] == NULL) {
 		int rc = hdelete_r(name, &env_htab, env_flag);
-		return !rc;
+		return rc;
 	}
 
 	/*
@@ -895,7 +895,7 @@ static int do_env_delete(struct cmd_tbl *cmdtp, int flag,
 	while (--argc > 0) {
 		char *name = *++argv;
 
-		if (!hdelete_r(name, &env_htab, env_flag))
+		if (hdelete_r(name, &env_htab, env_flag))
 			ret = 1;
 	}
 

@@ -16,6 +16,7 @@
 	"setexpr size *00100518; setexpr blocks $size / 200; " \
 	"read mmc 2:2 100000 80 $blocks; setexpr setup $loader - 1000; " \
 	"setexpr cmdline $loader - 2000; " \
+	"part uuid mmc 2:2 uuid; setenv bootargs_U $uuid; " \
 	"zboot start 100000 0 0 0 $setup $cmdline; " \
 	"zboot load; zboot setup; zboot dump; zboot go"
 
