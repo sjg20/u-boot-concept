@@ -8,6 +8,7 @@
 #ifndef _ASM_CACHE_H
 #define _ASM_CACHE_H
 
+#include <asm/config.h>
 #include <asm/system.h>
 
 #ifndef CONFIG_ARM64
