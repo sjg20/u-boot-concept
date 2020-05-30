@@ -337,6 +337,10 @@ int irq_router_probe(struct udevice *dev)
 {
 	int ret;
 
+	if (!ll_boot_init()) {
+		printf("Leaving previous bootloader pirq table intact\n");
+		return 0;
+	}
 	ret = create_pirq_routing_table(dev);
 	if (ret) {
 		debug("Failed to create pirq routing table\n");

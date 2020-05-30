@@ -10,6 +10,12 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#define xCONFIG_BOOTCOMMAND2	\
+	"fatload mmc 1:c 1000000 syslinux/vmlinuz.A; zboot 1000000"
+
+#define CONFIG_BOOTCOMMAND	\
+	"usb start; ext2load usb 0:1 111000 vmlinuz; zboot 111000"
+
 #include <configs/x86-common.h>
 
 #define CONFIG_SYS_MONITOR_LEN		(1 << 20)
