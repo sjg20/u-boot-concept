@@ -36,7 +36,8 @@
 #include <init.h>
 #include <display_options.h>
 #include <vsprintf.h>
-#include <net.h>
+//
+//#include <net.h>
 #include <bootstage.h>
 #endif	/* __ASSEMBLY__ */
 

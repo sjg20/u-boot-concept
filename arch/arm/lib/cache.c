@@ -7,8 +7,10 @@
 /* for now: just dummy functions to satisfy the linker */
 
 #include <common.h>
+#include <net.h>
 #include <cpu_func.h>
 #include <malloc.h>
+#include <asm/cache.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

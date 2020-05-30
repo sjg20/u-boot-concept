@@ -11,6 +11,7 @@
  */
 
 #include <common.h>
+#include <net.h>
 #include <console.h>
 #include <bootretry.h>
 #include <cli.h>
@@ -19,6 +20,7 @@
 #include <flash.h>
 #include <hash.h>
 #include <mapmem.h>
+#include <rand.h>
 #include <watchdog.h>
 #include <asm/io.h>
 #include <linux/compiler.h>
