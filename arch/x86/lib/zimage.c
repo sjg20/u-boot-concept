@@ -331,52 +331,52 @@ int do_zboot(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	int ret;
 
 	if (0) {
-	disable_interrupts();
+		disable_interrupts();
 
-	/* Setup board for maximum PC/AT Compatibility */
-	setup_pcat_compatibility();
+		/* Setup board for maximum PC/AT Compatibility */
+		setup_pcat_compatibility();
 
-	if (argc >= 2) {
-		/* argv[1] holds the address of the bzImage */
-		s = argv[1];
-	} else {
-		s = env_get("fileaddr");
-	}
+		if (argc >= 2) {
+			/* argv[1] holds the address of the bzImage */
+			s = argv[1];
+		} else {
+			s = env_get("fileaddr");
+		}
 
-	if (s)
-		bzImage_addr = (void *)simple_strtoul(s, NULL, 16);
+		if (s)
+			bzImage_addr = (void *)simple_strtoul(s, NULL, 16);
 
-	if (argc >= 3) {
-		/* argv[2] holds the size of the bzImage */
-		bzImage_size = simple_strtoul(argv[2], NULL, 16);
-	}
+		if (argc >= 3) {
+			/* argv[2] holds the size of the bzImage */
+			bzImage_size = simple_strtoul(argv[2], NULL, 16);
+		}
 
-	if (argc >= 4)
-		initrd_addr = simple_strtoul(argv[3], NULL, 16);
-	if (argc >= 5)
-		initrd_size = simple_strtoul(argv[4], NULL, 16);
+		if (argc >= 4)
+			initrd_addr = simple_strtoul(argv[3], NULL, 16);
+		if (argc >= 5)
+			initrd_size = simple_strtoul(argv[4], NULL, 16);
 
-	/* Lets look for */
-	base_ptr = load_zimage(bzImage_addr, bzImage_size, &load_address);
+		/* Lets look for */
+		base_ptr = load_zimage(bzImage_addr, bzImage_size, &load_address);
 
-	if (!base_ptr) {
-		puts("## Kernel loading failed ...\n");
-		return -1;
-	}
-	ret = setup_zimage(base_ptr, (char *)base_ptr + COMMAND_LINE_OFFSET,
-			   0, initrd_addr, initrd_size);
-	if (ret == -EACCES) {
-		base_ptr = (void *)0x1000;
-		printf("Forcing base_ptr to 1000\n");
-	} else if (ret < 0) {
-		puts("Setting up boot parameters failed ...\n");
-		return -1;
-	}
+		if (!base_ptr) {
+			puts("## Kernel loading failed ...\n");
+			return -1;
+		}
+		ret = setup_zimage(base_ptr, (char *)base_ptr + COMMAND_LINE_OFFSET,
+				   0, initrd_addr, initrd_size);
+		if (ret == -EACCES) {
+			base_ptr = (void *)0x1000;
+			printf("Forcing base_ptr to 1000\n");
+		} else if (ret < 0) {
+			puts("Setting up boot parameters failed ...\n");
+			return -1;
+		}
 	}
 	base_ptr = (void *)0x1000;
 	load_address = 0x100000;
-	printf("Booting kernel, base_ptr=%p, ll_boot_init()=%d\n", base_ptr,
-	       ll_boot_init());
+	printf("Booting kernel at %lx, base_ptr=%p, ll_boot_init()=%d\n",
+	       load_address, base_ptr, ll_boot_init());
 
 	/* we assume that the kernel is in place */
 	return boot_linux_kernel((ulong)base_ptr, load_address, false);
