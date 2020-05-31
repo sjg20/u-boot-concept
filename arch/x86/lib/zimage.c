@@ -90,7 +90,7 @@ static void build_command_line(char *command_line, int auto_boot)
 
 	if (env_command_line)
 		strcat(command_line, env_command_line);
-
+	strcpy(command_line, "cros_secure console= loglevel=7 init=/sbin/init cros_secure oops=panic panic=-1 root=PARTUUID=35c775e7-3735-d745-93e5-d9e0238f7ed0/PARTNROFF=1 rootwait rw dm_verity.error_behavior=3 dm_verity.max_bios=-1 dm_verity.dev_wait=0 dm=\"1 vroot none rw 1,0 3788800 verity payload=ROOT_DEV hashtree=HASH_DEV hashstart=3788800 alg=sha1 root_hexdigest=55052b629d3ac889f25a9583ea12cdcd3ea15ff8 salt=a2d4d9e574069f4fed5e3961b99054b7a4905414b60a25d89974a7334021165c\" noinitrd vt.global_cursor_default=0 kern_guid=35c775e7-3735-d745-93e5-d9e0238f7ed0 add_efi_memmap boot=local noresume noswap i915.modeset=1 tpm_tis.force=1 tpm_tis.interrupts=0 nmi_watchdog=panic,lapic disablevmx=off");
 	printf("Kernel command line: \"%s\"\n", command_line);
 }
 
@@ -219,7 +219,7 @@ struct boot_params *load_zimage(char *image, unsigned long kernel_size,
 		*load_addressp = BZIMAGE_LOAD_ADDR;
 	else
 		*load_addressp = ZIMAGE_LOAD_ADDR;
-	*load_addressp = 0x01800000;
+// 	*load_addressp = 0x01800000;
 
 	printf("Building boot_params at 0x%8.8lx\n", (ulong)setup_base);
 	memset(setup_base, 0, sizeof(*setup_base));
@@ -416,11 +416,15 @@ int do_zboot_info(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 
 int do_zboot_go(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {
+	struct boot_params *base_ptr = state.base_ptr;
+// 	struct setup_header *hdr = &base_ptr->hdr;
 	int ret;
 
 	printf("forcing base\n");
-	state.base_ptr = (void *)0x1000;
-	state.load_address = 0x100000;
+// 	state.base_ptr = (void *)0x1000;
+// 	state.load_address = 0x100000;
+// 	printf("forcing cmdline\n");
+// 	hdr->cmd_line_ptr = 0x2000;
 
 	disable_interrupts();
 
