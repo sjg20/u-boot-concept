@@ -467,11 +467,12 @@ int x86_cpu_init_f(void)
 	if (ll_boot_init())
 		setup_cpu_features();
 	setup_identity();
-	setup_mtrr();
+	if (ll_boot_init())
+		setup_mtrr();
 	setup_pci_ram_top();
 
 	/* Set up the i8254 timer if required */
-	if (IS_ENABLED(CONFIG_I8254_TIMER))
+	if (ll_boot_init() && IS_ENABLED(CONFIG_I8254_TIMER))
 		i8254_init();
 
 	return 0;
@@ -479,10 +480,15 @@ int x86_cpu_init_f(void)
 
 int x86_cpu_reinit_f(void)
 {
+	long addr;
+
 	setup_identity();
 	setup_pci_ram_top();
-	if (locate_coreboot_table() >= 0)
+	addr = locate_coreboot_table();
+	if (addr >= 0) {
+		gd->arch.coreboot_table = addr;
 		gd->flags |= GD_FLG_SKIP_LL_INIT;
+	}
 
 	return 0;
 }

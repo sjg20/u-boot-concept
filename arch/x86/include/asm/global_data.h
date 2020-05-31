@@ -123,6 +123,7 @@ struct arch_global_data {
 	const void *soc_config;		/* SOC-specific configuration */
 #endif
 	ulong acpi_start;		/* Start address of ACPI tables */
+	ulong coreboot_table;		/* Address of coreboot table */
 };
 
 #endif

@@ -405,6 +405,8 @@ int do_bdinfo(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 #endif
 	print_baudrate();
 	print_cpu_word_size();
+	printf("gd->flags %lx\n", gd->flags);
+	printf("Coreboot table %lx\n", gd->arch.coreboot_table);
 
 	return 0;
 }

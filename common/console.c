@@ -758,7 +758,6 @@ int console_assign(int file, const char *devname)
 	}
 
 	/* Check for valid device name */
-
 	dev = search_device(flag, devname);
 
 	if (dev)

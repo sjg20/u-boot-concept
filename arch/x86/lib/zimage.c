@@ -15,6 +15,7 @@
 #include <common.h>
 #include <command.h>
 #include <env.h>
+#include <init.h>
 #include <irq_func.h>
 #include <malloc.h>
 #include <acpi/acpi_table.h>
@@ -245,6 +246,13 @@ int setup_zimage(struct boot_params *setup_base, char *cmd_line, int auto_boot,
 	struct setup_header *hdr = &setup_base->hdr;
 	int bootproto = get_boot_protocol(hdr);
 
+	if (!ll_boot_init()) {
+		printf("Leaving previous bootloader zimage intact\n");
+		return -EACCES;
+		build_command_line(cmd_line, auto_boot);
+		hdr->cmd_line_ptr = (uintptr_t)cmd_line;
+		return -EACCES;
+	}
 	setup_base->e820_entries = install_e820_map(
 		ARRAY_SIZE(setup_base->e820_map), setup_base->e820_map);
 
@@ -320,6 +328,7 @@ int do_zboot(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	ulong bzImage_size = 0;
 	ulong initrd_addr = 0;
 	ulong initrd_size = 0;
+	int ret;
 
 	disable_interrupts();
 
@@ -353,11 +362,17 @@ int do_zboot(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 		puts("## Kernel loading failed ...\n");
 		return -1;
 	}
-	if (setup_zimage(base_ptr, (char *)base_ptr + COMMAND_LINE_OFFSET,
-			0, initrd_addr, initrd_size)) {
+	ret = setup_zimage(base_ptr, (char *)base_ptr + COMMAND_LINE_OFFSET,
+			   0, initrd_addr, initrd_size);
+	if (ret == -EACCES) {
+		base_ptr = (void *)0x1000;
+		printf("Forcing base_ptr to 1000\n");
+	} else if (ret < 0) {
 		puts("Setting up boot parameters failed ...\n");
 		return -1;
 	}
+	printf("Booting kernel, base_ptr=%p, ll_boot_init()=%d\n", base_ptr,
+	       ll_boot_init());
 
 	/* we assume that the kernel is in place */
 	return boot_linux_kernel((ulong)base_ptr, load_address, false);
