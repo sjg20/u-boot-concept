@@ -330,6 +330,7 @@ int do_zboot(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	ulong initrd_size = 0;
 	int ret;
 
+	if (0) {
 	disable_interrupts();
 
 	/* Setup board for maximum PC/AT Compatibility */
@@ -371,6 +372,9 @@ int do_zboot(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 		puts("Setting up boot parameters failed ...\n");
 		return -1;
 	}
+	}
+	base_ptr = (void *)0x1000;
+	load_address = 0x100000;
 	printf("Booting kernel, base_ptr=%p, ll_boot_init()=%d\n", base_ptr,
 	       ll_boot_init());
 
