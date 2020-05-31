@@ -47,6 +47,8 @@
 #define COMMAND_LINE_SIZE	2048
 
 struct zboot_state {
+	ulong bzimage_addr;
+	ulong bzimage_size;
 	struct boot_params *base_ptr;
 	ulong initrd_addr;
 	ulong initrd_size;
@@ -54,12 +56,15 @@ struct zboot_state {
 } state;
 
 enum {
-	ZBOOT_STATE_LOAD	= BIT(0),
-	ZBOOT_STATE_SETUP	= BIT(1),
-	ZBOOT_STATE_INFO	= BIT(2),
-	ZBOOT_STATE_BOOT	= BIT(3),
+	ZBOOT_STATE_START	= BIT(0),
+	ZBOOT_STATE_LOAD	= BIT(1),
+	ZBOOT_STATE_SETUP	= BIT(2),
+	ZBOOT_STATE_INFO	= BIT(3),
+	ZBOOT_STATE_GO		= BIT(4),
 
-	ZBOOT_STATE_COUNT	= 4,
+	/* This one doesn't execute automatically, so stop the count before 5 */
+	ZBOOT_STATE_DUMP	= BIT(5),
+	ZBOOT_STATE_COUNT	= 5,
 };
 
 static void build_command_line(char *command_line, int auto_boot)
@@ -322,11 +327,9 @@ int setup_zimage(struct boot_params *setup_base, char *cmd_line, int auto_boot,
 	return 0;
 }
 
-int do_zboot_load(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+int do_zboot_start(struct cmd_tbl *cmdtp, int flag, int argc,
+		   char *const argv[])
 {
-	struct boot_params *base_ptr;
-	void *bzImage_addr = NULL;
-	ulong bzImage_size = 0;
 	const char *s;
 
 	memset(&state, '\0', sizeof(state));
@@ -338,11 +341,11 @@ int do_zboot_load(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	}
 
 	if (s)
-		bzImage_addr = (void *)simple_strtoul(s, NULL, 16);
+		state.bzimage_addr = simple_strtoul(s, NULL, 16);
 
 	if (argc >= 3) {
 		/* argv[2] holds the size of the bzImage */
-		bzImage_size = simple_strtoul(argv[2], NULL, 16);
+		state.bzimage_size = simple_strtoul(argv[2], NULL, 16);
 	}
 
 	if (argc >= 4)
@@ -350,8 +353,16 @@ int do_zboot_load(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	if (argc >= 5)
 		state.initrd_size = simple_strtoul(argv[4], NULL, 16);
 
+	return 0;
+}
+
+int do_zboot_load(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+{
+	struct boot_params *base_ptr;
+
 	/* Lets look for */
-	base_ptr = load_zimage(bzImage_addr, bzImage_size, &state.load_address);
+	base_ptr = load_zimage((void *)state.bzimage_addr, state.bzimage_size,
+			       &state.load_address);
 	if (!base_ptr) {
 		puts("## Kernel loading failed ...\n");
 		return -ENXIO;
@@ -392,7 +403,7 @@ int do_zboot_info(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	return 0;
 }
 
-int do_zboot_boot(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+int do_zboot_go(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {
 	int ret;
 
@@ -413,11 +424,18 @@ int do_zboot_boot(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	return 0;
 }
 
+int do_zboot_dump(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+{
+	return 0;
+}
+
 U_BOOT_SUBCMDS(zboot,
+	U_BOOT_CMD_MKENT(start, 6, 1, do_zboot_start, "", ""),
 	U_BOOT_CMD_MKENT(load, 6, 1, do_zboot_load, "", ""),
 	U_BOOT_CMD_MKENT(setup, 1, 1, do_zboot_setup, "", ""),
 	U_BOOT_CMD_MKENT(info, 1, 1, do_zboot_info, "", ""),
-	U_BOOT_CMD_MKENT(boot, 1, 1, do_zboot_boot, "", ""),
+	U_BOOT_CMD_MKENT(go, 1, 1, do_zboot_go, "", ""),
+	U_BOOT_CMD_MKENT(dump, 1, 1, do_zboot_dump, "", ""),
 )
 
 int do_zboot_states(struct cmd_tbl *cmdtp, int flag, int argc,
@@ -456,9 +474,9 @@ int do_zboot_parent(struct cmd_tbl *cmdtp, int flag, int argc,
 			return do_zboot(cmdtp, flag, argc, argv, repeatable);
 	}
 
-	do_zboot_states(cmdtp, flag, argc, argv, ZBOOT_STATE_LOAD |
-			ZBOOT_STATE_SETUP | ZBOOT_STATE_INFO |
-			ZBOOT_STATE_BOOT);
+	do_zboot_states(cmdtp, flag, argc, argv, ZBOOT_STATE_START |
+			ZBOOT_STATE_LOAD | ZBOOT_STATE_SETUP |
+			ZBOOT_STATE_INFO | ZBOOT_STATE_GO);
 
 	return CMD_RET_FAILURE;
 }
@@ -474,6 +492,12 @@ U_BOOT_CMDREP_COMPLETE(
 	"      initrd addr - The address of the initrd image to use, if any.\n"
 	"      initrd size - The size of the initrd image to use, if any.\n"
 	"\n"
-	"   -n  - Dry run: load but do not boot",
+	"Sub-commands to do part of the zboot sequence:\n"
+	"\tstart [addr [arg ...]] - specify arguments\n"
+	"\tload   - load OS image\n"
+	"\tsetup  - set up table\n"
+	"\tinfo   - show sumary info\n"
+	"\tgo     - start OS\n"
+	"\tdump    - dump info",
 	complete_zboot
 );
