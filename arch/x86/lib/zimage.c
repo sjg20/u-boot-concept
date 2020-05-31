@@ -186,6 +186,7 @@ struct boot_params *load_zimage(char *image, unsigned long kernel_size,
 		*load_addressp = BZIMAGE_LOAD_ADDR;
 	else
 		*load_addressp = ZIMAGE_LOAD_ADDR;
+	*load_addressp = 0x01800000;
 
 	printf("Building boot_params at 0x%8.8lx\n", (ulong)setup_base);
 	memset(setup_base, 0, sizeof(*setup_base));
@@ -330,7 +331,7 @@ int do_zboot(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	ulong initrd_size = 0;
 	int ret;
 
-	if (0) {
+	if (1) {
 		disable_interrupts();
 
 		/* Setup board for maximum PC/AT Compatibility */

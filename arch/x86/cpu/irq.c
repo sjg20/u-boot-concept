@@ -7,6 +7,7 @@
 #include <dm.h>
 #include <errno.h>
 #include <fdtdec.h>
+#include <init.h>
 #include <irq.h>
 #include <log.h>
 #include <malloc.h>
