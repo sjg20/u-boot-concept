@@ -12,11 +12,14 @@
  * linux/Documentation/i386/boot.txt
  */
 
+#define LOG_DEBUG
+
 #include <common.h>
 #include <command.h>
 #include <env.h>
 #include <init.h>
 #include <irq_func.h>
+#include <log.h>
 #include <malloc.h>
 #include <acpi/acpi_table.h>
 #include <asm/io.h>
@@ -25,9 +28,6 @@
 #include <asm/byteorder.h>
 #include <asm/bootm.h>
 #include <asm/bootparam.h>
-#ifdef CONFIG_SYS_COREBOOT
-#include <asm/arch/timestamp.h>
-#endif
 #include <linux/compiler.h>
 #include <linux/libfdt.h>
 
@@ -273,13 +273,49 @@ struct boot_params *load_zimage(char *image, unsigned long kernel_size,
 	return setup_base;
 }
 
+static void add_entry(struct e820_entry *entries, int pos, u64 addr, u64 size,
+		      uint type)
+{
+	struct e820_entry *entry = &entries[pos];
+
+	entry->addr = addr;
+	entry->size = size;
+	entry->type = type;
+}
+
+static unsigned int do_install_e820_map(unsigned int max_entries,
+					struct e820_entry *entries)
+{
+	int i;
+
+	i = 0;
+	add_entry(entries, i++, 0, 0x1000, E820_RESERVED);
+	add_entry(entries, i++, 0x1000, 0x9f000, E820_RAM);
+	add_entry(entries, i++, 0xa0000, 0x60000, E820_RESERVED);
+	add_entry(entries, i++, 0x100000, 0xff00000, E820_RAM);
+	add_entry(entries, i++, 0x10000000, 0x2151000, E820_RESERVED);
+
+	add_entry(entries, i++, 0x12151000, 0x6888d000, E820_RAM);
+	add_entry(entries, i++, 0x7a9de000, 0x622000, E820_RESERVED);
+	add_entry(entries, i++, 0x7b000000, 0x5000000, E820_RESERVED);
+	add_entry(entries, i++, 0xd0000000, 0x1000000, E820_RESERVED);
+	add_entry(entries, i++, 0xe0000000, 0x10000000, E820_RESERVED);
+
+	add_entry(entries, i++, 0xfe042000, 0x2000, E820_RESERVED);
+	add_entry(entries, i++, 0xfed10000, 0x8000, E820_RESERVED);
+	add_entry(entries, i++, 0x100000000, 0x80000000, E820_RAM);
+
+	return i;
+}
+
 int setup_zimage(struct boot_params *setup_base, char *cmd_line, int auto_boot,
 		 ulong initrd_addr, ulong initrd_size, ulong cmdline_force)
 {
 	struct setup_header *hdr = &setup_base->hdr;
 	int bootproto = get_boot_protocol(hdr, false);
 
-	setup_base->e820_entries = install_e820_map(
+	log_debug("Setup E820 entries\n");
+	setup_base->e820_entries = do_install_e820_map(
 		ARRAY_SIZE(setup_base->e820_map), setup_base->e820_map);
 
 	if (bootproto == 0x0100) {
@@ -304,6 +340,7 @@ int setup_zimage(struct boot_params *setup_base, char *cmd_line, int auto_boot,
 	}
 
 	if (cmd_line) {
+		log_debug("Setup cmdline\n");
 		if (bootproto >= 0x0202) {
 			hdr->cmd_line_ptr = (uintptr_t)cmd_line;
 		} else if (bootproto >= 0x0200) {
@@ -325,21 +362,20 @@ int setup_zimage(struct boot_params *setup_base, char *cmd_line, int auto_boot,
 		printf("\"\n");
 	}
 
-#ifdef CONFIG_INTEL_MID
-	if (bootproto >= 0x0207)
+	if (IS_ENABLED(CONFIG_INTEL_MID) && bootproto >= 0x0207)
 		hdr->hardware_subarch = X86_SUBARCH_INTEL_MID;
-#endif
 
-#ifdef CONFIG_GENERATE_ACPI_TABLE
-	setup_base->acpi_rsdp_addr = acpi_get_rsdp_addr();
-#endif
+	if (IS_ENABLED(CONFIG_GENERATE_ACPI_TABLE))
+		setup_base->acpi_rsdp_addr = acpi_get_rsdp_addr();
 
+	log_debug("Setup devicetree\n");
 	setup_device_tree(hdr, (const void *)env_get_hex("fdtaddr", 0));
 	setup_video(&setup_base->screen_info);
 
-#ifdef CONFIG_EFI_STUB
-	setup_efi_info(&setup_base->efi_info);
-#endif
+	if (IS_ENABLED(CONFIG_EFI_STUB)) {
+		log_debug("Setup EFI\n");
+		setup_efi_info(&setup_base->efi_info);
+	}
 
 	return 0;
 }
