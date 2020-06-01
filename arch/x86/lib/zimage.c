@@ -22,6 +22,7 @@
 #include <log.h>
 #include <malloc.h>
 #include <acpi/acpi_table.h>
+#include <asm/intel_gnvs.h>
 #include <asm/io.h>
 #include <asm/ptrace.h>
 #include <asm/zimage.h>
@@ -308,6 +309,56 @@ static unsigned int do_install_e820_map(unsigned int max_entries,
 	return i;
 }
 
+enum {
+	CHSW_RECOVERY_X86 =		BIT(1),
+	CHSW_RECOVERY_EC =		BIT(2),
+	CHSW_DEVELOPER_SWITCH =		BIT(5),
+	CHSW_FIRMWARE_WP =		BIT(9),
+};
+
+enum {
+	FIRMWARE_TYPE_AUTO_DETECT = -1,
+	FIRMWARE_TYPE_RECOVERY = 0,
+	FIRMWARE_TYPE_NORMAL = 1,
+	FIRMWARE_TYPE_DEVELOPER = 2,
+	FIRMWARE_TYPE_NETBOOT = 3,
+	FIRMWARE_TYPE_LEGACY = 4,
+};
+
+#define ACPI_FWID_SIZE		64
+
+static void write_chromos_acpi(void)
+{
+	struct chromeos_acpi *tab;
+	char *ptr;
+
+	tab = (struct chromeos_acpi *)0x7ab2d100;
+	memset(tab, '\0', sizeof(*tab));
+	tab->vbt0 = 0;
+	tab->vbt1 = 1;
+	tab->vbt2 = 1;
+	tab->vbt3 = CHSW_RECOVERY_EC | CHSW_FIRMWARE_WP;
+	strcpy((char *)tab->vbt4, "CORAL TEST 8594");
+	strcpy((char *)tab->vbt5, "Google_Coral.13074.0.2020_05_30_1642");
+	strcpy((char *)tab->vbt6, "Google_Coral.13074.0.2020_05_30_1642");
+	tab->vbt7 = FIRMWARE_TYPE_DEVELOPER;
+	tab->vbt8 = 0;
+	tab->vbt9 = 0x7abdd000;
+	log_debug("FMAP:\n");
+	print_buffer(tab->vbt9, (void *)tab->vbt9, 1, 0x100, 0);
+	tab->vbt10 = 0x7a9de04e;
+	ptr = (char *)tab->vbt10;
+	log_debug("FWID before:\n");
+	print_buffer((ulong)ptr, ptr, 1, ACPI_FWID_SIZE, 0);
+	memset(ptr, ' ', ACPI_FWID_SIZE);
+	strcpy(ptr, "Google_Coral.13074.0.2020_05_30_1642");
+	log_debug("FWID:\n");
+	print_buffer((ulong)ptr, ptr, 1, ACPI_FWID_SIZE, 0);
+	log_debug("contents:\n");
+	print_buffer((ulong)tab, tab, 1, sizeof(*tab), 0);
+
+}
+
 int setup_zimage(struct boot_params *setup_base, char *cmd_line, int auto_boot,
 		 ulong initrd_addr, ulong initrd_size, ulong cmdline_force)
 {
@@ -317,6 +368,9 @@ int setup_zimage(struct boot_params *setup_base, char *cmd_line, int auto_boot,
 	log_debug("Setup E820 entries\n");
 	setup_base->e820_entries = do_install_e820_map(
 		ARRAY_SIZE(setup_base->e820_map), setup_base->e820_map);
+
+	log_debug("Write Chrome OS stuff\n");
+	write_chromos_acpi();
 
 	if (bootproto == 0x0100) {
 		setup_base->screen_info.cl_magic = COMMAND_LINE_MAGIC;

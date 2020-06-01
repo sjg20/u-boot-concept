@@ -125,7 +125,7 @@ int acpi_create_gnvs(struct acpi_global_nvs *gnvs)
 
 	/* TODO(sjg@chromium.org): Add the console log to gnvs->cbmc */
 
-#ifdef CONFIG_CHROMEOS
+#ifdef CONFIG_CHROMEOSx
 	/* Initialise Verified Boot data */
 	chromeos_init_acpi(&gnvs->chromeos);
 	gnvs->chromeos.vbt2 = ACTIVE_ECFW_RO;
