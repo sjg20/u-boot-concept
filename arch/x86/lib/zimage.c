@@ -53,6 +53,7 @@ struct zboot_state {
 	ulong initrd_addr;
 	ulong initrd_size;
 	ulong load_address;
+	ulong cmdline;
 } state;
 
 enum {
@@ -90,8 +91,7 @@ static void build_command_line(char *command_line, int auto_boot)
 
 	if (env_command_line)
 		strcat(command_line, env_command_line);
-	strcpy(command_line, "cros_secure console= loglevel=7 init=/sbin/init cros_secure oops=panic panic=-1 root=PARTUUID=35c775e7-3735-d745-93e5-d9e0238f7ed0/PARTNROFF=1 rootwait rw dm_verity.error_behavior=3 dm_verity.max_bios=-1 dm_verity.dev_wait=0 dm=\"1 vroot none rw 1,0 3788800 verity payload=ROOT_DEV hashtree=HASH_DEV hashstart=3788800 alg=sha1 root_hexdigest=55052b629d3ac889f25a9583ea12cdcd3ea15ff8 salt=a2d4d9e574069f4fed5e3961b99054b7a4905414b60a25d89974a7334021165c\" noinitrd vt.global_cursor_default=0 kern_guid=35c775e7-3735-d745-93e5-d9e0238f7ed0 add_efi_memmap boot=local noresume noswap i915.modeset=1 tpm_tis.force=1 tpm_tis.interrupts=0 nmi_watchdog=panic,lapic disablevmx=off");
-	printf("Kernel command line: \"%s\"\n", command_line);
+// 	strcpy(command_line, "cros_secure console= loglevel=7 init=/sbin/init cros_secure oops=panic panic=-1 root=PARTUUID=35c775e7-3735-d745-93e5-d9e0238f7ed0/PARTNROFF=1 rootwait rw dm_verity.error_behavior=3 dm_verity.max_bios=-1 dm_verity.dev_wait=0 dm=\"1 vroot none rw 1,0 3788800 verity payload=ROOT_DEV hashtree=HASH_DEV hashstart=3788800 alg=sha1 root_hexdigest=55052b629d3ac889f25a9583ea12cdcd3ea15ff8 salt=a2d4d9e574069f4fed5e3961b99054b7a4905414b60a25d89974a7334021165c\" noinitrd vt.global_cursor_default=0 kern_guid=35c775e7-3735-d745-93e5-d9e0238f7ed0 add_efi_memmap boot=local noresume noswap i915.modeset=1 tpm_tis.force=1 tpm_tis.interrupts=0 nmi_watchdog=panic,lapic disablevmx=off");
 }
 
 static int kernel_magic_ok(struct setup_header *hdr)
@@ -275,7 +275,7 @@ struct boot_params *load_zimage(char *image, unsigned long kernel_size,
 }
 
 int setup_zimage(struct boot_params *setup_base, char *cmd_line, int auto_boot,
-		 unsigned long initrd_addr, unsigned long initrd_size)
+		 ulong initrd_addr, ulong initrd_size, ulong cmdline_force)
 {
 	struct setup_header *hdr = &setup_base->hdr;
 	int bootproto = get_boot_protocol(hdr, false);
@@ -316,7 +316,11 @@ int setup_zimage(struct boot_params *setup_base, char *cmd_line, int auto_boot,
 		}
 
 		/* build command line at COMMAND_LINE_OFFSET */
-		build_command_line(cmd_line, auto_boot);
+		if (cmdline_force)
+			strcpy(cmd_line, (char *)cmdline_force);
+		else
+			build_command_line(cmd_line, auto_boot);
+		printf("Kernel command line: \"%s\"\n", cmd_line);
 	}
 
 #ifdef CONFIG_INTEL_MID
@@ -363,6 +367,13 @@ int do_zboot_start(struct cmd_tbl *cmdtp, int flag, int argc,
 		state.initrd_addr = simple_strtoul(argv[3], NULL, 16);
 	if (argc >= 5)
 		state.initrd_size = simple_strtoul(argv[4], NULL, 16);
+	if (argc >= 6) {
+		state.base_ptr = (void *)simple_strtoul(argv[5], NULL, 16);
+		state.load_address = state.bzimage_addr;
+		state.bzimage_addr = 0;
+	}
+	if (argc >= 7)
+		state.cmdline = simple_strtoul(argv[6], NULL, 16);
 
 	return 0;
 }
@@ -393,11 +404,12 @@ int do_zboot_setup(struct cmd_tbl *cmdtp, int flag, int argc,
 	int ret;
 
 	if (!base_ptr) {
-		printf("zbootbase is not set: use 'zboot load' first\n");
+		printf("base is not set: use 'zboot load' first\n");
 		return CMD_RET_FAILURE;
 	}
 	ret = setup_zimage(base_ptr, (char *)base_ptr + COMMAND_LINE_OFFSET,
-			   0, state.initrd_addr, state.initrd_size);
+			   0, state.initrd_addr, state.initrd_size,
+			   state.cmdline);
 	if (ret) {
 		puts("Setting up boot parameters failed ...\n");
 		return CMD_RET_FAILURE;
@@ -416,11 +428,11 @@ int do_zboot_info(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 
 int do_zboot_go(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {
-	struct boot_params *base_ptr = state.base_ptr;
+// 	struct boot_params *base_ptr = state.base_ptr;
 // 	struct setup_header *hdr = &base_ptr->hdr;
 	int ret;
 
-	printf("forcing base\n");
+// 	printf("forcing base\n");
 // 	state.base_ptr = (void *)0x1000;
 // 	state.load_address = 0x100000;
 // 	printf("forcing cmdline\n");
@@ -589,7 +601,7 @@ int do_zboot_dump(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	print_num("Kernel version", hdr->kernel_version);
 	version = get_kernel_version(base_ptr, (void *)state.bzimage_addr);
 	if (version)
-		printf("   %s\n", version);
+		printf("   @%p: %s\n", version, version);
 	print_num("Type of loader", hdr->type_of_loader);
 	show_loader(hdr);
 	print_num("Load flags", hdr->loadflags);
@@ -633,8 +645,8 @@ int do_zboot_dump(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 }
 
 U_BOOT_SUBCMDS(zboot,
-	U_BOOT_CMD_MKENT(start, 6, 1, do_zboot_start, "", ""),
-	U_BOOT_CMD_MKENT(load, 6, 1, do_zboot_load, "", ""),
+	U_BOOT_CMD_MKENT(start, 8, 1, do_zboot_start, "", ""),
+	U_BOOT_CMD_MKENT(load, 1, 1, do_zboot_load, "", ""),
 	U_BOOT_CMD_MKENT(setup, 1, 1, do_zboot_setup, "", ""),
 	U_BOOT_CMD_MKENT(info, 1, 1, do_zboot_info, "", ""),
 	U_BOOT_CMD_MKENT(go, 1, 1, do_zboot_go, "", ""),
@@ -685,8 +697,8 @@ int do_zboot_parent(struct cmd_tbl *cmdtp, int flag, int argc,
 }
 
 U_BOOT_CMDREP_COMPLETE(
-	zboot, 6, do_zboot_parent, "Boot bzImage",
-	"[addr] [size] [initrd addr] [initrd size]\n"
+	zboot, 8, do_zboot_parent, "Boot bzImage",
+	"[addr] [size] [initrd addr] [initrd size] [setup]\n"
 	"      addr -        The optional starting address of the bzimage.\n"
 	"                    If not set it defaults to the environment\n"
 	"                    variable \"fileaddr\".\n"
@@ -694,6 +706,10 @@ U_BOOT_CMDREP_COMPLETE(
 	"                    zero.\n"
 	"      initrd addr - The address of the initrd image to use, if any.\n"
 	"      initrd size - The size of the initrd image to use, if any.\n"
+	"      setup -       The address of the kernel setup region, if this\n"
+	"                    is not at addr\n"
+	"      cmdline -     The address of the kernel command line, to\n"
+	"                    override U-Boot's normal cmdline generation\n"
 	"\n"
 	"Sub-commands to do part of the zboot sequence:\n"
 	"\tstart [addr [arg ...]] - specify arguments\n"
