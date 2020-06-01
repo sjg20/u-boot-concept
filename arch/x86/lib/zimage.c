@@ -91,7 +91,6 @@ static void build_command_line(char *command_line, int auto_boot)
 
 	if (env_command_line)
 		strcat(command_line, env_command_line);
-// 	strcpy(command_line, "cros_secure console= loglevel=7 init=/sbin/init cros_secure oops=panic panic=-1 root=PARTUUID=35c775e7-3735-d745-93e5-d9e0238f7ed0/PARTNROFF=1 rootwait rw dm_verity.error_behavior=3 dm_verity.max_bios=-1 dm_verity.dev_wait=0 dm=\"1 vroot none rw 1,0 3788800 verity payload=ROOT_DEV hashtree=HASH_DEV hashstart=3788800 alg=sha1 root_hexdigest=55052b629d3ac889f25a9583ea12cdcd3ea15ff8 salt=a2d4d9e574069f4fed5e3961b99054b7a4905414b60a25d89974a7334021165c\" noinitrd vt.global_cursor_default=0 kern_guid=35c775e7-3735-d745-93e5-d9e0238f7ed0 add_efi_memmap boot=local noresume noswap i915.modeset=1 tpm_tis.force=1 tpm_tis.interrupts=0 nmi_watchdog=panic,lapic disablevmx=off");
 }
 
 static int kernel_magic_ok(struct setup_header *hdr)
@@ -320,7 +319,10 @@ int setup_zimage(struct boot_params *setup_base, char *cmd_line, int auto_boot,
 			strcpy(cmd_line, (char *)cmdline_force);
 		else
 			build_command_line(cmd_line, auto_boot);
-		printf("Kernel command line: \"%s\"\n", cmd_line);
+		strcpy(cmd_line, "cros_secure console= loglevel=7 init=/sbin/init cros_secure oops=panic panic=-1 root=PARTUUID=35c775e7-3735-d745-93e5-d9e0238f7ed0/PARTNROFF=1 rootwait rw dm_verity.error_behavior=3 dm_verity.max_bios=-1 dm_verity.dev_wait=0 dm=\"1 vroot none rw 1,0 3788800 verity payload=ROOT_DEV hashtree=HASH_DEV hashstart=3788800 alg=sha1 root_hexdigest=55052b629d3ac889f25a9583ea12cdcd3ea15ff8 salt=a2d4d9e574069f4fed5e3961b99054b7a4905414b60a25d89974a7334021165c\" noinitrd vt.global_cursor_default=0 kern_guid=35c775e7-3735-d745-93e5-d9e0238f7ed0 add_efi_memmap boot=local noresume noswap i915.modeset=1 tpm_tis.force=1 tpm_tis.interrupts=0 nmi_watchdog=panic,lapic disablevmx=off");
+		printf("Kernel command line: \"");
+		puts(cmd_line);
+		printf("\"\n");
 	}
 
 #ifdef CONFIG_INTEL_MID
@@ -382,12 +384,20 @@ int do_zboot_load(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {
 	struct boot_params *base_ptr;
 
-	/* Lets look for */
-	base_ptr = load_zimage((void *)state.bzimage_addr, state.bzimage_size,
-			       &state.load_address);
-	if (!base_ptr) {
-		puts("## Kernel loading failed ...\n");
-		return CMD_RET_FAILURE;
+	if (state.base_ptr) {
+		struct boot_params *from = (struct boot_params *)state.base_ptr;
+
+		base_ptr = (struct boot_params *)DEFAULT_SETUP_BASE;
+		printf("Building boot_params at 0x%8.8lx\n", (ulong)base_ptr);
+		memset(base_ptr, '\0', sizeof(*base_ptr));
+		base_ptr->hdr = from->hdr;
+	} else {
+		base_ptr = load_zimage((void *)state.bzimage_addr, state.bzimage_size,
+				       &state.load_address);
+		if (!base_ptr) {
+			puts("## Kernel loading failed ...\n");
+			return CMD_RET_FAILURE;
+		}
 	}
 	state.base_ptr = base_ptr;
 	if (env_set_hex("zbootbase", (ulong)base_ptr) ||
