@@ -25,6 +25,7 @@
 #include <asm/io.h>
 #include <linux/bitops.h>
 #include <linux/compiler.h>
+#include <linux/ctype.h>
 #include <linux/delay.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -387,9 +388,11 @@ static int do_mem_search(struct cmd_tbl *cmdtp, int flag, int argc,
 			 char *const argv[])
 {
 	ulong addr, length, bytes, offset;
-	const int limit = 10;
 	u8 *ptr, *end, *buf;
-	ulong last_match;
+	bool quiet = false;
+	ulong last_pos;		/* Offset of last match in 'size' units*/
+	ulong last_addr;	/* Address of last displayed line */
+	int limit = 10;
 	int count;
 	int size;
 	int i;
@@ -411,16 +414,30 @@ static int do_mem_search(struct cmd_tbl *cmdtp, int flag, int argc,
 		if (size < 0 && size != -2 /* string */)
 			return 1;
 
+		argc--; argv++;
+		while (argc && *argv[0] == '-') {
+			int ch = argv[0][1];
+
+			if (ch == 'q') {
+				quiet = true;
+			} else if (ch == 'l' && isxdigit(argv[0][2])) {
+				limit = simple_strtoul(argv[0] + 2, NULL, 16);
+			} else {
+				return CMD_RET_USAGE;
+			}
+			argc--; argv++;
+		}
+
 		/* Address is specified since argc > 1 */
-		addr = simple_strtoul(argv[1], NULL, 16);
+		addr = simple_strtoul(argv[0], NULL, 16);
 		addr += base_address;
 
 		/* Length is the number of objects, not number of bytes */
-		length = simple_strtoul(argv[2], NULL, 16);
+		length = simple_strtoul(argv[1], NULL, 16);
 
 		/* Read the bytes to search for */
 		end = search_buf + sizeof(search_buf);
-		for (i = 3, ptr = search_buf; i < argc && ptr < end; i++) {
+		for (i = 2, ptr = search_buf; i < argc && ptr < end; i++) {
 			if (SUPPORT_64BIT_DATA && size == 8) {
 				u64 val = simple_strtoull(argv[i], NULL, 16);
 
@@ -457,7 +474,8 @@ static int do_mem_search(struct cmd_tbl *cmdtp, int flag, int argc,
 		size = 1;
 	bytes = size * length;
 	buf = map_sysmem(addr, bytes);
-	last_match = 0;
+	last_pos = 0;
+	last_addr = 0;
 	count = 0;
 	for (offset = 0; offset <= bytes - search_len && count < limit;
 	     offset += size) {
@@ -465,24 +483,32 @@ static int do_mem_search(struct cmd_tbl *cmdtp, int flag, int argc,
 
 		if (!memcmp(ptr, search_buf, search_len)) {
 			uint align = (addr + offset) & 0xf;
-			ulong match = addr + offset - align;
+			ulong match = addr + offset;
 
-			if (!count || last_match != match) {
-				if (count)
-					printf("--\n");
-				print_buffer(match, ptr - align, size,
-					     ALIGN(search_len + align, 16) /
-					     size, 0);
-				last_match = match;
+			if (!count || (last_addr & ~0xf) != (match & ~0xf)) {
+				if (!quiet) {
+					if (count)
+						printf("--\n");
+					print_buffer(match - align, ptr - align,
+						     size,
+						     ALIGN(search_len + align,
+						     16) / size, 0);
+				}
+				last_addr = match;
+				last_pos = offset / size;
 			}
 			count++;
 		}
 	}
-	printf("%d match%s", count, count == 1 ? "" : "es");
-	env_set_ulong("memmatches", count);
-	if (count == limit)
-		printf(" (repeat command to check for more)");
-	printf("\n");
+	if (!quiet) {
+		printf("%d match%s", count, count == 1 ? "" : "es");
+		if (count == limit)
+			printf(" (repeat command to check for more)");
+		printf("\n");
+	}
+	env_set_hex("memmatches", count);
+	env_set_hex("memaddr", last_addr);
+	env_set_hex("mempos", last_pos);
 
 	unmap_sysmem(buf);
 
@@ -1383,8 +1409,10 @@ U_BOOT_CMD(
 	ms,	255,	1,	do_mem_search,
 	"memory search",
 	SUPPORT_64BIT_DATA ?
-	"[.b, .w, .l, .q, .s] address #-of-objects <value>..." :
-	"[.b, .w, .l, .s] address #-of-objects <value>..."
+	"[.b, .w, .l, .q, .s] [-q | -<n>] address #-of-objects <value>..."
+	"  -q = quiet, -n = maximum matches" :
+	"[.b, .w, .l, .s] [-q | -n] address #-of-objects <value>..."
+	"  -q = quiet, -n = maximum matches"
 );
 #endif
 

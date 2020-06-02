@@ -9,7 +9,9 @@
 #define LOG_CATEGORY LOGC_ACPI
 
 #include <common.h>
+#include <binman.h>
 #include <bloblist.h>
+#include <cbfs.h>
 #include <cpu.h>
 #include <dm.h>
 #include <log.h>
@@ -508,6 +510,51 @@ void acpi_create_ssdt(struct acpi_ctx *ctx, struct acpi_table_header *ssdt,
 	ssdt->checksum = table_compute_checksum((void *)ssdt, ssdt->length);
 }
 
+int hack_in_golden_tables_cbfs(void)
+{
+	ulong rom_offset = binman_get_rom_offset();
+	ulong base;
+	struct cbfs_cachenode node;
+	int ret;
+
+	printf("\n\nGolden tables\n");
+	base = rom_offset + 14090240;
+	printf("rom_offset=%lx\n", rom_offset);
+
+	print_buffer(base, (void *)base, 1, 0x20, 0);
+	ret = file_cbfs_find_uncached_base(base, "acpi", &node);
+	if (ret)
+		return log_msg_ret("cbfs", ret);
+	printf("data=%p, data_length=%x\n", node.data, node.data_length);
+
+	return 0;
+}
+
+static int hack_in_golden_tables(void)
+{
+	void *acpi, *gnvs;
+	int acpi_size, gnvs_size;
+	int ret;
+
+	printf("\n\nGolden tables\n");
+	ret = binman_entry_map(ofnode_null(), "acpi", &acpi, &acpi_size);
+	if (ret)
+		return log_msg_ret("acpi", ret);
+	print_buffer((ulong)acpi, acpi, 1, 0x20, 0);
+	printf("data=%p, data_length=%x\n", acpi, acpi_size);
+	memcpy((void *)0x7aaf1000, acpi, acpi_size);
+	*(ulong *)0xf0010 = 0x7aaf1030;
+
+	ret = binman_entry_map(ofnode_null(), "gnvs", &gnvs, &gnvs_size);
+	if (ret)
+		return log_msg_ret("gnvs", ret);
+	print_buffer((ulong)gnvs, gnvs, 1, 0x20, 0);
+	printf("data=%p, data_length=%x\n", gnvs, gnvs_size);
+	memcpy((void *)0x7ab2d000, gnvs, gnvs_size);
+
+	return 0;
+}
+
 /*
  * QEMU's version of write_acpi_tables is defined in drivers/misc/qfw.c
  */
@@ -665,6 +712,8 @@ ulong write_acpi_tables(ulong start_addr)
 
 	acpi_rsdp_addr = (unsigned long)ctx->rsdp;
 	debug("ACPI: done\n");
+
+	hack_in_golden_tables();
 
 	return addr;
 }

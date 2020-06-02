@@ -158,6 +158,14 @@
 		filename = "board/google/chromebook_coral/rw-var-mrc-cache";
 	};
 #endif
+	acpi {
+		type = "blob";
+		filename = "board/google/chromebook_coral/acpi.bin";
+	};
+	gnvs {
+		type = "blob";
+		filename = "board/google/chromebook_coral/gnvs.bin";
+	};
 #ifdef CONFIG_HAVE_CMC
 	intel-cmc {
 		filename = CONFIG_CMC_FILE;

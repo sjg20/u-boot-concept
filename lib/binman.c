@@ -82,6 +82,11 @@ void binman_set_rom_offset(int rom_offset)
 	binman->rom_offset = rom_offset;
 }
 
+int binman_get_rom_offset()
+{
+	return binman->rom_offset;
+}
+
 int binman_init(void)
 {
 	binman = malloc(sizeof(struct binman_info));
