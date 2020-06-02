@@ -626,7 +626,7 @@ config ARCH_FIXUP_FDT_MEMORY
 
 config CHROMEOS
 	bool "Enable Chrome OS booting"
-	default y
+# 	default y
 
 endmenu		# Boot images
 

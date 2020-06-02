@@ -717,6 +717,11 @@ config CMD_MEMORY
 	    base - print or set address offset
 	    loop - initialize loop on address range
 
+config MEM_SEARCH
+	bool "ms - Memory search"
+	help
+	  Memory-search command
+
 config CMD_MX_CYCLIC
 	bool "Enable cyclic md/mw commands"
 	depends on CMD_MEMORY

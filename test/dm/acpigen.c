@@ -758,8 +758,10 @@ static int dm_test_acpi_gpio_toggle(struct unit_test_state *uts)
 
 	/* Spot-check the results - see sb_gpio_get_acpi() */
 	ptr = acpigen_get_current(ctx);
-	acpigen_set_enable_tx_gpio(ctx, txbit, "\\_SB.GPC0", &gpio, true);
-	acpigen_set_enable_tx_gpio(ctx, txbit, "\\_SB.GPC0", &gpio, false);
+	acpigen_set_enable_tx_gpio(ctx, txbit, "\\_SB.GPC0", "\\_SB.SPC0",
+				   &gpio, true);
+	acpigen_set_enable_tx_gpio(ctx, txbit, "\\_SB.GPC0", "\\_SB.SPC0",
+				   &gpio, false);
 
 	/* Since this GPIO is active low, we expect it to be cleared here */
 	ut_asserteq(STORE_OP, ptr[0]);
@@ -812,8 +814,8 @@ static int dm_test_acpi_power_seq(struct unit_test_state *uts)
 	ptr = acpigen_get_current(ctx);
 
 	ut_assertok(acpi_device_add_power_res(ctx, txbit, "\\_SB.GPC0",
-					      &reset, 2, 3, &enable, 4, 5,
-					      &stop, 6, 7));
+					      "\\_SB.SPC0", &reset, 2, 3,
+					      &enable, 4, 5, &stop, 6, 7));
 	ut_asserteq(0x16a, acpigen_get_current(ctx) - ptr);
 	ut_asserteq_strn("PRIC", (char *)ptr + 0x18);
 

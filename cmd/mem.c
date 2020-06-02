@@ -33,6 +33,12 @@ DECLARE_GLOBAL_DATA_PTR;
 #define CONFIG_SYS_MEMTEST_SCRATCH 0
 #endif
 
+#ifdef MEM_SUPPORT_64BIT_DATA
+#define SUPPORT_64BIT_DATA 1
+#else
+#define SUPPORT_64BIT_DATA 0
+#endif
+
 static int mod_mem(struct cmd_tbl *, int, int, int, char * const []);
 
 /* Display values from last command.
@@ -43,6 +49,10 @@ static ulong	dp_last_length = 0x40;
 static ulong	mm_last_addr, mm_last_size;
 
 static	ulong	base_address = 0;
+#ifdef CONFIG_MEM_SEARCH
+static u8 search_buf[64];
+static uint search_len;
+#endif
 
 /* Memory Display
  *
@@ -371,6 +381,118 @@ static int do_mem_cp(struct cmd_tbl *cmdtp, int flag, int argc,
 	unmap_sysmem(dst);
 	return 0;
 }
+
+#ifdef CONFIG_MEM_SEARCH
+static int do_mem_search(struct cmd_tbl *cmdtp, int flag, int argc,
+			 char *const argv[])
+{
+	ulong addr, length, bytes, offset;
+	const int limit = 10;
+	u8 *ptr, *end, *buf;
+	ulong last_match;
+	int count;
+	int size;
+	int i;
+
+	/* We use the last specified parameters, unless new ones are entered */
+	addr = dp_last_addr;
+	size = dp_last_size;
+	length = dp_last_length;
+
+	if (argc < 3)
+		return CMD_RET_USAGE;
+
+	if ((!flag & CMD_FLAG_REPEAT)) {
+		/*
+		 * Check for a size specification.
+		 * Defaults to long if no or incorrect specification.
+		 */
+		size = cmd_get_data_size(argv[0], 4);
+		if (size < 0 && size != -2 /* string */)
+			return 1;
+
+		/* Address is specified since argc > 1 */
+		addr = simple_strtoul(argv[1], NULL, 16);
+		addr += base_address;
+
+		/* Length is the number of objects, not number of bytes */
+		length = simple_strtoul(argv[2], NULL, 16);
+
+		/* Read the bytes to search for */
+		end = search_buf + sizeof(search_buf);
+		for (i = 3, ptr = search_buf; i < argc && ptr < end; i++) {
+			if (SUPPORT_64BIT_DATA && size == 8) {
+				u64 val = simple_strtoull(argv[i], NULL, 16);
+
+				*(u64 *)ptr = val;
+			} else if (size == -2) {  /* string */
+				int len = min(strlen(argv[i]),
+					      (size_t)(end - ptr));
+
+				memcpy(ptr, argv[i], len);
+				ptr += len;
+				continue;
+			} else {
+				u32 val = simple_strtoul(argv[i], NULL, 16);
+
+				switch (size) {
+				case 1:
+					*ptr = val;
+					break;
+				case 2:
+					*(u16 *)ptr = val;
+					break;
+				case 4:
+					*(u32 *)ptr = val;
+					break;
+				}
+			}
+			ptr += size;
+		}
+		search_len = ptr - search_buf;
+	}
+
+	/* Do the search */
+	if (size == -2)
+		size = 1;
+	bytes = size * length;
+	buf = map_sysmem(addr, bytes);
+	last_match = 0;
+	count = 0;
+	for (offset = 0; offset <= bytes - search_len && count < limit;
+	     offset += size) {
+		void *ptr = buf + offset;
+
+		if (!memcmp(ptr, search_buf, search_len)) {
+			uint align = (addr + offset) & 0xf;
+			ulong match = addr + offset - align;
+
+			if (!count || last_match != match) {
+				if (count)
+					printf("--\n");
+				print_buffer(match, ptr - align, size,
+					     ALIGN(search_len + align, 16) /
+					     size, 0);
+				last_match = match;
+			}
+			count++;
+		}
+	}
+	printf("%d match%s", count, count == 1 ? "" : "es");
+	env_set_ulong("memmatches", count);
+	if (count == limit)
+		printf(" (repeat command to check for more)");
+	printf("\n");
+
+	unmap_sysmem(buf);
+
+	dp_last_addr = addr + offset / size;
+	dp_last_size = size;
+	dp_last_length = length - offset / size;
+
+	return count ? 0 : CMD_RET_FAILURE;
+}
+#endif
 
 static int do_mem_base(struct cmd_tbl *cmdtp, int flag, int argc,
 		       char *const argv[])
@@ -1254,6 +1376,17 @@ U_BOOT_CMD(
 	"[.b, .w, .l] addr1 addr2 count"
 #endif
 );
+
+#ifdef CONFIG_MEM_SEARCH
+/**************************************************/
+U_BOOT_CMD(
+	ms,	255,	1,	do_mem_search,
+	"memory search",
+	SUPPORT_64BIT_DATA ?
+	"[.b, .w, .l, .q, .s] address #-of-objects <value>..." :
+	"[.b, .w, .l, .s] address #-of-objects <value>..."
+);
+#endif
 
 #ifdef CONFIG_CMD_CRC32
 
