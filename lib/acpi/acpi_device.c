@@ -615,7 +615,7 @@ static int acpi_device_set_i2c(const struct udevice *dev, struct acpi_i2c *i2c,
 	i2c->speed = dev_read_u32_default(bus, "clock-frequency", 100000);
 	i2c->resource = scope;
 
-	return 0;
+	return i2c->address;
 }
 
 int acpi_device_write_i2c_dev(struct acpi_ctx *ctx, const struct udevice *dev)

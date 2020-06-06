@@ -93,7 +93,7 @@ int acpi_i2c_fill_ssdt(const struct udevice *dev, struct acpi_ctx *ctx)
 						     &curindex);
 	} else {
 		ret = acpi_device_write_interrupt_irq(ctx, &priv->irq);
-		if (ret)
+		if (ret < 0)
 			return log_msg_ret("irq", ret);
 	}
 

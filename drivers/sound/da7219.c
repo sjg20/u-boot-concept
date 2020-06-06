@@ -6,6 +6,8 @@
  * Parts taken from coreboot
  */
 
+#define LOG_DEBUG
+
 #include <common.h>
 #include <dm.h>
 #include <i2c.h>
