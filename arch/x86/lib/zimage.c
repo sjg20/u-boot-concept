@@ -344,18 +344,18 @@ static void write_chromos_acpi(void)
 	tab->vbt7 = FIRMWARE_TYPE_DEVELOPER;
 	tab->vbt8 = 0;
 	tab->vbt9 = 0x7abdd000;
-	log_debug("FMAP:\n");
-	print_buffer(tab->vbt9, (void *)tab->vbt9, 1, 0x100, 0);
+// 	log_debug("FMAP:\n");
+// 	print_buffer(tab->vbt9, (void *)tab->vbt9, 1, 0x100, 0);
 	tab->vbt10 = 0x7a9de04e;
 	ptr = (char *)tab->vbt10;
-	log_debug("FWID before:\n");
-	print_buffer((ulong)ptr, ptr, 1, ACPI_FWID_SIZE, 0);
+// 	log_debug("FWID before:\n");
+// 	print_buffer((ulong)ptr, ptr, 1, ACPI_FWID_SIZE, 0);
 	memset(ptr, ' ', ACPI_FWID_SIZE);
 	strcpy(ptr, "Google_Coral.13074.0.2020_05_30_1642");
 	log_debug("FWID:\n");
 	print_buffer((ulong)ptr, ptr, 1, ACPI_FWID_SIZE, 0);
-	log_debug("contents:\n");
-	print_buffer((ulong)tab, tab, 1, sizeof(*tab), 0);
+// 	log_debug("contents:\n");
+// 	print_buffer((ulong)tab, tab, 1, sizeof(*tab), 0);
 
 }
 

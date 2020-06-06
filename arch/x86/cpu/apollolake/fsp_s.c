@@ -168,12 +168,17 @@ static void set_sci_irq(void)
 	/* Skip this for now */
 }
 
+static bool skip_fsps(void)
+{
+	return !ll_boot_init() && !IS_ENABLED(CONFIG_APL_RUN_FSPS);
+}
+
 int arch_fsps_preinit(void)
 {
 	struct udevice *itss;
 	int ret;
 
-	if (!ll_boot_init())
+	if (skip_fsps())
 		return 0;
 	ret = irq_first_device_type(X86_IRQT_ITSS, &itss);
 	if (ret)
@@ -201,8 +206,10 @@ int arch_fsp_init_r(void)
 	struct udevice *dev, *itss;
 	int ret;
 
-	if (!ll_boot_init())
+	if (skip_fsps()) {
+		printf("Skipping FSP-S\n");
 		return 0;
+	}
 
 	s3wake = IS_ENABLED(CONFIG_HAVE_ACPI_RESUME) &&
 		gd->arch.prev_sleep_state == ACPI_S3;

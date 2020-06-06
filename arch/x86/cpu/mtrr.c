@@ -143,7 +143,7 @@ int mtrr_commit(bool do_caches)
 	int ret;
 	int i;
 
-	if (!ll_boot_init()) {
+	if (!ll_boot_init() && !IS_ENABLED(CONFIG_APL_DO_MTRRS)) {
 		printf("Leaving previous bootloader MTRRs intact\n");
 		return 0;
 	}

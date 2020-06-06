@@ -510,13 +510,18 @@ void acpi_create_ssdt(struct acpi_ctx *ctx, struct acpi_table_header *ssdt,
 	ssdt->checksum = table_compute_checksum((void *)ssdt, ssdt->length);
 }
 
-int hack_in_golden_tables_cbfs(void)
+static int hack_in_golden_tables_cbfs(void)
 {
 	ulong rom_offset = binman_get_rom_offset();
 	ulong base;
 	struct cbfs_cachenode node;
+	uint *ptr;
 	int ret;
 
+	if (rom_offset == 0xffffffff) {
+		rom_offset = 0xff081000;
+		binman_set_rom_offset(rom_offset);
+	}
 	printf("\n\nGolden tables\n");
 	base = rom_offset + 14090240;
 	printf("rom_offset=%lx\n", rom_offset);
@@ -526,6 +531,36 @@ int hack_in_golden_tables_cbfs(void)
 	if (ret)
 		return log_msg_ret("cbfs", ret);
 	printf("data=%p, data_length=%x\n", node.data, node.data_length);
+	memcpy((void *)0x7aaf1000, node.data, node.data_length);
+	ptr = (uint *)0xf0000;
+	ptr[0] = 0x20445352;
+	ptr[1] = 0x20525450;
+	ptr[2] = 0x524f43a3;
+	ptr[3] = 0x02347645;
+	ptr[4] = 0x7aaf1030;
+	ptr[5] = 0x00000024;
+	ptr[6] = 0x7aaf10e0;
+	ptr[7] = 0x00000000;
+	ptr[8] = 0x000000c3;
+
+	ret = file_cbfs_find_uncached_base(base, "gnvs", &node);
+	if (ret)
+		return log_msg_ret("cbfs", ret);
+	printf("data=%p, data_length=%x\n", node.data, node.data_length);
+	memcpy((void *)0x7ab2d000, node.data, node.data_length);
+
+        /* This is needed for audio */
+	ret = file_cbfs_find_uncached_base(base, "f0000", &node);
+	if (ret)
+		return log_msg_ret("cbfs", ret);
+	printf("data=%p, data_length=%x\n", node.data, node.data_length);
+	memcpy((void *)0xf0000, node.data, node.data_length);
+
+	ret = file_cbfs_find_uncached_base(base, "smbios", &node);
+	if (ret)
+		return log_msg_ret("cbfs", ret);
+	printf("data=%p, data_length=%x\n", node.data, node.data_length);
+	memcpy((void *)0x7a9de000, node.data, node.data_length);
 
 	return 0;
 }
@@ -713,7 +748,12 @@ ulong write_acpi_tables(ulong start_addr)
 	acpi_rsdp_addr = (unsigned long)ctx->rsdp;
 	debug("ACPI: done\n");
 
-	hack_in_golden_tables();
+	if (IS_ENABLED(CONFIG_FSP_FROM_CBFS))
+		ret = hack_in_golden_tables_cbfs();
+	else
+		ret = hack_in_golden_tables();
+	if (ret)
+		panic("need tables");
 
 	return addr;
 }

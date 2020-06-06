@@ -75,7 +75,7 @@ void write_tables(void)
 #endif
 	int i;
 
-	if (!ll_boot_init()) {
+	if (!ll_boot_init() && !IS_ENABLED(CONFIG_APL_DO_TABLES)) {
 		printf("Leaving previous bootloader tables intact\n");
 		return;
 	}

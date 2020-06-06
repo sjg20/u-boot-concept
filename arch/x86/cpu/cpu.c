@@ -236,9 +236,14 @@ int last_stage_init(void)
 }
 #endif
 
+static bool do_cpus(void)
+{
+	return ll_boot_init() || IS_ENABLED(CONFIG_APL_DO_CPUS);
+}
+
 static int x86_init_cpus(void)
 {
-	if (IS_ENABLED(CONFIG_SMP) && ll_boot_init()) {
+	if (IS_ENABLED(CONFIG_SMP) && do_cpus()) {
 		debug("Init additional CPUs\n");
 		x86_mp_init();
 	} else {
@@ -261,7 +266,7 @@ int cpu_init_r(void)
 	struct udevice *dev;
 	int ret;
 
-	if (!ll_boot_init()) {
+	if (!do_cpus()) {
 		uclass_first_device(UCLASS_PCI, &dev);
 		return 0;
 	}

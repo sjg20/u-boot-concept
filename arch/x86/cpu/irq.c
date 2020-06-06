@@ -338,7 +338,7 @@ int irq_router_probe(struct udevice *dev)
 {
 	int ret;
 
-	if (!ll_boot_init()) {
+	if (!ll_boot_init() && !IS_ENABLED(CONFIG_APL_DO_CPUS)) {
 		printf("Leaving previous bootloader pirq table intact\n");
 		return 0;
 	}

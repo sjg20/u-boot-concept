@@ -42,7 +42,7 @@ int binman_entry_find_(ofnode node, const char *name, struct binman_entry *entry
 
 	ret = ofnode_read_u32(node, "image-pos", &entry->image_pos);
 	if (ret)
-		return log_msg_ret("import-pos", ret);
+		return log_msg_ret("image-pos", ret);
 	ret = ofnode_read_u32(node, "size", &entry->size);
 	if (ret)
 		return log_msg_ret("size", ret);
