@@ -567,8 +567,8 @@ static int hack_in_golden_tables_cbfs(void)
 
 static int hack_in_golden_tables(void)
 {
-	void *acpi, *gnvs;
-	int acpi_size, gnvs_size;
+	void *acpi, *gnvs, *f0000, *smbios;
+	int acpi_size, gnvs_size, f0000_size, smbios_size;
 	int ret;
 
 	printf("\n\nGolden tables\n");
@@ -586,6 +586,20 @@ static int hack_in_golden_tables(void)
 	print_buffer((ulong)gnvs, gnvs, 1, 0x20, 0);
 	printf("data=%p, data_length=%x\n", gnvs, gnvs_size);
 	memcpy((void *)0x7ab2d000, gnvs, gnvs_size);
+
+	ret = binman_entry_map(ofnode_null(), "f0000", &f0000, &f0000_size);
+	if (ret)
+		return log_msg_ret("f0000", ret);
+	print_buffer((ulong)f0000, f0000, 1, 0x20, 0);
+	printf("data=%p, data_length=%x\n", f0000, f0000_size);
+	memcpy((void *)0xf0000, f0000, f0000_size);
+
+	ret = binman_entry_map(ofnode_null(), "smbios", &smbios, &smbios_size);
+	if (ret)
+		return log_msg_ret("smbios", ret);
+	print_buffer((ulong)smbios, smbios, 1, 0x20, 0);
+	printf("data=%p, data_length=%x\n", smbios, smbios_size);
+	memcpy((void *)0x7a9de000, smbios, smbios_size);
 
 	return 0;
 }
