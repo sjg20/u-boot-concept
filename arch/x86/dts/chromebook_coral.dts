@@ -789,6 +789,11 @@
 	fsps,emmc-rx-cmd-data-cntl1 = <0x00181717>;
 	fsps,emmc-rx-cmd-data-cntl2 = <0x10008>;
 
+	/* Enable Audio Clock and Power gating */
+	fsps,hd-audio-clk-gate = <1>;
+	fsps,hd-audio-pwr-gate = <1>;
+	fsps,bios-cfg-lock-down = <1>;
+
 	/* Enable WiFi */
 	fsps,pcie-root-port-en = [01 00 00 00 00 00];
 	fsps,pcie-rp-hot-plug = [00 00 00 00 00 00];
@@ -799,6 +804,10 @@
 
 	fsps,port-usb20-per-port-pe-txi-set = [07 07 06 06 07 07 07 01];
 	fsps,port-usb20-per-port-txi-set = [00 02 00 00 00 00 00 03];
+
+	fsps,lpss-s0ix-enable = <1>;
+	fsps,usb-otg = <0>;
+	fsps,monitor-mwait-enable = <0>;
 
 	/*
 	 * TODO(sjg@chromium.org): Move this to the I2C nodes

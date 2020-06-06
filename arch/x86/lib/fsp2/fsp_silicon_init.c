@@ -55,9 +55,12 @@ int fsp_silicon_init(bool s3wake, bool use_spi_flash)
 	memcpy(copy, &upd, sizeof(upd));
 	gd->arch.soc_config = copy;
 
+// 	print_buffer(0, &upd, 1, sizeof(upd), 0);
+
+	init_addr = hdr->img_base + hdr->fsp_silicon_init;
 	log_debug("Silicon init @ %x...", init_addr);
 	bootstage_start(BOOTSTAGE_ID_ACCUM_FSP_S, "fsp-s");
-	func = (fsp_silicon_init_func)(hdr->img_base + hdr->fsp_silicon_init);
+	func = (fsp_silicon_init_func)init_addr;
 	ret = func(&upd);
 	bootstage_accum(BOOTSTAGE_ID_ACCUM_FSP_S);
 	if (ret)
