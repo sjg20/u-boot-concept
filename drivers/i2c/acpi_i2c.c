@@ -197,15 +197,13 @@ int acpi_i2c_ofdata_to_platdata(struct udevice *dev)
 	priv->compat_string = dev_read_string(dev, "acpi,compatible");
 	priv->has_power_resource = dev_read_bool(dev,
 						 "acpi,has-power-resource");
-	dev_read_u32(dev, "hid-descr-addr",
-		     &priv->hid_desc_reg_offset);
+	dev_read_u32(dev, "hid-descr-addr", &priv->hid_desc_reg_offset);
 	dev_read_u32(dev, "reset-delay-ms", &priv->reset_delay_ms);
 	dev_read_u32(dev, "reset-off-delay-ms", &priv->reset_off_delay_ms);
 	dev_read_u32(dev, "enable-delay-ms", &priv->enable_delay_ms);
 	dev_read_u32(dev, "enable-off-delay-ms", &priv->enable_off_delay_ms);
 	dev_read_u32(dev, "stop-delay-ms", &priv->stop_delay_ms);
 	dev_read_u32(dev, "stop-off-delay-ms", &priv->stop_off_delay_ms);
-	dev_read_u32(dev, "stop-off-delay-ms", &priv->hid_desc_reg_offset);
 
 	return 0;
 }
