@@ -340,7 +340,7 @@ long locate_coreboot_table(void)
 
 	/* hack to tell U-Boot it is running from coreboot */
 #ifndef CONFIG_SPL_BUILD
-	if (IS_ENABLED(CONFIG_FSP_FROM_CBFS))
+	if (!addr && IS_ENABLED(CONFIG_FSP_FROM_CBFS))
 		return 1;
 #endif
 	return addr;
