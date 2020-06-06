@@ -353,7 +353,7 @@ enum acpi_dev_status acpi_device_status(const struct udevice *dev);
  *
  * @ctx: ACPI context pointer
  * @req_irq: Interrupt to output
- * @return 0 if OK, -ve on error
+ * @return IRQ pin number if OK, -ve on error
  */
 int acpi_device_write_interrupt_irq(struct acpi_ctx *ctx,
 				    const struct irq *req_irq);
@@ -362,7 +362,7 @@ int acpi_device_write_interrupt_irq(struct acpi_ctx *ctx,
  * acpi_device_write_gpio() - Write GpioIo() or GpioInt() descriptor
  *
  * @gpio: GPIO information to write
- * @return 0 if OK, -ve on error
+ * @return GPIO pin number of first GPIO if OK, -ve on error
  */
 int acpi_device_write_gpio(struct acpi_ctx *ctx, const struct acpi_gpio *gpio);
 
@@ -388,8 +388,8 @@ int acpi_device_write_gpio_desc(struct acpi_ctx *ctx,
  * If an interrupt is found, an ACPI interrupt descriptor is written to the ACPI
  * output. If not, but an GPIO is found, a GPIO descriptor is written.
  *
- * @return 0 if OK, -ve if neither an interrupt nor a GPIO could be found, or
- * some other error occurred
+ * @return irq or GPIO pin number if OK, -ve if neither an interrupt nor a GPIO
+ *	could be found, or some other error occurred
  */
 int acpi_device_write_interrupt_or_gpio(struct acpi_ctx *ctx,
 					struct udevice *dev, const char *prop);
@@ -413,7 +413,7 @@ void acpi_device_write_dsm_i2c_hid(struct acpi_ctx *ctx,
  *
  * @ctx: ACPI context pointer
  * @dev: I2C device to write
- * @return 0 if OK, -ve on error
+ * @return I2C address of device if OK, -ve on error
  */
 int acpi_device_write_i2c_dev(struct acpi_ctx *ctx, const struct udevice *dev);
 

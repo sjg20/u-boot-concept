@@ -208,7 +208,7 @@ int acpi_device_write_interrupt_irq(struct acpi_ctx *ctx,
 	if (ret)
 		return log_msg_ret("write", ret);
 
-	return 0;
+	return irq.pin;
 }
 
 /* ACPI 6.3 section 6.4.3.8.1 - GPIO Interrupt or I/O */
@@ -342,7 +342,7 @@ int acpi_device_write_gpio(struct acpi_ctx *ctx, const struct acpi_gpio *gpio)
 	/* Fill in GPIO Descriptor Length (account for len word) */
 	acpi_device_fill_len(ctx, desc_length);
 
-	return 0;
+	return gpio->pins[0];
 }
 
 int acpi_device_write_gpio_desc(struct acpi_ctx *ctx,
@@ -355,23 +355,25 @@ int acpi_device_write_gpio_desc(struct acpi_ctx *ctx,
 	if (ret)
 		return log_msg_ret("desc", ret);
 	ret = acpi_device_write_gpio(ctx, &gpio);
-	if (ret)
+	if (ret < 0)
 		return log_msg_ret("gpio", ret);
 
-	return 0;
+	return ret;
 }
 
 int acpi_device_write_interrupt_or_gpio(struct acpi_ctx *ctx,
 					struct udevice *dev, const char *prop)
 {
 	struct irq req_irq;
+	int pin;
 	int ret;
 
 	ret = irq_get_by_index(dev, 0, &req_irq);
 	if (!ret) {
 		ret = acpi_device_write_interrupt_irq(ctx, &req_irq);
-		if (ret)
+		if (ret < 0)
 			return log_msg_ret("irq", ret);
+		pin = ret;
 	} else {
 		struct gpio_desc req_gpio;
 
@@ -380,11 +382,12 @@ int acpi_device_write_interrupt_or_gpio(struct acpi_ctx *ctx,
 		if (ret)
 			return log_msg_ret("no gpio", ret);
 		ret = acpi_device_write_gpio_desc(ctx, &req_gpio);
-		if (ret)
+		if (ret < 0)
 			return log_msg_ret("gpio", ret);
+		pin = ret;
 	}
 
-	return 0;
+	return pin;
 }
 
 /* PowerResource() with Enable and/or Reset control */
@@ -593,7 +596,7 @@ static void acpi_device_write_i2c(struct acpi_ctx *ctx,
  * @dev: I2C device to convert
  * @i2c: Place to put the new structure
  * @scope: Scope of the I2C device (this is the controller path)
- * @return 0 (always)
+ * @return chip address of device
  */
 static int acpi_device_set_i2c(const struct udevice *dev, struct acpi_i2c *i2c,
 			       const char *scope)
@@ -625,11 +628,11 @@ int acpi_device_write_i2c_dev(struct acpi_ctx *ctx, const struct udevice *dev)
 	if (ret)
 		return log_msg_ret("scope", ret);
 	ret = acpi_device_set_i2c(dev, &i2c, scope);
-	if (ret)
+	if (ret < 0)
 		return log_msg_ret("set", ret);
 	acpi_device_write_i2c(ctx, &i2c);
 
-	return 0;
+	return ret;
 }
 
 #ifdef CONFIG_SPI

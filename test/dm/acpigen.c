@@ -137,7 +137,7 @@ static int dm_test_acpi_interrupt(struct unit_test_state *uts)
 	ut_assertok(uclass_first_device_err(UCLASS_TEST_FDT, &dev));
 	ut_assertok(irq_get_by_index(dev, 0, &irq));
 
-	ut_assertok(acpi_device_write_interrupt_irq(ctx, &irq));
+	ut_asserteq(123, acpi_device_write_interrupt_irq(ctx, &irq)); // irq pin
 	ut_asserteq(9, acpigen_get_current(ctx) - ptr);
 	ut_asserteq(ACPI_DESCRIPTOR_INTERRUPT, ptr[0]);
 	ut_asserteq(6, get_unaligned((u16 *)(ptr + 1)));
@@ -167,7 +167,7 @@ static int dm_test_acpi_gpio(struct unit_test_state *uts)
 	ut_asserteq_str("a-test", dev->name);
 	ut_assertok(gpio_request_by_name(dev, "test-gpios", 1, &desc, 0));
 
-	ut_assertok(acpi_device_write_gpio_desc(ctx, &desc));
+	ut_asserteq(123, acpi_device_write_gpio_desc(ctx, &desc)); // gpio pin
 	ut_asserteq(35, acpigen_get_current(ctx) - ptr);
 	ut_asserteq(ACPI_DESCRIPTOR_GPIO, ptr[0]);
 	ut_asserteq(32, get_unaligned((u16 *)(ptr + 1)));
@@ -211,7 +211,7 @@ static int dm_test_acpi_gpio_irq(struct unit_test_state *uts)
 	ut_asserteq_str("a-test", dev->name);
 	ut_assertok(gpio_request_by_name(dev, "test2-gpios", 2, &desc, 0));
 
-	ut_assertok(acpi_device_write_gpio_desc(ctx, &desc));
+	ut_asserteq(123, acpi_device_write_gpio_desc(ctx, &desc)); // gpio pin
 	ut_asserteq(35, acpigen_get_current(ctx) - ptr);
 	ut_asserteq(ACPI_DESCRIPTOR_GPIO, ptr[0]);
 	ut_asserteq(32, get_unaligned((u16 *)(ptr + 1)));
@@ -253,15 +253,15 @@ static int dm_test_acpi_interrupt_or_gpio(struct unit_test_state *uts)
 	/* This should produce an interrupt, even though it also has a GPIO */
 	ut_assertok(uclass_get_device(UCLASS_TEST_FDT, 0, &dev));
 	ut_asserteq_str("a-test", dev->name);
-	ut_assertok(acpi_device_write_interrupt_or_gpio(ctx, dev,
-							"test2-gpios"));
+	ut_asserteq(123, acpi_device_write_interrupt_or_gpio(ctx, dev,
+							"test2-gpios")); // pin
 	ut_asserteq(ACPI_DESCRIPTOR_INTERRUPT, ptr[0]);
 
 	/* This has no interrupt so should produce a GPIO */
 	ptr = ctx->current;
 	ut_assertok(uclass_find_first_device(UCLASS_PANEL_BACKLIGHT, &dev));
-	ut_assertok(acpi_device_write_interrupt_or_gpio(ctx, dev,
-							"enable-gpios"));
+	ut_asserteq(123, acpi_device_write_interrupt_or_gpio(ctx, dev,
+							"enable-gpios")); // pin
 	ut_asserteq(ACPI_DESCRIPTOR_GPIO, ptr[0]);
 
 	/* This one has neither */
@@ -291,7 +291,7 @@ static int dm_test_acpi_i2c(struct unit_test_state *uts)
 	ptr = acpigen_get_current(ctx);
 
 	ut_assertok(uclass_get_device(UCLASS_RTC, 0, &dev));
-	ut_assertok(acpi_device_write_i2c_dev(ctx, dev));
+	ut_asserteq(12, acpi_device_write_i2c_dev(ctx, dev)); /* fixme irq # */
 	ut_asserteq(28, acpigen_get_current(ctx) - ptr);
 	ut_asserteq(ACPI_DESCRIPTOR_SERIAL_BUS, ptr[0]);
 	ut_asserteq(25, get_unaligned((u16 *)(ptr + 1)));
