@@ -25,7 +25,7 @@ static int dm_test_rtc_base(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_rtc_base, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+DM_TEST(dm_test_rtc_base, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 static void show_time(const char *msg, struct rtc_time *time)
 {
@@ -115,7 +115,7 @@ static int dm_test_rtc_set_get(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_rtc_set_get, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+DM_TEST(dm_test_rtc_set_get, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 /* Reset the time */
 static int dm_test_rtc_reset(struct unit_test_state *uts)
@@ -141,7 +141,7 @@ static int dm_test_rtc_reset(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_rtc_reset, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+DM_TEST(dm_test_rtc_reset, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 /* Check that two RTC devices can be used independently */
 static int dm_test_rtc_dual(struct unit_test_state *uts)
@@ -173,4 +173,4 @@ static int dm_test_rtc_dual(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_rtc_dual, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+DM_TEST(dm_test_rtc_dual, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);

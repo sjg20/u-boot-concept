@@ -56,4 +56,4 @@ static int dm_test_fdtdec_set_carveout(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_fdtdec_set_carveout,
-	DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT | DM_TESTF_FLAT_TREE);
+	UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT | UT_TESTF_FLAT_TREE);
