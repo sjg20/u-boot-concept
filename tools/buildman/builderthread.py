@@ -176,12 +176,17 @@ class BuilderThread(threading.Thread):
             if result.return_code == RETURN_CODE_RETRY:
                 will_build = True
             elif will_build:
-                err_file = self.builder.GetErrFile(commit_upto, brd.target)
-                if os.path.exists(err_file) and os.stat(err_file).st_size:
-                    result.stderr = 'bad'
-                elif not force_build:
-                    # The build passed, so no need to build it again
-                    will_build = False
+                if not result.return_code:
+                    if not force_build:
+                        # The build passed, so no need to build it again
+                        will_build = False
+
+                    err_file = self.builder.GetErrFile(commit_upto, brd.target)
+                    if os.path.exists(err_file) and os.stat(err_file).st_size:
+                        # We could check for warnings too
+                        # Has warnings, but for now we don't rebuild those
+                        # result.stderr = 'bad'
+                        pass
 
         if will_build:
             # We are going to have to build it. First, get a toolchain
