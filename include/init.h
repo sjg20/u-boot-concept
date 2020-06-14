@@ -141,6 +141,8 @@ int arch_reserve_stacks(void);
  */
 int arch_reserve_mmu(void);
 
+#ifdef CONFIG
+
 /**
  * init_cache_f_r() - Turn on the cache in preparation for relocation
  *
@@ -162,6 +164,8 @@ int misc_init_f(void);
 #if defined(CONFIG_DTB_RESELECT)
 int embedded_dtb_select(void);
 #endif
+
+#undef CONFIG_CMD_WHICH
 
 /* common/init/board_init.c */
 extern ulong monitor_flash_len;
