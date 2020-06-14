@@ -31,6 +31,7 @@ enum {
 	DWORD_PREFIX		= 0x0c,
 	STRING_PREFIX		= 0x0d,
 	QWORD_PREFIX		= 0x0e,
+	SCOPE_OP		= 0x10,
 	BUFFER_OP		= 0x11,
 	PACKAGE_OP		= 0x12,
 	METHOD_OP		= 0x14,
@@ -259,6 +260,14 @@ void acpigen_emit_namestring(struct acpi_ctx *ctx, const char *namepath);
 void acpigen_write_name(struct acpi_ctx *ctx, const char *namepath);
 
 /**
+ * acpigen_write_scope() - Write a scope
+ *
+ * @ctx: ACPI context pointer
+ * @name: Scope to write (e.g. "\\_SB.ABCD")
+ */
+void acpigen_write_scope(struct acpi_ctx *ctx, const char *name);
+
+/**
  * acpigen_write_uuid() - Write a UUID
  *
  * This writes out a UUID in the format used by ACPI, with a BUFFER_OP prefix.
@@ -396,6 +405,7 @@ void acpigen_write_power_res(struct acpi_ctx *ctx, const char *name, uint level,
  */
 int acpigen_set_enable_tx_gpio(struct acpi_ctx *ctx, u32 tx_state_val,
 			       const char *dw0_name, struct acpi_gpio *gpio,
+
 			       bool enable);
 
 #endif
