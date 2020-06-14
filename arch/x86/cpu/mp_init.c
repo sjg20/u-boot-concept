@@ -454,7 +454,7 @@ static int get_bsp(struct udevice **devp, int *cpu_countp)
 	if (cpu_countp)
 		*cpu_countp = ret;
 
-	return dev->req_seq;
+	return dev->req_seq >= 0 ? dev->req_seq : 0;
 }
 
 static struct mp_callback *read_callback(struct mp_callback **slot)
@@ -589,9 +589,6 @@ int mp_run_on_cpus(int cpu_select, mp_run_func func, void *arg)
 	int num_cpus;
 	int ret;
 
-	if (!(gd->flags & GD_FLG_SMP_INIT))
-		return -ENXIO;
-
 	ret = get_bsp(&dev, &num_cpus);
 	if (ret < 0)
 		return log_msg_ret("bsp", ret);
@@ -599,6 +596,13 @@ int mp_run_on_cpus(int cpu_select, mp_run_func func, void *arg)
 	    cpu_select == ret) {
 		/* Run on BSP first */
 		func(arg);
+	}
+
+	if (!(gd->flags & GD_FLG_SMP_INIT)) {
+		/* Allow use of this function on the BSP only */
+		if (cpu_select == MP_SELECT_BSP || !cpu_select)
+			return 0;
+		return -ENXIO;
 	}
 
 	/* Allow up to 1 second for all APs to finish */
