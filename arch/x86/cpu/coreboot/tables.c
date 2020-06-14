@@ -243,6 +243,10 @@ int get_coreboot_info(struct sysinfo_t *info)
 	if (addr < 0)
 		return addr;
 	ret = cb_parse_header((void *)addr, 0x1000, info);
+	if (!ret)
+		return -ENOENT;
+	gd->arch.coreboot_table = addr;
+	gd->flags |= GD_FLG_SKIP_LL_INIT;
 
-	return ret == 1 ? 0 : -ENOENT;
+	return 0;
 }
