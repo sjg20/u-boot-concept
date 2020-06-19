@@ -369,7 +369,7 @@ U_BOOT_DEVICE(omapl138_uart) = {
 };
 
 U_BOOT_DEVICE(omapl138_mmc) = {
-	.name = "davinci_mmc",
+	.name = "ti_da830_mmc",
 };
 
 void spl_board_init(void)
