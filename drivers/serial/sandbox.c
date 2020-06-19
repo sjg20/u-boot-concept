@@ -252,8 +252,8 @@ static const struct udevice_id sandbox_serial_ids[] = {
 	{ }
 };
 
-U_BOOT_DRIVER(serial_sandbox) = {
-	.name	= "serial_sandbox",
+U_BOOT_DRIVER(sandbox_serial) = {
+	.name	= "sandbox_serial",
 	.id	= UCLASS_SERIAL,
 	.of_match = sandbox_serial_ids,
 	.ofdata_to_platdata = sandbox_serial_ofdata_to_platdata,
@@ -270,7 +270,7 @@ static const struct sandbox_serial_platdata platdata_non_fdt = {
 };
 
 U_BOOT_DEVICE(serial_sandbox_non_fdt) = {
-	.name = "serial_sandbox",
+	.name = "sandbox_serial",
 	.platdata = &platdata_non_fdt,
 };
 #endif /* CONFIG_IS_ENABLED(OF_CONTROL) */
