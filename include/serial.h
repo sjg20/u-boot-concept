@@ -248,12 +248,9 @@ struct serial_dev_priv {
  * struct tiny_serial_ops - Tiny operations support for serial
  *
  * This interface is optional for serial drivers and depends on
- * CONFIG_SPL_TINY_SERIAL
+ * CONFIG_SPL/TPL_TINY_SERIAL
  */
 struct tiny_serial_ops {
-	/**
-	 */
-	int (*probe)(struct tiny_dev *tdev);
 	/**
 	 * setbrg() - Set up the baud rate generator
 	 *
@@ -276,6 +273,18 @@ struct tiny_serial_ops {
 	 */
 	int (*putc)(struct tiny_dev *tdev, const char ch);
 };
+
+#define tiny_serial_get_ops(dev)   ((struct tiny_serial_ops *)(dev)->drv->ops)
+
+/**
+ * tiny_serial_setbrg() - Set the baud rate
+ *
+ * Set the baud rate for a tiny-serial device
+ *
+ * @tdev: Tiny device
+ * @baudrate: Baud rate to set (e.g. 115200)
+ */
+int tiny_serial_setbrg(struct tiny_dev *tdev, int baudrate);
 
 /**
  * serial_getconfig() - Get the uart configuration

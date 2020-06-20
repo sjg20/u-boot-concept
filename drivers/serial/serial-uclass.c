@@ -528,6 +528,9 @@ int serial_init(void)
 	ret = tiny_dev_probe(tdev);
 	if (ret)
 		return log_msg_ret("probe", ret);
+	ret = tiny_serial_setbrg(tdev, gd->baudrate);
+	if (ret)
+		return log_msg_ret("brg", ret);
 	gd->tiny_serial = tdev;
 	gd->flags |= GD_FLG_SERIAL_READY;
 
@@ -544,11 +547,15 @@ void serial_putc(const char ch)
 	struct tiny_dev *tdev = gd->tiny_serial;
 	struct tiny_serial_ops *ops;
 
+	/*
+	 * If we don't have a serial port or the driver is broken, try the
+	 * debug UART. This helps with debugging the serial driver in early
+	 * bringup, and adds very little to code size.
+	 */
 	if (!tdev)
 		goto err;
-
-	ops = tdev->drv->ops;
-	if (!ops->putc)
+	ops = tiny_serial_get_ops(tdev);
+	if (IS_ENABLED(CONFIG_TINY_CHECK) && !ops->putc)
 		goto err;
 	if (ch == '\n')
 		ops->putc(tdev, '\r');
@@ -564,6 +571,16 @@ void serial_puts(const char *str)
 {
 	for (const char *s = str; *s; s++)
 		serial_putc(*s);
+}
+
+int tiny_serial_setbrg(struct tiny_dev *tdev, int baudrate)
+{
+	const struct tiny_serial_ops *ops = tiny_serial_get_ops(tdev);
+
+	if (IS_ENABLED(CONFIG_TINY_CHECK) && !ops)
+		return -ENOSYS;
+
+	return ops->setbrg(tdev, baudrate);
 }
 
 #endif
