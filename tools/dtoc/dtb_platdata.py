@@ -719,7 +719,7 @@ class DtbPlatdata(object):
                     break
             if not driver:
                 raise ValueError("Cant' find driver for compatible '%s' (%s)'" %
-                                 (', '.val))
+                                 (', '.join(val), 'all'))
             self.buf('DM_DECL_TINY_DRIVER(%s);\n' % driver.name);
             priv_name = None
             inline = True
