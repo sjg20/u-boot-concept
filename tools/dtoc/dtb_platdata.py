@@ -290,8 +290,8 @@ class DtbPlatdata(object):
                     break
                 target = self._fdt.phandle_to_node.get(phandle)
                 if not target:
-                    raise ValueError("Cannot parse '%s' in node '%s'" %
-                                     (prop.name, node_name))
+                    raise ValueError("Cannot parse '%s' in node '%s' (phandle=%d)" %
+                                     (prop.name, node_name, phandle))
                 cells = None
                 for prop_name in ['#clock-cells', '#gpio-cells']:
                     cells = target.props.get(prop_name)
@@ -675,8 +675,8 @@ class DtbPlatdata(object):
                         (VAL_PREFIX, var_name, member_name, item, name))
                     self._links.append(phandle_entry)
                     item += 1
-                    for val in vals:
-                        self.buf('\n\t\t%s,' % val)
+                for val in vals:
+                    self.buf('\n\t\t%s,' % val)
             else:
                 for val in prop.value:
                     vals.append(get_value(prop.type, val))
@@ -767,6 +767,7 @@ class DtbPlatdata(object):
         See the documentation in doc/driver-model/of-plat.rst for more
         information.
         """
+        print('generate_tables')
         self.out_header()
         self.out('#include <common.h>\n')
         self.out('#include <dm.h>\n')

@@ -49,9 +49,15 @@ U_BOOT_DRIVER(rockchip_rk3188_uart) = {
 	.flags	= DM_FLAG_PRE_RELOC,
 };
 
+static const struct udevice_id rockchip_serial_ids[] = {
+	{ .compatible = "rockchip,rk3288-uart" },
+	{ },
+};
+
 U_BOOT_DRIVER(rockchip_rk3288_uart) = {
 	.name	= "rockchip_rk3288_uart",
 	.id	= UCLASS_SERIAL,
+	.of_match = rockchip_serial_ids,
 	.priv_auto_alloc_size = sizeof(struct NS16550),
 	.platdata_auto_alloc_size = sizeof(struct rockchip_uart_platdata),
 	.probe	= rockchip_serial_probe,

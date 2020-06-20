@@ -835,6 +835,10 @@
 	u-boot,dm-pre-reloc;
 };
 
+&gpio7 {
+	u-boot,dm-pre-reloc;
+};
+
 &gpio8 {
 	u-boot,dm-pre-reloc;
 };
