@@ -88,7 +88,8 @@ static inline int serial_in_shift(void *addr, int shift)
 static void serial_out_dynamic(struct ns16550_platdata *plat, u8 *addr,
 			       int value)
 {
-	if (plat->flags & NS16550_FLAG_IO) {
+	if (IS_ENABLED(CONFIG_NS16550_SUPPORT_IO) &&
+	    (plat->flags & NS16550_FLAG_IO)) {
 		outb(value, addr);
 	} else if (plat->reg_width == 4) {
 		if (plat->flags & NS16550_FLAG_ENDIAN) {
@@ -108,7 +109,8 @@ static void serial_out_dynamic(struct ns16550_platdata *plat, u8 *addr,
 
 static int serial_in_dynamic(struct ns16550_platdata *plat, u8 *addr)
 {
-	if (plat->flags & NS16550_FLAG_IO) {
+	if (IS_ENABLED(CONFIG_NS16550_SUPPORT_IO) &&
+	    (plat->flags & NS16550_FLAG_IO)) {
 		return inb(addr);
 	} else if (plat->reg_width == 4) {
 		if (plat->flags & NS16550_FLAG_ENDIAN) {
@@ -662,7 +664,6 @@ int ns16550_tiny_putc(struct ns16550_platdata *plat, const char ch)
 #ifdef CONFIG_DEBUG_UART_NS16550
 
 #include <debug_uart.h>
-
 
 static inline void _debug_uart_init(void)
 {

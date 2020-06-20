@@ -660,7 +660,8 @@ config SYS_NS16550
 config NS16550_DYNAMIC
 	bool "Allow NS16550 to be configured at runtime"
 	depends on SYS_NS16550
-	default y if SYS_COREBOOT || SYS_SLIMBOOTLOADER || TINY_SERIAL
+	default y if SYS_COREBOOT || SYS_SLIMBOOTLOADER
+	default y if SPL_TINY_SERIAL || TPL_TINY_SERIAL
 	help
 	  Enable this option to allow device-tree control of the driver.
 
@@ -678,6 +679,15 @@ config NS16550_DYNAMIC
 	  since it prevents the same driver being used for different types of
 	  UARTs in a system. This option avoids this problem at the cost of a
 	  slightly increased code size.
+
+config NS16550_SUPPORT_IO
+	bool "Support I/O access in the ns16550 driver"
+	default y if X86
+	help
+	  This enables I/O access in this driver, as wells the normal
+	  memory-mapped access. This is used on some architectures, such as
+	  x86. Note that I/O access is not supported on some more modern
+	  architectures, such as ARM.
 
 config INTEL_MID_SERIAL
 	bool "Intel MID platform UART support"
