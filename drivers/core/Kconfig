@@ -48,6 +48,7 @@ config SPL_TINY
 
 config SPL_TINY_RELOC
 	bool "Relocate devices into allocated memory before using them"
+	depends on SPL_TINY
 	help
 	  Some architectures load SPL into read-only memory. U-Boot needs write
 	  access to tiny devices (specifically struct tiny_dev) so this cannot
@@ -66,12 +67,25 @@ config TPL_TINY
 
 config TPL_TINY_RELOC
 	bool "Relocate devices into allocated memory before using them"
+	depends on TPL_TINY
 	default y if X86
 	help
 	  Some architectures load SPL into read-only memory. U-Boot needs write
 	  access to tiny devices (specifically struct tiny_dev) so this cannot
 	  work. If this option is enabled, U-Boot relocates these devices into
 	  RAM when they are needed.
+
+config TINY_CHECK
+	bool "Enable run-time consistency checks"
+	default y
+	help
+	  Enabling this catches some errors like drivers with required but
+	  missing options. It adds slightly to code size. Provided that your
+	  code is written correct and doesn't produce errors with this option
+	  enabled, it is generally safe to disable it for production.
+
+	  Note that this does not add checks for drivers without an operations
+	  struct. A few drivers don't need operations. Otherwise, don't do that.
 
 config DM_WARN
 	bool "Enable warnings in driver model"

@@ -7,6 +7,7 @@
 #include <debug_uart.h>
 #include <dm.h>
 #include <dt-structs.h>
+#include <log.h>
 #include <ns16550.h>
 #include <serial.h>
 #include <asm/arch-rockchip/clock.h>
@@ -25,6 +26,7 @@ struct rockchip_uart_platdata {
 struct dtd_rockchip_rk3288_uart *dtplat, s_dtplat;
 #endif
 
+#if !CONFIG_IS_ENABLED(TINY_SERIAL)
 static int rockchip_serial_probe(struct udevice *dev)
 {
 	struct rockchip_uart_platdata *plat = dev_get_platdata(dev);
@@ -64,3 +66,54 @@ U_BOOT_DRIVER(rockchip_rk3288_uart) = {
 	.ops	= &ns16550_serial_ops,
 	.flags	= DM_FLAG_PRE_RELOC,
 };
+#else /* TINY_SERIAL */
+
+static int rockchip_serial_tiny_probe(struct tiny_dev *tdev)
+{
+	struct dtd_rockchip_rk3288_uart *dtplat = tdev->dtplat;
+	struct ns16550_platdata *plat = tdev->priv;
+	int ret;
+
+	/* Create some new platform data for the standard driver */
+	plat->base = dtplat->reg[0];
+	plat->reg_shift = dtplat->reg_shift;
+	plat->reg_width = dtplat->reg_io_width;
+	plat->clock = dtplat->clock_frequency;
+	plat->fcr = UART_FCR_DEFVAL;
+
+	log_debug("plat=%p, base=%lx, offset=%x, width=%x, shift=%x, clock=%d, flags=%x\n",
+		  plat, plat->base, plat->reg_offset, plat->reg_width,
+		  plat->reg_shift, plat->clock, plat->flags);
+	ret = ns16550_tiny_probe_plat(plat);
+	if (ret)
+		return log_ret(ret);
+
+	return 0;
+}
+
+static int rockchip_serial_tiny_setbrg(struct tiny_dev *tdev, int baudrate)
+{
+	struct ns16550_platdata *plat = tdev->priv;
+
+	return ns16550_tiny_setbrg(plat, baudrate);
+}
+
+static int rockchip_serial_tiny_putc(struct tiny_dev *tdev, const char ch)
+{
+	struct ns16550_platdata *plat = tdev->priv;
+
+	return ns16550_tiny_putc(plat, ch);
+}
+
+struct tiny_serial_ops rockchip_serial_tiny_ops = {
+	.setbrg	= rockchip_serial_tiny_setbrg,
+	.putc	= rockchip_serial_tiny_putc,
+};
+
+U_BOOT_TINY_DRIVER(rockchip_rk3288_uart) = {
+	.uclass_id	= UCLASS_SERIAL,
+	.probe		= rockchip_serial_tiny_probe,
+	.ops		= &rockchip_serial_tiny_ops,
+	DM_TINY_PRIV(<ns16550.h>, sizeof(struct ns16550_platdata))
+};
+#endif
