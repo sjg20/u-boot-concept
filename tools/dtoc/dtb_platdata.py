@@ -767,7 +767,6 @@ class DtbPlatdata(object):
         See the documentation in doc/driver-model/of-plat.rst for more
         information.
         """
-        print('generate_tables')
         self.out_header()
         self.out('#include <common.h>\n')
         self.out('#include <dm.h>\n')
