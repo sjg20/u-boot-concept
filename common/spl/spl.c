@@ -386,6 +386,7 @@ static int spl_common_init(bool setup_malloc)
 {
 	int ret;
 
+	printch('1');
 #if CONFIG_VAL(SYS_MALLOC_F_LEN)
 	if (setup_malloc) {
 #ifdef CONFIG_MALLOC_F_ADDR
@@ -395,6 +396,7 @@ static int spl_common_init(bool setup_malloc)
 		gd->malloc_ptr = 0;
 	}
 #endif
+	printch('2');
 	ret = bootstage_init(u_boot_first_phase());
 	if (ret) {
 		debug("%s: Failed to set up bootstage: ret=%d\n", __func__,
@@ -412,8 +414,11 @@ static int spl_common_init(bool setup_malloc)
 			      __func__, ret);
 	}
 #endif /* CONFIG_BOOTSTAGE_STASH */
+	printch('3');
 	bootstage_mark_name(spl_phase() == PHASE_TPL ? BOOTSTAGE_ID_START_TPL :
 			    BOOTSTAGE_ID_START_SPL, SPL_TPL_NAME);
+	printch('4');
+
 #if CONFIG_IS_ENABLED(LOG)
 	ret = log_init();
 	if (ret) {
@@ -421,6 +426,7 @@ static int spl_common_init(bool setup_malloc)
 		return ret;
 	}
 #endif
+	printch('5');
 	if (CONFIG_IS_ENABLED(OF_CONTROL) && !CONFIG_IS_ENABLED(OF_PLATDATA)) {
 		ret = fdtdec_setup();
 		if (ret) {
@@ -428,17 +434,22 @@ static int spl_common_init(bool setup_malloc)
 			return ret;
 		}
 	}
+	printch('6');
 	if (CONFIG_IS_ENABLED(DM)) {
 		bootstage_start(BOOTSTAGE_ID_ACCUM_DM_SPL,
 				spl_phase() == PHASE_TPL ? "dm tpl" : "dm_spl");
+		printch('a');
 		/* With CONFIG_SPL_OF_PLATDATA, bring in all devices */
 		ret = dm_init_and_scan(!CONFIG_IS_ENABLED(OF_PLATDATA));
+		printch('b');
 		bootstage_accum(BOOTSTAGE_ID_ACCUM_DM_SPL);
+		printch('c');
 		if (ret) {
 			debug("dm_init_and_scan() returned error %d\n", ret);
 			return ret;
 		}
 	}
+	printch('7');
 
 	return 0;
 }

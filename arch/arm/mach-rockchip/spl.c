@@ -119,17 +119,21 @@ void board_init_f(ulong dummy)
 	 * printascii("string");
 	 */
 	debug_uart_init();
+	printch('a');
 	debug("\nspl:debug uart enabled in %s\n", __func__);
 #endif
 
 	board_early_init_f();
+	printch('b');
 
 	ret = spl_early_init();
+	printch('c');
 	if (ret) {
 		printf("spl_early_init() failed: %d\n", ret);
 		hang();
 	}
 	arch_cpu_init();
+	printch('d');
 #if !defined(CONFIG_ROCKCHIP_RK3188)
 	rockchip_stimer_init();
 #endif
@@ -137,6 +141,7 @@ void board_init_f(ulong dummy)
 	/* Init ARM arch timer in arch/arm/cpu/armv7/arch_timer.c */
 	timer_init();
 #endif
+	printch('e');
 #if !defined(CONFIG_TPL) || defined(CONFIG_SPL_RAM)
 	debug("\nspl:init dram\n");
 	ret = dram_init();
@@ -147,6 +152,7 @@ void board_init_f(ulong dummy)
 	gd->ram_top = gd->ram_base + get_effective_memsize();
 	gd->ram_top = board_get_usable_ram_top(gd->ram_size);
 #endif
+	printch('f');
 	preloader_console_init();
 }
 
