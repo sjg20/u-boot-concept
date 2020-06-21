@@ -288,6 +288,26 @@ struct driver {
  */
 #define U_BOOT_DRIVER_ALIAS(__name, __alias)
 
+/**
+ * struct tiny_drv: A tiny driver
+ *
+ * This provides a smaller driver than the full-blown driver-model. It is
+ * intended for SPL or TPL and offers just a probe() function and some basic
+ * operations. It has a limit of 256 bytes for the private size.
+ *
+ * Note that tiny drivers exist alongside normal ones. Each subsystem must be
+ * enabled for tiny drivers (e.g. CONFIG_SPL_TINY_SERIAL for serial).
+ *
+ * Naming here is changed from struct driver, to make it easier to search code.
+ *
+ * @uclass_id: Identifies the uclass we belong to
+ * @priv_size: If non-zero this is the size of the private data to be allocated
+ * in the device's ->priv pointer. If zero, then the driver is responsible for
+ * allocating any data required (but malloc() is discouraged in tiny drivers)
+ * @ops: Driver-specific operations. This is typically a list of function
+ * pointers defined by the driver, to implement driver functions required by
+ * the uclass.
+ */
 struct tiny_drv {
 	u8 uclass_id;
 	u8 priv_size;
