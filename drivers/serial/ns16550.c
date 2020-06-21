@@ -92,7 +92,8 @@ static void serial_out_dynamic(struct ns16550_platdata *plat, u8 *addr,
 	    (plat->flags & NS16550_FLAG_IO)) {
 		outb(value, addr);
 	} else if (plat->reg_width == 4) {
-		if (plat->flags & NS16550_FLAG_ENDIAN) {
+		if (IS_ENABLED(CONFIG_NS16550_SUPPORT_ENDIAN) &&
+		    (plat->flags & NS16550_FLAG_ENDIAN)) {
 			if (plat->flags & NS16550_FLAG_BE)
 				out_be32(addr, value);
 			else
@@ -100,7 +101,8 @@ static void serial_out_dynamic(struct ns16550_platdata *plat, u8 *addr,
 		} else {
 			writel(value, addr);
 		}
-	} else if (plat->flags & NS16550_FLAG_BE) {
+	} else if (IS_ENABLED(CONFIG_NS16550_SUPPORT_ENDIAN) &&
+		   (plat->flags & NS16550_FLAG_BE)) {
 		writeb(value, addr + (1 << plat->reg_shift) - 1);
 	} else {
 		writeb(value, addr);
@@ -113,7 +115,8 @@ static int serial_in_dynamic(struct ns16550_platdata *plat, u8 *addr)
 	    (plat->flags & NS16550_FLAG_IO)) {
 		return inb(addr);
 	} else if (plat->reg_width == 4) {
-		if (plat->flags & NS16550_FLAG_ENDIAN) {
+		if (IS_ENABLED(CONFIG_NS16550_SUPPORT_ENDIAN) &&
+		    (plat->flags & NS16550_FLAG_ENDIAN)) {
 			if (plat->flags & NS16550_FLAG_BE)
 				return in_be32(addr);
 			else
@@ -121,7 +124,8 @@ static int serial_in_dynamic(struct ns16550_platdata *plat, u8 *addr)
 		} else {
 			return readl(addr);
 		}
-	} else if (plat->flags & NS16550_FLAG_BE) {
+	} else if (IS_ENABLED(CONFIG_NS16550_SUPPORT_ENDIAN) &&
+		   (plat->flags & NS16550_FLAG_BE)) {
 		return readb(addr + (1 << plat->reg_shift) - 1);
 	} else {
 		return readb(addr);
