@@ -689,6 +689,15 @@ config NS16550_SUPPORT_IO
 	  x86. Note that I/O access is not supported on some more modern
 	  architectures, such as ARM.
 
+config NS16550_SUPPORT_ENDIAN
+	bool "Support endian-aware access in the ns16550 driver"
+	default y if POWERPC
+	help
+	  This enables in_be32() and the like in this driver, as wells the
+	  normal memory-mapped access. This is used on some architectures, such
+	  as PowerPC. Note that this access is not used on some architectures,
+	  such as ARM.
+
 config INTEL_MID_SERIAL
 	bool "Intel MID platform UART support"
 	depends on DM_SERIAL && OF_CONTROL
