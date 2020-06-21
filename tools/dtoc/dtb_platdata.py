@@ -345,7 +345,7 @@ class DtbPlatdata(object):
             buff = fd.read()
 
         drivers = {}
-        m_drivers = re.findall(r'U_BOOT_DRIVER\((.*)\)', b)
+        m_drivers = re.findall(r'U_BOOT_DRIVER\((.*)\)', buff)
         if m_drivers:
             driver_name = None
             uclass_id = None
@@ -360,7 +360,7 @@ class DtbPlatdata(object):
             tiny_name = None
 
             prefix = ''
-            for line in b.splitlines():
+            for line in buff.splitlines():
                 if prefix:
                     line = prefix + line
                     prefix = ''
@@ -424,12 +424,12 @@ class DtbPlatdata(object):
         self._drivers.update(drivers)
 
         driver_aliases = re.findall(
-            r'U_BOOT_DRIVER_ALIAS\(\s*(\w+)\s*,\s*(\w+)\s*\)', b)
+            r'U_BOOT_DRIVER_ALIAS\(\s*(\w+)\s*,\s*(\w+)\s*\)', buff)
 
-            for alias in driver_aliases: # pragma: no cover
-                if len(alias) != 2:
-                    continue
-                self._driver_aliases[alias[1]] = alias[0]
+        for alias in driver_aliases: # pragma: no cover
+            if len(alias) != 2:
+                continue
+            self._driver_aliases[alias[1]] = alias[0]
 
     def scan_drivers(self, srcpath):
         """Scan the driver folders to build a list of driver names and aliases
@@ -853,8 +853,8 @@ class DtbPlatdata(object):
         self.out(''.join(self.get_buf()))
         self.close_output()
 
-def run_steps(args, dtb_file, config_file, include_disabled, output,
-              warning_disabled=False, srcpath):
+def run_steps(args, dtb_file, config_file, include_disabled, output, srcpath,
+              warning_disabled=False):
     """Run all the steps of the dtoc tool
 
     Args:
@@ -870,7 +870,7 @@ def run_steps(args, dtb_file, config_file, include_disabled, output,
 
     plat = DtbPlatdata(dtb_file, config_file, include_disabled,
                        warning_disabled)
-    plat.scan_drivers()
+    plat.scan_drivers(srcpath)
     plat.scan_dtb()
     plat.scan_tree()
     plat.scan_config()
