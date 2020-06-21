@@ -111,7 +111,7 @@ config DM_SERIAL
 config SPL_TINY_SERIAL
 	bool "Support tiny serial drivers in SPL"
 	depends on SPL_TINY
-	default y
+	default y if SPL_TINY_ONLY
 	help
 	  In constrained environments the driver-model overhead of several KB
 	  of code and data structures can be problematic. Enable this to use a
@@ -120,7 +120,7 @@ config SPL_TINY_SERIAL
 config TPL_TINY_SERIAL
 	bool "Support tiny serial drivers in TPL"
 	depends on TPL_TINY
-	default y
+	default y if TPL_TINY_ONLY
 	help
 	  In constrained environments the driver-model overhead of several KB
 	  of code and data structures can be problematic. Enable this to use a
