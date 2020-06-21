@@ -395,11 +395,11 @@ class DtbPlatdata(object):
             except:
                 pass
 
-    def scan_drivers(self):
+    def scan_drivers(self, srcpath):
         """Scan the driver folders to build a list of driver names and possible
         aliases
         """
-        for (dirpath, dirnames, filenames) in os.walk('/home/sglass/u'):
+        for (dirpath, dirnames, filenames) in os.walk(srcpath):
             for fn in filenames:
                 if not fn.endswith('.c'):
                     continue
@@ -802,7 +802,7 @@ class DtbPlatdata(object):
         self.out(''.join(self.get_buf()))
         self.close_output()
 
-def run_steps(args, dtb_file, config_file, include_disabled, output):
+def run_steps(args, dtb_file, config_file, include_disabled, output, srcpath):
     """Run all the steps of the dtoc tool
 
     Args:
@@ -817,7 +817,7 @@ def run_steps(args, dtb_file, config_file, include_disabled, output):
         raise ValueError('Please specify a command: struct, platdata')
 
     plat = DtbPlatdata(dtb_file, config_file, include_disabled)
-    plat.scan_drivers()
+    plat.scan_drivers(srcpath)
     plat.scan_dtb()
     plat.scan_tree()
     plat.scan_config()

@@ -97,6 +97,8 @@ parser.add_option('-o', '--output', action='store', default='-',
                   help='Select output filename')
 parser.add_option('-P', '--processes', type=int,
                   help='set number of processes to use for running tests')
+parser.add_option('-s', '--srcpath', type='string',
+                  help='Specify the source directory for U-Boot')
 parser.add_option('-t', '--test', action='store_true', dest='test',
                   default=False, help='run tests')
 parser.add_option('-T', '--test-coverage', action='store_true',
@@ -113,4 +115,5 @@ elif options.test_coverage:
 
 else:
     dtb_platdata.run_steps(args, options.dtb_file, options.config,
-                           options.include_disabled, options.output)
+                           options.include_disabled, options.output,
+                           options.srcpath)
