@@ -55,6 +55,15 @@ config SPL_TINY_RELOC
 	  work. If this option is enabled, U-Boot relocates these devices into
 	  RAM when they are needed.
 
+config SPL_TINY_ONLY
+	bool "Only support tiny drivers in SPL, not full drivers"
+	depends on SPL_TINY
+	help
+	  Enable this to drop support for full drivers in SPL. This enables
+	  'tiny' drivers for all subsystems and removes the core driver-model
+	  support for full drivers. This can same space, but only works if all
+	  the subsystems used by your board support tiny drivers.
+
 config TPL_TINY
 	bool "Support tiny drivers in TPL without full driver-model support"
 	depends on TPL_OF_PLATDATA
@@ -74,6 +83,15 @@ config TPL_TINY_RELOC
 	  access to tiny devices (specifically struct tiny_dev) so this cannot
 	  work. If this option is enabled, U-Boot relocates these devices into
 	  RAM when they are needed.
+
+config TPL_TINY_ONLY
+	bool "Only support tiny drivers in SPL, not full drivers"
+	depends on TPL_TINY
+	help
+	  Enable this to drop support for full drivers in SPL. This enables
+	  'tiny' drivers for all subsystems and removes the core driver-model
+	  support for full drivers. This can same space, but only works if all
+	  the subsystems used by your board support tiny drivers.
 
 config TINY_CHECK
 	bool "Enable run-time consistency checks"
