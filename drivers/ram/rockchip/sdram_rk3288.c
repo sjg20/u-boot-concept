@@ -90,7 +90,6 @@ const int ddrconf_table[] = {
 #define DO_SDRAM_INIT 0
 #endif
 
-#if DO_SDRAM_INIT
 static void copy_to_reg(u32 *dest, const u32 *src, u32 n)
 {
 	int i;
@@ -972,7 +971,6 @@ static int setup_sdram(struct udevice *dev)
 
 	return sdram_init(priv, params);
 }
-#endif /* CONFIG_SPL_BUILD */
 
 static int rk3288_dmc_ofdata_to_platdata(struct udevice *dev)
 {
@@ -1020,9 +1018,9 @@ static int rk3288_dmc_ofdata_to_platdata(struct udevice *dev)
 	return 0;
 }
 
-#if CONFIG_IS_ENABLED(OF_PLATDATA)
 static int conv_of_platdata(struct udevice *dev)
 {
+#if CONFIG_IS_ENABLED(OF_PLATDATA)
 	struct rk3288_sdram_params *plat = dev_get_platdata(dev);
 	struct dtd_rockchip_rk3288_dmc *of_plat = &plat->of_plat;
 	int ret;
@@ -1039,62 +1037,60 @@ static int conv_of_platdata(struct udevice *dev)
 				       &plat->map);
 	if (ret)
 		return ret;
+#endif
 
 	return 0;
 }
-#endif
 
 static int rk3288_dmc_probe(struct udevice *dev)
 {
-#if DO_SDRAM_INIT
 	struct rk3288_sdram_params *plat = dev_get_platdata(dev);
 	struct udevice *dev_clk;
 	struct regmap *map;
 	int ret;
-#endif
 	struct dram_info *priv = dev_get_priv(dev);
 
 	priv->pmu = syscon_get_first_range(ROCKCHIP_SYSCON_PMU);
-#if DO_SDRAM_INIT
-#if CONFIG_IS_ENABLED(OF_PLATDATA)
-	ret = conv_of_platdata(dev);
-	if (ret)
-		return ret;
-#endif
-	map = syscon_get_regmap_by_driver_data(ROCKCHIP_SYSCON_NOC);
-	if (IS_ERR(map))
-		return PTR_ERR(map);
-	priv->chan[0].msch = regmap_get_range(map, 0);
-	priv->chan[1].msch = (struct rk3288_msch *)
-			(regmap_get_range(map, 0) + 0x80);
+	if (DO_SDRAM_INIT) {
+		if (CONFIG_IS_ENABLED(OF_PLATDATA)) {
+			ret = conv_of_platdata(dev);
+			if (ret)
+				return ret;
+		}
+		map = syscon_get_regmap_by_driver_data(ROCKCHIP_SYSCON_NOC);
+		if (IS_ERR(map))
+			return PTR_ERR(map);
+		priv->chan[0].msch = regmap_get_range(map, 0);
+		priv->chan[1].msch = (struct rk3288_msch *)
+				(regmap_get_range(map, 0) + 0x80);
 
-	priv->grf = syscon_get_first_range(ROCKCHIP_SYSCON_GRF);
-	priv->sgrf = syscon_get_first_range(ROCKCHIP_SYSCON_SGRF);
+		priv->grf = syscon_get_first_range(ROCKCHIP_SYSCON_GRF);
+		priv->sgrf = syscon_get_first_range(ROCKCHIP_SYSCON_SGRF);
 
-	priv->chan[0].pctl = regmap_get_range(plat->map, 0);
-	priv->chan[0].publ = regmap_get_range(plat->map, 1);
-	priv->chan[1].pctl = regmap_get_range(plat->map, 2);
-	priv->chan[1].publ = regmap_get_range(plat->map, 3);
+		priv->chan[0].pctl = regmap_get_range(plat->map, 0);
+		priv->chan[0].publ = regmap_get_range(plat->map, 1);
+		priv->chan[1].pctl = regmap_get_range(plat->map, 2);
+		priv->chan[1].publ = regmap_get_range(plat->map, 3);
 
-	ret = rockchip_get_clk(&dev_clk);
-	if (ret)
-		return ret;
-	priv->ddr_clk.id = CLK_DDR;
-	ret = clk_request(dev_clk, &priv->ddr_clk);
-	if (ret)
-		return ret;
+		ret = rockchip_get_clk(&dev_clk);
+		if (ret)
+			return ret;
+		priv->ddr_clk.id = CLK_DDR;
+		ret = clk_request(dev_clk, &priv->ddr_clk);
+		if (ret)
+			return ret;
 
-	priv->cru = rockchip_get_cru();
-	if (IS_ERR(priv->cru))
-		return PTR_ERR(priv->cru);
-	ret = setup_sdram(dev);
-	if (ret)
-		return ret;
-#else
-	priv->info.base = CONFIG_SYS_SDRAM_BASE;
-	priv->info.size = rockchip_sdram_size(
-			(phys_addr_t)&priv->pmu->sys_reg[2]);
-#endif
+		priv->cru = rockchip_get_cru();
+		if (IS_ERR(priv->cru))
+			return PTR_ERR(priv->cru);
+		ret = setup_sdram(dev);
+		if (ret)
+			return ret;
+	} else {
+		priv->info.base = CONFIG_SYS_SDRAM_BASE;
+		priv->info.size = rockchip_sdram_size(
+				(phys_addr_t)&priv->pmu->sys_reg[2]);
+	}
 
 	return 0;
 }
