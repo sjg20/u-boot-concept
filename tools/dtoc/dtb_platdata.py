@@ -327,7 +327,14 @@ class DtbPlatdata(object):
             re_tiny_priv = re.compile('^\s*DM_TINY_PRIV\((.*)\)$')
             tiny_name = None
 
+            prefix = ''
             for line in b.splitlines():
+                if prefix:
+                    line = prefix + line
+                    prefix = ''
+                if line.endswith('\\'):
+                    prefix = line[:-1]
+                    continue
                 if driver_name:
                     id_m = re_id.search(line)
                     id_of_match = re_of_match.search(line)
@@ -450,16 +457,22 @@ class DtbPlatdata(object):
 
     def parse_config(self, config_data):
         tiny_list = re.findall(r'CONFIG_[ST]PL_TINY_(.*)=y', config_data)
-        self._tiny_uclasses = [n.lower() for n in tiny_list]
+        self._tiny_uclasses = [n.lower() for n in tiny_list
+                               if n not in ['MEMSET', 'RELOC', 'ONLY']]
 
     def scan_config(self):
         if self._config_fname:
             self.parse_config(tools.ReadFile(self._config_fname, binary=False))
+        unused = set(self._tiny_uclasses)
         for node in self._valid_nodes:
             node.is_tiny = False
             alias = self._aliases_by_path.get(node.path)
             if alias and alias in self._tiny_uclasses:
                 node.is_tiny = True
+                unused.remove(alias)
+        if unused:
+            print('Warning: Some tiny uclasses lack aliases: %s' %
+                  ', '.join(unused))
 
     @staticmethod
     def get_num_cells(node):
@@ -673,7 +686,8 @@ class DtbPlatdata(object):
                     vals.append('\t{NULL, {%s}}' % (', '.join(arg_values)))
                     phandle_entry = ('%s%s.%s[%d].node = DM_GET_DEVICE(%s)' %
                         (VAL_PREFIX, var_name, member_name, item, name))
-                    self._links.append(phandle_entry)
+                    if not target_node.is_tiny:
+                        self._links.append(phandle_entry)
                     item += 1
                 for val in vals:
                     self.buf('\n\t\t%s,' % val)

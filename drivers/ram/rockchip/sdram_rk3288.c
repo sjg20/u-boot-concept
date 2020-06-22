@@ -787,7 +787,11 @@ static int sdram_init(struct rk_dram_info *dram,
 	}
 
 	debug("ddr clk dpll\n");
-	ret = clk_set_rate(&dram->ddr_clk, sdram_params->base.ddr_freq);
+	if (!CONFIG_IS_ENABLED(TINY_CLK))
+		ret = clk_set_rate(&dram->ddr_clk, sdram_params->base.ddr_freq);
+	else
+		ret = tiny_clk_set_rate(&dram->tiny_ddr_clk,
+					sdram_params->base.ddr_freq);
 	debug("ret=%d\n", ret);
 	if (ret) {
 		debug("Could not set DDR clock\n");
@@ -1027,7 +1031,6 @@ static int conv_of_platdata(struct rk3288_sdram_params *plat,
 static int complete_probe(struct rk3288_sdram_params *plat,
 			  struct rk_dram_info *priv)
 {
-	struct udevice *dev_clk;
 	struct regmap *map;
 	int ret;
 
@@ -1046,13 +1049,27 @@ static int complete_probe(struct rk3288_sdram_params *plat,
 	priv->chan[1].pctl = regmap_get_range(plat->map, 2);
 	priv->chan[1].publ = regmap_get_range(plat->map, 3);
 
-	ret = rockchip_get_clk(&dev_clk);
-	if (ret)
-		return ret;
-	priv->ddr_clk.id = CLK_DDR;
-	ret = clk_request(dev_clk, &priv->ddr_clk);
-	if (ret)
-		return ret;
+	if (!CONFIG_IS_ENABLED(TINY_CLK)) {
+		struct udevice *dev_clk;
+
+		ret = rockchip_get_clk(&dev_clk);
+		if (ret)
+			return ret;
+		priv->ddr_clk.id = CLK_DDR;
+		ret = clk_request(dev_clk, &priv->ddr_clk);
+		if (ret)
+			return ret;
+	} else {
+		struct tinydev *tdev_clk;
+
+		tdev_clk = tiny_rockchip_get_clk();
+		if (!tdev_clk)
+			return -ENODEV;
+		priv->tiny_ddr_clk.id = CLK_DDR;
+		ret = tiny_clk_request(tdev_clk, &priv->tiny_ddr_clk);
+		if (ret)
+			return ret;
+	}
 
 	priv->cru = rockchip_get_cru();
 	if (IS_ERR(priv->cru))

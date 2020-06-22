@@ -312,6 +312,7 @@ struct tiny_drv {
 	u8 uclass_id;
 	u8 priv_size;
 	int (*probe)(struct tinydev *dev);
+	struct tinydev *tdev;
 	void *ops;
 };
 

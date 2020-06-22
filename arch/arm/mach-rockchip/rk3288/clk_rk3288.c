@@ -11,6 +11,7 @@
 #include <asm/arch-rockchip/cru.h>
 #include <linux/err.h>
 
+#if !CONFIG_IS_ENABLED(TINY_CLK)
 int rockchip_get_clk(struct udevice **devp)
 {
 	return uclass_get_device_by_driver(UCLASS_CLK,
@@ -31,3 +32,22 @@ void *rockchip_get_cru(void)
 
 	return priv->cru;
 }
+#else /* TINY_CLK */
+struct tinydev *tiny_rockchip_get_clk(void)
+{
+	return tiny_dev_get(UCLASS_CLK, 0);
+}
+
+void *rockchip_get_cru(void)
+{
+	struct rk3288_clk_priv *priv;
+	struct tinydev *tdev;
+
+	tdev = tiny_rockchip_get_clk();
+	if (!tdev)
+		return NULL;
+	priv = tdev->priv;
+
+	return priv->cru;
+}
+#endif

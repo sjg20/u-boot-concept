@@ -53,6 +53,7 @@ struct rockchip_spi_platdata {
 struct rockchip_spi_priv {
 	struct rockchip_spi *regs;
 	struct clk clk;
+	struct tiny_clk tiny_clk;
 	unsigned int max_freq;
 	unsigned int mode;
 	ulong last_transaction_us;	/* Time of last transaction end */
@@ -183,9 +184,16 @@ static int conv_of_platdata(struct udevice *dev)
 
 	plat->base = dtplat->reg[0];
 	plat->frequency = 20000000;
-	ret = clk_get_by_driver_info(dev, dtplat->clocks, &priv->clk);
-	if (ret < 0)
-		return log_ret(ret);
+	if (!CONFIG_IS_ENABLED(TINY_CLK)) {
+		ret = clk_get_by_driver_info(dev, dtplat->clocks, &priv->clk);
+		if (ret < 0)
+			return log_ret(ret);
+	} else {
+		ret = tiny_clk_get_by_driver_info(dtplat->clocks,
+						  &priv->tiny_clk);
+		if (ret < 0)
+			return log_ret(ret);
+	}
 	dev->req_seq = 0;
 
 	return 0;
@@ -273,8 +281,13 @@ static int rockchip_spi_probe(struct udevice *bus)
 		priv->max_freq = ROCKCHIP_SPI_MAX_RATE;
 
 	/* Find a module-input clock that fits with the max_freq setting */
-	ret = clk_set_rate(&priv->clk,
-			   rockchip_spi_calc_modclk(priv->max_freq));
+	if (!CONFIG_IS_ENABLED(TINY_CLK)) {
+		ret = clk_set_rate(&priv->clk,
+				   rockchip_spi_calc_modclk(priv->max_freq));
+	} else {
+		ret = tiny_clk_set_rate(&priv->tiny_clk,
+				rockchip_spi_calc_modclk(priv->max_freq));
+	}
 	if (ret < 0) {
 		debug("%s: Failed to set clock: %d\n", __func__, ret);
 		return log_ret(ret);

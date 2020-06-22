@@ -8,6 +8,9 @@
 #ifndef _ASM_ARCH_RK3288_SDRAM_H__
 #define _ASM_ARCH_RK3288_SDRAM_H__
 
+#include <clk.h>
+#include <ram.h>
+
 struct rk3288_sdram_channel {
 	/*
 	 * bit width in address, eg:
@@ -109,6 +112,7 @@ struct rk_dram_info {
 	struct rk_chan_info chan[2];
 	struct ram_info info;
 	struct clk ddr_clk;
+	struct tiny_clk tiny_ddr_clk;
 	struct rockchip_cru *cru;
 	struct rk3288_grf *grf;
 	struct rk3288_sgrf *sgrf;

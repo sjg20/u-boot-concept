@@ -160,6 +160,8 @@ void rk3288_clk_configure_cpu(struct rockchip_cru *cru, struct rk3288_grf *grf);
 
 int rockchip_get_clk(struct udevice **devp);
 
+struct tinydev *tiny_rockchip_get_clk(void);
+
 /*
  * rockchip_reset_bind() - Bind soft reset device as child of clock device
  *
