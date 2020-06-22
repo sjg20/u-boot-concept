@@ -57,4 +57,7 @@ struct driver_info {
  * by dtoc when parsing dtb.
  */
 void dm_populate_phandle_data(void);
+
+#define IF_OF_PLATDATA(x) CONFIG_IS_ENABLED(OF_PLATDATA, (x))
+
 #endif
