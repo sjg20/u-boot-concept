@@ -51,7 +51,7 @@ config SPL_TINY_RELOC
 	depends on SPL_TINY
 	help
 	  Some architectures load SPL into read-only memory. U-Boot needs write
-	  access to tiny devices (specifically struct tiny_dev) so this cannot
+	  access to tiny devices (specifically struct tinydev) so this cannot
 	  work. If this option is enabled, U-Boot relocates these devices into
 	  RAM when they are needed.
 
@@ -80,7 +80,7 @@ config TPL_TINY_RELOC
 	default y if X86
 	help
 	  Some architectures load SPL into read-only memory. U-Boot needs write
-	  access to tiny devices (specifically struct tiny_dev) so this cannot
+	  access to tiny devices (specifically struct tinydev) so this cannot
 	  work. If this option is enabled, U-Boot relocates these devices into
 	  RAM when they are needed.
 

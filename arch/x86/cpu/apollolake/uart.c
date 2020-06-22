@@ -138,7 +138,7 @@ U_BOOT_DRIVER(apl_ns16550) = {
 
 #else /* TINY_SERIAL */
 
-static int apl_ns16550_tiny_probe(struct tiny_dev *tdev)
+static int apl_ns16550_tiny_probe(struct tinydev *tdev)
 {
 	struct dtd_intel_apl_ns16550 *dtplat = tdev->dtplat;
 	struct ns16550_platdata *plat = tdev->priv;
@@ -160,14 +160,14 @@ static int apl_ns16550_tiny_probe(struct tiny_dev *tdev)
 	return ns16550_tiny_probe_plat(plat);
 }
 
-static int apl_ns16550_tiny_setbrg(struct tiny_dev *tdev, int baudrate)
+static int apl_ns16550_tiny_setbrg(struct tinydev *tdev, int baudrate)
 {
 	struct ns16550_platdata *plat = tdev->priv;
 
 	return ns16550_tiny_setbrg(plat, baudrate);
 }
 
-static int apl_ns16550_tiny_putc(struct tiny_dev *tdev, const char ch)
+static int apl_ns16550_tiny_putc(struct tinydev *tdev, const char ch)
 {
 	struct ns16550_platdata *plat = tdev->priv;
 
