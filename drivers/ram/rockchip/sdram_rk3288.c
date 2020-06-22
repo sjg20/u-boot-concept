@@ -933,7 +933,6 @@ error:
 	hang();
 }
 
-# ifdef CONFIG_ROCKCHIP_FAST_SPL
 static int veyron_init(struct dram_info *priv)
 {
 	struct udevice *pmic;
@@ -957,22 +956,19 @@ static int veyron_init(struct dram_info *priv)
 
 	return 0;
 }
-# endif
 
 static int setup_sdram(struct udevice *dev)
 {
 	struct dram_info *priv = dev_get_priv(dev);
 	struct rk3288_sdram_params *params = dev_get_platdata(dev);
 
-# ifdef CONFIG_ROCKCHIP_FAST_SPL
-	if (priv->is_veyron) {
+	if (IS_ENABLED(CONFIG_ROCKCHIP_FAST_SPL) && priv->is_veyron) {
 		int ret;
 
 		ret = veyron_init(priv);
 		if (ret)
 			return ret;
 	}
-# endif
 
 	return sdram_init(priv, params);
 }
@@ -1006,11 +1002,12 @@ static int rk3288_dmc_ofdata_to_platdata(struct udevice *dev)
 		debug("%s: Cannot read rockchip,sdram-params\n", __func__);
 		return -EINVAL;
 	}
-#ifdef CONFIG_ROCKCHIP_FAST_SPL
-	struct dram_info *priv = dev_get_priv(dev);
+	if (IS_ENABLED(CONFIG_ROCKCHIP_FAST_SPL)) {
+		struct dram_info *priv = dev_get_priv(dev);
 
-	priv->is_veyron = !fdt_node_check_compatible(blob, 0, "google,veyron");
-#endif
+		priv->is_veyron = !fdt_node_check_compatible(gd->fdt_blob, 0,
+							     "google,veyron");
+	}
 	ret = regmap_init_mem(dev_ofnode(dev), &params->map);
 	if (ret)
 		return ret;
