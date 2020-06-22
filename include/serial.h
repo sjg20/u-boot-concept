@@ -9,7 +9,7 @@ void serial_initialize(void);
 #ifdef CONFIG_USB_TTY
 
 struct stdio_dev;
-struct tiny_dev;
+struct tinydev;
 
 int usbtty_getc(struct stdio_dev *dev);
 void usbtty_putc(struct stdio_dev *dev, const char c);
@@ -263,7 +263,7 @@ struct tiny_serial_ops {
 	 * @baudrate: New baud rate to use
 	 * @return 0 if OK, -ve on error
 	 */
-	int (*setbrg)(struct tiny_dev *tdev, int baudrate);
+	int (*setbrg)(struct tinydev *tdev, int baudrate);
 	/**
 	 * putc() - Write a character
 	 *
@@ -271,7 +271,7 @@ struct tiny_serial_ops {
 	 * @ch: character to write
 	 * @return 0 if OK, -ve on error
 	 */
-	int (*putc)(struct tiny_dev *tdev, const char ch);
+	int (*putc)(struct tinydev *tdev, const char ch);
 };
 
 #define tiny_serial_get_ops(dev)   ((struct tiny_serial_ops *)(dev)->drv->ops)
@@ -284,7 +284,7 @@ struct tiny_serial_ops {
  * @tdev: Tiny device
  * @baudrate: Baud rate to set (e.g. 115200)
  */
-int tiny_serial_setbrg(struct tiny_dev *tdev, int baudrate);
+int tiny_serial_setbrg(struct tinydev *tdev, int baudrate);
 
 /**
  * serial_getconfig() - Get the uart configuration

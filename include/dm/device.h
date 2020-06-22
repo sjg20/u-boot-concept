@@ -312,7 +312,7 @@ struct driver {
 struct tiny_drv {
 	u8 uclass_id;
 	u8 priv_size;
-	int (*probe)(struct tiny_dev *dev);
+	int (*probe)(struct tinydev *dev);
 	void *ops;
 };
 
@@ -348,7 +348,7 @@ struct tiny_drv {
 #define DM_TINY_PRIV(hdr,size)		.priv_size	= size,
 
 /**
- * struct tiny_dev - A tiny device
+ * struct tinydev - A tiny device
  *
  * This does not have a separate struct driver_info like full devices. The
  * platform data is combined into this struct, which is used by dtoc to declare
@@ -358,7 +358,7 @@ struct tiny_drv {
  * @drv: Pointer to the driver
  * @flags: Flags for this device DM_FLAG_...
  */
-struct tiny_dev {
+struct tinydev {
 	void *dtplat;
 	void *priv;
 	struct tiny_drv *drv;
@@ -366,7 +366,18 @@ struct tiny_dev {
 };
 
 #define U_BOOT_TINY_DEVICE(__name)					\
-	ll_entry_declare(struct tiny_dev, __name, tiny_dev)
+	ll_entry_declare(struct tinydev, __name, tiny_dev)
+
+struct tinydev *tiny_dev_find(enum uclass_id uclass_id, int seq);
+
+int tiny_dev_probe(struct tinydev *tdev);
+
+struct tinydev *tiny_dev_get(enum uclass_id uclass_id, int seq);
+
+static inline void *tinydev_get_priv(struct tinydev *tdev)
+{
+	return tdev->priv;
+}
 
 /**
  * dev_get_platdata() - Get the platform data for a device

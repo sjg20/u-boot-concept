@@ -399,7 +399,7 @@ static int spl_common_init(bool setup_malloc)
 	if (ret) {
 		debug("%s: Failed to set up bootstage: ret=%d\n", __func__,
 		      ret);
-		return ret;
+		return log_msg_ret("bootstage", ret);
 	}
 #ifdef CONFIG_BOOTSTAGE_STASH
 	if (!u_boot_first_phase()) {
@@ -418,14 +418,14 @@ static int spl_common_init(bool setup_malloc)
 	ret = log_init();
 	if (ret) {
 		debug("%s: Failed to set up logging\n", __func__);
-		return ret;
+		return log_msg_ret("log", ret);
 	}
 #endif
 	if (CONFIG_IS_ENABLED(OF_CONTROL) && !CONFIG_IS_ENABLED(OF_PLATDATA)) {
 		ret = fdtdec_setup();
 		if (ret) {
 			debug("fdtdec_setup() returned error %d\n", ret);
-			return ret;
+			return log_msg_ret("fdtdec", ret);
 		}
 	}
 	if (CONFIG_IS_ENABLED(DM)) {
@@ -436,7 +436,7 @@ static int spl_common_init(bool setup_malloc)
 		bootstage_accum(BOOTSTAGE_ID_ACCUM_DM_SPL);
 		if (ret) {
 			debug("dm_init_and_scan() returned error %d\n", ret);
-			return ret;
+			return log_msg_ret("init", ret);
 		}
 	}
 

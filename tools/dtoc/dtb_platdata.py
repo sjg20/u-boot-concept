@@ -345,6 +345,7 @@ class DtbPlatdata(object):
             buff = fd.read()
 
         drivers = {}
+        of_match = {}
         m_drivers = re.findall(r'U_BOOT_DRIVER\((.*)\)', buff)
         if m_drivers:
             driver_name = None
@@ -376,13 +377,21 @@ class DtbPlatdata(object):
                         compat = id_of_match.group(1)
                     elif '};' in line:
                         if uclass_id and compat:
-                            if compat not in self._of_match:
+                            if compat not in of_match:
                                 raise ValueError("%s: Unknown compatible var '%s' (found %s)" %
-                                                 (fn, compat, ','.join(self._of_match.keys())))
-                            drivers[driver_name] = DriverInfo(
-                                driver_name, uclass_id, self._of_match[compat])
-                            for val in self._of_match[compat]:
-                                self._compat_to_driver[val] = drivers[driver_name]
+                                                 (fn, compat, ','.join(of_match.keys())))
+                            driver = DriverInfo(driver_name, uclass_id,
+                                                of_match[compat])
+                            drivers[driver_name] = driver
+
+                            # This needs to be deterministic, since a driver may
+                            # have multiple compatible strings pointing to it.
+                            # We record the one earliest in the alphabet so it
+                            # will produce the same result on all machines.
+                            for id in of_match[compat]:
+                                old = self._compat_to_driver.get(id)
+                                if not old or driver.name < old.name:
+                                    self._compat_to_driver[id] = driver
                         else:
                             pass
                             #print("%s: Cannot find .id/.of_match in driver '%s': uclass_id=%s, compat=%s" %
@@ -403,7 +412,7 @@ class DtbPlatdata(object):
                     if compat_m:
                         compat_list.append(compat_m.group(1))
                     elif '};' in line:
-                        self._of_match[ids_name] = compat_list
+                        of_match[ids_name] = compat_list
                         ids_name = None
                 elif 'U_BOOT_DRIVER' in line:
                     match = re.search(r'U_BOOT_DRIVER\((.*)\)', line)
@@ -422,6 +431,7 @@ class DtbPlatdata(object):
                         ids_name = ids_m.group(1)
 
         self._drivers.update(drivers)
+        self._of_match.update(of_match)
 
         driver_aliases = re.findall(
             r'U_BOOT_DRIVER_ALIAS\(\s*(\w+)\s*,\s*(\w+)\s*\)', buff)

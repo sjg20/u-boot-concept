@@ -516,7 +516,7 @@ UCLASS_DRIVER(serial) = {
 
 int serial_init(void)
 {
-	struct tiny_dev *tdev;
+	struct tinydev *tdev;
 	int ret;
 
 	tdev = tiny_dev_find(UCLASS_SERIAL, 0);
@@ -544,7 +544,7 @@ int serial_getc(void)
 
 void serial_putc(const char ch)
 {
-	struct tiny_dev *tdev = gd->tiny_serial;
+	struct tinydev *tdev = gd->tiny_serial;
 	struct tiny_serial_ops *ops;
 
 	/*
@@ -573,7 +573,7 @@ void serial_puts(const char *str)
 		serial_putc(*s);
 }
 
-int tiny_serial_setbrg(struct tiny_dev *tdev, int baudrate)
+int tiny_serial_setbrg(struct tinydev *tdev, int baudrate)
 {
 	const struct tiny_serial_ops *ops = tiny_serial_get_ops(tdev);
 
