@@ -48,9 +48,7 @@ struct dram_info {
 };
 
 struct rk3288_sdram_params {
-#if CONFIG_IS_ENABLED(OF_PLATDATA)
-	struct dtd_rockchip_rk3288_dmc of_plat;
-#endif
+	IF_OF_PLATDATA(struct dtd_rockchip_rk3288_dmc of_plat;)
 	struct rk3288_sdram_channel ch[2];
 	struct rk3288_sdram_pctl_timing pctl_timing;
 	struct rk3288_sdram_phy_timing phy_timing;

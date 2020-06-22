@@ -49,4 +49,7 @@ struct driver_info {
 	ll_entry_get(struct driver_info, __name, driver_info)
 
 void populate_phandle_data(void);
+
+#define IF_OF_PLATDATA(x) CONFIG_IS_ENABLED(OF_PLATDATA, (x))
+
 #endif
