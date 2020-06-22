@@ -352,6 +352,20 @@ struct spi_nor {
 	u32 erase_size;
 };
 
+struct tiny_spi_nor {
+	struct tiny_mtd_info		mtd;
+	struct spi_slave *spi;
+	const struct flash_info	*info;
+	u8			addr_width;
+	u8			read_opcode;
+	u8			read_dummy;
+	enum spi_nor_protocol	read_proto;
+	u32			flags;
+	u8			cmd_buf[SPI_NOR_MAX_CMD_SIZE];
+	void *priv;
+	u32 size;
+};
+
 static inline void spi_nor_set_flash_node(struct spi_nor *nor,
 					  const struct device_node *np)
 {
@@ -435,6 +449,10 @@ struct spi_nor_hwcaps {
  *
  * Return: 0 for success, others for failure.
  */
+#if !CONFIG_IS_ENABLED(TINY_SPI)
 int spi_nor_scan(struct spi_nor *nor);
+#else
+int spi_nor_scan(struct tiny_spi_nor *nor);
+#endif
 
 #endif

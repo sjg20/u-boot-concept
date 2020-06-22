@@ -118,10 +118,8 @@ static int rkspi_wait_till_not_busy(struct rockchip_spi *regs)
 	return 0;
 }
 
-static void spi_cs_activate(struct udevice *dev, uint cs)
+static void spi_cs_activate_bus(struct rockchip_spi_priv *priv, uint cs)
 {
-	struct udevice *bus = dev->parent;
-	struct rockchip_spi_priv *priv = dev_get_priv(bus);
 	struct rockchip_spi *regs = priv->regs;
 
 	/* If it's too soon to do another transaction, wait */
@@ -143,10 +141,8 @@ static void spi_cs_activate(struct udevice *dev, uint cs)
 		udelay(priv->activate_delay_us);
 }
 
-static void spi_cs_deactivate(struct udevice *dev, uint cs)
+static void spi_cs_deactivate_bus(struct rockchip_spi_priv *priv, uint cs)
 {
-	struct udevice *bus = dev->parent;
-	struct rockchip_spi_priv *priv = dev_get_priv(bus);
 	struct rockchip_spi *regs = priv->regs;
 
 	debug("deactivate cs%u\n", cs);
@@ -157,54 +153,6 @@ static void spi_cs_deactivate(struct udevice *dev, uint cs)
 		priv->last_transaction_us = timer_get_us();
 }
 
-#if CONFIG_IS_ENABLED(OF_PLATDATA)
-static int conv_of_platdata(struct udevice *dev)
-{
-	struct rockchip_spi_platdata *plat = dev->platdata;
-	struct dtd_rockchip_rk3288_spi *dtplat = &plat->of_plat;
-	struct rockchip_spi_priv *priv = dev_get_priv(dev);
-	int ret;
-
-	priv->base = dtplat->reg[0];
-	priv->frequency = 20000000;
-	ret = clk_get_by_driver_info(dev, dtplat->clocks, &priv->clk);
-	if (ret < 0)
-		return log_ret(ret);
-	dev->req_seq = 0;
-
-	return 0;
-}
-#endif
-
-static int rockchip_spi_ofdata_to_platdata(struct udevice *bus)
-{
-#if !CONFIG_IS_ENABLED(OF_PLATDATA)
-	struct rockchip_spi_priv *priv = dev_get_priv(bus);
-	int ret;
-
-	priv->base = dev_read_addr(bus);
-
-	ret = clk_get_by_index(bus, 0, &priv->clk);
-	if (ret < 0) {
-		debug("%s: Could not get clock for %s: %d\n", __func__,
-		      bus->name, ret);
-		return ret;
-	}
-
-	priv->frequency =
-		dev_read_u32_default(bus, "spi-max-frequency", 50000000);
-	priv->deactivate_delay_us =
-		dev_read_u32_default(bus, "spi-deactivate-delay", 0);
-	priv->activate_delay_us =
-		dev_read_u32_default(bus, "spi-activate-delay", 0);
-
-	debug("%s: base=%x, max-frequency=%d, deactivate_delay=%d\n",
-	      __func__, (uint)priv->base, priv->frequency,
-	      priv->deactivate_delay_us);
-#endif
-
-	return 0;
-}
 
 static int rockchip_spi_calc_modclk(ulong max_freq)
 {
@@ -234,17 +182,10 @@ static int rockchip_spi_calc_modclk(ulong max_freq)
 	return gpll_hz / div;
 }
 
-static int rockchip_spi_probe(struct udevice *bus)
+static int rockchip_spi_probe_(struct rockchip_spi_priv *priv)
 {
-	struct rockchip_spi_priv *priv = dev_get_priv(bus);
 	int ret;
 
-	debug("%s: probe\n", __func__);
-#if CONFIG_IS_ENABLED(OF_PLATDATA)
-	ret = conv_of_platdata(bus);
-	if (ret)
-		return log_ret(ret);
-#endif
 	priv->regs = (struct rockchip_spi *)priv->base;
 
 	priv->last_transaction_us = timer_get_us();
@@ -262,17 +203,13 @@ static int rockchip_spi_probe(struct udevice *bus)
 		return log_ret(ret);
 	}
 	priv->input_rate = ret;
-	if (dev_get_driver_data(bus) == RK_SPI_RK33XX)
-		priv->master_manages_fifo = true;
 	debug("%s: rate = %u\n", __func__, priv->input_rate);
 
 	return 0;
 }
 
-static int rockchip_spi_claim_bus(struct udevice *dev)
+static int rockchip_spi_claim_bus_(struct rockchip_spi_priv *priv)
 {
-	struct udevice *bus = dev->parent;
-	struct rockchip_spi_priv *priv = dev_get_priv(bus);
 	struct rockchip_spi *regs = priv->regs;
 	uint ctrlr0;
 
@@ -323,21 +260,16 @@ static int rockchip_spi_claim_bus(struct udevice *dev)
 	return 0;
 }
 
-static int rockchip_spi_release_bus(struct udevice *dev)
+static int rockchip_spi_release_bus_(struct rockchip_spi_priv *priv)
 {
-	struct udevice *bus = dev->parent;
-	struct rockchip_spi_priv *priv = dev_get_priv(bus);
-
 	rkspi_enable_chip(priv->regs, false);
 
 	return 0;
 }
 
-static inline int rockchip_spi_16bit_reader(struct udevice *dev,
-					    u8 **din, int *len)
+static int rockchip_spi_16bit_reader(struct rockchip_spi_priv *priv, u8 **din,
+				     int *len)
 {
-	struct udevice *bus = dev->parent;
-	struct rockchip_spi_priv *priv = dev_get_priv(bus);
 	struct rockchip_spi *regs = priv->regs;
 	const u32 saved_ctrlr0 = readl(&regs->ctrlr0);
 #if defined(DEBUG)
@@ -405,16 +337,14 @@ static inline int rockchip_spi_16bit_reader(struct udevice *dev,
 #endif
 	/* Restore the original transfer setup and return error-free. */
 	writel(saved_ctrlr0, &regs->ctrlr0);
+
 	return 0;
 }
 
-static int rockchip_spi_xfer(struct udevice *dev, unsigned int bitlen,
-			   const void *dout, void *din, unsigned long flags)
+static int rockchip_spi_xfer_(struct rockchip_spi_priv *priv, uint bitlen,
+			      const void *dout, void *din, ulong flags, uint cs)
 {
-	struct udevice *bus = dev->parent;
-	struct rockchip_spi_priv *priv = dev_get_priv(bus);
 	struct rockchip_spi *regs = priv->regs;
-	struct dm_spi_slave_platdata *slave_plat = dev_get_parent_platdata(dev);
 	int len = bitlen >> 3;
 	const u8 *out = dout;
 	u8 *in = din;
@@ -428,7 +358,7 @@ static int rockchip_spi_xfer(struct udevice *dev, unsigned int bitlen,
 
 	/* Assert CS before transfer */
 	if (flags & SPI_XFER_BEGIN)
-		spi_cs_activate(dev, slave_plat->cs);
+		spi_cs_activate_bus(priv, cs);
 
 	/*
 	 * To ensure fast loading of firmware images (e.g. full U-Boot
@@ -437,7 +367,7 @@ static int rockchip_spi_xfer(struct udevice *dev, unsigned int bitlen,
 	 * FIFO element.
 	 */
 	if (!out)
-		ret = rockchip_spi_16bit_reader(dev, &in, &len);
+		ret = rockchip_spi_16bit_reader(priv, &in, &len);
 
 	/* This is the original 8bit reader/writer code */
 	while (len > 0) {
@@ -481,11 +411,41 @@ static int rockchip_spi_xfer(struct udevice *dev, unsigned int bitlen,
 
 	/* Deassert CS after transfer */
 	if (flags & SPI_XFER_END)
-		spi_cs_deactivate(dev, slave_plat->cs);
+		spi_cs_deactivate_bus(priv, cs);
 
 	rkspi_enable_chip(regs, false);
 
 	return ret;
+}
+
+#if !CONFIG_IS_ENABLED(TINY_SPI)
+static int rockchip_spi_claim_bus(struct udevice *dev)
+{
+	struct udevice *bus = dev_get_parent(dev);
+	struct rockchip_spi_priv *priv = dev_get_priv(bus);
+
+	return rockchip_spi_claim_bus_(priv);
+}
+
+static int rockchip_spi_release_bus(struct udevice *dev)
+{
+	struct udevice *bus = dev_get_parent(dev);
+	struct rockchip_spi_priv *priv = dev_get_priv(bus);
+
+	rockchip_spi_release_bus_(priv);
+
+	return 0;
+}
+
+static int rockchip_spi_xfer(struct udevice *dev, uint bitlen,
+			     const void *dout, void *din, ulong flags)
+{
+	struct dm_spi_slave_platdata *slave_plat = dev_get_parent_platdata(dev);
+	struct udevice *bus = dev_get_parent(dev);
+	struct rockchip_spi_priv *priv = dev_get_priv(bus);
+
+	return rockchip_spi_xfer_(priv, bitlen, dout, din, flags,
+				  slave_plat->cs);
 }
 
 static int rockchip_spi_set_speed(struct udevice *bus, uint speed)
@@ -506,6 +466,72 @@ static int rockchip_spi_set_mode(struct udevice *bus, uint mode)
 	struct rockchip_spi_priv *priv = dev_get_priv(bus);
 
 	priv->mode = mode;
+
+	return 0;
+}
+
+static int conv_of_platdata(struct udevice *dev)
+{
+#if CONFIG_IS_ENABLED(OF_PLATDATA)
+	struct rockchip_spi_platdata *plat = dev->platdata;
+	struct dtd_rockchip_rk3288_spi *dtplat = &plat->of_plat;
+	struct rockchip_spi_priv *priv = dev_get_priv(dev);
+	int ret;
+
+	priv->base = dtplat->reg[0];
+	priv->frequency = 20000000;
+	ret = clk_get_by_driver_info(dev, dtplat->clocks, &priv->clk);
+	if (ret < 0)
+		return log_ret(ret);
+	dev->req_seq = 0;
+#endif
+
+	return 0;
+}
+
+static int rockchip_spi_probe(struct udevice *bus)
+{
+	struct rockchip_spi_priv *priv = dev_get_priv(bus);
+	int ret;
+
+	debug("%s: probe\n", __func__);
+	if (CONFIG_IS_ENABLED(OF_PLATDATA)) {
+		ret = conv_of_platdata(bus);
+		if (ret)
+			return log_ret(ret);
+	}
+	if (dev_get_driver_data(bus) == RK_SPI_RK33XX)
+		priv->master_manages_fifo = true;
+
+	return rockchip_spi_probe_(priv);
+}
+
+static int rockchip_spi_ofdata_to_platdata(struct udevice *bus)
+{
+#if !CONFIG_IS_ENABLED(OF_PLATDATA)
+	struct rockchip_spi_priv *priv = dev_get_priv(bus);
+	int ret;
+
+	priv->base = dev_read_addr(bus);
+
+	ret = clk_get_by_index(bus, 0, &priv->clk);
+	if (ret < 0) {
+		debug("%s: Could not get clock for %s: %d\n", __func__,
+		      bus->name, ret);
+		return ret;
+	}
+
+	priv->frequency =
+		dev_read_u32_default(bus, "spi-max-frequency", 50000000);
+	priv->deactivate_delay_us =
+		dev_read_u32_default(bus, "spi-deactivate-delay", 0);
+	priv->activate_delay_us =
+		dev_read_u32_default(bus, "spi-activate-delay", 0);
+
+	debug("%s: base=%x, max-frequency=%d, deactivate_delay=%d\n",
+	      __func__, (uint)priv->base, priv->frequency,
+	      priv->deactivate_delay_us);
+#endif
 
 	return 0;
 }
@@ -541,5 +567,61 @@ U_BOOT_DRIVER(rockchip_rk3288_spi) = {
 	.priv_auto_alloc_size = sizeof(struct rockchip_spi_priv),
 	.probe	= rockchip_spi_probe,
 };
+
+#else /* TINY_SPI */
+static int rockchip_tiny_spi_claim_bus(struct tinydev *tbus, uint cs)
+{
+	struct rockchip_spi_priv *priv = tinydev_get_priv(tbus);
+
+	return rockchip_spi_claim_bus_(priv);
+}
+
+static int rockchip_tiny_spi_release_bus(struct tinydev *tbus, uint cs)
+{
+	struct rockchip_spi_priv *priv = tinydev_get_priv(tbus);
+
+	rockchip_spi_release_bus_(priv);
+
+	return 0;
+}
+
+static int rockchip_tiny_spi_xfer_bus(struct tinydev *tbus, uint bitlen,
+				      const void *dout, void *din, ulong flags,
+				      uint cs)
+{
+	struct rockchip_spi_priv *priv = tinydev_get_priv(tbus);
+
+	return rockchip_spi_xfer_(priv, bitlen, dout, din, flags, cs);
+}
+
+static int rockchip_spi_tiny_probe(struct tinydev *tdev)
+{
+	struct rockchip_spi_priv *priv = tinydev_get_priv(tdev);
+	struct dtd_rockchip_rk3288_spi *dtplat = tdev->dtplat;
+	int ret;
+
+	priv->base = dtplat->reg[0];
+	priv->frequency = 20000000;
+	ret = tiny_clk_get_by_driver_info(dtplat->clocks, &priv->tiny_clk);
+	if (ret < 0)
+		return log_ret(ret);
+
+	return rockchip_spi_probe_(priv);
+}
+
+static struct tiny_spi_ops rockchip_clk_tiny_ops = {
+	.claim_bus	= rockchip_tiny_spi_claim_bus,
+	.release_bus	= rockchip_tiny_spi_release_bus,
+	.xfer		= rockchip_tiny_spi_xfer_bus,
+};
+
+U_BOOT_TINY_DRIVER(rockchip_rk3288_spi) = {
+	.uclass_id	= UCLASS_SPI,
+	.probe		= rockchip_spi_tiny_probe,
+	.ops		= &rockchip_clk_tiny_ops,
+	DM_TINY_PRIV(<asm/arch-rockchip/spi.h>, \
+		sizeof(struct rockchip_spi_priv))
+};
+#endif
 
 U_BOOT_DRIVER_ALIAS(rockchip_rk3288_spi, rockchip_rk3368_spi)
