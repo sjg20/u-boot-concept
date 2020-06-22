@@ -14,6 +14,7 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#if !CONFIG_IS_ENABLED(TINY_SPI_FLASH)
 int spi_flash_read_dm(struct udevice *dev, u32 offset, size_t len, void *buf)
 {
 	return log_ret(sf_get_ops(dev)->read(dev, offset, len, buf));
@@ -102,3 +103,33 @@ UCLASS_DRIVER(spi_flash) = {
 	.post_bind	= spi_flash_post_bind,
 	.per_device_auto_alloc_size = sizeof(struct spi_flash),
 };
+#else /* TINY_SPI_FLASH */
+static int tiny_sf_probe(struct tinydev *tdev)
+{
+	return 0;
+}
+
+static int tiny_sf_read(struct tinydev *tdev, u32 offset, size_t len, void *buf)
+{
+	return -ENOSYS;
+}
+
+struct tiny_spi_flash_ops tiny_sf_ops = {
+	.read		= tiny_sf_read,
+};
+
+U_BOOT_TINY_DRIVER(jedec_spi_nor) = {
+	.uclass_id	= UCLASS_SPI_FLASH,
+	.probe		= tiny_sf_probe,
+	.ops		= &tiny_sf_ops,
+	DM_TINY_PRIV(<spi_flash.h>, sizeof(struct tiny_spi_nor))
+};
+
+int tiny_spi_flash_read(struct tinydev *tdev, u32 offset, size_t len,
+			void *buf)
+{
+	printf("%s: start\n", __func__);
+
+	return 0;
+}
+#endif

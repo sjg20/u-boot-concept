@@ -8,7 +8,9 @@ ifdef CONFIG_DM_SPI
 obj-y += spi-uclass.o
 obj-$(CONFIG_SANDBOX) += spi-emul-uclass.o
 obj-$(CONFIG_SOFT_SPI) += soft_spi.o
+ifeq ($(CONFIG_$(SPL_TPL_)TINY_SPI),)
 obj-$(CONFIG_SPI_MEM) += spi-mem.o
+endif
 obj-$(CONFIG_TI_QSPI) += ti_qspi.o
 else
 obj-y += spi.o

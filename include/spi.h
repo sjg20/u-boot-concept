@@ -542,6 +542,13 @@ struct dm_spi_emul_ops {
 		    const void *dout, void *din, unsigned long flags);
 };
 
+struct tiny_spi_ops {
+	int (*claim_bus)(struct tinydev *tdev, uint cs);
+	int (*release_bus)(struct tinydev *tdev, uint cs);
+	int (*xfer)(struct tinydev *dev, uint bitlen, const void *dout,
+		    void *din, ulong flags, uint cs);
+};
+
 /**
  * spi_find_bus_and_cs() - Find bus and slave devices by number
  *

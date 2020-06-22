@@ -36,6 +36,114 @@
 
 #define DEFAULT_READY_WAIT_JIFFIES		(40UL * HZ)
 
+#if CONFIG_IS_ENABLED(TINY_SPI)
+
+#define spi_nor tiny_spi_nor
+#define mtd_info tiny_mtd_info
+
+int spi_mem_exec_op(struct spi_slave *slave, const struct spi_mem_op *op)
+{
+	struct udevice *bus = slave->dev->parent;
+	struct dm_spi_ops *ops = spi_get_ops(bus);
+	unsigned int pos = 0;
+	const u8 *tx_buf = NULL;
+	u8 *rx_buf = NULL;
+	int op_len;
+	u32 flag;
+	int ret;
+	int i;
+
+	if (!spi_mem_supports_op(slave, op))
+		return -ENOTSUPP;
+
+	ret = spi_claim_bus(slave);
+	if (ret < 0)
+		return ret;
+
+	if (ops->mem_ops && ops->mem_ops->exec_op) {
+		ret = ops->mem_ops->exec_op(slave, op);
+
+		/*
+		 * Some controllers only optimize specific paths (typically the
+		 * read path) and expect the core to use the regular SPI
+		 * interface in other cases.
+		 */
+		if (!ret || ret != -ENOTSUPP) {
+			spi_release_bus(slave);
+			return ret;
+		}
+	}
+
+	if (op->data.nbytes) {
+		if (op->data.dir == SPI_MEM_DATA_IN)
+			rx_buf = op->data.buf.in;
+		else
+			tx_buf = op->data.buf.out;
+	}
+
+	op_len = sizeof(op->cmd.opcode) + op->addr.nbytes + op->dummy.nbytes;
+
+	/*
+	 * Avoid using malloc() here so that we can use this code in SPL where
+	 * simple malloc may be used. That implementation does not allow free()
+	 * so repeated calls to this code can exhaust the space.
+	 *
+	 * The value of op_len is small, since it does not include the actual
+	 * data being sent, only the op-code and address. In fact, it should be
+	 * possible to just use a small fixed value here instead of op_len.
+	 */
+	u8 op_buf[op_len];
+
+	op_buf[pos++] = op->cmd.opcode;
+
+	if (op->addr.nbytes) {
+		for (i = 0; i < op->addr.nbytes; i++)
+			op_buf[pos + i] = op->addr.val >>
+				(8 * (op->addr.nbytes - i - 1));
+
+		pos += op->addr.nbytes;
+	}
+
+	if (op->dummy.nbytes)
+		memset(op_buf + pos, 0xff, op->dummy.nbytes);
+
+	/* 1st transfer: opcode + address + dummy cycles */
+	flag = SPI_XFER_BEGIN;
+	/* Make sure to set END bit if no tx or rx data messages follow */
+	if (!tx_buf && !rx_buf)
+		flag |= SPI_XFER_END;
+
+	ret = spi_xfer(slave, op_len * 8, op_buf, NULL, flag);
+	if (ret)
+		return ret;
+
+	/* 2nd transfer: rx or tx data path */
+	if (tx_buf || rx_buf) {
+		ret = spi_xfer(slave, op->data.nbytes * 8, tx_buf,
+			       rx_buf, SPI_XFER_END);
+		if (ret)
+			return ret;
+	}
+
+	spi_release_bus(slave);
+
+	for (i = 0; i < pos; i++)
+		debug("%02x ", op_buf[i]);
+	debug("| [%dB %s] ",
+	      tx_buf || rx_buf ? op->data.nbytes : 0,
+	      tx_buf || rx_buf ? (tx_buf ? "out" : "in") : "-");
+	for (i = 0; i < op->data.nbytes; i++)
+		debug("%02x ", tx_buf ? tx_buf[i] : rx_buf[i]);
+	debug("[ret %d]\n", ret);
+
+	if (ret < 0)
+		return ret;
+
+	return 0;
+}
+
+#endif /* TINY_SPI */
+
 static int spi_nor_read_write_reg(struct spi_nor *nor, struct spi_mem_op
 		*op, void *buf)
 {
@@ -724,9 +832,11 @@ int spi_nor_scan(struct spi_nor *nor)
 	int ret;
 
 	/* Reset SPI protocol for all commands. */
-	nor->reg_proto = SNOR_PROTO_1_1_1;
 	nor->read_proto = SNOR_PROTO_1_1_1;
+#if !CONFIG_IS_ENABLED(TINY_SPI)
+	nor->reg_proto = SNOR_PROTO_1_1_1;
 	nor->write_proto = SNOR_PROTO_1_1_1;
+#endif
 
 	if (spi->mode & SPI_RX_QUAD)
 		hwcaps.mask |= SNOR_HWCAPS_READ_1_1_4;
@@ -739,16 +849,17 @@ int spi_nor_scan(struct spi_nor *nor)
 	if (ret)
 		return ret;
 
-	mtd->name = "spi-flash";
 	mtd->priv = nor;
+	mtd->size = info->sector_size * info->n_sectors;
+#if !CONFIG_IS_ENABLED(TINY_SPI)
+	mtd->name = "spi-flash";
 	mtd->type = MTD_NORFLASH;
 	mtd->writesize = 1;
 	mtd->flags = MTD_CAP_NORFLASH;
-	mtd->size = info->sector_size * info->n_sectors;
 	mtd->_erase = spi_nor_erase;
 	mtd->_read = spi_nor_read;
 	mtd->_write = spi_nor_write;
-
+#endif
 	nor->size = mtd->size;
 
 	if (info->flags & USE_FSR)
