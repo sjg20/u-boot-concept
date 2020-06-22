@@ -30,22 +30,7 @@
 #include <power/regulator.h>
 #include <power/rk8xx_pmic.h>
 
-struct chan_info {
-	struct rk3288_ddr_pctl *pctl;
-	struct rk3288_ddr_publ *publ;
-	struct rk3288_msch *msch;
-};
-
-struct dram_info {
-	struct chan_info chan[2];
-	struct ram_info info;
-	struct clk ddr_clk;
-	struct rockchip_cru *cru;
-	struct rk3288_grf *grf;
-	struct rk3288_sgrf *sgrf;
-	struct rk3288_pmu *pmu;
-	bool is_veyron;
-};
+struct dtd_rockchip_rk3288_dmc;
 
 struct rk3288_sdram_params {
 	IF_OF_PLATDATA(struct dtd_rockchip_rk3288_dmc of_plat;)
@@ -294,7 +279,7 @@ static void pctl_cfg(int channel, struct rk3288_ddr_pctl *pctl,
 	setbits_le32(&pctl->scfg, 1);
 }
 
-static void phy_cfg(const struct chan_info *chan, int channel,
+static void phy_cfg(const struct rk_chan_info *chan, int channel,
 		    struct rk3288_sdram_params *sdram_params)
 {
 	struct rk3288_ddr_publ *publ = chan->publ;
@@ -439,7 +424,7 @@ static void move_to_config_state(struct rk3288_ddr_publ *publ,
 	}
 }
 
-static void set_bandwidth_ratio(const struct chan_info *chan, int channel,
+static void set_bandwidth_ratio(const struct rk_chan_info *chan, int channel,
 				u32 n, struct rk3288_grf *grf)
 {
 	struct rk3288_ddr_pctl *pctl = chan->pctl;
@@ -477,7 +462,7 @@ static void set_bandwidth_ratio(const struct chan_info *chan, int channel,
 	setbits_le32(&pctl->dfistcfg0, 1 << 2);
 }
 
-static int data_training(const struct chan_info *chan, int channel,
+static int data_training(const struct rk_chan_info *chan, int channel,
 			 struct rk3288_sdram_params *sdram_params)
 {
 	unsigned int j;
@@ -540,7 +525,7 @@ static int data_training(const struct chan_info *chan, int channel,
 	return ret;
 }
 
-static void move_to_access_state(const struct chan_info *chan)
+static void move_to_access_state(const struct rk_chan_info *chan)
 {
 	struct rk3288_ddr_publ *publ = chan->publ;
 	struct rk3288_ddr_pctl *pctl = chan->pctl;
@@ -580,7 +565,7 @@ static void move_to_access_state(const struct chan_info *chan)
 	}
 }
 
-static void dram_cfg_rbc(const struct chan_info *chan, u32 chnum,
+static void dram_cfg_rbc(const struct rk_chan_info *chan, u32 chnum,
 			 struct rk3288_sdram_params *sdram_params)
 {
 	struct rk3288_ddr_publ *publ = chan->publ;
@@ -594,7 +579,7 @@ static void dram_cfg_rbc(const struct chan_info *chan, u32 chnum,
 	writel(sdram_params->base.ddrconfig, &chan->msch->ddrconf);
 }
 
-static void dram_all_config(const struct dram_info *dram,
+static void dram_all_config(const struct rk_dram_info *dram,
 			    struct rk3288_sdram_params *sdram_params)
 {
 	unsigned int chan;
@@ -622,12 +607,12 @@ static void dram_all_config(const struct dram_info *dram,
 	rk_clrsetreg(&dram->sgrf->soc_con2, 0x1f, sdram_params->base.stride);
 }
 
-static int sdram_rank_bw_detect(struct dram_info *dram, int channel,
+static int sdram_rank_bw_detect(struct rk_dram_info *dram, int channel,
 		struct rk3288_sdram_params *sdram_params)
 {
 	int reg;
 	int need_trainig = 0;
-	const struct chan_info *chan = &dram->chan[channel];
+	const struct rk_chan_info *chan = &dram->chan[channel];
 	struct rk3288_ddr_publ *publ = chan->publ;
 
 	if (data_training(chan, channel, sdram_params) < 0) {
@@ -675,12 +660,12 @@ static int sdram_rank_bw_detect(struct dram_info *dram, int channel,
 	return 0;
 }
 
-static int sdram_col_row_detect(struct dram_info *dram, int channel,
+static int sdram_col_row_detect(struct rk_dram_info *dram, int channel,
 		struct rk3288_sdram_params *sdram_params)
 {
 	int row, col;
 	unsigned int addr;
-	const struct chan_info *chan = &dram->chan[channel];
+	const struct rk_chan_info *chan = &dram->chan[channel];
 	struct rk3288_ddr_pctl *pctl = chan->pctl;
 	struct rk3288_ddr_publ *publ = chan->publ;
 	int ret = 0;
@@ -785,7 +770,7 @@ static int sdram_get_stride(struct rk3288_sdram_params *sdram_params)
 	return ret;
 }
 
-static int sdram_init(struct dram_info *dram,
+static int sdram_init(struct rk_dram_info *dram,
 		      struct rk3288_sdram_params *sdram_params)
 {
 	int channel;
@@ -810,7 +795,7 @@ static int sdram_init(struct dram_info *dram,
 	}
 
 	for (channel = 0; channel < 2; channel++) {
-		const struct chan_info *chan = &dram->chan[channel];
+		const struct rk_chan_info *chan = &dram->chan[channel];
 		struct rk3288_ddr_pctl *pctl = chan->pctl;
 		struct rk3288_ddr_publ *publ = chan->publ;
 
@@ -930,7 +915,7 @@ error:
 	hang();
 }
 
-static int veyron_init(struct dram_info *priv)
+static int veyron_init(struct rk_dram_info *priv)
 {
 	struct udevice *pmic;
 	int ret;
@@ -954,11 +939,9 @@ static int veyron_init(struct dram_info *priv)
 	return 0;
 }
 
-static int setup_sdram(struct udevice *dev)
+static int setup_sdram(struct rk_dram_info *priv,
+		       struct rk3288_sdram_params *params)
 {
-	struct dram_info *priv = dev_get_priv(dev);
-	struct rk3288_sdram_params *params = dev_get_platdata(dev);
-
 	if (IS_ENABLED(CONFIG_ROCKCHIP_FAST_SPL) && priv->is_veyron) {
 		int ret;
 
@@ -970,6 +953,7 @@ static int setup_sdram(struct udevice *dev)
 	return sdram_init(priv, params);
 }
 
+#if !CONFIG_IS_ENABLED(TINY_RAM)
 static int rk3288_dmc_ofdata_to_platdata(struct udevice *dev)
 {
 #if !CONFIG_IS_ENABLED(OF_PLATDATA)
@@ -1003,7 +987,7 @@ static int rk3288_dmc_ofdata_to_platdata(struct udevice *dev)
 		return -EINVAL;
 	}
 	if (IS_ENABLED(CONFIG_ROCKCHIP_FAST_SPL)) {
-		struct dram_info *priv = dev_get_priv(dev);
+		struct rk_dram_info *priv = dev_get_priv(dev);
 
 		priv->is_veyron = !fdt_node_check_compatible(gd->fdt_blob, 0,
 							     "google,veyron");
@@ -1015,12 +999,12 @@ static int rk3288_dmc_ofdata_to_platdata(struct udevice *dev)
 
 	return 0;
 }
+#endif /* !TINY_RAM */
 
-static int conv_of_platdata(struct udevice *dev)
+static int conv_of_platdata(struct rk3288_sdram_params *plat,
+			    struct dtd_rockchip_rk3288_dmc *of_plat)
 {
 #if CONFIG_IS_ENABLED(OF_PLATDATA)
-	struct rk3288_sdram_params *plat = dev_get_platdata(dev);
-	struct dtd_rockchip_rk3288_dmc *of_plat = &plat->of_plat;
 	int ret;
 
 	memcpy(&plat->pctl_timing, of_plat->rockchip_pctl_timing,
@@ -1030,7 +1014,7 @@ static int conv_of_platdata(struct udevice *dev)
 	memcpy(&plat->base, of_plat->rockchip_sdram_params, sizeof(plat->base));
 	/* Rk3288 supports dual-channel, set default channel num to 2 */
 	plat->num_channels = 2;
-	ret = regmap_init_mem_platdata(dev, of_plat->reg,
+	ret = regmap_init_mem_platdata(of_plat->reg,
 				       ARRAY_SIZE(of_plat->reg) / 2,
 				       &plat->map);
 	if (ret)
@@ -1040,50 +1024,65 @@ static int conv_of_platdata(struct udevice *dev)
 	return 0;
 }
 
-static int rk3288_dmc_probe(struct udevice *dev)
+static int complete_probe(struct rk3288_sdram_params *plat,
+			  struct rk_dram_info *priv)
 {
-	struct rk3288_sdram_params *plat = dev_get_platdata(dev);
 	struct udevice *dev_clk;
 	struct regmap *map;
 	int ret;
-	struct dram_info *priv = dev_get_priv(dev);
+
+	map = syscon_get_regmap_by_driver_data(ROCKCHIP_SYSCON_NOC);
+	if (IS_ERR(map))
+		return PTR_ERR(map);
+	priv->chan[0].msch = regmap_get_range(map, 0);
+	priv->chan[1].msch = (struct rk3288_msch *)
+			(regmap_get_range(map, 0) + 0x80);
+
+	priv->grf = syscon_get_first_range(ROCKCHIP_SYSCON_GRF);
+	priv->sgrf = syscon_get_first_range(ROCKCHIP_SYSCON_SGRF);
+
+	priv->chan[0].pctl = regmap_get_range(plat->map, 0);
+	priv->chan[0].publ = regmap_get_range(plat->map, 1);
+	priv->chan[1].pctl = regmap_get_range(plat->map, 2);
+	priv->chan[1].publ = regmap_get_range(plat->map, 3);
+
+	ret = rockchip_get_clk(&dev_clk);
+	if (ret)
+		return ret;
+	priv->ddr_clk.id = CLK_DDR;
+	ret = clk_request(dev_clk, &priv->ddr_clk);
+	if (ret)
+		return ret;
+
+	priv->cru = rockchip_get_cru();
+	if (IS_ERR(priv->cru))
+		return PTR_ERR(priv->cru);
+	ret = setup_sdram(priv, plat);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+
+#if !CONFIG_IS_ENABLED(TINY_RAM)
+static int rk3288_dmc_probe(struct udevice *dev)
+{
+	struct rk3288_sdram_params *plat = dev_get_platdata(dev);
+	int ret;
+	struct rk_dram_info *priv = dev_get_priv(dev);
 
 	priv->pmu = syscon_get_first_range(ROCKCHIP_SYSCON_PMU);
 	if (DO_SDRAM_INIT) {
 		if (CONFIG_IS_ENABLED(OF_PLATDATA)) {
-			ret = conv_of_platdata(dev);
+			ret = conv_of_platdata(plat,
+				CONFIG_IS_ENABLED(OF_PLATDATA, (&plat->of_plat),
+						  (NULL)));
 			if (ret)
-				return ret;
+				return log_msg_ret("plat", ret);
 		}
-		map = syscon_get_regmap_by_driver_data(ROCKCHIP_SYSCON_NOC);
-		if (IS_ERR(map))
-			return PTR_ERR(map);
-		priv->chan[0].msch = regmap_get_range(map, 0);
-		priv->chan[1].msch = (struct rk3288_msch *)
-				(regmap_get_range(map, 0) + 0x80);
-
-		priv->grf = syscon_get_first_range(ROCKCHIP_SYSCON_GRF);
-		priv->sgrf = syscon_get_first_range(ROCKCHIP_SYSCON_SGRF);
-
-		priv->chan[0].pctl = regmap_get_range(plat->map, 0);
-		priv->chan[0].publ = regmap_get_range(plat->map, 1);
-		priv->chan[1].pctl = regmap_get_range(plat->map, 2);
-		priv->chan[1].publ = regmap_get_range(plat->map, 3);
-
-		ret = rockchip_get_clk(&dev_clk);
+		ret = complete_probe(plat, priv);
 		if (ret)
-			return ret;
-		priv->ddr_clk.id = CLK_DDR;
-		ret = clk_request(dev_clk, &priv->ddr_clk);
-		if (ret)
-			return ret;
-
-		priv->cru = rockchip_get_cru();
-		if (IS_ERR(priv->cru))
-			return PTR_ERR(priv->cru);
-		ret = setup_sdram(dev);
-		if (ret)
-			return ret;
+			return log_msg_ret("complete", ret);
 	} else {
 		priv->info.base = CONFIG_SYS_SDRAM_BASE;
 		priv->info.size = rockchip_sdram_size(
@@ -1095,7 +1094,7 @@ static int rk3288_dmc_probe(struct udevice *dev)
 
 static int rk3288_dmc_get_info(struct udevice *dev, struct ram_info *info)
 {
-	struct dram_info *priv = dev_get_priv(dev);
+	struct rk_dram_info *priv = dev_get_priv(dev);
 
 	*info = priv->info;
 
@@ -1111,15 +1110,60 @@ static const struct udevice_id rk3288_dmc_ids[] = {
 	{ }
 };
 
-U_BOOT_DRIVER(dmc_rk3288) = {
+U_BOOT_DRIVER(rockchip_rk3288_dmc) = {
 	.name = "rockchip_rk3288_dmc",
 	.id = UCLASS_RAM,
 	.of_match = rk3288_dmc_ids,
 	.ops = &rk3288_dmc_ops,
 	.ofdata_to_platdata = rk3288_dmc_ofdata_to_platdata,
 	.probe = rk3288_dmc_probe,
-	.priv_auto_alloc_size = sizeof(struct dram_info),
+	.priv_auto_alloc_size = sizeof(struct rk_dram_info),
 #if DO_SDRAM_INIT
 	.platdata_auto_alloc_size = sizeof(struct rk3288_sdram_params),
 #endif
 };
+#else /* TINY_RAM */
+static int tiny_rk3288_dmc_probe(struct tinydev *tdev)
+{
+	struct rk_dram_info *priv = tinydev_get_priv(tdev);
+	int ret;
+
+	priv->pmu = syscon_get_first_range(ROCKCHIP_SYSCON_PMU);
+	if (DO_SDRAM_INIT) {
+		struct rk3288_sdram_params plat;
+
+		ret = conv_of_platdata(&plat, tdev->dtplat);
+		if (ret)
+			return log_msg_ret("plat", ret);
+		ret = complete_probe(&plat, priv);
+		if (ret)
+			return log_msg_ret("complete", ret);
+	} else {
+		priv->info.base = CONFIG_SYS_SDRAM_BASE;
+		priv->info.size = rockchip_sdram_size(
+				(phys_addr_t)&priv->pmu->sys_reg[2]);
+	}
+
+	return 0;
+}
+static int tiny_rk3288_dmc_get_info(struct tinydev *dev, struct ram_info *info)
+{
+	struct rk_dram_info *priv = tinydev_get_priv(dev);
+
+	*info = priv->info;
+
+	return 0;
+}
+
+static struct tiny_ram_ops tiny_rk3288_dmc_ops = {
+	.get_info = tiny_rk3288_dmc_get_info,
+};
+
+U_BOOT_TINY_DRIVER(rockchip_rk3288_dmc) = {
+	.uclass_id = UCLASS_RAM,
+	.ops = &tiny_rk3288_dmc_ops,
+	.probe = tiny_rk3288_dmc_probe,
+	DM_TINY_PRIV(<asm/arch-rockchip/sdram_rk3288.h>, \
+		     sizeof(struct rk_dram_info))
+};
+#endif

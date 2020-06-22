@@ -244,7 +244,7 @@ U_BOOT_DEVICE(serial_sandbox_non_fdt) = {
 
 #else /* TINY_SERIAL */
 
-static int sandbox_serial_tiny_putc(struct tiny_dev *tdev, const char ch)
+static int sandbox_serial_tiny_putc(struct tinydev *tdev, const char ch)
 {
 	os_putc(ch);
 

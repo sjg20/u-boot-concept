@@ -99,4 +99,21 @@ struct rk3288_base_params {
 	u32 odt;
 };
 
+struct rk_chan_info {
+	struct rk3288_ddr_pctl *pctl;
+	struct rk3288_ddr_publ *publ;
+	struct rk3288_msch *msch;
+};
+
+struct rk_dram_info {
+	struct rk_chan_info chan[2];
+	struct ram_info info;
+	struct clk ddr_clk;
+	struct rockchip_cru *cru;
+	struct rk3288_grf *grf;
+	struct rk3288_sgrf *sgrf;
+	struct rk3288_pmu *pmu;
+	bool is_veyron;
+};
+
 #endif

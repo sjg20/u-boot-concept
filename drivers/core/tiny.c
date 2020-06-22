@@ -5,27 +5,26 @@
  * Copyright 2020 Google LLC
  */
 
-#define LOG_DEBUG
-
 #include <common.h>
 #include <dm.h>
 #include <log.h>
 #include <malloc.h>
 
-struct tiny_dev *tiny_dev_find(enum uclass_id uclass_id, int seq)
+struct tinydev *tiny_dev_find(enum uclass_id uclass_id, int seq)
 {
-	struct tiny_dev *info = ll_entry_start(struct tiny_dev, tiny_dev);
-	const int n_ents = ll_entry_count(struct tiny_dev, tiny_dev);
-	struct tiny_dev *entry;
+	struct tinydev *info = ll_entry_start(struct tinydev, tiny_dev);
+	const int n_ents = ll_entry_count(struct tinydev, tiny_dev);
+	struct tinydev *entry;
 
+	log_debug("find %d seq %d: n_ents=%d\n", uclass_id, seq, n_ents);
 	for (entry = info; entry != info + n_ents; entry++) {
 		struct tiny_drv *drv = entry->drv;
 
-		log_debug("entry %p, uclass %d %d\n", entry,
+		log_debug("- entry %p, uclass %d %d\n", entry,
 			  drv->uclass_id, uclass_id);
 		if (drv->uclass_id == uclass_id) {
 			if (CONFIG_IS_ENABLED(TINY_RELOC)) {
-				struct tiny_dev *copy;
+				struct tinydev *copy;
 
 				copy = malloc(sizeof(*copy));
 				if (!copy)
@@ -40,7 +39,7 @@ struct tiny_dev *tiny_dev_find(enum uclass_id uclass_id, int seq)
 	return NULL;
 }
 
-int tiny_dev_probe(struct tiny_dev *tdev)
+int tiny_dev_probe(struct tinydev *tdev)
 {
 	struct tiny_drv *drv;
 	int ret;
@@ -48,15 +47,12 @@ int tiny_dev_probe(struct tiny_dev *tdev)
 	if (tdev->flags & DM_FLAG_ACTIVATED)
 		return 0;
 	drv = tdev->drv;
-// 	printf("drv->priv_size=%d, tdev->priv=%p\n", drv->priv_size, tdev->priv);
 
 	if (!tdev->priv && drv->priv_size) {
 		tdev->priv = calloc(1, drv->priv_size);
-// 		printf("alloced %p %p\n", tdev, tdev->priv);
 		if (!tdev->priv)
 			return -ENOMEM;
 	}
-// 	printf("2drv->priv_size=%d, tdev->priv=%p\n", drv->priv_size, tdev->priv);
 	if (drv->probe) {
 		ret = drv->probe(tdev);
 		if (ret)
@@ -66,4 +62,20 @@ int tiny_dev_probe(struct tiny_dev *tdev)
 	tdev->flags |= DM_FLAG_ACTIVATED;
 
 	return 0;
+}
+
+struct tinydev *tiny_dev_get(enum uclass_id uclass_id, int seq)
+{
+	struct tinydev *dev;
+	int ret;
+
+	dev = tiny_dev_find(uclass_id, seq);
+	if (!dev)
+		return NULL;
+
+	ret = tiny_dev_probe(dev);
+	if (ret)
+		return NULL;
+
+	return dev;
 }

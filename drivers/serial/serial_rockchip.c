@@ -68,7 +68,7 @@ U_BOOT_DRIVER(rockchip_rk3288_uart) = {
 };
 #else /* TINY_SERIAL */
 
-static int rockchip_serial_tiny_probe(struct tiny_dev *tdev)
+static int rockchip_serial_tiny_probe(struct tinydev *tdev)
 {
 	struct dtd_rockchip_rk3288_uart *dtplat = tdev->dtplat;
 	struct ns16550_platdata *plat = tdev->priv;
@@ -91,14 +91,14 @@ static int rockchip_serial_tiny_probe(struct tiny_dev *tdev)
 	return 0;
 }
 
-static int rockchip_serial_tiny_setbrg(struct tiny_dev *tdev, int baudrate)
+static int rockchip_serial_tiny_setbrg(struct tinydev *tdev, int baudrate)
 {
 	struct ns16550_platdata *plat = tdev->priv;
 
 	return ns16550_tiny_setbrg(plat, baudrate);
 }
 
-static int rockchip_serial_tiny_putc(struct tiny_dev *tdev, const char ch)
+static int rockchip_serial_tiny_putc(struct tinydev *tdev, const char ch)
 {
 	struct ns16550_platdata *plat = tdev->priv;
 

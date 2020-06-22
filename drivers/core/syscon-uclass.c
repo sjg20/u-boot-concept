@@ -52,7 +52,7 @@ static int syscon_pre_probe(struct udevice *dev)
 #if CONFIG_IS_ENABLED(OF_PLATDATA)
 	struct syscon_base_platdata *plat = dev_get_platdata(dev);
 
-	return regmap_init_mem_platdata(dev, plat->reg, ARRAY_SIZE(plat->reg),
+	return regmap_init_mem_platdata(plat->reg, ARRAY_SIZE(plat->reg),
 					&priv->regmap);
 #else
 	return regmap_init_mem(dev_ofnode(dev), &priv->regmap);
