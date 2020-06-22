@@ -85,6 +85,12 @@ const int ddrconf_table[] = {
 
 #if defined(CONFIG_TPL_BUILD) || \
 	(!defined(CONFIG_TPL) && defined(CONFIG_SPL_BUILD))
+#define DO_SDRAM_INIT 1
+#else
+#define DO_SDRAM_INIT 0
+#endif
+
+#if DO_SDRAM_INIT
 static void copy_to_reg(u32 *dest, const u32 *src, u32 n)
 {
 	int i;
@@ -1040,8 +1046,7 @@ static int conv_of_platdata(struct udevice *dev)
 
 static int rk3288_dmc_probe(struct udevice *dev)
 {
-#if defined(CONFIG_TPL_BUILD) || \
-	(!defined(CONFIG_TPL) && defined(CONFIG_SPL_BUILD))
+#if DO_SDRAM_INIT
 	struct rk3288_sdram_params *plat = dev_get_platdata(dev);
 	struct udevice *dev_clk;
 	struct regmap *map;
@@ -1050,8 +1055,7 @@ static int rk3288_dmc_probe(struct udevice *dev)
 	struct dram_info *priv = dev_get_priv(dev);
 
 	priv->pmu = syscon_get_first_range(ROCKCHIP_SYSCON_PMU);
-#if defined(CONFIG_TPL_BUILD) || \
-	(!defined(CONFIG_TPL) && defined(CONFIG_SPL_BUILD))
+#if DO_SDRAM_INIT
 #if CONFIG_IS_ENABLED(OF_PLATDATA)
 	ret = conv_of_platdata(dev);
 	if (ret)
@@ -1118,14 +1122,12 @@ U_BOOT_DRIVER(dmc_rk3288) = {
 	.id = UCLASS_RAM,
 	.of_match = rk3288_dmc_ids,
 	.ops = &rk3288_dmc_ops,
-#if defined(CONFIG_TPL_BUILD) || \
-	(!defined(CONFIG_TPL) && defined(CONFIG_SPL_BUILD))
+#if DO_SDRAM_INIT
 	.ofdata_to_platdata = rk3288_dmc_ofdata_to_platdata,
 #endif
 	.probe = rk3288_dmc_probe,
 	.priv_auto_alloc_size = sizeof(struct dram_info),
-#if defined(CONFIG_TPL_BUILD) || \
-	(!defined(CONFIG_TPL) && defined(CONFIG_SPL_BUILD))
+#if DO_SDRAM_INIT
 	.platdata_auto_alloc_size = sizeof(struct rk3288_sdram_params),
 #endif
 };
