@@ -972,12 +972,16 @@ static int setup_sdram(struct udevice *dev)
 
 	return sdram_init(priv, params);
 }
+#endif /* CONFIG_SPL_BUILD */
 
 static int rk3288_dmc_ofdata_to_platdata(struct udevice *dev)
 {
 #if !CONFIG_IS_ENABLED(OF_PLATDATA)
 	struct rk3288_sdram_params *params = dev_get_platdata(dev);
 	int ret;
+
+	if (!DO_SDRAM_INIT)
+		return 0;
 
 	/* Rk3288 supports dual-channel, set default channel num to 2 */
 	params->num_channels = 2;
@@ -1015,7 +1019,6 @@ static int rk3288_dmc_ofdata_to_platdata(struct udevice *dev)
 
 	return 0;
 }
-#endif /* CONFIG_SPL_BUILD */
 
 #if CONFIG_IS_ENABLED(OF_PLATDATA)
 static int conv_of_platdata(struct udevice *dev)
@@ -1119,9 +1122,7 @@ U_BOOT_DRIVER(dmc_rk3288) = {
 	.id = UCLASS_RAM,
 	.of_match = rk3288_dmc_ids,
 	.ops = &rk3288_dmc_ops,
-#if DO_SDRAM_INIT
 	.ofdata_to_platdata = rk3288_dmc_ofdata_to_platdata,
-#endif
 	.probe = rk3288_dmc_probe,
 	.priv_auto_alloc_size = sizeof(struct dram_info),
 #if DO_SDRAM_INIT
