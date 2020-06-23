@@ -23,6 +23,7 @@
 #include <asm/io.h>
 #include <asm/arch-rockchip/clock.h>
 #include <asm/arch-rockchip/periph.h>
+#include <asm/arch-rockchip/spi.h>
 #include <dm/pinctrl.h>
 #include "rk_spi.h"
 
@@ -50,20 +51,9 @@ struct rockchip_spi_platdata {
 	uint activate_delay_us;		/* Delay to wait after activate */
 };
 
-struct rockchip_spi_priv {
-	struct rockchip_spi *regs;
-	struct clk clk;
-	struct tiny_clk tiny_clk;
-	unsigned int max_freq;
-	unsigned int mode;
-	ulong last_transaction_us;	/* Time of last transaction end */
-	unsigned int speed_hz;
-	unsigned int last_speed_hz;
-	uint input_rate;
-};
-
 #define SPI_FIFO_DEPTH		32
 
+#if !CONFIG_IS_ENABLED(TINY_SPI)
 static void rkspi_dump_regs(struct rockchip_spi *regs)
 {
 	debug("ctrl0: \t\t0x%08x\n", readl(&regs->ctrlr0));
@@ -566,12 +556,8 @@ static const struct udevice_id rockchip_spi_ids[] = {
 	{ }
 };
 
-U_BOOT_DRIVER(rockchip_spi) = {
-#if CONFIG_IS_ENABLED(OF_PLATDATA)
+U_BOOT_DRIVER(rockchip_rk3288_spi) = {
 	.name	= "rockchip_rk3288_spi",
-#else
-	.name	= "rockchip_spi",
-#endif
 	.id	= UCLASS_SPI,
 	.of_match = rockchip_spi_ids,
 	.ops	= &rockchip_spi_ops,
@@ -580,3 +566,12 @@ U_BOOT_DRIVER(rockchip_spi) = {
 	.priv_auto_alloc_size = sizeof(struct rockchip_spi_priv),
 	.probe	= rockchip_spi_probe,
 };
+#else /* TINY_SPI */
+U_BOOT_TINY_DRIVER(rockchip_spi) = {
+	.uclass_id	= UCLASS_SPI,
+// 	.probe		= rockchip_clk_tiny_probe,
+// 	.ops		= &rockchip_clk_tiny_ops,
+	DM_TINY_PRIV(<asm/arch-rockchip/spi.h>, \
+		sizeof(struct rockchip_spi_priv))
+};
+#endif

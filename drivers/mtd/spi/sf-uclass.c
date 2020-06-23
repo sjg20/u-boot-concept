@@ -14,6 +14,7 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#if !CONFIG_IS_ENABLED(TINY_SPI_FLASH)
 int spi_flash_read_dm(struct udevice *dev, u32 offset, size_t len, void *buf)
 {
 	return log_ret(sf_get_ops(dev)->read(dev, offset, len, buf));
@@ -102,3 +103,5 @@ UCLASS_DRIVER(spi_flash) = {
 	.post_bind	= spi_flash_post_bind,
 	.per_device_auto_alloc_size = sizeof(struct spi_flash),
 };
+#else /* TINY_SPI_FLASH */
+#endif

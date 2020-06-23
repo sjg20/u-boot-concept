@@ -17,6 +17,7 @@
 
 #include "sf_internal.h"
 
+#if !CONFIG_IS_ENABLED(TINY_SPI_FLASH)
 /**
  * spi_flash_probe_slave() - Probe for a SPI flash device on a bus
  *
@@ -171,3 +172,6 @@ U_BOOT_DRIVER(spi_flash_std) = {
 };
 
 #endif /* CONFIG_DM_SPI_FLASH */
+#else /* TINY_SPI_FLASH */
+#endif
+

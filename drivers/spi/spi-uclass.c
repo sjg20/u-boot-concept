@@ -16,6 +16,7 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#if !CONFIG_IS_ENABLED(TINY_SPI)
 #define SPI_DEFAULT_SPEED_HZ 100000
 
 static int spi_set_speed_mode(struct udevice *bus, int speed, int mode)
@@ -520,3 +521,5 @@ U_BOOT_DRIVER(spi_generic_drv) = {
 	.name		= "spi_generic_drv",
 	.id		= UCLASS_SPI_GENERIC,
 };
+#else /* TINY_SPI */
+#endif /* TINY_SPI */
