@@ -41,10 +41,10 @@
 #define spi_nor tiny_spi_nor
 #define mtd_info tiny_mtd_info
 
-int spi_mem_exec_op(struct spi_slave *slave, const struct spi_mem_op *op)
+static int spi_mem_exec_op_(struct tinydev *tdev, const struct spi_mem_op *op)
 {
-	struct udevice *bus = slave->tdev->parent;
-	struct dm_spi_ops *ops = spi_get_ops(bus);
+	struct tinydev *bus = tinydev_get_parent(tdev);
+	struct tiny_spi_ops *ops = tiny_spi_get_ops(bus);
 	unsigned int pos = 0;
 	const u8 *tx_buf = NULL;
 	u8 *rx_buf = NULL;
@@ -53,12 +53,12 @@ int spi_mem_exec_op(struct spi_slave *slave, const struct spi_mem_op *op)
 	int ret;
 	int i;
 
-	ret = spi_claim_bus(slave);
+	ret = tiny_spi_claim_bus(tdev);
 	if (ret < 0)
 		return ret;
 
-	if (ops->mem_ops && ops->mem_ops->exec_op) {
-		ret = ops->mem_ops->exec_op(slave, op);
+	if (ops->exec_op) {
+		ret = ops->exec_op(tdev, op);
 
 		/*
 		 * Some controllers only optimize specific paths (typically the
@@ -66,7 +66,7 @@ int spi_mem_exec_op(struct spi_slave *slave, const struct spi_mem_op *op)
 		 * interface in other cases.
 		 */
 		if (!ret || ret != -ENOTSUPP) {
-			spi_release_bus(slave);
+			tiny_spi_release_bus(tdev);
 			return ret;
 		}
 	}
@@ -110,19 +110,19 @@ int spi_mem_exec_op(struct spi_slave *slave, const struct spi_mem_op *op)
 	if (!tx_buf && !rx_buf)
 		flag |= SPI_XFER_END;
 
-	ret = spi_xfer(slave, op_len * 8, op_buf, NULL, flag);
+	ret = tiny_spi_xfer(tdev, op_len * 8, op_buf, NULL, flag);
 	if (ret)
 		return ret;
 
 	/* 2nd transfer: rx or tx data path */
 	if (tx_buf || rx_buf) {
-		ret = spi_xfer(slave, op->data.nbytes * 8, tx_buf,
-			       rx_buf, SPI_XFER_END);
+		ret = tiny_spi_xfer(tdev, op->data.nbytes * 8, tx_buf, rx_buf,
+			       SPI_XFER_END);
 		if (ret)
 			return ret;
 	}
 
-	spi_release_bus(slave);
+	tiny_spi_release_bus(tdev);
 
 	for (i = 0; i < pos; i++)
 		debug("%02x ", op_buf[i]);
@@ -148,7 +148,8 @@ static int spi_nor_read_write_reg(struct spi_nor *nor, struct spi_mem_op
 		op->data.buf.in = buf;
 	else
 		op->data.buf.out = buf;
-	return spi_mem_exec_op(nor->spi, op);
+
+	return spi_mem_exec_op_(nor->tdev, op);
 }
 
 static int spi_nor_read_reg(struct spi_nor *nor, u8 code, u8 *val, int len)
@@ -203,7 +204,7 @@ static ssize_t spi_nor_read_data(struct spi_nor *nor, loff_t from, size_t len,
 		if (ret)
 			return ret;
 
-		ret = spi_mem_exec_op(nor->spi, &op);
+		ret = spi_mem_exec_op_(nor->tdev, &op);
 		if (ret)
 			return ret;
 
@@ -456,7 +457,8 @@ static int spi_nor_wait_till_ready(struct spi_nor *nor)
  * Erase an address range on the nor chip.  The address range may extend
  * one or more erase sectors.  Return an error is there is a problem erasing.
  */
-static int spi_nor_erase(struct mtd_info *mtd, struct erase_info *instr)
+__maybe_unused static int spi_nor_erase(struct mtd_info *mtd,
+					struct erase_info *instr)
 {
 	return -ENOTSUPP;
 }
@@ -521,8 +523,8 @@ read_err:
  * FLASH_PAGESIZE chunks.  The address range may be any size provided
  * it is within the physical boundaries.
  */
-static int spi_nor_write(struct mtd_info *mtd, loff_t to, size_t len,
-			 size_t *retlen, const u_char *buf)
+__maybe_unused static int spi_nor_write(struct mtd_info *mtd, loff_t to,
+					size_t len, size_t *retlen, const u_char *buf)
 {
 	return -ENOTSUPP;
 }

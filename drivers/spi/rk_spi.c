@@ -569,15 +569,17 @@ U_BOOT_DRIVER(rockchip_rk3288_spi) = {
 };
 
 #else /* TINY_SPI */
-static int rockchip_tiny_spi_claim_bus(struct tinydev *tbus, uint cs)
+static int rockchip_tiny_spi_claim_bus(struct tinydev *tdev)
 {
+	struct tinydev *tbus = tinydev_get_parent(tdev);
 	struct rockchip_spi_priv *priv = tinydev_get_priv(tbus);
 
 	return rockchip_spi_claim_bus_(priv);
 }
 
-static int rockchip_tiny_spi_release_bus(struct tinydev *tbus, uint cs)
+static int rockchip_tiny_spi_release_bus(struct tinydev *tdev)
 {
+	struct tinydev *tbus = tinydev_get_parent(tdev);
 	struct rockchip_spi_priv *priv = tinydev_get_priv(tbus);
 
 	rockchip_spi_release_bus_(priv);
@@ -585,13 +587,17 @@ static int rockchip_tiny_spi_release_bus(struct tinydev *tbus, uint cs)
 	return 0;
 }
 
-static int rockchip_tiny_spi_xfer_bus(struct tinydev *tbus, uint bitlen,
-				      const void *dout, void *din, ulong flags,
-				      uint cs)
+static int rockchip_tiny_spi_xfer(struct tinydev *tdev, uint bitlen,
+				  const void *dout, void *din, ulong flags)
 {
+	struct tinydev *tbus = tinydev_get_parent(tdev);
 	struct rockchip_spi_priv *priv = tinydev_get_priv(tbus);
+	struct dm_spi_slave_platdata *slave_plat;
 
-	return rockchip_spi_xfer_(priv, bitlen, dout, din, flags, cs);
+	slave_plat = tinydev_get_data(tdev, DEVDATAT_PARENT_PLAT);
+
+	return rockchip_spi_xfer_(priv, bitlen, dout, din, flags,
+				  slave_plat->cs);
 }
 
 static int rockchip_spi_tiny_probe(struct tinydev *tdev)
@@ -609,16 +615,16 @@ static int rockchip_spi_tiny_probe(struct tinydev *tdev)
 	return rockchip_spi_probe_(priv);
 }
 
-static struct tiny_spi_ops rockchip_clk_tiny_ops = {
+static struct tiny_spi_ops rockchip_spi_tiny_ops = {
 	.claim_bus	= rockchip_tiny_spi_claim_bus,
 	.release_bus	= rockchip_tiny_spi_release_bus,
-	.xfer		= rockchip_tiny_spi_xfer_bus,
+	.xfer		= rockchip_tiny_spi_xfer,
 };
 
 U_BOOT_TINY_DRIVER(rockchip_rk3288_spi) = {
 	.uclass_id	= UCLASS_SPI,
 	.probe		= rockchip_spi_tiny_probe,
-	.ops		= &rockchip_clk_tiny_ops,
+	.ops		= &rockchip_spi_tiny_ops,
 	DM_TINY_PRIV(<asm/arch-rockchip/spi.h>, \
 		sizeof(struct rockchip_spi_priv))
 };

@@ -522,5 +522,58 @@ U_BOOT_DRIVER(spi_generic_drv) = {
 	.id		= UCLASS_SPI_GENERIC,
 };
 #else /* TINY_SPI */
+#if 0
+int tiny_spi_claim_bus(struct tinydev *dev)
+{
+	struct udevice *bus = dev->parent;
+	struct dm_spi_ops *ops = spi_get_ops(bus);
+	struct dm_spi_bus *spi = dev_get_uclass_priv(bus);
+	struct spi_slave *slave = dev_get_parent_priv(dev);
+	int speed;
+
+	speed = slave->max_hz;
+	if (spi->max_hz) {
+		if (speed)
+			speed = min(speed, (int)spi->max_hz);
+		else
+			speed = spi->max_hz;
+	}
+	if (!speed)
+		speed = SPI_DEFAULT_SPEED_HZ;
+	if (speed != slave->speed) {
+		int ret = spi_set_speed_mode(bus, speed, slave->mode);
+
+		if (ret)
+			return log_ret(ret);
+		slave->speed = speed;
+	}
+
+	return log_ret(ops->claim_bus ? ops->claim_bus(dev) : 0);
+}
+
+void dm_spi_release_bus(struct udevice *dev)
+{
+	struct udevice *bus = dev->parent;
+	struct dm_spi_ops *ops = spi_get_ops(bus);
+
+	if (ops->release_bus)
+		ops->release_bus(dev);
+}
+
+int dm_spi_xfer(struct udevice *dev, unsigned int bitlen,
+		const void *dout, void *din, unsigned long flags)
+{
+	struct udevice *bus = dev->parent;
+	struct dm_spi_ops *ops = spi_get_ops(bus);
+
+	if (bus->uclass->uc_drv->id != UCLASS_SPI)
+		return -EOPNOTSUPP;
+	if (!ops->xfer)
+		return -ENOSYS;
+
+	return ops->xfer(dev, bitlen, dout, din, flags);
+}
+#endif
+
 struct tinydev *tiny_spi_flash_probe(void);
 #endif /* TINY_SPI */

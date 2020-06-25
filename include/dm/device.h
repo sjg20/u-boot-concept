@@ -348,6 +348,9 @@ struct tiny_drv {
  */
 #define DM_TINY_PRIV(hdr,size)		.priv_size	= size,
 
+/* A struct tinydev * stored as an index into the device linker-list */
+typedef u8 tinydev_idx_t;
+
 /**
  * struct tinydev - A tiny device
  *
@@ -360,14 +363,26 @@ struct tiny_drv {
  * @flags: Flags for this device DM_FLAG_...
  */
 struct tinydev {
-	void *dtplat;
-	void *priv;
-	struct tiny_drv *drv;
-	u32 flags;
+	/* TODO: Convert these into ushort offsets to a base address */
+	void *dtplat;		/* u16 word index into dtd data section */
+	void *priv;		/* u16 word index into device priv section */
+	struct tiny_drv *drv;	/* u8 index into driver list? */
+	u16 flags;		/* switch to u8? */
+	tinydev_idx_t parent;
 };
 
+/* Declare a tiny device with a given name */
 #define U_BOOT_TINY_DEVICE(__name)					\
 	ll_entry_declare(struct tinydev, __name, tiny_dev)
+
+/**
+ * U_BOOT_TINY_DEVICE_START - Find the start of the list of tiny devices
+ *
+ * Use this like this:
+ * struct tinydev *start = U_BOOT_TINY_DEVICE_START;
+ */
+#define U_BOOT_TINY_DEVICE_START					\
+	ll_entry_start(struct tinydev, tiny_dev)
 
 struct tinydev *tiny_dev_find(enum uclass_id uclass_id, int seq);
 
@@ -375,15 +390,30 @@ int tiny_dev_probe(struct tinydev *tdev);
 
 struct tinydev *tiny_dev_get(enum uclass_id uclass_id, int seq);
 
-static inline struct tinydev *tinydev_get_parent(struct tinydev *tdev)
-{
-	return NULL;
-}
+struct tinydev *tinydev_from_dev_idx(tinydev_idx_t index);
+
+tinydev_idx_t tinydev_to_dev_idx(struct tinydev *tdev);
+
+struct tinydev *tinydev_get_parent(struct tinydev *tdev);
 
 static inline void *tinydev_get_priv(struct tinydev *tdev)
 {
 	return tdev->priv;
 }
+
+/* enum dm_data_t - Types of data that can be attached to devices */
+enum dm_data_t {
+	DEVDATAT_PLAT,
+	DEVDATAT_PARENT_PLAT,
+	DEVDATAT_UC_PLAT,
+
+	DEVDATAT_PRIV,
+	DEVDATAT_PARENT_PRIV,
+	DEVDATAT_UC_PRIV,
+};
+
+void *tinydev_get_data(struct tinydev *tdev, enum dm_data_t type);
+
 
 /**
  * dev_get_platdata() - Get the platform data for a device
