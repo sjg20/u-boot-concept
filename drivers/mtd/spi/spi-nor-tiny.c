@@ -43,7 +43,7 @@
 
 int spi_mem_exec_op(struct spi_slave *slave, const struct spi_mem_op *op)
 {
-	struct udevice *bus = slave->dev->parent;
+	struct udevice *bus = slave->tdev->parent;
 	struct dm_spi_ops *ops = spi_get_ops(bus);
 	unsigned int pos = 0;
 	const u8 *tx_buf = NULL;
@@ -52,9 +52,6 @@ int spi_mem_exec_op(struct spi_slave *slave, const struct spi_mem_op *op)
 	u32 flag;
 	int ret;
 	int i;
-
-	if (!spi_mem_supports_op(slave, op))
-		return -ENOTSUPP;
 
 	ret = spi_claim_bus(slave);
 	if (ret < 0)
