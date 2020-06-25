@@ -106,6 +106,13 @@ UCLASS_DRIVER(spi_flash) = {
 #else /* TINY_SPI_FLASH */
 static int tiny_sf_probe(struct tinydev *tdev)
 {
+	struct tiny_spi_nor *nor = tinydev_get_priv(tdev);
+	int ret;
+
+	ret = spi_nor_scan(nor);
+	if (ret)
+		return ret;
+
 	return 0;
 }
 
