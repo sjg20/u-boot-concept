@@ -68,6 +68,8 @@ typedef struct global_data {
 	struct udevice	*dm_root_f;	/* Pre-relocation root instance */
 	struct list_head uclass_root;	/* Head of core tree */
 #endif
+#if CONFIG_IS_ENABLED(TINY)
+#endif
 #ifdef CONFIG_TIMER
 	struct udevice	*timer;		/* Timer instance for Driver Model */
 #endif

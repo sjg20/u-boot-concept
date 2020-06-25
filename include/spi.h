@@ -12,6 +12,8 @@
 #include <common.h>
 #include <linux/bitops.h>
 
+struct spi_mem_op;
+
 /* SPI mode flags */
 #define SPI_CPHA	BIT(0)			/* clock phase */
 #define SPI_CPOL	BIT(1)			/* clock polarity */
@@ -133,6 +135,7 @@ enum spi_polarity {
 struct spi_slave {
 #ifdef CONFIG_DM_SPI
 	struct udevice *dev;	/* struct spi_slave is dev->parentdata */
+	struct tinydev *tdev;
 	uint max_hz;
 	uint speed;
 #else
@@ -543,11 +546,21 @@ struct dm_spi_emul_ops {
 };
 
 struct tiny_spi_ops {
-	int (*claim_bus)(struct tinydev *tdev, uint cs);
-	int (*release_bus)(struct tinydev *tdev, uint cs);
-	int (*xfer)(struct tinydev *dev, uint bitlen, const void *dout,
-		    void *din, ulong flags, uint cs);
+	int (*claim_bus)(struct tinydev *tdev);
+	int (*release_bus)(struct tinydev *tdev);
+	int (*xfer)(struct tinydev *tdev, uint bitlen, const void *dout,
+		    void *din, ulong flags);
+	int (*adjust_op_size)(struct tinydev *tdev, struct spi_mem_op *op);
+	bool (*supports_op)(struct tinydev *tdev,
+			    const struct spi_mem_op *op);
+	int (*exec_op)(struct tinydev *tdev,
+		       const struct spi_mem_op *op);
 };
+
+int tiny_spi_claim_bus(struct tinydev *dev);
+int tiny_spi_release_bus(struct tinydev *dev);
+int tiny_spi_xfer(struct tinydev *dev, uint bitlen, const void *dout, void *din,
+		  ulong flags);
 
 /**
  * spi_find_bus_and_cs() - Find bus and slave devices by number
@@ -724,6 +737,7 @@ int dm_spi_get_mmap(struct udevice *dev, ulong *map_basep, uint *map_sizep,
 /* Access the operations for a SPI device */
 #define spi_get_ops(dev)	((struct dm_spi_ops *)(dev)->driver->ops)
 #define spi_emul_get_ops(dev)	((struct dm_spi_emul_ops *)(dev)->driver->ops)
+#define tiny_spi_get_ops(tdev)	((struct tiny_spi_ops *)(tdev)->drv->ops)
 #endif /* CONFIG_DM_SPI */
 
 #endif	/* _SPI_H_ */

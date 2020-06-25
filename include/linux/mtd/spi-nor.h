@@ -353,6 +353,7 @@ struct spi_nor {
 };
 
 struct tiny_spi_nor {
+	struct tinydev *tdev;	/* SPI device */
 	struct tiny_mtd_info		mtd;
 	struct spi_slave *spi;
 	const struct flash_info	*info;

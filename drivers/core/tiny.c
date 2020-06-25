@@ -79,3 +79,22 @@ struct tinydev *tiny_dev_get(enum uclass_id uclass_id, int seq)
 
 	return dev;
 }
+
+struct tinydev *tinydev_from_dev_idx(tinydev_idx_t index)
+{
+	struct tinydev *start = U_BOOT_TINY_DEVICE_START;
+
+	return start + index;
+}
+
+tinydev_idx_t tinydev_to_dev_idx(struct tinydev *tdev)
+{
+	struct tinydev *start = U_BOOT_TINY_DEVICE_START;
+
+	return tdev - start;
+}
+
+struct tinydev *tinydev_get_parent(struct tinydev *tdev)
+{
+	return tinydev_from_dev_idx(tdev->parent);
+}
