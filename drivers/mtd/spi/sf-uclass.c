@@ -5,6 +5,7 @@
 
 #include <common.h>
 #include <dm.h>
+#include <dt-structs.h>
 #include <log.h>
 #include <malloc.h>
 #include <spi.h>
@@ -106,8 +107,28 @@ UCLASS_DRIVER(spi_flash) = {
 #else /* TINY_SPI_FLASH */
 static int tiny_sf_probe(struct tinydev *tdev)
 {
+	const struct dtd_jedec_spi_nor *dtplat = tdev->dtplat;
 	struct tiny_spi_nor *nor = tinydev_get_priv(tdev);
+	struct dm_spi_slave_platdata *slave_plat;
+	struct spi_slave *slave = nor->spi;
+	bool exists;
 	int ret;
+
+	slave = tinydev_ensure_data(tdev, DEVDATAT_PARENT_PRIV, sizeof(*slave),
+				    &exists);
+	if (!exists) {
+		slave->tdev = tdev;
+		slave->max_hz = dtplat->spi_max_frequency;
+		slave->wordlen = SPI_DEFAULT_WORDLEN;
+		/* Leave mode as the default 0 */
+	}
+	slave_plat = tinydev_ensure_data(tdev, DEVDATAT_PARENT_PLAT,
+					 sizeof(*slave_plat), &exists);
+	if (!exists) {
+		slave_plat->cs = dtplat->reg[0];
+		slave_plat->max_hz = dtplat->spi_max_frequency;
+		/* Leave mode as the default 0 */
+	}
 
 	ret = spi_nor_scan(nor);
 	if (ret)

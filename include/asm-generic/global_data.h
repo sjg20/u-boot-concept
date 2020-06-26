@@ -23,6 +23,7 @@
 #include <fdtdec.h>
 #include <membuff.h>
 #include <linux/list.h>
+#include <dm/tiny_struct.h>
 
 typedef struct global_data {
 	struct bd_info *bd;
@@ -69,6 +70,7 @@ typedef struct global_data {
 	struct list_head uclass_root;	/* Head of core tree */
 #endif
 #if CONFIG_IS_ENABLED(TINY)
+	struct tinydev_info tinydev_info;
 #endif
 #ifdef CONFIG_TIMER
 	struct udevice	*timer;		/* Timer instance for Driver Model */
@@ -97,7 +99,7 @@ typedef struct global_data {
 #if CONFIG_VAL(SYS_MALLOC_F_LEN)
 	unsigned long malloc_base;	/* base address of early malloc() */
 	unsigned long malloc_limit;	/* limit address */
-	unsigned long malloc_ptr;	/* current address */
+	unsigned long malloc_ptr;	/* offset of next byte to allocate */
 #endif
 #ifdef CONFIG_PCI
 	struct pci_controller *hose;	/* PCI hose for early use */

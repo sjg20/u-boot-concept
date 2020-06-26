@@ -550,6 +550,15 @@ struct tiny_spi_ops {
 	int (*release_bus)(struct tinydev *tdev);
 	int (*xfer)(struct tinydev *tdev, uint bitlen, const void *dout,
 		    void *din, ulong flags);
+	/**
+	 * Set transfer speed and mode
+	 * This sets a new speed to be applied for next tiny_spi_xfer().
+	 * @bus:	The SPI bus
+	 * @hz:		The transfer speed
+	 * @return 0 if OK, -ve on error
+	 */
+	int (*set_speed_mode)(struct tinydev *bus, uint hz, uint mode);
+
 	int (*adjust_op_size)(struct tinydev *tdev, struct spi_mem_op *op);
 	bool (*supports_op)(struct tinydev *tdev,
 			    const struct spi_mem_op *op);
@@ -557,10 +566,11 @@ struct tiny_spi_ops {
 		       const struct spi_mem_op *op);
 };
 
-int tiny_spi_claim_bus(struct tinydev *dev);
-int tiny_spi_release_bus(struct tinydev *dev);
-int tiny_spi_xfer(struct tinydev *dev, uint bitlen, const void *dout, void *din,
-		  ulong flags);
+int tiny_spi_claim_bus(struct tinydev *tdev);
+int tiny_spi_release_bus(struct tinydev *tdev);
+int tiny_spi_xfer(struct tinydev *tdev, uint bitlen, const void *dout,
+		  void *din, ulong flags);
+int tiny_spi_set_speed_mode(struct tinydev *bus, uint hz, uint mode);
 
 /**
  * spi_find_bus_and_cs() - Find bus and slave devices by number

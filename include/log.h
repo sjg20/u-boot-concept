@@ -59,6 +59,7 @@ enum log_category_t {
 	LOGC_DEVRES,	/* Device resources (devres_... functions) */
 	/* Advanced Configuration and Power Interface (ACPI) */
 	LOGC_ACPI,
+	LOGC_TINYDEV,	/* Tiny devices (struct tinydev) */
 
 	LOGC_COUNT,	/* Number of log categories */
 	LOGC_END,	/* Sentinel value for a list of log categories */

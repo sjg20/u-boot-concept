@@ -16,8 +16,9 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#if !CONFIG_IS_ENABLED(TINY_SPI)
 #define SPI_DEFAULT_SPEED_HZ 100000
+
+#if !CONFIG_IS_ENABLED(TINY_SPI)
 
 static int spi_set_speed_mode(struct udevice *bus, int speed, int mode)
 {
@@ -522,58 +523,69 @@ U_BOOT_DRIVER(spi_generic_drv) = {
 	.id		= UCLASS_SPI_GENERIC,
 };
 #else /* TINY_SPI */
-#if 0
-int tiny_spi_claim_bus(struct tinydev *dev)
+int tiny_spi_claim_bus(struct tinydev *tdev)
 {
-	struct udevice *bus = dev->parent;
-	struct dm_spi_ops *ops = spi_get_ops(bus);
-	struct dm_spi_bus *spi = dev_get_uclass_priv(bus);
-	struct spi_slave *slave = dev_get_parent_priv(dev);
-	int speed;
+	struct tinydev *bus = tinydev_get_parent(tdev);
+	struct tiny_spi_ops *ops = tiny_spi_get_ops(bus);
+	struct spi_slave *slave = tinydev_get_data(tdev, DEVDATAT_PARENT_PLAT);
+	int speed = 0;
+	int ret;
 
 	speed = slave->max_hz;
-	if (spi->max_hz) {
-		if (speed)
-			speed = min(speed, (int)spi->max_hz);
-		else
-			speed = spi->max_hz;
-	}
 	if (!speed)
 		speed = SPI_DEFAULT_SPEED_HZ;
 	if (speed != slave->speed) {
-		int ret = spi_set_speed_mode(bus, speed, slave->mode);
+		int ret = tiny_spi_set_speed_mode(bus, speed, slave->mode);
 
 		if (ret)
-			return log_ret(ret);
+			return log_msg_ret("speed", ret);
 		slave->speed = speed;
 	}
 
-	return log_ret(ops->claim_bus ? ops->claim_bus(dev) : 0);
+	if (ops->claim_bus) {
+		ret = ops->claim_bus(tdev);
+		if (ret)
+			return log_msg_ret("claim", ret);
+	}
+
+	return 0;
 }
 
-void dm_spi_release_bus(struct udevice *dev)
+int tiny_spi_release_bus(struct tinydev *tdev)
 {
-	struct udevice *bus = dev->parent;
-	struct dm_spi_ops *ops = spi_get_ops(bus);
+	struct tinydev *bus = tinydev_get_parent(tdev);
+	struct tiny_spi_ops *ops = tiny_spi_get_ops(bus);
+	int ret;
 
-	if (ops->release_bus)
-		ops->release_bus(dev);
+	if (ops->release_bus) {
+		ret = ops->release_bus(tdev);
+		if (ret)
+			return log_ret(ret);
+	}
+
+	return 0;
 }
 
-int dm_spi_xfer(struct udevice *dev, unsigned int bitlen,
+int tiny_spi_xfer(struct tinydev *tdev, unsigned int bitlen,
 		const void *dout, void *din, unsigned long flags)
 {
-	struct udevice *bus = dev->parent;
-	struct dm_spi_ops *ops = spi_get_ops(bus);
+	struct tinydev *bus = tinydev_get_parent(tdev);
+	struct tiny_spi_ops *ops = tiny_spi_get_ops(bus);
 
-	if (bus->uclass->uc_drv->id != UCLASS_SPI)
-		return -EOPNOTSUPP;
 	if (!ops->xfer)
 		return -ENOSYS;
 
-	return ops->xfer(dev, bitlen, dout, din, flags);
+	return ops->xfer(tdev, bitlen, dout, din, flags);
 }
-#endif
 
-struct tinydev *tiny_spi_flash_probe(void);
+int tiny_spi_set_speed_mode(struct tinydev *bus, uint hz, uint mode)
+{
+	struct tiny_spi_ops *ops = tiny_spi_get_ops(bus);
+
+	if (!ops->xfer)
+		return -ENOSYS;
+
+	return ops->set_speed_mode(bus, hz, mode);
+}
+
 #endif /* TINY_SPI */
