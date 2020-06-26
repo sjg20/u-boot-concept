@@ -11,6 +11,7 @@
 #define _DM_DEVICE_H
 
 #include <dm/ofnode.h>
+#include <dm/tiny_struct.h>
 #include <dm/uclass-id.h>
 #include <fdtdec.h>
 #include <linker_lists.h>
@@ -348,9 +349,6 @@ struct tiny_drv {
  */
 #define DM_TINY_PRIV(hdr,size)		.priv_size	= size,
 
-/* A struct tinydev * stored as an index into the device linker-list */
-typedef u8 tinydev_idx_t;
-
 /**
  * struct tinydev - A tiny device
  *
@@ -392,28 +390,21 @@ struct tinydev *tiny_dev_get(enum uclass_id uclass_id, int seq);
 
 struct tinydev *tinydev_from_dev_idx(tinydev_idx_t index);
 
-tinydev_idx_t tinydev_to_dev_idx(struct tinydev *tdev);
+tinydev_idx_t tinydev_to_dev_idx(const struct tinydev *tdev);
 
-struct tinydev *tinydev_get_parent(struct tinydev *tdev);
+struct tinydev *tinydev_get_parent(const struct tinydev *tdev);
 
-static inline void *tinydev_get_priv(struct tinydev *tdev)
+static inline void *tinydev_get_priv(const struct tinydev *tdev)
 {
 	return tdev->priv;
 }
 
-/* enum dm_data_t - Types of data that can be attached to devices */
-enum dm_data_t {
-	DEVDATAT_PLAT,
-	DEVDATAT_PARENT_PLAT,
-	DEVDATAT_UC_PLAT,
-
-	DEVDATAT_PRIV,
-	DEVDATAT_PARENT_PRIV,
-	DEVDATAT_UC_PRIV,
-};
-
 void *tinydev_get_data(struct tinydev *tdev, enum dm_data_t type);
 
+void *tinydev_alloc_data(struct tinydev *tdev, enum dm_data_t type, int size);
+
+void *tinydev_ensure_data(struct tinydev *tdev, enum dm_data_t type, int size,
+			  bool *existsp);
 
 /**
  * dev_get_platdata() - Get the platform data for a device

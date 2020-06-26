@@ -46,6 +46,25 @@ config SPL_TINY
 	  the full driver-model infrastructure. This can be useful for saving
 	  memory in SPL.
 
+config TIMYDEV_SHRINK_DATA
+	bool "Use smaller data structures"
+	help
+	  Tinydev supports storing some data structures in a smaller form to
+	  save memory. However this does increase code sixe so only enable
+	  this option if you have quite a lot of devices used by your board
+	  in SPL/TPL.
+
+config TINYDEV_DATA_MAX_COUNT
+	int "Number of tinydev data records to allow"
+	default 10
+	help
+	  With tinydev each device has a single priv pointer but it is possible
+	  to attach other kinds of pointers to tiny devices using a separate
+	  mechanism. This sets the maximum number that can be attached. See
+	  struct tinydev_info for the details. Mostly these slots are used by
+	  buses, so if you have a lot of I2C or SPI devices you may need to
+	  increase it.
+
 config SPL_TINY_RELOC
 	bool "Relocate devices into allocated memory before using them"
 	depends on SPL_TINY
