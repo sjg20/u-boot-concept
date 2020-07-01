@@ -100,7 +100,7 @@ static void rkspi_set_clk(struct rockchip_spi_priv *priv, uint speed)
 	/* Round up to the next even 16bit number */
 	clk_div = (clk_div + 1) & 0xfffe;
 
-	debug("spi speed %u, div %u\n", speed, clk_div);
+	log_debug("spi speed %u, div %u\n", speed, clk_div);
 
 	clrsetbits_le32(&priv->regs->baudr, 0xffff, clk_div);
 	priv->last_speed_hz = speed;
@@ -187,7 +187,7 @@ static int rockchip_spi_calc_modclk(ulong max_freq)
 
 static int rockchip_spi_probe_(struct rockchip_spi_priv *priv)
 {
-	int ret;
+	int ret, rate;
 
 	priv->regs = (struct rockchip_spi *)priv->base;
 
@@ -199,8 +199,18 @@ static int rockchip_spi_probe_(struct rockchip_spi_priv *priv)
 		priv->max_freq = ROCKCHIP_SPI_MAX_RATE;
 
 	/* Find a module-input clock that fits with the max_freq setting */
-	ret = clk_set_rate(&priv->clk,
-			   rockchip_spi_calc_modclk(priv->max_freq));
+	log_debug("priv->max_freq=%d, modclk=%d\n", priv->max_freq,
+		  rockchip_spi_calc_modclk(priv->max_freq));
+	rate = rockchip_spi_calc_modclk(priv->max_freq);
+	if (!CONFIG_IS_ENABLED(TINY_SPI)) {
+		log_debug("clk=%s, id=%ld\n", priv->clk.dev->name,
+			  priv->clk.id);
+		ret = clk_set_rate(&priv->clk, rate);
+	} else {
+		log_debug("clk=%s, id=%ld\n", priv->tiny_clk.tdev->name,
+			  priv->tiny_clk.id);
+		ret = tiny_clk_set_rate(&priv->tiny_clk, rate);
+	}
 	if (ret < 0) {
 		debug("%s: Failed to set clock: %d\n", __func__, ret);
 		return log_ret(ret);
@@ -294,7 +304,6 @@ static int rockchip_spi_16bit_reader(struct rockchip_spi_priv *priv, u8 **din,
 	if (priv->master_manages_fifo)
 		max_chunk_size = ROCKCHIP_SPI_MAX_TRANLEN;
 
-	// rockchip_spi_configure(dev, mode, size)
 	rkspi_enable_chip(regs, false);
 	clrsetbits_le32(&regs->ctrlr0,
 			TMOD_MASK << TMOD_SHIFT,
@@ -311,6 +320,7 @@ static int rockchip_spi_16bit_reader(struct rockchip_spi_priv *priv, u8 **din,
 	while (frames) {
 		u32 chunk_size = min(frames, max_chunk_size);
 
+		log_debug("frames=%u\n", frames);
 		frames -= chunk_size;
 
 		writew(chunk_size - 1, &regs->ctrlr1);
@@ -327,6 +337,7 @@ static int rockchip_spi_16bit_reader(struct rockchip_spi_priv *priv, u8 **din,
 				*in++ = val & 0xff;
 				*in++ = val >> 8;
 			}
+			log_debug("chunk_size=%u\n", chunk_size);
 		} while (chunk_size);
 
 		rkspi_enable_chip(regs, false);
@@ -369,14 +380,14 @@ static int rockchip_spi_xfer_(struct rockchip_spi_priv *priv, uint bitlen,
 	 * case of read-only transfers by using the full 16bits of each
 	 * FIFO element.
 	 */
-	if (!out)
+	if (0 && !out)
 		ret = rockchip_spi_16bit_reader(priv, &in, &len);
 
 	/* This is the original 8bit reader/writer code */
-	log_debug("reg=%p\n", regs);
 	while (len > 0) {
 		int todo = min(len, ROCKCHIP_SPI_MAX_TRANLEN);
 
+		log_debug("todo=%d\n", todo);
 		rkspi_enable_chip(regs, false);
 		writel(todo - 1, &regs->ctrlr1);
 		rkspi_enable_chip(regs, true);
@@ -624,6 +635,7 @@ static int rockchip_tiny_spi_xfer(struct tinydev *tdev, uint bitlen,
 
 static int rockchip_spi_tiny_probe(struct tinydev *tdev)
 {
+	log_debug("start\n");
 	struct rockchip_spi_priv *priv = tinydev_get_priv(tdev);
 	struct dtd_rockchip_rk3288_spi *dtplat = tdev->dtplat;
 	int ret;

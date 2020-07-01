@@ -59,6 +59,17 @@ int tiny_dev_probe(struct tinydev *tdev)
 
 	if (tdev->flags & DM_FLAG_ACTIVATED)
 		return 0;
+	if (tdev->parent) {
+		ret = tiny_dev_probe(tdev->parent);
+		if (ret)
+			return log_msg_ret("parent", ret);
+		/*
+		 * The device might have already been probed during the call to
+		 * tiny_dev_probe() on its parent device.
+		 */
+		if (tdev->flags & DM_FLAG_ACTIVATED)
+			return 0;
+	}
 	drv = tdev->drv;
 
 	if (!tdev->priv && drv->priv_size) {

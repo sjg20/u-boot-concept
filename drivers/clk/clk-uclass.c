@@ -51,7 +51,7 @@ int tiny_clk_get_by_driver_info(struct phandle_1_arg *cells,
 	if (!tdev)
 		return -ENODEV;
 	tclk->tdev = tdev;
-	tclk->id = cells[0].arg[0];
+	tclk->id = cells->arg[0];
 
 	return 0;
 }

@@ -367,6 +367,9 @@ struct tiny_spi_nor {
 	u32 size;
 };
 
+int tiny_spi_nor_read(struct tiny_mtd_info *mtd, loff_t from, size_t len,
+		      size_t *retlen, u_char *buf);
+
 static inline void spi_nor_set_flash_node(struct spi_nor *nor,
 					  const struct device_node *np)
 {

@@ -150,7 +150,7 @@ static int tiny_sf_probe(struct tinydev *tdev)
 
 static int tiny_sf_read(struct tinydev *tdev, u32 offset, size_t len, void *buf)
 {
-	return -ENOSYS;
+	return log_ret(tiny_spi_flash_read(tdev, offset, len, buf));
 }
 
 struct tiny_spi_flash_ops tiny_sf_ops = {
@@ -167,7 +167,16 @@ U_BOOT_TINY_DRIVER(jedec_spi_nor) = {
 int tiny_spi_flash_read(struct tinydev *tdev, u32 offset, size_t len,
 			void *buf)
 {
+	struct tiny_spi_nor *nor = tinydev_get_priv(tdev);
+	struct tiny_mtd_info *mtd = &nor->mtd;
+	size_t retlen;
+	int ret;
+
 	printf("%s: start\n", __func__);
+
+	ret = tiny_spi_nor_read(mtd, offset, len, &retlen, buf);
+	if (ret)
+		return log_ret(ret);
 
 	return 0;
 }

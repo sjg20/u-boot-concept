@@ -9,7 +9,7 @@
  * Synced from Linux v4.19
  */
 
-#define LOG_DEBUG
+// #define LOG_DEBUG
 #define LOG_CATEGORY UCLASS_SPI_FLASH
 
 #include <common.h>
@@ -43,6 +43,32 @@
 
 #define spi_nor tiny_spi_nor
 #define mtd_info tiny_mtd_info
+
+/**
+ * spi_mem_adjust_op_size() - Adjust the data size of a SPI mem operation to
+ *				 match controller limitations
+ * @tdev: the SPI device (its parent being a bus)
+ * @op: the operation to adjust
+ *
+ * Some controllers have FIFO limitations and must split a data transfer
+ * operation into multiple ones, others require a specific alignment for
+ * optimized accesses. This function allows SPI mem drivers to split a single
+ * operation into multiple sub-operations when required.
+ *
+ * Return: a negative error code if the controller can't properly adjust @op,
+ *	   0 otherwise. Note that @op->data.nbytes will be updated if @op
+ *	   can't be handled in a single step.
+ */
+static int spi_mem_adjust_op_size_(struct tinydev *tdev, struct spi_mem_op *op)
+{
+	struct tinydev *bus = tinydev_get_parent(tdev);
+	struct tiny_spi_ops *ops = tiny_spi_get_ops(bus);
+
+	if (ops->adjust_op_size)
+		return ops->adjust_op_size(tdev, op);
+
+	return 0;
+}
 
 static int spi_mem_exec_op_(struct tinydev *tdev, const struct spi_mem_op *op)
 {
@@ -204,7 +230,7 @@ static ssize_t spi_nor_read_data(struct spi_nor *nor, loff_t from, size_t len,
 
 	while (remaining) {
 		op.data.nbytes = remaining < UINT_MAX ? remaining : UINT_MAX;
-		ret = spi_mem_adjust_op_size(nor->spi, &op);
+		ret = spi_mem_adjust_op_size_(nor->tdev, &op);
 		if (ret)
 			return ret;
 
@@ -491,8 +517,8 @@ static const struct flash_info *spi_nor_read_id(struct spi_nor *nor)
 	return ERR_PTR(-ENODEV);
 }
 
-static int spi_nor_read(struct mtd_info *mtd, loff_t from, size_t len,
-			size_t *retlen, u_char *buf)
+int tiny_spi_nor_read(struct mtd_info *mtd, loff_t from, size_t len,
+		      size_t *retlen, u_char *buf)
 {
 	struct spi_nor *nor = mtd_to_spi_nor(mtd);
 	int ret;
