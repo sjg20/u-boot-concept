@@ -15,6 +15,11 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+const char *tiny_dev_name(struct tinydev *tdev)
+{
+	return tdev->name;
+}
+
 struct tinydev *tiny_dev_find(enum uclass_id uclass_id, int seq)
 {
 	struct tinydev *info = ll_entry_start(struct tinydev, tiny_dev);
@@ -57,9 +62,14 @@ int tiny_dev_probe(struct tinydev *tdev)
 	drv = tdev->drv;
 
 	if (!tdev->priv && drv->priv_size) {
-		tdev->priv = calloc(1, drv->priv_size);
-		if (!tdev->priv)
+		void *priv;
+
+		// This doesn't work with TINY_RELOC
+		priv = calloc(1, drv->priv_size);
+		if (!priv)
 			return -ENOMEM;
+		tdev->priv = priv;
+		log_debug("probe: %s: priv=%p\n", tiny_dev_name(tdev), priv);
 	}
 	if (drv->probe) {
 		ret = drv->probe(tdev);
@@ -104,14 +114,14 @@ tinydev_idx_t tinydev_to_dev_idx(const struct tinydev *tdev)
 
 struct tinydev *tinydev_get_parent(const struct tinydev *tdev)
 {
-	return tinydev_from_dev_idx(tdev->parent);
+	return tdev->parent;
 }
 
 #ifndef CONFIG_SYS_MALLOC_F
 #error "Must enable CONFIG_SYS_MALLOC_F with tinydev"
 #endif
 
-static void *tinydev_look_data(struct tinydev *tdev, enum dm_data_t type)
+static void *tinydev_lookup_data(struct tinydev *tdev, enum dm_data_t type)
 {
 	struct tinydev_info *info = &((gd_t *)gd)->tinydev_info;
 	struct tinydev_data *data;
@@ -119,12 +129,12 @@ static void *tinydev_look_data(struct tinydev *tdev, enum dm_data_t type)
 #ifdef TIMYDEV_SHRINK_DATA
 	uint idx = tinydev_to_dev_idx(tdev);
 
-	for (i = 0, data = info->data; i < info->data_count; i++) {
+	for (i = 0, data = info->data; i < info->data_count; i++, data++) {
 		if (data->type == type && data->tdev_idx == idx)
 			return malloc_ofs_to_ptr(data->ofs);
 	}
 #else
-	for (i = 0, data = info->data; i < info->data_count; i++) {
+	for (i = 0, data = info->data; i < info->data_count; i++, data++) {
 		if (data->type == type && data->tdev == tdev)
 			return data->ptr;
 	}
@@ -156,6 +166,9 @@ void *tinydev_alloc_data(struct tinydev *tdev, enum dm_data_t type, int size)
 	data->tdev = tdev;
 	data->ptr = ptr;
 #endif
+	log_debug("alloc_data: %d: %s: tdev=%p, type=%d, size=%x, ptr=%p\n",
+		  info->data_count, tiny_dev_name(tdev), tdev, type, size, ptr);
+	info->data_count++;
 
 	return ptr;
 }
@@ -166,7 +179,7 @@ void *tinydev_ensure_data(struct tinydev *tdev, enum dm_data_t type, int size,
 	bool exists = true;
 	void *ptr;
 
-	ptr = tinydev_look_data(tdev, type);
+	ptr = tinydev_lookup_data(tdev, type);
 	if (!ptr) {
 		exists = false;
 		ptr = tinydev_alloc_data(tdev, type, size);
@@ -179,10 +192,10 @@ void *tinydev_ensure_data(struct tinydev *tdev, enum dm_data_t type, int size,
 
 void *tinydev_get_data(struct tinydev *tdev, enum dm_data_t type)
 {
-	void *ptr = tinydev_look_data(tdev, type);
+	void *ptr = tinydev_lookup_data(tdev, type);
 
 	if (!ptr) {
-		log_debug("Cannot found type %d for device %p\n", type, tdev);
+		log_debug("Cannot find type %d for device %p\n", type, tdev);
 		panic("tinydev missing data");
 	}
 

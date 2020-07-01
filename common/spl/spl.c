@@ -819,9 +819,10 @@ ulong spl_relocate_stack_gd(void)
 	ptr = CONFIG_SPL_STACK_R_ADDR - roundup(sizeof(gd_t),16);
 	new_gd = (gd_t *)ptr;
 	memcpy(new_gd, (void *)gd, sizeof(gd_t));
-#if CONFIG_IS_ENABLED(DM)
-	dm_fixup_for_gd_move(new_gd);
-#endif
+	if (CONFIG_IS_ENABLED(DM))
+		dm_fixup_for_gd_move(new_gd);
+	if (CONFIG_IS_ENABLED(LOG))
+		log_fixup_for_gd_move(new_gd);
 #if !defined(CONFIG_ARM) && !defined(CONFIG_RISCV)
 	gd = new_gd;
 #endif

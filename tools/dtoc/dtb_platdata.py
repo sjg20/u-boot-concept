@@ -800,6 +800,11 @@ class DtbPlatdata(object):
             self.buf('\t.drv\t\t= DM_REF_TINY_DRIVER(%s),\n' % driver.name)
             if priv_name:
                 self.buf('\t.priv\t\t= %s,\n' % priv_name)
+            self.buf('\t.name\t\t= "%s",\n' % node.name)
+            if node.parent and node.parent.name != '/':
+                parent_name = conv_name_to_c(node.parent.name)
+                self.buf('\t.parent\t\t= DM_REF_TINY_DEVICE(%s),\n' %
+                    parent_name)
             self.buf('};\n')
             self.buf('\n')
         else:

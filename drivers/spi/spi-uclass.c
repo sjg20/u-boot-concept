@@ -3,6 +3,9 @@
  * Copyright (c) 2014 Google, Inc
  */
 
+#define LOG_DEBUG
+#define LOG_CATEGORY UCLASS_SPI
+
 #include <common.h>
 #include <dm.h>
 #include <errno.h>
@@ -525,15 +528,19 @@ U_BOOT_DRIVER(spi_generic_drv) = {
 #else /* TINY_SPI */
 int tiny_spi_claim_bus(struct tinydev *tdev)
 {
+	log_debug("claim\n");
 	struct tinydev *bus = tinydev_get_parent(tdev);
 	struct tiny_spi_ops *ops = tiny_spi_get_ops(bus);
-	struct spi_slave *slave = tinydev_get_data(tdev, DEVDATAT_PARENT_PLAT);
+	struct spi_slave *slave = tinydev_get_data(tdev, DEVDATAT_PARENT_PRIV);
 	int speed = 0;
 	int ret;
 
+	log_debug("bus=%s\n", bus->name);
+	log_debug("slave=%p\n", slave);
 	speed = slave->max_hz;
 	if (!speed)
 		speed = SPI_DEFAULT_SPEED_HZ;
+	log_debug("speed=%d\n", speed);
 	if (speed != slave->speed) {
 		int ret = tiny_spi_set_speed_mode(bus, speed, slave->mode);
 
@@ -553,6 +560,7 @@ int tiny_spi_claim_bus(struct tinydev *tdev)
 
 int tiny_spi_release_bus(struct tinydev *tdev)
 {
+	log_debug("release\n");
 	struct tinydev *bus = tinydev_get_parent(tdev);
 	struct tiny_spi_ops *ops = tiny_spi_get_ops(bus);
 	int ret;
@@ -569,6 +577,7 @@ int tiny_spi_release_bus(struct tinydev *tdev)
 int tiny_spi_xfer(struct tinydev *tdev, unsigned int bitlen,
 		const void *dout, void *din, unsigned long flags)
 {
+	log_debug("xfer\n");
 	struct tinydev *bus = tinydev_get_parent(tdev);
 	struct tiny_spi_ops *ops = tiny_spi_get_ops(bus);
 
@@ -582,7 +591,7 @@ int tiny_spi_set_speed_mode(struct tinydev *bus, uint hz, uint mode)
 {
 	struct tiny_spi_ops *ops = tiny_spi_get_ops(bus);
 
-	if (!ops->xfer)
+	if (!ops->set_speed_mode)
 		return -ENOSYS;
 
 	return ops->set_speed_mode(bus, hz, mode);

@@ -326,10 +326,6 @@ struct tiny_drv {
 #define DM_GET_TINY_DRIVER(__name)					\
 	ll_entry_get(struct tiny_drv, __name, tiny_drv)
 
-/* Get a pointer to a given tiny driver */
-#define DM_REF_TINY_DRIVER(__name)					\
-	ll_entry_ref(struct tiny_drv, __name, tiny_drv)
-
 #define DM_DECL_TINY_DRIVER(__name)					\
 	ll_entry_decl(struct tiny_drv, __name, tiny_drv)
 
@@ -361,17 +357,21 @@ struct tiny_drv {
  * @flags: Flags for this device DM_FLAG_...
  */
 struct tinydev {
+	const char *name;	/* allow this to be dropped */
 	/* TODO: Convert these into ushort offsets to a base address */
 	void *dtplat;		/* u16 word index into dtd data section */
 	void *priv;		/* u16 word index into device priv section */
 	struct tiny_drv *drv;	/* u8 index into driver list? */
 	u16 flags;		/* switch to u8? */
-	tinydev_idx_t parent;
+	struct tinydev *parent;
 };
 
 /* Declare a tiny device with a given name */
 #define U_BOOT_TINY_DEVICE(__name)					\
 	ll_entry_declare(struct tinydev, __name, tiny_dev)
+
+#define DM_REF_TINY_DEVICE(__name)					\
+	ll_entry_ref(struct tinydev, __name, tiny_dev)
 
 /**
  * U_BOOT_TINY_DEVICE_START - Find the start of the list of tiny devices

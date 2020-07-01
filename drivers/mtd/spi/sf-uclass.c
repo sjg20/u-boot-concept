@@ -3,6 +3,9 @@
  * Copyright (c) 2014 Google, Inc
  */
 
+#define LOG_DEBUG
+#define LOG_CATEGORY UCLASS_SPI_FLASH
+
 #include <common.h>
 #include <dm.h>
 #include <dt-structs.h>
@@ -110,26 +113,34 @@ static int tiny_sf_probe(struct tinydev *tdev)
 	const struct dtd_jedec_spi_nor *dtplat = tdev->dtplat;
 	struct tiny_spi_nor *nor = tinydev_get_priv(tdev);
 	struct dm_spi_slave_platdata *slave_plat;
-	struct spi_slave *slave = nor->spi;
+	struct spi_slave *slave;
 	bool exists;
 	int ret;
 
 	slave = tinydev_ensure_data(tdev, DEVDATAT_PARENT_PRIV, sizeof(*slave),
 				    &exists);
+	if (!slave)
+		return log_msg_ret("slave", -ENOMEM);
 	if (!exists) {
 		slave->tdev = tdev;
 		slave->max_hz = dtplat->spi_max_frequency;
 		slave->wordlen = SPI_DEFAULT_WORDLEN;
 		/* Leave mode as the default 0 */
+		nor->spi = slave;
+		nor->tdev = tdev;
+		log_debug("slave->max_hz=%d\n", slave->max_hz);
 	}
 	slave_plat = tinydev_ensure_data(tdev, DEVDATAT_PARENT_PLAT,
 					 sizeof(*slave_plat), &exists);
+	if (!slave_plat)
+		return log_msg_ret("plat", -ENOMEM);
 	if (!exists) {
 		slave_plat->cs = dtplat->reg[0];
 		slave_plat->max_hz = dtplat->spi_max_frequency;
 		/* Leave mode as the default 0 */
 	}
 
+	log_debug("start spi_nor_scan\n");
 	ret = spi_nor_scan(nor);
 	if (ret)
 		return ret;

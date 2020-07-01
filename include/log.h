@@ -15,6 +15,7 @@
 #include <linux/list.h>
 
 struct cmd_tbl;
+struct global_data;
 
 /** Log levels supported, ranging from most to least important */
 enum log_level_t {
@@ -468,5 +469,9 @@ static inline int log_init(void)
 	return 0;
 }
 #endif
+
+void log_check(const char *msg);
+
+void log_fixup_for_gd_move(struct global_data *new_gd);
 
 #endif

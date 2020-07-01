@@ -10,6 +10,9 @@
  * Peter, Software Engineering, <superpeter.cai@gmail.com>.
  */
 
+#define LOG_DEBUG
+#define LOG_CATEGORY UCLASS_SPI
+
 #include <common.h>
 #include <clk.h>
 #include <dm.h>
@@ -370,6 +373,7 @@ static int rockchip_spi_xfer_(struct rockchip_spi_priv *priv, uint bitlen,
 		ret = rockchip_spi_16bit_reader(priv, &in, &len);
 
 	/* This is the original 8bit reader/writer code */
+	log_debug("reg=%p\n", regs);
 	while (len > 0) {
 		int todo = min(len, ROCKCHIP_SPI_MAX_TRANLEN);
 
@@ -587,14 +591,32 @@ static int rockchip_tiny_spi_release_bus(struct tinydev *tdev)
 	return 0;
 }
 
+static int rockchip_tiny_set_speed_mode(struct tinydev *tbus, uint speed_hz,
+					uint mode)
+{
+	struct rockchip_spi_priv *priv = tinydev_get_priv(tbus);
+
+	/* Clamp to the maximum frequency specified in the DTS */
+	if (speed_hz > priv->max_freq)
+		speed_hz = priv->max_freq;
+
+	priv->speed_hz = speed_hz;
+	priv->mode = mode;
+
+	return 0;
+}
+
 static int rockchip_tiny_spi_xfer(struct tinydev *tdev, uint bitlen,
 				  const void *dout, void *din, ulong flags)
 {
+	log_debug("xfer\n");
 	struct tinydev *tbus = tinydev_get_parent(tdev);
 	struct rockchip_spi_priv *priv = tinydev_get_priv(tbus);
 	struct dm_spi_slave_platdata *slave_plat;
 
 	slave_plat = tinydev_get_data(tdev, DEVDATAT_PARENT_PLAT);
+	log_debug("priv=%p, slave_plat=%p, cs=%d\n", priv, slave_plat,
+		  slave_plat->cs);
 
 	return rockchip_spi_xfer_(priv, bitlen, dout, din, flags,
 				  slave_plat->cs);
@@ -611,6 +633,7 @@ static int rockchip_spi_tiny_probe(struct tinydev *tdev)
 	ret = tiny_clk_get_by_driver_info(dtplat->clocks, &priv->tiny_clk);
 	if (ret < 0)
 		return log_ret(ret);
+	log_debug("priv->base=%lx\n", priv->base);
 
 	return rockchip_spi_probe_(priv);
 }
@@ -618,6 +641,7 @@ static int rockchip_spi_tiny_probe(struct tinydev *tdev)
 static struct tiny_spi_ops rockchip_spi_tiny_ops = {
 	.claim_bus	= rockchip_tiny_spi_claim_bus,
 	.release_bus	= rockchip_tiny_spi_release_bus,
+	.set_speed_mode	= rockchip_tiny_set_speed_mode,
 	.xfer		= rockchip_tiny_spi_xfer,
 };
 

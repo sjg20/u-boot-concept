@@ -9,6 +9,9 @@
  * Synced from Linux v4.19
  */
 
+#define LOG_DEBUG
+#define LOG_CATEGORY UCLASS_SPI_FLASH
+
 #include <common.h>
 #include <log.h>
 #include <dm/device_compat.h>
@@ -53,6 +56,7 @@ static int spi_mem_exec_op_(struct tinydev *tdev, const struct spi_mem_op *op)
 	int ret;
 	int i;
 
+	log_debug("bus=%s\n", bus->name);
 	ret = tiny_spi_claim_bus(tdev);
 	if (ret < 0)
 		return ret;
@@ -829,6 +833,8 @@ int spi_nor_scan(struct spi_nor *nor)
 	};
 	struct spi_slave *spi = nor->spi;
 	int ret;
+
+	log_debug("start\n");
 
 	/* Reset SPI protocol for all commands. */
 	nor->read_proto = SNOR_PROTO_1_1_1;

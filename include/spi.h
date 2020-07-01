@@ -557,7 +557,7 @@ struct tiny_spi_ops {
 	 * @hz:		The transfer speed
 	 * @return 0 if OK, -ve on error
 	 */
-	int (*set_speed_mode)(struct tinydev *bus, uint hz, uint mode);
+	int (*set_speed_mode)(struct tinydev *tbus, uint hz, uint mode);
 
 	int (*adjust_op_size)(struct tinydev *tdev, struct spi_mem_op *op);
 	bool (*supports_op)(struct tinydev *tdev,
