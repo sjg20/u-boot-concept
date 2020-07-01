@@ -428,7 +428,7 @@ static int spl_common_init(bool setup_malloc)
 			return log_msg_ret("fdtdec", ret);
 		}
 	}
-	if (CONFIG_IS_ENABLED(DM)) {
+	if (CONFIG_IS_ENABLED(DM) && !CONFIG_IS_ENABLED(TINY)) {
 		bootstage_start(BOOTSTAGE_ID_ACCUM_DM_SPL,
 				spl_phase() == PHASE_TPL ? "dm tpl" : "dm_spl");
 		/* With CONFIG_SPL_OF_PLATDATA, bring in all devices */
@@ -819,7 +819,7 @@ ulong spl_relocate_stack_gd(void)
 	ptr = CONFIG_SPL_STACK_R_ADDR - roundup(sizeof(gd_t),16);
 	new_gd = (gd_t *)ptr;
 	memcpy(new_gd, (void *)gd, sizeof(gd_t));
-	if (CONFIG_IS_ENABLED(DM))
+	if (CONFIG_IS_ENABLED(DM) && !CONFIG_IS_ENABLED(TINY))
 		dm_fixup_for_gd_move(new_gd);
 	if (CONFIG_IS_ENABLED(LOG))
 		log_fixup_for_gd_move(new_gd);

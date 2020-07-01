@@ -11,6 +11,16 @@
 #include <asm/arch-rockchip/cru.h>
 #include <linux/err.h>
 
+static int rockchip_sysreset_probe_(struct sysreset_reg *priv)
+{
+	priv->glb_srst_fst_value = offsetof(struct rockchip_cru,
+					    cru_glb_srst_fst_value);
+	priv->glb_srst_snd_value = offsetof(struct rockchip_cru,
+					    cru_glb_srst_snd_value);
+
+	return 0;
+}
+
 #if !CONFIG_IS_ENABLED(TINY_CLK)
 int rockchip_get_clk(struct udevice **devp)
 {
@@ -32,7 +42,16 @@ void *rockchip_get_cru(void)
 
 	return priv->cru;
 }
+
+int rockchip_sysreset_probe(struct udevice *dev)
+{
+	struct sysreset_reg *priv = dev_get_priv(dev);
+
+	return rockchip_sysreset_probe_(priv);
+}
+
 #else /* TINY_CLK */
+
 struct tinydev *tiny_rockchip_get_clk(void)
 {
 	return tiny_dev_get(UCLASS_CLK, 0);
@@ -49,5 +68,12 @@ void *rockchip_get_cru(void)
 	priv = tdev->priv;
 
 	return priv->cru;
+}
+
+int rockchip_tiny_sysreset_probe(struct tinydev *tdev)
+{
+	struct sysreset_reg *priv = tinydev_get_priv(tdev);
+
+	return rockchip_sysreset_probe_(priv);
 }
 #endif

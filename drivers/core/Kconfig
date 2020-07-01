@@ -236,6 +236,15 @@ config SPL_SYSCON
 	  by this uclass, including accessing registers via regmap and
 	  assigning a unique number to each.
 
+config SPL_TINY_SYSCON
+	bool "Support tiny syscon drivers in SPL"
+	depends on SPL_TINY
+	default y if SPL_TINY_ONLY
+	help
+	  In constrained environments the driver-model overhead of several KB
+	  of code and data structures can be problematic. Enable this to use a
+	  tiny implementation that only supports a single driver.
+
 config TPL_SYSCON
 	bool "Support system controllers in TPL"
 	depends on TPL_REGMAP
@@ -244,6 +253,15 @@ config TPL_SYSCON
 	  as a group by a single driver. Some common functionality is provided
 	  by this uclass, including accessing registers via regmap and
 	  assigning a unique number to each.
+
+config TPL_TINY_SYSCON
+	bool "Support tiny syscon drivers in TPL"
+	depends on TPL_TINY
+	default y if TPL_TINY_ONLY
+	help
+	  In constrained environments the driver-model overhead of several KB
+	  of code and data structures can be problematic. Enable this to use a
+	  tiny implementation that only supports a single driver.
 
 config DEVRES
 	bool "Managed device resources"

@@ -16,6 +16,7 @@
 #include <dm/root.h>
 #include <linux/err.h>
 
+#if !CONFIG_IS_ENABLED(TINY_SYSCON)
 /*
  * Caution:
  * This API requires the given device has alerady been bound to syscon driver.
@@ -208,3 +209,5 @@ struct regmap *syscon_node_to_regmap(ofnode node)
 
 	return r;
 }
+#else
+#endif

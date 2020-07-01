@@ -1017,6 +1017,7 @@ static int rk3288_clk_probe(struct udevice *dev)
 
 static int rk3288_clk_bind(struct udevice *dev)
 {
+#if 0
 	int ret;
 	struct udevice *sys_child;
 	struct sysreset_reg *priv;
@@ -1034,6 +1035,7 @@ static int rk3288_clk_bind(struct udevice *dev)
 						    cru_glb_srst_snd_value);
 		sys_child->priv = priv;
 	}
+#endif
 
 #if CONFIG_IS_ENABLED(RESET_ROCKCHIP)
 	ret = offsetof(struct rockchip_cru, cru_softrst_con[0]);
