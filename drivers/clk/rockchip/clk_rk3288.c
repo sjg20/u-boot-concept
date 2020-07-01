@@ -957,7 +957,6 @@ static int rk3288_clk_probe_(struct rk3288_clk_priv *priv,
 #ifdef CONFIG_SPL_BUILD
 #if CONFIG_IS_ENABLED(OF_PLATDATA)
 	priv->cru = map_sysmem(plat->dtd.reg[0], plat->dtd.reg[1]);
-	printf("priv->cru=%p\n", priv->cru);
 #endif
 	init_clocks = true;
 #endif

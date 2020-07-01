@@ -3,7 +3,6 @@
  * Copyright (c) 2014 Google, Inc
  */
 
-#define LOG_DEBUG
 #define LOG_CATEGORY UCLASS_SPI
 
 #include <common.h>

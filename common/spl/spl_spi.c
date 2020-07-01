@@ -133,7 +133,6 @@ static int spl_spi_load_image(struct spl_image_info *spl_image,
 		}
 		load.tdev = tdev;
 		payload_offs = CONFIG_SYS_SPI_U_BOOT_OFFS;
-		printf("tdev=%p\n", tdev);
 	}
 
 	header = spl_get_load_buffer(-sizeof(*header), sizeof(*header));

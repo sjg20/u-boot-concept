@@ -10,7 +10,6 @@
  * Peter, Software Engineering, <superpeter.cai@gmail.com>.
  */
 
-#define LOG_DEBUG
 #define LOG_CATEGORY UCLASS_SPI
 
 #include <common.h>
@@ -380,7 +379,7 @@ static int rockchip_spi_xfer_(struct rockchip_spi_priv *priv, uint bitlen,
 	 * case of read-only transfers by using the full 16bits of each
 	 * FIFO element.
 	 */
-	if (0 && !out)
+	if (!out)
 		ret = rockchip_spi_16bit_reader(priv, &in, &len);
 
 	/* This is the original 8bit reader/writer code */

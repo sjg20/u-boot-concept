@@ -3,7 +3,6 @@
  * Copyright (c) 2014 Google, Inc
  */
 
-#define LOG_DEBUG
 #define LOG_CATEGORY UCLASS_SPI_FLASH
 
 #include <common.h>
@@ -171,8 +170,6 @@ int tiny_spi_flash_read(struct tinydev *tdev, u32 offset, size_t len,
 	struct tiny_mtd_info *mtd = &nor->mtd;
 	size_t retlen;
 	int ret;
-
-	printf("%s: start\n", __func__);
 
 	ret = tiny_spi_nor_read(mtd, offset, len, &retlen, buf);
 	if (ret)
