@@ -406,6 +406,9 @@ void *tinydev_alloc_data(struct tinydev *tdev, enum dm_data_t type, int size);
 void *tinydev_ensure_data(struct tinydev *tdev, enum dm_data_t type, int size,
 			  bool *existsp);
 
+struct tinydev *tiny_dev_get_by_drvdata(enum uclass_id uclass_id,
+					ulong driver_data);
+
 /**
  * dev_get_platdata() - Get the platform data for a device
  *

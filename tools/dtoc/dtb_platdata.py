@@ -349,25 +349,42 @@ class DtbPlatdata(object):
         m_drivers = re.findall(r'U_BOOT_DRIVER\((.*)\)', buff)
         if m_drivers:
             driver_name = None
+
+            # Collect the uclass ID, e.g. 'UCLASS_SPI'
             uclass_id = None
-            ids_name = None
-            compat_list = []
-            compat = None
             re_id = re.compile(r'\s*\.id\s*=\s*(UCLASS_[A-Z0-9_]+)')
-            re_ids = re.compile('struct udevice_id (.*)\[\]\s*=')
+
+            # Collect the compatible string, e.g. 'rockchip,rk3288-gr'
+            compat = None
             re_compat = re.compile('{\s*.compatible\s*=\s*"(.*)"\s*},')
+
+            # This is a list of compatible strings that were found
+            compat_list = []
+
+            # Holds the var nane of the udevice_id list, e.g.
+            # 'rk3288_syscon_ids_noc' in
+            # static const struct udevice_id rk3288_syscon_ids_noc[] = {
+            ids_name = None
+            re_ids = re.compile('struct udevice_id (.*)\[\]\s*=')
+
+            # Matches the references to the udevice_id list
             re_of_match = re.compile('\.of_match\s*=\s*([a-z0-9_]+),')
+
+            # Matches the header/size information for tinydev
             re_tiny_priv = re.compile('^\s*DM_TINY_PRIV\((.*)\)$')
             tiny_name = None
 
             prefix = ''
             for line in buff.splitlines():
+                # Handle line continuation
                 if prefix:
                     line = prefix + line
                     prefix = ''
                 if line.endswith('\\'):
                     prefix = line[:-1]
                     continue
+
+                # If we have seen U_BOOT_DRIVER()...
                 if driver_name:
                     id_m = re_id.search(line)
                     id_of_match = re_of_match.search(line)
@@ -401,6 +418,8 @@ class DtbPlatdata(object):
                         ids_name = None
                         compat = None
                         compat_list = []
+
+                # If we have seen U_BOOT_TINY_DRIVER()...
                 elif tiny_name:
                     tiny_priv = re_tiny_priv.match(line)
                     if tiny_priv:

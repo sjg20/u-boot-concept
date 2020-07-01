@@ -212,3 +212,7 @@ void *tinydev_get_data(struct tinydev *tdev, enum dm_data_t type)
 	return ptr;
 }
 
+struct tinydev *tiny_dev_get_by_drvdata(enum uclass_id uclass_id,
+					ulong driver_data)
+{
+}

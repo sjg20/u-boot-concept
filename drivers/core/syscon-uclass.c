@@ -210,4 +210,32 @@ struct regmap *syscon_node_to_regmap(ofnode node)
 	return r;
 }
 #else
+struct tinydev *tiny_syscon_get_by_driver_data(ulong driver_data)
+{
+	struct tinydev *tdev;
+
+	tdev = tiny_dev_get_by_drvdata(UCLASS_SYSCON, driver_data);
+	if (!tdev)
+		return NULL;
+
+	return tdev;
+}
+
+struct regmap *syscon_get_regmap_by_driver_data(ulong driver_data)
+{
+	struct syscon_uc_info *uc_priv;
+	struct tinydev *tdev;
+	int ret;
+
+	tdev = tiny_syscon_get_by_driver_data(driver_data);
+	if (!tdev)
+		return ERR_PTR(-ENODEV);
+	/*
+	 * We assume that the device has struct syscon_uc_info at the start of
+	 * its private data
+	 */
+	uc_priv = tinydev_get_priv(tdev);
+
+	return uc_priv->regmap;
+}
 #endif
