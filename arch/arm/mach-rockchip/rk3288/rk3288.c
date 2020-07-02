@@ -115,6 +115,7 @@ int rk_board_late_init(void)
 	return rk3288_board_late_init();
 }
 
+#if !CONFIG_IS_ENABLED(TINY_CLK)
 static int do_clock(struct cmd_tbl *cmdtp, int flag, int argc,
 		    char *const argv[])
 {
@@ -165,3 +166,4 @@ U_BOOT_CMD(
 	"display information about clocks",
 	""
 );
+#endif
