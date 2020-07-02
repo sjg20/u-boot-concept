@@ -8,6 +8,7 @@
 / {
 	aliases {
 		ram0 = &dmc;
+		clk0 = &cru;
 	};
 
 	chosen {

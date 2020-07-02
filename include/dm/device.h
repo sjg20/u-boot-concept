@@ -313,6 +313,7 @@ struct tiny_drv {
 	u8 uclass_id;
 	u8 priv_size;
 	int (*probe)(struct tinydev *dev);
+	struct tinydev *tdev;
 	void *ops;
 };
 
@@ -373,6 +374,11 @@ struct tinydev *tiny_dev_find(enum uclass_id uclass_id, int seq);
 int tiny_dev_probe(struct tinydev *tdev);
 
 struct tinydev *tiny_dev_get(enum uclass_id uclass_id, int seq);
+
+static inline struct tinydev *tinydev_get_parent(struct tinydev *tdev)
+{
+	return NULL;
+}
 
 static inline void *tinydev_get_priv(struct tinydev *tdev)
 {
