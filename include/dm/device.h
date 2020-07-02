@@ -363,6 +363,7 @@ struct tinydev {
 	void *priv;		/* u16 word index into device priv section */
 	struct tiny_drv *drv;	/* u8 index into driver list? */
 	u16 flags;		/* switch to u8? */
+	u8 driver_data;
 	struct tinydev *parent;
 };
 

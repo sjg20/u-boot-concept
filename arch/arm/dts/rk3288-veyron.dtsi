@@ -12,6 +12,9 @@
 / {
 	aliases {
 		spi_flash0 = &spi_flash;
+		sysreset0 = &sysreset;
+		syscon0 = &grf;
+		syscon1 = &sgrf;
 	};
 
 	memory {

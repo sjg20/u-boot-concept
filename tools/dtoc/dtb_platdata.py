@@ -345,7 +345,14 @@ class DtbPlatdata(object):
             buff = fd.read()
 
         drivers = {}
+
+        # Dict of compatible strings in a udevice_id array:
+        #   key: udevice_id array name (e.g. 'rk3288_syscon_ids_noc')
+        #   value: Dict of compatible strings in that array:
+        #      key: Compatible string, e.g. 'rockchip,rk3288-grf'
+        #      value: Driver data, e,g, 'ROCKCHIP_SYSCON_GRF', or None
         of_match = {}
+
         m_drivers = re.findall(r'U_BOOT_DRIVER\((.*)\)', buff)
         if m_drivers:
             driver_name = None
@@ -354,12 +361,17 @@ class DtbPlatdata(object):
             uclass_id = None
             re_id = re.compile(r'\s*\.id\s*=\s*(UCLASS_[A-Z0-9_]+)')
 
-            # Collect the compatible string, e.g. 'rockchip,rk3288-gr'
+            # Collect the compatible string, e.g. 'rockchip,rk3288-grf'
             compat = None
-            re_compat = re.compile('{\s*.compatible\s*=\s*"(.*)"\s*},')
+            #re_compat = re.compile('{\s*.compatible\s*=\s*"(.*)"\s*},')
 
-            # This is a list of compatible strings that were found
-            compat_list = []
+            re_compat = re.compile('{\s*.compatible\s*=\s*"(.*)"\s*'
+                                     '(,\s*.data\s*=\s*(.*))?\s*},')
+
+            # This is a dict of compatible strings that were found:
+            #    key: Compatible string, e.g. 'rockchip,rk3288-grf'
+            #    value: Driver data, e,g, 'ROCKCHIP_SYSCON_GRF', or None
+            compat_dict = {}
 
             # Holds the var nane of the udevice_id list, e.g.
             # 'rk3288_syscon_ids_noc' in
@@ -417,7 +429,7 @@ class DtbPlatdata(object):
                         uclass_id = None
                         ids_name = None
                         compat = None
-                        compat_list = []
+                        compat_dict = {}
 
                 # If we have seen U_BOOT_TINY_DRIVER()...
                 elif tiny_name:
@@ -429,9 +441,9 @@ class DtbPlatdata(object):
                 elif ids_name:
                     compat_m = re_compat.search(line)
                     if compat_m:
-                        compat_list.append(compat_m.group(1))
+                        compat_dict[compat_m.group(1)] = compat_m.group(3)
                     elif '};' in line:
-                        of_match[ids_name] = compat_list
+                        of_match[ids_name] = compat_dict
                         ids_name = None
                 elif 'U_BOOT_DRIVER' in line:
                     match = re.search(r'U_BOOT_DRIVER\((.*)\)', line)
@@ -529,7 +541,7 @@ class DtbPlatdata(object):
             alias = self._aliases_by_path.get(node.path)
             if alias and alias in self._tiny_uclasses:
                 node.is_tiny = True
-                unused.remove(alias)
+                unused.discard(alias)
         if unused:
             print('Warning: Some tiny uclasses lack aliases: %s' %
                   ', '.join(unused))
@@ -817,6 +829,9 @@ class DtbPlatdata(object):
             self.buf('U_BOOT_TINY_DEVICE(%s) = {\n' % var_name)
             self.buf('\t.dtplat\t\t= &%s%s,\n' % (VAL_PREFIX, var_name))
             self.buf('\t.drv\t\t= DM_REF_TINY_DRIVER(%s),\n' % driver.name)
+            driver_data = driver.compat[compat]
+            if driver_data is not None:
+                self.buf('\t.driver_data\t\t= %s,\n' % driver_data)
             if priv_name:
                 self.buf('\t.priv\t\t= %s,\n' % priv_name)
             self.buf('\t.name\t\t= "%s",\n' % node.name)

@@ -6,6 +6,9 @@
 #ifndef _ASM_ARCH_CLOCK_H
 #define _ASM_ARCH_CLOCK_H
 
+/* Include this so that struct syscon_uc_info is available for dt-platdata */
+#include <syscon.h>
+
 /* define pll mode */
 #define RKCLK_PLL_MODE_SLOW		0
 #define RKCLK_PLL_MODE_NORMAL		1
