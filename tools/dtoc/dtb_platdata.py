@@ -221,7 +221,8 @@ class DtbPlatdata(object):
             compat_c = self._driver_aliases.get(compat_c)
             if not compat_c:
                 if not self._warning_disabled:
-                    print('WARNING: the driver %s was not found in the driver list' % (compat_c_old))
+                    print('WARNING: the driver %s was not found in the driver list. Check that your driver has the same name as one of its compatible strings' %
+                          (compat_c_old))
                 compat_c = compat_c_old
             else:
                 aliases_c = [compat_c_old] + aliases_c
@@ -543,7 +544,7 @@ class DtbPlatdata(object):
                 node.is_tiny = True
                 unused.discard(alias)
         if unused:
-            print('Warning: Some tiny uclasses lack aliases: %s' %
+            print('Warning: Some tiny uclasses lack aliases or a device: %s' %
                   ', '.join(unused))
 
     @staticmethod

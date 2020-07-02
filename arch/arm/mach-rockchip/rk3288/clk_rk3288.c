@@ -43,7 +43,7 @@ void *rockchip_get_cru(void)
 	return priv->cru;
 }
 
-int rockchip_sysreset_probe(struct udevice *dev)
+int rockchip_cru_setup_sysreset(struct udevice *dev)
 {
 	struct sysreset_reg *priv = dev_get_priv(dev);
 
@@ -70,7 +70,7 @@ void *rockchip_get_cru(void)
 	return priv->cru;
 }
 
-int rockchip_tiny_sysreset_probe(struct tinydev *tdev)
+int rockchip_cru_setup_tiny_sysreset(struct tinydev *tdev)
 {
 	struct sysreset_reg *priv = tinydev_get_priv(tdev);
 

@@ -16,6 +16,16 @@
 #include <dm/root.h>
 #include <linux/err.h>
 
+void *syscon_get_first_range(ulong driver_data)
+{
+	struct regmap *map;
+
+	map = syscon_get_regmap_by_driver_data(driver_data);
+	if (IS_ERR(map))
+		return map;
+	return regmap_get_range(map, 0);
+}
+
 #if !CONFIG_IS_ENABLED(TINY_SYSCON)
 /*
  * Caution:
@@ -156,16 +166,6 @@ struct regmap *syscon_get_regmap_by_driver_data(ulong driver_data)
 	return priv->regmap;
 }
 
-void *syscon_get_first_range(ulong driver_data)
-{
-	struct regmap *map;
-
-	map = syscon_get_regmap_by_driver_data(driver_data);
-	if (IS_ERR(map))
-		return map;
-	return regmap_get_range(map, 0);
-}
-
 UCLASS_DRIVER(syscon) = {
 	.id		= UCLASS_SYSCON,
 	.name		= "syscon",
@@ -225,7 +225,6 @@ struct regmap *syscon_get_regmap_by_driver_data(ulong driver_data)
 {
 	struct syscon_uc_info *uc_priv;
 	struct tinydev *tdev;
-	int ret;
 
 	tdev = tiny_syscon_get_by_driver_data(driver_data);
 	if (!tdev)
@@ -237,5 +236,21 @@ struct regmap *syscon_get_regmap_by_driver_data(ulong driver_data)
 	uc_priv = tinydev_get_priv(tdev);
 
 	return uc_priv->regmap;
+}
+
+int tiny_syscon_setup(struct tinydev *tdev)
+{
+	struct syscon_uc_info *priv = tinydev_get_priv(tdev);
+
+	/*
+	 * With OF_PLATDATA we really have no way of knowing the format of
+	 * the device-specific platform data. So we assume that it starts with
+	 * a 'reg' member, and this holds a single address and size. Drivers
+	 * using OF_PLATDATA will need to ensure that this is true.
+	 */
+	struct syscon_base_platdata *plat = tdev->dtplat;
+
+	return regmap_init_mem_platdata(plat->reg, ARRAY_SIZE(plat->reg),
+					&priv->regmap);
 }
 #endif

@@ -19,6 +19,23 @@ const char *tiny_dev_name(struct tinydev *tdev)
 	return tdev->name;
 }
 
+static struct tinydev *tiny_dev_find_tail(struct tinydev *tdev)
+{
+	if (CONFIG_IS_ENABLED(TINY_RELOC)) {
+		struct tinydev *copy;
+
+		copy = malloc(sizeof(*copy));
+		if (!copy)
+			return NULL;
+		memcpy(copy, tdev, sizeof(*copy));
+		log_debug("   - found, copied to %p\n", copy);
+		return copy;
+	}
+	log_debug("   - found at %p\n", tdev);
+
+	return tdev;
+}
+
 struct tinydev *tiny_dev_find(enum uclass_id uclass_id, int seq)
 {
 	struct tinydev *info = ll_entry_start(struct tinydev, tiny_dev);
@@ -31,20 +48,8 @@ struct tinydev *tiny_dev_find(enum uclass_id uclass_id, int seq)
 
 		log_content("   - entry %p, uclass %d %d\n", entry,
 			    drv->uclass_id, uclass_id);
-		if (drv->uclass_id == uclass_id) {
-			if (CONFIG_IS_ENABLED(TINY_RELOC)) {
-				struct tinydev *copy;
-
-				copy = malloc(sizeof(*copy));
-				if (!copy)
-					return NULL;
-				memcpy(copy, entry, sizeof(*copy));
-				log_debug("   - found, copied to %p\n", copy);
-				return copy;
-			}
-			log_debug("   - found at %p\n", entry);
-			return entry;
-		}
+		if (drv->uclass_id == uclass_id)
+			return tiny_dev_find_tail(entry);
 	}
 	log_debug("   - not found\n");
 
@@ -215,4 +220,30 @@ void *tinydev_get_data(struct tinydev *tdev, enum dm_data_t type)
 struct tinydev *tiny_dev_get_by_drvdata(enum uclass_id uclass_id,
 					ulong driver_data)
 {
+	struct tinydev *info = ll_entry_start(struct tinydev, tiny_dev);
+	const int n_ents = ll_entry_count(struct tinydev, tiny_dev);
+	struct tinydev *entry;
+
+	log_debug("find %d driver_data %lx: n_ents=%d\n", uclass_id,
+		  driver_data, n_ents);
+	for (entry = info; entry != info + n_ents; entry++) {
+		struct tiny_drv *drv = entry->drv;
+
+		log_content("   - entry %p, uclass %d, driver_data %x\n", entry,
+			    drv->uclass_id, entry->driver_data);
+		if (drv->uclass_id == uclass_id &&
+		    entry->driver_data == driver_data) {
+			struct tinydev *tdev = tiny_dev_find_tail(entry);
+			int ret;
+
+			if (!tdev)
+				return NULL;
+			ret = tiny_dev_probe(tdev);
+			if (ret)
+				return NULL;
+			return tdev;
+		}
+	}
+
+	return NULL;
 }

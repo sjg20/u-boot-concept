@@ -55,6 +55,10 @@
 
 &cru {
 	u-boot,dm-pre-reloc;
+
+	sysreset {
+		u-boot,dm-pre-reloc;
+	};
 };
 
 &grf {

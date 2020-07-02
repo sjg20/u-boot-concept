@@ -159,9 +159,9 @@ void *rockchip_get_pmucru(void);
 struct rockchip_cru;
 struct rk3288_grf;
 
-int rockchip_sysreset_probe(struct udevice *dev);
+int rockchip_cru_setup_sysreset(struct udevice *dev);
 
-int rockchip_tiny_sysreset_probe(struct tinydev *tdev);
+int rockchip_cru_setup_tiny_sysreset(struct tinydev *tdev);
 
 void rk3288_clk_configure_cpu(struct rockchip_cru *cru, struct rk3288_grf *grf);
 

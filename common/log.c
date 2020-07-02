@@ -45,6 +45,9 @@ const char *log_get_cat_name(enum log_category_t cat)
 	if (cat >= LOGC_NONE)
 		return log_cat_name[cat - LOGC_NONE];
 
+	/* With tiny-dm we don't have uclasses, so cannot get the name */
+	if (CONFIG_IS_ENABLED(TINY_ONLY))
+		return "tiny";
 	name = uclass_get_name((enum uclass_id)cat);
 
 	return name ? name : "<missing>";
