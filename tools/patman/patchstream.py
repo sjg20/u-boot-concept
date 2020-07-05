@@ -2,10 +2,12 @@
 # Copyright (c) 2011 The Chromium OS Authors.
 #
 
+import collections
 import datetime
 import math
 import os
 import re
+import queue
 import shutil
 import tempfile
 
@@ -80,6 +82,10 @@ class PatchStream:
         self.state = STATE_MSG_HEADER    # What state are we in?
         self.signoff = []                # Contents of signoff line
         self.commit = None               # Current commit
+        self.snippets = []               # List of unquoted test blocks
+        self.recent_quoted = collections.deque([], 5)
+        self.recent_unquoted = queue.Queue()
+        self.was_quoted = None
 
     def AddToSeries(self, line, name, value):
         """Add a new Series-xxx tag.
@@ -164,6 +170,40 @@ class PatchStream:
         elif self.in_change == 'Commit':
             self.commit.AddChange(self.change_version, change)
         self.change_lines = []
+
+    def FinaliseSnippet(self):
+        """Finish off a snippet and add it to the list
+
+        This is called when we get to the end of a snippet, i.e. the we enter
+        the next block of quoted text:
+
+            This is a comment from someone.
+
+            Something else
+
+            > Now we have some code          <----- end of snippet
+            > more code
+
+            Now a comment about the above code
+
+        This adds the snippet to our list
+        """
+        quoted_lines = []
+        while len(self.recent_quoted):
+            quoted_lines.append(self.recent_quoted.popleft())
+        unquoted_lines = []
+        valid = False
+        while not self.recent_unquoted.empty():
+            text = self.recent_unquoted.get()
+            unquoted_lines.append(text)
+            if text:
+                valid = True
+        if valid:
+            lines = quoted_lines + unquoted_lines
+            if lines[0].startswith('On ') and lines[0].endswith('wrote:'):
+                lines = lines[1:]
+            if lines:
+                self.snippets.append(lines)
 
     def ProcessLine(self, line):
         """Process a single line of a patch file or commit log
@@ -391,6 +431,18 @@ class PatchStream:
             out = [line]
             self.linenum += 1
             self.skip_blank = False
+
+            # If this is quoted, keep recent lines
+            if self.linenum > 1 and line:
+                if line.startswith('>'):
+                    if not self.was_quoted:
+                        self.FinaliseSnippet()
+                    self.recent_quoted.append(line)
+                    self.was_quoted = True
+                else:
+                    self.recent_unquoted.put(line)
+                    self.was_quoted = False
+
             if self.state == STATE_DIFFS:
                 pass
 
@@ -414,6 +466,7 @@ class PatchStream:
 
     def Finalize(self):
         """Close out processing of this patch stream"""
+        self.FinaliseSnippet()
         self.FinalizeChange()
         self.CloseCommit()
         if self.lines_after_test:
