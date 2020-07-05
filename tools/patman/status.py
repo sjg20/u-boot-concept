@@ -304,7 +304,48 @@ def ShowResponses(rtags, indent, is_new):
             count += 1
     return count
 
-def check_patchwork_status(series, url, branch):
+def CreateBranch(series, new_rtag_list, branch, dest_branch, overwrite):
+    if branch == dest_branch:
+        raise ValueError(
+            'Destination branch must not be the same as the original branch')
+    repo = pygit2.Repository('.')
+    count = len(series.commits)
+    old_br = repo.branches[branch]
+    new_br = repo.branches.get(dest_branch)
+    if new_br:
+        if not overwrite:
+            raise ValueError("Branch '%s' already exists (-f to overwrite)" %
+                             dest_branch)
+        new_br.delete()
+    target = repo.revparse_single('%s~%d' % (branch, count))
+    repo.branches.local.create(dest_branch, target)
+
+    num_added = 0
+    for seq in range(count):
+        basket = repo.branches.get(dest_branch)
+        cherry = repo.revparse_single('%s~%d' % (branch, count - seq - 1))
+
+        base = repo.merge_base(cherry.oid, basket.target)
+        base_tree = cherry.parents[0].tree
+
+        index = repo.merge_trees(base_tree, basket, cherry)
+        tree_id = index.write_tree(repo)
+
+        author    = cherry.author
+        committer = cherry.committer
+        lines = []
+        for tag, people in new_rtag_list[seq].items():
+            for who in people:
+                lines.append('%s: %s' % (tag, who))
+                num_added += 1
+        message = cherry.message + '\n'.join(lines)
+
+        basket = repo.create_commit(
+            basket.name, cherry.author, cherry.committer, message, tree_id,
+            [basket.target])
+    return num_added
+
+def check_patchwork_status(series, url, branch, dest_branch, force):
     patches = CollectPatches(series, url)
     col = terminal.Color()
     count = len(patches)
@@ -330,5 +371,12 @@ def check_patchwork_status(series, url, branch):
         ShowResponses(base_rtags, indent, False)
         num_to_add += ShowResponses(new_rtags, indent, True)
 
-    print("%d new response%s available in patchwork" %
-          (num_to_add, 's' if num_to_add != 1 else ''))
+    print("%d new response%s available in patchwork%s" %
+          (num_to_add, 's' if num_to_add != 1 else '',
+           '' if dest_branch else ' (use -d to write them to a new branch)'))
+
+    if dest_branch:
+        num_added = CreateBranch(series, new_rtag_list, branch,
+                                 dest_branch, force)
+        print("%d response%s added from patchwork into new branch '%s'" %
+              (num_added, 's' if num_added != 1 else '', dest_branch))
