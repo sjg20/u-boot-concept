@@ -88,6 +88,10 @@ send.add_argument('patchfiles', nargs='*')
 test_parser = subparsers.add_parser('test', help='Run tests')
 AddCommonArgs(test_parser)
 
+status = subparsers.add_parser('status',
+                               help='Check status of patches in patchwork')
+AddCommonArgs(status)
+
 # Parse options twice: first to get the project and second to handle
 # defaults properly (which depends on project).
 argv = sys.argv[1:]
@@ -147,3 +151,16 @@ elif args.cmd == 'send':
 
     else:
         control.send(args)
+
+# Check status of patches in patchwork
+elif args.cmd == 'status':
+    ret_code = 0
+    try:
+        control.patchwork_status(args.branch, args.count, args.start, args.end)
+    except Exception as e:
+        print('patman: %s: %s' % (type(e).__name__, e))
+        if args.debug:
+            print()
+            traceback.print_exc()
+        ret_code = 1
+    sys.exit(ret_code)

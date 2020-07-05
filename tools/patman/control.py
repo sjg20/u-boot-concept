@@ -175,3 +175,34 @@ def send(args):
         its_a_go, args.ignore_bad_tags, args.add_maintainers,
         args.limit, args.dry_run, args.in_reply_to, args.thread,
         args.smtp_server)
+
+def patchwork_status(branch, count, start, end):
+    """Check the status of patches in patchwork
+
+    This finds the series in patchwork using the Series-link tag, checks for new
+    comments / review tags and displays them
+
+    Args:
+        branch (str): Branch to create patches from (None = current)
+        count (int): Number of patches to produce, or -1 to produce patches for
+            the current branch back to the upstream commit
+        start (int): Start partch to use (0=first / top of branch)
+        end (int): End patch to use (0=last one in series, 1=one before that,
+            etc.)
+
+    Raises:
+        ValueError: if the branch has no Series-link value
+    """
+    if count == -1:
+        # Work out how many patches to send if we can
+        count = (gitutil.CountCommitsToBranch(branch) - start)
+
+    series = patchstream.GetMetaData(branch, start, count - end)
+    link = series.get('link')
+    if not link:
+        raise ValueError("Branch has no Series-link value")
+
+    # Import this here to avoid failing on other commands if the dependencies
+    # are not present
+    from patman import status
+    status.check_patchwork_status(series, link, branch)
