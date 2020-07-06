@@ -111,8 +111,8 @@ def CheckPatch(fname, verbose=False, show_types=False):
         # Skip lines which quote code
         if line.startswith(indent):
             continue
-        # Skip code quotes and #<n>
-        if line.startswith('+') or line.startswith('#'):
+        # Skip code quotes
+        if line.startswith('+'):
             continue
         match = re_stats_full.match(line)
         if not match:
