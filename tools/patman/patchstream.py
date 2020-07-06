@@ -50,6 +50,8 @@ re_space_before_tab = re.compile('^[+].* \t')
 # Match indented lines for changes
 re_leading_whitespace = re.compile('^\s')
 
+re_diff = re.compile(r'^>.*diff --git a/(.*) b/(.*)$')
+
 # States we can be in - can we use range() and still have comments?
 STATE_MSG_HEADER = 0        # Still in the message header
 STATE_PATCH_SUBJECT = 1     # In patch subject (first line of log for a commit)
@@ -83,6 +85,7 @@ class PatchStream:
         self.signoff = []                # Contents of signoff line
         self.commit = None               # Current commit
         self.snippets = []               # List of unquoted test blocks
+        self.recent_diff = None          # Last 'diff' line seen (str)
         self.recent_quoted = collections.deque([], 5)
         self.recent_unquoted = queue.Queue()
         self.was_quoted = None
@@ -199,7 +202,10 @@ class PatchStream:
             if text:
                 valid = True
         if valid:
-            lines = quoted_lines + unquoted_lines
+            lines = []
+            if self.recent_diff:
+                lines.append('> File: %s' % self.recent_diff)
+            lines += quoted_lines + unquoted_lines
             if lines[0].startswith('On ') and lines[0].endswith('wrote:'):
                 lines = lines[1:]
             if lines:
@@ -246,6 +252,7 @@ class PatchStream:
         cover_match = re_cover.match(line)
         signoff_match = re_signoff.match(line)
         leading_whitespace_match = re_leading_whitespace.match(line)
+        diff_match = re_diff.match(line)
         tag_match = None
         if self.state == STATE_PATCH_HEADER:
             tag_match = re_tag.match(line)
@@ -431,6 +438,9 @@ class PatchStream:
             out = [line]
             self.linenum += 1
             self.skip_blank = False
+
+            if diff_match:
+                self.recent_diff = diff_match.group(1)
 
             # If this is quoted, keep recent lines
             if self.linenum > 1 and line:
