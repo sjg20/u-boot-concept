@@ -70,7 +70,6 @@ class PatchStream:
         self.skip_blank = False          # True to skip a single blank line
         self.found_test = False          # Found a TEST= line
         self.lines_after_test = 0        # Number of lines found after TEST=
-        self.warn = []                   # List of warnings we have collected
         self.linenum = 1                 # Output line number we are up to
         self.in_section = None           # Name of start...END section we are in
         self.notes = []                  # Series notes
@@ -91,6 +90,12 @@ class PatchStream:
         self.saw_signoff = False         # Found sign-off line for this commit
         self.saw_change_id = False       # Found Change-Id for this commit
 
+    def AddWarn(self, warn):
+        if not self.commit:
+            raise ValueError('Warning outside commit: %s' % warn)
+        if warn not in self.commit.warn:
+            self.commit.warn.append(warn)
+
     def AddToSeries(self, line, name, value):
         """Add a new Series-xxx tag.
 
@@ -106,7 +111,9 @@ class PatchStream:
             self.in_section = name
             self.skip_blank = False
         if self.is_log:
-            self.series.AddTag(self.commit, line, name, value)
+            warn = self.series.AddTag(self.commit, line, name, value)
+            if warn:
+                self.commit.warn.append(warn)
 
     def AddToCommit(self, line, name, value):
         """Add a new Commit-xxx tag.
@@ -279,7 +286,7 @@ class PatchStream:
             # but we are already in a section, this means 'END' is missing
             # for that section, fix it up.
             if self.in_section:
-                self.warn.append("Missing 'END' in section '%s'" % self.in_section)
+                self.AddWarn("Missing 'END' in section '%s'" % self.in_section)
                 if self.in_section == 'cover':
                     self.series.cover = self.section
                 elif self.in_section == 'notes':
@@ -289,14 +296,15 @@ class PatchStream:
                     if self.is_log:
                         self.commit.notes += self.section
                 else:
-                    self.warn.append("Unknown section '%s'" % self.in_section)
+                    self.AddWarn("Unknown section '%s'" % self.in_section)
                 self.in_section = None
                 self.skip_blank = True
                 self.section = []
             # but we are already in a change list, that means a blank line
             # is missing, fix it up.
             if self.in_change:
-                self.warn.append("Missing 'blank line' in section '%s-changes'" % self.in_change)
+                self.AddWarn("Missing 'blank line' in section '%s-changes'" %
+                             self.in_change)
                 self.FinalizeChange()
                 self.in_change = None
                 self.change_version = 0
@@ -313,7 +321,7 @@ class PatchStream:
                     if self.is_log:
                         self.commit.notes += self.section
                 else:
-                    self.warn.append("Unknown section '%s'" % self.in_section)
+                    self.AddWarn("Unknown section '%s'" % self.in_section)
                 self.in_section = None
                 self.skip_blank = True
                 self.section = []
@@ -344,7 +352,7 @@ class PatchStream:
             name = cover_match.group(1)
             value = cover_match.group(2)
             if self.saw_signoff or self.saw_change_id:
-                self.warn.append(
+                self.AddWarn(
                     "Tag 'Cover-%s' should be before sign-off / Change-Id" %
                     name)
             if name == 'letter':
@@ -379,7 +387,7 @@ class PatchStream:
             name = series_tag_match.group(1)
             value = series_tag_match.group(2)
             if self.saw_signoff or self.saw_change_id:
-                self.warn.append(
+                self.AddWarn(
                     "Tag 'Series-%s' should be before sign-off / Change-Id" %
                     name)
             if name == 'changes':
@@ -412,7 +420,7 @@ class PatchStream:
                 self.in_change = 'Commit'
                 self.change_version = self.ParseVersion(value, line)
             else:
-                self.warn.append('Line %d: Ignoring Commit-%s' %
+                self.AddWarn('Line %d: Ignoring Commit-%s' %
                     (self.linenum, name))
 
         # Detect the start of a new commit
@@ -427,7 +435,7 @@ class PatchStream:
             # Remove Tested-by self, since few will take much notice
             if (rtag_type == 'Tested-by' and
                     who.find(os.getenv('USER') + '@') != -1):
-                self.warn.append("Ignoring %s" % line)
+                self.AddWarn("Ignoring %s" % line)
             elif rtag_type == 'Patch-cc':
                 self.commit.AddCc(who.split(','))
             else:
@@ -445,7 +453,7 @@ class PatchStream:
             # Look for space before tab
             m = re_space_before_tab.match(line)
             if m:
-                self.warn.append('Line %d/%d has space before tab' %
+                self.AddWarn('Line %d/%d has space before tab' %
                     (self.linenum, m.start()))
 
             # OK, we have a valid non-blank line
@@ -494,8 +502,7 @@ class PatchStream:
         self.FinalizeChange()
         self.CloseCommit()
         if self.lines_after_test:
-            self.warn.append('Found %d lines after TEST=' %
-                    self.lines_after_test)
+            self.AddWarn('Found %d lines after TEST=' % self.lines_after_test)
 
     def WriteMessageId(self, outfd):
         """Write the Message-Id into the output.
@@ -570,8 +577,8 @@ class PatchStream:
                     self.blank_count += 1
                 else:
                     if self.blank_count and (line == '-- ' or match):
-                        self.warn.append("Found possible blank line(s) at "
-                                "end of file '%s'" % last_fname)
+                        self.AddWarn("Found possible blank line(s) at end of file '%s'" %
+                                     last_fname)
                     outfd.write('+\n' * self.blank_count)
                     outfd.write(line + '\n')
                     self.blank_count = 0
@@ -662,7 +669,7 @@ def FixPatch(backup_dir, fname, series, commit):
     if backup_dir:
         shutil.copy(fname, os.path.join(backup_dir, os.path.basename(fname)))
     shutil.move(tmpname, fname)
-    return ps.warn
+    return commit.warn
 
 def FixPatches(series, fnames):
     """Fix up a list of patches identified by filenames
