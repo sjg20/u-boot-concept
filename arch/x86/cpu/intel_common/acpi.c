@@ -245,31 +245,6 @@ static int calculate_power(int tdp, int p1_ratio, int ratio)
 	return power;
 }
 
-static int get_cores_per_package(void)
-{
-	struct cpuid_result result;
-	int cores = 1;
-
-	if (gd->arch.x86_vendor != X86_VENDOR_INTEL)
-		return 1;
-
-	result = cpuid_ext(0xb, 1);
-	cores = result.ebx & 0xff;
-
-	return cores;
-}
-
-static void generate_c_state_entries(struct acpi_ctx *ctx)
-{
-	struct acpi_cstate *c_state_map;
-	size_t entries;
-
-	c_state_map = arch_get_cstate_map(&entries);
-
-	/* Generate C-state tables */
-	acpigen_write_cst_package(ctx, c_state_map, entries);
-}
-
 void generate_p_state_entries(struct acpi_ctx *ctx, int core,
 			      int cores_per_package)
 {
@@ -384,51 +359,24 @@ void generate_t_state_entries(struct acpi_ctx *ctx, int core,
 	acpigen_write_tss_package(ctx, entries, soc_tss_table);
 }
 
-__weak void soc_power_states_generation(struct acpi_ctx *ctx,
-					int core_id, int cores_per_package)
+int acpi_generate_cpu_header(struct acpi_ctx *ctx, int core_id,
+			     const struct acpi_cstate *c_state_map,
+			     int num_cstates)
 {
+	bool is_first = !core_id;
+
+	/* Generate processor \_PR.CPUx */
+	acpigen_write_processor(ctx, core_id, is_first ? ACPI_BASE_ADDRESS : 0,
+				is_first ? 6 : 0);
+
+	/* Generate C-state tables */
+	acpigen_write_cst_package(ctx, c_state_map, num_cstates);
+
+	return 0;
 }
 
-int generate_cpu_entries(struct acpi_ctx *ctx, const struct udevice *dev)
+int acpi_generate_cpu_package_final(struct acpi_ctx *ctx, int cores_per_package)
 {
-	int core_id, cpu_id, pcontrol_blk = ACPI_BASE_ADDRESS;
-	int plen = 6;
-	int totalcores;
-	int cores_per_package;
-	int numcpus;
-	int ret;
-
-	ret = cpu_get_count(dev);
-	if (ret < 0)
-		return log_msg_ret("count", ret);
-	totalcores = ret;
-	cores_per_package = get_cores_per_package();
-	numcpus = totalcores / cores_per_package;
-	log_debug("Found %d CPU(s) with %d core(s) each.\n", numcpus,
-		  cores_per_package);
-
-	for (cpu_id = 0; cpu_id < numcpus; cpu_id++) {
-		for (core_id = 0; core_id < cores_per_package; core_id++) {
-			if (core_id > 0) {
-				pcontrol_blk = 0;
-				plen = 0;
-			}
-
-			/* Generate processor \_PR.CPUx */
-			acpigen_write_processor(ctx,
-						cpu_id * cores_per_package +
-						core_id, pcontrol_blk, plen);
-
-			/* Generate C-state tables */
-			generate_c_state_entries(ctx);
-
-			/* Soc specific power states generation */
-			soc_power_states_generation(ctx, core_id,
-						    cores_per_package);
-
-			acpigen_pop_len(ctx);
-		}
-	}
 	/*
 	 * PPKG is usually used for thermal management of the first and only
 	 * package

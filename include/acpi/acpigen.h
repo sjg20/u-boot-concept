@@ -835,10 +835,8 @@ enum psd_coord {
 
 void acpigen_write_psd_package(struct acpi_ctx *ctx, u32 domain, u32 numprocs,
 			       enum psd_coord coordtype);
-void acpigen_write_cst_package_entry(struct acpi_ctx *ctx,
-				     struct acpi_cstate *cstate);
-void acpigen_write_cst_package(struct acpi_ctx *ctx, struct acpi_cstate *entry,
-			       int nentries);
+void acpigen_write_cst_package(struct acpi_ctx *ctx,
+			       const struct acpi_cstate *entry, int nentries);
 
 enum csd_coord {
 	CSD_HW_ALL = 0xfe,

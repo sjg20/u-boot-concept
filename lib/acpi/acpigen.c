@@ -876,8 +876,8 @@ void acpigen_write_psd_package(struct acpi_ctx *ctx, u32 domain, u32 numprocs,
 	acpigen_pop_len(ctx);
 }
 
-void acpigen_write_cst_package_entry(struct acpi_ctx *ctx,
-				     struct acpi_cstate *cstate)
+static void acpigen_write_cst_package_entry(struct acpi_ctx *ctx,
+				     const struct acpi_cstate *cstate)
 {
 	acpigen_write_package(ctx, 4);
 	acpigen_write_register_resource(ctx, &cstate->resource);
@@ -887,8 +887,8 @@ void acpigen_write_cst_package_entry(struct acpi_ctx *ctx,
 	acpigen_pop_len(ctx);
 }
 
-void acpigen_write_cst_package(struct acpi_ctx *ctx, struct acpi_cstate *cstate,
-			       int nentries)
+void acpigen_write_cst_package(struct acpi_ctx *ctx,
+			       const struct acpi_cstate *cstate, int nentries)
 {
 	int i;
 
