@@ -7,6 +7,7 @@
  * (C) Copyright 2000
  * Paolo Scaffardi, AIRVENT SAM s.p.a - RIMINI(ITALY), arsenio@tin.it
  */
+#define DEBUG
 
 #include <config.h>
 #include <common.h>
@@ -154,8 +155,8 @@ static int stdio_probe_device(const char *name, enum uclass_id id,
 	if (ret == -ENODEV)
 		ret = uclass_first_device_err(id, &dev);
 	if (ret) {
-		debug("No %s device for seq %d (%s)\n", uclass_get_name(id),
-		      seq, name);
+		debug("No %s device for seq %d (%s), err=%d\n",
+                      uclass_get_name(id), seq, name, ret);
 		return ret;
 	}
 	/* The device should be be the last one registered */
