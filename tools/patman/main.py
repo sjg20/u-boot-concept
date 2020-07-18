@@ -166,7 +166,8 @@ elif args.cmd == 'status':
                                  args.dest_branch, args.force,
                                  args.show_comments)
     except Exception as e:
-        print('patman: %s: %s' % (type(e).__name__, e))
+        terminal.Print('patman: %s: %s' % (type(e).__name__, e),
+                       colour=terminal.Color.RED)
         if args.debug:
             print()
             traceback.print_exc()

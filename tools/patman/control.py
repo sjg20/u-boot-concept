@@ -206,6 +206,16 @@ def patchwork_status(branch, count, start, end, dest_branch, force,
         count = (gitutil.CountCommitsToBranch(branch) - start)
 
     series = patchstream.GetMetaData(branch, start, count - end)
+    warnings = 0
+    for cmt in series.commits:
+        if cmt.warn:
+            print('%d warnings for %s:' % (len(cmt.warn), cmt.hash))
+            for warn in cmt.warn:
+                print('\t', warn)
+                warnings += 1
+            print
+    if warnings:
+        raise ValueError("Please fix warnings before running status")
     link = series.get('link')
     if not link:
         raise ValueError("Branch has no Series-link value")
@@ -214,4 +224,4 @@ def patchwork_status(branch, count, start, end, dest_branch, force,
     # are not present
     from patman import status
     status.check_patchwork_status(series, link, branch, dest_branch, force,
-show_comments)
+                                  show_comments)
