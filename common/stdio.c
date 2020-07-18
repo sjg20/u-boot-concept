@@ -106,7 +106,7 @@ static void drv_system_init (void)
  */
 struct list_head* stdio_get_list(void)
 {
-	return &(devs.list);
+	return &devs.list;
 }
 
 #ifdef CONFIG_DM_VIDEO
@@ -170,7 +170,7 @@ struct stdio_dev *stdio_get_by_name(const char *name)
 	if (!name)
 		return NULL;
 
-	list_for_each(pos, &(devs.list)) {
+	list_for_each(pos, &devs.list) {
 		sdev = list_entry(pos, struct stdio_dev, list);
 		if (strcmp(sdev->name, name) == 0)
 			return sdev;
@@ -219,7 +219,7 @@ int stdio_register_dev(struct stdio_dev *dev, struct stdio_dev **devp)
 	_dev = stdio_clone(dev);
 	if(!_dev)
 		return -ENODEV;
-	list_add_tail(&(_dev->list), &(devs.list));
+	list_add_tail(&_dev->list, &devs.list);
 	if (devp)
 		*devp = _dev;
 
@@ -256,11 +256,11 @@ int stdio_deregister_dev(struct stdio_dev *dev, int force)
 			sizeof(temp_names[l]));
 	}
 
-	list_del(&(dev->list));
+	list_del(&dev->list);
 	free(dev);
 
 	/* reassign Device list */
-	list_for_each(pos, &(devs.list)) {
+	list_for_each(pos, &devs.list) {
 		dev = list_entry(pos, struct stdio_dev, list);
 		for (l=0 ; l< MAX_FILES; l++) {
 			if(strcmp(dev->name, temp_names[l]) == 0)
@@ -298,7 +298,7 @@ int stdio_init_tables(void)
 #endif /* CONFIG_NEEDS_MANUAL_RELOC */
 
 	/* Initialize the list */
-	INIT_LIST_HEAD(&(devs.list));
+	INIT_LIST_HEAD(&devs.list);
 
 	return 0;
 }
