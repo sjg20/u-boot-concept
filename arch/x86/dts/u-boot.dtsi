@@ -141,8 +141,6 @@
 		filename = CONFIG_FSP_FILE_S;
 	};
 #endif
-	fdtmap {
-	};
 #ifdef CONFIG_HAVE_CMC
 	intel-cmc {
 		filename = CONFIG_CMC_FILE;
