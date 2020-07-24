@@ -144,7 +144,7 @@ static int dm_test_gpio(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_gpio, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+DM_TEST(dm_test_gpio, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 /* Test that GPIO open-drain/open-source emulation works correctly */
 static int dm_test_gpio_opendrain_opensource(struct unit_test_state *uts)
@@ -233,7 +233,7 @@ static int dm_test_gpio_opendrain_opensource(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_gpio_opendrain_opensource,
-	DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+	UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 /* Test that sandbox anonymous GPIOs work correctly */
 static int dm_test_gpio_anon(struct unit_test_state *uts)
@@ -255,7 +255,7 @@ static int dm_test_gpio_anon(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_gpio_anon, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+DM_TEST(dm_test_gpio_anon, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 /* Test that gpio_requestf() works as expected */
 static int dm_test_gpio_requestf(struct unit_test_state *uts)
@@ -273,7 +273,7 @@ static int dm_test_gpio_requestf(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_gpio_requestf, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+DM_TEST(dm_test_gpio_requestf, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 /* Test that gpio_request() copies its string */
 static int dm_test_gpio_copy(struct unit_test_state *uts)
@@ -295,7 +295,7 @@ static int dm_test_gpio_copy(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_gpio_copy, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+DM_TEST(dm_test_gpio_copy, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 /* Test that we don't leak memory with GPIOs */
 static int dm_test_gpio_leak(struct unit_test_state *uts)
@@ -307,7 +307,7 @@ static int dm_test_gpio_leak(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_gpio_leak, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+DM_TEST(dm_test_gpio_leak, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 /* Test that we can find GPIOs using phandles */
 static int dm_test_gpio_phandles(struct unit_test_state *uts)
@@ -381,7 +381,7 @@ static int dm_test_gpio_phandles(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_gpio_phandles, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+DM_TEST(dm_test_gpio_phandles, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 /* Check the gpio pin configuration get from device tree information */
 static int dm_test_gpio_get_dir_flags(struct unit_test_state *uts)
@@ -417,7 +417,7 @@ static int dm_test_gpio_get_dir_flags(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_gpio_get_dir_flags, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+DM_TEST(dm_test_gpio_get_dir_flags, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 /* Test of gpio_get_acpi() */
 static int dm_test_gpio_get_acpi(struct unit_test_state *uts)
@@ -446,7 +446,7 @@ static int dm_test_gpio_get_acpi(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_gpio_get_acpi, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+DM_TEST(dm_test_gpio_get_acpi, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 /* Test of gpio_get_acpi() with an interrupt GPIO */
 static int dm_test_gpio_get_acpi_irq(struct unit_test_state *uts)
@@ -478,4 +478,4 @@ static int dm_test_gpio_get_acpi_irq(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_gpio_get_acpi_irq, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+DM_TEST(dm_test_gpio_get_acpi_irq, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);

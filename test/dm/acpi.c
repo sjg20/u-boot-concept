@@ -171,7 +171,7 @@ static int dm_test_acpi_get_name(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_acpi_get_name, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+DM_TEST(dm_test_acpi_get_name, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 /* Test acpi_get_table_revision() */
 static int dm_test_acpi_get_table_revision(struct unit_test_state *uts)
@@ -184,7 +184,7 @@ static int dm_test_acpi_get_table_revision(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_acpi_get_table_revision,
-	DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+	UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 /* Test acpi_create_dmar() */
 static int dm_test_acpi_create_dmar(struct unit_test_state *uts)
@@ -197,7 +197,7 @@ static int dm_test_acpi_create_dmar(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_acpi_create_dmar, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+DM_TEST(dm_test_acpi_create_dmar, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 /* Test acpi_fill_header() */
 static int dm_test_acpi_fill_header(struct unit_test_state *uts)
@@ -224,7 +224,7 @@ static int dm_test_acpi_fill_header(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_acpi_fill_header, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+DM_TEST(dm_test_acpi_fill_header, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 /* Test ACPI write_tables() */
 static int dm_test_acpi_write_tables(struct unit_test_state *uts)
@@ -265,7 +265,7 @@ static int dm_test_acpi_write_tables(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_acpi_write_tables, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+DM_TEST(dm_test_acpi_write_tables, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 /* Test basic ACPI functions */
 static int dm_test_acpi_basic(struct unit_test_state *uts)
@@ -293,7 +293,7 @@ static int dm_test_acpi_basic(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_acpi_basic, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+DM_TEST(dm_test_acpi_basic, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 /* Test acpi_setup_base_tables */
 static int dm_test_acpi_setup_base_tables(struct unit_test_state *uts)
@@ -341,7 +341,7 @@ static int dm_test_acpi_setup_base_tables(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_acpi_setup_base_tables,
-	DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+	UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 /* Test 'acpi list' command */
 static int dm_test_acpi_cmd_list(struct unit_test_state *uts)
@@ -383,7 +383,7 @@ static int dm_test_acpi_cmd_list(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_acpi_cmd_list, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+DM_TEST(dm_test_acpi_cmd_list, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 /* Test 'acpi dump' command */
 static int dm_test_acpi_cmd_dump(struct unit_test_state *uts)
@@ -414,7 +414,7 @@ static int dm_test_acpi_cmd_dump(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_acpi_cmd_dump, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+DM_TEST(dm_test_acpi_cmd_dump, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 /* Test acpi_device_path() */
 static int dm_test_acpi_device_path(struct unit_test_state *uts)
@@ -451,7 +451,7 @@ static int dm_test_acpi_device_path(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_acpi_device_path, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+DM_TEST(dm_test_acpi_device_path, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 /* Test acpi_device_status() */
 static int dm_test_acpi_device_status(struct unit_test_state *uts)
@@ -463,7 +463,7 @@ static int dm_test_acpi_device_status(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_acpi_device_status, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+DM_TEST(dm_test_acpi_device_status, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 /* Test acpi_fill_ssdt() */
 static int dm_test_acpi_fill_ssdt(struct unit_test_state *uts)
@@ -493,7 +493,7 @@ static int dm_test_acpi_fill_ssdt(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_acpi_fill_ssdt, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+DM_TEST(dm_test_acpi_fill_ssdt, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 /* Test acpi_inject_dsdt() */
 static int dm_test_acpi_inject_dsdt(struct unit_test_state *uts)
@@ -523,7 +523,7 @@ static int dm_test_acpi_inject_dsdt(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_acpi_inject_dsdt, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+DM_TEST(dm_test_acpi_inject_dsdt, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 /* Test 'acpi items' command */
 static int dm_test_acpi_cmd_items(struct unit_test_state *uts)
@@ -562,4 +562,4 @@ static int dm_test_acpi_cmd_items(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_acpi_cmd_items, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+DM_TEST(dm_test_acpi_cmd_items, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
