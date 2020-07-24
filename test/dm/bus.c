@@ -137,7 +137,7 @@ static int dm_test_bus_children(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_bus_children, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+DM_TEST(dm_test_bus_children, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 /* Test our functions for accessing children */
 static int dm_test_bus_children_funcs(struct unit_test_state *uts)
@@ -176,7 +176,7 @@ static int dm_test_bus_children_funcs(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_bus_children_funcs, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+DM_TEST(dm_test_bus_children_funcs, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 static int dm_test_bus_children_of_offset(struct unit_test_state *uts)
 {
@@ -200,7 +200,7 @@ static int dm_test_bus_children_of_offset(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_bus_children_of_offset,
-	DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT | DM_TESTF_FLAT_TREE);
+	UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT | UT_TESTF_FLAT_TREE);
 
 /* Test that we can iterate through children */
 static int dm_test_bus_children_iterators(struct unit_test_state *uts)
@@ -231,7 +231,7 @@ static int dm_test_bus_children_iterators(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_bus_children_iterators,
-	DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+	UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 /* Test that the bus can store data about each child */
 static int test_bus_parent_data(struct unit_test_state *uts)
@@ -298,7 +298,7 @@ static int dm_test_bus_parent_data(struct unit_test_state *uts)
 {
 	return test_bus_parent_data(uts);
 }
-DM_TEST(dm_test_bus_parent_data, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+DM_TEST(dm_test_bus_parent_data, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 /* As above but the size is controlled by the uclass */
 static int dm_test_bus_parent_data_uclass(struct unit_test_state *uts)
@@ -328,7 +328,7 @@ static int dm_test_bus_parent_data_uclass(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_bus_parent_data_uclass,
-	DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+	UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 /* Test that the bus ops are called when a child is probed/removed */
 static int dm_test_bus_parent_ops(struct unit_test_state *uts)
@@ -367,7 +367,7 @@ static int dm_test_bus_parent_ops(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_bus_parent_ops, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+DM_TEST(dm_test_bus_parent_ops, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 static int test_bus_parent_platdata(struct unit_test_state *uts)
 {
@@ -442,7 +442,7 @@ static int dm_test_bus_parent_platdata(struct unit_test_state *uts)
 {
 	return test_bus_parent_platdata(uts);
 }
-DM_TEST(dm_test_bus_parent_platdata, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+DM_TEST(dm_test_bus_parent_platdata, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 /* As above but the size is controlled by the uclass */
 static int dm_test_bus_parent_platdata_uclass(struct unit_test_state *uts)
@@ -471,7 +471,7 @@ static int dm_test_bus_parent_platdata_uclass(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_bus_parent_platdata_uclass,
-	DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+	UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 /* Test that the child post_bind method is called */
 static int dm_test_bus_child_post_bind(struct unit_test_state *uts)
@@ -492,7 +492,7 @@ static int dm_test_bus_child_post_bind(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_bus_child_post_bind, DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+DM_TEST(dm_test_bus_child_post_bind, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 /* Test that the child post_bind method is called */
 static int dm_test_bus_child_post_bind_uclass(struct unit_test_state *uts)
@@ -514,7 +514,7 @@ static int dm_test_bus_child_post_bind_uclass(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_bus_child_post_bind_uclass,
-	DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+	UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 /*
  * Test that the bus' uclass' child_pre_probe() is called before the
@@ -548,7 +548,7 @@ static int dm_test_bus_child_pre_probe_uclass(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_bus_child_pre_probe_uclass,
-	DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+	UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 /*
  * Test that the bus' uclass' child_post_probe() is called after the
@@ -581,4 +581,4 @@ static int dm_test_bus_child_post_probe_uclass(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_bus_child_post_probe_uclass,
-	DM_TESTF_SCAN_PDATA | DM_TESTF_SCAN_FDT);
+	UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
