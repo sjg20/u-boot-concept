@@ -13,7 +13,6 @@ DECLARE_GLOBAL_DATA_PTR;
 void handoff_save_dram(struct spl_handoff *ho)
 {
 	ho->ram_size = gd->ram_size;
-#ifdef CONFIG_NR_DRAM_BANKS
 	{
 		struct bd_info *bd = gd->bd;
 		int i;
@@ -23,7 +22,6 @@ void handoff_save_dram(struct spl_handoff *ho)
 			ho->ram_bank[i].size = bd->bi_dram[i].size;
 		}
 	}
-#endif
 }
 
 void handoff_load_dram_size(struct spl_handoff *ho)
@@ -33,7 +31,6 @@ void handoff_load_dram_size(struct spl_handoff *ho)
 
 void handoff_load_dram_banks(struct spl_handoff *ho)
 {
-#ifdef CONFIG_NR_DRAM_BANKS
 	{
 		struct bd_info *bd = gd->bd;
 		int i;
@@ -43,5 +40,4 @@ void handoff_load_dram_banks(struct spl_handoff *ho)
 			bd->bi_dram[i].size = ho->ram_bank[i].size;
 		}
 	}
-#endif
 }

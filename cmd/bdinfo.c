@@ -47,7 +47,6 @@ void bdinfo_print_mhz(const char *name, unsigned long hz)
 
 static void print_bi_dram(const struct bd_info *bd)
 {
-#ifdef CONFIG_NR_DRAM_BANKS
 	int i;
 
 	for (i = 0; i < CONFIG_NR_DRAM_BANKS; ++i) {
@@ -57,7 +56,6 @@ static void print_bi_dram(const struct bd_info *bd)
 			bdinfo_print_num("-> size",	bd->bi_dram[i].size);
 		}
 	}
-#endif
 }
 
 __weak void arch_print_bdinfo(void)
