@@ -12,6 +12,7 @@
 #include <dm/devres.h>
 #include <generic-phy.h>
 #include <linux/list.h>
+#include <linux/printk.h>
 
 /**
  * struct phy_counts - Init and power-on counts of a single PHY port

@@ -10,6 +10,7 @@
 #include <misc.h>
 #include <dm/device.h>
 #include <dm/uclass.h>
+#include <linux/printk.h>
 
 /* Closed device : bit 6 of OPT0*/
 #define STM32_OTP_CLOSE_ID		0

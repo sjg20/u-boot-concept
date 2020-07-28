@@ -26,6 +26,7 @@
 #include <asm/gpio.h>
 #include <linux/iopoll.h>
 #include <watchdog.h>
+#include <linux/printk.h>
 
 struct stm32_sdmmc2_plat {
 	struct mmc_config cfg;

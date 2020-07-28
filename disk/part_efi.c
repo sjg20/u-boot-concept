@@ -26,6 +26,7 @@
 #include <dm/ofnode.h>
 #include <linux/compiler.h>
 #include <linux/ctype.h>
+#include <linux/printk.h>
 #include <u-boot/crc.h>
 
 #ifdef CONFIG_HAVE_BLOCK_DEVICE

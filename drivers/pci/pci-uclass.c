@@ -23,6 +23,7 @@
 #endif
 #include <dt-bindings/pci/pci.h>
 #include <linux/delay.h>
+#include <linux/printk.h>
 #include "pci_internal.h"
 
 DECLARE_GLOBAL_DATA_PTR;

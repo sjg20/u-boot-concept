@@ -22,6 +22,7 @@
 #include <dm/device.h>
 #include <dm/uclass.h>
 #include <linux/bitops.h>
+#include <linux/printk.h>
 
 /*
  * early TLB into the .data section so that it not get cleared
