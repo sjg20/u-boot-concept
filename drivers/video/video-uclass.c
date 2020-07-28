@@ -15,6 +15,7 @@
 #include <mapmem.h>
 #include <spl.h>
 #include <stdio_dev.h>
+#include <time.h>
 #include <video.h>
 #include <video_console.h>
 #include <asm/cache.h>

@@ -8,6 +8,7 @@
  *	   Jon Lin <Jon.lin@rock-chips.com>
  */
 
+#include <time.h>
 #include <asm/io.h>
 #include <bouncebuf.h>
 #include <clk.h>

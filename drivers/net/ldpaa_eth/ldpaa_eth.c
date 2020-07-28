@@ -6,6 +6,7 @@
 
 #include <common.h>
 #include <cpu_func.h>
+#include <time.h>
 #include <dm/device_compat.h>
 #include <fsl-mc/fsl_dpmac.h>
 #include <fsl-mc/ldpaa_wriop.h>

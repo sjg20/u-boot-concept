@@ -14,6 +14,7 @@
 #include <regmap.h>
 #include <sdhci.h>
 #include <soc.h>
+#include <time.h>
 #include <dm/device_compat.h>
 #include <linux/bitops.h>
 #include <linux/err.h>

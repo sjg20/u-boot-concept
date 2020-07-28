@@ -54,6 +54,7 @@
 #include <dm.h>
 #include <malloc.h>
 #include <net.h>
+#include <time.h>
 #include <asm/io.h>
 #include <linux/delay.h>
 

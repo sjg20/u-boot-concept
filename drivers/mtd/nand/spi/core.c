@@ -22,6 +22,7 @@
 #else
 #include <common.h>
 #include <errno.h>
+#include <time.h>
 #include <watchdog.h>
 #include <spi.h>
 #include <spi-mem.h>

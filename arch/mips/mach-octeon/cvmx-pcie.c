@@ -6,6 +6,7 @@
  */
 
 #include <log.h>
+#include <time.h>
 #include <linux/delay.h>
 #include <linux/libfdt.h>
 

@@ -10,6 +10,7 @@
 #include <common.h>
 #include <net6.h>
 #include <malloc.h>
+#include <time.h>
 #include <linux/delay.h>
 #include "net_rand.h"
 #include "dhcpv6.h"

@@ -16,6 +16,7 @@
 #include <image.h>
 #include <log.h>
 #include <mapmem.h>
+#include <time.h>
 #include <asm/global_data.h>
 #include <linux/ctype.h>
 

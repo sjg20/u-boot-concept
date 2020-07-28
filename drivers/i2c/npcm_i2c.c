@@ -6,6 +6,7 @@
 #include <clk.h>
 #include <dm.h>
 #include <i2c.h>
+#include <time.h>
 #include <asm/io.h>
 #include <linux/iopoll.h>
 #include <asm/arch/gcr.h>

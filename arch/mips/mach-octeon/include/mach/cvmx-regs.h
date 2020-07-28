@@ -7,6 +7,7 @@
 #define __CVMX_REGS_H__
 
 #include <log.h>
+#include <time.h>
 #include <linux/bitfield.h>
 #include <linux/bitops.h>
 #include <linux/io.h>

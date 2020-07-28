@@ -7,6 +7,7 @@
 #include <command.h>
 #include <fastboot.h>
 #include <net.h>
+#include <time.h>
 #include <net/fastboot_udp.h>
 #include <linux/printk.h>
 

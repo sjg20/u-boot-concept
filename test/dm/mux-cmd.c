@@ -7,6 +7,7 @@
 #include <dm.h>
 #include <mux.h>
 #include <mux-internal.h>
+#include <time.h>
 #include <dt-bindings/mux/mux.h>
 #include <asm/test.h>
 #include <dm/test.h>

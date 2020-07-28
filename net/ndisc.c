@@ -14,6 +14,7 @@
 #include <net6.h>
 #include <ndisc.h>
 #include <stdlib.h>
+#include <time.h>
 #include <linux/delay.h>
 
 /* IPv6 destination address of packet waiting for ND */

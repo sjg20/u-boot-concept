@@ -9,6 +9,7 @@
 #define _TEGRA_TIMER_H
 
 /* returns the current monotonic timer value in microseconds */
+#include <time.h>
 unsigned long timer_get_us(void);
 
 #endif

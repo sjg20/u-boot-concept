@@ -5,6 +5,7 @@
 
 #include <common.h>
 #include <dm.h>
+#include <time.h>
 #include <uboot_aes.h>
 #include <asm/io.h>
 #include <asm/arch/aes.h>

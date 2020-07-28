@@ -8,6 +8,7 @@
 #include <dm.h>
 #include <clk.h>
 #include <spi.h>
+#include <time.h>
 #include <asm/io.h>
 #include <linux/bitfield.h>
 #include <linux/delay.h>

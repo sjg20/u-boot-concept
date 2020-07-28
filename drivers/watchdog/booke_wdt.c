@@ -5,6 +5,7 @@
 
 #include <div64.h>
 #include <dm.h>
+#include <time.h>
 #include <wdt.h>
 #include <asm/processor.h>
 

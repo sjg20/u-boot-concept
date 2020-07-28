@@ -14,6 +14,7 @@
 #include <common.h>		/* core U-Boot definitions */
 #include <log.h>
 #include <spartan3.h>		/* Spartan-II device family */
+#include <time.h>
 
 /* Note: The assumption is that we cannot possibly run fast enough to
  * overrun the device (the Slave Parallel mode can free run at 50MHz).

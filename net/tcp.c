@@ -23,6 +23,7 @@
 #include <env_internal.h>
 #include <errno.h>
 #include <net.h>
+#include <time.h>
 #include <net/tcp.h>
 
 /*

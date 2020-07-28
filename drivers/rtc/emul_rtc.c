@@ -10,6 +10,7 @@
 #include <dm.h>
 #include <env.h>
 #include <rtc.h>
+#include <time.h>
 #include <timestamp.h>
 
 /**

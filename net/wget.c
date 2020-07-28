@@ -11,6 +11,7 @@
 #include <image.h>
 #include <mapmem.h>
 #include <net.h>
+#include <time.h>
 #include <net/tcp.h>
 #include <net/wget.h>
 

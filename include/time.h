@@ -3,6 +3,7 @@
 #ifndef _TIME_H
 #define _TIME_H
 
+#include <time.h>
 #include <linux/typecheck.h>
 #include <linux/types.h>
 

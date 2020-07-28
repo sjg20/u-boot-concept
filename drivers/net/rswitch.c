@@ -7,6 +7,7 @@
  * Based on the Renesas Ethernet AVB driver.
  */
 
+#include <time.h>
 #include <asm/io.h>
 #include <clk.h>
 #include <common.h>

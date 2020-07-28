@@ -8,6 +8,7 @@
 #include <clk.h>
 #include <display.h>
 #include <dm.h>
+#include <time.h>
 #include <dm/device_compat.h>
 #include <edid.h>
 #include <log.h>

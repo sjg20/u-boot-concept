@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <hwspinlock.h>
 #include <log.h>
+#include <time.h>
 #include <dm/device-internal.h>
 #include <dm/device_compat.h>
 #include <linux/compat.h>

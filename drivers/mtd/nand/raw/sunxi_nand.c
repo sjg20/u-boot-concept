@@ -31,6 +31,7 @@
 #include <memalign.h>
 #include <nand.h>
 #include <reset.h>
+#include <time.h>
 #include <dm/device_compat.h>
 #include <dm/devres.h>
 #include <linux/bitops.h>

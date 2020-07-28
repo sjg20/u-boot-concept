@@ -25,6 +25,7 @@
 #include <dm.h>
 #include <env.h>
 #include <init.h>
+#include <time.h>
 #include <watchdog.h>
 #include <wdt.h>
 #include <malloc.h>

@@ -13,6 +13,7 @@
 #include <regmap.h>
 #include <serial.h>
 #include <syscon.h>
+#include <time.h>
 #include <asm/io.h>
 #include <linux/err.h>
 #include <linux/iopoll.h>

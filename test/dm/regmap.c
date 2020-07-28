@@ -10,6 +10,7 @@
 #include <regmap.h>
 #include <syscon.h>
 #include <rand.h>
+#include <time.h>
 #include <asm/test.h>
 #include <dm/test.h>
 #include <dm/devres.h>

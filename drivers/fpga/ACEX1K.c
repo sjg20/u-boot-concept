@@ -13,6 +13,7 @@
 #include <console.h>
 #include <log.h>
 #include <ACEX1K.h>		/* ACEX device family */
+#include <time.h>
 #include <linux/delay.h>
 
 /* Note: The assumption is that we cannot possibly run fast enough to

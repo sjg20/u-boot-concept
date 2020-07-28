@@ -14,6 +14,7 @@
 #include <net.h>
 #include <phy.h>
 #include <miiphy.h>
+#include <time.h>
 #include <dm/device_compat.h>
 #include <asm/global_data.h>
 #include <linux/delay.h>

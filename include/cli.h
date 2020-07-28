@@ -8,6 +8,7 @@
 #define __CLI_H
 
 #include <stdbool.h>
+#include <time.h>
 
 /**
  * struct cli_ch_state - state information for reading cmdline characters

@@ -14,6 +14,7 @@
 #include <edid.h>
 #include <log.h>
 #include <part.h>
+#include <time.h>
 #include <video.h>
 #include <asm/gpio.h>
 #include <asm/io.h>

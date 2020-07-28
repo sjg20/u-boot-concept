@@ -16,6 +16,7 @@
 #include <log.h>
 #include <miiphy.h>
 #include <malloc.h>
+#include <time.h>
 #include <asm/cache.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>

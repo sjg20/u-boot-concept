@@ -6,6 +6,7 @@
 #include <common.h>
 #include <cyclic.h>
 #include <dm.h>
+#include <time.h>
 #include <wdt.h>
 #include <asm/gpio.h>
 #include <asm/state.h>

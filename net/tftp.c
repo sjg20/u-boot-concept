@@ -16,6 +16,7 @@
 #include <mapmem.h>
 #include <net.h>
 #include <net6.h>
+#include <time.h>
 #include <asm/global_data.h>
 #include <net/tftp.h>
 #include "bootp.h"

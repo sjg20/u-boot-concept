@@ -17,6 +17,7 @@
 #include <malloc.h>
 #include <mapmem.h>
 #include <os.h>
+#include <time.h>
 #include <acpi/acpi_table.h>
 #include <asm/global_data.h>
 #include <asm/test.h>

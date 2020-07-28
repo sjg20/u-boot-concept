@@ -21,6 +21,7 @@
 #include <mmc.h>
 #include <clk.h>
 #include <reset.h>
+#include <time.h>
 #include <asm/gpio.h>
 #include <asm/io.h>
 #include <asm/arch/clock.h>

@@ -11,6 +11,7 @@
 #include <log.h>
 #include <spl.h>
 #include <syscon.h>
+#include <time.h>
 #include <asm/cpu.h>
 #include <asm/global_data.h>
 #include <asm/gpio.h>

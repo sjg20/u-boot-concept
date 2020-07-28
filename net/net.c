@@ -93,6 +93,7 @@
 #include <net.h>
 #include <net6.h>
 #include <ndisc.h>
+#include <time.h>
 #include <net/fastboot_udp.h>
 #include <net/fastboot_tcp.h>
 #include <net/tftp.h>

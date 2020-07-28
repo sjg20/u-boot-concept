@@ -17,6 +17,7 @@
 #include <common.h>
 #include <console.h>
 #include <log.h>
+#include <time.h>
 #include <virtex2.h>
 #include <linux/delay.h>
 

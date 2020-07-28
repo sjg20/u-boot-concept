@@ -15,6 +15,7 @@
 #include <net.h>
 #include <net6.h>
 #include <ndisc.h>
+#include <time.h>
 
 /* NULL IPv6 address */
 struct in6_addr const net_null_addr_ip6 = ZERO_IPV6_ADDR;

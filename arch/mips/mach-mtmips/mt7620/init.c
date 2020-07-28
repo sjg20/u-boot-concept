@@ -6,6 +6,7 @@
  */
 
 #include <config.h>
+#include <time.h>
 #include <asm/global_data.h>
 #include <linux/io.h>
 #include "mt7620.h"

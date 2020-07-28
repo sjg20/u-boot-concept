@@ -11,6 +11,7 @@
 #include <malloc.h>
 #include <pwrseq.h>
 #include <mmc.h>
+#include <time.h>
 #include <asm/io.h>
 #include <asm/gpio.h>
 #include <linux/delay.h>

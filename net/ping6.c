@@ -12,6 +12,7 @@
 #include <common.h>
 #include <net.h>
 #include <net6.h>
+#include <time.h>
 #include "ndisc.h"
 
 static ushort seq_no;

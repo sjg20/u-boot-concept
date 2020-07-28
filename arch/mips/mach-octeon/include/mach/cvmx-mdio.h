@@ -12,6 +12,7 @@
 /**
  * PHY register 0 from the 802.3 spec
  */
+#include <time.h>
 #define CVMX_MDIO_PHY_REG_CONTROL 0
 
 typedef union {

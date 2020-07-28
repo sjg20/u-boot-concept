@@ -13,6 +13,7 @@
 #include <regmap.h>
 #include <reset.h>
 #include <syscon.h>
+#include <time.h>
 #include <dm/device.h>
 #include <dm/device_compat.h>
 #include <linux/bitops.h>

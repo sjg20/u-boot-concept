@@ -21,6 +21,7 @@
 #include <fs.h>
 #include <sandboxfs.h>
 #include <semihostingfs.h>
+#include <time.h>
 #include <ubifs_uboot.h>
 #include <btrfs.h>
 #include <asm/global_data.h>

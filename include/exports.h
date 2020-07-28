@@ -12,6 +12,7 @@
 #endif
 
 #include <irq_func.h>
+#include <time.h>
 
 struct cmd_tbl;
 struct spi_slave;

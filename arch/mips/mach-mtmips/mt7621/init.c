@@ -7,6 +7,7 @@
 
 #include <clk.h>
 #include <dm.h>
+#include <time.h>
 #include <dm/uclass.h>
 #include <dt-bindings/clock/mt7621-clk.h>
 #include <asm/global_data.h>
