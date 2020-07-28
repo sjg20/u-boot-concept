@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 
 #include <common.h>
+#include <display_options.h>
 #include <malloc.h>
 #include <errno.h>
 #include <fsl_ddr.h>

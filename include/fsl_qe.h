@@ -14,6 +14,8 @@
 #include <linux/immap_qe.h>
 #endif
 
+struct udevice;
+
 #define QE_NUM_OF_BRGS	16
 #define UCC_MAX_NUM	8
 
