@@ -215,7 +215,8 @@
 
 */
 
-
+
+
 #ifndef __MALLOC_H__
 #define __MALLOC_H__
 
@@ -230,6 +231,7 @@
 #else
 #define __STD_C     0
 #endif /*__cplusplus*/
+#include <linux/string.h>
 #endif /*__STDC__*/
 #endif /*__STD_C*/
 

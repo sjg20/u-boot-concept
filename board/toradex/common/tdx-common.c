@@ -8,6 +8,7 @@
 #include <g_dnl.h>
 #include <init.h>
 #include <linux/libfdt.h>
+#include <linux/string.h>
 
 #include "tdx-cfg-block.h"
 #include <asm/setup.h>

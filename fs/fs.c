@@ -25,6 +25,7 @@
 #include <div64.h>
 #include <linux/math64.h>
 #include <efi_loader.h>
+#include <linux/string.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
