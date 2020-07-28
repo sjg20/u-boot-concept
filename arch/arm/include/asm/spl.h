@@ -41,4 +41,5 @@ extern char __bss_start[], __bss_end[];
 extern gd_t gdata;
 #endif
 
+#include <asm/global_data.h>
 #endif

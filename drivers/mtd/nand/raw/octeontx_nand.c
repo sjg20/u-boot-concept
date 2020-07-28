@@ -4,6 +4,7 @@
  */
 
 #include <dm.h>
+#include <asm/global_data.h>
 #include <dm/device-internal.h>
 #include <dm/devres.h>
 #include <dm/of_access.h>

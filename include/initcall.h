@@ -6,6 +6,7 @@
 #ifndef __INITCALL_H
 #define __INITCALL_H
 
+#include <asm/global_data.h>
 typedef int (*init_fnc_t)(void);
 
 #include <log.h>

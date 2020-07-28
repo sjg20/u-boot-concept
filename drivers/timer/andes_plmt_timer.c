@@ -11,6 +11,7 @@
 #include <common.h>
 #include <dm.h>
 #include <timer.h>
+#include <asm/global_data.h>
 #include <asm/io.h>
 #include <linux/err.h>
 

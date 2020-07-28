@@ -9,6 +9,7 @@
 #include <env_internal.h>
 #include <init.h>
 #include <net.h>
+#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/eth.h>
 #include <i2c.h>

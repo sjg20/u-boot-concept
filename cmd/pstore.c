@@ -10,6 +10,7 @@
 #include <mapmem.h>
 #include <memalign.h>
 #include <part.h>
+#include <asm/global_data.h>
 
 struct persistent_ram_buffer {
 	u32    sig;

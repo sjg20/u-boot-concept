@@ -17,6 +17,7 @@
 #define _I2C_H_
 
 #include <linker_lists.h>
+#include <asm/global_data.h>
 
 /*
  * For now there are essentially two parts to this file - driver model
