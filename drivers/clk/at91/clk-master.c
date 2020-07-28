@@ -13,6 +13,7 @@
 #include <clk-uclass.h>
 #include <common.h>
 #include <dm.h>
+#include <asm/global_data.h>
 #include <linux/clk-provider.h>
 #include <linux/clk/at91_pmc.h>
 

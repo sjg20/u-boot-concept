@@ -6,6 +6,7 @@
 #ifndef	_ASM_SPL_H_
 #define	_ASM_SPL_H_
 
+#include <asm/global_data.h>
 enum {
 	BOOT_DEVICE_RAM,
 	BOOT_DEVICE_MMC1,

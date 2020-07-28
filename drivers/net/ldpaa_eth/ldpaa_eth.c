@@ -15,6 +15,7 @@
 #include <miiphy.h>
 #include <net.h>
 #include <phy.h>
+#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/types.h>
 #include <linux/bug.h>

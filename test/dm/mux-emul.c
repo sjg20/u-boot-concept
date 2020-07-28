@@ -7,6 +7,7 @@
 #include <dm.h>
 #include <mux.h>
 #include <mux-internal.h>
+#include <asm/global_data.h>
 #include <dm/test.h>
 #include <test/ut.h>
 

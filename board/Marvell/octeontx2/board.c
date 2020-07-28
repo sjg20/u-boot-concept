@@ -5,10 +5,12 @@
  * https://spdx.org/licenses
  */
 
+#include <common.h>
 #include <command.h>
 #include <console.h>
 #include <cpu_func.h>
 #include <dm.h>
+#include <asm/global_data.h>
 #include <dm/uclass-internal.h>
 #include <env.h>
 #include <init.h>
