@@ -13,6 +13,7 @@
 #include <asm/arch/imx-regs.h>
 #include <asm/gpio.h>
 #include <asm/io.h>
+#include <linux/string.h>
 
 enum mxc_gpio_direction {
 	MXC_GPIO_DIRECTION_IN,

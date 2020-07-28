@@ -11,6 +11,7 @@
 #include <common.h>
 #include <command.h>
 #include <miiphy.h>
+#include <linux/string.h>
 
 typedef struct _MII_field_desc_t {
 	ushort hi;

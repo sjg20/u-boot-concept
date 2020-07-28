@@ -27,6 +27,7 @@
 #include <netdev.h>
 #include <i2c.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 
 #include <dm.h>
 #include <dm/platform_data/serial_mxc.h>

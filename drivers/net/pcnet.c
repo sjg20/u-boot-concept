@@ -19,6 +19,7 @@
 #include <asm/io.h>
 #include <pci.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 
 #define	PCNET_DEBUG_LEVEL	0	/* 0=off, 1=init, 2=rx/tx */
 
