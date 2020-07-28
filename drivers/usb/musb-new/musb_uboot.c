@@ -1,6 +1,7 @@
 #include <common.h>
 #include <console.h>
 #include <malloc.h>
+#include <time.h>
 #include <watchdog.h>
 #include <linux/delay.h>
 #include <linux/err.h>
