@@ -18,6 +18,7 @@
 #include <linux/bitops.h>
 #include <linux/err.h>
 #include <linux/libfdt.h>
+#include <linux/printk.h>
 
 #define MAX_PINS_ONE_IP			70
 #define MODE_BITS_MASK			3
