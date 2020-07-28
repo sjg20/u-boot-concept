@@ -6,8 +6,8 @@
  * (C) Copyright 2009 Freescale Semiconductor, Inc.
  */
 
-#include <bootm.h>
 #include <common.h>
+#include <bootm.h>
 #include <init.h>
 #include <log.h>
 #include <net.h>
