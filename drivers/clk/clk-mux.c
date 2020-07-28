@@ -31,6 +31,7 @@
 #include <malloc.h>
 #include <asm/io.h>
 #include <linux/clk-provider.h>
+#include <linux/printk.h>
 #include <linux/err.h>
 #include "clk.h"
 

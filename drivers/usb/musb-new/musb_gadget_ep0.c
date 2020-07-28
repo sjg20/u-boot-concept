@@ -22,6 +22,7 @@
 #include <dm.h>
 #include <dm/device_compat.h>
 #include <asm/processor.h>
+#include <linux/printk.h>
 #include "linux-compat.h"
 #endif
 
