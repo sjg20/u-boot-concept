@@ -12,6 +12,7 @@
 #include <tables_csum.h>
 #include <acpi/acpi_table.h>
 #include <dm/acpi.h>
+#include <linux/string.h>
 
 int acpi_create_mcfg_mmconfig(struct acpi_mcfg_mmconfig *mmconfig, u32 base,
 			      u16 seg_nr, u8 start, u8 end)

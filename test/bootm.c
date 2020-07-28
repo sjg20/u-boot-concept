@@ -8,6 +8,7 @@
 #include <common.h>
 #include <bootm.h>
 #include <asm/global_data.h>
+#include <linux/string.h>
 #include <test/suites.h>
 #include <test/test.h>
 #include <test/ut.h>

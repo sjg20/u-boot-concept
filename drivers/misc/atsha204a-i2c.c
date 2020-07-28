@@ -19,6 +19,7 @@
 #include <asm/global_data.h>
 #include <linux/delay.h>
 #include <linux/bitrev.h>
+#include <linux/string.h>
 #include <u-boot/crc.h>
 
 #define ATSHA204A_TWLO_US		60

@@ -17,6 +17,7 @@
 #include <log.h>
 #include <spl.h>
 #include <asm/cache.h>
+#include <linux/string.h>
 
 /* Holds all the structures we need for bl31 parameter passing */
 struct bl2_to_bl31_params_mem {

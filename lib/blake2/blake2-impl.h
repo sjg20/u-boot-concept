@@ -26,6 +26,7 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <linux/string.h>
 
 #define BLAKE2_INLINE inline
 

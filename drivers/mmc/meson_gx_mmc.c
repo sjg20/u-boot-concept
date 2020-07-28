@@ -16,6 +16,7 @@
 #include <asm/gpio.h>
 #include <linux/delay.h>
 #include <linux/log2.h>
+#include <linux/string.h>
 #include "meson_gx_mmc.h"
 
 bool meson_gx_mmc_is_compatible(struct udevice *dev,

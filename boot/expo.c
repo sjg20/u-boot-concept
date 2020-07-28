@@ -13,6 +13,7 @@
 #include <expo.h>
 #include <malloc.h>
 #include <video.h>
+#include <linux/string.h>
 #include "scene_internal.h"
 
 int expo_new(const char *name, void *priv, struct expo **expp)

@@ -15,6 +15,7 @@
 #include <dm/of_access.h>
 #include <generic-phy.h>
 #include <linux/bitfield.h>
+#include <linux/string.h>
 #include <linux/usb/ch9.h>
 #include <linux/usb/otg.h>
 #include <regmap.h>

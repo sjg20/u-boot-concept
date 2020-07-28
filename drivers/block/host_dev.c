@@ -18,6 +18,7 @@
 #include <os.h>
 #include <sandbox_host.h>
 #include <dm/device-internal.h>
+#include <linux/string.h>
 
 static int host_sb_attach_file(struct udevice *dev, const char *filename)
 {

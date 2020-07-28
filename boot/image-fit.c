@@ -30,6 +30,7 @@
 #include <dm.h>
 #include <u-boot/hash.h>
 #endif
+#include <linux/string.h>
 DECLARE_GLOBAL_DATA_PTR;
 #endif /* !USE_HOSTCC*/
 

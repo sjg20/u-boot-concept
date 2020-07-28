@@ -30,6 +30,7 @@
 #include <malloc.h>
 #include <virtio_types.h>
 #include <virtio.h>
+#include <linux/string.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

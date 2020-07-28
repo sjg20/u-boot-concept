@@ -14,6 +14,7 @@
 #include <spi_flash.h>
 #include <asm/global_data.h>
 #include <dm/device-internal.h>
+#include <linux/string.h>
 #include <test/test.h>
 #include "sf_internal.h"
 

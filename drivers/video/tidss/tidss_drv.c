@@ -23,6 +23,7 @@
 #include <regmap.h>
 #include <cpu_func.h>
 #include <media_bus_format.h>
+#include <linux/string.h>
 
 #include <asm/io.h>
 #include <asm/cache.h>

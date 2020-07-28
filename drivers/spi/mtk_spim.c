@@ -23,6 +23,7 @@
 #include <linux/io.h>
 #include <linux/iopoll.h>
 #include <linux/sizes.h>
+#include <linux/string.h>
 
 #define SPI_CFG0_REG				0x0000
 #define SPI_CFG1_REG				0x0004

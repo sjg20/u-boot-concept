@@ -19,6 +19,7 @@
 #include <asm/io.h>
 #include <linux/delay.h>
 #include <linux/ethtool.h>
+#include <linux/string.h>
 #include "xilinx_axi_mrmac.h"
 
 static void axi_mrmac_dma_write(struct mcdma_bd *bd, u32 *desc)

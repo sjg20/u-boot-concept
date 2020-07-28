@@ -7,6 +7,7 @@
 #include <dm.h>
 #include <asm/io.h>
 #include <dm/device_compat.h>
+#include <linux/string.h>
 #include <power/regulator.h>
 
 #define REG_VSRCR	0xf08000e8	/* Voltage Supply Control Register */

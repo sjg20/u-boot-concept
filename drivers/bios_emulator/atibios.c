@@ -53,6 +53,7 @@
 #include <malloc.h>
 #include <vesa.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 #include "biosemui.h"
 
 /* Length of the BIOS image */

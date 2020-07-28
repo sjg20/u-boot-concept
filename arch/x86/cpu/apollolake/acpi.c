@@ -34,6 +34,7 @@
 #include <asm/arch/systemagent.h>
 #include <dm/acpi.h>
 #include <dm/uclass-internal.h>
+#include <linux/string.h>
 #include <power/acpi_pmc.h>
 
 int arch_read_sci_irq_select(void)

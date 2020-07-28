@@ -8,6 +8,7 @@
 #include <linux/errno.h>
 #include <linux/mtd/mtd.h>
 #include <spi_flash.h>
+#include <linux/string.h>
 
 #if CONFIG_IS_ENABLED(DM_SPI_FLASH)
 

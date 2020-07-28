@@ -21,6 +21,7 @@
 #include <uuid.h>
 #include <asm-generic/unaligned.h>
 #include <linux/compat.h> /* U16_MAX */
+#include <linux/string.h>
 
 /* template END node: */
 const struct efi_device_path END = {

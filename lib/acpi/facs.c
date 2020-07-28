@@ -10,6 +10,7 @@
 #include <common.h>
 #include <acpi/acpi_table.h>
 #include <dm/acpi.h>
+#include <linux/string.h>
 
 int acpi_write_facs(struct acpi_ctx *ctx, const struct acpi_writer *entry)
 {

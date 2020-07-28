@@ -13,6 +13,7 @@
 #include <asm/io.h>
 #include <asm/arch/board.h>
 #include <asm/arch/csrs/csrs-npa.h>
+#include <linux/string.h>
 
 #include "nix.h"
 

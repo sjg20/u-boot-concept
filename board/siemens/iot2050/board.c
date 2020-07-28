@@ -24,6 +24,7 @@
 #include <asm/arch/hardware.h>
 #include <asm/gpio.h>
 #include <asm/io.h>
+#include <linux/string.h>
 
 #define IOT2050_INFO_MAGIC		0x20502050
 

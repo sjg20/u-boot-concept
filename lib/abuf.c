@@ -11,6 +11,7 @@
 #include <malloc.h>
 #include <mapmem.h>
 #include <string.h>
+#include <linux/string.h>
 #endif
 
 #include <abuf.h>

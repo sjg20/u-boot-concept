@@ -4,6 +4,7 @@
  */
 
 #include <asm/eth.h>
+#include <linux/string.h>
 #include <net/dsa.h>
 #include <net.h>
 

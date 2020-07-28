@@ -17,6 +17,7 @@
 #include <dm/device_compat.h>
 #include <dt-bindings/mfd/stm32f7-rcc.h>
 #include <linux/bitops.h>
+#include <linux/string.h>
 
 #define RCC_CR_HSION			BIT(0)
 #define RCC_CR_HSEON			BIT(16)

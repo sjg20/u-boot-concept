@@ -16,6 +16,7 @@
 #include <efi_config.h>
 #include <efi_variable.h>
 #include <crypto/pkcs7_parser.h>
+#include <linux/string.h>
 
 struct eficonfig_sig_data {
 	struct efi_signature_list *esl;

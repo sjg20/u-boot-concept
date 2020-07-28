@@ -17,6 +17,7 @@
 #include <serial.h>
 #include <dm/device-internal.h>
 #include <dm/uclass-internal.h>
+#include <linux/string.h>
 
 /* error codes used to signal running out of things */
 enum {

@@ -16,6 +16,7 @@
 #include <spi.h>
 #include <spi_flash.h>
 #include <spi-mem.h>
+#include <linux/string.h>
 
 #include "sf_internal.h"
 

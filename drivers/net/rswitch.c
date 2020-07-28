@@ -25,6 +25,7 @@
 #include <log.h>
 #include <malloc.h>
 #include <miiphy.h>
+#include <linux/string.h>
 
 #define RSWITCH_SLEEP_US	1000
 #define RSWITCH_TIMEOUT_US	1000000

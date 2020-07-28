@@ -22,6 +22,7 @@
 #include <init.h>
 #include <linux/errno.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 #include <power/pca9450.h>
 #include <power/pmic.h>
 #include <spl.h>

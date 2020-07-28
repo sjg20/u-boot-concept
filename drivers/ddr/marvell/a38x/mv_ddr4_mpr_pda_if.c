@@ -5,6 +5,8 @@
 
 #if defined(CONFIG_DDR4)
 
+#include <linux/string.h>
+
 /* DDR4 MPR/PDA Interface */
 #include "ddr3_init.h"
 #include "mv_ddr4_mpr_pda_if.h"

@@ -32,6 +32,7 @@
 #include <linux/ctype.h>
 #include <linux/lzo.h>
 #include <linux/ioport.h>
+#include <linux/string.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

@@ -13,6 +13,7 @@
 #include <linux/arm-smccc.h>
 #include <linux/compiler.h>
 #include <cpu_func.h>
+#include <linux/string.h>
 
 #ifndef CONFIG_IMX8
 /* Just to avoid build error */

@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2020 Marvell International Ltd.
  *
+#include <linux/string.h>
  * This header file defines the work queue entry (wqe) data structure.
  * Since this is a commonly used structure that depends on structures
  * from several hardware blocks, those definitions have been placed

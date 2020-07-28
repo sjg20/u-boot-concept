@@ -355,6 +355,8 @@ typedef volatile unsigned int   *dv_reg_p;
 
 #ifndef __ASSEMBLY__
 
+#include <asm/io.h>
+
 static inline u16 get_part_number(void)
 {
 	u32 jtag_id = __raw_readl(KS2_JTAG_ID_REG);

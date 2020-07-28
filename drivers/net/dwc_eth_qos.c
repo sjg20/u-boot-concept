@@ -8,6 +8,7 @@
 /*
  * This driver supports the Synopsys Designware Ethernet QOS (Quality Of
  * Service) IP block. The IP supports multiple options for bus type, clocking/
+#include <linux/string.h>
  * reset structure, and feature list.
  *
  * The driver is written such that generic core logic is kept separate from

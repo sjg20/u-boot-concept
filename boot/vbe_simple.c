@@ -19,6 +19,7 @@
 #include <vbe.h>
 #include <dm/device-internal.h>
 #include <dm/ofnode.h>
+#include <linux/string.h>
 #include <u-boot/crc.h>
 #include "vbe_simple.h"
 

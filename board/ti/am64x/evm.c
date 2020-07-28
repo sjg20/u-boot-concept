@@ -15,6 +15,7 @@
 #include <fdt_support.h>
 #include <asm/arch/hardware.h>
 #include <env.h>
+#include <linux/string.h>
 
 #include "../common/board_detect.h"
 

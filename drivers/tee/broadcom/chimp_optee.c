@@ -6,6 +6,7 @@
 #include <common.h>
 #include <tee.h>
 #include <broadcom/chimp.h>
+#include <linux/string.h>
 
 #ifdef CONFIG_CHIMP_OPTEE
 

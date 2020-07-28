@@ -15,6 +15,7 @@
 #include <linux/bitops.h>
 #include <linux/kernel.h>
 #include <linux/psci.h>
+#include <linux/string.h>
 
 #define DRIVER_NAME	"smccc-trng"
 

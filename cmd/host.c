@@ -13,6 +13,7 @@
 #include <dm/device-internal.h>
 #include <dm/uclass-internal.h>
 #include <linux/errno.h>
+#include <linux/string.h>
 
 static int do_host_load(struct cmd_tbl *cmdtp, int flag, int argc,
 			char *const argv[])

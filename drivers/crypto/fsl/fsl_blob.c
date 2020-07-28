@@ -12,6 +12,7 @@
 #include <fsl_sec.h>
 #include <asm/cache.h>
 #include <linux/errno.h>
+#include <linux/string.h>
 #include "jobdesc.h"
 #include "desc.h"
 #include "jr.h"

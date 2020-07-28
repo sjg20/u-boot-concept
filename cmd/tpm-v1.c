@@ -10,6 +10,7 @@
 #include <asm/unaligned.h>
 #include <tpm-common.h>
 #include <tpm-v1.h>
+#include <linux/string.h>
 #include "tpm-user-utils.h"
 #include <tpm_api.h>
 

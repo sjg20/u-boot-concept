@@ -10,6 +10,7 @@
 #include <dm.h>
 #include <dm/lists.h>
 #include <linux/bitops.h>
+#include <linux/string.h>
 #include <linux/usb/gadget.h>
 
 #include "core.h"

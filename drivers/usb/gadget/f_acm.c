@@ -19,6 +19,7 @@
 #include <stdio_dev.h>
 #include <version.h>
 #include <watchdog.h>
+#include <linux/string.h>
 
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>

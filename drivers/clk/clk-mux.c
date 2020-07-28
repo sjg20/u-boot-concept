@@ -37,6 +37,7 @@
 #include <linux/clk-provider.h>
 #include <linux/err.h>
 #include <linux/printk.h>
+#include <linux/string.h>
 
 #include "clk.h"
 

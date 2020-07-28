@@ -10,6 +10,7 @@
 #include <asm/io.h>
 #include <malloc.h>
 #include <watchdog.h>
+#include <linux/string.h>
 #include <u-boot/hash.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>

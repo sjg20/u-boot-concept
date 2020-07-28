@@ -12,6 +12,7 @@
 #include <dm/device-internal.h>
 #include <malloc.h>
 #include <part.h>
+#include <linux/string.h>
 
 #include <asm/armv8/mmu.h>
 #include <asm/global_data.h>

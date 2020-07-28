@@ -13,6 +13,7 @@
  *
  * Consequently, pages with meaningful in-band data are written with
  * blank (all-ones) out-of-band data and a valid ECC, and any later
+#include <linux/string.h>
  * out-of-band data write will void the ECC.
  *
  * Therefore, code which reads such late-written out-of-band data

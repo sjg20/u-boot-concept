@@ -16,6 +16,7 @@
 #include <mapmem.h>
 #include <asm/gpio.h>
 #include <malloc.h>
+#include <linux/string.h>
 
 enum {
 	MPC8XX_CPM1_PORTA,

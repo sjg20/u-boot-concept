@@ -35,6 +35,7 @@
  *	Copyright (C) 2022 Microchip Technology Inc.
  *
  * A few words about the naming convention in this file. This convention
+#include <linux/string.h>
  * applies to structure and function names.
  *
  * Prefixes:

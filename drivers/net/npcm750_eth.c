@@ -17,6 +17,7 @@
 #include <asm/io.h>
 #include <linux/err.h>
 #include <linux/iopoll.h>
+#include <linux/string.h>
 
 #define MAC_ADDR_SIZE		6
 #define CFG_TX_DESCR_NUM	32

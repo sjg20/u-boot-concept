@@ -8,6 +8,7 @@
 #include <fdt_support.h>
 #include <linux/libfdt_env.h>
 #include <fdt_region.h>
+#include <linux/string.h>
 
 #ifndef USE_HOSTCC
 #include <fdt.h>

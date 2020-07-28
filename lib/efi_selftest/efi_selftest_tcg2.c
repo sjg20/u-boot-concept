@@ -9,6 +9,7 @@
 
 #include <efi_selftest.h>
 #include <efi_tcg2.h>
+#include <linux/string.h>
 /*
  * Include containing the miniapp.efi application.
  * Note that tcg2 selftest measures the PE/COFF image,

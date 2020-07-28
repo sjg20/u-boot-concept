@@ -36,6 +36,7 @@
 #include <linux/errno.h>
 #include <eth_phy.h>
 #include <zynqmp_firmware.h>
+#include <linux/string.h>
 
 /* Bit/mask specification */
 #define ZYNQ_GEM_PHYMNTNC_OP_MASK	0x40020000 /* operation mask bits */

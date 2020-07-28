@@ -9,6 +9,7 @@
 #include <part.h>
 #include <part_efi.h>
 #include <dm/test.h>
+#include <linux/string.h>
 #include <test/ut.h>
 
 static int do_test(struct unit_test_state *uts, int expected,

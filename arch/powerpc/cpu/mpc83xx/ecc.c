@@ -10,6 +10,7 @@
 #include <irq_func.h>
 #include <mpc83xx.h>
 #include <command.h>
+#include <linux/string.h>
 
 void ecc_print_status(void)
 {

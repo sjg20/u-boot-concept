@@ -19,6 +19,7 @@
 #include <spl.h>
 #include <asm/global_data.h>
 #include <asm/itss.h>
+#include <linux/string.h>
 
 static int set_polarity(struct udevice *dev, uint irq, bool active_low)
 {

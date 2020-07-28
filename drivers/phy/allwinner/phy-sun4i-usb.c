@@ -24,6 +24,7 @@
 #include <linux/bitops.h>
 #include <linux/delay.h>
 #include <linux/err.h>
+#include <linux/string.h>
 #include <power/regulator.h>
 
 #define REG_ISCR			0x00

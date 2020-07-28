@@ -14,6 +14,7 @@
 #include <regmap.h>
 #include <reset-uclass.h>
 #include <dt-bindings/phy/phy.h>
+#include <linux/string.h>
 
 #include <dt-bindings/phy/phy-ti.h>
 

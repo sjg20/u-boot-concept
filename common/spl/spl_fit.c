@@ -18,6 +18,7 @@
 #include <asm/global_data.h>
 #include <linux/libfdt.h>
 #include <linux/printk.h>
+#include <linux/string.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

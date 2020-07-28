@@ -23,6 +23,7 @@
 #include <dm/device_compat.h>
 #include <dm/devres.h>
 #include <linux/bug.h>
+#include <linux/string.h>
 #endif
 
 #ifndef __UBOOT__

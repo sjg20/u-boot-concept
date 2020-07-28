@@ -21,6 +21,7 @@
 #include <fdtdec.h>
 #include <bouncebuf.h>
 #include <dm.h>
+#include <linux/string.h>
 #include "cortina_nand.h"
 
 static unsigned int *pread, *pwrite;

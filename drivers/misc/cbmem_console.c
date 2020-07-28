@@ -6,6 +6,7 @@
 #include <common.h>
 #include <console.h>
 #include <asm/cb_sysinfo.h>
+#include <linux/string.h>
 
 void cbmemc_putc(struct stdio_dev *dev, char data)
 {

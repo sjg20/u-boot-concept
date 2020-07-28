@@ -13,6 +13,7 @@
 #include <linux/iopoll.h>
 #include <malloc.h>
 #include <misc.h>
+#include <linux/string.h>
 
 /* OTP Register Offsets */
 #define OTPC_SBPI_CTRL			0x0020

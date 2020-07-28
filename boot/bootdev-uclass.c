@@ -20,6 +20,7 @@
 #include <dm/device-internal.h>
 #include <dm/lists.h>
 #include <dm/uclass-internal.h>
+#include <linux/string.h>
 
 enum {
 	/*

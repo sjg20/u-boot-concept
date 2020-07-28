@@ -12,6 +12,7 @@
 #include <efi_loader.h>
 #include <errno.h>
 #include <malloc.h>
+#include <linux/string.h>
 
 /**
  * codepage_437 - Unicode to codepage 437 translation table

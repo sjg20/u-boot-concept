@@ -8,6 +8,7 @@
 #include <malloc.h>
 #include <serial.h>
 #include <semihosting.h>
+#include <linux/string.h>
 
 /**
  * struct smh_serial_priv - Semihosting serial private data

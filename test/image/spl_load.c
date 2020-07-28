@@ -9,6 +9,7 @@
 #include <mapmem.h>
 #include <os.h>
 #include <spl.h>
+#include <linux/string.h>
 #include <test/ut.h>
 
 /* Declare a new SPL test */

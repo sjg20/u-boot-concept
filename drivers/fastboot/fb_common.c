@@ -16,6 +16,7 @@
 #include <env.h>
 #include <fastboot.h>
 #include <net.h>
+#include <linux/string.h>
 
 /**
  * fastboot_buf_addr - base address of the fastboot download buffer

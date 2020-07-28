@@ -15,6 +15,7 @@
 #include <acpi/acpi_table.h>
 #include <asm/global_data.h>
 #include <dm/acpi.h>
+#include <linux/string.h>
 
 /*
  * OEM_REVISION is 32-bit unsigned number. It should be increased only when

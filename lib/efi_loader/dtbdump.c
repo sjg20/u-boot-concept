@@ -11,6 +11,7 @@
 #include <efi_dt_fixup.h>
 #include <part.h>
 #include <linux/libfdt.h>
+#include <linux/string.h>
 
 #define BUFFER_SIZE 64
 #define ESC 0x17

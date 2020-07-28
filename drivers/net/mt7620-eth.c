@@ -26,6 +26,7 @@
 #include <linux/iopoll.h>
 #include <linux/mdio.h>
 #include <linux/mii.h>
+#include <linux/string.h>
 #include <mach/mt7620-sysc.h>
 
 /* Frame Engine block */

@@ -25,6 +25,7 @@
 #include <dm/acpi.h>
 #include <dm/device-internal.h>
 #include <dt-bindings/gpio/x86-gpio.h>
+#include <linux/string.h>
 
 static int intel_gpio_get_value(struct udevice *dev, uint offset)
 {

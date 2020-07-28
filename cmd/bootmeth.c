@@ -14,6 +14,7 @@
 #include <dm.h>
 #include <malloc.h>
 #include <dm/uclass-internal.h>
+#include <linux/string.h>
 
 static int do_bootmeth_list(struct cmd_tbl *cmdtp, int flag, int argc,
 			    char *const argv[])

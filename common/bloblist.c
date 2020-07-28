@@ -14,6 +14,7 @@
 #include <mapmem.h>
 #include <spl.h>
 #include <asm/global_data.h>
+#include <linux/string.h>
 #include <u-boot/crc.h>
 
 /*

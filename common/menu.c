@@ -12,6 +12,7 @@
 #include <linux/delay.h>
 #include <linux/list.h>
 #include <watchdog.h>
+#include <linux/string.h>
 
 #include "menu.h"
 

@@ -30,6 +30,7 @@
 # error "invalid flash block start/end"
 #endif
 
+#include <linux/string.h>
 static void *seed_src_data(void *ptr, ulong *old_len, ulong new_len)
 {
 	unsigned char *p;

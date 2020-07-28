@@ -15,6 +15,7 @@
 #include <dm/test.h>
 #include <dm/devres.h>
 #include <linux/err.h>
+#include <linux/string.h>
 #include <test/test.h>
 #include <test/ut.h>
 

@@ -20,6 +20,7 @@
 #include <linux/delay.h>
 #include <linux/io.h>
 #include <linux/iopoll.h>
+#include <linux/string.h>
 
 #include "ftmac100.h"
 #include <dm.h>

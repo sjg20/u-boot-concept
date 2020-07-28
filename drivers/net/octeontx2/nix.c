@@ -12,6 +12,7 @@
 #include <net.h>
 #include <pci.h>
 #include <watchdog.h>
+#include <linux/string.h>
 
 #include <asm/arch/board.h>
 #include <asm/arch/csrs/csrs-lmt.h>

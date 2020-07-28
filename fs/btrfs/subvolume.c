@@ -6,6 +6,7 @@
  */
 
 #include <malloc.h>
+#include <linux/string.h>
 #include "ctree.h"
 #include "btrfs.h"
 #include "disk-io.h"

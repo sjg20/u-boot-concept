@@ -14,6 +14,7 @@
 #include <fuse.h>
 #include <mapmem.h>
 #include <linux/errno.h>
+#include <linux/string.h>
 
 static int strtou32(const char *str, unsigned int base, u32 *result)
 {

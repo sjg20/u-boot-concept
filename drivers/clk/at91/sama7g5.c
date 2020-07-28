@@ -14,6 +14,7 @@
 #include <dm.h>
 #include <dt-bindings/clk/at91.h>
 #include <linux/clk-provider.h>
+#include <linux/string.h>
 
 #include "pmc.h"
 

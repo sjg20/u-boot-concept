@@ -14,6 +14,7 @@
 #include <mapmem.h>
 #include <asm/global_data.h>
 #include <dm/test.h>
+#include <linux/string.h>
 #include <test/suites.h>
 #include <test/test.h>
 #include <test/ut.h>

@@ -16,6 +16,7 @@
 #include <dm/lists.h>
 #include <dm/uclass-internal.h>
 #include <linux/err.h>
+#include <linux/string.h>
 
 #define blk_get_ops(dev)	((struct blk_ops *)(dev)->driver->ops)
 

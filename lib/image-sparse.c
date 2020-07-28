@@ -44,6 +44,7 @@
 #include <part.h>
 #include <sparse_format.h>
 #include <asm/cache.h>
+#include <linux/string.h>
 
 #include <linux/math64.h>
 #include <linux/err.h>

@@ -30,6 +30,7 @@
 #include <common.h>
 #include <compiler.h>
 #include <linux/kernel.h>
+#include <linux/string.h>
 #include <linux/types.h>
 #include <linux/bug.h>
 #include <asm/unaligned.h>

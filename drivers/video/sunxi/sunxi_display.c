@@ -14,6 +14,7 @@
 #include <init.h>
 #include <time.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 
 #include <asm/arch/clock.h>
 #include <asm/arch/display.h>

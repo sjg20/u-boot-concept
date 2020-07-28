@@ -14,6 +14,7 @@
  * data lines).
  *
  * FlexSPI controller is driven by the LUT(Look-up Table) registers
+#include <linux/string.h>
  * LUT registers are a look-up-table for sequences of instructions.
  * A valid sequence consists of four LUT registers.
  * Maximum 32 LUT sequences can be programmed simultaneously.

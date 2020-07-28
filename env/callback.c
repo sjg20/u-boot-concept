@@ -8,6 +8,7 @@
 #include <env.h>
 #include <env_internal.h>
 #include <asm/global_data.h>
+#include <linux/string.h>
 
 /*
  * Look up a callback function pointer by name

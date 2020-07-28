@@ -10,6 +10,7 @@
 #include <asm/state.h>
 #include <asm/unaligned.h>
 #include <linux/bitops.h>
+#include <linux/string.h>
 #include <u-boot/crc.h>
 #include <u-boot/sha256.h>
 #include "sandbox_common.h"

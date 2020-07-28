@@ -16,6 +16,7 @@
 #include <malloc.h>
 #include <pe.h>
 #include <time.h>
+#include <linux/string.h>
 #include <u-boot/crc.h>
 #include <usb.h>
 #include <watchdog.h>

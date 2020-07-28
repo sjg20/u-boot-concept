@@ -11,6 +11,7 @@
 #include <dm/root.h>
 #include <dm/util.h>
 #include <dm/uclass-internal.h>
+#include <linux/string.h>
 
 /**
  * struct sort_info - information used for sorting

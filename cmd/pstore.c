@@ -12,6 +12,7 @@
 #include <memalign.h>
 #include <part.h>
 #include <fdt_support.h>
+#include <linux/string.h>
 
 struct persistent_ram_buffer {
 	u32    sig;

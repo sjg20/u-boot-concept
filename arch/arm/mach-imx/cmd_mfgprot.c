@@ -16,6 +16,7 @@
 #include <fsl_sec.h>
 #include <mapmem.h>
 #include <memalign.h>
+#include <linux/string.h>
 
 /**
  * do_mfgprot() - Handle the "mfgprot" command-line command

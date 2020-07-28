@@ -114,6 +114,7 @@
 #define hush_main main
 #define BB_BANNER
 #endif
+#include <linux/string.h>
 #endif
 #define SPECIAL_VAR_SYMBOL 03
 #define SUBSTED_VAR_SYMBOL 04

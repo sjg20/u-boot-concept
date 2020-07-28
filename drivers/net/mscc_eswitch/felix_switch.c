@@ -18,6 +18,7 @@
 #include <dm/device_compat.h>
 #include <dm/of_extra.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 #include <net/dsa.h>
 #include <asm/io.h>
 #include <miiphy.h>

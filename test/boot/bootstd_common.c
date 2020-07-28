@@ -13,6 +13,7 @@
 #include <memalign.h>
 #include <mmc.h>
 #include <linux/log2.h>
+#include <linux/string.h>
 #include <test/suites.h>
 #include <test/ut.h>
 #include <u-boot/crc.h>

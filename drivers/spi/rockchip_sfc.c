@@ -19,6 +19,7 @@
 #include <linux/iopoll.h>
 #include <spi.h>
 #include <spi-mem.h>
+#include <linux/string.h>
 
 /* System control */
 #define SFC_CTRL			0x0

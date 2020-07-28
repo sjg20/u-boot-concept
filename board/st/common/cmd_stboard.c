@@ -37,6 +37,7 @@
 #include <asm/arch/bsec.h>
 #include <dm/device.h>
 #include <dm/uclass.h>
+#include <linux/string.h>
 
 static bool check_stboard(u16 board)
 {

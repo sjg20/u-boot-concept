@@ -21,6 +21,7 @@
 #include <linux/err.h>
 #include <linux/io.h>
 #include <linux/printk.h>
+#include <linux/string.h>
 
 /* STM32 I2C registers */
 struct stm32_i2c_regs {

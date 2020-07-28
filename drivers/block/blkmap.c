@@ -14,6 +14,7 @@
 #include <dm/device-internal.h>
 #include <dm/lists.h>
 #include <dm/root.h>
+#include <linux/string.h>
 
 struct blkmap;
 

@@ -13,6 +13,7 @@
 #if CONFIG_IS_ENABLED(ARMV8_SEC_FIRMWARE_SUPPORT)
 #include <asm/armv8/sec_firmware.h>
 #endif
+#include <linux/string.h>
 
 int fdt_psci(void *fdt)
 {

@@ -11,6 +11,7 @@
 #include <dm.h>
 #include <fdtdec.h>
 #include <dm/device-internal.h>
+#include <linux/string.h>
 #include <mvebu/comphy.h>
 
 int mvebu_comphy_rx_training_cmd(struct cmd_tbl *cmdtp, int flag, int argc,

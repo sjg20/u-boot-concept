@@ -47,6 +47,7 @@
 #include <dm/device-internal.h>
 #include <dm/lists.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 
 #include <part.h>
 #include <usb.h>

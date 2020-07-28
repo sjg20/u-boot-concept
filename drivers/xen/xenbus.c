@@ -17,6 +17,7 @@
 
 #include <common.h>
 #include <log.h>
+#include <linux/string.h>
 
 #include <asm/armv8/mmu.h>
 #include <asm/io.h>

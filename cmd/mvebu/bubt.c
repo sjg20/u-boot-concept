@@ -14,6 +14,7 @@
 #include <errno.h>
 #include <dm.h>
 #include <fuse.h>
+#include <linux/string.h>
 #include <mach/efuse.h>
 
 #include <spi_flash.h>

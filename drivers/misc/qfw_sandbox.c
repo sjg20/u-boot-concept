@@ -13,6 +13,7 @@
 #include <dm.h>
 #include <dm/device.h>
 #include <qfw.h>
+#include <linux/string.h>
 
 struct qfw_sandbox_plat {
 	u8 file_dir_offset;

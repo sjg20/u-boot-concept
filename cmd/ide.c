@@ -19,6 +19,7 @@
 #include <asm/io.h>
 #include <dm/device-internal.h>
 #include <dm/uclass-internal.h>
+#include <linux/string.h>
 
 #include <ide.h>
 #include <ata.h>

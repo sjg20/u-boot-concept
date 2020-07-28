@@ -7,6 +7,7 @@
 
 #include <common.h>
 #include <smbios.h>
+#include <linux/string.h>
 
 static inline int verify_checksum(const struct smbios_entry *e)
 {

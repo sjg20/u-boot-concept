@@ -8,6 +8,7 @@
 #include <common.h>
 #include <dm.h>
 #include <fuzzing_engine.h>
+#include <linux/string.h>
 #include <test/fuzz.h>
 
 static struct fuzz_test *find_fuzz_test(const char *name)

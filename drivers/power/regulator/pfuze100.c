@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <dm.h>
 #include <log.h>
+#include <linux/string.h>
 #include <power/pmic.h>
 #include <power/regulator.h>
 #include <power/pfuze100_pmic.h>

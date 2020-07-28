@@ -12,6 +12,7 @@
 #include <dm/acpi.h>
 #include <mapmem.h>
 #include <tables_csum.h>
+#include <linux/string.h>
 
 void acpi_write_rsdp(struct acpi_rsdp *rsdp, struct acpi_rsdt *rsdt,
 		     struct acpi_xsdt *xsdt)

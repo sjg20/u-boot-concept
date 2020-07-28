@@ -11,6 +11,7 @@
 #include <dm/device.h>
 #include <dm/fdtaddr.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 #include <u-boot/rsa-mod-exp.h>
 
 /* ACRY register offsets */

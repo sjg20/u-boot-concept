@@ -14,6 +14,7 @@
 #include <dm.h>
 #include <dm/device-internal.h>
 #include <dm/uclass-internal.h>
+#include <linux/string.h>
 
 static int bootdev_check_state(struct bootstd_priv **stdp)
 {

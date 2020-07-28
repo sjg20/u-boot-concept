@@ -23,6 +23,7 @@
 #include <asm/global_data.h>
 #include <dm/ofnode.h>
 #include <linux/errno.h>
+#include <linux/string.h>
 
 #ifdef CONFIG_CMDLINE
 /*

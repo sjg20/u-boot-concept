@@ -11,6 +11,7 @@
 #include <dm/test.h>
 #include <dm/uclass-internal.h>
 #include <soc.h>
+#include <linux/string.h>
 #include <test/ut.h>
 
 struct sb_soc_data {

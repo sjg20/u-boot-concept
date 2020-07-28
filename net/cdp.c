@@ -11,6 +11,7 @@
 
 #include <common.h>
 #include <net.h>
+#include <linux/string.h>
 
 #include "cdp.h"
 

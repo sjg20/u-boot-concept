@@ -12,6 +12,7 @@
 #include <memalign.h>
 #include <versalpl.h>
 #include <zynqmp_firmware.h>
+#include <linux/string.h>
 
 /**
  * do_versalnet_load_pdi - Handle the "versalnet load pdi" command-line command

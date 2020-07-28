@@ -20,6 +20,7 @@
 #include <memalign.h>
 #include <asm/unaligned.h>
 #include <linux/compiler.h>
+#include <linux/string.h>
 #include "part_dos.h"
 #include <part.h>
 

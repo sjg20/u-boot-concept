@@ -12,6 +12,7 @@
 #include <misc.h>
 #include <spl.h>
 #include <syscon.h>
+#include <linux/string.h>
 #include <u-boot/crc.h>
 #include <usb.h>
 #include <dm/pinctrl.h>

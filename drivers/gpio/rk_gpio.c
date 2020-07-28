@@ -18,6 +18,7 @@
 #include <dm/pinctrl.h>
 #include <dm/read.h>
 #include <dt-bindings/pinctrl/rockchip.h>
+#include <linux/string.h>
 
 #define SWPORT_DR		0x0000
 #define SWPORT_DDR		0x0004

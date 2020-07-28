@@ -23,6 +23,7 @@
 #include <spl.h>
 #include <vbe.h>
 #include <dm/device-internal.h>
+#include <linux/string.h>
 #include "vbe_simple.h"
 
 /**

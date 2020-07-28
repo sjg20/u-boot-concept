@@ -10,6 +10,7 @@
 #include <asm/global_data.h>
 #include <asm/hob.h>
 #include <asm/fsp/fsp_hob.h>
+#include <linux/string.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

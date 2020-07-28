@@ -11,6 +11,7 @@
 #include <mipi_dsi.h>
 #include <panel.h>
 #include <asm/gpio.h>
+#include <linux/string.h>
 #include <power/regulator.h>
 
 struct simple_panel_priv {

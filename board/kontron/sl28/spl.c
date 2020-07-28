@@ -6,6 +6,7 @@
 #include <asm/arch-fsl-layerscape/fsl_serdes.h>
 #include <asm/arch-fsl-layerscape/soc.h>
 #include <spi_flash.h>
+#include <linux/string.h>
 
 #include "sl28.h"
 

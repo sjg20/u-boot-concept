@@ -23,6 +23,7 @@
 #include <stdbool.h>
 #include <watchdog.h>
 #include <linux/dma-mapping.h>
+#include <linux/string.h>
 
 #define DRIVER_NAME "mtk-spi-nor"
 

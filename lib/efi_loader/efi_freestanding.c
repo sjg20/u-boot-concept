@@ -5,6 +5,7 @@
  * Copyright 2019, Heinrich Schuchardt <xypron.glpk@gmx.de>
  *
  * GCC requires that freestanding programs provide memcpy(), memmove(),
+#include <linux/string.h>
  * memset(), and memcmp().
  */
 

@@ -14,6 +14,7 @@
 #include <miiphy.h>
 #include <asm/global_data.h>
 #include <asm/io.h>
+#include <linux/string.h>
 
 #include "dm_qe_uec.h"
 

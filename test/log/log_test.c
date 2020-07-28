@@ -10,6 +10,7 @@
 #include <command.h>
 #include <log.h>
 #include <asm/global_data.h>
+#include <linux/string.h>
 #include <test/log.h>
 #include <test/ut.h>
 

@@ -10,6 +10,7 @@
 #include <malloc.h>
 #include <sdhci.h>
 #include <asm/global_data.h>
+#include <linux/string.h>
 #include "mmc_private.h"
 #include <linux/delay.h>
 

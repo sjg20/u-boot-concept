@@ -16,6 +16,7 @@
 #include <log.h>
 #include <scsi.h>
 #include <scsi_emul.h>
+#include <linux/string.h>
 
 int sb_scsi_emul_command(struct scsi_emul_info *info,
 			 const struct scsi_cmd *req, int len)

@@ -18,6 +18,7 @@
 #include <linux/arm-smccc.h>
 #include <linux/bug.h>
 #include <linux/compat.h>
+#include <linux/string.h>
 
 #include "smt.h"
 

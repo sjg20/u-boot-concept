@@ -17,6 +17,7 @@
 #include <spi.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <linux/string.h>
 
 #include <linux/delay.h>
 #include <linux/immap_qe.h>

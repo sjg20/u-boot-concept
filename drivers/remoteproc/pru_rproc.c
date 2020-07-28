@@ -20,6 +20,7 @@
 #include <power-domain.h>
 #include <linux/pruss_driver.h>
 #include <dm/device_compat.h>
+#include <linux/string.h>
 
 /* PRU_ICSS_PRU_CTRL registers */
 #define PRU_CTRL_CTRL		0x0000

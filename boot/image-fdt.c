@@ -22,6 +22,7 @@
 #include <mapmem.h>
 #include <asm/io.h>
 #include <dm/ofnode.h>
+#include <linux/string.h>
 #include <tee/optee.h>
 
 /* adding a ramdisk needs 0x44 bytes in version 2008.10 */

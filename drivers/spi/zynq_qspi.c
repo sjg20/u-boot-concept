@@ -18,6 +18,7 @@
 #include <asm/io.h>
 #include <linux/bitops.h>
 #include <spi-mem.h>
+#include <linux/string.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

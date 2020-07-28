@@ -17,6 +17,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/mach-imx/hab.h>
 #include <linux/arm-smccc.h>
+#include <linux/string.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

@@ -7,6 +7,7 @@
 #ifndef __ASM_RISCV_IO_H
 #define __ASM_RISCV_IO_H
 
+#include <linux/string.h>
 #include <linux/types.h>
 #include <asm/barrier.h>
 #include <asm/byteorder.h>

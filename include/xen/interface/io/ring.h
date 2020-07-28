@@ -25,6 +25,7 @@
  * and grant_table.h from the Xen public headers.
  */
 
+#include <linux/string.h>
 #include <xen/interface/grant_table.h>
 
 typedef unsigned int RING_IDX;

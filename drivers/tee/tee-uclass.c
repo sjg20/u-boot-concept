@@ -14,6 +14,7 @@
 #include <asm/cache.h>
 #include <dm/device-internal.h>
 #include <dm/uclass-internal.h>
+#include <linux/string.h>
 
 /**
  * struct tee_uclass_priv - information of a TEE, stored by the uclass

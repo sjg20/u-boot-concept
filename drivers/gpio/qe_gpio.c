@@ -11,6 +11,7 @@
 #include <asm/immap_83xx.h>
 #include <asm/io.h>
 #include <dm/of_access.h>
+#include <linux/string.h>
 
 #define QE_DIR_NONE	0
 #define QE_DIR_OUT	1

@@ -10,6 +10,7 @@
 #include <dt-bindings/pinctrl/sandbox-pinmux.h>
 #include <log.h>
 #include <linux/bitops.h>
+#include <linux/string.h>
 
 /*
  * This driver emulates a pin controller with the following rules:

@@ -10,6 +10,7 @@
 #include <lmb.h>
 #include <memalign.h>
 #include <asm/io.h>
+#include <linux/string.h>
 
 #define DART_PARAMS2		0x0004
 #define  DART_PARAMS2_BYPASS_SUPPORT	BIT(0)

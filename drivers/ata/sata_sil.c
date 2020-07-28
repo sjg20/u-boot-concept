@@ -21,6 +21,7 @@
 #include <sata.h>
 #include <dm/device-internal.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 
 #include "sata_sil.h"
 

@@ -13,6 +13,7 @@
 #include <dm/device-internal.h>
 #include <dm/ofnode.h>
 #include <dm/read.h>
+#include <linux/string.h>
 
 #define GSC_BUSNO	0
 #define GSC_SC_ADDR	0x20

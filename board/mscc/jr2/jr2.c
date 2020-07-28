@@ -12,6 +12,7 @@
 #include <linux/bitops.h>
 #include <linux/delay.h>
 #include <asm/global_data.h>
+#include <linux/string.h>
 
 enum {
 	BOARD_TYPE_PCB110 = 0xAABBCE00,

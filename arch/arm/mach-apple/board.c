@@ -8,6 +8,7 @@
 #include <dm/uclass-internal.h>
 #include <efi_loader.h>
 #include <lmb.h>
+#include <linux/string.h>
 
 #include <asm/armv8/mmu.h>
 #include <asm/global_data.h>

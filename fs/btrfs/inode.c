@@ -8,6 +8,7 @@
 #include <linux/kernel.h>
 #include <malloc.h>
 #include <memalign.h>
+#include <linux/string.h>
 #include "btrfs.h"
 #include "disk-io.h"
 #include "volumes.h"

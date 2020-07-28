@@ -15,6 +15,7 @@
 #include <splash.h>
 #include <video.h>
 #include <stdlib.h>
+#include <linux/string.h>
 
 static int do_bmp_info(struct cmd_tbl *cmdtp, int flag, int argc,
 		       char *const argv[])

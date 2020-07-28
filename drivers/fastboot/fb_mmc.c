@@ -18,6 +18,7 @@
 #include <div64.h>
 #include <linux/compat.h>
 #include <android_image.h>
+#include <linux/string.h>
 
 #define BOOT_PARTITION_NAME "boot"
 

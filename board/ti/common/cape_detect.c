@@ -8,6 +8,7 @@
 #include <malloc.h>
 #include <i2c.h>
 #include <extension_board.h>
+#include <linux/string.h>
 
 #include "cape_detect.h"
 

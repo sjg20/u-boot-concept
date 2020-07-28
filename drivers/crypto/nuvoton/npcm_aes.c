@@ -11,6 +11,7 @@
 #include <asm/arch/aes.h>
 #include <asm/arch/otp.h>
 #include <malloc.h>
+#include <linux/string.h>
 
 #define ONE_SECOND 0xC00000
 

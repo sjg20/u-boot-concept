@@ -9,6 +9,7 @@
 #include <fdtdec.h>
 #include <fdt_support.h>
 #include <log.h>
+#include <linux/string.h>
 
 #include <linux/compiler.h>
 #include <linux/libfdt.h>

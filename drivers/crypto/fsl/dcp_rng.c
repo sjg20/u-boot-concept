@@ -16,6 +16,7 @@
 #include <dm/root.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>
+#include <linux/string.h>
 
 #define DCP_RNG_MAX_FIFO_STORE_SIZE	4
 #define RNGC_VER_ID			0x0

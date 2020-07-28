@@ -10,6 +10,7 @@
 #include <netdev.h>
 #include <asm/global_data.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 
 #include <asm/fec.h>
 #include <asm/immap.h>

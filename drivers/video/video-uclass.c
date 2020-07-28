@@ -27,6 +27,7 @@
 #ifdef CONFIG_SANDBOX
 #include <asm/sdl.h>
 #endif
+#include <linux/string.h>
 
 /*
  * Theory of operation:

@@ -7,6 +7,7 @@
 #include <dm/test.h>
 #include <mapmem.h>
 #include <part.h>
+#include <linux/string.h>
 #include <test/test.h>
 #include <test/ut.h>
 

@@ -37,6 +37,7 @@
 #include <asm/global_data.h>
 #include <linux/bitops.h>
 #include <linux/printk.h>
+#include <linux/string.h>
 #include <u-boot/crc.h>
 #include <linux/stddef.h>
 #include <asm/byteorder.h>

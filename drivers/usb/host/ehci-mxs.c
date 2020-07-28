@@ -12,6 +12,7 @@
 #include <errno.h>
 #include <linux/delay.h>
 #include <dm.h>
+#include <linux/string.h>
 #include <power/regulator.h>
 
 #include "ehci.h"

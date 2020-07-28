@@ -18,6 +18,7 @@
 #include <asm/gpio.h>
 #include <asm/sections.h>
 #include <linux/compiler.h>
+#include <linux/string.h>
 
 #include "mxs_init.h"
 

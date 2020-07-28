@@ -12,6 +12,7 @@
 #include <log.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 
 #include <malloc.h>
 #include <spi.h>

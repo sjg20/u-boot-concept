@@ -9,6 +9,7 @@
 #include <common.h>
 #include <dm.h>
 #include <asm/global_data.h>
+#include <linux/string.h>
 #include <u-boot/hash.h>
 #include <errno.h>
 #include <fdtdec.h>

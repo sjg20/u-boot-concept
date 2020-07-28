@@ -18,6 +18,7 @@
 #include <rtc.h>
 #include <log.h>
 #include <linux/bitfield.h>
+#include <linux/string.h>
 
 #define ABX8XX_REG_HTH		0x00
 #define ABX8XX_REG_SC		0x01

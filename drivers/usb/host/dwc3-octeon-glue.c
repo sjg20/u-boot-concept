@@ -21,6 +21,7 @@
 #include <linux/delay.h>
 #include <linux/err.h>
 #include <linux/io.h>
+#include <linux/string.h>
 #include <linux/usb/dwc3.h>
 #include <linux/usb/otg.h>
 #include <mach/octeon-model.h>

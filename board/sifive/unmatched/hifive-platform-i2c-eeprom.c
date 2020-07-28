@@ -16,6 +16,7 @@
 #include <init.h>
 #include <linux/ctype.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 #include <u-boot/crc.h>
 
 #ifndef CONFIG_SYS_EEPROM_BUS_NUM

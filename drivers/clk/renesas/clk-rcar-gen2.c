@@ -18,6 +18,7 @@
 #include <asm/global_data.h>
 #include <asm/io.h>
 #include <linux/clk-provider.h>
+#include <linux/string.h>
 
 #include <dt-bindings/clock/renesas-cpg-mssr.h>
 

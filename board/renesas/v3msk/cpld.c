@@ -16,6 +16,7 @@
 #include <sysreset.h>
 #include <linux/delay.h>
 #include <command.h>
+#include <linux/string.h>
 
 #define CPLD_ADDR_PRODUCT_L		0x000 /* R */
 #define CPLD_ADDR_PRODUCT_H		0x001 /* R */

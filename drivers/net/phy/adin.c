@@ -10,6 +10,7 @@
 #include <phy.h>
 #include <linux/bitops.h>
 #include <linux/bitfield.h>
+#include <linux/string.h>
 
 #define PHY_ID_ADIN1300				0x0283bc30
 #define ADIN1300_EXT_REG_PTR			0x10

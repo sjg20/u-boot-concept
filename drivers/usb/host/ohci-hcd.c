@@ -34,6 +34,7 @@
 #include <errno.h>
 #include <asm/cache.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 
 #include <malloc.h>
 #include <memalign.h>

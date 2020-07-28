@@ -8,6 +8,7 @@
 #include <i2c_eeprom.h>
 #include <log.h>
 #include <sysinfo.h>
+#include <linux/string.h>
 
 #define BOARD_CODE_MASK		0xF8
 #define BOARD_REV_MASK		0x07

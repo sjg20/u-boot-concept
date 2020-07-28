@@ -15,6 +15,7 @@
 #include <panel.h>
 #include <asm/gpio.h>
 #include <linux/err.h>
+#include <linux/string.h>
 #include "tilcdc.h"
 
 struct tilcdc_panel_priv {

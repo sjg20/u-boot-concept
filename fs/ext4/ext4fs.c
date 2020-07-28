@@ -24,6 +24,7 @@
 #include <blk.h>
 #include <ext_common.h>
 #include <ext4fs.h>
+#include <linux/string.h>
 #include "ext4_common.h"
 #include <div64.h>
 #include <malloc.h>

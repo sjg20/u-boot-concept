@@ -7,6 +7,7 @@
 #include <dm.h>
 #include <mailbox.h>
 #include <mapmem.h>
+#include <linux/string.h>
 #include "nvme.h"
 #include <reset.h>
 

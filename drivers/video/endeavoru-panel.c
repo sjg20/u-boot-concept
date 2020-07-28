@@ -14,6 +14,7 @@
 #include <asm/gpio.h>
 #include <linux/delay.h>
 #include <linux/err.h>
+#include <linux/string.h>
 #include <power/regulator.h>
 
 struct endeavoru_panel_priv {

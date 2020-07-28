@@ -22,6 +22,7 @@
 #include <net.h>
 #include <pxe_utils.h>
 #include <linux/sizes.h>
+#include <linux/string.h>
 
 #define EFI_DIRNAME	"efi/boot/"
 

@@ -30,6 +30,7 @@
 #include <fsl_wdog.h>
 #include <imx_sip.h>
 #include <linux/bitops.h>
+#include <linux/string.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

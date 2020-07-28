@@ -20,6 +20,7 @@
 #include <watchdog.h>
 #include <asm/unaligned.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 
 static struct efi_simple_text_input_protocol *cin;
 const char *eficonfig_menu_desc =

@@ -24,6 +24,7 @@
 #include <malloc.h>
 #include <dm/uclass.h>
 #include <rng.h>
+#include <linux/string.h>
 
 int uuid_str_valid(const char *uuid)
 {

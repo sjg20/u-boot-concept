@@ -13,6 +13,7 @@
 #include <net.h>
 #include <asm/io.h>
 #include <asm/arch/hardware.h>
+#include <linux/string.h>
 
 #include "fru.h"
 

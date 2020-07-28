@@ -19,6 +19,7 @@
 #include <misc.h>
 #include <tables_csum.h>
 #include <asm/acpi_table.h>
+#include <linux/string.h>
 
 #if defined(CONFIG_GENERATE_ACPI_TABLE) && !defined(CONFIG_SANDBOX)
 /*

@@ -11,6 +11,7 @@
 #include <asm/io.h>
 #include <asm-generic/gpio.h>
 #include <linux/bitfield.h>
+#include <linux/string.h>
 
 struct apple_pinctrl_priv {
 	void *base;

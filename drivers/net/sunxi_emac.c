@@ -17,6 +17,7 @@
 #include <net.h>
 #include <asm/io.h>
 #include <asm/arch/clock.h>
+#include <linux/string.h>
 
 /* EMAC register  */
 struct emac_regs {

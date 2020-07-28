@@ -13,6 +13,7 @@
 #include <image.h>
 #include <vbe.h>
 #include <dm/uclass-internal.h>
+#include <linux/string.h>
 
 /**
  * is_vbe() - Check if a device is a VBE method

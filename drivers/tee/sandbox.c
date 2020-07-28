@@ -6,6 +6,7 @@
 #include <dm.h>
 #include <sandboxtee.h>
 #include <tee.h>
+#include <linux/string.h>
 #include <tee/optee_ta_avb.h>
 #include <tee/optee_ta_rpc_test.h>
 #include <tee/optee_ta_scp03.h>

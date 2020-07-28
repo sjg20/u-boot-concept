@@ -33,6 +33,7 @@
 #include <linux/delay.h>
 #include <linux/math64.h>
 #include <dt-bindings/clock/sifive-fu740-prci.h>
+#include <linux/string.h>
 
 #include "fu540-prci.h"
 #include "fu740-prci.h"

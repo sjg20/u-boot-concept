@@ -19,6 +19,7 @@
 #include <version_string.h>
 #include <tpm-v2.h>
 #include <tpm_api.h>
+#include <linux/string.h>
 #include <u-boot/hash-checksum.h>
 #include <u-boot/sha1.h>
 #include <u-boot/sha256.h>

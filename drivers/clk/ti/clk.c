@@ -11,6 +11,7 @@
 #include <regmap.h>
 #include <asm/io.h>
 #include <dm/device_compat.h>
+#include <linux/string.h>
 #include "clk.h"
 
 #define CLK_MAX_MEMMAPS           10

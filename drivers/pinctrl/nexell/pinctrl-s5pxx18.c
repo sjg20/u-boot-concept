@@ -14,6 +14,7 @@
 #include <asm/io.h>
 #include <dm/pinctrl.h>
 #include <dm/root.h>
+#include <linux/string.h>
 #include "pinctrl-nexell.h"
 #include "pinctrl-s5pxx18.h"
 

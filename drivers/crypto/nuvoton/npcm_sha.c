@@ -9,6 +9,7 @@
 #include <malloc.h>
 #include <uboot_aes.h>
 #include <asm/io.h>
+#include <linux/string.h>
 
 #define HASH_DIG_H_NUM			8
 

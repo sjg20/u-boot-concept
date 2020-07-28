@@ -14,6 +14,7 @@
 #include <linux/sizes.h>
 #include <linux/bitops.h>
 #include <linux/bitfield.h>
+#include <linux/string.h>
 #include "mt7621_nand.h"
 
 /* NFI core registers */

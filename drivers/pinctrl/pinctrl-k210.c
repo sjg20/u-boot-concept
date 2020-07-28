@@ -15,6 +15,7 @@
 #include <linux/err.h>
 #include <linux/bitfield.h>
 #include <linux/bitops.h>
+#include <linux/string.h>
 
 /*
  * The K210 only implements 8 drive levels, even though there is register space

@@ -13,6 +13,7 @@
 #include <i2c.h>
 #include <dt-bindings/gpio/gpio.h>
 #include <asm/arch/hardware.h>
+#include <linux/string.h>
 
 #define SLG7XL45106_REG		0xdb
 

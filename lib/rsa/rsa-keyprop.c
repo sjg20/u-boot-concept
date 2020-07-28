@@ -13,6 +13,7 @@
 #include <image.h>
 #include <malloc.h>
 #include <crypto/internal/rsa.h>
+#include <linux/string.h>
 #include <u-boot/rsa-mod-exp.h>
 #include <asm/unaligned.h>
 

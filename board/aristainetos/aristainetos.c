@@ -36,6 +36,7 @@
 #include <micrel.h>
 #include <miiphy.h>
 #include <led.h>
+#include <linux/string.h>
 #include <power/pmic.h>
 #include <power/regulator.h>
 #include <power/da9063_pmic.h>

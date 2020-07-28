@@ -21,6 +21,7 @@
 #include <linux/compat.h>
 #include <linux/io.h>
 #include <linux/sizes.h>
+#include <linux/string.h>
 #include "sh_mmcif.h"
 #include <asm/global_data.h>
 

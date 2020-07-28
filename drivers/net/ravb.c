@@ -25,6 +25,7 @@
 #include <asm/io.h>
 #include <asm/global_data.h>
 #include <asm/gpio.h>
+#include <linux/string.h>
 
 /* Registers */
 #define RAVB_REG_CCC		0x000

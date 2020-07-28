@@ -10,6 +10,7 @@
 #include <console.h>
 #include <mapmem.h>
 #include <dm/test.h>
+#include <linux/string.h>
 #include <test/ut.h>
 
 #define BUF_SIZE	0x100

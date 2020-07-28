@@ -18,6 +18,7 @@
 #include <asm/lpss.h>
 #include <dm/device-internal.h>
 #include <asm/arch/uart.h>
+#include <linux/string.h>
 
 /* Low-power Subsystem (LPSS) clock register */
 enum {

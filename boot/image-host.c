@@ -9,6 +9,7 @@
  */
 
 #include <time.h>
+#include <linux/string.h>
 
 void memmove_wd(void *to, void *from, size_t len, ulong chunksz)
 {

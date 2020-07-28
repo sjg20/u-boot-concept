@@ -7,6 +7,7 @@
 #include <asm/system.h>
 #include <asm/arch/sys_proto.h>
 #include <dm/device.h>
+#include <linux/string.h>
 #include <linux/types.h>
 #include <u-boot/ecdsa.h>
 #include <crypto/ecdsa-uclass.h>

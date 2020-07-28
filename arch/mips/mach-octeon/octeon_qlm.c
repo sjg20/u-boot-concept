@@ -6,6 +6,7 @@
 #include <dm.h>
 #include <time.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 
 #include <mach/cvmx-regs.h>
 #include <mach/octeon-model.h>

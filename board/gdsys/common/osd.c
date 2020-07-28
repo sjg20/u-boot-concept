@@ -261,6 +261,7 @@ static int osd_write_videomem(unsigned screen, unsigned offset,
 	return charcount;
 }
 
+#include <linux/string.h>
 static int osd_print(struct cmd_tbl *cmdtp, int flag, int argc,
 		     char *const argv[])
 {

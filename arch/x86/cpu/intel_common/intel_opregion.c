@@ -12,6 +12,7 @@
 #include <dm.h>
 #include <spi_flash.h>
 #include <asm/intel_opregion.h>
+#include <linux/string.h>
 
 static char vbt_data[8 << 10];
 

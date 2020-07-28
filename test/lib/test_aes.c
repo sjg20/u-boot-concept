@@ -10,6 +10,7 @@
 #include <hexdump.h>
 #include <rand.h>
 #include <uboot_aes.h>
+#include <linux/string.h>
 #include <test/lib.h>
 #include <test/test.h>
 #include <test/ut.h>

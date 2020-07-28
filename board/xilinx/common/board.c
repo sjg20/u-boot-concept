@@ -20,6 +20,7 @@
 #include <i2c.h>
 #include <linux/sizes.h>
 #include <malloc.h>
+#include <linux/string.h>
 #include "board.h"
 #include <dm.h>
 #include <i2c_eeprom.h>

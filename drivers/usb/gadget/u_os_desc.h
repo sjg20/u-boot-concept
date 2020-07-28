@@ -16,6 +16,7 @@
 #ifndef __U_OS_DESC_H__
 #define __U_OS_DESC_H__
 
+#include <linux/string.h>
 #include <linux/utf.h>
 
 #define USB_EXT_PROP_DW_SIZE			0

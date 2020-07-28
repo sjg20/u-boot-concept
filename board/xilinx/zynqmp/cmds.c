@@ -14,6 +14,7 @@
 #include <asm/arch/hardware.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/io.h>
+#include <linux/string.h>
 #include <mach/zynqmp_aes.h>
 
 static int do_zynqmp_verify_secure(struct cmd_tbl *cmdtp, int flag, int argc,

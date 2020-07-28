@@ -3,6 +3,7 @@
  * Copyright 2021 NXP
  */
 
+#include <linux/string.h>
 #include <linux/types.h>
 #include <string.h>
 #include <asm/arch/imx-regs.h>

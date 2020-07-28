@@ -19,6 +19,7 @@
 #include <log.h>
 #include <part.h>
 #include <malloc.h>
+#include <linux/string.h>
 
 struct efi_system_partition efi_system_partition = {
 	.uclass_id = UCLASS_INVALID,

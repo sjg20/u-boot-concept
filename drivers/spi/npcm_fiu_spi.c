@@ -11,6 +11,7 @@
 #include <linux/bitfield.h>
 #include <linux/log2.h>
 #include <linux/iopoll.h>
+#include <linux/string.h>
 #include <power/regulator.h>
 
 #define DW_SIZE			4

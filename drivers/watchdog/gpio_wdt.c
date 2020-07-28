@@ -5,6 +5,7 @@
 #include <wdt.h>
 #include <asm/gpio.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 
 enum {
 	HW_ALGO_TOGGLE,

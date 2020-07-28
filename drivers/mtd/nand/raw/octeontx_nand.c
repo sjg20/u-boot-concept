@@ -29,6 +29,7 @@
 #include <asm/types.h>
 #include <asm/dma-mapping.h>
 #include <asm/arch/clock.h>
+#include <linux/string.h>
 #include "octeontx_bch.h"
 
 /*

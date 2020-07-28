@@ -16,6 +16,7 @@
 #include <spi-mem.h>
 #include <linux/bug.h>
 #include <linux/iopoll.h>
+#include <linux/string.h>
 
 #define HC_CFG			0x0
 #define HC_CFG_IF_CFG(x)	((x) << 27)

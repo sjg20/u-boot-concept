@@ -44,6 +44,7 @@
 #include <i2c.h>
 #include <linux/bitops.h>
 #include <log.h>
+#include <linux/string.h>
 
 #define REG_DEVID_CTRL		0x1
 # define SW_RST			BIT(0)

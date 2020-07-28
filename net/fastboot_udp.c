@@ -8,6 +8,7 @@
 #include <fastboot.h>
 #include <net.h>
 #include <time.h>
+#include <linux/string.h>
 #include <net/fastboot_udp.h>
 #include <linux/printk.h>
 

@@ -10,6 +10,7 @@
 #include <net.h>
 #include <net6.h>
 #include <malloc.h>
+#include <linux/string.h>
 
 #include "pxe_utils.h"
 

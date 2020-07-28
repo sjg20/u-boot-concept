@@ -19,6 +19,7 @@
 #include <linux/delay.h>
 #include <linux/psci.h>
 #include <malloc.h>
+#include <linux/string.h>
 #include "cpu.h"
 #include <asm/arch-fsl-layerscape/soc.h>
 

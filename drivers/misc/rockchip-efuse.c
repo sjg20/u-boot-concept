@@ -16,6 +16,7 @@
 #include <linux/iopoll.h>
 #include <malloc.h>
 #include <misc.h>
+#include <linux/string.h>
 
 #define EFUSE_CTRL		0x0000
 #define RK3036_A_SHIFT		8

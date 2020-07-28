@@ -16,6 +16,7 @@
 #include <asm/mpspec.h>
 #include <asm/tables.h>
 #include <asm/coreboot_tables.h>
+#include <linux/string.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

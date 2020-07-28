@@ -9,6 +9,7 @@
 #include <env.h>
 #include <i2c.h>
 #include <init.h>
+#include <linux/string.h>
 #include <u-boot/crc.h>
 #include <linux/delay.h>
 

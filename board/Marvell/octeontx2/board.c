@@ -27,6 +27,7 @@
 #include <asm/arch/soc.h>
 #include <asm/arch/board.h>
 #include <dm/util.h>
+#include <linux/string.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

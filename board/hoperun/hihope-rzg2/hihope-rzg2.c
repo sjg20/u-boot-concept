@@ -15,6 +15,7 @@
 #include <linux/bitops.h>
 #include <linux/delay.h>
 #include <linux/libfdt.h>
+#include <linux/string.h>
 
 #define RST_BASE	0xE6160000
 #define RST_CA57RESCNT	(RST_BASE + 0x40)

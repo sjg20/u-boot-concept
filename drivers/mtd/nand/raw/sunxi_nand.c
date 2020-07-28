@@ -38,6 +38,7 @@
 #include <linux/delay.h>
 #include <linux/err.h>
 #include <linux/printk.h>
+#include <linux/string.h>
 
 #include <linux/kernel.h>
 #include <linux/mtd/mtd.h>

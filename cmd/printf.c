@@ -90,6 +90,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <linux/string.h>
 
 #define WANT_HEX_ESCAPES 0
 #define PRINT_CONVERSION_ERROR 1

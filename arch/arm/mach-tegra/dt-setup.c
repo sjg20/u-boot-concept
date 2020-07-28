@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <asm/arch-tegra/cboot.h>
 #include <asm/arch-tegra/gpu.h>
+#include <linux/string.h>
 
 /*
  * This function is called right before the kernel is booted. "blob" is the

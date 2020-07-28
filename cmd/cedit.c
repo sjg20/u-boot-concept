@@ -17,6 +17,7 @@
 #include <mapmem.h>
 #include <dm/ofnode.h>
 #include <linux/sizes.h>
+#include <linux/string.h>
 
 struct expo *cur_exp;
 

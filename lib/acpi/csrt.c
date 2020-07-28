@@ -12,6 +12,7 @@
 #include <tables_csum.h>
 #include <acpi/acpi_table.h>
 #include <dm/acpi.h>
+#include <linux/string.h>
 
 __weak int acpi_fill_csrt(struct acpi_ctx *ctx)
 {

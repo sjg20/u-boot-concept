@@ -35,6 +35,7 @@
 #include <miiphy.h>
 #include <cpsw.h>
 #include <watchdog.h>
+#include <linux/string.h>
 #include "board.h"
 #include "../common/factoryset.h"
 #include "pmic.h"

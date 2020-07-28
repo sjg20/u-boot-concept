@@ -16,6 +16,7 @@
 #include <log.h>
 #include <os.h>
 #include <time.h>
+#include <linux/string.h>
 #include <u-boot/sha256.h>
 #include <spi.h>
 #include <asm/malloc.h>

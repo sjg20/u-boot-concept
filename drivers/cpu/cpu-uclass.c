@@ -15,6 +15,7 @@
 #include <dm/root.h>
 #include <linux/err.h>
 #include <relocate.h>
+#include <linux/string.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

@@ -13,6 +13,7 @@
 
 #include <irq_func.h>
 #include <time.h>
+#include <linux/string.h>
 
 struct cmd_tbl;
 struct spi_slave;

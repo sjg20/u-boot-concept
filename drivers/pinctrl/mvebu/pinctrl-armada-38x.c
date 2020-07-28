@@ -10,6 +10,7 @@
 #include <dm/root.h>
 #include <errno.h>
 #include <asm/io.h>
+#include <linux/string.h>
 
 struct mvebu_mpp_ctrl_setting {
 	const char *name;

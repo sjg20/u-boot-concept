@@ -29,6 +29,7 @@
 #include <power-domain.h>
 #include <elf.h>
 #include <spl.h>
+#include <linux/string.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

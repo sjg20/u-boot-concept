@@ -64,6 +64,8 @@ typedef struct {
 #define __FD_ISSET(fd, fdsetp) \
 	((((fd_set *)fdsetp)->fds_bits[fd >> 5] & (1<<(fd & 31))) != 0)
 
+#include <linux/string.h>
+
 #undef	__FD_ZERO
 #define __FD_ZERO(fdsetp) \
 	(memset(fdsetp, 0, sizeof(*(fd_set *)fdsetp)))

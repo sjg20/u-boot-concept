@@ -25,6 +25,7 @@
 #include <malloc.h>
 #include <spi.h>
 #include <spi-mem.h>
+#include <linux/string.h>
 
 #define ASPEED_SPI_MAX_CS       5
 

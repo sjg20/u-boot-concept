@@ -24,6 +24,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
+#include <linux/string.h>
 #include <u-boot/blake2.h>
 #include "blake2-impl.h"
 

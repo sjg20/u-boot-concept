@@ -14,6 +14,7 @@
 #include <fsl_sec.h>
 #include <asm/arch/clock.h>
 #endif
+#include <linux/string.h>
 
 /**
  * blob_decap() - Decapsulate the data as a blob

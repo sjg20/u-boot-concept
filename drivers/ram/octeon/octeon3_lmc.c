@@ -9,6 +9,7 @@
 #include <i2c.h>
 #include <ram.h>
 #include <time.h>
+#include <linux/string.h>
 
 #include <linux/bitops.h>
 #include <linux/io.h>

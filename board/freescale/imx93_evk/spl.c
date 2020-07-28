@@ -29,6 +29,7 @@
 #include <asm/arch/clock.h>
 #include <asm/arch/ccm_regs.h>
 #include <asm/arch/ddr.h>
+#include <linux/string.h>
 #include <power/pmic.h>
 #include <power/pca9450.h>
 #include <asm/arch/trdc.h>

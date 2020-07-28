@@ -39,6 +39,7 @@
 #endif
 #include <asm/gpio.h>
 #include <asm/io.h>
+#include <linux/string.h>
 #include <u-boot/crc.h>
 #include <env_internal.h>
 #include <linux/libfdt.h>

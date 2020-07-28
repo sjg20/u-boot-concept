@@ -18,6 +18,7 @@
 #include <regmap.h>
 #include <syscon.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 #include <power/regulator.h>
 #include <reset.h>
 #include <clk.h>

@@ -11,6 +11,7 @@
 #include <common.h>
 #include <getopt.h>
 #include <log.h>
+#include <linux/string.h>
 
 void getopt_init_state(struct getopt_state *gs)
 {

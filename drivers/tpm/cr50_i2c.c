@@ -23,6 +23,7 @@
 #include <asm/unaligned.h>
 #include <linux/delay.h>
 #include <dm/acpi.h>
+#include <linux/string.h>
 
 enum {
 	TIMEOUT_INIT_MS		= 30000, /* Very long timeout for TPM init */

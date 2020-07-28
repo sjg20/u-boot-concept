@@ -7,6 +7,7 @@
 #include <compiler.h>
 #include <image.h>
 #include <linux/kernel.h>
+#include <linux/string.h>
 #include <linux/types.h>
 #include <asm/unaligned.h>
 #include <u-boot/lz4.h>

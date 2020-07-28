@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
+#include <linux/string.h>
  * A general-purpose cyclic execution infrastructure, to allow "small"
  * (run-time wise) functions to be executed at a specified frequency.
  * Things like LED blinking or watchdog triggering are examples for such

@@ -83,6 +83,8 @@ typedef struct {
 	typeof(_fd) (fd) = (_fd); \
 	((((fd_set *)fdsetp)->fds_bits[fd >> 5] & (1 << (fd & 31))) != 0)
 
+#include <linux/string.h>
+
 #undef	__FD_ZERO
 #define __FD_ZERO(_fdsetp) \
 	typeof(_fdsetp) (fd) = (_fdsetp); \

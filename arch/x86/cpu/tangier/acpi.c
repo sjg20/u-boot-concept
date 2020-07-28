@@ -15,6 +15,7 @@
 #include <asm/arch/global_nvs.h>
 #include <asm/arch/iomap.h>
 #include <dm/uclass-internal.h>
+#include <linux/string.h>
 
 static int tangier_write_fadt(struct acpi_ctx *ctx,
 			      const struct acpi_writer *entry)

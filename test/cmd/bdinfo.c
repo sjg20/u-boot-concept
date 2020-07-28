@@ -10,6 +10,7 @@
 #include <mapmem.h>
 #include <asm/global_data.h>
 #include <dm/uclass.h>
+#include <linux/string.h>
 #include <test/suites.h>
 #include <test/ut.h>
 #include <dm.h>

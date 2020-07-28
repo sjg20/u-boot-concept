@@ -5,6 +5,7 @@
 #include <env.h>
 #include <fs.h>
 #include <pxe_utils.h>
+#include <linux/string.h>
 
 /**
  * struct sysboot_info - useful information for sysboot helpers

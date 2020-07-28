@@ -25,6 +25,7 @@
 #include <linux/errno.h>
 #include <linux/compat.h>
 #include <ubi_uboot.h>
+#include <linux/string.h>
 
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/partitions.h>

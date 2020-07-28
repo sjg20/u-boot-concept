@@ -13,6 +13,7 @@
 #include <mapmem.h>
 #include <linux/libfdt.h>
 #include <fdt_support.h>
+#include <linux/string.h>
 
 static LIST_HEAD(extension_list);
 

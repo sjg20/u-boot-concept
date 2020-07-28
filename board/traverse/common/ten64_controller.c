@@ -13,6 +13,7 @@
 #include <dm/device_compat.h>
 #include <inttypes.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 
 #include "ten64-controller.h"
 

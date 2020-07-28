@@ -18,6 +18,7 @@
 #include <part.h>
 #include <pci.h>
 #include <pci_ids.h>
+#include <linux/string.h>
 #include <power/regulator.h>
 #include <time.h>
 #include <watchdog.h>

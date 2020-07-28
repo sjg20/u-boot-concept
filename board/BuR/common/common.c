@@ -16,6 +16,7 @@
 #include <i2c.h>
 #include <asm/global_data.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 #include "bur_common.h"
 
 DECLARE_GLOBAL_DATA_PTR;

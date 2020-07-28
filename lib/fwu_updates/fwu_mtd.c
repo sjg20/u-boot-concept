@@ -12,6 +12,7 @@
 #include <mtd.h>
 #include <uuid.h>
 #include <vsprintf.h>
+#include <linux/string.h>
 
 #include <dm/ofnode.h>
 

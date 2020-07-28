@@ -22,6 +22,7 @@
 #include <dm.h>
 #include <dm/uclass-internal.h>
 #include <dm/root.h>
+#include <linux/string.h>
 
 #include "../common/board_detect.h"
 

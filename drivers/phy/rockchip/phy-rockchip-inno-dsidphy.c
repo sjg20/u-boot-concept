@@ -17,6 +17,7 @@
 #include <linux/math64.h>
 #include <phy-mipi-dphy.h>
 #include <reset.h>
+#include <linux/string.h>
 
 #define UPDATE(x, h, l)	(((x) << (l)) & GENMASK((h), (l)))
 

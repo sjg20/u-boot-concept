@@ -14,6 +14,7 @@
 #include <dm/of_extra.h>
 #include <dm/uclass-internal.h>
 #include <linux/compat.h>
+#include <linux/string.h>
 
 void dm_mdio_probe_devices(void)
 {

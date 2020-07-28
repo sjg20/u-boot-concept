@@ -4,6 +4,7 @@
 #include <log.h>
 #include <uuid.h>
 #include <memalign.h>
+#include <linux/string.h>
 #include "kernel-shared/btrfs_tree.h"
 #include "common/rbtree-utils.h"
 #include "disk-io.h"

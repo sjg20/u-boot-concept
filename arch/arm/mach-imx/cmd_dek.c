@@ -25,6 +25,7 @@
 #include <asm/mach-imx/ele_api.h>
 #include <asm/mach-imx/image.h>
 #endif
+#include <linux/string.h>
 
 #include <cpu_func.h>
 

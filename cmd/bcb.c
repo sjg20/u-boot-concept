@@ -15,6 +15,7 @@
 #include <malloc.h>
 #include <memalign.h>
 #include <linux/err.h>
+#include <linux/string.h>
 
 enum bcb_cmd {
 	BCB_CMD_LOAD,

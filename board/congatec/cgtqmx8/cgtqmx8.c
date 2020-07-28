@@ -8,6 +8,7 @@
 #include <linux/libfdt.h>
 #include <fsl_esdhc.h>
 #include <init.h>
+#include <linux/string.h>
 
 #include <asm/io.h>
 #include <asm/gpio.h>

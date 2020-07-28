@@ -8,6 +8,7 @@
 #include <malloc.h>
 #include <misc.h>
 #include <net.h>
+#include <linux/string.h>
 
 #include <linux/bitops.h>
 #include <linux/delay.h>

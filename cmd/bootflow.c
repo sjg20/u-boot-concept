@@ -15,6 +15,7 @@
 #include <console.h>
 #include <dm.h>
 #include <mapmem.h>
+#include <linux/string.h>
 
 /**
  * report_bootflow_err() - Report where a bootflow failed

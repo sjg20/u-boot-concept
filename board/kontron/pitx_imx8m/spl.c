@@ -18,6 +18,7 @@
 #include <asm/mach-imx/mxc_i2c.h>
 #include <asm/sections.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 #include <power/pmic.h>
 #include <power/pfuze100_pmic.h>
 

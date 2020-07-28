@@ -14,6 +14,7 @@
 #include <micrel.h>
 #include <miiphy.h>
 #include <netdev.h>
+#include <linux/string.h>
 
 #include "../common/tdx-cfg-block.h"
 

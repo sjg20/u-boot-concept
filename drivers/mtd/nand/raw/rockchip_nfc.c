@@ -25,6 +25,7 @@
 #include <linux/mtd/rawnand.h>
 #include <memalign.h>
 #include <nand.h>
+#include <linux/string.h>
 
 /*
  * NFC Page Data Layout:

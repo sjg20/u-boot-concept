@@ -24,6 +24,7 @@
 #include <asm/arch-rockchip/edp_rk3288.h>
 #include <asm/arch-rockchip/grf_rk3288.h>
 #include <asm/arch-rockchip/grf_rk3399.h>
+#include <linux/string.h>
 
 #define MAX_CR_LOOP 5
 #define MAX_EQ_LOOP 5

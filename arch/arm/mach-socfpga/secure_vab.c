@@ -13,6 +13,7 @@
 #include <linux/errno.h>
 #include <linux/intel-smc.h>
 #include <log.h>
+#include <linux/string.h>
 
 #define CHUNKSZ_PER_WD_RESET		(256 * SZ_1K)
 

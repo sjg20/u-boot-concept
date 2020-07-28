@@ -11,6 +11,7 @@
 #include <asm-generic/gpio.h>
 #include <linux/delay.h>
 #include <linux/input.h>
+#include <linux/string.h>
 
 /*
  * The Apple SPI keyboard controller implements a protocol that

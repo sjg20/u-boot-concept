@@ -6,6 +6,7 @@
 #include <dm/device.h>
 #include <dm/uclass.h>
 #include <atsha204a-i2c.h>
+#include <linux/string.h>
 #include "mercury_aa1.h"
 
 #define MERCURY_AA1_ATSHA204A_OTP_MAC0 4

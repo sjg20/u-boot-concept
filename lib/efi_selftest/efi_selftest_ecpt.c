@@ -8,6 +8,7 @@
  */
 
 #include <efi_selftest.h>
+#include <linux/string.h>
 
 static const efi_guid_t guid_ecpt = EFI_CONFORMANCE_PROFILES_TABLE_GUID;
 static const efi_guid_t guid_ebbr_2_1 = EFI_CONFORMANCE_PROFILE_EBBR_2_1_GUID;

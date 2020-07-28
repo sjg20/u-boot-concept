@@ -136,6 +136,7 @@
  *              distribution of the executed statements should not be
  *              changed, there are still cases where optimizing compilers
  *              may not generate code for some statements. To a certain
+#include <linux/string.h>
  *              degree, this is unavoidable for small synthetic benchmarks.
  *              Users of the benchmark are advised to check code listings
  *              whether code is generated for all statements of Dhrystone.

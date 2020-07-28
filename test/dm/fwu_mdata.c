@@ -13,6 +13,7 @@
 #include <malloc.h>
 #include <memalign.h>
 #include <part.h>
+#include <linux/string.h>
 
 #include <dm/test.h>
 #include <test/ut.h>

@@ -15,6 +15,7 @@
 #include <cpu_func.h>
 #include <zynqmp_firmware.h>
 #include <asm/arch/hardware.h>
+#include <linux/string.h>
 #include "cadence_qspi.h"
 #include <dt-bindings/power/xlnx-versal-power.h>
 

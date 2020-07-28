@@ -9,6 +9,7 @@
 #include <asm/tables.h>
 #include <asm/arch/global_nvs.h>
 #include <asm/arch/iomap.h>
+#include <linux/string.h>
 
 static int quark_write_fadt(struct acpi_ctx *ctx,
 			    const struct acpi_writer *entry)

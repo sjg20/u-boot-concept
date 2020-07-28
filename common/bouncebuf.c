@@ -13,6 +13,7 @@
 #include <bouncebuf.h>
 #include <asm/cache.h>
 #include <linux/dma-mapping.h>
+#include <linux/string.h>
 
 static int addr_aligned(struct bounce_buffer *state)
 {

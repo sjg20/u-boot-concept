@@ -12,6 +12,7 @@
 #include <linker_lists.h>
 #include <linux/errno.h>
 #include <linux/list.h>
+#include <linux/string.h>
 
 struct block_drvr {
 	char *name;

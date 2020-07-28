@@ -27,6 +27,7 @@
 #include <efi_loader.h>
 #include <linux/bitops.h>
 #include <linux/err.h>
+#include <linux/string.h>
 #include <power/regulator.h>
 #include "rk_vop.h"
 

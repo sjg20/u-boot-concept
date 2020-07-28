@@ -6,6 +6,7 @@
 #include <dt-structs.h>
 #include <irq.h>
 #include <dm/test.h>
+#include <linux/string.h>
 #include <test/test.h>
 #include <test/ut.h>
 #include <asm-generic/gpio.h>

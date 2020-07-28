@@ -9,6 +9,7 @@
 #include <dm/device.h>
 #include <dm/uclass.h>
 #include <atsha204a-i2c.h>
+#include <linux/string.h>
 
 #include "turris_atsha_otp.h"
 

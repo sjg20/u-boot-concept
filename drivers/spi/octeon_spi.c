@@ -14,6 +14,7 @@
 #include <linux/bitfield.h>
 #include <linux/compat.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 
 #define OCTEON_SPI_MAX_BYTES	9
 #define OCTEON_SPI_MAX_CLOCK_HZ	50000000

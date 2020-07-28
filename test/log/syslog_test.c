@@ -14,6 +14,7 @@
 #include <asm/global_data.h>
 #include <dm/device.h>
 #include <hexdump.h>
+#include <linux/string.h>
 #include <test/log.h>
 #include <test/test.h>
 #include <test/suites.h>

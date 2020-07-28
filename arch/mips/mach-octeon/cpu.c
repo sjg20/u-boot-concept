@@ -12,6 +12,7 @@
 #include <linux/bitops.h>
 #include <linux/compat.h>
 #include <linux/io.h>
+#include <linux/string.h>
 #include <mach/clock.h>
 #include <mach/cavm-reg.h>
 #include <mach/cvmx-bootmem.h>

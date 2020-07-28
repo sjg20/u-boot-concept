@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <soc.h>
 #include <clk-uclass.h>
+#include <linux/string.h>
 #include "k3-clk.h"
 
 #define PLL_MIN_FREQ	800000000

@@ -15,6 +15,7 @@
 #include <asm/arch/sm.h>
 #include <asm/global_data.h>
 #include <i2c.h>
+#include <linux/string.h>
 #include "khadas-mcu.h"
 
 int mmc_get_env_dev(void)

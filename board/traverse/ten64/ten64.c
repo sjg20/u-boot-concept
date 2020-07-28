@@ -32,6 +32,7 @@
 #include <asm/arch/soc.h>
 #include <asm/arch-fsl-layerscape/fsl_icid.h>
 #include <nvme.h>
+#include <linux/string.h>
 
 #include <fsl_immap.h>
 

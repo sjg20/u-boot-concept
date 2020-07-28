@@ -24,6 +24,7 @@
 #include <dm/device.h>
 #include <dm/pinctrl.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 #include <power/bd71837.h>
 #include <power/mp5416.h>
 #include <power/pca9450.h>

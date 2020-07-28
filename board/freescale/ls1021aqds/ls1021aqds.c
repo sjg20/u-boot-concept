@@ -25,6 +25,7 @@
 #include <fsl_devdis.h>
 #include <fsl_validate.h>
 #include <fsl_ddr.h>
+#include <linux/string.h>
 #include "../common/i2c_mux.h"
 #include "../common/sleep.h"
 #include "../common/qixis.h"

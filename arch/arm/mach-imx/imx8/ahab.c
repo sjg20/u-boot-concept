@@ -16,6 +16,7 @@
 #include <asm/mach-imx/image.h>
 #include <console.h>
 #include <cpu_func.h>
+#include <linux/string.h>
 #include "u-boot/sha256.h"
 #include <asm/mach-imx/ahab.h>
 

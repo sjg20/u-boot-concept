@@ -20,6 +20,7 @@
 #include <init.h>
 #include <net.h>
 #include <spl.h>
+#include <linux/string.h>
 
 #include <dm/uclass.h>
 #include <dm/device.h>

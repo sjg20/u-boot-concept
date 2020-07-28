@@ -24,6 +24,7 @@
 #include <linux/err.h>
 #include <linux/sizes.h>
 #include <zynqmp_firmware.h>
+#include <linux/string.h>
 
 #define GQSPI_GFIFO_STRT_MODE_MASK	BIT(29)
 #define GQSPI_CONFIG_MODE_EN_MASK	(3 << 30)

@@ -22,6 +22,7 @@
 #include <mmc.h>
 #include <net.h>
 #include <pxe_utils.h>
+#include <linux/string.h>
 
 static int extlinux_pxe_getfile(struct pxe_context *ctx, const char *file_path,
 				char *file_addr, ulong *sizep)

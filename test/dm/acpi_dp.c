@@ -14,6 +14,7 @@
 #include <asm/unaligned.h>
 #include <dm/acpi.h>
 #include <dm/test.h>
+#include <linux/string.h>
 #include <test/ut.h>
 #include "acpi.h"
 

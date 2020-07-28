@@ -17,6 +17,7 @@
 #include <asm/io.h>
 #include <linux/delay.h>
 #include <wait_bit.h>
+#include <linux/string.h>
 #include <renesas/ddr_ctrl.h>
 
 void clk_rzn1_reset_state(struct clk *clk, int on);

@@ -9,6 +9,7 @@
 #include <malloc.h>
 #include <linux/delay.h>
 #include <display_options.h>
+#include <linux/string.h>
 
 #include <mach/cvmx-regs.h>
 #include <mach/cvmx-csr.h>

@@ -15,6 +15,7 @@
 #include <malloc.h>
 #include <dm/ofnode.h>
 #include <linux/libfdt.h>
+#include <linux/string.h>
 
 /**
  * struct build_info - Information to use when building

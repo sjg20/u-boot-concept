@@ -5,6 +5,7 @@
  *
  * This SHOULD eventually work like the ARM mach_is_*() stuff, driven by
  * some config file that gets updated as new hardware is supported.
+#include <linux/string.h>
  * (And avoiding all runtime comparisons in typical one-choice configs!)
  *
  * NOTE:  some of these controller drivers may not be available yet.

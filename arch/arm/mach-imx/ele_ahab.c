@@ -15,6 +15,7 @@
 #include <console.h>
 #include <cpu_func.h>
 #include <asm/global_data.h>
+#include <linux/string.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

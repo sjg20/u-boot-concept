@@ -8,6 +8,8 @@
 #ifndef __SOC_H__
 #define __SOC_H__
 
+#include <linux/string.h>
+
 /* Product PARTNUM */
 #define CN81XX	0xA2
 #define CN83XX	0xA3

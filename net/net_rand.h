@@ -12,6 +12,7 @@
 #include <common.h>
 #include <dm/uclass.h>
 #include <rng.h>
+#include <linux/string.h>
 
 /*
  * Return a seed for the PRNG derived from the eth0 MAC address.

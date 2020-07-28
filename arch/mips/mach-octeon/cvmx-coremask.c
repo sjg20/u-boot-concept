@@ -5,6 +5,7 @@
 
 #include <env.h>
 #include <errno.h>
+#include <linux/string.h>
 
 #include <linux/compat.h>
 #include <linux/ctype.h>

@@ -19,6 +19,7 @@
 #include <linux/compiler.h>
 #include <asm/serial.h>
 #include <asm/state.h>
+#include <linux/string.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

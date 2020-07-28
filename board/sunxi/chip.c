@@ -11,6 +11,7 @@
 #include <w1.h>
 #include <w1-eeprom.h>
 #include <dm/device-internal.h>
+#include <linux/string.h>
 
 #include <asm/arch/gpio.h>
 

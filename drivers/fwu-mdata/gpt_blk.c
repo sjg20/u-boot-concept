@@ -14,6 +14,7 @@
 #include <memalign.h>
 #include <part.h>
 #include <part_efi.h>
+#include <linux/string.h>
 
 #include <dm/device-internal.h>
 #include <linux/errno.h>

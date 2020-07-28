@@ -7,6 +7,7 @@
 #include <common.h>
 #include <scp03.h>
 #include <tee.h>
+#include <linux/string.h>
 #include <tee/optee_ta_scp03.h>
 
 static int scp03_enable(bool provision)

@@ -15,6 +15,7 @@
 #include <asm/gpio.h>
 #include <asm/io.h>
 #include <dm/of_access.h>
+#include <linux/string.h>
 
 struct mpc8xxx_gpio_data {
 	/* The bank's register base in memory */

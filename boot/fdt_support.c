@@ -15,6 +15,7 @@
 #include <stdio_dev.h>
 #include <dm/ofnode.h>
 #include <linux/ctype.h>
+#include <linux/string.h>
 #include <linux/types.h>
 #include <asm/global_data.h>
 #include <linux/libfdt.h>

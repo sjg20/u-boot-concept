@@ -17,6 +17,7 @@
 #include <asm/arch-rockchip/sdram_common.h>
 #include <asm/arch-rockchip/sdram_rv1126.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 
 /* define training flag */
 #define CA_TRAINING			(0x1 << 0)

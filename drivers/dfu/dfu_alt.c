@@ -9,6 +9,7 @@
 #include <malloc.h>
 #include <errno.h>
 #include <dfu.h>
+#include <linux/string.h>
 
 /**
  * dfu_write_by_name() - write data to DFU medium

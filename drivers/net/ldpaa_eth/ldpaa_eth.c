@@ -22,6 +22,7 @@
 #include <linux/compat.h>
 #include <linux/delay.h>
 #include <asm/global_data.h>
+#include <linux/string.h>
 #include <net/ldpaa_eth.h>
 #include "ldpaa_eth.h"
 

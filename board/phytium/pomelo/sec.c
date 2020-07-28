@@ -9,6 +9,7 @@
 #include <string.h>
 #include <linux/arm-smccc.h>
 #include <init.h>
+#include <linux/string.h>
 #include "cpu.h"
 
 struct common_config {

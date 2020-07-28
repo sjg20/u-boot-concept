@@ -17,6 +17,7 @@
 #include <malloc.h>
 #include <mapmem.h>
 #include <linux/sizes.h>
+#include <linux/string.h>
 #include "printf.h"
 
 #define MAX_STR_LEN 128

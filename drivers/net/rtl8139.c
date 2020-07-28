@@ -58,6 +58,7 @@
  *    Drastically simplified error handling. Basically, if any error
  *    in transmission or reception occurs, the card is reset.
  *    Also, pointed all transmit descriptors to the same buffer to
+#include <linux/string.h>
  *    save buffer space. This should decrease driver size and avoid
  *    corruption because of exceeding 32K during runtime.
  *

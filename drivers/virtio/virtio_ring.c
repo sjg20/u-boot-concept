@@ -17,6 +17,7 @@
 #include <linux/bug.h>
 #include <linux/compat.h>
 #include <linux/kernel.h>
+#include <linux/string.h>
 
 static void *virtio_alloc_pages(struct udevice *vdev, u32 npages)
 {

@@ -12,6 +12,7 @@
 #include <scmi_protocols.h>
 #include <asm/types.h>
 #include <linux/clk-provider.h>
+#include <linux/string.h>
 
 /**
  * struct scmi_clk_priv - Private data for SCMI clocks

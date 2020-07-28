@@ -4,6 +4,7 @@
  */
 
 #include <common.h>
+#include <linux/string.h>
 
 #include <asm/io.h>
 #include <dm.h>

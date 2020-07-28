@@ -26,6 +26,7 @@
 #include <i2c.h>
 #include <eeprom_layout.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 
 #ifndef	I2C_RXTX_LEN
 #define I2C_RXTX_LEN	128

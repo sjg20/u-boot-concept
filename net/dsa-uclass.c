@@ -3,6 +3,7 @@
  * Copyright 2019-2021 NXP
  */
 
+#include <linux/string.h>
 #include <net/dsa.h>
 #include <dm/lists.h>
 #include <dm/device_compat.h>

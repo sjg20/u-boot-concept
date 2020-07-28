@@ -14,6 +14,7 @@
 #include <log.h>
 #include <malloc.h>
 #include <net.h>
+#include <linux/string.h>
 #include <net/tcp.h>
 #include <net/wget.h>
 #include <asm/eth.h>

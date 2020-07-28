@@ -28,6 +28,7 @@
 #include <linux/errno.h>
 #include <jffs2/load_kernel.h>
 #include <linux/log2.h>
+#include <linux/string.h>
 
 #undef ubi_msg
 #define ubi_msg(fmt, ...) printf("UBI: " fmt "\n", ##__VA_ARGS__)

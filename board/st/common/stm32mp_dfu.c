@@ -15,6 +15,7 @@
 #include <mtd_node.h>
 #include <asm/arch/stm32prog.h>
 #include <linux/printk.h>
+#include <linux/string.h>
 
 #define DFU_ALT_BUF_LEN SZ_1K
 

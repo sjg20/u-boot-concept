@@ -11,6 +11,7 @@
 #include <menu.h>
 #include <video.h>
 #include <linux/input.h>
+#include <linux/string.h>
 #include <test/suites.h>
 #include <test/ut.h>
 #include "bootstd_common.h"

@@ -20,6 +20,7 @@
 
 #define OPENSSL_API_COMPAT 0x10101000L
 
+#include <linux/string.h>
 #include <u-boot/ecdsa.h>
 #include <u-boot/fdt-libcrypto.h>
 #include <openssl/ssl.h>

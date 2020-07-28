@@ -18,6 +18,7 @@
 #include <video_console.h>
 #include <video_font.h>		/* Bitmap font for code page 437 */
 #include <linux/ctype.h>
+#include <linux/string.h>
 
 int vidconsole_putc_xy(struct udevice *dev, uint x, uint y, char ch)
 {

@@ -8,6 +8,7 @@
 
 #include <dm/device.h>
 #include <dm/device_compat.h>
+#include <linux/string.h>
 #include <linux/usb/usb_urb_compat.h>
 
 #include <time.h>

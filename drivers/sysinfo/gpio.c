@@ -9,6 +9,7 @@
 #include <sysinfo.h>
 #include <asm/gpio.h>
 #include <dm/device_compat.h>
+#include <linux/string.h>
 
 /**
  * struct sysinfo_gpio_priv - GPIO sysinfo private data

@@ -28,6 +28,7 @@
 #include <asm/arch/global_nvs.h>
 #include <dm/acpi.h>
 #include <linux/err.h>
+#include <linux/string.h>
 
 static int acpi_create_madt_lapic(struct acpi_madt_lapic *lapic,
 				  u8 cpu, u8 apic)

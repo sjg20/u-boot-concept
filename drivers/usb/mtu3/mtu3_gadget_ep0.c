@@ -8,6 +8,7 @@
  */
 
 #include <linux/iopoll.h>
+#include <linux/string.h>
 #include <linux/usb/composite.h>
 
 #include "mtu3.h"

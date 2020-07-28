@@ -19,6 +19,7 @@
 #include <video_console.h>
 #include <watchdog.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 #include "bootflow_internal.h"
 
 /**

@@ -12,6 +12,7 @@
 #include <dm.h>
 #include <asm/arch/hardware.h>
 #include <zynqmp_firmware.h>
+#include <linux/string.h>
 
 #define OUTEN(pin)		(BIT(0) << (pin))
 #define INVAL(pin)		(BIT(4) << (pin))

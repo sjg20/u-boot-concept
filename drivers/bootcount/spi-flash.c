@@ -8,6 +8,7 @@
 #include <bootcount.h>
 #include <dm.h>
 #include <spi_flash.h>
+#include <linux/string.h>
 
 static const u8 bootcount_magic = 0xbc;
 

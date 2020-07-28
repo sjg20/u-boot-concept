@@ -25,6 +25,7 @@
 #include <asm/u-boot.h>
 #include <nand.h>
 #include <fat.h>
+#include <linux/string.h>
 #include <u-boot/crc.h>
 #if CONFIG_IS_ENABLED(BANNER_PRINT)
 #include <timestamp.h>

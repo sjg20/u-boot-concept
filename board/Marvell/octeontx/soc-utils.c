@@ -12,6 +12,7 @@
 #include <asm/io.h>
 #include <asm/arch/soc.h>
 #include <asm/arch/board.h>
+#include <linux/string.h>
 
 int read_platform(void)
 {

@@ -6,6 +6,7 @@
 #include <common.h>
 #include <fastboot.h>
 #include <net.h>
+#include <linux/string.h>
 #include <net/fastboot_tcp.h>
 #include <net/tcp.h>
 

@@ -20,6 +20,7 @@
 #include <asm/types.h>
 #include <linux/err.h>
 #include <linux/printk.h>
+#include <linux/string.h>
 
 struct mtk_serial_regs {
 	u32 rbr;

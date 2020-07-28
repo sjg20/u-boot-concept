@@ -6,6 +6,7 @@
 #include <asm/io.h>
 #include <asm/arch/fsl_serdes.h>
 #include <fsl-mc/fsl_mc.h>
+#include <linux/string.h>
 
 #if defined(CONFIG_RESET_PHY_R)
 void reset_phy(void)

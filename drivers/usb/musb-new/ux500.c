@@ -5,6 +5,7 @@
 #include <dm.h>
 #include <generic-phy.h>
 #include <dm/device_compat.h>
+#include <linux/string.h>
 #include "musb_uboot.h"
 
 static struct musb_hdrc_config ux500_musb_hdrc_config = {

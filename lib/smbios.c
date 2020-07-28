@@ -8,6 +8,7 @@
 #include <common.h>
 #include <dm.h>
 #include <env.h>
+#include <linux/string.h>
 #include <linux/stringify.h>
 #include <mapmem.h>
 #include <smbios.h>

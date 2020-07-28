@@ -15,6 +15,7 @@
 #include <malloc.h>
 #include <rng.h>
 #include <dm/ofnode.h>
+#include <linux/string.h>
 
 #define VBE_PREFIX		"vbe,"
 #define VBE_PREFIX_LEN		(sizeof(VBE_PREFIX) - 1)

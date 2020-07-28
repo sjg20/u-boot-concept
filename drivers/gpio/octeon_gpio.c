@@ -18,6 +18,7 @@
 #include <linux/bitfield.h>
 #include <linux/compat.h>
 #include <dt-bindings/gpio/gpio.h>
+#include <linux/string.h>
 
 /* Returns the bit value to write or read based on the offset */
 #define GPIO_BIT(x)		BIT_ULL((x) & 0x3f)

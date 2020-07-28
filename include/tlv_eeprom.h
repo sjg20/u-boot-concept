@@ -17,6 +17,7 @@
  *
  * See the end of this file for details of this eeprom format
  */
+#include <linux/string.h>
 struct __attribute__ ((__packed__)) tlvinfo_header {
 	char    signature[8]; /* 0x00 - 0x07 EEPROM Tag "TlvInfo" */
 	u8      version;      /* 0x08        Structure version    */

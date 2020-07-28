@@ -28,6 +28,7 @@
 #include <env_internal.h>
 #include <fsl_mmdc.h>
 #include <netdev.h>
+#include <linux/string.h>
 #include <net/pfe_eth/pfe/pfe_hw.h>
 
 DECLARE_GLOBAL_DATA_PTR;

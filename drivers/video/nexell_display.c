@@ -20,6 +20,7 @@
 #include <asm/io.h>
 #include <asm/arch/display.h>
 #include <asm/arch/display_dev.h>
+#include <linux/string.h>
 #include "videomodes.h"
 
 DECLARE_GLOBAL_DATA_PTR;

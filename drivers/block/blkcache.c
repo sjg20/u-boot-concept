@@ -12,6 +12,7 @@
 #include <asm/global_data.h>
 #include <linux/ctype.h>
 #include <linux/list.h>
+#include <linux/string.h>
 
 struct block_cache_node {
 	struct list_head lh;

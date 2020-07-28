@@ -19,6 +19,7 @@
 #include <dm/pinctrl.h>
 #include <linux/compat.h>
 #include <dt-bindings/pinctrl/pinctrl-zynqmp.h>
+#include <linux/string.h>
 
 #define PINCTRL_GET_FUNC_GROUPS_RESP_LEN	12
 #define PINCTRL_GET_PIN_GROUPS_RESP_LEN		12

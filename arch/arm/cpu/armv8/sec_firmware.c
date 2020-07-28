@@ -19,6 +19,7 @@
 #include <asm/types.h>
 #include <asm/macro.h>
 #include <asm/armv8/sec_firmware.h>
+#include <linux/string.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 extern void c_runtime_cpu_setup(void);

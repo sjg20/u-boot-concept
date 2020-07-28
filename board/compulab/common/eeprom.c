@@ -13,6 +13,7 @@
 #include <eeprom_field.h>
 #include <asm/setup.h>
 #include <linux/kernel.h>
+#include <linux/string.h>
 #include "eeprom.h"
 
 #define EEPROM_LAYOUT_VER_OFFSET	44

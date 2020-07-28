@@ -10,6 +10,7 @@
 #include <qfw.h>
 #include <stdlib.h>
 #include <dm/uclass.h>
+#include <linux/string.h>
 
 int qfw_get_dev(struct udevice **devp)
 {

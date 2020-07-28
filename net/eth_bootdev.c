@@ -18,6 +18,7 @@
 #include <init.h>
 #include <log.h>
 #include <net.h>
+#include <linux/string.h>
 #include <test/test.h>
 
 static int eth_get_bootflow(struct udevice *dev, struct bootflow_iter *iter,

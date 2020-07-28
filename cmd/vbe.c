@@ -13,6 +13,7 @@
 #include <command.h>
 #include <spl.h>
 #include <vbe.h>
+#include <linux/string.h>
 
 static int do_vbe_list(struct cmd_tbl *cmdtp, int flag, int argc,
 		       char *const argv[])

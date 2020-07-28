@@ -13,6 +13,7 @@
 #include <asm/arch/soc.h>
 #include <linux/libfdt.h>
 #include <fdt_support.h>
+#include <linux/string.h>
 #include "pcie_layerscape_fixup_common.h"
 
 extern int next_stream_id;

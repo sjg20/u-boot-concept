@@ -15,6 +15,7 @@
 #include <linux/mtd/partitions.h>
 #include <asm/global_data.h>
 #include <mtd.h>
+#include <linux/string.h>
 
 #define MTD_NAME_MAX_LEN 20
 

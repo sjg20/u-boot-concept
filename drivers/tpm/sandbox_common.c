@@ -11,6 +11,7 @@
 #include <tpm-v1.h>
 #include <tpm-v2.h>
 #include <asm/unaligned.h>
+#include <linux/string.h>
 #include "sandbox_common.h"
 
 #define TPM_ERR_CODE_OFS	(2 + 4)		/* after tag and size */

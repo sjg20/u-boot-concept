@@ -12,6 +12,7 @@
 #include <phy.h>
 #include <asm/io.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 
 #include "nic_reg.h"
 #include "nic.h"

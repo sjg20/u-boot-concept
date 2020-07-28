@@ -10,6 +10,7 @@
 #include <spi.h>
 #include <asm/io.h>
 #include <dm.h>
+#include <linux/string.h>
 
 #define GXP_SPI0_MAX_CHIPSELECT		2
 

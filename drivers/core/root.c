@@ -30,6 +30,7 @@
 #include <dm/util.h>
 #include <linux/list.h>
 #include <linux/printk.h>
+#include <linux/string.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

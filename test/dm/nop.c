@@ -13,6 +13,7 @@
 #include <dm/device.h>
 #include <dm/test.h>
 #include <misc.h>
+#include <linux/string.h>
 #include <test/test.h>
 #include <test/ut.h>
 

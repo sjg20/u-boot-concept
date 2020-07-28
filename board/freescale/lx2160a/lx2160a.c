@@ -30,6 +30,7 @@
 #include <asm/arch/config.h>
 #include <asm/arch/fsl_serdes.h>
 #include <asm/arch/soc.h>
+#include <linux/string.h>
 #include "../common/i2c_mux.h"
 
 #include "../common/qixis.h"

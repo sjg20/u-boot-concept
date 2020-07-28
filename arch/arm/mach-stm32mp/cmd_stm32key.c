@@ -12,6 +12,7 @@
 #include <dm/device.h>
 #include <dm/uclass.h>
 #include <linux/printk.h>
+#include <linux/string.h>
 
 /*
  * Closed device: OTP0

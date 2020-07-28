@@ -10,6 +10,7 @@
 #include <linux/sizes.h>
 #include <linux/delay.h>
 #include <linux/mtd/rawnand.h>
+#include <linux/string.h>
 #include "mt7621_nand.h"
 
 static struct mt7621_nfc nfc_dev;

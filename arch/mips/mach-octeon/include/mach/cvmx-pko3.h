@@ -7,6 +7,7 @@
 #ifndef __CVMX_PKO3_H__
 #define __CVMX_PKO3_H__
 
+#include <linux/string.h>
 DECLARE_GLOBAL_DATA_PTR;
 
 /* Use full LMTDMA when PARAMETER_CHECKINS is enabled */

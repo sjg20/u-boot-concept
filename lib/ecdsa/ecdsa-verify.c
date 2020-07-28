@@ -3,6 +3,7 @@
  * ECDSA signature verification for u-boot
  *
  * This implements the firmware-side wrapper for ECDSA verification. It bridges
+#include <linux/string.h>
  * the struct crypto_algo API to the ECDSA uclass implementations.
  *
  * Copyright (c) 2020, Alexandru Gagniuc <mr.nuke.me@gmail.com>

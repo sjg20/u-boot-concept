@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 
 /* IPv6 destination address of packet waiting for ND */
 struct in6_addr net_nd_sol_packet_ip6 = ZERO_IPV6_ADDR;

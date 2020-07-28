@@ -17,6 +17,7 @@
 #include <imx_sip.h>
 #include <linux/bitmap.h>
 #include <wait_bit.h>
+#include <linux/string.h>
 
 #include <dt-bindings/power/imx8mm-power.h>
 #include <dt-bindings/power/imx8mn-power.h>

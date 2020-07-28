@@ -12,6 +12,7 @@
 #include <altera.h>             /* altera specific definitions */
 #include <lattice.h>
 #include <dm/device_compat.h>
+#include <linux/string.h>
 
 /* Local static data */
 static int next_desc = FPGA_INVALID_DEVICE;

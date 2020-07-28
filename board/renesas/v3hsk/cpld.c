@@ -14,6 +14,7 @@
 #include <linux/err.h>
 #include <sysreset.h>
 #include <command.h>
+#include <linux/string.h>
 
 #define CPLD_ADDR_PRODUCT_0		0x0000 /* R */
 #define CPLD_ADDR_PRODUCT_1		0x0001 /* R */

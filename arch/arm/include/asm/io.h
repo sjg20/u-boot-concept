@@ -10,6 +10,7 @@
 #ifndef __ASM_ARM_IO_H
 #define __ASM_ARM_IO_H
 
+#include <linux/string.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <asm/byteorder.h>

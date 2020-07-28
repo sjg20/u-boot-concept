@@ -9,6 +9,7 @@
 #include <asm/msr.h>
 #include <asm/mp.h>
 #include <asm/mtrr.h>
+#include <linux/string.h>
 
 static int do_mtrr_set(int cpu_select, uint reg, int argc, char *const argv[])
 {

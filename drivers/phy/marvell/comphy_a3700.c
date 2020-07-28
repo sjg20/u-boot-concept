@@ -12,6 +12,7 @@
 #include <asm/arch/soc.h>
 #include <linux/delay.h>
 #include <phy.h>
+#include <linux/string.h>
 
 #include "comphy_a3700.h"
 

@@ -15,6 +15,7 @@
 #include <fsl_errata.h>
 #include <fsl_usb.h>
 #include <fdt_support.h>
+#include <linux/string.h>
 
 /* USB Controllers */
 #define FSL_USB2_MPH	"fsl-usb2-mph"

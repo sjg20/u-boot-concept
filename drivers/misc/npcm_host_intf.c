@@ -11,6 +11,7 @@
 #include <asm/io.h>
 #include <dm/device_compat.h>
 #include <linux/bitfield.h>
+#include <linux/string.h>
 
 #define SMC_CTL_REG_ADDR	0xc0001001
 #define SMC_CTL_HOSTWAIT	0x80

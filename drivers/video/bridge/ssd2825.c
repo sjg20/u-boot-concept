@@ -16,6 +16,7 @@
 #include <linux/delay.h>
 #include <linux/err.h>
 #include <asm/gpio.h>
+#include <linux/string.h>
 
 #define SSD2825_DEVICE_ID_REG			0xB0
 #define SSD2825_RGB_INTERFACE_CTRL_REG_1	0xB1

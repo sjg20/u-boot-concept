@@ -10,6 +10,7 @@
 #include <env.h>
 #include <net.h>
 #include <asm/setup.h>
+#include <linux/string.h>
 
 #include "legacy.h"
 

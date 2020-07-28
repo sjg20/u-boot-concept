@@ -16,6 +16,7 @@
 #include <watchdog.h>
 #include <linux/delay.h>
 #include <asm/io.h>
+#include <linux/string.h>
 #include <mach/cvmx-regs.h>
 #include <mach/cvmx-bootmem.h>
 

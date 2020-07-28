@@ -9,6 +9,7 @@
 #include <dma.h>
 #include <flash.h>
 #include <malloc.h>
+#include <linux/string.h>
 
 #include <linux/errno.h>
 #include <linux/mtd/mtd.h>

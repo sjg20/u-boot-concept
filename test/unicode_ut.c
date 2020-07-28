@@ -12,6 +12,7 @@
 #include <errno.h>
 #include <log.h>
 #include <malloc.h>
+#include <linux/string.h>
 #include <test/test.h>
 #include <test/suites.h>
 #include <test/ut.h>

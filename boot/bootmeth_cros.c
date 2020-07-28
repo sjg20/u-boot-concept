@@ -21,6 +21,7 @@
 #include <mapmem.h>
 #include <part.h>
 #include <linux/sizes.h>
+#include <linux/string.h>
 #include "bootmeth_cros.h"
 
 static const efi_guid_t cros_kern_type = PARTITION_CROS_KERNEL;

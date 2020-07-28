@@ -15,6 +15,7 @@
 #include <asm/mach-imx/image.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/mach-imx/boot_mode.h>
+#include <linux/string.h>
 
 #define MMC_DEV		0
 #define QSPI_DEV	1

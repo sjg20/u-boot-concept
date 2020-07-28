@@ -24,6 +24,7 @@
 #include <fdt_support.h>
 #include <linux/delay.h>
 #include <spi.h>
+#include <linux/string.h>
 
 #include "../common/common.h"
 

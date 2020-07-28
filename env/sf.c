@@ -21,6 +21,7 @@
 #include <asm/cache.h>
 #include <asm/global_data.h>
 #include <dm/device-internal.h>
+#include <linux/string.h>
 #include <u-boot/crc.h>
 
 #define	OFFSET_INVALID		(~(u32)0)

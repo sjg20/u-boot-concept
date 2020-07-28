@@ -26,6 +26,7 @@
 #include <linux/math64.h>
 #include <linux/bitfield.h>
 #include <linux/clk-provider.h>
+#include <linux/string.h>
 
 #define NSEC_PER_SEC 1000000000L
 

@@ -10,6 +10,7 @@
 #include <log.h>
 #include <stdio_dev.h>
 #include <net.h>
+#include <linux/string.h>
 
 #ifndef CFG_NETCONSOLE_BUFFER_SIZE
 #define CFG_NETCONSOLE_BUFFER_SIZE 512

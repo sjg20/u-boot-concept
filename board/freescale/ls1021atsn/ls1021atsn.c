@@ -14,6 +14,7 @@
 #include <asm/global_data.h>
 #include <asm/sections.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 #include "../common/sleep.h"
 #include <fsl_validate.h>
 #include <fsl_immap.h>

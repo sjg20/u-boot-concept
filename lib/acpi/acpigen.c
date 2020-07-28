@@ -16,6 +16,7 @@
 #include <acpi/acpi_device.h>
 #include <acpi/acpi_table.h>
 #include <dm/acpi.h>
+#include <linux/string.h>
 
 /* CPU path format */
 #define ACPI_CPU_STRING "\\_PR.CP%02d"

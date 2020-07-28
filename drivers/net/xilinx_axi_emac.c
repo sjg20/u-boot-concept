@@ -22,6 +22,7 @@
 #include <wait_bit.h>
 #include <linux/delay.h>
 #include <eth_phy.h>
+#include <linux/string.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

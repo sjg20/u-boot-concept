@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <common.h>
 #include <fs_internal.h>
+#include <linux/string.h>
 #include "ctree.h"
 #include "disk-io.h"
 #include "volumes.h"

@@ -8,6 +8,7 @@
 #include <dm/device_compat.h>
 #include <dm/devres.h>
 #include <exports.h>
+#include <linux/string.h>
 #include <reboot-mode/reboot-mode.h>
 
 int dm_reboot_mode_update(struct udevice *dev)

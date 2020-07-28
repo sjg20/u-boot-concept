@@ -26,6 +26,7 @@
 #include <log.h>
 #include <malloc.h>
 #include <usb.h>
+#include <linux/string.h>
 #include <usb/xhci.h>
 #include <watchdog.h>
 #include <asm/byteorder.h>

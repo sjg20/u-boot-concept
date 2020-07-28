@@ -37,6 +37,7 @@
 #include <spi.h>
 #include <spi-mem.h>
 #include <malloc.h>
+#include <linux/string.h>
 #include "cadence_qspi.h"
 
 __weak void cadence_qspi_apb_enable_linear_mode(bool enable)

@@ -18,6 +18,7 @@
 #include <dm/test.h>
 #include <dm/device-internal.h>
 #include <dm/uclass-internal.h>
+#include <linux/string.h>
 #include <test/test.h>
 #include <test/ut.h>
 #include <ndisc.h>

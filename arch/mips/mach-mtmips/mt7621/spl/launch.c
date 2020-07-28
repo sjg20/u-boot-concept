@@ -13,6 +13,7 @@
 #include <linux/sizes.h>
 #include <time.h>
 #include <cpu_func.h>
+#include <linux/string.h>
 #include "launch.h"
 #include "../mt7621.h"
 

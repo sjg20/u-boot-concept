@@ -13,6 +13,7 @@
 #include <misc.h>
 #include <asm/io.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 
 #include <mach/cvmx-regs.h>
 #include <mach/cvmx-csr.h>

@@ -18,6 +18,7 @@
 #include <asm/arch/board.h>
 #include <linux/delay.h>
 #include <linux/libfdt.h>
+#include <linux/string.h>
 
 #include "nic_reg.h"
 #include "nic.h"

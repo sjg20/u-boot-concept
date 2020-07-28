@@ -94,6 +94,7 @@
 #include <net6.h>
 #include <ndisc.h>
 #include <time.h>
+#include <linux/string.h>
 #include <net/fastboot_udp.h>
 #include <net/fastboot_tcp.h>
 #include <net/tftp.h>

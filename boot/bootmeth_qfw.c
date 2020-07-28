@@ -16,6 +16,7 @@
 #include <env.h>
 #include <qfw.h>
 #include <dm.h>
+#include <linux/string.h>
 
 static int qfw_check(struct udevice *dev, struct bootflow_iter *iter)
 {

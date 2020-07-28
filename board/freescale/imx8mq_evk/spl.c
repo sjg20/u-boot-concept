@@ -25,6 +25,7 @@
 #include <fsl_sec.h>
 #include <mmc.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 #include <power/pmic.h>
 #include <power/pfuze100_pmic.h>
 #include <spl.h>

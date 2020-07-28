@@ -11,6 +11,7 @@
 #include <acpi/acpi_table.h>
 #include <dm/acpi.h>
 #include <tables_csum.h>
+#include <linux/string.h>
 
 int acpi_write_ssdt(struct acpi_ctx *ctx, const struct acpi_writer *entry)
 {

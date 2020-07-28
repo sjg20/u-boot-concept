@@ -18,6 +18,7 @@
 #include <linux/sizes.h>
 #include <asm/arch/sys_proto.h>
 #include <memalign.h>
+#include <linux/string.h>
 
 #define DUMMY_WORD	0xffffffff
 

@@ -16,6 +16,7 @@
 #include <linux/delay.h>
 #include <linux/if_ether.h>
 #include <linux/if_vlan.h>
+#include <linux/string.h>
 #include <linux/types.h>
 #include <net/dsa.h>
 #include <stdlib.h>

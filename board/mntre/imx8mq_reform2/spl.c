@@ -25,6 +25,7 @@
 #include <fsl_esdhc_imx.h>
 #include <mmc.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 #include <power/pmic.h>
 #include <spl.h>
 

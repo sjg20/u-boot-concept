@@ -11,6 +11,7 @@
 #include <dm.h>
 #include <log.h>
 #include <linux/bitops.h>
+#include <linux/string.h>
 #include <power/pca9450.h>
 #include <power/pmic.h>
 #include <power/regulator.h>

@@ -30,6 +30,7 @@
 #include <linux/compiler.h>
 #include <linux/ctype.h>
 #include <linux/printk.h>
+#include <linux/string.h>
 #include <u-boot/crc.h>
 
 /* GUID for basic data partitons */

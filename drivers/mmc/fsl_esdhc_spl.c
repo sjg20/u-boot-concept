@@ -8,6 +8,7 @@
 #include <hang.h>
 #include <mmc.h>
 #include <malloc.h>
+#include <linux/string.h>
 
 #ifndef CFG_SYS_MMC_U_BOOT_OFFS
 extern uchar mmc_u_boot_offs[];

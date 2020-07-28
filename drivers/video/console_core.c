@@ -10,6 +10,7 @@
 #include <video_console.h>
 #include <dm.h>
 #include <video_font.h>
+#include <linux/string.h>
 #include "vidconsole_internal.h"
 
 /**

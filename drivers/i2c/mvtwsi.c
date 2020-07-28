@@ -21,6 +21,7 @@
 #include <dm.h>
 #include <reset.h>
 #endif
+#include <linux/string.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

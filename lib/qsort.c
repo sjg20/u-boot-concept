@@ -11,6 +11,7 @@
  * Ray Gardner and found in Bob Stout's snippets collection.  The
  * original code is included below in an #if 0/#endif block.
  *
+#include <linux/string.h>
  * I modified it to avoid the possibility of overflow in the wgap
  * calculation, as well as to reduce the generated code size with
  * bcc and gcc. */

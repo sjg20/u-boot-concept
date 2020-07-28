@@ -13,6 +13,7 @@
 #include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/utils.h>
+#include <linux/string.h>
 #include "tilcdc.h"
 #include "tilcdc-panel.h"
 

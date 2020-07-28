@@ -11,6 +11,7 @@
 #include <log.h>
 #include <usb.h>
 #include <dm/device-internal.h>
+#include <linux/string.h>
 
 static int copy_to_unicode(char *buff, int length, const char *str)
 {

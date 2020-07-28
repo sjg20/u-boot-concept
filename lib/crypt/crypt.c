@@ -3,6 +3,7 @@
 
 #include <common.h>
 #include <crypt.h>
+#include <linux/string.h>
 #include "crypt-port.h"
 
 typedef int (*crypt_fn)(const char *, size_t, const char *, size_t, uint8_t *,

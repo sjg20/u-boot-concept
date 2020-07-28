@@ -10,6 +10,7 @@
 #include <dm.h>
 #include <malloc.h>
 #include <sdhci.h>
+#include <linux/string.h>
 
 #define F_SDH30_ESD_CONTROL		0x124
 #define F_SDH30_CMD_DAT_DELAY		BIT(9)

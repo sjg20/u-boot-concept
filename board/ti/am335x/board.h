@@ -12,6 +12,7 @@
 
 /**
  * AM335X (EMIF_4D) EMIF REG_COS_COUNT_1, REG_COS_COUNT_2, and
+#include <linux/string.h>
  * REG_PR_OLD_COUNT values to avoid LCDC DMA FIFO underflows and Frame
  * Synchronization Lost errors. The values are the biggest that work
  * reliably with offered video modes and the memory subsystem on the

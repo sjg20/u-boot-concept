@@ -8,6 +8,7 @@
 #include <hexdump.h>
 #include <i2c.h>
 #include <dm/uclass.h>
+#include <linux/string.h>
 
 #include "eeprom.h"
 

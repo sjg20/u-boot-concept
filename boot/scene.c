@@ -17,6 +17,7 @@
 #include <video.h>
 #include <video_console.h>
 #include <linux/input.h>
+#include <linux/string.h>
 #include "scene_internal.h"
 
 int scene_new(struct expo *exp, const char *name, uint id, struct scene **scnp)

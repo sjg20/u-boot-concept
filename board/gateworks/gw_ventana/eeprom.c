@@ -14,6 +14,7 @@
 #include <dm/uclass.h>
 #include <linux/ctype.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 
 #include "eeprom.h"
 

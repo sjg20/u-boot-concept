@@ -12,6 +12,7 @@
 #include <pci.h>
 #include <time.h>
 #include <watchdog.h>
+#include <linux/string.h>
 #include <linux/types.h>
 #include <linux/list.h>
 #include <linux/log2.h>

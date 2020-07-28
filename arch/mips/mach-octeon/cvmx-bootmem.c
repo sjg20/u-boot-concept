@@ -9,6 +9,7 @@
  */
 
 #include <asm/global_data.h>
+#include <linux/string.h>
 
 #include <linux/compat.h>
 #include <linux/io.h>

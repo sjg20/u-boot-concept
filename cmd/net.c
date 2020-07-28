@@ -19,6 +19,7 @@
 #include <log.h>
 #include <net.h>
 #include <net6.h>
+#include <linux/string.h>
 #include <net/udp.h>
 #include <net/sntp.h>
 #include <net/ncsi.h>

@@ -14,6 +14,7 @@
 #include <vbe.h>
 #include <version_string.h>
 #include <dm/device-internal.h>
+#include <linux/string.h>
 #include "vbe_simple.h"
 
 int vbe_simple_fixup_node(ofnode node, struct simple_state *state)

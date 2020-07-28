@@ -20,6 +20,7 @@
 #include <malloc.h>
 #include <mapmem.h>
 #include <net.h>
+#include <linux/string.h>
 
 #define SCRIPT_FNAME1	"boot.scr.uimg"
 #define SCRIPT_FNAME2	"boot.scr"

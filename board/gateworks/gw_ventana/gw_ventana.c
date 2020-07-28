@@ -23,6 +23,7 @@
 #include <jffs2/load_kernel.h>
 #include <linux/ctype.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 
 #include "common.h"
 

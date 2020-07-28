@@ -12,6 +12,7 @@
 #include <asm/io.h>
 #include <asm/types.h>
 #include <asm/arch/board.h>
+#include <linux/string.h>
 #include "cgx.h"
 #include "nix.h"
 

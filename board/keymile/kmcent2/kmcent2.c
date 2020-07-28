@@ -24,6 +24,7 @@
 #include <net.h>
 #include <netdev.h>
 #include <vsc9953.h>
+#include <linux/string.h>
 
 #include "../common/common.h"
 #include "../common/qrio.h"

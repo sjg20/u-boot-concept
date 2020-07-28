@@ -9,6 +9,7 @@
 #include <log.h>
 #include <malloc.h>
 #include <memalign.h>
+#include <linux/string.h>
 #include "btrfs.h"
 #include "disk-io.h"
 

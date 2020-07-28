@@ -11,6 +11,7 @@
 #include <linux/bitops.h>
 #include <linux/printk.h>
 #include <linux/sizes.h>
+#include <linux/string.h>
 
 static u32 lpi_id_bits;
 

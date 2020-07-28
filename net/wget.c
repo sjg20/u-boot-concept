@@ -12,6 +12,7 @@
 #include <mapmem.h>
 #include <net.h>
 #include <time.h>
+#include <linux/string.h>
 #include <net/tcp.h>
 #include <net/wget.h>
 

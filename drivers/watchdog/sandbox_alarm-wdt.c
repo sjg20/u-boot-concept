@@ -2,6 +2,7 @@
 #include <dm.h>
 #include <os.h>
 #include <wdt.h>
+#include <linux/string.h>
 
 struct alarm_wdt_priv {
 	unsigned int timeout_sec;

@@ -21,6 +21,7 @@
 #include <linux/bug.h>
 #include <linux/io.h>
 #include <linux/sizes.h>
+#include <linux/string.h>
 
 #include "sh_pfc.h"
 

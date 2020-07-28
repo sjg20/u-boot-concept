@@ -23,6 +23,7 @@
 #include <search.h>
 #include <linux/ctype.h>
 #include <linux/err.h>
+#include <linux/string.h>
 
 #define BS systab.boottime
 

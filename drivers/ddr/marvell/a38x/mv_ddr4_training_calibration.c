@@ -1849,6 +1849,7 @@ int mv_ddr4_receiver_calibration(u8 dev_num)
 			DEBUG_CALIBRATION(DEBUG_LEVEL_INFO, ("final dc %d\n", center_vref[if_id][subphy_num]));
 		}
 
+#include <linux/string.h>
 		/* run centralization again with optimal vref to update global structures */
 		mv_ddr4_centralization(dev_num, lambda_per_dq, c_opt_per_bus, pbs_res_per_bus, valid_win_size,
 				       RX_DIR, 0, center_vref[if_id][0]);

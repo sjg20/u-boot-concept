@@ -10,6 +10,7 @@
 #include <command.h>
 #include <malloc.h>
 #include <dm/device.h>
+#include <linux/string.h>
 
 static int blkmap_curr_dev;
 

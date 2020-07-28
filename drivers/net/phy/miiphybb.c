@@ -17,6 +17,7 @@
 #include <ppc_asm.tmpl>
 #include <miiphy.h>
 #include <asm/global_data.h>
+#include <linux/string.h>
 
 #ifndef CONFIG_BITBANGMII_MULTI
 

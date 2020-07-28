@@ -31,6 +31,7 @@
 #include <linux/sizes.h>
 #include <common.h>
 #include <i2c.h>
+#include <linux/string.h>
 #include <power/pmic.h>
 #include <power/pfuze3000_pmic.h>
 #include <malloc.h>

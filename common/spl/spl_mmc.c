@@ -16,6 +16,7 @@
 #include <errno.h>
 #include <mmc.h>
 #include <image.h>
+#include <linux/string.h>
 
 static int mmc_load_legacy(struct spl_image_info *spl_image,
 			   struct spl_boot_device *bootdev,

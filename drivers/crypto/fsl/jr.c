@@ -12,6 +12,7 @@
 #include <log.h>
 #include <malloc.h>
 #include <power-domain.h>
+#include <linux/string.h>
 #include "jr.h"
 #include "jobdesc.h"
 #include "desc_constr.h"

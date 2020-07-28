@@ -37,6 +37,7 @@
 #include <asm/mach-imx/ele_api.h>
 #include <fuse.h>
 #include <asm/arch/ddr.h>
+#include <linux/string.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

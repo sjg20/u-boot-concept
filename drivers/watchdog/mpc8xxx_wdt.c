@@ -9,6 +9,7 @@
 #include <wdt.h>
 #include <clock_legacy.h>
 #include <asm/io.h>
+#include <linux/string.h>
 
 struct mpc8xxx_wdt {
 	__be32 res0;

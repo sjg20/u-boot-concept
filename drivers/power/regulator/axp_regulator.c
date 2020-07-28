@@ -8,6 +8,7 @@
 #include <dm.h>
 #include <errno.h>
 #include <dm/device-internal.h>
+#include <linux/string.h>
 #include <power/pmic.h>
 #include <power/regulator.h>
 

@@ -21,6 +21,7 @@
 #ifdef CONFIG_SANDBOX
 #include <asm/state.h>
 #endif
+#include <linux/string.h>
 
 #include <usb.h>
 

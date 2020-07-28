@@ -8,6 +8,7 @@
 #include <dm.h>
 #include <virtio.h>
 #include <virtio_ring.h>
+#include <linux/string.h>
 #include <test/fuzz.h>
 
 static int fuzz_vring(const uint8_t *data, size_t size)

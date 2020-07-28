@@ -21,6 +21,7 @@
 #include <asm/cache.h>
 #include <cpu_func.h>
 #include <linux/iopoll.h>
+#include <linux/string.h>
 #include <linux/types.h>
 
 #include "mtu3.h"

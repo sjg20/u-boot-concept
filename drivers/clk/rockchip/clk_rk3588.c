@@ -18,6 +18,7 @@
 #include <dm/device-internal.h>
 #include <dm/lists.h>
 #include <dt-bindings/clock/rockchip,rk3588-cru.h>
+#include <linux/string.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

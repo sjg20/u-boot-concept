@@ -11,6 +11,7 @@
 #include <dt-bindings/mux/mux.h>
 #include <asm/test.h>
 #include <dm/test.h>
+#include <linux/string.h>
 #include <test/ut.h>
 #include <console.h>
 #include <rand.h>

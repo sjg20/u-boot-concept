@@ -14,6 +14,7 @@
 #include <asm/arch/crm_regs.h>
 #include <asm/sections.h>
 #include <fsl_esdhc_imx.h>
+#include <linux/string.h>
 
 #define UART_PAD_CTRL  (PAD_CTL_PKE | PAD_CTL_PUE |		\
 	PAD_CTL_PUS_100K_UP | PAD_CTL_SPEED_MED |		\

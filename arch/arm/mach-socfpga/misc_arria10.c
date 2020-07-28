@@ -23,6 +23,7 @@
 #include <asm/io.h>
 #include <asm/pl310.h>
 #include <linux/sizes.h>
+#include <linux/string.h>
 
 #define PINMUX_UART0_TX_SHARED_IO_OFFSET_Q1_3	0x08
 #define PINMUX_UART0_TX_SHARED_IO_OFFSET_Q2_11	0x58

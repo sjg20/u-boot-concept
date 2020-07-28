@@ -14,6 +14,7 @@
 #include <linux/arm-smccc.h>
 #include <linux/err.h>
 #include <linux/io.h>
+#include <linux/string.h>
 #include <tee/optee_service.h>
 
 #include "optee_smc.h"

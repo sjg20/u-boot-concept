@@ -10,6 +10,7 @@
  * executable image.
  *
  * The core numbers used in this file are the same value as what is found in
+#include <linux/string.h>
  * the COP0_EBASE register and the rdhwr 0 instruction.
  *
  * For the CN78XX and other multi-node environments the core numbers are not

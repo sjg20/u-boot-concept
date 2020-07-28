@@ -11,6 +11,7 @@
 #include <mapmem.h>
 #include <version_string.h>
 #include <vsprintf.h>
+#include <linux/string.h>
 #include <test/suites.h>
 #include <test/test.h>
 #include <test/ut.h>

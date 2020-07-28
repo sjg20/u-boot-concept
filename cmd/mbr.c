@@ -13,6 +13,7 @@
 #include <command.h>
 #include <malloc.h>
 #include <part.h>
+#include <linux/string.h>
 
 /**
  * extract_val() - Extract a value from the key=value pair list

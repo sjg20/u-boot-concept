@@ -13,6 +13,7 @@
 #include <asm/unaligned.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 
 struct ihs_i2c_priv {
 	uint speed;

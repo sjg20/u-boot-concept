@@ -19,6 +19,7 @@
 #include <asm/sections.h>
 #include <fsl_esdhc_imx.h>
 #include <spl.h>
+#include <linux/string.h>
 
 static struct ddrc ddrc_regs_val = {
 	.mstr		= 0x01040001,

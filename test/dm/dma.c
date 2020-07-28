@@ -11,6 +11,7 @@
 #include <malloc.h>
 #include <dm/test.h>
 #include <dma.h>
+#include <linux/string.h>
 #include <test/test.h>
 #include <test/ut.h>
 

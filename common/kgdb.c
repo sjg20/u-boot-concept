@@ -58,6 +58,7 @@
  *    c             Resume at current address              SNN   ( signal NN)
  *    cAA..AA       Continue at address AA..AA             SNN
  *
+#include <linux/string.h>
  *    s             Step one instruction                   SNN
  *    sAA..AA       Step one instruction from AA..AA       SNN
  *

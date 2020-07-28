@@ -8,6 +8,7 @@
 #include <asm/ptrace.h>
 #include <asm/system.h>
 #include <linux/intel-smc.h>
+#include <linux/string.h>
 
 int invoke_smc(u32 func_id, u64 *args, int arg_len, u64 *ret_arg, int ret_len)
 {

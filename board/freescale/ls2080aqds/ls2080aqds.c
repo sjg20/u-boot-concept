@@ -25,6 +25,7 @@
 #include <hwconfig.h>
 #include <asm/arch/ppa.h>
 #include <asm/arch-fsl-layerscape/fsl_icid.h>
+#include <linux/string.h>
 #include "../common/i2c_mux.h"
 
 #include "../common/qixis.h"

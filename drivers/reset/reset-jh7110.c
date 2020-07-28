@@ -12,6 +12,7 @@
 #include <errno.h>
 #include <linux/iopoll.h>
 #include <reset-uclass.h>
+#include <linux/string.h>
 
 struct jh7110_reset_priv {
 	void __iomem *reg;

@@ -26,6 +26,7 @@
 #include <dm/device-internal.h>
 #include <linux/errno.h>
 #include <malloc.h>
+#include <linux/string.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

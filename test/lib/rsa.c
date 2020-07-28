@@ -9,6 +9,7 @@
 #include <common.h>
 #include <command.h>
 #include <image.h>
+#include <linux/string.h>
 #include <test/lib.h>
 #include <test/test.h>
 #include <test/ut.h>

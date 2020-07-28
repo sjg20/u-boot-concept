@@ -19,6 +19,7 @@
 #include <rng.h>
 #include <stdlib.h>
 #include <video_bridge.h>
+#include <linux/string.h>
 
 #define GPIO0_BASE		0xfdd60000
 #define GPIO4_BASE		0xfe770000

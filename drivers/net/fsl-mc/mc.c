@@ -29,6 +29,7 @@
 #include <fsl-mc/fsl_dpsparser.h>
 #include <fsl-mc/fsl_qbman_portal.h>
 #include <fsl-mc/ldpaa_wriop.h>
+#include <linux/string.h>
 #include <net/ldpaa_eth.h>
 
 #define MC_RAM_BASE_ADDR_ALIGNMENT  (512UL * 1024 * 1024)

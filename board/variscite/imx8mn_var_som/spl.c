@@ -16,6 +16,7 @@
 #include <asm/sections.h>
 #include <dm/device.h>
 #include <dm/uclass.h>
+#include <linux/string.h>
 
 int spl_board_boot_device(enum boot_device boot_dev_spl)
 {

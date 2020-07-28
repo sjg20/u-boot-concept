@@ -28,6 +28,7 @@
 #include <asm/arch-rockchip/sdram.h>
 #include <linux/delay.h>
 #include <linux/err.h>
+#include <linux/string.h>
 
 struct rk3066_dmc_chan_info {
 	struct rk3288_ddr_pctl *pctl;

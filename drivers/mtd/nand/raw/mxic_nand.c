@@ -22,6 +22,7 @@
 #include <linux/mtd/partitions.h>
 #include <linux/mtd/nand_ecc.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 
 #define HC_CFG			0x0
 #define HC_CFG_IF_CFG(x)	((x) << 27)

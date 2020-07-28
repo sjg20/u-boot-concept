@@ -12,6 +12,7 @@
 #include <asm/io.h>
 #include <dm.h>
 #include <dm/device-internal.h>	/* for dev_set_priv() */
+#include <linux/string.h>
 
 #define TX_NUM_DESC			1
 #define RX_NUM_DESC			32

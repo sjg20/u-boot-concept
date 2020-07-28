@@ -13,6 +13,7 @@
 #include <malloc.h>
 #include <efi_loader.h>
 #include <asm/unaligned.h>
+#include <linux/string.h>
 
 /**
  * efi_set_load_options() - set the load options of a loaded image

@@ -11,6 +11,7 @@
 #include <fwu.h>
 #include <fwu_mdata.h>
 #include <malloc.h>
+#include <linux/string.h>
 
 #include <linux/errno.h>
 #include <linux/types.h>

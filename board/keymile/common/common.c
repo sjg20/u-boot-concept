@@ -21,6 +21,7 @@
 #include <linux/delay.h>
 #include <linux/bug.h>
 #include <bootcount.h>
+#include <linux/string.h>
 
 #if defined(CONFIG_POST)
 #include "post.h"

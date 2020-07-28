@@ -18,6 +18,7 @@
 #include <malloc.h>
 #include <net.h>
 #include <miiphy.h>
+#include <linux/string.h>
 
 #include "lpddr4_timing.h"
 #include "../common/dh_common.h"

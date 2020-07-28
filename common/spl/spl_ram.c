@@ -16,6 +16,7 @@
 #include <mapmem.h>
 #include <spl.h>
 #include <linux/libfdt.h>
+#include <linux/string.h>
 
 static ulong spl_ram_load_read(struct spl_load_info *load, ulong sector,
 			       ulong count, void *buf)

@@ -32,6 +32,7 @@
 #include <timer.h>
 #include <reset.h>
 #include <linux/bitmap.h>
+#include <linux/string.h>
 
 #define IPU1_LOAD_ADDR         (0xa17ff000)
 #define MAX_REMOTECORE_BIN_SIZE (8 * 0x100000)

@@ -20,6 +20,7 @@
 #include <asm/arch/clock.h>
 #include <asm/arch/display2.h>
 #include <linux/bitops.h>
+#include <linux/string.h>
 #include "simplefb_common.h"
 
 DECLARE_GLOBAL_DATA_PTR;

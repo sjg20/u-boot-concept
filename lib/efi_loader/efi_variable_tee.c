@@ -24,6 +24,7 @@
 #include <mapmem.h>
 #include <mm_communication.h>
 #include <tee.h>
+#include <linux/string.h>
 
 #if CONFIG_IS_ENABLED(ARM_FFA_TRANSPORT)
 /* MM return codes */

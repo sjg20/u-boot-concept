@@ -26,6 +26,7 @@
 #include <linux/sizes.h>
 #include <linux/bitfield.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/spi-nor.h>

@@ -18,6 +18,7 @@
 #include <asm/pci.h>
 #include <asm/arch/pmc.h>
 #include <linux/bitops.h>
+#include <linux/string.h>
 #include <power/acpi_pmc.h>
 
 #define GPIO_GPE_CFG		0x1050

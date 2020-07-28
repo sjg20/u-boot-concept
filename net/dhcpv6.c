@@ -12,6 +12,7 @@
 #include <malloc.h>
 #include <time.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 #include "net_rand.h"
 #include "dhcpv6.h"
 

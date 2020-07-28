@@ -29,6 +29,7 @@
 #include <linux/compat.h>
 #include <linux/iopoll.h>
 #include <linux/sizes.h>
+#include <linux/string.h>
 
 /* Register offsets */
 #define DW_SPI_CTRLR0			0x00

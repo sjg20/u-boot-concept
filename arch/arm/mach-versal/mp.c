@@ -8,6 +8,7 @@
 #include <asm/io.h>
 #include <asm/arch/hardware.h>
 #include <asm/arch/sys_proto.h>
+#include <linux/string.h>
 
 #define HALT		0
 #define RELEASE		1

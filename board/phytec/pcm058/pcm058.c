@@ -19,6 +19,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/sections.h>
 #include <dm.h>
+#include <linux/string.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

@@ -9,6 +9,7 @@
 #include <asm/io.h>
 #include <dm/uclass.h>
 #include <linux/errno.h>
+#include <linux/string.h>
 
 #ifdef CONFIG_ARCH_OMAP2PLUS
 #include <asm/arch/mem.h>

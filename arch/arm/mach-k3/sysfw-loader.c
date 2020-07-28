@@ -21,6 +21,7 @@
 #include <dfu.h>
 #include <dm/uclass-internal.h>
 #include <spi_flash.h>
+#include <linux/string.h>
 
 #include <asm/io.h>
 #include "common.h"

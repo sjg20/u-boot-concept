@@ -9,6 +9,7 @@
 #include <linux/bug.h>
 #include <malloc.h>
 #include <memalign.h>
+#include <linux/string.h>
 #include "btrfs.h"
 #include "ctree.h"
 #include "extent-io.h"

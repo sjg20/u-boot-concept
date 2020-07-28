@@ -16,6 +16,7 @@
 #include <asm/gpio.h>
 #include <linux/delay.h>
 #include <linux/input.h>
+#include <linux/string.h>
 
 /**
  * struct button_kbd_priv - driver private data

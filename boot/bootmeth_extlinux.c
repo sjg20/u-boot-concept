@@ -21,6 +21,7 @@
 #include <mapmem.h>
 #include <mmc.h>
 #include <pxe_utils.h>
+#include <linux/string.h>
 
 static int extlinux_get_state_desc(struct udevice *dev, char *buf, int maxsize)
 {

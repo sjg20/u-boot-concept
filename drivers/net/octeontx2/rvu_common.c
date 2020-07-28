@@ -9,6 +9,7 @@
 #include <misc.h>
 #include <net.h>
 #include <asm/io.h>
+#include <linux/string.h>
 
 #include "rvu.h"
 

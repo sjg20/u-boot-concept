@@ -14,6 +14,7 @@
 #include <asm/io.h>
 #include <asm/scmi_test.h>
 #include <dm/device_compat.h>
+#include <linux/string.h>
 
 /*
  * The sandbox SCMI agent driver simulates to some extend a SCMI message

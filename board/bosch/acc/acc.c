@@ -16,6 +16,7 @@
 #include <init.h>
 #include <linux/delay.h>
 #include <mmc.h>
+#include <linux/string.h>
 
 #include <asm/io.h>
 #include <asm/gpio.h>

@@ -14,6 +14,7 @@
 #include <lmb.h>
 #include <log.h>
 #include <malloc.h>
+#include <linux/string.h>
 #include <u-boot/crc.h>
 
 #ifdef CONFIG_SHOW_BOOT_PROGRESS

@@ -16,6 +16,7 @@
 #include <errno.h>
 #include <fat.h>
 #include <image.h>
+#include <linux/string.h>
 
 static int spl_sata_load_image_raw(struct spl_image_info *spl_image,
 		struct spl_boot_device *bootdev,

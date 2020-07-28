@@ -15,6 +15,7 @@
 #include <linux/errno.h>
 #include <malloc.h>
 #include <video.h>
+#include <linux/string.h>
 
 #include <asm/arch/clock.h>
 #include <asm/arch/imx-regs.h>

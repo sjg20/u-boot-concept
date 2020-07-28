@@ -12,6 +12,7 @@
 #include <asm/io.h>
 #include <linux/errno.h>
 #include <tsec.h>
+#include <linux/string.h>
 
 #ifdef CONFIG_DM_MDIO
 struct tsec_mdio_priv {

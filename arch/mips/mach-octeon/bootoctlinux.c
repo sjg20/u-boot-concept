@@ -10,6 +10,7 @@
 #include <elf.h>
 #include <env.h>
 #include <asm/global_data.h>
+#include <linux/string.h>
 
 #include <asm/io.h>
 #include <linux/compat.h>

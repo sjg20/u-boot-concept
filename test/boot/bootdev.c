@@ -13,6 +13,7 @@
 #include <bootflow.h>
 #include <mapmem.h>
 #include <os.h>
+#include <linux/string.h>
 #include <test/suites.h>
 #include <test/ut.h>
 #include "bootstd_common.h"

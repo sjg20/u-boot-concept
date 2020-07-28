@@ -18,6 +18,7 @@
 #include <net6.h>
 #include <time.h>
 #include <asm/global_data.h>
+#include <linux/string.h>
 #include <net/tftp.h>
 #include "bootp.h"
 

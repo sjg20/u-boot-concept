@@ -45,6 +45,7 @@
 #include <dm/of_access.h>
 #include <dm/ofnode.h>
 #include <asm/io.h>
+#include <linux/string.h>
 #include "pmecc.h"
 #include <dm/uclass.h>
 #include <dm/device_compat.h>

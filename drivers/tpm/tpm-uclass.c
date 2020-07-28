@@ -15,6 +15,7 @@
 #include <tpm-v2.h>
 #include <dm/lists.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 #include <linux/unaligned/be_byteshift.h>
 #include "tpm_internal.h"
 

@@ -9,6 +9,7 @@
 #include <net.h>
 #include <dm/device.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 
 #include <mach/cvmx-regs.h>
 #include <mach/cvmx-csr.h>

@@ -7,6 +7,7 @@
 #include <fdt_support.h>
 #include <ram.h>
 #include <asm/gpio.h>
+#include <linux/string.h>
 
 #include <mach/octeon_ddr.h>
 #include <mach/cvmx-qlm.h>

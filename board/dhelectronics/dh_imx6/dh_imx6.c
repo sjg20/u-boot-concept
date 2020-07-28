@@ -34,6 +34,7 @@
 #include <mmc.h>
 #include <usb.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 #include <usb/ehci-ci.h>
 
 #include "../common/dh_common.h"

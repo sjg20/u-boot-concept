@@ -22,6 +22,7 @@
 #include <fis.h>
 #include <sata.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 #include "fsl_sata.h"
 
 static inline void sdelay(unsigned long sec)

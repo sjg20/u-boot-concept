@@ -9,6 +9,7 @@
 #include <fdt_support.h>
 #include <log.h>
 #include <malloc.h>
+#include <linux/string.h>
 #include <tee/optee.h>
 
 #include <linux/sizes.h>

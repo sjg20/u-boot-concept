@@ -29,6 +29,7 @@
 #include <linux/iopoll.h>
 #include <env.h>
 #include <env_internal.h>
+#include <linux/string.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

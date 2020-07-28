@@ -18,6 +18,7 @@
 #include <pe.h>
 #include <linux/list.h>
 #include <linux/oid_registry.h>
+#include <linux/string.h>
 
 struct blk_desc;
 struct jmp_buf_data;

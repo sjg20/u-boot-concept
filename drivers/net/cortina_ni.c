@@ -16,6 +16,7 @@
 #include <time.h>
 #include <linux/delay.h>
 #include <linux/bitops.h>
+#include <linux/string.h>
 #include <u-boot/crc.h>
 #include <led.h>
 

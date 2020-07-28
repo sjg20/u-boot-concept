@@ -21,6 +21,7 @@
 #endif
 #include <malloc.h>
 #include <env.h>
+#include <linux/string.h>
 #include "pcie_layerscape.h"
 #include "pcie_layerscape_fixup_common.h"
 

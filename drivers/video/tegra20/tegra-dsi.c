@@ -14,6 +14,7 @@
 #include <panel.h>
 #include <linux/delay.h>
 #include <linux/err.h>
+#include <linux/string.h>
 #include <power/regulator.h>
 
 #include <asm/gpio.h>

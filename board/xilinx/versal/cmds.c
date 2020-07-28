@@ -11,6 +11,7 @@
 #include <memalign.h>
 #include <versalpl.h>
 #include <zynqmp_firmware.h>
+#include <linux/string.h>
 
 static int do_versal_load_pdi(struct cmd_tbl *cmdtp, int flag, int argc,
 			      char * const argv[])

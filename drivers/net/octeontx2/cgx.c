@@ -13,6 +13,7 @@
 #include <asm/arch/board.h>
 #include <asm/arch/csrs/csrs-cgx.h>
 #include <asm/io.h>
+#include <linux/string.h>
 
 #include "cgx.h"
 

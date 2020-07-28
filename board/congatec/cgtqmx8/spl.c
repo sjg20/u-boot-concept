@@ -16,6 +16,7 @@
 #include <dm/uclass-internal.h>
 #include <dm/device-internal.h>
 #include <dm/lists.h>
+#include <linux/string.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

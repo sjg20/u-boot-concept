@@ -21,6 +21,7 @@
 #include <env.h>
 #include <spl.h>
 #include <linux/printk.h>
+#include <linux/string.h>
 
 #include "../common/board_detect.h"
 

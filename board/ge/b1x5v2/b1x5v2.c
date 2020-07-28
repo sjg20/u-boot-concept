@@ -31,6 +31,7 @@
 #include <rtc.h>
 #include <spi_flash.h>
 #include <version_string.h>
+#include <linux/string.h>
 
 #include "../common/vpd_reader.h"
 
