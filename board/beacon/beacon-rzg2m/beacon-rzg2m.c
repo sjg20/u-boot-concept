@@ -8,6 +8,7 @@
 #include <asm/io.h>
 #include <asm/arch/rcar-mstp.h>
 #include <asm/u-boot.h>
+#include <linux/errno.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

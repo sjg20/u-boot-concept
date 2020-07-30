@@ -13,6 +13,7 @@
 #include <dm/device.h>
 #include <dm/test.h>
 #include <misc.h>
+#include <linux/errno.h>
 #include <test/ut.h>
 
 static int noptest_bind(struct udevice *parent)

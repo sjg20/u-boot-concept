@@ -37,6 +37,7 @@
 #include <g_dnl.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
+#include <linux/errno.h>
 #include <linux/sizes.h>
 #include <linux/string.h>
 #include "../common/board.h"

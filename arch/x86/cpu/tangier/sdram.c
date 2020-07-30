@@ -10,6 +10,7 @@
 #include <asm/global_data.h>
 #include <asm/sfi.h>
 #include <asm/u-boot.h>
+#include <linux/errno.h>
 #include <linux/printk.h>
 #include <linux/string.h>
 

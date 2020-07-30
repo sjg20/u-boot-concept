@@ -13,6 +13,7 @@
 #include <asm/global_data.h>
 #include <asm/u-boot.h>
 #include <linux/bitops.h>
+#include <linux/errno.h>
 #include <linux/libfdt.h>
 #include <asm/io.h>
 #include <asm/system.h>

@@ -15,6 +15,7 @@
 #include <dm/device-internal.h>
 #include <dm/test.h>
 #include <dm/uclass-internal.h>
+#include <linux/errno.h>
 #include <test/ut.h>
 
 struct keyboard_test_data {

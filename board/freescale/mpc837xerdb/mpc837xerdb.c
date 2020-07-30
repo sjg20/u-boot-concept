@@ -21,6 +21,7 @@
 #include <fsl_esdhc.h>
 #include <asm/u-boot.h>
 #include <linux/delay.h>
+#include <linux/errno.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

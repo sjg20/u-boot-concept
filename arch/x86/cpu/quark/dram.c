@@ -19,6 +19,7 @@
 #include <asm/arch/msg_port.h>
 #include <asm/arch/quark.h>
 #include <asm/u-boot.h>
+#include <linux/errno.h>
 #include <linux/string.h>
 
 DECLARE_GLOBAL_DATA_PTR;

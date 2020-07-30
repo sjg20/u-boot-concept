@@ -4,6 +4,7 @@
  */
 #define LOG_CATEGORY UCLASS_CLK
 #include <kendryte/pll.h>
+#include <linux/errno.h>
 
 #include <asm/io.h>
 /* For DIV_ROUND_DOWN_ULL, defined in linux/kernel.h */

@@ -22,6 +22,7 @@
 #include <asm/u-boot.h>
 #include <linux/ctype.h>
 #include <linux/err.h>
+#include <linux/errno.h>
 #include <linux/string.h>
 #include <u-boot/zlib.h>
 #include <mapmem.h>

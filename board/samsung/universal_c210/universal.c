@@ -20,6 +20,7 @@
 #include <ld9040.h>
 #include <asm/u-boot.h>
 #include <linux/delay.h>
+#include <linux/errno.h>
 #include <power/pmic.h>
 #include <usb.h>
 #include <usb/dwc2_udc.h>

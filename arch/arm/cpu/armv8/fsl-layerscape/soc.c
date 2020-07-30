@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <vsprintf.h>
 #include <asm/u-boot.h>
+#include <linux/errno.h>
 #include <linux/sizes.h>
 #include <log.h>
 #include <asm/arch/fsl_serdes.h>

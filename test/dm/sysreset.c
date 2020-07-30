@@ -9,6 +9,7 @@
 #include <asm/state.h>
 #include <asm/test.h>
 #include <dm/test.h>
+#include <linux/errno.h>
 #include <test/ut.h>
 
 /* Test that we can use particular sysreset devices */

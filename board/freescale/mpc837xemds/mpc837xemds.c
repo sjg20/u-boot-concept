@@ -18,6 +18,7 @@
 #include <tsec.h>
 #include <asm/u-boot.h>
 #include <linux/delay.h>
+#include <linux/errno.h>
 #include <linux/libfdt.h>
 #include <fdt_support.h>
 #include <fsl_esdhc.h>

@@ -15,6 +15,7 @@
 #include <asm/rtc.h>
 #include <asm/test.h>
 #include <dm/test.h>
+#include <linux/errno.h>
 #include <test/ut.h>
 
 /* Simple RTC sanity check */

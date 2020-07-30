@@ -11,6 +11,7 @@
 #include <asm/state.h>
 #include <asm/test.h>
 #include <asm/u-boot.h>
+#include <linux/errno.h>
 #include <linux/string.h>
 
 static int sandbox_warm_sysreset_request(struct udevice *dev,

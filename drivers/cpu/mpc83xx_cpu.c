@@ -13,6 +13,7 @@
 #include <vsprintf.h>
 #include <asm/u-boot.h>
 #include <linux/bitops.h>
+#include <linux/errno.h>
 
 #include "mpc83xx_cpu.h"
 

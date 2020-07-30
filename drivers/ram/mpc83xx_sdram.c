@@ -12,6 +12,7 @@
 #include <asm/bitops.h>
 #include <asm/global_data.h>
 #include <dt-bindings/memory/mpc83xx-sdram.h>
+#include <linux/errno.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

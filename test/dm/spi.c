@@ -13,6 +13,7 @@
 #include <dm/test.h>
 #include <dm/uclass-internal.h>
 #include <dm/util.h>
+#include <linux/errno.h>
 #include <test/ut.h>
 
 /* Test that we can find buses and chip-selects */

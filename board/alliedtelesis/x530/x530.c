@@ -15,6 +15,7 @@
 #include <asm/gpio.h>
 #include <asm/u-boot.h>
 #include <linux/bitops.h>
+#include <linux/errno.h>
 #include <linux/mbus.h>
 #include <linux/io.h>
 #include <asm/arch/cpu.h>

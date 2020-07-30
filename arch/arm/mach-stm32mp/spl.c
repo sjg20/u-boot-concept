@@ -16,6 +16,7 @@
 #include <asm/io.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/u-boot.h>
+#include <linux/errno.h>
 #include <linux/libfdt.h>
 
 u32 spl_boot_device(void)
