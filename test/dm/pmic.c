@@ -16,6 +16,7 @@
 #include <dm/util.h>
 #include <dm/test.h>
 #include <dm/uclass-internal.h>
+#include <linux/types.h>
 #include <power/pmic.h>
 #include <power/sandbox_pmic.h>
 #include <test/ut.h>

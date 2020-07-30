@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <asm/u-boot.h>
 #include <linux/delay.h>
+#include <linux/types.h>
 
 #include <asm/io.h>
 #include <asm/spl.h>

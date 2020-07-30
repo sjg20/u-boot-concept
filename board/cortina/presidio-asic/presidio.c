@@ -19,6 +19,7 @@
 #include <asm/psci.h>
 #include <cpu_func.h>
 #include <asm/armv8/mmu.h>
+#include <linux/types.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

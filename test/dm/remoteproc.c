@@ -12,6 +12,7 @@
 #include <dm/test.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>
+#include <linux/types.h>
 #include <test/ut.h>
 /**
  * dm_test_remoteproc_base() - test the operations after initializations

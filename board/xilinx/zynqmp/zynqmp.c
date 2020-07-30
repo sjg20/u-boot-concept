@@ -16,6 +16,7 @@
 #include <ahci.h>
 #include <scsi.h>
 #include <malloc.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <vsprintf.h>
 #include <wdt.h>
@@ -41,6 +42,7 @@
 #include <linux/kernel.h>
 #include <linux/sizes.h>
 #include <linux/string.h>
+#include <linux/types.h>
 #include "../common/board.h"
 
 #include "pm_cfg_obj.h"

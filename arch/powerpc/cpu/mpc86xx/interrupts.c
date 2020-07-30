@@ -27,6 +27,7 @@
 #endif
 #include <asm/ptrace.h>
 #include <asm/u-boot.h>
+#include <linux/types.h>
 
 void interrupt_init_cpu(unsigned *decrementer_count)
 {

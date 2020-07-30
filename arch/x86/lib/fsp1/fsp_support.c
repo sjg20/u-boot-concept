@@ -9,6 +9,7 @@
 #include <vsprintf.h>
 #include <asm/fsp1/fsp_support.h>
 #include <asm/post.h>
+#include <asm/types.h>
 #include <asm/u-boot.h>
 #include <linux/string.h>
 

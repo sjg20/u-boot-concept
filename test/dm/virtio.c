@@ -13,6 +13,7 @@
 #include <dm/root.h>
 #include <dm/test.h>
 #include <linux/errno.h>
+#include <linux/types.h>
 #include <test/ut.h>
 
 /* Basic test of the virtio uclass */

@@ -7,6 +7,7 @@
 #define __DM_TEST_H
 
 #include <dm.h>
+#include <linux/types.h>
 #include <test/test.h>
 
 /**

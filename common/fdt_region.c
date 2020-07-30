@@ -9,6 +9,7 @@
 #include <linux/libfdt_env.h>
 #include <fdt_region.h>
 #include <linux/string.h>
+#include <linux/types.h>
 
 #ifndef USE_HOSTCC
 #include <fdt.h>

@@ -10,8 +10,10 @@
  */
 
 #include <common.h>
+#include <compiler.h>
 #include <stdio.h>
 #include <asm/global_data.h>
+#include <asm/types.h>
 #include <dm/device_compat.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>

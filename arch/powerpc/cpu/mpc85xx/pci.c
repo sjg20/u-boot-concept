@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <asm/bitops.h>
 #include <asm/cpm_85xx.h>
+#include <asm/types.h>
 #include <asm/u-boot.h>
 #include <pci.h>
 

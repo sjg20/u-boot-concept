@@ -18,6 +18,7 @@
 #include <asm/arch/device.h>
 #include <asm/arch/msg_port.h>
 #include <asm/arch/quark.h>
+#include <asm/types.h>
 #include <asm/u-boot.h>
 #include <linux/delay.h>
 

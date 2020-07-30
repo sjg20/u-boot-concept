@@ -10,6 +10,7 @@
 #include <asm/io.h>
 #include <asm/immap_85xx.h>
 #include <asm/fsl_serdes.h>
+#include <asm/types.h>
 #include <asm/u-boot.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>

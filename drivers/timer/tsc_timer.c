@@ -12,6 +12,7 @@
 #include <dm.h>
 #include <log.h>
 #include <malloc.h>
+#include <stdbool.h>
 #include <time.h>
 #include <timer.h>
 #include <vsprintf.h>
@@ -25,6 +26,7 @@
 #include <asm/u-boot.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>
+#include <linux/types.h>
 
 #define MAX_NUM_FREQS	9
 

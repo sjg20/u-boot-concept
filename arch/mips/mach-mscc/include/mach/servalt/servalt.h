@@ -8,6 +8,7 @@
 #ifndef _MSCC_SERVALT_H_
 #define _MSCC_SERVALT_H_
 
+#include <compiler.h>
 #include <linux/bitops.h>
 #include <dm.h>
 

@@ -13,6 +13,7 @@
 #include <asm/arch-rockchip/uart.h>
 #include <asm/arch-rockchip/clock.h>
 #include <asm/arch-rockchip/cru_px30.h>
+#include <asm/types.h>
 #include <asm/u-boot.h>
 #include <dt-bindings/clock/px30-cru.h>
 

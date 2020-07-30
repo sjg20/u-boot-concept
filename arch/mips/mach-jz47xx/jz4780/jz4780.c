@@ -18,6 +18,7 @@
 #include <asm/sections.h>
 #include <asm/u-boot.h>
 #include <linux/string.h>
+#include <linux/types.h>
 #include <mach/jz4780.h>
 #include <mach/jz4780_dram.h>
 #include <mmc.h>

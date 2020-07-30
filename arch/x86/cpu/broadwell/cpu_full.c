@@ -10,6 +10,7 @@
 #include <cpu.h>
 #include <init.h>
 #include <log.h>
+#include <stdbool.h>
 #include <asm/cpu.h>
 #include <asm/cpu_x86.h>
 #include <asm/cpu_common.h>
@@ -25,6 +26,7 @@
 #include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>
+#include <linux/types.h>
 
 struct cpu_broadwell_priv {
 	bool ht_disabled;

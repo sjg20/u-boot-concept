@@ -13,6 +13,7 @@
 #include <fdt_support.h>
 #include <log.h>
 #include <part.h>
+#include <stdbool.h>
 #include <asm/global_data.h>
 #include <asm/u-boot.h>
 #include <linux/errno.h>

@@ -21,6 +21,7 @@
 #include <dm/lists.h>
 #include <dm/of_access.h>
 #include <linux/errno.h>
+#include <linux/types.h>
 #include <test/ut.h>
 
 DECLARE_GLOBAL_DATA_PTR;

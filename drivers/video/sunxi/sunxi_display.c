@@ -10,6 +10,7 @@
 #include <cpu_func.h>
 #include <efi_loader.h>
 #include <init.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <time.h>
 #include <asm/u-boot.h>
@@ -17,6 +18,7 @@
 #include <linux/errno.h>
 #include <linux/kernel.h>
 #include <linux/string.h>
+#include <linux/types.h>
 
 #include <asm/arch/clock.h>
 #include <asm/arch/display.h>

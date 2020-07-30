@@ -3,9 +3,12 @@
  * Copyright (C) 2019-20 Sean Anderson <seanga2@gmail.com>
  */
 #define LOG_CATEGORY UCLASS_CLK
+#include <compiler.h>
+#include <stdbool.h>
 #include <kendryte/pll.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>
+#include <linux/types.h>
 
 #include <asm/io.h>
 /* For DIV_ROUND_DOWN_ULL, defined in linux/kernel.h */

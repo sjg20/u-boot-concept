@@ -12,6 +12,7 @@
 #include <linux/sizes.h>
 #include <asm/e820.h>
 #include <asm/arch/slimbootloader.h>
+#include <linux/types.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

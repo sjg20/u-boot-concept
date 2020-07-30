@@ -17,6 +17,7 @@
  */
 #include <common.h>
 #include <command.h>
+#include <compiler.h>
 #include <dm.h>
 #include <init.h>
 #include <spl.h>
@@ -31,6 +32,7 @@
 #include <asm/u-boot.h>
 #include <linux/compiler.h>
 #include <linux/string.h>
+#include <linux/types.h>
 
 /* Declarations */
 extern omap3_sysinfo sysinfo;

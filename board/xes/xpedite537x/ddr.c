@@ -9,6 +9,7 @@
 #include <log.h>
 #include <asm/u-boot.h>
 #include <linux/kernel.h>
+#include <linux/types.h>
 
 #include <fsl_ddr_sdram.h>
 #include <fsl_ddr_dimm_params.h>

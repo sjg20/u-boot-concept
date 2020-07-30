@@ -11,6 +11,7 @@
 #include <asm/gpio.h>
 #include <asm/ibmpc.h>
 #include <asm/pnp_def.h>
+#include <asm/types.h>
 #include <asm/u-boot.h>
 
 int board_early_init_f(void)

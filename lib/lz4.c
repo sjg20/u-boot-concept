@@ -1,4 +1,5 @@
 #include <linux/string.h>
+#include <linux/types.h>
 // SPDX-License-Identifier: BSD-2-Clause
 /*
    LZ4 - Fast LZ compression algorithm

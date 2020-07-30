@@ -23,6 +23,7 @@
 #include <asm/arch/gpio.h>
 #include <asm/u-boot.h>
 #include <linux/kernel.h>
+#include <linux/types.h>
 
 #include "net2big_v2.h"
 #include "../common/common.h"

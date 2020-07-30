@@ -9,9 +9,11 @@
 
 #include <common.h>
 #include <clk.h>
+#include <compiler.h>
 #include <log.h>
 #include <reset.h>
 #include <spi-mem.h>
+#include <stdbool.h>
 #include <dm/device_compat.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
@@ -21,6 +23,7 @@
 #include <linux/kernel.h>
 #include <linux/printk.h>
 #include <linux/sizes.h>
+#include <linux/types.h>
 
 struct stm32_qspi_regs {
 	u32 cr;		/* 0x00 */

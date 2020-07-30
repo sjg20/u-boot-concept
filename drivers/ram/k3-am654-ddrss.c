@@ -8,6 +8,7 @@
 
 #include <common.h>
 #include <clk.h>
+#include <compiler.h>
 #include <dm.h>
 #include <log.h>
 #include <ram.h>
@@ -16,6 +17,7 @@
 #include <power-domain.h>
 #include <dm.h>
 #include <asm/arch/sys_proto.h>
+#include <asm/types.h>
 #include <dm/device_compat.h>
 #include <linux/errno.h>
 #include <power/regulator.h>

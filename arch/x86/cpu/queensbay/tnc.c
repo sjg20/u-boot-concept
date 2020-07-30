@@ -6,6 +6,7 @@
 #include <common.h>
 #include <dm.h>
 #include <init.h>
+#include <asm/types.h>
 #include <asm/u-boot.h>
 #include <dm/device-internal.h>
 #include <pci.h>

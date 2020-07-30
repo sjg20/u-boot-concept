@@ -12,6 +12,7 @@
 #include <dm/test.h>
 #include <dm/device-internal.h>
 #include <linux/err.h>
+#include <linux/types.h>
 #include <test/ut.h>
 
 /* Base test of the clk uclass */

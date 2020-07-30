@@ -5,6 +5,7 @@
  */
 
 #include <common.h>
+#include <compiler.h>
 #include <hwconfig.h>
 #include <i2c.h>
 #include <init.h>
@@ -16,6 +17,7 @@
 #include <asm/fsl_mpc83xx_serdes.h>
 #include <spd_sdram.h>
 #include <tsec.h>
+#include <asm/types.h>
 #include <asm/u-boot.h>
 #include <linux/delay.h>
 #include <linux/errno.h>

@@ -16,6 +16,7 @@
 #include <rtc.h>
 #include <mk48t59.h>
 #include <asm/u-boot.h>
+#include <linux/types.h>
 
 #if defined(CONFIG_BAB7xx)
 

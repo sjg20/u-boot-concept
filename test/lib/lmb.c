@@ -8,6 +8,7 @@
 #include <log.h>
 #include <malloc.h>
 #include <dm/test.h>
+#include <linux/types.h>
 #include <test/ut.h>
 
 static int check_lmb(struct unit_test_state *uts, struct lmb *lmb,

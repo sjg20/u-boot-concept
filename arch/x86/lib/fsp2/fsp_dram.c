@@ -19,6 +19,7 @@
 #include <asm/u-boot.h>
 #include <linux/errno.h>
 #include <linux/sizes.h>
+#include <linux/types.h>
 
 int dram_init(void)
 {

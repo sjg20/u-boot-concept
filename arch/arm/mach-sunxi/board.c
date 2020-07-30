@@ -29,6 +29,7 @@
 #include <asm/arch/tzpc.h>
 #include <asm/arch/mmc.h>
 #include <asm/u-boot.h>
+#include <linux/types.h>
 
 #include <linux/compiler.h>
 

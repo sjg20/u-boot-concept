@@ -2,6 +2,7 @@
 #define __USB_COMPAT_H__
 
 #include <dm.h>
+#include <asm/types.h>
 #include "usb.h"
 
 struct usb_hcd {

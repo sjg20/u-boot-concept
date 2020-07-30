@@ -20,6 +20,7 @@
 #include <flash.h>
 #include <asm/u-boot.h>
 #include <linux/delay.h>
+#include <linux/types.h>
 #include <mtd/cfi_flash.h>
 
 DECLARE_GLOBAL_DATA_PTR;

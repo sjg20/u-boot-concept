@@ -22,6 +22,7 @@
 #include <dm/uclass.h>
 #include <dt-bindings/clock/mt8516-clk.h>
 #include <linux/kernel.h>
+#include <linux/types.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

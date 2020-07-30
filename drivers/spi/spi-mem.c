@@ -13,6 +13,8 @@
 #include <linux/pm_runtime.h>
 #include "internals.h"
 #else
+#include <stdbool.h>
+#include <asm/types.h>
 #include <dm/device_compat.h>
 #include <spi.h>
 #include <spi-mem.h>

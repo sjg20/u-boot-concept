@@ -10,6 +10,7 @@
 #include <vsprintf.h>
 #include <w1.h>
 #include <w1-eeprom.h>
+#include <asm/types.h>
 #include <dm/device-internal.h>
 #include <linux/string.h>
 

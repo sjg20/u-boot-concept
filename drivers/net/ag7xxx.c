@@ -8,6 +8,7 @@
 
 #include <common.h>
 #include <clock_legacy.h>
+#include <compiler.h>
 #include <cpu_func.h>
 #include <dm.h>
 #include <errno.h>
@@ -30,6 +31,7 @@
 #include <wait_bit.h>
 #include <asm/io.h>
 #include <linux/string.h>
+#include <linux/types.h>
 
 #include <mach/ath79.h>
 

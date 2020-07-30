@@ -4,10 +4,12 @@
  */
 
 #include <common.h>
+#include <compiler.h>
 #include <i2c.h>
 #include <stdio.h>
 #include <linux/delay.h>
 #include <linux/string.h>
+#include <linux/types.h>
 
 #include <fsl_ddr_sdram.h>
 #include <fsl_ddr_dimm_params.h>

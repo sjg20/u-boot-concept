@@ -15,6 +15,7 @@
 #include <asm/arch/cpu.h>
 #include <asm/arch/soc.h>
 #include <asm/arch/mpp.h>
+#include <asm/types.h>
 #include <asm/u-boot.h>
 #include "sheevaplug.h"
 

@@ -10,10 +10,12 @@
 
 #include <common.h>
 #include <command.h>
+#include <compiler.h>
 #include <stdio.h>
 #include <vsprintf.h>
 #include <asm/global_data.h>
 #include <asm/u-boot.h>
+#include <linux/types.h>
 
 #include <asm/immap_8xx.h>
 #include <asm/cpm_8xx.h>

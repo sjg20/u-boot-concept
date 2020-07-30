@@ -7,6 +7,7 @@
  */
 
 #include <common.h>
+#include <compiler.h>
 #include <hang.h>
 #include <init.h>
 #include <log.h>
@@ -22,6 +23,7 @@
 #include <g_dnl.h>
 #include <asm/u-boot.h>
 #include <linux/kernel.h>
+#include <linux/types.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

@@ -5,6 +5,7 @@
 
 #include <clk.h>
 #include <dm.h>
+#include <linux/types.h>
 
 char *devm_kasprintf(struct udevice *dev, gfp_t gfp, const char *fmt, ...);
 

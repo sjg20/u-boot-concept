@@ -7,6 +7,7 @@
 #include <common.h>
 #include <dm.h>
 #include <i2s.h>
+#include <asm/types.h>
 #include <dm/test.h>
 #include <linux/kernel.h>
 #include <test/ut.h>

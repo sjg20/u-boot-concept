@@ -13,6 +13,7 @@
 #include <linux/libfdt.h>
 #include <fdt_support.h>
 #include <asm/processor.h>
+#include <linux/types.h>
 
 extern void ft_qe_setup(void *blob);
 

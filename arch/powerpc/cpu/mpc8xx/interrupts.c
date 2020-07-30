@@ -5,6 +5,7 @@
  */
 
 #include <common.h>
+#include <compiler.h>
 #include <irq_func.h>
 #include <mpc8xx.h>
 #include <mpc8xx_irq.h>
@@ -15,6 +16,7 @@
 #include <asm/io.h>
 #include <asm/ptrace.h>
 #include <asm/u-boot.h>
+#include <linux/types.h>
 
 /************************************************************************/
 

@@ -22,6 +22,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/mach-imx/boot_mode.h>
 #include <asm/u-boot.h>
+#include <linux/types.h>
 #include <power/pmic.h>
 
 #include <power/pca9450.h>

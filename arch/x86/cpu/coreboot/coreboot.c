@@ -17,6 +17,7 @@
 #include <asm/mtrr.h>
 #include <asm/arch/sysinfo.h>
 #include <asm/arch/timestamp.h>
+#include <asm/types.h>
 #include <asm/u-boot.h>
 
 DECLARE_GLOBAL_DATA_PTR;

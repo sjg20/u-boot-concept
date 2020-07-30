@@ -15,6 +15,7 @@
 #include <asm/arch/msg_port.h>
 #include <asm/arch/quark.h>
 #include <asm/u-boot.h>
+#include <linux/types.h>
 #include "mrc_util.h"
 #include "hte.h"
 #include "smc.h"

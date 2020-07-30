@@ -15,6 +15,7 @@
 #include <asm/processor.h>
 #include <asm/ptrace.h>
 #include <asm/u-boot.h>
+#include <linux/types.h>
 
 
 extern void _exc_handler(void);

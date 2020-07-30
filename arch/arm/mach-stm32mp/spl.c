@@ -4,6 +4,7 @@
  */
 
 #include <common.h>
+#include <compiler.h>
 #include <cpu_func.h>
 #include <dm.h>
 #include <hang.h>
@@ -18,6 +19,7 @@
 #include <asm/u-boot.h>
 #include <linux/errno.h>
 #include <linux/libfdt.h>
+#include <linux/types.h>
 
 u32 spl_boot_device(void)
 {

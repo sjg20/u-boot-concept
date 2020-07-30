@@ -7,6 +7,7 @@
 #define _FS_LOADER_H_
 
 #include <dm.h>
+#include <linux/types.h>
 
 /**
  * struct phandle_part - A place for storing phandle of node and its partition

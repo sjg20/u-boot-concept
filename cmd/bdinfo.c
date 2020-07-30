@@ -8,6 +8,7 @@
 
 #include <common.h>
 #include <command.h>
+#include <compiler.h>
 #include <env.h>
 #include <net.h>
 #include <stdio.h>
@@ -16,6 +17,7 @@
 #include <asm/global_data.h>
 #include <asm/u-boot.h>
 #include <linux/string.h>
+#include <linux/types.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

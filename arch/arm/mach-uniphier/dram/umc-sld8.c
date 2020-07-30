@@ -5,7 +5,9 @@
  *   Author: Masahiro Yamada <yamada.masahiro@socionext.com>
  */
 
+#include <compiler.h>
 #include <stdbool.h>
+#include <asm/types.h>
 #include <asm/u-boot.h>
 #include <linux/errno.h>
 #include <linux/io.h>
