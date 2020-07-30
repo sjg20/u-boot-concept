@@ -12,6 +12,7 @@
 #include <lmb.h>
 #include <log.h>
 #include <stdio.h>
+#include <vsprintf.h>
 #include <asm/u-boot.h>
 #include <linux/compiler.h>
 

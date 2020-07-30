@@ -10,6 +10,7 @@
 #include <spl.h>
 #include <misc.h>
 #include <log.h>
+#include <vsprintf.h>
 #include <linux/delay.h>
 #include <asm/gpio.h>
 #include <asm/arch/gpio.h>

@@ -10,6 +10,7 @@
 #include <fsl_ddr_sdram.h>
 #include <log.h>
 #include <stdio.h>
+#include <vsprintf.h>
 #include <asm/u-boot.h>
 
 #include <fsl_ddr.h>

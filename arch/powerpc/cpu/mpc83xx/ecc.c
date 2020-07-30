@@ -11,6 +11,7 @@
 #include <mpc83xx.h>
 #include <command.h>
 #include <stdio.h>
+#include <vsprintf.h>
 #include <asm/u-boot.h>
 #include <linux/string.h>
 

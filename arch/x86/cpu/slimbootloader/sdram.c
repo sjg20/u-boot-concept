@@ -5,6 +5,7 @@
 
 #include <common.h>
 #include <init.h>
+#include <vsprintf.h>
 #include <asm/global_data.h>
 #include <asm/u-boot.h>
 #include <linux/sizes.h>
