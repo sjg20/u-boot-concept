@@ -17,6 +17,7 @@
 #include <clk.h>
 #include <dm.h>
 #include <mapmem.h>
+#include <asm/u-boot.h>
 #include <linux/delay.h>
 #include <linux/string.h>
 

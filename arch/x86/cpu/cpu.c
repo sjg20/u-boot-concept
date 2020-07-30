@@ -47,6 +47,7 @@
 #include <asm/processor-flags.h>
 #include <asm/interrupt.h>
 #include <asm/tables.h>
+#include <asm/u-boot.h>
 #include <linux/compiler.h>
 
 DECLARE_GLOBAL_DATA_PTR;

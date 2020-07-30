@@ -10,6 +10,7 @@
 #include <cpu_func.h>
 #include <init.h>
 #include <asm/global_data.h>
+#include <asm/u-boot.h>
 #include <dm/device.h>
 #include <fdt_support.h>
 

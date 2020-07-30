@@ -13,6 +13,7 @@
 #include <malloc.h>
 #include <time.h>
 #include <asm/global_data.h>
+#include <asm/u-boot.h>
 #include <linux/libfdt_env.h>
 #include <linux/string.h>
 #include <u-boot/crc.h>

@@ -14,6 +14,7 @@
 #include <dm.h>
 #include <fdt_support.h>
 #include <fsl_dcu_fb.h>
+#include <asm/u-boot.h>
 #include <linux/fb.h>
 #include <malloc.h>
 #include <video.h>

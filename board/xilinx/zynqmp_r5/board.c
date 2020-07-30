@@ -6,6 +6,7 @@
 #include <common.h>
 #include <fdtdec.h>
 #include <init.h>
+#include <asm/u-boot.h>
 
 int board_init(void)
 {

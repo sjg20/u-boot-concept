@@ -15,6 +15,7 @@
 #include <asm/arch-rockchip/cru_rk3368.h>
 #include <asm/arch-rockchip/grf_rk3368.h>
 #include <asm/arch-rockchip/hardware.h>
+#include <asm/u-boot.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
 

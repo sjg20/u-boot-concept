@@ -19,6 +19,7 @@
 #include <watchdog.h>
 #include <scsi.h>
 #include <i2c.h>
+#include <asm/u-boot.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

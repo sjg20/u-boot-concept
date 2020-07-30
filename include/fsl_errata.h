@@ -14,6 +14,7 @@
 #elif defined(CONFIG_FSL_LAYERSCAPE)
 #include <asm/arch/soc.h>
 #endif
+#include <asm/u-boot.h>
 
 
 #ifdef CONFIG_SYS_FSL_ERRATUM_A006379

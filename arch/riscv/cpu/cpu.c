@@ -9,6 +9,7 @@
 #include <init.h>
 #include <log.h>
 #include <asm/encoding.h>
+#include <asm/u-boot.h>
 #include <dm/uclass-internal.h>
 #include <linux/bitops.h>
 #include <linux/string.h>

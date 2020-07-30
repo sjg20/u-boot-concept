@@ -193,4 +193,5 @@ ulong get_tbclk(void)
 	return CONFIG_SYS_CLK_FREQ;
 #endif
 }
+#include <asm/u-boot.h>
 #endif /* CONFIG_TIMER */

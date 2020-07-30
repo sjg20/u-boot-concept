@@ -7,6 +7,7 @@
 #include <hang.h>
 #include <init.h>
 #include <asm/fsl_lbc.h>
+#include <asm/u-boot.h>
 
 #ifdef CONFIG_MPC83xx
 #include "../mpc83xx/elbc/elbc.h"

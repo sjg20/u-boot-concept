@@ -15,6 +15,7 @@
 #include <led.h>
 #include <wait_bit.h>
 #include <miiphy.h>
+#include <asm/u-boot.h>
 #include <linux/bitops.h>
 #include <linux/printk.h>
 #include <linux/string.h>

@@ -7,6 +7,7 @@
 #include <common.h>
 #include <init.h>
 #include <asm/global_data.h>
+#include <asm/u-boot.h>
 #include <dm/uclass.h>
 #include <env.h>
 #include <fdtdec.h>

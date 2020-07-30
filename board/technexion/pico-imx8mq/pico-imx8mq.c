@@ -21,6 +21,7 @@
 #include <asm/mach-imx/gpio.h>
 #include <asm/mach-imx/mxc_i2c.h>
 #include <asm/arch/clock.h>
+#include <asm/u-boot.h>
 #include <linux/delay.h>
 #include <spl.h>
 #include <power/pmic.h>

@@ -849,6 +849,7 @@ long int spd_sdram()
 	debug("DDR:sdram_cfg=0x%08x\n", ddr->sdram_cfg);
 	return memsize; /*in MBytes*/
 }
+#include <asm/u-boot.h>
 #endif /* CONFIG_SPD_EEPROM */
 
 #if defined(CONFIG_DDR_ECC) && !defined(CONFIG_ECC_INIT_VIA_DDRCONTROLLER)

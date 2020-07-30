@@ -13,6 +13,7 @@
 #include <asm/io.h>
 #include <errno.h>
 #include <fdtdec.h>
+#include <asm/u-boot.h>
 #include <linux/libfdt.h>
 #include <altera.h>
 #include <miiphy.h>

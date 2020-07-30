@@ -36,6 +36,7 @@
 #include <version.h>
 #include <asm/arch/mrc.h>
 #include <asm/arch/msg_port.h>
+#include <asm/u-boot.h>
 #include "mrc_util.h"
 #include "smc.h"
 

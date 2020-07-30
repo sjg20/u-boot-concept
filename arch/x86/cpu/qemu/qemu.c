@@ -13,6 +13,7 @@
 #include <asm/processor.h>
 #include <asm/arch/device.h>
 #include <asm/arch/qemu.h>
+#include <asm/u-boot.h>
 
 static bool i440fx;
 

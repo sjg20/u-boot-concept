@@ -16,6 +16,7 @@
 #include <init.h>
 #include <log.h>
 #include <asm/global_data.h>
+#include <asm/u-boot.h>
 
 #include <asm/io.h>
 #include <asm/arch/stm32.h>

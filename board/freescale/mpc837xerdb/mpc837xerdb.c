@@ -18,6 +18,7 @@
 #include <spd_sdram.h>
 #include <vsc7385.h>
 #include <fsl_esdhc.h>
+#include <asm/u-boot.h>
 #include <linux/delay.h>
 
 DECLARE_GLOBAL_DATA_PTR;

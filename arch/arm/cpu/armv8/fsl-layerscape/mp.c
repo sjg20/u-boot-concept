@@ -13,6 +13,7 @@
 #include <asm/system.h>
 #include <asm/arch/mp.h>
 #include <asm/arch/soc.h>
+#include <asm/u-boot.h>
 #include <linux/delay.h>
 #include <linux/string.h>
 #include "cpu.h"

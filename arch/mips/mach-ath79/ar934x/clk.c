@@ -11,6 +11,7 @@
 #include <asm/io.h>
 #include <asm/addrspace.h>
 #include <asm/types.h>
+#include <asm/u-boot.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
 #include <mach/ar71xx_regs.h>

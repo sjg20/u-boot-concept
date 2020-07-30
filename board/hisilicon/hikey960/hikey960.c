@@ -15,6 +15,7 @@
 #include <asm/arch/hi3660.h>
 #include <asm/armv8/mmu.h>
 #include <asm/psci.h>
+#include <asm/u-boot.h>
 #include <linux/arm-smccc.h>
 #include <linux/delay.h>
 #include <linux/psci.h>

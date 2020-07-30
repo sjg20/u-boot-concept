@@ -23,6 +23,7 @@
 #include <asm/arch/cpu.h>
 #include <asm/arch/pch.h>
 #include <asm/arch/rcb.h>
+#include <asm/u-boot.h>
 
 int arch_cpu_init_dm(void)
 {

@@ -23,6 +23,7 @@
 #if defined(CONFIG_OF_LIBFDT)
 #include <linux/libfdt.h>
 #endif
+#include <asm/u-boot.h>
 #include <linux/delay.h>
 #include <linux/string.h>
 

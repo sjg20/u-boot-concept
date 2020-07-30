@@ -8,6 +8,7 @@
 #include <dm.h>
 #include <init.h>
 #include <wdt.h>
+#include <asm/u-boot.h>
 #include <dm/uclass-internal.h>
 
 int arch_cpu_init(void)

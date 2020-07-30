@@ -11,6 +11,7 @@
 #include <init.h>
 #include <asm/io.h>
 #include <asm/processor.h>
+#include <asm/u-boot.h>
 
 #define CPU_CMDREG	0xB1000006
 #define PDCR        0xffef0006

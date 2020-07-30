@@ -17,6 +17,7 @@
 #include <asm/arch-rockchip/clock.h>
 #include <asm/arch-rockchip/periph.h>
 #include <asm/arch-rockchip/misc.h>
+#include <asm/u-boot.h>
 #include <linux/string.h>
 #include <power/regulator.h>
 

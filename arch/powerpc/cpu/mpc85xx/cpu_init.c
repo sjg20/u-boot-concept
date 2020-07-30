@@ -33,6 +33,7 @@
 #endif
 #include <fsl_usb.h>
 #include <hwconfig.h>
+#include <asm/u-boot.h>
 #include <linux/compiler.h>
 #include <linux/delay.h>
 #include <linux/string.h>

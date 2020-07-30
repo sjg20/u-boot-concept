@@ -13,6 +13,7 @@
 #include <asm/arch/mrc.h>
 #include <asm/arch/msg_port.h>
 #include <asm/arch/quark.h>
+#include <asm/u-boot.h>
 #include "mrc_util.h"
 #include "hte.h"
 #include "smc.h"

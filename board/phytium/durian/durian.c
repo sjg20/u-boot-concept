@@ -15,6 +15,7 @@
 #include <asm/global_data.h>
 #include <asm/system.h>
 #include <asm/io.h>
+#include <asm/u-boot.h>
 #include <linux/arm-smccc.h>
 #include <linux/kernel.h>
 #include <scsi.h>

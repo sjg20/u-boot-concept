@@ -11,6 +11,7 @@
 #include <log.h>
 #include <spl.h>
 #include <asm/global_data.h>
+#include <asm/u-boot.h>
 #include <dm/uclass.h>
 #include <dm/device.h>
 #include <dm/uclass-internal.h>

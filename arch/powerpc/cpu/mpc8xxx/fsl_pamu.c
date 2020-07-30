@@ -11,6 +11,7 @@
 #include <linux/log2.h>
 #include <malloc.h>
 #include <asm/fsl_pamu.h>
+#include <asm/u-boot.h>
 #include <linux/string.h>
 
 struct paace *ppaact;

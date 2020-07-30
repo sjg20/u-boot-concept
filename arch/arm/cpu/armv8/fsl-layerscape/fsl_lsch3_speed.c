@@ -10,6 +10,7 @@
 #include <clock_legacy.h>
 #include <cpu_func.h>
 #include <asm/global_data.h>
+#include <asm/u-boot.h>
 #include <linux/compiler.h>
 #include <fsl_ifc.h>
 #include <asm/processor.h>

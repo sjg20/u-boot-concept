@@ -13,6 +13,7 @@
 #include <asm/arch-rockchip/grf_rv1108.h>
 #include <asm/arch-rockchip/hardware.h>
 #include <asm/gpio.h>
+#include <asm/u-boot.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

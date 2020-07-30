@@ -4,6 +4,7 @@
 #include <asm/ptrace.h>
 #include <asm/signal.h>
 #include <asm/processor.h>
+#include <asm/u-boot.h>
 
 #define PC_REGNUM 64
 #define SP_REGNUM 1

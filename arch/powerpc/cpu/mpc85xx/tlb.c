@@ -12,6 +12,7 @@
 #include <asm/global_data.h>
 #include <asm/processor.h>
 #include <asm/mmu.h>
+#include <asm/u-boot.h>
 #ifdef CONFIG_ADDR_MAP
 #include <addr_map.h>
 #endif

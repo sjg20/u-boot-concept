@@ -13,6 +13,7 @@
 #include <command.h>
 #include <asm/processor.h>
 #include <asm/ptrace.h>
+#include <asm/u-boot.h>
 
 
 extern void _exc_handler(void);

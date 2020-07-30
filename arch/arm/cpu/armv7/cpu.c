@@ -21,6 +21,7 @@
 #include <asm/system.h>
 #include <asm/cache.h>
 #include <asm/armv7.h>
+#include <asm/u-boot.h>
 #include <linux/compiler.h>
 
 void __weak cpu_cache_initialization(void){}

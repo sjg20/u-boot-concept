@@ -13,6 +13,7 @@
 #include <asm/processor.h>
 #include <asm/io.h>
 #include <asm/ptrace.h>
+#include <asm/u-boot.h>
 
 /************************************************************************/
 

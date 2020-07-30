@@ -19,6 +19,7 @@
 #include <irq_func.h>
 #include <watchdog.h>
 #include <asm/cache.h>
+#include <asm/u-boot.h>
 
 #include <faraday/ftwdt010_wdt.h>
 

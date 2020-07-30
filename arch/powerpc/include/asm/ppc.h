@@ -38,6 +38,7 @@
 #endif
 
 #include <asm/processor.h>
+#include <asm/u-boot.h>
 
 static inline uint get_immr(void)
 {

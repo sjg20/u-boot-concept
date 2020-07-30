@@ -7,6 +7,7 @@
 #include <asm/arch-rockchip/bootrom.h>
 #include <asm/arch-rockchip/grf_rk322x.h>
 #include <asm/arch-rockchip/hardware.h>
+#include <asm/u-boot.h>
 
 const char * const boot_devices[BROM_LAST_BOOTSOURCE + 1] = {
 	[BROM_BOOTSOURCE_EMMC] = "/dwmmc@30020000",

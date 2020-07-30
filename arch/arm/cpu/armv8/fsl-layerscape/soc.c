@@ -11,6 +11,7 @@
 #include <fsl_immap.h>
 #include <fsl_ifc.h>
 #include <init.h>
+#include <asm/u-boot.h>
 #include <linux/sizes.h>
 #include <log.h>
 #include <asm/arch/fsl_serdes.h>

@@ -14,6 +14,7 @@
 #include <asm/immap_85xx.h>
 #include <asm/io.h>
 #include <asm/processor.h>
+#include <asm/u-boot.h>
 #include <asm/fsl_law.h>
 #include <linux/delay.h>
 #include <linux/errno.h>

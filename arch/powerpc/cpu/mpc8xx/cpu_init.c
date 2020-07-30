@@ -7,6 +7,7 @@
 #include <common.h>
 #include <init.h>
 #include <watchdog.h>
+#include <asm/u-boot.h>
 
 #include <mpc8xx.h>
 #include <asm/cpm_8xx.h>

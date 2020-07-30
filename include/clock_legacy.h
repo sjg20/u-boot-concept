@@ -7,6 +7,7 @@
 #ifndef __CLOCK_LEGACY_H
 #define __CLOCK_LEGACY_H
 
+#include <asm/u-boot.h>
 int get_clocks(void);
 unsigned long get_bus_freq(unsigned long dummy);
 int get_serial_clock(void);

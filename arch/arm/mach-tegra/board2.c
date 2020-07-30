@@ -37,6 +37,7 @@
 #ifdef CONFIG_TEGRA_CLOCK_SCALING
 #include <asm/arch/emc.h>
 #endif
+#include <asm/u-boot.h>
 #include "emc.h"
 
 DECLARE_GLOBAL_DATA_PTR;

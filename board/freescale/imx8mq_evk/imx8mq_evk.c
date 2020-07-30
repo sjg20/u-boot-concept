@@ -22,6 +22,7 @@
 #include <asm/mach-imx/mxc_i2c.h>
 #include <asm/arch/clock.h>
 #include <spl.h>
+#include <asm/u-boot.h>
 #include <linux/bitops.h>
 #include <power/pmic.h>
 #include <power/pfuze100_pmic.h>

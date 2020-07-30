@@ -33,6 +33,7 @@
 #include <asm/arch/systemagent.h>
 #include <asm/arch/uart.h>
 #include <asm/fsp2/fsp_api.h>
+#include <asm/u-boot.h>
 #include <linux/sizes.h>
 #include <power/acpi_pmc.h>
 

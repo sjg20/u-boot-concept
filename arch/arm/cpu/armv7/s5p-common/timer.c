@@ -14,6 +14,7 @@
 #include <asm/io.h>
 #include <asm/arch/pwm.h>
 #include <asm/arch/clk.h>
+#include <asm/u-boot.h>
 #include <linux/delay.h>
 
 /* Use the old PWM interface for now */

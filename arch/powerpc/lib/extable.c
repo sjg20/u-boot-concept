@@ -7,6 +7,7 @@
  */
 #include <common.h>
 #include <log.h>
+#include <asm/u-boot.h>
 
 /*
  * The exception table consists of pairs of addresses: the first is the

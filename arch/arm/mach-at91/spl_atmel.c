@@ -16,6 +16,7 @@
 #include <asm/arch/at91_wdt.h>
 #include <asm/arch/clk.h>
 #include <spl.h>
+#include <asm/u-boot.h>
 
 static void switch_to_main_crystal_osc(void)
 {

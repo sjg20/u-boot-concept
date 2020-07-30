@@ -17,6 +17,7 @@
 #include <asm/mmu.h>
 #include <pci.h>
 #include <flash.h>
+#include <asm/u-boot.h>
 #include <linux/delay.h>
 #include <mtd/cfi_flash.h>
 

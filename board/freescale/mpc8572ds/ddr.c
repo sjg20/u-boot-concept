@@ -4,6 +4,7 @@
  */
 
 #include <common.h>
+#include <asm/u-boot.h>
 
 #include <fsl_ddr_sdram.h>
 #include <fsl_ddr_dimm_params.h>
