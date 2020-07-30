@@ -3,6 +3,7 @@
 #include <common.h>
 #include <malloc.h>
 #include <stdarg.h>
+#include <vsprintf.h>
 #include <dm/devres.h>
 #include "brcmnand_compat.h"
 

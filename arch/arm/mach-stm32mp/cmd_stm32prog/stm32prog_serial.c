@@ -9,6 +9,7 @@
 #include <malloc.h>
 #include <serial.h>
 #include <stdio.h>
+#include <vsprintf.h>
 #include <watchdog.h>
 #include <asm/global_data.h>
 #include <dm/lists.h>

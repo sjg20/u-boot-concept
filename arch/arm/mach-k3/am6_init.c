@@ -9,6 +9,7 @@
 #include <common.h>
 #include <init.h>
 #include <stdio.h>
+#include <vsprintf.h>
 #include <asm/io.h>
 #include <spl.h>
 #include <asm/arch/hardware.h>

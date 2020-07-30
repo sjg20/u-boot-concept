@@ -12,6 +12,7 @@
 #include <mtd.h>
 #include <mtd_node.h>
 #include <stdio.h>
+#include <vsprintf.h>
 #include <asm/arch/stm32prog.h>
 #include <linux/printk.h>
 #include <linux/string.h>

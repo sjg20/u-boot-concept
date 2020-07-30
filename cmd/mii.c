@@ -12,6 +12,7 @@
 #include <command.h>
 #include <miiphy.h>
 #include <stdio.h>
+#include <vsprintf.h>
 #include <linux/string.h>
 
 typedef struct _MII_field_desc_t {
