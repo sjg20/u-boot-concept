@@ -19,6 +19,7 @@
 #include <mpc86xx.h>
 #include <asm/fsl_law.h>
 #include <asm/ppc.h>
+#include <asm/u-boot.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

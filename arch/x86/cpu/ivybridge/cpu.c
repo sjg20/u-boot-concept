@@ -34,6 +34,7 @@
 #include <asm/arch/model_206ax.h>
 #include <asm/arch/pch.h>
 #include <asm/arch/sandybridge.h>
+#include <asm/u-boot.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

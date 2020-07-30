@@ -3,6 +3,7 @@
  * Copyright 2014 Broadcom Corporation.
  */
 
+#include <asm/u-boot.h>
 /*
  * Early system init. Currently empty.
  */

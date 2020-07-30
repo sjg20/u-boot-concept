@@ -7,6 +7,7 @@
 #include <irq_func.h>
 #include <asm/arcregs.h>
 #include <asm/ptrace.h>
+#include <asm/u-boot.h>
 
 /* Bit values in STATUS32 */
 #define E1_MASK		(1 << 1)	/* Level 1 interrupts enable */

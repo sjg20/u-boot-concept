@@ -12,6 +12,7 @@
 #include <init.h>
 #include <log.h>
 #include <asm/global_data.h>
+#include <asm/u-boot.h>
 #include <dm/device-internal.h>
 #include <ahci.h>
 #include <env.h>

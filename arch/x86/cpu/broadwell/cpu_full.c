@@ -21,6 +21,7 @@
 #include <asm/arch/cpu.h>
 #include <asm/arch/pch.h>
 #include <asm/arch/rcb.h>
+#include <asm/u-boot.h>
 #include <linux/delay.h>
 
 struct cpu_broadwell_priv {

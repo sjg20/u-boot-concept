@@ -27,6 +27,7 @@
 #include <asm/armv7.h>
 #include <asm/gpio.h>
 #include <asm/omap_common.h>
+#include <asm/u-boot.h>
 #include <linux/compiler.h>
 #include <linux/string.h>
 

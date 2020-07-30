@@ -5,6 +5,7 @@
  *   Author: Masahiro Yamada <yamada.masahiro@socionext.com>
  */
 
+#include <asm/u-boot.h>
 #include <linux/errno.h>
 #include <linux/io.h>
 #include <linux/printk.h>

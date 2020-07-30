@@ -4,6 +4,7 @@
  */
 
 #include <common.h>
+#include <asm/u-boot.h>
 
 int board_init(void)
 {

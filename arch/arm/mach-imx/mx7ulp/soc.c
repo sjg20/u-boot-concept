@@ -13,6 +13,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/mach-imx/boot_mode.h>
 #include <asm/mach-imx/hab.h>
+#include <asm/u-boot.h>
 #include <linux/bitops.h>
 
 #define PMC0_BASE_ADDR		0x410a1000

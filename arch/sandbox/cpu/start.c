@@ -16,6 +16,7 @@
 #include <asm/malloc.h>
 #include <asm/sections.h>
 #include <asm/state.h>
+#include <asm/u-boot.h>
 #include <linux/ctype.h>
 #include <linux/string.h>
 

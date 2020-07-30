@@ -33,6 +33,7 @@
 #include <command.h>
 #include <irq_func.h>
 #include <asm/interrupt.h>
+#include <asm/u-boot.h>
 
 #if !CONFIG_IS_ENABLED(X86_64)
 

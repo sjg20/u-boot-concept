@@ -26,6 +26,7 @@
 #include <asm/mach-imx/sata.h>
 #include <asm/io.h>
 #include <env.h>
+#include <asm/u-boot.h>
 #include <linux/delay.h>
 #include <linux/sizes.h>
 #include <common.h>

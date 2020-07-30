@@ -11,6 +11,7 @@
 #include <irq_func.h>
 #include <time.h>
 #include <asm/processor.h>
+#include <asm/u-boot.h>
 #include <watchdog.h>
 #ifdef CONFIG_LED_STATUS
 #include <status_led.h>
@@ -43,13 +44,13 @@ static __inline__ void set_dec (unsigned long val)
 
 void enable_interrupts(void)
 {
-	set_msr (get_msr () | MSR_EE);
+	set_msr(get_msr() | MSR_EE);
 }
 
 /* returns flag if MSR_EE was set before */
 int disable_interrupts(void)
 {
-	ulong msr = get_msr ();
+	ulong msr = get_msr();
 
 	set_msr (msr & ~MSR_EE);
 	return ((msr & MSR_EE) != 0);
@@ -63,7 +64,7 @@ int interrupt_init(void)
 
 	set_dec (decrementer_count);
 
-	set_msr (get_msr () | MSR_EE);
+	set_msr(get_msr() | MSR_EE);
 
 	return (0);
 }

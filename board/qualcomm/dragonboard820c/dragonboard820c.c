@@ -11,6 +11,7 @@
 #include <env.h>
 #include <asm/cache.h>
 #include <asm/global_data.h>
+#include <asm/u-boot.h>
 #include <linux/arm-smccc.h>
 #include <linux/psci.h>
 #include <common.h>

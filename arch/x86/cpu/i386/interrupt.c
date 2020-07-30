@@ -25,6 +25,7 @@
 #include <asm/lapic.h>
 #include <asm/processor-flags.h>
 #include <asm/ptrace.h>
+#include <asm/u-boot.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

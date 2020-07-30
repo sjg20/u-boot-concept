@@ -9,6 +9,7 @@
 #include <debug_uart.h>
 #include <init.h>
 #include <asm/global_data.h>
+#include <asm/u-boot.h>
 
 /*
  * Global declaration of gd.

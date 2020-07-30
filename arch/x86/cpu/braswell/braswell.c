@@ -7,6 +7,7 @@
 #include <init.h>
 #include <asm/mrccache.h>
 #include <asm/post.h>
+#include <asm/u-boot.h>
 
 int arch_cpu_init(void)
 {

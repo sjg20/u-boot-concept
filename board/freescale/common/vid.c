@@ -17,6 +17,7 @@
 #else
 #include <asm/immap_85xx.h>
 #endif
+#include <asm/u-boot.h>
 #include <linux/delay.h>
 #include "vid.h"
 

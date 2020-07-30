@@ -20,6 +20,7 @@
 #include <env.h>
 #include <i2c.h>
 #include <spl.h>
+#include <asm/u-boot.h>
 
 #include "gsc.h"
 #include "common.h"

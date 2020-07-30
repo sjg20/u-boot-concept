@@ -19,6 +19,7 @@
 #include <imx_thermal.h>
 #include <fsl_sec.h>
 #include <asm/setup.h>
+#include <asm/u-boot.h>
 #include <linux/delay.h>
 
 #define IOMUXC_GPR1		0x4

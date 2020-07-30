@@ -17,6 +17,7 @@
 #include <time.h>
 #include <wait_bit.h>
 #include <asm/cache.h>
+#include <asm/u-boot.h>
 #include <linux/delay.h>
 #include <power/regulator.h>
 

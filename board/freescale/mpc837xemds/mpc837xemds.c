@@ -15,6 +15,7 @@
 #include <asm/fsl_mpc83xx_serdes.h>
 #include <spd_sdram.h>
 #include <tsec.h>
+#include <asm/u-boot.h>
 #include <linux/delay.h>
 #include <linux/libfdt.h>
 #include <fdt_support.h>

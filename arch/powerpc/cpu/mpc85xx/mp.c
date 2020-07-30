@@ -16,6 +16,7 @@
 #include <asm/mmu.h>
 #include <asm/fsl_law.h>
 #include <fsl_ddr_sdram.h>
+#include <asm/u-boot.h>
 #include <linux/delay.h>
 #include <linux/string.h>
 #include "mp.h"

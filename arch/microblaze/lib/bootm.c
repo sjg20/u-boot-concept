@@ -19,6 +19,7 @@
 #include <log.h>
 #include <asm/cache.h>
 #include <asm/global_data.h>
+#include <asm/u-boot.h>
 #include <u-boot/zlib.h>
 #include <asm/byteorder.h>
 

@@ -11,6 +11,7 @@
 #include <pci.h>
 #include <asm/bitops.h>
 #include <asm/global_data.h>
+#include <asm/u-boot.h>
 #include <linux/delay.h>
 
 #if defined(CONFIG_OF_LIBFDT)

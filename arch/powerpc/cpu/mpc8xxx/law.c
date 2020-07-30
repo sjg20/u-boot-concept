@@ -10,6 +10,7 @@
 #include <display_options.h>
 #include <asm/bitops.h>
 #include <asm/global_data.h>
+#include <asm/u-boot.h>
 #include <linux/compiler.h>
 #include <asm/fsl_law.h>
 #include <asm/io.h>

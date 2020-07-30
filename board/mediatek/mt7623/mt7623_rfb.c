@@ -6,6 +6,7 @@
 #include <common.h>
 #include <mmc.h>
 #include <asm/global_data.h>
+#include <asm/u-boot.h>
 #include <linux/string.h>
 
 DECLARE_GLOBAL_DATA_PTR;

@@ -9,6 +9,7 @@
 #include <init.h>
 #include <asm/io.h>
 #include <env.h>
+#include <asm/u-boot.h>
 #include <linux/ctype.h>
 
 #ifdef CONFIG_ARCH_CPU_INIT

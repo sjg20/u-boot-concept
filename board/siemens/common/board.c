@@ -34,6 +34,7 @@
 #include <cpsw.h>
 #include <watchdog.h>
 #include <asm/mach-types.h>
+#include <asm/u-boot.h>
 #include <linux/string.h>
 #include "../common/factoryset.h"
 

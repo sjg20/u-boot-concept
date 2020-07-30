@@ -22,16 +22,19 @@
 #else
 
 #if defined(CONFIG_ARCH_MPC8360)
+#include <asm/u-boot.h>
 #include <linux/immap_qe.h>
 #define _POST_WORD_ADDR	(CONFIG_SYS_IMMR + CPM_POST_WORD_ADDR)
 
 #elif defined (CONFIG_MPC85xx)
 #include <asm/immap_85xx.h>
+#include <asm/u-boot.h>
 #define _POST_WORD_ADDR	(CONFIG_SYS_IMMR + CONFIG_SYS_MPC85xx_PIC_OFFSET + \
 				offsetof(ccsr_pic_t, tfrr))
 
 #elif defined (CONFIG_MPC86xx)
 #include <asm/immap_86xx.h>
+#include <asm/u-boot.h>
 #define _POST_WORD_ADDR	(CONFIG_SYS_IMMR + CONFIG_SYS_MPC86xx_PIC_OFFSET + \
 				offsetof(ccsr_pic_t, tfrr))
 #endif

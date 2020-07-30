@@ -18,6 +18,7 @@
 #include <asm/io.h>
 #include <asm/system.h>
 #include <command.h>
+#include <asm/u-boot.h>
 
 /* Flush I/D-cache */
 static void cache_flush(void)

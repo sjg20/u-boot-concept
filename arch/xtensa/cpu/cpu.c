@@ -12,6 +12,7 @@
 #include <command.h>
 #include <init.h>
 #include <vsprintf.h>
+#include <asm/u-boot.h>
 #include <linux/stringify.h>
 #include <asm/global_data.h>
 #include <asm/cache.h>

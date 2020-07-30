@@ -13,6 +13,7 @@
 #include <cpu_func.h>
 #include <ppc_asm.tmpl>
 #include <asm/global_data.h>
+#include <asm/u-boot.h>
 #include <linux/compiler.h>
 #include <asm/processor.h>
 #include <asm/io.h>

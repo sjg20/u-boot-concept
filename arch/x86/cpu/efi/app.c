@@ -8,6 +8,7 @@
 #include <fdtdec.h>
 #include <init.h>
 #include <netdev.h>
+#include <asm/u-boot.h>
 
 int arch_cpu_init(void)
 {

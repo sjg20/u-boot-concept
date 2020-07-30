@@ -12,6 +12,7 @@
 #include <mpc83xx.h>
 #include <asm/global_data.h>
 #include <asm/io.h>
+#include <asm/u-boot.h>
 #include <linux/delay.h>
 
 DECLARE_GLOBAL_DATA_PTR;

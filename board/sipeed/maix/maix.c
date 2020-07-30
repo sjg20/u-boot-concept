@@ -8,6 +8,7 @@
 #include <dm.h>
 #include <fdt_support.h>
 #include <asm/io.h>
+#include <asm/u-boot.h>
 
 phys_size_t get_effective_memsize(void)
 {

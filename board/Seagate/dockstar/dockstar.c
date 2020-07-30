@@ -19,6 +19,7 @@
 #include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/mach-types.h>
+#include <asm/u-boot.h>
 #include "dockstar.h"
 
 DECLARE_GLOBAL_DATA_PTR;

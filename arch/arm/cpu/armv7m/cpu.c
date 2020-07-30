@@ -12,6 +12,7 @@
 #include <irq_func.h>
 #include <asm/io.h>
 #include <asm/armv7m.h>
+#include <asm/u-boot.h>
 
 /*
  * This is called right before passing control to

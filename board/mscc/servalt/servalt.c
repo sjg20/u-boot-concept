@@ -9,6 +9,7 @@
 #include <asm/global_data.h>
 #include <asm/io.h>
 #include <led.h>
+#include <asm/u-boot.h>
 #include <linux/string.h>
 
 enum {

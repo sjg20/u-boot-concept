@@ -14,6 +14,7 @@
 #include <asm/io.h>
 #include <asm/processor.h>
 #include <asm/fsl_serdes.h>
+#include <asm/u-boot.h>
 #include <malloc.h>
 #include <libata.h>
 #include <fis.h>

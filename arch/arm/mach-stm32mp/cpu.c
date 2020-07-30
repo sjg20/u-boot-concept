@@ -16,6 +16,7 @@
 #include <asm/arch/bsec.h>
 #include <asm/arch/stm32.h>
 #include <asm/arch/sys_proto.h>
+#include <asm/u-boot.h>
 #include <dm/device.h>
 #include <dm/uclass.h>
 #include <linux/bitops.h>

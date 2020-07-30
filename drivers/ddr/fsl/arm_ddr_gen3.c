@@ -13,6 +13,7 @@
 #include <fsl_immap.h>
 #include <fsl_ddr.h>
 #include <asm/arch/clock.h>
+#include <asm/u-boot.h>
 #include <linux/delay.h>
 
 #if (CONFIG_CHIP_SELECTS_PER_CTRL > 4)

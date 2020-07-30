@@ -12,6 +12,7 @@
 #include <cpu_func.h>
 #include <init.h>
 #include <watchdog.h>
+#include <asm/u-boot.h>
 
 #include <asm/immap.h>
 #include <asm/io.h>

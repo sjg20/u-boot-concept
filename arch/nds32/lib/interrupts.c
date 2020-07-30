@@ -14,6 +14,7 @@
 #include <irq_func.h>
 #include <asm/ptrace.h>
 #include <asm/system.h>
+#include <asm/u-boot.h>
 #undef INTERRUPT_MODE
 
 static int int_flag;

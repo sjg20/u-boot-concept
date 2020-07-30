@@ -11,6 +11,7 @@
 #include <asm/mrccache.h>
 #include <asm/post.h>
 #include <asm/arch/iomap.h>
+#include <asm/u-boot.h>
 #include <linux/bitops.h>
 
 /* GPIO SUS */

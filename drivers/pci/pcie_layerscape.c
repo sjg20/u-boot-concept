@@ -15,6 +15,7 @@
 	defined(CONFIG_ARM)
 #include <asm/arch/clock.h>
 #endif
+#include <asm/u-boot.h>
 #include "pcie_layerscape.h"
 
 DECLARE_GLOBAL_DATA_PTR;

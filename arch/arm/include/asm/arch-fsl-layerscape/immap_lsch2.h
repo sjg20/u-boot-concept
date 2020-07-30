@@ -8,6 +8,7 @@
 
 #include <fsl_immap.h>
 #ifndef __ASSEMBLY__
+#include <asm/u-boot.h>
 #include <linux/bitops.h>
 #endif
 

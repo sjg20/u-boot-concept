@@ -19,6 +19,7 @@
 #include <asm/fsl_law.h>
 #include <asm/fsl_serdes.h>
 #include <asm/mp.h>
+#include <asm/u-boot.h>
 
 extern void srio_init(void);
 

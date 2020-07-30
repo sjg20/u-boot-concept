@@ -10,6 +10,7 @@
 #include <asm/global_data.h>
 #include <asm/io.h>
 #include <usb.h>
+#include <asm/u-boot.h>
 #include <linux/delay.h>
 #include "ehci.h"
 #include <linux/mbus.h>

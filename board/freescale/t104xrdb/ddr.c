@@ -14,6 +14,7 @@
 #include <fsl_ddr_dimm_params.h>
 #include <asm/fsl_law.h>
 #include <asm/mpc85xx_gpio.h>
+#include <asm/u-boot.h>
 #include <linux/delay.h>
 #include "ddr.h"
 

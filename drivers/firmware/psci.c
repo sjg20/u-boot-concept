@@ -11,6 +11,7 @@
 #include <dm.h>
 #include <irq_func.h>
 #include <log.h>
+#include <asm/u-boot.h>
 #include <dm/lists.h>
 #include <efi_loader.h>
 #include <linux/delay.h>

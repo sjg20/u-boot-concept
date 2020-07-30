@@ -19,6 +19,7 @@
 #include <asm/post.h>
 #include <asm/processor.h>
 #include <asm/fsp/fsp_support.h>
+#include <asm/u-boot.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

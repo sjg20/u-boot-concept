@@ -5,6 +5,7 @@
 
 #include <common.h>
 #include <asm/io.h>
+#include <asm/u-boot.h>
 
 #define PCI_DEV_CONFIG(segbus, dev, fn) ( \
 		(((segbus) & 0xfff) << 20) | \

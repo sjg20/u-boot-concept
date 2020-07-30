@@ -25,6 +25,7 @@
 #include <spd_sdram.h>
 #include <asm/bitops.h>
 #include <asm/global_data.h>
+#include <asm/u-boot.h>
 #include <linux/delay.h>
 
 DECLARE_GLOBAL_DATA_PTR;

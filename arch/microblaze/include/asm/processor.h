@@ -8,6 +8,7 @@
 
 /* References to section boundaries */
 
+#include <asm/u-boot.h>
 extern char __end[];
 extern char __text_start[];
 

@@ -17,6 +17,7 @@
 #include <asm/cache.h>
 #include <asm/system.h>
 #include <asm/secure.h>
+#include <asm/u-boot.h>
 #include <linux/compiler.h>
 #include <linux/string.h>
 

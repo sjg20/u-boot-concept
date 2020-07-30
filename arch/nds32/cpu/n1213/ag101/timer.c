@@ -14,6 +14,7 @@
 #include <log.h>
 #include <time.h>
 #include <asm/io.h>
+#include <asm/u-boot.h>
 #include <faraday/fttmr010.h>
 #include <linux/delay.h>
 
@@ -193,4 +194,5 @@ ulong get_tbclk(void)
 	return CONFIG_SYS_CLK_FREQ;
 #endif
 }
+
 #endif /* CONFIG_TIMER */

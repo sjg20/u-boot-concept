@@ -12,6 +12,7 @@
 #include <log.h>
 #include <asm/cache.h>
 #include <asm/global_data.h>
+#include <asm/u-boot.h>
 #include <dm/device-internal.h>
 #include <dm/lists.h>
 #include <dm/uclass.h>
