@@ -5,6 +5,7 @@
 
 #include <common.h>
 #include <i2c.h>
+#include <stdio.h>
 #include <linux/delay.h>
 #include <linux/string.h>
 

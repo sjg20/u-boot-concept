@@ -10,6 +10,7 @@
 #include <env.h>
 #include <init.h>
 #include <log.h>
+#include <stdio.h>
 #include <asm/u-boot.h>
 #include <linux/bitops.h>
 #include <linux/bug.h>

@@ -16,6 +16,7 @@
 #include <mmc.h>
 #include <sdhci.h>
 #include <dm.h>
+#include <stdio.h>
 #include <time.h>
 #include <asm/cache.h>
 #include <linux/bitops.h>

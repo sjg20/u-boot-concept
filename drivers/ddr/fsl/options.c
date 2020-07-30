@@ -9,6 +9,7 @@
 #include <hwconfig.h>
 #include <fsl_ddr_sdram.h>
 #include <log.h>
+#include <stdio.h>
 #include <asm/u-boot.h>
 
 #include <fsl_ddr.h>

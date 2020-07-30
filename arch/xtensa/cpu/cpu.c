@@ -11,6 +11,7 @@
 #include <common.h>
 #include <command.h>
 #include <init.h>
+#include <stdio.h>
 #include <vsprintf.h>
 #include <asm/u-boot.h>
 #include <linux/stringify.h>

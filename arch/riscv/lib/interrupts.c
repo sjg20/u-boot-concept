@@ -12,6 +12,7 @@
 #include <common.h>
 #include <hang.h>
 #include <irq_func.h>
+#include <stdio.h>
 #include <asm/ptrace.h>
 #include <asm/system.h>
 #include <asm/encoding.h>

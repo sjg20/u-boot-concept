@@ -10,6 +10,7 @@
 #include <cpu_func.h>
 #include <efi_loader.h>
 #include <init.h>
+#include <stdio.h>
 #include <time.h>
 #include <asm/u-boot.h>
 #include <linux/delay.h>

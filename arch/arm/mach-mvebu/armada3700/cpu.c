@@ -9,6 +9,7 @@
 #include <dm.h>
 #include <fdtdec.h>
 #include <init.h>
+#include <stdio.h>
 #include <asm/global_data.h>
 #include <asm/u-boot.h>
 #include <linux/bitops.h>

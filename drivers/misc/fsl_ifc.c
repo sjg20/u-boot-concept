@@ -7,6 +7,7 @@
 #include <common.h>
 #include <fsl_ifc.h>
 #include <part.h>
+#include <stdio.h>
 #include <asm/u-boot.h>
 
 #ifdef CONFIG_TFABOOT
