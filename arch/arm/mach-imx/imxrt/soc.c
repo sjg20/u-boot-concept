@@ -10,6 +10,7 @@
 #include <asm/armv7_mpu.h>
 #include <asm/u-boot.h>
 #include <linux/bitops.h>
+#include <linux/kernel.h>
 
 int arch_cpu_init(void)
 {

@@ -23,6 +23,7 @@
 #include <asm/pl310.h>
 #include <asm/u-boot.h>
 #include <linux/errno.h>
+#include <linux/kernel.h>
 #include <linux/libfdt.h>
 #include <asm/arch/mailbox_s10.h>
 #include <linux/string.h>

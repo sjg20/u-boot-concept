@@ -11,6 +11,7 @@
 #include <dm/device_compat.h>
 #include <linux/bitops.h>
 #include <linux/errno.h>
+#include <linux/kernel.h>
 #include <power/regulator.h>
 #include "stm32-adc-core.h"
 

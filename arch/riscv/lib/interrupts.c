@@ -16,6 +16,7 @@
 #include <asm/ptrace.h>
 #include <asm/system.h>
 #include <asm/encoding.h>
+#include <linux/kernel.h>
 
 static void show_regs(struct pt_regs *regs)
 {

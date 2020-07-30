@@ -7,6 +7,7 @@
 #include <common.h>
 #include <command.h>
 #include <stdio.h>
+#include <linux/kernel.h>
 #include <test/suites.h>
 #include <test/test.h>
 

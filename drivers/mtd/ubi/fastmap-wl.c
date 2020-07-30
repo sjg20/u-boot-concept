@@ -1,4 +1,5 @@
 #include <linux/errno.h>
+#include <linux/kernel.h>
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (c) 2012 Linutronix GmbH

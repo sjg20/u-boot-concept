@@ -604,4 +604,5 @@ U_BOOT_CMD(clocks, 1, 0, do_clocks,
 
 #include <stdio.h>
 #include <asm/u-boot.h>
+#include <linux/kernel.h>
 #endif

@@ -12,6 +12,7 @@
 #include <malloc.h>
 #include <spi.h>
 #include <dm.h>
+#include <stdbool.h>
 #include <asm/gpio.h>
 #include <asm/io.h>
 #include <linux/bitops.h>

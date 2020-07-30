@@ -21,6 +21,7 @@
 #endif
 #include <asm/u-boot.h>
 #include <linux/delay.h>
+#include <linux/kernel.h>
 #include "vid.h"
 
 int __weak i2c_multiplexer_select_vid_channel(u8 channel)

@@ -12,6 +12,7 @@
 #include <asm/fsl_serdes.h>
 #include <asm/u-boot.h>
 #include <linux/delay.h>
+#include <linux/kernel.h>
 
 typedef struct serdes_85xx {
 	u32	srdscr0;	/* 0x00 - SRDS Control Register 0 */

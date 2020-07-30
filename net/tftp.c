@@ -20,6 +20,7 @@
 #include <time.h>
 #include <vsprintf.h>
 #include <asm/global_data.h>
+#include <linux/kernel.h>
 #include <linux/string.h>
 #include <net/tftp.h>
 #include "bootp.h"

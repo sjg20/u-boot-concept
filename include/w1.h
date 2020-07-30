@@ -9,6 +9,7 @@
 #define __W1_H
 
 #include <dm.h>
+#include <stdbool.h>
 
 #define W1_FAMILY_DS24B33	0x23
 #define W1_FAMILY_DS2431	0x2d

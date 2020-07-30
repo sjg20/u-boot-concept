@@ -28,6 +28,7 @@
 #include <asm/arch/soc.h>
 #include <asm/arch/mpp.h>
 #include <asm/u-boot.h>
+#include <linux/kernel.h>
 
 #include "../common/common.h"
 

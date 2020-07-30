@@ -22,6 +22,7 @@
 #include <asm/mach-imx/boot_mode.h>
 #include <asm/arch/ddr.h>
 #include <asm/u-boot.h>
+#include <linux/kernel.h>
 #include <linux/string.h>
 
 #include <dm/uclass.h>

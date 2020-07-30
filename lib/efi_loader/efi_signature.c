@@ -10,6 +10,7 @@
 #include <image.h>
 #include <hexdump.h>
 #include <malloc.h>
+#include <stdbool.h>
 #include <crypto/pkcs7_parser.h>
 #include <linux/compat.h>
 #include <linux/oid_registry.h>

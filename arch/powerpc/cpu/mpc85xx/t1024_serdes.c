@@ -8,6 +8,7 @@
 #include <asm/processor.h>
 #include <asm/io.h>
 #include <asm/u-boot.h>
+#include <linux/kernel.h>
 
 static u8 serdes_cfg_tbl[][SRDS_MAX_LANES] = {
 	[0x40] = {PCIE1, PCIE1, PCIE1, PCIE1},

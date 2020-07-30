@@ -25,6 +25,7 @@
 #include <asm/u-boot.h>
 #include <linux/delay.h>
 #include <spl.h>
+#include <linux/kernel.h>
 #include <power/pmic.h>
 
 DECLARE_GLOBAL_DATA_PTR;

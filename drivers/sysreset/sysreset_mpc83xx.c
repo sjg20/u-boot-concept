@@ -15,6 +15,7 @@
 #include <asm/global_data.h>
 #include <linux/delay.h>
 #include <linux/errno.h>
+#include <linux/kernel.h>
 
 #include "sysreset_mpc83xx.h"
 

@@ -9,6 +9,7 @@
 #include <part.h>
 #include <stdio.h>
 #include <asm/u-boot.h>
+#include <linux/kernel.h>
 
 #ifdef CONFIG_TFABOOT
 struct ifc_regs ifc_cfg_default_boot[CONFIG_SYS_FSL_IFC_BANK_COUNT] = {

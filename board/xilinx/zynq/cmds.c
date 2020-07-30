@@ -15,6 +15,7 @@
 #include <malloc.h>
 #include <asm/u-boot.h>
 #include <linux/bitops.h>
+#include <linux/kernel.h>
 #include <linux/string.h>
 #include <u-boot/md5.h>
 #include <u-boot/rsa.h>

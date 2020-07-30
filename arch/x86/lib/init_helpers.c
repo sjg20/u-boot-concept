@@ -6,6 +6,7 @@
 
 #include <common.h>
 #include <init.h>
+#include <stdbool.h>
 #include <asm/global_data.h>
 #include <asm/u-boot.h>
 #include <linux/errno.h>

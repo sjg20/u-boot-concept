@@ -12,6 +12,7 @@
 #include <env.h>
 #include <asm/u-boot.h>
 #include <linux/ctype.h>
+#include <linux/kernel.h>
 
 #ifdef CONFIG_ARCH_CPU_INIT
 int arch_cpu_init(void)

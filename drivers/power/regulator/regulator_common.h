@@ -1,3 +1,4 @@
+#include <stdbool.h>
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2019 Disruptive Technologies Research AS

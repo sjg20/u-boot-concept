@@ -2,6 +2,7 @@
 #ifndef __UFS_H
 #define __UFS_H
 
+#include <stdbool.h>
 #include <asm/io.h>
 #include <dm.h>
 

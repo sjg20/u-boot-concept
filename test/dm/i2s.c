@@ -8,6 +8,7 @@
 #include <dm.h>
 #include <i2s.h>
 #include <dm/test.h>
+#include <linux/kernel.h>
 #include <test/ut.h>
 #include <asm/test.h>
 

@@ -10,6 +10,7 @@
 #include <asm/io.h>
 #include <asm/u-boot.h>
 #include <linux/errno.h>
+#include <linux/kernel.h>
 
 phys_size_t get_effective_memsize(void)
 {
