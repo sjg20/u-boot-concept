@@ -11,6 +11,7 @@
 #include <irq_func.h>
 #include <lmb.h>
 #include <log.h>
+#include <stdio.h>
 #include <asm/u-boot.h>
 #include <linux/compiler.h>
 

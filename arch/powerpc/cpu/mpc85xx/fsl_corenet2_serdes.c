@@ -5,6 +5,7 @@
 
 #include <common.h>
 #include <log.h>
+#include <stdio.h>
 #include <asm/fsl_serdes.h>
 #include <asm/immap_85xx.h>
 #include <asm/io.h>

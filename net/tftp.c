@@ -16,6 +16,7 @@
 #include <log.h>
 #include <mapmem.h>
 #include <net.h>
+#include <stdio.h>
 #include <time.h>
 #include <asm/global_data.h>
 #include <linux/string.h>

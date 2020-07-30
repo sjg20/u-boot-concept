@@ -19,6 +19,7 @@
 #include <led.h>
 #include <miiphy.h>
 #include <panel.h>
+#include <stdio.h>
 #include <asm/global_data.h>
 #include <asm/u-boot.h>
 #include <power/tps65217.h>

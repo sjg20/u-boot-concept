@@ -6,6 +6,7 @@
 
 #include <common.h>
 #include <i2c.h>
+#include <stdio.h>
 #include <asm/u-boot.h>
 
 #include <fsl_ddr_sdram.h>

@@ -32,6 +32,7 @@
 #include <common.h>
 #include <command.h>
 #include <irq_func.h>
+#include <stdio.h>
 #include <asm/interrupt.h>
 #include <asm/u-boot.h>
 

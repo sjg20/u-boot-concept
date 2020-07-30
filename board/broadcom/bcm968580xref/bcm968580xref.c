@@ -6,6 +6,7 @@
 #include <common.h>
 #include <fdtdec.h>
 #include <init.h>
+#include <stdio.h>
 #include <asm/u-boot.h>
 #include <linux/io.h>
 

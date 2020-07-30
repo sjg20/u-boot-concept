@@ -12,6 +12,7 @@
 #include <log.h>
 #include <net.h>
 #include <netdev.h>
+#include <stdio.h>
 #include <asm/u-boot.h>
 #include <linux/errno.h>
 #include <asm/io.h>

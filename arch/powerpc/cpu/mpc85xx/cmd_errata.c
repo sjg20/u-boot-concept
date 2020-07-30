@@ -6,6 +6,7 @@
 #include <common.h>
 #include <command.h>
 #include <init.h>
+#include <stdio.h>
 #include <asm/u-boot.h>
 #include <linux/compiler.h>
 #include <fsl_errata.h>

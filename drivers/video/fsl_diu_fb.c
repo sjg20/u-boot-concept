@@ -9,6 +9,7 @@
 
 #include <common.h>
 #include <malloc.h>
+#include <stdio.h>
 #include <asm/io.h>
 #include <asm/u-boot.h>
 #include <linux/string.h>
