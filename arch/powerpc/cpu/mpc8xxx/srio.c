@@ -11,6 +11,7 @@
 #include <asm/fsl_law.h>
 #include <asm/fsl_serdes.h>
 #include <asm/fsl_srio.h>
+#include <asm/types.h>
 #include <asm/u-boot.h>
 #include <linux/delay.h>
 #include <linux/errno.h>

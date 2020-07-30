@@ -7,11 +7,13 @@
  */
 
 #include <common.h>
+#include <compiler.h>
 #include <irq_func.h>
 #include <mpc83xx.h>
 #include <command.h>
 #include <stdio.h>
 #include <vsprintf.h>
+#include <asm/types.h>
 #include <asm/u-boot.h>
 #include <linux/string.h>
 

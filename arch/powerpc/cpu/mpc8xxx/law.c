@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <asm/bitops.h>
 #include <asm/global_data.h>
+#include <asm/types.h>
 #include <asm/u-boot.h>
 #include <linux/compiler.h>
 #include <asm/fsl_law.h>

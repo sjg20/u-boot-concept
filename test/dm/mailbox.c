@@ -9,6 +9,7 @@
 #include <dm/test.h>
 #include <asm/mbox.h>
 #include <linux/errno.h>
+#include <linux/types.h>
 #include <test/ut.h>
 
 static int dm_test_mailbox(struct unit_test_state *uts)

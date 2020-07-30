@@ -7,6 +7,7 @@
 #include <dm.h>
 #include <init.h>
 #include <log.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <syscon.h>
 #include <time.h>
@@ -23,6 +24,7 @@
 #include <asm/u-boot.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>
+#include <linux/types.h>
 
 static const char *const ecc_decoder[] = {
 	"inactive",

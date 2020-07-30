@@ -8,6 +8,7 @@
 #include <axi.h>
 #include <dm.h>
 #include <log.h>
+#include <asm/types.h>
 #include <dm/test.h>
 #include <linux/kernel.h>
 #include <test/ut.h>

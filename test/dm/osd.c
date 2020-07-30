@@ -9,6 +9,7 @@
 #include <dm.h>
 #include <stdio.h>
 #include <dm/test.h>
+#include <linux/types.h>
 #include <test/ut.h>
 #include <video_osd.h>
 #include <asm/test.h>

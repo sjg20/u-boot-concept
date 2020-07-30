@@ -7,11 +7,13 @@
 #ifdef CONFIG_PPC
 #include <asm/fsl_law.h>
 #endif
+#include <compiler.h>
 #include <div64.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <asm/u-boot.h>
 #include <linux/delay.h>
+#include <linux/types.h>
 
 #include <fsl_ddr.h>
 #include <fsl_immap.h>

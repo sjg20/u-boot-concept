@@ -12,6 +12,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/u-boot.h>
 #include <linux/errno.h>
+#include <linux/types.h>
 
 #define RZA1_WDT_BASE	0xfcfe0000
 #define WTCSR		0x00

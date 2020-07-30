@@ -15,6 +15,7 @@
 #include <asm/gpio.h>
 #include <asm/test.h>
 #include <dm/test.h>
+#include <linux/types.h>
 #include <test/ut.h>
 #include <power/regulator.h>
 

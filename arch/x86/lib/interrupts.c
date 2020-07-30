@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <asm/interrupt.h>
 #include <asm/u-boot.h>
+#include <linux/types.h>
 
 #if !CONFIG_IS_ENABLED(X86_64)
 

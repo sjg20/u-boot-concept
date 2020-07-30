@@ -11,6 +11,7 @@
 #include <irq_func.h>
 #include <log.h>
 #include <malloc.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <time.h>
 #include <vsprintf.h>
@@ -19,6 +20,7 @@
 #include <linux/kernel.h>
 #include <linux/libfdt_env.h>
 #include <linux/string.h>
+#include <linux/types.h>
 #include <u-boot/crc.h>
 #include <bootm.h>
 #include <pe.h>

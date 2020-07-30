@@ -15,6 +15,7 @@
 #include <asm/test.h>
 #include <dm/test.h>
 #include <dm/util.h>
+#include <linux/types.h>
 #include <test/ut.h>
 
 /* Simple test of sandbox SPI flash */

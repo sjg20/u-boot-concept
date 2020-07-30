@@ -8,6 +8,7 @@
 #include <spl.h>
 #include <asm/arch/mx6-ddr.h>
 #include <asm/u-boot.h>
+#include <linux/types.h>
 
 /* Configure MX6Q/DUAL mmdc DDR io registers */
 static struct mx6dq_iomux_ddr_regs ot1200_ddr_ioregs = {

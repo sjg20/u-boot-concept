@@ -11,10 +11,12 @@
 #include <common.h>
 #include <command.h>
 #include <miiphy.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <vsprintf.h>
 #include <linux/kernel.h>
 #include <linux/string.h>
+#include <linux/types.h>
 
 typedef struct _MII_field_desc_t {
 	ushort hi;

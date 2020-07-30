@@ -6,6 +6,7 @@
 #include <common.h>
 #include <fsl_sec_mon.h>
 #include <stdio.h>
+#include <asm/types.h>
 #include <asm/u-boot.h>
 #include <linux/delay.h>
 

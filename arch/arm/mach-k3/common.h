@@ -7,6 +7,7 @@
  */
 
 #include <asm/armv7_mpu.h>
+#include <linux/types.h>
 
 struct fwl_data {
 	const char *name;

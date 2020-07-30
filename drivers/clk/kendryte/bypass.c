@@ -6,6 +6,7 @@
 #define LOG_CATEGORY UCLASS_CLK
 #include <kendryte/bypass.h>
 #include <linux/errno.h>
+#include <linux/types.h>
 
 #include <clk-uclass.h>
 #include <linux/clk-provider.h>

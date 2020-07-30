@@ -7,6 +7,7 @@
 #include <asm/fsl_serdes.h>
 #include <asm/processor.h>
 #include <asm/io.h>
+#include <asm/types.h>
 #include <asm/u-boot.h>
 #include <linux/kernel.h>
 #include "fsl_corenet_serdes.h"

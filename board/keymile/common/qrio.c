@@ -5,7 +5,9 @@
  */
 
 #include <common.h>
+#include <compiler.h>
 #include <stdbool.h>
+#include <asm/types.h>
 #include <asm/u-boot.h>
 #include <linux/bitops.h>
 

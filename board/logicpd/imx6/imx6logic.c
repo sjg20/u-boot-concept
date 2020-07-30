@@ -30,6 +30,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/mach-imx/boot_mode.h>
 #include <asm/mach-imx/iomux-v3.h>
+#include <linux/types.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

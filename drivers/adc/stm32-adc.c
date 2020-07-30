@@ -8,6 +8,7 @@
 
 #include <common.h>
 #include <adc.h>
+#include <compiler.h>
 #include <stdbool.h>
 #include <asm/io.h>
 #include <dm/device_compat.h>
@@ -15,6 +16,7 @@
 #include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/iopoll.h>
+#include <linux/types.h>
 #include "stm32-adc-core.h"
 
 /* STM32H7 - Registers for each ADC instance */

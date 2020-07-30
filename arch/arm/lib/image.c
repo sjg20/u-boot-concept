@@ -7,12 +7,14 @@
 #include <common.h>
 #include <image.h>
 #include <mapmem.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <asm/global_data.h>
 #include <asm/u-boot.h>
 #include <linux/bitops.h>
 #include <linux/kernel.h>
 #include <linux/sizes.h>
+#include <linux/types.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

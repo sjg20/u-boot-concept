@@ -18,6 +18,7 @@
 #include <asm/u-boot.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
+#include <linux/types.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

@@ -13,6 +13,7 @@
 #include <ddr_spd.h>
 #include <fsl_ddrc_version.h>
 #include <stdbool.h>
+#include <asm/types.h>
 #include <asm/u-boot.h>
 
 #define SDRAM_TYPE_DDR1		2

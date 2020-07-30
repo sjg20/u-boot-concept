@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <asm/fsl_lbc.h>
 #include <asm/u-boot.h>
+#include <linux/types.h>
 
 #ifdef CONFIG_MPC83xx
 #include "../mpc83xx/elbc/elbc.h"

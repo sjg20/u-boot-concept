@@ -39,6 +39,7 @@
 
 #include <asm/processor.h>
 #include <asm/u-boot.h>
+#include <linux/types.h>
 
 static inline uint get_immr(void)
 {

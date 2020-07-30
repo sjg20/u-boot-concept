@@ -26,6 +26,7 @@
 #include <asm/io.h>
 #include <asm/gpio.h>
 #include <asm/u-boot.h>
+#include <linux/types.h>
 
 #define USBHUB_RSTN	IMX_GPIO_NR(1, 16)
 #define BKLT_EN		IMX_GPIO_NR(1, 15)

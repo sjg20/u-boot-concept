@@ -18,6 +18,7 @@
 #include <linux/compiler.h>
 #include <asm/processor.h>
 #include <asm/io.h>
+#include <linux/types.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

@@ -6,6 +6,7 @@
 #include <common.h>
 #include <command.h>
 #include <log.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <vsprintf.h>
 #include <asm/global_data.h>
@@ -17,6 +18,7 @@
 #include <linux/bitops.h>
 #include <linux/kernel.h>
 #include <linux/string.h>
+#include <linux/types.h>
 #include <u-boot/md5.h>
 #include <u-boot/rsa.h>
 #include <u-boot/rsa-mod-exp.h>

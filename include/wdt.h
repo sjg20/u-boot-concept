@@ -9,6 +9,7 @@
 #include <dm.h>
 #include <log.h>
 #include <dm/read.h>
+#include <linux/types.h>
 
 /*
  * Implement a simple watchdog uclass. Watchdog is basically a timer that

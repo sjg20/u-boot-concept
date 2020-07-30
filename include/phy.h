@@ -18,6 +18,7 @@
 #include <linux/mdio.h>
 #include <log.h>
 #include <phy_interface.h>
+#include <linux/types.h>
 
 #define PHY_FIXED_ID		0xa5a55a5a
 #define PHY_NCSI_ID            0xbeefcafe

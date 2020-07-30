@@ -12,6 +12,7 @@
 
 #include <common.h>
 #include <command.h>
+#include <compiler.h>
 #include <cpu_func.h>
 #include <irq_func.h>
 #include <asm/cache.h>
@@ -20,6 +21,7 @@
 #include <asm/u-boot.h>
 #include <linux/compiler.h>
 #include <linux/string.h>
+#include <linux/types.h>
 
 /*
  * sdelay() - simple spin loop.

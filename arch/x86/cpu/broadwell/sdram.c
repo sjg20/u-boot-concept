@@ -28,6 +28,7 @@
 #include <asm/u-boot.h>
 #include <linux/errno.h>
 #include <linux/string.h>
+#include <linux/types.h>
 
 ulong board_get_usable_ram_top(ulong total_size)
 {

@@ -8,6 +8,7 @@
 #ifndef _MSCC_OCELOT_H_
 #define _MSCC_OCELOT_H_
 
+#include <compiler.h>
 #include <linux/bitops.h>
 #include <dm.h>
 

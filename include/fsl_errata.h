@@ -15,6 +15,7 @@
 #include <asm/arch/soc.h>
 #endif
 #include <stdbool.h>
+#include <asm/types.h>
 #include <asm/u-boot.h>
 
 

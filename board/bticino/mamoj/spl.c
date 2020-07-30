@@ -12,6 +12,7 @@
 #include <asm/global_data.h>
 #include <asm/u-boot.h>
 #include <linux/delay.h>
+#include <linux/types.h>
 
 #include <asm/io.h>
 #include <linux/sizes.h>

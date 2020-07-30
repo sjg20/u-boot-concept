@@ -5,6 +5,7 @@
  */
 
 #include <common.h>
+#include <compiler.h>
 #include <env.h>
 #include <hwconfig.h>
 #include <fsl_ddr_sdram.h>
@@ -12,6 +13,7 @@
 #include <stdio.h>
 #include <vsprintf.h>
 #include <asm/u-boot.h>
+#include <linux/types.h>
 
 #include <fsl_ddr.h>
 #if defined(CONFIG_FSL_LSCH2) || defined(CONFIG_FSL_LSCH3) || \

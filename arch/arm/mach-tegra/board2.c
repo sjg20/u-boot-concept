@@ -5,6 +5,7 @@
  */
 
 #include <common.h>
+#include <compiler.h>
 #include <dm.h>
 #include <env.h>
 #include <errno.h>
@@ -39,6 +40,7 @@
 #include <asm/arch/emc.h>
 #endif
 #include <asm/u-boot.h>
+#include <linux/types.h>
 #include "emc.h"
 
 DECLARE_GLOBAL_DATA_PTR;

@@ -16,6 +16,7 @@
 #include <mmc.h>
 #include <sdhci.h>
 #include <dm.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <time.h>
 #include <asm/cache.h>
@@ -27,6 +28,7 @@
 #include <linux/kernel.h>
 #include <linux/printk.h>
 #include <linux/string.h>
+#include <linux/types.h>
 
 static void sdhci_reset(struct sdhci_host *host, u8 mask)
 {

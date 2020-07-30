@@ -15,6 +15,7 @@
 #include <asm/u-boot.h>
 #include <linux/bitops.h>
 #include <linux/errno.h>
+#include <linux/types.h>
 
 #include "mpc83xx_cpu.h"
 

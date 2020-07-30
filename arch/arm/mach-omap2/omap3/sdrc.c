@@ -27,6 +27,7 @@
 #include <asm/io.h>
 #include <asm/arch/mem.h>
 #include <asm/arch/sys_proto.h>
+#include <asm/types.h>
 #include <asm/u-boot.h>
 
 DECLARE_GLOBAL_DATA_PTR;

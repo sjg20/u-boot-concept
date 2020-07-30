@@ -22,6 +22,7 @@
 #include <command.h>
 #include <asm/processor.h>
 #include <asm/u-boot.h>
+#include <linux/types.h>
 
 /* Returns 0 if exception not found and fixup otherwise.  */
 extern unsigned long search_exception_table(unsigned long);

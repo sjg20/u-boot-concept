@@ -13,6 +13,7 @@
 #include <asm/io.h>
 #include <asm/armv7m.h>
 #include <asm/u-boot.h>
+#include <linux/types.h>
 
 /*
  * This is called right before passing control to

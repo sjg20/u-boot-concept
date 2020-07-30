@@ -8,6 +8,7 @@
 #define __ASM_ARCH_LS102XA_CLOCK_H_
 
 #include <asm/u-boot.h>
+#include <linux/types.h>
 enum mxc_clock {
 	MXC_ARM_CLK = 0,
 	MXC_UART_CLK,

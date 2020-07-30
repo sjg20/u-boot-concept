@@ -17,6 +17,7 @@
 #include <mm_communication.h>
 #include <linux/errno.h>
 #include <linux/string.h>
+#include <linux/types.h>
 
 static efi_uintn_t max_buffer_size;	/* comm + var + func + data */
 static efi_uintn_t max_payload_size;	/* func + data */

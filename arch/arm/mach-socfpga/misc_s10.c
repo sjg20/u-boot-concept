@@ -21,6 +21,7 @@
 #include <asm/arch/system_manager.h>
 #include <asm/arch/misc.h>
 #include <asm/pl310.h>
+#include <asm/types.h>
 #include <asm/u-boot.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

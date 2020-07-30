@@ -21,6 +21,7 @@
 #include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>
+#include <linux/types.h>
 #include "fsl_corenet_serdes.h"
 
 /*

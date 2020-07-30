@@ -16,6 +16,7 @@
 #include <asm/arch/at91_gpbr.h>
 #include <asm/arch/clk.h>
 #include <asm/u-boot.h>
+#include <linux/types.h>
 
 #ifndef CONFIG_SYS_AT91_MAIN_CLOCK
 #define CONFIG_SYS_AT91_MAIN_CLOCK 0

@@ -17,6 +17,7 @@
 #include <fat.h>
 #include <fs.h>
 #include <sandboxfs.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <time.h>
 #include <ubifs_uboot.h>
@@ -30,6 +31,7 @@
 #include <linux/math64.h>
 #include <efi_loader.h>
 #include <linux/string.h>
+#include <linux/types.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

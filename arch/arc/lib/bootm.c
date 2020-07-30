@@ -5,6 +5,7 @@
 
 #include <common.h>
 #include <bootstage.h>
+#include <compiler.h>
 #include <env.h>
 #include <image.h>
 #include <irq_func.h>
@@ -14,6 +15,7 @@
 #include <asm/cache.h>
 #include <asm/global_data.h>
 #include <asm/u-boot.h>
+#include <linux/types.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

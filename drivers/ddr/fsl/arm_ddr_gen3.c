@@ -6,6 +6,7 @@
  */
 
 #include <common.h>
+#include <compiler.h>
 #include <log.h>
 #include <stdio.h>
 #include <asm/io.h>
@@ -14,6 +15,7 @@
 #include <fsl_immap.h>
 #include <fsl_ddr.h>
 #include <asm/arch/clock.h>
+#include <asm/types.h>
 #include <asm/u-boot.h>
 #include <linux/delay.h>
 

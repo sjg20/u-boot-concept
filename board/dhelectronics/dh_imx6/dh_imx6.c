@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <vsprintf.h>
 #include <asm/global_data.h>
+#include <asm/types.h>
 #include <asm/u-boot.h>
 #include <dm/device-internal.h>
 #include <asm/arch/clock.h>

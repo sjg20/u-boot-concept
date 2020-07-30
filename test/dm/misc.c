@@ -9,6 +9,7 @@
 #include <stdbool.h>
 #include <dm/test.h>
 #include <misc.h>
+#include <linux/types.h>
 #include <test/ut.h>
 
 static int dm_test_misc(struct unit_test_state *uts)

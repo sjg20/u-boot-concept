@@ -2,9 +2,11 @@
 #ifndef __UFS_H
 #define __UFS_H
 
+#include <compiler.h>
 #include <stdbool.h>
 #include <asm/io.h>
 #include <dm.h>
+#include <linux/types.h>
 
 #include "unipro.h"
 

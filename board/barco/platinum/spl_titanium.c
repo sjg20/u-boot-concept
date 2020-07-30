@@ -20,6 +20,7 @@
 #include <spl.h>
 #include <asm/u-boot.h>
 #include <linux/string.h>
+#include <linux/types.h>
 
 #include "platinum.h"
 

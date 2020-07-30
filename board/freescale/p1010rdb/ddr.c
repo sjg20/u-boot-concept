@@ -16,6 +16,7 @@
 #include <asm/fsl_law.h>
 #include <asm/u-boot.h>
 #include <linux/string.h>
+#include <linux/types.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

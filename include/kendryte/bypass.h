@@ -7,6 +7,7 @@
 
 #include <clk.h>
 #include <linux/kernel.h>
+#include <linux/types.h>
 
 struct k210_bypass {
 	struct clk clk;

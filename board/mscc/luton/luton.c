@@ -10,6 +10,7 @@
 #include <asm/io.h>
 #include <led.h>
 #include <miiphy.h>
+#include <asm/types.h>
 #include <asm/u-boot.h>
 #include <linux/string.h>
 

@@ -7,6 +7,7 @@
  */
 
 #include <common.h>
+#include <compiler.h>
 #include <init.h>
 #include <asm/u-boot.h>
 #include <linux/delay.h>
@@ -27,6 +28,7 @@
 #include <imx_thermal.h>
 #include <mmc.h>
 #include <linux/kernel.h>
+#include <linux/types.h>
 
 struct scu_regs {
 	u32	ctrl;

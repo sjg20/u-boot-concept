@@ -13,6 +13,7 @@
 #include <asm/global_data.h>
 #include <dt-bindings/memory/mpc83xx-sdram.h>
 #include <linux/errno.h>
+#include <linux/types.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

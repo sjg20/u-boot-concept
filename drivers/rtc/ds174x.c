@@ -17,6 +17,7 @@
 #include <rtc.h>
 #include <stdio.h>
 #include <asm/u-boot.h>
+#include <linux/types.h>
 
 static uchar rtc_read( unsigned int addr );
 static void  rtc_write( unsigned int addr, uchar val);

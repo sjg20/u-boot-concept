@@ -17,6 +17,7 @@
 #include <watchdog.h>
 #include <asm/io.h>
 #include <post.h>
+#include <asm/types.h>
 #include <asm/u-boot.h>
 
 #if CONFIG_POST & CONFIG_SYS_POST_ECC
