@@ -18,6 +18,7 @@
 #include <asm/ptrace.h>
 #include <asm/u-boot.h>
 #include <linux/bitops.h>
+#include <linux/errno.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

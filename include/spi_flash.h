@@ -11,6 +11,7 @@
 
 #include <dm.h>	/* Because we dereference struct udevice here */
 #include <stdio.h>
+#include <linux/errno.h>
 #include <linux/string.h>
 #include <linux/types.h>
 #include <linux/mtd/spi-nor.h>

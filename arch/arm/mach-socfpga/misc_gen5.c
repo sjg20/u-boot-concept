@@ -14,6 +14,7 @@
 #include <fdtdec.h>
 #include <asm/u-boot.h>
 #include <linux/bitops.h>
+#include <linux/errno.h>
 #include <linux/libfdt.h>
 #include <altera.h>
 #include <miiphy.h>

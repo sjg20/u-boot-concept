@@ -25,6 +25,7 @@
 #include <asm/arch/pch.h>
 #include <asm/arch/rcb.h>
 #include <asm/u-boot.h>
+#include <linux/errno.h>
 
 int arch_cpu_init_dm(void)
 {

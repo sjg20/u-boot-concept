@@ -12,6 +12,7 @@
 #include <virtio_types.h>
 #include <virtio.h>
 #include <asm/u-boot.h>
+#include <linux/errno.h>
 
 #ifdef CONFIG_ARM64
 #include <asm/armv8/mmu.h>

@@ -9,6 +9,7 @@
 #include <fdtdec.h>
 #include <log.h>
 #include <asm/u-boot.h>
+#include <linux/errno.h>
 #include <linux/libfdt.h>
 #include <pci.h>
 #include <dm/lists.h>

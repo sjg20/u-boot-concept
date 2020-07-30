@@ -17,6 +17,7 @@
 #include <dt-bindings/clk/mpc83xx-clk.h>
 #include <asm/arch/soc.h>
 #include <linux/bitops.h>
+#include <linux/errno.h>
 
 #include "mpc83xx_clk.h"
 

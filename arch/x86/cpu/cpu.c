@@ -50,6 +50,7 @@
 #include <asm/tables.h>
 #include <asm/u-boot.h>
 #include <linux/compiler.h>
+#include <linux/errno.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

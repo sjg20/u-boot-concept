@@ -16,6 +16,7 @@
 #include <asm/fsp2/fsp_internal.h>
 #include <asm/global_data.h>
 #include <asm/u-boot.h>
+#include <linux/errno.h>
 #include <linux/sizes.h>
 
 int dram_init(void)

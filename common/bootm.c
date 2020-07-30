@@ -26,6 +26,7 @@
 #include <usb.h>
 #endif
 #include <asm/u-boot.h>
+#include <linux/errno.h>
 #include <linux/string.h>
 #else
 #include "mkimage.h"

@@ -7,6 +7,7 @@
 #include <fdtdec.h>
 #include <init.h>
 #include <asm/u-boot.h>
+#include <linux/errno.h>
 
 int board_init(void)
 {

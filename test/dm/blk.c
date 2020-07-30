@@ -11,6 +11,7 @@
 #include <asm/global_data.h>
 #include <asm/state.h>
 #include <dm/test.h>
+#include <linux/errno.h>
 #include <test/ut.h>
 
 DECLARE_GLOBAL_DATA_PTR;

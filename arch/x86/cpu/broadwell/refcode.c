@@ -13,6 +13,7 @@
 #include <log.h>
 #include <asm/arch/pei_data.h>
 #include <asm/u-boot.h>
+#include <linux/errno.h>
 #include <linux/string.h>
 
 #define RMODULE_MAGIC		0xf8fe

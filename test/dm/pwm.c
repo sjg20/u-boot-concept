@@ -7,6 +7,7 @@
 #include <dm.h>
 #include <pwm.h>
 #include <dm/test.h>
+#include <linux/errno.h>
 #include <test/ut.h>
 
 /* Basic test of the pwm uclass */

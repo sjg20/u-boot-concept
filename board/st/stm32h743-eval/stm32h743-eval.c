@@ -10,6 +10,7 @@
 #include <log.h>
 #include <asm/global_data.h>
 #include <asm/u-boot.h>
+#include <linux/errno.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

@@ -16,6 +16,7 @@
 #include <dm/device_compat.h>
 #include <spi.h>
 #include <spi-mem.h>
+#include <linux/errno.h>
 #include <linux/string.h>
 #endif
 

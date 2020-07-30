@@ -37,6 +37,7 @@
 #include <errno.h>
 #include <linux/delay.h>
 #include <linux/err.h>
+#include <linux/errno.h>
 #include <linux/string.h>
 
 #include <linux/math64.h>

@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <asm/global_data.h>
 #include <asm/u-boot.h>
+#include <linux/errno.h>
 #include <power/tps65217.h>
 #include <power/tps65910.h>
 #include <spl.h>
