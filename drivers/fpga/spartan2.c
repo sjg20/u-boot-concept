@@ -143,11 +143,11 @@ static int spartan2_sp_load(xilinx_desc *desc, const void *buf, size_t bsize)
 		CFG_FPGA_DELAY ();
 		(*fn->pgm) (false, true, cookie);	/* Deassert the program, commit */
 
-		ts = get_timer (0);		/* get current time */
+		ts = get_timer(0);		/* get current time */
 		/* Now wait for INIT and BUSY to go high */
 		do {
 			CFG_FPGA_DELAY ();
-			if (get_timer (ts) > CFG_SYS_FPGA_WAIT) {	/* check the time */
+			if (get_timer(ts) > CFG_SYS_FPGA_WAIT) {	/* check the time */
 				puts ("** Timeout waiting for INIT to clear.\n");
 				(*fn->abort) (cookie);	/* abort the burn */
 				return FPGA_FAIL;
@@ -170,7 +170,7 @@ static int spartan2_sp_load(xilinx_desc *desc, const void *buf, size_t bsize)
 			(*fn->clk) (true, true, cookie);	/* Assert the clock pin */
 
 #ifdef CONFIG_SYS_FPGA_CHECK_BUSY
-			ts = get_timer (0);	/* get current time */
+			ts = get_timer(0);	/* get current time */
 			while ((*fn->busy) (cookie)) {
 				/* XXX - we should have a check in here somewhere to
 				 * make sure we aren't busy forever... */
@@ -180,7 +180,7 @@ static int spartan2_sp_load(xilinx_desc *desc, const void *buf, size_t bsize)
 				CFG_FPGA_DELAY ();
 				(*fn->clk) (true, true, cookie);	/* Assert the clock pin */
 
-				if (get_timer (ts) > CFG_SYS_FPGA_WAIT) {	/* check the time */
+				if (get_timer(ts) > CFG_SYS_FPGA_WAIT) {	/* check the time */
 					puts ("** Timeout waiting for BUSY to clear.\n");
 					(*fn->abort) (cookie);	/* abort the burn */
 					return FPGA_FAIL;
@@ -203,7 +203,7 @@ static int spartan2_sp_load(xilinx_desc *desc, const void *buf, size_t bsize)
 #endif
 
 		/* now check for done signal */
-		ts = get_timer (0);		/* get current time */
+		ts = get_timer(0);		/* get current time */
 		ret_val = FPGA_SUCCESS;
 		while ((*fn->done) (cookie) == FPGA_FAIL) {
 
@@ -212,7 +212,7 @@ static int spartan2_sp_load(xilinx_desc *desc, const void *buf, size_t bsize)
 			CFG_FPGA_DELAY ();
 			(*fn->clk) (true, true, cookie);	/* Assert the clock pin */
 
-			if (get_timer (ts) > CFG_SYS_FPGA_WAIT) {	/* check the time */
+			if (get_timer(ts) > CFG_SYS_FPGA_WAIT) {	/* check the time */
 				puts ("** Timeout waiting for DONE to clear.\n");
 				(*fn->abort) (cookie);	/* abort the burn */
 				ret_val = FPGA_FAIL;
@@ -328,10 +328,10 @@ static int spartan2_ss_load(xilinx_desc *desc, const void *buf, size_t bsize)
 		(*fn->pgm) (true, true, cookie);	/* Assert the program, commit */
 
 		/* Wait for INIT state (init low)                            */
-		ts = get_timer (0);		/* get current time */
+		ts = get_timer(0);		/* get current time */
 		do {
 			CFG_FPGA_DELAY ();
-			if (get_timer (ts) > CFG_SYS_FPGA_WAIT) {	/* check the time */
+			if (get_timer(ts) > CFG_SYS_FPGA_WAIT) {	/* check the time */
 				puts ("** Timeout waiting for INIT to start.\n");
 				return FPGA_FAIL;
 			}
@@ -341,11 +341,11 @@ static int spartan2_ss_load(xilinx_desc *desc, const void *buf, size_t bsize)
 		CFG_FPGA_DELAY ();
 		(*fn->pgm) (false, true, cookie);	/* Deassert the program, commit */
 
-		ts = get_timer (0);		/* get current time */
+		ts = get_timer(0);		/* get current time */
 		/* Now wait for INIT to go high */
 		do {
 			CFG_FPGA_DELAY ();
-			if (get_timer (ts) > CFG_SYS_FPGA_WAIT) {	/* check the time */
+			if (get_timer(ts) > CFG_SYS_FPGA_WAIT) {	/* check the time */
 				puts ("** Timeout waiting for INIT to clear.\n");
 				return FPGA_FAIL;
 			}
@@ -389,7 +389,7 @@ static int spartan2_ss_load(xilinx_desc *desc, const void *buf, size_t bsize)
 #endif
 
 		/* now check for done signal */
-		ts = get_timer (0);		/* get current time */
+		ts = get_timer(0);		/* get current time */
 		ret_val = FPGA_SUCCESS;
 		(*fn->wr) (true, true, cookie);
 
@@ -402,7 +402,7 @@ static int spartan2_ss_load(xilinx_desc *desc, const void *buf, size_t bsize)
 
 			putc ('*');
 
-			if (get_timer (ts) > CFG_SYS_FPGA_WAIT) {	/* check the time */
+			if (get_timer(ts) > CFG_SYS_FPGA_WAIT) {	/* check the time */
 				puts ("** Timeout waiting for DONE to clear.\n");
 				ret_val = FPGA_FAIL;
 				break;
