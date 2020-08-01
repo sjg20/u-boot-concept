@@ -105,17 +105,14 @@ tpl/include/autoconf.mk: tpl/u-boot.cfg
 #	2. #include <config_uncmd_spl.h>
 #	3. #include <configs/....h>
 #	4. #include <asm/config.h>
-#	5. #include <linux/kconfig.h>
-#	6. #include <config_fallbacks.h>
+#	5. #include <config_fallbacks.h>
 #
 # 1 should be able to move to Kconfig
 # 2 should be removed by tidying up a few Kconfig items
 # 3 uses CONFIG_SYS_CONFIG_NAME and will go away when Kconfig migration is
 #	completed and all files in include/configs are removed
 # 4 should be removed when all CONFIG options in those files move to Kconfig
-# 5 is automatically included by the build system (see UBOOTINCLUDE) so is
-#	already unnecessary
-# 6 should be removed by tidying up a few Kconfig items
+# 5 should be removed by tidying up a few Kconfig items
 #
 # So all of the above should eventually go away
 define filechk_config_h
@@ -128,7 +125,6 @@ define filechk_config_h
 	echo \#include \<config_uncmd_spl.h\>;				\
 	echo \#include \<configs/$(CONFIG_SYS_CONFIG_NAME).h\>;		\
 	echo \#include \<asm/config.h\>;				\
-	echo \#include \<linux/kconfig.h\>;				\
 	echo \#include \<config_fallbacks.h\>;)
 endef
 

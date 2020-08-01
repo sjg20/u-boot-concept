@@ -14,6 +14,7 @@
 
 #include <config.h>
 #include <stdlib.h>
+#include <linux/kconfig.h>
 
 static int pmecc_get_ecc_bytes(int cap, int sector_size)
 {
