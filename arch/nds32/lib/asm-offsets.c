@@ -10,6 +10,7 @@
  * published by the Free Software Foundation.
  */
 #include <common.h>
+#include <compiler.h>
 
 #include <linux/kbuild.h>
 

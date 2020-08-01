@@ -16,9 +16,4 @@
 #include <config.h>
 #endif	/* __ASSEMBLY__ */
 
-/* Pull in stuff for the build system */
-#ifdef DO_DEPS_ONLY
-# include <env_internal.h>
-#endif
-
 #endif	/* __COMMON_H_ */
