@@ -2,17 +2,17 @@
 /*
  * Common header file for U-Boot
  *
- * This file still includes quite a few headers that should be included
- * individually as needed. Patches to remove things are welcome.
+ * This just includes the auto-generated config.h which is documented in
+ * Makefile.autoconf
  *
  * (C) Copyright 2000-2009
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  */
 
 #ifndef __COMMON_H_
-#define __COMMON_H_	1
+#define __COMMON_H_
 
-#ifndef __ASSEMBLY__		/* put C only stuff in this section */
+#ifndef __ASSEMBLY__
 #include <config.h>
 #endif	/* __ASSEMBLY__ */
 
