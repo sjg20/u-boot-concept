@@ -5,6 +5,12 @@
 
 #include "rk3399-u-boot.dtsi"
 
+&binman {
+	rom {
+		size = <0x800000>;
+	};
+};
+
 &spi_flash {
 	u-boot,dm-pre-reloc;
 };
