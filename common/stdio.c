@@ -31,15 +31,6 @@ static struct stdio_dev devs;
 struct stdio_dev *stdio_devices[] = { NULL, NULL, NULL };
 char *stdio_names[MAX_FILES] = { "stdin", "stdout", "stderr" };
 
-#if defined(CONFIG_SPLASH_SCREEN) && !defined(CONFIG_SYS_DEVICE_NULLDEV)
-#define	CONFIG_SYS_DEVICE_NULLDEV	1
-#endif
-
-#if CONFIG_IS_ENABLED(SYS_STDIO_DEREGISTER)
-#define	CONFIG_SYS_DEVICE_NULLDEV	1
-#endif
-
-#ifdef CONFIG_SYS_DEVICE_NULLDEV
 static void nulldev_putc(struct stdio_dev *dev, const char c)
 {
 	/* nulldev is empty! */
@@ -55,7 +46,6 @@ static int nulldev_input(struct stdio_dev *dev)
 	/* nulldev is empty! */
 	return 0;
 }
-#endif
 
 static void stdio_serial_putc(struct stdio_dev *dev, const char c)
 {
@@ -96,18 +86,18 @@ static void drv_system_init (void)
 	dev.tstc = stdio_serial_tstc;
 	stdio_register (&dev);
 
-#ifdef CONFIG_SYS_DEVICE_NULLDEV
-	memset (&dev, 0, sizeof (dev));
+	if (CONFIG_IS_ENABLED(SYS_DEVICE_NULLDEV)) {
+		memset(&dev, '\0', sizeof(dev));
 
-	strcpy (dev.name, "nulldev");
-	dev.flags = DEV_FLAGS_OUTPUT | DEV_FLAGS_INPUT;
-	dev.putc = nulldev_putc;
-	dev.puts = nulldev_puts;
-	dev.getc = nulldev_input;
-	dev.tstc = nulldev_input;
+		strcpy(dev.name, "nulldev");
+		dev.flags = DEV_FLAGS_OUTPUT | DEV_FLAGS_INPUT;
+		dev.putc = nulldev_putc;
+		dev.puts = nulldev_puts;
+		dev.getc = nulldev_input;
+		dev.tstc = nulldev_input;
 
-	stdio_register (&dev);
-#endif
+		stdio_register(&dev);
+	}
 }
 
 /**************************************************************************
@@ -116,7 +106,7 @@ static void drv_system_init (void)
  */
 struct list_head* stdio_get_list(void)
 {
-	return &(devs.list);
+	return &devs.list;
 }
 
 #ifdef CONFIG_DM_VIDEO
@@ -180,7 +170,7 @@ struct stdio_dev *stdio_get_by_name(const char *name)
 	if (!name)
 		return NULL;
 
-	list_for_each(pos, &(devs.list)) {
+	list_for_each(pos, &devs.list) {
 		sdev = list_entry(pos, struct stdio_dev, list);
 		if (strcmp(sdev->name, name) == 0)
 			return sdev;
@@ -229,7 +219,7 @@ int stdio_register_dev(struct stdio_dev *dev, struct stdio_dev **devp)
 	_dev = stdio_clone(dev);
 	if(!_dev)
 		return -ENODEV;
-	list_add_tail(&(_dev->list), &(devs.list));
+	list_add_tail(&_dev->list, &devs.list);
 	if (devp)
 		*devp = _dev;
 
@@ -266,11 +256,11 @@ int stdio_deregister_dev(struct stdio_dev *dev, int force)
 			sizeof(temp_names[l]));
 	}
 
-	list_del(&(dev->list));
+	list_del(&dev->list);
 	free(dev);
 
 	/* reassign Device list */
-	list_for_each(pos, &(devs.list)) {
+	list_for_each(pos, &devs.list) {
 		dev = list_entry(pos, struct stdio_dev, list);
 		for (l=0 ; l< MAX_FILES; l++) {
 			if(strcmp(dev->name, temp_names[l]) == 0)
@@ -308,7 +298,7 @@ int stdio_init_tables(void)
 #endif /* CONFIG_NEEDS_MANUAL_RELOC */
 
 	/* Initialize the list */
-	INIT_LIST_HEAD(&(devs.list));
+	INIT_LIST_HEAD(&devs.list);
 
 	return 0;
 }
