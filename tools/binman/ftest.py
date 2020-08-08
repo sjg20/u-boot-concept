@@ -3657,5 +3657,27 @@ class TestFunctional(unittest.TestCase):
         self.assertIn("Generator node requires 'fit,fdt-list' property",
                       str(e.exception))
 
+    def testDepthchargeKernel(self):
+        """Test generating a depthcharge kernel partition"""
+        entry_args = {
+            'test-id': TEXT_DATA,
+        }
+        data, _, _, _ = self._DoReadFileDtb('172_depthcharge_kernel.dts',
+                                            entry_args=entry_args)
+
+        fname = os.path.join(self._indir, 'depthcharge.kpart')
+        tools.WriteFile(fname, data)
+        out = tools.Run('futility', 'vbutil_kernel', '--verify', fname)
+
+        lines = out.splitlines()
+        config = lines[-1].encode()
+        self.assertEqual(tools.ToBytes(TEXT_DATA), config)
+
+        kname = os.path.join(self._indir, 'depthcharge.kpart')
+        tools.Run('futility', 'vbutil_kernel', '--get-vmlinuz', fname,
+                  '--vmlinuz-out', kname)
+        vmlinuz = tools.ReadFile(kname)
+        self.assertEqual(U_BOOT_DATA, vmlinuz[:len(U_BOOT_DATA)])
+
 if __name__ == "__main__":
     unittest.main()
