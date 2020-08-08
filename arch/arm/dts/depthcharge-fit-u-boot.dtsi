@@ -1,0 +1,179 @@
+// SPDX-License-Identifier: GPL-2.0+
+// Copyright (C) Alper Nebi Yasak <alpernebiyasak@gmail.com>
+
+#include <config.h>
+
+/*
+ * This is to align the u-boot.bin within the FIT image so that
+ * depthcharge will end up putting it exactly at SYS_TEXT_BASE. Or in
+ * the SPL case, spl/u-boot-spl.bin ends up exactly at SPL_TEXT_BASE.
+ *
+ * The correct value of FIT_HEADER_SIZE can be found by setting it to
+ * zero, building the image, then inspecting the generated FIT image
+ * (u-boot-depthcharge-kpart.depthcharge-kernel.vmlinuz) to see where
+ * u-boot.bin begins in it (e.g with hexdump). The difference between
+ * that address and SYS_TEXT_BASE is the proper value.
+ *
+ * If you make changes to the fit images below, you'll probably need to
+ * change this as well.
+ */
+#define DEPTHCHARGE_FIT_HEADER_SIZE 0xcc
+#define FIT_PADDING(n) \
+	(n - CONFIG_DEPTHCHARGE_KERNEL_START - DEPTHCHARGE_FIT_HEADER_SIZE)
+
+/*
+ * Depthcharge loads the 'vmlinuz' from our image to a fixed memory
+ * region, So we should the build the partition images only if U-Boot is
+ * compiled to run from within that memory region.
+ */
+#define IN_DEPTHCHARGE_RANGE(n) \
+	(n > CONFIG_DEPTHCHARGE_KERNEL_START + DEPTHCHARGE_FIT_HEADER_SIZE) && \
+	(CONFIG_DEPTHCHARGE_KERNEL_START + CONFIG_DEPTHCHARGE_KERNEL_SIZE > n)
+
+#define BUILD_DEPTHCHARGE_PARTITION_IMAGE \
+	CONFIG_IS_ENABLED(DEPTHCHARGE_PARTITION_IMAGE) && \
+	IN_DEPTHCHARGE_RANGE(CONFIG_SYS_TEXT_BASE)
+
+#define BUILD_DEPTHCHARGE_PARTITION_IMAGE_SPL \
+	CONFIG_IS_ENABLED(DEPTHCHARGE_PARTITION_IMAGE_SPL) && \
+	IN_DEPTHCHARGE_RANGE(CONFIG_SYS_TEXT_BASE) && \
+	IN_DEPTHCHARGE_RANGE(CONFIG_SPL_TEXT_BASE) && \
+	(CONFIG_SYS_TEXT_BASE > CONFIG_SPL_TEXT_BASE)
+
+#if BUILD_DEPTHCHARGE_PARTITION_IMAGE_SPL
+#define U_BOOT_OFFSET (CONFIG_SYS_TEXT_BASE - CONFIG_SPL_TEXT_BASE)
+#endif
+
+#define ARCH CONFIG_IS_ENABLED(ARM64, ("arm64"), ("arm"))
+
+&binman {
+#if BUILD_DEPTHCHARGE_PARTITION_IMAGE
+	u-boot-depthcharge-kpart {
+		filename = "u-boot-depthcharge.kpart";
+
+		depthcharge-kernel {
+			keydir = "../../doc/chromium/devkeys";
+			keyblock = "kernel.keyblock";
+			signprivate = "kernel_data_key.vbprivk";
+			version = <1>;
+			preamble-flags = <0>;
+			arch = ARCH;
+
+			vmlinuz {
+				fit {
+					description = "U-Boot for chainloading from depthcharge";
+
+					images {
+						padding {
+							fill {
+								size = <(FIT_PADDING(CONFIG_SYS_TEXT_BASE))>;
+							};
+						};
+
+						kernel-1 {
+							description = "U-Boot binary";
+							type = "kernel";
+							arch = ARCH;
+							os = "linux";
+							compression = "none";
+							load = <0>;
+							entry = <0>;
+
+							u-boot {
+							};
+						};
+
+						fdt-1 {
+							description = "U-Boot device tree";
+							type = "flat_dt";
+							arch = ARCH;
+							os = "linux";
+							compression = "none";
+
+							u-boot-dtb {
+							};
+						};
+					};
+
+					configurations {
+						default = "conf-1";
+						conf-1 {
+							description = "U-Boot";
+							kernel = "kernel-1";
+							fdt = "fdt-1";
+							loadables = "kernel-1";
+						};
+					};
+				};
+			};
+		};
+	};
+#endif
+
+#if BUILD_DEPTHCHARGE_PARTITION_IMAGE_SPL
+	u-boot-spl-depthcharge-kpart {
+		filename = "u-boot-spl-depthcharge.kpart";
+
+		depthcharge-kernel {
+			keydir = "../../doc/chromium/devkeys";
+			keyblock = "kernel.keyblock";
+			signprivate = "kernel_data_key.vbprivk";
+			version = <1>;
+			preamble-flags = <0>;
+			arch = ARCH;
+
+			vmlinuz {
+				fit {
+					description = "U-Boot for chainloading from depthcharge";
+
+					images {
+						padding {
+							fill {
+								size = <(FIT_PADDING(CONFIG_SPL_TEXT_BASE))>;
+							};
+						};
+
+						kernel-1 {
+							description = "U-Boot binaries";
+							type = "kernel";
+							arch = ARCH;
+							os = "linux";
+							compression = "none";
+							load = <0>;
+							entry = <0>;
+
+							pad-byte = [ff];
+							u-boot-spl {
+							};
+							u-boot {
+								offset = <(U_BOOT_OFFSET)>;
+							};
+						};
+
+						fdt-1 {
+							description = "U-Boot device tree";
+							type = "flat_dt";
+							arch = ARCH;
+							os = "linux";
+							compression = "none";
+
+							u-boot-dtb {
+							};
+						};
+					};
+
+					configurations {
+						default = "conf-1";
+						conf-1 {
+							description = "U-Boot";
+							kernel = "kernel-1";
+							fdt = "fdt-1";
+							loadables = "kernel-1";
+						};
+					};
+				};
+			};
+		};
+	};
+#endif
+};

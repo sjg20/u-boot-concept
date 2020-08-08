@@ -1825,6 +1825,45 @@ config ISW_ENTRY_ADDR
 	  image headers.
 endif
 
+config DEPTHCHARGE_PARTITION_IMAGE
+	bool "Build a depthcharge kernel partition to chainload into U-Boot"
+	select BINMAN
+	select FIT
+	help
+		ChromeOS devices ship with a firmware/bootloader (depthcharge)
+		that implements a custom verified boot flow which depends on
+		custom images written to ChromeOS Kernel GPT partitions. Enable
+		this option to produce such an image (u-boot-depthcharge.kpart)
+		which should make depthcharge chainload into U-Boot.
+
+config DEPTHCHARGE_PARTITION_IMAGE_SPL
+	bool "Build a depthcharge kernel partition to chainload into U-Boot SPL"
+	select BINMAN
+	select FIT
+	depends on SPL
+	help
+		ChromeOS devices ship with a firmware/bootloader (depthcharge)
+		that implements a custom verified boot flow which depends on
+		custom images written to "ChromeOS Kernel" GPT partitions. Enable
+		this option to produce such an image (u-boot-spl-depthcharge.kpart)
+		which should make depthcharge chainload into U-Boot SPL.
+
+config DEPTHCHARGE_KERNEL_START
+	hex "Address of the memory region where depthcharge loads its kernel image"
+	depends on DEPTHCHARGE_PARTITION_IMAGE || DEPTHCHARGE_PARTITION_IMAGE_SPL
+	help
+		This is the CONFIG_KERNEL_START value from depthcharge sources.
+		See doc/README.chromium-chainload to how to properly find the
+		value your machine's vendor-compiled firmware uses.
+
+config DEPTHCHARGE_KERNEL_SIZE
+	hex "Size of the memory region where depthcharge loads its kernel image"
+	depends on DEPTHCHARGE_PARTITION_IMAGE || DEPTHCHARGE_PARTITION_IMAGE_SPL
+	help
+		This is the CONFIG_KERNEL_SIZE value from depthcharge sources.
+		See doc/README.chromium-chainload to how to properly find the
+		value your machine's vendor-compiled firmware uses.
+
 source "arch/arm/mach-aspeed/Kconfig"
 
 source "arch/arm/mach-at91/Kconfig"
