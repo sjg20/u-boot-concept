@@ -1,0 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0+
+
+#include "rk3288-veyron-u-boot.dtsi"
+#include "depthcharge-fit-u-boot.dtsi"
