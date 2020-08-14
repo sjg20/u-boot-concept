@@ -16,6 +16,9 @@ class Part_ykush(Part):
         _serial: Serial number of the Ykusb
         _symlink: Symlink to the device
     """
+    VENDOR = 0x04d8
+    PRODUCT = 0xf2f7
+
     def load(self, yam):
         """Load the object from a yaml definition
 
@@ -153,12 +156,14 @@ class Part_ykush(Part):
             'name': str(self),
             'serial': self._serial,
             'symlink': self._symlink,
+            'product': '%04x' % self.PRODUCT,
+            'vendor': '%04x' % self.VENDOR,
             }
         out = '''# {name}
 ACTION=="add|bind" \\
 , SUBSYSTEM=="usb" \\
-, ATTR{{idProduct}}=="f2f7" \\
-, ATTR{{idVendor}}=="04d8" \\
+, ATTR{{idProduct}}=="{product}" \\
+, ATTR{{idVendor}}=="{vendor}" \\
 , ATTR{{serial}}=="{serial}" \\
 , MODE="0666" \\
 , SYMLINK+="{symlink}"
@@ -206,3 +211,13 @@ ACTION=="add|bind" \\
             return 'self.ykush_set_power(False)'
         elif prop == 'delay':
             return 'self.ykush_delay()'
+
+    @classmethod
+    def guess_part(cls, lab, phys):
+        result = lab.get_usb_files(phys + '.4', 'idProduct', 'idVendor', 'serial')
+        if not result:
+            return
+        if (result['idVendor'] == '%04x' % cls.VENDOR and
+            result['idProduct'] == '%04x' % cls.PRODUCT):
+            return result['serial']
+        return None

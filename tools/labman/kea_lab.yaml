@@ -435,9 +435,22 @@ ykushs:
       port3: &ykush1_port3
         port-number: 3
 
+  ykush2: &ykush2
+    serial: YK19191
+    symlink: ykush2
+    hub-port: *huba_15
+    hub-power-port: *hube_10
+    ports:
+      port1: &ykush2_port1
+        port-number: 1
+      port2: &ykush2_port2
+        port-number: 2
+      port3: &ykush2_port3
+        port-number: 3
+
 dfus:
   dfu0: &dfu_usb0
-    hub-port: *huba_15
+    hub-port: *ykush2_port1
     symlink: usbdev-edison
 
 at91usbs:
