@@ -452,6 +452,7 @@ intelusbs:
   intelusb0: &intel_usb0
     hub-port: *ykush2_port1
     symlink: usbdev-edison
+    retries: 1
 
 at91usbs:
   at91-usb0: &sn9260_send
@@ -1019,8 +1020,8 @@ duts:
     console: *ttyusb_port17
     power: *dli_second_port5
     reset: *usbrelay2_port5
-    recovery: *usbrelay2_port6  # FM button (firmware recovery)
-    recovery-extra: *usbrelay2_port7  # RM buton (recovery mode)
+    recovery: *usbrelay2_port6  # FW button (firmware recovery, green)
+    recovery-extra: *usbrelay2_port7  # RM button (select receiver mode, blue)
     send:
       method: edison
       device: *intel_usb0

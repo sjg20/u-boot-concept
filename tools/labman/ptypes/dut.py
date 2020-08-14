@@ -410,7 +410,7 @@ LINUX = {class_name}Linux
     def get_send_device(self):
         return self._send_device
 
-    def setup_recovery(self, use_ts_method):
+    def setup_recovery(self, use_ts_method, use_power_cycle):
         "Enable recovery and assert reset (or power off)"""
         if use_ts_method:
             tout.Detail('%s: Recovery: Using select_ts, power' % str(self))
@@ -426,23 +426,33 @@ LINUX = {class_name}Linux
             if self._recovery_extra:
                 self._recovery_extra.obj.set_power(True,
                                                    self._recovery_extra.port)
-            if self._reset:
+            if self._reset and not use_power_cycle:
                 self._reset.obj.set_power(True, self._reset.port)
                 time.sleep(.1)
             else:
                 self._power.obj.set_power(False, self._power.port)
+
+                # Disable the hub port that the USB DFU connects to, if we
+                # can, since we may supply power to the board even when the
+                # main power is off. This can prevent a proper reset.
+                hub = self._send_device.obj.hub
+                hub.obj.set_power(False, hub.port)
                 time.sleep(1)
 
-    def initiate_recovery(self, use_ts_method):
+    def initiate_recovery(self, use_ts_method, use_power_cycle):
         """Power-on (or de-assert reset) so that the board goes into recovery"""
         if use_ts_method:
             self._power.obj.set_power(True, self._power.port)
         else:
-            if self._reset:
+            if self._reset and not use_power_cycle:
                 self._reset.obj.set_power(False, self._reset.port)
                 time.sleep(.1)
             else:
                 self._power.obj.set_power(True, self._power.port)
+
+                # Enable the hub port that the USB DFU connects to
+                hub = self._send_device.obj.hub
+                hub.obj.set_power(True, hub.port)
                 time.sleep(1)
 
     def complete_recovery(self, use_ts_method):
@@ -456,13 +466,16 @@ LINUX = {class_name}Linux
         use_ts_method = (not self._send_device or
             self._send_device.obj.recovery_method ==
             Part_usbboot.Method.BOOTDEV_TS_RESET)
+        use_power_cycle = (not use_ts_method and
+            self._send_device.obj.recovery_method ==
+            Part_usbboot.Method.RECOVERY_POWER_EXTRA)
         try:
             # Out of 100 runs, pcduino3 required 5 attempts once, 4 attempts
             # 4 times, 3 attempts 9 times, 2 attempts 21 times and the rest
             # succeeded on the first attempt.
             for attempt in range(retries):
-                self.setup_recovery(use_ts_method)
-                self.initiate_recovery(use_ts_method)
+                self.setup_recovery(use_ts_method, use_power_cycle)
+                self.initiate_recovery(use_ts_method, use_power_cycle)
                 msg = ''
                 start_time = datetime.now()
 
