@@ -448,8 +448,8 @@ ykushs:
       port3: &ykush2_port3
         port-number: 3
 
-dfus:
-  dfu0: &dfu_usb0
+intelusbs:
+  intelusb0: &intel_usb0
     hub-port: *ykush2_port1
     symlink: usbdev-edison
 
@@ -1023,7 +1023,7 @@ duts:
     recovery-extra: *usbrelay2_port7  # RM buton (recovery mode)
     send:
       method: edison
-      device: *dfu_usb0
+      device: *intel_usb0
     builds:
       edison:
         target: edison

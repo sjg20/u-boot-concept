@@ -95,7 +95,7 @@ class Part_dut(Part, Power):
                 self._send_device = self.lookup_part_ref(send, 'device')
             if self._send_method == 'edison':
                 self._send_device.obj.set_recovery_method(
-                    Part_usbboot.Method.RECOVERY_RESET_EXTRA)
+                    Part_usbboot.Method.RECOVERY_POWER_EXTRA)
             elif self._recovery:
                 self._send_device.obj.set_recovery_method(
                     Part_usbboot.Method.RECOVERY_RESET)
@@ -455,7 +455,7 @@ LINUX = {class_name}Linux
     def reset_to_recovery(self, symlink, retries):
         use_reset_method = (self._send_device and
             self._send_device.obj.recovery_method in
-            [Part_usbboot.Method.RECOVERY_RESET_EXTRA,
+            [Part_usbboot.Method.RECOVERY_POWER_EXTRA,
              Part_usbboot.Method.RECOVERY_RESET])
         try:
             # Out of 100 runs, pcduino3 required 5 attempts once, 4 attempts

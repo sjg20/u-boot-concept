@@ -26,8 +26,8 @@ class Part_usbboot(Part):
         RECOVERY_RESET = auto()
         # Reset while the MMC is not available to the DUT
         BOOTDEV_TS_RESET = auto()
-        # Reset while pressing the recovery button plus another button
-        RECOVERY_RESET_EXTRA = auto()
+        # Power cycle while pressing the recovery button plus another button
+        RECOVERY_POWER_EXTRA = auto()
 
     def __init__(self):
         super().__init__()
