@@ -494,6 +494,13 @@ tegrarcms:
     bct: /vid/software/devel/tegra/tegra-uboot-flasher-scripts/jetson-tk1/PM375_Hynix_2GB_H5TC4G63AFR_RDA_924MHz.bct
     loadaddr: 0x80108000
 
+  tegra-usb1: &nyan_big_send
+    hub-port: *hube_9
+    symlink: usbdev-nyan-big
+    #bct: /vid/software/devel/tegra/nyan-big.bct
+    bct: /vid/software/devel/tegra/cbootimage-configs/tegra124/nvidia/norrin/PM370_Hynix_2GB_H5TC4G63AFR_PBA_924MHz_01212014.bct
+    loadaddr: 0x80108000
+
 uarts:
   usbport1: &ttyusb_port1
     type: usb-uart
@@ -821,6 +828,9 @@ duts:
     password: test0000
     flash:
       method: em100
+    send:
+      method: tegra
+      device: *nyan_big_send
     network:
       method: ethernet
       mac-address: 94:eb:2c:15:84:a3
