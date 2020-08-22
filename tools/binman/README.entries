@@ -11,6 +11,16 @@ features to produce new behaviours.
 
 
 
+Entry: atf-bl31: Entry containing an ARM Trusted Firmware (ATF) BL31 blob
+-------------------------------------------------------------------------
+
+Properties / Entry arguments:
+    - atf-bl31-path: Filename of file to read into entry
+
+This entry holds the run-time firmware started by ATF.
+
+
+
 Entry: blob: Entry containing an arbitrary binary blob
 ------------------------------------------------------
 
