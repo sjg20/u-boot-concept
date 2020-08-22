@@ -8,7 +8,7 @@
 from collections import defaultdict, OrderedDict
 import libfdt
 
-from binman.entry import Entry
+from binman.entry import Entry, EntryArg
 from dtoc import fdt_util
 from dtoc.fdt import Fdt
 from patman import tools
@@ -27,6 +27,7 @@ class Entry_fit(Entry):
         binman {
             fit {
                 description = "Test FIT";
+                fit,fdt-list = "of-list";
 
                 images {
                     kernel@1 {
@@ -45,7 +46,46 @@ class Entry_fit(Entry):
             };
         };
 
-    Properties:
+    U-Boot supports creating fdt and config nodes automatically. To do this,
+    pass an of-list property (e.g. -a of-list=file1 file2). This tells binman
+    that you want to generates nodes for two files: file1.dtb and file2.dtb
+    The fit,fdt-list property (see above) indicates that of-list should be used.
+
+    Then add a 'generator node', a node with a name starting with '@':
+
+        @fdt-SEQ {
+            description = "fdt-NAME";
+            type = "flat_dt";
+            compression = "none";
+        };
+
+    This tells binman to create nodes fdt-1 and fdt-2 for each of your two
+    files. All the properties you specify will be included in the node. This
+    node acts like a template to generate the nodes. The generator node itself
+    does not appear in the output - it is replaced with what binman generates.
+
+    You can create config nodes in a similar way:
+
+        @config-SEQ {
+            description = "NAME";
+            firmware = "uboot";
+            loadables = "atf";
+            fdt = "fdt-SEQ";
+        };
+
+    This tells binman to create nodes config-1 and config-2, i.e. a config for
+    each of your two files.
+
+    Available substitutions for '@' nodes are:
+
+        SEQ    Sequence number of the generated fdt (1, 2, ...)
+        NAME   Name of the dtb as provided (i.e. without adding '.dtb')
+
+    Note that if no device tree files are provided (with '-a of-list' as above)
+    then no nodes will be generated.
+
+
+    Properties (in the 'fit' node itself):
         fit,external-offset: Indicates that the contents of the FIT are external
             and provides the external offset. This is passsed to mkimage via
             the -E and -p flags.
@@ -64,6 +104,15 @@ class Entry_fit(Entry):
         self._fit = None
         self._fit_content = defaultdict(list)
         self._fit_props = {}
+        for pname, prop in self._node.props.items():
+            if pname.startswith('fit,'):
+                self._fit_props[pname] = prop
+
+        self._fdts = []
+        list_prop = self._fit_props.get('fit,fdt-list')
+        if list_prop:
+            fdts, = self.GetEntryArgsOrProps([EntryArg(list_prop.value, str)])
+            self._fdts = fdts and fdts.split() or []
 
     def ReadNode(self):
         self._ReadSubnodes()
@@ -84,13 +133,12 @@ class Entry_fit(Entry):
                   image
             """
             for pname, prop in node.props.items():
-                if pname.startswith('fit,'):
-                    self._fit_props[pname] = prop
-                else:
+                if not pname.startswith('fit,'):
                     fsw.property(pname, prop.bytes)
 
             rel_path = node.path[len(base_node.path):]
-            has_images = depth == 2 and rel_path.startswith('/images/')
+            in_images = rel_path.startswith('/images')
+            has_images = depth == 2 and in_images
             for subnode in node.subnodes:
                 if has_images and not (subnode.name.startswith('hash') or
                                        subnode.name.startswith('signature')):
@@ -100,6 +148,22 @@ class Entry_fit(Entry):
                     entry = Entry.Create(self.section, subnode)
                     entry.ReadNode()
                     self._fit_content[rel_path].append(entry)
+                elif subnode.name.startswith('@'):
+                    for seq, fdt_fname in enumerate(self._fdts):
+                        node_name = subnode.name[1:].replace('SEQ',
+                                                             str(seq + 1))
+                        fname = tools.GetInputFilename(fdt_fname + '.dtb')
+                        with fsw.add_node(node_name):
+                            for pname, prop in subnode.props.items():
+                                val = prop.bytes.replace(
+                                    b'NAME', tools.ToBytes(fdt_fname))
+                                val = val.replace(b'SEQ',
+                                                  tools.ToBytes(str(seq + 1)))
+                                fsw.property(pname, val)
+
+                                # Add data for 'fdt' nodes (but not 'config')
+                                if depth == 1 and in_images:
+                                    fsw.property('data', tools.ReadFile(fname))
                 else:
                     with fsw.add_node(subnode.name):
                         _AddNode(base_node, depth + 1, subnode)
