@@ -213,4 +213,4 @@ def patchwork_status(branch, count, start, end, dest_branch, force,
     # are not present
     from patman import status
     status.check_patchwork_status(series, link, branch, dest_branch, force,
-show_comments)
+                                  show_comments)
