@@ -216,6 +216,7 @@ def find_responses(url):
                 rtags[response].update(people)
             if pstrm.snippets:
                 reviews.append(Review(meta.get_text(), pstrm.snippets))
+
     return rtags, reviews
 
 def collect_patches(series, url):
@@ -388,6 +389,8 @@ def create_branch(series, new_rtag_list, branch, dest_branch, overwrite):
             raise ValueError("Branch '%s' already exists (-f to overwrite)" %
                              dest_branch)
         new_br.delete()
+    if not branch:
+        branch = 'HEAD'
     target = repo.revparse_single('%s~%d' % (branch, count))
     repo.branches.local.create(dest_branch, target)
 
@@ -407,7 +410,7 @@ def create_branch(series, new_rtag_list, branch, dest_branch, overwrite):
             for who in people:
                 lines.append('%s: %s' % (tag, who))
                 num_added += 1
-        message = cherry.message + '\n'.join(lines)
+        message = cherry.message.rstrip() + '\n' + '\n'.join(lines)
 
         repo.create_commit(
             parent.name, cherry.author, cherry.committer, message, tree_id,

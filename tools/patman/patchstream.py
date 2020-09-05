@@ -50,6 +50,8 @@ re_space_before_tab = re.compile('^[+].* \t')
 # Match indented lines for changes
 re_leading_whitespace = re.compile('^\s')
 
+re_diff = re.compile(r'^>.*diff --git a/(.*) b/(.*)$')
+
 # States we can be in - can we use range() and still have comments?
 STATE_MSG_HEADER = 0        # Still in the message header
 STATE_PATCH_SUBJECT = 1     # In patch subject (first line of log for a commit)
@@ -80,12 +82,14 @@ class PatchStream:
         self.change_lines = []           # Lines of the current change
         self.blank_count = 0             # Number of blank lines stored up
         self.state = STATE_MSG_HEADER    # What state are we in?
-        self.signoff = []                # Contents of signoff line
         self.commit = None               # Current commit
         self.snippets = []               # List of unquoted test blocks
+        self.recent_diff = None          # Last 'diff' line seen (str)
         self.recent_quoted = collections.deque([], 5)
         self.recent_unquoted = queue.Queue()
         self.was_quoted = None
+        self.saw_signoff = False         # Found sign-off line for this commit
+        self.saw_change_id = False       # Found Change-Id for this commit
 
     def AddToSeries(self, line, name, value):
         """Add a new Series-xxx tag.
@@ -140,6 +144,9 @@ class PatchStream:
             self.in_section = None
             self.skip_blank = True
             self.section = []
+
+        self.saw_signoff = False
+        self.saw_change_id = False
 
     def ParseVersion(self, value, line):
         """Parse a version from a *-changes tag
@@ -199,7 +206,10 @@ class PatchStream:
             if text:
                 valid = True
         if valid:
-            lines = quoted_lines + unquoted_lines
+            lines = []
+            if self.recent_diff:
+                lines.append('> File: %s' % self.recent_diff)
+            lines += quoted_lines + unquoted_lines
             if lines[0].startswith('On ') and lines[0].endswith('wrote:'):
                 lines = lines[1:]
             if lines:
@@ -246,6 +256,7 @@ class PatchStream:
         cover_match = re_cover.match(line)
         signoff_match = re_signoff.match(line)
         leading_whitespace_match = re_leading_whitespace.match(line)
+        diff_match = re_diff.match(line)
         tag_match = None
         if self.state == STATE_PATCH_HEADER:
             tag_match = re_tag.match(line)
@@ -332,6 +343,10 @@ class PatchStream:
         elif cover_match:
             name = cover_match.group(1)
             value = cover_match.group(2)
+            if self.saw_signoff or self.saw_change_id:
+                self.warn.append(
+                    "Tag 'Cover-%s' should be before sign-off / Change-Id" %
+                    name)
             if name == 'letter':
                 self.in_section = 'cover'
                 self.skip_blank = False
@@ -363,6 +378,10 @@ class PatchStream:
         elif series_tag_match:
             name = series_tag_match.group(1)
             value = series_tag_match.group(2)
+            if self.saw_signoff or self.saw_change_id:
+                self.warn.append(
+                    "Tag 'Series-%s' should be before sign-off / Change-Id" %
+                    name)
             if name == 'changes':
                 # value is the version number: e.g. 1, or 2
                 self.in_change = 'Series'
@@ -374,6 +393,7 @@ class PatchStream:
         # Detect Change-Id tags
         elif change_id_match:
             value = change_id_match.group(1)
+            self.saw_change_id = True
             if self.is_log:
                 if self.commit.change_id:
                     raise ValueError("%s: Two Change-Ids: '%s' vs. '%s'" %
@@ -415,6 +435,7 @@ class PatchStream:
 
         # Suppress duplicate signoffs
         elif signoff_match:
+            self.saw_signoff = True
             if (self.is_log or not self.commit or
                 self.commit.CheckDuplicateSignoff(signoff_match.group(1))):
                 out = [line]
@@ -431,6 +452,9 @@ class PatchStream:
             out = [line]
             self.linenum += 1
             self.skip_blank = False
+
+            if diff_match:
+                self.recent_diff = diff_match.group(1)
 
             # If this is quoted, keep recent lines
             if self.linenum > 1 and line:
