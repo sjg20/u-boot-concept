@@ -409,7 +409,7 @@ def create_branch(series, new_rtag_list, branch, dest_branch, overwrite):
             for who in people:
                 lines.append('%s: %s' % (tag, who))
                 num_added += 1
-        message = cherry.message + '\n' + '\n'.join(lines)
+        message = cherry.message.rstrip() + '\n' + '\n'.join(lines)
 
         repo.create_commit(
             parent.name, cherry.author, cherry.committer, message, tree_id,

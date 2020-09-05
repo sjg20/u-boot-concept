@@ -109,6 +109,7 @@ class PatchStream:
             warn = self.series.AddTag(self.commit, line, name, value)
             if warn:
                 self.warn.append(warn)
+                print('warn', self.commit, self.warn)
 
     def AddToCommit(self, line, name, value):
         """Add a new Commit-xxx tag.
@@ -136,7 +137,8 @@ class PatchStream:
     def CloseCommit(self):
         if self.commit:
             self.commit.warn = self.warn
-        self.warn = []
+            print('clear', self.commit.warn)
+            self.warn = []
 
         """Save the current commit into our commit list, and reset our state"""
         if self.commit and self.is_log:
