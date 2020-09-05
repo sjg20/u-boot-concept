@@ -273,9 +273,8 @@ def collect_patches(series, url):
             if name == 'patch':
                 patch.set_url(urljoin(url, col.a['href']))
         if patch.count != count:
-            raise ValueError(
-                "Patch %d '%s' has count of %d, expected %d" %
-                (patch.seq, patch.subject, patch.count, num_commits))
+            print("Warning: Patch %d '%s' suggests a series count of %d, expected %d" %
+                  (patch.seq, patch.subject, patch.count, num_commits))
         patches.append(patch)
 
     # Sort patches by patch number
