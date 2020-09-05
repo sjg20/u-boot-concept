@@ -44,7 +44,11 @@
 
 /*------------------------- Global Variables ------------------------------*/
 
+/* Definite this here since the emulator is not present on 64-bit */
+#ifdef CONFIG_X86_64
 X86EMU_sysEnv _X86EMU_env;	/* Global emulator machine state */
+#endif
+
 X86EMU_intrFuncs _X86EMU_intrTab[256];
 
 int debug_intr;
