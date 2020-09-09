@@ -19,6 +19,7 @@
 #include <common.h>
 #include <asm/u-boot.h>
 #include <linux/errno.h>
+#include <linux/kernel.h>
 #include <linux/sizes.h>
 #include <mmc.h>
 #include <power/pmic.h>

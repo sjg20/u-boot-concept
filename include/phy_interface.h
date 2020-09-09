@@ -10,6 +10,8 @@
 #ifndef _PHY_INTERFACE_H
 #define _PHY_INTERFACE_H
 
+#include <stdbool.h>
+#include <linux/kernel.h>
 #include <linux/string.h>
 typedef enum {
 	PHY_INTERFACE_MODE_MII,

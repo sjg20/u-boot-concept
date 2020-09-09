@@ -24,6 +24,7 @@
 #include <i2c.h>
 #include <miiphy.h>
 #include <asm/u-boot.h>
+#include <linux/kernel.h>
 #include <linux/sizes.h>
 #include <mmc.h>
 #include <netdev.h>

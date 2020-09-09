@@ -12,6 +12,7 @@
 #include <asm/immap_85xx.h>
 #include <asm/fsl_serdes.h>
 #include <asm/u-boot.h>
+#include <linux/kernel.h>
 
 #define SRDS1_MAX_LANES		4
 #define SRDS2_MAX_LANES		2

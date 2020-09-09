@@ -15,6 +15,7 @@
 #include <asm/gpio.h>
 #include <asm/io.h>
 #include <linux/errno.h>
+#include <linux/kernel.h>
 #include <linux/string.h>
 
 enum mxc_gpio_direction {

@@ -22,6 +22,7 @@
 #include <asm/arch/clock.h>
 #include <spl.h>
 #include <asm/u-boot.h>
+#include <linux/kernel.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

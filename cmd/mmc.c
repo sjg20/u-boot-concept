@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <vsprintf.h>
 #include <asm/u-boot.h>
+#include <linux/kernel.h>
 #include <linux/string.h>
 
 static int curr_device = -1;

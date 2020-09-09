@@ -15,6 +15,7 @@
 #include <asm/u-boot.h>
 #include <linux/delay.h>
 #include <linux/errno.h>
+#include <linux/kernel.h>
 #include <linux/string.h>
 
 #include <asm/arch/clock.h>

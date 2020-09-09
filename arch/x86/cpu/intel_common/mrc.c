@@ -22,6 +22,7 @@
 #include <asm/report_platform.h>
 #include <asm/u-boot.h>
 #include <linux/errno.h>
+#include <linux/kernel.h>
 
 static const char *const ecc_decoder[] = {
 	"inactive",

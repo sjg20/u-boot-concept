@@ -6,6 +6,7 @@
 #ifndef _PART_H
 #define _PART_H
 
+#include <compiler.h>
 #include <blk.h>
 #include <ide.h>
 #include <uuid.h>

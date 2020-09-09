@@ -11,6 +11,7 @@
 #include <asm/fsl_law.h>
 #include <asm/mmu.h>
 #include <asm/u-boot.h>
+#include <linux/kernel.h>
 
 struct law_entry law_table[] = {
 #ifdef CONFIG_VSC7385_ENET

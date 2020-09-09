@@ -7,6 +7,7 @@
 #ifndef BLK_H
 #define BLK_H
 
+#include <compiler.h>
 #include <efi.h>
 
 #ifdef CONFIG_SYS_64BIT_LBA

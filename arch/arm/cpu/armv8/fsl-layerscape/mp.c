@@ -17,6 +17,7 @@
 #include <asm/arch/soc.h>
 #include <asm/u-boot.h>
 #include <linux/delay.h>
+#include <linux/kernel.h>
 #include <linux/string.h>
 #include "cpu.h"
 #include <asm/arch-fsl-layerscape/soc.h>

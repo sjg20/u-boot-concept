@@ -12,6 +12,7 @@
 #include <asm/immap_85xx.h>
 #include <asm/fsl_serdes.h>
 #include <asm/u-boot.h>
+#include <linux/kernel.h>
 
 /* PORDEVSR register */
 #define GUTS_PORDEVSR_OFFS		0xc

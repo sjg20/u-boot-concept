@@ -10,6 +10,7 @@
 #define _SPI_FLASH_H_
 
 #include <dm.h>	/* Because we dereference struct udevice here */
+#include <stdbool.h>
 #include <stdio.h>
 #include <linux/errno.h>
 #include <linux/string.h>

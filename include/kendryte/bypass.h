@@ -6,6 +6,7 @@
 #define K210_BYPASS_H
 
 #include <clk.h>
+#include <linux/kernel.h>
 
 struct k210_bypass {
 	struct clk clk;

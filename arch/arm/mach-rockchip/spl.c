@@ -18,6 +18,7 @@
 #include <asm/io.h>
 #include <asm/u-boot.h>
 #include <linux/bitops.h>
+#include <linux/kernel.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

@@ -20,6 +20,7 @@
 #include <asm/fsl_law.h>
 #include <linux/delay.h>
 #include <linux/errno.h>
+#include <linux/kernel.h>
 #include "fsl_corenet_serdes.h"
 
 /*

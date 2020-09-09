@@ -14,6 +14,7 @@
 #include <dm/util.h>
 #include <asm/gpio.h>
 #include <linux/errno.h>
+#include <linux/kernel.h>
 #include <test/ut.h>
 
 /* Test that sandbox GPIOs work correctly */

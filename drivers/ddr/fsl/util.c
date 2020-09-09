@@ -8,6 +8,7 @@
 #include <asm/fsl_law.h>
 #endif
 #include <div64.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <asm/u-boot.h>
 #include <linux/delay.h>

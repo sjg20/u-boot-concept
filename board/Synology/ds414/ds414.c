@@ -14,6 +14,7 @@
 #include <asm/arch/soc.h>
 #include <asm/u-boot.h>
 #include <linux/bitops.h>
+#include <linux/kernel.h>
 #include <linux/mbus.h>
 
 #include "../drivers/ddr/marvell/axp/ddr3_hw_training.h"

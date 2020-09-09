@@ -14,6 +14,7 @@
 #elif defined(CONFIG_FSL_LAYERSCAPE)
 #include <asm/arch/soc.h>
 #endif
+#include <stdbool.h>
 #include <asm/u-boot.h>
 
 

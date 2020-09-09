@@ -18,6 +18,7 @@
 #include <asm/global_data.h>
 #include <asm/u-boot.h>
 #include <linux/errno.h>
+#include <linux/kernel.h>
 #include <linux/printk.h>
 #include <linux/string.h>
 

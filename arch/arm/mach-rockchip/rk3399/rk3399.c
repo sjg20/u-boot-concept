@@ -20,6 +20,7 @@
 #include <asm/arch-rockchip/hardware.h>
 #include <asm/u-boot.h>
 #include <linux/bitops.h>
+#include <linux/kernel.h>
 #include <linux/printk.h>
 #include <power/regulator.h>
 

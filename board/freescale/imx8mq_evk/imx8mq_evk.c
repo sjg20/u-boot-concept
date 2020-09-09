@@ -24,6 +24,7 @@
 #include <spl.h>
 #include <asm/u-boot.h>
 #include <linux/bitops.h>
+#include <linux/kernel.h>
 #include <power/pmic.h>
 #include <power/pfuze100_pmic.h>
 #include "../common/pfuze.h"
