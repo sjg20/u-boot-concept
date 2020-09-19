@@ -364,7 +364,8 @@ int setup_zimage(struct boot_params *setup_base, char *cmd_line, int auto_boot,
 		ARRAY_SIZE(setup_base->e820_map), setup_base->e820_map);
 
 	log_debug("Write Chrome OS stuff\n");
-	write_chromos_acpi();
+	if (USE_GOLDEN)
+		write_chromos_acpi();
 
 	if (bootproto == 0x0100) {
 		setup_base->screen_info.cl_magic = COMMAND_LINE_MAGIC;

@@ -159,7 +159,6 @@ static int da7219_acpi_setup_nhlt(const struct udevice *dev,
 	u32 hwlink;
 	int ret;
 
-	log_debug("here\n");
 	if (dev_read_u32(dev, "acpi,audio-link", &hwlink))
 		return log_msg_ret("link", -EINVAL);
 

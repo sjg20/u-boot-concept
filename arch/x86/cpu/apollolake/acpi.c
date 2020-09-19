@@ -100,6 +100,8 @@ int acpi_create_gnvs(struct acpi_global_nvs *gnvs)
 
 	/* Enable DPTF based on mainboard configuration */
 	gnvs->dpte = cfg->dptf_enable;
+	gnvs->dpte = 1;
+	//hack
 
 	/* Assign address of PERST_0 if GPIO is defined in devicetree */
 	if (0 && cfg->prt0_gpio != GPIO_PRT0_UDEF) {
@@ -129,6 +131,7 @@ int acpi_create_gnvs(struct acpi_global_nvs *gnvs)
 	cros->active_main_fw = 1;
 	cros->switches = CHSW_DEVELOPER_SWITCH;
 	cros->main_fw_type = 2;
+
 
 	return 0;
 }

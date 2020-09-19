@@ -54,6 +54,9 @@
 		recovery-gpios = <&gpio_nw (-1) GPIO_ACTIVE_LOW>;
 		write-protect-gpios = <&gpio_nw GPIO_75 GPIO_ACTIVE_HIGH>;
 		phase-enforce-gpios = <&gpio_n GPIO_10 GPIO_ACTIVE_HIGH>;
+		smbios {
+			manufacture = "Google";
+		};
 	};
 
 	config {
@@ -165,7 +168,7 @@
 
 		gma@2,0 {
 			reg = <0x00001000 0 0 0 0>;
-			compatible = "vesa-fb";
+			compatible = "fsp-fb";
 		};
 
 		p2sb: p2sb@d,0 {
@@ -783,7 +786,7 @@
 	 * [6:0] steps of delay for HS200, each 125ps
 	 */
 	/* Enable DPTF */
-	dptf-enable;
+	fsps,dptf-enabled;
 	fsps,emmc-tx-data-cntl1 = <0x0c16>;
 	fsps,emmc-tx-data-cntl2 = <0x28162828>;
 	fsps,emmc-rx-cmd-data-cntl1 = <0x00181717>;

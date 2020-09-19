@@ -436,6 +436,7 @@ int nhlt_serialise_oem_overrides(struct acpi_ctx *ctx, struct nhlt *nhlt,
 
 	header->checksum = table_compute_checksum(header, sz);
 	nhlt_free_resources(nhlt);
+	assert(cur.buf - cur.start == sz);
 
 	ret = acpi_add_table(ctx, ctx->current);
 	if (ret)

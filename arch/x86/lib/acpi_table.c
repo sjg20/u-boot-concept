@@ -492,8 +492,9 @@ static void acpi_ssdt_write_cbtable(struct acpi_ctx *ctx)
 	acpigen_pop_len(ctx);
 }
 
-void acpi_create_ssdt(struct acpi_ctx *ctx, struct acpi_table_header *ssdt,
-		      const char *oem_table_id)
+static int acpi_create_ssdt(struct acpi_ctx *ctx,
+			    struct acpi_table_header *ssdt,
+			    const char *oem_table_id)
 {
 	memset((void *)ssdt, '\0', sizeof(struct acpi_table_header));
 
@@ -508,9 +509,19 @@ void acpi_create_ssdt(struct acpi_ctx *ctx, struct acpi_table_header *ssdt,
 	acpi_ssdt_write_cbtable(ctx);
 	acpi_fill_ssdt(ctx);
 
-	/* (Re)calculate length and checksum. */
+	/* (Re)calculate length and checksum */
 	ssdt->length = ctx->current - (void *)ssdt;
 	ssdt->checksum = table_compute_checksum((void *)ssdt, ssdt->length);
+	log_debug("SSDT at %p, length %x\n", ssdt, ssdt->length);
+
+	/* Drop the table if it is empty */
+	if (ssdt->length == sizeof(struct acpi_table_header)) {
+		ctx->current = ssdt;
+		return -ENOENT;
+	}
+	acpi_align(ctx);
+
+	return 0;
 }
 
 int hack_in_golden_tables_cbfs(void)
@@ -575,13 +586,13 @@ int hack_in_golden_tables(void)
 	bool doit = USE_GOLDEN;
 	int ret;
 
-	printf("\n\nGolden tables (binman)\n");
+	printf("\n\nGolden tables (binman), write=%d\n", doit);
 
 	ret = binman_entry_map(ofnode_null(), "acpi", &acpi, &acpi_size);
 	if (ret)
 		return log_msg_ret("acpi", ret);
-	print_buffer((ulong)acpi, acpi, 1, 0x20, 0);
 	printf("acpi=%p, length=%x\n", acpi, acpi_size);
+	print_buffer((ulong)acpi, acpi, 1, 0x20, 0);
 	if (doit) {
 		memcpy((void *)0x7aaf1000, acpi, acpi_size);
 		*(ulong *)0xf0010 = 0x7aaf1030;
@@ -590,24 +601,24 @@ int hack_in_golden_tables(void)
 	ret = binman_entry_map(ofnode_null(), "gnvs", &gnvs, &gnvs_size);
 	if (ret)
 		return log_msg_ret("gnvs", ret);
-	print_buffer((ulong)gnvs, gnvs, 1, 0x20, 0);
 	printf("gnvs=%p, length=%x\n", gnvs, gnvs_size);
+	print_buffer((ulong)gnvs, gnvs, 1, 0x100, 0);
 	if (doit)
 		memcpy((void *)0x7ab2d000, gnvs, gnvs_size);
 
 	ret = binman_entry_map(ofnode_null(), "f0000", &f0000, &f0000_size);
 	if (ret)
 		return log_msg_ret("f0000", ret);
-	print_buffer((ulong)f0000, f0000, 1, 0x20, 0);
 	printf("f0000=%p, length=%x\n", f0000, f0000_size);
+	print_buffer((ulong)f0000, f0000, 1, 0x20, 0);
 	if (doit)
 		memcpy((void *)0xf0000, f0000, f0000_size);
 
 	ret = binman_entry_map(ofnode_null(), "smbios", &smbios, &smbios_size);
 	if (ret)
 		return log_msg_ret("smbios", ret);
-	print_buffer((ulong)smbios, smbios, 1, 0x20, 0);
 	printf("smbios=%p, length=%x\n", smbios, smbios_size);
+	print_buffer((ulong)smbios, smbios, 1, 0x20, 0);
 	if (doit)
 		memcpy((void *)0x7a9de000, smbios, smbios_size);
 
@@ -615,8 +626,8 @@ int hack_in_golden_tables(void)
 			       &coreboot_size);
 	if (ret)
 		return log_msg_ret("coreboot", ret);
-	print_buffer((ulong)coreboot, coreboot, 1, 0x20, 0);
 	printf("coreboot=%p, length=%x\n", coreboot, coreboot_size);
+	print_buffer((ulong)coreboot, coreboot, 1, 0x20, 0);
 	if (doit)
 		memcpy((void *)0x7ab33000, coreboot, coreboot_size);
 
@@ -733,11 +744,8 @@ ulong write_acpi_tables(ulong start_addr)
 
 	debug("ACPI:     * SSDT\n");
 	ssdt = (struct acpi_table_header *)ctx->current;
-	acpi_create_ssdt(ctx, ssdt, OEM_TABLE_ID);
-	if (ssdt->length > sizeof(struct acpi_table_header)) {
-		acpi_inc_align(ctx, ssdt->length);
+	if (!acpi_create_ssdt(ctx, ssdt, OEM_TABLE_ID))
 		acpi_add_table(ctx, ssdt);
-	}
 
 	debug("ACPI:    * MCFG\n");
 	mcfg = ctx->current;
@@ -880,6 +888,7 @@ int acpi_write_dbg2_pci_uart(struct acpi_ctx *ctx, struct udevice *dev,
 		log_info("Device not enabled\n");
 		return -EACCES;
 	}
+	log_debug("ACPI:    * DBG2\n");
 	/*
 	 * PCI devices don't remember their resource allocation information in
 	 * U-Boot at present. We assume that MMIO is used for the UART and that

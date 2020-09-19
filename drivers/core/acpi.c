@@ -6,6 +6,7 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
+#define LOG_DEBUG
 #define LOG_CATEOGRY	LOGC_ACPI
 
 #include <common.h>
@@ -268,8 +269,7 @@ int acpi_recurse_method(struct acpi_ctx *ctx, struct udevice *parent,
 	if (func) {
 		void *start = ctx->current;
 
-		log_debug("\n");
-		log_debug("- %s %p\n", parent->name, func);
+		log_debug("- method %d, %s %p\n", method, parent->name, func);
 		ret = device_ofdata_to_platdata(parent);
 		if (ret)
 			return log_msg_ret("ofdata", ret);
