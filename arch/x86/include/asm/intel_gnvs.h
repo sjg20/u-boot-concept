@@ -18,16 +18,32 @@
  */
 #define GNVS_CHROMEOS_ACPI_OFFSET 0x100
 
+enum {
+	CHSW_RECOVERY_X86 =		BIT(1),
+	CHSW_RECOVERY_EC =		BIT(2),
+	CHSW_DEVELOPER_SWITCH =		BIT(5),
+	CHSW_FIRMWARE_WP =		BIT(9),
+};
+
+enum {
+	FIRMWARE_TYPE_AUTO_DETECT = -1,
+	FIRMWARE_TYPE_RECOVERY = 0,
+	FIRMWARE_TYPE_NORMAL = 1,
+	FIRMWARE_TYPE_DEVELOPER = 2,
+	FIRMWARE_TYPE_NETBOOT = 3,
+	FIRMWARE_TYPE_LEGACY = 4,
+};
+
 struct __packed chromeos_acpi {
 	/* ChromeOS specific */
-	u32	vbt0;		// 00 boot reason
-	u32	vbt1;		// 04 active main firmware
-	u32	vbt2;		// 08 active ec firmware
-	u16	vbt3;		// 0c CHSW
+	u32	boot_reason;	// 00 boot reason
+	u32	active_main_fw;	// 04 (0=recovery, 1=A, 2=B)
+	u32	activeec_fw;	// 08 (0=RO, 1=RW)
+	u16	switches;	// 0c CHSW
 	u8	vbt4[256];	// 0e HWID
 	u8	vbt5[64];	// 10e FWID
 	u8	vbt6[64];	// 14e FRID - 275
-	u32	vbt7;		// 18e active main firmware type
+	u32	main_fw_type;	// 18e (2 = developer mode)
 	u32	vbt8;		// 192 recovery reason
 	u32	vbt9;		// 196 fmap base address
 	u8	vdat[3072];	// 19a VDAT space filled by verified boot
@@ -62,12 +78,8 @@ struct __packed acpi_global_nvs {
 	u64	emna; /* 0x2d - 0x34 EPC base address */
 	u64	elng; /* 0x35 - 0x3C EPC Length */
 	u8	unused1[0x100 - 0x3d];		/* Pad out to 256 bytes */
-#ifdef CONFIG_CHROMEOS
 	/* ChromeOS-specific (0x100 - 0xfff) */
 	struct chromeos_acpi chromeos;
-#else
-	u8	unused2[0x1000 - 0x100];	/* Pad out to 4096 bytes */
-#endif
 };
 
 #ifdef CONFIG_CHROMEOS

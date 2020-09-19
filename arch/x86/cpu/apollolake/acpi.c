@@ -122,6 +122,14 @@ int acpi_create_gnvs(struct acpi_global_nvs *gnvs)
 		gnvs->scdo = intel_pinctrl_get_acpi_pin(pinctrl, offset);
 	}
 
+	struct chromeos_acpi *cros = &gnvs->chromeos;
+
+#define FIRMWARE_TYPE_DEVELOPER		2
+
+	cros->active_main_fw = 1;
+	cros->switches = CHSW_DEVELOPER_SWITCH;
+	cros->main_fw_type = 2;
+
 	return 0;
 }
 

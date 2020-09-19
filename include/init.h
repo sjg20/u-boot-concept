@@ -12,7 +12,7 @@
 
 #include <linux/types.h>
 
-#define USE_GOLDEN	0
+#define USE_GOLDEN	1
 
 struct global_data;
 
