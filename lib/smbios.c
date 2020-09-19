@@ -53,22 +53,39 @@ static int smbios_add_string(char *start, const char *str)
 }
 
 /**
- * smbios_add_prop() - Add a property from the device tree
+ * smbios_add_prop_default() - Add a property from the device tree or default
  *
  * @start:	string area start address
- * @dev:	BOARD device containing the property values
  * @node:	node containing the information to write (ofnode_null() if none)
+ * @prop:	property to write
+ * @def:	default string if the node has no such property
  * @return 0 if not found, else SMBIOS string number (1 or more)
  */
-static int smbios_add_prop(char *start, ofnode node, const char *prop)
+static int smbios_add_prop_default(char *start, ofnode node, const char *prop,
+				   const char *def)
 {
 	const char *str;
 
 	str = ofnode_read_string(node, prop);
 	if (str)
 		return smbios_add_string(start, str);
+	else if (def)
+		return smbios_add_string(start, def);
 
 	return 0;
+}
+
+/**
+ * smbios_add_prop() - Add a property from the device tree
+ *
+ * @start:	string area start address
+ * @node:	node containing the information to write (ofnode_null() if none)
+ * @prop:	property to write
+ * @return 0 if not found, else SMBIOS string number (1 or more)
+ */
+static int smbios_add_prop(char *start, ofnode node, const char *prop)
+{
+	return smbios_add_prop_default(start, node, prop, NULL);
 }
 
 /**
@@ -130,24 +147,42 @@ static int smbios_write_type0(ulong *current, int handle, ofnode node)
 	return len;
 }
 
+static int smbios_add_serial(char *start, ofnode node)
+{
+	char *serial_str = env_get("serial#");
+
+	if (serial_str)
+		return smbios_add_string(start, serial_str);
+	else
+		return smbios_add_prop(start, node, "serial");
+
+}
+
+static void smbios_write_type1_2(char *start, struct smbios_type1 *t,
+				 ofnode node)
+{
+	t->manufacturer = smbios_add_prop_default(start, node, "manufactuer",
+						  CONFIG_SMBIOS_MANUFACTURER);
+	t->product_name = smbios_add_prop_default(start, node, "product",
+						  CONFIG_SMBIOS_PRODUCT_NAME);
+	t->version = smbios_add_prop(start, node, "version");
+	t->serial_number = smbios_add_serial(start, node);
+}
+
 static int smbios_write_type1(ulong *current, int handle, ofnode node)
 {
+	char *serial_str = env_get("serial#");
 	struct smbios_type1 *t;
 	int len = sizeof(struct smbios_type1);
-	char *serial_str = env_get("serial#");
 
 	t = map_sysmem(*current, len);
 	memset(t, 0, sizeof(struct smbios_type1));
 	fill_smbios_header(t, SMBIOS_SYSTEM_INFORMATION, len, handle);
-	t->manufacturer = smbios_add_prop(t->eos, node, "manufactuer");
-	if (!t->manufacturer)
-		t->manufacturer = smbios_add_string(t->eos,
-						    CONFIG_SMBIOS_MANUFACTURER);
-	t->product_name = smbios_add_string(t->eos, CONFIG_SMBIOS_PRODUCT_NAME);
-	if (serial_str) {
+	smbios_write_type1_2(t->eos, t, node);
+	if (serial_str)
 		strncpy((char *)t->uuid, serial_str, sizeof(t->uuid));
-		t->serial_number = smbios_add_string(t->eos, serial_str);
-	}
+	t->sku_number = smbios_add_prop(t->eos, node, "sku");
+	t->family = smbios_add_prop(t->eos, node, "family");
 
 	len = t->length + smbios_string_table_len(t->eos);
 	*current += len;
@@ -164,8 +199,8 @@ static int smbios_write_type2(ulong *current, int handle, ofnode node)
 	t = map_sysmem(*current, len);
 	memset(t, 0, sizeof(struct smbios_type2));
 	fill_smbios_header(t, SMBIOS_BOARD_INFORMATION, len, handle);
-	t->manufacturer = smbios_add_string(t->eos, CONFIG_SMBIOS_MANUFACTURER);
-	t->product_name = smbios_add_string(t->eos, CONFIG_SMBIOS_PRODUCT_NAME);
+	smbios_write_type1_2(t->eos, (struct smbios_type1 *)t, node);
+	t->asset_tag_number = smbios_add_prop(t->eos, node, "asset-tag");
 	t->feature_flags = SMBIOS_BOARD_FEATURE_HOSTING;
 	t->board_type = SMBIOS_BOARD_MOTHERBOARD;
 
@@ -184,8 +219,12 @@ static int smbios_write_type3(ulong *current, int handle, ofnode node)
 	t = map_sysmem(*current, len);
 	memset(t, 0, sizeof(struct smbios_type3));
 	fill_smbios_header(t, SMBIOS_SYSTEM_ENCLOSURE, len, handle);
-	t->manufacturer = smbios_add_string(t->eos, CONFIG_SMBIOS_MANUFACTURER);
+	t->manufacturer = smbios_add_prop_default(t->eos, node, "manufactuer",
+						  CONFIG_SMBIOS_MANUFACTURER);
 	t->chassis_type = SMBIOS_ENCLOSURE_DESKTOP;
+	t->version = smbios_add_prop(t->eos, node, "version");
+	t->serial_number = smbios_add_serial(t->eos, node);
+	t->asset_tag_number = smbios_add_prop(t->eos, node, "asset-tag");
 	t->bootup_state = SMBIOS_STATE_SAFE;
 	t->power_supply_state = SMBIOS_STATE_SAFE;
 	t->thermal_state = SMBIOS_STATE_SAFE;
