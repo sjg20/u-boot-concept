@@ -215,6 +215,16 @@ void acpi_fadt_common(struct acpi_fadt *fadt, struct acpi_facs *facs,
  */
 void intel_acpi_fill_fadt(struct acpi_fadt *fadt);
 
+/**
+ * acpi_write_rsdp() - Write out an RSDP indicating where the ACPI tables are
+ *
+ * @rsdp: Address to write RSDP
+ * @rsdt: Address of RSDT
+ * @xsdt: Address of XSDT
+ */
+void acpi_write_rsdp(struct acpi_rsdp *rsdp, struct acpi_rsdt *rsdt,
+		     struct acpi_xsdt *xsdt);
+
 #endif /* !__ACPI__ */
 
 #endif /* __ASM_ACPI_TABLE_H__ */
