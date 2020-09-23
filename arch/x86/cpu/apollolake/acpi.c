@@ -31,6 +31,7 @@
 #include <asm/arch/iomap.h>
 #include <asm/arch/gpio.h>
 #include <asm/arch/pm.h>
+#include <asm/arch/soc_config.h>
 #include <asm/arch/systemagent.h>
 #include <dm/acpi.h>
 #include <dm/uclass-internal.h>
@@ -116,6 +117,9 @@ int arch_madt_sci_irq_polarity(int sci)
 
 void fill_fadt(struct acpi_fadt *fadt)
 {
+	const struct apl_config *cfg = gd->arch.soc_config;
+
+	assert(cfg);
 	fadt->pm_tmr_blk = IOMAP_ACPI_BASE + PM1_TMR;
 
 	fadt->p_lvl2_lat = ACPI_FADT_C2_NOT_SUPPORTED;
@@ -129,6 +133,9 @@ void fill_fadt(struct acpi_fadt *fadt)
 	fadt->x_pm_tmr_blk.space_id = 1;
 	fadt->x_pm_tmr_blk.bit_width = fadt->pm_tmr_len * 8;
 	fadt->x_pm_tmr_blk.addrl = IOMAP_ACPI_BASE + PM1_TMR;
+
+	if (cfg->lpss_s0ix_enable)
+		fadt->flags |= ACPI_FADT_LOW_PWR_IDLE_S0;
 }
 
 void acpi_create_fadt(struct acpi_fadt *fadt, struct acpi_facs *facs,
