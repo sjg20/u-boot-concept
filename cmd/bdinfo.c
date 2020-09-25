@@ -36,6 +36,12 @@ static void print_eth(int idx)
 	printf("%-12s= %s\n", name, val);
 }
 
+static void print_phys_addr(const char *name, phys_addr_t value)
+{
+	printf("%-12s= 0x%.*llx\n", name, 2 * (int)sizeof(ulong),
+	       (unsigned long long)value);
+}
+
 void bdinfo_print_mhz(const char *name, unsigned long hz)
 {
 	char buf[32];
