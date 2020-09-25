@@ -26,7 +26,6 @@
 
 #include <gzip.h>
 #include <image.h>
-#include <lz4.h>
 #include <mapmem.h>
 
 #if IMAGE_ENABLE_FIT || IMAGE_ENABLE_OF_LIBFDT
@@ -41,13 +40,6 @@
 #include <linux/errno.h>
 #include <asm/io.h>
 
-#include <bzlib.h>
-#include <linux/lzo.h>
-#include <lzma/LzmaTypes.h>
-#include <lzma/LzmaDec.h>
-#include <lzma/LzmaTools.h>
-#include <linux/zstd.h>
-
 #ifdef CONFIG_CMD_BDI
 extern int do_bdinfo(struct cmd_tbl *cmdtp, int flag, int argc,
 		     char *const argv[]);
@@ -59,7 +51,14 @@ DECLARE_GLOBAL_DATA_PTR;
 static const image_header_t *image_get_ramdisk(ulong rd_addr, uint8_t arch,
 						int verify);
 #endif
-#else
+#else	/* USE_HOSTCC */
+/* Support all compression algorithms */
+#define CONFIG_SYS_MALLOC_LEN	(32 << 20)
+#define CONFIG_BZIP2
+#define CONFIG_LZMA
+#define CONFIG_LZO
+#define CONFIG_LZ4
+#define CONFIG_ZSTD
 #include "mkimage.h"
 #include <u-boot/md5.h>
 #include <time.h>
@@ -69,6 +68,14 @@ static const image_header_t *image_get_ramdisk(ulong rd_addr, uint8_t arch,
 # define __maybe_unused		/* unimplemented */
 #endif
 #endif /* !USE_HOSTCC*/
+
+#include <bzlib.h>
+#include <linux/lzo.h>
+#include <lzma/LzmaTypes.h>
+#include <lzma/LzmaDec.h>
+#include <lzma/LzmaTools.h>
+#include <lz4.h>
+#include <linux/zstd.h>
 
 #include <u-boot/crc.h>
 #include <imximage.h>
