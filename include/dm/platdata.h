@@ -30,6 +30,9 @@ struct driver_info {
 #if CONFIG_IS_ENABLED(OF_PLATDATA)
 	uint platdata_size;
 	struct udevice *dev;
+#if CONFIG_IS_ENABLED(OF_PLATDATA_PARENT)
+        struct driver_info *parent;
+#endif
 #endif
 };
 

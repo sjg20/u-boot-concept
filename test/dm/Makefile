@@ -36,6 +36,7 @@ obj-$(CONFIG_DM_MAILBOX) += mailbox.o
 obj-$(CONFIG_DM_MMC) += mmc.o
 obj-y += fdtdec.o
 obj-y += ofnode.o
+obj-$(CONFIG_SPL_OF_PLATDATA) += of_platdata.o
 obj-y += ofread.o
 obj-$(CONFIG_OSD) += osd.o
 obj-$(CONFIG_DM_VIDEO) += panel.o
