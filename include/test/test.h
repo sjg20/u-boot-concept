@@ -94,4 +94,6 @@ enum {
 	TEST_DEVRES_SIZE3	= 37,
 };
 
+int dm_test_main(const char *test_name);
+
 #endif /* __TEST_TEST_H */

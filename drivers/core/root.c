@@ -50,7 +50,6 @@ void dm_fixup_for_gd_move(struct global_data *new_gd)
 	}
 }
 
-#if defined(CONFIG_NEEDS_MANUAL_RELOC)
 void fix_drivers(void)
 {
 	struct driver *drv =
@@ -129,8 +128,6 @@ void fix_devices(void)
 	}
 }
 
-#endif
-
 int dm_init(bool of_live)
 {
 	int ret;
@@ -141,11 +138,11 @@ int dm_init(bool of_live)
 	}
 	INIT_LIST_HEAD(&DM_UCLASS_ROOT_NON_CONST);
 
-#if defined(CONFIG_NEEDS_MANUAL_RELOC)
-	fix_drivers();
-	fix_uclass();
-	fix_devices();
-#endif
+	if (IS_ENABLED(CONFIG_NEEDS_MANUAL_RELOC)) {
+		fix_drivers();
+		fix_uclass();
+		fix_devices();
+	}
 
 	ret = device_bind_by_name(NULL, false, &root_info, &DM_ROOT_NON_CONST);
 	if (ret)
@@ -184,6 +181,17 @@ int dm_remove_devices_flags(uint flags)
 int dm_scan_platdata(bool pre_reloc_only)
 {
 	int ret;
+
+	if (CONFIG_IS_ENABLED(OF_PLATDATA)) {
+		struct driver_dyn_info *dyn;
+		int n_ents;
+
+		n_ents = ll_entry_count(struct driver_info, driver_info);
+		dyn = calloc(n_ents, sizeof(struct driver_dyn_info));
+		if (!dyn)
+			return -ENOMEM;
+		gd_set_dm_dyn(dyn);
+	}
 
 	ret = lists_bind_drivers(DM_ROOT_NON_CONST, pre_reloc_only);
 	if (ret == -ENOENT) {
@@ -339,9 +347,8 @@ int dm_init_and_scan(bool pre_reloc_only)
 {
 	int ret;
 
-#if CONFIG_IS_ENABLED(OF_PLATDATA)
-	dm_populate_phandle_data();
-#endif
+	if (CONFIG_IS_ENABLED(OF_PLATDATA))
+		dm_populate_phandle_data();
 
 	ret = dm_init(CONFIG_IS_ENABLED(OF_LIVE));
 	if (ret) {

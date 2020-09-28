@@ -22,15 +22,29 @@
  * @name:	Driver name
  * @platdata:	Driver-specific platform data
  * @platdata_size: Size of platform data structure
+ * @parent_idx:	Index of the parent driver_info structure
  * @dev:	Device created from this structure data
  */
 struct driver_info {
 	const char *name;
 	const void *platdata;
 #if CONFIG_IS_ENABLED(OF_PLATDATA)
-	uint platdata_size;
-	struct udevice *dev;
+	unsigned short platdata_size;
+	short parent_idx;
 #endif
+};
+
+#if CONFIG_IS_ENABLED(OF_PLATDATA)
+#define driver_info_parent_id(driver_info)	driver_info->parent_idx
+#else
+#define driver_info_parent_id(driver_info)	(-1)
+#endif
+
+/**
+ * driver_dyn_info - run-time information set up by U-Boot
+ */
+struct driver_dyn_info {
+	struct udevice *dev;
 };
 
 /**
@@ -38,8 +52,13 @@ struct driver_info {
  * is not feasible (e.g. serial driver in SPL where <8KB of SRAM is
  * available). U-Boot's driver model uses device tree for configuration.
  */
+#if CONFIG_IS_ENABLED(OF_PLATDATA) && !defined(DT_PLATDATA_C)
+#define U_BOOT_DEVICE(__name)	_Static_assert(false, \
+	"Cannot use U_BOOT_DEVICE with of-platdata. Please use devicetree instead")
+#else
 #define U_BOOT_DEVICE(__name)						\
 	ll_entry_declare(struct driver_info, __name, driver_info)
+#endif
 
 /* Declare a list of devices. The argument is a driver_info[] array */
 #define U_BOOT_DEVICES(__name)						\
