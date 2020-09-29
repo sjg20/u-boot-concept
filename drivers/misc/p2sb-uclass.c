@@ -169,33 +169,10 @@ int p2sb_get_port_id(struct udevice *dev)
 
 int p2sb_set_port_id(struct udevice *dev, int portid)
 {
-	struct udevice *ps2b;
-	struct p2sb_child_platdata *pplat;
+	struct p2sb_child_platdata *pplat = dev_get_parent_platdata(dev);
 
 	if (!CONFIG_IS_ENABLED(OF_PLATDATA))
 		return -ENOSYS;
-
-	uclass_find_first_device(UCLASS_P2SB, &ps2b);
-	if (!ps2b)
-		return -EDEADLK;
-	printascii(dev->name); printch(' '); printhex8((ulong)dev->parent); printch(' ');
-		printascii(dev->parent->name); printch('\n');
-	printascii("   "); printhex8((ulong)ps2b); printch(' ');
-		printascii(ps2b->name); printch('\n');
-
-	dev->parent = ps2b;
-
-	/*
-	 * We must allocate this, since when the device was bound it did not
-	 * have a parent.
-	 * TODO(sjg@chromium.org): Add a parent pointer to child devices in dtoc
-	 */
-// 	printf("dev %s ->parent %p=%s, parent_platdata %p\n", dev->name,
-// 	       dev->parent, dev->parent->name, dev->parent_platdata);
-	dev->parent_platdata = malloc(sizeof(*pplat));
-	if (!dev->parent_platdata)
-		return -ENOMEM;
-	pplat = dev_get_parent_platdata(dev);
 	pplat->pid = portid;
 
 	return 0;

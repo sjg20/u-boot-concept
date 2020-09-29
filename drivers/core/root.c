@@ -192,7 +192,7 @@ int dm_scan_platdata(bool pre_reloc_only)
 		dyn = calloc(n_ents, sizeof(struct driver_dyn_info));
 		if (!dyn)
 			return -ENOMEM;
-		gd_set_dm_dyn(DM_ROOT_NON_CONST, dyn);
+		gd_set_dm_dyn(dyn);
 	}
 
 	ret = lists_bind_drivers(DM_ROOT_NON_CONST, pre_reloc_only);

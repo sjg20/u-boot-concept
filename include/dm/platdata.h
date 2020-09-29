@@ -45,7 +45,6 @@ struct driver_info {
  */
 struct driver_dyn_info {
 	struct udevice *dev;
-	short parent_idx;
 };
 
 /**

@@ -249,7 +249,7 @@ int device_bind_ofnode(struct udevice *parent, const struct driver *drv,
 }
 
 int device_bind_by_name(struct udevice *parent, bool pre_reloc_only,
-			struct driver_info *info, struct udevice **devp)
+			const struct driver_info *info, struct udevice **devp)
 {
 	struct driver *drv;
 	uint platdata_size = 0;
@@ -270,7 +270,7 @@ int device_bind_by_name(struct udevice *parent, bool pre_reloc_only,
 	if (ret)
 		return ret;
 #if CONFIG_IS_ENABLED(OF_PLATDATA)
-	info->dev = *devp;
+// 	info->dev = *devp;
 #endif
 
 	return ret;
@@ -742,9 +742,13 @@ int device_get_global_by_ofnode(ofnode ofnode, struct udevice **devp)
 int device_get_by_driver_info(const struct driver_info *info,
 			      struct udevice **devp)
 {
+	struct driver_info *info_base =
+		ll_entry_start(struct driver_info, driver_info);
+	int idx = info - info_base;
+	struct driver_dyn_info *dyn = gd_dm_dyn() + idx;
 	struct udevice *dev;
 
-	dev = info->dev;
+	dev = dyn->dev;
 
 	return device_get_device_tail(dev, dev ? 0 : -ENOENT, devp);
 }

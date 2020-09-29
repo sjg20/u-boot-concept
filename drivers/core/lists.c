@@ -64,21 +64,26 @@ static int bind_drivers_pass(struct udevice *parent, bool pre_reloc_only)
 	for (idx = 0; idx < n_ents; idx++) {
 		struct udevice *par = parent;
 		const struct driver_info *entry = info + idx;
+		struct driver_dyn_info *dyn = gd_dm_dyn() + idx;
+		struct udevice *dev;
+		int ret;
 
 		if (CONFIG_IS_ENABLED(OF_PLATDATA)) {
-			struct driver_dyn_info *dyn = gd_dm_dyn(gd);
+			int parent_idx = driver_info_parent_id(entry);
 
-			/* Update the parent to point to the device */
-	// 		printascii("parent"); printhex8(info->parent); printch('\n');
-			int parent_idx = driver_info_parent_id(info);
+			if (dyn->dev)
+				continue;
 
 			if (parent_idx != -1) {
-				struct driver_info *parent_info = info + idx;
+				struct driver_dyn_info *parent_dyn;
 
-				if (parent_dyn->dev)
-
-				else
+				parent_dyn = gd_dm_dyn() + parent_idx;
+				if (!parent_dyn->dev) {
 					missing_parent = true;
+					continue;
+				}
+
+				par = parent_dyn->dev;
 			}
 		}
 		ret = device_bind_by_name(par, pre_reloc_only, entry, &dev);
@@ -87,8 +92,8 @@ static int bind_drivers_pass(struct udevice *parent, bool pre_reloc_only)
 			if (!result || ret != -ENOENT)
 				result = ret;
 		}
-		if (CONFIG_IS_ENABLED(OF_PLATDATA)) {
-		}
+		if (CONFIG_IS_ENABLED(OF_PLATDATA))
+			dyn->dev = dev;
 	}
 
 	return result ? result : missing_parent ? -EAGAIN : 0;
@@ -96,12 +101,18 @@ static int bind_drivers_pass(struct udevice *parent, bool pre_reloc_only)
 
 int lists_bind_drivers(struct udevice *parent, bool pre_reloc_only)
 {
-	struct udevice *dev;
-	int ret;
+	int result = 0;
+	int pass;
 
-// 	printch('!'); printhex8(info); printch('\n');
+	/* 10 passes is 10 levels deep in the devicetree, which is plenty */
 	for (pass = 0; pass < 10; pass++) {
+		int ret;
+
 		ret = bind_drivers_pass(parent, pre_reloc_only);
+		if (!ret)
+			break;
+		if (ret != -EAGAIN && !result)
+			result = ret;
 	}
 
 	return result;

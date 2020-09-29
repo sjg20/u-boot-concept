@@ -156,11 +156,11 @@ typedef struct global_data {
 #endif
 
 #if CONFIG_IS_ENABLED(OF_PLATDATA)
-#define gd_set_dm_dyn(gd, dyn)		gd->dm_dyn = dyn
-#define gd_dm_dyn(gd)			gd->dm_dyn
+#define gd_set_dm_dyn(dyn)	gd->dm_dyn = dyn
+#define gd_dm_dyn()		gd->dm_dyn
 #else
-#define gd_set_dm_dyn(gd, dyn)
-#define gd_dm_dyn(gd)			NULL
+#define gd_set_dm_dyn(dyn)
+#define gd_dm_dyn()		NULL
 #endif
 
 /*
