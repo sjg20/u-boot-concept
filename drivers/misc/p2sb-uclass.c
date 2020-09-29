@@ -7,6 +7,7 @@
  */
 
 #include <common.h>
+#include <debug_uart.h>
 #include <dm.h>
 #include <log.h>
 #include <malloc.h>
@@ -177,9 +178,9 @@ int p2sb_set_port_id(struct udevice *dev, int portid)
 	uclass_find_first_device(UCLASS_P2SB, &ps2b);
 	if (!ps2b)
 		return -EDEADLK;
-	printascii(dev->name); printch(' '); printhex8(dev->parent); printch(' ');
+	printascii(dev->name); printch(' '); printhex8((ulong)dev->parent); printch(' ');
 		printascii(dev->parent->name); printch('\n');
-	printascii("   "); printhex8(ps2b); printch(' ');
+	printascii("   "); printhex8((ulong)ps2b); printch(' ');
 		printascii(ps2b->name); printch('\n');
 
 	dev->parent = ps2b;

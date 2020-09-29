@@ -25,6 +25,7 @@
 #include <linux/list.h>
 
 struct acpi_ctx;
+struct driver_dyn_info;
 
 typedef struct global_data {
 	struct bd_info *bd;
@@ -69,6 +70,9 @@ typedef struct global_data {
 	struct udevice	*dm_root;	/* Root instance for Driver Model */
 	struct udevice	*dm_root_f;	/* Pre-relocation root instance */
 	struct list_head uclass_root;	/* Head of core tree */
+# if CONFIG_IS_ENABLED(OF_PLATDATA)
+	struct driver_dyn_info *dm_dyn;	/* Dynamic info about the driver */
+# endif
 #endif
 #ifdef CONFIG_TIMER
 	struct udevice	*timer;		/* Timer instance for Driver Model */
@@ -149,6 +153,14 @@ typedef struct global_data {
 #define gd_board_type()		gd->board_type
 #else
 #define gd_board_type()		0
+#endif
+
+#if CONFIG_IS_ENABLED(OF_PLATDATA)
+#define gd_set_dm_dyn(gd, dyn)		gd->dm_dyn = dyn
+#define gd_dm_dyn(gd)			gd->dm_dyn
+#else
+#define gd_set_dm_dyn(gd, dyn)
+#define gd_dm_dyn(gd)			NULL
 #endif
 
 /*

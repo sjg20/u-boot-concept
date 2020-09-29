@@ -9,6 +9,7 @@
 #define LOG_CATEGORY LOGC_DM
 
 #include <common.h>
+#include <debug_uart.h>
 #include <errno.h>
 #include <log.h>
 #include <dm/device.h>
@@ -51,33 +52,56 @@ struct uclass_driver *lists_uclass_lookup(enum uclass_id id)
 	return NULL;
 }
 
-int lists_bind_drivers(struct udevice *parent, bool pre_reloc_only)
+static int bind_drivers_pass(struct udevice *parent, bool pre_reloc_only)
 {
 	struct driver_info *info =
 		ll_entry_start(struct driver_info, driver_info);
 	const int n_ents = ll_entry_count(struct driver_info, driver_info);
-	struct driver_info *entry;
-	struct udevice *dev;
+	bool missing_parent = false;
 	int result = 0;
-	int ret;
+	uint idx;
 
-	printch('!'); printhex8(info); printch('\n');
-	for (entry = info; entry != info + n_ents; entry++) {
-		const struct udevice *par = parent;
+	for (idx = 0; idx < n_ents; idx++) {
+		struct udevice *par = parent;
+		const struct driver_info *entry = info + idx;
 
-#if CONFIG_IS_ENABLED(OF_PLATDATA)
-		/* Update the parent to point to the device */
-		printascii("parent"); printhex8(info->parent); printch('\n');
-		if (info->parent) {
-			par = info->parent->dev;
+		if (CONFIG_IS_ENABLED(OF_PLATDATA)) {
+			struct driver_dyn_info *dyn = gd_dm_dyn(gd);
+
+			/* Update the parent to point to the device */
+	// 		printascii("parent"); printhex8(info->parent); printch('\n');
+			int parent_idx = driver_info_parent_id(info);
+
+			if (parent_idx != -1) {
+				struct driver_info *parent_info = info + idx;
+
+				if (parent_dyn->dev)
+
+				else
+					missing_parent = true;
+			}
 		}
-#endif
 		ret = device_bind_by_name(par, pre_reloc_only, entry, &dev);
 		if (ret && ret != -EPERM) {
 			dm_warn("No match for driver '%s'\n", entry->name);
 			if (!result || ret != -ENOENT)
 				result = ret;
 		}
+		if (CONFIG_IS_ENABLED(OF_PLATDATA)) {
+		}
+	}
+
+	return result ? result : missing_parent ? -EAGAIN : 0;
+}
+
+int lists_bind_drivers(struct udevice *parent, bool pre_reloc_only)
+{
+	struct udevice *dev;
+	int ret;
+
+// 	printch('!'); printhex8(info); printch('\n');
+	for (pass = 0; pass < 10; pass++) {
+		ret = bind_drivers_pass(parent, pre_reloc_only);
 	}
 
 	return result;
