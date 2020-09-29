@@ -61,8 +61,18 @@ int lists_bind_drivers(struct udevice *parent, bool pre_reloc_only)
 	int result = 0;
 	int ret;
 
+	printch('!'); printhex8(info); printch('\n');
 	for (entry = info; entry != info + n_ents; entry++) {
-		ret = device_bind_by_name(parent, pre_reloc_only, entry, &dev);
+		const struct udevice *par = parent;
+
+#if CONFIG_IS_ENABLED(OF_PLATDATA)
+		/* Update the parent to point to the device */
+		printascii("parent"); printhex8(info->parent); printch('\n');
+		if (info->parent) {
+			par = info->parent->dev;
+		}
+#endif
+		ret = device_bind_by_name(par, pre_reloc_only, entry, &dev);
 		if (ret && ret != -EPERM) {
 			dm_warn("No match for driver '%s'\n", entry->name);
 			if (!result || ret != -ENOENT)

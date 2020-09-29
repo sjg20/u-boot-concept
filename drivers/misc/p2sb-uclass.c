@@ -177,6 +177,11 @@ int p2sb_set_port_id(struct udevice *dev, int portid)
 	uclass_find_first_device(UCLASS_P2SB, &ps2b);
 	if (!ps2b)
 		return -EDEADLK;
+	printascii(dev->name); printch(' '); printhex8(dev->parent); printch(' ');
+		printascii(dev->parent->name); printch('\n');
+	printascii("   "); printhex8(ps2b); printch(' ');
+		printascii(ps2b->name); printch('\n');
+
 	dev->parent = ps2b;
 
 	/*
@@ -184,6 +189,8 @@ int p2sb_set_port_id(struct udevice *dev, int portid)
 	 * have a parent.
 	 * TODO(sjg@chromium.org): Add a parent pointer to child devices in dtoc
 	 */
+// 	printf("dev %s ->parent %p=%s, parent_platdata %p\n", dev->name,
+// 	       dev->parent, dev->parent->name, dev->parent_platdata);
 	dev->parent_platdata = malloc(sizeof(*pplat));
 	if (!dev->parent_platdata)
 		return -ENOMEM;
