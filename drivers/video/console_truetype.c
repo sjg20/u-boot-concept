@@ -210,8 +210,10 @@ static int console_truetype_putc_xy(struct udevice *dev, uint x, uint y,
 	struct pos_info *pos;
 	u8 *bits, *data;
 	int advance;
-	void *start, *end, *line;
+	void *start, *line, *sync_start, *sync_end;
 	int row, ret;
+	int bg_r, bg_g, bg_b;
+	int fg_r, fg_g, fg_b;
 
 	/* First get some basic metrics about this character */
 	stbtt_GetCodepointHMetrics(font, ch, &advance, &lsb);
@@ -255,82 +257,126 @@ static int console_truetype_putc_xy(struct udevice *dev, uint x, uint y,
 	data = stbtt_GetCodepointBitmapSubpixel(font, priv->scale, priv->scale,
 						x_shift, 0, ch, &width, &height,
 						&xoff, &yoff);
-	if (!data)
-		return width_frac;
+	bits = data;
 
 	/* Figure out where to write the character in the frame buffer */
-	bits = data;
-	start = vid_priv->fb + y * vid_priv->line_length +
-		VID_TO_PIXEL(x) * VNBYTES(vid_priv->bpix);
+	sync_start = vid_priv->fb + y * vid_priv->line_length;
+	sync_end = sync_start + vc_priv->y_charsize * vid_priv->line_length;
+	start = sync_start + VID_TO_PIXEL(x) * VNBYTES(vid_priv->bpix);
 	linenum = priv->baseline + yoff;
-	if (linenum > 0)
-		start += linenum * vid_priv->line_length;
-	line = start;
+	line = start + linenum * vid_priv->line_length;
+
+	/* Decompose foreground and background color */
+	switch (vid_priv->bpix) {
+#ifdef CONFIG_VIDEO_BPP16
+	case VIDEO_BPP16:
+		bg_r = (vid_priv->colour_bg >> 11) & 0x1f;
+		bg_g = (vid_priv->colour_bg >> 5) & 0x3f;
+		bg_b = (vid_priv->colour_bg >> 0) & 0x1f;
+
+		fg_r = (vid_priv->colour_fg >> 11) & 0x1f;
+		fg_g = (vid_priv->colour_fg >> 5) & 0x3f;
+		fg_b = (vid_priv->colour_fg >> 0) & 0x1f;
+		break;
+#endif
+#ifdef CONFIG_VIDEO_BPP32
+	case VIDEO_BPP32:
+		bg_r = (vid_priv->colour_bg >> 16) & 0xff;
+		bg_g = (vid_priv->colour_bg >> 8) & 0xff;
+		bg_b = (vid_priv->colour_bg >> 0) & 0xff;
+
+		fg_r = (vid_priv->colour_fg >> 16) & 0xff;
+		fg_g = (vid_priv->colour_fg >> 8) & 0xff;
+		fg_b = (vid_priv->colour_fg >> 0) & 0xff;
+		break;
+#endif
+	default:
+		free(data);
+		return -ENOSYS;
+	}
 
 	/*
 	 * Write a row at a time, converting the 8bpp image into the colour
-	 * depth of the display. We only expect white-on-black or the reverse
-	 * so the code only handles this simple case.
+	 * depth of the display.
 	 */
-	for (row = 0; row < height; row++) {
-		switch (vid_priv->bpix) {
+	switch (vid_priv->bpix) {
 #ifdef CONFIG_VIDEO_BPP16
-		case VIDEO_BPP16: {
-			uint16_t *dst = (uint16_t *)line + xoff;
+	case VIDEO_BPP16:
+		for (row = 0; row < vc_priv->y_charsize; row++) {
+			u16 *dst = (u16 *)start;
 			int i;
 
-			for (i = 0; i < width; i++) {
-				int val = *bits;
-				int out;
-
-				if (vid_priv->colour_bg)
-					val = 255 - val;
-				out = val >> 3 |
-					(val >> 2) << 5 |
-					(val >> 3) << 11;
-				if (vid_priv->colour_fg)
-					*dst++ |= out;
-				else
-					*dst++ &= out;
-				bits++;
-			}
-			end = dst;
-			break;
+			for (i = 0; i < xpos; ++i)
+				*dst++ = vid_priv->colour_bg;
+			start += vid_priv->line_length;
 		}
+		if (data) {
+			for (row = 0; row < height; row++) {
+				u16 *dst = (u16 *)line + xoff;
+				int i;
+
+				for (i = 0; i < width; i++) {
+					int fg, bg, r, g, b, out;
+
+					/*
+					 * Interpolate between foreground and
+					 * background color.
+					 */
+					fg = 1 + *bits++;
+					bg = 0x101 - fg;
+					r = (fg_r * fg + bg_r * bg) >> 8;
+					g = (fg_g * fg + bg_g * bg) >> 8;
+					b = (fg_b * fg + bg_b * bg) >> 8;
+					out = b | g << 5 | r << 11;
+					*dst++ = out;
+				}
+				line += vid_priv->line_length;
+			}
+		}
+		break;
 #endif
 #ifdef CONFIG_VIDEO_BPP32
-		case VIDEO_BPP32: {
-			u32 *dst = (u32 *)line + xoff;
+	case VIDEO_BPP32:
+		for (row = 0; row < vc_priv->y_charsize; row++) {
+			u32 *dst = (u32 *)start;
 			int i;
 
-			for (i = 0; i < width; i++) {
-				int val = *bits;
-				int out;
+			for (i = 0; i < xpos; ++i)
+				*dst++ = vid_priv->colour_bg;
+			start += vid_priv->line_length;
+		}
+		if (data) {
+			for (row = 0; row < height; row++) {
+				u32 *dst = (u32 *)line + xoff;
+				int i;
 
-				if (vid_priv->colour_bg)
-					val = 255 - val;
-				out = val | val << 8 | val << 16;
-				if (vid_priv->colour_fg)
-					*dst++ |= out;
-				else
-					*dst++ &= out;
-				bits++;
+				for (i = 0; i < width; i++) {
+					int fg, bg, r, g, b, out;
+
+					/*
+					 * Interpolate between foreground and
+					 * background color.
+					 */
+					fg = 1 + *bits++;
+					bg = 0x101 - fg;
+					r = (fg_r * fg + bg_r * bg) >> 8;
+					g = (fg_g * fg + bg_g * bg) >> 8;
+					b = (fg_b * fg + bg_b * bg) >> 8;
+					out = b | g << 8 | r << 16;
+					*dst++ = out;
+				}
+				line += vid_priv->line_length;
 			}
-			end = dst;
-			break;
 		}
+		break;
 #endif
-		default:
-			free(data);
-			return -ENOSYS;
-		}
-
-		line += vid_priv->line_length;
+	default:
+		break;
 	}
-	ret = vidconsole_sync_copy(dev, start, line);
+	ret = vidconsole_sync_copy(dev, sync_start, sync_end);
+	free(data);
 	if (ret)
 		return ret;
-	free(data);
 
 	return width_frac;
 }
