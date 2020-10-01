@@ -656,6 +656,9 @@ class DtbPlatdata(object):
         information.
         """
         self.out_header()
+        self.out('/* Allow use of U_BOOT_DEVICE() in this file */\n')
+        self.out('#define DT_PLATDATA_C\n')
+        self.out('\n')
         self.out('#include <common.h>\n')
         self.out('#include <dm.h>\n')
         self.out('#include <dt-structs.h>\n')
