@@ -553,6 +553,8 @@ int device_get_global_by_ofnode(ofnode node, struct udevice **devp);
 int device_get_by_driver_info(const struct driver_info *info,
 			      struct udevice **devp);
 
+int device_get_by_driver_info_idx(uint idx, struct udevice **devp);
+
 /**
  * device_find_first_child() - Find the first child of a device
  *
