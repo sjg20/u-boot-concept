@@ -100,6 +100,8 @@ static int dm_test_of_platdata_dev(struct unit_test_state *uts)
 }
 DM_TEST(dm_test_of_platdata_dev, UT_TESTF_SCAN_PDATA);
 
+#if CONFIG_IS_ENABLED(OF_PLATDATA_PARENT)
+/* Test that device parents are correctly set up */
 static int dm_test_of_platdata_parent(struct unit_test_state *uts)
 {
 	struct udevice *rtc, *i2c;
@@ -111,3 +113,16 @@ static int dm_test_of_platdata_parent(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_of_platdata_parent, UT_TESTF_SCAN_PDATA);
+#endif
+
+/* Test handling of phandles that point to other devices */
+static int dm_test_of_platdata_phandle(struct unit_test_state *uts)
+{
+	struct udevice *dev;
+
+	ut_assertok(uclass_first_device_err(UCLASS_MISC, &dev));
+	printf("dev=%s\n", dev->name);
+
+	return 0;
+}
+DM_TEST(dm_test_of_platdata_phandle, UT_TESTF_SCAN_PDATA);
