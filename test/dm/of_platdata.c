@@ -99,3 +99,15 @@ static int dm_test_of_platdata_dev(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_of_platdata_dev, UT_TESTF_SCAN_PDATA);
+
+static int dm_test_of_platdata_parent(struct unit_test_state *uts)
+{
+	struct udevice *rtc, *i2c;
+
+	ut_assertok(uclass_first_device_err(UCLASS_RTC, &rtc));
+	ut_assertok(uclass_first_device_err(UCLASS_I2C, &i2c));
+	ut_asserteq_ptr(i2c, dev_get_parent(rtc));
+
+	return 0;
+}
+DM_TEST(dm_test_of_platdata_parent, UT_TESTF_SCAN_PDATA);
