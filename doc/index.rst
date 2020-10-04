@@ -110,6 +110,14 @@ Android-specific features available in U-Boot.
 
    android/index
 
+Chromium OS-specific doc
+------------------------
+
+.. toctree::
+   :maxdepth: 2
+
+   cros/index
+
 Indices and tables
 ==================
 

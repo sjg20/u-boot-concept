@@ -8,21 +8,19 @@
 #ifndef __CROS_VBOOT_H
 #define __CROS_VBOOT_H
 
-#include <vboot_api.h>
-#include <vb2_api.h>
 #include <cros/cros_ofnode.h>
+#include <vb2_api.h>
+#include <vboot_api.h>
 
+/* Length of format ID */
 #define ID_LEN		256U
 
 /* Required alignment for struct vb2_context */
 #define VBOOT_CONTEXT_ALIGN	16
 
 /**
- * Information about each firmware type. We expect to have read-only (used for
- * RO-normal if enabled), read-write A, read-write B and recovery. Recovery
- * is the same as RO-normal unless EFS is enabled, in which case RO-normal
- * is a small, low-feature version incapable of running recovery, and we
- * have a separate recovery image.
+ * Information about each firmware type. We expect to have read-only,
+ * read-write A, read-write B and recovery.
  *
  * @vblock: Pointer to the vblock if loaded - this is NULL except for RW-A and
  *	RW-B
@@ -41,14 +39,19 @@
  */
 struct vboot_fw_info {
 	void *vblock;
-	u32 size;
+	ulong size;
 	void *cache;
 	size_t uncomp_size;
-	struct fmap_firmware_entry *fw_entry;
+	struct fmap_firmware_section *fw_entry;
 	struct fmap_entry *entry;
 };
 
-/*
+/**
+ * struct vboot_blob - Vboot information in the bloblist
+ *
+ * This is persistent through the stages of vboot through TPL, SPL, etc.
+ *
+ * @ctx: vboot context
  * @spl_entry: used for the verstage to return the location of the selected
  *	SPL slot
  * @u_boot_entry: used for the verstage to return the location of the selected
@@ -60,10 +63,16 @@ struct vboot_blob {
 	struct fmap_entry u_boot_entry;
 };
 
-/*
+/**
+ * struct vboot_handoff - vboot information passed through the phases
+ *
  * The vboot_handoff structure contains the data to be consumed by downstream
  * firmware after firmware selection has been completed. Namely it provides
  * vboot shared data as well as the flags from VbInit.
+ *
+ * @init_params: vboot parameters
+ * @selected_firmware: This is the firmware selected to run (fw_slot)
+ * @shared_data: Shared data used by vboot
  */
 struct vboot_handoff {
 	VbInitParams init_params;
@@ -78,7 +87,6 @@ struct vboot_handoff {
  * @blob: Persistent blob in the bloblist
  * @ctx: vboot2 API context
  * @nvdata_dev: Device to use to access non-volatile data
- * @kparams: Kernel params passed to Vboot library
  * @cros_ec: Chromium OS EC, or NULL if none
  * @gbb_flags: Copy of the flags from the Google Binary Block (GBB)
  * @tpm: TPM device
@@ -88,12 +96,7 @@ struct vboot_handoff {
  * @config: Config node containing general configuation info
  *
  * @deactivate_tpm: Deactivate the TPM on startup
- * @detachable_ui: Use the keyboard-less UI
  * @disable_dev_on_rec: Disable developer mode if going into recovery
- * @disable_memwipe: Disable memory wiping on this platform
- * @disable_lid_shutdown_during_update: Ignore LID closed during auxfw update
- * @disable_power_button_during_update: Disable the power button during an aux
- *	firmware update
  * @ec-efs: EC uses early firmware selection
  * @ec_slow_update: Show a warning screen when updating the EC
  * @ec_software_sync: Platform supports EC software sync
@@ -103,9 +106,20 @@ struct vboot_handoff {
  * @physical_dev_switch: Developer mode has a physical switch (i.e. not in TPM)
  * @physical_rec_switch: Recovery mode has a physical switch (i.e. not in TPM)
  * @resume_path_same_as_boot: Resume path boots through the reset vector
+ *
+ * @detachable_ui: Use the keyboard-less UI
+ * @disable_memwipe: Disable memory wiping on this platform
+ * @disable_lid_shutdown_during_update: Ignore LID closed during auxfw update
+ * @disable_power_button_during_update: Disable the power button during an aux
+ *	firmware update
  * @usb_is_enumerated: true if USB ports have been enumerated already
  * @work_buffer_size: Size of vboot2 work buffer
  *
+ * @handoff: Vboot handoff info
+ * @fmap: Firmare map, parsed from the binman information
+ * @fwstore: Firmware storage device
+ * @vboot_out_flags: Output flags provided by vboot
+ * @kparams: Kernel params passed to Vboot library
  * @cparams: Common params passed to Vboot library
  * @vb2_return_code: Vboot library error, if any
  * @fw_size: Size of firmware image in bytes - this starts off as the number
@@ -113,6 +127,7 @@ struct vboot_handoff {
  *	the vblock indicates that not all of that data was signed.
  * @readonly_firmware_id: Firmware ID read from RO firmware
  * @firmware_id: Firmware ID of selected RO/RW firmware
+ * @spl_image: SPL image provided to U-Boot so it knows what to boot into next
  */
 struct vboot_info {
 	bool valid;
@@ -174,18 +189,30 @@ enum secdata_t {
 	SECDATA_NONE
 };
 
+/**
+ * ctx_to_vboot() - Get the vboot_info from a vb2 context
+ *
+ * @ctx: vb2 context
+ * @return pointer to vboot_info record
+ */
 static inline struct vboot_info *ctx_to_vboot(struct vb2_context *ctx)
 {
 	return ctx->non_vboot_context;
 }
 
+/**
+ * vboot_get_ctx() - Get the vb2 context from a vboot_info poitner
+ *
+ * @vboot: vboot_info pointer
+ * @return pointer to vb2 context
+ */
 static inline struct vb2_context *vboot_get_ctx(struct vboot_info *vboot)
 {
 	return vboot->ctx;
 }
 
 /**
- * Set up the common params for the vboot library
+ * vboot_init_cparams() - Set up the common params for the vboot library
  *
  * @vboot: Pointer to vboot structure
  * @cparams: Pointer to params structure to set up
@@ -193,7 +220,7 @@ static inline struct vb2_context *vboot_get_ctx(struct vboot_info *vboot)
 void vboot_init_cparams(struct vboot_info *vboot, VbCommonParams *cparams);
 
 /**
- * Update ACPI data
+ * vboot_update_acpi() - Update ACPI data
  *
  * For x86 systems, this writes a basic level of information in binary to
  * the ACPI tables for use by the kernel.
@@ -204,18 +231,11 @@ void vboot_init_cparams(struct vboot_info *vboot, VbCommonParams *cparams);
 int vboot_update_acpi(struct vboot_info *vboot);
 
 /**
- * Get a pointer to the vboot structure
+ * vboot_get() - Get a pointer to the vboot structure
  *
  * @vboot: Pointer to vboot structure, if valid, else NULL
  */
 struct vboot_info *vboot_get(void);
-
-/**
- * Get a pointer to the vboot structure
- *
- * @vboot: Pointer to vboot structure (there is only one)
- */
-struct vboot_info *vboot_get_nocheck(void);
 
 /**
  * vboot_alloc() - Allocate a vboot structure
@@ -233,9 +253,12 @@ int vboot_alloc(struct vboot_info **vbootp);
 struct vboot_info *vboot_get_alloc(void);
 
 /**
- * Load configuration for vboot, to control how it operates.
+ * vboot_load_config() - Load configuration for vboot
+ *
+ * The configuration controls how vboot operates
  *
  * @vboot: Pointer to vboot structure to update
+ * @return 0 if OK, -ve on error
  */
 int vboot_load_config(struct vboot_info *vboot);
 
@@ -292,12 +315,15 @@ int vboot_jump(struct vboot_info *vboot, struct fmap_entry *entry);
  * vboot_wants_oprom() - Check if vboot needs an option ROM
  *
  * @return true if vboot needs an option ROM (as it intends to use the display
- *	and this platform uses OPROMS), false if not
+ *	and this platform uses OPROMs), false if not
  */
 int vboot_wants_oprom(struct vboot_info *vboot);
 
 /**
  * vboot_fill_handoff() - Add the handoff information to vboot
+ *
+ * This writes out the handoff information so that the following phases know
+ * what to do
  *
  * @vboot: Pointer to vboot structure
  */
@@ -365,8 +391,31 @@ int vboot_dump_nvdata(const void *nvdata, int size);
  */
 int vboot_secdata_dump(const void *secdata, int size);
 
+/**
+ * vboot_secdata_set() - Set a field in the secure data
+ *
+ * This is used to update a single field in the secure data, for testing and
+ * development purpsoes
+ *
+ * @secdata: Pointer to vboot secure data
+ * @size: Size of data in bytes
+ * @field: Field to udpate
+ * @val: Value to set
+ * @return 0 if OK, -ve on error
+ */
 int vboot_secdata_set(void *secdata, int size, enum secdata_t field, int val);
 
+/**
+ * vboot_secdata_get() - Get a field from secure data
+ *
+ * This is read used read a single field in the secure data, for testing and
+ * development purposes
+ *
+ * @secdata: Pointer to vboot secure data
+ * @size: Size of data in bytes
+ * @field: Field to read
+ * @return value read, or -ve on error
+ */
 int vboot_secdata_get(const void *secdata, int size, enum secdata_t field);
 
 #endif /* __CROS_VBOOT_H */

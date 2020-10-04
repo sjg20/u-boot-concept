@@ -259,7 +259,7 @@ static int vboot_init_handoff(struct vboot_info *vboot)
 
 int vboot_rw_init(struct vboot_info *vboot)
 {
-	struct fmap_firmware_entry *fw_entry;
+	struct fmap_firmware_section *fw_entry;
 	struct vboot_blob *blob;
 	struct vb2_context *ctx;
 	int ret;

@@ -11,6 +11,12 @@
 #include <dm/ofnode.h>
 #include <dm/of_extra.h>
 
+/**
+ * enum cros_compress_t - compression types supported
+ *
+ * @CROS_COMPRESS_NONE: Not compressed
+ * @CROS_COMPRESS_LZO: Lempel–Ziv–Oberhumer (LZO) compression
+ */
 enum cros_compress_t {
 	CROS_COMPRESS_NONE,
 	CROS_COMPRESS_LZO,
@@ -21,7 +27,12 @@ enum cros_compress_t {
 /* struct fmap_entry is now defined in fdtdec.h */
 #include <fdtdec.h>
 
-/* List of EC images available */
+/**
+ * List of EC images available
+ *
+ * @EC_MAIN: Main Chrome OS EC
+ * @EC_PD: USB Power Delivery controller
+ */
 enum ec_index_t {
 	EC_MAIN,
 	EC_PD,
@@ -29,20 +40,35 @@ enum ec_index_t {
 	EC_COUNT
 };
 
+/** FMAP information for read-only and read-write EC images */
 struct fmap_firmware_ec {
 	struct fmap_entry ro;
 	struct fmap_entry rw;
 };
 
-struct fmap_firmware_entry {
-	struct fmap_entry all;		/* how big is the whole section? */
+/**
+ * struct fmap_firmware_section - information about a section
+ *
+ * This holds information about all the binaries in a particular part of the
+ * image, such as read-only, RW-A, RW-B.
+ *
+ * @all: Size and position of the entire section
+ * @spl: Information about SPL
+ * @boot: Information about U-Boot
+ * @vblock: Information about  the vblock
+ * @firmware_id: Information about the firmware ID string
+ * @ec: Information about each EC
+ * @gbb: Information about the Google Binary Block
+ * @fmap: Information about the FMAP (Flash Map)
+ * @spl_rec: Information about SPL recovery
+ * @boot_rec: Information about U-Boot recovery
+ */
+struct fmap_firmware_section {
+	struct fmap_entry all;
 	struct fmap_entry spl;
-	struct fmap_entry boot;		/* U-Boot */
+	struct fmap_entry boot;
 	struct fmap_entry vblock;
 	struct fmap_entry firmware_id;
-
-	/* The offset of the first block of R/W firmware when stored on disk */
-	u64 block_offset;
 
 	/* EC RW binary, and RO binary if present */
 	struct fmap_firmware_ec ec[EC_COUNT];
@@ -56,39 +82,44 @@ struct fmap_firmware_entry {
 };
 
 /*
+ * struct cros_fmap - Full FMAP as parsed from binman info
+ *
  * Only sections that are used during booting are put here. More sections will
  * be added if required.
- * TODO(sjg@chromium.org): Unify readonly into struct fmap_firmware_entry
+ *
+ * @readonly: Information about the read-only section
+ * @readwrite_a: Information about the read-write section A
+ * @readwrite_b: Information about the read-write section B
+ * @readwrite_devkey: Key for developer mode
+ * @elog: Location of the ELOG (event log)
+ * @flash_base: Base offset of the flash
  */
 struct cros_fmap {
-	struct fmap_firmware_entry readonly;
-	struct fmap_firmware_entry readwrite_a;
-	struct fmap_firmware_entry readwrite_b;
+	struct fmap_firmware_section readonly;
+	struct fmap_firmware_section readwrite_a;
+	struct fmap_firmware_section readwrite_b;
 	struct fmap_entry readwrite_devkey;
 	struct fmap_entry elog;
 	u32  flash_base;
 };
 
-struct fmap_entry;
-struct cros_fmap;
-
 /**
  * cros_ofnode_flashmap() - Decode Chromium OS-specific configuration from fdt
  *
- * @config: Returns decoded FMAP
+ * @config: Returns decoded flashmap
  * @return 0 if OK, -ve on error
  */
 int cros_ofnode_flashmap(struct cros_fmap *config);
 
 /**
- * Return the /chromeos-config ofnode
+ * cros_ofnode_config_node() - Return the /chromeos-config ofnode
  *
  * @return ofnode found, of ofnode_null() if not found
  */
 ofnode cros_ofnode_config_node(void);
 
 /**
- * Decode a named region within a memory bank of a given type.
+ * cros_ofnode_decode_region() - Decode a named region within a memory bank
  *
  * The properties are looked up in the /chromeos-config node
  *
@@ -105,7 +136,7 @@ int cros_ofnode_decode_region(const char *mem_type, const char *suffix,
 			      fdt_addr_t *basep, fdt_size_t *sizep);
 
 /**
- * Returns information from the FDT about memory for a given root
+ * cros_ofnode_memory() - Returns information about memory for a given root
  *
  * @name:	Root name of alias to search for
  * @config:	structure to use to return information
@@ -134,4 +165,5 @@ int cros_ofnode_find_locale(const char *name, struct fmap_entry *entry);
  * @config: FMAP config to dump
  */
 void cros_ofnode_dump_fmap(struct cros_fmap *config);
+
 #endif /* __CROS_OFNODE_H */

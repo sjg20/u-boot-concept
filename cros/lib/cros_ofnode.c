@@ -90,7 +90,7 @@ static enum section_t lookup_section(const char *name)
  * @return 0 if ok, -ve on error
  */
 static int process_fmap_node(ofnode node, struct cros_fmap *config,
-			     struct fmap_firmware_entry *fw)
+			     struct fmap_firmware_section *fw)
 {
 	enum section_t section;
 	struct fmap_entry *entry;
@@ -182,7 +182,7 @@ int cros_ofnode_flashmap(struct cros_fmap *config)
 	config->flash_base = base_entry.offset;
 
 	ofnode_for_each_subnode(node, node) {
-		struct fmap_firmware_entry *fw;
+		struct fmap_firmware_section *fw;
 		struct fmap_entry *entry;
 		const char *name;
 		ofnode subnode;
@@ -207,10 +207,6 @@ int cros_ofnode_flashmap(struct cros_fmap *config)
 		ret = ofnode_read_fmap_entry(node, entry);
 		if (ret)
 			return log_msg_ret(ofnode_get_name(node), ret);
-		fw->block_offset = ofnode_read_u64_default(node, "block-offset",
-							   ~0ULL);
-		if (fw->block_offset == ~0ULL)
-			log_debug("Node '%s': bad block-offset\n", name);
 		ofnode_for_each_subnode(subnode, node) {
 			ret = process_fmap_node(subnode, config, fw);
 			if (ret)
@@ -297,8 +293,8 @@ static void dump_fmap_entry(const char *path, struct fmap_entry *entry)
 	}
 }
 
-static void dump_fmap_firmware_entry(const char *name,
-				     struct fmap_firmware_entry *entry)
+static void dump_fmap_firmware_section(const char *name,
+				     struct fmap_firmware_section *entry)
 {
 	log_debug("%s\n", name);
 	dump_fmap_entry("all", &entry->all);
@@ -318,6 +314,6 @@ void cros_ofnode_dump_fmap(struct cros_fmap *config)
 	dump_fmap_entry("firmware_id", &config->readonly.firmware_id);
 	dump_fmap_entry("boot-rec", &config->readonly.boot_rec);
 	dump_fmap_entry("spl-rec", &config->readonly.spl_rec);
-	dump_fmap_firmware_entry("rw-a", &config->readwrite_a);
-	dump_fmap_firmware_entry("rw-b", &config->readwrite_b);
+	dump_fmap_firmware_section("rw-a", &config->readwrite_a);
+	dump_fmap_firmware_section("rw-b", &config->readwrite_b);
 }

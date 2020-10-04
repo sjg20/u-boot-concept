@@ -32,9 +32,8 @@ int vboot_draw_screen(u32 screen, u32 locale);
  *	screen
  * @return VBERROR_SUCCESS (0) if OK, other VBERROR_... value on error
  */
-int vboot_draw_ui(u32 screen, u32 locale,
-		  u32 selected_index, u32 disabled_idx_mask,
-		  u32 redraw_base);
+int vboot_draw_ui(u32 screen, u32 locale, u32 selected_index,
+		  u32 disabled_idx_mask, u32 redraw_base);
 
 /**
  * vboot_get_locale_count() - Return number of supported locales

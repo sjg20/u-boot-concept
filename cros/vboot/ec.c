@@ -146,7 +146,7 @@ static struct fmap_entry *get_firmware_entry(struct vboot_info *vboot,
 					     int devidx,
 					     enum VbSelectFirmware_t select)
 {
-	struct fmap_firmware_entry *fw;
+	struct fmap_firmware_section *fw;
 	struct fmap_firmware_ec *ec;
 	struct fmap_entry *entry;
 

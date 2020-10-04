@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Constant flag: always has the same value; hard-coded in the device tree
+ * Constant flag: always has the same value; hard-coded in the devicetree
  *
  * Copyright 2018 Google LLC
  * Written by Simon Glass <sjg@chromium.org>

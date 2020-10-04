@@ -8,9 +8,12 @@
  * Copyright 2018 Google LLC
  */
 
+#define NEED_VB20_INTERNALS
+
 #include <common.h>
 #include <command.h>
 #include <dm.h>
+#include <ec_commands.h>
 #include <cros/nvdata.h>
 #include <cros/stages.h>
 #include <cros/vboot.h>
@@ -146,17 +149,15 @@ U_BOOT_CMD_WITH_SUBCMDS(vboot, "Chromium OS Verified boot", vboot_help_text,
 	U_BOOT_CMD_MKENT(flags, 4, 0, do_vboot_flags, "", ""),
 );
 
-static int dump_nvdata(struct vboot_info *vboot)
+static int dump_nvdata(void)
 {
-	struct vb2_context *ctx;
+	u8 nvdata[EC_VBNV_BLOCK_SIZE];
 	int ret;
 
-	ctx = vboot_get_ctx(vboot);
-	ret = cros_nvdata_read_walk(CROS_NV_DATA, ctx->nvdata,
-				    sizeof(ctx->nvdata));
+	ret = cros_nvdata_read_walk(CROS_NV_DATA, nvdata, sizeof(nvdata));
 	if (ret)
 		return log_msg_ret("read", ret);
-	ret = vboot_dump_nvdata(ctx->nvdata, sizeof(ctx->nvdata));
+	ret = vboot_dump_nvdata(nvdata, sizeof(nvdata));
 	if (ret)
 		return log_msg_ret("dump", ret);
 
@@ -166,10 +167,9 @@ static int dump_nvdata(struct vboot_info *vboot)
 static int do_nvdata_dump(struct cmd_tbl *cmdtp, int flag, int argc,
 			  char *const argv[])
 {
-	struct vboot_info *vboot = vboot_get_alloc();
 	int ret;
 
-	ret = dump_nvdata(vboot);
+	ret = dump_nvdata();
 	if (ret) {
 		printf("Error %d\n", ret);
 		return CMD_RET_FAILURE;
@@ -187,17 +187,15 @@ U_BOOT_CMD_WITH_SUBCMDS(nvdata, "Non-volatile data", nvdata_help_text,
 	U_BOOT_CMD_MKENT(dump, 1, 0, do_nvdata_dump, "", "")
 );
 
-static int dump_secdata(struct vboot_info *vboot)
+static int dump_secdata(void)
 {
-	struct vb2_context *ctx;
+	u8 secdata[sizeof(struct vb2_secdata)];
 	int ret;
 
-	ctx = vboot_get_ctx(vboot);
-	ret = cros_nvdata_read_walk(CROS_NV_SECDATA, ctx->secdata,
-				    sizeof(ctx->secdata));
+	ret = cros_nvdata_read_walk(CROS_NV_SECDATA, secdata, sizeof(secdata));
 	if (ret)
 		return log_msg_ret("read", ret);
-	ret = vboot_secdata_dump(ctx->secdata, sizeof(ctx->secdata));
+	ret = vboot_secdata_dump(secdata, sizeof(secdata));
 	if (ret)
 		return log_msg_ret("dump", ret);
 
@@ -207,10 +205,9 @@ static int dump_secdata(struct vboot_info *vboot)
 static int do_secdata_dump(struct cmd_tbl *cmdtp, int flag, int argc,
 			   char *const argv[])
 {
-	struct vboot_info *vboot = vboot_get_alloc();
 	int ret;
 
-	ret = dump_secdata(vboot);
+	ret = dump_secdata();
 	if (ret) {
 		printf("Error %d\n", ret);
 		return CMD_RET_FAILURE;
@@ -227,21 +224,18 @@ const char *const secdata_name[] = {
 static int do_secdata_set(struct cmd_tbl *cmdtp, int flag, int argc,
 			  char *const argv[])
 {
-	struct vboot_info *vboot = vboot_get_alloc();
-	struct vb2_context *ctx;
+	u8 secdata[sizeof(struct vb2_secdata)];
 	int ret, i;
 
-	ctx = vboot_get_ctx(vboot);
-	ret = cros_nvdata_read_walk(CROS_NV_SECDATA, ctx->secdata,
-				    sizeof(ctx->secdata));
+	ret = cros_nvdata_read_walk(CROS_NV_SECDATA, secdata, sizeof(secdata));
 	if (ret) {
 		printf("Cannot read (err=%d)\n", ret);
 		return CMD_RET_FAILURE;
 	}
 	if (argc <= 1) {
 		for (i = 0; i < SECDATA_COUNT; i++) {
-			int val = vboot_secdata_get(ctx->secdata,
-						    sizeof(ctx->secdata), i);
+			int val = vboot_secdata_get(secdata, sizeof(secdata),
+						    i);
 
 			printf("%s: %d (%#x)\n", secdata_name[i], val, val);
 		}
@@ -263,14 +257,13 @@ static int do_secdata_set(struct cmd_tbl *cmdtp, int flag, int argc,
 
 		val = simple_strtol(argv[2], NULL, 16);
 		printf("Set '%s' to %x\n", secdata_name[field], val);
-		ret = vboot_secdata_set(ctx->secdata, sizeof(ctx->secdata),
-					field, val);
+		ret = vboot_secdata_set(secdata, sizeof(secdata), field, val);
 		if (ret) {
 			printf("Cannot set (err=%d)\n", ret);
 			return CMD_RET_FAILURE;
 		}
-		ret = cros_nvdata_write_walk(CROS_NV_SECDATA, ctx->secdata,
-					     sizeof(ctx->secdata));
+		ret = cros_nvdata_write_walk(CROS_NV_SECDATA, secdata,
+					     sizeof(secdata));
 		if (ret) {
 			printf("Cannot write (err=%d)\n", ret);
 			return CMD_RET_FAILURE;
@@ -285,7 +278,7 @@ static int do_secdata_set(struct cmd_tbl *cmdtp, int flag, int argc,
 #ifdef CONFIG_SYS_LONGHELP
 static char secdata_help_text[] =
 	"dump     Dump secure vboot data\n"
-	"set      Set/Get secure vboot data";
+	"secdata set      Set/Get secure vboot data";
 #endif
 
 U_BOOT_CMD_WITH_SUBCMDS(secdata, "Cros vboot boot secure data",

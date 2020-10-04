@@ -48,6 +48,15 @@ struct cros_fwstore_ops {
 	 */
 	int (*sw_wp_enabled)(struct udevice *dev);
 
+	/**
+	 * mmap() - Find the memory-mapped address of a fwstore offset
+	 *
+	 * @dev:	Device to map
+	 * @offset:	Offset within device to map
+	 * @count:	Number of bytes to map
+	 * @addrp:	Returns map address
+	 * @return 0 if OK, -ve on error
+	 */
 	int (*mmap)(struct udevice *dev, uint offset, uint size, ulong *addrp);
 
 };
@@ -85,6 +94,15 @@ int cros_fwstore_write(struct udevice *dev, int offset, int count, void *buf);
  */
 int cros_fwstore_get_sw_write_prot(struct udevice *dev);
 
+/**
+ * cros_fwstore_mmap() - Find the memory-mapped address of a fwstore offset
+ *
+ * @dev:	Device to map
+ * @offset:	Offset within device to map
+ * @count:	Number of bytes to map
+ * @addrp:	Returns map address
+ * @return 0 if OK, -ve on error
+ */
 int cros_fwstore_mmap(struct udevice *dev, uint offset, uint size,
 		      ulong *addrp);
 
@@ -175,6 +193,14 @@ int fwstore_read_decomp(struct udevice *dev, struct fmap_entry *entry,
 int cros_fwstore_read_entry(struct udevice *dev, struct fmap_entry *entry,
 			    void *buf, int maxlen);
 
+/**
+ * fwstore_entry_mmap() - Find the memory-mapped address of an entry
+ *
+ * @dev:	Device to map
+ * @entry:	FMAP Entry to map
+ * @addrp:	Returns map address
+ * @return 0 if OK, -ve on error
+ */
 int fwstore_entry_mmap(struct udevice *dev, struct fmap_entry *entry,
 		       ulong *addrp);
 

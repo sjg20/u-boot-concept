@@ -37,29 +37,51 @@
 #define CBAR_MAGIC	"CBAR"
 #define NAME_LENGTH	32
 
-/* Root header */
+/**
+ * struct directory - Root header
+ *
+ * @magic: Magic number (CBAR_MAGIC)
+ * @version: version of the header, little endian
+ * @size: total size of archive, little endian
+ * @count: number of files, little endian */
+ */
 struct directory {
 	char magic[4];
-	u32 version;	/* version of the header. little endian */
-	u32 size;		/* total size of archive. little endian */
-	u32 count;		/* number of files. little endian */
+	u32 version;
+	u32 size;
+	u32 count;
 };
 
-/* File header */
+/**
+ * struct dentry - File header
+ *
+ * @name: file name, nul-terminated if shorter than NAME_LENGTH
+ * offset: file offset from the root header, little endian
+ * @size: file size, little endian
+ */
 struct dentry {
-	/* file name. nul-terminated if shorter than NAME_LENGTH */
 	char name[NAME_LENGTH];
-	/* file offset from the root header, little endian */
 	u32 offset;
-	/* file size, little endian */
 	u32 size;
 };
 
+/**
+ * get_first_dentry() - Get the first file in a directory
+ *
+ * @dir: Directory to check
+ * @return pointer to the first file
+ */
 static inline struct dentry *get_first_dentry(const struct directory *dir)
 {
 	return (struct dentry *)(dir + 1);
 }
 
+/**
+ * get_first_offset() - Get the offset of the first file
+ *
+ * @dir: Directory to check
+ * @return offset of the first file, in bytes
+ */
 static inline u32 get_first_offset(const struct directory *dir)
 {
 	return sizeof(struct directory) + sizeof(struct dentry) * dir->count;

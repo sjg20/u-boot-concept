@@ -117,7 +117,7 @@ int vboot_run_stages(struct vboot_info *vboot, enum vboot_stage_t start,
  */
 int vboot_run_auto(struct vboot_info *vboot, uint flags);
 
-/* TPL stages */
+/* VPL stages */
 int vboot_ver_init(struct vboot_info *vboot);
 int vboot_ver1_vbinit(struct vboot_info *vboot);
 int vboot_ver2_select_fw(struct vboot_info *vboot);

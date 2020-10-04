@@ -175,7 +175,7 @@ int vboot_run_stages(struct vboot_info *vboot, enum vboot_stage_t start,
 
 		if (stagenum == VBOOT_STAGE_VER1_VBINIT &&
 		    ret == VB2_ERROR_API_PHASE1_RECOVERY) {
-			struct fmap_firmware_entry *fw = &vboot->fmap.readonly;
+			struct fmap_firmware_section *fw = &vboot->fmap.readonly;
 			struct vb2_context *ctx = vboot_get_ctx(vboot);
 
 			vboot_set_selected_region(vboot, &fw->spl_rec, &fw->boot_rec);

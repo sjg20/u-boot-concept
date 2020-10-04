@@ -17,7 +17,7 @@
  *
  * @name: Name of this flag
  * @port: GPIO port number (coreboot value)
- * @active_high: true if active hight, false if active low (inverted)
+ * @active_high: true if active high, false if active low (inverted)
  * @value: raw GPIO value as read by coreboot
  */
 struct flag_sysinfo_priv {

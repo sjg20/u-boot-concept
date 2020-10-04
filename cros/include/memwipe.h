@@ -11,8 +11,8 @@
  * Copyright 2018 Google LLC
  */
 
-#ifndef __CROS_memwipe_H
-#define __CROS_memwipe_H
+#ifndef __CROS_MEMWIPE_H
+#define __CROS_MEMWIPE_H
 
 /* The margin to keep extra stack region that not to be wiped */
 #define memwipe_STACK_MARGIN		1024
@@ -63,4 +63,4 @@ void memwipe_sub(struct memwipe *wipe, phys_addr_t start, phys_addr_t end);
  */
 void memwipe_execute(struct memwipe *wipe);
 
-#endif /* __CROS_memwipe_H */
+#endif /* __CROS_MEMWIPE_H */

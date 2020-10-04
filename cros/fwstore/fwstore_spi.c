@@ -19,6 +19,11 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+/**
+ * struct fwstore_spi_priv - private information for the driver
+ *
+ * @sf: SPI flash device that this driver uses
+ */
 struct fwstore_spi_priv {
 	struct udevice *sf;
 };

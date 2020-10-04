@@ -49,11 +49,6 @@ struct vboot_info *vboot_get_alloc(void)
 	return vboot;
 }
 
-struct vboot_info *vboot_get_nocheck(void)
-{
-	return gd->vboot;
-}
-
 int vboot_load_config(struct vboot_info *vboot)
 {
 	ofnode node;

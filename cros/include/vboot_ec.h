@@ -10,9 +10,15 @@
 #define __CROS_VBOOT_EC_H
 
 enum {
+	/* Maximum size of the hash value for an EC image */
 	VBOOT_EC_MAX_HASH_SIZE	= 64,
 };
 
+/**
+ * struct vboot_ec_uc_priv - Uclass information about each vboot EC
+ *
+ * @hash_digest: Value of the hash digest for this vboot EC
+ */
 struct vboot_ec_uc_priv {
 	u8 hash_digest[VBOOT_EC_MAX_HASH_SIZE];
 };
@@ -20,7 +26,7 @@ struct vboot_ec_uc_priv {
 /**
  * struct vboot_ec_ops - EC operations required by vboot
  *
- * These directly correspond to normal vboot VbExEc... interfaces.
+ * These directly correspond to the vboot VbExEc... interfaces.
  */
 struct vboot_ec_ops {
 	/**
@@ -58,7 +64,6 @@ struct vboot_ec_ops {
 	 * hash_image() - Read the SHA-256 hash of the selected EC image
 	 *
 	 * @dev: UCLASS_CROS_VBOOT_EC device
-	 * @devidx:	Device index. 0: EC, 1: PD
 	 * @select:	Image to get hash of. RO or RW
 	 * @hash:	Pointer to the hash
 	 * @hash_sizep:	Pointer to the hash size, which is set to the
@@ -74,7 +79,6 @@ struct vboot_ec_ops {
 	 * update_image() - Update the selected EC image
 	 *
 	 * @dev: UCLASS_CROS_VBOOT_EC device
-	 * @devidx:	Device index. 0: EC, 1: PD
 	 * @select:	Image to get hash of. RO or RW
 	 * @image:	Pointer to the image
 	 * @image_size:	Size of the image in bytes
@@ -90,6 +94,7 @@ struct vboot_ec_ops {
 	 * update_image() with the same region this boot will fail.
 	 *
 	 * @dev: UCLASS_CROS_VBOOT_EC device
+	 * @select:	Image to protect
 	 * @return 0 if OK, -EPERM if protection could not be set and a reboot
 	 *	is required, other non-zero on error
 	 */
@@ -100,6 +105,7 @@ struct vboot_ec_ops {
 	 * mode: Normal, Developer, or Recovery
 	 *
 	 * @dev: UCLASS_CROS_VBOOT_EC device
+	 * @mode: Boot mode selected
 	 * @return 0 if OK, non-zero on error
 	 */
 	int (*entering_mode)(struct udevice *dev, enum VbEcBootMode_t mode);

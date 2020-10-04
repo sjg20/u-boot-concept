@@ -79,11 +79,18 @@ struct rgb_colour {
  * y values increasing towards bottom of screen.
  */
 
-/** Clear the screen */
+/**
+ * cbgfx_clear_screen() - Clear the screen
+ *
+ * @rgb: Colour to clear the screen to
+ * @return 0 (always)
+ */
 int cbgfx_clear_screen(const struct rgb_colour *rgb);
 
 /**
- * Draw a bitmap image using position and size relative to the canvas
+ * cbgfx_draw_bitmap() - Draw a bitmap image
+ *
+ * This uses tje position and size relative to the canvas.
  *
  * 'Pivot' is a point of the image based on which the image is positioned.
  * For example, if a pivot is set to PIVOT_H_CENTER|PIVOT_V_CENTER, the image is
@@ -121,7 +128,7 @@ int cbgfx_draw_bitmap(const void *bitmap, size_t size,
 #define INVERT_COLOURS	BIT(INVERT_SHIFT)
 
 /**
- * Get width and height of projected image
+ * cbgfx_get_bitmap_dimension() - Get width and height of projected image
  *
  * It returns the width and height of the projected image. If the input height
  * is zero, it's derived from the input width to keep the aspect ratio, and vice

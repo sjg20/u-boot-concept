@@ -8,7 +8,10 @@
 #include <common.h>
 #include <vb2_api.h>
 
-/* No-op stubs that can be overridden by SoCs with hardware-crypto support */
+/*
+ * No-op stubs that can be overridden by SoCs with hardware-crypto support.
+ * This could be plumbed through U-Boot's hash subsystem if needed.
+ */
 int vb2ex_hwcrypto_digest_init(enum vb2_hash_algorithm hash_alg,
 			       u32 data_size)
 {
