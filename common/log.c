@@ -402,7 +402,6 @@ int log_init(void)
 	gd->log_fmt = log_get_default_format();
 	gd->logc_prev = LOGC_NONE;
 	gd->logl_prev = LOGL_INFO;
-	printf("log_init\n");
 
 	return 0;
 }
