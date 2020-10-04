@@ -219,6 +219,7 @@ static int log_dispatch(struct log_rec *rec)
 			ldev->drv->emit(ldev, rec);
 	}
 	gd->processing_msg = false;
+
 	return 0;
 }
 
@@ -401,6 +402,7 @@ int log_init(void)
 	gd->log_fmt = log_get_default_format();
 	gd->logc_prev = LOGC_NONE;
 	gd->logl_prev = LOGL_INFO;
+	printf("log_init\n");
 
 	return 0;
 }
