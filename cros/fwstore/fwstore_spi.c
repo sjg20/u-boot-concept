@@ -215,8 +215,8 @@ static struct udevice_id fwstore_spi_ids[] = {
 	{ },
 };
 
-U_BOOT_DRIVER(fwstore_spi) = {
-	.name	= "fwstore_spi",
+U_BOOT_DRIVER(cros_fwstore_spi) = {
+	.name	= "cros_fwstore_spi",
 	.id	= UCLASS_CROS_FWSTORE,
 	.of_match = fwstore_spi_ids,
 	.ops	= &fwstore_spi_ops,

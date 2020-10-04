@@ -62,8 +62,8 @@ static const struct udevice_id flag_const_ids[] = {
 	{ }
 };
 
-U_BOOT_DRIVER(flag_const_drv) = {
-	.name		= "flag_const",
+U_BOOT_DRIVER(google_const_flag) = {
+	.name		= "google_const_flag",
 	.id		= UCLASS_CROS_VBOOT_FLAG,
 	.of_match	= flag_const_ids,
 	.ofdata_to_platdata	= flag_const_ofdata_to_platdata,
