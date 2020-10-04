@@ -862,8 +862,7 @@ ifdef VBOOT_SOURCE
 # set VBOOT_MAKEFLAGS to required make flags, e.g. MOCK_TPM=1 if no TPM
 CFLAGS_VBOOT = $(filter-out -Wstrict-prototypes, \
 		$(KBUILD_CPPFLAGS) $(KBUILD_CFLAGS) $(PLATFORM_CPPFLAGS) \
-		$(UBOOTINCLUDE) -I$(CURDIR)/include) -include common.h \
-		-I$(srctree)/include/linux
+		$(UBOOTINCLUDE) -I$(CURDIR)/include) -include common.h
 
 # Always call the vboot Makefile, since we don't have its dependencies
 #

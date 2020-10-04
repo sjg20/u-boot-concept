@@ -54,8 +54,8 @@ binman_sym_declare(ulong, spl, size);
 #endif
 
 #ifdef CONFIG_VPL
-binman_sym_declare(ulong, u_boot_vpl_any, image_pos);
-binman_sym_declare(ulong, u_boot_vpl_any, size);
+binman_sym_declare(ulong, vpl, image_pos);
+binman_sym_declare(ulong, vpl, size);
 #endif
 
 /* Define board data structure */
@@ -153,7 +153,7 @@ ulong spl_get_image_size(void)
 {
 #ifdef CONFIG_VPL
 	if (IS_ENABLED(CONFIG_CHROMEOS_VBOOT))
-		return binman_sym(ulong, u_boot_vpl_any, size);
+		return binman_sym(ulong, vpl, size);
 #endif
 	return spl_phase() == PHASE_TPL ?
 		binman_sym(ulong, spl, size) :

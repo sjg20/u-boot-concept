@@ -1,8 +1,7 @@
 if TARGET_CHROMEBOOK_CORAL || TARGET_CHROMEOS_CORAL
 
 config SYS_BOARD
-	default "chromebook_coral" if TARGET_CHROMEBOOK_CORAL
-	default "chromeos_coral" if TARGET_CHROMEOS_CORAL
+	default "chromebook_coral"
 
 config SYS_VENDOR
 	default "google"

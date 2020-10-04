@@ -655,6 +655,17 @@ config VPL_OF_LIBFDT
 	  particular compatible nodes. The library operates on a flattened
 	  version of the device tree.
 
+config VPL_OF_LIBFDT_ASSUME_MASK
+	hex "Mask of conditions to assume for libfdt"
+	depends on VPL_OF_LIBFDT || FIT
+	default 0xff
+	help
+	  Use this to change the assumptions made by libfdt in SPL about the
+	  device tree it is working with. A value of 0 means that no assumptions
+	  are made, and libfdt is able to deal with malicious data. A value of
+	  0xff means all assumptions are made and any invalid data may cause
+	  unsafe execution. See FDT_ASSUME_PERFECT, etc. in libfdt_internal.h
+
 config FDT_FIXUP_PARTITIONS
 	bool "overwrite MTD partitions in DTS through defined in 'mtdparts'"
 	depends on OF_LIBFDT
