@@ -8,10 +8,12 @@
 
 #include <common.h>
 #include <dm.h>
+#include <log.h>
 #include <sound.h>
 #include <sysreset.h>
 #include <cros/cros_common.h>
 #include <cros/vboot.h>
+#include <linux/delay.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

@@ -9,6 +9,7 @@
 
 #include <common.h>
 #include <errno.h>
+#include <log.h>
 #include <spl.h>
 #include <sysreset.h>
 #include <cros/nvdata.h>

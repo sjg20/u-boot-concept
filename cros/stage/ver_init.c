@@ -54,7 +54,7 @@ int vboot_ver_init(struct vboot_info *vboot)
 
 	printf("vboot is at %p, size %lx, bloblist %p\n", vboot,
 	       (ulong)sizeof(*vboot), gd->bloblist);
-	blob = bloblist_add(BLOBLISTT_VBOOT_CTX, sizeof(struct vboot_blob));
+	blob = bloblist_add(BLOBLISTT_VBOOT_CTX, sizeof(struct vboot_blob), 0);
 	if (!blob)
 		return log_msg_ret("set up vboot context", -ENOSPC);
 
