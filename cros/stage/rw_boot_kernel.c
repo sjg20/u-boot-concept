@@ -7,7 +7,10 @@
 #define LOG_CATEGORY LOGC_VBOOT
 
 #include <common.h>
+#include <blk.h>
 #include <dm.h>
+#include <env.h>
+#include <log.h>
 #include <mapmem.h>
 #ifdef CONFIG_X86
 #include <asm/bootm.h>
@@ -236,7 +239,7 @@ static int boot_kernel(struct vboot_info *vboot,
 
 	params = (struct boot_params *)(uintptr_t)
 		(kparams->bootloader_address - CROS_PARAMS_SIZE);
-	if (!setup_zimage(params, cmdline, 0, 0, 0))
+	if (!setup_zimage(params, cmdline, 0, 0, 0, 0))
 		boot_linux_kernel((ulong)params, (ulong)kparams->kernel_buffer,
 				  false);
 #else

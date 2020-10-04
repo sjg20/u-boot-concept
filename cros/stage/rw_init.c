@@ -10,6 +10,7 @@
 #include <common.h>
 #include <bloblist.h>
 #include <dm.h>
+#include <log.h>
 #include <mapmem.h>
 #include <cros/cros_ofnode.h>
 #include <cros/fwstore.h>

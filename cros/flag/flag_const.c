@@ -10,6 +10,7 @@
 
 #include <common.h>
 #include <dm.h>
+#include <log.h>
 #include <cros/vboot_flag.h>
 
 DECLARE_GLOBAL_DATA_PTR;

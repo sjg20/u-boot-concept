@@ -8,6 +8,7 @@
 
 #include <common.h>
 #include <dm.h>
+#include <log.h>
 #include <cros/fwstore.h>
 #include <dm/device-internal.h>
 
