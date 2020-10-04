@@ -5,10 +5,9 @@
 # Entry-type module for vpl/u-boot-vpl.bin
 #
 
-import elf
-
-from entry import Entry
-from blob import Entry_blob
+import binman.elf
+from binman.entry import Entry
+from binman.etype.blob import Entry_blob
 
 class Entry_u_boot_vpl(Entry_blob):
     """U-Boot VPL binary

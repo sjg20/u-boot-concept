@@ -993,10 +993,6 @@ ifeq ($(CONFIG_SPL),)
 INPUTS-$(CONFIG_ARCH_MEDIATEK) += u-boot-mtk.bin
 endif
 
-ifneq ($(CONFIG_CHROMEOS_VBOOT),)
-ALL-y += image.bin
-endif
-
 # Add optional build target if defined in board/cpu/soc headers
 ifneq ($(CONFIG_BUILD_TARGET),)
 INPUTS-y += $(CONFIG_BUILD_TARGET:"%"=%)
@@ -1087,9 +1083,11 @@ cmd_cfgcheck = $(srctree)/scripts/check-config.sh $2 \
 PHONY += inputs
 inputs: $(INPUTS-y)
 
-all: .binman_stamp inputs
+all: .binman_stamp inputs $(if $(CONFIG_CHROMEOS_VBOOT),image.bin)
 ifeq ($(CONFIG_BINMAN),y)
+ifeq ($(CONFIG_TARGET_CHROMEOS_CORAL),)
 	$(call if_changed,binman)
+endif
 endif
 
 # Timestamp file to make sure that binman always runs
@@ -1695,7 +1693,7 @@ BINMAN_image.bin := -akeydir=$(KBUILD_SRC)/cros/data/devkeys \
 	"-ahardware-id=TEST 999" \
 	"-afrid=123412 123" -acros-ec-rw-path=$(KBUILD_SRC)/cros/data/ecrw.bin \
 	 -m -i image
-image.bin: $(filter-out image.bin,$(ALL-y)) \
+image.bin: $(INPUTS-y) \
 		$(if($(CONFIG_TPL),tpl/u-boot-tpl) \
 		$(if($(CONFIG_SPL),spl/u-boot-spl) \
 		u-boot.bin FORCE
