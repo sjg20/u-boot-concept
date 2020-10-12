@@ -325,6 +325,15 @@ void bloblist_show_list(void)
 	}
 }
 
+void bloblist_reloc(void *to, uint to_size, void *from, uint from_size)
+{
+	struct bloblist_hdr *hdr;
+
+	memcpy(to, from, from_size);
+	hdr = to;
+	hdr->size = to_size;
+}
+
 int bloblist_init(void)
 {
 	bool expected;
