@@ -48,7 +48,7 @@
 			type = "section";
 			align = <0x1000>;
 			u-boot,dm-pre-reloc;
-			compress = "lz4";
+			/*compress = "lz4";*/
 			section {
 				u-boot-nodtb {
 				};
