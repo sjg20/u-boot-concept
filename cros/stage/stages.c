@@ -213,22 +213,15 @@ int vboot_run_stages(struct vboot_info *vboot, enum vboot_stage_t start,
 int vboot_run_auto(struct vboot_info *vboot, uint flags)
 {
 	enum vboot_stage_t stage;
-	int ret;
 
 	log_debug("start\n");
 
-	/* See if we are the first phase after power-on */
-	ret = sysreset_get_last_walk();
-	log_debug("power-on: returns %d (power-on-reset=%d)\n", ret,
-		  ret == SYSRESET_POWER);
-	if (ret == SYSRESET_POWER)
+	if (CONFIG_IS_ENABLED(CHROMEOS_VBOOT_A))
 		stage = VBOOT_STAGE_FIRST_VER;
-	else
-#ifdef CONFIG_SPL_BUILD
+	else if (CONFIG_IS_ENABLED(CHROMEOS_VBOOT_B))
 		stage = VBOOT_STAGE_FIRST_SPL;
-#else
+	else
 		stage = VBOOT_STAGE_FIRST_RW;
-#endif
 
 	return vboot_run_stages(vboot, stage, flags);
 }
