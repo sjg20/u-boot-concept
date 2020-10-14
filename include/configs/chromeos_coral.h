@@ -16,4 +16,8 @@
 
 #include <configs/chromebook_coral.h>
 
+#undef CONFIG_BOOTCOMMAND
+
+#define CONFIG_BOOTCOMMAND	"vboot go auto"
+
 #endif	/* _OS_CONFIG_H */
