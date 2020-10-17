@@ -706,8 +706,7 @@ class TestFunctional(unittest.TestCase):
         """Test a simple binman run with debugging enabled"""
         self._DoTestFile('005_simple.dts', debug=True)
 
-    # Disable for now until padding of images is supported
-    def xtestDual(self):
+    def testDual(self):
         """Test that we can handle creating two images
 
         This also tests image padding.
