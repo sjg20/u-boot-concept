@@ -1820,6 +1820,8 @@ class TestFunctional(unittest.TestCase):
         orig = self._decompress(entry.data)
         self.assertEqual(orig, entry.uncomp_data)
 
+        self.assertEqual(image.data, entry.data)
+
         expected = {
             'blob:uncomp-size': len(COMPRESS_DATA),
             'blob:size': len(data),
