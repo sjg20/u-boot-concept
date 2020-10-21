@@ -251,6 +251,7 @@ class Lab:
             sdw = sdwire.Part_sdwire()
             sdw.lab = self
             sdw.parts = None
+            sdw.name = 'sdw'
             sdw.provision_test(device)
         else:
             self.raise_self("Unknown component '%s'" % component)
