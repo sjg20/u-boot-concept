@@ -1070,10 +1070,6 @@
 		compatible = "sandbox,sandbox_osd";
 	};
 
-	board {
-		compatible = "sandbox,board_sandbox";
-	};
-
 	sandbox_tee {
 		compatible = "sandbox,tee";
 	};
@@ -1207,6 +1203,10 @@
 		compatible = "sandbox,misc_sandbox";
 		resets = <&resetc2 15>, <&resetc2 30>, <&resetc2 60>;
 		reset-names = "valid", "no_mask", "out_of_range";
+	};
+
+	sysinfo {
+		compatible = "sandbox,sysinfo-sandbox";
 	};
 
 	some_regmapped-bus {
