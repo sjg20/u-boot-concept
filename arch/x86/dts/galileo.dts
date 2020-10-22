@@ -164,4 +164,22 @@
 		};
 	};
 
+	smbios {
+		compatible = "u-boot,sysinfo-smbios";
+
+		smbios {
+			system {
+				product = "GalileoGen2";
+			};
+
+			baseboard {
+				product = "GalileoGen2";
+			};
+
+			chassis {
+				product = "GalileoGen2";
+			};
+		};
+	};
+
 };
