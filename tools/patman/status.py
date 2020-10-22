@@ -22,6 +22,7 @@ from bs4 import BeautifulSoup
 from patman import commit
 from patman import patchstream
 from patman import terminal
+from patman import tout
 
 # Patches which are part of a multi-patch series are shown with a prefix like
 # [prefix, version, sequence], for example '[RFC, v2, 3/5]'. All but the last
@@ -63,6 +64,8 @@ class Patch(dict):
         seq (int): Sequence number within series (1=first) parsed from sequence
             string
         count (int): Number of patches in series, parsed from sequence string
+        raw_subject (str): Entire subject line, e.g.
+            "[1/2,v2] efi_loader: Sort header file ordering"
         prefix (str): Prefix string or None (e.g. 'RFC')
         version (str): Version string or None (e.g. 'v2')
         subject (str): Patch subject with [..] part removed (same as commit
@@ -85,6 +88,7 @@ class Patch(dict):
         super().__init__()
         self.seq = None
         self.count = None
+        self.raw_subject = None
         self.prefix = None
         self.version = None
         self.subject = None
@@ -109,6 +113,12 @@ class Patch(dict):
     def __getattr__(self, name):
         return self[name]
 
+    def __hash__(self):
+        return hash(frozenset(self.items()))
+
+    def __str__(self):
+        return self.raw_subject
+
     def add(self, name, value):
         """Add information obtained from the web page
 
@@ -125,6 +135,7 @@ class Patch(dict):
         if name in self:
             self[name] = value
         elif name == 'patch':
+            self.raw_subject = value.strip()
             mat = RE_PATCH.search(value.strip())
             if not mat:
                 raise ValueError("Cannot parse subject '%s'" % value)
@@ -219,6 +230,64 @@ def find_responses(url):
 
     return rtags, reviews
 
+def compare_with_series(series, patches):
+    """Compare a list of patches with a series it came from
+
+    This prints any problems as warnings
+
+    Args:
+        series: Series object
+        patches: list of Patch objects
+
+    Returns:
+        tuple
+            dict:
+                key: Commit number (0...n-1)
+                value: Patch object for that commit
+            dict:
+                key: Patch number  (0...n-1)
+                value: Commit object for that patch
+    """
+    # Check the names match
+    patch_for_commit = {}
+    all_patches = set(patches)
+    for seq, cmt in enumerate(series.commits):
+        pmatch = [p for p in all_patches if p.subject == cmt.subject]
+        if seq == 2:
+            pmatch = pmatch + pmatch
+        if len(pmatch) == 1:
+            patch_for_commit[seq] = pmatch[0]
+            all_patches.remove(pmatch[0])
+        elif len(pmatch) > 1:
+            tout.Warning("Multiple patches match commit %d ('%s'):\n   %s" %
+                         (seq + 1, cmt.subject,
+                          '\n   '.join([p.subject for p in pmatch])))
+        else:
+            tout.Warning("Cannot find patch for commit %d ('%s')" %
+                         (seq + 1, cmt.subject))
+
+
+    # Check the names match
+    commit_for_patch = {}
+    all_commits = set(series.commits)
+    for seq, patch in enumerate(patches):
+        cmatch = [c for c in all_commits if c.subject == patch.subject]
+        if seq == 2:
+            cmatch = cmatch + cmatch
+        if len(cmatch) == 1:
+            commit_for_patch[seq] = cmatch[0]
+            all_commits.remove(cmatch[0])
+        elif len(cmatch) > 1:
+            tout.Warning("Multiple commits match patch %d ('%s'):\n   %s" %
+                         (seq + 1, patch.subject,
+                          '\n   '.join([c.subject for c in cmatch])))
+        else:
+            tout.Warning("Cannot find commit for patch %d ('%s')" %
+                         (seq + 1, patch.subject))
+
+    return patch_for_commit, commit_for_patch
+
+
 def collect_patches(series, url):
     """Collect patch information about a series from patchwork
 
@@ -265,6 +334,7 @@ def collect_patches(series, url):
     patches = []
 
     # Work through each row (patch) one at a time, collecting the information
+    warn_count = 0
     for row in rows:
         patch = Patch()
         for seq, col in enumerate(row.findAll('td')):
@@ -273,9 +343,14 @@ def collect_patches(series, url):
             if name == 'patch':
                 patch.set_url(urljoin(url, col.a['href']))
         if patch.count != count:
-            print("Warning: Patch %d '%s' suggests a series count of %d, expected %d" %
-                  (patch.seq, patch.subject, patch.count, num_commits))
+            if not warn_count:
+                # Just print the first warning. We may get one for every patch
+                tout.Warning("Patch %d '%s':\n   suggests a series count of %d, expected %d" %
+                      (patch.seq, patch.subject, patch.count, count))
+            warn_count += 1
         patches.append(patch)
+    if warn_count > 1:
+        tout.Warning('   (total of %d warnings)' % warn_count)
 
     # Sort patches by patch number
     patches = sorted(patches, key=lambda x: x.seq)
@@ -302,6 +377,9 @@ def find_new_responses(new_rtag_list, review_list, seq, cmt, patch,
         force_load (bool): True to always load the patch from patchwork, False
             to only load it if patchwork has additional response tags
     """
+    print('cmt=%s, patch=%s, url=%s' % (cmt, patch, patch.url))
+    if not patch:
+        return
     acked = cmt.rtags['Acked-by']
     reviewed = cmt.rtags['Reviewed-by']
     tested = cmt.rtags['Tested-by']
