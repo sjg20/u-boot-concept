@@ -253,8 +253,6 @@ def compare_with_series(series, patches):
     all_patches = set(patches)
     for seq, cmt in enumerate(series.commits):
         pmatch = [p for p in all_patches if p.subject == cmt.subject]
-        if seq == 2:
-            pmatch = pmatch + pmatch
         if len(pmatch) == 1:
             patch_for_commit[seq] = pmatch[0]
             all_patches.remove(pmatch[0])
@@ -272,8 +270,6 @@ def compare_with_series(series, patches):
     all_commits = set(series.commits)
     for seq, patch in enumerate(patches):
         cmatch = [c for c in all_commits if c.subject == patch.subject]
-        if seq == 2:
-            cmatch = cmatch + cmatch
         if len(cmatch) == 1:
             commit_for_patch[seq] = cmatch[0]
             all_commits.remove(cmatch[0])
@@ -377,7 +373,7 @@ def find_new_responses(new_rtag_list, review_list, seq, cmt, patch,
         force_load (bool): True to always load the patch from patchwork, False
             to only load it if patchwork has additional response tags
     """
-    print('cmt=%s, patch=%s, url=%s' % (cmt, patch, patch.url))
+    #print('cmt=%s, patch=%s, url=%s' % (cmt, patch, patch.url))
     if not patch:
         return
     acked = cmt.rtags['Acked-by']
@@ -483,10 +479,11 @@ def create_branch(series, new_rtag_list, branch, dest_branch, overwrite):
         tree_id = index.write_tree(repo)
 
         lines = []
-        for tag, people in new_rtag_list[seq].items():
-            for who in people:
-                lines.append('%s: %s' % (tag, who))
-                num_added += 1
+        if new_rtag_list[seq]:
+            for tag, people in new_rtag_list[seq].items():
+                for who in people:
+                    lines.append('%s: %s' % (tag, who))
+                    num_added += 1
         message = cherry.message.rstrip() + '\n' + '\n'.join(lines)
 
         repo.create_commit(
@@ -512,20 +509,27 @@ def check_patchwork_status(series, url, branch, dest_branch, force,
     """
     patches = collect_patches(series, url)
     col = terminal.Color()
-    count = len(patches)
+    count = len(series.commits)
     new_rtag_list = [None] * count
     review_list = [None] * count
+
+    patch_for_commit, commit_for_patch = compare_with_series(series, patches)
+
+    patch_list = [patch_for_commit.get(c) for c in range(len(series.commits))]
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=16) as executor:
         futures = executor.map(
             find_new_responses, repeat(new_rtag_list), repeat(review_list),
-            range(count), series.commits, patches, repeat(show_comments))
+            range(count), series.commits, patch_list, repeat(show_comments))
     for fresponse in futures:
         if fresponse:
             raise fresponse.exception()
 
     num_to_add = 0
-    for seq, patch in enumerate(patches):
+    for seq, cmt in enumerate(series.commits):
+        patch = patch_for_commit.get(seq)
+        if not patch:
+            continue
         terminal.Print('%3d %s' % (patch.seq, patch.subject[:50]),
                        colour=col.BLUE)
         cmt = series.commits[seq]

@@ -83,7 +83,8 @@ class PatchStream:
         self.state = STATE_MSG_HEADER    # What state are we in?
         self.commit = None               # Current commit
         self.snippets = []               # List of unquoted test blocks
-        self.recent_diff = None          # Last 'diff' line seen (str)
+        self.cur_diff = None             # Last 'diff' line seen (str)
+        self.recent_diff= None           # 'diff' line for current snippet (str)
         self.recent_quoted = collections.deque([], 5)
         self.recent_unquoted = queue.Queue()
         self.was_quoted = None
@@ -154,6 +155,8 @@ class PatchStream:
 
         self.saw_signoff = False
         self.saw_change_id = False
+        self.cur_diff = None
+        self.recent_diff = None
 
     def ParseVersion(self, value, line):
         """Parse a version from a *-changes tag
@@ -462,7 +465,7 @@ class PatchStream:
             self.skip_blank = False
 
             if diff_match:
-                self.recent_diff = diff_match.group(1)
+                self.cur_diff = diff_match.group(1)
 
             # If this is quoted, keep recent lines
             if self.linenum > 1 and line:
@@ -471,6 +474,7 @@ class PatchStream:
                         self.FinaliseSnippet()
                     self.recent_quoted.append(line)
                     self.was_quoted = True
+                    self.recent_diff = self.cur_diff
                 else:
                     self.recent_unquoted.put(line)
                     self.was_quoted = False
