@@ -194,6 +194,9 @@ class TestFunctional(unittest.TestCase):
             'fred': [self.fred],
         }
 
+        # NOTE: If you change this file you must also change the patch files in
+        # the same directory, since we assume that the metadata file matches the
+        # patched. If it doesn't, this test will fail.
         text = self._get_text('test01.txt')
         series = patchstream.get_metadata_for_test(text)
         cover_fname, args = self._create_patches_for_test(series)
@@ -213,6 +216,10 @@ class TestFunctional(unittest.TestCase):
         os.remove(cc_file)
 
         lines = iter(out[0].getvalue().splitlines())
+        self.assertIn('1 warnings for', next(lines))
+        self.assertEqual(
+            "\t Tag 'Commit-notes' should be before sign-off / Change-Id",
+            next(lines))
         self.assertEqual('Cleaned %s patches' % len(series.commits),
                          next(lines))
         self.assertEqual('Change log missing for v2', next(lines))
@@ -223,7 +230,7 @@ class TestFunctional(unittest.TestCase):
         self.assertEqual('', next(lines))
         self.assertIn('Send a total of %d patches' % count, next(lines))
         prev = next(lines)
-        for i, commit in enumerate(series.commits):
+        for i in range(len(series.commits)):
             self.assertEqual('   %s' % args[i], prev)
             while True:
                 prev = next(lines)
@@ -587,4 +594,18 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         pstrm = PatchStream.process_text(text)
         self.assertEqual(
             ["Found possible blank line(s) at end of file 'lib/fdtdec.c'"],
+            pstrm.commit.warn)
+
+    def testTagsAfterSignoff(self):
+        """Test detection of tags after the signoff"""
+        text = '''This is a patch
+
+Signed-off-by: Terminator 2
+Series-changes: 2
+- A change
+
+'''
+        pstrm = PatchStream.process_text(text)
+        self.assertEqual(
+            ["Tag 'Series-changes' should be before sign-off / Change-Id"],
             pstrm.commit.warn)
