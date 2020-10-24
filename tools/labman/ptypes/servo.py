@@ -238,6 +238,9 @@ class Part_servo(Part):
     def get_py_base_class(self):
         return 'Servo'
 
+    def set_power(self, power_on: bool, port: int):
+        pass
+
     def check(self):
         """Run a check on a servo to see that it seems to work OK
 

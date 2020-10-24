@@ -95,6 +95,9 @@ class Part_em100(Part):
         serial = rem.group(1)
         return serial
 
+    def select_ts(self, retry=True):
+        pass
+
     def check(self):
         # Sometimes the em100 says "Could not claim interface"
         for i in range(10):
