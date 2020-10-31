@@ -451,7 +451,6 @@ struct global_data {
 #define gd_set_of_root(_root)
 #endif
 
-<<<<<<< HEAD
 #if CONFIG_IS_ENABLED(OF_PLATDATA)
 #define gd_set_dm_driver_rt(dyn)	gd->dm_driver_rt = dyn
 #define gd_dm_driver_rt()		gd->dm_driver_rt
@@ -470,10 +469,6 @@ struct global_data {
  * enum gd_flags - global data flags
  *
  * See field flags of &struct global_data.
-=======
-/*
- * Global Data Flags
->>>>>>> dm: Avoid using #ifdef for CONFIG_OF_LIVE
  */
 enum gd_flags {
 	/**

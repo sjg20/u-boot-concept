@@ -1238,10 +1238,6 @@
 		reset-names = "valid", "no_mask", "out_of_range";
 	};
 
-	sysinfo {
-		compatible = "sandbox,sysinfo-sandbox";
-	};
-
 	some_regmapped-bus {
 		#address-cells = <0x1>;
 		#size-cells = <0x1>;
@@ -1254,6 +1250,11 @@
 			compatible = "sandbox,regmap_test";
 		};
 	};
+
+	sysinfo {
+		compatible = "sandbox,sysinfo-sandbox";
+	};
+
 };
 
 #include "sandbox_pmic.dtsi"
