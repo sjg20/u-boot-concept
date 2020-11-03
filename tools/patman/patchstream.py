@@ -803,7 +803,7 @@ def fix_patches(series, fnames):
                 print('\t%s' % warn)
             print()
         count += 1
-    print('Cleaned %d patche%s' % (count, 's' if count > 1 else ''))
+    print('Cleaned %d patch%s' % (count, 'es' if count > 1 else ''))
 
 def insert_cover_letter(fname, series, count):
     """Inserts a cover letter with the required info into patch 0
