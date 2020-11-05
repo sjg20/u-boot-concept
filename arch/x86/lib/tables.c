@@ -14,6 +14,8 @@
 #include <asm/tables.h>
 #include <asm/coreboot_tables.h>
 
+DECLARE_GLOBAL_DATA_PTR;
+
 /**
  * Function prototype to write a specific configuration table
  *
