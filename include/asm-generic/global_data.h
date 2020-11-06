@@ -432,7 +432,6 @@ struct global_data {
 	struct vboot_info *vboot;
 #endif
 };
-} gd_t;
 
 /**
  * gd_board_type() - retrieve board type
