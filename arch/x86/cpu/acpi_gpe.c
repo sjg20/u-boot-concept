@@ -102,8 +102,8 @@ static const struct udevice_id acpi_gpe_ids[] = {
 	{ }
 };
 
-U_BOOT_DRIVER(acpi_gpe_drv) = {
-	.name		= "acpi_gpe",
+U_BOOT_DRIVER(intel_acpi_gpe) = {
+	.name		= "intel_acpi_gpe",
 	.id		= UCLASS_IRQ,
 	.of_match	= acpi_gpe_ids,
 	.ops		= &acpi_gpe_ops,

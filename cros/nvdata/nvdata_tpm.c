@@ -230,8 +230,8 @@ static const struct udevice_id tpm_secdata_ids[] = {
 	{ }
 };
 
-U_BOOT_DRIVER(tpm_secdata_drv) = {
-	.name		= "cros-ec-secdata",
+U_BOOT_DRIVER(google_tpm_secdata) = {
+	.name		= "google_tpm_secdata",
 	.id		= UCLASS_CROS_NVDATA,
 	.of_match	= tpm_secdata_ids,
 	.ops		= &tpm_secdata_ops,
