@@ -182,6 +182,8 @@ int arch_fsp_init_r(void)
 	struct udevice *dev, *itss;
 	int ret;
 
+	return 0;
+
 	if (!ll_boot_init())
 		return 0;
 
