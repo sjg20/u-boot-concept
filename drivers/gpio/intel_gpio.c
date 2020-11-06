@@ -118,6 +118,7 @@ static int intel_gpio_xlate(struct udevice *orig_dev, struct gpio_desc *desc,
 	 * which one is used
 	 */
 	gpio = args->args[0];
+	log_info("gpio=%d, desc->dev=%p\n", gpio, desc->dev);
 	ret = intel_pinctrl_get_pad(gpio, &pinctrl, &desc->offset);
 	if (ret)
 		return log_msg_ret("bad", ret);

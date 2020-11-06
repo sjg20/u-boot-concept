@@ -5,6 +5,9 @@
  * Copyright 2018 Google LLC
  */
 
+#define LOG_DEBUG
+#define LOG_CATEGORY	UCLASS_TPM
+
 #include <common.h>
 #include <config.h>
 #include <tpm-v1.h>
@@ -43,9 +46,11 @@ VbError_t VbExTpmSendReceive(const u8 *request, u32 request_length,
 	size_t resp_len = *response_length;
 	int ret;
 
+	log_debug("tpm_xfer\n");
 	ret = tpm_xfer(vboot->tpm, request, request_length, response,
 		       &resp_len);
 	*response_length = resp_len;
+	log_debug("tpm_xfer, ret=%d\n", ret);
 	if (ret)
 		return VBERROR_UNKNOWN;
 
