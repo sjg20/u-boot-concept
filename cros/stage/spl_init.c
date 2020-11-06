@@ -35,7 +35,7 @@ int vboot_spl_init(struct vboot_info *vboot)
 	if (IS_ENABLED(CONFIG_SANDBOX) && CONFIG_IS_ENABLED(CROS_EC))
 		uclass_get_device(UCLASS_CROS_EC, 0, &vboot->cros_ec);
 
-	if (0) {
+	if (1) {
 		u8 sendbuf[] = {
 			0x80, 0x02, 0x00, 0x00, 0x00, 0x23, 0x00, 0x00,
 			0x01, 0x4e, 0x40, 0x00, 0x00, 0x0c, 0x01, 0x00,

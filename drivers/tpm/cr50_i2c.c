@@ -559,9 +559,23 @@ static int cr50_i2c_get_desc(struct udevice *dev, char *buf, int size)
 {
 	struct dm_i2c_chip *chip = dev_get_parent_platdata(dev);
 	struct cr50_priv *priv = dev_get_priv(dev);
+	int len;
 
-	return snprintf(buf, size, "cr50 TPM 2.0 (i2c %02x id %x) irq=%d",
-			chip->chip_addr, priv->vendor >> 16, priv->use_irq);
+	len = snprintf(buf, size, "cr50 TPM 2.0 (i2c %02x id %x), ",
+			chip->chip_addr, priv->vendor >> 16);
+	if (priv->use_irq) {
+		 len += snprintf(buf + len, size - len, "irq=%s/%ld",
+				 priv->irq.dev->name, priv->irq.id);
+	} else if (dm_gpio_is_valid(&priv->ready_gpio)) {
+		 len += snprintf(buf + len, size - len, "gpio=%s/%u",
+				 priv->ready_gpio.dev->name,
+				 priv->ready_gpio.offset);
+	} else {
+		 len += snprintf(buf + len, size - len, "delay=%d",
+				 TIMEOUT_NO_IRQ_US);
+	}
+
+	return len;
 }
 
 static int cr50_i2c_open(struct udevice *dev)
