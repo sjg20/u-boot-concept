@@ -174,6 +174,8 @@ int arch_fsps_preinit(void)
 	return 0;
 }
 
+#include <tpm-common.h>
+
 int arch_fsp_init_r(void)
 {
 	bool s3wake;
@@ -190,6 +192,29 @@ int arch_fsp_init_r(void)
 		ret = binman_select_subnode("read-only");
 		if (ret)
 			return log_msg_ret("binman", ret);
+	}
+
+	if (0) {
+		u8 sendbuf[] = {
+			0x80, 0x02, 0x00, 0x00, 0x00, 0x23, 0x00, 0x00,
+			0x01, 0x4e, 0x40, 0x00, 0x00, 0x0c, 0x01, 0x00,
+			0x10, 0x08, 0x00, 0x00, 0x00, 0x09, 0x40, 0x00,
+			0x00, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+			0x0d, 0x00, 0x00
+		};
+		struct udevice *tpm;
+		u8 recvbuf[100];
+		size_t recv_size;
+		int ret;
+
+		ret = uclass_first_device_err(UCLASS_TPM, &tpm);
+		if (ret)
+			return log_msg_ret("Cannot locate TPM", ret);
+
+		recv_size = 100;
+		ret = tpm_xfer(tpm, sendbuf, 0x23, recvbuf, &recv_size);
+		printf("\ntry ret=%d\n\n", ret);
+		while (ret);
 	}
 
 	/*

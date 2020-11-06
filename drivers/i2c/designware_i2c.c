@@ -160,7 +160,7 @@ static int dw_i2c_calc_timing(struct dw_i2c *priv, enum i2c_speed_mode mode,
 	min_tlow_cnt = calc_counts(ic_clk, info->min_scl_lowtime_ns);
 	min_thigh_cnt = calc_counts(ic_clk, info->min_scl_hightime_ns);
 
-	debug("dw_i2c: mode %d, ic_clk %d, speed %d, period %d rise %d fall %d tlow %d thigh %d spk %d\n",
+	log_debug("dw_i2c: mode %d, ic_clk %d, speed %d, period %d rise %d fall %d tlow %d thigh %d spk %d\n",
 	      mode, ic_clk, info->speed, period_cnt, rise_cnt, fall_cnt,
 	      min_tlow_cnt, min_thigh_cnt, spk_cnt);
 
@@ -173,7 +173,7 @@ static int dw_i2c_calc_timing(struct dw_i2c *priv, enum i2c_speed_mode mode,
 	lcnt = min_tlow_cnt - rise_cnt + fall_cnt - 1;
 
 	if (hcnt < 0 || lcnt < 0) {
-		debug("dw_i2c: bad counts. hcnt = %d lcnt = %d\n", hcnt, lcnt);
+		log_debug("dw_i2c: bad counts. hcnt = %d lcnt = %d\n", hcnt, lcnt);
 		return log_msg_ret("counts", -EINVAL);
 	}
 
@@ -199,7 +199,7 @@ static int dw_i2c_calc_timing(struct dw_i2c *priv, enum i2c_speed_mode mode,
 		 priv->sda_hold_time_ns : DEFAULT_SDA_HOLD_TIME;
 	config->sda_hold = calc_counts(ic_clk, sda_hold_time_ns);
 
-	debug("dw_i2c: hcnt = %d lcnt = %d sda hold = %d\n", hcnt, lcnt,
+	log_debug("dw_i2c: hcnt = %d lcnt = %d sda hold = %d\n", hcnt, lcnt,
 	      config->sda_hold);
 
 	return 0;
@@ -743,6 +743,7 @@ static int designware_i2c_set_bus_speed(struct udevice *bus, unsigned int speed)
 #else
 	rate = IC_CLK;
 #endif
+	log_debug("%s: speed=%u, rate=%lu\n", bus->name, speed, rate);
 	return _dw_i2c_set_bus_speed(i2c, i2c->regs, speed, rate);
 }
 
