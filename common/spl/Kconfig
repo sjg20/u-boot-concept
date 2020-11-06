@@ -297,6 +297,15 @@ config TPL_BANNER_PRINT
 	  info. Disabling this option could be useful to reduce TPL boot time
 	  (e.g. approx. 6 ms faster, when output on i.MX6 with 115200 baud).
 
+config VPL_BANNER_PRINT
+	bool "Enable output of the VPL banner 'U-Boot VPL ...'"
+	depends on VPL
+	default y
+	help
+	  If this option is enabled, VPL will print the banner with version
+	  info. Disabling this option could be useful to reduce VPL boot time
+	  (e.g. approx. 6 ms faster, when output on i.MX6 with 115200 baud).
+
 config SPL_EARLY_BSS
 	depends on ARM && !ARM64
 	bool "Allows initializing BSS early before entering board_init_f"

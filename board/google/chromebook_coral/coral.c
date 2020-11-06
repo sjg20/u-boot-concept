@@ -44,12 +44,14 @@ int chromeos_get_gpio(const struct udevice *dev, const char *prop,
 	int ret;
 
 	ret = gpio_request_by_name((struct udevice *)dev, prop, 0, &desc, 0);
-	if (ret == -ENOTBLK)
+	if (ret == -ENOTBLK) {
 		info->gpio_num = CROS_GPIO_VIRTUAL;
-	else if (ret)
+		log_info("GPIO '%s' is virtual\n", prop);
+	} else if (ret) {
 		return log_msg_ret("gpio", ret);
-	else
+	} else {
 		info->gpio_num = desc.offset;
+	}
 	info->linux_name = dev_read_string(desc.dev, "linux-name");
 	if (!info->linux_name)
 		return log_msg_ret("linux-name", -ENOENT);

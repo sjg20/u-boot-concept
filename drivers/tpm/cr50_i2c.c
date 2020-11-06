@@ -5,6 +5,7 @@
  * Copyright 2018 Google LLC
  */
 
+#define LOG_DEBUG
 #define LOG_CATEGORY UCLASS_TPM
 
 #include <common.h>
@@ -82,7 +83,8 @@ static int cr50_i2c_wait_tpm_ready(struct udevice *dev)
 			return -ETIME;
 		}
 	}
-	log_debug("i=%d\n", i);
+	if (i > 10)
+		log_debug("i=%d\n", i);
 
 	return 0;
 }
@@ -301,7 +303,7 @@ static int cr50_i2c_recv(struct udevice *dev, u8 *buf, size_t buf_len)
 	int status;
 	int ret;
 
-	log_debug("%s: len=%x\n", __func__, buf_len);
+	log_debug("%s: maxlen=%x\n", __func__, buf_len);
 	if (buf_len < TPM_HEADER_SIZE)
 		return -E2BIG;
 
@@ -320,6 +322,7 @@ static int cr50_i2c_recv(struct udevice *dev, u8 *buf, size_t buf_len)
 	/* Determine expected data in the return buffer */
 	memcpy(&expected_buf, buf + TPM_CMD_COUNT_OFFSET, sizeof(expected_buf));
 	expected = be32_to_cpu(expected_buf);
+	log_debug("expected=%x, burstcnt=%x\n", expected, burstcnt);
 	if (expected > buf_len) {
 		log_warning("Too much data: %zu > %zu\n", expected, buf_len);
 		goto out_err;
@@ -353,6 +356,8 @@ static int cr50_i2c_recv(struct udevice *dev, u8 *buf, size_t buf_len)
 		goto out_err;
 	}
 
+	log_debug("complete, current=%x\n", current);
+
 	return current;
 
 out_err:
@@ -372,14 +377,14 @@ out_err:
 static int cr50_i2c_send(struct udevice *dev, const u8 *buf, size_t len)
 {
 	struct cr50_priv *priv = dev_get_priv(dev);
-
 	int status;
 	size_t burstcnt, limit, sent = 0;
 	u8 tpm_go[4] = { TPM_STS_GO };
 	ulong timeout;
 	int ret;
 
-	log_debug("%s: len=%x\n", __func__, len);
+	log_debug("len=%x\n", len);
+	print_buffer(0, buf, 1, len, 0);
 	timeout = timer_get_us() + TIMEOUT_LONG_US;
 	do {
 		ret = cr50_i2c_status(dev);
@@ -419,6 +424,7 @@ static int cr50_i2c_send(struct udevice *dev, const u8 *buf, size_t len)
 
 		sent += limit;
 		len -= limit;
+		log_debug("   - sent=%x\n", limit);
 	}
 
 	/* Ensure TPM is not expecting more data */
@@ -437,9 +443,13 @@ static int cr50_i2c_send(struct udevice *dev, const u8 *buf, size_t len)
 		goto out_err;
 	}
 
+	log_debug("complete, sent=%x\n", sent);
+
 	return sent;
 
 out_err:
+	log_warning("error: abort\n");
+
 	/* Abort current transaction if still pending */
 	ret = cr50_i2c_status(dev);
 
@@ -559,6 +569,7 @@ static int cr50_i2c_open(struct udevice *dev)
 	char buf[80];
 	int ret;
 
+	log_debug("start\n");
 	ret = process_reset(dev);
 	if (ret)
 		return log_msg_ret("reset", ret);
@@ -699,7 +710,16 @@ static int cr50_i2c_probe(struct udevice *dev)
 	}
 	priv->vendor = vendor;
 	priv->locality = -1;
-
+	log_debug("Cr50 ready\n");\
+/*
+	size_t burstcnt;
+	int status;
+	int ret;
+	ret = cr50_i2c_wait_burststs(dev, TPM_STS_VALID, &burstcnt, &status);
+	log_debug("ret=%d\n", ret);
+	ret = cr50_i2c_wait_burststs(dev, TPM_STS_VALID, &burstcnt, &status);
+	log_debug("ret2=%d\n", ret);
+*/
 	return 0;
 }
 

@@ -109,8 +109,12 @@ int binman_get_rom_offset(void)
 int binman_select_subnode(const char *name)
 {
 	ofnode node;
+	int ret;
 
-	node = ofnode_find_subnode(binman->image, name);
+	ret = find_image_node(&node);
+	if (ret)
+		return log_msg_ret("main", -ENOENT);
+	node = ofnode_find_subnode(node, name);
 	if (!ofnode_valid(node))
 		return log_msg_ret("node", -ENOENT);
 	binman->image = node;
