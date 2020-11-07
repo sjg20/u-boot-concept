@@ -35,6 +35,8 @@
 #include <linux/sizes.h>
 #include <power/acpi_pmc.h>
 
+#include <tpm-common.h>
+
 /* Define this here to avoid referencing any drivers for the debug UART 1 */
 #define PCH_DEV_P2SB	PCI_BDF(0, 0x0d, 0)
 
@@ -223,6 +225,7 @@ static int arch_cpu_init_spl(void)
 		return log_msg_ret("Cannot set up p2sb", ret);
 
 	if (1) {
+		dm_dump_all();
 		u8 sendbuf[] = {
 			0x80, 0x02, 0x00, 0x00, 0x00, 0x23, 0x00, 0x00,
 			0x01, 0x4e, 0x40, 0x00, 0x00, 0x0c, 0x01, 0x00,
@@ -246,6 +249,7 @@ static int arch_cpu_init_spl(void)
 		recv_size = 100;
 		ret = tpm_xfer(tpm, sendbuf, 0x23, recvbuf, &recv_size);
 		printf("\ntry ret=%d\n\n", ret);
+		dm_dump_all();
 		while (ret);
 	}
 

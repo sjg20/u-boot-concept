@@ -4,6 +4,9 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
+#define LOG_DEBUG
+#define LOG_CATEGORY	UCLASS_IRQ
+
 #include <common.h>
 #include <dm.h>
 #include <irq.h>
@@ -34,6 +37,9 @@ static int acpi_gpe_read_and_clear(struct irq *irq)
 
 	bank = irq->id / 32;
 	mask = 1 << (irq->id % 32);
+
+// 	log_debug("priv->acpi_base=%lx, bank=%x, mask=%x\n", priv->acpi_base,
+// 		  bank, mask);
 
 	/* Wait up to 1ms for GPE status to clear */
 	start = get_timer(0);
