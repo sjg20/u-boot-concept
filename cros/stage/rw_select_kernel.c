@@ -45,6 +45,10 @@ int vboot_rw_select_kernel(struct vboot_info *vboot)
 	printf("Calling VbSelectAndLoadKernel().\n");
 	VbError_t res = VbSelectAndLoadKernel(&vboot->cparams, kparams);
 
+	if (res) {
+		printf("res=%d/%x\n", res, res);
+		while (1);
+	}
 	ret = 0;
 	if (res == VBERROR_EC_REBOOT_TO_RO_REQUIRED) {
 		printf("EC Reboot requested. Doing cold reboot.\n");

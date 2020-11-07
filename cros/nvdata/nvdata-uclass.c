@@ -4,6 +4,8 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
+#define LOG_CATEGORY LOGC_VBOOT
+
 #include <common.h>
 #include <dm.h>
 #include <ec_commands.h>
@@ -82,8 +84,10 @@ int cros_nvdata_write_walk(enum cros_nvdata_type type, const u8 *data, int size)
 		if (!ret)
 			break;
 	}
-	if (ret)
+	if (ret) {
+		log_warning("Failed to write type %d\n", type);
 		return ret;
+	}
 
 	return 0;
 }
@@ -138,7 +142,10 @@ VbError_t VbExNvStorageWrite(const u8 *buf)
 {
 	int ret;
 
-	printf("write\n");
+	log_warning("write\n");
+	log_warning("Skipping save\n");
+	return 0;
+
 	print_buffer(0, buf, 1, EC_VBNV_BLOCK_SIZE, 0);
 	ret = cros_nvdata_write_walk(CROS_NV_DATA, buf, EC_VBNV_BLOCK_SIZE);
 	if (ret)

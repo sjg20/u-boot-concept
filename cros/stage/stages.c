@@ -116,6 +116,9 @@ static int save_if_needed(struct vboot_info *vboot)
 	struct vb2_context *ctx = vboot_get_ctx(vboot);
 	int ret;
 
+	log_warning("Skipping save\n");
+	return 0;
+
 	if (!ctx)
 		return -ENOENT;
 	if (ctx->flags & VB2_CONTEXT_NVDATA_CHANGED) {
