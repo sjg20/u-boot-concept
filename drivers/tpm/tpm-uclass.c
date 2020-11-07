@@ -4,7 +4,6 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
-#define LOG_DEBUG
 #define LOG_CATEGORY UCLASS_TPM
 
 #include <common.h>
@@ -107,7 +106,6 @@ int tpm_xfer(struct udevice *dev, const uint8_t *sendbuf, size_t send_size,
 	stop = tpm_tis_i2c_calc_ordinal_duration(priv, ordinal);
 	do {
 		ret = ops->recv(dev, priv->buf, sizeof(priv->buf));
-		log_debug("receive: ret=%x\n", ret);
 		if (ret >= 0) {
 			if (ret > *recv_size)
 				return -ENOSPC;

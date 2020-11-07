@@ -113,8 +113,6 @@ u32 fsp_notify(struct fsp_header *fsp_hdr, u32 phase)
 	struct fsp_notify_params *params_ptr;
 	u32 status;
 
-	return 0;
-
 	if (!fsp_hdr)
 		fsp_hdr = gd->arch.fsp_s_hdr;
 

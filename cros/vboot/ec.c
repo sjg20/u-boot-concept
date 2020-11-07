@@ -56,6 +56,7 @@ static int ec_get(int devidx, struct udevice **devp)
 	ret = uclass_get_device_by_seq(UCLASS_CROS_VBOOT_EC, devidx, &dev);
 	if (ret) {
 		log_err("Get EC %d: err=%d\n", devidx, ret);
+		dm_dump_uclass();
 		return VBERROR_UNKNOWN;
 	}
 	log_debug("EC = %s\n", dev->name);
