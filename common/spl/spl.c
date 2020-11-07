@@ -697,7 +697,7 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 #endif
 	switch (spl_image.os) {
 	case IH_OS_U_BOOT:
-		debug("Jumping to U-Boot\n");
+		debug("Jumping to %s\n", spl_phase_name(spl_next_phase()));
 		break;
 #if CONFIG_IS_ENABLED(ATF)
 	case IH_OS_ARM_TRUSTED_FIRMWARE:
