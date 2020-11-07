@@ -111,6 +111,6 @@ int vboot_ec_reboot_to_ro(struct udevice *dev)
 
 UCLASS_DRIVER(cros_vboot_ec) = {
 	.id		= UCLASS_CROS_VBOOT_EC,
-	.name		= "cros_vboot_ec",
+	.name		= "cros-vboot-ec",
 	.flags		= DM_UC_FLAG_SEQ_ALIAS,
 };

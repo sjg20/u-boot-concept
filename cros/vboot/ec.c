@@ -5,6 +5,7 @@
  * Copyright 2018 Google LLC
  */
 
+#define LOG_DEBUG
 #define LOG_CATEGORY UCLASS_CROS_EC
 
 #include <common.h>
@@ -56,7 +57,6 @@ static int ec_get(int devidx, struct udevice **devp)
 	ret = uclass_get_device_by_seq(UCLASS_CROS_VBOOT_EC, devidx, &dev);
 	if (ret) {
 		log_err("Get EC %d: err=%d\n", devidx, ret);
-		dm_dump_uclass();
 		return VBERROR_UNKNOWN;
 	}
 	log_debug("EC = %s\n", dev->name);
@@ -134,6 +134,8 @@ VbError_t VbExEcHashImage(int devidx, enum VbSelectFirmware_t select,
 		return log_msg_ret("Cannot get EC", ret);
 
 	ret = vboot_ec_hash_image(dev, select, hashp, hash_sizep);
+	log_info("ret=%d, hash ptr=%p, hash_size=%x\n", ret, *hashp,
+		 *hash_sizep);
 	if (ret) {
 		log_err("Failed, err=%d\n", ret);
 		return VBERROR_UNKNOWN;
@@ -159,8 +161,10 @@ static struct fmap_entry *get_firmware_entry(struct vboot_info *vboot,
 	}
 	ec = &fw->ec[devidx];
 	entry = select == VB_SELECT_FIRMWARE_READONLY ? &ec->ro : &ec->rw;
-	log_debug("Selected devidx=%d, select=%s\n", devidx,
-		  select == VB_SELECT_FIRMWARE_READONLY ? "ro" : "rw");
+	log_info("Selected devidx=%d, select=%s\n", devidx,
+		 select == VB_SELECT_FIRMWARE_READONLY ? "ro" : "rw");
+	log_info("entry->hash=%p, hash_size=%x\n", entry->hash,
+		 entry->hash_size);
 
 	return entry;
 }
@@ -173,7 +177,7 @@ VbError_t VbExEcGetExpectedImage(int devidx, enum VbSelectFirmware_t select,
 	u8 *image;
 	int ret;
 
-	log_debug("%s: %d\n", __func__, devidx);
+	log_info("%s: %d\n", __func__, devidx);
 	entry = get_firmware_entry(vboot, devidx, select);
 	if (!entry)
 		return VBERROR_UNKNOWN;
@@ -194,7 +198,7 @@ VbError_t VbExEcGetExpectedImageHash(int devidx, enum VbSelectFirmware_t select,
 	struct vboot_info *vboot = vboot_get();
 	struct fmap_entry *entry;
 
-	log_debug("%s: %d\n", __func__, devidx);
+	log_info("devidx=%d\n", devidx);
 	entry = get_firmware_entry(vboot, devidx, select);
 	if (!entry)
 		return VBERROR_UNKNOWN;

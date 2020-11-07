@@ -88,7 +88,7 @@ int cros_ec_vboot_hash_image(struct udevice *dev,
 	ret = cros_ec_read_hash(ec_dev, hash_offset, &resp);
 	if (ret)
 		return ret;
-	*hash_sizep = resp.size;
+	*hash_sizep = resp.digest_size;
 	*hashp = resp.hash_digest;
 
 	return 0;
