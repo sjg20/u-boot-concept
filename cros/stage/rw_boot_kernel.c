@@ -89,12 +89,12 @@ static u32 get_dev_num(const struct udevice *dev)
  * @src: Input string
  * @devnum: Device number of the storage device we will mount
  * @partnum: Partition number of the root file system we will mount
- * @guid: GUID of the kernel partition
+ * @guid: GUID of the kernel partition as a string
  * @dst: Output string
  * @dst_size: Size of output string
  * @return zero if it succeeds, non-zero if it fails
  */
-static int update_cmdline(char *src, int devnum, int partnum, u8 *guid,
+static int update_cmdline(char *src, int devnum, int partnum, char *guid,
 			  char *dst, int dst_size)
 {
 	char *dst_end = dst + dst_size;
@@ -156,8 +156,9 @@ static int update_cmdline(char *src, int devnum, int partnum, u8 *guid,
 			break;
 		case 'U':
 			/* GUID replacement needs 36 bytes */
-			CHECK_SPACE(36 + 1);
-			dst += sprintf(dst, "%pU", guid);
+			CHECK_SPACE(UUID_STR_LEN + 1);
+			strncpy(dst, guid, UUID_STR_LEN);
+			dst += UUID_STR_LEN;
 			break;
 		default:
 			CHECK_SPACE(3);
@@ -244,8 +245,7 @@ static int boot_kernel(struct vboot_info *vboot,
 	printf("\n");
 
 	if (update_cmdline(cmdline_buf, get_dev_num(kparams->disk_handle),
-			   kparams->partition_number + 1,
-			   kparams->partition_guid, cmdline_out,
+			   kparams->partition_number + 1, guid, cmdline_out,
 			   sizeof(cmdline_out))) {
 		log_err("failed replace %%[DUP] in command line\n");
 		return 1;
