@@ -14,6 +14,7 @@
 #include <env.h>
 #include <log.h>
 #include <mapmem.h>
+#include <uuid.h>
 #ifdef CONFIG_X86
 #include <asm/bootm.h>
 #include <asm/zimage.h>
@@ -102,8 +103,8 @@ static int update_cmdline(char *src, int devnum, int partnum, u8 *guid,
 	/* sanity check on inputs */
 	if (devnum < 0 || devnum > 25 || partnum < 1 || partnum > 99 ||
 	    dst_size < 0 || dst_size > 10000) {
-		log_debug("insane input: %d, %d, %d\n", devnum, partnum,
-			  dst_size);
+		log_err("insane input: %d, %d, %d\n", devnum, partnum,
+			dst_size);
 		return 1;
 	}
 
@@ -156,7 +157,7 @@ static int update_cmdline(char *src, int devnum, int partnum, u8 *guid,
 		case 'U':
 			/* GUID replacement needs 36 bytes */
 			CHECK_SPACE(36 + 1);
-			sprintf(dst, "%pU", guid);
+			dst += sprintf(dst, "%pU", guid);
 			break;
 		default:
 			CHECK_SPACE(3);
@@ -182,6 +183,7 @@ static int boot_kernel(struct vboot_info *vboot,
 		EXTRA_BUFFER];
 	char *cmdline;
 	struct udevice *dev;
+	char guid[UUID_STR_LEN + 1];
 #ifdef CONFIG_X86
 	struct boot_params *params;
 #endif
@@ -222,22 +224,39 @@ static int boot_kernel(struct vboot_info *vboot,
 	 */
 	strncat(cmdline_buf, cmdline, CMDLINE_SIZE);
 
-	log_debug("cmdline before update: ");
-	log_debug(cmdline_buf);
-	log_debug("\n");
+	printf("cmdline before update: ptr=%p, len %dn", cmdline_buf,
+	       strlen(cmdline_buf));
+	puts(cmdline_buf);
+	printf("\n");
+
+	printf("2cmdline before update: ptr=%p, len %dn", cmdline_buf,
+	       strlen(cmdline_buf));
+	puts(cmdline_buf);
+	printf("\n");
+
+	uuid_bin_to_str(kparams->partition_guid, guid, UUID_STR_FORMAT_GUID);
+	log_info("partition_number=%d, guid=%s\n", kparams->partition_number,
+		 guid);
+
+	printf("3cmdline before update: ptr=%p, len %d\n", cmdline_buf,
+	       strlen(cmdline_buf));
+	puts(cmdline_buf);
+	printf("\n");
 
 	if (update_cmdline(cmdline_buf, get_dev_num(kparams->disk_handle),
 			   kparams->partition_number + 1,
 			   kparams->partition_guid, cmdline_out,
 			   sizeof(cmdline_out))) {
-		log_debug("failed replace %%[DUP] in command line\n");
+		log_err("failed replace %%[DUP] in command line\n");
 		return 1;
 	}
 
+	printf("cmdline after update: ptr=%p, len %d\n", cmdline_out,
+	       strlen(cmdline_out));
+	puts(cmdline_out);
+	printf("\n");
+
 	env_set("bootargs", cmdline_out);
-	log_debug("cmdline after update:  ");
-	log_debug(env_get("bootargs"));
-	log_debug("\n");
 
 	boot_kernel_vboot_ptr = vboot;
 
@@ -255,12 +274,14 @@ static int boot_kernel(struct vboot_info *vboot,
 	params = (struct boot_params *)(cmdline + CMDLINE_SIZE);
 	printf("kernel_buffer=%p, size=%x, bootloader_address=%llx, size=%x, cmdline=%p, params=%p\n",
 	       kparams->kernel_buffer, kparams->kernel_buffer_size,
-	       kparams->bootloader_address, kparams->bootloader_size, cmdline,
-	       params);
-	print_buffer((ulong)params, params, 1, 0x200, 0);
-	if (!setup_zimage(params, cmdline, 0, 0, 0, 0))
+	       kparams->bootloader_address, kparams->bootloader_size,
+	       cmdline, params);
+// 	print_buffer((ulong)params, params, 1, 0x200, 0);
+	if (!setup_zimage(params, cmdline_out, 0, 0, 0, 0)) {
+		zimage_dump(params);
 		boot_linux_kernel((ulong)params, (ulong)kparams->kernel_buffer,
 				  false);
+	}
 #else
 	cmdtp.name = "bootm";
 	do_bootm(&cmdtp, 0, ARRAY_SIZE(argv), argv);
