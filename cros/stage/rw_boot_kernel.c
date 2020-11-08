@@ -180,8 +180,8 @@ static int boot_kernel(struct vboot_info *vboot,
 	/* sizeof(CHROMEOS_BOOTARGS) reserves extra 1 byte */
 	char cmdline_buf[sizeof(CHROMEOS_BOOTARGS) + CMDLINE_SIZE];
 	/* Reserve EXTRA_BUFFER bytes for update_cmdline's string replacement */
-	char cmdline_out[sizeof(CHROMEOS_BOOTARGS) + CMDLINE_SIZE +
-		EXTRA_BUFFER];
+// 	char cmdline_out[sizeof(CHROMEOS_BOOTARGS) + CMDLINE_SIZE +
+// 		EXTRA_BUFFER];
 	char *cmdline;
 	struct udevice *dev;
 	char guid[UUID_STR_LEN + 1];
@@ -230,33 +230,23 @@ static int boot_kernel(struct vboot_info *vboot,
 	puts(cmdline_buf);
 	printf("\n");
 
-	printf("2cmdline before update: ptr=%p, len %dn", cmdline_buf,
-	       strlen(cmdline_buf));
-	puts(cmdline_buf);
-	printf("\n");
-
 	uuid_bin_to_str(kparams->partition_guid, guid, UUID_STR_FORMAT_GUID);
 	log_info("partition_number=%d, guid=%s\n", kparams->partition_number,
 		 guid);
 
-	printf("3cmdline before update: ptr=%p, len %d\n", cmdline_buf,
-	       strlen(cmdline_buf));
-	puts(cmdline_buf);
-	printf("\n");
-
 	if (update_cmdline(cmdline_buf, get_dev_num(kparams->disk_handle),
-			   kparams->partition_number + 1, guid, cmdline_out,
-			   sizeof(cmdline_out))) {
+			   kparams->partition_number + 1, guid, cmdline,
+			   CMDLINE_SIZE)) {
 		log_err("failed replace %%[DUP] in command line\n");
 		return 1;
 	}
 
-	printf("cmdline after update: ptr=%p, len %d\n", cmdline_out,
-	       strlen(cmdline_out));
-	puts(cmdline_out);
+	printf("cmdline after update: ptr=%p, len %d\n", cmdline,
+	       strlen(cmdline));
+	puts(cmdline);
 	printf("\n");
 
-	env_set("bootargs", cmdline_out);
+	env_set("bootargs", cmdline);
 
 	boot_kernel_vboot_ptr = vboot;
 
@@ -276,9 +266,11 @@ static int boot_kernel(struct vboot_info *vboot,
 	       kparams->kernel_buffer, kparams->kernel_buffer_size,
 	       kparams->bootloader_address, kparams->bootloader_size,
 	       cmdline, params);
-// 	print_buffer((ulong)params, params, 1, 0x200, 0);
-	if (!setup_zimage(params, cmdline_out, 0, 0, 0, 0)) {
+	print_buffer((ulong)params + 0x1f1, (void *)params + 0x1f1, 1, 0xf, 0);
+	if (!setup_zimage(params, cmdline, 0, 0, 0, 0)) {
 		zimage_dump(params);
+		print_buffer((ulong)kparams->kernel_buffer,
+			     kparams->kernel_buffer, 1, 0x100, 0);
 		boot_linux_kernel((ulong)params, (ulong)kparams->kernel_buffer,
 				  false);
 	}
