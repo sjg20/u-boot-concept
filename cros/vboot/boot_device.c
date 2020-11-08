@@ -5,6 +5,9 @@
  * Copyright 2018 Google LLC
  */
 
+#define LOG_DEBUG
+#define LOG_CATEGORY	LOGC_VBOOT
+
 #include <common.h>
 #include <bootstage.h>
 #include <dm.h>
@@ -13,6 +16,7 @@
 #include <usb.h>
 #include <cros/cros_common.h>
 #include <cros/vboot.h>
+#include <dm/device-internal.h>
 
 /* Maximum number of devices we can support */
 enum {
@@ -35,16 +39,21 @@ static int add_matching_device(struct udevice *dev, u32 req_flags,
 	u32 flags;
 
 	/* Ignore zero-length devices */
-	if (!bdev->lba)
+	if (!bdev->lba) {
+		log_debug("Ignoring %s: zero-length\n", dev->name);
 		return -ENOENT;
+	}
 
 	/*
 	 * Only add this storage device if the properties of req_flags is a
 	 * subset of the properties of flags.
 	 */
 	flags = bdev->removable ? VB_DISK_FLAG_REMOVABLE : VB_DISK_FLAG_FIXED;
-	if ((flags & req_flags) != req_flags)
+	if ((flags & req_flags) != req_flags) {
+		log_debug("Ignoring %s: flags=%x, req_flags=%x\n", dev->name,
+			  flags, req_flags);
 		return -ENOENT;
+	}
 
 	info->handle = (VbExDiskHandle_t)dev;
 	info->bytes_per_lba = bdev->blksz;
@@ -88,6 +97,7 @@ VbError_t VbExDiskGetInfo(VbDiskInfo **infos_ptr, u32 *count_ptr,
 	u32 max_count;	/* maximum devices to scan for */
 	u32 count = 0;	/* number of matching devices found */
 	struct udevice *dev;
+	struct uclass *uc;
 
 	/* We return as many disk infos as possible */
 	max_count = MAX_DISK_INFO;
@@ -102,7 +112,12 @@ VbError_t VbExDiskGetInfo(VbDiskInfo **infos_ptr, u32 *count_ptr,
 		boot_device_usb_start(vboot);
 
 	/* Scan through all the interfaces looking for devices */
-	uclass_foreach_dev_probe(UCLASS_BLK, dev) {
+	uclass_id_foreach_dev(UCLASS_BLK, dev, uc) {
+		int ret;
+
+		ret = device_probe(dev);
+		if (ret)
+			continue;
 		/* Now record the devices that have the required flags */
 		if (!add_matching_device(dev, disk_flags, infos + count))
 			count++;
@@ -119,6 +134,7 @@ VbError_t VbExDiskGetInfo(VbDiskInfo **infos_ptr, u32 *count_ptr,
 		free(infos);
 	}
 	bootstage_accum(BOOTSTAGE_ACCUM_VBOOT_BOOT_DEVICE_INFO);
+	log_info("Found %u disks\n", count);
 
 	/* The operation itself succeeds, despite scan failure all about */
 	return VBERROR_SUCCESS;
