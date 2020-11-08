@@ -19,6 +19,8 @@ config CHROMEOS_VBOOT
 	imply NVDATA_CMOS if X86
 	imply FWSTORE_SPI_FLASH
 
+if CHROMEOS_VBOOT
+
 config VBOOT2
 	bool "Use Chromium OS vboot2 API where possible"
 	depends on CHROMEOS
@@ -131,8 +133,26 @@ config VPL_CHROMEOS
 	imply VPL_NVDATA_CMOS if X86
 	imply VPL_FWSTORE_SPI_FLASH
 
-config CROS_FULL
-	bool "Build full Chromium OS support"
+config TPL_CHROMEOS_VBOOT_A
+	bool "Run vboot stage A (SPL selection) in TPL"
+	default y if TPL && !VPL
+	imply TPL_FWSTORE_SPI_FLASH
+	imply TPL_TPM
+	imply TPL_NVDATA_TPM
+
+config VPL_CHROMEOS_VBOOT_A
+	bool "Run vboot stage A (SPL selection) in VPL"
+	default y if VPL
+	imply VPL_FWSTORE_SPI_FLASH
+	imply VPL_TPM
+	imply VPL_NVDATA_TPM
+
+config SPL_CHROMEOS_VBOOT_B
+	bool "Run vboot stage B (U-Boot selection) in SPL"
+	default y
+
+config CHROMEOS_VBOOT_C
+	bool "Run vboot stage C (kernel selection) in U-Boot proper"
 	default y
 
 config CHROMEOS_TEST
@@ -156,3 +176,5 @@ source "cros/cmd/Kconfig"
 source "cros/flag/Kconfig"
 source "cros/fwstore/Kconfig"
 source "cros/nvdata/Kconfig"
+
+endif
