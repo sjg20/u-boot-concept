@@ -132,8 +132,7 @@ def LookupAndWriteSymbols(elf_fname, entry, section):
                                  (msg, sym.size))
 
             # Look up the symbol in our entry tables.
-            value = section.GetImage().LookupImageSymbol(name, sym.weak, msg,
-                                                         base.address)
+            value = section.LookupSymbol(name, sym.weak, msg, base.address)
             if value is None:
                 value = -1
                 pack_string = pack_string.lower()
