@@ -72,6 +72,10 @@ static struct driver_info driver_info_act_dma = {
 	.name = "test_act_dma_drv",
 };
 
+static struct driver_info driver_info_act_vital_clk = {
+	.name = "test_act_vital_clk_drv",
+};
+
 void dm_leak_check_start(struct unit_test_state *uts)
 {
 	uts->start = mallinfo();
@@ -882,6 +886,49 @@ static int dm_test_remove_active_dma(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_remove_active_dma, 0);
+
+/* Test removal of 'vital' devices */
+static int dm_test_remove_vital(struct unit_test_state *uts)
+{
+	struct dm_test_state *dms = uts->priv;
+	struct udevice *normal, *vital;
+
+	/* Skip the behaviour in test_post_probe() */
+	dms->skip_post_probe = 1;
+
+	ut_assertok(device_bind_by_name(dms->root, false,
+					&driver_info_act_vital_clk, &vital));
+	ut_assertnonnull(vital);
+
+	ut_assertok(device_bind_by_name(dms->root, false, &driver_info_manual,
+					&normal));
+	ut_assertnonnull(normal);
+
+	/* Probe the devices */
+	ut_assertok(device_probe(vital));
+	ut_assertok(device_probe(normal));
+
+	/* Check that devices are active right now */
+	ut_asserteq(true, device_active(vital));
+	ut_asserteq(true, device_active(normal));
+
+	/* Remove normal devices via selective remove flag */
+	dm_remove_devices_flags(DM_REMOVE_NON_VITAL);
+
+	/* Check that normal devices are inactive right now */
+	ut_asserteq(true, device_active(vital));
+	ut_asserteq(false, device_active(normal));
+
+	/* Remove vital devices via normal remove flag */
+	dm_remove_devices_flags(DM_REMOVE_NORMAL);
+
+	/* Check that all devices are inactive right now */
+	ut_asserteq(false, device_active(vital));
+	ut_asserteq(false, device_active(normal));
+
+	return 0;
+}
+DM_TEST(dm_test_remove_vital, 0);
 
 static int dm_test_uclass_before_ready(struct unit_test_state *uts)
 {

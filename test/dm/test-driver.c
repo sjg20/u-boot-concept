@@ -170,3 +170,14 @@ U_BOOT_DRIVER(test_act_dma_drv) = {
 	.unbind	= test_manual_unbind,
 	.flags	= DM_FLAG_ACTIVE_DMA,
 };
+
+U_BOOT_DRIVER(test_act_vital_clk_drv) = {
+	.name	= "test_act_vital_clk_drv",
+	.id	= UCLASS_TEST,
+	.ops	= &test_manual_ops,
+	.bind	= test_manual_bind,
+	.probe	= test_manual_probe,
+	.remove	= test_manual_remove,
+	.unbind	= test_manual_unbind,
+	.flags	= DM_FLAG_VITAL,
+};
