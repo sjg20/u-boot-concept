@@ -271,6 +271,9 @@ static int boot_kernel(struct vboot_info *vboot,
 		zimage_dump(params);
 		print_buffer((ulong)kparams->kernel_buffer,
 			     kparams->kernel_buffer, 1, 0x100, 0);
+		printf("go %p, %p\n", params, kparams->kernel_buffer);
+		return 1;
+
 		boot_linux_kernel((ulong)params, (ulong)kparams->kernel_buffer,
 				  false);
 	}
