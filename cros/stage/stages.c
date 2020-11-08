@@ -188,6 +188,8 @@ int vboot_run_stages(struct vboot_info *vboot, enum vboot_stage_t start,
 		return -ENOENT;  /* Try next boot method (which is recovery) */
 	}
 
+	return 0;
+
 	if (ret == VBERROR_REBOOT_REQUIRED) {
 		log_warning("Cold reboot\n");
 		sysreset_walk_halt(SYSRESET_COLD);
