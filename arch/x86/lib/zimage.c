@@ -110,7 +110,9 @@ static void build_command_line(char *command_line, int auto_boot)
 	if (env_command_line)
 		strcat(command_line, env_command_line);
 
-	printf("Kernel command line: \"%s\"\n", command_line);
+	printf("Kernel command line:");
+	puts(command_line);
+	printf("\n");
 }
 
 static int kernel_magic_ok(struct setup_header *hdr)
@@ -134,8 +136,7 @@ static int get_boot_protocol(struct setup_header *hdr, bool verbose)
 		return hdr->version;
 	} else {
 		/* Very old kernel */
-		if (verbose)
-			printf("Magic signature not found\n");
+		printf("Magic signature not found\n");
 		return 0x0100;
 	}
 }
@@ -303,7 +304,7 @@ int setup_zimage(struct boot_params *setup_base, char *cmd_line, int auto_boot,
 		 ulong initrd_addr, ulong initrd_size, ulong cmdline_force)
 {
 	struct setup_header *hdr = &setup_base->hdr;
-	int bootproto = get_boot_protocol(hdr, false);
+	int bootproto = get_boot_protocol(hdr, true);
 
 	log_debug("Setup E820 entries\n");
 	setup_base->e820_entries = install_e820_map(
@@ -354,7 +355,8 @@ int setup_zimage(struct boot_params *setup_base, char *cmd_line, int auto_boot,
 			build_command_line(cmd_line, auto_boot);
 		ret = bootm_process_cmdline(cmd_line, max_size, BOOTM_CL_ALL);
 		if (ret) {
-			printf("Cmdline setup failed (err=%d)\n", ret);
+			printf("Cmdline setup failed (max_size=%x, bootproto=%x, err=%d)\n",
+			       max_size, bootproto, ret);
 			return ret;
 		}
 		printf("Kernel command line: \"");

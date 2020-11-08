@@ -154,8 +154,8 @@ VbError_t VbExDiskRead(VbExDiskHandle_t handle, u64 lba_start, u64 lba_count,
 	struct blk_desc *bdev = dev_get_uclass_platdata(dev);
 	u64 blks_read;
 
-	log_debug("lba_start=%u, lba_count=%u\n", (uint)lba_start,
-		  (uint)lba_count);
+	log_debug("lba_start=%x, lba_count=%x, buffer=%p\n", (uint)lba_start,
+		  (uint)lba_count, buffer);
 
 	if (lba_start >= bdev->lba || lba_start + lba_count > bdev->lba)
 		return VBERROR_UNKNOWN;

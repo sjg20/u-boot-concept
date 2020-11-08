@@ -4,6 +4,7 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
+#define LOG_DEBUG
 #define LOG_CATEGORY LOGC_VBOOT
 
 #include <common.h>
@@ -20,6 +21,19 @@
 #include <cros/cros_common.h>
 #include <cros/vboot.h>
 #include <dm/device-internal.h>
+
+/*
+ * The Chrome OS kernel file has the following format:
+ *
+ *  0		Vboot header (used by the vboot library). At offset 4f0 is the
+ *		bootloader address, assuming that the kernel (at 8000) is loaded
+ *		at CROS_32BIT_ENTRY_ADDR
+ *		This header is easy to recognise as the first bytes are
+ *		"CHROMEOS"
+ *  8000	Kernel start
+ *  BLO - 1000	Setup block (x86)
+ *  BLO - 2000	Command line
+ */
 
 enum {
 	CROS_32BIT_ENTRY_ADDR = 0x100000
@@ -189,10 +203,10 @@ static int boot_kernel(struct vboot_info *vboot,
 	 * you have the offset.
 	 *
 	 * Note that kernel body load address is kept in kernel preamble but
-	 * actually serves no real purpose; for one, kernel buffer is not
+	 * actually serves no real purpose; for one, the kernel buffer is not
 	 * always allocated at that address (nor even recommended to be).
 	 *
-	 * Because this address does not effect kernel buffer location (or in
+	 * Because this address does not affect kernel-buffer location (or in
 	 * fact anything else), the current consensus is not to adjust this
 	 * address on a per-board basis.
 	 *
@@ -238,8 +252,12 @@ static int boot_kernel(struct vboot_info *vboot,
 #ifdef CONFIG_X86
 // 	vboot_update_acpi(vboot);
 
-	params = (struct boot_params *)(uintptr_t)
-		(kparams->bootloader_address - CROS_PARAMS_SIZE);
+	params = (struct boot_params *)(cmdline + CMDLINE_SIZE);
+	printf("kernel_buffer=%p, size=%x, bootloader_address=%llx, size=%x, cmdline=%p, params=%p\n",
+	       kparams->kernel_buffer, kparams->kernel_buffer_size,
+	       kparams->bootloader_address, kparams->bootloader_size, cmdline,
+	       params);
+	print_buffer((ulong)params, params, 1, 0x200, 0);
 	if (!setup_zimage(params, cmdline, 0, 0, 0, 0))
 		boot_linux_kernel((ulong)params, (ulong)kparams->kernel_buffer,
 				  false);
