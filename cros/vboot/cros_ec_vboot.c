@@ -76,7 +76,7 @@ static u32 get_vboot_hash_offset(enum VbSelectFirmware_t select)
 
 int cros_ec_vboot_hash_image(struct udevice *dev,
 			     enum VbSelectFirmware_t select,
-			     const u8 **hashp, int *hash_sizep)
+			     const u8 **hashp /* must alloc mem, int *hash_sizep)
 {
 	struct udevice *ec_dev = dev_get_parent(dev);
 	static struct ec_response_vboot_hash resp;
@@ -88,6 +88,9 @@ int cros_ec_vboot_hash_image(struct udevice *dev,
 	ret = cros_ec_read_hash(ec_dev, hash_offset, &resp);
 	if (ret)
 		return ret;
+	log_info("hash status=%x, hash_type=%x, digest_size=%x, offset=%x, size=%x\n",
+		 resp.status, resp.hash_type, resp.digest_size, resp.offset,
+		 resp.size);
 	*hash_sizep = resp.digest_size;
 	*hashp = resp.hash_digest;
 
@@ -165,14 +168,14 @@ int cros_ec_vboot_update_image(struct udevice *dev,
 	region = vboot_to_ec_region(select);
 	ret = vboot_set_region_protection(ec_dev, select, 0);
 	if (ret)
-		return ret;
+		return log_msg_ret("prot", ret);
 
 	ret = cros_ec_flash_offset(ec_dev, region, &region_offset,
 				   &region_size);
 	if (ret)
 		return ret;
 	if (image_size > region_size)
-		return -EINVAL;
+		return log_msg_ret("size", -EINVAL);
 
 	/*
 	 * Erase the entire region, so that the EC doesn't see any garbage
@@ -184,17 +187,17 @@ int cros_ec_vboot_update_image(struct udevice *dev,
 	 */
 	ret = cros_ec_flash_erase(ec_dev, region_offset, region_size);
 	if (ret)
-		return ret;
+		return log_msg_ret("erase", ret);
 
 	/* Write the image */
 	ret = cros_ec_flash_write(ec_dev, image, region_offset, image_size);
 	if (ret)
-		return ret;
+		return log_msg_ret("write", ret);
 
 	/* Verify the image */
 	ret = cros_ec_efs_verify(ec_dev, region);
 	if (ret)
-		return ret;
+		return log_msg_ret("verify", ret);
 
 	return 0;
 }

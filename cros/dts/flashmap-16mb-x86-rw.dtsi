@@ -60,7 +60,8 @@
 				algo = "sha256";
 			};
 		};
-		cros-ec-rw {
+		ecrw {
+			type = "cros-ec-rw";
 			u-boot,dm-pre-reloc;
 			size = <0xf000>;
 			hash {
@@ -121,7 +122,8 @@
 				};
 			};
 		};
-		cros-ec-rw {
+		ecrw {
+			type = "cros-ec-rw";
 			u-boot,dm-pre-reloc;
 			size = <0xf000>;
 			add-hash;
