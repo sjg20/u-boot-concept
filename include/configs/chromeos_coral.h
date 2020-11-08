@@ -18,7 +18,7 @@
 
 #undef CONFIG_BOOTCOMMAND
 
-#define CONFIG_BOOTCOMMAND2	"vboot go auto"
+#define CONFIG_BOOTCOMMAND	"vboot go auto"
 
 #define xCONFIG_BOOTCOMMAND	\
 	"read mmc 2:2 100000 0 80; setexpr loader *001004f0; " \
