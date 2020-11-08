@@ -163,6 +163,7 @@ int dm_init(bool of_live)
 int dm_uninit(void)
 {
 	device_remove(dm_root(), DM_REMOVE_NORMAL);
+	device_remove(dm_root(), DM_REMOVE_LATE);
 	device_unbind(dm_root());
 	gd->dm_root = NULL;
 
@@ -391,6 +392,7 @@ struct acpi_ops root_acpi_ops = {
 U_BOOT_DRIVER(root_driver) = {
 	.name	= "root_driver",
 	.id	= UCLASS_ROOT,
+	.flags	= DM_FLAG_REMOVE_LATE,
 	ACPI_OPS_PTR(&root_acpi_ops)
 };
 

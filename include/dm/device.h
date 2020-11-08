@@ -74,6 +74,13 @@ struct driver_info;
 #define DM_FLAG_REMOVE_WITH_PD_ON	(1 << 13)
 
 /*
+ * Device is removed late, after all regular devices were removed. This
+ * is useful e.g. for clock, which need to be active during the device
+ * remove phase.
+ */
+#define DM_FLAG_REMOVE_LATE		(1 << 14)
+
+/*
  * One or multiple of these flags are passed to device_remove() so that
  * a selective device removal as specified by the remove-stage and the
  * driver flags can be done.
@@ -95,6 +102,9 @@ enum {
 
 	/* Don't power down any attached power domains */
 	DM_REMOVE_NO_PD		= 1 << 1,
+
+	/* Remove device after all regular devices are removed */
+	DM_REMOVE_LATE		= 1 << 2,
 };
 
 /**

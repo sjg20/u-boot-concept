@@ -72,6 +72,10 @@ static struct driver_info driver_info_act_dma = {
 	.name = "test_act_dma_drv",
 };
 
+static struct driver_info driver_info_act_late_clk = {
+	.name = "test_act_late_clk_drv",
+};
+
 void dm_leak_check_start(struct unit_test_state *uts)
 {
 	uts->start = mallinfo();
@@ -82,16 +86,19 @@ void dm_leak_check_start(struct unit_test_state *uts)
 int dm_leak_check_end(struct unit_test_state *uts)
 {
 	struct mallinfo end;
-	int id, diff;
+	int i, id, diff;
 
 	/* Don't delete the root class, since we started with that */
-	for (id = UCLASS_ROOT + 1; id < UCLASS_COUNT; id++) {
-		struct uclass *uc;
+	for (i = 0; i < 2; i++) {
+		for (id = UCLASS_ROOT + 1; id < UCLASS_COUNT; id++) {
+			struct uclass *uc;
 
-		uc = uclass_find(id);
-		if (!uc)
-			continue;
-		ut_assertok(uclass_destroy(uc));
+			uc = uclass_find(id);
+			if (!uc)
+				continue;
+			ut_assertok(uclass_destroy(uc,
+				    i ? DM_REMOVE_LATE : DM_REMOVE_NORMAL));
+		}
 	}
 
 	end = mallinfo();
@@ -514,7 +521,7 @@ static int dm_test_uclass(struct unit_test_state *uts)
 	ut_asserteq(0, dm_testdrv_op_count[DM_TEST_OP_DESTROY]);
 	ut_assert(uc->priv);
 
-	ut_assertok(uclass_destroy(uc));
+	ut_assertok(uclass_destroy(uc, DM_REMOVE_LATE));
 	ut_asserteq(1, dm_testdrv_op_count[DM_TEST_OP_INIT]);
 	ut_asserteq(1, dm_testdrv_op_count[DM_TEST_OP_DESTROY]);
 
@@ -882,6 +889,80 @@ static int dm_test_remove_active_dma(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_remove_active_dma, 0);
+
+/*
+ * Test that removal of devices, either via the "normal" device_remove()
+ * API or via the device driver selective flag works as expected
+ */
+static int dm_test_remove_active_late(struct unit_test_state *uts)
+{
+	struct dm_test_state *dms = uts->priv;
+	struct udevice *devn, *devl;
+
+	/* Skip the behaviour in test_post_probe() */
+	dms->skip_post_probe = 1;
+
+	ut_assertok(device_bind_by_name(dms->root, false,
+					&driver_info_act_late_clk,
+					&devl));
+	ut_assert(devl);
+
+	ut_assertok(device_bind_by_name(dms->root, false,
+					&driver_info_manual,
+					&devn));
+	ut_assert(devn);
+
+	/* Part 1, DM_REMOVE_ACTIVE_ALL */
+
+	/* Probe the devices */
+	ut_assertok(device_probe(devl));
+	ut_assertok(device_probe(devn));
+
+	/* Test if devices are active right now */
+	ut_asserteq(true, device_active(devl));
+	ut_asserteq(true, device_active(devn));
+
+	/* Remove normal devices via selective remove flag */
+	dm_remove_devices_flags(DM_REMOVE_ACTIVE_ALL | DM_REMOVE_NORMAL);
+
+	/* Test if normal devices are inactive right now */
+	ut_asserteq(true, device_active(devl));
+	ut_asserteq(false, device_active(devn));
+
+	/* Remove late devices via selective remove flag */
+	dm_remove_devices_flags(DM_REMOVE_ACTIVE_ALL | DM_REMOVE_LATE);
+
+	/* Test if all devices are inactive right now */
+	ut_asserteq(false, device_active(devl));
+	ut_asserteq(false, device_active(devn));
+
+	/* Part 2, device_remove() */
+
+	/* Probe the devices again */
+	ut_assertok(device_probe(devl));
+	ut_assertok(device_probe(devn));
+
+	/* Test if devices are active right now */
+	ut_asserteq(true, device_active(devl));
+	ut_asserteq(true, device_active(devn));
+
+	/* Remove the devices via "normal" remove API */
+	ut_assertok(device_remove(devn, DM_REMOVE_NORMAL));
+	ut_assertok(device_remove(devl, DM_REMOVE_NORMAL));
+
+	/* Test if normal devices are inactive right now */
+	ut_asserteq(true, device_active(devl));
+	ut_asserteq(false, device_active(devn));
+
+	ut_assertok(device_remove(devl, DM_REMOVE_LATE));
+
+	/* Test if devices are inactive right now */
+	ut_asserteq(false, device_active(devl));
+	ut_asserteq(false, device_active(devn));
+
+	return 0;
+}
+DM_TEST(dm_test_remove_active_late, 0);
 
 static int dm_test_uclass_before_ready(struct unit_test_state *uts)
 {
