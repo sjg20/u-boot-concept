@@ -298,6 +298,7 @@ static void dump_fmap_firmware_entry(const char *name,
 	dump_fmap_entry("boot", &entry->boot);
 	dump_fmap_entry("vblock", &entry->vblock);
 	dump_fmap_entry("firmware_id", &entry->firmware_id);
+	dump_fmap_entry("ecrw", &entry->ec[EC_MAIN].rw);
 	log_debug("%-20s %08llx\n", "block_offset",
 		  (long long)entry->block_offset);
 }

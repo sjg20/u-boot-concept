@@ -14,6 +14,7 @@
 int ofnode_read_fmap_entry(ofnode node, struct fmap_entry *entry)
 {
 	const char *prop;
+	ofnode subnode;
 
 	if (ofnode_read_u32(node, "image-pos", &entry->offset)) {
 		debug("Node '%s' has bad/missing 'image-pos' property\n",
@@ -37,11 +38,14 @@ int ofnode_read_fmap_entry(ofnode node, struct fmap_entry *entry)
 	}
 	entry->unc_length = ofnode_read_s32_default(node, "uncomp-size",
 						    entry->length);
-	prop = ofnode_read_string(node, "hash");
-	if (prop)
-		entry->hash_size = strlen(prop);
-	entry->hash_algo = prop ? FMAP_HASH_SHA256 : FMAP_HASH_NONE;
-	entry->hash = (uint8_t *)prop;
+	subnode = ofnode_find_subnode(node, "hash");
+	if (ofnode_valid(subnode)) {
+		prop = ofnode_read_prop(subnode, "value", &entry->hash_size);
+
+		/* Assume it is sha256 */
+		entry->hash_algo = prop ? FMAP_HASH_SHA256 : FMAP_HASH_NONE;
+		entry->hash = (uint8_t *)prop;
+	}
 
 	return 0;
 }

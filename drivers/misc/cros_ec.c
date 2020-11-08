@@ -13,6 +13,7 @@
  * is not reset.
  */
 
+#define DEBUG
 #define LOG_CATEGORY UCLASS_CROS_EC
 
 #include <common.h>
