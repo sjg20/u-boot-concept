@@ -129,9 +129,11 @@ enum {
  * @parent_priv: The parent's private data for this device
  * @uclass_node: Used by uclass to link its devices
  * @child_head: List of children of this device
- * @sibling_node: Next device in list of all devices
- * @flags: Flags for this device DM_FLAG_...
- * @seq: Allocated sequence number for this device (-1 = none). This is set up
+ * @sibling_node: Next device in parent's child_head list
+ * @flags: Flags for this device DM_FLAG_... These start at 0 initially and are
+ *	used to track the device's state. They are unrelated to the driver
+ *	flags.
+ * @sqq: Allocated sequence number for this device (-1 = none). This is set up
  * when the device is bound and is unique within the device's uclass. If the
  * device has an alias in the devicetree then that is used to set the sequence
  * number. Otherwise, the next available number is used. Sequence numbers are
@@ -147,7 +149,9 @@ struct udevice {
 	void *plat;
 	void *parent_plat;
 	void *uclass_plat;
+#if !CONFIG_IS_ENABLED(OF_PLATDATA)
 	ofnode node;
+#endif
 	ulong driver_data;
 	struct udevice *parent;
 	void *priv;
@@ -175,17 +179,52 @@ struct udevice {
 
 static inline int dev_of_offset(const struct udevice *dev)
 {
+#if !CONFIG_IS_ENABLED(OF_PLATDATA)
 	return ofnode_to_offset(dev->node);
+#else
+        return -1;
+#endif
 }
 
 static inline bool dev_has_of_node(struct udevice *dev)
 {
+#if !CONFIG_IS_ENABLED(OF_PLATDATA)
 	return ofnode_valid(dev->node);
+#else
+        return false;
+#endif
+}
+
+static inline void dev_set_node(struct udevice *dev, ofnode node)
+{
+#if !CONFIG_IS_ENABLED(OF_PLATDATA)
+	dev->node = node;
+#endif
 }
 
 static inline int dev_seq(const struct udevice *dev)
 {
 	return dev->sqq;
+}
+
+/**
+ * dev_ofnode() - get the DT node reference associated with a udevice
+ *
+ * @dev:	device to check
+ * @return reference of the the device's DT node
+ */
+static inline ofnode dev_ofnode(const struct udevice *dev)
+{
+#if !CONFIG_IS_ENABLED(OF_PLATDATA)
+	return dev->node;
+#else
+	return ofnode_null();
+#endif
+}
+
+static inline bool dev_of_valid(const struct udevice *dev)
+{
+	return ofnode_valid(dev_ofnode(dev));
 }
 
 /**
@@ -282,6 +321,17 @@ struct driver {
 /* Get a pointer to a given driver */
 #define DM_GET_DRIVER(__name)						\
 	ll_entry_get(struct driver, __name, driver)
+
+/* Declare a driver as an extern, so it can be referenced at build time */
+#define DM_DECL_DRIVER(__name)					\
+	ll_entry_decl(struct driver, __name, driver)
+
+/*
+ * Get a pointer to a given driver, for use in data structures. This requires
+ * that the symbol be declared with DM_DECL_DRIVER() first
+ */
+#define DM_REF_DRIVER(__name)					\
+	ll_entry_ref(struct driver, __name, driver)
 
 /**
  * Declare a macro to state a alias for a driver name. This macro will
