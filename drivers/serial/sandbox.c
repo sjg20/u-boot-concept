@@ -18,6 +18,7 @@
 #include <serial.h>
 #include <video.h>
 #include <linux/compiler.h>
+#include <asm/serial.h>
 #include <asm/state.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -36,14 +37,6 @@ DECLARE_GLOBAL_DATA_PTR;
 static unsigned char serial_buf[16];
 static unsigned int serial_buf_write;
 static unsigned int serial_buf_read;
-
-struct sandbox_serial_plat {
-	int colour;	/* Text colour to use for output, -1 for none */
-};
-
-struct sandbox_serial_priv {
-	bool start_of_line;
-};
 
 /**
  * output_ansi_colour() - Output an ANSI colour code

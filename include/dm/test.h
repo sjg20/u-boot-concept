@@ -168,13 +168,13 @@ struct sandbox_sdl_plat {
 };
 
 /**
- * struct dm_test_parent_platdata  - Used to track state in bus tests
+ * struct dm_test_parent_plat - Used to track state in bus tests
  *
  * @count:
  * @bind_flag: Indicates that the child post-bind method was called
  * @uclass_bind_flag: Also indicates that the child post-bind method was called
  */
-struct dm_test_parent_platdata {
+struct dm_test_parent_plat {
 	int count;
 	int bind_flag;
 	int uclass_bind_flag;

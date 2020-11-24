@@ -86,8 +86,8 @@ void fix_drivers(void)
 void fix_uclass(void)
 {
 	struct uclass_driver *uclass =
-		ll_entry_start(struct uclass_driver, uclass);
-	const int n_ents = ll_entry_count(struct uclass_driver, uclass);
+		ll_entry_start(struct uclass_driver, uclass_driver);
+	const int n_ents = ll_entry_count(struct uclass_driver, uclass_driver);
 	struct uclass_driver *entry;
 
 	for (entry = uclass; entry != uclass + n_ents; entry++) {
@@ -144,14 +144,17 @@ int dm_init(bool of_live)
 		fix_devices();
 	}
 
-	ret = device_bind_by_name(NULL, false, &root_info, &DM_ROOT_NON_CONST);
-	if (ret)
-		return ret;
-	if (CONFIG_IS_ENABLED(OF_CONTROL))
-		DM_ROOT_NON_CONST->node = ofnode_root();
-	ret = device_probe(DM_ROOT_NON_CONST);
-	if (ret)
-		return ret;
+	if (!CONFIG_IS_ENABLED(OF_PLATDATA_INST)) {
+            ret = device_bind_by_name(NULL, false, &root_info,
+                                      &DM_ROOT_NON_CONST);
+            if (ret)
+                    return ret;
+            if (CONFIG_IS_ENABLED(OF_CONTROL))
+                    dev_set_node(DM_ROOT_NON_CONST, ofnode_root());
+            ret = device_probe(DM_ROOT_NON_CONST);
+            if (ret)
+                    return ret;
+        }
 
 	return 0;
 }
@@ -296,36 +299,78 @@ __weak int dm_scan_other(bool pre_reloc_only)
 	return 0;
 }
 
-int dm_init_and_scan(bool pre_reloc_only)
+static void dm_setup_inst_uclass(void)
+{
+	struct uclass *uc = ll_entry_start(struct uclass, uclass);
+	struct uclass *end = ll_entry_end(struct uclass, uclass);
+
+	for (; uc < end; uc++) {
+		if (!uc->sibling_node.prev) {
+			uc->sibling_node.prev = &gd->uclass_root;
+			gd->uclass_root.next = &uc->sibling_node;
+		}
+		if (!uc->sibling_node.next) {
+			uc->sibling_node.next = &gd->uclass_root;
+			gd->uclass_root.prev = &uc->sibling_node;
+		}
+	}
+}
+
+DM_DECL_DRIVER(root_driver);
+
+static void dm_setup_inst_dev(void)
+{
+	struct udevice *dev = ll_entry_start(struct udevice, udevice);
+	struct udevice *end = ll_entry_end(struct udevice, udevice);
+
+	for (; dev < end; dev++) {
+		if (dev->driver == DM_REF_DRIVER(root_driver)) {
+			DM_ROOT_NON_CONST = dev;
+			break;
+		}
+	}
+}
+
+static int dm_setup_inst(void)
+{
+	dm_setup_inst_uclass();
+	dm_setup_inst_dev();
+
+	return 0;
+}
+
+/**
+ * dm_scan() - Scan tables to bind devices
+ *
+ * Runs through the driver_info tables and binds the devices it finds. Then runs
+ * through the devicetree nodes. Finally calls dm_scan_other() to add any
+ * special devices
+ *
+ * @pre_reloc_only: If true, bind only nodes with special devicetree properties,
+ * or drivers with the DM_FLAG_PRE_RELOC flag. If false bind all drivers.
+ */
+static int dm_scan(bool pre_reloc_only)
 {
 	int ret;
 
-	if (CONFIG_IS_ENABLED(OF_PLATDATA))
-		dm_populate_phandle_data();
-
-	ret = dm_init(CONFIG_IS_ENABLED(OF_LIVE));
-	if (ret) {
-		debug("dm_init() failed: %d\n", ret);
-		return ret;
-	}
 	gd->flags |= GD_FLG_DM_NO_SEQ;
 	ret = dm_scan_plat(pre_reloc_only);
 	if (ret) {
 		debug("dm_scan_plat() failed: %d\n", ret);
-		goto fail;
+		return ret;
 	}
 
 	if (CONFIG_IS_ENABLED(OF_CONTROL) && !CONFIG_IS_ENABLED(OF_PLATDATA)) {
 		ret = dm_extended_scan(pre_reloc_only);
 		if (ret) {
 			debug("dm_extended_scan() failed: %d\n", ret);
-			goto fail;
+			return ret;
 		}
 	}
 
 	ret = dm_scan_other(pre_reloc_only);
 	if (ret)
-		goto fail;
+		return ret;
 
 	/*
 	 * Now that all the alisas have been used to claim sequence numbers, we
@@ -340,8 +385,35 @@ int dm_init_and_scan(bool pre_reloc_only)
 	gd->flags &= ~GD_FLG_DM_NO_SEQ;
 
 	return 0;
-fail:
-	return ret;
+}
+
+int dm_init_and_scan(bool pre_reloc_only)
+{
+	int ret;
+
+	if (CONFIG_IS_ENABLED(OF_PLATDATA))
+		dm_populate_phandle_data();
+
+	ret = dm_init(CONFIG_IS_ENABLED(OF_LIVE));
+	if (ret) {
+		debug("dm_init() failed: %d\n", ret);
+		return ret;
+	}
+	if (CONFIG_IS_ENABLED(OF_PLATDATA_INST)) {
+		ret = dm_setup_inst();
+		if (ret) {
+			log_debug("dm_setup_inst() failed: %d\n", ret);
+			return ret;
+		}
+	} else {
+		ret = dm_scan(pre_reloc_only);
+		if (ret) {
+			log_debug("dm_scan() failed: %d\n", ret);
+			return ret;
+		}
+	}
+
+	return 0;
 }
 
 #ifdef CONFIG_ACPIGEN

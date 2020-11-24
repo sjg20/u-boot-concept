@@ -43,6 +43,9 @@ static int device_bind_common(struct udevice *parent, const struct driver *drv,
 	int size, ret = 0;
 	bool auto_seq = false;
 
+	if (CONFIG_IS_ENABLED(OF_PLATDATA_INST))
+		return -ENOSYS;
+
 	if (devp)
 		*devp = NULL;
 	if (!name)
@@ -67,7 +70,7 @@ static int device_bind_common(struct udevice *parent, const struct driver *drv,
 	dev->plat = plat;
 	dev->driver_data = driver_data;
 	dev->name = name;
-	dev->node = node;
+	dev_set_node(dev, node);
 	dev->parent = parent;
 	dev->driver = drv;
 	dev->uclass = uc;
@@ -335,6 +338,12 @@ int device_of_to_plat(struct udevice *dev)
 
 	if (dev->flags & DM_FLAG_PLATDATA_VALID)
 		return 0;
+
+	if (CONFIG_IS_ENABLED(OF_PLATDATA_INST)) {
+		dev->flags |= DM_FLAG_PLATDATA_VALID;
+
+		return 0;
+	}
 
 	/* Ensure all parents have ofdata */
 	if (dev->parent) {
