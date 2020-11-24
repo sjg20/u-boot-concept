@@ -64,22 +64,68 @@ PhandleInfo = collections.namedtuple('PhandleInfo', ['max_args', 'args'])
 PhandleLink = collections.namedtuple('PhandleLink', ['var_node', 'dev_name'])
 
 
-class DriverInfo:
-    def __init__(self, name, uclass_id, compat):
+class Driver:
+    """Information about a driver in U-Boot
+
+    Attributes:
+        compat: Driver data for each compatible string:
+            key: Compatible string, e.g. 'rockchip,rk3288-grf'
+            value: Driver data, e,g, 'ROCKCHIP_SYSCON_GRF', or None
+    """
+    def __init__(self, name):
         self.name = name
-        self.uclass_id = uclass_id
-        self.compat = compat
-        self.priv_size = 0
+        self.uclass_id = None
+        self.compat = None
+        self.priv = ''
+        self.platdata = ''
+        self.child_platdata = ''
+        self.child_priv = ''
+        self.used = False
 
     def __eq__(self, other):
         return (self.name == other.name and
                 self.uclass_id == other.uclass_id and
                 self.compat == other.compat and
-                self.priv_size == other.priv_size)
+                self.priv == other.priv and
+                self.platdata == other.platdata)
 
     def __repr__(self):
-        return ("DriverInfo(name='%s', uclass_id='%s', compat=%s, priv_size=%s)" %
-                (self.name, self.uclass_id, self.compat, self.priv_size))
+        return ("Driver(name='%s', used=%s, uclass_id='%s', compat=%s, priv=%s)" %
+                (self.name, self.used, self.uclass_id, self.compat, self.priv))
+
+
+class UclassDriver:
+    """Holds information about a uclass driver
+
+    Attributes:
+        name: Uclass name, e.g. 'i2c' if the driver is for UCLASS_I2C
+        uclass_id: Uclass ID, e.g. 'UCLASS_I2C'
+        priv: Information about private data, e.g.
+            '<i2c.h>, sizeof(struct i2c_priv)'
+        per_dev_priv (str): Information about per-device private data
+        per_dev_platdata (str): Information about per-device platdata
+        devs (list): List of devices in this uclass, each a Node
+        node_refs (dict): References in the linked list of devices:
+            key (it): Sequence number (0=first, n-1=last, -1=head, n=tail)
+            value (str): Reference to the device at that position
+    """
+    def __init__(self, name):
+        self.name = name
+        self.uclass_id = None
+        self.priv = ''
+        self.per_dev_priv = ''
+        self.per_dev_platdata = ''
+        self.devs = []
+        self.node_refs = {}
+
+    def __eq__(self, other):
+        return (self.name == other.name and
+                self.uclass_id == other.uclass_id and
+                self.priv == other.priv)
+
+    def __repr__(self):
+        return ("UclassDriver(name='%s', uclass_id='%s')" %
+                (self.name, self.uclass_id))
 
 
 def conv_name_to_c(name):
@@ -175,7 +221,7 @@ class DtbPlatdata(object):
         _lines: Stashed list of output lines for outputting in the future
         _drivers: Dict of valid driver names found in drivers/
             key: Driver name
-            value: DriverInfo for that driver
+            value: Driver for that driver
         _driver_aliases: Dict that holds aliases for driver names
             key: Driver alias declared with
                 U_BOOT_DRIVER_ALIAS(driver_alias, driver_name)
@@ -186,10 +232,15 @@ class DtbPlatdata(object):
             value: Dict of compatible info in that variable:
                key: Compatible string, e.g. 'rockchip,rk3288-grf'
                value: Driver data, e,g, 'ROCKCHIP_SYSCON_GRF', or None
-        _compat_to_driver: Maps compatible strings to DriverInfo
+        _compat_to_driver: Maps compatible strings to Driver
+        _uclass: Dict of uclass information
+            key: uclass name (e.g. 'UCLASS_I2C')
+            value: UClassDriver
+        _instantiate: Instantiate devices so they don't need to be bound at
+            run-time
     """
     def __init__(self, dtb_fname, include_disabled, warning_disabled,
-                 drivers_additional=None):
+                 drivers_additional=None, instantiate=False):
         self._fdt = None
         self._dtb_fname = dtb_fname
         self._valid_nodes = None
@@ -202,6 +253,8 @@ class DtbPlatdata(object):
         self._drivers_additional = drivers_additional or []
         self._of_match = {}
         self._compat_to_driver = {}
+        self._uclass = {}
+        self._instantiate = instantiate
 
     def get_normalized_compat_name(self, node):
         """Get a node's normalized compat name
@@ -340,20 +393,95 @@ class DtbPlatdata(object):
             return PhandleInfo(max_args, args)
         return None
 
-    def _parse_driver(self, buff):
+    @staticmethod
+    def uclass_id_to_name(uclass_id):
+        return uclass_id[len('UCLASS_'):].lower()
+
+    def _parse_uclass_driver(self, buff, fname):
+        """Parse a C file to extract uclass driver information contained within
+
+        This parses UCLASS_DRIVER() structs to obtain various pieces of useful
+        information.
+
+        It updates the following members:
+
+        Args:
+            buff (str): Contents of file
+            fname (str): Filename (to use when printing errors)
+        """
+        uc_drivers = {}
+
+        # Collect the driver name and associated Driver
+        driver = None
+        re_driver = re.compile(r'UCLASS_DRIVER\((.*)\)')
+
+        # Collect the uclass ID, e.g. 'UCLASS_SPI'
+        re_id = re.compile(r'\s*\.id\s*=\s*(UCLASS_[A-Z0-9_]+)')
+
+        # Matches the header/size information for uclass-private data
+        re_priv = re.compile('^\s*DM_PRIV\((.*)\)$')
+
+        # Matches the header/size information for per-device uclass data
+        re_per_device_priv = re.compile('^\s*DM_PER_DEVICE_PRIV\((.*)\)$')
+
+        # Matches the header/size information for per-device uclass platdata
+        re_per_device_plat = re.compile('^\s*DM_PER_DEVICE_PLATDATA\((.*)\)$')
+
+        prefix = ''
+        for line in buff.splitlines():
+            # Handle line continuation
+            if prefix:
+                line = prefix + line
+                prefix = ''
+            if line.endswith('\\'):
+                prefix = line[:-1]
+                continue
+
+            driver_match = re_driver.search(line)
+
+            # If we have seen UCLASS_DRIVER()...
+            if driver:
+                m_id = re_id.search(line)
+                m_priv = re_priv.match(line)
+                m_per_dev_priv = re_per_device_priv.match(line)
+                m_per_dev_plat = re_per_device_plat.match(line)
+                if m_id:
+                    driver.uclass_id = m_id.group(1)
+                elif m_priv:
+                    driver.priv = m_priv.group(1)
+                elif m_per_dev_priv:
+                    driver.per_dev_priv = m_per_dev_priv.group(1)
+                elif m_per_dev_plat:
+                    driver.per_dev_platdata = m_per_dev_plat.group(1)
+                elif '};' in line:
+                    if not driver.uclass_id:
+                        raise ValueError(
+                            "%s: Cannot parse uclass ID in driver '%s'" %
+                            (fname, driver.name))
+                    uc_drivers[driver.uclass_id] = driver
+                    driver = None
+
+            elif driver_match:
+                driver_name = driver_match.group(1)
+                driver = UclassDriver(driver_name)
+
+        self._uclass.update(uc_drivers)
+
+    def _parse_driver(self, buff, fname):
         """Parse a C file to extract driver information contained within
 
         This parses U_BOOT_DRIVER() structs to obtain various pieces of useful
         information.
 
         It updates the following members:
-            _drivers - updated with new DriverInfo records for each driver found
+            _drivers - updated with new Driver records for each driver found
                 in the file
             _of_match - updated with each compatible string found in the file
-            _compat_to_driver - Maps compatible string to DriverInfo
+            _compat_to_driver - Maps compatible string to Driver
 
         Args:
             buff (str): Contents of file
+            fname (str): Filename (to use when printing errors)
         """
         # Dict holding information about compatible strings collected in this
         # function so far
@@ -365,21 +493,20 @@ class DtbPlatdata(object):
 
         # Dict holding driver information collected in this function so far
         #    key: Driver name (C name as in U_BOOT_DRIVER(xxx))
-        #    value: DriverInfo
+        #    value: Driver
         drivers = {}
 
-        # Collect the driver name (None means not found yet)
-        driver_name = None
+        # Collect the driver info
+        driver = None
         re_driver = re.compile(r'U_BOOT_DRIVER\((.*)\)')
 
         # Collect the uclass ID, e.g. 'UCLASS_SPI'
-        uclass_id = None
         re_id = re.compile(r'\s*\.id\s*=\s*(UCLASS_[A-Z0-9_]+)')
 
         # Collect the compatible string, e.g. 'rockchip,rk3288-grf'
         compat = None
         re_compat = re.compile('{\s*.compatible\s*=\s*"(.*)"\s*'
-                                    '(,\s*.data\s*=\s*(.*))?\s*},')
+                                    '(,\s*.data\s*=\s*(\S*))?\s*},')
 
         # This is a dict of compatible strings that were found:
         #    key: Compatible string, e.g. 'rockchip,rk3288-grf'
@@ -395,9 +522,11 @@ class DtbPlatdata(object):
         # Matches the references to the udevice_id list
         re_of_match = re.compile('\.of_match\s*=\s*([a-z0-9_]+),')
 
-        # Matches the header/size information for priv
+        # Matches the header/size information for priv, platdata
         re_priv = re.compile('^\s*DM_PRIV\((.*)\)$')
-        drv_name = None
+        re_platdata = re.compile('^\s*DM_PLATDATA\((.*)\)$')
+        re_child_platdata = re.compile('^\s*DM_CHILD_PLATDATA\((.*)\)$')
+        re_child_priv = re.compile('^\s*DM_CHILD_PRIV\((.*)\)$')
 
         prefix = ''
         for line in buff.splitlines():
@@ -411,23 +540,34 @@ class DtbPlatdata(object):
 
             driver_match = re_driver.search(line)
 
-            # If we have seen U_BOOT_DRIVER()...
-            if driver_name:
-                id_m = re_id.search(line)
-                id_of_match = re_of_match.search(line)
-                if id_m:
-                    uclass_id = id_m.group(1)
-                elif id_of_match:
-                    compat = id_of_match.group(1)
+            # If this line contains U_BOOT_DRIVER()...
+            if driver:
+                m_id = re_id.search(line)
+                m_of_match = re_of_match.search(line)
+                m_priv = re_priv.match(line)
+                m_platdata = re_platdata.match(line)
+                m_cplatdata = re_child_platdata.match(line)
+                m_cpriv = re_child_priv.match(line)
+                if m_priv:
+                    driver.priv = m_priv.group(1)
+                elif m_platdata:
+                    driver.platdata = m_platdata.group(1)
+                elif m_cplatdata:
+                    driver.child_platdata = m_cplatdata.group(1)
+                elif m_cpriv:
+                    driver.child_priv = m_cpriv.group(1)
+                elif m_id:
+                    driver.uclass_id = m_id.group(1)
+                elif m_of_match:
+                    compat = m_of_match.group(1)
                 elif '};' in line:
-                    if uclass_id and compat:
+                    if driver.uclass_id and compat:
                         if compat not in of_match:
                             raise ValueError(
                                 "%s: Unknown compatible var '%s' (found %s)" %
-                                (fn, compat, ','.join(of_match.keys())))
-                        driver = DriverInfo(driver_name, uclass_id,
-                                            of_match[compat])
-                        drivers[driver_name] = driver
+                                (fname, compat, ','.join(of_match.keys())))
+                        driver.compat = of_match[compat]
+                        drivers[driver.name] = driver
 
                         # This needs to be deterministic, since a driver may
                         # have multiple compatible strings pointing to it.
@@ -442,19 +582,11 @@ class DtbPlatdata(object):
                         # The first is required but the second is not, so just
                         # ignore this.
                         pass
-                    driver_name = None
-                    uclass_id = None
+                    driver = None
                     ids_name = None
                     compat = None
                     compat_dict = {}
 
-            # If we have seen U_BOOT_DRIVER()...
-            elif drv_name:
-                priv = re_priv.match(line)
-                if priv:
-                    drivers[drv_name].priv_size = priv.group(1)
-                elif '};' in line:
-                    drv_name = None
             elif ids_name:
                 compat_m = re_compat.search(line)
                 if compat_m:
@@ -464,6 +596,7 @@ class DtbPlatdata(object):
                     ids_name = None
             elif driver_match:
                 driver_name = driver_match.group(1)
+                driver = Driver(driver_name)
             else:
                 ids_m = re_ids.search(line)
                 if ids_m:
@@ -477,10 +610,10 @@ class DtbPlatdata(object):
         """Scan a driver file to build a list of driver names and aliases
 
         It updates the following members:
-            _drivers - updated with new DriverInfo records for each driver found
+            _drivers - updated with new Driver records for each driver found
                 in the file
             _of_match - updated with each compatible string found in the file
-            _compat_to_driver - Maps compatible string to DriverInfo
+            _compat_to_driver - Maps compatible string to Driver
             _driver_aliases - Maps alias names to driver name
 
         Args
@@ -497,7 +630,9 @@ class DtbPlatdata(object):
             # If this file has any U_BOOT_DRIVER() declarations, process it to
             # obtain driver information
             if 'U_BOOT_DRIVER' in buff:
-                self._parse_driver(buff)
+                self._parse_driver(buff, fname)
+            if 'UCLASS_DRIVER' in buff:
+                self._parse_uclass_driver(buff, fname)
 
             # The following re will search for driver aliases declared as
             # U_BOOT_DRIVER_ALIAS(alias, driver_name)
@@ -510,15 +645,16 @@ class DtbPlatdata(object):
                     continue
                 self._driver_aliases[alias[1]] = alias[0]
 
-    def scan_drivers(self):
+    def scan_drivers(self, basedir=None):
         """Scan the driver folders to build a list of driver names and aliases
 
         This procedure will populate self._drivers and self._driver_aliases
 
         """
-        basedir = sys.argv[0].replace('tools/dtoc/dtoc', '')
-        if basedir == '':
-            basedir = './'
+        if not basedir:
+            basedir = sys.argv[0].replace('tools/dtoc/dtoc', '')
+            if basedir == '':
+                basedir = './'
         for (dirpath, _, filenames) in os.walk(basedir):
             for fname in filenames:
                 if not fname.endswith('.c'):
@@ -815,7 +951,112 @@ class DtbPlatdata(object):
         self.buf('};\n')
         self.buf('\n')
 
-    def _output_prop(self, node, prop):
+    def prep_priv(self, info, name, suffix):
+        if not info:
+            return None
+        parts = info.split(',')
+        if len(parts) == 2:
+            hdr, struc = parts
+        else:
+            hdr = None
+            struc = parts[0]
+        var_name = '_%s%s' % (name, suffix)
+        if hdr:
+            self.buf('#include %s\n' % hdr)
+        section = '__attribute__ ((section (".data")))'
+        return var_name, struc, section
+
+    def alloc_priv(self, info, name, suffix='_priv'):
+        result = self.prep_priv(info, name, suffix)
+        if not result:
+            return None
+        var_name, struc, section = result
+        self.buf('u8 %s[sizeof(%s)]\n\t%s;\n' % (var_name, struc.strip(),
+                                                 section))
+        return var_name
+
+    def alloc_plat(self, info, name, dt_platdata, node):
+        result = self.prep_priv(info, name, '_plat')
+        if not result:
+            return None
+        var_name, struc, section = result
+        self.buf('%s %s = {\n' % (struc.strip(), var_name))
+        self.buf('\t.dtplat = {\n')
+        for pname in sorted(node.props):
+            self._output_prop(node, node.props[pname], 2)
+        self.buf('\t},\n')
+        self.buf('} %s;\n' % section)
+        return '&' + var_name
+
+    def _declare_device_inst(self, driver, var_name, struct_name,
+			     parent_driver, node, uclass):
+        """Add a device instance declaration to the output
+
+        This declares a U_BOOT_DEVICE_INST() for the device being processed
+
+        Args:
+            var_name: C name for the node
+            struct_name: Name for the dt struct associated with the node
+            parent_driver: Driver for the node's parent, or None if none
+        """
+        self.buf('DM_DECL_DRIVER(%s);\n' % struct_name);
+        self.buf('\n')
+        plat_name = self.alloc_plat(driver.platdata, driver.name, var_name,
+                                    node)
+        priv_name = self.alloc_priv(driver.priv, driver.name)
+        parent_plat_name = None
+        parent_priv_name = None
+        if parent_driver:
+            parent_plat_name = self.alloc_priv(parent_driver.child_platdata,
+                                               driver.name, '_parent_plat')
+            parent_priv_name = self.alloc_priv(parent_driver.child_priv,
+                                               driver.name, '_parent_priv')
+        uclass_plat_name = self.alloc_priv(uclass.per_dev_platdata, driver.name)
+        uclass_priv_name = self.alloc_priv(uclass.per_dev_priv, driver.name)
+
+        self.buf('U_BOOT_DEVICE_INST(%s) = {\n' % var_name)
+        self.buf('\t.driver\t\t= DM_REF_DRIVER(%s),\n' % struct_name)
+        self.buf('\t.name\t\t= "%s",\n' % struct_name)
+        if plat_name:
+            self.buf('\t.platdata\t= %s,\n' % plat_name)
+        else:
+            self.buf('\t.platdata\t= &%s%s,\n' % (VAL_PREFIX, var_name))
+        if parent_plat_name:
+            self.buf('\t.parent_platdata = %s,\n' % parent_plat_name)
+        if uclass_plat_name:
+            self.buf('\t.uclass_platdata = %s,\n' % uclass_plat_name)
+        driver_date = None
+
+        compat_list = node.props['compatible'].value
+        if not isinstance(compat_list, list):
+            compat_list = [compat_list]
+        for compat in compat_list:
+            driver_data = driver.compat.get(compat)
+            if driver_data:
+                self.buf('\t.driver_data\t= %s,\n' % driver_data)
+                break
+        if node.parent and node.parent.parent:
+            self.buf('\t.parent\t\t= U_BOOT_DEVICE_REF(%s),\n' %
+                     conv_name_to_c(node.parent.name))
+        if priv_name:
+            self.buf('\t.priv\t\t= %s,\n' % priv_name)
+        self.buf('\t.uclass\t= DM_REF_UCLASS_INST(%s),\n' % uclass.name)
+
+        if uclass_priv_name:
+            self.buf('\t.uclass_priv = %s,\n' % uclass_priv_name)
+        if parent_priv_name:
+            self.buf('\t.parent_priv\t= %s,\n' % parent_priv_name)
+        self.list_node('uclass_node', uclass.node_refs, node.uclass_seq)
+        if node.parent in self._valid_nodes:
+            self.list_node('sibling_node', node.parent.child_refs,
+                           node.parent_seq)
+        self.list_head('child_head', 'sibling_node', node.child_devs)
+
+        self.buf('};\n')
+        self.buf('\n')
+        return parent_plat_name
+
+    def _output_prop(self, node, prop, tabs=1):
         """Output a line containing the value of a struct member
 
         Args:
@@ -825,7 +1066,7 @@ class DtbPlatdata(object):
         if prop.name in PROP_IGNORE_LIST or prop.name[0] == '#':
             return
         member_name = conv_name_to_c(prop.name)
-        self.buf('\t%s= ' % tab_to(3, '.' + member_name))
+        self.buf('%s%s= ' % ('\t' * tabs, tab_to(3, '.' + member_name)))
 
         # Special handling for lists
         if isinstance(prop.value, list):
@@ -856,12 +1097,81 @@ class DtbPlatdata(object):
         """
         struct_name, _ = self.get_normalized_compat_name(node)
         var_name = conv_name_to_c(node.name)
-        self.buf('/* Node %s index %d */\n' % (node.path, node.idx))
 
-        self._output_values(var_name, struct_name, node)
-        self._declare_device(var_name, struct_name, node.parent)
+        driver = node.driver
+        parent_driver = node.parent_driver
+
+        self.buf('/*\n')
+        self.buf(' * Node %s index %d\n' % (node.path, node.idx))
+        self.buf(' * driver %s parent %s\n' % (driver.name,
+                 parent_driver.name if parent_driver else 'None'))
+        self.buf('*/\n')
+
+        if not self._instantiate or not driver.platdata:
+            self._output_values(var_name, struct_name, node)
+        if self._instantiate:
+            self._declare_device_inst(driver, var_name, struct_name,
+                                      parent_driver, node, node.uclass)
+        else:
+            self._declare_device(var_name, struct_name, node.parent)
 
         self.out(''.join(self.get_buf()))
+
+    def list_head(self, member, node_member, node_refs):
+        if node_refs:
+            self.buf('\t.%s\t= {\n' % member)
+            last = node_refs[-1]
+            first = node_refs[0]
+            self.buf('\t\t.prev = &%s->%s,\n' % (last.dev_ref, node_member))
+            self.buf('\t\t.next = &%s->%s,\n' % (first.dev_ref, node_member))
+            self.buf('\t},\n')
+
+    def list_node(self, member, node_refs, seq):
+        self.buf('\t.%s\t= {\n' % member)
+        self.buf('\t\t.prev = %s,\n' % node_refs[seq - 1])
+        self.buf('\t\t.next = %s,\n' % node_refs[seq + 1])
+        self.buf('\t},\n')
+
+    def _output_uclasses(self):
+        uclass_list = set()
+        for driver in self._drivers.values():
+            if driver.used:
+                uclass_list.add(driver.uclass_id)
+        self.buf('/* uclass declarations */\n')
+        uclass_list = sorted(list(uclass_list))
+        prev_uc = 'NULL /* Set up at runtime */'
+
+        uclass_node = {}
+        for seq, uclass_id in enumerate(uclass_list):
+            uc_name = self.uclass_id_to_name(uclass_id)
+            self.buf('DM_DECL_UCLASS_DRIVER(%s);\n' % uc_name)
+            self.buf('DM_DECL_UCLASS_INST(%s);\n' % uc_name)
+            uclass_node[seq] = ('&DM_REF_UCLASS_INST(%s)->sibling_node' %
+                                      uc_name)
+        uclass_node[-1] = 'NULL /* Set up at runtime */'
+        uclass_node[len(uclass_list)] = 'NULL /* Set up at runtime */'
+        self.buf('\n')
+
+        for seq, uclass_id in enumerate(uclass_list):
+            uc_drv = self._uclass.get(uclass_id)
+            uc_name = self.uclass_id_to_name(uclass_id)
+            if not uc_drv:
+                raise ValueError('Cannot find uclass driver for %s (have %s)'
+                                 % (uc_drv, ', '.join(self._uclass.keys())))
+            ref = '&DM_REF_UCLASS_INST(%s)->dev_head' % uc_name
+            uc_drv.node_refs[-1] = ref
+            uc_drv.node_refs[len(uc_drv.devs)] = ref
+
+            priv_name = self.alloc_priv(uc_drv.priv, uc_drv.name)
+
+            self.buf('UCLASS_INST(%s) = {\n' % uc_name)
+            if priv_name:
+                self.buf('\t.priv\t\t= %s,\n' % priv_name)
+            self.buf('\t.uc_drv\t\t= DM_REF_UCLASS_DRIVER(%s),\n' % uc_name)
+            self.list_node('sibling_node', uclass_node, seq)
+            self.list_head('dev_head', 'uclass_node', uc_drv.devs)
+            self.buf('};\n')
+            self.buf('\n')
 
     def generate_tables(self):
         """Generate device defintions for the platform data
@@ -883,6 +1193,58 @@ class DtbPlatdata(object):
         self.out('\n')
         nodes_to_output = list(self._valid_nodes)
 
+        # Figure out which drivers we actually use
+        for node in nodes_to_output:
+            struct_name, _ = self.get_normalized_compat_name(node)
+            driver = self._drivers.get(struct_name)
+            if driver:
+                driver.used = True
+            node.child_devs = []
+            node.child_refs = {}
+
+        for node in nodes_to_output:
+            self.buf('U_BOOT_DEVICE_DECL(%s);\n' % conv_name_to_c(node.name))
+            node.dev_ref = 'U_BOOT_DEVICE_REF(%s)' % conv_name_to_c(node.name)
+            struct_name, _ = self.get_normalized_compat_name(node)
+            driver = self._drivers.get(struct_name)
+            if not driver:
+                raise ValueError("Cannot parse/find driver for '%s'" %
+                                 struct_name)
+            node.driver = driver
+            uclass = self._uclass.get(driver.uclass_id)
+            if not uclass:
+                raise ValueError("Cannot parse/find uclass '%s' for driver '%s'" %
+                                (driver.uclass_id, struct_name))
+            node.uclass = uclass
+            node.uclass_seq = len(node.uclass.devs)
+            node.uclass.devs.append(node)
+            uclass.node_refs[node.uclass_seq] = \
+                '&%s->uclass_node' % node.dev_ref
+
+            parent_driver = None
+            parent_struct_name = None
+            if node.parent in self._valid_nodes:
+                parent_struct_name, _ = self.get_normalized_compat_name(
+                    node.parent)
+                parent_driver = self._drivers.get(parent_struct_name)
+                if not parent_driver:
+                    raise ValueError("Cannot parse/find driver for '%s'" %
+                                    parent_struct_name)
+                node.parent_seq = len(node.parent.child_devs)
+                node.parent.child_devs.append(node)
+                node.parent.child_refs[node.parent_seq] = \
+                    '&%s->sibling_node' % node.dev_ref
+            node.parent_driver = parent_driver
+        self.buf('\n')
+
+        for node in nodes_to_output:
+            ref = '&%s->child_head' % node.dev_ref
+            node.child_refs[-1] = ref
+            node.child_refs[len(node.child_devs)] = ref
+
+        if self._instantiate:
+            self._output_uclasses()
+
         # Keep outputing nodes until there is none left
         while nodes_to_output:
             node = nodes_to_output[0]
@@ -903,7 +1265,7 @@ class DtbPlatdata(object):
         self.out(''.join(self.get_buf()))
 
 def run_steps(args, dtb_file, include_disabled, output, warning_disabled=False,
-              drivers_additional=None):
+              drivers_additional=None, instantiate=False, basedir=None):
     """Run all the steps of the dtoc tool
 
     Args:
@@ -915,6 +1277,8 @@ def run_steps(args, dtb_file, include_disabled, output, warning_disabled=False,
             drivers
        _drivers_additional (list): List of additional drivers to use during
             scanning
+        instantiate: Instantiate devices so they don't need to be bound at
+            run-time
     Raises:
         ValueError: if args has no command, or an unknown command
     """
@@ -922,8 +1286,8 @@ def run_steps(args, dtb_file, include_disabled, output, warning_disabled=False,
         raise ValueError('Please specify a command: struct, platdata')
 
     plat = DtbPlatdata(dtb_file, include_disabled, warning_disabled,
-                       drivers_additional)
-    plat.scan_drivers()
+                       drivers_additional, instantiate)
+    plat.scan_drivers(basedir)
     plat.scan_dtb()
     plat.scan_tree()
     plat.scan_reg_sizes()

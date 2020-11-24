@@ -129,9 +129,11 @@ enum {
  * @parent_priv: The parent's private data for this device
  * @uclass_node: Used by uclass to link its devices
  * @child_head: List of children of this device
- * @sibling_node: Next device in list of all devices
- * @flags: Flags for this device DM_FLAG_...
- * @seq: Allocated sequence number for this device (-1 = none). This is set up
+ * @sibling_node: Next device in parent's child_head list
+ * @flags: Flags for this device DM_FLAG_... These start at 0 initially and are
+ *	used to track the device's state. They are unrelated to the driver
+ *	flags.
+ * @sqq: Allocated sequence number for this device (-1 = none). This is set up
  * when the device is bound and is unique within the device's uclass. If the
  * device has an alias in the devicetree then that is used to set the sequence
  * number. Otherwise, the next available number is used. Sequence numbers are
@@ -282,6 +284,54 @@ struct driver {
 /* Get a pointer to a given driver */
 #define DM_GET_DRIVER(__name)						\
 	ll_entry_get(struct driver, __name, driver)
+
+/* Declare a driver as an extern, so it can be referenced at build time */
+#define DM_DECL_DRIVER(__name)					\
+	ll_entry_decl(struct driver, __name, driver)
+
+/*
+ * Get a pointer to a given driver, for use in data structures. This requires
+ * that the symbol be declared with DM_DECL_DRIVER() first
+ */
+#define DM_REF_DRIVER(__name)					\
+	ll_entry_ref(struct driver, __name, driver)
+
+/**
+ * DM_PRIV() - Specifies the size of the private data
+ *
+ * This generate code but is also is parsed by dtoc. Put it inside
+ * U_BOOT_DRIVER() or UCLASS_DRIVER() on its own line to specify the amount of
+ * data to be allocated for the device/uclass
+ */
+#define DM_PRIV(hdr,struc)	.priv_auto_alloc_size = sizeof(struc),
+
+/**
+ * DM_PLATDATA() - Specifies the size of the platform data
+ *
+ * This generate code but is also is parsed by dtoc. Put it inside
+ * U_BOOT_DRIVER() on its own line to specify the amount of platdata to be
+ * allocated for the device
+ */
+#define DM_PLATDATA(hdr,struc)	.platdata_auto_alloc_size = sizeof(struc),
+
+/**
+ * DM_CHILD_PRIV() - Specifies the size of the per-child private data
+ *
+ * This generate code but is also is parsed by dtoc. Put it inside
+ * U_BOOT_DRIVER() on its own line to specify the amount of data to be allocated
+ * by each child for the device
+ */
+#define DM_CHILD_PRIV(hdr,struc)  .per_child_auto_alloc_size= sizeof(struc),
+
+/**
+ * DM_CHILD_PLATDATA() - Specifies the size of the per-child platform data
+ *
+ * This generate code but is also is parsed by dtoc. Put it inside
+ * U_BOOT_DRIVER() on its own line to specify the amount of platdata to be
+ * allocated by each child for the device
+ */
+#define DM_CHILD_PLATDATA(hdr,struc)	\
+	.per_child_platdata_auto_alloc_size = sizeof(struc),
 
 /**
  * Declare a macro to state a alias for a driver name. This macro will
