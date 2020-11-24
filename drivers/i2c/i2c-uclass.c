@@ -686,10 +686,6 @@ static int i2c_child_post_bind(struct udevice *dev)
 #endif
 }
 
-struct i2c_priv {
-	int max_id;
-};
-
 static int i2c_post_bind(struct udevice *dev)
 {
 	struct uclass *class = dev->uclass;
