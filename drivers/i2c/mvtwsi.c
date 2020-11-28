@@ -824,7 +824,7 @@ static int mvtwsi_i2c_bind(struct udevice *bus)
 
 	/* Disable the hidden slave in i2c0 of these platforms */
 	if ((IS_ENABLED(CONFIG_ARMADA_38X) || IS_ENABLED(CONFIG_ARCH_KIRKWOOD))
-			&& bus->req_seq == 0)
+			&& !dev_seq(bus))
 		twsi_disable_i2c_slave(twsi);
 
 	return 0;
