@@ -572,7 +572,11 @@ static int ehci_usb_bind(struct udevice *dev)
 	u32 controller_spacing = is_mx7() ? 0x10000 : 0x200;
 	fdt_addr_t addr = devfdt_get_addr_index(dev, 0);
 
-	dev->req_seq = (addr - USB_BASE_ADDR) / controller_spacing;
+	/*
+	 * FIXME: This cannot work with the new sequence numbers.
+	 * Please complete the DM conversion.
+	 * dev->req_seq = (addr - USB_BASE_ADDR) / controller_spacing;
+	 */
 
 	return 0;
 }
