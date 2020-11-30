@@ -67,7 +67,7 @@ static int device_bind_common(struct udevice *parent, const struct driver *drv,
 	dev->platdata = platdata;
 	dev->driver_data = driver_data;
 	dev->name = name;
-	dev->node = node;
+	dev_set_node(dev, node);
 	dev->parent = parent;
 	dev->driver = drv;
 	dev->uclass = uc;

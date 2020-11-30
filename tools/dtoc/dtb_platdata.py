@@ -1047,10 +1047,13 @@ class DtbPlatdata(object):
         if parent_priv_name:
             self.buf('\t.parent_priv\t= %s,\n' % parent_priv_name)
         self.list_node('uclass_node', uclass.node_refs, node.uclass_seq)
+        self.list_head('child_head', 'sibling_node', node.child_devs)
         if node.parent in self._valid_nodes:
             self.list_node('sibling_node', node.parent.child_refs,
                            node.parent_seq)
-        self.list_head('child_head', 'sibling_node', node.child_devs)
+        # flags is left as 0
+
+        self.buf('\t.sqq = %d,\n' % node.uclass_seq)
 
         self.buf('};\n')
         self.buf('\n')

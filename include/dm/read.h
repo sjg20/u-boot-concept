@@ -38,7 +38,7 @@ static inline const struct device_node *dev_np(const struct udevice *dev)
  */
 static inline ofnode dev_ofnode(const struct udevice *dev)
 {
-	return dev->node;
+	return dev_ofnode(dev);
 }
 
 static inline bool dev_of_valid(const struct udevice *dev)

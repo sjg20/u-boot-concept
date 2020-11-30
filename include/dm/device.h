@@ -149,7 +149,9 @@ struct udevice {
 	void *platdata;
 	void *parent_platdata;
 	void *uclass_platdata;
+#if !CONFIG_IS_ENABLED(OF_PLATDATA)
 	ofnode node;
+#endif
 	ulong driver_data;
 	struct udevice *parent;
 	void *priv;
@@ -177,12 +179,27 @@ struct udevice {
 
 static inline int dev_of_offset(const struct udevice *dev)
 {
+#if !CONFIG_IS_ENABLED(OF_PLATDATA)
 	return ofnode_to_offset(dev->node);
+#else
+        return -1;
+#endif
 }
 
 static inline bool dev_has_of_node(struct udevice *dev)
 {
+#if !CONFIG_IS_ENABLED(OF_PLATDATA)
 	return ofnode_valid(dev->node);
+#else
+        return false;
+#endif
+}
+
+static inline void dev_set_node(struct udevice *dev, ofnode node)
+{
+#if !CONFIG_IS_ENABLED(OF_PLATDATA)
+	dev->node = node;
+#endif
 }
 
 static inline int dev_seq(const struct udevice *dev)
