@@ -10,6 +10,13 @@
 / {
 	#address-cells = <1>;
 	#size-cells = <1>;
+
+	aliases {
+		testbus2 = &bus2;
+		testfdt1 = &testfdt_1;
+		i2c4 = &i2c;
+	};
+
 	spl-test {
 		u-boot,dm-pre-reloc;
 		compatible = "sandbox,spl-test";
@@ -17,7 +24,7 @@
 		intval = <1>;
 	};
 
-	i2c {
+	i2c: i2c {
 		u-boot,dm-pre-reloc;
 		compatible = "sandbox,i2c";
 		intval = <3>;
@@ -30,18 +37,22 @@
 		longbytearray = [09 0a 0b 0c 0d 0e 0f 10];
 	};
 
-	some-bus {
+	bus2: some-bus {
 		#address-cells = <1>;
 		#size-cells = <0>;
 		compatible = "denx,u-boot-test-bus";
 		reg = <3 1>;
 		ping-expect = <4>;
 		ping-add = <4>;
-		test {
+		testfdt_1: test {
 			compatible = "denx,u-boot-fdt-test", "google,another-fdt-test";
 			reg = <5>;
 			ping-expect = <5>;
 			ping-add = <5>;
+		};
+
+		test0 {
+			compatible = "google,another-fdt-test";
 		};
 	};
 };

@@ -106,8 +106,11 @@ class UclassDriver:
         per_dev_platdata (str): Information about per-device platdata
         devs (list): List of devices in this uclass, each a Node
         node_refs (dict): References in the linked list of devices:
-            key (it): Sequence number (0=first, n-1=last, -1=head, n=tail)
+            key (int): Sequence number (0=first, n-1=last, -1=head, n=tail)
             value (str): Reference to the device at that position
+        alias (dict): Aliases for this uclasses (for sequence numbers)
+            key (int): Alias number (e.g. 2 for "pci2")
+            value (str): Node the alias points to
     """
     def __init__(self, name):
         self.name = name
@@ -117,6 +120,8 @@ class UclassDriver:
         self.per_dev_platdata = ''
         self.devs = []
         self.node_refs = {}
+        self.alias_num_to_node = {}
+        self.alias_path_to_num = {}
 
     def __eq__(self, other):
         return (self.name == other.name and
@@ -705,6 +710,7 @@ class DtbPlatdata(object):
         """
         valid_nodes = []
         self.scan_node(self._fdt.GetRoot(), valid_nodes)
+        self._valid_nodes_unsorted = valid_nodes
         self._valid_nodes = sorted(valid_nodes,
                                    key=lambda x: conv_name_to_c(x.name))
         for idx, node in enumerate(self._valid_nodes):
@@ -988,8 +994,8 @@ class DtbPlatdata(object):
         self.buf('} %s;\n' % section)
         return '&' + var_name
 
-    def _declare_device_inst(self, driver, var_name, struct_name,
-			     parent_driver, node, uclass):
+    def _declare_device_inst(self, driver, var_name, struct_name, parent_driver,
+                             node, uclass):
         """Add a device instance declaration to the output
 
         This declares a U_BOOT_DEVICE_INST() for the device being processed
@@ -1053,7 +1059,7 @@ class DtbPlatdata(object):
                            node.parent_seq)
         # flags is left as 0
 
-        self.buf('\t.sqq = %d,\n' % node.uclass_seq)
+        self.buf('\t.sqq = %d,\n' % node.seq)
 
         self.buf('};\n')
         self.buf('\n')
@@ -1140,7 +1146,16 @@ class DtbPlatdata(object):
         for driver in self._drivers.values():
             if driver.used:
                 uclass_list.add(driver.uclass_id)
-        self.buf('/* uclass declarations */\n')
+        self.buf('/*\n')
+        self.buf(' * uclass declarations\n')
+        self.buf(' *\n')
+        self.buf(' * Sequence numbers:\n')
+        for uclass in self._uclass.values():
+            if uclass.alias_num_to_node:
+                self.buf(' * %s: %s\n' % (uclass.name, uclass.uclass_id))
+                for seq, node in uclass.alias_num_to_node.items():
+                    self.buf(' *    %d: %s\n' % (seq, node.path))
+        self.buf(' */\n')
         uclass_list = sorted(list(uclass_list))
         prev_uc = 'NULL /* Set up at runtime */'
 
@@ -1176,6 +1191,47 @@ class DtbPlatdata(object):
             self.buf('};\n')
             self.buf('\n')
 
+    def _read_aliases(self):
+        """Read the aliases and attach the information to self._alias
+        """
+        alias_node = self._fdt.GetNode('/aliases')
+        re_num = re.compile('([a-z0-9]+[a-z]+)([0-9]+)')
+        for prop in alias_node .props.values():
+            m_alias = re_num.match(prop.name)
+            if not m_alias:
+                raise ValueError("Cannot decode alias '%s'" % prop.name)
+            name, num = m_alias.groups()
+            found = False
+            for uclass in self._uclass.values():
+                if uclass.name == name:
+                    node = self._fdt.GetNode(prop.value)
+                    if not node:
+                        raise ValueError("Alias '%s' path '%s' not found" %
+                                         (prop.name, prop.value))
+                    uclass.alias_num_to_node[int(num)] = node
+                    uclass.alias_path_to_num[node.path] = int(num)
+                    found = True
+                    break
+            if not found:
+                print("Could not find uclass for alias '%s'" % prop.name)
+
+    def _assign_seq(self):
+        """Assign a sequence number to each node"""
+        for node in self._valid_nodes_unsorted:
+            if node.seq == -1:
+                uclass = node.uclass
+                num = uclass.alias_path_to_num.get(node.path)
+                if num is not None:
+                    node.seq = num
+                else:
+                    for seq in range(1000):
+                        if seq not in uclass.alias_num_to_node:
+                            break
+                    node.seq = seq
+                    uclass.alias_path_to_num[node.path] = seq
+                    uclass.alias_num_to_node[seq] = node
+
+
     def generate_tables(self):
         """Generate device defintions for the platform data
 
@@ -1204,6 +1260,7 @@ class DtbPlatdata(object):
                 driver.used = True
             node.child_devs = []
             node.child_refs = {}
+            node.seq = -1
 
         for node in nodes_to_output:
             self.buf('U_BOOT_DEVICE_DECL(%s);\n' % conv_name_to_c(node.name))
@@ -1246,6 +1303,8 @@ class DtbPlatdata(object):
             node.child_refs[len(node.child_devs)] = ref
 
         if self._instantiate:
+            self._read_aliases()
+            self._assign_seq()
             self._output_uclasses()
 
         # Keep outputing nodes until there is none left
