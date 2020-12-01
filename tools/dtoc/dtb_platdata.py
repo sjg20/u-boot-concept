@@ -148,6 +148,8 @@ def conv_name_to_c(name):
     new = new.replace('-', '_')
     new = new.replace(',', '_')
     new = new.replace('.', '_')
+    if new == '/':
+        return 'root'
     return new
 
 def tab_to(num_tabs, line):
@@ -218,8 +220,10 @@ class DtbPlatdata(object):
     Properties:
         _fdt: Fdt object, referencing the device tree
         _dtb_fname: Filename of the input device tree binary file
-        _valid_nodes: A list of Node object with compatible strings. The list
-            is ordered by conv_name_to_c(node.name)
+        _valid_nodes_unsorted: A list of Node object with compatible strings,
+            ordered by devicetree node order
+        _valid_nodes: A list of Node object with compatible strings, ordered by
+            conv_name_to_c(node.name)
         _include_disabled: true to include nodes marked status = "disabled"
         _outfile: The current output file (sys.stdout or a real file)
         _warning_disabled: true to disable warnings about driver names not found
@@ -278,7 +282,10 @@ class DtbPlatdata(object):
                 In case of no match found, the return will be the same as
                 get_compat_name()
         """
-        compat_list_c = get_compat_name(node)
+        if node == self._fdt.GetRoot():
+            compat_list_c = ['root_driver']
+        else:
+            compat_list_c = get_compat_name(node)
 
         for compat_c in compat_list_c:
             if not compat_c in self._drivers.keys():
@@ -566,22 +573,24 @@ class DtbPlatdata(object):
                 elif m_of_match:
                     compat = m_of_match.group(1)
                 elif '};' in line:
-                    if driver.uclass_id and compat:
-                        if compat not in of_match:
-                            raise ValueError(
-                                "%s: Unknown compatible var '%s' (found %s)" %
-                                (fname, compat, ','.join(of_match.keys())))
-                        driver.compat = of_match[compat]
-                        drivers[driver.name] = driver
+                    is_root = driver.name == 'root_driver'
+                    if driver.uclass_id and (compat or is_root):
+                        if not is_root:
+                            if compat not in of_match:
+                                raise ValueError(
+                                    "%s: Unknown compatible var '%s' (found %s)" %
+                                    (fname, compat, ','.join(of_match.keys())))
+                            driver.compat = of_match[compat]
 
-                        # This needs to be deterministic, since a driver may
-                        # have multiple compatible strings pointing to it.
-                        # We record the one earliest in the alphabet so it
-                        # will produce the same result on all machines.
-                        for id in of_match[compat]:
-                            old = self._compat_to_driver.get(id)
-                            if not old or driver.name < old.name:
-                                self._compat_to_driver[id] = driver
+                            # This needs to be deterministic, since a driver may
+                            # have multiple compatible strings pointing to it.
+                            # We record the one earliest in the alphabet so it
+                            # will produce the same result on all machines.
+                            for id in of_match[compat]:
+                                old = self._compat_to_driver.get(id)
+                                if not old or driver.name < old.name:
+                                    self._compat_to_driver[id] = driver
+                        drivers[driver.name] = driver
                     else:
                         # The driver does not have a uclass or compat string.
                         # The first is required but the second is not, so just
@@ -682,34 +691,43 @@ class DtbPlatdata(object):
         """
         self._fdt = fdt.FdtScan(self._dtb_fname)
 
-    def scan_node(self, root, valid_nodes):
+    def scan_node(self, node, valid_nodes):
         """Scan a node and subnodes to build a tree of node and phandle info
 
-        This adds each node to self._valid_nodes.
+        This adds each subnode to self._valid_nodes if it is enabled and has a
+        compatible string.
 
         Args:
-            root: Root node for scan
+            node: Node for scan for subnodes
             valid_nodes: List of Node objects to add to
         """
-        for node in root.subnodes:
-            if 'compatible' in node.props:
-                status = node.props.get('status')
+        for subnode in node.subnodes:
+            if 'compatible' in subnode.props:
+                status = subnode.props.get('status')
                 if (not self._include_disabled and not status or
                         status.value != 'disabled'):
-                    valid_nodes.append(node)
+                    valid_nodes.append(subnode)
 
             # recurse to handle any subnodes
-            self.scan_node(node, valid_nodes)
+            self.scan_node(subnode, valid_nodes)
 
-    def scan_tree(self):
+    def scan_tree(self, add_root):
         """Scan the device tree for useful information
 
         This fills in the following properties:
-            _valid_nodes: A list of nodes we wish to consider include in the
-                platform data
+            _valid_nodes_unsorted: A list of nodes we wish to consider include
+                in the platform data (in devicetree node order)
+            _valid_nodes: Sorted version of _valid_nodes_unsorted
+
+        Args:
+            add_root: True to add the root node also (which wouldn't normally
+                be added as it may not have a compatible string)
         """
+        root = self._fdt.GetRoot()
         valid_nodes = []
-        self.scan_node(self._fdt.GetRoot(), valid_nodes)
+        if add_root:
+            valid_nodes.append(root)
+        self.scan_node(root, valid_nodes)
         self._valid_nodes_unsorted = valid_nodes
         self._valid_nodes = sorted(valid_nodes,
                                    key=lambda x: conv_name_to_c(x.name))
@@ -1033,14 +1051,16 @@ class DtbPlatdata(object):
             self.buf('\t.uclass_platdata = %s,\n' % uclass_plat_name)
         driver_date = None
 
-        compat_list = node.props['compatible'].value
-        if not isinstance(compat_list, list):
-            compat_list = [compat_list]
-        for compat in compat_list:
-            driver_data = driver.compat.get(compat)
-            if driver_data:
-                self.buf('\t.driver_data\t= %s,\n' % driver_data)
-                break
+        if node != self._fdt.GetRoot():
+            compat_list = node.props['compatible'].value
+            if not isinstance(compat_list, list):
+                compat_list = [compat_list]
+            for compat in compat_list:
+                driver_data = driver.compat.get(compat)
+                if driver_data:
+                    self.buf('\t.driver_data\t= %s,\n' % driver_data)
+                    break
+
         if node.parent and node.parent.parent:
             self.buf('\t.parent\t\t= U_BOOT_DEVICE_REF(%s),\n' %
                      conv_name_to_c(node.parent.name))
@@ -1268,6 +1288,7 @@ class DtbPlatdata(object):
             struct_name, _ = self.get_normalized_compat_name(node)
             driver = self._drivers.get(struct_name)
             if not driver:
+                print('all', self._drivers.keys())
                 raise ValueError("Cannot parse/find driver for '%s'" %
                                  struct_name)
             node.driver = driver
@@ -1351,7 +1372,7 @@ def run_steps(args, dtb_file, include_disabled, output, warning_disabled=False,
                        drivers_additional, instantiate)
     plat.scan_drivers(basedir)
     plat.scan_dtb()
-    plat.scan_tree()
+    plat.scan_tree(add_root=instantiate)
     plat.scan_reg_sizes()
     plat.setup_output(output)
     structs = plat.scan_structs()
