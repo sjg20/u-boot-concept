@@ -344,6 +344,12 @@ int device_ofdata_to_platdata(struct udevice *dev)
 	if (dev->flags & DM_FLAG_PLATDATA_VALID)
 		return 0;
 
+	if (CONFIG_IS_ENABLED(OF_PLATDATA_INST)) {
+		dev->flags |= DM_FLAG_PLATDATA_VALID;
+
+		return 0;
+	}
+
 	/* Ensure all parents have ofdata */
 	if (dev->parent) {
 		ret = device_ofdata_to_platdata(dev->parent);

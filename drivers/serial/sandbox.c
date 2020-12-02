@@ -18,6 +18,7 @@
 #include <serial.h>
 #include <video.h>
 #include <linux/compiler.h>
+#include <asm/serial.h>
 #include <asm/state.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -36,14 +37,6 @@ DECLARE_GLOBAL_DATA_PTR;
 static unsigned char serial_buf[16];
 static unsigned int serial_buf_write;
 static unsigned int serial_buf_read;
-
-struct sandbox_serial_platdata {
-	int colour;	/* Text colour to use for output, -1 for none */
-};
-
-struct sandbox_serial_priv {
-	bool start_of_line;
-};
 
 /**
  * output_ansi_colour() - Output an ANSI colour code
@@ -259,8 +252,8 @@ U_BOOT_DRIVER(sandbox_serial) = {
 	.id	= UCLASS_SERIAL,
 	.of_match = sandbox_serial_ids,
 	.ofdata_to_platdata = sandbox_serial_ofdata_to_platdata,
-	.platdata_auto_alloc_size = sizeof(struct sandbox_serial_platdata),
-	.priv_auto_alloc_size = sizeof(struct sandbox_serial_priv),
+	DM_PLATDATA(<asm/serial.h>,struct sandbox_serial_platdata)
+	DM_PRIV(<asm/serial.h>,struct sandbox_serial_priv)
 	.probe = sandbox_serial_probe,
 	.remove = sandbox_serial_remove,
 	.ops	= &sandbox_serial_ops,

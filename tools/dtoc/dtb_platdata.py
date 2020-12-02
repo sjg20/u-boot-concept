@@ -81,6 +81,7 @@ class Driver:
         self.child_platdata = ''
         self.child_priv = ''
         self.used = False
+        self.need_macro = []
 
     def __eq__(self, other):
         return (self.name == other.name and
@@ -540,6 +541,10 @@ class DtbPlatdata(object):
         re_child_platdata = re.compile('^\s*DM_CHILD_PLATDATA\((.*)\)$')
         re_child_priv = re.compile('^\s*DM_CHILD_PRIV\((.*)\)$')
 
+        re_need_macro = re.compile('(priv_auto_alloc_size|'
+            'platdata_auto_alloc_size|per_child_auto_alloc_size|'
+            'per_child_platdata_auto_alloc_size)')
+
         prefix = ''
         for line in buff.splitlines():
             # Handle line continuation
@@ -560,7 +565,10 @@ class DtbPlatdata(object):
                 m_platdata = re_platdata.match(line)
                 m_cplatdata = re_child_platdata.match(line)
                 m_cpriv = re_child_priv.match(line)
-                if m_priv:
+                m_need_macro = re_need_macro.search(line)
+                if m_need_macro:
+                    driver.need_macro.append(line)
+                elif m_priv:
                     driver.priv = m_priv.group(1)
                 elif m_platdata:
                     driver.platdata = m_platdata.group(1)
@@ -1004,12 +1012,12 @@ class DtbPlatdata(object):
         if not result:
             return None
         var_name, struc, section = result
-        self.buf('%s %s = {\n' % (struc.strip(), var_name))
+        self.buf('%s %s %s = {\n' % (struc.strip(), section, var_name))
         self.buf('\t.dtplat = {\n')
         for pname in sorted(node.props):
             self._output_prop(node, node.props[pname], 2)
         self.buf('\t},\n')
-        self.buf('} %s;\n' % section)
+        self.buf('};\n')
         return '&' + var_name
 
     def _declare_device_inst(self, driver, var_name, struct_name, parent_driver,
@@ -1283,6 +1291,9 @@ class DtbPlatdata(object):
             driver = self._drivers.get(struct_name)
             if driver:
                 driver.used = True
+                if driver.need_macro:
+                    print("Warning: Driver '%s' needs macros for: %s" %
+                          (driver.name, '\n'.join(driver.need_macro)))
             node.child_devs = []
             node.child_refs = {}
             node.seq = -1
