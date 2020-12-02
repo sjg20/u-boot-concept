@@ -185,7 +185,7 @@ U_BOOT_DRIVER(sandbox_fixed_clock) = {
 	.id = UCLASS_CLK,
 	.of_match = sandbox_clk_fixed_rate_match,
 	.ofdata_to_platdata = clk_fixed_rate_ofdata_to_platdata,
-	DM_PLATDATA(<asm/clk.h>,struct sandbox_clk_fixed_rate_plat)
+	.platdata_auto_alloc_size = sizeof(struct sandbox_clk_fixed_rate_plat),
 	.ops = &clk_fixed_rate_ops,
 	.flags = DM_FLAG_PRE_RELOC,
 };
