@@ -13,7 +13,7 @@
 #include "regulator_common.h"
 
 int regulator_common_of_to_plat(struct udevice *dev,
-	struct regulator_common_platdata *dev_pdata, const char *enable_gpio_name)
+	struct regulator_common_plat *dev_pdata, const char *enable_gpio_name)
 {
 	struct gpio_desc *gpio;
 	int flags = GPIOD_IS_OUT;
@@ -48,7 +48,7 @@ int regulator_common_of_to_plat(struct udevice *dev,
 }
 
 int regulator_common_get_enable(const struct udevice *dev,
-	struct regulator_common_platdata *dev_pdata)
+	struct regulator_common_plat *dev_pdata)
 {
 	/* Enable GPIO is optional */
 	if (!dev_pdata->gpio.dev)
@@ -58,7 +58,7 @@ int regulator_common_get_enable(const struct udevice *dev,
 }
 
 int regulator_common_set_enable(const struct udevice *dev,
-	struct regulator_common_platdata *dev_pdata, bool enable)
+	struct regulator_common_plat *dev_pdata, bool enable)
 {
 	int ret;
 

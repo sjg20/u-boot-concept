@@ -3034,13 +3034,13 @@ static int rk3399_dmc_of_to_plat(struct udevice *dev)
 }
 
 #if CONFIG_IS_ENABLED(OF_PLATDATA)
-static int conv_of_platdata(struct udevice *dev)
+static int conv_of_plat(struct udevice *dev)
 {
 	struct rockchip_dmc_plat *plat = dev_get_plat(dev);
 	struct dtd_rockchip_rk3399_dmc *dtplat = &plat->dtplat;
 	int ret;
 
-	ret = regmap_init_mem_platdata(dev, dtplat->reg,
+	ret = regmap_init_mem_plat(dev, dtplat->reg,
 				       ARRAY_SIZE(dtplat->reg) / 2,
 				       &plat->map);
 	if (ret)
@@ -3076,7 +3076,7 @@ static int rk3399_dmc_init(struct udevice *dev)
 	struct rk3399_sdram_params *params =
 					(void *)dtplat->rockchip_sdram_params;
 
-	ret = conv_of_platdata(dev);
+	ret = conv_of_plat(dev);
 	if (ret)
 		return ret;
 #endif
