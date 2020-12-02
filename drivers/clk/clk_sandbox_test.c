@@ -11,12 +11,6 @@
 #include <dm/device_compat.h>
 #include <linux/err.h>
 
-struct sandbox_clk_test {
-	struct clk clks[SANDBOX_CLK_TEST_NON_DEVM_COUNT];
-	struct clk *clkps[SANDBOX_CLK_TEST_ID_COUNT];
-	struct clk_bulk bulk;
-};
-
 static const char * const sandbox_clk_test_names[] = {
 	[SANDBOX_CLK_TEST_ID_FIXED] = "fixed",
 	[SANDBOX_CLK_TEST_ID_SPI] = "spi",
@@ -189,5 +183,5 @@ U_BOOT_DRIVER(sandbox_clk_test) = {
 	.id = UCLASS_MISC,
 	.of_match = sandbox_clk_test_ids,
 	.probe = sandbox_clk_test_probe,
-	.priv_auto_alloc_size = sizeof(struct sandbox_clk_test),
+	DM_PRIV(<asm/clk.h>,struct sandbox_clk_test)
 };

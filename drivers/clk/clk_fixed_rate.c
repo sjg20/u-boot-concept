@@ -24,17 +24,22 @@ const struct clk_ops clk_fixed_rate_ops = {
 	.enable = dummy_enable,
 };
 
-static int clk_fixed_rate_ofdata_to_platdata(struct udevice *dev)
+void clk_fixed_rate_ofdata_to_platdata_(struct udevice *dev,
+					struct clk_fixed_rate *plat)
 {
-	struct clk *clk = &to_clk_fixed_rate(dev)->clk;
+	struct clk *clk = &plat->clk;
 #if !CONFIG_IS_ENABLED(OF_PLATDATA)
-	to_clk_fixed_rate(dev)->fixed_rate =
-		dev_read_u32_default(dev, "clock-frequency", 0);
+	plat->fixed_rate = dev_read_u32_default(dev, "clock-frequency", 0);
 #endif
 	/* Make fixed rate clock accessible from higher level struct clk */
 	dev->uclass_priv = clk;
 	clk->dev = dev;
 	clk->enable_count = 0;
+}
+
+static int clk_fixed_rate_ofdata_to_platdata(struct udevice *dev)
+{
+	clk_fixed_rate_ofdata_to_platdata_(dev, to_clk_fixed_rate(dev));
 
 	return 0;
 }
@@ -51,7 +56,7 @@ U_BOOT_DRIVER(fixed_clock) = {
 	.id = UCLASS_CLK,
 	.of_match = clk_fixed_rate_match,
 	.ofdata_to_platdata = clk_fixed_rate_ofdata_to_platdata,
-	.platdata_auto_alloc_size = sizeof(struct clk_fixed_rate),
+	DM_PLATDATA(<linux/clk-provider.h>,struct clk_fixed_rate)
 	.ops = &clk_fixed_rate_ops,
 	.flags = DM_FLAG_PRE_RELOC,
 };
