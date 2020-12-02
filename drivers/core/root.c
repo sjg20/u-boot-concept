@@ -299,7 +299,7 @@ __weak int dm_scan_other(bool pre_reloc_only)
 	return 0;
 }
 
-static int dm_setup_inst(void)
+static void dm_setup_inst_uclass(void)
 {
 	struct uclass *uc = ll_entry_start(struct uclass, uclass);
 	struct uclass *end = ll_entry_end(struct uclass, uclass);
@@ -314,6 +314,27 @@ static int dm_setup_inst(void)
 			gd->uclass_root.prev = &uc->sibling_node;
 		}
 	}
+}
+
+DM_DECL_DRIVER(root_driver);
+
+static void dm_setup_inst_dev(void)
+{
+	struct udevice *dev = ll_entry_start(struct udevice, udevice);
+	struct udevice *end = ll_entry_end(struct udevice, udevice);
+
+	for (; dev < end; dev++) {
+		if (dev->driver == DM_REF_DRIVER(root_driver)) {
+			DM_ROOT_NON_CONST = dev;
+			break;
+		}
+	}
+}
+
+static int dm_setup_inst(void)
+{
+	dm_setup_inst_uclass();
+	dm_setup_inst_dev();
 
 	return 0;
 }
@@ -391,11 +412,6 @@ int dm_init_and_scan(bool pre_reloc_only)
 			return ret;
 		}
 	}
-	printf("devices:\n");
-	dm_dump_all();
-	printf("uclasses:\n");
-	dm_dump_uclass();
-	printf("done\n");
 
 	return 0;
 }

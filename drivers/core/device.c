@@ -43,6 +43,9 @@ static int device_bind_common(struct udevice *parent, const struct driver *drv,
 	int size, ret = 0;
 	bool auto_seq = false;
 
+	if (CONFIG_IS_ENABLED(OF_PLATDATA_INST))
+		return -ENOSYS;
+
 	if (devp)
 		*devp = NULL;
 	if (!name)

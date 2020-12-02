@@ -67,7 +67,6 @@ struct driver_rt {
 	ll_entry_declare(struct driver_info, __name, driver_info)
 #endif
 
-#if CONFIG_IS_ENABLED(OF_PLATDATA)
 /* Declare a bound device ready for run-time use */
 #define U_BOOT_DEVICE_INST(__name)						\
 	ll_entry_declare(struct udevice, __name, udevice)
@@ -77,8 +76,6 @@ struct driver_rt {
 
 #define U_BOOT_DEVICE_REF(__name)						\
 	ll_entry_ref(struct udevice, __name, udevice)
-
-#endif
 
 /* Declare a list of devices. The argument is a driver_info[] array */
 #define U_BOOT_DEVICES(__name)						\

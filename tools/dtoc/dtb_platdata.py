@@ -1073,7 +1073,7 @@ class DtbPlatdata(object):
         if parent_priv_name:
             self.buf('\t.parent_priv\t= %s,\n' % parent_priv_name)
         self.list_node('uclass_node', uclass.node_refs, node.uclass_seq)
-        self.list_head('child_head', 'sibling_node', node.child_devs)
+        self.list_head('child_head', 'sibling_node', node.child_devs, var_name)
         if node.parent in self._valid_nodes:
             self.list_node('sibling_node', node.parent.child_refs,
                            node.parent_seq)
@@ -1146,14 +1146,19 @@ class DtbPlatdata(object):
 
         self.out(''.join(self.get_buf()))
 
-    def list_head(self, member, node_member, node_refs):
+    def list_head(self, head_member, node_member, node_refs, var_name):
+        self.buf('\t.%s\t= {\n' % head_member)
         if node_refs:
-            self.buf('\t.%s\t= {\n' % member)
-            last = node_refs[-1]
-            first = node_refs[0]
-            self.buf('\t\t.prev = &%s->%s,\n' % (last.dev_ref, node_member))
-            self.buf('\t\t.next = &%s->%s,\n' % (first.dev_ref, node_member))
-            self.buf('\t},\n')
+            last = node_refs[-1].dev_ref
+            first = node_refs[0].dev_ref
+            member = node_member
+        else:
+            last = 'U_BOOT_DEVICE_REF(%s)' % var_name
+            first = last
+            member = head_member
+        self.buf('\t\t.prev = &%s->%s,\n' % (last, member))
+        self.buf('\t\t.next = &%s->%s,\n' % (first, member))
+        self.buf('\t},\n')
 
     def list_node(self, member, node_refs, seq):
         self.buf('\t.%s\t= {\n' % member)
@@ -1207,7 +1212,7 @@ class DtbPlatdata(object):
                 self.buf('\t.priv\t\t= %s,\n' % priv_name)
             self.buf('\t.uc_drv\t\t= DM_REF_UCLASS_DRIVER(%s),\n' % uc_name)
             self.list_node('sibling_node', uclass_node, seq)
-            self.list_head('dev_head', 'uclass_node', uc_drv.devs)
+            self.list_head('dev_head', 'uclass_node', uc_drv.devs, None)
             self.buf('};\n')
             self.buf('\n')
 

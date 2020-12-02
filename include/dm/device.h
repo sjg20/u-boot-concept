@@ -208,6 +208,26 @@ static inline int dev_seq(const struct udevice *dev)
 }
 
 /**
+ * dev_ofnode() - get the DT node reference associated with a udevice
+ *
+ * @dev:	device to check
+ * @return reference of the the device's DT node
+ */
+static inline ofnode dev_ofnode(const struct udevice *dev)
+{
+#if !CONFIG_IS_ENABLED(OF_PLATDATA)
+	return dev->node;
+#else
+	return ofnode_null();
+#endif
+}
+
+static inline bool dev_of_valid(const struct udevice *dev)
+{
+	return ofnode_valid(dev_ofnode(dev));
+}
+
+/**
  * struct udevice_id - Lists the compatible strings supported by a driver
  * @compatible: Compatible string
  * @data: Data for this compatible string
