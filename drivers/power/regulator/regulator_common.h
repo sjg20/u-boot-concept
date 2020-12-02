@@ -15,7 +15,7 @@ struct regulator_common_platdata {
 	unsigned int off_on_delay_us;
 };
 
-int regulator_common_ofdata_to_platdata(struct udevice *dev,
+int regulator_common_of_to_plat(struct udevice *dev,
 	struct regulator_common_platdata *dev_pdata, const char *enable_gpio_name);
 int regulator_common_get_enable(const struct udevice *dev,
 	struct regulator_common_platdata *dev_pdata);
