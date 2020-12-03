@@ -675,6 +675,9 @@ class DtbPlatdata(object):
                 if ids_m:
                     ids_name = ids_m.group(1)
 
+        if fname.endswith('test_drv.c'):
+            print('here', drivers, of_match)
+
         # Make the updates based on what we found
         self._drivers.update(drivers)
         self._of_match.update(of_match)
