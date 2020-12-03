@@ -134,6 +134,21 @@ class UclassDriver:
                 (self.name, self.uclass_id))
 
 
+class Struct:
+    """Holds information about a struct definition
+
+    Attributes:
+        name: Struct name, e.g. 'fred' if the struct is 'struct fred'
+        fname: Filename containing the struct
+    """
+    def __init__(self, name, fname):
+        self.name = name
+        self.fname =fname
+
+    def __repr__(self):
+        return ("Struct(name='%s', fname='%s')" % (self.name, self.fname))
+
+
 def conv_name_to_c(name):
     """Convert a device-tree name to a C identifier
 
@@ -248,6 +263,9 @@ class DtbPlatdata(object):
             value: UClassDriver
         _instantiate: Instantiate devices so they don't need to be bound at
             run-time
+        _structs: Dict of Struct obtains:
+            key: Name of struct
+            value: Struct object
     """
     def __init__(self, dtb_fname, include_disabled, warning_disabled,
                  drivers_additional=None, instantiate=False):
@@ -265,6 +283,7 @@ class DtbPlatdata(object):
         self._compat_to_driver = {}
         self._uclass = {}
         self._instantiate = instantiate
+        self._structs = {}
 
     def get_normalized_compat_name(self, node):
         """Get a node's normalized compat name
@@ -410,6 +429,35 @@ class DtbPlatdata(object):
     def uclass_id_to_name(uclass_id):
         return uclass_id[len('UCLASS_'):].lower()
 
+    def _parse_structs(self, buff, fname):
+        """Parse a H file to extract struct defintions contained within
+
+        This parses 'struct xx {' definitions to figure out what structs this
+        header defines.
+
+        Args:
+            buff (str): Contents of file
+            fname (str): Filename (to use when printing errors)
+        """
+        structs = {}
+
+        re_struct = re.compile('^struct ([a-z0-9_]+) {$')
+        prefix = ''
+        for line in buff.splitlines():
+            # Handle line continuation
+            if prefix:
+                line = prefix + line
+                prefix = ''
+            if line.endswith('\\'):
+                prefix = line[:-1]
+                continue
+
+            m_struct = re_struct.match(line)
+            if m_struct:
+                name = m_struct.group(1)
+                structs[name] = Struct(name, fname)
+        self._structs.update(structs)
+
     def _parse_uclass_driver(self, buff, fname):
         """Parse a C file to extract uclass driver information contained within
 
@@ -417,6 +465,9 @@ class DtbPlatdata(object):
         information.
 
         It updates the following members:
+            _uclass: Dict of uclass information
+                key: uclass name (e.g. 'UCLASS_I2C')
+                value: UClassDriver
 
         Args:
             buff (str): Contents of file
@@ -432,7 +483,7 @@ class DtbPlatdata(object):
         re_id = re.compile(r'\s*\.id\s*=\s*(UCLASS_[A-Z0-9_]+)')
 
         # Matches the header/size information for uclass-private data
-        re_priv = re.compile('^\s*DM_PRIV\((.*)\)$')
+        re_priv = re.compile('^\s*.priv_auto\s*=\s*sizeof\((.*)\),$')
 
         # Matches the header/size information for per-device uclass data
         re_per_device_priv = re.compile('^\s*DM_PER_DEVICE_PRIV\((.*)\)$')
@@ -667,6 +718,29 @@ class DtbPlatdata(object):
                     continue
                 self._driver_aliases[alias[1]] = alias[0]
 
+    def scan_header(self, fname):
+        """Scan a header file to build a list of struct definitions
+
+        It updates the following members:
+            _structs - updated with new Struct records for each struct found
+                in the file
+
+        Args
+            fname: header filename to scan
+        """
+        with open(fname, encoding='utf-8') as inf:
+            try:
+                buff = inf.read()
+            except UnicodeDecodeError:
+                # This seems to happen on older Python versions
+                print("Skipping file '%s' due to unicode error" % fname)
+                return
+
+            # If this file has any U_BOOT_DRIVER() declarations, process it to
+            # obtain driver information
+            if 'struct' in buff:
+                self._parse_structs(buff, fname)
+
     def scan_drivers(self, basedir=None):
         """Scan the driver folders to build a list of driver names and aliases
 
@@ -679,9 +753,11 @@ class DtbPlatdata(object):
                 basedir = './'
         for (dirpath, _, filenames) in os.walk(basedir):
             for fname in filenames:
-                if not fname.endswith('.c'):
-                    continue
-                self.scan_driver(dirpath + '/' + fname)
+                pathname = dirpath + '/' + fname
+                if fname.endswith('.c'):
+                    self.scan_driver(pathname)
+                elif fname.endswith('.h'):
+                    self.scan_header(pathname)
 
         for fname in self._drivers_additional:
             if not isinstance(fname, str) or len(fname) == 0:
@@ -993,8 +1069,10 @@ class DtbPlatdata(object):
             hdr = None
             struc = parts[0]
         var_name = '_%s%s' % (name, suffix)
+        hdr = self._structs.get(struc)
+        print('struct', struc, hdr)
         if hdr:
-            self.buf('#include %s\n' % hdr)
+            self.buf('#include %s\n' % hdr.fname)
         section = '__attribute__ ((section (".data")))'
         return var_name, struc, section
 
@@ -1304,7 +1382,7 @@ class DtbPlatdata(object):
             struct_name, _ = self.get_normalized_compat_name(node)
             driver = self._drivers.get(struct_name)
             if not driver:
-                print('all', self._drivers.keys())
+                #print('all', self._drivers.keys())
                 raise ValueError("Cannot parse/find driver for '%s'" %
                                  struct_name)
             node.driver = driver
