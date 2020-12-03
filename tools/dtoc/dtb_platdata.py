@@ -266,6 +266,7 @@ class DtbPlatdata(object):
         _structs: Dict of Struct obtains:
             key: Name of struct
             value: Struct object
+        _basedir (str): Base directory of source tree
     """
     def __init__(self, dtb_fname, include_disabled, warning_disabled,
                  drivers_additional=None, instantiate=False):
@@ -284,6 +285,7 @@ class DtbPlatdata(object):
         self._uclass = {}
         self._instantiate = instantiate
         self._structs = {}
+        self._basedir = None
 
     def get_normalized_compat_name(self, node):
         """Get a node's normalized compat name
@@ -442,6 +444,7 @@ class DtbPlatdata(object):
         structs = {}
 
         re_struct = re.compile('^struct ([a-z0-9_]+) {$')
+        re_asm = re.compile('../arch/[a-z]+/include/asm/(.*)')
         prefix = ''
         for line in buff.splitlines():
             # Handle line continuation
@@ -455,7 +458,12 @@ class DtbPlatdata(object):
             m_struct = re_struct.match(line)
             if m_struct:
                 name = m_struct.group(1)
-                structs[name] = Struct(name, fname)
+                include_dir = os.path.join(self._basedir, 'include')
+                rel_fname = os.path.relpath(fname, include_dir)
+                m_asm = re_asm.match(rel_fname)
+                if m_asm:
+                    rel_fname = 'asm/' + m_asm.group(1)
+                structs[name] = Struct(name, rel_fname)
         self._structs.update(structs)
 
     def _parse_uclass_driver(self, buff, fname):
@@ -483,7 +491,7 @@ class DtbPlatdata(object):
         re_id = re.compile(r'\s*\.id\s*=\s*(UCLASS_[A-Z0-9_]+)')
 
         # Matches the header/size information for uclass-private data
-        re_priv = re.compile('^\s*.priv_auto\s*=\s*sizeof\((.*)\),$')
+        re_priv = re.compile('^\s*.priv_auto\s*=\s*sizeof\(struct\s+(.*)\),$')
 
         # Matches the header/size information for per-device uclass data
         re_per_device_priv = re.compile('^\s*DM_PER_DEVICE_PRIV\((.*)\)$')
@@ -587,7 +595,7 @@ class DtbPlatdata(object):
         re_of_match = re.compile('\.of_match\s*=\s*([a-z0-9_]+),')
 
         # Matches the header/size information for priv, platdata
-        re_priv = re.compile('^\s*DM_PRIV\((.*)\)$')
+        re_priv = re.compile('^\s*.priv_auto\s*=\s*sizeof\(struct\s+(.*)\),$')
         re_platdata = re.compile('^\s*DM_PLATDATA\((.*)\)$')
         re_child_platdata = re.compile('^\s*DM_CHILD_PLATDATA\((.*)\)$')
         re_child_priv = re.compile('^\s*DM_CHILD_PRIV\((.*)\)$')
@@ -675,9 +683,6 @@ class DtbPlatdata(object):
                 if ids_m:
                     ids_name = ids_m.group(1)
 
-        if fname.endswith('test_drv.c'):
-            print('here', drivers, of_match)
-
         # Make the updates based on what we found
         self._drivers.update(drivers)
         self._of_match.update(of_match)
@@ -754,6 +759,7 @@ class DtbPlatdata(object):
             basedir = sys.argv[0].replace('tools/dtoc/dtoc', '')
             if basedir == '':
                 basedir = './'
+        self._basedir = basedir
         for (dirpath, _, filenames) in os.walk(basedir):
             for fname in filenames:
                 pathname = dirpath + '/' + fname
@@ -1073,9 +1079,8 @@ class DtbPlatdata(object):
             struc = parts[0]
         var_name = '_%s%s' % (name, suffix)
         hdr = self._structs.get(struc)
-        print('struct', struc, hdr)
         if hdr:
-            self.buf('#include %s\n' % hdr.fname)
+            self.buf('#include <%s>\n' % hdr.fname)
         section = '__attribute__ ((section (".data")))'
         return var_name, struc, section
 
@@ -1084,8 +1089,8 @@ class DtbPlatdata(object):
         if not result:
             return None
         var_name, struc, section = result
-        self.buf('u8 %s[sizeof(%s)]\n\t%s;\n' % (var_name, struc.strip(),
-                                                 section))
+        self.buf('u8 %s[sizeof(struct %s)]\n\t%s;\n' % (var_name, struc.strip(),
+                                                        section))
         return var_name
 
     def alloc_plat(self, info, name, dt_platdata, node):

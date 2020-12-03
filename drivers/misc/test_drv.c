@@ -85,7 +85,7 @@ static const struct udevice_id testbus_ids[] = {
 	{ }
 };
 
-U_BOOT_DRIVER(testbus_drv) = {
+U_BOOT_DRIVER(denx_u_boot_test_bus) = {
 	.name	= "testbus_drv",
 	.of_match	= testbus_ids,
 	.id	= UCLASS_TEST_BUS,
