@@ -119,6 +119,8 @@ class UclassDriver:
         self.priv = ''
         self.per_dev_priv = ''
         self.per_dev_platdata = ''
+        self.per_child_priv = ''
+        self.per_child_platdata = ''
         self.devs = []
         self.node_refs = {}
         self.alias_num_to_node = {}
@@ -466,6 +468,21 @@ class DtbPlatdata(object):
                 structs[name] = Struct(name, rel_fname)
         self._structs.update(structs)
 
+    def _get_re_for_member(self, member):
+        """_get_re_for_member: Get a compiled regular expresion
+
+        Args:
+            member (str): Struct member name (e.g. 'priv_auto')
+
+        returns:
+            Compiled regular expression that parses:
+
+               .member = sizeof(struct fred),
+
+            and returns "fred" as group 1
+        """
+        return re.compile('^\s*.%s\s*=\s*sizeof\(struct\s+(.*)\),$' % member)
+
     def _parse_uclass_driver(self, buff, fname):
         """Parse a C file to extract uclass driver information contained within
 
@@ -491,13 +508,13 @@ class DtbPlatdata(object):
         re_id = re.compile(r'\s*\.id\s*=\s*(UCLASS_[A-Z0-9_]+)')
 
         # Matches the header/size information for uclass-private data
-        re_priv = re.compile('^\s*.priv_auto\s*=\s*sizeof\(struct\s+(.*)\),$')
+        re_priv = self._get_re_for_member('priv_auto')
 
-        # Matches the header/size information for per-device uclass data
-        re_per_device_priv = re.compile('^\s*DM_PER_DEVICE_PRIV\((.*)\)$')
-
-        # Matches the header/size information for per-device uclass platdata
-        re_per_device_plat = re.compile('^\s*DM_PER_DEVICE_PLATDATA\((.*)\)$')
+        # Set up parsing for the auto members
+        re_per_device_priv = self._get_re_for_member('per_device_auto')
+        re_per_device_plat = self._get_re_for_member('per_device_plat_auto')
+        re_per_child_priv = self._get_re_for_member('per_child_auto')
+        re_per_child_plat = self._get_re_for_member('per_child_plat_auto')
 
         prefix = ''
         for line in buff.splitlines():
@@ -517,6 +534,8 @@ class DtbPlatdata(object):
                 m_priv = re_priv.match(line)
                 m_per_dev_priv = re_per_device_priv.match(line)
                 m_per_dev_plat = re_per_device_plat.match(line)
+                m_per_child_priv = re_per_child_priv.match(line)
+                m_per_child_plat = re_per_child_plat.match(line)
                 if m_id:
                     driver.uclass_id = m_id.group(1)
                 elif m_priv:
@@ -525,6 +544,10 @@ class DtbPlatdata(object):
                     driver.per_dev_priv = m_per_dev_priv.group(1)
                 elif m_per_dev_plat:
                     driver.per_dev_platdata = m_per_dev_plat.group(1)
+                elif m_per_child_priv:
+                    driver.per_child_priv = m_per_child_priv.group(1)
+                elif m_per_child_plat:
+                    driver.per_child_platdata = m_per_child_plat.group(1)
                 elif '};' in line:
                     if not driver.uclass_id:
                         raise ValueError(
@@ -595,10 +618,10 @@ class DtbPlatdata(object):
         re_of_match = re.compile('\.of_match\s*=\s*([a-z0-9_]+),')
 
         # Matches the header/size information for priv, platdata
-        re_priv = re.compile('^\s*.priv_auto\s*=\s*sizeof\(struct\s+(.*)\),$')
-        re_platdata = re.compile('^\s*DM_PLATDATA\((.*)\)$')
-        re_child_platdata = re.compile('^\s*DM_CHILD_PLATDATA\((.*)\)$')
-        re_child_priv = re.compile('^\s*DM_CHILD_PRIV\((.*)\)$')
+        re_priv = self._get_re_for_member('priv_auto')
+        re_platdata = self._get_re_for_member('plat_auto')
+        re_child_priv = self._get_re_for_member('per_child_auto')
+        re_child_platdata = self._get_re_for_member('per_child_plat_auto')
 
         re_need_macro = re.compile('(priv_auto_alloc_size|'
             'platdata_auto_alloc_size|per_child_auto_alloc_size|'
@@ -1098,7 +1121,7 @@ class DtbPlatdata(object):
         if not result:
             return None
         var_name, struc, section = result
-        self.buf('%s %s %s = {\n' % (struc.strip(), section, var_name))
+        self.buf('struct %s %s %s = {\n' % (struc.strip(), section, var_name))
         self.buf('\t.dtplat = {\n')
         for pname in sorted(node.props):
             self._output_prop(node, node.props[pname], 2)
@@ -1125,12 +1148,14 @@ class DtbPlatdata(object):
         parent_plat_name = None
         parent_priv_name = None
         if parent_driver:
+            # TODO: deal with uclass providing these values
             parent_plat_name = self.alloc_priv(parent_driver.child_platdata,
                                                driver.name, '_parent_plat')
             parent_priv_name = self.alloc_priv(parent_driver.child_priv,
                                                driver.name, '_parent_priv')
         uclass_plat_name = self.alloc_priv(uclass.per_dev_platdata, driver.name)
-        uclass_priv_name = self.alloc_priv(uclass.per_dev_priv, driver.name)
+        uclass_priv_name = self.alloc_priv(uclass.per_dev_priv,
+                                           driver.name + '_uc')
 
         self.buf('U_BOOT_DEVICE_INST(%s) = {\n' % var_name)
         self.buf('\t.driver\t\t= DM_REF_DRIVER(%s),\n' % struct_name)
