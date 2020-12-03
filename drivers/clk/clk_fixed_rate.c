@@ -37,9 +37,9 @@ void clk_fixed_rate_ofdata_to_plat_(struct udevice *dev,
 	clk->enable_count = 0;
 }
 
-static int clk_fixed_rate_ofdata_to_platdata(struct udevice *dev)
+static int clk_fixed_rate_of_to_plat(struct udevice *dev)
 {
-	clk_fixed_rate_ofdata_to_platdata_(dev, to_clk_fixed_rate(dev));
+	clk_fixed_rate_ofdata_to_plat_(dev, to_clk_fixed_rate(dev));
 
 	return 0;
 }

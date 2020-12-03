@@ -1050,13 +1050,13 @@ class DtbPlatdata(object):
         self.buf('\t.driver\t\t= DM_REF_DRIVER(%s),\n' % struct_name)
         self.buf('\t.name\t\t= "%s",\n' % struct_name)
         if plat_name:
-            self.buf('\t.platdata\t= %s,\n' % plat_name)
+            self.buf('\t.plat\t= %s,\n' % plat_name)
         else:
-            self.buf('\t.platdata\t= &%s%s,\n' % (VAL_PREFIX, var_name))
+            self.buf('\t.plat\t= &%s%s,\n' % (VAL_PREFIX, var_name))
         if parent_plat_name:
-            self.buf('\t.parent_platdata = %s,\n' % parent_plat_name)
+            self.buf('\t.parent_plat = %s,\n' % parent_plat_name)
         if uclass_plat_name:
-            self.buf('\t.uclass_platdata = %s,\n' % uclass_plat_name)
+            self.buf('\t.uclass_plat = %s,\n' % uclass_plat_name)
         driver_date = None
 
         if node != self._fdt.GetRoot():

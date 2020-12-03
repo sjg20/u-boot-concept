@@ -10,9 +10,26 @@
 /* Records the last testbus device that was removed */
 static struct udevice *testbus_removed;
 
+struct udevice *testbus_get_clear_removed(void)
+{
+	struct udevice *removed = testbus_removed;
+
+	testbus_removed = NULL;
+
+	return removed;
+}
+
 static int testbus_drv_probe(struct udevice *dev)
 {
-	return dm_scan_fdt_dev(dev);
+	if (!CONFIG_IS_ENABLED(OF_PLATDATA)) {
+		int ret;
+
+		ret = dm_scan_fdt_dev(dev);
+		if (ret)
+			return ret;
+	}
+
+	return 0;
 }
 
 static int testbus_child_post_bind(struct udevice *dev)
@@ -30,7 +47,7 @@ static int testbus_child_pre_probe(struct udevice *dev)
 {
 	struct dm_test_parent_data *parent_data = dev_get_parent_priv(dev);
 
-	parent_data->flag += FLAG_CHILD_PROBED;
+	parent_data->flag += TEST_FLAG_CHILD_PROBED;
 
 	return 0;
 }
@@ -57,7 +74,7 @@ static int testbus_child_post_remove(struct udevice *dev)
 {
 	struct dm_test_parent_data *parent_data = dev_get_parent_priv(dev);
 
-	parent_data->flag += FLAG_CHILD_REMOVED;
+	parent_data->flag += TEST_FLAG_CHILD_REMOVED;
 	testbus_removed = dev;
 
 	return 0;
@@ -187,6 +204,6 @@ UCLASS_DRIVER(testfdt) = {
 	.name		= "testfdt",
 	.id		= UCLASS_TEST_FDT,
 	.flags		= DM_UC_FLAG_SEQ_ALIAS,
-	DM_PER_DEVICE_PRIV(<dm/tets.h>,struct dm_test_uclass_perdev_priv)
-	DM_PER_DEVICE_PLATDATA(<dm/tets.h>,struct dm_test_perdev_uc_pdata)
+	.per_device_auto	= sizeof(struct dm_test_uclass_perdev_priv),
+	.per_device_plat_auto	= sizeof(struct dm_test_perdev_uc_pdata),
 };

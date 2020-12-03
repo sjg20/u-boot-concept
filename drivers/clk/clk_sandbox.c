@@ -163,19 +163,19 @@ static const struct udevice_id sandbox_clk_fixed_rate_match[] = {
 	{ /* sentinel */ }
 };
 
-int clk_fixed_rate_ofdata_to_platdata(struct udevice *dev)
+int clk_fixed_rate_of_to_plat(struct udevice *dev)
 {
 	struct clk_fixed_rate *cplat;
 
 #if CONFIG_IS_ENABLED(OF_PLATDATA)
-	struct sandbox_clk_fixed_rate_plat *plat = dev_get_platdata(dev);
+	struct sandbox_clk_fixed_rate_plat *plat = dev_get_plat(dev);
 
 	cplat = &plat->fixed;
 	cplat->fixed_rate = plat->dtplat.clock_frequency;
 #else
 	cplat = to_clk_fixed_rate(dev);
 #endif
-	clk_fixed_rate_ofdata_to_platdata_(dev, cplat);
+	clk_fixed_rate_ofdata_to_plat_(dev, cplat);
 
 	return 0;
 }
@@ -184,8 +184,8 @@ U_BOOT_DRIVER(sandbox_fixed_clock) = {
 	.name = "sandbox_fixed_clock",
 	.id = UCLASS_CLK,
 	.of_match = sandbox_clk_fixed_rate_match,
-	.ofdata_to_platdata = clk_fixed_rate_ofdata_to_platdata,
-	.platdata_auto_alloc_size = sizeof(struct sandbox_clk_fixed_rate_plat),
+	.of_to_plat = clk_fixed_rate_of_to_plat,
+	.plat_auto = sizeof(struct sandbox_clk_fixed_rate_plat),
 	.ops = &clk_fixed_rate_ops,
 	.flags = DM_FLAG_PRE_RELOC,
 };
