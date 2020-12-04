@@ -105,6 +105,7 @@
 		u-boot,dm-pre-reloc;
 		#address-cells = <1>;
 		#size-cells = <0>;
+		compatible = "simple-bus";
 
 		cpu_0: cpu@0 {
 			u-boot,dm-pre-reloc;

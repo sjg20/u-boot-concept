@@ -446,7 +446,7 @@ class DtbPlatdata(object):
         structs = {}
 
         re_struct = re.compile('^struct ([a-z0-9_]+) {$')
-        re_asm = re.compile('../arch/[a-z]+/include/asm/(.*)')
+        re_asm = re.compile('../arch/[a-z0-9]+/include/asm/(.*)')
         prefix = ''
         for line in buff.splitlines():
             # Handle line continuation
@@ -784,6 +784,9 @@ class DtbPlatdata(object):
                 basedir = './'
         self._basedir = basedir
         for (dirpath, _, filenames) in os.walk(basedir):
+            rel_path = dirpath[len(basedir):]
+            if rel_path.startswith('build') or rel_path.startswith('.git'):
+                continue
             for fname in filenames:
                 pathname = dirpath + '/' + fname
                 if fname.endswith('.c'):
@@ -1104,6 +1107,8 @@ class DtbPlatdata(object):
         hdr = self._structs.get(struc)
         if hdr:
             self.buf('#include <%s>\n' % hdr.fname)
+        else:
+            print('Warning: Cannot find header file for struct %s' % struc)
         section = '__attribute__ ((section (".data")))'
         return var_name, struc, section
 
@@ -1121,13 +1126,14 @@ class DtbPlatdata(object):
         if not result:
             return None
         var_name, struc, section = result
-        self.buf('struct %s %s %s = {\n' % (struc.strip(), section, var_name))
+        self.buf('struct %s %s %s_%s = {\n' %
+                 (struc.strip(), section, var_name, dt_platdata))
         self.buf('\t.dtplat = {\n')
         for pname in sorted(node.props):
             self._output_prop(node, node.props[pname], 2)
         self.buf('\t},\n')
         self.buf('};\n')
-        return '&' + var_name
+        return '&%s_%s' % (var_name, dt_platdata)
 
     def _declare_device_inst(self, driver, var_name, struct_name, parent_driver,
                              node, uclass):
@@ -1339,7 +1345,7 @@ class DtbPlatdata(object):
         """Read the aliases and attach the information to self._alias
         """
         alias_node = self._fdt.GetNode('/aliases')
-        re_num = re.compile('([a-z0-9]+[a-z]+)([0-9]+)')
+        re_num = re.compile('([a-z0-9-]+[a-z]+)([0-9]+)')
         for prop in alias_node .props.values():
             m_alias = re_num.match(prop.name)
             if not m_alias:

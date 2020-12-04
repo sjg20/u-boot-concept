@@ -43,7 +43,7 @@ static int device_bind_common(struct udevice *parent, const struct driver *drv,
 	int size, ret = 0;
 	bool auto_seq = false;
 
-	if (CONFIG_IS_ENABLED(OF_PLATDATA_INST))
+	if (CONFIG_IS_ENABLED(OF_PLATDATA_NO_BIND))
 		return -ENOSYS;
 
 	if (devp)
@@ -339,7 +339,7 @@ int device_of_to_plat(struct udevice *dev)
 	if (dev->flags & DM_FLAG_PLATDATA_VALID)
 		return 0;
 
-	if (CONFIG_IS_ENABLED(OF_PLATDATA_INST)) {
+	if (CONFIG_IS_ENABLED(OF_PLATDATA_NO_BIND)) {
 		dev->flags |= DM_FLAG_PLATDATA_VALID;
 
 		return 0;

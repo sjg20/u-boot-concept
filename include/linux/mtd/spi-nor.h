@@ -258,7 +258,7 @@ struct flash_info;
 /*
  * TODO: Remove, once all users of spi_flash interface are moved to MTD
  *
- * struct spi_flash {
+struct spi_flash {
  *	Defined below (keep this text to enable searching for spi_flash decl)
  * }
  */
