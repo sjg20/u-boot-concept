@@ -487,6 +487,8 @@
 
 #ifndef __ASSEMBLY__
 
+#include <dt-structs.h>
+
 /**
  * struct apl_gpio_plat - platform data for each device
  *

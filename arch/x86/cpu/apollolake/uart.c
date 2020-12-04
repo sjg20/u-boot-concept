@@ -91,21 +91,24 @@ static int apl_ns16550_of_to_plat(struct udevice *dev)
 #if CONFIG_IS_ENABLED(OF_PLATDATA)
 	struct dtd_intel_apl_ns16550 *dtplat = dev_get_plat(dev);
 	struct apl_ns16550_plat *plat;
+	struct ns16550_plat *ns;
 
 	/*
 	 * Convert our plat to the ns16550's plat, so we can just use
 	 * that driver
+         * TODO: Fix this up
 	 */
 	plat = malloc(sizeof(*plat));
 	if (!plat)
 		return -ENOMEM;
-	plat->base = dtplat->early_regs[0];
-	plat->reg_width = 1;
-	plat->reg_shift = dtplat->reg_shift;
-	plat->reg_offset = 0;
-	plat->clock = dtplat->clock_frequency;
-	plat->fcr = UART_FCR_DEFVAL;
-	plat->bdf = pci_ofplat_get_devfn(dtplat->reg[0]);
+        ns = &plat->ns16550;
+	ns->base = dtplat->early_regs[0];
+	ns->reg_width = 1;
+	ns->reg_shift = dtplat->reg_shift;
+	ns->reg_offset = 0;
+	ns->clock = dtplat->clock_frequency;
+	ns->fcr = UART_FCR_DEFVAL;
+	ns->bdf = pci_ofplat_get_devfn(dtplat->reg[0]);
 	dev->plat = plat;
 #else
 	int ret;
@@ -128,7 +131,7 @@ U_BOOT_DRIVER(intel_apl_ns16550) = {
 	.id	= UCLASS_SERIAL,
 	.of_match = apl_ns16550_serial_ids,
 	.plat_auto	= sizeof(struct apl_ns16550_plat),
-	.priv_auto	= sizeof(struct NS16550),
+	.priv_auto	= sizeof(struct ns16550),
 	.ops	= &ns16550_serial_ops,
 	.of_to_plat = apl_ns16550_of_to_plat,
 	.probe = apl_ns16550_probe,

@@ -102,13 +102,12 @@
 	};
 
 	cpus {
-		u-boot,dm-pre-reloc;
+		u-boot,dm-pre-proper;
 		#address-cells = <1>;
 		#size-cells = <0>;
-		compatible = "simple-bus";
 
 		cpu_0: cpu@0 {
-			u-boot,dm-pre-reloc;
+			u-boot,dm-pre-proper;
 			device_type = "cpu";
 			compatible = "intel,apl-cpu";
 			reg = <0>;
@@ -573,9 +572,9 @@
 				compatible = "intel,apl-lpc";
 				#address-cells = <1>;
 				#size-cells = <0>;
-				u-boot,dm-pre-reloc;
+				u-boot,dm-pre-proper;
 				cros_ec: cros-ec {
-					u-boot,dm-pre-reloc;
+					u-boot,dm-pre-proper;
 					compatible = "google,cros-ec-lpc";
 					reg = <0x204 1 0x200 1 0x880 0x80>;
 

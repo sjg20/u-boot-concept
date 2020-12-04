@@ -262,7 +262,9 @@ struct spi_flash {
  *	Defined below (keep this text to enable searching for spi_flash decl)
  * }
  */
+#ifndef DT_PLATDATA_C
 #define spi_flash spi_nor
+#endif
 
 /**
  * struct spi_nor - Structure for defining a the SPI NOR layer

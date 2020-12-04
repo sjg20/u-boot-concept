@@ -85,7 +85,7 @@ struct ns16550_plat {
 
 struct udevice;
 
-struct NS16550 {
+struct ns16550 {
 	UART_REG(rbr);		/* 0 */
 	UART_REG(ier);		/* 1 */
 	UART_REG(fcr);		/* 2 */
@@ -123,7 +123,7 @@ struct NS16550 {
 #define dll rbr
 #define dlm ier
 
-typedef struct NS16550 *NS16550_t;
+typedef struct ns16550 *NS16550_t;
 
 /*
  * These are the definitions for the FIFO Control Register
@@ -264,7 +264,7 @@ int ns16550_serial_of_to_plat(struct udevice *dev);
 int ns16550_serial_probe(struct udevice *dev);
 
 /**
- * struct NS16550_serial_ops - ns16550 serial operations
+ * struct ns16550_serial_ops - ns16550 serial operations
  *
  * These should be used by the client driver for the driver's 'ops' member
  */
