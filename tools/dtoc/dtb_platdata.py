@@ -71,6 +71,8 @@ class Driver:
         compat: Driver data for each compatible string:
             key: Compatible string, e.g. 'rockchip,rk3288-grf'
             value: Driver data, e,g, 'ROCKCHIP_SYSCON_GRF', or None
+        headers (list): List of header files needed for this driver (each a str)
+            e.g. ['<asm/cpu.h>']
     """
     def __init__(self, name):
         self.name = name
@@ -82,6 +84,7 @@ class Driver:
         self.child_priv = ''
         self.used = False
         self.need_macro = []
+        self.headers = []
 
     def __eq__(self, other):
         return (self.name == other.name and
@@ -617,6 +620,8 @@ class DtbPlatdata(object):
         # Matches the references to the udevice_id list
         re_of_match = re.compile('\.of_match\s*=\s*([a-z0-9_]+),')
 
+        re_hdr = re.compile('^\s*U_BOOT_DM_HDR\((.*)\).*$')
+
         # Matches the header/size information for priv, platdata
         re_priv = self._get_re_for_member('priv_auto')
         re_platdata = self._get_re_for_member('plat_auto')
@@ -648,6 +653,7 @@ class DtbPlatdata(object):
                 m_cplatdata = re_child_platdata.match(line)
                 m_cpriv = re_child_priv.match(line)
                 m_need_macro = re_need_macro.search(line)
+                m_hdr = re_hdr.match(line)
                 if m_need_macro:
                     driver.need_macro.append(line)
                 elif m_priv:
@@ -662,6 +668,8 @@ class DtbPlatdata(object):
                     driver.uclass_id = m_id.group(1)
                 elif m_of_match:
                     compat = m_of_match.group(1)
+                elif m_hdr:
+                    driver.headers.append(m_hdr.group(1))
                 elif '};' in line:
                     is_root = driver.name == 'root_driver'
                     if driver.uclass_id and (compat or is_root):
@@ -785,6 +793,8 @@ class DtbPlatdata(object):
         self._basedir = basedir
         for (dirpath, _, filenames) in os.walk(basedir):
             rel_path = dirpath[len(basedir):]
+            if rel_path.startswith('/'):
+                rel_path = rel_path[1:]
             if rel_path.startswith('build') or rel_path.startswith('.git'):
                 continue
             for fname in filenames:
@@ -907,6 +917,7 @@ class DtbPlatdata(object):
                 val = reg.value
                 if not isinstance(val, list):
                     val = [val]
+                print('node', node.path)
                 while i < len(val):
                     addr = fdt_util.fdt_cells_to_cpu(val[i:], reg.num_addr)
                     i += num_addr
@@ -1148,6 +1159,7 @@ class DtbPlatdata(object):
         """
         self.buf('DM_DECL_DRIVER(%s);\n' % struct_name);
         self.buf('\n')
+        num_lines = len(self._lines)
         plat_name = self.alloc_plat(driver.platdata, driver.name, var_name,
                                     node)
         priv_name = self.alloc_priv(driver.priv, driver.name)
@@ -1162,6 +1174,12 @@ class DtbPlatdata(object):
         uclass_plat_name = self.alloc_priv(uclass.per_dev_platdata, driver.name)
         uclass_priv_name = self.alloc_priv(uclass.per_dev_priv,
                                            driver.name + '_uc')
+        for hdr in driver.headers:
+            self.buf('#include %s\n' % hdr)
+
+        # Add a blank line if we emitted any stuff above, for readability
+        if num_lines != len(self._lines):
+            self.buf('\n')
 
         self.buf('U_BOOT_DEVICE_INST(%s) = {\n' % var_name)
         self.buf('\t.driver\t\t= DM_REF_DRIVER(%s),\n' % struct_name)

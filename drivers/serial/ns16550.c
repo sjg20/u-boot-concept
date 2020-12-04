@@ -324,7 +324,7 @@ int NS16550_tstc(NS16550_t com_port)
 
 static inline void _debug_uart_init(void)
 {
-	struct NS16550 *com_port = (struct NS16550 *)CONFIG_DEBUG_UART_BASE;
+	struct ns16550 *com_port = (struct ns16550 *)CONFIG_DEBUG_UART_BASE;
 	int baud_divisor;
 
 	/*
@@ -345,7 +345,7 @@ static inline void _debug_uart_init(void)
 	serial_dout(&com_port->lcr, UART_LCRVAL);
 }
 
-static inline int NS16550_read_baud_divisor(struct NS16550 *com_port)
+static inline int NS16550_read_baud_divisor(struct ns16550 *com_port)
 {
 	int ret;
 
@@ -359,7 +359,7 @@ static inline int NS16550_read_baud_divisor(struct NS16550 *com_port)
 
 static inline void _debug_uart_putc(int ch)
 {
-	struct NS16550 *com_port = (struct NS16550 *)CONFIG_DEBUG_UART_BASE;
+	struct ns16550 *com_port = (struct ns16550 *)CONFIG_DEBUG_UART_BASE;
 
 	while (!(serial_din(&com_port->lsr) & UART_LSR_THRE)) {
 #ifdef CONFIG_DEBUG_UART_NS16550_CHECK_ENABLED
@@ -377,7 +377,7 @@ DEBUG_UART_FUNCS
 #if CONFIG_IS_ENABLED(DM_SERIAL)
 static int ns16550_serial_putc(struct udevice *dev, const char ch)
 {
-	struct NS16550 *const com_port = dev_get_priv(dev);
+	struct ns16550 *const com_port = dev_get_priv(dev);
 
 	if (!(serial_in(&com_port->lsr) & UART_LSR_THRE))
 		return -EAGAIN;
@@ -397,7 +397,7 @@ static int ns16550_serial_putc(struct udevice *dev, const char ch)
 
 static int ns16550_serial_pending(struct udevice *dev, bool input)
 {
-	struct NS16550 *const com_port = dev_get_priv(dev);
+	struct ns16550 *const com_port = dev_get_priv(dev);
 
 	if (input)
 		return (serial_in(&com_port->lsr) & UART_LSR_DR) ? 1 : 0;
@@ -407,7 +407,7 @@ static int ns16550_serial_pending(struct udevice *dev, bool input)
 
 static int ns16550_serial_getc(struct udevice *dev)
 {
-	struct NS16550 *const com_port = dev_get_priv(dev);
+	struct ns16550 *const com_port = dev_get_priv(dev);
 
 	if (!(serial_in(&com_port->lsr) & UART_LSR_DR))
 		return -EAGAIN;
@@ -417,7 +417,7 @@ static int ns16550_serial_getc(struct udevice *dev)
 
 static int ns16550_serial_setbrg(struct udevice *dev, int baudrate)
 {
-	struct NS16550 *const com_port = dev_get_priv(dev);
+	struct ns16550 *const com_port = dev_get_priv(dev);
 	struct ns16550_plat *plat = com_port->plat;
 	int clock_divisor;
 
@@ -430,7 +430,7 @@ static int ns16550_serial_setbrg(struct udevice *dev, int baudrate)
 
 static int ns16550_serial_setconfig(struct udevice *dev, uint serial_config)
 {
-	struct NS16550 *const com_port = dev_get_priv(dev);
+	struct ns16550 *const com_port = dev_get_priv(dev);
 	int lcr_val = UART_LCR_WLS_8;
 	uint parity = SERIAL_GET_PARITY(serial_config);
 	uint bits = SERIAL_GET_BITS(serial_config);
@@ -464,7 +464,7 @@ static int ns16550_serial_setconfig(struct udevice *dev, uint serial_config)
 static int ns16550_serial_getinfo(struct udevice *dev,
 				  struct serial_device_info *info)
 {
-	struct NS16550 *const com_port = dev_get_priv(dev);
+	struct ns16550 *const com_port = dev_get_priv(dev);
 	struct ns16550_plat *plat = com_port->plat;
 
 	info->type = SERIAL_CHIP_16550_COMPATIBLE;
@@ -499,7 +499,7 @@ static int ns16550_serial_assign_base(struct ns16550_plat *plat, ulong base)
 int ns16550_serial_probe(struct udevice *dev)
 {
 	struct ns16550_plat *plat = dev->plat;
-	struct NS16550 *const com_port = dev_get_priv(dev);
+	struct ns16550 *const com_port = dev_get_priv(dev);
 	struct reset_ctl_bulk reset_bulk;
 	fdt_addr_t addr;
 	int ret;
@@ -613,7 +613,7 @@ U_BOOT_DRIVER(ns16550_serial) = {
 	.of_to_plat = ns16550_serial_of_to_plat,
 	.plat_auto	= sizeof(struct ns16550_plat),
 #endif
-	.priv_auto	= sizeof(struct NS16550),
+	.priv_auto	= sizeof(struct ns16550),
 	.probe = ns16550_serial_probe,
 	.ops	= &ns16550_serial_ops,
 #if !CONFIG_IS_ENABLED(OF_CONTROL)
