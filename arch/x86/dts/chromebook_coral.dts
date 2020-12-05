@@ -181,7 +181,8 @@
 		};
 
 		punit@0,1 {
-			u-boot,dm-pre-reloc;
+			u-boot,dm-pre-proper;
+			u-boot,dm-spl;
 			reg = <0x00000800 0 0 0 0>;
 			compatible = "intel,apl-punit";
 		};
