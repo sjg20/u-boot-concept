@@ -626,7 +626,8 @@ class DtbPlatdata(object):
         re_ids = re.compile('struct udevice_id (.*)\[\]\s*=')
 
         # Matches the references to the udevice_id list
-        re_of_match = re.compile('\.of_match\s*=\s*([a-z0-9_]+),')
+        re_of_match = re.compile(
+            '\.of_match\s*=\s*(of_match_ptr\()?([a-z0-9_]+)(\))?,')
 
         re_hdr = re.compile('^\s*U_BOOT_DM_HDR\((.*)\).*$')
         re_phase = re.compile('^\s*DM_PHASE\((.*)\).*$')
@@ -677,7 +678,7 @@ class DtbPlatdata(object):
                 elif m_id:
                     driver.uclass_id = m_id.group(1)
                 elif m_of_match:
-                    compat = m_of_match.group(1)
+                    compat = m_of_match.group(2)
                 elif m_hdr:
                     driver.headers.append(m_hdr.group(1))
                 elif m_phase:
@@ -1129,7 +1130,7 @@ class DtbPlatdata(object):
         self.buf('};\n')
         self.buf('\n')
 
-    def prep_priv(self, info, name, suffix):
+    def prep_priv(self, info, name, suffix, section='.data'):
         if not info:
             return None
         parts = info.split(',')
@@ -1144,11 +1145,11 @@ class DtbPlatdata(object):
             self.buf('#include <%s>\n' % hdr.fname)
         else:
             print('Warning: Cannot find header file for struct %s' % struc)
-        section = '__attribute__ ((section (".data")))'
-        return var_name, struc, section
+        attr = '__attribute__ ((section ("%s")))' % section
+        return var_name, struc, attr
 
     def alloc_priv(self, info, name, suffix='_priv'):
-        result = self.prep_priv(info, name, suffix)
+        result = self.prep_priv(info, name, suffix, section='.bss')
         if not result:
             return None
         var_name, struc, section = result
