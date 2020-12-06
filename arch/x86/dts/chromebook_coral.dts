@@ -153,6 +153,7 @@
 		#address-cells = <3>;
 		#size-cells = <2>;
 		u-boot,dm-pre-reloc;
+
 		ranges = <0x02000000 0x0 0xc0000000 0xc0000000 0 0x10000000
 			0x42000000 0x0 0xb0000000 0xb0000000 0 0x10000000
 			0x01000000 0x0 0x1000 0x1000 0 0xefff>;
@@ -322,7 +323,8 @@
 		};
 
 		spi: fast-spi@d,2 {
-			u-boot,dm-pre-reloc;
+			u-boot,dm-pre-proper;
+			u-boot,dm-spl;
 			reg = <0x02006a10 0 0 0 0>;
 			#address-cells = <1>;
 			#size-cells = <0>;
@@ -333,7 +335,8 @@
 			fwstore_spi: spi-flash@0 {
 				#size-cells = <1>;
 				#address-cells = <1>;
-				u-boot,dm-pre-reloc;
+				u-boot,dm-pre-proper;
+				u-boot,dm-spl;
 				reg = <0>;
 				compatible = "winbond,w25q128fw",
 					 "jedec,spi-nor";

@@ -917,7 +917,6 @@ class DtbPlatdata(object):
                 val = reg.value
                 if not isinstance(val, list):
                     val = [val]
-                print('node', node.path)
                 while i < len(val):
                     addr = fdt_util.fdt_cells_to_cpu(val[i:], reg.num_addr)
                     i += num_addr
