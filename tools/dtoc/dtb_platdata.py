@@ -68,14 +68,18 @@ class Driver:
     """Information about a driver in U-Boot
 
     Attributes:
+        name: Name of driver. For U_BOOT_DRIVER(x) this is 'x'
+        fname: Filename where the driver was found
         compat: Driver data for each compatible string:
             key: Compatible string, e.g. 'rockchip,rk3288-grf'
             value: Driver data, e,g, 'ROCKCHIP_SYSCON_GRF', or None
+        phase: Which phase of U-Boot to use this driver
         headers (list): List of header files needed for this driver (each a str)
             e.g. ['<asm/cpu.h>']
     """
-    def __init__(self, name):
+    def __init__(self, name, fname):
         self.name = name
+        self.fname = fname
         self.uclass_id = None
         self.compat = None
         self.priv = ''
@@ -85,6 +89,7 @@ class Driver:
         self.used = False
         self.need_macro = []
         self.headers = []
+        self.phase = ''
 
     def __eq__(self, other):
         return (self.name == other.name and
@@ -268,13 +273,15 @@ class DtbPlatdata(object):
             value: UClassDriver
         _instantiate: Instantiate devices so they don't need to be bound at
             run-time
+        _phase: The phase of U-Boot that we are generating data for, e.g. 'spl'
+             or 'tpl'. None if not known
         _structs: Dict of Struct obtains:
             key: Name of struct
             value: Struct object
         _basedir (str): Base directory of source tree
     """
     def __init__(self, dtb_fname, include_disabled, warning_disabled,
-                 drivers_additional=None, instantiate=False):
+                 drivers_additional=None, instantiate=False, phase=None):
         self._fdt = None
         self._dtb_fname = dtb_fname
         self._valid_nodes = None
@@ -289,6 +296,7 @@ class DtbPlatdata(object):
         self._compat_to_driver = {}
         self._uclass = {}
         self._instantiate = instantiate
+        self._phase = phase
         self._structs = {}
         self._basedir = None
 
@@ -621,6 +629,7 @@ class DtbPlatdata(object):
         re_of_match = re.compile('\.of_match\s*=\s*([a-z0-9_]+),')
 
         re_hdr = re.compile('^\s*U_BOOT_DM_HDR\((.*)\).*$')
+        re_phase = re.compile('^\s*DM_PHASE\((.*)\).*$')
 
         # Matches the header/size information for priv, platdata
         re_priv = self._get_re_for_member('priv_auto')
@@ -654,6 +663,7 @@ class DtbPlatdata(object):
                 m_cpriv = re_child_priv.match(line)
                 m_need_macro = re_need_macro.search(line)
                 m_hdr = re_hdr.match(line)
+                m_phase = re_phase.match(line)
                 if m_need_macro:
                     driver.need_macro.append(line)
                 elif m_priv:
@@ -670,6 +680,8 @@ class DtbPlatdata(object):
                     compat = m_of_match.group(1)
                 elif m_hdr:
                     driver.headers.append(m_hdr.group(1))
+                elif m_phase:
+                    driver.phase = m_phase.group(1)
                 elif '};' in line:
                     is_root = driver.name == 'root_driver'
                     if driver.uclass_id and (compat or is_root):
@@ -708,14 +720,27 @@ class DtbPlatdata(object):
                     ids_name = None
             elif driver_match:
                 driver_name = driver_match.group(1)
-                driver = Driver(driver_name)
+                driver = Driver(driver_name, fname)
             else:
                 ids_m = re_ids.search(line)
                 if ids_m:
                     ids_name = ids_m.group(1)
 
         # Make the updates based on what we found
-        self._drivers.update(drivers)
+        for driver in drivers.values():
+            if driver.name in self._drivers:
+                orig = self._drivers[driver.name]
+                print("Warning: Duplicate driver name '%s' (orig=%s, new=%s)" %
+                      (driver.name, orig.fname, driver.fname))
+                if orig.phase or driver.phase:
+                    print('   - phases: orig=%s, new=%s (current phase=%s)' %
+                          (orig.phase, driver.phase, self._phase))
+                if orig.phase == self._phase:
+                    print('   - Using %s' % orig.fname)
+                    continue
+                else:
+                    print('   - Using %s' % driver.fname)
+            self._drivers[driver.name] = driver
         self._of_match.update(of_match)
 
     def scan_driver(self, fname):
@@ -1498,7 +1523,8 @@ class DtbPlatdata(object):
         self.out(''.join(self.get_buf()))
 
 def run_steps(args, dtb_file, include_disabled, output, warning_disabled=False,
-              drivers_additional=None, instantiate=False, basedir=None):
+              drivers_additional=None, instantiate=False, phase=None,
+              basedir=None):
     """Run all the steps of the dtoc tool
 
     Args:
@@ -1519,7 +1545,7 @@ def run_steps(args, dtb_file, include_disabled, output, warning_disabled=False,
         raise ValueError('Please specify a command: struct, platdata')
 
     plat = DtbPlatdata(dtb_file, include_disabled, warning_disabled,
-                       drivers_additional, instantiate)
+                       drivers_additional, instantiate, phase)
     plat.scan_drivers(basedir)
     plat.scan_dtb()
     plat.scan_tree(add_root=instantiate)
