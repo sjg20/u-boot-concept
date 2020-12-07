@@ -76,6 +76,10 @@ class Driver:
         phase: Which phase of U-Boot to use this driver
         headers (list): List of header files needed for this driver (each a str)
             e.g. ['<asm/cpu.h>']
+        dups (list): Driver objects with the same name as this one, that were
+            found after this one
+        warn_dups (bool): True if the duplicates are not distinguisble using
+            the phase
     """
     def __init__(self, name, fname):
         self.name = name
@@ -90,6 +94,8 @@ class Driver:
         self.need_macro = []
         self.headers = []
         self.phase = ''
+        self.dups = []
+        self.warn_dups = False
 
     def __eq__(self, other):
         return (self.name == other.name and
@@ -731,16 +737,19 @@ class DtbPlatdata(object):
         for driver in drivers.values():
             if driver.name in self._drivers:
                 orig = self._drivers[driver.name]
-                print("Warning: Duplicate driver name '%s' (orig=%s, new=%s)" %
-                      (driver.name, orig.fname, driver.fname))
-                if orig.phase or driver.phase:
-                    print('   - phases: orig=%s, new=%s (current phase=%s)' %
-                          (orig.phase, driver.phase, self._phase))
-                if orig.phase == self._phase:
-                    print('   - Using %s' % orig.fname)
-                    continue
+                #if orig.phase or driver.phase:
+                    #print('   - phases: orig=%s, new=%s (current phase=%s)' %
+                          #(orig.phase, driver.phase, self._phase))
+                if self._phase:
+                    if orig.phase == self._phase:
+                        orig.dups.append(driver)
+                        #print('   - Using %s' % orig.fname)
+                        continue
                 else:
-                    print('   - Using %s' % driver.fname)
+                    # We have no way of distinguishing them
+                    driver.warn_dups = True
+                    #print('   - Using %s' % driver.fname)
+                driver.dups.append(orig)
             self._drivers[driver.name] = driver
         self._of_match.update(of_match)
 
@@ -1454,6 +1463,10 @@ class DtbPlatdata(object):
                 if driver.need_macro:
                     print("Warning: Driver '%s' needs macros for: %s" %
                           (driver.name, '\n'.join(driver.need_macro)))
+                if driver.dups and driver.warn_dups:
+                    print("Warning: Duplicate driver name '%s' (orig=%s, dups=%s)" %
+                          (driver.name, driver.fname,
+                           ', '.join([drv.fname for drv in driver.dups])))
             node.child_devs = []
             node.child_refs = {}
             node.seq = -1
