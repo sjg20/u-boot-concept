@@ -162,7 +162,9 @@ static int arch_cpu_init_tpl(void)
 		return log_msg_ret("PMC", ret);
 
 	/* Clear global reset promotion bit */
+        printch('m');
 	ret = pmc_global_reset_set_enable(pmc, false);
+        printch('n');
 	if (ret)
 		return log_msg_ret("disable global reset", ret);
 

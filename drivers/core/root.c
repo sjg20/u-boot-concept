@@ -187,17 +187,6 @@ int dm_scan_plat(bool pre_reloc_only)
 {
 	int ret;
 
-	if (CONFIG_IS_ENABLED(OF_PLATDATA)) {
-		struct driver_rt *dyn;
-		int n_ents;
-
-		n_ents = ll_entry_count(struct driver_info, driver_info);
-		dyn = calloc(n_ents, sizeof(struct driver_rt));
-		if (!dyn)
-			return -ENOMEM;
-		gd_set_dm_driver_rt(dyn);
-	}
-
 	ret = lists_bind_drivers(DM_ROOT_NON_CONST, pre_reloc_only);
 	if (ret == -ENOENT) {
 		dm_warn("Some drivers were not found\n");
@@ -371,6 +360,17 @@ static int dm_scan(bool pre_reloc_only)
 	int ret;
 
 	gd->flags |= GD_FLG_DM_NO_SEQ;
+
+	if (CONFIG_IS_ENABLED(OF_PLATDATA)) {
+		struct driver_rt *dyn;
+		int n_ents;
+
+		n_ents = ll_entry_count(struct driver_info, driver_info);
+		dyn = calloc(n_ents, sizeof(struct driver_rt));
+		if (!dyn)
+			return -ENOMEM;
+		gd_set_dm_driver_rt(dyn);
+	}
 	ret = dm_scan_plat(pre_reloc_only);
 	if (ret) {
 		debug("dm_scan_plat() failed: %d\n", ret);
