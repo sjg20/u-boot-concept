@@ -10,6 +10,7 @@
 
 #include <common.h>
 #include <cpu_func.h>
+#include <debug_uart.h>
 #include <log.h>
 #include <asm/io.h>
 #include <clk.h>
@@ -102,13 +103,13 @@ static int device_bind_common(struct udevice *parent, const struct driver *drv,
 
 		if (CONFIG_IS_ENABLED(OF_PLATDATA)) {
 			if (of_plat_size) {
-				dev->flags |= DM_FLAG_OF_PLATDATA;
+				dev_or_flags(dev, DM_FLAG_OF_PLATDATA);
 				if (of_plat_size < drv->plat_auto)
 					alloc = true;
 			}
 		}
 		if (alloc) {
-			dev->flags |= DM_FLAG_ALLOC_PDATA;
+			dev_or_flags(dev, DM_FLAG_ALLOC_PDATA);
 			dev->plat = calloc(1, drv->plat_auto);
 			if (!dev->plat) {
 				ret = -ENOMEM;
@@ -122,7 +123,7 @@ static int device_bind_common(struct udevice *parent, const struct driver *drv,
 
 	size = uc->uc_drv->per_device_plat_auto;
 	if (size) {
-		dev->flags |= DM_FLAG_ALLOC_UCLASS_PDATA;
+		dev_or_flags(dev, DM_FLAG_ALLOC_UCLASS_PDATA);
 		dev->uclass_plat = calloc(1, size);
 		if (!dev->uclass_plat) {
 			ret = -ENOMEM;
@@ -136,7 +137,7 @@ static int device_bind_common(struct udevice *parent, const struct driver *drv,
 			size = parent->uclass->uc_drv->per_child_plat_auto;
 		}
 		if (size) {
-			dev->flags |= DM_FLAG_ALLOC_PARENT_PDATA;
+			dev_or_flags(dev, DM_FLAG_ALLOC_PARENT_PDATA);
 			dev->parent_plat = calloc(1, size);
 			if (!dev->parent_plat) {
 				ret = -ENOMEM;
@@ -173,7 +174,7 @@ static int device_bind_common(struct udevice *parent, const struct driver *drv,
 	if (devp)
 		*devp = dev;
 
-	dev->flags |= DM_FLAG_BOUND;
+	dev_or_flags(dev, DM_FLAG_BOUND);
 
 	return 0;
 
@@ -197,18 +198,18 @@ fail_bind:
 fail_uclass_bind:
 	if (CONFIG_IS_ENABLED(DM_DEVICE_REMOVE)) {
 		list_del(&dev->sibling_node);
-		if (dev->flags & DM_FLAG_ALLOC_PARENT_PDATA) {
+		if (dev_get_flags(dev) & DM_FLAG_ALLOC_PARENT_PDATA) {
 			free(dev->parent_plat);
 			dev->parent_plat = NULL;
 		}
 	}
 fail_alloc3:
-	if (dev->flags & DM_FLAG_ALLOC_UCLASS_PDATA) {
+	if (dev_get_flags(dev) & DM_FLAG_ALLOC_UCLASS_PDATA) {
 		free(dev->uclass_plat);
 		dev->uclass_plat = NULL;
 	}
 fail_alloc2:
-	if (dev->flags & DM_FLAG_ALLOC_PDATA) {
+	if (dev_get_flags(dev) & DM_FLAG_ALLOC_PDATA) {
 		free(dev->plat);
 		dev->plat = NULL;
 	}
@@ -336,11 +337,14 @@ int device_of_to_plat(struct udevice *dev)
 	if (!dev)
 		return -EINVAL;
 
-	if (dev->flags & DM_FLAG_PLATDATA_VALID)
+	printch('e');
+	if (dev_get_flags(dev) & DM_FLAG_PLATDATA_VALID)
 		return 0;
 
 	if (CONFIG_IS_ENABLED(OF_PLATDATA_NO_BIND)) {
-		dev->flags |= DM_FLAG_PLATDATA_VALID;
+		printch('f');
+		dev_or_flags(dev, DM_FLAG_PLATDATA_VALID);
+		printch('g');
 
 		return 0;
 	}
@@ -357,7 +361,7 @@ int device_of_to_plat(struct udevice *dev)
 		 * (e.g. PCI bridge devices). Test the flags again
 		 * so that we don't mess up the device.
 		 */
-		if (dev->flags & DM_FLAG_PLATDATA_VALID)
+		if (dev_get_flags(dev) & DM_FLAG_PLATDATA_VALID)
 			return 0;
 	}
 
@@ -405,7 +409,7 @@ int device_of_to_plat(struct udevice *dev)
 			goto fail;
 	}
 
-	dev->flags |= DM_FLAG_PLATDATA_VALID;
+	dev_or_flags(dev, DM_FLAG_PLATDATA_VALID);
 
 	return 0;
 fail:
@@ -422,8 +426,12 @@ int device_probe(struct udevice *dev)
 	if (!dev)
 		return -EINVAL;
 
-	if (dev->flags & DM_FLAG_ACTIVATED)
+	printch('A');
+	if (dev_get_flags(dev) & DM_FLAG_ACTIVATED) {
+		printch('B');
+	}
 		return 0;
+	printch('C');
 
 	drv = dev->driver;
 	assert(drv);
@@ -444,11 +452,11 @@ int device_probe(struct udevice *dev)
 		 * (e.g. PCI bridge devices). Test the flags again
 		 * so that we don't mess up the device.
 		 */
-		if (dev->flags & DM_FLAG_ACTIVATED)
+		if (dev_get_flags(dev) & DM_FLAG_ACTIVATED)
 			return 0;
 	}
 
-	dev->flags |= DM_FLAG_ACTIVATED;
+	dev_or_flags(dev, DM_FLAG_ACTIVATED);
 
 	/*
 	 * Process pinctrl for everything except the root device, and
@@ -508,7 +516,7 @@ fail_uclass:
 			__func__, dev->name);
 	}
 fail:
-	dev->flags &= ~DM_FLAG_ACTIVATED;
+	dev_bic_flags(dev, DM_FLAG_ACTIVATED);
 
 	device_free(dev);
 
@@ -958,7 +966,7 @@ bool device_is_last_sibling(const struct udevice *dev)
 
 void device_set_name_alloced(struct udevice *dev)
 {
-	dev->flags |= DM_FLAG_NAME_ALLOCED;
+	dev_or_flags(dev, DM_FLAG_NAME_ALLOCED);
 }
 
 int device_set_name(struct udevice *dev, const char *name)
@@ -1036,3 +1044,37 @@ int dev_enable_by_path(const char *path)
 	return lists_bind_fdt(parent, node, NULL, false);
 }
 #endif
+
+#if CONFIG_IS_ENABLED(OF_PLATDATA_INST)
+static struct udevice_rt *dev_get_rt(const struct udevice *dev)
+{
+	struct udevice *base = ll_entry_start(struct udevice, udevice);
+	int idx = dev - base;
+
+	struct udevice_rt *urt = gd_dm_udevice_rt() + idx;
+	printhex8(urt);
+
+	return urt;
+}
+
+u32 dev_get_flags(const struct udevice *dev)
+{
+	const struct udevice_rt *urt = dev_get_rt(dev);
+
+	return urt->flags;
+}
+
+void dev_or_flags(const struct udevice *dev, u32 or)
+{
+	struct udevice_rt *urt = dev_get_rt(dev);
+
+	urt->flags |= or;
+}
+
+void dev_bic_flags(const struct udevice *dev, u32 bic)
+{
+	struct udevice_rt *urt = dev_get_rt(dev);
+
+	urt->flags &= ~bic;
+}
+#endif /* OF_PLATDATA_INST */

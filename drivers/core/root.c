@@ -161,8 +161,6 @@ int dm_init(bool of_live)
             if (ret)
                     return ret;
         }
-        dm_dump_all();
-        dm_dump_uclass();
 
 	return 0;
 }
@@ -343,6 +341,17 @@ static int dm_setup_inst(void)
 {
 	dm_setup_inst_uclass();
 	dm_setup_inst_dev();
+	if (CONFIG_IS_ENABLED(OF_PLATDATA_INST)) {
+		struct udevice_rt *dyn;
+		int n_ents;
+
+		n_ents = ll_entry_count(struct udevice, udevice);
+		dyn = calloc(n_ents, sizeof(struct udevice_rt));
+		if (!dyn)
+			return -ENOMEM;
+		printhex8(dyn);
+		gd_set_dm_udevice_rt(dyn);
+	}
 
 	return 0;
 }
@@ -399,8 +408,6 @@ int dm_init_and_scan(bool pre_reloc_only)
 {
 	int ret;
 
-        printch('!');
-        printf("@");
 	if (CONFIG_IS_ENABLED(OF_PLATDATA))
 		dm_populate_phandle_data();
 
@@ -422,10 +429,6 @@ int dm_init_and_scan(bool pre_reloc_only)
 			return ret;
 		}
 	}
-        printf("$\n");
-        dm_dump_all();
-        dm_dump_uclass();
-        printf("done\n");
 
 	return 0;
 }

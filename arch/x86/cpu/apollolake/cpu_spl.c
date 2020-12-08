@@ -156,9 +156,8 @@ static int arch_cpu_init_tpl(void)
 	int ret;
 
         printch('a');
-        printf("x");
 	ret = uclass_first_device_err(UCLASS_ACPI_PMC, &pmc);
-        printch('b');
+        printch('z');
 	if (ret)
 		return log_msg_ret("PMC", ret);
 

@@ -149,9 +149,6 @@ struct udevice {
 	void *plat;
 	void *parent_plat;
 	void *uclass_plat;
-#if !CONFIG_IS_ENABLED(OF_PLATDATA)
-	ofnode node;
-#endif
 	ulong driver_data;
 	struct udevice *parent;
 	void *priv;
@@ -161,11 +158,26 @@ struct udevice {
 	struct list_head uclass_node;
 	struct list_head child_head;
 	struct list_head sibling_node;
-	uint32_t flags;
 	int sqq;
+#if !CONFIG_IS_ENABLED(OF_PLATDATA)
+	ofnode node;
+	uint32_t flags;
+#endif
 #ifdef CONFIG_DEVRES
 	struct list_head devres_head;
 #endif
+};
+
+/**
+ * udevice_rt - runtime information set up by U-Boot
+ *
+ * There is one of these for every udevice in the linker list, indexed by
+ * the udevice_info idx value.
+ *
+ * @flags: Flags for this device
+ */
+struct udevice_rt {
+	u32 flags;
 };
 
 /* Maximum sequence number supported */
@@ -174,8 +186,29 @@ struct udevice {
 /* Returns the operations for a device */
 #define device_get_ops(dev)	(dev->driver->ops)
 
+#if CONFIG_IS_ENABLED(OF_PLATDATA_INST)
+u32 dev_get_flags(const struct udevice *dev);
+void dev_or_flags(const struct udevice *dev, u32 or);
+void dev_bic_flags(const struct udevice *dev, u32 bic);
+#else
+static inline u32 dev_get_flags(const struct udevice *dev)
+{
+	return dev->flags;
+}
+
+static inline void dev_or_flags(struct udevice *dev, u32 or)
+{
+	dev->flags |= or;
+}
+
+static inline void dev_bic_flags(struct udevice *dev, u32 bic)
+{
+	dev->flags &= ~bic;
+}
+#endif
+
 /* Returns non-zero if the device is active (probed and not removed) */
-#define device_active(dev)	((dev)->flags & DM_FLAG_ACTIVATED)
+#define device_active(dev)	(dev_get_flags(dev) & DM_FLAG_ACTIVATED)
 
 static inline int dev_of_offset(const struct udevice *dev)
 {

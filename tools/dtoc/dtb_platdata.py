@@ -1324,14 +1324,8 @@ class DtbPlatdata(object):
 
         self.out(''.join(self.get_buf()))
 
-    def list_head(self, head_member, node_member, node_refs, var_name,
-                  is_member=True):
-        if is_member:
-            self.buf('\t.%s\t= {\n' % head_member)
-            indent = '\t\t'
-        else:
-            self.buf('struct list_head %s = {\n' % head_member)
-            indent = '\t'
+    def list_head(self, head_member, node_member, node_refs, var_name):
+        self.buf('\t.%s\t= {\n' % head_member)
         if node_refs:
             last = node_refs[-1].dev_ref
             first = node_refs[0].dev_ref
@@ -1340,12 +1334,9 @@ class DtbPlatdata(object):
             last = 'U_BOOT_DEVICE_REF(%s)' % var_name
             first = last
             member = head_member
-        self.buf('%s.prev = &%s->%s,\n' % (indent, last, member))
-        self.buf('%s.next = &%s->%s,\n' % (indent, first, member))
-        if is_member:
-            self.buf('\t},\n')
-        else:
-            self.buf('};\n')
+        self.buf('\t\t.prev = &%s->%s,\n' % (last, member))
+        self.buf('\t\t.next = &%s->%s,\n' % (first, member))
+        self.buf('\t},\n')
 
     def list_node(self, member, node_refs, seq):
         self.buf('\t.%s\t= {\n' % member)
@@ -1369,7 +1360,6 @@ class DtbPlatdata(object):
                     self.buf(' *    %d: %s\n' % (seq, node.path))
         self.buf(' */\n')
         uclass_list = sorted(list(uclass_list))
-        prev_uc = 'NULL /* Set up at runtime */'
 
         uclass_node = {}
         for seq, uclass_id in enumerate(uclass_list):
@@ -1378,8 +1368,13 @@ class DtbPlatdata(object):
             self.buf('DM_DECL_UCLASS_INST(%s);\n' % uc_name)
             uclass_node[seq] = ('&DM_REF_UCLASS_INST(%s)->sibling_node' %
                                       uc_name)
-        uclass_node[-1] = 'NULL /* Set up at runtime */'
-        uclass_node[len(uclass_list)] = 'NULL /* Set up at runtime */'
+        uclass_node[-1] = '&uclass_head'
+        uclass_node[len(uclass_list)] = '&uclass_head'
+        self.buf('\n')
+        self.buf('struct list_head %s = {\n' % 'uclass_head')
+        self.buf('\t.prev = %s,\n' % uclass_node[len(uclass_list) -1])
+        self.buf('\t.next = %s,\n' % uclass_node[0])
+        self.buf('};\n')
         self.buf('\n')
 
         for seq, uclass_id in enumerate(uclass_list):
@@ -1402,12 +1397,6 @@ class DtbPlatdata(object):
             self.list_head('dev_head', 'uclass_node', uc_drv.devs, None)
             self.buf('};\n')
             self.buf('\n')
-#        self.list_head('uclass_head', 'uclass_node', uclass_node, None, False)
-        self.buf('struct list_head %s = {\n' % 'uclass_head')
-        self.buf('\t.prev = %s,\n' % uclass_node[len(uclass_list) -1])
-        self.buf('\t.next = %s,\n' % uclass_node[0])
-        self.buf('\n')
-        self.buf('};\n')
 
     def _read_aliases(self):
         """Read the aliases and attach the information to self._alias
