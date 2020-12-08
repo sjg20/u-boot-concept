@@ -32,7 +32,7 @@
  * @sibling_node: Next uclass in the linked list of uclasses
  */
 struct uclass {
-	void *priv;
+	void *priv_;
 	struct uclass_driver *uc_drv;
 	struct list_head dev_head;
 	struct list_head sibling_node;
@@ -155,6 +155,14 @@ struct uclass_driver {
  */
 #define DM_PER_DEVICE_PLATDATA(hdr,struc) \
 	.per_device_platdata_auto_alloc_size = sizeof(struc),
+
+/**
+ * uclass_get_priv() - Get the private data for a uclass
+ *
+ * @uc		Uclass to check
+ * @return private data, or NULL if none
+ */
+void *uclass_get_priv(const struct uclass *uc);
 
 /**
  * uclass_get() - Get a uclass based on an ID, creating it if needed

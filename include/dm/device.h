@@ -151,10 +151,10 @@ struct udevice {
 	void *uclass_plat_;
 	ulong driver_data;
 	struct udevice *parent;
-	void *priv;
+	void *priv_;
 	struct uclass *uclass;
-	void *uclass_priv;
-	void *parent_priv;
+	void *uclass_priv_;
+	void *parent_priv_;
 	struct list_head uclass_node;
 	struct list_head child_head;
 	struct list_head sibling_node;

@@ -32,7 +32,10 @@ void clk_fixed_rate_ofdata_to_plat_(struct udevice *dev,
 	plat->fixed_rate = dev_read_u32_default(dev, "clock-frequency", 0);
 #endif
 	/* Make fixed rate clock accessible from higher level struct clk */
-	dev->uclass_priv = clk;
+
+	/* FIXME: This is not allowed...should be allocated by driver model */
+	dev->uclass_priv_ = clk;
+
 	clk->dev = dev;
 	clk->enable_count = 0;
 }

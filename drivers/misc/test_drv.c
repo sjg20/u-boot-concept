@@ -109,7 +109,7 @@ UCLASS_DRIVER(testbus) = {
 
 static int testfdt_drv_ping(struct udevice *dev, int pingval, int *pingret)
 {
-	const struct dm_test_pdata *pdata = dev->plat;
+	const struct dm_test_pdata *pdata = dev_get_plat(dev);
 	struct dm_test_priv *priv = dev_get_priv(dev);
 
 	*pingret = pingval + pdata->ping_add;
