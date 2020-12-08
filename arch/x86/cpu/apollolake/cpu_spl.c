@@ -6,6 +6,7 @@
  */
 
 #include <common.h>
+#include <debug_uart.h>
 #include <dm.h>
 #include <ec_commands.h>
 #include <init.h>
@@ -154,7 +155,10 @@ static int arch_cpu_init_tpl(void)
 	struct udevice *pmc, *sa, *p2sb, *serial, *spi, *lpc;
 	int ret;
 
+        printch('a');
+        printf("x");
 	ret = uclass_first_device_err(UCLASS_ACPI_PMC, &pmc);
+        printch('b');
 	if (ret)
 		return log_msg_ret("PMC", ret);
 

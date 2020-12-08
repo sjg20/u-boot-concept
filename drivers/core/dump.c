@@ -16,9 +16,18 @@ static void show_devices(struct udevice *dev, int depth, int last_flag)
 	struct udevice *child;
 
 	/* print the first 20 characters to not break the tree-format. */
-	printf(" %-10.10s  %3d  [ %c ]   %-20.20s  ", dev->uclass->uc_drv->name,
-	       dev_get_uclass_index(dev, NULL),
-	       dev->flags & DM_FLAG_ACTIVATED ? '+' : ' ', dev->driver->name);
+	if (IS_ENABLED(CONFIG_SPL_BUILD)) {
+		printf(" %s  %d  [ %c ]   %s  ", dev->uclass->uc_drv->name,
+		       dev_get_uclass_index(dev, NULL),
+		       dev->flags & DM_FLAG_ACTIVATED ? '+' : ' ',
+		       dev->driver->name);
+	} else {
+		printf(" %-10.10s  %3d  [ %c ]   %-20.20s  ",
+		       dev->uclass->uc_drv->name,
+		       dev_get_uclass_index(dev, NULL),
+		       dev->flags & DM_FLAG_ACTIVATED ? '+' : ' ',
+		       dev->driver->name);
+	}
 
 	for (i = depth; i >= 0; i--) {
 		is_last = (last_flag >> i) & 1;

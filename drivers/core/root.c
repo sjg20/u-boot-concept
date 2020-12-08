@@ -7,6 +7,7 @@
  */
 
 #include <common.h>
+#include <debug_uart.h>
 #include <errno.h>
 #include <fdtdec.h>
 #include <log.h>
@@ -45,8 +46,8 @@ void dm_fixup_for_gd_move(struct global_data *new_gd)
 {
 	/* The sentinel node has moved, so update things that point to it */
 	if (gd->dm_root) {
-		new_gd->uclass_root.next->prev = &new_gd->uclass_root;
-		new_gd->uclass_root.prev->next = &new_gd->uclass_root;
+		new_gd->uclass_root->next->prev = new_gd->uclass_root;
+		new_gd->uclass_root->prev->next = new_gd->uclass_root;
 	}
 }
 
@@ -136,7 +137,12 @@ int dm_init(bool of_live)
 		dm_warn("Virtual root driver already exists!\n");
 		return -EINVAL;
 	}
-	INIT_LIST_HEAD(&DM_UCLASS_ROOT_NON_CONST);
+	if (CONFIG_IS_ENABLED(OF_PLATDATA_INST))
+		gd->uclass_root = &uclass_head;
+	else {
+		gd->uclass_root = &gd->uclass_root_s;
+		INIT_LIST_HEAD(DM_UCLASS_ROOT_NON_CONST);
+	}
 
 	if (IS_ENABLED(CONFIG_NEEDS_MANUAL_RELOC)) {
 		fix_drivers();
@@ -155,6 +161,8 @@ int dm_init(bool of_live)
             if (ret)
                     return ret;
         }
+        dm_dump_all();
+        dm_dump_uclass();
 
 	return 0;
 }
@@ -306,12 +314,12 @@ static void dm_setup_inst_uclass(void)
 
 	for (; uc < end; uc++) {
 		if (!uc->sibling_node.prev) {
-			uc->sibling_node.prev = &gd->uclass_root;
-			gd->uclass_root.next = &uc->sibling_node;
+			uc->sibling_node.prev = gd->uclass_root;
+			gd->uclass_root->next = &uc->sibling_node;
 		}
 		if (!uc->sibling_node.next) {
-			uc->sibling_node.next = &gd->uclass_root;
-			gd->uclass_root.prev = &uc->sibling_node;
+			uc->sibling_node.next = gd->uclass_root;
+			gd->uclass_root->prev = &uc->sibling_node;
 		}
 	}
 }
@@ -391,6 +399,8 @@ int dm_init_and_scan(bool pre_reloc_only)
 {
 	int ret;
 
+        printch('!');
+        printf("@");
 	if (CONFIG_IS_ENABLED(OF_PLATDATA))
 		dm_populate_phandle_data();
 
@@ -412,6 +422,10 @@ int dm_init_and_scan(bool pre_reloc_only)
 			return ret;
 		}
 	}
+        printf("$\n");
+        dm_dump_all();
+        dm_dump_uclass();
+        printf("done\n");
 
 	return 0;
 }

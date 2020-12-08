@@ -1057,6 +1057,7 @@ class DtbPlatdata(object):
         self.out_header()
         self.out('#include <stdbool.h>\n')
         self.out('#include <linux/libfdt.h>\n')
+        self.out('\n')
 
         # Output the struct definition
         for name in sorted(structs):
@@ -1323,8 +1324,14 @@ class DtbPlatdata(object):
 
         self.out(''.join(self.get_buf()))
 
-    def list_head(self, head_member, node_member, node_refs, var_name):
-        self.buf('\t.%s\t= {\n' % head_member)
+    def list_head(self, head_member, node_member, node_refs, var_name,
+                  is_member=True):
+        if is_member:
+            self.buf('\t.%s\t= {\n' % head_member)
+            indent = '\t\t'
+        else:
+            self.buf('struct list_head %s = {\n' % head_member)
+            indent = '\t'
         if node_refs:
             last = node_refs[-1].dev_ref
             first = node_refs[0].dev_ref
@@ -1333,9 +1340,12 @@ class DtbPlatdata(object):
             last = 'U_BOOT_DEVICE_REF(%s)' % var_name
             first = last
             member = head_member
-        self.buf('\t\t.prev = &%s->%s,\n' % (last, member))
-        self.buf('\t\t.next = &%s->%s,\n' % (first, member))
-        self.buf('\t},\n')
+        self.buf('%s.prev = &%s->%s,\n' % (indent, last, member))
+        self.buf('%s.next = &%s->%s,\n' % (indent, first, member))
+        if is_member:
+            self.buf('\t},\n')
+        else:
+            self.buf('};\n')
 
     def list_node(self, member, node_refs, seq):
         self.buf('\t.%s\t= {\n' % member)
@@ -1392,6 +1402,12 @@ class DtbPlatdata(object):
             self.list_head('dev_head', 'uclass_node', uc_drv.devs, None)
             self.buf('};\n')
             self.buf('\n')
+#        self.list_head('uclass_head', 'uclass_node', uclass_node, None, False)
+        self.buf('struct list_head %s = {\n' % 'uclass_head')
+        self.buf('\t.prev = %s,\n' % uclass_node[len(uclass_list) -1])
+        self.buf('\t.next = %s,\n' % uclass_node[0])
+        self.buf('\n')
+        self.buf('};\n')
 
     def _read_aliases(self):
         """Read the aliases and attach the information to self._alias
