@@ -1131,7 +1131,7 @@ class DtbPlatdata(object):
         """
         self.buf('U_BOOT_DEVICE(%s) = {\n' % var_name)
         self.buf('\t.name\t\t= "%s",\n' % struct_name)
-        self.buf('\t.plat\t= &%s%s,\n' % (VAL_PREFIX, var_name))
+        self.buf('\t.plat_\t= &%s%s,\n' % (VAL_PREFIX, var_name))
         self.buf('\t.plat_size\t= sizeof(%s%s),\n' % (VAL_PREFIX, var_name))
         idx = -1
         if node_parent and node_parent in self._valid_nodes:
@@ -1203,9 +1203,9 @@ class DtbPlatdata(object):
         if parent_driver:
             # TODO: deal with uclass providing these values
             parent_plat_name = self.alloc_priv(parent_driver.child_platdata,
-                                               driver.name, '_parent_plat')
+                                               driver.name, '_parent_plat_')
             parent_priv_name = self.alloc_priv(parent_driver.child_priv,
-                                               driver.name, '_parent_priv')
+                                               driver.name, '_parent_priv_')
         uclass_plat_name = self.alloc_priv(uclass.per_dev_platdata, driver.name)
         uclass_priv_name = self.alloc_priv(uclass.per_dev_priv,
                                            driver.name + '_uc')
@@ -1220,13 +1220,13 @@ class DtbPlatdata(object):
         self.buf('\t.driver\t\t= DM_REF_DRIVER(%s),\n' % struct_name)
         self.buf('\t.name\t\t= "%s",\n' % struct_name)
         if plat_name:
-            self.buf('\t.plat\t= %s,\n' % plat_name)
+            self.buf('\t.plat_\t= %s,\n' % plat_name)
         else:
-            self.buf('\t.plat\t= &%s%s,\n' % (VAL_PREFIX, var_name))
+            self.buf('\t.plat_\t= &%s%s,\n' % (VAL_PREFIX, var_name))
         if parent_plat_name:
-            self.buf('\t.parent_plat = %s,\n' % parent_plat_name)
+            self.buf('\t.parent_plat_ = %s,\n' % parent_plat_name)
         if uclass_plat_name:
-            self.buf('\t.uclass_plat = %s,\n' % uclass_plat_name)
+            self.buf('\t.uclass_plat_ = %s,\n' % uclass_plat_name)
         driver_date = None
 
         if node != self._fdt.GetRoot():
@@ -1243,13 +1243,13 @@ class DtbPlatdata(object):
             self.buf('\t.parent\t\t= U_BOOT_DEVICE_REF(%s),\n' %
                      conv_name_to_c(node.parent.name))
         if priv_name:
-            self.buf('\t.priv\t\t= %s,\n' % priv_name)
+            self.buf('\t.priv_\t\t= %s,\n' % priv_name)
         self.buf('\t.uclass\t= DM_REF_UCLASS_INST(%s),\n' % uclass.name)
 
         if uclass_priv_name:
-            self.buf('\t.uclass_priv = %s,\n' % uclass_priv_name)
+            self.buf('\t.uclass_priv_ = %s,\n' % uclass_priv_name)
         if parent_priv_name:
-            self.buf('\t.parent_priv\t= %s,\n' % parent_priv_name)
+            self.buf('\t.parent_priv_\t= %s,\n' % parent_priv_name)
         self.list_node('uclass_node', uclass.node_refs, node.uclass_seq)
         self.list_head('child_head', 'sibling_node', node.child_devs, var_name)
         if node.parent in self._valid_nodes:
@@ -1391,7 +1391,7 @@ class DtbPlatdata(object):
 
             self.buf('UCLASS_INST(%s) = {\n' % uc_name)
             if priv_name:
-                self.buf('\t.priv\t\t= %s,\n' % priv_name)
+                self.buf('\t.priv_\t\t= %s,\n' % priv_name)
             self.buf('\t.uc_drv\t\t= DM_REF_UCLASS_DRIVER(%s),\n' % uc_name)
             self.list_node('sibling_node', uclass_node, seq)
             self.list_head('dev_head', 'uclass_node', uc_drv.devs, None)

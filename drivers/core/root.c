@@ -12,6 +12,7 @@
 #include <fdtdec.h>
 #include <log.h>
 #include <malloc.h>
+#include <asm-generic/sections.h>
 #include <linux/libfdt.h>
 #include <dm/acpi.h>
 #include <dm/device.h>
@@ -337,8 +338,19 @@ static int dm_setup_inst(void)
 		n_ents = ll_entry_count(struct udevice, udevice);
 		dyn = calloc(n_ents, sizeof(struct udevice_rt));
 		if (!dyn)
-			return -ENOMEM;
+			return log_msg_ret("dyn", -ENOMEM);
 		gd_set_dm_udevice_rt(dyn);
+
+		if (CONFIG_IS_ENABLED(READ_ONLY)) {
+			uint size = __priv_data_end - __priv_data_start;
+			void *base;
+
+			base = calloc(1, size);
+			if (!base)
+				return log_msg_ret("priv", -ENOMEM);
+			memcpy(base, __priv_data_start, size);
+			gd_set_dm_priv_base(base);
+		}
 	}
 
 	return 0;

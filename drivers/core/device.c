@@ -523,6 +523,13 @@ fail:
 	return ret;
 }
 
+void *dev_priv_to_rw(const void *priv)
+{
+	long offset = priv - __priv_data_start;
+
+	return gd_dm_priv_base() + offset;
+}
+
 void *dev_get_plat(const struct udevice *dev)
 {
 	if (!dev) {

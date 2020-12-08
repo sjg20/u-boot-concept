@@ -109,7 +109,7 @@ static int apl_ns16550_of_to_plat(struct udevice *dev)
 	ns->clock = dtplat->clock_frequency;
 	ns->fcr = UART_FCR_DEFVAL;
 	ns->bdf = pci_ofplat_get_devfn(dtplat->reg[0]);
-	dev->plat = plat;
+	dev->plat_ = plat;
 #else
 	int ret;
 
