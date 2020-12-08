@@ -328,32 +328,17 @@ static void *alloc_priv(int size, uint flags)
 	return priv;
 }
 
-int device_of_to_plat(struct udevice *dev)
+static int device_alloc_priv(struct udevice *dev)
 {
 	const struct driver *drv;
-	int size = 0;
+	int size;
 	int ret;
-
-	if (!dev)
-		return -EINVAL;
-
-	printch('e');
-	if (dev_get_flags(dev) & DM_FLAG_PLATDATA_VALID)
-		return 0;
-
-	if (CONFIG_IS_ENABLED(OF_PLATDATA_NO_BIND)) {
-		printch('f');
-		dev_or_flags(dev, DM_FLAG_PLATDATA_VALID);
-		printch('g');
-
-		return 0;
-	}
 
 	/* Ensure all parents have ofdata */
 	if (dev->parent) {
 		ret = device_of_to_plat(dev->parent);
 		if (ret)
-			goto fail;
+			return ret;
 
 		/*
 		 * The device might have already been probed during
@@ -371,20 +356,16 @@ int device_of_to_plat(struct udevice *dev)
 	/* Allocate private data if requested and not reentered */
 	if (drv->priv_auto && !dev->priv_) {
 		dev->priv_ = alloc_priv(drv->priv_auto, drv->flags);
-		if (!dev->priv_) {
-			ret = -ENOMEM;
-			goto fail;
-		}
+		if (!dev->priv_)
+			return -ENOMEM;
 	}
 	/* Allocate private data if requested and not reentered */
 	size = dev->uclass->uc_drv->per_device_auto;
 	if (size && !dev->uclass_priv_) {
 		dev->uclass_priv_ = alloc_priv(size,
 					      dev->uclass->uc_drv->flags);
-		if (!dev->uclass_priv_) {
-			ret = -ENOMEM;
-			goto fail;
-		}
+		if (!dev->uclass_priv_)
+				return -ENOMEM;
 	}
 
 	/* Allocate parent data for this child */
@@ -395,12 +376,33 @@ int device_of_to_plat(struct udevice *dev)
 		}
 		if (size && !dev->parent_priv_) {
 			dev->parent_priv_ = alloc_priv(size, drv->flags);
-			if (!dev->parent_priv_) {
-				ret = -ENOMEM;
-				goto fail;
-			}
+			if (!dev->parent_priv_)
+				return -ENOMEM;
 		}
 	}
+
+	return 0;
+}
+
+int device_of_to_plat(struct udevice *dev)
+{
+	const struct driver *drv;
+	int ret;
+
+	if (!dev)
+		return -EINVAL;
+
+	printch('e');
+	if (dev_get_flags(dev) & DM_FLAG_PLATDATA_VALID)
+		return 0;
+
+	if (!CONFIG_IS_ENABLED(OF_PLATDATA_NO_BIND)) {
+		ret = device_alloc_priv(dev);
+		if (ret)
+			goto fail;
+	}
+	drv = dev->driver;
+	assert(drv);
 
 	if (drv->of_to_plat &&
 	    (CONFIG_IS_ENABLED(OF_PLATDATA) || dev_has_of_node(dev))) {
@@ -427,10 +429,11 @@ int device_probe(struct udevice *dev)
 		return -EINVAL;
 
 	printch('A');
+	printf("\nflags=%x\n", dev_get_flags(dev));
 	if (dev_get_flags(dev) & DM_FLAG_ACTIVATED) {
 		printch('B');
-	}
 		return 0;
+	}
 	printch('C');
 
 	drv = dev->driver;
@@ -523,13 +526,6 @@ fail:
 	return ret;
 }
 
-void *dev_priv_to_rw(const void *priv)
-{
-	long offset = priv - __priv_data_start;
-
-	return gd_dm_priv_base() + offset;
-}
-
 void *dev_get_plat(const struct udevice *dev)
 {
 	if (!dev) {
@@ -537,7 +533,7 @@ void *dev_get_plat(const struct udevice *dev)
 		return NULL;
 	}
 
-	return dev->plat_;
+	return dm_priv_to_rw(dev->plat_);
 }
 
 void *dev_get_parent_plat(const struct udevice *dev)
@@ -547,7 +543,7 @@ void *dev_get_parent_plat(const struct udevice *dev)
 		return NULL;
 	}
 
-	return dev->parent_plat_;
+	return dm_priv_to_rw(dev->parent_plat_);
 }
 
 void *dev_get_uclass_plat(const struct udevice *dev)
@@ -557,7 +553,7 @@ void *dev_get_uclass_plat(const struct udevice *dev)
 		return NULL;
 	}
 
-	return dev->uclass_plat_;
+	return dm_priv_to_rw(dev->uclass_plat_);
 }
 
 void *dev_get_priv(const struct udevice *dev)
@@ -567,7 +563,7 @@ void *dev_get_priv(const struct udevice *dev)
 		return NULL;
 	}
 
-	return dev->priv_;
+	return dm_priv_to_rw(dev->priv_);
 }
 
 void *dev_get_uclass_priv(const struct udevice *dev)
@@ -577,7 +573,7 @@ void *dev_get_uclass_priv(const struct udevice *dev)
 		return NULL;
 	}
 
-	return dev->uclass_priv_;
+	return dm_priv_to_rw(dev->uclass_priv_);
 }
 
 void *dev_get_parent_priv(const struct udevice *dev)
@@ -587,7 +583,7 @@ void *dev_get_parent_priv(const struct udevice *dev)
 		return NULL;
 	}
 
-	return dev->parent_priv_;
+	return dm_priv_to_rw(dev->parent_priv_);
 }
 
 static int device_get_device_tail(struct udevice *dev, int ret,

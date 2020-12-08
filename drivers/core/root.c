@@ -327,19 +327,29 @@ static void dm_setup_inst_dev(void)
 	}
 }
 
+#if CONFIG_IS_ENABLED(OF_PLATDATA_INST) && CONFIG_IS_ENABLED(READ_ONLY)
+void *dm_priv_to_rw(void *priv)
+{
+	long offset = priv - (void *)__priv_data_start;
+
+	return gd_dm_priv_base() + offset;
+}
+#endif
+
 static int dm_setup_inst(void)
 {
 	dm_setup_inst_uclass();
 	dm_setup_inst_dev();
 	if (CONFIG_IS_ENABLED(OF_PLATDATA_INST)) {
-		struct udevice_rt *dyn;
+		struct udevice_rt *urt;
 		int n_ents;
 
 		n_ents = ll_entry_count(struct udevice, udevice);
-		dyn = calloc(n_ents, sizeof(struct udevice_rt));
-		if (!dyn)
-			return log_msg_ret("dyn", -ENOMEM);
-		gd_set_dm_udevice_rt(dyn);
+		urt = calloc(n_ents, sizeof(struct udevice_rt));
+		if (!urt)
+			return log_msg_ret("urt", -ENOMEM);
+		gd_set_dm_udevice_rt(urt);
+		printf("urt=%p\n", urt);
 
 		if (CONFIG_IS_ENABLED(READ_ONLY)) {
 			uint size = __priv_data_end - __priv_data_start;
@@ -350,6 +360,7 @@ static int dm_setup_inst(void)
 				return log_msg_ret("priv", -ENOMEM);
 			memcpy(base, __priv_data_start, size);
 			gd_set_dm_priv_base(base);
+			printf("base=%p, size=%x\n", base, size);
 		}
 	}
 
