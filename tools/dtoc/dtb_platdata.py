@@ -1159,7 +1159,7 @@ class DtbPlatdata(object):
         return var_name, struc, attr
 
     def alloc_priv(self, info, name, suffix='_priv'):
-        result = self.prep_priv(info, name, suffix, section='.data')
+        result = self.prep_priv(info, name, suffix, section='.priv_data')
         if not result:
             return None
         var_name, struc, section = result
