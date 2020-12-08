@@ -338,7 +338,6 @@ static int dm_setup_inst(void)
 		dyn = calloc(n_ents, sizeof(struct udevice_rt));
 		if (!dyn)
 			return -ENOMEM;
-		printhex8(dyn);
 		gd_set_dm_udevice_rt(dyn);
 	}
 

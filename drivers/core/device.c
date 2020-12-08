@@ -1052,7 +1052,6 @@ static struct udevice_rt *dev_get_rt(const struct udevice *dev)
 	int idx = dev - base;
 
 	struct udevice_rt *urt = gd_dm_udevice_rt() + idx;
-	printhex8(urt);
 
 	return urt;
 }
