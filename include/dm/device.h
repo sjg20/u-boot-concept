@@ -146,9 +146,9 @@ enum {
 struct udevice {
 	const struct driver *driver;
 	const char *name;
-	void *plat;
-	void *parent_plat;
-	void *uclass_plat;
+	void *plat_;
+	void *parent_plat_;
+	void *uclass_plat_;
 	ulong driver_data;
 	struct udevice *parent;
 	void *priv;
