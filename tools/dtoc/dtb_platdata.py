@@ -1158,28 +1158,28 @@ class DtbPlatdata(object):
         attr = '__attribute__ ((section ("%s")))' % section
         return var_name, struc, attr
 
-    def alloc_priv(self, info, name, suffix='_priv'):
+    def alloc_priv(self, info, name, extra, suffix='_priv'):
         result = self.prep_priv(info, name, suffix)
         if not result:
             return None
         var_name, struc, section = result
-        self.buf('u8 %s[sizeof(struct %s)]\n\t%s;\n' % (var_name, struc.strip(),
-                                                        section))
-        return var_name
+        self.buf('u8 %s_%s[sizeof(struct %s)]\n\t%s;\n' %
+                 (var_name, extra, struc.strip(), section))
+        return '%s_%s' % (var_name, extra)
 
-    def alloc_plat(self, info, name, dt_platdata, node):
+    def alloc_plat(self, info, name, extra, node):
         result = self.prep_priv(info, name, '_plat')
         if not result:
             return None
         var_name, struc, section = result
         self.buf('struct %s %s %s_%s = {\n' %
-                 (struc.strip(), section, var_name, dt_platdata))
+                 (struc.strip(), section, var_name, extra))
         self.buf('\t.dtplat = {\n')
         for pname in sorted(node.props):
             self._output_prop(node, node.props[pname], 2)
         self.buf('\t},\n')
         self.buf('};\n')
-        return '&%s_%s' % (var_name, dt_platdata)
+        return '&%s_%s' % (var_name, extra)
 
     def _declare_device_inst(self, driver, var_name, struct_name, parent_driver,
                              node, uclass):
@@ -1197,18 +1197,21 @@ class DtbPlatdata(object):
         num_lines = len(self._lines)
         plat_name = self.alloc_plat(driver.platdata, driver.name, var_name,
                                     node)
-        priv_name = self.alloc_priv(driver.priv, driver.name)
+        priv_name = self.alloc_priv(driver.priv, driver.name, var_name)
         parent_plat_name = None
         parent_priv_name = None
         if parent_driver:
             # TODO: deal with uclass providing these values
-            parent_plat_name = self.alloc_priv(parent_driver.child_platdata,
-                                               driver.name, '_parent_plat_')
-            parent_priv_name = self.alloc_priv(parent_driver.child_priv,
-                                               driver.name, '_parent_priv_')
-        uclass_plat_name = self.alloc_priv(uclass.per_dev_platdata, driver.name)
+            parent_plat_name = self.alloc_priv(
+                parent_driver.child_platdata, driver.name, var_name,
+                '_parent_plat')
+            parent_priv_name = self.alloc_priv(
+                parent_driver.child_priv, driver.name, var_name,
+                '_parent_priv')
+        uclass_plat_name = self.alloc_priv(uclass.per_dev_platdata, driver.name,
+                                           var_name)
         uclass_priv_name = self.alloc_priv(uclass.per_dev_priv,
-                                           driver.name + '_uc')
+                                           driver.name + '_uc', var_name)
         for hdr in driver.headers:
             self.buf('#include %s\n' % hdr)
 
@@ -1387,7 +1390,7 @@ class DtbPlatdata(object):
             uc_drv.node_refs[-1] = ref
             uc_drv.node_refs[len(uc_drv.devs)] = ref
 
-            priv_name = self.alloc_priv(uc_drv.priv, uc_drv.name)
+            priv_name = self.alloc_priv(uc_drv.priv, uc_drv.name, '')
 
             self.buf('UCLASS_INST(%s) = {\n' % uc_name)
             if priv_name:

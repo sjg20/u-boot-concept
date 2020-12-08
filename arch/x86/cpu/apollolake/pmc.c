@@ -94,7 +94,6 @@ static int apl_global_reset_set_enable(struct udevice *dev, bool enable)
 {
 	struct acpi_pmc_upriv *upriv = dev_get_uclass_priv(dev);
 
-	printf("set %p, %p\n", upriv, upriv->pmc_bar0);
 	if (enable)
 		setbits_le32(upriv->pmc_bar0 + ETR, CF9_GLB_RST);
 	else
@@ -155,7 +154,6 @@ int apl_pmc_ofdata_to_uc_plat(struct udevice *dev)
 	upriv->gpe0_en_reg += upriv->acpi_base;
 	upriv->gpe0_count = min((int)ARRAY_SIZE(dtplat->gpe0_dw), GPE0_REG_MAX);
 	memcpy(upriv->gpe0_dw, dtplat->gpe0_dw, sizeof(dtplat->gpe0_dw));
-	printf("setup upriv=%p, upriv->pmc_bar=%p\n", upriv, upriv->pmc_bar0);
 #endif
 	upriv->gpe_cfg = (u32 *)(upriv->pmc_bar0 + GPIO_GPE_CFG);
 
@@ -168,8 +166,6 @@ static int enable_pmcbar(struct udevice *dev)
 	struct apl_pmc_plat *priv = dev_get_plat(dev);
 	pci_dev_t pmc = priv->bdf;
 
-	printch("!");
-	printf("upriv=%p, priv=%p\n", upriv, priv);
 	/*
 	 * Set PMC base addresses and enable decoding. BARs 1 and 3 are 64-bit
 	 * BARs.

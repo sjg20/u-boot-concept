@@ -9,7 +9,6 @@
 #define LOG_CATEGORY LOGC_DM
 
 #include <common.h>
-#include <debug_uart.h>
 #include <dm.h>
 #include <errno.h>
 #include <log.h>
@@ -476,10 +475,8 @@ int uclass_get_device_tail(struct udevice *dev, int ret, struct udevice **devp)
 	if (ret)
 		return ret;
 
-	printch('c');
 	assert(dev);
 	ret = device_probe(dev);
-	printch('d');
 	if (ret)
 		return ret;
 
@@ -592,7 +589,6 @@ int uclass_first_device(enum uclass_id id, struct udevice **devp)
 
 	*devp = NULL;
 	ret = uclass_find_first_device(id, &dev);
-	printch('b');
 	if (!dev)
 		return 0;
 	return uclass_get_device_tail(dev, ret, devp);

@@ -6,7 +6,6 @@
  */
 
 #include <common.h>
-#include <debug_uart.h>
 #include <dm.h>
 #include <ec_commands.h>
 #include <init.h>
@@ -155,16 +154,12 @@ static int arch_cpu_init_tpl(void)
 	struct udevice *pmc, *sa, *p2sb, *serial, *spi, *lpc;
 	int ret;
 
-        printch('a');
 	ret = uclass_first_device_err(UCLASS_ACPI_PMC, &pmc);
-        printch('z');
 	if (ret)
 		return log_msg_ret("PMC", ret);
 
 	/* Clear global reset promotion bit */
-        printch('m');
 	ret = pmc_global_reset_set_enable(pmc, false);
-        printch('n');
 	if (ret)
 		return log_msg_ret("disable global reset", ret);
 

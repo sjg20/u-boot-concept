@@ -10,7 +10,6 @@
 
 #include <common.h>
 #include <cpu_func.h>
-#include <debug_uart.h>
 #include <log.h>
 #include <asm/io.h>
 #include <clk.h>
@@ -392,7 +391,6 @@ int device_of_to_plat(struct udevice *dev)
 	if (!dev)
 		return -EINVAL;
 
-	printch('e');
 	if (dev_get_flags(dev) & DM_FLAG_PLATDATA_VALID)
 		return 0;
 
@@ -428,13 +426,8 @@ int device_probe(struct udevice *dev)
 	if (!dev)
 		return -EINVAL;
 
-	printch('A');
-	printf("\nflags=%x\n", dev_get_flags(dev));
-	if (dev_get_flags(dev) & DM_FLAG_ACTIVATED) {
-		printch('B');
+	if (dev_get_flags(dev) & DM_FLAG_ACTIVATED)
 		return 0;
-	}
-	printch('C');
 
 	drv = dev->driver;
 	assert(drv);

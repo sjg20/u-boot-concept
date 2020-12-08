@@ -7,7 +7,6 @@
  */
 
 #include <common.h>
-#include <debug_uart.h>
 #include <errno.h>
 #include <fdtdec.h>
 #include <log.h>
@@ -349,7 +348,6 @@ static int dm_setup_inst(void)
 		if (!urt)
 			return log_msg_ret("urt", -ENOMEM);
 		gd_set_dm_udevice_rt(urt);
-		printf("urt=%p\n", urt);
 
 		if (CONFIG_IS_ENABLED(READ_ONLY)) {
 			uint size = __priv_data_end - __priv_data_start;
@@ -360,7 +358,6 @@ static int dm_setup_inst(void)
 				return log_msg_ret("priv", -ENOMEM);
 			memcpy(base, __priv_data_start, size);
 			gd_set_dm_priv_base(base);
-			printf("base=%p, size=%x\n", base, size);
 		}
 	}
 
