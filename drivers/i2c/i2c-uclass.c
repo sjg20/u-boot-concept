@@ -688,12 +688,7 @@ static int i2c_child_post_bind(struct udevice *dev)
 
 static int i2c_post_bind(struct udevice *dev)
 {
-	struct i2c_priv *priv = dev_get_uclass_priv(dev);
 	int ret = 0;
-
-	/* Just for sure */
-	if (!priv)
-		return -ENOMEM;
 
 	debug("%s: %s, seq=%d\n", __func__, dev->name, dev_seq(dev));
 
