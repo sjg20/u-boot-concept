@@ -89,27 +89,19 @@ static int apl_ns16550_probe(struct udevice *dev)
 static int apl_ns16550_of_to_plat(struct udevice *dev)
 {
 #if CONFIG_IS_ENABLED(OF_PLATDATA)
-	struct dtd_intel_apl_ns16550 *dtplat = dev_get_plat(dev);
-	struct apl_ns16550_plat *plat;
-	struct ns16550_plat *ns;
+	struct dtd_intel_apl_ns16550 *dtplat;
+	struct apl_ns16550_plat *plat = dev_get_plat(dev);
+	struct ns16550_plat ns;
 
-	/*
-	 * Convert our plat to the ns16550's plat, so we can just use
-	 * that driver
-         * TODO: Fix this up
-	 */
-	plat = malloc(sizeof(*plat));
-	if (!plat)
-		return -ENOMEM;
-        ns = &plat->ns16550;
-	ns->base = dtplat->early_regs[0];
-	ns->reg_width = 1;
-	ns->reg_shift = dtplat->reg_shift;
-	ns->reg_offset = 0;
-	ns->clock = dtplat->clock_frequency;
-	ns->fcr = UART_FCR_DEFVAL;
-	ns->bdf = pci_ofplat_get_devfn(dtplat->reg[0]);
-	dev->plat_ = plat;
+	dtplat = &plat->dtplat;
+	ns.base = dtplat->early_regs[0];
+	ns.reg_width = 1;
+	ns.reg_shift = dtplat->reg_shift;
+	ns.reg_offset = 0;
+	ns.clock = dtplat->clock_frequency;
+	ns.fcr = UART_FCR_DEFVAL;
+	ns.bdf = pci_ofplat_get_devfn(dtplat->reg[0]);
+	memcpy(plat, &ns, sizeof(ns));
 #else
 	int ret;
 

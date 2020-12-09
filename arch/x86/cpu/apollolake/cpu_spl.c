@@ -248,7 +248,6 @@ int arch_cpu_init(void)
 		ret = arch_cpu_init_spl();
 	if (ret)
 		printf("%s: Error %d\n", __func__, ret);
-	printf("init phase=%d\n", spl_phase());
 
 	return ret;
 }
