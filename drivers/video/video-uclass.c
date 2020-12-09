@@ -378,7 +378,7 @@ static int video_post_bind(struct udevice *dev)
 		return 0;
 
 	/* Set up the video pointer, if this is the first device */
-	uc_priv = dev_get_uclass_priv(dev);
+	uc_priv = uclass_get_priv(dev->uclass);
 	if (!uc_priv->video_ptr)
 		uc_priv->video_ptr = gd->video_top;
 
@@ -389,8 +389,8 @@ static int video_post_bind(struct udevice *dev)
 		/* Device tree node may need the 'u-boot,dm-pre-reloc' or
 		 * 'u-boot,dm-pre-proper' tag
 		 */
-		printf("Video device '%s' cannot allocate frame buffer memory -ensure the device is set up before relocation\n",
-		       dev->name);
+		printf("Video device '%s' cannot allocate %lx bytes for frame buffer memory: ensure the device is set up before relocation (addr=%lx, botton=%lx)\n",
+		       dev->name, size, addr, gd->video_bottom);
 		return -ENOSPC;
 	}
 	debug("%s: Claiming %lx bytes at %lx for video device '%s'\n",

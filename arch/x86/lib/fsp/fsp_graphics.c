@@ -128,6 +128,7 @@ static int fsp_video_bind(struct udevice *dev)
 
 	/* Set the maximum supported resolution */
 	plat->size = 2560 * 1600 * 4;
+	printf("bind\n");
 
 	return 0;
 }
