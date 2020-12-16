@@ -10,6 +10,7 @@
 /* TODO(sjg@chromium.org): Drop fdtdec.h include */
 #include <fdtdec.h>
 #include <dm/of.h>
+#include <dm/of_access.h>
 #include <log.h>
 
 /* Enable checks to protect against invalid calls */
@@ -131,6 +132,12 @@ static inline bool ofnode_valid(ofnode node)
 		return node.of_offset >= 0;
 }
 
+/*
+ * U-Boot proper does not inline these functions. They are called so often that
+ * it adds to code size. For SPL, we offer the option to inline them since it is
+ * often a win.
+ */
+#if CONFIG_IS_ENABLED(DM_INLINE_OFNODE)
 /**
  * offset_to_ofnode() - convert a DT offset to an ofnode
  *
@@ -148,6 +155,9 @@ static inline ofnode offset_to_ofnode(int of_offset)
 
 	return node;
 }
+#else
+ofnode offset_to_ofnode(int of_offset);
+#endif /* DM_INLINE_OFNODE */
 
 /**
  * np_to_ofnode() - convert a node pointer to an ofnode
@@ -357,17 +367,6 @@ const char *ofnode_read_string(ofnode node, const char *propname);
  */
 int ofnode_read_u32_array(ofnode node, const char *propname,
 			  u32 *out_values, size_t sz);
-/**
- * ofnode_is_enabled() - Checks whether a node is enabled.
- * This looks for a 'status' property. If this exists, then returns true if
- * the status is 'okay' and false otherwise. If there is no status property,
- * it returns true on the assumption that anything mentioned should be enabled
- * by default.
- *
- * @node: node to examine
- * @return false (not enabled) or true (enabled)
- */
-bool ofnode_is_enabled(ofnode node);
 
 /**
  * ofnode_read_bool() - read a boolean value from a property
@@ -388,6 +387,49 @@ bool ofnode_read_bool(ofnode node, const char *propname);
  */
 ofnode ofnode_find_subnode(ofnode node, const char *subnode_name);
 
+#if CONFIG_IS_ENABLED(DM_INLINE_OFNODE)
+static inline bool ofnode_is_enabled(ofnode node)
+{
+	if (ofnode_is_np(node)) {
+		return of_device_is_available(ofnode_to_np(node));
+	} else {
+		return fdtdec_get_is_enabled(gd->fdt_blob,
+					     ofnode_to_offset(node));
+	}
+}
+
+static inline ofnode ofnode_first_subnode(ofnode node)
+{
+	assert(ofnode_valid(node));
+	if (ofnode_is_np(node))
+		return np_to_ofnode(node.np->child);
+
+	return offset_to_ofnode(
+		fdt_first_subnode(gd->fdt_blob, ofnode_to_offset(node)));
+}
+
+static inline ofnode ofnode_next_subnode(ofnode node)
+{
+	assert(ofnode_valid(node));
+	if (ofnode_is_np(node))
+		return np_to_ofnode(node.np->sibling);
+
+	return offset_to_ofnode(
+		fdt_next_subnode(gd->fdt_blob, ofnode_to_offset(node)));
+}
+#else
+/**
+ * ofnode_is_enabled() - Checks whether a node is enabled.
+ * This looks for a 'status' property. If this exists, then returns true if
+ * the status is 'okay' and false otherwise. If there is no status property,
+ * it returns true on the assumption that anything mentioned should be enabled
+ * by default.
+ *
+ * @node: node to examine
+ * @return false (not enabled) or true (enabled)
+ */
+bool ofnode_is_enabled(ofnode node);
+
 /**
  * ofnode_first_subnode() - find the first subnode of a parent node
  *
@@ -405,6 +447,7 @@ ofnode ofnode_first_subnode(ofnode node);
  * has no more siblings)
  */
 ofnode ofnode_next_subnode(ofnode node);
+#endif /* DM_INLINE_OFNODE */
 
 /**
  * ofnode_get_parent() - get the ofnode's parent (enclosing ofnode)

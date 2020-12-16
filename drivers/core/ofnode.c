@@ -17,6 +17,20 @@
 #include <linux/err.h>
 #include <linux/ioport.h>
 
+#if !CONFIG_IS_ENABLED(DM_INLINE_OFNODE)
+ofnode offset_to_ofnode(int of_offset)
+{
+	ofnode node;
+
+	if (of_live_active())
+		node.np = NULL;
+	else
+		node.of_offset = of_offset >= 0 ? of_offset : -1;
+
+	return node;
+}
+#endif /* !DM_INLINE_OFNODE */
+
 int ofnode_read_u32(ofnode node, const char *propname, u32 *outp)
 {
 	return ofnode_read_u32_index(node, propname, 0, outp);
@@ -226,6 +240,7 @@ int ofnode_read_u32_array(ofnode node, const char *propname,
 	}
 }
 
+#if !CONFIG_IS_ENABLED(DM_INLINE_OFNODE)
 bool ofnode_is_enabled(ofnode node)
 {
 	if (ofnode_is_np(node)) {
@@ -255,7 +270,7 @@ ofnode ofnode_next_subnode(ofnode node)
 	return offset_to_ofnode(
 		fdt_next_subnode(gd->fdt_blob, ofnode_to_offset(node)));
 }
-
+#endif /* !DM_INLINE_OFNODE */
 ofnode ofnode_get_parent(ofnode node)
 {
 	ofnode parent;
