@@ -14,6 +14,7 @@
 #include <asm/io.h>
 #include <dm/device-internal.h>
 #include <dm/lists.h>
+#include <dm/uclass-internal.h>
 #if defined(CONFIG_X86) && defined(CONFIG_HAVE_FSP)
 #include <asm/fsp/fsp_support.h>
 #endif
@@ -1001,10 +1002,25 @@ static void decode_regions(struct pci_controller *hose, ofnode parent_node,
 static int pci_uclass_pre_probe(struct udevice *bus)
 {
 	struct pci_controller *hose;
+	struct uclass *uc;
+	int ret;
 
 	debug("%s, bus=%d/%s, parent=%s\n", __func__, dev_seq(bus), bus->name,
 	      bus->parent->name);
 	hose = bus->uclass_priv;
+
+	/*
+	 * Set the sequence number, if device_bind() doesn't. We want control
+	 * of this so that numbers are allocated as devices are probed. That
+	 * ensures that sub-bus numbered is correct (sub-buses must get numbers
+	 * higher than their parents)
+	 */
+	if (dev_seq(bus) == -1) {
+		ret = uclass_get(UCLASS_PCI, &uc);
+		if (ret)
+			return ret;
+		bus->sqq = uclass_find_next_free_seq(uc);
+	}
 
 	/* For bridges, use the top-level PCI controller */
 	if (!device_is_on_pci_bus(bus)) {
@@ -1016,6 +1032,7 @@ static int pci_uclass_pre_probe(struct udevice *bus)
 		parent_hose = dev_get_uclass_priv(bus->parent);
 		hose->ctlr = parent_hose->bus;
 	}
+
 	hose->bus = bus;
 	hose->first_busno = dev_seq(bus);
 	hose->last_busno = dev_seq(bus);
@@ -1783,7 +1800,7 @@ int pci_sriov_get_totalvfs(struct udevice *pdev)
 UCLASS_DRIVER(pci) = {
 	.id		= UCLASS_PCI,
 	.name		= "pci",
-	.flags		= DM_UC_FLAG_SEQ_ALIAS,
+	.flags		= DM_UC_FLAG_SEQ_ALIAS | DM_UC_FLAG_NO_SEQ,
 	.post_bind	= dm_scan_fdt_dev,
 	.pre_probe	= pci_uclass_pre_probe,
 	.post_probe	= pci_uclass_post_probe,

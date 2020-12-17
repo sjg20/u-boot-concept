@@ -87,7 +87,7 @@ static int device_bind_common(struct udevice *parent, const struct driver *drv,
 			}
 		}
 	}
-	if (auto_seq)
+	if (auto_seq && !(uc->uc_drv->flags & DM_UC_FLAG_NO_SEQ))
 		dev->sqq = uclass_find_next_free_seq(uc);
 
 	if (drv->plat_auto) {
