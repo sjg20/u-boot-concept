@@ -44,7 +44,9 @@ int clk_register(struct clk *clk, const char *drv_name,
 	}
 
 	clk->enable_count = 0;
+
 	/* Store back pointer to clk from udevice */
+	/* FIXME: This is not allowed...should be allocated by driver model */
 	clk->dev->uclass_priv = clk;
 
 	return 0;
