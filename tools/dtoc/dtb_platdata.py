@@ -56,7 +56,7 @@ class Ftype(IntEnum):
 
 # This holds information about each type of output file dtoc can create
 # type: Type of file (Ftype)
-# fname: Filename excluding directory, e.g. 'dt-platdata.c'
+# fname: Filename excluding directory, e.g. 'dt-plat.c'
 # hdr_comment: Comment explaining the purpose of the file
 OutputFile = collections.namedtuple('OutputFile',
                                     ['ftype', 'fname', 'method', 'hdr_comment'])
@@ -1376,34 +1376,6 @@ class DtbPlatdata():
             self._output_prop(node, node.props[pname])
         self.buf('};\n')
 
-    def output_node(self, node):
-        """Output the C code for a node
-
-        Args:
-            node (fdt.Node): node to output
-        """
-        struct_name, _ = self.get_normalized_compat_name(node)
-        var_name = conv_name_to_c(node.name)
-
-        driver = node.driver
-        parent_driver = node.parent_driver
-
-        self.buf('/*\n')
-        self.buf(' * Node %s index %d\n' % (node.path, node.idx))
-        self.buf(' * driver %s parent %s\n' % (driver.name,
-                 parent_driver.name if parent_driver else 'None'))
-        self.buf('*/\n')
-
-        if not self._instantiate or not driver.platdata:
-            self._output_values(var_name, struct_name, node)
-        if self._instantiate:
-            self._declare_device_inst(driver, var_name, struct_name,
-                                      parent_driver, node, node.uclass)
-        else:
-            self._declare_device(var_name, struct_name, node.parent)
-
-        self.out(''.join(self.get_buf()))
-
     def list_head(self, head_member, node_member, node_refs, var_name):
         self.buf('\t.%s\t= {\n' % head_member)
         if node_refs:
@@ -1628,7 +1600,35 @@ class DtbPlatdata():
             uc_drv.node_refs[-1] = ref
             uc_drv.node_refs[len(uc_drv.devs)] = ref
 
-    def generate_tables(self):
+    def output_node(self, node):
+        """Output the C code for a node
+
+        Args:
+            node (fdt.Node): node to output
+        """
+        struct_name, _ = self.get_normalized_compat_name(node)
+        var_name = conv_name_to_c(node.name)
+
+        driver = node.driver
+        parent_driver = node.parent_driver
+
+        self.buf('/*\n')
+        self.buf(' * Node %s index %d\n' % (node.path, node.idx))
+        self.buf(' * driver %s parent %s\n' % (driver.name,
+                 parent_driver.name if parent_driver else 'None'))
+        self.buf('*/\n')
+
+        if not self._instantiate or not driver.platdata:
+            self._output_values(var_name, struct_name, node)
+        if self._instantiate:
+            self._declare_device_inst(driver, var_name, struct_name,
+                                      parent_driver, node, node.uclass)
+        else:
+            self._declare_device(var_name, struct_name, node.parent)
+
+        self.out(''.join(self.get_buf()))
+
+    def generate_plat(self):
         """Generate device defintions for the platform data
 
         This writes out C platform data initialisation data and
@@ -1660,6 +1660,7 @@ class DtbPlatdata():
 
         self.out(''.join(self.get_buf()))
 
+
 # Types of output file we understand
 # key: Command used to generate this file
 # value: OutputFile for this command
@@ -1669,7 +1670,7 @@ OUTPUT_FILES = {
                    DtbPlatdata.generate_structs,
                    'Defines the structs used to hold devicetree data'),
     'platdata':
-        OutputFile(Ftype.SOURCE, 'dt-platdata.c', DtbPlatdata.generate_tables,
+        OutputFile(Ftype.SOURCE, 'dt-plat.c', DtbPlatdata.generate_plat,
                    'Declares the U_BOOT_DRIVER() records and platform data'),
     'uclass':
         OutputFile(Ftype.SOURCE, 'dt-uclass.c', DtbPlatdata.generate_uclasses,
