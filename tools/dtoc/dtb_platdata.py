@@ -1397,7 +1397,7 @@ class DtbPlatdata():
         self.buf('\t},\n')
 
     def generate_uclasses(self):
-        if not self._instantiate:
+        if not self.check_instantiate(True):
             return
         self.out('\n')
         self.out('#include <common.h>\n')
@@ -1447,8 +1447,6 @@ class DtbPlatdata():
         self.out(''.join(self.get_buf()))
 
     def generate_decl(self):
-        if not self._instantiate:
-            return
         nodes_to_output = list(self._valid_nodes)
 
         self.buf(
@@ -1458,11 +1456,13 @@ class DtbPlatdata():
             self.buf('DM_DECL_DRIVER(%s);\n' % struct_name);
         self.buf('\n')
 
-        self.buf(
-            '/* device declarations - these allow U_BOOT_DEVICE_REF() to be used */\n')
-        for node in nodes_to_output:
-            self.buf('U_BOOT_DEVICE_DECL(%s);\n' % conv_name_to_c(node.name))
-        self.buf('\n')
+        if self._instantiate:
+            self.buf(
+                '/* device declarations - these allow U_BOOT_DEVICE_REF() to be used */\n')
+            for node in nodes_to_output:
+                self.buf('U_BOOT_DEVICE_DECL(%s);\n' %
+                         conv_name_to_c(node.name))
+            self.buf('\n')
 
         uclass_list = self._valid_uclasses
 
@@ -1473,11 +1473,12 @@ class DtbPlatdata():
             self.buf('DM_DECL_UCLASS_DRIVER(%s);\n' % uc_name)
         self.buf('\n')
 
-        self.buf('/* uclass declarations - needed for DM_REF_UCLASS_INST() */\n')
-        for uclass_id in uclass_list:
-            uc_name = self.uclass_id_to_name(uclass_id)
-            self.buf('DM_DECL_UCLASS_INST(%s);\n' % uc_name)
-        self.out(''.join(self.get_buf()))
+        if self._instantiate:
+            self.buf('/* uclass declarations - needed for DM_REF_UCLASS_INST() */\n')
+            for uclass_id in uclass_list:
+                uc_name = self.uclass_id_to_name(uclass_id)
+                self.buf('DM_DECL_UCLASS_INST(%s);\n' % uc_name)
+            self.out(''.join(self.get_buf()))
 
     def _read_aliases(self):
         """Read the aliases and attach the information to self._alias
