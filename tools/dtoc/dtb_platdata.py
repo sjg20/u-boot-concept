@@ -1209,7 +1209,7 @@ class DtbPlatdata():
         """
         self.buf('U_BOOT_DEVICE(%s) = {\n' % var_name)
         self.buf('\t.name\t\t= "%s",\n' % struct_name)
-        self.buf('\t.plat_\t= &%s%s,\n' % (VAL_PREFIX, var_name))
+        self.buf('\t.plat\t= &%s%s,\n' % (VAL_PREFIX, var_name))
         self.buf('\t.plat_size\t= sizeof(%s%s),\n' % (VAL_PREFIX, var_name))
         idx = -1
         if node_parent and node_parent in self._valid_nodes:
@@ -1600,7 +1600,7 @@ class DtbPlatdata():
             uc_drv.node_refs[-1] = ref
             uc_drv.node_refs[len(uc_drv.devs)] = ref
 
-    def output_node(self, node):
+    def output_node_plat(self, node):
         """Output the C code for a node
 
         Args:
@@ -1618,15 +1618,51 @@ class DtbPlatdata():
                  parent_driver.name if parent_driver else 'None'))
         self.buf('*/\n')
 
-        if not self._instantiate or not driver.platdata:
-            self._output_values(var_name, struct_name, node)
-        if self._instantiate:
-            self._declare_device_inst(driver, var_name, struct_name,
-                                      parent_driver, node, node.uclass)
-        else:
-            self._declare_device(var_name, struct_name, node.parent)
+        self._output_values(var_name, struct_name, node)
+        self._declare_device(var_name, struct_name, node.parent)
 
         self.out(''.join(self.get_buf()))
+
+    def output_node_instance(self, node):
+        """Output the C code for a node
+
+        Args:
+            node (fdt.Node): node to output
+        """
+        struct_name, _ = self.get_normalized_compat_name(node)
+        var_name = conv_name_to_c(node.name)
+
+        driver = node.driver
+        parent_driver = node.parent_driver
+
+        self.buf('/*\n')
+        self.buf(' * Node %s index %d\n' % (node.path, node.idx))
+        self.buf(' * driver %s parent %s\n' % (driver.name,
+                 parent_driver.name if parent_driver else 'None'))
+        self.buf('*/\n')
+
+        if not driver.platdata:
+            self._output_values(var_name, struct_name, node)
+        self._declare_device_inst(driver, var_name, struct_name,
+                                  parent_driver, node, node.uclass)
+
+        self.out(''.join(self.get_buf()))
+
+    def check_instantiate(self, require):
+        """Check if self._instantiate is set to the required value
+
+        If not, this outputs a message into the current file
+
+        Args:
+            require: True to require --instantiate, False to require that it not
+                be enabled
+        """
+        if require != self._instantiate:
+            self.out(
+                '/* This file is not used: --instantiate was %senabled */\n' %
+                ('not ' if require else ''))
+            return False
+        return True
 
     def generate_plat(self):
         """Generate device defintions for the platform data
@@ -1638,6 +1674,8 @@ class DtbPlatdata():
         See the documentation in doc/driver-model/of-plat.rst for more
         information.
         """
+        if not self.check_instantiate(False):
+            return
         self.out('/* Allow use of U_BOOT_DEVICE() in this file */\n')
         self.out('#define DT_PLATDATA_C\n')
         self.out('\n')
@@ -1653,9 +1691,39 @@ class DtbPlatdata():
             # Output all the node's dependencies first
             for req_node in node.phandles:
                 if req_node in nodes_to_output:
-                    self.output_node(req_node)
+                    self.output_node_plat(req_node)
                     nodes_to_output.remove(req_node)
-            self.output_node(node)
+            self.output_node_plat(node)
+            nodes_to_output.remove(node)
+
+        self.out(''.join(self.get_buf()))
+
+    def generate_inst(self):
+        """Generate device instances
+
+        This writes out U_BOOT_DEVICE_INST() records for each device in the
+        build.
+
+        See the documentation in doc/driver-model/of-plat.rst for more
+        information.
+        """
+        if not self.check_instantiate(True):
+            return
+        self.out('#include <common.h>\n')
+        self.out('#include <dm.h>\n')
+        self.out('#include <dt-structs.h>\n')
+        self.out('\n')
+        nodes_to_output = list(self._valid_nodes)
+
+        # Keep outputing nodes until there is none left
+        while nodes_to_output:
+            node = nodes_to_output[0]
+            # Output all the node's dependencies first
+            for req_node in node.phandles:
+                if req_node in nodes_to_output:
+                    self.output_node_instance(req_node)
+                    nodes_to_output.remove(req_node)
+            self.output_node_instance(node)
             nodes_to_output.remove(node)
 
         self.out(''.join(self.get_buf()))
@@ -1672,6 +1740,9 @@ OUTPUT_FILES = {
     'platdata':
         OutputFile(Ftype.SOURCE, 'dt-plat.c', DtbPlatdata.generate_plat,
                    'Declares the U_BOOT_DRIVER() records and platform data'),
+    'instance':
+        OutputFile(Ftype.SOURCE, 'dt-inst.c', DtbPlatdata.generate_inst,
+                   'Declares the U_BOOT_DEVICE_INST() records'),
     'uclass':
         OutputFile(Ftype.SOURCE, 'dt-uclass.c', DtbPlatdata.generate_uclasses,
                    'Declares the uclass instances (struct uclass)'),

@@ -1074,12 +1074,12 @@ U_BOOT_DRIVER(i2c_tegra) = {
 
         dtb_platdata.run_steps(['all'], dtb_file, False, None, [outdir], True)
         fnames = glob.glob(outdir + '/*')
-        self.assertEqual(6, len(fnames))
+        self.assertEqual(7, len(fnames))
 
         leafs = set([os.path.basename(fname) for fname in fnames])
         self.assertEqual(
             {'dt-structs-gen.h', 'source.dts', 'dt-plat.c', 'source.dtb',
-             'dt-uclass.c', 'dt-decl.h'},
+             'dt-uclass.c', 'dt-decl.h', 'dt-inst.c'},
             leafs)
 
     def testInstantiate(self):
