@@ -122,6 +122,7 @@ u-boot-spl-main := $(libs-y)
 ifdef CONFIG_$(SPL_TPL_)OF_PLATDATA
 u-boot-spl-platdata := $(obj)/dts/dt-plat.o $(obj)/dts/dt-uclass.o \
 	$(obj)/dts/dt-inst.o
+u-boot-spl-platdata_c := $(patsubst %.o,%.c,$(u-boot-spl-platdata))
 endif
 
 # Linker Script
@@ -321,7 +322,7 @@ cmd_dtoc = $(DTOC_ARGS) -c $(obj)/dts -C include/generated all
 quiet_cmd_plat = PLAT    $@
 cmd_plat = $(CC) $(c_flags) -c $< -o $(filter-out $(PHONY),$@)
 
-targets += $(obj)/dts/dt-plat.o $(obj)/dts/dt-uclass.o $(obj)/dts/dt-inst.o
+targets += $(u-boot-spl-platdata)
 
 $(obj)/dts/dt-%.o: $(obj)/dts/dt-%.c \
 		include/generated/dt-structs-gen.h prepare FORCE
@@ -331,7 +332,7 @@ PHONY += dts_dir
 dts_dir:
 	$(shell [ -d $(obj)/dts ] || mkdir -p $(obj)/dts)
 
-include/generated/dt-structs-gen.h $(obj)/dts/dt-plat.c: \
+include/generated/dt-structs-gen.h $(u-boot-spl-platdata_c) &: \
 		$(obj)/$(SPL_BIN).dtb dts_dir FORCE
 	$(call if_changed,dtoc)
 
