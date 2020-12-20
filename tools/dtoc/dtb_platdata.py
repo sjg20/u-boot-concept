@@ -282,7 +282,7 @@ class DtbPlatdata():
             value: Driver for that driver
         _driver_aliases: Dict that holds aliases for driver names
             key: Driver alias declared with
-                U_BOOT_DRIVER_ALIAS(driver_alias, driver_name)
+                DM_DRIVER_ALIAS(driver_alias, driver_name)
             value: Driver name declared with U_BOOT_DRIVER(driver_name)
         _drivers_additional: List of additional drivers to use during scanning
         _of_match: Dict holding information about compatible strings
@@ -722,7 +722,7 @@ class DtbPlatdata():
         re_of_match = re.compile(
             r'\.of_match\s*=\s*(of_match_ptr\()?([a-z0-9_]+)(\))?,')
 
-        re_hdr = re.compile('^\s*U_BOOT_DM_HDR\((.*)\).*$')
+        re_hdr = re.compile('^\s*DM_HEADER\((.*)\).*$')
         re_phase = re.compile('^\s*DM_PHASE\((.*)\).*$')
 
         # Matches the header/size information for priv, platdata
@@ -869,9 +869,9 @@ class DtbPlatdata():
                 self._parse_uclass_driver(fname, buff)
 
             # The following re will search for driver aliases declared as
-            # U_BOOT_DRIVER_ALIAS(alias, driver_name)
+            # DM_DRIVER_ALIAS(alias, driver_name)
             driver_aliases = re.findall(
-                r'U_BOOT_DRIVER_ALIAS\(\s*(\w+)\s*,\s*(\w+)\s*\)',
+                r'DM_DRIVER_ALIAS\(\s*(\w+)\s*,\s*(\w+)\s*\)',
                 buff)
 
             for alias in driver_aliases: # pragma: no cover
@@ -1200,14 +1200,14 @@ class DtbPlatdata():
     def _declare_device(self, var_name, struct_name, node_parent):
         """Add a device declaration to the output
 
-        This declares a U_BOOT_DEVICE() for the device being processed
+        This declares a U_BOOT_DRVINFO() for the device being processed
 
         Args:
             var_name (str): C name for the node
             struct_name (str): Name for the dt struct associated with the node
             node_parent (Node): Parent of the node (or None if none)
         """
-        self.buf('U_BOOT_DEVICE(%s) = {\n' % var_name)
+        self.buf('U_BOOT_DRVINFO(%s) = {\n' % var_name)
         self.buf('\t.name\t\t= "%s",\n' % struct_name)
         self.buf('\t.plat\t= &%s%s,\n' % (VAL_PREFIX, var_name))
         self.buf('\t.plat_size\t= sizeof(%s%s),\n' % (VAL_PREFIX, var_name))
@@ -1263,7 +1263,7 @@ class DtbPlatdata():
                              node, uclass):
         """Add a device instance declaration to the output
 
-        This declares a U_BOOT_DEVICE_INST() for the device being processed
+        This declares a DM_DEVICE_INST() for the device being processed
 
         Args:
             var_name: C name for the node
@@ -1296,8 +1296,8 @@ class DtbPlatdata():
         if num_lines != len(self._lines):
             self.buf('\n')
 
-        self.buf('U_BOOT_DEVICE_INST(%s) = {\n' % var_name)
-        self.buf('\t.driver\t\t= DM_REF_DRIVER(%s),\n' % struct_name)
+        self.buf('DM_DEVICE_INST(%s) = {\n' % var_name)
+        self.buf('\t.driver\t\t= DM_DRIVER_REF(%s),\n' % struct_name)
         self.buf('\t.name\t\t= "%s",\n' % struct_name)
         if plat_name:
             self.buf('\t.plat_\t= %s,\n' % plat_name)
@@ -1320,11 +1320,11 @@ class DtbPlatdata():
                     break
 
         if node.parent and node.parent.parent:
-            self.buf('\t.parent\t\t= U_BOOT_DEVICE_REF(%s),\n' %
+            self.buf('\t.parent\t\t= DM_DEVICE_REF(%s),\n' %
                      conv_name_to_c(node.parent.name))
         if priv_name:
             self.buf('\t.priv_\t\t= %s,\n' % priv_name)
-        self.buf('\t.uclass\t= DM_REF_UCLASS_INST(%s),\n' % uclass.name)
+        self.buf('\t.uclass\t= DM_UCLASS_REF(%s),\n' % uclass.name)
 
         if uclass_priv_name:
             self.buf('\t.uclass_priv_ = %s,\n' % uclass_priv_name)
@@ -1383,7 +1383,7 @@ class DtbPlatdata():
             first = node_refs[0].dev_ref
             member = node_member
         else:
-            last = 'U_BOOT_DEVICE_REF(%s)' % var_name
+            last = 'DM_DEVICE_REF(%s)' % var_name
             first = last
             member = head_member
         self.buf('\t\t.prev = &%s->%s,\n' % (last, member))
@@ -1419,7 +1419,7 @@ class DtbPlatdata():
         uclass_node = {}
         for seq, uclass_id in enumerate(uclass_list):
             uc_name = self.uclass_id_to_name(uclass_id)
-            uclass_node[seq] = ('&DM_REF_UCLASS_INST(%s)->sibling_node' %
+            uclass_node[seq] = ('&DM_UCLASS_REF(%s)->sibling_node' %
                                       uc_name)
         uclass_node[-1] = '&uclass_head'
         uclass_node[len(uclass_list)] = '&uclass_head'
@@ -1436,10 +1436,10 @@ class DtbPlatdata():
 
             priv_name = self.alloc_priv(uc_drv.priv, uc_drv.name, '')
 
-            self.buf('UCLASS_INST(%s) = {\n' % uc_name)
+            self.buf('DM_UCLASS_INST(%s) = {\n' % uc_name)
             if priv_name:
                 self.buf('\t.priv_\t\t= %s,\n' % priv_name)
-            self.buf('\t.uc_drv\t\t= DM_REF_UCLASS_DRIVER(%s),\n' % uc_name)
+            self.buf('\t.uc_drv\t\t= DM_UCLASS_DRIVER_REF(%s),\n' % uc_name)
             self.list_node('sibling_node', uclass_node, seq)
             self.list_head('dev_head', 'uclass_node', uc_drv.devs, None)
             self.buf('};\n')
@@ -1449,35 +1449,38 @@ class DtbPlatdata():
     def generate_decl(self):
         nodes_to_output = list(self._valid_nodes)
 
+        self.buf('#include <dm/device-internal.h>\n')
+        self.buf('#include <dm/uclass-internal.h>\n')
+        self.buf('\n')
         self.buf(
-            '/* driver declarations - these allow DM_GET_DRIVER() to be used */\n')
+            '/* driver declarations - these allow DM_DRIVER_GET() to be used */\n')
         for node in nodes_to_output:
             struct_name, _ = self.get_normalized_compat_name(node)
-            self.buf('DM_DECL_DRIVER(%s);\n' % struct_name);
+            self.buf('DM_DRIVER_DECL(%s);\n' % struct_name);
         self.buf('\n')
 
         if self._instantiate:
             self.buf(
-                '/* device declarations - these allow U_BOOT_DEVICE_REF() to be used */\n')
+                '/* device declarations - these allow DM_DEVICE_REF() to be used */\n')
             for node in nodes_to_output:
-                self.buf('U_BOOT_DEVICE_DECL(%s);\n' %
+                self.buf('DM_DEVICE_DECL(%s);\n' %
                          conv_name_to_c(node.name))
             self.buf('\n')
 
         uclass_list = self._valid_uclasses
 
         self.buf(
-            '/* uclass driver declarations - needed for DM_REF_UCLASS_DRIVER() */\n')
+            '/* uclass driver declarations - needed for DM_UCLASS_DRIVER_REF() */\n')
         for uclass_id in uclass_list:
             uc_name = self.uclass_id_to_name(uclass_id)
-            self.buf('DM_DECL_UCLASS_DRIVER(%s);\n' % uc_name)
+            self.buf('DM_UCLASS_DRIVER_DECL(%s);\n' % uc_name)
         self.buf('\n')
 
         if self._instantiate:
-            self.buf('/* uclass declarations - needed for DM_REF_UCLASS_INST() */\n')
+            self.buf('/* uclass declarations - needed for DM_UCLASS_REF() */\n')
             for uclass_id in uclass_list:
                 uc_name = self.uclass_id_to_name(uclass_id)
-                self.buf('DM_DECL_UCLASS_INST(%s);\n' % uc_name)
+                self.buf('DM_UCLASS_DECL(%s);\n' % uc_name)
             self.out(''.join(self.get_buf()))
 
     def _read_aliases(self):
@@ -1544,7 +1547,7 @@ class DtbPlatdata():
             node.seq = -1
 
         for node in nodes_to_output:
-            node.dev_ref = 'U_BOOT_DEVICE_REF(%s)' % conv_name_to_c(node.name)
+            node.dev_ref = 'DM_DEVICE_REF(%s)' % conv_name_to_c(node.name)
             struct_name, _ = self.get_normalized_compat_name(node)
             driver = self._drivers.get(struct_name)
             if not driver:
@@ -1597,7 +1600,7 @@ class DtbPlatdata():
                 raise ValueError('Cannot find uclass driver for %s (have %s)'
                                  % (uc_drv, ', '.join(self._uclass.keys())))
             uc_name = self.uclass_id_to_name(uclass_id)
-            ref = '&DM_REF_UCLASS_INST(%s)->dev_head' % uc_name
+            ref = '&DM_UCLASS_REF(%s)->dev_head' % uc_name
             uc_drv.node_refs[-1] = ref
             uc_drv.node_refs[len(uc_drv.devs)] = ref
 
@@ -1669,7 +1672,7 @@ class DtbPlatdata():
         """Generate device defintions for the platform data
 
         This writes out C platform data initialisation data and
-        U_BOOT_DEVICE() declarations for each valid node. Where a node has
+        U_BOOT_DRVINFO() declarations for each valid node. Where a node has
         multiple compatible strings, a #define is used to make them equivalent.
 
         See the documentation in doc/driver-model/of-plat.rst for more
@@ -1677,7 +1680,7 @@ class DtbPlatdata():
         """
         if not self.check_instantiate(False):
             return
-        self.out('/* Allow use of U_BOOT_DEVICE() in this file */\n')
+        self.out('/* Allow use of U_BOOT_DRVINFO() in this file */\n')
         self.out('#define DT_PLATDATA_C\n')
         self.out('\n')
         self.out('#include <common.h>\n')
@@ -1693,7 +1696,7 @@ class DtbPlatdata():
     def generate_inst(self):
         """Generate device instances
 
-        This writes out U_BOOT_DEVICE_INST() records for each device in the
+        This writes out DM_DEVICE_INST() records for each device in the
         build.
 
         See the documentation in doc/driver-model/of-plat.rst for more
@@ -1725,7 +1728,7 @@ OUTPUT_FILES = {
                    'Declares the U_BOOT_DRIVER() records and platform data'),
     'instance':
         OutputFile(Ftype.SOURCE, 'dt-inst.c', DtbPlatdata.generate_inst,
-                   'Declares the U_BOOT_DEVICE_INST() records'),
+                   'Declares the DM_DEVICE_INST() records'),
     'uclass':
         OutputFile(Ftype.SOURCE, 'dt-uclass.c', DtbPlatdata.generate_uclasses,
                    'Declares the uclass instances (struct uclass)'),

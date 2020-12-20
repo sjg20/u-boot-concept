@@ -43,17 +43,17 @@ static const struct dm_test_pdata test_pdata_pre_reloc = {
 	.ping_add		= TEST_INTVAL_PRE_RELOC,
 };
 
-U_BOOT_DEVICE(dm_test_info1) = {
+U_BOOT_DRVINFO(dm_test_info1) = {
 	.name = "test_drv",
 	.plat = &test_pdata[0],
 };
 
-U_BOOT_DEVICE(dm_test_info2) = {
+U_BOOT_DRVINFO(dm_test_info2) = {
 	.name = "test_drv",
 	.plat = &test_pdata[1],
 };
 
-U_BOOT_DEVICE(dm_test_info3) = {
+U_BOOT_DRVINFO(dm_test_info3) = {
 	.name = "test_drv",
 	.plat = &test_pdata[2],
 };
@@ -1052,7 +1052,7 @@ static int dm_test_inactive_child(struct unit_test_state *uts)
 	 */
 	ut_asserteq(-ENODEV, device_find_first_inactive_child(parent,
 							UCLASS_TEST, &dev1));
-	ut_assertok(device_bind(parent, DM_GET_DRIVER(test_drv),
+	ut_assertok(device_bind(parent, DM_DRIVER_GET(test_drv),
 				"test_child", 0, ofnode_null(), &dev1));
 
 	ut_assertok(device_find_first_inactive_child(parent, UCLASS_TEST,

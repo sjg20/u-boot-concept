@@ -104,7 +104,7 @@ enum {
  * particular port or peripheral (essentially a driver instance).
  *
  * A device will come into existence through a 'bind' call, either due to
- * a U_BOOT_DEVICE() macro (in which case plat is non-NULL) or a node
+ * a U_BOOT_DRVINFO() macro (in which case plat is non-NULL) or a node
  * in the device tree (in which case of_offset is >= 0). In the latter case
  * we translate the device tree information into plat in a function
  * implemented by the driver of_to_plat method (called just before the
@@ -316,7 +316,7 @@ struct udevice_id {
  * platform data to be allocated in the device's ->plat pointer.
  * This is typically only useful for device-tree-aware drivers (those with
  * an of_match), since drivers which use plat will have the data
- * provided in the U_BOOT_DEVICE() instantiation.
+ * provided in the U_BOOT_DRVINFO() instantiation.
  * @per_child_auto: Each device can hold private data owned by
  * its parent. If required this will be automatically allocated if this
  * value is non-zero.
@@ -358,18 +358,18 @@ struct driver {
 	ll_entry_declare(struct driver, __name, driver)
 
 /* Get a pointer to a given driver */
-#define DM_GET_DRIVER(__name)						\
+#define DM_DRIVER_GET(__name)						\
 	ll_entry_get(struct driver, __name, driver)
 
 /* Declare a driver as an extern, so it can be referenced at build time */
-#define DM_DECL_DRIVER(__name)					\
+#define DM_DRIVER_DECL(__name)					\
 	ll_entry_decl(struct driver, __name, driver)
 
 /*
  * Get a pointer to a given driver, for use in data structures. This requires
- * that the symbol be declared with DM_DECL_DRIVER() first
+ * that the symbol be declared with DM_DRIVER_DECL() first
  */
-#define DM_REF_DRIVER(__name)					\
+#define DM_DRIVER_REF(__name)					\
 	ll_entry_ref(struct driver, __name, driver)
 
 /**
@@ -377,7 +377,7 @@ struct driver {
  * produce no code but its information will be parsed by tools like
  * dtoc
  */
-#define U_BOOT_DRIVER_ALIAS(__name, __alias)
+#define DM_DRIVER_ALIAS(__name, __alias)
 
 /**
  * Declare a macro to declare a header needed for a driver. Often the correct
@@ -392,10 +392,10 @@ struct driver {
  * U_BOOT_DRIVER(cpu) = {
  *	.name = ...
  *	...
- *	U_BOOT_DM_HDR(<asm/cpu.h>)
+ *	DM_HEADER(<asm/cpu.h>)
  * };
  */
-#define U_BOOT_DM_HDR(_hdr)
+#define DM_HEADER(_hdr)
 
 /**
  * Declare a macro to indicate which phase of U-Boot this driver is fore.

@@ -322,7 +322,7 @@ static void dm_setup_inst_uclass(void)
 	}
 }
 
-DM_DECL_DRIVER(root_driver);
+DM_DRIVER_DECL(root_driver);
 
 static void dm_setup_inst_dev(void)
 {
@@ -330,7 +330,7 @@ static void dm_setup_inst_dev(void)
 	struct udevice *end = ll_entry_end(struct udevice, udevice);
 
 	for (; dev < end; dev++) {
-		if (dev->driver == DM_REF_DRIVER(root_driver)) {
+		if (dev->driver == DM_DRIVER_REF(root_driver)) {
 			DM_ROOT_NON_CONST = dev;
 			break;
 		}
