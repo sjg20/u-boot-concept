@@ -1713,18 +1713,9 @@ class DtbPlatdata():
         self.out('#include <dm.h>\n')
         self.out('#include <dt-structs.h>\n')
         self.out('\n')
-        nodes_to_output = list(self._valid_nodes)
 
-        # Keep outputing nodes until there is none left
-        while nodes_to_output:
-            node = nodes_to_output[0]
-            # Output all the node's dependencies first
-            for req_node in node.phandles:
-                if req_node in nodes_to_output:
-                    self.output_node_instance(req_node)
-                    nodes_to_output.remove(req_node)
+        for node in self._valid_nodes:
             self.output_node_instance(node)
-            nodes_to_output.remove(node)
 
         self.out(''.join(self.get_buf()))
 

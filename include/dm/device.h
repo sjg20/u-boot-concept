@@ -167,6 +167,8 @@ struct udevice {
 	int seq_;
 #if !CONFIG_IS_ENABLED(OF_PLATDATA)
 	ofnode node_;
+#endif
+#if !CONFIG_IS_ENABLED(OF_PLATDATA_INST)
 	u32 flags_;
 #endif
 #ifdef CONFIG_DEVRES
