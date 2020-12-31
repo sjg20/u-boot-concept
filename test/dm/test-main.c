@@ -107,7 +107,8 @@ static int dm_do_test(struct unit_test_state *uts, struct unit_test *test,
 	gd->flags &= ~(GD_FLG_SILENT | GD_FLG_RECORD);
 	state_set_skip_delays(false);
 
-	ut_assertok(dm_test_destroy(uts));
+	if (!CONFIG_IS_ENABLED(OF_PLATDATA_INST))
+		ut_assertok(dm_test_destroy(uts));
 
 	return 0;
 }
