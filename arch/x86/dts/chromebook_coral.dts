@@ -30,6 +30,7 @@
 #include <asm/arch-apollolake/fsp/fsp_m_upd.h>
 #include <asm/arch-apollolake/fsp/fsp_s_upd.h>
 #include <dt-bindings/sound/nhlt.h>
+#include <dt-bindings/cros/nvdata.h>
 
 / {
 	model = "Google Coral";
@@ -457,6 +458,9 @@
 				secdata {
 					u-boot,dm-pre-reloc;
 					compatible = "google,tpm-secdata";
+					nvdata,types = <CROS_NV_SECDATA
+						CROS_NV_SECDATAK
+						CROS_NV_REC_HASH>;
 				};
 			};
 		};
@@ -633,8 +637,7 @@
 					nvdata-vstore {
 						u-boot,dm-pre-reloc;
 						compatible = "google,cros-ec-nvdata";
-						/* CROS_NV_VSTORE */
-						nvdata,types = <(1 << 4)>;
+						nvdata,types = <CROS_NV_VSTORE>;
 					};
 				};
 			};
@@ -1262,6 +1265,7 @@
 		u-boot,dm-pre-reloc;
 		compatible = "google,cmos-nvdata";
 		reg = <0x26>;
+		nvdata,types = <CROS_NV_DATA>;
 	};
 };
 

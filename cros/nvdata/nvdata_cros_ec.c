@@ -16,26 +16,12 @@
 #define VBOOT_HASH_VSLOT	0
 #define VBOOT_HASH_VSLOT_MASK	(1 << (VBOOT_HASH_VSLOT))
 
-struct nvdata_priv {
-	u32 supported;
-};
-
 static int cros_ec_nvdata_read(struct udevice *dev, enum cros_nvdata_type type,
 			       u8 *data, int size)
 {
 	struct udevice *cros_ec = dev_get_parent(dev);
-	struct nvdata_priv *priv = dev_get_priv(dev);
 	int ret;
 
-	if (type != CROS_NV_DATA && type != CROS_NV_VSTORE) {
-		log_debug("Type %x not supported\n", type);
-		return -ENOSYS;
-	}
-	if (!(priv->supported & ((1 << type)))) {
-		log_debug("Type %x not enabled (mask %x)\n", type,
-			  priv->supported);
-		return -ENOSYS;
-	}
 	switch (type) {
 	case CROS_NV_DATA:
 		ret = cros_ec_read_nvdata(cros_ec, data, size);
@@ -59,18 +45,8 @@ static int cros_ec_nvdata_write(struct udevice *dev, enum cros_nvdata_type type,
 				const u8 *data, int size)
 {
 	struct udevice *cros_ec = dev_get_parent(dev);
-	struct nvdata_priv *priv = dev_get_priv(dev);
 	int ret;
 
-	if (type != CROS_NV_DATA && type != CROS_NV_VSTORE) {
-		log_debug("Type %x not supported\n", type);
-		return -ENOSYS;
-	}
-	if (!(priv->supported & ((1 << type)))) {
-		log_debug("Type %x not enabled (mask %x)\n", type,
-			  priv->supported);
-		return -ENOSYS;
-	}
 	switch (type) {
 	case CROS_NV_DATA:
 		ret = cros_ec_write_nvdata(cros_ec, data, size);
@@ -114,16 +90,6 @@ static int cros_ec_nvdata_write(struct udevice *dev, enum cros_nvdata_type type,
 	return 0;
 }
 
-static int cros_ec_ofdata_to_platdata(struct udevice *dev)
-{
-	struct nvdata_priv *priv = dev_get_priv(dev);
-
-	if (dev_read_u32(dev, "nvdata,types", &priv->supported))
-		return log_ret(-EINVAL);
-
-	return 0;
-}
-
 static const struct cros_nvdata_ops cros_ec_nvdata_ops = {
 	.read	= cros_ec_nvdata_read,
 	.write	= cros_ec_nvdata_write,
@@ -139,6 +105,5 @@ U_BOOT_DRIVER(cros_ec_nvdata_drv) = {
 	.id		= UCLASS_CROS_NVDATA,
 	.of_match	= cros_ec_nvdata_ids,
 	.ops		= &cros_ec_nvdata_ops,
-	.ofdata_to_platdata	= cros_ec_ofdata_to_platdata,
-	.priv_auto_alloc_size	= sizeof(struct nvdata_priv),
+	.ofdata_to_platdata	= cros_nvdata_ofdata_to_platdata,
 };

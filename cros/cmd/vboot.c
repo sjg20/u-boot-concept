@@ -248,6 +248,7 @@ static int do_secdata_set(struct cmd_tbl *cmdtp, int flag, int argc,
 #ifdef CONFIG_SYS_LONGHELP
 static char secdata_help_text[] =
 	"dump     Dump data";
+	"set      Set/Get data";
 #endif
 
 U_BOOT_CMD_WITH_SUBCMDS(secdata, "Cros vboot boot secure data",

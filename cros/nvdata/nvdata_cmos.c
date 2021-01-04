@@ -86,4 +86,5 @@ U_BOOT_DRIVER(google_cmos_nvdata) = {
 	.ops		= &cmos_nvdata_ops,
 	.priv_auto_alloc_size	= sizeof(struct cmos_priv),
 	.probe		= cmos_nvdata_probe,
+	.ofdata_to_platdata	= cros_nvdata_ofdata_to_platdata,
 };

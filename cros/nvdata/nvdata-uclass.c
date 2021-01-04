@@ -57,15 +57,25 @@ int cros_nvdata_lock(struct udevice *dev, enum cros_nvdata_type type)
 	return ops->lock(dev, type);
 }
 
+bool supports_type(struct udevice *dev, enum cros_nvdata_type type)
+{
+	struct nvdata_uc_priv *uc_priv = dev_get_uclass_priv(dev);
+	uint mask = 1 << type;
+
+	return uc_priv->supported & mask;
+}
+
 int cros_nvdata_read_walk(enum cros_nvdata_type type, u8 *data, int size)
 {
 	struct udevice *dev;
 	int ret = -ENOSYS;
 
 	uclass_foreach_dev_probe(UCLASS_CROS_NVDATA, dev) {
-		ret = cros_nvdata_read(dev, type, data, size);
-		if (!ret)
-			break;
+		if (supports_type(dev, type)) {
+			ret = cros_nvdata_read(dev, type, data, size);
+			if (!ret)
+				break;
+		}
 	}
 	if (ret)
 		return ret;
@@ -80,11 +90,11 @@ int cros_nvdata_write_walk(enum cros_nvdata_type type, const u8 *data, int size)
 
 	log_info("write type %d size %x\n", type, size);
 	uclass_foreach_dev_probe(UCLASS_CROS_NVDATA, dev) {
-		log_info("   - try %s\n", dev->name);
-		ret = cros_nvdata_write(dev, type, data, size);
-		log_info("   - %s ret=%d\n", dev->name, ret);
-		if (!ret)
-			break;
+		if (supports_type(dev, type)) {
+			ret = cros_nvdata_write(dev, type, data, size);
+			if (!ret)
+				break;
+		}
 	}
 	if (ret) {
 		log_warning("Failed to write type %d\n", type);
@@ -101,10 +111,12 @@ int cros_nvdata_setup_walk(enum cros_nvdata_type type, uint attr, uint size,
 	int ret = -ENOSYS;
 
 	uclass_foreach_dev_probe(UCLASS_CROS_NVDATA, dev) {
-		ret = cros_nvdata_setup(dev, type, attr, size, nv_policy,
-					nv_policy_size);
-		if (!ret)
-			break;
+		if (supports_type(dev, type)) {
+			ret = cros_nvdata_setup(dev, type, attr, size,
+						nv_policy, nv_policy_size);
+			if (!ret)
+				break;
+		}
 	}
 	if (ret)
 		return ret;
@@ -157,7 +169,32 @@ VbError_t VbExNvStorageWrite(const u8 *buf)
 	return 0;
 }
 
+int cros_nvdata_ofdata_to_platdata(struct udevice *dev)
+{
+	struct nvdata_uc_priv *uc_priv = dev_get_uclass_priv(dev);
+	uint i;
+
+	for (i = 0; i < 32; i++) {
+		int ret;
+		u32 val;
+
+		ret = dev_read_u32_index(dev, "nvdata,types", i, &val);
+		if (ret == -EOVERFLOW)
+			break;
+		else if (ret) {
+			log_err("Device '%s' is missing nvdata,types\n",
+				dev->name);
+			return log_msg_ret("array", ret);
+		}
+
+		uc_priv->supported |= 1 << val;
+	}
+
+	return 0;
+}
+
 UCLASS_DRIVER(cros_nvdata) = {
 	.id		= UCLASS_CROS_NVDATA,
 	.name		= "cros_nvdata",
+	.per_device_auto_alloc_size	= sizeof(struct nvdata_uc_priv),
 };
