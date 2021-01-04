@@ -165,6 +165,15 @@ struct vboot_info {
 	struct spl_image_info *spl_image;
 };
 
+/** enum secdata_t - field that can be read/written in secdata */
+enum secdata_t {
+	SECDATA_DEV_MODE,
+	SECDATA_LAST_BOOT_DEV,
+
+	SECDATA_COUNT,
+	SECDATA_NONE
+};
+
 static inline struct vboot_info *ctx_to_vboot(struct vb2_context *ctx)
 {
 	return ctx->non_vboot_context;
@@ -354,6 +363,10 @@ int vboot_dump_nvdata(const void *nvdata, int size);
  * @size: Size of NV context (typically sizeof(struct vb2_secdata))
  * @return 0 if it is valid, -ve error otherwise
  */
-int vboot_dump_secdata(const void *secdata, int size);
+int vboot_secdata_dump(const void *secdata, int size);
+
+int vboot_secdata_set(void *secdata, int size, enum secdata_t field, int val);
+
+int vboot_secdata_get(const void *secdata, int size, enum secdata_t field);
 
 #endif /* __CROS_VBOOT_H */

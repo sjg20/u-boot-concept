@@ -136,7 +136,7 @@ int vboot_ver_init(struct vboot_info *vboot)
 // 		ret = cros_tpm_factory_initialise(vboot);
 	else if (ret)
 		return log_msg_ret("read secdata", ret);
-	vboot_dump_secdata(ctx->secdata, sizeof(ctx->secdata));
+	vboot_secdata_dump(ctx->secdata, sizeof(ctx->secdata));
 #ifdef CONFIG_SANDBOX
 	ctx->secdata[0] = 2;
 	ctx->secdata[1] = 3;

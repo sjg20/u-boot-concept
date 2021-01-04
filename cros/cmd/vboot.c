@@ -126,8 +126,8 @@ static int dump_nvdata(struct vboot_info *vboot)
 	return 0;
 }
 
-static int do_vboot_nvdata(struct cmd_tbl *cmdtp, int flag, int argc,
-			   char * const argv[])
+static int do_nvdata_dump(struct cmd_tbl *cmdtp, int flag, int argc,
+			  char * const argv[])
 {
 	struct vboot_info *vboot = vboot_get_alloc();
 	int ret;
@@ -141,6 +141,15 @@ static int do_vboot_nvdata(struct cmd_tbl *cmdtp, int flag, int argc,
 	return 0;
 }
 
+#ifdef CONFIG_SYS_LONGHELP
+static char nvdata_help_text[] =
+	"dump     Dump data";
+#endif
+
+U_BOOT_CMD_WITH_SUBCMDS(nvdata, "Non-volatile data", nvdata_help_text,
+	U_BOOT_CMD_MKENT(dump, 1, 0, do_nvdata_dump, "", "")
+);
+
 static int dump_secdata(struct vboot_info *vboot)
 {
 	struct vb2_context *ctx;
@@ -151,14 +160,14 @@ static int dump_secdata(struct vboot_info *vboot)
 				    sizeof(ctx->secdata));
 	if (ret)
 		return log_msg_ret("read", ret);
-	ret = vboot_dump_secdata(ctx->secdata, sizeof(ctx->secdata));
+	ret = vboot_secdata_dump(ctx->secdata, sizeof(ctx->secdata));
 	if (ret)
 		return log_msg_ret("dump", ret);
 
 	return 0;
 }
 
-static int do_vboot_secdata(struct cmd_tbl *cmdtp, int flag, int argc,
+static int do_secdata_dump(struct cmd_tbl *cmdtp, int flag, int argc,
 			   char * const argv[])
 {
 	struct vboot_info *vboot = vboot_get_alloc();
@@ -173,19 +182,89 @@ static int do_vboot_secdata(struct cmd_tbl *cmdtp, int flag, int argc,
 	return 0;
 }
 
+const char *const secdata_name[] = {
+	[SECDATA_DEV_MODE] = "dev_mode",
+	[SECDATA_LAST_BOOT_DEV] = "last_boot_dev",
+};
+
+static int do_secdata_set(struct cmd_tbl *cmdtp, int flag, int argc,
+			  char * const argv[])
+{
+	struct vboot_info *vboot = vboot_get_alloc();
+	struct vb2_context *ctx;
+	int ret, i;
+
+	ctx = vboot_get_ctx(vboot);
+	ret = cros_nvdata_read_walk(CROS_NV_SECDATA, ctx->secdata,
+				    sizeof(ctx->secdata));
+	if (ret) {
+		printf("Cannot read (err=%d)\n", ret);
+		return CMD_RET_FAILURE;
+	}
+	if (argc <= 1) {
+		for (i = 0; i < SECDATA_COUNT; i++) {
+			int val = vboot_secdata_get(ctx->secdata,
+						    sizeof(ctx->secdata), i);
+
+			printf("%s: %d (%#x)\n", secdata_name[i], val, val);
+		}
+
+	} else if (argc == 3) {
+		enum secdata_t field = SECDATA_NONE;
+		int val;
+
+		for (i = 0; i < SECDATA_COUNT; i++) {
+			if (!strcmp(argv[1], secdata_name[i])) {
+				field = i;
+				break;
+			}
+		}
+		if (field == SECDATA_NONE) {
+			printf("Unknown field '%s'\n", argv[1]);
+			return CMD_RET_USAGE;
+		}
+
+		val = simple_strtol(argv[2], NULL, 16);
+		printf("Set '%s' to %x\n", secdata_name[field], val);
+		ret = vboot_secdata_set(ctx->secdata, sizeof(ctx->secdata),
+					field, val);
+		if (ret) {
+			printf("Cannot set (err=%d)\n", ret);
+			return CMD_RET_FAILURE;
+		}
+		ret = cros_nvdata_write_walk(CROS_NV_SECDATA, ctx->secdata,
+					     sizeof(ctx->secdata));
+		if (ret) {
+			printf("Cannot write (err=%d)\n", ret);
+			return CMD_RET_FAILURE;
+		}
+	} else {
+		return CMD_RET_USAGE;
+	}
+
+	return 0;
+}
+
+#ifdef CONFIG_SYS_LONGHELP
+static char secdata_help_text[] =
+	"dump     Dump data";
+#endif
+
+U_BOOT_CMD_WITH_SUBCMDS(secdata, "Cros vboot boot secure data",
+			secdata_help_text,
+	U_BOOT_CMD_MKENT(dump, 4, 0, do_secdata_dump, "", ""),
+	U_BOOT_CMD_MKENT(set, 4, 0, do_secdata_set, "", ""),
+);
+
 #ifdef CONFIG_SYS_LONGHELP
 static char vboot_help_text[] =
 	 "go -n [ro|rw|auto|start|next|<stage>]  Run verified boot stage (repeatable)\n"
-	 "vboot list           List verified boot stages\n"
-	 "vboot nvdata         Vboot non-volatile data access\n"
-	 "vboot secdata        Vboot secure data access";
+	 "vboot list           List verified boot stages";
 #endif
 
 U_BOOT_CMD_WITH_SUBCMDS(vboot, "Chromium OS Verified boot", vboot_help_text,
 	U_BOOT_CMD_MKENT(go, 4, 0, do_vboot_go, "", ""),
 	U_BOOT_CMD_MKENT(list, 4, 0, do_vboot_list, "", ""),
-	U_BOOT_CMD_MKENT(nvdata, 4, 0, do_vboot_nvdata, "", ""),
-	U_BOOT_CMD_MKENT(secdata, 4, 0, do_vboot_secdata, "", ""),
 );
 
 static int do_vboot_go_auto(struct cmd_tbl *cmdtp, int flag, int argc,

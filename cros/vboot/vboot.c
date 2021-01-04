@@ -231,7 +231,7 @@ int vboot_dump_nvdata(const void *nvdata, int size)
 	return crc_ok ? 0 : -EINVAL;
 }
 
-int vboot_dump_secdata(const void *secdata, int size)
+int vboot_secdata_dump(const void *secdata, int size)
 {
 	const struct vb2_secdata *sec = secdata;
 	bool crc_ok;
@@ -253,4 +253,49 @@ int vboot_dump_secdata(const void *secdata, int size)
 	printf("   Firmware versions %x\n", sec->fw_versions);
 
 	return crc_ok ? 0 : -EINVAL;
+}
+
+static void update_flag(u8 *flagp, uint mask, uint val)
+{
+	if (val)
+		*flagp |= mask;
+	else
+		*flagp &= ~mask;
+}
+
+int vboot_secdata_set(void *secdata, int size, enum secdata_t field, int val)
+{
+	struct vb2_secdata *sec = secdata;
+
+	switch (field) {
+	case SECDATA_LAST_BOOT_DEV:
+		update_flag(&sec->flags, VB2_SECDATA_FLAG_LAST_BOOT_DEVELOPER,
+			    val);
+		break;
+	case SECDATA_DEV_MODE:
+		update_flag(&sec->flags, VB2_SECDATA_FLAG_DEV_MODE, val);
+		break;
+	default:
+		return -ENOENT;
+	}
+
+	/* Update the CRC */
+	sec->crc8 = crc8(0, secdata, offsetof(struct vb2_secdata, crc8));
+
+	return 0;
+}
+
+int vboot_secdata_get(const void *secdata, int size, enum secdata_t field)
+{
+	const struct vb2_secdata *sec = secdata;
+
+	switch (field) {
+	case SECDATA_LAST_BOOT_DEV:
+		return sec->flags & VB2_SECDATA_FLAG_LAST_BOOT_DEVELOPER ?
+			true : false;
+	case SECDATA_DEV_MODE:
+		return sec->flags & VB2_SECDATA_FLAG_DEV_MODE ? true : false;
+	default:
+		return -ENOENT;
+	}
 }
