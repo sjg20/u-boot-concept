@@ -8,6 +8,8 @@
 
 #include <common.h>
 #include <command.h>
+#include <dm.h>
+#include <cros/nvdata.h>
 #include <cros/stages.h>
 #include <cros/vboot.h>
 
@@ -101,7 +103,43 @@ static int do_vboot_list(struct cmd_tbl *cmdtp, int flag, int argc,
 	for (stagenum = VBOOT_STAGE_FIRST_VER; stagenum < VBOOT_STAGE_COUNT;
 	     stagenum++) {
 		name = vboot_get_stage_name(stagenum);
-		printf("   %s\n", name);
+		printf("   %d: %s\n", stagenum, name);
+	}
+
+	return 0;
+}
+
+static int dump_nvdata(struct vboot_info *vboot)
+{
+	struct vb2_context *ctx;
+	int ret;
+
+	/* initialise and read nvdata from non-volatile storage */
+	ret = uclass_first_device_err(UCLASS_CROS_NVDATA, &vboot->nvdata_dev);
+	if (ret)
+		return log_msg_ret("find", ret);
+	ctx = vboot_get_ctx(vboot);
+	ret = cros_nvdata_read_walk(CROS_NV_DATA, ctx->nvdata,
+				    VBNV_BLOCK_SIZE);
+	if (ret)
+		return log_msg_ret("read", ret);
+	ret = vboot_dump_nvdata(ctx->nvdata, VBNV_BLOCK_SIZE);
+	if (ret)
+		return log_msg_ret("dump", ret);
+
+	return 0;
+}
+
+static int do_vboot_nvdata(struct cmd_tbl *cmdtp, int flag, int argc,
+			   char * const argv[])
+{
+	struct vboot_info *vboot = vboot_get_alloc();
+	int ret;
+
+	ret = dump_nvdata(vboot);
+	if (ret) {
+		printf("Error %d\n", ret);
+		return CMD_RET_FAILURE;
 	}
 
 	return 0;
@@ -110,6 +148,7 @@ static int do_vboot_list(struct cmd_tbl *cmdtp, int flag, int argc,
 static struct cmd_tbl cmd_vboot_sub[] = {
 	U_BOOT_CMD_MKENT(go, 4, 0, do_vboot_go, "", ""),
 	U_BOOT_CMD_MKENT(list, 4, 0, do_vboot_list, "", ""),
+	U_BOOT_CMD_MKENT(nvdata, 4, 0, do_vboot_nvdata, "", ""),
 };
 
 /* Process a vboot sub-command */
@@ -130,7 +169,8 @@ static int do_vboot(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv
 
 U_BOOT_CMD(vboot, 4, 1, do_vboot, "Chromium OS Verified boot",
 	   "go -n [ro|rw|auto|start|next|<stage>]  Run verified boot stage (repeatable)\n"
-	   "vboot list           List verified boot stages");
+	   "vboot list           List verified boot stages\n"
+	   "vboot nvdata         Vboot non-volatile data access");
 
 static int do_vboot_go_auto(struct cmd_tbl *cmdtp, int flag, int argc,
 			    char * const argv[])

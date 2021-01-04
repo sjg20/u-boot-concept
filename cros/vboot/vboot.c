@@ -186,8 +186,8 @@ int vboot_dump_nvdata(const void *nvdata, int size)
 	const u8 *data = nvdata;
 	uint sig, val, val2, crc, crc_ofs, ch;
 	static struct nvdata_info *inf;
+	bool is_v2, crc_ok;
 	uint expect_size;
-	bool is_v2;
 
 	ch = data[VB2_NV_OFFS_HEADER];
 	sig = ch & VB2_NV_HEADER_SIGNATURE_MASK;
@@ -195,6 +195,7 @@ int vboot_dump_nvdata(const void *nvdata, int size)
 
 	crc_ofs = is_v2 ? VB2_NV_OFFS_CRC_V2 : VB2_NV_OFFS_CRC_V1;
 	crc = crc8(0, data, crc_ofs);
+	crc_ok = crc == data[crc_ofs];
 	printf("Vboot nvdata:\n");
 	printf("   Signature %s, ", sig == VB2_NV_HEADER_SIGNATURE_V1 ? "v1" :
 	       sig == VB2_NV_HEADER_SIGNATURE_V2 ? "v2" : "invalid");
@@ -202,7 +203,7 @@ int vboot_dump_nvdata(const void *nvdata, int size)
 		sig == VB2_NV_HEADER_SIGNATURE_V2 ? VB2_NVDATA_SIZE_V2 : -1;
 	printf("size %d (%svalid), ", size, size == expect_size ? "" : "in");
 	printf("CRC %x (calc %x, %svalid)\n", data[crc_ofs], crc,
-	       crc == data[crc_ofs] ? "" : "in");
+	       crc_ok ? "" : "in");
 
 	for (inf = nvdata_info; inf->name; inf++) {
 		if (data[inf->ofs] & inf->mask)
@@ -227,21 +228,23 @@ int vboot_dump_nvdata(const void *nvdata, int size)
 	       (ch & VB2_NV_DEV_FLAG_DEFAULT_BOOT) >>
 	       VB2_NV_DEV_DEFAULT_BOOT_SHIFT, val, val2);
 
-	return crc ? -EINVAL : 0;
+	return crc_ok ? 0 : -EINVAL;
 }
 
 int vboot_dump_secdata(const void *secdata, int size)
 {
 	const struct vb2_secdata *sec = secdata;
+	bool crc_ok;
 	uint crc;
 
 	crc = crc8(0, secdata, offsetof(struct vb2_secdata, crc8));
+	crc_ok = crc == sec->crc8;
 	printf("Vboot secdata:\n");
 
 	printf("   Size %d : %svalid\n", size, size == VB2_SECDATA_SIZE ?
 	       "" : "in");
 	printf("   CRC %x (calc %x): %svalid\n", sec->crc8, crc,
-	       crc == sec->crc8 ? "" : "in");
+	       crc_ok ? "" : "in");
 	printf("   Version %d\n", sec->struct_version);
 	if (sec->flags & VB2_SECDATA_FLAG_LAST_BOOT_DEVELOPER)
 		printf("   - last boot was dev mode\n");
@@ -249,5 +252,5 @@ int vboot_dump_secdata(const void *secdata, int size)
 		printf("   - dev mode\n");
 	printf("   Firmware versions %x\n", sec->fw_versions);
 
-	return 0;
+	return crc_ok ? 0 : -EINVAL;
 }

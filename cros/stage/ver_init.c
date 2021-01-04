@@ -87,8 +87,7 @@ int vboot_ver_init(struct vboot_info *vboot)
 	if (ret)
 		return log_msg_ret("find nvdata", ret);
 	/* TODO(sjg@chromium.org): Support full-size context */
-	ret = cros_nvdata_read_walk(CROS_NV_DATA, ctx->nvdata,
-				    EC_VBNV_BLOCK_SIZE);
+	ret = cros_nvdata_read_walk(CROS_NV_DATA, ctx->nvdata, VBNV_BLOCK_SIZE);
 	if (ret)
 		return log_msg_ret("read nvdata", ret);
 

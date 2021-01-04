@@ -141,8 +141,11 @@ static int save_if_needed(struct vboot_info *vboot)
 		log_info("Saving secdata\n");
 		ret = cros_nvdata_write_walk(CROS_NV_SECDATA, ctx->secdata,
 					     sizeof(ctx->secdata));
-		if (ret)
+		if (ret) {
+			printf("write failed: %d\n", ret);
+			while (1);
 			return log_msg_ret("secdata", ret);
+		}
 		ctx->flags &= ~VB2_CONTEXT_SECDATA_CHANGED;
 	}
 
