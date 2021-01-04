@@ -114,16 +114,12 @@ static int dump_nvdata(struct vboot_info *vboot)
 	struct vb2_context *ctx;
 	int ret;
 
-	/* initialise and read nvdata from non-volatile storage */
-	ret = uclass_first_device_err(UCLASS_CROS_NVDATA, &vboot->nvdata_dev);
-	if (ret)
-		return log_msg_ret("find", ret);
 	ctx = vboot_get_ctx(vboot);
 	ret = cros_nvdata_read_walk(CROS_NV_DATA, ctx->nvdata,
-				    VBNV_BLOCK_SIZE);
+				    sizeof(ctx->nvdata));
 	if (ret)
 		return log_msg_ret("read", ret);
-	ret = vboot_dump_nvdata(ctx->nvdata, VBNV_BLOCK_SIZE);
+	ret = vboot_dump_nvdata(ctx->nvdata, sizeof(ctx->nvdata));
 	if (ret)
 		return log_msg_ret("dump", ret);
 
@@ -145,32 +141,52 @@ static int do_vboot_nvdata(struct cmd_tbl *cmdtp, int flag, int argc,
 	return 0;
 }
 
-static struct cmd_tbl cmd_vboot_sub[] = {
+static int dump_secdata(struct vboot_info *vboot)
+{
+	struct vb2_context *ctx;
+	int ret;
+
+	ctx = vboot_get_ctx(vboot);
+	ret = cros_nvdata_read_walk(CROS_NV_SECDATA, ctx->secdata,
+				    sizeof(ctx->secdata));
+	if (ret)
+		return log_msg_ret("read", ret);
+	ret = vboot_dump_secdata(ctx->secdata, sizeof(ctx->secdata));
+	if (ret)
+		return log_msg_ret("dump", ret);
+
+	return 0;
+}
+
+static int do_vboot_secdata(struct cmd_tbl *cmdtp, int flag, int argc,
+			   char * const argv[])
+{
+	struct vboot_info *vboot = vboot_get_alloc();
+	int ret;
+
+	ret = dump_secdata(vboot);
+	if (ret) {
+		printf("Error %d\n", ret);
+		return CMD_RET_FAILURE;
+	}
+
+	return 0;
+}
+
+#ifdef CONFIG_SYS_LONGHELP
+static char vboot_help_text[] =
+	 "go -n [ro|rw|auto|start|next|<stage>]  Run verified boot stage (repeatable)\n"
+	 "vboot list           List verified boot stages\n"
+	 "vboot nvdata         Vboot non-volatile data access\n"
+	 "vboot secdata        Vboot secure data access";
+#endif
+
+U_BOOT_CMD_WITH_SUBCMDS(vboot, "Chromium OS Verified boot", vboot_help_text,
 	U_BOOT_CMD_MKENT(go, 4, 0, do_vboot_go, "", ""),
 	U_BOOT_CMD_MKENT(list, 4, 0, do_vboot_list, "", ""),
 	U_BOOT_CMD_MKENT(nvdata, 4, 0, do_vboot_nvdata, "", ""),
-};
-
-/* Process a vboot sub-command */
-static int do_vboot(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
-{
-	struct cmd_tbl *c;
-
-	/* Strip off leading 'vboot' command argument */
-	argc--;
-	argv++;
-
-	c = find_cmd_tbl(argv[0], cmd_vboot_sub, ARRAY_SIZE(cmd_vboot_sub));
-	if (c)
-		return c->cmd(cmdtp, flag, argc, argv);
-	else
-		return CMD_RET_USAGE;
-}
-
-U_BOOT_CMD(vboot, 4, 1, do_vboot, "Chromium OS Verified boot",
-	   "go -n [ro|rw|auto|start|next|<stage>]  Run verified boot stage (repeatable)\n"
-	   "vboot list           List verified boot stages\n"
-	   "vboot nvdata         Vboot non-volatile data access");
+	U_BOOT_CMD_MKENT(secdata, 4, 0, do_vboot_secdata, "", ""),
+);
 
 static int do_vboot_go_auto(struct cmd_tbl *cmdtp, int flag, int argc,
 			    char * const argv[])
