@@ -16,6 +16,7 @@ int vboot_rw_lock(struct vboot_info *vboot)
 	struct vb2_context *ctx = vboot_get_ctx(vboot);
 	int ret;
 
+	/* This should be done on resume */
 	if (!(ctx->flags & VB2_CONTEXT_RECOVERY_MODE)) {
 		ret = cros_nvdata_lock_walk(CROS_NV_SECDATAK);
 		if (ret) {
@@ -27,10 +28,6 @@ int vboot_rw_lock(struct vboot_info *vboot)
 		log_info("Not locking secdata_kernel in recovery mode\n");
 		return 0;
 	}
-
-	/* lock physical presense */
-
-	ret = cros_nvdata_lock_walk(CROS_NV_SECDATAK);
 
 	return 0;
 }

@@ -18,6 +18,10 @@
 #include <dm/uclass-internal.h>
 #endif
 
+enum {
+	SMBIOS_STR_MAX	= 64,	/* Maximum length allowed for a string */
+};
+
 /**
  * struct smbios_ctx - context for writing SMBIOS tables
  *
@@ -141,6 +145,34 @@ static int smbios_add_prop(struct smbios_ctx *ctx, const char *prop)
 	return smbios_add_prop_si(ctx, prop, SYSINFO_ID_NONE);
 }
 
+int smbios_update_version(const char *version)
+{
+	char *ptr = gd->arch.smbios_version;
+	uint old_len, len;
+
+	if (!ptr)
+		return log_ret(-ENOENT);
+
+	/*
+	 * This string is supposed to have at least enough bytes and is
+	 * padded with spaces. Update it, taking care not to move the
+	 * \0 terminator, so that other strings in the string table
+	 * are not disturbed. See smbios_add_string()
+	 */
+	old_len = strnlen(ptr, SMBIOS_STR_MAX);
+	len = strnlen(version, SMBIOS_STR_MAX);
+	if (len > old_len)
+		return log_ret(-ENOSPC);
+
+	log_debug("Replacing SMBIOS type 0 version string '%s'\n", ptr);
+	memcpy(ptr, version, len);
+#ifdef LOG_DEBUG
+	print_buffer((ulong)ptr, ptr, 1, old_len + 1, 0);
+#endif
+
+	return 0;
+}
+
 /**
  * smbios_string_table_len() - compute the string area size
  *
@@ -178,6 +210,12 @@ static int smbios_write_type0(ulong *current, int handle,
 		t->bios_ver = smbios_add_string(ctx, PLAIN_VERSION);
 	if (t->bios_ver)
 		gd->arch.smbios_version = ctx->last_str;
+	log_debug("smbios_version = %p: '%s'\n", gd->arch.smbios_version,
+		  gd->arch.smbios_version);
+#ifdef LOG_DEBUG
+	print_buffer((ulong)gd->arch.smbios_version, gd->arch.smbios_version,
+		     1, strlen(gd->arch.smbios_version) + 1, 0);
+#endif
 	t->bios_release_date = smbios_add_string(ctx, U_BOOT_DMI_DATE);
 #ifdef CONFIG_ROM_SIZE
 	t->bios_rom_size = (CONFIG_ROM_SIZE / 65536) - 1;

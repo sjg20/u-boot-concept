@@ -257,4 +257,6 @@ const struct smbios_header *smbios_header(const struct smbios_entry *entry, int 
  */
 const char *smbios_string(const struct smbios_header *header, int index);
 
+int smbios_update_version(const char *version);
+
 #endif /* _SMBIOS_H_ */

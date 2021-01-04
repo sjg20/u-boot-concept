@@ -10,6 +10,7 @@
 #include <common.h>
 #include <bloblist.h>
 #include <log.h>
+#include <smbios.h>
 #include <asm/intel_gnvs.h>
 #include <cros/fwstore.h>
 #include <cros/vboot.h>
@@ -137,24 +138,10 @@ int vboot_update_acpi(struct vboot_info *vboot)
 		log_err("FMAP address cannot be mapped (err=%d)\n", ret);
 
 	size = min(ID_LEN, sizeof(tab->fwid));
-	if (gd->arch.smbios_version) {
-		uint len;
-
-		/* This string is supposed to have at least enough bytes */
-		len = strlen(gd->arch.smbios_version);
-		if (len + 1 >= size) {
-			log_debug("Replacing SMBIOS type 0 version string '%s'\n",
-				  gd->arch.smbios_version);
-			strncpy(gd->arch.smbios_version, vboot->firmware_id,
-				size);
-			gd->arch.smbios_version[size] = '\0';
-		} else {
-		log_err("SMBIOS type 0 version string is too small (%d)\n",
-			len);
-		}
-	} else {
+	ret = smbios_update_version(vboot->firmware_id);
+	if (ret) {
 		log_err("Unable to update SMBIOS type 0 version string\n");
-		return -ENOSPC;
+		return log_msg_ret("smbios", -ENOSPC);
 	}
 
 	/* Synchronize VbSharedDataHeader from vboot_handoff to acpi vdat */
