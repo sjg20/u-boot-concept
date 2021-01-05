@@ -38,23 +38,17 @@ static int vboot_save_hash(void *digest, size_t digest_size)
 {
 	int ret;
 
-	/* Ensure the digests being saved match the EC's slot size. */
+	/* Ensure the digests being saved match the EC's slot size */
 	assert(digest_size == EC_VSTORE_SLOT_SIZE);
 
 	ret = cros_nvdata_write_walk(CROS_NV_VSTORE, digest, digest_size);
-
-	if (ret == -ENOSYS) {
-		/* Coral EC does not support this */
-		log_err("Could not write to vstore: continuing\n");
-		return 0;
-	}
 	if (ret)
-		return ret;
+		return log_msg_ret("write", ret);
 
-	/* Assert the slot is locked on successful write. */
+	/* Assert the slot is locked on successful write */
 	ret = cros_nvdata_lock_walk(CROS_NV_VSTORE);
 	if (ret)
-		return ret;
+		return log_msg_ret("lock", ret);
 
 	return 0;
 }
@@ -68,7 +62,7 @@ static int vboot_save_hash(void *digest, size_t digest_size)
  */
 static int vboot_retrieve_hash(void *digest, size_t digest_size)
 {
-	/* Ensure the digests being saved match the EC's slot size. */
+	/* Ensure the digests being saved match the EC's slot size */
 	assert(digest_size == EC_VSTORE_SLOT_SIZE);
 
 	return cros_nvdata_read_walk(CROS_NV_VSTORE, digest, digest_size);
@@ -78,6 +72,7 @@ static int handle_digest_result(struct vboot_info *vboot, void *slot_hash,
 				size_t slot_hash_sz)
 {
 	int is_resume;
+	int ret;
 
 	/*
 	 * Chrome EC is the only support for vboot_save_hash() &
@@ -135,8 +130,9 @@ static int handle_digest_result(struct vboot_info *vboot, void *slot_hash,
 	log_debug("Saving vboot hash\n");
 
 	/* Always save the hash for the current boot */
-	if (vboot_save_hash(slot_hash, slot_hash_sz)) {
-		log_err("Error saving vboot hash\n");
+	ret = vboot_save_hash(slot_hash, slot_hash_sz);
+	if (ret) {
+		log_err("Error %d saving vboot hash\n", ret);
 		/*
 		 * Though this is an error, don't report it up since it could
 		 * lead to a reboot loop. The consequence of this is that

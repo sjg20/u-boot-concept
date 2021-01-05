@@ -11,7 +11,7 @@
 /include/ "tsc_timer.dtsi"
 
 #ifdef CONFIG_CHROMEOS_VBOOT
-#include "chromeos-x86.dtsi"
+#include "chromeos-coral.dtsi"
 #include "flashmap-x86-ro.dtsi"
 #include "flashmap-16mb-x86-rw.dtsi"
 #endif

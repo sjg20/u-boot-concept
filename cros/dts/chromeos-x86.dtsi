@@ -32,12 +32,11 @@
 		developer {
 			u-boot,dm-pre-reloc;
 			compatible = "google,const-flag";
-			value = <1>;
+			value = <0>;
 		};
 		lid-open {
 			u-boot,dm-pre-reloc;
-			compatible = "google,const-flag";
-			value = <1>;
+			compatible = "google,cros-ec-flag";
 		};
 		power-off {
 			u-boot,dm-pre-reloc;
@@ -49,15 +48,14 @@
 			compatible = "google,const-flag";
 			value = <0>;
 		};
+
+		/* Set up ec-in-rw in board .dts */
 		ec-in-rw {
-			u-boot,dm-pre-reloc;
-			compatible = "google,const-flag";
-			value = <0>;
 		};
+
 		recovery {
 			u-boot,dm-pre-reloc;
-			compatible = "google,const-flag";
-			value = <1>;
+			compatible = "google,cros-ec-flag";
 		};
 		wipeout {
 			u-boot,dm-pre-reloc;

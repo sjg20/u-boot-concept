@@ -548,4 +548,15 @@ int cros_ec_vstore_read(struct udevice *dev, int slot, uint8_t *data);
 int cros_ec_vstore_write(struct udevice *dev, int slot, const uint8_t *data,
 			 size_t size);
 
+int cros_ec_get_features(struct udevice *dev, u64 *featuresp);
+
+/**
+ * cros_ec_check_feature() - Check if a feature is supported
+ *
+ * @dev		CROS-EC device
+ * @feature:	Feature number to check (enum ec_feature_code)
+ * @return true if supported, false if not, -ve on error
+ */
+int cros_ec_check_feature(struct udevice *dev, uint feature);
+
 #endif

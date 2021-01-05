@@ -1343,19 +1343,33 @@ int cros_ec_i2c_tunnel(struct udevice *dev, int port, struct i2c_msg *in,
 	return 0;
 }
 
-int cros_ec_check_feature(struct udevice *dev, int feature)
+int cros_ec_get_features(struct udevice *dev, u64 *featuresp)
 {
 	struct ec_response_get_features r;
 	int rv;
 
-	rv = ec_command(dev, EC_CMD_GET_FEATURES, 0, &r, sizeof(r), NULL, 0);
-	if (rv)
-		return rv;
+	rv = ec_command(dev, EC_CMD_GET_FEATURES, 0, NULL, 0, &r, sizeof(r));
+	if (rv != sizeof(r))
+		return -EIO;
+	*featuresp = r.flags[0] | (u64)r.flags[1] << 32;
+
+	return 0;
+}
+
+int cros_ec_check_feature(struct udevice *dev, uint feature)
+{
+	struct ec_response_get_features r;
+	int rv;
+
+	rv = ec_command(dev, EC_CMD_GET_FEATURES, 0, NULL, 0, &r, sizeof(r));
+	if (rv != sizeof(r))
+		return -EIO;
 
 	if (feature >= 8 * sizeof(r.flags))
-		return -1;
+		return -EINVAL;
 
-	return r.flags[feature / 32] & EC_FEATURE_MASK_0(feature);
+	return r.flags[feature / 32] & EC_FEATURE_MASK_0(feature) ? true :
+		 false;
 }
 
 /*
@@ -1576,7 +1590,7 @@ int cros_ec_vstore_read(struct udevice *dev, int slot, uint8_t *data)
 	struct ec_response_vstore_read *resp;
 
 	req.slot = slot;
-	if (ec_command_inptr(dev, EC_CMD_VSTORE_INFO, 0, &req, sizeof(req),
+	if (ec_command_inptr(dev, EC_CMD_VSTORE_READ, 0, &req, sizeof(req),
 			     (uint8_t **)&resp, sizeof(*resp)) != sizeof(*resp))
 		return -EIO;
 
@@ -1610,7 +1624,7 @@ int cros_ec_vstore_write(struct udevice *dev, int slot, const uint8_t *data,
 	req.slot = slot;
 	memcpy(req.data, data, size);
 
-	if (ec_command(dev, EC_CMD_VSTORE_INFO, 0, &req, sizeof(req), NULL, 0))
+	if (ec_command(dev, EC_CMD_VSTORE_WRITE, 0, &req, sizeof(req), NULL, 0))
 		return -EIO;
 
 	return 0;

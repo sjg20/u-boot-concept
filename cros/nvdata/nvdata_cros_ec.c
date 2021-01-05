@@ -50,23 +50,42 @@ static int cros_ec_nvdata_write(struct udevice *dev, enum cros_nvdata_type type,
 	switch (type) {
 	case CROS_NV_DATA:
 		ret = cros_ec_write_nvdata(cros_ec, data, size);
+		if (ret)
+			return log_msg_ret("nvwrite", ret);
 		break;
 	case CROS_NV_VSTORE: {
-		u32 locked;
-		int num_slots;
-
-		if (cros_ec_vstore_supported(cros_ec) != true) {
-			log_warning("Not supported\n");
-			return -ENOSYS;
+		ret = cros_ec_vstore_supported(cros_ec);
+		if (ret != true) {
+			log_warning("Not supported by EC (err=%d)\n", ret);
+			return log_msg_ret("ec", -ENOSYS);
 		}
 		ret = cros_ec_vstore_write(cros_ec, VBOOT_HASH_VSLOT, data,
 					   size);
 		if (ret)
 			return log_msg_ret("write", ret);
+		break;
+	}
+	default:
+		log_debug("Type %x not supported\n", type);
+		return -ENOSYS;
+	}
+
+	return 0;
+}
+
+static int cros_ec_nvdata_lock(struct udevice *dev, enum cros_nvdata_type type)
+{
+	struct udevice *cros_ec = dev_get_parent(dev);
+
+	switch (type) {
+	case CROS_NV_VSTORE: {
+		int num_slots;
+		u32 locked;
+		int ret;
 
 		/* Check the slot is now locked */
 		ret = cros_ec_vstore_info(cros_ec, &locked);
-		if (ret)
+		if (ret < 0)
 			return log_msg_ret("info", ret);
 
 		num_slots = ret;
@@ -93,6 +112,7 @@ static int cros_ec_nvdata_write(struct udevice *dev, enum cros_nvdata_type type,
 static const struct cros_nvdata_ops cros_ec_nvdata_ops = {
 	.read	= cros_ec_nvdata_read,
 	.write	= cros_ec_nvdata_write,
+	.lock	= cros_ec_nvdata_lock,
 };
 
 static const struct udevice_id cros_ec_nvdata_ids[] = {

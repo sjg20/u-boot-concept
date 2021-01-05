@@ -87,8 +87,10 @@ static int cros_ec_vboot_hash_image(struct udevice *dev,
 	hash_offset = get_vboot_hash_offset(select);
 
 	ret = cros_ec_read_hash(ec_dev, hash_offset, &resp);
-	if (ret)
+	if (ret) {
+		log_err("EC '%s': Cannot read hash\n", ec_dev->name);
 		return log_msg_ret("read", ret);
+	}
 	if (resp.digest_size > *hash_sizep)
 		return log_msg_ret("size", -E2BIG);
 	log_debug("hash status=%x, select=%d, hash_offset=%x, hash_type=%x, digest_size=%x, offset=%x, size=%x\n",

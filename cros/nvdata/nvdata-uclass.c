@@ -51,7 +51,7 @@ int cros_nvdata_lock(struct udevice *dev, enum cros_nvdata_type type)
 {
 	struct cros_nvdata_ops *ops = cros_nvdata_get_ops(dev);
 
-	if (!ops->setup)
+	if (!ops->lock)
 		return -ENOSYS;
 
 	return ops->lock(dev, type);
@@ -130,9 +130,11 @@ int cros_nvdata_lock_walk(enum cros_nvdata_type type)
 	int ret = -ENOSYS;
 
 	uclass_foreach_dev_probe(UCLASS_CROS_NVDATA, dev) {
-		ret = cros_nvdata_lock(dev, type);
-		if (!ret)
-			break;
+		if (supports_type(dev, type)) {
+			ret = cros_nvdata_lock(dev, type);
+			if (!ret)
+				break;
+		}
 	}
 	if (ret)
 		return ret;
