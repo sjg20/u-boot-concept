@@ -223,15 +223,16 @@ u32 tpm2_nv_write_value(struct udevice *dev, u32 index, const void *data,
 			u32 count)
 {
 	struct tpm_chip_priv *priv = dev_get_uclass_priv(dev);
-	uint offset = 10 + 8 + 9;
+	uint offset = 10 + 8 + 4 + 9 + 2;
+	uint len = offset + count + 2;
 	/* Use empty password auth if platform hierarchy is disabled */
 	u32 auth = priv->plat_hier_disabled ? HR_NV_INDEX + index :
 		TPM2_RH_PLATFORM;
 	u8 command_v2[COMMAND_BUFFER_SIZE] = {
 		/* header 10 bytes */
 		tpm_u16(TPM2_ST_SESSIONS),	/* TAG */
-		tpm_u32(offset + count + 2),	/* Length */
-		tpm_u32(TPM2_CC_NV_READ),	/* Command code */
+		tpm_u32(len),			/* Length */
+		tpm_u32(TPM2_CC_NV_WRITE),	/* Command code */
 
 		/* handles 8 bytes */
 		tpm_u32(auth),			/* Primary platform seed */
@@ -245,6 +246,8 @@ u32 tpm2_nv_write_value(struct udevice *dev, u32 index, const void *data,
 		0,				/* Attributes: Cont/Excl/Rst */
 		tpm_u16(0),			/* Size of <hmac/password> */
 						/* <hmac/password> (if any) */
+
+		tpm_u16(count),
 	};
 	size_t response_len = COMMAND_BUFFER_SIZE;
 	u8 response[COMMAND_BUFFER_SIZE];
@@ -255,8 +258,8 @@ u32 tpm2_nv_write_value(struct udevice *dev, u32 index, const void *data,
 			       offset + count, 0);
 	if (ret)
 		return TPM_LIB_ERROR;
-	printf("TPM output\n");
-	print_buffer(0, command_v2, 1, count, 0);
+	printf("TPM input\n");
+	print_buffer(0, command_v2, 1, len, 0);
 
 	return tpm_sendrecv_command(dev, command_v2, response, &response_len);
 }

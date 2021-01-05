@@ -83,9 +83,6 @@ int vboot_ver_init(struct vboot_info *vboot)
 	}
 
 	/* initialise and read nvdata from non-volatile storage */
-	ret = uclass_first_device_err(UCLASS_CROS_NVDATA, &vboot->nvdata_dev);
-	if (ret)
-		return log_msg_ret("find nvdata", ret);
 	/* TODO(sjg@chromium.org): Support full-size context */
 	ret = cros_nvdata_read_walk(CROS_NV_DATA, ctx->nvdata, VBNV_BLOCK_SIZE);
 	if (ret)

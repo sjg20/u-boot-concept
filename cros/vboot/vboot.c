@@ -240,6 +240,7 @@ int vboot_secdata_dump(const void *secdata, int size)
 	crc = crc8(0, secdata, offsetof(struct vb2_secdata, crc8));
 	crc_ok = crc == sec->crc8;
 	printf("Vboot secdata:\n");
+	print_buffer(0, secdata, 1, size, 0);
 
 	printf("   Size %d : %svalid\n", size, size == VB2_SECDATA_SIZE ?
 	       "" : "in");

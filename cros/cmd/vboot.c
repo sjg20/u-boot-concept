@@ -247,7 +247,7 @@ static int do_secdata_set(struct cmd_tbl *cmdtp, int flag, int argc,
 
 #ifdef CONFIG_SYS_LONGHELP
 static char secdata_help_text[] =
-	"dump     Dump data";
+	"dump     Dump data\n"
 	"set      Set/Get data";
 #endif
 

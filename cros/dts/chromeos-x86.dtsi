@@ -18,6 +18,7 @@
 		ec-software-sync;
 		resume-path-same-as-boot;
 		oprom-matters;
+		recovery-mode-mrc;
 	};
 
 	chromeos_dev: chromeos {
