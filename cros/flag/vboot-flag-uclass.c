@@ -111,7 +111,6 @@ static int vboot_flag_pre_probe(struct udevice *dev)
 		log_warning("Unrecognised flag name '%s'\n", dev->name);
 		return -EINVAL;
 	}
-	log_info("probe: %s, i=%d\n", dev->name, i);
 	uc_priv->flag = i;
 
 	return 0;
