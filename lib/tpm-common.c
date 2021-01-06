@@ -4,7 +4,6 @@
  * Coypright (c) 2013 Guntermann & Drunck GmbH
  */
 
-#define LOG_DEBUG
 #define LOG_CATEGORY UCLASS_TPM
 
 #include <common.h>

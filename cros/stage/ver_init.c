@@ -152,15 +152,15 @@ int vboot_ver_init(struct vboot_info *vboot)
 #endif
 
 	bootstage_mark(BOOTSTAGE_VBOOT_END_TPMINIT);
-#if 0
 	if (vboot_flag_read_walk(VBOOT_FLAG_DEVELOPER) == 1) {
 		ctx->flags |= VB2_CONTEXT_FORCE_DEVELOPER_MODE;
 		log_info("Enabled developer mode\n");
 	}
-#endif
 	if (vboot_flag_read_walk(VBOOT_FLAG_RECOVERY) == 1) {
+		ctx->flags |= VB2_CONTEXT_FORCE_RECOVERY_MODE;
 		if (vboot->disable_dev_on_rec)
 			ctx->flags |= VB2_DISABLE_DEVELOPER_MODE;
+		log_info("Enabled recovery mode\n");
 	}
 
 	if (vboot_flag_read_walk(VBOOT_FLAG_WIPEOUT) == 1)

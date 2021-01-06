@@ -598,6 +598,8 @@ int gpio_dev_request_index(struct udevice *dev, const char *nodename,
  * dm_gpio_free() - Free a single GPIO
  *
  * This frees a single GPIOs previously returned from gpio_request_by_name().
+ * Note that @desc is not updated, so is still valid after this call. That means
+ * that the information can be used, even though the GPIO is no-longer claimed.
  *
  * @dev:	Device which requested the GPIO
  * @desc:	GPIO to free

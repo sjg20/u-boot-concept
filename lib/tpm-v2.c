@@ -258,8 +258,8 @@ u32 tpm2_nv_write_value(struct udevice *dev, u32 index, const void *data,
 			       offset + count, 0);
 	if (ret)
 		return TPM_LIB_ERROR;
-	printf("TPM input\n");
-	print_buffer(0, command_v2, 1, len, 0);
+// 	printf("TPM input\n");
+// 	print_buffer(0, command_v2, 1, len, 0);
 
 	return tpm_sendrecv_command(dev, command_v2, response, &response_len);
 }

@@ -12,6 +12,7 @@
 #include <cros/nvdata.h>
 #include <cros/stages.h>
 #include <cros/vboot.h>
+#include <cros/vboot_flag.h>
 
 /* The next stage of vboot to run (used for repeatable commands) */
 static enum vboot_stage_t vboot_next_stage;
@@ -33,7 +34,7 @@ int board_run_command(const char *cmd)
 }
 
 static int do_vboot_go(struct cmd_tbl *cmdtp, int flag, int argc,
-		       char * const argv[])
+		       char *const argv[])
 {
 	struct vboot_info *vboot = vboot_get_alloc();
 	const char *stage;
@@ -94,7 +95,7 @@ static int do_vboot_go(struct cmd_tbl *cmdtp, int flag, int argc,
 }
 
 static int do_vboot_list(struct cmd_tbl *cmdtp, int flag, int argc,
-			 char * const argv[])
+			 char *const argv[])
 {
 	enum vboot_stage_t stagenum;
 	const char *name;
@@ -108,6 +109,39 @@ static int do_vboot_list(struct cmd_tbl *cmdtp, int flag, int argc,
 
 	return 0;
 }
+
+static int do_vboot_flags(struct cmd_tbl *cmdtp, int flag, int argc,
+			  char *const argv[])
+{
+
+	int i;
+
+	for (i = 0; i < VBOOT_FLAG_COUNT; i++) {
+		struct udevice *dev;
+		int prev;
+		int val;
+
+		val = vboot_flag_read_walk_prev(i, &prev, &dev);
+
+		printf("%-15s: %-18s: value=%d, prev=%d\n", vboot_flag_name(i),
+		       dev ? dev->driver->name: "(none)", val, prev);
+	}
+
+	return 0;
+}
+
+#ifdef CONFIG_SYS_LONGHELP
+static char vboot_help_text[] =
+	 "go -n [ro|rw|auto|start|next|<stage>]  Run verified boot stage (repeatable)\n"
+	 "vboot list           List verified boot stages\n"
+	 "vboot flags          Show values of flags";
+#endif
+
+U_BOOT_CMD_WITH_SUBCMDS(vboot, "Chromium OS Verified boot", vboot_help_text,
+	U_BOOT_CMD_MKENT(go, 4, 0, do_vboot_go, "", ""),
+	U_BOOT_CMD_MKENT(list, 4, 0, do_vboot_list, "", ""),
+	U_BOOT_CMD_MKENT(flags, 4, 0, do_vboot_flags, "", ""),
+);
 
 static int dump_nvdata(struct vboot_info *vboot)
 {
@@ -127,7 +161,7 @@ static int dump_nvdata(struct vboot_info *vboot)
 }
 
 static int do_nvdata_dump(struct cmd_tbl *cmdtp, int flag, int argc,
-			  char * const argv[])
+			  char *const argv[])
 {
 	struct vboot_info *vboot = vboot_get_alloc();
 	int ret;
@@ -168,7 +202,7 @@ static int dump_secdata(struct vboot_info *vboot)
 }
 
 static int do_secdata_dump(struct cmd_tbl *cmdtp, int flag, int argc,
-			   char * const argv[])
+			   char *const argv[])
 {
 	struct vboot_info *vboot = vboot_get_alloc();
 	int ret;
@@ -188,7 +222,7 @@ const char *const secdata_name[] = {
 };
 
 static int do_secdata_set(struct cmd_tbl *cmdtp, int flag, int argc,
-			  char * const argv[])
+			  char *const argv[])
 {
 	struct vboot_info *vboot = vboot_get_alloc();
 	struct vb2_context *ctx;
@@ -257,19 +291,8 @@ U_BOOT_CMD_WITH_SUBCMDS(secdata, "Cros vboot boot secure data",
 	U_BOOT_CMD_MKENT(set, 4, 0, do_secdata_set, "", ""),
 );
 
-#ifdef CONFIG_SYS_LONGHELP
-static char vboot_help_text[] =
-	 "go -n [ro|rw|auto|start|next|<stage>]  Run verified boot stage (repeatable)\n"
-	 "vboot list           List verified boot stages";
-#endif
-
-U_BOOT_CMD_WITH_SUBCMDS(vboot, "Chromium OS Verified boot", vboot_help_text,
-	U_BOOT_CMD_MKENT(go, 4, 0, do_vboot_go, "", ""),
-	U_BOOT_CMD_MKENT(list, 4, 0, do_vboot_list, "", ""),
-);
-
 static int do_vboot_go_auto(struct cmd_tbl *cmdtp, int flag, int argc,
-			    char * const argv[])
+			    char *const argv[])
 {
 	board_run_command("vboot");
 

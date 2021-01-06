@@ -162,6 +162,100 @@ static int do_show_features(struct udevice *dev)
 	return 0;
 }
 
+static const char *const switch_name[8] = {
+	"lid open",
+	"power button pressed",
+	"write-protect disabled",
+	NULL,
+	"dedicated recovery",
+	NULL,
+	NULL,
+	NULL,
+};
+
+static int do_show_switches(struct udevice *dev)
+{
+	uint switches;
+	int ret;
+	uint i;
+
+	ret = cros_ec_get_switches(dev);
+	if (ret < 0)
+		return log_msg_ret("get", ret);
+	switches = ret;
+	for (i = 0; i < ARRAY_SIZE(switch_name); i++) {
+		uint mask = 1 << i;
+
+		if (switches & mask) {
+			if (switch_name[i])
+				printf("%s\n", switch_name[i]);
+			else
+				printf("unknown %02x\n", mask);
+		}
+	}
+
+	return 0;
+}
+
+static const char *const event_name[] = {
+	"lid_closed",
+	"lid_open",
+	"power_button",
+	"ac_connected",
+	"ac_disconnected",
+	"battery_low",
+	"battery_critical",
+	"battery",
+	"thermal_threshold",
+	"device",
+	"thermal",
+	"usb_charger",
+	"key_pressed",
+	"interface_ready",
+	"keyboard_recovery",
+	"thermal_shutdown",
+	"battery_shutdown",
+	"throttle_start",
+	"throttle_stop",
+	"hang_detect",
+	"hang_reboot",
+	"pd_mcu",
+	"battery_status",
+	"panic",
+	"keyboard_fastboot",
+	"rtc",
+	"mkbp",
+	"usb_mux",
+	"mode_change",
+	"keyboard_recovery_hw_reinit",
+	"extended",
+	"invalid",
+};
+
+static int do_show_events(struct udevice *dev)
+{
+	u32 events;
+	int ret;
+	uint i;
+
+	ret = cros_ec_get_host_events(dev, &events);
+	if (ret)
+		return ret;
+	printf("%#08x\n", events);
+	for (i = 0; i < ARRAY_SIZE(event_name); i++) {
+		enum host_event_code code = i + 1;
+		u64 mask = EC_HOST_EVENT_MASK(code);
+
+		if (events & mask) {
+			if (event_name[i])
+				printf("%s\n", event_name[i]);
+			else
+				printf("unknown code %#x\n", code);
+		}
+	}
+
+	return 0;
+}
 
 static int do_cros_ec(struct cmd_tbl *cmdtp, int flag, int argc,
 		      char *const argv[])
@@ -211,6 +305,11 @@ static int do_cros_ec(struct cmd_tbl *cmdtp, int flag, int argc,
 		printf("cols     = %u\n", info.cols);
 	} else if (!strcmp("features", cmd)) {
 		ret = do_show_features(dev);
+
+		if (ret)
+			printf("Error: %d\n", ret);
+	} else if (!strcmp("switches", cmd)) {
+		ret = do_show_switches(dev);
 
 		if (ret)
 			printf("Error: %d\n", ret);
@@ -264,13 +363,15 @@ static int do_cros_ec(struct cmd_tbl *cmdtp, int flag, int argc,
 			return 1;
 		}
 	} else if (0 == strcmp("events", cmd)) {
-		uint32_t events;
+		ret = do_show_events(dev);
 
-		if (cros_ec_get_host_events(dev, &events)) {
-			debug("%s: Could not read host events\n", __func__);
-			return 1;
-		}
-		printf("0x%08x\n", events);
+		if (ret)
+			printf("Error: %d\n", ret);
+	} else if (0 == strcmp("eventsb", cmd)) {
+		u64 events;
+
+		events = cros_ec_get_events_b(dev);
+		printf("%020llx\n", events);
 	} else if (0 == strcmp("clrevents", cmd)) {
 		uint32_t events = 0x7fffffff;
 
@@ -452,10 +553,12 @@ U_BOOT_CMD(
 	"crosec id                  Read CROS-EC ID\n"
 	"crosec info                Read CROS-EC info\n"
 	"crosec features            Read CROS-EC features\n"
+	"crosec switches            Read CROS-EC switches\n"
 	"crosec curimage            Read CROS-EC current image\n"
 	"crosec hash                Read CROS-EC hash\n"
 	"crosec reboot [rw | ro | cold]  Reboot CROS-EC\n"
 	"crosec events              Read CROS-EC host events\n"
+	"crosec eventsb             Read CROS-EC host events_b\n"
 	"crosec clrevents [mask]    Clear CROS-EC host events\n"
 	"crosec regioninfo <ro|rw>  Read image info\n"
 	"crosec flashinfo           Read flash info\n"

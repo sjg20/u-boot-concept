@@ -34,10 +34,6 @@
 			compatible = "google,const-flag";
 			value = <0>;
 		};
-		lid-open {
-			u-boot,dm-pre-reloc;
-			compatible = "google,cros-ec-flag";
-		};
 		power-off {
 			u-boot,dm-pre-reloc;
 			compatible = "google,const-flag";
@@ -53,10 +49,6 @@
 		ec-in-rw {
 		};
 
-		recovery {
-			u-boot,dm-pre-reloc;
-			compatible = "google,cros-ec-flag";
-		};
 		wipeout {
 			u-boot,dm-pre-reloc;
 			compatible = "google,const-flag";

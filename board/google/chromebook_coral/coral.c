@@ -149,6 +149,7 @@ int chromeos_get_gpio(const struct udevice *dev, const char *prop,
 		return log_msg_ret("gpio", ret);
 	} else {
 		info->gpio_num = desc.offset;
+		dm_gpio_free((struct udevice *)dev, &desc);
 	}
 	info->linux_name = dev_read_string(desc.dev, "linux-name");
 	if (!info->linux_name)
