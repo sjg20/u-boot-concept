@@ -121,6 +121,12 @@ static void announce_and_cleanup(int fake)
 	 */
 	dm_remove_devices_flags(DM_REMOVE_ACTIVE_ALL);
 
+	/* Remove all non-vital devices next */
+	dm_remove_devices_flags(DM_REMOVE_NON_VITAL);
+
+	/* Finally, remove everything else */
+	dm_remove_devices_flags(DM_REMOVE_NORMAL);
+
 	cleanup_before_linux();
 }
 
