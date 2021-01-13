@@ -62,6 +62,8 @@ void spl_board_init(void)
 
 		ret = dm_test_main(state->select_unittests);
 		/* continue execution into U-Boot */
+
+		ret =
 	}
 }
 

@@ -21,3 +21,4 @@ obj-$(CONFIG_UNIT_TEST) += lib/
 obj-y += log/
 obj-$(CONFIG_$(SPL_)UT_UNICODE) += unicode_ut.o
 endif
+obj-$(CONFIG_SPL_BUILD) += spl.o
