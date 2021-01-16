@@ -39,6 +39,10 @@ length
     number of values to output. Defaults to 40 (0d64). Note that this is not
     the same as the number of bytes, unless .b is used.
 
+Note that the format of 'md' can be emulated from linux with::
+
+    hexdump -v -e '"%08.8_ax: " 16/1 "%02x " "    "' -e '16/1 "%_p" "\n" ' <f>
+
 
 Example
 -------
