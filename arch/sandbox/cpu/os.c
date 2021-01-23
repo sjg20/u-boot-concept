@@ -272,6 +272,8 @@ void *os_malloc(size_t length)
 	int page_size = getpagesize();
 	struct os_mem_hdr *hdr;
 
+	if (!length)
+		return NULL;
 	/*
 	 * Use an address that is hopefully available to us so that pointers
 	 * to this memory are fairly obvious. If we end up with a different
@@ -296,6 +298,42 @@ void os_free(void *ptr)
 		hdr = ptr - page_size;
 		munmap(hdr, hdr->length + page_size);
 	}
+}
+
+/* These macros are from kernel.h but not accessible in this file */
+#define ALIGN(x, a)		__ALIGN_MASK((x), (typeof(x))(a) - 1)
+#define __ALIGN_MASK(x, mask)	(((x) + (mask)) & ~(mask))
+
+void *os_realloc(void *ptr, size_t length)
+{
+	int page_size = getpagesize();
+	struct os_mem_hdr *hdr;
+	void *new_ptr;
+
+	/* Reallocating a NULL pointer is just an alloc */
+	if (!ptr)
+		return os_malloc(length);
+
+	/* Changing a length to 0 is just a free */
+	if (length) {
+		os_free(ptr);
+		return NULL;
+	}
+
+	/*
+	 * If the new size is the same number of pages as the old, nothing to
+	 * do. There isn't much point in shrinking things
+	 */
+	hdr = ptr - page_size;
+	if (ALIGN(length, page_size) <= ALIGN(hdr->length, page_size))
+		return ptr;
+
+	/* We have to grow it, so allocate something new */
+	new_ptr = os_malloc(length);
+	memcpy(new_ptr, ptr, hdr->length);
+	os_free(ptr);
+
+	return new_ptr;
 }
 
 void os_usleep(unsigned long usec)
