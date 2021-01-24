@@ -307,12 +307,12 @@ static int do_cros_ec(struct cmd_tbl *cmdtp, int flag, int argc,
 		ret = do_show_features(dev);
 
 		if (ret)
-			printf("Error: %d\n", ret);
+			printf("Cannot get features: %d\n", ret);
 	} else if (!strcmp("switches", cmd)) {
 		ret = do_show_switches(dev);
 
 		if (ret)
-			printf("Error: %d\n", ret);
+			printf("Cannot show switches: %d\n", ret);
 	} else if (0 == strcmp("curimage", cmd)) {
 		enum ec_current_image image;
 

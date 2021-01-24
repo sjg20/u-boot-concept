@@ -86,7 +86,7 @@ void *parse_byte_string(char *bytes, u8 *data, size_t *count_ptr)
 int report_return_code(int return_code)
 {
 	if (return_code) {
-		printf("Error: %d\n", return_code);
+		printf("TPM error: %d\n", return_code);
 		return CMD_RET_FAILURE;
 	} else {
 		return CMD_RET_SUCCESS;
