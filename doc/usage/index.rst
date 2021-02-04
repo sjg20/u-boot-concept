@@ -25,6 +25,7 @@ Shell commands
    for
    loady
    mbr
+   md
    pstore
    sbi
    true
