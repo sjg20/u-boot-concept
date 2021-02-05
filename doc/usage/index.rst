@@ -13,6 +13,7 @@ Shell commands
 .. toctree::
    :maxdepth: 1
 
+   addrmap
    base
    bootefi
    booti
