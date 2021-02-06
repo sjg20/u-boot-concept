@@ -43,9 +43,19 @@ void lynxkdi_boot(image_header_t *hdr);
 
 boot_os_fn *bootm_os_get_boot_func(int os);
 
-#if defined(CONFIG_FIT_SIGNATURE)
-int bootm_host_load_images(const void *fit, int cfg_noffset);
-#endif
+/**
+ * bootm_host_load_images() - Load images from a FIT configuration
+ *
+ * This loads all the available images in a FIT configuration. It tries kernel,
+ * flatft and ramdisk. An error is reported if the image is mentioned in the
+ * config but cannot be loaded.
+ *
+ * @fit: FIT image to load
+ * @size: Size of FIT image in bytes
+ * @cfg_noffset: Offset of the /configuration node
+ * @return 0 if OK, -ve on error
+ */
+int bootm_host_load_images(const void *fit, ulong size, int cfg_noffset);
 
 int boot_selected_os(int argc, char *const argv[], int state,
 		     bootm_headers_t *images, boot_os_fn *boot_fn);

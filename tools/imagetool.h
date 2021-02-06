@@ -113,7 +113,8 @@ struct image_type_params {
 	 * Returns 0 if image header verification is successful
 	 * otherwise, returns respective negative error codes
 	 */
-	int (*verify_header) (unsigned char *, int, struct image_tool_params *);
+	int (*verify_header) (unsigned char *ptr, int size,
+			      struct image_tool_params *);
 	/* Prints image information abstracting from image header */
 	void (*print_header) (const void *);
 	/*
@@ -130,10 +131,15 @@ struct image_type_params {
 	 * -o <component-outfile> <image>). Thus the code to extract a file
 	 * from an image must be put here.
 	 *
+	 * @ptr: Pointer to image
+	 * @size: Size of image
+	 * @params: Image parameters
+	 *
 	 * Returns 0 if the file was successfully retrieved from the image,
 	 * or a negative value on error.
 	 */
-	int (*extract_subimage)(void *, struct image_tool_params *);
+	int (*extract_subimage)(void *ptr, int size,
+				struct image_tool_params *params);
 	/*
 	 * Some image generation support for ex (default image type) supports
 	 * more than one type_ids, this callback function is used to check

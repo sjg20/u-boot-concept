@@ -46,7 +46,8 @@ static int dumpimage_extract_subimage(struct image_type_params *tparams,
 		 * if verify is successful
 		 */
 		if (tparams->extract_subimage) {
-			retval = tparams->extract_subimage(ptr, &params);
+			retval = tparams->extract_subimage(ptr, sbuf->st_size,
+							   &params);
 			if (retval != 0) {
 				fprintf(stderr, "%s: extract_subimage failed for %s\n",
 					params.cmdname, tparams->name);

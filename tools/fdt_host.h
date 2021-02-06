@@ -27,7 +27,20 @@
  */
 int fdt_remove_unused_strings(const void *old, void *new);
 
-int fit_check_sign(const void *fit, const void *key,
+/**
+ * fit_check_sign() - Check the signatures in an image
+ *
+ * This verified the configuration signature and then loads all the images it
+ * contains
+ *
+ * @fit: FIT image to load
+ * @size: Size of FIT image in bytes
+ * @key: Key FDT blob to use (contains public key)
+ * @key_size: Size of key FDT blob
+ * @fit_uname_config: Name of configuration to verify
+ * @return 0 if OK, -ve on error
+ */
+int fit_check_sign(const void *fit, ulong size, const void *key, ulong key_size,
 		   const char *fit_uname_config);
 
 #endif /* __FDT_HOST_H__ */

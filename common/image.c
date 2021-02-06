@@ -1025,9 +1025,9 @@ int genimg_get_comp_id(const char *name)
  * returns:
  *     kernel start address
  */
-ulong genimg_get_kernel_addr_fit(char * const img_addr,
-			     const char **fit_uname_config,
-			     const char **fit_uname_kernel)
+ulong genimg_get_kernel_addr_fit(char *const img_addr,
+				 const char **fit_uname_config,
+				 const char **fit_uname_kernel)
 {
 	ulong kernel_addr;
 
@@ -1042,7 +1042,7 @@ ulong genimg_get_kernel_addr_fit(char * const img_addr,
 		debug("*  kernel: config '%s' from image at 0x%08lx\n",
 		      *fit_uname_config, kernel_addr);
 	} else if (fit_parse_subimage(img_addr, image_load_addr, &kernel_addr,
-				     fit_uname_kernel)) {
+				      fit_uname_kernel)) {
 		debug("*  kernel: subimage '%s' from image at 0x%08lx\n",
 		      *fit_uname_kernel, kernel_addr);
 #endif
@@ -1123,6 +1123,21 @@ int genimg_has_config(bootm_headers_t *images)
 	return 0;
 }
 
+int image_parse_size(int argc, char *const **argvp, ulong *sizep)
+{
+	char *const *argv = *argvp;
+
+	if (argc >= 2 && !strcmp("-s", argv[0])) {
+		*sizep = simple_strtoul(argv[1], NULL, 16);
+		argc += 2;
+		*argvp += 2;
+	} else {
+		*sizep = IMAGE_SIZE_INVAL;
+	}
+
+	return argc;
+}
+
 /**
  * boot_get_ramdisk - main ramdisk handling routine
  * @argc: command argument count
@@ -1148,7 +1163,7 @@ int genimg_has_config(bootm_headers_t *images)
 int boot_get_ramdisk(int argc, char *const argv[], bootm_headers_t *images,
 		     uint8_t arch, ulong *rd_start, ulong *rd_end)
 {
-	ulong rd_addr, rd_load;
+	ulong rd_addr, rd_size = IMAGE_SIZE_INVAL, rd_load;
 	ulong rd_data, rd_len;
 #if CONFIG_IS_ENABLED(LEGACY_IMAGE_FORMAT)
 	const image_header_t *rd_hdr;
@@ -1167,6 +1182,8 @@ int boot_get_ramdisk(int argc, char *const argv[], bootm_headers_t *images,
 
 	*rd_start = 0;
 	*rd_end = 0;
+
+	argc = image_parse_size(argc, &argv, &rd_size);
 
 #ifdef CONFIG_ANDROID_BOOT_IMAGE
 	/*
@@ -1262,7 +1279,7 @@ int boot_get_ramdisk(int argc, char *const argv[], bootm_headers_t *images,
 #if IMAGE_ENABLE_FIT
 		case IMAGE_FORMAT_FIT:
 			rd_noffset = fit_image_load(images,
-					rd_addr, &fit_uname_ramdisk,
+					rd_addr, rd_size, &fit_uname_ramdisk,
 					&fit_uname_config, arch,
 					IH_TYPE_RAMDISK,
 					BOOTSTAGE_ID_FIT_RD_START,
@@ -1272,6 +1289,7 @@ int boot_get_ramdisk(int argc, char *const argv[], bootm_headers_t *images,
 				return 1;
 
 			images->fit_hdr_rd = map_sysmem(rd_addr, 0);
+			images->fit_rd_size = rd_size;
 			images->fit_uname_rd = fit_uname_ramdisk;
 			images->fit_noffset_rd = rd_noffset;
 			break;
@@ -1588,8 +1606,7 @@ int boot_get_loadable(int argc, char *const argv[], bootm_headers_t *images,
 		     loadables_index++)
 		{
 			fit_img_result = fit_image_load(images,
-				tmp_img_addr,
-				&uname,
+				tmp_img_addr, images->fit_os_size, &uname,
 				&(images->fit_uname_cfg), arch,
 				IH_TYPE_LOADABLE,
 				BOOTSTAGE_ID_FIT_LOADABLE_START,

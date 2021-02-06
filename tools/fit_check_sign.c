@@ -83,7 +83,8 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 
 	image_set_host_blob(key_blob);
-	ret = fit_check_sign(fit_blob, key_blob, config_name);
+	ret = fit_check_sign(fit_blob, fsbuf.st_size, key_blob, ksbuf.st_size,
+			     config_name);
 	if (!ret) {
 		ret = EXIT_SUCCESS;
 		fprintf(stderr, "Signature check OK\n");

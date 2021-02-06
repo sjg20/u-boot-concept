@@ -42,7 +42,7 @@ static const char *get_default_image(const void *fit)
 }
 #endif
 
-int image_source_script(ulong addr, const char *fit_uname)
+int image_source_script(ulong addr, ulong size, const char *fit_uname)
 {
 	ulong		len;
 #if defined(CONFIG_LEGACY_IMAGE_FORMAT)
@@ -107,7 +107,7 @@ int image_source_script(ulong addr, const char *fit_uname)
 #if defined(CONFIG_FIT)
 	case IMAGE_FORMAT_FIT:
 		fit_hdr = buf;
-		if (fit_check_format(fit_hdr, IMAGE_SIZE_INVAL)) {
+		if (fit_check_format(fit_hdr, size)) {
 			puts ("Bad FIT image format\n");
 			return 1;
 		}
@@ -164,27 +164,32 @@ int image_source_script(ulong addr, const char *fit_uname)
 static int do_source(struct cmd_tbl *cmdtp, int flag, int argc,
 		     char *const argv[])
 {
-	ulong addr;
+	ulong addr, size;
 	int rcode;
 	const char *fit_uname = NULL;
 
+	argc--;
+	argv++;
+
+	argc = image_parse_size(argc, &argv, &size);
+
 	/* Find script image */
-	if (argc < 2) {
+	if (argc < 1) {
 		addr = CONFIG_SYS_LOAD_ADDR;
 		debug("*  source: default load address = 0x%08lx\n", addr);
 #if defined(CONFIG_FIT)
-	} else if (fit_parse_subimage(argv[1], image_load_addr, &addr,
+	} else if (fit_parse_subimage(argv[0], image_load_addr, &addr,
 				      &fit_uname)) {
 		debug("*  source: subimage '%s' from FIT image at 0x%08lx\n",
 		      fit_uname, addr);
 #endif
 	} else {
-		addr = simple_strtoul(argv[1], NULL, 16);
+		addr = simple_strtoul(argv[0], NULL, 16);
 		debug("*  source: cmdline image address = 0x%08lx\n", addr);
 	}
 
 	printf ("## Executing script at %08lx\n", addr);
-	rcode = image_source_script(addr, fit_uname);
+	rcode = image_source_script(addr, size, fit_uname);
 	return rcode;
 }
 

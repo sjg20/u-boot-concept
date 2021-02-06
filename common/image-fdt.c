@@ -275,6 +275,7 @@ int boot_get_fdt(int flag, int argc, char *const argv[], uint8_t arch,
 #endif
 	ulong		img_addr;
 	ulong		fdt_addr;
+	ulong		fdt_size;
 	char		*fdt_blob = NULL;
 	void		*buf;
 #if CONFIG_IS_ENABLED(FIT)
@@ -287,6 +288,8 @@ int boot_get_fdt(int flag, int argc, char *const argv[], uint8_t arch,
 
 	*of_flat_tree = NULL;
 	*of_size = 0;
+
+	argc = image_parse_size(argc, &argv, &fdt_size);
 
 	img_addr = (argc == 0) ? image_load_addr :
 			simple_strtoul(argv[0], NULL, 16);
@@ -348,7 +351,7 @@ int boot_get_fdt(int flag, int argc, char *const argv[], uint8_t arch,
 		 * address provided in the second bootm argument
 		 * check image type, for FIT images get a FIT node.
 		 */
-		buf = map_sysmem(fdt_addr, 0);
+		buf = map_sysmem(fdt_addr, fdt_size);
 		switch (genimg_get_format(buf)) {
 #if CONFIG_IS_ENABLED(LEGACY_IMAGE_FORMAT)
 		case IMAGE_FORMAT_LEGACY:
@@ -399,19 +402,20 @@ int boot_get_fdt(int flag, int argc, char *const argv[], uint8_t arch,
 			 */
 #if CONFIG_IS_ENABLED(FIT)
 			/* check FDT blob vs FIT blob */
-			if (!fit_check_format(buf, IMAGE_SIZE_INVAL)) {
+			if (!fit_check_format(buf, fdt_size)) {
 				ulong load, len;
 
 				fdt_noffset = boot_get_fdt_fit(images,
-					fdt_addr, &fit_uname_fdt,
+					fdt_addr, fdt_size, &fit_uname_fdt,
 					&fit_uname_config,
 					arch, &load, &len);
 
 				if (fdt_noffset < 0)
 					goto error;
 
-				images->fit_hdr_fdt = map_sysmem(fdt_addr, 0);
+				images->fit_hdr_fdt = map_sysmem(fdt_addr, len);
 				images->fit_uname_fdt = fit_uname_fdt;
+				images->fit_fdt_size = len;
 				images->fit_noffset_fdt = fdt_noffset;
 				fdt_addr = load;
 

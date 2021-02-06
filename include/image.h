@@ -131,6 +131,7 @@ struct fdt_region;
 #endif
 
 extern ulong image_load_addr;		/* Default Load Address */
+extern ulong image_load_size;		/* Default Load Size */
 extern ulong image_save_addr;		/* Default Save Address */
 extern ulong image_save_size;		/* Default Save Size */
 
@@ -387,20 +388,19 @@ typedef struct bootm_headers {
 	const char	*fit_uname_cfg;	/* configuration node unit name */
 
 	void		*fit_hdr_os;	/* os FIT image header */
+	ulong		fit_os_size;	/* os FIT image size */
 	const char	*fit_uname_os;	/* os subimage node unit name */
 	int		fit_noffset_os;	/* os subimage node offset */
 
 	void		*fit_hdr_rd;	/* init ramdisk FIT image header */
+	ulong		fit_rd_size;	/* init ramdisk size */
 	const char	*fit_uname_rd;	/* init ramdisk subimage node unit name */
 	int		fit_noffset_rd;	/* init ramdisk subimage node offset */
 
 	void		*fit_hdr_fdt;	/* FDT blob FIT image header */
+	ulong		fit_fdt_size;	/* FDT blob FIT image size */
 	const char	*fit_uname_fdt;	/* FDT blob subimage node unit name */
 	int		fit_noffset_fdt;/* FDT blob subimage node offset */
-
-	void		*fit_hdr_setup;	/* x86 setup FIT image header */
-	const char	*fit_uname_setup; /* x86 setup subimage node name */
-	int		fit_noffset_setup;/* x86 setup subimage node offset */
 #endif
 
 #ifndef USE_HOSTCC
@@ -623,6 +623,19 @@ ulong genimg_get_kernel_addr(char * const img_addr);
 int genimg_get_format(const void *img_addr);
 int genimg_has_config(bootm_headers_t *images);
 
+/**
+ * image_parse_size() - Parse a size value from the arguments
+ *
+ * If argc >= 2 then this looks for "-s <size>" and returns the size found in
+ * @sizep. Otherwise *@sizep is set to IMAGE_SIZE_INVAL
+ *
+ * @argc: Number of arguments
+ * @argv: pointer to list of arguments, updated on return
+ * @sizep: Return the size selected (which may be IMAGE_SIZE_INVAL)
+ * @return new argc value (either unchanged or incremented by 2)
+ */
+int image_parse_size(int argc, char *const **argv, ulong *sizep);
+
 int boot_get_fpga(int argc, char *const argv[], bootm_headers_t *images,
 		  uint8_t arch, const ulong *ld_start, ulong * const ld_len);
 int boot_get_ramdisk(int argc, char *const argv[], bootm_headers_t *images,
@@ -665,6 +678,7 @@ int boot_get_setup_fit(bootm_headers_t *images, uint8_t arch,
  *
  * @param images	Boot images structure
  * @param addr		Address of FIT in memory
+ * @param size		Size of FIT, or IMAGE_SIZE_INVAL if unknown
  * @param fit_unamep	On entry this is the requested image name
  *			(e.g. "kernel") or NULL to use the default. On exit
  *			points to the selected image name
@@ -677,7 +691,7 @@ int boot_get_setup_fit(bootm_headers_t *images, uint8_t arch,
  *
  * @return node offset of base image, or -ve error code on error
  */
-int boot_get_fdt_fit(bootm_headers_t *images, ulong addr,
+int boot_get_fdt_fit(bootm_headers_t *images, ulong addr, ulong size,
 		   const char **fit_unamep, const char **fit_uname_configp,
 		   int arch, ulong *datap, ulong *lenp);
 
@@ -693,6 +707,7 @@ int boot_get_fdt_fit(bootm_headers_t *images, ulong addr,
  *
  * @param images	Boot images structure
  * @param addr		Address of FIT in memory
+ * @param size		Size of FIT, or IMAGE_SIZE_INVAL if unknown
  * @param fit_unamep	On entry this is the requested image name
  *			(e.g. "kernel") or NULL to use the default. On exit
  *			points to the selected image name
@@ -711,7 +726,7 @@ int boot_get_fdt_fit(bootm_headers_t *images, ulong addr,
  * @param lenp		Returns length of loaded image
  * @return node offset of image, or -ve error code on error
  */
-int fit_image_load(bootm_headers_t *images, ulong addr,
+int fit_image_load(bootm_headers_t *images, ulong addr, ulong size,
 		   const char **fit_unamep, const char **fit_uname_configp,
 		   int arch, int image_type, int bootstage_id,
 		   enum fit_load_op load_op, ulong *datap, ulong *lenp);
@@ -723,10 +738,11 @@ int fit_image_load(bootm_headers_t *images, ulong addr,
  * have a header (FIT or legacy) with the script type (IH_TYPE_SCRIPT).
  *
  * @addr: Address of script
+ * @size: Size of script
  * @fit_uname: FIT subimage name
  * @return result code (enum command_ret_t)
  */
-int image_source_script(ulong addr, const char *fit_uname);
+int image_source_script(ulong addr, ulong size, const char *fit_uname);
 
 #ifndef USE_HOSTCC
 /**
@@ -1629,6 +1645,7 @@ struct fit_loadable_tbl {
 /**
  * fit_update - update storage with FIT image
  * @fit:        Pointer to FIT image
+ * @size:	Size of FIT
  *
  * Update firmware on storage using FIT image as input.
  * The storage area to be update will be identified by the name
@@ -1636,6 +1653,6 @@ struct fit_loadable_tbl {
  *
  * Return:      0 on success, non-zero otherwise
  */
-int fit_update(const void *fit);
+int fit_update(const void *fit, ulong size);
 
 #endif	/* __IMAGE_H__ */

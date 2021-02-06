@@ -343,17 +343,7 @@ next_node:
 #endif /* CONFIG_DFU_UPDATE || CONFIG_UPDATE_TFTP */
 
 #ifdef CONFIG_UPDATE_FIT
-/**
- * fit_update - update storage with FIT image
- * @fit:	Pointer to FIT image
- *
- * Update firmware on storage using FIT image as input.
- * The storage area to be update will be identified by the name
- * in FIT and matching it to "dfu_alt_info" variable.
- *
- * Return:      0 - on success, non-zero - otherwise
- */
-int fit_update(const void *fit)
+int fit_update(const void *fit, ulong size)
 {
 	char *fit_image_name;
 	ulong update_addr, update_fladdr, update_size;
@@ -363,7 +353,7 @@ int fit_update(const void *fit)
 	if (!fit)
 		return -EINVAL;
 
-	if (fit_check_format((void *)fit, IMAGE_SIZE_INVAL)) {
+	if (fit_check_format((void *)fit, size)) {
 		printf("Bad FIT format of the update file, aborting auto-update\n");
 		return -EINVAL;
 	}

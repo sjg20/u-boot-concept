@@ -36,6 +36,7 @@ static int
 do_imgextract(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {
 	ulong		addr = image_load_addr;
+	ulong		size;
 	ulong		dest = 0;
 	ulong		data, len;
 	int		verify;
@@ -57,18 +58,21 @@ do_imgextract(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	uint8_t		comp;
 
 	verify = env_get_yesno("verify");
+	argc--;
+	argv++;
+	argc = image_parse_size(argc, &argv, &size);
 
-	if (argc > 1) {
-		addr = simple_strtoul(argv[1], NULL, 16);
+	if (argc > 0) {
+		addr = simple_strtoul(argv[0], NULL, 16);
 	}
-	if (argc > 2) {
-		part = simple_strtoul(argv[2], NULL, 16);
+	if (argc > 1) {
+		part = simple_strtoul(argv[1], NULL, 16);
 #if defined(CONFIG_FIT)
-		uname = argv[2];
+		uname = argv[1];
 #endif
 	}
-	if (argc > 3) {
-		dest = simple_strtoul(argv[3], NULL, 16);
+	if (argc > 2) {
+		dest = simple_strtoul(argv[2], NULL, 16);
 	}
 
 	switch (genimg_get_format((void *)addr)) {
@@ -100,7 +104,7 @@ do_imgextract(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 		}
 
 		comp = image_get_comp(hdr);
-		if ((comp != IH_COMP_NONE) && (argc < 4)) {
+		if ((comp != IH_COMP_NONE) && (argc < 3)) {
 			printf("Must specify load address for %s command "
 					"with compressed image\n",
 					cmdtp->name);
@@ -136,7 +140,7 @@ do_imgextract(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 			"at %08lx ...\n", uname, addr);
 
 		fit_hdr = (const void *)addr;
-		if (fit_check_format(fit_hdr, IMAGE_SIZE_INVAL)) {
+		if (fit_check_format(fit_hdr, size)) {
 			puts("Bad FIT image format\n");
 			return 1;
 		}
@@ -149,7 +153,7 @@ do_imgextract(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 		}
 
 		if (!fit_image_check_comp(fit_hdr, noffset, IH_COMP_NONE)
-		    && (argc < 4)) {
+		    && (argc < 3)) {
 			printf("Must specify load address for %s command "
 				"with compressed image\n",
 				cmdtp->name);
@@ -186,7 +190,7 @@ do_imgextract(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 		return 1;
 	}
 
-	if (argc > 3) {
+	if (argc > 2) {
 		switch (comp) {
 		case IH_COMP_NONE:
 #if defined(CONFIG_HW_WATCHDOG) || defined(CONFIG_WATCHDOG)

@@ -23,10 +23,6 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#if defined(CONFIG_CMD_IMI)
-static int image_info(unsigned long addr);
-#endif
-
 #if defined(CONFIG_CMD_IMLS)
 #include <flash.h>
 #include <mtd/cfi_flash.h>
@@ -117,10 +113,8 @@ int do_bootm(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 		 *
 		 * If endp is ':' or '#' assume a FIT identifier so pass
 		 * along for normal processing.
-		 *
-		 * Right now we assume the first arg should never be '-'
 		 */
-		if ((*endp != 0) && (*endp != ':') && (*endp != '#'))
+		if (*endp && *endp != ':' && *endp != '#' && *endp != '-')
 			return do_bootm_subcommand(cmdtp, flag, argc, argv);
 	}
 
@@ -176,7 +170,7 @@ static char bootm_help_text[] =
 	"\nSub-commands to do part of the bootm sequence.  The sub-commands "
 	"must be\n"
 	"issued in the order below (it's ok to not issue all sub-commands):\n"
-	"\tstart [addr [arg ...]]\n"
+	"\tstart [-s size] [addr [arg ...]]\n"
 	"\tloados  - load OS image\n"
 #if defined(CONFIG_SYS_BOOT_RAMDISK_HIGH)
 	"\tramdisk - relocate initrd, set env initrd_start/initrd_end\n"
@@ -227,26 +221,7 @@ U_BOOT_CMD(
 /* iminfo - print header info for a requested image */
 /*******************************************************************/
 #if defined(CONFIG_CMD_IMI)
-static int do_iminfo(struct cmd_tbl *cmdtp, int flag, int argc,
-		     char *const argv[])
-{
-	int	arg;
-	ulong	addr;
-	int	rcode = 0;
-
-	if (argc < 2) {
-		return image_info(image_load_addr);
-	}
-
-	for (arg = 1; arg < argc; ++arg) {
-		addr = simple_strtoul(argv[arg], NULL, 16);
-		if (image_info(addr) != 0)
-			rcode = 1;
-	}
-	return rcode;
-}
-
-static int image_info(ulong addr)
+static int image_info(ulong addr, ulong size)
 {
 	void *hdr = (void *)map_sysmem(addr, 0);
 
@@ -291,7 +266,7 @@ static int image_info(ulong addr)
 	case IMAGE_FORMAT_FIT:
 		puts("   FIT image found\n");
 
-		if (fit_check_format(hdr, IMAGE_SIZE_INVAL)) {
+		if (fit_check_format(hdr, size)) {
 			puts("Bad FIT image format!\n");
 			unmap_sysmem(hdr);
 			return 1;
@@ -315,6 +290,29 @@ static int image_info(ulong addr)
 
 	unmap_sysmem(hdr);
 	return 1;
+}
+
+static int do_iminfo(struct cmd_tbl *cmdtp, int flag, int argc,
+		     char *const argv[])
+{
+	int	arg;
+	ulong	addr, size;
+	int	rcode = 0;
+
+	argc--;
+	argv++;
+	argc = image_parse_size(argc, &argv, &size);
+
+	if (argc < 1)
+		return image_info(image_load_addr, size);
+
+	for (arg = 0; arg < argc; ++arg) {
+		addr = simple_strtoul(argv[arg], NULL, 16);
+		if (image_info(addr, size) != 0)
+			rcode = 1;
+	}
+
+	return rcode;
 }
 
 U_BOOT_CMD(

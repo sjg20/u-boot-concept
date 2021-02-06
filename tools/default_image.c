@@ -139,7 +139,8 @@ static void image_set_header(void *ptr, struct stat *sbuf, int ifd,
 	image_set_hcrc(hdr, checksum);
 }
 
-static int image_extract_subimage(void *ptr, struct image_tool_params *params)
+static int image_extract_subimage(void *ptr, int size,
+				  struct image_tool_params *params)
 {
 	const image_header_t *hdr = (const image_header_t *)ptr;
 	ulong file_data;

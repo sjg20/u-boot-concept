@@ -17,30 +17,35 @@ int common_diskboot(struct cmd_tbl *cmdtp, const char *intf, int argc,
 	__maybe_unused int dev;
 	int part;
 	ulong addr = CONFIG_SYS_LOAD_ADDR;
+	ulong size;
 	ulong cnt;
 	struct disk_partition info;
 #if defined(CONFIG_LEGACY_IMAGE_FORMAT)
 	image_header_t *hdr;
 #endif
 	struct blk_desc *dev_desc;
-
+	const char *cmd = argv[0];
 #if CONFIG_IS_ENABLED(FIT)
 	const void *fit_hdr = NULL;
 #endif
 
 	bootstage_mark(BOOTSTAGE_ID_IDE_START);
-	if (argc > 3) {
+	argc--;
+	argv++;
+	argc = image_parse_size(argc, &argv, &size);
+
+	if (argc > 2) {
 		bootstage_error(BOOTSTAGE_ID_IDE_ADDR);
 		return CMD_RET_USAGE;
 	}
 	bootstage_mark(BOOTSTAGE_ID_IDE_ADDR);
 
-	if (argc > 1)
-		addr = simple_strtoul(argv[1], NULL, 16);
+	if (argc > 0)
+		addr = simple_strtoul(argv[0], NULL, 16);
 
 	bootstage_mark(BOOTSTAGE_ID_IDE_BOOT_DEVICE);
 
-	part = blk_get_device_part_str(intf, (argc == 3) ? argv[2] : NULL,
+	part = blk_get_device_part_str(intf, (argc == 2) ? argv[1] : NULL,
 					&dev_desc, &info, 1);
 	if (part < 0) {
 		bootstage_error(BOOTSTAGE_ID_IDE_TYPE);
@@ -114,7 +119,7 @@ int common_diskboot(struct cmd_tbl *cmdtp, const char *intf, int argc,
 	/* This cannot be done earlier,
 	 * we need complete FIT image in RAM first */
 	if (genimg_get_format((void *) addr) == IMAGE_FORMAT_FIT) {
-		if (fit_check_format(fit_hdr, IMAGE_SIZE_INVAL)) {
+		if (fit_check_format(fit_hdr, size)) {
 			bootstage_error(BOOTSTAGE_ID_IDE_FIT_READ);
 			puts("** Bad FIT image format\n");
 			return 1;
@@ -128,5 +133,5 @@ int common_diskboot(struct cmd_tbl *cmdtp, const char *intf, int argc,
 	/* Loading ok, update default load address */
 	image_load_addr = addr;
 
-	return bootm_maybe_autostart(cmdtp, argv[0]);
+	return bootm_maybe_autostart(cmdtp, cmd);
 }

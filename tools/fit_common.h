@@ -14,7 +14,7 @@
  * Verify the format of FIT header pointed to by ptr
  *
  * @ptr: image header to be verified
- * @image_size: size of while image
+ * @image_size: size of whole image
  * @params: mkimage parameters
  * @return 0 if OK, -1 on error
  */

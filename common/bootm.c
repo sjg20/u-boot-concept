@@ -852,13 +852,15 @@ static const void *boot_get_kernel(struct cmd_tbl *cmdtp, int flag, int argc,
 #if CONFIG_IS_ENABLED(LEGACY_IMAGE_FORMAT)
 	image_header_t	*hdr;
 #endif
-	ulong		img_addr;
+	ulong		img_addr, img_size = IMAGE_SIZE_INVAL;
 	const void *buf;
 	const char	*fit_uname_config = NULL;
 	const char	*fit_uname_kernel = NULL;
 #if IMAGE_ENABLE_FIT
 	int		os_noffset;
 #endif
+
+	argc = image_parse_size(argc, &argv, &img_size);
 
 	img_addr = genimg_get_kernel_addr_fit(argc < 1 ? NULL : argv[0],
 					      &fit_uname_config,
@@ -868,13 +870,13 @@ static const void *boot_get_kernel(struct cmd_tbl *cmdtp, int flag, int argc,
 
 	/* check image type, for FIT images get FIT kernel node */
 	*os_data = *os_len = 0;
-	buf = map_sysmem(img_addr, 0);
+	buf = map_sysmem(img_addr, img_size);
 	switch (genimg_get_format(buf)) {
 #if CONFIG_IS_ENABLED(LEGACY_IMAGE_FORMAT)
 	case IMAGE_FORMAT_LEGACY:
 		printf("## Booting kernel from Legacy Image at %08lx ...\n",
 		       img_addr);
-		hdr = image_get_kernel(img_addr, images->verify);
+		hdr = image_get_kernel(img_addr, img_size, images->verify);
 		if (!hdr)
 			return NULL;
 		bootstage_mark(BOOTSTAGE_ID_CHECK_IMAGETYPE);
@@ -916,7 +918,7 @@ static const void *boot_get_kernel(struct cmd_tbl *cmdtp, int flag, int argc,
 #endif
 #if IMAGE_ENABLE_FIT
 	case IMAGE_FORMAT_FIT:
-		os_noffset = fit_image_load(images, img_addr,
+		os_noffset = fit_image_load(images, img_addr, img_size,
 				&fit_uname_kernel, &fit_uname_config,
 				IH_ARCH_DEFAULT, IH_TYPE_KERNEL,
 				BOOTSTAGE_ID_FIT_KERNEL_START,
@@ -924,7 +926,8 @@ static const void *boot_get_kernel(struct cmd_tbl *cmdtp, int flag, int argc,
 		if (os_noffset < 0)
 			return NULL;
 
-		images->fit_hdr_os = map_sysmem(img_addr, 0);
+		images->fit_hdr_os = map_sysmem(img_addr, img_size);
+		images->fit_os_size = img_size;
 		images->fit_uname_os = fit_uname_kernel;
 		images->fit_uname_cfg = fit_uname_config;
 		images->fit_noffset_os = os_noffset;
@@ -962,7 +965,7 @@ void __weak switch_to_non_secure_mode(void)
 #else /* USE_HOSTCC */
 
 #if defined(CONFIG_FIT_SIGNATURE)
-static int bootm_host_load_image(const void *fit, int req_image_type,
+static int bootm_host_load_image(const void *fit, ulong size, int req_image_type,
 				 int cfg_noffset)
 {
 	const char *fit_uname_config = NULL;
@@ -978,7 +981,7 @@ static int bootm_host_load_image(const void *fit, int req_image_type,
 	fit_uname_config = fdt_get_name(fit, cfg_noffset, NULL);
 	memset(&images, '\0', sizeof(images));
 	images.verify = 1;
-	noffset = fit_image_load(&images, (ulong)fit,
+	noffset = fit_image_load(&images, (ulong)fit, size,
 		NULL, &fit_uname_config,
 		IH_ARCH_DEFAULT, req_image_type, -1,
 		FIT_LOAD_IGNORED, &data, &len);
@@ -1010,7 +1013,7 @@ static int bootm_host_load_image(const void *fit, int req_image_type,
 	return 0;
 }
 
-int bootm_host_load_images(const void *fit, int cfg_noffset)
+int bootm_host_load_images(const void *fit, ulong size, int cfg_noffset)
 {
 	static uint8_t image_types[] = {
 		IH_TYPE_KERNEL,
@@ -1023,7 +1026,8 @@ int bootm_host_load_images(const void *fit, int cfg_noffset)
 	for (i = 0; i < ARRAY_SIZE(image_types); i++) {
 		int ret;
 
-		ret = bootm_host_load_image(fit, image_types[i], cfg_noffset);
+		ret = bootm_host_load_image(fit, size, image_types[i],
+					    cfg_noffset);
 		if (!err && ret && ret != -ENOENT)
 			err = ret;
 	}

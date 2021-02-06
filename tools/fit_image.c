@@ -871,7 +871,8 @@ static int fit_image_extract(
  * returns:
  *     zero in case of success or a negative value if fail.
  */
-static int fit_extract_contents(void *ptr, struct image_tool_params *params)
+static int fit_extract_contents(void *ptr, int size,
+				struct image_tool_params *params)
 {
 	int images_noffset;
 	int noffset;
@@ -883,7 +884,7 @@ static int fit_extract_contents(void *ptr, struct image_tool_params *params)
 	/* Indent string is defined in header image.h */
 	p = IMAGE_INDENT_STRING;
 
-	if (fit_check_format(fit, IMAGE_SIZE_INVAL)) {
+	if (fit_check_format(fit, size)) {
 		printf("Bad FIT image format\n");
 		return -1;
 	}

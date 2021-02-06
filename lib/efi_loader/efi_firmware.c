@@ -305,7 +305,7 @@ efi_status_t EFIAPI efi_firmware_fit_set_image(
 	if (!image || image_index != 1)
 		return EFI_EXIT(EFI_INVALID_PARAMETER);
 
-	if (fit_update(image))
+	if (fit_update(image, IMAGE_SIZE_INVAL))
 		return EFI_EXIT(EFI_DEVICE_ERROR);
 
 	return EFI_EXIT(EFI_SUCCESS);

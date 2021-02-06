@@ -1969,7 +1969,7 @@ static const char *fit_get_image_type_property(int type)
 	return "unknown";
 }
 
-int fit_image_load(bootm_headers_t *images, ulong addr,
+int fit_image_load(bootm_headers_t *images, ulong addr, ulong size,
 		   const char **fit_unamep, const char **fit_uname_configp,
 		   int arch, int image_type, int bootstage_id,
 		   enum fit_load_op load_op, ulong *datap, ulong *lenp)
@@ -1981,7 +1981,7 @@ int fit_image_load(bootm_headers_t *images, ulong addr,
 	const void *fit;
 	void *buf;
 	void *loadbuf;
-	size_t size;
+	size_t buf_size;
 	int type_ok, os_ok;
 	ulong load, load_end, data, len;
 	uint8_t os, comp;
@@ -1991,7 +1991,7 @@ int fit_image_load(bootm_headers_t *images, ulong addr,
 	const char *prop_name;
 	int ret;
 
-	fit = map_sysmem(addr, 0);
+	fit = map_sysmem(addr, size);
 	fit_uname = fit_unamep ? *fit_unamep : NULL;
 	fit_uname_config = fit_uname_configp ? *fit_uname_configp : NULL;
 	fit_base_uname_config = NULL;
@@ -1999,7 +1999,7 @@ int fit_image_load(bootm_headers_t *images, ulong addr,
 	printf("## Loading %s from FIT Image at %08lx ...\n", prop_name, addr);
 
 	bootstage_mark(bootstage_id + BOOTSTAGE_SUB_FORMAT);
-	ret = fit_check_format(fit, IMAGE_SIZE_INVAL);
+	ret = fit_check_format(fit, size);
 	if (ret) {
 		printf("Bad FIT %s image format! (err=%d)\n", prop_name, ret);
 		if (CONFIG_IS_ENABLED(FIT_SIGNATURE) && ret == -EADDRNOTAVAIL)
@@ -2116,7 +2116,7 @@ int fit_image_load(bootm_headers_t *images, ulong addr,
 
 	/* get image data address and length */
 	if (fit_image_get_data_and_size(fit, noffset,
-					(const void **)&buf, &size)) {
+					(const void **)&buf, &buf_size)) {
 		printf("Could not find %s subimage data!\n", prop_name);
 		bootstage_error(bootstage_id + BOOTSTAGE_SUB_GET_DATA);
 		return -ENOENT;
@@ -2125,7 +2125,7 @@ int fit_image_load(bootm_headers_t *images, ulong addr,
 	/* Decrypt data before uncompress/move */
 	if (IS_ENABLED(CONFIG_FIT_CIPHER) && IMAGE_ENABLE_DECRYPT) {
 		puts("   Decrypting Data ... ");
-		if (fit_image_uncipher(fit, noffset, &buf, &size)) {
+		if (fit_image_uncipher(fit, noffset, &buf, &buf_size)) {
 			puts("Error\n");
 			return -EACCES;
 		}
@@ -2134,9 +2134,9 @@ int fit_image_load(bootm_headers_t *images, ulong addr,
 
 	/* perform any post-processing on the image data */
 	if (!host_build() && IS_ENABLED(CONFIG_FIT_IMAGE_POST_PROCESS))
-		board_fit_image_post_process(&buf, &size);
+		board_fit_image_post_process(&buf, &buf_size);
 
-	len = (ulong)size;
+	len = (ulong)buf_size;
 
 	bootstage_mark(bootstage_id + BOOTSTAGE_SUB_GET_DATA_OK);
 
@@ -2225,7 +2225,7 @@ int fit_image_load(bootm_headers_t *images, ulong addr,
 }
 
 int boot_get_setup_fit(bootm_headers_t *images, uint8_t arch,
-			ulong *setup_start, ulong *setup_len)
+		       ulong *setup_start, ulong *setup_len)
 {
 	int noffset;
 	ulong addr;
@@ -2237,15 +2237,16 @@ int boot_get_setup_fit(bootm_headers_t *images, uint8_t arch,
 	if (noffset < 0)
 		return noffset;
 
-	ret = fit_image_load(images, addr, NULL, NULL, arch,
-			     IH_TYPE_X86_SETUP, BOOTSTAGE_ID_FIT_SETUP_START,
-			     FIT_LOAD_REQUIRED, setup_start, &len);
+	ret = fit_image_load(images, addr, images->fit_os_size, NULL, NULL,
+			     arch, IH_TYPE_X86_SETUP,
+			     BOOTSTAGE_ID_FIT_SETUP_START, FIT_LOAD_REQUIRED,
+			     setup_start, &len);
 
 	return ret;
 }
 
 #ifndef USE_HOSTCC
-int boot_get_fdt_fit(bootm_headers_t *images, ulong addr,
+int boot_get_fdt_fit(bootm_headers_t *images, ulong addr, ulong size,
 		   const char **fit_unamep, const char **fit_uname_configp,
 		   int arch, ulong *datap, ulong *lenp)
 {
@@ -2279,11 +2280,10 @@ int boot_get_fdt_fit(bootm_headers_t *images, ulong addr,
 			fit_uname_config = fit_uname_config_copy;
 	}
 
-	fdt_noffset = fit_image_load(images,
-		addr, &fit_uname, &fit_uname_config,
-		arch, IH_TYPE_FLATDT,
-		BOOTSTAGE_ID_FIT_FDT_START,
-		FIT_LOAD_OPTIONAL, &load, &len);
+	fdt_noffset = fit_image_load(images, addr, size, &fit_uname,
+				     &fit_uname_config, arch, IH_TYPE_FLATDT,
+				     BOOTSTAGE_ID_FIT_FDT_START,
+			             FIT_LOAD_OPTIONAL, &load, &len);
 
 	if (fdt_noffset < 0)
 		goto out;
@@ -2347,11 +2347,10 @@ int boot_get_fdt_fit(bootm_headers_t *images, ulong addr,
 
 		debug("%d: using uname=%s uconfig=%s\n", i, uname, uconfig);
 
-		ov_noffset = fit_image_load(images,
-			addr, &uname, &uconfig,
-			arch, IH_TYPE_FLATDT,
-			BOOTSTAGE_ID_FIT_FDT_START,
-			FIT_LOAD_REQUIRED, &ovload, &ovlen);
+		ov_noffset = fit_image_load(images, addr, size, &uname,
+					    &uconfig, arch, IH_TYPE_FLATDT,
+					    BOOTSTAGE_ID_FIT_FDT_START,
+					    FIT_LOAD_REQUIRED, &ovload, &ovlen);
 		if (ov_noffset < 0) {
 			printf("load of %s failed\n", uname);
 			continue;
