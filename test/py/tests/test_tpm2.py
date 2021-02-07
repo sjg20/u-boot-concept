@@ -40,10 +40,14 @@ def force_init(u_boot_console, force=False):
             u_boot_console.run_command('tpm2 clear TPM2_RH_PLATFORM')
         u_boot_console.run_command('echo --- end of init ---')
 
+def is_sandbox(cons):
+    # Array slice removes leading/trailing quotes.
+    sys_arch = cons.config.buildconfig.get('config_sys_arch', '"sandbox"')[1:-1]
+    return sys_arch == 'sandbox'
+
 @pytest.mark.buildconfigspec('cmd_tpm_v2')
 def test_tpm2_init(u_boot_console):
     """Init the software stack to use TPMv2 commands."""
-
     u_boot_console.run_command('tpm2 init')
     output = u_boot_console.run_command('echo $?')
     assert output.endswith('0')
@@ -54,17 +58,43 @@ def test_tpm2_startup(u_boot_console):
 
     Initiate the TPM internal state machine.
     """
+    u_boot_console.run_command('tpm2 startup TPM2_SU_CLEAR')
+    output = u_boot_console.run_command('echo $?')
+    assert output.endswith('0')
+
+def tpm2_sandbox_init(u_boot_console):
+    """Put sandbox back into a known state so we can run a test
+
+    This allows all tests to run in parallel, since no test depends on another.
+    """
+    u_boot_console.restart_uboot()
+    u_boot_console.run_command('tpm2 init')
+    output = u_boot_console.run_command('echo $?')
+    assert output.endswith('0')
 
     u_boot_console.run_command('tpm2 startup TPM2_SU_CLEAR')
     output = u_boot_console.run_command('echo $?')
     assert output.endswith('0')
 
+    u_boot_console.run_command('tpm2 self_test full')
+    output = u_boot_console.run_command('echo $?')
+    assert output.endswith('0')
+
 @pytest.mark.buildconfigspec('cmd_tpm_v2')
-def test_tpm2_self_test_full(u_boot_console):
+def test_tpm2_sandbox_self_test_full(u_boot_console):
     """Execute a TPM2_SelfTest (full) command.
 
     Ask the TPM to perform all self tests to also enable full capabilities.
     """
+    if is_sandbox(u_boot_console):
+        u_boot_console.restart_uboot()
+        u_boot_console.run_command('tpm2 init')
+        output = u_boot_console.run_command('echo $?')
+        assert output.endswith('0')
+
+        u_boot_console.run_command('tpm2 startup TPM2_SU_CLEAR')
+        output = u_boot_console.run_command('echo $?')
+        assert output.endswith('0')
 
     u_boot_console.run_command('tpm2 self_test full')
     output = u_boot_console.run_command('echo $?')
@@ -77,7 +107,8 @@ def test_tpm2_continue_self_test(u_boot_console):
     Ask the TPM to finish its self tests (alternative to the full test) in order
     to enter a fully operational state.
     """
-
+    if is_sandbox(u_boot_console):
+        tpm2_sandbox_init(u_boot_console)
     u_boot_console.run_command('tpm2 self_test continue')
     output = u_boot_console.run_command('echo $?')
     assert output.endswith('0')
@@ -94,6 +125,8 @@ def test_tpm2_clear(u_boot_console):
     not have a password set, otherwise this test will fail. ENDORSEMENT and
     PLATFORM hierarchies are also available.
     """
+    if is_sandbox(u_boot_console):
+        tpm2_sandbox_init(u_boot_console)
 
     u_boot_console.run_command('tpm2 clear TPM2_RH_LOCKOUT')
     output = u_boot_console.run_command('echo $?')
@@ -112,7 +145,8 @@ def test_tpm2_change_auth(u_boot_console):
     Use the LOCKOUT hierarchy for this. ENDORSEMENT and PLATFORM hierarchies are
     also available.
     """
-
+    if is_sandbox(u_boot_console):
+        tpm2_sandbox_init(u_boot_console)
     force_init(u_boot_console)
 
     u_boot_console.run_command('tpm2 change_auth TPM2_RH_LOCKOUT unicorn')
@@ -136,6 +170,8 @@ def test_tpm2_get_capability(u_boot_console):
     There is no expected default values because it would depend on the chip
     used. We can still save them in order to check they have changed later.
     """
+    if is_sandbox(u_boot_console):
+        tpm2_sandbox_init(u_boot_console)
 
     force_init(u_boot_console)
     ram = u_boot_utils.find_ram_base(u_boot_console)
@@ -158,7 +194,8 @@ def test_tpm2_dam_parameters(u_boot_console):
     the authentication, otherwise the lockout will be engaged after the first
     failed authentication attempt.
     """
-
+    if is_sandbox(u_boot_console):
+        tpm2_sandbox_init(u_boot_console)
     force_init(u_boot_console)
     ram = u_boot_utils.find_ram_base(u_boot_console)
 
@@ -181,6 +218,8 @@ def test_tpm2_pcr_read(u_boot_console):
 
     Perform a PCR read of the 0th PCR. Must be zero.
     """
+    if is_sandbox(u_boot_console):
+        tpm2_sandbox_init(u_boot_console)
 
     force_init(u_boot_console)
     ram = u_boot_utils.find_ram_base(u_boot_console)
@@ -208,7 +247,8 @@ def test_tpm2_pcr_extend(u_boot_console):
     No authentication mechanism is used here, not protecting against packet
     replay, yet.
     """
-
+    if is_sandbox(u_boot_console):
+        tpm2_sandbox_init(u_boot_console)
     force_init(u_boot_console)
     ram = u_boot_utils.find_ram_base(u_boot_console)
 
