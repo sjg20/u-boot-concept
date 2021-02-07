@@ -24,22 +24,23 @@ For configuration verification:
 Tests run with both SHA1 and SHA256 hashing.
 """
 
+import os
 import struct
 import pytest
 import u_boot_utils as util
 import vboot_forge
 
 TESTDATA = [
-    ['sha1', '', None, False],
-    ['sha1', '', '-E -p 0x10000', False],
-    ['sha1', '-pss', None, False],
-    ['sha1', '-pss', '-E -p 0x10000', False],
-    ['sha256', '', None, False],
-    ['sha256', '', '-E -p 0x10000', False],
-    ['sha256', '-pss', None, False],
-    ['sha256', '-pss', '-E -p 0x10000', False],
-    ['sha256', '-pss', None, True],
-    ['sha256', '-pss', '-E -p 0x10000', True],
+    ['sha1-basic', 'sha1', '', None, False],
+    ['sha1-pad', 'sha1', '', '-E -p 0x10000', False],
+    ['sha1-pss', 'sha1', '-pss', None, False],
+    ['sha1-pss-pad', 'sha1', '-pss', '-E -p 0x10000', False],
+    ['sha256-basic', 'sha256', '', None, False],
+    ['sha256-pad', 'sha256', '', '-E -p 0x10000', False],
+    ['sha256-pss', 'sha256', '-pss', None, False],
+    ['sha256-pss-pad', 'sha256', '-pss', '-E -p 0x10000', False],
+    ['sha256-pss-required', 'sha256', '-pss', None, True],
+    ['sha256-pss-pad-required', 'sha256', '-pss', '-E -p 0x10000', True],
 ]
 
 @pytest.mark.boardspec('sandbox')
@@ -48,8 +49,9 @@ TESTDATA = [
 @pytest.mark.requiredtool('fdtget')
 @pytest.mark.requiredtool('fdtput')
 @pytest.mark.requiredtool('openssl')
-@pytest.mark.parametrize("sha_algo,padding,sign_options,required", TESTDATA)
-def test_vboot(u_boot_console, sha_algo, padding, sign_options, required):
+@pytest.mark.parametrize("name,sha_algo,padding,sign_options,required",
+                         TESTDATA)
+def test_vboot(u_boot_console, name, sha_algo, padding, sign_options, required):
     """Test verified boot signing with mkimage and verification with 'bootm'.
 
     This works using sandbox only as it needs to update the device tree used
@@ -331,7 +333,9 @@ def test_vboot(u_boot_console, sha_algo, padding, sign_options, required):
         run_bootm(sha_algo, 'multi required key', '', False)
 
     cons = u_boot_console
-    tmpdir = cons.config.result_dir + '/'
+    tmpdir = os.path.join(cons.config.result_dir, name) + '/'
+    if not os.path.exists(tmpdir):
+        os.mkdir(tmpdir)
     datadir = cons.config.source_dir + '/test/py/tests/vboot/'
     fit = '%stest.fit' % tmpdir
     mkimage = cons.config.build_dir + '/tools/mkimage'
