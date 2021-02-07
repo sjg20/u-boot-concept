@@ -1428,6 +1428,7 @@ config SYS_FSL_LBC_CLK_DIV
 		Defines divider of platform clock(clock input to
 		eLBC controller).
 
+source "board/emulation/qemu-ppce500/Kconfig"
 source "board/freescale/corenet_ds/Kconfig"
 source "board/freescale/mpc8541cds/Kconfig"
 source "board/freescale/mpc8548cds/Kconfig"
@@ -1437,7 +1438,6 @@ source "board/freescale/mpc8569mds/Kconfig"
 source "board/freescale/p1010rdb/Kconfig"
 source "board/freescale/p1_p2_rdb_pc/Kconfig"
 source "board/freescale/p2041rdb/Kconfig"
-source "board/freescale/qemu-ppce500/Kconfig"
 source "board/freescale/t102xrdb/Kconfig"
 source "board/freescale/t104xrdb/Kconfig"
 source "board/freescale/t208xqds/Kconfig"
