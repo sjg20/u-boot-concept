@@ -1186,8 +1186,7 @@ def run_steps(args, dtb_file, include_disabled, output, output_dirs, phase,
         raise ValueError('Must specify either output or output_dirs, not both')
 
     if not scan:
-        scan = src_scan.Scanner(basedir, warning_disabled, drivers_additional,
-                                phase)
+        scan = src_scan.Scanner(basedir, drivers_additional, phase)
         scan.scan_drivers()
         do_process = True
     else:
@@ -1217,4 +1216,7 @@ def run_steps(args, dtb_file, include_disabled, output, output_dirs, phase,
         plat.out_header(outfile)
         outfile.method(plat)
     plat.finish_output()
+
+    if not warning_disabled:
+        scan.show_warnings()
     return plat
