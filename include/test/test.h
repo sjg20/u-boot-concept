@@ -24,8 +24,8 @@ struct unit_test_state {
 	struct mallinfo start;
 	void *priv;
 	struct device_node *of_root;
-	char expect_str[256];
-	char actual_str[256];
+	char expect_str[512];
+	char actual_str[512];
 };
 
 /* Test flags for each test */
