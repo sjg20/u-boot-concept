@@ -13,6 +13,8 @@
 #include <linux/ctype.h>
 #include <asm/io.h>
 
+#include <ns16550.h>
+
 char *display_options_get_banner_priv(bool newlines, const char *build_tag,
 				      char *buf, int size)
 {
@@ -44,9 +46,11 @@ char *display_options_get_banner(bool newlines, char *buf, int size)
 int display_options(void)
 {
 	char buf[DISPLAY_OPTIONS_BANNER_LENGTH];
+	struct ns16550_plat *plat = dev_get_plat(gd->cur_serial_dev);
 
 	display_options_get_banner(true, buf, sizeof(buf));
 	printf("%s", buf);
+	printf("base %x\n", plat->base);
 
 	return 0;
 }

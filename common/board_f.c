@@ -949,6 +949,7 @@ void board_init_f(ulong boot_flags)
 {
 	gd->flags = boot_flags;
 	gd->have_console = 0;
+	printch('a');
 
 	if (initcall_run_list(init_sequence_f))
 		hang();
@@ -989,6 +990,7 @@ static const init_fnc_t init_sequence_f_r[] = {
 
 void board_init_f_r(void)
 {
+	printch('b');
 	if (initcall_run_list(init_sequence_f_r))
 		hang();
 
@@ -1004,6 +1006,7 @@ void board_init_f_r(void)
 	gd->timer = NULL;
 #endif
 
+	printch('c');
 	/*
 	 * U-Boot has been copied into SDRAM, the BSS has been cleared etc.
 	 * Transfer execution from Flash to RAM by calculating the address
