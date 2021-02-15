@@ -115,7 +115,7 @@ VbError_t VbExDiskGetInfo(VbDiskInfo **infos_ptr, u32 *count_ptr,
 			"boot_device_info");
 
 	/* If we are looking for removable disks, scan USB */
-	if (disk_flags & VB_DISK_FLAG_REMOVABLE)
+	if (IS_ENABLED(CONFIG_USB) && (disk_flags & VB_DISK_FLAG_REMOVABLE))
 		boot_device_usb_start(vboot);
 
 	/* Scan through all the interfaces looking for devices */
