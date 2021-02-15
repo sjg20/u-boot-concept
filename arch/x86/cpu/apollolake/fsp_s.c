@@ -180,7 +180,7 @@ int arch_fsp_init_r(void)
 	struct udevice *dev, *itss;
 	int ret;
 
-	if (!ll_boot_init())
+	if (!ll_boot_init() || true)
 		return 0;
 
 	s3wake = IS_ENABLED(CONFIG_HAVE_ACPI_RESUME) &&
