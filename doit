@@ -1,0 +1,43 @@
+#!/bin/sh
+
+set -e
+
+# Replace dc with U-Boot in the image
+
+#old=/scratch/sglass/coral/chroot/build/coral/firmware/image-coral.dev.bin
+old=/scratch/sglass/coral/chroot/build/coral/firmware/image-coral.bin
+
+new=cb.bin
+ub=/tmp/b/chromeos_coral
+name=fallback/payload
+
+cp $old $new
+
+# Process one region of the image
+#  $1: region params ('' for recovery, '-r FW_MAIN_A' for firmare a)
+do_part() {
+	region="$1"
+
+	cbfstool $new remove $region -n $name
+
+	# Drop the unused bootblock in recovery to add space
+	[ -z "$region" ] && cbfstool $new remove $region -n bootblock
+
+	cbfstool $new expand $region
+
+	if ! cbfstool $new add-flat-binary $region -n $name \
+		-f $ub/u-boot.bin \
+		-c lzma -l 0x1110000 -e 0x1110000; then
+		cbfstool $new print $region
+	fi
+}
+
+# Do read/write and recovery
+do_part "-r FW_MAIN_A"
+do_part "-r FW_MAIN_B"
+do_part
+
+# Put valid MRC-cache data in there for a faster boot
+cbfstool $new write -r RW_MRC_CACHE -f RW_MRC_CACHE
+cbfstool $new write -r RW_VAR_MRC_CACHE -f RW_VAR_MRC_CACHE
+cbfstool $new write -r RECOVERY_MRC_CACHE -f RECOVERY_MRC_CACHE
