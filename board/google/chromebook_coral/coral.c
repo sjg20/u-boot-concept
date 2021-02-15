@@ -7,6 +7,7 @@
 #include <bloblist.h>
 #include <command.h>
 #include <dm.h>
+#include <init.h>
 #include <log.h>
 #include <sysinfo.h>
 #include <acpi/acpigen.h>
@@ -17,12 +18,27 @@
 #include <dm/acpi.h>
 #include "variant_gpio.h"
 
+DECLARE_GLOBAL_DATA_PTR;
+
 struct cros_gpio_info {
 	const char *linux_name;
 	enum cros_gpio_t type;
 	int gpio_num;
 	int flags;
 };
+
+int misc_init_f(void)
+{
+	if (!ll_boot_init()) {
+		printf("Running as secondary loader");
+		if (gd->arch.coreboot_table)
+			printf(" (found coreboot table at %lx)",
+			       gd->arch.coreboot_table);
+		printf("\n");
+	}
+
+	return 0;
+}
 
 int arch_misc_init(void)
 {

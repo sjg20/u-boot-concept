@@ -147,11 +147,13 @@ int vboot_update_acpi(struct vboot_info *vboot)
 	else
 		log_warning("FMAP address cannot be mapped (err=%d)\n", ret);
 
-	size = min(ID_LEN, sizeof(tab->fwid));
-	ret = smbios_update_version(vboot->firmware_id);
-	if (ret) {
-		log_err("Unable to update SMBIOS type 0 version string\n");
-		return log_msg_ret("smbios", -ENOSPC);
+	if (IS_ENABLED(CONFIG_GENERATE_SMBIOS_TABLE)) {
+		size = min(ID_LEN, sizeof(tab->fwid));
+		ret = smbios_update_version(vboot->firmware_id);
+		if (ret) {
+			log_err("Unable to update SMBIOS type 0 version string\n");
+			return log_msg_ret("smbios", -ENOSPC);
+		}
 	}
 
 	/* Synchronize VbSharedDataHeader from vboot_handoff to acpi vdat */

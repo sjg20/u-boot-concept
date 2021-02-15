@@ -27,7 +27,7 @@ static void read_mtrrs(void *arg)
 	mtrr_read_all(info);
 }
 
-static int do_mtrr_list(int reg_count, int cpu_select)
+int do_mtrr_list(int reg_count, int cpu_select)
 {
 	struct mtrr_info info;
 	int ret;
