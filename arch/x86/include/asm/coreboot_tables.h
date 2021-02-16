@@ -290,6 +290,7 @@ struct cb_cmos_option_table {
 	u32 tag;
 	u32 size;
 	u32 header_length;
+	/* entries follow after this header */
 };
 
 #define CB_TAG_OPTION         0x00c9
