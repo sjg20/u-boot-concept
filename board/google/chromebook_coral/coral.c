@@ -15,6 +15,7 @@
 #include <asm/acpi_nhlt.h>
 #include <asm/intel_gnvs.h>
 #include <asm/intel_pinctrl.h>
+#include <asm/arch-coreboot/sysinfo.h>
 #include <dm/acpi.h>
 #include "variant_gpio.h"
 
@@ -31,9 +32,19 @@ int misc_init_f(void)
 {
 	if (!ll_boot_init()) {
 		printf("Running as secondary loader");
-		if (gd->arch.coreboot_table)
+		if (gd->arch.coreboot_table) {
+			int ret;
 			printf(" (found coreboot table at %lx)",
 			       gd->arch.coreboot_table);
+
+			ret = get_coreboot_info(&lib_sysinfo);
+			if (ret != 0) {
+				printf("Failed to parse coreboot tables (err=%d)\n",
+				       ret);
+				return ret;
+			}
+		}
+
 		printf("\n");
 	}
 

@@ -7,8 +7,9 @@
  */
 
 #include <common.h>
+#include <mapmem.h>
 #include <net.h>
-#include <asm/arch/sysinfo.h>
+#include <asm/arch-coreboot/sysinfo.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -65,10 +66,10 @@ static void cb_parse_serial(unsigned char *ptr, struct sysinfo_t *info)
 
 static void cb_parse_vbnv(unsigned char *ptr, struct sysinfo_t *info)
 {
-	struct cb_vbnv *vbnv = (struct cb_vbnv *)ptr;
+	struct lb_range *vbnv = (struct lb_range *)ptr;
 
-	info->vbnv_start = vbnv->vbnv_start;
-	info->vbnv_size = vbnv->vbnv_size;
+	info->vbnv_start = vbnv->range_start;
+	info->vbnv_size = vbnv->range_size;
 }
 
 static void cb_parse_cbmem_entry(unsigned char *ptr, struct sysinfo_t *info)
@@ -96,20 +97,24 @@ static void cb_parse_gpios(unsigned char *ptr, struct sysinfo_t *info)
 
 static void cb_parse_vdat(unsigned char *ptr, struct sysinfo_t *info)
 {
-	struct cb_vdat *vdat = (struct cb_vdat *) ptr;
+	struct lb_range *vdat = (struct lb_range *)ptr;
 
-	info->vdat_addr = vdat->vdat_addr;
-	info->vdat_size = vdat->vdat_size;
+	info->vdat_addr = map_sysmem(vdat->range_start, vdat->range_size);
+	info->vdat_size = vdat->range_size;
 }
 
-static void cb_parse_tstamp(unsigned char *ptr, struct sysinfo_t *info)
+static void cb_parse_tstamp(void *ptr, struct sysinfo_t *info)
 {
-	info->tstamp_table = ((struct cb_cbmem_tab *)ptr)->cbmem_tab;
+	struct cb_cbmem_tab *const cbmem = ptr;
+
+	info->tstamp_table = map_sysmem(cbmem->cbmem_tab, 0);
 }
 
-static void cb_parse_cbmem_cons(unsigned char *ptr, struct sysinfo_t *info)
+static void cb_parse_cbmem_cons(void *ptr, struct sysinfo_t *info)
 {
-	info->cbmem_cons = ((struct cb_cbmem_tab *)ptr)->cbmem_tab;
+	struct cb_cbmem_tab *const cbmem = ptr;
+
+	info->cbmem_cons = map_sysmem(cbmem->cbmem_tab, 0);
 }
 
 static void cb_parse_framebuffer(unsigned char *ptr, struct sysinfo_t *info)

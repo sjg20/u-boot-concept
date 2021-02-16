@@ -15,6 +15,9 @@ ifndef CONFIG_SPL_BUILD
 obj-$(CONFIG_CMD_BOOTM) += bootm.o
 endif
 obj-y	+= cmd_boot.o
+ifndef CONFIG_SPL_BUILD
+obj-$(CONFIG_COREBOOT_SYSINFO)	+= coreboot_sysinfo.o
+endif
 obj-$(CONFIG_SEABIOS) += coreboot_table.o
 obj-y	+= early_cmos.o
 obj-y	+= e820.o
