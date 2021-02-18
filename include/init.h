@@ -335,6 +335,20 @@ void bdinfo_print_mhz(const char *name, unsigned long hz);
 /* Show arch-specific information for the 'bd' command */
 void arch_print_bdinfo(void);
 
+/**
+ * cb_get_sysinfo() - Returns a pointer to the sysinfo if present
+ *
+ * @return pointer to sysinfo struct or NULL if none
+ */
+#ifdef CONFIG_X86
+const struct sysinfo_t *cb_get_sysinfo(void);
+#else
+const struct sysinfo_t *cb_get_sysinfo(void)
+{
+	return NULL;
+}
+#endif
+
 #endif	/* __ASSEMBLY__ */
 /* Put only stuff here that the assembler can digest */
 

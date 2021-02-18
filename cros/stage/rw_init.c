@@ -9,10 +9,13 @@
 
 #include <common.h>
 #include <bloblist.h>
+#include <cb_sysinfo.h>
 #include <dm.h>
+#include <init.h>
 #include <log.h>
 #include <mapmem.h>
 #include <cros/cros_ofnode.h>
+#include <cros/fmap.h>
 #include <cros/fwstore.h>
 #include <cros/keyboard.h>
 #include <cros/nvdata.h>
@@ -233,10 +236,15 @@ static int vboot_init_handoff(struct vboot_info *vboot)
 	VbSharedDataHeader *vdat;
 	int ret;
 
-	handoff = bloblist_find(BLOBLISTT_VBOOT_HANDOFF, sizeof(*handoff));
-	if (!handoff)
-		return log_msg_ret("handoff\n", -ENOENT);
-	vboot->handoff = handoff;
+	if (!vboot->from_coreboot) {
+		handoff = bloblist_find(BLOBLISTT_VBOOT_HANDOFF,
+					sizeof(*handoff));
+		if (!handoff)
+			return log_msg_ret("handoff\n", -ENOENT);
+		vboot->handoff = handoff;
+	} else {
+		handoff = vboot->sysinfo->vboot_handoff;
+	}
 
 	/* Set up the common param structure, not clearing shared data */
 	ret = common_params_init(vboot, 0);
@@ -263,6 +271,104 @@ static int vboot_init_handoff(struct vboot_info *vboot)
 	return 0;
 }
 
+static int fmap_read(struct vboot_info *vboot)
+{
+	const struct sysinfo_t *sysinfo = vboot->sysinfo;
+	struct fmap_entry entry;
+	ulong addr;
+	int ret;
+
+	entry.offset = sysinfo->fmap_offset;
+	entry.length = 0x1000;
+	ret = fwstore_entry_mmap(vboot->fwstore, &entry, &addr);
+	if (ret)
+		return log_msg_ret("entry", ret);
+	ret = fmap_parse((void *)addr, &vboot->fmap);
+	if (ret)
+		return log_msg_ret("parse", ret);
+
+	return 0;
+}
+
+#if 0
+int vboot_make_context(const struct sysinfo_t *sysinfo,
+		       struct vb2_context **ctxp)
+{
+	const struct vboot_handoff *handoff = sysinfo->vboot_handoff;
+	struct vb2_context *ctx;
+
+	if (!handoff)
+		return log_msg_ret("handoff", -ENOENT);
+	log_info("Using vboot_handoff at %p\n", handoff);
+	ctx = calloc(sizeof(*ctx), 1);
+	if (!ctx)
+		return log_msg_ret("ctx", -ENOMEM);
+	ctx->workbuf_size = VB2_KERNEL_WORKBUF_RECOMMENDED_SIZE;
+	if (sysinfo->vboot_workbuf_size > ctx->workbuf_size)
+		return log_msg_ret("workbuf", -ENOSPC);
+
+	/*
+	 * Import the firmware verification workbuf, which includes
+	 * vb2_shared_data
+	 * */
+	ctx->workbuf = memalign(VB2_WORKBUF_ALIGN, ctx->workbuf_size);
+	memcpy(ctx.workbuf, sysinfo->vboot_workbuf,
+	       sysinfo->vboot_workbuf_size);
+	ctx->workbuf_used = sysinfo->vboot_workbuf_size;
+
+	*ctxp = ctx;
+
+	return 0;
+}
+#endif
+
+#if 0
+static int vboot_init_handoff()
+{
+	struct vboot_handoff *vboot_handoff;
+
+	// Set up the common param structure, not clearing shared data.
+	if (common_params_init(0))
+		return 1;
+
+	if (lib_sysinfo.vboot_handoff == NULL) {
+		printf("vboot handoff pointer is NULL\n");
+		return 1;
+	}
+
+	if (lib_sysinfo.vboot_handoff_size != sizeof(struct vboot_handoff)) {
+		printf("Unexpected vboot handoff size: %d\n",
+		       lib_sysinfo.vboot_handoff_size);
+		return 1;
+	}
+
+	vboot_handoff = lib_sysinfo.vboot_handoff;
+
+	/* If the lid is closed, don't count down the boot
+	 * tries for updates, since the OS will shut down
+	 * before it can register success.
+	 *
+	 * VbInit was already called in coreboot, so we need
+	 * to update the vboot internal flags ourself.
+	 */
+	int lid_switch = flag_fetch(FLAG_LIDSW);
+	if (!lid_switch) {
+		VbSharedDataHeader *vdat;
+		int vdat_size;
+
+		if (find_common_params((void **)&vdat, &vdat_size) != 0)
+			vdat = NULL;
+
+		/* We need something to work with */
+		if (vdat != NULL)
+			/* Tell kernel selection to not count down */
+			vdat->flags |= VBSD_NOFAIL_BOOT;
+	}
+
+	return vboot_do_init_out_flags(vboot_handoff->init_params.out_flags);
+}
+#endif
+
 int vboot_rw_init(struct vboot_info *vboot)
 {
 	struct fmap_section *fw_entry;
@@ -270,16 +376,39 @@ int vboot_rw_init(struct vboot_info *vboot)
 	struct vb2_context *ctx;
 	int ret;
 
-	blob = bloblist_find(BLOBLISTT_VBOOT_CTX, sizeof(*blob));
-	if (!blob)
-		return log_msg_ret("blob", -ENOENT);
-	vboot->blob = blob;
-	ctx = &blob->ctx;
-	vboot->ctx = ctx;
-	ctx->non_vboot_context = vboot;
+	if (ll_boot_init()) {
+		blob = bloblist_find(BLOBLISTT_VBOOT_CTX, sizeof(*blob));
+		if (!blob)
+			return log_msg_ret("blob", -ENOENT);
+		vboot->blob = blob;
+		ctx = &blob->ctx;
+		vboot->ctx = ctx;
+		ctx->non_vboot_context = vboot;
+		log_warning("flags %x %d\n", ctx->flags,
+			    ((ctx->flags & VB2_CONTEXT_RECOVERY_MODE) != 0));
+	} else {
+		const struct sysinfo_t *sysinfo = cb_get_sysinfo();
+
+		if (sysinfo) {
+			const struct cb_mainboard *mb = sysinfo->mainboard;
+			const char *ptr;
+
+			ptr = (char *)mb->strings + mb->part_number_idx;
+			if (mb->strings && strnlen(ptr, 30) < 30)
+				log_notice("Starting vboot on %.30s...\n",
+					   mb->strings + mb->part_number_idx);
+// 			ret = vboot_make_context(sysinfo, &vboot->ctx);
+// 			if (ret)
+// 				return log_msg_ret("ctx", ret);
+			vboot->from_coreboot = true;
+			vboot->sysinfo = sysinfo;
+		} else {
+			log_err("No vboot handoff info\n");
+			return -ENOENT;
+		}
+	}
+
 	vboot->valid = true;
-	log_warning("flags %x %d\n", ctx->flags,
-		    ((ctx->flags & VB2_CONTEXT_RECOVERY_MODE) != 0));
 
 	ret = vboot_load_config(vboot);
 	if (ret)
@@ -289,18 +418,24 @@ int vboot_rw_init(struct vboot_info *vboot)
 	if (ret)
 		return log_msg_ret("tpm", ret);
 
-	ret = cros_ofnode_flashmap(&vboot->fmap);
+	ret = uclass_first_device_err(UCLASS_CROS_FWSTORE, &vboot->fwstore);
 	if (ret)
-		return log_msg_ret("fmap\n", ret);
+		return log_msg_ret("fwstore", ret);
+
+	if (!vboot->from_coreboot) {
+		ret = cros_ofnode_flashmap(&vboot->fmap);
+		if (ret)
+			return log_msg_ret("ofmap\n", ret);
+	} else {
+		ret = fmap_read(vboot);
+		if (ret)
+			return log_msg_ret("fmap\n", ret);
+	}
 	cros_ofnode_dump_fmap(&vboot->fmap);
 
 	ret = vboot_keymap_init(vboot);
 	if (ret)
 		return log_msg_ret("key remap", ret);
-
-	ret = uclass_first_device_err(UCLASS_CROS_FWSTORE, &vboot->fwstore);
-	if (ret)
-		return log_msg_ret("fwstore", ret);
 
 	ret = cros_fwstore_read_entry(vboot->fwstore,
 				      &vboot->fmap.readonly.firmware_id,

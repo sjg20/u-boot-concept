@@ -5,8 +5,8 @@
  */
 
 #include <common.h>
+#include <cb_sysinfo.h>
 #include <command.h>
-#include <asm/arch-coreboot/sysinfo.h>
 
 static void cbprompt(const char *name)
 {
@@ -55,25 +55,10 @@ static void print_str(const char *name, const char *value)
 
 static void print_idx(const char *name, uint idx, const u8 *strings)
 {
-	const char *ptr = NULL;
-	uint i;
-
-	/* sanity check */
-	if (idx < 50) {
-		for (i = 0, ptr = (const char *)strings; i < idx; i++) {
-			int len = strnlen(ptr, 100);
-
-			/* sanity check */
-			if (len >= 100) {
-				printf("i=%d, ptr=%p\n", i, ptr);
-				ptr = NULL;
-				break;
-			}
-			ptr += len + 1;
-		}
-	}
+	const char *ptr;
 
 	cbprompt(name);
+	ptr = (char *)strings + idx;
 	printf("%d: %s\n", idx, ptr ? ptr : "(unknown)");
 }
 

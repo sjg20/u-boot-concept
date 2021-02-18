@@ -94,6 +94,9 @@ struct vboot_handoff {
  * @console: Video console (text device)
  * @panel: Display panel (can be NULL if there is none)
  * @config: Config node containing general configuation info
+ * @from_coreboot: true if booted from coreboot, meaning that we must read the
+ *	tables created by coreboot rather than U-Boot VPL
+ * @sysinfo: Coreboot sysinfo if @from_coreboot is true
  *
  * @deactivate_tpm: Deactivate the TPM on startup
  * @disable_dev_on_rec: Disable developer mode if going into recovery
@@ -141,6 +144,8 @@ struct vboot_info {
 	struct udevice *console;
 	struct udevice *panel;
 	ofnode config;
+	bool from_coreboot;
+	const struct sysinfo_t *sysinfo;
 
 	bool deactivate_tpm;
 	bool disable_dev_on_rec;

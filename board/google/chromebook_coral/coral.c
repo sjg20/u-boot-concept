@@ -5,6 +5,7 @@
 
 #include <common.h>
 #include <bloblist.h>
+#include <cb_sysinfo.h>
 #include <command.h>
 #include <dm.h>
 #include <init.h>
@@ -15,7 +16,6 @@
 #include <asm/acpi_nhlt.h>
 #include <asm/intel_gnvs.h>
 #include <asm/intel_pinctrl.h>
-#include <asm/arch-coreboot/sysinfo.h>
 #include <dm/acpi.h>
 #include "variant_gpio.h"
 

@@ -7,9 +7,10 @@
  */
 
 #include <common.h>
+#include <cb_sysinfo.h>
+#include <init.h>
 #include <mapmem.h>
 #include <net.h>
-#include <asm/arch-coreboot/sysinfo.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -455,4 +456,12 @@ int get_coreboot_info(struct sysinfo_t *info)
 	gd->flags |= GD_FLG_SKIP_LL_INIT;
 
 	return 0;
+}
+
+const struct sysinfo_t *cb_get_sysinfo(void)
+{
+	if (!ll_boot_init())
+		return &lib_sysinfo;
+
+	return NULL;
 }
