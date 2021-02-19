@@ -51,7 +51,6 @@ delete_locales() {
 		locale_ko.bin \
 		locale_fil.bin \
 		locale_da.bin \
-		locale_es-419.bin \
 		locale_ru.bin \
 		locale_uk.bin \
 		locale_sl.bin \
@@ -64,10 +63,11 @@ delete_locales() {
 		locale_fa.bin \
 		locale_zh-TW.bin \
 		vbt-astronaut.bin vbt-epaulette.bin vbt-babytiger.bin \
-		vbt-babymega.bin vbt-nasher.bin	vbt-rabbid_rugged.bin; do
+		vbt-babymega.bin vbt-nasher.bin vbt-rabbid_rugged.bin; do
 		cbfstool $new remove -n $f
 	done
 
+#	locale_es-419.bin \
 }
 
 # Process one region of the image
