@@ -20,6 +20,7 @@
 #include <cros/cb_gfx.h>
 #include <cros/fwstore.h>
 #include <cros/screens.h>
+#include <cros/vbfile.h>
 #include <cros/vboot.h>
 
 #include <gbb_header.h>
@@ -98,22 +99,16 @@ struct menu {
 static int load_archive(const char *locale_name, struct directory **dest)
 {
 	struct vboot_info *vboot = vboot_get();
-	struct fmap_entry fentry;
 	struct directory *dir;
 	struct dentry *entry;
 	int size, ret, i;
 	u8 *data;
 
 	log_info("Load locale file '%s'\n", locale_name);
-	ret = cros_ofnode_find_locale(locale_name, &fentry);
-	if (ret) {
-		log_err("Cannot find locale '%s'\n", locale_name);
-		return VBERROR_INVALID_BMPFV;
-	}
 
-	ret = fwstore_load_image(vboot->fwstore, &fentry, &data, &size);
+	ret = vbfile_load(vboot, locale_name, &data, &size);
 	if (ret) {
-		log_err("Cannot read file '%s'\n", locale_name);
+		log_err("Cannot read locale '%s'\n", locale_name);
 		return VBERROR_INVALID_BMPFV;
 	}
 
@@ -1175,22 +1170,16 @@ static VbError_t draw_ui(struct vboot_info *vboot, u32 screen_type,
 
 static int vboot_init_locale(struct vboot_info *vboot)
 {
-	struct fmap_entry fentry;
 	char *loc_start, *loc;
 	u8 *locales;
 	int size;
 	int ret;
 
-	ret = cros_ofnode_find_locale("locales", &fentry);
-	if (ret)
-		return log_msg_ret("find locales", ret);
-
 	locale_data.count = 0;
 
-	/* Load locale list */
-	ret = fwstore_load_image(vboot->fwstore, &fentry, &locales, &size);
+	ret = vbfile_load(vboot, "locales", &locales, &size);
 	if (ret)
-		return log_msg_ret("read locales", ret);
+		return log_msg_ret("locales", ret);
 
 	/* Copy the file and null-terminate it */
 	loc_start = malloc(size + 1);

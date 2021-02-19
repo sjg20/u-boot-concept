@@ -9,6 +9,7 @@
 
 #include <common.h>
 #include <bloblist.h>
+#include <cbfs.h>
 #include <cb_sysinfo.h>
 #include <dm.h>
 #include <init.h>
@@ -427,9 +428,24 @@ int vboot_rw_init(struct vboot_info *vboot)
 		if (ret)
 			return log_msg_ret("ofmap\n", ret);
 	} else {
+		ulong addr;
+
 		ret = fmap_read(vboot);
 		if (ret)
 			return log_msg_ret("fmap\n", ret);
+
+		/* Access the CBFS containing our files */
+		ret = cros_fwstore_mmap(vboot->fwstore,
+					vboot->sysinfo->cbfs_offset,
+					vboot->sysinfo->cbfs_size, &addr);
+		if (ret)
+			return log_msg_ret("mmap\n", ret);
+		log_info("Mapped fstore offset %lx to address %lx\n",
+			 (ulong)vboot->sysinfo->cbfs_offset, addr);
+
+		ret = cbfs_init_mem(addr, &vboot->cbfs);
+		if (ret)
+			return log_msg_ret("cbfs\n", ret);
 	}
 	cros_ofnode_dump_fmap(&vboot->fmap);
 

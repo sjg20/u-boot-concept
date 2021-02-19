@@ -97,6 +97,7 @@ struct vboot_handoff {
  * @from_coreboot: true if booted from coreboot, meaning that we must read the
  *	tables created by coreboot rather than U-Boot VPL
  * @sysinfo: Coreboot sysinfo if @from_coreboot is true
+ * @cbfs: Coreboot filesystem (CBFS) we can read files from
  *
  * @deactivate_tpm: Deactivate the TPM on startup
  * @disable_dev_on_rec: Disable developer mode if going into recovery
@@ -146,6 +147,7 @@ struct vboot_info {
 	ofnode config;
 	bool from_coreboot;
 	const struct sysinfo_t *sysinfo;
+	struct cbfs_priv *cbfs;
 
 	bool deactivate_tpm;
 	bool disable_dev_on_rec;
