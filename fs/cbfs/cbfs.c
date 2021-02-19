@@ -79,6 +79,28 @@ static void swap_file_header(struct cbfs_fileheader *dest,
 	dest->offset = be32_to_cpu(src->offset);
 }
 
+static int fill_node(struct cbfs_cachenode *node, void *start,
+		     struct cbfs_fileheader *header)
+{
+	uint name_len;
+
+	if (header->offset < sizeof(struct cbfs_fileheader))
+		return -EBADF;
+
+	node->next = NULL;
+	node->type = header->type;
+	node->data = (void *)start + header->offset;
+	node->data_length = header->len;
+	name_len = header->offset - sizeof(struct cbfs_fileheader);
+	node->name = (char *)start + sizeof(struct cbfs_fileheader);
+	node->name_length = name_len;
+	node->attr_offset = header->attributes_offset;
+
+// 		for (offset = node->attr_offset; offset;
+
+	return 0;
+}
+
 /*
  * Given a starting position in memory, scan forward, bounded by a size, and
  * find the next valid CBFS file. No memory is allocated by this function. The
@@ -104,8 +126,7 @@ static int file_cbfs_next_file(struct cbfs_priv *priv, void *start, int size,
 
 	while (size >= align) {
 		const struct cbfs_fileheader *file_header = start;
-		u32 name_len;
-		u32 step;
+		int ret;
 
 		/* Check if there's a file here. */
 		if (memcmp(good_file_magic, &file_header->magic,
@@ -117,25 +138,13 @@ static int file_cbfs_next_file(struct cbfs_priv *priv, void *start, int size,
 		}
 
 		swap_file_header(&header, file_header);
-		if (header.offset < sizeof(struct cbfs_fileheader)) {
+		ret = fill_node(node, start, &header);
+		if (ret) {
 			priv->result = CBFS_BAD_FILE;
-			return -EBADF;
+			return log_msg_ret("fill", ret);
 		}
-		node->next = NULL;
-		node->type = header.type;
-		node->data = start + header.offset;
-		node->data_length = header.len;
-		name_len = header.offset - sizeof(struct cbfs_fileheader);
-		node->name = (char *)file_header +
-				sizeof(struct cbfs_fileheader);
-		node->name_length = name_len;
-		node->attr_offset = header.attributes_offset;
 
-		step = header.len;
-		if (step % align)
-			step = step + align - step % align;
-
-		*used += step;
+		*used += ALIGN(header.len, align);
 		return 0;
 	}
 
