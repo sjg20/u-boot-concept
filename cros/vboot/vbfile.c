@@ -13,6 +13,9 @@
 #include <cros/fwstore.h>
 #include <cros/vbfile.h>
 #include <cros/vboot.h>
+#include <lzma/LzmaTypes.h>
+#include <lzma/LzmaDec.h>
+#include <lzma/LzmaTools.h>
 
 int vbfile_load(struct vboot_info *vboot, const char *name,
 		u8 **imagep, int *image_sizep)
@@ -37,9 +40,34 @@ int vbfile_load(struct vboot_info *vboot, const char *name,
 		file = cbfs_find_file(vboot->cbfs, name);
 		if (!file)
 			return log_msg_ret("cfind", -ENOENT);
-		printf("file %s, data %p, attr %x\n", file->name, file->data,
-		       file->attr_offset);
-		return -ENOENT;
+		switch (file->comp_algo) {
+		case CBFS_COMPRESS_NONE:
+			*imagep = file->data;
+			*image_sizep = file->data_length;
+			break;
+		case CBFS_COMPRESS_LZMA:{
+			SizeT inout_size;
+			void *buf;
+
+			buf = malloc(file->decomp_size);
+			if (!buf)
+				return log_msg_ret("lzma", -ENOMEM);
+			inout_size = file->decomp_size;
+			ret = lzmaBuffToBuffDecompress(buf, &inout_size,
+						       file->data,
+						       file->data_length);
+			if (ret) {
+				log_warning("LZMA decomp failed, err=%d\n",
+					    ret);
+				return log_msg_ret("lzmad", -EIO);
+			}
+			*imagep = buf;
+			*image_sizep = inout_size;
+			break;
+		}
+		}
+
+		return 0;
 	}
 
 	return 0;

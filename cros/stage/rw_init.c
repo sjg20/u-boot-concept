@@ -242,10 +242,10 @@ static int vboot_init_handoff(struct vboot_info *vboot)
 					sizeof(*handoff));
 		if (!handoff)
 			return log_msg_ret("handoff\n", -ENOENT);
-		vboot->handoff = handoff;
 	} else {
 		handoff = vboot->sysinfo->vboot_handoff;
 	}
+	vboot->handoff = handoff;
 
 	/* Set up the common param structure, not clearing shared data */
 	ret = common_params_init(vboot, 0);
@@ -403,6 +403,7 @@ int vboot_rw_init(struct vboot_info *vboot)
 // 				return log_msg_ret("ctx", ret);
 			vboot->from_coreboot = true;
 			vboot->sysinfo = sysinfo;
+			log_info("Located coreboot sysinfo at %p\n", sysinfo);
 		} else {
 			log_err("No vboot handoff info\n");
 			return -ENOENT;
