@@ -304,18 +304,24 @@ int file_cbfs_init(ulong end_of_rom)
 	return cbfs_init(&cbfs_s, end_of_rom);
 }
 
-int cbfs_init_mem(ulong base, struct cbfs_priv **privp)
+int cbfs_init_mem(ulong base, ulong size, bool require_hdr,
+		  struct cbfs_priv **privp)
 {
 	struct cbfs_priv priv_s, *priv = &priv_s;
 	int ret;
 
 	/*
-	 * Use a local variable to start with until we know that the CBFS is
+	 * Use a local variable to start with until we know that the * CBFS is
 	 * valid.
 	 */
 	ret = cbfs_load_header_ptr(priv, base);
-	if (ret)
-		return ret;
+	if (ret) {
+		if (require_hdr)
+			return ret;
+		memset(priv, '\0', sizeof(struct cbfs_priv));
+		priv->header.rom_size = size;
+		priv->header.align = CBFS_ALIGN_SIZE;
+	}
 
 	ret = file_cbfs_fill_cache(priv, priv->header.rom_size,
 				   priv->header.align);

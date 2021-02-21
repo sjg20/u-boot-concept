@@ -325,8 +325,15 @@ static void show_table(struct sysinfo_t *info, bool verbose)
 				int ch = cons->body[i];
 
 				putc(ch);
-				if (ch == '\n')
+
+				if (ch == '\n') {
+					/* check for ctrl-c to abort... */
+					if (ctrlc()) {
+						puts("Abort\n");
+						return 0;
+					}
 					printf("   ");
+				}
 			}
 			printf("\n");
 		}

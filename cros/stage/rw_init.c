@@ -444,9 +444,12 @@ int vboot_rw_init(struct vboot_info *vboot)
 		log_info("Mapped fstore offset %lx to address %lx\n",
 			 (ulong)vboot->sysinfo->cbfs_offset, addr);
 
-		ret = cbfs_init_mem(addr, &vboot->cbfs);
-		if (ret)
-			return log_msg_ret("cbfs\n", ret);
+		ret = cbfs_init_mem(addr, vboot->sysinfo->cbfs_size, false,
+				    &vboot->cbfs);
+		if (ret) {
+			log_err("Invalid CBFS (err=%d)\n", ret);
+			return log_msg_ret("cbfs", ret);
+		}
 	}
 	cros_ofnode_dump_fmap(&vboot->fmap);
 
