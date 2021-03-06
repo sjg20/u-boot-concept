@@ -4274,6 +4274,60 @@ class TestFunctional(unittest.TestCase):
         self.assertIn('Expected __bss_size symbol in tpl/u-boot-tpl',
                       str(e.exception))
 
+    def checkDtbSizes(self, data, pad_len, start):
+        """Check the size arguments in a dtb embedded in an image
+
+        Args:
+            data: The image data
+            pad_len: Length of the pad section in the image, in bytes
+            start: Start offset of the devicetree to examine, within the image
+
+        Returns:
+            Size of the devicetree in bytes
+        """
+        dtb_data = data[start:]
+        dtb = fdt.Fdt.FromData(dtb_data)
+        fdt_size = dtb.GetFdtObj().totalsize()
+        dtb.Scan()
+        props = self._GetPropTree(dtb, 'size')
+        self.assertEqual({
+            'size': len(data),
+            'u-boot-spl/u-boot-spl-bss-pad:size': pad_len,
+            'u-boot-spl/u-boot-spl-dtb:size': 1005,
+            'u-boot-spl/u-boot-spl-nodtb:size': len(U_BOOT_SPL_NODTB_DATA),
+            'u-boot-spl:size': 1064,
+            'u-boot-tpl/u-boot-tpl-bss-pad:size': pad_len,
+            'u-boot-tpl/u-boot-tpl-dtb:size': 1005,
+            'u-boot-tpl/u-boot-tpl-nodtb:size': len(U_BOOT_TPL_NODTB_DATA),
+            'u-boot-tpl:size': 1064,
+            'u-boot/u-boot-dtb:size': 1005,
+            'u-boot/u-boot-nodtb:size': len(U_BOOT_NODTB_DATA),
+            'u-boot:size': 1051,
+            }, props)
+        return fdt_size
+
+    def testFdtInclude(self):
+        """Test that an Fdt is update within all binaries"""
+        self._SetupSplElf()
+        self._SetupTplElf()
+        self.maxDiff = None
+        # Build the image. It includes three separate devicetree binaries, each
+        # with their own contents, but all contain the binman definition.
+        data = self._DoReadFileDtb(
+            '194_fdt_incl.dts', use_real_dtb=True, use_expanded=True,
+            update_dtb=True)[0]
+        pad_len = 10
+
+        # Check the U-Boot dtb
+        start = len(U_BOOT_NODTB_DATA)
+        fdt_size = self.checkDtbSizes(data, pad_len, start)
+
+        # Now check SPL and TPL
+        start += fdt_size + len(U_BOOT_SPL_NODTB_DATA) + pad_len
+        fdt_size = self.checkDtbSizes(data, pad_len, start)
+        start += fdt_size + len(U_BOOT_TPL_NODTB_DATA) + pad_len
+        fdt_size = self.checkDtbSizes(data, pad_len, start)
+
 
 if __name__ == "__main__":
     unittest.main()
