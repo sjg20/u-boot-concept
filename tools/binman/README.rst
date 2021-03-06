@@ -786,12 +786,17 @@ the 'warning' line in scripts/Makefile.lib to see what it has found::
 
 
 Entry Documentation
--------------------
+===================
 
 For details on the various entry types supported by binman and how to use them,
-see README.entries. This is generated from the source code using:
+see entries.rst which is generated from the source code using:
 
-    binman entry-docs >tools/binman/README.entries
+    binman entry-docs >tools/binman/entries.rst
+
+.. toctree::
+   :maxdepth: 2
+
+   entries.rst
 
 
 Managing images
