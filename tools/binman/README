@@ -9,12 +9,29 @@ For example, we may have SPL, U-Boot, a device tree and an environment area
 grouped together and placed in MMC flash. When the system starts, it must be
 able to find these pieces.
 
-So far U-Boot has not provided a way to handle creating such images in a
-general way. Each SoC does what it needs to build an image, often packing or
-concatenating images in the U-Boot build system.
+Binman provides a mechanism for building images, from simple SPL + U-Boot
+combinations, to more complex arrangements with many parts. It also allows
+users to inspect images, extract and replace binaries within them, repacking if
+needed.
 
-Binman aims to provide a mechanism for building images, from simple
-SPL + U-Boot combinations, to more complex arrangements with many parts.
+The main idea with binman is that building firmware is separate from packaging
+it. Many of the complexities of modern build systems come from trying to do
+both at once. With binman, you build all the pieces that are needed, using
+whatever assortment of projects and build systems are needed, then use binman
+to stitch everything together.
+
+Apart from basic padding, alignment and positioning features, Binman supports
+hierarchical images, compression, hashing and dealing with the binary blobs
+which are a sad trend in open-source firmware at present.
+
+Executable binaries can access the location of other binaries in an image by
+using special linker symbols (zero-overhead but somewhat limited) or by reading
+the devicetree description of the image.
+
+Binman is designed primarily for use with U-Boot and associated binaries such
+as ARM Trusted Firmware, but it is suitable for use with other projects, such
+as Zephyr. Binman also provides facilities useful in Chromium OS, such as CBFS,
+vblocks and and the like.
 
 
 What it does
