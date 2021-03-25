@@ -1120,6 +1120,17 @@ ifneq ($(CONFIG_SPL_FIT_GENERATOR),)
 	@echo >&2 "arch-specific scripts with no tests."
 	@echo >&2 "===================================================="
 endif
+ifneq ($(CONFIG_NET),)
+ifneq ($(CONFIG_DM_ETH),y)
+	@echo >&2 "===================== WARNING ======================"
+	@echo >&2 "This board does not use CONFIG_DM_I2C (Driver Model"
+	@echo >&2 "for I2C drivers). Please update the board to use"
+	@echo >&2 "CONFIG_DM_I2C before the v2021.10 release. Failure to"
+	@echo >&2 "update by the deadline may result in board removal."
+	@echo >&2 "See doc/driver-model/migration.rst for more info."
+	@echo >&2 "===================================================="
+endif
+endif
 	@# Check that this build does not use CONFIG options that we do not
 	@# know about unless they are in Kconfig. All the existing CONFIG
 	@# options are whitelisted, so new ones should not be added.
