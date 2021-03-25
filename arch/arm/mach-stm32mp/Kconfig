@@ -14,7 +14,7 @@ config SPL
 	select SPL_OF_TRANSLATE
 	select SPL_PINCTRL
 	select SPL_REGMAP
-	select SPL_DM_RESET
+	select SPL_RESET
 	select SPL_SERIAL_SUPPORT
 	select SPL_SPI_LOAD
 	select SPL_SYSCON

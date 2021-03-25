@@ -83,7 +83,7 @@ struct reset_ctl_bulk {
 	unsigned int count;
 };
 
-#if CONFIG_IS_ENABLED(DM_RESET)
+#if CONFIG_IS_ENABLED(RESET)
 
 /**
  * devm_reset_control_get - resource managed reset_get_by_name()

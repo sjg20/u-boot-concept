@@ -50,7 +50,7 @@ config TEGRA_COMMON
 	select DM_KEYBOARD
 	select DM_MMC
 	select DM_PWM
-	select DM_RESET
+	select RESET
 	select DM_SERIAL
 	select DM_SPI
 	select DM_SPI_FLASH

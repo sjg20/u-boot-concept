@@ -315,7 +315,7 @@ static int dw_spi_reset(struct udevice *bus)
 	ret = reset_get_bulk(bus, &priv->resets);
 	if (ret) {
 		/*
-		 * Return 0 if error due to !CONFIG_DM_RESET and reset
+		 * Return 0 if error due to !CONFIG_RESET and reset
 		 * DT property is not present.
 		 */
 		if (ret == -ENOENT || ret == -ENOTSUPP)

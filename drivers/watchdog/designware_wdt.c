@@ -137,7 +137,7 @@ static int designware_wdt_probe(struct udevice *dev)
 	priv->clk_khz = CONFIG_DW_WDT_CLOCK_KHZ;
 #endif
 
-#if CONFIG_IS_ENABLED(DM_RESET)
+#if CONFIG_IS_ENABLED(RESET)
 	struct reset_ctl_bulk resets;
 
 	ret = reset_get_bulk(dev, &resets);
