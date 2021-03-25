@@ -763,7 +763,7 @@ config ARCH_IPQ40XX
 	select DM
 	select DM_GPIO
 	select DM_SERIAL
-	select DM_RESET
+	select RESET
 	select MSM_SMEM
 	select PINCTRL
 	select CLK
@@ -976,7 +976,7 @@ config ARCH_SOCFPGA
 	select DM_SERIAL
 	select ENABLE_ARM_SOC_BOOT0_HOOK if TARGET_SOCFPGA_GEN5 || TARGET_SOCFPGA_ARRIA10
 	select OF_CONTROL
-	select SPL_DM_RESET if DM_RESET
+	select SPL_RESET if RESET
 	select SPL_DM_SERIAL
 	select SPL_LIBCOMMON_SUPPORT
 	select SPL_LIBGENERIC_SUPPORT
@@ -1640,7 +1640,7 @@ config ARCH_UNIPHIER
 	select DM_I2C
 	select DM_MMC
 	select DM_MTD
-	select DM_RESET
+	select RESET
 	select DM_SERIAL
 	select DM_USB
 	select OF_BOARD_SETUP
@@ -1674,7 +1674,7 @@ config ARCH_STI
 	select CPU_V7A
 	select DM
 	select DM_MMC
-	select DM_RESET
+	select RESET
 	select DM_SERIAL
 	imply CMD_DM
 	help
@@ -1689,7 +1689,7 @@ config ARCH_STM32MP
 	select CLK
 	select DM
 	select DM_GPIO
-	select DM_RESET
+	select RESET
 	select DM_SERIAL
 	select MISC
 	select OF_CONTROL

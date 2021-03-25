@@ -1154,7 +1154,7 @@ static int dwc2_reset(struct udevice *dev)
 	ret = reset_get_bulk(dev, &priv->resets);
 	if (ret) {
 		dev_warn(dev, "Can't get reset: %d\n", ret);
-		/* Return 0 if error due to !CONFIG_DM_RESET and reset
+		/* Return 0 if error due to !CONFIG_RESET and reset
 		 * DT property is not present.
 		 */
 		if (ret == -ENOENT || ret == -ENOTSUPP)

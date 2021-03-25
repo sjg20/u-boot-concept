@@ -40,7 +40,7 @@ config BOARD_SPECIFIC_OPTIONS
 	imply CLK_CCF
 	imply CLK_COMPOSITE_CCF
 	imply CLK_K210
-	imply DM_RESET
+	imply RESET
 	imply RESET_SYSCON
 	imply SYSRESET
 	imply SYSRESET_SYSCON

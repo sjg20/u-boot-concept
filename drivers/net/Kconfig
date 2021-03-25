@@ -425,7 +425,7 @@ config MT7620_ETH
 	bool "MediaTek MT7620 Ethernet Interface"
 	depends on SOC_MT7620
 	select PHYLIB
-	select DM_RESET
+	select RESET
 	select DM_GPIO
 	select CLK
 	help
@@ -737,7 +737,7 @@ config MEDIATEK_ETH
 	depends on DM_ETH
 	select PHYLIB
 	select DM_GPIO
-	select DM_RESET
+	select RESET
 	help
 	  This Driver support MediaTek Ethernet GMAC
 	  Say Y to enable support for the MediaTek Ethernet GMAC.
@@ -745,7 +745,7 @@ config MEDIATEK_ETH
 config HIGMACV300_ETH
 	bool "HiSilicon Gigabit Ethernet Controller"
 	depends on DM_ETH
-	select DM_RESET
+	select RESET
 	select PHYLIB
 	help
 	  This driver supports HIGMACV300 Ethernet controller found on

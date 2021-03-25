@@ -82,7 +82,7 @@ config ARCH_MTMIPS
 	select DM
 	imply DM_ETH
 	imply DM_GPIO
-	select DM_RESET
+	select RESET
 	select DM_SERIAL
 	select PINCTRL
 	select PINMUX

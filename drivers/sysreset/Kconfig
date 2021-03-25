@@ -123,7 +123,7 @@ config SYSRESET_WATCHDOG
 
 config SYSRESET_RESETCTL
 	bool "Enable support for reset controller reboot driver"
-	select DM_RESET
+	select RESET
 	help
 	  Reboot support using generic reset controller.
 
