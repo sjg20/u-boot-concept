@@ -384,6 +384,36 @@ static int do_spi_protect(int argc, char *const argv[])
 	return ret == 0 ? 0 : 1;
 }
 
+static int do_spi_flash_mmap(int argc, char *const argv[])
+{
+	loff_t offset, len, maxsize;
+	uint map_offset, map_size;
+	ulong map_base;
+	int dev = 0;
+	int ret;
+
+	if (argc < 2)
+		return CMD_RET_USAGE;
+
+	ret = mtd_arg_off_size(argc - 1, &argv[1], &dev, &offset, &len,
+			       &maxsize, MTD_DEV_TYPE_NOR, flash->size);
+	if (ret)
+		return ret;
+
+	ret = dm_spi_get_mmap(flash->dev, &map_base, &map_size, &map_offset);
+	if (ret) {
+		printf("Mapping not available (err=%d)\n", ret);
+		return CMD_RET_FAILURE;
+	}
+	if (offset < 0 || offset + len > map_size) {
+		printf("Offset out of range (map size %x)\n", map_size);
+		return CMD_RET_FAILURE;
+	}
+	printf("%lx\n", map_base + (ulong)offset);
+
+	return 0;
+}
+
 enum {
 	STAGE_ERASE,
 	STAGE_CHECK,
@@ -580,6 +610,8 @@ static int do_spi_flash(struct cmd_tbl *cmdtp, int flag, int argc,
 		ret = do_spi_flash_erase(argc, argv);
 	else if (strcmp(cmd, "protect") == 0)
 		ret = do_spi_protect(argc, argv);
+	else if (IS_ENABLED(CONFIG_CMD_SF_MMAP) && !strcmp(cmd, "mmap"))
+		ret = do_spi_flash_mmap(argc, argv);
 	else if (IS_ENABLED(CONFIG_CMD_SF_TEST) && !strcmp(cmd, "test"))
 		ret = do_spi_flash_test(argc, argv);
 	else
@@ -611,6 +643,9 @@ static const char long_help[] =
 	"					  or to start of mtd `partition'\n"
 	"sf protect lock/unlock sector len	- protect/unprotect 'len' bytes starting\n"
 	"					  at address 'sector'"
+#ifdef CONFIG_CMD_SF_MMAP
+	"\nsf mmap offset len		- get memory address of SPI-flash offset\n"
+#endif
 #ifdef CONFIG_CMD_SF_TEST
 	"\nsf test offset len		- run a very basic destructive test"
 #endif

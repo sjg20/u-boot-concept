@@ -1300,6 +1300,14 @@ config CMD_SF
 	help
 	  SPI Flash support
 
+config CMD_SF_MMAP
+	bool "sf mmap - Access memory-mapped SPI flash"
+	depends on CMD_SF
+	help
+	  On some systems part of the SPI flash is mapped into mmemory. This
+	  command provides a way to map a SPI-flash offset to a memory address,
+	  so that the contents can be browsed using 'md', for example.
+
 config CMD_SF_TEST
 	bool "sf test - Allow testing of SPI flash"
 	depends on CMD_SF

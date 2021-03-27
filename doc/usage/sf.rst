@@ -14,6 +14,7 @@ Synopis
     sf erase <offset>|<partition> <len>
     sf update <addr> <offset>|<partition> <len>
     sf protect lock|unlock <sector> <len>
+    sf mmap <offset>|<partition> <len>
     sf test <offset>|<partition> <len>
 
 Description
@@ -143,6 +144,16 @@ lock|unlock
 	Number of bytes to lock/unlock
 
 
+Memory-mapped flash
+-------------------
+
+On some systems part of the SPI flash is mapped into mmemory. With *sf mmap*
+you can map a SPI-flash offset to a memory address, so that the contents can be
+browsed using 'md', for example.
+
+The command will fail if this is not supported by the hardware or driver.
+
+
 Test
 ~~~~
 
@@ -240,6 +251,58 @@ This second example is running on coral, an x86 Chromebook::
    2 write: 227 ticks, 2255 KiB/s 18.040 Mbps
    3 read: 189 ticks, 2708 KiB/s 21.664 Mbps
 
+   # On coral, SPI flash offset 0 corresponds to address ff081000 in memory
+   => sf mmap 0 1000
+   device 0 offset 0x0, size 0x1000
+   ff081000
+
+   # See below for how this address was obtained
+   => sf mmap e80000 11e18
+   device 0 offset 0xe80000, size 0x11e18
+   fff01000
+   => md fff01000
+   fff01000: b2e8e089 89000030 30b4e8c4 c0310000    ....0......0..1.
+   fff01010: 002c95e8 2ce8e800 feeb0000 dfe8c489    ..,....,........
+   fff01020: f400002c 83f4fdeb d4e80cec 3100001e    ,..............1
+   fff01030: 0cc483c0 f883c3c3 8b0b770a df408504    .........w....@.
+   fff01040: c085fef1 c8b80575 c3fef1e5 53565755    ....u.......UWVS
+   fff01050: 89c38951 2404c7c5 80000002 8924048b    Q......$......$.
+   fff01060: 89a20fdf 89fb89de 75890045 084d8904    ........E..u..M.
+   fff01070: ff0c5589 c5832404 243c8110 80000005    .U...$....<$....
+   fff01080: 43c6da75 3b800030 43037520 d889f8eb    u..C0..; u.C....
+   fff01090: 5f5e5b5a 80e6c35d 535657c3 e7e8c689    Z[^_]....WVS....
+   fff010a0: 89000069 00a164c3 8b000000 408b4c56    i....d......VL.@
+   fff010b0: 0cec837c ddb9ff6a e8fef1e5 00004e01    |...j........N..
+   fff010c0: a1640389 00000000 1c80b60f 66000001    ..d............f
+   fff010d0: b80c4389 00000001 a20fdf89 fb89de89    .C..............
+   fff010e0: 89104389 c4831453 5bc03110 56c35f5e    .C..S....1.[^_.V
+   fff010f0: 14ec8353 ce89d389 0000a164 b60f0000    S.......d.......
+
+
+The offset e80000 was obtained using the following binman command, to find the
+location of U-Boot SPL::
+
+   $ binman ls -i /tmp/b/chromebook_coral/u-boot.rom
+   Name                                   Image-pos  Size      Entry-type        Offset     Uncomp-size
+   ------------------------------------------------------------------------------------------------------
+   main-section                                   0   1000000  section                   0
+     spl                                     e80000     11e18  u-boot-spl         ffe80000
+     u-boot                                  d00000     9106e  u-boot             ffd00000
+     ...
+
 
 .. _SPI documentation:
    https://en.wikipedia.org/wiki/Serial_Peripheral_Interface
+
+
+Configuration
+-------------
+
+The *sf* command is only available if `CONFIG_CMD_SF=y`. Note that it depends on
+`CONFIG_DM_SPI_FLASH`.
+
+Return value
+------------
+
+The return value $? is set to 0 (true) if the command succeeded and to 1 (false)
+otherwise.
