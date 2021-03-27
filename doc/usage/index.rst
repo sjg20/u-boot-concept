@@ -43,6 +43,7 @@ Shell commands
    qfw
    reset
    sbi
+   sf
    scp03
    setexpr
    size
