@@ -546,6 +546,8 @@ int fdtdec_get_alias_highest_id(const void *blob, const char *base)
 		if (*prop != '/' || prop[len - 1] ||
 		    strncmp(name, base, base_len))
 			continue;
+		if (!fdtdec_get_is_enabled(blob, fdt_path_offset(blob, prop)))
+			continue;
 
 		val = trailing_strtol(name);
 		if (val > max) {
