@@ -33,10 +33,12 @@ typedef struct global_data gd_t;
  * struct global_data - global data structure
  */
 struct global_data {
+#if (defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_ALLOC_BD)) || (!defined(CONFIG_SPL_BUILD) && !defined(CONFIG_TPL_BUILD))
 	/**
 	 * @bd: board information
 	 */
 	struct bd_info *bd;
+#endif
 	/**
 	 * @flags: global data flags
 	 *
