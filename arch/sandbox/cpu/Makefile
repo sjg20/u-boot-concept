@@ -10,6 +10,7 @@ extra-y	:= start.o os.o
 extra-$(CONFIG_SANDBOX_SDL)	+= sdl.o
 obj-$(CONFIG_SPL_BUILD)	+= spl.o
 obj-$(CONFIG_ETH_SANDBOX_RAW)	+= eth-raw-os.o
+obj-$(CONFIG_EFI_CAPSULE_FIRMWARE_MANAGEMENT) += fdt_efi_capsule.o
 
 # os.c is build in the system environment, so needs standard includes
 # CFLAGS_REMOVE_os.o cannot be used to drop header include path
