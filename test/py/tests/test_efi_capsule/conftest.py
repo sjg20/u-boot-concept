@@ -98,6 +98,7 @@ def efi_capsule_data(request, u_boot_config):
     else:
         yield image_path
     finally:
+        call('echo foo', shell= True);
         # call('rm -rf %s' % mnt_point, shell=True)
-        call('rm -f %s' % image_path, shell=True)
-        call('rm -f ./spi.bin', shell=True)
+        # call('rm -f %s' % image_path, shell=True)
+        # call('rm -f ./spi.bin', shell=True)
