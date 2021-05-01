@@ -8,7 +8,7 @@
 #define __FDT_SUPPORT_H
 
 /* Not used on the host and we don't have types like phys_size_t */
-#if defined(CONFIG_OF_LIBFDT) && !defined(USE_HOSTCC)
+#if !defined(USE_HOSTCC) && defined(CONFIG_OF_LIBFDT)
 
 #include <asm/u-boot.h>
 #include <linux/libfdt.h>
