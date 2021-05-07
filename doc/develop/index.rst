@@ -23,6 +23,7 @@ Implementation
    menus
    printf
    smbios
+   spl
    uefi/index
    version
 
