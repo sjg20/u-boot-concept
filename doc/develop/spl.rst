@@ -42,29 +42,42 @@ configured by defining CONFIG_SPL_TEXT_BASE. The linker script has to be
 defined with CONFIG_SPL_LDSCRIPT.
 
 To support generic U-Boot libraries and drivers in the SPL binary one can
-optionally define CONFIG_SPL_XXX_SUPPORT. Currently following options
-are supported:
+optionally define CONFIG_SPL_XXX_SUPPORT (or CONFIG_SPL_XXX_SUPPORT for older
+options).
 
-CONFIG_SPL_LIBCOMMON_SUPPORT (common/libcommon.o)
-CONFIG_SPL_LIBDISK_SUPPORT (disk/libdisk.o)
-CONFIG_SPL_I2C_SUPPORT (drivers/i2c/libi2c.o)
-CONFIG_SPL_GPIO_SUPPORT (drivers/gpio/libgpio.o)
-CONFIG_SPL_MMC_SUPPORT (drivers/mmc/libmmc.o)
-CONFIG_SPL_SERIAL_SUPPORT (drivers/serial/libserial.o)
-CONFIG_SPL_SPI_FLASH_SUPPORT (drivers/mtd/spi/libspi_flash.o)
-CONFIG_SPL_SPI_SUPPORT (drivers/spi/libspi.o)
-CONFIG_SPL_FS_FAT (fs/fat/libfat.o)
-CONFIG_SPL_FS_EXT4
-CONFIG_SPL_LIBGENERIC_SUPPORT (lib/libgeneric.o)
-CONFIG_SPL_POWER_SUPPORT (drivers/power/libpower.o)
-CONFIG_SPL_NAND_SUPPORT (drivers/mtd/nand/raw/libnand.o)
-CONFIG_SPL_DRIVERS_MISC_SUPPORT (drivers/misc)
-CONFIG_SPL_DMA (drivers/dma/libdma.o)
-CONFIG_SPL_POST_MEM_SUPPORT (post/drivers/memory.o)
-CONFIG_SPL_NAND_LOAD (drivers/mtd/nand/raw/nand_spl_load.o)
-CONFIG_SPL_SPI_LOAD (drivers/mtd/spi/spi_spl_load.o)
-CONFIG_SPL_RAM_DEVICE (common/spl/spl.c)
-CONFIG_SPL_WATCHDOG_SUPPORT (drivers/watchdog/libwatchdog.o)
+Adding SPL-specific code
+------------------------
+
+To check whether a feature is enabled, use CONFIG_IS_ENABLED()::
+
+  if (CONFIG_IS_ENABLED(CLK))
+      ...
+
+This checks CONFIG_CLK for the main build, CONFIG_SPL_CLK for the SPL build,
+CONFIG_TPL_CLK for the TPL build, etc.
+
+U-Boot Phases
+-------------
+
+U-Boot boots through the following phases:
+
+TPL
+   Very early init, as tiny as possible. This loads SPL.
+
+SPL
+   Secondary program loader. Sets up SDRAM and loads U-Boot proper. It may also
+   load other firmware components.
+
+U-Boot
+   U-Boot proper, containing the command line and boot logic.
+
+
+Checking the boot phase
+-----------------------
+
+Use `spl_phase()` to find the current U-Boot phase, e.g. `PHASE_SPL`. You can
+also find the previous and next phase and get the phase name.
+
 
 Device tree
 -----------
