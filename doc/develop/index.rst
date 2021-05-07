@@ -14,6 +14,7 @@ Implementation
    global_data
    logging
    menus
+   spl
    uefi/index
    version
 
