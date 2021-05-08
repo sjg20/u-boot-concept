@@ -293,6 +293,7 @@ struct regmap *devm_regmap_init(struct udevice *dev,
 	int rc;
 	struct regmap **mapp, *map;
 
+	/* coverity[RESOURCE_LEAK] */
 	mapp = devres_alloc(devm_regmap_release, sizeof(struct regmap *),
 			    __GFP_ZERO);
 	if (unlikely(!mapp))
