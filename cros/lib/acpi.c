@@ -5,7 +5,6 @@
  * Copyright 2020 Google LLC
  */
 
-#define NEED_VB20_INTERNALS
 #define LOG_CATEGORY	LOGC_VBOOT
 
 #include <common.h>
@@ -17,58 +16,30 @@
 #include <cros/fwstore.h>
 #include <cros/vboot.h>
 
-#include <gbb_header.h>
-#include <vboot_struct.h>
-
-/* vboot firmware indexes */
-enum {
-	VBSD_RW_A	= 0x0,
-	VBSD_RW_B	= 0x1,
-	VBSD_RO		= 0xff,
-	VBSD_RECOVERY	= 0xff,
-	VBSD_UNKNOWN	= 0x100,
-};
-
+#include <vb2_internals_please_do_not_use.h>
 
 /**
- * get_firmware_index() - Convert a vboot firmware index to crossystem
+ * get_firmware_index() - Get the encoded firmware index
  *
  * @vbsd_fw_index: vboot firmware index
- * @return associated index for using in ACPI, or -1 if not found
+ * @return associated index for using in ACPI
  */
-static int get_firmware_index(int vbsd_fw_index)
+static int get_firmware_index(struct vboot_info *vboot)
 {
-	const struct entry {
-		int vbsd_fw_index;
-		int main_fw_index;
-	} fw_arr[] = {
-		{ VBSD_RW_A, BINF_RW_A },
-		{ VBSD_RW_B, BINF_RW_B },
-		{ VBSD_RECOVERY, BINF_RECOVERY },
-	};
-	int i;
-
-	for (i = 0; i < ARRAY_SIZE(fw_arr); i++) {
-		const struct entry *entry = &fw_arr[i];
-
-		if (vbsd_fw_index == entry->vbsd_fw_index)
-			return entry->main_fw_index;
-	}
-
-	return -1;
+	if (vboot_is_recovery(vboot))
+		return BINF_RECOVERY;
+	else
+		return vboot_is_slot_a(vboot) ? BINF_RW_A : BINF_RW_B;
 }
 
-int vboot_update_acpi(struct vboot_info *vboot)
+int vboot_update_acpi(struct vboot_info *vboot, enum cros_fw_type_t fw_type)
 {
+	struct vb2_context *ctx = vboot_get_ctx(vboot);
 	struct chromeos_acpi_gnvs *tab;
 	struct acpi_global_nvs *gnvs;
-	GoogleBinaryBlockHeader *gbb;
-	VbSharedDataHeader *vb_sd;
-	VbSharedDataHeader *vdat;
-	uint size, vb_sd_size;
+	uint size;
 	ulong fmap_addr;
 	int main_fw;
-	char *hwid;
 	uint chsw;
 	int ret;
 
@@ -83,36 +54,17 @@ int vboot_update_acpi(struct vboot_info *vboot)
 	}
 	tab = &gnvs->chromeos;
 
-	vdat = (VbSharedDataHeader *)&tab->vdat;
-	if (vdat->magic != VB_SHARED_DATA_MAGIC) {
-		log_err("Bad magic value in vboot shared data header\n");
-		return -EBADFD;
-	}
-
-	vb_sd = (VbSharedDataHeader *)vboot->handoff->shared_data;
-	vb_sd_size = sizeof(vboot->handoff->shared_data);
-	if (!vb_sd) {
-		log_err("Can't find common params\n");
-		return -ENOENT;
-	}
-
-	if (vb_sd->magic != VB_SHARED_DATA_MAGIC) {
-		log_err("Bad magic value in vboot shared data header\n");
-		return -EPERM;
-	}
+		/* Write VbSharedDataHeader to ACPI vdat for userspace access. */
+	vb2api_export_vbsd(ctx, tab->vdat);
 
 	tab->boot_reason = BOOT_REASON_OTHER;
-	main_fw = get_firmware_index(vb_sd->firmware_index);
-	if (main_fw < 0) {
-		log_err("Invalid firmware index %d\n", vb_sd->firmware_index);
-		return -EINVAL;
-	}
-	tab->main_fw_type = main_fw;
+
+	tab->main_fw_type = get_firmware_index(vboot);
 
 	if (vboot->ec_software_sync) {
 		int in_rw = 0;
 
-		if (VbExEcRunningRW(0, &in_rw)) {
+		if (vb2ex_ec_running_rw(&in_rw)) {
 			log_err("Couldn't tell if the EC firmware is RW\n");
 			return -EPROTO;
 		}
@@ -120,22 +72,16 @@ int vboot_update_acpi(struct vboot_info *vboot)
 	}
 
 	chsw = 0;
-	if (vb_sd->flags & VBSD_BOOT_FIRMWARE_WP_ENABLED)
-		chsw |= CHSW_FIRMWARE_WP;
-	if (vb_sd->flags & VBSD_BOOT_REC_SWITCH_ON)
+	if (ctx->flags & VB2_CONTEXT_FORCE_RECOVERY_MODE)
 		chsw |= CHSW_RECOVERY_X86;
-	if (vb_sd->flags & VBSD_BOOT_DEV_SWITCH_ON)
+	if (ctx->flags & VB2_CONTEXT_DEVELOPER_MODE)
 		chsw |= CHSW_DEVELOPER_SWITCH;
 	tab->switches = chsw;
 
-	gbb = vboot->cparams.gbb_data;
-	if (memcmp(gbb->signature, GBB_SIGNATURE, GBB_SIGNATURE_SIZE)) {
-		log_err("Bad signature on GBB\n");
-		return -EBADSLT;
-	}
-	hwid = (char *)gbb + gbb->hwid_offset;
-	size = min(gbb->hwid_size, sizeof(tab->hwid));
-	memcpy(tab->hwid, hwid, size);
+	char hwid[VB2_GBB_HWID_MAX_SIZE];
+	uint32_t hwid_size = min(sizeof(hwid), sizeof(tab->hwid));
+	if (!vb2api_gbb_read_hwid(vboot_get_ctx(vboot), hwid, &hwid_size))
+		memcpy(tab->hwid, hwid, hwid_size);
 
 	size = min(ID_LEN, sizeof(tab->fwid));
 	memcpy(tab->fwid, vboot->firmware_id, size);
@@ -143,14 +89,16 @@ int vboot_update_acpi(struct vboot_info *vboot)
 	size = min(ID_LEN, sizeof(tab->frid));
 	memcpy(tab->frid, vboot->readonly_firmware_id, size);
 
-	if (main_fw == BINF_RECOVERY)
+	if (fw_type != FIRMWARE_TYPE_AUTO_DETECT)
+		tab->main_fw_type = fw_type;  // TODO: set this correctly
+	else if (main_fw == BINF_RECOVERY)
 		tab->main_fw_type = FIRMWARE_TYPE_RECOVERY;
-	else if (vb_sd->flags & VBSD_BOOT_DEV_SWITCH_ON)
+	else if (ctx->flags & VB2_CONTEXT_DEVELOPER_MODE)
 		tab->main_fw_type = FIRMWARE_TYPE_DEVELOPER;
 	else
 		tab->main_fw_type = FIRMWARE_TYPE_NORMAL;
 
-	tab->recovery_reason = vb_sd->recovery_reason;
+	tab->recovery_reason = vb2api_get_recovery_reason(ctx);
 
 	if (!vboot->fmap.readonly.fmap.length) {
 		log_err("No FMAP available\n");
@@ -185,9 +133,6 @@ int vboot_update_acpi(struct vboot_info *vboot)
 			return log_msg_ret("cbsmbios", ret);
 		}
 	}
-
-	/* Synchronize VbSharedDataHeader from vboot_handoff to acpi vdat */
-	memcpy(vdat, vb_sd, vb_sd_size);
 
 	return 0;
 }

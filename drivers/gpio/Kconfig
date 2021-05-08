@@ -38,7 +38,7 @@ config TPL_DM_GPIO
 
 config VPL_DM_GPIO
 	bool "Enable Driver Model for GPIO drivers in VPL"
-	depends on DM_GPIO && VPL_DM && VPL_GPIO
+	depends on DM_GPIO && VPL_DM && VPL_GPIO_SUPPORT
 	default y
 	help
 	  Enable driver model for GPIO access in VPL. The standard GPIO
@@ -407,7 +407,7 @@ config DM_74X164
 
 config DM_PCA953X
 	bool "PCA95[357]x, PCA9698, TCA64xx, and MAX7310 I/O ports"
-	depends on DM_GPIO && DM_I2C
+	depends on DM_GPIO
 	help
 	  Say yes here to provide access to several register-oriented
 	  SMBus I/O expanders, made mostly by NXP or TI.  Compatible

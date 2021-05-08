@@ -168,6 +168,15 @@ config TPL_CROS_EC_LPC
 	  through a legacy port interface, so on x86 machines the main
 	  function of the EC is power and thermal management.
 
+config VPL_CROS_EC_LPC
+	bool "Enable Chrome OS EC LPC driver in VPL"
+	depends on CROS_EC
+	help
+	  Enable I2C access to the Chrome OS EC. This is used on x86
+	  Chromebooks such as link and falco. The keyboard is provided
+	  through a legacy port interface, so on x86 machines the main
+	  function of the EC is power and thermal management.
+
 config CROS_EC_SANDBOX
 	bool "Enable Chrome OS EC sandbox driver"
 	depends on CROS_EC && SANDBOX

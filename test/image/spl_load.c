@@ -69,10 +69,7 @@ static int spl_test_load(struct unit_test_state *uts)
 	load.bl_len = 512;
 	load.read = read_fit_image;
 
-	cur_prefix = spl_phase_prefix(spl_phase());
-	next_prefix = spl_phase_prefix(spl_next_phase());
-	ret = os_find_u_boot(fname, sizeof(fname), true, cur_prefix,
-			     next_prefix);
+	ret = sandbox_find_next_phase(fname, sizeof(fname), true);
 	if (ret) {
 		printf("(%s not found, error %d)\n", fname, ret);
 		return ret;

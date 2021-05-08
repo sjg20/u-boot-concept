@@ -199,6 +199,8 @@ static inline const char *spl_phase_prefix(enum u_boot_phase phase)
 	switch (phase) {
 	case PHASE_TPL:
 		return "tpl";
+	case PHASE_VPL:
+		return "vpl";
 	case PHASE_SPL:
 		return "spl";
 	case PHASE_BOARD_F:

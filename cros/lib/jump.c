@@ -32,10 +32,10 @@ int vboot_jump(struct vboot_info *vboot, struct fmap_entry *entry)
 	int ret;
 #if USE_RAM
 	u32 addr;
-	char *buf;
+	struct abuf buf;
 
 	addr = spl_get_image_text_base();
-	buf = map_sysmem(addr, 0);
+	abuf_map_sysmem(&buf, addr, entry->length * 3);
 #else
 	ulong mask = CONFIG_ROM_SIZE - 1;
 	struct udevice *sf;
@@ -59,9 +59,13 @@ int vboot_jump(struct vboot_info *vboot, struct fmap_entry *entry)
 #if USE_RAM
 	log_info("Reading firmware offset %x (addr %x, size %x)\n",
 		 entry->offset, addr, entry->length);
-	/* TODO(sjg@chromium.org): Find out the real end of the buffer */
-	ret = fwstore_read_decomp(vboot->fwstore, entry, buf,
-				  entry->length * 3);
+	/*
+	 * We don't really know where the buffer ends, since we don't have a
+	 * size for the SPL load area. For now, use a length of triple the
+	 * compressed size, which should be large enough. We could add
+	 * something like spl_get_image_text_size() to obtain the true size.
+	 */
+	ret = fwstore_read_decomp(vboot->fwstore, entry, &buf);
 	if (ret)
 		return log_msg_ret("read", ret);
 #else

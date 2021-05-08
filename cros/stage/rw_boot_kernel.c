@@ -19,6 +19,7 @@
 #include <asm/bootm.h>
 #include <asm/zimage.h>
 #endif
+#include <cros/crossystem.h>
 #include <cros/cros_common.h>
 #include <cros/vboot.h>
 #include <dm/device-internal.h>
@@ -282,7 +283,7 @@ static int boot_kernel(struct vboot_info *vboot,
 	log_info("Bloblist:\n");
 	bloblist_show_list();
 #ifdef CONFIG_X86
-	ret = vboot_update_acpi(vboot);
+	ret = vboot_update_acpi(vboot, FIRMWARE_TYPE_AUTO_DETECT);
 	if (ret)
 		log_warning("Failed to write vboot to ACPI (err=%d)\n", ret);
 

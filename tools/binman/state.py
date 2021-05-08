@@ -8,8 +8,8 @@
 from collections import defaultdict
 import hashlib
 import re
-import time
 import threading
+import time
 
 from dtoc import fdt
 import os
@@ -516,3 +516,11 @@ def TimingShow():
 
     for name, seconds in duration.items():
         print('%10s: %10.1fms' % (name, seconds * 1000))
+
+def SetThreads(threads):
+    global num_threads
+
+    num_threads = threads
+
+def GetThreads():
+    return num_threads
