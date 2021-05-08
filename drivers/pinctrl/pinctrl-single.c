@@ -471,6 +471,7 @@ static int single_probe(struct udevice *dev)
 		return -ENOMEM;
 	#endif
 
+	/* coverity[DIVIDE_BY_ZERO] */
 	priv->npins = size / (pdata->width / BITS_PER_BYTE);
 	if (pdata->bits_per_mux) {
 		if (!pdata->mask) {
