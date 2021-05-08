@@ -739,22 +739,6 @@ int blk_find_first(enum blk_flag_t flags, struct udevice **devp);
 int blk_find_next(enum blk_flag_t flags, struct udevice **devp);
 
 /**
- * blk_foreach() - iterate through block devices
- *
- * This creates a for() loop which works through the available block devices in
- * order from start to end.
- *
- * If for some reason the uclass cannot be found, this does nothing.
- *
- * @flags: Indicates type of device to return
- * @pos: struct udevice * to hold the current device. Set to NULL when there
- * are no more devices.
- */
-#define blk_foreach(flags, pos) \
-	for (int _ret = blk_find_first(flags, &pos); !_ret && dev; \
-	     _ret = blk_find_next(flags, &pos))
-
-/**
  * blk_foreach_probe() - Helper function to iteration through block devices
  *
  * This creates a for() loop which works through the available devices in
