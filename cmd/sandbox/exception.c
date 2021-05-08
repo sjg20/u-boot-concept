@@ -13,7 +13,9 @@ static int do_sigsegv(struct cmd_tbl *cmdtp, int flag, int argc,
 {
 	u8 *ptr = NULL;
 
+	/* coverity[FORWARD_NULL] */
 	*ptr = 0;
+
 	return CMD_RET_FAILURE;
 }
 
