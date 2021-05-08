@@ -551,6 +551,7 @@ class Entry_section(Entry):
                         timeout = 0
                     done, not_done = concurrent.futures.wait(
                         future_to_data.values(), timeout=timeout)
+
                     # Make sure we check the result, so any exceptions are
                     # generated. Check the results in entry order, since tests
                     # may expect earlier entries to fail first.
