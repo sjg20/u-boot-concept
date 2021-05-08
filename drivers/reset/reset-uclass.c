@@ -323,6 +323,8 @@ struct reset_ctl_bulk *devm_reset_bulk_get_by_node(struct udevice *dev,
 	bulk = devres_alloc(devm_reset_bulk_release,
 			    sizeof(struct reset_ctl_bulk),
 			    __GFP_ZERO);
+
+	/* coverity[RESOURCE_LEAK] */
 	if (unlikely(!bulk))
 		return ERR_PTR(-ENOMEM);
 
