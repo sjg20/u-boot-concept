@@ -121,6 +121,7 @@ err_regul:
 	n = SCMI_TEST_DEVICES_RD_COUNT;
 err_reset:
 	for (; n > 0; n--)
+		/* dead code, if SCMI_TEST_DEVICES_RD_COUNT < 2 */
 		reset_free(priv->devices.reset + n - 1);
 
 	return ret;
