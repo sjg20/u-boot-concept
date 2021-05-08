@@ -796,13 +796,17 @@ void devm_clk_put(struct udevice *dev, struct clk *clk)
 
 int clk_uclass_post_probe(struct udevice *dev)
 {
+	int ret;
+
 	/*
 	 * when a clock provider is probed. Call clk_set_defaults()
 	 * also after the device is probed. This takes care of cases
 	 * where the DT is used to setup default parents and rates
 	 * using assigned-clocks
 	 */
-	clk_set_defaults(dev, 1);
+	ret = clk_set_defaults(dev, 1);
+	if (ret)
+		return log_ret(ret);
 
 	return 0;
 }
