@@ -32,6 +32,8 @@ struct udevice;
 #define TPM2_MAX_TPM_PROPERTIES ((TPM2_MAX_CAP_BUFFER - sizeof(u32) /* TPM2_CAP */ - \
 				 sizeof(u32)) / sizeof(struct tpms_tagged_property))
 
+#define TPM2_HDR_LEN		10
+
 /*
  *  We deviate from this draft of the specification by increasing the value of
  *  TPM2_NUM_PCR_BANKS from 3 to 16 to ensure compatibility with TPM2
@@ -622,5 +624,7 @@ u32 tpm2_write_lock(struct udevice *dev, u32 index);
  * @return code of the operation
  */
 u32 tpm2_disable_platform_hierarchy(struct udevice *dev);
+
+u32 tpm2_cr50_enable_nvcommits(struct udevice *dev);
 
 #endif /* __TPM_V2_H */

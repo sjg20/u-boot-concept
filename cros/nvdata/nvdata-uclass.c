@@ -142,35 +142,6 @@ int cros_nvdata_lock_walk(enum cros_nvdata_type type)
 	return 0;
 }
 
-VbError_t VbExNvStorageRead(u8 *buf)
-{
-	int ret;
-
-	ret = cros_nvdata_read_walk(CROS_NV_DATA, buf, EC_VBNV_BLOCK_SIZE);
-	if (ret)
-		return VBERROR_UNKNOWN;
-#ifdef DEBUG
-	print_buffer(0, buf, 1, EC_VBNV_BLOCK_SIZE, 0);
-#endif
-
-	return 0;
-}
-
-VbError_t VbExNvStorageWrite(const u8 *buf)
-{
-	int ret;
-
-#ifdef DEBUG
-	print_buffer(0, buf, 1, EC_VBNV_BLOCK_SIZE, 0);
-#endif
-	vboot_dump_nvdata(buf, EC_VBNV_BLOCK_SIZE);
-	ret = cros_nvdata_write_walk(CROS_NV_DATA, buf, EC_VBNV_BLOCK_SIZE);
-	if (ret)
-		return VBERROR_UNKNOWN;
-
-	return 0;
-}
-
 int cros_nvdata_of_to_plat(struct udevice *dev)
 {
 	struct nvdata_uc_priv *uc_priv = dev_get_uclass_priv(dev);
