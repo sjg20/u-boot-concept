@@ -78,6 +78,7 @@ static int state_read_file(struct sandbox_state *state, const char *fname)
 err_read:
 	os_close(fd);
 err_open:
+	/* coverity[TAINTED_SCALAR] */
 	os_free(state->state_fdt);
 	state->state_fdt = NULL;
 
