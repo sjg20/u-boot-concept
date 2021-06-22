@@ -170,6 +170,12 @@ Run tests for Nokia RX-51 (aka N900):
       export PATH=~/.buildman-toolchains/gcc-9.2.0-nolibc/arm-linux-gnueabi/bin/:$PATH;
       test/nokia_rx51_test.sh
 
+Build vboot:
+  stage: testsuites
+  script:
+    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/ap-firmware/vboot_reference.git
+    - VBOOT_SOURCE=$(pwd)/vboot_reference ./tools/buildman/buildman chromeos_sandbox
+
 # Test sandbox with test.py
 sandbox test.py:
   variables:
