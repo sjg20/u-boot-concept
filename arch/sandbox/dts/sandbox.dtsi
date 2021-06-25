@@ -293,11 +293,10 @@
 
 	tpm_v2: tpm2 {
 		compatible = "sandbox,tpm2";
-		u-boot,dm-pre-reloc;
+		u-boot,dm-vpl;
 
 		nvdata {
-			u-boot,dm-pre-reloc;
-			compatible = "google,tpm-secdata";
+			u-boot,dm-vpl;
 			nvdata,types = <CROS_NV_SECDATAF
 				CROS_NV_SECDATAK
 				CROS_NV_MRC_REC_HASH
@@ -438,7 +437,7 @@
 	};
 
 	nvdata {
-		u-boot,dm-pre-reloc;
+		u-boot,dm-vpl;
 		compatible = "google,cros-ec-nvdata";
 		nvdata,types = <CROS_NV_DATA CROS_NV_VSTORE>;
 	};

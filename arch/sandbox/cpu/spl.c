@@ -18,7 +18,7 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-int sandbox_find_next_stage(char *fname, int maxlen, bool use_img)
+int sandbox_find_next_phase(char *fname, int maxlen, bool use_img)
 {
 	const char *cur_prefix, *next_prefix;
 	int ret;
@@ -53,7 +53,7 @@ static int spl_board_load_image(struct spl_image_info *spl_image,
 	char fname[256];
 	int ret;
 
-	ret = sandbox_find_next_stage(fname, sizeof(fname), false);
+	ret = sandbox_find_next_phase(fname, sizeof(fname), false);
 	if (ret) {
 		printf("(%s not found, error %d)\n", fname, ret);
 		return ret;
