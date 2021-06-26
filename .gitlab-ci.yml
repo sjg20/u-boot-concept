@@ -2,7 +2,7 @@
 
 # Grab our configured image.  The source for this is found at:
 # https://source.denx.de/u-boot/gitlab-ci-runner
-image: sjg20/bionic-20200526-26jun21
+image: sjg20/bionic-20200526-27jun21
 
 # We run some tests in different order, to catch some failures quicker.
 stages:
@@ -175,9 +175,13 @@ Build vboot:
   script:
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/ap-firmware/vboot_reference.git
     - UB=/tmp/b/chromeos_sandbox
-    - IMG=~/chromiumos_test_image.bin
+    - IMG=/uboot/chromiumos_test_image.bin
     - VBOOT_SOURCE=$(pwd)/vboot_reference ./tools/buildman/buildman
         chromeos_sandbox -o ${UB} -w
+    - rm -f image.bin; ln -s $UB/image.bin
+    - pwd
+    - ls -l
+    - ls -la /uboot
     - $UB/tpl/u-boot-tpl -d $UB/u-boot.dtb.out -L6
         -c "host bind 0 $IMG; vboot go auto" -w -s state.dtb -r -n -m $UB/ram
 

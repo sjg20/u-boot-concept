@@ -70,15 +70,19 @@ int cros_nvdata_read_walk(enum cros_nvdata_type type, u8 *data, int size)
 	struct udevice *dev;
 	int ret = -ENOSYS;
 
+	log_info("read type %d size %x\n", type, size);
 	uclass_foreach_dev_probe(UCLASS_CROS_NVDATA, dev) {
+		log_warning("trying dev %s\n", dev->name);
 		if (supports_type(dev, type)) {
 			ret = cros_nvdata_read(dev, type, data, size);
 			if (!ret)
 				break;
 		}
 	}
-	if (ret)
-		return ret;
+	if (ret) {
+		log_warning("Failed to read type %d\n", type);
+		return log_msg_ret("walk", ret);
+	}
 
 	return 0;
 }
