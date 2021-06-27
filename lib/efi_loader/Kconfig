@@ -1,6 +1,6 @@
 config EFI_LOADER
 	bool "Support running UEFI applications"
-	depends on OF_LIBFDT && ( \
+	depends on OF_LIBFDT && DM && OF_CONTROL && ( \
 		ARM && (SYS_CPU = arm1136 || \
 			SYS_CPU = arm1176 || \
 			SYS_CPU = armv7   || \
@@ -10,7 +10,8 @@ config EFI_LOADER
 	depends on !EFI_STUB || !X86_64 || EFI_STUB_64BIT
 	# We need EFI_STUB_32BIT to be set on x86_32 with EFI_STUB
 	depends on !EFI_STUB || !X86 || X86_64 || EFI_STUB_32BIT
-	default y if !ARM || SYS_CPU = armv7 || SYS_CPU = armv8
+	depends on !ARM || SYS_CPU = armv7 || SYS_CPU = armv8
+	default y if SANDBOX
 	select LIB_UUID
 	select HAVE_BLOCK_DEVICE
 	select REGEX
