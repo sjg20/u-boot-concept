@@ -303,7 +303,7 @@ config LEGACY_IMAGE_FORMAT
 config EBBR
 	bool "Enable support for Embeeded Boot Base Requirements (EBBR)"
 	select EFI_LOADER
-	default y if !ARM || SYS_CPU = armv7 || SYS_CPU = armv8
+	default y if sandbox
 	help
 	  Enable this to support ARM's EBBR boot method. This bases everything
 	  on UEFI protocols.
