@@ -300,6 +300,22 @@ config LEGACY_IMAGE_FORMAT
 	  loaded. If a board needs the legacy image format support in this
 	  case, enable it here.
 
+config EBBR
+	bool "Enable support for Embeeded Boot Base Requirements (EBBR)"
+	select EFI_LOADER
+	default y if !ARM || SYS_CPU = armv7 || SYS_CPU = armv8
+	help
+	  Enable this to support ARM's EBBR boot method. This bases everything
+	  on UEFI protocols.
+
+	  This Embedded Base Boot Requirements (EBBR) specification defines an
+	  interface between platform firmware and an operating system that is
+	  suitable for embedded platforms. EBBR-compliant platforms present a
+	  consistent interface that will boot an EBBR-compliant operating
+	  system without any custom tailoring required. For example, an Arm
+	  A-class embedded platform will benefit from a standard interface that
+	  supports features such as secure boot and firmware update.
+
 config SUPPORT_RAW_INITRD
 	bool "Enable raw initrd images"
 	help
