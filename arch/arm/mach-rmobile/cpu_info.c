@@ -109,12 +109,12 @@ int print_cpuinfo(void)
 	if (rmobile_cpuinfo[i].cpu_type == RMOBILE_CPU_TYPE_R8A7796) {
 		if ((rmobile_get_cpu_rev_integer() == 1) &&
 		    (rmobile_get_cpu_rev_fraction() == 1)) {
-			printf("CPU: Renesas Electronics R8A7796 rev 1.1/rev 1.2\n");
+			printf("CPU:   Renesas Electronics R8A7796 rev 1.1/rev 1.2\n");
 			return 0;
 		}
 	}
 
-	printf("CPU: Renesas Electronics %s rev %d.%d\n",
+	printf("CPU:   Renesas Electronics %s rev %d.%d\n",
 		rmobile_cpuinfo[i].cpu_name, rmobile_get_cpu_rev_integer(),
 		rmobile_get_cpu_rev_fraction());
 
