@@ -5,6 +5,7 @@ obj-$(CONFIG_$(SPL_TPL_)BUTTON) += button/
 obj-$(CONFIG_$(SPL_TPL_)CACHE) += cache/
 obj-$(CONFIG_$(SPL_TPL_)CLK) += clk/
 obj-$(CONFIG_$(SPL_TPL_)DM) += core/
+obj-y += ddr/
 obj-$(CONFIG_$(SPL_TPL_)DMA) += dma/
 obj-$(CONFIG_$(SPL_TPL_)DMA_LEGACY) += dma/
 obj-$(CONFIG_$(SPL_TPL_)DFU) += dfu/
@@ -42,11 +43,6 @@ ifdef CONFIG_SPL_BUILD
 
 obj-$(CONFIG_SPL_CPU) += cpu/
 obj-$(CONFIG_SPL_CRYPTO) += crypto/
-obj-$(CONFIG_SPL_MPC8XXX_INIT_DDR) += ddr/fsl/
-obj-$(CONFIG_ARMADA_38X) += ddr/marvell/a38x/
-obj-$(CONFIG_ARMADA_XP) += ddr/marvell/axp/
-obj-$(CONFIG_$(SPL_)ALTERA_SDRAM) += ddr/altera/
-obj-$(CONFIG_ARCH_IMX8M) += ddr/imx/imx8m/
 obj-$(CONFIG_SPL_DM_RESET) += reset/
 obj-$(CONFIG_SPL_MUSB_NEW) += usb/musb-new/
 obj-$(CONFIG_SPL_USB_GADGET) += usb/gadget/
@@ -60,12 +56,6 @@ obj-$(CONFIG_HAVE_BLOCK_DEVICE) += block/
 obj-$(CONFIG_SPL_THERMAL) += thermal/
 
 endif
-endif
-
-ifdef CONFIG_TPL_BUILD
-
-obj-$(CONFIG_TPL_MPC8XXX_INIT_DDR) += ddr/fsl/
-
 endif
 
 ifeq ($(CONFIG_SPL_BUILD)$(CONFIG_TPL_BUILD),)
@@ -109,7 +99,6 @@ obj-y += ufs/
 obj-$(CONFIG_W1) += w1/
 obj-$(CONFIG_W1_EEPROM) += w1-eeprom/
 
-obj-$(CONFIG_MACH_PIC32) += ddr/microchip/
 obj-$(CONFIG_DM_HWSPINLOCK) += hwspinlock/
 obj-$(CONFIG_DM_RNG) += rng/
 endif
