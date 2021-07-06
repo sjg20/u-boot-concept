@@ -1037,7 +1037,7 @@ config SPL_PCI
 	  necessary driver support. This enables the drivers in drivers/pci
 	  as part of an SPL build.
 
-config SPL_PCH_SUPPORT
+config SPL_PCH
 	bool "Support PCH drivers"
 	help
 	  Enable support for PCH (Platform Controller Hub) devices in SPL.
@@ -1584,7 +1584,7 @@ config TPL_PCI
 	  necessary driver support. This enables the drivers in drivers/pci
 	  as part of a TPL build.
 
-config TPL_PCH_SUPPORT
+config TPL_PCH
 	bool "Support PCH drivers"
 	help
 	  Enable support for PCH (Platform Controller Hub) devices in TPL.
@@ -1765,9 +1765,9 @@ config VPL_I2C
 	  Enable support for the I2C bus in TPL. Vee SPL_I2C for
 	  details.
 
-config VPL_PCH_SUPPORT
+config VPL_PCH
 	bool "Support PCH drivers"
-	default y if TPL_PCH_SUPPORT
+	default y if TPL_PCH
 	help
 	  Enable support for PCH (Platform Controller Hub) devices in VPL.
 	  These are used to set up GPIOs and the SPI peripheral early in
