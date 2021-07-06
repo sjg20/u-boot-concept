@@ -53,7 +53,7 @@ static u32 get_boot_device(void)
 	case BOOT_FROM_NAND:
 		return BOOT_DEVICE_NAND;
 #endif
-#ifdef CONFIG_SPL_MMC_SUPPORT
+#ifdef CONFIG_SPL_MMC
 	case BOOT_FROM_MMC:
 	case BOOT_FROM_MMC_ALT:
 		return BOOT_DEVICE_MMC1;

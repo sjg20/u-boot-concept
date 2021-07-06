@@ -266,7 +266,7 @@ config MVEBU_SPL_BOOT_DEVICE_MMC
 	select SPL_DM_MMC
 	select SPL_GPIO
 	select SPL_LIBDISK_SUPPORT
-	select SPL_MMC_SUPPORT
+	select SPL_MMC
 
 config MVEBU_SPL_BOOT_DEVICE_SATA
 	bool "SATA"
