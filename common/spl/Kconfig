@@ -1150,7 +1150,7 @@ config SPL_SERIAL
 	  unless there are space reasons not to. Even then, consider
 	  enabling SPL_USE_TINY_PRINTF which is a small printf() version.
 
-config SPL_SPI_SUPPORT
+config SPL_SPI
 	bool "Support SPI drivers"
 	help
 	  Enable support for using SPI in SPL. This is used for connecting
@@ -1162,14 +1162,14 @@ config SPL_SPI_SUPPORT
 
 config SPL_SPI_FLASH_SUPPORT
 	bool "Support SPI flash drivers"
-	depends on SPL_SPI_SUPPORT
+	depends on SPL_SPI
 	help
 	  Enable support for using SPI flash in SPL, and loading U-Boot from
 	  SPI flash. SPI flash (Serial Peripheral Bus flash) is named after
 	  the SPI bus that is used to connect it to a system. It is a simple
 	  but fast bidirectional 4-wire bus (clock, chip select and two data
 	  lines). This enables the drivers in drivers/mtd/spi as part of an
-	  SPL build. This normally requires SPL_SPI_SUPPORT.
+	  SPL build. This normally requires SPL_SPI.
 
 if SPL_SPI_FLASH_SUPPORT
 
@@ -1646,10 +1646,10 @@ config TPL_SPI_LOAD
 	  Enable support for loading next stage, U-Boot or otherwise, from
 	  SPI NOR in U-Boot TPL.
 
-config TPL_SPI_SUPPORT
+config TPL_SPI
 	bool "Support SPI drivers"
 	help
-	  Enable support for using SPI in TPL. See SPL_SPI_SUPPORT for
+	  Enable support for using SPI in TPL. See SPL_SPI for
 	  details.
 
 config TPL_DM_SPI
@@ -1801,10 +1801,10 @@ config VPL_SERIAL
 	  Enable support for serial in VPL. See SPL_SERIAL for
 	  details.
 
-config VPL_SPI_SUPPORT
+config VPL_SPI
 	bool "Support SPI drivers"
 	help
-	  Enable support for using SPI in VPL. See SPL_SPI_SUPPORT for
+	  Enable support for using SPI in VPL. See SPL_SPI for
 	  details.
 
 config VPL_SPI_FLASH_SUPPORT
@@ -1815,7 +1815,7 @@ config VPL_SPI_FLASH_SUPPORT
 	  the SPI bus that is used to connect it to a system. It is a simple
 	  but fast bidirectional 4-wire bus (clock, chip select and two data
 	  lines). This enables the drivers in drivers/mtd/spi as part of an
-	  VPL build. This normally requires VPL_SPI_SUPPORT.
+	  VPL build. This normally requires VPL_SPI.
 
 config VPL_TEXT_BASE
 	hex "VPL Text Base"
