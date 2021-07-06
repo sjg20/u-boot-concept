@@ -42,8 +42,7 @@ configured by defining CONFIG_SPL_TEXT_BASE. The linker script has to be
 defined with CONFIG_SPL_LDSCRIPT.
 
 To support generic U-Boot libraries and drivers in the SPL binary one can
-optionally define CONFIG_SPL_XXX_SUPPORT (or CONFIG_SPL_XXX_SUPPORT for older
-options).
+optionally define CONFIG_SPL_XXX (or CONFIG_SPL_XXX_SUPPORT for older options).
 
 Adding SPL-specific code
 ------------------------
@@ -81,7 +80,6 @@ Checking the boot phase
 
 Use `spl_phase()` to find the current U-Boot phase, e.g. `PHASE_SPL`. You can
 also find the previous and next phase and get the phase name.
-
 
 Device tree
 -----------
