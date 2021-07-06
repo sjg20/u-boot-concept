@@ -70,7 +70,7 @@ static int get_container_size(void *dev, int dev_type, unsigned long offset)
 		return -ENOMEM;
 	}
 
-#ifdef CONFIG_SPL_MMC_SUPPORT
+#ifdef CONFIG_SPL_MMC
 	if (dev_type == MMC_DEV) {
 		unsigned long count = 0;
 		struct mmc *mmc = (struct mmc *)dev;
@@ -197,7 +197,7 @@ unsigned long spl_spi_get_uboot_offs(struct spi_flash *flash)
 }
 #endif
 
-#ifdef CONFIG_SPL_MMC_SUPPORT
+#ifdef CONFIG_SPL_MMC
 unsigned long spl_mmc_get_uboot_raw_sector(struct mmc *mmc,
 					   unsigned long raw_sect)
 {
