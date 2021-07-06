@@ -256,7 +256,7 @@ config MVEBU_SPL_BOOT_DEVICE_SPI
 	select SPL_DM_SPI
 	select SPL_SPI_FLASH_SUPPORT
 	select SPL_SPI_LOAD
-	select SPL_SPI_SUPPORT
+	select SPL_SPI
 
 config MVEBU_SPL_BOOT_DEVICE_MMC
 	bool "SDIO/MMC card"
