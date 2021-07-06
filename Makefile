@@ -802,7 +802,6 @@ libs-y += fs/
 libs-y += net/
 libs-y += disk/
 libs-y += drivers/
-libs-y += drivers/i2c/
 libs-y += drivers/net/
 libs-y += drivers/net/phy/
 libs-y += drivers/power/ \
