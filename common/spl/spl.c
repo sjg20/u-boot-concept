@@ -621,7 +621,7 @@ static int boot_from_devices(struct spl_image_info *spl_image,
 		struct spl_image_loader *loader;
 
 		loader = spl_ll_find_loader(spl_boot_list[i]);
-#if defined(CONFIG_SPL_SERIAL_SUPPORT) \
+#if defined(CONFIG_SPL_SERIAL) \
     && defined(CONFIG_SPL_LIBCOMMON_SUPPORT)    \
     && !defined(CONFIG_SILENT_CONSOLE)
 		if (loader)
@@ -808,7 +808,7 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
  */
 void preloader_console_init(void)
 {
-#ifdef CONFIG_SPL_SERIAL_SUPPORT
+#ifdef CONFIG_SPL_SERIAL
 	gd->baudrate = CONFIG_BAUDRATE;
 
 	serial_init();		/* serial communications setup */
