@@ -802,20 +802,6 @@ libs-y += fs/
 libs-y += net/
 libs-y += disk/
 libs-y += drivers/
-libs-y += drivers/usb/cdns3/
-libs-y += drivers/usb/dwc3/
-libs-y += drivers/usb/common/
-libs-y += drivers/usb/emul/
-libs-y += drivers/usb/eth/
-libs-$(CONFIG_USB_DEVICE) += drivers/usb/gadget/
-libs-$(CONFIG_USB_GADGET) += drivers/usb/gadget/
-libs-$(CONFIG_USB_GADGET) += drivers/usb/gadget/udc/
-libs-y += drivers/usb/host/
-libs-y += drivers/usb/mtu3/
-libs-y += drivers/usb/musb/
-libs-y += drivers/usb/musb-new/
-libs-y += drivers/usb/phy/
-libs-y += drivers/usb/ulpi/
 ifdef CONFIG_POST
 libs-y += post/
 endif

@@ -33,6 +33,14 @@ menuconfig USB
 
 if USB
 
+config USB_HOST
+	bool "Enable USB Host support"
+	default y
+	help
+	  Enable support for USB host functionality. This allows U-Boot to
+	  talk to USB peripherals such as flash sticks and Ethernet adaptors,
+	  if enabled.
+
 config DM_USB
 	bool "Enable driver model for USB"
 	depends on USB && DM
