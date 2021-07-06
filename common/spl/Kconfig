@@ -1092,12 +1092,8 @@ config SPL_SATA
 
 config SPL_SATA_RAW_U_BOOT_USE_SECTOR
 	bool "SATA raw mode: by sector"
-<<<<<<< HEAD
-	depends on SPL_SATA_SUPPORT
-	default y if ARCH_MVEBU
-=======
 	depends on SPL_SATA
->>>>>>> 5d24b4224c0... Rename SATA_SUPPORT to SATA
+	default y if ARCH_MVEBU
 	help
 	  Use sector number for specifying U-Boot location on SATA disk in
 	  raw mode.

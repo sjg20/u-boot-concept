@@ -1123,11 +1123,7 @@ endif
 	$(call deprecated,CONFIG_WDT,DM watchdog,v2019.10,\
 		$(CONFIG_WATCHDOG)$(CONFIG_HW_WATCHDOG))
 	$(call deprecated,CONFIG_DM_ETH,Ethernet drivers,v2020.07,$(CONFIG_NET))
-<<<<<<< HEAD
-	$(call deprecated,CONFIG_DM_I2C,I2C drivers,v2022.04,$(CONFIG_SYS_I2C_LEGACY))
-=======
 	$(call deprecated,CONFIG_DM_I2C,I2C drivers,v2022.04,$(CONFIG_SYS_I2C))
->>>>>>> 0d1472991f2... i2c: Drop existing CONFIG_I2C
 	@# Check that this build does not use CONFIG options that we do not
 	@# know about unless they are in Kconfig. All the existing CONFIG
 	@# options are whitelisted, so new ones should not be added.
