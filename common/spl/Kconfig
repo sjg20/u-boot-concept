@@ -1106,7 +1106,7 @@ config SPL_REMOTEPROC
 	  Enable support for REMOTEPROCs in SPL. This permits to load
 	  a remote processor firmware in SPL.
 
-config SPL_RTC_SUPPORT
+config SPL_RTC
 	bool "Support RTC drivers"
 	help
 	  Enable RTC (Real-time Clock) support in SPL. This includes support
@@ -1606,7 +1606,7 @@ config TPL_RAM_DEVICE
 	  be already in memory when TPL takes over, e.g. loaded by the boot
 	  ROM.
 
-config TPL_RTC_SUPPORT
+config TPL_RTC
 	bool "Support RTC drivers"
 	help
 	  Enable RTC (Real-time Clock) support in TPL. This includes support
@@ -1783,7 +1783,7 @@ config VPL_PCI
 	  necessary driver support. This enables the drivers in drivers/pci
 	  as part of a VPL build.
 
-config VPL_RTC_SUPPORT
+config VPL_RTC
 	bool "Support RTC drivers"
 	help
 	  Enable RTC (Real-time Clock) support in VPL. This includes support
