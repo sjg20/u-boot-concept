@@ -2,7 +2,17 @@
 # RTC drivers configuration
 #
 
-menu "Real Time Clock"
+menuconfig RTC
+	bool "Real Time Clock"
+	default y
+	help
+	  Enable RTC (Real-time Clock) support. This includes support
+	  for reading and setting the time. Some RTC devices also have some
+	  non-volatile (battery-backed) memory which is accessible if
+	  needed. This enables the drivers in drivers/rtc as part of an SPL
+	  build.
+
+if RTC
 
 config DM_RTC
 	bool "Enable Driver Model for RTC drivers"
@@ -195,4 +205,4 @@ config RTC_DAVINCI
 	  Say "yes" here to support the on chip real time clock
 	  present on TI OMAP1, AM33xx, DA8xx/OMAP-L13x, AM43xx and DRA7xx.
 
-endmenu
+endif
