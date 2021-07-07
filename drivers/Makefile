@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0+
 
+obj-y += soc/
+
 # Order by directory name
 obj-$(CONFIG_$(SPL_TPL_)BIOSEMU) += bios_emulator/
 obj-$(CONFIG_$(SPL_TPL_)BOOTCOUNT_LIMIT) += bootcount/
@@ -71,20 +73,17 @@ ifeq ($(CONFIG_SPL_BUILD)$(CONFIG_TPL_BUILD),)
 
 obj-y += adc/
 obj-y += ata/
-obj-y += bus/
+obj-y += axi/
 obj-y += block/
+obj-y += bus/
 obj-y += cache/
-obj-y += scsi/
-obj-y += sound/
-obj-y += spmi/
-obj-y += video/
 obj-y += memory/
 obj-y += pwm/
-# SOC specific infrastructure drivers.
+obj-y += scsi/
 obj-y += smem/
-obj-y += axi/
+obj-y += sound/
+obj-y += spmi/
 obj-y += ufs/
+obj-y += video/
 
 endif
-
-obj-y += soc/
