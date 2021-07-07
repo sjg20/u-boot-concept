@@ -80,7 +80,6 @@ obj-y += mailbox/
 obj-y += memory/
 obj-y += mtd/
 obj-y += pwm/
-obj-y += input/
 # SOC specific infrastructure drivers.
 obj-y += smem/
 obj-$(CONFIG_TEE) += tee/
