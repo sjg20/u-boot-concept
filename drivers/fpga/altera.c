@@ -43,7 +43,7 @@ static const struct altera_fpga {
 #if defined(CONFIG_FPGA_SOCFPGA)
 	{ Altera_SoCFPGA, "SoC FPGA", socfpga_load, NULL, NULL },
 #endif
-#if defined(CONFIG_FPGA_INTEL_SDM_MAILBOX)
+#if defined(CONFIG_FPGA_INTEL_SMAILBOX)
 	{ Intel_FPGA_SDM_Mailbox, "Intel SDM Mailbox", intel_sdm_mb_load, NULL,
 	  NULL },
 #endif

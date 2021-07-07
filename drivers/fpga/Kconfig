@@ -31,7 +31,7 @@ config FPGA_CYCLON2
 	  Enable FPGA driver for loading bitstream in BIT and BIN format
 	  on Altera Cyclone II device.
 
-config FPGA_INTEL_SDM_MAILBOX
+config FPGA_INTEL_SMAILBOX
 	bool "Enable Intel FPGA Full Reconfiguration SDM Mailbox driver"
 	depends on TARGET_SOCFPGA_SOC64
 	select FPGA_ALTERA

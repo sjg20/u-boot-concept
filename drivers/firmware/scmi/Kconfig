@@ -2,7 +2,7 @@ config SCMI_FIRMWARE
 	bool "Enable SCMI support"
 	select FIRMWARE
 	select OF_TRANSLATE
-	depends on SANDBOX || DM_MAILBOX || ARM_SMCCC
+	depends on SANDBOX || MAILBOX || ARM_SMCCC
 	help
 	  System Control and Management Interface (SCMI) is a communication
 	  protocol that defines standard interfaces for power, performance

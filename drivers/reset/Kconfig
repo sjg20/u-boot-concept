@@ -14,7 +14,7 @@ config DM_RESET
 
 config SANDBOX_RESET
 	bool "Enable the sandbox reset test driver"
-	depends on DM_MAILBOX && SANDBOX
+	depends on MAILBOX && SANDBOX
 	help
 	  Enable support for a test reset controller implementation, which
 	  simply accepts requests to reset various HW modules without actually
