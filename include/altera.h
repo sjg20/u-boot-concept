@@ -120,7 +120,7 @@ int socfpga_load(Altera_desc *desc, const void *rbf_data, size_t rbf_size);
 int stratixv_load(Altera_desc *desc, const void *rbf_data, size_t rbf_size);
 #endif
 
-#ifdef CONFIG_FPGA_INTEL_SDM_MAILBOX
+#ifdef CONFIG_FPGA_INTEL_SMAILBOX
 int intel_sdm_mb_load(Altera_desc *desc, const void *rbf_data,
 		      size_t rbf_size);
 #endif

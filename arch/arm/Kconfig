@@ -1116,7 +1116,7 @@ config ARCH_ZYNQMP
 	select CLK
 	select DM
 	select DM_ETH if NET
-	select DM_MAILBOX
+	select MAILBOX
 	select DM_MMC if MMC
 	select DM_SERIAL
 	select DM_SPI if SPI
@@ -1129,7 +1129,7 @@ config ARCH_ZYNQMP
 	select SPL_DM if SPL
 	select SPL_DM_SPI if SPI && SPL_DM
 	select SPL_DM_SPI_FLASH if SPL_DM_SPI
-	select SPL_DM_MAILBOX if SPL
+	select SPL_MAILBOX if SPL
 	select SPL_FIRMWARE if SPL
 	select SPL_SEPARATE_BSS if SPL
 	select SUPPORT_SPL

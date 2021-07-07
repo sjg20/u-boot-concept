@@ -700,7 +700,7 @@ config SPL_LIBGENERIC_SUPPORT
 	  boards. Enable this option to build the code in lib/ as part of an
 	  SPL build.
 
-config SPL_DM_MAILBOX
+config SPL_MAILBOX
 	bool "Support Mailbox"
 	help
 	  Enable support for Mailbox within SPL. This enable the inter
