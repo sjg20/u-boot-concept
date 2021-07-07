@@ -1,7 +1,16 @@
 #
 # MUSB Controller Driver
 #
-comment "MUSB Controller Driver"
+menuconfig MUSB_NEW
+	bool "MUSB Controller Driver"
+	default y
+	help
+	  Enable support for Mentor Graphics USB. This is a new
+	  driver used by some boards. Enable this option to build
+	  the drivers in drivers/usb/musb-new as part of the build. The
+	  old drivers are in drivers/usb/musb
+
+if MUSB_NEW
 
 config USB_MUSB_HOST
 	bool "MUSB host mode support"
@@ -99,3 +108,5 @@ config USB_MUSB_FIXED_CONFIGDATA
 	  Newer Allwinner SoCs do not implement the MUSB_CONFIGDATA register,
 	  so it always reads 0. Select this option to override this and
 	  return a hardcoded value instead.
+
+endif
