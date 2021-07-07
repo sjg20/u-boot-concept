@@ -68,7 +68,6 @@ obj-y += misc/
 obj-$(CONFIG_NVME) += nvme/
 obj-$(CONFIG_PCI_ENDPOINT) += pci_endpoint/
 obj-y += dfu/
-obj-$(CONFIG_PCH) += pch/
 obj-$(CONFIG_DM_REBOOT_MODE) += reboot-mode/
 obj-y += rtc/
 obj-y += scsi/
