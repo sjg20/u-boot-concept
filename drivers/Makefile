@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0+
 
+# Order by directory name
 obj-$(CONFIG_$(SPL_TPL_)BOOTCOUNT_LIMIT) += bootcount/
 obj-$(CONFIG_$(SPL_TPL_)BUTTON) += button/
 obj-$(CONFIG_$(SPL_TPL_)CACHE) += cache/
@@ -8,18 +9,19 @@ obj-$(CONFIG_$(SPL_TPL_)DM) += core/
 obj-$(CONFIG_$(SPL_TPL_)CPU) += cpu/
 obj-$(CONFIG_$(SPL_TPL_)CRYPTO) += crypto/
 obj-y += ddr/
+obj-$(CONFIG_$(SPL_TPL_)DFU) += dfu/
 obj-$(CONFIG_$(SPL_TPL_)DMA) += dma/
 obj-$(CONFIG_$(SPL_TPL_)DMA_LEGACY) += dma/
-obj-$(CONFIG_$(SPL_TPL_)DFU) += dfu/
+obj-$(CONFIG_$(SPL_)FPGA) += fpga/
+obj-$(CONFIG_$(SPL_TPL_)FIRMWARE) += firmware/
 obj-$(CONFIG_$(SPL_TPL_)GPIO) += gpio/
 obj-$(CONFIG_$(SPL_TPL_)DRIVERS_MISC) += misc/
-obj-$(CONFIG_$(SPL_TPL_)SYSRESET) += sysreset/
-obj-$(CONFIG_$(SPL_TPL_)FIRMWARE) +=firmware/
 obj-$(CONFIG_$(SPL_TPL_)I2C) += i2c/
 obj-$(CONFIG_$(SPL_TPL_)INPUT) += input/
 obj-$(CONFIG_$(SPL_TPL_)LED) += led/
-obj-$(CONFIG_$(SPL_TPL_)MMC) += mmc/
+obj-$(CONFIG_$(SPL_TPL_)MAILBOX) += mailbox/
 obj-y += mtd/
+obj-$(CONFIG_$(SPL_TPL_)MMC) += mmc/
 obj-$(CONFIG_$(SPL_)MULTIPLEXER) += mux/
 obj-$(CONFIG_$(SPL_TPL_)NET) += net/
 obj-$(CONFIG_$(SPL_TPL_)PCH) += pch/
@@ -28,22 +30,21 @@ obj-$(CONFIG_$(SPL_TPL_)PHY) += phy/
 obj-$(CONFIG_$(SPL_TPL_)PINCTRL) += pinctrl/
 obj-$(CONFIG_$(SPL_TPL_)POWER) += power/
 obj-$(CONFIG_$(SPL_TPL_)RAM) += ram/
+obj-$(CONFIG_$(SPL_)REMOTEPROC) += remoteproc/
 obj-$(CONFIG_$(SPL_TPL_)DM_RESET) += reset/
 obj-$(CONFIG_$(SPL_TPL_)RTC) += rtc/
 obj-$(CONFIG_$(SPL_TPL_)SERIAL) += serial/
 obj-$(CONFIG_$(SPL_TPL_)SPI) += spi/
+obj-$(CONFIG_$(SPL_)SYSINFO) += sysinfo/
+obj-$(CONFIG_$(SPL_TPL_)SYSRESET) += sysreset/
 obj-$(CONFIG_$(SPL_TPL_)TIMER) += timer/
 obj-$(CONFIG_$(SPL_TPL_)USB) += usb/
 obj-$(CONFIG_$(SPL_TPL_)VIRTIO) += virtio/
-obj-$(CONFIG_$(SPL_TPL_)MAILBOX) += mailbox/
-obj-$(CONFIG_$(SPL_)REMOTEPROC) += remoteproc/
-obj-$(CONFIG_$(SPL_)SYSINFO) += sysinfo/
 obj-$(CONFIG_$(SPL_TPL_)THERMAL) += thermal/
 obj-$(CONFIG_$(SPL_TPL_)TPM) += tpm/
 obj-$(CONFIG_$(SPL_TPL_)WATCHDOG) += watchdog/
 obj-$(CONFIG_$(SPL_TPL_)WATCHDOG_IMX_HACK) += watchdog/
 obj-$(CONFIG_XEN) += xen/
-obj-$(CONFIG_$(SPL_)FPGA) += fpga/
 
 ifndef CONFIG_TPL_BUILD
 ifdef CONFIG_SPL_BUILD
