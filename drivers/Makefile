@@ -28,6 +28,7 @@ obj-$(CONFIG_$(SPL_TPL_)PHY) += phy/
 obj-$(CONFIG_$(SPL_TPL_)PINCTRL) += pinctrl/
 obj-$(CONFIG_$(SPL_TPL_)POWER) += power/
 obj-$(CONFIG_$(SPL_TPL_)RAM) += ram/
+obj-$(CONFIG_$(SPL_TPL_)DM_RESET) += reset/
 obj-$(CONFIG_$(SPL_TPL_)RTC) += rtc/
 obj-$(CONFIG_$(SPL_TPL_)SERIAL) += serial/
 obj-$(CONFIG_$(SPL_TPL_)SPI) += spi/
@@ -44,7 +45,6 @@ obj-$(CONFIG_$(SPL_)FPGA) += fpga/
 ifndef CONFIG_TPL_BUILD
 ifdef CONFIG_SPL_BUILD
 
-obj-$(CONFIG_SPL_DM_RESET) += reset/
 obj-$(CONFIG_SPL_WATCHDOG) += watchdog/
 obj-$(CONFIG_SPL_SATA) += ata/ scsi/
 obj-$(CONFIG_HAVE_BLOCK_DEVICE) += block/
@@ -82,7 +82,6 @@ obj-y += mailbox/
 obj-y += memory/
 obj-y += mtd/
 obj-y += pwm/
-obj-y += reset/
 obj-y += input/
 # SOC specific infrastructure drivers.
 obj-y += smem/
