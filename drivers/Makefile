@@ -39,6 +39,7 @@ obj-$(CONFIG_$(SPL_)DM_MAILBOX) += mailbox/
 obj-$(CONFIG_$(SPL_)REMOTEPROC) += remoteproc/
 obj-$(CONFIG_$(SPL_)SYSINFO) += sysinfo/
 obj-$(CONFIG_$(SPL_TPL_)TPM) += tpm/
+obj-$(CONFIG_$(SPL_TPL_)WATCHDOG) += watchdog/
 obj-$(CONFIG_$(SPL_TPL_)WATCHDOG_IMX_HACK) += watchdog/
 obj-$(CONFIG_XEN) += xen/
 obj-$(CONFIG_$(SPL_)FPGA) += fpga/
@@ -46,7 +47,6 @@ obj-$(CONFIG_$(SPL_)FPGA) += fpga/
 ifndef CONFIG_TPL_BUILD
 ifdef CONFIG_SPL_BUILD
 
-obj-$(CONFIG_SPL_WATCHDOG) += watchdog/
 obj-$(CONFIG_SPL_SATA) += ata/ scsi/
 obj-$(CONFIG_HAVE_BLOCK_DEVICE) += block/
 obj-$(CONFIG_SPL_THERMAL) += thermal/
@@ -76,7 +76,6 @@ obj-y += scsi/
 obj-y += sound/
 obj-y += spmi/
 obj-y += video/
-obj-y += watchdog/
 obj-$(CONFIG_QE) += qe/
 obj-$(CONFIG_U_QE) += qe/
 obj-y += mailbox/
