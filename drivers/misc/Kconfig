@@ -4,6 +4,15 @@
 
 menu "Multifunction device drivers"
 
+config DRIVERS_MISC
+	bool "Support drivers in drivers/misc"
+	default y
+	help
+	  Enable miscellaneous drivers. These drivers perform various
+	  tasks that don't fall nicely into other categories, Enable this
+	  option to build the drivers in drivers/misc as part of a U-Boot
+	  build.
+
 config MISC
 	bool "Enable Driver Model for Misc drivers"
 	depends on DM

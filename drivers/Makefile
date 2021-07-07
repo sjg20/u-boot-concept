@@ -64,7 +64,6 @@ obj-$(CONFIG_BIOSEMU) += bios_emulator/
 obj-y += block/
 obj-y += cache/
 obj-$(CONFIG_FASTBOOT) += fastboot/
-obj-y += misc/
 obj-$(CONFIG_NVME) += nvme/
 obj-$(CONFIG_PCI_ENDPOINT) += pci_endpoint/
 obj-$(CONFIG_DM_REBOOT_MODE) += reboot-mode/
