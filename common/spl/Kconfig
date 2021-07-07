@@ -1189,6 +1189,15 @@ config SPL_THERMAL
 	  automatic power-off when the temperature gets too high or low. Other
 	  devices may be discrete but connected on a suitable bus.
 
+menuconfig SPL_USB
+	bool "USB support"
+	default y
+	help
+	  Enables USB support on a device. This has no effect unless one of
+	  the options below is also enabled.
+
+if SPL_USB
+
 config SPL_USB_HOST
 	bool "Support USB host drivers"
 	select HAVE_BLOCK_DEVICE
@@ -1271,6 +1280,8 @@ config SPL_SDP_USB_DEV
 	  Some boards have USB controller other than 0. Define this option
 	  so it can be used in compiled environment.
 endif
+
+endif # SPL_USB
 
 config SPL_WATCHDOG
 	bool "Support watchdog drivers"
