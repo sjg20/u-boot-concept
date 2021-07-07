@@ -38,6 +38,7 @@ obj-$(CONFIG_$(SPL_TPL_)VIRTIO) += virtio/
 obj-$(CONFIG_$(SPL_)DM_MAILBOX) += mailbox/
 obj-$(CONFIG_$(SPL_)REMOTEPROC) += remoteproc/
 obj-$(CONFIG_$(SPL_)SYSINFO) += sysinfo/
+obj-$(CONFIG_$(SPL_TPL_)THERMAL) += thermal/
 obj-$(CONFIG_$(SPL_TPL_)TPM) += tpm/
 obj-$(CONFIG_$(SPL_TPL_)WATCHDOG) += watchdog/
 obj-$(CONFIG_$(SPL_TPL_)WATCHDOG_IMX_HACK) += watchdog/
@@ -49,7 +50,6 @@ ifdef CONFIG_SPL_BUILD
 
 obj-$(CONFIG_SPL_SATA) += ata/ scsi/
 obj-$(CONFIG_HAVE_BLOCK_DEVICE) += block/
-obj-$(CONFIG_SPL_THERMAL) += thermal/
 
 endif
 endif
@@ -84,7 +84,6 @@ obj-y += pwm/
 obj-y += input/
 # SOC specific infrastructure drivers.
 obj-y += smem/
-obj-y += thermal/
 obj-$(CONFIG_TEE) += tee/
 obj-y += axi/
 obj-y += ufs/
