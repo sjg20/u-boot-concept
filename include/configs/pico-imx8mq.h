@@ -45,9 +45,6 @@
 #define CONFIG_SYS_I2C_MXC_I2C3		/* enable I2C bus 3 */
 
 #define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
-
-#define CONFIG_POWER_LEGACY
-#define CONFIG_POWER_I2C
 #endif
 
 #define CONFIG_REMAKE_ELF
