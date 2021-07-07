@@ -1,4 +1,4 @@
-config DM_THERMAL
+config THERMAL
 	bool "Driver support for thermal devices"
 	help
 	  Enable support for temperature-sensing devices. Some SoCs have on-chip
@@ -6,7 +6,7 @@ config DM_THERMAL
 	  automatic power-off when the temperature gets too high or low. Other
 	  devices may be discrete but connected on a suitable bus.
 
-if DM_THERMAL
+if THERMAL
 
 config IMX_THERMAL
 	bool "Temperature sensor driver for Freescale i.MX SoCs"
@@ -41,4 +41,4 @@ config TI_DRA7_THERMAL
 	 Enable thermal support for for the Texas Instruments DRA752 SoC family.
 	 The driver supports reading CPU temperature.
 
-endif # if DM_THERMAL
+endif # if THERMAL

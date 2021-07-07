@@ -30,7 +30,7 @@ choice
 config TARGET_CL_SOM_IMX7
 	bool "CL-SOM-iMX7"
 	select DM
-	select DM_THERMAL
+	select THERMAL
 	select MX7D
 	select SUPPORT_SPL
 	imply CMD_DM
@@ -39,7 +39,7 @@ config TARGET_IMX7_CM
 	bool "Ronetix iMX7-CM"
 	select BOARD_LATE_INIT
 	select DM
-	select DM_THERMAL
+	select THERMAL
 	select MX7D
 	select SUPPORT_SPL
 	imply CMD_DM
@@ -49,7 +49,7 @@ config TARGET_MEERKAT96
 	select BOARD_LATE_INIT
 	select DM
 	select DM_SERIAL
-	select DM_THERMAL
+	select THERMAL
 	select MX7D
 	imply CMD_DM
 
@@ -57,7 +57,7 @@ config TARGET_MX7DSABRESD
 	bool "mx7dsabresd"
 	select BOARD_LATE_INIT
 	select DM
-	select DM_THERMAL
+	select THERMAL
 	select MX7D
 	imply CMD_DM
 
@@ -65,7 +65,7 @@ config TARGET_PICO_IMX7D
 	bool "pico-imx7d"
 	select BOARD_LATE_INIT
 	select DM
-	select DM_THERMAL
+	select THERMAL
 	select MX7D
 	select SUPPORT_SPL
 	imply CMD_DM
@@ -74,7 +74,7 @@ config TARGET_SMEGW01
 	bool "smegw01"
 	select BOARD_LATE_INIT
 	select DM
-	select DM_THERMAL
+	select THERMAL
 	select MX7D
 	imply CMD_DM
 
@@ -82,7 +82,7 @@ config TARGET_WARP7
 	bool "warp7"
 	select BOARD_LATE_INIT
 	select DM
-	select DM_THERMAL
+	select THERMAL
 	select MX7D
 	imply CMD_DM
 
@@ -90,7 +90,7 @@ config TARGET_COLIBRI_IMX7
 	bool "Support Colibri iMX7S/iMX7D modules"
 	select DM
 	select DM_SERIAL
-	select DM_THERMAL
+	select THERMAL
 	imply CMD_DM
 
 endchoice
