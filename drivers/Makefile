@@ -65,7 +65,6 @@ obj-y += block/
 obj-y += cache/
 obj-$(CONFIG_FASTBOOT) += fastboot/
 obj-y += misc/
-obj-$(CONFIG_MMC) += mmc/
 obj-$(CONFIG_NVME) += nvme/
 obj-$(CONFIG_PCI_ENDPOINT) += pci_endpoint/
 obj-y += dfu/
