@@ -67,7 +67,6 @@ obj-$(CONFIG_FASTBOOT) += fastboot/
 obj-$(CONFIG_NVME) += nvme/
 obj-$(CONFIG_PCI_ENDPOINT) += pci_endpoint/
 obj-$(CONFIG_DM_REBOOT_MODE) += reboot-mode/
-obj-y += rtc/
 obj-y += scsi/
 obj-y += sound/
 obj-y += spmi/
@@ -75,7 +74,6 @@ obj-y += video/
 obj-$(CONFIG_QE) += qe/
 obj-$(CONFIG_U_QE) += qe/
 obj-y += memory/
-obj-y += mtd/
 obj-y += pwm/
 # SOC specific infrastructure drivers.
 obj-y += smem/
