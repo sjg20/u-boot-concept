@@ -813,9 +813,13 @@ libs-y += fs/
 libs-y += net/
 libs-y += disk/
 libs-y += drivers/
+
+# This uses ifdef because CONFIG_POST is not a Kconfig bool, but is defined to
+# the list of tests to run, e.g. (CONFIG_SYS_POST_MEM_REGIONS)
 ifdef CONFIG_POST
 libs-y += post/
 endif
+
 libs-$(CONFIG_UNIT_TEST) += test/
 libs-$(CONFIG_UT_ENV) += test/env/
 libs-$(CONFIG_UT_OPTEE) += test/optee/
