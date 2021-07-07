@@ -1,5 +1,15 @@
-menu "Hardware crypto devices"
+menuconfig CRYPTO
+	 bool "Hardware crypto devices"
+	 default y
+	 help
+	   Enable support for hardware-accerlated cryptographic devices.
+
+	   Note that this option is a misnomer since CRYPTO suggests that
+	   software devices/implementations should be included in the
+	   option.
+
+if CRYPTO
 
 source drivers/crypto/fsl/Kconfig
 
-endmenu
+endif
