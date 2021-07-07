@@ -6,6 +6,7 @@ obj-$(CONFIG_$(SPL_TPL_)CACHE) += cache/
 obj-$(CONFIG_$(SPL_TPL_)CLK) += clk/
 obj-$(CONFIG_$(SPL_TPL_)DM) += core/
 obj-$(CONFIG_$(SPL_TPL_)CPU) += cpu/
+obj-$(CONFIG_$(SPL_TPL_)CRYPTO) += crypto/
 obj-y += ddr/
 obj-$(CONFIG_$(SPL_TPL_)DMA) += dma/
 obj-$(CONFIG_$(SPL_TPL_)DMA_LEGACY) += dma/
@@ -43,7 +44,6 @@ obj-$(CONFIG_$(SPL_)FPGA) += fpga/
 ifndef CONFIG_TPL_BUILD
 ifdef CONFIG_SPL_BUILD
 
-obj-$(CONFIG_SPL_CRYPTO) += crypto/
 obj-$(CONFIG_SPL_DM_RESET) += reset/
 obj-$(CONFIG_SPL_WATCHDOG) += watchdog/
 obj-$(CONFIG_SPL_SATA) += ata/ scsi/
@@ -62,7 +62,6 @@ obj-$(CONFIG_DM_DEMO) += demo/
 obj-$(CONFIG_BIOSEMU) += bios_emulator/
 obj-y += block/
 obj-y += cache/
-obj-y += crypto/
 obj-$(CONFIG_FASTBOOT) += fastboot/
 obj-y += misc/
 obj-$(CONFIG_MMC) += mmc/
