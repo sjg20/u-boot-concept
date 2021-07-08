@@ -13,6 +13,7 @@ config DM_PMIC
 config SPL_DM_PMIC
 	bool "Enable Driver Model for PMIC drivers (UCLASS_PMIC) in SPL"
 	depends on SPL_DM
+	default y if DM_PMIC
 	---help---
 	This config enables the driver-model PMIC support in SPL.
 	UCLASS_PMIC - designed to provide an I/O interface for PMIC devices.
