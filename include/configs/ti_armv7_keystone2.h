@@ -155,7 +155,6 @@
 #define CONFIG_TIMESTAMP
 
 /* EDMA3 */
-#define CONFIG_TI_EDMA3
 
 #define KERNEL_MTD_PARTS						\
 	"mtdparts="							\
