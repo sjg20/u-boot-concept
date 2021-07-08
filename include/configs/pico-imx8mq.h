@@ -38,7 +38,6 @@
 #define CONFIG_SPL_ABORT_ON_RAW_IMAGE
 
 #undef CONFIG_DM_MMC
-#undef CONFIG_DM_PMIC
 
 #define CONFIG_SYS_I2C
 #define CONFIG_SYS_I2C_MXC_I2C1		/* enable I2C bus 1 */
@@ -167,10 +166,6 @@
 #define CONFIG_SYS_I2C_SPEED		100000
 
 #define CONFIG_OF_SYSTEM_SETUP
-
-#ifndef CONFIG_SPL_BUILD
-#define CONFIG_DM_PMIC
-#endif
 
 #define CONFIG_SYS_BOOTM_LEN		SZ_128M
 
