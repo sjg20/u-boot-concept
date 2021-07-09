@@ -3,14 +3,9 @@
 #
 comment "USB Host Controller Drivers"
 
-config USB_HOST
-	bool
-	select DM_USB
-
 config USB_XHCI_HCD
 	bool "xHCI HCD (USB 3.0) support"
 	depends on DM && OF_CONTROL
-	select USB_HOST
 	---help---
 	  The eXtensible Host Controller Interface (xHCI) is standard for USB 3.0
 	  "SuperSpeed" host controller hardware.
@@ -109,8 +104,6 @@ endif # USB_XHCI_HCD
 config USB_EHCI_HCD
 	bool "EHCI HCD (USB 2.0) support"
 	default y if ARCH_MX5 || ARCH_MX6
-	depends on DM && OF_CONTROL
-	select USB_HOST
 	---help---
 	  The Enhanced Host Controller Interface (EHCI) is standard for USB 2.0
 	  "high speed" (480 Mbit/sec, 60 Mbyte/sec) host controller hardware.
@@ -271,7 +264,6 @@ endif # USB_OHCI_HCD
 
 config USB_UHCI_HCD
 	bool "UHCI HCD (most Intel and VIA) support"
-	select USB_HOST
 	---help---
 	  The Universal Host Controller Interface is a standard by Intel for
 	  accessing the USB hardware in the PC (which is also called the USB
@@ -289,8 +281,6 @@ endif # USB_UHCI_HCD
 
 config USB_DWC2
 	bool "DesignWare USB2 Core support"
-	depends on DM && OF_CONTROL
-	select USB_HOST
 	---help---
 	  The DesignWare USB 2.0 controller is compliant with the
 	  USB-Implementers Forum (USB-IF) USB 2.0 specifications.
@@ -312,8 +302,8 @@ endif # USB_DWC2
 
 config USB_R8A66597_HCD
 	bool "Renesas R8A66597 USB Core support"
-	depends on DM && OF_CONTROL
-	select USB_HOST
+	depends on OF_CONTROL
+	depends on DM_USB
 	---help---
 	  This enables support for the on-chip Renesas R8A66597 USB 2.0
 	  controller, present in various RZ and SH SoCs.
