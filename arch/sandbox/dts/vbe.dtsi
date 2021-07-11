@@ -13,7 +13,7 @@
 &vbe_image {
 	read-only {
 		type = "section";
-		u-boot-tpl {
+		u-boot-tpl-elf {
 		};
 		u-boot-vpl {
 		};
@@ -22,30 +22,30 @@
 	recovery {
 		type = "section";
 
-		u-boot-spl {
+		u-boot-spl-elf {
 		};
 
-		u-boot {
-		};
-	};
-
-	read-write-a {
-		type = "section";
-
-		u-boot-spl {
-		};
-
-		u-boot {
+		u-boot-elf {
 		};
 	};
 
 	read-write-a {
 		type = "section";
 
-		u-boot-spl {
+		u-boot-spl-elf {
 		};
 
-		u-boot {
+		u-boot-elf {
+		};
+	};
+
+	read-write-a {
+		type = "section";
+
+		u-boot-spl-elf {
+		};
+
+		u-boot-elf {
 		};
 	};
 };
