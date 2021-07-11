@@ -288,7 +288,7 @@ static inline int _compare_and_overwrite_entry(struct env_entry item,
 	return -1;
 }
 
-int hsearch_r(struct env_entry item, enum env_action action,
+int hsearch_rx(struct env_entry item, enum env_action action,
 	      struct env_entry **retval, struct hsearch_data *htab, int flag)
 {
 	unsigned int hval;
