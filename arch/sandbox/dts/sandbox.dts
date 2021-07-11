@@ -1,3 +1,10 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ *  Main sandbox devicetree
+ *
+ *  Copyright 2021 Google LLC
+ */
+
 /dts-v1/;
 
 #include <config.h>
@@ -95,3 +102,4 @@
 #include "sandbox.dtsi"
 #include "cros-ec-keyboard.dtsi"
 #include "sandbox_pmic.dtsi"
+#include "vbe.dtsi"
