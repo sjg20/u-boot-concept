@@ -517,6 +517,8 @@ efi_status_t EFIAPI efi_convert_pointer(efi_uintn_t debug_disposition,
 void efi_carve_out_dt_rsv(void *fdt);
 /* Called by bootefi to make console interface available */
 efi_status_t efi_console_register(void);
+/* Called when a block devices has been probed */
+int efi_disk_create(struct udevice *dev);
 /* Called by bootefi to make all disk storage accessible as EFI objects */
 efi_status_t efi_disk_register(void);
 /* Called by efi_init_obj_list() to install EFI_RNG_PROTOCOL */

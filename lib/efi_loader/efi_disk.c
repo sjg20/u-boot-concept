@@ -10,6 +10,7 @@
 #include <common.h>
 #include <blk.h>
 #include <dm.h>
+#include <dm/device-internal.h>
 #include <efi_loader.h>
 #include <fs.h>
 #include <log.h>
@@ -484,6 +485,7 @@ error:
 	return ret;
 }
 
+#ifndef CONFIG_BLK
 /**
  * efi_disk_create_partitions() - create handles and protocols for partitions
  *
@@ -530,6 +532,96 @@ int efi_disk_create_partitions(efi_handle_t parent, struct blk_desc *desc,
 	}
 
 	return disks;
+}
+#endif /* CONFIG_BLK */
+
+/*
+ * Create a handle for a whole raw disk
+ *
+ * @dev		uclass device
+ * @return	0 on success, -1 otherwise
+ */
+static int efi_disk_create_raw(struct udevice *dev)
+{
+	struct efi_disk_obj *disk;
+	struct blk_desc *desc;
+	const char *if_typename;
+	int diskid;
+	efi_status_t ret;
+
+	desc = dev_get_uclass_plat(dev);
+	if_typename = blk_get_if_type_name(desc->if_type);
+	diskid = desc->devnum;
+
+	ret = efi_disk_add_dev(NULL, NULL, if_typename, desc,
+			       diskid, NULL, 0, &disk);
+	if (ret != EFI_SUCCESS) {
+		log_err("Adding disk %s%d failed\n", if_typename, diskid);
+		return -1;
+	}
+	disk->dev = dev;
+	dev->efi_obj = &disk->header;
+
+	return 0;
+}
+
+/*
+ * Create a handle for a disk partition
+ *
+ * @dev		uclass device
+ * @return	0 on success, -1 otherwise
+ */
+static int efi_disk_create_part(struct udevice *dev)
+{
+	efi_handle_t parent;
+	struct blk_desc *desc;
+	const char *if_typename;
+	struct disk_part *part_data;
+	struct disk_partition *info;
+	unsigned int part;
+	int diskid;
+	struct efi_device_path *dp = NULL;
+	struct efi_disk_obj *disk;
+	efi_status_t ret;
+
+	parent = dev->parent->efi_obj;
+	desc = dev_get_uclass_plat(dev->parent);
+	if_typename = blk_get_if_type_name(desc->if_type);
+	diskid = desc->devnum;
+
+	part_data = dev_get_uclass_plat(dev);
+	part = part_data->partnum;
+	info = &part_data->gpt_part_info;
+
+	/* TODO: should not use desc? */
+	dp = efi_dp_from_part(desc, 0);
+
+	ret = efi_disk_add_dev(parent, dp, if_typename, desc, diskid,
+			       info, part, &disk);
+	if (ret != EFI_SUCCESS) {
+		log_err("Adding partition %s%d:%x failed\n",
+			if_typename, diskid, part);
+		return -1;
+	}
+	disk->dev = dev;
+	dev->efi_obj = &disk->header;
+
+	return 0;
+}
+
+int efi_disk_create(struct udevice *dev)
+{
+	enum uclass_id id;
+
+	id = device_get_uclass_id(dev);
+
+	if (id == UCLASS_BLK)
+		return efi_disk_create_raw(dev);
+
+	if (id == UCLASS_PARTITION)
+		return efi_disk_create_part(dev);
+
+	return -1;
 }
 
 /**
