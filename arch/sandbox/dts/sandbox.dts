@@ -23,6 +23,10 @@
 		spi0 = &spi;
 	};
 
+	chosen {
+		stdout-path = &uart0;
+	};
+
 	memory {
 		reg = <0 CONFIG_SYS_SDRAM_SIZE>;
 	};
