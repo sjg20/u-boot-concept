@@ -240,7 +240,7 @@ static int do_efi_capsule_res(struct cmd_tbl *cmdtp, int flag,
 	guid = efi_guid_capsule_report;
 	if (argc == 1) {
 		size = sizeof(var_name16);
-		ret = efi_get_variable_int(L"CapsuleLast", &guid, NULL,
+		ret = efi_get_variable_int(u"CapsuleLast", &guid, NULL,
 					   &size, var_name16, NULL);
 
 		if (ret != EFI_SUCCESS) {
@@ -1279,7 +1279,7 @@ static int do_efi_boot_dump(struct cmd_tbl *cmdtp, int flag,
 			return CMD_RET_FAILURE;
 		}
 
-		if (memcmp(var_name16, L"Boot", 8))
+		if (memcmp(var_name16, u"Boot", 8))
 			continue;
 
 		for (id = 0, i = 0; i < 4; i++) {
@@ -1315,7 +1315,7 @@ static int show_efi_boot_order(void)
 	efi_status_t ret;
 
 	size = 0;
-	ret = EFI_CALL(efi_get_variable(L"BootOrder", &efi_global_variable_guid,
+	ret = EFI_CALL(efi_get_variable(u"BootOrder", &efi_global_variable_guid,
 					NULL, &size, NULL));
 	if (ret != EFI_BUFFER_TOO_SMALL) {
 		if (ret == EFI_NOT_FOUND) {
@@ -1330,7 +1330,7 @@ static int show_efi_boot_order(void)
 		printf("ERROR: Out of memory\n");
 		return CMD_RET_FAILURE;
 	}
-	ret = EFI_CALL(efi_get_variable(L"BootOrder", &efi_global_variable_guid,
+	ret = EFI_CALL(efi_get_variable(u"BootOrder", &efi_global_variable_guid,
 					NULL, &size, bootorder));
 	if (ret != EFI_SUCCESS) {
 		ret = CMD_RET_FAILURE;
@@ -1419,7 +1419,7 @@ static int do_efi_boot_next(struct cmd_tbl *cmdtp, int flag,
 
 	guid = efi_global_variable_guid;
 	size = sizeof(u16);
-	ret = efi_set_variable_int(L"BootNext", &guid,
+	ret = efi_set_variable_int(u"BootNext", &guid,
 					EFI_VARIABLE_NON_VOLATILE |
 					EFI_VARIABLE_BOOTSERVICE_ACCESS |
 					EFI_VARIABLE_RUNTIME_ACCESS,
@@ -1480,7 +1480,7 @@ static int do_efi_boot_order(struct cmd_tbl *cmdtp, int flag,
 	}
 
 	guid = efi_global_variable_guid;
-	ret = efi_set_variable_int(L"BootOrder", &guid,
+	ret = efi_set_variable_int(u"BootOrder", &guid,
 					EFI_VARIABLE_NON_VOLATILE |
 					EFI_VARIABLE_BOOTSERVICE_ACCESS |
 					EFI_VARIABLE_RUNTIME_ACCESS,
