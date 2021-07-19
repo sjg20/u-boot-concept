@@ -56,14 +56,6 @@ subtests = (
     ('test 123 -ge 123', True),
     ('test 123 -ge 456', False),
 
-    # Octal tests
-
-    ('test 010 -eq 010', True),
-    ('test 010 -eq 011', False),
-
-    ('test 010 -ne 011', True),
-    ('test 010 -ne 010', False),
-
     # Hexadecimal tests
 
     ('test 0x2000000 -gt 0x2000001', False),
@@ -72,10 +64,7 @@ subtests = (
 
     # Mixed tests
 
-    ('test 010 -eq 10', False),
-    ('test 010 -ne 10', True),
     ('test 0xa -eq 10', True),
-    ('test 0xa -eq 012', True),
 
     ('test 2000000 -gt 0x1ffffff', False),
     ('test 0x2000000 -gt 1ffffff', True),

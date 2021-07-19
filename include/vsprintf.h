@@ -26,9 +26,15 @@
  * If found, the base is set to hex (16). Similarly a decimal prefix (e.g. 0n12)
  * causes the base to be set to decimal (10).
  *
- * If @base is 0:
- *    - an octal '0' prefix (e.g. 0777) sets the base to octal (8).
- *    - otherwise the base defaults to decimal (10).
+ * Note that the '0' prefix is not supported for octal. So when @base is 10,
+ * "0123" is interpreted as decimal 123, not octal. This is to avoid confusion
+ * with hex values which can start with 0.
+ *
+ * It would be possible to add a 0o prefix for octal, but this is not
+ * implemented since it is rarely used. See the 'setexpr' command for more
+ * options.
+ *
+ * If @base is 0 it defaults to decimal (10).
  */
 ulong simple_strtoul(const char *cp, char **endp, unsigned int base);
 
@@ -80,9 +86,16 @@ unsigned long dectoul(const char *cp, char **endp);
  * If found, the base is set to hex (16). Similarly a decimal prefix (e.g. 0n12)
  * causes the base to be set to decimal (10).
  *
- * If @base is 0:
- *    - an octal '0' prefix (e.g. 0777) sets the base to octal (8).
- *    - otherwise the base defaults to decimal (10).
+ * Note that the '0' prefix is not supported for octal. So when @base is 10,
+ * "0123" is interpreted as decimal 123, not octal. This is to avoid confusion
+ * with hex values which can start with 0.
+ *
+ * It would be possible to add a 0o prefix for octal, but this is not
+ * implemented since it is rarely used. See the 'setexpr' command for more
+ * options.
+ *
+ *
+ * If @base is 0 it defaults to decimal (10).
  *
  * Copied this function from Linux 2.6.38 commit ID:
  * 521cb40b0c44418a4fd36dc633f575813d59a43d
