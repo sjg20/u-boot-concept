@@ -33,9 +33,9 @@ static const char *_parse_integer_fixup_radix(const char *s, uint *basep)
 			s -= 2;  /* odd, nothing found */
 	}
 
-	/* Use decimal by default */
+	/* Use hex by default */
 	if (!*basep)
-		*basep = 10;
+		*basep = 16;
 
 	return s;
 }
