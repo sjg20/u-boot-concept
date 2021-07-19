@@ -94,19 +94,20 @@ static int str_simple_strtoul(struct unit_test_state *uts)
 
 		/* Base 0 */
 		ut_assertok(run_strtoul(uts, str1, 0, 0, 0, upper));
-		ut_assertok(run_strtoul(uts, str2, 0, 1099, 4, upper));
+		ut_assertok(run_strtoul(uts, str2, 0, 0x1099ab, 6, upper));
 		ut_assertok(run_strtoul(uts, str3, 0, 0xb, 3, upper));
 
 		/* Base 2 */
 		ut_assertok(run_strtoul(uts, str1, 2, 0, 0, upper));
 		ut_assertok(run_strtoul(uts, str2, 2, 2, 2, upper));
+		ut_assertok(run_strtoul(uts, str3, 2, 0xb, 3, upper));
 	}
 
 	/* Check endp being NULL */
-	ut_asserteq(1099, simple_strtoul(str2, NULL, 0));
+	ut_asserteq(0x1099ab, simple_strtoul(str2, NULL, 0));
 
 	/* check decimal */
-	ut_assertok(run_strtoul(uts, "123fg", 0, 123, 3, false));
+	ut_assertok(run_strtoul(uts, "123fg", 0, 0x123f, 4, false));
 	ut_assertok(run_strtoul(uts, "123a", 10, 123, 3, false));
 	ut_assertok(run_strtoul(uts, "0x123fg", 0, 0x123f, 6, false));
 	ut_assertok(run_strtoul(uts, "0n123a", 16, 123, 5, false));
@@ -159,7 +160,7 @@ static int str_simple_strtoull(struct unit_test_state *uts)
 
 		/* Base 0 */
 		ut_assertok(run_strtoull(uts, str1, 0, 0, 0, upper));
-		ut_assertok(run_strtoull(uts, str2, 0, 1099, 4, upper));
+		ut_assertok(run_strtoull(uts, str2, 0, 0x1099ab, 6, upper));
 		ut_assertok(run_strtoull(uts, str3, 0, 0xb, 3, upper));
 
 		/* Base 2 */
@@ -168,10 +169,10 @@ static int str_simple_strtoull(struct unit_test_state *uts)
 	}
 
 	/* Check endp being NULL */
-	ut_asserteq(1099, simple_strtoull(str2, NULL, 0));
+	ut_asserteq(0x1099ab, simple_strtoull(str2, NULL, 0));
 
 	/* check decimal */
-	ut_assertok(run_strtoull(uts, "123fg", 0, 123, 3, false));
+	ut_assertok(run_strtoull(uts, "123fg", 0, 0x123f, 4, false));
 	ut_assertok(run_strtoull(uts, "123a", 10, 123, 3, false));
 	ut_assertok(run_strtoull(uts, "0x123fg", 0, 0x123f, 6, false));
 	ut_assertok(run_strtoull(uts, "0n123a", 16, 123, 5, false));

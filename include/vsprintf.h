@@ -34,7 +34,7 @@
  * implemented since it is rarely used. See the 'setexpr' command for more
  * options.
  *
- * If @base is 0 it defaults to decimal (10).
+ * If @base is 0 it defaults to hex (16).
  */
 ulong simple_strtoul(const char *cp, char **endp, unsigned int base);
 
@@ -95,7 +95,7 @@ unsigned long dectoul(const char *cp, char **endp);
  * options.
  *
  *
- * If @base is 0 it defaults to decimal (10).
+ * If @base is 0 it defaults to hex (16).
  *
  * Copied this function from Linux 2.6.38 commit ID:
  * 521cb40b0c44418a4fd36dc633f575813d59a43d
