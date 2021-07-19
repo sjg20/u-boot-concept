@@ -63,6 +63,13 @@ use of addresses, for example::
   00001000: 2c786f62 00697073 03000000 0c000000  box,spi.........
   00001010: 67020000 00000000                    ...g....
 
+In these cases it is possible to use a `0m` prefix ('deciMal') to use a decimal
+value if that is more convenient. For example, this shows 19 bytes (0x13)::
+
+  => md.b 1000 0m19
+  00001000: 62 6f 78 2c 73 70 69 00 00 00 00 03 00 00 00 0c  box,spi.........
+  00001010: 00 00 02                                         ...
+
 There is no need to add a `0x` prefix to the arguments and the output is shown
 in hex also, without any prefixes. This helps to avoid clutter.
 
