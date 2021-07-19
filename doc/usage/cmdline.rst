@@ -82,15 +82,6 @@ Some commands use decimal where it is more natural::
   => i2c speed 100000
   Setting bus speed to 100000 Hz
 
-In some cases the default is decimal but it is possible to use octal if that is
-useful::
-
-  pmic dev pmic@41
-  dev: 1 @ pmic@41
-  => pmic write 2 0177
-  => pmic read 2
-  0x02: 0x00007f
-
 It is possible to use a `0x` prefix to use a hex value if that is more
 convenient::
 
@@ -102,3 +93,11 @@ U-Boot also supports a `0y` for binary base 2 ("binarY")::
   => mw 100 0y11010011
   => md 100 1
   00000100: 000000d3                             ....
+
+It is possible to use a 0o prefix for octal if that is useful::
+
+  => pmic dev pmic@41
+  dev: 1 @ pmic@41
+  => pmic write 2 0o177
+  => pmic read 2
+  0x02: 0x00007f

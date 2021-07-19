@@ -24,11 +24,14 @@
  *
  * A hex prefix is supported (e.g. 0x123) regardless of the value of @base.
  * If found, the base is set to hex (16). Similarly a decimal prefix (e.g. 0d12)
- * causes the base to be set to decimal (10).
+ * causes the base to be set to decimal (10) and an octal prefix (e.g. 0o177)
+ * causes the base to be set to octal (8).
  *
- * If @base is 0:
- *    - an octal '0' prefix (e.g. 0777) sets the base to octal (8).
- *    - otherwise the base defaults to decimal (10).
+ * Note that the '0' prefix is not supported for octal. So "0123" is interpreted
+ * as decimal 123, not octal. This is to avoid confusion with hex values which
+ * can start with 0.
+ *
+ * If @base is 0 it defaults to decimal (10).
  */
 ulong simple_strtoul(const char *cp, char **endp, unsigned int base);
 
@@ -78,11 +81,14 @@ unsigned long dectoul(const char *cp, char **endp);
  *
  * A hex prefix is supported (e.g. 0x123) regardless of the value of @base.
  * If found, the base is set to hex (16). Similarly a decimal prefix (e.g. 0d12)
- * causes the base to be set to decimal (10).
+ * causes the base to be set to decimal (10) and an octal prefix (e.g. 0o177)
+ * causes the base to be set to octal (8).
  *
- * If @base is 0:
- *    - an octal '0' prefix (e.g. 0777) sets the base to octal (8).
- *    - otherwise the base defaults to decimal (10).
+ * Note that the '0' prefix is not supported for octal. So "0123" is interpreted
+ * as decimal 123, not octal. This is to avoid confusion with hex values which
+ * can start with 0.
+ *
+ * If @base is 0 it defaults to decimal (10).
  *
  * Copied this function from Linux 2.6.38 commit ID:
  * 521cb40b0c44418a4fd36dc633f575813d59a43d

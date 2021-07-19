@@ -20,19 +20,17 @@ static const char *_parse_integer_fixup_radix(const char *s, uint *basep)
 	if (s[0] == '0') {
 		int ch = tolower(s[1]);
 
-		if (ch == 'x') {
+		s += 2;
+		if (ch == 'x')
 			*basep = 16;
-			s += 2;
-		} else if (ch == 'm') {
+		else if (ch == 'm')
 			*basep = 10;
-			s += 2;
-		} else if (ch == 'y') {
+		else if (ch == 'y')
 			*basep = 2;
-			s += 2;
-		} else if (!*basep) {
-			/* Only select octal if we don't have a base */
+		else if (ch == 'o')
 			*basep = 8;
-		}
+		else
+			s -= 2;  /* odd, nothing found */
 	}
 
 	/* Use decimal by default */
