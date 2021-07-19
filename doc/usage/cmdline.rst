@@ -96,3 +96,9 @@ convenient::
 
   => i2c speed 0x30000
   Setting bus speed to 196608 Hz
+
+U-Boot also supports a `0y` for binary base 2 ("binarY")::
+
+  => mw 100 0y11010011
+  => md 100 1
+  00000100: 000000d3                             ....

@@ -117,6 +117,10 @@ static int str_simple_strtoul(struct unit_test_state *uts)
 	ut_assertok(run_strtoul(uts, "0x123fg", 0, 0x123f, 6, false));
 	ut_assertok(run_strtoul(uts, "0m123a", 16, 123, 5, false));
 
+	/* check binary */
+	ut_assertok(run_strtoul(uts, "1011b", 2, 0xb, 4, false));
+	ut_assertok(run_strtoul(uts, "0y111more", 0, 7, 5, false));
+
 	return 0;
 }
 STR_TEST(str_simple_strtoul, 0);
@@ -185,6 +189,10 @@ static int str_simple_strtoull(struct unit_test_state *uts)
 	ut_assertok(run_strtoull(uts, "123a", 10, 123, 3, false));
 	ut_assertok(run_strtoull(uts, "0x123fg", 0, 0x123f, 6, false));
 	ut_assertok(run_strtoull(uts, "0m123a", 16, 123, 5, false));
+
+	/* check binary */
+	ut_assertok(run_strtoull(uts, "1011b", 2, 0xb, 4, false));
+	ut_assertok(run_strtoull(uts, "0y111more", 0, 7, 5, false));
 
 	return 0;
 }
