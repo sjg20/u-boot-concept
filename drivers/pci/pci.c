@@ -430,7 +430,7 @@ int pci_hose_scan(struct pci_controller *hose)
 		/* wait "pcidelay" ms (if defined)... */
 		s = env_get("pcidelay");
 		if (s) {
-			int val = simple_strtoul(s, NULL, 10);
+			int val = dectoul(s, NULL);
 			for (i = 0; i < val; i++)
 				udelay(1000);
 		}
