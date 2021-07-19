@@ -23,7 +23,8 @@
  * 0 is returned
  *
  * A hex prefix is supported (e.g. 0x123) regardless of the value of @base.
- * If found, the base is set to hex (16).
+ * If found, the base is set to hex (16). Similarly a decimal prefix (e.g. 0n12)
+ * causes the base to be set to decimal (10).
  *
  * If @base is 0:
  *    - an octal '0' prefix (e.g. 0777) sets the base to octal (8).
@@ -76,7 +77,8 @@ unsigned long dectoul(const char *cp, char **endp);
  * echo will append a newline to the tail.
  *
  * A hex prefix is supported (e.g. 0x123) regardless of the value of @base.
- * If found, the base is set to hex (16).
+ * If found, the base is set to hex (16). Similarly a decimal prefix (e.g. 0n12)
+ * causes the base to be set to decimal (10).
  *
  * If @base is 0:
  *    - an octal '0' prefix (e.g. 0777) sets the base to octal (8).

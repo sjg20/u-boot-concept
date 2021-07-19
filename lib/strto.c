@@ -23,6 +23,9 @@ static const char *_parse_integer_fixup_radix(const char *s, uint *basep)
 		if (ch == 'x') {
 			*basep = 16;
 			s += 2;
+		} else if (ch == 'n') {
+			*basep = 10;
+			s += 2;
 		} else if (!*basep) {
 			/* Only select octal if we don't have a base */
 			*basep = 8;
