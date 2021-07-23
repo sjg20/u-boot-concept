@@ -134,8 +134,11 @@ class TestElf(unittest.TestCase):
         entry = FakeEntry(10)
         section = FakeSection()
         elf_fname = self.ElfTestFile('u_boot_binman_syms_bad')
-        self.assertEqual(elf.LookupAndWriteSymbols(elf_fname, entry, section),
-                         None)
+        with self.assertRaises(ValueError) as e:
+            self.assertEqual(elf.LookupAndWriteSymbols(elf_fname, entry, section),
+                             None)
+        self.assertIn("Cannot process symbol '_binman_u_boot_spl_any_prop_offset' since there is no __image_copy_start",
+                      str(e.exception))
 
     def testBadSymbolSize(self):
         """Test that an attempt to use an 8-bit symbol are detected
