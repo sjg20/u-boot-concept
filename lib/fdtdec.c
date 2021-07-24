@@ -192,7 +192,6 @@ fdt_addr_t fdtdec_get_addr(const void *blob, int node, const char *prop_name)
 	return fdtdec_get_addr_size(blob, node, prop_name, NULL);
 }
 
-#if CONFIG_IS_ENABLED(PCI) && defined(CONFIG_DM_PCI)
 int fdtdec_get_pci_vendev(const void *blob, int node, u16 *vendor, u16 *device)
 {
 	const char *list, *end;
@@ -260,7 +259,6 @@ int fdtdec_get_pci_bus_range(const void *blob, int node,
 
 	return 0;
 }
-#endif
 
 uint64_t fdtdec_get_uint64(const void *blob, int node, const char *prop_name,
 			   uint64_t default_val)
