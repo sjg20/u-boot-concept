@@ -7,6 +7,7 @@
  * Copyright (c) 2019 Michael Walle <michael@walle.cc>
  */
 #include <common.h>
+#include <log.h>
 #include <phy.h>
 #include <dm/device_compat.h>
 #include <linux/bitfield.h>
@@ -196,6 +197,16 @@ static int ar803x_of_init(struct phy_device *phydev)
 	ofnode node, vddio_reg_node;
 	u32 strength, freq, min_uV, max_uV;
 	int sel;
+
+	/*
+	 * This driver requires OF_CONTROL but this is included on some boards
+	 * that don't support it in SPL. Return an error so the board vendor
+	 * can resolve this.
+	 */
+	if (!CONFIG_IS_ENABLED(OF_CONTROL)) {
+		log_err("atheros driver requires OF_CONTROL enabled");
+		return -ENOSYS;
+	}
 
 	node = phy_get_ofnode(phydev);
 	if (!ofnode_valid(node))
