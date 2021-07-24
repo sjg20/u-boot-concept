@@ -176,11 +176,11 @@ static int spi_child_post_bind(struct udevice *dev)
 
 static int spi_post_probe(struct udevice *bus)
 {
-#if !CONFIG_IS_ENABLED(OF_PLATDATA)
 	struct dm_spi_bus *spi = dev_get_uclass_priv(bus);
 
-	spi->max_hz = dev_read_u32_default(bus, "spi-max-frequency", 0);
-#endif
+	if (CONFIG_IS_ENABLED(OF_CONTROL) && !CONFIG_IS_ENABLED(OF_PLATDATA))
+		spi->max_hz = dev_read_u32_default(bus, "spi-max-frequency", 0);
+
 #if defined(CONFIG_NEEDS_MANUAL_RELOC)
 	struct dm_spi_ops *ops = spi_get_ops(bus);
 	static int reloc_done;
@@ -470,6 +470,16 @@ int spi_slave_of_to_plat(struct udevice *dev, struct dm_spi_slave_plat *plat)
 {
 	int mode = 0;
 	int value;
+
+	/*
+	 * This uclass requires OF_CONTROL but this is included on some boards
+	 * that don't support it in SPL. Return an error so the board vendor
+	 * can resolve this.
+	 */
+	if (!CONFIG_IS_ENABLED(OF_CONTROL)) {
+		log_err("SPI flash requires OF_CONTROL enabled");
+		return -ENOSYS;
+	}
 
 	plat->cs = dev_read_u32_default(dev, "reg", -1);
 	plat->max_hz = dev_read_u32_default(dev, "spi-max-frequency",
