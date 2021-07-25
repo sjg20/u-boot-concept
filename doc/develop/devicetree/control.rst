@@ -1,26 +1,27 @@
 .. SPDX-License-Identifier: GPL-2.0+
 .. sectionauthor:: Copyright 2011 The Chromium OS Authors
 
-Device Tree Control in U-Boot
-=============================
+Devicetree Control in U-Boot
+============================
 
 This feature provides for run-time configuration of U-Boot via a flat
-device tree (fdt). U-Boot configuration has traditionally been done
-using CONFIG options in the board config file. This feature aims to
-make it possible for a single U-Boot binary to support multiple boards,
-with the exact configuration of each board controlled by a flat device
-tree (fdt). This is the approach recently taken by the ARM Linux kernel
-and has been used by PowerPC for some time.
+device tree (fdt).
+
+This feature aims to make it possible for a single U-Boot binary to support
+multiple boards, with the exact configuration of each board controlled by
+a flat device tree (fdt). This is the approach recently taken by Linux (e.g.
+for PowerPC and ARM).
 
 The fdt is a convenient vehicle for implementing run-time configuration
-for three reasons. Firstly it is easy to use, being a simple text file.
-It is extensible since it consists of nodes and properties in a nice
-hierarchical format.
+for three reasons:
 
-Finally, there is already excellent infrastructure for the fdt: a
-compiler checks the text file and converts it to a compact binary
-format, and a library is already available in U-Boot (libfdt) for
-handling this format.
+- Firstly it is easy to use, being a simple text file
+- It is extensible since it consists of nodes and properties in a nice
+  hierarchical format
+- There is already excellent infrastructure for the fdt: a compiler checks
+  the text file and converts it to a compact binary format, and a library
+  is already available in U-Boot (libfdt) for handling this format\
+- It is fairly efficient to read incrementally
 
 The dts directory contains a Makefile for building the device tree blob
 and embedding it in your U-Boot image. This is useful since it allows
@@ -38,14 +39,8 @@ What is a Flat Device Tree?
 An fdt can be specified in source format as a text file. To read about
 the fdt syntax, take a look at the specification (dtspec_).
 
-You also might find this section of the Linux kernel documentation
-useful: (access this in the Linux kernel source code)
-
-	Documentation/devicetree/booting-without-of.txt
-
-There is also a mailing list:
-
-	http://lists.ozlabs.org/listinfo/devicetree-discuss
+There is also a mailing list (dtlist_) for the compiler and associated
+tools.
 
 In case you are wondering, OF stands for Open Firmware.
 
@@ -82,8 +77,9 @@ Then run the compiler (your version will vary)::
 	*   Bad configuration:	0
 	* Strange test result:	0
 
-You will also find a useful fdtdump utility for decoding a binary file, as
-well as fdtget/fdtput for reading and writing properties in a binary file.
+You will also find a useful `fdtdump` utility for decoding a binary file, as
+well as `fdtget`/`fdtput` for reading and writing properties in a binary file.
+U-Boot adds its own `fdtgrep` for creating subsets of the file.
 
 
 Where do I get an fdt file for my board?
@@ -109,10 +105,11 @@ Use::
 to set the filename of the device tree source. Then put your device tree
 file into::
 
-   board/<vendor>/dts/<name>.dts
+   arch/<arch>/dts/<name>.dts
 
 This should include your CPU or SOC's device tree file, placed in
-arch/<arch>/dts, and then make any adjustments required.
+`arch/<arch>/dts`, and then make any adjustments required using a u-boot-dtsi
+file for your board.
 
 If CONFIG_OF_EMBED is defined, then it will be picked up and built into
 the U-Boot image (including u-boot.bin). This is suitable for debugging
@@ -122,11 +119,10 @@ If CONFIG_OF_SEPARATE is defined, then it will be built and placed in
 a u-boot.dtb file alongside u-boot-nodtb.bin. A common approach is then to
 join the two::
 
-   cat u-boot-nodtb.bin u-boot.dtb >image.bin
+   cat u-boot-nodtb.bin u-boot.dtb >u-boot.bin
 
 and then flash image.bin onto your board. Note that U-Boot creates
-u-boot-dtb.bin which does the above step for you also. Resulting
-u-boot.bin is a copy of u-boot-dtb.bin in this case. If you are using
+u-boot.bin so does the above step for you automatically. If you are using
 CONFIG_SPL_FRAMEWORK, then u-boot.img will be built to include the device
 tree binary.
 
@@ -136,7 +132,8 @@ it and passes it to U-Boot.
 
 If CONFIG_OF_HOSTFILE is defined, then it will be read from a file on
 startup. This is only useful for sandbox. Use the -d flag to U-Boot to
-specify the file to read.
+specify the file to read, -D for the default and -T for the test devicetree,
+used to run sandbox unit tests.
 
 You cannot use more than one of these options at the same time.
 
@@ -177,6 +174,35 @@ ways:
     $ make DEVICE_TREE=<dts-file-name>
 
 
+Adding tweaks for U-Boot
+------------------------
+
+It is strongly recommended that devicetree files in U-Boot be an exact copy of
+those in Linux, so that it is easy to sync them up from time to time.
+
+U-Boot is of course a very different project from Linux, e.g. it operates under
+much more restrictive memory and code-size constraints. Where Linux may use a
+full clock driver with Common Clock Format (CCF) to find the input clock to the
+UART, U-Boot typically wants to output a banner as early as possible before too
+much code has run.
+
+A second different is that U-Boot includes different phases. For SPL,
+constraints are even more extreme and the devicetree is shrunk to remove
+unwanted nodes, or even turned into C code to avoid access overhead.
+
+U-Boot automatically looks for and incluces a file with updates to the standard
+devicetree for your board, searching for them in the same directory as the
+main file, in this order::
+
+   <orig_filename>-u-boot.dtsi
+   <CONFIG_SYS_SOC>-u-boot.dtsi
+   <CONFIG_SYS_CPU>-u-boot.dtsi
+   <CONFIG_SYS_VENDOR>-u-boot.dtsi
+   u-boot.dtsi
+
+Only one of these is selected but of course you can #include another one within
+that file, to create a hierarchy of shared files.
+
 Relocation, SPL and TPL
 -----------------------
 
@@ -201,7 +227,7 @@ If board_fit_config_name_match() relies on DM (DM driver to access an EEPROM
 containing the board ID for example), it possible to start with a generic DTB
 and then switch over to the right DTB after the detection. For this purpose,
 the platform code must call fdtdec_resetup(). Based on the returned flag, the
-platform may have to re-initiliaze the DM subusystem using dm_uninit() and
+platform may have to re-initiliaze the DM subsystem using dm_uninit() and
 dm_init_and_scan().
 
 
@@ -227,4 +253,19 @@ but can use the fdt to specific the UART clock, peripheral address, etc.
 In very broad terms, the CONFIG options in general control *what* driver
 files are pulled in, and the fdt controls *how* those files work.
 
-.. _dtspec: https://www.power.org/resources/downloads/Power_ePAPR_APPROVED_v1.0.pdf
+History
+-------
+
+U-Boot configuration was previous done using CONFIG options in the board
+config file. This eventually got out of hand with nearly 10,000 options.
+
+U-Boot adopted devicetree around the same time as linux and early boards
+used it before linux (e.g. snow). The two projects developed in parallel
+and there are still some differences in the bindings with certain boards.
+While there has beeen dicussion of having a separate repo for devicetree
+files, in practice the kernel's repo has become the place where these are
+stored, with U-Boot taking copies and adding tweaks with u-boot.dtsi files.
+
+
+.. _dtspec: https://www.devicetree.org/specifications/
+.. _dtlist: https://www.spinics.net/lists/devicetree-compiler/
