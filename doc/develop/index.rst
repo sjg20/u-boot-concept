@@ -10,6 +10,7 @@ Implementation
    :maxdepth: 1
 
    commands
+   devicetree/index
    driver-model/index
    global_data
    logging
