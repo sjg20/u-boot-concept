@@ -45,8 +45,8 @@ void dm_fixup_for_gd_move(struct global_data *new_gd)
 {
 	/* The sentinel node has moved, so update things that point to it */
 	if (gd->dm_root) {
-		new_gd->uclass_root_s.next->prev = &new_gd->uclass_root_s;
-		new_gd->uclass_root_s.prev->next = &new_gd->uclass_root_s;
+		new_gd->uclass_root->next->prev = new_gd->uclass_root;
+		new_gd->uclass_root->prev->next = new_gd->uclass_root;
 	}
 }
 

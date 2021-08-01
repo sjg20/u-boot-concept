@@ -33,7 +33,7 @@ struct uclass *uclass_find(enum uclass_id key)
 	 * node to the start of the list, or creating a linear array mapping
 	 * id to node.
 	 */
-	list_for_each_entry(uc, &gd->uclass_root_s, sibling_node) {
+	list_for_each_entry(uc, gd->uclass_root, sibling_node) {
 		if (uc->uc_drv->id == key)
 			return uc;
 	}
