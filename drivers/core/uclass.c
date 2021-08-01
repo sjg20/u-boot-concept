@@ -56,6 +56,7 @@ static int uclass_add(enum uclass_id id, struct uclass **ucp)
 	struct uclass *uc;
 	int ret;
 
+	printf("try %d/%d ", id, UCLASS_SPI_FLASH);
 	*ucp = NULL;
 	uc_drv = lists_uclass_lookup(id);
 	if (!uc_drv) {
@@ -84,7 +85,13 @@ static int uclass_add(enum uclass_id id, struct uclass **ucp)
 	uc->uc_drv = uc_drv;
 	INIT_LIST_HEAD(&uc->sibling_node);
 	INIT_LIST_HEAD(&uc->dev_head);
-	list_add(&uc->sibling_node, &DM_UCLASS_ROOT_S_NON_CONST);
+// good
+	printch('1');
+//	list_add(&uc->sibling_node, &DM_UCLASS_ROOT_S_NON_CONST);
+	printch('2');
+
+// bad
+ 	list_add(&uc->sibling_node, DM_UCLASS_ROOT_NON_CONST);
 
 	if (uc_drv->init) {
 		ret = uc_drv->init(uc);
@@ -145,6 +152,8 @@ int uclass_get(enum uclass_id id, struct uclass **ucp)
 {
 	struct uclass *uc;
 
+	if (!(gd->flags & GD_FLG_DM_INIT))
+		return -EDEADLK;
 	*ucp = NULL;
 	uc = uclass_find(id);
 	if (!uc)

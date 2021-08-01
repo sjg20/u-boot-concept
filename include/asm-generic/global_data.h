@@ -553,6 +553,10 @@ enum gd_flags {
 	 * @GD_FLG_SMP_READY: SMP initialization is complete
 	 */
 	GD_FLG_SMP_READY = 0x40000,
+	/**
+	 * @GD_FLG_DM: Driver model init is complete
+	 */
+	GD_FLG_DM_INIT = 0x80000,
 };
 
 #endif /* __ASSEMBLY__ */

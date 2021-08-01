@@ -136,6 +136,7 @@ int dm_init(bool of_live)
 		dm_warn("Virtual root driver already exists!\n");
 		return -EINVAL;
 	}
+	printch('a');
 	gd->uclass_root = &DM_UCLASS_ROOT_S_NON_CONST;
 // 	INIT_LIST_HEAD(&DM_UCLASS_ROOT_S_NON_CONST);
 	INIT_LIST_HEAD(gd->uclass_root);
@@ -146,7 +147,10 @@ int dm_init(bool of_live)
 		fix_devices();
 	}
 
+	printch('b');
+	gd->flags |= GD_FLG_DM_INIT;
 	ret = device_bind_by_name(NULL, false, &root_info, &DM_ROOT_NON_CONST);
+	printch('c');
 	if (ret)
 		return ret;
 	if (CONFIG_IS_ENABLED(OF_CONTROL))

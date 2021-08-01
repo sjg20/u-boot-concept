@@ -776,6 +776,7 @@ static int initf_console_record(void)
 
 static int initf_dm(void)
 {
+	printf("%s ", __func__);
 #if defined(CONFIG_DM) && CONFIG_VAL(SYS_MALLOC_F_LEN)
 	int ret;
 

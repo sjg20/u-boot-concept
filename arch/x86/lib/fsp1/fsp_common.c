@@ -28,10 +28,12 @@ static void *fsp_prepare_mrc_cache(void)
 	int ret;
 
 	ret = mrccache_get_region(MRC_TYPE_NORMAL, NULL, &entry);
+	printf("xret=%d ", ret);
 	if (ret)
 		return NULL;
 
 	cache = mrccache_find_current(&entry);
+	printf("yret=%d ", ret);
 	if (!cache)
 		return NULL;
 
