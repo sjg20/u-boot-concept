@@ -243,6 +243,7 @@ int mrccache_get_region(enum mrc_type_t type, struct udevice **devp,
 	 * memory map cannot be read.
 	 */
 	ret = uclass_find_first_device(UCLASS_SPI_FLASH, &dev);
+	printf("%s: ret=%d dev=%p ", __func__, ret, dev);
 	if (ret || !dev) {
 		/*
 		 * Fall back to searching the device tree since driver model
