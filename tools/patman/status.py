@@ -485,3 +485,4 @@ def check_patchwork_status(series, series_id, branch, dest_branch, force,
         terminal.Print(
             "%d response%s added from patchwork into new branch '%s'" %
             (num_added, 's' if num_added != 1 else '', dest_branch))
+
