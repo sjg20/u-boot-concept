@@ -137,7 +137,8 @@ int dm_init(bool of_live)
 		return -EINVAL;
 	}
 	gd->uclass_root = &DM_UCLASS_ROOT_S_NON_CONST;
-	INIT_LIST_HEAD(&DM_UCLASS_ROOT_S_NON_CONST);
+// 	INIT_LIST_HEAD(&DM_UCLASS_ROOT_S_NON_CONST);
+	INIT_LIST_HEAD(gd->uclass_root);
 
 	if (IS_ENABLED(CONFIG_NEEDS_MANUAL_RELOC)) {
 		fix_drivers();
