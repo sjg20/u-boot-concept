@@ -34,7 +34,7 @@ endif
 ifndef CONFIG_$(SPL_)X86_64
 AFLAGS_REMOVE_call32.o := -mregparm=3 \
 	$(if $(CONFIG_EFI_STUB_64BIT),-march=i386 -m32)
-AFLAGS_call32.o := -fpic -fshort-wchar \
+AFLAGS_call32.o := -fpic \
 	$(if $(CONFIG_EFI_STUB_64BIT),-m64)
 
 extra-y += call32.o

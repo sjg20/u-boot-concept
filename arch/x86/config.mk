@@ -40,7 +40,7 @@ OBJCOPYFLAGS_EFI := -j .text -j .sdata -j .data -j .dynamic -j .dynsym \
 	-j .rel -j .rela -j .reloc
 
 # Compiler flags to be added when building UEFI applications
-CFLAGS_EFI := -fpic -fshort-wchar
+CFLAGS_EFI := -fpic
 # Compiler flags to be removed when building UEFI applications
 CFLAGS_NON_EFI := -mregparm=3 -fstack-protector-strong
 

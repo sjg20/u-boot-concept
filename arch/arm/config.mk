@@ -13,7 +13,7 @@ endif
 
 CFLAGS_NON_EFI := -fno-pic -ffixed-r9 -ffunction-sections -fdata-sections \
 		  -fstack-protector-strong
-CFLAGS_EFI := -fpic -fshort-wchar
+CFLAGS_EFI := -fpic
 
 ifneq ($(CONFIG_LTO)$(CONFIG_USE_PRIVATE_LIBGCC),yy)
 LDFLAGS_FINAL += --gc-sections

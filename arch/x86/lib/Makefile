@@ -71,14 +71,14 @@ endif
 ifneq ($(CONFIG_EFI_STUB),)
 
 CFLAGS_REMOVE_reloc_ia32_efi.o += -mregparm=3
-CFLAGS_reloc_ia32_efi.o += -fpic -fshort-wchar
+CFLAGS_reloc_ia32_efi.o += -fpic
 
 # When building for 64-bit we must remove the i386-specific flags
 CFLAGS_REMOVE_reloc_x86_64_efi.o += -mregparm=3 -march=i386 -m32
-CFLAGS_reloc_x86_64_efi.o += -fpic -fshort-wchar -m64
+CFLAGS_reloc_x86_64_efi.o += -fpic -m64
 
 AFLAGS_REMOVE_crt0_x86_64_efi.o += -mregparm=3 -march=i386 -m32
-AFLAGS_crt0_x86_64_efi.o += -fpic -fshort-wchar -m64
+AFLAGS_crt0_x86_64_efi.o += -fpic -m64
 
 extra-$(CONFIG_EFI_STUB_32BIT) += crt0_ia32_efi.o reloc_ia32_efi.o
 extra-$(CONFIG_EFI_STUB_64BIT) += crt0_x86_64_efi.o reloc_x86_64_efi.o
