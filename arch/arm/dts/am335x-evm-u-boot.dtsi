@@ -8,6 +8,7 @@
 &l4_per {
 
 	segment@300000 {
+		u-boot,dm-pre-reloc;
 
 		target-module@e000 {
 			u-boot,dm-pre-reloc;
