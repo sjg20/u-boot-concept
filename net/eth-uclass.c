@@ -497,7 +497,7 @@ static int eth_pre_unbind(struct udevice *dev)
 
 static bool eth_dev_get_mac_address(struct udevice *dev, u8 mac[ARP_HLEN])
 {
-#if CONFIG_IS_ENABLED(OF_CONTROL)
+#if CONFIG_IS_ENABLED(OF_CONTROL) && !CONFIG_IS_ENABLED(OF_PLATDATA)
 	const uint8_t *p;
 
 	p = dev_read_u8_array_ptr(dev, "mac-address", ARP_HLEN);
@@ -615,6 +615,7 @@ UCLASS_DRIVER(ethernet) = {
 	.post_probe	= eth_post_probe,
 	.pre_remove	= eth_pre_remove,
 	.priv_auto	= sizeof(struct eth_uclass_priv),
+	.per_device_plat_auto	= sizeof(struct eth_pdata),
 	.per_device_auto	= sizeof(struct eth_device_priv),
 	.flags		= DM_UC_FLAG_SEQ_ALIAS,
 };

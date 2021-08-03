@@ -1983,7 +1983,7 @@ static int omap_hsmmc_probe(struct udevice *dev)
 				    &priv->pbias_supply);
 #endif
 #if defined(OMAP_HSMMC_USE_GPIO)
-#if CONFIG_IS_ENABLED(OF_CONTROL) && CONFIG_IS_ENABLED(DM_GPIO)
+#if CONFIG_IS_ENABLED(OF_CONTROL) && CONFIG_IS_ENABLED(DM_GPIO) && !CONFIG_IS_ENABLED(OF_PLATDATA)
 	gpio_request_by_name(dev, "cd-gpios", 0, &priv->cd_gpio, GPIOD_IS_IN);
 	gpio_request_by_name(dev, "wp-gpios", 0, &priv->wp_gpio, GPIOD_IS_IN);
 #endif
