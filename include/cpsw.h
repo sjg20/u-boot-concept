@@ -16,6 +16,7 @@
 #ifndef _CPSW_H_
 #define _CPSW_H_
 
+#include <dt-structs.h>
 #include <dm/ofnode.h>
 
 /* reg offset */
@@ -50,6 +51,9 @@ enum {
 };
 
 struct cpsw_platform_data {
+#if CONFIG_IS_ENABLED(OF_PLATDATA)
+	struct dtd_ti_am335x_cpsw dtplat;
+#endif
 	u32	mdio_base;
 	u32	cpsw_base;
 	u32	mac_id;

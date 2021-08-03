@@ -1223,32 +1223,17 @@ static void cpsw_eth_of_parse_slave(struct cpsw_platform_data *data,
 							"max-speed", 0);
 }
 
-static int cpsw_eth_of_to_plat(struct udevice *dev)
+static int cpsw_eth_of_to_plat_dt(struct udevice *dev)
 {
 	struct eth_pdata *pdata = dev_get_plat(dev);
-	struct cpsw_platform_data *data;
+	struct cpsw_platform_data *data = pdata->priv_pdata;
 	struct gpio_desc *mode_gpios;
 	int slave_index = 0;
 	int num_mode_gpios;
 	ofnode subnode;
 	int ret;
 
-	data = calloc(1, sizeof(struct cpsw_platform_data));
-	if (!data)
-		return -ENOMEM;
-
-	pdata->priv_pdata = data;
 	pdata->iobase = dev_read_addr(dev);
-	data->version = CPSW_CTRL_VERSION_2;
-	data->bd_ram_ofs = CPSW_BD_OFFSET;
-	data->ale_reg_ofs = CPSW_ALE_OFFSET;
-	data->cpdma_reg_ofs = CPSW_CPDMA_OFFSET;
-	data->mdio_div = CPSW_MDIO_DIV;
-	data->host_port_reg_ofs = CPSW_HOST_PORT_OFFSET,
-
-	pdata->phy_interface = -1;
-
-	data->cpsw_base = pdata->iobase;
 
 	ret = dev_read_s32(dev, "cpdma_channels", &data->channels);
 	if (ret) {
@@ -1333,6 +1318,65 @@ static int cpsw_eth_of_to_plat(struct udevice *dev)
 		}
 	}
 
+	ret = ti_cm_get_macid_addr(dev, data->active_slave, data);
+	if (ret < 0) {
+		pr_err("cpsw read efuse mac failed\n");
+		return ret;
+	}
+
+	return 0;
+}
+
+static int cpsw_eth_of_to_plat_non_dt(struct udevice *dev)
+{
+#if CONFIG_IS_ENABLED(OF_PLATDATA)
+	struct cpsw_platform_data *plat = dev_get_plat(dev);
+	struct dtd_ti_am335x_cpsw *dtplat = &plat->dtplat;
+	struct gpio_desc mode_gpio;
+
+	plat->channels = dtplat->cpdma_channels;
+	plat->slaves = dtplat->slaves;
+	plat->ale_entries = dtplat->ale_entries;
+	plat->bd_ram_ofs = dtplat->bd_ram_size;
+	plat->mac_control = dtplat->mac_control;
+
+	/*
+	 * This is requested but never actually used in this driver. With DT
+	 * it is implemented as a list but no devicetree actually provides more
+	 * than one.
+	 */
+	gpio_request_by_driver_info(dev, dtplat->mode_gpios, 0, &mode_gpio,
+				    GPIOD_IS_OUT);
+	plat->active_slave = dtplat->active_slave;
+#endif
+
+	return 0;
+}
+
+static int cpsw_eth_of_to_plat(struct udevice *dev)
+{
+	struct cpsw_platform_data *data = dev_get_plat(dev);
+	struct eth_pdata *pdata = dev_get_uclass_plat(dev);
+	int ret;
+
+	pdata->priv_pdata = data;
+	data->version = CPSW_CTRL_VERSION_2;
+	data->bd_ram_ofs = CPSW_BD_OFFSET;
+	data->ale_reg_ofs = CPSW_ALE_OFFSET;
+	data->cpdma_reg_ofs = CPSW_CPDMA_OFFSET;
+	data->mdio_div = CPSW_MDIO_DIV;
+	data->host_port_reg_ofs = CPSW_HOST_PORT_OFFSET,
+
+	pdata->phy_interface = -1;
+
+	data->cpsw_base = pdata->iobase;
+	if (!CONFIG_IS_ENABLED(OF_PLATDATA))
+		ret = cpsw_eth_of_to_plat_dt(dev);
+	else
+		ret = cpsw_eth_of_to_plat_non_dt(dev);
+	if (ret)
+		return ret;
+
 	data->slave_data[0].slave_reg_ofs = CPSW_SLAVE0_OFFSET;
 	data->slave_data[0].sliver_reg_ofs = CPSW_SLIVER0_OFFSET;
 
@@ -1341,18 +1385,13 @@ static int cpsw_eth_of_to_plat(struct udevice *dev)
 		data->slave_data[1].sliver_reg_ofs = CPSW_SLIVER1_OFFSET;
 	}
 
-	ret = ti_cm_get_macid_addr(dev, data->active_slave, data);
-	if (ret < 0) {
-		pr_err("cpsw read efuse mac failed\n");
-		return ret;
-	}
-
 	pdata->phy_interface = data->slave_data[data->active_slave].phy_if;
 	if (pdata->phy_interface == -1) {
 		debug("%s: Invalid PHY interface '%s'\n", __func__,
 		      phy_string_for_interface(pdata->phy_interface));
 		return -EINVAL;
 	}
+
 
 	return 0;
 }
@@ -1377,9 +1416,9 @@ U_BOOT_DRIVER(eth_cpsw) = {
 	.id	= UCLASS_ETH,
 #if CONFIG_IS_ENABLED(OF_CONTROL)
 	.of_match = cpsw_eth_ids,
-	.of_to_plat = cpsw_eth_of_to_plat,
-	.plat_auto	= sizeof(struct eth_pdata),
+	.plat_auto	= sizeof(struct cpsw_platform_data),
 #endif
+	.of_to_plat = cpsw_eth_of_to_plat,
 	.probe	= cpsw_eth_probe,
 	.ops	= &cpsw_eth_ops,
 	.priv_auto	= sizeof(struct cpsw_priv),

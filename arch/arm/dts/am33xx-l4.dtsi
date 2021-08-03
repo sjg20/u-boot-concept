@@ -49,7 +49,7 @@
 		};
 	};
 
-	segment@200000 {					/* 0x44e00000 */
+	segment_2: segment@200000 {					/* 0x44e00000 */
 		compatible = "simple-bus";
 		#address-cells = <1>;
 		#size-cells = <1>;

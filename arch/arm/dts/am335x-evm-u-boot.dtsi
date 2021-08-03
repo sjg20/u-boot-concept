@@ -20,6 +20,10 @@
 	};
 };
 
+&mac {
+	u-boot,dm-spl;
+};
+
 &mmc3 {
 	status = "disabled";
 };
