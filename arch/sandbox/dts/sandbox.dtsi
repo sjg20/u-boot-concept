@@ -65,12 +65,19 @@
 	};
 
 	gpio_b: gpios@1 {
+		u-boot,dm-spl;
 		u-boot,dm-pre-proper;
 		gpio-controller;
 		compatible = "sandbox,gpio";
 		#gpio-cells = <2>;
 		gpio-bank-name = "b";
 		sandbox,gpio-count = <10>;
+	};
+
+	gpio-test {
+		u-boot,dm-spl;
+		compatible = "sandbox,gpio-test";
+		test-gpios = <&gpio_b 3 0>;
 	};
 
 	hexagon {
