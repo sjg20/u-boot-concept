@@ -45,7 +45,7 @@ int initr_watchdog(void)
 		}
 	}
 
-	if (CONFIG_IS_ENABLED(OF_CONTROL) && !CONFIG_IS_ENABLED(OF_PLATDATA)) {
+	if (CONFIG_IS_ENABLED(OF_REAL)) {
 		timeout = dev_read_u32_default(gd->watchdog_dev, "timeout-sec",
 					       WATCHDOG_TIMEOUT_SECS);
 		reset_period = dev_read_u32_default(gd->watchdog_dev,
