@@ -8,6 +8,7 @@
 #include <led.h>
 #include <log.h>
 #include <asm/global_data.h>
+#include <dm/ofnode.h>
 
 #ifdef CONFIG_SPL_BUILD
 DECLARE_GLOBAL_DATA_PTR;
@@ -18,7 +19,7 @@ static int setup_led(void)
 	char *led_name;
 	int ret;
 
-	led_name = fdtdec_get_config_string(gd->fdt_blob, "u-boot,boot-led");
+	led_name = ofnode_conf_read_str("u-boot,boot-led");
 	if (!led_name)
 		return 0;
 	ret = led_get_by_label(led_name, &dev);
