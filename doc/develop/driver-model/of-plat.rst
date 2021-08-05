@@ -634,7 +634,7 @@ then dtoc looks at the first compatible string ("rockchip,rk3188-grf"),
 converts that to a C identifier (rockchip_rk3188_grf) and then looks for that.
 
 Various things can cause dtoc to fail to find the driver and it tries to
-warn about these. For example:
+warn about these. For example::
 
    rockchip_rk3188_uart: Missing .compatible in drivers/serial/serial_rockchip.c
                     : WARNING: the driver rockchip_rk3188_uart was not found in the driver list
@@ -648,6 +648,30 @@ DM_DRIVER_ALIAS() macro can be used to tell dtoc about this and avoid a problem.
 Checks are also made to confirm that the referenced driver has a .compatible
 member and a .id member. The first provides the array of compatible strings and
 the second provides the uclass ID.
+
+Another error that can crop up is something like::
+
+   spl/dts/dt-device.c:257:38: error: invalid application of ‘sizeof’ to
+         incomplete type ‘struct sandbox_irq_priv’
+      257 | u8 _sandbox_irq_priv_irq_sbox[sizeof(struct sandbox_irq_priv)]
+          |                                      ^~~~~~
+
+This indicates that `struct sandbox_irq_priv` is not defined anywhere. The
+solution is to add a DM_HEADER() line, as below, so this is included in the
+dt-device.c file::
+
+   U_BOOT_DRIVER(sandbox_irq) = {
+      .name		= "sandbox_irq",
+      .id		= UCLASS_IRQ,
+      .of_match	= sandbox_irq_ids,
+      .ops		= &sandbox_irq_ops,
+      .priv_auto	= sizeof(struct sandbox_irq_priv),
+      DM_HEADER(<asm/irq.h>)
+   };
+
+Note that there is no dependency checking on the above, so U-Boot will not
+regenerate the dt-device.c file when you update the source file (here,
+`irq_sandbox.c`). You need to run `make mrproper` first to get a fresh build.
 
 
 Caveats
