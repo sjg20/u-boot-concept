@@ -1110,6 +1110,12 @@ ifeq ($(CONFIG_OF_EMBED)$(CONFIG_EFI_APP),y)
 	@echo >&2 "===================================================="
 endif
 ifneq ($(CONFIG_SPL_FIT_GENERATOR),)
+	# Only allow existing users of this deprecated option. Please migrate!
+	@if ! grep -q $(shell cat .defconfig_name) \
+			$(srctree)/scripts/fit_gen_whitelist.txt; then \
+		echo >&2 "Error: CONFIG_SPL_FIT_GENERATOR is deprecated"; \
+		exit 1; \
+	fi
 	@echo >&2 "===================== WARNING ======================"
 	@echo >&2 "This board uses CONFIG_SPL_FIT_GENERATOR. Please migrate"
 	@echo >&2 "to binman instead, to avoid the proliferation of"
