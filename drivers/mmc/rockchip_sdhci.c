@@ -83,13 +83,13 @@ static int arasan_sdhci_probe(struct udevice *dev)
 
 static int arasan_sdhci_of_to_plat(struct udevice *dev)
 {
-#if CONFIG_IS_ENABLED(OF_REAL)
-	struct sdhci_host *host = dev_get_priv(dev);
+	if (CONFIG_IS_ENABLED(OF_REAL)) {
+		struct sdhci_host *host = dev_get_priv(dev);
 
-	host->name = dev->name;
-	host->ioaddr = dev_read_addr_ptr(dev);
-	host->bus_width = dev_read_u32_default(dev, "bus-width", 4);
-#endif
+		host->name = dev->name;
+		host->ioaddr = dev_read_addr_ptr(dev);
+		host->bus_width = dev_read_u32_default(dev, "bus-width", 4);
+	}
 
 	return 0;
 }

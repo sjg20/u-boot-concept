@@ -1407,7 +1407,6 @@ __weak void init_clk_usdhc(u32 index)
 
 static int fsl_esdhc_of_to_plat(struct udevice *dev)
 {
-#if CONFIG_IS_ENABLED(OF_REAL)
 	struct fsl_esdhc_priv *priv = dev_get_priv(dev);
 #if CONFIG_IS_ENABLED(DM_REGULATOR)
 	struct udevice *vqmmc_dev;
@@ -1415,9 +1414,11 @@ static int fsl_esdhc_of_to_plat(struct udevice *dev)
 #endif
 	const void *fdt = gd->fdt_blob;
 	int node = dev_of_offset(dev);
-
 	fdt_addr_t addr;
 	unsigned int val;
+
+	if (!CONFIG_IS_ENABLED(OF_REAL))
+		return 0;
 
 	addr = dev_read_addr(dev);
 	if (addr == FDT_ADDR_T_NONE)
@@ -1490,7 +1491,7 @@ static int fsl_esdhc_of_to_plat(struct udevice *dev)
 			priv->vs18_enable = 1;
 	}
 #endif
-#endif
+
 	return 0;
 }
 
@@ -1594,11 +1595,11 @@ static int fsl_esdhc_probe(struct udevice *dev)
 		return ret;
 	}
 
-#if CONFIG_IS_ENABLED(OF_REAL)
-	ret = mmc_of_parse(dev, &plat->cfg);
-	if (ret)
-		return ret;
-#endif
+	if (CONFIG_IS_ENABLED(OF_REAL)) {
+		ret = mmc_of_parse(dev, &plat->cfg);
+		if (ret)
+			return ret;
+	}
 
 	mmc = &plat->mmc;
 	mmc->cfg = &plat->cfg;
