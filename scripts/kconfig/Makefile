@@ -92,8 +92,10 @@ else
 endif
 endif
 
+# Write out the defconfig name to a file so we know which board was configured
 %_defconfig: $(obj)/conf
 	$(Q)$< $(silent) --defconfig=arch/$(SRCARCH)/configs/$@ $(Kconfig)
+	$(Q)echo $(subst _defconfig,,$@) > .defconfig_name
 
 # Added for U-Boot (backward compatibility)
 %_config: %_defconfig
