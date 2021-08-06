@@ -1407,7 +1407,7 @@ __weak void init_clk_usdhc(u32 index)
 
 static int fsl_esdhc_of_to_plat(struct udevice *dev)
 {
-#if !CONFIG_IS_ENABLED(OF_PLATDATA)
+#if CONFIG_IS_ENABLED(OF_REAL)
 	struct fsl_esdhc_priv *priv = dev_get_priv(dev);
 #if CONFIG_IS_ENABLED(DM_REGULATOR)
 	struct udevice *vqmmc_dev;
@@ -1594,7 +1594,7 @@ static int fsl_esdhc_probe(struct udevice *dev)
 		return ret;
 	}
 
-#if !CONFIG_IS_ENABLED(OF_PLATDATA)
+#if CONFIG_IS_ENABLED(OF_REAL)
 	ret = mmc_of_parse(dev, &plat->cfg);
 	if (ret)
 		return ret;

@@ -83,7 +83,7 @@ static int arasan_sdhci_probe(struct udevice *dev)
 
 static int arasan_sdhci_of_to_plat(struct udevice *dev)
 {
-#if !CONFIG_IS_ENABLED(OF_PLATDATA)
+#if CONFIG_IS_ENABLED(OF_REAL)
 	struct sdhci_host *host = dev_get_priv(dev);
 
 	host->name = dev->name;
