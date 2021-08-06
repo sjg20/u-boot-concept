@@ -392,34 +392,35 @@ static void ftsdc_setup_cfg(struct mmc_config *cfg, const char *name, int buswid
 
 static int ftsdc010_mmc_of_to_plat(struct udevice *dev)
 {
-#if CONFIG_IS_ENABLED(OF_REAL)
-	struct ftsdc_priv *priv = dev_get_priv(dev);
-	struct ftsdc010_chip *chip = &priv->chip;
-	chip->name = dev->name;
-	chip->ioaddr = dev_read_addr_ptr(dev);
-	chip->buswidth = fdtdec_get_int(gd->fdt_blob, dev_of_offset(dev),
-					"bus-width", 4);
-	chip->priv = dev;
-	priv->fifo_depth = fdtdec_get_int(gd->fdt_blob, dev_of_offset(dev),
-				    "fifo-depth", 0);
-	priv->fifo_mode = fdtdec_get_bool(gd->fdt_blob, dev_of_offset(dev),
-					  "fifo-mode");
-	if (fdtdec_get_int_array(gd->fdt_blob, dev_of_offset(dev),
-			 "clock-freq-min-max", priv->minmax, 2)) {
-		int val = fdtdec_get_int(gd->fdt_blob, dev_of_offset(dev),
-				  "max-frequency", -EINVAL);
-		if (val < 0)
-			return val;
+	if (CONFIG_IS_ENABLED(OF_REAL)) {
+		struct ftsdc_priv *priv = dev_get_priv(dev);
+		struct ftsdc010_chip *chip = &priv->chip;
+		chip->name = dev->name;
+		chip->ioaddr = dev_read_addr_ptr(dev);
+		chip->buswidth = fdtdec_get_int(gd->fdt_blob, dev_of_offset(dev),
+						"bus-width", 4);
+		chip->priv = dev;
+		priv->fifo_depth = fdtdec_get_int(gd->fdt_blob, dev_of_offset(dev),
+					    "fifo-depth", 0);
+		priv->fifo_mode = fdtdec_get_bool(gd->fdt_blob, dev_of_offset(dev),
+						  "fifo-mode");
+		if (fdtdec_get_int_array(gd->fdt_blob, dev_of_offset(dev),
+				 "clock-freq-min-max", priv->minmax, 2)) {
+			int val = fdtdec_get_int(gd->fdt_blob, dev_of_offset(dev),
+					  "max-frequency", -EINVAL);
+			if (val < 0)
+				return val;
 
-		priv->minmax[0] = 400000;  /* 400 kHz */
-		priv->minmax[1] = val;
-	} else {
-		debug("%s: 'clock-freq-min-max' property was deprecated.\n",
-		__func__);
+			priv->minmax[0] = 400000;  /* 400 kHz */
+			priv->minmax[1] = val;
+		} else {
+			debug("%s: 'clock-freq-min-max' property was deprecated.\n",
+			__func__);
+		}
 	}
-#endif
 	chip->sclk = priv->minmax[1];
 	chip->regs = chip->ioaddr;
+
 	return 0;
 }
 
