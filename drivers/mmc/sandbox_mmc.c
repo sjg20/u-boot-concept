@@ -10,11 +10,15 @@
 #include <fdtdec.h>
 #include <log.h>
 #include <mmc.h>
+#include <os.h>
 #include <asm/test.h>
 
 struct sandbox_mmc_plat {
 	struct mmc_config cfg;
 	struct mmc mmc;
+	const char *fname;
+	void *buf;
+	int size;
 };
 
 #define MMC_CSIZE 0
@@ -143,6 +147,8 @@ static int sandbox_mmc_of_to_plat(struct udevice *dev)
 	struct blk_desc *blk;
 	int ret;
 
+	plat->fname = dev_read_string(dev, "filename");
+
 	ret = mmc_of_parse(dev, cfg);
 	if (ret)
 		return ret;
@@ -156,6 +162,18 @@ static int sandbox_mmc_of_to_plat(struct udevice *dev)
 static int sandbox_mmc_probe(struct udevice *dev)
 {
 	struct sandbox_mmc_plat *plat = dev_get_plat(dev);
+
+	if (plat->fname) {
+		int ret;
+
+		ret = os_map_file(plat->fname, OS_O_RDWR | OS_O_CREAT,
+				  &plat->buf, &plat->size);
+		if (ret) {
+			log_err("%s: Unable to map file '%s'\n", dev->name,
+				    plat->fname);
+			return ret;
+		}
+	}
 
 	return mmc_init(&plat->mmc);
 }
