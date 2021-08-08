@@ -316,6 +316,20 @@ int mmc_get_next_devnum(void)
 	return blk_find_max_devnum(IF_TYPE_MMC);
 }
 
+int mmc_get_blk(struct udevice *dev, struct udevice **blkp)
+{
+	struct udevice *blk;
+	int ret;
+
+	device_find_first_child_by_uclass(dev, UCLASS_BLK, &blk);
+	ret = device_probe(blk);
+	if (ret)
+		return ret;
+	*blkp = blk;
+
+	return 0;
+}
+
 struct blk_desc *mmc_get_blk_desc(struct mmc *mmc)
 {
 	struct blk_desc *desc;

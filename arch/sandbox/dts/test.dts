@@ -846,7 +846,7 @@
 
 	mmc0 {
 		compatible = "sandbox,mmc";
-		filename = "mmc.bin";
+		filename = "mmc.img";
 	};
 
 	pch {

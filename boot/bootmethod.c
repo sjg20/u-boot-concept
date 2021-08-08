@@ -5,9 +5,11 @@
  */
 
 #include <common.h>
+#include <blk.h>
 #include <bootmethod.h>
 #include <dm.h>
 #include <log.h>
+#include <part.h>
 #include <dm/lists.h>
 
 enum {
@@ -103,6 +105,21 @@ int bootmethod_bind(struct udevice *parent, const char *drv_name,
 	if (ret)
 		return ret;
 	*devp = dev;
+
+	return 0;
+}
+
+int bootmethod_find_in_blk(struct udevice *blk, int seq, struct bootflow *bflow)
+{
+	struct blk_desc *desc = blk_get_by_device(blk);
+	struct disk_partition info;
+	int partnum = seq + 1;
+	int ret;
+
+	ret = part_get_info(desc, partnum, &info);
+	if (ret)
+		return ret;
+	log_info("%s: Found partition %x\n", blk->name, partnum);
 
 	return 0;
 }

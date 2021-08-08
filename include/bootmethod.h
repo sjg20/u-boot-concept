@@ -102,4 +102,16 @@ int bootmethod_next_bootflow(struct bootmethod_iter *iter,
 int bootmethod_bind(struct udevice *parent, const char *drv_name,
 		    const char *name, struct udevice **devp);
 
+/**
+ * bootmethod_find_in_blk() - Find a bootmethod in a block device
+ *
+ * @blk: Block device to search
+ * @seq: Sequence number within block device, used as the partition number,
+ *	after adding 1
+ * @bflow:	Returns bootflow if found
+ * @return 0 if found, -ESHUTDOWN if no more bootflows, other -ve on error
+ */
+int bootmethod_find_in_blk(struct udevice *blk, int seq,
+			   struct bootflow *bflow);
+
 #endif

@@ -7,11 +7,27 @@
 #include <common.h>
 #include <bootmethod.h>
 #include <dm.h>
+#include <mmc.h>
+#include <dm/device-internal.h>
 
 static int mmc_get_bootflow(struct udevice *dev, int seq,
 			    struct bootflow *bflow)
 {
-	return -ESHUTDOWN;
+	struct udevice *mmc_dev = dev_get_parent(dev);
+	struct udevice *blk;
+	int ret;
+
+	ret = mmc_get_blk(mmc_dev, &blk);
+	if (ret)
+		return log_msg_ret("blk", ret);
+	printf("MMC - blk %s probed %d %d\n", blk->name,
+	       device_active(dev), device_active(blk));
+	assert(blk);
+	ret = bootmethod_find_in_blk(blk, seq, bflow);
+	if (ret)
+		return log_msg_ret("find", ret);
+
+	return 0;
 }
 
 struct bootmethod_ops mmc_bootmethod_ops = {
