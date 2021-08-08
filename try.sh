@@ -5,6 +5,7 @@ set -e
 file=mmc.img
 mnt=/mnt/x
 fat=/mnt/y
+dstdir=$fat/boot/extlinux
 
 old() {
 	mkfs.vfat $file
@@ -35,15 +36,15 @@ EOF
 }
 
 new() {
-	echo 'type=c' | sudo sfdisk -q $file
+	echo 'type=c' | sudo sfdisk $file
 	#sudo kpartx -a $file
-	loop=$(losetup --show -f -P $file)
+	loop=$(sudo losetup --show -f -P $file)
 	echo "Mounted to $loop"
 	fatpart="${loop}p1"
- 	mkfs.vfat $fatpart
+ 	sudo mkfs.vfat $fatpart
 	sudo mount -o loop ${fatpart} $fat
 
-	echo >>/tmp/extlinux.conf <<EOF
+	cat >/tmp/extlinux.conf << EOF
 ui menu.c32
 
 menu autoboot Arch Boot. Automatic boot in # second{,s}. Press a key for options.
@@ -60,8 +61,11 @@ label Arch
     fdtdir /dtbs
     initrd /initramfs-linux.img
 EOF
-	sudo cp /tmp/extlinux.conf $fat
+	sudo mkdir -p $dstdir
+	sudo cp /tmp/extlinux.conf $dstdir
 	sudo umount $fat
+
+	losetup -d $loop
 }
 
 # Remove old devices

@@ -20,8 +20,6 @@ static int mmc_get_bootflow(struct udevice *dev, int seq,
 	ret = mmc_get_blk(mmc_dev, &blk);
 	if (ret)
 		return log_msg_ret("blk", ret);
-	printf("MMC - blk %s probed %d %d\n", blk->name,
-	       device_active(dev), device_active(blk));
 	assert(blk);
 	ret = bootmethod_find_in_blk(blk, seq, bflow);
 	if (ret)

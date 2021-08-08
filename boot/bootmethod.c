@@ -8,9 +8,14 @@
 #include <blk.h>
 #include <bootmethod.h>
 #include <dm.h>
+#include <fs.h>
 #include <log.h>
+#include <malloc.h>
+#include <mapmem.h>
 #include <part.h>
 #include <dm/lists.h>
+
+#define DISTRO_FNAME	"/boot/extlinux/extlinux.conf"
 
 enum {
 	/*
@@ -71,16 +76,18 @@ int bootmethod_next_bootflow(struct bootmethod_iter *iter,
 		ret = next_bootflow(iter->dev, iter->seq, bflow);
 
 		/* If we got a valid bootflow, return it */
-		if (!ret)
+		if (!ret) {
+			log_info("Bootmethod '%s' seq %d: Found bootflow\n",
+				 iter->dev->name, iter->seq);
 			return 0;
+		}
 
-		/* If we got some other error, try the device again */
+		/* If we got some other error, try the next partition */
 		else if (ret != -ESHUTDOWN) {
-			log_warning("Bootmethod '%s' seq %d: Error %d\n",
-				    iter->dev->name, iter->seq, ret);
+			log_debug("Bootmethod '%s' seq %d: Error %d\n",
+				  iter->dev->name, iter->seq, ret);
 			if (iter->seq++ == MAX_BOOTFLOWS_PER_BOOTMETHOD)
 				return log_msg_ret("max", -E2BIG);
-			continue;
 		}
 
 		/* we got to the end of that bootmethod, try the next */
@@ -99,9 +106,15 @@ int bootmethod_bind(struct udevice *parent, const char *drv_name,
 		    const char *name, struct udevice **devp)
 {
 	struct udevice *dev;
+	char dev_name[30];
+	char *str;
 	int ret;
 
-	ret = device_bind_driver(parent, drv_name, name, &dev);
+	snprintf(dev_name, sizeof(dev_name), "%s.%s", parent->name, name);
+	str = strdup(dev_name);
+	if (!str)
+		return -ENOMEM;
+	ret = device_bind_driver(parent, drv_name, str, &dev);
 	if (ret)
 		return ret;
 	*devp = dev;
@@ -109,17 +122,63 @@ int bootmethod_bind(struct udevice *parent, const char *drv_name,
 	return 0;
 }
 
+static int distro_boot(struct blk_desc *desc, int partnum)
+{
+	loff_t size, bytes_read;
+	ulong addr;
+	void *buf;
+	int ret;
+
+	ret = fs_size(DISTRO_FNAME, &size);
+	if (ret)
+		return log_msg_ret("size", ret);
+	log_info("   - distro file size %x\n", (uint)size);
+	if (size > 0x10000)
+		return log_msg_ret("chk", -E2BIG);
+
+	// FIXME: FS closes the file after fs_size()
+	ret = fs_set_blk_dev_with_part(desc, partnum);
+	if (ret)
+		return log_msg_ret("set", ret);
+
+	buf = malloc(size);
+	if (!buf)
+		return log_msg_ret("buf", -ENOMEM);
+	addr = map_to_sysmem(buf);
+
+	ret = fs_read(DISTRO_FNAME, addr, 0, 0, &bytes_read);
+	printf("read %d %lx\n", ret, addr);
+	if (ret)
+		return log_msg_ret("read", ret);
+	if (size != bytes_read)
+		return log_msg_ret("bread", -EINVAL);
+
+
+	return 0;
+}
+
 int bootmethod_find_in_blk(struct udevice *blk, int seq, struct bootflow *bflow)
 {
-	struct blk_desc *desc = blk_get_by_device(blk);
+	struct blk_desc *desc = dev_get_uclass_plat(blk);
 	struct disk_partition info;
 	int partnum = seq + 1;
 	int ret;
 
 	ret = part_get_info(desc, partnum, &info);
 	if (ret)
-		return ret;
-	log_info("%s: Found partition %x\n", blk->name, partnum);
+		return log_msg_ret("part", ret);
+	ret = fs_set_blk_dev_with_part(desc, partnum);
+	log_info("%s: Found partition %x type %x fstype %d\n", blk->name,
+		 partnum, info.sys_ind, ret ? -1 : fs_get_type());
+	if (ret)
+		return log_msg_ret("fs", ret);
+
+	if (CONFIG_IS_ENABLED(BOOTMETHOD_DISTRO)) {
+		ret = distro_boot(desc, partnum);
+		printf("ret=%d\n", ret);
+		if (ret)
+			return log_msg_ret("distro", ret);
+	}
 
 	return 0;
 }
