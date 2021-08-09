@@ -7,12 +7,14 @@
 #include <common.h>
 #include <blk.h>
 #include <bootmethod.h>
+#include <command.h>
 #include <dm.h>
 #include <fs.h>
 #include <log.h>
 #include <malloc.h>
 #include <mapmem.h>
 #include <part.h>
+#include <pxe_utils.h>
 #include <dm/lists.h>
 
 #define DISTRO_FNAME	"/boot/extlinux/extlinux.conf"
@@ -122,8 +124,18 @@ int bootmethod_bind(struct udevice *parent, const char *drv_name,
 	return 0;
 }
 
+static int disto_getfile(struct pxe_context *ctx, const char *file_path,
+			 char *file_addr)
+{
+	//TODO
+
+	return 0;
+}
+
 static int distro_boot(struct blk_desc *desc, int partnum)
 {
+	struct cmd_tbl cmdtp = {};	/* dummy */
+	struct pxe_context ctx;
 	loff_t size, bytes_read;
 	ulong addr;
 	void *buf;
@@ -153,6 +165,11 @@ static int distro_boot(struct blk_desc *desc, int partnum)
 	if (size != bytes_read)
 		return log_msg_ret("bread", -EINVAL);
 
+	pxe_setup_ctx(&ctx, &cmdtp, disto_getfile, NULL, true);
+
+	ret = pxe_process(&ctx, addr, false);
+	if (ret)
+		return log_msg_ret("bread", -EINVAL);
 
 	return 0;
 }
