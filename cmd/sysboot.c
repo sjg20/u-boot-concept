@@ -42,25 +42,6 @@ static int sysboot_read_file(struct pxe_context *ctx, const char *file_path,
 	return 0;
 }
 
-int sysboot_process()
-{
-	struct pxe_menu *cfg;
-
-	cfg = parse_pxefile(cmdtp, pxefile_addr_r);
-
-	if (!cfg) {
-		printf("Error parsing config file\n");
-		return 1;
-	}
-
-	if (prompt)
-		cfg->prompt = 1;
-
-	handle_pxe_menu(cmdtp, cfg);
-
-	destroy_pxe_menu(cfg);
-}
-
 /*
  * Boots a system using a local disk syslinux/extlinux file
  *
