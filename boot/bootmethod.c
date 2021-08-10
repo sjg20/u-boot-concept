@@ -16,6 +16,7 @@
 #include <part.h>
 #include <pxe_utils.h>
 #include <dm/lists.h>
+#include <dm/uclass-internal.h>
 
 #define DISTRO_FNAME	"/boot/extlinux/extlinux.conf"
 
@@ -24,8 +25,24 @@ enum {
 	 * Set some sort of limit on the number of bootflows a bootmethod can
 	 * return
 	 */
-	MAX_BOOTFLOWS_PER_BOOTMETHOD	= 100,
+	MAX_BOOTFLOWS_PER_BOOTMETHOD	= 10,
 };
+
+static const char *const bootmethod_state[BOOTFLOWST_COUNT] = {
+	"base",
+	"media",
+	"part",
+	"file",
+	"loaded",
+};
+
+const char *bootmethod_state_get_name(enum bootflow_state_t state)
+{
+	if (state < 0 || state >= BOOTFLOWST_COUNT)
+		return "?";
+
+	return bootmethod_state[state];
+}
 
 int bootmethod_get_bootflow(struct udevice *dev, int seq,
 			    struct bootflow *bflow)
@@ -79,8 +96,8 @@ int bootmethod_next_bootflow(struct bootmethod_iter *iter,
 
 		/* If we got a valid bootflow, return it */
 		if (!ret) {
-			log_info("Bootmethod '%s' seq %d: Found bootflow\n",
-				 iter->dev->name, iter->seq);
+			log_debug("Bootmethod '%s' seq %d: Found bootflow\n",
+				  iter->dev->name, iter->seq);
 			return 0;
 		}
 
@@ -132,19 +149,22 @@ static int disto_getfile(struct pxe_context *ctx, const char *file_path,
 	return 0;
 }
 
-static int distro_boot(struct blk_desc *desc, int partnum)
+static int distro_boot_setup(struct blk_desc *desc, int partnum,
+			     struct bootflow *bflow)
 {
-	struct cmd_tbl cmdtp = {};	/* dummy */
-	struct pxe_context ctx;
 	loff_t size, bytes_read;
 	ulong addr;
 	void *buf;
 	int ret;
 
-	ret = fs_size(DISTRO_FNAME, &size);
+	bflow->fname = strdup(DISTRO_FNAME);
+	if (!bflow->fname)
+		return log_msg_ret("name", -ENOMEM);
+	ret = fs_size(bflow->fname, &size);
 	if (ret)
 		return log_msg_ret("size", ret);
-	log_info("   - distro file size %x\n", (uint)size);
+	bflow->state = BOOTFLOWST_FILE;
+	log_debug("   - distro file size %x\n", (uint)size);
 	if (size > 0x10000)
 		return log_msg_ret("chk", -E2BIG);
 
@@ -158,13 +178,27 @@ static int distro_boot(struct blk_desc *desc, int partnum)
 		return log_msg_ret("buf", -ENOMEM);
 	addr = map_to_sysmem(buf);
 
-	ret = fs_read(DISTRO_FNAME, addr, 0, 0, &bytes_read);
-	printf("read %d %lx\n", ret, addr);
-	if (ret)
+	ret = fs_read(bflow->fname, addr, 0, 0, &bytes_read);
+	if (ret) {
+		free(buf);
 		return log_msg_ret("read", ret);
+	}
 	if (size != bytes_read)
 		return log_msg_ret("bread", -EINVAL);
+	bflow->state = BOOTFLOWST_LOADED;
+	bflow->buf = buf;
 
+	return 0;
+}
+
+static int distro_boot(struct bootflow *bflow)
+{
+	struct cmd_tbl cmdtp = {};	/* dummy */
+	struct pxe_context ctx;
+	ulong addr;
+	int ret;
+
+	addr = map_to_sysmem(bflow->buf);
 	pxe_setup_ctx(&ctx, &cmdtp, disto_getfile, NULL, true);
 
 	ret = pxe_process(&ctx, addr, false);
@@ -178,26 +212,68 @@ int bootmethod_find_in_blk(struct udevice *blk, int seq, struct bootflow *bflow)
 {
 	struct blk_desc *desc = dev_get_uclass_plat(blk);
 	struct disk_partition info;
+	char name[17];
 	int partnum = seq + 1;
 	int ret;
 
+	if (seq >= MAX_BOOTFLOWS_PER_BOOTMETHOD)
+		return -ESHUTDOWN;
+
+	memset(bflow, '\0', sizeof(*bflow));
+	sprintf(name, "part %x", partnum);
+	bflow->name = strdup(name);
+	if (!bflow->name)
+		return log_msg_ret("name", -ENOMEM);
+
+	bflow->state = BOOTFLOWST_BASE;
 	ret = part_get_info(desc, partnum, &info);
 	if (ret)
 		return log_msg_ret("part", ret);
+
+	bflow->state = BOOTFLOWST_PART;
+	bflow->part = partnum;
 	ret = fs_set_blk_dev_with_part(desc, partnum);
-	log_info("%s: Found partition %x type %x fstype %d\n", blk->name,
-		 partnum, info.sys_ind, ret ? -1 : fs_get_type());
+	log_debug("%s: Found partition %x type %x fstype %d\n", blk->name,
+		  partnum, info.sys_ind, ret ? -1 : fs_get_type());
 	if (ret)
 		return log_msg_ret("fs", ret);
 
+	bflow->state = BOOTFLOWST_MEDIA;
+
 	if (CONFIG_IS_ENABLED(BOOTMETHOD_DISTRO)) {
-		ret = distro_boot(desc, partnum);
-		printf("ret=%d\n", ret);
+		ret = distro_boot_setup(desc, partnum, bflow);
 		if (ret)
 			return log_msg_ret("distro", ret);
+		if (0)
+			distro_boot(bflow);
 	}
 
 	return 0;
+}
+
+void bootmethod_list(bool probe)
+{
+	struct udevice *dev;
+	int ret;
+	int i;
+
+	printf("Seq  Probed  Status  Name\n");
+	printf("---  ------  ------  ------------------\n");
+	if (probe)
+		ret = uclass_first_device_err(UCLASS_BOOTMETHOD, &dev);
+	else
+		ret = uclass_find_first_device(UCLASS_BOOTMETHOD, &dev);
+	for (i = 0; dev; i++) {
+		printf("%3x   [ %c ]  %6s  %s\n", dev_seq(dev),
+		       device_active(dev) ? '+' : ' ',
+		       ret ? simple_itoa(ret) : "OK", dev->name);
+		if (probe)
+			ret = uclass_next_device_err(&dev);
+		else
+			ret = uclass_find_next_device(&dev);
+	}
+	printf("---  ------  ------  ------------------\n");
+	printf("(%d device%s)\n", i, i != 1 ? "s" : "");
 }
 
 UCLASS_DRIVER(bootmethod) = {

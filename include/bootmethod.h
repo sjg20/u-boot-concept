@@ -15,7 +15,32 @@
 struct bootmethod_priv {
 };
 
+
+enum bootflow_state_t {
+	BOOTFLOWST_BASE,	/* Nothing known yet */
+	BOOTFLOWST_MEDIA,	/* Media exists */
+	BOOTFLOWST_PART,	/* Partition exists */
+	BOOTFLOWST_FILE,	/* Bootflow file exists */
+	BOOTFLOWST_LOADED,	/* Bootflow file loaded */
+
+	BOOTFLOWST_COUNT
+};
+
+/**
+ * struct bootflow - information about a bootflow
+ *
+ * @name: Name of bootflow
+ * @state: Current state
+ * @part: Partition number
+ * @filename: Filename of bootflow file
+ * @buf: Bootflow file contents
+ */
 struct bootflow {
+	enum bootflow_state_t state;
+	int part;
+	char *fname;
+	char *name;
+	char *buf;
 };
 
 struct bootmethod_iter {
@@ -113,5 +138,16 @@ int bootmethod_bind(struct udevice *parent, const char *drv_name,
  */
 int bootmethod_find_in_blk(struct udevice *blk, int seq,
 			   struct bootflow *bflow);
+
+/**
+ * bootmethod_list() - List all available bootmethods
+ *
+ * @probe: true to probe devices, false to leave them as is
+ */
+void bootmethod_list(bool probe);
+
+int bootmethod_find_name(const char *name, struct udevice **devp);
+
+const char *bootmethod_state_get_name(enum bootflow_state_t state);
 
 #endif
