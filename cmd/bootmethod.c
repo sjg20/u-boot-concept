@@ -106,7 +106,6 @@ static int do_bootmethod_bootflows(struct cmd_tbl *cmdtp, int flag, int argc,
 	printf("---  ------  ----  --------------  ----------------\n");
 	printf("(%d bootflow%s, %d valid)\n", i, i != 1 ? "s" : "", num_valid);
 
-
 	return 0;
 }
 

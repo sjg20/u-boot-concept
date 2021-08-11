@@ -16,14 +16,23 @@ struct bootmethod_priv {
 };
 
 
+/**
+ * enum bootflow_state_t - states that a particular bootflow can be in
+ */
 enum bootflow_state_t {
-	BOOTFLOWST_BASE,	/* Nothing known yet */
-	BOOTFLOWST_MEDIA,	/* Media exists */
-	BOOTFLOWST_PART,	/* Partition exists */
-	BOOTFLOWST_FILE,	/* Bootflow file exists */
-	BOOTFLOWST_LOADED,	/* Bootflow file loaded */
+	BOOTFLOWST_BASE,	/**< Nothing known yet */
+	BOOTFLOWST_MEDIA,	/**< Media exists */
+	BOOTFLOWST_PART,	/**< Partition exists */
+	BOOTFLOWST_FILE,	/**< Bootflow file exists */
+	BOOTFLOWST_LOADED,	/**< Bootflow file loaded */
 
 	BOOTFLOWST_COUNT
+};
+
+enum bootflow_type_t {
+	BOOTFLOWT_DISTRO,	/**< Distro boot */
+
+	BOOTFLOWT_COUNT,
 };
 
 /**
@@ -37,6 +46,7 @@ enum bootflow_state_t {
  */
 struct bootflow {
 	enum bootflow_state_t state;
+	enum bootflow_type_t type;
 	int part;
 	char *fname;
 	char *name;
@@ -146,8 +156,20 @@ int bootmethod_find_in_blk(struct udevice *blk, int seq,
  */
 void bootmethod_list(bool probe);
 
-int bootmethod_find_name(const char *name, struct udevice **devp);
-
+/**
+ * bootmethod_state_get_name() - Get the name of a bootflow state
+ *
+ * @state: State to check
+ * @return name, or "?" if invalid
+ */
 const char *bootmethod_state_get_name(enum bootflow_state_t state);
+
+/**
+ * bootmethod_type_get_name() - Get the name of a bootflow state
+ *
+ * @type: Type to check
+ * @return name, or "?" if invalid
+ */
+const char *bootmethod_type_get_name(enum bootflow_type_t type);
 
 #endif

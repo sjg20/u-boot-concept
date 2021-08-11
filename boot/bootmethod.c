@@ -36,12 +36,24 @@ static const char *const bootmethod_state[BOOTFLOWST_COUNT] = {
 	"loaded",
 };
 
+static const char *const bootmethod_type[BOOTFLOWT_COUNT] = {
+	"distro-boot",
+};
+
 const char *bootmethod_state_get_name(enum bootflow_state_t state)
 {
 	if (state < 0 || state >= BOOTFLOWST_COUNT)
 		return "?";
 
 	return bootmethod_state[state];
+}
+
+const char *bootmethod_type_get_name(enum bootflow_type_t type)
+{
+	if (type < 0 || type >= BOOTFLOWT_COUNT)
+		return "?";
+
+	return bootmethod_type[type];
 }
 
 int bootmethod_get_bootflow(struct udevice *dev, int seq,
@@ -157,6 +169,7 @@ static int distro_boot_setup(struct blk_desc *desc, int partnum,
 	void *buf;
 	int ret;
 
+	bflow->type = BOOTFLOWT_DISTRO;
 	bflow->fname = strdup(DISTRO_FNAME);
 	if (!bflow->fname)
 		return log_msg_ret("name", -ENOMEM);
