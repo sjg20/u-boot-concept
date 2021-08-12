@@ -21,7 +21,7 @@ static int mmc_get_bootflow(struct udevice *dev, int seq,
 	if (ret)
 		return log_msg_ret("blk", ret);
 	assert(blk);
-	ret = bootmethod_find_in_blk(blk, seq, bflow);
+	ret = bootmethod_find_in_blk(dev, blk, seq, bflow);
 	if (ret)
 		return log_msg_ret("find", ret);
 

@@ -12,7 +12,7 @@
 #include <dm.h>
 #include <dm/uclass-internal.h>
 
-int bootmethod_get_state(bool need_bootmethod, struct bootflow_state **statep)
+int bootmethod_check_state(bool need_bootmethod, struct bootflow_state **statep)
 {
 	struct bootflow_state *state;
 	struct uclass *uc;
@@ -52,7 +52,7 @@ static int do_bootmethod_select(struct cmd_tbl *cmdtp, int flag, int argc,
 	int seq;
 	int ret;
 
-	ret = bootmethod_get_state(false, &state);
+	ret = bootmethod_get_state(&state);
 	if (ret)
 		return CMD_RET_FAILURE;
 	if (argc < 2) {
@@ -81,7 +81,7 @@ static int do_bootmethod_info(struct cmd_tbl *cmdtp, int flag, int argc,
 	struct udevice *dev;
 	int ret;
 
-	ret = bootmethod_get_state(false, &state);
+	ret = bootmethod_get_state(&state);
 	if (ret)
 		return CMD_RET_FAILURE;
 	printf("%s\n", dev->name);
