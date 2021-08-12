@@ -53,12 +53,12 @@ extern struct bootflow_cmds g_bootflow_cmds;
  * struct bootflow - information about a bootflow
  *
  * @seq: Sequence number of bootflow
- * @name: Name of bootflow
+ * @name: Name of bootflow (allocated)
  * @type: Bootflow type (enum bootflow_type_t)
  * @state: Current state (enum bootflow_state_t)
  * @part: Partition number
- * @fname: Filename of bootflow file
- * @buf: Bootflow file contents
+ * @fname: Filename of bootflow file (allocated)
+ * @buf: Bootflow file contents (allocated)
  */
 struct bootflow {
 	struct list_head sibling_node;
