@@ -12,7 +12,7 @@
 #include <dm.h>
 #include <dm/uclass-internal.h>
 
-int bootmethod_get_state(bool prompt, struct bootflow_state **statep)
+int bootmethod_get_state(bool need_bootmethod, struct bootflow_state **statep)
 {
 	struct bootflow_state *state;
 	struct uclass *uc;
@@ -22,7 +22,7 @@ int bootmethod_get_state(bool prompt, struct bootflow_state **statep)
 	if (ret)
 		return ret;
 	state = uclass_get_priv(uc);
-	if (prompt && !state->cur_bootmethod) {
+	if (need_bootmethod && !state->cur_bootmethod) {
 		printf("Please use 'bootmethod select' first\n");
 		return -ENOENT;
 	}

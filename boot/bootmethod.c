@@ -56,6 +56,30 @@ const char *bootmethod_type_get_name(enum bootflow_type_t type)
 	return bootmethod_type[type];
 }
 
+void bootmethod_clear_bootflows(struct udevice *dev)
+{
+	struct bootmethod_uc_priv *ucp = dev_get_uclass_priv(dev);
+
+	while (!list_empty(&ucp->bootflow_head)) {
+		struct bootflow *bflow;
+
+		bflow = list_first_entry(&ucp->bootflow_head, struct bootflow,
+					 sibling_node);
+		free(bflow->fname);
+		free(bflow->name);
+		free(bflow->buf);
+
+		list_del(&ucp->bootflow_head);
+	}
+}
+
+void bootmethod_add_bootflow(struct udevice *dev, struct bootflow *bflow)
+{
+	struct bootmethod_uc_priv *ucp = dev_get_uclass_priv(dev);
+
+	list_add_tail(&bflow->sibling_node, &ucp->bootflow_head);
+}
+
 int bootmethod_get_bootflow(struct udevice *dev, int seq,
 			    struct bootflow *bflow)
 {
@@ -234,6 +258,7 @@ int bootmethod_find_in_blk(struct udevice *blk, int seq, struct bootflow *bflow)
 
 	memset(bflow, '\0', sizeof(*bflow));
 	sprintf(name, "part %x", partnum);
+	bflow->seq = seq;
 	bflow->name = strdup(name);
 	if (!bflow->name)
 		return log_msg_ret("name", -ENOMEM);
@@ -289,10 +314,20 @@ void bootmethod_list(bool probe)
 	printf("(%d device%s)\n", i, i != 1 ? "s" : "");
 }
 
+static int bootmethod_pre_probe(struct udevice *dev)
+{
+	struct bootmethod_uc_priv *ucp = dev_get_uclass_priv(dev);
+
+	INIT_LIST_HEAD(&ucp->bootflow_head);
+
+	return 0;
+}
+
 UCLASS_DRIVER(bootmethod) = {
 	.id		= UCLASS_BOOTMETHOD,
 	.name		= "bootmethod",
 	.flags		= DM_UC_FLAG_SEQ_ALIAS,
 	.priv_auto	= sizeof(struct bootflow_state),
-	.per_device_auto	= sizeof(struct bootmethod_priv),
+	.per_device_auto	= sizeof(struct bootmethod_uc_priv),
+	.pre_probe	= bootmethod_pre_probe,
 };

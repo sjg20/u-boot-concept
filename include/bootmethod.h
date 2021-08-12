@@ -10,15 +10,6 @@
 #include <linux/list.h>
 
 /**
- * struct bootmethod_priv - bootmethod information about each device
- *
- * Access this with dev_get_uclass_priv(dev)
- */
-struct bootmethod_priv {
-};
-
-
-/**
  * enum bootflow_state_t - states that a particular bootflow can be in
  */
 enum bootflow_state_t {
@@ -53,7 +44,7 @@ struct bootflow_state {
  * @bootflows: List of available bootflows
  */
 struct bootmethod_uc_priv {
-	struct list_head bootflows;
+	struct list_head bootflow_head;
 };
 
 extern struct bootflow_cmds g_bootflow_cmds;
@@ -61,18 +52,22 @@ extern struct bootflow_cmds g_bootflow_cmds;
 /**
  * struct bootflow - information about a bootflow
  *
+ * @seq: Sequence number of bootflow
  * @name: Name of bootflow
- * @state: Current state
+ * @type: Bootflow type (enum bootflow_type_t)
+ * @state: Current state (enum bootflow_state_t)
  * @part: Partition number
- * @filename: Filename of bootflow file
+ * @fname: Filename of bootflow file
  * @buf: Bootflow file contents
  */
 struct bootflow {
-	enum bootflow_state_t state;
+	struct list_head sibling_node;
+	int seq;
+	char *name;
 	enum bootflow_type_t type;
+	enum bootflow_state_t state;
 	int part;
 	char *fname;
-	char *name;
 	char *buf;
 };
 
@@ -195,6 +190,10 @@ const char *bootmethod_state_get_name(enum bootflow_state_t state);
  */
 const char *bootmethod_type_get_name(enum bootflow_type_t type);
 
-int bootmethod_get_state(bool prompt, struct bootflow_state **statep);
+int bootmethod_get_state(bool need_bootmethod, struct bootflow_state **statep);
+
+void bootmethod_clear_bootflows(struct udevice *dev);
+
+void bootmethod_add_bootflow(struct udevice *dev, struct bootflow *bflow);
 
 #endif
