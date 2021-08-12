@@ -12,18 +12,21 @@
 #include <dm.h>
 #include <dm/uclass-internal.h>
 
-// TODO: Can we allow the samdbox test to reset this?
-struct g_bootmethod {
-	struct udevice *cur_dev;
-} g_bootmethod;
-
-static int get_cur_bootmethod(struct udevice **devp)
+int bootmethod_get_state(bool prompt, struct bootflow_state **statep)
 {
-	if (!g_bootmethod.cur_dev) {
+	struct bootflow_state *state;
+	struct uclass *uc;
+	int ret;
+
+	ret = uclass_get(UCLASS_BOOTMETHOD, &uc);
+	if (ret)
+		return ret;
+	state = uclass_get_priv(uc);
+	if (prompt && !state->cur_bootmethod) {
 		printf("Please use 'bootmethod select' first\n");
 		return -ENOENT;
 	}
-	*devp = g_bootmethod.cur_dev;
+	*statep = state;
 
 	return 0;
 }
@@ -42,14 +45,18 @@ static int do_bootmethod_list(struct cmd_tbl *cmdtp, int flag, int argc,
 static int do_bootmethod_select(struct cmd_tbl *cmdtp, int flag, int argc,
 				char *const argv[])
 {
+	struct bootflow_state *state;
 	struct udevice *dev;
 	const char *name;
 	char *endp;
 	int seq;
 	int ret;
 
+	ret = bootmethod_get_state(false, &state);
+	if (ret)
+		return CMD_RET_FAILURE;
 	if (argc < 2) {
-		g_bootmethod.cur_dev = NULL;
+		state->cur_bootmethod = NULL;
 		return 0;
 	}
 	name = argv[1];
@@ -62,7 +69,7 @@ static int do_bootmethod_select(struct cmd_tbl *cmdtp, int flag, int argc,
 		printf("Cannot find '%s' (err=%d)\n", name, ret);
 		return CMD_RET_FAILURE;
 	}
-	g_bootmethod.cur_dev = dev;
+	state->cur_bootmethod = dev;
 
 	return 0;
 }
@@ -70,41 +77,14 @@ static int do_bootmethod_select(struct cmd_tbl *cmdtp, int flag, int argc,
 static int do_bootmethod_info(struct cmd_tbl *cmdtp, int flag, int argc,
 			      char *const argv[])
 {
+	struct bootflow_state *state;
 	struct udevice *dev;
+	int ret;
 
-	if (get_cur_bootmethod(&dev))
+	ret = bootmethod_get_state(false, &state);
+	if (ret)
 		return CMD_RET_FAILURE;
 	printf("%s\n", dev->name);
-
-	return 0;
-}
-
-static int do_bootmethod_bootflows(struct cmd_tbl *cmdtp, int flag, int argc,
-			      char *const argv[])
-{
-	struct bootflow bflow;
-	struct udevice *dev;
-	int num_valid;
-	int ret, i;
-	bool all;
-
-	all = argc >= 2 && !strcmp(argv[1], "-a");
-
-	if (get_cur_bootmethod(&dev))
-		return CMD_RET_FAILURE;
-	printf("Seq   State  Part  Name            Filename\n");
-	printf("---  ------  ----  --------------  ----------------\n");
-	for (i = 0, ret = 0, num_valid = 0; i < 100 && ret != -ESHUTDOWN; i++) {
-		ret = bootmethod_get_bootflow(dev, i, &bflow);
-		if ((ret && !all) || ret == -ESHUTDOWN)
-			continue;
-		num_valid++;
-		printf("%3x  %6s  %4x  %-14s  %s\n", i,
-		       bootmethod_state_get_name(bflow.state), bflow.part,
-		       bflow.name, bflow.fname);
-	}
-	printf("---  ------  ----  --------------  ----------------\n");
-	printf("(%d bootflow%s, %d valid)\n", i, i != 1 ? "s" : "", num_valid);
 
 	return 0;
 }
@@ -113,12 +93,10 @@ static int do_bootmethod_bootflows(struct cmd_tbl *cmdtp, int flag, int argc,
 static char bootmethod_help_text[] =
 	"list [-p]      - list all available bootmethods (-p to probe)\n"
 	"bootmethod select <bm>    - select a bootmethod by name\n"
-	"bootmethod info           - show information about a bootmethod\n"
-	"bootmethod bootflows [-a] - show bootflows (-a for all)";
+	"bootmethod info           - show information about a bootmethod";
 #endif
 
 U_BOOT_CMD_WITH_SUBCMDS(bootmethod, "Bootmethods", bootmethod_help_text,
 	U_BOOT_SUBCMD_MKENT(list, 2, 1, do_bootmethod_list),
 	U_BOOT_SUBCMD_MKENT(select, 2, 1, do_bootmethod_select),
-	U_BOOT_SUBCMD_MKENT(info, 1, 1, do_bootmethod_info),
-	U_BOOT_SUBCMD_MKENT(bootflows, 1, 1, do_bootmethod_bootflows));
+	U_BOOT_SUBCMD_MKENT(info, 1, 1, do_bootmethod_info));

@@ -293,5 +293,6 @@ UCLASS_DRIVER(bootmethod) = {
 	.id		= UCLASS_BOOTMETHOD,
 	.name		= "bootmethod",
 	.flags		= DM_UC_FLAG_SEQ_ALIAS,
+	.priv_auto	= sizeof(struct bootflow_state),
 	.per_device_auto	= sizeof(struct bootmethod_priv),
 };

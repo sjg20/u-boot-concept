@@ -7,6 +7,8 @@
 #ifndef __bootmethod_h
 #define __bootmethod_h
 
+#include <linux/list.h>
+
 /**
  * struct bootmethod_priv - bootmethod information about each device
  *
@@ -34,6 +36,27 @@ enum bootflow_type_t {
 
 	BOOTFLOWT_COUNT,
 };
+
+/**
+ * struct bootflow_state - information about available bootflows, etc.
+ *
+ * @cur_bootmethod: Currently selected bootmethod (for commands)
+ */
+struct bootflow_state {
+	struct udevice *cur_bootmethod;
+	struct bootflow *cur_bootflow;
+};
+
+/**
+ * struct bootmethod_uc_priv - uclass information about a bootmethod
+ *
+ * @bootflows: List of available bootflows
+ */
+struct bootmethod_uc_priv {
+	struct list_head bootflows;
+};
+
+extern struct bootflow_cmds g_bootflow_cmds;
 
 /**
  * struct bootflow - information about a bootflow
@@ -171,5 +194,7 @@ const char *bootmethod_state_get_name(enum bootflow_state_t state);
  * @return name, or "?" if invalid
  */
 const char *bootmethod_type_get_name(enum bootflow_type_t type);
+
+int bootmethod_get_state(bool prompt, struct bootflow_state **statep);
 
 #endif
