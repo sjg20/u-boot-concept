@@ -12,17 +12,15 @@
 #include <dm.h>
 #include <dm/uclass-internal.h>
 
-int bootmethod_check_state(bool need_bootmethod, struct bootflow_state **statep)
+static int bootmethod_check_state(struct bootflow_state **statep)
 {
 	struct bootflow_state *state;
-	struct uclass *uc;
 	int ret;
 
-	ret = uclass_get(UCLASS_BOOTMETHOD, &uc);
+	ret = bootmethod_get_state(&state);
 	if (ret)
 		return ret;
-	state = uclass_get_priv(uc);
-	if (need_bootmethod && !state->cur_bootmethod) {
+	if (!state->cur_bootmethod) {
 		printf("Please use 'bootmethod select' first\n");
 		return -ENOENT;
 	}
@@ -78,13 +76,12 @@ static int do_bootmethod_info(struct cmd_tbl *cmdtp, int flag, int argc,
 			      char *const argv[])
 {
 	struct bootflow_state *state;
-	struct udevice *dev;
 	int ret;
 
-	ret = bootmethod_get_state(&state);
+	ret = bootmethod_check_state(&state);
 	if (ret)
 		return CMD_RET_FAILURE;
-	printf("%s\n", dev->name);
+	printf("%s\n", state->cur_bootmethod->name);
 
 	return 0;
 }

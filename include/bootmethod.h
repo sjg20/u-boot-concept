@@ -240,9 +240,6 @@ int bootflow_first_glob(struct bootflow **bflowp);
 
 int bootflow_next_glob(struct bootflow **bflowp);
 
-int bootmethod_check_state(bool need_bootmethod,
-			   struct bootflow_state **statep);
-
 void bootflow_free(struct bootflow *bflow);
 
 #endif

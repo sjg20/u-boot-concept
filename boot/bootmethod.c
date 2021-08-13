@@ -256,6 +256,7 @@ int bootmethod_scan_next_bootflow(struct bootmethod_iter *iter,
 		if (!ret) {
 			log_debug("Bootmethod '%s' seq %d: Found bootflow\n",
 				  iter->dev->name, iter->seq);
+			iter->seq++;
 			return 0;
 		}
 
@@ -265,6 +266,7 @@ int bootmethod_scan_next_bootflow(struct bootmethod_iter *iter,
 				  iter->dev->name, iter->seq, ret);
 			if (iter->seq++ == MAX_BOOTFLOWS_PER_BOOTMETHOD)
 				return log_msg_ret("max", -E2BIG);
+			continue;
 		}
 
 		/* we got to the end of that bootmethod, try the next */

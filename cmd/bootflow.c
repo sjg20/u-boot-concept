@@ -56,6 +56,7 @@ static int do_bootflow_list(struct cmd_tbl *cmdtp, int flag, int argc,
 		}
 	} else {
 		printf("Showing all bootflows\n");
+		show_header();
 		for (ret = bootflow_first_glob(&bflow), i = 0;
 		     !ret;
 		     ret = bootflow_next_glob(&bflow), i++) {
@@ -109,11 +110,11 @@ static int do_bootflow_scan(struct cmd_tbl *cmdtp, int flag, int argc,
 		}
 	} else {
 		if (list)
-			printf("Scanning for bootflows all bootmethods\n");
+			printf("Scanning for bootflows in all bootmethods\n");
 		show_header();
 		bootmethod_clear_glob();
-		for (i = 0, ret = bootmethod_scan_first_bootflow(&iter, 0, &bflow);
-		     ret;
+		for (ret = bootmethod_scan_first_bootflow(&iter, 0, &bflow);
+		     !ret;
 		     num_valid++,
 	             ret = bootmethod_scan_next_bootflow(&iter, &bflow)) {
 			ret = bootmethod_add_bootflow(&bflow);
@@ -122,8 +123,9 @@ static int do_bootflow_scan(struct cmd_tbl *cmdtp, int flag, int argc,
 				return CMD_RET_FAILURE;
 			}
 			if (list)
-				show_bootflow(i, &bflow);
+				show_bootflow(num_valid, &bflow);
 		}
+		i = num_valid;
 	}
 	if (list)
 		show_footer(i, num_valid);
