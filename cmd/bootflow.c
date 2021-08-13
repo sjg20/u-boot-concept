@@ -98,7 +98,11 @@ static int do_bootflow_scan(struct cmd_tbl *cmdtp, int flag, int argc,
 			ret = bootmethod_get_bootflow(dev, i, &bflow);
 			if ((ret && !all) || ret == -ESHUTDOWN)
 				continue;
-			bootmethod_add_bootflow(dev, &bflow);
+			ret = bootmethod_add_bootflow(&bflow);
+			if (ret) {
+				printf("Out of memory\n");
+				return CMD_RET_FAILURE;
+			}
 			num_valid++;
 			if (list)
 				show_bootflow(i, &bflow);
@@ -107,11 +111,16 @@ static int do_bootflow_scan(struct cmd_tbl *cmdtp, int flag, int argc,
 		if (list)
 			printf("Scanning for bootflows all bootmethods\n");
 		show_header();
-		bootmethod_clear_glob(dev);
+		bootmethod_clear_glob();
 		for (i = 0, ret = bootmethod_scan_first_bootflow(&iter, 0, &bflow);
 		     ret;
 		     num_valid++,
 	             ret = bootmethod_scan_next_bootflow(&iter, &bflow)) {
+			ret = bootmethod_add_bootflow(&bflow);
+			if (ret) {
+				printf("Out of memory\n");
+				return CMD_RET_FAILURE;
+			}
 			if (list)
 				show_bootflow(i, &bflow);
 		}

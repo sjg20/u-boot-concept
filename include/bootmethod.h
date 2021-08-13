@@ -215,9 +215,22 @@ int bootmethod_get_state(struct bootflow_state **statep);
 
 void bootmethod_clear_bootflows(struct udevice *dev);
 
-void bootmethod_clear_glob(struct udevice *dev);
+void bootmethod_clear_glob(void);
 
-void bootmethod_add_bootflow(struct udevice *dev, struct bootflow *bflow);
+/**
+ * bootmethod_add_bootflow() - Add a bootflow to the bootmethod's list
+ *
+ * All fields in @bflow must be set up. Note that @bflow->dev is used to add the
+ * bootflow to that device.
+ *
+ * @dev: Bootmethod device to add to
+ * @bflow: Bootflow to add. Note that fields within bflow must be allocated
+ *	since this function takes over ownership of these. This functions makes
+ *	a copy of @bflow itself (without allocating its fields again), so the
+ *	caller must dispose of the memory used by the @bflow pointer itself
+ * @return 0 if OK, -ENOMEM if out of memory
+ */
+int bootmethod_add_bootflow(struct bootflow *bflow);
 
 int bootmethod_first_bootflow(struct udevice *dev, struct bootflow **bflowp);
 
@@ -229,5 +242,7 @@ int bootflow_next_glob(struct bootflow **bflowp);
 
 int bootmethod_check_state(bool need_bootmethod,
 			   struct bootflow_state **statep);
+
+void bootflow_free(struct bootflow *bflow);
 
 #endif

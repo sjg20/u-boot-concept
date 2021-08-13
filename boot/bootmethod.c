@@ -74,9 +74,14 @@ void bootflow_free(struct bootflow *bflow)
 	free(bflow->fname);
 	free(bflow->name);
 	free(bflow->buf);
+}
 
+void bootflow_remove(struct bootflow *bflow)
+{
 	list_del(&bflow->bm_node);
 	list_del(&bflow->glob_node);
+
+	bootflow_free(bflow);
 }
 
 void bootmethod_clear_bootflows(struct udevice *dev)
@@ -88,11 +93,11 @@ void bootmethod_clear_bootflows(struct udevice *dev)
 
 		bflow = list_first_entry(&ucp->bootflow_head, struct bootflow,
 					 bm_node);
-		bootflow_free(bflow);
+		bootflow_remove(bflow);
 	}
 }
 
-void bootmethod_clear_glob(struct udevice *dev)
+void bootmethod_clear_glob(void)
 {
 	struct bootflow_state *state;
 
@@ -104,15 +109,30 @@ void bootmethod_clear_glob(struct udevice *dev)
 
 		bflow = list_first_entry(&state->glob_head, struct bootflow,
 					 glob_node);
-		bootflow_free(bflow);
+		bootflow_remove(bflow);
 	}
 }
 
-void bootmethod_add_bootflow(struct udevice *dev, struct bootflow *bflow)
+int bootmethod_add_bootflow(struct bootflow *bflow)
 {
-	struct bootmethod_uc_priv *ucp = dev_get_uclass_priv(dev);
+	struct bootmethod_uc_priv *ucp = dev_get_uclass_priv(bflow->dev);
+	struct bootflow_state *state;
+	struct bootflow *new;
+	int ret;
 
-	list_add_tail(&bflow->bm_node, &ucp->bootflow_head);
+	ret = bootmethod_get_state(&state);
+	if (ret)
+		return ret;
+
+	new = malloc(sizeof(*bflow));
+	if (!new)
+		return log_msg_ret("bflow", -ENOMEM);
+	memcpy(new, bflow, sizeof(*bflow));
+
+	list_add_tail(&new->glob_node, &state->glob_head);
+	list_add_tail(&new->bm_node, &ucp->bootflow_head);
+
+	return 0;
 }
 
 int bootmethod_first_bootflow(struct udevice *dev, struct bootflow **bflowp)
@@ -188,6 +208,7 @@ int bootmethod_get_bootflow(struct udevice *dev, int seq,
 
 	if (!ops->get_bootflow)
 		return -ENOSYS;
+	memset(bflow, '\0', sizeof(*bflow));
 
 	return ops->get_bootflow(dev, seq, bflow);
 }
@@ -358,7 +379,6 @@ int bootmethod_find_in_blk(struct udevice *dev, struct udevice *blk, int seq,
 	if (seq >= MAX_BOOTFLOWS_PER_BOOTMETHOD)
 		return -ESHUTDOWN;
 
-	memset(bflow, '\0', sizeof(*bflow));
 	bflow->dev = dev;
 	bflow->seq = seq;
 	sprintf(name, "part %x", partnum);
