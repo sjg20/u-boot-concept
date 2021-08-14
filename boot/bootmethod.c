@@ -7,18 +7,14 @@
 #include <common.h>
 #include <blk.h>
 #include <bootmethod.h>
-#include <command.h>
+#include <distro.h>
 #include <dm.h>
 #include <fs.h>
 #include <log.h>
 #include <malloc.h>
-#include <mapmem.h>
 #include <part.h>
-#include <pxe_utils.h>
 #include <dm/lists.h>
 #include <dm/uclass-internal.h>
-
-#define DISTRO_FNAME	"/boot/extlinux/extlinux.conf"
 
 enum {
 	/*
@@ -301,74 +297,6 @@ int bootmethod_bind(struct udevice *parent, const char *drv_name,
 	return 0;
 }
 
-static int disto_getfile(struct pxe_context *ctx, const char *file_path,
-			 char *file_addr)
-{
-	//TODO
-
-	return 0;
-}
-
-static int distro_boot_setup(struct blk_desc *desc, int partnum,
-			     struct bootflow *bflow)
-{
-	loff_t size, bytes_read;
-	ulong addr;
-	void *buf;
-	int ret;
-
-	bflow->type = BOOTFLOWT_DISTRO;
-	bflow->fname = strdup(DISTRO_FNAME);
-	if (!bflow->fname)
-		return log_msg_ret("name", -ENOMEM);
-	ret = fs_size(bflow->fname, &size);
-	if (ret)
-		return log_msg_ret("size", ret);
-	bflow->state = BOOTFLOWST_FILE;
-	log_debug("   - distro file size %x\n", (uint)size);
-	if (size > 0x10000)
-		return log_msg_ret("chk", -E2BIG);
-
-	// FIXME: FS closes the file after fs_size()
-	ret = fs_set_blk_dev_with_part(desc, partnum);
-	if (ret)
-		return log_msg_ret("set", ret);
-
-	buf = malloc(size);
-	if (!buf)
-		return log_msg_ret("buf", -ENOMEM);
-	addr = map_to_sysmem(buf);
-
-	ret = fs_read(bflow->fname, addr, 0, 0, &bytes_read);
-	if (ret) {
-		free(buf);
-		return log_msg_ret("read", ret);
-	}
-	if (size != bytes_read)
-		return log_msg_ret("bread", -EINVAL);
-	bflow->state = BOOTFLOWST_LOADED;
-	bflow->buf = buf;
-
-	return 0;
-}
-
-static int distro_boot(struct bootflow *bflow)
-{
-	struct cmd_tbl cmdtp = {};	/* dummy */
-	struct pxe_context ctx;
-	ulong addr;
-	int ret;
-
-	addr = map_to_sysmem(bflow->buf);
-	pxe_setup_ctx(&ctx, &cmdtp, disto_getfile, NULL, true);
-
-	ret = pxe_process(&ctx, addr, false);
-	if (ret)
-		return log_msg_ret("bread", -EINVAL);
-
-	return 0;
-}
-
 int bootmethod_find_in_blk(struct udevice *dev, struct udevice *blk, int seq,
 			   struct bootflow *bflow)
 {
@@ -407,11 +335,42 @@ int bootmethod_find_in_blk(struct udevice *dev, struct udevice *blk, int seq,
 		ret = distro_boot_setup(desc, partnum, bflow);
 		if (ret)
 			return log_msg_ret("distro", ret);
-		if (0)
-			distro_boot(bflow);
 	}
 
 	return 0;
+}
+
+int bootflow_boot(struct bootflow *bflow)
+{
+	bool done = false;
+	int ret;
+
+	if (bflow->state != BOOTFLOWST_LOADED)
+		return log_msg_ret("load", ret);
+
+	switch (bflow->type) {
+	case BOOTFLOWT_DISTRO:
+		if (CONFIG_IS_ENABLED(BOOTMETHOD_DISTRO)) {
+			done = true;
+			ret = distro_boot(bflow);
+		}
+		break;
+	case BOOTFLOWT_COUNT:
+		break;
+	}
+
+	if (!done)
+		return log_msg_ret("type", -ENOSYS);
+
+	if (ret)
+		return log_msg_ret("boot", ret);
+
+	/*
+	 * internal error, should not get here since we should have booted
+	 * something or returned an error
+	 */
+
+	return log_msg_ret("end", -EFAULT);
 }
 
 void bootmethod_list(bool probe)

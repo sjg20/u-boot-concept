@@ -242,4 +242,14 @@ int bootflow_next_glob(struct bootflow **bflowp);
 
 void bootflow_free(struct bootflow *bflow);
 
+/**
+ * bootflow_boot() - boot a bootflow
+ *
+ * @bflow: Bootflow to boot
+ * @return -EPROTO if bootflow has not been loaded, -ENOSYS if the bootflow
+ *	type is not supported, -EFAULT if the boot returned without an error
+ *	when we are expecting it to boot
+ */
+int bootflow_boot(struct bootflow *bflow);
+
 #endif

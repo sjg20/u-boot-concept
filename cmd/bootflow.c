@@ -160,7 +160,7 @@ static int do_bootflow_select(struct cmd_tbl *cmdtp, int flag, int argc,
 
 	if (dev) {
 		for (ret = bootmethod_first_bootflow(dev, &bflow), i = 0;
-		     ret;
+		     !ret;
 		     ret = bootmethod_next_bootflow(&bflow), i++) {
 			if (*endp ? !strcmp(bflow->name, name) : (i == seq)) {
 				found = bflow;
@@ -169,7 +169,7 @@ static int do_bootflow_select(struct cmd_tbl *cmdtp, int flag, int argc,
 		}
 	} else {
 		for (ret = bootflow_first_glob(&bflow), i = 0;
-		     ret;
+		     !ret;
 		     ret = bootflow_next_glob(&bflow), i++) {
 			if (*endp ? !strcmp(bflow->name, name) : (i == seq)) {
 				found = bflow;
@@ -179,7 +179,10 @@ static int do_bootflow_select(struct cmd_tbl *cmdtp, int flag, int argc,
 	}
 
 	if (!found) {
-		printf("Cannot find bootflow '%s' (err=%d)\n", name, ret);
+		printf("Cannot find bootflow '%s' ", name);
+		if (dev)
+			printf("in bootmethod '%s' ", dev->name);
+		printf("(err=%d)\n", ret);
 		return CMD_RET_FAILURE;
 	}
 	state->cur_bootflow = found;
@@ -187,13 +190,51 @@ static int do_bootflow_select(struct cmd_tbl *cmdtp, int flag, int argc,
 	return 0;
 }
 
+static int do_bootflow_boot(struct cmd_tbl *cmdtp, int flag, int argc,
+			    char *const argv[])
+{
+	struct bootflow_state *state;
+	struct bootflow *bflow;
+	int ret;
+
+	ret = bootmethod_get_state(&state);
+	if (ret)
+		return CMD_RET_FAILURE;
+
+	if (!state->cur_bootflow) {
+		printf("No bootflow selected\n");
+		return CMD_RET_FAILURE;
+	}
+
+	bflow = state->cur_bootflow;
+	ret = bootflow_boot(bflow);
+	switch (ret) {
+	case -EPROTO:
+		printf("Bootflow not loaded (state '%s')\n",
+		       bootmethod_state_get_name(bflow->state));
+		break;
+	case -ENOSYS:
+		printf("Boot type '%s' not supported\n",
+		       bootmethod_type_get_name(bflow->type));
+		break;
+	default:
+		printf("Boot failed (err=%d)\n", ret);
+		break;
+	}
+
+	return 0;
+}
+
 #ifdef CONFIG_SYS_LONGHELP
 static char bootflow_help_text[] =
 	"scan [-la]   - scan for valid bootflows (-l to list, -a for all))\n"
-	"list         - list scanned bootflows";
+	"list         - list scanned bootflows\n"
+	"select       - select a bootflow\n"
+	"boot         - boot a bootflow";
 #endif
 
 U_BOOT_CMD_WITH_SUBCMDS(bootflow, "Bootflows", bootflow_help_text,
 	U_BOOT_SUBCMD_MKENT(scan, 2, 1, do_bootflow_scan),
 	U_BOOT_SUBCMD_MKENT(list, 1, 1, do_bootflow_list),
-	U_BOOT_SUBCMD_MKENT(select, 2, 1, do_bootflow_select));
+	U_BOOT_SUBCMD_MKENT(select, 2, 1, do_bootflow_select),
+	U_BOOT_SUBCMD_MKENT(boot, 1, 1, do_bootflow_boot));
