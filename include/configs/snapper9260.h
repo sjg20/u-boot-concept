@@ -74,7 +74,6 @@
 
 /* I2C - Bit-bashed */
 #define CONFIG_SYS_I2C_LEGACY
-#define CONFIG_SYS_I2C_SOFT_SLAVE	0x7F
 #define CONFIG_SOFT_I2C_READ_REPEATED_START
 #define I2C_INIT do {							\
 		at91_set_gpio_output(AT91_PIN_PA23, 1);			\
