@@ -206,7 +206,6 @@
 #endif
 
 #if defined CONFIG_VIDEO_LCD_PANEL_I2C && !(defined CONFIG_SPL_BUILD)
-#define CONFIG_SYS_I2C_SOFT
 #define CONFIG_SYS_I2C_SOFT_SPEED	50000
 #define CONFIG_SYS_I2C_SOFT_SLAVE	0x00
 /* We use pin names in Kconfig and sunxi_name_to_gpio() */

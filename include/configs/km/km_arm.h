@@ -91,7 +91,6 @@
  */
 #undef CONFIG_I2C_MVTWSI
 #define CONFIG_SYS_I2C_LEGACY
-#define	CONFIG_SYS_I2C_SOFT	/* I2C bit-banged	*/
 #define CONFIG_SYS_I2C_INIT_BOARD
 
 #define	CONFIG_KIRKWOOD_GPIO		/* Enable GPIO Support */
