@@ -63,7 +63,7 @@ int distro_boot_setup(struct blk_desc *desc, int partnum,
 }
 
 static int disto_getfile(struct pxe_context *ctx, const char *file_path,
-			 char *file_addr)
+			 char *file_addr, ulong *sizep)
 {
 	printf("get file %s %s\n", file_path, file_addr);
 	//TODO
@@ -79,7 +79,10 @@ int distro_boot(struct bootflow *bflow)
 	int ret;
 
 	addr = map_to_sysmem(bflow->buf);
-	pxe_setup_ctx(&ctx, &cmdtp, disto_getfile, NULL, true);
+	ret = pxe_setup_ctx(&ctx, &cmdtp, disto_getfile, NULL, true,
+			    bflow->fname);
+	if (ret)
+		return log_msg_ret("ctx", -EINVAL);
 
 	ret = pxe_process(&ctx, addr, false);
 	if (ret)
