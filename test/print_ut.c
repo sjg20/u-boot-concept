@@ -345,6 +345,22 @@ static int print_itoa(struct unit_test_state *uts)
 }
 PRINT_TEST(print_itoa, 0);
 
+static int print_xtoa(struct unit_test_state *uts)
+{
+	ut_asserteq_str("7f", simple_xtoa(127));
+	ut_asserteq_str("00", simple_xtoa(0));
+	ut_asserteq_str("7fffffff", simple_xtoa(0x7fffffff));
+	ut_asserteq_str("ffffffff", simple_xtoa(0xffffffff));
+	if (sizeof(ulong) == 8) {
+		ut_asserteq_str("7fffffffffffffff",
+				simple_xtoa((1UL << 63) - 1));
+		ut_asserteq_str("ffffffffffffffff", simple_xtoa(-1));
+	}
+
+	return 0;
+}
+PRINT_TEST(print_xtoa, 0);
+
 int do_ut_print(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {
 	struct unit_test *tests = UNIT_TEST_SUITE_START(print_test);
