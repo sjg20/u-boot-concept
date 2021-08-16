@@ -46,14 +46,14 @@ struct bootflow_state {
 };
 
 /**
- * struct bootmethod_uc_priv - uclass information about a bootmethod
+ * struct bootmethod_uc_plat - uclass information about a bootmethod
  *
  * This is attached to each device in the bootmethod uclass and accessible via
- * dev_get_uclass_priv(dev)
+ * dev_get_uclass_plat(dev)
  *
  * @bootflows: List of available bootflows for this bootmethod
  */
-struct bootmethod_uc_priv {
+struct bootmethod_uc_plat {
 	struct list_head bootflow_head;
 };
 

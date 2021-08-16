@@ -81,11 +81,12 @@ void bootflow_remove(struct bootflow *bflow)
 	list_del(&bflow->glob_node);
 
 	bootflow_free(bflow);
+	free(bflow);
 }
 
 void bootmethod_clear_bootflows(struct udevice *dev)
 {
-	struct bootmethod_uc_priv *ucp = dev_get_uclass_priv(dev);
+	struct bootmethod_uc_plat *ucp = dev_get_uclass_plat(dev);
 
 	while (!list_empty(&ucp->bootflow_head)) {
 		struct bootflow *bflow;
@@ -114,11 +115,12 @@ void bootmethod_clear_glob(void)
 
 int bootmethod_add_bootflow(struct bootflow *bflow)
 {
-	struct bootmethod_uc_priv *ucp = dev_get_uclass_priv(bflow->dev);
+	struct bootmethod_uc_plat *ucp = dev_get_uclass_plat(bflow->dev);
 	struct bootflow_state *state;
 	struct bootflow *new;
 	int ret;
 
+	assert(bflow->dev);
 	ret = bootmethod_get_state(&state);
 	if (ret)
 		return ret;
@@ -136,7 +138,7 @@ int bootmethod_add_bootflow(struct bootflow *bflow)
 
 int bootmethod_first_bootflow(struct udevice *dev, struct bootflow **bflowp)
 {
-	struct bootmethod_uc_priv *ucp = dev_get_uclass_priv(dev);
+	struct bootmethod_uc_plat *ucp = dev_get_uclass_plat(dev);
 
 	if (list_empty(&ucp->bootflow_head))
 		return -ENOENT;
@@ -150,7 +152,7 @@ int bootmethod_first_bootflow(struct udevice *dev, struct bootflow **bflowp)
 int bootmethod_next_bootflow(struct bootflow **bflowp)
 {
 	struct bootflow *bflow = *bflowp;
-	struct bootmethod_uc_priv *ucp = dev_get_uclass_priv(bflow->dev);
+	struct bootmethod_uc_plat *ucp = dev_get_uclass_plat(bflow->dev);
 
 	*bflowp = NULL;
 
@@ -463,9 +465,9 @@ static int bootmethod_init(struct uclass *uc)
 	return 0;
 }
 
-static int bootmethod_pre_probe(struct udevice *dev)
+static int bootmethod_post_bind(struct udevice *dev)
 {
-	struct bootmethod_uc_priv *ucp = dev_get_uclass_priv(dev);
+	struct bootmethod_uc_plat *ucp = dev_get_uclass_plat(dev);
 
 	INIT_LIST_HEAD(&ucp->bootflow_head);
 
@@ -477,7 +479,7 @@ UCLASS_DRIVER(bootmethod) = {
 	.name		= "bootmethod",
 	.flags		= DM_UC_FLAG_SEQ_ALIAS,
 	.priv_auto	= sizeof(struct bootflow_state),
-	.per_device_auto	= sizeof(struct bootmethod_uc_priv),
+	.per_device_plat_auto	= sizeof(struct bootmethod_uc_plat),
 	.init		= bootmethod_init,
-	.pre_probe	= bootmethod_pre_probe,
+	.post_bind	= bootmethod_post_bind,
 };

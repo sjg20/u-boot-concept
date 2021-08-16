@@ -132,7 +132,7 @@ static int bootflow_run_boot(struct bootflow *bflow)
 {
 	int ret;
 
-	printf("Booting bootflow '%s'\n", bflow->name);
+	printf("** Booting bootflow '%s'\n", bflow->name);
 	ret = bootflow_boot(bflow);
 	switch (ret) {
 	case -EPROTO:
@@ -173,6 +173,7 @@ static int do_bootflow_scan(struct cmd_tbl *cmdtp, int flag, int argc,
 	if (ret)
 		return CMD_RET_FAILURE;
 	dev = state->cur_bootmethod;
+	state->cur_bootflow = NULL;
 	if (dev) {
 		if (list) {
 			printf("Scanning for bootflows in bootmethod '%s'\n",
@@ -183,7 +184,7 @@ static int do_bootflow_scan(struct cmd_tbl *cmdtp, int flag, int argc,
 		for (i = 0, ret = 0; i < 100 && ret != -ESHUTDOWN; i++) {
 			ret = bootmethod_get_bootflow(dev, i, &bflow);
 			if ((ret && !all) || ret == -ESHUTDOWN) {
-				/* TODO(sjg@chromium.org): free bflow fields */
+				bootflow_free(&bflow);
 				continue;
 			}
 			bflow.err = ret;
@@ -366,11 +367,11 @@ static int do_bootflow_boot(struct cmd_tbl *cmdtp, int flag, int argc,
 
 #ifdef CONFIG_SYS_LONGHELP
 static char bootflow_help_text[] =
-	"scan [-abel]  - scan for valid bootflows (-l list, -a all, -e errors, -b boot)\n"
-	"list [-e]    - list scanned bootflows (-e errors)\n"
-	"select       - select a bootflow\n"
-	"info [-d]    - show info on current bootflow (-d dump bootflow)\n"
-	"boot         - boot current bootflow (or first available if none selected)";
+	"scan [-abel] - scan for valid bootflows (-l list, -a all, -e errors, -b boot)\n"
+	"bootflow list [-e]    - list scanned bootflows (-e errors)\n"
+	"bootflow select       - select a bootflow\n"
+	"bootflow info [-d]    - show info on current bootflow (-d dump bootflow)\n"
+	"bootflow boot         - boot current bootflow (or first available if none selected)";
 #endif
 
 U_BOOT_CMD_WITH_SUBCMDS(bootflow, "Bootflows", bootflow_help_text,

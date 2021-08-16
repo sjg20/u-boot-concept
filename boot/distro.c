@@ -91,7 +91,12 @@ int distro_net_setup(struct bootflow *bflow)
 		return log_msg_ret("name", -ENOMEM);
 
 	bflow->state = BOOTFLOWST_LOADED;
-	buf = map_sysmem(addr, 0);
+
+	/* Allocate the buffer, including the \0 byte added by get_pxe_file() */
+	buf = malloc(size + 1);
+	if (!buf)
+		return log_msg_ret("buf", -ENOMEM);
+	memcpy(buf, map_sysmem(addr, 0), size + 1);
 	bflow->buf = buf;
 
 	return 0;

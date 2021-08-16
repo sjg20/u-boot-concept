@@ -16,6 +16,7 @@
 static int eth_get_bootflow(struct udevice *dev, int seq,
 			    struct bootflow *bflow)
 {
+	char name[60];
 	int ret;
 
 	/*
@@ -26,7 +27,10 @@ static int eth_get_bootflow(struct udevice *dev, int seq,
 		return log_msg_ret("dhcp", -ESHUTDOWN);
 
 	bflow->seq = seq;
-	bflow->name = strdup(dev->name);
+	snprintf(name, sizeof(name), "%s.%d", dev->name, seq);
+	bflow->name = strdup(name);
+	if (!bflow->name)
+		return log_msg_ret("name", -ENOMEM);
 	if (!bflow->name)
 		return log_msg_ret("name", -ENOMEM);
 	bflow->state = BOOTFLOWST_BASE;
