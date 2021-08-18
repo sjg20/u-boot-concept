@@ -635,6 +635,7 @@ M:	Simon Glass <sjg@chromium.org>
 S:	Maintained
 F:	boot/bootmethod.c
 F:	boot/distro.c
+F:	cmd/bootmethod.c
 F:	include/bootmethod.h
 F:	include/distro.h
 
