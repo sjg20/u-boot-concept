@@ -634,7 +634,9 @@ BOOTMETHOD
 M:	Simon Glass <sjg@chromium.org>
 S:	Maintained
 F:	boot/bootmethod.c
+F:	boot/distro.c
 F:	include/bootmethod.h
+F:	include/distro.h
 
 BTRFS
 M:	Marek Behun <marek.behun@nic.cz>
