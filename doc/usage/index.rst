@@ -21,8 +21,10 @@ Shell commands
    askenv
    base
    bootefi
+   bootflow
    booti
    bootmenu
+   bootmethod
    button
    x86/cbsysinfo
    conitrace
