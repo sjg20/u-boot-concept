@@ -195,6 +195,7 @@ int os_map_file(const char *pathname, int os_flags, void **bufp, int *sizep)
 	}
 	size = os_filesize(ifd);
 	if (size < 0) {
+		close(ifd);
 		printf("Cannot get file size of '%s'\n", pathname);
 		return -EIO;
 	}
@@ -202,9 +203,13 @@ int os_map_file(const char *pathname, int os_flags, void **bufp, int *sizep)
 	ptr = mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED, ifd, 0);
 	if (ptr == MAP_FAILED) {
 		printf("Can't map file '%s': %s\n", pathname, strerror(errno));
+
+		/* Close after reporting the error in case errno is changed */
+		close(ifd);
 		return -EPERM;
 	}
 
+	close(ifd);
 	*bufp = ptr;
 	*sizep = size;
 
