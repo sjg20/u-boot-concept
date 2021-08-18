@@ -633,6 +633,12 @@ M:	Simon Glass <sjg@chromium.org>
 S:	Maintained
 F:	tools/binman/
 
+BOOTMETHOD
+M:	Simon Glass <sjg@chromium.org>
+S:	Maintained
+F:	boot/bootmethod.c
+F:	include/bootmethod.h
+
 BTRFS
 M:	Marek Behun <marek.behun@nic.cz>
 R:	Qu Wenruo <wqu@suse.com>
