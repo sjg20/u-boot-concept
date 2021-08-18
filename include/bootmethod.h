@@ -24,6 +24,8 @@ enum bootflow_state_t {
 };
 
 enum bootflow_type_t {
+	BOOTFLOWT_DISTRO,	/**< Distro boot */
+
 	BOOTFLOWT_COUNT,
 };
 
