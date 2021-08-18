@@ -642,6 +642,7 @@ F:	cmd/bootflow.c
 F:	cmd/bootmethod.c
 F:	include/bootmethod.h
 F:	include/distro.h
+F:	test/boot/bootmethod.c
 
 BTRFS
 M:	Marek Behun <marek.behun@nic.cz>
