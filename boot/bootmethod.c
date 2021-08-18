@@ -7,6 +7,7 @@
 #include <common.h>
 #include <blk.h>
 #include <bootmethod.h>
+#include <distro.h>
 #include <dm.h>
 #include <fs.h>
 #include <log.h>
@@ -34,6 +35,7 @@ static const char *const bootmethod_state[BOOTFLOWST_COUNT] = {
 };
 
 static const char *const bootmethod_type[BOOTFLOWT_COUNT] = {
+	"distro-boot",
 };
 
 int bootmethod_get_state(struct bootflow_state **statep)
@@ -360,6 +362,12 @@ int bootmethod_find_in_blk(struct udevice *dev, struct udevice *blk, int seq,
 
 	bflow->state = BOOTFLOWST_FS;
 
+	if (CONFIG_IS_ENABLED(BOOTMETHOD_DISTRO)) {
+		ret = distro_boot_setup(desc, partnum, bflow);
+		if (ret)
+			return log_msg_ret("distro", ret);
+	}
+
 	return 0;
 }
 
@@ -372,6 +380,12 @@ int bootflow_boot(struct bootflow *bflow)
 		return log_msg_ret("load", -EPROTO);
 
 	switch (bflow->type) {
+	case BOOTFLOWT_DISTRO:
+		if (CONFIG_IS_ENABLED(BOOTMETHOD_DISTRO)) {
+			done = true;
+			ret = distro_boot(bflow);
+		}
+		break;
 	case BOOTFLOWT_COUNT:
 		break;
 	}
