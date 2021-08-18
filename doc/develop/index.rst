@@ -9,6 +9,7 @@ Implementation
 .. toctree::
    :maxdepth: 1
 
+   bootflow
    ci_testing
    commands
    devicetree/index
