@@ -640,6 +640,9 @@ F:	boot/bootmethod.c
 F:	boot/distro.c
 F:	cmd/bootflow.c
 F:	cmd/bootmethod.c
+F:	doc/develop/bootflow.rst
+F:	doc/usage/bootflow.rst
+F:	doc/usage/bootmethod.rst
 F:	include/bootmethod.h
 F:	include/distro.h
 F:	test/boot/bootmethod.c
