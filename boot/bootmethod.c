@@ -404,6 +404,32 @@ int bootflow_boot(struct bootflow *bflow)
 	return log_msg_ret("end", -EFAULT);
 }
 
+void bootmethod_list(bool probe)
+{
+	struct udevice *dev;
+	int ret;
+	int i;
+
+	printf("Seq  Probed  Status  Uclass    Name\n");
+	printf("---  ------  ------  --------  ------------------\n");
+	if (probe)
+		ret = uclass_first_device_err(UCLASS_BOOTMETHOD, &dev);
+	else
+		ret = uclass_find_first_device(UCLASS_BOOTMETHOD, &dev);
+	for (i = 0; dev; i++) {
+		printf("%3x   [ %c ]  %6s  %-9.9s %s\n", dev_seq(dev),
+		       device_active(dev) ? '+' : ' ',
+		       ret ? simple_itoa(ret) : "OK",
+		       dev_get_uclass_name(dev_get_parent(dev)), dev->name);
+		if (probe)
+			ret = uclass_next_device_err(&dev);
+		else
+			ret = uclass_find_next_device(&dev);
+	}
+	printf("---  ------  ------  --------  ------------------\n");
+	printf("(%d device%s)\n", i, i != 1 ? "s" : "");
+}
+
 int bootmethod_setup_for_dev(struct udevice *parent, const char *drv_name)
 {
 	struct udevice *bm;
