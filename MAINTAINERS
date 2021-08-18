@@ -643,6 +643,7 @@ F:	doc/usage/bootmethod.rst
 F:	drivers/mmc/mmc_bootmethod.c
 F:	include/bootmethod.h
 F:	include/distro.h
+F:	net/eth_bootmethod.c
 F:	test/boot/bootmethod.c
 
 BTRFS
