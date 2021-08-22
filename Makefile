@@ -1133,6 +1133,7 @@ endif
 	@# confuses this rule. Use if() to send just a single character which
 	@# is enable to tell 'deprecated' that one of these symbols exists
 	$(call deprecated,CONFIG_TIMER,Timer drivers,v2023.01,$(if $(strip $(CONFIG_SYS_TIMER_RATE)$(CONFIG_SYS_TIMER_COUNTER)),x))
+	$(call deprecated,CONFIG_DM_SERIAL,Serial drivers,v2022.10,$(CONFIG_ATMEL_USART)$(CONFIG_MTK_SERIAL)$(CONFIG_MXC_UART)$(CONFIG_OMAP_SERIAL)$(CONFIG_PL01X_SERIAL)$(CONFIG_PXA_SERIAL)$(CONFIG_SCIF_CONSOLE)$(CONFIG_SYS_NS16550)$(CONFIG_SYS_NS16550_SERIAL)$(CONFIG_USB_TTY))
 	@# Check that this build does not use CONFIG options that we do not
 	@# know about unless they are in Kconfig. All the existing CONFIG
 	@# options are whitelisted, so new ones should not be added.
