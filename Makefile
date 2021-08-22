@@ -1128,6 +1128,7 @@ endif
 		$(CONFIG_WATCHDOG)$(CONFIG_HW_WATCHDOG))
 	$(call deprecated,CONFIG_DM_ETH,Ethernet drivers,v2020.07,$(CONFIG_NET))
 	$(call deprecated,CONFIG_DM_I2C,I2C drivers,v2022.04,$(CONFIG_SYS_I2C_LEGACY))
+	$(call deprecated,CONFIG_DM_GPIO,GPIO drivers,v2022.10,$(CONFIG_AT91_GPIO)$(CONFIG_ATMEL_PIO4)$(CONFIG_CORTINA_GPIO)$(CONFIG_DA8XX_GPIO)$(CONFIG_KIRKWOOD_GPIO)$(CONFIG_MARVELL_MFP)$(CONFIG_MXC_GPIO)$(CONFIG_MXS_GPIO)$(CONFIG_OMAP_GPIO)$(CONFIG_PCA953X)$(CONFIG_SH_GPIO_PFC)$(CONFIG_SUNXI_GPIO)$(CONFIG_TCA642X))
 	@# Check that this build does not use CONFIG options that we do not
 	@# know about unless they are in Kconfig. All the existing CONFIG
 	@# options are whitelisted, so new ones should not be added.
