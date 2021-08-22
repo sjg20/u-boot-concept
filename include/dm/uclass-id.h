@@ -49,6 +49,7 @@ enum uclass_id {
 	UCLASS_DSA,		/* Distributed (Ethernet) Switch Architecture */
 	UCLASS_ECDSA,		/* Elliptic curve cryptographic device */
 	UCLASS_EFI_LOADER,	/* Devices created by UEFI apps and drivers */
+	UCLASS_EFI_MEDIA,	/* EFI media/devs provided by UEFI firmware */
 	UCLASS_ETH,		/* Ethernet device */
 	UCLASS_ETH_PHY,		/* Ethernet PHY device */
 	UCLASS_FIRMWARE,	/* Firmware */
