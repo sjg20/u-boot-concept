@@ -112,8 +112,8 @@ struct vboot_blob {
  * @disable_power_button_during_update: Disable the power button during an aux
  *	firmware update
  * @disable-firmware-jump: Disable jumping to firmware (ver6)
- * @usb_is_enumerated: true if USB ports have been enumerated already
  * @tpm_optional: true if the TPM is optional
+ * @usb_is_enumerated: true if USB ports have been enumerated already
  *
  * @fmap: Firmare map, parsed from the binman information
  * @fwstore: Firmware storage device
@@ -159,13 +159,13 @@ struct vboot_info {
 	bool resume_path_same_as_boot;
 	bool cr50_commit_secdata;
 	bool disable_firmware_jump;
+	bool tpm_optional;
 #ifndef CONFIG_SPL_BUILD
 	bool detachable_ui;
 	bool disable_memwipe;
 	bool disable_lid_shutdown_during_update;
 	bool disable_power_button_during_update;
 	bool usb_is_enumerated;
-	bool tpm_optional;
 #endif
 
 	struct cros_fmap fmap;

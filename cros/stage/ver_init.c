@@ -124,7 +124,7 @@ int vboot_ver_init(struct vboot_info *vboot)
 	blob = bloblist_add(BLOBLISTT_VBOOT_CTX, ctx_size, VBOOT_CONTEXT_ALIGN);
 	if (!blob)
 		return log_msg_ret("blob", -ENOSPC);
-	log_notice("Bloblist at %p, size %x\n", blob,
+	log_notice("Bloblist at %p, size %zx\n", blob,
 		   sizeof(struct vboot_blob));
 
 	/* Set up context and work buffer */
