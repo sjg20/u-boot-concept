@@ -9,6 +9,7 @@
 #include <bootmethod.h>
 #include <distro.h>
 #include <dm.h>
+#include <bm_efi.h>
 #include <fs.h>
 #include <log.h>
 #include <malloc.h>
@@ -17,12 +18,15 @@
 #include <dm/uclass-internal.h>
 
 enum {
+	/* So far we only support distroboot and EFI_LOADER */
+	MAX_BOOTMETHODS			= 2,
+
 	/*
 	 * Set some sort of limit on the number of bootflows a bootmethod can
 	 * return. Note that for disks this limits the partitions numbers that
-	 * are scanned to 1..MAX_BOOTFLOWS_PER_BOOTMETHOD
+	 * are scanned to 1..MAX_BOOTFLOWS_PER_BOOTMETHOD / MAX_BOOTMETHODS
 	 */
-	MAX_BOOTFLOWS_PER_BOOTMETHOD	= 20,
+	MAX_BOOTFLOWS_PER_BOOTMETHOD	= 20 * MAX_BOOTMETHODS,
 };
 
 static const char *const bootmethod_state[BOOTFLOWST_COUNT] = {
@@ -36,6 +40,7 @@ static const char *const bootmethod_state[BOOTFLOWST_COUNT] = {
 
 static const char *const bootmethod_type[BOOTFLOWT_COUNT] = {
 	"distro-boot",
+	"efi-loader",
 };
 
 int bootmethod_get_state(struct bootflow_state **statep)
@@ -279,14 +284,23 @@ int bootmethod_scan_next_bootflow(struct bootmethod_iter *iter,
 
 		/*
 		 * Unless there are no more partitions or no bootflow support,
-		 * try the next partition
+		 * try the next partition. If we run out of partitions, fall
+		 * through to select the next device.
 		 */
 		else if (ret != -ESHUTDOWN && ret != -ENOSYS) {
 			log_debug("Bootmethod '%s' seq %d: Error %d\n",
 				  dev->name, iter->seq, ret);
-			if ((iter->seq++ != MAX_BOOTFLOWS_PER_BOOTMETHOD) &&
-			    (iter->flags & BOOTFLOWF_ALL))
-				return log_msg_ret("all", ret);
+			if (iter->seq++ != MAX_BOOTFLOWS_PER_BOOTMETHOD) {
+				/*
+				 * For 'all' we return all bootflows, even
+				 * those with errors
+				 */
+				if (iter->flags & BOOTFLOWF_ALL)
+					return log_msg_ret("all", ret);
+
+				/* Try the next partition */
+				continue;
+			}
 		}
 
 		/* we got to the end of that bootmethod, try the next */
@@ -327,12 +341,19 @@ int bootmethod_find_in_blk(struct udevice *dev, struct udevice *blk, int seq,
 {
 	struct blk_desc *desc = dev_get_uclass_plat(blk);
 	struct disk_partition info;
+	bool done = false;
 	char name[60];
-	int partnum = seq + 1;
+
+	/*
+	 * TODO(sjg@chromium.org): Add a suitable parameter for the method
+	 * number. Needs to consider the renaming suggested in the cover letter
+	 */
+	int methodnum = seq % MAX_BOOTMETHODS;
+	int partnum = seq / MAX_BOOTMETHODS + 1;
 	int ret;
 
 	if (seq >= MAX_BOOTFLOWS_PER_BOOTMETHOD)
-		return -ESHUTDOWN;
+		return log_msg_ret("max", -ESHUTDOWN);
 
 	bflow->blk = blk;
 	bflow->seq = seq;
@@ -344,7 +365,11 @@ int bootmethod_find_in_blk(struct udevice *dev, struct udevice *blk, int seq,
 	bflow->state = BOOTFLOWST_BASE;
 	ret = part_get_info(desc, partnum, &info);
 
-	/* This error indicates the media is not present */
+	/*
+	 * This error indicates the media is not present. Otherwise we just
+	 * blindly scan the next partition. We could be more intelligent here
+	 * and check which partition numbers actually exist.
+	 */
 	if (ret != -EOPNOTSUPP)
 		bflow->state = BOOTFLOWST_MEDIA;
 	if (ret)
@@ -362,11 +387,27 @@ int bootmethod_find_in_blk(struct udevice *dev, struct udevice *blk, int seq,
 
 	bflow->state = BOOTFLOWST_FS;
 
-	if (CONFIG_IS_ENABLED(BOOTMETHOD_DISTRO)) {
-		ret = distro_boot_setup(desc, partnum, bflow);
-		if (ret)
-			return log_msg_ret("distro", ret);
+	switch (methodnum) {
+	case 0:
+		if (CONFIG_IS_ENABLED(BOOTMETHOD_DISTRO)) {
+			done = true;
+			ret = distro_boot_setup(desc, partnum, bflow);
+			if (ret)
+				return log_msg_ret("distro", ret);
+		}
+		break;
+
+	case 1:
+		if (CONFIG_IS_ENABLED(BOOTMETHOD_EFILOADER)) {
+			done = true;
+			ret = efiloader_boot_setup(desc, partnum, bflow);
+			if (ret)
+				return log_msg_ret("efi_loader", ret);
+		}
+		break;
 	}
+	if (!done)
+		return log_msg_ret("supp", -ENOTSUPP);
 
 	return 0;
 }
@@ -384,6 +425,12 @@ int bootflow_boot(struct bootflow *bflow)
 		if (CONFIG_IS_ENABLED(BOOTMETHOD_DISTRO)) {
 			done = true;
 			ret = distro_boot(bflow);
+		}
+		break;
+	case BOOTFLOWT_EFILOADER:
+		if (CONFIG_IS_ENABLED(BOOTMETHOD_EFILOADER)) {
+			done = true;
+			ret = efiloader_boot(bflow);
 		}
 		break;
 	case BOOTFLOWT_COUNT:
