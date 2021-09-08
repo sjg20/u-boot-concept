@@ -239,6 +239,12 @@ static int usb_stor_probe_device(struct usb_device *udev)
 			if (ret)
 				return ret;
 		}
+
+		ret = device_probe(dev);
+		if (ret) {
+			device_unbind(dev);
+			return ret;
+		}
 	}
 #else
 	/* We don't have space to even probe if we hit the maximum */
