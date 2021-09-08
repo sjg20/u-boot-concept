@@ -595,6 +595,16 @@ static int do_scsi_scan_one(struct udevice *dev, int id, int lun, bool verbose)
 		ata_swap_buf_le16((u16 *)&bdesc->revision, sizeof(bd.revision) / 2);
 	}
 
+	ret = device_probe(bdev);
+	if (ret < 0) {
+		debug("Can't probe\n");
+		/* TODO: undo create */
+
+		ret = device_unbind(bdev);
+
+		return ret;
+	}
+
 	if (verbose) {
 		printf("  Device %d: ", bdesc->devnum);
 		dev_print(bdesc);
