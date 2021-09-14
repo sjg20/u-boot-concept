@@ -418,6 +418,13 @@ int mmc_bind(struct udevice *dev, struct mmc *mmc, const struct mmc_config *cfg)
 	bdesc->part_type = cfg->part_type;
 	mmc->dev = dev;
 	mmc->user_speed_mode = MMC_MODES_END;
+
+	ret = device_probe(dev);
+	if (ret) {
+		device_unbind(dev);
+		return ret;
+	}
+
 	return 0;
 }
 
