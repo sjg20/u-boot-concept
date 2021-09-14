@@ -847,6 +847,16 @@ static int blk_post_probe(struct udevice *dev)
 	return 0;
 }
 
+static int blk_pre_remove(struct udevice *dev)
+{
+	if (CONFIG_IS_ENABLED(EFI_LOADER)) {
+		if (efi_disk_delete(dev))
+			debug("*** efi_pre_remove_device failed\n");
+	}
+
+	return 0;
+}
+
 static int blk_part_post_probe(struct udevice *dev)
 {
 	if (CONFIG_IS_ENABLED(EFI_LOADER)) {
@@ -861,10 +871,21 @@ static int blk_part_post_probe(struct udevice *dev)
 	return 0;
 }
 
+static int blk_part_pre_remove(struct udevice *dev)
+{
+	if (CONFIG_IS_ENABLED(EFI_LOADER)) {
+		if (efi_disk_delete(dev))
+			debug("*** efi_pre_remove_device failed\n");
+	}
+
+	return 0;
+}
+
 UCLASS_DRIVER(blk) = {
 	.id		= UCLASS_BLK,
 	.name		= "blk",
 	.post_probe	= blk_post_probe,
+	.pre_remove	= blk_pre_remove,
 	.per_device_plat_auto	= sizeof(struct blk_desc),
 };
 
@@ -937,6 +958,7 @@ U_BOOT_DRIVER(blk_partition) = {
 UCLASS_DRIVER(partition) = {
 	.id		= UCLASS_PARTITION,
 	.post_probe	= blk_part_post_probe,
+	.pre_remove	= blk_part_pre_remove,
 	.per_device_plat_auto	= sizeof(struct disk_part),
 	.name		= "partition",
 };
