@@ -519,6 +519,8 @@ void efi_carve_out_dt_rsv(void *fdt);
 efi_status_t efi_console_register(void);
 /* Called when a block devices has been probed */
 int efi_disk_create(struct udevice *dev);
+/* Called when a block devices is to be removed */
+int efi_disk_delete(struct udevice *dev);
 /* Called by efi_init_obj_list() to install EFI_RNG_PROTOCOL */
 efi_status_t efi_rng_register(void);
 /* Called by efi_init_obj_list() to install EFI_TCG2_PROTOCOL */

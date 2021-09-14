@@ -574,6 +574,60 @@ int efi_disk_create(struct udevice *dev)
 	return -1;
 }
 
+static int efi_disk_delete_raw(struct udevice *dev)
+{
+	efi_handle_t handle = dev->efi_obj;
+	struct blk_desc *desc;
+	struct efi_disk_obj *diskobj;
+
+	desc = dev_get_uclass_plat(dev);
+	if (desc->if_type != IF_TYPE_EFI) {
+		diskobj = container_of(handle, struct efi_disk_obj, header);
+		efi_free_pool(diskobj->dp);
+	}
+
+	/*
+	 * TODO: Can we use efi_delete_handle() here?
+	 */
+	efi_remove_all_protocols(handle);
+
+	efi_remove_handle(handle);
+	free(diskobj);
+
+	return 0;
+}
+
+static int efi_disk_delete_part(struct udevice *dev)
+{
+	efi_handle_t handle = dev->efi_obj;
+	struct efi_disk_obj *diskobj;
+
+	diskobj = container_of(handle, struct efi_disk_obj, header);
+
+	efi_free_pool(diskobj->dp);
+
+	efi_remove_all_protocols(handle);
+
+	efi_remove_handle(handle);
+	free(diskobj);
+
+	return 0;
+}
+
+int efi_disk_delete(struct udevice *dev)
+{
+	enum uclass_id id;
+
+	id = device_get_uclass_id(dev);
+
+	if (id == UCLASS_BLK)
+		return efi_disk_delete_raw(dev);
+	else if (id == UCLASS_PARTITION)
+		return efi_disk_delete_part(dev);
+	else
+		return -1;
+}
+
 /**
  * efi_disk_is_system_part() - check if handle refers to an EFI system partition
  *
