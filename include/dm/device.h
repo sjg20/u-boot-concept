@@ -190,6 +190,10 @@ struct udevice {
 #if CONFIG_IS_ENABLED(DM_DMA)
 	ulong dma_offset;
 #endif
+#if CONFIG_IS_ENABLED(EFI_LOADER)
+	/* link to efi_object */
+	void *efi_obj;
+#endif
 };
 
 /**
