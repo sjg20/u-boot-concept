@@ -503,6 +503,14 @@ void efi_add_handle(efi_handle_t handle)
 	list_add_tail(&handle->link, &efi_obj_list);
 }
 
+void efi_remove_handle(efi_handle_t handle)
+{
+	if (!handle)
+		return;
+
+	list_del(&handle->link);
+}
+
 /**
  * efi_create_handle() - create handle
  * @handle: new handle

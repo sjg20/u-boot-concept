@@ -579,6 +579,8 @@ void efi_save_gd(void);
 void efi_runtime_relocate(ulong offset, struct efi_mem_desc *map);
 /* Add a new object to the object list. */
 void efi_add_handle(efi_handle_t obj);
+/* Remove a object from the object list. */
+void efi_remove_handle(efi_handle_t obj);
 /* Create handle */
 efi_status_t efi_create_handle(efi_handle_t *handle);
 /* Delete handle */
