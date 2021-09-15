@@ -909,6 +909,12 @@ static int nvme_probe(struct udevice *udev)
 					 -1, 512, 0, &ns_udev);
 		if (ret)
 			goto free_id;
+
+		ret = device_probe(ns_udev);
+		if (ret) {
+			device_unbind(ns_udev);
+			goto free_id;
+		}
 	}
 
 	free(id);
