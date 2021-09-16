@@ -227,6 +227,7 @@ static efi_uintn_t gop_get_bpp(struct efi_gop *this)
 
 	switch (gopobj->bpix) {
 #ifdef CONFIG_DM_VIDEO
+	case VIDEO_BPP30:
 	case VIDEO_BPP32:
 #else
 	case LCD_COLOR32:
@@ -468,6 +469,7 @@ efi_status_t efi_gop_register(void)
 	switch (bpix) {
 #ifdef CONFIG_DM_VIDEO
 	case VIDEO_BPP16:
+	case VIDEO_BPP30:
 	case VIDEO_BPP32:
 #else
 	case LCD_COLOR32:
@@ -518,6 +520,14 @@ efi_status_t efi_gop_register(void)
 #endif
 	{
 		gopobj->info.pixel_format = EFI_GOT_BGRA8;
+#ifdef CONFIG_DM_VIDEO
+	} else if (bpix == VIDEO_BPP30) {
+		gopobj->info.pixel_format = EFI_GOT_BITMASK;
+		gopobj->info.pixel_bitmask[0] = 0x3ff00000; /* red */
+		gopobj->info.pixel_bitmask[1] = 0x000ffc00; /* green */
+		gopobj->info.pixel_bitmask[2] = 0x000003ff; /* blue */
+		gopobj->info.pixel_bitmask[3] = 0xc0000000; /* reserved */
+#endif
 	} else {
 		gopobj->info.pixel_format = EFI_GOT_BITMASK;
 		gopobj->info.pixel_bitmask[0] = 0xf800; /* red */
