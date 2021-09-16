@@ -40,6 +40,7 @@ static int console_set_row_1(struct udevice *dev, uint row, int clr)
 					*dst++ = clr;
 				break;
 			}
+		case VIDEO_BPP30:
 		case VIDEO_BPP32:
 			if (IS_ENABLED(CONFIG_VIDEO_BPP32)) {
 				uint32_t *dst = line;
@@ -128,6 +129,7 @@ static int console_putc_xy_1(struct udevice *dev, uint x_frac, uint y, char ch)
 				}
 				break;
 			}
+		case VIDEO_BPP30:
 		case VIDEO_BPP32:
 			if (IS_ENABLED(CONFIG_VIDEO_BPP32)) {
 				uint32_t *dst = line;
@@ -183,6 +185,7 @@ static int console_set_row_2(struct udevice *dev, uint row, int clr)
 			end = dst;
 			break;
 		}
+	case VIDEO_BPP30:
 	case VIDEO_BPP32:
 		if (IS_ENABLED(CONFIG_VIDEO_BPP32)) {
 			uint32_t *dst = line;
@@ -266,6 +269,7 @@ static int console_putc_xy_2(struct udevice *dev, uint x_frac, uint y, char ch)
 				}
 				break;
 			}
+		case VIDEO_BPP30:
 		case VIDEO_BPP32:
 			if (IS_ENABLED(CONFIG_VIDEO_BPP32)) {
 				uint32_t *dst = line;
@@ -318,6 +322,7 @@ static int console_set_row_3(struct udevice *dev, uint row, int clr)
 					*dst++ = clr;
 				break;
 			}
+		case VIDEO_BPP30:
 		case VIDEO_BPP32:
 			if (IS_ENABLED(CONFIG_VIDEO_BPP32)) {
 				uint32_t *dst = line;
@@ -402,6 +407,7 @@ static int console_putc_xy_3(struct udevice *dev, uint x_frac, uint y, char ch)
 				}
 				break;
 			}
+		case VIDEO_BPP30:
 		case VIDEO_BPP32:
 			if (IS_ENABLED(CONFIG_VIDEO_BPP32)) {
 				uint32_t *dst = line;

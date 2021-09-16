@@ -53,6 +53,7 @@ enum video_log2_bpp {
 	VIDEO_BPP4,
 	VIDEO_BPP8,
 	VIDEO_BPP16,
+	VIDEO_BPP30,
 	VIDEO_BPP32,
 };
 
