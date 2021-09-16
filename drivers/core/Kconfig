@@ -117,6 +117,10 @@ config DM_EVENT
 	  operations, such as prbing or removing a device. Subsystems can
 	  register a 'spy' function that is called when the event occurs.
 
+config SPL_DM_EVENT
+	def_bool n # Support events with driver model (SPL)
+	depends on SPL_DM && SPL_EVENT
+
 config SPL_DM_DEVICE_REMOVE
 	bool "Support device removal in SPL"
 	depends on SPL_DM
@@ -133,6 +137,10 @@ config DM_STDIO
 	  Normally serial drivers register with stdio so that they can be used
 	  as normal output devices. In SPL we don't normally use stdio, so
 	  we can omit this feature.
+
+config SPL_DM_STDIO
+	def_bool n  # Support stdio registration
+	depends on SPL_DM
 
 config DM_SEQ_ALIAS
 	bool "Support numbered aliases in device tree"
@@ -422,6 +430,9 @@ config OF_ISA_BUS
 	  typical simple-bus compatible busses. This will lead to
 	  mistranslation of device addresses, so ensure that this is
 	  enabled if your board does include an ISA bus.
+
+config SPL_OF_ISA_BUS
+	def_bool n
 
 config DM_DEV_READ_INLINE
 	bool

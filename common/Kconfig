@@ -647,6 +647,9 @@ config EVENT_DEBUG
 	  events, such as event-type names. This adds to the code size of
 	  U-Boot so can be turned off for production builds.
 
+config SPL_EVENT_DEBUG
+	def_bool n  # Enable event debugging assistance (SPL)
+
 endif # EVENT
 
 config ARCH_EARLY_INIT_R
@@ -1093,15 +1096,15 @@ if IMAGE_SIGN_INFO
 
 config SPL_IMAGE_SIGN_INFO
 	bool
-	select SHA1
-	select SHA256
+	select SPL_SHA1
+	select SPL_SHA256
 	help
 	  Enable image_sign_info helper functions in SPL.
 
 config VPL_IMAGE_SIGN_INFO
 	bool
-	select SHA1
-	select SHA256
+	select VPL_SHA1
+	select VPL_SHA256
 	help
 	  Enable image_sign_info helper functions in SPL.
 

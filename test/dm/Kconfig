@@ -6,3 +6,7 @@ config UT_DM
 	  tests on the driver model code. Each subsystem (uclass) is tested.
 	  If all is well then all tests pass although there will be a few
 	  messages printed along the way.
+
+config SPL_UT_DM
+	def_bool b  # Enable driver model unit test command (SPL)
+	depends on UT_DM && SPL

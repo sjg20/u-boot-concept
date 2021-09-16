@@ -722,6 +722,12 @@ config BZIP2
 	help
 	  This enables support for BZIP2 compression algorithm.
 
+config SPL_BZIP2
+	bool "Enable bzip2 decompression support (SPL)"
+	depends on SPL
+	help
+	  This enables support for BZIP2 compression algorithm in SPL.
+
 config ZLIB
 	bool
 	default y

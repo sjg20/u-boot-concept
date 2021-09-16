@@ -823,6 +823,9 @@ config SYS_MMCSD_FS_BOOT_PARTITION
 	  used in fs mode.
 	  Use -1 as a special value to use the first bootable partition.
 
+config MMC_TINY
+	def_bool n  # This is only available in SPL
+
 config SPL_MMC_TINY
 	bool "Tiny MMC framework in SPL"
 	depends on SPL_MMC

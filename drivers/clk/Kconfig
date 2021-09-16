@@ -150,6 +150,19 @@ config CLK_OCTEON
 	help
 	  Enable this to support the clocks on Octeon MIPS platforms.
 
+config SANDBOX_CLK
+	bool "Sandbox clock driver"
+	depends on SANDBOX
+	default y
+	help
+	  Enable this option if you want to use the sandbox clock driver, which
+	  is used to run the various clock tests as well as to provide a clock
+	  feature to other test devices that need it.
+
+config SPL_SANDBOX_CLK
+	def_bool n  # Sandbox clock driver
+	depends on SPL && SANDBOX
+
 config SANDBOX_CLK_CCF
 	bool "Sandbox Common Clock Framework [CCF] support "
 	depends on SANDBOX

@@ -30,6 +30,10 @@ config EFI_LOADER
 	  will expose the UEFI API to a loaded application, enabling it to
 	  reuse U-Boot's device drivers.
 
+config SPL_EFI_LOADER
+	def_bool n # Support running UEFI applications (SPL)
+	depends on SPL
+
 if EFI_LOADER
 
 config CMD_BOOTEFI_BOOTMGR
@@ -226,6 +230,10 @@ config EFI_DEVICE_PATH_TO_TEXT
 	help
 	  The device path to text protocol converts device nodes and paths to
 	  human readable strings.
+
+config SPL_EFI_DEVICE_PATH_TO_TEXT
+	def_bool n # Device path to text protocol
+	depends on SPL
 
 config EFI_DEVICE_PATH_UTIL
 	bool "Device path utilities protocol"
