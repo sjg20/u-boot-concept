@@ -156,3 +156,8 @@ ulong board_get_usable_ram_top(ulong total_size)
 	 */
 	return 0x980000000;
 }
+
+unsigned long get_uart_clk(int dev_index)
+{
+	return 24000000;
+}
