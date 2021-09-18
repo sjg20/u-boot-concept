@@ -38,6 +38,13 @@ config ALTERA_SYSID
 	  Select this to enable a sysid for Altera devices. Please find
 	  details on the "Embedded Peripherals IP User Guide" of Altera.
 
+config APPLE_DART
+	bool "Apple DART support"
+	depends on MISC && ARCH_APPLE
+	default y
+	help
+	  Enable support for the DART on Apple SoCs.
+
 config ATSHA204A
 	bool "Support for Atmel ATSHA204A module"
 	depends on MISC
