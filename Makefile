@@ -1132,6 +1132,16 @@ endif
 	@# know about unless they are in Kconfig. All the existing CONFIG
 	@# options are whitelisted, so new ones should not be added.
 	$(call cmd,cfgcheck,u-boot.cfg)
+	@if [ -s include/autoconf.mk ]; then \
+		echo >&2 "===================== WARNING ======================"; \
+		echo >&2 "This board uses ad-hoc CONFIG options, i.e. those"; \
+		echo >&2 "not defined by a Kconfig option."; \
+		echo >&2 "Support for these will be dropped starting with the"; \
+		echo >&2 "v2022.10 release. Please add new Kconfig options"; \
+		echo >&2 "as needed, or use devicetree."; \
+		echo >&2 "Failure to update may result in board removal."; \
+		echo >&2 "===================================================="; \
+	fi
 
 PHONY += dtbs
 dtbs: dts/dt.dtb
