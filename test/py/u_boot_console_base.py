@@ -16,13 +16,13 @@ import sys
 import u_boot_spawn
 
 # Regexes for text we expect U-Boot to send to the console.
-pattern_u_boot_spl_signon = re.compile('(U-Boot SPL \\d{4}\\.\\d{2}[^\r\n]*\\))')
-pattern_u_boot_spl2_signon = re.compile('(U-Boot SPL \\d{4}\\.\\d{2}[^\r\n]*\\))')
-pattern_u_boot_main_signon = re.compile('(U-Boot \\d{4}\\.\\d{2}[^\r\n]*\\))')
-pattern_stop_autoboot_prompt = re.compile('Hit any key to stop autoboot: ')
-pattern_unknown_command = re.compile('Unknown command \'.*\' - try \'help\'')
-pattern_error_notification = re.compile('## Error: ')
-pattern_error_please_reset = re.compile('### ERROR ### Please RESET the board ###')
+pattern_u_boot_spl_signon = re.compile(b'(U-Boot SPL \\d{4}\\.\\d{2}[^\r\n]*\\))')
+pattern_u_boot_spl2_signon = re.compile(b'(U-Boot SPL \\d{4}\\.\\d{2}[^\r\n]*\\))')
+pattern_u_boot_main_signon = re.compile(b'(U-Boot \\d{4}\\.\\d{2}[^\r\n]*\\))')
+pattern_stop_autoboot_prompt = re.compile(b'Hit any key to stop autoboot: ')
+pattern_unknown_command = re.compile(b'Unknown command \'.*\' - try \'help\'')
+pattern_error_notification = re.compile(b'## Error: ')
+pattern_error_please_reset = re.compile(b'### ERROR ### Please RESET the board ###')
 
 PAT_ID = 0
 PAT_RE = 1
@@ -103,11 +103,12 @@ class ConsoleBase(object):
         self.config = config
         self.max_fifo_fill = max_fifo_fill
 
-        self.logstream = self.log.get_stream('console', sys.stdout)
+        self.logstream = self.log.get_stream('console', sys.stdout.buffer)
 
         # Array slice removes leading/trailing quotes
         self.prompt = self.config.buildconfig['config_sys_prompt'][1:-1]
-        self.prompt_compiled = re.compile('^' + re.escape(self.prompt), re.MULTILINE)
+        self.prompt_compiled = re.compile(
+            b'^' + re.escape(self.prompt).encode('utf-8'), re.MULTILINE)
         self.p = None
         self.disable_check_count = {pat[PAT_ID]: 0 for pat in bad_pattern_defs}
         self.eval_bad_patterns()
@@ -160,7 +161,7 @@ class ConsoleBase(object):
         running command such as "ums".
 
         Args:
-            cmd: The command to send.
+            cmd (str): The command to send.
             wait_for_echo: Boolean indicating whether to wait for U-Boot to
                 echo the command text back to its output.
             send_nl: Boolean indicating whether to send a newline character
@@ -180,12 +181,13 @@ class ConsoleBase(object):
 
         if self.at_prompt and \
                 self.at_prompt_logevt != self.logstream.logfile.cur_evt:
-            self.logstream.write(self.prompt, implicit=True)
+            self.logstream.write(self.prompt.encode('utf-8'), implicit=True)
 
+        cmd = cmd.encode('utf-8')
         try:
             self.at_prompt = False
             if send_nl:
-                cmd += '\n'
+                cmd += b'\n'
             while cmd:
                 # Limit max outstanding data, so UART FIFOs don't overflow
                 chunk = cmd[:self.max_fifo_fill]
@@ -194,7 +196,7 @@ class ConsoleBase(object):
                 if not wait_for_echo:
                     continue
                 chunk = re.escape(chunk)
-                chunk = chunk.replace('\\\n', '[\r\n]')
+                chunk = chunk.replace(b'\\\n', b'[\r\n]')
                 m = self.p.expect([chunk] + self.bad_patterns)
                 if m != 0:
                     self.at_prompt = False
@@ -211,7 +213,7 @@ class ConsoleBase(object):
             self.at_prompt_logevt = self.logstream.logfile.cur_evt
             # Only strip \r\n; space/TAB might be significant if testing
             # indentation.
-            return self.p.before.strip('\r\n')
+            return self.p.before.strip(b'\r\n').decode()
         except Exception as ex:
             self.log.error(str(ex))
             self.cleanup_spawn()
@@ -260,7 +262,7 @@ class ConsoleBase(object):
         location in the log file.
 
         Args:
-            text: The text to wait for; either a string (containing raw text,
+            text: The text to wait for; either bytes (containing raw text,
                 not a regular expression) or an re object.
 
         Returns:
@@ -373,14 +375,14 @@ class ConsoleBase(object):
             if m != 0:
                 raise Exception('Bad pattern found on console: ' +
                                 self.bad_pattern_ids[m - 1])
-            self.u_boot_version_string = self.p.after
+            self.u_boot_version_string = self.p.after.decode()
             while True:
                 m = self.p.expect([self.prompt_compiled,
                     pattern_stop_autoboot_prompt] + self.bad_patterns)
                 if m == 0:
                     break
                 if m == 1:
-                    self.p.send(' ')
+                    self.p.send(b' ')
                     continue
                 raise Exception('Bad pattern found on console: ' +
                                 self.bad_pattern_ids[m - 2])

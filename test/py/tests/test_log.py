@@ -44,5 +44,5 @@ def test_log_dropped(u_boot_console):
 
     cons = u_boot_console
     cons.restart_uboot()
-    output = cons.get_spawn_output().replace('\r', '')
-    assert (not 'debug: main' in output)
+    output = cons.get_spawn_output().replace(b'\r', b'')
+    assert (not b'debug: main' in output)

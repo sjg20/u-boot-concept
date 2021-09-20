@@ -172,7 +172,7 @@ def run_and_log(u_boot_console, cmd, ignore_errors=False):
     """
     if isinstance(cmd, str):
         cmd = cmd.split()
-    runner = u_boot_console.log.get_runner(cmd[0], sys.stdout)
+    runner = u_boot_console.log.get_runner(cmd[0], sys.stdout.buffer)
     output = runner.run(cmd, ignore_errors=ignore_errors)
     runner.close()
     return output
@@ -190,7 +190,7 @@ def run_and_log_expect_exception(u_boot_console, cmd, retcode, msg):
         msg: String that should be contained within the command's output.
     """
     try:
-        runner = u_boot_console.log.get_runner(cmd[0], sys.stdout)
+        runner = u_boot_console.log.get_runner(cmd[0], sys.stdout.buffer)
         runner.run(cmd)
     except Exception as e:
         assert(retcode == runner.exit_status)

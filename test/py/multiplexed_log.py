@@ -65,7 +65,7 @@ class LogfileStream(object):
         self.logfile.write(self, data, implicit)
         if self.chained_file:
             # Chained file is console, convert things a little
-            self.chained_file.write((data.encode('ascii', 'replace')).decode())
+            self.chained_file.write(data)
 
     def flush(self):
         """Flush the log stream, to ensure correct log interleaving.
@@ -130,8 +130,8 @@ class RunAndLog(object):
 
         msg = '+' + ' '.join(cmd) + '\n'
         if self.chained_file:
-            self.chained_file.write(msg)
-        self.logfile.write(self, msg)
+            self.chained_file.write(msg.encode('utf-8'))
+        self.logfile.write(self, msg.encode('utf-8'))
 
         try:
             p = subprocess.Popen(cmd, cwd=cwd,
@@ -166,9 +166,9 @@ class RunAndLog(object):
             exception = Exception('Exit code: ' + str(exit_status))
         if exception:
             output += str(exception) + '\n'
-        self.logfile.write(self, output)
+        self.logfile.write(self, output.encode('utf-8'))
         if self.chained_file:
-            self.chained_file.write(output)
+            self.chained_file.write(output.encode('utf-8'))
         self.logfile.timestamp()
 
         # Store the output so it can be accessed if we raise an exception.
@@ -220,7 +220,7 @@ class Logfile(object):
             Nothing.
         """
 
-        self.f = open(fn, 'wt', encoding='utf-8')
+        self.f = open(fn, 'wb')
         self.last_stream = None
         self.blocks = []
         self.cur_evt = 1
@@ -231,7 +231,7 @@ class Logfile(object):
         self.seen_warning = False
 
         shutil.copy(mod_dir + '/multiplexed_log.css', os.path.dirname(fn))
-        self.f.write('''\
+        self.f.write(b'''\
 <html>
 <head>
 <link rel="stylesheet" type="text/css" href="multiplexed_log.css">
@@ -310,7 +310,7 @@ $(document).ready(function () {
             Nothing.
         """
 
-        self.f.write('''\
+        self.f.write(b'''\
 </tt>
 </body>
 </html>
@@ -330,16 +330,16 @@ $(document).ready(function () {
         control characters to a hexadecimal representation.
 
         Args:
-            data: The raw string data to be escaped.
+            data (bytes): The raw string data to be escaped.
 
         Returns:
             An escaped version of the data.
         """
 
-        data = data.replace(chr(13), '')
-        data = ''.join((ord(c) in self._nonprint) and ('%%%02x' % ord(c)) or
-                       c for c in data)
-        data = html.escape(data)
+        data = data.replace(bytes([13]), b'')
+        data = b''.join([(c in self._nonprint) and (b'%%%02x' % c) or
+                         bytes([c]) for c in data])
+        data = html.escape(data.decode()).encode('utf-8')
         return data
 
     def _terminate_stream(self):
@@ -355,11 +355,11 @@ $(document).ready(function () {
         self.cur_evt += 1
         if not self.last_stream:
             return
-        self.f.write('</pre>\n')
-        self.f.write('<div class="stream-trailer block-trailer">End stream: ' +
-                     self.last_stream.name + '</div>\n')
-        self.f.write('</div>\n')
-        self.f.write('</div>\n')
+        self.f.write(b'</pre>\n')
+        self.f.write(b'<div class="stream-trailer block-trailer">End stream: ' +
+                     self.last_stream.name.encode('utf-8') + b'</div>\n')
+        self.f.write(b'</div>\n')
+        self.f.write(b'</div>\n')
         self.last_stream = None
 
     def _note(self, note_type, msg, anchor=None):
@@ -376,15 +376,15 @@ $(document).ready(function () {
         """
 
         self._terminate_stream()
-        self.f.write('<div class="' + note_type + '">\n')
-        self.f.write('<pre>')
+        self.f.write(b'<div class="' + note_type.encode('utf-8') + b'">\n')
+        self.f.write(b'<pre>')
         if anchor:
-            self.f.write('<a href="#%s">' % anchor)
-        self.f.write(self._escape(msg))
+            self.f.write(b'<a href="#%s">' % anchor.encode('utf-8'))
+        self.f.write(self._escape(msg.encode('utf-8')))
         if anchor:
-            self.f.write('</a>')
-        self.f.write('\n</pre>\n')
-        self.f.write('</div>\n')
+            self.f.write(b'</a>')
+        self.f.write(b'\n</pre>\n')
+        self.f.write(b'</div>\n')
 
     def start_section(self, marker, anchor=None):
         """Begin a new nested section in the log file.
@@ -405,10 +405,11 @@ $(document).ready(function () {
             self.anchor += 1
             anchor = str(self.anchor)
         blk_path = '/'.join(self.blocks)
-        self.f.write('<div class="section block" id="' + anchor + '">\n')
-        self.f.write('<div class="section-header block-header">Section: ' +
-                     blk_path + '</div>\n')
-        self.f.write('<div class="section-content block-content">\n')
+        self.f.write(b'<div class="section block" id="' +
+                     anchor.encode('utf-8') + b'">\n')
+        self.f.write(b'<div class="section-header block-header">Section: ' +
+                     blk_path.encode('utf-8') + b'</div>\n')
+        self.f.write(b'<div class="section-content block-content">\n')
         self.timestamp()
 
         return anchor
@@ -436,10 +437,10 @@ $(document).ready(function () {
         self._note("timestamp",
             "TIME: SINCE-SECTION: " + str(delta_section))
         blk_path = '/'.join(self.blocks)
-        self.f.write('<div class="section-trailer block-trailer">' +
-                     'End section: ' + blk_path + '</div>\n')
-        self.f.write('</div>\n')
-        self.f.write('</div>\n')
+        self.f.write(b'<div class="section-trailer block-trailer">' +
+                     b'End section: ' + blk_path.encode('utf-8') + b'</div>\n')
+        self.f.write(b'</div>\n')
+        self.f.write(b'</div>\n')
         self.blocks.pop()
 
     def section(self, marker, anchor=None):
@@ -684,16 +685,16 @@ $(document).ready(function () {
 
         if stream != self.last_stream:
             self._terminate_stream()
-            self.f.write('<div class="stream block">\n')
-            self.f.write('<div class="stream-header block-header">Stream: ' +
-                         stream.name + '</div>\n')
-            self.f.write('<div class="stream-content block-content">\n')
-            self.f.write('<pre>')
+            self.f.write(b'<div class="stream block">\n')
+            self.f.write(b'<div class="stream-header block-header">Stream: ' +
+                         stream.name.encode('utf-8') + b'</div>\n')
+            self.f.write(b'<div class="stream-content block-content">\n')
+            self.f.write(b'<pre>')
         if implicit:
-            self.f.write('<span class="implicit">')
+            self.f.write(b'<span class="implicit">')
         self.f.write(self._escape(data))
         if implicit:
-            self.f.write('</span>')
+            self.f.write(b'</span>')
         self.last_stream = stream
 
     def flush(self):

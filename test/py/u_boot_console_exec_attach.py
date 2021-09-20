@@ -37,7 +37,7 @@ class ConsoleExecAttach(ConsoleBase):
         with self.log.section('flash'):
             self.log.action('Flashing U-Boot')
             cmd = ['u-boot-test-flash', config.board_type, config.board_identity]
-            runner = self.log.get_runner(cmd[0], sys.stdout)
+            runner = self.log.get_runner(cmd[0], sys.stdout.buffer)
             runner.run(cmd)
             runner.close()
             self.log.status_pass('OK')
@@ -60,7 +60,7 @@ class ConsoleExecAttach(ConsoleBase):
         try:
             self.log.action('Resetting board')
             cmd = ['u-boot-test-reset'] + args
-            runner = self.log.get_runner(cmd[0], sys.stdout)
+            runner = self.log.get_runner(cmd[0], sys.stdout.buffer)
             runner.run(cmd)
             runner.close()
         except:

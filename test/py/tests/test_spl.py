@@ -25,8 +25,8 @@ def test_spl(u_boot_console, ut_spl_subtest):
     try:
         cons = u_boot_console
         cons.restart_uboot_with_flags(['-u', '-k', ut_spl_subtest.split()[1]])
-        output = cons.get_spawn_output().replace('\r', '')
-        assert 'Failures: 0' in output
+        output = cons.get_spawn_output().replace(b'\r', b'')
+        assert b'Failures: 0' in output
     finally:
         # Restart afterward in case a non-SPL test is run next. This should not
         # happen since SPL tests are run in their own invocation of test.py, but
