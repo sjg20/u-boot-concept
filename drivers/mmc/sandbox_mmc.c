@@ -84,8 +84,13 @@ static int sandbox_mmc_send_cmd(struct udevice *dev, struct mmc_cmd *cmd,
 		break;
 	case MMC_CMD_WRITE_SINGLE_BLOCK:
 	case MMC_CMD_WRITE_MULTIPLE_BLOCK:
+		if (cmd->cmdarg * data->blocksize +
+		    data->blocks * data->blocksize > priv->size)
+			panic("size overflow1\n");
+
 		memcpy(&priv->buf[cmd->cmdarg * data->blocksize], data->src,
 		       data->blocks * data->blocksize);
+
 		break;
 	case MMC_CMD_STOP_TRANSMISSION:
 		break;
@@ -96,6 +101,10 @@ static int sandbox_mmc_send_cmd(struct udevice *dev, struct mmc_cmd *cmd,
 		erase_end = cmd->cmdarg;
 		break;
 	case MMC_CMD_ERASE:
+		if (erase_start * mmc->write_bl_len +
+		    (erase_end - erase_start + 1) * mmc->write_bl_len >
+		    priv->size)
+			panic("size overflow2\n");
 		memset(&priv->buf[erase_start * mmc->write_bl_len], '\0',
 		       (erase_end - erase_start + 1) * mmc->write_bl_len);
 		break;
