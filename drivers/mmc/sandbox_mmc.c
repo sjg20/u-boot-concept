@@ -201,6 +201,17 @@ static int sandbox_mmc_probe(struct udevice *dev)
 	return mmc_init(&plat->mmc);
 }
 
+static int sandbox_mmc_remove(struct udevice *dev)
+{
+	struct sandbox_mmc_plat *plat = dev_get_plat(dev);
+	struct sandbox_mmc_priv *priv = dev_get_priv(dev);
+
+	if (!plat->fname)
+		free(priv->buf);
+
+	return 0;
+}
+
 static int sandbox_mmc_bind(struct udevice *dev)
 {
 	struct sandbox_mmc_plat *plat = dev_get_plat(dev);
