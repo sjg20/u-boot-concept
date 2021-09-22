@@ -1099,6 +1099,15 @@ static int sata_mv_probe(struct udevice *dev)
 			continue;
 		}
 
+		ret = device_probe(bdev);
+		if (ret < 0) {
+			debug("Can't probe\n");
+			/* TODO: undo create */
+
+			device_unbind(bdev);
+			continue;
+		}
+
 		/* If we got here, the current SATA port was probed
 		 * successfully, so set the probe status to successful.
 		 */

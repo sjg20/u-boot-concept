@@ -1026,6 +1026,16 @@ int dwc_ahsata_scan(struct udevice *dev)
 		return ret;
 	}
 
+	ret = device_probe(bdev);
+	if (ret < 0) {
+		debug("Can't probe\n");
+		/* TODO: undo create */
+
+		device_unbind(bdev);
+
+		return ret;
+	}
+
 	return 0;
 }
 
