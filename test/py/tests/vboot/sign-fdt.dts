@@ -1,0 +1,23 @@
+// SPDX-License-Identifier: GPL-2.0+
+
+/dts-v1/;
+
+/ {
+	#address-cells = <1>;
+	#size-cells = <1>;
+
+	model = "Google Snow";
+	chosen {
+		bootargs = "console=tty1";
+		stdout-path = "serial3:115200n8";
+	};
+	aliases {
+		serail0 = "/serial@12c30000";
+	};
+
+	serial@12c30000 {
+		compatible = "samsung,exynos4210-uart";
+		reg = <0x12c30000 0x00000100>;
+		u-boot,dm-pre-reloc;
+	};
+};

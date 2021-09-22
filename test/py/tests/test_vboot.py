@@ -29,6 +29,7 @@ import shutil
 import struct
 import pytest
 import u_boot_utils as util
+import vboot_comm
 import vboot_forge
 import vboot_evil
 
@@ -172,22 +173,6 @@ def test_vboot(u_boot_console, name, sha_algo, padding, sign_options, required,
             handle.seek(4)
             handle.write(struct.pack(">I", size))
         return struct.unpack(">I", total_size)[0]
-
-    def create_rsa_pair(name):
-        """Generate a new RSA key paid and certificate
-
-        Args:
-            name: Name of of the key (e.g. 'dev')
-        """
-        public_exponent = 65537
-        util.run_and_log(cons, 'openssl genpkey -algorithm RSA -out %s%s.key '
-                     '-pkeyopt rsa_keygen_bits:2048 '
-                     '-pkeyopt rsa_keygen_pubexp:%d' %
-                     (tmpdir, name, public_exponent))
-
-        # Create a certificate containing the public key
-        util.run_and_log(cons, 'openssl req -batch -new -x509 -key %s%s.key '
-                         '-out %s%s.crt' % (tmpdir, name, tmpdir, name))
 
     def test_with_algo(sha_algo, padding, sign_options):
         """Test verified boot with the given hash algorithm.
@@ -377,8 +362,8 @@ def test_vboot(u_boot_console, name, sha_algo, padding, sign_options, required,
     dtb = '%ssandbox-u-boot.dtb' % tmpdir
     sig_node = '/configurations/conf-1/signature'
 
-    create_rsa_pair('dev')
-    create_rsa_pair('prod')
+    vboot_comm.create_rsa_pair(cons, tmpdir, 'dev')
+    vboot_comm.create_rsa_pair(cons, tmpdir, 'prod')
 
     # Create a number kernel image with zeroes
     with open('%stest-kernel.bin' % tmpdir, 'wb') as fd:
