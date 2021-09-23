@@ -155,9 +155,10 @@ int efi_store_memory_map(struct efi_priv *priv)
 		return ret;
 	}
 	/*
-	 * Since doing a malloc() may change the memory map and also we want to
-	 * be able to read the memory map in efi_call_exit_boot_services()
-	 * below, after more changes have happened
+	 * Allow a bit of extra space, since doing a malloc() may change the
+	 * memory map and also we want to be able to read the memory map in
+	 * efi_call_exit_boot_services() * below, after more changes have
+	 * happened
 	 */
 	priv->memmap_alloc = size + 1024;
 	priv->memmap_size = priv->memmap_alloc;

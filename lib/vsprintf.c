@@ -276,9 +276,8 @@ static char *string(char *buf, char *end, char *s, int field_width,
 }
 
 /* U-Boot uses UTF-16 strings in the EFI context only. */
-#if CONFIG_IS_ENABLED(EFI_LOADER) && !defined(API_BUILD)
 static char *string16(char *buf, char *end, u16 *s, int field_width,
-		int precision, int flags)
+		      int precision, int flags)
 {
 	const u16 *str = s ? s : L"<NULL>";
 	ssize_t i, len = utf16_strnlen(str, precision);
@@ -316,7 +315,6 @@ static char *device_path_string(char *buf, char *end, void *dp, int field_width,
 	efi_free_pool(str);
 	return buf;
 }
-#endif
 #endif
 
 static char *mac_address_string(char *buf, char *end, u8 *addr, int field_width,
@@ -615,14 +613,13 @@ repeat:
 			continue;
 
 		case 's':
-/* U-Boot uses UTF-16 strings in the EFI context only. */
-#if CONFIG_IS_ENABLED(EFI_LOADER) && !defined(API_BUILD)
-			if (qualifier == 'l') {
+			/* U-Boot uses UTF-16 strings in the EFI context only */
+			if (!IS_ENABLED(CONFIG_API_BUILD) &&
+			    (CONFIG_IS_ENABLED(EFI_LOADER)) &&
+			    qualifier == 'l') {
 				str = string16(str, end, va_arg(args, u16 *),
 					       field_width, precision, flags);
-			} else
-#endif
-			{
+			} else {
 				str = string(str, end, va_arg(args, char *),
 					     field_width, precision, flags);
 			}

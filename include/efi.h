@@ -439,6 +439,7 @@ struct efi_priv {
 	efi_uintn_t memmap_desc_size;
 	u32 memmap_version;
 
+
 	/* app: */
 	bool use_pool_for_malloc;
 	unsigned long ram_base;
