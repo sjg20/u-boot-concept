@@ -1,0 +1,307 @@
+// SPDX-License-Identifier: GPL-2.0+ OR MIT
+/*
+ * Sample device tree for versal-virt board
+
+ * Copyright 2021 Google LLC
+ */
+
+/dts-v1/;
+
+/ {
+	compatible = "xlnx-versal-virt";
+	model = "Xilinx Versal Virtual development board";
+	#address-cells = <0x02>;
+	#size-cells = <0x02>;
+	interrupt-parent = <0x8000>;
+
+	memory@0 {
+		reg = <0x00 0x00 0x00 0x8000000>;
+		device_type = "memory";
+	};
+
+	clk25 {
+		u-boot,dm-pre-reloc;
+		compatible = "fixed-clock";
+		#clock-cells = <0x00>;
+		clock-frequency = <0x17d7840>;
+		phandle = <0x8003>;
+	};
+
+	clk125 {
+		u-boot,dm-pre-reloc;
+		compatible = "fixed-clock";
+		#clock-cells = <0x00>;
+		clock-frequency = <0x7735940>;
+		phandle = <0x8004>;
+	};
+
+	cpus {
+		#address-cells = <0x01>;
+		#size-cells = <0x00>;
+
+		cpu@0 {
+			compatible = "arm,cortex-a72";
+			device_type = "cpu";
+			reg = <0x00>;
+		};
+
+		cpu@1 {
+			compatible = "arm,cortex-a72";
+			device_type = "cpu";
+			reg = <0x01>;
+		};
+	};
+
+	rtc@f12a0000 {
+		compatible = "xlnx,zynqmp-rtc";
+		reg = <0x00 0xf12a0000 0x00 0x10000>;
+		interrupt-names = "alarm\0sec";
+		interrupts = <0x00 0x8e 0x04 0x00 0x8f 0x04>;
+	};
+
+	sdhci@f1040000 {
+		compatible = "arasan,sdhci-8.9a";
+		reg = <0x00 0xf1040000 0x00 0x10000>;
+		interrupts = <0x00 0x7e 0x04>;
+		clock-names = "clk_xin\0clk_ahb";
+		clocks = <0x8003 0x8003>;
+	};
+
+	sdhci@f1050000 {
+		compatible = "arasan,sdhci-8.9a";
+		reg = <0x00 0xf1050000 0x00 0x10000>;
+		interrupts = <0x00 0x80 0x04>;
+		clock-names = "clk_xin\0clk_ahb";
+		clocks = <0x8003 0x8003>;
+	};
+
+	usb@ff9d0000 {
+		phandle = <0x8005>;
+		#size-cells = <0x02>;
+		#address-cells = <0x02>;
+		ranges;
+		clocks = <0x8003 0x8004>;
+		clock-names = "bus_clk\0ref_clk";
+		reg = <0x00 0xff9d0000 0x00 0x10000>;
+		compatible = "xlnx,versal-dwc3";
+
+		dwc3@fe200000 {
+			maximum-speed = "high-speed";
+			phandle = <0x8006>;
+			snps,mask_phy_reset;
+			snps,refclk_fladj;
+			snps,dis_u3_susphy_quirk;
+			snps,dis_u2_susphy_quirk;
+			phy-names = "usb3-phy";
+			dr_mode = "host";
+			#stream-id-cells = <0x01>;
+			snps,quirk-frame-length-adjustment = <0x20>;
+			interrupts = <0x00 0x16 0x04>;
+			interrupt-names = "dwc_usb3";
+			reg = <0x00 0xfe200000 0x00 0x10000>;
+			compatible = "snps,dwc3";
+		};
+	};
+
+	dma@ffa80000 {
+		compatible = "xlnx,zynqmp-dma-1.0";
+		reg = <0x00 0xffa80000 0x00 0x1000>;
+		interrupts = <0x00 0x3c 0x04>;
+		clock-names = "clk_main\0clk_apb";
+		clocks = <0x8003 0x8003>;
+		xlnx,bus-width = <0x40>;
+	};
+
+	dma@ffa90000 {
+		compatible = "xlnx,zynqmp-dma-1.0";
+		reg = <0x00 0xffa90000 0x00 0x1000>;
+		interrupts = <0x00 0x3d 0x04>;
+		clock-names = "clk_main\0clk_apb";
+		clocks = <0x8003 0x8003>;
+		xlnx,bus-width = <0x40>;
+	};
+
+	dma@ffaa0000 {
+		compatible = "xlnx,zynqmp-dma-1.0";
+		reg = <0x00 0xffaa0000 0x00 0x1000>;
+		interrupts = <0x00 0x3e 0x04>;
+		clock-names = "clk_main\0clk_apb";
+		clocks = <0x8003 0x8003>;
+		xlnx,bus-width = <0x40>;
+	};
+
+	dma@ffab0000 {
+		compatible = "xlnx,zynqmp-dma-1.0";
+		reg = <0x00 0xffab0000 0x00 0x1000>;
+		interrupts = <0x00 0x3f 0x04>;
+		clock-names = "clk_main\0clk_apb";
+		clocks = <0x8003 0x8003>;
+		xlnx,bus-width = <0x40>;
+	};
+
+	dma@ffac0000 {
+		compatible = "xlnx,zynqmp-dma-1.0";
+		reg = <0x00 0xffac0000 0x00 0x1000>;
+		interrupts = <0x00 0x40 0x04>;
+		clock-names = "clk_main\0clk_apb";
+		clocks = <0x8003 0x8003>;
+		xlnx,bus-width = <0x40>;
+	};
+
+	dma@ffad0000 {
+		compatible = "xlnx,zynqmp-dma-1.0";
+		reg = <0x00 0xffad0000 0x00 0x1000>;
+		interrupts = <0x00 0x41 0x04>;
+		clock-names = "clk_main\0clk_apb";
+		clocks = <0x8003 0x8003>;
+		xlnx,bus-width = <0x40>;
+	};
+
+	dma@ffae0000 {
+		compatible = "xlnx,zynqmp-dma-1.0";
+		reg = <0x00 0xffae0000 0x00 0x1000>;
+		interrupts = <0x00 0x42 0x04>;
+		clock-names = "clk_main\0clk_apb";
+		clocks = <0x8003 0x8003>;
+		xlnx,bus-width = <0x40>;
+	};
+
+	dma@ffaf0000 {
+		compatible = "xlnx,zynqmp-dma-1.0";
+		reg = <0x00 0xffaf0000 0x00 0x1000>;
+		interrupts = <0x00 0x43 0x04>;
+		clock-names = "clk_main\0clk_apb";
+		clocks = <0x8003 0x8003>;
+		xlnx,bus-width = <0x40>;
+	};
+
+	timer {
+		compatible = "arm,armv8-timer";
+		interrupts = <0x01 0x0d 0x04 0x01 0x0e 0x04 0x01 0x0b 0x04 0x01 0x0a 0x04>;
+	};
+
+	gic@f9000000 {
+		compatible = "arm,gic-v3";
+		#interrupt-cells = <0x03>;
+		reg = <0x00 0xf9000000 0x00 0x10000 0x00 0xf9080000 0x00 0x80000>;
+		interrupt-controller;
+		interrupts = <0x01 0x09 0x04>;
+		phandle = <0x8000>;
+	};
+
+	uart@ff000000 {
+		u-boot,dm-pre-reloc;
+		compatible = "arm,pl011\0arm,sbsa-uart";
+		reg = <0x00 0xff000000 0x00 0x1000>;
+		interrupts = <0x00 0x12 0x04>;
+		clock-names = "uartclk\0apb_pclk";
+		clocks = <0x8004 0x8004>;
+		current-speed = <0x1c200>;
+	};
+
+	uart@ff010000 {
+		u-boot,dm-pre-reloc;
+		compatible = "arm,pl011\0arm,sbsa-uart";
+		reg = <0x00 0xff010000 0x00 0x1000>;
+		interrupts = <0x00 0x13 0x04>;
+		clock-names = "uartclk\0apb_pclk";
+		clocks = <0x8004 0x8004>;
+		current-speed = <0x1c200>;
+	};
+
+	ethernet@ff0c0000 {
+		#size-cells = <0x00>;
+		#address-cells = <0x01>;
+		compatible = "cdns,zynqmp-gem\0cdns,gem";
+		reg = <0x00 0xff0c0000 0x00 0x1000>;
+		interrupts = <0x00 0x38 0x04 0x00 0x38 0x04>;
+		clock-names = "pclk\0hclk\0tx_clk\0rx_clk";
+		clocks = <0x8003 0x8003 0x8004 0x8004>;
+		phy-handle = <0x8002>;
+		phy-mode = "rgmii-id";
+
+		fixed-link {
+			speed = <0x3e8>;
+			full-duplex;
+			phandle = <0x8002>;
+		};
+	};
+
+	ethernet@ff0d0000 {
+		#size-cells = <0x00>;
+		#address-cells = <0x01>;
+		compatible = "cdns,zynqmp-gem\0cdns,gem";
+		reg = <0x00 0xff0d0000 0x00 0x1000>;
+		interrupts = <0x00 0x3a 0x04 0x00 0x3a 0x04>;
+		clock-names = "pclk\0hclk\0tx_clk\0rx_clk";
+		clocks = <0x8003 0x8003 0x8004 0x8004>;
+		phy-handle = <0x8001>;
+		phy-mode = "rgmii-id";
+
+		fixed-link {
+			speed = <0x3e8>;
+			full-duplex;
+			phandle = <0x8001>;
+		};
+	};
+
+	virtio_mmio@a0000e00 {
+		compatible = "virtio,mmio";
+		reg = <0x00 0xa0000e00 0x00 0x200>;
+		interrupts = <0x00 0x76 0x01>;
+		dma-coherent;
+	};
+
+	virtio_mmio@a0000c00 {
+		compatible = "virtio,mmio";
+		reg = <0x00 0xa0000c00 0x00 0x200>;
+		interrupts = <0x00 0x75 0x01>;
+		dma-coherent;
+	};
+
+	virtio_mmio@a0000a00 {
+		compatible = "virtio,mmio";
+		reg = <0x00 0xa0000a00 0x00 0x200>;
+		interrupts = <0x00 0x74 0x01>;
+		dma-coherent;
+	};
+
+	virtio_mmio@a0000800 {
+		compatible = "virtio,mmio";
+		reg = <0x00 0xa0000800 0x00 0x200>;
+		interrupts = <0x00 0x73 0x01>;
+		dma-coherent;
+	};
+
+	virtio_mmio@a0000600 {
+		compatible = "virtio,mmio";
+		reg = <0x00 0xa0000600 0x00 0x200>;
+		interrupts = <0x00 0x72 0x01>;
+		dma-coherent;
+	};
+
+	virtio_mmio@a0000400 {
+		compatible = "virtio,mmio";
+		reg = <0x00 0xa0000400 0x00 0x200>;
+		interrupts = <0x00 0x71 0x01>;
+		dma-coherent;
+	};
+
+	virtio_mmio@a0000200 {
+		compatible = "virtio,mmio";
+		reg = <0x00 0xa0000200 0x00 0x200>;
+		interrupts = <0x00 0x70 0x01>;
+		dma-coherent;
+	};
+
+	virtio_mmio@a0000000 {
+		compatible = "virtio,mmio";
+		reg = <0x00 0xa0000000 0x00 0x200>;
+		interrupts = <0x00 0x6f 0x01>;
+		dma-coherent;
+	};
+
+	chosen {
+		stdout-path = "/uart@ff000000";
+	};
+};
