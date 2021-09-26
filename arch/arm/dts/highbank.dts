@@ -1,0 +1,14 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * Dummy devicetre file for highbank board
+ *
+ * This is required to make the board build with CONFIG OF_SEPARATE
+ * There appears to be no in-tree documentation about this board at all.
+ *
+ * Copyright 2021 Google LLC
+ */
+
+/dts-v1/;
+
+/ {
+};
