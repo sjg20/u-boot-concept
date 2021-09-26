@@ -1145,6 +1145,8 @@ dtb-$(CONFIG_TARGET_IMX8MM_CL_IOT_GATE) += imx8mm-cl-iot-gate.dtb
 
 dtb-$(CONFIG_TARGET_EA_LPC3250DEVKITV2) += lpc3250-ea3250.dtb
 
+dtb-$(CONFIG_ARCH_QEMU) += qemu-arm.dtb
+
 targets += $(dtb-y)
 
 # Add any required device tree compiler flags here
