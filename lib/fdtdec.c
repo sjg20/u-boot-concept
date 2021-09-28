@@ -1608,11 +1608,6 @@ int fdtdec_setup(void)
 # elif defined(CONFIG_OF_BOARD) || defined(CONFIG_OF_SEPARATE)
 	/* Allow the board to override the fdt address. */
 	gd->fdt_blob = board_fdt_blob_setup();
-# elif defined(CONFIG_OF_HOSTFILE)
-	if (sandbox_read_fdt_from_file()) {
-		puts("Failed to read control FDT\n");
-		return -1;
-	}
 # endif
 # ifndef CONFIG_SPL_BUILD
 	/* Allow the early environment to override the fdt address */
