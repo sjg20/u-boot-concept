@@ -9,6 +9,7 @@
 #include <common.h>
 #include <blk.h>
 #include <dm.h>
+#include <efi_loader.h>
 #include <log.h>
 #include <malloc.h>
 #include <part.h>
@@ -827,6 +828,11 @@ int blk_create_partitions(struct udevice *parent)
 
 static int blk_post_probe(struct udevice *dev)
 {
+	if (CONFIG_IS_ENABLED(EFI_LOADER)) {
+		if (efi_disk_create(dev))
+			debug("*** efi_post_probe_device failed\n");
+	}
+
 	if (IS_ENABLED(CONFIG_PARTITIONS) &&
 	    IS_ENABLED(CONFIG_HAVE_BLOCK_DEVICE)) {
 		struct blk_desc *desc = dev_get_uclass_plat(dev);
@@ -843,6 +849,10 @@ static int blk_post_probe(struct udevice *dev)
 
 static int blk_part_post_probe(struct udevice *dev)
 {
+	if (CONFIG_IS_ENABLED(EFI_LOADER)) {
+		if (efi_disk_create(dev))
+			debug("*** efi_post_probe_device failed\n");
+	}
 	/*
 	 * TODO:
 	 * If we call blk_creat_partitions() here, it would allow for
