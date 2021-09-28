@@ -485,56 +485,6 @@ error:
 	return ret;
 }
 
-#ifndef CONFIG_BLK
-/**
- * efi_disk_create_partitions() - create handles and protocols for partitions
- *
- * Create handles and protocols for the partitions of a block device.
- *
- * @parent:		handle of the parent disk
- * @desc:		block device
- * @if_typename:	interface type
- * @diskid:		device number
- * @pdevname:		device name
- * Return:		number of partitions created
- */
-int efi_disk_create_partitions(efi_handle_t parent, struct blk_desc *desc,
-			       const char *if_typename, int diskid,
-			       const char *pdevname)
-{
-	int disks = 0;
-	char devname[32] = { 0 }; /* dp->str is u16[32] long */
-	int part;
-	struct efi_device_path *dp = NULL;
-	efi_status_t ret;
-	struct efi_handler *handler;
-
-	/* Get the device path of the parent */
-	ret = efi_search_protocol(parent, &efi_guid_device_path, &handler);
-	if (ret == EFI_SUCCESS)
-		dp = handler->protocol_interface;
-
-	/* Add devices for each partition */
-	for (part = 1; part <= MAX_SEARCH_PARTITIONS; part++) {
-		struct disk_partition info;
-
-		if (part_get_info(desc, part, &info))
-			continue;
-		snprintf(devname, sizeof(devname), "%s:%x", pdevname,
-			 part);
-		ret = efi_disk_add_dev(parent, dp, if_typename, desc, diskid,
-				       &info, part, NULL);
-		if (ret != EFI_SUCCESS) {
-			log_err("Adding partition %s failed\n", pdevname);
-			continue;
-		}
-		disks++;
-	}
-
-	return disks;
-}
-#endif /* CONFIG_BLK */
-
 /*
  * Create a handle for a whole raw disk
  *
@@ -622,58 +572,6 @@ int efi_disk_create(struct udevice *dev)
 		return efi_disk_create_part(dev);
 
 	return -1;
-}
-
-/**
- * efi_disk_register() - register block devices
- *
- * U-Boot doesn't have a list of all online disk devices. So when running our
- * EFI payload, we scan through all of the potentially available ones and
- * store them in our object pool.
- *
- * This function is called in efi_init_obj_list().
- *
- * TODO(sjg@chromium.org): Actually with CONFIG_BLK, U-Boot does have this.
- * Consider converting the code to look up devices as needed. The EFI device
- * could be a child of the UCLASS_BLK block device, perhaps.
- *
- * Return:	status code
- */
-efi_status_t efi_disk_register(void)
-{
-	struct efi_disk_obj *disk;
-	int disks = 0;
-	efi_status_t ret;
-	struct udevice *dev;
-
-	for (uclass_first_device_check(UCLASS_BLK, &dev); dev;
-	     uclass_next_device_check(&dev)) {
-		struct blk_desc *desc = dev_get_uclass_plat(dev);
-		const char *if_typename = blk_get_if_type_name(desc->if_type);
-
-		/* Add block device for the full device */
-		log_info("Scanning disk %s...\n", dev->name);
-		ret = efi_disk_add_dev(NULL, NULL, if_typename,
-					desc, desc->devnum, NULL, 0, &disk);
-		if (ret == EFI_NOT_READY) {
-			log_notice("Disk %s not ready\n", dev->name);
-			continue;
-		}
-		if (ret) {
-			log_err("ERROR: failure to add disk device %s, r = %lu\n",
-				dev->name, ret & ~EFI_ERROR_MASK);
-			return ret;
-		}
-		disks++;
-
-		/* Partitions show up as block devices in EFI */
-		disks += efi_disk_create_partitions(
-					&disk->header, desc, if_typename,
-					desc->devnum, dev->name);
-	}
-	log_info("Found %d disks\n", disks);
-
-	return EFI_SUCCESS;
 }
 
 /**
