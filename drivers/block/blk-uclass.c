@@ -741,8 +741,22 @@ static int blk_post_probe(struct udevice *dev)
 		struct blk_desc *desc = dev_get_uclass_plat(dev);
 
 		part_init(desc);
+
+		if (desc->part_type != PART_TYPE_UNKNOWN &&
+		    blk_create_partitions(dev))
+			debug("*** creating partitions failed\n");
 	}
 
+	return 0;
+}
+
+static int blk_part_post_probe(struct udevice *dev)
+{
+	/*
+	 * TODO:
+	 * If we call blk_creat_partitions() here, it would allow for
+	 * "partitions in a partition".
+	 */
 	return 0;
 }
 
@@ -821,6 +835,7 @@ U_BOOT_DRIVER(blk_partition) = {
 
 UCLASS_DRIVER(partition) = {
 	.id		= UCLASS_PARTITION,
+	.post_probe	= blk_part_post_probe,
 	.per_device_plat_auto	= sizeof(struct disk_part),
 	.name		= "partition",
 };
