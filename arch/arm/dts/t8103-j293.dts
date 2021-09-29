@@ -71,27 +71,3 @@
 		local-mac-address = [00 00 00 00 00 00];
 	};
 };
-
-&dwc3_0_dart_0 {
-	status = "okay";
-};
-
-&dwc3_0_dart_1 {
-	status = "okay";
-};
-
-&dwc3_0 {
-	status = "okay";
-};
-
-&dwc3_1_dart_0 {
-	status = "okay";
-};
-
-&dwc3_1_dart_1 {
-	status = "okay";
-};
-
-&dwc3_1 {
-	status = "okay";
-};
