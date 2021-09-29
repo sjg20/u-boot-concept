@@ -628,6 +628,35 @@ __maybe_unused static void *dp_fill(void *buf, struct udevice *dev)
 			return &dp->vendor_data[1];
 			}
 #endif
+#ifdef CONFIG_EFI_LOADER
+		/*
+		 * FIXME: conflicting with CONFIG_SANDBOX
+		 * This case is necessary to support efi_disk's created by
+		 * efi_driver (and efi_driver_binding_protocol).
+		 * TODO:
+		 * The best way to work around here is to create efi_root as
+		 * udevice and put all efi_driver objects under it.
+		 */
+		case UCLASS_ROOT: {
+			struct efi_device_path_vendor *dp;
+			struct blk_desc *desc = dev_get_uclass_plat(dev);
+			/* FIXME: guid_vendor used in selftest_block_device */
+			static efi_guid_t guid_vendor =
+				EFI_GUID(0xdbca4c98, 0x6cb0, 0x694d,
+				0x08, 0x72, 0x81, 0x9c, 0x65, 0x0c, 0xb7, 0xb8);
+
+
+			dp_fill(buf, dev->parent);
+			dp = buf;
+			++dp;
+			dp->dp.type = DEVICE_PATH_TYPE_HARDWARE_DEVICE;
+			dp->dp.sub_type = DEVICE_PATH_SUB_TYPE_VENDOR;
+			dp->dp.length = sizeof(*dp) + 1;
+			memcpy(&dp->guid, &guid_vendor, sizeof(efi_guid_t));
+			dp->vendor_data[0] = desc->devnum;
+			return &dp->vendor_data[1];
+			}
+#endif
 #ifdef CONFIG_VIRTIO_BLK
 		case UCLASS_VIRTIO: {
 			struct efi_device_path_vendor *dp;

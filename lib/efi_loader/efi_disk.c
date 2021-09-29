@@ -562,11 +562,21 @@ static int efi_disk_create_part(struct udevice *dev)
 int efi_disk_create(struct udevice *dev)
 {
 	enum uclass_id id;
+	struct blk_desc *desc;
 
 	id = device_get_uclass_id(dev);
 
-	if (id == UCLASS_BLK)
+	if (id == UCLASS_BLK) {
+		/*
+		 * avoid creating duplicated objects now that efi_driver
+		 * has already created an efi_disk at this moment.
+		 */
+		desc = dev_get_uclass_plat(dev);
+		if (desc->if_type == IF_TYPE_EFI)
+			return 0;
+
 		return efi_disk_create_raw(dev);
+	}
 
 	if (id == UCLASS_PARTITION)
 		return efi_disk_create_part(dev);

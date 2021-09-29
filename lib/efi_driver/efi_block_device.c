@@ -173,6 +173,12 @@ static int efi_bl_bind(efi_handle_t handle, void *interface)
 	plat->handle = handle;
 	plat->io = interface;
 
+	/*
+	 * FIXME: necessary because we won't do almost nothing in
+	 * efi_disk_create() when called from device_probe().
+	 */
+	bdev->efi_obj = handle;
+
 	ret = device_probe(bdev);
 	if (ret)
 		return ret;
