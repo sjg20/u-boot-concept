@@ -30,6 +30,9 @@ static const efi_guid_t guid_device_path = EFI_DEVICE_PATH_PROTOCOL_GUID;
 static const efi_guid_t guid_simple_file_system_protocol =
 					EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
 static const efi_guid_t guid_file_system_info = EFI_FILE_SYSTEM_INFO_GUID;
+static efi_guid_t guid_uboot =
+	EFI_GUID(0xe61d73b9, 0xa384, 0x4acc, \
+		 0xae, 0xab, 0x82, 0xe8, 0x28, 0xf3, 0x62, 0x8b);
 static efi_guid_t guid_vendor =
 	EFI_GUID(0xdbca4c98, 0x6cb0, 0x694d,
 		 0x08, 0x72, 0x81, 0x9c, 0x65, 0x0c, 0xb7, 0xb8);
@@ -206,25 +209,44 @@ static int setup(const efi_handle_t handle,
 
 	ret = boottime->allocate_pool(EFI_LOADER_DATA,
 				      sizeof(struct efi_device_path_vendor) +
+				      sizeof(struct efi_device_path_vendor) +
+				      sizeof(u8) +
 				      sizeof(struct efi_device_path),
 				      (void **)&dp);
 	if (ret != EFI_SUCCESS) {
 		efi_st_error("Out of memory\n");
 		return EFI_ST_FAILURE;
 	}
+	/* first part */
 	vendor_node.dp.type = DEVICE_PATH_TYPE_HARDWARE_DEVICE;
 	vendor_node.dp.sub_type = DEVICE_PATH_SUB_TYPE_VENDOR;
 	vendor_node.dp.length = sizeof(struct efi_device_path_vendor);
 
-	boottime->copy_mem(&vendor_node.guid, &guid_vendor,
+	boottime->copy_mem(&vendor_node.guid, &guid_uboot,
 			   sizeof(efi_guid_t));
 	boottime->copy_mem(dp, &vendor_node,
 			   sizeof(struct efi_device_path_vendor));
+
+	/* second part */
+	vendor_node.dp.type = DEVICE_PATH_TYPE_HARDWARE_DEVICE;
+	vendor_node.dp.sub_type = DEVICE_PATH_SUB_TYPE_VENDOR;
+	vendor_node.dp.length = sizeof(struct efi_device_path_vendor) + 1;
+
+	boottime->copy_mem(&vendor_node.guid, &guid_vendor,
+			   sizeof(efi_guid_t));
+	boottime->copy_mem((char *)dp + sizeof(struct efi_device_path_vendor),
+			   &vendor_node,
+			   sizeof(struct efi_device_path_vendor));
+	/* vendor_data[0] */
+	*((char *)dp + sizeof(struct efi_device_path_vendor) * 2) = 0;
+
 	end_node.type = DEVICE_PATH_TYPE_END;
 	end_node.sub_type = DEVICE_PATH_SUB_TYPE_END;
 	end_node.length = sizeof(struct efi_device_path);
 
-	boottime->copy_mem((char *)dp + sizeof(struct efi_device_path_vendor),
+	boottime->copy_mem((char *)dp + sizeof(struct efi_device_path_vendor)
+			   + sizeof(struct efi_device_path_vendor)
+			   + sizeof(u8),
 			   &end_node, sizeof(struct efi_device_path));
 	ret = boottime->install_protocol_interface(&disk_handle,
 						   &guid_device_path,
