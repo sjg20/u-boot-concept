@@ -40,9 +40,6 @@
 
 /* LCD and keyboard require SDL support */
 #ifdef CONFIG_SANDBOX_SDL
-#define LCD_BPP			LCD_COLOR16
-#define CONFIG_LCD_BMP_RLE8
-
 #define CONFIG_KEYBOARD
 #endif
 
