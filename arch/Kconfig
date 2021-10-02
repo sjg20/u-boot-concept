@@ -200,6 +200,7 @@ config SANDBOX
 	imply CMD_EXTENSION
 	imply KEYBOARD
 	imply PHYSMEM
+	imply KEYBOARD
 
 config SH
 	bool "SuperH architecture"
