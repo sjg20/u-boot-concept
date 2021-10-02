@@ -196,6 +196,7 @@ config SANDBOX
 	imply CMD_EXTENSION
 	imply I2C_EDID
 	imply PHYSMEM
+	imply KEYBOARD
 
 config SH
 	bool "SuperH architecture"

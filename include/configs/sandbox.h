@@ -50,8 +50,6 @@
 
 /* LCD and keyboard require SDL support */
 #ifdef CONFIG_SANDBOX_SDL
-#define CONFIG_KEYBOARD
-
 #define SANDBOX_SERIAL_SETTINGS		"stdin=serial,cros-ec-keyb,usbkbd\0" \
 					"stdout=serial,vidconsole\0" \
 					"stderr=serial,vidconsole\0"
