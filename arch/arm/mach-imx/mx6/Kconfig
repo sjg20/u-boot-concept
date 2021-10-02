@@ -209,6 +209,7 @@ config TARGET_EMBESTMX6BOARDS
 	bool "embestmx6boards"
 	select BOARD_LATE_INIT
 	select SUPPORT_SPL
+	imply I2C_EDID
 
 config TARGET_GE_BX50V3
 	bool "General Electric Bx50v3"
@@ -450,6 +451,7 @@ config TARGET_NITROGEN6X
 	imply USB_ETHER_MCS7830
 	imply USB_ETHER_SMSC95XX
 	imply USB_HOST_ETHER
+	imply I2C_EDID
 
 config TARGET_NPI_IMX6ULL
 	bool "Seeed NPI-IMX6ULL"
