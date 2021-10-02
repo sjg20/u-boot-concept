@@ -33,10 +33,15 @@ $(obj)/$(offsets-file): $(obj)/arch/$(ARCH)/lib/asm-offsets.s FORCE
 #####
 # Generate u-boot.cfgv
 
-always  += u-boot.cfgv
+cfgv-file := include/generated/cfg_value.h
+
+always  += $(cfgv-file)
 targets += cfg_tmp.s
 
 CFLAGS_cfg_tmp.o := -DDO_DEPS_ONLY
 
-$(obj)/u-boot.cfgv: cfg_tmp.s FORCE
+cfg_tmp.c: u-boot.cfg
+	awk -f ${srctree}/scripts/gen_cfgc.awk $< >$@;
+
+$(obj)/$(cfgv-file): cfg_tmp.s FORCE
 	$(call filechk,cfgv,__CFGV_H__)
