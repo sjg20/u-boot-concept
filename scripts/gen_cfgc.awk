@@ -1,12 +1,16 @@
 #!/usr/bin/awk -f
 # SPDX-License-Identifier: GPL-2.0
-# Generate a C program that prints all the CONFIG options in the given file
+# Generate a C program that uses all the CONFIG options in the given file
+# This can then be compiled to assembler, which produces the values in the .S
+# file. Then this is parsed by filechk_cfgv to obtain the literal values and
+# generate a file containing those
 
 BEGIN {
-	print "/* C program to print out CONFIG options */"
+	print "/* C program which can be assembled to evaluate CONFIG options */"
 	print "#include <common.h>"
 	print "#include <asm-offsets.h>"
 	print "#include <asm/global_data.h>"
+	print "#include <generated/generic-asm-offsets.h>"
 	print ""
 	print "#include <linux/kbuild.h>"
 
@@ -16,6 +20,8 @@ BEGIN {
 }
 
 END {
+	print ""
+	print "\treturn 0;"
 	print "}"
 }
 
@@ -33,25 +39,5 @@ END {
 	if ($3 ~ /^"/)
 		next;
 
-# 	printf("\tprintf(\"%s ", $2)
 	printf("\tDEFINE(%s, %s);\n", $2, $2)
-	next;
-
-	# The only variables we expect, other than ENV settings, are hex
-	is_hex = 1
-	if ($2 ~ /^(CONFIG_EXTRA_ENV_SETTINGS)/)
-		is_hex = 0;
-
-	# Cast hex values to unsigned long so we can cover everything
-	# Example output: CONFIG_SYS_PBSIZE 0x414
-	if (is_hex)
-# 		printf("%s", %s", "%#lx", $2)
-		printf("%s\\n\", (unsigned long)(%s)", "%#lx", $2)
-
-	# Put quotes around string values
-	# Example output: CONFIG_EXTRA_ENV_SETTINGS "stdin=serial,cros-ec-keyb"
-	else
-		printf("\\\"%s\\\"\\n\", %s", "%s", $2)
-# 	printf(");  /* %s */\n", $3)
-# 	printf(");")
 }

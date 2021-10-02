@@ -40,7 +40,7 @@ targets += cfg_tmp.s
 
 CFLAGS_cfg_tmp.o := -DDO_DEPS_ONLY
 
-cfg_tmp.c: u-boot.cfg
+cfg_tmp.c: u-boot.cfg $(generic-offsets-file) $(offsets-file)
 	awk -f ${srctree}/scripts/gen_cfgc.awk $< >$@;
 
 $(obj)/$(cfgv-file): cfg_tmp.s FORCE
