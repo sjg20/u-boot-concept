@@ -30,16 +30,16 @@ Sandbox is a build of U-Boot that can run under Linux so it is a convenient
 way of trying out tracing before you use it on your actual board. To do
 this, follow these steps:
 
-Add the following to include/configs/sandbox.h (if not already there)
+Add the following to config/sandbox_defconfig (if not already there)
 
 .. code-block:: c
 
-    #define CONFIG_TRACE
-    #define CONFIG_CMD_TRACE
-    #define CONFIG_TRACE_BUFFER_SIZE    (16 << 20)
-    #define CONFIG_TRACE_EARLY_SIZE     (8 << 20)
-    #define CONFIG_TRACE_EARLY
-    #define CONFIG_TRACE_EARLY_ADDR     0x00100000
+    CONFIG_TRACE=y
+    CONFIG_TRACE_BUFFER_SIZE=0x01000000
+    CONFIG_TRACE_BUFFER_SIZE=0x01000000
+    CONFIG_TRACE_EARLY_SIZE=0x800000
+    CONFIG_TRACE_EARLY=y
+    CONFIG_TRACE_EARLY_ADDR=0x00100000
 
 Build sandbox U-Boot with tracing enabled:
 
