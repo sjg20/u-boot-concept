@@ -38,11 +38,6 @@
 #define CONFIG_SANDBOX_SDL
 #endif
 
-/* LCD and keyboard require SDL support */
-#ifdef CONFIG_SANDBOX_SDL
-#define CONFIG_KEYBOARD
-#endif
-
 #ifndef CONFIG_SPL_BUILD
 #define CONFIG_SYS_IDE_MAXBUS		1
 #define CONFIG_SYS_ATA_IDE0_OFFSET	0

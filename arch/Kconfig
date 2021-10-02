@@ -195,6 +195,7 @@ config SANDBOX
 	imply DM_DSA
 	imply CMD_EXTENSION
 	imply PHYSMEM
+	imply KEYBOARD
 
 config SH
 	bool "SuperH architecture"
