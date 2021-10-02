@@ -1039,7 +1039,7 @@ cmd_pad_cat = $(cmd_objcopy) && $(append) || { rm -f $@; false; }
 quiet_cmd_lzma = LZMA    $@
 cmd_lzma = lzma -c -z -k -9 $< > $@
 
-cfg: u-boot.cfgv
+cfg: u-boot.cfg
 
 quiet_cmd_cfgcheck = CFGCHK  $2
 cmd_cfgcheck = $(srctree)/scripts/check-config.sh $2 \
@@ -2303,25 +2303,8 @@ PHONY += coccicheck
 coccicheck:
 	$(Q)$(CONFIG_SHELL) $(srctree)/scripts/$@
 
-# Produce a file that lists the evaluated value of each ad-hoc CONFIG
-PHONY += cfgval
-
-quiet_cmd_cfgval = CFGV    $@
-      cmd_cfgval = awk -f ${srctree}/scripts/gen_cfgc.awk u-boot.cfg > cfg_tmp.c; \
-	      $(CC) -include $(srctree)/include/compiler.h \
-		$(patsubst -I%,-idirafter%, $(filter -I%, $(UBOOTINCLUDE))) \
-		-I$(srctree)/scripts/dtc/libfdt \
-		-I$(srctree)/tools \
-		-DUSE_HOSTCC \
-		-D__KERNEL_STRICT_NAMES \
-		-D_GNU_SOURCE \
-		-std=gnu99 -o cfg_tmp cfg_tmp.c; \
-		./cfg_tmp >$@
-
-u-boot.cfgv: u-boot.cfg
-	$(call cmd,cfgval)
-
-cfgval: u-boot.cfgv
+# u-boot.cfgv: u-boot.cfg
+# 	$(call cmd,cfgval)
 
 # FIXME Should go into a make.lib or something
 # ===========================================================================

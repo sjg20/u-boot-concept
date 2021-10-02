@@ -29,3 +29,14 @@ CFLAGS_asm-offsets.o := -DDO_DEPS_ONLY
 
 $(obj)/$(offsets-file): $(obj)/arch/$(ARCH)/lib/asm-offsets.s FORCE
 	$(call filechk,offsets,__ASM_OFFSETS_H__)
+
+#####
+# Generate u-boot.cfgv
+
+always  += u-boot.cfgv
+targets += cfg_tmp.s
+
+CFLAGS_cfg_tmp.o := -DDO_DEPS_ONLY
+
+$(obj)/u-boot.cfgv: cfg_tmp.s FORCE
+	$(call filechk,cfgv,__CFGV_H__)
