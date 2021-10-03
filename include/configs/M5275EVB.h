@@ -60,7 +60,7 @@
 
 /* I2C */
 #define CONFIG_SYS_IMMR		CONFIG_SYS_MBAR
-#define CONFIG_SYS_I2C_PINMUX_REG	(gpio_reg->par_feci2c)
+#define CONFIG_SYS_I2C_PINMUX_REGP	(u32 *)0 /* FIXME (gpio_reg->par_feci2c) */
 #define CONFIG_SYS_I2C_PINMUX_CLR	(0xFFF0)
 #define CONFIG_SYS_I2C_PINMUX_SET	(0x000F)
 
@@ -168,5 +168,9 @@
  * Port configuration
  */
 #define CONFIG_SYS_FECI2C		0x0FA0
+
+#ifdef DO_CONFIGS_ONLY
+#include <asm/cache.h>
+#endif
 
 #endif	/* _M5275EVB_H */

@@ -28,14 +28,30 @@ END {
 /^#define (CONFIG_\w+)\s*(.*)$/ {
 	if (length($3) == 0)
 		next;
+
+	# Ignore strange ones that don't have a single value
 	if ($2 ~ /^(CONFIG_BOARDDIR|CONFIG_SYS_BAUDRATE_TABLE$)/)
 		next;
+
+	# Ignore macros with parameters
 	if ($2 ~ /\(/)
 		next;
+
+	# Ignore values containing a comma or period, since we won't be able to
+	# evaluate them anyway
+	if ($3 ~ /[,.]/)
+		next;
+
+	# Ignore simple decimal integers, since they will appear in u-boot.cfg
+	# and don't need any special handling
 	if ($3 ~ /^[0-9]+$/)
 		next;
+
+	# Same with simple hex integers
 	if ($3 ~ /^0x[0-9a-fA-F]+$/)
 		next;
+
+	# Ignore strings
 	if ($3 ~ /^"/)
 		next;
 

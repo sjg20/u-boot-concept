@@ -50,7 +50,7 @@
 
 /* I2C */
 #define CONFIG_SYS_IMMR		CONFIG_SYS_MBAR
-#define CONFIG_SYS_I2C_PINMUX_REG	(gpio->par_qspi)
+#define CONFIG_SYS_I2C_PINMUX_REGP	(u32 *)0 /* FIXME (gpio->par_qspi) */
 #define CONFIG_SYS_I2C_PINMUX_CLR	~(GPIO_PAR_FECI2C_SCL_MASK | GPIO_PAR_FECI2C_SDA_MASK)
 #define CONFIG_SYS_I2C_PINMUX_SET	(GPIO_PAR_FECI2C_SCL_I2CSCL | GPIO_PAR_FECI2C_SDA_I2CSDA)
 
@@ -180,6 +180,12 @@
 #	define CONFIG_SYS_CS0_BASE	0xFFE00000
 #	define CONFIG_SYS_CS0_MASK	0x001f0001
 #	define CONFIG_SYS_CS0_CTRL	0x00001D80
+#endif
+
+#ifdef DO_CONFIGS_ONLY
+#include <asm/cache.h>
+#include <asm/m5235.h>
+#include <flash.h>
 #endif
 
 #endif				/* _M5329EVB_H */

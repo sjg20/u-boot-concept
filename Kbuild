@@ -38,7 +38,7 @@ cfgv-file := include/generated/cfg_value.h
 always  += $(cfgv-file)
 targets += cfg_tmp.s
 
-CFLAGS_cfg_tmp.o := -DDO_DEPS_ONLY
+CFLAGS_cfg_tmp.o := -DDO_DEPS_ONLY -DDO_CONFIGS_ONLY
 
 cfg_tmp.c: u-boot.cfg $(generic-offsets-file) $(offsets-file)
 	awk -f ${srctree}/scripts/gen_cfgc.awk $< >$@;

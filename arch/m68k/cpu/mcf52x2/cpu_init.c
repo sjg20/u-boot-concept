@@ -214,8 +214,7 @@ void cpu_init_f(void)
 	init_fbcs();
 
 #ifdef CONFIG_SYS_I2C_FSL
-	*CONFIG_SYS_I2C_PINMUX_REGP =
-	    *CONFIG_SYS_I2C_PINMUX_REGP & CONFIG_SYS_I2C_PINMUX_CLR;
+	*CONFIG_SYS_I2C_PINMUX_REGP &= CONFIG_SYS_I2C_PINMUX_CLR;
 	*CONFIG_SYS_I2C_PINMUX_REGP |= CONFIG_SYS_I2C_PINMUX_SET;
 #ifdef CONFIG_SYS_I2C2_OFFSET
 	*CONFIG_SYS_I2C_PINMUX_REGP &= CONFIG_SYS_I2C2_PINMUX_CLR;
@@ -462,7 +461,7 @@ void cpu_init_f(void)
 
 #ifndef CONFIG_MONITOR_IS_IN_RAM
 	wdog_t *wdog_reg = (wdog_t *) (MMAP_WDOG);
-	gpio_t *gpio_reg = (gpio_t *) (MMAP_GPIO);
+	/* FIXME gpio_t *gpio_reg = (gpio_t *) (MMAP_GPIO); */
 
 	/* Kill watchdog so we can initialize the PLL */
 	out_be16(&wdog_reg->wcr, 0);
@@ -472,8 +471,8 @@ void cpu_init_f(void)
 #endif				/* #ifndef CONFIG_MONITOR_IS_IN_RAM */
 
 #ifdef CONFIG_SYS_I2C_FSL
-	CONFIG_SYS_I2C_PINMUX_REG &= CONFIG_SYS_I2C_PINMUX_CLR;
-	CONFIG_SYS_I2C_PINMUX_REG |= CONFIG_SYS_I2C_PINMUX_SET;
+	*CONFIG_SYS_I2C_PINMUX_REGP &= CONFIG_SYS_I2C_PINMUX_CLR;
+	*CONFIG_SYS_I2C_PINMUX_REGP |= CONFIG_SYS_I2C_PINMUX_SET;
 #endif
 
 	/* enable instruction cache now */
