@@ -25,7 +25,8 @@ END {
 	print "}"
 }
 
-/^#define (CONFIG_\w+)\s*(.*)$/ {
+# Avoid using \w and \s to make this compatible with mawk
+/^#define (CONFIG_[A-Za-z0-9_]+) *(.*)$/ {
 	if (length($3) == 0)
 		next;
 
@@ -37,10 +38,10 @@ END {
 	if ($2 ~ /\(/)
 		next;
 
-	# Ignore values containing a comma, period or colon, since we won't be
-	# able to evaluate them anyway. These might be Ethernet MAC addresses,
-	# like: #define CONFIG_ETHBASE 00:50:C2:13:6f:00
-	if ($3 ~ /[,.:]/)
+	# Ignore values containing a comma, period, colon or brace, since we
+        # won't be able to evaluate them anyway. These might be Ethernet MAC
+        # addresses, like: #define CONFIG_ETHBASE 00:50:C2:13:6f:00
+	if ($3 ~ /[,.:{}]/)
 		next;
 
 	# Ignore simple decimal integers, since they will appear in u-boot.cfg
@@ -68,7 +69,7 @@ END {
 	# lot of unmigrated coded
 	if ($2 ~ /CONFIG_SYS_FSL|CONFIG_SYS_MPC|CONFIG_SYS_PCIE/)
 		next;
-	if ($2 ~ /CONFIG_SYS_CCSRBAR_PHYS/)
+	if ($2 ~ /CONFIG_SYS_CCSRBAR_PHYS|CONFIG_SYS_PAMU/)
 		next;
 
 	printf("\tDEFINE(%s, %s);\n", $2, $2)

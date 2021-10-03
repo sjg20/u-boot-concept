@@ -10,6 +10,9 @@
 #include <asm/arch/core.h>
 #include <asm/addrspace.h>
 #include <asm/config.h>
+#ifdef DO_CONFIGS_ONLY
+#include <asm/global_data.h>
+#endif
 
 /*
  * The 'xtfpga' board describes a set of very similar boards with only minimal
@@ -169,7 +172,7 @@
 #define CONFIG_SYS_NS16550_COM1		IOADDR(0x0D050020) /* Base address */
 
 /* Input clk to NS16550 (in Hz; the SYS_CLK_FREQ is in kHz) */
-#define CONFIG_SYS_NS16550_CLK		CONFIG_SYS_CLK_FREQ
+#define CONFIG_SYS_NS16550_CLK		(gd->cpu_clk)
 
 /*======================*/
 /* Ethernet Driver Info */
@@ -215,5 +218,9 @@
 
 /* print 'E' for empty sector on flinfo */
 #define CONFIG_SYS_FLASH_EMPTY_INFO
+
+#ifdef DO_CONFIGS_ONLY
+#include <flash.h>
+#endif
 
 #endif /* __CONFIG_H */
