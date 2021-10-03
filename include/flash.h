@@ -7,6 +7,8 @@
 #ifndef _FLASH_H_
 #define _FLASH_H_
 
+#include <linux/types.h>
+
 #ifndef CONFIG_SYS_MAX_FLASH_SECT
 #define CONFIG_SYS_MAX_FLASH_SECT	512
 #endif
