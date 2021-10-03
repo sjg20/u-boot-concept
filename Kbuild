@@ -29,3 +29,19 @@ CFLAGS_asm-offsets.o := -DDO_DEPS_ONLY
 
 $(obj)/$(offsets-file): $(obj)/arch/$(ARCH)/lib/asm-offsets.s FORCE
 	$(call filechk,offsets,__ASM_OFFSETS_H__)
+
+#####
+# Generate cfg_value.h
+
+cfgv-file := include/generated/cfg_value.h
+
+always  += $(cfgv-file)
+targets += .cfg_tmp.s
+
+CFLAGS_.cfg_tmp.o := -DDO_DEPS_ONLY -DDO_CONFIGS_ONLY
+
+.cfg_tmp.c: u-boot.cfg $(generic-offsets-file) $(offsets-file)
+	awk -f ${srctree}/scripts/gen_cfgc.awk $< >$@;
+
+$(obj)/$(cfgv-file): .cfg_tmp.s FORCE
+	$(call filechk,cfgv,__CFGV_H__)

@@ -182,4 +182,10 @@
 #	define CONFIG_SYS_CS0_CTRL	0x00001D80
 #endif
 
+#ifdef DO_CONFIGS_ONLY
+#include <asm/cache.h>
+#include <asm/m5235.h>
+#include <flash.h>
+#endif
+
 #endif				/* _M5329EVB_H */

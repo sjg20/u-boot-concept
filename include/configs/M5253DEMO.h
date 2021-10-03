@@ -189,4 +189,8 @@
 #define CONFIG_SYS_GPIO1_OUT		0x00c70000	/* Set outputs to default state */
 #define CONFIG_SYS_GPIO1_LED		0x00400000	/* user led */
 
+#ifdef DO_CONFIGS_ONLY
+#include <asm/cache.h>
+#endif
+
 #endif				/* _M5253DEMO_H */

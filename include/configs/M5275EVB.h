@@ -169,4 +169,8 @@
  */
 #define CONFIG_SYS_FECI2C		0x0FA0
 
+#ifdef DO_CONFIGS_ONLY
+#include <asm/cache.h>
+#endif
+
 #endif	/* _M5275EVB_H */
