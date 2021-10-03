@@ -230,4 +230,8 @@
 #define CONFIG_SYS_FLASH_EMPTY_INFO	/* flinfo indicates empty blocks */
 #define FLASH_MAX_SECTOR_SIZE		0x00040000
 
+#ifdef DO_CONFIGS_ONLY
+#include <flash.h>
+#endif
+
 #endif /* __VEXPRESS_AEMV8A_H */
