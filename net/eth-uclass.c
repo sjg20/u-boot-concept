@@ -8,7 +8,7 @@
 #define LOG_CATEGORY UCLASS_ETH
 
 #include <common.h>
-#include <bootmethod.h>
+#include <bootdevice.h>
 #include <bootstage.h>
 #include <dm.h>
 #include <env.h>
@@ -485,10 +485,10 @@ static int eth_post_bind(struct udevice *dev)
 #ifdef CONFIG_DM_ETH_PHY
 	eth_phy_binds_nodes(dev);
 #endif
-	if (CONFIG_IS_ENABLED(BOOTMETHOD_ETH)) {
-		ret = bootmethod_setup_for_dev(dev, "eth_bootmethod");
+	if (CONFIG_IS_ENABLED(BOOTDEVICE_ETH)) {
+		ret = bootdevice_setup_for_dev(dev, "eth_bootdevice");
 		if (ret)
-			return log_msg_ret("bootmethod", ret);
+			return log_msg_ret("bootdevice", ret);
 	}
 
 	return 0;

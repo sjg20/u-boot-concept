@@ -633,21 +633,21 @@ M:	Simon Glass <sjg@chromium.org>
 S:	Maintained
 F:	tools/binman/
 
-BOOTMETHOD
+BOOTDEVICE
 M:	Simon Glass <sjg@chromium.org>
 S:	Maintained
-F:	boot/bootmethod.c
+F:	boot/bootdevice.c
 F:	boot/distro.c
 F:	cmd/bootflow.c
-F:	cmd/bootmethod.c
+F:	cmd/bootdevice.c
 F:	doc/develop/bootflow.rst
 F:	doc/usage/bootflow.rst
-F:	doc/usage/bootmethod.rst
-F:	drivers/mmc/mmc_bootmethod.c
-F:	include/bootmethod.h
+F:	doc/usage/bootdevice.rst
+F:	drivers/mmc/mmc_bootdevice.c
+F:	include/bootdevice.h
 F:	include/distro.h
-F:	net/eth_bootmethod.c
-F:	test/boot/bootmethod.c
+F:	net/eth_bootdevice.c
+F:	test/boot/bootdevice.c
 
 BTRFS
 M:	Marek Behun <marek.behun@nic.cz>

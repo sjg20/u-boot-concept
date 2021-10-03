@@ -18,7 +18,7 @@ Synopis
 Description
 -----------
 
-The `bootflow` command is used to manage bootflows. It can scan bootmethods to
+The `bootflow` command is used to manage bootflows. It can scan bootdevices to
 locate bootflows, list them and boot them.
 
 See :doc:`../develop/bootflow` for more information.
@@ -30,9 +30,9 @@ bootflow scan
 Scans for available bootflows, optionally booting the first valid one it finds.
 This operates in two modes:
 
-- If no bootmethod is selected (see `bootmethod select`) it scans bootflows one
-  by one, extracting all the bootmethods from each
-- If a bootmethod is selected, it just scans that one bootflow
+- If no bootdevice is selected (see `bootdevice select`) it scans bootflows one
+  by one, extracting all the bootdevices from each
+- If a bootdevice is selected, it just scans that one bootflow
 
 Flags are:
 
@@ -55,7 +55,7 @@ Flags are:
 -l
     List bootflows while scanning. This is helpful when you want to see what
     is happening during scanning. Use it with the `-b` flag to see which
-    bootmethod and bootflows are being tried.
+    bootdevice and bootflows are being tried.
 
 
 bootflow list
@@ -72,8 +72,8 @@ The list looks something like this:
 ===  ===========  ======  ========  ====  ===============================   ================
 Seq  Type         State   Uclass    Part  Name                              Filename
 ===  ===========  ======  ========  ====  ===============================   ================
-  0  distro-boot  loaded  mmc          2  mmc\@7e202000.bootmethod.part_2   extlinux/extlinux.conf
-  1  distro-boot  loaded  ethernet     0  smsc95xx_eth.bootmethod.0         rpi.pxe/extlinux/extlinux.conf
+  0  distro-boot  loaded  mmc          2  mmc\@7e202000.bootdevice.part_2   extlinux/extlinux.conf
+  1  distro-boot  loaded  ethernet     0  smsc95xx_eth.bootdevice.0         rpi.pxe/extlinux/extlinux.conf
 ===  ===========  ======  ========  ====  ===============================   ================
 
 The fields are as follows:
@@ -86,7 +86,7 @@ Type:
     that it is an extlinux.conf file.
 
 State:
-    Current state of the bootflow, indicating how far the bootmethod got in
+    Current state of the bootflow, indicating how far the bootdevice got in
     obtaining a valid one. See :ref:`BootflowStates` for a list of states.
 
 Uclass:
@@ -99,7 +99,7 @@ Part:
     without partition tables (e.g. network) this field is 0.
 
 Name:
-    Name of the bootflow. This is generated from the bootmethod appended with
+    Name of the bootflow. This is generated from the bootdevice appended with
     the partition information
 
 Filename:
@@ -126,8 +126,8 @@ This shows information on the current bootflow, with the format looking like
 this:
 
 =========  ===============================
-Name       mmc\@7e202000.bootmethod.part_2
-Device     mmc\@7e202000.bootmethod
+Name       mmc\@7e202000.bootdevice.part_2
+Device     mmc\@7e202000.bootdevice
 Block dev  mmc\@7e202000.blk
 Sequence   1
 Type       distro-boot
@@ -144,13 +144,13 @@ Most of the information is the same as `bootflow list` above. The new fields
 are:
 
 Device
-    Name of the bootmethod
+    Name of the bootdevice
 
 Block dev
     Name of the block device, if any. Network devices don't have a block device.
 
 Subdir
-    Subdirectory used for retrieving files. For network bootmethods this is the
+    Subdirectory used for retrieving files. For network bootdevices this is the
     directory of the 'bootfile' parameter passed from DHCP. All file retrievals
     when booting are relative to this.
 
@@ -181,14 +181,14 @@ Example
 Here is an example of scanning for bootflows, then listing them::
 
     U-Boot> bootflow scan -l
-    Scanning for bootflows in all bootmethods
+    Scanning for bootflows in all bootdevices
     Seq  Type         State   Uclass    Part  Name                      Filename
     ---  -----------  ------  --------  ----  ------------------------  ----------------
-    Scanning bootmethod 'mmc@7e202000.bootmethod':
-      0  distro-boot  loaded  mmc          2  mmc@7e202000.bootmethod.p extlinux/extlinux.conf
-    Scanning bootmethod 'sdhci@7e300000.bootmethod':
+    Scanning bootdevice 'mmc@7e202000.bootdevice':
+      0  distro-boot  loaded  mmc          2  mmc@7e202000.bootdevice.p extlinux/extlinux.conf
+    Scanning bootdevice 'sdhci@7e300000.bootdevice':
     Card did not respond to voltage select! : -110
-    Scanning bootmethod 'smsc95xx_eth.bootmethod':
+    Scanning bootdevice 'smsc95xx_eth.bootdevice':
     Waiting for Ethernet connection... done.
     BOOTP broadcast 1
     DHCP client bound to address 192.168.4.30 (4 ms)
@@ -211,16 +211,16 @@ Here is an example of scanning for bootflows, then listing them::
     	 45.9 KiB/s
     done
     Bytes transferred = 566 (236 hex)
-      1  distro-boot  loaded  ethernet     0  smsc95xx_eth.bootmethod.0 rpi.pxe/extlinux/extlinux.conf
-    No more bootmethods
+      1  distro-boot  loaded  ethernet     0  smsc95xx_eth.bootdevice.0 rpi.pxe/extlinux/extlinux.conf
+    No more bootdevices
     ---  -----------  ------  --------  ----  ------------------------  ----------------
     (2 bootflows, 2 valid)
     U-Boot> bootflow l
     Showing all bootflows
     Seq  Type         State   Uclass    Part  Name                      Filename
     ---  -----------  ------  --------  ----  ------------------------  ----------------
-      0  distro-boot  loaded  mmc          2  mmc@7e202000.bootmethod.p extlinux/extlinux.conf
-      1  distro-boot  loaded  ethernet     0  smsc95xx_eth.bootmethod.0 rpi.pxe/extlinux/extlinux.conf
+      0  distro-boot  loaded  mmc          2  mmc@7e202000.bootdevice.p extlinux/extlinux.conf
+      1  distro-boot  loaded  ethernet     0  smsc95xx_eth.bootdevice.0 rpi.pxe/extlinux/extlinux.conf
     ---  -----------  ------  --------  ----  ------------------------  ----------------
     (2 bootflows, 2 valid)
 
@@ -230,10 +230,10 @@ displayed and booted::
 
     U-Boot> bootflow info
     No bootflow selected
-    U-Boot> bootflow sel mmc@7e202000.bootmethod.part_2
+    U-Boot> bootflow sel mmc@7e202000.bootdevice.part_2
     U-Boot> bootflow info
-    Name:      mmc@7e202000.bootmethod.part_2
-    Device:    mmc@7e202000.bootmethod
+    Name:      mmc@7e202000.bootdevice.part_2
+    Device:    mmc@7e202000.bootdevice
     Block dev: mmc@7e202000.blk
     Sequence:  1
     Type:      distro-boot
@@ -245,7 +245,7 @@ displayed and booted::
     Size:      232 (562 bytes)
     Error:     0
     U-Boot> bootflow boot
-    ** Booting bootflow 'smsc95xx_eth.bootmethod.0'
+    ** Booting bootflow 'smsc95xx_eth.bootdevice.0'
     Ignoring unknown command: ui
     Ignoring malformed menu command:  autoboot
     Ignoring malformed menu command:  hidden
@@ -302,12 +302,12 @@ displayed and booted::
 Here we scan for bootflows and boot the first one found::
 
     U-Boot> bootflow scan -bl
-    Scanning for bootflows in all bootmethods
+    Scanning for bootflows in all bootdevices
     Seq  Type         State   Uclass    Part  Name                      Filename
     ---  -----------  ------  --------  ----  ------------------------  ----------------
-    Scanning bootmethod 'mmc@7e202000.bootmethod':
-      0  distro-boot  loaded  mmc          2  mmc@7e202000.bootmethod.p extlinux/extlinux.conf
-    ** Booting bootflow 'mmc@7e202000.bootmethod.part_2'
+    Scanning bootdevice 'mmc@7e202000.bootdevice':
+      0  distro-boot  loaded  mmc          2  mmc@7e202000.bootdevice.p extlinux/extlinux.conf
+    ** Booting bootflow 'mmc@7e202000.bootdevice.part_2'
     Ignoring unknown command: ui
     Ignoring malformed menu command:  autoboot
     Ignoring malformed menu command:  hidden
@@ -360,46 +360,46 @@ Here is am example using the -e flag to see all errors::
     Showing all bootflows
     Seq  Type         State   Uclass    Part  Name                      Filename
     ---  -----------  ------  --------  ----  ------------------------  ----------------
-      0  distro-boot  fs      mmc          1  mmc@7e202000.bootmethod.p extlinux/extlinux.conf
+      0  distro-boot  fs      mmc          1  mmc@7e202000.bootdevice.p extlinux/extlinux.conf
          ** File not found, err=-2
-      1  distro-boot  loaded  mmc          2  mmc@7e202000.bootmethod.p extlinux/extlinux.conf
-      2  distro-boot  fs      mmc          3  mmc@7e202000.bootmethod.p extlinux/extlinux.conf
+      1  distro-boot  loaded  mmc          2  mmc@7e202000.bootdevice.p extlinux/extlinux.conf
+      2  distro-boot  fs      mmc          3  mmc@7e202000.bootdevice.p extlinux/extlinux.conf
          ** File not found, err=-1
-      3  distro-boot  media   mmc          0  mmc@7e202000.bootmethod.p <NULL>
+      3  distro-boot  media   mmc          0  mmc@7e202000.bootdevice.p <NULL>
          ** No partition found, err=-2
-      4  distro-boot  media   mmc          0  mmc@7e202000.bootmethod.p <NULL>
+      4  distro-boot  media   mmc          0  mmc@7e202000.bootdevice.p <NULL>
          ** No partition found, err=-2
-      5  distro-boot  media   mmc          0  mmc@7e202000.bootmethod.p <NULL>
+      5  distro-boot  media   mmc          0  mmc@7e202000.bootdevice.p <NULL>
          ** No partition found, err=-2
-      6  distro-boot  media   mmc          0  mmc@7e202000.bootmethod.p <NULL>
+      6  distro-boot  media   mmc          0  mmc@7e202000.bootdevice.p <NULL>
          ** No partition found, err=-2
-      7  distro-boot  media   mmc          0  mmc@7e202000.bootmethod.p <NULL>
+      7  distro-boot  media   mmc          0  mmc@7e202000.bootdevice.p <NULL>
          ** No partition found, err=-2
-      8  distro-boot  media   mmc          0  mmc@7e202000.bootmethod.p <NULL>
+      8  distro-boot  media   mmc          0  mmc@7e202000.bootdevice.p <NULL>
          ** No partition found, err=-2
-      9  distro-boot  media   mmc          0  mmc@7e202000.bootmethod.p <NULL>
+      9  distro-boot  media   mmc          0  mmc@7e202000.bootdevice.p <NULL>
          ** No partition found, err=-2
-      a  distro-boot  media   mmc          0  mmc@7e202000.bootmethod.p <NULL>
+      a  distro-boot  media   mmc          0  mmc@7e202000.bootdevice.p <NULL>
          ** No partition found, err=-2
-      b  distro-boot  media   mmc          0  mmc@7e202000.bootmethod.p <NULL>
+      b  distro-boot  media   mmc          0  mmc@7e202000.bootdevice.p <NULL>
          ** No partition found, err=-2
-      c  distro-boot  media   mmc          0  mmc@7e202000.bootmethod.p <NULL>
+      c  distro-boot  media   mmc          0  mmc@7e202000.bootdevice.p <NULL>
          ** No partition found, err=-2
-      d  distro-boot  media   mmc          0  mmc@7e202000.bootmethod.p <NULL>
+      d  distro-boot  media   mmc          0  mmc@7e202000.bootdevice.p <NULL>
          ** No partition found, err=-2
-      e  distro-boot  media   mmc          0  mmc@7e202000.bootmethod.p <NULL>
+      e  distro-boot  media   mmc          0  mmc@7e202000.bootdevice.p <NULL>
          ** No partition found, err=-2
-      f  distro-boot  media   mmc          0  mmc@7e202000.bootmethod.p <NULL>
+      f  distro-boot  media   mmc          0  mmc@7e202000.bootdevice.p <NULL>
          ** No partition found, err=-2
-     10  distro-boot  media   mmc          0  mmc@7e202000.bootmethod.p <NULL>
+     10  distro-boot  media   mmc          0  mmc@7e202000.bootdevice.p <NULL>
          ** No partition found, err=-2
-     11  distro-boot  media   mmc          0  mmc@7e202000.bootmethod.p <NULL>
+     11  distro-boot  media   mmc          0  mmc@7e202000.bootdevice.p <NULL>
          ** No partition found, err=-2
-     12  distro-boot  media   mmc          0  mmc@7e202000.bootmethod.p <NULL>
+     12  distro-boot  media   mmc          0  mmc@7e202000.bootdevice.p <NULL>
          ** No partition found, err=-2
-     13  distro-boot  media   mmc          0  mmc@7e202000.bootmethod.p <NULL>
+     13  distro-boot  media   mmc          0  mmc@7e202000.bootdevice.p <NULL>
          ** No partition found, err=-2
-     14  distro-boot  loaded  ethernet     0  smsc95xx_eth.bootmethod.0 rpi.pxe/extlinux/extlinux.conf
+     14  distro-boot  loaded  ethernet     0  smsc95xx_eth.bootdevice.0 rpi.pxe/extlinux/extlinux.conf
     ---  -----------  ------  --------  ----  ------------------------  ----------------
     (21 bootflows, 2 valid)
     U-Boot>

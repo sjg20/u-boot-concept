@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Bootmethod for ethernet
+ * Bootdevice for ethernet
  *
  * Copyright 2021 Google LLC
  * Written by Simon Glass <sjg@chromium.org>
  */
 
 #include <common.h>
-#include <bootmethod.h>
+#include <bootdevice.h>
 #include <command.h>
 #include <distro.h>
 #include <dm.h>
@@ -56,7 +56,7 @@ static int eth_get_bootflow(struct udevice *dev, int seq,
 	run_command("dhcp", 0);
 	bflow->state = BOOTFLOWST_MEDIA;
 
-	if (CONFIG_IS_ENABLED(BOOTMETHOD_DISTRO)) {
+	if (CONFIG_IS_ENABLED(BOOTDEVICE_DISTRO)) {
 		ret = distro_net_setup(bflow);
 		if (ret)
 			return log_msg_ret("distro", ret);
@@ -65,12 +65,12 @@ static int eth_get_bootflow(struct udevice *dev, int seq,
 	return 0;
 }
 
-struct bootmethod_ops eth_bootmethod_ops = {
+struct bootdevice_ops eth_bootdevice_ops = {
 	.get_bootflow	= eth_get_bootflow,
 };
 
-U_BOOT_DRIVER(eth_bootmethod) = {
-	.name		= "eth_bootmethod",
-	.id		= UCLASS_BOOTMETHOD,
-	.ops		= &eth_bootmethod_ops,
+U_BOOT_DRIVER(eth_bootdevice) = {
+	.name		= "eth_bootdevice",
+	.id		= UCLASS_BOOTDEVICE,
+	.ops		= &eth_bootdevice_ops,
 };

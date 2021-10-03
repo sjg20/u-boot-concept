@@ -4,8 +4,8 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
-#ifndef __bootmethod_efi_h
-#define __bootmethod_efi_h
+#ifndef __bootdevice_efi_h
+#define __bootdevice_efi_h
 
 struct blk_desc;
 

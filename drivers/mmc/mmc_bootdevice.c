@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Bootmethod for MMC
+ * Bootdevice for MMC
  *
  * Copyright 2021 Google LLC
  * Written by Simon Glass <sjg@chromium.org>
  */
 
 #include <common.h>
-#include <bootmethod.h>
+#include <bootdevice.h>
 #include <dm.h>
 #include <mmc.h>
 
@@ -28,19 +28,19 @@ static int mmc_get_bootflow(struct udevice *dev, int seq,
 	if (ret)
 		return log_msg_ret("blk", ret);
 	assert(blk);
-	ret = bootmethod_find_in_blk(dev, blk, seq, bflow);
+	ret = bootdevice_find_in_blk(dev, blk, seq, bflow);
 	if (ret)
 		return log_msg_ret("find", ret);
 
 	return 0;
 }
 
-struct bootmethod_ops mmc_bootmethod_ops = {
+struct bootdevice_ops mmc_bootdevice_ops = {
 	.get_bootflow	= mmc_get_bootflow,
 };
 
-U_BOOT_DRIVER(mmc_bootmethod) = {
-	.name		= "mmc_bootmethod",
-	.id		= UCLASS_BOOTMETHOD,
-	.ops		= &mmc_bootmethod_ops,
+U_BOOT_DRIVER(mmc_bootdevice) = {
+	.name		= "mmc_bootdevice",
+	.id		= UCLASS_BOOTDEVICE,
+	.ops		= &mmc_bootdevice_ops,
 };

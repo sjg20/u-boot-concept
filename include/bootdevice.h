@@ -4,8 +4,8 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
-#ifndef __bootmethod_h
-#define __bootmethod_h
+#ifndef __bootdevice_h
+#define __bootdevice_h
 
 #include <linux/list.h>
 
@@ -33,28 +33,28 @@ enum bootflow_type_t {
 /**
  * struct bootflow_state - information about available bootflows, etc.
  *
- * This is attached to the bootmethod uclass so there is only one of them. It
- * provides overall information about bootmethods and bootflows.
+ * This is attached to the bootdevice uclass so there is only one of them. It
+ * provides overall information about bootdevices and bootflows.
  *
- * @cur_bootmethod: Currently selected bootmethod (for commands)
+ * @cur_bootdevice: Currently selected bootdevice (for commands)
  * @cur_bootflow: Currently selected bootflow (for commands)
- * @glob_head: Head for the global list of all bootmethods across all bootflows
+ * @glob_head: Head for the global list of all bootdevices across all bootflows
  */
 struct bootflow_state {
-	struct udevice *cur_bootmethod;
+	struct udevice *cur_bootdevice;
 	struct bootflow *cur_bootflow;
 	struct list_head glob_head;
 };
 
 /**
- * struct bootmethod_uc_plat - uclass information about a bootmethod
+ * struct bootdevice_uc_plat - uclass information about a bootdevice
  *
- * This is attached to each device in the bootmethod uclass and accessible via
+ * This is attached to each device in the bootdevice uclass and accessible via
  * dev_get_uclass_plat(dev)
  *
- * @bootflows: List of available bootflows for this bootmethod
+ * @bootflows: List of available bootflows for this bootdevice
  */
-struct bootmethod_uc_plat {
+struct bootdevice_uc_plat {
 	struct list_head bootflow_head;
 };
 
@@ -65,15 +65,15 @@ extern struct bootflow_cmds g_bootflow_cmds;
  *
  * This is connected into two separate linked lists:
  *
- *   bm_sibling - links all bootflows in the same bootmethod
- *   glob_sibling - links all bootflows in all bootmethods
+ *   bm_sibling - links all bootflows in the same bootdevice
+ *   glob_sibling - links all bootflows in all bootdevices
  *
- * @bm_node: Points to siblings in the same bootmethod
- * @glob_node: Points to siblings in the global list (all bootmethod)
- * @dev: Bootmethod device which produced this bootflow
+ * @bm_node: Points to siblings in the same bootdevice
+ * @glob_node: Points to siblings in the global list (all bootdevice)
+ * @dev: Bootdevice device which produced this bootflow
  * @blk: Block device which contains this bootflow, NULL if this is a network
  *	device
- * @seq: Sequence number of bootflow within its bootmethod, typically the
+ * @seq: Sequence number of bootflow within its bootdevice, typically the
  *	partition number (0...)
  * @name: Name of bootflow (allocated)
  * @type: Bootflow type (enum bootflow_type_t)
@@ -106,7 +106,7 @@ struct bootflow {
  * enum bootflow_flags_t - flags for the bootflow
  *
  * @BOOTFLOWF_FIXED: Only used fixed/internal media
- * @BOOTFLOWF_SHOW: Show each bootmethod before scanning it
+ * @BOOTFLOWF_SHOW: Show each bootdevice before scanning it
  * @BOOTFLOWF_ALL: Return bootflows with errors as well
  */
 enum bootflow_flags_t {
@@ -116,25 +116,25 @@ enum bootflow_flags_t {
 };
 
 /**
- * struct bootmethod_iter - state for iterating through bootflows
+ * struct bootdevice_iter - state for iterating through bootflows
  *
  * @flags: Flags to use (see enum bootflow_flags_t)
- * @dev: Current bootmethod
- * @seq: Current sequence number within that bootmethod (determines partition
+ * @dev: Current bootdevice
+ * @seq: Current sequence number within that bootdevice (determines partition
  *	number, for example)
  */
-struct bootmethod_iter {
+struct bootdevice_iter {
 	int flags;
 	struct udevice *dev;
 	int seq;
 };
 
 /**
- * struct bootmethod_ops - Operations for the Platform Controller Hub
+ * struct bootdevice_ops - Operations for the Platform Controller Hub
  *
  * Consider using ioctl() to add rarely used or driver-specific operations.
  */
-struct bootmethod_ops {
+struct bootdevice_ops {
 	/**
 	 * get_bootflow() - get a bootflow
 	 *
@@ -149,10 +149,10 @@ struct bootmethod_ops {
 			    struct bootflow *bflow);
 };
 
-#define bootmethod_get_ops(dev)  ((struct bootmethod_ops *)(dev)->driver->ops)
+#define bootdevice_get_ops(dev)  ((struct bootdevice_ops *)(dev)->driver->ops)
 
 /**
- * bootmethod_get_bootflow() - get a bootflow
+ * bootdevice_get_bootflow() - get a bootflow
  *
  * @dev:	Bootflow device to check
  * @seq:	Sequence number of bootflow to read (0 for first)
@@ -161,51 +161,51 @@ struct bootmethod_ops {
  *	-ENOSYS if this device doesn't support bootflows, other -ve value on
  *	other error
  */
-int bootmethod_get_bootflow(struct udevice *dev, int seq,
+int bootdevice_get_bootflow(struct udevice *dev, int seq,
 			    struct bootflow *bflow);
 
 /**
- * bootmethod_scan_first_bootflow() - find the first bootflow
+ * bootdevice_scan_first_bootflow() - find the first bootflow
  *
- * This works through the available bootmethod devices until it finds one that
+ * This works through the available bootdevice devices until it finds one that
  * can supply a bootflow. It then returns that
  *
  * If @flags includes BOOTFLOWF_ALL then bootflows with errors are returned too
  *
  * @iter:	Place to store private info (inited by this call)
- * @flags:	Flags for bootmethod (enum bootflow_flags_t)
+ * @flags:	Flags for bootdevice (enum bootflow_flags_t)
  * @bflow:	Place to put the bootflow if found
  * @return 0 if found, -ESHUTDOWN if no more bootflows, other -ve on error
  */
-int bootmethod_scan_first_bootflow(struct bootmethod_iter *iter, int flags,
+int bootdevice_scan_first_bootflow(struct bootdevice_iter *iter, int flags,
 				   struct bootflow *bflow);
 
 /**
- * bootmethod_scan_next_bootflow() - find the next bootflow
+ * bootdevice_scan_next_bootflow() - find the next bootflow
  *
- * This works through the available bootmethod devices until it finds one that
+ * This works through the available bootdevice devices until it finds one that
  * can supply a bootflow. It then returns that bootflow
  *
- * @iter:	Private info (as set up by bootmethod_scan_first_bootflow())
+ * @iter:	Private info (as set up by bootdevice_scan_first_bootflow())
  * @bflow:	Place to put the bootflow if found
  * @return 0 if found, -ESHUTDOWN if no more bootflows, -ve on error
  */
-int bootmethod_scan_next_bootflow(struct bootmethod_iter *iter,
+int bootdevice_scan_next_bootflow(struct bootdevice_iter *iter,
 				  struct bootflow *bflow);
 
 /**
- * bootmethod_bind() - Bind a new named bootmethod device
+ * bootdevice_bind() - Bind a new named bootdevice device
  *
  * @parent:	Parent of the new device
- * @drv_name:	Driver name to use for the bootmethod device
+ * @drv_name:	Driver name to use for the bootdevice device
  * @name:	Name for the device (parent name is prepended)
  * @devp:	the new device (which has not been probed)
  */
-int bootmethod_bind(struct udevice *parent, const char *drv_name,
+int bootdevice_bind(struct udevice *parent, const char *drv_name,
 		    const char *name, struct udevice **devp);
 
 /**
- * bootmethod_find_in_blk() - Find a bootmethod in a block device
+ * bootdevice_find_in_blk() - Find a bootdevice in a block device
  *
  * @dev: Bootflow device associated with this block device
  * @blk: Block device to search
@@ -214,94 +214,94 @@ int bootmethod_bind(struct udevice *parent, const char *drv_name,
  * @bflow:	Returns bootflow if found
  * @return 0 if found, -ESHUTDOWN if no more bootflows, other -ve on error
  */
-int bootmethod_find_in_blk(struct udevice *dev, struct udevice *blk, int seq,
+int bootdevice_find_in_blk(struct udevice *dev, struct udevice *blk, int seq,
 			   struct bootflow *bflow);
 
 /**
- * bootmethod_list() - List all available bootmethods
+ * bootdevice_list() - List all available bootdevices
  *
  * @probe: true to probe devices, false to leave them as is
  */
-void bootmethod_list(bool probe);
+void bootdevice_list(bool probe);
 
 /**
- * bootmethod_state_get_name() - Get the name of a bootflow state
+ * bootdevice_state_get_name() - Get the name of a bootflow state
  *
  * @state: State to check
  * @return name, or "?" if invalid
  */
-const char *bootmethod_state_get_name(enum bootflow_state_t state);
+const char *bootdevice_state_get_name(enum bootflow_state_t state);
 
 /**
- * bootmethod_type_get_name() - Get the name of a bootflow state
+ * bootdevice_type_get_name() - Get the name of a bootflow state
  *
  * @type: Type to check
  * @return name, or "?" if invalid
  */
-const char *bootmethod_type_get_name(enum bootflow_type_t type);
+const char *bootdevice_type_get_name(enum bootflow_type_t type);
 
 /**
- * bootmethod_get_state() - Get the (single) state for the bootmethod system
+ * bootdevice_get_state() - Get the (single) state for the bootdevice system
  *
  * The state holds a global list of all bootflows that have been found.
  *
  * @return 0 if OK, -ve if the uclass does not exist
  */
-int bootmethod_get_state(struct bootflow_state **statep);
+int bootdevice_get_state(struct bootflow_state **statep);
 
 /**
- * bootmethod_clear_bootflows() - Clear bootflows from a bootmethod
+ * bootdevice_clear_bootflows() - Clear bootflows from a bootdevice
  *
- * Each bootmethod maintains a list of discovered bootflows. This provides a
+ * Each bootdevice maintains a list of discovered bootflows. This provides a
  * way to clear it. These bootflows are removed from the global list too.
  *
- * @dev: bootmethod device to update
+ * @dev: bootdevice device to update
  */
-void bootmethod_clear_bootflows(struct udevice *dev);
+void bootdevice_clear_bootflows(struct udevice *dev);
 
 /**
- * bootmethod_clear_glob() - Clear the global list of bootflows
+ * bootdevice_clear_glob() - Clear the global list of bootflows
  *
- * This removes all bootflows globally and across all bootmethods.
+ * This removes all bootflows globally and across all bootdevices.
  */
-void bootmethod_clear_glob(void);
+void bootdevice_clear_glob(void);
 
 /**
- * bootmethod_add_bootflow() - Add a bootflow to the bootmethod's list
+ * bootdevice_add_bootflow() - Add a bootflow to the bootdevice's list
  *
  * All fields in @bflow must be set up. Note that @bflow->dev is used to add the
  * bootflow to that device.
  *
- * @dev: Bootmethod device to add to
+ * @dev: Bootdevice device to add to
  * @bflow: Bootflow to add. Note that fields within bflow must be allocated
  *	since this function takes over ownership of these. This functions makes
  *	a copy of @bflow itself (without allocating its fields again), so the
  *	caller must dispose of the memory used by the @bflow pointer itself
  * @return 0 if OK, -ENOMEM if out of memory
  */
-int bootmethod_add_bootflow(struct bootflow *bflow);
+int bootdevice_add_bootflow(struct bootflow *bflow);
 
 /**
- * bootmethod_first_bootflow() - Get the first bootflow from a bootmethod
+ * bootdevice_first_bootflow() - Get the first bootflow from a bootdevice
  *
- * Returns the first bootflow attached to a bootmethod
+ * Returns the first bootflow attached to a bootdevice
  *
- * @dev: bootmethod device
+ * @dev: bootdevice device
  * @bflowp: Returns a pointer to the bootflow
  * @return 0 if found, -ENOENT if there are no bootflows
  */
-int bootmethod_first_bootflow(struct udevice *dev, struct bootflow **bflowp);
+int bootdevice_first_bootflow(struct udevice *dev, struct bootflow **bflowp);
 
 /**
- * bootmethod_next_bootflow() - Get the next bootflow from a bootmethod
+ * bootdevice_next_bootflow() - Get the next bootflow from a bootdevice
  *
- * Returns the next bootflow attached to a bootmethod
+ * Returns the next bootflow attached to a bootdevice
  *
  * @bflowp: On entry, the last bootflow returned , e.g. from
- *	bootmethod_first_bootflow()
+ *	bootdevice_first_bootflow()
  * @return 0 if found, -ENOENT if there are no more bootflows
  */
-int bootmethod_next_bootflow(struct bootflow **bflowp);
+int bootdevice_next_bootflow(struct bootflow **bflowp);
 
 /**
  * bootflow_first_glob() - Get the first bootflow from the global list
@@ -344,15 +344,15 @@ void bootflow_free(struct bootflow *bflow);
 int bootflow_boot(struct bootflow *bflow);
 
 /**
- * bootmethod_setup_for_dev() - Bind a new bootmethod device
+ * bootdevice_setup_for_dev() - Bind a new bootdevice device
  *
- * Creates a bootmethod device as a child of @parent. This should be called from
+ * Creates a bootdevice device as a child of @parent. This should be called from
  * the driver's bind() method or its uclass' post_bind() method.
  *
  * @parent: Parent device (e.g. MMC or Ethernet)
- * @drv_name: Name of bootmethod driver to bind
+ * @drv_name: Name of bootdevice driver to bind
  * @return 0 if OK, -ve on error
  */
-int bootmethod_setup_for_dev(struct udevice *parent, const char *drv_name);
+int bootdevice_setup_for_dev(struct udevice *parent, const char *drv_name);
 
 #endif

@@ -6,7 +6,7 @@
 
 #include <common.h>
 #include <blk.h>
-#include <bootmethod.h>
+#include <bootdevice.h>
 #include <distro.h>
 #include <dm.h>
 #include <bm_efi.h>
@@ -19,17 +19,17 @@
 
 enum {
 	/* So far we only support distroboot and EFI_LOADER */
-	MAX_BOOTMETHODS			= 2,
+	MAX_BOOTDEVICES			= 2,
 
 	/*
-	 * Set some sort of limit on the number of bootflows a bootmethod can
+	 * Set some sort of limit on the number of bootflows a bootdevice can
 	 * return. Note that for disks this limits the partitions numbers that
-	 * are scanned to 1..MAX_BOOTFLOWS_PER_BOOTMETHOD / MAX_BOOTMETHODS
+	 * are scanned to 1..MAX_BOOTFLOWS_PER_BOOTDEVICE / MAX_BOOTDEVICES
 	 */
-	MAX_BOOTFLOWS_PER_BOOTMETHOD	= 20 * MAX_BOOTMETHODS,
+	MAX_BOOTFLOWS_PER_BOOTDEVICE	= 20 * MAX_BOOTDEVICES,
 };
 
-static const char *const bootmethod_state[BOOTFLOWST_COUNT] = {
+static const char *const bootdevice_state[BOOTFLOWST_COUNT] = {
 	"base",
 	"media",
 	"part",
@@ -38,17 +38,17 @@ static const char *const bootmethod_state[BOOTFLOWST_COUNT] = {
 	"loaded",
 };
 
-static const char *const bootmethod_type[BOOTFLOWT_COUNT] = {
+static const char *const bootdevice_type[BOOTFLOWT_COUNT] = {
 	"distro-boot",
 	"efi-loader",
 };
 
-int bootmethod_get_state(struct bootflow_state **statep)
+int bootdevice_get_state(struct bootflow_state **statep)
 {
 	struct uclass *uc;
 	int ret;
 
-	ret = uclass_get(UCLASS_BOOTMETHOD, &uc);
+	ret = uclass_get(UCLASS_BOOTDEVICE, &uc);
 	if (ret)
 		return ret;
 	*statep = uclass_get_priv(uc);
@@ -56,20 +56,20 @@ int bootmethod_get_state(struct bootflow_state **statep)
 	return 0;
 }
 
-const char *bootmethod_state_get_name(enum bootflow_state_t state)
+const char *bootdevice_state_get_name(enum bootflow_state_t state)
 {
 	if (state < 0 || state >= BOOTFLOWST_COUNT)
 		return "?";
 
-	return bootmethod_state[state];
+	return bootdevice_state[state];
 }
 
-const char *bootmethod_type_get_name(enum bootflow_type_t type)
+const char *bootdevice_type_get_name(enum bootflow_type_t type)
 {
 	if (type < 0 || type >= BOOTFLOWT_COUNT)
 		return "?";
 
-	return bootmethod_type[type];
+	return bootdevice_type[type];
 }
 
 void bootflow_free(struct bootflow *bflow)
@@ -89,9 +89,9 @@ void bootflow_remove(struct bootflow *bflow)
 	free(bflow);
 }
 
-void bootmethod_clear_bootflows(struct udevice *dev)
+void bootdevice_clear_bootflows(struct udevice *dev)
 {
-	struct bootmethod_uc_plat *ucp = dev_get_uclass_plat(dev);
+	struct bootdevice_uc_plat *ucp = dev_get_uclass_plat(dev);
 
 	while (!list_empty(&ucp->bootflow_head)) {
 		struct bootflow *bflow;
@@ -102,11 +102,11 @@ void bootmethod_clear_bootflows(struct udevice *dev)
 	}
 }
 
-void bootmethod_clear_glob(void)
+void bootdevice_clear_glob(void)
 {
 	struct bootflow_state *state;
 
-	if (bootmethod_get_state(&state))
+	if (bootdevice_get_state(&state))
 		return;
 
 	while (!list_empty(&state->glob_head)) {
@@ -118,15 +118,15 @@ void bootmethod_clear_glob(void)
 	}
 }
 
-int bootmethod_add_bootflow(struct bootflow *bflow)
+int bootdevice_add_bootflow(struct bootflow *bflow)
 {
-	struct bootmethod_uc_plat *ucp = dev_get_uclass_plat(bflow->dev);
+	struct bootdevice_uc_plat *ucp = dev_get_uclass_plat(bflow->dev);
 	struct bootflow_state *state;
 	struct bootflow *new;
 	int ret;
 
 	assert(bflow->dev);
-	ret = bootmethod_get_state(&state);
+	ret = bootdevice_get_state(&state);
 	if (ret)
 		return ret;
 
@@ -141,9 +141,9 @@ int bootmethod_add_bootflow(struct bootflow *bflow)
 	return 0;
 }
 
-int bootmethod_first_bootflow(struct udevice *dev, struct bootflow **bflowp)
+int bootdevice_first_bootflow(struct udevice *dev, struct bootflow **bflowp)
 {
-	struct bootmethod_uc_plat *ucp = dev_get_uclass_plat(dev);
+	struct bootdevice_uc_plat *ucp = dev_get_uclass_plat(dev);
 
 	if (list_empty(&ucp->bootflow_head))
 		return -ENOENT;
@@ -154,10 +154,10 @@ int bootmethod_first_bootflow(struct udevice *dev, struct bootflow **bflowp)
 	return 0;
 }
 
-int bootmethod_next_bootflow(struct bootflow **bflowp)
+int bootdevice_next_bootflow(struct bootflow **bflowp)
 {
 	struct bootflow *bflow = *bflowp;
-	struct bootmethod_uc_plat *ucp = dev_get_uclass_plat(bflow->dev);
+	struct bootdevice_uc_plat *ucp = dev_get_uclass_plat(bflow->dev);
 
 	*bflowp = NULL;
 
@@ -174,7 +174,7 @@ int bootflow_first_glob(struct bootflow **bflowp)
 	struct bootflow_state *state;
 	int ret;
 
-	ret = bootmethod_get_state(&state);
+	ret = bootdevice_get_state(&state);
 	if (ret)
 		return ret;
 
@@ -193,7 +193,7 @@ int bootflow_next_glob(struct bootflow **bflowp)
 	struct bootflow *bflow = *bflowp;
 	int ret;
 
-	ret = bootmethod_get_state(&state);
+	ret = bootdevice_get_state(&state);
 	if (ret)
 		return ret;
 
@@ -207,10 +207,10 @@ int bootflow_next_glob(struct bootflow **bflowp)
 	return 0;
 }
 
-int bootmethod_get_bootflow(struct udevice *dev, int seq,
+int bootdevice_get_bootflow(struct udevice *dev, int seq,
 			    struct bootflow *bflow)
 {
-	const struct bootmethod_ops *ops = bootmethod_get_ops(dev);
+	const struct bootdevice_ops *ops = bootdevice_get_ops(dev);
 
 	if (!ops->get_bootflow)
 		return -ENOSYS;
@@ -225,26 +225,26 @@ static int next_bootflow(struct udevice *dev, int seq, struct bootflow *bflow)
 {
 	int ret;
 
-	ret = bootmethod_get_bootflow(dev, seq, bflow);
+	ret = bootdevice_get_bootflow(dev, seq, bflow);
 	if (ret)
 		return ret;
 
 	return 0;
 }
 
-static void bootmethod_iter_set_dev(struct bootmethod_iter *iter,
+static void bootdevice_iter_set_dev(struct bootdevice_iter *iter,
 				    struct udevice *dev)
 {
 	iter->dev = dev;
 	if (iter->flags & BOOTFLOWF_SHOW) {
 		if (dev)
-			printf("Scanning bootmethod '%s':\n", dev->name);
+			printf("Scanning bootdevice '%s':\n", dev->name);
 		else
-			printf("No more bootmethods\n");
+			printf("No more bootdevices\n");
 	}
 }
 
-int bootmethod_scan_first_bootflow(struct bootmethod_iter *iter, int flags,
+int bootdevice_scan_first_bootflow(struct bootdevice_iter *iter, int flags,
 				   struct bootflow *bflow)
 {
 	struct udevice *dev;
@@ -252,19 +252,19 @@ int bootmethod_scan_first_bootflow(struct bootmethod_iter *iter, int flags,
 
 	iter->flags = flags;
 	iter->seq = 0;
-	ret = uclass_first_device_err(UCLASS_BOOTMETHOD, &dev);
+	ret = uclass_first_device_err(UCLASS_BOOTDEVICE, &dev);
 	if (ret)
 		return ret;
-	bootmethod_iter_set_dev(iter, dev);
+	bootdevice_iter_set_dev(iter, dev);
 
-	ret = bootmethod_scan_next_bootflow(iter, bflow);
+	ret = bootdevice_scan_next_bootflow(iter, bflow);
 	if (ret)
 		return ret;
 
 	return 0;
 }
 
-int bootmethod_scan_next_bootflow(struct bootmethod_iter *iter,
+int bootdevice_scan_next_bootflow(struct bootdevice_iter *iter,
 				  struct bootflow *bflow)
 {
 	struct udevice *dev;
@@ -276,7 +276,7 @@ int bootmethod_scan_next_bootflow(struct bootmethod_iter *iter,
 
 		/* If we got a valid bootflow, return it */
 		if (!ret) {
-			log_debug("Bootmethod '%s' seq %d: Found bootflow\n",
+			log_debug("Bootdevice '%s' seq %d: Found bootflow\n",
 				  dev->name, iter->seq);
 			iter->seq++;
 			return 0;
@@ -288,9 +288,9 @@ int bootmethod_scan_next_bootflow(struct bootmethod_iter *iter,
 		 * through to select the next device.
 		 */
 		else if (ret != -ESHUTDOWN && ret != -ENOSYS) {
-			log_debug("Bootmethod '%s' seq %d: Error %d\n",
+			log_debug("Bootdevice '%s' seq %d: Error %d\n",
 				  dev->name, iter->seq, ret);
-			if (iter->seq++ != MAX_BOOTFLOWS_PER_BOOTMETHOD) {
+			if (iter->seq++ != MAX_BOOTFLOWS_PER_BOOTDEVICE) {
 				/*
 				 * For 'all' we return all bootflows, even
 				 * those with errors
@@ -303,20 +303,20 @@ int bootmethod_scan_next_bootflow(struct bootmethod_iter *iter,
 			}
 		}
 
-		/* we got to the end of that bootmethod, try the next */
+		/* we got to the end of that bootdevice, try the next */
 		ret = uclass_next_device_err(&dev);
-		bootmethod_iter_set_dev(iter, dev);
+		bootdevice_iter_set_dev(iter, dev);
 
-		/* if there are no more bootmethods, give up */
+		/* if there are no more bootdevices, give up */
 		if (ret)
 			return ret;
 
-		/* start at the beginning of this bootmethod */
+		/* start at the beginning of this bootdevice */
 		iter->seq = 0;
 	} while (1);
 }
 
-int bootmethod_bind(struct udevice *parent, const char *drv_name,
+int bootdevice_bind(struct udevice *parent, const char *drv_name,
 		    const char *name, struct udevice **devp)
 {
 	struct udevice *dev;
@@ -336,7 +336,7 @@ int bootmethod_bind(struct udevice *parent, const char *drv_name,
 	return 0;
 }
 
-int bootmethod_find_in_blk(struct udevice *dev, struct udevice *blk, int seq,
+int bootdevice_find_in_blk(struct udevice *dev, struct udevice *blk, int seq,
 			   struct bootflow *bflow)
 {
 	struct blk_desc *desc = dev_get_uclass_plat(blk);
@@ -348,11 +348,11 @@ int bootmethod_find_in_blk(struct udevice *dev, struct udevice *blk, int seq,
 	 * TODO(sjg@chromium.org): Add a suitable parameter for the method
 	 * number. Needs to consider the renaming suggested in the cover letter
 	 */
-	int methodnum = seq % MAX_BOOTMETHODS;
-	int partnum = seq / MAX_BOOTMETHODS + 1;
+	int methodnum = seq % MAX_BOOTDEVICES;
+	int partnum = seq / MAX_BOOTDEVICES + 1;
 	int ret;
 
-	if (seq >= MAX_BOOTFLOWS_PER_BOOTMETHOD)
+	if (seq >= MAX_BOOTFLOWS_PER_BOOTDEVICE)
 		return log_msg_ret("max", -ESHUTDOWN);
 
 	bflow->blk = blk;
@@ -389,7 +389,7 @@ int bootmethod_find_in_blk(struct udevice *dev, struct udevice *blk, int seq,
 
 	switch (methodnum) {
 	case 0:
-		if (CONFIG_IS_ENABLED(BOOTMETHOD_DISTRO)) {
+		if (CONFIG_IS_ENABLED(BOOTDEVICE_DISTRO)) {
 			done = true;
 			ret = distro_boot_setup(desc, partnum, bflow);
 			if (ret)
@@ -398,7 +398,7 @@ int bootmethod_find_in_blk(struct udevice *dev, struct udevice *blk, int seq,
 		break;
 
 	case 1:
-		if (CONFIG_IS_ENABLED(BOOTMETHOD_EFILOADER)) {
+		if (CONFIG_IS_ENABLED(BOOTDEVICE_EFILOADER)) {
 			done = true;
 			ret = efiloader_boot_setup(desc, partnum, bflow);
 			if (ret)
@@ -422,13 +422,13 @@ int bootflow_boot(struct bootflow *bflow)
 
 	switch (bflow->type) {
 	case BOOTFLOWT_DISTRO:
-		if (CONFIG_IS_ENABLED(BOOTMETHOD_DISTRO)) {
+		if (CONFIG_IS_ENABLED(BOOTDEVICE_DISTRO)) {
 			done = true;
 			ret = distro_boot(bflow);
 		}
 		break;
 	case BOOTFLOWT_EFILOADER:
-		if (CONFIG_IS_ENABLED(BOOTMETHOD_EFILOADER)) {
+		if (CONFIG_IS_ENABLED(BOOTDEVICE_EFILOADER)) {
 			done = true;
 			ret = efiloader_boot(bflow);
 		}
@@ -451,7 +451,7 @@ int bootflow_boot(struct bootflow *bflow)
 	return log_msg_ret("end", -EFAULT);
 }
 
-void bootmethod_list(bool probe)
+void bootdevice_list(bool probe)
 {
 	struct udevice *dev;
 	int ret;
@@ -460,9 +460,9 @@ void bootmethod_list(bool probe)
 	printf("Seq  Probed  Status  Uclass    Name\n");
 	printf("---  ------  ------  --------  ------------------\n");
 	if (probe)
-		ret = uclass_first_device_err(UCLASS_BOOTMETHOD, &dev);
+		ret = uclass_first_device_err(UCLASS_BOOTDEVICE, &dev);
 	else
-		ret = uclass_find_first_device(UCLASS_BOOTMETHOD, &dev);
+		ret = uclass_find_first_device(UCLASS_BOOTDEVICE, &dev);
 	for (i = 0; dev; i++) {
 		printf("%3x   [ %c ]  %6s  %-9.9s %s\n", dev_seq(dev),
 		       device_active(dev) ? '+' : ' ',
@@ -477,25 +477,25 @@ void bootmethod_list(bool probe)
 	printf("(%d device%s)\n", i, i != 1 ? "s" : "");
 }
 
-int bootmethod_setup_for_dev(struct udevice *parent, const char *drv_name)
+int bootdevice_setup_for_dev(struct udevice *parent, const char *drv_name)
 {
 	struct udevice *bm;
 	int ret;
 
-	if (!CONFIG_IS_ENABLED(BOOTMETHOD))
+	if (!CONFIG_IS_ENABLED(BOOTDEVICE))
 		return 0;
 
-	ret = device_find_first_child_by_uclass(parent, UCLASS_BOOTMETHOD,
+	ret = device_find_first_child_by_uclass(parent, UCLASS_BOOTDEVICE,
 						&bm);
 	if (ret) {
 		if (ret != -ENODEV) {
-			log_debug("Cannot access bootmethod device\n");
+			log_debug("Cannot access bootdevice device\n");
 			return ret;
 		}
 
-		ret = bootmethod_bind(parent, drv_name, "bootmethod", &bm);
+		ret = bootdevice_bind(parent, drv_name, "bootdevice", &bm);
 		if (ret) {
-			log_debug("Cannot create bootmethod device\n");
+			log_debug("Cannot create bootdevice device\n");
 			return ret;
 		}
 	}
@@ -503,7 +503,7 @@ int bootmethod_setup_for_dev(struct udevice *parent, const char *drv_name)
 	return 0;
 }
 
-static int bootmethod_init(struct uclass *uc)
+static int bootdevice_init(struct uclass *uc)
 {
 	struct bootflow_state *state = uclass_get_priv(uc);
 
@@ -512,21 +512,21 @@ static int bootmethod_init(struct uclass *uc)
 	return 0;
 }
 
-static int bootmethod_post_bind(struct udevice *dev)
+static int bootdevice_post_bind(struct udevice *dev)
 {
-	struct bootmethod_uc_plat *ucp = dev_get_uclass_plat(dev);
+	struct bootdevice_uc_plat *ucp = dev_get_uclass_plat(dev);
 
 	INIT_LIST_HEAD(&ucp->bootflow_head);
 
 	return 0;
 }
 
-UCLASS_DRIVER(bootmethod) = {
-	.id		= UCLASS_BOOTMETHOD,
-	.name		= "bootmethod",
+UCLASS_DRIVER(bootdevice) = {
+	.id		= UCLASS_BOOTDEVICE,
+	.name		= "bootdevice",
 	.flags		= DM_UC_FLAG_SEQ_ALIAS,
 	.priv_auto	= sizeof(struct bootflow_state),
-	.per_device_plat_auto	= sizeof(struct bootmethod_uc_plat),
-	.init		= bootmethod_init,
-	.post_bind	= bootmethod_post_bind,
+	.per_device_plat_auto	= sizeof(struct bootdevice_uc_plat),
+	.init		= bootdevice_init,
+	.post_bind	= bootdevice_post_bind,
 };
