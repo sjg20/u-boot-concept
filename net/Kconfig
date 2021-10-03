@@ -14,12 +14,12 @@ config PROT_UDP
 	  Enable a generic udp framework that allows defining a custom
 	  handler for udp protocol.
 
-config BOOTMETHOD_ETH
-	bool "Enable bootmethod for ethernet"
-	depends on BOOTMETHOD
+config BOOTDEV_ETH
+	bool "Enable bootdev for ethernet"
+	depends on BOOTDEV
 	default y
 	help
-	  Provide a bootmethod for ethernet so that is it possible to boot
+	  Provide a bootdev for ethernet so that is it possible to boot
 	  an operationg system over the network, using the PXE (Preboot
 	  Execution Environment) protocol.
 

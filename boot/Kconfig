@@ -274,33 +274,43 @@ endif # SPL
 
 endif # FIT
 
-config BOOTMETHOD
-	bool "Bootmethod support"
+config BOOTDEV
+	bool "Bootdevice support"
 	default y
 	help
-	  A bootmethod is a standard way of locating something to boot,
+	  A bootdev is a standard way of locating something to boot,
 	  typically an Operating System such as Linux. Enable this to support
-	  iterating through available bootmethods to find a bootflow suitable
+	  iterating through available bootdevs to find a bootflow suitable
 	  for booting.
 
-config BOOTMETHOD_DISTRO
-	bool "Bootmethod support for distro boot"
-	depends on BOOTMETHOD && CMD_PXE
+config BOOTDEV_DISTRO
+	bool "Bootdevice support for distro boot"
+	depends on BOOTDEV && CMD_PXE
 	default y
 	help
-	  Enables support for distro boot using bootmethods. This makes the
-	  bootmethods look for a 'extlinux/extlinux.conf' on each filesystem
+	  Enables support for distro boot using bootdevs. This makes the
+	  bootdevs look for a 'extlinux/extlinux.conf' on each filesystem
 	  they scan.
 
-	  This provides a way to try out bootmethod on an existing boot flow.
+	  This provides a way to try out bootdev on an existing boot flow.
 
-config BOOTMETHOD_EFILOADER
-	bool "Bootmethod support for EFI boot"
-	depends on BOOTMETHOD && EFI_LOADER
+config BOOTDEV_PXE
+	bool "Bootdevice support for distro boot over network"
+	depends on BOOTDEV && CMD_PXE && NET && DM_ETH
 	default y
 	help
-	  Enables support for EFI boot using bootmethods. This makes the
-	  bootmethods look for a 'boot<arch>.efi' on each filesystem
+	  Enables support for distro boot using bootdevs. This makes the
+	  bootdevs look for a 'extlinux/extlinux.conf' on the tftp server.
+
+	  This provides a way to try out bootdev on an existing boot flow.
+
+config BOOTDEV_EFILOADER
+	bool "Bootdevice support for EFI boot"
+	depends on BOOTDEV && EFI_LOADER
+	default y
+	help
+	  Enables support for EFI boot using bootdevs. This makes the
+	  bootdevs look for a 'boot<arch>.efi' on each filesystem
 	  they scan. The resulting file is booted after enabling U-Boot's
 	  EFI loader support.
 
@@ -313,7 +323,7 @@ config BOOTMETHOD_EFILOADER
 	     riscv32   - RISC-V 32-bit
 	     riscv64   - RISC-V 64-bit
 
-	  This provides a way to try out bootmethod on an existing boot flow.
+	  This provides a way to try out bootdev on an existing boot flow.
 
 config LEGACY_IMAGE_FORMAT
 	bool "Enable support for the legacy image format"

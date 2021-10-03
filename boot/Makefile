@@ -22,9 +22,10 @@ endif
 obj-y += image.o image-board.o
 obj-$(CONFIG_ANDROID_AB) += android_ab.o
 obj-$(CONFIG_ANDROID_BOOT_IMAGE) += image-android.o image-android-dt.o
-obj-$(CONFIG_$(SPL_TPL_)BOOTMETHOD) += bootmethod.o
-obj-$(CONFIG_$(SPL_TPL_)BOOTMETHOD_DISTRO) += distro.o
-obj-$(CONFIG_$(SPL_TPL_)BOOTMETHOD_EFILOADER) += efiloader.o
+obj-$(CONFIG_$(SPL_TPL_)BOOTDEV) += bdevice-uclass.o bootmeth-uclass.o
+obj-$(CONFIG_$(SPL_TPL_)BOOTDEV) += bootdev.o bootflow.o
+obj-$(CONFIG_$(SPL_TPL_)BOOTDEV_DISTRO) += bootmeth_distro.o bootmeth_pxe.o
+obj-$(CONFIG_$(SPL_TPL_)BOOTDEV_EFILOADER) += bootmeth_efi.o
 obj-$(CONFIG_$(SPL_TPL_)OF_LIBFDT) += image-fdt.o
 obj-$(CONFIG_$(SPL_TPL_)FIT_SIGNATURE) += fdt_region.o
 obj-$(CONFIG_$(SPL_TPL_)FIT) += image-fit.o

@@ -194,13 +194,13 @@ config CMD_BOOTM
 	help
 	  Boot an application image from the memory.
 
-config CMD_BOOTMETHOD
-	bool "bootmethod"
-	default y if BOOTMETHOD
+config CMD_BOOTDEV
+	bool "bootdev"
+	default y if BOOTDEV
 	help
-	  Support working with bootmethods, including listing available ones
+	  Support working with bootdevs, including listing available ones
 	  and showing information about a particular one. It also allows
-	  looking at bootflows available with the bootmethod.
+	  looking at bootflows available with the bootdev.
 
 config BOOTM_EFI
 	bool "Support booting UEFI FIT images"

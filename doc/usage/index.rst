@@ -24,7 +24,7 @@ Shell commands
    bootflow
    booti
    bootmenu
-   bootmethod
+   bootdev
    button
    x86/cbsysinfo
    conitrace

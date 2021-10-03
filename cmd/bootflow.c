@@ -7,7 +7,8 @@
  */
 
 #include <common.h>
-#include <bootmethod.h>
+#include <bootdev.h>
+#include <bootflow.h>
 #include <command.h>
 #include <console.h>
 #include <dm.h>
@@ -27,7 +28,7 @@ static void report_bootflow_err(struct bootflow *bflow, int err)
 	if (!err)
 		return;
 
-	/* Indent out to 'Type' */
+	/* Indent out to 'Method' */
 	printf("     ** ");
 
 	switch (bflow->state) {
@@ -66,8 +67,7 @@ static void report_bootflow_err(struct bootflow *bflow, int err)
 static void show_bootflow(int index, struct bootflow *bflow, bool errors)
 {
 	printf("%3x  %-11s  %-6s  %-9.9s %4x  %-25.25s %s\n", index,
-	       bootmethod_type_get_name(bflow->type),
-	       bootmethod_state_get_name(bflow->state),
+	       bflow->method->name, bootflow_state_get_name(bflow->state),
 	       dev_get_uclass_name(dev_get_parent(bflow->dev)), bflow->part,
 	       bflow->name, bflow->fname);
 	if (errors)
@@ -76,7 +76,7 @@ static void show_bootflow(int index, struct bootflow *bflow, bool errors)
 
 static void show_header(void)
 {
-	printf("Seq  Type         State   Uclass    Part  Name                      Filename\n");
+	printf("Seq  Method       State   Uclass    Part  Name                      Filename\n");
 	printf("---  -----------  ------  --------  ----  ------------------------  ----------------\n");
 }
 
@@ -90,7 +90,7 @@ static void show_footer(int count, int num_valid)
 static int do_bootflow_list(struct cmd_tbl *cmdtp, int flag, int argc,
 			    char *const argv[])
 {
-	struct bootflow_state *state;
+	struct bootdev_state *state;
 	struct udevice *dev;
 	struct bootflow *bflow;
 	int num_valid = 0;
@@ -100,18 +100,18 @@ static int do_bootflow_list(struct cmd_tbl *cmdtp, int flag, int argc,
 	if (argc > 1 && *argv[1] == '-')
 		errors = strchr(argv[1], 'e');
 
-	ret = bootmethod_get_state(&state);
+	ret = bootdev_get_state(&state);
 	if (ret)
 		return CMD_RET_FAILURE;
-	dev = state->cur_bootmethod;
+	dev = state->cur_bootdev;
 
 	/* If we have a device, just list bootflows attached to that device */
 	if (dev) {
-		printf("Showing bootflows for bootmethod '%s'\n", dev->name);
+		printf("Showing bootflows for bootdev '%s'\n", dev->name);
 		show_header();
-		for (ret = bootmethod_first_bootflow(dev, &bflow), i = 0;
+		for (ret = bootdev_first_bootflow(dev, &bflow), i = 0;
 		     !ret;
-		     ret = bootmethod_next_bootflow(&bflow), i++) {
+		     ret = bootdev_next_bootflow(&bflow), i++) {
 			num_valid += bflow->state == BOOTFLOWST_LOADED;
 			show_bootflow(i, bflow, errors);
 		}
@@ -139,11 +139,10 @@ static int bootflow_run_boot(struct bootflow *bflow)
 	switch (ret) {
 	case -EPROTO:
 		printf("Bootflow not loaded (state '%s')\n",
-		       bootmethod_state_get_name(bflow->state));
+		       bootflow_state_get_name(bflow->state));
 		break;
 	case -ENOSYS:
-		printf("Boot type '%s' not supported\n",
-		       bootmethod_type_get_name(bflow->type));
+		printf("Boot method '%s' not supported\n", bflow->method->name);
 		break;
 	default:
 		printf("Boot failed (err=%d)\n", ret);
@@ -156,13 +155,14 @@ static int bootflow_run_boot(struct bootflow *bflow)
 static int do_bootflow_scan(struct cmd_tbl *cmdtp, int flag, int argc,
 			    char *const argv[])
 {
-	struct bootflow_state *state;
-	struct bootmethod_iter iter;
+	struct bootdev_state *state;
+	struct bootflow_iter iter;
 	struct udevice *dev;
 	struct bootflow bflow;
 	bool all = false, boot = false, errors = false, list = false;
 	int num_valid = 0;
 	int ret, i;
+	int flags;
 
 	if (argc > 1 && *argv[1] == '-') {
 		all = strchr(argv[1], 'a');
@@ -171,60 +171,61 @@ static int do_bootflow_scan(struct cmd_tbl *cmdtp, int flag, int argc,
 		list = strchr(argv[1], 'l');
 	}
 
-	ret = bootmethod_get_state(&state);
+	ret = bootdev_get_state(&state);
 	if (ret)
 		return CMD_RET_FAILURE;
-	dev = state->cur_bootmethod;
+	dev = state->cur_bootdev;
 	state->cur_bootflow = NULL;
+
+	flags = 0;
+	if (list)
+		flags |= BOOTFLOWF_SHOW;
+	if (all)
+		flags |= BOOTFLOWF_ALL;
 
 	/*
 	 * If we have a device, just scan for bootflows attached to that device
 	 */
 	if (dev) {
 		if (list) {
-			printf("Scanning for bootflows in bootmethod '%s'\n",
+			printf("Scanning for bootflows in bootdev '%s'\n",
 			       dev->name);
 			show_header();
 		}
-		bootmethod_clear_bootflows(dev);
-		for (i = 0, ret = 0; i < 100 && ret != -ESHUTDOWN; i++) {
-			ret = bootmethod_get_bootflow(dev, i, &bflow);
-			if ((ret && !all) || ret == -ESHUTDOWN) {
-				bootflow_free(&bflow);
-				continue;
-			}
+		bootdev_clear_bootflows(dev);
+		for (i = 0,
+		     ret = bootflow_scan_bootdev(dev, &iter, flags, &bflow);
+		     i < 1000 && ret != -ENODEV;
+		     i++, ret = bootflow_scan_next(&iter, &bflow)) {
 			bflow.err = ret;
-			ret = bootmethod_add_bootflow(&bflow);
+			if (!ret)
+				num_valid++;
+			ret = bootdev_add_bootflow(&bflow);
 			if (ret) {
 				printf("Out of memory\n");
 				return CMD_RET_FAILURE;
 			}
-			num_valid++;
 			if (list)
 				show_bootflow(i, &bflow, errors);
 			if (boot && !bflow.err)
 				bootflow_run_boot(&bflow);
 		}
 	} else {
-		int flags = 0;
 
 		if (list) {
-			printf("Scanning for bootflows in all bootmethods\n");
+			printf("Scanning for bootflows in all bootdevs\n");
 			show_header();
 		}
-		bootmethod_clear_glob();
-		if (list)
-			flags |= BOOTFLOWF_SHOW;
-		if (all)
-			flags |= BOOTFLOWF_ALL;
+		bootdev_clear_glob();
+
 		for (i = 0,
-		     ret = bootmethod_scan_first_bootflow(&iter, flags, &bflow);
+		     ret = bootflow_scan_first(&iter, flags, &bflow);
 		     i < 1000 && ret != -ENODEV;
-		     i++, ret = bootmethod_scan_next_bootflow(&iter, &bflow)) {
+		     i++, ret = bootflow_scan_next(&iter, &bflow)) {
 			bflow.err = ret;
 			if (!ret)
 				num_valid++;
-			ret = bootmethod_add_bootflow(&bflow);
+			ret = bootdev_add_bootflow(&bflow);
 			if (ret) {
 				printf("Out of memory\n");
 				return CMD_RET_FAILURE;
@@ -244,7 +245,7 @@ static int do_bootflow_scan(struct cmd_tbl *cmdtp, int flag, int argc,
 static int do_bootflow_select(struct cmd_tbl *cmdtp, int flag, int argc,
 			      char *const argv[])
 {
-	struct bootflow_state *state;
+	struct bootdev_state *state;
 	struct bootflow *bflow, *found;
 	struct udevice *dev;
 	const char *name;
@@ -252,7 +253,7 @@ static int do_bootflow_select(struct cmd_tbl *cmdtp, int flag, int argc,
 	int seq, i;
 	int ret;
 
-	ret = bootmethod_get_state(&state);
+	ret = bootdev_get_state(&state);
 	if (ret)
 		return CMD_RET_FAILURE;
 ;
@@ -260,20 +261,20 @@ static int do_bootflow_select(struct cmd_tbl *cmdtp, int flag, int argc,
 		state->cur_bootflow = NULL;
 		return 0;
 	}
-	dev = state->cur_bootmethod;
+	dev = state->cur_bootdev;
 
 	name = argv[1];
 	seq = simple_strtol(name, &endp, 16);
 	found = NULL;
 
 	/*
-	 * If we have a bootmethod device, only allow selection of bootflows
+	 * If we have a bootdev device, only allow selection of bootflows
 	 * attached to that device
 	 */
 	if (dev) {
-		for (ret = bootmethod_first_bootflow(dev, &bflow), i = 0;
+		for (ret = bootdev_first_bootflow(dev, &bflow), i = 0;
 		     !ret;
-		     ret = bootmethod_next_bootflow(&bflow), i++) {
+		     ret = bootdev_next_bootflow(&bflow), i++) {
 			if (*endp ? !strcmp(bflow->name, name) : i == seq) {
 				found = bflow;
 				break;
@@ -293,7 +294,7 @@ static int do_bootflow_select(struct cmd_tbl *cmdtp, int flag, int argc,
 	if (!found) {
 		printf("Cannot find bootflow '%s' ", name);
 		if (dev)
-			printf("in bootmethod '%s' ", dev->name);
+			printf("in bootdev '%s' ", dev->name);
 		printf("(err=%d)\n", ret);
 		return CMD_RET_FAILURE;
 	}
@@ -305,7 +306,7 @@ static int do_bootflow_select(struct cmd_tbl *cmdtp, int flag, int argc,
 static int do_bootflow_info(struct cmd_tbl *cmdtp, int flag, int argc,
 			    char *const argv[])
 {
-	struct bootflow_state *state;
+	struct bootdev_state *state;
 	struct bootflow *bflow;
 	bool dump = false;
 	int ret;
@@ -313,7 +314,7 @@ static int do_bootflow_info(struct cmd_tbl *cmdtp, int flag, int argc,
 	if (argc > 1 && *argv[1] == '-')
 		dump = strchr(argv[1], 'd');
 
-	ret = bootmethod_get_state(&state);
+	ret = bootdev_get_state(&state);
 	if (ret)
 		return CMD_RET_FAILURE;
 
@@ -327,8 +328,8 @@ static int do_bootflow_info(struct cmd_tbl *cmdtp, int flag, int argc,
 	printf("Device:    %s\n", bflow->dev->name);
 	printf("Block dev: %s\n", bflow->blk ? bflow->blk->name : "(none)");
 	printf("Sequence:  %d\n", bflow->seq);
-	printf("Type:      %s\n", bootmethod_type_get_name(bflow->type));
-	printf("State:     %s\n", bootmethod_state_get_name(bflow->state));
+	printf("Method:    %s\n", bflow->method->name);
+	printf("State:     %s\n", bootflow_state_get_name(bflow->state));
 	printf("Partition: %d\n", bflow->part);
 	printf("Subdir:    %s\n", bflow->subdir ? bflow->subdir : "(none)");
 	printf("Filename:  %s\n", bflow->fname);
@@ -356,11 +357,11 @@ static int do_bootflow_info(struct cmd_tbl *cmdtp, int flag, int argc,
 static int do_bootflow_boot(struct cmd_tbl *cmdtp, int flag, int argc,
 			    char *const argv[])
 {
-	struct bootflow_state *state;
+	struct bootdev_state *state;
 	struct bootflow *bflow;
 	int ret;
 
-	ret = bootmethod_get_state(&state);
+	ret = bootdev_get_state(&state);
 	if (ret)
 		return CMD_RET_FAILURE;
 

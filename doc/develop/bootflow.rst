@@ -1,15 +1,15 @@
 .. SPDX-License-Identifier: GPL-2.0+:
 
-Bootmethod and Bootflow
+Bootdevice and Bootflow
 =======================
 
 Introduction
 ------------
 
-Bootmethod and bootflow provide a built-in way for U-Boot to automatically boot
+Bootdevice and bootflow provide a built-in way for U-Boot to automatically boot
 an Operating System without custom scripting and other customisation:
 
-  - bootmethod - a method to scan a device to find bootflows (owned by U-Boot)
+  - bootdev - a method to scan a device to find bootflows (owned by U-Boot)
   - bootflow - a description of how to boot (owned by the distro)
 
 For Linux, the distro (Linux distribution, e.g. Debian, Fedora) is responsible
@@ -24,7 +24,7 @@ disto_boodcmd_ for details. This is done because U-Boot has no native support
 for scanning devices. While the scripts work remarkably well, they can be hard
 to understand and extend, and the feature does not include tests.
 
-Bootmethod and bootflow together provide a more built-in way to boot with
+Bootdevice and bootflow together provide a more built-in way to boot with
 U-Boot. The feature is extensible to different Operating Systems (such as
 Chromium OS) and devices (beyond just block and network devices).
 
@@ -57,16 +57,16 @@ Typically the first available bootflow is selected and booted. If that fails,
 then the next one is tried.
 
 
-Bootmethod
+Bootdevice
 ----------
 
-How does U-Boot find the bootflow files? That is the job of bootmethods.
-A bootmethod is simply a device that locates bootflow files. For example, an
-MMC bootmethod for distro boot would simply scan through the partitions on the
+How does U-Boot find the bootflow files? That is the job of bootdevs.
+A bootdev is simply a device that locates bootflow files. For example, an
+MMC bootdev for distro boot would simply scan through the partitions on the
 MMC to find valid filesystems, then search each filesystem for a file called
 `extlinux/extlinux.conf`. Each of those files constitutes a bootflow, so the
 MMC device may produce multiple bootflows. Of course that is under control of
-the bootmethod.
+the bootdev.
 
 
 Boot process
@@ -75,14 +75,14 @@ Boot process
 U-Boot tries to use the 'lazy init' approach whereever possible and distro boot
 is no exception. The algorithm is:
 
-   while (get next bootmethod)
+   while (get next bootdev)
       while (get next bootflow)
           try to boot it
 
-So U-Boot works its way through the bootmethods, trying in turn the bootflows
+So U-Boot works its way through the bootdevs, trying in turn the bootflows
 provided by each, until it either boots or exhausts the available options.
 
-If you are familiar with the producer–consumer model, bootmethods are the
+If you are familiar with the producer–consumer model, bootdevs are the
 producers and bootflows are the items produced. The consumer is the 'booter'
 which tries to boot each produced item.
 
@@ -95,26 +95,26 @@ which scans for available bootflows, listing each find it finds (-l) and trying
 to boot it (-b).
 
 
-Bootmethod uclass
+Bootdevice uclass
 -----------------
 
-The bootmethod uclass provides an simple API call to obtain one or more
+The bootdev uclass provides an simple API call to obtain one or more
 bootflows from a device::
 
-   int bootmethod_get_bootflow(struct udevice *dev, int seq,
+   int bootdev_get_bootflow(struct udevice *dev, int seq,
                                struct bootflow *bflow);
 
 This takes a sequence number (0 for the first bootflow, 1 for the next) and
-returnS a bootflow. This is the core of the bootmethod implementation. The
-bootmethod drivers that implement this differ depending on the media they are
+returnS a bootflow. This is the core of the bootdev implementation. The
+bootdev drivers that implement this differ depending on the media they are
 reading from, but each is responsible for returning a valid bootflow if
 available.
 
 
-Bootmethod drivers
+Bootdevice drivers
 ------------------
 
-A bootmethod driver is typically fairly simple. Here is one for mmc::
+A bootdev driver is typically fairly simple. Here is one for mmc::
 
     static int mmc_get_bootflow(struct udevice *dev, int seq,
                     struct bootflow *bflow)
@@ -133,26 +133,26 @@ A bootmethod driver is typically fairly simple. Here is one for mmc::
         if (ret)
             return log_msg_ret("blk", ret);
         assert(blk);
-        ret = bootmethod_find_in_blk(dev, blk, seq, bflow);
+        ret = bootdev_find_in_blk(dev, blk, seq, bflow);
         if (ret)
             return log_msg_ret("find", ret);
 
         return 0;
     }
 
-    struct bootmethod_ops mmc_bootmethod_ops = {
+    struct bootdev_ops mmc_bootdev_ops = {
         .get_bootflow    = mmc_get_bootflow,
     };
 
-    U_BOOT_DRIVER(mmc_bootmethod) = {
-        .name        = "mmc_bootmethod",
-        .id        = UCLASS_BOOTMETHOD,
-        .ops        = &mmc_bootmethod_ops,
+    U_BOOT_DRIVER(mmc_bootdev) = {
+        .name        = "mmc_bootdev",
+        .id        = UCLASS_BOOTDEV,
+        .ops        = &mmc_bootdev_ops,
     };
 
 The implementation of the `get_bootflow` method is simply to obtain the
-block device and call a bootmethod helper function to do the rest. The
-implementation of `bootmethod_find_in_blk()` checks the partition table, and
+block device and call a bootdev helper function to do the rest. The
+implementation of `bootdev_find_in_blk()` checks the partition table, and
 attempts to read a file from a filesystem on the partition number given by the
 @seq parameter.
 
@@ -160,26 +160,26 @@ attempts to read a file from a filesystem on the partition number given by the
 Device hierarchy
 ----------------
 
-A bootmethod device is a child of the media device. In this example, you can see
-that the bootmethod is a sibling of the block device and both are children of
+A bootdev device is a child of the media device. In this example, you can see
+that the bootdev is a sibling of the block device and both are children of
 media device::
 
     mmc           0  [ + ]   bcm2835-sdhost        |   |-- mmc@7e202000
     blk           0  [ + ]   mmc_blk               |   |   |-- mmc@7e202000.blk
-    bootmethod    0  [   ]   mmc_bootmethod        |   |   `-- mmc@7e202000.bootmethod
+    bootdev    0  [   ]   mmc_bootdev        |   |   `-- mmc@7e202000.bootdev
     mmc           1  [ + ]   sdhci-bcm2835         |   |-- sdhci@7e300000
     blk           1  [   ]   mmc_blk               |   |   |-- sdhci@7e300000.blk
-    bootmethod    1  [   ]   mmc_bootmethod        |   |   `-- sdhci@7e300000.bootmethod
+    bootdev    1  [   ]   mmc_bootdev        |   |   `-- sdhci@7e300000.bootdev
 
-The bootmethod device is typically created automatically in the media uclass'
+The bootdev device is typically created automatically in the media uclass'
 `post_bind()` method. This is typically something like this::
 
-    ret = bootmethod_setup_for_dev(dev, "eth_bootmethod");
+    ret = bootdev_setup_for_dev(dev, "eth_bootdev");
         if (ret)
-            return log_msg_ret("bootmethod", ret);
+            return log_msg_ret("bootdev", ret);
 
-Here, `eth_bootmethod` is the name of the Ethernet bootmethod driver and `dev`
-is the ethernet device. This function is safe to call even if bootmethod is
+Here, `eth_bootdev` is the name of the Ethernet bootdev driver and `dev`
+is the ethernet device. This function is safe to call even if bootdev is
 not enabled, since it does nothing in that case. It can be added to all uclasses
 which implement suitable media.
 
@@ -187,9 +187,9 @@ which implement suitable media.
 Using devicetree
 ----------------
 
-If a bootmethod is complicated or needs configuration information, it can be
+If a bootdev is complicated or needs configuration information, it can be
 added to the devicetree as a child of the media device. For example, imagine a
-bootmethod which reads a bootflow from SPI flash. The devicetree fragment might
+bootdev which reads a bootflow from SPI flash. The devicetree fragment might
 look like this::
 
     spi@0 {
@@ -198,15 +198,15 @@ look like this::
             compatible = "spansion,m25p16", "jedec,spi-nor";
             spi-max-frequency = <40000000>;
 
-            bootmethod {
-                compatible = "sf-bootmethod";
+            bootdev {
+                compatible = "sf-bootdev";
                 offset = <0x2000>;
                 size = <0x1000>;
             };
         };
     };
 
-The `sf-bootmethod` driver can implement a way to read from the SPI flash, using
+The `sf-bootdev` driver can implement a way to read from the SPI flash, using
 the offset and size provided, and return that bootflow file back to the caller.
 When distro boot wants to read the kernel it calls disto_getfile() which must
 provide a way to read from the SPI flash. See `distro_boot()` at distro_boot_
@@ -219,9 +219,9 @@ to boot.
 Configuration
 -------------
 
-The bootmethod/bootflow feature can be enabled with `CONFIG_BOOTMETHOD`. Each
+The bootdev/bootflow feature can be enabled with `CONFIG_BOOTDEV`. Each
 type of bootflow has its own CONFIG option also. For example,
-`CONFIG_BOOTMETHOD_DISTRO` enables support for distro boot.
+`CONFIG_BOOTDEV_DISTRO` enables support for distro boot.
 
 
 Command interface
@@ -229,12 +229,12 @@ Command interface
 
 Two commands are available:
 
-`bootmethod`
-    Allows listing of available bootmethods, selecting a particular one and
-    getting information about it. See :doc:`../usage/bootmethod`
+`bootdev`
+    Allows listing of available bootdevs, selecting a particular one and
+    getting information about it. See :doc:`../usage/bootdev`
 
 `bootflow`
-    Allows scanning one or more bootmethods for bootflows, listing available
+    Allows scanning one or more bootdevs for bootflows, listing available
     bootflows, selecting one, obtaining information about it and booting it.
     See :doc:`../usage/bootflow`
 
@@ -269,10 +269,10 @@ Bootflow internals
 ------------------
 
 The bootflow uclass holds a linked list of scanned bootflows as well as the
-currently selected bootmethod and bootflow (for use by commands). This is in
-`struct bootflow_state`.
+currently selected bootdev and bootflow (for use by commands). This is in
+`struct bootdev_state`.
 
-Each bootmethod device has its own `struct bootmethod_uc_plat` which holds a
+Each bootdev device has its own `struct bootdev_uc_plat` which holds a
 list of scanned bootflows just for that device.
 
 The bootflow itself is documented in bootflow_h_. It includes various bits of
@@ -295,22 +295,22 @@ before a final series is sent:
 - use `ready` instead of `loaded` for the state name?
 - `bootflow prep` to load everything preparing for boot, so that `bootflow boot`
   can just do the boot.
-- check ordering of bootmethods (should it use aliases?)
-- check ordering of bootflows within bootmethods (needed)
+- check ordering of bootdevs (should it use aliases?)
+- check ordering of bootflows within bootdevs (needed)
 - implement boot_targets env var?
 - quick way to boot from particular media - 'bootflow boot mmc1' ?
-- add bootmethod drivers for dhcp, sata, scsi, ide, usb, virtio
+- add bootdev drivers for dhcp, sata, scsi, ide, usb, virtio
 - introduce an interface for disto_getfile() and disto_net_getfile() provided
-  by the bootmethod
+  by the bootdev
 - better name for this feature? It is clearly not auto-boot or distro-boot,
   but perhaps standard boot?
 
 Other ideas:
 
-- rename bootflow to flow, bootmethod to method (since this is a bootloader
+- rename bootflow to flow, bootdev to method (since this is a bootloader
   after all)
-- bootmethod flags for speed (e.g. network and USB are slow)
-- should the means of scanning for particular files on a bootmethod device be
+- bootdev flags for speed (e.g. network and USB are slow)
+- should the means of scanning for particular files on a bootdev device be
   moved into a driver architecture, so we have drivers for distro boot,
   Chromium OS, etc.?
 - automatically load kernel, FDT, etc. to suitable addresses so the board does
