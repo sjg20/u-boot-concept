@@ -73,8 +73,11 @@ extern struct bootflow_cmds g_bootflow_cmds;
  * @dev: Bootdevice device which produced this bootflow
  * @blk: Block device which contains this bootflow, NULL if this is a network
  *	device
- * @seq: Sequence number of bootflow within its bootdevice, typically the
- *	partition number (0...)
+ * @seq: Sequence number of bootflow within its bootdevice
+ * @hwpart: Hardware partition number (always 0 unless @dev is an MMC device and
+ *	has these)
+ * @part: Partition number (0 for whole device)
+ * @method: Bootmethod device
  * @name: Name of bootflow (allocated)
  * @type: Bootflow type (enum bootflow_type_t)
  * @state: Current state (enum bootflow_state_t)
@@ -91,10 +94,12 @@ struct bootflow {
 	struct udevice *dev;
 	struct udevice *blk;
 	int seq;
+	int hwpart;
+	int part;
+	struct udevice *method;
 	char *name;
 	enum bootflow_type_t type;
 	enum bootflow_state_t state;
-	int part;
 	char *subdir;
 	char *fname;
 	char *buf;
@@ -149,14 +154,13 @@ struct bootdevice_ops {
 	 * get_bootflow() - get a bootflow
 	 *
 	 * @dev:	Bootflow device to check
-	 * @seq:	Sequence number of bootflow to read (0 for first)
-	 * @bflow:	Returns bootflow if found
+	 * @bflow:	On entry, provides dev, hwpart, part and method.
+	 *	Returns updated bootflow if found
 	 * @return 0 if OK, -ESHUTDOWN if there are no more bootflows on this
 	 *	device, -ENOSYS if this device doesn't support bootflows,
 	 *	other -ve value on other error
 	 */
-	int (*get_bootflow)(struct udevice *dev, int seq,
-			    struct bootflow *bflow);
+	int (*get_bootflow)(struct udevice *dev, struct bootflow *bflow);
 };
 
 #define bootdevice_get_ops(dev)  ((struct bootdevice_ops *)(dev)->driver->ops)
@@ -165,13 +169,13 @@ struct bootdevice_ops {
  * bootdevice_get_bootflow() - get a bootflow
  *
  * @dev:	Bootflow device to check
- * @seq:	Sequence number of bootflow to read (0 for first)
+ * @iter:	Provides current hwpart, part, method to get
  * @bflow:	Returns bootflow if found
  * @return 0 if OK, -ESHUTDOWN if there are no more bootflows on this device,
  *	-ENOSYS if this device doesn't support bootflows, other -ve value on
  *	other error
  */
-int bootdevice_get_bootflow(struct udevice *dev, int seq,
+int bootdevice_get_bootflow(struct udevice *dev, struct bootdevice_iter *iter,
 			    struct bootflow *bflow);
 
 /**

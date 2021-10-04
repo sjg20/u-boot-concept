@@ -38,7 +38,8 @@ enum uclass_id {
 	UCLASS_AXI,		/* AXI bus */
 	UCLASS_BLK,		/* Block device */
 	UCLASS_BOOTCOUNT,       /* Bootcount backing store */
-	UCLASS_BOOTDEVICE,	/* Bootdevice for locating an OS to boot*/
+	UCLASS_BOOTDEVICE,	/* Bootdevice for locating an OS to boot */
+	UCLASS_BOOTMETHOD,	/* Bootmethod for booting an OS */
 	UCLASS_BUTTON,		/* Button */
 	UCLASS_CACHE,		/* Cache controller */
 	UCLASS_CLK,		/* Clock source, e.g. used by peripherals */

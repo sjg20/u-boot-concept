@@ -207,7 +207,7 @@ int bootflow_next_glob(struct bootflow **bflowp)
 	return 0;
 }
 
-int bootdevice_get_bootflow(struct udevice *dev, int seq,
+int bootdevice_get_bootflow(struct udevice *dev, struct bootdevice_iter *iter,
 			    struct bootflow *bflow)
 {
 	const struct bootdevice_ops *ops = bootdevice_get_ops(dev);
@@ -216,20 +216,11 @@ int bootdevice_get_bootflow(struct udevice *dev, int seq,
 		return -ENOSYS;
 	memset(bflow, '\0', sizeof(*bflow));
 	bflow->dev = dev;
-	bflow->seq = seq;
+	bflow->hwpart = iter->hwpart;
+	bflow->part = iter->part;
+	bflow->method = iter->method;
 
-	return ops->get_bootflow(dev, seq, bflow);
-}
-
-static int next_bootflow(struct udevice *dev, int seq, struct bootflow *bflow)
-{
-	int ret;
-
-	ret = bootdevice_get_bootflow(dev, seq, bflow);
-	if (ret)
-		return ret;
-
-	return 0;
+	return ops->get_bootflow(dev, bflow);
 }
 
 static void bootdevice_iter_set_dev(struct bootdevice_iter *iter,
@@ -257,7 +248,12 @@ int bootdevice_scan_first_bootflow(struct bootdevice_iter *iter, int flags,
 		return ret;
 	bootdevice_iter_set_dev(iter, dev);
 
-	ret = bootdevice_scan_next_bootflow(iter, bflow);
+	/* Find the first bootmethod (there must be at least one!) */
+	ret = uclass_first_device_err(UCLASS_BOOTMETHOD, &iter->method);
+	if (ret)
+		return log_msg_ret("meth", ret);
+
+	ret = bootdevice_get_bootflow(dev, iter, bflow);
 	if (ret)
 		return ret;
 
@@ -271,10 +267,34 @@ int bootdevice_scan_first_bootflow(struct bootdevice_iter *iter, int flags,
  */
 static int iter_incr(struct bootdevice_iter *iter)
 {
-	/* First try the next method */
-	 *
-	if (iter->hwpart <= iter->max_hw_part) {
-	}
+	int ret;
+
+	/* Get the next boothmethod */
+	ret = uclass_next_device_err(&iter->method);
+	if (!ret)
+		return 0;
+
+	/* No more bootmethods; start at the first one, and... */
+	ret = uclass_first_device_err(UCLASS_BOOTMETHOD, &iter->method);
+	if (ret)
+		return -ESHUTDOWN;
+
+	/* ...select next hardware partition */
+	if (++iter->hwpart <= iter->max_hw_part)
+		return 0;
+
+	/* No more hardware partitions; start at the first one and... */
+	iter->hwpart = 0;
+
+	/* ...select next partition  */
+	if (++iter->part <= iter->max_part)
+		return 0;
+
+	/* No more partitions; start at the first one and...*/
+	iter->part = 0;
+
+	/* ...select next bootdevice */
+	return -ESHUTDOWN;
 }
 
 int bootdevice_scan_next_bootflow(struct bootdevice_iter *iter,
@@ -284,14 +304,16 @@ int bootdevice_scan_next_bootflow(struct bootdevice_iter *iter,
 	int ret;
 
 	do {
+		ret = iter_incr(iter);
+
 		dev = iter->dev;
-		ret = next_bootflow(dev, iter, bflow);
+		ret = bootdevice_get_bootflow(dev, iter, bflow);
 
 		/* If we got a valid bootflow, return it */
 		if (!ret) {
-			log_debug("Bootdevice '%s' seq %d: Found bootflow\n",
-				  dev->name, iter->seq);
-			iter->seq++;
+			log_debug("Bootdevice '%s' hwpart %d part %d method '%s': Found bootflow\n",
+				  dev->name, iter->hwpart, iter->part,
+				  iter->method->name);
 			return 0;
 		}
 
@@ -301,20 +323,20 @@ int bootdevice_scan_next_bootflow(struct bootdevice_iter *iter,
 		 * through to select the next device.
 		 */
 		else if (ret != -ESHUTDOWN && ret != -ENOSYS) {
-			log_debug("Bootdevice '%s' seq %d: Error %d\n",
-				  dev->name, iter->seq, ret);
-			if (iter->seq++ != MAX_BOOTFLOWS_PER_BOOTDEVICE) {
-				/*
-				 * For 'all' we return all bootflows, even
-				 * those with errors
-				 */
-				if (iter->flags & BOOTFLOWF_ALL)
-					return log_msg_ret("all", ret);
+			log_debug("Bootdevice '%s' hwpart %d part %d method '%s': Error %d\n",
+				  dev->name, iter->hwpart, iter->part,
+				  iter->method->name, ret);
+			/*
+			 * For 'all' we return all bootflows, even
+			 * those with errors
+			 */
+			if (iter->flags & BOOTFLOWF_ALL)
+				return log_msg_ret("all", ret);
 
-				/* Try the next partition */
-				continue;
-			}
+			/* Try the next partition */
+			continue;
 		}
+
 
 		/* we got to the end of that bootdevice, try the next */
 		ret = uclass_next_device_err(&dev);
@@ -323,9 +345,6 @@ int bootdevice_scan_next_bootflow(struct bootdevice_iter *iter,
 		/* if there are no more bootdevices, give up */
 		if (ret)
 			return ret;
-
-		/* start at the beginning of this bootdevice */
-		iter->seq = 0;
 	} while (1);
 }
 
