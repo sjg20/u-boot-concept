@@ -250,8 +250,8 @@ int bootdevice_scan_first_bootflow(struct bootdevice_iter *iter, int flags,
 	struct udevice *dev;
 	int ret;
 
+	memset(iter, '\0', sizeof(*iter));
 	iter->flags = flags;
-	iter->seq = 0;
 	ret = uclass_first_device_err(UCLASS_BOOTDEVICE, &dev);
 	if (ret)
 		return ret;
@@ -264,6 +264,19 @@ int bootdevice_scan_first_bootflow(struct bootdevice_iter *iter, int flags,
 	return 0;
 }
 
+/**
+ * iter_incr() - Move to the next item (hwpart, part, method) in the iterator
+ *
+ * @return 0 if OK, -ENOENT if there are no more in this bootmethod
+ */
+static int iter_incr(struct bootdevice_iter *iter)
+{
+	/* First try the next method */
+	 *
+	if (iter->hwpart <= iter->max_hw_part) {
+	}
+}
+
 int bootdevice_scan_next_bootflow(struct bootdevice_iter *iter,
 				  struct bootflow *bflow)
 {
@@ -272,7 +285,7 @@ int bootdevice_scan_next_bootflow(struct bootdevice_iter *iter,
 
 	do {
 		dev = iter->dev;
-		ret = next_bootflow(dev, iter->seq, bflow);
+		ret = next_bootflow(dev, iter, bflow);
 
 		/* If we got a valid bootflow, return it */
 		if (!ret) {

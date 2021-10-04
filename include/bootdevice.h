@@ -120,13 +120,23 @@ enum bootflow_flags_t {
  *
  * @flags: Flags to use (see enum bootflow_flags_t)
  * @dev: Current bootdevice
- * @seq: Current sequence number within that bootdevice (determines partition
- *	number, for example)
+ * @hwpart: Current hardware partition number (always 0 unless @dev is an MMC
+ *	device and has these)
+ * @part: Current partition number (0 for whole device)
+ * @method: Current bootmethod
+ * @max_hw_part: Maximum hardware partition number in @dev, 0 if there are no
+ *	hardware partitions
+ * @max_part: Maximum hardware partition number in @dev, 0 if there is no
+ *	partition table
  */
 struct bootdevice_iter {
 	int flags;
 	struct udevice *dev;
-	int seq;
+	int hwpart;
+	int part;
+	struct udevice *method;
+	int max_hw_part;
+	int max_part;
 };
 
 /**
