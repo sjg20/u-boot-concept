@@ -218,9 +218,9 @@ static int do_bootflow_scan(struct cmd_tbl *cmdtp, int flag, int argc,
 		if (all)
 			flags |= BOOTFLOWF_ALL;
 		for (i = 0,
-		     ret = bootdevice_scan_first_bootflow(&iter, flags, &bflow);
+		     ret = bootflow_scan_first(&iter, flags, &bflow);
 		     i < 1000 && ret != -ENODEV;
-		     i++, ret = bootdevice_scan_next_bootflow(&iter, &bflow)) {
+		     i++, ret = bootflow_scan_next(&iter, &bflow)) {
 			bflow.err = ret;
 			if (!ret)
 				num_valid++;

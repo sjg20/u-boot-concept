@@ -235,8 +235,8 @@ static void bootdevice_iter_set_dev(struct bootdevice_iter *iter,
 	}
 }
 
-int bootdevice_scan_first_bootflow(struct bootdevice_iter *iter, int flags,
-				   struct bootflow *bflow)
+int bootflow_scan_first(struct bootdevice_iter *iter, int flags,
+			struct bootflow *bflow)
 {
 	struct udevice *dev;
 	int ret;
@@ -297,8 +297,7 @@ static int iter_incr(struct bootdevice_iter *iter)
 	return -ESHUTDOWN;
 }
 
-int bootdevice_scan_next_bootflow(struct bootdevice_iter *iter,
-				  struct bootflow *bflow)
+int bootflow_scan_next(struct bootdevice_iter *iter, struct bootflow *bflow)
 {
 	struct udevice *dev;
 	int ret;

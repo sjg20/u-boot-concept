@@ -179,7 +179,7 @@ int bootdevice_get_bootflow(struct udevice *dev, struct bootdevice_iter *iter,
 			    struct bootflow *bflow);
 
 /**
- * bootdevice_scan_first_bootflow() - find the first bootflow
+ * bootflow_scan_first() - find the first bootflow
  *
  * This works through the available bootdevice devices until it finds one that
  * can supply a bootflow. It then returns that
@@ -191,21 +191,20 @@ int bootdevice_get_bootflow(struct udevice *dev, struct bootdevice_iter *iter,
  * @bflow:	Place to put the bootflow if found
  * @return 0 if found, -ESHUTDOWN if no more bootflows, other -ve on error
  */
-int bootdevice_scan_first_bootflow(struct bootdevice_iter *iter, int flags,
-				   struct bootflow *bflow);
+int bootflow_scan_first(struct bootdevice_iter *iter, int flags,
+			struct bootflow *bflow);
 
 /**
- * bootdevice_scan_next_bootflow() - find the next bootflow
+ * bootflow_scan_next() - find the next bootflow
  *
  * This works through the available bootdevice devices until it finds one that
  * can supply a bootflow. It then returns that bootflow
  *
- * @iter:	Private info (as set up by bootdevice_scan_first_bootflow())
+ * @iter:	Private info (as set up by bootflow_scan_first())
  * @bflow:	Place to put the bootflow if found
  * @return 0 if found, -ESHUTDOWN if no more bootflows, -ve on error
  */
-int bootdevice_scan_next_bootflow(struct bootdevice_iter *iter,
-				  struct bootflow *bflow);
+int bootflow_scan_next(struct bootdevice_iter *iter, struct bootflow *bflow);
 
 /**
  * bootdevice_bind() - Bind a new named bootdevice device
