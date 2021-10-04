@@ -110,4 +110,8 @@
 	"fatload mmc 0:1 0x22000000 uImage; bootm"
 #endif
 
+#ifdef DO_CONFIGS_ONLY
+#include <mach/gpio.h>
+#endif
+
 #endif

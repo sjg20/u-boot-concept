@@ -72,5 +72,14 @@ END {
 	if ($2 ~ /CONFIG_SYS_CCSRBAR_PHYS|CONFIG_SYS_PAMU/)
 		next;
 
+	# Drop things known to be strings since we don't support evaluting these
+	# at present
+	if ($2 ~ /CONFIG_EXTRA_ENV_SETTINGS/)
+		next;
+
+	# Broadcom weirdness
+	if ($2 ~ /CONFIG_SYS_TIMER_COUNTER/)
+		next;
+
 	printf("\tDEFINE(%s, %s);\n", $2, $2)
 }
