@@ -235,31 +235,6 @@ static void bootdevice_iter_set_dev(struct bootdevice_iter *iter,
 	}
 }
 
-int bootflow_scan_first(struct bootdevice_iter *iter, int flags,
-			struct bootflow *bflow)
-{
-	struct udevice *dev;
-	int ret;
-
-	memset(iter, '\0', sizeof(*iter));
-	iter->flags = flags;
-	ret = uclass_first_device_err(UCLASS_BOOTDEVICE, &dev);
-	if (ret)
-		return ret;
-	bootdevice_iter_set_dev(iter, dev);
-
-	/* Find the first bootmethod (there must be at least one!) */
-	ret = uclass_first_device_err(UCLASS_BOOTMETHOD, &iter->method);
-	if (ret)
-		return log_msg_ret("meth", ret);
-
-	ret = bootdevice_get_bootflow(dev, iter, bflow);
-	if (ret)
-		return ret;
-
-	return 0;
-}
-
 /**
  * iter_incr() - Move to the next item (hwpart, part, method) in the iterator
  *
@@ -297,6 +272,75 @@ static int iter_incr(struct bootdevice_iter *iter)
 	return -ESHUTDOWN;
 }
 
+
+/**
+ * bootflow_scan() - Check if a bootflow can be obtained
+ *
+ *
+ */
+static int bootflow_check(struct bootdevice_iter *iter, struct bootflow *bflow)
+{
+	struct udevice *dev;
+
+	dev = iter->dev;
+	ret = bootdevice_get_bootflow(dev, iter, bflow);
+
+	/* If we got a valid bootflow, return it */
+	if (!ret) {
+		log_debug("Bootdevice '%s' hwpart %d part %d method '%s': Found bootflow\n",
+			  dev->name, iter->hwpart, iter->part,
+			  iter->method->name);
+		return 0;
+	}
+
+	/*
+	 * Unless there are no more partitions or no bootflow support,
+	 * try the next partition. If we run out of partitions, fall
+	 * through to select the next device.
+	 */
+	else if (ret != -ESHUTDOWN && ret != -ENOSYS) {
+		log_debug("Bootdevice '%s' hwpart %d part %d method '%s': Error %d\n",
+			  dev->name, iter->hwpart, iter->part,
+			  iter->method->name, ret);
+		/*
+		 * For 'all' we return all bootflows, even
+		 * those with errors
+		 */
+		if (iter->flags & BOOTFLOWF_ALL)
+			return log_msg_ret("all", ret);
+
+		/* Try the next partition */
+		continue;
+	}
+
+	return 0;
+}
+
+int bootflow_scan_first(struct bootdevice_iter *iter, int flags,
+			struct bootflow *bflow)
+{
+	struct udevice *dev;
+	int ret;
+
+	memset(iter, '\0', sizeof(*iter));
+	iter->flags = flags;
+	ret = uclass_first_device_err(UCLASS_BOOTDEVICE, &dev);
+	if (ret)
+		return ret;
+	bootdevice_iter_set_dev(iter, dev);
+
+	/* Find the first bootmethod (there must be at least one!) */
+	ret = uclass_first_device_err(UCLASS_BOOTMETHOD, &iter->method);
+	if (ret)
+		return log_msg_ret("meth", ret);
+
+	ret = bootdevice_get_bootflow(dev, iter, bflow);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+
 int bootflow_scan_next(struct bootdevice_iter *iter, struct bootflow *bflow)
 {
 	struct udevice *dev;
@@ -304,46 +348,21 @@ int bootflow_scan_next(struct bootdevice_iter *iter, struct bootflow *bflow)
 
 	do {
 		ret = iter_incr(iter);
+		if (ret && ret != -ESHUTDOWN)
+			return ret;
 
-		dev = iter->dev;
-		ret = bootdevice_get_bootflow(dev, iter, bflow);
-
-		/* If we got a valid bootflow, return it */
-		if (!ret) {
-			log_debug("Bootdevice '%s' hwpart %d part %d method '%s': Found bootflow\n",
-				  dev->name, iter->hwpart, iter->part,
-				  iter->method->name);
+		ret = bootflow_check(iter, bflow);
+		if (!ret)
 			return 0;
-		}
-
-		/*
-		 * Unless there are no more partitions or no bootflow support,
-		 * try the next partition. If we run out of partitions, fall
-		 * through to select the next device.
-		 */
-		else if (ret != -ESHUTDOWN && ret != -ENOSYS) {
-			log_debug("Bootdevice '%s' hwpart %d part %d method '%s': Error %d\n",
-				  dev->name, iter->hwpart, iter->part,
-				  iter->method->name, ret);
-			/*
-			 * For 'all' we return all bootflows, even
-			 * those with errors
-			 */
-			if (iter->flags & BOOTFLOWF_ALL)
-				return log_msg_ret("all", ret);
-
-			/* Try the next partition */
-			continue;
-		}
-
 
 		/* we got to the end of that bootdevice, try the next */
+		dev = iter->dev;
 		ret = uclass_next_device_err(&dev);
-		bootdevice_iter_set_dev(iter, dev);
-
 		/* if there are no more bootdevices, give up */
 		if (ret)
 			return ret;
+
+		bootdevice_iter_set_dev(iter, dev);
 	} while (1);
 }
 
