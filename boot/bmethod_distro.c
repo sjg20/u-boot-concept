@@ -10,25 +10,13 @@
 #include <bootdevice.h>
 #include <bootmethod.h>
 #include <command.h>
+#include <distro.h>
 #include <dm.h>
 #include <fs.h>
 #include <malloc.h>
 #include <mapmem.h>
 #include <mmc.h>
 #include <pxe_utils.h>
-
-#define DISTRO_FNAME	"extlinux/extlinux.conf"
-
-/**
- * struct distro_info - useful information for distro_getfile()
- *
- * @dev: bootmethod device being used to boot
- * @bflow: bootflow being booted
- */
-struct distro_info {
-	struct udevice *dev;
-	struct bootflow *bflow;
-};
 
 static int disto_getfile(struct pxe_context *ctx, const char *file_path,
 			 char *file_addr, ulong *sizep)
@@ -142,7 +130,7 @@ int distro_boot(struct udevice *dev, struct bootflow *bflow)
 	return 0;
 }
 
-struct bootmethod_ops distro_bmethod_ops = {
+static struct bootmethod_ops distro_bmethod_ops = {
 	.read_bootflow	= distro_read_bootflow,
 	.read_file	= distro_read_file,
 	.boot		= distro_boot,

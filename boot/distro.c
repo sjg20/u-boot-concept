@@ -19,15 +19,6 @@
 #include <pxe_utils.h>
 #include <vsprintf.h>
 
-/**
- * struct distro_info - useful information for distro_getfile()
- *
- * @bflow: bootflow being booted
- */
-struct distro_info {
-	struct bootflow *bflow;
-};
-
 static int distro_net_getfile(struct pxe_context *ctx, const char *file_path,
 			      char *file_addr, ulong *sizep)
 {
@@ -43,59 +34,6 @@ static int distro_net_getfile(struct pxe_context *ctx, const char *file_path,
 	ret = pxe_get_file_size(sizep);
 	if (ret)
 		return log_msg_ret("tftp", ret);
-
-	return 0;
-}
-
-int distro_net_setup(struct bootflow *bflow)
-{
-	const char *addr_str;
-	char fname[200];
-	char *bootdir;
-	ulong addr;
-	ulong size;
-	char *buf;
-	int ret;
-
-	addr_str = env_get("pxefile_addr_r");
-	if (!addr_str)
-		return log_msg_ret("pxeb", -EPERM);
-	addr = simple_strtoul(addr_str, NULL, 16);
-
-	bflow->type = BOOTFLOWT_DISTRO;
-	ret = pxe_get(addr, &bootdir, &size);
-	if (ret)
-		return log_msg_ret("pxeb", ret);
-	bflow->size = size;
-
-	/* Use the directory of the dhcp bootdir as our subdir, if provided */
-	if (bootdir) {
-		const char *last_slash;
-		int path_len;
-
-		last_slash = strrchr(bootdir, '/');
-		if (last_slash) {
-			path_len = (last_slash - bootdir) + 1;
-			bflow->subdir = malloc(path_len + 1);
-			memcpy(bflow->subdir, bootdir, path_len);
-			bflow->subdir[path_len] = '\0';
-		}
-	}
-	snprintf(fname, sizeof(fname), "%s%s",
-		 bflow->subdir ? bflow->subdir : "", DISTRO_FNAME);
-
-	bflow->fname = strdup(fname);
-	if (!bflow->fname)
-		return log_msg_ret("name", -ENOMEM);
-
-	bflow->state = BOOTFLOWST_LOADED;
-
-	/* Allocate the buffer, including the \0 byte added by get_pxe_file() */
-	buf = malloc(size + 1);
-	if (!buf)
-		return log_msg_ret("buf", -ENOMEM);
-	memcpy(buf, map_sysmem(addr, 0), size + 1);
-	bflow->buf = buf;
 
 	return 0;
 }
