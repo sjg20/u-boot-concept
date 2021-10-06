@@ -7,6 +7,7 @@
 #include <common.h>
 #include <blk.h>
 #include <bootdevice.h>
+#include <bootmethod.h>
 #include <distro.h>
 #include <dm.h>
 #include <bm_efi.h>
@@ -18,15 +19,12 @@
 #include <dm/uclass-internal.h>
 
 enum {
-	/* So far we only support distroboot and EFI_LOADER */
-	MAX_BOOTDEVICES			= 2,
-
 	/*
 	 * Set some sort of limit on the number of bootflows a bootdevice can
 	 * return. Note that for disks this limits the partitions numbers that
-	 * are scanned to 1..MAX_BOOTFLOWS_PER_BOOTDEVICE / MAX_BOOTDEVICES
+	 * are scanned to 1..MAX_BOOTFLOWS_PER_BOOTDEVICE
 	 */
-	MAX_BOOTFLOWS_PER_BOOTDEVICE	= 20 * MAX_BOOTDEVICES,
+	MAX_BOOTFLOWS_PER_BOOTDEVICE	= 100,
 };
 
 static const char *const bootdevice_state[BOOTFLOWST_COUNT] = {
@@ -207,20 +205,10 @@ int bootflow_next_glob(struct bootflow **bflowp)
 	return 0;
 }
 
-int bootdevice_get_bootflow(struct udevice *dev, struct bootdevice_iter *iter,
-			    struct bootflow *bflow)
+void bootflow_reset_iter(struct bootdevice_iter *iter, int flags)
 {
-	const struct bootdevice_ops *ops = bootdevice_get_ops(dev);
-
-	if (!ops->get_bootflow)
-		return -ENOSYS;
-	memset(bflow, '\0', sizeof(*bflow));
-	bflow->dev = dev;
-	bflow->hwpart = iter->hwpart;
-	bflow->part = iter->part;
-	bflow->method = iter->method;
-
-	return ops->get_bootflow(dev, bflow);
+	memset(iter, '\0', sizeof(*iter));
+	iter->flags = flags;
 }
 
 static void bootdevice_iter_set_dev(struct bootdevice_iter *iter,
@@ -274,9 +262,14 @@ static int iter_incr(struct bootdevice_iter *iter)
 
 
 /**
- * bootflow_scan() - Check if a bootflow can be obtained
+ * bootflow_check() - Check if a bootflow can be obtained
  *
- *
+ * @iter: Provides hwpart, part, method to get
+ * @bflow: Bootflow to update on success
+ * @return 0 if OK, -NOTTY if there is nothing there (try the next partition),
+ *	-ENOSYS if there is no bootflow support on this device, -ESHUTDOWN if
+ *	there are no more bootflows on this bootdevice, so the next bootdevice
+ *	should be tried
  */
 static int bootflow_check(struct bootdevice_iter *iter, struct bootflow *bflow)
 {
@@ -311,8 +304,10 @@ static int bootflow_check(struct bootdevice_iter *iter, struct bootflow *bflow)
 			return log_msg_ret("all", ret);
 
 		/* Try the next partition */
-		return -ENOENT;
+		return -ENOTTY;
 	}
+	if (ret)
+		return log_msg_ret("check", ret);
 
 	return 0;
 }
@@ -323,8 +318,7 @@ int bootflow_scan_first(struct bootdevice_iter *iter, int flags,
 	struct udevice *dev;
 	int ret;
 
-	memset(iter, '\0', sizeof(*iter));
-	iter->flags = flags;
+	bootflow_reset_iter(iter, flags);
 	ret = uclass_first_device_err(UCLASS_BOOTDEVICE, &dev);
 	if (ret)
 		return ret;
@@ -336,8 +330,11 @@ int bootflow_scan_first(struct bootdevice_iter *iter, int flags,
 		return log_msg_ret("meth", ret);
 
 	ret = bootdevice_get_bootflow(dev, iter, bflow);
-	if (ret)
-		return ret;
+	if (ret) {
+		ret = bootflow_scan_next(iter, bflow);
+
+		return log_msg_ret("get", ret);
+	}
 
 	return 0;
 }
@@ -355,13 +352,20 @@ int bootflow_scan_next(struct bootdevice_iter *iter, struct bootflow *bflow)
 		ret = bootflow_check(iter, bflow);
 		if (!ret)
 			return 0;
+		if (ret != -ESHUTDOWN && ret != -ENOSYS && ret != -ENOTTY) {
+			if (iter->flags & BOOTFLOWF_ALL)
+				return log_msg_ret("all", ret);
+
+			/* try the next one */
+			continue;
+		}
 
 		/* we got to the end of that bootdevice, try the next */
 		dev = iter->dev;
 		ret = uclass_next_device_err(&dev);
 		/* if there are no more bootdevices, give up */
 		if (ret)
-			return ret;
+			return log_msg_ret("next", ret);
 
 		bootdevice_iter_set_dev(iter, dev);
 	} while (1);
@@ -387,34 +391,26 @@ int bootdevice_bind(struct udevice *parent, const char *drv_name,
 	return 0;
 }
 
-int bootdevice_find_in_blk(struct udevice *dev, struct udevice *blk, int seq,
+int bootdevice_find_in_blk(struct udevice *dev, struct udevice *blk,
 			   struct bootflow *bflow)
 {
 	struct blk_desc *desc = dev_get_uclass_plat(blk);
 	struct disk_partition info;
-	bool done = false;
 	char name[60];
-
-	/*
-	 * TODO(sjg@chromium.org): Add a suitable parameter for the method
-	 * number. Needs to consider the renaming suggested in the cover letter
-	 */
-	int methodnum = seq % MAX_BOOTDEVICES;
-	int partnum = seq / MAX_BOOTDEVICES + 1;
 	int ret;
 
-	if (seq >= MAX_BOOTFLOWS_PER_BOOTDEVICE)
+	/* Sanity check */
+	if (bflow->part >= MAX_BOOTFLOWS_PER_BOOTDEVICE)
 		return log_msg_ret("max", -ESHUTDOWN);
 
 	bflow->blk = blk;
-	bflow->seq = seq;
-	snprintf(name, sizeof(name), "%s.part_%x", dev->name, partnum);
+	snprintf(name, sizeof(name), "%s.part_%x", dev->name, bflow->part);
 	bflow->name = strdup(name);
 	if (!bflow->name)
 		return log_msg_ret("name", -ENOMEM);
 
 	bflow->state = BOOTFLOWST_BASE;
-	ret = part_get_info(desc, partnum, &info);
+	ret = part_get_info(desc, bflow->part, &info);
 
 	/*
 	 * This error indicates the media is not present. Otherwise we just
@@ -427,69 +423,33 @@ int bootdevice_find_in_blk(struct udevice *dev, struct udevice *blk, int seq,
 		return log_msg_ret("part", ret);
 
 	bflow->state = BOOTFLOWST_PART;
-	bflow->part = partnum;
-	ret = fs_set_blk_dev_with_part(desc, partnum);
+	ret = fs_set_blk_dev_with_part(desc, bflow->part);
 #ifdef CONFIG_DOS_PARTITION
 	log_debug("%s: Found partition %x type %x fstype %d\n", blk->name,
-		  partnum, info.sys_ind, ret ? -1 : fs_get_type());
+		  bflow->part, info.sys_ind, ret ? -1 : fs_get_type());
 #endif
 	if (ret)
 		return log_msg_ret("fs", ret);
 
 	bflow->state = BOOTFLOWST_FS;
 
-	switch (methodnum) {
-	case 0:
-		if (CONFIG_IS_ENABLED(BOOTDEVICE_DISTRO)) {
-			done = true;
-			ret = distro_boot_setup(desc, partnum, bflow);
-			if (ret)
-				return log_msg_ret("distro", ret);
-		}
-		break;
-
-	case 1:
-		if (CONFIG_IS_ENABLED(BOOTDEVICE_EFILOADER)) {
-			done = true;
-			ret = efiloader_boot_setup(desc, partnum, bflow);
-			if (ret)
-				return log_msg_ret("efi_loader", ret);
-		}
-		break;
-	}
-	if (!done)
-		return log_msg_ret("supp", -ENOTSUPP);
+	ret = bootmethod_setup(bflow->method, bflow);
+	if (ret)
+		return log_msg_ret("method", ret);
 
 	return 0;
 }
 
 int bootflow_boot(struct bootflow *bflow)
 {
-	bool done = false;
 	int ret;
 
 	if (bflow->state != BOOTFLOWST_LOADED)
 		return log_msg_ret("load", -EPROTO);
 
-	switch (bflow->type) {
-	case BOOTFLOWT_DISTRO:
-		if (CONFIG_IS_ENABLED(BOOTDEVICE_DISTRO)) {
-			done = true;
-			ret = distro_boot(bflow);
-		}
-		break;
-	case BOOTFLOWT_EFILOADER:
-		if (CONFIG_IS_ENABLED(BOOTDEVICE_EFILOADER)) {
-			done = true;
-			ret = efiloader_boot(bflow);
-		}
-		break;
-	case BOOTFLOWT_COUNT:
-		break;
-	}
-
-	if (!done)
-		return log_msg_ret("type", -ENOSYS);
+	ret = bootmethod_boot(bflow->method, bflow);
+	if (ret)
+		return log_msg_ret("method", ret);
 
 	if (ret)
 		return log_msg_ret("boot", ret);
@@ -553,31 +513,3 @@ int bootdevice_setup_for_dev(struct udevice *parent, const char *drv_name)
 
 	return 0;
 }
-
-static int bootdevice_init(struct uclass *uc)
-{
-	struct bootflow_state *state = uclass_get_priv(uc);
-
-	INIT_LIST_HEAD(&state->glob_head);
-
-	return 0;
-}
-
-static int bootdevice_post_bind(struct udevice *dev)
-{
-	struct bootdevice_uc_plat *ucp = dev_get_uclass_plat(dev);
-
-	INIT_LIST_HEAD(&ucp->bootflow_head);
-
-	return 0;
-}
-
-UCLASS_DRIVER(bootdevice) = {
-	.id		= UCLASS_BOOTDEVICE,
-	.name		= "bootdevice",
-	.flags		= DM_UC_FLAG_SEQ_ALIAS,
-	.priv_auto	= sizeof(struct bootflow_state),
-	.per_device_plat_auto	= sizeof(struct bootdevice_uc_plat),
-	.init		= bootdevice_init,
-	.post_bind	= bootdevice_post_bind,
-};

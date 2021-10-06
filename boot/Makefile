@@ -22,8 +22,9 @@ endif
 obj-y += image.o
 obj-$(CONFIG_ANDROID_AB) += android_ab.o
 obj-$(CONFIG_ANDROID_BOOT_IMAGE) += image-android.o image-android-dt.o
+obj-$(CONFIG_$(SPL_TPL_)BOOTDEVICE) += bdevice-uclass.o bmethod-uclass.o
 obj-$(CONFIG_$(SPL_TPL_)BOOTDEVICE) += bootdevice.o
-obj-$(CONFIG_$(SPL_TPL_)BOOTDEVICE_DISTRO) += distro.o
+obj-$(CONFIG_$(SPL_TPL_)BOOTDEVICE_DISTRO) += bmethod_distro.o
 obj-$(CONFIG_$(SPL_TPL_)BOOTDEVICE_EFILOADER) += efiloader.o
 obj-$(CONFIG_$(SPL_TPL_)OF_LIBFDT) += image-fdt.o
 obj-$(CONFIG_$(SPL_TPL_)FIT_SIGNATURE) += fdt_region.o

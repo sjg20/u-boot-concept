@@ -178,6 +178,8 @@ struct bootdevice_ops {
 int bootdevice_get_bootflow(struct udevice *dev, struct bootdevice_iter *iter,
 			    struct bootflow *bflow);
 
+void bootflow_reset_iter(struct bootdevice_iter *iter, int flags);
+
 /**
  * bootflow_scan_first() - find the first bootflow
  *
@@ -222,12 +224,11 @@ int bootdevice_bind(struct udevice *parent, const char *drv_name,
  *
  * @dev: Bootflow device associated with this block device
  * @blk: Block device to search
- * @seq: Sequence number within block device, used as the partition number,
- *	after adding 1
- * @bflow:	Returns bootflow if found
+ * @bflow: On entry, provides information about the partition and device to
+ *	check. On exit, returns bootflow if found
  * @return 0 if found, -ESHUTDOWN if no more bootflows, other -ve on error
  */
-int bootdevice_find_in_blk(struct udevice *dev, struct udevice *blk, int seq,
+int bootdevice_find_in_blk(struct udevice *dev, struct udevice *blk,
 			   struct bootflow *bflow);
 
 /**

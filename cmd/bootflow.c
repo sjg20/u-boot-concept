@@ -163,6 +163,7 @@ static int do_bootflow_scan(struct cmd_tbl *cmdtp, int flag, int argc,
 	bool all = false, boot = false, errors = false, list = false;
 	int num_valid = 0;
 	int ret, i;
+	int flags;
 
 	if (argc > 1 && *argv[1] == '-') {
 		all = strchr(argv[1], 'a');
@@ -177,6 +178,12 @@ static int do_bootflow_scan(struct cmd_tbl *cmdtp, int flag, int argc,
 	dev = state->cur_bootdevice;
 	state->cur_bootflow = NULL;
 
+	flags = 0;
+	if (list)
+		flags |= BOOTFLOWF_SHOW;
+	if (all)
+		flags |= BOOTFLOWF_ALL;
+
 	/*
 	 * If we have a device, just scan for bootflows attached to that device
 	 */
@@ -187,8 +194,9 @@ static int do_bootflow_scan(struct cmd_tbl *cmdtp, int flag, int argc,
 			show_header();
 		}
 		bootdevice_clear_bootflows(dev);
+		bootflow_reset_iter(&iter, 0);
 		for (i = 0, ret = 0; i < 100 && ret != -ESHUTDOWN; i++) {
-			ret = bootdevice_get_bootflow(dev, i, &bflow);
+			ret = bootdevice_get_bootflow(dev, &iter, &bflow);
 			if ((ret && !all) || ret == -ESHUTDOWN) {
 				bootflow_free(&bflow);
 				continue;
@@ -206,17 +214,13 @@ static int do_bootflow_scan(struct cmd_tbl *cmdtp, int flag, int argc,
 				bootflow_run_boot(&bflow);
 		}
 	} else {
-		int flags = 0;
 
 		if (list) {
 			printf("Scanning for bootflows in all bootdevices\n");
 			show_header();
 		}
 		bootdevice_clear_glob();
-		if (list)
-			flags |= BOOTFLOWF_SHOW;
-		if (all)
-			flags |= BOOTFLOWF_ALL;
+
 		for (i = 0,
 		     ret = bootflow_scan_first(&iter, flags, &bflow);
 		     i < 1000 && ret != -ENODEV;
