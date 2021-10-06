@@ -433,7 +433,7 @@ int bootdevice_find_in_blk(struct udevice *dev, struct udevice *blk,
 
 	bflow->state = BOOTFLOWST_FS;
 
-	ret = bootmethod_setup(bflow->method, bflow);
+	ret = bootmethod_read_bootflow(bflow->method, bflow);
 	if (ret)
 		return log_msg_ret("method", ret);
 

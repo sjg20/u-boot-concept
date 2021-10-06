@@ -16,6 +16,22 @@
 		#sound-dai-cells = <1>;
 	};
 
+	bootmethods {
+		compatible = "simple-bus";
+
+		syslinux {
+			compatible = "u-boot,distro-syslinux";
+		};
+
+		pxe {
+			compatible = "u-boot,distro-syslinux";
+		};
+
+		efi {
+			compatible = "u-boot,distro-syslinux";
+		};
+	};
+
 	buttons {
 		compatible = "gpio-keys";
 

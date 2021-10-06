@@ -8,24 +8,35 @@
 #include <bootmethod.h>
 #include <dm.h>
 
-int bootmethod_setup(struct udevice *dev, struct bootflow *bflow)
+int bootmethod_read_bootflow(struct udevice *dev, struct bootflow *bflow)
 {
 	const struct bootmethod_ops *ops = bootmethod_get_ops(dev);
 
-	if (!ops->setup)
+	if (!ops->read_bootflow)
 		return -ENOSYS;
 
-	return ops->setup(dev, bflow);
+	return ops->read_bootflow(dev, bflow);
 }
 
 int bootmethod_boot(struct udevice *dev, struct bootflow *bflow)
 {
 	const struct bootmethod_ops *ops = bootmethod_get_ops(dev);
 
-	if (!ops->setup)
+	if (!ops->boot)
 		return -ENOSYS;
 
 	return ops->boot(dev, bflow);
+}
+
+int bootmethod_read_file(struct udevice *dev, struct bootflow *bflow,
+			 const char *file_path, ulong addr, ulong *sizep)
+{
+	const struct bootmethod_ops *ops = bootmethod_get_ops(dev);
+
+	if (!ops->read_file)
+		return -ENOSYS;
+
+	return ops->read_file(dev, bflow, file_path, addr, sizep);
 }
 
 UCLASS_DRIVER(bootmethod) = {

@@ -16,14 +16,31 @@ struct bootflow;
  */
 struct bootmethod_ops {
 	/**
-	 * setup() - set up a bootflow for a device
+	 * read_bootflow() - read a bootflow for a device
 	 *
-	 * @dev:	Bootmethod device to check
+	 * @dev:	Bootmethod device to use
 	 * @bflow:	On entry, provides dev, hwpart, part and method.
 	 *	Returns updated bootflow if found
 	 * @return 0 if OK, -ve on error
 	 */
-	int (*setup)(struct udevice *dev, struct bootflow *bflow);
+	int (*read_bootflow)(struct udevice *dev, struct bootflow *bflow);
+
+	/**
+	 * read_file() - read a file needed for a bootflow
+	 *
+	 * Read a file from the same place as the bootflow came from
+	 *
+	 * @dev:	Bootmethod device to use
+	 * @bflow:	Bootflow providing info on where to read from
+	 * @file_path:	Path to file (may be absolute or relative)
+	 * @addr:	Address to load file
+	 * @sizep:	On entry provides the maximum permitted size; on exit
+	 *		returns the size of the file
+	 * @return 0 if OK, -ENOSPC if the file is too large for @sizep, other
+	 *	-ve value if something else goes wrong
+	 */
+	int (*read_file)(struct udevice *dev, struct bootflow *bflow,
+			 const char *file_path, ulong addr, ulong *sizep);
 
 	/**
 	 * boot() - boot a bootflow
@@ -40,14 +57,31 @@ struct bootmethod_ops {
 #define bootmethod_get_ops(dev)  ((struct bootmethod_ops *)(dev)->driver->ops)
 
 /**
- * bootmethod_setup() - set up a bootflow for a device
+ * bootmethod_read_bootflow() - set up a bootflow for a device
  *
  * @dev:	Bootmethod device to check
  * @bflow:	On entry, provides dev, hwpart, part and method.
  *	Returns updated bootflow if found
  * @return 0 if OK, -ve on error
  */
-int bootmethod_setup(struct udevice *dev, struct bootflow *bflow);
+int bootmethod_read_bootflow(struct udevice *dev, struct bootflow *bflow);
+
+/**
+ * bootmethod_read_file() - read a file needed for a bootflow
+ *
+ * Read a file from the same place as the bootflow came from
+ *
+ * @dev:	Bootmethod device to use
+ * @bflow:	Bootflow providing info on where to read from
+ * @file_path:	Path to file (may be absolute or relative)
+ * @addr:	Address to load file
+ * @sizep:	On entry provides the maximum permitted size; on exit
+ *		returns the size of the file
+ * @return 0 if OK, -ENOSPC if the file is too large for @sizep, other
+ *	-ve value if something else goes wrong
+ */
+int bootmethod_read_file(struct udevice *dev, struct bootflow *bflow,
+			 const char *file_path, ulong addr, ulong *sizep);
 
 /**
  * bootmethod_boot() - boot a bootflow
