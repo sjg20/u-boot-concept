@@ -281,6 +281,7 @@ static int iter_incr(struct bootdevice_iter *iter)
 static int bootflow_check(struct bootdevice_iter *iter, struct bootflow *bflow)
 {
 	struct udevice *dev;
+	int ret;
 
 	dev = iter->dev;
 	ret = bootdevice_get_bootflow(dev, iter, bflow);
@@ -310,7 +311,7 @@ static int bootflow_check(struct bootdevice_iter *iter, struct bootflow *bflow)
 			return log_msg_ret("all", ret);
 
 		/* Try the next partition */
-		continue;
+		return -ENOENT;
 	}
 
 	return 0;
