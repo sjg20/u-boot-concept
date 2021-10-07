@@ -43,6 +43,10 @@ int distro_read_bootflow(struct udevice *dev, struct bootflow *bflow)
 	char *buf;
 	int ret;
 
+	/* We require a partition table */
+	if (!bflow->part)
+		return -ENOENT;
+
 	bflow->fname = strdup(DISTRO_FNAME);
 	if (!bflow->fname)
 		return log_msg_ret("name", -ENOMEM);

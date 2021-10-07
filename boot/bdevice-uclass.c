@@ -18,10 +18,9 @@ int bootdevice_get_bootflow(struct udevice *dev, struct bootflow_iter *iter,
 		return -ENOSYS;
 	memset(bflow, '\0', sizeof(*bflow));
 	bflow->dev = dev;
-	bflow->part = iter->part;
 	bflow->method = iter->method;
 
-	return ops->get_bootflow(dev, bflow);
+	return ops->get_bootflow(dev, iter, bflow);
 }
 
 static int bootdevice_init(struct uclass *uc)

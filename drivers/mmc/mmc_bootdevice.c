@@ -11,7 +11,8 @@
 #include <dm.h>
 #include <mmc.h>
 
-static int mmc_get_bootflow(struct udevice *dev, struct bootflow *bflow)
+static int mmc_get_bootflow(struct udevice *dev, struct bootflow_iter *iter,
+			    struct bootflow *bflow)
 {
 	struct udevice *mmc_dev = dev_get_parent(dev);
 	struct udevice *blk;
@@ -27,7 +28,7 @@ static int mmc_get_bootflow(struct udevice *dev, struct bootflow *bflow)
 	if (ret)
 		return log_msg_ret("blk", ret);
 	assert(blk);
-	ret = bootdevice_find_in_blk(dev, blk, bflow);
+	ret = bootdevice_find_in_blk(dev, blk, iter, bflow);
 	if (ret)
 		return log_msg_ret("find", ret);
 

@@ -78,10 +78,6 @@
 			compatible = "u-boot,distro-syslinux";
 		};
 
-		pxe {
-			compatible = "u-boot,distro-pxe";
-		};
-
 		efi {
 			compatible = "u-boot,distro-efi";
 		};

@@ -142,7 +142,7 @@ int bootdevice_bind(struct udevice *parent, const char *drv_name,
 }
 
 int bootdevice_find_in_blk(struct udevice *dev, struct udevice *blk,
-			   struct bootflow *bflow)
+			   struct bootflow_iter *iter, struct bootflow *bflow)
 {
 	struct blk_desc *desc = dev_get_uclass_plat(blk);
 	struct disk_partition info;
@@ -150,7 +150,7 @@ int bootdevice_find_in_blk(struct udevice *dev, struct udevice *blk,
 	int ret;
 
 	/* Sanity check */
-	if (bflow->part >= MAX_PART_PER_BOOTDEVICE)
+	if (iter->part >= MAX_PART_PER_BOOTDEVICE)
 		return log_msg_ret("max", -ESHUTDOWN);
 
 	bflow->blk = blk;
@@ -160,32 +160,46 @@ int bootdevice_find_in_blk(struct udevice *dev, struct udevice *blk,
 		return log_msg_ret("name", -ENOMEM);
 
 	bflow->state = BOOTFLOWST_BASE;
-	ret = part_get_info(desc, bflow->part, &info);
+	bflow->part = iter->part;
+
+	/*
+	 * partition numbers start at 0 so this cannot succeed, but it can tell
+	 * us whether there is valid media there
+	 */
+	ret = part_get_info(desc, iter->part, &info);
+	if (!iter->part && ret == -EPROTONOSUPPORT)
+		ret = 0;
 
 	/*
 	 * This error indicates the media is not present. Otherwise we just
 	 * blindly scan the next partition. We could be more intelligent here
 	 * and check which partition numbers actually exist.
 	 */
-	if (ret != -EOPNOTSUPP)
-		bflow->state = BOOTFLOWST_MEDIA;
-	else
+	if (ret == -EOPNOTSUPP)
 		ret = -ESHUTDOWN;
+	else
+		bflow->state = BOOTFLOWST_MEDIA;
 	if (ret)
 		return log_msg_ret("part", ret);
 
-	ret = fs_set_blk_dev_with_part(desc, bflow->part);
-	if (ret == -EPROTONOSUPPORT) /* no partition table */
-		return log_msg_ret("set", -ESHUTDOWN);
-	bflow->state = BOOTFLOWST_PART;
-#ifdef CONFIG_DOS_PARTITION
-	log_debug("%s: Found partition %x type %x fstype %d\n", blk->name,
-		  bflow->part, info.sys_ind, ret ? -1 : fs_get_type());
-#endif
-	if (ret)
-		return log_msg_ret("fs", ret);
+	/*
+	 * Currently we don't get the number of partitions, so just
+	 * assume a large number
+	 */
+	iter->max_part = MAX_PART_PER_BOOTDEVICE;
 
-	bflow->state = BOOTFLOWST_FS;
+	if (iter->part) {
+		ret = fs_set_blk_dev_with_part(desc, bflow->part);
+		bflow->state = BOOTFLOWST_PART;
+#ifdef CONFIG_DOS_PARTITION
+		log_debug("%s: Found partition %x type %x fstype %d\n",
+			  blk->name, bflow->part, info.sys_ind,
+			  ret ? -1 : fs_get_type());
+#endif
+		if (ret)
+			return log_msg_ret("fs", ret);
+		bflow->state = BOOTFLOWST_FS;
+	}
 
 	ret = bootmethod_read_bootflow(bflow->method, bflow);
 	if (ret)

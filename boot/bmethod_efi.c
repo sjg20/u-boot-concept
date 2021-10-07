@@ -120,6 +120,10 @@ int distro_efi_read_bootflow(struct udevice *dev, struct bootflow *bflow)
 	loff_t size;
 	int ret;
 
+	/* We require a partition table */
+	if (!bflow->part)
+		return -ENOENT;
+
 	strcpy(fname, EFI_DIRNAME);
 	ret = get_efi_leafname(fname + strlen(fname),
 			       sizeof(fname) - strlen(fname));

@@ -43,7 +43,7 @@ struct bootdevice_uc_plat {
 };
 
 /**
- * struct bootdevice_ops - Operations for the Platform Controller Hub
+ * struct bootdevice_ops - Operations for the bootdevice uclass
  *
  * Consider using ioctl() to add rarely used or driver-specific operations.
  */
@@ -52,13 +52,15 @@ struct bootdevice_ops {
 	 * get_bootflow() - get a bootflow
 	 *
 	 * @dev:	Bootflow device to check
-	 * @bflow:	On entry, provides dev, hwpart, part and method.
-	 *	Returns updated bootflow if found
+	 * @iter:	Provides current dev, part, method to get. Should update
+	 *	max_part if there is a partition table
+	 * @bflow:	Updated bootflow if found
 	 * @return 0 if OK, -ESHUTDOWN if there are no more bootflows on this
 	 *	device, -ENOSYS if this device doesn't support bootflows,
 	 *	other -ve value on other error
 	 */
-	int (*get_bootflow)(struct udevice *dev, struct bootflow *bflow);
+	int (*get_bootflow)(struct udevice *dev, struct bootflow_iter *iter,
+			    struct bootflow *bflow);
 };
 
 #define bootdevice_get_ops(dev)  ((struct bootdevice_ops *)(dev)->driver->ops)
@@ -67,7 +69,7 @@ struct bootdevice_ops {
  * bootdevice_get_bootflow() - get a bootflow
  *
  * @dev:	Bootflow device to check
- * @iter:	Provides current hwpart, part, method to get
+ * @iter:	Provides current  part, method to get
  * @bflow:	Returns bootflow if found
  * @return 0 if OK, -ESHUTDOWN if there are no more bootflows on this device,
  *	-ENOSYS if this device doesn't support bootflows, other -ve value on
@@ -92,12 +94,14 @@ int bootdevice_bind(struct udevice *parent, const char *drv_name,
  *
  * @dev: Bootflow device associated with this block device
  * @blk: Block device to search
+ * @iter:	Provides current dev, part, method to get. Should update
+ *	max_part if there is a partition table
  * @bflow: On entry, provides information about the partition and device to
  *	check. On exit, returns bootflow if found
  * @return 0 if found, -ESHUTDOWN if no more bootflows, other -ve on error
  */
 int bootdevice_find_in_blk(struct udevice *dev, struct udevice *blk,
-			   struct bootflow *bflow);
+			   struct bootflow_iter *iter, struct bootflow *bflow);
 
 /**
  * bootdevice_list() - List all available bootdevices
