@@ -719,6 +719,7 @@ F:	cmd/bootefi.c
 F:	cmd/efidebug.c
 F:	cmd/nvedit_efi.c
 F:	tools/efivar.py
+F:	tools/fdtsig.sh
 F:	tools/file2include.c
 F:	tools/mkeficapsule.c
 
