@@ -368,8 +368,8 @@ Run the following command to create and sign the capsule file::
       --private-key CRT.key \
       --certificate CRT.crt \
       --index 1 --instance 0 \
-      [--fit <FIT image> | --raw <raw image>] \
-      <capsule_file_name>
+      [--fit | --raw | --guid <guid-string] \
+      <image_blob> <capsule_file_name>
 
 Executing the boot manager
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
