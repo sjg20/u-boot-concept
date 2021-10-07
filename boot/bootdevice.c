@@ -21,11 +21,11 @@
 
 enum {
 	/*
-	 * Set some sort of limit on the number of bootflows a bootdevice can
-	 * return. Note that for disks this limits the partitions numbers that
+	 * Set some sort of limit on the number of partitions a bootdevice can
+	 * have. Note that for disks this limits the partitions numbers that
 	 * are scanned to 1..MAX_BOOTFLOWS_PER_BOOTDEVICE
 	 */
-	MAX_BOOTFLOWS_PER_BOOTDEVICE	= 100,
+	MAX_PART_PER_BOOTDEVICE		= 30,
 };
 
 int bootdevice_get_state(struct bootdevice_state **statep)
@@ -150,7 +150,7 @@ int bootdevice_find_in_blk(struct udevice *dev, struct udevice *blk,
 	int ret;
 
 	/* Sanity check */
-	if (bflow->part >= MAX_BOOTFLOWS_PER_BOOTDEVICE)
+	if (bflow->part >= MAX_PART_PER_BOOTDEVICE)
 		return log_msg_ret("max", -ESHUTDOWN);
 
 	bflow->blk = blk;

@@ -11,11 +11,6 @@
 #include <dm.h>
 #include <malloc.h>
 
-static const char *const bootdevice_type[BOOTFLOWT_COUNT] = {
-	"distro-boot",
-	"efi-loader",
-};
-
 static const char *const bootflow_state[BOOTFLOWST_COUNT] = {
 	"base",
 	"media",
@@ -24,14 +19,6 @@ static const char *const bootflow_state[BOOTFLOWST_COUNT] = {
 	"file",
 	"loaded",
 };
-
-const char *bootflow_type_get_name(enum bootflow_type_t type)
-{
-	if (type < 0 || type >= BOOTFLOWT_COUNT)
-		return "?";
-
-	return bootdevice_type[type];
-}
 
 const char *bootflow_state_get_name(enum bootflow_state_t state)
 {
@@ -100,7 +87,7 @@ static void bootflow_iter_set_dev(struct bootflow_iter *iter,
 /**
  * iter_incr() - Move to the next item (hwpart, part, method) in the iterator
  *
- * @return 0 if OK, -ENOENT if there are no more in this bootmethod
+ * @return 0 if OK, -ESHUTDOWN if there are no more in this bootdevice
  */
 static int iter_incr(struct bootflow_iter *iter)
 {
@@ -114,7 +101,7 @@ static int iter_incr(struct bootflow_iter *iter)
 	/* No more bootmethods; start at the first one, and... */
 	ret = uclass_first_device_err(UCLASS_BOOTMETHOD, &iter->method);
 	if (ret)
-		return -ESHUTDOWN;
+		return -ESHUTDOWN;  /* should not happen, but just in case */
 
 	/* ...select next hardware partition */
 	if (++iter->hwpart <= iter->max_hw_part)
@@ -202,11 +189,17 @@ int bootflow_scan_first(struct bootflow_iter *iter, int flags,
 	if (ret)
 		return log_msg_ret("meth", ret);
 
-	ret = bootdevice_get_bootflow(dev, iter, bflow);
+	ret = bootflow_check(iter, bflow);
 	if (ret) {
+		if (ret != -ESHUTDOWN && ret != -ENOSYS &&
+		    ret != -ENOTTY) {
+			if (iter->flags & BOOTFLOWF_ALL)
+				return log_msg_ret("all", ret);
+		}
+		iter->err = ret;
 		ret = bootflow_scan_next(iter, bflow);
-
-		return log_msg_ret("get", ret);
+		if (ret)
+			return log_msg_ret("get", ret);
 	}
 
 	return 0;
@@ -222,15 +215,18 @@ int bootflow_scan_next(struct bootflow_iter *iter, struct bootflow *bflow)
 		if (ret && ret != -ESHUTDOWN)
 			return ret;
 
-		ret = bootflow_check(iter, bflow);
-		if (!ret)
-			return 0;
-		if (ret != -ESHUTDOWN && ret != -ENOSYS && ret != -ENOTTY) {
-			if (iter->flags & BOOTFLOWF_ALL)
-				return log_msg_ret("all", ret);
+		if (!ret) {
+			ret = bootflow_check(iter, bflow);
+			if (!ret)
+				return 0;
+			if (ret != -ESHUTDOWN && ret != -ENOSYS &&
+			    ret != -ENOTTY) {
+				if (iter->flags & BOOTFLOWF_ALL)
+					return log_msg_ret("all", ret);
 
-			/* try the next one */
-			continue;
+				/* try the next one */
+				continue;
+			}
 		}
 
 		/* we got to the end of that bootdevice, try the next */

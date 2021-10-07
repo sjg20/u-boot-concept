@@ -126,7 +126,6 @@ int distro_efi_read_bootflow(struct udevice *dev, struct bootflow *bflow)
 	if (ret)
 		return log_msg_ret("leaf", ret);
 
-	bflow->type = BOOTFLOWT_EFILOADER;
 	bflow->fname = strdup(fname);
 	if (!bflow->fname)
 		return log_msg_ret("name", -ENOMEM);

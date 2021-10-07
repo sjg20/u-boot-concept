@@ -51,7 +51,6 @@ int distro_pxe_read_bootflow(struct udevice *dev, struct bootflow *bflow)
 		return log_msg_ret("pxeb", -EPERM);
 	addr = simple_strtoul(addr_str, NULL, 16);
 
-	bflow->type = BOOTFLOWT_DISTRO;
 	ret = pxe_get(addr, &bootdir, &size);
 	if (ret)
 		return log_msg_ret("pxeb", ret);

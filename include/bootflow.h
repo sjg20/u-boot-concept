@@ -23,13 +23,6 @@ enum bootflow_state_t {
 	BOOTFLOWST_COUNT
 };
 
-enum bootflow_type_t {
-	BOOTFLOWT_DISTRO,	/**< Distro boot */
-	BOOTFLOWT_EFILOADER,	/**< EFI loader boot */
-
-	BOOTFLOWT_COUNT,
-};
-
 /**
  * struct bootflow - information about a bootflow
  *
@@ -68,7 +61,6 @@ struct bootflow {
 	int part;
 	struct udevice *method;
 	char *name;
-	enum bootflow_type_t type;
 	enum bootflow_state_t state;
 	char *subdir;
 	char *fname;
@@ -103,6 +95,10 @@ enum bootflow_flags_t {
  *	hardware partitions
  * @max_part: Maximum hardware partition number in @dev, 0 if there is no
  *	partition table
+ * @err: Error obtained from checking the last iteration. This is used to skip
+ *	forward (e.g. to skip the current partition because it is not valid)
+ *	-ENOTTY: try next partition
+ *	-ESHUTDOWN: try next bootdevice
  */
 struct bootflow_iter {
 	int flags;
@@ -112,6 +108,7 @@ struct bootflow_iter {
 	struct udevice *method;
 	int max_hw_part;
 	int max_part;
+	int err;
 };
 
 /**
@@ -199,14 +196,6 @@ int bootflow_boot(struct bootflow *bflow);
  * @return name, or "?" if invalid
  */
 const char *bootflow_state_get_name(enum bootflow_state_t state);
-
-/**
- * bootflow_type_get_name() - Get the name of a bootflow state
- *
- * @type: Type to check
- * @return name, or "?" if invalid
- */
-const char *bootflow_type_get_name(enum bootflow_type_t type);
 
 void bootflow_remove(struct bootflow *bflow);
 

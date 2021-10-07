@@ -28,7 +28,7 @@ static void report_bootflow_err(struct bootflow *bflow, int err)
 	if (!err)
 		return;
 
-	/* Indent out to 'Type' */
+	/* Indent out to 'Method' */
 	printf("     ** ");
 
 	switch (bflow->state) {
@@ -67,8 +67,7 @@ static void report_bootflow_err(struct bootflow *bflow, int err)
 static void show_bootflow(int index, struct bootflow *bflow, bool errors)
 {
 	printf("%3x  %-11s  %-6s  %-9.9s %4x  %-25.25s %s\n", index,
-	       bootflow_type_get_name(bflow->type),
-	       bootflow_state_get_name(bflow->state),
+	       bflow->method->name, bootflow_state_get_name(bflow->state),
 	       dev_get_uclass_name(dev_get_parent(bflow->dev)), bflow->part,
 	       bflow->name, bflow->fname);
 	if (errors)
@@ -77,7 +76,7 @@ static void show_bootflow(int index, struct bootflow *bflow, bool errors)
 
 static void show_header(void)
 {
-	printf("Seq  Type         State   Uclass    Part  Name                      Filename\n");
+	printf("Seq  Method       State   Uclass    Part  Name                      Filename\n");
 	printf("---  -----------  ------  --------  ----  ------------------------  ----------------\n");
 }
 
@@ -143,8 +142,7 @@ static int bootflow_run_boot(struct bootflow *bflow)
 		       bootflow_state_get_name(bflow->state));
 		break;
 	case -ENOSYS:
-		printf("Boot type '%s' not supported\n",
-		       bootflow_type_get_name(bflow->type));
+		printf("Boot method '%s' not supported\n", bflow->method->name);
 		break;
 	default:
 		printf("Boot failed (err=%d)\n", ret);
@@ -332,7 +330,7 @@ static int do_bootflow_info(struct cmd_tbl *cmdtp, int flag, int argc,
 	printf("Device:    %s\n", bflow->dev->name);
 	printf("Block dev: %s\n", bflow->blk ? bflow->blk->name : "(none)");
 	printf("Sequence:  %d\n", bflow->seq);
-	printf("Type:      %s\n", bootflow_type_get_name(bflow->type));
+	printf("Method:    %s\n", bflow->method->name);
 	printf("State:     %s\n", bootflow_state_get_name(bflow->state));
 	printf("Partition: %d\n", bflow->part);
 	printf("Subdir:    %s\n", bflow->subdir ? bflow->subdir : "(none)");
