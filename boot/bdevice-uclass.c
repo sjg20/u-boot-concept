@@ -18,7 +18,6 @@ int bootdevice_get_bootflow(struct udevice *dev, struct bootflow_iter *iter,
 		return -ENOSYS;
 	memset(bflow, '\0', sizeof(*bflow));
 	bflow->dev = dev;
-	bflow->hwpart = iter->hwpart;
 	bflow->part = iter->part;
 	bflow->method = iter->method;
 

@@ -11,6 +11,13 @@
 #include <dm.h>
 #include <malloc.h>
 
+/* error codes used to signal running out of things */
+enum {
+	BF_NO_MORE_METHODS	= -ENOTTY,
+	BF_NO_MORE_PARTS	= -ESHUTDOWN,
+	BF_NO_MORE_DEVICES	= -ENODEV,
+};
+
 static const char *const bootflow_state[BOOTFLOWST_COUNT] = {
 	"base",
 	"media",
@@ -85,51 +92,59 @@ static void bootflow_iter_set_dev(struct bootflow_iter *iter,
 }
 
 /**
- * iter_incr() - Move to the next item (hwpart, part, method) in the iterator
+ * iter_incr() - Move to the next item (method, part, bootdevice)
  *
- * @return 0 if OK, -ESHUTDOWN if there are no more in this bootdevice
+ * @return 0 if OK, BF_NO_MORE_DEVICES if there are no more bootdevices
  */
 static int iter_incr(struct bootflow_iter *iter)
 {
+	struct udevice *dev;
 	int ret;
 
-	/* Get the next boothmethod */
-	ret = uclass_next_device_err(&iter->method);
-	if (!ret)
-		return 0;
+	if (iter->err == BF_NO_MORE_DEVICES)
+		return BF_NO_MORE_DEVICES;
+
+	if (iter->err != BF_NO_MORE_PARTS && iter->err != BF_NO_MORE_METHODS) {
+		/* Get the next boothmethod */
+		ret = uclass_next_device_err(&iter->method);
+		if (!ret)
+			return 0;
+	}
 
 	/* No more bootmethods; start at the first one, and... */
 	ret = uclass_first_device_err(UCLASS_BOOTMETHOD, &iter->method);
-	if (ret)
-		return -ESHUTDOWN;  /* should not happen, but just in case */
+	if (ret)  /* should not happen, but just in case */
+		return BF_NO_MORE_DEVICES;
 
-	/* ...select next hardware partition */
-	if (++iter->hwpart <= iter->max_hw_part)
-		return 0;
-
-	/* No more hardware partitions; start at the first one and... */
-	iter->hwpart = 0;
-
-	/* ...select next partition  */
-	if (++iter->part <= iter->max_part)
-		return 0;
+	if (iter->err != BF_NO_MORE_PARTS) {
+		/* ...select next partition  */
+		if (++iter->part <= iter->max_part)
+			return 0;
+	}
 
 	/* No more partitions; start at the first one and...*/
 	iter->part = 0;
 
 	/* ...select next bootdevice */
-	return -ESHUTDOWN;
+	dev = iter->dev;
+	ret = uclass_next_device_err(&dev);
+
+	/* if there are no more bootdevices, give up */
+	if (ret)
+		return log_msg_ret("next", BF_NO_MORE_DEVICES);
+
+	bootflow_iter_set_dev(iter, dev);
+
+	return 0;
 }
 
 /**
  * bootflow_check() - Check if a bootflow can be obtained
  *
- * @iter: Provides hwpart, part, method to get
+ * @iter: Provides part, method to get
  * @bflow: Bootflow to update on success
- * @return 0 if OK, -NOTTY if there is nothing there (try the next partition),
- *	-ENOSYS if there is no bootflow support on this device, -ESHUTDOWN if
- *	there are no more bootflows on this bootdevice, so the next bootdevice
- *	should be tried
+ * @return 0 if OK, -ENOSYS if there is no bootflow support on this device,
+ *	BF_NO_MORE_PARTS if there are no more partitions on bootdevice
  */
 static int bootflow_check(struct bootflow_iter *iter, struct bootflow *bflow)
 {
@@ -141,30 +156,24 @@ static int bootflow_check(struct bootflow_iter *iter, struct bootflow *bflow)
 
 	/* If we got a valid bootflow, return it */
 	if (!ret) {
-		log_debug("Bootdevice '%s' hwpart %d part %d method '%s': Found bootflow\n",
-			  dev->name, iter->hwpart, iter->part,
-			  iter->method->name);
+		log_debug("Bootdevice '%s' part %d method '%s': Found bootflow\n",
+			  dev->name, iter->part, iter->method->name);
 		return 0;
 	}
 
 	/*
-	 * Unless there are no more partitions or no bootflow support,
-	 * try the next partition. If we run out of partitions, fall
-	 * through to select the next device.
+	 * Unless there is nothing more to try, fall through to select the next
+	 * device.
 	 */
-	else if (ret != -ESHUTDOWN && ret != -ENOSYS) {
-		log_debug("Bootdevice '%s' hwpart %d part %d method '%s': Error %d\n",
-			  dev->name, iter->hwpart, iter->part,
-			  iter->method->name, ret);
+	else if (ret != BF_NO_MORE_PARTS && ret != -ENOSYS) {
+		log_debug("Bootdevice '%s' part %d method '%s': Error %d\n",
+			  dev->name, iter->part, iter->method->name, ret);
 		/*
 		 * For 'all' we return all bootflows, even
 		 * those with errors
 		 */
 		if (iter->flags & BOOTFLOWF_ALL)
 			return log_msg_ret("all", ret);
-
-		/* Try the next partition */
-		return -ENOTTY;
 	}
 	if (ret)
 		return log_msg_ret("check", ret);
@@ -191,8 +200,7 @@ int bootflow_scan_first(struct bootflow_iter *iter, int flags,
 
 	ret = bootflow_check(iter, bflow);
 	if (ret) {
-		if (ret != -ESHUTDOWN && ret != -ENOSYS &&
-		    ret != -ENOTTY) {
+		if (ret != BF_NO_MORE_PARTS && ret != -ENOSYS) {
 			if (iter->flags & BOOTFLOWF_ALL)
 				return log_msg_ret("all", ret);
 		}
@@ -207,36 +215,26 @@ int bootflow_scan_first(struct bootflow_iter *iter, int flags,
 
 int bootflow_scan_next(struct bootflow_iter *iter, struct bootflow *bflow)
 {
-	struct udevice *dev;
 	int ret;
 
 	do {
 		ret = iter_incr(iter);
-		if (ret && ret != -ESHUTDOWN)
-			return ret;
+		if (ret == BF_NO_MORE_DEVICES)
+			return log_msg_ret("done", ret);
 
 		if (!ret) {
 			ret = bootflow_check(iter, bflow);
 			if (!ret)
 				return 0;
-			if (ret != -ESHUTDOWN && ret != -ENOSYS &&
-			    ret != -ENOTTY) {
+			iter->err = ret;
+			if (ret != BF_NO_MORE_PARTS && ret != -ENOSYS) {
 				if (iter->flags & BOOTFLOWF_ALL)
 					return log_msg_ret("all", ret);
-
-				/* try the next one */
-				continue;
 			}
+		} else {
+			iter->err = ret;
 		}
 
-		/* we got to the end of that bootdevice, try the next */
-		dev = iter->dev;
-		ret = uclass_next_device_err(&dev);
-		/* if there are no more bootdevices, give up */
-		if (ret)
-			return log_msg_ret("next", ret);
-
-		bootflow_iter_set_dev(iter, dev);
 	} while (1);
 }
 

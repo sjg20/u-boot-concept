@@ -37,8 +37,6 @@ enum bootflow_state_t {
  * @blk: Block device which contains this bootflow, NULL if this is a network
  *	device
  * @seq: Sequence number of bootflow within its bootdevice
- * @hwpart: Hardware partition number (always 0 unless @dev is an MMC device and
- *	has these)
  * @part: Partition number (0 for whole device)
  * @method: Bootmethod device
  * @name: Name of bootflow (allocated)
@@ -57,7 +55,6 @@ struct bootflow {
 	struct udevice *dev;
 	struct udevice *blk;
 	int seq;
-	int hwpart;
 	int part;
 	struct udevice *method;
 	char *name;
@@ -87,12 +84,8 @@ enum bootflow_flags_t {
  *
  * @flags: Flags to use (see enum bootflow_flags_t)
  * @dev: Current bootdevice
- * @hwpart: Current hardware partition number (always 0 unless @dev is an MMC
- *	device and has these)
  * @part: Current partition number (0 for whole device)
  * @method: Current bootmethod
- * @max_hw_part: Maximum hardware partition number in @dev, 0 if there are no
- *	hardware partitions
  * @max_part: Maximum hardware partition number in @dev, 0 if there is no
  *	partition table
  * @err: Error obtained from checking the last iteration. This is used to skip
@@ -103,10 +96,8 @@ enum bootflow_flags_t {
 struct bootflow_iter {
 	int flags;
 	struct udevice *dev;
-	int hwpart;
 	int part;
 	struct udevice *method;
-	int max_hw_part;
 	int max_part;
 	int err;
 };

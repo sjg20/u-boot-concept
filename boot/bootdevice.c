@@ -169,11 +169,15 @@ int bootdevice_find_in_blk(struct udevice *dev, struct udevice *blk,
 	 */
 	if (ret != -EOPNOTSUPP)
 		bflow->state = BOOTFLOWST_MEDIA;
+	else
+		ret = -ESHUTDOWN;
 	if (ret)
 		return log_msg_ret("part", ret);
 
-	bflow->state = BOOTFLOWST_PART;
 	ret = fs_set_blk_dev_with_part(desc, bflow->part);
+	if (ret == -EPROTONOSUPPORT) /* no partition table */
+		return log_msg_ret("set", -ESHUTDOWN);
+	bflow->state = BOOTFLOWST_PART;
 #ifdef CONFIG_DOS_PARTITION
 	log_debug("%s: Found partition %x type %x fstype %d\n", blk->name,
 		  bflow->part, info.sys_ind, ret ? -1 : fs_get_type());

@@ -196,7 +196,10 @@ static int do_bootflow_scan(struct cmd_tbl *cmdtp, int flag, int argc,
 		bootflow_reset_iter(&iter, 0);
 		for (i = 0, ret = 0; i < 100 && ret != -ESHUTDOWN; i++) {
 			ret = bootdevice_get_bootflow(dev, &iter, &bflow);
-			if ((ret && !all) || ret == -ESHUTDOWN) {
+			if (ret == -ENODEV) {
+				bootflow_free(&bflow);
+				break;
+			} else if ((ret && !all) || ret == -ESHUTDOWN) {
 				bootflow_free(&bflow);
 				continue;
 			}
