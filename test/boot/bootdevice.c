@@ -74,18 +74,18 @@ static int bootdevice_test_cmd_bootflow(struct unit_test_state *uts)
 	ut_assert_console_end();
 	ut_assertok(run_command("bootflow scan -l", 0));
 	ut_assert_nextline("Scanning for bootflows in bootdevice 'mmc0.bootdevice'");
-	ut_assert_nextline("Seq  Type         State   Uclass    Part  Name                      Filename");
+	ut_assert_nextline("Seq  Method       State   Uclass    Part  Name                      Filename");
 	ut_assert_nextlinen("---");
-	ut_assert_nextline("  0  distro-boot  loaded  mmc          1  mmc0.bootdevice.part_1    extlinux/extlinux.conf");
+	ut_assert_nextline("  0  syslinux     loaded  mmc          1  mmc0.bootdevice.part_1    extlinux/extlinux.conf");
 	ut_assert_nextlinen("---");
 	ut_assert_nextline("(41 bootflows, 1 valid)");
 	ut_assert_console_end();
 
 	ut_assertok(run_command("bootflow list", 0));
 	ut_assert_nextline("Showing bootflows for bootdevice 'mmc0.bootdevice'");
-	ut_assert_nextline("Seq  Type         State   Uclass    Part  Name                      Filename");
+	ut_assert_nextline("Seq  Method       State   Uclass    Part  Name                      Filename");
 	ut_assert_nextlinen("---");
-	ut_assert_nextline("  0  distro-boot  loaded  mmc          1  mmc0.bootdevice.part_1    extlinux/extlinux.conf");
+	ut_assert_nextline("  0  syslinux     loaded  mmc          1  mmc0.bootdevice.part_1    extlinux/extlinux.conf");
 	ut_assert_nextlinen("---");
 	ut_assert_nextline("(1 bootflow, 1 valid)");
 	ut_assert_console_end();
@@ -100,12 +100,12 @@ static int bootdevice_test_cmd_bootflow_glob(struct unit_test_state *uts)
 	console_record_reset_enable();
 	ut_assertok(run_command("bootflow scan -l", 0));
 	ut_assert_nextline("Scanning for bootflows in all bootdevices");
-	ut_assert_nextline("Seq  Type         State   Uclass    Part  Name                      Filename");
+	ut_assert_nextline("Seq  Method       State   Uclass    Part  Name                      Filename");
 	ut_assert_nextlinen("---");
 	ut_assert_nextline("Scanning bootdevice 'mmc2.bootdevice':");
 	ut_assert_nextline("Scanning bootdevice 'mmc1.bootdevice':");
 	ut_assert_nextline("Scanning bootdevice 'mmc0.bootdevice':");
-	ut_assert_nextline("  0  distro-boot  loaded  mmc          1  mmc0.bootdevice.part_1    extlinux/extlinux.conf");
+	ut_assert_nextline("  0  syslinux     loaded  mmc          1  mmc0.bootdevice.part_1    extlinux/extlinux.conf");
 	ut_assert_nextline("No more bootdevices");
 	ut_assert_nextlinen("---");
 	ut_assert_nextline("(1 bootflow, 1 valid)");
@@ -113,9 +113,9 @@ static int bootdevice_test_cmd_bootflow_glob(struct unit_test_state *uts)
 
 	ut_assertok(run_command("bootflow list", 0));
 	ut_assert_nextline("Showing all bootflows");
-	ut_assert_nextline("Seq  Type         State   Uclass    Part  Name                      Filename");
+	ut_assert_nextline("Seq  Method       State   Uclass    Part  Name                      Filename");
 	ut_assert_nextlinen("---");
-	ut_assert_nextline("  0  distro-boot  loaded  mmc          1  mmc0.bootdevice.part_1    extlinux/extlinux.conf");
+	ut_assert_nextline("  0  syslinux     loaded  mmc          1  mmc0.bootdevice.part_1    extlinux/extlinux.conf");
 	ut_assert_nextlinen("---");
 	ut_assert_nextline("(1 bootflow, 1 valid)");
 	ut_assert_console_end();
@@ -131,18 +131,18 @@ static int bootdevice_test_cmd_bootflow_scan_e(struct unit_test_state *uts)
 	console_record_reset_enable();
 	ut_assertok(run_command("bootflow scan -ale", 0));
 	ut_assert_nextline("Scanning for bootflows in all bootdevices");
-	ut_assert_nextline("Seq  Type         State   Uclass    Part  Name                      Filename");
+	ut_assert_nextline("Seq  Method       State   Uclass    Part  Name                      Filename");
 	ut_assert_nextlinen("---");
 	ut_assert_nextline("Scanning bootdevice 'mmc2.bootdevice':");
-	ut_assert_nextline("  0  distro-boot  media   mmc          0  mmc2.bootdevice.part_1    <NULL>");
+	ut_assert_nextline("  0  syslinux     media   mmc          0  mmc2.bootdevice.part_1    <NULL>");
 	ut_assert_nextline("     ** No partition found, err=-93");
-	ut_assert_nextline("  1  distro-boot  media   mmc          0  mmc2.bootdevice.part_2    <NULL>");
+	ut_assert_nextline("  1  syslinux     media   mmc          0  mmc2.bootdevice.part_2    <NULL>");
 
 	ut_assert_skip_to_line("Scanning bootdevice 'mmc1.bootdevice':");
 	ut_assert_skip_to_line("Scanning bootdevice 'mmc0.bootdevice':");
-	ut_assert_nextline(" 28  distro-boot  loaded  mmc          1  mmc0.bootdevice.part_1    extlinux/extlinux.conf");
-	ut_assert_nextline(" 29  distro-boot  media   mmc          0  mmc0.bootdevice.part_2    <NULL>");
-	ut_assert_skip_to_line(" 3b  distro-boot  media   mmc          0  mmc0.bootdevice.part_14   <NULL>");
+	ut_assert_nextline(" 28  syslinux     loaded  mmc          1  mmc0.bootdevice.part_1    extlinux/extlinux.conf");
+	ut_assert_nextline(" 29  syslinux     media   mmc          0  mmc0.bootdevice.part_2    <NULL>");
+	ut_assert_skip_to_line(" 3b  syslinux     media   mmc          0  mmc0.bootdevice.part_14   <NULL>");
 	ut_assert_nextline("     ** No partition found, err=-2");
 	ut_assert_nextline("No more bootdevices");
 	ut_assert_nextlinen("---");
@@ -151,11 +151,11 @@ static int bootdevice_test_cmd_bootflow_scan_e(struct unit_test_state *uts)
 
 	ut_assertok(run_command("bootflow list", 0));
 	ut_assert_nextline("Showing all bootflows");
-	ut_assert_nextline("Seq  Type         State   Uclass    Part  Name                      Filename");
+	ut_assert_nextline("Seq  Method       State   Uclass    Part  Name                      Filename");
 	ut_assert_nextlinen("---");
-	ut_assert_nextline("  0  distro-boot  media   mmc          0  mmc2.bootdevice.part_1    <NULL>");
-	ut_assert_skip_to_line(" 28  distro-boot  loaded  mmc          1  mmc0.bootdevice.part_1    extlinux/extlinux.conf");
-	ut_assert_skip_to_line(" 3b  distro-boot  media   mmc          0  mmc0.bootdevice.part_14   <NULL>");
+	ut_assert_nextline("  0  syslinux     media   mmc          0  mmc2.bootdevice.part_1    <NULL>");
+	ut_assert_skip_to_line(" 28  syslinux     loaded  mmc          1  mmc0.bootdevice.part_1    extlinux/extlinux.conf");
+	ut_assert_skip_to_line(" 3b  syslinux     media   mmc          0  mmc0.bootdevice.part_14   <NULL>");
 	ut_assert_nextlinen("---");
 	ut_assert_nextline("(60 bootflows, 1 valid)");
 	ut_assert_console_end();
@@ -180,7 +180,7 @@ static int bootdevice_test_cmd_bootflow_info(struct unit_test_state *uts)
 	ut_assert_nextline("Device:    mmc0.bootdevice");
 	ut_assert_nextline("Block dev: mmc0.blk");
 	ut_assert_nextline("Sequence:  0");
-	ut_assert_nextline("Type:      distro-boot");
+	ut_assert_nextline("Type:      syslinux   ");
 	ut_assert_nextline("State:     loaded");
 	ut_assert_nextline("Partition: 1");
 	ut_assert_nextline("Subdir:    (none)");

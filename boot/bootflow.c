@@ -128,12 +128,11 @@ static int iter_incr(struct bootflow_iter *iter)
 	/* ...select next bootdevice */
 	dev = iter->dev;
 	ret = uclass_next_device_err(&dev);
+	bootflow_iter_set_dev(iter, dev);
 
 	/* if there are no more bootdevices, give up */
 	if (ret)
 		return log_msg_ret("next", BF_NO_MORE_DEVICES);
-
-	bootflow_iter_set_dev(iter, dev);
 
 	return 0;
 }

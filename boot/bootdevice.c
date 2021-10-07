@@ -154,7 +154,7 @@ int bootdevice_find_in_blk(struct udevice *dev, struct udevice *blk,
 		return log_msg_ret("max", -ESHUTDOWN);
 
 	bflow->blk = blk;
-	snprintf(name, sizeof(name), "%s.part_%x", dev->name, bflow->part);
+	snprintf(name, sizeof(name), "%s.part_%x", dev->name, iter->part);
 	bflow->name = strdup(name);
 	if (!bflow->name)
 		return log_msg_ret("name", -ENOMEM);
