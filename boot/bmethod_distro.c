@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Bootmethod for distro boot
+ * Bootmethod for distro boot (syslinux boot from a block device)
  *
  * Copyright 2021 Google LLC
  * Written by Simon Glass <sjg@chromium.org>

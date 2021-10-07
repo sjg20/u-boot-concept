@@ -41,62 +41,6 @@
 
 #define EFI_FNAME	"efi/boot/" BOOTEFI_NAME
 
-static int efiload_read_file(struct blk_desc *desc, int partnum,
-			     struct bootflow *bflow)
-{
-	const struct udevice *media_dev;
-	int size = bflow->size;
-	char devnum_str[9];
-	char dirname[200];
-	loff_t bytes_read;
-	char *last_slash;
-	ulong addr;
-	char *buf;
-	int ret;
-
-	/* Sadly FS closes the file after fs_size() so we must redo this */
-	ret = fs_set_blk_dev_with_part(desc, partnum);
-	if (ret)
-		return log_msg_ret("set", ret);
-
-	buf = malloc(size + 1);
-	if (!buf)
-		return log_msg_ret("buf", -ENOMEM);
-	addr = map_to_sysmem(buf);
-
-	ret = fs_read(bflow->fname, addr, 0, 0, &bytes_read);
-	if (ret) {
-		free(buf);
-		return log_msg_ret("read", ret);
-	}
-	if (size != bytes_read)
-		return log_msg_ret("bread", -EINVAL);
-	buf[size] = '\0';
-	bflow->state = BOOTFLOWST_LOADED;
-	bflow->buf = buf;
-
-	/*
-	 * This is a horrible hack to tell EFI about this boot device. Once we
-	 * unify EFI with the rest of U-Boot we can clean this up. The same hack
-	 * exists in multiple places, e.g. in the fs, tftp and load commands.
-	 *
-	 * Once we can clean up the EFI code to make proper use of driver model,
-	 * this can go away.
-	 */
-	media_dev = dev_get_parent(bflow->dev);
-	snprintf(devnum_str, sizeof(devnum_str), "%x", dev_seq(media_dev));
-
-	strlcpy(dirname, bflow->fname, sizeof(dirname));
-	last_slash = strrchr(dirname, '/');
-	if (last_slash)
-		*last_slash = '\0';
-
-	efi_set_bootdev(dev_get_uclass_name(media_dev), devnum_str, dirname,
-			bflow->buf, size);
-
-	return 0;
-}
-
 int efiloader_boot_setup(struct blk_desc *desc, int partnum,
 			 struct bootflow *bflow)
 {

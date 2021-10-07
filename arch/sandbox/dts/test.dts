@@ -71,6 +71,22 @@
 		};
 	};
 
+	bootmethods {
+		compatible = "simple-bus";
+
+		syslinux {
+			compatible = "u-boot,distro-syslinux";
+		};
+
+		pxe {
+			compatible = "u-boot,distro-pxe";
+		};
+
+		efi {
+			compatible = "u-boot,distro-efi";
+		};
+	};
+
 	reboot-mode0 {
 		compatible = "reboot-mode-gpio";
 		gpios = <&gpio_c 0 GPIO_ACTIVE_HIGH>, <&gpio_c 1 GPIO_ACTIVE_HIGH>;
