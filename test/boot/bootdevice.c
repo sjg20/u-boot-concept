@@ -7,6 +7,7 @@
 #include <common.h>
 #include <dm.h>
 #include <bootdevice.h>
+#include <bootflow.h>
 #include <test/suites.h>
 #include <test/ut.h>
 
@@ -254,7 +255,7 @@ BOOTDEVICE_TEST(bootdevice_test_cmd_bootflow_boot,
 /* Check we can get a bootdevice */
 static int bootdevice_test_get(struct unit_test_state *uts)
 {
-	struct bootdevice_iter iter;
+	struct bootflow_iter iter;
 	struct bootflow bflow;
 
 	ut_assertok(bootflow_scan_first(&iter, 0, &bflow));

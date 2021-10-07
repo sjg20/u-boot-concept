@@ -270,7 +270,7 @@ Bootflow internals
 
 The bootflow uclass holds a linked list of scanned bootflows as well as the
 currently selected bootdevice and bootflow (for use by commands). This is in
-`struct bootflow_state`.
+`struct bootdevice_state`.
 
 Each bootdevice device has its own `struct bootdevice_uc_plat` which holds a
 list of scanned bootflows just for that device.

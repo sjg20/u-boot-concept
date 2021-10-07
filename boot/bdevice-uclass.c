@@ -6,9 +6,10 @@
 
 #include <common.h>
 #include <bootdevice.h>
+#include <bootflow.h>
 #include <dm.h>
 
-int bootdevice_get_bootflow(struct udevice *dev, struct bootdevice_iter *iter,
+int bootdevice_get_bootflow(struct udevice *dev, struct bootflow_iter *iter,
 			    struct bootflow *bflow)
 {
 	const struct bootdevice_ops *ops = bootdevice_get_ops(dev);
@@ -26,7 +27,7 @@ int bootdevice_get_bootflow(struct udevice *dev, struct bootdevice_iter *iter,
 
 static int bootdevice_init(struct uclass *uc)
 {
-	struct bootflow_state *state = uclass_get_priv(uc);
+	struct bootdevice_state *state = uclass_get_priv(uc);
 
 	INIT_LIST_HEAD(&state->glob_head);
 
@@ -46,7 +47,7 @@ UCLASS_DRIVER(bootdevice) = {
 	.id		= UCLASS_BOOTDEVICE,
 	.name		= "bootdevice",
 	.flags		= DM_UC_FLAG_SEQ_ALIAS,
-	.priv_auto	= sizeof(struct bootflow_state),
+	.priv_auto	= sizeof(struct bootdevice_state),
 	.per_device_plat_auto	= sizeof(struct bootdevice_uc_plat),
 	.init		= bootdevice_init,
 	.post_bind	= bootdevice_post_bind,

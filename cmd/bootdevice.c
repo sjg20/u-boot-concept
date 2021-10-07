@@ -8,14 +8,15 @@
 
 #include <common.h>
 #include <bootdevice.h>
+#include <bootflow.h>
 #include <command.h>
 #include <dm.h>
 #include <dm/device-internal.h>
 #include <dm/uclass-internal.h>
 
-static int bootdevice_check_state(struct bootflow_state **statep)
+static int bootdevice_check_state(struct bootdevice_state **statep)
 {
-	struct bootflow_state *state;
+	struct bootdevice_state *state;
 	int ret;
 
 	ret = bootdevice_get_state(&state);
@@ -44,7 +45,7 @@ static int do_bootdevice_list(struct cmd_tbl *cmdtp, int flag, int argc,
 static int do_bootdevice_select(struct cmd_tbl *cmdtp, int flag, int argc,
 				char *const argv[])
 {
-	struct bootflow_state *state;
+	struct bootdevice_state *state;
 	struct udevice *dev;
 	const char *name;
 	char *endp;
@@ -78,7 +79,7 @@ static int do_bootdevice_select(struct cmd_tbl *cmdtp, int flag, int argc,
 static int do_bootdevice_info(struct cmd_tbl *cmdtp, int flag, int argc,
 			      char *const argv[])
 {
-	struct bootflow_state *state;
+	struct bootdevice_state *state;
 	struct bootflow *bflow;
 	int ret, i, num_valid;
 	struct udevice *dev;

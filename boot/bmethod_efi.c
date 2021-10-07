@@ -8,6 +8,7 @@
 
 #include <common.h>
 #include <bootdevice.h>
+#include <bootflow.h>
 #include <bootmethod.h>
 #include <command.h>
 #include <distro.h>
