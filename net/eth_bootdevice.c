@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Bootdevice for ethernet
+ * Bootdevice for ethernet (uses PXE)
  *
  * Copyright 2021 Google LLC
  * Written by Simon Glass <sjg@chromium.org>
@@ -8,12 +8,14 @@
 
 #include <common.h>
 #include <bootdevice.h>
+#include <bootflow.h>
 #include <command.h>
+#include <bootmethod.h>
 #include <distro.h>
 #include <dm.h>
 #include <net.h>
 
-static int eth_get_bootflow(struct udevice *dev, int seq,
+static int eth_get_bootflow(struct udevice *dev, struct bootflow_iter *iter,
 			    struct bootflow *bflow)
 {
 	struct udevice *media_dev = dev_get_parent(dev);
@@ -28,18 +30,13 @@ static int eth_get_bootflow(struct udevice *dev, int seq,
 	 * Like distro boot, this assumes there is only one Ethernet device.
 	 * In this case, that means that @eth is ignored
 	 */
-	if (seq)
-		return log_msg_ret("dhcp", -ESHUTDOWN);
 
-	bflow->seq = seq;
-	snprintf(name, sizeof(name), "%s.%d", dev->name, seq);
+	snprintf(name, sizeof(name), "%s.%d", dev->name, iter->part);
 	bflow->name = strdup(name);
 	if (!bflow->name)
 		return log_msg_ret("name", -ENOMEM);
-	if (!bflow->name)
-		return log_msg_ret("name", -ENOMEM);
 	bflow->state = BOOTFLOWST_BASE;
-d
+
 	/*
 	 * There is not a direct interface to the network stack so run
 	 * everything through the command-line interpreter for now.
@@ -61,11 +58,9 @@ d
 	run_command("dhcp", 0);
 	bflow->state = BOOTFLOWST_MEDIA;
 
-	if (CONFIG_IS_ENABLED(BOOTDEVICE_DISTRO)) {
-		ret = distro_net_setup(bflow);
-		if (ret)
-			return log_msg_ret("distro", ret);
-	}
+	ret = bootmethod_read_bootflow(bflow->method, bflow);
+	if (ret)
+		return log_msg_ret("method", ret);
 
 	return 0;
 }
