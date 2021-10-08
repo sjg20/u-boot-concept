@@ -78,7 +78,7 @@ static int bootdevice_test_cmd_bootflow(struct unit_test_state *uts)
 	ut_assert_nextlinen("---");
 	ut_assert_nextline("  0  syslinux     loaded  mmc          1  mmc0.bootdevice.part_1    extlinux/extlinux.conf");
 	ut_assert_nextlinen("---");
-	ut_assert_nextline("(41 bootflows, 1 valid)");
+	ut_assert_nextline("(1 bootflow, 1 valid)");
 	ut_assert_console_end();
 
 	ut_assertok(run_command("bootflow list", 0));
@@ -134,30 +134,37 @@ static int bootdevice_test_cmd_bootflow_scan_e(struct unit_test_state *uts)
 	ut_assert_nextline("Seq  Method       State   Uclass    Part  Name                      Filename");
 	ut_assert_nextlinen("---");
 	ut_assert_nextline("Scanning bootdevice 'mmc2.bootdevice':");
-	ut_assert_nextline("  0  syslinux     media   mmc          0  mmc2.bootdevice.part_1    <NULL>");
+	ut_assert_nextline("  0  syslinux     media   mmc          0  mmc2.bootdevice.whole     <NULL>");
 	ut_assert_nextline("     ** No partition found, err=-93");
-	ut_assert_nextline("  1  syslinux     media   mmc          0  mmc2.bootdevice.part_2    <NULL>");
+	ut_assert_nextline("  1  efi          media   mmc          0  mmc2.bootdevice.whole     <NULL>");
+	ut_assert_nextline("     ** No partition found, err=-93");
 
-	ut_assert_skip_to_line("Scanning bootdevice 'mmc1.bootdevice':");
+	ut_assert_nextline("Scanning bootdevice 'mmc1.bootdevice':");
 	ut_assert_skip_to_line("Scanning bootdevice 'mmc0.bootdevice':");
-	ut_assert_nextline(" 28  syslinux     loaded  mmc          1  mmc0.bootdevice.part_1    extlinux/extlinux.conf");
-	ut_assert_nextline(" 29  syslinux     media   mmc          0  mmc0.bootdevice.part_2    <NULL>");
-	ut_assert_skip_to_line(" 3b  syslinux     media   mmc          0  mmc0.bootdevice.part_14   <NULL>");
+	ut_assert_nextline("  4  syslinux     media   mmc          0  mmc0.bootdevice.whole     <NULL>");
+	ut_assert_nextline("     ** No partition found, err=-2");
+	ut_assert_nextline("  5  efi          media   mmc          0  mmc0.bootdevice.whole     <NULL>");
+	ut_assert_nextline("     ** No partition found, err=-2");
+
+	ut_assert_nextline("  6  syslinux     loaded  mmc          1  mmc0.bootdevice.part_1    extlinux/extlinux.conf");
+	ut_assert_nextline("  7  efi          fs      mmc          1  mmc0.bootdevice.part_1    efi/boot/bootsbox.efi");
+	ut_assert_skip_to_line(" 3f  efi          media   mmc         1d  mmc0.bootdevice.part_1d   <NULL>");
 	ut_assert_nextline("     ** No partition found, err=-2");
 	ut_assert_nextline("No more bootdevices");
 	ut_assert_nextlinen("---");
-	ut_assert_nextline("(60 bootflows, 1 valid)");
+	ut_assert_nextline("(64 bootflows, 1 valid)");
 	ut_assert_console_end();
 
 	ut_assertok(run_command("bootflow list", 0));
 	ut_assert_nextline("Showing all bootflows");
 	ut_assert_nextline("Seq  Method       State   Uclass    Part  Name                      Filename");
 	ut_assert_nextlinen("---");
-	ut_assert_nextline("  0  syslinux     media   mmc          0  mmc2.bootdevice.part_1    <NULL>");
-	ut_assert_skip_to_line(" 28  syslinux     loaded  mmc          1  mmc0.bootdevice.part_1    extlinux/extlinux.conf");
-	ut_assert_skip_to_line(" 3b  syslinux     media   mmc          0  mmc0.bootdevice.part_14   <NULL>");
+	ut_assert_nextline("  0  syslinux     media   mmc          0  mmc2.bootdevice.whole     <NULL>");
+	ut_assert_nextline("  1  efi          media   mmc          0  mmc2.bootdevice.whole     <NULL>");
+	ut_assert_skip_to_line("  6  syslinux     loaded  mmc          1  mmc0.bootdevice.part_1    extlinux/extlinux.conf");
+	ut_assert_skip_to_line(" 3f  efi          media   mmc         1d  mmc0.bootdevice.part_1d   <NULL>");
 	ut_assert_nextlinen("---");
-	ut_assert_nextline("(60 bootflows, 1 valid)");
+	ut_assert_nextline("(64 bootflows, 1 valid)");
 	ut_assert_console_end();
 
 	return 0;
@@ -180,7 +187,7 @@ static int bootdevice_test_cmd_bootflow_info(struct unit_test_state *uts)
 	ut_assert_nextline("Device:    mmc0.bootdevice");
 	ut_assert_nextline("Block dev: mmc0.blk");
 	ut_assert_nextline("Sequence:  0");
-	ut_assert_nextline("Type:      syslinux   ");
+	ut_assert_nextline("Method:    syslinux");
 	ut_assert_nextline("State:     loaded");
 	ut_assert_nextline("Partition: 1");
 	ut_assert_nextline("Subdir:    (none)");

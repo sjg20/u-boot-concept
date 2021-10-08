@@ -146,6 +146,7 @@ int bootdevice_find_in_blk(struct udevice *dev, struct udevice *blk,
 {
 	struct blk_desc *desc = dev_get_uclass_plat(blk);
 	struct disk_partition info;
+	char partstr[20];
 	char name[60];
 	int ret;
 
@@ -154,7 +155,11 @@ int bootdevice_find_in_blk(struct udevice *dev, struct udevice *blk,
 		return log_msg_ret("max", -ESHUTDOWN);
 
 	bflow->blk = blk;
-	snprintf(name, sizeof(name), "%s.part_%x", dev->name, iter->part);
+	if (iter->part)
+		snprintf(partstr, sizeof(partstr), "part_%x", iter->part);
+	else
+		strcpy(partstr, "whole");
+	snprintf(name, sizeof(name), "%s.%s", dev->name, partstr);
 	bflow->name = strdup(name);
 	if (!bflow->name)
 		return log_msg_ret("name", -ENOMEM);
@@ -167,7 +172,7 @@ int bootdevice_find_in_blk(struct udevice *dev, struct udevice *blk,
 	 * us whether there is valid media there
 	 */
 	ret = part_get_info(desc, iter->part, &info);
-	if (!iter->part && ret == -EPROTONOSUPPORT)
+	if (!iter->part && ret == -ENOENT)
 		ret = 0;
 
 	/*

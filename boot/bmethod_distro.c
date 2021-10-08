@@ -27,6 +27,9 @@ static int disto_getfile(struct pxe_context *ctx, const char *file_path,
 	int ret;
 
 	addr = simple_strtoul(file_addr, NULL, 16);
+
+	/* Allow up to 1GB */
+	*sizep = 1 << 30;
 	ret = bootmethod_read_file(info->dev, info->bflow, file_path, addr,
 				   sizep);
 	if (ret)
@@ -94,7 +97,7 @@ static int distro_read_file(struct udevice *dev, struct bootflow *bflow,
 	ret = fs_set_blk_dev_with_part(desc, bflow->part);
 	if (ret)
 		return log_msg_ret("set1", ret);
-	ret = fs_size(bflow->fname, &size);
+	ret = fs_size(file_path, &size);
 	if (ret)
 		return log_msg_ret("size", ret);
 	if (size > *sizep)

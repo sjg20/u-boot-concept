@@ -80,10 +80,11 @@ void bootflow_reset_iter(struct bootflow_iter *iter, int flags)
 }
 
 static void bootflow_iter_set_dev(struct bootflow_iter *iter,
-				    struct udevice *dev)
+				  struct udevice *dev)
 {
 	iter->dev = dev;
-	if (iter->flags & BOOTFLOWF_SHOW) {
+	if ((iter->flags & (BOOTFLOWF_SHOW | BOOTFLOWF_SINGLE_DEV)) ==
+	    BOOTFLOWF_SHOW) {
 		if (dev)
 			printf("Scanning bootdevice '%s':\n", dev->name);
 		else
@@ -126,9 +127,13 @@ static int iter_incr(struct bootflow_iter *iter)
 	iter->part = 0;
 
 	/* ...select next bootdevice */
-	dev = iter->dev;
-	ret = uclass_next_device_err(&dev);
-	bootflow_iter_set_dev(iter, dev);
+	if (iter->flags & BOOTFLOWF_SINGLE_DEV) {
+		ret = -ENOENT;
+	} else {
+		dev = iter->dev;
+		ret = uclass_next_device_err(&dev);
+		bootflow_iter_set_dev(iter, dev);
+	}
 
 	/* if there are no more bootdevices, give up */
 	if (ret)
@@ -180,16 +185,19 @@ static int bootflow_check(struct bootflow_iter *iter, struct bootflow *bflow)
 	return 0;
 }
 
-int bootflow_scan_first(struct bootflow_iter *iter, int flags,
-			struct bootflow *bflow)
+int bootflow_scan_bootdevice(struct udevice *dev, struct bootflow_iter *iter,
+			     int flags, struct bootflow *bflow)
 {
-	struct udevice *dev;
 	int ret;
 
+	if (dev)
+		flags |= BOOTFLOWF_SINGLE_DEV;
 	bootflow_reset_iter(iter, flags);
-	ret = uclass_first_device_err(UCLASS_BOOTDEVICE, &dev);
-	if (ret)
-		return ret;
+	if (!dev) {
+		ret = uclass_first_device_err(UCLASS_BOOTDEVICE, &dev);
+		if (ret)
+			return ret;
+	}
 	bootflow_iter_set_dev(iter, dev);
 
 	/* Find the first bootmethod (there must be at least one!) */
@@ -210,6 +218,12 @@ int bootflow_scan_first(struct bootflow_iter *iter, int flags,
 	}
 
 	return 0;
+}
+
+int bootflow_scan_first(struct bootflow_iter *iter, int flags,
+			struct bootflow *bflow)
+{
+	return bootflow_scan_bootdevice(NULL, iter, flags, bflow);
 }
 
 int bootflow_scan_next(struct bootflow_iter *iter, struct bootflow *bflow)

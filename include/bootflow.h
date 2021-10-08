@@ -72,11 +72,13 @@ struct bootflow {
  * @BOOTFLOWF_FIXED: Only used fixed/internal media
  * @BOOTFLOWF_SHOW: Show each bootdevice before scanning it
  * @BOOTFLOWF_ALL: Return bootflows with errors as well
+ * @BOOTFLOWF_SINGLE_DEV: Just scan one bootmethod
  */
 enum bootflow_flags_t {
 	BOOTFLOWF_FIXED		= 1 << 0,
 	BOOTFLOWF_SHOW		= 1 << 1,
 	BOOTFLOWF_ALL		= 1 << 2,
+	BOOTFLOWF_SINGLE_DEV	= 1 << 3,
 };
 
 /**
@@ -113,6 +115,21 @@ struct bootflow_iter {
 void bootflow_reset_iter(struct bootflow_iter *iter, int flags);
 
 /**
+ * bootflow_scan_bootdevice() - find the first bootflow in a bootdevice
+ *
+ * If @flags includes BOOTFLOWF_ALL then bootflows with errors are returned too
+ *
+ * @dev:	Boot device to scan, NULL to work through all of them until it
+ *	finds one that * can supply a bootflow
+ * @iter:	Place to store private info (inited by this call)
+ * @flags:	Flags for bootdevice (enum bootflow_flags_t)
+ * @bflow:	Place to put the bootflow if found
+ * @return 0 if found, other -ve on error
+ */
+int bootflow_scan_bootdevice(struct udevice *dev, struct bootflow_iter *iter,
+			     int flags, struct bootflow *bflow);
+
+/**
  * bootflow_scan_first() - find the first bootflow
  *
  * This works through the available bootdevice devices until it finds one that
@@ -123,7 +140,7 @@ void bootflow_reset_iter(struct bootflow_iter *iter, int flags);
  * @iter:	Place to store private info (inited by this call)
  * @flags:	Flags for bootdevice (enum bootflow_flags_t)
  * @bflow:	Place to put the bootflow if found
- * @return 0 if found, -ESHUTDOWN if no more bootflows, other -ve on error
+ * @return 0 if found, other -ve on error
  */
 int bootflow_scan_first(struct bootflow_iter *iter, int flags,
 			struct bootflow *bflow);

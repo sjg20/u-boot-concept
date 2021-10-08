@@ -193,23 +193,18 @@ static int do_bootflow_scan(struct cmd_tbl *cmdtp, int flag, int argc,
 			show_header();
 		}
 		bootdevice_clear_bootflows(dev);
-		bootflow_reset_iter(&iter, 0);
-		for (i = 0, ret = 0; i < 100 && ret != -ESHUTDOWN; i++) {
-			ret = bootdevice_get_bootflow(dev, &iter, &bflow);
-			if (ret == -ENODEV) {
-				bootflow_free(&bflow);
-				break;
-			} else if ((ret && !all) || ret == -ESHUTDOWN) {
-				bootflow_free(&bflow);
-				continue;
-			}
+		for (i = 0,
+		     ret = bootflow_scan_bootdevice(dev, &iter, flags, &bflow);
+		     i < 1000 && ret != -ENODEV;
+		     i++, ret = bootflow_scan_next(&iter, &bflow)) {
 			bflow.err = ret;
+			if (!ret)
+				num_valid++;
 			ret = bootdevice_add_bootflow(&bflow);
 			if (ret) {
 				printf("Out of memory\n");
 				return CMD_RET_FAILURE;
 			}
-			num_valid++;
 			if (list)
 				show_bootflow(i, &bflow, errors);
 			if (boot && !bflow.err)
