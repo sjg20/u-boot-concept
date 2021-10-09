@@ -93,7 +93,7 @@ class Spawn(object):
         """
 
         if self.waited:
-            return False, exit_code, self.exit_info
+            return False, self.exit_code, self.exit_info
 
         w = os.waitpid(self.pid, os.WNOHANG)
         if w[0] == 0:
