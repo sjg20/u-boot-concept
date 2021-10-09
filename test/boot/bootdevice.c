@@ -8,12 +8,32 @@
 #include <dm.h>
 #include <bootdevice.h>
 #include <bootflow.h>
+#include <mapmem.h>
+#include <os.h>
 #include <test/suites.h>
 #include <test/ut.h>
 
 /* Declare a new bootdevice test */
 #define BOOTDEVICE_TEST(_name, _flags) \
 		UNIT_TEST(_name, _flags, bootdevice_test)
+
+/* Setup the MMC file */
+static int bootdevice_setup_test(struct unit_test_state *uts)
+{
+	int full_size = 20 << 20;
+	const char *src;
+
+	/* Write out an empty file */
+	src = map_sysmem(0, full_size);
+	ut_assertok(os_write_file("mmc.img", src, full_size));
+
+	/* Create a partition table */
+	ut_assertok(env_set("mbr_parts",
+			    "name=boot,start=1M,size=19M,bootable,id=0x0c"));
+	ut_assertok(run_command("mbr write mmc 0", 0));
+
+	return 0;
+}
 
 /* Check 'bootdevice list' command */
 static int bootdevice_test_cmd_list(struct unit_test_state *uts)
@@ -128,6 +148,8 @@ BOOTDEVICE_TEST(bootdevice_test_cmd_bootflow_glob,
 /* Check 'bootflow scan -e' */
 static int bootdevice_test_cmd_bootflow_scan_e(struct unit_test_state *uts)
 {
+	ut_assertok(bootdevice_setup_test(uts));
+
 	console_record_reset_enable();
 	ut_assertok(run_command("bootflow scan -ale", 0));
 	ut_assert_nextline("Scanning for bootflows in all bootdevices");
