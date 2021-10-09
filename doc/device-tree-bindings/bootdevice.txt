@@ -1,14 +1,14 @@
 U-Boot Bootdevice
 =================
 
-A bootdevice provides a way to obtain a bootflow file from a device. It is a
+A bootdev provides a way to obtain a bootflow file from a device. It is a
 child of the media device (UCLASS_MMC, UCLASS_SPI_FLASH, etc.)
 
-The bootdevice driver is provided by the media devices. The bindings for each
+The bootdev driver is provided by the media devices. The bindings for each
 are described in this file.
 
 
-MMC bootdevice
+MMC bootdev
 --------------
 
 Optional properties:

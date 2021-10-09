@@ -5,9 +5,9 @@
  */
 
 #include <common.h>
-#include <bootdevice.h>
+#include <bootdev.h>
 #include <bootflow.h>
-#include <bootmethod.h>
+#include <bootmeth.h>
 #include <dm.h>
 #include <malloc.h>
 
@@ -37,10 +37,10 @@ const char *bootflow_state_get_name(enum bootflow_state_t state)
 
 int bootflow_first_glob(struct bootflow **bflowp)
 {
-	struct bootdevice_state *state;
+	struct bootdev_state *state;
 	int ret;
 
-	ret = bootdevice_get_state(&state);
+	ret = bootdev_get_state(&state);
 	if (ret)
 		return ret;
 
@@ -55,11 +55,11 @@ int bootflow_first_glob(struct bootflow **bflowp)
 
 int bootflow_next_glob(struct bootflow **bflowp)
 {
-	struct bootdevice_state *state;
+	struct bootdev_state *state;
 	struct bootflow *bflow = *bflowp;
 	int ret;
 
-	ret = bootdevice_get_state(&state);
+	ret = bootdev_get_state(&state);
 	if (ret)
 		return ret;
 
@@ -86,16 +86,16 @@ static void bootflow_iter_set_dev(struct bootflow_iter *iter,
 	if ((iter->flags & (BOOTFLOWF_SHOW | BOOTFLOWF_SINGLE_DEV)) ==
 	    BOOTFLOWF_SHOW) {
 		if (dev)
-			printf("Scanning bootdevice '%s':\n", dev->name);
+			printf("Scanning bootdev '%s':\n", dev->name);
 		else
-			printf("No more bootdevices\n");
+			printf("No more bootdevs\n");
 	}
 }
 
 /**
- * iter_incr() - Move to the next item (method, part, bootdevice)
+ * iter_incr() - Move to the next item (method, part, bootdev)
  *
- * @return 0 if OK, BF_NO_MORE_DEVICES if there are no more bootdevices
+ * @return 0 if OK, BF_NO_MORE_DEVICES if there are no more bootdevs
  */
 static int iter_incr(struct bootflow_iter *iter)
 {
@@ -112,7 +112,7 @@ static int iter_incr(struct bootflow_iter *iter)
 			return 0;
 	}
 
-	/* No more bootmethods; start at the first one, and... */
+	/* No more bootmeths; start at the first one, and... */
 	ret = uclass_first_device_err(UCLASS_BOOTMETHOD, &iter->method);
 	if (ret)  /* should not happen, but just in case */
 		return BF_NO_MORE_DEVICES;
@@ -126,7 +126,7 @@ static int iter_incr(struct bootflow_iter *iter)
 	/* No more partitions; start at the first one and...*/
 	iter->part = 0;
 
-	/* ...select next bootdevice */
+	/* ...select next bootdev */
 	if (iter->flags & BOOTFLOWF_SINGLE_DEV) {
 		ret = -ENOENT;
 	} else {
@@ -135,7 +135,7 @@ static int iter_incr(struct bootflow_iter *iter)
 		bootflow_iter_set_dev(iter, dev);
 	}
 
-	/* if there are no more bootdevices, give up */
+	/* if there are no more bootdevs, give up */
 	if (ret)
 		return log_msg_ret("next", BF_NO_MORE_DEVICES);
 
@@ -148,7 +148,7 @@ static int iter_incr(struct bootflow_iter *iter)
  * @iter: Provides part, method to get
  * @bflow: Bootflow to update on success
  * @return 0 if OK, -ENOSYS if there is no bootflow support on this device,
- *	BF_NO_MORE_PARTS if there are no more partitions on bootdevice
+ *	BF_NO_MORE_PARTS if there are no more partitions on bootdev
  */
 static int bootflow_check(struct bootflow_iter *iter, struct bootflow *bflow)
 {
@@ -156,7 +156,7 @@ static int bootflow_check(struct bootflow_iter *iter, struct bootflow *bflow)
 	int ret;
 
 	dev = iter->dev;
-	ret = bootdevice_get_bootflow(dev, iter, bflow);
+	ret = bootdev_get_bootflow(dev, iter, bflow);
 
 	/* If we got a valid bootflow, return it */
 	if (!ret) {
@@ -185,7 +185,7 @@ static int bootflow_check(struct bootflow_iter *iter, struct bootflow *bflow)
 	return 0;
 }
 
-int bootflow_scan_bootdevice(struct udevice *dev, struct bootflow_iter *iter,
+int bootflow_scan_bootdev(struct udevice *dev, struct bootflow_iter *iter,
 			     int flags, struct bootflow *bflow)
 {
 	int ret;
@@ -200,7 +200,7 @@ int bootflow_scan_bootdevice(struct udevice *dev, struct bootflow_iter *iter,
 	}
 	bootflow_iter_set_dev(iter, dev);
 
-	/* Find the first bootmethod (there must be at least one!) */
+	/* Find the first bootmeth (there must be at least one!) */
 	ret = uclass_first_device_err(UCLASS_BOOTMETHOD, &iter->method);
 	if (ret)
 		return log_msg_ret("meth", ret);
@@ -223,7 +223,7 @@ int bootflow_scan_bootdevice(struct udevice *dev, struct bootflow_iter *iter,
 int bootflow_scan_first(struct bootflow_iter *iter, int flags,
 			struct bootflow *bflow)
 {
-	return bootflow_scan_bootdevice(NULL, iter, flags, bflow);
+	return bootflow_scan_bootdev(NULL, iter, flags, bflow);
 }
 
 int bootflow_scan_next(struct bootflow_iter *iter, struct bootflow *bflow)
@@ -275,7 +275,7 @@ int bootflow_boot(struct bootflow *bflow)
 	if (bflow->state != BOOTFLOWST_LOADED)
 		return log_msg_ret("load", -EPROTO);
 
-	ret = bootmethod_boot(bflow->method, bflow);
+	ret = bootmeth_boot(bflow->method, bflow);
 	if (ret)
 		return log_msg_ret("method", ret);
 

@@ -7,10 +7,10 @@
  */
 
 #include <common.h>
-#include <bootdevice.h>
+#include <bootdev.h>
 #include <bootflow.h>
 #include <command.h>
-#include <bootmethod.h>
+#include <bootmeth.h>
 #include <distro.h>
 #include <dm.h>
 #include <net.h>
@@ -58,19 +58,19 @@ static int eth_get_bootflow(struct udevice *dev, struct bootflow_iter *iter,
 	run_command("dhcp", 0);
 	bflow->state = BOOTFLOWST_MEDIA;
 
-	ret = bootmethod_read_bootflow(bflow->method, bflow);
+	ret = bootmeth_read_bootflow(bflow->method, bflow);
 	if (ret)
 		return log_msg_ret("method", ret);
 
 	return 0;
 }
 
-struct bootdevice_ops eth_bootdevice_ops = {
+struct bootdev_ops eth_bootdev_ops = {
 	.get_bootflow	= eth_get_bootflow,
 };
 
-U_BOOT_DRIVER(eth_bootdevice) = {
-	.name		= "eth_bootdevice",
+U_BOOT_DRIVER(eth_bootdev) = {
+	.name		= "eth_bootdev",
 	.id		= UCLASS_BOOTDEVICE,
-	.ops		= &eth_bootdevice_ops,
+	.ops		= &eth_bootdev_ops,
 };

@@ -1,29 +1,29 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * 'bootdevice' command
+ * 'bootdev' command
  *
  * Copyright 2021 Google LLC
  * Written by Simon Glass <sjg@chromium.org>
  */
 
 #include <common.h>
-#include <bootdevice.h>
+#include <bootdev.h>
 #include <bootflow.h>
 #include <command.h>
 #include <dm.h>
 #include <dm/device-internal.h>
 #include <dm/uclass-internal.h>
 
-static int bootdevice_check_state(struct bootdevice_state **statep)
+static int bootdev_check_state(struct bootdev_state **statep)
 {
-	struct bootdevice_state *state;
+	struct bootdev_state *state;
 	int ret;
 
-	ret = bootdevice_get_state(&state);
+	ret = bootdev_get_state(&state);
 	if (ret)
 		return ret;
-	if (!state->cur_bootdevice) {
-		printf("Please use 'bootdevice select' first\n");
+	if (!state->cur_bootdev) {
+		printf("Please use 'bootdev select' first\n");
 		return -ENOENT;
 	}
 	*statep = state;
@@ -31,32 +31,32 @@ static int bootdevice_check_state(struct bootdevice_state **statep)
 	return 0;
 }
 
-static int do_bootdevice_list(struct cmd_tbl *cmdtp, int flag, int argc,
+static int do_bootdev_list(struct cmd_tbl *cmdtp, int flag, int argc,
 			      char *const argv[])
 {
 	bool probe;
 
 	probe = argc >= 2 && !strcmp(argv[1], "-p");
-	bootdevice_list(probe);
+	bootdev_list(probe);
 
 	return 0;
 }
 
-static int do_bootdevice_select(struct cmd_tbl *cmdtp, int flag, int argc,
+static int do_bootdev_select(struct cmd_tbl *cmdtp, int flag, int argc,
 				char *const argv[])
 {
-	struct bootdevice_state *state;
+	struct bootdev_state *state;
 	struct udevice *dev;
 	const char *name;
 	char *endp;
 	int seq;
 	int ret;
 
-	ret = bootdevice_get_state(&state);
+	ret = bootdev_get_state(&state);
 	if (ret)
 		return CMD_RET_FAILURE;
 	if (argc < 2) {
-		state->cur_bootdevice = NULL;
+		state->cur_bootdev = NULL;
 		return 0;
 	}
 	name = argv[1];
@@ -71,15 +71,15 @@ static int do_bootdevice_select(struct cmd_tbl *cmdtp, int flag, int argc,
 		printf("Cannot find '%s' (err=%d)\n", name, ret);
 		return CMD_RET_FAILURE;
 	}
-	state->cur_bootdevice = dev;
+	state->cur_bootdev = dev;
 
 	return 0;
 }
 
-static int do_bootdevice_info(struct cmd_tbl *cmdtp, int flag, int argc,
+static int do_bootdev_info(struct cmd_tbl *cmdtp, int flag, int argc,
 			      char *const argv[])
 {
-	struct bootdevice_state *state;
+	struct bootdev_state *state;
 	struct bootflow *bflow;
 	int ret, i, num_valid;
 	struct udevice *dev;
@@ -87,17 +87,17 @@ static int do_bootdevice_info(struct cmd_tbl *cmdtp, int flag, int argc,
 
 	probe = argc >= 2 && !strcmp(argv[1], "-p");
 
-	ret = bootdevice_check_state(&state);
+	ret = bootdev_check_state(&state);
 	if (ret)
 		return CMD_RET_FAILURE;
 
-	dev = state->cur_bootdevice;
+	dev = state->cur_bootdev;
 
 	/* Count the number of bootflows, including how many are valid*/
 	num_valid = 0;
-	for (ret = bootdevice_first_bootflow(dev, &bflow), i = 0;
+	for (ret = bootdev_first_bootflow(dev, &bflow), i = 0;
 	     !ret;
-	     ret = bootdevice_next_bootflow(&bflow), i++)
+	     ret = bootdev_next_bootflow(&bflow), i++)
 		num_valid += bflow->state == BOOTFLOWST_LOADED;
 
 	/*
@@ -119,13 +119,13 @@ static int do_bootdevice_info(struct cmd_tbl *cmdtp, int flag, int argc,
 }
 
 #ifdef CONFIG_SYS_LONGHELP
-static char bootdevice_help_text[] =
-	"list [-p]      - list all available bootdevices (-p to probe)\n"
-	"bootdevice select <bm>    - select a bootdevice by name\n"
-	"bootdevice info [-p]      - show information about a bootdevice (-p to probe)";
+static char bootdev_help_text[] =
+	"list [-p]      - list all available bootdevs (-p to probe)\n"
+	"bootdev select <bm>    - select a bootdev by name\n"
+	"bootdev info [-p]      - show information about a bootdev (-p to probe)";
 #endif
 
-U_BOOT_CMD_WITH_SUBCMDS(bootdevice, "Bootdevices", bootdevice_help_text,
-	U_BOOT_SUBCMD_MKENT(list, 2, 1, do_bootdevice_list),
-	U_BOOT_SUBCMD_MKENT(select, 2, 1, do_bootdevice_select),
-	U_BOOT_SUBCMD_MKENT(info, 2, 1, do_bootdevice_info));
+U_BOOT_CMD_WITH_SUBCMDS(bootdev, "Bootdevices", bootdev_help_text,
+	U_BOOT_SUBCMD_MKENT(list, 2, 1, do_bootdev_list),
+	U_BOOT_SUBCMD_MKENT(select, 2, 1, do_bootdev_select),
+	U_BOOT_SUBCMD_MKENT(info, 2, 1, do_bootdev_info));

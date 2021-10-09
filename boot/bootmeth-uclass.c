@@ -5,12 +5,12 @@
  */
 
 #include <common.h>
-#include <bootmethod.h>
+#include <bootmeth.h>
 #include <dm.h>
 
-int bootmethod_read_bootflow(struct udevice *dev, struct bootflow *bflow)
+int bootmeth_read_bootflow(struct udevice *dev, struct bootflow *bflow)
 {
-	const struct bootmethod_ops *ops = bootmethod_get_ops(dev);
+	const struct bootmeth_ops *ops = bootmeth_get_ops(dev);
 
 	if (!ops->read_bootflow)
 		return -ENOSYS;
@@ -18,9 +18,9 @@ int bootmethod_read_bootflow(struct udevice *dev, struct bootflow *bflow)
 	return ops->read_bootflow(dev, bflow);
 }
 
-int bootmethod_boot(struct udevice *dev, struct bootflow *bflow)
+int bootmeth_boot(struct udevice *dev, struct bootflow *bflow)
 {
-	const struct bootmethod_ops *ops = bootmethod_get_ops(dev);
+	const struct bootmeth_ops *ops = bootmeth_get_ops(dev);
 
 	if (!ops->boot)
 		return -ENOSYS;
@@ -28,10 +28,10 @@ int bootmethod_boot(struct udevice *dev, struct bootflow *bflow)
 	return ops->boot(dev, bflow);
 }
 
-int bootmethod_read_file(struct udevice *dev, struct bootflow *bflow,
+int bootmeth_read_file(struct udevice *dev, struct bootflow *bflow,
 			 const char *file_path, ulong addr, ulong *sizep)
 {
-	const struct bootmethod_ops *ops = bootmethod_get_ops(dev);
+	const struct bootmeth_ops *ops = bootmeth_get_ops(dev);
 
 	if (!ops->read_file)
 		return -ENOSYS;
@@ -39,8 +39,8 @@ int bootmethod_read_file(struct udevice *dev, struct bootflow *bflow,
 	return ops->read_file(dev, bflow, file_path, addr, sizep);
 }
 
-UCLASS_DRIVER(bootmethod) = {
+UCLASS_DRIVER(bootmeth) = {
 	.id		= UCLASS_BOOTMETHOD,
-	.name		= "bootmethod",
+	.name		= "bootmeth",
 	.flags		= DM_UC_FLAG_SEQ_ALIAS,
 };

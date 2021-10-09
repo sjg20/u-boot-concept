@@ -7,9 +7,9 @@
  */
 
 #include <common.h>
-#include <bootdevice.h>
+#include <bootdev.h>
 #include <bootflow.h>
-#include <bootmethod.h>
+#include <bootmeth.h>
 #include <command.h>
 #include <distro.h>
 #include <dm.h>
@@ -28,7 +28,7 @@ static int disto_pxe_getfile(struct pxe_context *ctx, const char *file_path,
 	int ret;
 
 	addr = simple_strtoul(file_addr, NULL, 16);
-	ret = bootmethod_read_file(info->dev, info->bflow, file_path, addr,
+	ret = bootmeth_read_file(info->dev, info->bflow, file_path, addr,
 				   sizep);
 	if (ret)
 		return log_msg_ret("read", ret);
@@ -139,21 +139,21 @@ int distro_pxe_boot(struct udevice *dev, struct bootflow *bflow)
 	return 0;
 }
 
-static struct bootmethod_ops distro_bmethod_pxe_ops = {
+static struct bootmeth_ops distro_bootmeth_pxe_ops = {
 	.read_bootflow	= distro_pxe_read_bootflow,
 	.read_file	= distro_pxe_read_file,
 	.boot		= distro_pxe_boot,
 };
 
-static const struct udevice_id distro_bmethod_ids[] = {
+static const struct udevice_id distro_bootmeth_ids[] = {
 	{ .compatible = "u-boot,distro-pxe" },
 	{ }
 };
 
-U_BOOT_DRIVER(distro_bmethod_pxe) = {
-	.name		= "distro_bmethod_pxe",
+U_BOOT_DRIVER(distro_bootmeth_pxe) = {
+	.name		= "distro_bootmeth_pxe",
 	.id		= UCLASS_BOOTMETHOD,
-	.of_match	= distro_bmethod_ids,
-	.ops		= &distro_bmethod_pxe_ops,
+	.of_match	= distro_bootmeth_ids,
+	.ops		= &distro_bootmeth_pxe_ops,
 	.priv_auto	= sizeof(struct pxe_context),
 };

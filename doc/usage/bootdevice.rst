@@ -1,6 +1,6 @@
 .. SPDX-License-Identifier: GPL-2.0+:
 
-bootdevice command
+bootdev command
 ==================
 
 Synopis
@@ -8,26 +8,26 @@ Synopis
 
 ::
 
-    bootdevice list [-p]      - list all available bootdevices (-p to probe)\n"
-    bootdevice select <bm>    - select a bootdevice by name\n"
-    bootdevice info [-p]      - show information about a bootdevice";
+    bootdev list [-p]      - list all available bootdevs (-p to probe)\n"
+    bootdev select <bm>    - select a bootdev by name\n"
+    bootdev info [-p]      - show information about a bootdev";
 
 Description
 -----------
 
-The `` command is used to manage bootdevices. It can list available
-bootdevices, select one and obtain information about it.
+The `` command is used to manage bootdevs. It can list available
+bootdevs, select one and obtain information about it.
 
-See :doc:`../develop/bootflow` for more information about bootdevices in
+See :doc:`../develop/bootflow` for more information about bootdevs in
 general.
 
 
-bootdevice list
+bootdev list
 ~~~~~~~~~~~~~~~
 
-This lists available bootdevices
+This lists available bootdevs
 
-Scanning with -p causes the bootdevices to be probed. This happens automatically
+Scanning with -p causes the bootdevs to be probed. This happens automatically
 when they are used.
 
 The list looks something like this:
@@ -35,9 +35,9 @@ The list looks something like this:
 ===  ======  ======  ========  =========================
 Seq  Probed  Status  Uclass    Name
 ===  ======  ======  ========  =========================
-  0   [ + ]      OK  mmc       mmc@7e202000.bootdevice
-  1   [   ]      OK  mmc       sdhci@7e300000.bootdevice
-  2   [   ]      OK  ethernet  smsc95xx_eth.bootdevice
+  0   [ + ]      OK  mmc       mmc@7e202000.bootdev
+  1   [   ]      OK  mmc       sdhci@7e300000.bootdev
+  2   [   ]      OK  ethernet  smsc95xx_eth.bootdev
 ===  ======  ======  ========  =========================
 
 
@@ -60,70 +60,70 @@ Uclass:
     device (e.g. MMC, Ethernet).
 
 Name:
-    Name of the bootdevice. This is generated from the media device appended
-    with `.bootdevice`
+    Name of the bootdev. This is generated from the media device appended
+    with `.bootdev`
 
 
-bootdevice select
+bootdev select
 ~~~~~~~~~~~~~~~~~
 
-Use this to select a particular bootdevice. You can select it by the sequence
-number or name, as shown in `bootdevice list`.
+Use this to select a particular bootdev. You can select it by the sequence
+number or name, as shown in `bootdev list`.
 
-Once a bootdevice is selected, you can use `bootdevice info` to look at it or
+Once a bootdev is selected, you can use `bootdev info` to look at it or
 `bootflow scan` to scan it.
 
-If no bootdevice name or number is provided, then any existing bootdevice is
+If no bootdev name or number is provided, then any existing bootdev is
 unselected.
 
 
-bootdevice info
+bootdev info
 ~~~~~~~~~~~~~~~
 
-This shows information on the current bootdevice, with the format looking like
+This shows information on the current bootdev, with the format looking like
 this:
 
 =========  =======================
-Name       mmc@7e202000.bootdevice
+Name       mmc@7e202000.bootdev
 Sequence   0
 Status     Probed
 Uclass     mmc
 Bootflows  1 (1 valid)
 =========  =======================
 
-Most of the information is the same as `bootdevice list` above. The new fields
+Most of the information is the same as `bootdev list` above. The new fields
 are:
 
 Device
-    Name of the bootdevice
+    Name of the bootdev
 
 Status
     Shows `Probed` if the device is probed, `OK` if not. If -p is used and the
     device fails to probe, an error code is shown.
 
 Bootflows
-    Indicates the number of bootflows attached to the bootdevice. This is 0
+    Indicates the number of bootflows attached to the bootdev. This is 0
     unless you have used 'bootflow scan' on the bootflow, or on all bootflows.
 
 
 Example
 -------
 
-This example shows listing available bootdevice and getting information about
+This example shows listing available bootdev and getting information about
 one of them::
 
-   U-Boot> bootdevice list
+   U-Boot> bootdev list
    Seq  Probed  Status  Uclass    Name
    ---  ------  ------  --------  ------------------
-     0   [ + ]      OK  mmc       mmc@7e202000.bootdevice
-     1   [   ]      OK  mmc       sdhci@7e300000.bootdevice
-     2   [   ]      OK  ethernet  smsc95xx_eth.bootdevice
+     0   [ + ]      OK  mmc       mmc@7e202000.bootdev
+     1   [   ]      OK  mmc       sdhci@7e300000.bootdev
+     2   [   ]      OK  ethernet  smsc95xx_eth.bootdev
    ---  ------  ------  --------  ------------------
    (3 devices)
-   U-Boot> bootdevice sel 0
+   U-Boot> bootdev sel 0
    U-Boot> bootflow scan
-   U-Boot> bootdevice info
-   Name:      mmc@7e202000.bootdevice
+   U-Boot> bootdev info
+   Name:      mmc@7e202000.bootdev
    Sequence:  0
    Status:    Probed
    Uclass:    mmc

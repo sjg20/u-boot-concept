@@ -6,19 +6,19 @@
 
 #include <common.h>
 #include <dm.h>
-#include <bootdevice.h>
+#include <bootdev.h>
 #include <bootflow.h>
 #include <mapmem.h>
 #include <os.h>
 #include <test/suites.h>
 #include <test/ut.h>
 
-/* Declare a new bootdevice test */
-#define BOOTDEVICE_TEST(_name, _flags) \
-		UNIT_TEST(_name, _flags, bootdevice_test)
+/* Declare a new bootdev test */
+#define BOOTDEV_TEST(_name, _flags) \
+		UNIT_TEST(_name, _flags, bootdev_test)
 #if 0
 /* Setup the MMC file */
-static int bootdevice_setup_test(struct unit_test_state *uts)
+static int bootdev_setup_test(struct unit_test_state *uts)
 {
 	int full_size = 20 << 20;
 	const char *src;
@@ -36,8 +36,8 @@ static int bootdevice_setup_test(struct unit_test_state *uts)
 }
 #endif
 
-/* Check 'bootdevice list' command */
-static int bootdevice_test_cmd_list(struct unit_test_state *uts)
+/* Check 'bootdev list' command */
+static int bootdev_test_cmd_list(struct unit_test_state *uts)
 {
 	int probed;
 
@@ -45,16 +45,16 @@ static int bootdevice_test_cmd_list(struct unit_test_state *uts)
 	for (probed = 0; probed < 2; probed++) {
 		int probe_ch = probed ? '+' : ' ';
 
-		ut_assertok(run_command(probed ? "bootdevice list -p" :
-			"bootdevice list", 0));
+		ut_assertok(run_command(probed ? "bootdev list -p" :
+			"bootdev list", 0));
 		ut_assert_nextline("Seq  Probed  Status  Uclass    Name");
 		ut_assert_nextlinen("---");
 		ut_assert_nextline("%3x   [ %c ]  %6s  %-8s  %s", 0, probe_ch, "OK",
-				   "mmc", "mmc2.bootdevice");
+				   "mmc", "mmc2.bootdev");
 		ut_assert_nextline("%3x   [ %c ]  %6s  %-8s  %s", 1, probe_ch, "OK",
-				   "mmc", "mmc1.bootdevice");
+				   "mmc", "mmc1.bootdev");
 		ut_assert_nextline("%3x   [ %c ]  %6s  %-8s  %s", 2, probe_ch, "OK",
-				   "mmc", "mmc0.bootdevice");
+				   "mmc", "mmc0.bootdev");
 		ut_assert_nextlinen("---");
 		ut_assert_nextline("(3 devices)");
 		ut_assert_console_end();
@@ -62,21 +62,21 @@ static int bootdevice_test_cmd_list(struct unit_test_state *uts)
 
 	return 0;
 }
-BOOTDEVICE_TEST(bootdevice_test_cmd_list, UT_TESTF_DM | UT_TESTF_SCAN_FDT);
+BOOTDEV_TEST(bootdev_test_cmd_list, UT_TESTF_DM | UT_TESTF_SCAN_FDT);
 
-/* Check 'bootdevice select' and 'info' commands */
-static int bootdevice_test_cmd_select(struct unit_test_state *uts)
+/* Check 'bootdev select' and 'info' commands */
+static int bootdev_test_cmd_select(struct unit_test_state *uts)
 {
 	console_record_reset_enable();
-	ut_asserteq(1, run_command("bootdevice info", 0));
+	ut_asserteq(1, run_command("bootdev info", 0));
 	ut_assert_nextlinen("Please use");
 	ut_assert_console_end();
 
-	ut_assertok(run_command("bootdevice select 0", 0));
+	ut_assertok(run_command("bootdev select 0", 0));
 	ut_assert_console_end();
 
-	ut_assertok(run_command("bootdevice info", 0));
-	ut_assert_nextline("Name:      mmc2.bootdevice");
+	ut_assertok(run_command("bootdev info", 0));
+	ut_assert_nextline("Name:      mmc2.bootdev");
         ut_assert_nextline("Sequence:  0");
         ut_assert_nextline("Status:    Probed");
 	ut_assert_nextline("Uclass:    mmc");
@@ -85,49 +85,49 @@ static int bootdevice_test_cmd_select(struct unit_test_state *uts)
 
 	return 0;
 }
-BOOTDEVICE_TEST(bootdevice_test_cmd_select, UT_TESTF_DM | UT_TESTF_SCAN_FDT);
+BOOTDEV_TEST(bootdev_test_cmd_select, UT_TESTF_DM | UT_TESTF_SCAN_FDT);
 
 /* Check 'bootflow scan/list' commands */
-static int bootdevice_test_cmd_bootflow(struct unit_test_state *uts)
+static int bootdev_test_cmd_bootflow(struct unit_test_state *uts)
 {
 	console_record_reset_enable();
-	ut_assertok(run_command("bootdevice select 2", 0));
+	ut_assertok(run_command("bootdev select 2", 0));
 	ut_assert_console_end();
 	ut_assertok(run_command("bootflow scan -l", 0));
-	ut_assert_nextline("Scanning for bootflows in bootdevice 'mmc0.bootdevice'");
+	ut_assert_nextline("Scanning for bootflows in bootdev 'mmc0.bootdev'");
 	ut_assert_nextline("Seq  Method       State   Uclass    Part  Name                      Filename");
 	ut_assert_nextlinen("---");
-	ut_assert_nextline("  0  syslinux     loaded  mmc          1  mmc0.bootdevice.part_1    extlinux/extlinux.conf");
+	ut_assert_nextline("  0  syslinux     loaded  mmc          1  mmc0.bootdev.part_1    extlinux/extlinux.conf");
 	ut_assert_nextlinen("---");
 	ut_assert_nextline("(1 bootflow, 1 valid)");
 	ut_assert_console_end();
 
 	ut_assertok(run_command("bootflow list", 0));
-	ut_assert_nextline("Showing bootflows for bootdevice 'mmc0.bootdevice'");
+	ut_assert_nextline("Showing bootflows for bootdev 'mmc0.bootdev'");
 	ut_assert_nextline("Seq  Method       State   Uclass    Part  Name                      Filename");
 	ut_assert_nextlinen("---");
-	ut_assert_nextline("  0  syslinux     loaded  mmc          1  mmc0.bootdevice.part_1    extlinux/extlinux.conf");
+	ut_assert_nextline("  0  syslinux     loaded  mmc          1  mmc0.bootdev.part_1    extlinux/extlinux.conf");
 	ut_assert_nextlinen("---");
 	ut_assert_nextline("(1 bootflow, 1 valid)");
 	ut_assert_console_end();
 
 	return 0;
 }
-BOOTDEVICE_TEST(bootdevice_test_cmd_bootflow, UT_TESTF_DM | UT_TESTF_SCAN_FDT);
+BOOTDEV_TEST(bootdev_test_cmd_bootflow, UT_TESTF_DM | UT_TESTF_SCAN_FDT);
 
-/* Check 'bootflow scan/list' commands using all bootdevices */
-static int bootdevice_test_cmd_bootflow_glob(struct unit_test_state *uts)
+/* Check 'bootflow scan/list' commands using all bootdevs */
+static int bootdev_test_cmd_bootflow_glob(struct unit_test_state *uts)
 {
 	console_record_reset_enable();
 	ut_assertok(run_command("bootflow scan -l", 0));
-	ut_assert_nextline("Scanning for bootflows in all bootdevices");
+	ut_assert_nextline("Scanning for bootflows in all bootdevs");
 	ut_assert_nextline("Seq  Method       State   Uclass    Part  Name                      Filename");
 	ut_assert_nextlinen("---");
-	ut_assert_nextline("Scanning bootdevice 'mmc2.bootdevice':");
-	ut_assert_nextline("Scanning bootdevice 'mmc1.bootdevice':");
-	ut_assert_nextline("Scanning bootdevice 'mmc0.bootdevice':");
-	ut_assert_nextline("  0  syslinux     loaded  mmc          1  mmc0.bootdevice.part_1    extlinux/extlinux.conf");
-	ut_assert_nextline("No more bootdevices");
+	ut_assert_nextline("Scanning bootdev 'mmc2.bootdev':");
+	ut_assert_nextline("Scanning bootdev 'mmc1.bootdev':");
+	ut_assert_nextline("Scanning bootdev 'mmc0.bootdev':");
+	ut_assert_nextline("  0  syslinux     loaded  mmc          1  mmc0.bootdev.part_1    extlinux/extlinux.conf");
+	ut_assert_nextline("No more bootdevs");
 	ut_assert_nextlinen("---");
 	ut_assert_nextline("(1 bootflow, 1 valid)");
 	ut_assert_console_end();
@@ -136,42 +136,42 @@ static int bootdevice_test_cmd_bootflow_glob(struct unit_test_state *uts)
 	ut_assert_nextline("Showing all bootflows");
 	ut_assert_nextline("Seq  Method       State   Uclass    Part  Name                      Filename");
 	ut_assert_nextlinen("---");
-	ut_assert_nextline("  0  syslinux     loaded  mmc          1  mmc0.bootdevice.part_1    extlinux/extlinux.conf");
+	ut_assert_nextline("  0  syslinux     loaded  mmc          1  mmc0.bootdev.part_1    extlinux/extlinux.conf");
 	ut_assert_nextlinen("---");
 	ut_assert_nextline("(1 bootflow, 1 valid)");
 	ut_assert_console_end();
 
 	return 0;
 }
-BOOTDEVICE_TEST(bootdevice_test_cmd_bootflow_glob,
+BOOTDEV_TEST(bootdev_test_cmd_bootflow_glob,
 		UT_TESTF_DM | UT_TESTF_SCAN_FDT);
 
 /* Check 'bootflow scan -e' */
-static int bootdevice_test_cmd_bootflow_scan_e(struct unit_test_state *uts)
+static int bootdev_test_cmd_bootflow_scan_e(struct unit_test_state *uts)
 {
 	console_record_reset_enable();
 	ut_assertok(run_command("bootflow scan -ale", 0));
-	ut_assert_nextline("Scanning for bootflows in all bootdevices");
+	ut_assert_nextline("Scanning for bootflows in all bootdevs");
 	ut_assert_nextline("Seq  Method       State   Uclass    Part  Name                      Filename");
 	ut_assert_nextlinen("---");
-	ut_assert_nextline("Scanning bootdevice 'mmc2.bootdevice':");
-	ut_assert_nextline("  0  syslinux     media   mmc          0  mmc2.bootdevice.whole     <NULL>");
+	ut_assert_nextline("Scanning bootdev 'mmc2.bootdev':");
+	ut_assert_nextline("  0  syslinux     media   mmc          0  mmc2.bootdev.whole     <NULL>");
 	ut_assert_nextline("     ** No partition found, err=-93");
-	ut_assert_nextline("  1  efi          media   mmc          0  mmc2.bootdevice.whole     <NULL>");
+	ut_assert_nextline("  1  efi          media   mmc          0  mmc2.bootdev.whole     <NULL>");
 	ut_assert_nextline("     ** No partition found, err=-93");
 
-	ut_assert_nextline("Scanning bootdevice 'mmc1.bootdevice':");
-	ut_assert_skip_to_line("Scanning bootdevice 'mmc0.bootdevice':");
-	ut_assert_nextline("  4  syslinux     media   mmc          0  mmc0.bootdevice.whole     <NULL>");
+	ut_assert_nextline("Scanning bootdev 'mmc1.bootdev':");
+	ut_assert_skip_to_line("Scanning bootdev 'mmc0.bootdev':");
+	ut_assert_nextline("  4  syslinux     media   mmc          0  mmc0.bootdev.whole     <NULL>");
 	ut_assert_nextline("     ** No partition found, err=-2");
-	ut_assert_nextline("  5  efi          media   mmc          0  mmc0.bootdevice.whole     <NULL>");
+	ut_assert_nextline("  5  efi          media   mmc          0  mmc0.bootdev.whole     <NULL>");
 	ut_assert_nextline("     ** No partition found, err=-2");
 
-	ut_assert_nextline("  6  syslinux     loaded  mmc          1  mmc0.bootdevice.part_1    extlinux/extlinux.conf");
-	ut_assert_nextline("  7  efi          fs      mmc          1  mmc0.bootdevice.part_1    efi/boot/bootsbox.efi");
-	ut_assert_skip_to_line(" 3f  efi          media   mmc         1d  mmc0.bootdevice.part_1d   <NULL>");
+	ut_assert_nextline("  6  syslinux     loaded  mmc          1  mmc0.bootdev.part_1    extlinux/extlinux.conf");
+	ut_assert_nextline("  7  efi          fs      mmc          1  mmc0.bootdev.part_1    efi/boot/bootsbox.efi");
+	ut_assert_skip_to_line(" 3f  efi          media   mmc         1d  mmc0.bootdev.part_1d   <NULL>");
 	ut_assert_nextline("     ** No partition found, err=-2");
-	ut_assert_nextline("No more bootdevices");
+	ut_assert_nextline("No more bootdevs");
 	ut_assert_nextlinen("---");
 	ut_assert_nextline("(64 bootflows, 1 valid)");
 	ut_assert_console_end();
@@ -180,32 +180,32 @@ static int bootdevice_test_cmd_bootflow_scan_e(struct unit_test_state *uts)
 	ut_assert_nextline("Showing all bootflows");
 	ut_assert_nextline("Seq  Method       State   Uclass    Part  Name                      Filename");
 	ut_assert_nextlinen("---");
-	ut_assert_nextline("  0  syslinux     media   mmc          0  mmc2.bootdevice.whole     <NULL>");
-	ut_assert_nextline("  1  efi          media   mmc          0  mmc2.bootdevice.whole     <NULL>");
-	ut_assert_skip_to_line("  6  syslinux     loaded  mmc          1  mmc0.bootdevice.part_1    extlinux/extlinux.conf");
-	ut_assert_skip_to_line(" 3f  efi          media   mmc         1d  mmc0.bootdevice.part_1d   <NULL>");
+	ut_assert_nextline("  0  syslinux     media   mmc          0  mmc2.bootdev.whole     <NULL>");
+	ut_assert_nextline("  1  efi          media   mmc          0  mmc2.bootdev.whole     <NULL>");
+	ut_assert_skip_to_line("  6  syslinux     loaded  mmc          1  mmc0.bootdev.part_1    extlinux/extlinux.conf");
+	ut_assert_skip_to_line(" 3f  efi          media   mmc         1d  mmc0.bootdev.part_1d   <NULL>");
 	ut_assert_nextlinen("---");
 	ut_assert_nextline("(64 bootflows, 1 valid)");
 	ut_assert_console_end();
 
 	return 0;
 }
-BOOTDEVICE_TEST(bootdevice_test_cmd_bootflow_scan_e,
+BOOTDEV_TEST(bootdev_test_cmd_bootflow_scan_e,
 		UT_TESTF_DM | UT_TESTF_SCAN_FDT);
 
 /* Check 'bootflow info' */
-static int bootdevice_test_cmd_bootflow_info(struct unit_test_state *uts)
+static int bootdev_test_cmd_bootflow_info(struct unit_test_state *uts)
 {
 	console_record_reset_enable();
-	ut_assertok(run_command("bootdevice select 2", 0));
+	ut_assertok(run_command("bootdev select 2", 0));
 	ut_assert_console_end();
 	ut_assertok(run_command("bootflow scan", 0));
 	ut_assert_console_end();
 	ut_assertok(run_command("bootflow select 0", 0));
 	ut_assert_console_end();
 	ut_assertok(run_command("bootflow info", 0));
-	ut_assert_nextline("Name:      mmc0.bootdevice.part_1");
-	ut_assert_nextline("Device:    mmc0.bootdevice");
+	ut_assert_nextline("Name:      mmc0.bootdev.part_1");
+	ut_assert_nextline("Device:    mmc0.bootdev");
 	ut_assert_nextline("Block dev: mmc0.blk");
 	ut_assert_nextline("Sequence:  0");
 	ut_assert_nextline("Method:    syslinux");
@@ -219,7 +219,7 @@ static int bootdevice_test_cmd_bootflow_info(struct unit_test_state *uts)
 	ut_assert_console_end();
 
 	ut_assertok(run_command("bootflow info -d", 0));
-	ut_assert_nextline("Name:      mmc0.bootdevice.part_1");
+	ut_assert_nextline("Name:      mmc0.bootdev.part_1");
 	ut_assert_skip_to_line("Error:     0");
 	ut_assert_nextline("Contents:");
 	ut_assert_nextline("%s", "");
@@ -229,15 +229,15 @@ static int bootdevice_test_cmd_bootflow_info(struct unit_test_state *uts)
 
 	return 0;
 }
-BOOTDEVICE_TEST(bootdevice_test_cmd_bootflow_info,
+BOOTDEV_TEST(bootdev_test_cmd_bootflow_info,
 		UT_TESTF_DM | UT_TESTF_SCAN_FDT);
 
-/* Check 'bootflow scan -b' to boot the first available bootdevice */
-static int bootdevice_test_cmd_bootflow_scan_boot(struct unit_test_state *uts)
+/* Check 'bootflow scan -b' to boot the first available bootdev */
+static int bootdev_test_cmd_bootflow_scan_boot(struct unit_test_state *uts)
 {
 	console_record_reset_enable();
 	ut_assertok(run_command("bootflow scan -b", 0));
-	ut_assert_nextline("** Booting bootflow 'mmc0.bootdevice.part_1'");
+	ut_assert_nextline("** Booting bootflow 'mmc0.bootdev.part_1'");
 	ut_assert_nextline("Ignoring unknown command: ui");
 
 	/*
@@ -250,21 +250,21 @@ static int bootdevice_test_cmd_bootflow_scan_boot(struct unit_test_state *uts)
 
 	return 0;
 }
-BOOTDEVICE_TEST(bootdevice_test_cmd_bootflow_scan_boot,
+BOOTDEV_TEST(bootdev_test_cmd_bootflow_scan_boot,
 		UT_TESTF_DM | UT_TESTF_SCAN_FDT);
 
 /* Check 'bootflow boot' to boot a selected bootflow */
-static int bootdevice_test_cmd_bootflow_boot(struct unit_test_state *uts)
+static int bootdev_test_cmd_bootflow_boot(struct unit_test_state *uts)
 {
 	console_record_reset_enable();
-	ut_assertok(run_command("bootdevice select 2", 0));
+	ut_assertok(run_command("bootdev select 2", 0));
 	ut_assert_console_end();
 	ut_assertok(run_command("bootflow scan", 0));
 	ut_assert_console_end();
 	ut_assertok(run_command("bootflow select 0", 0));
 	ut_assert_console_end();
 	ut_assertok(run_command("bootflow boot", 0));
-	ut_assert_nextline("** Booting bootflow 'mmc0.bootdevice.part_1'");
+	ut_assert_nextline("** Booting bootflow 'mmc0.bootdev.part_1'");
 	ut_assert_nextline("Ignoring unknown command: ui");
 
 	/*
@@ -277,11 +277,11 @@ static int bootdevice_test_cmd_bootflow_boot(struct unit_test_state *uts)
 
 	return 0;
 }
-BOOTDEVICE_TEST(bootdevice_test_cmd_bootflow_boot,
+BOOTDEV_TEST(bootdev_test_cmd_bootflow_boot,
 		UT_TESTF_DM | UT_TESTF_SCAN_FDT);
 
-/* Check we can get a bootdevice */
-static int bootdevice_test_get(struct unit_test_state *uts)
+/* Check we can get a bootdev */
+static int bootdev_test_get(struct unit_test_state *uts)
 {
 	struct bootflow_iter iter;
 	struct bootflow bflow;
@@ -290,14 +290,14 @@ static int bootdevice_test_get(struct unit_test_state *uts)
 
 	return 0;
 }
-BOOTDEVICE_TEST(bootdevice_test_get, UT_TESTF_DM | UT_TESTF_SCAN_FDT);
+BOOTDEV_TEST(bootdev_test_get, UT_TESTF_DM | UT_TESTF_SCAN_FDT);
 
-int do_ut_bootdevice(struct cmd_tbl *cmdtp, int flag, int argc,
+int do_ut_bootdev(struct cmd_tbl *cmdtp, int flag, int argc,
 		     char *const argv[])
 {
-	struct unit_test *tests = UNIT_TEST_SUITE_START(bootdevice_test);
-	const int n_ents = UNIT_TEST_SUITE_COUNT(bootdevice_test);
+	struct unit_test *tests = UNIT_TEST_SUITE_START(bootdev_test);
+	const int n_ents = UNIT_TEST_SUITE_COUNT(bootdev_test);
 
-	return cmd_ut_category("bootdevice", "bootdevice_test_",
+	return cmd_ut_category("bootdev", "bootdev_test_",
 			       tests, n_ents, argc, argv);
 }

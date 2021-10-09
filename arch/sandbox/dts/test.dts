@@ -71,7 +71,7 @@
 		};
 	};
 
-	bootmethods {
+	bootmeths {
 		compatible = "simple-bus";
 
 		syslinux {

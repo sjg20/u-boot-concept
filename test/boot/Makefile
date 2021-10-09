@@ -2,4 +2,4 @@
 #
 # Copyright 2021 Google LLC
 
-obj-$(CONFIG_BOOTDEVICE) += bootdevice.o
+obj-$(CONFIG_BOOTDEV) += bootdev.o

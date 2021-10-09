@@ -4,17 +4,17 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
-#ifndef __bootmethod_h
-#define __bootmethod_h
+#ifndef __bootmeth_h
+#define __bootmeth_h
 
 struct bootflow;
 
 /**
- * struct bootmethod_ops - Operations for the Platform Controller Hub
+ * struct bootmeth_ops - Operations for the Platform Controller Hub
  *
  * Consider using ioctl() to add rarely used or driver-specific operations.
  */
-struct bootmethod_ops {
+struct bootmeth_ops {
 	/**
 	 * read_bootflow() - read a bootflow for a device
 	 *
@@ -54,20 +54,20 @@ struct bootmethod_ops {
 	int (*boot)(struct udevice *dev, struct bootflow *bflow);
 };
 
-#define bootmethod_get_ops(dev)  ((struct bootmethod_ops *)(dev)->driver->ops)
+#define bootmeth_get_ops(dev)  ((struct bootmeth_ops *)(dev)->driver->ops)
 
 /**
- * bootmethod_read_bootflow() - set up a bootflow for a device
+ * bootmeth_read_bootflow() - set up a bootflow for a device
  *
  * @dev:	Bootmethod device to check
  * @bflow:	On entry, provides dev, hwpart, part and method.
  *	Returns updated bootflow if found
  * @return 0 if OK, -ve on error
  */
-int bootmethod_read_bootflow(struct udevice *dev, struct bootflow *bflow);
+int bootmeth_read_bootflow(struct udevice *dev, struct bootflow *bflow);
 
 /**
- * bootmethod_read_file() - read a file needed for a bootflow
+ * bootmeth_read_file() - read a file needed for a bootflow
  *
  * Read a file from the same place as the bootflow came from
  *
@@ -80,11 +80,11 @@ int bootmethod_read_bootflow(struct udevice *dev, struct bootflow *bflow);
  * @return 0 if OK, -ENOSPC if the file is too large for @sizep, other
  *	-ve value if something else goes wrong
  */
-int bootmethod_read_file(struct udevice *dev, struct bootflow *bflow,
+int bootmeth_read_file(struct udevice *dev, struct bootflow *bflow,
 			 const char *file_path, ulong addr, ulong *sizep);
 
 /**
- * bootmethod_boot() - boot a bootflow
+ * bootmeth_boot() - boot a bootflow
  *
  * @dev:	Bootmethod device to boot
  * @bflow:	Bootflow to boot
@@ -92,6 +92,6 @@ int bootmethod_read_file(struct udevice *dev, struct bootflow *bflow,
  *	Operating Systemn. Returns -EFAULT if that fails, other -ve on
  *	other error
  */
-int bootmethod_boot(struct udevice *dev, struct bootflow *bflow);
+int bootmeth_boot(struct udevice *dev, struct bootflow *bflow);
 
 #endif

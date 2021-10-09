@@ -28,15 +28,15 @@ enum bootflow_state_t {
  *
  * This is connected into two separate linked lists:
  *
- *   bm_sibling - links all bootflows in the same bootdevice
- *   glob_sibling - links all bootflows in all bootdevices
+ *   bm_sibling - links all bootflows in the same bootdev
+ *   glob_sibling - links all bootflows in all bootdevs
  *
- * @bm_node: Points to siblings in the same bootdevice
- * @glob_node: Points to siblings in the global list (all bootdevice)
+ * @bm_node: Points to siblings in the same bootdev
+ * @glob_node: Points to siblings in the global list (all bootdev)
  * @dev: Bootdevice device which produced this bootflow
  * @blk: Block device which contains this bootflow, NULL if this is a network
  *	device
- * @seq: Sequence number of bootflow within its bootdevice
+ * @seq: Sequence number of bootflow within its bootdev
  * @part: Partition number (0 for whole device)
  * @method: Bootmethod device
  * @name: Name of bootflow (allocated)
@@ -70,9 +70,9 @@ struct bootflow {
  * enum bootflow_flags_t - flags for the bootflow
  *
  * @BOOTFLOWF_FIXED: Only used fixed/internal media
- * @BOOTFLOWF_SHOW: Show each bootdevice before scanning it
+ * @BOOTFLOWF_SHOW: Show each bootdev before scanning it
  * @BOOTFLOWF_ALL: Return bootflows with errors as well
- * @BOOTFLOWF_SINGLE_DEV: Just scan one bootmethod
+ * @BOOTFLOWF_SINGLE_DEV: Just scan one bootmeth
  */
 enum bootflow_flags_t {
 	BOOTFLOWF_FIXED		= 1 << 0,
@@ -85,15 +85,15 @@ enum bootflow_flags_t {
  * struct bootflow_iter - state for iterating through bootflows
  *
  * @flags: Flags to use (see enum bootflow_flags_t)
- * @dev: Current bootdevice
+ * @dev: Current bootdev
  * @part: Current partition number (0 for whole device)
- * @method: Current bootmethod
+ * @method: Current bootmeth
  * @max_part: Maximum hardware partition number in @dev, 0 if there is no
  *	partition table
  * @err: Error obtained from checking the last iteration. This is used to skip
  *	forward (e.g. to skip the current partition because it is not valid)
  *	-ENOTTY: try next partition
- *	-ESHUTDOWN: try next bootdevice
+ *	-ESHUTDOWN: try next bootdev
  */
 struct bootflow_iter {
 	int flags;
@@ -115,30 +115,30 @@ struct bootflow_iter {
 void bootflow_reset_iter(struct bootflow_iter *iter, int flags);
 
 /**
- * bootflow_scan_bootdevice() - find the first bootflow in a bootdevice
+ * bootflow_scan_bootdev() - find the first bootflow in a bootdev
  *
  * If @flags includes BOOTFLOWF_ALL then bootflows with errors are returned too
  *
  * @dev:	Boot device to scan, NULL to work through all of them until it
  *	finds one that * can supply a bootflow
  * @iter:	Place to store private info (inited by this call)
- * @flags:	Flags for bootdevice (enum bootflow_flags_t)
+ * @flags:	Flags for bootdev (enum bootflow_flags_t)
  * @bflow:	Place to put the bootflow if found
  * @return 0 if found, other -ve on error
  */
-int bootflow_scan_bootdevice(struct udevice *dev, struct bootflow_iter *iter,
+int bootflow_scan_bootdev(struct udevice *dev, struct bootflow_iter *iter,
 			     int flags, struct bootflow *bflow);
 
 /**
  * bootflow_scan_first() - find the first bootflow
  *
- * This works through the available bootdevice devices until it finds one that
+ * This works through the available bootdev devices until it finds one that
  * can supply a bootflow. It then returns that
  *
  * If @flags includes BOOTFLOWF_ALL then bootflows with errors are returned too
  *
  * @iter:	Place to store private info (inited by this call)
- * @flags:	Flags for bootdevice (enum bootflow_flags_t)
+ * @flags:	Flags for bootdev (enum bootflow_flags_t)
  * @bflow:	Place to put the bootflow if found
  * @return 0 if found, other -ve on error
  */
@@ -148,7 +148,7 @@ int bootflow_scan_first(struct bootflow_iter *iter, int flags,
 /**
  * bootflow_scan_next() - find the next bootflow
  *
- * This works through the available bootdevice devices until it finds one that
+ * This works through the available bootdev devices until it finds one that
  * can supply a bootflow. It then returns that bootflow
  *
  * @iter:	Private info (as set up by bootflow_scan_first())

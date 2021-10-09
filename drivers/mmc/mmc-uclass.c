@@ -8,7 +8,7 @@
 #define LOG_CATEGORY UCLASS_MMC
 
 #include <common.h>
-#include <bootdevice.h>
+#include <bootdev.h>
 #include <log.h>
 #include <mmc.h>
 #include <dm.h>
@@ -421,9 +421,9 @@ int mmc_bind(struct udevice *dev, struct mmc *mmc, const struct mmc_config *cfg)
 	mmc->cfg = cfg;
 	mmc->priv = dev;
 
-	ret = bootdevice_setup_for_dev(dev, "mmc_bootdevice");
+	ret = bootdev_setup_for_dev(dev, "mmc_bootdev");
 	if (ret)
-		return log_msg_ret("bootdevice", ret);
+		return log_msg_ret("bootdev", ret);
 
 	/* the following chunk was from mmc_register() */
 

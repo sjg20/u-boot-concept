@@ -7,7 +7,7 @@
  */
 
 #include <common.h>
-#include <bootdevice.h>
+#include <bootdev.h>
 #include <dm.h>
 #include <mmc.h>
 
@@ -28,19 +28,19 @@ static int mmc_get_bootflow(struct udevice *dev, struct bootflow_iter *iter,
 	if (ret)
 		return log_msg_ret("blk", ret);
 	assert(blk);
-	ret = bootdevice_find_in_blk(dev, blk, iter, bflow);
+	ret = bootdev_find_in_blk(dev, blk, iter, bflow);
 	if (ret)
 		return log_msg_ret("find", ret);
 
 	return 0;
 }
 
-struct bootdevice_ops mmc_bootdevice_ops = {
+struct bootdev_ops mmc_bootdev_ops = {
 	.get_bootflow	= mmc_get_bootflow,
 };
 
-U_BOOT_DRIVER(mmc_bootdevice) = {
-	.name		= "mmc_bootdevice",
+U_BOOT_DRIVER(mmc_bootdev) = {
+	.name		= "mmc_bootdev",
 	.id		= UCLASS_BOOTDEVICE,
-	.ops		= &mmc_bootdevice_ops,
+	.ops		= &mmc_bootdev_ops,
 };

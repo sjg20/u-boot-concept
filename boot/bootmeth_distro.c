@@ -7,9 +7,9 @@
  */
 
 #include <common.h>
-#include <bootdevice.h>
+#include <bootdev.h>
 #include <bootflow.h>
-#include <bootmethod.h>
+#include <bootmeth.h>
 #include <command.h>
 #include <distro.h>
 #include <dm.h>
@@ -30,7 +30,7 @@ static int disto_getfile(struct pxe_context *ctx, const char *file_path,
 
 	/* Allow up to 1GB */
 	*sizep = 1 << 30;
-	ret = bootmethod_read_file(info->dev, info->bflow, file_path, addr,
+	ret = bootmeth_read_file(info->dev, info->bflow, file_path, addr,
 				   sizep);
 	if (ret)
 		return log_msg_ret("read", ret);
@@ -137,20 +137,20 @@ int distro_boot(struct udevice *dev, struct bootflow *bflow)
 	return 0;
 }
 
-static struct bootmethod_ops distro_bmethod_ops = {
+static struct bootmeth_ops distro_bootmeth_ops = {
 	.read_bootflow	= distro_read_bootflow,
 	.read_file	= distro_read_file,
 	.boot		= distro_boot,
 };
 
-static const struct udevice_id distro_bmethod_ids[] = {
+static const struct udevice_id distro_bootmeth_ids[] = {
 	{ .compatible = "u-boot,distro-syslinux" },
 	{ }
 };
 
-U_BOOT_DRIVER(distro_bmethod) = {
-	.name		= "distro_bmethod",
+U_BOOT_DRIVER(distro_bootmeth) = {
+	.name		= "distro_bootmeth",
 	.id		= UCLASS_BOOTMETHOD,
-	.of_match	= distro_bmethod_ids,
-	.ops		= &distro_bmethod_ops,
+	.of_match	= distro_bootmeth_ids,
+	.ops		= &distro_bootmeth_ops,
 };

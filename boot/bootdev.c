@@ -6,12 +6,10 @@
 
 #include <common.h>
 #include <blk.h>
-#include <bootdevice.h>
+#include <bootdev.h>
 #include <bootflow.h>
-#include <bootmethod.h>
-#include <distro.h>
+#include <bootmeth.h>
 #include <dm.h>
-#include <bm_efi.h>
 #include <fs.h>
 #include <log.h>
 #include <malloc.h>
@@ -21,22 +19,22 @@
 
 enum {
 	/*
-	 * Set some sort of limit on the number of partitions a bootdevice can
+	 * Set some sort of limit on the number of partitions a bootdev can
 	 * have. Note that for disks this limits the partitions numbers that
-	 * are scanned to 1..MAX_BOOTFLOWS_PER_BOOTDEVICE
+	 * are scanned to 1..MAX_BOOTFLOWS_PER_BOOTDEV
 	 */
-	MAX_PART_PER_BOOTDEVICE		= 30,
+	MAX_PART_PER_BOOTDEV		= 30,
 };
 
-int bootdevice_add_bootflow(struct bootflow *bflow)
+int bootdev_add_bootflow(struct bootflow *bflow)
 {
-	struct bootdevice_uc_plat *ucp = dev_get_uclass_plat(bflow->dev);
-	struct bootdevice_state *state;
+	struct bootdev_uc_plat *ucp = dev_get_uclass_plat(bflow->dev);
+	struct bootdev_state *state;
 	struct bootflow *new;
 	int ret;
 
 	assert(bflow->dev);
-	ret = bootdevice_get_state(&state);
+	ret = bootdev_get_state(&state);
 	if (ret)
 		return ret;
 
@@ -51,9 +49,9 @@ int bootdevice_add_bootflow(struct bootflow *bflow)
 	return 0;
 }
 
-int bootdevice_first_bootflow(struct udevice *dev, struct bootflow **bflowp)
+int bootdev_first_bootflow(struct udevice *dev, struct bootflow **bflowp)
 {
-	struct bootdevice_uc_plat *ucp = dev_get_uclass_plat(dev);
+	struct bootdev_uc_plat *ucp = dev_get_uclass_plat(dev);
 
 	if (list_empty(&ucp->bootflow_head))
 		return -ENOENT;
@@ -64,10 +62,10 @@ int bootdevice_first_bootflow(struct udevice *dev, struct bootflow **bflowp)
 	return 0;
 }
 
-int bootdevice_next_bootflow(struct bootflow **bflowp)
+int bootdev_next_bootflow(struct bootflow **bflowp)
 {
 	struct bootflow *bflow = *bflowp;
-	struct bootdevice_uc_plat *ucp = dev_get_uclass_plat(bflow->dev);
+	struct bootdev_uc_plat *ucp = dev_get_uclass_plat(bflow->dev);
 
 	*bflowp = NULL;
 
@@ -79,7 +77,7 @@ int bootdevice_next_bootflow(struct bootflow **bflowp)
 	return 0;
 }
 
-int bootdevice_bind(struct udevice *parent, const char *drv_name,
+int bootdev_bind(struct udevice *parent, const char *drv_name,
 		    const char *name, struct udevice **devp)
 {
 	struct udevice *dev;
@@ -99,7 +97,7 @@ int bootdevice_bind(struct udevice *parent, const char *drv_name,
 	return 0;
 }
 
-int bootdevice_find_in_blk(struct udevice *dev, struct udevice *blk,
+int bootdev_find_in_blk(struct udevice *dev, struct udevice *blk,
 			   struct bootflow_iter *iter, struct bootflow *bflow)
 {
 	struct blk_desc *desc = dev_get_uclass_plat(blk);
@@ -109,7 +107,7 @@ int bootdevice_find_in_blk(struct udevice *dev, struct udevice *blk,
 	int ret;
 
 	/* Sanity check */
-	if (iter->part >= MAX_PART_PER_BOOTDEVICE)
+	if (iter->part >= MAX_PART_PER_BOOTDEV)
 		return log_msg_ret("max", -ESHUTDOWN);
 
 	bflow->blk = blk;
@@ -149,7 +147,7 @@ int bootdevice_find_in_blk(struct udevice *dev, struct udevice *blk,
 	 * Currently we don't get the number of partitions, so just
 	 * assume a large number
 	 */
-	iter->max_part = MAX_PART_PER_BOOTDEVICE;
+	iter->max_part = MAX_PART_PER_BOOTDEV;
 
 	if (iter->part) {
 		ret = fs_set_blk_dev_with_part(desc, bflow->part);
@@ -164,14 +162,14 @@ int bootdevice_find_in_blk(struct udevice *dev, struct udevice *blk,
 		bflow->state = BOOTFLOWST_FS;
 	}
 
-	ret = bootmethod_read_bootflow(bflow->method, bflow);
+	ret = bootmeth_read_bootflow(bflow->method, bflow);
 	if (ret)
 		return log_msg_ret("method", ret);
 
 	return 0;
 }
 
-void bootdevice_list(bool probe)
+void bootdev_list(bool probe)
 {
 	struct udevice *dev;
 	int ret;
@@ -197,25 +195,25 @@ void bootdevice_list(bool probe)
 	printf("(%d device%s)\n", i, i != 1 ? "s" : "");
 }
 
-int bootdevice_setup_for_dev(struct udevice *parent, const char *drv_name)
+int bootdev_setup_for_dev(struct udevice *parent, const char *drv_name)
 {
 	struct udevice *bm;
 	int ret;
 
-	if (!CONFIG_IS_ENABLED(BOOTDEVICE))
+	if (!CONFIG_IS_ENABLED(BOOTDEV))
 		return 0;
 
 	ret = device_find_first_child_by_uclass(parent, UCLASS_BOOTDEVICE,
 						&bm);
 	if (ret) {
 		if (ret != -ENODEV) {
-			log_debug("Cannot access bootdevice device\n");
+			log_debug("Cannot access bootdev device\n");
 			return ret;
 		}
 
-		ret = bootdevice_bind(parent, drv_name, "bootdevice", &bm);
+		ret = bootdev_bind(parent, drv_name, "bootdev", &bm);
 		if (ret) {
-			log_debug("Cannot create bootdevice device\n");
+			log_debug("Cannot create bootdev device\n");
 			return ret;
 		}
 	}

@@ -5,14 +5,14 @@
  */
 
 #include <common.h>
-#include <bootdevice.h>
+#include <bootdev.h>
 #include <bootflow.h>
 #include <dm.h>
 
-int bootdevice_get_bootflow(struct udevice *dev, struct bootflow_iter *iter,
+int bootdev_get_bootflow(struct udevice *dev, struct bootflow_iter *iter,
 			    struct bootflow *bflow)
 {
-	const struct bootdevice_ops *ops = bootdevice_get_ops(dev);
+	const struct bootdev_ops *ops = bootdev_get_ops(dev);
 
 	if (!ops->get_bootflow)
 		return -ENOSYS;
@@ -23,7 +23,7 @@ int bootdevice_get_bootflow(struct udevice *dev, struct bootflow_iter *iter,
 	return ops->get_bootflow(dev, iter, bflow);
 }
 
-int bootdevice_get_state(struct bootdevice_state **statep)
+int bootdev_get_state(struct bootdev_state **statep)
 {
 	struct uclass *uc;
 	int ret;
@@ -36,9 +36,9 @@ int bootdevice_get_state(struct bootdevice_state **statep)
 	return 0;
 }
 
-void bootdevice_clear_bootflows(struct udevice *dev)
+void bootdev_clear_bootflows(struct udevice *dev)
 {
-	struct bootdevice_uc_plat *ucp = dev_get_uclass_plat(dev);
+	struct bootdev_uc_plat *ucp = dev_get_uclass_plat(dev);
 
 	while (!list_empty(&ucp->bootflow_head)) {
 		struct bootflow *bflow;
@@ -49,7 +49,7 @@ void bootdevice_clear_bootflows(struct udevice *dev)
 	}
 }
 
-static void bootdevice_clear_glob_(struct bootdevice_state *state)
+static void bootdev_clear_glob_(struct bootdev_state *state)
 {
 	while (!list_empty(&state->glob_head)) {
 		struct bootflow *bflow;
@@ -60,58 +60,58 @@ static void bootdevice_clear_glob_(struct bootdevice_state *state)
 	}
 }
 
-void bootdevice_clear_glob(void)
+void bootdev_clear_glob(void)
 {
-	struct bootdevice_state *state;
+	struct bootdev_state *state;
 
-	if (bootdevice_get_state(&state))
+	if (bootdev_get_state(&state))
 		return;
 
-	bootdevice_clear_glob_(state);
+	bootdev_clear_glob_(state);
 }
 
-static int bootdevice_init(struct uclass *uc)
+static int bootdev_init(struct uclass *uc)
 {
-	struct bootdevice_state *state = uclass_get_priv(uc);
+	struct bootdev_state *state = uclass_get_priv(uc);
 
 	INIT_LIST_HEAD(&state->glob_head);
 
 	return 0;
 }
 
-static int bootdevice_destroy(struct uclass *uc)
+static int bootdev_destroy(struct uclass *uc)
 {
-	struct bootdevice_state *state = uclass_get_priv(uc);
+	struct bootdev_state *state = uclass_get_priv(uc);
 
-	bootdevice_clear_glob_(state);
+	bootdev_clear_glob_(state);
 
 	return 0;
 }
 
-static int bootdevice_post_bind(struct udevice *dev)
+static int bootdev_post_bind(struct udevice *dev)
 {
-	struct bootdevice_uc_plat *ucp = dev_get_uclass_plat(dev);
+	struct bootdev_uc_plat *ucp = dev_get_uclass_plat(dev);
 
 	INIT_LIST_HEAD(&ucp->bootflow_head);
 
 	return 0;
 }
 
-static int bootdevice_pre_unbind(struct udevice *dev)
+static int bootdev_pre_unbind(struct udevice *dev)
 {
-	bootdevice_clear_bootflows(dev);
+	bootdev_clear_bootflows(dev);
 
 	return 0;
 }
 
-UCLASS_DRIVER(bootdevice) = {
+UCLASS_DRIVER(bootdev) = {
 	.id		= UCLASS_BOOTDEVICE,
-	.name		= "bootdevice",
+	.name		= "bootdev",
 	.flags		= DM_UC_FLAG_SEQ_ALIAS,
-	.priv_auto	= sizeof(struct bootdevice_state),
-	.per_device_plat_auto	= sizeof(struct bootdevice_uc_plat),
-	.init		= bootdevice_init,
-	.destroy	= bootdevice_destroy,
-	.post_bind	= bootdevice_post_bind,
-	.pre_unbind	= bootdevice_pre_unbind,
+	.priv_auto	= sizeof(struct bootdev_state),
+	.per_device_plat_auto	= sizeof(struct bootdev_uc_plat),
+	.init		= bootdev_init,
+	.destroy	= bootdev_destroy,
+	.post_bind	= bootdev_post_bind,
+	.pre_unbind	= bootdev_pre_unbind,
 };

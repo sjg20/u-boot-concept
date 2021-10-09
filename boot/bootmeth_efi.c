@@ -7,11 +7,10 @@
  */
 
 #include <common.h>
-#include <bootdevice.h>
+#include <bootdev.h>
 #include <bootflow.h>
-#include <bootmethod.h>
+#include <bootmeth.h>
 #include <command.h>
-#include <distro.h>
 #include <dm.h>
 #include <efi_loader.h>
 #include <fs.h>
@@ -222,20 +221,20 @@ int distro_efi_boot(struct udevice *dev, struct bootflow *bflow)
 	return 0;
 }
 
-static struct bootmethod_ops distro_efi_bmethod_ops = {
+static struct bootmeth_ops distro_efi_bootmeth_ops = {
 	.read_bootflow	= distro_efi_read_bootflow,
 	.read_file	= distro_efi_read_file,
 	.boot		= distro_efi_boot,
 };
 
-static const struct udevice_id distro_efi_bmethod_ids[] = {
+static const struct udevice_id distro_efi_bootmeth_ids[] = {
 	{ .compatible = "u-boot,distro-efi" },
 	{ }
 };
 
-U_BOOT_DRIVER(efi_bmethod) = {
-	.name		= "efi_bmethod",
+U_BOOT_DRIVER(efi_bootmeth) = {
+	.name		= "efi_bootmeth",
 	.id		= UCLASS_BOOTMETHOD,
-	.of_match	= distro_efi_bmethod_ids,
-	.ops		= &distro_efi_bmethod_ops,
+	.of_match	= distro_efi_bootmeth_ids,
+	.ops		= &distro_efi_bootmeth_ops,
 };
