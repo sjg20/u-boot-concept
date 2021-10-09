@@ -86,7 +86,7 @@ class RunAndLog(object):
     a multiplexed log file. Objects of this type should be created by factory
     functions in the Logfile class rather than directly."""
 
-    def __init__(self, logfile, name, chained_file):
+    def __init__(self, logfile, name, chained_file, stdin=None):
         """Initialize a new object.
 
         Args:
@@ -102,6 +102,7 @@ class RunAndLog(object):
         self.logfile = logfile
         self.name = name
         self.chained_file = chained_file
+        self.stdin = stdin
         self.output = None
         self.exit_status = None
 
@@ -109,7 +110,7 @@ class RunAndLog(object):
         """Clean up any resources managed by this object."""
         pass
 
-    def run(self, cmd, cwd=None, ignore_errors=False):
+    def run(self, cmd, cwd=None, ignore_errors=False, stdin=None):
         """Run a command as a sub-process, and log the results.
 
         The output is available at self.output which can be useful if there is
@@ -135,8 +136,9 @@ class RunAndLog(object):
 
         try:
             p = subprocess.Popen(cmd, cwd=cwd,
-                stdin=None, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            (stdout, stderr) = p.communicate()
+                stdin=subprocess.PIPE if stdin else None,
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            (stdout, stderr) = p.communicate(input=stdin)
             if stdout is not None:
                 stdout = stdout.decode('utf-8')
             if stderr is not None:
@@ -649,7 +651,7 @@ $(document).ready(function () {
 
         return LogfileStream(self, name, chained_file)
 
-    def get_runner(self, name, chained_file=None):
+    def get_runner(self, name, chained_file=None, stdin=None):
         """Create an object that executes processes and logs their output.
 
         Args:
@@ -661,7 +663,7 @@ $(document).ready(function () {
             A RunAndLog object.
         """
 
-        return RunAndLog(self, name, chained_file)
+        return RunAndLog(self, name, chained_file, stdin)
 
     def write(self, stream, data, implicit=False):
         """Write stream data into the log file.
