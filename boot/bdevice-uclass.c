@@ -32,11 +32,25 @@ static int bootdevice_init(struct uclass *uc)
 	return 0;
 }
 
+static int bootdevice_destroy(struct uclass *uc)
+{
+	bootdevice_clear_glob();
+
+	return 0;
+}
+
 static int bootdevice_post_bind(struct udevice *dev)
 {
 	struct bootdevice_uc_plat *ucp = dev_get_uclass_plat(dev);
 
 	INIT_LIST_HEAD(&ucp->bootflow_head);
+
+	return 0;
+}
+
+static int bootdevice_pre_unbind(struct udevice *dev)
+{
+	bootdevice_clear_bootflows(dev);
 
 	return 0;
 }
@@ -48,5 +62,7 @@ UCLASS_DRIVER(bootdevice) = {
 	.priv_auto	= sizeof(struct bootdevice_state),
 	.per_device_plat_auto	= sizeof(struct bootdevice_uc_plat),
 	.init		= bootdevice_init,
+	.destroy	= bootdevice_destroy,
 	.post_bind	= bootdevice_post_bind,
+	.pre_unbind	= bootdevice_pre_unbind,
 };
