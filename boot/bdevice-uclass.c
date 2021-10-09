@@ -23,6 +23,53 @@ int bootdevice_get_bootflow(struct udevice *dev, struct bootflow_iter *iter,
 	return ops->get_bootflow(dev, iter, bflow);
 }
 
+int bootdevice_get_state(struct bootdevice_state **statep)
+{
+	struct uclass *uc;
+	int ret;
+
+	ret = uclass_get(UCLASS_BOOTDEVICE, &uc);
+	if (ret)
+		return ret;
+	*statep = uclass_get_priv(uc);
+
+	return 0;
+}
+
+void bootdevice_clear_bootflows(struct udevice *dev)
+{
+	struct bootdevice_uc_plat *ucp = dev_get_uclass_plat(dev);
+
+	while (!list_empty(&ucp->bootflow_head)) {
+		struct bootflow *bflow;
+
+		bflow = list_first_entry(&ucp->bootflow_head, struct bootflow,
+					 bm_node);
+		bootflow_remove(bflow);
+	}
+}
+
+static void bootdevice_clear_glob_(struct bootdevice_state *state)
+{
+	while (!list_empty(&state->glob_head)) {
+		struct bootflow *bflow;
+
+		bflow = list_first_entry(&state->glob_head, struct bootflow,
+					 glob_node);
+		bootflow_remove(bflow);
+	}
+}
+
+void bootdevice_clear_glob(void)
+{
+	struct bootdevice_state *state;
+
+	if (bootdevice_get_state(&state))
+		return;
+
+	bootdevice_clear_glob_(state);
+}
+
 static int bootdevice_init(struct uclass *uc)
 {
 	struct bootdevice_state *state = uclass_get_priv(uc);
@@ -34,7 +81,9 @@ static int bootdevice_init(struct uclass *uc)
 
 static int bootdevice_destroy(struct uclass *uc)
 {
-	bootdevice_clear_glob();
+	struct bootdevice_state *state = uclass_get_priv(uc);
+
+	bootdevice_clear_glob_(state);
 
 	return 0;
 }

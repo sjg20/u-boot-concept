@@ -28,48 +28,6 @@ enum {
 	MAX_PART_PER_BOOTDEVICE		= 30,
 };
 
-int bootdevice_get_state(struct bootdevice_state **statep)
-{
-	struct uclass *uc;
-	int ret;
-
-	ret = uclass_get(UCLASS_BOOTDEVICE, &uc);
-	if (ret)
-		return ret;
-	*statep = uclass_get_priv(uc);
-
-	return 0;
-}
-
-void bootdevice_clear_bootflows(struct udevice *dev)
-{
-	struct bootdevice_uc_plat *ucp = dev_get_uclass_plat(dev);
-
-	while (!list_empty(&ucp->bootflow_head)) {
-		struct bootflow *bflow;
-
-		bflow = list_first_entry(&ucp->bootflow_head, struct bootflow,
-					 bm_node);
-		bootflow_remove(bflow);
-	}
-}
-
-void bootdevice_clear_glob(void)
-{
-	struct bootdevice_state *state;
-
-	if (bootdevice_get_state(&state))
-		return;
-
-	while (!list_empty(&state->glob_head)) {
-		struct bootflow *bflow;
-
-		bflow = list_first_entry(&state->glob_head, struct bootflow,
-					 glob_node);
-		bootflow_remove(bflow);
-	}
-}
-
 int bootdevice_add_bootflow(struct bootflow *bflow)
 {
 	struct bootdevice_uc_plat *ucp = dev_get_uclass_plat(bflow->dev);
