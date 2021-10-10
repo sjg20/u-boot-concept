@@ -10,6 +10,7 @@
 #include <common.h>
 #include <dm.h>
 #include <init.h>
+#include <lmb.h>
 #include <asm/global_data.h>
 #include <dm/uclass-internal.h>
 #include <asm/arch/rmobile.h>
@@ -49,6 +50,14 @@ int mach_cpu_init(void)
 {
 	gd->flags |= GD_FLG_SKIP_RELOC;
 	return 0;
+}
+
+void board_lmb_reserve(struct lmb *lmb)
+{
+	/* Reserve example firmware in the middle of DRAM at 0x64000000-0x68000000 */
+	lmb_reserve(lmb, (phys_addr_t)0x64000000,
+		    (phys_addr_t)0x68000000 -
+		    (phys_addr_t)0x64000000);
 }
 
 #if defined(CONFIG_OF_BOARD_SETUP)
