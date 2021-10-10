@@ -674,6 +674,7 @@ static int reloc_bloblist(void)
 static int setup_reloc(void)
 {
 	if (gd->flags & GD_FLG_SKIP_RELOC) {
+		memcpy(gd->new_gd, (char *)gd, sizeof(gd_t));
 		debug("Skipping relocation due to flag\n");
 		return 0;
 	}
