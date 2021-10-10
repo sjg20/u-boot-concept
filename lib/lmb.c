@@ -144,6 +144,7 @@ void arch_lmb_reserve_generic(struct lmb *lmb, ulong sp, ulong end, ulong align)
 			bank_end = end - 1;
 
 		lmb_reserve(lmb, sp, bank_end - sp + 1);
+
 		break;
 	}
 }

@@ -14,6 +14,7 @@
 #include <init.h>
 #include <lmb.h>
 #include <asm/global_data.h>
+#include <asm/sections.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -46,4 +47,12 @@ static ulong get_sp(void)
 void arch_lmb_reserve(struct lmb *lmb)
 {
 	arch_lmb_reserve_generic(lmb, get_sp(), gd->ram_top, 16384);
+
+#ifdef CONFIG_ARM
+		if (gd->flags & GD_FLG_SKIP_RELOC) {
+			lmb_reserve(lmb, (phys_addr_t)__image_copy_start,
+				    (phys_addr_t)__image_copy_end -
+				    (phys_addr_t)__image_copy_start);
+		}
+#endif
 }
