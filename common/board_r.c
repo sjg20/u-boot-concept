@@ -178,7 +178,12 @@ static int initr_reloc_global_data(void)
 	 */
 	efi_save_gd();
 
-	efi_runtime_relocate(gd->relocaddr, NULL);
+#ifdef CONFIG_ARM
+	if (gd->flags & GD_FLG_SKIP_RELOC)
+		efi_runtime_relocate((ulong)__image_copy_start, NULL);
+	else
+#endif
+		efi_runtime_relocate(gd->relocaddr, NULL);
 #endif
 
 	return 0;

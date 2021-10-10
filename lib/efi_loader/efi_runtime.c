@@ -17,6 +17,8 @@
 #include <asm/global_data.h>
 #include <u-boot/crc.h>
 
+#include <asm/sections.h>
+
 /* For manual relocation support */
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -629,13 +631,23 @@ out:
 	return ret;
 }
 
+static unsigned long efi_get_reloc_start(void)
+{
+#ifdef CONFIG_ARM
+	if (gd->flags & GD_FLG_SKIP_RELOC)
+		return (unsigned long)__image_copy_start;
+	else
+#endif
+		return gd->relocaddr;
+}
+
 static __efi_runtime void efi_relocate_runtime_table(ulong offset)
 {
 	ulong patchoff;
 	void **pos;
 
 	/* Relocate the runtime services pointers */
-	patchoff = offset - gd->relocaddr;
+	patchoff = offset - efi_get_reloc_start();
 	for (pos = (void **)&efi_runtime_services.get_time;
 	     pos <= (void **)&efi_runtime_services.query_variable_info; ++pos) {
 		if (*pos)
@@ -681,7 +693,7 @@ void efi_runtime_relocate(ulong offset, struct efi_mem_desc *map)
 		ulong *p;
 		ulong newaddr;
 
-		p = (void*)((ulong)rel->offset - base) + gd->relocaddr;
+		p = (void*)((ulong)rel->offset - base) + efi_get_reloc_start();
 
 		/*
 		 * The runtime services table is updated in
@@ -852,7 +864,8 @@ static efi_status_t EFIAPI efi_set_virtual_address_map(
 		map = (void*)virtmap + (descriptor_size * i);
 		if (map->type == EFI_RUNTIME_SERVICES_CODE) {
 			ulong new_offset = map->virtual_start -
-					   map->physical_start + gd->relocaddr;
+					   map->physical_start +
+					   efi_get_reloc_start();
 
 			efi_relocate_runtime_table(new_offset);
 			efi_runtime_relocate(new_offset, map);
