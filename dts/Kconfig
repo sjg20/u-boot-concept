@@ -100,7 +100,6 @@ choice
 
 config OF_SEPARATE
 	bool "Separate DTB for DT control"
-	depends on !SANDBOX
 	help
 	  If this option is enabled, the device tree will be built and
 	  placed as a separate u-boot.dtb file alongside the U-Boot image.
@@ -113,14 +112,16 @@ config OF_EMBED
 	  and development only and is not recommended for production devices.
 	  Boards in the mainline U-Boot tree should not use it.
 
+endchoice
+
 config OF_BOARD
 	bool "Provided by the board (e.g a previous loader) at runtime"
 	help
 	  If this option is enabled, the device tree will be provided by
-	  the board at runtime if the board supports it, instead of being
-	  bundled with the image.
+	  the board at runtime if the board supports it. The device tree bundled
+	  with the image (if any) will be overridden / ignored.
 
-endchoice
+	  A device tree file must be provided in the tree.
 
 config DEFAULT_DEVICE_TREE
 	string "Default Device Tree for DT control"
