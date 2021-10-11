@@ -113,3 +113,15 @@ An attached disk can be emulated by adding::
     -device ide-hd,drive=mydisk,bus=ahci.0
 
 You will have to run 'scsi scan' to use it.
+
+Obtaining the QEMU devicetree
+-----------------------------
+
+QEMU generates its own devicetree to pass to U-Boot and does this by default.
+You can use `-dtb u-boot.dtb` to force QEMU to use U-Boot's in-tree version.
+
+To obtain the devicetree that qemu generates, add `-machine dumpdtb=dtb.dtb`,
+e.g.::
+
+    qemu-system-riscv64 -nographic -machine virt -bios u-boot \
+	    -machine dumpdtb=dtb.dtb
