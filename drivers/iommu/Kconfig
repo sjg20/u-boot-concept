@@ -1,0 +1,13 @@
+#
+# IOMMU devices
+#
+
+menu "IOMMU device drivers"
+
+config IOMMU
+	bool "Enable Driver Model for IOMMU drivers"
+	depends on DM
+	help
+	  Enable driver model for IOMMU devices.
+
+endmenu
