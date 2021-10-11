@@ -91,3 +91,15 @@ The debug UART on the ARM virt board uses these settings::
     CONFIG_DEBUG_UART_PL010=y
     CONFIG_DEBUG_UART_BASE=0x9000000
     CONFIG_DEBUG_UART_CLOCK=0
+
+Obtaining the QEMU devicetree
+-----------------------------
+
+QEMU generates its own devicetree to pass to U-Boot and does this by default.
+You can use `-dtb u-boot.dtb` to force QEMU to use U-Boot's in-tree version.
+
+To obtain the devicetree that qemu generates, add `-machine dumpdtb=dtb.dtb`,
+e.g.::
+
+    qemu-system-aarch64 -machine virt -nographic -cpu cortex-a57 \
+	    -bios u-boot.bin -machine dumpdtb=dtb.dtb
