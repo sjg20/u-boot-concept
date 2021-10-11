@@ -12,3 +12,4 @@ build-time and runtime configuration.
    intro
    control
    dt_update
+   dt_qemu
