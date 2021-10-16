@@ -165,8 +165,8 @@ autostart
     be automatically started (by internally calling
     "bootm")
 
-    If set to "no", a standalone image passed to the
-    "bootm" command will be copied to the load address
+    If unset, or set to anything other than "yes", a standalone image passed to
+    the "bootm" command will be copied to the load address
     (and eventually uncompressed), but NOT be started.
     This can be used to load and uncompress arbitrary
     data.

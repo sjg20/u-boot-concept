@@ -47,6 +47,13 @@ int env_get_yesno(const char *var)
 		1 : 0;
 }
 
+bool env_get_autostart(void)
+{
+	const char *val = env_get("autostart");
+
+	return val && !strcmp(val, "yes");
+}
+
 /*
  * Look up the variable from the default environment
  */
