@@ -296,7 +296,7 @@ config BOOTSTD
 
 if BOOTSTD
 
-config BOOTDEV_DISTRO
+config BOOTMETH_DISTRO
 	bool "Bootdev support for distro boot"
 	depends on CMD_PXE
 	default y
@@ -307,7 +307,7 @@ config BOOTDEV_DISTRO
 
 	  This provides a way to try out standard boot on an existing boot flow.
 
-config BOOTDEV_DISTRO_PXE
+config BOOTMETH_DISTRO_PXE
 	bool "Bootdev support for distro boot over network"
 	depends on CMD_PXE && NET && DM_ETH
 	default y
@@ -317,7 +317,7 @@ config BOOTDEV_DISTRO_PXE
 
 	  This provides a way to try out standard boot on an existing boot flow.
 
-config BOOTDEV_EFILOADER
+config BOOTMETH_EFILOADER
 	bool "Bootdev support for EFI boot"
 	depends on CMD_BOOTEFI
 	default y
