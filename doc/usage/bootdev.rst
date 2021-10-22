@@ -1,7 +1,7 @@
 .. SPDX-License-Identifier: GPL-2.0+:
 
 bootdev command
-==================
+===============
 
 Synopis
 -------
@@ -15,19 +15,18 @@ Synopis
 Description
 -----------
 
-The `` command is used to manage bootdevs. It can list available
+The `bootdev` command is used to manage bootdevs. It can list available
 bootdevs, select one and obtain information about it.
 
-See :doc:`../develop/bootflow` for more information about bootdevs in
-general.
+See :doc:`../develop/bootstd` for more information about bootdevs in general.
 
 
 bootdev list
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~
 
 This lists available bootdevs
 
-Scanning with -p causes the bootdevs to be probed. This happens automatically
+Scanning with `-p` causes the bootdevs to be probed. This happens automatically
 when they are used.
 
 The list looks something like this:
@@ -98,7 +97,7 @@ Device
     Name of the bootdev
 
 Status
-    Shows `Probed` if the device is probed, `OK` if not. If -p is used and the
+    Shows `Probed` if the device is probed, `OK` if not. If `-p` is used and the
     device fails to probe, an error code is shown.
 
 Bootflows
