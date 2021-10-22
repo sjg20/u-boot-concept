@@ -8,7 +8,7 @@ Synopis
 
 ::
 
-    bootflow scan [-abel]
+    bootflow scan [-abel] [bootdev]
     bootflow list [-e]
     bootflow select [<num|name>]
     bootflow info [-d]
