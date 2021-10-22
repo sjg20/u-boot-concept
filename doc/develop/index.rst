@@ -10,7 +10,7 @@ Implementation
    :maxdepth: 1
 
    bloblist
-   bootflow
+   bootstd
    ci_testing
    commands
    config_binding

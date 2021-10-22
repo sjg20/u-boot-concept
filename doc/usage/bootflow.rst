@@ -21,7 +21,7 @@ Description
 The `bootflow` command is used to manage bootflows. It can scan bootdevs to
 locate bootflows, list them and boot them.
 
-See :doc:`../develop/bootflow` for more information.
+See :doc:`../develop/bootstd` for more information.
 
 
 bootflow scan

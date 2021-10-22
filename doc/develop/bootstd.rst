@@ -1,16 +1,16 @@
 .. SPDX-License-Identifier: GPL-2.0+:
 
-U-Boot Bootflow
-===============
+U-Boot Standard Boot
+====================
 
 Introduction
 ------------
 
-Bootflow provides a built-in way for U-Boot to automatically boot
+Standard boot provides a built-in way for U-Boot to automatically boot
 an Operating System without custom scripting and other customisation. It
 consists of the following concepts:
 
-   - bootdev - a device which can hold a distro
+   - bootdev  - a device which can hold a distro
    - bootmeth - a method to scan a bootdev to find bootflows (owned by U-Boot)
    - bootflow - a description of how to boot (owned by the distro)
 

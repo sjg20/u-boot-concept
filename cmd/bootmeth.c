@@ -87,7 +87,7 @@ static int do_bootmeth_list(struct cmd_tbl *cmdtp, int flag, int argc,
 	return 0;
 }
 
-static int bootmeth_select_order(int argc, char *const argv[])
+static int bootmeth_order(int argc, char *const argv[])
 {
 	struct bootstd_priv *std;
 	struct udevice **order;
@@ -138,7 +138,7 @@ static int do_bootmeth_order(struct cmd_tbl *cmdtp, int flag, int argc,
 {
 	int ret;
 
-	ret = bootmeth_select_order(argc - 1, argv + 1);
+	ret = bootmeth_order(argc - 1, argv + 1);
 	if (ret) {
 		printf("Failed (err=%d)\n", ret);
 		return CMD_RET_FAILURE;
