@@ -33,22 +33,6 @@ static const char *if_typename_str[IF_TYPE_COUNT] = {
 	[IF_TYPE_PVBLOCK]	= "pvblock",
 };
 
-static enum uclass_id if_type_uclass_id[IF_TYPE_COUNT] = {
-	[IF_TYPE_IDE]		= UCLASS_IDE,
-	[IF_TYPE_SCSI]		= UCLASS_SCSI,
-	[IF_TYPE_ATAPI]		= UCLASS_INVALID,
-	[IF_TYPE_USB]		= UCLASS_MASS_STORAGE,
-	[IF_TYPE_DOC]		= UCLASS_INVALID,
-	[IF_TYPE_MMC]		= UCLASS_MMC,
-	[IF_TYPE_SD]		= UCLASS_INVALID,
-	[IF_TYPE_SATA]		= UCLASS_AHCI,
-	[IF_TYPE_HOST]		= UCLASS_ROOT,
-	[IF_TYPE_NVME]		= UCLASS_NVME,
-	[IF_TYPE_EFI]		= UCLASS_EFI,
-	[IF_TYPE_VIRTIO]	= UCLASS_VIRTIO,
-	[IF_TYPE_PVBLOCK]	= UCLASS_PVBLOCK,
-};
-
 static enum if_type if_typename_to_iftype(const char *if_typename)
 {
 	int i;
@@ -60,11 +44,6 @@ static enum if_type if_typename_to_iftype(const char *if_typename)
 	}
 
 	return IF_TYPE_UNKNOWN;
-}
-
-static enum uclass_id if_type_to_uclass_id(enum if_type if_type)
-{
-	return if_type_uclass_id[if_type];
 }
 
 const char *blk_get_if_type_name(enum if_type if_type)
@@ -93,7 +72,6 @@ struct blk_desc *blk_get_devnum_by_type(enum if_type if_type, int devnum)
  */
 struct blk_desc *blk_get_devnum_by_typename(const char *if_typename, int devnum)
 {
-	enum uclass_id uclass_id;
 	enum if_type if_type;
 	struct udevice *dev;
 	struct uclass *uc;
@@ -103,12 +81,6 @@ struct blk_desc *blk_get_devnum_by_typename(const char *if_typename, int devnum)
 	if (if_type == IF_TYPE_UNKNOWN) {
 		debug("%s: Unknown interface type '%s'\n", __func__,
 		      if_typename);
-		return NULL;
-	}
-	uclass_id = if_type_to_uclass_id(if_type);
-	if (uclass_id == UCLASS_INVALID) {
-		debug("%s: Unknown uclass for interface type'\n",
-		      if_typename_str[if_type]);
 		return NULL;
 	}
 
@@ -122,13 +94,8 @@ struct blk_desc *blk_get_devnum_by_typename(const char *if_typename, int devnum)
 		      if_type, devnum, dev->name, desc->if_type, desc->devnum);
 		if (desc->devnum != devnum)
 			continue;
-
-		/* Find out the parent device uclass */
-		if (device_get_uclass_id(dev->parent) != uclass_id) {
-			debug("%s: parent uclass %d, this dev %d\n", __func__,
-			      device_get_uclass_id(dev->parent), uclass_id);
+		if (desc->if_type != if_type)
 			continue;
-		}
 
 		if (device_probe(dev))
 			return NULL;
