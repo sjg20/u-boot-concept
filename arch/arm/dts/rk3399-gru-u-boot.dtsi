@@ -48,3 +48,8 @@
 &ppvar_centerlogic_pwm {
 	regulator-init-microvolt = <900000>;
 };
+
+&pp1800_audio {
+	regulator-min-microvolt = <1800000>;
+	regulator-max-microvolt = <1800000>;
+};
