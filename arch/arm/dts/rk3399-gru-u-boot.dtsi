@@ -32,3 +32,19 @@
 &ppvar_sd_card_io {
 	enable-gpios = <&gpio2 2 GPIO_ACTIVE_HIGH>;
 };
+
+&ppvar_gpu_pwm {
+	regulator-init-microvolt = <900000>;
+};
+
+&ppvar_bigcpu_pwm {
+	regulator-init-microvolt = <900000>;
+};
+
+&ppvar_litcpu_pwm {
+	regulator-init-microvolt = <900000>;
+};
+
+&ppvar_centerlogic_pwm {
+	regulator-init-microvolt = <900000>;
+};
