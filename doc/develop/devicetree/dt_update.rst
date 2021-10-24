@@ -32,66 +32,6 @@ that board on suitable hardware (or emulation). This is specified using the
 `CONFIG DEFAULT_DEVICE_TREE` option.
 
 
-Current situation (October 2021)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-As an aside, at present U-Boot allows `CONFIG_DEFAULT_DEVICE_TREE` to be empty,
-e.g. if `CONFIG_OF_BOARD` is used. This has unfortunately created an enormous
-amount of confusion and some wasted effort. This was not intended. Support for
-an empty `CONFIG_DEFAULT_DEVICE_TREE` will be dropped soon.
-
-Some of the problems created are:
-
-- It is not obvious that the devicetree is coming from another project
-
-- There is no way to see even a sample devicetree for these platform in U-Boot,
-  so it is hard to know what is going on, e.g. which devices are typically
-  present
-
-- The other project may not provide a way to support U-Boot's requirements for
-  devicetree, such as the /config node. Note: On the U-Boot mailing list, this
-  was only discovered after weeks of discussion and confusion
-
-- For QEMU specifically, consulting two QEMU source files is required, for which
-  there are no references in U-Boot documentation. The code is generating a
-  devicetree, but it is not clear what controls affect this generation.
-
-Specifically on the changes in U-Bootm `CONFIG_OF_BOARD` was added in
-rpi_patch_ for Raspberry Pi, which does have an in-tree devicetree, but this
-feature has since been used for boards that don't
-
-Once this bug is fixed, CONFIG_OF_BOARD will override (at runtime) the
-evicetree suppled with U-Boot, but will otherwise use CONFIG_OF_SEPARATE for the
-in-tree build. So these two will become options, moving out of the 'choice' in
-`dts/Kconfig`.
-
-This means that there is a basic devicetree build in the U-Boot tree, for
-build-testing, consistency and documentation purposes, but at runtime U-Boot can
-accept its devicetree from another source. The in-tree devicetree may contain
-U-Boot-specific features (in u-boot*.dtsi files) and this may prove useful for
-the other project, so it can ensure that U-Boot functions correctly and supports
-all its expected features.
-
-To be clear, while U-Boot has its own copy of the devicetree source for each
-board, this must match the Linux source, perhaps with some u-boot.dtsi
-additions. The intent here is not to create a separate binding, just to provide
-a representative devicetree in U-Boot.
-
-Offending boards are:
-
-- rpi_4 and rpi_4_32b (other rpi boards do have an in-tree devicetree)
-- qemu_arm64
-- qemu_arm
-- qemu-ppce500
-- qemu-riscv32
-- qemu-riscv32_smode
-- qemu-riscv64
-- qemu-riscv64_smode
-
-All of these need to have a devicetree added in-tree. This is targeted to be
-fixed in the 2022.01 release.
-
-
 Building the devicetree
 -----------------------
 
@@ -198,17 +138,18 @@ The /config node is similar in concept to the `/chosen node`_ except that it is
 for passing information *into* firmware instead of from firmware to the
 Operating System. Also, while Linux has a (sometimes extremely long) command
 line, U-Boot does not support this. The devicetree provides a more structured
-approach in any case.
+approach in any case. Upstreaming of this node (as /options) has begun as of
+November 2021.
 
 
 Devicetree in another project
 -----------------------------
 
-In some cases U-Boot receive its devicetree at runtime from a program that calls
-it. For example ARM's Trusted Firmware A (`TF-A`_) may have a devicetree that it
-passes to U-Boot. This overrides any devicetree build by U-Boot. When packaging
-the firmware, the U-Boot devicetree may in fact be left out if it can be
-guaranteed that it will receive one from another project.
+In some cases U-Boot receives its devicetree at runtime from a program that
+calls it. For example ARM's Trusted Firmware A (`TF-A`_) may have a devicetree
+that it passes to U-Boot. This overrides any devicetree build by U-Boot. When
+packaging the firmware, the U-Boot devicetree may in fact be left out if it can
+be guaranteed that it will receive one from another project.
 
 In this case, the devicetree in the other project must track U-Boot's use of
 device tree, for the following reasons:
@@ -546,7 +487,6 @@ Overall, adding a second devicetree would create enormous confusion and
 complexity. It seems a lot cheaper to solve this by a change of attitude.
 
 
-.. _rpi_patch: https://patchwork.ozlabs.org/project/uboot/patch/20170402082520.32546-1-deymo@google.com/
 .. _`TF-A`: https://www.trustedfirmware.org/projects/tf-a
 .. _`QEMU ARM`: https://github.com/qemu/qemu/blob/master/hw/arm/virt.c
 .. _`QEMU RISC-V`: https://github.com/qemu/qemu/blob/master/hw/riscv/virt.c
