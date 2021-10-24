@@ -1170,8 +1170,11 @@ int fdtdec_resetup(int *rescan);
 
 /**
  * Board-specific FDT initialization. Returns the address to a device tree blob.
- * Called when CONFIG_OF_BOARD is defined, or if CONFIG_OF_SEPARATE is defined
- * and the board implements it.
+ * Called when CONFIG_OF_BOARD is defined.
+ *
+ * The existing devicetree is available at gd->fdt_blob
+ *
+ * @returns new devicetree blob pointer
  */
 void *board_fdt_blob_setup(void);
 
