@@ -131,6 +131,9 @@ static struct mmc *__init_mmc_device(int dev, bool force_init,
 		return NULL;
 	}
 
+	if (mmc->cfg->host_caps & MMC_CAP_NONREMOVABLE)
+		force_init = false;
+
 	if (!mmc_getcd(mmc))
 		force_init = true;
 
