@@ -209,7 +209,7 @@ static int console_truetype_putc_xy(struct udevice *dev, uint x, uint y,
 	int width_frac, linenum;
 	struct pos_info *pos;
 	u8 *bits, *data;
-	int advance;
+	int advance, kern_adv;
 	void *start, *line, *sync_start, *sync_end;
 	int row, ret;
 	int bg_r, bg_g, bg_b;
@@ -224,8 +224,11 @@ static int console_truetype_putc_xy(struct udevice *dev, uint x, uint y,
 	 * this character */
 	xpos = frac(VID_TO_PIXEL((double)x));
 	if (vc_priv->last_ch) {
-		xpos += priv->scale * stbtt_GetCodepointKernAdvance(font,
-							vc_priv->last_ch, ch);
+		kern_adv = stbtt_GetCodepointKernAdvance(font, vc_priv->last_ch,
+							 ch);
+		xpos += priv->scale * kern_adv;
+	} else {
+		kern_adv = 0;
 	}
 
 	/*
@@ -236,8 +239,8 @@ static int console_truetype_putc_xy(struct udevice *dev, uint x, uint y,
 	 */
 	x_shift = xpos - (double)tt_floor(xpos);
 	xpos += advance * priv->scale;
-	width_frac = (int)VID_TO_POS(xpos);
-	if (x + width_frac >= vc_priv->xsize_frac)
+	width_frac = VID_TO_POS(priv->scale * (kern_adv + advance));
+	if (x + (int)VID_TO_POS(xpos) >= vc_priv->xsize_frac)
 		return -EAGAIN;
 
 	/* Write the current cursor position into history */
@@ -585,20 +588,21 @@ static int console_truetype_probe(struct udevice *dev)
 	struct udevice *vid_dev = dev->parent;
 	struct video_priv *vid_priv = dev_get_uclass_priv(vid_dev);
 	stbtt_fontinfo *font = &priv->font;
-	int ascent;
+	int advance, ascent, lsb;
 
 	debug("%s: start\n", __func__);
+
 	if (vid_priv->font_size)
 		priv->font_size = vid_priv->font_size;
 	else
 		priv->font_size = CONFIG_CONSOLE_TRUETYPE_SIZE;
+
 	priv->font_data = console_truetype_find_font();
 	if (!priv->font_data) {
 		debug("%s: Could not find any fonts\n", __func__);
 		return -EBFONT;
 	}
 
-	vc_priv->x_charsize = priv->font_size;
 	vc_priv->y_charsize = priv->font_size;
 	vc_priv->xstart_frac = VID_TO_POS(2);
 	vc_priv->cols = vid_priv->xsize / priv->font_size;
@@ -612,6 +616,15 @@ static int console_truetype_probe(struct udevice *dev)
 
 	/* Pre-calculate some things we will need regularly */
 	priv->scale = stbtt_ScaleForPixelHeight(font, priv->font_size);
+
+	/* Assuming that 'W' is the widest character */
+	stbtt_GetCodepointHMetrics(font, 'W', &advance, &lsb);
+	advance += stbtt_GetCodepointKernAdvance(font, 'W', 'W');
+	vc_priv->cols =
+		(int)VID_TO_POS(vid_priv->xsize - 2) /
+		(int)VID_TO_POS(advance * priv->scale);
+	vc_priv->x_charsize = advance * priv->scale;
+
 	stbtt_GetFontVMetrics(font, &ascent, 0, 0);
 	priv->baseline = (int)(ascent * priv->scale);
 	debug("%s: ready\n", __func__);

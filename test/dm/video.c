@@ -344,7 +344,7 @@ static int dm_test_video_truetype(struct unit_test_state *uts)
 	ut_assertok(uclass_get_device(UCLASS_VIDEO, 0, &dev));
 	ut_assertok(uclass_get_device(UCLASS_VIDEO_CONSOLE, 0, &con));
 	vidconsole_put_string(con, test_string);
-	ut_asserteq(13001, compress_frame_buffer(uts, dev));
+	ut_asserteq(12752, compress_frame_buffer(uts, dev));
 
 	return 0;
 }
@@ -365,7 +365,7 @@ static int dm_test_video_truetype_scroll(struct unit_test_state *uts)
 	ut_assertok(uclass_get_device(UCLASS_VIDEO, 0, &dev));
 	ut_assertok(uclass_get_device(UCLASS_VIDEO_CONSOLE, 0, &con));
 	vidconsole_put_string(con, test_string);
-	ut_asserteq(36952, compress_frame_buffer(uts, dev));
+	ut_asserteq(36493, compress_frame_buffer(uts, dev));
 
 	return 0;
 }
@@ -386,7 +386,7 @@ static int dm_test_video_truetype_bs(struct unit_test_state *uts)
 	ut_assertok(uclass_get_device(UCLASS_VIDEO, 0, &dev));
 	ut_assertok(uclass_get_device(UCLASS_VIDEO_CONSOLE, 0, &con));
 	vidconsole_put_string(con, test_string);
-	ut_asserteq(30747, compress_frame_buffer(uts, dev));
+	ut_asserteq(31117, compress_frame_buffer(uts, dev));
 
 	return 0;
 }
