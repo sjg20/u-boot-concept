@@ -68,7 +68,11 @@ struct vidconsole_priv {
 	int ycur;
 	int rows;
 	int cols;
+#ifdef CONFIG_CONSOLE_TRUETYPE
+	double x_charsize;
+#else
 	int x_charsize;
+#endif
 	int y_charsize;
 	int tab_width_frac;
 	int xsize_frac;
