@@ -757,6 +757,14 @@ config BLOBLIST_ALLOC
 	  specify a fixed address on systems where this is unknown or can
 	  change at runtime.
 
+config BLOBLIST_PASSAGE
+	bool "Obtain bloblist from standard passage information"
+	help
+	  Rather than allocating the bloblist, get it from the standard
+	  passage provided by an earlier phase, e.g. SPL. The bloblist address
+	  and size are used as is, except that the bloblist is of course
+	  relocated when U-Boot relocates.
+
 endchoice
 
 config BLOBLIST_ADDR
@@ -815,6 +823,13 @@ config SPL_BLOBLIST_ALLOC
 	  specify a fixed address on systems where this is unknown or can
 	  change at runtime.
 
+config SPL_BLOBLIST_PASSAGE
+	bool "Obtain bloblist from standard passage information"
+	help
+	  Rather than allocating the bloblist, get it from the standard
+	  passage provided by an earlier phase, e.g. TPL. The bloblist address
+	  and size are used as is within SPL, then passed on to U-Boot.
+
 endchoice
 
 endif # SPL_BLOBLIST
@@ -849,6 +864,22 @@ endchoice
 endif # TPL_BLOBLIST
 
 endmenu
+
+config PASSAGE_IN
+	bool "Support the standard-passage protocol (in)"
+	help
+	  This enables a standard protocol for entering U-Boot, providing
+	  parameters in a bloblist with a devicetree. It allows the various
+	  firmware phases to communicate state and settings to following
+	  phases.
+
+config SPL_PASSAGE_IN
+	bool "Support the standard-passage protocol in SPL (in)"
+	help
+	  This enables a standard protocol for entering SPL, providing
+	  parameters in a bloblist and a devicetree. It allows the various
+	  firmware phases to communicate state and settings to following
+	  phases.
 
 source "common/spl/Kconfig"
 

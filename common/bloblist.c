@@ -441,7 +441,8 @@ int bloblist_init(void)
 	 * allocated bloblist from a previous stage, so it must be at a fixed
 	 * address.
 	 */
-	expected = fixed && !u_boot_first_phase();
+	expected = (fixed || CONFIG_IS_ENABLED(BLOBLIST_PASSAGE)) &&
+		!u_boot_first_phase();
 	if (spl_prev_phase() == PHASE_TPL && !IS_ENABLED(CONFIG_TPL_BLOBLIST))
 		expected = false;
 	if (fixed)
@@ -449,6 +450,10 @@ int bloblist_init(void)
 				      CONFIG_BLOBLIST_ADDR);
 	size = CONFIG_BLOBLIST_SIZE;
 	if (expected) {
+		if (CONFIG_IS_ENABLED(BLOBLIST_PASSAGE)) {
+			addr = gd->passage_bloblist;
+			size = 0;
+		}
 		ret = bloblist_check(addr, size);
 		if (ret) {
 			log_warning("Expected bloblist at %lx not found (err=%d)\n",
