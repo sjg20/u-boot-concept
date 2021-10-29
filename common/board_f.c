@@ -667,11 +667,14 @@ static int reloc_bootstage(void)
 static int reloc_bloblist(void)
 {
 #ifdef CONFIG_BLOBLIST
-	/*
-	 * Relocate only if we are supposed to send it
-	 */
-	if ((gd->flags & GD_FLG_SKIP_RELOC) &&
-	    CONFIG_BLOBLIST_SIZE == CONFIG_BLOBLIST_SIZE_RELOC) {
+	int size = bloblist_get_size();
+	int new_size = CONFIG_BLOBLIST_SIZE_RELOC;
+
+	if (!new_size)
+		new_size = size;
+
+	/* Relocate only if we are supposed to send it */
+	if ((gd->flags & GD_FLG_SKIP_RELOC) && size == new_size) {
 		debug("Not relocating bloblist\n");
 		return 0;
 	}

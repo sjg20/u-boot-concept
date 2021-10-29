@@ -1393,7 +1393,7 @@ endif
 
 binman_dtb := $(shell echo $(CONFIG_BINMAN_DTB))
 ifeq ($(strip $(binman_dtb)),)
-ifeq ($(CONFIG_OF_EMBED),y)
+ifneq ($(CONFIG_OF_EMBED)$(CONFIG_OF_PASSAGE),)
 binman_dtb = ./dts/dt.dtb
 else
 binman_dtb = ./u-boot.dtb
