@@ -49,12 +49,6 @@ struct fdt_memory {
 
 struct bd_info;
 
-#ifdef CONFIG_SPL_BUILD
-#define SPL_BUILD	1
-#else
-#define SPL_BUILD	0
-#endif
-
 /*
  * Information about a resource. start is the first address of the resource
  * and end is the last address (inclusive). The length of the resource will
