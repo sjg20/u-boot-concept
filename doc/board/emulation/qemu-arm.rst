@@ -38,6 +38,11 @@ Set the CROSS_COMPILE environment variable as usual, and run:
     make qemu_arm64_defconfig
     make
 
+- for ARM with SPL::
+
+    make qemu_arm_spl_defconfig
+    make
+
 Running U-Boot
 --------------
 The minimal QEMU command line to get U-Boot up and running is:
@@ -49,6 +54,10 @@ The minimal QEMU command line to get U-Boot up and running is:
 - For AArch64::
 
     qemu-system-aarch64 -machine virt -nographic -cpu cortex-a57 -bios u-boot.bin
+
+- For ARM with SPL::
+
+    qemu-system-arm -machine virt -nographic -bios image.bin
 
 Note that for some odd reason qemu-system-aarch64 needs to be explicitly
 told to use a 64-bit CPU or it will boot in 32-bit mode. The -nographic argument
@@ -84,6 +93,35 @@ can be enabled with the following command line parameters:
     -drive if=none,file=disk.img,id=mydisk -device nvme,drive=mydisk,serial=foo
 
 These have been tested in QEMU 2.9.0 but should work in at least 2.5.0 as well.
+
+SPL Description
+---------------
+
+As you see above, running the SPL build is a little different, since there are
+two binaries to load into memory: SPL and U-Boot proper. Binman is used to
+produce the combined `image.bin` containing these. See
+`arch/arm/dts/qemu-arm-u-boot.dtsi` for the definition. A custom loader called
+`spl_qemu_load_image()` is used to access the U-Boot binary from within SPL.
+
+A sample run is shown below::
+
+    U-Boot SPL 2021.10 (Oct 28 2021 - 20:57:27 -0600)
+    Trying to boot from QEMU
+
+
+    U-Boot 2021.10 (Oct 28 2021 - 20:57:27 -0600)
+
+    DRAM:  128 MiB
+    Flash: 64 MiB
+    Loading Environment from Flash... *** Warning - bad CRC, using default environment
+
+    In:    pl011@9000000
+    Out:   pl011@9000000
+    Err:   pl011@9000000
+    Net:   eth0: virtio-net#32
+    Hit any key to stop autoboot:  0
+    =>
+
 
 Debug UART
 ----------
