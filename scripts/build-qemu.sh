@@ -178,7 +178,11 @@ arm)
 	extra+=" -machine virt -accel tcg"
 	suffix="arm"
 	if [[ "${bitness}" == "64" ]]; then
-		BOARD="qemu_arm64"
+		if [ -n "${xpl}" ]; then
+			BOARD="qemu_arm64_spl"
+		else
+			BOARD="qemu_arm64"
+		fi
 		qemu=qemu-system-aarch64
 		extra+=" -cpu cortex-a57"
 		suffix="arm64"
