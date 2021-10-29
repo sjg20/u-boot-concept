@@ -322,7 +322,7 @@ endif
 #   - we have either OF_SEPARATE or OF_HOSTFILE
 build_dtb :=
 ifneq ($(CONFIG_$(PHASE_)OF_REAL),)
-ifneq ($(CONFIG_OF_SEPARATE)$(CONFIG_SANDBOX),)
+ifneq ($(CONFIG_OF_SEPARATE)$(CONFIG_OF_PASSAGE),$(CONFIG_SANDBOX),)
 build_dtb := y
 endif
 endif
