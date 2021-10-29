@@ -43,6 +43,11 @@ Set the CROSS_COMPILE environment variable as usual, and run:
     make qemu_arm_spl_defconfig
     make
 
+- for AArch64 with SPL::
+
+    make qemu_arm64_spl_defconfig
+    make
+
 Running U-Boot
 --------------
 The minimal QEMU command line to get U-Boot up and running is:
@@ -58,6 +63,10 @@ The minimal QEMU command line to get U-Boot up and running is:
 - For ARM with SPL::
 
     qemu-system-arm -machine virt -nographic -bios image.bin
+
+- For AArch64 with SPL::
+
+    qemu-system-aarch64 -machine virt -nographic -cpu cortex-a57 -bios image.bin
 
 Note that for some odd reason qemu-system-aarch64 needs to be explicitly
 told to use a 64-bit CPU or it will boot in 32-bit mode. The -nographic argument
@@ -215,11 +224,39 @@ devicetree is passed via standard passage::
     $ ./scripts/build-qemu.sh -a arm  -rsxw
     Running qemu-system-arm  -machine virt -accel tcg -display none -serial mon:stdio
 
-    U-Boot SPL 2025.04-01115-g0b14f5ab2aa1 (Apr 17 2025 - 09:39:51 -0600)
+    U-Boot SPL 2025.04-01115-g0b14f5ab2aa1 (Apr 17 2025 - 06:39:51 -0600)
     Trying to boot from QEMU
 
 
-    U-Boot 2025.04-01115-g0b14f5ab2aa1 (Apr 17 2025 - 09:39:51 -0600)
+    U-Boot 2025.04-01115-g0b14f5ab2aa1 (Apr 17 2025 - 06:39:51 -0600)
+
+    DRAM:  128 MiB
+    using memory 0x466aa000-0x476ea000 for malloc()
+    Core:  48 devices, 12 uclasses, devicetree: passage
+    Flash: 64 MiB
+    Loading Environment from Flash... *** Warning - bad CRC, using default environment
+
+    In:    serial,usbkbd
+    Out:   serial,vidconsole
+    Err:   serial,vidconsole
+    No USB controllers found
+    Net:   No ethernet found.
+
+    starting USB...
+    No USB controllers found
+    Hit any key to stop autoboot:  0
+    =>
+
+The aarch64 build is similar::
+
+    $ ./scripts/build-qemu.sh -a arm  -rsxw
+    Running qemu-system-arm  -machine virt -accel tcg -display none -serial mon:stdio
+
+    U-Boot SPL 2025.04-01115-g38a16f456571 (Apr 17 2025 - 06:43:50 -0600)
+    Trying to boot from QEMU
+
+
+    U-Boot 2025.04-01115-g38a16f456571 (Apr 17 2025 - 06:43:50 -0600)
 
     DRAM:  128 MiB
     using memory 0x466aa000-0x476ea000 for malloc()
