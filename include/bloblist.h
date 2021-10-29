@@ -292,6 +292,15 @@ int bloblist_finish(void);
  */
 void bloblist_get_stats(ulong *basep, ulong *sizep, ulong *allocedp);
 
+ulong bloblist_get_base(void);
+
+/**
+ * bloblist_get_size() - Get the size of the bloblist
+ *
+ * @returns the size in bytes
+ */
+ulong bloblist_get_size(void);
+
 /**
  * bloblist_get_base() - Get the base address of the bloblist
  *

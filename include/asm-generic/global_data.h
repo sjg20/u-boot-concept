@@ -120,6 +120,27 @@ struct global_data {
 	unsigned long precon_buf_idx;
 #endif
 	/**
+	 * @passage_bloblist: Incoming bloblist from the passage
+	 *
+	 * Provides the address of the bloblist passed in by the previous stage
+	 * or phase. If this is zero, there is none.
+	 */
+	ulong passage_bloblist;
+
+	/**
+	 * @passage_dtb_off: Offset of dtb within the passage
+	 *
+	 * Provides the offset within the bloblist where the control DTB is
+	 * stored. If this is zero, there is none.
+	 *
+	 * Note: This must be set to the correct value if the control DTB exists
+	 * since SPL may use this and ignore the bloblist, e.g. if bloblist
+	 * support is not enabled for code-size reasons. If this value is not
+	 * valid, any devicetree passed in the passage_bloblist is ignored.
+	 */
+	ulong passage_dtb_off;
+
+	/**
 	 * @env_addr: address of environment structure
 	 *
 	 * @env_addr contains the address of the structure holding the

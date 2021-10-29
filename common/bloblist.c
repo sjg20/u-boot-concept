@@ -444,6 +444,10 @@ int bloblist_init(void)
 	addr = IF_ENABLED_INT(CONFIG_BLOBLIST_FIXED, CONFIG_BLOBLIST_ADDR);
 	size = CONFIG_BLOBLIST_SIZE;
 	if (expected) {
+		if (CONFIG_IS_ENABLED(BLOBLIST_PASSAGE)) {
+			addr = gd->passage_bloblist;
+			size = 0;
+		}
 		ret = bloblist_check(addr, size);
 		if (ret) {
 			log_warning("Expected bloblist at %lx not found (err=%d)\n",

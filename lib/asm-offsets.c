@@ -43,5 +43,10 @@ int main(void)
 
 	DEFINE(GD_ENV_ADDR, offsetof(struct global_data, env_addr));
 
+	DEFINE(GD_PASSAGE_BLOBLIST,
+	       offsetof(struct global_data, passage_bloblist));
+	DEFINE(GD_PASSAGE_DTB_OFF,
+	       offsetof(struct global_data, passage_dtb_off));
+
 	return 0;
 }
