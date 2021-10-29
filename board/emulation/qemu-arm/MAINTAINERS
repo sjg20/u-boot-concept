@@ -7,6 +7,7 @@ F:	include/configs/qemu-arm.h
 F:	include/configs/qemu-sbsa.h
 F:	configs/qemu_arm_defconfig
 F:	configs/qemu_arm64_defconfig
+F:	configs/qemu_arm64_spl_defconfig
 F:	configs/qemu-arm-sbsa_defconfig
 
 QEMU ARM 'VIRT' BOARD SPL
