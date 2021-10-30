@@ -56,6 +56,11 @@ binman_sym_declare(ulong, spl, image_pos);
 binman_sym_declare(ulong, spl, size);
 #endif
 
+#if CONFIG_IS_ENABLED(PASSAGE_ADD_DTB)
+binman_sym_declare(ulong, u_boot_dtb, image_pos);
+binman_sym_declare(ulong, u_boot_dtb, size);
+#endif
+
 /* Define board data structure */
 static struct bd_info bdata __attribute__ ((section(".data")));
 
@@ -406,7 +411,8 @@ static int setup_spl_handoff(void)
 {
 	struct spl_handoff *ho;
 
-	ho = bloblist_ensure(BLOBLISTT_U_BOOT_SPL_HANDOFF, sizeof(struct spl_handoff));
+	ho = bloblist_ensure(BLOBLISTT_U_BOOT_SPL_HANDOFF,
+			     sizeof(struct spl_handoff));
 	if (!ho)
 		return -ENOENT;
 
@@ -423,7 +429,8 @@ static int write_spl_handoff(void)
 	struct spl_handoff *ho;
 	int ret;
 
-	ho = bloblist_find(BLOBLISTT_U_BOOT_SPL_HANDOFF, sizeof(struct spl_handoff));
+	ho = bloblist_find(BLOBLISTT_U_BOOT_SPL_HANDOFF,
+			   sizeof(struct spl_handoff));
 	if (!ho)
 		return -ENOENT;
 	handoff_save_dram(ho);
@@ -439,6 +446,33 @@ static inline int setup_spl_handoff(void) { return 0; }
 static inline int write_spl_handoff(void) { return 0; }
 
 #endif /* HANDOFF */
+
+/**
+ * Write the devicetree for the next phase into the passage
+ *
+ * For now we assume the next phase is U-Boot proper
+ *
+ * @return 0 on success,  -ENOSPC if it is missing and could not be added due to
+ *	lack of space, or -ESPIPE it exists but has the wrong size
+ */
+static int passage_write_dtb(void)
+{
+#if CONFIG_IS_ENABLED(PASSAGE_ADD_DTB)
+	ulong start = binman_sym(ulong, u_boot_dtb, image_pos);
+	ulong size = binman_sym(ulong, u_boot_dtb, size);
+	void *dtb;
+	int ret;
+
+	log_debug("passage: Adding control dtb size %lx\n", size);
+	ret = bloblist_ensure_size(BLOBLISTT_CONTROL_DTB, size, 0,
+				   (void **)&dtb);
+	if (ret)
+		return ret;
+	memcpy(dtb, map_sysmem(start, size), size);
+#endif
+
+	return 0;
+}
 
 /**
  * get_bootstage_id() - Get the bootstage ID to emit
@@ -760,6 +794,12 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 		if (ret)
 			printf(SPL_TPL_PROMPT
 			       "SPL hand-off write failed (err=%d)\n", ret);
+	}
+	if (CONFIG_IS_ENABLED(PASSAGE_ADD_DTB)) {
+		ret = passage_write_dtb();
+		if (ret)
+			printf(SPL_TPL_PROMPT
+			       "Write DTB failed (err=%d)\n", ret);
 	}
 	if (CONFIG_IS_ENABLED(BLOBLIST)) {
 		ret = bloblist_finish();
