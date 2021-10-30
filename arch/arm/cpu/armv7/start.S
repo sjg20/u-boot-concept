@@ -40,6 +40,14 @@ reset:
 	/* Allow the board to save important registers */
 	b	save_boot_params
 save_boot_params_ret:
+#if CONFIG_IS_ENABLED(PASSAGE_IN)
+	# Keep passage information in case it is provided
+	cmp	r0, #0
+	moveq	r6, r1		/* mach */
+	moveq	r7, r2		/* dtb */
+	moveq	r8, r3		/* bloblist */
+	movne	r6, #0
+#endif
 #ifdef CONFIG_POSITION_INDEPENDENT
 	/*
 	 * Fix .rela.dyn relocations. This allows U-Boot to loaded to and
@@ -123,7 +131,7 @@ switch_to_hypervisor_ret:
 	bl	cpu_init_crit
 #endif
 #endif
-
+	# Note: r6-r8 are available to _main in case standard passage is used
 	bl	_main
 
 /*------------------------------------------------------------------------------*/
