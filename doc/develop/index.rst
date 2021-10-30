@@ -19,6 +19,7 @@ Implementation
    logging
    makefiles
    menus
+   std_passage
    uefi/index
    version
 
