@@ -8,13 +8,6 @@
 
 #include <common.h>
 
-/* BLOBLISTT_U_BOOT_SPL_HANDOFF */
-#include <handoff.h>
-void check_spl_handoff(void)
-{
-	__maybe_unused struct spl_handoff check;
-};
-
 /*
  * See also doc/develop/std_passage.rst
  *
@@ -23,7 +16,8 @@ void check_spl_handoff(void)
  * 1. Add your header file to U-Boot, or to include/stdpass if it is not used in
  * U-Boot
  *
- * 2. Add a function below to include the header and use the struct
+ * 2. Add a function below to include the header and use the struct. Please put
+ * your function in order of tag ID (see bloblist.h)
  *
  * Template follows, see above for example
  */

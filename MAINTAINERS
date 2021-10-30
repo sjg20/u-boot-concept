@@ -1177,6 +1177,16 @@ F:	common/stackprot.c
 F:	cmd/stackprot_test.c
 F:	test/py/tests/test_stackprotector.py
 
+STANDARD PASSAGE
+M:	Simon Glass <sjg@chromium.org>
+F:	board/sandbox/stdpass_check.c
+F:	cmd/bloblist.c
+F:	common/bloblist.c
+F:	doc/develop/std_passage.rst
+F:	include/bloblist.h
+F:	include/stdpass/
+F:	test/bloblist.c
+
 TARGET_BCMNS3
 M:	Bharat Gooty <bharat.gooty@broadcom.com>
 M:	Rayagonda Kokatanur <rayagonda.kokatanur@broadcom.com>
