@@ -87,7 +87,7 @@ void spl_board_init(void)
 	}
 }
 
-void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
+void __noreturn jump_to_image(struct spl_image_info *spl_image)
 {
 	const char *fname = spl_image->arg;
 

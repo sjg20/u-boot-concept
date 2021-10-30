@@ -394,13 +394,33 @@ int spl_parse_image_header(struct spl_image_info *spl_image,
 
 __weak void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
 {
-	typedef void __noreturn (*image_entry_noargs_t)(void);
+	jump_to_image(spl_image);
+}
 
-	image_entry_noargs_t image_entry =
-		(image_entry_noargs_t)spl_image->entry_point;
+__weak void __noreturn jump_to_image(struct spl_image_info *spl_image)
+{
+	typedef void __noreturn (*image_entry_t)(ulong bloblist,
+						 ulong dtb_offset);
+	ulong bloblist = 0;
+	ulong dtb_offset = 0;
+
+	image_entry_t image_entry = (image_entry_t)spl_image->entry_point;
 
 	debug("image entry point: 0x%lx\n", spl_image->entry_point);
-	image_entry();
+
+	if (CONFIG_IS_ENABLED(PASSAGE_OUT)) {
+		const void *fdt;
+
+		bloblist = bloblist_get_base();
+		fdt = bloblist_find(BLOBLISTT_CONTROL_DTB, 0);
+		if (fdt)
+			dtb_offset = (ulong)fdt - (ulong)gd_bloblist();
+
+		log_debug("passage: sending bloblist at %lx, dtb offset %lx\n",
+			  bloblist, dtb_offset);
+	}
+
+	image_entry(bloblist, dtb_offset);
 }
 
 #if CONFIG_IS_ENABLED(HANDOFF)
@@ -862,7 +882,7 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 #endif
 
 	spl_board_prepare_for_boot();
-	jump_to_image_no_args(&spl_image);
+	jump_to_image(&spl_image);
 }
 
 /*

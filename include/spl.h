@@ -581,6 +581,19 @@ int spl_load_image_fat(struct spl_image_info *spl_image,
 int spl_load_image_fat_os(struct spl_image_info *spl_image,
 			  struct blk_desc *block_dev, int partition);
 
+/**
+ * jump_to_image() - Jump to image, using standard passage if enabled
+ *
+ * This sets the machine registers correctly if standard passage is enabled for
+ * output. This allows the target image to read the info using the standard
+ * passage protocol
+ *
+ * This is a weak function, so may be overriddden
+ *
+ * @spl_image: Image to jump to
+ */
+void __noreturn jump_to_image(struct spl_image_info *spl_image);
+
 void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image);
 
 /* SPL EXT image functions */
