@@ -3,8 +3,11 @@
  * Copyright (c) 2011 The Chromium OS Authors.
  */
 
+#define LOG_CATEGORY	LOGC_DT
+
 #ifndef USE_HOSTCC
 #include <common.h>
+#include <bloblist.h>
 #include <boot_fit.h>
 #include <dm.h>
 #include <hang.h>
@@ -1630,6 +1633,33 @@ int fdtdec_setup(void)
 		gd->fdt_blob = fdt_find_separate();
 	else /* embed dtb in ELF file for testing / development */
 		gd->fdt_blob = dtb_dt_embedded();
+
+	/* Passed in via the standard passage */
+	if (IS_ENABLED(CONFIG_OF_PASSAGE) && gd->passage_dtb_off) {
+		void *fdt = NULL;
+
+		/* Use the bloblist if available */
+		if (CONFIG_IS_ENABLED(BLOBLIST)) {
+			fdt = bloblist_find(BLOBLISTT_CONTROL_DTB, 0);
+
+			if (fdt)
+				gd->flags |= GD_FLG_OF_PASSAGE;
+		} else {
+			void *bloblist;
+
+			/* Cursory check for a valid bloblist; use the offset */
+			bloblist = bloblist_check_magic(gd->passage_bloblist);
+			if (bloblist) {
+				fdt = bloblist + gd->passage_dtb_off;
+				log_debug("passage: Found dtb offset %lx\n",
+					  gd->passage_dtb_off);
+			}
+		}
+		if (fdt) {
+			gd->fdt_blob = fdt;
+			log_debug("passage: Found control dtb at %p\n", fdt);
+		}
+	}
 
 	/* Allow the board to override the fdt address. */
 	if (IS_ENABLED(CONFIG_OF_BOARD)) {

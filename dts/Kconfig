@@ -96,6 +96,18 @@ config OF_EMBED
 
 endchoice
 
+config OF_PASSAGE
+	bool "Devicetree provided by the standard passage protocol"
+	help
+	  If this option is enabled, the device tree may be provided by the
+	  standard passage, meaning that a previous phase/stage passes a
+	  bloblist containing this. This is the standard way to pass a
+	  devicetree between firmware components at runtime. The device tree
+	  bundled with the image (if any) will be overridden / ignored.
+
+	  Note: If BLOBLIST is not enabled, this does not decode the
+	  bloblist, but just picks up the devicetree by itself.
+
 config OF_BOARD
 	bool "Provided by the board (e.g a previous loader) at runtime"
 	default y if SANDBOX

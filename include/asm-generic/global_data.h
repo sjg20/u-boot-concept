@@ -627,6 +627,10 @@ enum gd_flags {
 	 * @GD_FLG_SMP_READY: SMP initialization is complete
 	 */
 	GD_FLG_SMP_READY = 0x80000,
+	/**
+	 * @GD_FLG_OF_PASSAGE: Using devicetree from standard passage protocol
+	 */
+	GD_FLG_OF_PASSAGE = 0x80000,
 };
 
 #endif /* __ASSEMBLY__ */

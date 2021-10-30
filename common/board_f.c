@@ -517,7 +517,7 @@ static int reserve_global_data(void)
 
 static int reserve_fdt(void)
 {
-	if (!IS_ENABLED(CONFIG_OF_EMBED)) {
+	if (!IS_ENABLED(CONFIG_OF_EMBED) && !(gd->flags & GD_FLG_OF_PASSAGE)) {
 		/*
 		 * If the device tree is sitting immediately above our image
 		 * then we must relocate it. If it is embedded in the data
@@ -622,7 +622,12 @@ static int init_post(void)
 
 static int reloc_fdt(void)
 {
-	if (!IS_ENABLED(CONFIG_OF_EMBED)) {
+	if (IS_ENABLED(CONFIG_OF_PASSAGE) && (gd->flags & GD_FLG_OF_PASSAGE)) {
+		void *blob = bloblist_find(BLOBLISTT_CONTROL_DTB, 0);
+
+		log_info("passage: Control dtb relocated to %p\n", blob);
+		gd->fdt_blob = blob;
+	} else if (!IS_ENABLED(CONFIG_OF_EMBED)) {
 		if (gd->flags & GD_FLG_SKIP_RELOC)
 			return 0;
 		if (gd->new_fdt) {
@@ -819,6 +824,9 @@ __weak int clear_bss(void)
 
 static const init_fnc_t init_sequence_f[] = {
 	setup_mon_len,
+#ifdef CONFIG_OF_PASSAGE
+	bloblist_init,
+#endif
 #ifdef CONFIG_OF_CONTROL
 	fdtdec_setup,
 #endif
@@ -828,7 +836,7 @@ static const init_fnc_t init_sequence_f[] = {
 	initf_malloc,
 	log_init,
 	initf_bootstage,	/* uses its own timer, so does not need DM */
-#ifdef CONFIG_BLOBLIST
+#if !defined(CONFIG_OF_PASSAGE) && defined(CONFIG_BLOBLIST)
 	bloblist_init,
 #endif
 	setup_spl_handoff,
@@ -938,9 +946,9 @@ static const init_fnc_t init_sequence_f[] = {
 	setup_bdinfo,
 	display_new_sp,
 	INIT_FUNC_WATCHDOG_RESET
-	reloc_fdt,
 	reloc_bootstage,
 	reloc_bloblist,
+	reloc_fdt,
 	setup_reloc,
 #if defined(CONFIG_X86) || defined(CONFIG_ARC)
 	copy_uboot_to_ram,
