@@ -552,6 +552,12 @@ static_assert(sizeof(struct global_data) == GD_SIZE);
 #define gd_set_multi_dtb_fit(_dtb)
 #endif
 
+#if CONFIG_IS_ENABLED(BLOBLIST)
+#define gd_bloblist()		gd->bloblist
+#else
+#define gd_bloblist()		NULL
+#endif
+
 /**
  * enum gd_flags - global data flags
  *

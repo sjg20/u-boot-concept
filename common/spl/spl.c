@@ -22,6 +22,7 @@
 #include <malloc.h>
 #include <mapmem.h>
 #include <nand.h>
+#include <passage.h>
 #include <serial.h>
 #include <spl.h>
 #if CONFIG_IS_ENABLED(BANNER_PRINT)
@@ -392,13 +393,29 @@ int spl_parse_image_header(struct spl_image_info *spl_image,
 
 __weak void __noreturn jump_to_image(struct spl_image_info *spl_image)
 {
-	typedef void __noreturn (*image_entry_noargs_t)(void);
-
-	image_entry_noargs_t image_entry =
-		(image_entry_noargs_t)spl_image->entry_point;
+	typedef void __noreturn (*image_entry_t)(void);
+	ulong bloblist = 0;
+	ulong dtb_offset = 0;
 
 	debug("image entry point: 0x%lx\n", spl_image->entry_point);
-	image_entry();
+
+	if (CONFIG_IS_ENABLED(PASSAGE_OUT)) {
+		const void *fdt;
+
+		bloblist = bloblist_get_base();
+		fdt = bloblist_find(BLOBLISTT_CONTROL_DTB, 0);
+
+		log_debug("passage: sending bloblist at %lx, dtb offset %lx\n",
+			  bloblist, dtb_offset);
+		arch_passage_entry(spl_image->entry_point,
+				   map_to_sysmem(gd_bloblist()),
+				   map_to_sysmem(fdt));
+	} else {
+		image_entry_t image_entry;
+
+		image_entry = (image_entry_t)spl_image->entry_point;
+		image_entry();
+	}
 }
 
 #if CONFIG_IS_ENABLED(HANDOFF)
