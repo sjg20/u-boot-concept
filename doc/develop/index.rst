@@ -53,6 +53,7 @@ Implementation
    smbios
    spl
    falcon
+   std_passage
    uefi/index
    vbe
    version
