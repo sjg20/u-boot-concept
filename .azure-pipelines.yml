@@ -459,6 +459,12 @@ stages:
         qemu_arm_sbsa_ref:
           TEST_PY_BD: "qemu-arm-sbsa"
           TEST_PY_TEST_SPEC: "not sleep"
+        qemu_arm_spl:
+          TEST_PY_BD: "qemu_arm_spl"
+          TEST_PY_TEST_SPEC: "test_passage"
+        qemu_arm64_spl:
+          TEST_PY_BD: "qemu_arm64_spl"
+          TEST_PY_TEST_SPEC: "test_passage"
         qemu_m68k:
           TEST_PY_BD: "M5208EVBE"
           TEST_PY_ID: "--id qemu"
