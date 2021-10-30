@@ -1621,6 +1621,7 @@ static void setup_multi_dtb_fit(void)
 	if (blob) {
 		gd_set_multi_dtb_fit(gd->fdt_blob);
 		gd->fdt_blob = blob;
+		gd->fdt_src = FDTSRC_FIT;
 	}
 }
 
@@ -1629,10 +1630,13 @@ int fdtdec_setup(void)
 	int ret;
 
 	/* The devicetree is typically appended to U-Boot */
-	if (IS_ENABLED(CONFIG_OF_SEPARATE))
+	if (IS_ENABLED(CONFIG_OF_SEPARATE)) {
 		gd->fdt_blob = fdt_find_separate();
-	else /* embed dtb in ELF file for testing / development */
+		gd->fdt_src = FDTSRC_SEPARATE;
+	} else { /* embed dtb in ELF file for testing / development */
 		gd->fdt_blob = dtb_dt_embedded();
+		gd->fdt_src = FDTSRC_EMBED;
+	}
 
 	/* Passed in via the standard passage */
 	if (IS_ENABLED(CONFIG_OF_PASSAGE) && gd->passage_dtb_off) {
@@ -1657,6 +1661,7 @@ int fdtdec_setup(void)
 		}
 		if (fdt) {
 			gd->fdt_blob = fdt;
+			gd->fdt_src = FDTSRC_PASSAGE;
 			log_debug("passage: Found control dtb at %p\n", fdt);
 		}
 	}
@@ -1666,12 +1671,18 @@ int fdtdec_setup(void)
 		gd->fdt_blob = board_fdt_blob_setup(&ret);
 		if (ret)
 			return ret;
+		gd->fdt_src = FDTSRC_BOARD;
 	}
 
+	/* Allow the early environment to override the fdt address */
 	if (!IS_ENABLED(CONFIG_SPL_BUILD)) {
-		/* Allow the early environment to override the fdt address */
-		gd->fdt_blob = map_sysmem(env_get_ulong("fdtcontroladdr", 16,
-			       (unsigned long)map_to_sysmem(gd->fdt_blob)), 0);
+		ulong addr;
+
+		addr = env_get_hex("fdtcontroladdr", 0);
+		if (addr) {
+			gd->fdt_blob = map_sysmem(addr, 0);
+			gd->fdt_src = FDTSRC_ENV;
+		}
 	}
 
 	if (CONFIG_IS_ENABLED(MULTI_DTB_FIT))
