@@ -864,6 +864,26 @@ config SPL_PASSAGE_IN
 	  firmware phases to communicate state and settings to following
 	  phases.
 
+config SPL_PASSAGE_OUT
+	bool "Support the standard-passage protocol in SPL (out)"
+	depends on SPL_BLOBLIST
+	default y if PASSAGE_IN
+	help
+	  This enables a standard protocol for entering U-Boot, providing
+	  parameters in a bloblist and a devicetree. It allows the various
+	  firmware stages to communicate state and settings to following
+	  stages.
+
+config SPL_PASSAGE_ADD_DTB
+	bool "Add devicetree to the outgoing passage"
+	depends on SPL_PASSAGE_OUT
+	default y if SPL_PASSAGE_OUT && !SPL_PASSAGE_IN
+	help
+	  Add the devicetree into the bloblist in SPL (it is assumed to not
+	  already be there) so that the next phase (U-Boot) can find it.
+
+	  This option should be enabled in the phase that sets up the passage.
+
 source "common/spl/Kconfig"
 
 config IMAGE_SIGN_INFO
