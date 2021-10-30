@@ -36,6 +36,10 @@
 #endif
 
 reset:
+	# Keep passage information in case it is provided
+	mov	r6, r0
+	mov	r7, r1
+
 	/* Allow the board to save important registers */
 	b	save_boot_params
 save_boot_params_ret:
@@ -124,7 +128,8 @@ switch_to_hypervisor_ret:
 	bl	cpu_init_crit
 #endif
 #endif
-
+	# Note: r6 and r7 are available to _main in case standard passage is
+	# used
 	bl	_main
 
 /*------------------------------------------------------------------------------*/
