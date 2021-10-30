@@ -117,6 +117,11 @@ ENTRY(_main)
 	CLEAR_BSS
 #endif
 
+#if CONFIG_IS_ENABLED(PASSAGE_IN)
+	str	r6, [r9, #GD_PASSAGE_MACH]
+	str	r7, [r9, #GD_PASSAGE_DTB]
+	str	r8, [r9, #GD_PASSAGE_BLOBLIST]
+#endif
 	mov	r0, #0
 	bl	board_init_f
 
