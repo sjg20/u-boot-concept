@@ -56,6 +56,9 @@ struct bd_info;
  *
  * @FDTSRC_SEPARATE: Appended to U-Boot. This is the normal approach if U-Boot
  *	is the only firmware being booted
+ * @FDTSRC_PASSAGE: From the standard passage (passed in from previous
+ *	phase/stage). This is the normal approach if prior-stage firmware is
+ *	used, such as TF-A
  * @FDTSRC_FIT: Found in a multi-dtb FIT. This should be used when U-Boot must
  *	select a devicetree from many options
  * @FDTSRC_BOARD: Located by custom board code. This should only be used when
@@ -68,6 +71,7 @@ struct bd_info;
  */
 enum fdt_source_t {
 	FDTSRC_SEPARATE,
+	FDTSRC_PASSAGE,
 	FDTSRC_FIT,
 	FDTSRC_BOARD,
 	FDTSRC_EMBED,

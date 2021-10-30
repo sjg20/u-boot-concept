@@ -39,6 +39,7 @@ static struct tag_name {
 	{ BLOBLISTT_NONE, "(none)" },
 
 	/* BLOBLISTT_AREA_FIRMWARE_TOP */
+	{ BLOBLISTT_CONTROL_DTB, "Control DTB" },
 
 	/* BLOBLISTT_AREA_FIRMWARE */
 	{ BLOBLISTT_ACPI_GNVS, "ACPI GNVS" },

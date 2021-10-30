@@ -3,8 +3,11 @@
  * Copyright (c) 2011 The Chromium OS Authors.
  */
 
+#define LOG_CATEGORY	LOGC_DT
+
 #ifndef USE_HOSTCC
 #include <common.h>
+#include <bloblist.h>
 #include <boot_fit.h>
 #include <dm.h>
 #include <hang.h>
@@ -78,6 +81,7 @@ static const char * const compat_names[COMPAT_COUNT] = {
 
 static const char *const fdt_src_name[] = {
 	[FDTSRC_SEPARATE] = "separate",
+	[FDTSRC_PASSAGE] = "passage",
 	[FDTSRC_FIT] = "fit",
 	[FDTSRC_BOARD] = "board",
 	[FDTSRC_EMBED] = "embed",
@@ -1647,6 +1651,35 @@ int fdtdec_setup(void)
 	} else { /* embed dtb in ELF file for testing / development */
 		gd->fdt_blob = dtb_dt_embedded();
 		gd->fdt_src = FDTSRC_EMBED;
+	}
+
+	/* Passed in via the standard passage */
+	if (IS_ENABLED(CONFIG_OF_PASSAGE) && gd->passage_dtb) {
+		void *passage_dtb = map_sysmem(gd->passage_dtb, 0);
+		void *fdt = NULL;
+
+		/* Use the bloblist if available */
+		if (CONFIG_IS_ENABLED(BLOBLIST)) {
+			fdt = bloblist_find(BLOBLISTT_CONTROL_DTB, 0);
+
+			if (fdt == passage_dtb)
+				gd->flags |= GD_FLG_OF_PASSAGE;
+		} else {
+			void *bloblist;
+
+			/* Cursory check for a valid bloblist; use the offset */
+			bloblist = bloblist_check_magic(gd->passage_bloblist);
+			if (bloblist) {
+				fdt = passage_dtb;
+				log_debug("passage: Found dtb addr %lx\n",
+					  gd->passage_dtb);
+			}
+		}
+		if (fdt) {
+			gd->fdt_blob = fdt;
+			gd->fdt_src = FDTSRC_PASSAGE;
+			log_debug("passage: Found control dtb at %p\n", fdt);
+		}
 	}
 
 	/* Allow the board to override the fdt address. */
