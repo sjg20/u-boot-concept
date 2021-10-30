@@ -261,6 +261,12 @@ qemu_arm64 test.py:
     TEST_PY_TEST_SPEC: "not sleep"
   <<: *buildman_and_testpy_dfn
 
+#qemu_arm spl_test.py:
+#  variables:
+#    TEST_PY_BD: "qemu_arm_spl"
+#    TEST_PY_TEST_SPEC: "not sleep"
+#  <<: *buildman_and_testpy_dfn
+
 qemu_malta test.py:
   variables:
     TEST_PY_BD: "malta"
