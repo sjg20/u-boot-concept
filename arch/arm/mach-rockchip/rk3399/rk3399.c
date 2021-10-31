@@ -140,19 +140,22 @@ void board_debug_uart_init(void)
 		     GRF_GPIO3B7_SEL_MASK,
 		     GRF_UART3_SOUT << GRF_GPIO3B7_SEL_SHIFT);
 #else
-# ifdef CONFIG_TARGET_CHROMEBOOK_BOB
-	rk_setreg(&grf->io_vsel, 1 << 0);
+	if (IS_ENABLED(CONFIG_SPL_BUILD) &&
+	    IS_ENABLED(CONFIG_TARGET_CHROMEBOOK_BOB)) {
+		rk_setreg(&grf->io_vsel, 1 << 0);
 
-	/*
-	 * Let's enable these power rails here, we are already running the SPI
-	 * Flash based code.
-	 */
-	spl_gpio_output(gpio, GPIO(BANK_B, 2), 1);  /* PP1500_EN */
-	spl_gpio_set_pull(&pmugrf->gpio0_p, GPIO(BANK_B, 2), GPIO_PULL_NORMAL);
+		/*
+		 * Let's enable these power rails here, we are already running
+		 * the SPI-Flash-based code.
+		 */
+		spl_gpio_output(gpio, GPIO(BANK_B, 2), 1);  /* PP1500_EN */
+		spl_gpio_set_pull(&pmugrf->gpio0_p, GPIO(BANK_B, 2),
+				  GPIO_PULL_NORMAL);
 
-	spl_gpio_output(gpio, GPIO(BANK_B, 4), 1);  /* PP3000_EN */
-	spl_gpio_set_pull(&pmugrf->gpio0_p, GPIO(BANK_B, 4), GPIO_PULL_NORMAL);
-#endif /* CONFIG_TARGET_CHROMEBOOK_BOB */
+		spl_gpio_output(gpio, GPIO(BANK_B, 4), 1);  /* PP3000_EN */
+		spl_gpio_set_pull(&pmugrf->gpio0_p, GPIO(BANK_B, 4),
+				  GPIO_PULL_NORMAL);
+	}
 
 	/* Enable early UART2 channel C on the RK3399 */
 	rk_clrsetreg(&grf->gpio4c_iomux,
