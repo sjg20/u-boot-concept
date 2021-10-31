@@ -13,6 +13,7 @@
 #include <common.h>
 #include <cpu.h>
 #include <dm.h>
+#include <intel_gnvs.h>
 #include <log.h>
 #include <p2sb.h>
 #include <pci.h>
@@ -21,7 +22,6 @@
 #include <asm/acpi_table.h>
 #include <asm/cpu_common.h>
 #include <asm/intel_acpi.h>
-#include <asm/intel_gnvs.h>
 #include <asm/intel_pinctrl.h>
 #include <asm/intel_pinctrl_defs.h>
 #include <asm/intel_regs.h>
