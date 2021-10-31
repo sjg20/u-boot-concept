@@ -12,14 +12,19 @@
 
 #include <linux/types.h>
 #include <asm/handoff.h>
+#endif
 
 /**
  * struct spl_handoff - information passed from SPL to U-Boot proper
  *
+ * bloblist_tag: BLOBLISTT_U_BOOT_SPL_HANDOFF
+ *
  * @ram_size: Value to use for gd->ram_size
  */
 struct spl_handoff {
+#if CONFIG_IS_ENABLED(HANDOFF)
 	struct arch_spl_handoff arch;
+#endif
 	u64 ram_size;
 	struct {
 		u64 start;
@@ -42,7 +47,5 @@ void handoff_load_dram_banks(struct spl_handoff *ho);
  * Return: 0 if OK, -ve on error
  */
 int handoff_arch_save(struct spl_handoff *ho);
-
-#endif
 
 #endif
