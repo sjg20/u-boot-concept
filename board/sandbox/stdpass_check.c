@@ -6,13 +6,6 @@
  * Copyright 2021 Google LLC
  */
 
-/* BLOBLISTT_U_BOOT_SPL_HANDOFF */
-#include <handoff.h>
-void check_spl_handoff(void)
-{
-	__maybe_unused struct spl_handoff check;
-};
-
 /*
  * See also doc/develop/std_passage.rst
  *
@@ -33,3 +26,11 @@ void check_struct_name(void)
 {
 	/* __maybe_unused struct struct_name check; */
 }
+
+/* BLOBLISTT_U_BOOT_SPL_HANDOFF */
+#include <handoff.h>
+void check_spl_handoff(void)
+{
+	__maybe_unused struct spl_handoff check;
+};
+
