@@ -14,6 +14,7 @@
 		filename = "flash.bin";
 		pad-byte = <0xff>;
 		size = <0x8c0000>;
+		allow-repack;
 
 		blob-ext@0x000000 {
 			offset = <0x000000>;
@@ -39,6 +40,9 @@
 					entry = <0x80800000>;
 					u-boot-nodtb {
 					};
+					hash {
+						algo = "sha256";
+					};
 				};
 
 				fdt-iot2050-basic {
@@ -48,6 +52,9 @@
 					compression = "none";
 					blob {
 						filename = "arch/arm/dts/k3-am6528-iot2050-basic.dtb";
+					};
+					hash {
+						algo = "sha256";
 					};
 				};
 
@@ -59,6 +66,9 @@
 					blob {
 						filename = "arch/arm/dts/k3-am6528-iot2050-basic-pg2.dtb";
 					};
+					hash {
+						algo = "sha256";
+					};
 				};
 
 				fdt-iot2050-advanced {
@@ -69,6 +79,9 @@
 					blob {
 						filename = "arch/arm/dts/k3-am6548-iot2050-advanced.dtb";
 					};
+					hash {
+						algo = "sha256";
+					};
 				};
 
 				fdt-iot2050-advanced-pg2 {
@@ -78,6 +91,9 @@
 					compression = "none";
 					blob {
 						filename = "arch/arm/dts/k3-am6548-iot2050-advanced-pg2.dtb";
+					};
+					hash {
+						algo = "sha256";
 					};
 				};
 
@@ -90,6 +106,9 @@
 					blob-ext {
 						filename = CONFIG_WDT_K3_RTI_FW_FILE;
 						missing-msg = "k3-rti-wdt-firmware";
+					};
+					hash {
+						algo = "sha256";
 					};
 				};
 #endif
@@ -105,6 +124,9 @@
 #ifdef CONFIG_WDT_K3_RTI_FW_FILE
 					loadables = "k3-rti-wdt-firmware";
 #endif
+					signature {
+						sign-images = "firmware", "fdt", "loadables";
+					};
 				};
 
 				conf-iot2050-basic-pg2 {
@@ -114,6 +136,9 @@
 #ifdef CONFIG_WDT_K3_RTI_FW_FILE
 					loadables = "k3-rti-wdt-firmware";
 #endif
+					signature {
+						sign-images = "firmware", "fdt", "loadables";
+					};
 				};
 
 				conf-iot2050-advanced {
@@ -123,6 +148,9 @@
 #ifdef CONFIG_WDT_K3_RTI_FW_FILE
 					loadables = "k3-rti-wdt-firmware";
 #endif
+					signature {
+						sign-images = "firmware", "fdt", "loadables";
+					};
 				};
 
 				conf-iot2050-advanced-pg2 {
@@ -132,8 +160,14 @@
 #ifdef CONFIG_WDT_K3_RTI_FW_FILE
 					loadables = "k3-rti-wdt-firmware";
 #endif
+					signature {
+						sign-images = "firmware", "fdt", "loadables";
+					};
 				};
 			};
+		};
+
+		fdtmap {
 		};
 
 		/* primary env */
