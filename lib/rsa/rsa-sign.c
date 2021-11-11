@@ -701,5 +701,8 @@ err_get_pub_key:
 	if (info->engine_id)
 		rsa_engine_remove(e);
 
-	return ret;
+	if (ret)
+		return ret;
+
+	return node;
 }
