@@ -1021,6 +1021,25 @@ int fit_cipher_data(const char *keydir, void *keydest, void *fit,
 		    const char *comment, int require_keys,
 		    const char *engine_id, const char *cmdname);
 
+#define NODE_MAX_NAME_LEN	80
+
+/**
+ * struct image_summary  - Provides information about signing info added
+ *
+ * @sig_offset: Offset of the node in the blob devicetree where the signature
+ *	was wriiten
+ * @sig_path: Path to @sig_offset
+ * @keydest_offset: Offset of the node in the keydest devicetree where the
+ *	public key was written (-1 if none)
+ * @keydest_path: Path to @keydest_offset
+ */
+struct image_summary {
+	int sig_offset;
+	char sig_path[NODE_MAX_NAME_LEN];
+	int keydest_offset;
+	char keydest_path[NODE_MAX_NAME_LEN];
+};
+
 /**
  * fit_add_verification_data() - add verification data to FIT image nodes
  *
@@ -1031,6 +1050,7 @@ int fit_cipher_data(const char *keydir, void *keydest, void *fit,
  * @require_keys: Mark all keys as 'required'
  * @engine_id:	Engine to use for signing
  * @cmdname:	Command name used when reporting errors
+ * @summary:	Returns information about what data was written
  *
  * Adds hash values for all component images in the FIT blob.
  * Hashes are calculated for all component images which have hash subnodes
@@ -1045,7 +1065,8 @@ int fit_cipher_data(const char *keydir, void *keydest, void *fit,
 int fit_add_verification_data(const char *keydir, const char *keyfile,
 			      void *keydest, void *fit, const char *comment,
 			      int require_keys, const char *engine_id,
-			      const char *cmdname);
+			      const char *cmdname,
+			      struct image_summary *summary);
 
 /**
  * fit_image_verify_with_data() - Verify an image with given data
