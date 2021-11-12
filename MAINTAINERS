@@ -780,6 +780,13 @@ F:	cmd/fdt.c
 F:	common/fdt_support.c
 F:	scripts/dtc-version.sh
 
+FDT SIGNING
+M:	Simon Glass <sjg@chromium.org>
+S:	Maintained
+F:	doc/fdt_*sign.1
+F:	tools/fdt_check_sign.c
+F:	tools/fdt_sign.c
+
 FREEBSD
 M:	Rafal Jaworowski <raj@semihalf.com>
 S:	Maintained

@@ -1,0 +1,74 @@
+.TH FDT_CHECK_SIGN 1 "2021-11-11"
+
+.SH NAME
+fdt_check_sign \- Check the signature in a flat device tree (FDT) file
+.SH SYNOPSIS
+.B fdt_check_sign
+.RB [\fIoptions\fP] " \-f [" "device tree binary file" "] " \-K " [" "key file" "]"
+
+.SH "DESCRIPTION"
+The
+.B fdt_check_sign
+command is used to check the signatures in a device tree binary file (.dtb
+file) to ensure it has not been modified since it was signed.
+
+Permitted modifications are to the
+.B /chosen
+node and
+.B /signature
+node/subnodes only.
+
+.SH "OPTIONS"
+
+.TP
+.BI "\-f [" "device tree binary file" "]"
+Selects the .dtb file to check.
+
+.TP
+.BI "\-k [" "key directory" "]"
+Selects the device tree binary file containing the public key to check against.
+
+.SH EXAMPLES
+
+.P
+Generate a key pair with openssl:
+
+.nf
+   $ openssl genpkey -algorithm RSA -out name.key \\
+                 -pkeyopt rsa_keygen_bits:2048 \\
+                 -pkeyopt rsa_keygen_pubexp:65537
+   $ openssl req -batch -new -x509 -key name.key -out name.crt
+.fi
+
+.P
+Create a .dtb file to accept the public key, called pubkey.dtb in this example.
+
+   # echo "/dts-v1/; /{};" | dtc - -o pubkey.dtb
+
+Sign a device tree binary:
+
+.nf
+   $ fdt_sign -f input.dtb -G name.key -K pubkey.dtb -k . -r
+   Signature written to 'input.dtb', node '/signature/name'
+   Public key written to 'pubkey.dtb', node '/signature/key-name
+.fi
+
+.P
+Check the signatures:
+
+.nf
+   $ fdt_check_sign -f input.dtb -k pubkey.dtb
+   name+
+   Verify OK
+   Signature check OK
+.fi
+
+.SH SEE ALSO
+
+fdt_sign
+
+.SH HOMEPAGE
+http://www.denx.de/wiki/U-Boot/WebHome
+.PP
+.SH AUTHOR
+This manual page was written by Simon Glass <sjg@chromium.org>.
