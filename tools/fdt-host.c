@@ -331,3 +331,23 @@ int fdt_add_verif_data(const char *keydir, const char *keyfile, void *keydest,
 
 	return ret;
 }
+
+#ifdef CONFIG_FIT_SIGNATURE
+int fdt_check_sign(const void *blob, const void *key)
+{
+	int fdt_sigs;
+	int ret;
+
+	fdt_sigs = fdt_subnode_offset(blob, 0, FIT_SIG_NODENAME);
+	if (fdt_sigs < 0) {
+		printf("No %s node found (err=%d)\n", FIT_SIG_NODENAME,
+		       fdt_sigs);
+		return fdt_sigs;
+	}
+
+	ret = fdt_sig_verify(blob, fdt_sigs, key);
+	fprintf(stderr, "Verify %s\n", ret ? "failed" : "OK");
+
+	return ret;
+}
+#endif
