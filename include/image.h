@@ -1154,6 +1154,35 @@ int fit_check_ramdisk(const void *fit, int os_noffset,
 int calculate_hash(const void *data, int data_len, const char *algo,
 			uint8_t *value, int *value_len);
 
+/**
+ * fdt_add_verif_data() - add verification data to an FDT blob
+ *
+ * @keydir:	Directory containing keys
+ * @keyfile:	Filename containing .key file
+ * @kwydest:	FDT blob to write public key information to (NULL if none)
+ * @fit:	Pointer to the FIT format image header
+ * @key_name:	Name of key used to sign (used for node name and .crt file)
+ * @comment:	Comment to add to signature nodes
+ * @require_keys: Mark all keys as 'required'
+ * @engine_id:	Engine to use for signing
+ * @cmdname:	Command name used when reporting errors
+ * @summary:	Returns information about what data was written
+ *
+ * Adds hash values for all component images in the FIT blob.
+ * Hashes are calculated for all component images which have hash subnodes
+ * with algorithm property set to one of the supported hash algorithms.
+ *
+ * Also add signatures if signature nodes are present.
+ *
+ * returns
+ *     0, on success
+ *     libfdt error code, on failure
+ */
+int fdt_add_verif_data(const char *keydir, const char *keyfile, void *keydest,
+		       void *blob, const char *key_name, const char *comment,
+		       bool require_keys, const char *engine_id,
+		       const char *cmdname, struct image_summary *summary);
+
 /*
  * At present we only support signing on the host, and verification on the
  * device
