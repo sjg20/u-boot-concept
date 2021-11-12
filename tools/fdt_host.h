@@ -57,4 +57,23 @@ int fit_check_sign(const void *fit, const void *key,
 int fdt_get_regions(const void *blob, int strtab_len,
 		    struct image_region **regionp, int *region_countp);
 
+/**
+ * fdt_check_sign() - Check signatures in an FDT blob
+ *
+ * @fdt: FDT blob to check
+ * @key: Key FDT blob to check against
+ * @return 0 if OK, -ve if any required signature failed
+ */
+int fdt_check_sign(const void *blob, const void *key);
+
+/**
+ * fdt_sig_verify() - Check signatures in an FDT blob
+ *
+ * @fdt: FDT blob to check
+ * @fit_sigs: Offset of /signatures node in the FDT
+ * @key: Key FDT blob to check against
+ * @return 0 if OK, -ve if any required signature failed
+ */
+int fdt_sig_verify(const void *blob, int fdt_sigs, const void *key);
+
 #endif /* __FDT_HOST_H__ */

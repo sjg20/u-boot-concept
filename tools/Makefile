@@ -73,13 +73,13 @@ mkenvimage-objs := mkenvimage.o os_support.o lib/crc32.o
 
 hostprogs-y += dumpimage mkimage
 hostprogs-$(CONFIG_TOOLS_LIBCRYPTO) += fit_info fit_check_sign \
-	fdt_sign
+	fdt_sign fdt_check_sign
 
 hostprogs-$(CONFIG_CMD_BOOTEFI_SELFTEST) += file2include
 
 FIT_OBJS-y := fit_common.o fit_image.o image-host.o boot/image-fit.o
 FIT_SIG_OBJS-$(CONFIG_TOOLS_LIBCRYPTO) := image-sig-host.o \
-	boot/image-fit-sig.o fdt-host.o
+	boot/image-fit-sig.o fdt-host.o image-fdt-sig.o
 FIT_CIPHER_OBJS-$(CONFIG_TOOLS_LIBCRYPTO) := boot/image-cipher.o
 
 # The following files are synced with upstream DTC.
@@ -157,6 +157,7 @@ mkimage-objs   := $(dumpimage-mkimage-objs) mkimage.o
 fit_info-objs   := $(dumpimage-mkimage-objs) fit_info.o
 fit_check_sign-objs   := $(dumpimage-mkimage-objs) fit_check_sign.o
 fdt_sign-objs   := $(dumpimage-mkimage-objs) fdt_sign.o
+fdt_check_sign-objs   := $(dumpimage-mkimage-objs) fdt_check_sign.o
 file2include-objs := file2include.o
 
 ifneq ($(CONFIG_MX23)$(CONFIG_MX28)$(CONFIG_TOOLS_LIBCRYPTO),)
@@ -195,6 +196,7 @@ HOSTLDLIBS_dumpimage := $(HOSTLDLIBS_mkimage)
 HOSTLDLIBS_fit_info := $(HOSTLDLIBS_mkimage)
 HOSTLDLIBS_fit_check_sign := $(HOSTLDLIBS_mkimage)
 HOSTLDLIBS_fdt_sign := $(HOSTLDLIBS_mkimage)
+HOSTLDLIBS_fdt_check_sign := $(HOSTLDLIBS_mkimage)
 
 hostprogs-$(CONFIG_EXYNOS5250) += mkexynosspl
 hostprogs-$(CONFIG_EXYNOS5420) += mkexynosspl
