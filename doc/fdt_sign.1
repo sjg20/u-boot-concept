@@ -1,0 +1,111 @@
+.TH FDT_SIGN 1 "2021-11-11"
+
+.SH NAME
+fdt_sign \- Sign a flat device tree (FDT) file
+.SH SYNOPSIS
+.B fdt_sign
+.RB [\fIoptions\fP] " \-f [" "device tree binary file" "] " \-G " [" "key file" "]"
+
+.SH "DESCRIPTION"
+The
+.B fdt_sign
+command is used to sign device tree binary files (.dtb files) so that they be
+protected against unwanted modification.
+
+.B fdt_sign
+adds a /signature node to the FDT, if not already present, then adds a node with
+the signature itself, in a simplified format. It uses a private key to generate
+the signature.
+
+.B fdt_check_sign
+can then be used to verify the signature against a public key.
+
+The /chosen node is ignored when signing. A /signature node is added containing
+the signature.
+
+.SH "OPTIONS"
+
+.TP
+.BI "\-f [" "device tree binary file" "]"
+Selects the .dtb file to sign.
+
+.TP
+.BI "\-G [" "key file" "]"
+Selects the key file to sign with. This should be a .key file containing an
+RSA private key.
+
+.TP
+.BI "\-k [" "key directory" "]"
+Selects the directory containing the key file.
+
+.TP
+.BI "\-K [" "key .dtb file" "]"
+Selects the device tree binary file to write the public key into. This is
+updated with a /signature subnode containing the public key the can be used to
+verify the signed device tree.
+
+.TP
+.BI "\-o [" "output file" "]"
+Selects the output file to write to. If omitted, the device tree binary file is
+updated in-place and only the
+.B -f
+parameter is used.
+
+.TP
+.BI "\-q
+Selects quiet mode which supresses non-error output.
+
+.TP
+.BI "\-r
+Marks the key as 'required', meaning that it must be used to check a signature
+in the device tree, when fdt_check_sign is used.
+
+.TP
+.BI "\-S
+Selects the key name to sign with. This is optional and defaults to the base
+name of the key file.
+
+.SH EXAMPLES
+
+.P
+Generate a key pair with openssl:
+
+.nf
+   $ openssl genpkey -algorithm RSA -out name.key \\
+                 -pkeyopt rsa_keygen_bits:2048 \\
+                 -pkeyopt rsa_keygen_pubexp:65537
+   $ openssl req -batch -new -x509 -key name.key -out name.crt
+.fi
+
+.P
+Create a .dtb file to accept the public key, called pubkey.dtb in this example.
+
+   # echo "/dts-v1/; /{};" | dtc - -o pubkey.dtb
+
+Sign a device tree binary:
+
+.nf
+   $ fdt_sign -f input.dtb -G name.key -K pubkey.dtb -k . -r
+   Signature written to 'input.dtb', node '/signature/name'
+   Public key written to 'pubkey.dtb', node '/signature/key-name
+.fi
+
+.P
+Check the signatures:
+
+.nf
+   $ fdt_check_sign -f input.dtb -k pubkey.dtb
+   name+
+   Verify OK
+   Signature check OK
+.fi
+
+.SH SEE ALSO
+
+fdt_check_sign
+
+.SH HOMEPAGE
+http://www.denx.de/wiki/U-Boot/WebHome
+.PP
+.SH AUTHOR
+This manual page was written by Simon Glass <sjg@chromium.org>.
