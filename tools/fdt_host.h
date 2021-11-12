@@ -10,6 +10,8 @@
 #include "../include/linux/libfdt.h"
 #include "../include/fdt_support.h"
 
+struct image_region;
+
 /**
  * fdt_remove_unused_strings() - Remove any unused strings from an FDT
  *
@@ -37,5 +39,22 @@ int fdt_remove_unused_strings(const void *old, void *new);
  */
 int fit_check_sign(const void *fit, const void *key,
 		   const char *fit_uname_config);
+
+/**
+ * fdt_get_regions() - Get the regions to sign
+ *
+ * This calculates a list of node to hash for this particular configuration,
+ * then finds which regions of the devicetree they correspond to.
+ *
+ * @blob:	Pointer to the FDT blob to sign
+ * @strtab_len:	Length in bytes of the string table to sign, -1 to sign it all
+ * @regionp: Returns list of regions that need to be hashed (allocated; must be
+ *	freed by the caller)
+ * @region_count: Returns number of regions
+ * @return 0 if OK, -ENOMEM if out of memory, -EIO if the regions to hash could
+ * not be found, -EINVAL if no registers were found to hash
+ */
+int fdt_get_regions(const void *blob, int strtab_len,
+		    struct image_region **regionp, int *region_countp);
 
 #endif /* __FDT_HOST_H__ */
