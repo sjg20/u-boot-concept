@@ -65,3 +65,18 @@ fallback:
 	return checkboard();
 }
 #endif
+
+static struct splash_location cm_fx6_splash_locations[] = {
+	{
+		.name = "virtio_fs",
+		.storage = SPLASH_STORAGE_SATA,
+		.flags = SPLASH_STORAGE_FS,
+		.devpart = "0:1",
+	},
+};
+
+int splash_screen_prepare(void)
+{
+	return splash_source_load(cm_fx6_splash_locations,
+				  ARRAY_SIZE(cm_fx6_splash_locations));
+}
