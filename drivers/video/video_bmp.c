@@ -169,6 +169,13 @@ static void video_splash_align_axis(int *axis, unsigned long panel_size,
 	*axis = max(0, (int)axis_alignment);
 }
 
+static uint get_bmp_col_16bpp(struct bmp_color_table_entry *cte)
+{
+	return ((cte->red   << 8) & 0xf800) |
+		((cte->green << 3) & 0x07e0) |
+		((cte->blue  >> 3) & 0x001f);
+}
+
 static void video_set_cmap(struct udevice *dev,
 			   struct bmp_color_table_entry *cte, unsigned colours)
 {
@@ -178,9 +185,7 @@ static void video_set_cmap(struct udevice *dev,
 
 	debug("%s: colours=%d\n", __func__, colours);
 	for (i = 0; i < colours; ++i) {
-		*cmap = ((cte->red   << 8) & 0xf800) |
-			((cte->green << 3) & 0x07e0) |
-			((cte->blue  >> 3) & 0x001f);
+		*cmap = get_bmp_col_16bpp(cte);
 		cmap++;
 		cte++;
 	}
@@ -298,6 +303,9 @@ int video_bmp_display(struct udevice *dev, ulong bmp_image, int x, int y,
 					fb_put_byte(&fb, &bmap);
 				} else if (bpix == 16) {
 					*(uint16_t *)fb = cmap_base[*bmap];
+					*(u16 *)fb = get_bmp_col_16bpp(
+						&palette[*bmap]);
+
 					bmap++;
 					fb += sizeof(uint16_t) / sizeof(*fb);
 				} else {
