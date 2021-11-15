@@ -339,9 +339,7 @@ static int show_splash(struct udevice *dev)
 	u8 *data = SPLASH_START(u_boot_logo);
 	int ret;
 
-	printf("data at %p\n", data);
 	ret = video_bmp_display(dev, (ulong)data, -4, 4, true);
-	printf("ret=%d\n", ret);
 
 	return 0;
 }
