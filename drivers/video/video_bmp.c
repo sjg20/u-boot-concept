@@ -19,28 +19,39 @@
 #define BMP_RLE8_EOBMP		1
 #define BMP_RLE8_DELTA		2
 
-static void draw_unencoded_bitmap(ushort **fbp, uchar *bmap, ushort *cmap,
+static uint get_bmp_col_16bpp(struct bmp_color_table_entry cte)
+{
+	return ((cte.red   << 8) & 0xf800) |
+		((cte.green << 3) & 0x07e0) |
+		((cte.blue  >> 3) & 0x001f);
+}
+
+static void draw_unencoded_bitmap(ushort **fbp, uchar *bmap,
+				  struct bmp_color_table_entry *palette,
 				  int cnt)
 {
 	while (cnt > 0) {
-		*(*fbp)++ = cmap[*bmap++];
+		*(*fbp)++ = get_bmp_col_16bpp(palette[*bmap++]);
 		cnt--;
 	}
 }
 
-static void draw_encoded_bitmap(ushort **fbp, ushort col, int cnt)
+static void draw_encoded_bitmap(ushort **fbp, struct bmp_color_table_entry col,
+				int cnt)
 {
 	ushort *fb = *fbp;
+	ushort val = get_bmp_col_16bpp(col);
 
 	while (cnt > 0) {
-		*fb++ = col;
+		*fb++ = val;
 		cnt--;
 	}
 	*fbp = fb;
 }
 
 static void video_display_rle8_bitmap(struct udevice *dev,
-				      struct bmp_image *bmp, ushort *cmap,
+				      struct bmp_image *bmp,
+				      struct bmp_color_table_entry *palette,
 				      uchar *fb, int x_off, int y_off,
 				      ulong width, ulong height)
 {
@@ -92,7 +103,7 @@ static void video_display_rle8_bitmap(struct udevice *dev,
 							cnt = runlen;
 						draw_unencoded_bitmap(
 							(ushort **)&fb,
-							bmap, cmap, cnt);
+							bmap, palette, cnt);
 					}
 					x += runlen;
 				}
@@ -117,7 +128,7 @@ static void video_display_rle8_bitmap(struct udevice *dev,
 					else
 						cnt = runlen;
 					draw_encoded_bitmap((ushort **)&fb,
-						cmap[bmap[1]], cnt);
+						palette[bmap[1]], cnt);
 				}
 				x += runlen;
 			}
@@ -169,13 +180,6 @@ static void video_splash_align_axis(int *axis, unsigned long panel_size,
 	*axis = max(0, (int)axis_alignment);
 }
 
-static uint get_bmp_col_16bpp(struct bmp_color_table_entry *cte)
-{
-	return ((cte->red   << 8) & 0xf800) |
-		((cte->green << 3) & 0x07e0) |
-		((cte->blue  >> 3) & 0x001f);
-}
-
 static void video_set_cmap(struct udevice *dev,
 			   struct bmp_color_table_entry *cte, unsigned colours)
 {
@@ -185,7 +189,7 @@ static void video_set_cmap(struct udevice *dev,
 
 	debug("%s: colours=%d\n", __func__, colours);
 	for (i = 0; i < colours; ++i) {
-		*cmap = get_bmp_col_16bpp(cte);
+		*cmap = get_bmp_col_16bpp(*cte);
 		cmap++;
 		cte++;
 	}
@@ -251,8 +255,8 @@ int video_bmp_display(struct udevice *dev, ulong bmp_image, int x, int y,
 	debug("Display-bmp: %d x %d  with %d colours, display %d\n",
 	      (int)width, (int)height, (int)colours, 1 << bpix);
 
-	if (bmp_bpix == 8)
-		video_set_cmap(dev, palette, colours);
+// 	if (bmp_bpix == 8)
+// 		video_set_cmap(dev, palette, colours);
 
 	padded_width = (width & 0x3 ? (width & ~0x3) + 4 : width);
 
@@ -287,7 +291,7 @@ int video_bmp_display(struct udevice *dev, ulong bmp_image, int x, int y,
 				printf("Error: only support 16 bpix");
 				return -EPROTONOSUPPORT;
 			}
-			video_display_rle8_bitmap(dev, bmp, cmap_base, fb, x,
+			video_display_rle8_bitmap(dev, bmp, palette, fb, x,
 						  y, width, height);
 			break;
 		}
@@ -302,9 +306,9 @@ int video_bmp_display(struct udevice *dev, ulong bmp_image, int x, int y,
 				if (bpix == 8) {
 					fb_put_byte(&fb, &bmap);
 				} else if (bpix == 16) {
-					*(uint16_t *)fb = cmap_base[*bmap];
+// 					*(uint16_t *)fb = cmap_base[*bmap];
 					*(u16 *)fb = get_bmp_col_16bpp(
-						&palette[*bmap]);
+						palette[*bmap]);
 
 					bmap++;
 					fb += sizeof(uint16_t) / sizeof(*fb);
