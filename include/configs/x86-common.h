@@ -98,8 +98,9 @@
 	"scriptaddr=0x7000000\0"			\
 	"kernel_addr_r=0x1000000\0"			\
 	"ramdisk_addr_r=0x4000000\0"			\
-	"ramdiskfile=initramfs.gz\0"
-
+	"ramdiskfile=initramfs.gz\0"			\
+	"splashsource=virtio_fs\0"			\
+	"splashimage=0x1000000\0"
 
 #define RAMBOOTCOMMAND				\
 	"setenv bootargs root=/dev/ram rw "		\

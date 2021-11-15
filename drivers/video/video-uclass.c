@@ -326,6 +326,26 @@ static int video_pre_remove(struct udevice *dev)
 	return 0;
 }
 
+#define SPLASH_DECL(_name) \
+	extern u8 __splash_ ## _name ## _begin[]; \
+	extern u8 __splash_ ## _name ## _end[];
+
+#define SPLASH_START(_name)	__splash_ ## _name ## _begin
+
+SPLASH_DECL(u_boot_logo);
+
+static int show_splash(struct udevice *dev)
+{
+	u8 *data = SPLASH_START(u_boot_logo);
+	int ret;
+
+	printf("data at %p\n", data);
+	ret = video_bmp_display(dev, (ulong)data, -4, 4, true);
+	printf("ret=%d\n", ret);
+
+	return 0;
+}
+
 /* Set up the display ready for use */
 static int video_post_probe(struct udevice *dev)
 {
@@ -389,6 +409,14 @@ static int video_post_probe(struct udevice *dev)
 	if (ret) {
 		debug("%s: Cannot probe console driver\n", __func__);
 		return ret;
+	}
+
+	if (IS_ENABLED(CONFIG_VIDEO_LOGO)) {
+		ret = show_splash(dev);
+		if (ret) {
+			log_debug("Cannot show splash screen\n");
+			return ret;
+		}
 	}
 
 	return 0;
