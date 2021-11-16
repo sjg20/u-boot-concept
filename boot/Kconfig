@@ -279,6 +279,56 @@ config SPL_FIT_GENERATOR
 
 endif # SPL
 
+config FIT_SIGNATURE_ADD_KEYS
+	bool "Add public keys for FIT image verification"
+	depends on FIT_SIGNATURE || SPL_FIT_SIGNATURE
+	help
+	  Add public keys that can be used to verify signed FIT images. The
+	  keys will be embedded into the control device tree of U-Boot.
+
+if FIT_SIGNATURE_ADD_KEYS
+
+config PUB_KEYS
+	string "Public keys to use for FIT image verification"
+	help
+	  Public keys, or certificate files to extract them from, that shall
+	  be used to verify signed FIT images.
+
+choice
+	prompt "Signature algorithm"
+	default PUB_KEYS_RSA2048
+
+config PUB_KEYS_RSA2048
+	bool "RSA, 2048 bits"
+
+config PUB_KEYS_RSA4096
+	bool "RSA, 4096 bits"
+
+config PUB_KEYS_ECDSA256
+	bool "ECDSA, 256 bits"
+
+endchoice
+
+config PUB_KEYS_ALGO
+	string
+	default "sha256,rsa2048" if PUB_KEYS_RSA2048
+	default "sha256,rsa4096" if PUB_KEYS_RSA4096
+	default "sha256,rcdsa256" if PUB_KEYS_RCDSA256
+
+choice
+	prompt "Require keys"
+	default PUB_KEYS_REQUIRE_CONF
+
+config PUB_KEYS_REQUIRE_CONF
+	bool "Verify configuration against keys"
+
+config PUB_KEYS_REQUIRE_IMAGE
+	bool "Verify images against keys"
+
+endchoice
+
+endif # FIT_SIGNATURE_ADD_KEYS
+
 endif # FIT
 
 config LEGACY_IMAGE_FORMAT

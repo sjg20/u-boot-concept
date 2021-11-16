@@ -315,6 +315,22 @@ ifeq ($(CONFIG_OF_LIBFDT_OVERLAY),y)
 DTC_FLAGS += -@
 endif
 
+ifneq ($(CONFIG_FIT_SIGNATURE_ADD_KEYS),)
+ifeq ($(CONFIG_PUB_KEYS_REQUIRE_CONF),y)
+KEYS_REQUIRED := conf
+else
+KEYS_REQUIRED := image
+endif
+ADD_PUB_KEYS_DEPS := tools/fdt_add_pubkey
+define add_pub_keys
+	$(foreach key,$(subst $(quote),,$(CONFIG_PUB_KEYS)), \
+		tools/fdt_add_pubkey -a $(CONFIG_PUB_KEYS_ALGO) \
+			-k $(shell dirname $(key)) \
+			-n $(subst .key,,$(shell basename $(key))) \
+			-r $(KEYS_REQUIRED) $@;)
+endef
+endif
+
 quiet_cmd_dtc = DTC     $@
 # Modified for U-Boot
 # Bring in any U-Boot-specific include at the end of the file
@@ -328,9 +344,10 @@ cmd_dtc = mkdir -p $(dir ${dtc-tmp}) ; \
 		-d $(depfile).dtc.tmp $(dtc-tmp) || \
 		(echo "Check $(shell pwd)/$(pre-tmp) for errors" && false) \
 		; \
+	$(call add_pub_keys) \
 	sed "s:$(pre-tmp):$(<):" $(depfile).pre.tmp $(depfile).dtc.tmp > $(depfile)
 
-$(obj)/%.dtb: $(src)/%.dts FORCE
+$(obj)/%.dtb: $(src)/%.dts $(ADD_PUB_KEYS_DEPS) FORCE
 	$(call if_changed_dep,dtc)
 
 pre-tmp = $(subst $(comma),_,$(dot-target).pre.tmp)
