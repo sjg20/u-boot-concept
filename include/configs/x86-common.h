@@ -88,9 +88,14 @@
 #define DISTRO_BOOTENV
 #endif
 
+#ifndef SPLASH_SETTINGS
+#define SPLASH_SETTINGS
+#endif
+
 #define CONFIG_EXTRA_ENV_SETTINGS			\
 	DISTRO_BOOTENV					\
 	CONFIG_STD_DEVICES_SETTINGS			\
+	SPLASH_SETTINGS					\
 	"pciconfighost=1\0"				\
 	"netdev=eth0\0"					\
 	"consoledev=ttyS0\0"				\
@@ -99,7 +104,6 @@
 	"kernel_addr_r=0x1000000\0"			\
 	"ramdisk_addr_r=0x4000000\0"			\
 	"ramdiskfile=initramfs.gz\0"
-
 
 #define RAMBOOTCOMMAND				\
 	"setenv bootargs root=/dev/ram rw "		\
