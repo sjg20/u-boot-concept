@@ -13,6 +13,8 @@ is built.
 
 Available options are:
 
+** binding applied upstream:
+
 bootcmd (string)
 	Allows overwriting of the boot command used by U-Boot on startup. If
 	present, U-Boot uses this command instead. Note that this feature can
@@ -26,16 +28,53 @@ bootdelay (int)
 	images is being packed for testing or a user holds down a button, it may
 	allow a delay, but disable it for production.
 
-u-boot,boot-led (string)
-u-boot,error-led (string)
-	This is used to specify the label for an LED to indicate an error and
-	a successful boot, on supported hardware.
-
 bootsecure (int)
 	Indicates that U-Boot should use secure_boot_cmd() to run commands,
 	rather than the normal CLI. This can be used in production images, to
 	restrict the amount of parsing done or the options available, to cut
 	back on the available surface for security attacks.
+
+silent-console (int)
+	If present and non-zero, the console is silenced by default on boot.
+
+
+To be upstreamed:
+
+load-environment (int)
+	Allows control over whether U-Boot loads its environment after
+	relocation (0=no, 1 or not present=yes).
+
+u-boot,no-apm-finalise (bool)
+	For x86 devices running on coreboot, this tells U-Boot not to lock
+	down the Intel Management Engine (ME) registers. This allows U-Boot to
+	access the hardware more fully for platforms that need it.
+
+u-boot,spl-payload-offset (int)
+	If present (and SPL is controlled by the device-tree), this allows
+	to override the CONFIG_SYS_SPI_U_BOOT_OFFS setting using a value
+	from the device-tree.
+
+delete:
+
+u-boot,no-keyboard (bool)
+	Tells U-Boot not to expect an attached keyboard with a VGA console.
+
+kernel-offset (int)
+	This allows setting the 'kernaddr' environment variable, used to select
+	the address to load the kernel. It is useful for systems that use U-Boot
+	to flash a device, so the scripts that do this know where to put the
+	kernel to be flashed.
+
+rootdisk-offset (int)
+	This allows setting the 'rootdisk' environment variable, used to select
+	the address to load the rootdisk. It is useful for systems that use
+	U-Boot to flash a device, so the scripts that do this know where to put
+	the root disk to be flashed.
+
+u-boot,boot-led (string)
+u-boot,error-led (string)
+	This is used to specify the label for an LED to indicate an error and
+	a successful boot, on supported hardware.
 
 u-boot,efi-partition-entries-offset (int)
 	If present, this provides an offset (in bytes, from the start of a
@@ -44,16 +83,6 @@ u-boot,efi-partition-entries-offset (int)
 	is formatted.
 
 	This setting will override any values configured via Kconfig.
-
-kernel-offset (int)
-	This allows setting the 'kernaddr' environment variable, used to select
-	the address to load the kernel. It is useful for systems that use U-Boot
-	to flash a device, so the scripts that do this know where to put the
-	kernel to be flashed.
-
-load-environment (int)
-	Allows control over whether U-Boot loads its environment after
-	relocation (0=no, 1 or not present=yes).
 
 u-boot,mmc-env-offset (int)
 u-boot,mmc-env-offset-redundant (int)
@@ -75,28 +104,6 @@ u-boot,mmc-env-partition (int)
 	if u-boot,mmc-env-offset* is present, this setting will take
 	precedence. In that case, only if the partition is not found,
 	mmc-env-offset* will be tried.
-
-u-boot,no-apm-finalize (bool)
-	For x86 devices running on coreboot, this tells U-Boot not to lock
-	down the Intel Management Engine (ME) registers. This allows U-Boot to
-	access the hardware more fully for platforms that need it.
-
-u-boot,no-keyboard (bool)
-	Tells U-Boot not to expect an attached keyboard with a VGA console.
-
-rootdisk-offset (int)
-	This allows setting the 'rootdisk' environment variable, used to select
-	the address to load the rootdisk. It is useful for systems that use
-	U-Boot to flash a device, so the scripts that do this know where to put
-	the root disk to be flashed.
-
-silent-console (int)
-	If present and non-zero, the console is silenced by default on boot.
-
-u-boot,spl-payload-offset (int)
-	If present (and SPL is controlled by the device-tree), this allows
-	to override the CONFIG_SYS_SPI_U_BOOT_OFFS setting using a value
-	from the device-tree.
 
 sysreset-gpio (string)
 	If present (and supported by the specific board), indicates a
