@@ -5,9 +5,9 @@
 
 obj-$(CONFIG_$(SPL_)BLK) += blk-uclass.o
 
-ifndef CONFIG_$(SPL_)BLK
-obj-$(CONFIG_HAVE_BLOCK_DEVICE) += blk_legacy.o
-endif
+#ifndef CONFIG_$(SPL_)BLK
+#obj-$(CONFIG_HAVE_BLOCK_DEVICE) += blk_legacy.o
+#endif
 
 ifndef CONFIG_SPL_BUILD
 obj-$(CONFIG_IDE) += ide.o
