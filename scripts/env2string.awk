@@ -24,26 +24,33 @@ NF {
 	# Quote quotes
 	gsub("\"", "\\\"")
 
+	# Avoid using the non-POSIX third parameter to match(), by splitting
+	# the work into several steps.
+	has_var = match($0, "^([^ \t=][^ =]*)=(.*)$")
+
 	# Is this the start of a new environment variable?
-	if (match($0, "^([^ \t=][^ =]*)=(.*)$", arr)) {
+	if (has_var) {
 		if (length(env) != 0) {
 			# Record the value of the variable now completed
 			vars[var] = env
 		}
-		var = arr[1]
-		env = arr[2]
+
+		# Collect the variable name. The value follows the '='
+		match($0, "^([^ \t=][^ =]*)=")
+		var = substr($0, 1, RLENGTH - 1)
+		env = substr($0, RLENGTH + 1)
 
 		# Deal with += which concatenates the new string to the existing
-		# variable
-		if (length(env) != 0 && match(var, "^(.*)[+]$", var_arr))
-		{
+		# variable. Again we are careful to use POSIX match()
+		if (length(env) != 0 && match(var, "^(.*)[+]$")) {
+			plusname = substr(var, RSTART, RLENGTH - 1)
 			# Allow var\+=val to indicate that the variable name is
 			# var+ and this is not actually a concatenation
-			if (substr(var_arr[1], length(var_arr[1])) == "\\") {
+			if (substr(plusname, length(plusname)) == "\\") {
 				# Drop the backslash
 				sub(/\\[+]$/, "+", var)
 			} else {
-				var = var_arr[1]
+				var = plusname
 				env = vars[var] env
 			}
 		}
