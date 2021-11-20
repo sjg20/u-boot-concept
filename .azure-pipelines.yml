@@ -172,6 +172,23 @@ jobs:
           export PATH=/opt/gcc-11.1.0-nolibc/arm-linux-gnueabi/bin:$PATH
           test/nokia_rx51_test.sh
 
+  - job: pylint
+    displayName: Check for any pylint regressions
+    pool:
+      vmImage: $(ubuntu_vm)
+    container:
+      image: $(ci_runner_image)
+      options: $(container_option)
+    steps:
+      - script: |
+          pip install -r test/py/requirements.txt
+          pip install asteval pylint pyopenssl
+          export PATH=${PATH}:~/.local/bin
+          echo "[MASTER]" >> .pylintrc
+          echo "load-plugins=pylint.extensions.docparams" >> .pylintrc
+          pylint --version
+          make pylint
+
   - job: test_py
     displayName: 'test.py'
     pool:

@@ -5,7 +5,40 @@
 # Command-line parser for binman
 #
 
+import argparse
 from argparse import ArgumentParser
+import os
+import re
+import sys
+
+import state
+
+OUR_PATH = os.path.dirname(os.path.realpath(__file__))
+
+
+class BinmanVersion(argparse.Action):
+    """Handles the -V option to binman
+
+    This reads the version information from a file called 'version' in the same
+    directory as this file.
+
+    If not present it assumes this is running from the U-Boot tree and collects
+    the version from the Makefile.
+
+    The format of the version information is three VAR = VALUE lines, for
+    example:
+
+        VERSION = 2022
+        PATCHLEVEL = 01
+        EXTRAVERSION = -rc2
+    """
+    def __init__(self, nargs=0, **kwargs):
+        super().__init__(nargs=nargs, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        parser._print_message('Binman %s\n' % state.GetVersion())
+        parser.exit()
+
 
 def ParseArgs(argv):
     """Parse the binman command-line arguments
@@ -39,6 +72,7 @@ controlled by a description in the board device tree.'''
     parser.add_argument('-v', '--verbosity', default=1,
         type=int, help='Control verbosity: 0=silent, 1=warnings, 2=notices, '
         '3=info, 4=detail, 5=debug')
+    parser.add_argument('-V', '--version', nargs=0, action=BinmanVersion)
 
     subparsers = parser.add_subparsers(dest='cmd')
     subparsers.required = True

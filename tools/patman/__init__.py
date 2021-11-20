@@ -1,3 +1,4 @@
-__all__ = ['checkpatch', 'command', 'commit', 'cros_subprocess',
-           'get_maintainer', 'gitutil', 'patchstream', 'project',
-           'series', 'settings', 'terminal', 'test']
+__all__ = ['checkpatch', 'command', 'commit', 'control', 'cros_subprocess',
+           'func_test', 'get_maintainer', 'gitutil', 'main', 'patchstream',
+           'project', 'series', 'setup', 'settings', 'terminal',
+           'test_checkpatch', 'test_util', 'tools', 'tout']
