@@ -9,11 +9,13 @@ binman.elf_test 5.41
 binman.entry 2.39
 binman.entry_test 5.29
 binman.fdt_test 3.23
+binman.fip_util 9.86
+binman.fip_util_test 9.75
 binman.fmap_util 6.67
 binman.ftest 7.38
 binman.image 6.39
 binman.image_test 4.48
-binman.main 4.26
+binman.main 4.03
 binman.setup 5.00
 binman.state 3.30
 blob -1.94
@@ -33,7 +35,7 @@ buildman.main 1.43
 buildman.test 6.10
 buildman.toolchain 5.81
 capsule_defs 5.00
-cbfs -1.52
+cbfs -1.44
 collection 2.33
 concurrencytest 6.77
 conftest -3.84
@@ -107,7 +109,7 @@ powerpc_mpc85xx_bootpg_resetvec -10.00
 rkmux 6.76
 rmboard 7.76
 scp -6.00
-section 4.25
+section 4.31
 sqfs_common 8.12
 test 8.18
 test_000_version 7.50
