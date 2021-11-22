@@ -61,3 +61,11 @@ Refactoring
    checkpatch
    coccinelle
    moveconfig
+
+Code quality
+------------
+
+.. toctree::
+   :maxdepth: 1
+
+   python_cq
