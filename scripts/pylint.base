@@ -44,12 +44,12 @@ cros_ec_rw -6.00
 defs 6.67
 dtoc.dtb_platdata 7.82
 dtoc.fdt 3.47
-dtoc.fdt_util 4.53
+dtoc.fdt_util 4.95
 dtoc.main 7.33
 dtoc.setup 5.00
 dtoc.src_scan 8.75
 dtoc.test_dtoc 8.54
-dtoc.test_fdt 6.92
+dtoc.test_fdt 6.93
 dtoc.test_src_scan 9.43
 efivar 6.71
 endian-swap 8.93
