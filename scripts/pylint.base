@@ -2,7 +2,7 @@ _testing 0.83
 atf_bl31 -6.00
 binman.cbfs_util 7.70
 binman.cbfs_util_test 9.19
-binman.cmdline 8.87
+binman.cmdline 9.06
 binman.control 4.39
 binman.elf 6.42
 binman.elf_test 5.41
