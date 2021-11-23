@@ -7460,5 +7460,9 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
         with self.assertRaises(ValueError) as e:
             self._DoReadFile('323_capsule_accept_revert_missing.dts')
 
+    def testAmlEncrypt(self):
+        self._DoTestFile('213_aml_encrypt.dts', allow_missing=True)
+
+
 if __name__ == "__main__":
     unittest.main()
