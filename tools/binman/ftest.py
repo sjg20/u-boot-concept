@@ -7487,6 +7487,9 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
             err,
             "Image '.*' is missing external blobs and is non-functional: .*")
 
+    def testAmlEncrypt(self):
+        self._DoTestFile('213_aml_encrypt.dts', allow_missing=True)
+
 
 if __name__ == "__main__":
     unittest.main()

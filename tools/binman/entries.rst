@@ -11,6 +11,13 @@ features to produce new behaviours.
 
 
 
+.. _etype_aml_encrypt:
+
+Entry: aml-encrypt: TODO: Insert documentation here
+---------------------------------------------------
+
+
+
 .. _etype_atf_bl31:
 
 Entry: atf-bl31: ARM Trusted Firmware (ATF) BL31 blob
