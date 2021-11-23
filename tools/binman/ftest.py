@@ -4952,6 +4952,9 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
         err = stderr.getvalue()
         self.assertRegex(err, "Image 'main-section'.*missing.*: blob-ext")
 
+    def testAmlEncrypt(self):
+        self._DoTestFile('213_aml_encrypt.dts', allow_missing=True)
+
 
 if __name__ == "__main__":
     unittest.main()

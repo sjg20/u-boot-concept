@@ -1,4 +1,5 @@
 _testing 0.83
+aml_encrypt 2.71
 atf_bl31 -6.00
 atf_fip 0.44
 binman.cbfs_util 7.70
