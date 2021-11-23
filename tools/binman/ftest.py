@@ -6676,6 +6676,9 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
                                 ['fit'])
         self.assertIn("Node '/fit': Missing tool: 'mkimage'", str(e.exception))
 
+    def testAmlEncrypt(self):
+        self._DoTestFile('213_aml_encrypt.dts', allow_missing=True)
+
 
 if __name__ == "__main__":
     unittest.main()
