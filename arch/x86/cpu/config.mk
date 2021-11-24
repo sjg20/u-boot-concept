@@ -10,6 +10,8 @@ LDPPFLAGS += -DSTART_16=$(CONFIG_SYS_X86_START16)
 
 ifdef CONFIG_X86_64
 ifndef CONFIG_SPL_BUILD
+ifndef CONFIG_EFI_APP
 LDSCRIPT = $(srctree)/arch/x86/cpu/u-boot-64.lds
+endif
 endif
 endif
