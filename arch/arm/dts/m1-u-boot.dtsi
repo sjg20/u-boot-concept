@@ -1,0 +1,21 @@
+// SPDX-License-Identifier: GPL-2.0+ OR MIT
+/*
+ * Provides a binman defintion for building and booting with the default
+ * devicetree
+ *
+ * Copyright 2021 Google LLC
+ */
+
+/ {
+	binman {
+		blob-ext {
+			filename = "m1n1.macho";
+		};
+
+		u-boot-dtb {
+		};
+
+		u-boot-nodtb {
+		};
+	};
+};
