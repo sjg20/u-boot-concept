@@ -22,6 +22,7 @@ binman.state 3.30
 blob -1.94
 blob_dtb -10.00
 blob_ext -20.00
+blob_ext_list -0.32
 blob_named_by_arg -7.78
 blob_phase -5.00
 buildman.board 7.11
