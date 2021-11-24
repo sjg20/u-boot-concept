@@ -250,7 +250,21 @@ class Entry_atf_fip(Entry_section):
             entry.offset = fent.offset
             entry.image_pos = self.image_pos + entry.offset
 
-    def ReadChildData(self, child, decomp=True):
+    def ReadChildData(self, child, decomp=True, alt_format=None):
+        """Read the data for a particular child entry
+
+        This reads data from the parent and extracts the piece that relates to
+        the given child.
+
+        Args:
+            child (Entry): Child entry to read data for (must be valid)
+            decomp (bool): True to decompress any compressed data before
+                returning it; False to return the raw, uncompressed data
+            alt_format (str): Alternative format to read in, or None
+
+        Returns:
+            bytes: Data for the child (bytes)
+        """
         if not self.reader:
             self.fip_data = super().ReadData(True)
             self.reader = FipReader(self.fip_data)
