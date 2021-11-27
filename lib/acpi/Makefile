@@ -10,3 +10,4 @@ obj-y += acpi_writer.o
 endif
 
 obj-y += base.o
+obj-y += facs.o
