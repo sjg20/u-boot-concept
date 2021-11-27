@@ -196,6 +196,7 @@ config SANDBOX
 	imply PHY_FIXED
 	imply DM_DSA
 	imply CMD_EXTENSION
+	imply GENERATE_ACPI_TABLE
 
 config SH
 	bool "SuperH architecture"
