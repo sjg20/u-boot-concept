@@ -8,3 +8,5 @@ obj-$(CONFIG_$(SPL_)ACPIGEN) += acpi_table.o
 ifndef CONFIG_QFW
 obj-y += acpi_writer.o
 endif
+
+obj-y += base.o
