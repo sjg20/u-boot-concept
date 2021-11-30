@@ -52,6 +52,7 @@ enum acpi_dump_option {
  * @nhlt: Intel Non-High-Definition-Audio Link Table (NHLT) pointer, used to
  *	build up information that audio codecs need to provide in the NHLT ACPI
  *	table
+ * @tab_start: Address of start of table being written
  * @len_stack: Stack of 'length' words to fix up later
  * @ltop: Points to current top of stack (0 = empty)
  */
@@ -62,6 +63,7 @@ struct acpi_ctx {
 	struct acpi_rsdt *rsdt;
 	struct acpi_xsdt *xsdt;
 	struct nhlt *nhlt;
+	void *tab_start;
 	char *len_stack[ACPIGEN_LENSTACK_SIZE];
 	int ltop;
 };
