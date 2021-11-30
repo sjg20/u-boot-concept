@@ -142,8 +142,6 @@ static efi_status_t efi_env_set_load_options(efi_handle_t handle,
 	return ret;
 }
 
-#if !CONFIG_IS_ENABLED(GENERATE_ACPI_TABLE)
-
 /**
  * copy_fdt() - Copy the device tree to a new location available to EFI
  *
@@ -230,8 +228,6 @@ static void *get_config_table(const efi_guid_t *guid)
 	return NULL;
 }
 
-#endif /* !CONFIG_IS_ENABLED(GENERATE_ACPI_TABLE) */
-
 /**
  * efi_install_fdt() - install device tree
  *
@@ -251,16 +247,6 @@ static void *get_config_table(const efi_guid_t *guid)
  */
 efi_status_t efi_install_fdt(void *fdt)
 {
-	/*
-	 * The EBBR spec requires that we have either an FDT or an ACPI table
-	 * but not both.
-	 */
-#if CONFIG_IS_ENABLED(GENERATE_ACPI_TABLE)
-	if (fdt) {
-		log_err("ERROR: can't have ACPI table and device tree.\n");
-		return EFI_LOAD_ERROR;
-	}
-#else
 	bootm_headers_t img = { 0 };
 	efi_status_t ret;
 
@@ -316,7 +302,6 @@ efi_status_t efi_install_fdt(void *fdt)
 		log_err("ERROR: failed to install device tree\n");
 		return ret;
 	}
-#endif /* GENERATE_ACPI_TABLE */
 
 	return EFI_SUCCESS;
 }
@@ -625,19 +610,30 @@ static int do_bootefi(struct cmd_tbl *cmdtp, int flag, int argc,
 		return CMD_RET_FAILURE;
 	}
 
-	if (argc > 2) {
-		uintptr_t fdt_addr;
+	/*
+	 * The EBBR spec requires that we have either an FDT or an ACPI table
+	 * but not both.
+	 */
+	if (!IS_ENABLED(GENERATE_ACPI_TABLE)) {
+		if (fdt) {
+			log_err("ERROR: can't have ACPI table and device tree\n");
+			return EFI_LOAD_ERROR;
+		}
 
-		fdt_addr = hextoul(argv[2], NULL);
-		fdt = map_sysmem(fdt_addr, 0);
-	} else {
-		fdt = EFI_FDT_USE_INTERNAL;
+		if (argc > 2) {
+			uintptr_t fdt_addr;
+
+			fdt_addr = hextoul(argv[2], NULL);
+			fdt = map_sysmem(fdt_addr, 0);
+		} else {
+			fdt = EFI_FDT_USE_INTERNAL;
+		}
+		ret = efi_install_fdt(fdt);
+		if (ret == EFI_INVALID_PARAMETER)
+			return CMD_RET_USAGE;
+		else if (ret != EFI_SUCCESS)
+			return CMD_RET_FAILURE;
 	}
-	ret = efi_install_fdt(fdt);
-	if (ret == EFI_INVALID_PARAMETER)
-		return CMD_RET_USAGE;
-	else if (ret != EFI_SUCCESS)
-		return CMD_RET_FAILURE;
 
 	if (IS_ENABLED(CONFIG_CMD_BOOTEFI_BOOTMGR)) {
 		if (!strcmp(argv[1], "bootmgr"))
