@@ -30,7 +30,7 @@ ykush_port=1
 
 sdwire_serial=sdwire-18
 
-mount_uuid=B529-9710
+#mount_uuid=B529-9710
 
 # Fedora 34
 mount_uuid=5B0C-97DF
