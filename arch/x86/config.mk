@@ -55,6 +55,13 @@ endif
 
 EFIPAYLOAD_BFDARCH = i386
 
+$(warning IS_32BIT $(IS_32BIT))
+$(warning EFI_IS_32BIT $(EFI_IS_32BIT))
+$(warning CFLAGS_EFI $(CFLAGS_EFI))
+$(warning EFIARCH $(EFIARCH))
+$(warning EFIPAYLOAD_BFDARCH $(EFIPAYLOAD_BFDARCH))
+$(warning EFIPAYLOAD_BFDTARGET $(EFIPAYLOAD_BFDTARGET))
+
 LDSCRIPT_EFI := $(srctree)/arch/x86/lib/elf_$(EFIARCH)_efi.lds
 EFISTUB := crt0_$(EFIARCH)_efi.o reloc_$(EFIARCH)_efi.o
 OBJCOPYFLAGS_EFI += --target=efi-app-$(EFIARCH)
