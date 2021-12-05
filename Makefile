@@ -1107,6 +1107,9 @@ endif
 ifeq ($(CONFIG_DEPRECATED),y)
 	$(warning "You have deprecated configuration options enabled in your .config! Please check your configuration.")
 endif
+ifeq ($(CONFIG_OF_HAS_PRIOR_STAGE).$(CONFIG_OF_OMIT_DTB),y.)
+	@echo >&2 "Warning: Devicetree was built but is not normally used on this board"
+endif
 ifeq ($(CONFIG_OF_EMBED)$(CONFIG_EFI_APP),y)
 	@echo >&2 "===================== WARNING ======================"
 	@echo >&2 "CONFIG_OF_EMBED is enabled. This option should only"
