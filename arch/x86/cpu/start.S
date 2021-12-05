@@ -104,6 +104,8 @@ early_board_init_ret:
 	jmp	car_init
 .globl car_init_ret
 car_init_ret:
+	# stop here
+	jmp	.
 #ifdef CONFIG_USE_CAR
 	/*
 	 * We now have CONFIG_SYS_CAR_SIZE bytes of Cache-As-RAM (or SRAM,

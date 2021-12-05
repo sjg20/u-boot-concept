@@ -14,6 +14,9 @@
 
 		volteer: volteer {
 		};
+
+		myvolteer: myvolteer {
+		};
 	};
 };
 
@@ -204,6 +207,36 @@
 	blob {
 		offset = <0xffff4000>;
 		filename = "bootblock";
+	};
+};
+
+&myvolteer {
+	size = <0x2000000>;
+	end-at-4gb;
+	sort-by-offset;
+	pad-byte = <0xff>;
+
+	intel-descriptor {
+		offset = <0xfe000000>;
+		filename = "/vid/software/devel/volteer/rom/SI_DESC";
+	};
+	intel-me {
+		filename = "/vid/software/devel/volteer/rom/SI_ME";
+	};
+	fdtmap {
+	};
+	blob {
+		offset = <0xffff4000>;
+		filename = "bootblock";
+	};
+	u-boot-tpl-with-ucode-ptr {
+		offset = <CONFIG_TPL_TEXT_BASE>;
+	};
+	x86-start16-tpl {
+		offset = <CONFIG_SYS_X86_START16>;
+	};
+	x86-reset16-tpl {
+		offset = <CONFIG_RESET_VEC_LOC>;
 	};
 };
 #endif
