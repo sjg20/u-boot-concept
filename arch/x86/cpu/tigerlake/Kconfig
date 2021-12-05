@@ -11,6 +11,8 @@ config INTEL_TIGERLAKE
 	select USE_CAR
 	select INTEL_CAR_NEM_ENHANCED
 	select CAR_HAS_SF_MASKS
+	select SF_MASK_2WAYS_PER_BIT
+	select COS_MAPPED_TO_MSB
 	select INTEL_SOC
 	select INTEL_PMC
 	select TPL_X86_TSC_TIMER_NATIVE
@@ -114,5 +116,11 @@ config APL_BOOT_FROM_FAST_SPI_FLASH
 config VBT_ADDR
 	# TODO
 	default 0xff3f1000
+
+config PCR_BASE_ADDRESS
+	hex
+	default 0xfd000000
+	help
+	  This option allows you to select MMIO Base Address of sideband bus.
 
 endif
