@@ -952,7 +952,11 @@ INPUTS-$(CONFIG_SPL_FRAMEWORK) += u-boot.img
 endif
 endif
 INPUTS-$(CONFIG_TPL) += tpl/u-boot-tpl.bin
+
+# Allow omitting the .dtb output if it is not normally used
+ifndef CONFIG_OF_OMIT_DTB
 INPUTS-$(CONFIG_OF_SEPARATE) += u-boot.dtb
+endif
 ifeq ($(CONFIG_SPL_FRAMEWORK),y)
 INPUTS-$(CONFIG_OF_SEPARATE) += u-boot-dtb.img
 endif
@@ -1192,7 +1196,7 @@ u-boot.bin: u-boot-fit-dtb.bin FORCE
 u-boot-dtb.bin: u-boot-nodtb.bin dts/dt.dtb FORCE
 	$(call if_changed,cat)
 
-else ifeq ($(CONFIG_OF_SEPARATE),y)
+else ifeq ($(CONFIG_OF_SEPARATE).$(CONFIG_OF_OMIT_DTB),y.)
 u-boot-dtb.bin: u-boot-nodtb.bin dts/dt.dtb FORCE
 	$(call if_changed,cat)
 
