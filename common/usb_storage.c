@@ -1535,7 +1535,7 @@ U_BOOT_DRIVER(usb_mass_storage) = {
 
 UCLASS_DRIVER(usb_mass_storage) = {
 	.id		= UCLASS_MASS_STORAGE,
-	.name		= "usb_mass_storage",
+	.name		= "usbms",
 };
 
 static const struct usb_device_id mass_storage_id_table[] = {

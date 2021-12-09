@@ -293,22 +293,22 @@ unsigned long blk_derase(struct blk_desc *block_dev, lbaint_t start,
  * This function does not activate the device. The device will be returned
  * whether or not it is activated.
  *
- * @if_type:	Interface type (enum if_type_t)
+ * @id:		Uclass ID
  * @devnum:	Device number (specific to each interface type)
  * @devp:	the device, if found
  * @return 0 if found, -ENODEV if no device found, or other -ve error value
  */
-int blk_find_device(int if_type, int devnum, struct udevice **devp);
+int blk_find_device(enum uclass_id id, int devnum, struct udevice **devp);
 
 /**
  * blk_get_device() - Find and probe a block device ready for use
  *
- * @if_type:	Interface type (enum if_type_t)
+ * @id:		Uclass ID
  * @devnum:	Device number (specific to each interface type)
  * @devp:	the device, if found
  * @return 0 if found, -ENODEV if no device found, or other -ve error value
  */
-int blk_get_device(int if_type, int devnum, struct udevice **devp);
+int blk_get_device(enum uclass_id id, int devnum, struct udevice **devp);
 
 /**
  * blk_first_device() - Find the first device for a given interface
@@ -419,6 +419,14 @@ int blk_select_hwpart(struct udevice *dev, int hwpart);
  * All devices with
  */
 int blk_get_from_parent(struct udevice *parent, struct udevice **devp);
+
+/**
+ * blk_get_devtype() - Get the device type of a block device
+ *
+ * @dev:	Block device to check
+ * @return device tree, i.e. the uclass name of its parent, e.g. "mmc"
+ */
+const char *blk_get_devtype(struct udevice *dev);
 
 /**
  * blk_get_by_device() - Get the block device descriptor for the given device

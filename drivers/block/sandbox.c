@@ -98,7 +98,7 @@ int host_dev_bind(int devnum, char *filename, bool removable)
 	int ret, fd;
 
 	/* Remove and unbind the old device, if any */
-	ret = blk_get_device(IF_TYPE_HOST, devnum, &dev);
+	ret = blk_get_device(UCLASS_ROOT, devnum, &dev);
 	if (ret == 0) {
 		ret = device_remove(dev, DM_REMOVE_NORMAL);
 		if (ret)
@@ -211,7 +211,7 @@ int host_get_dev_err(int devnum, struct blk_desc **blk_devp)
 	struct udevice *dev;
 	int ret;
 
-	ret = blk_get_device(IF_TYPE_HOST, devnum, &dev);
+	ret = blk_get_device(UCLASS_ROOT, devnum, &dev);
 	if (ret)
 		return ret;
 	*blk_devp = dev_get_uclass_plat(dev);
