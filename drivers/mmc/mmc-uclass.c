@@ -418,6 +418,7 @@ int mmc_bind(struct udevice *dev, struct mmc *mmc, const struct mmc_config *cfg)
 	bdesc->part_type = cfg->part_type;
 	mmc->dev = dev;
 	mmc->user_speed_mode = MMC_MODES_END;
+
 	return 0;
 }
 
@@ -464,6 +465,18 @@ static int mmc_blk_probe(struct udevice *dev)
 	ret = mmc_init(mmc);
 	if (ret) {
 		debug("%s: mmc_init() failed (err=%d)\n", __func__, ret);
+		return ret;
+	}
+
+	ret = device_probe(dev);
+	if (ret) {
+		debug("Can't probe\n");
+
+		if (IS_ENABLED(CONFIG_MMC_UHS_SUPPORT) ||
+		    IS_ENABLED(CONFIG_MMC_HS200_SUPPORT) ||
+		    IS_ENABLED(CONFIG_MMC_HS400_SUPPORT))
+			mmc_deinit(mmc);
+
 		return ret;
 	}
 
