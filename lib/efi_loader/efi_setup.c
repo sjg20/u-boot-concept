@@ -200,11 +200,12 @@ efi_status_t efi_init_obj_list(void)
 	if (ret != EFI_SUCCESS)
 		goto out;
 
-#ifdef CONFIG_PARTITIONS
-	ret = efi_disk_register();
-	if (ret != EFI_SUCCESS)
-		goto out;
-#endif
+	if (IS_ENABLED(CONFIG_BLK)) {
+		ret = efi_disk_init();
+		if (ret != EFI_SUCCESS)
+			goto out;
+	}
+
 	if (IS_ENABLED(CONFIG_EFI_RNG_PROTOCOL)) {
 		ret = efi_rng_register();
 		if (ret != EFI_SUCCESS)
