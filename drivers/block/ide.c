@@ -1145,6 +1145,10 @@ static int ide_probe(struct udevice *udev)
 						 blksz, size, &blk_dev);
 			if (ret)
 				return ret;
+
+			ret = blk_probe_or_unbind(blk_dev);
+			if (ret)
+				return ret;
 		}
 	}
 
