@@ -290,7 +290,7 @@ struct mmc *find_mmc_device(int dev_num)
 	struct udevice *dev, *mmc_dev;
 	int ret;
 
-	ret = blk_find_device(IF_TYPE_MMC, dev_num, &dev);
+	ret = blk_find_device(UCLASS_MMC, dev_num, &dev);
 
 	if (ret) {
 #if !defined(CONFIG_SPL_BUILD) || defined(CONFIG_SPL_LIBCOMMON_SUPPORT)

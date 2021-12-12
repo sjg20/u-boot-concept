@@ -293,22 +293,22 @@ unsigned long blk_derase(struct blk_desc *block_dev, lbaint_t start,
  * This function does not activate the device. The device will be returned
  * whether or not it is activated.
  *
- * @if_type:	Interface type (enum if_type_t)
+ * @id:		Uclass ID
  * @devnum:	Device number (specific to each interface type)
  * @devp:	the device, if found
  * @return 0 if found, -ENODEV if no device found, or other -ve error value
  */
-int blk_find_device(int if_type, int devnum, struct udevice **devp);
+int blk_find_device(enum uclass_id id, int devnum, struct udevice **devp);
 
 /**
  * blk_get_device() - Find and probe a block device ready for use
  *
- * @if_type:	Interface type (enum if_type_t)
+ * @id:		Uclass ID
  * @devnum:	Device number (specific to each interface type)
  * @devp:	the device, if found
  * @return 0 if found, -ENODEV if no device found, or other -ve error value
  */
-int blk_get_device(int if_type, int devnum, struct udevice **devp);
+int blk_get_device(enum uclass_id id, int devnum, struct udevice **devp);
 
 /**
  * blk_first_device() - Find the first device for a given interface

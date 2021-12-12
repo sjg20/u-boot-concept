@@ -76,9 +76,12 @@ struct blk_desc *blk_get_devnum_by_type(enum if_type if_type, int devnum)
 {
 	struct blk_desc *desc;
 	struct udevice *dev;
+	enum uclass_id id;
 	int ret;
 
-	ret = blk_get_device(if_type, devnum, &dev);
+	id = if_type_to_uclass_id(if_type);
+
+	ret = blk_get_device(id, devnum, &dev);
 	if (ret)
 		return NULL;
 	desc = dev_get_uclass_plat(dev);
@@ -210,9 +213,12 @@ static int get_desc(enum if_type if_type, int devnum, struct blk_desc **descp)
 int blk_select_hwpart_devnum(enum if_type if_type, int devnum, int hwpart)
 {
 	struct udevice *dev;
+	enum uclass_id id;
 	int ret;
 
-	ret = blk_get_device(if_type, devnum, &dev);
+	id = if_type_to_uclass_id(if_type);
+
+	ret = blk_get_device(id, devnum, &dev);
 	if (ret)
 		return ret;
 
@@ -400,34 +406,40 @@ int blk_next_device(struct udevice **devp)
 	} while (1);
 }
 
-int blk_find_device(int if_type, int devnum, struct udevice **devp)
+int blk_find_device(enum uclass_id id, int devnum, struct udevice **devp)
 {
-	struct uclass *uc;
 	struct udevice *dev;
-	int ret;
+	struct uclass *uc;
 
-	ret = uclass_get(UCLASS_BLK, &uc);
-	if (ret)
-		return ret;
-	uclass_foreach_dev(dev, uc) {
-		struct blk_desc *desc = dev_get_uclass_plat(dev);
+	log_debug("id=%s, devnum=%d\n", uclass_get_name(id), devnum);
+	uclass_id_foreach_dev(UCLASS_BLK, dev, uc) {
+		struct blk_desc *desc;
+		enum uclass_id media_id;
 
-		debug("%s: if_type=%d, devnum=%d: %s, %d, %d\n", __func__,
-		      if_type, devnum, dev->name, desc->if_type, desc->devnum);
-		if (desc->if_type == if_type && desc->devnum == devnum) {
+		media_id = device_get_uclass_id(dev_get_parent(dev));
+		log_debug("media_id=%s, id=%s\n", uclass_get_name(media_id),
+			  uclass_get_name(id));
+		if (media_id != id)
+			continue;
+		desc = dev_get_uclass_plat(dev);
+		log_debug("uclass=%s, dev=%s, if_type=%d, devnum=%d\n",
+			  dev_get_uclass_name(dev), dev->name, desc->if_type,
+			  desc->devnum);
+		if (desc->devnum == devnum) {
 			*devp = dev;
 			return 0;
 		}
 	}
+	log_debug("- not found\n");
 
 	return -ENODEV;
 }
 
-int blk_get_device(int if_type, int devnum, struct udevice **devp)
+int blk_get_device(enum uclass_id id, int devnum, struct udevice **devp)
 {
 	int ret;
 
-	ret = blk_find_device(if_type, devnum, devp);
+	ret = blk_find_device(id, devnum, devp);
 	if (ret)
 		return ret;
 

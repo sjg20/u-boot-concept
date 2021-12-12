@@ -18,9 +18,12 @@ static int do_blk_list(struct cmd_tbl *cmdtp, int flag, int argc,
 	struct uclass *uc;
 
 	uclass_id_foreach_dev(UCLASS_BLK, dev, uc) {
+		const struct udevice *media = dev_get_parent(dev);
 		struct blk_desc *desc = dev_get_uclass_plat(dev);
 
-		printf("Device %d: ", dev_seq(dev->parent));
+		printf("Type %s, parent %s, device %d: ",
+		       dev_get_uclass_name(media), media->name,
+		       dev_seq(dev->parent));
 		dev_print(desc);
 	}
 
