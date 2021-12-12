@@ -288,6 +288,26 @@ int bootdev_get_sibling_blk(struct udevice *dev, struct udevice **blkp)
 	return 0;
 }
 
+static int bootdev_get_from_blk(struct udevice *blk, struct udevice **bootdevp)
+{
+	struct udevice *parent = dev_get_parent(blk);
+	struct udevice *bootdev;
+	char dev_name[50];
+	int ret;
+
+	if (device_get_uclass_id(blk) != UCLASS_BLK)
+		return -EINVAL;
+
+	/* This should always work if bootdev_setup_sibling_blk() was used */
+	snprintf(dev_name, sizeof(dev_name), "%s.%s", blk->name, "bootdev");
+	ret = device_find_child_by_name(parent, dev_name, &bootdev);
+	if (ret)
+		return log_msg_ret("find", ret);
+	*bootdevp = bootdev;
+
+	return 0;
+}
+
 int bootdev_unbind_dev(struct udevice *parent)
 {
 	struct udevice *dev;
@@ -329,26 +349,43 @@ int bootdev_find_by_label(const char *label, struct udevice **devp)
 
 	seq = trailing_strtoln_end(label, NULL, &end);
 	id = uclass_get_by_namelen(label, end - label);
+	log_debug("find %s: seq=%d, id=%d/%s\n", label, seq, id,
+		  uclass_get_name(id));
 	if (id == UCLASS_INVALID) {
 		log_warning("Unknown uclass '%s' in label\n", label);
 		return -EINVAL;
 	}
+	if (id == UCLASS_USB)
+		id = UCLASS_MASS_STORAGE;
 
 	/* Iterate through devices in the media uclass (e.g. UCLASS_MMC) */
 	uclass_id_foreach_dev(id, media, uc) {
-		struct udevice *bdev;
+		struct udevice *bdev, *blk;
 		int ret;
 
 		/* if there is no seq, match anything */
-		if (seq != -1 && dev_seq(media) != seq)
+		if (seq != -1 && dev_seq(media) != seq) {
+			log_debug("- skip, media seq=%d\n", dev_seq(media));
 			continue;
+		}
 
 		ret = device_find_first_child_by_uclass(media, UCLASS_BOOTDEV,
 							&bdev);
+		if (ret) {
+			log_debug("- looking via blk, seq=%d, id=%d\n", seq,
+				  id);
+			ret = blk_find_device(id, seq, &blk);
+			if (!ret) {
+				log_debug("- get from blk %s\n", blk->name);
+				ret = bootdev_get_from_blk(blk, &bdev);
+			}
+		}
 		if (!ret) {
+			log_debug("- found %s\n", bdev->name);
 			*devp = bdev;
 			return 0;
 		}
+		log_debug("- no device in %s\n", media->name);
 	}
 	log_warning("Unknown seq %d for label '%s'\n", seq, label);
 
@@ -448,58 +485,6 @@ static int h_cmp_bootdev(const void *v1, const void *v2)
 }
 
 /**
- * find_bootdev_by_target() - Convert a target string to a bootdev device
- *
- * Looks up a target name to find the associated bootdev. For example, if the
- * target name is "mmc2", this will find a bootdev for an mmc device whose
- * sequence number is 2.
- *
- * @target: Target string to convert, e.g. "mmc2"
- * @devp: Returns bootdev device corresponding to that boot target
- * @return 0 if OK, -EINVAL if the target name (e.g. "mmc") does not refer to a
- *	uclass, -ENOENT if no bootdev for that media has the sequence number
- *	(e.g. 2)
- */
-static int find_bootdev_by_target(char *target, struct udevice **devp)
-{
-	struct udevice *media;
-	struct uclass *uc;
-	enum uclass_id id;
-	const char *end;
-	int seq;
-
-	seq = trailing_strtoln_end(target, NULL, &end);
-	id = uclass_get_by_namelen(target, end - target);
-	log_debug("target=%s, seq=%d, id=%d\n", target, seq, id);
-	if (id == UCLASS_INVALID) {
-		log_warning("Unknown uclass '%s' in boot_targets\n", target);
-		return -EINVAL;
-	}
-
-	/* Iterate through devices in the media uclass (e.g. UCLASS_MMC) */
-	uclass_id_foreach_dev(id, media, uc) {
-		struct udevice *bdev;
-		int ret;
-
-		log_debug("trying '%s', seq=%d\n", media->name, dev_seq(media));
-		if (dev_seq(media) != seq)
-			continue;
-
-		ret = device_find_first_child_by_uclass(media, UCLASS_BOOTDEV,
-							&bdev);
-		if (!ret) {
-			*devp = bdev;
-			return 0;
-		}
-		log_debug("- failed, err=%d\n", ret);
-	}
-	log_warning("Unknown seq %d for target '%s' (uclass '%s') in boot_targets\n",
-		    seq, target, uc->uc_drv->name);
-
-	return -ENOENT;
-}
-
-/**
  * build_order() - Build the ordered list of bootdevs to use
  *
  * This builds an ordered list of devices by one of three methods:
@@ -537,7 +522,7 @@ static int build_order(struct udevice *bootstd, struct udevice **order,
 		strcpy(str, targets);
 		for (i = 0, target = strtok(str, " "); target;
 		     target = strtok(NULL, " ")) {
-			ret = find_bootdev_by_target(target, &dev);
+			ret = bootdev_find_by_label(target, &dev);
 			if (!ret) {
 				if (i == max_count) {
 					overflow_target = target;
