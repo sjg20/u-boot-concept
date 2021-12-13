@@ -7,6 +7,7 @@
 #ifndef __bootmeth_h
 #define __bootmeth_h
 
+struct blk_desc;
 struct bootflow;
 struct bootflow_iter;
 struct udevice;
@@ -178,5 +179,8 @@ int bootmeth_setup_iter_order(struct bootflow_iter *iter);
  * out of memory, -ENOENT if there are no bootmeth devices
  */
 int bootmeth_set_order(const char *order_str);
+
+int bootmeth_try_file(struct bootflow *bflow, struct blk_desc *desc,
+		      const char *prefix, const char *fname);
 
 #endif

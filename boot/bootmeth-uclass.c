@@ -7,11 +7,13 @@
 #define LOG_CATEGORY UCLASS_BOOTSTD
 
 #include <common.h>
+#include <blk.h>
 #include <bootflow.h>
 #include <bootmeth.h>
 #include <bootstd.h>
 #include <dm.h>
 #include <env_internal.h>
+#include <fs.h>
 #include <malloc.h>
 #include <dm/uclass-internal.h>
 
@@ -164,6 +166,35 @@ int bootmeth_set_order(const char *order_str)
 	free(std->bootmeth_order);
 	std->bootmeth_order = order;
 	std->bootmeth_count = i;
+
+	return 0;
+}
+
+int bootmeth_try_file(struct bootflow *bflow, struct blk_desc *desc,
+		      const char *prefix, const char *fname)
+{
+	char path[200];
+	loff_t size;
+	int ret, ret2;
+
+	snprintf(path, sizeof(path), "%s%s", prefix ? prefix : "", fname);
+	log_debug("trying: %s\n", path);
+
+	ret = fs_size(path, &size);
+	log_debug("   %s - err=%d\n", path, ret);
+
+	/* Sadly FS closes the file after fs_size() so we must * redo this */
+	ret2 = fs_set_blk_dev_with_part(desc, bflow->part);
+	if (ret2)
+		return log_msg_ret("set", ret2);
+	if (ret)
+		return log_msg_ret("size", ret);
+
+	bflow->fname = strdup(path);
+	if (!bflow->fname)
+		return log_msg_ret("name", -ENOMEM);
+	bflow->size = size;
+	bflow->state = BOOTFLOWST_FILE;
 
 	return 0;
 }

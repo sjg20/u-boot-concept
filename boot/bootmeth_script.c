@@ -36,35 +36,6 @@ static int script_check(struct udevice *dev, struct bootflow_iter *iter)
 	return 0;
 }
 
-static int try_file(struct bootflow *bflow, struct blk_desc *desc,
-		    const char *prefix, const char *fname)
-{
-	char path[200];
-	loff_t size;
-	int ret, ret2;
-
-	snprintf(path, sizeof(path), "%s%s", prefix ? prefix : "", fname);
-	log_debug("trying: %s\n", path);
-
-	ret = fs_size(path, &size);
-	log_debug("   %s - err=%d\n", path, ret);
-
-	/* Sadly FS closes the file after fs_size() so we must * redo this */
-	ret2 = fs_set_blk_dev_with_part(desc, bflow->part);
-	if (ret2)
-		return log_msg_ret("set", ret2);
-	if (ret)
-		return log_msg_ret("size", ret);
-
-	bflow->fname = strdup(path);
-	if (!bflow->fname)
-		return log_msg_ret("name", -ENOMEM);
-	bflow->size = size;
-	bflow->state = BOOTFLOWST_FILE;
-
-	return 0;
-}
-
 static int script_read_bootflow(struct udevice *dev, struct bootflow *bflow)
 {
 	struct blk_desc *desc = dev_get_uclass_plat(bflow->blk);
@@ -90,9 +61,10 @@ static int script_read_bootflow(struct udevice *dev, struct bootflow *bflow)
 	do {
 		prefix = prefixes ? prefixes[i] : NULL;
 
-		ret = try_file(bflow, desc, prefix, SCRIPT_FNAME1);
+		ret = bootmeth_try_file(bflow, desc, prefix, SCRIPT_FNAME1);
 		if (ret)
-			ret = try_file(bflow, desc, prefix, SCRIPT_FNAME2);
+			ret = bootmeth_try_file(bflow, desc, prefix,
+						SCRIPT_FNAME2);
 	} while (ret && prefixes && prefixes[++i]);
 	if (ret)
 		return log_msg_ret("try", ret);

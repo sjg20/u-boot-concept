@@ -59,7 +59,7 @@ static int distro_read_bootflow(struct udevice *dev, struct bootflow *bflow)
 	const char *const *prefixes;
 	struct udevice *bootstd;
 	loff_t size, bytes_read;
-	char fname[200];
+	const char *prefix;
 	ulong addr;
 	int ret, i;
 	char *buf;
@@ -72,44 +72,16 @@ static int distro_read_bootflow(struct udevice *dev, struct bootflow *bflow)
 	if (!bflow->part)
 		return -ENOENT;
 
-	bflow->fname = strdup(DISTRO_FNAME);
-	if (!bflow->fname)
-		return log_msg_ret("name", -ENOMEM);
-
 	prefixes = bootstd_get_prefixes(bootstd);
-	if (prefixes) {
-		log_debug("Trying prefixes:\n");
-		for (i = 0; prefixes[i]; i++) {
-			snprintf(fname, sizeof(fname), "%s%s", prefixes[i],
-				 DISTRO_FNAME);
-			ret = fs_size(fname, &size);
-			log_debug("   %s - err=%d\n", fname, ret);
-			if (!ret)
-				break;
+	i = 0;
+	do {
+		prefix = prefixes ? prefixes[i] : NULL;
 
-			/*
-			 * Sadly FS closes the file after fs_size() so we must
-			 * redo this
-			 */
-			ret = fs_set_blk_dev_with_part(desc, bflow->part);
-			if (ret)
-				return log_msg_ret("set", ret);
-		}
-		log_debug("   done\n");
-	} else {
-		strcpy(fname, DISTRO_FNAME);
-		ret = fs_size(bflow->fname, &size);
-		log_debug("No prefixes: %s - err=%d", fname, ret);
-	}
+		ret = bootmeth_try_file(bflow, desc, prefix, DISTRO_FNAME);
+	} while (ret && prefixes && prefixes[++i]);
 	if (ret)
-		return log_msg_ret("size", ret);
+		return log_msg_ret("try", ret);
 
-	bflow->fname = strdup(fname);
-	if (!bflow->fname)
-		return log_msg_ret("name", -ENOMEM);
-
-	bflow->state = BOOTFLOWST_FILE;
-	bflow->size = size;
 	log_debug("   - distro file size %x\n", (uint)size);
 	if (size > 0x10000)
 		return log_msg_ret("chk", -E2BIG);
