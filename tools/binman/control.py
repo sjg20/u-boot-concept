@@ -18,6 +18,7 @@ from binman import cbfs_util
 from binman import elf
 from patman import command
 from patman import tout
+from patman import tools
 
 # List of images we plan to create
 # Make this global so that it can be referenced from tests
@@ -401,6 +402,26 @@ def ReplaceEntries(image_fname, input_fname, indir, entry_paths,
     AfterReplace(image, allow_resize=allow_resize, write_map=write_map)
     return image
 
+def MkimageSign(privatekey_fname, algo, input_fname):
+    tools.Run('mkimage', '-G', privatekey_fname, '-r', '-o', algo, '-F', input_fname)
+
+def SignEntries(image_fname, input_fname, privatekey_fname, algo, entry_paths):
+    """Sign and replace the data from one or more entries from input files
+
+    Args:
+        image_fname: Image filename to process
+        input_fname: Single input filename to use if replacing one file, None
+            otherwise
+        algo: Hashing algorithm
+        privatekey_fname: Private key filename
+
+    Returns:
+        List of EntryInfo records that were signed and replaced
+    """
+
+    MkimageSign(privatekey_fname, algo, input_fname)
+
+    return ReplaceEntries(image_fname, input_fname, None, entry_paths)
 
 def PrepareImagesAndDtbs(dtb_fname, select_images, update_fdt, use_expanded):
     """Prepare the images to be processed and select the device tree
@@ -575,7 +596,7 @@ def Binman(args):
     from binman.image import Image
     from binman import state
 
-    if args.cmd in ['ls', 'extract', 'replace']:
+    if args.cmd in ['ls', 'extract', 'replace', 'sign']:
         try:
             tout.Init(args.verbosity)
             tools.PrepareOutputDir(None)
@@ -590,6 +611,10 @@ def Binman(args):
                 ReplaceEntries(args.image, args.filename, args.indir, args.paths,
                                do_compress=not args.compressed,
                                allow_resize=not args.fix_size, write_map=args.map)
+
+            if args.cmd == 'sign':
+                SignEntries(args.image, args.file, args.key, args.algo, args.paths)
+
         except:
             raise
         finally:
