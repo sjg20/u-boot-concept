@@ -6,6 +6,7 @@
  */
 
 #define LOG_CATEGORY LOGC_EFI
+#define LOG_DEBUG
 
 #include <common.h>
 #include <bootm.h>
@@ -65,6 +66,9 @@ void efi_set_bootdev(const char *dev, const char *devnr, const char *path,
 	struct efi_device_path *device, *image;
 	efi_status_t ret;
 
+	log_debug("dev=%s, devnr=%s, path=%s, buffer=%p, size=%zx\n", dev,
+		  devnr, path, buffer, buffer_size);
+
 	/* Forget overwritten image */
 	if (buffer + buffer_size >= image_addr &&
 	    image_addr + image_size >= buffer)
@@ -72,18 +76,19 @@ void efi_set_bootdev(const char *dev, const char *devnr, const char *path,
 
 	/* Remember only PE-COFF and FIT images */
 	if (efi_check_pe(buffer, buffer_size, NULL) != EFI_SUCCESS) {
-#ifdef CONFIG_FIT
-		if (fit_check_format(buffer, IMAGE_SIZE_INVAL))
+		if (IS_ENABLED(CONFIG_FIT) &&
+		    !fit_check_format(buffer, IMAGE_SIZE_INVAL)) {
+			/*
+			 * FIT images of type EFI_OS are started via command
+			 * bootm. We should not use their boot device with the
+			 * bootefi command.
+			 */
+			buffer = 0;
+			buffer_size = 0;
+		} else {
+			log_debug("- invalid image\n");
 			return;
-		/*
-		 * FIT images of type EFI_OS are started via command bootm.
-		 * We should not use their boot device with the bootefi command.
-		 */
-		buffer = 0;
-		buffer_size = 0;
-#else
-		return;
-#endif
+		}
 	}
 
 	/* efi_set_bootdev() is typically called repeatedly, recover memory */
@@ -103,7 +108,9 @@ void efi_set_bootdev(const char *dev, const char *devnr, const char *path,
 			efi_free_pool(image_tmp);
 		}
 		bootefi_image_path = image;
+		log_debug("- recorded\n");
 	} else {
+		log_debug("- efi_dp_from_name() failed, err=%lx\n", ret);
 		efi_clear_bootdev();
 	}
 }
