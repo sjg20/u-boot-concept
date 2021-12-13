@@ -19,6 +19,9 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+/* These are used if filename-prefixes is not present */
+const char *const default_prefixes[] = {"/", "/boot/"};
+
 static int bootstd_of_to_plat(struct udevice *dev)
 {
 	struct bootstd_priv *priv = dev_get_priv(dev);
@@ -76,7 +79,7 @@ const char *const *const bootstd_get_prefixes(struct udevice *dev)
 {
 	struct bootstd_priv *std = dev_get_priv(dev);
 
-	return std->prefixes;
+	return std->prefixes ? std->prefixes : default_prefixes;
 }
 
 int bootstd_get_priv(struct bootstd_priv **stdp)

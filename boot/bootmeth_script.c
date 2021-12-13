@@ -7,6 +7,7 @@
  */
 
 #define LOG_CATEGORY UCLASS_BOOTSTD
+#define LOG_DEBUG
 
 #include <common.h>
 #include <blk.h>
@@ -14,7 +15,9 @@
 #include <bootmeth.h>
 #include <bootstd.h>
 #include <dm.h>
+#include <env.h>
 #include <fs.h>
+#include <image.h>
 #include <malloc.h>
 #include <mapmem.h>
 
@@ -41,6 +44,7 @@ static int try_file(struct bootflow *bflow, struct blk_desc *desc,
 	int ret, ret2;
 
 	snprintf(path, sizeof(path), "%s%s", prefix ? prefix : "", fname);
+	log_debug("trying: %s\n", path);
 
 	ret = fs_size(path, &size);
 	log_debug("   %s - err=%d\n", path, ret);
@@ -66,6 +70,7 @@ static int script_read_bootflow(struct udevice *dev, struct bootflow *bflow)
 	struct blk_desc *desc = dev_get_uclass_plat(bflow->blk);
 	const char *const *prefixes;
 	struct udevice *bootstd;
+	const char *prefix;
 	loff_t bytes_read;
 	ulong addr;
 	uint size;
@@ -83,14 +88,18 @@ static int script_read_bootflow(struct udevice *dev, struct bootflow *bflow)
 	prefixes = bootstd_get_prefixes(bootstd);
 	i = 0;
 	do {
-		const char *prefix = prefixes ? prefixes[i] : NULL;
+		prefix = prefixes ? prefixes[i] : NULL;
 
 		ret = try_file(bflow, desc, prefix, SCRIPT_FNAME1);
 		if (ret)
 			ret = try_file(bflow, desc, prefix, SCRIPT_FNAME2);
-	} while (prefixes && prefixes[++i]);
+	} while (ret && prefixes && prefixes[++i]);
 	if (ret)
 		return log_msg_ret("try", ret);
+
+	bflow->subdir = strdup(prefix ? prefix : "");
+	if (!bflow->subdir)
+		return log_msg_ret("prefix", -ENOMEM);
 
 	size = bflow->size;
 	log_debug("   - script file size %x\n", size);
@@ -146,6 +155,27 @@ static int script_read_file(struct udevice *dev, struct bootflow *bflow,
 
 static int script_boot(struct udevice *dev, struct bootflow *bflow)
 {
+	struct blk_desc *desc = dev_get_uclass_plat(bflow->blk);
+	ulong addr;
+	int ret;
+
+	ret = env_set("devtype", blk_get_devtype(bflow->blk));
+	if (!ret)
+		ret = env_set_hex("devnum", desc->devnum);
+	if (!ret)
+		ret = env_set("prefix", bflow->subdir);
+	if (ret)
+		return log_msg_ret("env", ret);
+
+	log_debug("devtype: %s\n", env_get("devtype"));
+	log_debug("devnum: %s\n", env_get("devnum"));
+	log_debug("prefix: %s\n", env_get("prefix"));
+
+	addr = map_to_sysmem(bflow->buf);
+	ret = image_source_script(addr, NULL);
+	if (ret)
+		return log_msg_ret("boot", ret);
+
 	return 0;
 }
 
