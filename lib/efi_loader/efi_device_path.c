@@ -6,6 +6,7 @@
  */
 
 #define LOG_CATEGORY LOGC_EFI
+#define LOG_DEBUG
 
 #include <common.h>
 #include <blk.h>
@@ -576,10 +577,12 @@ __maybe_unused static unsigned int dp_size(struct udevice *dev)
  */
 __maybe_unused static void *dp_fill(void *buf, struct udevice *dev)
 {
+	log_debug("start dev=%s, uclass=%s\n", dev->name,
+		  dev_get_uclass_name(dev));
 	if (!dev || !dev->driver)
 		return buf;
 
-	switch (dev->driver->id) {
+	switch (device_get_uclass_id(dev)) {
 	case UCLASS_ROOT:
 	case UCLASS_SIMPLE_BUS: {
 		/* stop traversing parents at this point: */
@@ -740,7 +743,6 @@ __maybe_unused static void *dp_fill(void *buf, struct udevice *dev)
 		return &sddp[1];
 	}
 #endif
-	case UCLASS_USB:
 	case UCLASS_MASS_STORAGE:
 	case UCLASS_USB_HUB: {
 		struct efi_device_path_usb_class *udp =
@@ -869,6 +871,7 @@ static void *dp_part_fill(void *buf, struct blk_desc *desc, int part)
 {
 	struct udevice *dev = desc->bdev;
 
+	log_debug("start\n");
 	buf = dp_fill(buf, dev);
 
 	if (part == 0) /* the actual disk, not a partition */
@@ -882,6 +885,7 @@ struct efi_device_path *efi_dp_from_part(struct blk_desc *desc, int part)
 {
 	void *buf, *start;
 
+	log_debug("start\n");
 	start = buf = dp_alloc(dp_part_size(desc, part) + sizeof(END));
 	if (!buf)
 		return NULL;
@@ -1134,11 +1138,12 @@ efi_status_t efi_dp_from_name(const char *dev, const char *devnr,
 		if (device)
 			*device = efi_dp_from_uart();
 	} else {
+		log_debug("Decoding device %s:%s\n", dev, devnr);
 		part = blk_get_device_part_str(dev, devnr, &desc, &fs_partition,
 					       1);
+		log_info("part=%d\n", part);
 		if (part < 0 || !desc)
 			return EFI_INVALID_PARAMETER;
-		log_info("part=%d\n", part);
 
 		if (device)
 			*device = efi_dp_from_part(desc, part);

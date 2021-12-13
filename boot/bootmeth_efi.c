@@ -109,7 +109,8 @@ static int efiload_read_file(struct blk_desc *desc, struct bootflow *bflow)
 	if (last_slash)
 		*last_slash = '\0';
 
-	log_debug("setting bootdev %s\n", bflow->fname);
+	log_debug("setting bootdev %s, %s\n", dev_get_uclass_name(media_dev),
+		  bflow->fname);
 	efi_set_bootdev(dev_get_uclass_name(media_dev), devnum_str,
 			bflow->fname, bflow->buf, size);
 

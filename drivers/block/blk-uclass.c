@@ -21,7 +21,7 @@ static const char *if_typename_str[IF_TYPE_COUNT] = {
 	[IF_TYPE_IDE]		= "ide",
 	[IF_TYPE_SCSI]		= "scsi",
 	[IF_TYPE_ATAPI]		= "atapi",
-	[IF_TYPE_USB]		= "usb",
+	[IF_TYPE_USB]		= "usbms",
 	[IF_TYPE_DOC]		= "doc",
 	[IF_TYPE_MMC]		= "mmc",
 	[IF_TYPE_SD]		= "sd",
@@ -53,8 +53,8 @@ static enum if_type if_typename_to_iftype(const char *if_typename)
 {
 	int i;
 
-	if (!strcmp(if_typename, "usbms"))
-		if_typename = "usb";
+	if (!strcmp(if_typename, "usb"))
+		if_typename = "usbms";
 	for (i = 0; i < IF_TYPE_COUNT; i++) {
 		if (if_typename_str[i] &&
 		    !strcmp(if_typename, if_typename_str[i]))
