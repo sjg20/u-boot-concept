@@ -456,6 +456,7 @@ efi_status_t efi_run_image(void *source_buffer, efi_uintn_t source_size)
 	u16 *load_options;
 
 	if (!bootefi_device_path || !bootefi_image_path) {
+		log_info("Not loaded from disk\n");
 		/*
 		 * Special case for efi payload not loaded from disk,
 		 * such as 'bootefi hello' or for example payload
@@ -481,6 +482,7 @@ efi_status_t efi_run_image(void *source_buffer, efi_uintn_t source_size)
 		file_path = efi_dp_append(bootefi_device_path,
 					  bootefi_image_path);
 		msg_path = bootefi_image_path;
+		log_info("Loaded from disk\n");
 	}
 
 	log_info("Booting %pD\n", msg_path);

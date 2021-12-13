@@ -139,8 +139,8 @@ int dm_scan_other(bool pre_reloc_only)
 			if (!strncmp("bootmeth_", name, 9))
 				name += 9;
 			ret = device_bind(bootstd, drv, name, 0, ofnode_null(),
-					  &dev);			if (ret)
-
+					  &dev);
+			if (ret)
 				return log_msg_ret("meth", ret);
 		}
 	}

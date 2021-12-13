@@ -7,6 +7,7 @@
  */
 
 #define LOG_CATEGORY UCLASS_BOOTSTD
+#define LOG_DEBUG
 
 #include <common.h>
 #include <bootdev.h>
@@ -76,7 +77,7 @@ static int efiload_read_file(struct blk_desc *desc, struct bootflow *bflow)
 	if (ret)
 		return log_msg_ret("set", ret);
 
-	buf = malloc(size + 1);
+	buf = memalign(0x10000, size + 1);
 	if (!buf)
 		return log_msg_ret("buf", -ENOMEM);
 	addr = map_to_sysmem(buf);
@@ -108,8 +109,9 @@ static int efiload_read_file(struct blk_desc *desc, struct bootflow *bflow)
 	if (last_slash)
 		*last_slash = '\0';
 
-	efi_set_bootdev(dev_get_uclass_name(media_dev), devnum_str, dirname,
-			bflow->buf, size);
+	log_debug("setting bootdev %s\n", bflow->fname);
+	efi_set_bootdev(dev_get_uclass_name(media_dev), devnum_str,
+			bflow->fname, bflow->buf, size);
 
 	return 0;
 }
@@ -206,14 +208,15 @@ static int distro_efi_read_file(struct udevice *dev, struct bootflow *bflow,
 	 */
 	media_dev = dev_get_parent(bflow->dev);
 	snprintf(devnum_str, sizeof(devnum_str), "%x", dev_seq(media_dev));
-
+/*
 	strlcpy(dirname, bflow->fname, sizeof(dirname));
 	last_slash = strrchr(dirname, '/');
 	if (last_slash)
 		*last_slash = '\0';
-
-	efi_set_bootdev(dev_get_uclass_name(media_dev), devnum_str, dirname,
-			bflow->buf, size);
+*/
+	log_debug("setting bootdev %s\n", bflow->fname);
+	efi_set_bootdev(dev_get_uclass_name(media_dev), devnum_str,
+			bflow->fname, bflow->buf, size);
 
 	return 0;
 }

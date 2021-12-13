@@ -222,16 +222,20 @@ efi_status_t efi_var_from_file(void)
 	}
 
 	ret = efi_set_blk_dev_to_system_partition();
+	log_info("ret=%lx\n", (ulong)ret);
 	if (ret != EFI_SUCCESS)
 		goto error;
 	r = fs_read(EFI_VAR_FILE_NAME, map_to_sysmem(buf), 0, EFI_VAR_BUF_SIZE,
 		    &len);
+	log_info("fs_read, r=%d, len=%lx\n", r, (ulong)len);
 	if (r || len < sizeof(struct efi_var_file)) {
 		log_err("Failed to load EFI variables\n");
 		goto error;
 	}
 	if (buf->length != len || efi_var_restore(buf, false) != EFI_SUCCESS)
 		log_err("Invalid EFI variables file\n");
+	else
+		log_info("read file\n");
 error:
 	free(buf);
 #endif
