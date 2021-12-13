@@ -740,6 +740,7 @@ __maybe_unused static void *dp_fill(void *buf, struct udevice *dev)
 		return &sddp[1];
 	}
 #endif
+	case UCLASS_USB:
 	case UCLASS_MASS_STORAGE:
 	case UCLASS_USB_HUB: {
 		struct efi_device_path_usb_class *udp =
@@ -759,9 +760,9 @@ __maybe_unused static void *dp_fill(void *buf, struct udevice *dev)
 		return &udp[1];
 	}
 	default:
-		debug("%s(%u) %s: unhandled device class: %s (%u)\n",
-		      __FILE__, __LINE__, __func__,
-		      dev->name, dev->driver->id);
+		log_warning("unhandled device class: %s (%u:%s)\n", dev->name,
+			    device_get_uclass_id(dev),
+			    dev_get_uclass_name(dev));
 		return dp_fill(buf, dev->parent);
 	}
 }
@@ -794,8 +795,13 @@ static unsigned dp_part_size(struct blk_desc *desc, int part)
 static void *dp_part_node(void *buf, struct blk_desc *desc, int part)
 {
 	struct disk_partition info;
+	int ret;
 
-	part_get_info(desc, part, &info);
+	ret = part_get_info(desc, part, &info);
+	if (ret) {
+		log_err("Cannot read partition table\n");
+		return buf;
+	}
 
 	if (desc->part_type == PART_TYPE_ISO) {
 		struct efi_device_path_cdrom_path *cddp = buf;
@@ -1132,6 +1138,7 @@ efi_status_t efi_dp_from_name(const char *dev, const char *devnr,
 					       1);
 		if (part < 0 || !desc)
 			return EFI_INVALID_PARAMETER;
+		log_info("part=%d\n", part);
 
 		if (device)
 			*device = efi_dp_from_part(desc, part);
