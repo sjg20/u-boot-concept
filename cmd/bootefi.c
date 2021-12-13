@@ -6,6 +6,7 @@
  */
 
 #define LOG_CATEGORY LOGC_EFI
+#define LOG_DEBUG
 
 #include <common.h>
 #include <bootm.h>
@@ -65,6 +66,9 @@ void efi_set_bootdev(const char *dev, const char *devnr, const char *path,
 	struct efi_device_path *device, *image;
 	efi_status_t ret;
 
+	log_debug("dev=%s, devnr=%s, path=%s, buffer=%p, size=%zx\n", dev,
+		  devnr, path, buffer, buffer_size);
+
 	/* Forget overwritten image */
 	if (buffer + buffer_size >= image_addr &&
 	    image_addr + image_size >= buffer)
@@ -103,7 +107,11 @@ void efi_set_bootdev(const char *dev, const char *devnr, const char *path,
 			efi_free_pool(image_tmp);
 		}
 		bootefi_image_path = image;
+		log_debug("- recorded device %ls\n", efi_dp_str(device));
+		if (image)
+			log_debug("- and image %ls\n", efi_dp_str(image));
 	} else {
+		log_debug("- efi_dp_from_name() failed, err=%lx\n", ret);
 		efi_clear_bootdev();
 	}
 }
@@ -449,6 +457,7 @@ efi_status_t efi_run_image(void *source_buffer, efi_uintn_t source_size)
 	u16 *load_options;
 
 	if (!bootefi_device_path || !bootefi_image_path) {
+		log_info("Not loaded from disk\n");
 		/*
 		 * Special case for efi payload not loaded from disk,
 		 * such as 'bootefi hello' or for example payload
@@ -474,6 +483,7 @@ efi_status_t efi_run_image(void *source_buffer, efi_uintn_t source_size)
 		file_path = efi_dp_append(bootefi_device_path,
 					  bootefi_image_path);
 		msg_path = bootefi_image_path;
+		log_info("Loaded from disk\n");
 	}
 
 	log_info("Booting %pD\n", msg_path);
