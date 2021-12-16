@@ -883,6 +883,15 @@ config CMD_BCB
 	    https://android.googlesource.com/platform/bootable/recovery
 	  - Inspect/dump the contents of the BCB fields
 
+config CMD_BLK
+	bool "blk - Show block devices"
+	depends on BLK
+	help
+	  Allows display of information about block devices. These are the core
+	  implementation of many U-Boot uclasses, such as MMC, USB, SCSI and
+	  NVMe. Some of these may have one than one block device. The block
+	  devices are children of the uclass device.
+
 config CMD_BIND
 	bool "bind/unbind - Bind or unbind a device to/from a driver"
 	depends on DM
