@@ -62,12 +62,8 @@ static int get_efi_leafname(char *str, int max_len)
 
 static int efiload_read_file(struct blk_desc *desc, struct bootflow *bflow)
 {
-	const struct udevice *media_dev;
 	int size = bflow->size;
-	char devnum_str[9];
-	char dirname[200];
 	loff_t bytes_read;
-	char *last_slash;
 	ulong addr;
 	char *buf;
 	int ret;
@@ -92,27 +88,6 @@ static int efiload_read_file(struct blk_desc *desc, struct bootflow *bflow)
 	buf[size] = '\0';
 	bflow->state = BOOTFLOWST_READY;
 	bflow->buf = buf;
-
-	/*
-	 * This is a horrible hack to tell EFI about this boot device. Once we
-	 * unify EFI with the rest of U-Boot we can clean this up. The same hack
-	 * exists in multiple places, e.g. in the fs, tftp and load commands.
-	 *
-	 * Once we can clean up the EFI code to make proper use of driver model,
-	 * this can go away.
-	 */
-	media_dev = dev_get_parent(bflow->dev);
-	snprintf(devnum_str, sizeof(devnum_str), "%x", dev_seq(media_dev));
-
-	strlcpy(dirname, bflow->fname, sizeof(dirname));
-	last_slash = strrchr(dirname, '/');
-	if (last_slash)
-		*last_slash = '\0';
-
-	log_debug("setting bootdev %s, %s\n", dev_get_uclass_name(media_dev),
-		  bflow->fname);
-	efi_set_bootdev(dev_get_uclass_name(media_dev), devnum_str,
-			bflow->fname, bflow->buf, size);
 
 	return 0;
 }
@@ -172,9 +147,7 @@ static int distro_efi_read_file(struct udevice *dev, struct bootflow *bflow,
 	const struct udevice *media_dev;
 	int size = bflow->size;
 	char devnum_str[9];
-	char dirname[200];
 	loff_t bytes_read;
-	char *last_slash;
 	char *buf;
 	int ret;
 
@@ -209,12 +182,6 @@ static int distro_efi_read_file(struct udevice *dev, struct bootflow *bflow,
 	 */
 	media_dev = dev_get_parent(bflow->dev);
 	snprintf(devnum_str, sizeof(devnum_str), "%x", dev_seq(media_dev));
-/*
-	strlcpy(dirname, bflow->fname, sizeof(dirname));
-	last_slash = strrchr(dirname, '/');
-	if (last_slash)
-		*last_slash = '\0';
-*/
 	log_debug("setting bootdev %s\n", bflow->fname);
 	efi_set_bootdev(dev_get_uclass_name(media_dev), devnum_str,
 			bflow->fname, bflow->buf, size);
