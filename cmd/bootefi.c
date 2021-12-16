@@ -6,6 +6,7 @@
  */
 
 #define LOG_CATEGORY LOGC_EFI
+#define LOG_DEBUG
 
 #include <common.h>
 #include <bootm.h>
