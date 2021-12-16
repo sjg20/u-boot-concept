@@ -422,6 +422,7 @@ efi_status_t efi_init_variables(void)
 	efi_status_t ret;
 
 	ret = efi_var_mem_init();
+	log_info("mem, ret=%lx\n", ret);
 	if (ret != EFI_SUCCESS)
 		return ret;
 
@@ -433,6 +434,7 @@ efi_status_t efi_init_variables(void)
 	}
 
 	ret = efi_var_from_file();
+	log_info("from file, ret=%lx\n", ret);
 	if (ret != EFI_SUCCESS)
 		return ret;
 
