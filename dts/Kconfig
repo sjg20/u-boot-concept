@@ -98,7 +98,7 @@ endchoice
 
 config OF_BOARD
 	bool "Provided by the board (e.g a previous loader) at runtime"
-	default y if SANDBOX
+	default y if SANDBOX || OF_HAS_PRIOR_STAGE
 	help
 	  If this option is enabled, the device tree is provided at runtime by
 	  a custom function called board_fdt_blob_setup(). The board must
