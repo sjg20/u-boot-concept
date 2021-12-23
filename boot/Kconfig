@@ -175,6 +175,12 @@ config SPL_FIT_SIGNATURE_MAX_SIZE
 	  device memory. Assure this size does not extend past expected storage
 	  space.
 
+config SPL_FIT_SIGNATURE_ALGO
+	string "Specifying algo"
+	depends on SPL_FIT_SIGNATURE
+	help
+	  This option describes algo.
+
 config SPL_FIT_RSASSA_PSS
 	bool "Support rsassa-pss signature scheme of FIT image contents in SPL"
 	depends on SPL_FIT_SIGNATURE
