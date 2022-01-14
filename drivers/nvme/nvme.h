@@ -670,5 +670,6 @@ struct nvme_ops {
 };
 
 int nvme_init(struct udevice *udev);
+int nvme_shutdown(struct udevice *udev);
 
 #endif /* __DRIVER_NVME_H__ */
