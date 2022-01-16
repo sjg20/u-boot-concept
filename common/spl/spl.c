@@ -6,42 +6,41 @@
  * Aneesh V <aneesh@ti.com>
  */
 
-#include <config.h>
-#include <bloblist.h>
 #include <binman_sym.h>
+#include <bloblist.h>
+#include <bootcount.h>
 #include <bootstage.h>
 #include <dm.h>
+#include <fat.h>
+#include <fdt_support.h>
 #include <handoff.h>
 #include <hang.h>
+#include <image.h>
 #include <init.h>
 #include <irq_func.h>
 #include <log.h>
+#include <malloc.h>
 #include <mapmem.h>
+#include <nand.h>
 #include <serial.h>
 #include <spl.h>
 #include <spl_load.h>
 #include <system-constants.h>
-#include <asm/global_data.h>
-#include <asm-generic/gpio.h>
-#include <nand.h>
-#include <fat.h>
-#include <u-boot/crc.h>
 #if CONFIG_IS_ENABLED(BANNER_PRINT)
 #include <timestamp.h>
 #endif
 #include <version.h>
-#include <image.h>
-#include <malloc.h>
-#include <mapmem.h>
+#include <video.h>
+#include <wdt.h>
+#include <asm-generic/gpio.h>
+#include <asm/global_data.h>
+#include <asm/u-boot.h>
 #include <dm/root.h>
 #include <dm/util.h>
 #include <dm/device-internal.h>
 #include <dm/uclass-internal.h>
 #include <linux/compiler.h>
-#include <fdt_support.h>
-#include <bootcount.h>
-#include <wdt.h>
-#include <video.h>
+#include <u-boot/crc.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 DECLARE_BINMAN_MAGIC_SYM;
