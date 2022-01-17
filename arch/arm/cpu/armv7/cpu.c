@@ -18,6 +18,7 @@
 #include <command.h>
 #include <cpu_func.h>
 #include <irq_func.h>
+#include <passage.h>
 #include <asm/system.h>
 #include <asm/cache.h>
 #include <asm/armv7.h>
@@ -82,4 +83,31 @@ int cleanup_before_linux_select(int flags)
 int cleanup_before_linux(void)
 {
 	return cleanup_before_linux_select(CBL_ALL);
+}
+
+void __noreturn arch_passage_entry(ulong entry_addr, ulong bloblist, ulong fdt)
+{
+	typedef void __noreturn (*passage_entry_t)(ulong zero1, ulong mach,
+						   ulong fdt, ulong bloblist);
+	passage_entry_t entry = (passage_entry_t)entry_addr;
+
+	/*
+	 * Register   Contents
+	 * r0         0
+	 * r1         0xb0075701 (indicates standard passage v1)
+	 * r2         Address of devicetree
+	 * r3         Address of bloblist
+	 * r4         0
+	 * lr         Return address
+	 *
+	 * The ARMv7 calling convention only passes 4 arguments in registers, so
+	 * set r4 to 0 manually.
+	 */
+	__asm__ volatile (
+		"mov r4, #0\n"
+		:
+		:
+		: "r4"
+	);
+	entry(0, passage_mach_version(), fdt, bloblist);
 }

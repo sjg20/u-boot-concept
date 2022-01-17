@@ -14,6 +14,7 @@
 #include <command.h>
 #include <cpu_func.h>
 #include <irq_func.h>
+#include <passage.h>
 #include <asm/cache.h>
 #include <asm/system.h>
 #include <asm/secure.h>
@@ -84,3 +85,22 @@ void armv8_setup_psci(void)
 	secure_ram_addr(psci_arch_init)();
 }
 #endif
+
+void __noreturn arch_passage_entry(ulong entry_addr, ulong bloblist, ulong fdt)
+{
+	typedef void __noreturn (*passage_entry_t)(ulong fdt, ulong abi,
+						   ulong zero1, ulong bloblist,
+						   ulong zero2);
+	passage_entry_t entry = (passage_entry_t)entry_addr;
+
+	/*
+	 * Register   Contents
+	 * x0         Address of devicetree
+	 * x1         0xb00757a300000001 (indicates standard passage v1)
+	 * x2         0
+	 * x3         Address of bloblist
+	 * x4         0
+	 * x30        Return address
+	 */
+	entry(fdt, passage_mach_version(), 0, bloblist, 0);
+}
