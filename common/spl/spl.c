@@ -385,7 +385,7 @@ int spl_parse_image_header(struct spl_image_info *spl_image,
 	return 0;
 }
 
-__weak void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
+__weak void __noreturn jump_to_image(struct spl_image_info *spl_image)
 {
 	typedef void __noreturn (*image_entry_noargs_t)(void);
 
@@ -820,7 +820,7 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 #endif
 
 	spl_board_prepare_for_boot();
-	jump_to_image_no_args(&spl_image);
+	jump_to_image(&spl_image);
 }
 
 /*

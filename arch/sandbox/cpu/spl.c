@@ -58,7 +58,7 @@ static int spl_board_load_image(struct spl_image_info *spl_image,
 	}
 
 	/*
-	 * Set up spl_image to boot from jump_to_image_no_args(). Allocate this
+	 * Set up spl_image to boot from jump_to_image(). Allocate this
 	 * outsdide the RAM buffer (i.e. don't use strdup()).
 	 */
 	spl_image->arg = os_malloc(strlen(fname) + 1);
@@ -87,7 +87,7 @@ void spl_board_init(void)
 	}
 }
 
-void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
+void __noreturn jump_to_image(struct spl_image_info *spl_image)
 {
 	const char *fname = spl_image->arg;
 

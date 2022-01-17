@@ -512,7 +512,7 @@ int arch_cpu_init_dm(void)
 }
 
 #if defined(CONFIG_SPL_BUILD)
-__weak void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
+__weak void __noreturn jump_to_image(struct spl_image_info *spl_image)
 {
 	debug("image entry point: 0x%lx\n", spl_image->entry_point);
 

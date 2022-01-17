@@ -216,7 +216,7 @@ void spl_board_init(void)
 #endif
 }
 
-void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
+void __noreturn jump_to_image(struct spl_image_info *spl_image)
 {
 	typedef void __noreturn (*image_entry_noargs_t)(u32 *);
 	image_entry_noargs_t image_entry =

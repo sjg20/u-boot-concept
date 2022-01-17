@@ -34,7 +34,7 @@ u32 spl_boot_device(void)
 	return BOOT_DEVICE_UART;
 }
 
-void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
+void __noreturn jump_to_image(struct spl_image_info *spl_image)
 {
 	debug("image entry point: 0x%lx\n", spl_image->entry_point);
 	if (spl_image->os == IH_OS_ARM_TRUSTED_FIRMWARE) {

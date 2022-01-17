@@ -863,7 +863,7 @@ static int sdp_handle_in_ep(struct spl_image_info *spl_image)
 			/* In SPL, allow jumps to U-Boot images */
 			struct spl_image_info spl_image = {};
 			spl_parse_image_header(&spl_image, header);
-			jump_to_image_no_args(&spl_image);
+			jump_to_image(&spl_image);
 #else
 			/* In U-Boot, allow jumps to scripts */
 			image_source_script(sdp_func->jmp_address, "script@1");

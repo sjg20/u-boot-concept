@@ -579,7 +579,7 @@ int spl_load_image_fat(struct spl_image_info *spl_image,
 int spl_load_image_fat_os(struct spl_image_info *spl_image,
 			  struct blk_desc *block_dev, int partition);
 
-void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image);
+void __noreturn jump_to_image(struct spl_image_info *spl_image);
 
 /* SPL EXT image functions */
 int spl_load_image_ext(struct spl_image_info *spl_image,
