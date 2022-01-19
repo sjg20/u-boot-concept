@@ -966,6 +966,14 @@ You can also replace just a selection of entries::
 
     $ binman replace -i image.bin "*u-boot*" -I indir
 
+Signing FIT with private key in an image
+---------------------------
+
+You can sign FIT in an existing firmware image. For example::
+
+    $ binman sign -i image.bin -k privatekey -a sha256,rsa4096 -f fit.fit fit
+
+which will sign the FIT's content with private key and replace it immediately inside your image.
 
 Logging
 -------
