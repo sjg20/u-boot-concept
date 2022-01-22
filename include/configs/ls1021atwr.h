@@ -191,19 +191,6 @@
 #define CONFIG_SYS_EEPROM_BUS_NUM		1
 
 /*
- * MMC
- */
-
-/*
- * Video
- */
-#ifdef CONFIG_VIDEO_FSL_DCU_FB
-#define CONFIG_FSL_DCU_SII9022A
-#define CONFIG_SYS_I2C_DVI_BUS_NUM	1
-#define CONFIG_SYS_I2C_DVI_ADDR		0x39
-#endif
-
-/*
  * eTSEC
  */
 
