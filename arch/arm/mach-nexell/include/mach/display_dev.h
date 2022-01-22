@@ -8,7 +8,7 @@
 #ifndef _NX__DISPLAY_DEV_H_
 #define _NX__DISPLAY_DEV_H_
 
-#if defined CONFIG_VIDEO || defined CONFIG_DM_VIDEO
+#if defined CONFIG_DM_VIDEO
 #elif defined CONFIG_LCD
 #include <lcd.h>
 #endif
