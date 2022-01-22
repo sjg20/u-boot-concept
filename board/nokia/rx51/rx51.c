@@ -30,7 +30,6 @@
 #include <malloc.h>
 #include <twl4030.h>
 #include <i2c.h>
-#include <video_fb.h>
 #include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/setup.h>
@@ -60,8 +59,6 @@ struct emu_hal_params_rx51 {
 #define ONENAND_GPMC_CONFIG6_RX51	0x90060000
 
 DECLARE_GLOBAL_DATA_PTR;
-
-GraphicDevice gdev;
 
 const omap3_sysinfo sysinfo = {
 	DDR_STACKED,
@@ -339,22 +336,6 @@ void setup_board_tags(struct tag **in_params)
 	params = tag_next(params);
 
 	*in_params = params;
-}
-
-/*
- * Routine: video_hw_init
- * Description: Set up the GraphicDevice depending on sys_boot.
- */
-void *video_hw_init(void)
-{
-	/* fill in Graphic Device */
-	gdev.frameAdrs = 0x8f9c0000;
-	gdev.winSizeX = 800;
-	gdev.winSizeY = 480;
-	gdev.gdfBytesPP = 2;
-	gdev.gdfIndex = GDF_16BIT_565RGB;
-	memset((void *)gdev.frameAdrs, 0, 0xbb800);
-	return (void *) &gdev;
 }
 
 /*
