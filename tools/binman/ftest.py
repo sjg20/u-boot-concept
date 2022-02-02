@@ -5118,6 +5118,13 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
         finally:
             shutil.rmtree(tmpdir)
 
+    def testFitFdtBadOper(self):
+        """Check handling of an FDT map when the section cannot be found"""
+        with self.assertRaises(ValueError) as exc:
+            self._DoReadFileDtb('220_fit_bad_oper.dts')
+        self.assertIn("Node '/binman/fit': Unknown operation 'unknown'",
+                      str(exc.exception))
+
 
 if __name__ == "__main__":
     unittest.main()
