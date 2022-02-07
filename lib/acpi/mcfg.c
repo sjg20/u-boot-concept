@@ -47,7 +47,7 @@ int acpi_write_mcfg(struct acpi_ctx *ctx, const struct acpi_writer *entry)
 	acpi_fill_header(header, "MCFG");
 	header->length = sizeof(struct acpi_mcfg);
 	header->revision = 1;
-	acpi_inc(ctx, sizeof(*header));
+	acpi_inc(ctx, sizeof(*mcfg));
 
 	ret = acpi_fill_mcfg(ctx);
 	if (ret)
