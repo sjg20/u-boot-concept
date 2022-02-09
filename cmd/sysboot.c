@@ -4,7 +4,7 @@
 #include <command.h>
 #include <env.h>
 #include <fs.h>
-#include <pxe_utils.h>
+#include "pxe_utils.h"
 
 /**
  * struct sysboot_info - useful information for sysboot helpers
