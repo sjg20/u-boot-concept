@@ -27,5 +27,11 @@ int board_init(void)
 	printf("Disabling WDT\n");
 	writel(0, 0x10007000);
 
+	printf("Enabling SCP SRAM\n");
+	for (unsigned int val = 0xFFFFFFFF; val != 0U;) {
+		val = val >> 1;
+		writel(val, 0x1072102C);
+	}
+
 	return 0;
 }
