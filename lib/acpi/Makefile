@@ -9,6 +9,7 @@ obj-y += acpi_writer.o
 
 # With QEMU the ACPI tables come from there, not from U-Boot
 ifndef CONFIG_QEMU
+ifndef CONFIG_ARCH_QEMU
 obj-y += base.o
 obj-y += csrt.o
 obj-y += mcfg.o
@@ -20,4 +21,5 @@ endif
 
 obj-y += facs.o
 obj-y += ssdt.o
+endif
 endif
