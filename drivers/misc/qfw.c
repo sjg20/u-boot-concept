@@ -15,7 +15,7 @@
 #include <dm.h>
 #include <misc.h>
 #include <tables_csum.h>
-#ifdef CONFIG_GENERATE_ACPI_TABLE
+#if defined(CONFIG_GENERATE_ACPI_TABLE) && !defined(CONFIG_ARM)
 #include <asm/tables.h>
 #endif
 
