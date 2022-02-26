@@ -871,6 +871,14 @@ config VIDEO_MCDE_SIMPLE
 	  before u-boot starts, and u-boot will simply render to the pre-
 	  allocated frame buffer surface.
 
+config VIDEO_RAMFB
+	bool "QEMU ramfb display driver for in-RAM display"
+	depends on EFI_LOADER && DM_VIDEO && QFW
+	help
+	  Enables a RAM based simple frame buffer driver which uses qfw to
+	  notify the hypervisor about the location of a Frame Buffer allocated
+	  in guest RAM as well as its properties.
+
 config OSD
 	bool "Enable OSD support"
 	depends on DM
