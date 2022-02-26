@@ -18,6 +18,9 @@
 #if defined(CONFIG_GENERATE_ACPI_TABLE) && !defined(CONFIG_ARM)
 #include <asm/tables.h>
 #endif
+#ifdef CONFIG_EFI_LOADER
+#include <efi_loader.h>
+#endif
 
 #if defined(CONFIG_GENERATE_ACPI_TABLE) && !defined(CONFIG_SANDBOX)
 /*
@@ -35,7 +38,7 @@ static int bios_linker_allocate(struct udevice *dev,
 {
 	uint32_t size, align;
 	struct fw_file *file;
-	unsigned long aligned_addr;
+	unsigned long aligned_addr = 0;
 
 	align = le32_to_cpu(entry->alloc.align);
 	/* align must be power of 2 */
@@ -59,7 +62,19 @@ static int bios_linker_allocate(struct udevice *dev,
 	 * in which is low memory
 	 */
 	if (entry->alloc.zone == BIOS_LINKER_LOADER_ALLOC_ZONE_HIGH) {
+#ifdef CONFIG_EFI_LOADER
+		efi_status_t ret;
+		u64 efi_addr = 1ULL << 32;
+
+		ret = efi_allocate_pages(EFI_ALLOCATE_MAX_ADDRESS,
+					 EFI_ACPI_RECLAIM_MEMORY,
+					 efi_size_in_pages(size),
+					 &efi_addr);
+		if (ret == EFI_SUCCESS)
+			aligned_addr = efi_addr;
+#else
 		aligned_addr = (unsigned long)memalign(align, size);
+#endif
 		if (!aligned_addr) {
 			printf("error: allocating resource\n");
 			return -ENOMEM;
