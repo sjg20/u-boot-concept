@@ -58,6 +58,12 @@
 	BOOT_TARGET_NVME(func) \
 	BOOT_TARGET_DHCP(func)
 
+#ifdef CONFIG_VIDEO_RAMFB
+# define QEMU_STDOUT "serial,vidconsole"
+#else
+# define QEMU_STDOUT "serial"
+#endif
+
 #include <config_distro_bootcmd.h>
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
@@ -68,6 +74,9 @@
 	"pxefile_addr_r=0x40300000\0" \
 	"kernel_addr_r=0x40400000\0" \
 	"ramdisk_addr_r=0x44000000\0" \
+	"stdin=serial\0" \
+	"stdout="QEMU_STDOUT"\0" \
+	"stderr="QEMU_STDOUT"\0" \
 	BOOTENV
 
 #define CONFIG_SYS_CBSIZE 512

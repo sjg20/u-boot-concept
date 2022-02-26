@@ -979,6 +979,10 @@ config ARCH_QEMU
 	imply DM_RTC
 	imply RTC_PL031
 	imply OF_HAS_PRIOR_STAGE
+	imply BOARD_EARLY_INIT_R
+	imply DM_VIDEO
+	imply VIDEO_RAMFB
+	imply SYS_CONSOLE_IS_IN_ENV
 
 config ARCH_RMOBILE
 	bool "Renesas ARM SoCs"
