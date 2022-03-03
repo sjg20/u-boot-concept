@@ -3039,6 +3039,48 @@ class TestFunctional(unittest.TestCase):
         self.assertEqual(len(U_BOOT_DATA), entry.contents_size)
         self.assertEqual(len(U_BOOT_DATA), entry.size)
 
+    def testSignSimple(self):
+        """Test signing a single file"""
+
+        data = self._DoReadFileRealDtb('203_fit_sign.dts')
+
+        updated_fname = tools.GetOutputFilename('image-updated.bin')
+        tools.WriteFile(updated_fname, data)
+
+        outdir = os.path.join(self._indir, 'extract')
+        einfos = control.ExtractEntries(updated_fname, None, outdir, [])
+
+        dtb = tools.GetOutputFilename('source.dtb')
+        private_key = tools.GetOutputFilename('test_key.key')
+        public_key = tools.GetOutputFilename('test_key.crt')
+        fit = tools.GetOutputFilename('fit.fit')
+        key_dir = tools.GetOutputDir()
+
+        def check_sign(fit, key):
+            try:
+                tools.Run('fit_check_sign', '-k', key, '-f', fit)
+            except:
+                return False
+            return True
+
+        is_signed = False
+        try:
+            tools.Run('openssl', 'req', '-batch' , '-newkey', 'rsa:4096', 
+                      '-sha256', '-new',  '-nodes',  '-x509', '-keyout',
+                      private_key, '-out', public_key)
+            tools.Run('fdt_add_pubkey', '-a', 'sha256,rsa4096', '-k', key_dir,
+                      '-n', 'test_key', dtb)
+            with test_util.capture_sys_output() as (stdout, stderr):
+                # do sign with private key
+                self._DoBinman('sign', '-i', updated_fname, '-k', private_key,
+                               '-a', 'sha256,rsa4096', '-f', fit, 'fit')
+                is_signed = check_sign(fit, dtb)
+        finally:
+            shutil.rmtree(key_dir)
+
+        self.assertEqual(is_signed, True)
+
+
     def _RunReplaceCmd(self, entry_name, data, decomp=True, allow_resize=True,
                        dts='132_replace.dts'):
         """Replace an entry in an image
