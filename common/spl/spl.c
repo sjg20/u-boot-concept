@@ -32,6 +32,7 @@
 #include <malloc.h>
 #include <mapmem.h>
 #include <dm/root.h>
+#include <dm/util.h>
 #include <linux/compiler.h>
 #include <fdt_support.h>
 #include <bootcount.h>
@@ -741,6 +742,14 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 			puts(SPL_TPL_PROMPT "Cannot set up SPL handoff\n");
 			hang();
 		}
+	}
+
+	/* Dump drive model states to aid analysis */
+	if (1) {
+		struct dm_stats mem;
+
+		dm_get_mem(&mem);
+		dm_dump_mem(&mem);
 	}
 
 #if CONFIG_IS_ENABLED(BOARD_INIT)

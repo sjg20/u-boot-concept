@@ -10,11 +10,23 @@
 #include <linux/list.h>
 #include <linux/types.h>
 
+struct dm_stats;
 struct udevice;
 
 enum dm_tag_t {
+	/* Types of info that can be attached to devices */
+	DM_TAG_PLAT,
+	DM_TAG_PARENT_PLAT,
+	DM_TAG_UC_PLAT,
+
+	DM_TAG_PRIV,
+	DM_TAG_PARENT_PRIV,
+	DM_TAG_UC_PRIV,
+	DM_TAG_DRIVER_DATA,
+	DM_TAG_ATTACH_COUNT,
+
 	/* EFI_LOADER */
-	DM_TAG_EFI = 0,
+	DM_TAG_EFI = DM_TAG_ATTACH_COUNT,
 
 	DM_TAG_COUNT,
 };
@@ -106,5 +118,9 @@ int dev_tag_del(struct udevice *dev, enum dm_tag_t tag);
  * Return: 0 on success, -ve on error
  */
 int dev_tag_del_all(struct udevice *dev);
+
+const char *tag_get_name(enum dm_tag_t tag);
+
+void dev_tag_collect_stats(struct dm_stats *stats);
 
 #endif /* _DM_TAG_H */

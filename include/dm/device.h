@@ -11,6 +11,7 @@
 #define _DM_DEVICE_H
 
 #include <dm/ofnode.h>
+#include <dm/tag.h>
 #include <dm/uclass-id.h>
 #include <fdtdec.h>
 #include <linker_lists.h>
@@ -18,6 +19,7 @@
 #include <linux/list.h>
 #include <linux/printk.h>
 
+struct dm_stats;
 struct driver_info;
 
 /* Driver is active (probed). Cleared when it is removed */
@@ -542,6 +544,10 @@ void *dev_get_parent_priv(const struct udevice *dev);
  * Return: private uclass data for this device, or NULL if none
  */
 void *dev_get_uclass_priv(const struct udevice *dev);
+
+void *dev_get_attach(const struct udevice *dev, enum dm_tag_t tag);
+
+int dev_get_attach_size(const struct udevice *dev, enum dm_tag_t tag);
 
 /**
  * dev_get_parent() - Get the parent of a device

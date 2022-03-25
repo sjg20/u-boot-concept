@@ -64,6 +64,17 @@ static int do_dm_dump_static_driver_info(struct cmd_tbl *cmdtp, int flag, int ar
 	return 0;
 }
 
+static int do_dm_dump_mem(struct cmd_tbl *cmdtp, int flag, int argc,
+			  char *const argv[])
+{
+	struct dm_stats mem;
+
+	dm_get_mem(&mem);
+	dm_dump_mem(&mem);
+
+	return 0;
+}
+
 static struct cmd_tbl test_commands[] = {
 	U_BOOT_CMD_MKENT(tree, 0, 1, do_dm_dump_all, "", ""),
 	U_BOOT_CMD_MKENT(uclass, 1, 1, do_dm_dump_uclass, "", ""),
@@ -71,6 +82,7 @@ static struct cmd_tbl test_commands[] = {
 	U_BOOT_CMD_MKENT(drivers, 1, 1, do_dm_dump_drivers, "", ""),
 	U_BOOT_CMD_MKENT(compat, 1, 1, do_dm_dump_driver_compat, "", ""),
 	U_BOOT_CMD_MKENT(static, 1, 1, do_dm_dump_static_driver_info, "", ""),
+	U_BOOT_CMD_MKENT(mem, 1, 1, do_dm_dump_mem, "", ""),
 };
 
 static __maybe_unused void dm_reloc(void)
@@ -114,5 +126,6 @@ U_BOOT_CMD(
 	"dm devres        Dump list of device resources for each device\n"
 	"dm drivers       Dump list of drivers with uclass and instances\n"
 	"dm compat        Dump list of drivers with compatibility strings\n"
-	"dm static        Dump list of drivers with static platform data"
+	"dm static        Dump list of drivers with static platform data\n"
+	"dm mem           Provide a summary of memory usage"
 );
