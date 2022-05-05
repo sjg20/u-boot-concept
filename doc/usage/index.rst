@@ -32,6 +32,7 @@ Shell commands
    cmd/button
    cmd/cbsysinfo
    cmd/conitrace
+   cmd/dm
    cmd/echo
    cmd/env
    cmd/event
