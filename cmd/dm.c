@@ -16,10 +16,10 @@
 #include <dm/root.h>
 #include <dm/util.h>
 
-static int do_dm_dump_all(struct cmd_tbl *cmdtp, int flag, int argc,
-			  char *const argv[])
+static int do_dm_dump_tree(struct cmd_tbl *cmdtp, int flag, int argc,
+			   char *const argv[])
 {
-	dm_dump_all();
+	dm_dump_tree();
 
 	return 0;
 }
@@ -65,7 +65,7 @@ static int do_dm_dump_static_driver_info(struct cmd_tbl *cmdtp, int flag, int ar
 }
 
 static struct cmd_tbl test_commands[] = {
-	U_BOOT_CMD_MKENT(tree, 0, 1, do_dm_dump_all, "", ""),
+	U_BOOT_CMD_MKENT(tree, 0, 1, do_dm_dump_tree, "", ""),
 	U_BOOT_CMD_MKENT(uclass, 1, 1, do_dm_dump_uclass, "", ""),
 	U_BOOT_CMD_MKENT(devres, 1, 1, do_dm_dump_devres, "", ""),
 	U_BOOT_CMD_MKENT(drivers, 1, 1, do_dm_dump_drivers, "", ""),
