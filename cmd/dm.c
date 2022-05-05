@@ -40,6 +40,19 @@ static int do_dm_dump_drivers(struct cmd_tbl *cmdtp, int flag, int argc,
 	return 0;
 }
 
+#if CONFIG_IS_ENABLED(DM_STATS)
+static int do_dm_dump_mem(struct cmd_tbl *cmdtp, int flag, int argc,
+			  char *const argv[])
+{
+	struct dm_stats mem;
+
+	dm_get_mem(&mem);
+	dm_dump_mem(&mem);
+
+	return 0;
+}
+#endif /* DM_STATS */
+
 static int do_dm_dump_static_driver_info(struct cmd_tbl *cmdtp, int flag,
 					 int argc, char * const argv[])
 {
@@ -68,6 +81,9 @@ static struct cmd_tbl test_commands[] = {
 	U_BOOT_CMD_MKENT(compat, 1, 1, do_dm_dump_driver_compat, "", ""),
 	U_BOOT_CMD_MKENT(devres, 1, 1, do_dm_dump_devres, "", ""),
 	U_BOOT_CMD_MKENT(drivers, 1, 1, do_dm_dump_drivers, "", ""),
+#if CONFIG_IS_ENABLED(DM_STATS)
+	U_BOOT_CMD_MKENT(mem, 1, 1, do_dm_dump_mem, "", ""),
+#endif
 	U_BOOT_CMD_MKENT(static, 1, 1, do_dm_dump_static_driver_info, "", ""),
 	U_BOOT_CMD_MKENT(tree, 0, 1, do_dm_dump_tree, "", ""),
 	U_BOOT_CMD_MKENT(uclass, 1, 1, do_dm_dump_uclass, "", ""),
@@ -106,12 +122,19 @@ static int do_dm(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	return cmd_process_error(test_cmd, ret);
 }
 
+#if CONFIG_IS_ENABLED(DM_STATS)
+#define DM_MEM_HELP	"dm mem           Provide a summary of memory usage\n"
+#else
+#define DM_MEM_HELP
+#endif
+
 U_BOOT_CMD(
 	dm,	3,	1,	do_dm,
 	"Driver model low level access",
 	"compat        Dump list of drivers with compatibility strings\n"
 	"dm devres        Dump list of device resources for each device\n"
 	"dm drivers       Dump list of drivers with uclass and instances\n"
+	DM_MEM_HELP
 	"dm static        Dump list of drivers with static platform data\n"
 	"dm tree          Dump tree of driver model devices ('*' = activated)\n"
 	"dm uclass        Dump list of instances for each uclass"
