@@ -43,11 +43,11 @@ static int do_test_strlcat(struct unit_test_state *uts, int line, size_t align1,
 		s2[i] = 32 + 23 * i % (127 - 32);
 	s2[len2 - 1] = '\0';
 
-	expected = len2 < n ? min(len1 + len2 - 1, n) : n;
+	expected = len1 + len2 - 2;
 	actual = strlcat(s2, s1, n);
 	if (expected != actual) {
 		ut_failf(uts, __FILE__, line, __func__,
-			 "strlcat(s2, s1, 2) == len2 < n ? min(len1 + len2, n) : n",
+			 "strlcat(s2, s1, n) == len1 + len2 - 2",
 			 "Expected %#zx (%zd), got %#zx (%zd)",
 			 expected, expected, actual, actual);
 		return CMD_RET_FAILURE;
@@ -103,21 +103,21 @@ static int lib_test_strlcat(struct unit_test_state *uts)
 	}
 
 	for (n = 2; n <= 2048; n *= 4) {
-		test_strlcat(0, 2, 2, 2, n);
-		test_strlcat(0, 0, 4, 4, n);
-		test_strlcat(4, 0, 4, 4, n);
-		test_strlcat(0, 0, 8, 8, n);
-		test_strlcat(0, 8, 8, 8, n);
+		test_strlcat(0, 2, 2, 2, SIZE_MAX);
+		test_strlcat(0, 0, 4, 4, SIZE_MAX);
+		test_strlcat(4, 0, 4, 4, SIZE_MAX);
+		test_strlcat(0, 0, 8, 8, SIZE_MAX);
+		test_strlcat(0, 8, 8, 8, SIZE_MAX);
 
 		for (i = 1; i < 8; i++) {
-			test_strlcat(0, 0, 8 << i, 8 << i, n);
-			test_strlcat(8 - i, 2 * i, 8 << i, 8 << i, n);
-			test_strlcat(0, 0, 8 << i, 2 << i, n);
-			test_strlcat(8 - i, 2 * i, 8 << i, 2 << i, n);
+			test_strlcat(0, 0, 8 << i, 8 << i, SIZE_MAX);
+			test_strlcat(8 - i, 2 * i, 8 << i, 8 << i, SIZE_MAX);
+			test_strlcat(0, 0, 8 << i, 2 << i, SIZE_MAX);
+			test_strlcat(8 - i, 2 * i, 8 << i, 2 << i, SIZE_MAX);
 
-			test_strlcat(i, 2 * i, 8 << i, 1, n);
-			test_strlcat(2 * i, i, 8 << i, 1, n);
-			test_strlcat(i, i, 8 << i, 10, n);
+			test_strlcat(i, 2 * i, 8 << i, 1, SIZE_MAX);
+			test_strlcat(2 * i, i, 8 << i, 1, SIZE_MAX);
+			test_strlcat(i, i, 8 << i, 10, SIZE_MAX);
 		}
 	}
 
