@@ -97,19 +97,18 @@ void *memchr_inv(const void *s, int c, size_t n);
 #endif
 
 /* U-Boot specific APIs */
-extern char * ___strtok;
-extern char * strtok(char *,const char *);
+extern char *strtok(char *, const char *);
 #ifdef CONFIG_SANDBOX
 # define strdup		sandbox_strdup
 # define strndup		sandbox_strndup
 #endif
 
 #ifndef __HAVE_ARCH_STRDUP
-extern char * strdup(const char *);
-extern char * strndup(const char *, size_t);
+extern char *strdup(const char *);
+extern char *strndup(const char *, size_t);
 #endif
 #ifndef __HAVE_ARCH_STRSWAB
-extern char * strswab(const char *);
+extern char *strswab(const char *);
 #endif
 
 /**

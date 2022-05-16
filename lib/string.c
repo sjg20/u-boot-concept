@@ -68,8 +68,6 @@ int strcasecmp(const char *s1, const char *s2)
 }
 EXPORT_SYMBOL(strcasecmp);
 
-char * ___strtok;
-
 #ifndef __HAVE_ARCH_STRCPY
 /**
  * strcpy - Copy a %NUL terminated string
@@ -403,20 +401,20 @@ EXPORT_SYMBOL(strcspn);
 #endif
 
 #ifndef __HAVE_ARCH_STRDUP
-char * strdup(const char *s)
+char *strdup(const char *s)
 {
 	char *new;
 
 	if ((s == NULL)	||
-	    ((new = malloc (strlen(s) + 1)) == NULL) ) {
+	    ((new = malloc(strlen(s) + 1)) == NULL)) {
 		return NULL;
 	}
 
-	strcpy (new, s);
+	strcpy(new, s);
 	return new;
 }
 
-char * strndup(const char *s, size_t n)
+char *strndup(const char *s, size_t n)
 {
 	size_t len;
 	char *new;
@@ -469,8 +467,9 @@ EXPORT_SYMBOL(strpbrk);
  *
  * WARNING: strtok is deprecated, use strsep instead.
  */
-char * strtok(char * s,const char * ct)
+char *strtok(char *s, const char *ct)
 {
+	static char *___strtok;
 	char *sbegin, *send;
 
 	sbegin  = s ? s : ___strtok;
@@ -482,7 +481,7 @@ char * strtok(char * s,const char * ct)
 		___strtok = NULL;
 		return( NULL );
 	}
-	send = strpbrk( sbegin, ct);
+	send = strpbrk(sbegin, ct);
 	if (send && *send != '\0')
 		*send++ = '\0';
 	___strtok = send;
@@ -535,7 +534,8 @@ char *strswab(const char *s)
 		return (NULL);
 	}
 
-	for (p=(char *)s, q=p+1; (*p != '\0') && (*q != '\0'); p+=2, q+=2) {
+	for (p = (char *)s, q = p + 1; (*p != '\0') && (*q != '\0');
+	     p += 2, q += 2) {
 		char  tmp;
 
 		tmp = *p;
@@ -543,7 +543,7 @@ char *strswab(const char *s)
 		*q  = tmp;
 	}
 
-	return (char *) s;
+	return (char *)s;
 }
 #endif
 
