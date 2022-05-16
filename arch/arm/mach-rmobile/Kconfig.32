@@ -63,7 +63,6 @@ config TARGET_GOSE
 	bool "Gose board"
 	select DM
 	select DM_SERIAL
-	select SPL_TINY_MEMSET
 	select SUPPORT_SPL
 	select SPL_USE_TINY_PRINTF
 	imply CMD_DM
@@ -72,7 +71,6 @@ config TARGET_KOELSCH
 	bool "Koelsch board"
 	select DM
 	select DM_SERIAL
-	select SPL_TINY_MEMSET
 	select SUPPORT_SPL
 	select SPL_USE_TINY_PRINTF
 	imply CMD_DM
@@ -81,7 +79,6 @@ config TARGET_LAGER
 	bool "Lager board"
 	select DM
 	select DM_SERIAL
-	select SPL_TINY_MEMSET
 	select SUPPORT_SPL
 	select SPL_USE_TINY_PRINTF
 	imply CMD_DM
@@ -93,7 +90,6 @@ config TARGET_ALT
 	bool "Alt board"
 	select DM
 	select DM_SERIAL
-	select SPL_TINY_MEMSET
 	select SUPPORT_SPL
 	select SPL_USE_TINY_PRINTF
 	imply CMD_DM
@@ -102,7 +98,6 @@ config TARGET_SILK
 	bool "Silk board"
 	select DM
 	select DM_SERIAL
-	select SPL_TINY_MEMSET
 	select SUPPORT_SPL
 	select SPL_USE_TINY_PRINTF
 	imply CMD_DM
@@ -111,7 +106,6 @@ config TARGET_PORTER
 	bool "Porter board"
 	select DM
 	select DM_SERIAL
-	select SPL_TINY_MEMSET
 	select SUPPORT_SPL
 	select SPL_USE_TINY_PRINTF
 	imply CMD_DM
@@ -120,7 +114,6 @@ config TARGET_STOUT
 	bool "Stout board"
 	select DM
 	select DM_SERIAL
-	select SPL_TINY_MEMSET
 	select SUPPORT_SPL
 	select SPL_USE_TINY_PRINTF
 	imply CMD_DM
