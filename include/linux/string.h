@@ -1,19 +1,11 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 #ifndef _LINUX_STRING_H_
 #define _LINUX_STRING_H_
 
+#include <linux/compiler.h>	/* for inline */
 #include <linux/types.h>	/* for size_t */
 #include <linux/stddef.h>	/* for NULL */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-extern char * ___strtok;
-extern char * strpbrk(const char *,const char *);
-extern char * strtok(char *,const char *);
-extern char * strsep(char **,const char *);
-extern __kernel_size_t strspn(const char *,const char *);
-
+#include <linux/errno.h>	/* for E2BIG */
 
 /*
  * Include machine specific inline routines
@@ -36,7 +28,7 @@ extern char * strcat(char *, const char *);
 extern char * strncat(char *, const char *, __kernel_size_t);
 #endif
 #ifndef __HAVE_ARCH_STRLCAT
-size_t strlcat(char *, const char *, size_t);
+extern size_t strlcat(char *, const char *, __kernel_size_t);
 #endif
 #ifndef __HAVE_ARCH_STRCMP
 extern int strcmp(const char *,const char *);
@@ -45,33 +37,23 @@ extern int strcmp(const char *,const char *);
 extern int strncmp(const char *,const char *,__kernel_size_t);
 #endif
 #ifndef __HAVE_ARCH_STRCASECMP
-int strcasecmp(const char *s1, const char *s2);
+extern int strcasecmp(const char *s1, const char *s2);
 #endif
 #ifndef __HAVE_ARCH_STRNCASECMP
-extern int strncasecmp(const char *s1, const char *s2, __kernel_size_t len);
+extern int strncasecmp(const char *s1, const char *s2, size_t n);
 #endif
 #ifndef __HAVE_ARCH_STRCHR
 extern char * strchr(const char *,int);
 #endif
-
-/**
- * strchrnul() - return position of a character in the string, or end of string
- *
- * The strchrnul() function is like strchr() except that if c is not found
- * in s, then it returns a pointer to the nul byte at the end of s, rather than
- * NULL
- * @s: string to search
- * @c: character to search for
- * Return: position of @c in @s, or end of @s if not found
- */
-const char *strchrnul(const char *s, int c);
-
+extern char * strchrnul(const char *,int);
 #ifndef __HAVE_ARCH_STRRCHR
 extern char * strrchr(const char *,int);
 #endif
+
 #include <linux/linux_string.h>
+
 #ifndef __HAVE_ARCH_STRSTR
-extern char * strstr(const char *,const char *);
+extern char * strstr(const char *, const char *);
 #endif
 #ifndef __HAVE_ARCH_STRLEN
 extern __kernel_size_t strlen(const char *);
@@ -79,32 +61,17 @@ extern __kernel_size_t strlen(const char *);
 #ifndef __HAVE_ARCH_STRNLEN
 extern __kernel_size_t strnlen(const char *,__kernel_size_t);
 #endif
-
+#ifndef __HAVE_ARCH_STRPBRK
+extern char * strpbrk(const char *,const char *);
+#endif
+#ifndef __HAVE_ARCH_STRSEP
+extern char * strsep(char **,const char *);
+#endif
+#ifndef __HAVE_ARCH_STRSPN
+extern __kernel_size_t strspn(const char *,const char *);
+#endif
 #ifndef __HAVE_ARCH_STRCSPN
-/**
- * strcspn() - find span of string without given characters
- *
- * Calculates the length of the initial segment of @s which consists entirely
- * of bsytes not in reject.
- *
- * @s: string to search
- * @reject: strings which cause the search to halt
- * Return: number of characters at the start of @s which are not in @reject
- */
-size_t strcspn(const char *s, const char *reject);
-#endif
-
-#ifdef CONFIG_SANDBOX
-# define strdup		sandbox_strdup
-# define strndup		sandbox_strndup
-#endif
-
-#ifndef __HAVE_ARCH_STRDUP
-extern char * strdup(const char *);
-extern char * strndup(const char *, size_t);
-#endif
-#ifndef __HAVE_ARCH_STRSWAB
-extern char * strswab(const char *);
+extern __kernel_size_t strcspn(const char *,const char *);
 #endif
 
 #ifndef __HAVE_ARCH_MEMSET
@@ -126,7 +93,23 @@ extern int memcmp(const void *,const void *,__kernel_size_t);
 extern void * memchr(const void *,int,__kernel_size_t);
 #endif
 #ifndef __HAVE_ARCH_MEMCHR_INV
-void *memchr_inv(const void *, int, size_t);
+void *memchr_inv(const void *s, int c, size_t n);
+#endif
+
+/* U-Boot specific APIs */
+extern char * ___strtok;
+extern char * strtok(char *,const char *);
+#ifdef CONFIG_SANDBOX
+# define strdup		sandbox_strdup
+# define strndup		sandbox_strndup
+#endif
+
+#ifndef __HAVE_ARCH_STRDUP
+extern char * strdup(const char *);
+extern char * strndup(const char *, size_t);
+#endif
+#ifndef __HAVE_ARCH_STRSWAB
+extern char * strswab(const char *);
 #endif
 
 /**
@@ -144,9 +127,5 @@ char *memdup(const void *src, size_t len);
 
 unsigned long ustrtoul(const char *cp, char **endp, unsigned int base);
 unsigned long long ustrtoull(const char *cp, char **endp, unsigned int base);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* _LINUX_STRING_H_ */
