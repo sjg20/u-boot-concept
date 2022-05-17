@@ -477,6 +477,8 @@ board_init_f() and board_init_r().
 
 This approach can be used on normal boards as well as sandbox.
 
+When debugging with gdb, it's better to disable Link Timer Optimizations
+(CONFIG_LTO = n).
 
 SDL_CONFIG
 ----------
