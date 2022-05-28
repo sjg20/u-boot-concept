@@ -133,6 +133,16 @@ __weak enum env_location arch_env_get_location(enum env_operation op, int prio)
 	if (prio >= ARRAY_SIZE(env_locations))
 		return ENVL_UNKNOWN;
 
+	if (IS_ENABLED(CONFIG_ENV_WRITEABLE_LIST) &&
+	    IS_ENABLED(CONFIG_ENV_IS_NOWHERE)) {
+		/*
+		 * In writeable-list mode, ENVL_NOWHERE gains highest prio. This blocks
+		 * writing, though. So return the location of the next prio instead.
+		 */
+		if ((op == ENVOP_SAVE || op == ENVOP_ERASE) && prio == 0)
+			return ENVL_EEPROM;
+	}
+
 	return env_locations[prio];
 }
 
