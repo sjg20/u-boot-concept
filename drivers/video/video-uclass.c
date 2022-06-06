@@ -153,6 +153,8 @@ int video_clear(struct udevice *dev)
 	if (ret)
 		return ret;
 
+	video_damage(dev, 0, 0, priv->xsize, priv->ysize);
+
 	return video_sync(dev, false);
 }
 
