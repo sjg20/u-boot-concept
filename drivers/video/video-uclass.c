@@ -21,6 +21,8 @@
 #include <dm/device_compat.h>
 #include <dm/device-internal.h>
 #include <dm/uclass-internal.h>
+#include <linux/types.h>
+#include <linux/bitmap.h>
 #ifdef CONFIG_SANDBOX
 #include <asm/sdl.h>
 #endif
@@ -252,6 +254,45 @@ void video_set_default_colors(struct udevice *dev, bool invert)
 	priv->bg_col_idx = back;
 	priv->colour_fg = video_index_to_colour(priv, fore);
 	priv->colour_bg = video_index_to_colour(priv, back);
+}
+
+/* Notify about changes in the frame buffer */
+int video_damage(struct udevice *vid, int x, int y, int width, int height)
+{
+	struct video_priv *priv = dev_get_uclass_priv(vid);
+	int endx = x + width;
+	int endy = y + height;
+
+	if (!CONFIG_IS_ENABLED(VIDEO_DAMAGE))
+		return 0;
+
+	if (x > priv->xsize)
+		return 0;
+
+	if (y > priv->ysize)
+		return 0;
+
+	if (endx > priv->xsize)
+		endx = priv->xsize;
+
+	if (endy > priv->ysize)
+		endy = priv->ysize;
+
+	if (priv->damage.endx && priv->damage.endy) {
+		/* Span a rectangle across all old and new damage */
+		priv->damage.x = min(x, priv->damage.x);
+		priv->damage.y = min(y, priv->damage.y);
+		priv->damage.endx = max(endx, priv->damage.endx);
+		priv->damage.endy = max(endy, priv->damage.endy);
+	} else {
+		/* First damage, setting the rectangle to span it */
+		priv->damage.x = x;
+		priv->damage.y = y;
+		priv->damage.endx = endx;
+		priv->damage.endy = endy;
+	}
+
+	return 0;
 }
 
 /* Flush video activity to the caches */
