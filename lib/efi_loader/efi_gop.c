@@ -33,6 +33,7 @@ struct efi_gop_obj {
 	struct efi_gop ops;
 	struct efi_gop_mode_info info;
 	struct efi_gop_mode mode;
+	struct udevice *vdev;
 	/* Fields we only have access to during init */
 	u32 bpix;
 	void *fb;
@@ -243,6 +244,9 @@ static __always_inline efi_status_t gop_blt_int(struct efi_gop *this,
 		slineoff += swidth;
 		dlineoff += dwidth;
 	}
+
+	if (IS_ENABLED(CONFIG_DM_VIDEO))
+		video_damage(gopobj->vdev, dx, dy, width, height);
 
 	return EFI_SUCCESS;
 }
@@ -481,9 +485,9 @@ efi_status_t efi_gop_register(void)
 	u64 fb_base, fb_size;
 	void *fb;
 	efi_status_t ret;
+	struct udevice *vdev = NULL;
 
 #ifdef CONFIG_DM_VIDEO
-	struct udevice *vdev;
 	struct video_priv *priv;
 
 	/* We only support a single video output device for now */
@@ -582,6 +586,7 @@ efi_status_t efi_gop_register(void)
 	gopobj->info.pixels_per_scanline = col;
 	gopobj->bpix = bpix;
 	gopobj->fb = fb;
+	gopobj->vdev = vdev;
 
 	return EFI_SUCCESS;
 }
