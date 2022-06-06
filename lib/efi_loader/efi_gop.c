@@ -32,6 +32,7 @@ struct efi_gop_obj {
 	struct efi_gop ops;
 	struct efi_gop_mode_info info;
 	struct efi_gop_mode mode;
+	struct udevice *vdev;
 	/* Fields we only have access to during init */
 	u32 bpix;
 	void *fb;
@@ -242,6 +243,8 @@ static __always_inline efi_status_t gop_blt_int(struct efi_gop *this,
 		slineoff += swidth;
 		dlineoff += dwidth;
 	}
+
+	video_damage(gopobj->vdev, dx, dy, width, height);
 
 	return EFI_SUCCESS;
 }
@@ -547,6 +550,7 @@ efi_status_t efi_gop_register(void)
 	gopobj->info.pixels_per_scanline = col;
 	gopobj->bpix = bpix;
 	gopobj->fb = fb;
+	gopobj->vdev = vdev;
 
 	return EFI_SUCCESS;
 }
