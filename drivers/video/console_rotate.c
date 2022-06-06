@@ -57,6 +57,8 @@ static int console_set_row_1(struct udevice *dev, uint row, int clr)
 	if (ret)
 		return ret;
 
+	video_damage(dev->parent, 0, 0, vid_priv->xsize, vid_priv->ysize);
+
 	return 0;
 }
 
@@ -82,6 +84,8 @@ static int console_move_rows_1(struct udevice *dev, uint rowdst, uint rowsrc,
 		src += vid_priv->line_length;
 		dst += vid_priv->line_length;
 	}
+
+	video_damage(dev->parent, 0, 0, vid_priv->xsize, vid_priv->ysize);
 
 	return 0;
 }
@@ -150,6 +154,8 @@ static int console_putc_xy_1(struct udevice *dev, uint x_frac, uint y, char ch)
 	if (ret)
 		return ret;
 
+	video_damage(dev->parent, 0, 0, vid_priv->xsize, vid_priv->ysize);
+
 	return VID_TO_POS(VIDEO_FONT_WIDTH);
 }
 
@@ -199,6 +205,8 @@ static int console_set_row_2(struct udevice *dev, uint row, int clr)
 	if (ret)
 		return ret;
 
+	video_damage(dev->parent, 0, 0, vid_priv->xsize, vid_priv->ysize);
+
 	return 0;
 }
 
@@ -217,6 +225,8 @@ static int console_move_rows_2(struct udevice *dev, uint rowdst, uint rowsrc,
 		vid_priv->line_length;
 	vidconsole_memmove(dev, dst, src,
 			   VIDEO_FONT_HEIGHT * vid_priv->line_length * count);
+
+	video_damage(dev->parent, 0, 0, vid_priv->xsize, vid_priv->ysize);
 
 	return 0;
 }
@@ -288,6 +298,8 @@ static int console_putc_xy_2(struct udevice *dev, uint x_frac, uint y, char ch)
 	if (ret)
 		return ret;
 
+	video_damage(dev->parent, 0, 0, vid_priv->xsize, vid_priv->ysize);
+
 	return VID_TO_POS(VIDEO_FONT_WIDTH);
 }
 
@@ -335,6 +347,8 @@ static int console_set_row_3(struct udevice *dev, uint row, int clr)
 	if (ret)
 		return ret;
 
+	video_damage(dev->parent, 0, 0, vid_priv->xsize, vid_priv->ysize);
+
 	return 0;
 }
 
@@ -358,6 +372,8 @@ static int console_move_rows_3(struct udevice *dev, uint rowdst, uint rowsrc,
 		src += vid_priv->line_length;
 		dst += vid_priv->line_length;
 	}
+
+	video_damage(dev->parent, 0, 0, vid_priv->xsize, vid_priv->ysize);
 
 	return 0;
 }
@@ -423,6 +439,8 @@ static int console_putc_xy_3(struct udevice *dev, uint x_frac, uint y, char ch)
 	ret = vidconsole_sync_copy(dev, start + vid_priv->line_length, line);
 	if (ret)
 		return ret;
+
+	video_damage(dev->parent, 0, 0, vid_priv->xsize, vid_priv->ysize);
 
 	return VID_TO_POS(VIDEO_FONT_WIDTH);
 }
