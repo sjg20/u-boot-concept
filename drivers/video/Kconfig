@@ -54,12 +54,14 @@ config VIDEO_PCI_DEFAULT_FB_SIZE
 
 config VIDEO_COPY
 	bool "Enable copying the frame buffer to a hardware copy"
-	depends on DM_VIDEO
+	depends on DM_VIDEO && VIDEO_DAMAGE
 	help
 	  On some machines (e.g. x86), reading from the frame buffer is very
 	  slow because it is uncached. To improve performance, this feature
 	  allows the frame buffer to be kept in cached memory (allocated by
 	  U-Boot) and then copied to the hardware frame-buffer as needed.
+	  It uses the VIDEO_DAMAGE feature to keep track of regions to copy
+	  and will only copy actually touched regions.
 
 	  To use this, your video driver must set @copy_base in
 	  struct video_uc_plat.
@@ -74,10 +76,12 @@ config VIDEO_DAMAGE
 	  have to flush frame buffer contents from CPU caches into RAM which
 	  can be a slow operation.
 
-	  This patch adds damage tracking to collect information about regions
+	  This feature adds damage tracking to collect information about regions
 	  that received updates. When we want to sync, we then only flush
 	  regions of the frame buffer that were modified before, speeding up
 	  screen refreshes significantly.
+
+	  It is also used by VIDEO_COPY to identify which regions changed.
 
 config BACKLIGHT_PWM
 	bool "Generic PWM based Backlight Driver"

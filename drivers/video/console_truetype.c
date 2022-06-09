@@ -165,9 +165,6 @@ static int console_truetype_set_row(struct udevice *dev, uint row, int clr)
 	default:
 		return -ENOSYS;
 	}
-	ret = vidconsole_sync_copy(dev, line, end);
-	if (ret)
-		return ret;
 
 	video_damage(dev->parent, 0, vc_priv->y_charsize * row, vid_priv->xsize,
 		     vc_priv->y_charsize);
@@ -183,14 +180,11 @@ static int console_truetype_move_rows(struct udevice *dev, uint rowdst,
 	struct console_tt_priv *priv = dev_get_priv(dev);
 	void *dst;
 	void *src;
-	int i, diff, ret;
+	int i, diff;
 
 	dst = vid_priv->fb + rowdst * priv->font_size * vid_priv->line_length;
 	src = vid_priv->fb + rowsrc * priv->font_size * vid_priv->line_length;
-	ret = vidconsole_memmove(dev, dst, src, priv->font_size *
-				 vid_priv->line_length * count);
-	if (ret)
-		return ret;
+	memmove(dev, dst, src, priv->font_size * vid_priv->line_length * count);
 
 	/* Scroll up our position history */
 	diff = (rowsrc - rowdst) * priv->font_size;
@@ -360,9 +354,6 @@ static int console_truetype_putc_xy(struct udevice *dev, uint x, uint y,
 	video_damage(dev->parent, VID_TO_PIXEL(x) + xoff,
 		     y + priv->baseline + yoff, width, height);
 
-	ret = vidconsole_sync_copy(dev, start, line);
-	if (ret)
-		return ret;
 	free(data);
 
 	return width_frac;
@@ -429,10 +420,6 @@ static int console_truetype_erase(struct udevice *dev, int xstart, int ystart,
 	}
 
 	video_damage(dev->parent, xstart, ystart, xend - xstart, yend - ystart);
-
-	ret = vidconsole_sync_copy(dev, start, line);
-	if (ret)
-		return ret;
 
 	return 0;
 }
