@@ -12,12 +12,6 @@
 
 #include "siemens-env-common.h"
 
-/* SPL config */
-#ifdef CONFIG_SPL_BUILD
-#define CONFIG_MALLOC_F_ADDR		0x00120000
-
-#endif /* CONFIG_SPL_BUILD */
-
 /* ENET1 connects to base board and MUX with ESAI */
 #define CONFIG_FEC_ENET_DEV		1
 #define CONFIG_FEC_MXC_PHYADDR		0x0
