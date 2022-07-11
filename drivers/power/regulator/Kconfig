@@ -371,3 +371,12 @@ config DM_REGULATOR_SCMI
         help
           Enable this option if you want to support regulators exposed through
 	  the SCMI voltage domain protocol by a SCMI server.
+
+config DM_REGULATOR_MT6357
+	bool "Enable driver for MediaTek MT6357 PMIC regulators"
+	depends on DM_REGULATOR && MTK_PMIC_WRAP
+	help
+	  Say y here to select this option to enable the power regulator of
+	  MediaTek MT6357 PMIC.
+	  This driver supports the control of different power rails of device
+	  through regulator interface.
