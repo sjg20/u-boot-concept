@@ -6,6 +6,9 @@ setup.py file for SWIG libfdt
 Copyright (C) 2017 Google, Inc.
 Written by Simon Glass <sjg@chromium.org>
 
+This script is modified from the upstream version, to fit in with the U-Boot
+build system.
+
 Files to be built into the extension are provided in SOURCES
 C flags to use are provided in CPPFLAGS
 Object file directory is provided in OBJDIR
@@ -95,12 +98,13 @@ def GetEnvFromMakefiles():
     basedir = os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0])))
     swig_opts = ['-I%s' % basedir]
     makevars = ParseMakefile(os.path.join(basedir, 'Makefile'))
+    print('makevars', makevars)
     version = '%s.%s.%s' % (makevars['VERSION'], makevars['PATCHLEVEL'],
                             makevars['SUBLEVEL'])
     makevars = ParseMakefile(os.path.join(basedir, 'libfdt', 'Makefile.libfdt'))
     files = makevars['LIBFDT_SRCS'].split()
     files = [os.path.join(basedir, 'libfdt', fname) for fname in files]
-    files.append('pylibfdt/libfdt.i')
+    files.append('libfdt.i')
     cflags = ['-I%s' % basedir, '-I%s/libfdt' % basedir]
     objdir = ''
     return swig_opts, version, files, cflags, objdir
@@ -121,12 +125,11 @@ if not all((swig_opts, version, files, cflags, objdir)):
 
 libfdt_module = Extension(
     '_libfdt',
-    sources=[os.path.join(srcdir, 'pylibfdt/libfdt.i')],
+    sources=files,
     define_macros=[('PY_SSIZE_T_CLEAN', None)],
     include_dirs=[os.path.join(srcdir, 'libfdt')],
-    libraries=['fdt'],
     library_dirs=[os.path.join(top_builddir, 'libfdt')],
-    swig_opts=['-I' + os.path.join(srcdir, 'libfdt')],
+    swig_opts=swig_opts,
 )
 
 class build_py(_build_py):
@@ -136,16 +139,14 @@ class build_py(_build_py):
 
 setup(
     name='libfdt',
-    use_scm_version={
-        "root": srcdir,
-    },
+    version=version,
     cmdclass = {'build_py' : build_py},
     setup_requires = ['setuptools_scm'],
     author='Simon Glass',
     author_email='sjg@chromium.org',
     description='Python binding for libfdt',
     ext_modules=[libfdt_module],
-    package_dir={'': os.path.join(srcdir, 'pylibfdt')},
+    package_dir={'': objdir},
     py_modules=['libfdt'],
 
     long_description=long_description,
@@ -162,22 +163,3 @@ setup(
     ],
 
 )
-
-'''
-libfdt_module = Extension(
-    '_libfdt',
-    sources = files,
-    extra_compile_args = cflags,
-    swig_opts = swig_opts,
-)
-
-setup(
-    name='libfdt',
-    version= version,
-    author='Simon Glass <sjg@chromium.org>',
-    description='Python binding for libfdt',
-    ext_modules=[libfdt_module],
-    package_dir={'': objdir},
-    py_modules=['pylibfdt/libfdt'],
-)
-'''
