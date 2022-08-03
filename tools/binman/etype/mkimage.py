@@ -16,6 +16,9 @@ class Entry_mkimage(Entry):
 
     Properties / Entry arguments:
         - datafile: Filename for -d argument
+        - multiple-data-files: boolean to tell binman to pass all files as
+          datafiles to mkimage instead of creating a temporary file the result
+          of datafiles concatenation
         - args: Other arguments to pass
 
     The data passed to mkimage is collected from subnodes of the mkimage node,
@@ -32,6 +35,25 @@ class Entry_mkimage(Entry):
     file. The output from mkimage then becomes part of the image produced by
     binman.
 
+	To pass all datafiles untouched to mkimage::
+
+		mkimage {
+			args = "-n rk3399 -T rkspi";
+			multiple-data-files;
+
+			u-boot-tpl {
+			};
+
+			u-boot-spl {
+			};
+		};
+
+	This calls mkimage to create a Rockchip RK3399-specific first stage
+	bootloader, made of TPL+SPL. Since this first stage bootloader requires to
+	align the TPL and SPL but also some weird hacks that is handled by mkimage
+	directly, binman is told to not perform the concatenation of datafiles prior
+	to passing the data to mkimage.
+
     To use CONFIG options in the arguments, use a string list instead, as in
     this example which also produces four arguments::
 
@@ -46,16 +68,27 @@ class Entry_mkimage(Entry):
     def __init__(self, section, etype, node):
         super().__init__(section, etype, node)
         self._args = fdt_util.GetArgs(self._node, 'args')
+        self._multiple_data_files = fdt_util.GetBool(self._node, 'multiple-data-files')
         self._mkimage_entries = OrderedDict()
         self.align_default = None
         self.ReadEntries()
 
     def ObtainContents(self):
         # Use a non-zero size for any fake files to keep mkimage happy
-        data, input_fname, uniq = self.collect_contents_to_file(
-            self._mkimage_entries.values(), 'mkimage', 1024)
-        if data is None:
-            return False
+        fake_size = 1024
+        if self._multiple_data_files:
+            fnames = []
+            uniq = self.GetUniqueName()
+            for entry in self._mkimage_entries.values():
+                if not entry.ObtainContents(fake_size=fake_size):
+                    return False
+                fnames.append(entry.GetDefaultFilename())
+            input_fname = ":".join(fnames)
+        else:
+            data, input_fname, uniq = self.collect_contents_to_file(
+                self._mkimage_entries.values(), 'mkimage', fake_size)
+            if data is None:
+                return False
         output_fname = tools.get_output_filename('mkimage-out.%s' % uniq)
         if self.mkimage.run_cmd('-d', input_fname, *self._args,
                                 output_fname) is not None:

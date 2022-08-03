@@ -1167,6 +1167,9 @@ Entry: mkimage: Binary produced by mkimage
 
 Properties / Entry arguments:
     - datafile: Filename for -d argument
+    - multiple-data-files: boolean to tell binman to pass all files as
+      datafiles to mkimage instead of creating a temporary file the result
+      of datafiles concatenation
     - args: Other arguments to pass
 
 The data passed to mkimage is collected from subnodes of the mkimage node,
@@ -1182,6 +1185,25 @@ e.g.::
 This calls mkimage to create an imximage with u-boot-spl.bin as the input
 file. The output from mkimage then becomes part of the image produced by
 binman.
+
+To pass all datafiles untouched to mkimage::
+
+    mkimage {
+        args = "-n rk3399 -T rkspi";
+        multiple-data-files;
+
+        u-boot-tpl {
+        };
+
+        u-boot-spl {
+        };
+    };
+
+This calls mkimage to create a Rockchip RK3399-specific first stage
+bootloader, made of TPL+SPL. Since this first stage bootloader requires to
+align the TPL and SPL but also some weird hacks that is handled by mkimage
+directly, binman is told to not perform the concatenation of datafiles prior
+to passing the data to mkimage.
 
 To use CONFIG options in the arguments, use a string list instead, as in
 this example which also produces four arguments::
