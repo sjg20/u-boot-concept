@@ -5703,6 +5703,12 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
             dts='234_replace_section_simple.dts')
         self.assertEqual(new_data, data)
 
+    def testMkimageFilename(self):
+        """Test using mkimage to build a binary with a filename"""
+        retcode = self._DoTestFile('235_mkimage_filename.dts')
+        self.assertEqual(0, retcode)
+        fname = tools.get_output_filename('mkimage-test.bin')
+        self.assertTrue(os.path.exists(fname))
 
 if __name__ == "__main__":
     unittest.main()
