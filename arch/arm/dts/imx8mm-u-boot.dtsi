@@ -28,53 +28,81 @@
 };
 
 &binman {
-	u-boot-spl-ddr {
-		align = <4>;
-		align-size = <4>;
-		filename = "u-boot-spl-ddr.bin";
-		pad-byte = <0xff>;
-
-		u-boot-spl {
-			align-end = <4>;
-			filename = "u-boot-spl.bin";
+	secure-boot {
+		filename = "secure-boot.bin";
+		type = "section";
+		/* Image Vector Table - not sure what goes in here */
+		vector_table: vector-table {
+			type = "fill";
+			size = <0x20>;
 		};
 
-		ddr-1d-imem-fw {
-			filename = "lpddr4_pmu_train_1d_imem.bin";
-			align-end = <4>;
-			type = "blob-ext";
+		/* Something in here? Fixed size? */
+		boot_data: boot-data {
+			type = "fill";
+			size = <0x20>;
 		};
 
-		ddr-1d-dmem-fw {
-			filename = "lpddr4_pmu_train_1d_dmem.bin";
-			align-end = <4>;
-			type = "blob-ext";
-		};
+		/* Starts at 0x40 - *entry */
+		ddr: u-boot-spl-ddr {
+			type = "section";
+			align = <4>;
+			align-size = <4>;
+			filename = "u-boot-spl-ddr.bin";
+			pad-byte = <0xff>;
 
-		ddr-2d-imem-fw {
-			filename = "lpddr4_pmu_train_2d_imem.bin";
-			align-end = <4>;
-			type = "blob-ext";
-		};
+			u-boot-spl {
+				align-end = <4>;
+				filename = "u-boot-spl.bin";
+			};
 
-		ddr-2d-dmem-fw {
-			filename = "lpddr4_pmu_train_2d_dmem.bin";
-			align-end = <4>;
-			type = "blob-ext";
-		};
-	};
+			ddr-1d-imem-fw {
+				filename = "lpddr4_pmu_train_1d_imem.bin";
+				align-end = <4>;
+				type = "blob-ext";
+			};
 
-	spl {
-		filename = "spl.bin";
+			ddr-1d-dmem-fw {
+				filename = "lpddr4_pmu_train_1d_dmem.bin";
+				align-end = <4>;
+				type = "blob-ext";
+			};
 
-		mkimage {
-			args = "-n spl/u-boot-spl.cfgout -T imx8mimage -e 0x7e1000";
+			ddr-2d-imem-fw {
+				filename = "lpddr4_pmu_train_2d_imem.bin";
+				align-end = <4>;
+				type = "blob-ext";
+			};
 
-			blob {
-				filename = "u-boot-spl-ddr.bin";
+			ddr-2d-dmem-fw {
+				filename = "lpddr4_pmu_train_2d_dmem.bin";
+				align-end = <4>;
+				type = "blob-ext";
 			};
 		};
+
+		spl: spl {
+			type = "section";
+			filename = "spl.bin";
+
+			/* need padding after this entry */
+			align-end = <0x10000>;
+
+			mkimage {
+				args = "-n spl/u-boot-spl.cfgout -T imx8mimage -e 0x7e1000";
+
+				blob {
+					filename = "u-boot-spl-ddr.bin";
+				};
+			};
+		};
+
+		imx8mm-csf {
+			content = <&vector_table &boot_data &ddr &spl>;
+                        align-end = <0x1000>;   /* padding? */
+		};
 	};
+
 
 	itb {
 		filename = "u-boot.itb";
