@@ -1944,7 +1944,7 @@ static int omap_hsmmc_of_to_plat(struct udevice *dev)
 
 	return 0;
 }
-#endif
+#endif /* OF_REAL */
 
 #ifdef CONFIG_BLK
 
