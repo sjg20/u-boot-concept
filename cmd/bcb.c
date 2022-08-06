@@ -121,7 +121,7 @@ static int __bcb_load(int devnum, const char *partp)
 	char *endp;
 	int part, ret;
 
-	desc = blk_get_devnum_by_type(IF_TYPE_MMC, devnum);
+	desc = blk_get_devnum_by_type(UCLASS_MMC, devnum);
 	if (!desc) {
 		ret = -ENODEV;
 		goto err_read_fail;
@@ -286,7 +286,7 @@ static int __bcb_store(void)
 	u64 cnt;
 	int ret;
 
-	desc = blk_get_devnum_by_type(IF_TYPE_MMC, bcb_dev);
+	desc = blk_get_devnum_by_type(UCLASS_MMC, bcb_dev);
 	if (!desc) {
 		ret = -ENODEV;
 		goto err;
