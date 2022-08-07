@@ -89,12 +89,15 @@
 				};
 			};
 		};
-#if 0
+
 		imx8mm-csf {
-			content = <&vector_table &boot_data &ddr &spl>;
+			content = <&vector_table &boot_data &spl>;
                         align-end = <0x1000>;   /* padding? */
 		};
-#endif
+
+		fdtmap {
+		};
+
 	};
 
 
