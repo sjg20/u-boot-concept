@@ -43,44 +43,6 @@
 			size = <0x20>;
 		};
 
-		/* Starts at 0x40 - *entry */
-		ddr: u-boot-spl-ddr {
-			type = "section";
-			align = <4>;
-			align-size = <4>;
-			filename = "u-boot-spl-ddr.bin";
-			pad-byte = <0xff>;
-
-			u-boot-spl {
-				align-end = <4>;
-				filename = "u-boot-spl.bin";
-			};
-
-			ddr-1d-imem-fw {
-				filename = "lpddr4_pmu_train_1d_imem.bin";
-				align-end = <4>;
-				type = "blob-ext";
-			};
-
-			ddr-1d-dmem-fw {
-				filename = "lpddr4_pmu_train_1d_dmem.bin";
-				align-end = <4>;
-				type = "blob-ext";
-			};
-
-			ddr-2d-imem-fw {
-				filename = "lpddr4_pmu_train_2d_imem.bin";
-				align-end = <4>;
-				type = "blob-ext";
-			};
-
-			ddr-2d-dmem-fw {
-				filename = "lpddr4_pmu_train_2d_dmem.bin";
-				align-end = <4>;
-				type = "blob-ext";
-			};
-		};
-
 		spl: spl {
 			type = "section";
 			filename = "spl.bin";
@@ -91,16 +53,48 @@
 			mkimage {
 				args = "-n spl/u-boot-spl.cfgout -T imx8mimage -e 0x7e1000";
 
-				blob {
-					filename = "u-boot-spl-ddr.bin";
+				section {
+// 					filename = "u-boot-spl-ddr.bin";
+					align = <4>;
+					align-size = <4>;
+					pad-byte = <0xff>;
+
+					u-boot-spl {
+						align-end = <4>;
+					};
+
+					ddr-1d-imem-fw {
+						filename = "lpddr4_pmu_train_1d_imem.bin";
+						align-end = <4>;
+						type = "blob-ext";
+					};
+
+					ddr-1d-dmem-fw {
+						filename = "lpddr4_pmu_train_1d_dmem.bin";
+						align-end = <4>;
+						type = "blob-ext";
+					};
+
+					ddr-2d-imem-fw {
+						filename = "lpddr4_pmu_train_2d_imem.bin";
+						align-end = <4>;
+						type = "blob-ext";
+					};
+
+					ddr-2d-dmem-fw {
+						filename = "lpddr4_pmu_train_2d_dmem.bin";
+						align-end = <4>;
+						type = "blob-ext";
+					};
 				};
 			};
 		};
-
+#if 0
 		imx8mm-csf {
 			content = <&vector_table &boot_data &ddr &spl>;
                         align-end = <0x1000>;   /* padding? */
 		};
+#endif
 	};
 
 
