@@ -11,6 +11,8 @@ features to produce new behaviours.
 
 
 
+.. _etype_atf_bl31:
+
 Entry: atf-bl31: ARM Trusted Firmware (ATF) BL31 blob
 -----------------------------------------------------
 
@@ -24,6 +26,8 @@ https://github.com/ARM-software/arm-trusted-firmware for more information
 about ATF.
 
 
+
+.. _etype_atf_fip:
 
 Entry: atf-fip: ARM Trusted Firmware's Firmware Image Package (FIP)
 -------------------------------------------------------------------
@@ -179,6 +183,8 @@ FIPs so that binman and other tools can access the entire image correctly.
 
 
 
+.. _etype_blob:
+
 Entry: blob: Arbitrary binary blob
 ----------------------------------
 
@@ -201,6 +207,8 @@ data.
 
 
 
+.. _etype_blob_dtb:
+
 Entry: blob-dtb: A blob that holds a device tree
 ------------------------------------------------
 
@@ -209,6 +217,8 @@ obtained from the list of available device-tree files, managed by the
 'state' module.
 
 
+
+.. _etype_blob_ext:
 
 Entry: blob-ext: Externally built binary blob
 ---------------------------------------------
@@ -223,6 +233,8 @@ See 'blob' for Properties / Entry arguments.
 
 
 
+.. _etype_blob_ext_list:
+
 Entry: blob-ext-list: List of externally built binary blobs
 -----------------------------------------------------------
 
@@ -236,6 +248,8 @@ Args:
     filenames: List of filenames to read and include
 
 
+
+.. _etype_blob_named_by_arg:
 
 Entry: blob-named-by-arg: A blob entry which gets its filename property from its subclass
 -----------------------------------------------------------------------------------------
@@ -255,6 +269,8 @@ See cros_ec_rw for an example of this.
 
 
 
+.. _etype_blob_phase:
+
 Entry: blob-phase: Section that holds a phase binary
 ----------------------------------------------------
 
@@ -263,6 +279,8 @@ when converting a 'u-boot' entry automatically into a 'u-boot-expanded'
 entry; similarly for SPL.
 
 
+
+.. _etype_cbfs:
 
 Entry: cbfs: Coreboot Filesystem (CBFS)
 ---------------------------------------
@@ -416,6 +434,8 @@ both of size 1MB.
 
 
 
+.. _etype_collection:
+
 Entry: collection: An entry which contains a collection of other entries
 ------------------------------------------------------------------------
 
@@ -432,6 +452,8 @@ a different section from this entry.
 
 
 
+.. _etype_cros_ec_rw:
+
 Entry: cros-ec-rw: A blob entry which contains a Chromium OS read-write EC image
 --------------------------------------------------------------------------------
 
@@ -442,6 +464,8 @@ This entry holds a Chromium OS EC (embedded controller) image, for use in
 updating the EC on startup via software sync.
 
 
+
+.. _etype_fdtmap:
 
 Entry: fdtmap: An entry which contains an FDT map
 -------------------------------------------------
@@ -491,6 +515,8 @@ without the fdtmap header, so it can be viewed with `fdtdump`.
 
 
 
+.. _etype_files:
+
 Entry: files: A set of files arranged in a section
 --------------------------------------------------
 
@@ -507,6 +533,8 @@ at run-time so you can obtain the file positions.
 
 
 
+.. _etype_fill:
+
 Entry: fill: An entry which is filled to a particular byte value
 ----------------------------------------------------------------
 
@@ -522,6 +550,8 @@ that byte. But this entry is sometimes useful for explicitly setting the
 byte value of a region.
 
 
+
+.. _etype_fit:
 
 Entry: fit: Flat Image Tree (FIT)
 ---------------------------------
@@ -806,6 +836,8 @@ U-Boot SPL can then load the firmware (U-Boot proper) and all the loadables
 
 
 
+.. _etype_fmap:
+
 Entry: fmap: An entry which contains an Fmap section
 ----------------------------------------------------
 
@@ -831,6 +863,8 @@ CBFS entries appear as a single entry, i.e. the sub-entries are ignored.
 
 
 
+.. _etype_gbb:
+
 Entry: gbb: An entry which contains a Chromium OS Google Binary Block
 ---------------------------------------------------------------------
 
@@ -849,6 +883,8 @@ but note that the page dates from 2013 so is quite out of date. See
 README.chromium for how to obtain the required keys and tools.
 
 
+
+.. _etype_image_header:
 
 Entry: image-header: An entry which contains a pointer to the FDT map
 ---------------------------------------------------------------------
@@ -869,6 +905,8 @@ first/last in the entry list.
 
 
 
+.. _etype_intel_cmc:
+
 Entry: intel-cmc: Intel Chipset Micro Code (CMC) file
 -----------------------------------------------------
 
@@ -881,6 +919,8 @@ example filename is 'Microcode/C0_22211.BIN'.
 See README.x86 for information about x86 binary blobs.
 
 
+
+.. _etype_intel_descriptor:
 
 Entry: intel-descriptor: Intel flash descriptor block (4KB)
 -----------------------------------------------------------
@@ -903,6 +943,8 @@ See README.x86 for information about x86 binary blobs.
 
 
 
+.. _etype_intel_fit:
+
 Entry: intel-fit: Intel Firmware Image Table (FIT)
 --------------------------------------------------
 
@@ -914,6 +956,8 @@ At present binman only supports a basic FIT with no microcode.
 
 
 
+.. _etype_intel_fit_ptr:
+
 Entry: intel-fit-ptr: Intel Firmware Image Table (FIT) pointer
 --------------------------------------------------------------
 
@@ -921,6 +965,8 @@ This entry contains a pointer to the FIT. It is required to be at address
 0xffffffc0 in the image.
 
 
+
+.. _etype_intel_fsp:
 
 Entry: intel-fsp: Intel Firmware Support Package (FSP) file
 -----------------------------------------------------------
@@ -939,6 +985,8 @@ See README.x86 for information about x86 binary blobs.
 
 
 
+.. _etype_intel_fsp_m:
+
 Entry: intel-fsp-m: Intel Firmware Support Package (FSP) memory init
 --------------------------------------------------------------------
 
@@ -955,6 +1003,8 @@ An example filename is 'fsp_m.bin'
 See README.x86 for information about x86 binary blobs.
 
 
+
+.. _etype_intel_fsp_s:
 
 Entry: intel-fsp-s: Intel Firmware Support Package (FSP) silicon init
 ---------------------------------------------------------------------
@@ -973,6 +1023,8 @@ See README.x86 for information about x86 binary blobs.
 
 
 
+.. _etype_intel_fsp_t:
+
 Entry: intel-fsp-t: Intel Firmware Support Package (FSP) temp ram init
 ----------------------------------------------------------------------
 
@@ -988,6 +1040,8 @@ An example filename is 'fsp_t.bin'
 See README.x86 for information about x86 binary blobs.
 
 
+
+.. _etype_intel_ifwi:
 
 Entry: intel-ifwi: Intel Integrated Firmware Image (IFWI) file
 --------------------------------------------------------------
@@ -1023,6 +1077,8 @@ See README.x86 for information about x86 binary blobs.
 
 
 
+.. _etype_intel_me:
+
 Entry: intel-me: Intel Management Engine (ME) file
 --------------------------------------------------
 
@@ -1043,6 +1099,8 @@ See README.x86 for information about x86 binary blobs.
 
 
 
+.. _etype_intel_mrc:
+
 Entry: intel-mrc: Intel Memory Reference Code (MRC) file
 --------------------------------------------------------
 
@@ -1056,6 +1114,8 @@ is 'mrc.bin'.
 See README.x86 for information about x86 binary blobs.
 
 
+
+.. _etype_intel_refcode:
 
 Entry: intel-refcode: Intel Reference Code file
 -----------------------------------------------
@@ -1071,6 +1131,8 @@ See README.x86 for information about x86 binary blobs.
 
 
 
+.. _etype_intel_vbt:
+
 Entry: intel-vbt: Intel Video BIOS Table (VBT) file
 ---------------------------------------------------
 
@@ -1083,6 +1145,8 @@ some Intel SoCs. U-Boot executes this when the display is started up.
 See README.x86 for information about Intel binary blobs.
 
 
+
+.. _etype_intel_vga:
 
 Entry: intel-vga: Intel Video Graphics Adaptor (VGA) file
 ---------------------------------------------------------
@@ -1098,6 +1162,8 @@ This is similar to the VBT file but in a different format.
 See README.x86 for information about Intel binary blobs.
 
 
+
+.. _etype_mkimage:
 
 Entry: mkimage: Binary produced by mkimage
 ------------------------------------------
@@ -1118,12 +1184,12 @@ mkimage node, e.g.::
     };
 
 This calls mkimage to create an imximage with `u-boot-spl.bin` as the data
-file, which mkimage being called like this::
+file, with mkimage being called like this::
 
     mkimage -d <data_file> -n test -T imximage <output_file>
 
 The output from mkimage then becomes part of the image produced by
-binman. If you need to put mulitple things in the data file, you can use
+binman. If you need to put multiple things in the data file, you can use
 a section, or just multiple subnodes like this::
 
     mkimage {
@@ -1135,6 +1201,9 @@ a section, or just multiple subnodes like this::
         u-boot-tpl {
         };
     };
+
+Note that binman places the contents (here SPL and TPL) into a single file
+and passes that to mkimage using the -d option.
 
 To use CONFIG options in the arguments, use a string list instead, as in
 this example which also produces four arguments::
@@ -1151,16 +1220,17 @@ the 'data-to-imagename' property::
 
     mkimage {
         args = "-T imximage";
-        data-to-imagename';
+        data-to-imagename;
 
         u-boot-spl {
         };
     };
 
 That will pass the data to mkimage both as the data file (with -d) and as
-the image name (with -n).
+the image name (with -n). In both cases, a filename is passed as the
+argument, with the actual data being in that file.
 
-If need to pass different data in with -n, then use an imagename subnode::
+If need to pass different data in with -n, then use an `imagename` subnode::
 
     mkimage {
         args = "-T imximage";
@@ -1180,6 +1250,8 @@ This will pass in u-boot-spl as the input data and the .cfgout file as the
 
 
 
+.. _etype_opensbi:
+
 Entry: opensbi: RISC-V OpenSBI fw_dynamic blob
 ----------------------------------------------
 
@@ -1193,6 +1265,8 @@ https://github.com/riscv/opensbi for more information about OpenSBI.
 
 
 
+.. _etype_powerpc_mpc85xx_bootpg_resetvec:
+
 Entry: powerpc-mpc85xx-bootpg-resetvec: PowerPC mpc85xx bootpg + resetvec code for U-Boot
 -----------------------------------------------------------------------------------------
 
@@ -1204,6 +1278,8 @@ This entry is valid for PowerPC mpc85xx cpus. This entry holds
 placed at offset 'RESET_VECTOR_ADDRESS - 0xffc'.
 
 
+
+.. _etype_pre_load:
 
 Entry: pre-load: Pre load image header
 --------------------------------------
@@ -1244,6 +1320,8 @@ For example, this creates an image with a pre-load header and a binary::
 
 
 
+.. _etype_scp:
+
 Entry: scp: System Control Processor (SCP) firmware blob
 --------------------------------------------------------
 
@@ -1253,6 +1331,8 @@ Properties / Entry arguments:
 This entry holds firmware for an external platform-specific coprocessor.
 
 
+
+.. _etype_section:
 
 Entry: section: Entry that contains other entries
 -------------------------------------------------
@@ -1389,6 +1469,8 @@ available. This is set by the `SetAllowMissing()` method, if
 
 
 
+.. _etype_tee_os:
+
 Entry: tee-os: Entry containing an OP-TEE Trusted OS (TEE) blob
 ---------------------------------------------------------------
 
@@ -1401,6 +1483,8 @@ See the U-Boot README for your architecture or board for how to use it. See
 https://github.com/OP-TEE/optee_os for more information about OP-TEE.
 
 
+
+.. _etype_text:
 
 Entry: text: An entry which contains text
 -----------------------------------------
@@ -1450,6 +1534,8 @@ by setting the size of the entry to something larger than the text.
 
 
 
+.. _etype_u_boot:
+
 Entry: u-boot: U-Boot flat binary
 ---------------------------------
 
@@ -1471,6 +1557,8 @@ Note that this entry is automatically replaced with u-boot-expanded unless
 
 
 
+.. _etype_u_boot_dtb:
+
 Entry: u-boot-dtb: U-Boot device tree
 -------------------------------------
 
@@ -1485,6 +1573,8 @@ Note: This is mostly an internal entry type, used by others. This allows
 binman to know which entries contain a device tree.
 
 
+
+.. _etype_u_boot_dtb_with_ucode:
 
 Entry: u-boot-dtb-with-ucode: A U-Boot device tree file, with the microcode removed
 -----------------------------------------------------------------------------------
@@ -1502,6 +1592,8 @@ it available to u-boot-ucode.
 
 
 
+.. _etype_u_boot_elf:
+
 Entry: u-boot-elf: U-Boot ELF image
 -----------------------------------
 
@@ -1513,6 +1605,8 @@ relocated to any address for execution.
 
 
 
+.. _etype_u_boot_env:
+
 Entry: u-boot-env: An entry which contains a U-Boot environment
 ---------------------------------------------------------------
 
@@ -1521,6 +1615,8 @@ Properties / Entry arguments:
         form var=value
 
 
+
+.. _etype_u_boot_expanded:
 
 Entry: u-boot-expanded: U-Boot flat binary broken out into its component parts
 ------------------------------------------------------------------------------
@@ -1537,6 +1633,8 @@ image, so that the entries positions are provided to the running U-Boot.
 
 
 
+.. _etype_u_boot_img:
+
 Entry: u-boot-img: U-Boot legacy image
 --------------------------------------
 
@@ -1551,6 +1649,8 @@ applications.
 
 
 
+.. _etype_u_boot_nodtb:
+
 Entry: u-boot-nodtb: U-Boot flat binary without device tree appended
 --------------------------------------------------------------------
 
@@ -1564,6 +1664,8 @@ entry after this one, or use a u-boot entry instead, normally expands to a
 section containing u-boot and u-boot-dtb
 
 
+
+.. _etype_u_boot_spl:
 
 Entry: u-boot-spl: U-Boot SPL binary
 ------------------------------------
@@ -1592,6 +1694,8 @@ unless --no-expanded is used or the node has a 'no-expanded' property.
 
 
 
+.. _etype_u_boot_spl_bss_pad:
+
 Entry: u-boot-spl-bss-pad: U-Boot SPL binary padded with a BSS region
 ---------------------------------------------------------------------
 
@@ -1614,6 +1718,8 @@ binman uses that to look up the BSS address.
 
 
 
+.. _etype_u_boot_spl_dtb:
+
 Entry: u-boot-spl-dtb: U-Boot SPL device tree
 ---------------------------------------------
 
@@ -1626,6 +1732,8 @@ to activate.
 
 
 
+.. _etype_u_boot_spl_elf:
+
 Entry: u-boot-spl-elf: U-Boot SPL ELF image
 -------------------------------------------
 
@@ -1636,6 +1744,8 @@ This is the U-Boot SPL ELF image. It does not include a device tree but can
 be relocated to any address for execution.
 
 
+
+.. _etype_u_boot_spl_expanded:
 
 Entry: u-boot-spl-expanded: U-Boot SPL flat binary broken out into its component parts
 --------------------------------------------------------------------------------------
@@ -1659,6 +1769,8 @@ This entry is selected based on the value of the 'spl-dtb' entryarg. If
 this is non-empty (and not 'n' or '0') then this expanded entry is selected.
 
 
+
+.. _etype_u_boot_spl_nodtb:
 
 Entry: u-boot-spl-nodtb: SPL binary without device tree appended
 ----------------------------------------------------------------
@@ -1684,6 +1796,8 @@ binman uses that to look up symbols to write into the SPL binary.
 
 
 
+.. _etype_u_boot_spl_with_ucode_ptr:
+
 Entry: u-boot-spl-with-ucode-ptr: U-Boot SPL with embedded microcode pointer
 ----------------------------------------------------------------------------
 
@@ -1693,6 +1807,8 @@ See Entry_u_boot_ucode for full details of the entries involved in this
 process.
 
 
+
+.. _etype_u_boot_tpl:
 
 Entry: u-boot-tpl: U-Boot TPL binary
 ------------------------------------
@@ -1721,6 +1837,8 @@ unless --no-expanded is used or the node has a 'no-expanded' property.
 
 
 
+.. _etype_u_boot_tpl_bss_pad:
+
 Entry: u-boot-tpl-bss-pad: U-Boot TPL binary padded with a BSS region
 ---------------------------------------------------------------------
 
@@ -1743,6 +1861,8 @@ binman uses that to look up the BSS address.
 
 
 
+.. _etype_u_boot_tpl_dtb:
+
 Entry: u-boot-tpl-dtb: U-Boot TPL device tree
 ---------------------------------------------
 
@@ -1755,6 +1875,8 @@ to activate.
 
 
 
+.. _etype_u_boot_tpl_dtb_with_ucode:
+
 Entry: u-boot-tpl-dtb-with-ucode: U-Boot TPL with embedded microcode pointer
 ----------------------------------------------------------------------------
 
@@ -1764,6 +1886,8 @@ See Entry_u_boot_ucode for full details of the entries involved in this
 process.
 
 
+
+.. _etype_u_boot_tpl_elf:
 
 Entry: u-boot-tpl-elf: U-Boot TPL ELF image
 -------------------------------------------
@@ -1775,6 +1899,8 @@ This is the U-Boot TPL ELF image. It does not include a device tree but can
 be relocated to any address for execution.
 
 
+
+.. _etype_u_boot_tpl_expanded:
 
 Entry: u-boot-tpl-expanded: U-Boot TPL flat binary broken out into its component parts
 --------------------------------------------------------------------------------------
@@ -1798,6 +1924,8 @@ This entry is selected based on the value of the 'tpl-dtb' entryarg. If
 this is non-empty (and not 'n' or '0') then this expanded entry is selected.
 
 
+
+.. _etype_u_boot_tpl_nodtb:
 
 Entry: u-boot-tpl-nodtb: TPL binary without device tree appended
 ----------------------------------------------------------------
@@ -1823,6 +1951,8 @@ binman uses that to look up symbols to write into the TPL binary.
 
 
 
+.. _etype_u_boot_tpl_with_ucode_ptr:
+
 Entry: u-boot-tpl-with-ucode-ptr: U-Boot TPL with embedded microcode pointer
 ----------------------------------------------------------------------------
 
@@ -1830,6 +1960,8 @@ See Entry_u_boot_ucode for full details of the entries involved in this
 process.
 
 
+
+.. _etype_u_boot_ucode:
 
 Entry: u-boot-ucode: U-Boot microcode block
 -------------------------------------------
@@ -1881,6 +2013,8 @@ Entry types that have a part to play in handling microcode:
 
 
 
+.. _etype_u_boot_with_ucode_ptr:
+
 Entry: u-boot-with-ucode-ptr: U-Boot with embedded microcode pointer
 --------------------------------------------------------------------
 
@@ -1896,6 +2030,8 @@ microcode, to allow early x86 boot code to find it without doing anything
 complicated. Otherwise it is the same as the u-boot entry.
 
 
+
+.. _etype_vblock:
 
 Entry: vblock: An entry which contains a Chromium OS verified boot block
 ------------------------------------------------------------------------
@@ -1920,6 +2056,8 @@ and kernel are genuine.
 
 
 
+.. _etype_x86_reset16:
+
 Entry: x86-reset16: x86 16-bit reset code for U-Boot
 ----------------------------------------------------
 
@@ -1935,6 +2073,8 @@ for jumping to the x86-start16 code, which continues execution.
 For 64-bit U-Boot, the 'x86_reset16_spl' entry type is used instead.
 
 
+
+.. _etype_x86_reset16_spl:
 
 Entry: x86-reset16-spl: x86 16-bit reset code for U-Boot
 --------------------------------------------------------
@@ -1952,6 +2092,8 @@ For 32-bit U-Boot, the 'x86_reset_spl' entry type is used instead.
 
 
 
+.. _etype_x86_reset16_tpl:
+
 Entry: x86-reset16-tpl: x86 16-bit reset code for U-Boot
 --------------------------------------------------------
 
@@ -1967,6 +2109,8 @@ for jumping to the x86-start16 code, which continues execution.
 For 32-bit U-Boot, the 'x86_reset_tpl' entry type is used instead.
 
 
+
+.. _etype_x86_start16:
 
 Entry: x86-start16: x86 16-bit start-up code for U-Boot
 -------------------------------------------------------
@@ -1986,6 +2130,8 @@ For 64-bit U-Boot, the 'x86_start16_spl' entry type is used instead.
 
 
 
+.. _etype_x86_start16_spl:
+
 Entry: x86-start16-spl: x86 16-bit start-up code for SPL
 --------------------------------------------------------
 
@@ -2003,6 +2149,8 @@ U-Boot).
 For 32-bit U-Boot, the 'x86-start16' entry type is used instead.
 
 
+
+.. _etype_x86_start16_tpl:
 
 Entry: x86-start16-tpl: x86 16-bit start-up code for TPL
 --------------------------------------------------------
