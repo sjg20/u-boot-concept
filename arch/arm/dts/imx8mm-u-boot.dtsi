@@ -31,18 +31,6 @@
 	secure-boot {
 		filename = "secure-boot.bin";
 		type = "section";
-		/* Image Vector Table - not sure what goes in here */
-		vector_table: vector-table {
-			type = "fill";
-			size = <0x20>;
-		};
-
-		/* Something in here? Fixed size? */
-		boot_data: boot-data {
-			type = "fill";
-			size = <0x20>;
-		};
-
 		spl: spl {
 			type = "section";
 			filename = "spl.bin";
