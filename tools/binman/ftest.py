@@ -5266,7 +5266,8 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
 
     def testPadding(self):
         """Test padding of compression algorithms"""
-        for algo in comp_util.COMPRESSIONS:
+        # Skip zstd because it doesn't support padding
+        for algo in [a for a in comp_util.COMPRESSIONS if a != 'zstd']:
             data = comp_util.compress(COMPRESS_DATA, algo)
             data = data + bytes([0]) * 64
             orig = comp_util.decompress(data, algo)
