@@ -11,7 +11,7 @@ from binman import bintool
 from patman import tools
 
 # Supported compressions
-COMPRESSIONS = ['lz4', 'lzma']
+COMPRESSIONS = ['bzip2', 'lz4', 'lzma']
 
 bintools = {}
 
@@ -34,12 +34,12 @@ def compress(indata, algo):
     Note that for lzma this uses an old version of the algorithm, not that
     provided by xz.
 
-    This requires 'lz4' and 'lzma_alone' tools. It also requires an output
-    directory to be previously set up, by calling PrepareOutputDir().
+    This requires 'bzip2', 'lz4' and 'lzma_alone' tools. It also requires an
+    output directory to be previously set up, by calling PrepareOutputDir().
 
     Args:
         indata (bytes): Input data to compress
-        algo (str): Algorithm to use ('none', 'lz4' or 'lzma')
+        algo (str): Algorithm to use ('none', 'bzip2', 'lz4' or 'lzma')
 
     Returns:
         bytes: Compressed data
@@ -60,12 +60,12 @@ def decompress(indata, algo):
     Note that for lzma this uses an old version of the algorithm, not that
     provided by xz.
 
-    This requires 'lz4' and 'lzma_alone' tools. It also requires an output
-    directory to be previously set up, by calling PrepareOutputDir().
+    This requires 'bzip2', 'lz4' and 'lzma_alone' tools. It also requires an
+    output directory to be previously set up, by calling PrepareOutputDir().
 
     Args:
         indata (bytes): Input data to decompress
-        algo (str): Algorithm to use ('none', 'lz4' or 'lzma')
+        algo (str): Algorithm to use ('none', 'bzip2', 'lz4' or 'lzma')
 
     Returns:
         (bytes) Compressed data
