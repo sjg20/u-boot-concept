@@ -50,7 +50,7 @@ class TestCbfs(unittest.TestCase):
         cls.cbfstool = bintool.Bintool.create('cbfstool')
         cls.have_cbfstool = cls.cbfstool.is_present()
 
-        cls.have_lz4 = comp_util.HAVE_LZ4
+        cls.have_lz4 = comp_util.is_present('lz4')
 
     @classmethod
     def tearDownClass(cls):

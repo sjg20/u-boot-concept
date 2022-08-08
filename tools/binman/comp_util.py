@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0+
 # Copyright 2022 Google LLC
+# Copyright (C) 2022 Weidmüller Interface GmbH & Co. KG
+# Stefan Herbrechtsmeier <stefan.herbrechtsmeier@weidmueller.com>
 #
 """Utilities to compress and decompress data"""
 
@@ -8,12 +10,23 @@ import tempfile
 from binman import bintool
 from patman import tools
 
-LZ4 = bintool.Bintool.create('lz4')
-HAVE_LZ4 = LZ4.is_present()
+# Supported compressions
+COMPRESSIONS = ['lz4', 'lzma']
 
-LZMA_ALONE = bintool.Bintool.create('lzma_alone')
-HAVE_LZMA_ALONE = LZMA_ALONE.is_present()
+bintools = {}
 
+def _get_tool_name(algo):
+    names = {'lzma': 'lzma_alone'}
+    return names.get(algo, algo)
+
+def _get_tool(algo):
+    global bintools
+    name = _get_tool_name(algo)
+    tool = bintools.get(name)
+    if not tool:
+        tool = bintool.Bintool.create(name)
+        bintools[name] = tool
+    return tool
 
 def compress(indata, algo):
     """Compress some data using a given algorithm
@@ -33,13 +46,12 @@ def compress(indata, algo):
     """
     if algo == 'none':
         return indata
-    if algo == 'lz4':
-        data = LZ4.compress(indata)
-    # cbfstool uses a very old version of lzma
-    elif algo == 'lzma':
-        data = LZMA_ALONE.compress(indata)
-    else:
+    if algo not in COMPRESSIONS:
         raise ValueError("Unknown algorithm '%s'" % algo)
+
+    tool = _get_tool(algo)
+    data = tool.compress(indata)
+
     return data
 
 def decompress(indata, algo):
@@ -60,10 +72,14 @@ def decompress(indata, algo):
     """
     if algo == 'none':
         return indata
-    if algo == 'lz4':
-        data = LZ4.decompress(indata)
-    elif algo == 'lzma':
-        data = LZMA_ALONE.decompress(indata)
-    else:
+    if algo not in COMPRESSIONS:
         raise ValueError("Unknown algorithm '%s'" % algo)
+
+    tool = _get_tool(algo)
+    data = tool.decompress(indata)
+
     return data
+
+def is_present(algo):
+     tool = _get_tool(algo)
+     return tool.is_present()
