@@ -2536,6 +2536,28 @@ class TestFunctional(unittest.TestCase):
             }
         self.assertEqual(expected, props)
 
+    def testCompressPrependLengthDtb(self):
+        """Test that compress of device-tree files with length header is
+        supported
+        """
+        data = self.data = self._DoReadFileRealDtb('235_compress_prepend_length_dtb.dts')
+        self.assertEqual(U_BOOT_DATA, data[:len(U_BOOT_DATA)])
+        dtb_data = data[len(U_BOOT_DATA):]
+        comp_data_len = struct.unpack('<I', dtb_data[:4])[0]
+        comp_data = dtb_data[4:4 + comp_data_len]
+        orig = self._decompress(comp_data)
+        dtb = fdt.Fdt.FromData(orig)
+        dtb.Scan()
+        props = self._GetPropTree(dtb, ['size', 'uncomp-size'])
+        expected = {
+            'u-boot:size': len(U_BOOT_DATA),
+            'u-boot-dtb:uncomp-size': len(orig),
+            'u-boot-dtb:size': len(dtb_data),
+            'size': len(data),
+            }
+        self.assertEqual(expected, props)
+
+
     def testCbfsUpdateFdt(self):
         """Test that we can update the device tree with CBFS offset/size info"""
         self._CheckLz4()
@@ -2856,7 +2878,7 @@ class TestFunctional(unittest.TestCase):
     def testExtractCbfsRaw(self):
         """Test extracting CBFS compressed data without decompressing it"""
         data = self._RunExtractCmd('section/cbfs/u-boot-dtb', decomp=False)
-        dtb = comp_util.decompress(data, 'lzma', with_header=False)
+        dtb = comp_util.decompress(data, 'lzma')
         self.assertEqual(EXTRACT_DTB_SIZE, len(dtb))
 
     def testExtractBadEntry(self):
@@ -4427,15 +4449,17 @@ class TestFunctional(unittest.TestCase):
         rest = base[len(U_BOOT_DATA):]
 
         # Check compressed data
-        section1 = self._decompress(rest)
         expect1 = comp_util.compress(COMPRESS_DATA + U_BOOT_DATA, 'lz4')
-        self.assertEquals(expect1, rest[:len(expect1)])
+        data1 = rest[:len(expect1)]
+        section1 = self._decompress(data1)
+        self.assertEquals(expect1, data1)
         self.assertEquals(COMPRESS_DATA + U_BOOT_DATA, section1)
         rest1 = rest[len(expect1):]
 
-        section2 = self._decompress(rest1)
         expect2 = comp_util.compress(COMPRESS_DATA + COMPRESS_DATA, 'lz4')
-        self.assertEquals(expect2, rest1[:len(expect2)])
+        data2 = rest1[:len(expect2)]
+        section2 = self._decompress(data2)
+        self.assertEquals(expect2, data2)
         self.assertEquals(COMPRESS_DATA + COMPRESS_DATA, section2)
         rest2 = rest1[len(expect2):]
 

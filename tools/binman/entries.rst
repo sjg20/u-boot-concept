@@ -208,6 +208,10 @@ This is a blob containing a device tree. The contents of the blob are
 obtained from the list of available device-tree files, managed by the
 'state' module.
 
+Additional Properties / Entry arguments:
+    - prepend: Header type to use:
+        none: No header
+        length: 32-bit length header
 
 
 Entry: blob-ext: Externally built binary blob

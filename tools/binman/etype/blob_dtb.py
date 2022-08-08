@@ -7,6 +7,8 @@
 
 from binman.entry import Entry
 from binman.etype.blob import Entry_blob
+from dtoc import fdt_util
+import struct
 
 # This is imported if needed
 state = None
@@ -17,6 +19,9 @@ class Entry_blob_dtb(Entry_blob):
     This is a blob containing a device tree. The contents of the blob are
     obtained from the list of available device-tree files, managed by the
     'state' module.
+
+    Additional attributes:
+        prepend: Header used (e.g. 'length'), 'none' if none
     """
     def __init__(self, section, etype, node):
         # Put this here to allow entry-docs and help to work without libfdt
@@ -24,6 +29,12 @@ class Entry_blob_dtb(Entry_blob):
         from binman import state
 
         super().__init__(section, etype, node)
+
+        self.prepend = 'none'
+
+    def ReadNode(self):
+        super().ReadNode()
+        self.prepend = fdt_util.GetString(self._node, 'prepend', 'none')
 
     def ObtainContents(self):
         """Get the device-tree from the list held by the 'state' module"""
@@ -35,6 +46,9 @@ class Entry_blob_dtb(Entry_blob):
         """Re-read the DTB contents so that we get any calculated properties"""
         _, indata = state.GetFdtContents(self.GetFdtEtype())
         data = self.CompressData(indata)
+        if self.prepend == 'length':
+            hdr = struct.pack('<I', len(data))
+            data = hdr + data
         return self.ProcessContentsUpdate(data)
 
     def GetFdtEtype(self):
@@ -49,6 +63,13 @@ class Entry_blob_dtb(Entry_blob):
     def GetFdts(self):
         fname = self.GetDefaultFilename()
         return {self.GetFdtEtype(): [self, fname]}
+
+    def ReadData(self, decomp=True, alt_format=None):
+        data = super().ReadData(decomp, alt_format)
+        if self.prepend == 'length':
+            data_len = struct.unpack('<I', data[:4])[0]
+            data = data[4:4 + data_len]
+        return data
 
     def WriteData(self, data, decomp=True):
         ok = super().WriteData(data, decomp)
