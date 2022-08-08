@@ -5248,6 +5248,30 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
             comp_util.decompress(b'1234', 'invalid')
         self.assertIn("Unknown algorithm 'invalid'", str(e.exception))
 
+    def testCompressions(self):
+        """Test compression algorithms"""
+        for algo in comp_util.COMPRESSIONS:
+            data = comp_util.compress(COMPRESS_DATA, algo)
+            self.assertNotEqual(COMPRESS_DATA, data)
+            orig = comp_util.decompress(data, algo)
+            self.assertEquals(COMPRESS_DATA, orig)
+
+    def testVersions(self):
+        """Test tool version of compression algorithms"""
+        for algo in comp_util.COMPRESSIONS:
+            tool = comp_util._get_tool(algo)
+            version = tool.version()
+            print('%s - %s' % (algo, version))
+            self.assertRegex(version, '^v?[0-9]+[0-9.]*')
+
+    def testPadding(self):
+        """Test padding of compression algorithms"""
+        for algo in comp_util.COMPRESSIONS:
+            data = comp_util.compress(COMPRESS_DATA, algo)
+            data = data + bytes([0]) * 64
+            orig = comp_util.decompress(data, algo)
+            self.assertEquals(COMPRESS_DATA, orig)
+
     def testBintoolDocs(self):
         """Test for creation of bintool documentation"""
         with test_util.capture_sys_output() as (stdout, stderr):
