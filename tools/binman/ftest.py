@@ -5739,6 +5739,7 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
         # Check that the image name is set to the temporary filename used
         self.assertEqual(expect.encode('utf-8')[:0x20], name)
 
+<<<<<<< HEAD
     def testMkimageImage(self):
         """Test using mkimage with -n holding the data too"""
         data = self._DoReadFile('236_mkimage_image.dts')
@@ -5772,6 +5773,26 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
             self._DoReadFile('238_mkimage_image_bad.dts')
         self.assertIn('Cannot use both imagename node and data-to-imagename',
                       str(exc.exception))
+
+    def testImxCfg(self):
+        """Test an img-cfg etype"""
+        self._DoTestFile('235_imx_cfg.dts', allow_missing=True)
+
+    def testImxCfgMissing(self):
+        """Test an img-cfg with missing external blobs"""
+        self._DoTestFile('236_imx_cfg_missing.dts', allow_missing=True)
+
+    def testImxCfgFake(self):
+        """Test an img-cfg with missing faked external blobs"""
+        self._DoTestFile('236_imx_cfg_missing.dts', allow_missing=True,
+                         allow_fake_blobs=True)
+        image = control.images['image']
+        image_fname = tools.get_output_filename('image.bin')
+        data = tools.read_file(image_fname)
+        self.assertRegex(data, b'BOOT_FROM SD\nLOADER .* 0x1234')
+
+        #self.assertIn("Filename 'missing-file' not found in input path",
+                      #str(e.exception))
 
 
 if __name__ == "__main__":

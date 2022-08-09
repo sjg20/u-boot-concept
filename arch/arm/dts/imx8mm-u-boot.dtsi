@@ -35,22 +35,24 @@
 
 		secure-boot {
 			type = "section";
-			spl: spl {
-				type = "section";
-				filename = "spl.bin";
 
-				/* need padding after this entry */
-				align-end = <0x10000>;
+			/* need padding after this entry */
+			align-end = <0x10000>;
 
-				mkimage {
-					args = "-n spl/u-boot-spl.cfgout -T imx8mimage -e 0x7e1000";
+			mkimage {
+				args = "-T imx8mimage -e 0x7e1000";
+				data-to-imagename;
+
+				imx-cfg {
+					boot-from = "sd";
+					boot-addr = <0x731000>;
 
 					section {
 						align = <4>;
 						align-size = <4>;
 						pad-byte = <0xff>;
 
-						u-boot-spl {
+						spl: u-boot-spl {
 							align-end = <4>;
 						};
 
@@ -151,15 +153,15 @@
 					};
 				};
 			};
+		};
 
-			fdtmap {
-			};
+		fdtmap {
 		};
 	};
 
 	/* dummy - not used */
 	dummy {
-		filename = "flash.bin";
+		filename = "dummy.bin";
 		pad-byte = <0x00>;
 
 #ifdef CONFIG_FSPI_CONF_HEADER

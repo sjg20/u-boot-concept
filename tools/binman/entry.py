@@ -684,6 +684,18 @@ class Entry(object):
         """
         return None
 
+    def FindEntryByNode(self, find_node):
+        entries = self.GetEntries()
+        if entries:
+            for entry in entries.values():
+                if entry._node == find_node:
+                    return entry
+                found = entry.FindEntryByNode(find_node)
+                if found:
+                    return found
+
+        return None
+
     def GetArg(self, name, datatype=str):
         """Get the value of an entry argument or device-tree-node property
 

@@ -144,6 +144,12 @@ class Entry_mkimage(Entry):
 
         return True
 
+    def GetEntries(self):
+        entries = self._mkimage_entries
+        if self._imagename:
+            entries.append(self._imagename)
+        return entries
+
     def SetAllowMissing(self, allow_missing):
         """Set whether a section allows missing external blobs
 
