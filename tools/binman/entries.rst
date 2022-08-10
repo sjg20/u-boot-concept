@@ -1157,6 +1157,24 @@ the 'data-to-imagename' property::
 That will pass the data to mkimage both as the data file (with -d) and as
 the image name (with -n).
 
+If need to pass different data in with -n, then use an imagename subnode::
+
+    mkimage {
+        args = "-T imximage";
+
+        imagename {
+            blob {
+                filename = "spl/u-boot-spl.cfgout"
+            };
+        };
+
+        u-boot-spl {
+        };
+    };
+
+This will pass in u-boot-spl as the input data and the .cfgout file as the
+-n data.
+
 
 
 Entry: opensbi: RISC-V OpenSBI fw_dynamic blob
