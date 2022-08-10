@@ -26,8 +26,7 @@ class Entry_fill(Entry):
 
     def ReadNode(self):
         super().ReadNode()
-        if self.size is None:
-            self.Raise("'fill' entry must have a size property")
+        self.ensure_props(['size'])
         self.fill_value = fdt_util.GetByte(self._node, 'fill-byte', 0)
 
     def ObtainContents(self):

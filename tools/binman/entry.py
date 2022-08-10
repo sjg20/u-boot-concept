@@ -1179,3 +1179,19 @@ features to produce new behaviours.
         if not os.path.exists(cls.fake_dir):
             os.mkdir(cls.fake_dir)
         tout.notice(f"Fake-blob dir is '{cls.fake_dir}'")
+
+    def ensure_props(self, prop_list):
+        """Raise an exception if properties are missing
+
+        Args:
+            prop_list (list of str): List of properties to check for
+
+        Raises:
+            ValueError: Any property is missing
+        """
+        not_present = []
+        for prop in prop_list:
+            if not prop in self._node.props:
+                not_present.append(prop)
+        if not_present:
+            self.Raise(f"'{self.etype}' entry is missing properties: {' '.join(not_present)}")
