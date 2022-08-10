@@ -1100,11 +1100,10 @@ Entry: mkimage: Binary produced by mkimage
 ------------------------------------------
 
 Properties / Entry arguments:
-    - datafile: Filename for -d argument
-    - args: Other arguments to pass
+    - args: Arguments to pass
 
-The data passed to mkimage is collected from subnodes of the mkimage node,
-e.g.::
+The data passed to mkimage via the -d flag is collected from subnodes of the
+mkimage node, e.g.::
 
     mkimage {
         args = "-n test -T imximage";
@@ -1113,9 +1112,24 @@ e.g.::
         };
     };
 
-This calls mkimage to create an imximage with u-boot-spl.bin as the input
-file. The output from mkimage then becomes part of the image produced by
-binman.
+This calls mkimage to create an imximage with `u-boot-spl.bin` as the data
+file, which mkimage being called like this::
+
+    mkimage -d <data_file> -n test -T imximage <output_file>
+
+The output from mkimage then becomes part of the image produced by
+binman. If you need to put mulitple things in the data file, you can use
+a section, or just multiple subnodes like this::
+
+    mkimage {
+        args = "-n test -T imximage";
+
+        u-boot-spl {
+        };
+
+        u-boot-tpl {
+        };
+    };
 
 To use CONFIG options in the arguments, use a string list instead, as in
 this example which also produces four arguments::
@@ -1159,7 +1173,7 @@ Entry: pre-load: Pre load image header
 --------------------------------------
 
 Properties / Entry arguments:
-    - key-path: Path of the directory that store key (provided by the environment variable KEY_PATH)
+    - pre-load-key-path: Path of the directory that store key (provided by the environment variable PRE_LOAD_KEY_PATH)
     - content: List of phandles to entries to sign
     - algo-name: Hash and signature algo to use for the signature
     - padding-name: Name of the padding (pkcs-1.5 or pss)
