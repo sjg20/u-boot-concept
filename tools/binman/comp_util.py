@@ -8,6 +8,7 @@
 This supports the following compression algorithm:
   none
   bzip2
+  gzip
   lz4
   lzma
 
@@ -16,6 +17,7 @@ provided by xz.
 
 This requires the following tools:
   bzip2
+  gzip
   lz4
   lzma_alone
 
@@ -29,7 +31,7 @@ from binman import bintool
 from patman import tools
 
 # Supported compression algorithms
-ALGORITHMS = ['bzip2', 'lz4', 'lzma']
+ALGORITHMS = ['bzip2', 'gzip', 'lz4', 'lzma']
 
 bintools = {}
 
