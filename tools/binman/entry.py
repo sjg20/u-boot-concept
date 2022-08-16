@@ -1112,7 +1112,11 @@ features to produce new behaviours.
         """
         self.uncomp_data = indata
         if self.compress != 'none':
+            if not comp_util.is_present(self.compress):
+                self.missing = True
+                return b''
             self.uncomp_size = len(indata)
+
         data = comp_util.compress(indata, self.compress)
         return data
 

@@ -2557,6 +2557,14 @@ class TestFunctional(unittest.TestCase):
             }
         self.assertEqual(expected, props)
 
+    def testCompressMissingBintool(self):
+        """Test that compress of device-tree files with missing bintool is
+        supported
+        """
+        data = self.data = self._DoReadFileRealDtb('236_compress_dtb_missing_bintool.dts')
+        self.assertEqual(U_BOOT_DATA, data[:len(U_BOOT_DATA)])
+        dtb_data = data[len(U_BOOT_DATA):]
+        self.assertEqual(0, len(dtb_data))
 
     def testCbfsUpdateFdt(self):
         """Test that we can update the device tree with CBFS offset/size info"""
