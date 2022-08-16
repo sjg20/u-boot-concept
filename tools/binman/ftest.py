@@ -2536,6 +2536,28 @@ class TestFunctional(unittest.TestCase):
             }
         self.assertEqual(expected, props)
 
+    def testCompressPrependLengthDtb(self):
+        """Test that compress of device-tree files with length header is
+        supported
+        """
+        data = self.data = self._DoReadFileRealDtb('235_compress_prepend_length_dtb.dts')
+        self.assertEqual(U_BOOT_DATA, data[:len(U_BOOT_DATA)])
+        dtb_data = data[len(U_BOOT_DATA):]
+        comp_data_len = struct.unpack('<I', dtb_data[:4])[0]
+        comp_data = dtb_data[4:4 + comp_data_len]
+        orig = self._decompress(comp_data)
+        dtb = fdt.Fdt.FromData(orig)
+        dtb.Scan()
+        props = self._GetPropTree(dtb, ['size', 'uncomp-size'])
+        expected = {
+            'u-boot:size': len(U_BOOT_DATA),
+            'u-boot-dtb:uncomp-size': len(orig),
+            'u-boot-dtb:size': len(dtb_data),
+            'size': len(data),
+            }
+        self.assertEqual(expected, props)
+
+
     def testCbfsUpdateFdt(self):
         """Test that we can update the device tree with CBFS offset/size info"""
         self._CheckLz4()
