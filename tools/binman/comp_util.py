@@ -12,6 +12,7 @@ This supports the following compression algorithm:
   lz4
   lzma
   lzo
+  xz
 
 Note that for lzma this uses an old version of the algorithm, not that
 provided by xz.
@@ -22,6 +23,7 @@ This requires the following tools:
   lz4
   lzma_alone
   lzop
+  xz
 
 It also requires an output directory to be previously set up, by calling
 PrepareOutputDir().
@@ -33,7 +35,7 @@ from binman import bintool
 from patman import tools
 
 # Supported compression algorithms
-ALGORITHMS = ['bzip2', 'gzip', 'lz4', 'lzma', 'lzo']
+ALGORITHMS = ['bzip2', 'gzip', 'lz4', 'lzma', 'lzo', 'xz']
 
 bintools = {}
 
