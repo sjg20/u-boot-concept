@@ -1113,7 +1113,7 @@ features to produce new behaviours.
         self.uncomp_data = indata
         if self.compress != 'none':
             self.uncomp_size = len(indata)
-        data = comp_util.compress(indata, self.compress)
+        data = comp_util.compress(indata, self.compress, with_header=False)
         return data
 
     @classmethod

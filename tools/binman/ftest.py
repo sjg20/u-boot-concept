@@ -1967,7 +1967,7 @@ class TestFunctional(unittest.TestCase):
             self._ResetDtbs()
 
     def _decompress(self, data):
-        return comp_util.decompress(data, 'lz4')
+        return comp_util.decompress(data, 'lz4', with_header=False)
 
     def testCompress(self):
         """Test compression of blobs"""
@@ -4449,15 +4449,19 @@ class TestFunctional(unittest.TestCase):
         rest = base[len(U_BOOT_DATA):]
 
         # Check compressed data
-        section1 = self._decompress(rest)
-        expect1 = comp_util.compress(COMPRESS_DATA + U_BOOT_DATA, 'lz4')
-        self.assertEquals(expect1, rest[:len(expect1)])
+        expect1 = comp_util.compress(COMPRESS_DATA + U_BOOT_DATA, 'lz4',
+                                     with_header=False)
+        data1 = rest[:len(expect1)]
+        section1 = self._decompress(data1)
+        self.assertEquals(expect1, data1)
         self.assertEquals(COMPRESS_DATA + U_BOOT_DATA, section1)
         rest1 = rest[len(expect1):]
 
-        section2 = self._decompress(rest1)
-        expect2 = comp_util.compress(COMPRESS_DATA + COMPRESS_DATA, 'lz4')
-        self.assertEquals(expect2, rest1[:len(expect2)])
+        expect2 = comp_util.compress(COMPRESS_DATA + COMPRESS_DATA, 'lz4',
+                                     with_header=False)
+        data2 = rest1[:len(expect2)]
+        section2 = self._decompress(data2)
+        self.assertEquals(expect2, data2)
         self.assertEquals(COMPRESS_DATA + COMPRESS_DATA, section2)
         rest2 = rest1[len(expect2):]
 
