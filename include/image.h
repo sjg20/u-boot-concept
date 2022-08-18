@@ -263,7 +263,7 @@ enum {
  * Legacy format image header,
  * all data in network byte order (aka natural aka bigendian).
  */
-typedef struct image_header {
+typedef struct __attribute__((packed)) image_header {
 	uint32_t	ih_magic;	/* Image Header Magic Number	*/
 	uint32_t	ih_hcrc;	/* Image Header CRC Checksum	*/
 	uint32_t	ih_time;	/* Image Creation Timestamp	*/
