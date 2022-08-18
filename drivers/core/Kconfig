@@ -65,6 +65,20 @@ config DM_DEBUG
 	help
 	  Say Y here if you want to compile in debug messages in DM core.
 
+config DM_ALLOW_MULTIPLE_DRIVERS
+        bool "Allow multiple drivers to bind for one node"
+	depends on DM
+	default n
+	help
+	  The driver model in U-Boot originally did not allow multiple
+	  drivers to bind for a single device node.
+
+	  If enabled, multiple drivers can now bind for a single node
+	  by using the same compatible string for matching: lists_bind_fdt()
+	  will assume that binding multiple drivers is desirable, if the
+	  caller does not request the pointer to the udevice structure to
+	  be returned (i.e. if devp is NULL).
+
 config DM_DEVICE_REMOVE
 	bool "Support device removal"
 	depends on DM
