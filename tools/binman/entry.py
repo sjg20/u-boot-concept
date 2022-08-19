@@ -1076,7 +1076,8 @@ features to produce new behaviours.
         Args:
             bintool (Bintool): Bintool that was missing
         """
-        self.missing_bintools.append(bintool)
+        if bintool not in self.missing_bintools:
+            self.missing_bintools.append(bintool)
 
     def check_missing_bintools(self, missing_list):
         """Check if any entries in this section have missing bintools
