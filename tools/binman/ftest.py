@@ -5780,6 +5780,12 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
         expect = U_BOOT_SPL_DATA + U_BOOT_DATA
         self.assertEqual(expect, data[:len(expect)])
 
+    def testSectionLater(self):
+        """Test sections containing data that is not immediately available"""
+        data = self._DoReadFile('242_section_later.dts')
+        expected = U_BOOT_DATA + U_BOOT_DATA + b'aa' + U_BOOT_DATA + b'aa'
+        self.assertEqual(expected, data)
+
     def testMkimageSection(self):
         """Test using mkimage to build an image including a section"""
         data = self._DoReadFile('241_mkimage_section.dts')
