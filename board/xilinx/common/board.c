@@ -241,7 +241,7 @@ static int xilinx_read_eeprom_fru(struct udevice *dev, char *name,
 		goto end;
 	}
 
-	fru_capture((unsigned long)fru_content);
+	fru_capture(fru_content);
 	if (gd->flags & GD_FLG_RELOC || (_DEBUG && CONFIG_IS_ENABLED(DTB_RESELECT))) {
 		printf("Xilinx I2C FRU format at %s:\n", name);
 		ret = fru_display(0);

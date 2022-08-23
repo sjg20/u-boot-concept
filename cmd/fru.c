@@ -9,12 +9,15 @@
 #include <fdtdec.h>
 #include <fru.h>
 #include <malloc.h>
+#include <mapmem.h>
 
 static int do_fru_capture(struct cmd_tbl *cmdtp, int flag, int argc,
 			  char *const argv[])
 {
 	unsigned long addr;
+	const void *buf;
 	char *endp;
+	int ret;
 
 	if (argc < cmdtp->maxargs)
 		return CMD_RET_USAGE;
@@ -23,7 +26,11 @@ static int do_fru_capture(struct cmd_tbl *cmdtp, int flag, int argc,
 	if (*argv[1] == 0 || *endp != 0)
 		return -1;
 
-	return fru_capture(addr);
+	buf = map_sysmem(addr, 0);
+	ret = fru_capture(buf);
+	unmap_sysmem(buf);
+
+	return ret;
 }
 
 static int do_fru_display(struct cmd_tbl *cmdtp, int flag, int argc,
@@ -37,13 +44,19 @@ static int do_fru_generate(struct cmd_tbl *cmdtp, int flag, int argc,
 			   char *const argv[])
 {
 	unsigned long addr;
+	const void *buf;
+	int ret;
 
 	if (argc < cmdtp->maxargs)
 		return CMD_RET_USAGE;
 
-	addr = hextoul(argv[2], NULL);
+	addr = hextoul(argv[3], NULL);
 
-	return fru_generate(addr, argc - 3, argv + 3);
+	buf = map_sysmem(addr, 0);
+	ret = fru_generate(buf, argc - 3, argv + 3);
+	unmap_sysmem(buf);
+
+	return ret;
 }
 
 static struct cmd_tbl cmd_fru_sub[] = {

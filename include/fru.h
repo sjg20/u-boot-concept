@@ -107,8 +107,8 @@ struct fru_table {
 #define FRU_TYPELEN_TYPE_ASCII8		3
 
 int fru_display(int verbose);
-int fru_capture(unsigned long addr);
-int fru_generate(unsigned long addr, int argc, char *const argv[]);
+int fru_capture(const void *addr);
+int fru_generate(const void *addr, int argc, char *const argv[]);
 u8 fru_checksum(u8 *addr, u8 len);
 int fru_check_type_len(u8 type_len, u8 language, u8 *type);
 const struct fru_table *fru_get_fru_data(void);

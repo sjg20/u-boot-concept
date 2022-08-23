@@ -91,7 +91,7 @@ static u8 fru_gen_type_len(u8 *addr, char *name)
 	return 1 + len;
 }
 
-int fru_generate(unsigned long addr, int argc, char *const argv[])
+int fru_generate(const void *addr, int argc, char *const argv[])
 {
 	struct fru_common_hdr *header = (struct fru_common_hdr *)addr;
 	struct fru_board_info_header *board_info;
@@ -155,8 +155,8 @@ int fru_generate(unsigned long addr, int argc, char *const argv[])
 
 	debug("checksum %x(addr %x)\n", *member, len);
 
-	env_set_hex("fru_addr", addr);
-	env_set_hex("filesize", (unsigned long)member - addr + 1);
+	env_set_hex("fru_addr", (ulong)addr);
+	env_set_hex("filesize", (ulong)member - (ulong)addr + 1);
 
 	return 0;
 }
@@ -171,7 +171,7 @@ static void fru_delete_custom_fields(struct list_head *custom_fields)
 	}
 }
 
-static int fru_append_custom_info(unsigned long addr,
+static int fru_append_custom_info(const void *addr,
 				  struct list_head *custom_fields)
 {
 	struct fru_custom_info *info = (struct fru_custom_info *)addr;
@@ -190,7 +190,7 @@ static int fru_append_custom_info(unsigned long addr,
 	return 0;
 }
 
-static int fru_parse_board(unsigned long addr)
+static int fru_parse_board(const void *addr)
 {
 	u8 i, type;
 	int len;
@@ -268,8 +268,7 @@ static void fru_delete_multirecs(struct list_head *multi_recs)
 	}
 }
 
-static int fru_append_multirec(unsigned long addr,
-			       struct list_head *multi_recs)
+static int fru_append_multirec(const void *addr, struct list_head *multi_recs)
 {
 	struct fru_multirec_info *mr_src = (struct fru_multirec_info *)addr;
 	struct fru_multirec_node *mr_new;
@@ -286,7 +285,7 @@ static int fru_append_multirec(unsigned long addr,
 	return 0;
 }
 
-static int fru_parse_multirec(unsigned long addr)
+static int fru_parse_multirec(const void *addr)
 {
 	u8 hdr_len = sizeof(struct fru_multirec_hdr);
 	struct fru_multirec_hdr *mr_hdr;
@@ -308,7 +307,7 @@ static int fru_parse_multirec(unsigned long addr)
 	return 0;
 }
 
-int fru_capture(unsigned long addr)
+int fru_capture(const void *addr)
 {
 	struct fru_common_hdr *hdr;
 	u8 checksum = 0;
