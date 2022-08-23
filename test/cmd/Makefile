@@ -8,6 +8,7 @@ endif
 obj-y += mem.o
 obj-$(CONFIG_CMD_ADDRMAP) += addrmap.o
 obj-$(CONFIG_CMD_FDT) += fdt.o
+obj-$(CONFIG_CMD_FRU) += fru.o
 obj-$(CONFIG_CMD_LOADM) += loadm.o
 obj-$(CONFIG_CMD_MEM_SEARCH) += mem_search.o
 obj-$(CONFIG_CMD_PINMUX) += pinmux.o
