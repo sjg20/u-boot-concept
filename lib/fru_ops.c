@@ -7,13 +7,12 @@
 #include <common.h>
 #include <env.h>
 #include <fdtdec.h>
+#include <fru.h>
 #include <hexdump.h>
 #include <log.h>
 #include <malloc.h>
 #include <asm/io.h>
 #include <linux/compat.h>
-
-#include "fru.h"
 
 struct fru_table fru_data __section(".data") = {
 	.brd.custom_fields = LIST_HEAD_INIT(fru_data.brd.custom_fields),

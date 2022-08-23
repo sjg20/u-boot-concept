@@ -7,9 +7,8 @@
 #include <common.h>
 #include <command.h>
 #include <fdtdec.h>
+#include <fru.h>
 #include <malloc.h>
-
-#include "fru.h"
 
 static int do_fru_capture(struct cmd_tbl *cmdtp, int flag, int argc,
 			  char *const argv[])

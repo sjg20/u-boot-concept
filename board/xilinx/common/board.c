@@ -8,6 +8,7 @@
 #include <efi.h>
 #include <efi_loader.h>
 #include <env.h>
+#include <fru.h>
 #include <log.h>
 #include <asm/global_data.h>
 #include <asm/sections.h>
@@ -24,8 +25,6 @@
 #include <linux/ctype.h>
 #include <linux/kernel.h>
 #include <uuid.h>
-
-#include "fru.h"
 
 #if CONFIG_IS_ENABLED(EFI_HAVE_CAPSULE_SUPPORT)
 struct efi_fw_image fw_images[] = {
