@@ -43,11 +43,22 @@ static int do_fru_display(struct cmd_tbl *cmdtp, int flag, int argc,
 static int do_fru_generate(struct cmd_tbl *cmdtp, int flag, int argc,
 			   char *const argv[])
 {
+	int (*fru_generate)(const void *addr, int argc, char *const argv[]);
 	unsigned long addr;
 	const void *buf;
-	int ret;
+	int ret, maxargs;
 
-	if (argc < cmdtp->maxargs)
+	if (!strncmp(argv[2], "-b", 3)) {
+		fru_generate = fru_board_generate;
+		maxargs = cmdtp->maxargs + FRU_BOARD_AREA_TOTAL_FIELDS;
+	} else if (!strncmp(argv[2], "-p", 3)) {
+		fru_generate = fru_product_generate;
+		maxargs = cmdtp->maxargs + FRU_PRODUCT_AREA_TOTAL_FIELDS;
+	} else {
+		return CMD_RET_USAGE;
+	}
+
+	if (argc < maxargs)
 		return CMD_RET_USAGE;
 
 	addr = hextoul(argv[3], NULL);
@@ -62,7 +73,7 @@ static int do_fru_generate(struct cmd_tbl *cmdtp, int flag, int argc,
 static struct cmd_tbl cmd_fru_sub[] = {
 	U_BOOT_CMD_MKENT(capture, 3, 0, do_fru_capture, "", ""),
 	U_BOOT_CMD_MKENT(display, 2, 0, do_fru_display, "", ""),
-	U_BOOT_CMD_MKENT(board_gen, 8, 0, do_fru_generate, "", ""),
+	U_BOOT_CMD_MKENT(generate, 4, 0, do_fru_generate, "", ""),
 };
 
 static int do_fru(struct cmd_tbl *cmdtp, int flag, int argc,
@@ -90,11 +101,16 @@ static char fru_help_text[] =
 	"capture <addr> - Parse and capture FRU table present at address.\n"
 	"fru display - Displays content of FRU table that was captured using\n"
 	"              fru capture command\n"
-	"fru board_gen <addr> <manufacturer> <board name> <serial number>\n"
-	"              <part number> <file id> [custom ...] - Generate FRU\n"
-	"              format with board info area filled based on\n"
+	"fru generate -b <addr> <manufacturer> <board name> <serial number>\n"
+	"                <part number> <file id> [custom ...] - Generate FRU\n"
+	"                format with board info area filled based on\n"
 	"                parameters. <addr> is pointing to place where FRU is\n"
 	"                generated.\n"
+	"fru generate -p <addr> <manufacturer> <product name> <part number>\n"
+	"                <version number> <serial number> <asset number>\n"
+	"                <file id> [custom ...] - Generate FRU format with\n"
+	"                product info area filled based on parameters. <addr>\n"
+	"                is pointing to place where FRU is generated.\n"
 	;
 #endif
 

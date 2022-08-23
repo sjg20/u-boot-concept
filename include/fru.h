@@ -31,7 +31,13 @@ struct fru_board_info_header {
 	u8 time[3];
 } __packed;
 
-struct fru_board_info_member {
+struct fru_product_info_header {
+	u8 ver;
+	u8 len;
+	u8 lang_code;
+} __packed;
+
+struct fru_common_info_member {
 	u8 type_len;
 	u8 *name;
 } __packed;
@@ -64,6 +70,27 @@ struct fru_board_data {
 	struct list_head custom_fields;
 };
 
+struct fru_product_data {
+	u8 ver;
+	u8 len;
+	u8 lang_code;
+	u8 manufacturer_type_len;
+	u8 manufacturer_name[FRU_INFO_FIELD_LEN_MAX];
+	u8 product_name_type_len;
+	u8 product_name[FRU_INFO_FIELD_LEN_MAX];
+	u8 part_number_type_len;
+	u8 part_number[FRU_INFO_FIELD_LEN_MAX];
+	u8 version_number_type_len;
+	u8 version_number[FRU_INFO_FIELD_LEN_MAX];
+	u8 serial_number_type_len;
+	u8 serial_number[FRU_INFO_FIELD_LEN_MAX];
+	u8 asset_number_type_len;
+	u8 asset_number[FRU_INFO_FIELD_LEN_MAX];
+	u8 file_id_type_len;
+	u8 file_id[FRU_INFO_FIELD_LEN_MAX];
+	struct list_head custom_fields;
+};
+
 struct fru_multirec_hdr {
 	u8 rec_type;
 	u8 type;
@@ -85,6 +112,7 @@ struct fru_multirec_node {
 struct fru_table {
 	struct fru_common_hdr hdr;
 	struct fru_board_data brd;
+	struct fru_product_data prd;
 	struct list_head multi_recs;
 	bool captured;
 };
@@ -102,13 +130,15 @@ struct fru_table {
 
 /* This should be minimum of fields */
 #define FRU_BOARD_AREA_TOTAL_FIELDS	5
+#define FRU_PRODUCT_AREA_TOTAL_FIELDS	7
 #define FRU_TYPELEN_TYPE_SHIFT		6
 #define FRU_TYPELEN_TYPE_BINARY		0
 #define FRU_TYPELEN_TYPE_ASCII8		3
 
 int fru_display(int verbose);
 int fru_capture(const void *addr);
-int fru_generate(const void *addr, int argc, char *const argv[]);
+int fru_board_generate(const void *addr, int argc, char *const argv[]);
+int fru_product_generate(const void *addr, int argc, char *const argv[]);
 u8 fru_checksum(u8 *addr, u8 len);
 int fru_check_type_len(u8 type_len, u8 language, u8 *type);
 const struct fru_table *fru_get_fru_data(void);

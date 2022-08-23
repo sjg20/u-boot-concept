@@ -16,7 +16,16 @@
 
 struct fru_table fru_data __section(".data") = {
 	.brd.custom_fields = LIST_HEAD_INIT(fru_data.brd.custom_fields),
+	.prd.custom_fields = LIST_HEAD_INIT(fru_data.prd.custom_fields),
 	.multi_recs = LIST_HEAD_INIT(fru_data.multi_recs),
+};
+
+static const char * const fru_typecode_str[] = {
+	"Binary/Unspecified",
+	"BCD plus",
+	"6-bit ASCII",
+	"8-bit ASCII",
+	"2-byte UNICODE"
 };
 
 static u16 fru_cal_area_len(u8 len)
@@ -77,9 +86,9 @@ int fru_check_type_len(u8 type_len, u8 language, u8 *type)
 static u8 fru_gen_type_len(u8 *addr, char *name)
 {
 	int len = strlen(name);
-	struct fru_board_info_member *member;
+	struct fru_common_info_member *member;
 
-	member = (struct fru_board_info_member *)addr;
+	member = (struct fru_common_info_member *)addr;
 	member->type_len = FRU_TYPELEN_TYPE_ASCII8 << FRU_TYPELEN_TYPE_SHIFT;
 	member->type_len |= len;
 
@@ -91,7 +100,7 @@ static u8 fru_gen_type_len(u8 *addr, char *name)
 	return 1 + len;
 }
 
-int fru_generate(const void *addr, int argc, char *const argv[])
+int fru_board_generate(const void *addr, int argc, char *const argv[])
 {
 	struct fru_common_hdr *header = (struct fru_common_hdr *)addr;
 	struct fru_board_info_header *board_info;
@@ -152,6 +161,74 @@ int fru_generate(const void *addr, int argc, char *const argv[])
 
 	*member = 0; /* Clear before calculation */
 	*member = 0 - fru_checksum((u8 *)board_info, len);
+
+	debug("checksum %x(addr %x)\n", *member, len);
+
+	env_set_hex("fru_addr", (ulong)addr);
+	env_set_hex("filesize", (ulong)member - (ulong)addr + 1);
+
+	return 0;
+}
+
+int fru_product_generate(const void *addr, int argc, char *const argv[])
+{
+	struct fru_common_hdr *header = (struct fru_common_hdr *)addr;
+	struct fru_product_info_header *product_info;
+	u8 *member;
+	u8 len, pad, modulo;
+
+	header->version = 1; /* Only version 1.0 is supported now */
+	header->off_internal = 0; /* not present */
+	header->off_chassis = 0; /* not present */
+	header->off_board = 0; /* not present */
+	header->off_product = (sizeof(*header)) / 8; /* Starting offset 8 */
+	header->off_multirec = 0; /* not present */
+	header->pad = 0;
+	/*
+	 * This unsigned byte can be used to calculate a zero checksum
+	 * for the data area following the header. I.e. the modulo 256 sum of
+	 * the record data bytes plus the checksum byte equals zero.
+	 */
+	header->crc = 0; /* Clear before calculation */
+	header->crc = 0 - fru_checksum((u8 *)header, sizeof(*header));
+
+	/* board info is just right after header */
+	product_info = (void *)((u8 *)header + sizeof(*header));
+
+	debug("header %lx, product_info %lx\n", (ulong)header,
+	      (ulong)product_info);
+
+	product_info->ver = 1; /* 1.0 spec */
+	product_info->lang_code = 0; /* English */
+
+	/* Member fields are just after board_info header */
+	member = (u8 *)product_info + sizeof(*product_info);
+
+	while (--argc > 0 && ++argv) {
+		len = fru_gen_type_len(member, *argv);
+		member += len;
+	}
+
+	*member++ = 0xc1; /* Indication of no more fields */
+
+	len = member - (u8 *)product_info; /* Find current length */
+	len += 1; /* Add checksum there too for calculation */
+
+	modulo = len % 8;
+
+	if (modulo) {
+		/* Do not fill last item which is checksum */
+		for (pad = 0; pad < 8 - modulo; pad++)
+			*member++ = 0;
+
+		/* Increase structure size */
+		len += 8 - modulo;
+	}
+
+	product_info->len = len / 8; /* Size in multiples of 8 bytes */
+
+	*member = 0; /* Clear before calculation */
+	*member = 0 - fru_checksum((u8 *)product_info, len);
 
 	debug("checksum %x(addr %x)\n", *member, len);
 
@@ -258,6 +335,74 @@ static int fru_parse_board(const void *addr)
 	return 0;
 }
 
+static int fru_parse_product(const void *addr)
+{
+	u8 i, type;
+	int len;
+	u8 *data, *term, *limit;
+
+	memcpy(&fru_data.prd.ver, (void *)addr, 6);
+	addr += 3;
+	data = (u8 *)&fru_data.prd.manufacturer_type_len;
+
+	/* Record max structure limit not to write data over allocated space */
+	limit = (u8 *)&fru_data.prd + sizeof(struct fru_product_data) -
+		sizeof(struct fru_custom_field_node *);
+
+	for (i = 0; ; i++, data += FRU_INFO_FIELD_LEN_MAX) {
+		len = fru_check_type_len(*(u8 *)addr, fru_data.prd.lang_code,
+					 &type);
+		/*
+		 * Stop cature if it end of fields
+		 */
+		if (len == -EINVAL)
+			break;
+
+		if (i < FRU_PRODUCT_AREA_TOTAL_FIELDS) {
+			/* Stop when length is more then fields to record */
+			if (data + len > limit)
+				break;
+
+			/* This record type/len field */
+			*data++ = *(u8 *)addr;
+		}
+
+		/* Add offset to match data */
+		addr += 1;
+
+		/* If len is 0 it means empty field that's why skip writing */
+		if (!len)
+			continue;
+
+		if (i < FRU_PRODUCT_AREA_TOTAL_FIELDS) {
+			/* Record data field */
+			memcpy(data, (u8 *)addr, len);
+			term = data + (u8)len;
+			*term = 0;
+		} else {
+			struct list_head *custom_fields;
+
+			custom_fields = &fru_data.prd.custom_fields;
+
+			/* Add a custom info field */
+			if (fru_append_custom_info(addr - 1, custom_fields)) {
+				fru_delete_custom_fields(custom_fields);
+				return -EINVAL;
+			}
+		}
+
+		addr += len;
+	}
+
+	if (i < FRU_PRODUCT_AREA_TOTAL_FIELDS) {
+		printf("Product area require minimum %d fields\n",
+		       FRU_PRODUCT_AREA_TOTAL_FIELDS);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 static void fru_delete_multirecs(struct list_head *multi_recs)
 {
 	struct fru_multirec_node *node, *next;
@@ -320,9 +465,11 @@ int fru_capture(const void *addr)
 
 	hdr = (struct fru_common_hdr *)addr;
 	fru_delete_custom_fields(&fru_data.brd.custom_fields);
+	fru_delete_custom_fields(&fru_data.prd.custom_fields);
 	fru_delete_multirecs(&fru_data.multi_recs);
 	memset((void *)&fru_data, 0, sizeof(fru_data));
 	INIT_LIST_HEAD(&fru_data.brd.custom_fields);
+	INIT_LIST_HEAD(&fru_data.prd.custom_fields);
 	INIT_LIST_HEAD(&fru_data.multi_recs);
 	memcpy((void *)&fru_data, (void *)hdr, sizeof(struct fru_common_hdr));
 
@@ -330,6 +477,9 @@ int fru_capture(const void *addr)
 
 	if (hdr->off_board)
 		fru_parse_board(addr + fru_cal_area_len(hdr->off_board));
+
+	if (hdr->off_product)
+		fru_parse_product(addr + fru_cal_area_len(hdr->off_product));
 
 	if (hdr->off_multirec)
 		fru_parse_multirec(addr + fru_cal_area_len(hdr->off_multirec));
@@ -341,13 +491,6 @@ int fru_capture(const void *addr)
 
 static int fru_display_board(struct fru_board_data *brd, int verbose)
 {
-	static const char * const typecode[] = {
-		"Binary/Unspecified",
-		"BCD plus",
-		"6-bit ASCII",
-		"8-bit ASCII",
-		"2-byte UNICODE"
-	};
 	static const char * const boardinfo[] = {
 		"Manufacturer Name",
 		"Product Name",
@@ -389,9 +532,9 @@ static int fru_display_board(struct fru_board_data *brd, int verbose)
 		if (type <= FRU_TYPELEN_TYPE_ASCII8 &&
 		    (brd->lang_code == FRU_LANG_CODE_ENGLISH ||
 		     brd->lang_code == FRU_LANG_CODE_ENGLISH_1))
-			debug("Type code: %s\n", typecode[type]);
+			debug("Type code: %s\n", fru_typecode_str[type]);
 		else
-			debug("Type code: %s\n", typecode[type + 1]);
+			debug("Type code: %s\n", fru_typecode_str[type + 1]);
 
 		if (!len) {
 			debug("%s not found\n", boardinfo[i]);
@@ -415,6 +558,79 @@ static int fru_display_board(struct fru_board_data *brd, int verbose)
 	}
 
 	list_for_each_entry(node, &brd->custom_fields, list) {
+		printf(" Custom Type/Length: 0x%x\n", node->info.type_len);
+		print_hex_dump_bytes("  ", DUMP_PREFIX_OFFSET, node->info.data,
+				     node->info.type_len &
+				     FRU_TYPELEN_LEN_MASK);
+	}
+
+	return 0;
+}
+
+static int fru_display_product(struct fru_product_data *prd, int verbose)
+{
+	static const char * const productinfo[] = {
+		"Manufacturer Name",
+		"Product Name",
+		"Part Number",
+		"Version Number",
+		"Serial Number",
+		"Asset Number",
+		"File ID",
+	};
+	struct fru_custom_field_node *node;
+	u8 *data;
+	u8 type;
+	int len;
+
+	if (verbose) {
+		printf("*****PRODUCT INFO*****\n");
+		printf("Version:%d\n", fru_version(prd->ver));
+		printf("Product Area Length:%d\n", fru_cal_area_len(prd->len));
+	}
+
+	if (fru_check_language(prd->lang_code))
+		return -EINVAL;
+
+	data = (u8 *)&prd->manufacturer_type_len;
+
+	for (u8 i = 0; i < (sizeof(productinfo) / sizeof(*productinfo)); i++) {
+		len = fru_check_type_len(*data++, prd->lang_code,
+					 &type);
+		if (len == -EINVAL) {
+			printf("**** EOF for Product Area ****\n");
+			break;
+		}
+
+		if (type <= FRU_TYPELEN_TYPE_ASCII8 &&
+		    (prd->lang_code == FRU_LANG_CODE_ENGLISH ||
+		     prd->lang_code == FRU_LANG_CODE_ENGLISH_1))
+			debug("Type code: %s\n", fru_typecode_str[type]);
+		else
+			debug("Type code: %s\n", fru_typecode_str[type + 1]);
+
+		if (!len) {
+			debug("%s not found\n", productinfo[i]);
+			continue;
+		}
+
+		switch (type) {
+		case FRU_TYPELEN_TYPE_BINARY:
+			debug("Length: %d\n", len);
+			printf(" %s: 0x%x\n", productinfo[i], *data);
+			break;
+		case FRU_TYPELEN_TYPE_ASCII8:
+			debug("Length: %d\n", len);
+			printf(" %s: %s\n", productinfo[i], data);
+			break;
+		default:
+			debug("Unsupported type %x\n", type);
+		}
+
+		data += FRU_INFO_FIELD_LEN_MAX;
+	}
+
+	list_for_each_entry(node, &prd->custom_fields, list) {
 		printf(" Custom Type/Length: 0x%x\n", node->info.type_len);
 		print_hex_dump_bytes("  ", DUMP_PREFIX_OFFSET, node->info.data,
 				     node->info.type_len &
@@ -492,6 +708,10 @@ int fru_display(int verbose)
 	fru_display_common_hdr(&fru_data.hdr, verbose);
 
 	ret = fru_display_board(&fru_data.brd, verbose);
+	if (ret)
+		return ret;
+
+	ret = fru_display_product(&fru_data.prd, verbose);
 	if (ret)
 		return ret;
 
