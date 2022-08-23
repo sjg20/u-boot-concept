@@ -1,21 +1,24 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
  * (C) Copyright 2019 - 2020 Xilinx, Inc.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <common.h>
-#include <cpu_func.h>
 #include <env.h>
 #include <fdtdec.h>
+#include <hexdump.h>
 #include <log.h>
 #include <malloc.h>
-#include <net.h>
 #include <asm/io.h>
-#include <asm/arch/hardware.h>
+#include <linux/compat.h>
 
 #include "fru.h"
 
-struct fru_table fru_data __section(".data");
+struct fru_table fru_data __section(".data") = {
+	.brd.custom_fields = LIST_HEAD_INIT(fru_data.brd.custom_fields),
+	.multi_recs = LIST_HEAD_INIT(fru_data.multi_recs),
+};
 
 static u16 fru_cal_area_len(u8 len)
 {
@@ -57,7 +60,7 @@ u8 fru_checksum(u8 *addr, u8 len)
 	return checksum;
 }
 
-static int fru_check_type_len(u8 type_len, u8 language, u8 *type)
+int fru_check_type_len(u8 type_len, u8 language, u8 *type)
 {
 	int len;
 
@@ -89,8 +92,7 @@ static u8 fru_gen_type_len(u8 *addr, char *name)
 	return 1 + len;
 }
 
-int fru_generate(unsigned long addr, char *manufacturer, char *board_name,
-		 char *serial_no, char *part_no, char *revision)
+int fru_generate(unsigned long addr, int argc, char *const argv[])
 {
 	struct fru_common_hdr *header = (struct fru_common_hdr *)addr;
 	struct fru_board_info_header *board_info;
@@ -126,18 +128,10 @@ int fru_generate(unsigned long addr, char *manufacturer, char *board_name,
 	/* Member fields are just after board_info header */
 	member = (u8 *)board_info + sizeof(*board_info);
 
-	len = fru_gen_type_len(member, manufacturer); /* Board Manufacturer */
-	member += len;
-	len = fru_gen_type_len(member, board_name); /* Board Product name */
-	member += len;
-	len = fru_gen_type_len(member, serial_no); /* Board Serial number */
-	member += len;
-	len = fru_gen_type_len(member, part_no); /* Board part number */
-	member += len;
-	len = fru_gen_type_len(member, "U-Boot generator"); /* File ID */
-	member += len;
-	len = fru_gen_type_len(member, revision); /* Revision */
-	member += len;
+	while (--argc > 0 && ++argv) {
+		len = fru_gen_type_len(member, *argv);
+		member += len;
+	}
 
 	*member++ = 0xc1; /* Indication of no more fields */
 
@@ -168,6 +162,35 @@ int fru_generate(unsigned long addr, char *manufacturer, char *board_name,
 	return 0;
 }
 
+static void fru_delete_custom_fields(struct list_head *custom_fields)
+{
+	struct fru_custom_field_node *node, *next;
+
+	list_for_each_entry_safe(node, next, custom_fields, list) {
+		list_del(&node->list);
+		kfree(node);
+	}
+}
+
+static int fru_append_custom_info(unsigned long addr,
+				  struct list_head *custom_fields)
+{
+	struct fru_custom_info *info = (struct fru_custom_info *)addr;
+	struct fru_custom_field_node *ci_new;
+
+	ci_new = kzalloc(sizeof(*ci_new), GFP_KERNEL);
+	if (!ci_new)
+		return -ENOMEM;
+
+	ci_new->info.type_len = info->type_len;
+	memcpy(&ci_new->info.data, (void *)info->data,
+	       ci_new->info.type_len & FRU_TYPELEN_LEN_MASK);
+
+	list_add_tail(&ci_new->list, custom_fields);
+
+	return 0;
+}
+
 static int fru_parse_board(unsigned long addr)
 {
 	u8 i, type;
@@ -179,9 +202,10 @@ static int fru_parse_board(unsigned long addr)
 	data = (u8 *)&fru_data.brd.manufacturer_type_len;
 
 	/* Record max structure limit not to write data over allocated space */
-	limit = (u8 *)&fru_data.brd + sizeof(struct fru_board_data);
+	limit = (u8 *)&fru_data.brd + sizeof(struct fru_board_data) -
+		sizeof(struct fru_custom_field_node *);
 
-	for (i = 0; ; i++, data += FRU_BOARD_MAX_LEN) {
+	for (i = 0; ; i++, data += FRU_INFO_FIELD_LEN_MAX) {
 		len = fru_check_type_len(*(u8 *)addr, fru_data.brd.lang_code,
 					 &type);
 		/*
@@ -190,11 +214,14 @@ static int fru_parse_board(unsigned long addr)
 		if (len == -EINVAL)
 			break;
 
-		/* Stop when amount of chars is more then fields to record */
-		if (data + len > limit)
-			break;
-		/* This record type/len field */
-		*data++ = *(u8 *)addr;
+		if (i < FRU_BOARD_AREA_TOTAL_FIELDS) {
+			/* Stop when length is more then fields to record */
+			if (data + len > limit)
+				break;
+
+			/* This record type/len field */
+			*data++ = *(u8 *)addr;
+		}
 
 		/* Add offset to match data */
 		addr += 1;
@@ -203,10 +230,23 @@ static int fru_parse_board(unsigned long addr)
 		if (!len)
 			continue;
 
-		/* Record data field */
-		memcpy(data, (u8 *)addr, len);
-		term = data + (u8)len;
-		*term = 0;
+		if (i < FRU_BOARD_AREA_TOTAL_FIELDS) {
+			/* Record data field */
+			memcpy(data, (u8 *)addr, len);
+			term = data + (u8)len;
+			*term = 0;
+		} else {
+			struct list_head *custom_fields;
+
+			custom_fields = &fru_data.brd.custom_fields;
+
+			/* Add a custom info field */
+			if (fru_append_custom_info(addr - 1, custom_fields)) {
+				fru_delete_custom_fields(custom_fields);
+				return -EINVAL;
+			}
+		}
+
 		addr += len;
 	}
 
@@ -219,34 +259,52 @@ static int fru_parse_board(unsigned long addr)
 	return 0;
 }
 
+static void fru_delete_multirecs(struct list_head *multi_recs)
+{
+	struct fru_multirec_node *node, *next;
+
+	list_for_each_entry_safe(node, next, multi_recs, list) {
+		list_del(&node->list);
+		kfree(node);
+	}
+}
+
+static int fru_append_multirec(unsigned long addr,
+			       struct list_head *multi_recs)
+{
+	struct fru_multirec_info *mr_src = (struct fru_multirec_info *)addr;
+	struct fru_multirec_node *mr_new;
+
+	mr_new = kzalloc(sizeof(*mr_new), GFP_KERNEL);
+	if (!mr_new)
+		return -ENOMEM;
+
+	memcpy(&mr_new->info.hdr, (void *)&mr_src->hdr, sizeof(mr_src->hdr));
+	memcpy(&mr_new->info.data, (void *)mr_src->data, mr_src->hdr.len);
+
+	list_add_tail(&mr_new->list, multi_recs);
+
+	return 0;
+}
+
 static int fru_parse_multirec(unsigned long addr)
 {
-	struct fru_multirec_hdr mrc;
-	u8 checksum = 0;
 	u8 hdr_len = sizeof(struct fru_multirec_hdr);
-	int mac_len = 0;
+	struct fru_multirec_hdr *mr_hdr;
 
-	debug("%s: multirec addr %lx\n", __func__, addr);
+	debug("%s: multirec addr %lx\n", __func__, (ulong)addr);
 
 	do {
-		memcpy(&mrc.rec_type, (void *)addr, hdr_len);
-
-		checksum = fru_checksum((u8 *)addr, hdr_len);
-		if (checksum) {
+		if (fru_checksum((u8 *)addr, hdr_len)) {
 			debug("%s header CRC error\n", __func__);
 			return -EINVAL;
 		}
 
-		if (mrc.rec_type == FRU_MULTIREC_TYPE_OEM) {
-			struct fru_multirec_mac *mac = (void *)addr + hdr_len;
+		fru_append_multirec(addr, &fru_data.multi_recs);
 
-			if (mac->ver == FRU_DUT_MACID) {
-				mac_len = mrc.len - FRU_MULTIREC_MAC_OFFSET;
-				memcpy(&fru_data.mac.macid, mac->macid, mac_len);
-			}
-		}
-		addr += mrc.len + hdr_len;
-	} while (!(mrc.type & FRU_LAST_REC));
+		mr_hdr = (struct fru_multirec_hdr *)addr;
+		addr += mr_hdr->len + hdr_len;
+	} while (!(mr_hdr->type & FRU_LAST_REC));
 
 	return 0;
 }
@@ -255,7 +313,6 @@ int fru_capture(unsigned long addr)
 {
 	struct fru_common_hdr *hdr;
 	u8 checksum = 0;
-	unsigned long multirec_addr = addr;
 
 	checksum = fru_checksum((u8 *)addr, sizeof(struct fru_common_hdr));
 	if (checksum) {
@@ -264,33 +321,28 @@ int fru_capture(unsigned long addr)
 	}
 
 	hdr = (struct fru_common_hdr *)addr;
+	fru_delete_custom_fields(&fru_data.brd.custom_fields);
+	fru_delete_multirecs(&fru_data.multi_recs);
 	memset((void *)&fru_data, 0, sizeof(fru_data));
-	memcpy((void *)&fru_data, (void *)hdr,
-	       sizeof(struct fru_common_hdr));
+	INIT_LIST_HEAD(&fru_data.brd.custom_fields);
+	INIT_LIST_HEAD(&fru_data.multi_recs);
+	memcpy((void *)&fru_data, (void *)hdr, sizeof(struct fru_common_hdr));
 
 	fru_data.captured = true;
 
-	if (hdr->off_board) {
-		addr += fru_cal_area_len(hdr->off_board);
-		fru_parse_board(addr);
-	}
+	if (hdr->off_board)
+		fru_parse_board(addr + fru_cal_area_len(hdr->off_board));
 
-	env_set_hex("fru_addr", addr);
+	if (hdr->off_multirec)
+		fru_parse_multirec(addr + fru_cal_area_len(hdr->off_multirec));
 
-	if (hdr->off_multirec) {
-		multirec_addr += fru_cal_area_len(hdr->off_multirec);
-		fru_parse_multirec(multirec_addr);
-	}
+	env_set_hex("fru_addr", (ulong)addr);
 
 	return 0;
 }
 
 static int fru_display_board(struct fru_board_data *brd, int verbose)
 {
-	u32 time = 0;
-	u8 type;
-	int len;
-	u8 *data;
 	static const char * const typecode[] = {
 		"Binary/Unspecified",
 		"BCD plus",
@@ -301,12 +353,15 @@ static int fru_display_board(struct fru_board_data *brd, int verbose)
 	static const char * const boardinfo[] = {
 		"Manufacturer Name",
 		"Product Name",
-		"Serial No",
+		"Serial Number",
 		"Part Number",
 		"File ID",
-		/* Xilinx spec */
-		"Revision Number",
 	};
+	struct fru_custom_field_node *node;
+	u32 time = 0;
+	u8 *data;
+	u8 type;
+	int len;
 
 	if (verbose) {
 		printf("*****BOARD INFO*****\n");
@@ -358,7 +413,32 @@ static int fru_display_board(struct fru_board_data *brd, int verbose)
 			debug("Unsupported type %x\n", type);
 		}
 
-		data += FRU_BOARD_MAX_LEN;
+		data += FRU_INFO_FIELD_LEN_MAX;
+	}
+
+	list_for_each_entry(node, &brd->custom_fields, list) {
+		printf(" Custom Type/Length: 0x%x\n", node->info.type_len);
+		print_hex_dump_bytes("  ", DUMP_PREFIX_OFFSET, node->info.data,
+				     node->info.type_len &
+				     FRU_TYPELEN_LEN_MASK);
+	}
+
+	return 0;
+}
+
+static int fru_display_multirec(struct list_head *multi_recs, int verbose)
+{
+	struct fru_multirec_node *node;
+
+	if (verbose)
+		printf("*****MULTIRECORDS*****\n");
+
+	list_for_each_entry(node, multi_recs, list) {
+		printf("Type ID: 0x%x, Type: 0x%x Length: %d\n",
+		       node->info.hdr.rec_type, node->info.hdr.type,
+		       node->info.hdr.len);
+		print_hex_dump_bytes(" ", DUMP_PREFIX_OFFSET, node->info.data,
+				     node->info.hdr.len);
 	}
 
 	return 0;
@@ -404,6 +484,8 @@ static void fru_display_common_hdr(struct fru_common_hdr *hdr, int verbose)
 
 int fru_display(int verbose)
 {
+	int ret;
+
 	if (!fru_data.captured) {
 		printf("FRU data not available please run fru parse\n");
 		return -EINVAL;
@@ -411,5 +493,14 @@ int fru_display(int verbose)
 
 	fru_display_common_hdr(&fru_data.hdr, verbose);
 
-	return fru_display_board(&fru_data.brd, verbose);
+	ret = fru_display_board(&fru_data.brd, verbose);
+	if (ret)
+		return ret;
+
+	return fru_display_multirec(&fru_data.multi_recs, verbose);
+}
+
+const struct fru_table *fru_get_fru_data(void)
+{
+	return &fru_data;
 }

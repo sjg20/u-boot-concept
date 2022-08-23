@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
  * (C) Copyright 2019 - 2020 Xilinx, Inc.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <common.h>
@@ -43,7 +44,7 @@ static int do_fru_generate(struct cmd_tbl *cmdtp, int flag, int argc,
 
 	addr = hextoul(argv[2], NULL);
 
-	return fru_generate(addr, argv[3], argv[4], argv[5], argv[6], argv[7]);
+	return fru_generate(addr, argc - 3, argv + 3);
 }
 
 static struct cmd_tbl cmd_fru_sub[] = {
@@ -78,14 +79,15 @@ static char fru_help_text[] =
 	"fru display - Displays content of FRU table that was captured using\n"
 	"              fru capture command\n"
 	"fru board_gen <addr> <manufacturer> <board name> <serial number>\n"
-	"              <part number> <revision> - Generate FRU format with\n"
-	"              board info area filled based on parameters. <addr> is\n"
-	"              pointing to place where FRU is generated.\n"
+	"              <part number> <file id> [custom ...] - Generate FRU\n"
+	"              format with board info area filled based on\n"
+	"                parameters. <addr> is pointing to place where FRU is\n"
+	"                generated.\n"
 	;
 #endif
 
 U_BOOT_CMD(
-	fru, 8, 1, do_fru,
+	fru, CONFIG_SYS_MAXARGS, 1, do_fru,
 	"FRU table info",
 	fru_help_text
 )

@@ -88,6 +88,9 @@ int zynq_board_read_rom_ethaddr(unsigned char *ethaddr)
 #define EEPROM_HDR_NO_OF_MAC_ADDR	4
 #define EEPROM_HDR_ETH_ALEN		ETH_ALEN
 #define EEPROM_HDR_UUID_LEN		16
+#define EEPROM_MULTIREC_TYPE_XILINX_OEM	0xD2
+#define EEPROM_MULTIREC_MAC_OFFSET	4
+#define EEPROM_MULTIREC_DUT_MACID	0x31
 
 struct xilinx_board_description {
 	u32 header;
@@ -114,6 +117,19 @@ struct xilinx_legacy_format {
 	char unused2[5]; /* 0xdc */
 	char board_revision[3]; /* 0xe0 */
 	char unused3[29]; /* 0xe3 */
+};
+
+struct xilinx_multirec_mac {
+	u8 xlnx_iana_id[3];
+	u8 ver;
+	u8 macid[EEPROM_HDR_NO_OF_MAC_ADDR][ETH_ALEN];
+};
+
+enum xilinx_board_custom_field {
+	brd_custom_field_rev = 0,
+	brd_custom_field_pcie,
+	brd_custom_field_uuid,
+	brd_custom_field_max
 };
 
 static void xilinx_eeprom_legacy_cleanup(char *eeprom, int size)
@@ -200,9 +216,14 @@ static bool xilinx_detect_legacy(u8 *buffer)
 static int xilinx_read_eeprom_fru(struct udevice *dev, char *name,
 				  struct xilinx_board_description *desc)
 {
+	u8 parsed_macid[EEPROM_HDR_NO_OF_MAC_ADDR][ETH_ALEN] = { 0 };
+	struct fru_custom_info custom_info[brd_custom_field_max] = { 0 };
+	struct fru_custom_field_node *ci_node;
+	struct fru_multirec_node *mr_node;
+	const struct fru_table *fru_data;
 	int i, ret, eeprom_size;
 	u8 *fru_content;
-	u8 id = 0;
+	u8 id = 0, field = 0;
 
 	/* FIXME this is shortcut - if eeprom type is wrong it will fail */
 	eeprom_size = i2c_eeprom_size(dev);
@@ -237,30 +258,56 @@ static int xilinx_read_eeprom_fru(struct udevice *dev, char *name,
 		goto end;
 	}
 
+	fru_data = fru_get_fru_data();
+
+	list_for_each_entry(ci_node, &fru_data->brd.custom_fields, list) {
+		custom_info[field].type_len = ci_node->info.type_len;
+		memcpy(custom_info[field].data, ci_node->info.data,
+		       ci_node->info.type_len & FRU_TYPELEN_LEN_MASK);
+		if (++field < brd_custom_field_max)
+			break;
+	}
+
+	list_for_each_entry(mr_node, &fru_data->multi_recs, list) {
+		struct fru_multirec_hdr *hdr = &mr_node->info.hdr;
+
+		if (hdr->rec_type == EEPROM_MULTIREC_TYPE_XILINX_OEM) {
+			struct xilinx_multirec_mac *mac;
+
+			mac = (struct xilinx_multirec_mac *)mr_node->info.data;
+			if (mac->ver == EEPROM_MULTIREC_DUT_MACID) {
+				int mac_len = hdr->len -
+					      EEPROM_MULTIREC_MAC_OFFSET;
+
+				memcpy(parsed_macid, mac->macid, mac_len);
+			}
+		}
+	}
+
 	/* It is clear that FRU was captured and structures were filled */
-	strlcpy(desc->manufacturer, (char *)fru_data.brd.manufacturer_name,
+	strlcpy(desc->manufacturer, (char *)fru_data->brd.manufacturer_name,
 		sizeof(desc->manufacturer));
-	strlcpy(desc->uuid, (char *)fru_data.brd.uuid,
+	strlcpy(desc->uuid, (char *)custom_info[brd_custom_field_uuid].data,
 		sizeof(desc->uuid));
-	strlcpy(desc->name, (char *)fru_data.brd.product_name,
+	strlcpy(desc->name, (char *)fru_data->brd.product_name,
 		sizeof(desc->name));
 	for (i = 0; i < sizeof(desc->name); i++) {
 		if (desc->name[i] == ' ')
 			desc->name[i] = '\0';
 	}
-	strlcpy(desc->revision, (char *)fru_data.brd.rev,
+	strlcpy(desc->revision, (char *)custom_info[brd_custom_field_rev].data,
 		sizeof(desc->revision));
 	for (i = 0; i < sizeof(desc->revision); i++) {
 		if (desc->revision[i] == ' ')
 			desc->revision[i] = '\0';
 	}
-	strlcpy(desc->serial, (char *)fru_data.brd.serial_number,
+	strlcpy(desc->serial, (char *)fru_data->brd.serial_number,
 		sizeof(desc->serial));
 
 	while (id < EEPROM_HDR_NO_OF_MAC_ADDR) {
-		if (is_valid_ethaddr((const u8 *)fru_data.mac.macid[id]))
+		if (is_valid_ethaddr((const u8 *)parsed_macid[id]))
 			memcpy(&desc->mac_addr[id],
-			       (char *)fru_data.mac.macid[id], ETH_ALEN);
+			       (char *)parsed_macid[id], ETH_ALEN);
 		id++;
 	}
 
