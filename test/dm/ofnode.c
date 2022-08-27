@@ -601,3 +601,48 @@ static int dm_test_ofnode_u32(struct unit_test_state *uts)
 }
 DM_TEST(dm_test_ofnode_u32,
 	UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT | UT_TESTF_LIVE_OR_FLAT);
+
+/* writing to a device tree that is not the control device tree */
+static int test_ofnode_multi(struct unit_test_state *uts)
+{
+	struct device_node *root = NULL;
+	ofnode node, subnode;
+	char fdt[512];
+	oftree tree;
+
+	/* Skip this test if multiple flat device tress is not supported */
+	if (!IS_ENABLED(CONFIG_OFNODE_MULTI_TREE) && !of_live_active())
+		return 0;
+
+	ut_assertok(make_ofnode_fdt(uts, fdt, sizeof(fdt)));
+	ut_assertok(fdt_open_into(fdt, fdt, sizeof(fdt)));
+	if (of_live_active()) {
+		ut_assertok(unflatten_device_tree(fdt, &root));
+		tree = oftree_from_np(root);
+	} else {
+		tree = oftree_from_fdt(fdt);
+	}
+
+	/* Get the root node of this new tree */
+	node = ofnode_path_root(tree, "/");
+	ut_assert(ofnode_valid(node));
+
+	/* Create a subnode with some properties */
+	ut_assertok(ofnode_add_subnode(node, "ofnode-sub", &subnode));
+	ut_assert(ofnode_valid(subnode));
+	ut_asserteq_str("ofnode-sub", ofnode_get_name(subnode));
+	ut_assertok(ofnode_write_string(subnode, "lord", "blackadder"));
+
+	/* It should appear in the new tree */
+	node = ofnode_path_root(tree, "/ofnode-sub");
+	ut_assert(ofnode_valid(node));
+
+	/* ...and not in the control FDT */
+	node = ofnode_path_root(oftree_default(), "/ofnode-sub");
+	ut_assert(!ofnode_valid(node));
+
+	free(root);
+
+	return 0;
+}
+DM_TEST(test_ofnode_multi, UT_TESTF_SCAN_FDT);

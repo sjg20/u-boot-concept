@@ -258,11 +258,13 @@ struct device_node *of_find_node_by_prop_value(struct device_node *from,
 /**
  * of_find_node_by_phandle() - Find a node given a phandle
  *
+ * @root:	root node to start from (NULL for default device tree)
  * @handle:	phandle of the node to find
  *
  * Return: node pointer, or NULL if not found
  */
-struct device_node *of_find_node_by_phandle(phandle handle);
+struct device_node *of_find_node_by_phandle(struct device_node *root,
+					    phandle handle);
 
 /**
  * of_read_u32() - Find and read a 32-bit integer from a property
@@ -530,5 +532,17 @@ struct device_node *of_get_stdout(void);
  */
 int of_write_prop(struct device_node *np, const char *propname, int len,
 		  const void *value);
+
+/**
+ * of_add_subnode() - add a new subnode to a node
+ *
+ * @node:	parent node to add to
+ * @name:	name of subnode
+ * @len:	length of name
+ * @subnodep:	returns pointer to new subnode
+ * Returns 0 if OK, -ve on error
+ */
+int of_add_subnode(struct device_node *node, const char *name, int len,
+		   struct device_node **subnodep);
 
 #endif

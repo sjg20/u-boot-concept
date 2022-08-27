@@ -35,7 +35,7 @@ struct ofnode_phandle_args {
  * @node: Reference containing struct device_node * (possibly invalid)
  * Return: pointer to device node (can be NULL)
  */
-static inline const struct device_node *ofnode_to_np(ofnode node)
+static inline struct device_node *ofnode_to_np(ofnode node)
 {
 #ifdef OF_CHECKS
 	if (!of_live_active())
@@ -76,7 +76,7 @@ static inline int ofnode_to_offset(ofnode node)
 	if (of_live_active())
 		return -1;
 #endif
-	return node.of_offset;
+	return node.of_offset >= 0 ? OFTREE_OFFSET(node.of_offset) : -1;
 }
 
 /**
@@ -91,6 +91,54 @@ static inline bool ofnode_valid(ofnode node)
 		return node.np != NULL;
 	else
 		return node.of_offset >= 0;
+}
+
+void *ofnode_lookup_fdt(ofnode node);
+void *oftree_lookup_fdt(oftree tree);
+
+/**
+ * ofnode_to_fdt() - convert an ofnode to a flat DT pointer
+ *
+ * This cannot be called if the reference contains a node pointer.
+ *
+ * @node: Reference containing offset (possibly invalid)
+ * Return: DT offset (can be NULL)
+ */
+static inline void *ofnode_to_fdt(ofnode node)
+{
+#ifdef OF_CHECKS
+	if (of_live_active())
+		return NULL;
+#endif
+	if (CONFIG_IS_ENABLED(OFNODE_MULTI_TREE) && ofnode_valid(node))
+		return ofnode_lookup_fdt(node);
+
+	/* Use the control FDT by default */
+	return (void *)gd->fdt_blob;
+}
+
+/**
+ * noffset_to_ofnode() - convert a DT offset to an ofnode
+ *
+ * This converts a raw FDT offset into the of_offset used in ofnode. It works by
+ * using the 'other node' which is in the same tree, copying the tree ID into
+ * the new ofnode value.
+ *
+ * @other_node: Node in the same tree to use as a reference
+ * @of_offset: DT offset (either valid, or -1)
+ * Return: reference to the associated DT offset
+ */
+static inline ofnode noffset_to_ofnode(ofnode other_node, int of_offset)
+{
+	ofnode node;
+
+	if (of_live_active())
+		node.np = NULL;
+	else
+		node.of_offset = of_offset > 0 ?
+			OFTREE_MAKE_NODE(other_node.of_offset, of_offset) : -1;
+
+	return node;
 }
 
 /**
@@ -117,7 +165,7 @@ static inline ofnode offset_to_ofnode(int of_offset)
  * @np: Live node pointer (can be NULL)
  * Return: reference to the associated node pointer
  */
-static inline ofnode np_to_ofnode(const struct device_node *np)
+static inline ofnode np_to_ofnode(struct device_node *np)
 {
 	ofnode node;
 
@@ -210,6 +258,30 @@ static inline oftree oftree_default(void)
 
 	return tree;
 }
+
+/**
+ * oftree_from_np() - Returns the a device tree from a node pointer
+ *
+ * @root: Root node of the tree
+ * Returns: reference to the given node
+ */
+static inline oftree oftree_from_np(struct device_node *root)
+{
+	oftree tree;
+
+	tree.np = root;
+
+	return tree;
+}
+
+/**
+ * oftree_from_fdt() - Returns the a device tree from a flat device tree
+ *
+ * @fdt: Device tree to use
+ *
+ * Returns: reference to the given node
+ */
+oftree oftree_from_fdt(void *fdt);
 
 /**
  * ofnode_name_eq() - Check if the node name is equivalent to a given name
@@ -461,10 +533,20 @@ int ofnode_get_path(ofnode node, char *buf, int buflen);
 /**
  * ofnode_get_by_phandle() - get ofnode from phandle
  *
+ * This uses the default (control) device tree
  * @phandle:	phandle to look up
  * Return: ofnode reference to the phandle
  */
 ofnode ofnode_get_by_phandle(uint phandle);
+
+/**
+ * oftree_get_by_phandle() - get ofnode from phandle
+ *
+ * @tree:	tree to use
+ * @phandle:	phandle to look up
+ * Return: ofnode reference to the phandle
+ */
+ofnode oftree_get_by_phandle(oftree tree, uint phandle);
 
 /**
  * ofnode_read_size() - read the size of a property
@@ -1259,5 +1341,21 @@ static inline const char *ofnode_conf_read_str(const char *prop_name)
 	return NULL;
 }
 #endif /* CONFIG_DM */
+
+/**
+ * of_add_subnode() - add a new subnode to a node
+ *
+ * @parent:	parent node to add to
+ * @name:	name of subnode
+ * @nodep:	returns pointer to new subnode
+ * Returns 0 if OK, -ve on error
+ */
+int ofnode_add_subnode(ofnode parent, const char *name, ofnode *nodep);
+
+#if CONFIG_IS_ENABLED(OFNODE_MULTI_TREE)
+void oftree_reset(void);
+#else
+static inline void oftree_reset(void) {}
+#endif
 
 #endif

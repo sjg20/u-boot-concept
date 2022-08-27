@@ -31,17 +31,27 @@
  * this increases code size slightly due to the subtraction. Since it offers no
  * real benefit, the approach described here seems best.
  *
- * For now these points use constant types, since we don't allow writing
- * the DT.
+ * Where multiple trees are in use, this works without any trouble with live
+ * tree, except for aliases, such as ofnode_path("mmc0"), which only work on the
+ * control FDT. When the flat tree is in use, the trees are registered and a
+ * 'tree ID' is encoded into the top bits of @of_offset
  *
  * @np: Pointer to device node, used for live tree
  * @of_offset: Pointer into flat device tree, used for flat tree. Note that this
  *	is not a really a pointer to a node: it is an offset value. See above.
  */
 typedef union ofnode_union {
-	const struct device_node *np;
+	struct device_node *np;
 	long of_offset;
 } ofnode;
+
+#define OF_TREE_SHIFT 28
+#define OF_TREE_MASK ((1 << OF_TREE_SHIFT) - 1)
+#define OFTREE_NODE(tree_id, offs)	((tree_id) << OF_TREE_SHIFT | (offs))
+#define OFTREE_OFFSET(of_offs)		((of_offs) & OF_TREE_MASK)
+#define OFTREE_TREE_ID(of_offs)		((of_offs) >> OF_TREE_SHIFT)
+#define OFTREE_MAKE_NODE(noffset, of_offs)	\
+		(((of_offs) & OF_TREE_MASK) | ((noffset) & ~OF_TREE_MASK))
 
 /**
  * struct ofprop - reference to a property of a device tree node

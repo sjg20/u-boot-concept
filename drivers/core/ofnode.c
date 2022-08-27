@@ -4,6 +4,8 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
+#define LOG_CATEGORY	LOGC_DT
+
 #include <common.h>
 #include <dm.h>
 #include <fdtdec.h>
@@ -17,6 +19,97 @@
 #include <linux/err.h>
 #include <linux/ioport.h>
 #include <asm/global_data.h>
+
+DECLARE_GLOBAL_DATA_PTR;
+
+#if CONFIG_IS_ENABLED(OFNODE_MULTI_TREE)
+static void *oftree_list[CONFIG_OFNODE_MULTI_TREE_MAX];
+static int oftree_count;
+
+void oftree_reset(void)
+{
+	if (gd->flags & GD_FLG_RELOC) {
+		oftree_count = 0;
+		oftree_list[oftree_count++] = (void *)gd->fdt_blob;
+	}
+}
+
+static int oftree_find(const void *fdt)
+{
+	int i;
+
+	for (i = 0; i < oftree_count; i++) {
+		if (fdt == oftree_list[i])
+			return i;
+	}
+
+	return -1;
+}
+
+static ofnode oftree_ensure(void *fdt, const char *path)
+{
+	int offset, i;
+	ofnode node;
+
+	if (gd->flags & GD_FLG_RELOC) {
+		i = oftree_find(fdt);
+		if (i == -1) {
+			if (oftree_count == CONFIG_OFNODE_MULTI_TREE_MAX) {
+				log_warning("Too many registered device trees (max %d)\n",
+					    CONFIG_OFNODE_MULTI_TREE_MAX);
+				return ofnode_null();
+			}
+
+			/* register the new tree */
+			i = oftree_count++;
+			oftree_list[i] = fdt;
+			log_debug("oftree: registered tree %d: %p\n", i, fdt);
+		}
+	} else {
+		if (fdt != gd->fdt_blob) {
+			log_debug("Cannot only access control FDT before relocation\n");
+			return ofnode_null();
+		}
+	}
+
+	offset = fdt_path_offset(fdt, path);
+	if (offset < 0) {
+		log_debug("Unable to find path '%s' in tree %p\n", path, fdt);
+		return ofnode_null();
+	}
+
+	node.of_offset = OFTREE_NODE(i, offset);
+
+	return node;
+}
+
+void *ofnode_lookup_fdt(ofnode node)
+{
+	if (gd->flags & GD_FLG_RELOC) {
+		uint i = OFTREE_TREE_ID(node.of_offset);
+
+		if (i > oftree_count) {
+			log_debug("Invalid tree ID %x\n", i);
+			return NULL;
+		}
+
+		return oftree_list[i];
+	} else {
+		return (void *)gd->fdt_blob;
+	}
+}
+
+void *oftree_lookup_fdt(oftree tree)
+{
+	return tree.fdt;
+}
+
+#else
+static ofnode oftree_ensure(void *fdt, const char *path)
+{
+	return offset_to_ofnode(fdt_path_offset(fdt, path));
+}
+#endif
 
 bool ofnode_name_eq(ofnode node, const char *name)
 {
@@ -57,8 +150,8 @@ int ofnode_read_u32_index(ofnode node, const char *propname, int index,
 		return of_read_u32_index(ofnode_to_np(node), propname, index,
 					 outp);
 
-	cell = fdt_getprop(gd->fdt_blob, ofnode_to_offset(node), propname,
-			   &len);
+	cell = fdt_getprop(ofnode_to_fdt(node), ofnode_to_offset(node),
+			   propname, &len);
 	if (!cell) {
 		debug("(not found)\n");
 		return -EINVAL;
@@ -103,8 +196,8 @@ int ofnode_read_u64(ofnode node, const char *propname, u64 *outp)
 	if (ofnode_is_np(node))
 		return of_read_u64(ofnode_to_np(node), propname, outp);
 
-	cell = fdt_getprop(gd->fdt_blob, ofnode_to_offset(node), propname,
-			   &len);
+	cell = fdt_getprop(ofnode_to_fdt(node), ofnode_to_offset(node),
+			   propname, &len);
 	if (!cell || len < sizeof(*cell)) {
 		debug("(not found)\n");
 		return -EINVAL;
@@ -155,7 +248,7 @@ const void *ofnode_read_prop(ofnode node, const char *propname, int *sizep)
 			len = prop->length;
 		}
 	} else {
-		val = fdt_getprop(gd->fdt_blob, ofnode_to_offset(node),
+		val = fdt_getprop(ofnode_to_fdt(node), ofnode_to_offset(node),
 				  propname, &len);
 	}
 	if (!val) {
@@ -206,7 +299,7 @@ ofnode ofnode_find_subnode(ofnode node, const char *subnode_name)
 	debug("%s: %s: ", __func__, subnode_name);
 
 	if (ofnode_is_np(node)) {
-		const struct device_node *np = ofnode_to_np(node);
+		struct device_node *np = ofnode_to_np(node);
 
 		for (np = np->child; np; np = np->sibling) {
 			if (!strcmp(subnode_name, np->name))
@@ -214,7 +307,7 @@ ofnode ofnode_find_subnode(ofnode node, const char *subnode_name)
 		}
 		subnode = np_to_ofnode(np);
 	} else {
-		int ooffset = fdt_subnode_offset(gd->fdt_blob,
+		int ooffset = fdt_subnode_offset(ofnode_to_fdt(node),
 				ofnode_to_offset(node), subnode_name);
 		subnode = offset_to_ofnode(ooffset);
 	}
@@ -234,7 +327,7 @@ int ofnode_read_u32_array(ofnode node, const char *propname,
 		return of_read_u32_array(ofnode_to_np(node), propname,
 					 out_values, sz);
 	} else {
-		return fdtdec_get_int_array(gd->fdt_blob,
+		return fdtdec_get_int_array(ofnode_to_fdt(node),
 					    ofnode_to_offset(node), propname,
 					    out_values, sz);
 	}
@@ -246,7 +339,7 @@ bool ofnode_is_enabled(ofnode node)
 	if (ofnode_is_np(node)) {
 		return of_device_is_available(ofnode_to_np(node));
 	} else {
-		return fdtdec_get_is_enabled(gd->fdt_blob,
+		return fdtdec_get_is_enabled(ofnode_to_fdt(node),
 					     ofnode_to_offset(node));
 	}
 }
@@ -258,7 +351,7 @@ ofnode ofnode_first_subnode(ofnode node)
 		return np_to_ofnode(node.np->child);
 
 	return offset_to_ofnode(
-		fdt_first_subnode(gd->fdt_blob, ofnode_to_offset(node)));
+		fdt_first_subnode(ofnode_to_fdt(node), ofnode_to_offset(node)));
 }
 
 ofnode ofnode_next_subnode(ofnode node)
@@ -268,7 +361,7 @@ ofnode ofnode_next_subnode(ofnode node)
 		return np_to_ofnode(node.np->sibling);
 
 	return offset_to_ofnode(
-		fdt_next_subnode(gd->fdt_blob, ofnode_to_offset(node)));
+		fdt_next_subnode(ofnode_to_fdt(node), ofnode_to_offset(node)));
 }
 #endif /* !DM_INLINE_OFNODE */
 
@@ -280,7 +373,7 @@ ofnode ofnode_get_parent(ofnode node)
 	if (ofnode_is_np(node))
 		parent = np_to_ofnode(of_get_parent(ofnode_to_np(node)));
 	else
-		parent.of_offset = fdt_parent_offset(gd->fdt_blob,
+		parent.of_offset = fdt_parent_offset(ofnode_to_fdt(node),
 						     ofnode_to_offset(node));
 
 	return parent;
@@ -296,7 +389,7 @@ const char *ofnode_get_name(ofnode node)
 	if (ofnode_is_np(node))
 		return strrchr(node.np->full_name, '/') + 1;
 
-	return fdt_get_name(gd->fdt_blob, ofnode_to_offset(node), NULL);
+	return fdt_get_name(ofnode_to_fdt(node), ofnode_to_offset(node), NULL);
 }
 
 int ofnode_get_path(ofnode node, char *buf, int buflen)
@@ -313,7 +406,7 @@ int ofnode_get_path(ofnode node, char *buf, int buflen)
 	} else {
 		int res;
 
-		res = fdt_get_path(gd->fdt_blob, ofnode_to_offset(node), buf,
+		res = fdt_get_path(ofnode_to_fdt(node), ofnode_to_offset(node), buf,
 				   buflen);
 		if (!res)
 			return res;
@@ -329,10 +422,23 @@ ofnode ofnode_get_by_phandle(uint phandle)
 	ofnode node;
 
 	if (of_live_active())
-		node = np_to_ofnode(of_find_node_by_phandle(phandle));
+		node = np_to_ofnode(of_find_node_by_phandle(NULL, phandle));
 	else
 		node.of_offset = fdt_node_offset_by_phandle(gd->fdt_blob,
 							    phandle);
+
+	return node;
+}
+
+ofnode oftree_get_by_phandle(oftree tree, uint phandle)
+{
+	ofnode node;
+
+	if (of_live_active())
+		node = np_to_ofnode(of_find_node_by_phandle(tree.np, phandle));
+	else
+		node.of_offset = fdt_node_offset_by_phandle(
+					oftree_lookup_fdt(tree), phandle);
 
 	return node;
 }
@@ -369,7 +475,7 @@ static fdt_addr_t __ofnode_get_addr_size_index(ofnode node, int index,
 	} else {
 		na = ofnode_read_simple_addr_cells(ofnode_get_parent(node));
 		ns = ofnode_read_simple_size_cells(ofnode_get_parent(node));
-		return fdtdec_get_addr_size_fixed(gd->fdt_blob,
+		return fdtdec_get_addr_size_fixed(ofnode_to_fdt(node),
 						  ofnode_to_offset(node), "reg",
 						  index, na, ns, size,
 						  translate);
@@ -417,7 +523,7 @@ int ofnode_stringlist_search(ofnode node, const char *property,
 	} else {
 		int ret;
 
-		ret = fdt_stringlist_search(gd->fdt_blob,
+		ret = fdt_stringlist_search(ofnode_to_fdt(node),
 					    ofnode_to_offset(node), property,
 					    string);
 		if (ret == -FDT_ERR_NOTFOUND)
@@ -438,7 +544,8 @@ int ofnode_read_string_index(ofnode node, const char *property, int index,
 	} else {
 		int len;
 
-		*outp = fdt_stringlist_get(gd->fdt_blob, ofnode_to_offset(node),
+		*outp = fdt_stringlist_get(ofnode_to_fdt(node),
+					   ofnode_to_offset(node),
 					   property, index, &len);
 		if (len < 0)
 			return -EINVAL;
@@ -451,7 +558,7 @@ int ofnode_read_string_count(ofnode node, const char *property)
 	if (ofnode_is_np(node)) {
 		return of_property_count_strings(ofnode_to_np(node), property);
 	} else {
-		return fdt_stringlist_count(gd->fdt_blob,
+		return fdt_stringlist_count(ofnode_to_fdt(node),
 					    ofnode_to_offset(node), property);
 	}
 }
@@ -520,7 +627,7 @@ int ofnode_parse_phandle_with_args(ofnode node, const char *list_name,
 		struct fdtdec_phandle_args args;
 		int ret;
 
-		ret = fdtdec_parse_phandle_with_args(gd->fdt_blob,
+		ret = fdtdec_parse_phandle_with_args(ofnode_to_fdt(node),
 						     ofnode_to_offset(node),
 						     list_name, cells_name,
 						     cell_count, index, &args);
@@ -539,7 +646,7 @@ int ofnode_count_phandle_with_args(ofnode node, const char *list_name,
 		return of_count_phandle_with_args(ofnode_to_np(node),
 				list_name, cells_name, cell_count);
 	else
-		return fdtdec_parse_phandle_with_args(gd->fdt_blob,
+		return fdtdec_parse_phandle_with_args(ofnode_to_fdt(node),
 				ofnode_to_offset(node), list_name, cells_name,
 				cell_count, -1, NULL);
 }
@@ -560,7 +667,16 @@ ofnode ofnode_path_root(oftree tree, const char *path)
 	else if (*path != '/' && tree.fdt != gd->fdt_blob)
 		return ofnode_null();  /* Aliases only on control FDT */
 	else
-		return offset_to_ofnode(fdt_path_offset(tree.fdt, path));
+		return oftree_ensure(tree.fdt, path);
+}
+
+oftree oftree_from_fdt(void *fdt)
+{
+	oftree tree;
+
+	tree.fdt = fdt;
+
+	return tree;
 }
 
 const void *ofnode_read_chosen_prop(const char *propname, int *sizep)
@@ -714,7 +830,7 @@ const void *ofnode_get_property(ofnode node, const char *propname, int *lenp)
 	if (ofnode_is_np(node))
 		return of_get_property(ofnode_to_np(node), propname, lenp);
 	else
-		return fdt_getprop(gd->fdt_blob, ofnode_to_offset(node),
+		return fdt_getprop(ofnode_to_fdt(node), ofnode_to_offset(node),
 				   propname, lenp);
 }
 
@@ -728,7 +844,7 @@ int ofnode_get_first_property(ofnode node, struct ofprop *prop)
 			return -FDT_ERR_NOTFOUND;
 	} else {
 		prop->offset =
-			fdt_first_property_offset(gd->fdt_blob,
+			fdt_first_property_offset(ofnode_to_fdt(node),
 						  ofnode_to_offset(prop->node));
 		if (prop->offset < 0)
 			return prop->offset;
@@ -745,8 +861,8 @@ int ofnode_get_next_property(struct ofprop *prop)
 		if (!prop->prop)
 			return -FDT_ERR_NOTFOUND;
 	} else {
-		prop->offset = fdt_next_property_offset(gd->fdt_blob,
-							prop->offset);
+		prop->offset = fdt_next_property_offset(
+				ofnode_to_fdt(prop->node), prop->offset);
 		if (prop->offset  < 0)
 			return prop->offset;
 	}
@@ -761,7 +877,7 @@ const void *ofnode_get_property_by_prop(const struct ofprop *prop,
 		return of_get_property_by_prop(ofnode_to_np(prop->node),
 					       prop->prop, propname, lenp);
 	else
-		return fdt_getprop_by_offset(gd->fdt_blob,
+		return fdt_getprop_by_offset(ofnode_to_fdt(prop->node),
 					     prop->offset,
 					     propname, lenp);
 }
@@ -771,7 +887,7 @@ bool ofnode_is_available(ofnode node)
 	if (ofnode_is_np(node))
 		return of_device_is_available(ofnode_to_np(node));
 	else
-		return fdtdec_get_is_enabled(gd->fdt_blob,
+		return fdtdec_get_is_enabled(ofnode_to_fdt(node),
 					     ofnode_to_offset(node));
 }
 
@@ -795,7 +911,7 @@ fdt_addr_t ofnode_get_addr_size(ofnode node, const char *property,
 		else
 			return of_read_number(prop, na);
 	} else {
-		return fdtdec_get_addr_size(gd->fdt_blob,
+		return fdtdec_get_addr_size(ofnode_to_fdt(node),
 					    ofnode_to_offset(node), property,
 					    sizep);
 	}
@@ -814,7 +930,7 @@ const uint8_t *ofnode_read_u8_array_ptr(ofnode node, const char *propname,
 		return (uint8_t *)prop;
 
 	} else {
-		return fdtdec_locate_byte_array(gd->fdt_blob,
+		return fdtdec_locate_byte_array(ofnode_to_fdt(node),
 				ofnode_to_offset(node), propname, sz);
 	}
 }
@@ -950,10 +1066,10 @@ int ofnode_read_addr_cells(ofnode node)
 	if (ofnode_is_np(node)) {
 		return of_n_addr_cells(ofnode_to_np(node));
 	} else {
-		int parent = fdt_parent_offset(gd->fdt_blob,
+		int parent = fdt_parent_offset(ofnode_to_fdt(node),
 					       ofnode_to_offset(node));
 
-		return fdt_address_cells(gd->fdt_blob, parent);
+		return fdt_address_cells(ofnode_to_fdt(node), parent);
 	}
 }
 
@@ -962,10 +1078,10 @@ int ofnode_read_size_cells(ofnode node)
 	if (ofnode_is_np(node)) {
 		return of_n_size_cells(ofnode_to_np(node));
 	} else {
-		int parent = fdt_parent_offset(gd->fdt_blob,
+		int parent = fdt_parent_offset(ofnode_to_fdt(node),
 					       ofnode_to_offset(node));
 
-		return fdt_size_cells(gd->fdt_blob, parent);
+		return fdt_size_cells(ofnode_to_fdt(node), parent);
 	}
 }
 
@@ -974,7 +1090,8 @@ int ofnode_read_simple_addr_cells(ofnode node)
 	if (ofnode_is_np(node))
 		return of_simple_addr_cells(ofnode_to_np(node));
 	else
-		return fdt_address_cells(gd->fdt_blob, ofnode_to_offset(node));
+		return fdt_address_cells(ofnode_to_fdt(node),
+					 ofnode_to_offset(node));
 }
 
 int ofnode_read_simple_size_cells(ofnode node)
@@ -982,7 +1099,8 @@ int ofnode_read_simple_size_cells(ofnode node)
 	if (ofnode_is_np(node))
 		return of_simple_size_cells(ofnode_to_np(node));
 	else
-		return fdt_size_cells(gd->fdt_blob, ofnode_to_offset(node));
+		return fdt_size_cells(ofnode_to_fdt(node),
+				      ofnode_to_offset(node));
 }
 
 bool ofnode_pre_reloc(ofnode node)
@@ -1019,7 +1137,8 @@ int ofnode_read_resource(ofnode node, uint index, struct resource *res)
 		struct fdt_resource fres;
 		int ret;
 
-		ret = fdt_get_resource(gd->fdt_blob, ofnode_to_offset(node),
+		ret = fdt_get_resource(ofnode_to_fdt(node),
+				       ofnode_to_offset(node),
 				       "reg", index, &fres);
 		if (ret < 0)
 			return -EINVAL;
@@ -1048,7 +1167,8 @@ u64 ofnode_translate_address(ofnode node, const fdt32_t *in_addr)
 	if (ofnode_is_np(node))
 		return of_translate_address(ofnode_to_np(node), in_addr);
 	else
-		return fdt_translate_address(gd->fdt_blob, ofnode_to_offset(node), in_addr);
+		return fdt_translate_address(ofnode_to_fdt(node),
+					     ofnode_to_offset(node), in_addr);
 }
 
 u64 ofnode_translate_dma_address(ofnode node, const fdt32_t *in_addr)
@@ -1056,7 +1176,8 @@ u64 ofnode_translate_dma_address(ofnode node, const fdt32_t *in_addr)
 	if (ofnode_is_np(node))
 		return of_translate_dma_address(ofnode_to_np(node), in_addr);
 	else
-		return fdt_translate_dma_address(gd->fdt_blob, ofnode_to_offset(node), in_addr);
+		return fdt_translate_dma_address(ofnode_to_fdt(node),
+						 ofnode_to_offset(node), in_addr);
 }
 
 int ofnode_get_dma_range(ofnode node, phys_addr_t *cpu, dma_addr_t *bus, u64 *size)
@@ -1064,7 +1185,8 @@ int ofnode_get_dma_range(ofnode node, phys_addr_t *cpu, dma_addr_t *bus, u64 *si
 	if (ofnode_is_np(node))
 		return of_get_dma_range(ofnode_to_np(node), cpu, bus, size);
 	else
-		return fdt_get_dma_range(gd->fdt_blob, ofnode_to_offset(node),
+		return fdt_get_dma_range(ofnode_to_fdt(node),
+					 ofnode_to_offset(node),
 					 cpu, bus, size);
 }
 
@@ -1074,7 +1196,7 @@ int ofnode_device_is_compatible(ofnode node, const char *compat)
 		return of_device_is_compatible(ofnode_to_np(node), compat,
 					       NULL, NULL);
 	else
-		return !fdt_node_check_compatible(gd->fdt_blob,
+		return !fdt_node_check_compatible(ofnode_to_fdt(node),
 						  ofnode_to_offset(node),
 						  compat);
 }
@@ -1087,7 +1209,8 @@ ofnode ofnode_by_compatible(ofnode from, const char *compat)
 			compat));
 	} else {
 		return offset_to_ofnode(fdt_node_offset_by_compatible(
-				gd->fdt_blob, ofnode_to_offset(from), compat));
+					ofnode_to_fdt(from),
+					ofnode_to_offset(from), compat));
 	}
 }
 
@@ -1100,7 +1223,7 @@ ofnode ofnode_by_prop_value(ofnode from, const char *propname,
 			propval, proplen));
 	} else {
 		return offset_to_ofnode(fdt_node_offset_by_prop_value(
-				gd->fdt_blob, ofnode_to_offset(from),
+				ofnode_to_fdt(from), ofnode_to_offset(from),
 				propname, propval, proplen));
 	}
 }
@@ -1111,7 +1234,7 @@ int ofnode_write_prop(ofnode node, const char *propname, const void *value,
 	if (of_live_active())
 		return of_write_prop(ofnode_to_npw(node), propname, len, value);
 	else
-		return fdt_setprop((void *)gd->fdt_blob, ofnode_to_offset(node),
+		return fdt_setprop(ofnode_to_fdt(node), ofnode_to_offset(node),
 				   propname, value, len);
 
 	return 0;
@@ -1226,4 +1349,34 @@ phy_interface_t ofnode_read_phy_mode(ofnode node)
 	debug("%s: Invalid PHY interface '%s'\n", __func__, mode);
 
 	return PHY_INTERFACE_MODE_NA;
+}
+
+int ofnode_add_subnode(ofnode node, const char *name, ofnode *subnodep)
+{
+	ofnode subnode;
+	int ret;
+
+	assert(ofnode_valid(node));
+
+	if (ofnode_is_np(node)) {
+		struct device_node *np, *child;
+
+		np = (struct device_node *)ofnode_to_np(node);
+		ret = of_add_subnode(np, name, strlen(name), &child);
+		if (ret)
+			return ret;
+		subnode = np_to_ofnode(child);
+	} else {
+		int offset;
+
+		offset = fdt_add_subnode(ofnode_to_fdt(node),
+					 ofnode_to_offset(node), name);
+		if (offset < 0)
+			return offset;
+		subnode = noffset_to_ofnode(node, offset);
+	}
+
+	*subnodep = subnode;
+
+	return 0;
 }
