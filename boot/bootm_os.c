@@ -67,8 +67,8 @@ static void __maybe_unused fit_unsupported_reset(const char *msg)
 static int do_bootm_netbsd(int flag, int argc, char *const argv[],
 			   struct bootm_headers *images)
 {
-	void (*loader)(struct bd_info *, image_header_t *, char *, char *);
-	image_header_t *os_hdr, *hdr;
+	void (*loader)(struct bd_info *, struct legacy_img_hdr *, char *, char *);
+	struct legacy_img_hdr *os_hdr, *hdr;
 	ulong kernel_data, kernel_len;
 	char *cmdline;
 
@@ -115,7 +115,7 @@ static int do_bootm_netbsd(int flag, int argc, char *const argv[],
 			cmdline = "";
 	}
 
-	loader = (void (*)(struct bd_info *, image_header_t *, char *, char *))images->ep;
+	loader = (void (*)(struct bd_info *, struct legacy_img_hdr *, char *, char *))images->ep;
 
 	printf("## Transferring control to NetBSD stage-2 loader (at address %08lx) ...\n",
 	       (ulong)loader);

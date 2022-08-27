@@ -16,7 +16,7 @@ DECLARE_GLOBAL_DATA_PTR;
 #define LINUX_ARM64_IMAGE_MAGIC 0x644d5241
 
 /* See Documentation/arm64/booting.txt in the Linux kernel */
-struct Image_header {
+struct legacy_img_hdr {
 	uint32_t	code0;		/* Executable code */
 	uint32_t	code1;		/* Executable code */
 	uint64_t	text_offset;	/* Image load offset, LE */
@@ -32,13 +32,13 @@ struct Image_header {
 int booti_setup(ulong image, ulong *relocated_addr, ulong *size,
 		bool force_reloc)
 {
-	struct Image_header *ih;
+	struct legacy_img_hdr *ih;
 	uint64_t dst;
 	uint64_t image_size, text_offset;
 
 	*relocated_addr = image;
 
-	ih = (struct Image_header *)map_sysmem(image, 0);
+	ih = (struct legacy_img_hdr *)map_sysmem(image, 0);
 
 	if (ih->magic != le32_to_cpu(LINUX_ARM64_IMAGE_MAGIC)) {
 		puts("Bad Linux ARM64 Image magic!\n");
