@@ -188,6 +188,7 @@ stages:
           ./tools/buildman/buildman -t
           ./tools/dtoc/dtoc -t
           ./tools/patman/patman test
+          ./scripts/test_kconfig_check.py;
           make O=${UBOOT_TRAVIS_BUILD_DIR} testconfig
           EOF
           cat build.sh
