@@ -25,8 +25,8 @@ base_its = '''
                 compression = "%(compression)s";
 
                 random {
-                    compatible = "vbe,random-bytes";
-                    vbe,bytes = <0x40>;
+                    compatible = "vbe,random-rand";
+                    vbe,size = <0x40>;
                     vbe,required;
                 };
                 aslr1 {
@@ -34,7 +34,10 @@ base_its = '''
                     vbe,align = <0x100000>;
                 };
                 aslr2 {
-                    compatible = "vbe,aslr-bytes";
+                    compatible = "vbe,aslr-rand";
+                };
+                efi-runtime {
+                    compatible = "vbe,efi-runtime-rand";
                 };
                 wibble {
                     compatible = "vbe,wibble";

@@ -28,7 +28,7 @@ struct vbe_result {
 
 typedef int (*vbe_req_func)(ofnode node, struct vbe_result *result);
 
-static int handle_random_req(ofnode node, int default_bytes,
+static int handle_random_req(ofnode node, int default_size,
 			     struct vbe_result *result)
 {
 	char buf[VBE_MAX_RAND_SIZE];
@@ -36,17 +36,17 @@ static int handle_random_req(ofnode node, int default_bytes,
 	u32 size;
 	int ret;
 
-	if (ofnode_read_u32(node, "vbe,bytes", &size)) {
-		if (!default_bytes) {
+	if (ofnode_read_u32(node, "vbe,size", &size)) {
+		if (!default_size) {
 			snprintf(result->err_str, VBE_ERR_STR_LEN,
-				 "Missing vbe,bytes property");
+				 "Missing vbe,size property");
 			return log_msg_ret("byt", -EINVAL);
 		}
-		size = default_bytes;
+		size = default_size;
 	}
 	if (size > VBE_MAX_RAND_SIZE) {
 		snprintf(result->err_str, VBE_ERR_STR_LEN,
-			 "vbe,bytes %#x exceeds max size %#x", size,
+			 "vbe,size %#x exceeds max size %#x", size,
 			 VBE_MAX_RAND_SIZE);
 		return log_msg_ret("siz", -E2BIG);
 	}
@@ -69,7 +69,7 @@ static int handle_random_req(ofnode node, int default_bytes,
 	return 0;
 }
 
-static int vbe_req_random_bytes(ofnode node, struct vbe_result *result)
+static int vbe_req_random_seed(ofnode node, struct vbe_result *result)
 {
 	return handle_random_req(node, 0, result);
 }
@@ -79,7 +79,12 @@ static int vbe_req_aslr_move(ofnode node, struct vbe_result *result)
 	return -ENOTSUPP;
 }
 
-static int vbe_req_aslr_bytes(ofnode node, struct vbe_result *result)
+static int vbe_req_aslr_rand(ofnode node, struct vbe_result *result)
+{
+	return handle_random_req(node, 4, result);
+}
+
+static int vbe_req_efi_runtime_rand(ofnode node, struct vbe_result *result)
 {
 	return handle_random_req(node, 4, result);
 }
@@ -88,14 +93,18 @@ static struct vbe_req {
 	const char *compat;
 	vbe_req_func func;
 } vbe_reqs[] = {
-	/* generate random data bytes for the OS */
-	{ "random-bytes", vbe_req_random_bytes },
-
 	/* address space layout randomization - move the OS in memory */
 	{ "aslr-move", vbe_req_aslr_move },
 
 	/* provide random data for address space layout randomization */
-	{ "aslr-bytes", vbe_req_aslr_bytes },
+	{ "aslr-rand", vbe_req_aslr_rand },
+
+	/* provide random data for EFI-runtime-services address */
+	{ "efi-runtime-rand", vbe_req_efi_runtime_rand },
+
+	/* generate random data bytes to see the OS's rand generator */
+	{ "random-rand", vbe_req_random_seed },
+
 };
 
 static int vbe_process_request(ofnode node, struct vbe_result *result)

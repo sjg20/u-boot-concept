@@ -226,7 +226,6 @@ static int bootmeth_vbe_simple_ft_fixup(void *ctx, struct event *event)
 	oftree tree = event->data.ft_fixup.tree;
 	struct udevice *dev;
 
-	return 0;
 	/*
 	 * Ideally we would have driver model support for fixups, but that does
 	 * not exist yet. It is a step too far to try to do this before VBE is
