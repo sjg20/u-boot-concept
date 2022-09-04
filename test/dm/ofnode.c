@@ -78,6 +78,7 @@ static int dm_test_ofnode_compatible(struct unit_test_state *uts)
 DM_TEST(dm_test_ofnode_compatible,
 	UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
+/* check ofnode_device_is_compatible() with the 'other' FDT */
 static int dm_test_ofnode_compatible_ot(struct unit_test_state *uts)
 {
 	oftree otree = get_other_oftree(uts);
@@ -122,44 +123,17 @@ static int dm_test_ofnode_get_by_phandle_ot(struct unit_test_state *uts)
 }
 DM_TEST(dm_test_ofnode_get_by_phandle_ot, UT_TESTF_OTHER_FDT);
 
-static int dm_test_ofnode_by_prop_value(struct unit_test_state *uts)
+static int check_prop_values(struct unit_test_state *uts, ofnode start,
+			     const char *propname, const char *propval,
+			     int expect_count)
 {
-	const char propname[] = "compatible";
-	const char propval[] = "denx,u-boot-fdt-test";
+	int proplen = strlen(propval) + 1;
 	const char *str;
-	ofnode node = ofnode_null();
-
-	/* Find first matching node, there should be at least one */
-	node = ofnode_by_prop_value(node, propname, propval, sizeof(propval));
-	ut_assert(ofnode_valid(node));
-	str = ofnode_read_string(node, propname);
-	ut_assert(str && !strcmp(str, propval));
-
-	/* Find the rest of the matching nodes */
-	while (true) {
-		node = ofnode_by_prop_value(node, propname, propval,
-					    sizeof(propval));
-		if (!ofnode_valid(node))
-			break;
-		str = ofnode_read_string(node, propname);
-		ut_assert(str && !strcmp(str, propval));
-	}
-
-	return 0;
-}
-DM_TEST(dm_test_ofnode_by_prop_value, UT_TESTF_SCAN_FDT);
-
-static int dm_test_ofnode_by_prop_value_ot(struct unit_test_state *uts)
-{
-	const char propname[] = "str-prop";
-	const char propval[] = "other";
-	const char *str;
-	oftree otree = get_other_oftree(uts);
-	ofnode node = oftree_root(otree);
+	ofnode node;
 	int count;
 
 	/* Find first matching node, there should be at least one */
-	node = ofnode_by_prop_value(node, propname, propval, sizeof(propval));
+	node = ofnode_by_prop_value(start, propname, propval, proplen);
 	ut_assert(ofnode_valid(node));
 	str = ofnode_read_string(node, propname);
 	ut_assert(str && !strcmp(str, propval));
@@ -167,15 +141,33 @@ static int dm_test_ofnode_by_prop_value_ot(struct unit_test_state *uts)
 	/* Find the rest of the matching nodes */
 	count = 1;
 	while (true) {
-		node = ofnode_by_prop_value(node, propname, propval,
-					    sizeof(propval));
+		node = ofnode_by_prop_value(node, propname, propval, proplen);
 		if (!ofnode_valid(node))
 			break;
 		str = ofnode_read_string(node, propname);
 		ut_asserteq_str(propval, str);
 		count++;
 	}
-	ut_asserteq(2, count);
+	ut_asserteq(expect_count, count);
+
+	return 0;
+}
+
+static int dm_test_ofnode_by_prop_value(struct unit_test_state *uts)
+{
+	ut_assertok(check_prop_values(uts, ofnode_null(), "compatible",
+				      "denx,u-boot-fdt-test", 11));
+
+	return 0;
+}
+DM_TEST(dm_test_ofnode_by_prop_value, UT_TESTF_SCAN_FDT);
+
+static int dm_test_ofnode_by_prop_value_ot(struct unit_test_state *uts)
+{
+	oftree otree = get_other_oftree(uts);
+
+	ut_assertok(check_prop_values(uts, oftree_root(otree), "str-prop",
+				      "other", 2));
 
 	return 0;
 }
