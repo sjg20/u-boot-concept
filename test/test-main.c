@@ -317,7 +317,6 @@ static int test_pre_run(struct unit_test_state *uts, struct unit_test *test)
 	if (IS_ENABLED(CONFIG_SANDBOX) && (test->flags & UT_TESTF_OTHER_FDT)) {
 		ut_assertok(test_load_other_fdt(uts));
 
-		uts->of_other = NULL;
 		if (of_live_active()) {
 			ut_assertok(unflatten_device_tree(uts->other_fdt,
 							  &uts->of_other));
@@ -351,10 +350,8 @@ static int test_post_run(struct unit_test_state *uts, struct unit_test *test)
 		ut_assertok(dm_test_post_run(uts));
 	ut_assertok(event_uninit());
 
-	if (test->flags & UT_TESTF_OTHER_FDT) {
-// 		test_unload_other_fdt();
-		// free unflattened tree
-	}
+	free(uts->of_other);
+	uts->of_other = NULL;
 
 	return 0;
 }

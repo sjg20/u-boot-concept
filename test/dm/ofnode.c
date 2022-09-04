@@ -13,7 +13,13 @@
 #include <test/test.h>
 #include <test/ut.h>
 
-oftree oftree_get_other(struct unit_test_state *uts)
+/**
+ * get_other_oftree() - Convert a flat tree into an oftree object
+ *
+ * @uts: Test state
+ * @return: oftree object for the 'other' FDT (see sandbox' other.dts)
+ */
+oftree get_other_oftree(struct unit_test_state *uts)
 {
 	oftree tree;
 
@@ -23,6 +29,41 @@ oftree oftree_get_other(struct unit_test_state *uts)
 		tree = oftree_from_fdt(uts->other_fdt);
 
 	return tree;
+}
+
+/**
+ * get_oftree() - Convert a flat tree into an oftree object
+ *
+ * @uts: Test state
+ * @fdt: Pointer to flat tree
+ * @treep: Returns the tree, on success
+ * Return: 0 if OK, 1 if the tree failed to unflatten, -EOVERFLOW if there are
+ * too many flat trees to allow another one to be registers (see
+ * oftree_ensure())
+ */
+int get_oftree(struct unit_test_state *uts, void *fdt, oftree *treep)
+{
+	oftree tree;
+
+	if (of_live_active()) {
+		struct device_node *root;
+
+		ut_assertok(unflatten_device_tree(fdt, &root));
+		tree = oftree_from_np(root);
+	} else {
+		tree = oftree_from_fdt(fdt);
+		if (!oftree_valid(tree))
+			return -EOVERFLOW;
+	}
+	*treep = tree;
+
+	return 0;
+}
+
+void free_oftree(oftree tree)
+{
+	if (of_live_active())
+		free(tree.np);
 }
 
 static int dm_test_ofnode_compatible(struct unit_test_state *uts)
@@ -39,11 +80,9 @@ DM_TEST(dm_test_ofnode_compatible,
 
 static int dm_test_ofnode_compatible_ot(struct unit_test_state *uts)
 {
-	ofnode oroot;
-	oftree otree;
+	oftree otree = get_other_oftree(uts);
+	ofnode oroot = oftree_root(otree);
 
-	otree = oftree_get_other(uts);
-	oroot = oftree_root(otree);
 	ut_assert(ofnode_valid(oroot));
 	ut_assert(ofnode_device_is_compatible(oroot, "sandbox-other"));
 
@@ -68,6 +107,20 @@ static int dm_test_ofnode_get_by_phandle(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_ofnode_get_by_phandle, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
+
+static int dm_test_ofnode_get_by_phandle_ot(struct unit_test_state *uts)
+{
+	oftree otree = get_other_oftree(uts);
+	ofnode node;
+
+	ut_assert(ofnode_valid(oftree_get_by_phandle(oftree_default(), 1)));
+	node = oftree_get_by_phandle(otree, 1);
+	ut_assert(ofnode_valid(node));
+	ut_asserteq_str("target", ofnode_get_name(node));
+
+	return 0;
+}
+DM_TEST(dm_test_ofnode_get_by_phandle_ot, UT_TESTF_OTHER_FDT);
 
 static int dm_test_ofnode_by_prop_value(struct unit_test_state *uts)
 {
@@ -515,12 +568,16 @@ DM_TEST(dm_test_ofnode_get_phy, 0);
  * @uts: Test state
  * @fdt: Place to write FDT
  * @size: Maximum size of space for fdt
+ * @id: id value to add to the tree ('id' property in root node)
  */
-static int make_ofnode_fdt(struct unit_test_state *uts, void *fdt, int size)
+static int make_ofnode_fdt(struct unit_test_state *uts, void *fdt, int size,
+			   int id)
 {
 	ut_assertok(fdt_create(fdt, size));
 	ut_assertok(fdt_finish_reservemap(fdt));
 	ut_assert(fdt_begin_node(fdt, "") >= 0);
+
+	ut_assertok(fdt_property_u32(fdt, "id", id));
 
 	ut_assert(fdt_begin_node(fdt, "aliases") >= 0);
 	ut_assertok(fdt_property_string(fdt, "mmc0", "/new-mmc"));
@@ -537,7 +594,6 @@ static int make_ofnode_fdt(struct unit_test_state *uts, void *fdt, int size)
 
 static int dm_test_ofnode_root(struct unit_test_state *uts)
 {
-	struct device_node *root = NULL;
 	char fdt[256];
 	oftree tree;
 	ofnode node;
@@ -547,13 +603,8 @@ static int dm_test_ofnode_root(struct unit_test_state *uts)
 	ut_assert(ofnode_valid(node));
 	ut_asserteq_str("sbe5", ofnode_get_name(node));
 
-	ut_assertok(make_ofnode_fdt(uts, fdt, sizeof(fdt)));
-	if (of_live_active()) {
-		ut_assertok(unflatten_device_tree(fdt, &root));
-		tree = oftree_from_np(root);
-	} else {
-		tree = oftree_from_fdt(fdt);
-	}
+	ut_assertok(make_ofnode_fdt(uts, fdt, sizeof(fdt), 0));
+	ut_assertok(get_oftree(uts, fdt, &tree));
 
 	/* Make sure they don't work on this new tree */
 	node = oftree_path(tree, "mmc0");
@@ -567,7 +618,7 @@ static int dm_test_ofnode_root(struct unit_test_state *uts)
 	node = oftree_path(oftree_default(), "/new-mmc");
 	ut_assert(!ofnode_valid(node));
 
-	free(root);
+	free_oftree(tree);
 
 	return 0;
 }
@@ -825,3 +876,40 @@ static int dm_test_ofnode_get_name(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_ofnode_get_name, UT_TESTF_SCAN_FDT);
+
+/* try to access more FDTs than is supported */
+static int dm_test_ofnode_too_many(struct unit_test_state *uts)
+{
+	const int max_trees = CONFIG_IS_ENABLED(OFNODE_MULTI_TREE,
+					(CONFIG_OFNODE_MULTI_TREE_MAX), (1));
+	const int fdt_size = 256;
+	const int num_trees = max_trees + 1;
+	char fdt[num_trees][fdt_size];
+	int i;
+
+	for (i = 0; i < num_trees; i++) {
+		oftree tree;
+		int ret;
+
+		ut_assertok(make_ofnode_fdt(uts, fdt[i], fdt_size, i));
+		ret = get_oftree(uts, fdt[i], &tree);
+
+		/*
+		 * With flat tree we have the control FDT using one slot. Live
+		 * tree has no limit since it uses pointers, not integer tree
+		 * IDs
+		 */
+		if (of_live_active() || i < max_trees - 1) {
+			ut_assertok(ret);
+		} else {
+			/*
+			 * tree should be invalid when we try to register too
+			 * many trees
+			 */
+			ut_asserteq(-EOVERFLOW, ret);
+		}
+	}
+
+	return 0;
+}
+DM_TEST(dm_test_ofnode_too_many, UT_TESTF_SCAN_FDT);

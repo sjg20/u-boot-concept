@@ -10,4 +10,12 @@
 
 / {
 	compatible = "sandbox-other";
+
+	node {
+		target = <&target>;
+	};
+
+	target: target {
+		str-prop = "other";
+	};
 };

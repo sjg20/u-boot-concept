@@ -169,6 +169,23 @@ static inline int oftree_find(const void *fdt)
 
 #endif /* OFNODE_MULTI_TREE */
 
+static ofnode ofnode_for_tree(oftree tree, int offset)
+{
+	ofnode node;
+
+	if (CONFIG_IS_ENABLED(OFNODE_MULTI_TREE) && offset >= 0) {
+		int tree_id = oftree_find(tree.fdt);
+
+		if (tree_id == -1)
+			return ofnode_null();
+		node.of_offset = OFTREE_NODE(tree_id, offset);
+	} else {
+		node.of_offset = offset;
+	}
+
+	return node;
+}
+
 bool ofnode_name_eq(ofnode node, const char *name)
 {
 	const char *node_name;
@@ -452,7 +469,7 @@ const char *ofnode_get_name(ofnode node)
 	}
 
 	if (ofnode_is_np(node))
-		return strrchr(node.np->full_name, '/') + 1;
+		return node.np->name;
 
 	return fdt_get_name(ofnode_to_fdt(node), ofnode_to_offset(node), NULL);
 }
@@ -502,9 +519,9 @@ ofnode oftree_get_by_phandle(oftree tree, uint phandle)
 	if (of_live_active())
 		node = np_to_ofnode(of_find_node_by_phandle(tree.np, phandle));
 	else
-		node.of_offset =
+		node = ofnode_for_tree(tree,
 			fdt_node_offset_by_phandle(oftree_lookup_fdt(tree),
-						   phandle);
+						   phandle));
 
 	return node;
 }
