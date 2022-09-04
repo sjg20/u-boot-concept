@@ -25,6 +25,7 @@
  * @fdt_size: Size of the device-tree copy
  * @other_fdt: Buffer for the other FDT (UT_TESTF_OTHER_FDT)
  * @other_fdt_size: Size of the other FDT (UT_TESTF_OTHER_FDT)
+ * @of_other: Live tree for the other FDT
  * @expect_str: Temporary string used to hold expected string value
  * @actual_str: Temporary string used to hold actual string value
  */
@@ -147,7 +148,6 @@ static inline void arch_reset_for_test(void)
 	state_reset_for_test(state_get_current());
 #endif
 }
-
 static inline int test_load_other_fdt(struct unit_test_state *uts)
 {
 	int ret = 0;

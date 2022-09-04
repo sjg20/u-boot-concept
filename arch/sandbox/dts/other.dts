@@ -9,5 +9,5 @@
 /dts-v1/;
 
 / {
-
+	compatible = "sandbox-other";
 };

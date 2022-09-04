@@ -108,6 +108,9 @@ struct sandbox_state {
 	bool hwspinlock;		/* Hardware Spinlock status */
 	bool allow_memio;		/* Allow readl() etc. to work */
 
+	void *other_fdt_buf;		/* 'other' FDT blob used by tests */
+	int other_size;			/* size of other FDT blob */
+
 	/*
 	 * This struct is getting large.
 	 *
@@ -278,6 +281,8 @@ void state_show(struct sandbox_state *state);
  * small
  */
 int state_get_rel_filename(const char *rel_path, char *buf, int size);
+
+int state_load_other_fdt(const char **bufp, int *sizep);
 
 /**
  * Initialize the test system state

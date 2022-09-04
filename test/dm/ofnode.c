@@ -28,12 +28,16 @@ oftree oftree_get_other(struct unit_test_state *uts)
 static int dm_test_ofnode_compatible(struct unit_test_state *uts)
 {
 	ofnode root_node = ofnode_path("/");
+	ofnode oroot;
 	oftree otree;
 
 	ut_assert(ofnode_valid(root_node));
 	ut_assert(ofnode_device_is_compatible(root_node, "sandbox"));
 
 	otree = oftree_get_other(uts);
+	oroot = oftree_root(otree);
+	ut_assert(ofnode_valid(oroot));
+	ut_assert(ofnode_device_is_compatible(oroot, "sandbox-other"));
 
 	return 0;
 }

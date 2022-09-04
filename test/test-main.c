@@ -8,6 +8,7 @@
 #include <console.h>
 #include <dm.h>
 #include <event.h>
+#include <of_live.h>
 #include <dm/ofnode.h>
 #include <dm/root.h>
 #include <dm/test.h>
@@ -313,8 +314,15 @@ static int test_pre_run(struct unit_test_state *uts, struct unit_test *test)
 	    (test->flags & UT_TESTF_SCAN_FDT))
 		ut_assertok(dm_extended_scan(false));
 
-	if (IS_ENABLED(CONFIG_SANDBOX) && (test->flags & UT_TESTF_OTHER_FDT))
+	if (IS_ENABLED(CONFIG_SANDBOX) && (test->flags & UT_TESTF_OTHER_FDT)) {
 		ut_assertok(test_load_other_fdt(uts));
+
+		uts->of_other = NULL;
+		if (of_live_active()) {
+			ut_assertok(unflatten_device_tree(uts->other_fdt,
+							  &uts->of_other));
+		}
+	}
 
 	if (test->flags & UT_TESTF_CONSOLE_REC) {
 		int ret = console_record_reset_enable();

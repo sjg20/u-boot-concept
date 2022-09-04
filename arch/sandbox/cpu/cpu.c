@@ -10,7 +10,6 @@
 #include <cpu_func.h>
 #include <errno.h>
 #include <log.h>
-#include <of_live.h>
 #include <os.h>
 #include <asm/global_data.h>
 #include <asm/io.h>
@@ -381,27 +380,22 @@ ulong timer_get_boot_us(void)
 
 int sandbox_load_other_fdt(struct unit_test_state *uts)
 {
-	char fname[256];
-	int len, ret;
+	const char *orig;
+	int ret, size;
 
-	len = state_get_rel_filename("arch/sandbox/dts/test.dtb", fname,
-				     sizeof(fname));
-	if (len < 0)
-		return len;
-
-	ret = os_read_file(fname, &uts->other_fdt, &uts->other_fdt_size);
+	ret = state_load_other_fdt(&orig, &size);
 	if (ret) {
-		log_err("Cannot read file '%s'\n", fname);
-		return ret;
+		log_err("Cannot read other FDT\n");
+		return log_msg_ret("ld", ret);
 	}
-	uts->of_other = NULL;
-	if (of_live_active()) {
-		ret = unflatten_device_tree(uts->other_fdt, &uts->of_other);
-		if (ret) {
-			log_err("Cannot unflatten file '%s'\n", fname);
-			return ret;
-		}
+
+	if (!uts->other_fdt) {
+		uts->other_fdt = malloc(size);
+		if (!uts->other_fdt)
+			return log_msg_ret("mem", -ENOMEM);
 	}
+
+	memcpy(uts->other_fdt, orig, size);
 
 	return 0;
 }

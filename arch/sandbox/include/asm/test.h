@@ -317,6 +317,6 @@ int sandbox_sdl_set_bpp(struct udevice *dev, enum video_log2_bpp l2bpp);
  */
 void sandbox_set_fake_efi_mgr_dev(struct udevice *dev, bool fake_dev);
 
-int sandbox_load_other_fdt(struct unit_test_state *uts);
+int sandbox_load_other_fdt(struct unit_test_state *uts);;
 
 #endif
