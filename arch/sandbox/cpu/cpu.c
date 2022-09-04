@@ -3,19 +3,23 @@
  * Copyright (c) 2011 The Chromium OS Authors.
  */
 
+#define LOG_CATEGORY	LOGC_SANDBOX
+
 #include <common.h>
 #include <bootstage.h>
 #include <cpu_func.h>
 #include <errno.h>
 #include <log.h>
-#include <asm/global_data.h>
-#include <linux/delay.h>
-#include <linux/libfdt.h>
 #include <os.h>
+#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/malloc.h>
 #include <asm/setjmp.h>
 #include <asm/state.h>
+#include <dm/ofnode.h>
+#include <linux/delay.h>
+#include <linux/libfdt.h>
+#include <test/test.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -372,4 +376,27 @@ ulong timer_get_boot_us(void)
 		base_count = count;
 
 	return (count - base_count) / 1000;
+}
+
+int sandbox_load_other_fdt(struct unit_test_state *uts)
+{
+	const char *orig;
+	int ret, size;
+
+	ret = state_load_other_fdt(&orig, &size);
+	if (ret) {
+		log_err("Cannot read other FDT\n");
+		return log_msg_ret("ld", ret);
+	}
+
+	if (!uts->other_fdt) {
+		uts->other_fdt = malloc(size);
+		uts->other_fdt_size = size;
+		if (!uts->other_fdt)
+			return log_msg_ret("mem", -ENOMEM);
+	}
+
+	memcpy(uts->other_fdt, orig, size);
+
+	return 0;
 }
