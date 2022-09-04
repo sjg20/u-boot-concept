@@ -40,6 +40,10 @@
  * the FDT format contains 32-bit values for things like the string-table
  * offset, therefore 64-bit offsets cannot be supported anyway.
  *
+ * For the multiple-tree case, an invalid offset (i.e. with of_offset < 0) is
+ * still invalid. It does not contain a tree ID. So there is no way of knowing
+ * which tree produced the invalid offset.
+ *
  * @np: Pointer to device node, used for live tree
  * @of_offset: Pointer into flat device tree, used for flat tree. Note that this
  *	is not a really a pointer to a node: it is an offset value. See above.

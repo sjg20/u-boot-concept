@@ -149,6 +149,38 @@ static int dm_test_ofnode_by_prop_value(struct unit_test_state *uts)
 }
 DM_TEST(dm_test_ofnode_by_prop_value, UT_TESTF_SCAN_FDT);
 
+static int dm_test_ofnode_by_prop_value_ot(struct unit_test_state *uts)
+{
+	const char propname[] = "str-prop";
+	const char propval[] = "other";
+	const char *str;
+	oftree otree = get_other_oftree(uts);
+	ofnode node = oftree_root(otree);
+	int count;
+
+	/* Find first matching node, there should be at least one */
+	node = ofnode_by_prop_value(node, propname, propval, sizeof(propval));
+	ut_assert(ofnode_valid(node));
+	str = ofnode_read_string(node, propname);
+	ut_assert(str && !strcmp(str, propval));
+
+	/* Find the rest of the matching nodes */
+	count = 1;
+	while (true) {
+		node = ofnode_by_prop_value(node, propname, propval,
+					    sizeof(propval));
+		if (!ofnode_valid(node))
+			break;
+		str = ofnode_read_string(node, propname);
+		ut_asserteq_str(propval, str);
+		count++;
+	}
+	ut_asserteq(2, count);
+
+	return 0;
+}
+DM_TEST(dm_test_ofnode_by_prop_value_ot, UT_TESTF_OTHER_FDT);
+
 static int dm_test_ofnode_fmap(struct unit_test_state *uts)
 {
 	struct fmap_entry entry;

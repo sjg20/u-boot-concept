@@ -151,7 +151,8 @@ ofnode noffset_to_ofnode(ofnode other_node, int of_offset)
 
 	if (of_live_active())
 		node.np = NULL;
-	else if (!CONFIG_IS_ENABLED(OFNODE_MULTI_TREE) || of_offset < 0)
+	else if (!CONFIG_IS_ENABLED(OFNODE_MULTI_TREE) || of_offset < 0 ||
+		 !ofnode_valid(other_node))
 		node.of_offset = of_offset;
 	else
 		node.of_offset = OFTREE_MAKE_NODE(other_node.of_offset,
@@ -169,7 +170,20 @@ static inline int oftree_find(const void *fdt)
 
 #endif /* OFNODE_MULTI_TREE */
 
-static ofnode ofnode_for_tree(oftree tree, int offset)
+/**
+ * ofnode_from_tree_offset() - get an ofnode from a tree offset (flat tree)
+ *
+ * Looks up the tree and returns an ofnode with the correct of_offset (i.e.
+ * containing the tree ID).
+ *
+ * If @offset is < 0 then this returns an ofnode with that offset and no tree
+ * ID.
+ *
+ * @tree: tree to check
+ * @offset: offset within that tree (can be < 0)
+ * @return node for that offset, with the correct ID
+ */
+static ofnode ofnode_from_tree_offset(oftree tree, int offset)
 {
 	ofnode node;
 
@@ -519,7 +533,7 @@ ofnode oftree_get_by_phandle(oftree tree, uint phandle)
 	if (of_live_active())
 		node = np_to_ofnode(of_find_node_by_phandle(tree.np, phandle));
 	else
-		node = ofnode_for_tree(tree,
+		node = ofnode_from_tree_offset(tree,
 			fdt_node_offset_by_phandle(oftree_lookup_fdt(tree),
 						   phandle));
 
@@ -747,20 +761,7 @@ ofnode oftree_root(oftree tree)
 	if (of_live_active()) {
 		return np_to_ofnode(tree.np);
 	} else {
-		ofnode node;
-
-		if (CONFIG_IS_ENABLED(OFNODE_MULTI_TREE)) {
-			int tree_id = oftree_find(tree.fdt);
-
-			if (tree_id == -1)
-				node.of_offset = -1;
-			else
-				node.of_offset = OFTREE_NODE(tree_id, 0);
-		} else {
-			node.of_offset = 0;
-		}
-
-		return node;
+		return ofnode_from_tree_offset(tree, 0);
 	}
 }
 
@@ -773,19 +774,8 @@ ofnode oftree_path(oftree tree, const char *path)
 		return ofnode_null();  /* Aliases only on control FDT */
 	} else {
 		int offset = fdt_path_offset(tree.fdt, path);
-		ofnode node;
 
-		if (CONFIG_IS_ENABLED(OFNODE_MULTI_TREE)) {
-			int tree_id = oftree_find(tree.fdt);
-
-			if (tree_id == -1)
-				return ofnode_null();
-			node.of_offset = OFTREE_NODE(tree_id, offset);
-		} else {
-			node.of_offset = offset;
-		}
-
-		return node;
+		return ofnode_from_tree_offset(tree, offset);
 	}
 }
 
@@ -1324,9 +1314,10 @@ ofnode ofnode_by_prop_value(ofnode from, const char *propname,
 			(struct device_node *)ofnode_to_np(from), propname,
 			propval, proplen));
 	} else {
-		return offset_to_ofnode(fdt_node_offset_by_prop_value(
-				ofnode_to_fdt(from), ofnode_to_offset(from),
-				propname, propval, proplen));
+		return noffset_to_ofnode(from,
+			 fdt_node_offset_by_prop_value(ofnode_to_fdt(from),
+				ofnode_to_offset(from), propname, propval,
+				proplen));
 	}
 }
 

@@ -1204,8 +1204,9 @@ ofnode ofnode_by_compatible(ofnode from, const char *compat);
  * Find the next node after @from that has a @propname with a value
  * @propval and a length @proplen.
  *
- * @from: ofnode to start from (use ofnode_null() to start at the
- * beginning)
+ * @from: ofnode to start from. Use ofnode_null() to start at the
+ * beginning, or the return value from oftree_root() to start at the first
+ * child of the root
  * @propname: property name to check
  * @propval: property value to search for
  * @proplen: length of the value in propval

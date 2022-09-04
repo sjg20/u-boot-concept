@@ -13,6 +13,10 @@
 
 	node {
 		target = <&target>;
+
+		subnode {
+			str-prop = "other";
+		};
 	};
 
 	target: target {
