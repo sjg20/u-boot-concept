@@ -313,11 +313,7 @@ static int test_pre_run(struct unit_test_state *uts, struct unit_test *test)
 	    (test->flags & UT_TESTF_SCAN_FDT))
 		ut_assertok(dm_extended_scan(false));
 
-	if (IS_ENABLED(CONFIG_SANDBOX) && !CONFIG_IS_ENABLED(OF_PLATDATA) &&
-	    (test->flags & UT_TESTF_SCAN_FDT))
-		ut_assertok(dm_extended_scan(false));
-
-	if (test->flags & UT_TESTF_OTHER_FDT)
+	if (IS_ENABLED(CONFIG_SANDBOX) && (test->flags & UT_TESTF_OTHER_FDT))
 		ut_assertok(test_load_other_fdt(uts));
 
 	if (test->flags & UT_TESTF_CONSOLE_REC) {

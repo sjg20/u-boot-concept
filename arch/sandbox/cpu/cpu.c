@@ -381,12 +381,14 @@ ulong timer_get_boot_us(void)
 
 int sandbox_load_other_fdt(struct unit_test_state *uts)
 {
-	struct sandbox_state *state = state_get_current();
-	const char *path = "/arch/sandbox/dts/test.dtb";
 	char fname[256];
-	int ret;
+	int len, ret;
 
-	snprintf("%s%s", sizeof(fname), state->argv[0], path);
+	len = state_get_rel_filename("arch/sandbox/dts/test.dtb", fname,
+				     sizeof(fname));
+	if (len < 0)
+		return len;
+
 	ret = os_read_file(fname, &uts->other_fdt, &uts->other_fdt_size);
 	if (ret) {
 		log_err("Cannot read file '%s'\n", fname);
