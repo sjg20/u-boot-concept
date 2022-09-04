@@ -10,16 +10,26 @@
 
 / {
 	compatible = "sandbox-other";
+	#address-cells = <1>;
+	#size-cells = <1>;
 
 	node {
-		target = <&target>;
+		target = <&target 3 4>;
 
 		subnode {
+			compatible = "sandbox-other2";
 			str-prop = "other";
+		};
+
+		subnode2 {
 		};
 	};
 
 	target: target {
+		compatible = "sandbox-other2";
+		#gpio-cells = <2>;
 		str-prop = "other";
+		reg = <0x8000 0x100>;
+		status = "disabled";
 	};
 };

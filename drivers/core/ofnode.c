@@ -1300,8 +1300,8 @@ ofnode ofnode_by_compatible(ofnode from, const char *compat)
 			(struct device_node *)ofnode_to_np(from), NULL,
 			compat));
 	} else {
-		return offset_to_ofnode(fdt_node_offset_by_compatible(
-					ofnode_to_fdt(from),
+		return noffset_to_ofnode(from,
+			fdt_node_offset_by_compatible(ofnode_to_fdt(from),
 					ofnode_to_offset(from), compat));
 	}
 }
