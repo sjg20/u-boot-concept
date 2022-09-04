@@ -28,11 +28,19 @@ oftree oftree_get_other(struct unit_test_state *uts)
 static int dm_test_ofnode_compatible(struct unit_test_state *uts)
 {
 	ofnode root_node = ofnode_path("/");
-	ofnode oroot;
-	oftree otree;
 
 	ut_assert(ofnode_valid(root_node));
 	ut_assert(ofnode_device_is_compatible(root_node, "sandbox"));
+
+	return 0;
+}
+DM_TEST(dm_test_ofnode_compatible,
+	UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
+
+static int dm_test_ofnode_compatible_ot(struct unit_test_state *uts)
+{
+	ofnode oroot;
+	oftree otree;
 
 	otree = oftree_get_other(uts);
 	oroot = oftree_root(otree);
@@ -41,8 +49,7 @@ static int dm_test_ofnode_compatible(struct unit_test_state *uts)
 
 	return 0;
 }
-DM_TEST(dm_test_ofnode_compatible,
-	UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT | UT_TESTF_OTHER_FDT);
+DM_TEST(dm_test_ofnode_compatible_ot, UT_TESTF_OTHER_FDT);
 
 static int dm_test_ofnode_get_by_phandle(struct unit_test_state *uts)
 {

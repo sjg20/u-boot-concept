@@ -426,8 +426,8 @@ int state_load_other_fdt(const char **bufp, int *sizep)
 
 	/* load the file if needed */
 	if (!state->other_fdt_buf) {
-		len = state_get_rel_filename("arch/sandbox/dts/test.dtb", fname,
-					     sizeof(fname));
+		len = state_get_rel_filename("arch/sandbox/dts/other.dtb",
+					     fname, sizeof(fname));
 		if (len < 0)
 			return len;
 

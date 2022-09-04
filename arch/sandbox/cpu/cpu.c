@@ -391,6 +391,7 @@ int sandbox_load_other_fdt(struct unit_test_state *uts)
 
 	if (!uts->other_fdt) {
 		uts->other_fdt = malloc(size);
+		uts->other_fdt_size = size;
 		if (!uts->other_fdt)
 			return log_msg_ret("mem", -ENOMEM);
 	}
