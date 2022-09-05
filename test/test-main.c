@@ -8,6 +8,7 @@
 #include <console.h>
 #include <dm.h>
 #include <event.h>
+#include <os.h>
 #include <dm/ofnode.h>
 #include <dm/root.h>
 #include <dm/test.h>
@@ -506,7 +507,7 @@ int ut_run_list(const char *category, const char *prefix,
 	uts.of_root = gd_of_root();
 	if (fdt_action() == FDTCHK_COPY && gd->fdt_blob) {
 		uts.fdt_size = fdt_totalsize(gd->fdt_blob);
-		uts.fdt_copy = malloc(uts.fdt_size);
+		uts.fdt_copy = os_malloc(uts.fdt_size);
 		if (!uts.fdt_copy) {
 			printf("Out of memory for device tree copy\n");
 			return -ENOMEM;
@@ -524,7 +525,7 @@ int ut_run_list(const char *category, const char *prefix,
 	if (has_dm_tests)
 		dm_test_restore(uts.of_root);
 	if (IS_ENABLED(CONFIG_SANDBOX))
-		free(uts.fdt_copy);
+		os_free(uts.fdt_copy);
 
 	return ret;
 }

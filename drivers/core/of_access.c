@@ -941,7 +941,7 @@ int of_add_subnode(struct device_node *parent, const char *name, int len,
 
 	__for_each_child_of_node(parent, child) {
 		if (!strncmp(child->name, name, len) && strlen(name) == len) {
-			childp = child;
+			*childp = child;
 			return -EEXIST;
 		}
 		last_sibling = child;
