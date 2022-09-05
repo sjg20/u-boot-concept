@@ -51,6 +51,41 @@ oftree get_other_oftree(struct unit_test_state *uts)
 	return tree;
 }
 
+/**
+ * get_oftree() - Convert a flat tree into an oftree object
+ *
+ * @uts: Test state
+ * @fdt: Pointer to flat tree
+ * @treep: Returns the tree, on success
+ * Return: 0 if OK, 1 if the tree failed to unflatten, -EOVERFLOW if there are
+ * too many flat trees to allow another one to be registers (see
+ * oftree_ensure())
+ */
+int get_oftree(struct unit_test_state *uts, void *fdt, oftree *treep)
+{
+	oftree tree;
+
+	if (of_live_active()) {
+		struct device_node *root;
+
+		ut_assertok(unflatten_device_tree(fdt, &root));
+		tree = oftree_from_np(root);
+	} else {
+		tree = oftree_from_fdt(fdt);
+		if (!oftree_valid(tree))
+			return -EOVERFLOW;
+	}
+	*treep = tree;
+
+	return 0;
+}
+
+void free_oftree(oftree tree)
+{
+	if (of_live_active())
+		free(tree.np);
+}
+
 static int dm_test_ofnode_compatible(struct unit_test_state *uts)
 {
 	ofnode root_node = ofnode_path("/");
@@ -602,13 +637,8 @@ static int dm_test_ofnode_root(struct unit_test_state *uts)
 
 	ut_assert(!oftree_valid(oftree_null()));
 
-	ut_assertok(make_ofnode_fdt(uts, fdt, sizeof(fdt)));
-	if (of_live_active()) {
-		ut_assertok(unflatten_device_tree(fdt, &root));
-		tree = oftree_from_np(root);
-	} else {
-		tree = oftree_from_fdt(fdt);
-	}
+	ut_assertok(make_ofnode_fdt(uts, fdt, sizeof(fdt), 0));
+	ut_assertok(get_oftree(uts, fdt, &tree));
 	ut_assert(oftree_valid(tree));
 
 	/* Make sure they don't work on this new tree */
@@ -623,7 +653,7 @@ static int dm_test_ofnode_root(struct unit_test_state *uts)
 	node = oftree_path(oftree_default(), "/new-mmc");
 	ut_assert(!ofnode_valid(node));
 
-	free(root);
+	free_oftree(tree);
 
 	return 0;
 }
