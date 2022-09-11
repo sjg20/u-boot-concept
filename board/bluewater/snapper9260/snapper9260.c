@@ -27,6 +27,7 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#if 0
 /* IO Expander pins */
 #define IO_EXP_ETH_RESET	(0 << 1)
 #define IO_EXP_ETH_POWER	(1 << 1)
@@ -105,12 +106,13 @@ static void nand_hw_init(void)
 	gpio_request(CONFIG_SYS_NAND_ENABLE_PIN, "nand_ce");
 	gpio_direction_output(CONFIG_SYS_NAND_ENABLE_PIN, 1);
 }
+#endif
 
 int board_init(void)
 {
-	at91_periph_clk_enable(ATMEL_ID_PIOA);
-	at91_periph_clk_enable(ATMEL_ID_PIOB);
-	at91_periph_clk_enable(ATMEL_ID_PIOC);
+// 	at91_periph_clk_enable(ATMEL_ID_PIOA);
+// 	at91_periph_clk_enable(ATMEL_ID_PIOB);
+// 	at91_periph_clk_enable(ATMEL_ID_PIOC);
 
 	/* The mach-type is the same for both Snapper 9260 and 9G20 */
 	gd->bd->bi_arch_number = MACH_TYPE_SNAPPER_9260;
@@ -119,10 +121,10 @@ int board_init(void)
 	gd->bd->bi_boot_params = CONFIG_SYS_SDRAM_BASE + 0x100;
 
 	/* Initialise peripherals */
-	at91_seriald_hw_init();
-	i2c_set_bus_num(0);
-	nand_hw_init();
-	macb_hw_init();
+// 	at91_seriald_hw_init();
+// 	i2c_set_bus_num(0);
+// 	nand_hw_init();
+// 	macb_hw_init();
 
 	return 0;
 }
@@ -143,7 +145,15 @@ void reset_phy(void)
 {
 }
 
-static struct atmel_serial_platdata at91sam9260_serial_plat = {
+void board_debug_uart_init(void)
+{
+	at91_seriald_hw_init();
+	_atmel_serial_init((void *)CONFIG_DEBUG_UART_BASE,
+			   CONFIG_DEBUG_UART_CLOCK, gd->baudrate);
+}
+
+#if 0
+static struct atmel_serial_plat at91sam9260_serial_plat = {
 	.base_addr = ATMEL_BASE_DBGU,
 };
 
@@ -151,3 +161,5 @@ U_BOOT_DEVICE(at91sam9260_serial) = {
 	.name	= "serial_atmel",
 	.platdata = &at91sam9260_serial_plat,
 };
+#endif
+
