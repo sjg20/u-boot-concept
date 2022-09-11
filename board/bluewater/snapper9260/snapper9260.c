@@ -143,6 +143,13 @@ void reset_phy(void)
 {
 }
 
+void board_debug_uart_init(void)
+{
+	at91_seriald_hw_init();
+	_atmel_serial_init((void *)CONFIG_DEBUG_UART_BASE,
+			   CONFIG_DEBUG_UART_CLOCK, gd->baudrate);
+}
+
 static struct atmel_serial_platdata at91sam9260_serial_plat = {
 	.base_addr = ATMEL_BASE_DBGU,
 };
