@@ -61,16 +61,16 @@
 /* GPIOs and IO expander */
 #define CONFIG_ATMEL_LEGACY
 #define CONFIG_AT91_GPIO_PULLUP		1
-#define CONFIG_PCA953X
-#define CONFIG_SYS_I2C_PCA953X_ADDR	0x28
-#define CONFIG_SYS_I2C_PCA953X_WIDTH	{ {0x28, 16} }
+// #define CONFIG_PCA953X
+// #define CONFIG_SYS_I2C_PCA953X_ADDR	0x28
+// #define CONFIG_SYS_I2C_PCA953X_WIDTH	{ {0x28, 16} }
 
 /* UARTs/Serial console */
 #ifndef CONFIG_DM_SERIAL
 #define CONFIG_USART_BASE		ATMEL_BASE_DBGU
 #define CONFIG_USART_ID			ATMEL_ID_SYS
 #endif
-
+#if 0
 /* I2C - Bit-bashed */
 #define CONFIG_SYS_I2C
 #define CONFIG_SYS_I2C_SOFT		/* I2C bit-banged */
@@ -97,7 +97,7 @@
 	} while (0)
 #define I2C_SCL(bit)	at91_set_pio_value(AT91_PIO_PORTA, 24, bit)
 #define I2C_DELAY	udelay(2)
-
+#endif
 /* Boot options */
 #define CONFIG_SYS_LOAD_ADDR		0x23000000
 
