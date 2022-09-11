@@ -160,8 +160,6 @@ static void serial_find_console_or_panic(void)
 /* Called prior to relocation */
 int serial_init(void)
 {
-	printch('a');
-	while (1);
 #if CONFIG_IS_ENABLED(SERIAL_PRESENT)
 	serial_find_console_or_panic();
 	gd->flags |= GD_FLG_SERIAL_READY;

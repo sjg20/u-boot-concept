@@ -104,7 +104,7 @@ ENTRY(_main)
 	bic	r0, r0, #7	/* 8-byte alignment for ABI compliance */
 	mov	sp, r0
 #ifdef CONFIG_DEBUG_UART
-	bl	debug_uart_init
+	#bl	debug_uart_init
 #endif
 	bl	board_init_f_alloc_reserve
 	mov	sp, r0
