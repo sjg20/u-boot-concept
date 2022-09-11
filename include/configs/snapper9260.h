@@ -14,6 +14,13 @@
 #include <asm/hardware.h>
 #include <linux/sizes.h>
 
+/* Define actual evaluation board type from used processor type */
+#ifdef CONFIG_AT91SAM9G20
+# define CONFIG_AT91SAM9G20EK	/* It's an Atmel AT91SAM9G20 EK */
+#else
+# define CONFIG_AT91SAM9260EK	/* It's an Atmel AT91SAM9260 EK */
+#endif
+
 /* ARM asynchronous clock */
 #define CONFIG_SYS_AT91_MAIN_CLOCK	18432000 /* External Crystal, in Hz */
 #define CONFIG_SYS_AT91_SLOW_CLOCK	32768
@@ -39,8 +46,8 @@
 #define CONFIG_SYS_NAND_DBW_8
 #define CONFIG_SYS_NAND_MASK_ALE	(1 << 21) /* AD21 */
 #define CONFIG_SYS_NAND_MASK_CLE	(1 << 22) /* AD22 */
-#define CONFIG_SYS_NAND_ENABLE_PIN	AT91_PIN_PC14
-#define CONFIG_SYS_NAND_READY_PIN	AT91_PIN_PC13
+// #define CONFIG_SYS_NAND_ENABLE_PIN	AT91_PIN_PC14
+// #define CONFIG_SYS_NAND_READY_PIN	AT91_PIN_PC13
 
 /* Ethernet */
 #define CONFIG_NET_RETRY_COUNT		20
@@ -59,7 +66,6 @@
 #define CONFIG_SYS_USB_OHCI_MAX_ROOT_PORTS	2
 
 /* GPIOs and IO expander */
-#define CONFIG_ATMEL_LEGACY
 #define CONFIG_AT91_GPIO_PULLUP		1
 // #define CONFIG_PCA953X
 // #define CONFIG_SYS_I2C_PCA953X_ADDR	0x28
@@ -70,6 +76,7 @@
 #define CONFIG_USART_BASE		ATMEL_BASE_DBGU
 #define CONFIG_USART_ID			ATMEL_ID_SYS
 #endif
+
 #if 0
 /* I2C - Bit-bashed */
 #define CONFIG_SYS_I2C
@@ -98,6 +105,7 @@
 #define I2C_SCL(bit)	at91_set_pio_value(AT91_PIO_PORTA, 24, bit)
 #define I2C_DELAY	udelay(2)
 #endif
+
 /* Boot options */
 #define CONFIG_SYS_LOAD_ADDR		0x23000000
 
