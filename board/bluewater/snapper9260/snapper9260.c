@@ -145,12 +145,12 @@ void reset_phy(void)
 {
 }
 
+#ifdef CONFIG_DEBUG_UART
 void board_debug_uart_init(void)
 {
 	at91_seriald_hw_init();
-	_atmel_serial_init((void *)CONFIG_DEBUG_UART_BASE,
-			   CONFIG_DEBUG_UART_CLOCK, gd->baudrate);
 }
+#endif
 
 #if 0
 static struct atmel_serial_plat at91sam9260_serial_plat = {

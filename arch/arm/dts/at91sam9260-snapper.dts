@@ -46,11 +46,11 @@
 #include "at91sam9260.dtsi"
 
 / {
-	model = "Atmel at91sam9260ek";
-	compatible = "atmel,at91sam9260ek", "atmel,at91sam9260", "atmel,at91sam9";
+	model = "Snapper 9260";
+	compatible = "bluewater,snapper9260", "atmel,at91sam9260ek",
+		"atmel,at91sam9260", "atmel,at91sam9";
 
 	chosen {
-		u-boot,dm-pre-reloc;
 		stdout-path = &dbgu;
 	};
 
@@ -187,7 +187,7 @@
 		};
 	};
 
-	i2c@0 {
+	i2c@1 {
 		#address-cells = <1>;
 		#size-cells = <0>;
 		status = "okay";
@@ -195,6 +195,11 @@
 		24c512@50 {
 			compatible = "24c512";
 			reg = <0x50>;
+		};
+
+		expander {
+			compatible = "maxim,max7311";
+			reg = <0x28>;
 		};
 	};
 
