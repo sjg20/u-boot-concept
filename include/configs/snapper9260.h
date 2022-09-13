@@ -32,6 +32,9 @@
 #define CONFIG_INITRD_TAG
 #define CONFIG_SKIP_LOWLEVEL_INIT
 
+/* general purpose I/O */
+#define CONFIG_ATMEL_LEGACY		/* required until (g)pio is fixed */
+
 /* SDRAM */
 #define CONFIG_SYS_SDRAM_BASE		ATMEL_BASE_CS1
 #define CONFIG_SYS_SDRAM_SIZE		(64 * 1024 * 1024) /* 64MB */
@@ -46,8 +49,8 @@
 #define CONFIG_SYS_NAND_DBW_8
 #define CONFIG_SYS_NAND_MASK_ALE	(1 << 21) /* AD21 */
 #define CONFIG_SYS_NAND_MASK_CLE	(1 << 22) /* AD22 */
-// #define CONFIG_SYS_NAND_ENABLE_PIN	AT91_PIN_PC14
-// #define CONFIG_SYS_NAND_READY_PIN	AT91_PIN_PC13
+#define CONFIG_SYS_NAND_ENABLE_PIN	AT91_PIN_PC14
+#define CONFIG_SYS_NAND_READY_PIN	AT91_PIN_PC13
 
 /* Ethernet */
 #define CONFIG_NET_RETRY_COUNT		20
