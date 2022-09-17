@@ -65,7 +65,6 @@
  * I2C related stuff
  */
 #undef CONFIG_I2C_MVTWSI
-#define CONFIG_SYS_I2C_INIT_BOARD
 
 #define CONFIG_SYS_NUM_I2C_BUSES	6
 #define CONFIG_SYS_I2C_MAX_HOPS		1
