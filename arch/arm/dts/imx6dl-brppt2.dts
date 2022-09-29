@@ -109,7 +109,7 @@
 	};
 
 	vbus1_regulator: regulator@1 {
-		u-boot,dm-preloc;
+		u-boot,dm-pre-reloc;
 		compatible = "regulator-fixed";
 		regulator-name = "vbus1_regulator";
 		regulator-min-microvolt = <5000000>;
@@ -156,7 +156,7 @@
 
 &uart1 {
 	u-boot,dm-spl;
-	u-boot,dm-preloc;
+	u-boot,dm-pre-reloc;
 	status = "okay";
 };
 
