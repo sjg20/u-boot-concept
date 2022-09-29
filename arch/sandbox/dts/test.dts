@@ -211,7 +211,7 @@
 		compatible = "denx,u-boot-fdt-test";
 		ping-expect = <0>;
 		ping-add = <0>;
-		u-boot,dm-pre-reloc;
+		u-boot,dm-all;
 		test-gpios = <&gpio_a 1>, <&gpio_a 4>,
 			<&gpio_b 5 GPIO_ACTIVE_HIGH 3 2 1>,
 			<0>, <&gpio_a 12>;
@@ -818,7 +818,7 @@
 	};
 
 	lcd {
-		u-boot,dm-pre-reloc;
+		u-boot,dm-all;
 		compatible = "sandbox,lcd-sdl";
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinmux_lcd_pins>;
@@ -888,21 +888,21 @@
 			reg = <0x1>;
 			timebase-frequency = <3000000>;
 			compatible = "sandbox,cpu_sandbox";
-			u-boot,dm-pre-reloc;
+			u-boot,dm-all;
 		};
 
 		cpu2: cpu@2 {
 			device_type = "cpu";
 			reg = <0x2>;
 			compatible = "sandbox,cpu_sandbox";
-			u-boot,dm-pre-reloc;
+			u-boot,dm-all;
 		};
 
 		cpu3: cpu@3 {
 			device_type = "cpu";
 			reg = <0x3>;
 			compatible = "sandbox,cpu_sandbox";
-			u-boot,dm-pre-reloc;
+			u-boot,dm-all;
 		};
 	};
 
@@ -1275,7 +1275,7 @@
 
 	uart0: serial {
 		compatible = "sandbox,serial";
-		u-boot,dm-pre-reloc;
+		u-boot,dm-all;
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinmux_uart0_pins>;
 	};

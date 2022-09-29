@@ -10,12 +10,12 @@
 };
 
 &{/soc@0} {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 	u-boot,dm-spl;
 };
 
 &aips1 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 	u-boot,dm-spl;
 };
 
@@ -185,7 +185,7 @@
 };
 
 &clk {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 	u-boot,dm-spl;
 	/delete-property/ assigned-clocks;
 	/delete-property/ assigned-clock-parents;
@@ -197,16 +197,16 @@
 };
 
 &osc_24m {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 	u-boot,dm-spl;
 };
 
 &spba1 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 	u-boot,dm-spl;
 };
 
 &spba2 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 	u-boot,dm-spl;
 };

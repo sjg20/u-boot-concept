@@ -12,51 +12,51 @@
 
 / {
 	chosen {
-		u-boot,dm-pre-reloc;
+		u-boot,dm-all;
 	};
 
 	soc {
-		u-boot,dm-pre-reloc;
+		u-boot,dm-all;
 	};
 };
 
 &main_rc {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &main_xtal {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &pioA {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &pinctrl_flx3_default {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &pioA {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &pit64b0 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &pmc {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &slow_rc_osc {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &slow_xtal {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &uart3 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 

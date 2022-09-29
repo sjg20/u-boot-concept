@@ -19,7 +19,7 @@
 
 	firmware {
 		optee {
-			u-boot,dm-pre-reloc;
+			u-boot,dm-all;
 		};
 	};
 
@@ -29,10 +29,10 @@
 	};
 
 	soc {
-		u-boot,dm-pre-reloc;
+		u-boot,dm-all;
 
 		ddr: ddr@5a003000 {
-			u-boot,dm-pre-reloc;
+			u-boot,dm-all;
 
 			compatible = "st,stm32mp13-ddr";
 
@@ -45,73 +45,73 @@
 };
 
 &bsec {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &gpioa {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &gpiob {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &gpioc {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &gpiod {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &gpioe {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &gpiof {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &gpiog {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &gpioh {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &gpioi {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &iwdg2 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &pinctrl {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &scmi {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &scmi_clk {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &scmi_reset {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &scmi_shm {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &scmi_sram {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &syscfg {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };

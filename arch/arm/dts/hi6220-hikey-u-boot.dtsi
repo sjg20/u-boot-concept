@@ -6,9 +6,9 @@
  */
 
 &mmc0 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &mmc1 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };

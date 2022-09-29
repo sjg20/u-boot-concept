@@ -38,13 +38,13 @@
 };
 
 &{/soc@0} {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 	u-boot,dm-spl;
 };
 
 &aips1 {
 	u-boot,dm-spl;
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &aips2 {

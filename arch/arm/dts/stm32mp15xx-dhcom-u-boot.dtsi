@@ -46,7 +46,7 @@
 };
 
 &i2c4 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 	u-boot,dm-spl;
 
 	eeprom0: eeprom@50 {
@@ -54,9 +54,9 @@
 };
 
 &i2c4_pins_a {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 	pins {
-		u-boot,dm-pre-reloc;
+		u-boot,dm-all;
 	};
 };
 
@@ -82,7 +82,7 @@
 };
 
 &pmic {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 	u-boot,dm-spl;
 
 	regulators {
@@ -196,7 +196,7 @@
 		reg = <1>;
 		cfg = < 2 65 1 0 0 PQR(1,1,1) >;
 		frac = < 0x1400 >;
-		u-boot,dm-pre-reloc;
+		u-boot,dm-all;
 	};
 
 	/* VCO = 417.8 MHz => P = 209, Q = 24, R = 11 */
@@ -205,7 +205,7 @@
 		reg = <2>;
 		cfg = < 1 33 1 16 36 PQR(1,1,1) >;
 		frac = < 0x1a04 >;
-		u-boot,dm-pre-reloc;
+		u-boot,dm-all;
 	};
 
 	/* VCO = 600.0 MHz => P = 50, Q = 50, R = 50 */
@@ -213,7 +213,7 @@
 		compatible = "st,stm32mp1-pll";
 		reg = <3>;
 		cfg = < 1 49 5 11 11 PQR(1,1,1) >;
-		u-boot,dm-pre-reloc;
+		u-boot,dm-all;
 	};
 };
 
@@ -264,16 +264,16 @@
 };
 
 &uart4 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &uart4_pins_a {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 	pins1 {
-		u-boot,dm-pre-reloc;
+		u-boot,dm-all;
 	};
 	pins2 {
-		u-boot,dm-pre-reloc;
+		u-boot,dm-all;
 		/* pull-up on rx to avoid floating level */
 		bias-pull-up;
 	};

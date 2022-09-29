@@ -39,19 +39,19 @@
 };
 
 &gpio2 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &pinctrl {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &service_msch {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &dmc {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 
 	/*
 	 * Validation of throughput using SPEC2000 shows the following
@@ -75,23 +75,23 @@
 };
 
 &pmugrf {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &sgrf {
-        u-boot,dm-pre-reloc;
+        u-boot,dm-all;
 };
 
 &cru {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &grf {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &uart0 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &emmc {
@@ -111,7 +111,7 @@
 };
 
 &timer0 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 	clock-frequency = <24000000>;
 	status = "okay";
 };

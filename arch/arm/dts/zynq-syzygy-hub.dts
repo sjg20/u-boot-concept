@@ -61,12 +61,12 @@
 };
 
 &sdhci0 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 	status = "okay";
 };
 
 &uart0 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 	status = "okay";
 };
 

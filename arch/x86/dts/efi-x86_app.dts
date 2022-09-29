@@ -23,7 +23,7 @@
 
 	reset {
 		compatible = "efi,reset";
-		u-boot,dm-pre-reloc;
+		u-boot,dm-all;
 	};
 	efi-fb {
 		compatible = "efi-fb";

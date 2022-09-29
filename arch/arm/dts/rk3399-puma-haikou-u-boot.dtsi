@@ -39,7 +39,7 @@
 	 */
 	bios_enable: bios_enable {
 		compatible = "regulator-fixed";
-		u-boot,dm-pre-reloc;
+		u-boot,dm-all;
 		regulator-name = "bios_enable";
 		enable-active-high;
 		gpio = <&gpio3 RK_PD5 GPIO_ACTIVE_LOW>;
@@ -63,13 +63,13 @@
 };
 
 &gpio1 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &gpio3 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &norflash {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };

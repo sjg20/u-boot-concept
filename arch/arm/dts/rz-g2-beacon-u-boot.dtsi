@@ -9,12 +9,12 @@
 	};
 
 	soc {
-		u-boot,dm-pre-reloc;
+		u-boot,dm-all;
 	};
 };
 
 &cpg {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &ehci0 {
@@ -26,11 +26,11 @@
 };
 
 &extal_clk {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &extalr_clk {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &pfc {
@@ -41,7 +41,7 @@
 };
 
 &prr {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &rpc {

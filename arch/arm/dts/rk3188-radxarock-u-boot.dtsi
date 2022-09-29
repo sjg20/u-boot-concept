@@ -13,7 +13,7 @@
 
 	config {
 		u-boot,boot-led = "rock:red:power";
-		u-boot,dm-pre-reloc;
+		u-boot,dm-all;
 	};
 };
 

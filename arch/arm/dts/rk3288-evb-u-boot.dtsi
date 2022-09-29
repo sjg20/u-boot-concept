@@ -17,27 +17,27 @@
 };
 
 &pinctrl {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &uart2 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &sdmmc {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &emmc {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &gpio3 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &gpio8 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &sdmmc_bus4 {

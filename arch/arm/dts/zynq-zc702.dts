@@ -394,7 +394,7 @@
 };
 
 &qspi {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 	status = "okay";
 	num-cs = <1>;
 	flash@0 {
@@ -407,14 +407,14 @@
 };
 
 &sdhci0 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 	status = "okay";
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_sdhci0_default>;
 };
 
 &uart1 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 	status = "okay";
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_uart1_default>;

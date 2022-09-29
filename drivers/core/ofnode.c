@@ -1056,7 +1056,7 @@ bool ofnode_pre_reloc(ofnode node)
 	 */
 	return true;
 #else
-	if (ofnode_read_bool(node, "u-boot,dm-pre-reloc"))
+	if (ofnode_read_bool(node, "u-boot,dm-all"))
 		return true;
 	if (ofnode_read_bool(node, "u-boot,dm-pre-proper"))
 		return true;

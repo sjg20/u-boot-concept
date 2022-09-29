@@ -6,9 +6,9 @@
  */
 
 &uartlite {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &uartfull {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };

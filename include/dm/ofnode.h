@@ -991,7 +991,7 @@ int ofnode_read_simple_size_cells(ofnode node);
  *
  * There are 4 settings currently in use
  * - u-boot,dm-pre-proper: U-Boot proper pre-relocation only
- * - u-boot,dm-pre-reloc: legacy and indicates any of TPL or SPL
+ * - u-boot,dm-all: legacy and indicates any of TPL or SPL
  * Existing platforms only use it to indicate nodes needed in
  * SPL. Should probably be replaced by u-boot,dm-spl for new platforms.
  * - u-boot,dm-spl: SPL and U-Boot pre-relocation

@@ -23,7 +23,7 @@
 
 	fs_loader0: fs_loader@0 {
 		compatible = "u-boot,fs-loader";
-		u-boot,dm-pre-reloc;
+		u-boot,dm-all;
 	};
 
 	a72_0: a72@0 {

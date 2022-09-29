@@ -35,7 +35,7 @@ PROP_IGNORE_LIST = [
     'linux,phandle',
     "status",
     'phandle',
-    'u-boot,dm-pre-reloc',
+    'u-boot,dm-all',
     'u-boot,dm-tpl',
     'u-boot,dm-spl',
 ]
@@ -754,7 +754,7 @@ class DtbPlatdata():
                 # This might indicate that the parent node is not in the
                 # SPL/TPL devicetree but the child is. For example if we are
                 # dealing with of-platdata in TPL, the parent has a
-                # u-boot,dm-tpl tag but the child has u-boot,dm-pre-reloc. In
+                # u-boot,dm-tpl tag but the child has u-boot,dm-all. In
                 # this case the child node exists in TPL but the parent does
                 # not.
                 raise ValueError("Node '%s' requires parent node '%s' but it is not in the valid list" %

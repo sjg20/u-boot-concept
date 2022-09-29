@@ -193,7 +193,7 @@
 
 	spi_flash: spiflash@0 {
 		u-boot,dm-spl;
-		u-boot,dm-pre-reloc;
+		u-boot,dm-all;
 		compatible = "spidev", "spi-flash";
 		spi-max-frequency = <24000000>;
 		reg = <0>;
@@ -302,10 +302,10 @@
 	segment@300000 {
 
 		target-module@e000 {
-			u-boot,dm-pre-reloc;
+			u-boot,dm-all;
 
 			lcdc: lcdc@0 {
-				u-boot,dm-pre-reloc;
+				u-boot,dm-all;
 				status = "okay";
 				ti,no-reset-on-init;
 				ti,no-idle-on-init;

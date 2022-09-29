@@ -16,13 +16,13 @@
 };
 
 &{/soc@0} {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 	u-boot,dm-spl;
 };
 
 &clk {
 	u-boot,dm-spl;
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 	/delete-property/ assigned-clocks;
 	/delete-property/ assigned-clock-parents;
 	/delete-property/ assigned-clock-rates;
@@ -30,12 +30,12 @@
 
 &osc_24m {
 	u-boot,dm-spl;
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &aips1 {
 	u-boot,dm-spl;
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &aips2 {

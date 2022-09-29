@@ -11,7 +11,7 @@
 
 	soc {
 		u-boot,dm-spl;
-		u-boot,dm-pre-reloc;
+		u-boot,dm-all;
 
 		bus@2000000 {
 			u-boot,dm-spl;
@@ -35,5 +35,5 @@
 };
 
 &ipu1 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };

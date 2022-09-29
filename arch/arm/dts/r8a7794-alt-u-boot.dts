@@ -38,7 +38,7 @@
 };
 
 &scif2 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &qspi {

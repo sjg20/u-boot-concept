@@ -7,18 +7,18 @@
 
 / {
 	soc {
-		u-boot,dm-pre-reloc;
+		u-boot,dm-all;
 
 		pinctrl_north@1300000 {
-			u-boot,dm-pre-reloc;
+			u-boot,dm-all;
 		};
 
 		clock-controller@1800000 {
-			u-boot,dm-pre-reloc;
+			u-boot,dm-all;
 		};
 
 		serial@78b1000 {
-			u-boot,dm-pre-reloc;
+			u-boot,dm-all;
 		};
 	};
 };

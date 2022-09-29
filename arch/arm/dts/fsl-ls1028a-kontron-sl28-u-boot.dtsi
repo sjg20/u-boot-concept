@@ -153,30 +153,30 @@
 #endif
 
 &fspi {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 	flash@0 {
-		u-boot,dm-pre-reloc;
+		u-boot,dm-all;
 	};
 };
 
 &dspi2 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &esdhc {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &esdhc1 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &lpuart1 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &duart0 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 /*
@@ -197,9 +197,9 @@
 };
 
 &soc {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &sysclk {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };

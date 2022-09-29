@@ -107,15 +107,15 @@ Here are some things you might need to consider:
    parents, so put this in your xxx-u-boot.dtsi file::
 
        &pinctrl {
-           u-boot,dm-pre-reloc;
+           u-boot,dm-all;
        };
 
        &uart2 {
-           u-boot,dm-pre-reloc;
+           u-boot,dm-all;
        };
 
        &uart2_xfer {
-           u-boot,dm-pre-reloc;
+           u-boot,dm-all;
        };
 
 3. The same applies to power domains. For example, if a particular power domain

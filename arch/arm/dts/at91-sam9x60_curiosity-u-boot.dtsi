@@ -10,70 +10,70 @@
 
 / {
 	ahb {
-		u-boot,dm-pre-reloc;
+		u-boot,dm-all;
 
 		apb {
-			u-boot,dm-pre-reloc;
+			u-boot,dm-all;
 
 			pinctrl {
-				u-boot,dm-pre-reloc;
+				u-boot,dm-all;
 			};
 		};
 	};
 
 	chosen {
-		u-boot,dm-pre-reloc;
+		u-boot,dm-all;
 	};
 };
 
 &clk32 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &dbgu {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &main_rc {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &main_xtal {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &pinctrl_dbgu {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &pinctrl_sdhci0 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &pioA {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &pioB {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &pit64b0 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &pmc {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &sdhci0 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &slow_rc_osc {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &slow_xtal {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };

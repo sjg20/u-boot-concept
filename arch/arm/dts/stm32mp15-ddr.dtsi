@@ -21,7 +21,7 @@
 		      "ddrphycapb";
 
 	config-DDR_MEM_COMPATIBLE {
-		u-boot,dm-pre-reloc;
+		u-boot,dm-all;
 
 		compatible = __stringify(st,DDR_MEM_COMPATIBLE);
 

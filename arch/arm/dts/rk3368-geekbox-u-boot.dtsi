@@ -6,30 +6,30 @@
 #include "rk3368-u-boot.dtsi"
 
 &pinctrl {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &service_msch {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &dmc {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 	status = "okay";
 };
 
 &pmugrf {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &cru {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &grf {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &uart2 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };

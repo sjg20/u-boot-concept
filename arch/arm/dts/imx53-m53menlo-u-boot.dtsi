@@ -5,10 +5,10 @@
 
 / {
 	soc {
-		u-boot,dm-pre-reloc;
+		u-boot,dm-all;
 
 		bus@50000000 {
-			u-boot,dm-pre-reloc;
+			u-boot,dm-all;
 		};
 	};
 
@@ -19,29 +19,29 @@
 };
 
 &gpio1 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &gpio2 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &gpio3 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &gpio4 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &gpio5 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &gpio6 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &gpio7 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };

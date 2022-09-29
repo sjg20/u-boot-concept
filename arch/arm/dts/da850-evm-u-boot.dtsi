@@ -16,7 +16,7 @@
 	};
 
 	panel {
-		u-boot,dm-pre-reloc;
+		u-boot,dm-all;
 	};
 };
 

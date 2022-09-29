@@ -16,19 +16,19 @@
 };
 
 &gpio2 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &gpio3 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &gpio4 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &gpio6 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &usdhc1 {
@@ -36,9 +36,9 @@
 };
 
 &usdhc2 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &usdhc3 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };

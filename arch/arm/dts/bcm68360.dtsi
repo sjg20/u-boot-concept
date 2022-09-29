@@ -17,14 +17,14 @@
 	cpus {
 		#address-cells = <2>;
 		#size-cells = <0>;
-		u-boot,dm-pre-reloc;
+		u-boot,dm-all;
 
 		cpu0: cpu@0 {
 			compatible = "arm,cortex-a53", "arm,armv8";
 			device_type = "cpu";
 			reg = <0x0 0x0>;
 			next-level-cache = <&l2>;
-			u-boot,dm-pre-reloc;
+			u-boot,dm-all;
 		};
 
 		cpu1: cpu@1 {
@@ -32,12 +32,12 @@
 			device_type = "cpu";
 			reg = <0x0 0x1>;
 			next-level-cache = <&l2>;
-			u-boot,dm-pre-reloc;
+			u-boot,dm-all;
 		};
 
 		l2: l2-cache0 {
 			compatible = "cache";
-			u-boot,dm-pre-reloc;
+			u-boot,dm-all;
 		};
 	};
 
@@ -46,13 +46,13 @@
 		#address-cells = <2>;
 		#size-cells = <2>;
 		ranges;
-		u-boot,dm-pre-reloc;
+		u-boot,dm-all;
 
 		periph_osc: periph-osc {
 			compatible = "fixed-clock";
 			#clock-cells = <0>;
 			clock-frequency = <200000000>;
-			u-boot,dm-pre-reloc;
+			u-boot,dm-all;
 		};
 
 		hsspi_pll: hsspi-pll {
@@ -74,7 +74,7 @@
 		compatible = "simple-bus";
 		#address-cells = <2>;
 		#size-cells = <2>;
-		u-boot,dm-pre-reloc;
+		u-boot,dm-all;
 
 		wdt1: watchdog@ff800480 {
 			compatible = "brcm,bcm6345-wdt";

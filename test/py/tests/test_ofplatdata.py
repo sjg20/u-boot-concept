@@ -13,7 +13,7 @@ def test_spl_devicetree(u_boot_console):
     fdtgrep = cons.config.build_dir + '/tools/fdtgrep'
     output = util.run_and_log(cons, [fdtgrep, '-l', dtb])
 
-    assert "u-boot,dm-pre-reloc" not in output
+    assert "u-boot,dm-all" not in output
     assert "u-boot,dm-pre-proper" not in output
     assert "u-boot,dm-spl" not in output
     assert "u-boot,dm-tpl" not in output

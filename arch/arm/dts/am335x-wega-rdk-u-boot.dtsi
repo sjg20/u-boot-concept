@@ -15,16 +15,16 @@
 	};
 
 	ocp {
-		u-boot,dm-pre-reloc;
+		u-boot,dm-all;
 
 		l4_wkup@44c00000 {
-			u-boot,dm-pre-reloc;
+			u-boot,dm-all;
 
 			segment@200000 {
-				u-boot,dm-pre-reloc;
+				u-boot,dm-all;
 
 				target-module@9000 {
-					u-boot,dm-pre-reloc;
+					u-boot,dm-all;
 				};
 			};
 		};
@@ -32,14 +32,14 @@
 };
 
 &i2c0 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &uart0 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &mmc1 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 	cd-gpios = <&gpio0 6 GPIO_ACTIVE_LOW>;
 };

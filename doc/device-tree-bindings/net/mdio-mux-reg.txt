@@ -16,7 +16,7 @@ Example structure, used on Freescale LS1028A QDS board:
 
 &i2c0 {
 	status = "okay";
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 
 	fpga@66 {
 		#address-cells = <1>;

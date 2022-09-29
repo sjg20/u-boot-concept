@@ -21,25 +21,25 @@
 };
 
 &i2c0 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &rk808 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &sdhci {
 	max-frequency = <25000000>;
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &sdmmc {
 	max-frequency = <20000000>;
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &spiflash {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &vdd_log {

@@ -9,7 +9,7 @@
 	};
 
 	fs_loader0: fs_loader@0 {
-		u-boot,dm-pre-reloc;
+		u-boot,dm-all;
 		compatible = "u-boot,fs-loader";
 		phandlepart = <&mmc1 1>;
 	};

@@ -7,37 +7,37 @@
  */
 
 &soc {
-       u-boot,dm-pre-reloc;
+       u-boot,dm-all;
 };
 
 &ahbbridge0 {
-       u-boot,dm-pre-reloc;
+       u-boot,dm-all;
 };
 
 &ahbbridge1 {
-       u-boot,dm-pre-reloc;
+       u-boot,dm-all;
 };
 
 &iomuxc {
-       u-boot,dm-pre-reloc;
+       u-boot,dm-all;
 };
 
 &iomuxc1 {
-       u-boot,dm-pre-reloc;
+       u-boot,dm-all;
 };
 
 &lpuart4 {
-       u-boot,dm-pre-reloc;
+       u-boot,dm-all;
 };
 
 &lpuart5 {
-       u-boot,dm-pre-reloc;
+       u-boot,dm-all;
 };
 
 &lpuart6 {
-       u-boot,dm-pre-reloc;
+       u-boot,dm-all;
 };
 
 &lpuart7 {
-       u-boot,dm-pre-reloc;
+       u-boot,dm-all;
 };

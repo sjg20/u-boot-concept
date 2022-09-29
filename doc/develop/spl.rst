@@ -113,13 +113,13 @@ with:
 
 - the mandatory nodes (/alias, /chosen, /config)
 - the nodes with one pre-relocation property:
-  'u-boot,dm-pre-reloc' or 'u-boot,dm-spl'
+  'u-boot,dm-all' or 'u-boot,dm-spl'
 
 fdtgrep is also used to remove:
 
 - the properties defined in CONFIG_OF_SPL_REMOVE_PROPS
 - all the pre-relocation properties
-  ('u-boot,dm-pre-reloc', 'u-boot,dm-spl' and 'u-boot,dm-tpl')
+  ('u-boot,dm-all', 'u-boot,dm-spl' and 'u-boot,dm-tpl')
 
 All the nodes remaining in the SPL devicetree are bound
 (see doc/driver-model/design.rst).

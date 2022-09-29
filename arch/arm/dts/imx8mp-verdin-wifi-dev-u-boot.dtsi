@@ -27,7 +27,7 @@
 };
 
 &clk {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 	u-boot,dm-spl;
 	/delete-property/ assigned-clocks;
 	/delete-property/ assigned-clock-parents;

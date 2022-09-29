@@ -9,7 +9,7 @@
 
 / {
 	phandle-source {
-		u-boot,dm-pre-reloc;
+		u-boot,dm-all;
 		compatible = "source";
 		clocks = <20>;    /* Invalid phandle */
 	};

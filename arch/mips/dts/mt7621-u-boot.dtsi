@@ -14,35 +14,35 @@
 };
 
 &sysc {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &reboot {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &clkctrl {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &rstctrl {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &pinctrl {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &uart0 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &uart1 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &uart2 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &binman {

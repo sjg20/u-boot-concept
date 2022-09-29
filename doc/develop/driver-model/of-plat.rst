@@ -67,7 +67,7 @@ device. As an example, consider this MMC node:
             pinctrl-0 = <&sdmmc_clk>, <&sdmmc_cmd>, <&sdmmc_cd>, <&sdmmc_bus4>;
                 vmmc-supply = <&vcc_sd>;
                 status = "okay";
-                u-boot,dm-pre-reloc;
+                u-boot,dm-all;
         };
 
 
@@ -689,13 +689,13 @@ source .dts::
       reg = <0xff>;
       compatible = "sandbox,i2c-emul-parent";
       emul0: emul0 {
-         u-boot,dm-pre-reloc;
+         u-boot,dm-all;
          compatible = "sandbox,i2c-rtc-emul";
          #emul-cells = <0>;
       };
    };
 
-you can see that the child node 'emul0' usees 'u-boot,dm-pre-reloc', indicating
+you can see that the child node 'emul0' usees 'u-boot,dm-all', indicating
 that the node is present in all SPL builds, but its parent uses 'u-boot,dm-spl'
 indicating it is only present in SPL, not TPL. For a TPL build, this will fail
 with the above message. The fix is to change 'emul0' to use the same

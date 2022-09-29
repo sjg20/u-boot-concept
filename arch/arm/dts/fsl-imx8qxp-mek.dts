@@ -135,7 +135,7 @@
 };
 
 &A35_0 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &lpuart0 {

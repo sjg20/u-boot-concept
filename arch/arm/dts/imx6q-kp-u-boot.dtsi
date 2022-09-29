@@ -23,7 +23,7 @@
 };
 
 &clks {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &gpio2 {

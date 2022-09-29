@@ -26,10 +26,10 @@
 	};
 
 	soc {
-		u-boot,dm-pre-reloc;
+		u-boot,dm-all;
 
 		ddr: ddr@5a003000 {
-			u-boot,dm-pre-reloc;
+			u-boot,dm-all;
 
 			compatible = "st,stm32mp1-ddr";
 
@@ -47,55 +47,55 @@
 };
 
 &bsec {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &gpioa {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &gpiob {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &gpioc {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &gpiod {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &gpioe {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &gpiof {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &gpiog {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &gpioh {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &gpioi {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &gpioj {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &gpiok {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &gpioz {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &optee {
@@ -103,7 +103,7 @@
 };
 
 &iwdg2 {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 /* pre-reloc probe = reserve video frame buffer in video_reserve() */
@@ -119,15 +119,15 @@
 };
 
 &pinctrl {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &pinctrl_z {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &rcc {
-	u-boot,dm-pre-reloc;
+	u-boot,dm-all;
 };
 
 &scmi {

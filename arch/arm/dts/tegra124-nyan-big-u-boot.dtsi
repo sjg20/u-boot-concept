@@ -8,9 +8,9 @@
 
 / {
 	host1x@50000000 {
-		u-boot,dm-pre-reloc;
+		u-boot,dm-all;
 		dc@54200000 {
-			u-boot,dm-pre-reloc;
+			u-boot,dm-all;
 		};
 	};
 
