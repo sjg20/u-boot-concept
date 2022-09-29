@@ -1,0 +1,83 @@
+U-Boot driver model
+===================
+
+The device tree is often quite large (e.g. 40KB) and cannot fit into xPL phases
+like SPL, TPL. Even with U-Boot proper, we normally only want to init a small
+subset of devices before relocation.
+
+U-Boot supports adding tags to device tree nodes to allow them to be marked
+according to the U-Boot phases where they should be included.
+
+Without any tags, nodes are included only in U-Boot proper after relocation.
+Any untagged nodes are dropped from xPL and are ignored before relocation in
+U-Boot proper.
+
+The xPL builds use fdtgrep drop any nodes which are not needed for that build.
+For example, TPL will drop any nodes which are not marked with u-boot,dm-tpl or
+u-boot,dm-all tags.
+
+Note that xPL builds also drop the tags, since they have server their purpose
+by that point. So when looking at xPL device tree files you will not see these
+tags. The means, for example, that ofnode_pre_reloc() returns true always in
+xPL builds. This is done to save space.
+
+Multiple tags can be used in the same node.
+
+One complication is that tags apply only to the node they are added to, not to
+any parents. This means that you often need to add the same tag to parent nodes
+so that any properties needed by the parent driver are included. Without that,
+the parent node may have no properties, or may not be bound before relocation
+(meaning that its child will not be either).
+
+The phases of U-Boot in order are: TPL, VPL, SPL, U-Boot (first pre-relocation,
+then post-relocation). ALl but the last two are optional.
+
+
+Optional properties:
+
+u-boot,dm-all:
+  Include this node in all phases (see enum u_boot_phase)
+
+u-boot,dm-pre-reloc:
+  Enable this node before relocation in U-Boot proper
+
+u-boot,dm-tpl:
+  Enable this node in the Tertiary Program Loader (TPL)
+
+u-boot,dm-vpl:
+  Enable this node in the Verifying Program Loader (VPL)
+
+u-boot,dm-spl:
+  Enable this node in the Secondary Program Loader (SPL)
+
+
+Example:
+
+This ensures that the clock device is available in phases, since it is a core
+device needed to use any of the SoC devices:
+
+	cru: clock-controller@ff760000 {
+		u-boot,dm-all;
+		compatible = "rockchip,rk3399-cru";
+		reg = <0x0 0xff760000 0x0 0x1000>;
+		rockchip,grf = <&grf>;
+		#clock-cells = <1>;
+		#reset-cells = <1>;
+		...
+	};
+
+This shows enabling the LCD controller in U-Boot proper before relocation so
+that video memory is allocated correctly:
+
+&l4_per {
+	segment@300000 {
+
+		target-module@e000 {
+			u-boot,dm-all;
+
+			lcdc: lcdc@0 {
+				u-boot,dm-pre-reloc;
+			};
+		};
+	};
+};
