@@ -95,11 +95,12 @@ def show_event_spy_list(fname, endian):
     print('%-20s  %-30s  %s' % ('Event type', 'Id', 'Source location'))
     print('%-20s  %-30s  %s' % ('-' * 20, '-' * 30, '-' * 30))
     for name, sym in syms.items():
-        m_evtype = RE_EVTYPE_FULL.search(name)
-        if not m_evtype:
-            m_evtype = RE_EVTYPE_SIMPLE.search(name)
-        evtype = m_evtype .group(1)
-        show_sym(fname, data, endian, evtype, sym)
+        if 'UNIQUE_ID' not in name:
+            m_evtype = RE_EVTYPE_FULL.search(name)
+            if not m_evtype:
+                m_evtype = RE_EVTYPE_SIMPLE.search(name)
+            evtype = m_evtype .group(1)
+            show_sym(fname, data, endian, evtype, sym)
 
 def main(argv):
     """Main program
