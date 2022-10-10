@@ -742,7 +742,11 @@ def Binman(args):
                 elf.UpdateFile(*elf_params, data)
 
             if invalid:
-                tout.warning("\nSome images are invalid")
+                msg = '\nSome images are invalid'
+                if not args.ignore_missing_blobs:
+                    tout.error(msg)
+                    return 103
+                tout.warning(msg)
 
             # Use this to debug the time take to pack the image
             #state.TimingShow()
