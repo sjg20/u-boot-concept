@@ -1458,6 +1458,10 @@ space-separated list of directories to search for binary blobs::
        odroid-c4/build/board/hardkernel/odroidc4/firmware \
        odroid-c4/build/scp_task" binman ...
 
+Note that binman fails with error code 103 when there are missing blobs. If you
+wish to continue anyway, you can pass `-W` to binman.
+
+
 Code coverage
 -------------
 
