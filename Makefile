@@ -1111,7 +1111,7 @@ endef
 PHONY += inputs
 inputs: $(INPUTS-y)
 
-all: .binman_stamp inputs
+all: .binman_stamp inputs FORCE
 ifeq ($(CONFIG_BINMAN),y)
 	$(call if_changed,binman)
 endif
