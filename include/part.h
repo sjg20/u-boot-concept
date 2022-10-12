@@ -313,12 +313,12 @@ struct udevice;
  */
 int part_create_block_devices(struct udevice *blk_dev);
 
-unsigned long dev_read(struct udevice *dev, lbaint_t start,
-		       lbaint_t blkcnt, void *buffer);
-unsigned long dev_write(struct udevice *dev, lbaint_t start,
-			lbaint_t blkcnt, const void *buffer);
-unsigned long dev_erase(struct udevice *dev, lbaint_t start,
-			lbaint_t blkcnt);
+unsigned long disk_blk_read(struct udevice *dev, lbaint_t start,
+			    lbaint_t blkcnt, void *buffer);
+unsigned long disk_blk_write(struct udevice *dev, lbaint_t start,
+			     lbaint_t blkcnt, const void *buffer);
+unsigned long disk_blk_erase(struct udevice *dev, lbaint_t start,
+			     lbaint_t blkcnt);
 
 /*
  * We don't support printing partition information in SPL and only support
