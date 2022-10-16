@@ -369,8 +369,6 @@ int stdio_add_devices(void)
 	} else {
 		if (IS_ENABLED(CONFIG_LCD))
 			drv_lcd_init();
-		if (IS_ENABLED(CONFIG_VIDEO_VCXK))
-			drv_video_init();
 	}
 
 #if defined(CONFIG_KEYBOARD) && !defined(CONFIG_DM_KEYBOARD)
