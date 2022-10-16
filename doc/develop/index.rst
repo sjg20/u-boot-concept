@@ -32,6 +32,7 @@ Implementation
    distro
    driver-model/index
    environment
+   expo
    event
    global_data
    logging
