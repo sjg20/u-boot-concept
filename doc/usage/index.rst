@@ -72,6 +72,7 @@ Shell commands
    cmd/tftpput
    cmd/true
    cmd/ums
+   cmd/ut
    cmd/wdt
    cmd/xxd
 
