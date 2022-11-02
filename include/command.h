@@ -279,6 +279,22 @@ int run_commandf(const char *fmt, ...);
  * Return: 0 on success, or != 0 on error.
  */
 int run_command_list(const char *cmd, int len, int flag);
+
+/**
+ * cmd_source_script() - Execute a script
+ *
+ * Executes a U-Boot script at a particular address in memory. The script should
+ * have a header (FIT or legacy) with the script type (IH_TYPE_SCRIPT).
+ *
+ * If @fit_uname is the empty string, then the default image is used. If
+ * @confname is the empty string, the default config is used. If @confname and
+ * @fit_uname are both non-%NULL, then @confname is ignored. If @confname and
+ * @fit_uname are both %NULL, then first the default config is tried, and then
+ * the default image.
+ *
+ * Return: result code (enum command_ret_t)
+ */
+int cmd_source_script(ulong addr, const char *fit_uname, const char *confname);
 #endif	/* __ASSEMBLY__ */
 
 /*
