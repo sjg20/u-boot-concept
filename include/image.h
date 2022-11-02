@@ -709,18 +709,6 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 		   enum fit_load_op load_op, ulong *datap, ulong *lenp);
 
 /**
- * image_source_script() - Execute a script
- *
- * Executes a U-Boot script at a particular address in memory. The script should
- * have a header (FIT or legacy) with the script type (IH_TYPE_SCRIPT).
- *
- * @addr: Address of script
- * @fit_uname: FIT subimage name
- * Return: result code (enum command_ret_t)
- */
-int image_source_script(ulong addr, const char *fit_uname);
-
-/**
  * image_locate_script() - Locate the raw script in an image
  *
  * @buf: Address of image
