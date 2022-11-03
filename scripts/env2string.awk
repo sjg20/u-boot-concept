@@ -43,6 +43,14 @@ NF {
 		var = substr($0, 1, RLENGTH - 1)
 		env = substr($0, RLENGTH + 1)
 
+		# If the env value consists entirely of a quoted string, drop
+		# the quotes. This handles things like fred=CONFIG_SYS_BOARD
+		# which would otherwise result in fred=\"sandbox\" in this
+		# output and fred="sandbox" in the final environment.
+		if (length(env) != 0 && match(env, /^\\"([^"]*)\\"$/)) {
+			env = substr(env, RSTART + 2, RLENGTH - 4)
+		}
+
 		# Deal with += which concatenates the new string to the existing
 		# variable. Again we are careful to use POSIX match()
 		if (length(env) != 0 && match(var, "^(.*)[+]$")) {

@@ -588,8 +588,16 @@ e=456
 m+= 456''', 'e=456\\0m=123 456\\0')
 
     # contains quotes
+    check_script('''fred=run "my var"
+mary=another"''', 'fred=run \\"my var\\"\\0mary=another\\"\\0')
+
+    # contains only a quoted strings, so quotes are removed
     check_script('''fred="my var"
-mary=another"''', 'fred=\\"my var\\"\\0mary=another\\"\\0')
+mary=another"''', 'fred=my var\\0mary=another\\"\\0')
+
+    # contains more than one quoted string
+    check_script('''fred="my var" or "this var"
+mary=another"''', 'fred=\\"my var\\" or \\"this var\\"\\0mary=another\\"\\0')
 
     # variable name ending in +
     check_script('''fred\\+=my var

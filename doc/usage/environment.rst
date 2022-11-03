@@ -55,7 +55,12 @@ variable but assigning to a new one::
 
 This file can include C-style comments. Blank lines and multi-line
 variables are supported, and you can use normal C preprocessor directives
-and CONFIG defines from your board config also.
+and CONFIG defines from your board config also. If the CONFIG value consists of
+a string and this is the only thing in the variable, the quotes will be
+dropped::
+
+   something=CONFIG_SYS_BOARD
+   # where CONFIG_SYS_BOARD is "sandbox" this becomes: something=sandbox
 
 For example, for snapper9260 you would create a text file called
 `board/bluewater/snapper9260.env` containing the environment text.
