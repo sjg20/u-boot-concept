@@ -7,11 +7,13 @@
 #ifndef __bootdev_h
 #define __bootdev_h
 
+#include <dm/uclass-id.h>
 #include <linux/list.h>
 
 struct bootflow;
 struct bootflow_iter;
 struct bootstd_priv;
+struct driver_info;
 struct udevice;
 
 /**

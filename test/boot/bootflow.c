@@ -79,8 +79,9 @@ static int bootflow_cmd_label(struct unit_test_state *uts)
 	ut_assert_skip_to_line("(0 bootflows, 0 valid)");
 	ut_assert_console_end();
 
+	sandbox_set_eth_enable(false);
 	ut_assertok(run_command("bootflow scan -l 0", 0));
-	ut_assert_nextline("Scanning for bootflows in bootdev 'mmc2.bootdev'");
+	ut_assert_nextline("Scanning for bootflows in bootdev 'eth@10002000.bootdev'");
 	ut_assert_skip_to_line("(0 bootflows, 0 valid)");
 	ut_assert_console_end();
 
@@ -92,9 +93,10 @@ BOOTSTD_TEST(bootflow_cmd_label, UT_TESTF_DM | UT_TESTF_SCAN_FDT);
 static int bootflow_cmd_glob(struct unit_test_state *uts)
 {
 	ut_assertok(bootstd_test_drop_bootdev_order(uts));
+	sandbox_set_eth_enable(false);
 
 	console_record_reset_enable();
-	ut_assertok(run_command("bootflow scan -lG", 0));
+	ut_assertok(run_command("bootflow scan -lHG", 0));
 	ut_assert_nextline("Scanning for bootflows in all bootdevs");
 	ut_assert_nextline("Seq  Method       State   Uclass    Part  Name                      Filename");
 	ut_assert_nextlinen("---");
@@ -102,7 +104,7 @@ static int bootflow_cmd_glob(struct unit_test_state *uts)
 	ut_assert_nextline("Scanning bootdev 'mmc1.bootdev':");
 	ut_assert_nextline("  0  syslinux     ready   mmc          1  mmc1.bootdev.part_1       /extlinux/extlinux.conf");
 	ut_assert_nextline("Scanning bootdev 'mmc0.bootdev':");
-	ut_assert_nextline("No more bootdevs");
+	ut_assert_skip_to_line("No more bootdevs");
 	ut_assert_nextlinen("---");
 	ut_assert_nextline("(1 bootflow, 1 valid)");
 	ut_assert_console_end();
@@ -345,7 +347,7 @@ static int bootflow_system(struct unit_test_state *uts)
 	ut_assert_skip_to_line(
 		"  0  efi_mgr      ready   (none)       0  <NULL>                    <NULL>");
 	ut_assert_skip_to_line("No more bootdevs");
-	ut_assert_skip_to_line("(1 bootflow, 1 valid)");
+	ut_assert_skip_to_line("(2 bootflows, 2 valid)");
 	ut_assert_console_end();
 
 	return 0;
@@ -463,3 +465,47 @@ static int bootflow_cmd_boot(struct unit_test_state *uts)
 	return 0;
 }
 BOOTSTD_TEST(bootflow_cmd_boot, UT_TESTF_DM | UT_TESTF_SCAN_FDT);
+
+/* Check searching for a single bootdev using the hunters */
+static int bootflow_cmd_hunt_single(struct unit_test_state *uts)
+{
+	ut_assertok(bootstd_test_drop_bootdev_order(uts));
+
+	console_record_reset_enable();
+	ut_assertok(run_command("bootflow scan -l mmc1", 0));
+	ut_assert_nextline("Scanning for bootflows in bootdev 'mmc1.bootdev'");
+	ut_assert_skip_to_line("(1 bootflow, 1 valid)");
+	ut_assert_console_end();
+
+	/* check that the hunter was used */
+	ut_assertok(bootstd_test_check_mmc_hunter(uts));
+
+	return 0;
+}
+BOOTSTD_TEST(bootflow_cmd_hunt_single, UT_TESTF_DM | UT_TESTF_SCAN_FDT);
+
+/* Check searching for a uclass label using the hunters */
+static int bootflow_cmd_hunt_label(struct unit_test_state *uts)
+{
+	ut_assertok(bootstd_test_drop_bootdev_order(uts));
+
+	console_record_reset_enable();
+	ut_assertok(run_command("bootflow scan -l mmc", 0));
+
+	/* check that the hunter was used */
+	ut_assertok(bootstd_test_check_mmc_hunter(uts));
+
+	/* check that we got the mmc1 bootflow */
+	ut_assert_nextline("Scanning for bootflows with label 'mmc'");
+	ut_assert_nextlinen("Seq");
+	ut_assert_nextlinen("---");
+	ut_assert_nextline("Scanning bootdev 'mmc2.bootdev':");
+	ut_assert_nextline("Scanning bootdev 'mmc1.bootdev':");
+	ut_assert_nextline("  0  syslinux     ready   mmc          1  mmc1.bootdev.part_1       /extlinux/extlinux.conf");
+	ut_assert_nextline("Scanning bootdev 'mmc0.bootdev':");
+	ut_assert_skip_to_line("(1 bootflow, 1 valid)");
+	ut_assert_console_end();
+
+	return 0;
+}
+BOOTSTD_TEST(bootflow_cmd_hunt_label, UT_TESTF_DM | UT_TESTF_SCAN_FDT);
