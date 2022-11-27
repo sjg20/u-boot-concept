@@ -473,6 +473,21 @@ int bootdev_find_by_any(const char *name, struct udevice **devp,
 	return 0;
 }
 
+int bootdev_hunt_and_find_by_label(const char *label, struct udevice **devp,
+				   int *method_flagsp)
+{
+	int ret;
+
+	ret = bootdev_hunt(label, false);
+	if (ret)
+		return log_msg_ret("scn", ret);
+	ret = bootdev_find_by_label(label, devp, method_flagsp);
+	if (ret)
+		return log_msg_ret("fnd", ret);
+
+	return 0;
+}
+
 static int default_get_bootflow(struct udevice *dev, struct bootflow_iter *iter,
 				struct bootflow *bflow)
 {
