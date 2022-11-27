@@ -6,6 +6,7 @@
 #define LOG_CATEGORY UCLASS_SPI_FLASH
 
 #include <common.h>
+#include <bootdev.h>
 #include <dm.h>
 #include <log.h>
 #include <malloc.h>
@@ -86,6 +87,14 @@ int spi_flash_probe_bus_cs(unsigned int busnum, unsigned int cs,
 
 static int spi_flash_post_bind(struct udevice *dev)
 {
+	int ret;
+
+	if (CONFIG_IS_ENABLED(BOOTDEV_SPI_FLASH)) {
+		ret = bootdev_setup_for_dev(dev, "sf_bootdev");
+		if (ret)
+			return log_msg_ret("bd", ret);
+	}
+
 #if defined(CONFIG_NEEDS_MANUAL_RELOC)
 	struct dm_spi_flash_ops *ops = sf_get_ops(dev);
 	static int reloc_done;
@@ -101,6 +110,7 @@ static int spi_flash_post_bind(struct udevice *dev)
 		reloc_done++;
 	}
 #endif
+
 	return 0;
 }
 
