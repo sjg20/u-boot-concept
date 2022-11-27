@@ -21,15 +21,20 @@ struct udevice;
  *
  * Smallest value is the highest priority. By default, bootdevs are scanned from
  * highest to lowest priority
+ *
+ * @BOOTDEVP_6_PRE_SCAN: Scan bootdevs with this priority always, before
+ * starting any bootflow scan
  */
 enum bootdev_prio_t {
-	BOOTDEVP_0_INTERNAL_FAST	= 10,
-	BOOTDEVP_1_INTERNAL_SLOW	= 20,
-	BOOTDEVP_2_SCAN_FAST		= 30,
-	BOOTDEVP_3_SCAN_SLOW		= 40,
-	BOOTDEVP_4_NET_BASE		= 50,
-	BOOTDEVP_5_NET_FALLBACK		= 60,
-	BOOTDEVP_6_SYSTEM		= 70,
+	BOOTDEVP_0_NONE,
+	BOOTDEVP_1_PRE_SCAN		= 1,
+	BOOTDEVP_2_INTERNAL_FAST	= 2,
+	BOOTDEVP_3_INTERNAL_SLOW	= 3,
+	BOOTDEVP_4_SCAN_FAST		= 4,
+	BOOTDEVP_5_SCAN_SLOW		= 5,
+	BOOTDEVP_6_NET_BASE		= 6,
+	BOOTDEVP_7_NET_FALLBACK		= 7,
+	BOOTDEVP_8_SYSTEM		= 8,
 
 	BOOTDEVP_COUNT,
 };
