@@ -119,7 +119,6 @@ static int bootdev_test_labels(struct unit_test_state *uts)
 }
 BOOTSTD_TEST(bootdev_test_labels, UT_TESTF_DM | UT_TESTF_SCAN_FDT);
 
-#if 0 /* disable for now */
 /* Check bootdev ordering with the bootdev-order property */
 static int bootdev_test_order(struct unit_test_state *uts)
 {
@@ -138,17 +137,28 @@ static int bootdev_test_order(struct unit_test_state *uts)
 	ut_assertok(env_set("boot_targets", NULL));
 	ut_assertok(bootflow_scan_first(&iter, 0, &bflow));
 	ut_asserteq(2, iter.num_devs);
-	ut_asserteq_str("mmc2.bootdev", iter.dev_order[0]->name);
-	ut_asserteq_str("mmc1.bootdev", iter.dev_order[1]->name);
+	ut_asserteq_str("mmc2.bootdev", iter.dev_used[0]->name);
+	ut_asserteq_str("mmc1.bootdev", iter.dev_used[1]->name);
 	bootflow_iter_uninit(&iter);
 
 	/* Use the environment variable to override it */
 	ut_assertok(env_set("boot_targets", "mmc1 mmc2"));
 	ut_assertok(bootflow_scan_first(&iter, 0, &bflow));
+	ut_asserteq(-ENODEV, bootflow_scan_next(&iter, &bflow));
 	ut_asserteq(2, iter.num_devs);
-	ut_asserteq_str("mmc1.bootdev", iter.dev_order[0]->name);
-	ut_asserteq_str("mmc2.bootdev", iter.dev_order[1]->name);
+	ut_asserteq_str("mmc1.bootdev", iter.dev_used[0]->name);
+	ut_asserteq_str("mmc2.bootdev", iter.dev_used[1]->name);
 	bootflow_iter_uninit(&iter);
+
+	return 0;
+}
+BOOTSTD_TEST(bootdev_test_order, UT_TESTF_DM | UT_TESTF_SCAN_FDT);
+
+/* Check default bootdev ordering  */
+static int bootdev_test_order_default(struct unit_test_state *uts)
+{
+	struct bootflow_iter iter;
+	struct bootflow bflow;
 
 	/*
 	 * Now drop both orderings, to check the default (prioriy/sequence)
@@ -158,11 +168,14 @@ static int bootdev_test_order(struct unit_test_state *uts)
 	ut_assertok(bootstd_test_drop_bootdev_order(uts));
 
 	ut_assertok(bootflow_scan_first(&iter, 0, &bflow));
-	ut_asserteq(3, iter.num_devs);
-	ut_asserteq_str("mmc2.bootdev", iter.dev_order[0]->name);
-	ut_asserteq_str("mmc1.bootdev", iter.dev_order[1]->name);
-	ut_asserteq_str("mmc0.bootdev", iter.dev_order[2]->name);
+	ut_asserteq(2, iter.num_devs);
+	ut_asserteq_str("mmc2.bootdev", iter.dev_used[0]->name);
+	ut_asserteq_str("mmc1.bootdev", iter.dev_used[1]->name);
 
+	ut_asserteq(-ENODEV, bootflow_scan_next(&iter, &bflow));
+	ut_asserteq(3, iter.num_devs);
+	ut_asserteq_str("mmc0.bootdev", iter.dev_used[2]->name);
+#if 0
 	/*
 	 * Check that adding aliases for the bootdevs works. We just fake it by
 	 * setting the sequence numbers directly.
@@ -177,11 +190,12 @@ static int bootdev_test_order(struct unit_test_state *uts)
 	ut_asserteq_str("mmc2.bootdev", iter.dev_order[0]->name);
 	ut_asserteq_str("mmc0.bootdev", iter.dev_order[1]->name);
 	ut_asserteq_str("mmc1.bootdev", iter.dev_order[2]->name);
+#endif
 	bootflow_iter_uninit(&iter);
 
 	return 0;
 }
-BOOTSTD_TEST(bootdev_test_order, UT_TESTF_DM | UT_TESTF_SCAN_FDT);
+BOOTSTD_TEST(bootdev_test_order_default, UT_TESTF_DM | UT_TESTF_SCAN_FDT);
 
 /* Check bootdev ordering with the uclass priority */
 static int bootdev_test_prio(struct unit_test_state *uts)
@@ -190,6 +204,8 @@ static int bootdev_test_prio(struct unit_test_state *uts)
 	struct bootflow_iter iter;
 	struct bootflow bflow;
 	struct udevice *blk;
+
+	state_set_skip_delays(true);
 
 	/* Start up USB which gives us three additional bootdevs */
 	usb_started = false;
@@ -200,26 +216,28 @@ static int bootdev_test_prio(struct unit_test_state *uts)
 	/* 3 MMC and 3 USB bootdevs: MMC should come before USB */
 	console_record_reset_enable();
 	ut_assertok(bootflow_scan_first(&iter, 0, &bflow));
+	ut_asserteq(-ENODEV, bootflow_scan_next(&iter, &bflow));
 	ut_asserteq(6, iter.num_devs);
-	ut_asserteq_str("mmc2.bootdev", iter.dev_order[0]->name);
+	ut_asserteq_str("mmc2.bootdev", iter.dev_used[0]->name);
 	ut_asserteq_str("usb_mass_storage.lun0.bootdev",
-			iter.dev_order[3]->name);
+			iter.dev_used[3]->name);
 
-	ut_assertok(bootdev_get_sibling_blk(iter.dev_order[3], &blk));
+	ut_assertok(bootdev_get_sibling_blk(iter.dev_used[3], &blk));
 	ut_asserteq_str("usb_mass_storage.lun0", blk->name);
 
 	/* adjust the priority of the first USB bootdev to the highest */
-	ucp = dev_get_uclass_plat(iter.dev_order[3]);
-	ucp->prio = 1;
+	ucp = dev_get_uclass_plat(iter.dev_used[3]);
+	ucp->prio = BOOTDEVP_1_PRE_SCAN;
 
+	printf("\n\nstart\n");
 	bootflow_iter_uninit(&iter);
-	ut_assertok(bootflow_scan_first(&iter, 0, &bflow));
+	ut_assertok(bootflow_scan_first(&iter, BOOTFLOWF_HUNT, &bflow));
+	ut_asserteq(-ENODEV, bootflow_scan_next(&iter, &bflow));
 	ut_asserteq(6, iter.num_devs);
 	ut_asserteq_str("usb_mass_storage.lun0.bootdev",
-			iter.dev_order[0]->name);
-	ut_asserteq_str("mmc2.bootdev", iter.dev_order[1]->name);
+			iter.dev_used[0]->name);
+	ut_asserteq_str("mmc2.bootdev", iter.dev_used[1]->name);
 
 	return 0;
 }
 BOOTSTD_TEST(bootdev_test_prio, UT_TESTF_DM | UT_TESTF_SCAN_FDT);
-#endif /* disabled for now */
