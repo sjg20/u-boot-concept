@@ -119,6 +119,7 @@ static int bootdev_test_labels(struct unit_test_state *uts)
 }
 BOOTSTD_TEST(bootdev_test_labels, UT_TESTF_DM | UT_TESTF_SCAN_FDT);
 
+#if 0 /* disable for now */
 /* Check bootdev ordering with the bootdev-order property */
 static int bootdev_test_order(struct unit_test_state *uts)
 {
@@ -221,3 +222,4 @@ static int bootdev_test_prio(struct unit_test_state *uts)
 	return 0;
 }
 BOOTSTD_TEST(bootdev_test_prio, UT_TESTF_DM | UT_TESTF_SCAN_FDT);
+#endif /* disabled for now */
