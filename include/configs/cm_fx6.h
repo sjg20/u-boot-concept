@@ -136,7 +136,7 @@
 
 /* USB */
 #define CONFIG_MXC_USB_PORTSC		(PORT_PTS_UTMI | PORT_PTS_PTW)
-#define CONFIG_MXC_USB_FLAGS		0
+#define CFG_MXC_USB_FLAGS		0
 
 /* Boot */
 #define CFG_SYS_BOOTMAPSZ	        (8 << 20)

@@ -302,7 +302,7 @@ static int ehci_usb_probe(struct udevice *dev)
 	__raw_writel(CONFIG_MXC_USB_PORTSC, &ehci->portsc);
 	setbits_le32(&ehci->portsc, USB_EN);
 
-	mxc_set_usbcontrol(priv->portnr, CONFIG_MXC_USB_FLAGS);
+	mxc_set_usbcontrol(priv->portnr, CFG_MXC_USB_FLAGS);
 	mdelay(10);
 
 	return ehci_register(dev, hccr, hcor, &mx5_ehci_ops, 0,
