@@ -36,7 +36,7 @@
 /* Network */
 #define CFG_FEC_MXC_PHYADDR          0x0
 
-#define CONFIG_MXC_USB_PORTSC  (PORT_PTS_UTMI | PORT_PTS_PTW)
+#define CFG_MXC_USB_PORTSC  (PORT_PTS_UTMI | PORT_PTS_PTW)
 #define CFG_MXC_USB_FLAGS   0
 
 #ifdef CONFIG_CMD_PCI
