@@ -375,7 +375,7 @@ int get_scl(void);
 /*
  * Hardware Watchdog
  */
-#define CONFIG_WATCHDOG_PRESC 34	/* wdog prescaler 2^(64-34) ~10min */
+#define CFG_WATCHDOG_PRESC 34	/* wdog prescaler 2^(64-34) ~10min */
 #define CONFIG_WATCHDOG_RC WRC_CHIP	/* reset chip on watchdog event */
 
 /*
