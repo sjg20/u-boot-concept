@@ -34,7 +34,7 @@
 # define CONFIG_KM_UBI_LINUX_MTD					\
 	"ubi.mtd=" CONFIG_KM_UBI_PARTITION_NAME_BOOT			\
 	CONFIG_KM_UBI_PART_BOOT_OPTS
-# define CONFIG_KM_DEV_ENV_FLASH_BOOT_UBI				\
+# define CFG_KM_DEV_ENV_FLASH_BOOT_UBI				\
 	"ubiattach=ubi part " CONFIG_KM_UBI_PARTITION_NAME_BOOT "\0"
 #else /* CONFIG_KM_UBI_PARTITION_NAME_APP */
 /* two flash chips called boot and app */
@@ -44,7 +44,7 @@
 	"ubi.mtd=" CONFIG_KM_UBI_PARTITION_NAME_BOOT			\
 	CONFIG_KM_UBI_PART_BOOT_OPTS " "				\
 	"ubi.mtd=" CONFIG_KM_UBI_PARTITION_NAME_APP
-# define CONFIG_KM_DEV_ENV_FLASH_BOOT_UBI				\
+# define CFG_KM_DEV_ENV_FLASH_BOOT_UBI				\
 	"ubiattach=if test ${boot_bank} -eq 0; then; "			\
 	"ubi part " CONFIG_KM_UBI_PARTITION_NAME_BOOT "; else; "	\
 	"ubi part " CONFIG_KM_UBI_PARTITION_NAME_APP "; fi\0"
@@ -125,7 +125,7 @@
 	"cramfsloadkernel=cramfsload ${load_addr_r} ${uimage}\0"	\
 	"ubicopy=ubi read ${cramfsaddr} bootfs${boot_bank}\0"		\
 	"uimage=" CONFIG_KM_UIMAGE_NAME					\
-	CONFIG_KM_DEV_ENV_FLASH_BOOT_UBI
+	CFG_KM_DEV_ENV_FLASH_BOOT_UBI
 
 /*
  * constants
