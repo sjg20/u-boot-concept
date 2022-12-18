@@ -46,6 +46,7 @@
 					arch = "arm64";
 					compression = "none";
 					load = <CONFIG_TEXT_BASE>;
+					entry = <CONFIG_TEXT_BASE>;
 					u-boot-nodtb {
 					};
 					hash-1 {
@@ -87,6 +88,9 @@
 					description = "fdt-NAME";
 					compression = "none";
 					type = "flat_dt";
+					hash-1 {
+						algo = "crc32";
+					};
 				};
 			};
 
