@@ -39,7 +39,7 @@
 #include <serial.h>
 #include <spl.h>
 #include <status_led.h>
-#include <sysreset.h>
+// #include <sysreset.h>
 #include <timer.h>
 #include <trace.h>
 #include <video.h>
@@ -153,19 +153,24 @@ static int print_resetinfo(void)
 	/* Not all boards have sysreset drivers available during early
 	 * boot, so don't fail if one can't be found.
 	 */
+	printf("here\n");
+	printch('1');
 	for (ret = uclass_first_device_check(UCLASS_SYSRESET, &dev); dev;
 			ret = uclass_next_device_check(&dev)) {
+		printch('2');
 		if (ret) {
 			debug("%s: %s sysreset device (error: %d)\n",
 			      __func__, dev->name, ret);
 			continue;
 		}
 
+		printch('3');
 		if (!sysreset_get_status(dev, status, sizeof(status))) {
 			printf("%s%s", status_printed ? " " : "", status);
 			status_printed = true;
 		}
 	}
+	printch('4');
 	if (status_printed)
 		printf("\n");
 
@@ -793,17 +798,23 @@ static int initf_dm(void)
 #if defined(CONFIG_DM) && CONFIG_VAL(SYS_MALLOC_F_LEN)
 	int ret;
 
+	printascii("here\n");
 	bootstage_start(BOOTSTAGE_ID_ACCUM_DM_F, "dm_f");
+	printch('1');
 	ret = dm_init_and_scan(true);
+	printch('6');
 	bootstage_accum(BOOTSTAGE_ID_ACCUM_DM_F);
+	printch('7');
 	if (ret)
 		return ret;
 
+	printch('8');
 	if (IS_ENABLED(CONFIG_TIMER_EARLY)) {
 		ret = dm_timer_init();
 		if (ret)
 			return ret;
 	}
+	printch('9');
 #endif
 
 	return 0;

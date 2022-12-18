@@ -3,6 +3,7 @@
  * Copyright (C) 2016 Google, Inc
  * Written by Simon Glass <sjg@chromium.org>
  */
+#define LOG_DEBUG
 
 #include <common.h>
 #include <errno.h>
@@ -304,8 +305,9 @@ static int spl_load_fit_image(struct spl_load_info *info, ulong sector,
 			       nr_sectors, src_ptr) != nr_sectors)
 			return -EIO;
 
-		debug("External data: dst=%p, offset=%x, size=%lx\n",
-		      src_ptr, offset, (unsigned long)length);
+		debug("External data: dst=%lx, src=%p, offset=%x, size=%lx, sectors=%x, overhead=%lx\n",
+		      load_addr, src_ptr, offset, (unsigned long)length,
+		      nr_sectors, overhead);
 		src = src_ptr + overhead;
 	} else {
 		/* Embedded data */
@@ -341,6 +343,10 @@ static int spl_load_fit_image(struct spl_load_info *info, ulong sector,
 	} else {
 		memcpy(load_ptr, src, length);
 	}
+	uint crc;
+
+	crc = crc8(0, load_ptr, length);
+	printf("crc %x\n", crc);
 
 	if (image_info) {
 		ulong entry_point;

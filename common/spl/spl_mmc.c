@@ -5,6 +5,7 @@
  *
  * Aneesh V <aneesh@ti.com>
  */
+#define LOG_DEBUG
 #include <common.h>
 #include <dm.h>
 #include <log.h>
