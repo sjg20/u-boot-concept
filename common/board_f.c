@@ -9,6 +9,8 @@
  * Marius Groeger <mgroeger@sysgo.de>
  */
 
+#define LOG_DEBUG
+
 #include <common.h>
 #include <bloblist.h>
 #include <bootstage.h>
@@ -151,7 +153,6 @@ static int print_resetinfo(void)
 	/* Not all boards have sysreset drivers available during early
 	 * boot, so don't fail if one can't be found.
 	 */
-	printch('1');
 	for (ret = uclass_first_device_check(UCLASS_SYSRESET, &dev); dev;
 			ret = uclass_next_device_check(&dev)) {
 		if (ret) {
@@ -167,7 +168,6 @@ static int print_resetinfo(void)
 	}
 	if (status_printed)
 		printf("\n");
-	printch('9');
 
 	return 0;
 }

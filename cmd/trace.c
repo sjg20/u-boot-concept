@@ -80,6 +80,7 @@ int do_trace(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {
 	const char *cmd = argc < 2 ? NULL : argv[1];
 
+// 	printf("argc=%d, argv[1]=%s\n", argc, argv[1]);
 	if (!cmd)
 		return cmd_usage(cmdtp);
 	switch (*cmd) {
