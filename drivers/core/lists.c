@@ -5,7 +5,7 @@
  * (C) Copyright 2012
  * Marek Vasut <marex@denx.de>
  */
-
+#define LOG_DEBUG
 #define LOG_CATEGORY LOGC_DM
 
 #include <common.h>
@@ -224,6 +224,9 @@ int lists_bind_fdt(struct udevice *parent, ofnode node, struct udevice **devp,
 
 		id = NULL;
 		for (entry = driver; entry != driver + n_ents; entry++) {
+// 			printascii("driver: ");
+// 			printascii(entry->name);
+// 			printascii(" ");
 			if (drv) {
 				if (drv != entry)
 					continue;
