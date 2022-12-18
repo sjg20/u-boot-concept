@@ -48,6 +48,9 @@
 					load = <CONFIG_TEXT_BASE>;
 					u-boot-nodtb {
 					};
+					hash-1 {
+						algo = "crc32";
+					};
 				};
 
 				@atf-SEQ {
@@ -76,6 +79,7 @@
 					fit,data;
 
 					tee-os {
+						optional;
 					};
 				};
 

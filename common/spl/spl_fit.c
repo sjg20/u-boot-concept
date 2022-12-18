@@ -4,6 +4,7 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 #define LOG_DEBUG
+#define LOG_CATEGORY	LOGC_BOOT
 
 #include <common.h>
 #include <errno.h>
@@ -345,7 +346,7 @@ static int spl_load_fit_image(struct spl_load_info *info, ulong sector,
 	}
 	uint crc;
 
-	crc = crc8(0, load_ptr, length);
+	crc = crc32(0, load_ptr, length);
 	printf("crc %x\n", crc);
 
 	if (image_info) {
@@ -358,6 +359,7 @@ static int spl_load_fit_image(struct spl_load_info *info, ulong sector,
 			image_info->entry_point = entry_point;
 		else
 			image_info->entry_point = FDT_ERROR;
+		log_debug("entry_point=%lx\n", (ulong)image_info->entry_point);
 	}
 
 	return 0;
@@ -824,8 +826,11 @@ int spl_load_simple_fit(struct spl_image_info *spl_image,
 		 * use the first valid entry point from the loadables.
 		 */
 		if (spl_image->entry_point == FDT_ERROR &&
-		    image_info.entry_point != FDT_ERROR)
+		    image_info.entry_point != FDT_ERROR) {
 			spl_image->entry_point = image_info.entry_point;
+			log_debug("entry_point=%lx\n",
+				  (ulong)spl_image->entry_point);
+		}
 
 		/* Record our loadables into the FDT */
 		if (spl_image->fdt_addr)
@@ -846,6 +851,7 @@ int spl_load_simple_fit(struct spl_image_info *spl_image,
 
 	if (IS_ENABLED(CONFIG_IMX_HAB))
 		board_spl_fit_post_load(ctx.fit);
+	log_debug("Finished loading FIT\n");
 
 	return 0;
 }

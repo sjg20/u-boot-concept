@@ -36,8 +36,10 @@ static int fit_add_file_data(struct image_tool_params *params, size_t size_inc,
 
 	tfd = mmap_fdt(params->cmdname, tmpfile, size_inc, &ptr, &sbuf, true,
 		       false);
-	if (tfd < 0)
+	if (tfd < 0) {
+		fprintf(stderr, "Cannot map FDT file '%s'\n", tmpfile);
 		return -EIO;
+	}
 
 	if (params->keydest) {
 		struct stat dest_sbuf;
@@ -59,9 +61,11 @@ static int fit_add_file_data(struct image_tool_params *params, size_t size_inc,
 		ret = fit_set_timestamp(ptr, 0, time);
 	}
 
+	printf("%d: ret=%d\n", __LINE__, ret);
 	if (!ret)
 		ret = fit_pre_load_data(params->keydir, dest_blob, ptr);
 
+	printf("%d: ret=%d\n", __LINE__, ret);
 	if (!ret) {
 		ret = fit_cipher_data(params->keydir, dest_blob, ptr,
 				      params->comment,
@@ -70,6 +74,7 @@ static int fit_add_file_data(struct image_tool_params *params, size_t size_inc,
 				      params->cmdname);
 	}
 
+	printf("%d: ret=%d\n", __LINE__, ret);
 	if (!ret) {
 		ret = fit_add_verification_data(params->keydir,
 						params->keyfile, dest_blob, ptr,
@@ -81,6 +86,7 @@ static int fit_add_file_data(struct image_tool_params *params, size_t size_inc,
 						&params->summary);
 	}
 
+	printf("%d: ret=%d\n", __LINE__, ret);
 	if (dest_blob) {
 		munmap(dest_blob, destfd_size);
 		close(destfd);

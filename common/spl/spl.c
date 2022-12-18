@@ -5,6 +5,7 @@
  *
  * Aneesh V <aneesh@ti.com>
  */
+#define LOG_DEBUG
 
 #include <common.h>
 #include <bloblist.h>
@@ -711,6 +712,7 @@ static int boot_from_devices(struct spl_image_info *spl_image,
 			if (loader &&
 				!spl_load_image(spl_image, loader)) {
 				spl_image->boot_device = bootdev;
+				printf("loader done!\n");
 				return 0;
 			}
 		}
@@ -893,6 +895,7 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 #endif
 
 	spl_board_prepare_for_boot();
+	printf("about to boot\n");
 	jump_to_image_no_args(&spl_image);
 }
 

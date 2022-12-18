@@ -464,6 +464,7 @@ int spl_mmc_load(struct spl_image_info *spl_image,
 			err = mmc_load_image_raw_os(spl_image, bootdev, mmc);
 			if (!err)
 				return err;
+			printf("loaded\n");
 		}
 
 		raw_sect = spl_mmc_get_uboot_raw_sector(mmc, raw_sect);
@@ -476,8 +477,10 @@ int spl_mmc_load(struct spl_image_info *spl_image,
 			return err;
 #endif
 #ifdef CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_USE_SECTOR
+		printf("loading sector\n");
 		err = mmc_load_image_raw_sector(spl_image, bootdev, mmc,
 				raw_sect + spl_mmc_raw_uboot_offset(part));
+		printf("loading sector - err=%d\n", err);
 		if (!err)
 			return err;
 #endif
