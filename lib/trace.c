@@ -63,7 +63,7 @@ static inline uintptr_t __attribute__((no_instrument_function))
 /**
  * trace_gd - the value of the gd register
  */
-static volatile gd_t *trace_gd __section(".data");
+static volatile gd_t *trace_gd;
 
 /**
  * trace_save_gd() - save the value of the gd register

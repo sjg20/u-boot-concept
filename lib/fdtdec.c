@@ -576,6 +576,7 @@ const char *fdtdec_get_chosen_prop(const void *blob, const char *name)
 	if (!blob)
 		return NULL;
 	chosen_node = fdt_path_offset(blob, "/chosen");
+	printf("chosen_node = %d %s\n", chosen_node, name);
 	return fdt_getprop(blob, chosen_node, name, NULL);
 }
 
