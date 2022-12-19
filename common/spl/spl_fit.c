@@ -475,6 +475,7 @@ static int spl_fit_append_fdt(struct spl_image_info *spl_image,
 	ret = fdt_shrink_to_minimum(spl_image->fdt_addr, 8192);
 	if (ret < 0)
 		return ret;
+	fdt_crc("shrink done", spl_image->fdt_addr);
 
 	return ret;
 }
@@ -852,6 +853,7 @@ int spl_load_simple_fit(struct spl_image_info *spl_image,
 	if (IS_ENABLED(CONFIG_IMX_HAB))
 		board_spl_fit_post_load(ctx.fit);
 	log_debug("Finished loading FIT\n");
+	fdt_crc("loaded FIT", spl_image->fdt_addr);
 
 	return 0;
 }

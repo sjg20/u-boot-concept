@@ -896,6 +896,11 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 
 	spl_board_prepare_for_boot();
 	printf("about to boot\n");
+#ifndef CONFIG_TPL_BUILD
+	fdt_crc("about to boot", spl_image.fdt_addr);
+	memcpy((void *)FDT_COPY_ADDR, spl_image.fdt_addr, FDT_COPY_SIZE);
+	fdt_crc("copy", spl_image.fdt_addr);
+#endif
 	jump_to_image_no_args(&spl_image);
 }
 

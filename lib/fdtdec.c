@@ -4,6 +4,8 @@
  */
 
 #ifndef USE_HOSTCC
+#define DEBUG
+
 #include <common.h>
 #include <boot_fit.h>
 #include <display_options.h>
@@ -13,6 +15,7 @@
 #include <log.h>
 #include <malloc.h>
 #include <net.h>
+#include <spl.h>
 #include <env.h>
 #include <errno.h>
 #include <fdtdec.h>
@@ -28,6 +31,7 @@
 #include <linux/ctype.h>
 #include <linux/lzo.h>
 #include <linux/ioport.h>
+#include <u-boot/crc.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -590,6 +594,34 @@ int fdtdec_get_chosen_node(const void *blob, const char *name)
 	return fdt_path_offset(blob, prop);
 }
 
+/**
+ * fdtdec_prepare_fdt() - Check we have a valid fdt available to control U-Boot
+ *
+ * @blob: Blob to check
+ *
+ * If not, a message is printed to the console if the console is ready.
+ *
+ * Return: 0 if all ok, -ENOENT if not
+ */
+static int fdtdec_prepare_fdt(const void *blob)
+{
+	if (!blob || ((uintptr_t)blob & 3) || fdt_check_header(blob)) {
+		if (spl_phase() <= PHASE_SPL) {
+			puts("Missing DTB\n");
+		} else {
+			printf("No valid device tree binary found at %p\n",
+			       blob);
+			if (_DEBUG && blob) {
+				printf("fdt_blob=%p\n", blob);
+				print_buffer((ulong)blob, blob, 4, 32, 0);
+			}
+		}
+		return -ENOENT;
+	}
+
+	return 0;
+}
+
 int fdtdec_check_fdt(void)
 {
 	/*
@@ -598,34 +630,7 @@ int fdtdec_check_fdt(void)
 	 * FDT (prior to console ready) will need to make their own
 	 * arrangements and do their own checks.
 	 */
-	assert(!fdtdec_prepare_fdt());
-	return 0;
-}
-
-/*
- * This function is a little odd in that it accesses global data. At some
- * point if the architecture board.c files merge this will make more sense.
- * Even now, it is common code.
- */
-int fdtdec_prepare_fdt(void)
-{
-	if (!gd->fdt_blob || ((uintptr_t)gd->fdt_blob & 3) ||
-	    fdt_check_header(gd->fdt_blob)) {
-#ifdef CONFIG_SPL_BUILD
-		puts("Missing DTB\n");
-#else
-		printf("No valid device tree binary found at %p\n",
-		       gd->fdt_blob);
-# ifdef DEBUG
-		if (gd->fdt_blob) {
-			printf("fdt_blob=%p\n", gd->fdt_blob);
-			print_buffer((ulong)gd->fdt_blob, gd->fdt_blob, 4,
-				     32, 0);
-		}
-# endif
-#endif
-		return -1;
-	}
+	assert(!fdtdec_prepare_fdt(gd->fdt_blob));
 	return 0;
 }
 
@@ -1212,6 +1217,31 @@ static int uncompress_blob(const void *src, ulong sz_src, void **dstp)
 	return 0;
 }
 
+void fdt_crc(const char *msg, const void *blob)
+{
+	uint crc, crc2;
+	uint size = fdt_totalsize(blob);
+
+	crc = crc32(0, blob, size);
+	crc2 = crc32(0, (void *)FDT_COPY_ADDR, size);
+	printf("%s fdt at %p, crc %x - size %x - copy %x\n", msg, blob, crc,
+	       size, crc2);
+	if (crc != crc2) {
+		const char *good = (void *)FDT_COPY_ADDR;
+		const char *bad = blob;
+		int i, count;
+
+		for (i = 0, count = 0; i < size; i++) {
+			if (good[i] != bad[i]) {
+				printf("Byte at %p (offset %x) should be %02x, is %02x\n",
+				       bad + i, i, good[i], bad[i]);
+				if (++count == 100)
+					break;
+			}
+		}
+	}
+}
+
 /**
  * fdt_find_separate() - Find a devicetree at the end of the image
  *
@@ -1233,6 +1263,31 @@ static void *fdt_find_separate(void)
 #else
 	/* FDT is at end of image */
 	fdt_blob = (ulong *)&_end;
+	fdt_crc("find_sep", fdt_blob);
+
+	if (_DEBUG && !fdtdec_prepare_fdt(fdt_blob)) {
+		int stack_ptr;
+		const void *top = fdt_blob + fdt_totalsize(fdt_blob);
+
+		/*
+		 * Perform a sanity check on the memory layout. If this fails,
+		 * it indicates that the device tree is positioned above the
+		 * global data pointer or the stack pointer. This should not
+		 * happen.
+		 *
+		 * If this fails, check that SYS_INIT_SP_ADDR has enough space
+		 * below it for SYS_MALLOC_F_LEN and global_data, as well as the
+		 * stack, without overwriting the device tree or U-Boot itself.
+		 * Since the device tree is sitting at _end (the start of the
+		 * BSS region), we need the top of the device tree to be below
+		 * any memory allocated by board_init_f_alloc_reserve().
+		 */
+		if (top > (void *)gd || top > (void *)&stack_ptr) {
+			printf("FDT %p gd %p\n", fdt_blob, gd);
+			panic("FDT overlap");
+		}
+	}
+
 #endif
 
 	return fdt_blob;
@@ -1670,7 +1725,7 @@ int fdtdec_setup(void)
 	if (CONFIG_IS_ENABLED(MULTI_DTB_FIT))
 		setup_multi_dtb_fit();
 
-	ret = fdtdec_prepare_fdt();
+	ret = fdtdec_prepare_fdt(gd->fdt_blob);
 	if (!ret)
 		ret = fdtdec_board_setup(gd->fdt_blob);
 	oftree_reset();
@@ -1702,7 +1757,7 @@ int fdtdec_resetup(int *rescan)
 
 		*rescan = 1;
 		gd->fdt_blob = fdt_blob;
-		return fdtdec_prepare_fdt();
+		return fdtdec_prepare_fdt(fdt_blob);
 	}
 
 	/*

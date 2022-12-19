@@ -5,7 +5,6 @@
  * (C) Copyright 2012
  * Marek Vasut <marex@denx.de>
  */
-#define LOG_DEBUG
 #define LOG_CATEGORY LOGC_DM
 
 #include <common.h>
