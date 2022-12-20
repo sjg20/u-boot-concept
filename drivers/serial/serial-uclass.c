@@ -36,12 +36,10 @@ static int serial_check_stdout(const void *blob, struct udevice **devp)
 
 	/* Check for a chosen console */
 	str = fdtdec_get_chosen_prop(blob, "stdout-path");
-	printf("str=%s\n", str);
 	if (str) {
 		p = strchr(str, ':');
 		namelen = p ? p - str : strlen(str);
 		node = fdt_path_offset_namelen(blob, str, namelen);
-		printf("offset %.*s - node=%d\n", namelen, str, node);
 
 		if (node < 0) {
 			/*
@@ -54,7 +52,6 @@ static int serial_check_stdout(const void *blob, struct udevice **devp)
 			name = fdt_get_alias_namelen(blob, str, namelen);
 			if (name)
 				node = fdt_path_offset(blob, name);
-			printf("alias %.*s - name %s - node=%d\n", namelen, str, name, node);
 		}
 	}
 
@@ -85,7 +82,6 @@ static void serial_find_console_or_panic(void)
 	int ret;
 #endif
 
-	printf("blob=%p\n", blob);
 	if (CONFIG_IS_ENABLED(OF_PLATDATA)) {
 		uclass_first_device(UCLASS_SERIAL, &dev);
 		if (dev) {

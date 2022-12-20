@@ -4,7 +4,6 @@
  */
 
 #ifndef USE_HOSTCC
-#define DEBUG
 
 #include <common.h>
 #include <boot_fit.h>
@@ -1219,6 +1218,7 @@ static int uncompress_blob(const void *src, ulong sz_src, void **dstp)
 
 void fdt_crc(const char *msg, const void *blob)
 {
+	return;
 	uint crc, crc2;
 	uint size = fdt_totalsize(blob);
 
