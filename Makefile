@@ -1121,13 +1121,6 @@ ifeq ($(CONFIG_OF_EMBED)$(CONFIG_EFI_APP),y)
 	@echo >&2 "See doc/develop/devicetree/control.rst for more info."
 	@echo >&2 "===================================================="
 endif
-ifneq ($(CONFIG_SPL_FIT_GENERATOR),)
-	@echo >&2 "===================== WARNING ======================"
-	@echo >&2 "This board uses CONFIG_SPL_FIT_GENERATOR. Please migrate"
-	@echo >&2 "to binman instead, to avoid the proliferation of"
-	@echo >&2 "arch-specific scripts with no tests."
-	@echo >&2 "===================================================="
-endif
 	$(call deprecated,CONFIG_WDT,DM watchdog,v2019.10,\
 		$(CONFIG_WATCHDOG)$(CONFIG_HW_WATCHDOG))
 	$(call deprecated,CONFIG_DM_I2C,I2C drivers,v2022.04,$(CONFIG_SYS_I2C_LEGACY))
