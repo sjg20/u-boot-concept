@@ -250,14 +250,16 @@ Board requirements
 ------------------
 
 Trace data collection relies on a microsecond timer, accessed through
-`timer_get_us()`. So the first think you should do is make sure that
+`timer_get_us()`. So the first thing you should do is make sure that
 this produces sensible results for your board. Suitable sources for
 this timer include high resolution timers, PWMs or profile timers if
 available. Most modern SOCs have a suitable timer for this.
 
 See `add_ftrace()` for where `timer_get_us()` is called. The `notrace`
 attribute must be used on each function called by `timer_get_us()` since
-recursive calls to `add_ftrace()` will cause a hang.
+recursive calls to `add_ftrace()` will cause a fault::
+
+   trace: recursion detected, disabling
 
 You cannot use driver model to obtain the microsecond timer, since tracing
 may be enabled before driver model is set up. Instead, provide a low-level

@@ -35,9 +35,11 @@ struct trace_hdr {
 	ulong ftrace_count;	/* Num. of ftrace records written */
 	ulong ftrace_too_deep_count;	/* Functions that were too deep */
 
-	int depth;
-	int depth_limit;
-	int max_depth;
+	int depth;		/* Depth of function calls */
+	int depth_limit;	/* Depth limit to trace to */
+	int max_depth;		/* Maximum depth seen so far */
+	int min_depth;		/* Minimum depth seen so far */
+	bool trace_locked;	/* Used to detect recursive tracing */
 };
 
 /* Pointer to start of trace buffer */
@@ -132,6 +134,15 @@ void notrace __cyg_profile_func_enter(void *func_ptr, void *caller)
 	if (trace_enabled) {
 		int func;
 
+		if (hdr->trace_locked) {
+			trace_enabled = 0;
+			puts("trace: recursion detected, disabling\n");
+			hdr->trace_locked = false;
+			os_abort();
+			return;
+		}
+
+		hdr->trace_locked = true;
 		trace_swap_gd();
 		add_ftrace(func_ptr, caller, FUNCF_ENTRY);
 		func = func_ptr_to_num(func_ptr);
@@ -142,9 +153,10 @@ void notrace __cyg_profile_func_enter(void *func_ptr, void *caller)
 			hdr->untracked_count++;
 		}
 		hdr->depth++;
-		if (hdr->depth > hdr->depth_limit)
+		if (hdr->depth > hdr->max_depth)
 			hdr->max_depth = hdr->depth;
 		trace_swap_gd();
+		hdr->trace_locked = false;
 	}
 }
 
@@ -160,6 +172,8 @@ void notrace __cyg_profile_func_exit(void *func_ptr, void *caller)
 		trace_swap_gd();
 		hdr->depth--;
 		add_ftrace(func_ptr, caller, FUNCF_EXIT);
+		if (hdr->depth < hdr->min_depth)
+			hdr->min_depth = hdr->depth;
 		trace_swap_gd();
 	}
 }
@@ -309,8 +323,10 @@ void trace_print_stats(void)
 		printf(" (%lu dropped due to overflow)",
 		       hdr->ftrace_count - hdr->ftrace_size);
 	}
-	puts("\n");
-	printf("%15d maximum observed call depth\n", hdr->max_depth);
+
+	/* Add in minimum depth since the trace did not start at top level */
+	printf("\n%15d maximum observed call depth\n",
+	       hdr->max_depth - hdr->min_depth);
 	printf("%15d call depth limit\n", hdr->depth_limit);
 	print_grouped_ull(hdr->ftrace_too_deep_count, 10);
 	puts(" calls not traced due to depth\n");
@@ -325,6 +341,17 @@ void notrace trace_set_enabled(int enabled)
 	trace_enabled = enabled != 0;
 }
 
+static int get_func_count(void)
+{
+	/* Detect no support for mon_len since this means tracing cannot work */
+	if (IS_ENABLED(CONFIG_SANDBOX) && !gd->mon_len) {
+		puts("Tracing is not supported on this board\n");
+		return -ENOTSUPP;
+	}
+
+	return gd->mon_len / FUNC_SITE_SIZE;
+}
+
 /**
  * trace_init() - initialize the tracing system and enable it
  *
@@ -334,10 +361,12 @@ void notrace trace_set_enabled(int enabled)
  */
 int notrace trace_init(void *buff, size_t buff_size)
 {
-	ulong func_count = gd->mon_len / FUNC_SITE_SIZE;
+	int func_count = get_func_count();
 	size_t needed;
 	int was_disabled = !trace_enabled;
 
+	if (func_count < 0)
+		return func_count;
 	trace_save_gd();
 
 	if (!was_disabled) {
@@ -374,7 +403,7 @@ int notrace trace_init(void *buff, size_t buff_size)
 	hdr = (struct trace_hdr *)buff;
 	needed = sizeof(*hdr) + func_count * sizeof(uintptr_t);
 	if (needed > buff_size) {
-		printf("trace: buffer size %zd bytes: at least %zd needed\n",
+		printf("trace: buffer size %zx bytes: at least %zx needed\n",
 		       buff_size, needed);
 		return -ENOSPC;
 	}
@@ -404,10 +433,12 @@ int notrace trace_init(void *buff, size_t buff_size)
  */
 int notrace trace_early_init(void)
 {
-	ulong func_count = gd->mon_len / FUNC_SITE_SIZE;
+	int func_count = get_func_count();
 	size_t buff_size = CONFIG_TRACE_EARLY_SIZE;
 	size_t needed;
 
+	if (func_count < 0)
+		return func_count;
 	/* We can ignore additional calls to this function */
 	if (trace_enabled)
 		return 0;
@@ -415,7 +446,7 @@ int notrace trace_early_init(void)
 	hdr = map_sysmem(CONFIG_TRACE_EARLY_ADDR, CONFIG_TRACE_EARLY_SIZE);
 	needed = sizeof(*hdr) + func_count * sizeof(uintptr_t);
 	if (needed > buff_size) {
-		printf("trace: buffer size is %zd bytes, at least %zd needed\n",
+		printf("trace: buffer size is %zx bytes, at least %zx needed\n",
 		       buff_size, needed);
 		return -ENOSPC;
 	}
@@ -423,6 +454,7 @@ int notrace trace_early_init(void)
 	memset(hdr, '\0', needed);
 	hdr->call_accum = (uintptr_t *)(hdr + 1);
 	hdr->func_count = func_count;
+	hdr->min_depth = INT_MAX;
 
 	/* Use any remaining space for the timed function trace */
 	hdr->ftrace = (struct trace_call *)((char *)hdr + needed);
