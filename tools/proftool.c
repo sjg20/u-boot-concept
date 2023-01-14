@@ -637,7 +637,7 @@ static void check_trace_config(void)
  * exclude-func <regex>
  *
  * where <regex> is a regular expression matched against function names. It
- * allow some functions to be dropped from the trace when producing ftrace
+ * allows some functions to be dropped from the trace when producing ftrace
  * records
  *
  * @fin: File to process

@@ -271,12 +271,12 @@ When you run U-Boot on your board it will collect trace data up to the
 limit of the trace buffer size you have specified. Once that is exhausted
 no more data will be collected.
 
-Collecting trace data has an affect on execution time/performance. You
+Collecting trace data affects execution time and performance. You
 will notice this particularly with trivial functions - the overhead of
 recording their execution may even exceed their normal execution time.
 In practice this doesn't matter much so long as you are aware of the
 effect. Once you have done your optimizations, turn off tracing before
-doing end-to-end timing.
+doing end-to-end timing using bootstage.
 
 The best time to start tracing is right at the beginning of U-Boot. The
 best time to stop tracing is right at the end. In practice it is hard
@@ -286,7 +286,7 @@ This implementation enables tracing early in `board_init_r()`, or
 `board_init_f()` when `TRACE_EARLY` is enabled. This means
 that it captures most of the board init process, missing only the
 early architecture-specific init. However, it also misses the entire
-SPL stage if there is one.
+SPL stage if there is one. At present tracing is not supported in SPL.
 
 U-Boot typically ends with a 'bootm' command which loads and runs an
 OS. There is useful trace data in the execution of that bootm
@@ -296,29 +296,11 @@ the OS. In practical terms, U-Boot runs the 'fakegocmd' environment
 variable at this point. This variable should have a short script which
 collects the trace data and writes it somewhere.
 
-Commands
---------
+Controlling the trace
+---------------------
 
-The trace command has variable sub-commands:
-
-stats
-    Display tracing statistics
-
-pause
-    Pause tracing
-
-resume
-    Resume tracing
-
-funclist [<addr> <size>]
-    Dump a list of functions into the buffer
-
-calls  [<addr> <size>]
-    Dump function call trace into buffer
-
-If the address and size are not given, these are obtained from environment
-variables (see below). In any case the environment variables are updated
-after the command runs.
+U-Boot provides a command-line interface to the trace system for controlling
+tracing and accessing the trace data. See :doc:`../usage/cmd/trace`.
 
 
 Environment Variables
@@ -371,48 +353,94 @@ a trace log to address 10000000 and sends it to a host machine using
 TFTP. After this, U-Boot will boot the OS normally, albeit a little
 later.
 
+For a filesystem you may do something like::
 
-Converting Trace Output Data
-----------------------------
+    trace calls 10000000 1000000;
+    save mmc 1:1 10000000 /trace ${profoffset}
+
+The trace buffer format is internal to the trace system. It consists of a
+header, a call count for each function site, followed by a list of trace
+records, once for each function call.
+
+
+Converting Trace Output Data (proftool)
+---------------------------------------
 
 The trace output data is kept in a binary format which is not documented
-here. To convert it into something useful, you can use proftool.
+here. See the `trace.h` header file if you are interested. To convert it into
+something useful, you can use proftool.
 
 This tool must be given the U-Boot map file and the trace data received
-from running that U-Boot. It produces a text output file.
+from running that U-Boot. It produces a binary output file.
 
- * This file consists of lines like:
- *
- * include-func <regex>
- * exclude-func <regex>
- *
- * where <regex> is a regular expression matched against function names. It
- * allow some functions to be dropped from the trace when producing ftrace
- * records
+It is also possible to provide a configuration file to indicate which functions
+should be included or dropped during conversion. This file consists of lines
+like::
 
-Options
+   include-func <regex>
+   exclude-func <regex>
+
+where <regex> is a regular expression matched against function names. It
+allows some functions to be dropped from the trace when producing ftrace
+records.
+
+Options:
+
+-c <config_file>
+    Specify the optional configuration file, to control which functions are
+    included in the output.
+
+-f <format>
+    Specifies the format to use (see below)
 
 -m <map_file>
-    Specify U-Boot map file
+    Specify U-Boot map file (`System.map`)
 
--p <trace_file>
-    Specify profile/trace file
+-o <output file>
+    Specify the output filename
+
+-t <trace_file>
+    Specify trace file, the data saved from U-Boot
+
+-v <0-4>
+    Specify the verbosity, where 0 is the minimum and 4 is for debugging.
 
 Commands:
 
-dump-ftrace
-    Write a text dump of the file in Linux ftrace format to stdout
+dump-ftrace:
+    Write a binary dump of the file in Linux ftrace format. Two options are
+    available:
 
+    function
+        write function-call records (caller/callee)
+
+    funcgraph
+        write function entry/exit records (graph)
+
+    This format can be used with kernelshark_ and trace_cmd_.
+
+dump-flamegraph
+    Write a list of stack records useful for producing a flame graph. Two
+    options are available:
+
+    calls
+        create a flamegraph of stack frames
+
+    timing
+        create a flamegraph of microseconds for each stack frame
+
+    This format can be used with flamegraph_pl_.
 
 Viewing the Trace Data
 ----------------------
 
-You can use pytimechart for this (sudo apt-get pytimechart might work on
-your Debian-style machine, and use your favourite search engine to obtain
-documentation). It expects the file to have a .txt extension. The program
-has terse user interface but is very convenient for viewing U-Boot
-profile information.
+You can use kernelshark_ for a GUI, but note that version 2.0.x was broken. If
+you have that version you could try building it from source.
 
+The file must have a .dat extension or it is ignored. The program has terse
+user interface but is very convenient for viewing U-Boot profile information.
+
+Also available is trace_cmd_ which provides a command-line interface.
 
 Workflow Suggestions
 --------------------
@@ -464,9 +492,9 @@ Some other features that might be useful:
 - Compression of trace information
 
 
-Simon Glass <sjg@chromium.org>
-April 2013
-
+.. sectionauthor:: Simon Glass <sjg@chromium.org>
+.. April 2013
+.. Updated January 2023
 
 .. _kernelshark: https://kernelshark.org/
 .. _trace_cmd: https://www.trace-cmd.org/
