@@ -79,7 +79,7 @@ a trace:
              16 maximum observed call depth
              15 call depth limit
           1,275,767 calls not traced due to depth
-    =>trace calls 0 e00000
+    =>trace calls 1000000 e00000
     Call list dumped to 00000000, size 0xae0a40
     =>print
     baudrate=115200
@@ -91,7 +91,7 @@ a trace:
     stdout=serial
 
     Environment size: 117/8188 bytes
-    =>host save host 0 trace 0 ${profoffset}
+    =>host save hostfs - 1000000 trace ${profoffset}
     11405888 bytes written in 10 ms (1.1 GiB/s)
     =>reset
 
