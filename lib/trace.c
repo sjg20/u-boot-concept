@@ -138,7 +138,6 @@ void notrace __cyg_profile_func_enter(void *func_ptr, void *caller)
 			trace_enabled = 0;
 			puts("trace: recursion detected, disabling\n");
 			hdr->trace_locked = false;
-			os_abort();
 			return;
 		}
 

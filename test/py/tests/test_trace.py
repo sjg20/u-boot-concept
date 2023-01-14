@@ -11,12 +11,21 @@ import u_boot_utils as util
 # This is needed for Azure, since the default '..' directory is not writeable
 TMPDIR = '/tmp/test_trace'
 
-@pytest.mark.slow
-@pytest.mark.boardspec('sandbox')
-def test_trace(u_boot_console):
-    """Test we can build sandbox with trace, collect and process a trace"""
-    cons = u_boot_console
+# Decode a function-graph line
+RE_LINE = re.compile(r'.*\[000\]\s*([0-9.]*): func.*[|](\s*)(\S.*)?([{};])$')
 
+
+def collect_trace(cons):
+    """Build U-Boot and run it to collect a trace
+
+    Args:
+        cons (ConsoleBase): U-Boot console
+
+    Returns:
+        tuple:
+            str: Filename of the output trace file
+            int: Microseconds taken for initf_dm according to bootstage
+    """
     env = dict(os.environb)
 
     # Enable tracing and disable LTO, to ensure functions are not elided
@@ -30,8 +39,8 @@ def test_trace(u_boot_console):
                #'-o', TMPDIR, '-w', *cfgs], ignore_errors=True, env=env)
 
     cons.restart_uboot_with_flags([], build_dir=TMPDIR)
-    u_boot_console.run_command('trace pause')
-    out = u_boot_console.run_command('trace stats')
+    cons.run_command('trace pause')
+    out = cons.run_command('trace stats')
 
     # The output is something like this:
     #    251,003 function sites
@@ -55,19 +64,35 @@ def test_trace(u_boot_console):
             cons.config.buildconfig.get('config_trace_call_depth_limit'))
     assert int(vals['calls not traced due to depth']) > 100000
 
+    out = cons.run_command('bootstage report')
+    # Accumulated time:
+    #           19,104  dm_r
+    #           23,078  of_live
+    #           46,280  dm_f
+    dm_f_time = [line.split()[0] for line in out.replace(',', '').splitlines()
+                 if 'dm_f' in line]
+
     # Read out the trace data
     addr = 0x02000000
     size = 0x01000000
-    out = u_boot_console.run_command(f'trace calls {addr:x} {size:x}')
+    out = cons.run_command(f'trace calls {addr:x} {size:x}')
     print(out)
     fname = os.path.join(TMPDIR, 'trace')
-    out = u_boot_console.run_command(
+    out = cons.run_command(
         'host save hostfs - %x %s ${profoffset}' % (addr, fname))
+    return fname, int(dm_f_time[0])
 
-    # Convert it using proftool
-    proftool = os.path.join(TMPDIR, 'tools', 'proftool')
-    map_fname = os.path.join(TMPDIR, 'System.map')
-    trace_dat = os.path.join(TMPDIR, 'trace.dat')
+
+def check_function(cons, fname, proftool, map_fname, trace_dat):
+    """Check that the 'function' output works
+
+    Args:
+        cons (ConsoleBase): U-Boot console
+        fname (str): Filename of trace file
+        proftool (str): Filename of proftool
+        map_fname (str): Filename of System.map
+        trace_dat (str): Filename of output file
+    """
     out = util.run_and_log(
         cons, [proftool, '-t', fname, '-o', trace_dat, '-m', map_fname,
                'dump-ftrace'])
@@ -101,7 +126,7 @@ def test_trace(u_boot_console):
     assert val > 50000  # Should be at least 50KB of symbols
 
     # Check that the trace has something useful
-    cmd = f"trace-cmd report {trace_dat} |egrep '(initf_|initr_)'"
+    cmd = f"trace-cmd report {trace_dat} |grep -E '(initf_|initr_)'"
     out = util.run_and_log(cons, ['sh', '-c', cmd])
 
     # Format:
@@ -127,6 +152,18 @@ def test_trace(u_boot_console):
     # All the functions should be executed within five seconds at most
     assert max_delta < 5
 
+
+def check_funcgraph(cons, fname, proftool, map_fname, trace_dat):
+    """Check that the 'funcgraph' output works
+
+    Args:
+        cons (ConsoleBase): U-Boot console
+        fname (str): Filename of trace file
+        proftool (str): Filename of proftool
+        map_fname (str): Filename of System.map
+        trace_dat (str): Filename of output file
+    """
+
     # Generate the funcgraph format
     out = util.run_and_log(
         cons, [proftool, '-t', fname, '-o', trace_dat, '-m', map_fname,
@@ -149,20 +186,22 @@ def test_trace(u_boot_console):
     # Then check for this:
     #  u-boot-1     [000]   282.101375: funcgraph_entry:        0.000 us   |    event_init();
 
-    # Look for initf_bootstage() entry and make sure we see the exit
-    re_line = re.compile(r'.*[|](\s*)(\S.*)?([{};])$')
     expected_indent = None
     found_start = False
     found_end = False
     upto = None
+
+    # Look for initf_bootstage() entry and make sure we see the exit
+    # Collect the time for initf_dm()
     for line in out.splitlines():
-        m = re_line.match(line)
+        m = RE_LINE.match(line)
         if m:
-            indent, func, brace = m.groups()
+            timestamp, indent, func, brace = m.groups()
+            print('here', timestamp, indent, func, brace)
             if found_end:
                 upto = func
                 break
-            elif func == 'initf_bootstage() ' and brace == '{':
+            elif func == 'initf_bootstage() ':
                 found_start = True
                 expected_indent = indent + '  '
             elif found_start and indent == expected_indent and brace == '}':
@@ -170,6 +209,47 @@ def test_trace(u_boot_console):
 
     # The next function after initf_bootstage() exits should be event_init()
     assert upto == 'event_init()'
+
+    # Now look for initf_dm() and dm_timer_init() so we can check the bootstage
+    # time
+    cmd = f"trace-cmd report {trace_dat} |grep -E '(initf_dm|dm_timer_init)'"
+    out = util.run_and_log(cons, ['sh', '-c', cmd])
+
+    start_timestamp = None
+    end_timestamp = None
+    for line in out.splitlines():
+        m = RE_LINE.match(line)
+        if m:
+            timestamp, indent, func, brace = m.groups()
+            if func == 'initf_dm() ':
+                start_timestamp = timestamp
+            elif func == 'dm_timer_init() ':
+                end_timestamp = timestamp
+                break
+    assert start_timestamp and end_timestamp
+
+    # Convert the time to microseconds
+    return (float(end_timestamp) - float(start_timestamp)) * 1000000
+
+
+@pytest.mark.slow
+@pytest.mark.boardspec('sandbox')
+def test_trace(u_boot_console):
+    """Test we can build sandbox with trace, collect and process a trace"""
+    cons = u_boot_console
+
+    fname, dm_f_time = collect_trace(cons)
+
+    proftool = os.path.join(TMPDIR, 'tools', 'proftool')
+    map_fname = os.path.join(TMPDIR, 'System.map')
+    trace_dat = os.path.join(TMPDIR, 'trace.dat')
+
+    #check_function(cons, fname, proftool, map_fname, trace_dat)
+    trace_time = check_funcgraph(cons, fname, proftool, map_fname, trace_dat)
+
+    # Check that bootstage and funcgraph agree to within 10 microseconds
+    diff = abs(trace_time - dm_f_time)
+    assert diff < 10
 
     # Check flame graph
 
