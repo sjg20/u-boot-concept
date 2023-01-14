@@ -1659,7 +1659,6 @@ static int process_call(struct flame_state *state, bool entry, ulong timestamp,
 		      timestamp);
 		stack_ptr++;
 		node = child;
-		child->count++;
 	} else if (node->parent) {
 		ulong total_duration = 0, child_duration = 0;
 		struct stack_info *stk;
