@@ -35,8 +35,8 @@ stages:
     # If we've been asked to use clang only do one configuration.
     - export UBOOT_TRAVIS_BUILD_DIR=/tmp/${TEST_PY_BD}
     - echo BUILD_ENV ${BUILD_ENV}
-    - tools/buildman/buildman -o ${UBOOT_TRAVIS_BUILD_DIR} -w -E -W -e
-        --board ${TEST_PY_BD} ${OVERRIDE}
+    - ${BUILD_ENV} tools/buildman/buildman -o ${UBOOT_TRAVIS_BUILD_DIR}
+        -w -E -W -e --board ${TEST_PY_BD} ${OVERRIDE}
     - cp ~/grub_x86.efi $UBOOT_TRAVIS_BUILD_DIR/
     - cp ~/grub_x64.efi $UBOOT_TRAVIS_BUILD_DIR/
     - cp /opt/grub/grubriscv64.efi $UBOOT_TRAVIS_BUILD_DIR/grub_riscv64.efi
