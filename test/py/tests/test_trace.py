@@ -288,7 +288,7 @@ def check_flamegraph(cons, fname, proftool, map_fname, trace_fg):
 
 @pytest.mark.slow
 @pytest.mark.boardspec('sandbox')
-@pytest.mark.notbuildconfigspec('sandbox_spl')
+@pytest.mark.notbuildconfigspec('ftrace')
 def test_trace(u_boot_console):
     """Test we can build sandbox with trace, collect and process a trace"""
     cons = u_boot_console
@@ -299,7 +299,7 @@ def test_trace(u_boot_console):
     trace_fg = os.path.join(TMPDIR, 'trace.fg')
 
     fname, dm_f_time = collect_trace(cons)
-    cons.restart_uboot()
+    cons.restart_uboot_with_flags([])
 
     check_function(cons, fname, proftool, map_fname, trace_dat)
     trace_time = check_funcgraph(cons, fname, proftool, map_fname, trace_dat)
