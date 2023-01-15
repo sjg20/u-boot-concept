@@ -26,19 +26,6 @@ def collect_trace(cons):
             str: Filename of the output trace file
             int: Microseconds taken for initf_dm according to bootstage
     """
-    env = dict(os.environb)
-
-    # Enable tracing and disable LTO, to ensure functions are not elided
-    env['FTRACE'] = '1'
-    env['NO_LTO'] = '1'
-    options = ['CONFIG_TRACE=y', 'CONFIG_TRACE_EARLY=y',
-               'CONFIG_TRACE_EARLY_SIZE=0x01000000']
-    cfgs = [x for opt in options for x in ('-a', opt)]
-    out = util.run_and_log(
-        cons, ['./tools/buildman/buildman', '-m', '--board', 'sandbox',
-               '-o', TMPDIR, '-w', *cfgs], ignore_errors=True, env=env)
-
-    cons.restart_uboot_with_flags([], build_dir=TMPDIR)
     cons.run_command('trace pause')
     out = cons.run_command('trace stats')
 
