@@ -23,7 +23,7 @@
 
 	soc8544@e0000000 {
 		i2c@3000 {
-			u-boot,dm-pre-reloc;
+			bootph-all;
 		};
 	};
 };
@@ -35,6 +35,6 @@
 };
 
 &serial0 {
-	u-boot,dm-pre-reloc;
+	bootph-all;
 	clock-frequency = <333333330>;
 };

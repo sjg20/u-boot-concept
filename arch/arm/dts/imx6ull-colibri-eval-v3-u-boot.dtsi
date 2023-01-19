@@ -5,7 +5,7 @@
 
 / {
 	aliases {
-		u-boot,dm-pre-reloc;
+		bootph-all;
 		mmc0 = &usdhc1;
 		usb0 = &usbotg1; /* required for ums */
 		display0 = &lcdif;
@@ -13,11 +13,11 @@
 };
 
 &pinctrl_uart1 {
-	u-boot,dm-pre-reloc;
+	bootph-all;
 };
 
 &pinctrl_uart1_ctrl1 {
-	u-boot,dm-pre-reloc;
+	bootph-all;
 };
 
 &lcdif {
@@ -26,7 +26,7 @@
 		     &pinctrl_lcdif_ctrl>;
 	status = "okay";
 	display = <&display0>;
-	u-boot,dm-pre-reloc;
+	bootph-all;
 
 	display0: display0 {
 		bits-per-pixel = <18>;
@@ -36,7 +36,7 @@
 		display-timings {
 			native-mode = <&timing_vga>;
 			timing_vga: 640x480 {
-				u-boot,dm-pre-reloc;
+				bootph-all;
 				clock-frequency = <25175000>;
 				hactive = <640>;
 				vactive = <480>;
