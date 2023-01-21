@@ -1,6 +1,6 @@
-MPC83xx SPISEL_BOOT gpio controller
+MPC83XX SPISEL_BOOT gpio controller
 
-Provide access to MPC83xx SPISEL_BOOT signal as a gpio to allow it to be
+Provide access to MPC83XX SPISEL_BOOT signal as a gpio to allow it to be
 easily bound as a SPI controller chip select.
 
 The SPISEL_BOOT signal is always an output.

@@ -1,4 +1,4 @@
-MPC83xx RAM controller
+MPC83XX RAM controller
 
 This driver supplies support for the embedded RAM controller on MCP83xx-series
 SoCs.

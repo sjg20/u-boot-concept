@@ -13,7 +13,7 @@ Required properties :
 Example
 -------
 
-MPC83xx based board:
+MPC83XX based board:
 
 bootcount@0x13ff8 {
 	compatible = "u-boot,bootcount";

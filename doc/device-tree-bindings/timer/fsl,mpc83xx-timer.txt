@@ -1,6 +1,6 @@
-MPC83xx timer devices
+MPC83XX timer devices
 
-MPC83xx SoCs offer a decrementer interrupt that can be used to implement delay
+MPC83XX SoCs offer a decrementer interrupt that can be used to implement delay
 functionality, and periodically triggered actions.
 
 Required properties:

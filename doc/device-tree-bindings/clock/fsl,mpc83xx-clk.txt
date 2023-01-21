@@ -1,6 +1,6 @@
-MPC83xx system clock devices
+MPC83XX system clock devices
 
-MPC83xx SoCs supply a variety of clocks to drive various components of a
+MPC83XX SoCs supply a variety of clocks to drive various components of a
 system.
 
 Required properties:

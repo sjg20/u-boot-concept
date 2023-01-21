@@ -1,6 +1,6 @@
-MPC83xx SerDes controller devices
+MPC83XX SerDes controller devices
 
-MPC83xx SoCs contain a built-in SerDes controller that determines which
+MPC83XX SoCs contain a built-in SerDes controller that determines which
 protocols (SATA, PCI Express, SGMII, ...) are used on the system's serdes lines
 and how the lines are configured.
 

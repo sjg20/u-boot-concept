@@ -1,4 +1,4 @@
-Freescale MPC83xx ADS Boards
+Freescale MPC83XX ADS Boards
 -----------------------------------------
 
 0. Toolchain / Building
@@ -48,7 +48,7 @@ Freescale MPC83xx ADS Boards
 
 	include/configs/MPC8349ADS.h
 
-    CONFIG_MPC83xx	    MPC83xx family
+    CONFIG_MPC83XX	    MPC83XX family
     CONFIG_MPC8349	    MPC8349 specific
     CONFIG_TSEC_ENET	    Use on-chip 10/100/1000 ethernet
 

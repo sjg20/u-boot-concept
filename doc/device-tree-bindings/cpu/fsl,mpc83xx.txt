@@ -1,6 +1,6 @@
-MPC83xx CPU devices
+MPC83XX CPU devices
 
-MPC83xx SoCs contain a e300 core as their main processor.
+MPC83XX SoCs contain a e300 core as their main processor.
 
 Required properties:
 - compatible: must be one of "fsl,mpc83xx",
