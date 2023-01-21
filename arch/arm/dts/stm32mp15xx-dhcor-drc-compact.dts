@@ -11,6 +11,6 @@
 #include "stm32mp15xx-dhcor-drc-compact.dtsi"
 
 / {
-	model = "DH electronics STM32MP15xx DHCOR DRC Compact";
+	model = "DH electronics STM32MP15Xx DHCOR DRC Compact";
 	compatible = "dh,stm32mp15xx-dhcor-drc-compact", "st,stm32mp1xx";
 };

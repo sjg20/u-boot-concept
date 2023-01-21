@@ -2,7 +2,7 @@
 /*
  * Copyright (C) 2020, DH electronics - All Rights Reserved
  *
- * STM32MP15xx DHSOM configuration
+ * STM32MP15Xx DHSOM configuration
  * 2x DDR3L 4Gb each, 16-bit, 533MHz, Single Die Package in flyby topology.
  * Reference used W634GU6NB15I from Winbond
  *

@@ -1,18 +1,18 @@
-if STM32MP15x
+if STM32MP15X
 
-config STM32MP15x_STM32IMAGE
+config STM32MP15X_STM32IMAGE
 	bool "Support STM32 image for generated U-Boot image"
 	depends on TFABOOT
 	help
-		Support of STM32 image generation for SOC STM32MP15x
+		Support of STM32 image generation for SOC STM32MP15X
 		for TF-A boot when FIP container is not used
 
 choice
-	prompt "STM32MP15x board select"
+	prompt "STM32MP15X board select"
 	optional
 
-config TARGET_ST_STM32MP15x
-	bool "STMicroelectronics STM32MP15x boards"
+config TARGET_ST_STM32MP15X
+	bool "STMicroelectronics STM32MP15X boards"
 	imply BOOTSTAGE
 	imply CMD_BOOTSTAGE
 	imply CMD_CLS if CMD_BMP
@@ -20,7 +20,7 @@ config TARGET_ST_STM32MP15x
 	imply PRE_CONSOLE_BUFFER
 	imply SILENT_CONSOLE
 	help
-		target the STMicroelectronics board with SOC STM32MP15x
+		target the STMicroelectronics board with SOC STM32MP15X
 		managed by board/st/stm32mp1:
 		Evalulation board (EV1) or Discovery board (DK1 and DK2).
 		The difference between board are managed with devicetree
@@ -28,7 +28,7 @@ config TARGET_ST_STM32MP15x
 config TARGET_DH_STM32MP1_PDK2
 	bool "DH STM32MP1 PDK2"
 	help
-		Target the DH PDK2 development kit with STM32MP15x SoM.
+		Target the DH PDK2 development kit with STM32MP15X SoM.
 
 config TARGET_MICROGEA_STM32MP1
 	bool "Engicam MicroGEA STM32MP1 SOM"
@@ -78,20 +78,20 @@ config TARGET_ICORE_STM32MP1
 endchoice
 
 config STM32MP15_PWR
-	bool "Enable driver for STM32MP15x PWR"
+	bool "Enable driver for STM32MP15X PWR"
 	depends on DM_REGULATOR && DM_PMIC
 	default y
 	help
 		This config enables implementation of driver-model pmic and
-		regulator uclass features for access to STM32MP15x PWR.
+		regulator uclass features for access to STM32MP15X PWR.
 
 config SPL_STM32MP15_PWR
-	bool "Enable driver for STM32MP15x PWR in SPL"
+	bool "Enable driver for STM32MP15X PWR in SPL"
 	depends on SPL && SPL_DM_REGULATOR && SPL_DM_PMIC
 	default y
 	help
 		This config enables implementation of driver-model pmic and
-		regulator uclass features for access to STM32MP15x PWR in SPL.
+		regulator uclass features for access to STM32MP15X PWR in SPL.
 
 config TEXT_BASE
 	default 0xC0100000

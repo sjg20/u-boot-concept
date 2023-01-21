@@ -8,7 +8,7 @@
 #include "stm32mp15xx-dhcor-som.dtsi"
 
 / {
-	model = "DH electronics STM32MP15xx DHCOR Testbench";
+	model = "DH electronics STM32MP15Xx DHCOR Testbench";
 	compatible = "dh,stm32mp15xx-dhcor-testbench", "st,stm32mp1xx";
 
 	aliases {

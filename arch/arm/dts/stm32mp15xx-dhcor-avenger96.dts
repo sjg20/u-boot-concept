@@ -13,6 +13,6 @@
 #include "stm32mp15xx-dhcor-avenger96.dtsi"
 
 / {
-	model = "Arrow Electronics STM32MP15xx Avenger96 board";
+	model = "Arrow Electronics STM32MP15Xx Avenger96 board";
 	compatible = "arrow,stm32mp15xx-avenger96", "st,stm32mp15x";
 };

@@ -94,7 +94,7 @@ Build Procedure
      (libssl-dev, swig, libpython-dev...)
 
    * install ARMv7 toolchain for 32bit Cortex-A (from Linaro,
-     from SDK for STM32MP15x, or any crosstoolchains from your distribution)
+     from SDK for STM32MP15X, or any crosstoolchains from your distribution)
      (you can use any gcc cross compiler compatible with U-Boot)
 
 2. Set the cross compiler::

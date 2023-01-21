@@ -51,7 +51,7 @@ u32 get_cpu_rev(void);
 /* Get Package options from OTP */
 u32 get_cpu_package(void);
 
-/* package used for STM32MP15x */
+/* package used for STM32MP15X */
 #define STM32MP15_PKG_AA_LBGA448	4
 #define STM32MP15_PKG_AB_LBGA354	3
 #define STM32MP15_PKG_AC_TFBGA361	2

@@ -2,7 +2,7 @@
 /*
  * Copyright (C) 2020 Marek Vasut <marex@denx.de>
  *
- * Configuration settings for the DH STM32MP15x SoMs
+ * Configuration settings for the DH STM32MP15X SoMs
  */
 
 #ifndef __CONFIG_STM32MP15_DH_DHSOM_H__

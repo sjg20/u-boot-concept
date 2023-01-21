@@ -21,7 +21,7 @@ Required properties:
 - st,clksrc : The clock sources configuration array in a platform specific
               order.
 
-  For the STM32MP15x family there are 9 clock sources selector which are
+  For the STM32MP15X family there are 9 clock sources selector which are
   configured in the following order:
 	MPU AXI MCU PLL12 PLL3 PLL4 RTC MCO1 MCO2
 
@@ -46,7 +46,7 @@ Required properties:
 
   When used, it shall describe the whole clock dividers tree.
 
-  For the STM32MP15x family there are 11 dividers values expected.
+  For the STM32MP15X family there are 11 dividers values expected.
   They shall be configured in the following order:
 		MPU AXI MCU APB1 APB2 APB3 APB4 APB5 RTC MCO1 MCO2
 

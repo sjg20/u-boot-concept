@@ -2,7 +2,7 @@
 /*
  * Copyright (C) 2018, STMicroelectronics - All Rights Reserved
  *
- * Configuration settings for the STM32MP15x CPU
+ * Configuration settings for the STM32MP15X CPU
  */
 
 #ifndef __CONFIG_STM32MP15_COMMMON_H

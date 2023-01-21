@@ -196,7 +196,7 @@ static void update_bootmode(void)
 			boot_mode << TAMP_BOOT_MODE_SHIFT);
 }
 
-/* weak function: STM32MP15x mach init for boot without TFA */
+/* weak function: STM32MP15X mach init for boot without TFA */
 void stm32mp_cpu_init(void)
 {
 	if (IS_ENABLED(CONFIG_SPL_BUILD)) {
@@ -223,7 +223,7 @@ static u32 read_idc(void)
 		return readl(DBGMCU_IDC);
 	}
 
-	return CPU_DEV_STM32MP15; /* STM32MP15x and unknown revision */
+	return CPU_DEV_STM32MP15; /* STM32MP15X and unknown revision */
 }
 
 u32 get_cpu_dev(void)

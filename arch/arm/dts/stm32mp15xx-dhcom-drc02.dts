@@ -10,6 +10,6 @@
 #include "stm32mp15xx-dhcom-drc02.dtsi"
 
 / {
-	model = "DH Electronics STM32MP15xx DHCOM DRC02";
+	model = "DH Electronics STM32MP15Xx DHCOM DRC02";
 	compatible = "dh,stm32mp15xx-dhcom-drc02", "st,stm32mp1xx";
 };
