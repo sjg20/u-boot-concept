@@ -2,7 +2,7 @@
 /*
  * Copyright (C) 2022, STMicroelectronics - All Rights Reserved
  *
- * Configuration settings for the STMicroelectronics STM32MP13x boards
+ * Configuration settings for the STMicroelectronics STM32MP13X boards
  */
 
 #ifndef __CONFIG_STM32MP13_ST_COMMON_H__

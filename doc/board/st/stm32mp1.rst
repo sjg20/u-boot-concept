@@ -87,10 +87,10 @@ SCMI variant is used only with stm32mp15_defconfig, when the resources are
 secured with RCC_TZCR.TZEN=1 in OP-TEE. The access to these reset and clock
 resources are provided by OP-TEE and the associated SCMI services.
 
-STM32MP13x
+STM32MP13X
 ``````````
 
-The STM32MP13x is a single Cortex-A7 MPU aimed at various applications.
+The STM32MP13X is a single Cortex-A7 MPU aimed at various applications.
 
 Currently the following boards are supported:
 
@@ -118,7 +118,7 @@ The trusted boot chain is recommended with:
 - Secure monitor = **OP-TEE**
 - SSBL = **U-Boot**
 
-It is the only supported boot chain for STM32MP13x family.
+It is the only supported boot chain for STM32MP13X family.
 
 The **Trusted** boot chain with TF-A_
 `````````````````````````````````````
@@ -173,7 +173,7 @@ with only PSCI support (Power State Coordination Interface defined by ARM).
 Device Tree
 -----------
 
-All the STM32MP15x and STM32MP13x boards supported by U-Boot use the same generic board
+All the STM32MP15x and STM32MP13X boards supported by U-Boot use the same generic board
 stm32mp1 which supports all the bootable devices.
 
 Each STMicroelectronics board is only configured with the associated device tree.
@@ -202,9 +202,9 @@ The supported device trees for STM32MP15x (stm32mp15_trusted_defconfig and stm32
 
    + stm32mp15xx-dhcor-avenger96
 
-STM32MP13x device Tree Selection
+STM32MP13X device Tree Selection
 ````````````````````````````````
-The supported device trees for STM32MP13x (stm32mp13_defconfig) are:
+The supported device trees for STM32MP13X (stm32mp13_defconfig) are:
 
 + dk: Discovery board
 
@@ -249,7 +249,7 @@ Build Procedure
    with <defconfig_file>:
 
    - For **trusted** boot mode :
-     - For STM32MP13x: **stm32mp13_defconfig**
+     - For STM32MP13X: **stm32mp13_defconfig**
      - For STM32MP15x: **stm32mp15_defconfig** or stm32mp15_trusted_defconfig
    - For STM32MP15x basic boot mode: stm32mp15_basic_defconfig
 
@@ -271,7 +271,7 @@ Build Procedure
      # make stm32mp15_defconfig
      # make DEVICE_TREE=stm32mp157c-ev1 all
 
-  b) trusted boot on STM32MP13x discovery board::
+  b) trusted boot on STM32MP13X discovery board::
 
      # export KBUILD_OUTPUT=stm32mp13
      # make stm32mp13_defconfig
@@ -432,7 +432,7 @@ The communication between HOST and board is based on
 Prepare an SD card
 ------------------
 
-The minimal requirements for STMP32MP15x and STM32MP13x boot up to U-Boot are:
+The minimal requirements for STMP32MP15x and STM32MP13X boot up to U-Boot are:
 
 - GPT partitioning (with gdisk or with sgdisk)
 - 2 fsbl partitions, named "fsbl1" and "fsbl2", size at least 256KiB
@@ -595,7 +595,7 @@ For STMicroelectronics board, it is retrieved in:
    - OTP_57[31:0] = MAC_ADDR[31:0]
    - OTP_58[15:0] = MAC_ADDR[47:32]
 
- - STM32MP13x OTP:
+ - STM32MP13X OTP:
 
   - OTP_57[31:0]  = MAC_ADDR0[31:0]
   - OTP_58[15:0]  = MAC_ADDR0[47:32]

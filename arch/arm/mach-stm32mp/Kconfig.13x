@@ -1,11 +1,11 @@
-if STM32MP13x
+if STM32MP13X
 
 choice
-	prompt "STM32MP13x board select"
+	prompt "STM32MP13X board select"
 	optional
 
-config TARGET_ST_STM32MP13x
-	bool "STMicroelectronics STM32MP13x boards"
+config TARGET_ST_STM32MP13X
+	bool "STMicroelectronics STM32MP13X boards"
 	imply BOOTSTAGE
 	imply CMD_BOOTSTAGE
 	imply CMD_CLS if CMD_BMP
@@ -13,7 +13,7 @@ config TARGET_ST_STM32MP13x
 	imply PRE_CONSOLE_BUFFER
 	imply SILENT_CONSOLE
 	help
-		target the STMicroelectronics board with SOC STM32MP13x
+		target the STMicroelectronics board with SOC STM32MP13X
 		managed by board/st/stm32mp1.
 		The difference between board are managed with devicetree
 

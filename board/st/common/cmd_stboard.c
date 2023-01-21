@@ -18,7 +18,7 @@
  * - Finished Good = EVA32MP157A1$AU1
  *
  * Both information are written on board and these information are also saved
- * in OTP_BOARD (59 for STM32MP15x or 60 for STM32MP13x), with:
+ * in OTP_BOARD (59 for STM32MP15x or 60 for STM32MP13X), with:
  * bit [31:16] (hex) => Board id, MBxxxx
  * bit [15:12] (dec) => Variant CPN (1....15)
  * bit [11:8]  (dec) => Revision board (index with A = 1, Z = 26)

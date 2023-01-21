@@ -2,7 +2,7 @@
 /*
  * Copyright (C) 2022, STMicroelectronics - All Rights Reserved
  *
- * Configuration settings for the STM32MP13x CPU
+ * Configuration settings for the STM32MP13X CPU
  */
 
 #ifndef STM32MP13_RCC_H
