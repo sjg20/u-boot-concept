@@ -97,7 +97,11 @@ RE_REMOVE_DEFCONFIG = re.compile(r'(.*)_defconfig')
 # in U-Boot; KCONFIG symbols
 IGNORE_SYMS = ['DEBUG_SECTION_MISMATCH', 'FTRACE_MCOUNT_RECORD', 'GCOV_KERNEL',
                'GCOV_PROFILE_ALL', 'KALLSYMS', 'KASAN', 'MODVERSIONS', 'SHELL',
-               'TPL_BUILD', 'VPL_BUILD']
+               'TPL_BUILD', 'VPL_BUILD', 'IS_ENABLED', 'FOO', 'IF_ENABLED_INT',
+               'IS_ENABLED_', 'IS_ENABLED_1', 'IS_ENABLED_2', 'IS_ENABLED_3',
+               'SPL_', 'TPL_', 'SPL_FOO', 'TPL_FOO', 'TOOLS_FOO',
+               'ACME', 'SPL_ACME', 'TPL_ACME', 'TRACE_BRANCH_PROFILING',
+               'VAL', '_UNDEFINED', ]
 
 ### helper functions ###
 def check_top_directory():
@@ -1600,8 +1604,10 @@ def prefix_config(cfg):
     return op + cfg
 
 
-RE_CONFIGS = re.compile('CONFIG_(\$\(SPL_(?:TPL_)?\))?([A-Z0-9_]*)')
+RE_MK_CONFIGS = re.compile('CONFIG_(\$\(SPL_(?:TPL_)?\))?([A-Z0-9_]*)')
 RE_IFDEF = re.compile('(ifdef|ifndef)')
+RE_C_CONFIGS = re.compile('CONFIG_([A-Z0-9_]*)')
+RE_CONFIG_IS = re.compile('CONFIG_IS_ENABLED\(([A-Z0-9_]*)\)')
 
 class ConfigUse:
     def __init__(self, cfg, is_spl, fname, rest):
@@ -1632,49 +1638,80 @@ def scan_makefiles(fnames):
                 key (str): filename
                 value (set of ConfigUse): uses in that filename
 
-    >>> RE_CONFIGS.search('CONFIG_FRED').groups()
+    >>> RE_MK_CONFIGS.search('CONFIG_FRED').groups()
     (None, 'FRED')
-    >>> RE_CONFIGS.search('CONFIG_$(SPL_)MARY').groups()
+    >>> RE_MK_CONFIGS.search('CONFIG_$(SPL_)MARY').groups()
     ('$(SPL_)', 'MARY')
-    >>> RE_CONFIGS.search('CONFIG_$(SPL_TPL_)MARY').groups()
+    >>> RE_MK_CONFIGS.search('CONFIG_$(SPL_TPL_)MARY').groups()
     ('$(SPL_TPL_)', 'MARY')
     """
     all_uses = collections.defaultdict(list)
     fname_uses = {}
     for fname, rest in fnames:
-        #m_ifdef = RE_IFDEF.match(rest)
-        m_iter = RE_CONFIGS.finditer(rest)
-        #print('fname', fname, rest)
+        m_iter = RE_MK_CONFIGS.finditer(rest)
         found = False
-        if m_iter:
-            for m in m_iter:
-                found = True
-                real_opt = m.group(2)
-                if real_opt == '':
-                    continue
-                #if real_opt == 'CONFIG':
-                    #print(rest)
-                is_spl = False
-                if m.group(1):
-                    #print(f'group 1={real_opt} 2={m.group(2)} rest={rest}')
-                    is_spl = True
-                use = ConfigUse(real_opt, is_spl, fname, rest)
-                if fname not in fname_uses:
-                    fname_uses[fname] = set()
-                fname_uses[fname].add(use)
-                all_uses[use].append(rest)
-            #if m_ifdef:
-                #print('rest', rest, m_ifdef)
-        #if not found:
-            #print('fname', fname, rest)
-    '''
-    for fname, uses in fname_uses.items():
-        print(f'{fname}:')
-        for use in uses:
-            print(f'   {use.is_spl} {use.cfg}: {use.rest}')
-    '''
+        for m in m_iter:
+            found = True
+            real_opt = m.group(2)
+            if real_opt == '':
+                continue
+            is_spl = False
+            if m.group(1):
+                is_spl = True
+            use = ConfigUse(real_opt, is_spl, fname, rest)
+            if fname not in fname_uses:
+                fname_uses[fname] = set()
+            fname_uses[fname].add(use)
+            all_uses[use].append(rest)
     return all_uses, fname_uses
 
+
+def scan_src_files(fnames):
+    """Scan source files (other than Makefiles) looking for Kconfig options
+
+    Looks for uses of CONFIG options
+
+    Args:
+        fnames (list of tuple):
+            str: Makefile filename where the option was found
+            str: Line of the Makefile
+
+    Returns:
+        tuple:
+            dict: all_uses
+                key (ConfigUse): object
+                value (list of str): matching lines
+            dict: Uses by filename
+                key (str): filename
+                value (set of ConfigUse): uses in that filename
+
+    >>> RE_C_CONFIGS.search('CONFIG_FRED').groups()
+    ('FRED',)
+    >>> RE_CONFIG_IS.search('CONFIG_IS_ENABLED(MARY)').groups()
+    ('MARY',)
+    """
+    def add_uses(m_iter, is_spl):
+        for m in m_iter:
+            found = True
+            real_opt = m.group(1)
+            if real_opt == '':
+                continue
+            use = ConfigUse(real_opt, is_spl, fname, rest)
+            if fname not in fname_uses:
+                fname_uses[fname] = set()
+            fname_uses[fname].add(use)
+            all_uses[use].append(rest)
+
+    all_uses = collections.defaultdict(list)
+    fname_uses = {}
+    for fname, rest in fnames:
+        m_iter = RE_C_CONFIGS.finditer(rest)
+        add_uses(m_iter, False)
+
+        m_iter2 = RE_CONFIG_IS.finditer(rest)
+        add_uses(m_iter2, True)
+
+    return all_uses, fname_uses
 
 def do_scan_source(path):
     def check_not_found(all_uses, spl):
@@ -1760,6 +1797,8 @@ def do_scan_source(path):
     # Scan the Makefiles
     all_uses, fname_uses = scan_makefiles(mk_list)
 
+    spl_not_found = set()
+
     # Make sure we know about all the options
     print('\nCONFIG options present in Makefiles but not Kconfig (non-SPL):')
     not_found = check_not_found(all_uses, False)
@@ -1768,10 +1807,24 @@ def do_scan_source(path):
     print('\nCONFIG options present in Makefiles but not Kconfig (SPL):')
     not_found = check_not_found(all_uses, True)
     show_uses(not_found)
+    spl_not_found |= set([key[4:] for key in not_found.keys()])
 
     # Scan the source code
-    #all_uses, fname_uses = scan_source(src_list)
+    all_uses, fname_uses = scan_src_files(src_list)
 
+    # Make sure we know about all the options
+    print('\nCONFIG options present in source but not Kconfig (non-SPL):')
+    not_found = check_not_found(all_uses, False)
+    show_uses(not_found)
+
+    print('\nCONFIG options present in source but not Kconfig (SPL):')
+    not_found = check_not_found(all_uses, True)
+    show_uses(not_found)
+    spl_not_found |= set([key[4:] for key in not_found.keys()])
+
+    print('\nCONFIG options used as SPL but without an SPL_ variant:')
+    for item in sorted(spl_not_found):
+        print(f'   {item}')
 
 
 def main():
