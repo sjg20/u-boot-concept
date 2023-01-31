@@ -181,7 +181,7 @@ static int qfw_evt_write_smbios_tables(void)
 	/* Generate SMBIOS tables */
 	ret = qfw_write_smbios_tables(ptr, size);
 	if (ret) {
-		if (CONFIG_IS_ENABLED(GENERATE_SMBIOS_TABLE)) {
+		if (IS_ENABLED(CONFIG_GENERATE_SMBIOS_TABLE)) {
 			log_info("Falling back to U-Boot generated SMBIOS tables\n");
 			write_smbios_table(addr);
 		}

@@ -110,7 +110,7 @@ static int x86_spl_init(void)
 	 */
 	if (!IS_ENABLED(CONFIG_SPL_BOARD_INIT))
 		preloader_console_init();
-#if !defined(CONFIG_TPL) && !CONFIG_IS_ENABLED(CPU)
+#if !defined(CONFIG_TPL) && !IS_ENABLED(CONFIG_CPU)
 	ret = print_cpuinfo();
 	if (ret) {
 		log_debug("print_cpuinfo() failed (err=%d)\n", ret);
@@ -298,7 +298,7 @@ void spl_board_init(void)
 	if (IS_ENABLED(CONFIG_QEMU))
 		qemu_chipset_init();
 
-	if (CONFIG_IS_ENABLED(VIDEO)) {
+	if (IS_ENABLED(CONFIG_VIDEO)) {
 		struct udevice *dev;
 
 		/* Set up PCI video in SPL if required */
