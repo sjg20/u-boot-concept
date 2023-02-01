@@ -54,7 +54,7 @@ static inline uintptr_t __attribute__((no_instrument_function))
 	if (gd->flags & GD_FLG_RELOC)
 		offset -= gd->relocaddr;
 	else
-		offset -= CONFIG_TEXT_BASE;
+		offset -= CONFIG_PPL_TEXT_BASE;
 #endif
 	return offset / FUNC_SITE_SIZE;
 }
@@ -123,7 +123,7 @@ static void notrace add_textbase(void)
 	if (hdr->ftrace_count < hdr->ftrace_size) {
 		struct trace_call *rec = &hdr->ftrace[hdr->ftrace_count];
 
-		rec->func = CONFIG_TEXT_BASE;
+		rec->func = CONFIG_PPL_TEXT_BASE;
 		rec->caller = 0;
 		rec->flags = FUNCF_TEXTBASE;
 	}
