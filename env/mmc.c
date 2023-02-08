@@ -73,8 +73,7 @@ static inline int mmc_offset_try_partition(const char *str, int copy, s64 *val)
 
 		if (str && !strncmp((const char *)info.name, str, sizeof(info.name)))
 			break;
-#ifdef CONFIG_PARTITION_TYPE_GUID
-		if (!str) {
+		if (IS_ENABLED(CONFIG_PARTITION_TYPE_GUID) && !str) {
 			const efi_guid_t env_guid = PARTITION_U_BOOT_ENVIRONMENT;
 			efi_guid_t type_guid;
 
@@ -82,7 +81,6 @@ static inline int mmc_offset_try_partition(const char *str, int copy, s64 *val)
 			if (!memcmp(&env_guid, &type_guid, sizeof(efi_guid_t)))
 				break;
 		}
-#endif
 	}
 
 	/* round up to info.blksz */
