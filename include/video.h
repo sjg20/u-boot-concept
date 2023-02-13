@@ -115,6 +115,7 @@ struct video_priv {
 	bool flush_dcache;
 	u8 fg_col_idx;
 	u8 bg_col_idx;
+	struct video_fontdata *fontdata;
 };
 
 /**

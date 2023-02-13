@@ -80,6 +80,28 @@ static int vidconsole_back(struct udevice *dev)
 	return video_sync(dev->parent, false);
 }
 
+void vidconsole_list_fonts(struct udevice *dev)
+{
+	struct vidconsole_ops *ops = vidconsole_get_ops(dev);
+
+	if (ops->select_font)
+		ops->list_fonts(dev);
+}
+
+int vidconsole_select_font(struct udevice *dev, const char *name, uint size)
+{
+	struct vidconsole_ops *ops = vidconsole_get_ops(dev);
+	int ret;
+
+	if (ops->select_font) {
+		ret = ops->select_font(dev, name, size);
+		if (ret != -ENOSYS)
+			return ret;
+	}
+
+	return 0;
+}
+
 /* Move to a newline, scrolling the display if necessary */
 static void vidconsole_newline(struct udevice *dev)
 {

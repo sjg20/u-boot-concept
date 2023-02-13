@@ -150,6 +150,22 @@ struct vidconsole_ops {
 	int (*backspace)(struct udevice *dev);
 
 	/**
+	 * list_fonts() - List the available fonts
+	 *
+	 * This shows a list on the console
+	 */
+	void (*list_fonts)(struct udevice *dev);
+
+	/**
+	 * select_font() - Select a font to use
+	 *
+	 * @dev: vidconsole device
+	 * @name: Font name
+	 * @size: Size of the font (norminal pixel height) or 0 for default
+	 */
+	int (*select_font)(struct udevice *dev, const char *name, uint size);
+
+	/**
 	 * get_font() - Obtain information about a font (optional)
 	 *
 	 * @dev:	Device to check
@@ -232,6 +248,11 @@ int vidconsole_move_rows(struct udevice *dev, uint rowdst, uint rowsrc,
  * Return: 0 if OK, -ve on error
  */
 int vidconsole_set_row(struct udevice *dev, uint row, int clr);
+
+*
+ * This shows a list on the console
+ */
+void vidconsole_list_fonts(struct udevice *dev);
 
 /**
  * vidconsole_put_char() - Output a character to the current console position

@@ -774,6 +774,8 @@ struct vidconsole_ops console_truetype_ops = {
 	.entry_start	= console_truetype_entry_start,
 	.get_font	= console_truetype_get_font,
 	.select_font	= truetype_select_font,
+	.list_fonts	= console_truetype_list_fonts,
+	.select_font	= console_truetype_select_font,
 };
 
 U_BOOT_DRIVER(vidconsole_truetype) = {

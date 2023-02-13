@@ -19,6 +19,7 @@ static int do_font_list(struct cmd_tbl *cmdtp, int flag, int argc,
 
 	if (uclass_first_device_err(UCLASS_VIDEO_CONSOLE, &dev))
 		return CMD_RET_FAILURE;
+
 	vidconsole_list_fonts(dev);
 
 	return 0;
