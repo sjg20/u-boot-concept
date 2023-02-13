@@ -6489,6 +6489,17 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
         cert = data[:-4]
         self.assertEqual(U_BOOT_DATA, data[-4:])
 
+    def testX509Cert(self):
+        """Test creating an X509 certificate"""
+        keyfile = self.TestFile('key.key')
+        entry_args = {
+            'keyfile': keyfile,
+        }
+        data = self._DoReadFileDtb('277_x509_cert.dts',
+                                   entry_args=entry_args)[0]
+        cert = data[:-4]
+        self.assertEqual(U_BOOT_DATA, data[-4:])
+
 
 if __name__ == "__main__":
     unittest.main()

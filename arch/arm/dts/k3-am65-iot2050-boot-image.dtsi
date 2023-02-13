@@ -26,6 +26,8 @@
 			missing-msg = "iot2050-seboot";
 		};
 
+		blob@0x080000 {
+			offset = <0x080000>;
 		x509-cert {
 			cert-ca = "IOT2050 Firmware Signature";
 			cert-revision-int = <0>;
