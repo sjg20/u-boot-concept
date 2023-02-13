@@ -8,6 +8,10 @@
 		u-boot-dtb {
 		};
 
+		blob {
+			filename = "compress";
+		};
+
 		fit {
 			description = "test-desc";
 			#address-cells = <1>;
@@ -24,9 +28,6 @@
 					hash-1 {
 						algo = "crc32";
 					};
-					hash-2 {
-						algo = "sha1";
-					};
 					u-boot {
 					};
 				};
@@ -37,9 +38,6 @@
 					compression = "none";
 					hash-1 {
 						algo = "crc32";
-					};
-					hash-2 {
-						algo = "sha1";
 					};
 					u-boot-spl-dtb {
 					};
@@ -54,10 +52,6 @@
 					fdt = "fdt-1";
 				};
 			};
-		};
-
-		blob {
-			filename = "compress";
 		};
 
 		fdtmap {

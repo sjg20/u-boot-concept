@@ -6444,7 +6444,8 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
 
     def testReplaceFitSibling(self):
         """Test an image with a FIT inside where we replace its sibling"""
-        new_data = b'w' * 4000
+        #new_data = b'w' * 4000
+        new_data = b'w' * (len(COMPRESS_DATA + U_BOOT_DATA) + 1)
 
         data, expected_fdtmap, image = self._RunReplaceCmd('blob',
             new_data, dts='277_replace_fit_sibling.dts')
