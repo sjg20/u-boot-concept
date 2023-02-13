@@ -147,7 +147,7 @@ int checkboard(void)
 #ifdef CONFIG_BOARD_LATE_INIT
 static void setup_board_eeprom_env(void)
 {
-	char *name = "am62x_play";
+	char *name = "am62x_eeprom";
 
 	if (do_board_detect())
 		goto invalid_eeprom;
