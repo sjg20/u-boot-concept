@@ -131,6 +131,7 @@ void splash_get_pos(int *x, int *y)
 void splash_display_banner(void)
 {
 	struct udevice *dev;
+	struct video_priv *vid_priv;
 	char buf[DISPLAY_OPTIONS_BANNER_LENGTH];
 	int col, row, ret;
 
@@ -138,9 +139,11 @@ void splash_display_banner(void)
 	if (ret)
 		return;
 
+	vid_priv = dev_get_uclass_priv(dev->parent);
+
 #ifdef CONFIG_VIDEO_LOGO
-	col = BMP_LOGO_WIDTH / VIDEO_FONT_WIDTH + 1;
-	row = BMP_LOGO_HEIGHT / VIDEO_FONT_HEIGHT + 1;
+	col = BMP_LOGO_WIDTH / vid_priv->fontdata->width + 1;
+	row = BMP_LOGO_HEIGHT / vid_priv->fontdata->height + 1;
 #else
 	col = 0;
 	row = 0;
