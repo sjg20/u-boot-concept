@@ -127,17 +127,17 @@ config VIDEO_MIPI_DSI
 	  The MIPI Display Serial Interface (MIPI DSI) defines a high-speed
 	  serial interface between a host processor and a display module.
 
-config CONSOLE_NORMAL
+config VIDEO_CONSOLE
 	bool "Support a simple text console"
 	default y
 	help
 	  Support drawing text on the frame buffer console so that it can be
-	  used as a console. Rotation is not supported by this driver (see
-	  CONFIG_CONSOLE_ROTATION for that). A built-in 8x16 font is used
-	  for the display.
+	  used as a console. See CONFIG_CONSOLE_ROTATION for rotation support.
+	  A built-in 8x16 font is used for the display.
 
 config CONSOLE_ROTATION
 	bool "Support rotated displays"
+	depends on VIDEO_CONSOLE
 	help
 	  Sometimes, for example if the display is mounted in portrait
 	  mode or even if it's mounted landscape but rotated by 180degree,
