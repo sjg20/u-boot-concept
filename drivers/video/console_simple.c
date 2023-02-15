@@ -12,11 +12,49 @@
 #include <video_console.h>
 #include <video_font.h>		/* Get font data, width and height */
 
-#define VIDEO_FONT_BYTE_WIDTH	((VIDEO_FONT_WIDTH / 8) + (VIDEO_FONT_WIDTH % 8 > 0))
-#define VIDEO_FONT_CHAR_PIXEL_BYTES	(VIDEO_FONT_HEIGHT * VIDEO_FONT_BYTE_WIDTH)
-
 #define FLIPPED_DIRECTION 1
 #define NORMAL_DIRECTION 0
+
+/**
+ * struct console_simple_priv - Private data for this driver
+ *
+ * @video_fontdata	font graphical representation data
+ */
+struct console_simple_priv {
+	struct video_fontdata *fontdata;
+};
+
+/**
+ * console_set_font() - prepare vidconsole for chosen font.
+ *
+ * @dev		vidconsole device
+ * @fontdata	pointer to font data struct
+ */
+static int console_set_font(struct udevice *dev, struct video_fontdata *fontdata)
+{
+	struct console_simple_priv *priv = dev_get_priv(dev);
+	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
+	struct video_priv *vid_priv = dev_get_uclass_priv(dev->parent);
+
+	debug("console_simple: setting %s font\n", fontdata->name);
+	debug("width: %d\n", fontdata->width);
+	debug("byte width: %d\n", fontdata->byte_width);
+	debug("height: %d\n", fontdata->height);
+
+	priv->fontdata = fontdata;
+	vc_priv->x_charsize = fontdata->width;
+	vc_priv->y_charsize = fontdata->height;
+	if (vid_priv->rot % 2) {
+		vc_priv->cols = vid_priv->ysize / fontdata->width;
+		vc_priv->rows = vid_priv->xsize / fontdata->height;
+		vc_priv->xsize_frac = VID_TO_POS(vid_priv->ysize);
+	} else {
+		vc_priv->cols = vid_priv->xsize / fontdata->width;
+		vc_priv->rows = vid_priv->ysize / fontdata->height;
+	}
+
+	return 0;
+}
 
 /**
  * Checks if bits per pixel supported.
@@ -78,6 +116,7 @@ static inline void fill_pixel_and_goto_next(void **dstp, u32 value, int pbytes, 
  * @param pfont		a pointer to character font data.
  * @param line		a pointer to pointer to framebuffer. It's a point for upper left char corner
  * @param vid_priv	driver private data.
+ * @fontdata		font graphical representation data
  * @param direction	controls character orientation. Can be normal or flipped.
  * When normal:               When flipped:
  *|-----------------------------------------------|
@@ -94,7 +133,7 @@ static inline void fill_pixel_and_goto_next(void **dstp, u32 value, int pbytes, 
  * @returns 0, if success, or else error code.
  */
 static int fill_char_horizontally(uchar *pfont, void **line, struct video_priv *vid_priv,
-				  bool direction)
+				  struct video_fontdata *fontdata, bool direction)
 {
 	int step, line_step, pbytes, bitcount = 8, width_remainder, ret;
 	void *dst;
@@ -113,21 +152,20 @@ static int fill_char_horizontally(uchar *pfont, void **line, struct video_priv *
 		line_step = -vid_priv->line_length;
 	}
 
-	width_remainder = VIDEO_FONT_WIDTH % 8;
-	for (int col = 0; col < VIDEO_FONT_BYTE_WIDTH; col++) {
+	width_remainder = fontdata->width % 8;
+	for (int col = 0; col < fontdata->byte_width; col++) {
 		mask = 0x80;
 		if (width_remainder) {
-			bool is_last_iteration = (VIDEO_FONT_BYTE_WIDTH - col == 1);
+			bool is_last_col = (fontdata->byte_width - col == 1);
 
-			if (is_last_iteration)
+			if (is_last_col)
 				bitcount = width_remainder;
 		}
 		for (int bit = 0; bit < bitcount; bit++) {
 			dst = *line;
-			for (int row = 0; row < VIDEO_FONT_HEIGHT; row++) {
-				u32 value = (pfont[row * VIDEO_FONT_BYTE_WIDTH] & mask) ?
-							vid_priv->colour_fg :
-							vid_priv->colour_bg;
+			for (int row = 0; row < fontdata->height; row++) {
+				u32 value = (pfont[row * fontdata->byte_width + col]
+					     & mask) ? vid_priv->colour_fg : vid_priv->colour_bg;
 
 				fill_pixel_and_goto_next(&dst,
 							 value,
@@ -150,6 +188,7 @@ static int fill_char_horizontally(uchar *pfont, void **line, struct video_priv *
  * @param pfont		a pointer to character font data.
  * @param line		a pointer to pointer to framebuffer. It's a point for upper left char corner
  * @param vid_priv	driver private data.
+ * @fontdata		font graphical representation data
  * @param direction	controls character orientation. Can be normal or flipped.
  * When normal:               When flipped:
  *|-----------------------------------------------|
@@ -168,7 +207,7 @@ static int fill_char_horizontally(uchar *pfont, void **line, struct video_priv *
  * @returns 0, if success, or else error code.
  */
 static int fill_char_vertically(uchar *pfont, void **line, struct video_priv *vid_priv,
-				bool direction)
+				struct video_fontdata *fontdata, bool direction)
 {
 	int step, line_step, pbytes, bitcount, width_remainder, ret;
 	void *dst;
@@ -186,17 +225,17 @@ static int fill_char_vertically(uchar *pfont, void **line, struct video_priv *vi
 		line_step = vid_priv->line_length;
 	}
 
-	width_remainder = VIDEO_FONT_WIDTH % 8;
-	for (int row = 0; row < VIDEO_FONT_HEIGHT; row++) {
+	width_remainder = fontdata->width % 8;
+	for (int row = 0; row < fontdata->height; row++) {
 		uchar bits;
 
 		bitcount = 8;
 		dst = *line;
-		for (int col = 0; col < VIDEO_FONT_BYTE_WIDTH; col++) {
+		for (int col = 0; col < fontdata->byte_width; col++) {
 			if (width_remainder) {
-				bool is_last_iteration = (VIDEO_FONT_BYTE_WIDTH - col == 1);
+				bool is_last_col = (fontdata->byte_width - col == 1);
 
-				if (is_last_iteration)
+				if (is_last_col)
 					bitcount = width_remainder;
 			}
 			bits = pfont[col];
@@ -215,7 +254,7 @@ static int fill_char_vertically(uchar *pfont, void **line, struct video_priv *vi
 			}
 		}
 		*line += line_step;
-		pfont += VIDEO_FONT_BYTE_WIDTH;
+		pfont += fontdata->byte_width;
 	}
 	return ret;
 }
@@ -223,8 +262,10 @@ static int fill_char_vertically(uchar *pfont, void **line, struct video_priv *vi
 static int console_set_row(struct udevice *dev, uint row, int clr)
 {
 	struct video_priv *vid_priv = dev_get_uclass_priv(dev->parent);
+	struct console_simple_priv *priv = dev_get_priv(dev);
+	struct video_fontdata *fontdata = priv->fontdata;
 	void *line, *dst, *end;
-	int pixels = VIDEO_FONT_HEIGHT * vid_priv->xsize;
+	int pixels = fontdata->height * vid_priv->xsize;
 	int ret;
 	int i;
 	int pbytes;
@@ -233,7 +274,7 @@ static int console_set_row(struct udevice *dev, uint row, int clr)
 	if (ret)
 		return ret;
 
-	line = vid_priv->fb + row * VIDEO_FONT_HEIGHT * vid_priv->line_length;
+	line = vid_priv->fb + row * fontdata->height * vid_priv->line_length;
 	dst = line;
 	pbytes = VNBYTES(vid_priv->bpix);
 	for (i = 0; i < pixels; i++)
@@ -251,14 +292,16 @@ static int console_move_rows(struct udevice *dev, uint rowdst,
 			     uint rowsrc, uint count)
 {
 	struct video_priv *vid_priv = dev_get_uclass_priv(dev->parent);
+	struct console_simple_priv *priv = dev_get_priv(dev);
+	struct video_fontdata *fontdata = priv->fontdata;
 	void *dst;
 	void *src;
 	int size;
 	int ret;
 
-	dst = vid_priv->fb + rowdst * VIDEO_FONT_HEIGHT * vid_priv->line_length;
-	src = vid_priv->fb + rowsrc * VIDEO_FONT_HEIGHT * vid_priv->line_length;
-	size = VIDEO_FONT_HEIGHT * vid_priv->line_length * count;
+	dst = vid_priv->fb + rowdst * fontdata->height * vid_priv->line_length;
+	src = vid_priv->fb + rowsrc * fontdata->height * vid_priv->line_length;
+	size = fontdata->height * vid_priv->line_length * count;
 	ret = vidconsole_memmove(dev, dst, src, size);
 	if (ret)
 		return ret;
@@ -271,10 +314,13 @@ static int console_putc_xy(struct udevice *dev, uint x_frac, uint y, char ch)
 	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
 	struct udevice *vid = dev->parent;
 	struct video_priv *vid_priv = dev_get_uclass_priv(vid);
+	struct console_simple_priv *priv = dev_get_priv(dev);
+	struct video_fontdata *fontdata = priv->fontdata;
 	int pbytes = VNBYTES(vid_priv->bpix);
 	int x, linenum, ret;
 	void *start, *line;
-	uchar *pfont = video_fontdata + (u8)ch * VIDEO_FONT_CHAR_PIXEL_BYTES;
+	uchar *pfont = fontdata->video_fontdata +
+			(u8)ch * fontdata->char_pixel_bytes;
 
 	if (x_frac + VID_TO_POS(vc_priv->x_charsize) > vc_priv->xsize_frac)
 		return -EAGAIN;
@@ -286,7 +332,7 @@ static int console_putc_xy(struct udevice *dev, uint x_frac, uint y, char ch)
 	if (x_frac + VID_TO_POS(vc_priv->x_charsize) > vc_priv->xsize_frac)
 		return -EAGAIN;
 
-	ret = fill_char_vertically(pfont, &line, vid_priv, NORMAL_DIRECTION);
+	ret = fill_char_vertically(pfont, &line, vid_priv, fontdata, NORMAL_DIRECTION);
 	if (ret)
 		return ret;
 
@@ -294,21 +340,12 @@ static int console_putc_xy(struct udevice *dev, uint x_frac, uint y, char ch)
 	if (ret)
 		return ret;
 
-	return VID_TO_POS(VIDEO_FONT_WIDTH);
+	return VID_TO_POS(fontdata->width);
 }
 
 static int console_probe(struct udevice *dev)
 {
-	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
-	struct udevice *vid_dev = dev->parent;
-	struct video_priv *vid_priv = dev_get_uclass_priv(vid_dev);
-
-	vc_priv->x_charsize = VIDEO_FONT_WIDTH;
-	vc_priv->y_charsize = VIDEO_FONT_HEIGHT;
-	vc_priv->cols = vid_priv->xsize / VIDEO_FONT_WIDTH;
-	vc_priv->rows = vid_priv->ysize / VIDEO_FONT_HEIGHT;
-
-	return 0;
+	return console_set_font(dev, &fonts[0]);
 }
 
 struct vidconsole_ops console_ops = {
@@ -318,27 +355,30 @@ struct vidconsole_ops console_ops = {
 };
 
 U_BOOT_DRIVER(vidconsole_normal) = {
-	.name	= "vidconsole0",
-	.id	= UCLASS_VIDEO_CONSOLE,
-	.ops	= &console_ops,
-	.probe	= console_probe,
+	.name		= "vidconsole0",
+	.id		= UCLASS_VIDEO_CONSOLE,
+	.ops		= &console_ops,
+	.probe		= console_probe,
+	.priv_auto	= sizeof(struct console_simple_priv),
 };
 
 #if (CONFIG_IS_ENABLED(CONSOLE_ROTATION))
 static int console_set_row_1(struct udevice *dev, uint row, int clr)
 {
 	struct video_priv *vid_priv = dev_get_uclass_priv(dev->parent);
+	struct console_simple_priv *priv = dev_get_priv(dev);
+	struct video_fontdata *fontdata = priv->fontdata;
 	int pbytes = VNBYTES(vid_priv->bpix);
 	void *start, *dst, *line;
 	int i, j;
 	int ret;
 
 	start = vid_priv->fb + vid_priv->line_length -
-		(row + 1) * VIDEO_FONT_HEIGHT * pbytes;
+		(row + 1) * fontdata->height * pbytes;
 	line = start;
 	for (j = 0; j < vid_priv->ysize; j++) {
 		dst = line;
-		for (i = 0; i < VIDEO_FONT_HEIGHT; i++)
+		for (i = 0; i < fontdata->height; i++)
 			fill_pixel_and_goto_next(&dst, clr, pbytes, pbytes);
 		line += vid_priv->line_length;
 	}
@@ -353,19 +393,21 @@ static int console_move_rows_1(struct udevice *dev, uint rowdst, uint rowsrc,
 				   uint count)
 {
 	struct video_priv *vid_priv = dev_get_uclass_priv(dev->parent);
+	struct console_simple_priv *priv = dev_get_priv(dev);
+	struct video_fontdata *fontdata = priv->fontdata;
 	int pbytes = VNBYTES(vid_priv->bpix);
 	void *dst;
 	void *src;
 	int j, ret;
 
 	dst = vid_priv->fb + vid_priv->line_length -
-		(rowdst + count) * VIDEO_FONT_HEIGHT * pbytes;
+		(rowdst + count) * fontdata->height * pbytes;
 	src = vid_priv->fb + vid_priv->line_length -
-		(rowsrc + count) * VIDEO_FONT_HEIGHT * pbytes;
+		(rowsrc + count) * fontdata->height * pbytes;
 
 	for (j = 0; j < vid_priv->ysize; j++) {
 		ret = vidconsole_memmove(dev, dst, src,
-					VIDEO_FONT_HEIGHT * pbytes * count);
+					fontdata->height * pbytes * count);
 		if (ret)
 			return ret;
 		src += vid_priv->line_length;
@@ -380,10 +422,13 @@ static int console_putc_xy_1(struct udevice *dev, uint x_frac, uint y, char ch)
 	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
 	struct udevice *vid = dev->parent;
 	struct video_priv *vid_priv = dev_get_uclass_priv(vid);
+	struct console_simple_priv *priv = dev_get_priv(dev);
+	struct video_fontdata *fontdata = priv->fontdata;
 	int pbytes = VNBYTES(vid_priv->bpix);
 	int x, linenum, ret;
 	void *start, *line;
-	uchar *pfont = video_fontdata + (u8)ch * VIDEO_FONT_CHAR_PIXEL_BYTES;
+	uchar *pfont = fontdata->video_fontdata +
+			(u8)ch * fontdata->char_pixel_bytes;
 
 	if (x_frac + VID_TO_POS(vc_priv->x_charsize) > vc_priv->xsize_frac)
 		return -EAGAIN;
@@ -392,7 +437,7 @@ static int console_putc_xy_1(struct udevice *dev, uint x_frac, uint y, char ch)
 	start = vid_priv->fb + linenum * vid_priv->line_length - x * pbytes;
 	line = start;
 
-	ret = fill_char_horizontally(pfont, &line, vid_priv, FLIPPED_DIRECTION);
+	ret = fill_char_horizontally(pfont, &line, vid_priv, fontdata, FLIPPED_DIRECTION);
 	if (ret)
 		return ret;
 
@@ -401,20 +446,22 @@ static int console_putc_xy_1(struct udevice *dev, uint x_frac, uint y, char ch)
 	if (ret)
 		return ret;
 
-	return VID_TO_POS(VIDEO_FONT_WIDTH);
+	return VID_TO_POS(fontdata->width);
 }
 
 
 static int console_set_row_2(struct udevice *dev, uint row, int clr)
 {
 	struct video_priv *vid_priv = dev_get_uclass_priv(dev->parent);
+	struct console_simple_priv *priv = dev_get_priv(dev);
+	struct video_fontdata *fontdata = priv->fontdata;
 	void *start, *line, *dst, *end;
-	int pixels = VIDEO_FONT_HEIGHT * vid_priv->xsize;
+	int pixels = fontdata->height * vid_priv->xsize;
 	int i, ret;
 	int pbytes = VNBYTES(vid_priv->bpix);
 
 	start = vid_priv->fb + vid_priv->ysize * vid_priv->line_length -
-		(row + 1) * VIDEO_FONT_HEIGHT * vid_priv->line_length;
+		(row + 1) * fontdata->height * vid_priv->line_length;
 	line = start;
 	dst = line;
 	for (i = 0; i < pixels; i++)
@@ -431,17 +478,19 @@ static int console_move_rows_2(struct udevice *dev, uint rowdst, uint rowsrc,
 			       uint count)
 {
 	struct video_priv *vid_priv = dev_get_uclass_priv(dev->parent);
+	struct console_simple_priv *priv = dev_get_priv(dev);
+	struct video_fontdata *fontdata = priv->fontdata;
 	void *dst;
 	void *src;
 	void *end;
 
 	end = vid_priv->fb + vid_priv->ysize * vid_priv->line_length;
-	dst = end - (rowdst + count) * VIDEO_FONT_HEIGHT *
+	dst = end - (rowdst + count) * fontdata->height *
 		vid_priv->line_length;
-	src = end - (rowsrc + count) * VIDEO_FONT_HEIGHT *
+	src = end - (rowsrc + count) * fontdata->height *
 		vid_priv->line_length;
 	vidconsole_memmove(dev, dst, src,
-			   VIDEO_FONT_HEIGHT * vid_priv->line_length * count);
+			   fontdata->height * vid_priv->line_length * count);
 
 	return 0;
 }
@@ -451,10 +500,13 @@ static int console_putc_xy_2(struct udevice *dev, uint x_frac, uint y, char ch)
 	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
 	struct udevice *vid = dev->parent;
 	struct video_priv *vid_priv = dev_get_uclass_priv(vid);
+	struct console_simple_priv *priv = dev_get_priv(dev);
+	struct video_fontdata *fontdata = priv->fontdata;
 	int pbytes = VNBYTES(vid_priv->bpix);
 	int linenum, x, ret;
 	void *start, *line;
-	uchar *pfont = video_fontdata + (u8)ch * VIDEO_FONT_CHAR_PIXEL_BYTES;
+	uchar *pfont = fontdata->video_fontdata +
+			(u8)ch * fontdata->char_pixel_bytes;
 
 	if (x_frac + VID_TO_POS(vc_priv->x_charsize) > vc_priv->xsize_frac)
 		return -EAGAIN;
@@ -463,7 +515,7 @@ static int console_putc_xy_2(struct udevice *dev, uint x_frac, uint y, char ch)
 	start = vid_priv->fb + linenum * vid_priv->line_length + x * pbytes;
 	line = start;
 
-	ret = fill_char_vertically(pfont, &line, vid_priv, FLIPPED_DIRECTION);
+	ret = fill_char_vertically(pfont, &line, vid_priv, fontdata, FLIPPED_DIRECTION);
 	if (ret)
 		return ret;
 
@@ -472,21 +524,23 @@ static int console_putc_xy_2(struct udevice *dev, uint x_frac, uint y, char ch)
 	if (ret)
 		return ret;
 
-	return VID_TO_POS(VIDEO_FONT_WIDTH);
+	return VID_TO_POS(fontdata->width);
 }
 
 static int console_set_row_3(struct udevice *dev, uint row, int clr)
 {
 	struct video_priv *vid_priv = dev_get_uclass_priv(dev->parent);
+	struct console_simple_priv *priv = dev_get_priv(dev);
+	struct video_fontdata *fontdata = priv->fontdata;
 	int pbytes = VNBYTES(vid_priv->bpix);
 	void *start, *dst, *line;
 	int i, j, ret;
 
-	start = vid_priv->fb + row * VIDEO_FONT_HEIGHT * pbytes;
+	start = vid_priv->fb + row * fontdata->height * pbytes;
 	line = start;
 	for (j = 0; j < vid_priv->ysize; j++) {
 		dst = line;
-		for (i = 0; i < VIDEO_FONT_HEIGHT; i++)
+		for (i = 0; i < fontdata->height; i++)
 			fill_pixel_and_goto_next(&dst, clr, pbytes, pbytes);
 		line += vid_priv->line_length;
 	}
@@ -501,17 +555,19 @@ static int console_move_rows_3(struct udevice *dev, uint rowdst, uint rowsrc,
 			       uint count)
 {
 	struct video_priv *vid_priv = dev_get_uclass_priv(dev->parent);
+	struct console_simple_priv *priv = dev_get_priv(dev);
+	struct video_fontdata *fontdata = priv->fontdata;
 	int pbytes = VNBYTES(vid_priv->bpix);
 	void *dst;
 	void *src;
 	int j, ret;
 
-	dst = vid_priv->fb + rowdst * VIDEO_FONT_HEIGHT * pbytes;
-	src = vid_priv->fb + rowsrc * VIDEO_FONT_HEIGHT * pbytes;
+	dst = vid_priv->fb + rowdst * fontdata->height * pbytes;
+	src = vid_priv->fb + rowsrc * fontdata->height * pbytes;
 
 	for (j = 0; j < vid_priv->ysize; j++) {
 		ret = vidconsole_memmove(dev, dst, src,
-					VIDEO_FONT_HEIGHT * pbytes * count);
+					fontdata->height * pbytes * count);
 		if (ret)
 			return ret;
 		src += vid_priv->line_length;
@@ -526,10 +582,13 @@ static int console_putc_xy_3(struct udevice *dev, uint x_frac, uint y, char ch)
 	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
 	struct udevice *vid = dev->parent;
 	struct video_priv *vid_priv = dev_get_uclass_priv(vid);
+	struct console_simple_priv *priv = dev_get_priv(dev);
+	struct video_fontdata *fontdata = priv->fontdata;
 	int pbytes = VNBYTES(vid_priv->bpix);
 	int linenum, x, ret;
 	void *start, *line;
-	uchar *pfont = video_fontdata + (u8)ch * VIDEO_FONT_CHAR_PIXEL_BYTES;
+	uchar *pfont = fontdata->video_fontdata +
+			(u8)ch * fontdata->char_pixel_bytes;
 
 	if (x_frac + VID_TO_POS(vc_priv->x_charsize) > vc_priv->xsize_frac)
 		return -EAGAIN;
@@ -538,7 +597,7 @@ static int console_putc_xy_3(struct udevice *dev, uint x_frac, uint y, char ch)
 	start = vid_priv->fb + linenum * vid_priv->line_length + y * pbytes;
 	line = start;
 
-	ret = fill_char_horizontally(pfont, &line, vid_priv, NORMAL_DIRECTION);
+	ret = fill_char_horizontally(pfont, &line, vid_priv, fontdata, NORMAL_DIRECTION);
 	if (ret)
 		return ret;
 	/* Add a line to allow for the first pixels writen */
@@ -546,23 +605,7 @@ static int console_putc_xy_3(struct udevice *dev, uint x_frac, uint y, char ch)
 	if (ret)
 		return ret;
 
-	return VID_TO_POS(VIDEO_FONT_WIDTH);
-}
-
-
-static int console_probe_1_3(struct udevice *dev)
-{
-	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
-	struct udevice *vid_dev = dev->parent;
-	struct video_priv *vid_priv = dev_get_uclass_priv(vid_dev);
-
-	vc_priv->x_charsize = VIDEO_FONT_WIDTH;
-	vc_priv->y_charsize = VIDEO_FONT_HEIGHT;
-	vc_priv->cols = vid_priv->ysize / VIDEO_FONT_WIDTH;
-	vc_priv->rows = vid_priv->xsize / VIDEO_FONT_HEIGHT;
-	vc_priv->xsize_frac = VID_TO_POS(vid_priv->ysize);
-
-	return 0;
+	return VID_TO_POS(fontdata->width);
 }
 
 struct vidconsole_ops console_ops_1 = {
@@ -584,23 +627,26 @@ struct vidconsole_ops console_ops_3 = {
 };
 
 U_BOOT_DRIVER(vidconsole_1) = {
-	.name	= "vidconsole1",
-	.id	= UCLASS_VIDEO_CONSOLE,
-	.ops	= &console_ops_1,
-	.probe	= console_probe_1_3,
+	.name		= "vidconsole1",
+	.id		= UCLASS_VIDEO_CONSOLE,
+	.ops		= &console_ops_1,
+	.probe		= console_probe,
+	.priv_auto	= sizeof(struct console_simple_priv),
 };
 
 U_BOOT_DRIVER(vidconsole_2) = {
-	.name	= "vidconsole2",
-	.id	= UCLASS_VIDEO_CONSOLE,
-	.ops	= &console_ops_2,
-	.probe	= console_probe,
+	.name		= "vidconsole2",
+	.id		= UCLASS_VIDEO_CONSOLE,
+	.ops		= &console_ops_2,
+	.probe		= console_probe,
+	.priv_auto	= sizeof(struct console_simple_priv),
 };
 
 U_BOOT_DRIVER(vidconsole_3) = {
-	.name	= "vidconsole3",
-	.id	= UCLASS_VIDEO_CONSOLE,
-	.ops	= &console_ops_3,
-	.probe	= console_probe_1_3,
+	.name		= "vidconsole3",
+	.id		= UCLASS_VIDEO_CONSOLE,
+	.ops		= &console_ops_3,
+	.probe		= console_probe,
+	.priv_auto	= sizeof(struct console_simple_priv),
 };
 #endif
