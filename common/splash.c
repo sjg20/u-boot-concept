@@ -127,6 +127,7 @@ void splash_get_pos(int *x, int *y)
 #include <dm.h>
 #include <video_console.h>
 #include <video_font.h>
+#include <video_font_data.h>
 
 void splash_display_banner(void)
 {
@@ -138,13 +139,15 @@ void splash_display_banner(void)
 	if (ret)
 		return;
 
-#ifdef CONFIG_VIDEO_LOGO
-	col = BMP_LOGO_WIDTH / VIDEO_FONT_WIDTH + 1;
-	row = BMP_LOGO_HEIGHT / VIDEO_FONT_HEIGHT + 1;
-#else
-	col = 0;
-	row = 0;
-#endif
+	if (IS_ENABLED(CONFIG_VIDEO_LOGO)) {
+		struct video_fontdata *fontdata = &fonts[0];
+
+		col = BMP_LOGO_WIDTH / fontdata->width + 1;
+		row = BMP_LOGO_HEIGHT / fontdata->height + 1;
+	} else {
+		col = 0;
+		row = 0;
+	}
 
 	display_options_get_banner(false, buf, sizeof(buf));
 	vidconsole_position_cursor(dev, col, 1);
