@@ -3,6 +3,7 @@
  * Copyright (c) 2015 Google, Inc
  * (C) Copyright 2015
  * Bernecker & Rainer Industrieelektronik GmbH - http://www.br-automation.com
+ * (C) Copyright 2023 Dzmitry Sankouski <dsankouski@gmail.com>
  */
 
 #include <common.h>
@@ -11,46 +12,209 @@
 #include <video_console.h>
 #include <video_font.h>		/* Get font data, width and height */
 
-static int console_normal_set_row(struct udevice *dev, uint row, int clr)
+#define VIDEO_FONT_BYTE_WIDTH	((VIDEO_FONT_WIDTH / 8) + (VIDEO_FONT_WIDTH % 8 > 0))
+
+#define FLIPPED_DIRECTION 1
+#define NORMAL_DIRECTION 0
+
+/**
+ * Checks if bits per pixel supported.
+ *
+ * @param bpix	framebuffer bits per pixel.
+ *
+ * @returns 0, if supported, or else -ENOSYS.
+ */
+static int check_bpix_support(int bpix)
 {
-	struct video_priv *vid_priv = dev_get_uclass_priv(dev->parent);
-	void *line, *end;
-	int pixels = VIDEO_FONT_HEIGHT * vid_priv->xsize;
-	int ret;
-	int i;
-
-	line = vid_priv->fb + row * VIDEO_FONT_HEIGHT * vid_priv->line_length;
-	switch (vid_priv->bpix) {
+	switch (bpix) {
 	case VIDEO_BPP8:
-		if (IS_ENABLED(CONFIG_VIDEO_BPP8)) {
-			uint8_t *dst = line;
-
-			for (i = 0; i < pixels; i++)
-				*dst++ = clr;
-			end = dst;
-			break;
-		}
+		if (IS_ENABLED(CONFIG_VIDEO_BPP8))
+			return 0;
 	case VIDEO_BPP16:
-		if (IS_ENABLED(CONFIG_VIDEO_BPP16)) {
-			uint16_t *dst = line;
-
-			for (i = 0; i < pixels; i++)
-				*dst++ = clr;
-			end = dst;
-			break;
-		}
+		if (IS_ENABLED(CONFIG_VIDEO_BPP16))
+			return 0;
 	case VIDEO_BPP32:
-		if (IS_ENABLED(CONFIG_VIDEO_BPP32)) {
-			uint32_t *dst = line;
-
-			for (i = 0; i < pixels; i++)
-				*dst++ = clr;
-			end = dst;
-			break;
-		}
+		if (IS_ENABLED(CONFIG_VIDEO_BPP32))
+			return 0;
 	default:
 		return -ENOSYS;
 	}
+}
+
+/**
+ * Fill 1 pixel in framebuffer, and go to next one.
+ *
+ * @param dstp		a pointer to pointer to framebuffer.
+ * @param value		value to write to framebuffer.
+ * @param pbytes	framebuffer bytes per pixel.
+ * @param step		framebuffer pointer increment. Usually is equal to pbytes,
+ *			and may be negative to control filling direction.
+ */
+static inline void fill_pixel_and_goto_next(void **dstp, u32 value, int pbytes, int step)
+{
+	u8 *dst_byte = *dstp;
+
+	if (pbytes == 4) {
+		u32 *dst = *dstp;
+		*dst = value;
+	}
+	if (pbytes == 2) {
+		u16 *dst = *dstp;
+		*dst = value;
+	}
+	if (pbytes == 1) {
+		u8 *dst = *dstp;
+		*dst = value;
+	}
+	*dstp = dst_byte + step;
+}
+
+#if (CONFIG_IS_ENABLED(CONSOLE_ROTATION))
+/**
+ * Fills 1 character in framebuffer horizontally.
+ * Horizontally means we're filling char font data columns across the lines.
+ *
+ * @param pfont		a pointer to character font data.
+ * @param line		a pointer to pointer to framebuffer. It's a point for upper left char corner
+ * @param vid_priv	driver private data.
+ * @param direction	controls character orientation. Can be normal or flipped.
+ * When normal:               When flipped:
+ *|-----------------------------------------------|
+ *|               *        |   line stepping      |
+ *|    ^  * * * * *        |   |                  |
+ *|    |    *     *        |   v   *     *        |
+ *|    |                   |       * * * * *      |
+ *|  line stepping         |       *              |
+ *|                        |                      |
+ *|  stepping ->           |        <- stepping   |
+ *|---!!we're starting from upper left char corner|
+ *|-----------------------------------------------|
+ *
+ * @returns 0, if success, or else error code.
+ */
+static int fill_char_horizontally(uchar *pfont, void **line, struct video_priv *vid_priv,
+				  bool direction)
+{
+	int step, line_step, pbytes, ret;
+	void *dst;
+	u8 mask = 0x80;
+
+	ret = check_bpix_support(vid_priv->bpix);
+	if (ret)
+		return ret;
+
+	pbytes = VNBYTES(vid_priv->bpix);
+	if (direction) {
+		step = -pbytes;
+		line_step = vid_priv->line_length;
+	} else {
+		step = pbytes;
+		line_step = -vid_priv->line_length;
+	}
+	for (int col = 0; col < VIDEO_FONT_WIDTH; col++) {
+		dst = *line;
+		for (int row = 0; row < VIDEO_FONT_HEIGHT; row++) {
+			u32 value = (pfont[row * VIDEO_FONT_BYTE_WIDTH] & mask) ?
+						vid_priv->colour_fg :
+						vid_priv->colour_bg;
+
+			fill_pixel_and_goto_next(&dst,
+						 value,
+						 pbytes,
+						 step
+			);
+		}
+		*line += line_step;
+		mask >>= 1;
+	}
+	return ret;
+}
+#endif
+
+/**
+ * Fills 1 character in framebuffer vertically. Vertically means we're filling char font data rows
+ * across the lines.
+ *
+ * @param pfont		a pointer to character font data.
+ * @param line		a pointer to pointer to framebuffer. It's a point for upper left char corner
+ * @param vid_priv	driver private data.
+ * @param direction	controls character orientation. Can be normal or flipped.
+ * When normal:               When flipped:
+ *|-----------------------------------------------|
+ *| line stepping        |                        |
+ *|            |         |       stepping ->      |
+ *|     *      |         |       * * *            |
+ *|   * *      v         |         *              |
+ *|     *                |         *              |
+ *|     *                |         * *      ^     |
+ *|   * * *              |         *        |     |
+ *|                      |                  |     |
+ *| stepping ->          |         line stepping  |
+ *|---!!we're starting from upper left char corner|
+ *|-----------------------------------------------|
+ *
+ * @returns 0, if success, or else error code.
+ */
+static int fill_char_vertically(uchar *pfont, void **line, struct video_priv *vid_priv,
+				bool direction)
+{
+	int step, line_step, pbytes, ret;
+	void *dst;
+
+	ret = check_bpix_support(vid_priv->bpix);
+	if (ret)
+		return ret;
+
+	pbytes = VNBYTES(vid_priv->bpix);
+	if (direction) {
+		step = -pbytes;
+		line_step = -vid_priv->line_length;
+	} else {
+		step = pbytes;
+		line_step = vid_priv->line_length;
+	}
+
+	for (int row = 0; row < VIDEO_FONT_HEIGHT; row++) {
+		dst = *line;
+		uchar bits = pfont[row];
+
+		for (int i = 0; i < VIDEO_FONT_WIDTH; i++) {
+			u32 value = (bits & 0x80) ?
+				vid_priv->colour_fg :
+				vid_priv->colour_bg;
+
+			fill_pixel_and_goto_next(&dst,
+						 value,
+						 pbytes,
+						 step
+			);
+			bits <<= 1;
+		}
+		*line += line_step;
+	}
+	return ret;
+}
+
+static int console_set_row(struct udevice *dev, uint row, int clr)
+{
+	struct video_priv *vid_priv = dev_get_uclass_priv(dev->parent);
+	void *line, *dst, *end;
+	int pixels = VIDEO_FONT_HEIGHT * vid_priv->xsize;
+	int ret;
+	int i;
+	int pbytes;
+
+	ret = check_bpix_support(vid_priv->bpix);
+	if (ret)
+		return ret;
+
+	line = vid_priv->fb + row * VIDEO_FONT_HEIGHT * vid_priv->line_length;
+	dst = line;
+	pbytes = VNBYTES(vid_priv->bpix);
+	for (i = 0; i < pixels; i++)
+		fill_pixel_and_goto_next(&dst, clr, pbytes, pbytes);
+	end = dst;
+
 	ret = vidconsole_sync_copy(dev, line, end);
 	if (ret)
 		return ret;
@@ -58,8 +222,8 @@ static int console_normal_set_row(struct udevice *dev, uint row, int clr)
 	return 0;
 }
 
-static int console_normal_move_rows(struct udevice *dev, uint rowdst,
-				     uint rowsrc, uint count)
+static int console_move_rows(struct udevice *dev, uint rowdst,
+			     uint rowsrc, uint count)
 {
 	struct video_priv *vid_priv = dev_get_uclass_priv(dev->parent);
 	void *dst;
@@ -77,70 +241,30 @@ static int console_normal_move_rows(struct udevice *dev, uint rowdst,
 	return 0;
 }
 
-static int console_normal_putc_xy(struct udevice *dev, uint x_frac, uint y,
-				  char ch)
+static int console_putc_xy(struct udevice *dev, uint x_frac, uint y, char ch)
 {
 	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
 	struct udevice *vid = dev->parent;
 	struct video_priv *vid_priv = dev_get_uclass_priv(vid);
-	int i, row;
-	void *start;
-	void *line;
-	int ret;
+	int pbytes = VNBYTES(vid_priv->bpix);
+	int x, linenum, ret;
+	void *start, *line;
+	uchar *pfont = video_fontdata + (u8)ch * VIDEO_FONT_HEIGHT;
 
-	start = vid_priv->fb + y * vid_priv->line_length +
-		VID_TO_PIXEL(x_frac) * VNBYTES(vid_priv->bpix);
+	if (x_frac + VID_TO_POS(vc_priv->x_charsize) > vc_priv->xsize_frac)
+		return -EAGAIN;
+	linenum = y;
+	x = VID_TO_PIXEL(x_frac);
+	start = vid_priv->fb + linenum * vid_priv->line_length + x * pbytes;
 	line = start;
 
 	if (x_frac + VID_TO_POS(vc_priv->x_charsize) > vc_priv->xsize_frac)
 		return -EAGAIN;
 
-	for (row = 0; row < VIDEO_FONT_HEIGHT; row++) {
-		unsigned int idx = (u8)ch * VIDEO_FONT_HEIGHT + row;
-		uchar bits = video_fontdata[idx];
+	ret = fill_char_vertically(pfont, &line, vid_priv, NORMAL_DIRECTION);
+	if (ret)
+		return ret;
 
-		switch (vid_priv->bpix) {
-		case VIDEO_BPP8:
-			if (IS_ENABLED(CONFIG_VIDEO_BPP8)) {
-				uint8_t *dst = line;
-
-				for (i = 0; i < VIDEO_FONT_WIDTH; i++) {
-					*dst++ = (bits & 0x80) ?
-						vid_priv->colour_fg :
-						vid_priv->colour_bg;
-					bits <<= 1;
-				}
-				break;
-			}
-		case VIDEO_BPP16:
-			if (IS_ENABLED(CONFIG_VIDEO_BPP16)) {
-				uint16_t *dst = line;
-
-				for (i = 0; i < VIDEO_FONT_WIDTH; i++) {
-					*dst++ = (bits & 0x80) ?
-						vid_priv->colour_fg :
-						vid_priv->colour_bg;
-					bits <<= 1;
-				}
-				break;
-			}
-		case VIDEO_BPP32:
-			if (IS_ENABLED(CONFIG_VIDEO_BPP32)) {
-				uint32_t *dst = line;
-
-				for (i = 0; i < VIDEO_FONT_WIDTH; i++) {
-					*dst++ = (bits & 0x80) ?
-						vid_priv->colour_fg :
-						vid_priv->colour_bg;
-					bits <<= 1;
-				}
-				break;
-			}
-		default:
-			return -ENOSYS;
-		}
-		line += vid_priv->line_length;
-	}
 	ret = vidconsole_sync_copy(dev, start, line);
 	if (ret)
 		return ret;
@@ -148,7 +272,7 @@ static int console_normal_putc_xy(struct udevice *dev, uint x_frac, uint y,
 	return VID_TO_POS(VIDEO_FONT_WIDTH);
 }
 
-static int console_normal_probe(struct udevice *dev)
+static int console_probe(struct udevice *dev)
 {
 	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
 	struct udevice *vid_dev = dev->parent;
@@ -162,25 +286,25 @@ static int console_normal_probe(struct udevice *dev)
 	return 0;
 }
 
-struct vidconsole_ops console_normal_ops = {
-	.putc_xy	= console_normal_putc_xy,
-	.move_rows	= console_normal_move_rows,
-	.set_row	= console_normal_set_row,
+struct vidconsole_ops console_ops = {
+	.putc_xy	= console_putc_xy,
+	.move_rows	= console_move_rows,
+	.set_row	= console_set_row,
 };
 
 U_BOOT_DRIVER(vidconsole_normal) = {
 	.name	= "vidconsole0",
 	.id	= UCLASS_VIDEO_CONSOLE,
-	.ops	= &console_normal_ops,
-	.probe	= console_normal_probe,
+	.ops	= &console_ops,
+	.probe	= console_probe,
 };
 
-#if defined(CONFIG_CONSOLE_ROTATION)
+#if (CONFIG_IS_ENABLED(CONSOLE_ROTATION))
 static int console_set_row_1(struct udevice *dev, uint row, int clr)
 {
 	struct video_priv *vid_priv = dev_get_uclass_priv(dev->parent);
 	int pbytes = VNBYTES(vid_priv->bpix);
-	void *start, *line;
+	void *start, *dst, *line;
 	int i, j;
 	int ret;
 
@@ -188,34 +312,9 @@ static int console_set_row_1(struct udevice *dev, uint row, int clr)
 		(row + 1) * VIDEO_FONT_HEIGHT * pbytes;
 	line = start;
 	for (j = 0; j < vid_priv->ysize; j++) {
-		switch (vid_priv->bpix) {
-		case VIDEO_BPP8:
-			if (IS_ENABLED(CONFIG_VIDEO_BPP8)) {
-				uint8_t *dst = line;
-
-				for (i = 0; i < VIDEO_FONT_HEIGHT; i++)
-					*dst++ = clr;
-				break;
-			}
-		case VIDEO_BPP16:
-			if (IS_ENABLED(CONFIG_VIDEO_BPP16)) {
-				uint16_t *dst = line;
-
-				for (i = 0; i < VIDEO_FONT_HEIGHT; i++)
-					*dst++ = clr;
-				break;
-			}
-		case VIDEO_BPP32:
-			if (IS_ENABLED(CONFIG_VIDEO_BPP32)) {
-				uint32_t *dst = line;
-
-				for (i = 0; i < VIDEO_FONT_HEIGHT; i++)
-					*dst++ = clr;
-				break;
-			}
-		default:
-			return -ENOSYS;
-		}
+		dst = line;
+		for (i = 0; i < VIDEO_FONT_HEIGHT; i++)
+			fill_pixel_and_goto_next(&dst, clr, pbytes, pbytes);
 		line += vid_priv->line_length;
 	}
 	ret = vidconsole_sync_copy(dev, start, line);
@@ -226,7 +325,7 @@ static int console_set_row_1(struct udevice *dev, uint row, int clr)
 }
 
 static int console_move_rows_1(struct udevice *dev, uint rowdst, uint rowsrc,
-			       uint count)
+				   uint count)
 {
 	struct video_priv *vid_priv = dev_get_uclass_priv(dev->parent);
 	int pbytes = VNBYTES(vid_priv->bpix);
@@ -241,7 +340,7 @@ static int console_move_rows_1(struct udevice *dev, uint rowdst, uint rowsrc,
 
 	for (j = 0; j < vid_priv->ysize; j++) {
 		ret = vidconsole_memmove(dev, dst, src,
-					 VIDEO_FONT_HEIGHT * pbytes * count);
+					VIDEO_FONT_HEIGHT * pbytes * count);
 		if (ret)
 			return ret;
 		src += vid_priv->line_length;
@@ -256,60 +355,22 @@ static int console_putc_xy_1(struct udevice *dev, uint x_frac, uint y, char ch)
 	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
 	struct udevice *vid = dev->parent;
 	struct video_priv *vid_priv = dev_get_uclass_priv(vid);
-	uchar *pfont = video_fontdata + (u8)ch * VIDEO_FONT_HEIGHT;
 	int pbytes = VNBYTES(vid_priv->bpix);
-	int i, col, x, linenum, ret;
-	int mask = 0x80;
+	int x, linenum, ret;
 	void *start, *line;
+	uchar *pfont = video_fontdata + (u8)ch * VIDEO_FONT_HEIGHT;
 
+	if (x_frac + VID_TO_POS(vc_priv->x_charsize) > vc_priv->xsize_frac)
+		return -EAGAIN;
 	linenum = VID_TO_PIXEL(x_frac) + 1;
 	x = y + 1;
 	start = vid_priv->fb + linenum * vid_priv->line_length - x * pbytes;
 	line = start;
-	if (x_frac + VID_TO_POS(vc_priv->x_charsize) > vc_priv->xsize_frac)
-		return -EAGAIN;
 
-	for (col = 0; col < VIDEO_FONT_HEIGHT; col++) {
-		switch (vid_priv->bpix) {
-		case VIDEO_BPP8:
-			if (IS_ENABLED(CONFIG_VIDEO_BPP8)) {
-				uint8_t *dst = line;
+	ret = fill_char_horizontally(pfont, &line, vid_priv, FLIPPED_DIRECTION);
+	if (ret)
+		return ret;
 
-				for (i = 0; i < VIDEO_FONT_HEIGHT; i++) {
-					*dst-- = (pfont[i] & mask) ?
-						vid_priv->colour_fg :
-						vid_priv->colour_bg;
-				}
-				break;
-			}
-		case VIDEO_BPP16:
-			if (IS_ENABLED(CONFIG_VIDEO_BPP16)) {
-				uint16_t *dst = line;
-
-				for (i = 0; i < VIDEO_FONT_HEIGHT; i++) {
-					*dst-- = (pfont[i] & mask) ?
-						vid_priv->colour_fg :
-						vid_priv->colour_bg;
-				}
-				break;
-			}
-		case VIDEO_BPP32:
-			if (IS_ENABLED(CONFIG_VIDEO_BPP32)) {
-				uint32_t *dst = line;
-
-				for (i = 0; i < VIDEO_FONT_HEIGHT; i++) {
-					*dst-- = (pfont[i] & mask) ?
-						vid_priv->colour_fg :
-						vid_priv->colour_bg;
-				}
-				break;
-			}
-		default:
-			return -ENOSYS;
-		}
-		line += vid_priv->line_length;
-		mask >>= 1;
-	}
 	/* We draw backwards from 'start, so account for the first line */
 	ret = vidconsole_sync_copy(dev, start - vid_priv->line_length, line);
 	if (ret)
@@ -322,44 +383,18 @@ static int console_putc_xy_1(struct udevice *dev, uint x_frac, uint y, char ch)
 static int console_set_row_2(struct udevice *dev, uint row, int clr)
 {
 	struct video_priv *vid_priv = dev_get_uclass_priv(dev->parent);
-	void *start, *line, *end;
+	void *start, *line, *dst, *end;
 	int pixels = VIDEO_FONT_HEIGHT * vid_priv->xsize;
 	int i, ret;
+	int pbytes = VNBYTES(vid_priv->bpix);
 
 	start = vid_priv->fb + vid_priv->ysize * vid_priv->line_length -
 		(row + 1) * VIDEO_FONT_HEIGHT * vid_priv->line_length;
 	line = start;
-	switch (vid_priv->bpix) {
-	case VIDEO_BPP8:
-		if (IS_ENABLED(CONFIG_VIDEO_BPP8)) {
-			uint8_t *dst = line;
-
-			for (i = 0; i < pixels; i++)
-				*dst++ = clr;
-			end = dst;
-			break;
-		}
-	case VIDEO_BPP16:
-		if (IS_ENABLED(CONFIG_VIDEO_BPP16)) {
-			uint16_t *dst = line;
-
-			for (i = 0; i < pixels; i++)
-				*dst++ = clr;
-			end = dst;
-			break;
-		}
-	case VIDEO_BPP32:
-		if (IS_ENABLED(CONFIG_VIDEO_BPP32)) {
-			uint32_t *dst = line;
-
-			for (i = 0; i < pixels; i++)
-				*dst++ = clr;
-			end = dst;
-			break;
-		}
-	default:
-		return -ENOSYS;
-	}
+	dst = line;
+	for (i = 0; i < pixels; i++)
+		fill_pixel_and_goto_next(&dst, clr, pbytes, pbytes);
+	end = dst;
 	ret = vidconsole_sync_copy(dev, start, end);
 	if (ret)
 		return ret;
@@ -392,8 +427,9 @@ static int console_putc_xy_2(struct udevice *dev, uint x_frac, uint y, char ch)
 	struct udevice *vid = dev->parent;
 	struct video_priv *vid_priv = dev_get_uclass_priv(vid);
 	int pbytes = VNBYTES(vid_priv->bpix);
-	int i, row, x, linenum, ret;
+	int linenum, x, ret;
 	void *start, *line;
+	uchar *pfont = video_fontdata + (u8)ch * VIDEO_FONT_HEIGHT;
 
 	if (x_frac + VID_TO_POS(vc_priv->x_charsize) > vc_priv->xsize_frac)
 		return -EAGAIN;
@@ -402,52 +438,10 @@ static int console_putc_xy_2(struct udevice *dev, uint x_frac, uint y, char ch)
 	start = vid_priv->fb + linenum * vid_priv->line_length + x * pbytes;
 	line = start;
 
-	for (row = 0; row < VIDEO_FONT_HEIGHT; row++) {
-		unsigned int idx = (u8)ch * VIDEO_FONT_HEIGHT + row;
-		uchar bits = video_fontdata[idx];
+	ret = fill_char_vertically(pfont, &line, vid_priv, FLIPPED_DIRECTION);
+	if (ret)
+		return ret;
 
-		switch (vid_priv->bpix) {
-		case VIDEO_BPP8:
-			if (IS_ENABLED(CONFIG_VIDEO_BPP8)) {
-				uint8_t *dst = line;
-
-				for (i = 0; i < VIDEO_FONT_WIDTH; i++) {
-					*dst-- = (bits & 0x80) ?
-						vid_priv->colour_fg :
-						vid_priv->colour_bg;
-					bits <<= 1;
-				}
-				break;
-			}
-		case VIDEO_BPP16:
-			if (IS_ENABLED(CONFIG_VIDEO_BPP16)) {
-				uint16_t *dst = line;
-
-				for (i = 0; i < VIDEO_FONT_WIDTH; i++) {
-					*dst-- = (bits & 0x80) ?
-						vid_priv->colour_fg :
-						vid_priv->colour_bg;
-					bits <<= 1;
-				}
-				break;
-			}
-		case VIDEO_BPP32:
-			if (IS_ENABLED(CONFIG_VIDEO_BPP32)) {
-				uint32_t *dst = line;
-
-				for (i = 0; i < VIDEO_FONT_WIDTH; i++) {
-					*dst-- = (bits & 0x80) ?
-						vid_priv->colour_fg :
-						vid_priv->colour_bg;
-					bits <<= 1;
-				}
-				break;
-			}
-		default:
-			return -ENOSYS;
-		}
-		line -= vid_priv->line_length;
-	}
 	/* Add 4 bytes to allow for the first pixel writen */
 	ret = vidconsole_sync_copy(dev, start + 4, line);
 	if (ret)
@@ -460,40 +454,15 @@ static int console_set_row_3(struct udevice *dev, uint row, int clr)
 {
 	struct video_priv *vid_priv = dev_get_uclass_priv(dev->parent);
 	int pbytes = VNBYTES(vid_priv->bpix);
-	void *start, *line;
+	void *start, *dst, *line;
 	int i, j, ret;
 
 	start = vid_priv->fb + row * VIDEO_FONT_HEIGHT * pbytes;
 	line = start;
 	for (j = 0; j < vid_priv->ysize; j++) {
-		switch (vid_priv->bpix) {
-		case VIDEO_BPP8:
-			if (IS_ENABLED(CONFIG_VIDEO_BPP8)) {
-				uint8_t *dst = line;
-
-				for (i = 0; i < VIDEO_FONT_HEIGHT; i++)
-					*dst++ = clr;
-				break;
-			}
-		case VIDEO_BPP16:
-			if (IS_ENABLED(CONFIG_VIDEO_BPP16)) {
-				uint16_t *dst = line;
-
-				for (i = 0; i < VIDEO_FONT_HEIGHT; i++)
-					*dst++ = clr;
-				break;
-			}
-		case VIDEO_BPP32:
-			if (IS_ENABLED(CONFIG_VIDEO_BPP32)) {
-				uint32_t *dst = line;
-
-				for (i = 0; i < VIDEO_FONT_HEIGHT; i++)
-					*dst++ = clr;
-				break;
-			}
-		default:
-			return -ENOSYS;
-		}
+		dst = line;
+		for (i = 0; i < VIDEO_FONT_HEIGHT; i++)
+			fill_pixel_and_goto_next(&dst, clr, pbytes, pbytes);
 		line += vid_priv->line_length;
 	}
 	ret = vidconsole_sync_copy(dev, start, line);
@@ -517,7 +486,7 @@ static int console_move_rows_3(struct udevice *dev, uint rowdst, uint rowsrc,
 
 	for (j = 0; j < vid_priv->ysize; j++) {
 		ret = vidconsole_memmove(dev, dst, src,
-					 VIDEO_FONT_HEIGHT * pbytes * count);
+					VIDEO_FONT_HEIGHT * pbytes * count);
 		if (ret)
 			return ret;
 		src += vid_priv->line_length;
@@ -532,58 +501,21 @@ static int console_putc_xy_3(struct udevice *dev, uint x_frac, uint y, char ch)
 	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
 	struct udevice *vid = dev->parent;
 	struct video_priv *vid_priv = dev_get_uclass_priv(vid);
-	uchar *pfont = video_fontdata + (u8)ch * VIDEO_FONT_HEIGHT;
 	int pbytes = VNBYTES(vid_priv->bpix);
-	int i, col, x, ret;
-	int mask = 0x80;
+	int linenum, x, ret;
 	void *start, *line;
+	uchar *pfont = video_fontdata + (u8)ch * VIDEO_FONT_HEIGHT;
 
 	if (x_frac + VID_TO_POS(vc_priv->x_charsize) > vc_priv->xsize_frac)
 		return -EAGAIN;
-	x = vid_priv->ysize - VID_TO_PIXEL(x_frac) - 1;
-	start = vid_priv->fb + x * vid_priv->line_length + y * pbytes;
+	x = y;
+	linenum = vid_priv->ysize - VID_TO_PIXEL(x_frac) - 1;
+	start = vid_priv->fb + linenum * vid_priv->line_length + y * pbytes;
 	line = start;
-	for (col = 0; col < VIDEO_FONT_HEIGHT; col++) {
-		switch (vid_priv->bpix) {
-		case VIDEO_BPP8:
-			if (IS_ENABLED(CONFIG_VIDEO_BPP8)) {
-				uint8_t *dst = line;
 
-				for (i = 0; i < VIDEO_FONT_HEIGHT; i++) {
-					*dst++ = (pfont[i] & mask) ?
-						vid_priv->colour_fg :
-						vid_priv->colour_bg;
-				}
-				break;
-			}
-		case VIDEO_BPP16:
-			if (IS_ENABLED(CONFIG_VIDEO_BPP16)) {
-				uint16_t *dst = line;
-
-				for (i = 0; i < VIDEO_FONT_HEIGHT; i++) {
-					*dst++ = (pfont[i] & mask) ?
-						vid_priv->colour_fg :
-						vid_priv->colour_bg;
-				}
-				break;
-			}
-		case VIDEO_BPP32:
-			if (IS_ENABLED(CONFIG_VIDEO_BPP32)) {
-				uint32_t *dst = line;
-
-				for (i = 0; i < VIDEO_FONT_HEIGHT; i++) {
-					*dst++ = (pfont[i] & mask) ?
-						vid_priv->colour_fg :
-						vid_priv->colour_bg;
-				}
-				break;
-			}
-		default:
-			return -ENOSYS;
-		}
-		line -= vid_priv->line_length;
-		mask >>= 1;
-	}
+	ret = fill_char_horizontally(pfont, &line, vid_priv, NORMAL_DIRECTION);
+	if (ret)
+		return ret;
 	/* Add a line to allow for the first pixels writen */
 	ret = vidconsole_sync_copy(dev, start + vid_priv->line_length, line);
 	if (ret)
@@ -592,20 +524,6 @@ static int console_putc_xy_3(struct udevice *dev, uint x_frac, uint y, char ch)
 	return VID_TO_POS(VIDEO_FONT_WIDTH);
 }
 
-
-static int console_probe_2(struct udevice *dev)
-{
-	struct vidconsole_priv *vc_priv = dev_get_uclass_priv(dev);
-	struct udevice *vid_dev = dev->parent;
-	struct video_priv *vid_priv = dev_get_uclass_priv(vid_dev);
-
-	vc_priv->x_charsize = VIDEO_FONT_WIDTH;
-	vc_priv->y_charsize = VIDEO_FONT_HEIGHT;
-	vc_priv->cols = vid_priv->xsize / VIDEO_FONT_WIDTH;
-	vc_priv->rows = vid_priv->ysize / VIDEO_FONT_HEIGHT;
-
-	return 0;
-}
 
 static int console_probe_1_3(struct udevice *dev)
 {
@@ -651,7 +569,7 @@ U_BOOT_DRIVER(vidconsole_2) = {
 	.name	= "vidconsole2",
 	.id	= UCLASS_VIDEO_CONSOLE,
 	.ops	= &console_ops_2,
-	.probe	= console_probe_2,
+	.probe	= console_probe,
 };
 
 U_BOOT_DRIVER(vidconsole_3) = {
