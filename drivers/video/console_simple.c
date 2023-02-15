@@ -56,6 +56,28 @@ static int console_set_font(struct udevice *dev, struct video_fontdata *fontdata
 	return 0;
 }
 
+static int console_simple_get_font(struct udevice *dev, int seq, struct vidfont_info *info)
+{
+	info->name = (&fonts[seq])->name;
+
+	return 0;
+}
+
+static int console_simple_select_font(struct udevice *dev, const char *name, uint size)
+{
+	console_set_font(dev, &fonts[1]);
+	struct video_fontdata *font;
+
+	for (font = fonts; font->name; font++) {
+		if (!strcmp(name, font->name)) {
+			console_set_font(dev, font);
+			return 0;
+		}
+	};
+	printf("no such font: %s, make sure it's name has <width>x<height> format\n", name);
+	return -ENOENT;
+}
+
 /**
  * Checks if bits per pixel supported.
  *
@@ -352,6 +374,8 @@ struct vidconsole_ops console_ops = {
 	.putc_xy	= console_putc_xy,
 	.move_rows	= console_move_rows,
 	.set_row	= console_set_row,
+	.get_font	= console_simple_get_font,
+	.select_font	= console_simple_select_font,
 };
 
 U_BOOT_DRIVER(vidconsole_normal) = {
@@ -612,18 +636,24 @@ struct vidconsole_ops console_ops_1 = {
 	.putc_xy	= console_putc_xy_1,
 	.move_rows	= console_move_rows_1,
 	.set_row	= console_set_row_1,
+	.get_font	= console_simple_get_font,
+	.select_font	= console_simple_select_font,
 };
 
 struct vidconsole_ops console_ops_2 = {
 	.putc_xy	= console_putc_xy_2,
 	.move_rows	= console_move_rows_2,
 	.set_row	= console_set_row_2,
+	.get_font	= console_simple_get_font,
+	.select_font	= console_simple_select_font,
 };
 
 struct vidconsole_ops console_ops_3 = {
 	.putc_xy	= console_putc_xy_3,
 	.move_rows	= console_move_rows_3,
 	.set_row	= console_set_row_3,
+	.get_font	= console_simple_get_font,
+	.select_font	= console_simple_select_font,
 };
 
 U_BOOT_DRIVER(vidconsole_1) = {
