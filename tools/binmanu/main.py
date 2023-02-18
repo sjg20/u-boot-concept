@@ -141,8 +141,12 @@ def RunBinman(args):
     return ret_code
 
 
-if __name__ == "__main__":
+def start_binman():
     args = cmdline.ParseArgs(sys.argv[1:])
 
     ret_code = RunBinman(args)
     sys.exit(ret_code)
+
+
+if __name__ == "__main__":
+    start_binman()
