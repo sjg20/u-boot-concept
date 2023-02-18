@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "buildman-u-boot"
+name = "buildman"
 version = "0.0.1"
 authors = [
   { name="Simon Glass", email="sjg@chromium.org" },
@@ -21,3 +21,9 @@ classifiers = [
 [project.urls]
 "Homepage" = "https://u-boot.readthedocs.io/en/latest/build/buildman.html"
 "Bug Tracker" = "https://source.denx.de/groups/u-boot/-/issues"
+
+[project.scripts]
+patman = "buildman.__main__:run_buildman"
+
+[tool.setuptools.package-data]
+buildman = ["*.rst"]
