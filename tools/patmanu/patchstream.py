@@ -14,9 +14,9 @@ import queue
 import shutil
 import tempfile
 
-from patman import commit
-from patman import gitutil
-from patman.series import Series
+from patmanu import commit
+from patmanu import gitutil
+from patmanu.series import Series
 from u_boot_pylib import command
 
 # Tags that we detect and remove
