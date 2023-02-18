@@ -2285,6 +2285,7 @@ _pip:
 	scripts/make_pip.sh u_boot_pylib ${PIP_ARGS}
 	scripts/make_pip.sh patmanu ${PIP_ARGS}
 	scripts/make_pip.sh buildman ${PIP_ARGS}
+	scripts/make_pip.sh dtoc ${PIP_ARGS}
 
 help:
 	@echo  'Cleaning targets:'
