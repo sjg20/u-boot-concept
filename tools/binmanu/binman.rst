@@ -95,6 +95,20 @@ Binman uses the following terms:
 - binary - an input binary that goes into the image
 
 
+Installation
+------------
+
+You can install binman using::
+
+   pip install binmanu
+
+The 'u' at the end avoids a conflict with an existing package, indicates that it
+is related to U-Boot, and may suggest a Spanish influence.
+
+If you are using binman within the U-Boot tree, it may be easiest to add a
+symlink from your local `~/.bin` directory to `/path/to/tools/binman/binman`.
+
+
 Relationship to FIT
 -------------------
 
