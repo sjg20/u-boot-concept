@@ -66,7 +66,7 @@ def prepare_output_dir(dirname, preserve=False):
                     f"Cannot make output directory 'outdir': 'err.strerror'")
         tout.debug("Using output directory '%s'" % outdir)
     else:
-        outdir = tempfile.mkdtemp(prefix='binman.')
+        outdir = tempfile.mkdtemp(prefix='binmanu.')
         tout.debug("Using temporary directory '%s'" % outdir)
 
 def _remove_output_dir():

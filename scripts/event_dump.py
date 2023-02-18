@@ -14,7 +14,7 @@ src_path = os.path.dirname(our_path)
 
 sys.path.insert(1, os.path.join(our_path, '../tools'))
 
-from binman import elf
+from binmanu import elf
 from u_boot_pylib import tools
 
 # A typical symbol looks like this:
