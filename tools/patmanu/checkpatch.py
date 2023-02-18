@@ -7,7 +7,7 @@ import os
 import re
 import sys
 
-from patman import gitutil
+from patmanu import gitutil
 from u_boot_pylib import command
 from u_boot_pylib import terminal
 
