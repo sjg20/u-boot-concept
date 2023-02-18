@@ -2284,6 +2284,7 @@ pip pip_test pip_release: _pip
 _pip:
 	scripts/make_pip.sh u_boot_pylib ${PIP_ARGS}
 	scripts/make_pip.sh patmanu ${PIP_ARGS}
+	scripts/make_pip.sh buildman ${PIP_ARGS}
 
 help:
 	@echo  'Cleaning targets:'
