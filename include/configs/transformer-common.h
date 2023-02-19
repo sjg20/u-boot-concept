@@ -64,6 +64,14 @@
 		"else echo SPI flash backup FAILED! Aborting ...;" \
 			"poweroff; fi\0"
 
+#ifdef CONFIG_TRANSFORMER_SPI_BOOT
+#define TRANSFORMER_FLASH_BOOTLOADER \
+	"bootmenu_3=update bootloader=run update_spi\0"
+#else
+#define TRANSFORMER_FLASH_BOOTLOADER \
+	"bootmenu_3=update bootloader=run flash_uboot\0"
+#endif
+
 #define TRANSFORMER_REFRESH_USB \
 	"refresh_usb=usb start; usb reset; usb tree; usb info;" \
 		"pause 'Press ANY key to return to bootmenu...'; bootmenu\0"
@@ -75,7 +83,7 @@
 	"bootmenu_0=mount internal storage=usb start && ums 0 mmc 0; bootmenu\0" \
 	"bootmenu_1=mount external storage=usb start && ums 0 mmc 1; bootmenu\0" \
 	"bootmenu_2=fastboot=echo Starting Fastboot protocol ...; fastboot usb 0; bootmenu\0" \
-	"bootmenu_3=update bootloader=run flash_uboot\0" \
+	TRANSFORMER_FLASH_BOOTLOADER \
 	"bootmenu_4=refresh USB=run refresh_usb\0" \
 	"bootmenu_5=reboot RCM=enterrcm\0" \
 	"bootmenu_6=reboot=reset\0" \
