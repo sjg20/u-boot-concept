@@ -69,6 +69,17 @@ u32 tpm1_continue_self_test(struct udevice *dev)
 	return tpm_sendrecv_command(dev, command, NULL, NULL);
 }
 
+u32 tpm1_auto_start(struct udevice *dev)
+{
+	u32 rc;
+
+	rc = tpm1_startup(dev, TPM_ST_CLEAR);
+	if (rc == TPM_INVALID_POSTINIT)
+		rc = 0;
+
+	return rc;
+}
+
 u32 tpm1_clear_and_reenable(struct udevice *dev)
 {
 	u32 ret;
