@@ -753,3 +753,7 @@ Some images are invalid'''
         lines = self.check_command('-L')
         self.assertIn(b'NO_LTO=1', lines[0])
 
+    def testReproducible(self):
+        """Test that the -r flag works"""
+        lines = self.check_command('-r')
+        self.assertIn(b'SOURCE_DATE_EPOCH=0', lines[0])
