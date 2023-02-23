@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (c) 2016 Google, Inc
+ * (C) Copyright 2023 Dzmitry Sankouski <dsankouski@gmail.com>
  */
 
 #include <common.h>
@@ -9,6 +10,9 @@
 #include <malloc.h>
 #include <video.h>
 #include <video_console.h>
+#if IS_ENABLED(CONFIG_UT_DM)
+#include <cmd/test.h>
+#endif
 
 /* Functions needed by stb_truetype.h */
 static int tt_floor(double val)
@@ -691,7 +695,7 @@ static int truetype_select_font(struct udevice *dev, const char *name,
 		if (!size)
 			size = CONFIG_CONSOLE_TRUETYPE_SIZE;
 		if (!name)
-			name = font_table->name;
+			name = priv->cur_met->font_name;
 
 		met = find_metrics(dev, name, size);
 		if (!met) {
@@ -724,6 +728,7 @@ static int truetype_select_font(struct udevice *dev, const char *name,
 	return 0;
 }
 
+#if IS_ENABLED(CONFIG_UT_DM)
 const char *vidconsole_get_font_size(struct udevice *dev, uint *sizep)
 {
 	struct console_tt_priv *priv = dev_get_priv(dev);
@@ -733,6 +738,7 @@ const char *vidconsole_get_font_size(struct udevice *dev, uint *sizep)
 
 	return met->font_name;
 }
+#endif
 
 static int console_truetype_probe(struct udevice *dev)
 {

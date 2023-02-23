@@ -11,6 +11,7 @@
 #include <video_console.h>
 #include <test/suites.h>
 #include <test/ut.h>
+#include <cmd/test.h>
 
 /* Declare a new fdt test */
 #define FONT_TEST(_name, _flags)	UNIT_TEST(_name, _flags, font_test)
