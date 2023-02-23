@@ -32,7 +32,6 @@ CONFIG_OF_BOARD_SETUP=y
 CONFIG_OF_STDOUT_VIA_ALIAS=y
 CONFIG_TPL_SYS_MONITOR_BASE=0xF8F80000
 CONFIG_BOOTDELAY=10
-CONFIG_USE_BOOTCOMMAND=y
 CONFIG_BOOTCOMMAND="setenv bootargs root=/dev/$bdev rw rootdelay=30 console=$consoledev,$baudrate $othbootargs;usb start;ext2load usb 0:1 $loadaddr /boot/$bootfile;ext2load usb 0:1 $fdtaddr /boot/$fdtfile;bootm $loadaddr - $fdtaddr"
 CONFIG_BOARD_EARLY_INIT_F=y
 CONFIG_BOARD_EARLY_INIT_R=y
@@ -69,11 +68,7 @@ CONFIG_SYS_LOADS_BAUD_CHANGE=y
 CONFIG_CMD_MMC=y
 CONFIG_CMD_PCI=y
 CONFIG_CMD_USB=y
-CONFIG_CMD_MII=y
-CONFIG_CMD_PING=y
 # CONFIG_CMD_HASH is not set
-CONFIG_CMD_EXT2=y
-CONFIG_CMD_FAT=y
 CONFIG_CMD_MTDPARTS=y
 CONFIG_MTDIDS_DEFAULT="nor0=fef000000.nor"
 CONFIG_MTDPARTS_DEFAULT="mtdparts=fef000000.nor:256k(vsc7385-firmware),256k(dtb),4608k(kernel),9984k(fs),1280k(u-boot)"
@@ -159,5 +154,4 @@ CONFIG_DM_SPI=y
 CONFIG_FSL_ESPI=y
 CONFIG_USB=y
 CONFIG_USB_EHCI_FSL=y
-CONFIG_USB_STORAGE=y
 CONFIG_ADDR_MAP=y

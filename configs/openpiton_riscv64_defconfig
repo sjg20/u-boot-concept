@@ -13,11 +13,9 @@ CONFIG_CMODEL_MEDANY=y
 CONFIG_RISCV_SMODE=y
 CONFIG_OF_BOARD_FIXUP=y
 # CONFIG_LOCALVERSION_AUTO is not set
-CONFIG_ENV_VARS_UBOOT_CONFIG=y
 # CONFIG_EXPERT is not set
 # CONFIG_LEGACY_IMAGE_FORMAT is not set
 # CONFIG_ARCH_FIXUP_FDT_MEMORY is not set
-CONFIG_USE_BOOTCOMMAND=y
 CONFIG_BOOTCOMMAND="fdt addr ${fdtcontroladdr}; fdt move ${fdtcontroladdr} ${fdt_addr_r}; load mmc ${mmcdev}:${mmcpart} ${kernel_addr_r} ${image}; booti ${kernel_addr_r} - ${fdt_addr_r}; "
 CONFIG_SYS_CBSIZE=256
 CONFIG_SYS_PBSIZE=284
@@ -47,7 +45,6 @@ CONFIG_CMD_GPT=y
 # CONFIG_CMD_LOADS is not set
 CONFIG_CMD_LSBLK=y
 CONFIG_CMD_MMC=y
-CONFIG_CMD_PART=y
 CONFIG_CMD_READ=y
 # CONFIG_CMD_ECHO is not set
 # CONFIG_CMD_ITEST is not set
@@ -57,9 +54,6 @@ CONFIG_CMD_READ=y
 # CONFIG_CMD_DATE is not set
 # CONFIG_CMD_SLEEP is not set
 CONFIG_CMD_SYSBOOT=y
-CONFIG_CMD_EXT4=y
-CONFIG_CMD_FAT=y
-CONFIG_CMD_FS_GENERIC=y
 # CONFIG_DOS_PARTITION is not set
 CONFIG_OF_EMBED=y
 # CONFIG_NET is not set
