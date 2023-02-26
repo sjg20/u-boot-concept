@@ -559,6 +559,8 @@ void vidconsole_list_fonts(struct udevice *dev)
 
 	for (i = 0, ret = 0; !ret; i++) {
 		ret = vidconsole_get_font(dev, i, &info);
+		if (!info.name)
+			break;
 		if (!ret)
 			printf("%s\n", info.name);
 	}
