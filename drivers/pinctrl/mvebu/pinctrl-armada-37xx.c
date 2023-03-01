@@ -653,40 +653,33 @@ static struct driver armada_37xx_gpio_driver = {
 	.ops	= &armada_37xx_gpio_ops,
 };
 
-static int armada_37xx_gpiochip_register(struct udevice *parent,
-					 struct armada_37xx_pinctrl *info)
+static int armada_37xx_gpiochip_register(struct udevice *parent)
 {
-	const void *blob = gd->fdt_blob;
-	int node = dev_of_offset(parent);
-	struct uclass_driver *drv;
 	struct udevice *dev;
 	int ret = -ENODEV;
-	int subnode;
-	char *name;
+	ofnode subnode;
+	char dev_name[32], *name;
 
-	/* FIXME: Should not need to lookup GPIO uclass */
-	drv = lists_uclass_lookup(UCLASS_GPIO);
-	if (!drv) {
-		puts("Cannot find GPIO driver\n");
-		return -ENOENT;
-	}
-
-	/* FIXME: Use livtree and check the result of device_bind() below */
-	fdt_for_each_subnode(subnode, blob, node) {
-		if (fdtdec_get_bool(blob, subnode, "gpio-controller")) {
+	dev_for_each_subnode(subnode, parent) {
+		if (ofnode_read_bool(subnode, "gpio-controller")) {
 			ret = 0;
 			break;
 		}
-	};
+	}
 	if (ret)
 		return ret;
 
-	name = calloc(1, 32);
-	sprintf(name, "armada-37xx-gpio");
+	strcpy(dev_name, "armada-37xx-gpio");
+	name = strdup(dev_name);
+	if (!name)
+		return -ENOMEM;
 
 	/* Create child device UCLASS_GPIO and bind it */
-	device_bind(parent, &armada_37xx_gpio_driver, name, NULL,
-		    offset_to_ofnode(subnode), &dev);
+	ret = device_bind(parent, &armada_37xx_gpio_driver, name, NULL, subnode,
+			  &dev);
+	if (ret)
+		return ret;
+	device_set_name_alloced(dev);
 
 	return 0;
 }
@@ -738,22 +731,16 @@ static int armada_37xx_pinctrl_probe(struct udevice *dev)
 	if (ret)
 		return ret;
 
-	ret = armada_37xx_gpiochip_register(dev, info);
-	if (ret)
-		return ret;
-
 	return 0;
 }
 
 static int armada_37xx_pinctrl_bind(struct udevice *dev)
 {
-	/*
-	 * Make sure that the pinctrl driver gets probed after binding
-	 * as on A37XX the pinctrl driver is the one that is also
-	 * registering the GPIO one during probe, so if its not probed
-	 * GPIO-s are not registered as well.
-	 */
-	dev_or_flags(dev, DM_FLAG_PROBE_AFTER_BIND);
+	int ret;
+
+	ret = armada_37xx_gpiochip_register(dev);
+	if (ret)
+		return ret;
 
 	return 0;
 }
