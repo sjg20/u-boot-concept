@@ -480,6 +480,7 @@ class Entry_section(Entry):
 
     def CheckEntries(self):
         """Check that entries do not overlap or extend outside the section"""
+        print('checkentries', self._node.path)
         max_size = self.size if self.uncomp_size is None else self.uncomp_size
 
         offset = 0

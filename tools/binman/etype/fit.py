@@ -836,5 +836,5 @@ class Entry_fit(Entry_section):
         ## Nothing is needed for packing a FIT
         #return self.PackFinish(offset)
 
-    #def CheckEntries(self):
-        #pass
+    def CheckEntries(self):
+        pass

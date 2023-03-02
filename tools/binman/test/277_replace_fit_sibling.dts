@@ -5,7 +5,7 @@
 	binman {
 		allow-repack;
 
-		u-boot-dtb {
+		u-boot {
 		};
 
 		blob {
