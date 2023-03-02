@@ -45,7 +45,7 @@ cat $CERT_X509 tispl.bin > tispl.bin_signed
 cp flash.bin out.bin
 ls -l  tispl.bin  tispl.bin_signed
 source/tools/binman/binman ls -i out.bin
-source/tools/binman/binman -D replace -i out.bin -f tispl.bin_signed blob@0x180000
+source/tools/binman/binman -D replace -p -i out.bin -f tispl.bin_signed blob@0x180000
 # dd if=tispl.bin_signed of=out.bin bs=$((0x1000)) seek=$((0x180000/0x1000)) conv=notrunc
 
 rm $TEMP_X509 $CERT_X509

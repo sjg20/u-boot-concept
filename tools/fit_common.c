@@ -28,11 +28,15 @@ int fit_verify_header(unsigned char *ptr, int image_size,
 {
 	int ret;
 
-	if (fdt_check_header(ptr) != EXIT_SUCCESS)
+	ret = fdt_check_header(ptr);
+	if (ret) {
+		fprintf(stderr, "Bad FDT header: %d\n", fdt_strerror(ret));
 		return EXIT_FAILURE;
+	}
 
 	ret = fit_check_format(ptr, IMAGE_SIZE_INVAL);
 	if (ret) {
+		fprintf(stderr, "FDT format failure: %d\n", ret);
 		if (ret != -EADDRNOTAVAIL)
 			return EXIT_FAILURE;
 		fprintf(stderr, "Image contains unit addresses @, this will break signing\n");

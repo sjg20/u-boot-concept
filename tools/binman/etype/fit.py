@@ -434,6 +434,7 @@ class Entry_fit(Entry_section):
         Returns:
             bytes: Contents of the section
         """
+        print('fit BuildSectionData', self._node.path)
         data = self._build_input()
         uniq = self.GetUniqueName()
         input_fname = tools.get_output_filename(f'{uniq}.itb')
@@ -451,6 +452,7 @@ class Entry_fit(Entry_section):
         align = self._fit_props.get('fit,align')
         if align is not None:
             args.update({'align': fdt_util.fdt32_to_cpu(align.value)})
+        print('run', args, output_fname)
         if self.mkimage.run(reset_timestamp=True, output_fname=output_fname,
                             **args) is None:
             # Bintool is missing; just use empty data as the output
@@ -828,3 +830,11 @@ class Entry_fit(Entry_section):
         # missing
         for entry in self._priv_entries.values():
             entry.CheckMissing(missing_list)
+
+    #def Pack(self, offset):
+        #print('fit pack', self._node.path, self._build_done, offset)
+        ## Nothing is needed for packing a FIT
+        #return self.PackFinish(offset)
+
+    #def CheckEntries(self):
+        #pass

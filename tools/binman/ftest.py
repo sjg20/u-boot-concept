@@ -3191,6 +3191,7 @@ class TestFunctional(unittest.TestCase):
         image_fname = tools.get_output_filename('image.bin')
         updated_fname = tools.get_output_filename('image-updated.bin')
         tools.write_file(updated_fname, tools.read_file(image_fname))
+        print('writing')
         image = control.WriteEntry(updated_fname, entry_name, data, decomp,
                                    allow_resize)
         data = control.ReadEntry(updated_fname, entry_name, decomp)
@@ -6444,19 +6445,35 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
 
     def testReplaceFitSibling(self):
         """Test an image with a FIT inside where we replace its sibling"""
-        #new_data = b'w' * 4000
-        new_data = b'w' * (len(COMPRESS_DATA + U_BOOT_DATA) + 1)
+        self._DoReadFileRealDtb('277_replace_fit_sibling.dts')
 
-        data, expected_fdtmap, image = self._RunReplaceCmd('blob',
-            new_data, dts='277_replace_fit_sibling.dts')
-        self.assertEqual(new_data, data)
+        try:
+            tmpdir, updated_fname = self._SetupImageInTmpdir()
 
-        entries = image.GetEntries()
-        self.assertIn('blob', entries)
-        entry = entries['blob']
-        self.assertEqual(len(new_data), entry.size)
-        fentry = entries['fdtmap']
-        self.assertEqual(entry.offset + entry.size, fentry.offset)
+            fname = os.path.join(tmpdir, 'update-blob')
+            expected = b'w' * (len(COMPRESS_DATA + U_BOOT_DATA) + 1)
+            tools.write_file(fname, expected)
+
+            self._DoBinman('replace', '-i', updated_fname, 'blob', '-f', fname)
+            data = tools.read_file(updated_fname)
+            start = len(U_BOOT_DTB_DATA)
+            self.assertEqual(expected, data[start:start + len(expected)])
+            map_fname = os.path.join(tmpdir, 'image-updated.map')
+            self.assertFalse(os.path.exists(map_fname))
+        finally:
+            print('\ntmpdir', tmpdir)
+            #shutil.rmtree(tmpdir)
+
+        #data, expected_fdtmap, image = self._RunReplaceCmd('blob',
+            #new_data, dts='277_replace_fit_sibling.dts')
+        #self.assertEqual(new_data, data)
+
+        #entries = image.GetEntries()
+        #self.assertIn('blob', entries)
+        #entry = entries['blob']
+        #self.assertEqual(len(new_data), entry.size)
+        #fentry = entries['fdtmap']
+        #self.assertEqual(entry.offset + entry.size, fentry.offset)
 
     def testX509Cert(self):
         """Test creating an X509 certificate"""

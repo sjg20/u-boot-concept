@@ -426,13 +426,9 @@ class Entry_section(Entry):
         for entry in self._entries.values():
             entry.ResetForPack()
 
-    def Pack(self, offset):
+    def PackFinish(self, offset):
         """Pack all entries into the section"""
-        self._PackEntries()
-        if self._sort:
-            self._SortEntries()
-        self._extend_entries()
-
+        print('PackFinish', self._node.path, self._build_done, offset)
         if self._build_done:
             self.size = None
         else:
@@ -442,8 +438,19 @@ class Entry_section(Entry):
         self.CheckSize()
 
         offset = super().Pack(offset)
+        print('self.offset', self.offset)
         self.CheckEntries()
         return offset
+
+    def Pack(self, offset):
+        """Pack all entries into the section"""
+        print('pack', self._node.path, self._build_done, offset)
+        self._PackEntries()
+        if self._sort:
+            self._SortEntries()
+        self._extend_entries()
+
+        return self.PackFinish(offset)
 
     def _PackEntries(self):
         """Pack all entries into the section"""
