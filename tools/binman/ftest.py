@@ -6445,8 +6445,9 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
 
     def testReplaceFitSibling(self):
         """Test an image with a FIT inside where we replace its sibling"""
+        fname = TestFunctional._MakeInputFile('once', b'available once')
         self._DoReadFileRealDtb('277_replace_fit_sibling.dts')
-        return
+        os.remove(fname)
 
         try:
             tmpdir, updated_fname = self._SetupImageInTmpdir()
@@ -6455,6 +6456,7 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
             expected = b'w' * (len(COMPRESS_DATA + U_BOOT_DATA) + 1)
             tools.write_file(fname, expected)
 
+            print('\n\nreplace')
             self._DoBinman('replace', '-i', updated_fname, 'blob', '-f', fname)
             data = tools.read_file(updated_fname)
             start = len(U_BOOT_DTB_DATA)

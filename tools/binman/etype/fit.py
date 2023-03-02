@@ -777,6 +777,8 @@ class Entry_fit(Entry_section):
         Args:
             image_pos (int): Position of this entry in the image
         """
+        if self._build_done:
+            return
         super().SetImagePos(image_pos)
 
         # If mkimage is missing we'll have empty data,
@@ -790,6 +792,7 @@ class Entry_fit(Entry_section):
         for image_name, section in self._entries.items():
             path = f"/images/{image_name}"
             node = fdt.GetNode(path)
+            print('path', path)
 
             data_prop = node.props.get("data")
             data_pos = fdt_util.GetInt(node, "data-position")

@@ -52,5 +52,9 @@ rm $TEMP_X509 $CERT_X509
 
 tools/mkimage -G $1 -r -o sha256,rsa4096 -F fit@0x380000.fit
 # currently broken in upstream
-source/tools/binman/binman replace -i out.bin -f fit@0x380000.fit fit@0x380000
+echo
+echo
+echo here
+source/tools/binman/binman ls -i out.bin
+source/tools/binman/binman -D replace -i out.bin -f fit@0x380000.fit fit@0x380000
 # dd if=fit@0x380000.fit of=out.bin bs=$((0x1000)) seek=$((0x380000/0x1000)) conv=notrunc
