@@ -348,6 +348,9 @@ int distro_efi_boot(struct udevice *dev, struct bootflow *bflow)
 	 * At some point we can add a real interface to bootefi so we can call
 	 * this directly. For now, go through the CLI, like distro boot.
 	 */
+	if (!IS_ENABLED(CONFIG_CMDLINE))
+		return log_msg_ret("cmd", -ENOSYS);
+
 	snprintf(cmd, sizeof(cmd), "bootefi %lx %lx", kernel, fdt);
 	if (run_command(cmd, 0))
 		return log_msg_ret("run", -EINVAL);

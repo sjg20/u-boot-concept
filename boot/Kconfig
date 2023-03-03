@@ -346,6 +346,7 @@ endif # VPL
 
 config PXE_UTILS
 	bool
+	depends on CMDLINE
 	select MENU
 	help
 	  Utilities for parsing PXE file formats.
@@ -455,6 +456,7 @@ config BOOTMETH_GLOBAL
 
 config BOOTMETH_DISTRO
 	bool "Bootdev support for distro boot"
+	depends on CMDLINE
 	select PXE_UTILS
 	default y
 	help
