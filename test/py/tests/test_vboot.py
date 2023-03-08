@@ -313,6 +313,13 @@ def test_vboot(u_boot_console, name, sha_algo, padding, sign_options, required,
 
         util.run_and_log(cons, [fit_check_sign, '-f', fit, '-k', dtb])
 
+        # Create a fresh .dtb without the public keys
+        dtc('sandbox-u-boot.dts')
+        # Then add the dev key via the fdt_add_pubkey tool
+        util.run_and_log(cons, [fdt_add_pubkey, '-a', '%s,rsa2048' % sha_algo,
+                                '-k', tmpdir, '-n', 'dev', '-r', 'conf', dtb])
+        util.run_and_log(cons, [fit_check_sign, '-f', fit, '-k', dtb])
+
         if full_test:
             # Make sure that U-Boot checks that the config is in the list of
             # hashed nodes. If it isn't, a security bypass is possible.
@@ -500,6 +507,7 @@ def test_vboot(u_boot_console, name, sha_algo, padding, sign_options, required,
     mkimage = cons.config.build_dir + '/tools/mkimage'
     binman = cons.config.source_dir + '/tools/binman/binman'
     fit_check_sign = cons.config.build_dir + '/tools/fit_check_sign'
+    fdt_add_pubkey = cons.config.build_dir + '/tools/fdt_add_pubkey'
     dtc_args = '-I dts -O dtb -i %s' % tmpdir
     dtb = '%ssandbox-u-boot.dtb' % tmpdir
     sig_node = '/configurations/conf-1/signature'
