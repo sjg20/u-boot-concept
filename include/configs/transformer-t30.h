@@ -15,15 +15,6 @@
 #include "tegra30-common.h"
 #include "transformer-common.h"
 
-#ifdef CONFIG_TRANSFORMER_SPI_BOOT
-#define TRANSFORMER_BUTTON_ACTIONS \
-	"then echo Starting SPI flash update ...;" \
-		"run update_spi; fi;"
-#else
-#define TRANSFORMER_BUTTON_ACTIONS \
-	"then bootmenu; fi;"
-#endif
-
 /* Board-specific serial config */
 #define CFG_SYS_NS16550_COM1		NV_PA_APB_UARTA_BASE
 
@@ -38,7 +29,7 @@
 	"setenv gpio_button " \
 	__stringify(CONFIG_TRANSFORMER_ACTION_GPIO) ";" \
 	"if run check_button;" \
-	TRANSFORMER_BUTTON_ACTIONS \
+	"then bootmenu; fi;" \
 	"run bootcmd_mmc1;" \
 	"run bootcmd_mmc0;" \
 	"poweroff;"
