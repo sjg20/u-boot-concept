@@ -206,7 +206,7 @@
 					memory-map = <0xff800000 0x00800000>;
 					rw-mrc-cache {
 						label = "rw-mrc-cache";
-						reg = <0x006f0000 0x00010000>;
+						reg = <0x005f0000 0x00010000>;
 					};
 				};
 			};
@@ -263,7 +263,7 @@
 
 	fsp {
 		compatible = "intel,baytrail-fsp";
-		fsp,mrc-init-tseg-size = <MRC_INIT_TSEG_SIZE_1MB>;
+		fsp,mrc-init-tseg-size = <MRC_INIT_TSEG_SIZE_2MB>;
 		fsp,mrc-init-mmio-size = <MRC_INIT_MMIO_SIZE_2048MB>;
 		fsp,mrc-init-spd-addr1 = <0xa0>;
 		fsp,mrc-init-spd-addr2 = <0xa2>;

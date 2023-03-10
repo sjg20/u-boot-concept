@@ -42,6 +42,8 @@ static void *fsp_prepare_mrc_cache(void)
 	return cache->data;
 }
 
+#define HERE 	printf("here %s %d\n", __func__, __LINE__);
+
 int arch_fsp_init(void)
 {
 	void *nvs;
@@ -90,6 +92,7 @@ int arch_fsp_init(void)
 		 */
 		fsp_init(stack, boot_mode, nvs);
 	} else {
+	HERE
 		/*
 		 * The second time we enter here, adjust the size of malloc()
 		 * pool before relocation. Given gd->malloc_base was adjusted
@@ -98,6 +101,7 @@ int arch_fsp_init(void)
 		 */
 		gd->malloc_limit += CONFIG_FSP_SYS_MALLOC_F_LEN;
 	}
+	HERE
 
 	return 0;
 }
