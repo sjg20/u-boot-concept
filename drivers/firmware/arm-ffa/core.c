@@ -1042,6 +1042,7 @@ bool ffa_try_discovery(void)
 	return true;
 }
 
+#if !CONFIG_IS_ENABLED(SANDBOX_FFA)
 /**
  * __arm_ffa_fn_smc() - SMC wrapper
  * @args: FF-A ABI arguments to be copied to Xn registers
@@ -1069,6 +1070,7 @@ void __arm_ffa_fn_smc(ffa_value_t args, ffa_value_t *res)
  * The FF-A driver supports the SMCCCv1.2 extended input/output registers.
  * So, the legacy SMC invocation is not used.
  *
+ * In Sandbox mode sandbox_arm_ffa is used to test arm_ffa driver.
  * Return:
  *
  * 0 on success. Otherwise, failure
@@ -1088,6 +1090,30 @@ ARM_SMCCC_FEATURE_DRIVER(arm_ffa) = {
 	.driver_name = FFA_DRV_NAME,
 	.is_supported = ffa_bus_is_supported,
 };
+#else
+/* SANDBOX_FFA */
+
+/**
+ * ffa_bind() - The driver bind function
+ * @dev:	the arm_ffa device
+ * When using sandbox tries to discover the emulated FF-A bus.
+ * Return:
+ *
+ * 0 on success.
+ */
+static int ffa_bind(struct udevice *dev)
+{
+	bool ret;
+
+	log_info("[FFA] binding the device\n");
+
+	ret = ffa_try_discovery();
+	if (ret)
+		return 0;
+	else
+		return -ENODEV;
+}
+#endif
 
 /**
  * ffa_set_smc_conduit() - Set the SMC conduit
@@ -1101,7 +1127,12 @@ ARM_SMCCC_FEATURE_DRIVER(arm_ffa) = {
  */
 static int ffa_set_smc_conduit(void)
 {
-	dscvry_info.invoke_ffa_fn = __arm_ffa_fn_smc;
+#if CONFIG_IS_ENABLED(SANDBOX_FFA)
+		dscvry_info.invoke_ffa_fn = sandbox_arm_ffa_smccc_smc;
+		log_info("[FFA] Using SMC emulation\n");
+#else
+		dscvry_info.invoke_ffa_fn = __arm_ffa_fn_smc;
+#endif
 
 	log_info("[FFA] Conduit is SMC\n");
 
@@ -1246,4 +1277,7 @@ U_BOOT_DRIVER(arm_ffa) = {
 	.remove	= ffa_remove,
 	.unbind	= ffa_unbind,
 	.ops		= &ffa_ops,
+#if CONFIG_IS_ENABLED(SANDBOX_FFA)
+	.bind		= ffa_bind,
+#endif
 };

@@ -1802,6 +1802,10 @@
 		compatible = "u-boot,fwu-mdata-gpt";
 		fwu-mdata-store = <&mmc0>;
 	};
+
+	sandbox_arm_ffa {
+		compatible = "sandbox,arm_ffa";
+	};
 };
 
 #include "sandbox_pmic.dtsi"

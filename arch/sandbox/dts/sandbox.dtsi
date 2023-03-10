@@ -445,6 +445,10 @@
 	thermal {
 		compatible = "sandbox,thermal";
 	};
+
+	sandbox_arm_ffa {
+		compatible = "sandbox,arm_ffa";
+	};
 };
 
 &cros_ec {

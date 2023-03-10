@@ -2,9 +2,9 @@
 
 config ARM_FFA_TRANSPORT
 	bool "Enable Arm Firmware Framework for Armv8-A driver"
-	depends on DM && ARM64
-	select ARM_SMCCC
-	select ARM_SMCCC_FEATURES
+	depends on DM && (ARM64 || SANDBOX)
+	select ARM_SMCCC if !SANDBOX
+	select ARM_SMCCC_FEATURES if !SANDBOX
 	imply CMD_ARMFFA
 	select LIB_UUID
 	select DEVRES
@@ -32,3 +32,8 @@ config ARM_FFA_TRANSPORT
 
 	  For more details about the FF-A driver, please refer to doc/arch/arm64.ffa.rst
 
+config SANDBOX_FFA
+	bool "FF-A Sandbox driver"
+	depends on ARM_FFA_TRANSPORT && SANDBOX
+	help
+	  This emulates the FF-A handling under Sandbox and allows to test the FF-A driver

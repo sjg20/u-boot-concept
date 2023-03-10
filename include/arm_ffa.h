@@ -12,8 +12,9 @@
 #include <linux/printk.h>
 
 /*
- * This header is public. It can be used by clients to access
- * data structures and definitions they need
+ * This header is used to access FF-A data structures
+ * and definitions. The header is used by the FF-A core driver, clients,
+ * sandbox driver, sandbox tests, armffa command
  */
 
 /*

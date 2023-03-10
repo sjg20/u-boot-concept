@@ -64,6 +64,10 @@ CONFIG_ARM_FFA_TRANSPORT
     Enables the FF-A bus driver. Turn this on if you want to use FF-A
     communication.
 
+CONFIG_SANDBOX_FFA
+    Enables FF-A Sandbox driver. This emulates the FF-A ABIs handling under
+    Sandbox and provides functional tests for FF-A.
+
 FF-A ABIs under the hood
 ---------------------------------------
 
