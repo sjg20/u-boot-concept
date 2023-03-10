@@ -6,12 +6,18 @@
  *  Copyright (c) 2017, Intel Corporation. All rights reserved.
  *  Copyright (C) 2020 Linaro Ltd. <sughosh.ganu@linaro.org>
  *  Copyright (C) 2020 Linaro Ltd. <ilias.apalodimas@linaro.org>
+ *  Copyright 2022-2023 Arm Limited and/or its affiliates <open-source-office@arm.com>
+ *    Authors:
+ *      Abdellatif El Khlifi <abdellatif.elkhlifi@arm.com>
  */
 
 #ifndef _MM_COMMUNICATION_H_
 #define _MM_COMMUNICATION_H_
 
 #include <part_efi.h>
+
+/* MM service UUID string (big-endian format). This UUID is  common across all MM SPs */
+#define MM_SP_UUID	"33d532ed-e699-0942-c09c-a798d9cd722d"
 
 /*
  * Interface to the pseudo Trusted Application (TA), which provides a
