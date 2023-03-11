@@ -1068,6 +1068,7 @@ int gpio_request_list_by_name_nodev(ofnode node, const char *list_name,
 	for (count = 0; count < max_count; count++) {
 		ret = _gpio_request_by_name_nodev(node, list_name, count,
 						  &desc[count], flags, true);
+		printf("%s: count=%d, ret=%d\n", __func__, count, ret);
 		if (ret == -ENOENT)
 			break;
 		else if (ret)

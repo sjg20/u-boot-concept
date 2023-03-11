@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2016 Google, Inc
  */
+#define DEBUG
 
 #include <common.h>
 #include <cpu_func.h>

@@ -36,6 +36,7 @@ static int pch9_get_gpio_base(struct udevice *dev, u32 *gbasep)
 	 * while on the Ivybridge the bit0 is used to indicate it is an
 	 * I/O space.
 	 */
+	printf("%s: dev=%s: active=%d\n", __func__, dev->name, device_active(dev));
 	dm_pci_read_config32(dev, GPIO_BASE, &base);
 	if (base == 0x00000000 || base == 0xffffffff) {
 		debug("%s: unexpected BASE value\n", __func__);

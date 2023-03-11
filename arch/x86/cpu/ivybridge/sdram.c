@@ -8,7 +8,7 @@
  * Copyright (C) 2007-2010 coresystems GmbH
  * Copyright (C) 2011 Google Inc.
  */
-
+#define DEBUG
 #include <common.h>
 #include <dm.h>
 #include <errno.h>

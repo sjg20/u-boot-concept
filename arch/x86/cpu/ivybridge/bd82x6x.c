@@ -215,6 +215,8 @@ static int bd82x6x_get_gpio_base(struct udevice *dev, u32 *gbasep)
 	 * an I/O address, not a memory address, so mask that off.
 	 */
 	*gbasep = base & 1 ? base & ~3 : base & ~15;
+	printf("%s: dev=%s: active=%d, base=%x\n", __func__, dev->name,
+	       device_active(dev), base);
 
 	return 0;
 }

@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2012 The Chromium OS Authors.
  */
+#define DEBUG
 
 /*
  * This is a GPIO driver for Intel ICH6 and later. The x86 GPIOs are accessed
@@ -111,6 +112,7 @@ static int gpio_ich6_ofdata_to_platdata(struct udevice *dev)
 	}
 	plat->offset = offset;
 	plat->base_addr = gpiobase + offset;
+	printf("%s: gpiobase=%x, offset=%x\n", __func__, gpiobase, offset);
 	plat->bank_name = fdt_getprop(gd->fdt_blob, dev_of_offset(dev),
 				      "bank-name", NULL);
 
@@ -153,6 +155,7 @@ static int ich6_gpio_request(struct udevice *dev, unsigned offset,
 	 * requested pin.
 	 */
 	tmplong = inl(bank->use_sel);
+	printf("tmplong=%x %x\n", bank->use_sel, tmplong);
 	if (!(tmplong & (1UL << offset))) {
 		debug("%s: gpio %d is reserved for internal use\n", __func__,
 		      offset);

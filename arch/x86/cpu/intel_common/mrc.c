@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2016 Google, Inc
  */
-
+#define DEBUG
 #include <common.h>
 #include <dm.h>
 #include <init.h>
@@ -141,6 +141,8 @@ int mrc_locate_spd(struct udevice *dev, int size, const void **spd_datap)
 	int node;
 	int ret;
 
+	printf("dev %s\n", dev->name);
+// 	dm_dump_tree();
 	ret = gpio_request_list_by_name(dev, "board-id-gpios", desc,
 					ARRAY_SIZE(desc), GPIOD_IS_IN);
 	if (ret < 0) {
