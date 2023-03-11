@@ -1,8 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2002-2005 Roman Zippel <zippel@linux-m68k.org>
  * Copyright (C) 2002-2005 Sam Ravnborg <sam@ravnborg.org>
- *
- * Released under the terms of the GNU GPL v2.0.
  */
 
 #include <stdarg.h>
@@ -75,7 +74,7 @@ void str_printf(struct gstr *gs, const char *fmt, ...)
 }
 
 /* Retrieve value of growable string */
-const char *str_get(struct gstr *gs)
+char *str_get(struct gstr *gs)
 {
 	return gs->s;
 }
