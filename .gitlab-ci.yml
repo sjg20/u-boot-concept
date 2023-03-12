@@ -48,6 +48,13 @@ stages:
   after_script:
     - echo done
 
+#snow test:
+  #variables:
+    #board: "snow"
+    #id: "sjg-snow"
+    #test_spec: "help"
+  #<<: *hwlab_dfn
+
 kevin test:
   variables:
     board: "chromebook_kevin"
