@@ -27,6 +27,10 @@ stages:
     - export PATH=$PATH:~/bin
     - export PATH=/vid/software/devel/ubtest/u-boot-test-hooks/bin:${PATH};
 
+    - if [ -n "${blobs_from}" ]; then
+        cp -v ${blobs_from}/*.bin ${blobs_to}
+      fi
+
     # Do the build
     - ret=0;
       ${BUILDMAN} -o ${OUT} --board ${board} -k -W || ret=$?;
@@ -54,5 +58,7 @@ samus test:
   variables:
     board: "chromebook_samus"
     id: "chromebook_samus_sjg-samus"
+    blobs_from: "/vid/software/devel/samus/bin"
+    blobs_to: "board/google/chromebook_samus/"
     test_spec: "help"
   <<: *hwlab_dfn
