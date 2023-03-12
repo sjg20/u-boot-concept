@@ -18,13 +18,13 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-reset_impl=servo
+reset_impl=cros_servo
 flash_impl=em100
-power_impl=servo
+power_impl=cros_servo
 
-em100_chip=W25Q64FV
-em100_serial=DP033694
+em100_chip=W25Q64CV
+em100_serial=DP025143
 
-servo_name=samus
+cros_servo_name=samus
 
-. ubtest_common
+. common-config.cros-servo-dut-control

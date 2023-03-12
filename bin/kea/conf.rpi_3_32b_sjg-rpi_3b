@@ -30,5 +30,5 @@ ykush_port=1
 
 sdwire_serial=sdwire-18
 
-mount_uuid=B529-9710
+mount_uuid=5B0C-97DF
 mount_point=rpi3_b_boot

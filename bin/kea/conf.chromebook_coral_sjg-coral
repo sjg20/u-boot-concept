@@ -1,4 +1,4 @@
-# Copyright (c) 2016 Konsulko Group. All rights reserved.
+# Copyright 2020 Google LLC
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -18,17 +18,13 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-console_dev=/dev/ttyusb_port1
-reset_impl=ykush
-flash_impl=sdwire_ykush_mount
-power_impl=ykush
+reset_impl=cros_servo
+flash_impl=em100
+power_impl=cros_servo
 
-flash_writer=rpi_mount
+em100_chip=w25q128fw
+em100_serial=DP033694
 
-ykush_serial=YK17698
-ykush_port=1
+cros_servo_name=coral
 
-sdwire_serial=sdwire-18
-
-mount_uuid=5B0C-97DF
-mount_point=rpi3_b_boot
+. common-config.cros-servo-dut-control
