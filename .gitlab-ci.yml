@@ -14,12 +14,6 @@ sjg_rpi3b:
   before_script:
     # Clone uboot-test-hooks
     - git config --global --add safe.directory "${CI_PROJECT_DIR}"
-    - git clone --depth=1 https://github.com/sjg20/uboot-test-hooks.git /tmp/uboot-test-hooks
-    - ln -s kea /tmp/uboot-test-hooks/bin/`hostname`
-    - ln -s kea /tmp/uboot-test-hooks/py/`hostname`
-
-  after_script:
-    - rm -rf /tmp/uboot-test-hooks
 
   script:
     # Environment:
@@ -31,9 +25,7 @@ sjg_rpi3b:
     - export BUILDMAN="${SRC}/tools/buildman/buildman"
     - export OUT="${ROOT}/out"
     - export PATH=$PATH:~/bin
-    - export PATH=$PATH:$HOME/u-boot-test-hooks/bin
-    - export PATH=/tmp/uboot-test-hooks/bin:${PATH};
-    - export PATH=$PATH:/tmp/ykush/bin
+    - export PATH=/vid/software/devel/ubtest/u-boot-test-hooks/bin:${PATH};
     - export board=rpi_3_32b
 
     - pip install -r test/py/requirements.txt
