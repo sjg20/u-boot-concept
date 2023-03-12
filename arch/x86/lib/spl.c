@@ -147,14 +147,14 @@ static int x86_spl_init(void)
 	}
 
 	/* Cache the SPI flash. Otherwise copying the code to RAM takes ages */
-	ret = mtrr_add_request(MTRR_TYPE_WRBACK,
+	mtrr_set_next_var(MTRR_TYPE_WRBACK,
 			       (1ULL << 32) - CONFIG_XIP_ROM_SIZE,
 			       CONFIG_XIP_ROM_SIZE);
-	if (ret) {
-		debug("%s: SPI cache setup failed (err=%d)\n", __func__, ret);
-		return ret;
+	if (_LOG_DEBUG) {
+		ret = mtrr_list(mtrr_get_var_count(), MP_SELECT_BSP);
+		if (ret)
+			printf("mtrr_list failed\n");
 	}
-	mtrr_commit(true);
 # else
 	ret = syscon_get_by_driver_data(X86_SYSCON_PUNIT, &punit);
 	if (ret)
