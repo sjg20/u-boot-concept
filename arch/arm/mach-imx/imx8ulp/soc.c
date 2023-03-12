@@ -685,7 +685,7 @@ static int imx8ulp_check_mu(void *ctx, struct event *event)
 
 	return 0;
 }
-EVENT_SPY(EVT_DM_POST_INIT, imx8ulp_check_mu);
+EVENT_SPY(EVT_DM_POST_INIT_F, imx8ulp_check_mu);
 
 #if defined(CONFIG_SPL_BUILD)
 __weak void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
