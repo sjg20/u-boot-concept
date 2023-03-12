@@ -43,9 +43,16 @@ stages:
   after_script:
     - echo done
 
-qemu_arm test.py:
+rpi3 test:
   variables:
     board: "rpi_3_32b"
     id: "sjg-rpi_3b"
+    test_spec: "help"
+  <<: *hwlab_dfn
+
+samus test:
+  variables:
+    board: "chromebook_samus"
+    id: "chromebook_samus_sjg-samus"
     test_spec: "help"
   <<: *hwlab_dfn
