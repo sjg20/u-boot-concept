@@ -47,6 +47,15 @@ stages:
   after_script:
     - echo done
 
+coral test:
+  variables:
+    board: "chromebook_coral"
+    id: "sjg-coral"
+    blobs_from: "/vid/software/devel/coral/bin"
+    blobs_to: "board/google/chromebook_coral/"
+    test_spec: "help"
+  <<: *hwlab_dfn
+
 link test:
   variables:
     board: "chromebook_link"
