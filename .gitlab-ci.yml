@@ -26,6 +26,7 @@ stages:
     - export OUT="${ROOT}/out"
     - export PATH=$PATH:~/bin
     - export PATH=/vid/software/devel/ubtest/u-boot-test-hooks/bin:${PATH};
+    - export BL31=${bl31}
 
     - if [ -n "${blobs_from}" ]; then
         cp -v ${blobs_from} ${blobs_to};
@@ -51,8 +52,7 @@ kevin test:
   variables:
     board: "chromebook_kevin"
     id: "sjg-kevin"
-    blobs_from: "/vid/software/devel/rk3399/*.elf"
-    blobs_to: "board/google/gru/"
+    bl31: "/vid/software/devel/rk3399/bl31.elf"
     test_spec: "help"
   <<: *hwlab_dfn
 
@@ -60,8 +60,7 @@ bob test:
   variables:
     board: "chromebook_bob"
     id: "sjg-bob"
-    blobs_from: "/vid/software/devel/rk3399/*.elf"
-    blobs_to: "board/google/gru/"
+    bl31: "/vid/software/devel/rk3399/bl31.elf"
     test_spec: "help"
   <<: *hwlab_dfn
 
