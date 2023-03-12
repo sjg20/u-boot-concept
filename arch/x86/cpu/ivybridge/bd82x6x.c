@@ -162,6 +162,9 @@ void pch_iobp_update(struct udevice *dev, u32 address, u32 andvalue,
 
 static int bd82x6x_probe(struct udevice *dev)
 {
+	/* make sure the LPC is inited since it provides the gpio base */
+	uclass_first_device(UCLASS_LPC, &dev);
+
 	if (!(gd->flags & GD_FLG_RELOC))
 		return 0;
 
@@ -269,8 +272,6 @@ U_BOOT_DRIVER(bd82x6x_drv) = {
 	.name		= "bd82x6x",
 	.id		= UCLASS_PCH,
 	.of_match	= bd82x6x_ids,
-#ifndef CONFIG_HAVE_FSP
 	.probe		= bd82x6x_probe,
-#endif
 	.ops		= &bd82x6x_pch_ops,
 };
