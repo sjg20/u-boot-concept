@@ -28,7 +28,7 @@ stages:
     - export PATH=/vid/software/devel/ubtest/u-boot-test-hooks/bin:${PATH};
 
     - if [ -n "${blobs_from}" ]; then
-        cp -v ${blobs_from}/*.bin ${blobs_to};
+        cp -v ${blobs_from} ${blobs_to};
       fi
 
     # Do the build
@@ -47,11 +47,36 @@ stages:
   after_script:
     - echo done
 
+kevin test:
+  variables:
+    board: "chromebook_kevin"
+    id: "sjg-kevin"
+    blobs_from: "/vid/software/devel/rk3399/*.elf"
+    blobs_to: "board/google/gtu/"
+    test_spec: "help"
+  <<: *hwlab_dfn
+
+bob test:
+  variables:
+    board: "chromebook_bob"
+    id: "sjg-bob"
+    blobs_from: "/vid/software/devel/rk3399/*.elf"
+    blobs_to: "board/google/gtu/"
+    test_spec: "help"
+  <<: *hwlab_dfn
+
+jerry test:
+  variables:
+    board: "chromebook_jerry"
+    id: "sjg-jerry"
+    test_spec: "help"
+  <<: *hwlab_dfn
+
 coral test:
   variables:
     board: "chromebook_coral"
     id: "sjg-coral"
-    blobs_from: "/vid/software/devel/coral/bin"
+    blobs_from: "/vid/software/devel/coral/bin/*.bin"
     blobs_to: "board/google/chromebook_coral/"
     test_spec: "help"
   <<: *hwlab_dfn
@@ -60,7 +85,7 @@ link test:
   variables:
     board: "chromebook_link"
     id: "sjg-link"
-    blobs_from: "/vid/software/devel/link/bin"
+    blobs_from: "/vid/software/devel/link/bin/*.bin"
     blobs_to: "board/google/chromebook_link/"
     test_spec: "help"
   <<: *hwlab_dfn
@@ -69,7 +94,7 @@ samus test:
   variables:
     board: "chromebook_samus"
     id: "sjg-samus"
-    blobs_from: "/vid/software/devel/samus/bin"
+    blobs_from: "/vid/software/devel/samus/bin/*.bin"
     blobs_to: "board/google/chromebook_samus/"
     test_spec: "help"
   <<: *hwlab_dfn
