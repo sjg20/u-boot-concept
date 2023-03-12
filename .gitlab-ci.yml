@@ -8,8 +8,7 @@ image: trini/u-boot-gitlab-ci-runner:jammy-20230126-17Feb2023
 stages:
   - hwlab
 
-.hwlab)template: &hwlab_dfn
-sjg_rpi3b:
+.hwlab_template: &hwlab_dfn
   tags: [ 'hwlab' ]
   stage: hwlab
   before_script:
