@@ -28,8 +28,6 @@ sjg_rpi3b:
     - export PATH=/vid/software/devel/ubtest/u-boot-test-hooks/bin:${PATH};
     - export board=rpi_3_32b
 
-    - pip install -r test/py/requirements.txt
-
     # Do the build
     - ret=0;
       ${BUILDMAN} -o ${OUT} --board ${board} -k -W || ret=$?;
