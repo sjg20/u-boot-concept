@@ -28,7 +28,7 @@ stages:
     - export PATH=/vid/software/devel/ubtest/u-boot-test-hooks/bin:${PATH};
 
     - if [ -n "${blobs_from}" ]; then
-        cp -v ${blobs_from}/*.bin ${blobs_to}
+        cp -v ${blobs_from}/*.bin ${blobs_to};
       fi
 
     # Do the build
