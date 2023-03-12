@@ -8,6 +8,7 @@ image: trini/u-boot-gitlab-ci-runner:jammy-20230126-17Feb2023
 stages:
   - hwlab
 
+.hwlab)template: &hwlab_dfn
 sjg_rpi3b:
   tags: [ 'hwlab' ]
   stage: hwlab
@@ -26,7 +27,6 @@ sjg_rpi3b:
     - export OUT="${ROOT}/out"
     - export PATH=$PATH:~/bin
     - export PATH=/vid/software/devel/ubtest/u-boot-test-hooks/bin:${PATH};
-    - export board=rpi_3_32b
 
     # Do the build
     - ret=0;
@@ -38,8 +38,15 @@ sjg_rpi3b:
 
     # Load it on the device
     - echo PATH $PATH
-    - ${SRC}/test/py/test.py -B $board --id sjg-rpi_3b
-        --build-dir ${OUT}/current/$board -k help
+    - ${SRC}/test/py/test.py -B $board --id ${id}
+        --build-dir ${OUT}/current/$board -k ${test_spec}
 
   after_script:
     - echo done
+
+qemu_arm test.py:
+  variables:
+    board: "rpi_3_32b"
+    id: "sjg-rpi_3b"
+    test_spec: "help"
+  <<: *hwlab_dfn
