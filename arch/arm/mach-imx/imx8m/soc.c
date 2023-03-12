@@ -512,7 +512,7 @@ static int imx8m_check_clock(void *ctx, struct event *event)
 
 	return 0;
 }
-EVENT_SPY(EVT_DM_POST_INIT, imx8m_check_clock);
+EVENT_SPY(EVT_DM_POST_INIT_F, imx8m_check_clock);
 
 int arch_cpu_init(void)
 {
