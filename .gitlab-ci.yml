@@ -17,6 +17,8 @@ sjg_rpi3b:
     - git clone --depth=1 https://github.com/sjg20/uboot-test-hooks.git /tmp/uboot-test-hooks
     - ln -s kea /tmp/uboot-test-hooks/bin/`hostname`
     - ln -s kea /tmp/uboot-test-hooks/py/`hostname`
+    - git clone -depth=1 https://github.com/Yepkit/ykush.git /tmp/ykush
+    - make -C /tmp/ykush
 
   after_script:
     - rm -rf /tmp/uboot-test-hooks
@@ -33,6 +35,7 @@ sjg_rpi3b:
     - export PATH=$PATH:~/bin
     - export PATH=$PATH:$HOME/u-boot-test-hooks/bin
     - export PATH=/tmp/uboot-test-hooks/bin:${PATH};
+    - export PATH=$PATH:/tmp/ykush/bin
     - export b=rpi_3_32b
 
     - pip install -r test/py/requirements.txt
