@@ -47,6 +47,15 @@ stages:
   after_script:
     - echo done
 
+link test:
+  variables:
+    board: "chromebook_link"
+    id: "sjg-link"
+    blobs_from: "/vid/software/devel/link/bin"
+    blobs_to: "board/google/chromebook_link/"
+    test_spec: "help"
+  <<: *hwlab_dfn
+
 samus test:
   variables:
     board: "chromebook_samus"
