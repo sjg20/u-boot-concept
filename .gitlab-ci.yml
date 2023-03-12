@@ -18,7 +18,7 @@ sjg_rpi3b:
     - ln -s kea /tmp/uboot-test-hooks/bin/`hostname`
     - ln -s kea /tmp/uboot-test-hooks/py/`hostname`
     - git clone --depth=1 https://github.com/Yepkit/ykush.git /tmp/ykush
-    - cd /tmp/ykush; make
+    - cd /tmp/ykush; make; cd -
 
   after_script:
     - rm -rf /tmp/uboot-test-hooks
