@@ -17,8 +17,6 @@ sjg_rpi3b:
     - git clone --depth=1 https://github.com/sjg20/uboot-test-hooks.git /tmp/uboot-test-hooks
     - ln -s kea /tmp/uboot-test-hooks/bin/`hostname`
     - ln -s kea /tmp/uboot-test-hooks/py/`hostname`
-    - git clone --depth=1 https://github.com/Yepkit/ykush.git /tmp/ykush
-    - cd /tmp/ykush; make; cd -
 
   after_script:
     - rm -rf /tmp/uboot-test-hooks
@@ -36,13 +34,13 @@ sjg_rpi3b:
     - export PATH=$PATH:$HOME/u-boot-test-hooks/bin
     - export PATH=/tmp/uboot-test-hooks/bin:${PATH};
     - export PATH=$PATH:/tmp/ykush/bin
-    - export b=rpi_3_32b
+    - export board=rpi_3_32b
 
     - pip install -r test/py/requirements.txt
 
     # Do the build
     - ret=0;
-      ${BUILDMAN} -o ${OUT} --board $b -k W || ret=$?;
+      ${BUILDMAN} -o ${OUT} --board ${board} -k -W || ret=$?;
       if [[ $ret -ne 0 && $ret -ne 129 ]]; then
         ./tools/buildman/buildman -o ${OUT} -sdeP;
         exit $ret;
@@ -50,8 +48,8 @@ sjg_rpi3b:
 
     # Load it on the device
     - echo PATH $PATH
-    - ${SRC}/test/py/test.py -B $b --id sjg-rpi_3b
-        --build-dir ${OUT}/current/$b -k help
+    - ${SRC}/test/py/test.py -B $board --id sjg-rpi_3b
+        --build-dir ${OUT}/current/$board -k help
 
   after_script:
     - echo done
