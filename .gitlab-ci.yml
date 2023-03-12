@@ -52,7 +52,7 @@ kevin test:
     board: "chromebook_kevin"
     id: "sjg-kevin"
     blobs_from: "/vid/software/devel/rk3399/*.elf"
-    blobs_to: "board/google/gtu/"
+    blobs_to: "board/google/gru/"
     test_spec: "help"
   <<: *hwlab_dfn
 
@@ -61,7 +61,7 @@ bob test:
     board: "chromebook_bob"
     id: "sjg-bob"
     blobs_from: "/vid/software/devel/rk3399/*.elf"
-    blobs_to: "board/google/gtu/"
+    blobs_to: "board/google/gru/"
     test_spec: "help"
   <<: *hwlab_dfn
 
