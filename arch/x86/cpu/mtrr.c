@@ -363,7 +363,7 @@ int mtrr_list(int reg_count, int cpu_select)
 		return log_msg_ret("run", ret);
 	for (i = 0; i < reg_count; i++) {
 		const char *type = "Invalid";
-		uint64_t base, mask, size;
+		u64 base, mask, size;
 		bool valid;
 
 		base = info.mtrr[i].base;
