@@ -34,6 +34,7 @@
 #include <malloc.h>
 #include <pci.h>
 #include <pci_rom.h>
+#include <qemu.h>
 #include <vesa.h>
 #include <video.h>
 #include <acpi/acpi_s3.h>
@@ -185,6 +186,10 @@ static int pci_rom_load(struct pci_rom_header *rom_header,
 		return -ENOMEM;
 	*allocedp = true;
 #endif
+	/* QEMU hacks */
+	if (IS_ENABLED(CONFIG_X86) && IS_ENABLED(CONFIG_QEMU))
+		qemu_x86_chipset_init();
+
 	if (target != rom_header) {
 		ulong start = get_timer(0);
 

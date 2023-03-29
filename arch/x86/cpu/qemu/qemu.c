@@ -7,6 +7,7 @@
 #include <cpu_func.h>
 #include <init.h>
 #include <pci.h>
+#include <qemu.h>
 #include <qfw.h>
 #include <dm/platdata.h>
 #include <asm/irq.h>
@@ -48,7 +49,7 @@ static void enable_pm_ich9(void)
 	pci_write_config32(ICH9_PM, PMBA, CONFIG_ACPI_PM1_BASE | 1);
 }
 
-static void qemu_chipset_init(void)
+void qemu_x86_chipset_init(void)
 {
 	u16 device, xbcs;
 	int pam, i;
@@ -119,7 +120,7 @@ int print_cpuinfo(void)
 
 int arch_early_init_r(void)
 {
-	qemu_chipset_init();
+	qemu_x86_chipset_init();
 
 	return 0;
 }
