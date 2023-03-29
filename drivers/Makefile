@@ -2,6 +2,7 @@
 
 obj-$(CONFIG_$(SPL_TPL_)BLK) += block/
 obj-$(CONFIG_$(SPL_TPL_)BOOTCOUNT_LIMIT) += bootcount/
+obj-$(CONFIG_$(SPL_TPL_)BIOSEMU) += bios_emulator/
 obj-$(CONFIG_$(SPL_TPL_)BUTTON) += button/
 obj-$(CONFIG_$(SPL_TPL_)CACHE) += cache/
 obj-$(CONFIG_$(SPL_TPL_)CLK) += clk/
@@ -78,7 +79,6 @@ ifeq ($(CONFIG_SPL_BUILD)$(CONFIG_TPL_BUILD),)
 obj-y += adc/
 obj-y += ata/
 obj-$(CONFIG_DM_DEMO) += demo/
-obj-$(CONFIG_BIOSEMU) += bios_emulator/
 obj-y += block/
 obj-y += cache/
 obj-$(CONFIG_CPU) += cpu/
