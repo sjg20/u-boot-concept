@@ -33,7 +33,7 @@
  * Returns NULL if decompression failed, or if the decompressed data
  * didn't contain a valid BMP signature.
  */
-#if CONFIG_IS_ENABLED(VIDEO_BMP_GZIP)
+
 struct bmp_image *gunzip_bmp(unsigned long addr, unsigned long *lenp,
 			     void **alloc_addr)
 {
@@ -41,6 +41,8 @@ struct bmp_image *gunzip_bmp(unsigned long addr, unsigned long *lenp,
 	unsigned long len;
 	struct bmp_image *bmp;
 
+	if (!CONFIG_IS_ENABLED(VIDEO_BMP_GZIP))
+		return NULL;
 	/*
 	 * Decompress bmp image
 	 */
@@ -77,14 +79,6 @@ struct bmp_image *gunzip_bmp(unsigned long addr, unsigned long *lenp,
 	*alloc_addr = dst;
 	return bmp;
 }
-#else
-struct bmp_image *gunzip_bmp(unsigned long addr, unsigned long *lenp,
-			     void **alloc_addr)
-{
-	return NULL;
-}
-#endif
-
 
 #ifdef CONFIG_NEEDS_MANUAL_RELOC
 void bmp_reloc(void) {
