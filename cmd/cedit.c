@@ -46,5 +46,5 @@ static char cedit_help_text[] =
 #endif /* CONFIG_SYS_LONGHELP */
 
 U_BOOT_CMD_WITH_SUBCMDS(cedit, "Configuration editor", cedit_help_text,
-	U_BOOT_SUBCMD_MKENT(expo, 5, 1, do_cedit_expo),
+	U_BOOT_SUBCMD_MKENT(expo, 4, 1, do_cedit_expo),
 );

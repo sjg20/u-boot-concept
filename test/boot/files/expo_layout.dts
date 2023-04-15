@@ -5,24 +5,54 @@
 
 /dts-v1/;
 
+#include "expo_ids.h"
+
 / {
 	scenes {
 		main {
-			scene-id = <SCENE1>;
-			title = "title";
+			scene-id = <ID_SCENE1>;
+			title = "main-title";
 			prompt = "prompt";
 
 			cpu-speed {
 				type = "menu";
-				title = "Test menu";
+				prompt = "CPU Speed";
+				id = <ID_SPEED>;
+				items = "100 MHz", "200 MHz";
+				item-ids = <ID_SPEED_100 ID_SPEED_200>;
+			};
 
-				items = "one", "two", "three";
+			date {
+				prompt = "Date";
+				id = <ID_DATE>;
+			};
+
+			time {
+				prompt = "Time";
+				id = <ID_TIME>;
+			};
+
+			boot-order {
+				type = "order";
+				prompt = "Boot Order";
+				items = "Ubuntu 23.04 (mmc0)",
+					"Armbian 6 (usb1)";
+				item-ids = <ID_OS1 ID_OS2>;
+			};
+
+			boot-delay {
+				type = "int";
+				prompt = "Boot Delay";
+			};
+
+			quiet {
+				type = "bool";
 			};
 		};
 	};
 
 	strings {
-		title {
+		main-title {
 			id = <45>;
 			value = "Test Configuration";
 		};
