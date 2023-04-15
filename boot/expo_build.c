@@ -61,12 +61,16 @@ int add_expo_str(void *ldtb, struct expo *exp, const char *name)
 	return ret;
 }
 
-int add_txt_str(void *ldtb, struct scene *scn, const char *name, uint obj_id)
+int add_txt_str(void *ldtb, struct scene *scn, int node, const char *prop,
+		uint obj_id)
 {
-	const char *text;
+	const char *text, *name;
 	uint str_id;
 	int ret;
 
+	name = fdt_getprop(ldtb, node, prop, NULL);
+	if (!name)
+		return log_msg_ret("pro", -ENOENT);
 	ret = lookup_str(ldtb, name, &text);
 	if (ret < 0)
 		return log_msg_ret("lu", ret);
@@ -107,13 +111,13 @@ int expo_build(void *ldtb, struct expo **expp)
 		if (ret < 0)
 			return log_msg_ret("scn", ret);
 
-		ret = add_txt_str(ldtb, scn, "title", 0);
+		ret = add_txt_str(ldtb, scn, node, "title", 0);
 		if (ret < 0)
 			return log_msg_ret("tit", -EINVAL);
 		title_id = ret;
 		scene_title_set(scn, title_id);
 
-		ret = add_txt_str(ldtb, scn, "prompt", 0);
+		ret = add_txt_str(ldtb, scn, node, "prompt", 0);
 		if (ret < 0)
 			return log_msg_ret("pr", ret);
 	}
