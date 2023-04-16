@@ -221,8 +221,8 @@ static int spl_board_load_image(struct spl_image_info *spl_image,
 		 * Also consider using FIT so we get the correct image length
 		 * and parameters.
 		 */
-		memcpy((char *)spl_image->load_addr, (char *)0xfff00000,
-		       0x100000);
+		memcpy((char *)spl_image->load_addr,
+		       (char *)CONFIG_X86_OFFSET_U_BOOT, 0x100000);
 	}
 
 	debug("Loading to %lx\n", spl_image->load_addr);
