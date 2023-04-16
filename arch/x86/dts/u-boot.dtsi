@@ -66,11 +66,7 @@
 		 * that we can actually build an image for coreboot, etc.
 		 * We need a better solution, perhaps a separate Kconfig.
 		 */
-#if CONFIG_SYS_TEXT_BASE == 0x1110000
-		offset = <0xfff00000>;
-#else
-		offset = <CONFIG_SYS_TEXT_BASE>;
-#endif
+		offset = <0xffee0000>;
 	};
 #else
 	u-boot-with-ucode-ptr {
