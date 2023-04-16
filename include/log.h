@@ -101,7 +101,7 @@ int _log(enum log_category_t cat, enum log_level_t level, const char *file,
 #define log_io(_fmt...)		log(LOG_CATEGORY, LOGL_DEBUG_IO, ##_fmt)
 #else
 #define _LOG_MAX_LEVEL LOGL_INFO
-#define log_err(_fmt...)
+#define log_err(_fmt...)	printf(_fmt)	/* errors must be shown */
 #define log_warning(_fmt...)
 #define log_notice(_fmt...)
 #define log_info(_fmt...)
