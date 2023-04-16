@@ -104,7 +104,7 @@ static int x86_spl_init(void)
 		debug("%s: SPI cache setup failed (err=%d)\n", __func__, ret);
 		return ret;
 	}
-	mtrr_commit(true);
+	//mtrr_commit(true);   breaks chromebook_link64
 #endif
 
 	return 0;
