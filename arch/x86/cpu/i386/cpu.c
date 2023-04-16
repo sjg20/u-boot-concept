@@ -530,11 +530,10 @@ int cpu_jump_to_64bit_uboot(ulong target)
 	build_pagetable(pgtable);
 
 	extern long call64_stub_size;
-	ptr = malloc(call64_stub_size);
-	if (!ptr) {
-		printf("Failed to allocate the cpu_call64 stub\n");
-		return -ENOMEM;
-	}
+	/* TODO(sjg@chromium.org): Find a better place for this */
+	ptr = (char *)0x3000000;
+
+	printf("ptr at %p\n", ptr);
 	memcpy(ptr, cpu_call64, call64_stub_size);
 
 	func = (func_t)ptr;
@@ -547,7 +546,8 @@ int cpu_jump_to_64bit_uboot(ulong target)
 	 * Also consider using FIT so we get the correct image length and
 	 * parameters.
 	 */
-	memcpy((char *)target, (char *)0xfff00000, 0x100000);
+	memcpy((char *)target, (char *)0xffef0000, 0x100000);
+	print_buffer(target, (void *)target, 1, 0x20, 0);
 
 	/* Jump to U-Boot */
 	func((ulong)pgtable, 0, (ulong)target);
