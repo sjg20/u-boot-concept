@@ -605,11 +605,10 @@ int cpu_jump_to_64bit_uboot(ulong target)
 	build_pagetable(pgtable);
 
 	extern long call64_stub_size;
-	ptr = malloc(call64_stub_size);
-	if (!ptr) {
-		printf("Failed to allocate the cpu_call64 stub\n");
-		return -ENOMEM;
-	}
+	/* TODO(sjg@chromium.org): Find a better place for this */
+	ptr = (char *)0x3000000;
+
+	printf("ptr at %p\n", ptr);
 	memcpy(ptr, cpu_call64, call64_stub_size);
 
 	func = (func_t)ptr;
