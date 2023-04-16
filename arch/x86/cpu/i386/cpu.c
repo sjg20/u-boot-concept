@@ -547,7 +547,8 @@ int cpu_jump_to_64bit_uboot(ulong target)
 	 * Also consider using FIT so we get the correct image length and
 	 * parameters.
 	 */
-	memcpy((char *)target, (char *)0xfff00000, 0x100000);
+	memcpy((char *)target, (char *)0xffef0000, 0x100000);
+	print_buffer(0xffef0000, (void *)0xffef0000, 1, 0x20, 0);
 
 	/* Jump to U-Boot */
 	func((ulong)pgtable, 0, (ulong)target);
