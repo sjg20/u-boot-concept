@@ -69,7 +69,7 @@
 #if CONFIG_SYS_TEXT_BASE == 0x1110000
 		offset = <0xfff00000>;
 #else
-		offset = <CONFIG_SYS_TEXT_BASE>;
+		offset = <0xffee0000>;
 #endif
 	};
 #else
