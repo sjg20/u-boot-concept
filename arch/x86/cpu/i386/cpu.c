@@ -547,7 +547,6 @@ int cpu_jump_to_64bit_uboot(ulong target)
 	 * parameters.
 	 */
 	memcpy((char *)target, (char *)0xffef0000, 0x100000);
-	print_buffer(target, (void *)target, 1, 0x20, 0);
 
 	/* Jump to U-Boot */
 	func((ulong)pgtable, 0, (ulong)target);
