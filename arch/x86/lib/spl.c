@@ -96,7 +96,7 @@ static int x86_spl_init(void)
 		return ret;
 	}
 #endif
-	preloader_console_init();
+// 	preloader_console_init();
 #if !defined(CONFIG_TPL) && !CONFIG_IS_ENABLED(CPU)
 	ret = print_cpuinfo();
 	if (ret) {
