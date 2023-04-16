@@ -539,6 +539,7 @@ int cpu_jump_to_64bit_uboot(ulong target)
 
 	extern char gdt64[];
 
+	print("ptr at %p\n", ptr);
 	memcpy(ptr, cpu_call64, call64_stub_size);
 	memcpy(gdt, gdt64, 0x100);
 
