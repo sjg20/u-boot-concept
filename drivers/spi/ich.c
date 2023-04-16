@@ -617,7 +617,11 @@ static int ich_get_mmap_bus(struct udevice *bus, ulong *map_basep,
 	pci_dev_t spi_bdf;
 
 #if !CONFIG_IS_ENABLED(OF_PLATDATA)
-	struct pci_child_platdata *pplat = dev_get_parent_platdata(bus);
+	struct pci_child_platdata *pplat;
+
+	if (!device_is_on_pci_bus(bus))
+		return -EFAULT;
+	pplat = dev_get_parent_platdata(bus);
 
 	spi_bdf = pplat->devfn;
 #else
@@ -717,7 +721,7 @@ static int ich_init_controller(struct udevice *dev,
 		ctlr->data = offsetof(struct ich7_spi_regs, spid);
 		ctlr->databytes = sizeof(ich7_spi->spid);
 		ctlr->status = offsetof(struct ich7_spi_regs, spis);
-		ctlr->control = offsetof(struct ich7_spi_regs, spic);
+// 		ctlr->control = offsetof(struct ich7_spi_regs, spic);
 		ctlr->bbar = offsetof(struct ich7_spi_regs, bbar);
 		ctlr->preop = offsetof(struct ich7_spi_regs, preop);
 	} else if (plat->ich_version == ICHV_9) {
