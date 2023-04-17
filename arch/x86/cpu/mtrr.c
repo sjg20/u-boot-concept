@@ -156,6 +156,13 @@ int mtrr_commit(bool do_caches)
 	int ret;
 	int i;
 
+	printf("commit:\n");
+	for (i = 0; i < gd->arch.mtrr_req_count; i++, req++) {
+		printf("%d: type=%d, %08llx  %08llx\n", i, req->type,
+		       req->start, req->size);
+	}
+	req = gd->arch.mtrr_req;
+
 	debug("%s: enabled=%d, count=%d\n", __func__, gd->arch.has_mtrr,
 	      gd->arch.mtrr_req_count);
 	if (!gd->arch.has_mtrr)
@@ -221,6 +228,7 @@ static int get_free_var_mtrr(void)
 	int i;
 
 	vcnt = mtrr_get_var_count();
+	printf("vcnt=%d\n", vcnt);
 
 	/* Identify the first var mtrr which is not valid */
 	for (i = 0; i < vcnt; i++) {
@@ -237,10 +245,13 @@ int mtrr_set_next_var(uint type, uint64_t start, uint64_t size)
 {
 	int mtrr;
 
+	printf("mtrr_set_next_var %lx %x %lx\n", type, (ulong)start,
+	       (ulong)size);
 	if (!is_power_of_2(size))
 		return -EINVAL;
 
 	mtrr = get_free_var_mtrr();
+	printf("free=%d\n", mtrr);
 	if (mtrr < 0)
 		return mtrr;
 
