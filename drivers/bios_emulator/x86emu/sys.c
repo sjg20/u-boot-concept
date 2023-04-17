@@ -44,7 +44,7 @@
 
 /*------------------------- Global Variables ------------------------------*/
 
-X86EMU_sysEnv _X86EMU_env;	/* Global emulator machine state */
+//X86EMU_sysEnv _X86EMU_env;	/* Global emulator machine state */
 X86EMU_intrFuncs _X86EMU_intrTab[256];
 
 int debug_intr;
