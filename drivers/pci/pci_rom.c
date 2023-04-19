@@ -369,7 +369,7 @@ int vesa_setup_video(struct udevice *dev, int (*int15_handler)(void))
 		return -EPERM;
 	}
 	bootstage_start(BOOTSTAGE_ID_ACCUM_LCD, "vesa display");
-	ret = dm_pci_run_vga_bios(dev, int15_handler, PCI_ROM_USE_NATIVE |
+	ret = dm_pci_run_vga_bios(dev, int15_handler, PCI_ROM_EMULATE |
 					PCI_ROM_ALLOW_FALLBACK);
 	bootstage_accum(BOOTSTAGE_ID_ACCUM_LCD);
 	if (ret) {
