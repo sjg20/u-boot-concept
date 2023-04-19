@@ -60,7 +60,7 @@ static u8 BE_model = 0xFC;
 static u8 BE_submodel = 0x00;
 #endif
 
-#undef DEBUG_IO_ACCESS
+#define DEBUG_IO_ACCESS
 
 #ifdef DEBUG_IO_ACCESS
 #define debug_io(fmt, ...)	printf(fmt, ##__VA_ARGS__)
@@ -418,6 +418,7 @@ portable PCI_accessReg function.
 static u32 BE_accessReg(int regOffset, u32 value, int func)
 {
 #ifdef __KERNEL__
+	f
 	int function, device, bus;
 	u8 val8;
 	u16 val16;
@@ -433,9 +434,11 @@ static u32 BE_accessReg(int regOffset, u32 value, int func)
 	bus = (_BE_env.configAddress >> 16) & 0xFF;
 
 	/* Ignore accesses to all devices other than the one we're POSTing */
+	printf("access0\n");
 	if ((function == _BE_env.vgaInfo.function) &&
 	    (device == _BE_env.vgaInfo.device) &&
 	    (bus == _BE_env.vgaInfo.bus)) {
+		printf("access\n");
 		switch (func) {
 		case REG_READ_BYTE:
 			pci_read_config_byte(_BE_env.vgaInfo.pcidev, regOffset,

@@ -269,6 +269,7 @@ void X86API BE_callRealMode(uint seg, uint off, RMREGS * regs, RMSREGS * sregs)
 	M.x86.R_SS = SEG(M.mem_size - 2);
 	M.x86.R_SP = OFF(M.mem_size - 2) + 2;
 
+	printf("exec\n");
 	X86EMU_exec();
 
 	regs->e.cflag = M.x86.R_EFLG & F_CF;

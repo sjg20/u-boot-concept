@@ -48,6 +48,7 @@
 #include <common.h>
 #include <compiler.h>
 #include <bios_emul.h>
+#include <dm.h>
 #include <errno.h>
 #include <log.h>
 #include <malloc.h>
@@ -246,6 +247,7 @@ static void PCI_doBIOSPOST(struct udevice *pcidev, BE_VGAInfo *vga_info,
 	bdf = dm_pci_get_bdf(pcidev);
 	regs.x.ax = (int)PCI_BUS(bdf) << 8 |
 			(int)PCI_DEV(bdf) << 3 | (int)PCI_FUNC(bdf);
+	printf("pcidev=%s, ax=%x\n", pcidev->name, regs.x.ax);
 	/*Setup the X86 emulator for the VGA BIOS*/
 	BE_setVGA(vga_info);
 
@@ -370,6 +372,8 @@ void *PCI_mapBIOSImage(struct udevice *pcidev)
 
 	BIOSImage = dm_pci_bus_to_virt(pcidev, BIOSImageBus, 0, PCI_REGION_TYPE,
 				       PCI_REGION_MEM, MAP_NOCACHE);
+	printf("BIOSImageBAR=%x, BIOSImage=%p, bus=%x\n", BIOSImageBAR,
+	       BIOSImage, BIOSImageBus);
 
 	/*Change the PCI BAR registers to map it onto the bus.*/
 	dm_pci_write_config32(pcidev, BIOSImageBAR, 0);
@@ -462,6 +466,7 @@ static int PCI_postController(struct udevice *pcidev, uchar *bios_rom,
 		printf("videoboot: Video ROM image is invalid!\n");
 		return false;
 	}
+	printf("post\n");
 
 	PCI_doBIOSPOST(pcidev, vga_info, vesa_mode, mode_info);
 
@@ -498,6 +503,7 @@ int biosemu_run(struct udevice *pcidev, uchar *bios_rom, int bios_len,
 		BE_VGAInfo *vga_info, int clean_up, int vesa_mode,
 		struct vesa_state *mode_info)
 {
+	printf("run\n");
 	/*Post all the display controller BIOS'es*/
 	if (!PCI_postController(pcidev, bios_rom, bios_len, vga_info,
 				vesa_mode, mode_info))

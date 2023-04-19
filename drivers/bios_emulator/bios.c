@@ -184,6 +184,7 @@ static void X86API int1A(int unused)
 		break;
 	case 0xB103:		/* Find PCI class code */
 		M.x86.R_AH = DEVICE_NOT_FOUND;
+		printf("find class\n");
 #ifdef __KERNEL__
 		dm_pci_read_config8(_BE_env.vgaInfo.pcidev, PCI_CLASS_PROG,
 				    &interface);
@@ -201,6 +202,7 @@ static void X86API int1A(int unused)
 #endif
 			M.x86.R_AH = SUCCESSFUL;
 			M.x86.R_BX = pciSlot;
+			printf("- success find class\n");
 		}
 		CONDITIONAL_SET_FLAG((M.x86.R_AH != SUCCESSFUL), F_CF);
 		break;
@@ -211,6 +213,7 @@ static void X86API int1A(int unused)
 #ifdef __KERNEL__
 			dm_pci_read_config8(_BE_env.vgaInfo.pcidev, M.x86.R_DI,
 					    &M.x86.R_CL);
+			printf("read8\n");
 #else
 			M.x86.R_CL =
 			    (u8) PCI_accessReg(M.x86.R_DI, 0, PCI_READ_BYTE,
@@ -226,6 +229,7 @@ static void X86API int1A(int unused)
 #ifdef __KERNEL__
 			dm_pci_read_config16(_BE_env.vgaInfo.pcidev, M.x86.R_DI,
 					     &M.x86.R_CX);
+			printf("read16\n");
 #else
 			M.x86.R_CX =
 			    (u16) PCI_accessReg(M.x86.R_DI, 0, PCI_READ_WORD,
@@ -239,6 +243,7 @@ static void X86API int1A(int unused)
 		if (M.x86.R_BX == pciSlot) {
 			M.x86.R_AH = SUCCESSFUL;
 #ifdef __KERNEL__
+			printf("read32\n");
 			dm_pci_read_config32(_BE_env.vgaInfo.pcidev,
 					     M.x86.R_DI, &M.x86.R_ECX);
 #else
@@ -254,6 +259,7 @@ static void X86API int1A(int unused)
 		if (M.x86.R_BX == pciSlot) {
 			M.x86.R_AH = SUCCESSFUL;
 #ifdef __KERNEL__
+			printf("wrte8\n");
 			dm_pci_write_config8(_BE_env.vgaInfo.pcidev,
 					     M.x86.R_DI, M.x86.R_CL);
 #else
@@ -268,6 +274,7 @@ static void X86API int1A(int unused)
 		if (M.x86.R_BX == pciSlot) {
 			M.x86.R_AH = SUCCESSFUL;
 #ifdef __KERNEL__
+			printf("wrte16\n");
 			dm_pci_write_config32(_BE_env.vgaInfo.pcidev,
 					      M.x86.R_DI, M.x86.R_CX);
 #else
@@ -282,6 +289,7 @@ static void X86API int1A(int unused)
 		if (M.x86.R_BX == pciSlot) {
 			M.x86.R_AH = SUCCESSFUL;
 #ifdef __KERNEL__
+			printf("wrte32\n");
 			dm_pci_write_config32(_BE_env.vgaInfo.pcidev,
 					      M.x86.R_DI, M.x86.R_ECX);
 #else
