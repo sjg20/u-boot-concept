@@ -294,6 +294,7 @@ static u32 PCI_findBIOSAddr(struct udevice *pcidev, int *bar)
 {
 	u32 base, size;
 
+	printf("%s\n", __func__);
 	for (*bar = 0x10; *bar <= 0x14; (*bar) += 4) {
 		dm_pci_read_config32(pcidev, *bar, &base);
 		if (!(base & 0x1)) {
@@ -323,6 +324,7 @@ chop off the top bits.
 ****************************************************************************/
 static void PCI_fixupIObase(struct udevice *pcidev, int reg, u32 *base)
 {
+	printf("%s\n", __func__);
 	if ((*base & 0x1) && (*base > 0xFFFE)) {
 		*base &= 0xFFFF;
 		dm_pci_write_config32(pcidev, reg, *base);
@@ -346,6 +348,7 @@ void *PCI_mapBIOSImage(struct udevice *pcidev)
 	int BIOSImageBAR;
 	u8 *BIOSImage;
 
+	printf("%s\n", __func__);
 	/*Save PCI BAR registers that might get changed*/
 	dm_pci_read_config32(pcidev, PCI_ROM_ADDRESS, &saveROMBaseAddress);
 	dm_pci_read_config32(pcidev, PCI_BASE_ADDRESS_0, &saveBaseAddress10);
@@ -399,6 +402,7 @@ Unmaps the BIOS image for the device and restores framebuffer mappings
 ****************************************************************************/
 void PCI_unmapBIOSImage(struct udevice *pcidev, void *BIOSImage)
 {
+	printf("%s\n", __func__);
 	dm_pci_write_config32(pcidev, PCI_ROM_ADDRESS, saveROMBaseAddress);
 	dm_pci_write_config32(pcidev, PCI_BASE_ADDRESS_0, saveBaseAddress10);
 	dm_pci_write_config32(pcidev, PCI_BASE_ADDRESS_1, saveBaseAddress14);
@@ -427,6 +431,7 @@ static int PCI_postController(struct udevice *pcidev, uchar *bios_rom,
 	uchar *copy_of_bios;
 	pci_dev_t bdf;
 
+	printf("%s\n", __func__);
 	if (bios_rom) {
 		copy_of_bios = bios_rom;
 		bios_image_len = bios_len;

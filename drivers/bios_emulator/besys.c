@@ -60,7 +60,7 @@ static u8 BE_model = 0xFC;
 static u8 BE_submodel = 0x00;
 #endif
 
-#define DEBUG_IO_ACCESS
+#undef DEBUG_IO_ACCESS
 
 #ifdef DEBUG_IO_ACCESS
 #define debug_io(fmt, ...)	printf(fmt, ##__VA_ARGS__)
@@ -240,7 +240,7 @@ void X86API BE_wrl(u32 addr, u32 val)
 	}
 }
 
-#if !defined(CONFIG_X86EMU_RAW_IO)
+//#if !defined(CONFIG_X86EMU_RAW_IO)
 
 /* For Non-Intel machines we may need to emulate some I/O port accesses that
  * the BIOS may try to access, such as the PCI config registers.
@@ -418,7 +418,6 @@ portable PCI_accessReg function.
 static u32 BE_accessReg(int regOffset, u32 value, int func)
 {
 #ifdef __KERNEL__
-	f
 	int function, device, bus;
 	u8 val8;
 	u16 val16;
@@ -434,37 +433,35 @@ static u32 BE_accessReg(int regOffset, u32 value, int func)
 	bus = (_BE_env.configAddress >> 16) & 0xFF;
 
 	/* Ignore accesses to all devices other than the one we're POSTing */
-	printf("access0\n");
 	if ((function == _BE_env.vgaInfo.function) &&
 	    (device == _BE_env.vgaInfo.device) &&
 	    (bus == _BE_env.vgaInfo.bus)) {
-		printf("access\n");
 		switch (func) {
 		case REG_READ_BYTE:
-			pci_read_config_byte(_BE_env.vgaInfo.pcidev, regOffset,
-					     &val8);
+			dm_pci_read_config8(_BE_env.vgaInfo.pcidev, regOffset,
+					    &val8);
 			return val8;
 		case REG_READ_WORD:
-			pci_read_config_word(_BE_env.vgaInfo.pcidev, regOffset,
+			dm_pci_read_config16(_BE_env.vgaInfo.pcidev, regOffset,
 					     &val16);
 			return val16;
 		case REG_READ_DWORD:
-			pci_read_config_dword(_BE_env.vgaInfo.pcidev, regOffset,
-					      &val32);
+			dm_pci_read_config32(_BE_env.vgaInfo.pcidev, regOffset,
+					     &val32);
 			return val32;
 		case REG_WRITE_BYTE:
-			pci_write_config_byte(_BE_env.vgaInfo.pcidev, regOffset,
-					      value);
+			dm_pci_write_config8(_BE_env.vgaInfo.pcidev, regOffset,
+					     value);
 
 			return 0;
 		case REG_WRITE_WORD:
-			pci_write_config_word(_BE_env.vgaInfo.pcidev, regOffset,
+			dm_pci_write_config16(_BE_env.vgaInfo.pcidev, regOffset,
 					      value);
 
 			return 0;
 		case REG_WRITE_DWORD:
-			pci_write_config_dword(_BE_env.vgaInfo.pcidev,
-					       regOffset, value);
+			dm_pci_write_config32(_BE_env.vgaInfo.pcidev,
+					      regOffset, value);
 
 			return 0;
 		}
@@ -556,7 +553,7 @@ static void PCI_outp(int port, u32 val, int type)
 	}
 }
 
-#endif
+//#endif
 
 /****************************************************************************
 PARAMETERS:

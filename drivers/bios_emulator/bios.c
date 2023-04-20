@@ -275,7 +275,7 @@ static void X86API int1A(int unused)
 			M.x86.R_AH = SUCCESSFUL;
 #ifdef __KERNEL__
 			printf("wrte16\n");
-			dm_pci_write_config32(_BE_env.vgaInfo.pcidev,
+			dm_pci_write_config16(_BE_env.vgaInfo.pcidev,
 					      M.x86.R_DI, M.x86.R_CX);
 #else
 			PCI_accessReg(M.x86.R_DI, M.x86.R_CX, PCI_WRITE_WORD,
