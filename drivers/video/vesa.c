@@ -18,6 +18,7 @@ static int vesa_video_probe(struct udevice *dev)
 	int ret;
 
 	ret = vesa_setup_video(dev, NULL);
+	printf("ret=%d\n", ret);
 	if (ret)
 		return log_ret(ret);
 

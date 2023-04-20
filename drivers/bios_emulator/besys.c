@@ -240,7 +240,7 @@ void X86API BE_wrl(u32 addr, u32 val)
 	}
 }
 
-//#if !defined(CONFIG_X86EMU_RAW_IO)
+#if !defined(CONFIG_X86EMU_RAW_IO)
 
 /* For Non-Intel machines we may need to emulate some I/O port accesses that
  * the BIOS may try to access, such as the PCI config registers.
@@ -553,7 +553,7 @@ static void PCI_outp(int port, u32 val, int type)
 	}
 }
 
-//#endif
+#endif
 
 /****************************************************************************
 PARAMETERS:

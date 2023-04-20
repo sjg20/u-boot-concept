@@ -261,6 +261,7 @@ static void PCI_doBIOSPOST(struct udevice *pcidev, BE_VGAInfo *vga_info,
 	/* Useful for debugging */
 	if (0)
 		atibios_debug_mode(vga_info, &regs, vesa_mode, mode_info);
+	printf("set mode %x\n", vesa_mode);
 	if (vesa_mode != -1)
 		atibios_set_vesa_mode(&regs, vesa_mode, mode_info);
 #endif

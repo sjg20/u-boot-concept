@@ -22,6 +22,7 @@
  * Copyright 1997 -- 1999 Martin Mares <mj@atrey.karlin.mff.cuni.cz>
  */
 
+#define LOG_DEBUG
 #define LOG_CATEGORY UCLASS_PCI
 
 #include <common.h>
@@ -369,7 +370,7 @@ int vesa_setup_video(struct udevice *dev, int (*int15_handler)(void))
 		return -EPERM;
 	}
 	bootstage_start(BOOTSTAGE_ID_ACCUM_LCD, "vesa display");
-	ret = dm_pci_run_vga_bios(dev, int15_handler, PCI_ROM_EMULATE |
+	ret = dm_pci_run_vga_bios(dev, int15_handler, PCI_ROM_USE_NATIVE |
 					PCI_ROM_ALLOW_FALLBACK);
 	bootstage_accum(BOOTSTAGE_ID_ACCUM_LCD);
 	if (ret) {
@@ -390,7 +391,7 @@ int vesa_setup_video(struct udevice *dev, int (*int15_handler)(void))
 				dev->driver->name);
 		}
 
-		debug("No video mode configured\n");
+		debug("No video mode configured (err=%d)\n", ret);
 		return ret;
 	}
 
