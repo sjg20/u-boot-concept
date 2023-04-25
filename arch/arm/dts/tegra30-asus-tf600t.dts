@@ -11,7 +11,26 @@
 		spi0 = &spi4;
 	};
 
-	/delete-node/ host1x@50000000;
+	host1x@50000000 {
+		dc@54200000 {
+			clocks = <&tegra_car TEGRA30_CLK_DISP1>,
+				 <&tegra_car TEGRA30_CLK_PLL_D_OUT0>;
+
+			rgb {
+				status = "okay";
+
+				nvidia,panel = <&dsia>;
+			};
+		};
+
+		dsia: dsi@54300000 {
+			status = "okay";
+
+			avdd-dsi-csi-supply = <&avdd_dsi_csi>;
+
+			panel = <&panel>;
+		};
+	};
 
 	pmic_i2c: i2c@7000d000 {
 		/* Texas Instruments TPS659110 PMIC */
@@ -59,6 +78,7 @@
 
 	backlight {
 		power-supply = <&vdd_1v2_bl>;
+		pwms = <&pwm 0 71428>;
 	};
 
 	gpio-keys {
@@ -75,7 +95,14 @@
 		};
 	};
 
-	/delete-node/ panel;
+	panel {
+		compatible = "hydis,hv101hd1";
+
+		enable-gpios = <&gpio TEGRA_GPIO(L, 4) GPIO_ACTIVE_HIGH>;
+
+		/delete-property/ power-supply;
+		/delete-node/ display-timings;
+	};
 
 	vdd_usd: regulator-usd {
 		compatible = "regulator-fixed";
