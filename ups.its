@@ -1,0 +1,60 @@
+/dts-v1/;
+
+/ {
+	compatible = "universal-payload";
+	description = "Tianocore 2022-08";
+	upl-version = <0x0100>;	// top 8 bits major, bottom 8 minor
+	images {
+		tianocore {
+			description = "Tianocore edk2-stable202208";
+			type = "binary";
+			arch = "x86_64";
+			compression = "lzma";
+			revision = <0x12345678>;
+			build-type = "debug";
+			capabilities = "smm-rebase", "...";
+			producer = "My company";
+			image-id = "tianocore";
+			data = /incbin/("/scratch/sglass/edk2/Build/UefiPayloadPkgX64/DEBUG_CLANGDWARF/X64/UefiPayloadPkg/UefiPayloadEntry/UniversalPayloadEntry/DEBUG/UniversalPayloadEntry.dll");
+			reloc-start = <0xc0000>;
+			load = <0x120000>;
+			hash-1 {
+				algo = "sha256";
+			};
+		};
+
+		uefi-fv {
+			description = "UEFI Firmware Volume";
+			type = "binary";
+			arch = "x86_64";
+			compression = "lzma";
+			data = /incbin/("/scratch/sglass/edk2/Build/UefiPayloadPkgX64/DEBUG_CLANGDWARF/FV/DXEFV.Fv");
+			hash-1 {
+				algo = "sha256";
+			};
+		};
+		bds-fv {
+			description = "BDS Firmware Volume";
+			type = "binary";
+			arch = "x86_64";
+			compression = "lzma";
+			data = /incbin/("/scratch/sglass/edk2/Build/UefiPayloadPkgX64/DEBUG_CLANGDWARF/FV/BDSFV.Fv");
+			hash-1 {
+				algo = "sha256";
+			};
+		};
+	};
+
+	configurations {
+		default = "conf-1";
+		conf-1 {
+			firmware = "tianocore";
+			loadables = "uefi-fv", "bds-fv";
+			signature {
+				algo = "sha256,rsa2048";
+				key-name-hint = "dev";   // key to sign with
+				sign-images = "firmware", "loadables";
+			};
+		};
+	};
+};
