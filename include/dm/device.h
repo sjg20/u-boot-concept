@@ -749,6 +749,23 @@ int device_get_child_by_of_offset(const struct udevice *parent, int of_offset,
 int device_find_global_by_ofnode(ofnode node, struct udevice **devp);
 
 /**
+ * device_find_global_by_ofnode_driver() - Get a device based on ofnode and driver
+ *
+ * Locates a device by its device tree ofnode and driver currently bound to
+ * it, searching globally throughout the all driver model devices.
+ *
+ * The device is NOT probed
+ *
+ * @node: Device tree ofnode to find
+ * @drv: Driver name bound to device
+ * @devp: Returns pointer to device if found, otherwise this is set to NULL
+ * Return: 0 if OK, -ve on error
+ */
+
+int device_find_global_by_ofnode_driver(ofnode node, const char *drv,
+					struct udevice **devp);
+
+/**
  * device_get_global_by_ofnode() - Get a device based on ofnode
  *
  * Locates a device by its device tree ofnode, searching globally throughout
