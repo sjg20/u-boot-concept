@@ -162,7 +162,7 @@ static int bind_by_node_path(const char *path, const char *drv_name)
 	return 0;
 }
 
-static int unbind_by_node_path(const char *path)
+static int unbind_by_node_path(const char *path, const char *drv_name)
 {
 	struct udevice *dev;
 	int ret;
@@ -174,7 +174,7 @@ static int unbind_by_node_path(const char *path)
 		return -EINVAL;
 	}
 
-	ret = device_find_global_by_ofnode(ofnode, &dev);
+	ret = device_find_global_by_ofnode_driver(ofnode, drv_name, &dev);
 
 	if (!dev || ret) {
 		printf("Cannot find a device with path %s\n", path);
@@ -214,9 +214,9 @@ static int do_bind_unbind(struct cmd_tbl *cmdtp, int flag, int argc,
 			return CMD_RET_USAGE;
 		ret = bind_by_node_path(argv[1], argv[2]);
 	} else if (by_node && !bind) {
-		if (argc != 2)
+		if (argc != 2 && argc != 3)
 			return CMD_RET_USAGE;
-		ret = unbind_by_node_path(argv[1]);
+		ret = unbind_by_node_path(argv[1], argv[2]);
 	} else if (!by_node && bind) {
 		int index = (argc > 2) ? dectoul(argv[2], NULL) : 0;
 
@@ -251,7 +251,7 @@ U_BOOT_CMD(
 U_BOOT_CMD(
 	unbind,	4,	0,	do_bind_unbind,
 	"Unbind a device from a driver",
-	"<node path>\n"
+	"<node path> [<driver>]\n"
 	"unbind <class> <index>\n"
 	"unbind <class> <index> <driver>\n"
 );
