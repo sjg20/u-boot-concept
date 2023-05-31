@@ -37,6 +37,7 @@ Shell commands
    cmd/bootz
    cmd/cat
    cmd/cbsysinfo
+   cmd/cedit
    cmd/cls
    cmd/cmp
    cmd/coninfo
