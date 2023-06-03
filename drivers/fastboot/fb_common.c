@@ -132,6 +132,13 @@ void fastboot_boot(void)
 {
 	char *s;
 
+	/*
+	 * Avoid a build error; this will always have generated a Kconfig
+	 * warning about CMDLINE not being enabled
+	 */
+	if (!IS_ENABLED(CONFIG_CMDLINE))
+		return;
+
 	s = env_get("fastboot_bootcmd");
 	if (s) {
 		run_command(s, CMD_FLAG_ENV);
@@ -170,8 +177,12 @@ void fastboot_handle_boot(int command, bool success)
 
 	switch (command) {
 	case FASTBOOT_COMMAND_BOOT:
-		fastboot_boot();
-		net_set_state(NETLOOP_SUCCESS);
+		if (IS_ENABLED(CONFIG_CMDLINE)) {
+			fastboot_boot();
+			net_set_state(NETLOOP_SUCCESS);
+		} else {
+			net_set_state(NETLOOP_FAIL);
+		}
 		break;
 
 	case FASTBOOT_COMMAND_CONTINUE:
