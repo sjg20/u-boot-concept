@@ -344,11 +344,13 @@ static int do_ihs_axi(struct cmd_tbl *cmdtp, int flag, int argc,
 		return CMD_RET_USAGE;
 }
 
+#if IS_ENABLED(CONFIG_SYS_LONGHELP)
 static char axi_help_text[] =
 	"bus  - show AXI bus info\n"
 	"axi dev [bus] - show or set current AXI bus to bus number [bus]\n"
 	"axi md size addr [# of objects] - read from AXI device at address [addr] and data width [size] (one of 8, 16, 32)\n"
 	"axi mw size addr value [count] - write data [value] to AXI device at address [addr] and data width [size] (one of 8, 16, 32)\n";
+#endif
 
 U_BOOT_CMD(axi, 7, 1, do_ihs_axi,
 	   "AXI sub-system",

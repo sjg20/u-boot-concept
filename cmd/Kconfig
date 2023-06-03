@@ -224,6 +224,7 @@ menu "Boot commands"
 
 config CMD_BOOTD
 	bool "bootd"
+	depends on CMDLINE
 	default y
 	help
 	  Run the command stored in the environment "bootcmd", i.e.
@@ -413,6 +414,7 @@ source lib/efi_selftest/Kconfig
 
 config CMD_BOOTMENU
 	bool "bootmenu"
+	depends on CMDLINE
 	select MENU
 	select CHARSET
 	help
@@ -479,6 +481,7 @@ config CMD_GO
 
 config CMD_RUN
 	bool "run"
+	depends on CMDLINE
 	default y
 	help
 	  Run the command in the given environment variable.
@@ -572,6 +575,7 @@ menu "Environment commands"
 
 config CMD_ASKENV
 	bool "ask for env variable"
+	depends on CMDLINE
 	help
 	  Ask for environment variable
 
@@ -2123,6 +2127,7 @@ config CMD_EFICONFIG
 
 config CMD_EXCEPTION
 	bool "exception - raise exception"
+	depends on CMDLINE
 	depends on ARM || RISCV || SANDBOX || X86
 	help
 	  Enable the 'exception' command which allows to raise an exception.
@@ -2229,6 +2234,7 @@ config CMD_SYSBOOT
 
 config CMD_QFW
 	bool "qfw"
+	depends on CMDLINE
 	select QFW
 	help
 	  This provides access to the QEMU firmware interface.  The main

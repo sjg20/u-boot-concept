@@ -48,6 +48,7 @@ static int do_pcap_clear(struct cmd_tbl *cmdtp, int flag, int argc,
 	return pcap_clear() ? CMD_RET_FAILURE : CMD_RET_SUCCESS;
 }
 
+#if IS_ENABLED(CONFIG_SYS_LONGHELP)
 static char pcap_help_text[] =
 	"- network packet capture\n\n"
 	"pcap\n"
@@ -61,6 +62,7 @@ static char pcap_help_text[] =
 	"\t<addr>: user address to which pcap will be stored (hexedcimal)\n"
 	"\t<max_size>: Maximum size of pcap file (decimal)\n"
 	"\n";
+#endif
 
 U_BOOT_CMD_WITH_SUBCMDS(pcap, "pcap", pcap_help_text,
 			U_BOOT_SUBCMD_MKENT(init, 3, 0, do_pcap_init),

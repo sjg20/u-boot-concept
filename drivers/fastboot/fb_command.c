@@ -346,7 +346,8 @@ static char g_a_cmd_buff[64];
 
 void fastboot_acmd_complete(void)
 {
-	run_command(g_a_cmd_buff, 0);
+	if (IS_ENABLED(CONFIG_CMDLINE))
+		run_command(g_a_cmd_buff, 0);
 }
 
 /**

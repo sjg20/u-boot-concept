@@ -76,9 +76,11 @@ static int do_cyclic_list(struct cmd_tbl *cmdtp, int flag, int argc,
 	return 0;
 }
 
+#if IS_ENABLED(CONFIG_SYS_LONGHELP)
 static char cyclic_help_text[] =
 	"demo <cycletime_ms> <delay_us> - register cyclic demo function\n"
 	"cyclic list - list cyclic functions\n";
+#endif
 
 U_BOOT_CMD_WITH_SUBCMDS(cyclic, "Cyclic", cyclic_help_text,
 	U_BOOT_SUBCMD_MKENT(demo, 3, 1, do_cyclic_demo),

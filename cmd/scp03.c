@@ -41,10 +41,12 @@ int do_scp03_provision(struct cmd_tbl *cmdtp, int flag, int argc,
 	return CMD_RET_SUCCESS;
 }
 
+#if IS_ENABLED(CONFIG_SYS_LONGHELP)
 static char text[] =
 	"provides a command to enable SCP03 and provision the SCP03 keys\n"
 	" enable    - enable SCP03 on the TEE\n"
 	" provision - provision SCP03 on the TEE\n";
+#endif
 
 U_BOOT_CMD_WITH_SUBCMDS(scp03, "Secure Channel Protocol 03 control", text,
 	U_BOOT_SUBCMD_MKENT(enable, 1, 1, do_scp03_enable),

@@ -31,11 +31,13 @@ static struct cmd_tbl cmd_sub[] = {
 			 "", ""),
 };
 
+#if IS_ENABLED(CONFIG_SYS_LONGHELP)
 static char exception_help_text[] =
 	"<ex>\n"
 	"  The following exceptions are available:\n"
 	"  undefined  - undefined instruction\n"
 	"  sigsegv    - illegal memory access\n"
 	;
+#endif
 
 #include <exception.h>

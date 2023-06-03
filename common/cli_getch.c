@@ -8,6 +8,7 @@
 
 #include <common.h>
 #include <cli.h>
+#include <menu.h>
 
 /**
  * enum cli_esc_state_t - indicates what to do with an escape character
@@ -206,4 +207,44 @@ int cli_ch_process(struct cli_ch_state *cch, int ichar)
 	}
 
 	return ichar;
+}
+
+enum bootmenu_key bootmenu_conv_key(int ichar)
+{
+	enum bootmenu_key key;
+
+	switch (ichar) {
+	case '\n':
+		/* enter key was pressed */
+		key = BKEY_SELECT;
+		break;
+	case CTL_CH('c'):
+	case '\e':
+		/* ^C was pressed */
+		key = BKEY_QUIT;
+		break;
+	case CTL_CH('p'):
+		key = BKEY_UP;
+		break;
+	case CTL_CH('n'):
+		key = BKEY_DOWN;
+		break;
+	case CTL_CH('s'):
+		key = BKEY_SAVE;
+		break;
+	case '+':
+		key = BKEY_PLUS;
+		break;
+	case '-':
+		key = BKEY_MINUS;
+		break;
+	case ' ':
+		key = BKEY_SPACE;
+		break;
+	default:
+		key = BKEY_NONE;
+		break;
+	}
+
+	return key;
 }
