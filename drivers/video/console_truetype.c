@@ -123,8 +123,14 @@ struct pos_info {
 /*
  * Allow one for each character on the command line plus one for each newline.
  * This is just an estimate, but it should not be exceeded.
+ *
+ * If there is no cmdline then this will not be used
  */
+#ifdef CONFIG_SYS_CBSIZE
 #define POS_HISTORY_SIZE	(CONFIG_SYS_CBSIZE * 11 / 10)
+#else
+#define POS_HISTORY_SIZE	1
+#endif
 
 /**
  * struct console_tt_metrics - Information about a font / size combination

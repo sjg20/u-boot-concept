@@ -770,7 +770,7 @@ config ARCH_IPQ40XX
 
 config ARCH_KEYSTONE
 	bool "TI Keystone"
-	select CMD_POWEROFF
+	select CMD_POWEROFF if CMDLINE
 	select CPU_V7A
 	select DDR_SPD
 	select SUPPORT_SPL
