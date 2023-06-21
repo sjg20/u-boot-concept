@@ -146,6 +146,11 @@ class Entry_mkimage(Entry):
             else:
                 self._mkimage_entries[entry.name] = entry
 
+    def gen_entries(self):
+        super().gen_entries()
+        for entry in self._mkimage_entries.values():
+            entry.gen_entries()
+
     def ObtainContents(self):
         # Use a non-zero size for any fake files to keep mkimage happy
         # Note that testMkimageImagename() relies on this 'mkimage' parameter
