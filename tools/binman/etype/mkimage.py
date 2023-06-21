@@ -150,6 +150,11 @@ class Entry_mkimage(Entry_section):
             else:
                 self._entries[entry.name] = entry
 
+    def gen_entries(self):
+        super().gen_entries()
+        for entry in self._entries.values():
+            entry.gen_entries()
+
     def BuildSectionData(self, required):
         """Build mkimage entry contents
 
