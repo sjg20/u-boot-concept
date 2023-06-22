@@ -288,10 +288,11 @@ static int tegra_display_probe(const void *blob, struct tegra_lcd_priv *priv,
 	priv->frame_buffer = (u32)default_lcd_base;
 
 	/*
-	 * We halve the rate if DISP1 paret is PLLD, since actual parent
-	 * is plld_out0 which is PLLD divided by 2.
+	 * We halve the rate if DISP1/2 paret is PLLD/D2, since actual parent
+	 * is plld_out0/plld2_out0 which is PLLD/D2 divided by 2.
 	 */
-	if (priv->dc_clk[1] == CLOCK_ID_DISPLAY)
+	if (priv->dc_clk[1] == CLOCK_ID_DISPLAY ||
+	    priv->dc_clk[1] == CLOCK_ID_DISPLAY2)
 		rate /= 2;
 
 	/*
@@ -418,11 +419,15 @@ static int tegra_lcd_of_to_plat(struct udevice *dev)
 	}
 
 	if (!strcmp(priv->panel->name, TEGRA_DSI_A) ||
-	    !strcmp(priv->panel->name, TEGRA_DSI_B)) {
+	    !strcmp(priv->panel->name, TEGRA_DSI_B) ||
+	    !strcmp(priv->panel->name, TEGRA_HDMI)) {
 		struct tegra_dc_plat *dc_plat = dev_get_plat(priv->panel);
 
 		dc_plat->dev = dev;
 		dc_plat->dc = priv->dc;
+
+		if (!strcmp(dev->name, TEGRA_DC_B))
+			dc_plat->pipe = 1;
 	}
 
 	ret = panel_get_display_timing(priv->panel, &priv->timing);
