@@ -7,12 +7,76 @@
 	model = "ASUS Portable AiO P1801-T";
 	compatible = "asus,p1801-t", "nvidia,tegra30";
 
-	/delete-node/ host1x@50000000;
+	aliases {
+		i2c3 = &hdmi_ddc;
+	};
+
+	host1x@50000000 {
+		dc@54200000 {
+			clocks = <&tegra_car TEGRA30_CLK_DISP1>,
+				 <&tegra_car TEGRA30_CLK_PLL_D2_OUT0>;
+
+			rgb {
+				status = "okay";
+
+				nvidia,panel = <&hdmi>;
+			};
+		};
+
+		hdmi: hdmi@54280000 {
+			clocks = <&tegra_car TEGRA30_CLK_HDMI>,
+				 <&tegra_car TEGRA30_CLK_PLL_D2_OUT0>;
+
+			status = "okay";
+
+			hdmi-supply = <&hdmi_5v0_sys>;
+			pll-supply = <&hdmi_1v8_pll>;
+			vdd-supply = <&hdmi_3v3_vdd>;
+
+			/* low: tablet, high: dock */
+			nvidia,hpd-gpio = <&gpio TEGRA_GPIO(H, 4) GPIO_ACTIVE_LOW>;
+			nvidia,ddc-i2c-bus = <&hdmi_ddc>;
+		};
+	};
+
 	/delete-node/ pwm@7000a000;
+
+	hdmi_ddc: i2c@7000c700 {
+		status = "okay";
+		clock-frequency = <33000>;
+	};
 
 	/delete-node/ backlight;
 	/delete-node/ panel;
 
 	/delete-node/ regulator-pnl;
 	/delete-node/ regulator-bl;
+
+	hdmi_3v3_vdd: regulator-vdd {
+		compatible = "regulator-fixed";
+		regulator-name = "hdmi_3v3_vdd";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		regulator-boot-on;
+		gpio = <&gpio TEGRA_GPIO(H, 3) GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+	};
+
+	hdmi_5v0_sys: regulator-hdmi {
+		compatible = "regulator-fixed";
+		regulator-name = "hdmi_5v0_sys";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		regulator-boot-on;
+		gpio = <&gpio TEGRA_GPIO(P, 2) GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+	};
+
+	hdmi_1v8_pll: regulator-pll {
+		compatible = "regulator-fixed";
+		regulator-name = "hdmi_1v8_pll";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+		regulator-boot-on;
+	};
 };
