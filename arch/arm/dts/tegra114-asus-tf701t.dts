@@ -28,7 +28,33 @@
 		reg = <0x80000000 0x80000000>;
 	};
 
+	host1x@50000000 {
+		dc@54200000 {
+			clocks = <&tegra_car TEGRA114_CLK_DISP1>,
+				 <&tegra_car TEGRA114_CLK_PLL_D_OUT0>;
+
+			rgb {
+				status = "okay";
+
+				nvidia,panel = <&dsia>;
+			};
+		};
+
+		dsia: dsi@54300000 {
+			clocks = <&tegra_car TEGRA114_CLK_DSIA>;
+			status = "okay";
+
+			avdd-dsi-csi-supply = <&avdd_dsi_csi>;
+
+			panel = <&panel>;
+		};
+	};
+
 	uartd: serial@70006300 {
+		status = "okay";
+	};
+
+	pwm: pwm@7000a000 {
 		status = "okay";
 	};
 
@@ -46,6 +72,12 @@
 					regulator-name = "vdd_sdmmc";
 					regulator-min-microvolt = <2900000>;
 					regulator-max-microvolt = <2900000>;
+				};
+
+				avdd_dsi_csi: ldo2 {
+					regulator-name = "avdd_dsi_csi";
+					regulator-min-microvolt = <1200000>;
+					regulator-max-microvolt = <1200000>;
 				};
 
 				vddio_usd: ldo9 {
@@ -96,6 +128,16 @@
 		status = "okay";
 	};
 
+	backlight: backlight {
+		compatible = "pwm-backlight";
+
+		enable-gpios = <&gpio TEGRA_GPIO(H, 2) GPIO_ACTIVE_HIGH>;
+		pwms = <&pwm 1 1000000>;
+
+		brightness-levels = <1 35 70 105 140 175 210 255>;
+		default-brightness-level = <5>;
+	};
+
 	/* PMIC has a built-in 32KHz oscillator which is used by PMC */
 	clk32k_in: clock-32k {
 		compatible = "fixed-clock";
@@ -124,5 +166,11 @@
 			gpios = <&gpio TEGRA_GPIO(R, 1) GPIO_ACTIVE_LOW>;
 			linux,code = <KEY_DOWN>;
 		};
+	};
+
+	panel: panel {
+		compatible = "sharp,lq101r1sx01";
+
+		backlight = <&backlight>;
 	};
 };
