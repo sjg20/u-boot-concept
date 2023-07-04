@@ -683,20 +683,24 @@ void clock_early_init(void)
 
 	/*
 	 * PLLD output frequency set to 925Mhz
+	 * PLLD2 output frequency set to 297Mhz
 	 */
 	switch (clock_get_osc_freq()) {
 	case CLOCK_OSC_FREQ_12_0: /* OSC is 12Mhz */
 	case CLOCK_OSC_FREQ_48_0: /* OSC is 48Mhz */
 		clock_set_rate(CLOCK_ID_DISPLAY, 925, 12, 0, 12);
+		clock_set_rate(CLOCK_ID_DISPLAY2, 297, 12, 0, 12);
 		break;
 
 	case CLOCK_OSC_FREQ_26_0: /* OSC is 26Mhz */
 		clock_set_rate(CLOCK_ID_DISPLAY, 925, 26, 0, 12);
+		clock_set_rate(CLOCK_ID_DISPLAY2, 297, 26, 0, 12);
 		break;
 
 	case CLOCK_OSC_FREQ_13_0: /* OSC is 13Mhz */
 	case CLOCK_OSC_FREQ_16_8: /* OSC is 16.8Mhz */
 		clock_set_rate(CLOCK_ID_DISPLAY, 925, 13, 0, 12);
+		clock_set_rate(CLOCK_ID_DISPLAY2, 297, 13, 0, 12);
 		break;
 
 	case CLOCK_OSC_FREQ_19_2:
@@ -715,6 +719,13 @@ void clock_early_init(void)
 	data = (12 << pllinfo->kcp_shift) | (1 << pllinfo->kvco_shift);
 	data |= (1 << PLLD_CLKENABLE) | (1 << pllinfo->lock_ena);
 	writel(data, &clkrst->crc_pll[CLOCK_ID_DISPLAY].pll_misc);
+	udelay(2);
+
+	/* PLLD2_MISC: Set CLKENABLE, CPCON 12, LFCON 1, and enable lock */
+	pllinfo = &tegra_pll_info_table[CLOCK_ID_DISPLAY2];
+	data = (12 << pllinfo->kcp_shift) | (1 << pllinfo->kvco_shift);
+	data |= (1 << PLLD_CLKENABLE) | (1 << pllinfo->lock_ena);
+	writel(data, &clkrst->plld2.pll_misc);
 	udelay(2);
 }
 
