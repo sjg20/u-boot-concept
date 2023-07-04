@@ -178,7 +178,7 @@ class Entry_section(Entry):
         Returns:
             bool: True if the node is a special one, else False
         """
-        return node.name.startswith('hash') or node.name.startswith('signature')
+        return node.name.startswith('hash') or node.name.startswith('signature') or node.name.startswith('cipher')
 
     def ReadNode(self):
         """Read properties from the section node"""
