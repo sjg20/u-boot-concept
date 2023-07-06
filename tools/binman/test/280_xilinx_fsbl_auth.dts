@@ -1,0 +1,23 @@
+// SPDX-License-Identifier: GPL-2.0+
+
+/dts-v1/;
+
+/ {
+	#address-cells = <1>;
+	#size-cells = <1>;
+
+	binman {
+		xilinx-fsbl-auth {
+			filename = "boot.bin";
+
+			psk-filename = "psk.pem";
+			ssk-filename = "ssk.pem";
+			auth-params = "ppk_select=0", "spk_id=0x00000000";
+
+			u-boot-spl-nodtb {
+			};
+			u-boot-spl-dtb {
+			};
+		};
+	};
+};

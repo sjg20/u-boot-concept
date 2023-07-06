@@ -6793,6 +6793,14 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
         data = tools.read_file(image_fname)
         self.assertEqual(b'blob@@@@other', data)
 
+    def testXilinxFsblAuth(self):
+        """Test xilinx_fsbl_auth etype"""
+        data = tools.read_file(self.TestFile("key.key"))
+        self._MakeInputFile("psk.pem", data)
+        self._MakeInputFile("ssk.pem", data)
+        self._SetupPmuFwlElf()
+        self._SetupSplElf()
+        self._DoReadFileRealDtb('280_xilinx_fsbl_auth.dts')
 
     def testSplPubkeyDtb(self):
          """Test u_boot_spl_pubkey_dtb etype"""
