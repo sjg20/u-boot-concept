@@ -2468,3 +2468,56 @@ may be used instead.
 
 
 
+.. _etype_xilinx_fsbl_auth:
+
+Entry: xilinx-fsbl-auth: Authenticated SPL for booting Xilinx ZynqMP devices
+----------------------------------------------------------------------------
+
+Properties / Entry arguments:
+    - auth-params: (Optional) Authentication parameters passed to bootgen
+    - fsbl-config: (Optional) FSBL parameters passed to bootgen
+    - keysrc-enc: (Optional) Key source when using decryption engine
+    - pmufw-filename: Filename of PMU firmware. Default: pmu-firmware.elf
+    - psk-filename: Filename of primary public key
+    - ssk-filename: Filename of secondary public key
+
+The following example builds an authenticated boot image. The fuses of
+the primary public key (ppk) should be fused together with the RSA_EN flag.
+
+Example node::
+
+    spl {
+        filename = "boot.signed.bin";
+
+        xilinx-fsbl-auth {
+            psk-filename = "psk0.pem";
+            ssk-filename = "ssk0.pem";
+            auth-params = "ppk_select=0", "spk_id=0x00000000";
+
+            u-boot-spl-nodtb {
+            };
+            u-boot-spl-pubkey-dtb {
+                algo = "sha384,rsa4096";
+                required = "conf";
+                key-name = "dev";
+            };
+        };
+    };
+
+For testing purposes, e.g. if no RSA_EN should be fused, one could add
+the "bh_auth_enable" flag in the fsbl-config field. This will skip the
+verification of the ppk fuses and boot the image, even if ppk hash is
+invalid.
+
+Example node::
+
+    xilinx-fsbl-auth {
+        psk-filename = "psk0.pem";
+        ssk-filename = "ssk0.pem";
+        ...
+        fsbl-config = "bh_auth_enable";
+        ...
+    };
+
+
+
