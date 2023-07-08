@@ -273,3 +273,12 @@ class Entry_mkimage(Entry_section):
 
     def CheckEntries(self):
         pass
+
+    def ProcessContents(self):
+        # The blob may have changed due to WriteSymbols()
+        ok = super().ProcessContents()
+        data = self.BuildSectionData(True)
+        print('\n** mkimage ProcessContents\n')
+        ok2 = self.ProcessContentsUpdate(data)
+        print('** mkimage ProcessContents done\n')
+        return ok and ok2

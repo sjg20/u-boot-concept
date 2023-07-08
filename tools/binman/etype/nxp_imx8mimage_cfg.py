@@ -31,11 +31,23 @@ class Entry_nxp_imx8mimage_cfg(Entry_section):
         self.rom_version = fdt_util.GetInt(self._node, 'nxp,rom-version')
         self.loader_address = fdt_util.GetInt(self._node, 'nxp,loader-address')
 
-    def ObtainContents(self, fake_size=0, skip_entry=None):
+    def BuildContents(self):
+        print('build')
         _, input_fname, uniq = self.collect_contents_to_file(self._entries.values(), 'input')
         output_fname = tools.get_output_filename('nxp.imx8mimage.cfg.%s' % uniq)
         with open(output_fname, 'w') as outf:
             print('ROM_VERSION v%d' % self.rom_version, file=outf)
             print('BOOT_FROM %s' % self.boot_from, file=outf)
             print('LOADER %s %#x' % (input_fname, self.loader_address), file=outf)
+
+    def ObtainContents(self, fake_size=0, skip_entry=None):
+        self.BuildContents()
         return self.GetEntryContents(skip_entry=skip_entry)
+
+    def ProcessContents(self):
+        # The blob may have changed due to WriteSymbols()
+        self.BuildContents()
+        ok = super().ProcessContents()
+        print('\n** cfg ProcessContents\n')
+        #return ok and self.ProcessContentsUpdate(data)
+        return ok

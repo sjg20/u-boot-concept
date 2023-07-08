@@ -700,8 +700,11 @@ class Entry(object):
         if self.auto_write_symbols and not self.no_write_symbols:
             # Check if we are writing symbols into an ELF file
             is_elf = self.GetDefaultFilename() == self.elf_fname
-            elf.LookupAndWriteSymbols(self.elf_fname, self, section.GetImage(),
-                                      is_elf, self.elf_base_sym)
+            count = elf.LookupAndWriteSymbols(
+                self.elf_fname, self, section.GetImage(),is_elf,
+                self.elf_base_sym)
+            if count:
+                tout.debug(f'{self._node.path}: Write {count} symbols')
 
     def CheckEntries(self):
         """Check that the entry offsets are correct

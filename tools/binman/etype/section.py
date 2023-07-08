@@ -497,7 +497,7 @@ class Entry_section(Entry):
 
     def WriteSymbols(self, section):
         """Write symbol values into binary files for access at run time"""
-        for entry in self._entries.values():
+        for entry in self.GetEntries().values():
             entry.WriteSymbols(self)
 
     def SetCalculatedProperties(self):
