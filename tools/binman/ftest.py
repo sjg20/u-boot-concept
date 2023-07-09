@@ -6812,6 +6812,10 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
         tools.write_file(fname, fit_data)
         out = tools.run('dumpimage', '-l', fname)
 
+    def test_imx8m_image_cfg(self):
+        fit_data = self._DoReadFile('290_imx8m_image.dts')
+
+
 
 if __name__ == "__main__":
     unittest.main()

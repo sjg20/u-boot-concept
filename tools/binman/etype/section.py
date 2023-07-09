@@ -362,6 +362,7 @@ class Entry_section(Entry):
 
         self.Detail('GetData: %d entries, total size %#x' %
                     (len(self._entries), len(section_data)))
+        print('in', b'BSYM' in section_data)
         return self.CompressData(section_data)
 
     def GetPaddedData(self, data=None):
@@ -408,6 +409,7 @@ class Entry_section(Entry):
             data = self.data
         if self._filename:
             tools.write_file(tools.get_output_filename(self._filename), data)
+        print('in', self._node.path, b'BSYM' in data)
         return data
 
     def GetOffsets(self):

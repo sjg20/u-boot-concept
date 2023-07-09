@@ -12,13 +12,12 @@ from binman import elf
 from dtoc import fdt_util
 from u_boot_pylib import tools
 
-class Entry_nxp_imx8mimage_cfg(Entry_section):
+class Entry_nxp_imx8mimage_cfg(Entry_mkimage):
     """NXP i.MX8M imx8mimage .cfg file generator
 
     Properties / Entry arguments:
         - nxp,boot-from - device to boot from (e.g. 'sd')
         - nxp,rom-version - BootROM version ('2' for i.MX8M Nano and Plus)
-
     """
 
     def __init__(self, section, etype, node):
@@ -32,8 +31,8 @@ class Entry_nxp_imx8mimage_cfg(Entry_section):
         self.loader_address = fdt_util.GetInt(self._node, 'nxp,loader-address')
 
     def BuildContents(self):
-        print('build')
         _, input_fname, uniq = self.collect_contents_to_file(self._entries.values(), 'input')
+        print('build', input_fname, b'BSYM' in tools.read_file(input_fname))
         output_fname = tools.get_output_filename('nxp.imx8mimage.cfg.%s' % uniq)
         with open(output_fname, 'w') as outf:
             print('ROM_VERSION v%d' % self.rom_version, file=outf)
@@ -46,8 +45,8 @@ class Entry_nxp_imx8mimage_cfg(Entry_section):
 
     def ProcessContents(self):
         # The blob may have changed due to WriteSymbols()
-        self.BuildContents()
         ok = super().ProcessContents()
         print('\n** cfg ProcessContents\n')
-        #return ok and self.ProcessContentsUpdate(data)
+        self.BuildContents()
+        print('** built\n')
         return ok

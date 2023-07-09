@@ -93,6 +93,7 @@ class Entry_blob(Entry):
         return self._filename
 
     def ProcessContents(self):
+        print('ProcessContents', self._node.path, b'BSYM' in self.data)
         # The blob may have changed due to WriteSymbols()
         return self.ProcessContentsUpdate(self.data)
 

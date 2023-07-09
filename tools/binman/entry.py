@@ -617,6 +617,7 @@ class Entry(object):
                 is null, then None is returned.
         """
         self.Detail('GetData: size %s' % to_hex_size(self.data))
+        print('GetData', self._node.path, b'BSYM' in self.data)
         return self.data
 
     def GetPaddedData(self, data=None):
