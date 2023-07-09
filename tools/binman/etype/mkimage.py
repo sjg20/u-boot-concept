@@ -169,16 +169,14 @@ class Entry_mkimage(Entry_section):
             fnames = []
             uniq = self.GetUniqueName()
             for entry in self._entries.values():
-                entry.ObtainContents(fake_size=fake_size)
-
                 # If this is a section, put the contents in a temporary file.
                 # Otherwise, assume it is a blob and use the pathname
-                if isinstance(entry, Entry_section):
-                    ename = f'mkimage-in-{uniq}-{entry.name}'
-                    fname = tools.get_output_filename(ename)
-                    tools.write_file(fname, entry.data)
-                elif entry._pathname:
-                    fname = entry._pathname
+                ename = f'mkimage-in-{uniq}-{entry.name}'
+                fname = tools.get_output_filename(ename)
+                data = entry.GetData(required)
+                if not data:
+                    return None
+                tools.write_file(fname, data)
                 fnames.append(fname)
             input_fname = ":".join(fnames)
             data = b''
@@ -279,6 +277,7 @@ class Entry_mkimage(Entry_section):
         ok = super().ProcessContents()
         data = self.BuildSectionData(True)
         print('\n** mkimage ProcessContents\n')
+        print(f'found in {self._node.path}', b'BSYM' in data)
         ok2 = self.ProcessContentsUpdate(data)
         print('** mkimage ProcessContents done\n')
         return ok and ok2

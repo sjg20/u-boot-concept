@@ -6812,8 +6812,24 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
         tools.write_file(fname, fit_data)
         out = tools.run('dumpimage', '-l', fname)
 
+    def testMkimageSymbols(self):
+        """Test using mkimage to build an image with symbols in it"""
+        self._SetupSplElf('u_boot_binman_syms')
+        data = self._DoReadFile('290_mkimage_sym.dts')
+        self.assertTrue(b'BSYM' in data)
+
+        self.assertIn(U_BOOT_SPL_DATA, data)
+
     def test_imx8m_image_cfg(self):
-        fit_data = self._DoReadFile('290_imx8m_image.dts')
+        #self.checkSymbols('290_imx8m_image.dts', U_BOOT_SPL_DATA, 0x1c)
+        data = self._DoReadFile('290_imx8m_image.dts')
+        self.assertTrue(b'BSYM' in data)
+
+        self.assertEqual(0, retcode)
+        self.assertIn('image', control.images)
+        image = control.images['image']
+        entries = image.GetEntries()
+        self.assertEqual(5, len(entries))
 
 
 
