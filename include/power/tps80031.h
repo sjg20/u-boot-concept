@@ -1,0 +1,42 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
+/*
+ *  Copyright(C) 2023 Svyatoslav Ryhel <clamor95@gmail.com>
+ */
+
+#ifndef _TPS80031_H_
+#define _TPS80031_H_
+
+#define TPS80031_LDO_NUM		9
+#define TPS80031_SMPS_NUM		5
+
+/* Drivers name */
+#define TPS80031_LDO_DRIVER		"tps80031_ldo"
+#define TPS80031_SMPS_DRIVER		"tps80031_smps"
+
+#define	TPS80031_SMPS_OFFSET		0xE0
+#define	TPS80031_OFFSET_FLAG		BIT(3)
+
+#define	TPS80031_REGULATOR_STATUS_MASK	0x3
+#define	TPS80031_REGULATOR_MODE_ON	0x1
+
+#define TPS80031_SMPS_VOLT_MASK		0x3F
+#define TPS80031_SMPS_VOLT_MAX_HEX	0x39
+#define TPS80031_SMPS_VOLT_MAX		1400000
+#define TPS80031_SMPS_VOLT_BASE		600000
+#define TPS80031_SMPS_VOLT_BASE_OFFSET	700000
+
+#define TPS80031_LDO_VOLT_MASK		0x3F
+#define TPS80031_LDO_VOLT_MAX_HEX	0x18
+#define TPS80031_LDO_VOLT_MIN_HEX	0x01
+#define TPS80031_LDO_VOLT_MAX		3360000
+#define TPS80031_LDO_VOLT_MIN		1018000
+#define TPS80031_LDO_VOLT_BASE		916000
+
+/* register groups */
+enum {
+	CTRL,
+	VOLT,
+	OFFSET,
+};
+
+#endif /* _TPS80031_H_ */
