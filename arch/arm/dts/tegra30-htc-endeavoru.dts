@@ -66,13 +66,24 @@
 			compatible = "ti,tps80032";
 			reg = <0x48>;
 
+			ti,system-power-controller;
+
 			regulators {
+				vdd_1v8_vio: smps5 {
+					regulator-name = "vdd_1v8_gen";
+					regulator-min-microvolt = <1800000>;
+					regulator-max-microvolt = <1800000>;
+					regulator-always-on;
+					regulator-boot-on;
+				};
+
 				/* DSI VDD */
 				avdd_dsi_csi: ldo1 {
 					regulator-name = "avdd_dsi_csi";
 					regulator-min-microvolt = <1200000>;
 					regulator-max-microvolt = <1200000>;
 					regulator-always-on;
+					regulator-boot-on;
 				};
 			};
 		};
@@ -82,6 +93,9 @@
 		status = "okay";
 		bus-width = <8>;
 		non-removable;
+
+		vmmc-supply = <&vdd_2v85_sdmmc>;
+		vqmmc-supply = <&vdd_1v8_vio>;
 	};
 
 	micro_usb: usb@7d000000 {
@@ -161,6 +175,15 @@
 		regulator-min-microvolt = <1800000>;
 		regulator-max-microvolt = <1800000>;
 		gpio = <&gpio TEGRA_GPIO(E, 5) GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+	};
+
+	vdd_2v85_sdmmc: regulator-emmc {
+		compatible = "regulator-fixed";
+		regulator-name = "v_sdmmc_2v85";
+		regulator-min-microvolt = <2850000>;
+		regulator-max-microvolt = <2850000>;
+		gpio = <&gpio TEGRA_GPIO(M, 3) GPIO_ACTIVE_HIGH>;
 		enable-active-high;
 	};
 };
