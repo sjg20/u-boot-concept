@@ -91,6 +91,14 @@
 					regulator-boot-on;
 				};
 
+				avdd_3v3_periph: ldo2 {
+					regulator-name = "avdd_usb";
+					regulator-min-microvolt = <3300000>;
+					regulator-max-microvolt = <3300000>;
+					regulator-always-on;
+					regulator-boot-on;
+				};
+
 				vdd_usd: ldo3 {
 					regulator-name = "vdd_sdmmc3";
 					regulator-min-microvolt = <3000000>;
