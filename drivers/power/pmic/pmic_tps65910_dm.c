@@ -11,10 +11,16 @@
 #include <power/regulator.h>
 #include <power/tps65910_pmic.h>
 
-static const struct pmic_child_info pmic_children_info[] = {
+static const struct pmic_child_info tps65910_children_info[] = {
 	{ .prefix = "ldo_", .driver = TPS65910_LDO_DRIVER },
 	{ .prefix = "buck_", .driver = TPS65910_BUCK_DRIVER },
 	{ .prefix = "boost_", .driver = TPS65910_BOOST_DRIVER },
+	{ },
+};
+
+static const struct pmic_child_info tps65911_children_info[] = {
+	{ .prefix = "ldo", .driver = TPS65911_LDO_DRIVER },
+	{ .prefix = "vdd", .driver = TPS65911_VDD_DRIVER },
 	{ },
 };
 
@@ -51,6 +57,7 @@ static int pmic_tps65910_bind(struct udevice *dev)
 {
 	ofnode regulators_node;
 	int children;
+	int type = dev_get_driver_data(dev);
 
 	regulators_node = dev_read_subnode(dev, "regulators");
 	if (!ofnode_valid(regulators_node)) {
@@ -58,7 +65,19 @@ static int pmic_tps65910_bind(struct udevice *dev)
 		return -EINVAL;
 	}
 
-	children = pmic_bind_children(dev, regulators_node, pmic_children_info);
+	switch (type) {
+	case TPS65910:
+		children = pmic_bind_children(dev, regulators_node,
+					      tps65910_children_info);
+		break;
+	case TPS65911:
+		children = pmic_bind_children(dev, regulators_node,
+					      tps65911_children_info);
+		break;
+	default:
+		log_err("unknown PMIC type\n");
+	}
+
 	if (!children)
 		debug("%s has no children (regulators)\n", dev->name);
 
@@ -82,7 +101,8 @@ static struct dm_pmic_ops pmic_tps65910_ops = {
 };
 
 static const struct udevice_id pmic_tps65910_match[] = {
-	{ .compatible = "ti,tps65910" },
+	{ .compatible = "ti,tps65910", .data = TPS65910 },
+	{ .compatible = "ti,tps65911", .data = TPS65911 },
 	{ /* sentinel */ }
 };
 
