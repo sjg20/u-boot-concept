@@ -12,6 +12,7 @@
 /* Drivers name */
 #define MAX77663_LDO_DRIVER		"max77663_ldo"
 #define MAX77663_SD_DRIVER		"max77663_sd"
+#define MAX77663_GPIO_DRIVER		"max77663_gpio"
 
 #define	MAX77663_SD_STATUS_MASK		0x30
 
