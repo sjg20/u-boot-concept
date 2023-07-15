@@ -21,7 +21,7 @@
 
 #define AXP209_I2C_ADDR			0x34
 
-#define AXP305_I2C_ADDR			0x36
+#define AXP305_I2C_ADDR			0x36 /* AXP305 and AXP313A */
 
 #define AXP221_CHIP_ADDR		0x68
 
@@ -32,7 +32,7 @@ static int pmic_i2c_address(void)
 {
 	if (IS_ENABLED(CONFIG_AXP152_POWER))
 		return AXP152_I2C_ADDR;
-	if (IS_ENABLED(CONFIG_AXP305_POWER))
+	if (IS_ENABLED(CONFIG_AXP305_POWER) || IS_ENABLED(CONFIG_AXP313A_POWER))
 		return AXP305_I2C_ADDR;
 
 	/* Other AXP2xx and AXP8xx variants */
