@@ -16,6 +16,7 @@
 #include <dm/device-internal.h>
 #include <dm/uclass-internal.h>
 #include <power/pmic.h>
+#include <power/regulator.h>
 #include <linux/ctype.h>
 
 #if CONFIG_IS_ENABLED(PMIC_CHILDREN)
@@ -198,9 +199,18 @@ static int pmic_pre_probe(struct udevice *dev)
 	return 0;
 }
 
+static int pmic_post_probe(struct udevice *dev)
+{
+	struct udevice *child;
+
+	device_foreach_child_probe(child, dev);
+	return 0;
+}
+
 UCLASS_DRIVER(pmic) = {
 	.id		= UCLASS_PMIC,
 	.name		= "pmic",
 	.pre_probe	= pmic_pre_probe,
+	.post_probe	= pmic_post_probe,
 	.per_device_auto	= sizeof(struct uc_pmic_priv),
 };
