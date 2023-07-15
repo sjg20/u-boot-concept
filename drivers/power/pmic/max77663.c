@@ -13,6 +13,7 @@
 #include <power/regulator.h>
 #include <power/max77663.h>
 #include <dm/device.h>
+#include <dm/lists.h>
 
 static const struct pmic_child_info pmic_children_info[] = {
 	{ .prefix = "ldo", .driver = MAX77663_LDO_DRIVER },
@@ -43,8 +44,9 @@ static int max77663_read(struct udevice *dev, uint reg, uint8_t *buff, int len)
 
 static int max77663_bind(struct udevice *dev)
 {
+	struct udevice *gpio_dev;
 	ofnode regulators_node;
-	int children;
+	int children, ret;
 
 	regulators_node = dev_read_subnode(dev, "regulators");
 	if (!ofnode_valid(regulators_node)) {
@@ -57,6 +59,15 @@ static int max77663_bind(struct udevice *dev)
 	children = pmic_bind_children(dev, regulators_node, pmic_children_info);
 	if (!children)
 		log_err("%s - no child found\n", dev->name);
+
+	if (IS_ENABLED(CONFIG_MAX77663_GPIO)) {
+		ret = device_bind_driver(dev, MAX77663_GPIO_DRIVER,
+					 MAX77663_GPIO_DRIVER, &gpio_dev);
+		if (ret) {
+			log_err("cannot bind GPIOs (ret = %d)\n", ret);
+			return ret;
+		}
+	}
 
 	/* Always return success for this device */
 	return 0;
