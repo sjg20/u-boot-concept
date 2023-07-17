@@ -77,11 +77,15 @@ static int ps8622_attach(struct udevice *dev)
 	/* set the LDO providing the 1.2V rail to the Parade bridge */
 	ret = uclass_get_device_by_phandle(UCLASS_REGULATOR, dev,
 					   "power-supply", &reg);
-	if (!ret) {
-		ret = regulator_autoset(reg);
-	} else if (ret != -ENOENT) {
-		debug("%s: Failed to enable power: ret=%d\n", __func__, ret);
+	if (ret) {
+		debug("%s: Failed to get power: ret=%d\n", __func__, ret);
 		return ret;
+	}
+
+	if (reg) {
+		ret = regulator_set_enable(reg, true);
+		if (ret)
+			return ret;
 	}
 
 	ret = video_bridge_set_active(dev, true);

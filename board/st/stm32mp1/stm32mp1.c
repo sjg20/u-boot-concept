@@ -602,13 +602,6 @@ static int board_stm32mp15x_dk2_init(void)
 		goto error;
 	}
 
-	/* power-up audio IC */
-	regulator_autoset_by_name("v1v8_audio", NULL);
-
-	/* power-up HDMI IC */
-	regulator_autoset_by_name("v1v2_hdmi", NULL);
-	regulator_autoset_by_name("v3v3_hdmi", NULL);
-
 error:
 	return ret;
 }
@@ -664,8 +657,6 @@ int board_init(void)
 
 	if (board_is_stm32mp15x_dk2())
 		board_stm32mp15x_dk2_init();
-
-	regulators_enable_boot_on(_DEBUG);
 
 	/*
 	 * sysconf initialisation done only when U-Boot is running in secure
