@@ -158,6 +158,7 @@ enum regulator_flag {
  * @name**     - fdt regulator name - should be taken from the device tree
  * ctrl_reg:   - Control register offset used to enable/disable regulator
  * volt_reg:   - register offset for writing voltage vsel values
+ * enable_count - counter of enable calls for this regulator
  *
  * Note:
  * *  - set automatically on device probe by the uclass's '.pre_probe' method.
@@ -184,6 +185,7 @@ struct dm_regulator_uclass_plat {
 	u8 volt_reg;
 	bool suspend_on;
 	u32 suspend_uV;
+	u32 enable_count;
 };
 
 /* Regulator device operations */
