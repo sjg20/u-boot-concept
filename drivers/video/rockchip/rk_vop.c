@@ -397,7 +397,7 @@ static int rk_display_init(struct udevice *dev, ulong fbbase, ofnode ep_node)
 void rk_vop_probe_regulators(struct udevice *dev,
 			     const char * const *names, int cnt)
 {
-	int i, ret;
+	int i;
 	const char *name;
 	struct udevice *reg;
 
@@ -405,9 +405,7 @@ void rk_vop_probe_regulators(struct udevice *dev,
 		name = names[i];
 		debug("%s: probing regulator '%s'\n", dev->name, name);
 
-		ret = regulator_autoset_by_name(name, &reg);
-		if (!ret)
-			ret = regulator_set_enable(reg, true);
+		regulator_set_enable(reg, true);
 	}
 }
 
