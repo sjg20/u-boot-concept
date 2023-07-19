@@ -1439,6 +1439,12 @@ config CMD_POWEROFF
 	help
 	  Poweroff/Shutdown the system
 
+config CMD_PMIC_POWEROFF
+	bool "PMIC poweroff"
+	select CMD_POWEROFF
+	help
+	  Shutdown the system using PMIC poweroff sequence.
+
 config CMD_READ
 	bool "read - Read binary data from a partition"
 	help

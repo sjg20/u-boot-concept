@@ -9,7 +9,13 @@
  */
 #include <common.h>
 #include <command.h>
+#include <dm.h>
+#include <log.h>
 #include <net.h>
+#include <dm/device-internal.h>
+#include <dm/uclass-internal.h>
+#include <power/pmic.h>
+#include <linux/delay.h>
 
 #ifdef CONFIG_CMD_GO
 
@@ -64,6 +70,40 @@ U_BOOT_CMD(
 );
 
 #ifdef CONFIG_CMD_POWEROFF
+#ifdef CONFIG_CMD_PMIC_POWEROFF
+int do_poweroff(struct cmd_tbl *cmdtp, int flag,
+		int argc, char *const argv[])
+{
+	struct uc_pmic_priv *pmic_priv;
+	struct udevice *dev;
+	int ret;
+
+	for (uclass_find_first_device(UCLASS_PMIC, &dev);
+	     dev;
+	     uclass_find_next_device(&dev)) {
+		if (dev && !device_active(dev)) {
+			ret = device_probe(dev);
+			if (ret)
+				return ret;
+		}
+
+		/* value we need to check is set after probe */
+		pmic_priv = dev_get_uclass_priv(dev);
+		if (pmic_priv->sys_pow_ctrl) {
+			ret = pmic_poweroff(dev);
+
+			/* wait some time and then print error */
+			mdelay(5000);
+			log_err("Failed to power off!!!\n");
+			return ret;
+		}
+	}
+
+	/* no device should reach here */
+	return 1;
+}
+#endif
+
 U_BOOT_CMD(
 	poweroff, 1, 0,	do_poweroff,
 	"Perform POWEROFF of the device",
