@@ -187,7 +187,6 @@ int dm_test_power_regulator_set_enable_if_allowed(struct unit_test_state *uts)
 
 	/* Get BUCK1 - always on regulator */
 	platname = regulator_names[BUCK1][PLATNAME];
-	ut_assertok(regulator_autoset_by_name(platname, &dev_autoset));
 	ut_assertok(regulator_get_by_platname(platname, &dev));
 
 	/* Try disabling always-on regulator */
@@ -292,8 +291,8 @@ static int dm_test_power_regulator_set_get_suspend_enable(struct unit_test_state
 }
 DM_TEST(dm_test_power_regulator_set_get_suspend_enable, UT_TESTF_SCAN_FDT);
 
-/* Test regulator autoset method */
-static int dm_test_power_regulator_autoset(struct unit_test_state *uts)
+/* Test regulator setup inside uclass driver */
+static int dm_test_power_regulator_set(struct unit_test_state *uts)
 {
 	const char *platname;
 	struct udevice *dev, *dev_autoset;
@@ -306,12 +305,10 @@ static int dm_test_power_regulator_autoset(struct unit_test_state *uts)
 	 * - boot-on = not set
 	 * Expected output state: uV=1200000; uA=200000; output enabled
 	 */
-	platname = regulator_names[BUCK1][PLATNAME];
-	ut_assertok(regulator_autoset_by_name(platname, &dev_autoset));
 
 	/* Check, that the returned device is proper */
+	platname = regulator_names[BUCK1][PLATNAME];
 	ut_assertok(regulator_get_by_platname(platname, &dev));
-	ut_asserteq_ptr(dev, dev_autoset);
 
 	/* Check the setup after autoset */
 	ut_asserteq(regulator_get_value(dev),
@@ -321,72 +318,28 @@ static int dm_test_power_regulator_autoset(struct unit_test_state *uts)
 	ut_asserteq(regulator_get_enable(dev),
 		    SANDBOX_BUCK1_AUTOSET_EXPECTED_ENABLE);
 
-	return 0;
-}
-DM_TEST(dm_test_power_regulator_autoset, UT_TESTF_SCAN_FDT);
-
-/*
- * Struct setting: to keep the expected output settings.
- * @voltage: Voltage value [uV]
- * @current: Current value [uA]
- * @enable: output enable state: true/false
- */
-struct setting {
-	int voltage;
-	int current;
-	bool enable;
-};
-
-/*
- * platname_list: an array of regulator platform names.
- * For testing regulator_list_autoset() for outputs:
- * - LDO1
- * - LDO2
- */
-static const char *platname_list[] = {
-	SANDBOX_LDO1_PLATNAME,
-	SANDBOX_LDO2_PLATNAME,
-	NULL,
-};
-
-/*
- * expected_setting_list: an array of regulator output setting, expected after
- * call of the regulator_list_autoset() for the "platname_list" array.
- * For testing results of regulator_list_autoset() for outputs:
- * - LDO1
- * - LDO2
- * The settings are defined in: include/power/sandbox_pmic.h
- */
-static const struct setting expected_setting_list[] = {
-	[0] = { /* LDO1 */
-	.voltage = SANDBOX_LDO1_AUTOSET_EXPECTED_UV,
-	.current = SANDBOX_LDO1_AUTOSET_EXPECTED_UA,
-	.enable  = SANDBOX_LDO1_AUTOSET_EXPECTED_ENABLE,
-	},
-	[1] = { /* LDO2 */
-	.voltage = SANDBOX_LDO2_AUTOSET_EXPECTED_UV,
-	.current = SANDBOX_LDO2_AUTOSET_EXPECTED_UA,
-	.enable  = SANDBOX_LDO2_AUTOSET_EXPECTED_ENABLE,
-	},
-};
-
-static int list_count = ARRAY_SIZE(expected_setting_list);
-
-/* Test regulator list autoset method */
-static int dm_test_power_regulator_autoset_list(struct unit_test_state *uts)
-{
-	struct udevice *dev_list[2], *dev;
-	int i;
-
 	/*
-	 * Test the settings of the regulator list:
 	 * LDO1 with fdt properties:
 	 * - min-microvolt = max-microvolt = 1800000
 	 * - min-microamp = max-microamp = 100000
 	 * - always-on = not set
 	 * - boot-on = set
 	 * Expected output state: uV=1800000; uA=100000; output enabled
-	 *
+	 */
+
+	/* Check, that the returned device is proper */
+	platname = regulator_names[LDO1][PLATNAME];
+	ut_assertok(regulator_get_by_platname(platname, &dev));
+
+	/* Check the setup after autoset */
+	ut_asserteq(regulator_get_value(dev),
+		    SANDBOX_LDO1_AUTOSET_EXPECTED_UV);
+	ut_asserteq(regulator_get_current(dev),
+		    SANDBOX_LDO1_AUTOSET_EXPECTED_UA);
+	ut_asserteq(regulator_get_enable(dev),
+		    SANDBOX_LDO1_AUTOSET_EXPECTED_ENABLE);
+
+	/*
 	 * LDO2 with fdt properties:
 	 * - min-microvolt = max-microvolt = 3300000
 	 * - always-on = not set
@@ -394,29 +347,19 @@ static int dm_test_power_regulator_autoset_list(struct unit_test_state *uts)
 	 * Expected output state: uV=300000(default); output disabled(default)
 	 * The expected settings are defined in: include/power/sandbox_pmic.h.
 	 */
-	ut_assertok(regulator_list_autoset(platname_list, dev_list, false));
 
-	for (i = 0; i < list_count; i++) {
-		/* Check, that the returned device is non-NULL */
-		ut_assert(dev_list[i]);
+	/* Check, that the returned device is proper */
+	platname = regulator_names[LDO2][PLATNAME];
+	ut_assertok(regulator_get_by_platname(platname, &dev));
 
-		/* Check, that the returned device is proper */
-		ut_assertok(regulator_get_by_platname(platname_list[i], &dev));
-		ut_asserteq_ptr(dev_list[i], dev);
-
-		/* Check, that regulator output Voltage value is as expected */
-		ut_asserteq(regulator_get_value(dev_list[i]),
-			    expected_setting_list[i].voltage);
-
-		/* Check, that regulator output Current value is as expected */
-		ut_asserteq(regulator_get_current(dev_list[i]),
-			    expected_setting_list[i].current);
-
-		/* Check, that regulator output Enable state is as expected */
-		ut_asserteq(regulator_get_enable(dev_list[i]),
-			    expected_setting_list[i].enable);
-	}
+	/* Check the setup after autoset */
+	ut_asserteq(regulator_get_value(dev),
+		    SANDBOX_LDO2_AUTOSET_EXPECTED_UV);
+	ut_asserteq(regulator_get_current(dev),
+		    SANDBOX_LDO2_AUTOSET_EXPECTED_UA);
+	ut_asserteq(regulator_get_enable(dev),
+		    SANDBOX_LDO2_AUTOSET_EXPECTED_ENABLE);
 
 	return 0;
 }
-DM_TEST(dm_test_power_regulator_autoset_list, UT_TESTF_SCAN_FDT);
+DM_TEST(dm_test_power_regulator_set, UT_TESTF_SCAN_FDT);
