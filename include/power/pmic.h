@@ -157,11 +157,13 @@ struct pmic {
  * Should be implemented by UCLASS_PMIC device drivers. The standard
  * device operations provides the I/O interface for it's childs.
  *
+ * @poweroff:  perform poweroff sequence
  * @reg_count: device's register count
  * @read:      read 'len' bytes at "reg" and store it into the 'buffer'
  * @write:     write 'len' bytes from the 'buffer' to the register at 'reg' address
  */
 struct dm_pmic_ops {
+	int (*poweroff)(struct udevice *dev);
 	int (*reg_count)(struct udevice *dev);
 	int (*read)(struct udevice *dev, uint reg, uint8_t *buffer, int len);
 	int (*write)(struct udevice *dev, uint reg, const uint8_t *buffer,
@@ -243,6 +245,16 @@ int pmic_bind_children(struct udevice *pmic, ofnode parent,
 int pmic_get(const char *name, struct udevice **devp);
 
 /**
+ * pmic_poweroff: call the pmic poweroff sequence
+ *
+ * The required pmic device can be obtained by 'pmic_get()'
+ *
+ * @dev - pointer to the UCLASS_PMIC device
+ * Return: device turns off or negative value of errno.
+ */
+int pmic_poweroff(struct udevice *dev);
+
+/**
  * pmic_reg_count: get the pmic register count
  *
  * The required pmic device can be obtained by 'pmic_get()'
@@ -306,6 +318,7 @@ int pmic_clrsetbits(struct udevice *dev, uint reg, uint clr, uint set);
  */
 struct uc_pmic_priv {
 	uint trans_len;
+	bool sys_pow_ctrl;
 };
 
 #endif /* DM_PMIC */

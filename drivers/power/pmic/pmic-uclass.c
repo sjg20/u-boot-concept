@@ -99,6 +99,18 @@ int pmic_get(const char *name, struct udevice **devp)
 	return uclass_get_device_by_name(UCLASS_PMIC, name, devp);
 }
 
+int pmic_poweroff(struct udevice *dev)
+{
+	const struct dm_pmic_ops *ops = dev_get_driver_ops(dev);
+	struct uc_pmic_priv *priv = dev_get_uclass_priv(dev);
+
+	if (!ops || !ops->poweroff ||
+	    !priv->sys_pow_ctrl)
+		return -ENOSYS;
+
+	return ops->poweroff(dev);
+}
+
 int pmic_reg_count(struct udevice *dev)
 {
 	const struct dm_pmic_ops *ops = dev_get_driver_ops(dev);
