@@ -18,6 +18,7 @@
 #include <dm/uclass-internal.h>
 #include <dm/util.h>
 #include <power/pmic.h>
+#include <power/regulator.h>
 #include <power/sandbox_pmic.h>
 #include <test/test.h>
 #include <test/ut.h>
@@ -129,3 +130,37 @@ static int dm_test_power_pmic_mc34708_rw_val(struct unit_test_state *uts)
 }
 
 DM_TEST(dm_test_power_pmic_mc34708_rw_val, UT_TESTF_SCAN_FDT);
+
+static int dm_test_power_pmic_child_probe(struct unit_test_state *uts)
+{
+	const char *name = "sandbox_pmic";
+	const char *devname = "ldo1";
+	struct udevice *dev;
+	int i;
+
+	ut_assertok(pmic_get(name, &dev));
+
+	/*
+	 * LDO1 with fdt properties:
+	 * - min-microvolt = max-microvolt = 1800000
+	 * - min-microamp = max-microamp = 100000
+	 * - always-on = not set
+	 * - boot-on = set
+	 * Expected output state: uV=1800000; uA=100000; output enabled
+	 */
+
+	/* Check, that the returned device is proper */
+	ut_assertok(regulator_get_by_devname(devname, &dev));
+
+	/* Check the setup after autoset */
+	ut_asserteq(regulator_get_value(dev),
+		    SANDBOX_LDO1_AUTOSET_EXPECTED_UV);
+	ut_asserteq(regulator_get_current(dev),
+		    SANDBOX_LDO1_AUTOSET_EXPECTED_UA);
+	ut_asserteq(regulator_get_enable(dev),
+		    SANDBOX_LDO1_AUTOSET_EXPECTED_ENABLE);
+
+	return 0;
+}
+
+DM_TEST(dm_test_power_pmic_child_probe, UT_TESTF_SCAN_FDT);
