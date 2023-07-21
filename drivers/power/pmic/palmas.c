@@ -14,6 +14,7 @@
 #include <power/regulator.h>
 #include <power/palmas.h>
 #include <dm/device.h>
+#include <dm/lists.h>
 
 static const struct pmic_child_info pmic_children_info[] = {
 	{ .prefix = "ldo", .driver = PALMAS_LDO_DRIVER },
@@ -45,8 +46,19 @@ static int palmas_read(struct udevice *dev, uint reg, uint8_t *buff, int len)
 static int palmas_bind(struct udevice *dev)
 {
 	ofnode pmic_node = ofnode_null(), regulators_node;
-	ofnode subnode;
+	ofnode subnode, gpio_node;
 	int children;
+
+	gpio_node = ofnode_find_subnode(dev_ofnode(dev), "gpio");
+	if (ofnode_valid(gpio_node)) {
+		struct udevice *gpio;
+		int ret;
+
+		ret = device_bind_driver(dev, PALMAS_GPIO_DRIVER,
+					 PALMAS_GPIO_DRIVER, &gpio);
+		if (ret)
+			log_err("cannot bind GPIOs (ret = %d)\n", ret);
+	}
 
 	dev_for_each_subnode(subnode, dev) {
 		const char *name;
