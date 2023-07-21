@@ -112,8 +112,9 @@ static int fsp_video_probe(struct udevice *dev)
 
 	printf("graphics\n");
 	mtrr_list(10, 0);
-	mtrr_add_request(MTRR_TYPE_WRCOMB, vesa->phys_base_ptr, 256 << 20);
-	mtrr_commit(true);
+	//mtrr_add_request(MTRR_TYPE_WRCOMB, vesa->phys_base_ptr, 256 << 20);
+	mtrr_set_next_var(MTRR_TYPE_WRCOMB, vesa->phys_base_ptr, 256 << 20);
+	//mtrr_commit(true);
 	mtrr_list(10, 0);
 	printf("graphics done\n");
 
