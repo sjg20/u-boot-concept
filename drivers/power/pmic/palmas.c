@@ -42,6 +42,25 @@ static int palmas_read(struct udevice *dev, uint reg, uint8_t *buff, int len)
 	return 0;
 }
 
+static int palmas_poweroff(struct udevice *dev)
+{
+	struct palmas_priv *priv = dev_get_priv(dev);
+	int ret;
+
+	/*
+	 * Mask INT3 on second page which detects vbus
+	 * or device will immediately turn on.
+	 */
+	ret = dm_i2c_reg_clrset(priv->chip2, PALMAS_INT3_MASK,
+				PALMAS_INT3_MASK_VBUS,
+				PALMAS_INT3_MASK_VBUS);
+	if (ret < 0)
+		return ret;
+
+	/* TPS65913: DEV_CTRL > OFF */
+	return pmic_reg_write(dev, PALMAS_DEV_CTRL, 0);
+}
+
 static int palmas_bind(struct udevice *dev)
 {
 	ofnode pmic_node = ofnode_null(), regulators_node;
@@ -81,9 +100,30 @@ static int palmas_bind(struct udevice *dev)
 }
 
 static struct dm_pmic_ops palmas_ops = {
+	.poweroff = palmas_poweroff,
 	.read = palmas_read,
 	.write = palmas_write,
 };
+
+static int palmas_probe(struct udevice *dev)
+{
+	struct dm_i2c_chip *chip = dev_get_parent_plat(dev);
+	struct palmas_priv *priv = dev_get_priv(dev);
+	struct udevice *bus = dev_get_parent(dev);
+	struct uc_pmic_priv *uc_priv = dev_get_uclass_priv(dev);
+	u32 chip2_addr = chip->chip_addr + 1;
+	int ret;
+
+	/* Palmas PMIC is multi chip and chips are located in a row */
+	ret = i2c_get_chip(bus, chip2_addr, 1, &priv->chip2);
+	if (ret) {
+		log_err("cannot get second PMIC I2C chip (err %d)\n", ret);
+		return ret;
+	}
+
+	uc_priv->sys_pow_ctrl = dev_read_bool(dev, "ti,system-power-controller");
+	return 0;
+}
 
 static const struct udevice_id palmas_ids[] = {
 	{ .compatible = "ti,tps659038", .data = TPS659038 },
@@ -97,5 +137,7 @@ U_BOOT_DRIVER(pmic_palmas) = {
 	.id = UCLASS_PMIC,
 	.of_match = palmas_ids,
 	.bind = palmas_bind,
+	.probe = palmas_probe,
 	.ops = &palmas_ops,
+	.priv_auto = sizeof(struct palmas_priv),
 };
