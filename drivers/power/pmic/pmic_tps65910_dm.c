@@ -10,6 +10,7 @@
 #include <power/pmic.h>
 #include <power/regulator.h>
 #include <power/tps65910_pmic.h>
+#include <dm/lists.h>
 
 static const struct pmic_child_info tps65910_children_info[] = {
 	{ .prefix = "ldo_", .driver = TPS65910_LDO_DRIVER },
@@ -55,9 +56,19 @@ static int pmic_tps65910_read(struct udevice *dev, uint reg, u8 *buffer,
 
 static int pmic_tps65910_bind(struct udevice *dev)
 {
+	struct udevice *sysreset_dev;
 	ofnode regulators_node;
-	int children;
+	int children, ret;
 	int type = dev_get_driver_data(dev);
+
+	if (IS_ENABLED(CONFIG_SYSRESET_TPS65910)) {
+		ret = device_bind_driver(dev, TPS65910_RST_DRIVER,
+					 TPS65910_RST_DRIVER, &sysreset_dev);
+		if (ret) {
+			log_err("cannot bind SYSRESET (ret = %d)\n", ret);
+			return ret;
+		}
+	}
 
 	regulators_node = dev_read_subnode(dev, "regulators");
 	if (!ofnode_valid(regulators_node)) {
