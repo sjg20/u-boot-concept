@@ -13,6 +13,7 @@
 #include <power/regulator.h>
 #include <power/tps80031.h>
 #include <dm/device.h>
+#include <dm/lists.h>
 
 static const struct pmic_child_info pmic_children_info[] = {
 	{ .prefix = "ldo", .driver = TPS80031_LDO_DRIVER },
@@ -43,8 +44,18 @@ static int tps80031_read(struct udevice *dev, uint reg, uint8_t *buff, int len)
 
 static int tps80031_bind(struct udevice *dev)
 {
+	struct udevice *sysreset_dev;
 	ofnode regulators_node;
-	int children;
+	int children, ret;
+
+	if (IS_ENABLED(CONFIG_SYSRESET_TPS80031)) {
+		ret = device_bind_driver(dev, TPS80031_RST_DRIVER,
+					 TPS80031_RST_DRIVER, &sysreset_dev);
+		if (ret) {
+			log_err("cannot bind SYSRESET (ret = %d)\n", ret);
+			return ret;
+		}
+	}
 
 	regulators_node = dev_read_subnode(dev, "regulators");
 	if (!ofnode_valid(regulators_node)) {
