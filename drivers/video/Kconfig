@@ -1107,6 +1107,15 @@ config SPL_VIDEO_REMOVE
 	  if this  option is enabled video driver will be removed at the end of
 	  SPL stage, beforeloading the next stage.
 
+config VIDEO_RESERVE_SPL
+	bool
+	help
+	  This adjusts reserve_video() to redirect memory reservation when it
+	  sees a video handoff blob (BLOBLISTT_U_BOOT_VIDEO). This avoids the
+	  memory used for framebuffer from being allocated by U-Boot proper,
+	  thus preventing any further memory reservations done by U-Boot proper
+	  from overwriting the framebuffer.
+
 if SPL_SPLASH_SCREEN
 
 config SPL_SPLASH_SCREEN_ALIGN
