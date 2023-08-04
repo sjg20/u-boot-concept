@@ -24,10 +24,10 @@ start16:
 	movl	%eax, %cr3	/* Invalidate TLB */
 
 	/* Turn off cache (this might require a 486-class CPU) */
-	movl	%cr0, %eax
-	orl	$(X86_CR0_NW | X86_CR0_CD), %eax
-	movl	%eax, %cr0
-	wbinvd
+	#movl	%cr0, %eax
+	#orl	$(X86_CR0_NW | X86_CR0_CD), %eax
+	#movl	%eax, %cr0
+	#wbinvd
 
 	/* load the temporary Global Descriptor Table */
 data32 cs	lidt	idt_ptr

@@ -20,6 +20,7 @@ cpu_call64:
 	 * edx - setup_base
 	 * ecx - target
 	 */
+	and	$0xfffffff0, %esp
 	cli
 	push	%ecx		/* arg2 = target */
 	push	%edx		/* arg1 = setup_base */
