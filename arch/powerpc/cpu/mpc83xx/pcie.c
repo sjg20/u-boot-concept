@@ -8,6 +8,7 @@
  */
 
 #include <common.h>
+#include <clock_legacy.h>
 #include <pci.h>
 #include <mpc83xx.h>
 #include <asm/global_data.h>
@@ -23,13 +24,13 @@ static struct {
 	u32 size;
 } mpc83xx_pcie_cfg_space[] = {
 	{
-		.base = CONFIG_SYS_PCIE1_CFG_BASE,
-		.size = CONFIG_SYS_PCIE1_CFG_SIZE,
+		.base = CFG_SYS_PCIE1_CFG_BASE,
+		.size = CFG_SYS_PCIE1_CFG_SIZE,
 	},
-#if defined(CONFIG_SYS_PCIE2_CFG_BASE) && defined(CONFIG_SYS_PCIE2_CFG_SIZE)
+#if defined(CFG_SYS_PCIE2_CFG_BASE) && defined(CFG_SYS_PCIE2_CFG_SIZE)
 	{
-		.base = CONFIG_SYS_PCIE2_CFG_BASE,
-		.size = CONFIG_SYS_PCIE2_CFG_SIZE,
+		.base = CFG_SYS_PCIE2_CFG_BASE,
+		.size = CFG_SYS_PCIE2_CFG_SIZE,
 	},
 #endif
 };
@@ -46,7 +47,7 @@ int get_pcie_clk(int index)
 
 	clkin_div = ((im->clk.spmr & SPMR_CKID) >> SPMR_CKID_SHIFT);
 	sccr = im->clk.sccr;
-	pci_sync_in = CONFIG_SYS_CLK_FREQ / (1 + clkin_div);
+	pci_sync_in = get_board_sys_clk() / (1 + clkin_div);
 	spmf = (im->clk.spmr & SPMR_SPMF) >> SPMR_SPMF_SHIFT;
 	csb_clk = pci_sync_in * (1 + clkin_div) * spmf;
 

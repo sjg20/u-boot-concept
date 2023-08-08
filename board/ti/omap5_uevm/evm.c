@@ -138,7 +138,7 @@ int usb_gadget_handle_interrupts(int index)
 /**
  * @brief board_init
  *
- * @return 0
+ * Return: 0
  */
 int board_init(void)
 {
@@ -146,7 +146,7 @@ int board_init(void)
 	gd->bd->bi_arch_number = MACH_TYPE_OMAP5_SEVM;
 	gd->bd->bi_boot_params = (0x80000000 + 0x100); /* boot param addr */
 
-	tca642x_set_inital_state(CONFIG_SYS_I2C_TCA642X_ADDR, tca642x_init);
+	tca642x_set_inital_state(CFG_SYS_I2C_TCA642X_ADDR, tca642x_init);
 
 	return 0;
 }
@@ -172,7 +172,7 @@ int board_eth_init(struct bd_info *bis)
  * such as power configurations, ethernet initialization as phase2 of
  * boot sequence
  *
- * @return 0
+ * Return: 0
  */
 int misc_init_r(void)
 {
@@ -212,7 +212,7 @@ int board_mmc_init(struct bd_info *bis)
  * @brief board_usb_init - Configure EVM board specific configurations
  * for the LDO's and clocks for the USB blocks.
  *
- * @return 0
+ * Return: 0
  */
 int board_usb_init(int index, enum usb_init_type init)
 {

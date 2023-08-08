@@ -43,12 +43,92 @@ static struct disk_partition cur_part_info;
 #define DOS_FS_TYPE_OFFSET	0x36
 #define DOS_FS32_TYPE_OFFSET	0x52
 
-static int disk_read(__u32 block, __u32 nr_blocks, void *buf)
+/**
+ * disk_read_conv() - Read blocks and break them into smaller ones
+ *
+ * This is used when the FAT filesystem is hosted on a block device with a
+ * block size greated than 512 bytes, e.g. the 2048 bytes of a CDROM drive. It
+ * reads the blocks into a buffer and pulls out what is requested by the calling
+ * function.
+ *
+ * It uses an internal 2KB buffer on the stack.
+ *
+ * @mydata: Filesystem information
+ * @block: Block number to read, in terms of mydata->sect_size
+ * @nr_blocks: Number of blocks to read, in terms of mydata->sect_size
+ * @buf: Buffer for data
+ */
+static int disk_read_conv(fsdata *mydata, __u32 block, __u32 nr_blocks,
+			  void *buf)
+{
+	uint factor, whole, remain, upto;
+	ulong base, index;
+	uint to_copy;
+	u8 tbuf[2048];
+	int ret;
+
+	log_debug("mydata %x, cur_dev %lx, block %x, nr_block %x\n",
+		  mydata->sect_size, cur_dev->blksz, block, nr_blocks);
+	if (mydata->sect_size > cur_dev->blksz ||
+	    cur_dev->blksz > sizeof(tbuf)) {
+		log_err("Block size %lx not supported\n", cur_dev->blksz);
+		return -EIO;
+	}
+	factor = cur_dev->blksz / mydata->sect_size;
+
+	/* get the first partial block */
+	base = cur_part_info.start + block / factor;
+	index = block % factor;
+	log_debug("cur_part_info.start %llx, block %x, base %lx, index %lx\n",
+		  (unsigned long long)cur_part_info.start, block, base, index);
+	ret = blk_dread(cur_dev, base, 1, tbuf);
+	if (ret != 1)
+		return -EIO;
+
+	to_copy = min((ulong)nr_blocks, factor - index);
+	log_debug("to_copy %x\n", to_copy);
+	memcpy(buf, tbuf + index * mydata->sect_size,
+	       to_copy * mydata->sect_size);
+	upto = to_copy;
+
+	/* load any whole blocks */
+	remain = nr_blocks - upto;
+	whole = remain / factor;
+	log_debug("factor %x, whole %x, remain %x\n", factor, whole, remain);
+	if (whole) {
+		ret = blk_dread(cur_dev, base + 1, whole,
+				buf + upto * mydata->sect_size);
+		if (ret != whole)
+			return -EIO;
+		upto += whole * factor;
+		remain = nr_blocks - upto;
+	}
+
+	/* load any blocks at the end */
+	log_debug("end: remain %x\n", remain);
+	if (remain) {
+		ret = blk_dread(cur_dev, base + 1 + whole, 1, tbuf);
+		if (ret != 1)
+			return -EIO;
+		memcpy(buf + upto * mydata->sect_size, tbuf,
+		       remain * mydata->sect_size);
+		upto += remain;
+	}
+
+	return upto;
+}
+
+static int disk_read(fsdata *mydata, __u32 block, __u32 nr_blocks, void *buf)
 {
 	ulong ret;
 
 	if (!cur_dev)
 		return -1;
+
+	/* support converting from a larger block size */
+	if (IS_ENABLED(CONFIG_FAT_BLK_XLATE) && mydata &&
+	    mydata->sect_size != cur_dev->blksz)
+		return disk_read_conv(mydata, block, nr_blocks, buf);
 
 	ret = blk_dread(cur_dev, cur_part_info.start + block, nr_blocks, buf);
 
@@ -66,7 +146,7 @@ int fat_set_blk_dev(struct blk_desc *dev_desc, struct disk_partition *info)
 	cur_part_info = *info;
 
 	/* Make sure it has a valid FAT header */
-	if (disk_read(0, 1, buffer) != 1) {
+	if (disk_read(NULL, 0, 1, buffer) != 1) {
 		cur_dev = NULL;
 		return -1;
 	}
@@ -97,8 +177,8 @@ int fat_register_device(struct blk_desc *dev_desc, int part_no)
 	/* Read the partition table, if present */
 	if (part_get_info(dev_desc, part_no, &info)) {
 		if (part_no != 0) {
-			printf("** Partition %d not valid on device %d **\n",
-					part_no, dev_desc->devnum);
+			printf("** Partition %d invalid on device %d **\n",
+			       part_no, dev_desc->devnum);
 			return -1;
 		}
 
@@ -168,7 +248,7 @@ static __u32 get_fatent(fsdata *mydata, __u32 entry)
 	__u32 ret = 0x00;
 
 	if (CHECK_CLUST(entry, mydata->fatsize)) {
-		printf("Error: Invalid FAT entry: 0x%08x\n", entry);
+		printf("** Invalid FAT entry: %#08x\n", entry);
 		return ret;
 	}
 
@@ -211,7 +291,7 @@ static __u32 get_fatent(fsdata *mydata, __u32 entry)
 		if (flush_dirty_fat_buffer(mydata) < 0)
 			return -1;
 
-		if (disk_read(startblock, getsize, bufptr) < 0) {
+		if (disk_read(mydata, startblock, getsize, bufptr) < 0) {
 			debug("Error reading FAT blocks\n");
 			return ret;
 		}
@@ -265,7 +345,7 @@ get_cluster(fsdata *mydata, __u32 clustnum, __u8 *buffer, unsigned long size)
 		debug("FAT: Misaligned buffer address (%p)\n", buffer);
 
 		while (size >= mydata->sect_size) {
-			ret = disk_read(startsect++, 1, tmpbuf);
+			ret = disk_read(mydata, startsect++, 1, tmpbuf);
 			if (ret != 1) {
 				debug("Error reading data (got %d)\n", ret);
 				return -1;
@@ -279,7 +359,7 @@ get_cluster(fsdata *mydata, __u32 clustnum, __u8 *buffer, unsigned long size)
 		__u32 bytes_read;
 		__u32 sect_count = size / mydata->sect_size;
 
-		ret = disk_read(startsect, sect_count, buffer);
+		ret = disk_read(mydata, startsect, sect_count, buffer);
 		if (ret != sect_count) {
 			debug("Error reading data (got %d)\n", ret);
 			return -1;
@@ -292,7 +372,7 @@ get_cluster(fsdata *mydata, __u32 clustnum, __u8 *buffer, unsigned long size)
 	if (size) {
 		ALLOC_CACHE_ALIGN_BUFFER(__u8, tmpbuf, mydata->sect_size);
 
-		ret = disk_read(startsect, 1, tmpbuf);
+		ret = disk_read(mydata, startsect, 1, tmpbuf);
 		if (ret != 1) {
 			debug("Error reading data (got %d)\n", ret);
 			return -1;
@@ -504,7 +584,7 @@ read_bootsectandvi(boot_sector *bs, volume_info *volinfo, int *fatsize)
 		return -1;
 	}
 
-	if (disk_read(0, 1, block) < 0) {
+	if (disk_read(NULL, 0, 1, block) < 0) {
 		debug("Error: reading block\n");
 		goto fail;
 	}
@@ -586,17 +666,22 @@ static int get_fs_info(fsdata *mydata)
 	mydata->sect_size = (bs.sector_size[1] << 8) + bs.sector_size[0];
 	mydata->clust_size = bs.cluster_size;
 	if (mydata->sect_size != cur_part_info.blksz) {
-		printf("Error: FAT sector size mismatch (fs=%hu, dev=%lu)\n",
-				mydata->sect_size, cur_part_info.blksz);
-		return -1;
+		if (IS_ENABLED(CONFIG_FAT_BLK_XLATE)) {
+			printf("Warning: FAT sector size mismatch (fs=%u, dev=%lu): translating for read-only\n",
+			       mydata->sect_size, cur_part_info.blksz);
+		} else {
+			printf("** FAT sector size mismatch (fs=%u, dev=%lu), see CONFIG_FAT_BLK_XLATE\n",
+			       mydata->sect_size, cur_part_info.blksz);
+			return -1;
+		}
 	}
 	if (mydata->clust_size == 0) {
-		printf("Error: FAT cluster size not set\n");
+		printf("** FAT cluster size not set\n");
 		return -1;
 	}
 	if ((unsigned int)mydata->clust_size * mydata->sect_size >
 	    MAX_CLUSTSIZE) {
-		printf("Error: FAT cluster size too big (cs=%u, max=%u)\n",
+		printf("** FAT cluster size too big (cs=%u, max=%u)\n",
 		       (unsigned int)mydata->clust_size * mydata->sect_size,
 		       MAX_CLUSTSIZE);
 		return -1;
@@ -735,7 +820,7 @@ static int fat_itr_isdir(fat_itr *itr);
  *
  * @itr: iterator to initialize
  * @fsdata: filesystem data for the partition
- * @return 0 on success, else -errno
+ * Return: 0 on success, else -errno
  */
 static int fat_itr_root(fat_itr *itr, fsdata *fsdata)
 {
@@ -846,7 +931,7 @@ void *fat_next_cluster(fat_itr *itr, unsigned int *nbytes)
 	 * dent at a time and iteratively constructing the vfat long
 	 * name.
 	 */
-	ret = disk_read(sect, read_size, itr->block);
+	ret = disk_read(itr->fsdata, sect, read_size, itr->block);
 	if (ret < 0) {
 		debug("Error: reading block\n");
 		return NULL;
@@ -954,7 +1039,7 @@ static dir_entry *extract_vfat_name(fat_itr *itr)
  * Must be called once on a new iterator before the cursor is valid.
  *
  * @itr: the iterator to iterate
- * @return boolean, 1 if success or 0 if no more entries in the
+ * Return: boolean, 1 if success or 0 if no more entries in the
  *    current directory
  */
 static int fat_itr_next(fat_itr *itr)
@@ -1024,7 +1109,7 @@ static int fat_itr_next(fat_itr *itr)
  * fat_itr_isdir() - is current cursor position pointing to a directory
  *
  * @itr: the iterator
- * @return true if cursor is at a directory
+ * Return: true if cursor is at a directory
  */
 static int fat_itr_isdir(fat_itr *itr)
 {
@@ -1052,7 +1137,7 @@ static int fat_itr_isdir(fat_itr *itr)
  * @itr: iterator initialized to root
  * @path: the requested path
  * @type: bitmask of allowable file types
- * @return 0 on success or -errno
+ * Return: 0 on success or -errno
  */
 static int fat_itr_resolve(fat_itr *itr, const char *path, unsigned type)
 {
@@ -1144,8 +1229,8 @@ int file_fat_detectfs(void)
 		return 1;
 	}
 
-	if (IS_ENABLED(CONFIG_HAVE_BLOCK_DEVICE)) {
-		printf("Interface:  %s\n", blk_get_if_type_name(cur_dev->if_type));
+	if (blk_enabled()) {
+		printf("Interface:  %s\n", blk_get_uclass_name(cur_dev->uclass_id));
 		printf("  Device %d: ", cur_dev->devnum);
 		dev_print(cur_dev);
 	}
@@ -1243,8 +1328,8 @@ out_free_itr:
 	return ret;
 }
 
-int file_fat_read_at(const char *filename, loff_t pos, void *buffer,
-		     loff_t maxsize, loff_t *actread)
+int fat_read_file(const char *filename, void *buf, loff_t offset, loff_t len,
+		  loff_t *actread)
 {
 	fsdata fsdata;
 	fat_itr *itr;
@@ -1261,12 +1346,12 @@ int file_fat_read_at(const char *filename, loff_t pos, void *buffer,
 	if (ret)
 		goto out_free_both;
 
-	debug("reading %s at pos %llu\n", filename, pos);
+	debug("reading %s at pos %llu\n", filename, offset);
 
 	/* For saving default max clustersize memory allocated to malloc pool */
 	dir_entry *dentptr = itr->dent;
 
-	ret = get_contents(&fsdata, dentptr, pos, buffer, maxsize, actread);
+	ret = get_contents(&fsdata, dentptr, offset, buf, len, actread);
 
 out_free_both:
 	free(fsdata.fatbuf);
@@ -1280,23 +1365,11 @@ int file_fat_read(const char *filename, void *buffer, int maxsize)
 	loff_t actread;
 	int ret;
 
-	ret =  file_fat_read_at(filename, 0, buffer, maxsize, &actread);
+	ret =  fat_read_file(filename, buffer, 0, maxsize, &actread);
 	if (ret)
 		return ret;
 	else
 		return actread;
-}
-
-int fat_read_file(const char *filename, void *buf, loff_t offset, loff_t len,
-		  loff_t *actread)
-{
-	int ret;
-
-	ret = file_fat_read_at(filename, offset, buf, len, actread);
-	if (ret)
-		printf("** Unable to read file %s **\n", filename);
-
-	return ret;
 }
 
 typedef struct {

@@ -38,7 +38,7 @@ static int rsa_err(const char *msg)
  * @keydir:	Directory containins the key
  * @name	Name of key file (will have a .crt extension)
  * @evpp	Returns EVP_PKEY object, or NULL on failure
- * @return 0 if ok, -ve on error (in which case *evpp will be set to NULL)
+ * Return: 0 if ok, -ve on error (in which case *evpp will be set to NULL)
  */
 static int rsa_pem_get_pub_key(const char *keydir, const char *name, EVP_PKEY **evpp)
 {
@@ -96,7 +96,7 @@ err_cert:
  * @name	Name of key
  * @engine	Engine to use
  * @evpp	Returns EVP_PKEY object, or NULL on failure
- * @return 0 if ok, -ve on error (in which case *evpp will be set to NULL)
+ * Return: 0 if ok, -ve on error (in which case *evpp will be set to NULL)
  */
 static int rsa_engine_get_pub_key(const char *keydir, const char *name,
 				  ENGINE *engine, EVP_PKEY **evpp)
@@ -156,7 +156,7 @@ static int rsa_engine_get_pub_key(const char *keydir, const char *name,
  * @name	Name of key file (will have a .crt extension)
  * @engine	Engine to use
  * @evpp	Returns EVP_PKEY object, or NULL on failure
- * @return 0 if ok, -ve on error (in which case *evpp will be set to NULL)
+ * Return: 0 if ok, -ve on error (in which case *evpp will be set to NULL)
  */
 static int rsa_get_pub_key(const char *keydir, const char *name,
 			   ENGINE *engine, EVP_PKEY **evpp)
@@ -172,7 +172,7 @@ static int rsa_get_pub_key(const char *keydir, const char *name,
  * @keydir:	Directory containing the key
  * @name	Name of key file (will have a .key extension)
  * @evpp	Returns EVP_PKEY object, or NULL on failure
- * @return 0 if ok, -ve on error (in which case *evpp will be set to NULL)
+ * Return: 0 if ok, -ve on error (in which case *evpp will be set to NULL)
  */
 static int rsa_pem_get_priv_key(const char *keydir, const char *name,
 				const char *keyfile, EVP_PKEY **evpp)
@@ -215,7 +215,7 @@ static int rsa_pem_get_priv_key(const char *keydir, const char *name,
  * @name	Name of key
  * @engine	Engine to use
  * @evpp	Returns EVP_PKEY object, or NULL on failure
- * @return 0 if ok, -ve on error (in which case *evpp will be set to NULL)
+ * Return: 0 if ok, -ve on error (in which case *evpp will be set to NULL)
  */
 static int rsa_engine_get_priv_key(const char *keydir, const char *name,
 				   const char *keyfile,
@@ -283,7 +283,7 @@ static int rsa_engine_get_priv_key(const char *keydir, const char *name,
  * @name	Name of key
  * @engine	Engine to use for signing
  * @evpp	Returns EVP_PKEY object, or NULL on failure
- * @return 0 if ok, -ve on error (in which case *evpp will be set to NULL)
+ * Return: 0 if ok, -ve on error (in which case *evpp will be set to NULL)
  */
 static int rsa_get_priv_key(const char *keydir, const char *name,
 			    const char *keyfile, ENGINE *engine, EVP_PKEY **evpp)
@@ -383,12 +383,11 @@ static int rsa_sign_with_key(EVP_PKEY *pkey, struct padding_algo *padding_algo,
 		goto err_alloc;
 	}
 
-	context = EVP_MD_CTX_create();
+	context = EVP_MD_CTX_new();
 	if (!context) {
 		ret = rsa_err("EVP context creation failed");
 		goto err_create;
 	}
-	EVP_MD_CTX_init(context);
 
 	ckey = EVP_PKEY_CTX_new(pkey, NULL);
 	if (!ckey) {
@@ -425,8 +424,7 @@ static int rsa_sign_with_key(EVP_PKEY *pkey, struct padding_algo *padding_algo,
 		goto err_sign;
 	}
 
-	EVP_MD_CTX_reset(context);
-	EVP_MD_CTX_destroy(context);
+	EVP_MD_CTX_free(context);
 
 	debug("Got signature: %zu bytes, expected %d\n", size, EVP_PKEY_size(pkey));
 	*sigp = sig;
@@ -435,7 +433,7 @@ static int rsa_sign_with_key(EVP_PKEY *pkey, struct padding_algo *padding_algo,
 	return 0;
 
 err_sign:
-	EVP_MD_CTX_destroy(context);
+	EVP_MD_CTX_free(context);
 err_create:
 	free(sig);
 err_alloc:
@@ -610,7 +608,7 @@ int rsa_add_verify_data(struct image_sign_info *info, void *keydest)
 	BIGNUM *modulus, *r_squared;
 	uint64_t exponent;
 	uint32_t n0_inv;
-	int parent, node;
+	int parent, node = -FDT_ERR_NOTFOUND;
 	char name[100];
 	int ret;
 	int bits;
@@ -703,5 +701,8 @@ err_get_pub_key:
 	if (info->engine_id)
 		rsa_engine_remove(e);
 
-	return ret;
+	if (ret)
+		return ret;
+
+	return node;
 }

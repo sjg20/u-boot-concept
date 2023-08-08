@@ -15,9 +15,12 @@
 #include <malloc.h>
 #include <spl.h>
 #include <syscon.h>
+#include <vesa.h>
 #include <asm/cpu.h>
 #include <asm/cpu_common.h>
+#include <asm/fsp2/fsp_api.h>
 #include <asm/global_data.h>
+#include <asm/mp.h>
 #include <asm/mrccache.h>
 #include <asm/mtrr.h>
 #include <asm/pci.h>
@@ -27,7 +30,7 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-__weak int arch_cpu_init_dm(void)
+__weak int fsp_setup_pinctrl(void *ctx, struct event *event)
 {
 	return 0;
 }
@@ -65,7 +68,7 @@ static int x86_spl_init(void)
 	 * TODO(sjg@chromium.org): We use this area of RAM for the stack
 	 * and global_data in SPL. Once U-Boot starts up and releocates it
 	 * is not needed. We could make this a CONFIG option or perhaps
-	 * place it immediately below CONFIG_SYS_TEXT_BASE.
+	 * place it immediately below CONFIG_TEXT_BASE.
 	 */
 	__maybe_unused char *ptr = (char *)0x110000;
 #else
@@ -89,13 +92,14 @@ static int x86_spl_init(void)
 		return ret;
 	}
 #ifndef CONFIG_TPL
-	ret = arch_cpu_init_dm();
+	ret = fsp_setup_pinctrl(NULL, NULL);
 	if (ret) {
-		debug("%s: arch_cpu_init_dm() failed\n", __func__);
+		debug("%s: fsp_setup_pinctrl() failed\n", __func__);
 		return ret;
 	}
 #endif
-	preloader_console_init();
+	if (!IS_ENABLED(CONFIG_SPL_BOARD_INIT))
+		preloader_console_init();
 #if !defined(CONFIG_TPL) && !CONFIG_IS_ENABLED(CPU)
 	ret = print_cpuinfo();
 	if (ret) {
@@ -133,8 +137,21 @@ static int x86_spl_init(void)
 	 */
 	gd->new_gd = (struct global_data *)ptr;
 	memcpy(gd->new_gd, gd, sizeof(*gd));
+
+	/*
+	 * Make sure logging is disabled when we switch, since the log system
+	 * list head will move
+	 */
+	gd->new_gd->flags &= ~GD_FLG_LOG_READY;
 	arch_setup_gd(gd->new_gd);
 	gd->start_addr_sp = (ulong)ptr;
+
+	/* start up logging again, with the new list-head location */
+	ret = log_init();
+	if (ret) {
+		log_debug("Log setup failed (err=%d)\n", ret);
+		return ret;
+	}
 
 	/* Cache the SPI flash. Otherwise copying the code to RAM takes ages */
 	ret = mtrr_add_request(MTRR_TYPE_WRBACK,
@@ -208,8 +225,8 @@ static int spl_board_load_image(struct spl_image_info *spl_image,
 				struct spl_boot_device *bootdev)
 {
 	spl_image->size = CONFIG_SYS_MONITOR_LEN;
-	spl_image->entry_point = CONFIG_SYS_TEXT_BASE;
-	spl_image->load_addr = CONFIG_SYS_TEXT_BASE;
+	spl_image->entry_point = CONFIG_TEXT_BASE;
+	spl_image->load_addr = CONFIG_TEXT_BASE;
 	spl_image->os = IH_OS_U_BOOT;
 	spl_image->name = "U-Boot";
 
@@ -254,4 +271,12 @@ void spl_board_init(void)
 #ifndef CONFIG_TPL
 	preloader_console_init();
 #endif
+
+	if (CONFIG_IS_ENABLED(VIDEO)) {
+		struct udevice *dev;
+
+		/* Set up PCI video in SPL if required */
+		uclass_first_device_err(UCLASS_PCI, &dev);
+		uclass_first_device_err(UCLASS_VIDEO, &dev);
+	}
 }

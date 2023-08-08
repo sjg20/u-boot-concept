@@ -31,11 +31,6 @@
 #include <asm/arch/clock.h>
 #include "octeontx_bch.h"
 
-#ifdef DEBUG
-# undef CONFIG_LOGLEVEL
-# define CONFIG_LOGLEVEL 8
-#endif
-
 /*
  * The NDF_CMD queue takes commands between 16 - 128 bit.
  * All commands must be 16 bit aligned and are little endian.
@@ -2098,7 +2093,7 @@ static int octeontx_pci_nand_probe(struct udevice *dev)
 	tn->dev = dev;
 	INIT_LIST_HEAD(&tn->chips);
 
-	tn->base = dm_pci_map_bar(dev, PCI_BASE_ADDRESS_0, PCI_REGION_MEM);
+	tn->base = dm_pci_map_bar(dev, PCI_BASE_ADDRESS_0, 0, 0, PCI_REGION_TYPE, PCI_REGION_MEM);
 	if (!tn->base) {
 		ret = -EINVAL;
 		goto release;
@@ -2179,7 +2174,7 @@ int octeontx_pci_nand_disable(struct udevice *dev)
  * In this case, the initial probe returns success but the actual probing
  * is deferred until the BCH VF has been probed.
  *
- * @return	0 for success, otherwise error
+ * Return:	0 for success, otherwise error
  */
 int octeontx_pci_nand_deferred_probe(void)
 {

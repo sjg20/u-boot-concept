@@ -10,14 +10,10 @@
 /* Memory configurations */
 #define PHYS_SDRAM_1_SIZE		0x40000000	/* 1GiB */
 
-/* Booting Linux */
-#define CONFIG_BOOTFILE		"fitImage"
-#define CONFIG_BOOTCOMMAND	"run mmc_mmc"
-
 /* Environment is in MMC */
 
 /* Extra Environment */
-#define CONFIG_EXTRA_ENV_SETTINGS					\
+#define CFG_EXTRA_ENV_SETTINGS					\
 	"consdev=ttyS0\0"						\
 	"baudrate=115200\0"						\
 	"bootscript=boot.scr\0"						\

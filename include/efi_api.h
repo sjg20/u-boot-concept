@@ -21,7 +21,7 @@
 #include <pe.h>
 
 /* UEFI spec version 2.9 */
-#define EFI_SPECIFICATION_VERSION (2 << 16 | 90)
+#define EFI_SPECIFICATION_VERSION (2 << 16 | 100)
 
 /* Types and defines for EFI CreateEvent */
 enum efi_timer_delay {
@@ -226,6 +226,22 @@ enum efi_reset_type {
 	EFI_GUID(0x6dcbd5ed, 0xe82d, 0x4c44, 0xbd, 0xa1, \
 		 0x71, 0x94, 0x19, 0x9a, 0xd9, 0x2a)
 
+#define EFI_CONFORMANCE_PROFILES_TABLE_GUID \
+	EFI_GUID(0x36122546, 0xf7ef, 0x4c8f, 0xbd, 0x9b, \
+		 0xeb, 0x85, 0x25, 0xb5, 0x0c, 0x0b)
+
+#define EFI_CONFORMANCE_PROFILES_TABLE_VERSION 1
+
+#define EFI_CONFORMANCE_PROFILE_EBBR_2_1_GUID \
+	EFI_GUID(0xcce33c35, 0x74ac, 0x4087, 0xbc, 0xe7, \
+		 0x8b, 0x29, 0xb0, 0x2e, 0xeb, 0x27)
+
+struct efi_conformance_profiles_table {
+	u16 version;
+	u16 number_of_profiles;
+	efi_guid_t	conformance_profiles[];
+} __packed;
+
 struct efi_capsule_header {
 	efi_guid_t capsule_guid;
 	u32 header_size;
@@ -426,6 +442,22 @@ struct efi_runtime_services {
 	EFI_GUID(0x1e2ed096, 0x30e2, 0x4254, 0xbd, \
 		 0x89, 0x86, 0x3b, 0xbe, 0xf8, 0x23, 0x25)
 
+#define EFI_RNG_PROTOCOL_GUID \
+	EFI_GUID(0x3152bca5, 0xeade, 0x433d, 0x86, 0x2e, \
+		 0xc0, 0x1c, 0xdc, 0x29, 0x1f, 0x44)
+
+#define EFI_DT_FIXUP_PROTOCOL_GUID \
+	EFI_GUID(0xe617d64c, 0xfe08, 0x46da, 0xf4, 0xdc, \
+		 0xbb, 0xd5, 0x87, 0x0c, 0x73, 0x00)
+
+#define EFI_TCG2_PROTOCOL_GUID \
+	EFI_GUID(0x607f766c, 0x7455, 0x42be, 0x93, \
+		 0x0b, 0xe4, 0xd7, 0x6d, 0xb2, 0x72, 0x0f)
+
+#define RISCV_EFI_BOOT_PROTOCOL_GUID \
+	EFI_GUID(0xccd15fec, 0x6f73, 0x4eec, 0x83, \
+		 0x95, 0x3e, 0x69, 0xe4, 0xb9, 0x40, 0xbf)
+
 /**
  * struct efi_configuration_table - EFI Configuration Table
  *
@@ -481,6 +513,16 @@ struct efi_system_table {
 	struct efi_configuration_table *tables;
 };
 
+/**
+ * efi_main() - entry point of EFI applications
+ *
+ * @image_handle:	handle with the Loaded Image Protocol
+ * @systab:		pointer to the system table
+ * Return:		status code
+ */
+efi_status_t EFIAPI efi_main(efi_handle_t image_handle,
+			     struct efi_system_table *systab);
+
 #define EFI_LOADED_IMAGE_PROTOCOL_GUID \
 	EFI_GUID(0x5b1b31a1, 0x9562, 0x11d2, \
 		 0x8e, 0x3f, 0x00, 0xa0, 0xc9, 0x69, 0x72, 0x3b)
@@ -528,6 +570,7 @@ struct efi_mac_addr {
 #define DEVICE_PATH_TYPE_HARDWARE_DEVICE	0x01
 #  define DEVICE_PATH_SUB_TYPE_MEMORY		0x03
 #  define DEVICE_PATH_SUB_TYPE_VENDOR		0x04
+#  define DEVICE_PATH_SUB_TYPE_CONTROLLER	0x05
 
 struct efi_device_path_memory {
 	struct efi_device_path dp;
@@ -540,6 +583,11 @@ struct efi_device_path_vendor {
 	struct efi_device_path dp;
 	efi_guid_t guid;
 	u8 vendor_data[];
+} __packed;
+
+struct efi_device_path_controller {
+	struct efi_device_path dp;
+	u32 controller_number;
 } __packed;
 
 #define DEVICE_PATH_TYPE_ACPI_DEVICE		0x02
@@ -562,6 +610,7 @@ struct efi_device_path_acpi_path {
 #  define DEVICE_PATH_SUB_TYPE_MSG_MAC_ADDR	0x0b
 #  define DEVICE_PATH_SUB_TYPE_MSG_UART		0x0e
 #  define DEVICE_PATH_SUB_TYPE_MSG_USB_CLASS	0x0f
+#  define DEVICE_PATH_SUB_TYPE_MSG_USB_WWI	0x10
 #  define DEVICE_PATH_SUB_TYPE_MSG_SATA		0x12
 #  define DEVICE_PATH_SUB_TYPE_MSG_NVME		0x17
 #  define DEVICE_PATH_SUB_TYPE_MSG_URI		0x18
@@ -785,7 +834,7 @@ struct efi_simple_text_output_protocol {
 
 struct efi_input_key {
 	u16 scan_code;
-	s16 unicode_char;
+	u16 unicode_char;
 };
 
 #define EFI_SHIFT_STATE_INVALID		0x00000000
@@ -1833,9 +1882,21 @@ struct efi_system_resource_table {
 #define LAST_ATTEMPT_STATUS_ERROR_UNSUCCESSFUL_VENDOR_RANGE_MAX 0x00004000
 
 /* Certificate types in signature database */
+#define EFI_CERT_SHA1_GUID \
+	EFI_GUID(0x826ca512, 0xcf10, 0x4ac9, 0xb1, 0x87, \
+		 0xbe, 0x01, 0x49, 0x66, 0x31, 0xbd)
+#define EFI_CERT_SHA224_GUID \
+	EFI_GUID(0xb6e5233, 0xa65c, 0x44c9, 0x94, 0x07, \
+		 0xd9, 0xab, 0x83, 0xbf, 0xc8, 0xbd)
 #define EFI_CERT_SHA256_GUID \
 	EFI_GUID(0xc1c41626, 0x504c, 0x4092, 0xac, 0xa9, \
 		 0x41, 0xf9, 0x36, 0x93, 0x43, 0x28)
+#define EFI_CERT_SHA384_GUID \
+	EFI_GUID(0xff3e5307, 0x9fd0, 0x48c9, 0x85, 0xf1, \
+		 0x8a, 0xd5, 0x6c, 0x70, 0x1e, 0x01)
+#define EFI_CERT_SHA512_GUID \
+	EFI_GUID(0x93e0fae, 0xa6c4, 0x4f50, 0x9f, 0x1b, \
+		 0xd4, 0x1e, 0x2b, 0x89, 0xc1, 0x9a)
 #define EFI_CERT_RSA2048_GUID \
 	EFI_GUID(0x3c5766e8, 0x269c, 0x4e34, 0xaa, 0x14, \
 		 0xed, 0x77, 0x6e, 0x85, 0xb3, 0xb6)
@@ -1845,9 +1906,34 @@ struct efi_system_resource_table {
 #define EFI_CERT_X509_SHA256_GUID \
 	EFI_GUID(0x3bd2a492, 0x96c0, 0x4079, 0xb4, 0x20, \
 		 0xfc, 0xf9, 0x8e, 0xf1, 0x03, 0xed)
+#define EFI_CERT_X509_SHA384_GUID \
+	EFI_GUID(0x7076876e, 0x80c2, 0x4ee6,		\
+		 0xaa, 0xd2, 0x28, 0xb3, 0x49, 0xa6, 0x86, 0x5b)
+#define EFI_CERT_X509_SHA512_GUID \
+	EFI_GUID(0x446dbf63, 0x2502, 0x4cda,		\
+		 0xbc, 0xfa, 0x24, 0x65, 0xd2, 0xb0, 0xfe, 0x9d)
 #define EFI_CERT_TYPE_PKCS7_GUID \
 	EFI_GUID(0x4aafd29d, 0x68df, 0x49ee, 0x8a, 0xa9, \
 		 0x34, 0x7d, 0x37, 0x56, 0x65, 0xa7)
+
+#define EFI_LZMA_COMPRESSED \
+	EFI_GUID(0xee4e5898, 0x3914, 0x4259, 0x9d, 0x6e, \
+		 0xdc, 0x7b, 0xd7, 0x94, 0x03, 0xcf)
+#define EFI_DXE_SERVICES \
+	EFI_GUID(0x05ad34ba, 0x6f02, 0x4214, 0x95, 0x2e, \
+		 0x4d, 0xa0, 0x39, 0x8e, 0x2b, 0xb9)
+#define EFI_HOB_LIST \
+	EFI_GUID(0x7739f24c, 0x93d7, 0x11d4, 0x9a, 0x3a,  \
+		 0x00, 0x90, 0x27, 0x3f, 0xc1, 0x4d)
+#define EFI_MEMORY_TYPE \
+	EFI_GUID(0x4c19049f, 0x4137, 0x4dd3, 0x9c, 0x10, \
+		 0x8b, 0x97, 0xa8, 0x3f, 0xfd, 0xfa)
+#define EFI_MEM_STATUS_CODE_REC \
+	EFI_GUID(0x060cc026, 0x4c0d, 0x4dda, 0x8f, 0x41, \
+		 0x59, 0x5f, 0xef, 0x00, 0xa5, 0x02)
+#define EFI_GUID_EFI_ACPI1 \
+	EFI_GUID(0xeb9d2d30, 0x2d88, 0x11d3,  0x9a, 0x16, \
+		 0x00, 0x90, 0x27, 0x3f, 0xc1, 0x4d)
 
 /**
  * struct win_certificate_uefi_guid - A certificate that encapsulates
@@ -1939,14 +2025,6 @@ struct efi_signature_list {
 	EFI_GUID(0x86c77a67, 0x0b97, 0x4633, 0xa1, 0x87, \
 		 0x49, 0x10, 0x4d, 0x06, 0x85, 0xc7)
 
-#define EFI_FIRMWARE_IMAGE_TYPE_UBOOT_FIT_GUID \
-	EFI_GUID(0xae13ff2d, 0x9ad4, 0x4e25, 0x9a, 0xc8, \
-		 0x6d, 0x80, 0xb3, 0xb2, 0x21, 0x47)
-
-#define EFI_FIRMWARE_IMAGE_TYPE_UBOOT_RAW_GUID \
-	EFI_GUID(0xe2bb9c06, 0x70e9, 0x4b14, 0x97, 0xa3, \
-		 0x5a, 0x79, 0x13, 0x17, 0x6e, 0x3f)
-
 #define IMAGE_ATTRIBUTE_IMAGE_UPDATABLE		0x0000000000000001
 #define IMAGE_ATTRIBUTE_RESET_REQUIRED		0x0000000000000002
 #define IMAGE_ATTRIBUTE_AUTHENTICATION_REQUIRED	0x0000000000000004
@@ -2033,6 +2111,21 @@ struct efi_firmware_management_protocol {
 			const void *vendor_code,
 			u32 package_version,
 			const u16 *package_version_name);
+};
+
+#define EFI_DISK_IO_PROTOCOL_GUID	\
+	EFI_GUID(0xce345171, 0xba0b, 0x11d2, 0x8e, 0x4f, \
+		 0x00, 0xa0, 0xc9, 0x69, 0x72, 0x3b)
+
+struct efi_disk {
+	u64 revision;
+	efi_status_t (EFIAPI *read_disk)(struct efi_disk *this, u32 media_id,
+					 u64 offset, efi_uintn_t buffer_size,
+					 void *buffer);
+
+	efi_status_t (EFIAPI *write_disk)(struct efi_disk *this, u32 media_id,
+					  u64 offset, efi_uintn_t buffer_size,
+					  void *buffer);
 };
 
 #endif

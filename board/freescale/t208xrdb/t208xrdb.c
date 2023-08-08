@@ -77,7 +77,7 @@ int checkboard(void)
 
 int board_early_init_r(void)
 {
-	const unsigned int flashbase = CONFIG_SYS_FLASH_BASE;
+	const unsigned int flashbase = CFG_SYS_FLASH_BASE;
 	int flash_esel = find_tlb_idx((void *)flashbase, 1);
 	/*
 	 * Remap Boot flash + PROMJET region to caching-inhibited
@@ -96,7 +96,7 @@ int board_early_init_r(void)
 		disable_tlb(flash_esel);
 	}
 
-	set_tlb(1, flashbase, CONFIG_SYS_FLASH_BASE_PHYS,
+	set_tlb(1, flashbase, CFG_SYS_FLASH_BASE_PHYS,
 		MAS3_SX|MAS3_SW|MAS3_SR, MAS2_I|MAS2_G,
 		0, flash_esel, BOOKE_PAGESZ_256M, 1);
 
@@ -107,11 +107,6 @@ int board_early_init_r(void)
 	if (adjust_vdd(0))
 		printf("Warning: Adjusting core voltage failed.\n");
 	return 0;
-}
-
-unsigned long get_board_sys_clk(void)
-{
-	return CONFIG_SYS_CLK_FREQ;
 }
 
 int misc_init_r(void)

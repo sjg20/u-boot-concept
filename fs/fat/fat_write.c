@@ -5,6 +5,8 @@
  * R/W (V)FAT 12/16/32 filesystem implementation by Donggeun Kim
  */
 
+#define LOG_CATEGORY LOGC_FS
+
 #include <common.h>
 #include <command.h>
 #include <config.h>
@@ -472,7 +474,7 @@ static int set_fatent_value(fsdata *mydata, __u32 entry, __u32 entry_value)
 
 		startblock += mydata->fat_sect;
 
-		if (disk_read(startblock, getsize, bufptr) < 0) {
+		if (disk_read(NULL, startblock, getsize, bufptr) < 0) {
 			debug("Error reading FAT blocks\n");
 			return -1;
 		}
@@ -707,7 +709,8 @@ get_set_cluster(fsdata *mydata, __u32 clustnum, loff_t pos, __u8 *buffer,
 	/* partial write at beginning */
 	if (pos) {
 		wsize = min(bytesperclust - pos, size);
-		ret = disk_read(startsect, mydata->clust_size, tmpbuf_cluster);
+		ret = disk_read(NULL, startsect, mydata->clust_size,
+				tmpbuf_cluster);
 		if (ret != mydata->clust_size) {
 			debug("Error reading data (got %d)\n", ret);
 			return -1;
@@ -773,7 +776,8 @@ get_set_cluster(fsdata *mydata, __u32 clustnum, loff_t pos, __u8 *buffer,
 	/* partial write at end */
 	if (size) {
 		wsize = size;
-		ret = disk_read(startsect, mydata->clust_size, tmpbuf_cluster);
+		ret = disk_read(NULL, startsect, mydata->clust_size,
+				tmpbuf_cluster);
 		if (ret != mydata->clust_size) {
 			debug("Error reading data (got %d)\n", ret);
 			return -1;
@@ -1566,8 +1570,9 @@ int fat_unlink(const char *filename)
 	char *filename_copy, *dirname, *basename;
 
 	filename_copy = strdup(filename);
-	if (!filename_copy) {
-		printf("Error: allocating memory\n");
+	itr = malloc_cache_aligned(sizeof(fat_itr));
+	if (!itr || !filename_copy) {
+		printf("Error: out of memory\n");
 		ret = -ENOMEM;
 		goto exit;
 	}
@@ -1576,13 +1581,6 @@ int fat_unlink(const char *filename)
 	if (!strcmp(dirname, "/") && !strcmp(basename, "")) {
 		printf("Error: cannot remove root\n");
 		ret = -EINVAL;
-		goto exit;
-	}
-
-	itr = malloc_cache_aligned(sizeof(fat_itr));
-	if (!itr) {
-		printf("Error: allocating memory\n");
-		ret = -ENOMEM;
 		goto exit;
 	}
 
@@ -1600,7 +1598,7 @@ int fat_unlink(const char *filename)
 	}
 
 	if (!find_directory_entry(itr, basename)) {
-		printf("%s: doesn't exist\n", basename);
+		printf("%s: doesn't exist (%d)\n", basename, -ENOENT);
 		ret = -ENOENT;
 		goto exit;
 	}
