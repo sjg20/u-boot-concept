@@ -85,6 +85,13 @@ build in `$CBDIR`::
 This allows booting and installing various distros, many of which are
 64-bit-only, so cannot work with the 32-bit 'coreboot' build.
 
+USB keyboard
+------------
+
+The `CONFIG_USE_PREBOOT` option is enabled by default, meaning that USB starts
+up just before the command-line starts. This allows user interaction on
+non-laptop devices which use a USB keyboard.
+
 CBFS access
 -----------
 
