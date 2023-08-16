@@ -11,6 +11,7 @@
 #include <log.h>
 #include <mapmem.h>
 #include <asm/io.h>
+#include <linux/bitfield.h>
 #include <linux/bitops.h>
 #include <linux/errno.h>
 #include "nvmxip.h"
@@ -26,9 +27,17 @@
  *
  * Always return 0.
  */
-static int nvmxip_mmio_rawread(const phys_addr_t address, u64 *value)
+static int nvmxip_mmio_rawread(const u64 *address, u64 *value)
 {
+#if CONFIG_IS_ENABLED(PHYS_64BIT)
 	*value = readq(address);
+#else
+	u32 h_word, l_word;
+
+	l_word = readl(address);
+	h_word = readl((u8 *)address + sizeof(u32));
+	*value = FIELD_PREP(GENMASK_ULL(63, 32), h_word) | l_word;
+#endif
 	return 0;
 }
 
@@ -67,7 +76,7 @@ static ulong nvmxip_blk_read(struct udevice *dev, lbaint_t blknr, lbaint_t blkcn
 	/* assumption: the data is virtually contiguous */
 
 	for (qdata_idx = 0 ; qdata_idx < qwords ; qdata_idx++)
-		nvmxip_mmio_rawread((phys_addr_t)(virt_blkaddr + qdata_idx), pdst++);
+		nvmxip_mmio_rawread(virt_blkaddr + qdata_idx, pdst++);
 
 	log_debug("[%s]:     src[0]: 0x%llx , dst[0]: 0x%llx , src[-1]: 0x%llx , dst[-1]: 0x%llx\n",
 		  dev->name,

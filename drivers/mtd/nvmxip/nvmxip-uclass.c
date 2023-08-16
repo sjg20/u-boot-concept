@@ -9,7 +9,7 @@
 #include <common.h>
 #include <dm.h>
 #include <log.h>
-#if CONFIG_IS_ENABLED(SANDBOX64)
+#if CONFIG_IS_ENABLED(SANDBOX)
 #include <asm/test.h>
 #endif
 #include <linux/bitops.h>
@@ -39,7 +39,7 @@ static int nvmxip_post_bind(struct udevice *udev)
 	char bdev_name[NVMXIP_BLKDEV_NAME_SZ + 1];
 	int devnum;
 
-#if CONFIG_IS_ENABLED(SANDBOX64)
+#if CONFIG_IS_ENABLED(SANDBOX)
 	sandbox_set_enable_memio(true);
 #endif
 
@@ -62,7 +62,7 @@ static int nvmxip_post_bind(struct udevice *udev)
 		return ret;
 	}
 
-	log_info("[%s]: the block device %s ready for use\n", udev->name, bdev_name);
+	log_debug("[%s]: the block device %s ready for use\n", udev->name, bdev_name);
 
 	return 0;
 }
