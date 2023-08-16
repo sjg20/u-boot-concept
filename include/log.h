@@ -370,6 +370,15 @@ void __assert_fail(const char *assertion, const char *file, unsigned int line,
 #define log_msg_retz(_msg, _ret) ((void)(_msg), _ret)
 #endif
 
+/* Select the right physical address formatting according to the platform */
+#ifdef CONFIG_PHYS_64BIT
+#define PhysAddrLength "ll"
+#else
+#define PhysAddrLength ""
+#endif
+#define PHYS_ADDR_LN "%" PhysAddrLength "x"
+#define PHYS_ADDR_LNU "%" PhysAddrLength "u"
+
 /** * enum log_rec_flags - Flags for a log record */
 enum log_rec_flags {
 	/** @LOGRECF_FORCE_DEBUG: Force output of debug record */

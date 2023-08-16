@@ -13,14 +13,6 @@
 #include <stdlib.h>
 #include <asm/io.h>
 
-/* Select the right physical address formatting according to the platform */
-#ifdef CONFIG_PHYS_64BIT
-#define PhysAddrLength "ll"
-#else
-#define PhysAddrLength ""
-#endif
-#define PHYS_ADDR_LN "%" PhysAddrLength "x"
-
 /**
  * ffa_get_dev() - Return the FF-A device
  * @devp:	pointer to the FF-A device
