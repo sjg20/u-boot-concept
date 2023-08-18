@@ -137,6 +137,7 @@ struct eth_dev {
 struct ether_priv {
 	struct eth_dev ethdev;
 	struct udevice *netdev;
+	struct udevice *udcdev;
 	struct usb_gadget_driver eth_driver;
 };
 
@@ -1895,7 +1896,7 @@ static int eth_stop(struct eth_dev *dev)
 		/* Wait until host receives OID_GEN_MEDIA_CONNECT_STATUS */
 		ts = get_timer(0);
 		while (get_timer(ts) < timeout)
-			usb_gadget_handle_interrupts(0);
+			dm_usb_gadget_handle_interrupts(priv->udcdev);
 #endif
 
 		rndis_uninit(dev->rndis_config);
@@ -2300,7 +2301,7 @@ static int usb_eth_start(struct udevice *udev)
 			pr_err("The remote end did not respond in time.");
 			goto fail;
 		}
-		usb_gadget_handle_interrupts(0);
+		dm_usb_gadget_handle_interrupts(priv->udcdev);
 	}
 
 	packet_received = 0;
@@ -2370,7 +2371,7 @@ static int usb_eth_send(struct udevice *udev, void *packet, int length)
 			printf("timeout sending packets to usb ethernet\n");
 			return -1;
 		}
-		usb_gadget_handle_interrupts(0);
+		dm_usb_gadget_handle_interrupts(priv->udcdev);
 	}
 	free(rndis_pkt);
 
@@ -2406,7 +2407,7 @@ static void usb_eth_stop(struct udevice *udev)
 
 	/* Clear pending interrupt */
 	if (dev->network_started) {
-		usb_gadget_handle_interrupts(0);
+		dm_usb_gadget_handle_interrupts(priv->udcdev);
 		dev->network_started = 0;
 	}
 }
@@ -2416,7 +2417,7 @@ static int usb_eth_recv(struct udevice *dev, int flags, uchar **packetp)
 	struct ether_priv *priv = dev_get_priv(dev);
 	struct eth_dev *ethdev = &priv->ethdev;
 
-	usb_gadget_handle_interrupts(0);
+	dm_usb_gadget_handle_interrupts(priv->udcdev);
 
 	if (packet_received) {
 		if (ethdev->rx_req) {
@@ -2452,6 +2453,7 @@ static const struct eth_ops usb_eth_ops = {
 
 int usb_ether_init(void)
 {
+	struct ether_priv *priv;
 	struct udevice *usb_dev;
 	int ret;
 
@@ -2467,7 +2469,8 @@ int usb_ether_init(void)
 		return ret;
 	}
 
-	return usb_gadget_initialize(0);
+	priv = dev_get_priv(usb_dev);
+	return udc_device_get_by_index(0, &priv->udcdev);
 }
 
 static int usb_eth_probe(struct udevice *dev)
@@ -2477,6 +2480,9 @@ static int usb_eth_probe(struct udevice *dev)
 
 	priv->netdev = dev;
 	l_priv = priv;
+
+	if (!priv->udcdev)
+		priv->udcdev = dev->parent;
 
 	get_ether_addr(CONFIG_USBNET_DEV_ADDR, pdata->enetaddr);
 	eth_env_set_enetaddr("usbnet_devaddr", pdata->enetaddr);
@@ -2528,7 +2534,9 @@ static int usb_eth_remove(struct udevice *dev)
 
 static int usb_eth_unbind(struct udevice *dev)
 {
-	usb_gadget_release(0);
+	struct ether_priv *priv = dev_get_priv(dev);
+
+	udc_device_put(priv->udcdev);
 
 	return 0;
 }
