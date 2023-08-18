@@ -682,6 +682,11 @@ config BACKLIGHT_LM3533
 	  LM3533 Lighting Power chip. Only Bank A is supported as for now.
 	  Supported backlight level range is from 2 to 255 with step of 1.
 
+config BMP
+	bool # Enable bmp image display
+	help
+	  Enable bmp functions to display bmp image and get bmp info.
+
 source "drivers/video/ti/Kconfig"
 
 source "drivers/video/exynos/Kconfig"
@@ -1124,6 +1129,12 @@ config SPL_VIDEO_REMOVE
 	help
 	  if this  option is enabled video driver will be removed at the end of
 	  SPL stage, before loading the next stage.
+
+config SPL_BMP
+	bool # Enable bmp image display at SPL
+	depends on SPL_VIDEO
+	help
+	  Enable bmp functions to display bmp image and get bmp info at SPL.
 
 if SPL_SPLASH_SCREEN
 

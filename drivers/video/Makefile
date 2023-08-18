@@ -3,6 +3,8 @@
 # (C) Copyright 2000-2007
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 
+obj-$(CONFIG_$(SPL_)BMP) += bmp.o
+
 ifdef CONFIG_DM
 obj-$(CONFIG_$(SPL_TPL_)BACKLIGHT) += backlight-uclass.o
 obj-$(CONFIG_BACKLIGHT_GPIO) += backlight_gpio.o
