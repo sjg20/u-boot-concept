@@ -31,11 +31,14 @@ struct udevice;
 #define DEBUG_INT_STATE 0	/* Internal network state changes */
 
 /*
- *	The number of receive packet buffers, and the required packet buffer
- *	alignment in memory.
- *
+ * The number of receive packet buffers, and the required packet buffer
+ * alignment in memory.
  */
+#ifdef CONFIG_SYS_RX_ETH_BUFFER
 #define PKTBUFSRX	CONFIG_SYS_RX_ETH_BUFFER
+#else
+#define PKTBUFSRX	4
+#endif
 #define PKTALIGN	ARCH_DMA_MINALIGN
 
 /* Number of packets processed together */
