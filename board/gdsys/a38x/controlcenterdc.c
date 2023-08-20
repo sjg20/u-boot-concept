@@ -7,6 +7,7 @@
 #include <common.h>
 #include <command.h>
 #include <dm.h>
+#include <event.h>
 #include <init.h>
 #include <miiphy.h>
 #include <net.h>
@@ -284,7 +285,7 @@ int board_fix_fdt(void *rw_fdt_blob)
 	return 0;
 }
 
-int last_stage_init(void)
+static int last_stage_init(void)
 {
 	struct udevice *tpm;
 	int ret;
@@ -305,3 +306,4 @@ int last_stage_init(void)
 
 	return 0;
 }
+EVENT_SPY_SIMPLE(EVT_LAST_STAGE_INIT, last_stage_init);

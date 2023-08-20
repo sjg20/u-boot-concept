@@ -520,6 +520,21 @@ static int initr_post(void)
 }
 #endif
 
+/*
+ * Some parts can be only initialized if all others (like Interrupts) are up and
+ * running (i.e. the PC-style ISA keyboard).
+ */
+static int last_stage_init(void)
+{
+	if (IS_ENABLED(CONFIG_LAST_STAGE_INIT)) {
+		init_func_watchdog_reset();
+
+		return event_notify_null(EVT_MISC_INIT_F);
+	}
+
+	return 0;
+}
+
 #if defined(CFG_PRAM)
 /*
  * Export available size of memory for Linux, taking into account the
@@ -767,15 +782,7 @@ static init_fnc_t init_sequence_r[] = {
 #ifdef CONFIG_POST
 	initr_post,
 #endif
-#ifdef CONFIG_LAST_STAGE_INIT
-	INIT_FUNC_WATCHDOG_RESET
-	/*
-	 * Some parts can be only initialized if all others (like
-	 * Interrupts) are up and running (i.e. the PC-style ISA
-	 * keyboard).
-	 */
 	last_stage_init,
-#endif
 #if defined(CFG_PRAM)
 	initr_mem,
 #endif

@@ -4,6 +4,7 @@
  */
 
 #include <common.h>
+#include <event.h>
 #include <init.h>
 #include <malloc.h>
 #include <asm/addrspace.h>
@@ -21,7 +22,7 @@ int dram_init(void)
 	return 0;
 }
 
-int last_stage_init(void)
+static int last_stage_init(void)
 {
 	void *src, *dst;
 
@@ -46,3 +47,4 @@ int last_stage_init(void)
 
 	return 0;
 }
+EVENT_SPY_SIMPLE(EVT_LAST_STAGE_INIT, last_stage_init);

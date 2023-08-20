@@ -35,6 +35,15 @@ enum event_t {
 	/* Emitted before relocation to set up Firmware Support Package */
 	EVT_FSP_INIT_F,
 
+	/* *
+	 * Emitted just before jumping to the main loop
+	 *
+	 * Some boards need to perform initialisation immediately before control
+	 * is passed to the command-line interpreter (e.g. for init that depend
+	 * on later phases in the init sequence).
+	 */
+	EVT_LAST_STAGE_INIT,
+
 	/* Fpga load hook */
 	EVT_FPGA_LOAD,
 

@@ -26,6 +26,7 @@
 #include <cpu_func.h>
 #include <dm.h>
 #include <errno.h>
+#include <event.h>
 #include <init.h>
 #include <irq.h>
 #include <log.h>
@@ -202,7 +203,7 @@ __weak void board_final_cleanup(void)
 {
 }
 
-int last_stage_init(void)
+static int last_stage_init(void)
 {
 	struct acpi_fadt __maybe_unused *fadt;
 	int ret;
@@ -245,6 +246,8 @@ int last_stage_init(void)
 
 	return 0;
 }
+EVENT_SPY_SIMPLE(EVT_LAST_STAGE_INIT, last_stage_init);
+
 #endif
 
 static int x86_init_cpus(void)

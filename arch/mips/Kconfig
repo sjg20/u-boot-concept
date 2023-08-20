@@ -79,7 +79,7 @@ config ARCH_MTMIPS
 	select RESET_MTMIPS
 	imply DM_SPI
 	imply DM_SPI_FLASH
-	select LAST_STAGE_INIT
+	select EVENT
 	select MIPS_TUNE_24KC
 	select OF_CONTROL
 	select ROM_EXCEPTION_VECTORS
