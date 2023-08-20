@@ -179,6 +179,9 @@ int do_bdinfo(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 		bdinfo_print_num_l("malloc base", gd_malloc_start());
 	}
 
+	if (IS_ENABLED(CONFIG_EVENT))
+		bdinfo_print_num_l("evspy_info", sizeof(struct evspy_info));
+
 	arch_print_bdinfo();
 
 	return 0;
