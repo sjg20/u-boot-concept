@@ -229,6 +229,9 @@ efi_status_t efi_init_obj_list(void)
 	if (efi_obj_list_initialized != OBJ_LIST_NOT_INITIALIZED)
 		return efi_obj_list_initialized;
 
+	if (efi_memory_init())
+		return EFI_ACCESS_DENIED;
+
 	/* Set up console modes */
 	efi_setup_console_size();
 
