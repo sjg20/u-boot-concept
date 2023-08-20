@@ -842,6 +842,23 @@ static int misc_init_f(void)
 	return event_notify_null(EVT_MISC_INIT_F);
 }
 
+/**
+ * arch_fsp_init_f() - perform firmware support package init
+ *
+ * Where U-Boot relies on binary blobs to handle part of the system init, this
+ * function can be used to set up the blobs. This is used on some Intel
+ * platforms.
+ *
+ * Return: 0 on success, -ve on error
+ */
+static int arch_fsp_init_f(void)
+{
+	if (IS_ENABLED(CONFIG_HAVE_FSP))
+		return event_notify_null(EVT_FSP_INIT_F);
+
+	return 0;
+}
+
 static const init_fnc_t init_sequence_f[] = {
 	setup_mon_len,
 #ifdef CONFIG_OF_CONTROL
@@ -861,9 +878,7 @@ static const init_fnc_t init_sequence_f[] = {
 #if defined(CONFIG_CONSOLE_RECORD_INIT_F)
 	console_record_init,
 #endif
-#if defined(CONFIG_HAVE_FSP)
-	arch_fsp_init,
-#endif
+	arch_fsp_init_f,
 	arch_cpu_init,		/* basic arch cpu dependent setup */
 	mach_cpu_init,		/* SoC/machine dependent CPU setup */
 	initf_dm,
