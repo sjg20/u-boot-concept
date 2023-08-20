@@ -71,7 +71,14 @@ static int notify_static(struct event *ev)
 
 			log_debug("Sending event %x/%s to spy '%s'\n", ev->type,
 				  event_type_name(ev->type), event_spy_id(spy));
-			ret = spy->func(NULL, ev);
+			if (spy->flags & EVSPYF_SIMPLE) {
+				event_handler_simple_t func;
+
+				func = (event_handler_simple_t)spy->func;
+				func();
+			} else {
+				spy->func(NULL, ev);
+			}
 
 			/*
 			 * TODO: Handle various return codes to
