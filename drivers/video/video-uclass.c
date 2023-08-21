@@ -393,10 +393,12 @@ void video_damage(struct udevice *vid, int x, int y, int width, int height)
 	priv->damage.yend = max(yend, priv->damage.yend);
 }
 
-#if defined(CONFIG_ARM) && !CONFIG_IS_ENABLED(SYS_DCACHE_OFF)
 static void video_flush_dcache(struct udevice *vid)
 {
 	struct video_priv *priv = dev_get_uclass_priv(vid);
+
+	if (CONFIG_IS_ENABLED(SYS_DCACHE_OFF))
+		return;
 
 	if (!priv->flush_dcache)
 		return;
@@ -426,7 +428,6 @@ static void video_flush_dcache(struct udevice *vid)
 		}
 	}
 }
-#endif
 
 static void video_flush_copy(struct udevice *vid)
 {
@@ -468,6 +469,8 @@ int video_sync(struct udevice *vid, bool force)
 	if (CONFIG_IS_ENABLED(CYCLIC) && !force &&
 	    get_timer(priv->last_sync) < CONFIG_VIDEO_SYNC_MS)
 		return 0;
+
+	video_flush_dcache(vid);
 
 	/*
 	 * flush_dcache_range() is declared in common.h but it seems that some
