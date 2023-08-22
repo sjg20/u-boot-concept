@@ -32,4 +32,5 @@ if [ ! -z "${qemu_helper_script}" ]; then
   . "${bin_dir}/qemu.${qemu_helper_script}"
 fi
 
+echo exec "${qemu_binary}" ${ARGS}
 exec "${qemu_binary}" ${ARGS}
