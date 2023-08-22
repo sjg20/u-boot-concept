@@ -23,20 +23,19 @@ DECLARE_GLOBAL_DATA_PTR;
 
 static void lmb_dump_region(struct lmb_region *rgn, char *name)
 {
-	unsigned long long base, size, end;
-	enum lmb_flags flags;
 	int i;
 
 	printf(" %s.cnt = 0x%lx / max = 0x%lx\n", name, rgn->cnt, rgn->max);
 
 	for (i = 0; i < rgn->cnt; i++) {
-		base = rgn->area[i].base;
-		size = rgn->area[i].size;
-		end = base + size - 1;
-		flags = rgn->area[i].flags;
+		struct lmb_area *area = &rgn->area[i];
+		unsigned long long end;
+
+		end = area->base + area->size - 1;
 
 		printf(" %s[%d]\t[0x%llx-0x%llx], 0x%08llx bytes flags: %x\n",
-		       name, i, base, end, size, flags);
+		       name, i, (unsigned long long)area->base, end,
+		       (unsigned long long)area->size, area->flags);
 	}
 }
 
@@ -88,11 +87,8 @@ static void lmb_remove_area(struct lmb_region *rgn, unsigned long area)
 {
 	unsigned long i;
 
-	for (i = area; i < rgn->cnt - 1; i++) {
-		rgn->area[i].base = rgn->area[i + 1].base;
-		rgn->area[i].size = rgn->area[i + 1].size;
-		rgn->area[i].flags = rgn->area[i + 1].flags;
-	}
+	for (i = area; i < rgn->cnt - 1; i++)
+		rgn->area[i] = rgn->area[i + 1];
 	rgn->cnt--;
 }
 
@@ -120,6 +116,7 @@ void lmb_init(struct lmb *lmb)
 
 void arch_lmb_reserve_generic(struct lmb *lmb, ulong sp, ulong end, ulong align)
 {
+	struct bd_info *bd = gd->bd;
 	ulong bank_end;
 	int bank;
 
@@ -133,12 +130,10 @@ void arch_lmb_reserve_generic(struct lmb *lmb, ulong sp, ulong end, ulong align)
 	/* adjust sp by 4K to be safe */
 	sp -= align;
 	for (bank = 0; bank < CONFIG_NR_DRAM_BANKS; bank++) {
-		if (!gd->bd->bi_dram[bank].size ||
-		    sp < gd->bd->bi_dram[bank].start)
+		if (!bd->bi_dram[bank].size || sp < bd->bi_dram[bank].start)
 			continue;
 		/* Watch out for RAM at end of address space! */
-		bank_end = gd->bd->bi_dram[bank].start +
-			gd->bd->bi_dram[bank].size - 1;
+		bank_end = bd->bi_dram[bank].start + bd->bi_dram[bank].size - 1;
 		if (sp > bank_end)
 			continue;
 		if (bank_end > end)
@@ -242,13 +237,15 @@ static long lmb_add_area_flags(struct lmb_region *rgn, phys_addr_t base,
 
 	/* First try and coalesce this LMB with another. */
 	for (i = 0; i < rgn->cnt; i++) {
-		phys_addr_t abase = rgn->area[i].base;
-		phys_size_t asize = rgn->area[i].size;
-		phys_size_t aflags = rgn->area[i].flags;
-		phys_addr_t end = base + size - 1;
-		phys_addr_t rgnend = abase + asize - 1;
+		struct lmb_area *area = &rgn->area[i];
 
-		if (abase <= base && end <= rgnend) {
+		phys_addr_t abase = area->base;
+		phys_size_t asize = area->size;
+		phys_size_t aflags = area->flags;
+		phys_addr_t end = base + size - 1;
+		phys_addr_t aend = abase + asize - 1;
+
+		if (abase <= base && end <= aend) {
 			if (flags == aflags)
 				/* Already have this area, so we're done */
 				return 0;
@@ -260,14 +257,14 @@ static long lmb_add_area_flags(struct lmb_region *rgn, phys_addr_t base,
 		if (adjacent > 0) {
 			if (flags != aflags)
 				break;
-			rgn->area[i].base -= size;
-			rgn->area[i].size += size;
+			area->base -= size;
+			area->size += size;
 			coalesced++;
 			break;
 		} else if (adjacent < 0) {
 			if (flags != aflags)
 				break;
-			rgn->area[i].size += size;
+			area->size += size;
 			coalesced++;
 			break;
 		} else if (lmb_addrs_overlap(base, size, abase, asize)) {
@@ -291,9 +288,7 @@ static long lmb_add_area_flags(struct lmb_region *rgn, phys_addr_t base,
 	/* Couldn't coalesce the LMB, so add it to the sorted table. */
 	for (i = rgn->cnt-1; i >= 0; i--) {
 		if (base < rgn->area[i].base) {
-			rgn->area[i + 1].base = rgn->area[i].base;
-			rgn->area[i + 1].size = rgn->area[i].size;
-			rgn->area[i + 1].flags = rgn->area[i].flags;
+			rgn->area[i + 1] = rgn->area[i];
 		} else {
 			rgn->area[i + 1].base = base;
 			rgn->area[i + 1].size = size;
@@ -533,10 +528,11 @@ int lmb_is_reserved_flags(struct lmb *lmb, phys_addr_t addr, int flags)
 	int i;
 
 	for (i = 0; i < lmb->reserved.cnt; i++) {
-		phys_addr_t upper = lmb->reserved.area[i].base +
-			lmb->reserved.area[i].size - 1;
-		if (addr >= lmb->reserved.area[i].base && addr <= upper)
-			return (lmb->reserved.area[i].flags & flags) == flags;
+		struct lmb_area *area = &lmb->reserved.area[i];
+		phys_addr_t upper = area->base + area->size - 1;
+
+		if (addr >= area->base && addr <= upper)
+			return (area->flags & flags) == flags;
 	}
 
 	return 0;
