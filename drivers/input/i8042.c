@@ -6,11 +6,14 @@
 
 /* i8042.c - Intel 8042 keyboard driver routines */
 
+#define LOG_CATEGORY UCLASS_KEYBOARD
+
 #include <common.h>
 #include <dm.h>
 #include <env.h>
 #include <errno.h>
 #include <i8042.h>
+#include <init.h>
 #include <input.h>
 #include <keyboard.h>
 #include <log.h>
@@ -54,6 +57,14 @@ static unsigned char ext_key_map[] = {
 	0x00  /* map end */
 	};
 
+/**
+ * kbd_input_empty() - Wait until the keyboard is ready for a command
+ *
+ * Checks the IBF flag (input buffer full), waiting for it to indicate that
+ * any previous command has been processed.
+ *
+ * Return: true if ready, false if it timed out
+ */
 static int kbd_input_empty(void)
 {
 	int kbd_timeout = KBD_TIMEOUT * 1000;
@@ -64,6 +75,12 @@ static int kbd_input_empty(void)
 	return kbd_timeout != -1;
 }
 
+/**
+ * kbd_output_full() - Wait until the keyboard has data available
+ *
+ * Checks the OBF flag (output buffer full), waiting for it to indicate that
+ * a response to a previous command is available
+ */
 static int kbd_output_full(void)
 {
 	int kbd_timeout = KBD_TIMEOUT * 1000;
@@ -78,7 +95,7 @@ static int kbd_output_full(void)
  * check_leds() - Check the keyboard LEDs and update them it needed
  *
  * @ret:	Value to return
- * @return value of @ret
+ * Return: value of @ret
  */
 static int i8042_kbd_update_leds(struct udevice *dev, int leds)
 {
@@ -127,21 +144,31 @@ static int kbd_reset(int quirk)
 {
 	int config;
 
+	log_debug("empty\n");
+	if (!kbd_input_empty())
+		goto err;
+
 	/* controller self test */
+	log_debug("self test\n");
 	if (kbd_cmd_read(CMD_SELF_TEST) != KBC_TEST_OK)
 		goto err;
 
 	/* keyboard reset */
-	if (kbd_write(I8042_DATA_REG, CMD_RESET_KBD) ||
-	    kbd_read(I8042_DATA_REG) != KBD_ACK ||
-	    kbd_read(I8042_DATA_REG) != KBD_POR)
-		goto err;
+	log_debug("reset\n");
+	if (ll_boot_init()) {
+		if (kbd_write(I8042_DATA_REG, CMD_RESET_KBD) ||
+		    kbd_read(I8042_DATA_REG) != KBD_ACK ||
+		    kbd_read(I8042_DATA_REG) != KBD_POR)
+			goto err;
+	}
 
+	log_debug("drain\n");
 	if (kbd_write(I8042_DATA_REG, CMD_DRAIN_OUTPUT) ||
 	    kbd_read(I8042_DATA_REG) != KBD_ACK)
 		goto err;
 
 	/* set AT translation and disable irq */
+	log_debug("read config\n");
 	config = kbd_cmd_read(CMD_RD_CONFIG);
 	if (config == -1)
 		goto err;
@@ -150,19 +177,21 @@ static int kbd_reset(int quirk)
 	else if ((quirk & QUIRK_DUP_POR) && config == KBD_POR)
 		config = kbd_cmd_read(CMD_RD_CONFIG);
 
+	log_debug("write config\n");
 	config |= CFG_AT_TRANS;
 	config &= ~(CFG_KIRQ_EN | CFG_MIRQ_EN);
 	if (kbd_cmd_write(CMD_WR_CONFIG, config))
 		goto err;
 
 	/* enable keyboard */
+	log_debug("enable\n");
 	if (kbd_write(I8042_CMD_REG, CMD_KBD_EN) ||
 	    !kbd_input_empty())
 		goto err;
 
 	return 0;
 err:
-	debug("%s: Keyboard failure\n", __func__);
+	log_warning("Keyboard failure\n");
 	return -1;
 }
 
@@ -199,7 +228,7 @@ static void i8042_flush(void)
  * Disables the keyboard so that key strokes no longer generate scancodes to
  * the host.
  *
- * @return 0 if ok, -1 if keyboard input was found while disabling
+ * Return: 0 if ok, -1 if keyboard input was found while disabling
  */
 static int i8042_disable(void)
 {
@@ -312,7 +341,7 @@ static int i8042_kbd_remove(struct udevice *dev)
  * wait for the keyboard to init. We do this only when a key is first
  * read - see kbd_wait_for_fifo_init().
  *
- * @return 0 if ok, -ve on error
+ * Return: 0 if ok, -ve on error
  */
 static int i8042_kbd_probe(struct udevice *dev)
 {

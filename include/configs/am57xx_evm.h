@@ -14,15 +14,9 @@
 #include <environment/ti/dfu.h>
 #include <linux/sizes.h>
 
-#define CONFIG_IODELAY_RECALIBRATION
-
-#define CONFIG_SYS_BOOTM_LEN		SZ_64M
-
-#define CONFIG_SYS_NS16550_COM1		UART1_BASE	/* Base EVM has UART0 */
-#define CONFIG_SYS_NS16550_COM2		UART2_BASE	/* UART2 */
-#define CONFIG_SYS_NS16550_COM3		UART3_BASE	/* UART3 */
-
-#define CONFIG_SYS_OMAP_ABE_SYSCK
+#define CFG_SYS_NS16550_COM1		UART1_BASE	/* Base EVM has UART0 */
+#define CFG_SYS_NS16550_COM2		UART2_BASE	/* UART2 */
+#define CFG_SYS_NS16550_COM3		UART3_BASE	/* UART3 */
 
 #ifndef CONFIG_SPL_BUILD
 #define DFUARGS \
@@ -41,19 +35,8 @@
 
 #include <configs/ti_omap5_common.h>
 
-/* Enhance our eMMC support / experience. */
-#define CONFIG_HSMMC2_8BIT
-
 /* CPSW Ethernet */
-#define CONFIG_NET_RETRY_COUNT		10
 #define PHY_ANEG_TIMEOUT	8000	/* PHY needs longer aneg time at 1G */
-
-/* SATA */
-#define CONFIG_SCSI_AHCI_PLAT
-#define CONFIG_SYS_SCSI_MAX_SCSI_ID	1
-#define CONFIG_SYS_SCSI_MAX_LUN		1
-#define CONFIG_SYS_SCSI_MAX_DEVICE	(CONFIG_SYS_SCSI_MAX_SCSI_ID * \
-						CONFIG_SYS_SCSI_MAX_LUN)
 
 /*
  * Default to using SPI for environment, etc.
@@ -65,9 +48,9 @@
  * 0x1E0000 - 0x9E0000 : QSPI.kernel (8MiB)
  * 0x9E0000 - 0x2000000 : USERLAND
  */
-#define CONFIG_SYS_SPI_KERNEL_OFFS      0x1E0000
-#define CONFIG_SYS_SPI_ARGS_OFFS        0x140000
-#define CONFIG_SYS_SPI_ARGS_SIZE        0x80000
+#define CFG_SYS_SPI_KERNEL_OFFS      0x1E0000
+#define CFG_SYS_SPI_ARGS_OFFS        0x140000
+#define CFG_SYS_SPI_ARGS_SIZE        0x80000
 
 /* SPI SPL */
 

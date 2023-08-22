@@ -80,8 +80,8 @@ enum ds_type {
 #endif
 /*---------------------------------------------------------------------*/
 
-#ifndef CONFIG_SYS_I2C_RTC_ADDR
-# define CONFIG_SYS_I2C_RTC_ADDR	0x68
+#ifndef CFG_SYS_I2C_RTC_ADDR
+# define CFG_SYS_I2C_RTC_ADDR	0x68
 #endif
 
 #if defined(CONFIG_RTC_DS1307) && (CONFIG_SYS_I2C_SPEED > 100000)
@@ -212,13 +212,13 @@ void rtc_reset (void)
 static
 uchar rtc_read (uchar reg)
 {
-	return (i2c_reg_read (CONFIG_SYS_I2C_RTC_ADDR, reg));
+	return (i2c_reg_read (CFG_SYS_I2C_RTC_ADDR, reg));
 }
 
 
 static void rtc_write (uchar reg, uchar val)
 {
-	i2c_reg_write (CONFIG_SYS_I2C_RTC_ADDR, reg, val);
+	i2c_reg_write (CFG_SYS_I2C_RTC_ADDR, reg, val);
 }
 
 #endif /* !CONFIG_DM_RTC */
@@ -358,6 +358,7 @@ static const struct udevice_id ds1307_rtc_ids[] = {
 	{ .compatible = "dallas,ds1337", .data = ds_1337 },
 	{ .compatible = "dallas,ds1339", .data = ds_1339 },
 	{ .compatible = "dallas,ds1340", .data = ds_1340 },
+	{ .compatible = "microchip,mcp7940x", .data = mcp794xx },
 	{ .compatible = "microchip,mcp7941x", .data = mcp794xx },
 	{ .compatible = "st,m41t11", .data = m41t11 },
 	{ }

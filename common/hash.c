@@ -326,8 +326,8 @@ static struct hash_algo hash_algo[] = {
 };
 
 /* Try to minimize code size for boards that don't want much hashing */
-#if CONFIG_IS_ENABLED(SHA256) || CONFIG_IS_ENABLED(CMD_SHA1SUM) || \
-	CONFIG_IS_ENABLED(CRC32_VERIFY) || CONFIG_IS_ENABLED(CMD_HASH) || \
+#if CONFIG_IS_ENABLED(SHA256) || IS_ENABLED(CONFIG_CMD_SHA1SUM) || \
+	CONFIG_IS_ENABLED(CRC32_VERIFY) || IS_ENABLED(CONFIG_CMD_HASH) || \
 	CONFIG_IS_ENABLED(SHA384) || CONFIG_IS_ENABLED(SHA512)
 #define multi_hash()	1
 #else
@@ -500,7 +500,7 @@ static void store_result(struct hash_algo *algo, const uint8_t *sum,
  * @allow_env_vars:	non-zero to permit storing the result to an environment
  *			variable. If 0 then verify_str is assumed to be an
  *			address, and the * prefix is not expected.
- * @return 0 if ok, non-zero on error
+ * Return: 0 if ok, non-zero on error
  */
 static int parse_verify_sum(struct hash_algo *algo, char *verify_str,
 			    uint8_t *vsum, int allow_env_vars)

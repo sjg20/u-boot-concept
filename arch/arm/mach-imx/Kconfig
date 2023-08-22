@@ -18,6 +18,9 @@ config SYSCOUNTER_TIMER
 config GPT_TIMER
 	bool
 
+config MXC_GPT_HCLK
+	bool
+
 config IMX_RDC
 	bool "i.MX Resource domain controller driver"
 	depends on ARCH_MX6 || ARCH_MX7
@@ -137,7 +140,7 @@ config CMD_NANDBCB
 
 config FSL_MFGPROT
 	bool "Support the 'mfgprot' command"
-	depends on IMX_HAB && ARCH_MX7
+	depends on IMX_HAB && (ARCH_MX7 || ARCH_IMX8M)
 	help
 	  This option enables the manufacturing protection command
 	  which can be used has a protection feature for Manufacturing
@@ -164,9 +167,14 @@ config DDRMC_VF610_CALIBRATION
 	  shall perform it on a new PCB and then use those values to program
 	  the ddrmc_cr_setting on relevant board file.
 
+config IMX8_ROMAPI
+	def_bool y
+	depends on IMX8MN || IMX8MP || IMX8ULP || IMX9
+
 config SPL_IMX_ROMAPI_LOADADDR
 	hex "Default load address to load image through ROM API"
-	depends on IMX8MN || IMX8MP || IMX8ULP
+	depends on IMX8_ROMAPI || SPL_BOOTROM_SUPPORT
+	default 0
 
 config IMX_DCD_ADDR
 	hex "DCD Blocks location on the image"
@@ -190,3 +198,9 @@ config IMX_CONTAINER_CFG
 	help
 	  This is to specific the cfg file for generating container
 	  image which will be loaded by SPL.
+
+config IOMUX_LPSR
+	bool
+
+config IOMUX_SHARE_CONF_REG
+	bool

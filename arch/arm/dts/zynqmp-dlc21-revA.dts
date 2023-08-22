@@ -12,7 +12,6 @@
 #include "zynqmp-clk-ccf.dtsi"
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/phy/phy.h>
-#include <include/dt-bindings/gpio/gpio.h>
 
 / {
 	model = "Smartlynq+ DLC21 RevA";
@@ -155,8 +154,6 @@
 
 &usb0 {
 	status = "okay";
-	xlnx,usb-polarity = <0>;
-	xlnx,usb-reset-mode = <0>;
 };
 
 &dwc3_0 {
@@ -171,8 +168,6 @@
 
 &usb1 {
 	status = "disabled"; /* Any unknown issue with USB-C */
-	xlnx,usb-polarity = <0>;
-	xlnx,usb-reset-mode = <0>;
 };
 
 &dwc3_1 {

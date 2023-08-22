@@ -3,8 +3,6 @@
 # (C) Copyright 2000-2002
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 
-CONFIG_STANDALONE_LOAD_ADDR ?= 0x40000
-
 PLATFORM_CPPFLAGS += -fomit-frame-pointer
 PF_CPPFLAGS_X86   := $(call cc-option, -fno-toplevel-reorder, \
 		     $(call cc-option, -fno-unit-at-a-time))
@@ -18,6 +16,11 @@ else
 ifndef CONFIG_X86_64
 IS_32BIT := y
 endif
+endif
+
+EFI_IS_32BIT := $(IS_32BIT)
+ifdef CONFIG_EFI_STUB_64BIT
+EFI_IS_32BIT :=
 endif
 
 ifeq ($(IS_32BIT),y)
@@ -34,7 +37,8 @@ KBUILD_LDFLAGS += -m $(if $(IS_32BIT),elf_i386,elf_x86_64)
 
 # This is used in the top-level Makefile which does not include
 # KBUILD_LDFLAGS
-LDFLAGS_EFI_PAYLOAD := -Bsymbolic -Bsymbolic-functions -shared --no-undefined -s
+LDFLAGS_EFI_PAYLOAD := -Bsymbolic -Bsymbolic-functions -shared --no-undefined \
+		       -s -zexecstack
 
 OBJCOPYFLAGS_EFI := -j .text -j .sdata -j .data -j .dynamic -j .dynsym \
 	-j .rel -j .rela -j .reloc --strip-all
@@ -44,16 +48,20 @@ CFLAGS_EFI := -fpic -fshort-wchar
 # Compiler flags to be removed when building UEFI applications
 CFLAGS_NON_EFI := -mregparm=3 -fstack-protector-strong
 
-ifeq ($(CONFIG_EFI_STUB_64BIT),)
+ifeq ($(IS_32BIT),y)
+EFIPAYLOAD_BFDARCH = i386
+else
 CFLAGS_EFI += $(call cc-option, -mno-red-zone)
+EFIPAYLOAD_BFDARCH = x86_64
+endif
+
+ifeq ($(EFI_IS_32BIT),y)
 EFIARCH = ia32
 EFIPAYLOAD_BFDTARGET = elf32-i386
 else
 EFIARCH = x86_64
 EFIPAYLOAD_BFDTARGET = elf64-x86-64
 endif
-
-EFIPAYLOAD_BFDARCH = i386
 
 LDSCRIPT_EFI := $(srctree)/arch/x86/lib/elf_$(EFIARCH)_efi.lds
 EFISTUB := crt0_$(EFIARCH)_efi.o reloc_$(EFIARCH)_efi.o
