@@ -64,17 +64,21 @@ static int x86_spl_init(void)
 		return ret;
 	}
 #endif
+	printf("here %d\n", __LINE__);
 	ret = dram_init();
+	printf("here %d\n", __LINE__);
 	if (ret) {
 		debug("%s: dram_init() failed\n", __func__);
 		return ret;
 	}
+	printf("here %d\n", __LINE__);
 	if (IS_ENABLED(CONFIG_ENABLE_MRC_CACHE)) {
 		ret = mrccache_spl_save();
 		if (ret)
 			debug("%s: Failed to write to mrccache (err=%d)\n",
 			      __func__, ret);
 	}
+	printf("here %d\n", __LINE__);
 
 #ifndef CONFIG_TPL
 	memset(&__bss_start, 0, (ulong)&__bss_end - (ulong)&__bss_start);
@@ -106,6 +110,7 @@ static int x86_spl_init(void)
 	}
 	mtrr_commit(true);
 #endif
+	printf("here %d\n", __LINE__);
 
 	return 0;
 }

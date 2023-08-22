@@ -600,6 +600,7 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 #if CONFIG_IS_ENABLED(BOARD_INIT)
 	spl_board_init();
 #endif
+	printf("here\n");
 
 #if defined(CONFIG_SPL_WATCHDOG_SUPPORT) && defined(CONFIG_WDT)
 	initr_watchdog();
