@@ -68,7 +68,7 @@ static int x86_spl_init(void)
 	ret = dram_init();
 	printf("here %d\n", __LINE__);
 	if (ret) {
-		debug("%s: dram_init() failed\n", __func__);
+		printf("%s: dram_init() failed\n", __func__);
 		return ret;
 	}
 	printf("here %d\n", __LINE__);

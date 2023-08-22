@@ -5,8 +5,12 @@
  * From coreboot src/soc/intel/broadwell/romstage/raminit.c
  */
 
+#define LOG_DEBUG
+#define LOG_CATEGORY UCLASS_RAM
+
 #include <common.h>
 #include <dm.h>
+#include <log.h>
 #include <pci.h>
 #include <syscon.h>
 #include <asm/cpu.h>
@@ -107,10 +111,12 @@ int dram_init(void)
 	const void *spd_data;
 	int ret, size;
 
+	printf("dram init\n");
 	memset(pei_data, '\0', sizeof(struct pei_data));
 
 	/* Print ME state before MRC */
 	ret = syscon_get_by_driver_data(X86_SYSCON_ME, &me_dev);
+	printf("here %d\n", __LINE__);
 	if (ret) {
 		debug("Cannot get ME (err=%d)\n", ret);
 		return ret;
@@ -119,6 +125,7 @@ int dram_init(void)
 
 	/* Save ME HSIO version */
 	ret = uclass_first_device_err(UCLASS_PCH, &pch_dev);
+	printf("here %d\n", __LINE__);
 	if (ret) {
 		debug("Cannot get PCH (err=%d)\n", ret);
 		return ret;
@@ -131,12 +138,14 @@ int dram_init(void)
 	mainboard_fill_pei_data(pei_data);
 
 	ret = uclass_first_device_err(UCLASS_NORTHBRIDGE, &dev);
+	printf("here %d\n", __LINE__);
 	if (ret) {
 		debug("Cannot get Northbridge (err=%d)\n", ret);
 		return ret;
 	}
 	size = 256;
 	ret = mrc_locate_spd(dev, size, &spd_data);
+	printf("here %d\n", __LINE__);
 	if (ret) {
 		debug("Cannot locate SPD (err=%d)\n", ret);
 		return ret;
@@ -145,11 +154,13 @@ int dram_init(void)
 	memcpy(pei_data->spd_data[1][0], spd_data, size);
 
 	ret = prepare_mrc_cache(pei_data);
+	printf("here %d ret=%d\n", __LINE__, ret);
 	if (ret)
 		debug("prepare_mrc_cache failed: %d\n", ret);
 
 	debug("PEI version %#x\n", pei_data->pei_version);
 	ret = mrc_common_init(dev, pei_data, true);
+	printf("here %d\n", __LINE__);
 	if (ret) {
 		debug("mrc_common_init() failed(err=%d)\n", ret);
 		return ret;
@@ -157,6 +168,7 @@ int dram_init(void)
 	debug("Memory init done\n");
 
 	ret = sdram_find(dev);
+	printf("here %d\n", __LINE__);
 	if (ret) {
 		debug("sdram_find() failed (err=%d)\n", ret);
 		return ret;

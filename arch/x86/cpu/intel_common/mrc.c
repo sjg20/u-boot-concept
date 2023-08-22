@@ -3,6 +3,9 @@
  * Copyright (c) 2016 Google, Inc
  */
 
+#define LOG_DEBUG
+#define LOG_CATEGORY UCLASS_RAM
+
 #include <common.h>
 #include <dm.h>
 #include <syscon.h>
@@ -250,13 +253,17 @@ int mrc_common_init(struct udevice *dev, void *pei_data, bool use_asm_linkage)
 	struct udevice *me_dev;
 	int ret;
 
+	printf("here %d\n", __LINE__);
 	ret = syscon_get_by_driver_data(X86_SYSCON_ME, &me_dev);
+	printf("here %d\n", __LINE__);
 	if (ret)
 		return ret;
 
 	ret = sdram_initialise(dev, me_dev, pei_data, use_asm_linkage);
+	printf("here %d\n", __LINE__);
 	if (ret)
 		return ret;
+	printf("here %d\n", __LINE__);
 	quick_ram_check();
 	post_code(POST_DRAM);
 	report_memory_config();
