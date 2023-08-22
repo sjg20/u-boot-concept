@@ -386,6 +386,13 @@ int lmb_reserve(struct lmb *lmb, phys_addr_t base, phys_size_t size)
 	return lmb_reserve_flags(lmb, base, size, LMB_NONE);
 }
 
+/**
+ * lmb_overlaps_region() - Check if a region overlaps a given base/size
+ *
+ * @base:	base address of the memory region
+ * @size:	size of the memory region
+ * Returns: Region number of overlapping region, if found, else -ENOENT
+ */
 static int lmb_overlaps_region(struct lmb_region *rgn, phys_addr_t base,
 			       phys_size_t size)
 {
@@ -396,10 +403,10 @@ static int lmb_overlaps_region(struct lmb_region *rgn, phys_addr_t base,
 		phys_size_t asize = rgn->area[i].size;
 
 		if (lmb_addrs_overlap(base, size, abase, asize))
-			break;
+			return i;
 	}
 
-	return i < rgn->cnt ? i : -1;
+	return -ENOENT;
 }
 
 phys_addr_t lmb_alloc(struct lmb *lmb, phys_size_t size, ulong align)
