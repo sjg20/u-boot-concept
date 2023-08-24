@@ -5,6 +5,7 @@
  * Copyright 2021 Google LLC
  */
 
+#define LOG_DEBUG
 #define LOG_CATEGORY LOGC_ACPI
 
 #include <common.h>
@@ -21,8 +22,8 @@ int acpi_write_one(struct acpi_ctx *ctx, const struct acpi_writer *entry)
 {
 	int ret;
 
-	log_debug("%s: writing table '%s'\n", entry->name,
-		  entry->table);
+	log_debug("%s: writing table '%s' at %p\n", entry->name,
+		  entry->table, ctx->current);
 	ctx->tab_start = ctx->current;
 	ret = entry->h_write(ctx, entry);
 	if (ret == -ENOENT) {
@@ -57,11 +58,15 @@ static int acpi_write_all(struct acpi_ctx *ctx)
 	const struct acpi_writer *entry;
 	int ret;
 
+	log_debug("writing acpi tables\n");
+
 	for (entry = writer; entry != writer + n_ents; entry++) {
 		ret = acpi_write_one(ctx, entry);
+		log_debug("- return code %d\n", ret);
 		if (ret && ret != -ENOENT)
 			return log_msg_ret("one", ret);
 	}
+	log_debug("writing acpi tables done ok\n");
 
 	return 0;
 }
