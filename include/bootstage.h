@@ -244,6 +244,8 @@ void show_boot_progress(int val);
 
 #ifdef ENABLE_BOOTSTAGE
 
+#include <mapmem.h>
+
 /* This is the full bootstage implementation */
 
 /**
@@ -451,6 +453,28 @@ static inline int bootstage_init(bool first)
 }
 
 #endif /* ENABLE_BOOTSTAGE */
+
+static inline int bootstage_stash_default(void)
+{
+#ifdef CONFIG_BOOTSTAGE_STASH
+	return bootstage_stash(map_sysmem(CONFIG_BOOTSTAGE_STASH_ADDR, 0),
+			       CONFIG_BOOTSTAGE_STASH_SIZE);
+#else
+	return 0;
+#endif
+}
+
+static inline int bootstage_unstash_default(void)
+{
+#ifdef CONFIG_BOOTSTAGE_STASH
+	const void *stash = map_sysmem(CONFIG_BOOTSTAGE_STASH_ADDR,
+				       CONFIG_BOOTSTAGE_STASH_SIZE);
+
+	return bootstage_unstash(stash, CONFIG_BOOTSTAGE_STASH_SIZE);
+#else
+	return 0;
+#endif
+}
 
 /* Helper macro for adding a bootstage to a line of code */
 #define BOOTSTAGE_MARKER()	\
