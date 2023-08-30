@@ -13,6 +13,7 @@ Use U-Boot
    partitions
    cmdline
    semihosting
+   upl
 
 Shell commands
 --------------
