@@ -679,6 +679,7 @@ config BOOTMETH_SCRIPT
 config UPL
 	bool "upl - Universal Payload Specification"
 	imply UPL_READ
+	imply UPL_WRITE
 	help
 	  Provides support for UPL payloads and handoff information. U-Boot
 	  supports generating and accepting handoff information. The mkimage
@@ -692,6 +693,13 @@ config UPL_READ
 	  Provides support for decoding a UPL-format payload and using it
 	  in U-Boot. This allows U-Boot to function as a payload in the meaning
 	  of the specification.
+
+config UPL_WRITE
+	bool "upl - Support writing a Universal Payload handoff"
+	help
+	  Provides support for encoding a UPL-format payload and passing it to
+	  the next firmware phase. This allows U-Boot to function as Platform
+	  Init in the meaning of the specification.
 
 endif  # UPL
 
