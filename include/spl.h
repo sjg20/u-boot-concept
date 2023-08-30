@@ -251,6 +251,9 @@ struct spl_image_info {
 #if CONFIG_IS_ENABLED(LOAD_FIT) || CONFIG_IS_ENABLED(LOAD_FIT_FULL)
 	void *fdt_addr;
 #endif
+#if CONFIG_IS_ENABLED(UPL)
+	int conf_node;		/* FDT offset to selected configuration node */
+#endif
 	u32 boot_device;
 	u32 offset;
 	u32 size;
@@ -920,5 +923,13 @@ void spl_save_restore_data(void);
  */
 int spl_load_fit_image(struct spl_image_info *spl_image,
 		       const struct legacy_img_hdr *header);
+
+/**
+ * spl_write_upl_handoff() - Write a Universal Payload hand-off structure
+ *
+ * @spl_image: Information about the image being booted
+ * Return: 0 if OK, -ve on error
+ */
+int spl_write_upl_handoff(struct spl_image_info *spl_image);
 
 #endif
