@@ -12,6 +12,7 @@
 #include <memalign.h>
 #include <mapmem.h>
 #include <spl.h>
+#include <upl.h>
 #include <sysinfo.h>
 #include <asm/global_data.h>
 #include <asm/io.h>
@@ -645,6 +646,8 @@ static int spl_fit_load_fpga(struct spl_fit_info *ctx,
 		printf("%s: Cannot load the FPGA: %i\n", __func__, ret);
 		return ret;
 	}
+	upl_add_image(node, fpga_image.load_addr, fpga_image.size,
+		      fdt_getprop(ctx->fit, node, FIT_DESC_PROP, NULL));
 
 	return spl_fit_upload_fpga(ctx, node, &fpga_image);
 }
@@ -768,6 +771,9 @@ int spl_load_simple_fit(struct spl_image_info *spl_image,
 	if (ret)
 		return ret;
 
+	upl_add_image(node, spl_image->load_addr, spl_image->size,
+		      fdt_getprop(ctx.fit, node, FIT_DESC_PROP, NULL));
+
 	/*
 	 * For backward compatibility, we treat the first node that is
 	 * as a U-Boot image, if no OS-type has been declared.
@@ -811,6 +817,8 @@ int spl_load_simple_fit(struct spl_image_info *spl_image,
 			       __func__, index, ret);
 			return ret;
 		}
+		upl_add_image(node, image_info.load_addr, image_info.size,
+			      fdt_getprop(ctx.fit, node, FIT_DESC_PROP, NULL));
 
 		if (spl_fit_image_is_fpga(ctx.fit, node))
 			spl_fit_upload_fpga(&ctx, node, &image_info);
@@ -847,6 +855,8 @@ int spl_load_simple_fit(struct spl_image_info *spl_image,
 		spl_image->entry_point = spl_image->load_addr;
 
 	spl_image->flags |= SPL_FIT_FOUND;
+	upl_set_fit_info(map_to_sysmem(ctx.fit), ctx.conf_node,
+			 spl_image->entry_point);
 
 	return 0;
 }
@@ -891,6 +901,9 @@ int spl_load_fit_image(struct spl_image_info *spl_image,
 	if (ret < 0)
 		return ret;
 
+	upl_add_image(ret, fw_data, fw_len,
+		      fdt_getprop((void *)header, ret, FIT_DESC_PROP, NULL));
+
 	spl_image->size = fw_len;
 	spl_image->load_addr = fw_data;
 	if (fit_image_get_entry(header, ret, &spl_image->entry_point))
@@ -910,6 +923,9 @@ int spl_load_fit_image(struct spl_image_info *spl_image,
 			     -1, FIT_LOAD_OPTIONAL, &dt_data, &dt_len);
 	if (ret >= 0) {
 		spl_image->fdt_addr = (void *)dt_data;
+
+		upl_add_image(ret, dt_data, dt_len,
+		      fdt_getprop((void *)header, ret, FIT_DESC_PROP, NULL));
 
 		if (spl_image->os == IH_OS_U_BOOT) {
 			/* HACK: U-Boot expects FDT at a specific address */
@@ -940,7 +956,13 @@ int spl_load_fit_image(struct spl_image_info *spl_image,
 				     &img_data, &img_len);
 		if (ret < 0)
 			return ret;
+		upl_add_image(ret, img_data, img_len,
+		      fdt_getprop((void *)header, ret, FIT_DESC_PROP, NULL));
 	}
+
+	spl_image->flags |= SPL_FIT_FOUND;
+	upl_set_fit_info(map_to_sysmem(header), conf_noffset,
+			 spl_image->entry_point);
 
 	return 0;
 }
