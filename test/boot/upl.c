@@ -418,3 +418,40 @@ static int upl_test_read_failure(struct unit_test_state *uts)
 	return 0;
 }
 BOOTSTD_TEST(upl_test_read_failure, 0);
+
+/* Test 'upl info' command */
+static int dm_test_upl_info(struct unit_test_state *uts)
+{
+	ut_assertok(run_command("upl info", 0));
+	ut_assert_nextline("UPL state: inactive");
+	ut_assert_console_end();
+
+	gd_set_upl((struct upl *)uts);	/* set it to any non-zero value */
+	ut_assertok(run_command("upl info", 0));
+	ut_assert_nextline("UPL state: active");
+	ut_assert_console_end();
+	gd_set_upl(NULL);
+
+	return 0;
+}
+BOOTSTD_TEST(dm_test_upl_info, UT_TESTF_CONSOLE_REC);
+
+/* Test 'upl read' and 'upl_write' commands */
+static int dm_test_upl_read_write(struct unit_test_state *uts)
+{
+	ulong addr;
+
+	ut_assertok(run_command("upl write", 0));
+
+	addr = env_get_hex("upladdr", 0);
+	ut_assert_nextline("UPL handoff written to %lx size %lx", addr,
+			   env_get_hex("uplsize", 0));
+	ut_assert_console_end();
+
+	ut_assertok(run_command("upl read ${upladdr}", 0));
+	ut_assert_nextline("Reading UPL at %lx", addr);
+	ut_assert_console_end();
+
+	return 0;
+}
+BOOTSTD_TEST(dm_test_upl_read_write, UT_TESTF_CONSOLE_REC);
