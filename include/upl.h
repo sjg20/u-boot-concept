@@ -307,6 +307,15 @@ int upl_create_handoff_tree(const struct upl *upl, oftree *treep);
  */
 int upl_read_handoff(struct upl *upl, oftree tree);
 
+/**
+ * upl_get_test_data() - Fill a UPL with some test data
+ *
+ * @uts: Test state (can be uninited)
+ * @upl: Returns test data
+ * Return: 0 on success, 1 on error
+ */
+int upl_get_test_data(struct unit_test_state *uts, struct upl *upl);
+
 #if CONFIG_IS_ENABLED(UPL)
 
 /**
