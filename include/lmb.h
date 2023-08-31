@@ -13,7 +13,7 @@
  */
 
 /**
- * enum lmb_flags - definition of memory region attributes
+ * enum lmb_flags - definition of memory area attributes
  * @LMB_NONE: no special request
  * @LMB_NOMAP: don't add to mmu configuration
  */
@@ -40,24 +40,24 @@ struct lmb_area {
  * all the #if test are done with CONFIG_LMB_USE_MAX_AREAS (boolean)
  *
  * case 1. CONFIG_LMB_USE_MAX_AREAS is defined (legacy mode)
- *         => CONFIG_LMB_MAX_AREAS is used to configure the region size,
- *         directly in the array lmb_region.region[], with the same
- *         configuration for memory and reserved regions.
+ *         => CONFIG_LMB_MAX_AREAS is used to configure the maximum number of
+ *	   areas, directly in the array lmb_region.area[], with the same
+ *         configuration for memory and reserved areas.
  *
- * case 2. CONFIG_LMB_USE_MAX_AREAS is not defined, the size of each
- *         region is configurated *independently* with
- *         => CONFIG_LMB_MEMORY_AREAS: struct lmb.memory_regions
- *         => CONFIG_LMB_RESERVED_AREAS: struct lmb.reserved_regions
- *         lmb_region.region is only a pointer to the correct buffer,
+ * case 2. CONFIG_LMB_USE_MAX_AREAS is not defined, the maximum number of
+ *         areas is configured *independently* with
+ *         => CONFIG_LMB_MEMORY_AREAS: struct lmb.memory_areas
+ *         => CONFIG_LMB_RESERVED_AREAS: struct lmb.reserved_areas
+ *         lmb_region.area is only a pointer to the correct buffer,
  *         initialized in lmb_init(). This configuration is useful to manage
- *         more reserved memory regions with CONFIG_LMB_RESERVED_AREAS.
+ *         more reserved memory areas with CONFIG_LMB_RESERVED_AREAS.
  */
 
 /**
- * struct lmb_region - Description of a set of region.
+ * struct lmb_region - Description of a set of areas.
  *
- * @cnt: Number of regions.
- * @max: Size of the region array, max value of cnt.
+ * @cnt: Number of areas
+ * @max: Size of the area array, max value of cnt
  * @area: Array of the areas within the region
  */
 struct lmb_region {
@@ -99,13 +99,13 @@ void lmb_init_and_reserve_range(struct lmb *lmb, phys_addr_t base,
 long lmb_add(struct lmb *lmb, phys_addr_t base, phys_size_t size);
 long lmb_reserve(struct lmb *lmb, phys_addr_t base, phys_size_t size);
 /**
- * lmb_reserve_flags - Reserve one region with a specific flags bitfield.
+ * lmb_reserve_flags - Reserve one area with a specific flags bitfield.
  *
  * @lmb:	the logical memory block struct
- * @base:	base address of the memory region
- * @size:	size of the memory region
- * @flags:	flags for the memory region
- * Return:	0 if OK, > 0 for coalesced region or a negative error code.
+ * @base:	base address of the memory area
+ * @size:	size of the memory area
+ * @flags:	flags for the memory area
+ * Return:	0 if OK, > 0 for coalesced area or a negative error code.
  */
 long lmb_reserve_flags(struct lmb *lmb, phys_addr_t base,
 		       phys_size_t size, enum lmb_flags flags);
@@ -118,9 +118,9 @@ phys_addr_t lmb_alloc_addr(struct lmb *lmb, phys_addr_t base, phys_size_t size);
 phys_size_t lmb_get_free_size(struct lmb *lmb, phys_addr_t addr);
 
 /**
- * lmb_is_reserved() - test if address is in reserved region
+ * lmb_is_reserved() - test if address is in reserved area
  *
- * The function checks if a reserved region comprising @addr exists.
+ * The function checks if a reserved area comprising @addr exists.
  *
  * @lmb:	the logical memory block struct
  * @addr:	address to be tested
@@ -129,9 +129,9 @@ phys_size_t lmb_get_free_size(struct lmb *lmb, phys_addr_t addr);
 int lmb_is_reserved(struct lmb *lmb, phys_addr_t addr);
 
 /**
- * lmb_is_reserved_flags() - test if address is in reserved region with flag bits set
+ * lmb_is_reserved_flags() - test if address is in reserved area with flag bits set
  *
- * The function checks if a reserved region comprising @addr exists which has
+ * The function checks if a reserved area comprising @addr exists which has
  * all flag bits set which are set in @flags.
  *
  * @lmb:	the logical memory block struct
