@@ -12,7 +12,7 @@
 #include <test/test.h>
 #include <test/ut.h>
 
-static inline bool lmb_is_nomap(struct lmb_property *m)
+static inline bool lmb_is_nomap(struct lmb_area *m)
 {
 	return m->flags & LMB_NOMAP;
 }
