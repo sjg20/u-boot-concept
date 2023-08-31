@@ -107,9 +107,9 @@ static void lmb_coalesce_regions(struct lmb_region *rgn, unsigned long r1,
 
 void lmb_init(struct lmb *lmb)
 {
-#if IS_ENABLED(CONFIG_LMB_USE_MAX_REGIONS)
-	lmb->memory.max = CONFIG_LMB_MAX_REGIONS;
-	lmb->reserved.max = CONFIG_LMB_MAX_REGIONS;
+#if IS_ENABLED(CONFIG_LMB_USE_MAX_AREAS)
+	lmb->memory.max = CONFIG_LMB_MAX_AREAS;
+	lmb->reserved.max = CONFIG_LMB_MAX_AREAS;
 #else
 	lmb->memory.max = CONFIG_LMB_MEMORY_AREAS;
 	lmb->reserved.max = CONFIG_LMB_RESERVED_AREAS;

@@ -665,8 +665,8 @@ static int lib_test_lmb_get_free_size(struct unit_test_state *uts)
 DM_TEST(lib_test_lmb_get_free_size,
 	UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
-#ifdef CONFIG_LMB_USE_MAX_REGIONS
-static int lib_test_lmb_max_regions(struct unit_test_state *uts)
+#ifdef CONFIG_LMB_USE_MAX_AREAS
+static int lib_test_LMB_MAX_AREAS(struct unit_test_state *uts)
 {
 	const phys_addr_t ram = 0x00000000;
 	/*
@@ -674,8 +674,8 @@ static int lib_test_lmb_max_regions(struct unit_test_state *uts)
 	 * we need to scale ram_size (which in this case is the size of the lmb
 	 * region) to match.
 	 */
-	const phys_size_t ram_size = ((0xFFFFFFFF >> CONFIG_LMB_MAX_REGIONS)
-			+ 1) * CONFIG_LMB_MAX_REGIONS;
+	const phys_size_t ram_size = ((0xFFFFFFFF >> CONFIG_LMB_MAX_AREAS)
+			+ 1) * CONFIG_LMB_MAX_AREAS;
 	const phys_size_t blk_size = 0x10000;
 	phys_addr_t offset;
 	struct lmb lmb;
@@ -684,57 +684,57 @@ static int lib_test_lmb_max_regions(struct unit_test_state *uts)
 	lmb_init(&lmb);
 
 	ut_asserteq(lmb.memory.cnt, 0);
-	ut_asserteq(lmb.memory.max, CONFIG_LMB_MAX_REGIONS);
+	ut_asserteq(lmb.memory.max, CONFIG_LMB_MAX_AREAS);
 	ut_asserteq(lmb.reserved.cnt, 0);
-	ut_asserteq(lmb.reserved.max, CONFIG_LMB_MAX_REGIONS);
+	ut_asserteq(lmb.reserved.max, CONFIG_LMB_MAX_AREAS);
 
-	/*  Add CONFIG_LMB_MAX_REGIONS memory regions */
-	for (i = 0; i < CONFIG_LMB_MAX_REGIONS; i++) {
+	/*  Add CONFIG_LMB_MAX_AREAS memory regions */
+	for (i = 0; i < CONFIG_LMB_MAX_AREAS; i++) {
 		offset = ram + 2 * i * ram_size;
 		ret = lmb_add(&lmb, offset, ram_size);
 		ut_asserteq(ret, 0);
 	}
-	ut_asserteq(lmb.memory.cnt, CONFIG_LMB_MAX_REGIONS);
+	ut_asserteq(lmb.memory.cnt, CONFIG_LMB_MAX_AREAS);
 	ut_asserteq(lmb.reserved.cnt, 0);
 
-	/*  error for the (CONFIG_LMB_MAX_REGIONS + 1) memory regions */
-	offset = ram + 2 * (CONFIG_LMB_MAX_REGIONS + 1) * ram_size;
+	/*  error for the (CONFIG_LMB_MAX_AREAS + 1) memory regions */
+	offset = ram + 2 * (CONFIG_LMB_MAX_AREAS + 1) * ram_size;
 	ret = lmb_add(&lmb, offset, ram_size);
 	ut_asserteq(ret, -1);
 
-	ut_asserteq(lmb.memory.cnt, CONFIG_LMB_MAX_REGIONS);
+	ut_asserteq(lmb.memory.cnt, CONFIG_LMB_MAX_AREAS);
 	ut_asserteq(lmb.reserved.cnt, 0);
 
-	/*  reserve CONFIG_LMB_MAX_REGIONS regions */
-	for (i = 0; i < CONFIG_LMB_MAX_REGIONS; i++) {
+	/*  reserve CONFIG_LMB_MAX_AREAS regions */
+	for (i = 0; i < CONFIG_LMB_MAX_AREAS; i++) {
 		offset = ram + 2 * i * blk_size;
 		ret = lmb_reserve(&lmb, offset, blk_size);
 		ut_asserteq(ret, 0);
 	}
 
-	ut_asserteq(lmb.memory.cnt, CONFIG_LMB_MAX_REGIONS);
-	ut_asserteq(lmb.reserved.cnt, CONFIG_LMB_MAX_REGIONS);
+	ut_asserteq(lmb.memory.cnt, CONFIG_LMB_MAX_AREAS);
+	ut_asserteq(lmb.reserved.cnt, CONFIG_LMB_MAX_AREAS);
 
 	/*  error for the 9th reserved blocks */
-	offset = ram + 2 * (CONFIG_LMB_MAX_REGIONS + 1) * blk_size;
+	offset = ram + 2 * (CONFIG_LMB_MAX_AREAS + 1) * blk_size;
 	ret = lmb_reserve(&lmb, offset, blk_size);
 	ut_asserteq(ret, -1);
 
-	ut_asserteq(lmb.memory.cnt, CONFIG_LMB_MAX_REGIONS);
-	ut_asserteq(lmb.reserved.cnt, CONFIG_LMB_MAX_REGIONS);
+	ut_asserteq(lmb.memory.cnt, CONFIG_LMB_MAX_AREAS);
+	ut_asserteq(lmb.reserved.cnt, CONFIG_LMB_MAX_AREAS);
 
 	/*  check each regions */
-	for (i = 0; i < CONFIG_LMB_MAX_REGIONS; i++)
+	for (i = 0; i < CONFIG_LMB_MAX_AREAS; i++)
 		ut_asserteq(lmb.memory.area[i].base, ram + 2 * i * ram_size);
 
-	for (i = 0; i < CONFIG_LMB_MAX_REGIONS; i++)
+	for (i = 0; i < CONFIG_LMB_MAX_AREAS; i++)
 		ut_asserteq(lmb.reserved.area[i].base, ram + 2 * i * blk_size);
 
 	return 0;
 }
 #endif
 
-DM_TEST(lib_test_lmb_max_regions,
+DM_TEST(lib_test_LMB_MAX_AREAS,
 	UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
 
 static int lib_test_lmb_flags(struct unit_test_state *uts)

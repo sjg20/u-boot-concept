@@ -37,14 +37,14 @@ struct lmb_area {
 
 /*
  * For regions size management, see LMB configuration in KConfig
- * all the #if test are done with CONFIG_LMB_USE_MAX_REGIONS (boolean)
+ * all the #if test are done with CONFIG_LMB_USE_MAX_AREAS (boolean)
  *
- * case 1. CONFIG_LMB_USE_MAX_REGIONS is defined (legacy mode)
- *         => CONFIG_LMB_MAX_REGIONS is used to configure the region size,
+ * case 1. CONFIG_LMB_USE_MAX_AREAS is defined (legacy mode)
+ *         => CONFIG_LMB_MAX_AREAS is used to configure the region size,
  *         directly in the array lmb_region.region[], with the same
  *         configuration for memory and reserved regions.
  *
- * case 2. CONFIG_LMB_USE_MAX_REGIONS is not defined, the size of each
+ * case 2. CONFIG_LMB_USE_MAX_AREAS is not defined, the size of each
  *         region is configurated *independently* with
  *         => CONFIG_LMB_MEMORY_AREAS: struct lmb.memory_regions
  *         => CONFIG_LMB_RESERVED_AREAS: struct lmb.reserved_regions
@@ -63,8 +63,8 @@ struct lmb_area {
 struct lmb_region {
 	unsigned long cnt;
 	unsigned long max;
-#if IS_ENABLED(CONFIG_LMB_USE_MAX_REGIONS)
-	struct lmb_area area[CONFIG_LMB_MAX_REGIONS];
+#if IS_ENABLED(CONFIG_LMB_USE_MAX_AREAS)
+	struct lmb_area area[CONFIG_LMB_MAX_AREAS];
 #else
 	struct lmb_area *area;
 #endif
@@ -86,7 +86,7 @@ struct lmb_region {
 struct lmb {
 	struct lmb_region memory;
 	struct lmb_region reserved;
-#if !IS_ENABLED(CONFIG_LMB_USE_MAX_REGIONS)
+#if !IS_ENABLED(CONFIG_LMB_USE_MAX_AREAS)
 	struct lmb_area memory_areas[CONFIG_LMB_MEMORY_AREAS];
 	struct lmb_area reserved_areas[CONFIG_LMB_RESERVED_AREAS];
 #endif
