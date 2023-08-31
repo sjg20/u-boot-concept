@@ -48,15 +48,6 @@ DECLARE_GLOBAL_DATA_PTR;
  */
 #define	MAX_ENV_SIZE	(1 << 20)	/* 1 MiB */
 
-/*
- * This variable is incremented on each do_env_set(), so it can
- * be used via env_get_id() as an indication, if the environment
- * has changed or not. So it is possible to reread an environment
- * variable only if the environment was changed ... done so for
- * example in NetInitLoop()
- */
-static int env_id = 1;
-
 int env_get_id(void)
 {
 	return env_id;
@@ -194,10 +185,8 @@ DONE:
 
 	return 0;
 }
-#endif
-#endif /* CONFIG_SPL_BUILD */
+#endif /* CONFIG_CMD_GREPENV */
 
-#ifndef CONFIG_SPL_BUILD
 static int do_env_set(struct cmd_tbl *cmdtp, int flag, int argc,
 		      char *const argv[])
 {
@@ -361,7 +350,7 @@ int do_env_callback(struct cmd_tbl *cmdtp, int flag, int argc,
 	hwalk_r(&env_htab, print_active_callback);
 	return 0;
 }
-#endif
+#endif /* CONFIG_CMD_ENV_CALLBACK */
 
 #if defined(CONFIG_CMD_ENV_FLAGS)
 static int print_static_flags(const char *var_name, const char *flags,
@@ -434,7 +423,7 @@ int do_env_flags(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	hwalk_r(&env_htab, print_active_flags);
 	return 0;
 }
-#endif
+#endif /* CONFIG_CMD_ENV_FLAGS */
 
 /*
  * Interactively edit an environment variable

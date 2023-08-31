@@ -9,11 +9,29 @@
  * Copyright 2011 Freescale Semiconductor, Inc.
  */
 
+#include <common.h>
+#include <command.h>
+#include <env.h>
+#include <env_internal.h>
+#include <malloc.h>
+#include <asm/global_data.h>
+
+DECLARE_GLOBAL_DATA_PTR;
+
+/*
+ * This variable is incremented on each do_env_set(), so it can
+ * be used via env_get_id() as an indication, if the environment
+ * has changed or not. So it is possible to reread an environment
+ * variable only if the environment was changed ... done so for
+ * example in NetInitLoop()
+ */
+static int env_id = 1;
+
 /*
  * Set a new environment variable,
  * or replace or delete an existing one.
  */
-static int _do_env_set(int flag, int argc, char *const argv[], int env_flag)
+int _do_env_set(int flag, int argc, char *const argv[], int env_flag)
 {
 	int   i, len;
 	char  *name, *value, *s;
