@@ -109,10 +109,10 @@ static int lmb_test_dump_region(struct unit_test_state *uts,
 	ut_assert_nextline(" %s.cnt = 0x%lx / max = 0x%lx", name, rgn->cnt, rgn->max);
 
 	for (i = 0; i < rgn->cnt; i++) {
-		base = rgn->region[i].base;
-		size = rgn->region[i].size;
+		base = rgn->area[i].base;
+		size = rgn->area[i].size;
 		end = base + size - 1;
-		flags = rgn->region[i].flags;
+		flags = rgn->area[i].flags;
 
 		ut_assert_nextline(" %s[%d]\t[0x%llx-0x%llx], 0x%08llx bytes flags: %x",
 				   name, i, base, end, size, flags);

@@ -26,22 +26,22 @@ static int check_lmb(struct unit_test_state *uts, struct lmb *lmb,
 {
 	if (ram_size) {
 		ut_asserteq(lmb->memory.cnt, 1);
-		ut_asserteq(lmb->memory.region[0].base, ram_base);
-		ut_asserteq(lmb->memory.region[0].size, ram_size);
+		ut_asserteq(lmb->memory.area[0].base, ram_base);
+		ut_asserteq(lmb->memory.area[0].size, ram_size);
 	}
 
 	ut_asserteq(lmb->reserved.cnt, num_reserved);
 	if (num_reserved > 0) {
-		ut_asserteq(lmb->reserved.region[0].base, base1);
-		ut_asserteq(lmb->reserved.region[0].size, size1);
+		ut_asserteq(lmb->reserved.area[0].base, base1);
+		ut_asserteq(lmb->reserved.area[0].size, size1);
 	}
 	if (num_reserved > 1) {
-		ut_asserteq(lmb->reserved.region[1].base, base2);
-		ut_asserteq(lmb->reserved.region[1].size, size2);
+		ut_asserteq(lmb->reserved.area[1].base, base2);
+		ut_asserteq(lmb->reserved.area[1].size, size2);
 	}
 	if (num_reserved > 2) {
-		ut_asserteq(lmb->reserved.region[2].base, base3);
-		ut_asserteq(lmb->reserved.region[2].size, size3);
+		ut_asserteq(lmb->reserved.area[2].base, base3);
+		ut_asserteq(lmb->reserved.area[2].size, size3);
 	}
 	return 0;
 }
@@ -87,14 +87,14 @@ static int test_multi_alloc(struct unit_test_state *uts, const phys_addr_t ram,
 
 	if (ram0_size) {
 		ut_asserteq(lmb.memory.cnt, 2);
-		ut_asserteq(lmb.memory.region[0].base, ram0);
-		ut_asserteq(lmb.memory.region[0].size, ram0_size);
-		ut_asserteq(lmb.memory.region[1].base, ram);
-		ut_asserteq(lmb.memory.region[1].size, ram_size);
+		ut_asserteq(lmb.memory.area[0].base, ram0);
+		ut_asserteq(lmb.memory.area[0].size, ram0_size);
+		ut_asserteq(lmb.memory.area[1].base, ram);
+		ut_asserteq(lmb.memory.area[1].size, ram_size);
 	} else {
 		ut_asserteq(lmb.memory.cnt, 1);
-		ut_asserteq(lmb.memory.region[0].base, ram);
-		ut_asserteq(lmb.memory.region[0].size, ram_size);
+		ut_asserteq(lmb.memory.area[0].base, ram);
+		ut_asserteq(lmb.memory.area[0].size, ram_size);
 	}
 
 	/* reserve 64KiB somewhere */
@@ -165,14 +165,14 @@ static int test_multi_alloc(struct unit_test_state *uts, const phys_addr_t ram,
 
 	if (ram0_size) {
 		ut_asserteq(lmb.memory.cnt, 2);
-		ut_asserteq(lmb.memory.region[0].base, ram0);
-		ut_asserteq(lmb.memory.region[0].size, ram0_size);
-		ut_asserteq(lmb.memory.region[1].base, ram);
-		ut_asserteq(lmb.memory.region[1].size, ram_size);
+		ut_asserteq(lmb.memory.area[0].base, ram0);
+		ut_asserteq(lmb.memory.area[0].size, ram0_size);
+		ut_asserteq(lmb.memory.area[1].base, ram);
+		ut_asserteq(lmb.memory.area[1].size, ram_size);
 	} else {
 		ut_asserteq(lmb.memory.cnt, 1);
-		ut_asserteq(lmb.memory.region[0].base, ram);
-		ut_asserteq(lmb.memory.region[0].size, ram_size);
+		ut_asserteq(lmb.memory.area[0].base, ram);
+		ut_asserteq(lmb.memory.area[0].size, ram_size);
 	}
 
 	return 0;
@@ -725,10 +725,10 @@ static int lib_test_lmb_max_regions(struct unit_test_state *uts)
 
 	/*  check each regions */
 	for (i = 0; i < CONFIG_LMB_MAX_REGIONS; i++)
-		ut_asserteq(lmb.memory.region[i].base, ram + 2 * i * ram_size);
+		ut_asserteq(lmb.memory.area[i].base, ram + 2 * i * ram_size);
 
 	for (i = 0; i < CONFIG_LMB_MAX_REGIONS; i++)
-		ut_asserteq(lmb.reserved.region[i].base, ram + 2 * i * blk_size);
+		ut_asserteq(lmb.reserved.area[i].base, ram + 2 * i * blk_size);
 
 	return 0;
 }
@@ -767,7 +767,7 @@ static int lib_test_lmb_flags(struct unit_test_state *uts)
 	ASSERT_LMB(&lmb, ram, ram_size, 1, 0x40010000, 0x10000,
 		   0, 0, 0, 0);
 
-	ut_asserteq(lmb_is_nomap(&lmb.reserved.region[0]), 1);
+	ut_asserteq(lmb_is_nomap(&lmb.reserved.area[0]), 1);
 
 	/* merge after */
 	ret = lmb_reserve_flags(&lmb, 0x40020000, 0x10000, LMB_NOMAP);
@@ -781,15 +781,15 @@ static int lib_test_lmb_flags(struct unit_test_state *uts)
 	ASSERT_LMB(&lmb, ram, ram_size, 1, 0x40000000, 0x30000,
 		   0, 0, 0, 0);
 
-	ut_asserteq(lmb_is_nomap(&lmb.reserved.region[0]), 1);
+	ut_asserteq(lmb_is_nomap(&lmb.reserved.area[0]), 1);
 
 	ret = lmb_reserve_flags(&lmb, 0x40030000, 0x10000, LMB_NONE);
 	ut_asserteq(ret, 0);
 	ASSERT_LMB(&lmb, ram, ram_size, 2, 0x40000000, 0x30000,
 		   0x40030000, 0x10000, 0, 0);
 
-	ut_asserteq(lmb_is_nomap(&lmb.reserved.region[0]), 1);
-	ut_asserteq(lmb_is_nomap(&lmb.reserved.region[1]), 0);
+	ut_asserteq(lmb_is_nomap(&lmb.reserved.area[0]), 1);
+	ut_asserteq(lmb_is_nomap(&lmb.reserved.area[1]), 0);
 
 	/* test that old API use LMB_NONE */
 	ret = lmb_reserve(&lmb, 0x40040000, 0x10000);
@@ -797,8 +797,8 @@ static int lib_test_lmb_flags(struct unit_test_state *uts)
 	ASSERT_LMB(&lmb, ram, ram_size, 2, 0x40000000, 0x30000,
 		   0x40030000, 0x20000, 0, 0);
 
-	ut_asserteq(lmb_is_nomap(&lmb.reserved.region[0]), 1);
-	ut_asserteq(lmb_is_nomap(&lmb.reserved.region[1]), 0);
+	ut_asserteq(lmb_is_nomap(&lmb.reserved.area[0]), 1);
+	ut_asserteq(lmb_is_nomap(&lmb.reserved.area[1]), 0);
 
 	ret = lmb_reserve_flags(&lmb, 0x40070000, 0x10000, LMB_NOMAP);
 	ut_asserteq(ret, 0);
@@ -816,9 +816,9 @@ static int lib_test_lmb_flags(struct unit_test_state *uts)
 	ASSERT_LMB(&lmb, ram, ram_size, 3, 0x40000000, 0x30000,
 		   0x40030000, 0x20000, 0x40050000, 0x30000);
 
-	ut_asserteq(lmb_is_nomap(&lmb.reserved.region[0]), 1);
-	ut_asserteq(lmb_is_nomap(&lmb.reserved.region[1]), 0);
-	ut_asserteq(lmb_is_nomap(&lmb.reserved.region[2]), 1);
+	ut_asserteq(lmb_is_nomap(&lmb.reserved.area[0]), 1);
+	ut_asserteq(lmb_is_nomap(&lmb.reserved.area[1]), 0);
+	ut_asserteq(lmb_is_nomap(&lmb.reserved.area[2]), 1);
 
 	return 0;
 }

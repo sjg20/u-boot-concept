@@ -23,11 +23,11 @@ enum lmb_flags {
 };
 
 /**
- * struct lmb_area - Description of one region.
+ * struct lmb_area - Description of one area within a region
  *
- * @base:	Base address of the region.
- * @size:	Size of the region
- * @flags:	memory region attributes
+ * @base:	Base address of the area
+ * @size:	Size of the area
+ * @flags:	memory-area attributes
  */
 struct lmb_area {
 	phys_addr_t base;
@@ -58,15 +58,15 @@ struct lmb_area {
  *
  * @cnt: Number of regions.
  * @max: Size of the region array, max value of cnt.
- * @region: Array of the region properties
+ * @area: Array of the areas within the region
  */
 struct lmb_region {
 	unsigned long cnt;
 	unsigned long max;
 #if IS_ENABLED(CONFIG_LMB_USE_MAX_REGIONS)
-	struct lmb_area region[CONFIG_LMB_MAX_REGIONS];
+	struct lmb_area area[CONFIG_LMB_MAX_REGIONS];
 #else
-	struct lmb_area *region;
+	struct lmb_area *area;
 #endif
 };
 
