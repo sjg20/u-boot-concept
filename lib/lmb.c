@@ -111,8 +111,8 @@ void lmb_init(struct lmb *lmb)
 	lmb->memory.max = CONFIG_LMB_MAX_REGIONS;
 	lmb->reserved.max = CONFIG_LMB_MAX_REGIONS;
 #else
-	lmb->memory.max = CONFIG_LMB_MEMORY_REGIONS;
-	lmb->reserved.max = CONFIG_LMB_RESERVED_REGIONS;
+	lmb->memory.max = CONFIG_LMB_MEMORY_AREAS;
+	lmb->reserved.max = CONFIG_LMB_RESERVED_AREAS;
 	lmb->memory.area = lmb->memory_areas;
 	lmb->reserved.area = lmb->reserved_areas;
 #endif

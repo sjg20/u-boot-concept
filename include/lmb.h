@@ -46,11 +46,11 @@ struct lmb_area {
  *
  * case 2. CONFIG_LMB_USE_MAX_REGIONS is not defined, the size of each
  *         region is configurated *independently* with
- *         => CONFIG_LMB_MEMORY_REGIONS: struct lmb.memory_regions
- *         => CONFIG_LMB_RESERVED_REGIONS: struct lmb.reserved_regions
+ *         => CONFIG_LMB_MEMORY_AREAS: struct lmb.memory_regions
+ *         => CONFIG_LMB_RESERVED_AREAS: struct lmb.reserved_regions
  *         lmb_region.region is only a pointer to the correct buffer,
  *         initialized in lmb_init(). This configuration is useful to manage
- *         more reserved memory regions with CONFIG_LMB_RESERVED_REGIONS.
+ *         more reserved memory regions with CONFIG_LMB_RESERVED_AREAS.
  */
 
 /**
@@ -87,8 +87,8 @@ struct lmb {
 	struct lmb_region memory;
 	struct lmb_region reserved;
 #if !IS_ENABLED(CONFIG_LMB_USE_MAX_REGIONS)
-	struct lmb_area memory_areas[CONFIG_LMB_MEMORY_REGIONS];
-	struct lmb_area reserved_areas[CONFIG_LMB_RESERVED_REGIONS];
+	struct lmb_area memory_areas[CONFIG_LMB_MEMORY_AREAS];
+	struct lmb_area reserved_areas[CONFIG_LMB_RESERVED_AREAS];
 #endif
 };
 
