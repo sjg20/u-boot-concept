@@ -80,15 +80,15 @@ struct lmb_region {
  *
  * @memory: Description of memory regions.
  * @reserved: Description of reserved regions.
- * @memory_regions: Array of the memory regions (statically allocated)
- * @reserved_regions: Array of the reserved regions (statically allocated)
+ * @memory_areas: Array of the memory areas (statically allocated)
+ * @reserved_areas: Array of the reserved areas (statically allocated)
  */
 struct lmb {
 	struct lmb_region memory;
 	struct lmb_region reserved;
 #if !IS_ENABLED(CONFIG_LMB_USE_MAX_REGIONS)
-	struct lmb_area memory_regions[CONFIG_LMB_MEMORY_REGIONS];
-	struct lmb_area reserved_regions[CONFIG_LMB_RESERVED_REGIONS];
+	struct lmb_area memory_areas[CONFIG_LMB_MEMORY_REGIONS];
+	struct lmb_area reserved_areas[CONFIG_LMB_RESERVED_REGIONS];
 #endif
 };
 
