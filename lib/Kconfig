@@ -8,6 +8,16 @@ config ADDR_MAP
 
 	  This library only works in the post-relocation phase.
 
+config ALIST_REALLOC
+	bool "Use realloc() in the alist implementation"
+	help
+	  An alist must expand when it runs out of space. It is more efficient
+	  to use realloc() for this, but for boards which don't otherwise use
+	  this function it can add 1KB of code space, so separate malloc() and
+	  free are normally used instead.
+
+	  Enable this to use realloc() in alist
+
 config SYS_NUM_ADDR_MAP
 	int "Size of the address-map table"
 	depends on ADDR_MAP
