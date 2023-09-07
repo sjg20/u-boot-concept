@@ -91,14 +91,14 @@ void dm_dump_tree(bool sort)
 
 	root = dm_root();
 	if (root) {
-		int dev_count, uclasses;
 		struct udevice **devs = NULL;
-
-		dm_get_stats(&dev_count, &uclasses);
 
 		printf(" Class     Index  Probed  Driver                Name\n");
 		printf("-----------------------------------------------------------\n");
 		if (sort) {
+			int dev_count, uclasses;
+
+			dm_get_stats(&dev_count, &uclasses);
 			devs = calloc(dev_count, sizeof(struct udevice *));
 			if (!devs) {
 				printf("(out of memory)\n");
