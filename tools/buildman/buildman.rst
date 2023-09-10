@@ -1021,7 +1021,8 @@ various files to be rebuilt even if no source changes are made, which in turn
 requires that the final U-Boot binary be re-linked. This unnecessary work can
 be avoided by turning off the timestamp feature. This can be achieved using
 the `-r` flag, which enables reproducible builds by setting
-`SOURCE_DATE_EPOCH=0` when building.
+`SOURCE_DATE_EPOCH=0` when building, as well as disabling `LOCALVERSION_AUTO`
+and `CONFIG_CMD_CONFIG`.
 
 Combining all of these options together yields the command-line shown below.
 This will provide the quickest possible feedback regarding the current content

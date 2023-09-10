@@ -784,6 +784,7 @@ Some images are invalid'''
         # We should see CONFIG_LOCALVERSION_AUTO unset
         self.assertEqual(b'''CONFIG_SOMETHING=1
 # CONFIG_LOCALVERSION_AUTO is not set
+# CONFIG_CMD_CONFIG is not set
 ''', cfg_data)
 
         with test_util.capture_sys_output() as (stdout, stderr):
@@ -793,6 +794,7 @@ Some images are invalid'''
         # We should see CONFIG_LOCALVERSION_AUTO unset
         self.assertEqual(b'''CONFIG_SOMETHING=1
 CONFIG_LOCALVERSION=y
+# CONFIG_CMD_CONFIG is not set
 ''', cfg_data)
         self.assertIn('Not dropping LOCALVERSION_AUTO', stdout.getvalue())
 

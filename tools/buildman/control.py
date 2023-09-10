@@ -575,6 +575,10 @@ def calc_adjust_cfg(adjust_cfg, reproducible_builds):
             print('Not dropping LOCALVERSION_AUTO for reproducible build')
         else:
             adjust_cfg['LOCALVERSION_AUTO'] = '~'
+        if 'CMD_CONFIG' in adjust_cfg:
+            print('Not dropping CMD_CONFIG for reproducible build')
+        else:
+            adjust_cfg['CMD_CONFIG'] = '~'
     return adjust_cfg
 
 
