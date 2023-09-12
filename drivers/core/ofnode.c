@@ -92,12 +92,6 @@ static oftree oftree_ensure(void *fdt)
 	return tree;
 }
 
-void oftree_dispose(oftree tree)
-{
-	if (of_live_active())
-		of_live_free(tree.np);
-}
-
 void *ofnode_lookup_fdt(ofnode node)
 {
 	if (gd->flags & GD_FLG_RELOC) {
@@ -194,6 +188,12 @@ static inline int oftree_find(const void *fdt)
 }
 
 #endif /* OFNODE_MULTI_TREE */
+
+void oftree_dispose(oftree tree)
+{
+	if (of_live_active())
+		of_live_free(tree.np);
+}
 
 /**
  * ofnode_from_tree_offset() - get an ofnode from a tree offset (flat tree)
