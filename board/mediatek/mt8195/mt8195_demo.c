@@ -11,6 +11,7 @@
 #include <asm/io.h>
 #include <linux/kernel.h>
 #include <linux/arm-smccc.h>
+#include <iot_ab.h>
 
 #define MT8195_UPDATABLE_IMAGES	5
 
@@ -18,12 +19,22 @@
 static struct efi_fw_image fw_images[MT8195_UPDATABLE_IMAGES] = {0};
 
 struct efi_capsule_update_info update_info = {
+#if defined(CONFIG_MEDIATEK_IOT_AB_BOOT_SUPPORT)
+#if defined(CONFIG_UFS_MEDIATEK)
+	.dfu_string = "ufs 0=bl2.img raw 0x0 0x400 dev 0;"
+			"fip.bin part 2 %d;firmware.vfat part 2 %d;u-boot-env.bin raw 0x0 0x400 dev 1",
+#else
+	.dfu_string = "mmc 0=bl2.img raw 0x0 0x2000 mmcpart 1;"
+			"fip.bin part 0 %d;firmware.vfat part 0 %d;u-boot-env.bin raw 0x0 0x2000 mmcpart 2",
+#endif
+#else
 #if defined(CONFIG_UFS_MEDIATEK)
 	.dfu_string = "ufs 0=bl2.img raw 0x0 0x400 dev 0;"
 			"fip.bin part 2 1;firmware.vfat part 2 3;u-boot-env.bin raw 0x0 0x400 dev 1",
 #else
 	.dfu_string = "mmc 0=bl2.img raw 0x0 0x2000 mmcpart 1;"
 			"fip.bin part 0 1;firmware.vfat part 0 3;u-boot-env.bin raw 0x0 0x2000 mmcpart 2",
+#endif
 #endif
 	.images = fw_images,
 };
@@ -122,6 +133,25 @@ void mediatek_capsule_update_board_setup(void)
 		fw_images[4].fw_name = u"GENIO-1200-EVK-UFS-ENV";
 	}
 }
+
+#if defined(CONFIG_MEDIATEK_IOT_AB_BOOT_SUPPORT)
+void set_dfu_alt_info(char *interface, char *devstr)
+{
+	char alt[BOOTCTRL_DFU_ALT_LEN] = {0};
+	const char *s = env_get(BOOTCTRL_ENV);
+
+	if (s) {
+		if (!strcmp(s, "a")) {
+			if (sprintf(alt, update_info.dfu_string, BOOTCTRL_FIP_NUM + PART_BOOT_B, BOOTCTRL_FW_NUM + PART_BOOT_B) < 0)
+				return;
+		} else if(!strcmp(s, "b")) {
+			if (sprintf(alt, update_info.dfu_string, BOOTCTRL_FIP_NUM, BOOTCTRL_FW_NUM) < 0)
+				return;
+		}
+		env_set("dfu_alt_info", alt);
+	}
+}
+#endif
 #endif /* CONFIG_EFI_HAVE_CAPSULE_SUPPORT && CONFIG_EFI_PARTITION */
 
 int board_init(void)

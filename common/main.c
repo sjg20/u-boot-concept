@@ -60,6 +60,9 @@ void main_loop(void)
 			efi_launch_capsules();
 	}
 
+	if (IS_ENABLED(CONFIG_MEDIATEK_IOT_AB_BOOT_SUPPORT))
+		iot_ab_boot_slot(0);
+
 	s = bootdelay_process();
 	if (cli_process_fdt(&s))
 		cli_secure_boot_cmd(s);

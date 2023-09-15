@@ -302,6 +302,9 @@ static void boot_jump_linux(bootm_headers_t *images, int flag)
 		(ulong) kernel_entry);
 	bootstage_mark(BOOTSTAGE_ID_RUN_OS);
 
+	if (IS_ENABLED(CONFIG_MEDIATEK_IOT_AB_BOOT_SUPPORT))
+		iot_ab_boot_complete();
+
 	announce_and_cleanup(fake);
 
 	if (!fake) {
