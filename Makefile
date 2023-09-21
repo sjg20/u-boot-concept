@@ -485,6 +485,15 @@ export RCS_FIND_IGNORE := \( -name SCCS -o -name BitKeeper -o -name .svn -o    \
 export RCS_TAR_IGNORE := --exclude SCCS --exclude BitKeeper --exclude .svn \
 			 --exclude CVS --exclude .pc --exclude .hg --exclude .git
 
+export PYTHON_ENABLE
+
+# This is y if U-Boot should not build any Python tools or libraries. Typically
+# you would need to set this if those tools/libraries (typically binman and
+# pylibfdt) cannot be built by your environment and are provided separately.
+ifeq ($(NO_PYTHON),)
+PYTHON_ENABLE=y
+endif
+
 # ===========================================================================
 # Rules shared between *config targets and build targets
 
@@ -646,18 +655,10 @@ export CFLAGS_NON_EFI	# Compiler flags to remove when building EFI app
 export EFI_TARGET	# binutils target if EFI is natively supported
 
 export LTO_ENABLE
-export PYTHON_ENABLE
 
 # This is y if LTO is enabled for this build. See NO_LTO=1 to disable LTO
 ifeq ($(NO_LTO),)
 LTO_ENABLE=$(if $(CONFIG_LTO),y)
-endif
-
-# This is y if U-Boot should not build any Python tools or libraries. Typically
-# you would need to set this if those tools/libraries (typically binman and
-# pylibfdt) cannot be built by your environment and are provided separately.
-ifeq ($(NO_PYTHON),)
-PYTHON_ENABLE=y
 endif
 
 # If board code explicitly specified LDSCRIPT or CONFIG_SYS_LDSCRIPT, use
