@@ -97,7 +97,7 @@ static int do_bootflow_scan(struct cmd_tbl *cmdtp, int flag, int argc,
 	struct udevice *dev = NULL;
 	struct bootflow bflow;
 	bool all = false, boot = false, errors = false, no_global = false;
-	bool list = false, no_hunter = false;
+	bool list = false, no_hunter = false, menu = false, text_mode = false;
 	int num_valid = 0;
 	const char *label = NULL;
 	bool has_args;
@@ -117,6 +117,8 @@ static int do_bootflow_scan(struct cmd_tbl *cmdtp, int flag, int argc,
 			no_global = strchr(argv[1], 'G');
 			list = strchr(argv[1], 'l');
 			no_hunter = strchr(argv[1], 'H');
+			menu = strchr(argv[1], 'm');
+			text_mode = strchr(argv[1], 't');
 			argc--;
 			argv++;
 		}
@@ -175,15 +177,32 @@ static int do_bootflow_scan(struct cmd_tbl *cmdtp, int flag, int argc,
 		}
 		if (list)
 			show_bootflow(i, &bflow, errors);
-		if (boot && !bflow.err)
+		if (!menu && boot && !bflow.err)
 			bootflow_run_boot(&iter, &bflow);
 	}
 	bootflow_iter_uninit(&iter);
 	if (list)
 		show_footer(i, num_valid);
 
-	if (IS_ENABLED(CONFIG_CMD_BOOTFLOW_FULL) && !num_valid && !list)
-		printf("No bootflows found; try again with -l\n");
+	if (IS_ENABLED(CONFIG_CMD_BOOTFLOW_FULL)) {
+		if (!num_valid && !list)
+			printf("No bootflows found; try again with -l\n");
+		else if (menu) {
+			struct bootflow *sel_bflow;
+
+			ret = bootflow_menu_run(std, text_mode, &sel_bflow);
+			if (!ret) {
+				ret = console_clear();
+				if (ret) {
+					log_err("Failed to clear console: %dE\n",
+						ret);
+					return ret;
+				}
+
+				bootflow_run_boot(NULL, sel_bflow);
+			}
+		}
+	}
 
 	return 0;
 }
