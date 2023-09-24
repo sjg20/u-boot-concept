@@ -105,6 +105,19 @@ config OF_EMBED
 
 endchoice
 
+config OF_BLOBLIST
+	bool "Provided by a bloblist at runtime"
+	depends on BLOBLIST && OF_SEPARATE
+	default y
+	help
+	  Select this to read the devicetree from the bloblist. This allows
+	  using a bloblist to transfer the devicetree between  U-Boot phases.
+	  The devicetree is stored in the bloblist by an early phase so that
+	  U-Boot can read it.
+
+	  If the bloblist does not contain a devicetree, then other methods will
+	  be used.
+
 config OF_BOARD
 	bool "Provided by the board (e.g a previous loader) at runtime"
 	default y if SANDBOX || OF_HAS_PRIOR_STAGE
