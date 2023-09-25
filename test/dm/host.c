@@ -32,7 +32,7 @@ static int dm_test_host(struct unit_test_state *uts)
 	ut_asserteq(-ENODEV, uclass_first_device_err(UCLASS_PARTITION, &part));
 
 	mem_start = ut_check_delta(0);
-	ut_assertok(host_create_device(label, true, &dev));
+	ut_assertok(host_create_device(label, true, DEFAULT_BLKSZ, &dev));
 
 	/* Check that the plat data has been allocated */
 	plat = dev_get_plat(dev);
@@ -81,7 +81,7 @@ static int dm_test_host_dup(struct unit_test_state *uts)
 	struct udevice *dev, *chk;
 
 	ut_asserteq(0, uclass_id_count(UCLASS_HOST));
-	ut_assertok(host_create_device(label, true, &dev));
+	ut_assertok(host_create_device(label, true, DEFAULT_BLKSZ, &dev));
 
 	/* Attach a file created in test_host.py */
 	ut_assertok(host_attach_file(dev, filename));
@@ -90,7 +90,7 @@ static int dm_test_host_dup(struct unit_test_state *uts)
 	ut_asserteq(1, uclass_id_count(UCLASS_HOST));
 
 	/* Create another device with the same label (should remove old one) */
-	ut_assertok(host_create_device(label, true, &dev));
+	ut_assertok(host_create_device(label, true, DEFAULT_BLKSZ, &dev));
 
 	/* Attach a different file created in test_host.py */
 	ut_assertok(host_attach_file(dev, filename2));
