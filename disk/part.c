@@ -310,7 +310,7 @@ static void print_part_header(const char *type, struct blk_desc *dev_desc)
 		puts("EFI");
 		break;
 	default:
-		puts("UNKNOWN");
+		printf("UNKNOWN(%d)", dev_desc->uclass_id);
 		break;
 	}
 	printf (" device %d  --   Partition Type: %s\n\n",
