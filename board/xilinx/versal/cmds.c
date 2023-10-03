@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
  * (C) Copyright 2020 Xilinx, Inc.
- * Michal Simek <michal.simek@xilinx.com>
+ * Michal Simek <michal.simek@amd.com>
  */
 
 #include <cpu_func.h>
@@ -32,7 +32,7 @@ static int do_versal_load_pdi(struct cmd_tbl *cmdtp, int flag, int argc,
 		return CMD_RET_USAGE;
 	}
 
-	len = simple_strtoul(argv[3], NULL, 16);
+	len = hextoul(argv[3], NULL);
 	if (!len) {
 		debug("pdi_load: zero size\n");
 		return CMD_RET_USAGE;
@@ -102,4 +102,3 @@ U_BOOT_CMD(versal, 4, 1, do_versal,
 	   "versal sub-system",
 	   versal_help_text
 )
-

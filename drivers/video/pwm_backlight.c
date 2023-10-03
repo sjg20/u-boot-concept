@@ -14,6 +14,7 @@
 #include <pwm.h>
 #include <asm/gpio.h>
 #include <linux/delay.h>
+#include <linux/math64.h>
 #include <power/regulator.h>
 
 /**
@@ -59,12 +60,14 @@ struct pwm_backlight_priv {
 
 static int set_pwm(struct pwm_backlight_priv *priv)
 {
+	u64 width;
 	uint duty_cycle;
 	int ret;
 
 	if (priv->period_ns) {
-		duty_cycle = priv->period_ns * (priv->cur_level - priv->min_level) /
-			(priv->max_level - priv->min_level);
+		width = priv->period_ns * (priv->cur_level - priv->min_level);
+		duty_cycle = div_u64(width,
+				     (priv->max_level - priv->min_level));
 		ret = pwm_set_config(priv->pwm, priv->channel, priv->period_ns,
 				     duty_cycle);
 	} else {
@@ -235,8 +238,10 @@ static int pwm_backlight_of_to_plat(struct udevice *dev)
 		priv->levels = malloc(len);
 		if (!priv->levels)
 			return log_ret(-ENOMEM);
-		dev_read_u32_array(dev, "brightness-levels", priv->levels,
-				   count);
+		ret = dev_read_u32_array(dev, "brightness-levels", priv->levels,
+					 count);
+		if (ret)
+			return log_msg_ret("levels", ret);
 		priv->num_levels = count;
 		priv->default_level = priv->levels[index];
 		priv->max_level = priv->levels[count - 1];

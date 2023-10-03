@@ -4,6 +4,7 @@
  */
 
 #include <common.h>
+#include <event.h>
 #include <i2c.h>
 #include <asm/io.h>
 #include <asm/arch/immap_ls102xa.h>
@@ -49,9 +50,9 @@ int dram_init(void)
 
 int board_early_init_f(void)
 {
-	struct ccsr_scfg *scfg = (struct ccsr_scfg *)CONFIG_SYS_FSL_SCFG_ADDR;
-	struct ccsr_gur __iomem *gur = (void *)CONFIG_SYS_FSL_GUTS_ADDR;
-	struct fsl_ifc ifc = {(void *)CONFIG_SYS_IFC_ADDR, (void *)NULL};
+	struct ccsr_scfg *scfg = (struct ccsr_scfg *)CFG_SYS_FSL_SCFG_ADDR;
+	struct ccsr_gur __iomem *gur = (void *)CFG_SYS_FSL_GUTS_ADDR;
+	struct fsl_ifc ifc = {(void *)CFG_SYS_IFC_ADDR, (void *)NULL};
 
 	/* Disable unused MCK1 */
 	setbits_be32(&gur->ddrclkdr, 2);
@@ -70,23 +71,53 @@ int board_early_init_f(void)
 	/* QRIO Configuration */
 	qrio_uprstreq(UPREQ_CORE_RST);
 
-	if (IS_ENABLED(CONFIG_TARGET_PG_WCOM_SELI8)) {
-		qrio_prstcfg(KM_LIU_RST, PRSTCFG_POWUP_UNIT_RST);
-		qrio_wdmask(KM_LIU_RST, true);
+#if IS_ENABLED(CONFIG_TARGET_PG_WCOM_SELI8)
+	qrio_prstcfg(KM_LIU_RST, PRSTCFG_POWUP_UNIT_RST);
+	qrio_wdmask(KM_LIU_RST, true);
 
-		qrio_prstcfg(KM_PAXK_RST, PRSTCFG_POWUP_UNIT_RST);
-		qrio_wdmask(KM_PAXK_RST, true);
+	qrio_prstcfg(KM_PAXK_RST, PRSTCFG_POWUP_UNIT_RST);
+	qrio_wdmask(KM_PAXK_RST, true);
+#endif
 
-		qrio_prstcfg(KM_DBG_ETH_RST, PRSTCFG_POWUP_UNIT_CORE_RST);
-		qrio_prst(KM_DBG_ETH_RST, false, false);
-	}
+#if IS_ENABLED(CONFIG_TARGET_PG_WCOM_EXPU1)
+	qrio_prstcfg(WCOM_TMG_RST, PRSTCFG_POWUP_UNIT_RST);
+	qrio_wdmask(WCOM_TMG_RST, true);
+
+	qrio_prstcfg(WCOM_PHY_RST, PRSTCFG_POWUP_UNIT_RST);
+	qrio_prst(WCOM_PHY_RST, false, false);
+
+	qrio_prstcfg(WCOM_QSFP_RST, PRSTCFG_POWUP_UNIT_RST);
+	qrio_wdmask(WCOM_QSFP_RST, true);
+
+	qrio_prstcfg(WCOM_CLIPS_RST, PRSTCFG_POWUP_UNIT_RST);
+	qrio_prst(WCOM_CLIPS_RST, false, false);
+#endif
+
+	/* deasset debug phy reset only if piggy is present */
+	qrio_prstcfg(KM_DBG_ETH_RST, PRSTCFG_POWUP_UNIT_CORE_RST);
+	qrio_prst(KM_DBG_ETH_RST, !qrio_get_pgy_pres_pin(), false);
 
 	i2c_deblock_gpio_cfg();
+
+	/* enable the Unit LED (red) & Boot LED (on) */
+	qrio_set_leds();
+
+	/* enable Application Buffer */
+	qrio_enable_app_buffer();
 
 	arch_soc_init();
 
 	return 0;
 }
+
+static int pg_wcom_misc_init_f(void)
+{
+	if (IS_ENABLED(CONFIG_PG_WCOM_UBOOT_UPDATE_SUPPORTED))
+		check_for_uboot_update();
+
+	return 0;
+}
+EVENT_SPY_SIMPLE(EVT_MISC_INIT_F, pg_wcom_misc_init_f);
 
 int board_init(void)
 {
@@ -109,8 +140,7 @@ int board_late_init(void)
 
 int misc_init_r(void)
 {
-	if (IS_ENABLED(CONFIG_FSL_DEVICE_DISABLE))
-		device_disable(devdis_tbl, ARRAY_SIZE(devdis_tbl));
+	device_disable(devdis_tbl, ARRAY_SIZE(devdis_tbl));
 
 	ivm_read_eeprom(ivm_content, CONFIG_SYS_IVM_EEPROM_MAX_LEN,
 			CONFIG_PIGGY_MAC_ADDRESS_OFFSET);
@@ -127,6 +157,38 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 
 	return 0;
 }
+
+#if defined(CONFIG_POST)
+int post_hotkeys_pressed(void)
+{
+	/* DIC26_SELFTEST: QRIO, SLFTEST */
+	return qrio_get_selftest_pin();
+}
+
+/* POST word is located in the unused SCRATCHRW4 register */
+#define CCSR_SCRATCHRW4_ADDR		0x1ee020c
+
+ulong post_word_load(void)
+{
+	void *addr = (void *)CCSR_SCRATCHRW4_ADDR;
+	return in_le32(addr);
+}
+
+void post_word_store(ulong value)
+{
+	void *addr = (void *)CCSR_SCRATCHRW4_ADDR;
+	out_le32(addr, value);
+}
+
+int arch_memory_test_prepare(u32 *vstart, u32 *size, phys_addr_t *phys_offset)
+{
+	/* Define only 1MiB range for mem_regions at the middle of the RAM */
+	/* For 1GiB range mem_regions takes approx. 4min */
+	*vstart = CFG_SYS_SDRAM_BASE + (gd->ram_size >> 1);
+	*size = 1 << 20;
+	return 0;
+}
+#endif
 
 u8 flash_read8(void *addr)
 {
@@ -153,8 +215,4 @@ int hush_init_var(void)
 	return 0;
 }
 
-int last_stage_init(void)
-{
-	set_km_env();
-	return 0;
-}
+EVENT_SPY_SIMPLE(EVT_LAST_STAGE_INIT, set_km_env);

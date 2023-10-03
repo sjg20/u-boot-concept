@@ -73,6 +73,8 @@ int pcie_dw_prog_outbound_atu_unroll(struct pcie_dw *pci, int index,
 				 upper_32_bits(cpu_addr));
 	dw_pcie_writel_ob_unroll(pci, index, PCIE_ATU_UNR_LIMIT,
 				 lower_32_bits(cpu_addr + size - 1));
+	dw_pcie_writel_ob_unroll(pci, index, PCIE_ATU_UNR_UPPER_LIMIT,
+				 upper_32_bits(cpu_addr + size - 1));
 	dw_pcie_writel_ob_unroll(pci, index, PCIE_ATU_UNR_LOWER_TARGET,
 				 lower_32_bits(pci_addr));
 	dw_pcie_writel_ob_unroll(pci, index, PCIE_ATU_UNR_UPPER_TARGET,
@@ -139,9 +141,9 @@ static uintptr_t set_cfg_address(struct pcie_dw *pcie,
 
 	/*
 	 * Not accessing root port configuration space?
-	 * Region #0 is used for Outbound CFG space access.
+	 * Region #1 is used for Outbound CFG space access.
 	 * Direction = Outbound
-	 * Region Index = 0
+	 * Region Index = 1
 	 */
 	d = PCI_MASK_BUS(d);
 	d = PCI_ADD_BUS(bus, d);
@@ -213,7 +215,7 @@ int pcie_dw_read_config(const struct udevice *bus, pci_dev_t bdf,
 
 	va_address = set_cfg_address(pcie, bdf, offset);
 
-	value = readl(va_address);
+	value = readl((void __iomem *)va_address);
 
 	debug("(addr,val)=(0x%04x, 0x%08lx)\n", offset, value);
 	*valuep = pci_conv_32_to_size(value, offset, size);
@@ -257,9 +259,9 @@ int pcie_dw_write_config(struct udevice *bus, pci_dev_t bdf,
 
 	va_address = set_cfg_address(pcie, bdf, offset);
 
-	old = readl(va_address);
+	old = readl((void __iomem *)va_address);
 	value = pci_conv_size_to_32(old, value, offset, size);
-	writel(value, va_address);
+	writel(value, (void __iomem *)va_address);
 
 	return pcie_dw_prog_outbound_atu_unroll(pcie, PCIE_ATU_REGION_INDEX1,
 						 PCIE_ATU_TYPE_IO, pcie->io.phys_start,
@@ -326,40 +328,46 @@ void pcie_dw_setup_host(struct pcie_dw *pci)
 			pci->prefetch.bus_start = hose->regions[ret].bus_start;  /* PREFETCH_bus_addr */
 			pci->prefetch.size = hose->regions[ret].size;	    /* PREFETCH size */
 		} else if (hose->regions[ret].flags == PCI_REGION_SYS_MEMORY) {
-			pci->cfg_base = (void *)(pci->io.phys_start - pci->io.size);
-			pci->cfg_size = pci->io.size;
+			if (!pci->cfg_base) {
+				pci->cfg_base = (void *)(pci->io.phys_start - pci->io.size);
+				pci->cfg_size = pci->io.size;
+			}
 		} else {
 			dev_err(pci->dev, "invalid flags type!\n");
 		}
 	}
 
-	dev_dbg(pci->dev, "Config space: [0x%p - 0x%p, size 0x%llx]\n",
-		pci->cfg_base, pci->cfg_base + pci->cfg_size,
-		pci->cfg_size);
+	dev_dbg(pci->dev, "Config space: [0x%llx - 0x%llx, size 0x%llx]\n",
+		(u64)pci->cfg_base, (u64)pci->cfg_base + pci->cfg_size,
+		(u64)pci->cfg_size);
 
-	dev_dbg(pci->dev, "IO space: [0x%llx - 0x%llx, size 0x%lx]\n",
-		pci->io.phys_start, pci->io.phys_start + pci->io.size,
-		pci->io.size);
+	dev_dbg(pci->dev, "IO space: [0x%llx - 0x%llx, size 0x%llx]\n",
+		(u64)pci->io.phys_start, (u64)pci->io.phys_start + pci->io.size,
+		(u64)pci->io.size);
 
-	dev_dbg(pci->dev, "IO bus:   [0x%lx - 0x%lx, size 0x%lx]\n",
-		pci->io.bus_start, pci->io.bus_start + pci->io.size,
-		pci->io.size);
+	dev_dbg(pci->dev, "IO bus:   [0x%llx - 0x%llx, size 0x%llx]\n",
+		(u64)pci->io.bus_start,	(u64)pci->io.bus_start + pci->io.size,
+		(u64)pci->io.size);
 
-	dev_dbg(pci->dev, "MEM space: [0x%llx - 0x%llx, size 0x%lx]\n",
-		pci->mem.phys_start, pci->mem.phys_start + pci->mem.size,
-		pci->mem.size);
+	dev_dbg(pci->dev, "MEM space: [0x%llx - 0x%llx, size 0x%llx]\n",
+		(u64)pci->mem.phys_start,
+		(u64)pci->mem.phys_start + pci->mem.size,
+		(u64)pci->mem.size);
 
-	dev_dbg(pci->dev, "MEM bus:   [0x%lx - 0x%lx, size 0x%lx]\n",
-		pci->mem.bus_start, pci->mem.bus_start + pci->mem.size,
-		pci->mem.size);
+	dev_dbg(pci->dev, "MEM bus:   [0x%llx - 0x%llx, size 0x%llx]\n",
+		(u64)pci->mem.bus_start,
+		(u64)pci->mem.bus_start + pci->mem.size,
+		(u64)pci->mem.size);
 
 	if (pci->prefetch.size) {
-		dev_dbg(pci->dev, "PREFETCH space: [0x%llx - 0x%llx, size 0x%lx]\n",
-			pci->prefetch.phys_start, pci->prefetch.phys_start + pci->prefetch.size,
-			pci->prefetch.size);
+		dev_dbg(pci->dev, "PREFETCH space: [0x%llx - 0x%llx, size 0x%llx]\n",
+			(u64)pci->prefetch.phys_start,
+			(u64)pci->prefetch.phys_start + pci->prefetch.size,
+			(u64)pci->prefetch.size);
 
-		dev_dbg(pci->dev, "PREFETCH bus:   [0x%lx - 0x%lx, size 0x%lx]\n",
-			pci->prefetch.bus_start, pci->prefetch.bus_start + pci->prefetch.size,
-			pci->prefetch.size);
+		dev_dbg(pci->dev, "PREFETCH bus:   [0x%llx - 0x%llx, size 0x%llx]\n",
+			(u64)pci->prefetch.bus_start,
+			(u64)pci->prefetch.bus_start + pci->prefetch.size,
+			(u64)pci->prefetch.size);
 	}
 }

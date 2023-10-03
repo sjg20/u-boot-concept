@@ -10,7 +10,7 @@
 #include <gzip.h>
 #include <image.h>
 #include <log.h>
-#include <malloc.h>
+#include <memalign.h>
 #include <mapmem.h>
 #include <spl.h>
 #include <sysinfo.h>
@@ -20,24 +20,12 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#ifndef CONFIG_SPL_LOAD_FIT_APPLY_OVERLAY_BUF_SZ
-#define CONFIG_SPL_LOAD_FIT_APPLY_OVERLAY_BUF_SZ (64 * 1024)
-#endif
-
-#ifndef CONFIG_SYS_BOOTM_LEN
-#define CONFIG_SYS_BOOTM_LEN	(64 << 20)
-#endif
-
 struct spl_fit_info {
 	const void *fit;	/* Pointer to a valid FIT blob */
 	size_t ext_data_offset;	/* Offset to FIT external data (end of FIT) */
 	int images_node;	/* FDT offset to "/images" node */
 	int conf_node;		/* FDT offset to selected configuration node */
 };
-
-__weak void board_spl_fit_post_load(const void *fit)
-{
-}
 
 __weak ulong board_spl_fit_size_align(ulong size)
 {
@@ -110,6 +98,10 @@ static int spl_fit_get_image_name(const struct spl_fit_info *ctx,
 		 * no string in the property for this index. Check if the
 		 * sysinfo-level code can supply one.
 		 */
+		rc = sysinfo_detect(sysinfo);
+		if (rc)
+			return rc;
+
 		rc = sysinfo_get_fit_loadable(sysinfo, index - i - 1, type,
 					      &str);
 		if (rc && rc != -ENOENT)
@@ -282,6 +274,13 @@ static int spl_load_fit_image(struct spl_load_info *info, ulong sector,
 		if (fit_image_get_data_size(fit, node, &len))
 			return -ENOENT;
 
+		/* Dont bother to copy 0 byte data, but warn, though */
+		if (!len) {
+			log_warning("%s: Skip load '%s': image size is 0!\n",
+				    __func__, fit_get_name(fit, node, NULL));
+			return 0;
+		}
+
 		src_ptr = map_sysmem(ALIGN(load_addr, ARCH_DMA_MINALIGN), len);
 		length = len;
 
@@ -310,13 +309,14 @@ static int spl_load_fit_image(struct spl_load_info *info, ulong sector,
 	if (CONFIG_IS_ENABLED(FIT_SIGNATURE)) {
 		printf("## Checking hash(es) for Image %s ... ",
 		       fit_get_name(fit, node, NULL));
-		if (!fit_image_verify_with_data(fit, node, src, length))
+		if (!fit_image_verify_with_data(fit, node, gd_fdt_blob(), src,
+						length))
 			return -EPERM;
 		puts("OK\n");
 	}
 
 	if (CONFIG_IS_ENABLED(FIT_IMAGE_POST_PROCESS))
-		board_fit_image_post_process(&src, &length);
+		board_fit_image_post_process(fit, node, &src, &length);
 
 	load_ptr = map_sysmem(load_addr, length);
 	if (IS_ENABLED(CONFIG_SPL_GZIP) && image_comp == IH_COMP_GZIP) {
@@ -396,7 +396,7 @@ static int spl_fit_append_fdt(struct spl_image_info *spl_image,
 	if (CONFIG_IS_ENABLED(FIT_IMAGE_TINY))
 		return 0;
 
-	if (CONFIG_IS_ENABLED(LOAD_FIT_APPLY_OVERLAY)) {
+#if CONFIG_IS_ENABLED(LOAD_FIT_APPLY_OVERLAY)
 		void *tmpbuffer = NULL;
 
 		for (; ; index++) {
@@ -417,7 +417,9 @@ static int spl_fit_append_fdt(struct spl_image_info *spl_image,
 				 * depending on how the overlay is stored, so
 				 * don't fail yet if the allocation failed.
 				 */
-				tmpbuffer = malloc(CONFIG_SPL_LOAD_FIT_APPLY_OVERLAY_BUF_SZ);
+				size_t size = CONFIG_SPL_LOAD_FIT_APPLY_OVERLAY_BUF_SZ;
+
+				tmpbuffer = malloc_cache_aligned(size);
 				if (!tmpbuffer)
 					debug("%s: unable to allocate space for overlays\n",
 					      __func__);
@@ -448,7 +450,7 @@ static int spl_fit_append_fdt(struct spl_image_info *spl_image,
 		free(tmpbuffer);
 		if (ret)
 			return ret;
-	}
+#endif
 	/* Try to make space, so we can inject details on the loadables */
 	ret = fdt_shrink_to_minimum(spl_image->fdt_addr, 8192);
 	if (ret < 0)
@@ -476,7 +478,8 @@ static int spl_fit_record_loadable(const struct spl_fit_info *ctx, int index,
 	ret = fdt_record_loadable(blob, index, name, image->load_addr,
 				  image->size, image->entry_point,
 				  fdt_getprop(ctx->fit, node, "type", NULL),
-				  fdt_getprop(ctx->fit, node, "os", NULL));
+				  fdt_getprop(ctx->fit, node, "os", NULL),
+				  fdt_getprop(ctx->fit, node, "arch", NULL));
 	return ret;
 }
 
@@ -524,13 +527,18 @@ static void *spl_get_fit_load_buffer(size_t size)
 {
 	void *buf;
 
-	buf = malloc(size);
+	buf = malloc_cache_aligned(size);
 	if (!buf) {
 		pr_err("Could not get FIT buffer of %lu bytes\n", (ulong)size);
 		pr_err("\tcheck CONFIG_SYS_SPL_MALLOC_SIZE\n");
 		buf = spl_get_load_buffer(0, size);
 	}
 	return buf;
+}
+
+__weak void *board_spl_fit_buffer_addr(ulong fit_size, int sectors, int bl_len)
+{
+	return spl_get_fit_load_buffer(sectors * bl_len);
 }
 
 /*
@@ -541,6 +549,15 @@ static void *spl_get_fit_load_buffer(size_t size)
 __weak bool spl_load_simple_fit_skip_processing(void)
 {
 	return false;
+}
+
+/*
+ * Weak default function to allow fixes after fit header
+ * is loaded.
+ */
+__weak void *spl_load_simple_fit_fix_load(const void *fit)
+{
+	return (void *)fit;
 }
 
 static void warn_deprecated(const char *msg)
@@ -554,18 +571,25 @@ static int spl_fit_upload_fpga(struct spl_fit_info *ctx, int node,
 {
 	const char *compatible;
 	int ret;
+	int devnum = 0;
+	int flags = 0;
 
 	debug("FPGA bitstream at: %x, size: %x\n",
 	      (u32)fpga_image->load_addr, fpga_image->size);
 
 	compatible = fdt_getprop(ctx->fit, node, "compatible", NULL);
-	if (!compatible)
+	if (!compatible) {
 		warn_deprecated("'fpga' image without 'compatible' property");
-	else if (strcmp(compatible, "u-boot,fpga-legacy"))
-		printf("Ignoring compatible = %s property\n", compatible);
+	} else {
+		if (CONFIG_IS_ENABLED(FPGA_LOAD_SECURE))
+			flags = fpga_compatible2flag(devnum, compatible);
+		if (strcmp(compatible, "u-boot,fpga-legacy"))
+			debug("Ignoring compatible = %s property\n",
+			      compatible);
+	}
 
-	ret = fpga_load(0, (void *)fpga_image->load_addr, fpga_image->size,
-			BIT_FULL);
+	ret = fpga_load(devnum, (void *)fpga_image->load_addr,
+			fpga_image->size, BIT_FULL, flags);
 	if (ret) {
 		printf("%s: Cannot load the image to the FPGA\n", __func__);
 		return ret;
@@ -626,7 +650,7 @@ static int spl_simple_fit_read(struct spl_fit_info *ctx,
 	 * For FIT with external data, data is not loaded in this step.
 	 */
 	sectors = get_aligned_image_size(info, size, 0);
-	buf = spl_get_fit_load_buffer(sectors * info->bl_len);
+	buf = board_spl_fit_buffer_addr(size, sectors, info->bl_len);
 
 	count = info->read(info, sector, sectors, buf);
 	ctx->fit = buf;
@@ -679,6 +703,8 @@ int spl_load_simple_fit(struct spl_image_info *spl_image,
 	/* skip further processing if requested to enable load-only use cases */
 	if (spl_load_simple_fit_skip_processing())
 		return 0;
+
+	ctx.fit = spl_load_simple_fit_fix_load(ctx.fit);
 
 	ret = spl_simple_fit_parse(&ctx);
 	if (ret < 0)
@@ -790,7 +816,7 @@ int spl_load_simple_fit(struct spl_image_info *spl_image,
 	}
 
 	/*
-	 * If a platform does not provide CONFIG_SYS_UBOOT_START, U-Boot's
+	 * If a platform does not provide CFG_SYS_UBOOT_START, U-Boot's
 	 * Makefile will set it to 0 and it will end up as the entry point
 	 * here. What it actually means is: use the load address.
 	 */
@@ -798,9 +824,6 @@ int spl_load_simple_fit(struct spl_image_info *spl_image,
 		spl_image->entry_point = spl_image->load_addr;
 
 	spl_image->flags |= SPL_FIT_FOUND;
-
-	if (IS_ENABLED(CONFIG_IMX_HAB))
-		board_spl_fit_post_load(ctx.fit);
 
 	return 0;
 }

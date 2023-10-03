@@ -12,7 +12,10 @@
 
 / {
 	aliases {
+		mmc0 = &mmc0;
+#if CONFIG_MMC_SUNXI_SLOT_EXTRA == 2
 		mmc1 = &mmc2;
+#endif
 	};
 
 	binman: binman {
@@ -26,6 +29,11 @@
 		pad-byte = <0xff>;
 
 		blob {
+			/*
+			 * This value matches SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR
+			 * and SYS_SPI_U_BOOT_OFFS if those are defined.
+			 */
+			min-size = <0x8000>;
 			filename = "spl/sunxi-spl.bin";
 		};
 
@@ -42,7 +50,7 @@
 					os = "u-boot";
 					arch = "arm64";
 					compression = "none";
-					load = <CONFIG_SYS_TEXT_BASE>;
+					load = <CONFIG_TEXT_BASE>;
 
 					u-boot-nodtb {
 					};
@@ -63,7 +71,7 @@
 					};
 				};
 
-#ifndef CONFIG_MACH_SUN50I_H616
+#ifdef SCP_ADDR
 				scp {
 					description = "SCP firmware";
 					type = "firmware";
@@ -91,7 +99,7 @@
 				@config-SEQ {
 					description = "NAME";
 					firmware = "atf";
-#ifdef CONFIG_MACH_SUN50I_H616
+#ifndef SCP_ADDR
 					loadables = "uboot";
 #else
 					loadables = "scp", "uboot";
@@ -102,7 +110,6 @@
 		};
 #else
 		u-boot-img {
-			offset = <CONFIG_SPL_PAD_TO>;
 		};
 #endif
 	};

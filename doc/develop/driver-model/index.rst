@@ -19,6 +19,8 @@ subsystems
    i2c-howto
    livetree
    migration
+   nvme
+   nvmxip
    of-plat
    pci-info
    pmic-framework
@@ -27,3 +29,4 @@ subsystems
    soc-framework
    spi-howto
    usb-info
+   virtio

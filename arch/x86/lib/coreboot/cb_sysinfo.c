@@ -21,7 +21,7 @@ DECLARE_GLOBAL_DATA_PTR;
  * with zeroes when transitioning from "ROM", which is really RAM, to other
  * RAM.
  */
-struct sysinfo_t lib_sysinfo __attribute__((section(".data")));
+struct sysinfo_t lib_sysinfo __section(".data");
 
 /*
  * Some of this is x86 specific, and the rest of it is generic. Right now,
@@ -264,6 +264,13 @@ static void cb_parse_mrc_cache(void *ptr, struct sysinfo_t *info)
 	info->mrc_cache = map_sysmem(cbmem->cbmem_tab, 0);
 }
 
+static void cb_parse_acpi_rsdp(void *ptr, struct sysinfo_t *info)
+{
+	struct cb_cbmem_tab *const cbmem = (struct cb_cbmem_tab *)ptr;
+
+	info->rsdp = map_sysmem(cbmem->cbmem_tab, 0);
+}
+
 __weak void cb_parse_unhandled(u32 tag, unsigned char *ptr)
 {
 }
@@ -428,13 +435,20 @@ static int cb_parse_header(void *addr, int len, struct sysinfo_t *info)
 		case CB_TAG_MRC_CACHE:
 			cb_parse_mrc_cache(rec, info);
 			break;
+		case CB_TAG_ACPI_RSDP:
+			cb_parse_acpi_rsdp(rec, info);
+			break;
 		default:
+			if (info->unimpl_count < SYSINFO_MAX_UNIMPL)
+				info->unimpl[info->unimpl_count++] = rec->tag;
 			cb_parse_unhandled(rec->tag, ptr);
 			break;
 		}
 
 		ptr += rec->size;
 	}
+	info->table_size += (void *)ptr - (void *)header;
+	info->rec_count += header->table_entries;
 
 	return 1;
 }
@@ -450,10 +464,14 @@ int get_coreboot_info(struct sysinfo_t *info)
 	addr = locate_coreboot_table();
 	if (addr < 0)
 		return addr;
+	info->table_size = 0;
+	info->rec_count = 0;
 	ret = cb_parse_header((void *)addr, 0x1000, info);
 	if (!ret)
 		return -ENOENT;
 	gd->arch.coreboot_table = addr;
+	gd_set_acpi_start(map_to_sysmem(info->rsdp));
+	gd_set_smbios_start(info->smbios_start);
 	gd->flags |= GD_FLG_SKIP_LL_INIT;
 
 	return 0;

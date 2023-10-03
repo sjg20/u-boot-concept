@@ -16,6 +16,8 @@
 #define SYSINFO_MAX_GPIOS	8
 /* Up to 10 MAC addresses */
 #define SYSINFO_MAX_MACS 10
+/* Track the first 32 unimplemented tags */
+#define SYSINFO_MAX_UNIMPL	32
 
 /**
  * struct sysinfo_t - Information passed to U-Boot from coreboot
@@ -133,6 +135,11 @@
  * @mtc_size: Size of MTC region
  * @chromeos_vpd: Chromium OS Vital Product Data region, typically NULL, meaning
  *	not used
+ * @rsdp: Pointer to ACPI RSDP table
+ * @unimpl_count: Number of entries in unimpl_map[]
+ * @unimpl: List of unimplemented IDs (bottom 8 bits only)
+ * @table_size: Number of bytes taken up by the sysinfo table
+ * @rec_count: Number of records in the sysinfo table
  */
 struct sysinfo_t {
 	unsigned int cpu_khz;
@@ -211,10 +218,31 @@ struct sysinfo_t {
 	u64 mtc_start;
 	u32 mtc_size;
 	void	*chromeos_vpd;
+	void *rsdp;
+	u32 unimpl_count;
+	u8 unimpl[SYSINFO_MAX_UNIMPL];
+	uint table_size;
+	uint rec_count;
 };
 
 extern struct sysinfo_t lib_sysinfo;
 
+/**
+ * get_coreboot_info() - parse the coreboot sysinfo table
+ *
+ * Parses the coreboot table if found, setting the GD_FLG_SKIP_LL_INIT flag if
+ * so.
+ *
+ * @info: Place to put the parsed information
+ * Return: 0 if OK, -ENOENT if no table found
+ */
 int get_coreboot_info(struct sysinfo_t *info);
+
+/**
+ * cb_get_sysinfo() - get a pointer to the parsed coreboot sysinfo
+ *
+ * Return: pointer to sysinfo, or NULL if not available
+ */
+const struct sysinfo_t *cb_get_sysinfo(void);
 
 #endif

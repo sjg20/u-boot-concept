@@ -25,6 +25,7 @@ trying to get it to work optimally on a given system.
    :maxdepth: 2
 
    build/index
+   learn/index
    usage/index
 
 Developer-oriented documentation
@@ -63,17 +64,6 @@ implementation.
    :maxdepth: 2
 
    arch/index
-
-Machine-specific doc
---------------------
-
-These books provide programming details about machine-specific
-implementation.
-
-.. toctree::
-   :maxdepth: 2
-
-   imx/index
 
 Board-specific doc
 ------------------

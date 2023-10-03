@@ -22,14 +22,12 @@ config TARGET_KP_IMX53
 	bool "Support K+P imx53 board"
 	select BOARD_LATE_INIT
 	select DM
-	select DM_ETH
 	select DM_GPIO
 	select DM_I2C
 	select DM_PMIC
 	select DM_SERIAL
 	select DM_MMC
 	select BLK
-	select DM_USB
 	select DM_REGULATOR
 	select MX53
 	imply CMD_DM

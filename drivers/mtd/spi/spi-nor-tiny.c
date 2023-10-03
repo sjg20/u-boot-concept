@@ -361,7 +361,7 @@ static int spi_nor_wait_till_ready(struct spi_nor *nor)
  * Erase an address range on the nor chip.  The address range may extend
  * one or more erase sectors.  Return an error is there is a problem erasing.
  */
-static int spi_nor_erase(struct mtd_info *mtd, struct erase_info *instr)
+static int spi_nor_erase_tiny(struct mtd_info *mtd, struct erase_info *instr)
 {
 	return -ENOTSUPP;
 }
@@ -390,8 +390,8 @@ static const struct flash_info *spi_nor_read_id(struct spi_nor *nor)
 	return ERR_PTR(-EMEDIUMTYPE);
 }
 
-static int spi_nor_read(struct mtd_info *mtd, loff_t from, size_t len,
-			size_t *retlen, u_char *buf)
+static int spi_nor_read_tiny(struct mtd_info *mtd, loff_t from, size_t len,
+			     size_t *retlen, u_char *buf)
 {
 	struct spi_nor *nor = mtd_to_spi_nor(mtd);
 	int ret;
@@ -426,8 +426,8 @@ read_err:
  * FLASH_PAGESIZE chunks.  The address range may be any size provided
  * it is within the physical boundaries.
  */
-static int spi_nor_write(struct mtd_info *mtd, loff_t to, size_t len,
-			 size_t *retlen, const u_char *buf)
+static int spi_nor_write_tiny(struct mtd_info *mtd, loff_t to, size_t len,
+			      size_t *retlen, const u_char *buf)
 {
 	return -ENOTSUPP;
 }
@@ -555,28 +555,6 @@ static int spansion_read_cr_quad_enable(struct spi_nor *nor)
 }
 #endif /* CONFIG_SPI_FLASH_SPANSION */
 
-struct spi_nor_read_command {
-	u8			num_mode_clocks;
-	u8			num_wait_states;
-	u8			opcode;
-	enum spi_nor_protocol	proto;
-};
-
-enum spi_nor_read_command_index {
-	SNOR_CMD_READ,
-	SNOR_CMD_READ_FAST,
-
-	/* Quad SPI */
-	SNOR_CMD_READ_1_1_4,
-
-	SNOR_CMD_READ_MAX
-};
-
-struct spi_nor_flash_parameter {
-	struct spi_nor_hwcaps		hwcaps;
-	struct spi_nor_read_command	reads[SNOR_CMD_READ_MAX];
-};
-
 static void
 spi_nor_set_read_settings(struct spi_nor_read_command *read,
 			  u8 num_mode_clocks,
@@ -605,6 +583,12 @@ static int spi_nor_init_params(struct spi_nor *nor,
 		spi_nor_set_read_settings(&params->reads[SNOR_CMD_READ_FAST],
 					  0, 8, SPINOR_OP_READ_FAST,
 					  SNOR_PROTO_1_1_1);
+#ifdef CONFIG_SPI_FLASH_SPANSION
+		if (JEDEC_MFR(info) == SNOR_MFR_CYPRESS &&
+		    (info->id[1] == 0x2a || info->id[1] == 0x2b))
+			/* 0x2a: S25HL (QSPI, 3.3V), 0x2b: S25HS (QSPI, 1.8V) */
+			params->reads[SNOR_CMD_READ_FAST].num_mode_clocks = 8;
+#endif
 	}
 
 	if (info->flags & SPI_NOR_QUAD_READ) {
@@ -751,14 +735,15 @@ int spi_nor_scan(struct spi_nor *nor)
 		return ret;
 
 	mtd->name = "spi-flash";
+	mtd->dev = nor->dev;
 	mtd->priv = nor;
 	mtd->type = MTD_NORFLASH;
 	mtd->writesize = 1;
 	mtd->flags = MTD_CAP_NORFLASH;
 	mtd->size = info->sector_size * info->n_sectors;
-	mtd->_erase = spi_nor_erase;
-	mtd->_read = spi_nor_read;
-	mtd->_write = spi_nor_write;
+	mtd->_erase = spi_nor_erase_tiny;
+	mtd->_read = spi_nor_read_tiny;
+	mtd->_write = spi_nor_write_tiny;
 
 	nor->size = mtd->size;
 
