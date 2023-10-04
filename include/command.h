@@ -60,6 +60,8 @@ struct cmd_tbl {
 #endif
 };
 
+#define __longhelp	__section(".data.longhelp") __used
+
 #if defined(CONFIG_CMD_RUN)
 int do_run(struct cmd_tbl *cmdtp, int flag, int argc,
 	   char *const argv[]);
@@ -320,7 +322,6 @@ int cmd_source_script(ulong addr, const char *fit_uname, const char *confname);
 # define _CMD_HELP(x) x,
 #else
 # define _CMD_HELP(x)
-#endif
 
 #define U_BOOT_LONGHELP(_cmdname, text)					\
 	static __maybe_unused const char _cmdname##_help_text[] = text;

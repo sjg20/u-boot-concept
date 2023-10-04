@@ -67,7 +67,8 @@
 	func(PXE, pxe, na) \
 	func(DHCP, dhcp, na)
 
-#include <config_distro_bootcmd.h>
+// #include <config_distro_bootcmd.h>
+#define BOOTENV
 
 #ifndef MEM_LAYOUT_ENV_SETTINGS
 /* 2GB RAM, bootm size of 256M, load scripts after that */
