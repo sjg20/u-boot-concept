@@ -28,8 +28,10 @@ static void spl_parse_legacy_validate(uintptr_t start, uintptr_t size)
 	    (start > end && end > spl_start))
 		panic("SPL: Image overlaps SPL\n");
 
+#ifdef CONFIG_SYS_BOOTM_LEN
 	if (size > CONFIG_SYS_BOOTM_LEN)
 		panic("SPL: Image too large\n");
+#endif
 }
 
 int spl_parse_legacy_header(struct spl_image_info *spl_image,
