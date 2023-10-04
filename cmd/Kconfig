@@ -34,6 +34,14 @@ menu "Hush flavor to use"
 		  2005.
 
 		  It is actually the default U-Boot shell when decided to use hush as shell.
+
+	config HUSH_2021_PARSER
+		bool "Use hush 2021 parser"
+		help
+		  This option enables the new flavor of hush based on hush Busybox from
+		  2021.
+
+		  For the moment, it is highly experimental and should be used at own risks.
 endmenu
 
 config CMDLINE_EDITING

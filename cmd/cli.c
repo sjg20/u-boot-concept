@@ -12,6 +12,8 @@ static const char *gd_flags_to_parser(void)
 {
 	if (gd->flags & GD_FLG_HUSH_OLD_PARSER)
 		return "old";
+	if (gd->flags & GD_FLG_HUSH_2021_PARSER)
+		return "2021";
 	return NULL;
 }
 
@@ -34,12 +36,15 @@ static int parser_string_to_gd_flags(const char *parser)
 {
 	if (!strcmp(parser, "old"))
 		return GD_FLG_HUSH_OLD_PARSER;
+	if (!strcmp(parser, "2021"))
+		return GD_FLG_HUSH_2021_PARSER;
 	return -1;
 }
 
 static void reset_parser_gd_flags(void)
 {
 	gd->flags &= ~GD_FLG_HUSH_OLD_PARSER;
+	gd->flags &= ~GD_FLG_HUSH_2021_PARSER;
 }
 
 static int do_cli_set(struct cmd_tbl *cmdtp, int flag, int argc,
@@ -108,7 +113,7 @@ static int do_cli(struct cmd_tbl *cmdtp, int flag, int argc,
 #if CONFIG_IS_ENABLED(SYS_LONGHELP)
 static char cli_help_text[] =
 	"get - print current cli\n"
-	"set - set the current cli, possible value is: old"
+	"set - set the current cli, possible value are: old, 2021"
 	;
 #endif
 
