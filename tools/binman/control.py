@@ -11,7 +11,10 @@ try:
     import importlib.resources
 except ImportError:  # pragma: no cover
     # for Python 3.6
-    import importlib_resources
+    try:
+        import importlib_resources
+    except ImportError:  # pragma: no cover
+        import importlib
 import os
 import pkg_resources
 import re
