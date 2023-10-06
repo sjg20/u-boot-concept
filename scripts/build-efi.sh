@@ -62,6 +62,8 @@ kernel=
 # We avoid in-tree build because it gets confusing trying different builds
 ubdir=/tmp/b/
 
+DISK=/vid/software/linux/ubuntu/ubuntu-23.04-desktop-amd64.iso
+
 while getopts "akopPrsw" opt; do
 	case "${opt}" in
 	a)
@@ -111,10 +113,15 @@ run_qemu() {
 	echo "Running ${qemu}"
 	# Use 512MB since U-Boot EFI likes to have 256MB to play with
 	"${qemu}" -bios "${bios}" \
-		-m 512 \
+		-m 3G \
 		-drive id=disk,file="${IMG}",if=none,format=raw \
 		-nic none -device ahci,id=ahci \
-		-device ide-hd,drive=disk,bus=ahci.0 ${extra}
+		-device ide-hd,drive=disk,bus=ahci.0 ${extra} \
+		\
+		-drive id=iso,file=${DISK},if=none \
+		-device ich9-ahci,id=ahci2 \
+		-device ide-hd,drive=iso,bus=ahci2.0
+
 }
 
 setup_files() {
