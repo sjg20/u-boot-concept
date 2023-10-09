@@ -41,6 +41,7 @@
 		mmc3 = "/mmc3";
 		mmc4 = "/mmc4";
 		mmc5 = "/mmc5";
+		mmc6 = "/mmc6";
 		pci0 = &pci0;
 		pci1 = &pci1;
 		pci2 = &pci2;
@@ -1096,6 +1097,12 @@
 		status = "disabled";
 		compatible = "sandbox,mmc";
 		filename = "mmc5.img";
+	};
+
+	/* This is used for mbr tests */
+	mmc6 {
+		compatible = "sandbox,mmc";
+		filename = "mmc6.img";
 	};
 
 	pch {
