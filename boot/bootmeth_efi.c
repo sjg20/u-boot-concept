@@ -6,6 +6,7 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
+#define LOG_DEBUG
 #define LOG_CATEGORY UCLASS_BOOTSTD
 
 #include <common.h>
@@ -205,6 +206,9 @@ static int distro_efi_get_fdt_name(char *fname, int size, int seq)
 		break;
 	case 2:
 		prefix = "/dtb/current";
+		break;
+	case 3:
+		prefix = "";
 		break;
 	default:
 		return log_msg_ret("pref", -EINVAL);
