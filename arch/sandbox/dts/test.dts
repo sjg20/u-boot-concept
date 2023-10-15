@@ -1101,6 +1101,7 @@
 
 	/* This is used for mbr tests */
 	mmc6 {
+		status = "disabled";
 		compatible = "sandbox,mmc";
 		filename = "mmc6.img";
 	};

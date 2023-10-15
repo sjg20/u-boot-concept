@@ -7,11 +7,14 @@
  */
 
 #include <common.h>
-#include <asm/global_data.h>
+#include <dm.h>
 #include <console.h>
 #include <dm/test.h>
 #include <mapmem.h>
 #include <part.h>
+#include <asm/global_data.h>
+#include <dm/device-internal.h>
+#include <dm/lists.h>
 #include <test/suites.h>
 #include <test/ut.h>
 
@@ -231,6 +234,14 @@ static int mbr_test_run(struct unit_test_state *uts)
 	unsigned char mbr_wbuf[512], ebr_wbuf[512], rbuf[512];
 	char mbr_parts_buf[256];
 	ulong mbr_wa, ebr_wa, ra, ebr_blk, mbr_parts_max;
+	struct udevice *dev;
+	ofnode root, node;
+
+	/* Enable the mmc6 node for this test */
+	root = oftree_root(oftree_default());
+	node = ofnode_find_subnode(root, "mmc6");
+	ut_assert(ofnode_valid(node));
+	ut_assertok(lists_bind_fdt(gd->dm_root, node, &dev, NULL, false));
 
 	mbr_parts_max = sizeof('\0') + 2 +
 		strlen(mbr_parts_header) +

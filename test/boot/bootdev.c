@@ -128,7 +128,7 @@ static int bootdev_test_labels(struct unit_test_state *uts)
 		    bootdev_find_by_label("fred0", &dev, &mflags));
 
 	/* Check unknown sequence number */
-	ut_asserteq(-ENOENT, bootdev_find_by_label("mmc7", &dev, &mflags));
+	ut_asserteq(-ENOENT, bootdev_find_by_label("mmc6", &dev, &mflags));
 
 	return 0;
 }
