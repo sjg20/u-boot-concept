@@ -2,7 +2,7 @@
 # Copyright (c) 2011 The Chromium OS Authors.
 
 PLATFORM_CPPFLAGS += -D__SANDBOX__ -U_FORTIFY_SOURCE
-PLATFORM_CPPFLAGS += -fPIC
+PLATFORM_CPPFLAGS += -fPIC -ffunction-sections -fdata-sections
 PLATFORM_LIBS += -lrt
 SDL_CONFIG ?= sdl2-config
 
@@ -26,6 +26,7 @@ cmd_u-boot__ = $(CC) -o $@ -Wl,-T u-boot.lds $(u-boot-init) \
 	$(KBUILD_LDFLAGS:%=-Wl,%) \
 	$(SANITIZERS) \
 	$(LTO_FINAL_LDFLAGS) \
+	-Wl,--gc-section \
 	-Wl,--whole-archive \
 		$(u-boot-main) \
 		$(u-boot-keep-syms-lto) \
@@ -37,6 +38,7 @@ cmd_u-boot-spl = (cd $(obj) && $(CC) -o $(SPL_BIN) -Wl,-T u-boot-spl.lds \
 	$(SANITIZERS) \
 	$(LTO_FINAL_LDFLAGS) \
 	$(patsubst $(obj)/%,%,$(u-boot-spl-init)) \
+	-Wl,--gc-section \
 	-Wl,--whole-archive \
 		$(patsubst $(obj)/%,%,$(u-boot-spl-main)) \
 		$(patsubst $(obj)/%,%,$(u-boot-spl-platdata)) \
