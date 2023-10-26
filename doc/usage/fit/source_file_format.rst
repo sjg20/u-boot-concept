@@ -234,6 +234,10 @@ type
     zynqmpimage           Xilinx ZynqMP Boot Image }
     ====================  ==================
 
+    The kernel_noload type indicates that the image is a kernel but that it
+    does not need to be loaded and can be executed in-place from the FIT. This
+    type cannot be used if compression is not "none".
+
 compression
     Compression used by included data. If no compression is used, the
     compression property should be set to "none". If the data is compressed but
@@ -353,7 +357,8 @@ entry
 load
     load address, address size is determined by '#address-cells'
     property of the root node.
-    Mandatory for types: "firmware", and "kernel".
+    This is normally mandatory for types: "firmware", and "kernel". However if
+    it omitted the bootloader may chose a suitable address.
 
 compatible
     compatible method for loading image.
