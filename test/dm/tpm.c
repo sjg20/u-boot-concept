@@ -50,14 +50,87 @@ static int test_tpm_init(struct unit_test_state *uts, enum tpm_version version)
 	return 0;
 }
 
-static int dm_test_tpm(struct unit_test_state *uts)
+static int dm_test_tpm_init(struct unit_test_state *uts)
 {
 	ut_assertok(test_tpm_init(uts, TPM_V1));
 	ut_assertok(test_tpm_init(uts, TPM_V2));
 
 	return 0;
 }
-DM_TEST(dm_test_tpm, UT_TESTF_SCAN_FDT);
+DM_TEST(dm_test_tpm_init, UT_TESTF_SCAN_FDT);
+
+/* Test TPM startup */
+static int test_tpm_startup(struct unit_test_state *uts,
+			    enum tpm_version version)
+{
+	struct udevice *dev;
+
+	/* check probe success */
+	ut_assertok(get_tpm_version(version, &dev));
+
+	ut_assertok(tpm_init(dev));
+	ut_assertok(tpm_startup(dev, TPM_ST_CLEAR));
+
+	return 0;
+}
+
+static int dm_test_tpm_startup(struct unit_test_state *uts)
+{
+	ut_assertok(test_tpm_startup(uts, TPM_V1));
+	ut_assertok(test_tpm_startup(uts, TPM_V2));
+
+	return 0;
+}
+DM_TEST(dm_test_tpm_startup, UT_TESTF_SCAN_FDT);
+
+/* Test TPM self-test full */
+static int test_tpm_self_test_full(struct unit_test_state *uts,
+				   enum tpm_version version)
+{
+	struct udevice *dev;
+
+	/* check probe success */
+	ut_assertok(get_tpm_version(version, &dev));
+
+	ut_assertok(tpm_init(dev));
+	ut_assertok(tpm_startup(dev, TPM_ST_CLEAR));
+
+	return 0;
+}
+
+static int dm_test_tpm_self_test_full(struct unit_test_state *uts)
+{
+	ut_assertok(test_tpm_self_test_full(uts, TPM_V1));
+	ut_assertok(test_tpm_self_test_full(uts, TPM_V2));
+
+	return 0;
+}
+DM_TEST(dm_test_tpm_self_test_full, UT_TESTF_SCAN_FDT);
+
+/* Test TPM self-test continue */
+static int test_tpm_self_test_cont(struct unit_test_state *uts,
+				   enum tpm_version version)
+{
+	struct udevice *dev;
+
+	/* check probe success */
+	ut_assertok(get_tpm_version(version, &dev));
+
+	ut_assertok(tpm_init(dev));
+	ut_assertok(tpm_startup(dev, TPM_ST_CLEAR));
+	ut_assertok(tpm_continue_self_test(dev));
+
+	return 0;
+}
+
+static int dm_test_tpm_self_test_cont(struct unit_test_state *uts)
+{
+	ut_assertok(test_tpm_self_test_cont(uts, TPM_V1));
+	ut_assertok(test_tpm_self_test_cont(uts, TPM_V2));
+
+	return 0;
+}
+DM_TEST(dm_test_tpm_self_test_cont, UT_TESTF_SCAN_FDT);
 
 /* Test report_state */
 static int dm_test_tpm_report_state(struct unit_test_state *uts)

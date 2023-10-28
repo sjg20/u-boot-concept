@@ -56,25 +56,12 @@ def is_sandbox(cons):
     return sys_arch == 'sandbox'
 
 @pytest.mark.buildconfigspec('cmd_tpm_v2')
-def test_tpm2_init(u_boot_console):
+def test_tpm2_autostart(u_boot_console):
     """Init the software stack to use TPMv2 commands."""
     skip_test = u_boot_console.config.env.get('env__tpm_device_test_skip', False)
     if skip_test:
         pytest.skip('skip TPM device test')
     u_boot_console.run_command('tpm2 autostart')
-    output = u_boot_console.run_command('echo $?')
-    assert output.endswith('0')
-
-@pytest.mark.buildconfigspec('cmd_tpm_v2')
-def test_tpm2_startup(u_boot_console):
-    """Execute a TPM2_Startup command.
-
-    Initiate the TPM internal state machine.
-    """
-    skip_test = u_boot_console.config.env.get('env__tpm_device_test_skip', False)
-    if skip_test:
-        pytest.skip('skip TPM device test')
-    u_boot_console.run_command('tpm2 startup TPM2_SU_CLEAR')
     output = u_boot_console.run_command('echo $?')
     assert output.endswith('0')
 
@@ -93,6 +80,7 @@ def tpm2_sandbox_init(u_boot_console):
         pytest.skip('skip TPM device test')
 
 @pytest.mark.buildconfigspec('cmd_tpm_v2')
+<<<<<<< HEAD
 def test_tpm2_sandbox_self_test_full(u_boot_console):
     """Execute a TPM2_SelfTest (full) command.
 
@@ -133,6 +121,8 @@ def test_tpm2_continue_self_test(u_boot_console):
     assert output.endswith('0')
 
 @pytest.mark.buildconfigspec('cmd_tpm_v2')
+=======
+>>>>>>> 8ad9cdcd518 (tpm: Convert sandbox-focussed tests to C)
 def test_tpm2_clear(u_boot_console):
     """Execute a TPM2_Clear command.
 
