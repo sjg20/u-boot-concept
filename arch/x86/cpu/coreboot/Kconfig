@@ -29,5 +29,6 @@ config SYS_COREBOOT
 	select BINMAN if X86_64
 	select SYSINFO
 	imply SYSINFO_EXTRA
+	select SERIAL_CAN_DISABLE
 
 endif

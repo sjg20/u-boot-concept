@@ -95,6 +95,7 @@ static int read_dbg2(struct ns16550_plat *plat)
 
 static int coreboot_of_to_plat(struct udevice *dev)
 {
+	struct serial_dev_plat *uplat = dev_get_uclass_plat(dev);
 	struct ns16550_plat *plat = dev_get_plat(dev);
 	struct cb_serial *cb_info = lib_sysinfo.serial;
 	int ret = -ENOENT;
@@ -119,6 +120,7 @@ static int coreboot_of_to_plat(struct udevice *dev)
 		 * there is no UART, which may panic. So stay silent and
 		 * pray that the video console will work.
 		 */
+		uplat->disable = true;
 		log_debug("Cannot detect UART\n");
 	}
 
