@@ -123,6 +123,19 @@ int video_reserve(ulong *addrp)
 	struct udevice *dev;
 	ulong size;
 
+	if (IS_ENABLED(CONFIG_SPL_VIDEO_HANDOFF) && spl_phase() > PHASE_SPL) {
+		/*
+		 * Skip allocation if already received a bloblist which
+		 * filled below fields
+		 */
+		if (gd->fb_base && gd->video_top && gd->video_bottom) {
+			debug("Found pre-reserved video memory from %lx to %lx\n",
+			      gd->video_bottom, gd->video_top);
+			debug("Skipping video frame buffer allocation\n");
+			return 0;
+		}
+	}
+
 	gd->video_top = *addrp;
 	for (uclass_find_first_device(UCLASS_VIDEO, &dev);
 	     dev;
