@@ -181,10 +181,6 @@ static int psci_bind(struct udevice *dev)
 			pr_debug("PSCI System Reset was not bound.\n");
 	}
 
-	/* From PSCI v1.0 onward we can discover services through ARM_SMCCC_FEATURE */
-	if (IS_ENABLED(CONFIG_ARM_SMCCC_FEATURES) && device_is_compatible(dev, "arm,psci-1.0"))
-		dev_or_flags(dev, DM_FLAG_PROBE_AFTER_BIND);
-
 	return 0;
 }
 

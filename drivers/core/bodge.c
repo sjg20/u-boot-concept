@@ -77,6 +77,23 @@ static int dm_bodge_probe(bool pre_reloc_only)
 		}
 	}
 
+	/*
+	 * From PSCI v1.0 onward we can discover services through
+	 * ARM_SMCCC_FEATURE
+	 *
+	 * Unfortunately this does not have its own uclass so we need to search
+	 * for it.
+	 */
+	if (CONFIG_IS_ENABLED(ARM_PSCI_FW)) {
+		uclass_id_foreach_dev(UCLASS_FIRMWARE, dev, uc) {
+			if (!strcmp(dev->driver->name, "pcsi") &&
+			    device_is_compatible(dev, "arm,psci-1.0")) {
+				ret = device_probe(dev);
+				/* ignore the error as per previous code */
+			}
+		}
+	}
+
 	return 0;
 }
 
