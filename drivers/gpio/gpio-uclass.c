@@ -1513,13 +1513,6 @@ static int gpio_post_bind(struct udevice *dev)
 								 &child);
 				if (ret)
 					return ret;
-
-				/*
-				 * Make sure gpio-hogs are probed after bind
-				 * since hogs can be essential to the hardware
-				 * system.
-				 */
-				dev_or_flags(child, DM_FLAG_PROBE_AFTER_BIND);
 			}
 		}
 	}

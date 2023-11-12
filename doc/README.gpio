@@ -2,8 +2,8 @@
 GPIO hog (CONFIG_GPIO_HOG)
 --------
 
-All the GPIO hog are initialized using DM_FLAG_PROBE_AFTER_BIND DM flag
-after bind().
+All the GPIO hog are initialized by dm_bodge_probe() early in boot, both before
+and after relocation.
 
 Example, for the device tree:
 
