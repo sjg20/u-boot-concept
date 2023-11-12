@@ -468,4 +468,44 @@ config BOUNCE_BUFFER
 	  A second possible use of bounce buffers is their ability to
 	  provide aligned buffers for DMA operations.
 
+config DM_BODGE
+	bool  # Enable work-arounds for controversial DT nodes
+	default y
+	help
+	  U-Boot uses devicetree for device instantiation, but Linux often has
+	  devices which don't correspond to a devicetree node. In fact, Linux
+	  tends not to add a devicetree binding if there is any other way to
+	  find the device. This leads to a mismatch beteen the projects.
+
+	  U-Boot also has a broad idea of what a device is, e.g. using a
+	  'software-only' device for exponentiation. This allows selection
+	  between hardware devices and software backups, or using both for
+	  testing the hardware.
+
+	  U-Boot uses devicetree aliases to number devices and (with phandles)
+	  to determine which device another device uses. With Linux, userspace
+	  can typically decide which /dev/xxx to open, so the configuration
+	  does not need to be in the devicetree.
+
+	  U-Boot provides a way to work around these differences, by adding a
+	  handler for each case.
+
+	  Enable this if your feature is affected by this.
+
+if DM_BODGE
+
+config SPL_DM_BODGE
+	bool  # Enable work-arounds for controversial DT nodes (SPL)
+	default y
+
+config TPL_DM_BODGE
+	bool  # Enable work-arounds for controversial DT nodes (TPL)
+	default y
+
+config VPL_DM_BODGE
+	bool  # Enable work-arounds for controversial DT nodes (VPL)
+	default y
+
+endif
+
 endmenu
