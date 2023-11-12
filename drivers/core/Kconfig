@@ -502,6 +502,29 @@ config TPL_DM_BODGE
 	bool  # Enable work-arounds for controversial DT nodes (TPL)
 	default y
 
+config DM_BODGE_AUTO_PROBE
+	bool  # Handle devices which need to be probed on startup
+	default y
+	help
+	  Calls dm_bodge_auto_probe() on startup to handle devices which
+	  must be manually probed before the board can work.
+
+	  Normally devices are probed lazily, typically by another device, such
+	  as the board's sysinfo device, which is always probed early in boot.
+
+	  You should normally use the sysinfo "probe-devices" property to
+	  specify devices to probe on startup.
+
+config SPL_DM_BODGE_AUTO_PROBE
+	bool  # Handle devices which need to be probed on startup (SPL)
+	depends on SPL_DM_BODGE
+	default y
+
+config TPL_DM_BODGE_AUTO_PROBE
+	bool  # Handle devices which need to be probed on startup (TOK)
+	depends on TPL_DM_BODGE
+	default y
+
 endif
 
 endmenu
