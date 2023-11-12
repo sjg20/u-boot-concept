@@ -9,6 +9,12 @@ Required properties:
   - compatible: any suitable string where the driver is in the UCLASS_SYSINFO
       class
 
+Optional properties:
+
+   - probe-devices: a list of phandles of devices to probe. Note that the
+       boot-phase tags (bootph-pre-ram etc.) may result in nodes being ignored
+       in which case those devices will not be probed.
+
 See also smbios.txt
 
 

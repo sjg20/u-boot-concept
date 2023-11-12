@@ -100,9 +100,46 @@ int sysinfo_get_str(struct udevice *dev, int id, size_t size, char *val)
 	return ops->get_str(dev, id, size, val);
 }
 
+static int sysinfo_post_probe(struct udevice *dev)
+{
+	const u32 *list;
+	int size;
+
+	list = dev_read_prop(dev, "probe-devices", &size);
+	if (list) {
+		int i;
+
+		size /= sizeof(u32);
+		for (i = 0; i < size; i++) {
+			uint phandle = fdt32_to_cpu(list[i]);
+			struct udevice *found;
+			ofnode node;
+			int ret;
+
+			node = ofnode_get_by_phandle(phandle);
+			if (!ofnode_valid(node)) {
+				/* the node may have been dropped from SPL */
+				log_debug("Cannot find device for phandle %d\n",
+					  phandle);
+				continue;
+			}
+			ret = device_get_global_by_ofnode(node, &found);
+			if (ret) {
+				/* the node may be missing a bootph,xxx tag */
+				log_debug("Cannot find device for node '%s'\n",
+					  ofnode_get_name(node));
+				continue;
+			}
+		}
+	}
+
+	return 0;
+}
+
 UCLASS_DRIVER(sysinfo) = {
 	.id		= UCLASS_SYSINFO,
 	.name		= "sysinfo",
 	.post_bind	= dm_scan_fdt_dev,
+	.post_probe	= sysinfo_post_probe,
 	.per_device_auto	= sizeof(bool),
 };
