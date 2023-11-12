@@ -1091,6 +1091,10 @@ quiet_cmd_ofcheck = OFCHK   $2
 cmd_ofcheck = $(srctree)/scripts/check-of.sh $2 \
 		$(srctree)/scripts/of_allowlist.txt
 
+quiet_cmd_drvcheck = DRVCHK  $2
+cmd_drvcheck = $(srctree)/scripts/check-drv.sh $2 $3 \
+		$(srctree)/scripts/drv_allowlist.txt
+
 # Concat the value of all the CONFIGs (result is 'y' or 'yy', etc. )
 got = $(foreach cfg,$(1),$($(cfg)))
 
@@ -1156,6 +1160,7 @@ endif
 	@# Check that this build does not override OF_HAS_PRIOR_STAGE by
 	@# disabling OF_BOARD.
 	$(call cmd,ofcheck,$(KCONFIG_CONFIG))
+	$(call cmd,drvcheck,u-boot,$(KCONFIG_CONFIG))
 
 PHONY += dtbs
 dtbs: dts/dt.dtb

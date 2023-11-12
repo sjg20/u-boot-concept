@@ -534,6 +534,18 @@ config VPL_DM_BODGE_AUTO_PROBE
 	depends on VPL_DM_BODGE
 	default y
 
+config DM_BODGE_NO_NODE
+	bool  # Handle creating devices with no associated devicetree node
+	help
+	  Calls DM_BODGE_no_node() on startup to handle devices which do
+	  not have a correponding devicetree node.
+
+	  Enable this if your board cannot boot or work correctly without
+	  manually creating a device using device_bind()
+
+	  Before enabling this, consider sending a devicetree binding for your
+	  use case.
+
 endif
 
 endmenu
