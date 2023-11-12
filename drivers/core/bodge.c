@@ -94,6 +94,15 @@ static int dm_bodge_probe(bool pre_reloc_only)
 		}
 	}
 
+	if (CONFIG_IS_ENABLED(LED)) {
+		/*
+		 * In case the LED has default-state DT property, trigger
+		 * probe() to configure its default state during startup.
+		 */
+		ret = uclass_probe_all(UCLASS_LED);
+		/* ignore the error as per previous code */
+	}
+
 	return 0;
 }
 
