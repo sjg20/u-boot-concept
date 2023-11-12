@@ -651,3 +651,13 @@ static int dm_test_acpi_cmd_set(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_acpi_cmd_set, UT_TESTF_SCAN_PDATA | UT_TESTF_SCAN_FDT);
+
+/* Test offsets in RSDT, XSDT */
+static int dm_test_acpi_offsets(struct unit_test_state *uts)
+{
+	ut_asserteq(36, offsetof(struct acpi_rsdt, entry));
+	ut_asserteq(36, offsetof(struct acpi_xsdt, entry));
+
+	return 0;
+}
+DM_TEST(dm_test_acpi_offsets, 0);
