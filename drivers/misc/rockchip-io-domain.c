@@ -102,18 +102,6 @@ static const struct udevice_id rockchip_iodomain_ids[] = {
 	{ }
 };
 
-static int rockchip_iodomain_bind(struct udevice *dev)
-{
-	/*
-	 * According to the Hardware Design Guide, IO-domain configuration must
-	 * be consistent with the power supply voltage (1.8V or 3.3V).
-	 * Probe after bind to configure IO-domain voltage early during boot.
-	 */
-	dev_or_flags(dev, DM_FLAG_PROBE_AFTER_BIND);
-
-	return 0;
-}
-
 static int rockchip_iodomain_probe(struct udevice *dev)
 {
 	struct rockchip_iodomain_soc_data *soc_data =
@@ -162,6 +150,5 @@ U_BOOT_DRIVER(rockchip_iodomain) = {
 	.name = "rockchip_iodomain",
 	.id = UCLASS_NOP,
 	.of_match = rockchip_iodomain_ids,
-	.bind = rockchip_iodomain_bind,
 	.probe = rockchip_iodomain_probe,
 };
