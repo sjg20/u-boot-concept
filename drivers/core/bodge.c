@@ -139,6 +139,18 @@ static int dm_bodge_probe(bool pre_reloc_only)
 		/* ignore the error as per previous code */
 	}
 
+	if (CONFIG_IS_ENABLED(PMIC_RK8XX) && CONFIG_IS_ENABLED(PMIC_CHILDREN) &&
+	    IS_ENABLED(CONFIG_SPL_BUILD) &&
+	    IS_ENABLED(CONFIG_ROCKCHIP_RK8XX_DISABLE_BOOT_ON_POWERON)) {
+		/*
+		 * The original code has no comment
+		 *
+		 * Assume that there is only one PMIC in the system
+		 */
+		ret = uclass_probe_all(UCLASS_PMIC);
+		/* ignore the error as per previous code */
+	}
+
 	return 0;
 }
 

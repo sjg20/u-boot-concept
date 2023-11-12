@@ -156,10 +156,6 @@ static int rk8xx_bind(struct udevice *dev)
 	if (!children)
 		debug("%s: %s - no child found\n", __func__, dev->name);
 
-	if (IS_ENABLED(CONFIG_SPL_BUILD) &&
-	    IS_ENABLED(CONFIG_ROCKCHIP_RK8XX_DISABLE_BOOT_ON_POWERON))
-		dev_or_flags(dev, DM_FLAG_PROBE_AFTER_BIND);
-
 	/* Always return success for this device */
 	return 0;
 }
