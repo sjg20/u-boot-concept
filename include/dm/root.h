@@ -196,11 +196,8 @@ void dm_get_mem(struct dm_stats *stats);
  * place, to avoid the code spreading around U-Boot, such that it would be
  * impossible to clean them up later.
  *
- * @pre_reloc_only: If true, handle only devices with special devicetree
- * properties, or devices whose driver has the DM_FLAG_PRE_RELOC flag. If false
- * handle workarounds on all devices.
  * Return 0 if OK, -ve on error
  */
-int dm_bodge(bool pre_reloc_only);
+int dm_bodge(void);
 
 #endif

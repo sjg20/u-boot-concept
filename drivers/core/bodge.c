@@ -21,7 +21,7 @@
  * For other users please send an email to the mailing list and cc the
  * driver model maintainer
  */
-static int dm_bodge_probe(bool pre_reloc_only)
+static int dm_bodge_probe(void)
 {
 	struct udevice *dev;
 	struct uclass *uc;
@@ -124,12 +124,12 @@ static int dm_bodge_probe(bool pre_reloc_only)
 	return 0;
 }
 
-int dm_bodge(bool pre_reloc_only)
+int dm_bodge(void)
 {
 	int ret;
 
 	if (IS_ENABLED(CONFIG_DM_BODGE_AUTO_PROBE)) {
-		ret = dm_bodge_probe(pre_reloc_only);
+		ret = dm_bodge_probe();
 		if (ret)
 			return ret;
 	}
