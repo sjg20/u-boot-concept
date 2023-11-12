@@ -34,6 +34,10 @@ struct udevice;
  * }
  *
  * to read the serial number.
+ *
+ * NOTE: The sysinfo device is probed early in boot by show_board_info() so can
+ * be used to perform custom init steps as needed by the board. To do this, add
+ * the steps to the sysinfo driver's probe() method.
  */
 
 /** enum sysinfo_id - Standard IDs defined by U-Boot */

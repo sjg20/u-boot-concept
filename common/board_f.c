@@ -879,9 +879,7 @@ static const init_fnc_t init_sequence_f[] = {
 #if defined(CONFIG_DTB_RESELECT)
 	embedded_dtb_select,
 #endif
-#if defined(CONFIG_DISPLAY_BOARDINFO)
 	show_board_info,
-#endif
 	INIT_FUNC_WATCHDOG_INIT
 	INITCALL_EVENT(EVT_MISC_INIT_F),
 	INIT_FUNC_WATCHDOG_RESET

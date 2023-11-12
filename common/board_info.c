@@ -2,6 +2,7 @@
 
 #include <common.h>
 #include <dm.h>
+#include <console.h>
 #include <init.h>
 #include <sysinfo.h>
 #include <asm/global_data.h>
@@ -31,7 +32,10 @@ static int try_sysinfo(void)
 	char str[80];
 	int ret;
 
-	/* This might provide more detail */
+	/*
+	 * This might provide more detail as well as probing other devices -
+	 * see sysinfo_post_probe()
+	 */
 	ret = sysinfo_get(&dev);
 	if (ret)
 		return ret;
@@ -39,6 +43,15 @@ static int try_sysinfo(void)
 	ret = sysinfo_detect(dev);
 	if (ret)
 		return ret;
+
+	if ((gd->flags & GD_FLG_RELOC)) {
+		if (!IS_ENABLED(CONFIG_DISPLAY_BOARDINFO_LATE))
+			return 0;
+
+		console_announce_r();
+	} else if (!IS_ENABLED(CONFIG_DISPLAY_BOARDINFO)) {
+		return 0;
+	}
 
 	ret = sysinfo_get_str(dev, SYSINFO_ID_BOARD_MODEL, sizeof(str), str);
 	if (ret)

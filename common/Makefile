@@ -16,8 +16,7 @@ obj-y += version.o
 # # boards
 obj-y += board_f.o
 obj-y += board_r.o
-obj-$(CONFIG_DISPLAY_BOARDINFO) += board_info.o
-obj-$(CONFIG_DISPLAY_BOARDINFO_LATE) += board_info.o
+obj-y += board_info.o
 
 obj-$(CONFIG_MII) += miiphyutil.o
 obj-$(CONFIG_CMD_MII) += miiphyutil.o
