@@ -313,7 +313,7 @@ static int dm_scan(bool pre_reloc_only)
 	if (ret)
 		return ret;
 
-	ret = dm_bodge(pre_reloc_only);
+	ret = dm_bodge();
 	if (ret)
 		return ret;
 
