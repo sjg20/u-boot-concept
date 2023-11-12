@@ -248,6 +248,10 @@ static int bootm_find_os(struct cmd_tbl *cmdtp, int flag, int argc,
 	}
 
 	if (images.os.type == IH_TYPE_KERNEL_NOLOAD) {
+		if (images.os.comp != IH_COMP_NONE) {
+			puts("Cannot use kernel_noload with compression\n");
+			return 1;
+		}
 		images.os.load = images.os.image_start;
 		images.ep += images.os.image_start;
 	}
