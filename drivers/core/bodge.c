@@ -59,11 +59,23 @@ static int dm_probe_devices(struct udevice *dev, bool pre_reloc_only)
  */
 static int dm_bodge_probe(bool pre_reloc_only)
 {
+	struct udevice *dev;
+	struct uclass *uc;
 	int ret;
 
 	ret = dm_probe_devices(gd->dm_root, pre_reloc_only);
 	if (ret)
 		return ret;
+
+	/* probe all the GPIO hogs that were bound  */
+	if (CONFIG_IS_ENABLED(GPIO_HOG)) {
+		uclass_id_foreach_dev(UCLASS_NOP, dev, uc) {
+			if (!strcmp(dev->driver->name, "gpio_hog")) {
+				ret = device_probe(dev);
+				/* ignore the error as per previous code */
+			}
+		}
+	}
 
 	return 0;
 }
