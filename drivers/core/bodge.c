@@ -126,6 +126,19 @@ static int dm_bodge_probe(bool pre_reloc_only)
 		/* ignore the error as per previous code */
 	}
 
+	if (CONFIG_IS_ENABLED(PINCTRL_ARMADA_37XX)) {
+		/*
+		 * Make sure that the pinctrl driver gets probed after binding
+		 * as on A37XX the pinctrl driver is the one that is also
+		 * registering the GPIO one during probe, so if its not probed
+		 * GPIO-s are not registered as well.
+		 *
+		 * Assume that there is only one pinctrl driver in use
+		 */
+		ret = uclass_probe_all(UCLASS_PINCTRL);
+		/* ignore the error as per previous code */
+	}
+
 	return 0;
 }
 
