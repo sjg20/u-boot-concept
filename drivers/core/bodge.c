@@ -120,6 +120,12 @@ static int dm_bodge_probe(bool pre_reloc_only)
 		}
 	}
 
+	if (CONFIG_IS_ENABLED(NVMXIP)) {
+		/* The original code has no comment */
+		ret = uclass_probe_all(UCLASS_NVMXIP);
+		/* ignore the error as per previous code */
+	}
+
 	return 0;
 }
 
