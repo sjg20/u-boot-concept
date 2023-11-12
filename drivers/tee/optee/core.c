@@ -801,14 +801,6 @@ static int optee_of_to_plat(struct udevice *dev)
 	return 0;
 }
 
-static int optee_bind(struct udevice *dev)
-{
-	if (IS_ENABLED(CONFIG_OPTEE_SERVICE_DISCOVERY))
-		dev_or_flags(dev, DM_FLAG_PROBE_AFTER_BIND);
-
-	return 0;
-}
-
 static int optee_probe(struct udevice *dev)
 {
 	struct optee_pdata *pdata = dev_get_plat(dev);
@@ -867,7 +859,6 @@ U_BOOT_DRIVER(optee) = {
 	.of_match = optee_match,
 	.of_to_plat = optee_of_to_plat,
 	.probe = optee_probe,
-	.bind = optee_bind,
 	.ops = &optee_ops,
 	.plat_auto	= sizeof(struct optee_pdata),
 	.priv_auto	= sizeof(struct optee_private),

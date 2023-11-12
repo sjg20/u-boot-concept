@@ -151,6 +151,16 @@ static int dm_bodge_probe(bool pre_reloc_only)
 		/* ignore the error as per previous code */
 	}
 
+	if (CONFIG_IS_ENABLED(OPTEE_SERVICE_DISCOVERY)) {
+		/*
+		 * The original code has no comment
+		 *
+		 * Assume that there is only one TEE in the system
+		 */
+		ret = uclass_probe_all(UCLASS_TEE);
+		/* ignore the error as per previous code */
+	}
+
 	return 0;
 }
 
