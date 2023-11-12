@@ -337,7 +337,15 @@ static int dm_scan(bool pre_reloc_only)
 	if (ret)
 		return ret;
 
-	return dm_probe_devices(gd->dm_root, pre_reloc_only);
+	ret = dm_probe_devices(gd->dm_root, pre_reloc_only);
+	if (ret)
+		return ret;
+
+	ret = dm_bodge(pre_reloc_only);
+	if (ret)
+		return ret;
+
+	return 0;
 }
 
 int dm_init_and_scan(bool pre_reloc_only)

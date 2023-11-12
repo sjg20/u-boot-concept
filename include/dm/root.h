@@ -186,4 +186,21 @@ void dm_get_stats(int *device_countp, int *uclass_countp);
  */
 void dm_get_mem(struct dm_stats *stats);
 
+/**
+ * dm_bodge() - Handle work-arounds needed for driver model
+ *
+ * In some cases the devicetree is not ideal for U-Boot, or there are devices
+ * or uclasses which need to be auto-probed on start-up.
+ *
+ * This function collects together all of these sorts of work-arounds in one
+ * place, to avoid the code spreading around U-Boot, such that it would be
+ * impossible to clean them up later.
+ *
+ * @pre_reloc_only: If true, handle only devices with special devicetree
+ * properties, or devices whose driver has the DM_FLAG_PRE_RELOC flag. If false
+ * handle workarounds on all devices.
+ * Return 0 if OK, -ve on error
+ */
+int dm_bodge(bool pre_reloc_only);
+
 #endif
