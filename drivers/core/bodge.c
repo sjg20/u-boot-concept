@@ -103,6 +103,23 @@ static int dm_bodge_probe(bool pre_reloc_only)
 		/* ignore the error as per previous code */
 	}
 
+	/*
+	 * According to the Hardware Design Guide, IO-domain configuration must
+	 * be consistent with the power supply voltage (1.8V or 3.3V).
+	 * Probe after bind to configure IO-domain voltage early during boot.
+	 *
+	 * Unfortunately this does not have its own uclass so we need to search
+	 * for it.
+	 */
+	if (CONFIG_IS_ENABLED(ROCKCHIP_IODOMAIN)) {
+		uclass_id_foreach_dev(UCLASS_NOP, dev, uc) {
+			if (!strcmp(dev->driver->name, "rockchip_iodomain")) {
+				ret = device_probe(dev);
+				/* ignore the error as per previous code */
+			}
+		}
+	}
+
 	return 0;
 }
 
