@@ -28,13 +28,15 @@ static const struct mod_exp_ops mod_exp_ops_sw = {
 	.mod_exp	= mod_exp_sw,
 };
 
+static const struct udevice_id mod_exp_sw_ids[] = {
+	{ .compatible = "u-boot,mod-exp-sw" },
+	{ }
+};
+
 U_BOOT_DRIVER(mod_exp_sw) = {
 	.name	= "mod_exp_sw",
 	.id	= UCLASS_MOD_EXP,
+	.of_match = mod_exp_sw_ids,
 	.ops	= &mod_exp_ops_sw,
 	.flags	= DM_FLAG_PRE_RELOC,
-};
-
-U_BOOT_DRVINFO(mod_exp_sw) = {
-	.name = "mod_exp_sw",
 };

@@ -349,6 +349,20 @@ ifdef CONFIG_EFI_CAPSULE_AUTHENTICATE
 dtsi_include_list += $(capsule_esl_dtsi)
 endif
 
+# Generate devicetree fragment for orphaned drivers
+quiet_cmd_drv_gen = DRV_GEN  $@
+cmd_drv_gen = \
+	$(shell sed "s:ESL_BIN_FILE:$(drv_path):" $(drv_input_file) > $@)
+
+$(obj)/.drv.dtsi: FORCE
+	$(call cmd_drv_gen)
+
+drv_input_file=$(srctree)/scripts/u-boot-drv.dtsi
+drv_dtsi = .drv.dtsi
+drv_path=$(abspath $(srctree)/$(subst $(quote),,$(srcpath)/scripts/u-boot-drv.dtsi))
+
+dtsi_include_list += $(drv_dtsi)
+
 dtsi_include_list_deps = $(addprefix $(obj)/,$(subst $(quote),,$(dtsi_include_list)))
 
 $(obj)/%.dtb: $(src)/%.dts $(DTC) $(dtsi_include_list_deps) FORCE

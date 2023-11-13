@@ -1,0 +1,7 @@
+/ {
+#ifdef CONFIG_RSA_SOFTWARE_EXP
+	mod-exp-sw {
+		compatible = "u-boot,mod-exp-sw";
+	};
+#endif
+};
