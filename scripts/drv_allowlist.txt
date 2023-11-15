@@ -1,5 +1,6 @@
 # List of boards which are permitted to use U_BOOT_DRVINFO()
 
+axm
 A33-OLinuXino
 amcore
 apalis_imx6
