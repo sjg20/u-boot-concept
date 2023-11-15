@@ -1,5 +1,3 @@
-# List of boards which are permitted to use U_BOOT_DRVINFO()
-
 A10-OLinuXino-Lime
 A10s-OLinuXino-M
 A13-OLinuXino
@@ -71,6 +69,7 @@ devkit8000
 difrnce_dit4350
 dserve_dsrv9703c
 ea-lpc3250devkitv2
+embestmx6boards
 Empire_electronix_d709
 Empire_electronix_m712
 endeavoru
@@ -80,7 +79,6 @@ ga10h_v1_1
 ge_b1x5v2
 grouper_common
 gt90h_v4
-gurnard
 gwventana_emmc
 gwventana_nand
 harmony
@@ -91,6 +89,7 @@ i12-tvbox
 icnova-a20-swac
 igep00x0
 imx6dl_icore_nand
+imx6dl-mamoj
 imx6dl_mamoj
 imx6qdl_icore_mipi
 imx6qdl_icore_mmc
@@ -157,7 +156,6 @@ lx2160aqds_tfa_SECURE_BOOT
 lx2160ardb_tfa_SECURE_BOOT
 lx2162aqds_tfa_SECURE_BOOT
 lx2162aqds_tfa_verified_boot
-marsboard
 Marsboard_A10
 medcom-wide
 Mele_A1000
@@ -251,6 +249,7 @@ Sinlinx_SinA33
 Sinovoip_BPI_M2
 smartweb
 smegw01
+snapper9g45
 sniper
 somlabs_visionsom_6ull
 starqltechn

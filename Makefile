@@ -1160,7 +1160,7 @@ endif
 	@# Check that this build does not override OF_HAS_PRIOR_STAGE by
 	@# disabling OF_BOARD.
 	$(call cmd,ofcheck,$(KCONFIG_CONFIG))
-	$(call cmd,drvcheck,u-boot,$(KCONFIG_CONFIG))
+	$(call cmd,drvcheck,u-boot.map,$(KCONFIG_CONFIG))
 
 PHONY += dtbs
 dtbs: dts/dt.dtb

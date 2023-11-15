@@ -34,7 +34,9 @@ sys_config="$(sed -n 's/CONFIG_SYS_CONFIG_NAME="\(.*\)"$/\1/p' "${cfg_path}")"
 
 if grep -q _u_boot_list_2_driver_info_2_ "${map_path}"; then
 	echo >&2 "This board uses U_BOOT_DRVINFO() outside SPL."
-	echo >&2 "Please move ${sys_config} to dm_"
+# 	echo >&2 "Please move ${sys_config} to dm_:"
+	echo >&2 " Move ${sys_config}"
+	grep " _u_boot_list_2_driver_info_2_" "${map_path}" >&2
 	if grep -q "${sys_config}" "${allowlist}"; then
 		exit 0
 	fi
