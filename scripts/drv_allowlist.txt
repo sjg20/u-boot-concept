@@ -1,3 +1,5 @@
+# List of boards which are permitted to use U_BOOT_DRVINFO()
+
 A33-OLinuXino
 amcore
 apalis_imx6
@@ -34,6 +36,7 @@ colibri_t20
 colibri_t30
 corvus
 dalmore
+dart_6ul
 devkit3250
 devkit8000
 ea-lpc3250devkitv2
@@ -45,11 +48,14 @@ ga10h_v1_1
 ge_b1x5v2
 grouper_common
 gt90h_v4
+gw_ventana
 harmony
 hikey
 imx6dl-mamoj
 imx6dl_mamoj
+imx6-engicam
 imx6ulz_smm_m2
+imx7-cm
 inet86dz
 iNet_D978_rev2
 integratorap_cm720t
@@ -86,6 +92,7 @@ ls1046afrwy_tfa_SECURE_BOOT
 ls1046aqds_tfa_SECURE_BOOT
 ls1046ardb_tfa_SECURE_BOOT
 ls1088ardb_tfa_SECURE_BOOT
+ls2080ardb
 ls2088ardb_tfa_SECURE_BOOT
 lx2160aqds_tfa_SECURE_BOOT
 lx2160ardb_tfa_SECURE_BOOT
@@ -104,6 +111,7 @@ mx6sxsabreauto
 mx6sxsabresd
 mx6ul_14x14_evk
 mx6ul_9x9_evk
+mx6ullevk
 mx7dsabresd
 mx7dsabresd_qspi
 myir_mys_6ulx
@@ -114,6 +122,7 @@ novena
 nyan-big
 o4-imx6ull-nano
 of
+omap3_igep00x0
 opos6uldev
 orangepi_2
 orangepi_lite
@@ -153,6 +162,7 @@ qemu-x86_64
 sandbox
 sandbox64
 sandbox_flattree
+sdm845
 seaboard
 seeed_npi_imx6ull
 Sinlinx_SinA33
@@ -161,7 +171,12 @@ smegw01
 snapper9g45
 sniper
 somlabs_visionsom_6ull
+sun4i
+sun5i
+sun6i
+sun7i
 sun8i_a23_evb
+T208xQDS
 tbs2910
 tec
 tec-ng
@@ -174,6 +189,7 @@ tqma6q_mba6_mmc
 tqma6q_mba6_spi
 tqma6s_mba6_mmc
 tqma6s_mba6_spi
+transformer-t30
 trimslice
 U_BOOT_DRVINFO()
 udoo_neo
@@ -189,6 +205,7 @@ warp7
 warp7_bl33
 which
 work_92105
+x3-t30
 xilinx_versal_mini
 xilinx_versal_mini_emmc0
 xilinx_versal_mini_emmc1
