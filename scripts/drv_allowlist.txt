@@ -162,7 +162,10 @@ qemu-x86
 qemu-x86_64
 sandbox
 sandbox64
+sandbox_noinst
+sandbox_spl
 sandbox_flattree
+sandbox_vpl
 sdm845
 seaboard
 seeed_npi_imx6ull
@@ -178,6 +181,7 @@ sun6i
 sun7i
 sun8i_a23_evb
 T208xQDS
+taurus
 tbs2910
 tec
 tec-ng
