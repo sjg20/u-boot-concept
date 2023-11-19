@@ -11,6 +11,7 @@
 #ifndef __cyclic_h
 #define __cyclic_h
 
+#include <linux/kconfig.h>
 #include <linux/list.h>
 #include <asm/types.h>
 
@@ -44,7 +45,8 @@ struct cyclic_info {
 /** Function type for cyclic functions */
 typedef void (*cyclic_func_t)(void *ctx);
 
-#if defined(CONFIG_CYCLIC)
+#if CONFIG_IS_ENABLED(CYCLIC)
+
 /**
  * cyclic_register - Register a new cyclic function
  *
@@ -122,6 +124,6 @@ static inline int cyclic_unregister_all(void)
 {
 	return 0;
 }
-#endif
+#endif /* CYCLIC */
 
 #endif
