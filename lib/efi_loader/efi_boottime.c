@@ -1820,6 +1820,7 @@ efi_status_t efi_setup_loaded_image(struct efi_device_path *device_path,
 
 	if (device_path) {
 		info->device_handle = efi_dp_find_obj(device_path, NULL, NULL);
+		printf("info->device_handle = %p\n", info->device_handle);
 
 		dp = efi_dp_append(device_path, file_path);
 		if (!dp) {
@@ -1828,6 +1829,7 @@ efi_status_t efi_setup_loaded_image(struct efi_device_path *device_path,
 		}
 	} else {
 		dp = NULL;
+		printf("\nno device handle\n");
 	}
 	ret = efi_add_protocol(&obj->header,
 			       &efi_guid_loaded_image_device_path, dp);
@@ -1842,6 +1844,7 @@ efi_status_t efi_setup_loaded_image(struct efi_device_path *device_path,
 			       &efi_guid_loaded_image, info);
 	if (ret != EFI_SUCCESS)
 		goto failure;
+	printf("loaded_image info for %p: %p\n\n", &obj->header, info);
 
 	*info_ptr = info;
 	*handle_ptr = obj;
@@ -2665,8 +2668,10 @@ static efi_status_t EFIAPI efi_locate_protocol(const efi_guid_t *protocol,
 		if (ret == EFI_SUCCESS)
 			goto found;
 	} else {
+		printf("finding\n");
 		list_for_each_entry(efiobj, &efi_obj_list, link) {
 			ret = efi_search_protocol(efiobj, protocol, &handler);
+			printf("- search %p ret=%lx\n", efiobj, ret);
 			if (ret == EFI_SUCCESS)
 				goto found;
 		}

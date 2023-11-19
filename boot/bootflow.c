@@ -464,6 +464,8 @@ void bootflow_init(struct bootflow *bflow, struct udevice *bootdev,
 
 void bootflow_free(struct bootflow *bflow)
 {
+	/* this is where we want to get to (will only happen with USB) */
+	printf("bootflow free\n");
 	free(bflow->name);
 	free(bflow->subdir);
 	free(bflow->fname);
