@@ -206,6 +206,26 @@ efi_status_t EFIAPI efi_main(efi_handle_t handle,
 			(con_out, u"Cannot open loaded image protocol\r\n");
 		goto out;
 	}
+
+	{
+		ulong ptr = (ulong)loaded_image;
+		u16 str[80];
+		int i;
+
+		for (i = 0; i < 8; i++) {
+			uint digit = (ptr >> ((7 - i) * 4)) & 0xf;
+
+			if (digit > 9)
+				digit = 'a' + digit - 10;
+			else
+				digit += '0';
+			str[i] = digit;
+		}
+		str[i] = 0;
+		con_out->output_string(con_out, str);
+		con_out->output_string(con_out, u"\n");
+	}
+
 	print_load_options(loaded_image);
 
 	/* Get the device path to text protocol */
@@ -243,7 +263,21 @@ efi_status_t EFIAPI efi_main(efi_handle_t handle,
 		goto out;
 
 out:
-	boottime->exit(handle, ret, 0, NULL);
+	/*
+	 * TODO: Use vendor string to decide whether to call exit-boot-services
+	 */
+	efi_uintn_t map_size = 0;
+	efi_uintn_t map_key;
+	efi_uintn_t desc_size;
+	u32 desc_version;
+
+	ret = boottime->get_memory_map(&map_size, NULL, &map_key, &desc_size,
+				       &desc_version);
+	con_out->output_string(con_out, u"Exiting boot sevices\n");
+
+	boottime->exit_boot_services(handle, map_key);
+
+	ret = boottime->exit(handle, ret, 0, NULL);
 
 	/* We should never arrive here */
 	return ret;
