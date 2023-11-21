@@ -43,6 +43,7 @@
 		mmc4 = "/mmc4";
 		mmc5 = "/mmc5";
 		mmc6 = "/mmc6";
+		mmc7 = "/mmc7";
 		pci0 = &pci0;
 		pci1 = &pci1;
 		pci2 = &pci2;
@@ -108,7 +109,7 @@
 		compatible = "u-boot,boot-std";
 
 		filename-prefixes = "/", "/boot/";
-		bootdev-order = "mmc2", "mmc1";
+		/*bootdev-order = "mmc2", "mmc1";*/
 
 		extlinux {
 			compatible = "u-boot,extlinux";
@@ -1125,6 +1126,13 @@
 		status = "disabled";
 		compatible = "sandbox,mmc";
 		filename = "mmc6.img";
+	};
+
+	/* This is used for EFI tests */
+	mmc7 {
+/*		status = "disabled";*/
+		compatible = "sandbox,mmc";
+		filename = "mmc7.img";
 	};
 
 	pch {

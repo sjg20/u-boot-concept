@@ -13,6 +13,7 @@
 #include <bootstd.h>
 #include <cli.h>
 #include <dm.h>
+#include <efi_loader.h>
 #include <expo.h>
 #ifdef CONFIG_SANDBOX
 #include <asm/test.h>
@@ -29,6 +30,9 @@ DECLARE_GLOBAL_DATA_PTR;
 
 extern U_BOOT_DRIVER(bootmeth_cros);
 extern U_BOOT_DRIVER(bootmeth_2script);
+
+/* Use this as the vendor for EFI to tell the app to exit boot services */
+static u16 __efi_runtime_data test_vendor[] = u"U-Boot testing";
 
 static int inject_response(struct unit_test_state *uts)
 {
@@ -1059,3 +1063,52 @@ static int bootflow_cros(struct unit_test_state *uts)
 	return 0;
 }
 BOOTSTD_TEST(bootflow_cros, 0);
+
+/* Test EFI bootmeth */
+static int bootflow_efi(struct unit_test_state *uts)
+{
+	ut_assertok(scan_mmc_bootdev(uts, "mmc7", true));
+	ut_assertok(run_command("bootflow list", 0));
+
+	ut_assert_nextlinen("Showing all");
+	ut_assert_nextlinen("Seq");
+	ut_assert_nextlinen("---");
+	ut_assert_nextlinen("  0  extlinux");
+	ut_assert_nextlinen("  1  efi          ready   mmc          1  mmc7.bootdev.part_1       efi/boot/bootsbox.efi");
+	ut_assert_nextlinen("---");
+	ut_assert_skip_to_line("(2 bootflows, 2 valid)");
+	ut_assert_console_end();
+
+	ut_assertok(run_command("bootflow select 1", 0));
+	ut_assert_console_end();
+
+	/* signal to helloworld to exit boot services */
+	systab.fw_vendor = test_vendor;
+
+	ut_asserteq(1, run_command("bootflow boot", 0));
+	ut_assert_nextline(
+		"** Booting bootflow 'mmc7.bootdev.part_1' with efi");
+	ut_assert_nextline("No EFI system partition");
+	ut_assert_nextline("No EFI system partition");
+	ut_assert_nextline("Failed to persist EFI variables");
+	ut_assert_nextline("EFI using ACPI tables at 8ef8000");
+	ut_assert_nextline("WARNING: Can't have ACPI table and device tree - ignoring DT.");
+	ut_assert_nextline("Booting /efi\\boot\\bootsbox.efi");
+
+	/* TODO: Why the \r ? */
+	ut_assert_nextline("Hello, world!\r");
+	ut_assert_nextline("Running on UEFI 2.10\r");
+	ut_assert_nextline("Have ACPI 2.0 table\r");
+	ut_assert_nextline("Have SMBIOS table\r");
+	ut_assert_nextline("Load options: <none>\r");
+	ut_assert_nextline("File path: /efi\\boot\\bootsbox.efi\r");
+	ut_assert_nextline("Missing device handle\r");
+	ut_assert_nextline("Exiting boot sevices");
+
+	ut_assert_console_end();
+
+	ut_assert_console_end();
+
+	return 0;
+}
+BOOTSTD_TEST(bootflow_efi, 0);
