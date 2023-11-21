@@ -468,6 +468,37 @@ def test_ut_dm_init(u_boot_console):
     with open(fn, 'wb') as fh:
         fh.write(data)
 
+
+def setup_efi_image(cons):
+    """Create a 20MB disk image with an EFI app on it"""
+    mmc_dev = 7
+    fname, mnt = setup_image(cons, mmc_dev, 0xc, second_part=True)
+
+    loop = None
+    mounted = False
+    try:
+        loop = mount_image(cons, fname, mnt, 'ext4')
+        mounted = True
+        efi_dir = os.path.join(mnt, 'efi')
+        mkdir_cond(efi_dir)
+        bootdir = os.path.join(efi_dir, 'boot')
+        mkdir_cond(bootdir)
+        efi_src = os.path.join(cons.config.build_dir,
+                               f'lib/efi_loader/helloworld.efi')
+        efi_dst = os.path.join(bootdir, 'bootsbox.efi')
+        with open(efi_src, 'rb') as inf:
+            with open(efi_dst, 'wb') as outf:
+                outf.write(inf.read())
+
+    finally:
+        if mounted:
+            u_boot_utils.run_and_log(cons, 'sudo umount --lazy %s' % mnt)
+        if loop:
+            u_boot_utils.run_and_log(cons, 'sudo losetup -d %s' % loop)
+
+
+
+
 @pytest.mark.buildconfigspec('cmd_bootflow')
 def test_ut_dm_init_bootstd(u_boot_console):
     """Initialise data for bootflow tests"""
@@ -476,6 +507,7 @@ def test_ut_dm_init_bootstd(u_boot_console):
     setup_bootmenu_image(u_boot_console)
     setup_cedit_file(u_boot_console)
     setup_cros_image(u_boot_console)
+    setup_efi_image(u_boot_console)
 
     # Restart so that the new mmc1.img is picked up
     u_boot_console.restart_uboot()
