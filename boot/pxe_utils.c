@@ -643,10 +643,7 @@ static int label_run_boot(struct pxe_context *ctx, struct pxe_label *label,
 	if (!fdt_addr && genimg_get_format(buf) != IMAGE_FORMAT_FIT)
 		fdt_addr = env_get("fdtcontroladdr");
 
-	if (fdt_addr) {
-		if (!bmi.conf_ramdisk)
-			bmi.conf_ramdisk = "-";
-	}
+	printf("fdt %s\n", fdt_addr);
 	bmi.conf_fdt = fdt_addr;
 	bmi.images = &images;
 
