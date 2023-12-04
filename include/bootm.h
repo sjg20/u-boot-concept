@@ -273,7 +273,7 @@ int bootm_process_cmdline(char *buf, int maxlen, int flags);
 int bootm_process_cmdline_env(int flags);
 
 /**
- * zboot_start() - Boot a zimage
+ * zboot_run() - Run through the various steps to boot a zimage
  *
  * Boot a zimage, given the component parts
  *
@@ -286,8 +286,8 @@ int bootm_process_cmdline_env(int flags);
  * @cmdline: Command line to use for booting
  * Return: -EFAULT on error (normally it does not return)
  */
-int zboot_start(ulong addr, ulong size, ulong initrd, ulong initrd_size,
-		ulong base, char *cmdline);
+int zboot_run(ulong addr, ulong size, ulong initrd, ulong initrd_size,
+	      ulong base, char *cmdline);
 
 /*
  * zimage_get_kernel_version() - Get the version string from a kernel
