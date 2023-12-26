@@ -1245,31 +1245,22 @@ dtb-$(CONFIG_SAM9X60) += \
 	at91-sam9x60_curiosity.dtb \
 	sam9x60ek.dtb
 
-dtb-$(CONFIG_TARGET_OMAP3_LOGIC) += \
+dtb-$(CONFIG_OMAP34XX) += \
 	logicpd-som-lv-35xx-devkit.dtb \
 	logicpd-som-lv-37xx-devkit.dtb \
 	logicpd-torpedo-35xx-devkit.dtb \
-	logicpd-torpedo-37xx-devkit.dtb
-
-dtb-$(CONFIG_TARGET_OMAP3_EVM) += \
-	omap3-evm-37xx.dtb \
-	omap3-evm.dtb
-
-dtb-$(CONFIG_TARGET_OMAP3_BEAGLE) += \
+	logicpd-torpedo-37xx-devkit.dtb \
 	omap3-beagle-xm-ab.dtb \
 	omap3-beagle-xm.dtb \
-	omap3-beagle.dtb
-
-dtb-$(CONFIG_TARGET_DEVKIT8000) += omap3-devkit8000.dtb
-
-dtb-$(CONFIG_TARGET_OMAP3_IGEP00X0) += \
+	omap3-beagle.dtb \
+	omap3-devkit8000.dtb \
+	omap3-evm-37xx.dtb \
+	omap3-evm.dtb\
 	omap3-igep0020.dtb
 
-dtb-$(CONFIG_TARGET_OMAP4_PANDA) += \
+dtb-$(CONFIG_OMAP44XX) += \
 	omap4-panda.dtb \
-	omap4-panda-es.dtb
-
-dtb-$(CONFIG_TARGET_OMAP4_SDP4430) += \
+	omap4-panda-es.dtb \
 	omap4-sdp.dtb \
 	omap4-sdp-es23plus.dtb
 
