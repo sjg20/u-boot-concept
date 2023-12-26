@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0+
 
-dtb-$(CONFIG_TARGET_SMDKC100) += s5pc1xx-smdkc100.dtb
-dtb-$(CONFIG_TARGET_S5P_GONI) += s5pc1xx-goni.dtb
+dtb-$(CONFIG_ARCH_S5PC1XX) += s5pc1xx-smdkc100.dtb \
+	s5pc1xx-goni.dtb
 dtb-$(CONFIG_ARCH_EXYNOS4) += exynos4210-origen.dtb \
 	exynos4210-smdkv310.dtb \
 	exynos4210-universal_c210.dtb \
@@ -22,10 +22,10 @@ dtb-$(CONFIG_ARCH_EXYNOS5) += exynos5250-arndale.dtb \
 	exynos5420-peach-pit.dtb \
 	exynos5800-peach-pi.dtb \
 	exynos5422-odroidxu3.dtb
-dtb-$(CONFIG_EXYNOS7420) += exynos7420-espresso7420.dtb
-dtb-$(CONFIG_TARGET_A5Y17LTE) += exynos78x0-axy17lte.dtb
-dtb-$(CONFIG_TARGET_A3Y17LTE) += exynos78x0-axy17lte.dtb
-dtb-$(CONFIG_TARGET_A7Y17LTE) += exynos78x0-axy17lte.dtb
+dtb-$(ARCH_EXYNOS7) += exynos7420-espresso7420.dtb \
+	exynos78x0-axy17lte.dtb \
+	exynos78x0-axy17lte.dtb \
+	exynos78x0-axy17lte.dtb
 
 dtb-$(CONFIG_ARCH_APPLE) += \
 	t8103-j274.dtb \
