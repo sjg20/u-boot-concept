@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0+
 
-dtb-y += $(CONFIG_DEFAULT_DEVICE_TREE:"%"=%).dtb
+dtb-$(CONFIG_NIOS2) += 10m50_devboard.dtb 3c120_devboard.dtb
 
 include $(srctree)/scripts/Makefile.dts
 
