@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0+
 
-dtb-y += $(shell echo $(CONFIG_DEFAULT_DEVICE_TREE)).dtb
+dtb-$(CONFIG_MICROBLAZE) += microblaze-generic.dtb
 
 include $(srctree)/scripts/Makefile.dts
 
