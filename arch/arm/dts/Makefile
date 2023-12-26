@@ -1179,8 +1179,6 @@ dtb-$(CONFIG_ARCH_KEYSTONE) += keystone-k2hk-evm.dtb \
 	keystone-k2g-generic.dtb \
 	keystone-k2g-ice.dtb
 
-dtb-$(CONFIG_AT91SAM9RL) += at91sam9rlek.dtb
-
 dtb-$(CONFIG_AT91SAM9260) += \
 	at91sam9260ek.dtb \
 	at91sam9260-smartweb.dtb \
@@ -1195,11 +1193,15 @@ dtb-$(CONFIG_AT91SAM9G20) += \
 	at91sam9g20ek.dtb \
 	at91sam9g20ek_2mmc.dtb
 
-dtb-$(CONFIG_AT91SAM9M10G45) += at91sam9m10g45ek.dtb
-
 dtb-$(CONFIG_AT91SAM9G45) += \
 	at91sam9g45-corvus.dtb \
 	at91sam9g45-gurnard.dtb \
+
+dtb-$(CONFIG_AT91SAM9M10G45) += at91sam9m10g45ek.dtb
+
+dtb-$(CONFIG_AT91SAM9N12) += at91sam9n12ek.dtb
+
+dtb-$(CONFIG_AT91SAM9RL) += at91sam9rlek.dtb
 
 dtb-$(CONFIG_AT91SAM9X5) += \
 	at91sam9g25-gardena-smart-gateway.dtb \
@@ -1209,15 +1211,39 @@ dtb-$(CONFIG_AT91SAM9X5) += \
 	at91sam9x25ek.dtb	\
 	at91sam9x35ek.dtb
 
-dtb-$(CONFIG_SAM9X60) += \
-	at91-sam9x60_curiosity.dtb \
-	sam9x60ek.dtb
-
-dtb-$(CONFIG_AT91SAM9N12) += at91sam9n12ek.dtb
-
 dtb-$(CONFIG_AT91SAM9XE) += \
 	ethernut5.dtb \
 	usb_a9263.dtb
+
+dtb-$(CONFIG_SAMA7G5) += \
+	at91-sama7g5ek.dtb
+
+dtb-$(CONFIG_SAMA5D2) += \
+	at91-kstr-sama5d27.dtb \
+	at91-sama5d2_ptc_ek.dtb \
+	at91-sama5d2_xplained.dtb \
+	at91-sama5d27_giantboard.dtb \
+	at91-sama5d27_som1_ek.dtb   \
+	at91-sama5d27_wlsom1_ek.dtb \
+	at91-sama5d29_curiosity.dtb \
+	at91-sama5d2_icp.dtb
+
+dtb-$(CONFIG_SAMA5D3) += \
+	at91-sama5d3_xplained.dtb \
+	sama5d31ek.dtb \
+	sama5d33ek.dtb \
+	sama5d34ek.dtb \
+	sama5d35ek.dtb \
+	sama5d36ek.dtb \
+	sama5d36ek_cmp.dtb
+
+dtb-$(CONFIG_SAMA5D4) += \
+	at91-sama5d4ek.dtb \
+	at91-sama5d4_xplained.dtb
+
+dtb-$(CONFIG_SAM9X60) += \
+	at91-sam9x60_curiosity.dtb \
+	sam9x60ek.dtb
 
 dtb-$(CONFIG_TARGET_OMAP3_LOGIC) += \
 	logicpd-som-lv-35xx-devkit.dtb \
@@ -1246,33 +1272,6 @@ dtb-$(CONFIG_TARGET_OMAP4_PANDA) += \
 dtb-$(CONFIG_TARGET_OMAP4_SDP4430) += \
 	omap4-sdp.dtb \
 	omap4-sdp-es23plus.dtb
-
-dtb-$(CONFIG_SAMA7G5) += \
-	at91-sama7g5ek.dtb
-
-dtb-$(CONFIG_SAMA5D2) += \
-	at91-kstr-sama5d27.dtb \
-	at91-sama5d2_ptc_ek.dtb \
-	at91-sama5d2_xplained.dtb \
-	at91-sama5d27_giantboard.dtb \
-	at91-sama5d27_som1_ek.dtb   \
-	at91-sama5d27_wlsom1_ek.dtb \
-	at91-sama5d29_curiosity.dtb \
-	at91-sama5d2_icp.dtb
-
-dtb-$(CONFIG_SAMA5D3) += \
-	at91-sama5d3_xplained.dtb \
-	sama5d31ek.dtb \
-	sama5d33ek.dtb \
-	sama5d34ek.dtb \
-	sama5d35ek.dtb \
-	sama5d36ek.dtb \
-	sama5d36ek_cmp.dtb
-
-dtb-$(CONFIG_SAMA5D4) += \
-	at91-sama5d4ek.dtb \
-	at91-sama5d4_xplained.dtb \
-	at91-vinco.dtb
 
 dtb-$(CONFIG_ARCH_BCM283X) += \
 	bcm2835-rpi-a.dtb \
