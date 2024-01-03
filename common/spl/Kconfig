@@ -381,7 +381,7 @@ config SPL_SHARES_INIT_SP_ADDR
 config SPL_STACK
 	hex "Initial stack pointer location"
 	depends on (ARM || ARCH_JZ47XX || MICROBLAZE || RISCV) && \
-		SPL_FRAMEWORK || ROCKCHIP_RK3036
+		(SPL_FRAMEWORK || ROCKCHIP_RK3036)
 	depends on !SPL_SHARES_INIT_SP_ADDR
 	default 0x946bb8 if ARCH_MX7
 	default 0x93ffb8 if ARCH_MX6 && MX6_OCRAM_256KB
@@ -392,6 +392,7 @@ config SPL_STACK
 	default 0x54000 if MACH_SUN50I || MACH_SUN50I_H5
 	default 0x18000 if MACH_SUN9I
 	default 0x8000 if ARCH_SUNXI
+	default 0x600000 if ROCKCHIP_RV1126
 	help
 	  Address of the start of the stack SPL will use before SDRAM is
 	  initialized.
@@ -529,6 +530,13 @@ config SYS_MMCSD_RAW_MODE_U_BOOT_USE_PARTITION_TYPE
 	  raw mode. U-Boot will be loaded from the first partition of this
 	  type to be found.
 
+config SYS_MMCSD_RAW_MODE_U_BOOT_USE_BINMAN
+	bool "MMC raw mode: use binman symbol"
+	select SPL_LOAD_BLOCK if SPL_MMC
+	help
+	  Use binman symbols to specify the MMC offset to read the next boot
+	  phase from.
+
 endchoice
 
 config SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR
@@ -542,6 +550,7 @@ config SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR
 	default 0x200 if ARCH_SOCFPGA || ARCH_AT91
 	default 0x300 if ARCH_ZYNQ || ARCH_KEYSTONE || OMAP34XX || \
 		         OMAP54XX || AM33XX || AM43XX || ARCH_K3
+	default 0x800 if ARCH_ROCKCHIP && VPL
 	default 0x4000 if ARCH_ROCKCHIP
 	default 0x822 if TARGET_SIFIVE_UNLEASHED || TARGET_SIFIVE_UNMATCHED
 	help

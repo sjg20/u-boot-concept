@@ -12,10 +12,6 @@
 		spi1 = &spi1;
 	};
 
-	chosen {
-		u-boot,spl-boot-order = "same-as-spl", &sdhci, &sdmmc;
-	};
-
 	pmusgrf: syscon@ff330000 {
 		compatible = "rockchip,rk3399-pmusgrf", "syscon";
 		reg = <0x0 0xff330000 0x0 0xe3d4>;
@@ -71,7 +67,14 @@
 	       0x0 0xffa88800 0x0 0x1800
 	       0x0 0xffa8a000 0x0 0x2000
 	       0x0 0xffa8c000 0x0 0x1000>;
-	bootph-all;
+#ifdef CONFIG_VPL
+		bootph-pre-ram;
+		bootph-some-ram;
+// 		bootph-pre-sram;
+// 		bootph-all;
+#else
+		bootph-all;
+#endif
 	status = "okay";
 };
 
@@ -118,8 +121,10 @@
 };
 
 &sdmmc {
+	bootph-pre-sram;
 	bootph-pre-ram;
 	bootph-some-ram;
+	bootph-verify;
 
 	/* mmc to sram can't do dma, prevent aborts transferring TF-A parts */
 	u-boot,spl-fifo-mode;
