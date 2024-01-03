@@ -37,9 +37,6 @@ config SYS_SOC
 config CUSTOM_SYS_INIT_SP_ADDR
 	default 0x800000
 
-config SPL_STACK
-	default 0x600000
-
 config SPL_STACK_R_ADDR
 	default 0x800000
 

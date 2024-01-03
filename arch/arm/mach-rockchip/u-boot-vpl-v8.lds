@@ -22,7 +22,6 @@ SECTIONS
 {
 	. = 0x00000000;
 
-	__image_copy_start = ADDR(.text);
 	.text : {
 		. = ALIGN(8);
 		__image_copy_start = .;
@@ -37,8 +36,6 @@ SECTIONS
 
 		*(.text*)
 	}
-
-	_rcode_size = _rcode_end - _rcode_start;
 
 	.rodata : {
 		. = ALIGN(8);
@@ -55,18 +52,35 @@ SECTIONS
 		KEEP(*(SORT(__u_boot_list*)));
 	}
 
-	. = ALIGN(8);
-	__image_copy_end = .;
-	_end = .;
+	.image_copy_end : {
+		. = ALIGN(8);
+		*(.__image_copy_end)
+	}
+
+	.end : {
+		. = ALIGN(8);
+		*(.__end)
+	}
+
 	_image_binary_end = .;
+	_end = .;
 	__image_copy_end = .;
 
-	.bss ALIGN(8) : {
-		__bss_start = .;
-		*(.bss*)
+	__bss_start = .;
+	.bss_start (NOLOAD) : {
 		. = ALIGN(8);
-		__bss_end = .;
+		KEEP(*(.__bss_start));
 	}
+
+	.bss (NOLOAD) : {
+		*(.bss*)
+		 . = ALIGN(8);
+	}
+
+	.bss_end (NOLOAD) : {
+		KEEP(*(.__bss_end));
+	}
+	__bss_end = .;
 	__bss_size = __bss_end - __bss_start;
 
 	/DISCARD/ : { *(.dynsym) }

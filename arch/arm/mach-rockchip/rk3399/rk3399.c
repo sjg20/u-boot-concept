@@ -82,7 +82,6 @@ void rockchip_stimer_init(void)
 
 int arch_cpu_init(void)
 {
-
 #ifdef CONFIG_XPL_BUILD
 	struct rk3399_pmusgrf_regs *sgrf;
 	struct rk3399_grf_regs *grf;
@@ -98,7 +97,15 @@ int arch_cpu_init(void)
 	 */
 	sgrf = syscon_get_first_range(ROCKCHIP_SYSCON_PMUSGRF);
 	rk_clrsetreg(&sgrf->ddr_rgn_con[16], 0x1ff, 0);
-	rk_clrreg(&sgrf->slv_secure_con4, 0x2000);
+	rk_clrreg(&sgrf->slv_secure_con4, 0xffff);
+
+	/* tzma_rosize = 0, all sram non-secure */
+	rk_clrreg(&sgrf->soc_con4, 0x3ff);
+
+	rk_setreg(&sgrf->pmu_slv_con0, 1);
+
+	/* emmc master secure */
+	rk_clrreg(&sgrf->soc_con7, 1 << 7 | 1 << 8);
 
 	/*  eMMC clock generator: disable the clock multipilier */
 	grf = syscon_get_first_range(ROCKCHIP_SYSCON_GRF);
