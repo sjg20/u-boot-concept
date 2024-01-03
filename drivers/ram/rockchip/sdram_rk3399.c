@@ -5,6 +5,8 @@
  * Adapted from coreboot.
  */
 
+#define LOG_DEBUG
+
 #include <config.h>
 #include <clk.h>
 #include <dm.h>
@@ -24,6 +26,13 @@
 #include <linux/delay.h>
 #include <linux/err.h>
 #include <time.h>
+
+#define INIT_DRAM	\
+	CONFIG_IS_ENABLED(RAM) && \
+	(defined(CONFIG_TPL_BUILD) || \
+	 defined(CONFIG_SPL_BUILD) && \
+		 (!defined(CONFIG_TPL) || defined(CONFIG_VPL)))
+
 
 #define PRESET_SGRF_HOLD(n)	((0x1 << (6 + 16)) | ((n) << 6))
 #define PRESET_GPIO0_HOLD(n)	((0x1 << (7 + 16)) | ((n) << 7))
@@ -63,8 +72,7 @@ struct chan_info {
 };
 
 struct dram_info {
-#if defined(CONFIG_TPL_BUILD) || \
-	(!defined(CONFIG_TPL) && defined(CONFIG_SPL_BUILD))
+#if INIT_DRAM
 	u32 pwrup_srefresh_exit[2];
 	struct chan_info chan[2];
 	struct clk ddr_clk;
@@ -92,8 +100,7 @@ struct sdram_rk3399_ops {
 					struct rk3399_sdram_params *params);
 };
 
-#if defined(CONFIG_TPL_BUILD) || \
-	(!defined(CONFIG_TPL) && defined(CONFIG_SPL_BUILD))
+#if INIT_DRAM
 
 struct rockchip_dmc_plat {
 #if CONFIG_IS_ENABLED(OF_PLATDATA)
@@ -3142,14 +3149,21 @@ static int rk3399_dmc_init(struct udevice *dev)
 
 static int rk3399_dmc_probe(struct udevice *dev)
 {
-#if defined(CONFIG_TPL_BUILD) || \
-	(!defined(CONFIG_TPL) && defined(CONFIG_SPL_BUILD))
-	if (rk3399_dmc_init(dev))
-		return 0;
-#else
 	struct dram_info *priv = dev_get_priv(dev);
 
+#if INIT_DRAM
+	if (rk3399_dmc_init(dev)) {
+		log_debug("failed\n");
+		return 0;
+	}
+
+	priv->info.base = CFG_SYS_SDRAM_BASE;
+	priv->info.size =
+		rockchip_sdram_size((phys_addr_t)&priv->pmugrf->os_reg2);
+#else
 	priv->pmugrf = syscon_get_first_range(ROCKCHIP_SYSCON_PMUGRF);
+	if (IS_ERR(priv->pmugrf))
+		panic("Cannot get pmugrf\n");
 	debug("%s: pmugrf = %p\n", __func__, priv->pmugrf);
 	priv->info.base = CFG_SYS_SDRAM_BASE;
 	priv->info.size =
@@ -3181,14 +3195,12 @@ U_BOOT_DRIVER(dmc_rk3399) = {
 	.id = UCLASS_RAM,
 	.of_match = rk3399_dmc_ids,
 	.ops = &rk3399_dmc_ops,
-#if defined(CONFIG_TPL_BUILD) || \
-	(!defined(CONFIG_TPL) && defined(CONFIG_SPL_BUILD))
+#if INIT_DRAM
 	.of_to_plat = rk3399_dmc_of_to_plat,
 #endif
 	.probe = rk3399_dmc_probe,
 	.priv_auto	= sizeof(struct dram_info),
-#if defined(CONFIG_TPL_BUILD) || \
-	(!defined(CONFIG_TPL) && defined(CONFIG_SPL_BUILD))
+#if INIT_DRAM
 	.plat_auto	= sizeof(struct rockchip_dmc_plat),
 #endif
 };

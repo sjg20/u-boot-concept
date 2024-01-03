@@ -6,6 +6,8 @@
  * Aneesh V <aneesh@ti.com>
  */
 
+#define LOG_DEBUG
+
 #include <config.h>
 #include <bloblist.h>
 #include <binman_sym.h>
@@ -43,6 +45,8 @@
 #include <wdt.h>
 #include <video.h>
 
+#include <ns16550.h>
+
 DECLARE_GLOBAL_DATA_PTR;
 DECLARE_BINMAN_MAGIC_SYM;
 
@@ -50,10 +54,12 @@ u32 *boot_params_ptr = NULL;
 
 #if CONFIG_IS_ENABLED(BINMAN_UBOOT_SYMBOLS)
 /* See spl.h for information about this */
+#if defined(CONFIG_SPL_BUILD) && !defined(CONFIG_TPL_BUILD) && !defined(CONFIG_VPL_BUILD)
 binman_sym_declare(ulong, u_boot_any, image_pos);
 binman_sym_declare(ulong, u_boot_any, size);
+#endif
 
-#ifdef CONFIG_TPL
+#if defined(CONFIG_TPL) && !defined(CONFIG_VPL)
 binman_sym_declare(ulong, u_boot_spl_any, image_pos);
 binman_sym_declare(ulong, u_boot_spl_any, size);
 #endif
@@ -179,9 +185,15 @@ ulong spl_get_image_pos(void)
 	if (spl_next_phase() == PHASE_VPL)
 		return binman_sym(ulong, u_boot_vpl_any, image_pos);
 #endif
-	return spl_next_phase() == PHASE_SPL ?
-		binman_sym(ulong, u_boot_spl_any, image_pos) :
-		binman_sym(ulong, u_boot_any, image_pos);
+#if defined(CONFIG_TPL) && !defined(CONFIG_VPL)
+	if (spl_next_phase() == PHASE_SPL)
+		return binman_sym(ulong, u_boot_spl_any, image_pos);
+#endif
+#if defined(CONFIG_SPL_BUILD) && !defined(CONFIG_TPL_BUILD) && !defined(CONFIG_VPL_BUILD)
+	return binman_sym(ulong, u_boot_any, image_pos);
+#endif
+
+	return BINMAN_SYM_MISSING;
 }
 
 ulong spl_get_image_size(void)
@@ -263,14 +275,20 @@ void spl_set_header_raw_uboot(struct spl_image_info *spl_image)
 	 */
 	if (u_boot_pos && u_boot_pos != BINMAN_SYM_MISSING) {
 		/* Binman does not support separated entry addresses */
-		spl_image->entry_point = u_boot_pos;
-		spl_image->load_addr = u_boot_pos;
+		spl_image->entry_point = spl_get_image_text_base();
+		spl_image->load_addr = spl_get_image_text_base();
+		spl_image->size = spl_get_image_size();
+		log_debug("Next load addr %lx\n", spl_image->load_addr);
 	} else {
 		spl_image->entry_point = CONFIG_SYS_UBOOT_START;
 		spl_image->load_addr = CONFIG_TEXT_BASE;
+		log_debug("Default load addr %x (u_boot_pos=%lx)\n",
+			  CONFIG_TEXT_BASE, u_boot_pos);
 	}
 	spl_image->os = IH_OS_U_BOOT;
-	spl_image->name = "U-Boot";
+	spl_image->name = spl_phase_name(spl_next_phase());
+	log_debug("Next phase: %s at %lx size %lx\n", spl_image->name,
+		  spl_image->load_addr, (ulong)spl_image->size);
 }
 
 __weak int spl_parse_board_header(struct spl_image_info *spl_image,
@@ -616,6 +634,7 @@ static int boot_from_devices(struct spl_image_info *spl_image,
 	for (i = 0; i < count && spl_boot_list[i] != BOOT_DEVICE_NONE; i++) {
 		struct spl_image_loader *loader;
 		int bootdev = spl_boot_list[i];
+		int ret;
 
 		if (CONFIG_IS_ENABLED(SHOW_ERRORS))
 			ret = -ENXIO;
@@ -635,10 +654,13 @@ static int boot_from_devices(struct spl_image_info *spl_image,
 					     "Unsupported Boot Device!\n");
 				}
 			}
-			if (loader &&
-				!spl_load_image(spl_image, loader)) {
-				spl_image->boot_device = bootdev;
-				return 0;
+			if (loader) {
+				ret = spl_load_image(spl_image, loader);
+				if (!ret) {
+					spl_image->boot_device = bootdev;
+					return 0;
+				}
+				printf("Error: %d\n", ret);
 			}
 		}
 	}
@@ -654,7 +676,7 @@ void board_init_f(ulong dummy)
 
 		ret = spl_early_init();
 		if (ret) {
-			debug("spl_early_init() failed: %d\n", ret);
+			//printf("spl_early_init() failed: %d\n", ret);
 			hang();
 		}
 	}
@@ -672,8 +694,7 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 		BOOT_DEVICE_NONE,
 		BOOT_DEVICE_NONE,
 	};
-	typedef void __noreturn (*jump_to_image_t)(struct spl_image_info *);
-	jump_to_image_t jump_to_image = &jump_to_image_no_args;
+	spl_jump_to_image_t jump_to_image = &jump_to_image_no_args;
 	struct spl_image_info spl_image;
 	int ret, os;
 
@@ -688,8 +709,13 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 		gd->flags |= GD_FLG_FULL_MALLOC_INIT;
 	}
 	if (!(gd->flags & GD_FLG_SPL_INIT)) {
-		if (spl_init())
+		int ret;
+
+		ret = spl_init();
+		if (ret) {
+			//printf("spl_init() failed: %d\n", ret);
 			hang();
+		}
 	}
 	timer_init();
 	if (CONFIG_IS_ENABLED(BLOBLIST)) {
@@ -732,6 +758,10 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 	}
 
 	bootcount_inc();
+
+// 	printf("dev %s\n", gd->cur_serial_dev->name);
+// 	struct ns16550_plat *plat = dev_get_plat(gd->cur_serial_dev);
+// 	printf("clock %d\n", plat->clock);
 
 	/* Dump driver model states to aid analysis */
 	if (CONFIG_IS_ENABLED(DM_STATS)) {
@@ -818,7 +848,26 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 			       ret);
 	}
 
+	// relocate since ATF makes IRAM inaccessible
+	if (spl_phase() == PHASE_SPL) {
+		log_debug("Relocating bloblist to 100000\n");
+		bloblist_reloc((void *)0x100000, CONFIG_BLOBLIST_SIZE,
+			       gd->bloblist, CONFIG_BLOBLIST_SIZE);
+	}
+
 	spl_board_prepare_for_boot();
+
+	if (CONFIG_IS_ENABLED(RELOC_LOADER)) {
+		int ret;
+
+		ret = spl_reloc_jump(&spl_image, jump_to_image);
+		if (ret) {
+			if (spl_phase() == PHASE_VPL)
+				printf("jump failed %d\n", ret);
+			hang();
+		}
+	}
+
 	jump_to_image(&spl_image);
 }
 
@@ -828,7 +877,7 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
  */
 void preloader_console_init(void)
 {
-#ifdef CONFIG_SPL_SERIAL
+#if CONFIG_IS_ENABLED(SERIAL)
 	gd->baudrate = CONFIG_BAUDRATE;
 
 	serial_init();		/* serial communications setup */
@@ -887,7 +936,7 @@ __weak void spl_relocate_stack_check(void)
  */
 ulong spl_relocate_stack_gd(void)
 {
-#ifdef CONFIG_SPL_STACK_R
+#if CONFIG_IS_ENABLED(STACK_R)
 	gd_t *new_gd;
 	ulong ptr = CONFIG_SPL_STACK_R_ADDR;
 

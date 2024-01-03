@@ -76,18 +76,18 @@ obj-$(CONFIG_ECDSA) += ecdsa/
 obj-$(CONFIG_$(SPL_)RSA) += rsa/
 obj-$(CONFIG_HASH) += hash-checksum.o
 obj-$(CONFIG_BLAKE2) += blake2/blake2b.o
-obj-$(CONFIG_$(SPL_)SHA1) += sha1.o
-obj-$(CONFIG_$(SPL_)SHA256) += sha256.o
+obj-$(CONFIG_$(SPL_TPL_)SHA1) += sha1.o
+obj-$(CONFIG_$(SPL_TPL_)SHA256) += sha256.o
 obj-$(CONFIG_$(SPL_)SHA512) += sha512.o
 obj-$(CONFIG_CRYPT_PW) += crypt/
 obj-$(CONFIG_$(SPL_)ASN1_DECODER) += asn1_decoder.o
 
-obj-$(CONFIG_$(SPL_)ZLIB) += zlib/
+obj-$(CONFIG_$(SPL_TPL_)ZLIB) += zlib/
 obj-$(CONFIG_$(SPL_)ZSTD) += zstd/
-obj-$(CONFIG_$(SPL_)GZIP) += gunzip.o
+obj-$(CONFIG_$(SPL_TPL_)GZIP) += gunzip.o
 obj-$(CONFIG_$(SPL_)LZO) += lzo/
-obj-$(CONFIG_$(SPL_)LZMA) += lzma/
-obj-$(CONFIG_$(SPL_)LZ4) += lz4_wrapper.o
+obj-$(CONFIG_$(SPL_TPL_)LZMA) += lzma/
+obj-$(CONFIG_$(SPL_TPL_)LZ4) += lz4_wrapper.o
 
 obj-$(CONFIG_$(SPL_)LIB_RATIONAL) += rational.o
 
@@ -97,9 +97,9 @@ obj-$(CONFIG_$(SPL_TPL_)OF_LIBFDT) += libfdt/
 obj-$(CONFIG_$(SPL_TPL_)OF_REAL) += fdtdec_common.o fdtdec.o
 
 ifdef CONFIG_SPL_BUILD
-obj-$(CONFIG_SPL_YMODEM_SUPPORT) += crc16-ccitt.o
-obj-$(CONFIG_$(SPL_TPL_)HASH) += crc16-ccitt.o
-obj-$(CONFIG_MMC_SPI_CRC_ON) += crc16-ccitt.o
+# obj-$(CONFIG_SPL_YMODEM_SUPPORT) += crc16-ccitt.o
+# obj-$(CONFIG_$(SPL_TPL_)HASH) += crc16-ccitt.o
+# obj-$(CONFIG_MMC_SPI_CRC_ON) += crc16-ccitt.o
 obj-y += net_utils.o
 endif
 obj-$(CONFIG_ADDR_MAP) += addr_map.o

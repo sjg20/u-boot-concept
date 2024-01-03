@@ -56,12 +56,29 @@ SECTIONS
 	_end = .;
 	_image_binary_end = .;
 
+#ifdef CONFIG_SPL_SEPARATE_BSS
 	.bss : {
 		__bss_start = .;
 		*(.bss*)
 		. = ALIGN(8);
 		__bss_end = .;
 	} >.sdram
+#else
+	.bss_start (NOLOAD) : {
+		. = ALIGN(8);
+		KEEP(*(.__bss_start));
+	} >.sram
+
+	.bss (NOLOAD) : {
+		*(.bss*)
+		 . = ALIGN(8);
+	} >.sram
+
+	.bss_end (NOLOAD) : {
+		KEEP(*(.__bss_end));
+	} >.sram
+#endif
+	__bss_size = __bss_end - __bss_start;
 
 	/DISCARD/ : { *(.rela*) }
 	/DISCARD/ : { *(.dynsym) }

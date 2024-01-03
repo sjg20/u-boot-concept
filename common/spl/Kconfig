@@ -527,6 +527,13 @@ config SYS_MMCSD_RAW_MODE_U_BOOT_USE_PARTITION_TYPE
 	  raw mode. U-Boot will be loaded from the first partition of this
 	  type to be found.
 
+config SYS_MMCSD_RAW_MODE_U_BOOT_USE_BINMAN
+	bool "MMC raw mode: use binman symbol"
+	select SPL_LOAD_BLOCK if SPL_MMC
+	help
+	  Use binman symbols to specify the MMC offset to read the next boot
+	  phase from.
+
 endchoice
 
 config SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR
@@ -540,6 +547,7 @@ config SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR
 	default 0x200 if ARCH_SOCFPGA || ARCH_AT91
 	default 0x300 if ARCH_ZYNQ || ARCH_KEYSTONE || OMAP34XX || OMAP44XX || \
 		         OMAP54XX || AM33XX || AM43XX || ARCH_K3
+	default 0x800 if ARCH_ROCKCHIP && VPL
 	default 0x4000 if ARCH_ROCKCHIP
 	default 0x822 if TARGET_SIFIVE_UNLEASHED || TARGET_SIFIVE_UNMATCHED
 	help
@@ -966,6 +974,14 @@ config SPL_NAND_IDENT
 	bool "Use chip ID to identify NAND flash"
 	help
 	  SPL uses the chip ID list to identify the NAND flash.
+
+config SPL_RELOC_LOADER
+	bool "Allow relocating the next phase"
+	help
+	  In some cases multiple U-Boot phases need to run in SRAM, typically
+	  at the same address. Enable this to support loading the next phase
+	  to temporary memory, then copying it into place afterwards, then
+	  jumping to it.
 
 config SPL_UBI
 	bool "Support UBI"

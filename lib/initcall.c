@@ -57,6 +57,7 @@ int initcall_run_list(const init_fnc_t init_sequence[])
 
 	for (ptr = init_sequence; func = *ptr, func; ptr++) {
 		reloc_ofs = calc_reloc_ofs();
+
 		type = initcall_is_event(func);
 
 		if (type) {
