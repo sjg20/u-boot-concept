@@ -61,6 +61,9 @@ u32 spl_boot_device(void)
 {
 	u32 boot_device = BOOT_DEVICE_MMC1;
 
+	if (IS_ENABLED(CONFIG_VPL))
+		return BOOT_DEVICE_VBE;
+
 #if defined(CONFIG_TARGET_CHROMEBOOK_JERRY) || \
 		defined(CONFIG_TARGET_CHROMEBIT_MICKEY) || \
 		defined(CONFIG_TARGET_CHROMEBOOK_MINNIE) || \
@@ -102,12 +105,11 @@ void board_init_f(ulong dummy)
 		hang();
 	}
 	arch_cpu_init();
-
-	rockchip_stimer_init();
+// 	rockchip_stimer_init();
 
 #ifdef CONFIG_SYS_ARCH_TIMER
 	/* Init ARM arch timer in arch/arm/cpu/armv7/arch_timer.c */
-	timer_init();
+// 	timer_init();
 #endif
 #if !defined(CONFIG_TPL) || defined(CONFIG_SPL_RAM)
 	debug("\nspl:init dram\n");
@@ -119,11 +121,14 @@ void board_init_f(ulong dummy)
 	gd->ram_top = gd->ram_base + get_effective_memsize();
 	gd->ram_top = board_get_usable_ram_top(gd->ram_size);
 
+	log_debug("ram_top %lx\n", (ulong)gd->ram_top);
 	if (IS_ENABLED(CONFIG_ARM64) && !CONFIG_IS_ENABLED(SYS_DCACHE_OFF)) {
 		gd->relocaddr = gd->ram_top;
 		arch_reserve_mmu();
-		enable_caches();
+		printf("not setting up cache\n");
+// 		enable_caches();
 	}
+
 #endif
 	preloader_console_init();
 }
