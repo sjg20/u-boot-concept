@@ -1659,6 +1659,9 @@ int fit_check_format(const void *fit, ulong size)
 			  ret);
 		return -ENOEXEC;
 	}
+// 	if (!tools_build())
+// 		print_buffer((ulong)fit + fdt_off_dt_strings(fit),
+// 			     fit + fdt_off_dt_strings(fit), 1, 0x100, 0);
 
 	if (CONFIG_IS_ENABLED(FIT_FULL_CHECK)) {
 		/*
@@ -2035,6 +2038,8 @@ static const char *fit_get_image_type_property(int ph_type)
 	 */
 	switch (type) {
 	case IH_TYPE_FLATDT:
+// 		if (image_ph_phase(ph_type) == IH_PHASE_SPL)
+// 			return "fdt-spl";
 		return FIT_FDT_PROP;
 	case IH_TYPE_KERNEL:
 		return FIT_KERNEL_PROP;
@@ -2235,6 +2240,7 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 	data = map_to_sysmem(buf);
 	load = data;
 	if (load_op == FIT_LOAD_IGNORED) {
+		log_debug("load_op: not loading\n");
 		/* Don't load */
 	} else if (fit_image_get_load(fit, noffset, &load)) {
 		if (load_op == FIT_LOAD_REQUIRED) {
@@ -2271,10 +2277,13 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 	/* Kernel images get decompressed later in bootm_load_os(). */
 	if (!fit_image_get_comp(fit, noffset, &comp) &&
 	    comp != IH_COMP_NONE &&
+	    load_op != FIT_LOAD_IGNORED &&
 	    !(image_type == IH_TYPE_KERNEL ||
 	      image_type == IH_TYPE_KERNEL_NOLOAD ||
 	      image_type == IH_TYPE_RAMDISK)) {
 		ulong max_decomp_len = len * 20;
+
+		log_debug("decompressing image\n");
 		if (load == data) {
 			loadbuf = malloc(max_decomp_len);
 			load = map_to_sysmem(loadbuf);
@@ -2289,6 +2298,7 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 		}
 		len = load_end - load;
 	} else if (load != data) {
+		log_debug("copying\n");
 		loadbuf = map_sysmem(load, len);
 		memcpy(loadbuf, buf, len);
 	}
@@ -2298,8 +2308,9 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 		     " please fix your .its file!\n");
 
 	/* verify that image data is a proper FDT blob */
-	if (image_type == IH_TYPE_FLATDT && fdt_check_header(loadbuf)) {
-		puts("Subimage data is not a FDT");
+	if (load_op != FIT_LOAD_IGNORED && image_type == IH_TYPE_FLATDT &&
+	    fdt_check_header(loadbuf)) {
+		puts("Subimage data is not a FDT\n");
 		return -ENOEXEC;
 	}
 

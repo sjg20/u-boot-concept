@@ -33,6 +33,12 @@
 };
 
 &binman {
+	simple-bin {
+		fit {
+			offset = <((0 - 64) * 512)>;
+		};
+	};
+
 #ifdef CONFIG_ROCKCHIP_SPI_IMAGE
 	simple-bin-spi {
 		fit {

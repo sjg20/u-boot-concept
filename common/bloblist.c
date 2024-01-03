@@ -383,7 +383,7 @@ int bloblist_check(ulong addr, uint size)
 		return log_msg_ret("Bad magic", -ENOENT);
 	if (hdr->version != BLOBLIST_VERSION)
 		return log_msg_ret("Bad version", -EPROTONOSUPPORT);
-	if (!hdr->total_size || (size && hdr->total_size > size))
+	if (!hdr->total_size || (size && hdr->total_size != size))
 		return log_msg_ret("Bad total size", -EFBIG);
 	if (hdr->used_size > hdr->total_size)
 		return log_msg_ret("Bad used size", -ENOENT);
@@ -471,28 +471,13 @@ void bloblist_show_list(void)
 	}
 }
 
-int bloblist_reloc(void *to, uint to_size)
+void bloblist_reloc(void *to, uint to_size, void *from, uint from_size)
 {
 	struct bloblist_hdr *hdr;
 
-	if (to_size < gd->bloblist->total_size)
-		return -ENOSPC;
-
-	memcpy(to, gd->bloblist, gd->bloblist->total_size);
+	memcpy(to, from, from_size);
 	hdr = to;
 	hdr->total_size = to_size;
-	gd->bloblist = to;
-
-	return 0;
-}
-
-/*
- * Weak default function for getting bloblist from boot args.
- */
-int __weak xferlist_from_boot_arg(ulong __always_unused addr,
-				  ulong __always_unused size)
-{
-	return -ENOENT;
 }
 
 int bloblist_init(void)
@@ -500,43 +485,36 @@ int bloblist_init(void)
 	bool fixed = IS_ENABLED(CONFIG_BLOBLIST_FIXED);
 	int ret = -ENOENT;
 	ulong addr, size;
-	/*
-	 * If U-Boot is not in the first phase, an existing bloblist must be
-	 * at a fixed address.
-	 */
-	bool from_addr = fixed && !u_boot_first_phase();
-	/*
-	 * If U-Boot is in the first phase that an arch custom routine should
-	 * install the bloblist passed from previous loader to this fixed
+	bool expected;
+
+	/**
+	 * We don't expect to find an existing bloblist in the first phase of
+	 * U-Boot that runs. Also we have no way to receive the address of an
+	 * allocated bloblist from a previous stage, so it must be at a fixed
 	 * address.
 	 */
-	bool from_boot_arg = fixed && u_boot_first_phase();
-
+	expected = fixed && !u_boot_first_phase();
 	if (spl_prev_phase() == PHASE_TPL && !IS_ENABLED(CONFIG_TPL_BLOBLIST))
-		from_addr = false;
+		expected = false;
 	if (fixed)
 		addr = IF_ENABLED_INT(CONFIG_BLOBLIST_FIXED,
 				      CONFIG_BLOBLIST_ADDR);
+	if (spl_phase() == PHASE_BOARD_F) {
+		addr = 0x100000;
+		log_debug("bloblist addr=%lx\n", addr);
+	}
 	size = CONFIG_BLOBLIST_SIZE;
-
-	if (from_boot_arg)
-		ret = xferlist_from_boot_arg(addr, size);
-	else if (from_addr)
+	if (expected) {
 		ret = bloblist_check(addr, size);
-
-	if (ret)
-		log_warning("Bloblist at %lx not found (err=%d)\n",
-			    addr, ret);
-	else
-		/* Get the real size */
-		size = gd->bloblist->total_size;
-
+		if (ret) {
+			log_warning("Expected bloblist at %lx not found (err=%d)\n",
+				    addr, ret);
+		} else {
+			/* Get the real size, if it is not what we expected */
+			size = gd->bloblist->total_size;
+		}
+	}
 	if (ret) {
-		/*
-		 * If we don't have a bloblist from a fixed address, or the one
-		 * in the fixed address is not valid. we must allocate the
-		 * memory for it now.
-		 */
 		if (CONFIG_IS_ENABLED(BLOBLIST_ALLOC)) {
 			void *ptr = memalign(BLOBLIST_ALIGN, size);
 
@@ -544,8 +522,7 @@ int bloblist_init(void)
 				return log_msg_ret("alloc", -ENOMEM);
 			addr = map_to_sysmem(ptr);
 		} else if (!fixed) {
-			return log_msg_ret("BLOBLIST_FIXED is not enabled",
-					   ret);
+			return log_msg_ret("!fixed", ret);
 		}
 		log_debug("Creating new bloblist size %lx at %lx\n", size,
 			  addr);
@@ -557,11 +534,6 @@ int bloblist_init(void)
 	if (ret)
 		return log_msg_ret("ini", ret);
 	gd->flags |= GD_FLG_BLOBLIST_READY;
-
-#ifdef DEBUG
-	bloblist_show_stats();
-	bloblist_show_list();
-#endif
 
 	return 0;
 }
