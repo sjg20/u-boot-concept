@@ -1,13 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+ /* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) Sean Anderson <seanga2@gmail.com>
  */
+
+#define LOG_DEBUG
+
 #ifndef	_SPL_LOAD_H_
 #define	_SPL_LOAD_H_
 
 #include <image.h>
 #include <imx_container.h>
 #include <mapmem.h>
+#include <memalign.h>
 #include <spl.h>
 
 static inline int _spl_load(struct spl_image_info *spl_image,
@@ -15,20 +19,29 @@ static inline int _spl_load(struct spl_image_info *spl_image,
 			    struct spl_load_info *info, size_t size,
 			    size_t offset)
 {
-	struct legacy_img_hdr *header =
-		spl_get_load_buffer(-sizeof(*header), sizeof(*header));
-	ulong base_offset, image_offset, overhead;
+	ALLOC_ALIGN_BUFFER(u8, buf, MMC_MAX_BLOCK_LEN, 512);
+	struct legacy_img_hdr *header;
+	ulong base_offset, image_offset, overhead, addr;
 	int read, ret;
 
+	if (CONFIG_IS_ENABLED(RELOC_LOADER))
+		header = (struct legacy_img_hdr *)buf;
+	else
+		header = spl_get_load_buffer(-sizeof(*header), sizeof(*header));
+
+	offset += 0x8000;
+	log_debug("\nloading hdr from %x to %p\n", (uint)offset, header);
 	read = info->read(info, offset, ALIGN(sizeof(*header),
 					      spl_get_bl_len(info)), header);
 	if (read < (int)sizeof(*header))
 		return -EIO;
 
 	if (image_get_magic(header) == FDT_MAGIC) {
-		if (IS_ENABLED(CONFIG_SPL_LOAD_FIT_FULL)) {
+		log_debug("Found FIT\n");
+		if (CONFIG_IS_ENABLED(LOAD_FIT_FULL)) {
 			void *buf;
 
+			log_debug("Full loading\n");
 			/*
 			 * In order to support verifying images in the FIT, we
 			 * need to load the whole FIT into memory. Try and
@@ -48,9 +61,12 @@ static inline int _spl_load(struct spl_image_info *spl_image,
 			return spl_parse_image_header(spl_image, bootdev, buf);
 		}
 
-		if (IS_ENABLED(CONFIG_SPL_LOAD_FIT))
+		if (CONFIG_IS_ENABLED(LOAD_FIT)) {
+			log_debug("Simple loading\n");
 			return spl_load_simple_fit(spl_image, info, offset,
 						   header);
+		}
+		log_debug("No FIT support\n");
 	}
 
 	if (IS_ENABLED(CONFIG_SPL_LOAD_IMX_CONTAINER) &&
@@ -81,8 +97,20 @@ static inline int _spl_load(struct spl_image_info *spl_image,
 	overhead = base_offset - image_offset;
 	size = ALIGN(spl_image->size + overhead, spl_get_bl_len(info));
 
+	addr = spl_image->load_addr - overhead;
+
+	if (CONFIG_IS_ENABLED(RELOC_LOADER)) {
+		ret = spl_reloc_prepare(spl_image, &addr);
+		if (ret)
+			return ret;
+	}
+
+	log_debug("loading body from %lx to %lx size %lx, image_offset=%lx\n",
+		  offset + image_offset, addr, (ulong)size, image_offset);
+	memset(map_sysmem(addr, size), '\0', size);
+	read = spl_image->size;
 	read = info->read(info, offset + image_offset, size,
-			  map_sysmem(spl_image->load_addr - overhead, size));
+			  map_sysmem(addr, size));
 
 	if (read < 0)
 		return read;

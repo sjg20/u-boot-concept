@@ -114,7 +114,7 @@ int vbe_read_fit(struct udevice *blk, ulong area_offset, ulong area_size,
 	fit_uname_config = NULL;
 	log_debug("loading FIT\n");
 
-	if (spl_phase() == PHASE_SPL) {
+	if (xpl_phase() == PHASE_SPL) {
 		struct spl_load_info info;
 
 		spl_load_init(&info, h_vbe_load_read, desc, desc->blksz);
@@ -145,7 +145,7 @@ int vbe_read_fit(struct udevice *blk, ulong area_offset, ulong area_size,
 
 	fdt_load_addr = 0;
 	fdt_size = 0;
-	if (spl_phase() == PHASE_TPL || spl_phase() == PHASE_VPL) {
+	if (xpl_phase() == PHASE_TPL || xpl_phase() == PHASE_VPL) {
 		/* allow use of a different image from the configuration node */
 		fit_uname = NULL;
 		ret = fit_image_load(&images, addr, &fit_uname, &fit_uname_config,
@@ -207,8 +207,8 @@ int vbe_read_fit(struct udevice *blk, ulong area_offset, ulong area_size,
 				  base_buf + extra, len);
 			memmove(base_buf, base_buf + extra, len);
 		}
-\
-		if (spl_phase() == PHASE_VPL || spl_phase() == PHASE_TPL) {
+
+		if (xpl_phase() == PHASE_VPL || xpl_phase() == PHASE_TPL) {
 			image->load_addr = spl_get_image_text_base();
 			image->entry_point = image->load_addr;
 		}
@@ -241,7 +241,7 @@ int vbe_read_fit(struct udevice *blk, ulong area_offset, ulong area_size,
 			ulong xpl_pad;
 			ulong fdt_start;
 
-			if (spl_phase() == PHASE_TPL) {
+			if (xpl_phase() == PHASE_TPL) {
 				xpl_size = binman_sym(ulong, u_boot_vpl_nodtb, size);
 				xpl_pad = binman_sym(ulong, u_boot_vpl_bss_pad, size);
 			} else {

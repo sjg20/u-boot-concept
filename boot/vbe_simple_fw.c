@@ -135,7 +135,7 @@ static int simple_load_from_image(struct spl_image_info *image,
 		ret = blk_get_from_parent(media, &blk);
 		if (ret)
 			return log_msg_ret("med", ret);
-		if (spl_phase() == PHASE_TPL) {
+		if (xpl_phase() == PHASE_TPL) {
 			offset = binman_sym(ulong, vpl, image_pos);
 			size = binman_sym(ulong, vpl, size);
 		} else {

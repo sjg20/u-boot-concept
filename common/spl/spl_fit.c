@@ -4,6 +4,7 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
+#include <display_options.h>
 #include <errno.h>
 #include <fpga.h>
 #include <gzip.h>
@@ -158,7 +159,7 @@ static int spl_fit_get_image_node(const struct spl_fit_info *ctx,
 	if (err)
 		return err;
 
-	debug("%s: '%s'\n", type, str);
+	debug("get_image_node %s: '%s'\n", type, str);
 
 	node = fdt_subnode_offset(ctx->fit, ctx->images_node, str);
 	if (node < 0) {
@@ -199,7 +200,9 @@ static int get_aligned_image_size(struct spl_load_info *info, int data_size,
  *		the image gets loaded to the address pointed to by the
  *		load_addr member in this struct, if load_addr is not 0
  *
- * Return:	0 on success or a negative error number.
+ * Return:	0 on success, -EPERM if this image is not the correct phase
+ * (for CONFIG_BOOTMETH_VBE_SIMPLE_FW), or another negative error number on
+ * other error.
  */
 static int load_simple_fit(struct spl_load_info *info, ulong fit_offset,
 			   const struct spl_fit_info *ctx, int node,
@@ -217,6 +220,26 @@ static int load_simple_fit(struct spl_load_info *info, ulong fit_offset,
 	const void *data;
 	const void *fit = ctx->fit;
 	bool external_data = false;
+	bool deferred_read = false;
+
+	log_debug("starting\n");
+	if (CONFIG_IS_ENABLED(BOOTMETH_VBE) &&
+	    spl_get_phase(info) != IH_PHASE_NONE) {
+		enum image_phase_t phase;
+		int ret;
+
+		ret = fit_image_get_phase(fit, node, &phase);
+		/* if the image is for any phase, let's use it */
+		if (ret == -ENOENT || phase == spl_get_phase(info)) {
+			log_debug("found\n");
+		} else if (ret < 0) {
+			log_debug("err=%d\n", ret);
+			return ret;
+		} else {
+			log_debug("- phase mismatch, skipping this image\n");
+			return -EPERM;
+		}
+	}
 
 	if (IS_ENABLED(CONFIG_SPL_FPGA) ||
 	    (IS_ENABLED(CONFIG_SPL_OS_BOOT) && spl_decompression_enabled())) {
@@ -278,10 +301,12 @@ static int load_simple_fit(struct spl_load_info *info, ulong fit_offset,
 		log_debug("reading from offset %x / %lx size %lx to %p: ",
 			  offset, read_offset, size, src_ptr);
 
-		if (info->read(info,
-			       fit_offset +
-			       get_aligned_image_offset(info, offset), size,
-			       src_ptr) < length)
+// 		if ((ulong)src_ptr >= 0xff8c0000) {
+// 			src_ptr = malloc(size);
+// 			log_debug("bad read - new ptr %p\n", src_ptr);
+// 			deferred_read = true;
+// 		}
+		if (!deferred_read && info->read(info, read_offset, size, src_ptr) < length)
 			return -EIO;
 
 		debug("External data: dst=%p, offset=%x, size=%lx\n",
@@ -329,7 +354,10 @@ static int load_simple_fit(struct spl_load_info *info, ulong fit_offset,
 		}
 		length = loadEnd - CONFIG_SYS_LOAD_ADDR;
 	} else {
-		memcpy(load_ptr, src, length);
+		if (deferred_read)
+			log_debug("deferred load %lx\n", load_addr);
+		else
+			memcpy(load_ptr, src, length);
 	}
 
 	if (image_info) {
@@ -456,7 +484,9 @@ static int spl_fit_append_fdt(struct spl_image_info *spl_image,
 			image_info.load_addr = (ulong)tmpbuffer;
 			ret = load_simple_fit(info, offset, ctx, node,
 					      &image_info);
-			if (ret < 0)
+			if (ret == -EPERM)
+				continue;
+			else if (ret < 0)
 				break;
 
 			/* Make room in FDT for changes from the overlay */
@@ -495,7 +525,8 @@ static int spl_fit_record_loadable(const struct spl_fit_info *ctx, int index,
 	const char *name;
 	int node;
 
-	if (CONFIG_IS_ENABLED(FIT_IMAGE_TINY))
+	if (CONFIG_IS_ENABLED(FIT_IMAGE_TINY) ||
+	    CONFIG_IS_ENABLED(BOOTMETH_VBE_SIMPLE_FW))
 		return 0;
 
 	ret = spl_fit_get_image_name(ctx, "loadables", index, &name);
@@ -529,10 +560,12 @@ static int spl_fit_image_is_fpga(const void *fit, int node)
 
 static int spl_fit_image_get_os(const void *fit, int noffset, uint8_t *os)
 {
+	log_debug("looking\n");
 	if (!CONFIG_IS_ENABLED(FIT_IMAGE_TINY) || CONFIG_IS_ENABLED(OS_BOOT))
 		return fit_image_get_os(fit, noffset, os);
 
 	const char *name = fdt_getprop(fit, noffset, FIT_OS_PROP, NULL);
+	log_debug("name %s", name);
 	if (!name)
 		return -ENOENT;
 
@@ -660,12 +693,10 @@ static int spl_fit_load_fpga(struct spl_fit_info *ctx,
 	return spl_fit_upload_fpga(ctx, node, &fpga_image);
 }
 
-static int spl_simple_fit_read(struct spl_fit_info *ctx,
-			       struct spl_load_info *info, ulong offset,
-			       const void *fit_header)
+static ulong set_ext_data_offset(struct spl_fit_info *ctx,
+				 const void *fit_header)
 {
-	unsigned long count, size;
-	void *buf;
+	ulong size;
 
 	/*
 	 * For FIT with external data, figure out where the external images
@@ -675,6 +706,17 @@ static int spl_simple_fit_read(struct spl_fit_info *ctx,
 	size = ALIGN(fdt_totalsize(fit_header), 4);
 	size = board_spl_fit_size_align(size);
 	ctx->ext_data_offset = ALIGN(size, 4);
+	ctx->fit = fit_header;
+
+	return size;
+}
+
+static int spl_simple_fit_read(struct spl_fit_info *ctx,
+			       struct spl_load_info *info, ulong offset,
+			       ulong size)
+{
+	unsigned long count;
+	void *buf;
 
 	/*
 	 * So far we only have one block of data from the FIT. Read the entire
@@ -729,10 +771,15 @@ int spl_load_simple_fit(struct spl_image_info *spl_image,
 	int ret;
 	int index = 0;
 	int firmware_node;
+	ulong size;
 
-	ret = spl_simple_fit_read(&ctx, info, offset, fit);
-	if (ret < 0)
-		return ret;
+	size = set_ext_data_offset(&ctx, fit);
+	if (!spl_get_fit_loaded(info)) {
+		ret = spl_simple_fit_read(&ctx, info, offset, size);
+		if (ret < 0)
+			return ret;
+	}
+	log_debug("ext_data_offset %lx\n", ctx.ext_data_offset);
 
 	/* skip further processing if requested to enable load-only use cases */
 	if (spl_load_simple_fit_skip_processing())
@@ -787,6 +834,7 @@ int spl_load_simple_fit(struct spl_image_info *spl_image,
 		debug("Image OS is %s\n", genimg_get_os_name(spl_image->os));
 	else if (!IS_ENABLED(CONFIG_SPL_OS_BOOT))
 		spl_image->os = IH_OS_U_BOOT;
+	log_debug("os1 %d\n", spl_image->os);
 
 	/*
 	 * Booting a next-stage U-Boot may require us to append the FDT.
@@ -817,7 +865,8 @@ int spl_load_simple_fit(struct spl_image_info *spl_image,
 
 		image_info.load_addr = 0;
 		ret = load_simple_fit(info, offset, &ctx, node, &image_info);
-		if (ret < 0) {
+		log_debug("ret=%d\n", ret);
+		if (ret < 0 && ret != -EPERM) {
 			printf("%s: can't load image loadables index %d (ret = %d)\n",
 			       __func__, index, ret);
 			return ret;
@@ -830,8 +879,11 @@ int spl_load_simple_fit(struct spl_image_info *spl_image,
 			debug("Loadable is %s\n", genimg_get_os_name(os_type));
 
 		if (os_takes_devicetree(os_type)) {
+			log_debug("?takes dt");
 			spl_fit_append_fdt(&image_info, info, offset, &ctx);
 			spl_image->fdt_addr = image_info.fdt_addr;
+			log_debug("OS takes DT: fdt_addr %p\n",
+				  spl_image->fdt_addr);
 		}
 
 		/*
@@ -843,7 +895,7 @@ int spl_load_simple_fit(struct spl_image_info *spl_image,
 			spl_image->entry_point = image_info.entry_point;
 
 		/* Record our loadables into the FDT */
-		if (spl_image->fdt_addr)
+		if (0 && spl_image->fdt_addr)
 			spl_fit_record_loadable(&ctx, index,
 						spl_image->fdt_addr,
 						&image_info);

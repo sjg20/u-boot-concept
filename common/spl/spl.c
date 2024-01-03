@@ -282,7 +282,7 @@ void spl_set_header_raw_uboot(struct spl_image_info *spl_image)
 			  CONFIG_TEXT_BASE, u_boot_pos);
 	}
 	spl_image->os = IH_OS_U_BOOT;
-	spl_image->name = spl_phase_name(spl_next_phase());
+	spl_image->name = xpl_name(xpl_next_phase());
 	log_debug("Next phase: %s at %lx size %lx\n", spl_image->name,
 		  spl_image->load_addr, (ulong)spl_image->size);
 }
@@ -839,6 +839,13 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 			       ret);
 	}
 
+	// relocate since ATF makes IRAM inaccessible
+	if (xpl_phase() == PHASE_SPL) {
+		log_info("Relocating bloblist %p to 100000:", gd->bloblist);
+		bloblist_reloc((void *)0x100000, CONFIG_BLOBLIST_SIZE);
+		log_info(" done\n");
+	}
+
 	spl_board_prepare_for_boot();
 
 	if (CONFIG_IS_ENABLED(RELOC_LOADER)) {
@@ -846,7 +853,7 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 
 		ret = spl_reloc_jump(&spl_image, jump_to_image);
 		if (ret) {
-			if (spl_phase() == PHASE_VPL)
+			if (xpl_phase() == PHASE_VPL)
 				printf("jump failed %d\n", ret);
 			hang();
 		}
