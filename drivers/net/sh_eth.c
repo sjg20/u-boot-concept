@@ -12,6 +12,7 @@
 #include <common.h>
 #include <cpu_func.h>
 #include <env.h>
+#include <eth_phy.h>
 #include <log.h>
 #include <malloc.h>
 #include <net.h>
@@ -597,11 +598,16 @@ static int sh_eth_phy_config(struct udevice *dev)
 	struct sh_ether_priv *priv = dev_get_priv(dev);
 	struct eth_pdata *pdata = dev_get_plat(dev);
 	struct sh_eth_dev *eth = &priv->shdev;
-	int ret = 0;
 	struct sh_eth_info *port_info = &eth->port_info[eth->port];
 	struct phy_device *phydev;
+	int phy_addr;
+	int ret = 0;
 
-	phydev = phy_connect(priv->bus, -1, dev, pdata->phy_interface);
+	phy_addr = eth_phy_get_addr(dev);
+	if (phy_addr < 0)
+		phy_addr = -1;
+
+	phydev = phy_connect(priv->bus, phy_addr, dev, pdata->phy_interface);
 	if (!phydev)
 		return -ENODEV;
 
