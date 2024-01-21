@@ -18,6 +18,7 @@
 #include <phy.h>
 #include <errno.h>
 #include <asm/global_data.h>
+#include <dm/device_compat.h>
 #include <dm/of_extra.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
@@ -27,6 +28,30 @@
 DECLARE_GLOBAL_DATA_PTR;
 
 /* Generic PHY support and helper functions */
+
+/**
+ * eth_phy_get_addr - get PHY MDIO address from DT
+ * @dev: the udevice struct of the MAC
+ *
+ * Return PHY MDIO address read out of a PHY DT node "reg" property.
+ * The PHY DT node is located by resolving MAC "phy-handle" property.
+ * Returns PHY MDIO address on success, negative on failure.
+ */
+int eth_phy_get_addr(struct udevice *dev)
+{
+	struct ofnode_phandle_args phandle_args;
+	int reg;
+
+	if (dev_read_phandle_with_args(dev, "phy-handle", NULL, 0, 0,
+				       &phandle_args)) {
+		dev_dbg(dev, "Failed to find phy-handle");
+		return -ENODEV;
+	}
+
+	reg = ofnode_read_u32_default(phandle_args.node, "reg", 0);
+
+	return reg;
+}
 
 /**
  * genphy_config_advert - sanitize and advertise auto-negotiation parameters

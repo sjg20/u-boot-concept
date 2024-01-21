@@ -109,22 +109,6 @@ struct mii_dev *eth_phy_get_mdio_bus(struct udevice *eth_dev)
 	return NULL;
 }
 
-int eth_phy_get_addr(struct udevice *dev)
-{
-	struct ofnode_phandle_args phandle_args;
-	int reg;
-
-	if (dev_read_phandle_with_args(dev, "phy-handle", NULL, 0, 0,
-				       &phandle_args)) {
-		dev_dbg(dev, "Failed to find phy-handle");
-		return -ENODEV;
-	}
-
-	reg = ofnode_read_u32_default(phandle_args.node, "reg", 0);
-
-	return reg;
-}
-
 /* parsing generic properties of devicetree/bindings/net/ethernet-phy.yaml */
 static int eth_phy_of_to_plat(struct udevice *dev)
 {
