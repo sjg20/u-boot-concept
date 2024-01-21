@@ -12,6 +12,7 @@
 #include <clk.h>
 #include <cpu_func.h>
 #include <dm.h>
+#include <eth_phy.h>
 #include <errno.h>
 #include <log.h>
 #include <miiphy.h>
@@ -309,9 +310,14 @@ static int ravb_phy_config(struct udevice *dev)
 	struct ravb_priv *eth = dev_get_priv(dev);
 	struct eth_pdata *pdata = dev_get_plat(dev);
 	struct phy_device *phydev;
+	int phy_addr;
 	int reg;
 
-	phydev = phy_connect(eth->bus, -1, dev, pdata->phy_interface);
+	phy_addr = eth_phy_get_addr(dev);
+	if (phy_addr < 0)
+		phy_addr = -1;
+
+	phydev = phy_connect(eth->bus, phy_addr, dev, pdata->phy_interface);
 	if (!phydev)
 		return -ENODEV;
 
