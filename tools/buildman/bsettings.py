@@ -15,7 +15,7 @@ def Setup(fname=''):
     global settings
     global config_fname
 
-    settings = configparser.SafeConfigParser()
+    settings = configparser.ConfigParser()
     if fname is not None:
         config_fname = fname
         if config_fname == '':
