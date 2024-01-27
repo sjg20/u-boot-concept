@@ -24,6 +24,7 @@ struct phy_device *phy_connect_phy_id(struct mii_dev *bus, struct udevice *dev,
 	ofnode node;
 	u32 id, assert, deassert;
 	u16 vendor, device;
+	int mdio_addr;
 	int ret;
 
 	if (dev_read_phandle_with_args(dev, "phy-handle", NULL, 0, 0,
@@ -69,6 +70,12 @@ struct phy_device *phy_connect_phy_id(struct mii_dev *bus, struct udevice *dev,
 
 			udelay(deassert);
 		}
+	}
+
+	if (phyaddr == -1) {
+		mdio_addr = ofnode_read_u32_default(phandle_args.node, "reg", 0);
+		if (mdio_addr >= 0)
+			phyaddr = mdio_addr;
 	}
 
 	id =  vendor << 16 | device;
