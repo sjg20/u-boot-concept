@@ -507,10 +507,25 @@ usba_udc_set_selfpowered(struct usb_gadget *gadget, int is_selfpowered)
 	return 0;
 }
 
+int dm_usb_gadget_handle_interrupts(struct udevice *dev)
+{
+	struct usba_udc *udc = &controller;
+
+	return usba_udc_irq(udc);
+}
+
+static int usba_udc_handle_interrupts(struct usb_gadget *gadget)
+{
+	struct usba_udc *udc = to_usba_udc(gadget);
+
+	return usba_udc_irq(udc);
+}
+
 static const struct usb_gadget_ops usba_udc_ops = {
 	.get_frame		= usba_udc_get_frame,
 	.wakeup			= usba_udc_wakeup,
 	.set_selfpowered	= usba_udc_set_selfpowered,
+	.handle_interrupts	= usba_udc_handle_interrupts,
 };
 
 static struct usb_endpoint_descriptor usba_ep0_desc = {
@@ -1191,13 +1206,6 @@ static struct usba_udc controller = {
 		.name		= "atmel_usba_udc",
 	},
 };
-
-int dm_usb_gadget_handle_interrupts(struct udevice *dev)
-{
-	struct usba_udc *udc = &controller;
-
-	return usba_udc_irq(udc);
-}
 
 int usb_gadget_register_driver(struct usb_gadget_driver *driver)
 {
