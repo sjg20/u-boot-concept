@@ -1374,12 +1374,9 @@ static void cdns3_check_usb_interrupt_proceed(struct cdns3_device *priv_dev,
  */
 static irqreturn_t cdns3_device_irq_handler(int irq, void *data)
 {
-	struct cdns3_device *priv_dev;
-	struct cdns3 *cdns = data;
+	struct cdns3_device *priv_dev = data;
 	irqreturn_t ret = IRQ_NONE;
 	u32 reg;
-
-	priv_dev = cdns->gadget_dev;
 
 	/* check USB device interrupt */
 	reg = readl(&priv_dev->regs->usb_ists);
@@ -1418,14 +1415,12 @@ static irqreturn_t cdns3_device_irq_handler(int irq, void *data)
  */
 static irqreturn_t cdns3_device_thread_irq_handler(int irq, void *data)
 {
-	struct cdns3_device *priv_dev;
-	struct cdns3 *cdns = data;
+	struct cdns3_device *priv_dev = data;
 	irqreturn_t ret = IRQ_NONE;
 	unsigned long flags;
 	int bit;
 	u32 reg;
 
-	priv_dev = cdns->gadget_dev;
 	spin_lock_irqsave(&priv_dev->lock, flags);
 
 	reg = readl(&priv_dev->regs->usb_ists);
@@ -2410,6 +2405,35 @@ static void cdns3_gadget_udc_set_speed(struct usb_gadget *gadget,
 	priv_dev->gadget.speed = speed;
 }
 
+/**
+ * cdns3_gadget_uboot_handle_interrupt - handle cdns3 gadget interrupt
+ * @cdns: pointer to struct cdns3
+ *
+ * Handles ep0 and gadget interrupt
+ */
+static void cdns3_gadget_uboot_handle_interrupt(struct cdns3_device *priv_dev)
+{
+	int ret = cdns3_device_irq_handler(0, priv_dev);
+
+	if (ret == IRQ_WAKE_THREAD)
+		cdns3_device_thread_irq_handler(0, priv_dev);
+}
+
+/**
+ * cdns3_gadget_handle_interrupts - handle cdns3 gadget interrupt
+ * @gadget: gadget object
+ *
+ * Returns 0 on success, error code elsewhere
+ */
+static int cdns3_gadget_handle_interrupts(struct usb_gadget *gadget)
+{
+	struct cdns3_device *priv_dev = gadget_to_cdns3_device(gadget);
+
+	cdns3_gadget_uboot_handle_interrupt(priv_dev);
+
+	return 0;
+}
+
 static const struct usb_gadget_ops cdns3_gadget_ops = {
 	.get_frame = cdns3_gadget_get_frame,
 	.wakeup = cdns3_gadget_wakeup,
@@ -2419,6 +2443,7 @@ static const struct usb_gadget_ops cdns3_gadget_ops = {
 	.udc_stop = cdns3_gadget_udc_stop,
 	.match_ep = cdns3_gadget_match_ep,
 	.udc_set_speed = cdns3_gadget_udc_set_speed,
+	.handle_interrupts = cdns3_gadget_handle_interrupts,
 };
 
 static void cdns3_free_all_eps(struct cdns3_device *priv_dev)
@@ -2745,25 +2770,11 @@ int cdns3_gadget_init(struct cdns3 *cdns)
 	return 0;
 }
 
-/**
- * cdns3_gadget_uboot_handle_interrupt - handle cdns3 gadget interrupt
- * @cdns: pointer to struct cdns3
- *
- * Handles ep0 and gadget interrupt
- */
-static void cdns3_gadget_uboot_handle_interrupt(struct cdns3 *cdns)
-{
-	int ret = cdns3_device_irq_handler(0, cdns);
-
-	if (ret == IRQ_WAKE_THREAD)
-		cdns3_device_thread_irq_handler(0, cdns);
-}
-
 int dm_usb_gadget_handle_interrupts(struct udevice *dev)
 {
 	struct cdns3 *cdns = dev_get_priv(dev);
 
-	cdns3_gadget_uboot_handle_interrupt(cdns);
+	cdns3_gadget_uboot_handle_interrupt(cdns->gadget_dev);
 
 	return 0;
 }
