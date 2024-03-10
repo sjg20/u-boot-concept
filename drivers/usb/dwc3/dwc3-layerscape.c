@@ -100,15 +100,6 @@ static int dwc3_layerscape_of_to_plat(struct udevice *dev)
 }
 
 #if CONFIG_IS_ENABLED(DM_USB_GADGET)
-int dm_usb_gadget_handle_interrupts(struct udevice *dev)
-{
-	struct dwc3_layerscape_priv *priv = dev_get_priv(dev);
-
-	dwc3_gadget_uboot_handle_interrupt(&priv->dwc3);
-
-	return 0;
-}
-
 static int dwc3_layerscape_peripheral_probe(struct udevice *dev)
 {
 	struct dwc3_layerscape_priv *priv = dev_get_priv(dev);
