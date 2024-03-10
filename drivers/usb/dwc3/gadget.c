@@ -1566,6 +1566,59 @@ static int dwc3_gadget_stop(struct usb_gadget *g)
 	return 0;
 }
 
+/**
+ * dwc3_gadget_uboot_handle_interrupt - handle dwc3 gadget interrupt
+ * @dwc: struct dwce *
+ *
+ * Handles ep0 and gadget interrupt
+ *
+ * Should be called from dwc3 core.
+ */
+static void dwc3_gadget_uboot_handle_interrupt(struct dwc3 *dwc)
+{
+	int ret = dwc3_interrupt(0, dwc);
+
+	if (ret == IRQ_WAKE_THREAD) {
+		int i;
+		struct dwc3_event_buffer *evt;
+
+		dwc3_thread_interrupt(0, dwc);
+
+		/* Clean + Invalidate the buffers after touching them */
+		for (i = 0; i < dwc->num_event_buffers; i++) {
+			evt = dwc->ev_buffs[i];
+			dwc3_flush_cache((uintptr_t)evt->buf, evt->length);
+		}
+	}
+}
+
+int dm_usb_gadget_handle_interrupts(struct udevice *dev)
+{
+	struct dwc3_generic_priv *priv = dev_get_priv(dev);
+	struct dwc3 *dwc3 = &priv->dwc3;
+
+#if CONFIG_IS_ENABLED(USB_DWC3_OMAP)
+	u32 status;
+
+	status = dwc3_omap_uboot_interrupt_status(dev);
+	if (status)
+#endif
+	{
+		dwc3_gadget_uboot_handle_interrupt(dwc3);
+	}
+
+	return 0;
+}
+
+static int dwc3_gadget_handle_interrupts(struct usb_gadget *g)
+{
+	struct dwc3 *dwc = gadget_to_dwc(g);
+
+	dwc3_gadget_uboot_handle_interrupt(dwc3);
+
+	return 0;
+}
+
 static const struct usb_gadget_ops dwc3_gadget_ops = {
 	.get_frame		= dwc3_gadget_get_frame,
 	.wakeup			= dwc3_gadget_wakeup,
@@ -1573,6 +1626,7 @@ static const struct usb_gadget_ops dwc3_gadget_ops = {
 	.pullup			= dwc3_gadget_pullup,
 	.udc_start		= dwc3_gadget_start,
 	.udc_stop		= dwc3_gadget_stop,
+	.handle_interrupts	= dwc3_gadget_handle_interrupts,
 };
 
 /* -------------------------------------------------------------------------- */
@@ -2656,48 +2710,4 @@ void dwc3_gadget_exit(struct dwc3 *dwc)
 	dma_free_coherent(dwc->ep0_trb);
 
 	dma_free_coherent(dwc->ctrl_req);
-}
-
-/**
- * dwc3_gadget_uboot_handle_interrupt - handle dwc3 gadget interrupt
- * @dwc: struct dwce *
- *
- * Handles ep0 and gadget interrupt
- *
- * Should be called from dwc3 core.
- */
-static void dwc3_gadget_uboot_handle_interrupt(struct dwc3 *dwc)
-{
-	int ret = dwc3_interrupt(0, dwc);
-
-	if (ret == IRQ_WAKE_THREAD) {
-		int i;
-		struct dwc3_event_buffer *evt;
-
-		dwc3_thread_interrupt(0, dwc);
-
-		/* Clean + Invalidate the buffers after touching them */
-		for (i = 0; i < dwc->num_event_buffers; i++) {
-			evt = dwc->ev_buffs[i];
-			dwc3_flush_cache((uintptr_t)evt->buf, evt->length);
-		}
-	}
-}
-
-int dm_usb_gadget_handle_interrupts(struct udevice *dev)
-{
-	struct dwc3_generic_priv *priv = dev_get_priv(dev);
-	struct dwc3 *dwc3 = &priv->dwc3;
-
-#if CONFIG_IS_ENABLED(USB_DWC3_OMAP)
-	u32 status;
-
-	status = dwc3_omap_uboot_interrupt_status(dev);
-	if (status)
-#endif
-	{
-		dwc3_gadget_uboot_handle_interrupt(dwc3);
-	}
-
-	return 0;
 }
