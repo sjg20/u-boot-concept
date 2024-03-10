@@ -1791,6 +1791,15 @@ static int musb_gadget_stop(struct usb_gadget *g)
 }
 #endif
 
+static int musb_gadget_handle_interrupts(struct usb_gadget *gadget)
+{
+	schedule();
+	if (!gadget->isr)
+		return -EINVAL;
+
+	return gadget->isr(0, gadget);
+}
+
 static const struct usb_gadget_ops musb_gadget_operations = {
 	.get_frame		= musb_gadget_get_frame,
 	.wakeup			= musb_gadget_wakeup,
@@ -1805,6 +1814,7 @@ static const struct usb_gadget_ops musb_gadget_operations = {
 	.udc_start		= musb_gadget_start,
 	.udc_stop		= musb_gadget_stop,
 #endif
+	.handle_interrupts	= musb_gadget_handle_interrupts,
 };
 
 /* ----------------------------------------------------------------------- */
