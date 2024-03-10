@@ -481,6 +481,7 @@ struct usb_gadget_ops {
 			struct usb_endpoint_descriptor *);
 	void	(*udc_set_speed)(struct usb_gadget *gadget,
 				 enum usb_device_speed);
+	int	(*handle_interrupts)(struct usb_gadget *);
 };
 
 /**
