@@ -1592,24 +1592,6 @@ static void dwc3_gadget_uboot_handle_interrupt(struct dwc3 *dwc)
 	}
 }
 
-int dm_usb_gadget_handle_interrupts(struct udevice *dev)
-{
-	struct dwc3_generic_priv *priv = dev_get_priv(dev);
-	struct dwc3 *dwc3 = &priv->dwc3;
-
-#if CONFIG_IS_ENABLED(USB_DWC3_OMAP)
-	u32 status;
-
-	status = dwc3_omap_uboot_interrupt_status(dev);
-	if (status)
-#endif
-	{
-		dwc3_gadget_uboot_handle_interrupt(dwc3);
-	}
-
-	return 0;
-}
-
 static int dwc3_gadget_handle_interrupts(struct usb_gadget *g)
 {
 	struct dwc3 *dwc = gadget_to_dwc(g);

@@ -376,15 +376,6 @@ struct dm_usb_ops musb_usb_ops = {
 #if defined(CONFIG_USB_MUSB_GADGET) && !CONFIG_IS_ENABLED(DM_USB_GADGET)
 static struct musb *gadget;
 
-int dm_usb_gadget_handle_interrupts(struct udevice *dev)
-{
-	schedule();
-	if (!gadget || !gadget->isr)
-		return -EINVAL;
-
-	return gadget->isr(0, gadget);
-}
-
 int usb_gadget_register_driver(struct usb_gadget_driver *driver)
 {
 	int ret;

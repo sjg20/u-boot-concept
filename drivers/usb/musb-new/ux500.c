@@ -92,14 +92,6 @@ static const struct musb_platform_ops ux500_musb_ops = {
 	.disable	= ux500_musb_disable,
 };
 
-int dm_usb_gadget_handle_interrupts(struct udevice *dev)
-{
-	struct ux500_glue *glue = dev_get_priv(dev);
-
-	glue->mdata.host->isr(0, glue->mdata.host);
-	return 0;
-}
-
 static int ux500_musb_probe(struct udevice *dev)
 {
 #ifdef CONFIG_USB_MUSB_HOST

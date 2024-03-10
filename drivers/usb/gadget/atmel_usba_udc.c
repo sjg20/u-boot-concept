@@ -507,13 +507,6 @@ usba_udc_set_selfpowered(struct usb_gadget *gadget, int is_selfpowered)
 	return 0;
 }
 
-int dm_usb_gadget_handle_interrupts(struct udevice *dev)
-{
-	struct usba_udc *udc = &controller;
-
-	return usba_udc_irq(udc);
-}
-
 static int usba_udc_handle_interrupts(struct usb_gadget *gadget)
 {
 	struct usba_udc *udc = to_usba_udc(gadget);

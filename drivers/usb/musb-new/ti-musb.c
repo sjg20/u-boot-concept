@@ -234,15 +234,6 @@ static int ti_musb_peripheral_of_to_plat(struct udevice *dev)
 }
 #endif
 
-int dm_usb_gadget_handle_interrupts(struct udevice *dev)
-{
-	struct ti_musb_peripheral *priv = dev_get_priv(dev);
-
-	priv->periph->isr(0, priv->periph);
-
-	return 0;
-}
-
 static int ti_musb_peripheral_probe(struct udevice *dev)
 {
 	struct ti_musb_peripheral *priv = dev_get_priv(dev);

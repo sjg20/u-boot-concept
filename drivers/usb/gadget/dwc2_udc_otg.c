@@ -813,11 +813,6 @@ static void dwc2_fifo_flush(struct usb_ep *_ep)
 	debug("%s: %d\n", __func__, ep_index(ep));
 }
 
-int dm_usb_gadget_handle_interrupts(struct udevice *dev)
-{
-	return dwc2_udc_handle_interrupt();
-}
-
 static int dwc2_handle_interrupts(struct usb_gadget *gadget)
 {
 	return dwc2_udc_handle_interrupt();

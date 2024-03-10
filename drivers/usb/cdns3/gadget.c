@@ -2769,12 +2769,3 @@ int cdns3_gadget_init(struct cdns3 *cdns)
 
 	return 0;
 }
-
-int dm_usb_gadget_handle_interrupts(struct udevice *dev)
-{
-	struct cdns3 *cdns = dev_get_priv(dev);
-
-	cdns3_gadget_uboot_handle_interrupt(cdns->gadget_dev);
-
-	return 0;
-}

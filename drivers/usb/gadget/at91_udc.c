@@ -789,13 +789,6 @@ static int at91_start(struct usb_gadget *gadget,
 		struct usb_gadget_driver *driver);
 static int at91_stop(struct usb_gadget *gadget);
 
-int dm_usb_gadget_handle_interrupts(struct udevice *dev)
-{
-	struct at91_udc *udc = controller;
-
-	return at91_udc_irq(udc);
-}
-
 static int at91_gadget_handle_interrupts(struct usb_gadget *gadget)
 {
 	struct at91_udc	*udc = to_udc(gadget);

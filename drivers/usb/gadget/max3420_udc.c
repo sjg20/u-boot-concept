@@ -480,13 +480,6 @@ static int max3420_wakeup(struct usb_gadget *gadget)
 	return 0;
 }
 
-int dm_usb_gadget_handle_interrupts(struct udevice *dev)
-{
-	struct max3420_udc *udc = dev_get_priv(dev);
-
-	return max3420_irq(udc);
-}
-
 static int max3420_handle_interrupts(struct usb_gadget *gadget)
 {
 	struct max3420_udc *udc = to_udc(gadget);
