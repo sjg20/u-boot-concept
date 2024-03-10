@@ -480,10 +480,25 @@ static int max3420_wakeup(struct usb_gadget *gadget)
 	return 0;
 }
 
+int dm_usb_gadget_handle_interrupts(struct udevice *dev)
+{
+	struct max3420_udc *udc = dev_get_priv(dev);
+
+	return max3420_irq(udc);
+}
+
+static int max3420_handle_interrupts(struct usb_gadget *gadget)
+{
+	struct max3420_udc *udc = to_udc(gadget);
+
+	return max3420_irq(udc);
+}
+
 static const struct usb_gadget_ops max3420_udc_ops = {
 	.udc_start	= max3420_udc_start,
 	.udc_stop	= max3420_udc_stop,
 	.wakeup		= max3420_wakeup,
+	.handle_interrupts = max3420_handle_interrupts,
 };
 
 static struct usb_endpoint_descriptor ep0_desc = {
@@ -807,13 +822,6 @@ static void max3420_setup_spi(struct max3420_udc *udc)
 	spi_rd_buf(udc, MAX3420_REG_EPIRQ, reg, 8);
 	/* configure SPI */
 	spi_wr8(udc, MAX3420_REG_PINCTL, bFDUPSPI);
-}
-
-int dm_usb_gadget_handle_interrupts(struct udevice *dev)
-{
-	struct max3420_udc *udc = dev_get_priv(dev);
-
-	return max3420_irq(udc);
 }
 
 static int max3420_udc_probe(struct udevice *dev)
