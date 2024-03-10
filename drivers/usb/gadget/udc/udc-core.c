@@ -152,6 +152,38 @@ static inline void usb_gadget_udc_stop(struct usb_udc *udc)
 }
 
 /**
+ * dm_usb_gadget_handle_interrupts - tells usb device controller to handle interrupts
+ * @udc: The device we want to handle interrupts
+ *
+ * Trigger USB UDC handle_interrupts callback to handle UDC interrupts.
+ */
+int dm_usb_gadget_handle_interrupts(struct udevice *dev)
+{
+	struct usb_udc *udc = container_of(dev, struct usb_udc, dev);
+	int ret = 0;
+
+	mutex_lock(&udc_lock);
+	list_for_each_entry(udc, &udc_list, list) {
+		if (udc->dev.parent != dev)
+			continue;
+
+		if (!udc->gadget)
+			continue;
+
+		if (!udc->gadget->ops)
+			continue;
+
+		if (!udc->gadget->ops->handle_interrupts)
+			continue;
+
+		ret = udc->gadget->ops->handle_interrupts(udc->gadget);
+	}
+	mutex_unlock(&udc_lock);
+
+	return ret;
+}
+
+/**
  * usb_udc_release - release the usb_udc struct
  * @dev: the dev member within usb_udc
  *
