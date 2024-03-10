@@ -95,8 +95,33 @@ static struct usb_request *
 ci_ep_alloc_request(struct usb_ep *ep, unsigned int gfp_flags);
 static void ci_ep_free_request(struct usb_ep *ep, struct usb_request *_req);
 
+int dm_usb_gadget_handle_interrupts(struct udevice *dev)
+{
+	struct ci_udc *udc = (struct ci_udc *)controller.ctrl->hcor;
+	u32 value;
+
+	value = readl(&udc->usbsts);
+	if (value)
+		udc_irq();
+
+	return value;
+}
+
+static int ci_handle_interrupts(struct usb_gadget *gadget)
+{
+	struct ci_udc *udc = (struct ci_udc *)controller.ctrl->hcor;
+	u32 value;
+
+	value = readl(&udc->usbsts);
+	if (value)
+		udc_irq();
+
+	return value;
+}
+
 static const struct usb_gadget_ops ci_udc_ops = {
 	.pullup = ci_pullup,
+	.handle_interrupts = ci_handle_interrupts,
 };
 
 static const struct usb_ep_ops ci_ep_ops = {
@@ -905,18 +930,6 @@ void udc_irq(void)
 			}
 		}
 	}
-}
-
-int dm_usb_gadget_handle_interrupts(struct udevice *dev)
-{
-	struct ci_udc *udc = (struct ci_udc *)controller.ctrl->hcor;
-	u32 value;
-
-	value = readl(&udc->usbsts);
-	if (value)
-		udc_irq();
-
-	return value;
 }
 
 void udc_disconnect(void)
