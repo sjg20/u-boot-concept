@@ -551,6 +551,25 @@ mtu3_gadget_set_speed(struct usb_gadget *g, enum usb_device_speed speed)
 	spin_unlock_irqrestore(&mtu->lock, flags);
 }
 
+int dm_usb_gadget_handle_interrupts(struct udevice *dev)
+{
+	struct mtu3 *mtu = dev_get_priv(dev);
+
+	mtu3_irq(0, mtu);
+
+	return 0;
+}
+
+static void
+mtu3_gadget_handle_interrupts(struct usb_gadget *g, enum usb_device_speed speed)
+{
+	struct mtu3 *mtu = gadget_to_mtu3(g);
+
+	mtu3_irq(0, mtu);
+
+	return 0;
+}
+
 static const struct usb_gadget_ops mtu3_gadget_ops = {
 	.get_frame = mtu3_gadget_get_frame,
 	.wakeup = mtu3_gadget_wakeup,
@@ -559,6 +578,7 @@ static const struct usb_gadget_ops mtu3_gadget_ops = {
 	.udc_start = mtu3_gadget_start,
 	.udc_stop = mtu3_gadget_stop,
 	.udc_set_speed = mtu3_gadget_set_speed,
+	.handle_interrupts = mtu3_gadget_handle_interrupts,
 };
 
 static void mtu3_state_reset(struct mtu3 *mtu)

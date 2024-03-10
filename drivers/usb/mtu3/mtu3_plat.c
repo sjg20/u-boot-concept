@@ -224,15 +224,6 @@ static const struct udevice_id ssusb_of_match[] = {
 };
 
 #if CONFIG_IS_ENABLED(DM_USB_GADGET)
-int dm_usb_gadget_handle_interrupts(struct udevice *dev)
-{
-	struct mtu3 *mtu = dev_get_priv(dev);
-
-	mtu3_irq(0, mtu);
-
-	return 0;
-}
-
 static int mtu3_gadget_probe(struct udevice *dev)
 {
 	struct ssusb_mtk *ssusb = dev_to_ssusb(dev->parent);
