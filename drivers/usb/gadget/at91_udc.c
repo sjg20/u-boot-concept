@@ -789,6 +789,20 @@ static int at91_start(struct usb_gadget *gadget,
 		struct usb_gadget_driver *driver);
 static int at91_stop(struct usb_gadget *gadget);
 
+int dm_usb_gadget_handle_interrupts(struct udevice *dev)
+{
+	struct at91_udc *udc = controller;
+
+	return at91_udc_irq(udc);
+}
+
+static int at91_gadget_handle_interrupts(struct usb_gadget *gadget)
+{
+	struct at91_udc	*udc = to_udc(gadget);
+
+	return at91_udc_irq(udc);
+}
+
 static const struct usb_gadget_ops at91_udc_ops = {
 	.get_frame		= at91_get_frame,
 	.wakeup			= at91_wakeup,
@@ -797,6 +811,7 @@ static const struct usb_gadget_ops at91_udc_ops = {
 	.pullup			= at91_pullup,
 	.udc_start		= at91_start,
 	.udc_stop		= at91_stop,
+	.handle_interrupts	= at91_handle_interrupts,
 
 	/*
 	 * VBUS-powered devices may also also want to support bigger
@@ -1429,13 +1444,6 @@ static const struct at91_udc_caps at91sam9261_udc_caps = {
 	.pullup = at91sam9261_udc_pullup,
 };
 #endif
-
-int dm_usb_gadget_handle_interrupts(struct udevice *dev)
-{
-	struct at91_udc *udc = controller;
-
-	return at91_udc_irq(udc);
-}
 
 int usb_gadget_register_driver(struct usb_gadget_driver *driver)
 {
