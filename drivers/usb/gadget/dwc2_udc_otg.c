@@ -813,6 +813,16 @@ static void dwc2_fifo_flush(struct usb_ep *_ep)
 	debug("%s: %d\n", __func__, ep_index(ep));
 }
 
+int dm_usb_gadget_handle_interrupts(struct udevice *dev)
+{
+	return dwc2_udc_handle_interrupt();
+}
+
+static int dwc2_handle_interrupts(struct usb_gadget *gadget)
+{
+	return dwc2_udc_handle_interrupt();
+}
+
 static const struct usb_gadget_ops dwc2_udc_ops = {
 	.pullup = dwc2_gadget_pullup,
 	/* current versions must always be self-powered */
@@ -820,6 +830,7 @@ static const struct usb_gadget_ops dwc2_udc_ops = {
 	.udc_start		= dwc2_gadget_start,
 	.udc_stop		= dwc2_gadget_stop,
 #endif
+	.handle_interrupts	= dwc2_handle_interrupts,
 };
 
 static struct dwc2_udc memory = {
@@ -940,11 +951,6 @@ int dwc2_udc_handle_interrupt(void)
 		return dwc2_udc_irq(1, (void *)the_controller);
 
 	return 0;
-}
-
-int dm_usb_gadget_handle_interrupts(struct udevice *dev)
-{
-	return dwc2_udc_handle_interrupt();
 }
 
 #if CONFIG_IS_ENABLED(DM_USB_GADGET)
