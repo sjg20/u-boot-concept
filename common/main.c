@@ -44,6 +44,7 @@ void main_loop(void)
 {
 	const char *s;
 
+	printf("hi3\n");
 	bootstage_mark_name(BOOTSTAGE_ID_MAIN_LOOP, "main_loop");
 
 	if (IS_ENABLED(CONFIG_VERSION_VARIABLE))
