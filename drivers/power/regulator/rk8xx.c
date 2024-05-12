@@ -830,10 +830,8 @@ static int ldo_set_value(struct udevice *dev, int uvolt)
 	return _ldo_set_value(dev, info, uvolt);
 }
 
-static int ldo_set_suspend_value(struct udevice *dev, int uvolt)
+static int _ldo_set_suspend_value(struct udevice *dev, const struct rk8xx_reg_info *info, int uvolt)
 {
-	int ldo = dev->driver_data - 1;
-	const struct rk8xx_reg_info *info = get_ldo_reg(dev->parent, ldo, uvolt);
 	int mask = info->vsel_mask;
 	int val;
 
@@ -845,10 +843,18 @@ static int ldo_set_suspend_value(struct udevice *dev, int uvolt)
 	else
 		val = ((uvolt - info->min_uv) / info->step_uv) + info->min_sel;
 
-	debug("%s: volt=%d, ldo=%d, reg=0x%x, mask=0x%x, val=0x%x\n",
-	      __func__, uvolt, ldo + 1, info->vsel_sleep_reg, mask, val);
+	debug("%s: volt=%d, reg=0x%x, mask=0x%x, val=0x%x\n",
+	      __func__, uvolt, info->vsel_sleep_reg, mask, val);
 
 	return pmic_clrsetbits(dev->parent, info->vsel_sleep_reg, mask, val);
+}
+
+static int ldo_set_suspend_value(struct udevice *dev, int uvolt)
+{
+	int ldo = dev->driver_data - 1;
+	const struct rk8xx_reg_info *info = get_ldo_reg(dev->parent, ldo, uvolt);
+
+	return _ldo_set_suspend_value(dev->parent, info, uvolt);
 }
 
 static int _ldo_get_suspend_value(struct udevice *dev, const struct rk8xx_reg_info *info)
