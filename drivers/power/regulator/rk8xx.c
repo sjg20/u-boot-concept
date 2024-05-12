@@ -1240,7 +1240,7 @@ static int ldo_set_suspend_value(struct udevice *dev, int uvolt)
 	int ldo = dev->driver_data - 1;
 	const struct rk8xx_reg_info *info = get_ldo_reg(dev->parent, ldo, uvolt);
 
-	return _ldo_set_suspend_value(dev->parent, info, uvolt);
+	return _ldo_set_suspend_value(dev, info, uvolt);
 }
 
 static int nldo_set_suspend_value(struct udevice *dev, int uvolt)
