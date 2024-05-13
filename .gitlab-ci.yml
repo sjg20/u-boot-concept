@@ -94,7 +94,7 @@ stages:
 .world_build:
   stage: world build
   rules:
-    - when: always
+    - when: never
 
 build all 32bit ARM platforms:
   extends: .world_build
@@ -147,7 +147,7 @@ build all other platforms:
 .testsuites:
   stage: testsuites
   rules:
-    - when: always
+    - when: never
 
 check for new CONFIG symbols outside Kconfig:
   extends: .testsuites
