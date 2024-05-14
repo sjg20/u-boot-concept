@@ -9,6 +9,7 @@
 #define LOG_CATEGORY LOGC_DM
 
 #include <common.h>
+#include <debug_uart.h>
 #include <errno.h>
 #include <log.h>
 #include <dm/device.h>
@@ -51,6 +52,21 @@ struct uclass_driver *lists_uclass_lookup(enum uclass_id id)
 	return NULL;
 }
 
+/**
+ * bind_drivers_pass() - Perform a pass of driver binding
+ *
+ * Work through the driver_info records binding a driver for each one. If the
+ * binding fails, continue binding others, but return the error.
+ *
+ * For OF_PLATDATA we must bind parent devices before their children. So only
+ * children of bound parents are bound on each call to this function. When a
+ * child is left unbound, -EAGAIN is returned, indicating that this function
+ * should be called again
+ *
+ * @parent: Parent device to use when binding each child device
+ * Return: 0 if OK, -EAGAIN if unbound children exist, -ENOENT if there is no
+ * driver for one of the devices, other -ve on other error
+ */
 static int bind_drivers_pass(struct udevice *parent, bool pre_reloc_only)
 {
 	struct driver_info *info =
@@ -92,7 +108,13 @@ static int bind_drivers_pass(struct udevice *parent, bool pre_reloc_only)
 				par = parent_drt->dev;
 			}
 		}
+
+	printch('\n');
+	printascii("before ");
+	printascii(entry->name);
+	printch(':');
 		ret = device_bind_by_name(par, pre_reloc_only, entry, &dev);
+		printhex8(ret); printch(' '); printhex2(-ret); printch(' ');
 		if (!ret) {
 			if (CONFIG_IS_ENABLED(OF_PLATDATA))
 				drt->dev = dev;
@@ -101,6 +123,10 @@ static int bind_drivers_pass(struct udevice *parent, bool pre_reloc_only)
 			if (!result || ret != -ENOENT)
 				result = ret;
 		}
+
+	printascii("after ");
+	printascii(entry->name);
+	printch('\n');
 	}
 
 	return result ? result : missing_parent ? -EAGAIN : 0;
@@ -110,6 +136,12 @@ int lists_bind_drivers(struct udevice *parent, bool pre_reloc_only)
 {
 	int result = 0;
 	int pass;
+	int i;
+
+	debug_uart_init();
+	printascii(" lbd ");
+	for (i = 0; i < 10; i++)
+		printascii(" settle the UART down so it works OK ");
 
 	/*
 	 * 10 passes is 10 levels deep in the devicetree, which is plenty. If
@@ -124,6 +156,8 @@ int lists_bind_drivers(struct udevice *parent, bool pre_reloc_only)
 			break;
 		if (ret != -EAGAIN && !result)
 			result = ret;
+		if (ret == -ENOENT)
+			break;
 	}
 
 	return result;

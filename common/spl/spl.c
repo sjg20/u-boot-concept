@@ -10,6 +10,7 @@
 #include <bloblist.h>
 #include <binman_sym.h>
 #include <bootstage.h>
+#include <debug_uart.h>
 #include <dm.h>
 #include <handoff.h>
 #include <hang.h>
@@ -429,6 +430,8 @@ static int spl_common_init(bool setup_malloc)
 		}
 	}
 	if (CONFIG_IS_ENABLED(DM)) {
+		debug_uart_init();
+		printascii(" sci ");
 		bootstage_start(BOOTSTAGE_ID_ACCUM_DM_SPL,
 				spl_phase() == PHASE_TPL ? "dm tpl" : "dm_spl");
 		/* With CONFIG_SPL_OF_PLATDATA, bring in all devices */
@@ -744,9 +747,16 @@ void preloader_console_init(void)
 #ifdef CONFIG_SPL_SERIAL_SUPPORT
 	gd->baudrate = CONFIG_BAUDRATE;
 
+	debug_uart_init();
+	printascii(" pci ");
+
 	serial_init();		/* serial communications setup */
+	printch('x');
 
 	gd->have_console = 1;
+
+// 	debug_uart_init();
+	printch('a');
 
 #if CONFIG_IS_ENABLED(BANNER_PRINT)
 	puts("\nU-Boot " SPL_TPL_NAME " " PLAIN_VERSION " (" U_BOOT_DATE " - "

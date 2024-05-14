@@ -119,11 +119,14 @@ static const struct omap_i2c_platdata am33xx_i2c[] = {
 	{ I2C_BASE3, 100000, OMAP_I2C_REV_V2},
 };
 
+#if 1
 U_BOOT_DEVICES(am33xx_i2c) = {
 	{ "i2c_omap", &am33xx_i2c[0] },
 	{ "i2c_omap", &am33xx_i2c[1] },
 	{ "i2c_omap", &am33xx_i2c[2] },
 };
+#endif
+
 #endif
 
 #if CONFIG_IS_ENABLED(DM_GPIO)
@@ -137,7 +140,7 @@ static const struct omap_gpio_platdata am33xx_gpio[] = {
 	{ 5, AM33XX_GPIO5_BASE },
 #endif
 };
-
+#if 1
 U_BOOT_DEVICES(am33xx_gpios) = {
 	{ "gpio_omap", &am33xx_gpio[0] },
 	{ "gpio_omap", &am33xx_gpio[1] },
@@ -148,6 +151,7 @@ U_BOOT_DEVICES(am33xx_gpios) = {
 	{ "gpio_omap", &am33xx_gpio[5] },
 #endif
 };
+#endif
 #endif
 #if CONFIG_IS_ENABLED(DM_SPI) && !CONFIG_IS_ENABLED(OF_CONTROL)
 static const struct omap3_spi_plat omap3_spi_pdata = {
@@ -233,7 +237,7 @@ static struct ti_musb_platdata usb1 = {
 		.platform_ops	= &musb_dsps_ops,
 		},
 };
-
+#if 0
 U_BOOT_DEVICES(am33xx_usbs) = {
 #if CONFIG_AM335X_USB0_MODE == MUSB_PERIPHERAL
 	{ "ti-musb-peripheral", &usb0 },
@@ -246,6 +250,7 @@ U_BOOT_DEVICES(am33xx_usbs) = {
 	{ "ti-musb-host", &usb1 },
 #endif
 };
+#endif
 
 int arch_misc_init(void)
 {
@@ -559,6 +564,7 @@ void early_system_init(void)
 #endif
 #ifdef CONFIG_DEBUG_UART_OMAP
 	debug_uart_init();
+	printascii(" esi ");
 #endif
 
 #ifdef CONFIG_SPL_BUILD
@@ -578,6 +584,9 @@ void early_system_init(void)
 #ifdef CONFIG_SPL_BUILD
 void board_init_f(ulong dummy)
 {
+	debug_uart_init();
+	printascii(" bif ");
+
 	hw_data_init();
 	early_system_init();
 	board_early_init_f();
@@ -598,4 +607,14 @@ int arch_cpu_init_dm(void)
 	early_system_init();
 #endif
 	return 0;
+}
+
+void board_debug_uart_init(void)
+{
+#ifdef CONFIG_SPL_BUILD
+	hw_data_init();
+	set_uart_mux_conf();
+	setup_early_clocks();
+	uart_soft_reset();
+#endif
 }
