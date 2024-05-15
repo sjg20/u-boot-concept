@@ -500,7 +500,8 @@ coreboot test.py:
 
     # Load it on the device
     - ${SRC}/test/py/test.py -B "${BOARD}" --id sjg-${ID} --configure
-        --build-dir "${OUT}/current/${BOARD}" -k help
+        --build-dir "${OUT}/current/${BOARD}" -k help || u-boot-test-release
+    - u-boot-test-release
 
   after_script:
     - echo done
@@ -516,3 +517,4 @@ kevin:
     BOARD: chromebook_kevin
     ID: kevin
   <<: *lab_dfn
+
