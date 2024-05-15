@@ -497,7 +497,6 @@ rpi3:
     - export OUT="${ROOT}/out"
     - export PATH=$PATH:~/bin
     - export PATH=$PATH:/vid/software/devel/ubtest/u-boot-test-hooks/bin
-    - export PATH=$PATH:/home/sglass/.local/bin
     - export b=rpi_3_32b
 
     # Load it on the device
