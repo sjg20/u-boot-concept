@@ -1,6 +1,5 @@
-#!/bin/bash
-
-# Copyright (c) 2015, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2024 Google LLC
+# Written by Simon Glass
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -20,7 +19,5 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-bin_dir="`dirname $0`"
-. "${bin_dir}/u-boot-test-common"
-
-. "${bin_dir}/flash.${flash_impl}"
+exec labgrid-client -V do-bootstrap 1 -V do-build 1 -V do-send 0 \
+    -p "${ID}" -s start -a console
