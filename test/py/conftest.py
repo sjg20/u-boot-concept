@@ -74,13 +74,15 @@ def pytest_addoption(parser):
         help='U-Boot board identity/instance')
     parser.addoption('--build', default=False, action='store_true',
         help='Compile U-Boot before running tests')
+    parser.addoption('--configure', default=False, action='store_true',
+        help='Configure U-Boot before running tests')
     parser.addoption('--buildman', default=False, action='store_true',
         help='Use buildman to build U-Boot (assuming --build is given)')
     parser.addoption('--gdbserver', default=None,
         help='Run sandbox under gdbserver. The argument is the channel '+
         'over which gdbserver should communicate, e.g. localhost:1234')
 
-def run_build(config, source_dir, build_dir, board_type, log):
+def run_build(config, source_dir, build_dir, board_type, log, do_build):
     """run_build: Build U-Boot
 
     Args:
@@ -89,12 +91,15 @@ def run_build(config, source_dir, build_dir, board_type, log):
         build_dir (str): Directory to build in
         board_type (str): board_type parameter (e.g. 'sandbox')
         log (Logfile): Log file to use
+        do_build (bool): True to do the actual build (else just configure)
     """
     if config.getoption('buildman'):
         if build_dir != source_dir:
             dest_args = ['-o', build_dir, '-w']
         else:
             dest_args = ['-i']
+        if not do_build:
+            dest_args.append('--config-only')
         cmds = (['buildman', '--board', board_type] + dest_args,)
         name = 'buildman'
     else:
@@ -102,9 +107,12 @@ def run_build(config, source_dir, build_dir, board_type, log):
             o_opt = 'O=%s' % build_dir
         else:
             o_opt = ''
+        build_cmd = ['make', o_opt, '-s', '-j{}'.format(os.cpu_count())]
+        if not do_build:
+            build_cmd.append('cfg')
         cmds = (
             ['make', o_opt, '-s', board_type + '_defconfig'],
-            ['make', o_opt, '-s', '-j{}'.format(os.cpu_count())],
+            build_cmd,
         )
         name = 'make'
 
@@ -191,13 +199,14 @@ def pytest_configure(config):
     import multiplexed_log
     log = multiplexed_log.Logfile(result_dir + '/test-log.html')
 
-    if config.getoption('build'):
+    if config.getoption('build') or config.getoption('configure'):
         worker_id = os.environ.get("PYTEST_XDIST_WORKER")
         with filelock.FileLock(os.path.join(build_dir, 'build.lock')):
             build_done_file = Path(build_dir) / 'build.done'
             if (not worker_id or worker_id == 'master' or
                 not build_done_file.exists()):
-                run_build(config, source_dir, build_dir, board_type, log)
+                run_build(config, source_dir, build_dir, board_type, log,
+                          config.getoption('build'))
                 build_done_file.touch()
 
     class ArbitraryAttributeContainer(object):
