@@ -499,9 +499,13 @@ coreboot test.py:
     - export PATH=$PATH:/vid/software/devel/ubtest/u-boot-test-hooks/bin
 
     # Load it on the device
+    - ret=0
     - ${SRC}/test/py/test.py -B "${BOARD}" --id sjg-${ID} --configure
-        --build-dir "${OUT}/current/${BOARD}" -k help || u-boot-test-release
-    - u-boot-test-release
+        --build-dir "${OUT}/current/${BOARD}" -k help || ret=$?
+    - u-boot-test-release || true
+    - if [[ $ret -ne 0 ]]; then
+        exit $ret;
+      fi
 
   after_script:
     - echo done
