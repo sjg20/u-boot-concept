@@ -508,7 +508,7 @@ coreboot test.py:
 rpi3:
   variables:
     BOARD: rpi_3_32b
-    ID: rpi_3b
+    ID: rpi3
   <<: *lab_dfn
 
 kevin:
