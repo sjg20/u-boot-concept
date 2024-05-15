@@ -499,7 +499,7 @@ coreboot test.py:
     - export PATH=$PATH:/vid/software/devel/ubtest/u-boot-test-hooks/bin
 
     # Load it on the device
-    - ${SRC}/test/py/test.py -B "${BOARD}" --id sjg-rpi_3b --configure
+    - ${SRC}/test/py/test.py -B "${BOARD}" --id sjg-${ID} --configure
         --build-dir "${OUT}/current/${BOARD}" -k help
 
   after_script:
@@ -508,10 +508,11 @@ coreboot test.py:
 rpi3:
   variables:
     BOARD: rpi_3_32b
+    ID: rpi_3b
   <<: *lab_dfn
 
 kevin:
   variables:
     BOARD: chromebook_kevin
+    ID: kevin
   <<: *lab_dfn
-
