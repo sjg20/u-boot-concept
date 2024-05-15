@@ -494,22 +494,13 @@ rpi3:
     #   OUT  - output directory for builds
     - export SRC="$(pwd)"
     - ROOT="$(dirname ${SRC})"
-    - export BUILDMAN="${SRC}/tools/buildman/buildman"
     - export OUT="${ROOT}/out"
     - export PATH=$PATH:~/bin
     - export PATH=$PATH:$HOME/u-boot-test-hooks/bin
     - export b=rpi_3_32b
 
-    # Do the build
-    - ret=0;
-      ${BUILDMAN} -o ${OUT} --board $b -k || ret=$?;
-      if [[ $ret -ne 0 && $ret -ne 129 ]]; then
-        ./tools/buildman/buildman -o ${OUT} -sdeP;
-        exit $ret;
-      fi;
-
     # Load it on the device
-    - ${SRC}/test/py/test.py -B $b --id sjg-rpi_3b
+    - ${SRC}/test/py/test.py -B $b --id sjg-rpi_3b --configure
         --build-dir ${OUT}/current/$b -k help
 
   after_script:
