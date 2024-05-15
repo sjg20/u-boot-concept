@@ -484,9 +484,9 @@ coreboot test.py:
     TEST_PY_ID: "--id qemu"
   <<: *buildman_and_testpy_dfn
 
-rpi3:
-  tags: [ 'lab' ]
+.lab_template: &lab_dfn
   stage: lab
+  tags: [ 'lab' ]
   script:
     # Environment:
     #   SRC  - source tree
@@ -497,11 +497,21 @@ rpi3:
     - export OUT="${ROOT}/out"
     - export PATH=$PATH:~/bin
     - export PATH=$PATH:/vid/software/devel/ubtest/u-boot-test-hooks/bin
-    - export b=rpi_3_32b
 
     # Load it on the device
-    - ${SRC}/test/py/test.py -B $b --id sjg-rpi_3b --configure
-        --build-dir ${OUT}/current/$b -k help
+    - ${SRC}/test/py/test.py -B "${BOARD}" --id sjg-rpi_3b --configure
+        --build-dir "${OUT}/current/${BOARD}" -k help
 
   after_script:
     - echo done
+
+rpi3:
+  variables:
+    BOARD: rpi_3_32b
+  <<: *lab_dfn
+
+kevin:
+  variables:
+    BOARD: chromebook_kevin
+  <<: *lab_dfn
+
