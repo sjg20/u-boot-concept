@@ -161,20 +161,26 @@ class ConsoleBase(object):
             while loop_num > 0:
                 loop_num -= 1
                 if config_spl and config_spl_serial and not env_spl_skipped:
+                    print('expect SPL')
                     m = self.p.expect([pattern_u_boot_spl_signon] +
                                       self.bad_patterns)
+                    print(f'expect SPL={m}')
                     if m != 0:
                         raise Exception('Bad pattern found on SPL console: ' +
                                         self.bad_pattern_ids[m - 1])
                 if not env_spl2_skipped:
+                    print('expect SPL2')
                     m = self.p.expect([pattern_u_boot_spl2_signon] +
                                       self.bad_patterns)
+                    print(f'expect SPL2={m}')
                     if m != 0:
                         raise Exception('Bad pattern found on SPL2 console: ' +
                                         self.bad_pattern_ids[m - 1])
+                print('expect normal')
                 m = self.p.expect([pattern_u_boot_main_signon] + self.bad_patterns)
+                print(f'expect normal={m}')
                 if m != 0:
-                    raise Exception('Bad pattern found on console: ' +
+                    raise Exception('bBad pattern found on console: ' +
                                     self.bad_pattern_ids[m - 1])
             self.u_boot_version_string = self.p.after
             while True:
@@ -185,7 +191,7 @@ class ConsoleBase(object):
                 if m == 2:
                     self.p.send(' ')
                     continue
-                raise Exception('Bad pattern found on console: ' +
+                raise Exception('aBad pattern found on console: ' +
                                 self.bad_pattern_ids[m - 3])
 
         except Exception as ex:
@@ -257,7 +263,7 @@ class ConsoleBase(object):
                 m = self.p.expect([chunk] + self.bad_patterns)
                 if m != 0:
                     self.at_prompt = False
-                    raise Exception('Bad pattern found on console: ' +
+                    raise Exception('cBad pattern found on console: ' +
                                     self.bad_pattern_ids[m - 1])
             if not wait_for_prompt:
                 return
@@ -267,7 +273,7 @@ class ConsoleBase(object):
                 m = self.p.expect([self.prompt_compiled] + self.bad_patterns)
                 if m != 0:
                     self.at_prompt = False
-                    raise Exception('Bad pattern found on console: ' +
+                    raise Exception('dBad pattern found on console: ' +
                                     self.bad_pattern_ids[m - 1])
             self.at_prompt = True
             self.at_prompt_logevt = self.logstream.logfile.cur_evt
@@ -333,7 +339,7 @@ class ConsoleBase(object):
             text = re.escape(text)
         m = self.p.expect([text] + self.bad_patterns)
         if m != 0:
-            raise Exception('Bad pattern found on console: ' +
+            raise Exception('eBad pattern found on console: ' +
                             self.bad_pattern_ids[m - 1])
 
     def drain_console(self):
