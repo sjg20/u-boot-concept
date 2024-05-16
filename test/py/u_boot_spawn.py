@@ -10,6 +10,7 @@ import re
 import pty
 import signal
 import select
+import sys
 import time
 import traceback
 
@@ -48,6 +49,8 @@ class Spawn:
         # http://stackoverflow.com/questions/7857352/python-regex-to-match-vt100-escape-sequences
         self.re_vt100 = re.compile(r'(\x1b\[|\x9b)[^@-_]*[@-_]|\x1b[@-_]', re.I)
 
+        #self.err_fd, slave_err_pty = pty.openpty()
+
         (self.pid, self.fd) = pty.fork()
         if self.pid == 0:
             try:
@@ -57,6 +60,11 @@ class Spawn:
                 signal.signal(signal.SIGHUP, signal.SIG_DFL)
                 if cwd:
                     os.chdir(cwd)
+
+                #os.close(self.err_fd)
+                #slave_stderr = os.fdopen(slave_err_pty, "w")
+                #sys.stderr = slave_stderr
+                sys.stderr = sys.stdout
                 os.execvp(args[0], args)
             except:
                 print('CHILD EXECEPTION:')
@@ -65,6 +73,7 @@ class Spawn:
                 os._exit(255)
 
         try:
+            #os.close(slave_err_pty)
             self.poll = select.poll()
             self.poll.register(self.fd, select.POLLIN | select.POLLPRI | select.POLLERR |
                                select.POLLHUP | select.POLLNVAL)
