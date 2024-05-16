@@ -501,6 +501,7 @@ coreboot test.py:
     # Load it on the device
     - ret=0
     - echo "board ${BOARD} id ${ID}"
+    - pwd
     - ${SRC}/test/py/test.py -B "${BOARD}" --id ${ID} --configure
         --build-dir "${OUT}/current/${BOARD}" -k help || ret=$?
     - U_BOOT_BOARD_IDENTITY="${ID}" u-boot-test-release || true
