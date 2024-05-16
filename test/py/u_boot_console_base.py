@@ -410,7 +410,7 @@ class ConsoleBase(object):
             # Reset the console timeout value as some tests may change
             # its default value during the execution
             if not self.config.gdbserver:
-                self.p.timeout = 30000
+                self.p.timeout = 40000
             return
         try:
             self.log.start_section('Starting U-Boot')
@@ -421,7 +421,7 @@ class ConsoleBase(object):
             # future, possibly per-test to be optimal. This works for 'help'
             # on board 'seaboard'.
             if not self.config.gdbserver:
-                self.p.timeout = 30000
+                self.p.timeout = 40000
             self.p.logfile_read = self.logstream
             if expect_reset:
                 loop_num = 2
