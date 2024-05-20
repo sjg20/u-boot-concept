@@ -199,6 +199,39 @@ scripts must be replicated once per board instance, or their actions somehow
 serialized, since they copy files into their own directories when executing, and
 hence parallel execution would cause incorrect operation.
 
+## Labgrid Integration
+
+Labgrid is a python library for embedded-board-control. It includes a client
+program which is used to integrate with the U-Boot pytests.
+
+Since Labgrid has all the information necessary to build and boot on a lab,
+there is no per-board configuration required. The various flash.xxx and
+recovery.xxx scripts are not used. To set it up:
+
+- In your bin/$hostname directory, create `common-labgrid` and set your crossbar
+  and environment information, for example:
+
+      export LG_CROSSBAR="ws://kea:20408/ws"
+      export LG_ENV="/vid/software/devel/ubtest/lab/env_rpi_try.cfg"
+
+      flash_impl=none
+      reset_impl=none
+      console_impl=labgrid
+      release_impl=labgrid
+      getrole_impl=labgrid
+
+The last five lines tell the hooks to use Labgrid for console and board release
+as well as a new 'getrole' hook which is only used by Labgrid. The flash and
+reset of boards is handled by entirely by Labgrid.
+
+Then create another file (in the same directory) called 'conf.all', containing::
+
+    .. code-block:: bash
+
+    . "${bin_dir}/${hostname}/common-labgrid"
+
+That should be all that is needed.
+
 ## Dependencies
 
 The example scripts depend on various external tools, the installation location
