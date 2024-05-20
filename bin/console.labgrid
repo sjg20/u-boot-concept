@@ -19,5 +19,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-exec labgrid-client -V do-bootstrap 1 -V do-build 1 -V do-send 0 \
-    -p "${ID}" -s start -a console
+exec labgrid-client -V do-bootstrap ${bootstrap:-1} -V do-build ${build:-1} \
+    -V do-send ${send:-0} -V do-clean ${clean:-0} \
+    -p "${U_BOOT_BOARD_IDENTITY}" -s uboot -a console

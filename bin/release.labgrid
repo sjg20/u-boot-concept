@@ -20,4 +20,4 @@
 # DEALINGS IN THE SOFTWARE.
 
 echo releasing
-exec labgrid-client -p "${ID}" release
+exec labgrid-client -p "${U_BOOT_BOARD_IDENTITY}" release
