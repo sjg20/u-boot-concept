@@ -1,7 +1,5 @@
-#!/bin/bash
-
 # Copyright 2024 Google LLC
-# Written by Simon Glass <sjg@chromium.org>
+# Written by Simon Glass
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -21,16 +19,28 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-set -e
+# Hostname and port for the gRPC coordinator
+export LG_COORDINATOR=kea:20408
 
-bin_dir="`dirname $0`"
-board_type="$1"
-board_ident="$2"
-hostname="`hostname`"
+# Environment file for the lab
+export LG_ENV=/vid/software/devel/ubtest/lab/cfg/kea_env.cfg
 
-# Use either the Labgrid integration or the traditional hooks
-if [ -n "${USE_LABGRID_SJG}" ]; then
-	. "${bin_dir}/${hostname}/conf.all"
-else
-	. "${bin_dir}/${hostname}/conf.${board_type}_${board_ident}"
-fi
+# Make sure only one buildman can run at a time, since it uses all CPUs
+export BUILDMAN_PROCESS_LIMIT=1
+
+# Location of the U-Boot test hooks
+export UB_TEST_HOOKS=/vid/software/devel/ubtest/u-boot-test-hooks
+
+# Use the internal console since microcom can miss serial input at boot
+export LG_CONSOLE=internal
+
+# Tell u-boot-test-hooks to use the Labgrid integration
+export USE_LABGRID_SJG=1
+
+
+flash_impl=none
+reset_impl=none
+console_impl=labgrid-sjg
+release_impl=labgrid-sjg
+getrole_impl=labgrid-sjg
+power_impl=none
