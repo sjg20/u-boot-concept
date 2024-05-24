@@ -7,7 +7,8 @@ import pytest
 def test_help(u_boot_console):
     """Test that the "help" command can be executed."""
 
-    u_boot_console.run_command('help')
+    lines = u_boot_console.run_command('help')
+    assert lines.splitlines()[0] == "?         - alias for 'help'"
 
 @pytest.mark.boardspec('sandbox')
 def test_help_no_devicetree(u_boot_console):

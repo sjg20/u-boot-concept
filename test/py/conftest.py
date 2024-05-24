@@ -24,6 +24,7 @@ import pytest
 import re
 from _pytest.runner import runtestprotocol
 import sys
+from u_boot_spawn import BootFail, Timeout, Unexpected
 
 # Globals: The HTML log file, and the connection to the U-Boot console.
 log = None
@@ -105,7 +106,7 @@ def run_build(config, source_dir, build_dir, board_type, log, do_build):
         else:
             dest_args = ['-i']
         if not do_build:
-            dest_args.append('--config-only')
+            dest_args += ['--config-only', '-m', 'C']
         cmds = (['buildman', '--board', board_type] + dest_args,)
         name = 'buildman'
     else:
@@ -439,12 +440,29 @@ def u_boot_console(request):
     try:
         console.ensure_spawned()
     except OSError as err:
-        print('Lab failure: Marking connection bad - no other tests will run')
+        msg = 'Lab failure: Marking connection bad - no other tests will run'
+        print(msg)
+        log.error(msg)
+        log.error(f'Error: {err}')
         ubconfig.connection_ok = False
         raise
-    except u_boot_spawn.Timeout:
-        print('Lab timeout: Marking connection bad - no other tests will run')
+    except Timeout as err:
+        msg = 'Lab timeout: Marking connection bad - no other tests will run'
+        print(msg)
+        log.error(msg)
+        log.error(f'Error: {err}')
         ubconfig.connection_ok = False
+    except BootFail as err:
+        msg = 'Boot fail: Marking connection bad - no other tests will run'
+        print(msg)
+        log.error(msg)
+        log.error(f'Error: {err}')
+        ubconfig.connection_ok = False
+    except Unexpected:
+        msg = 'Unexpected test: Assume that lab is health'
+        print(msg)
+        log.error(f'Error: {err}')
+        log.error(msg)
     return console
 
 anchors = {}
