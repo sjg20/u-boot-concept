@@ -85,6 +85,8 @@ def pytest_addoption(parser):
         help="Assume that U-Boot is ready and don't wait for a prompt")
     parser.addoption('--slow-serial', default=False, action='store_true',
         help="Send fewer characters at a time when issuing commands")
+    parser.addoption('--env', type=str, nargs='*',
+        help="Add an environemnt variable, e.g. --env spl_banner_times=2")
 
 def run_build(config, source_dir, build_dir, board_type, log, do_build):
     """run_build: Build U-Boot
@@ -255,6 +257,14 @@ def pytest_configure(config):
     ubconfig.slow_serial = config.getoption('slow_serial')
     ubconfig.dtb = build_dir + '/arch/sandbox/dts/test.dtb'
     ubconfig.connection_ok = True
+    envs = config.getoption('env')
+    for env in envs or []:
+        name, value = env.split('=')
+        try:
+            value = int(value)
+        except:
+            pass
+        ubconfig.env[f'env__{name}'] = value
 
     env_vars = (
         'board_type',
