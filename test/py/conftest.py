@@ -83,6 +83,8 @@ def pytest_addoption(parser):
         'over which gdbserver should communicate, e.g. localhost:1234')
     parser.addoption('--no-prompt-wait', default=False, action='store_true',
         help="Assume that U-Boot is ready and don't wait for a prompt")
+    parser.addoption('--slow-serial', default=False, action='store_true',
+        help="Send fewer characters at a time when issuing commands")
 
 def run_build(config, source_dir, build_dir, board_type, log, do_build):
     """run_build: Build U-Boot
@@ -250,6 +252,7 @@ def pytest_configure(config):
     ubconfig.board_identity = board_identity
     ubconfig.gdbserver = gdbserver
     ubconfig.no_prompt_wait = config.getoption('no_prompt_wait')
+    ubconfig.slow_serial = config.getoption('slow_serial')
     ubconfig.dtb = build_dir + '/arch/sandbox/dts/test.dtb'
     ubconfig.connection_ok = True
 
