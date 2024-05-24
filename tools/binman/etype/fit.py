@@ -460,6 +460,9 @@ class Entry_fit(Entry_section):
         align = self._fit_props.get('fit,align')
         if align is not None:
             args.update({'align': fdt_util.fdt32_to_cpu(align.value)})
+        keys_dir = self._fit_props.get('fit,keys-directory')
+        if keys_dir is not None:
+            args.update({'keys_dir': keys_dir.value})
         if self.mkimage.run(reset_timestamp=True, output_fname=output_fname,
                             **args) is None:
             if not self.GetAllowMissing():
