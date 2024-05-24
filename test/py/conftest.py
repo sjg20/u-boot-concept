@@ -251,6 +251,7 @@ def pytest_configure(config):
     ubconfig.gdbserver = gdbserver
     ubconfig.no_prompt_wait = config.getoption('no_prompt_wait')
     ubconfig.dtb = build_dir + '/arch/sandbox/dts/test.dtb'
+    ubconfig.connection_ok = True
 
     env_vars = (
         'board_type',
@@ -417,8 +418,20 @@ def u_boot_console(request):
     Returns:
         The fixture value.
     """
+    import u_boot_spawn
 
-    console.ensure_spawned()
+    if not ubconfig.connection_ok:
+        pytest.skip('Cannot get target connection')
+        return None
+    try:
+        console.ensure_spawned()
+    except OSError as err:
+        print('Lab failure: Marking connection bad - no other tests will run')
+        ubconfig.connection_ok = False
+        raise
+    except u_boot_spawn.Timeout:
+        print('Lab timeout: Marking connection bad - no other tests will run')
+        ubconfig.connection_ok = False
     return console
 
 anchors = {}
