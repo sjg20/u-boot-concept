@@ -531,14 +531,12 @@ static void vidconsole_putc(struct stdio_dev *sdev, const char ch)
 		console_puts_select_stderr(true, "[vc err: putc]");
 #endif
 	}
-#if 0
 	ret = video_sync(dev->parent, false);
 	if (ret) {
 #ifdef DEBUG
 		console_puts_select_stderr(true, "[vc err: video_sync]");
 #endif
 	}
-#endif
 }
 
 static void vidconsole_puts(struct stdio_dev *sdev, const char *s)
