@@ -269,7 +269,8 @@ class ConsoleBase(object):
         try:
             self.at_prompt = False
             if not self.p:
-                raise BootFail(f'Lab failure: Cannot send command {cmd}')
+                raise BootFail(
+                    f"Lab failure: Connection lost when sending command '{cmd}'")
 
             if send_nl:
                 cmd += '\n'
@@ -314,6 +315,7 @@ class ConsoleBase(object):
             raise
         except BootFail as ex:
             self.log.error(str(ex))
+            self.config.connection_ok = False
             self.cleanup_spawn()
             raise
         finally:
