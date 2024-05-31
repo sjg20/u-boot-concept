@@ -106,7 +106,7 @@ def run_build(config, source_dir, build_dir, board_type, log, do_build):
         else:
             dest_args = ['-i']
         if not do_build:
-            dest_args += ['--config-only', '-m', 'C']
+            dest_args += ['--config-only', '-m']
         cmds = (['buildman', '--board', board_type] + dest_args,)
         name = 'buildman'
     else:
