@@ -24,7 +24,7 @@ pattern_unknown_command = re.compile('Unknown command \'.*\' - try \'help\'')
 pattern_error_notification = re.compile('## Error: ')
 pattern_error_please_reset = re.compile('### ERROR ### Please RESET the board ###')
 pattern_ready_prompt = re.compile('U-Boot is ready')
-pattern_preparing = re.compile('{lab is active}')
+pattern_lab_mode = re.compile('{lab mode}')
 
 PAT_ID = 0
 PAT_RE = 1
@@ -162,7 +162,7 @@ class ConsoleBase(object):
         self.logstream.close()
 
     def set_lab_mode(self):
-        self.log.info(f'Found ready prompt: enabling lab mode')
+        self.log.info(f'test.py: Lab mode is active')
         self.p.timeout = TIMEOUT_PREPARE_MS
         self.lab_mode = True
 
@@ -180,7 +180,7 @@ class ConsoleBase(object):
                 loop_num -= 1
                 while config_spl_serial and not env_spl_skipped and env_spl_banner_times > 0:
                     m = self.p.expect([pattern_u_boot_spl_signon,
-                                       pattern_preparing] + self.bad_patterns)
+                                       pattern_lab_mode] + self.bad_patterns)
                     if m == 1:
                         self.set_lab_mode()
                         break
@@ -191,7 +191,7 @@ class ConsoleBase(object):
 
                 if not self.lab_mode:
                     m = self.p.expect([pattern_u_boot_main_signon,
-                                       pattern_preparing] + self.bad_patterns)
+                                       pattern_lab_mode] + self.bad_patterns)
                     if m == 1:
                         self.set_lab_mode()
                     elif m != 0:
