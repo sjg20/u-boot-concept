@@ -502,7 +502,7 @@ coreboot test.py:
     - ret=0
     - echo "board ${BOARD} id ${ID}"
     - pwd
-    - export strategy="-s uboot"
+    - export strategy="-s start"
     - ${SRC}/test/py/test.py -B "${BOARD}" --id ${ID} --configure
         --build-dir "${OUT}/current/${BOARD}" -k "not bootstd"|| ret=$?
     - U_BOOT_BOARD_IDENTITY="${ID}" u-boot-test-release || true
@@ -512,6 +512,120 @@ coreboot test.py:
 
   after_script:
     - echo done
+
+rpi3:
+  variables:
+    BOARD: rpi_3_32b
+    ID: rpi3
+  <<: *lab_dfn
+
+opi_pc:
+  variables:
+    BOARD: orangepi_pc
+    ID: opi_pc
+  <<: *lab_dfn
+
+pcduino3_nano:
+  variables:
+    BOARD: Linksprite_pcDuino3_Nano
+    ID: pcduino3_nano
+  <<: *lab_dfn
+
+samus:
+  variables:
+    BOARD: chromebook_samus
+    ID: samus
+  <<: *lab_dfn
+
+link:
+  variables:
+    BOARD: chromebook_link
+    ID: link
+  <<: *lab_dfn
+
+jerry:
+  variables:
+    BOARD: chromebook_jerry
+    ID: jerry
+  <<: *lab_dfn
+
+minnowmax:
+  variables:
+    BOARD: minnowmax
+    ID: minnowmax
+  <<: *lab_dfn
+
+opi_pc2:
+  variables:
+    BOARD: orangepi_pc2
+    ID: opi_pc2
+  <<: *lab_dfn
+
+bpi:
+  variables:
+    BOARD: Bananapi
+    ID: bpi
+  <<: *lab_dfn
+
+rpi2:
+  variables:
+    BOARD: rpi_2
+    ID: rpi2
+  <<: *lab_dfn
+
+bob:
+  variables:
+    BOARD: chromebook_bob
+    ID: bob
+  <<: *lab_dfn
+
+ff3399:
+  variables:
+    BOARD: firefly-rk3399
+    ID: ff3399
+  <<: *lab_dfn
+
+coral:
+  variables:
+    BOARD: chromebook_coral
+    ID: coral
+  <<: *lab_dfn
+
+rpi3z:
+  variables:
+    BOARD: rpi_3
+    ID: rpi3z
+  <<: *lab_dfn
+
+bbb:
+  variables:
+    BOARD: am335x_boneblack_vboot
+    ID: bbb
+  <<: *lab_dfn
+
+kevin:
+  variables:
+    BOARD: chromebook_kevin
+    ID: kevin
+  <<: *lab_dfn
+
+pine64:
+  variables:
+    BOARD: pine64_plus
+    ID: pine64
+  <<: *lab_dfn
+
+c4:
+  variables:
+    BOARD: odroid-c4
+    ID: c4
+  <<: *lab_dfn
+
+rpi4:
+  variables:
+    BOARD: rpi_4
+    ID: rpi4
+  <<: *lab_dfn
 
 rpi0:
   variables:
