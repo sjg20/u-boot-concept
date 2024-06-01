@@ -82,6 +82,7 @@ class Spawn:
 
         try:
             new = termios.tcgetattr(self.fd)
+            old = new
             new[3] = new[3] & ~(termios.ICANON | termios.ISIG)
             new[3] = new[3] & ~termios.ECHO
             new[6][termios.VMIN] = 0
@@ -92,6 +93,7 @@ class Spawn:
             self.poll.register(self.fd, select.POLLIN | select.POLLPRI | select.POLLERR |
                                select.POLLHUP | select.POLLNVAL)
         except:
+            termios.tcsetattr(self.fd, termios.TCSANOW, old)
             self.close()
             raise
 

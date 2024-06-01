@@ -312,11 +312,13 @@ class ConsoleBase(object):
             self.log.error(msg)
             self.log.error(str(exc))
             self.cleanup_spawn()
+            pytest.exit(msg)
             raise
         except BootFail as ex:
             self.log.error(str(ex))
             self.config.connection_ok = False
             self.cleanup_spawn()
+            pytest.exit(msg)
             raise
         finally:
             self.log.timestamp()
