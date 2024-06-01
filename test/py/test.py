@@ -19,6 +19,6 @@ if __name__ == '__main__':
 
     # Use short format by default
     if not [arg for arg in args if '--tb=' in arg]:
-        args.append('--tb=long')
+        args.append('--tb=short')
 
     sys.exit(pytest.main(args))

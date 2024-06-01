@@ -315,8 +315,10 @@ class ConsoleBase(object):
             pytest.exit(msg)
             raise
         except BootFail as ex:
+            msg = 'Boot fail: Marking connection bad - no other tests will run'
             self.log.error(str(ex))
             self.config.connection_ok = False
+            msg += f'; output {console.get_spawn_output()}'
             self.cleanup_spawn()
             pytest.exit(msg)
             raise
