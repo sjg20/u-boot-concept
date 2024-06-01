@@ -18,7 +18,7 @@ if __name__ == '__main__':
     args.extend(sys.argv)
 
     # Use short format by default
-    if not [arg for arg in args if '--tb=' in arg]:
-        args.append('--tb=short')
+    #if not [arg for arg in args if '--tb=' in arg]:
+        #args.append('--tb=short')
 
     sys.exit(pytest.main(args))
