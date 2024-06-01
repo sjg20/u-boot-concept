@@ -509,6 +509,12 @@ coreboot test.py:
     - if [[ $ret -ne 0 ]]; then
         exit $ret;
       fi
+  artifacts:
+    when: always
+    paths:
+      - "../out/current/${BOARD}/test-log.html"
+      - "../out/current/${BOARD}/multiplexed_log.css"
+    expire_in: 1 week
 
 kevin:
   variables:

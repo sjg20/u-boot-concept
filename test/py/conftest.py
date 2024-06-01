@@ -459,6 +459,7 @@ def u_boot_console(request):
         print(msg)
         log.error(msg)
         log.error(f'Error: {err}')
+        msg += f'; output {console.get_spawn_output()}'
         pytest.exit(msg)
         ubconfig.connection_ok = False
     except Unexpected:
