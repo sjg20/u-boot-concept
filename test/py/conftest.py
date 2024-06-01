@@ -445,21 +445,24 @@ def u_boot_console(request):
         log.error(msg)
         log.error(f'Error: {err}')
         ubconfig.connection_ok = False
+        pytest.exit(msg)
         raise
     except Timeout as err:
         msg = 'Lab timeout: Marking connection bad - no other tests will run'
         print(msg)
         log.error(msg)
         log.error(f'Error: {err}')
+        pytest.exit(msg)
         ubconfig.connection_ok = False
     except BootFail as err:
         msg = 'Boot fail: Marking connection bad - no other tests will run'
         print(msg)
         log.error(msg)
         log.error(f'Error: {err}')
+        pytest.exit(msg)
         ubconfig.connection_ok = False
     except Unexpected:
-        msg = 'Unexpected test: Assume that lab is health'
+        msg = 'Unexpected test output: Assuming that lab is healthy'
         print(msg)
         log.error(f'Error: {err}')
         log.error(msg)
