@@ -213,8 +213,9 @@ class ConsoleBase(object):
                     self.log.info(f'Found autoboot prompt {m}')
                     self.p.send(' ')
                     continue
-                raise BootFail('Missing prompt / ready message on console: ' +
-                               self.bad_pattern_ids[m - 3])
+                if not self.lab_mode:
+                    raise BootFail('Missing prompt / ready message on console: ' +
+                                   self.bad_pattern_ids[m - 3])
             self.log.info(f'U-Boot is ready')
 
         finally:

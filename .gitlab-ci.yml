@@ -490,11 +490,9 @@ coreboot test.py:
   script:
     # Environment:
     #   SRC  - source tree
-    #   ROOT - directory above that
     #   OUT  - output directory for builds
     - export SRC="$(pwd)"
-    - ROOT="$(dirname ${SRC})"
-    - export OUT="${ROOT}/out"
+    - export OUT="${SRC}/build/${BOARD}"
     - export PATH=$PATH:~/bin
     - export PATH=$PATH:/vid/software/devel/ubtest/u-boot-test-hooks/bin
 
@@ -504,7 +502,7 @@ coreboot test.py:
     - pwd
     - export strategy="-s uboot"
     - ${SRC}/test/py/test.py -B "${BOARD}" --id ${ID} --configure
-        --build-dir "${OUT}/current/${BOARD}" -k "not bootstd"|| ret=$?
+        --build-dir "${OUT}" -k "not bootstd"|| ret=$?
     - U_BOOT_BOARD_IDENTITY="${ID}" u-boot-test-release || true
     - if [[ $ret -ne 0 ]]; then
         exit $ret;
@@ -512,8 +510,8 @@ coreboot test.py:
   artifacts:
     when: always
     paths:
-      - "../out/current/${BOARD}/test-log.html"
-      - "../out/current/${BOARD}/multiplexed_log.css"
+      - "build/${BOARD}/test-log.html"
+      - "build/${BOARD}/multiplexed_log.css"
     expire_in: 1 week
 
 kevin:
