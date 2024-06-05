@@ -1133,14 +1133,14 @@ static int buck_get_enable(struct udevice *dev)
 	return _buck_get_enable(dev->parent, buck);
 }
 
-static int _ldo_get_value(struct udevice *dev, const struct rk8xx_reg_info *info)
+static int _ldo_get_value(struct udevice *pmic, const struct rk8xx_reg_info *info)
 {
 	int mask = info->vsel_mask;
 	int ret, val;
 
 	if (info->vsel_reg == NA)
 		return -ENOSYS;
-	ret = pmic_reg_read(dev->parent, info->vsel_reg);
+	ret = pmic_reg_read(pmic, info->vsel_reg);
 	if (ret < 0)
 		return ret;
 	val = ret & mask;
@@ -1153,7 +1153,7 @@ static int ldo_get_value(struct udevice *dev)
 	int ldo = dev->driver_data - 1;
 	const struct rk8xx_reg_info *info = get_ldo_reg(dev->parent, ldo, 0);
 
-	return _ldo_get_value(dev, info);
+	return _ldo_get_value(dev->parent, info);
 }
 
 static int nldo_get_value(struct udevice *dev)
@@ -1161,7 +1161,7 @@ static int nldo_get_value(struct udevice *dev)
 	int nldo = dev->driver_data - 1;
 	const struct rk8xx_reg_info *info = get_nldo_reg(dev->parent, nldo, 0);
 
-	return _ldo_get_value(dev, info);
+	return _ldo_get_value(dev->parent, info);
 }
 
 static int pldo_get_value(struct udevice *dev)
@@ -1169,10 +1169,10 @@ static int pldo_get_value(struct udevice *dev)
 	int pldo = dev->driver_data - 1;
 	const struct rk8xx_reg_info *info = get_pldo_reg(dev->parent, pldo, 0);
 
-	return _ldo_get_value(dev, info);
+	return _ldo_get_value(dev->parent, info);
 }
 
-static int _ldo_set_value(struct udevice *dev, const struct rk8xx_reg_info *info, int uvolt)
+static int _ldo_set_value(struct udevice *pmic, const struct rk8xx_reg_info *info, int uvolt)
 {
 	int mask = info->vsel_mask;
 	int val;
@@ -1188,7 +1188,7 @@ static int _ldo_set_value(struct udevice *dev, const struct rk8xx_reg_info *info
 	debug("%s: volt=%d, reg=0x%x, mask=0x%x, val=0x%x\n",
 	      __func__, uvolt, info->vsel_reg, mask, val);
 
-	return pmic_clrsetbits(dev->parent, info->vsel_reg, mask, val);
+	return pmic_clrsetbits(pmic, info->vsel_reg, mask, val);
 }
 
 static int ldo_set_value(struct udevice *dev, int uvolt)
@@ -1196,7 +1196,7 @@ static int ldo_set_value(struct udevice *dev, int uvolt)
 	int ldo = dev->driver_data - 1;
 	const struct rk8xx_reg_info *info = get_ldo_reg(dev->parent, ldo, uvolt);
 
-	return _ldo_set_value(dev, info, uvolt);
+	return _ldo_set_value(dev->parent, info, uvolt);
 }
 
 static int nldo_set_value(struct udevice *dev, int uvolt)
@@ -1204,7 +1204,7 @@ static int nldo_set_value(struct udevice *dev, int uvolt)
 	int nldo = dev->driver_data - 1;
 	const struct rk8xx_reg_info *info = get_nldo_reg(dev->parent, nldo, uvolt);
 
-	return _ldo_set_value(dev, info, uvolt);
+	return _ldo_set_value(dev->parent, info, uvolt);
 }
 
 static int pldo_set_value(struct udevice *dev, int uvolt)
@@ -1212,7 +1212,7 @@ static int pldo_set_value(struct udevice *dev, int uvolt)
 	int pldo = dev->driver_data - 1;
 	const struct rk8xx_reg_info *info = get_pldo_reg(dev->parent, pldo, uvolt);
 
-	return _ldo_set_value(dev, info, uvolt);
+	return _ldo_set_value(dev->parent, info, uvolt);
 }
 
 static int _ldo_set_suspend_value(struct udevice *pmic, const struct rk8xx_reg_info *info, int uvolt)
