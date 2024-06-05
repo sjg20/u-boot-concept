@@ -519,7 +519,7 @@ static int _buck_get_enable(struct udevice *pmic, int buck)
 	if (ret < 0)
 		return ret;
 
-	return ret & mask ? true : false;
+	return (ret & mask) ? true : false;
 }
 
 static int _buck_set_suspend_enable(struct udevice *pmic, int buck, bool enable)
@@ -584,7 +584,7 @@ static int _buck_get_suspend_enable(struct udevice *pmic, int buck)
 		val = pmic_reg_read(pmic, RK816_REG_DCDC_SLP_EN);
 		if (val < 0)
 			return val;
-		ret = val & mask ? 1 : 0;
+		ret = (val & mask) ? 1 : 0;
 		break;
 	case RK806_ID:
 		{
@@ -607,7 +607,7 @@ static int _buck_get_suspend_enable(struct udevice *pmic, int buck)
 		val = pmic_reg_read(pmic, REG_SLEEP_SET_OFF1);
 		if (val < 0)
 			return val;
-		ret = val & mask ? 0 : 1;
+		ret = (val & mask) ? 0 : 1;
 		break;
 	case RK809_ID:
 	case RK817_ID:
@@ -619,7 +619,7 @@ static int _buck_get_suspend_enable(struct udevice *pmic, int buck)
 		val = pmic_reg_read(pmic, RK817_POWER_SLP_EN(0));
 		if (val < 0)
 			return val;
-		ret = val & mask ? 1 : 0;
+		ret = (val & mask) ? 1 : 0;
 		break;
 	default:
 		ret = -EINVAL;
@@ -722,7 +722,7 @@ static int _ldo_get_enable(struct udevice *pmic, int ldo)
 	if (ret < 0)
 		return ret;
 
-	return ret & mask ? true : false;
+	return (ret & mask) ? true : false;
 }
 
 static int _nldo_get_enable(struct udevice *pmic, int nldo)
@@ -979,7 +979,7 @@ static int _ldo_get_suspend_enable(struct udevice *pmic, int ldo)
 		val = pmic_reg_read(pmic, RK816_REG_LDO_SLP_EN);
 		if (val < 0)
 			return val;
-		ret = val & mask ? 1 : 0;
+		ret = (val & mask) ? 1 : 0;
 		break;
 	case RK808_ID:
 	case RK818_ID:
@@ -987,7 +987,7 @@ static int _ldo_get_suspend_enable(struct udevice *pmic, int ldo)
 		val = pmic_reg_read(pmic, REG_SLEEP_SET_OFF2);
 		if (val < 0)
 			return val;
-		ret = val & mask ? 0 : 1;
+		ret = (val & mask) ? 0 : 1;
 		break;
 	case RK809_ID:
 	case RK817_ID:
@@ -996,13 +996,13 @@ static int _ldo_get_suspend_enable(struct udevice *pmic, int ldo)
 			val = pmic_reg_read(pmic, RK817_POWER_SLP_EN(0));
 			if (val < 0)
 				return val;
-			ret = val & mask ? 1 : 0;
+			ret = (val & mask) ? 1 : 0;
 		} else {
 			mask = 1 << ldo;
 			val = pmic_reg_read(pmic, RK817_POWER_SLP_EN(1));
 			if (val < 0)
 				return val;
-			ret = val & mask ? 1 : 0;
+			ret = (val & mask) ? 1 : 0;
 		}
 		break;
 	}
@@ -1437,7 +1437,7 @@ static int switch_get_enable(struct udevice *dev)
 	if (ret < 0)
 		return ret;
 
-	return ret & mask ? true : false;
+	return (ret & mask) ? true : false;
 }
 
 static int switch_set_suspend_value(struct udevice *dev, int uvolt)
@@ -1492,21 +1492,21 @@ static int switch_get_suspend_enable(struct udevice *dev)
 		val = pmic_reg_read(dev->parent, REG_SLEEP_SET_OFF1);
 		if (val < 0)
 			return val;
-		ret = val & mask ? 0 : 1;
+		ret = (val & mask) ? 0 : 1;
 		break;
 	case RK809_ID:
 		mask = 1 << (sw + 6);
 		val = pmic_reg_read(dev->parent, RK817_POWER_SLP_EN(0));
 		if (val < 0)
 			return val;
-		ret = val & mask ? 1 : 0;
+		ret = (val & mask) ? 1 : 0;
 		break;
 	case RK818_ID:
 		mask = 1 << 6;
 		val = pmic_reg_read(dev->parent, REG_SLEEP_SET_OFF1);
 		if (val < 0)
 			return val;
-		ret = val & mask ? 0 : 1;
+		ret = (val & mask) ? 0 : 1;
 		break;
 	}
 
