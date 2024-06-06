@@ -502,7 +502,7 @@ coreboot test.py:
     - pwd
     - export strategy="-s uboot"
     - ${SRC}/test/py/test.py -B "${BOARD}" --id ${ID} --configure
-        --build-dir "${OUT}" -k "not bootstd"|| ret=$?
+        --build-dir "${OUT}" --capture=tee-sys -k "not bootstd"|| ret=$?
     - U_BOOT_BOARD_IDENTITY="${ID}" u-boot-test-release || true
     - if [[ $ret -ne 0 ]]; then
         exit $ret;
