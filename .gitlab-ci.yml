@@ -633,3 +633,21 @@ rpi0:
     BOARD: rpi_0_w
     ID: rpi0
   <<: *lab_dfn
+
+snow:
+  variables:
+    BOARD: snow
+    ID: snow
+  <<: *lab_dfn
+
+pcduino3:
+  variables:
+    BOARD: Linksprite_pcDuino3
+    ID: pcduino3
+  <<: *lab_dfn
+
+nyan-big:
+  variables:
+    BOARD: nyan-big
+    ID: nyan-big
+  <<: *lab_dfn
