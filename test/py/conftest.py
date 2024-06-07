@@ -148,6 +148,8 @@ def get_details(config):
             env['U_BOOT_BUILD_DIR'] = build_dir
         proc = subprocess.run(cmd, capture_output=True, encoding='utf-8',
                               env=env)
+        if proc.returncode:
+            raise ValueError(proc.stderr)
         vals = {}
         for line in proc.stdout.splitlines():
             item, value = line.split(' ', maxsplit=1)
