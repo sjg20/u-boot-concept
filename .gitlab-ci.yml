@@ -303,13 +303,13 @@ sandbox trace_test.py:
 evb-ast2500 test.py:
   variables:
     TEST_PY_BD: "evb-ast2500"
-    TEST_PY_ID: "--id qemu"
+    TEST_PY_ROLE: "--id qemu"
   <<: *buildman_and_testpy_dfn
 
 evb-ast2600 test.py:
   variables:
     TEST_PY_BD: "evb-ast2600"
-    TEST_PY_ID: "--id qemu"
+    TEST_PY_ROLE: "--id qemu"
   <<: *buildman_and_testpy_dfn
 
 sandbox_flattree test.py:
@@ -320,14 +320,14 @@ sandbox_flattree test.py:
 vexpress_ca9x4 test.py:
   variables:
     TEST_PY_BD: "vexpress_ca9x4"
-    TEST_PY_ID: "--id qemu"
+    TEST_PY_ROLE: "--id qemu"
   <<: *buildman_and_testpy_dfn
 
 integratorcp_cm926ejs test.py:
   variables:
     TEST_PY_BD: "integratorcp_cm926ejs"
     TEST_PY_TEST_SPEC: "not sleep"
-    TEST_PY_ID: "--id qemu"
+    TEST_PY_ROLE: "--id qemu"
   <<: *buildman_and_testpy_dfn
 
 qemu_arm test.py:
@@ -345,7 +345,7 @@ qemu_arm64 test.py:
 qemu_m68k test.py:
   variables:
     TEST_PY_BD: "M5208EVBE"
-    TEST_PY_ID: "--id qemu"
+    TEST_PY_ROLE: "--id qemu"
     TEST_PY_TEST_SPEC: "not sleep and not efi"
     OVERRIDE: "-a CONFIG_M68K_QEMU=y -a ~CONFIG_MCFTMR"
   <<: *buildman_and_testpy_dfn
@@ -354,28 +354,28 @@ qemu_malta test.py:
   variables:
     TEST_PY_BD: "malta"
     TEST_PY_TEST_SPEC: "not sleep and not efi"
-    TEST_PY_ID: "--id qemu"
+    TEST_PY_ROLE: "--id qemu"
   <<: *buildman_and_testpy_dfn
 
 qemu_maltael test.py:
   variables:
     TEST_PY_BD: "maltael"
     TEST_PY_TEST_SPEC: "not sleep and not efi"
-    TEST_PY_ID: "--id qemu"
+    TEST_PY_ROLE: "--id qemu"
   <<: *buildman_and_testpy_dfn
 
 qemu_malta64 test.py:
   variables:
     TEST_PY_BD: "malta64"
     TEST_PY_TEST_SPEC: "not sleep and not efi"
-    TEST_PY_ID: "--id qemu"
+    TEST_PY_ROLE: "--id qemu"
   <<: *buildman_and_testpy_dfn
 
 qemu_malta64el test.py:
   variables:
     TEST_PY_BD: "malta64el"
     TEST_PY_TEST_SPEC: "not sleep and not efi"
-    TEST_PY_ID: "--id qemu"
+    TEST_PY_ROLE: "--id qemu"
   <<: *buildman_and_testpy_dfn
 
 qemu-ppce500 test.py:
@@ -423,65 +423,65 @@ qemu-x86_64 test.py:
 r2dplus_i82557c test.py:
   variables:
     TEST_PY_BD: "r2dplus"
-    TEST_PY_ID: "--id i82557c_qemu"
+    TEST_PY_ROLE: "--id i82557c_qemu"
   <<: *buildman_and_testpy_dfn
 
 r2dplus_pcnet test.py:
   variables:
     TEST_PY_BD: "r2dplus"
-    TEST_PY_ID: "--id pcnet_qemu"
+    TEST_PY_ROLE: "--id pcnet_qemu"
   <<: *buildman_and_testpy_dfn
 
 r2dplus_rtl8139 test.py:
   variables:
     TEST_PY_BD: "r2dplus"
-    TEST_PY_ID: "--id rtl8139_qemu"
+    TEST_PY_ROLE: "--id rtl8139_qemu"
   <<: *buildman_and_testpy_dfn
 
 r2dplus_tulip test.py:
   variables:
     TEST_PY_BD: "r2dplus"
-    TEST_PY_ID: "--id tulip_qemu"
+    TEST_PY_ROLE: "--id tulip_qemu"
   <<: *buildman_and_testpy_dfn
 
 sifive_unleashed_sdcard test.py:
   variables:
     TEST_PY_BD: "sifive_unleashed"
-    TEST_PY_ID: "--id sdcard_qemu"
+    TEST_PY_ROLE: "--id sdcard_qemu"
   <<: *buildman_and_testpy_dfn
 
 sifive_unleashed_spi-nor test.py:
   variables:
     TEST_PY_BD: "sifive_unleashed"
-    TEST_PY_ID: "--id spi-nor_qemu"
+    TEST_PY_ROLE: "--id spi-nor_qemu"
   <<: *buildman_and_testpy_dfn
 
 xilinx_zynq_virt test.py:
   variables:
     TEST_PY_BD: "xilinx_zynq_virt"
     TEST_PY_TEST_SPEC: "not sleep"
-    TEST_PY_ID: "--id qemu"
+    TEST_PY_ROLE: "--id qemu"
   <<: *buildman_and_testpy_dfn
 
 xilinx_versal_virt test.py:
   variables:
     TEST_PY_BD: "xilinx_versal_virt"
     TEST_PY_TEST_SPEC: "not sleep"
-    TEST_PY_ID: "--id qemu"
+    TEST_PY_ROLE: "--id qemu"
   <<: *buildman_and_testpy_dfn
 
 xtfpga test.py:
   variables:
     TEST_PY_BD: "xtfpga"
     TEST_PY_TEST_SPEC: "not sleep"
-    TEST_PY_ID: "--id qemu"
+    TEST_PY_ROLE: "--id qemu"
   <<: *buildman_and_testpy_dfn
 
 coreboot test.py:
   variables:
     TEST_PY_BD: "coreboot"
     TEST_PY_TEST_SPEC: "not sleep"
-    TEST_PY_ID: "--id qemu"
+    TEST_PY_ROLE: "--id qemu"
   <<: *buildman_and_testpy_dfn
 
 .lab_template: &lab_dfn
@@ -498,13 +498,13 @@ coreboot test.py:
 
     # Load it on the device
     - ret=0
-    - echo "board ${BOARD} id ${ID}"
+    - echo "board ${BOARD} id ${ROLE}"
     - pwd
     - export strategy="-s uboot"
     # export verbose="-v"
-    - ${SRC}/test/py/test.py -B "${BOARD}" --id ${ID} --configure
+    - ${SRC}/test/py/test.py --role ${ROLE} --configure
         --build-dir "${OUT}" --capture=tee-sys -k "not bootstd"|| ret=$?
-    - U_BOOT_BOARD_IDENTITY="${ID}" u-boot-test-release || true
+    - U_BOOT_BOARD_IDENTITY="${ROLE}" u-boot-test-release || true
     - if [[ $ret -ne 0 ]]; then
         exit $ret;
       fi
@@ -517,138 +517,5 @@ coreboot test.py:
 
 rpi3:
   variables:
-    BOARD: rpi_3_32b
-    ID: rpi3
-  <<: *lab_dfn
-
-opi_pc:
-  variables:
-    BOARD: orangepi_pc
-    ID: opi_pc
-  <<: *lab_dfn
-
-pcduino3_nano:
-  variables:
-    BOARD: Linksprite_pcDuino3_Nano
-    ID: pcduino3_nano
-  <<: *lab_dfn
-
-samus:
-  variables:
-    BOARD: chromebook_samus
-    ID: samus
-  <<: *lab_dfn
-
-link:
-  variables:
-    BOARD: chromebook_link
-    ID: link
-  <<: *lab_dfn
-
-jerry:
-  variables:
-    BOARD: chromebook_jerry
-    ID: jerry
-  <<: *lab_dfn
-
-minnowmax:
-  variables:
-    BOARD: minnowmax
-    ID: minnowmax
-  <<: *lab_dfn
-
-opi_pc2:
-  variables:
-    BOARD: orangepi_pc2
-    ID: opi_pc2
-  <<: *lab_dfn
-
-bpi:
-  variables:
-    BOARD: Bananapi
-    ID: bpi
-  <<: *lab_dfn
-
-rpi2:
-  variables:
-    BOARD: rpi_2
-    ID: rpi2
-  <<: *lab_dfn
-
-bob:
-  variables:
-    BOARD: chromebook_bob
-    ID: bob
-  <<: *lab_dfn
-
-ff3399:
-  variables:
-    BOARD: firefly-rk3399
-    ID: ff3399
-  <<: *lab_dfn
-
-coral:
-  variables:
-    BOARD: chromebook_coral
-    ID: coral
-  <<: *lab_dfn
-
-rpi3z:
-  variables:
-    BOARD: rpi_3
-    ID: rpi3z
-  <<: *lab_dfn
-
-bbb:
-  variables:
-    BOARD: am335x_boneblack_vboot
-    ID: bbb
-  <<: *lab_dfn
-
-kevin:
-  variables:
-    BOARD: chromebook_kevin
-    ID: kevin
-  <<: *lab_dfn
-
-pine64:
-  variables:
-    BOARD: pine64_plus
-    ID: pine64
-  <<: *lab_dfn
-
-c4:
-  variables:
-    BOARD: odroid-c4
-    ID: c4
-  <<: *lab_dfn
-
-rpi4:
-  variables:
-    BOARD: rpi_4
-    ID: rpi4
-  <<: *lab_dfn
-
-rpi0:
-  variables:
-    BOARD: rpi_0_w
-    ID: rpi0
-  <<: *lab_dfn
-
-snow:
-  variables:
-    BOARD: snow
-    ID: snow
-  <<: *lab_dfn
-
-pcduino3:
-  variables:
-    BOARD: Linksprite_pcDuino3
-    ID: pcduino3
-  <<: *lab_dfn
-
-nyan-big:
-  variables:
-    BOARD: nyan-big
-    ID: nyan-big
+    ROLE: rpi3
   <<: *lab_dfn

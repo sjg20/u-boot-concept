@@ -23,6 +23,7 @@ from pathlib import Path
 import pytest
 import re
 from _pytest.runner import runtestprotocol
+import subprocess
 import sys
 from u_boot_spawn import BootFail, Timeout, Unexpected
 
@@ -82,6 +83,7 @@ def pytest_addoption(parser):
     parser.addoption('--gdbserver', default=None,
         help='Run sandbox under gdbserver. The argument is the channel '+
         'over which gdbserver should communicate, e.g. localhost:1234')
+    parser.addoption('--role', help='U-Boot board role (for Labgrid)')
     parser.addoption('--no-prompt-wait', default=False, action='store_true',
         help="Assume that U-Boot is ready and don't wait for a prompt")
     parser.addoption('--slow-serial', default=False, action='store_true',
@@ -130,14 +132,36 @@ def run_build(config, source_dir, build_dir, board_type, log, do_build):
         runner.close()
         log.status_pass('OK')
 
+def get_details(config):
+    txdelay = None
+    spl_banner_times = None
+    role = config.getoption('role')
+    source_dir = os.path.dirname(os.path.dirname(TEST_PY_DIR))
+    if role:
+        board_identity = role
+
+        cmd = ['u-boot-test-getrole', role]
+        proc = subprocess.run(cmd, capture_output=True, encoding='utf-8')
+        (board_type, build_dir, txdelay,
+         spl_banner_times) = proc.stdout.splitlines()
+        build_dir = None
+    else:
+        board_type = config.getoption('board_type')
+        board_identity = config.getoption('board_identity')
+
+        build_dir = config.getoption('build_dir')
+    if not build_dir:
+        build_dir = source_dir + '/build-' + board_type
+
+    return (board_type, board_identity, build_dir, source_dir, txdelay,
+            spl_banner_times)
+
 def pytest_xdist_setupnodes(config, specs):
     """Clear out any 'done' file from a previous build"""
     global build_done_file
-    build_dir = config.getoption('build_dir')
-    board_type = config.getoption('board_type')
-    source_dir = os.path.dirname(os.path.dirname(TEST_PY_DIR))
-    if not build_dir:
-        build_dir = source_dir + '/build-' + board_type
+
+    build_dir = get_details(config)[2]
+
     build_done_file = Path(build_dir) / 'build.done'
     if build_done_file.exists():
         os.remove(build_done_file)
@@ -176,17 +200,11 @@ def pytest_configure(config):
     global console
     global ubconfig
 
-    source_dir = os.path.dirname(os.path.dirname(TEST_PY_DIR))
+    (board_type, board_identity, build_dir, source_dir, txdelay,
+     spl_banner_times) = get_details(config)
 
-    board_type = config.getoption('board_type')
     board_type_filename = board_type.replace('-', '_')
-
-    board_identity = config.getoption('board_identity')
     board_identity_filename = board_identity.replace('-', '_')
-
-    build_dir = config.getoption('build_dir')
-    if not build_dir:
-        build_dir = source_dir + '/build-' + board_type
     mkdir_p(build_dir)
 
     result_dir = config.getoption('result_dir')
@@ -255,9 +273,12 @@ def pytest_configure(config):
     ubconfig.board_identity = board_identity
     ubconfig.gdbserver = gdbserver
     ubconfig.no_prompt_wait = config.getoption('no_prompt_wait')
-    ubconfig.slow_serial = config.getoption('slow_serial')
+    ubconfig.slow_serial = config.getoption('slow_serial') or txdelay
     ubconfig.dtb = build_dir + '/arch/sandbox/dts/test.dtb'
     ubconfig.connection_ok = True
+    if spl_banner_times:
+        ubconfig.env[f'env__spl_banner_times'] = spl_banner_times
+
     envs = config.getoption('env')
     for env in envs or []:
         name, value = env.split('=')
