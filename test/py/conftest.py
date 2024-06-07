@@ -158,6 +158,8 @@ def get_details(config):
         board_type, default_build_dir, source_dir, txdelay, spl_banner_times = (
             vals['board'], vals['build_dir'], vals['source_dir'],
             vals['txdelay'], vals['spl_banner_times'])
+        if spl_banner_times:
+            spl_banner_times = int(spl_banner_times)
     else:
         board_type = config.getoption('board_type')
         board_identity = config.getoption('board_identity')
