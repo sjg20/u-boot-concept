@@ -611,6 +611,7 @@ def wait_for_process_limit(limit):
     if count > limit:
         print('Waiting for other buildman processes...', end='')
         sys.stdout.flush()
+        raise ValueError('bad')
         while count_processes() > limit:
             if time.monotonic() > end_timeout:
                 print('deadline exceeed...', end='')
