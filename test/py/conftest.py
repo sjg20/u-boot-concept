@@ -137,13 +137,21 @@ def get_details(config):
     spl_banner_times = None
     role = config.getoption('role')
     source_dir = os.path.dirname(os.path.dirname(TEST_PY_DIR))
+    do_configure = config.getoption('configure')
     if role:
         board_identity = role
 
         cmd = ['u-boot-test-getrole', role]
+        if do_configure:
+            cmd.append('--do-configure')
         proc = subprocess.run(cmd, capture_output=True, encoding='utf-8')
-        (board_type, build_dir, config_file, txdelay,
-         spl_banner_times) = proc.stdout.splitlines()
+        vals = {}
+        for line in proc.stdout.splitlines():
+            item, value = line.split(' ', maxsplit=1)
+            k = item.split(':')[-1]
+            vals[k] = value
+        board_type, build_dir, txdelay, spl_banner_times = (vals['board'],
+            vals['build_dir'], vals['txdelay'], vals['spl_banner_times'])
     else:
         board_type = config.getoption('board_type')
         board_identity = config.getoption('board_identity')
@@ -152,8 +160,8 @@ def get_details(config):
     if not build_dir:
         build_dir = source_dir + '/build-' + board_type
 
-    return (board_type, board_identity, build_dir, source_dir, config_file,
-            txdelay, spl_banner_times)
+    return (board_type, board_identity, build_dir, source_dir, txdelay,
+            spl_banner_times)
 
 def pytest_xdist_setupnodes(config, specs):
     """Clear out any 'done' file from a previous build"""
@@ -199,7 +207,7 @@ def pytest_configure(config):
     global console
     global ubconfig
 
-    (board_type, board_identity, build_dir, source_dir, config_file, txdelay,
+    (board_type, board_identity, build_dir, source_dir, txdelay,
      spl_banner_times) = get_details(config)
 
     board_type_filename = board_type.replace('-', '_')
@@ -223,7 +231,7 @@ def pytest_configure(config):
     import multiplexed_log
     log = multiplexed_log.Logfile(result_dir + '/test-log.html')
 
-    if config.getoption('build') or config.getoption('configure'):
+    if config.getoption('build'):
         worker_id = os.environ.get("PYTEST_XDIST_WORKER")
         with filelock.FileLock(os.path.join(build_dir, 'build.lock')):
             build_done_file = Path(build_dir) / 'build.done'
