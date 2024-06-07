@@ -498,8 +498,7 @@ coreboot test.py:
 
     # Load it on the device
     - ret=0
-    - echo "board ${BOARD} id ${ROLE}"
-    - pwd
+    - echo "role ${ROLE}"
     - export strategy="-s uboot -e off"
     # export verbose="-v"
     - ${SRC}/test/py/test.py --role ${ROLE} --configure
