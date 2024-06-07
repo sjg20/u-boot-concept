@@ -11,6 +11,7 @@ import multiprocessing
 import os
 import shutil
 import sys
+import time
 
 from buildman import boards
 from buildman import bsettings
@@ -578,6 +579,45 @@ def calc_adjust_cfg(adjust_cfg, reproducible_builds):
     return adjust_cfg
 
 
+def count_processes():
+    """Count the number of buildman processes
+
+    This will never be less that 1, since it counts the current process
+
+    Returns:
+        int: Number of buildman process
+    """
+    # Import this here so this library is not needed until this feature is used
+    import psutil
+
+    count = 0
+    for proc in psutil.process_iter():
+        if 'python' in proc.name():
+            for arg in proc.cmdline():
+                if 'buildman' in arg:
+                    count += 1
+                    break
+    return count
+
+
+def wait_for_process_limit(limit):
+    """Wait until the number of buildman processes drops to the limit
+
+    Args:
+        limit (int): Maximum number of buildman processes, including this one
+    """
+    count = count_processes()
+    end_timeout = time.monotonic() + 300  # 5 minutes
+    if count > limit:
+        print('Waiting for other buildman processes...', end='')
+        sys.stdout.flush()
+        while count_processes() > limit:
+            if time.monotonic() > end_timeout:
+                print('deadline exceeed...', end='')
+                break
+            time.sleep(1)
+        print('starting buildman')
+
 def do_buildman(args, toolchains=None, make_func=None, brds=None,
                 clean_dir=False, test_thread_exceptions=False):
     """The main control code for buildman
@@ -676,6 +716,9 @@ def do_buildman(args, toolchains=None, make_func=None, brds=None,
             force_config_on_failure=not args.quick, make_func=make_func)
 
     TEST_BUILDER = builder
+
+    if args.process_limit:
+        wait_for_process_limit(args.process_limit)
 
     return run_builder(builder, series.commits if series else None,
                        brds.get_selected_dict(), args)
