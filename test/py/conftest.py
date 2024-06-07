@@ -136,16 +136,18 @@ def get_details(config):
     txdelay = None
     spl_banner_times = None
     role = config.getoption('role')
-    source_dir = os.path.dirname(os.path.dirname(TEST_PY_DIR))
     do_configure = config.getoption('configure')
     build_dir = config.getoption('build_dir')
     if role:
         board_identity = role
-
         cmd = ['u-boot-test-getrole', role]
         if do_configure:
             cmd.append('--do-configure')
-        proc = subprocess.run(cmd, capture_output=True, encoding='utf-8')
+        env = os.environ.copy()
+        if build_dir:
+            env['U_BOOT_BUILD_DIR'] = build_dir
+        proc = subprocess.run(cmd, capture_output=True, encoding='utf-8',
+                              env=env)
         print('out', proc.stdout)
         vals = {}
         for line in proc.stdout.splitlines():
@@ -153,13 +155,14 @@ def get_details(config):
             k = item.split(':')[-1]
             vals[k] = value
         print('vals', vals)
-        board_type, default_build_dir, txdelay, spl_banner_times = (
-            vals['board'], vals['build_dir'], vals['txdelay'],
-            vals['spl_banner_times'])
+        board_type, default_build_dir, source_dir, txdelay, spl_banner_times = (
+            vals['board'], vals['build_dir'], vals['source_dir'],
+            vals['txdelay'], vals['spl_banner_times'])
     else:
         board_type = config.getoption('board_type')
         board_identity = config.getoption('board_identity')
 
+        source_dir = os.path.dirname(os.path.dirname(TEST_PY_DIR))
         default_build_dir = source_dir + '/build-' + board_type
     if not build_dir:
         build_dir = default_build_dir
