@@ -142,9 +142,8 @@ def get_details(config):
 
         cmd = ['u-boot-test-getrole', role]
         proc = subprocess.run(cmd, capture_output=True, encoding='utf-8')
-        (board_type, build_dir, txdelay,
+        (board_type, build_dir, config_file, txdelay,
          spl_banner_times) = proc.stdout.splitlines()
-        build_dir = None
     else:
         board_type = config.getoption('board_type')
         board_identity = config.getoption('board_identity')
@@ -153,8 +152,8 @@ def get_details(config):
     if not build_dir:
         build_dir = source_dir + '/build-' + board_type
 
-    return (board_type, board_identity, build_dir, source_dir, txdelay,
-            spl_banner_times)
+    return (board_type, board_identity, build_dir, source_dir, config_file,
+            txdelay, spl_banner_times)
 
 def pytest_xdist_setupnodes(config, specs):
     """Clear out any 'done' file from a previous build"""
@@ -200,7 +199,7 @@ def pytest_configure(config):
     global console
     global ubconfig
 
-    (board_type, board_identity, build_dir, source_dir, txdelay,
+    (board_type, board_identity, build_dir, source_dir, config_file, txdelay,
      spl_banner_times) = get_details(config)
 
     board_type_filename = board_type.replace('-', '_')
