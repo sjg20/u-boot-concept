@@ -148,13 +148,12 @@ def get_details(config):
             env['U_BOOT_BUILD_DIR'] = build_dir
         proc = subprocess.run(cmd, capture_output=True, encoding='utf-8',
                               env=env)
-        print('out', proc.stdout)
         vals = {}
         for line in proc.stdout.splitlines():
             item, value = line.split(' ', maxsplit=1)
             k = item.split(':')[-1]
             vals[k] = value
-        print('vals', vals)
+        print('lab info:', vals)
         board_type, default_build_dir, source_dir, txdelay, spl_banner_times = (
             vals['board'], vals['build_dir'], vals['source_dir'],
             vals['txdelay'], vals['spl_banner_times'])

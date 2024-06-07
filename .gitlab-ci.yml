@@ -500,7 +500,7 @@ coreboot test.py:
     - ret=0
     - echo "board ${BOARD} id ${ROLE}"
     - pwd
-    - export strategy="-s uboot"
+    - export strategy="-s uboot -e off"
     # export verbose="-v"
     - ${SRC}/test/py/test.py --role ${ROLE} --configure
         --build-dir "${OUT}" --capture=tee-sys -k "not bootstd"|| ret=$?
