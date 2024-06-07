@@ -138,6 +138,7 @@ def get_details(config):
     role = config.getoption('role')
     source_dir = os.path.dirname(os.path.dirname(TEST_PY_DIR))
     do_configure = config.getoption('configure')
+    build_dir = config.getoption('build_dir')
     if role:
         board_identity = role
 
@@ -145,20 +146,23 @@ def get_details(config):
         if do_configure:
             cmd.append('--do-configure')
         proc = subprocess.run(cmd, capture_output=True, encoding='utf-8')
+        print('out', proc.stdout)
         vals = {}
         for line in proc.stdout.splitlines():
             item, value = line.split(' ', maxsplit=1)
             k = item.split(':')[-1]
             vals[k] = value
-        board_type, build_dir, txdelay, spl_banner_times = (vals['board'],
-            vals['build_dir'], vals['txdelay'], vals['spl_banner_times'])
+        print('vals', vals)
+        board_type, default_build_dir, txdelay, spl_banner_times = (
+            vals['board'], vals['build_dir'], vals['txdelay'],
+            vals['spl_banner_times'])
     else:
         board_type = config.getoption('board_type')
         board_identity = config.getoption('board_identity')
 
-        build_dir = config.getoption('build_dir')
+        default_build_dir = source_dir + '/build-' + board_type
     if not build_dir:
-        build_dir = source_dir + '/build-' + board_type
+        build_dir = default_build_dir
 
     return (board_type, board_identity, build_dir, source_dir, txdelay,
             spl_banner_times)
