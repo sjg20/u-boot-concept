@@ -159,7 +159,9 @@ class ConsoleBase(object):
 
         if self.p:
             self.log.start_section('Stopping U-Boot')
-            self.p.close()
+            close_type = self.p.close()
+            self.log.info(f'Close type: {close_type}')
+            self.log.end_section('Stopping U-Boot')
         self.logstream.close()
 
     def set_lab_mode(self):

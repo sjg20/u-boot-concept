@@ -273,15 +273,17 @@ class Spawn:
         # Wait about 10 seconds
         for _ in range(100):
             if not self.isalive():
-                return
+                return 'normal'
             time.sleep(0.1)
 
         # That didn't work, so try closing the PTY
         os.close(self.fd)
         for _ in range(100):
             if not self.isalive():
-                break
+                return 'break'
             time.sleep(0.1)
+
+        return 'timeout'
 
     def get_expect_output(self):
         """Return the output read by expect()
