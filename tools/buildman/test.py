@@ -812,6 +812,9 @@ class TestBuild(unittest.TestCase):
             self.assertEqual('Waiting for other buildman processes...',
                              lines[0].text)
             self.assertEqual('timeout...', lines[1].text)
+            self.assertEqual(None, lines[1].colour)
+            self.assertEqual(False, lines[1].newline)
+            self.assertEqual(True, lines[1].bright)
             self.assertEqual('starting build', lines[2].text)
             self.assertEqual([1, 2], control.read_procs(tmpdir))
             self.assertEqual(control.RUN_WAIT_S, self.cur_time)
@@ -827,6 +830,9 @@ class TestBuild(unittest.TestCase):
             self.assertEqual('Waiting for other buildman processes...',
                              lines[0].text)
             self.assertEqual('failed to get lock: busting...', lines[1].text)
+            self.assertEqual(None, lines[1].colour)
+            self.assertEqual(False, lines[1].newline)
+            self.assertEqual(True, lines[1].bright)
             self.assertEqual('timeout...', lines[2].text)
             self.assertEqual('starting build', lines[3].text)
             self.assertEqual([1, 2, 3], control.read_procs(tmpdir))

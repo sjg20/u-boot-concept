@@ -720,7 +720,7 @@ def wait_for_process_limit(limit, tmpdir=tempfile.gettempdir(),
                     break
 
         except Timeout:
-            tprint('failed to get lock: busting...')
+            tprint('failed to get lock: busting...', newline=False)
             os.remove(lock_fname)
 
         time.sleep(1)
