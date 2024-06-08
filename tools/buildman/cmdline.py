@@ -130,7 +130,7 @@ def add_after_m(parser):
     parser.add_argument('--print-arch', action='store_true',
           default=False, help="Print the architecture for a board (ARCH=)")
     parser.add_argument('--process-limit', type=int,
-          default=0, help='Limit the number of buildman jobs running at once')
+          default=0, help='Limit to number of buildmans running at once')
     parser.add_argument('-r', '--reproducible-builds', action='store_true',
           help='Set SOURCE_DATE_EPOCH=0 to suuport a reproducible build')
     parser.add_argument('-R', '--regen-board-list', type=str,

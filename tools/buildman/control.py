@@ -11,6 +11,7 @@ import multiprocessing
 import os
 import shutil
 import sys
+import tempfile
 import time
 
 from buildman import boards
@@ -22,9 +23,22 @@ from patman import gitutil
 from patman import patchstream
 from u_boot_pylib import command
 from u_boot_pylib import terminal
-from u_boot_pylib.terminal import tprint
+from u_boot_pylib import tools
+from u_boot_pylib.terminal import print_clear, tprint
 
 TEST_BUILDER = None
+
+# Space-separated list of buildman process IDs currently running jobs
+RUNNING_FNAME = 'buildmanq'
+
+# Lock file for access to RUNNING_FILE
+LOCK_FNAME = 'buildmanq.lock'
+
+# Wait time for access to lock (seconds)
+LOCK_WAIT_S = 10
+
+# Wait time to start running
+RUN_WAIT_S = 300
 
 def get_plural(count):
     """Returns a plural 's' if count is not 1"""
@@ -600,23 +614,95 @@ def count_processes():
     return count
 
 
-def wait_for_process_limit(limit):
+def read_procs(tmpdir=tempfile.gettempdir()):
+    """Read the list of running buildman processes
+
+    If the list is corrupted, returns an empty list
+
+    Args:
+        tmpdir (str): Temporary directory to use (for testing only)
+    """
+    running_fname = os.path.join(tmpdir, RUNNING_FNAME)
+    procs = []
+    if os.path.exists(running_fname):
+        items = tools.read_file(running_fname, binary=False).split()
+        try:
+            procs = [int(x) for x in items]
+        except ValueError: # Handle invalid format
+            pass
+    return procs
+
+
+def check_pid(pid):
+    """Check for existence of a unix PID
+
+    https://stackoverflow.com/questions/568271/how-to-check-if-there-exists-a-process-with-a-given-pid-in-python
+
+    Args:
+        pid (int): PID to check
+
+    Returns:
+        True if it exists, else False
+    """
+    try:
+        os.kill(pid, 0)
+    except OSError:
+        return False
+    else:
+        return True
+
+
+def write_procs(procs, tmpdir=tempfile.gettempdir()):
+    """Write the list of running buildman processes
+
+    Args:
+        tmpdir (str): Temporary directory to use (for testing only)
+    """
+    running_fname = os.path.join(tmpdir, RUNNING_FNAME)
+    tools.write_file(running_fname, ' '.join([str(p) for p in procs]),
+                     binary=False)
+
+def wait_for_process_limit(limit, tmpdir=tempfile.gettempdir(),
+                           pid=os.getpid()):
     """Wait until the number of buildman processes drops to the limit
 
     Args:
-        limit (int): Maximum number of buildman processes, including this one
+        limit (int): Maximum number of buildman processes, including this one;
+            must be > 0
+        tmpdir (str): Temporary directory to use (for testing only)
+        pid (int): Current process ID (for testing only)
     """
-    count = count_processes()
-    end_timeout = time.monotonic() + 300  # 5 minutes
-    if count > limit:
-        print('Waiting for other buildman processes...', end='')
-        sys.stdout.flush()
-        while count_processes() > limit:
-            if time.monotonic() > end_timeout:
-                print('deadline exceeed...', end='')
-                break
-            time.sleep(1)
-        print('starting buildman')
+    from filelock import Timeout, FileLock
+
+    running_fname = os.path.join(tmpdir, RUNNING_FNAME)
+    lock_fname = os.path.join(tmpdir, LOCK_FNAME)
+    lock = FileLock(lock_fname)
+    tprint('Waiting for other buildman processes...', newline=False)
+
+    claimed = False
+    deadline = time.time() + RUN_WAIT_S
+    while True:
+        try:
+            with lock.acquire(timeout=LOCK_WAIT_S):
+                procs = read_procs(tmpdir)
+
+                # If we haven't hit the limit, add ourself
+                if len(procs) < limit:
+                    tprint('done...')
+                    claimed = True
+                if time.time() >= deadline:
+                    tprint('timeout...')
+                    claimed = True
+                if claimed:
+                    write_procs(procs + [pid], tmpdir)
+                    break
+
+        except Timeout:
+            tprint('failed to get lock: busting...')
+            os.remove(lock_fname)
+
+        time.sleep(1)
+    tprint('starting build')
 
 def do_buildman(args, toolchains=None, make_func=None, brds=None,
                 clean_dir=False, test_thread_exceptions=False):

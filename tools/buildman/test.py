@@ -2,12 +2,14 @@
 # Copyright (c) 2012 The Chromium OS Authors.
 #
 
+from filelock import FileLock
 import os
 import shutil
 import sys
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
 
 from buildman import board
 from buildman import boards
@@ -155,6 +157,8 @@ class TestBuild(unittest.TestCase):
         self.base_dir = tempfile.mkdtemp()
         if not os.path.isdir(self.base_dir):
             os.mkdir(self.base_dir)
+
+        self.cur_time = 0
 
     def tearDown(self):
         shutil.rmtree(self.base_dir)
@@ -747,6 +751,61 @@ class TestBuild(unittest.TestCase):
         self.assertEqual([
             ['MARY="mary"', 'Missing expected line: CONFIG_MARY="mary"']], result)
 
+    def get_procs(self):
+        running_fname = os.path.join(self.base_dir, control.RUNNING_FNAME)
+        items = tools.read_file(running_fname, binary=False).split()
+        return [int(x) for x in items]
+
+    def get_time(self):
+        return self.cur_time
+
+    def inc_time(self, amount):
+        self.cur_time += amount
+        #print('cur', self.cur_time)
+
+    def test_process_limit(self):
+        """Test wait_for_process_limit() function"""
+        tmpdir = self.base_dir
+
+        with (patch('time.time', side_effect=self.get_time),
+              patch('time.sleep', side_effect=self.inc_time)):
+            # Grab the process. Since there is no other profcess, this should
+            # immediately succeed
+            control.wait_for_process_limit(1, tmpdir=tmpdir, pid=1)
+            lines = terminal.get_print_test_lines()
+            self.assertEqual(0, self.cur_time)
+            self.assertEqual('Waiting for other buildman processes...',
+                             lines[0].text)
+            self.assertEqual('done...', lines[1].text)
+            self.assertEqual('starting build', lines[2].text)
+            self.assertEqual([1], control.read_procs(tmpdir))
+
+            # Try again, with a different PID...this should eventually timeout
+            # and start the build anyway
+            self.cur_time = 0
+            control.wait_for_process_limit(1, tmpdir=tmpdir, pid=2)
+            lines = terminal.get_print_test_lines()
+            self.assertEqual('Waiting for other buildman processes...',
+                             lines[0].text)
+            self.assertEqual('timeout...', lines[1].text)
+            self.assertEqual('starting build', lines[2].text)
+            self.assertEqual([1, 2], control.read_procs(tmpdir))
+            self.assertEqual(control.RUN_WAIT_S, self.cur_time)
+
+            # Check lock-busting
+            self.cur_time = 0
+            lock_fname = os.path.join(tmpdir, control.LOCK_FNAME)
+            lock = FileLock(lock_fname)
+            lock.acquire(timeout=1)
+            control.wait_for_process_limit(1, tmpdir=tmpdir, pid=3)
+            lines = terminal.get_print_test_lines()
+            self.assertEqual('Waiting for other buildman processes...',
+                             lines[0].text)
+            self.assertEqual('failed to get lock: busting...', lines[1].text)
+            self.assertEqual('timeout...', lines[2].text)
+            self.assertEqual('starting build', lines[3].text)
+            self.assertEqual([1, 2, 3], control.read_procs(tmpdir))
+            self.assertEqual(control.RUN_WAIT_S, self.cur_time)
 
 if __name__ == "__main__":
     unittest.main()
