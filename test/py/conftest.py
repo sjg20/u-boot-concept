@@ -150,13 +150,13 @@ def get_details(config):
                               env=env)
         if proc.returncode:
             raise ValueError(proc.stderr)
+        print('conftest: lab:', proc.stdout)
         vals = {}
         for line in proc.stdout.splitlines():
             item, value = line.split(' ', maxsplit=1)
             k = item.split(':')[-1]
             vals[k] = value
-        print('lab info:', vals)
-        print('buildman limit', env.get('process_limit'))
+        print('conftest: lab info:', vals)
         board_type, default_build_dir, source_dir, txdelay, spl_banner_times = (
             vals['board'], vals['build_dir'], vals['source_dir'],
             vals['txdelay'], vals['spl_banner_times'])
