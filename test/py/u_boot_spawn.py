@@ -15,6 +15,9 @@ import termios
 import time
 import traceback
 
+# Character to send (twice) to exit the terminal
+EXIT_CHAR = 0x1d    # FS (Ctrl + ])
+
 class Timeout(Exception):
     """An exception sub-class that indicates that a timeout occurred."""
 
@@ -265,7 +268,15 @@ class Spawn:
         Returns:
             Nothing.
         """
+        self.send(EXIT_CHAR + EXIT_CHAR)
 
+        # Wait about 10 seconds
+        for _ in range(100):
+            if not self.isalive():
+                return
+            time.sleep(0.1)
+
+        # That didn't work, so try closing the PTY
         os.close(self.fd)
         for _ in range(100):
             if not self.isalive():
