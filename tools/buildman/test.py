@@ -159,6 +159,9 @@ class TestBuild(unittest.TestCase):
             os.mkdir(self.base_dir)
 
         self.cur_time = 0
+        self.valid_pids = []
+        self.finish_time = None
+        self.finish_pid = None
 
     def tearDown(self):
         shutil.rmtree(self.base_dir)
@@ -761,14 +764,23 @@ class TestBuild(unittest.TestCase):
 
     def inc_time(self, amount):
         self.cur_time += amount
-        #print('cur', self.cur_time)
+
+        # Handle a process exiting
+        if self.finish_time == self.cur_time:
+            self.valid_pids = [pid for pid in self.valid_pids
+                               if pid != self.finish_pid]
+
+    def kill(self, pid, signal):
+        if pid not in self.valid_pids:
+            raise OSError('Invalid PID')
 
     def test_process_limit(self):
         """Test wait_for_process_limit() function"""
         tmpdir = self.base_dir
 
         with (patch('time.time', side_effect=self.get_time),
-              patch('time.sleep', side_effect=self.inc_time)):
+              patch('time.sleep', side_effect=self.inc_time),
+              patch('os.kill', side_effect=self.kill)):
             # Grab the process. Since there is no other profcess, this should
             # immediately succeed
             control.wait_for_process_limit(1, tmpdir=tmpdir, pid=1)
@@ -776,13 +788,25 @@ class TestBuild(unittest.TestCase):
             self.assertEqual(0, self.cur_time)
             self.assertEqual('Waiting for other buildman processes...',
                              lines[0].text)
+            self.assertEqual(self._col.RED, lines[0].colour)
+            self.assertEqual(False, lines[0].newline)
+            self.assertEqual(True, lines[0].bright)
+
             self.assertEqual('done...', lines[1].text)
+            self.assertEqual(None, lines[1].colour)
+            self.assertEqual(False, lines[1].newline)
+            self.assertEqual(True, lines[1].bright)
+
             self.assertEqual('starting build', lines[2].text)
             self.assertEqual([1], control.read_procs(tmpdir))
+            self.assertEqual(None, lines[2].colour)
+            self.assertEqual(False, lines[2].newline)
+            self.assertEqual(True, lines[2].bright)
 
             # Try again, with a different PID...this should eventually timeout
             # and start the build anyway
             self.cur_time = 0
+            self.valid_pids = [1]
             control.wait_for_process_limit(1, tmpdir=tmpdir, pid=2)
             lines = terminal.get_print_test_lines()
             self.assertEqual('Waiting for other buildman processes...',
@@ -794,6 +818,7 @@ class TestBuild(unittest.TestCase):
 
             # Check lock-busting
             self.cur_time = 0
+            self.valid_pids = [1, 2]
             lock_fname = os.path.join(tmpdir, control.LOCK_FNAME)
             lock = FileLock(lock_fname)
             lock.acquire(timeout=1)
@@ -806,6 +831,37 @@ class TestBuild(unittest.TestCase):
             self.assertEqual('starting build', lines[3].text)
             self.assertEqual([1, 2, 3], control.read_procs(tmpdir))
             self.assertEqual(control.RUN_WAIT_S, self.cur_time)
+            lock.release()
+
+            # Check handling of dead processes. Here we have PID 2 as a running
+            # process, even though the PID file contains 1, 2 and 3. So we can
+            # add one more PID, to make 2 and 4
+            self.cur_time = 0
+            self.valid_pids = [2]
+            control.wait_for_process_limit(2, tmpdir=tmpdir, pid=4)
+            lines = terminal.get_print_test_lines()
+            self.assertEqual('Waiting for other buildman processes...',
+                             lines[0].text)
+            self.assertEqual('done...', lines[1].text)
+            self.assertEqual('starting build', lines[2].text)
+            self.assertEqual([2, 4], control.read_procs(tmpdir))
+            self.assertEqual(0, self.cur_time)
+
+            # Try again, with PID 2 quitting at time 50. This allows the new
+            # build to start
+            self.cur_time = 0
+            self.valid_pids = [2, 4]
+            self.finish_pid = 2
+            self.finish_time = 50
+            control.wait_for_process_limit(2, tmpdir=tmpdir, pid=5)
+            lines = terminal.get_print_test_lines()
+            self.assertEqual('Waiting for other buildman processes...',
+                             lines[0].text)
+            self.assertEqual('done...', lines[1].text)
+            self.assertEqual('starting build', lines[2].text)
+            self.assertEqual([4, 5], control.read_procs(tmpdir))
+            self.assertEqual(self.finish_time, self.cur_time)
+
 
 if __name__ == "__main__":
     unittest.main()

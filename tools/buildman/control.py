@@ -666,6 +666,23 @@ def wait_for_process_limit(limit, tmpdir=tempfile.gettempdir(),
                            pid=os.getpid()):
     """Wait until the number of buildman processes drops to the limit
 
+    This uses FileLock to protect a 'running' file, which contains a list of
+    PIDs of running buildman processes. The number of PIDs in the file indicates
+    the number of running processes.
+
+    When buildman starts up, it calls this function to wait until it is OK to
+    start the build.
+
+    On exit, no attempt is made to remove the PID from the file, since other
+    buildman processes will notice that the PID is no-longer valid, and ignore
+    it.
+
+    Two timeouts are provided:
+        LOCK_WAIT_S: length of time to wait for the lock; if this occurs, the
+            lock is busted / removed before trying again
+        RUN_WAIT_S: length of time to wait to be allowed to run; if this occurs,
+            the build starts, with the PID being added to the file.
+
     Args:
         limit (int): Maximum number of buildman processes, including this one;
             must be > 0
@@ -677,7 +694,9 @@ def wait_for_process_limit(limit, tmpdir=tempfile.gettempdir(),
     running_fname = os.path.join(tmpdir, RUNNING_FNAME)
     lock_fname = os.path.join(tmpdir, LOCK_FNAME)
     lock = FileLock(lock_fname)
-    tprint('Waiting for other buildman processes...', newline=False)
+    col = terminal.Color()
+    tprint('Waiting for other buildman processes...', newline=False,
+           colour=col.RED)
 
     claimed = False
     deadline = time.time() + RUN_WAIT_S
@@ -686,12 +705,15 @@ def wait_for_process_limit(limit, tmpdir=tempfile.gettempdir(),
             with lock.acquire(timeout=LOCK_WAIT_S):
                 procs = read_procs(tmpdir)
 
+                # Drop PIDs which are not running
+                procs = list(filter(check_pid, procs))
+
                 # If we haven't hit the limit, add ourself
                 if len(procs) < limit:
-                    tprint('done...')
+                    tprint('done...', newline=False)
                     claimed = True
                 if time.time() >= deadline:
-                    tprint('timeout...')
+                    tprint('timeout...', newline=False)
                     claimed = True
                 if claimed:
                     write_procs(procs + [pid], tmpdir)
@@ -702,7 +724,8 @@ def wait_for_process_limit(limit, tmpdir=tempfile.gettempdir(),
             os.remove(lock_fname)
 
         time.sleep(1)
-    tprint('starting build')
+    tprint('starting build', newline=False)
+    print_clear()
 
 def do_buildman(args, toolchains=None, make_func=None, brds=None,
                 clean_dir=False, test_thread_exceptions=False):
