@@ -268,7 +268,7 @@ class Spawn:
         Returns:
             Nothing.
         """
-        self.send(EXIT_CHAR + EXIT_CHAR)
+        self.send(chr(EXIT_CHAR) * 2)
 
         # Wait about 10 seconds
         for _ in range(100):
