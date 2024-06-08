@@ -7,6 +7,7 @@
 This holds the main control logic for buildman, when not running tests.
 """
 
+import getpass
 import multiprocessing
 import os
 import shutil
@@ -29,10 +30,10 @@ from u_boot_pylib.terminal import print_clear, tprint
 TEST_BUILDER = None
 
 # Space-separated list of buildman process IDs currently running jobs
-RUNNING_FNAME = 'buildmanq'
+RUNNING_FNAME = f'buildmanq.{getpass.getuser()}'
 
 # Lock file for access to RUNNING_FILE
-LOCK_FNAME = 'buildmanq.lock'
+LOCK_FNAME = f'{RUNNING_FNAME}.lock'
 
 # Wait time for access to lock (seconds)
 LOCK_WAIT_S = 10
