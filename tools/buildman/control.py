@@ -699,7 +699,6 @@ def wait_for_process_limit(limit, tmpdir=tempfile.gettempdir(),
     lock = FileLock(lock_fname)
 
     # Allow another user to access the file
-    os.chmod(lock_fname, 0o666)
     col = terminal.Color()
     tprint('Waiting for other buildman processes...', newline=False,
            colour=col.RED)
@@ -709,6 +708,7 @@ def wait_for_process_limit(limit, tmpdir=tempfile.gettempdir(),
     while True:
         try:
             with lock.acquire(timeout=LOCK_WAIT_S):
+                os.chmod(lock_fname, 0o666)
                 procs = read_procs(tmpdir)
 
                 # Drop PIDs which are not running
