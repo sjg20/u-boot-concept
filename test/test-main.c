@@ -491,7 +491,6 @@ static int ut_run_test_live_flat(struct unit_test_state *uts,
 			ut_assertok(ret);
 			runs++;
 		}
-		runs++;
 	}
 
 	return 0;
