@@ -266,7 +266,7 @@ class Spawn:
             None.
 
         Returns:
-            Nothing.
+            str: Type of closure completed
         """
         self.send(chr(EXIT_CHAR) * 2)
 

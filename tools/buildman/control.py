@@ -662,6 +662,9 @@ def write_procs(procs, tmpdir=tempfile.gettempdir()):
     tools.write_file(running_fname, ' '.join([str(p) for p in procs]),
                      binary=False)
 
+    # Allow another user to access the file
+    os.chmod(running_fname, 0o666)
+
 def wait_for_process_limit(limit, tmpdir=tempfile.gettempdir(),
                            pid=os.getpid()):
     """Wait until the number of buildman processes drops to the limit
@@ -694,6 +697,9 @@ def wait_for_process_limit(limit, tmpdir=tempfile.gettempdir(),
     running_fname = os.path.join(tmpdir, RUNNING_FNAME)
     lock_fname = os.path.join(tmpdir, LOCK_FNAME)
     lock = FileLock(lock_fname)
+
+    # Allow another user to access the file
+    os.chmod(lock_fname, 0o666)
     col = terminal.Color()
     tprint('Waiting for other buildman processes...', newline=False,
            colour=col.RED)

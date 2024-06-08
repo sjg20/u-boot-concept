@@ -158,6 +158,7 @@ class ConsoleBase(object):
         """
 
         if self.p:
+            self.log.start_section('Stopping U-Boot')
             self.p.close()
         self.logstream.close()
 
