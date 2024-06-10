@@ -466,12 +466,15 @@ int dram_init(void)
 	struct udevice *dev;
 	int ret;
 
+	printch('a');
 	ret = uclass_get_device(UCLASS_RAM, 0, &dev);
 	if (ret) {
 		debug("DRAM init failed: %d\n", ret);
 		return ret;
 	}
+	printch('b');
 	ret = ram_get_info(dev, &ram);
+	printch('c');
 	if (ret) {
 		debug("Cannot get DRAM size: %d\n", ret);
 		return ret;
@@ -479,6 +482,7 @@ int dram_init(void)
 	gd->ram_size = ram.size;
 	debug("SDRAM base=%lx, size=%lx\n",
 	      (unsigned long)ram.base, (unsigned long)ram.size);
+	printch('d');
 
 	return 0;
 }

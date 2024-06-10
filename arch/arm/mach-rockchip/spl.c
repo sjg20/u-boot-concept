@@ -142,16 +142,29 @@ void board_init_f(ulong dummy)
 		printf("DRAM init failed: %d\n", ret);
 		return;
 	}
+	printch('g');
+	printf("1 gd->ram_base %lx size %lx\n", (ulong)gd->ram_base,
+	       (ulong)gd->ram_size);
 	gd->ram_top = gd->ram_base + get_effective_memsize();
+	printf("2 gd->ram_top %lx\n", (ulong)gd->ram_top);
 	gd->ram_top = board_get_usable_ram_top(gd->ram_size);
+	printf("3 gd->ram_top %lx\n", (ulong)gd->ram_top);
+	printch('h');
 
 	if (IS_ENABLED(CONFIG_ARM64) && !CONFIG_IS_ENABLED(SYS_DCACHE_OFF)) {
+		printch('1');
 		gd->relocaddr = gd->ram_top;
+		printch('2');
 		arch_reserve_mmu();
+		printch('3');
+		printf(" gd %p ram_top %lx\n", gd, (ulong)gd->ram_top);
 		enable_caches();
+		printch('4');
 	}
 #endif
+	printch('i');
 	preloader_console_init();
+	printch('j');
 }
 
 void spl_board_prepare_for_boot(void)
