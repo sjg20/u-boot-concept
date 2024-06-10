@@ -442,9 +442,11 @@ void setup_pgtables(void)
 
 static void setup_all_pgtables(void)
 {
-	u64 tlb_addr = gd->arch.tlb_addr;
-	u64 tlb_size = gd->arch.tlb_size;
+	ulong tlb_addr = gd->arch.tlb_addr;
+	ulong tlb_size = gd->arch.tlb_size;
 
+	printf("setup_all_pgtables: %ld %lx %lx\n", sizeof(ulong),
+	       tlb_addr, tlb_size);
 	/* Reset the fill ptr */
 	gd->arch.tlb_fillptr = tlb_addr;
 
@@ -459,6 +461,7 @@ static void setup_all_pgtables(void)
 	gd->arch.tlb_emerg = gd->arch.tlb_addr;
 	gd->arch.tlb_addr = tlb_addr;
 	gd->arch.tlb_size = tlb_size;
+	printf("setup_all_pgtables: tlb_emerg %lx\n", gd->arch.tlb_emerg);
 }
 
 /* to activate the MMU we need to set up virtual memory */
@@ -475,7 +478,9 @@ __weak void mmu_setup(void)
 			  MEMORY_ATTRIBUTES);
 
 	/* enable the mmu */
+	printch('a');
 	set_sctlr(get_sctlr() | CR_M);
+	printch('b');
 }
 
 /*
