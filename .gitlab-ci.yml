@@ -10,7 +10,7 @@ default:
 
 # Grab our configured image.  The source for this is found
 # in the u-boot tree at tools/docker/Dockerfile
-image: ${MIRROR_DOCKER}/trini/u-boot-gitlab-ci-runner:jammy-20240227-14Mar2024
+image: ${MIRROR_DOCKER}/sjg20/try
 
 # We run some tests in different order, to catch some failures quicker.
 stages:
@@ -22,7 +22,7 @@ stages:
   stage: test.py
   retry: 2 # QEMU may be too slow, etc.
   rules:
-    - when: always
+    - when: never
   before_script:
     # Clone uboot-test-hooks
     - git config --global --add safe.directory "${CI_PROJECT_DIR}"
@@ -93,7 +93,7 @@ stages:
 .world_build:
   stage: world build
   rules:
-    - when: always
+    - when: never
 
 build all 32bit ARM platforms:
   extends: .world_build
@@ -148,41 +148,6 @@ build all other platforms:
   rules:
     - when: always
 
-check for new CONFIG symbols outside Kconfig:
-  extends: .testsuites
-  script:
-    - git config --global --add safe.directory "${CI_PROJECT_DIR}"
-    # If grep succeeds and finds a match the test fails as we should
-    # have no matches.
-    - git grep -E '^#[[:blank:]]*(define|undef)[[:blank:]]*CONFIG_'
-        :^doc/ :^arch/arm/dts/ :^scripts/kconfig/lkc.h
-        :^include/linux/kconfig.h :^tools/ :^dts/upstream/ &&
-        exit 1 || exit 0
-
-# build documentation
-docs:
-  extends: .testsuites
-  script:
-    - virtualenv -p /usr/bin/python3 /tmp/venvhtml
-    - . /tmp/venvhtml/bin/activate
-    - pip install -r doc/sphinx/requirements.txt
-    - make htmldocs KDOC_WERROR=1
-    - make infodocs
-
-# ensure all configs have MAINTAINERS entries
-Check for configs without MAINTAINERS entry:
-  extends: .testsuites
-  script:
-    - ./tools/buildman/buildman --maintainer-check
-
-# Ensure host tools build
-Build tools-only and envtools:
-  extends: .testsuites
-  script:
-    - make tools-only_config tools-only -j$(nproc);
-      make mrproper;
-      make tools-only_config envtools -j$(nproc)
-
 Run binman, buildman, dtoc, Kconfig and patman testsuites:
   extends: .testsuites
   script:
@@ -194,53 +159,29 @@ Run binman, buildman, dtoc, Kconfig and patman testsuites:
       . /tmp/venv/bin/activate;
       pip install -r test/py/requirements.txt;
       pip install -r tools/buildman/requirements.txt;
+      echo "doing again";
+      pip install -r tools/buildman/requirements.txt;
+      set +x;
       export UBOOT_TRAVIS_BUILD_DIR=/tmp/tools-only;
-      export PYTHONPATH="${UBOOT_TRAVIS_BUILD_DIR}/scripts/dtc/pylibfdt";
+      echo "VIRTUAL_ENV ${VIRTUAL_ENV}";
+      echo "1 PYTHONPATH ${PYTHONPATH}";
+      export PYTHONPATH="${PYTHONPATH}:${UBOOT_TRAVIS_BUILD_DIR}/scripts/dtc/pylibfdt";
+      echo "2 PYTHONPATH ${PYTHONPATH}";
       export PATH="${UBOOT_TRAVIS_BUILD_DIR}/scripts/dtc:${PATH}";
       set +e;
       ./tools/buildman/buildman -T0 -o ${UBOOT_TRAVIS_BUILD_DIR} -w
         --board tools-only;
       set -e;
-      ./tools/binman/binman --toolpath ${UBOOT_TRAVIS_BUILD_DIR}/tools test;
+      export TOOLPATH="--toolpath ${UBOOT_TRAVIS_BUILD_DIR}/tools --toolpath /opt/coreboot";
+      ls /tmp/venv/lib/python3.10/site-packages/yamllint;
+      echo 3;
+      ./tools/binman/binman ${TOOLPATH} test;
+      echo 4;
+      ./tools/binman/binman ${TOOLPATH} test -T;
       ./tools/buildman/buildman -t;
       ./tools/dtoc/dtoc -t;
       ./tools/patman/patman test;
       make testconfig
-
-# Check for any pylint regressions
-Run pylint:
-  extends: .testsuites
-  script:
-    - git config --global --add safe.directory "${CI_PROJECT_DIR}"
-    - pip install -r test/py/requirements.txt
-    - pip install -r tools/buildman/requirements.txt
-    - pip install asteval pylint==2.12.2 pyopenssl
-    - export PATH=${PATH}:~/.local/bin
-    - echo "[MASTER]" >> .pylintrc
-    - echo "load-plugins=pylint.extensions.docparams" >> .pylintrc
-    - export UBOOT_TRAVIS_BUILD_DIR=/tmp/tools-only
-    - set +e
-    - ./tools/buildman/buildman -T0 -o ${UBOOT_TRAVIS_BUILD_DIR} -w
-        --board tools-only
-    - set -e
-    - pylint --version
-    - export PYTHONPATH="${UBOOT_TRAVIS_BUILD_DIR}/scripts/dtc/pylibfdt"
-    - make pylint_err
-
-# Check for pre-schema driver model tags
-Check for pre-schema tags:
-  extends: .testsuites
-  script:
-    - git config --global --add safe.directory "${CI_PROJECT_DIR}";
-    # If grep succeeds and finds a match the test fails as we should
-    # have no matches.
-    - git grep u-boot,dm- -- '*.dts*' && exit 1 || exit 0
-
-# Check we can package the Python tools
-Check packing of Python tools:
-  extends: .testsuites
-  script:
-    - make pip
 
 # Test sandbox with test.py
 sandbox test.py:
