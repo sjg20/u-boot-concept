@@ -98,6 +98,7 @@ RUN apt-get update && apt-get install -y \
 	python2.7 \
 	python3 \
 	python3-coverage \
+	python3-pycryptodome \
 	python3-dev \
 	python3-pip \
 	python3-pyelftools \
