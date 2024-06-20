@@ -2,6 +2,7 @@
 
 variables:
   DEFAULT_TAG: ""
+  BUILD_TAG: "build"
   MIRROR_DOCKER: docker.io
 
 default:
@@ -92,6 +93,8 @@ stages:
 
 .world_build:
   stage: world build
+  tags:
+    - ${BUILD_TAG}
   rules:
     - when: always
 
