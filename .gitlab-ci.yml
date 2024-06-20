@@ -159,24 +159,15 @@ Run binman, buildman, dtoc, Kconfig and patman testsuites:
       . /tmp/venv/bin/activate;
       pip install -r test/py/requirements.txt;
       pip install -r tools/buildman/requirements.txt;
-      echo "doing again";
-      pip install -r tools/buildman/requirements.txt;
-      set +x;
       export UBOOT_TRAVIS_BUILD_DIR=/tmp/tools-only;
-      echo "VIRTUAL_ENV ${VIRTUAL_ENV}";
-      echo "1 PYTHONPATH ${PYTHONPATH}";
-      export PYTHONPATH="${PYTHONPATH}:${UBOOT_TRAVIS_BUILD_DIR}/scripts/dtc/pylibfdt";
-      echo "2 PYTHONPATH ${PYTHONPATH}";
+      export PYTHONPATH="${UBOOT_TRAVIS_BUILD_DIR}/scripts/dtc/pylibfdt";
       export PATH="${UBOOT_TRAVIS_BUILD_DIR}/scripts/dtc:${PATH}";
       set +e;
       ./tools/buildman/buildman -T0 -o ${UBOOT_TRAVIS_BUILD_DIR} -w
         --board tools-only;
       set -e;
       export TOOLPATH="--toolpath ${UBOOT_TRAVIS_BUILD_DIR}/tools --toolpath /opt/coreboot";
-      ls /tmp/venv/lib/python3.10/site-packages/yamllint;
-      echo 3;
       ./tools/binman/binman ${TOOLPATH} test;
-      echo 4;
       ./tools/binman/binman ${TOOLPATH} test -T;
       ./tools/buildman/buildman -t;
       ./tools/dtoc/dtoc -t;
