@@ -8,16 +8,23 @@
 #include <lwip/apps/http_client.h>
 #include <lwip/timeouts.h>
 #include <net.h>
+#include <stdio.h>
 #include <time.h>
+#include "lwip/altcp_tls.h"
+#include "mbedtls/debug.h"
 
 #define SERVER_NAME_SIZE 200
 #define HTTP_PORT_DEFAULT 80
+#define HTTPS_PORT_DEFAULT 443
+#define HTTP_SCHEME "http://"
+#define HTTPS_SCHEME "https://"
+
 #define PROGRESS_PRINT_STEP_BYTES (100 * 1024)
 
 enum done_state {
-        NOT_DONE = 0,
-        SUCCESS = 1,
-        FAILURE = 2
+	NOT_DONE = 0,
+	SUCCESS = 1,
+	FAILURE = 2
 };
 
 struct wget_ctx {
@@ -33,14 +40,20 @@ static int parse_url(char *url, char *host, u16 *port, char **path)
 {
 	char *p, *pp;
 	long lport;
+	bool https = false;
 
-	p = strstr(url, "http://");
+	p = strstr(url, HTTPS_SCHEME);
 	if (!p) {
-		log_err("only http:// is supported\n");
-		return -EINVAL;
+		p = strstr(url, HTTP_SCHEME);
+		p += strlen(HTTP_SCHEME);
+		if (!p) {
+			log_err("only http:// and https:// are supported\n");
+			return -ENOENT;
+		}
+	} else {
+		p += strlen(HTTPS_SCHEME);
+		https = true;
 	}
-
-	p += strlen("http://");
 
 	/* Parse hostname */
 	pp = strchr(p, ':');
@@ -64,6 +77,8 @@ static int parse_url(char *url, char *host, u16 *port, char **path)
 		if (lport > 65535)
 			return -EINVAL;
 		*port = (u16)lport;
+	} else if (https) {
+		*port = HTTPS_PORT_DEFAULT;
 	} else {
 		*port = HTTP_PORT_DEFAULT;
 	}
@@ -72,6 +87,16 @@ static int parse_url(char *url, char *host, u16 *port, char **path)
 	*path = pp;
 
 	return 0;
+}
+
+bool wget_validate_uri(char *uri)
+{
+	if (strstr(uri, HTTP_SCHEME) || strstr(uri, HTTPS_SCHEME)) {
+		return true;
+	}
+
+	log_err("only http:// and https:// are supported\n");
+	return false;
 }
 
 static err_t httpc_recv_cb(void *arg, struct altcp_pcb *pcb, struct pbuf *pbuf,
@@ -99,7 +124,7 @@ static err_t httpc_recv_cb(void *arg, struct altcp_pcb *pcb, struct pbuf *pbuf,
 }
 
 static void httpc_result_cb(void *arg, httpc_result_t httpc_result,
-			    u32_t rx_content_len, u32_t srv_res, err_t err)
+				u32_t rx_content_len, u32_t srv_res, err_t err)
 {
 	struct wget_ctx *ctx = arg;
 	ulong elapsed;
@@ -113,12 +138,13 @@ static void httpc_result_cb(void *arg, httpc_result_t httpc_result,
 	elapsed = get_timer(ctx->start_time);
 	if (rx_content_len > PROGRESS_PRINT_STEP_BYTES)
 		printf("\n");
-        printf("%u bytes transferred in %lu ms (", rx_content_len,
-	       get_timer(ctx->start_time));
-        print_size(rx_content_len / elapsed * 1000, "/s)\n");
+
+	printf("%u bytes transferred in %lu ms (", rx_content_len,
+		   get_timer(ctx->start_time));
+	print_size(rx_content_len / elapsed * 1000, "/s)\n");
 
 	if (env_set_hex("filesize", rx_content_len) ||
-	    env_set_hex("fileaddr", ctx->saved_daddr)) {
+		env_set_hex("fileaddr", ctx->saved_daddr)) {
 		log_err("Could not set filesize or fileaddr\n");
 		ctx->done = FAILURE;
 		return;
@@ -153,8 +179,27 @@ static int wget_loop(struct udevice *udev, ulong dst_addr, char *uri)
 	memset(&conn, 0, sizeof(conn));
 	conn.result_fn = httpc_result_cb;
 	ctx.start_time = get_timer(0);
+
+	if (port == HTTPS_PORT_DEFAULT) {
+		altcp_allocator_t tls_allocator;
+
+		tls_allocator.alloc = &altcp_tls_alloc;
+		tls_allocator.arg = altcp_tls_create_config_client(NULL, 0);
+
+		if (!tls_allocator.arg) {
+			log_err("error: tls_allocator arg is null\n");
+			return -1;
+		}
+
+		conn.altcp_allocator = &tls_allocator;
+	}
+
+#if defined(CONFIG_LWIP_DEBUG)
+	mbedtls_debug_set_threshold(99);
+#endif
+
 	if (httpc_get_file_dns(server_name, port, path, &conn, httpc_recv_cb,
-			       &ctx, &state)) {
+				   &ctx, &state)) {
 		net_lwip_remove_netif(netif);
 		return CMD_RET_FAILURE;
 	}
@@ -191,7 +236,7 @@ int do_wget(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
 		return CMD_RET_USAGE;
 
 	dst_addr = hextoul(argv[1], &end);
-        if (end == (argv[1] + strlen(argv[1]))) {
+	if (end == (argv[1] + strlen(argv[1]))) {
 		if (argc < 3)
 			return CMD_RET_USAGE;
 		url = argv[2];
@@ -204,69 +249,4 @@ int do_wget(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
 		return CMD_RET_FAILURE;
 
 	return CMD_RET_SUCCESS;
-}
-
-/**
- * wget_validate_uri() - validate the uri for wget
- *
- * @uri:	uri string
- *
- * This function follows the current U-Boot wget implementation.
- * scheme: only "http:" is supported
- * authority:
- *   - user information: not supported
- *   - host: supported
- *   - port: not supported(always use the default port)
- *
- * Uri is expected to be correctly percent encoded.
- * This is the minimum check, control codes(0x1-0x19, 0x7F, except '\0')
- * and space character(0x20) are not allowed.
- *
- * TODO: stricter uri conformance check
- *
- * Return:	true on success, false on failure
- */
-bool wget_validate_uri(char *uri)
-{
-	char c;
-	bool ret = true;
-	char *str_copy, *s, *authority;
-
-	for (c = 0x1; c < 0x21; c++) {
-		if (strchr(uri, c)) {
-			log_err("invalid character is used\n");
-			return false;
-		}
-	}
-	if (strchr(uri, 0x7f)) {
-		log_err("invalid character is used\n");
-		return false;
-	}
-
-	if (strncmp(uri, "http://", 7)) {
-		log_err("only http:// is supported\n");
-		return false;
-	}
-	str_copy = strdup(uri);
-	if (!str_copy)
-		return false;
-
-	s = str_copy + strlen("http://");
-	authority = strsep(&s, "/");
-	if (!s) {
-		log_err("invalid uri, no file path\n");
-		ret = false;
-		goto out;
-	}
-	s = strchr(authority, '@');
-	if (s) {
-		log_err("user information is not supported\n");
-		ret = false;
-		goto out;
-	}
-
-out:
-	free(str_copy);
-
-	return ret;
 }

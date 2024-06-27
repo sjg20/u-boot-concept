@@ -10,6 +10,7 @@
 #endif /* USE_HOSTCC */
 #include <string.h>
 #include <u-boot/sha1.h>
+#include "rand.h"
 
 const u8 sha1_der_prefix[SHA1_DER_LEN] = {
 	0x30, 0x21, 0x30, 0x09, 0x06, 0x05, 0x2b, 0x0e,
@@ -96,4 +97,22 @@ void sha1_hmac(const unsigned char *key, int keylen,
 	memset(k_opad, 0, sizeof(k_opad));
 	memset(tmpbuf, 0, sizeof(tmpbuf));
 	memset(&ctx, 0, sizeof(sha1_context));
+}
+
+int mbedtls_hardware_poll( void * data,
+                           unsigned char * output,
+                           size_t len,
+                           size_t * olen )
+{
+		uint32_t random_number = rand();
+
+    ((void)data);
+    *olen = 0;
+
+    if(( len < sizeof(uint32_t))) { return 0; }
+
+    memcpy(output, &random_number, sizeof(uint32_t));
+    *olen = sizeof(uint32_t);
+
+    return 0;
 }

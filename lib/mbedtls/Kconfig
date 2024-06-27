@@ -402,4 +402,9 @@ endif # SPL
 
 endif # MBEDTLS_LIB_X509
 
+config MBEDTLS_LIB_TLS
+	bool "MbedTLS TLS library"
+	help
+	  Enable MbedTLS TLS library
+
 endif # MBEDTLS_LIB

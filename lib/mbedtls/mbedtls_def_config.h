@@ -404,4 +404,67 @@
 #define MBEDTLS_X509_CRL_PARSE_C
 #endif
 
-/** \} name SECTION: Mbed TLS modules */
+/**
+ * \def MBEDTLS_SSL_TLS_C
+ *
+ * Enable the generic SSL/TLS code.
+ *
+ * Module:  library/ssl_tls.c
+ * Caller:  library/ssl*_client.c
+ *          library/ssl*_server.c
+ *
+ * Requires: MBEDTLS_CIPHER_C, MBEDTLS_MD_C
+ *           and at least one of the MBEDTLS_SSL_PROTO_XXX defines
+ *
+ * This module is required for SSL/TLS.
+ */
+#define MBEDTLS_DEBUG_C
+
+#if CONFIG_IS_ENABLED(MBEDTLS_LIB_TLS)
+
+#include "rtc.h"
+
+//Generic
+#define MBEDTLS_ENTROPY_HARDWARE_ALT
+#define MBEDTLS_HAVE_TIME
+#define MBEDTLS_PLATFORM_MS_TIME_ALT
+#define MBEDTLS_PLATFORM_TIME_MACRO            rtc_mktime /**< Default time macro to use, can be undefined. MBEDTLS_HAVE_TIME must be enabled */
+#define MBEDTLS_PLATFORM_C
+#define MBEDTLS_SSL_CLI_C
+#define MBEDTLS_SSL_TLS_C
+#define MBEDTLS_CIPHER_C
+#define MBEDTLS_MD_C
+#define MBEDTLS_CTR_DRBG_C
+#define MBEDTLS_AES_C
+#define MBEDTLS_ENTROPY_C
+#define MBEDTLS_NO_PLATFORM_ENTROPY
+#define MBEDTLS_SSL_PROTO_TLS1_2
+
+// RSA
+#define MBEDTLS_KEY_EXCHANGE_RSA_ENABLED
+#define MBEDTLS_KEY_EXCHANGE_ECDHE_RSA_ENABLED
+#define MBEDTLS_KEY_EXCHANGE_ECDH_RSA_ENABLED
+#define MBEDTLS_GCM_C
+
+// ECDSA
+#define MBEDTLS_ECDSA_C
+#define MBEDTLS_ECDH_C
+#define MBEDTLS_KEY_EXCHANGE_ECDHE_ECDSA_ENABLED
+#define MBEDTLS_KEY_EXCHANGE_ECDH_ECDSA_ENABLED
+#define MBEDTLS_CAN_ECDH
+#define MBEDTLS_PK_CAN_ECDSA_SIGN
+#define MBEDTLS_ECP_C
+#define MBEDTLS_ECP_DP_SECP256K1_ENABLED
+#define MBEDTLS_ECP_DP_SECP192R1_ENABLED
+#define MBEDTLS_ECP_DP_SECP224R1_ENABLED
+#define MBEDTLS_ECP_DP_SECP256R1_ENABLED
+#define MBEDTLS_ECP_DP_SECP384R1_ENABLED
+#define MBEDTLS_ECP_DP_SECP521R1_ENABLED
+#define MBEDTLS_ECP_DP_SECP192K1_ENABLED
+#define MBEDTLS_ECP_DP_SECP224K1_ENABLED
+#define MBEDTLS_ECP_DP_SECP256K1_ENABLED
+#define MBEDTLS_ECP_DP_BP256R1_ENABLED
+#define MBEDTLS_ECP_DP_BP384R1_ENABLED
+#define MBEDTLS_ECP_DP_BP512R1_ENABLED
+
+#endif
