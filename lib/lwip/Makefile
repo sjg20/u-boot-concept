@@ -2,6 +2,11 @@
 #
 # Copyright (C) 2024 Linaro Ltd.
 
+ccflags-y += -I$(srctree)/lib/lwip/include -I$(srctree)/lib/lwip/u-boot
+ccflags-$(CONFIG_MBEDTLS_LIB_TLS) += -I$(srctree)/lib/mbedtls \
+	-I$(srctree)/lib/mbedtls/port \
+	-I$(srctree)/lib/mbedtls/external/mbedtls/include
+
 obj-y += \
 	lwip/src/api/api_lib.o \
 	lwip/src/api/api_msg.o \
@@ -13,6 +18,8 @@ obj-y += \
 	lwip/src/api/sockets.o \
 	lwip/src/api/tcpip.o \
 	lwip/src/apps/http/http_client.o \
+	lwip/src/apps/altcp_tls/altcp_tls_mbedtls.o \
+	lwip/src/apps/altcp_tls/altcp_tls_mbedtls_mem.o \
 	lwip/src/apps/tftp/tftp.o \
 	lwip/src/core/altcp_alloc.o \
 	lwip/src/core/altcp.o \
