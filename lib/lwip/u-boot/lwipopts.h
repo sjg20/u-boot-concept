@@ -166,8 +166,8 @@
 // TCP WND must be at least 16 kb to match TLS record size. Silent warning
 // "altcp_tls: TCP_WND is smaller than the RX decrypion buffer, connection RX might stall!"
 #undef TCP_WND
-#define TCP_WND  16384
+#define TCP_WND  32768
 
-#define HTTPC_CLIENT_AGENT ""
+#define HTTPC_CLIENT_AGENT "U-Boot lwIP"
 
 #endif /* LWIP_UBOOT_LWIPOPTS_H */

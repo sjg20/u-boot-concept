@@ -109,3 +109,4 @@ mbedtls_lib_tls-y := \
 	$(MBEDTLS_LIB_DIR)/ssl_tls.o \
 	$(MBEDTLS_LIB_DIR)/ssl_tls12_client.o \
 	$(MBEDTLS_LIB_DIR)/ssl_tls12_server.o \
+	$(MBEDTLS_LIB_DIR)/hmac_drbg.o \

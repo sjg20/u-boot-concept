@@ -184,7 +184,8 @@ static int wget_loop(struct udevice *udev, ulong dst_addr, char *uri)
 		altcp_allocator_t tls_allocator;
 
 		tls_allocator.alloc = &altcp_tls_alloc;
-		tls_allocator.arg = altcp_tls_create_config_client(NULL, 0);
+		tls_allocator.arg = altcp_tls_create_config_client(NULL, 0,
+								   server_name);
 
 		if (!tls_allocator.arg) {
 			log_err("error: tls_allocator arg is null\n");
