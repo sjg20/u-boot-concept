@@ -183,7 +183,7 @@ flash.bin: MKIMAGEOUTPUT = flash.log
 
 spl/u-boot-spl.cfgout: $(IMX_CONFIG) FORCE
 	$(Q)mkdir -p $(dir $@)
-	$(call if_changed_dep,cpp_cfg)
+	$(call if_changed,cpp_cfg)
 
 spl/u-boot-spl-ddr.bin: spl/u-boot-spl.bin spl/u-boot-spl.cfgout FORCE
 
@@ -234,7 +234,7 @@ spl/u-boot-spl-ddr.bin: spl/u-boot-spl.bin spl/u-boot-spl.cfgout FORCE
 
 u-boot-container.cfgout: $(IMX_CONTAINER_CFG) FORCE
 	$(Q)mkdir -p $(dir $@)
-	$(call if_changed_dep,cpp_cfg)
+	$(call if_changed,cpp_cfg)
 	$(call if_changed,imx9_check)
 
 flash.bin: spl/u-boot-spl-ddr.bin container.cfgout FORCE
