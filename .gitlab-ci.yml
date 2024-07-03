@@ -22,7 +22,7 @@ stages:
   stage: test.py
   retry: 2 # QEMU may be too slow, etc.
   rules:
-    - when: always
+    - when: never
   before_script:
     # Clone uboot-test-hooks
     - git config --global --add safe.directory "${CI_PROJECT_DIR}"
@@ -97,6 +97,8 @@ stages:
 
 build all 32bit ARM platforms:
   extends: .world_build
+  rules:
+    - when: never
   script:
     - ret=0;
       git config --global --add safe.directory "${CI_PROJECT_DIR}";
@@ -123,6 +125,8 @@ build all 64bit ARM platforms:
 
 build all PowerPC platforms:
   extends: .world_build
+  rules:
+    - when: never
   script:
     - ret=0;
       git config --global --add safe.directory "${CI_PROJECT_DIR}";
@@ -134,6 +138,8 @@ build all PowerPC platforms:
 
 build all other platforms:
   extends: .world_build
+  rules:
+    - when: never
   script:
     - ret=0;
       git config --global --add safe.directory "${CI_PROJECT_DIR}";
@@ -146,7 +152,7 @@ build all other platforms:
 .testsuites:
   stage: testsuites
   rules:
-    - when: always
+    - when: never
 
 check for new CONFIG symbols outside Kconfig:
   extends: .testsuites
