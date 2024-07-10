@@ -36,15 +36,14 @@ void upl_set_fit_info(ulong fit, int conf_offset, ulong entry_addr)
 int upl_add_image(int node, ulong load_addr, ulong size, const char *desc)
 {
 	struct upl *upl = &s_upl;
-	struct upl_image *img;
+	struct upl_image img;
 
-	if (upl->num_images == UPL_MAX_IMAGES)
-		return log_msg_ret("img", -E2BIG);
-	img = &upl->image[upl->num_images++];
-	img->load = load_addr;
-	img->size = size;
-	img->offset = node;
-	img->description = desc;
+	img.load = load_addr;
+	img.size = size;
+	img.offset = node;
+	img.description = desc;
+	if (!alist_add(&upl->image, img, struct upl_image))
+		return -ENOMEM;
 
 	return 0;
 }
@@ -53,6 +52,7 @@ static int write_serial(struct upl_serial *ser)
 {
 	struct udevice *dev = gd->cur_serial_dev;
 	struct serial_device_info info;
+	struct memregion region;
 	int ret;
 
 	if (!dev)
@@ -64,8 +64,11 @@ static int write_serial(struct upl_serial *ser)
 	ser->compatible = ofnode_read_string(dev_ofnode(dev), "compatible");
 	ser->clock_frequency = info.clock;
 	ser->current_speed = gd->baudrate;
-	ser->reg.base = info.addr;
-	ser->reg.size = info.size;
+	region.base = info.addr;
+	region.size = info.size;
+	alist_init_struct(&ser->reg, struct memregion);
+	if (!alist_add(&ser->reg, region, struct memregion))
+		return -ENOMEM;
 	ser->reg_io_shift = info.reg_shift;
 	ser->reg_offset = info.reg_offset;
 	ser->reg_io_width = info.reg_width;
@@ -79,6 +82,7 @@ static int write_graphics(struct upl_graphics *gra)
 {
 	struct video_uc_plat *plat;
 	struct video_priv *priv;
+	struct memregion region;
 	struct udevice *dev;
 
 	uclass_find_first_device(UCLASS_VIDEO, &dev);
@@ -86,8 +90,11 @@ static int write_graphics(struct upl_graphics *gra)
 		return -ENOENT;
 
 	plat = dev_get_uclass_plat(dev);
-	gra->reg.base = plat->base;
-	gra->reg.size = plat->size;
+	region.base = plat->base;
+	region.size = plat->size;
+	alist_init_struct(&gra->reg, struct memregion);
+	if (!alist_add(&gra->reg, region, struct memregion))
+		return -ENOMEM;
 
 	priv = dev_get_uclass_priv(dev);
 	gra->width = priv->xsize;
@@ -121,8 +128,8 @@ int spl_write_upl_handoff(struct spl_image_info *spl_image)
 	void *ptr;
 	int ret;
 
-	log_debug("UPL: Writing handoff - image_count=%d\n", upl->num_images);
-	memset(upl, '\0', sizeof(struct upl));
+	log_debug("UPL: Writing handoff - image_count=%d\n", upl->image.count);
+	upl_init(upl);
 	upl->addr_cells = IS_ENABLED(CONFIG_PHYS_64BIT) ? 2 : 1;
 	upl->size_cells = IS_ENABLED(CONFIG_PHYS_64BIT) ? 2 : 1;
 	upl->bootmode = UPLBM_DEFAULT;
