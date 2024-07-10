@@ -460,7 +460,7 @@ static int add_upl_serial(const struct upl *upl, ofnode root,
 	if (!ser->compatible || skip_existing)
 		return 0;
 	if (!ser->reg.count)
-		return log_msg_ret("gra", -EINVAL);
+		return log_msg_ret("ser", -EINVAL);
 	first = alist_get(&ser->reg, 0, struct memregion);
 	sprintf(name, UPLN_SERIAL "@0x%lx", first->base);
 	ret = ofnode_add_subnode(root, name, &node);
@@ -520,7 +520,7 @@ static int add_upl_graphics(const struct upl *upl, ofnode root)
 	int ret;
 
 	if (!gra->reg.count)
-		return log_msg_ret("gra", -EINVAL);
+		return log_msg_ret("gra", -ENOENT);
 	first = alist_get(&gra->reg, 0, struct memregion);
 	sprintf(name, UPLN_GRAPHICS "@0x%lx", first->base);
 	ret = ofnode_add_subnode(root, name, &node);
@@ -593,7 +593,7 @@ int upl_write_handoff(const struct upl *upl, ofnode root, bool skip_existing)
 		return log_msg_ret("ad6", ret);
 
 	ret = add_upl_graphics(upl, root);
-	if (ret)
+	if (ret && ret != -ENOENT)
 		return log_msg_ret("ad6", ret);
 
 	return 0;

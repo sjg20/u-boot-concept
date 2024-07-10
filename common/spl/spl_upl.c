@@ -44,6 +44,7 @@ int upl_add_image(int node, ulong load_addr, ulong size, const char *desc)
 	img.description = desc;
 	if (!alist_add(&upl->image, img, struct upl_image))
 		return -ENOMEM;
+	printf("add image\n");
 
 	return 0;
 }
@@ -85,16 +86,16 @@ static int write_graphics(struct upl_graphics *gra)
 	struct memregion region;
 	struct udevice *dev;
 
+	alist_init_struct(&gra->reg, struct memregion);
 	uclass_find_first_device(UCLASS_VIDEO, &dev);
 	if (!dev || !device_active(dev))
-		return -ENOENT;
+		return log_msg_ret("vid", -ENOENT);
 
 	plat = dev_get_uclass_plat(dev);
 	region.base = plat->base;
 	region.size = plat->size;
-	alist_init_struct(&gra->reg, struct memregion);
 	if (!alist_add(&gra->reg, region, struct memregion))
-		return -ENOMEM;
+		return log_msg_ret("reg", -ENOMEM);
 
 	priv = dev_get_uclass_priv(dev);
 	gra->width = priv->xsize;
@@ -137,8 +138,10 @@ int spl_write_upl_handoff(struct spl_image_info *spl_image)
 	if (ret)
 		return log_msg_ret("ser", ret);
 	ret = write_graphics(&upl->graphics);
+	printf("1wr ret=%d %d\n", ret, ret != -ENOENT);
 	if (ret && ret != -ENOENT)
 		return log_msg_ret("gra", ret);
+	printf("2wr ret=%d %d\n", ret, ret != -ENOENT);
 
 	root = ofnode_root();
 	ret = upl_write_handoff(upl, root, true);
