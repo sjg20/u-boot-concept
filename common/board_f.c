@@ -868,7 +868,6 @@ static int initf_upl(void)
 	struct upl *upl;
 	int ret;
 
-	printf("initf_upl %d %lx\n", IS_ENABLED(CONFIG_UPL_IN), gd->flags & GD_FLG_UPL);
 	if (!IS_ENABLED(CONFIG_UPL_IN) || !(gd->flags & GD_FLG_UPL))
 		return 0;
 

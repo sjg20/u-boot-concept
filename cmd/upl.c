@@ -8,8 +8,9 @@
 
 #define LOG_CATEGORY UCLASS_BOOTSTD
 
-#include <command.h>
 #include <abuf.h>
+#include <alist.h>
+#include <command.h>
 #include <display_options.h>
 #include <mapmem.h>
 #include <string.h>
@@ -22,7 +23,25 @@ DECLARE_GLOBAL_DATA_PTR;
 static int do_upl_info(struct cmd_tbl *cmdtp, int flag, int argc,
 		       char *const argv[])
 {
-	printf("UPL state: %sactive\n", gd_upl() ? "" : "in");
+	const struct upl *upl = gd_upl();
+
+	printf("UPL state: %sactive\n", upl ? "" : "in");
+	if (!upl)
+		return 0;
+	if (argc > 1 && !strcmp("-v", argv[1])) {
+		int i;
+
+		printf("fit %lx\n", upl->fit);
+		printf("conf_offset %d\n", upl->conf_offset);
+		for (i = 0; i < upl->image.count; i++) {
+			const struct upl_image *img =
+				alist_get(&upl->image, i, struct upl_image);
+
+			printf("image %d: load %lx size %lx offset %d: %s\n", i,
+			       img->load, img->size, img->offset,
+			       img->description);
+		}
+	}
 
 	return 0;
 }
@@ -90,12 +109,12 @@ static int do_upl_read(struct cmd_tbl *cmdtp, int flag, int argc,
 
 #ifdef CONFIG_SYS_LONGHELP
 static char upl_help_text[] =
-	"info          - Check UPL status\n"
+	"info [-v]     - Check UPL status\n"
 	"upl read <addr>   - Read handoff information\n"
 	"upl write         - Write handoff information";
 #endif
 
 U_BOOT_CMD_WITH_SUBCMDS(upl, "Universal Payload support", upl_help_text,
-	U_BOOT_SUBCMD_MKENT(info, 1, 1, do_upl_info),
+	U_BOOT_SUBCMD_MKENT(info, 2, 1, do_upl_info),
 	U_BOOT_SUBCMD_MKENT(read, 2, 1, do_upl_read),
 	U_BOOT_SUBCMD_MKENT(write, 1, 1, do_upl_write));

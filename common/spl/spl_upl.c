@@ -6,7 +6,6 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
-#define LOG_DEBUG
 #define LOG_CATEGORY UCLASS_BOOTSTD
 
 #include <bloblist.h>
@@ -138,10 +137,8 @@ int spl_write_upl_handoff(struct spl_image_info *spl_image)
 	if (ret)
 		return log_msg_ret("ser", ret);
 	ret = write_graphics(&upl->graphics);
-	printf("1wr ret=%d %d\n", ret, ret != -ENOENT);
 	if (ret && ret != -ENOENT)
 		return log_msg_ret("gra", ret);
-	printf("2wr ret=%d %d\n", ret, ret != -ENOENT);
 
 	root = ofnode_root();
 	ret = upl_write_handoff(upl, root, true);
