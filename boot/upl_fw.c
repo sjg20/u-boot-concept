@@ -18,4 +18,4 @@ static int upl_load_from_image(struct spl_image_info *spl_image,
 
 	return 0;
 }
-SPL_LOAD_IMAGE_METHOD("upl", 5, BOOT_DEVICE_UPL, upl_load_from_image);
+SPL_LOAD_IMAGE_METHOD("upl", 4, BOOT_DEVICE_UPL, upl_load_from_image);

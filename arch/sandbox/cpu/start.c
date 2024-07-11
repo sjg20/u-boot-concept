@@ -547,10 +547,8 @@ int sandbox_main(int argc, char *argv[])
 			goto err;
 	}
 
-	if (state->upl) {
+	if (state->upl)
 		gd->flags |= GD_FLG_UPL;
-		printf("UPL enabled\n");
-	}
 
 #if CONFIG_IS_ENABLED(SYS_MALLOC_F)
 	gd->malloc_base = CFG_MALLOC_F_ADDR;
