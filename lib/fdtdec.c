@@ -8,6 +8,7 @@
 
 #ifndef USE_HOSTCC
 
+#define LOG_DEBUG
 #define LOG_CATEGORY	LOGC_DT
 
 #include <bloblist.h>
@@ -1678,6 +1679,9 @@ int fdtdec_setup(void)
 				gd->fdt_src = FDTSRC_BLOBLIST;
 				log_debug("Devicetree is in bloblist at %p\n",
 					  gd->fdt_blob);
+				os_write_file("/tmp/bl", gd->fdt_blob,
+					      fdt_totalsize(gd->fdt_blob));
+				ret = 0;
 			} else {
 				log_debug("No FDT found in bloblist\n");
 				ret = -ENOENT;

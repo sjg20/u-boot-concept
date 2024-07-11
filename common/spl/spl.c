@@ -812,9 +812,11 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 	}
 	if (CONFIG_IS_ENABLED(UPL_OUT)) {
 		ret = spl_write_upl_handoff(&spl_image);
-		if (ret)
+		if (ret) {
 			printf(SPL_TPL_PROMPT
 			       "UPL hand-off write failed (err=%d)\n", ret);
+			hang();
+		}
 	}
 	if (CONFIG_IS_ENABLED(BLOBLIST)) {
 		ret = bloblist_finish();

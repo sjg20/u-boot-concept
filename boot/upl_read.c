@@ -6,6 +6,7 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
+#define LOG_DEBUG
 #define LOG_CATEGORY UCLASS_BOOTSTD
 
 #include <log.h>
@@ -201,8 +202,16 @@ static int decode_root_props(struct upl *upl, ofnode node)
  */
 static int decode_upl_params(struct upl *upl, ofnode options)
 {
+	char buf[100];
 	ofnode node;
 	int ret;
+
+	ofnode_get_path(options, buf, sizeof(buf));
+
+	log_debug("looking in '%s'\n", buf);
+	ofnode_for_each_subnode(node, options) {
+		log_debug("- %s\n", ofnode_get_name(node));
+	}
 
 	node = ofnode_find_subnode(options, UPLN_UPL_PARAMS);
 	if (!ofnode_valid(node))
@@ -553,7 +562,7 @@ int upl_read_handoff(struct upl *upl, oftree tree)
 	upl_init(upl);
 	ret = decode_root_props(upl, root);
 	if (ret)
-		return log_msg_ret("ad1", ret);
+		return log_msg_ret("roo", ret);
 
 	ofnode_for_each_subnode(node, root) {
 		const char *name = ofnode_get_name(node);
@@ -562,7 +571,7 @@ int upl_read_handoff(struct upl *upl, oftree tree)
 		if (!strcmp(UPLN_OPTIONS, name)) {
 			ret = decode_upl_params(upl, node);
 			if (ret)
-				return log_msg_ret("ad2", ret);
+				return log_msg_ret("opt", ret);
 
 			ret = decode_upl_images(upl, node);
 		} else if (node_matches_at(node, UPLN_MEMORY)) {
@@ -580,7 +589,7 @@ int upl_read_handoff(struct upl *upl, oftree tree)
 			ret = 0;
 		}
 		if (ret)
-			return log_msg_ret("ad2", ret);
+			return log_msg_ret("err", ret);
 	}
 
 	return 0;
