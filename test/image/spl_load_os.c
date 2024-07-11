@@ -13,8 +13,9 @@
 static int spl_test_load(struct unit_test_state *uts)
 {
 	struct spl_image_info image;
+	char fname[256];
 
-	ut_assertok(sandbox_spl_load_fit(&image));
+	ut_assertok(sandbox_spl_load_fit(fname, sizeof(fname), &image));
 
 	return 0;
 }

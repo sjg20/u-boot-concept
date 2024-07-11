@@ -39,8 +39,11 @@ int sandbox_find_next_phase(char *fname, int maxlen, bool use_img);
  *
  * Loads a FIT containing the next phase and sets it up for booting
  *
+ * @fname: Returns filename loaded
+ * @maxlen: Maximum length for @fname including \0
  * @image: Place to put SPL-image information
+ * Return: 0 if OK, -ve on error
  */
-int sandbox_spl_load_fit(struct spl_image_info *image);
+int sandbox_spl_load_fit(char *fname, int maxlen, struct spl_image_info *image);
 
 #endif

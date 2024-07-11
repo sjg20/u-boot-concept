@@ -215,12 +215,11 @@ static ulong read_fit_image(struct spl_load_info *load, ulong offset,
 	return size;
 }
 
-int sandbox_spl_load_fit(struct spl_image_info *image)
+int sandbox_spl_load_fit(char *fname, int maxlen, struct spl_image_info *image)
 {
 	struct legacy_img_hdr *header;
 	struct load_ctx load_ctx;
 	struct spl_load_info load;
-	char fname[256];
 	int ret;
 	int fd;
 
@@ -228,7 +227,7 @@ int sandbox_spl_load_fit(struct spl_image_info *image)
 	spl_set_bl_len(&load, 512);
 	load.read = read_fit_image;
 
-	ret = sandbox_find_next_phase(fname, sizeof(fname), true);
+	ret = sandbox_find_next_phase(fname, maxlen, true);
 	if (ret) {
 		printf("%s not found, error %d\n", fname, ret);
 		return log_msg_ret("nph", ret);
@@ -256,17 +255,25 @@ int sandbox_spl_load_fit(struct spl_image_info *image)
 static int upl_load_from_image(struct spl_image_info *spl_image,
 			       struct spl_boot_device *bootdev)
 {
+	struct sandbox_state *state;
+	char *fname;
 	int ret;
 
 	if (!CONFIG_IS_ENABLED(UPL_OUT))
 		return -ENOTSUPP;
 
-	ret = sandbox_spl_load_fit(spl_image);
+	fname = os_malloc(256);
+
+	ret = sandbox_spl_load_fit(fname, 256, spl_image);
 	if (ret)
 		return log_msg_ret("fit", ret);
 	spl_image->flags = SPL_SANDBOXF_ARG_IS_BUF;
 	spl_image->arg = map_sysmem(spl_image->load_addr, 0);
 	/* size is set by load_simple_fit(), offset is left as 0 */
+
+	state = state_get_current();
+	state->upl_fname = fname;
+	printf("fname %s\n", state->upl_fname);
 
 	return 0;
 }
