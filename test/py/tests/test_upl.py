@@ -23,3 +23,6 @@ def test_upl_handoff(u_boot_console):
     # Make sure that Universal Payload is detected in U-Boot proper
     output = cons.run_command('upl info')
     assert 'UPL state: active' == output
+
+    output = cons.run_command('ut upl -f dm_test_upl_info_norun')
+    assert 'Failures: 0' in output
