@@ -868,7 +868,7 @@ static int initf_upl(void)
 	struct upl *upl;
 	int ret;
 
-	if (!IS_ENABLED(CONFIG_UPL_IN))
+	if (!IS_ENABLED(CONFIG_UPL_IN) | !(gd->flags & GD_FLG_UPL))
 		return 0;
 
 	upl = malloc(sizeof(struct upl));
