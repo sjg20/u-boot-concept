@@ -445,7 +445,7 @@ static int sandbox_cmdline_cb_upl_fname(struct sandbox_state *state, const char 
 
 	return 0;
 }
-SANDBOX_CMDLINE_OPT(upl_fname, 1, "Set Universal Payload (UPL) filename");
+SANDBOX_CMDLINE_OPT_SHORT(upl_fname, 'U', 1, "Set Universal Payload (UPL) filename");
 
 static void setup_ram_buf(struct sandbox_state *state)
 {

@@ -31,6 +31,7 @@ void upl_set_fit_info(ulong fit, int conf_offset, ulong entry_addr)
 
 	upl->fit = fit;
 	upl->conf_offset = conf_offset;
+	log_debug("upl: add fit %lx conf %d\n", fit, conf_offset);
 }
 
 int upl_add_image(int node, ulong load_addr, ulong size, const char *desc)
@@ -130,7 +131,6 @@ int spl_write_upl_handoff(struct spl_image_info *spl_image)
 	int ret;
 
 	log_debug("UPL: Writing handoff - image_count=%d\n", upl->image.count);
-	upl_init(upl);
 	upl->addr_cells = IS_ENABLED(CONFIG_PHYS_64BIT) ? 2 : 1;
 	upl->size_cells = IS_ENABLED(CONFIG_PHYS_64BIT) ? 2 : 1;
 	upl->bootmode = UPLBM_DEFAULT;
@@ -159,4 +159,9 @@ int spl_write_upl_handoff(struct spl_image_info *spl_image)
 	memcpy(ptr, abuf_data(&buf), abuf_size(&buf));
 
 	return 0;
+}
+
+void spl_upl_init(void)
+{
+	upl_init(&s_upl);
 }

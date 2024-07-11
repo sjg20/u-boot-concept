@@ -3,7 +3,6 @@
  * Copyright (c) 2016 Google, Inc
  */
 
-#define LOG_DEBUG
 #define LOG_CATEGORY	LOGC_BOOT
 
 #include <dm.h>
@@ -262,6 +261,7 @@ static int upl_load_from_image(struct spl_image_info *spl_image,
 	if (!CONFIG_IS_ENABLED(UPL_OUT))
 		return -ENOTSUPP;
 
+	spl_upl_init();
 	fname = os_malloc(256);
 
 	ret = sandbox_spl_load_fit(fname, 256, spl_image);
@@ -273,7 +273,6 @@ static int upl_load_from_image(struct spl_image_info *spl_image,
 
 	state = state_get_current();
 	state->upl_fname = fname;
-	printf("fname %s\n", state->upl_fname);
 
 	return 0;
 }

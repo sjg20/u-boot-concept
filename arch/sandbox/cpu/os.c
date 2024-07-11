@@ -3,7 +3,6 @@
  * Copyright (c) 2011 The Chromium OS Authors.
  */
 
-#define DEBUG
 #define _GNU_SOURCE
 
 #include <dirent.h>
@@ -585,6 +584,7 @@ int os_parse_args(struct sandbox_state *state, int argc, char *argv[])
 			if (sb_opt[i]->flag_short == c) {
 				if (sb_opt[i]->callback(state, optarg)) {
 					state->parse_err = sb_opt[i]->flag;
+					printf("err1\n");
 					return 0;
 				}
 				break;
@@ -608,8 +608,11 @@ int os_parse_args(struct sandbox_state *state, int argc, char *argv[])
 				static char parse_err[3] = { '-', 0, '\0', };
 				parse_err[1] = optopt;
 				state->parse_err = parse_err;
-			} else
+				printf("err2\n");
+			} else {
 				state->parse_err = argv[optind - 1];
+				printf("err3\n");
+			}
 			break;
 		}
 	}
@@ -907,7 +910,7 @@ static int os_jump_to_file(const char *fname, bool delete_it)
 		extra_args[argc++] = "--rm_memory";
 	printf("state->upl_fname %s\n", state->upl_fname);
 	if (state->upl_fname) {
-		extra_args[argc++] = "--upl-fname";
+		extra_args[argc++] = "-U";
 		extra_args[argc++] = state->upl_fname;
 	}
 	err = add_args(&argv, extra_args, argc);

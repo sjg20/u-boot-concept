@@ -1086,4 +1086,11 @@ static inline bool spl_decompression_enabled(void)
  */
 int spl_write_upl_handoff(struct spl_image_info *spl_image);
 
+/**
+ * spl_upl_init() - Get UPL ready for information to be added
+ *
+ * This must be called before upl_add_image(), etc.
+ */
+void spl_upl_init(void);
+
 #endif
