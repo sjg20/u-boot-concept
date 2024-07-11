@@ -6,6 +6,8 @@
 #ifndef __asm_spl_h
 #define __asm_spl_h
 
+struct spl_image_info;
+
 enum {
 	BOOT_DEVICE_MMC1,
 	BOOT_DEVICE_MMC2,
@@ -31,5 +33,14 @@ enum {
  * @use_img:	select the 'u-boot.img' file instead of the 'u-boot' ELF file
  */
 int sandbox_find_next_phase(char *fname, int maxlen, bool use_img);
+
+/**
+ * sandbox_spl_load_fit() - Load the next phase from a FIT
+ *
+ * Loads a FIT containing the next phase and sets it up for booting
+ *
+ * @image: Place to put SPL-image information
+ */
+int sandbox_spl_load_fit(struct spl_image_info *image);
 
 #endif

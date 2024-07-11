@@ -3,11 +3,16 @@
  * Copyright (c) 2016 Google, Inc
  */
 
+#define LOG_DEBUG
+#define LOG_CATEGORY	LOGC_BOOT
+
 #include <dm.h>
 #include <hang.h>
 #include <handoff.h>
+#include <image.h>
 #include <init.h>
 #include <log.h>
+#include <mapmem.h>
 #include <os.h>
 #include <spl.h>
 #include <asm/global_data.h>
@@ -180,3 +185,89 @@ int handoff_arch_save(struct spl_handoff *ho)
 
 	return 0;
 }
+
+/* Context used to hold file descriptor */
+struct load_ctx {
+	int fd;
+};
+
+static ulong read_fit_image(struct spl_load_info *load, ulong offset,
+			    ulong size, void *buf)
+{
+	struct load_ctx *load_ctx = load->priv;
+	off_t ret;
+	ssize_t res;
+
+	ret = os_lseek(load_ctx->fd, offset, OS_SEEK_SET);
+	if (ret < 0) {
+		printf("Failed to seek to %zx, got %zx (errno=%d)\n", offset,
+		       ret, errno);
+		return log_msg_ret("lse", ret);
+	}
+
+	res = os_read(load_ctx->fd, buf, size);
+	if (res < 0) {
+		printf("Failed to read %lx bytes, got %ld (errno=%d)\n",
+		       size, res, errno);
+		return log_msg_ret("osr", res);
+	}
+
+	return size;
+}
+
+int sandbox_spl_load_fit(struct spl_image_info *image)
+{
+	struct legacy_img_hdr *header;
+	struct load_ctx load_ctx;
+	struct spl_load_info load;
+	char fname[256];
+	int ret;
+	int fd;
+
+	memset(&load, '\0', sizeof(load));
+	spl_set_bl_len(&load, 512);
+	load.read = read_fit_image;
+
+	ret = sandbox_find_next_phase(fname, sizeof(fname), true);
+	if (ret) {
+		printf("%s not found, error %d\n", fname, ret);
+		return log_msg_ret("nph", ret);
+	}
+
+	header = spl_get_load_buffer(-sizeof(*header), sizeof(*header));
+
+	log_debug("reading from %s\n", fname);
+	fd = os_open(fname, OS_O_RDONLY);
+	if (fd < 0)
+		return log_msg_ret("ope", -ENOENT);
+	if (os_read(fd, header, 512) != 512)
+		return log_msg_ret("rea", -EIO);
+	load_ctx.fd = fd;
+
+	load.priv = &load_ctx;
+
+	ret = spl_load_simple_fit(image, &load, 0, header);
+	if (ret)
+		return log_msg_ret("slf", ret);
+
+	return 0;
+}
+
+static int upl_load_from_image(struct spl_image_info *spl_image,
+			       struct spl_boot_device *bootdev)
+{
+	int ret;
+
+	if (!CONFIG_IS_ENABLED(UPL_OUT))
+		return -ENOTSUPP;
+
+	ret = sandbox_spl_load_fit(spl_image);
+	if (ret)
+		return log_msg_ret("fit", ret);
+	spl_image->flags = SPL_SANDBOXF_ARG_IS_BUF;
+	spl_image->arg = map_sysmem(spl_image->load_addr, 0);
+	/* size is set by load_simple_fit(), offset is left as 0 */
+
+	return 0;
+}
+SPL_LOAD_IMAGE_METHOD("upl", 4, BOOT_DEVICE_UPL, upl_load_from_image);

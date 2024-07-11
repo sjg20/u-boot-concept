@@ -49,7 +49,7 @@ ssize_t os_write(int fd, const void *buf, size_t count);
  * @fd:		File descriptor as returned by os_open()
  * @offset:	File offset (based on whence)
  * @whence:	Position offset is relative to (see below)
- * Return:	new file offset
+ * Return:	new file offset, or -errno on error
  */
 off_t os_lseek(int fd, off_t offset, int whence);
 

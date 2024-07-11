@@ -44,7 +44,7 @@ int upl_add_image(int node, ulong load_addr, ulong size, const char *desc)
 	img.description = desc;
 	if (!alist_add(&upl->image, img, struct upl_image))
 		return -ENOMEM;
-	printf("add image\n");
+	log_debug("upl: add image %s at %lx size %lx\n", desc, load_addr, size);
 
 	return 0;
 }

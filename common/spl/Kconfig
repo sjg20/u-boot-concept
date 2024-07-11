@@ -288,6 +288,7 @@ config SPL_BOARD_INIT
 
 config SPL_LOAD_BLOCK
 	bool
+	default y if SANDBOX
 	help
 	  Support loading images from block devices. This adds a bl_len member
 	  to struct spl_load_info.

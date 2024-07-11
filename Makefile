@@ -1471,9 +1471,9 @@ u-boot-lzma.img: u-boot.bin.lzma FORCE
 	$(call if_changed,mkimage)
 
 u-boot-dtb.img u-boot.img u-boot.kwb u-boot.pbl u-boot-ivt.img: \
-		$(if $(CONFIG_SPL_LOAD_FIT),u-boot-nodtb.bin \
+		$(if $(CONFIG_SANDBOX),u-boot,$(if $(CONFIG_SPL_LOAD_FIT),u-boot-nodtb.bin \
 			$(if $(CONFIG_OF_SEPARATE)$(CONFIG_OF_EMBED)$(CONFIG_SANDBOX),dts/dt.dtb) \
-		,$(UBOOT_BIN)) FORCE
+		,$(UBOOT_BIN))) FORCE
 	$(call if_changed,mkimage)
 	$(BOARD_SIZE_CHECK)
 
