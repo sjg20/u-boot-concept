@@ -32,12 +32,12 @@ static int do_upl_info(struct cmd_tbl *cmdtp, int flag, int argc,
 		int i;
 
 		printf("fit %lx\n", upl->fit);
-		printf("conf_offset %d\n", upl->conf_offset);
+		printf("conf_offset %x\n", upl->conf_offset);
 		for (i = 0; i < upl->image.count; i++) {
 			const struct upl_image *img =
 				alist_get(&upl->image, i, struct upl_image);
 
-			printf("image %d: load %lx size %lx offset %d: %s\n", i,
+			printf("image %d: load %lx size %lx offset %x: %s\n", i,
 			       img->load, img->size, img->offset,
 			       img->description);
 		}

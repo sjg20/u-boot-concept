@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <log.h>
 #include <os.h>
+#include <upl.h>
 #include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/malloc.h>
@@ -415,3 +416,33 @@ int sandbox_load_other_fdt(void **fdtp, int *sizep)
 
 	return 0;
 }
+
+static int upl_load_image(void)
+{
+	struct sandbox_state *state = state_get_current();
+	struct upl *upl = gd_upl();
+
+	if (upl && state->upl_fname) {
+		void *buf, *ptr;
+		int size;
+
+		if (os_read_file(state->upl_fname, &buf, &size)) {
+			printf("Failed to read UPL FIT\n");
+			return -ENOENT;
+		}
+
+		/*
+		 * SPL loaded just the header of the image into allocated
+		 * memory but this is not large enough to load the entire FIT.
+		 * Use a safe address and update the UPL info to point to it.
+		 */
+		upl->fit = CONFIG_TEXT_BASE;
+		log_debug("Loading UPL FIT '%s' to %lx size %x\n",
+			  state->upl_fname, upl->fit, size);
+		ptr = map_sysmem(upl->fit, 0);
+		memcpy(ptr, buf, size);
+	}
+
+	return 0;
+}
+EVENT_SPY_SIMPLE(EVT_MISC_INIT_F, upl_load_image);

@@ -6,6 +6,7 @@
 #define LOG_CATEGORY	LOGC_BOOT
 
 #include <dm.h>
+#include <event.h>
 #include <hang.h>
 #include <handoff.h>
 #include <image.h>
@@ -14,6 +15,7 @@
 #include <mapmem.h>
 #include <os.h>
 #include <spl.h>
+#include <upl.h>
 #include <asm/global_data.h>
 #include <asm/spl.h>
 #include <asm/state.h>

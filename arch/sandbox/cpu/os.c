@@ -908,7 +908,6 @@ static int os_jump_to_file(const char *fname, bool delete_it)
 	extra_args[argc++] = mem_fname;
 	if (state->ram_buf_rm)
 		extra_args[argc++] = "--rm_memory";
-	printf("state->upl_fname %s\n", state->upl_fname);
 	if (state->upl_fname) {
 		extra_args[argc++] = "-U";
 		extra_args[argc++] = state->upl_fname;

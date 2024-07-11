@@ -30,7 +30,7 @@ void upl_set_fit_info(ulong fit, int conf_offset, ulong entry_addr)
 
 	upl->fit = fit;
 	upl->conf_offset = conf_offset;
-	log_debug("upl: add fit %lx conf %d\n", fit, conf_offset);
+	log_debug("upl: add fit %lx conf %x\n", fit, conf_offset);
 }
 
 int upl_add_image(int node, ulong load_addr, ulong size, const char *desc)

@@ -10,9 +10,13 @@
 #include <mapmem.h>
 #include <upl.h>
 #include <dm/ofnode.h>
+#include <test/suites.h>
 #include <test/test.h>
 #include <test/ut.h>
 #include "bootstd_common.h"
+
+/* Declare a new upl test */
+#define UPL_TEST(_name, _flags)	UNIT_TEST(_name, _flags, upl_test)
 
 int upl_get_test_data(struct unit_test_state *uts, struct upl *upl)
 {
@@ -381,7 +385,7 @@ static int upl_test_base(struct unit_test_state *uts)
 
 	return 0;
 }
-BOOTSTD_TEST(upl_test_base, 0);
+UPL_TEST(upl_test_base, 0);
 
 /* Test 'upl info' command */
 static int dm_test_upl_info(struct unit_test_state *uts)
@@ -398,7 +402,7 @@ static int dm_test_upl_info(struct unit_test_state *uts)
 
 	return 0;
 }
-BOOTSTD_TEST(dm_test_upl_info, UT_TESTF_CONSOLE_REC);
+UPL_TEST(dm_test_upl_info, UT_TESTF_CONSOLE_REC);
 
 /* Test 'upl read' and 'upl_write' commands */
 static int dm_test_upl_read_write(struct unit_test_state *uts)
@@ -420,4 +424,13 @@ static int dm_test_upl_read_write(struct unit_test_state *uts)
 
 	return 0;
 }
-BOOTSTD_TEST(dm_test_upl_read_write, UT_TESTF_CONSOLE_REC);
+UPL_TEST(dm_test_upl_read_write, UT_TESTF_CONSOLE_REC);
+
+int do_ut_upl(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+{
+	struct unit_test *tests = UNIT_TEST_SUITE_START(upl_test);
+	const int n_ents = UNIT_TEST_SUITE_COUNT(upl_test);
+
+	return cmd_ut_category("cmd_upl", "cmd_upl_", tests, n_ents, argc,
+			       argv);
+}
