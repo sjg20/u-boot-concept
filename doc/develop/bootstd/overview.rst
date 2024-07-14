@@ -420,6 +420,7 @@ Bootmeth drivers are provided for booting from various media:
    - :doc:`ChromiumOS <cros>` ChromiumOS boot from a disk
    - EFI boot using boot manager
    - :doc:`QFW <qfw>`: QEMU firmware interface
+   - :doc:`sandbox <sandbox>` used only for testing
 
 Each driver is controlled by a Kconfig option. If no bootmeth driver is
 selected by a compatible string in the devicetree, all available bootmeth
