@@ -412,7 +412,7 @@ Available bootmeth drivers
 
 Bootmeth drivers are provided for:
 
-   - extlinux / syslinux boot from a disk
+   - :doc:`extlinux / syslinux <extlinux>` boot from a disk
    - extlinux boot from a network (PXE)
    - U-Boot scripts from disk, network or SPI flash
    - EFI boot using bootefi from disk
