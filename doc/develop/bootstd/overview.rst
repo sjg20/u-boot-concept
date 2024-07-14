@@ -418,6 +418,7 @@ Bootmeth drivers are provided for booting from various media:
    - EFI boot using bootefi from disk
    - VBE
    - EFI boot using boot manager
+   - :doc:`QFW <qfw>`: QEMU firmware interface
 
 Each driver is controlled by a Kconfig option. If no bootmeth driver is
 selected by a compatible string in the devicetree, all available bootmeth
