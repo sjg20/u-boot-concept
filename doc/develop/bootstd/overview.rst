@@ -418,6 +418,7 @@ Bootmeth drivers are provided for:
    - EFI boot using bootefi from disk
    - VBE
    - EFI boot using boot manager
+   - :doc:`QFW <qfw>`: QEMU firmware interface
 
 
 Command interface
