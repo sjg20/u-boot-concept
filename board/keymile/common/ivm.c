@@ -342,7 +342,6 @@ static int ivm_populate_env(unsigned char *buf, int len, int mac_address_offset)
 
 int ivm_read_eeprom(unsigned char *buf, int len, int mac_address_offset)
 {
-	int ret;
 #if CONFIG_IS_ENABLED(DM_I2C)
 	struct udevice *eedev = NULL;
 
@@ -361,6 +360,9 @@ int ivm_read_eeprom(unsigned char *buf, int len, int mac_address_offset)
 		return 1;
 	}
 #else
+	printf("** needs porting to driver model\n");
+	return -1;
+#if 0
 	i2c_set_bus_num(CONFIG_KM_IVM_BUS);
 	/* add deblocking here */
 	i2c_make_abort();
@@ -370,6 +372,7 @@ int ivm_read_eeprom(unsigned char *buf, int len, int mac_address_offset)
 		printf("Error reading EEprom\n");
 		return -2;
 	}
+#endif
 #endif
 	return ivm_populate_env(buf, len, mac_address_offset);
 }
