@@ -111,6 +111,9 @@ static int ddr_i2c_read(DEV_TYPE *dev, unsigned int addr,
 #if CONFIG_IS_ENABLED(DM_I2C)
 	ret = dm_i2c_read(dev, 0, buf, len);
 #else
+	printf("** needs porting to driver model\n");
+	return -1;
+
 	ret = i2c_read(dev->chip, addr, alen, buf, len);
 #endif
 
@@ -157,6 +160,8 @@ static void __get_spd(generic_spd_eeprom_t *spd, u8 i2c_address)
 		return;
 	}
 #else /* Non DM I2C support - will be removed */
+	printf("** needs porting to driver model\n");
+	return;
 	struct ludevice ldev = {
 		.chip = i2c_address,
 	};

@@ -109,7 +109,9 @@ int setup_i2c(unsigned i2c_index, int speed, int slave_addr,
 		goto err_idle;
 
 #if !CONFIG_IS_ENABLED(DM_I2C)
-	bus_i2c_init(i2c_index, speed, slave_addr, force_idle_bus, p);
+	printf("** port this code\n");
+	return -1;
+	/* bus_i2c_init(i2c_index, speed, slave_addr, force_idle_bus, p);*/
 #endif
 
 	return 0;
