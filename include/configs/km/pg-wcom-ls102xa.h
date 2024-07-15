@@ -149,7 +149,6 @@
  * I2C
  */
 
-#define CFG_SYS_I2C_MAX_HOPS		1
 #define CFG_SYS_NUM_I2C_BUSES	3
 #define I2C_MUX_PCA_ADDR		0x70
 #define I2C_MUX_CH_DEFAULT		0x0
