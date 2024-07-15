@@ -416,7 +416,7 @@ Bootmeth drivers are provided for:
    - :doc:`extlinux / syslinux <extlinux>` boot from a network (PXE)
    - :doc:`U-Boot scripts <script>` from disk, network or SPI flash
    - EFI boot using bootefi from disk
-   - VBE
+   - :doc:`VBE </develop/vbe>`: Verified Boot for Embedded
    - :doc:`ChromiumOS <cros>` ChromiumOS boot from a disk
    - EFI boot using boot manager
    - :doc:`QFW <qfw>`: QEMU firmware interface
