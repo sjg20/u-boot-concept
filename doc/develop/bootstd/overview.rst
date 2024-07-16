@@ -419,6 +419,9 @@ Bootmeth drivers are provided for:
    - VBE
    - EFI boot using boot manager
 
+Each driver is controlled by a Kconfig option. If no bootmeth driver is
+selected by a compatible string in the devicetree, all available bootmeth
+drivers are bound automatically.
 
 Command interface
 -----------------
