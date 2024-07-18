@@ -74,8 +74,6 @@ DECLARE_GLOBAL_DATA_PTR;
 #define I2SR_IIF_CLEAR	(0 << 1)
 #endif
 
-#if CONFIG_IS_ENABLED(DM_I2C) || CONFIG_SYS_I2C_MXC_I2C1
-
 #ifdef I2C_QUIRK_REG
 static u16 i2c_clk_div[60][2] = {
 	{ 20,	0x00 }, { 22,	0x01 }, { 24,	0x02 }, { 26,	0x03 },
@@ -319,8 +317,6 @@ static int i2c_init_transfer_(struct mxc_i2c_bus *i2c_bus, u8 chip,
 	return 0;
 }
 
-#endif /* DM_I2C || SYS_I2C_MXC_I2C1 */
-
 #if !defined(I2C2_BASE_ADDR)
 #define I2C2_BASE_ADDR	0
 #endif
@@ -484,7 +480,6 @@ void i2c_early_init_f(void)
 	writeb(I2CR_IEN, base + (I2CR << reg_shift));
 }
 
-#ifdef CONFIG_SYS_I2C_MXC_I2C1
 static int i2c_init_transfer(struct mxc_i2c_bus *i2c_bus, u8 chip,
 			     u32 addr, int alen)
 {
@@ -617,8 +612,6 @@ static int i2c_read_data(struct mxc_i2c_bus *i2c_bus, uchar chip, uchar *buf,
 	return 0;
 }
 
-#endif /* ifdef CONFIG_SYS_I2C_MXC_I2C1 */
-
 int __enable_i2c_clk(unsigned char enable, unsigned int i2c_num)
 {
 	return 1;
@@ -627,11 +620,8 @@ int __enable_i2c_clk(unsigned char enable, unsigned int i2c_num)
 int enable_i2c_clk(unsigned char enable, unsigned int i2c_num)
 	__attribute__((weak, alias("__enable_i2c_clk")));
 
-#if !defined(CONFIG_SYS_I2C_MXC_I2C1)
+#if !CONFIG_IS_ENABLED(DM_I2C)
 
-/* no code */
-
-#elif !CONFIG_IS_ENABLED(DM_I2C)
 /*
  * Read data from I2C device
  *
