@@ -31,11 +31,13 @@ ulong spl_romapi_raw_seekable_read(u32 offset, u32 size, void *buf)
 	return 0;
 }
 
+#ifdef CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_USE_SECTOR
 ulong __weak spl_romapi_get_uboot_base(u32 image_offset, u32 rom_bt_dev)
 {
 	return image_offset +
 		(CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR * 512 - 0x8000);
 }
+#endif
 
 static int is_boot_from_stream_device(u32 boot)
 {
