@@ -49,6 +49,14 @@ struct global_data {
 	struct board_f *boardf;
 #endif
 	/**
+	 * @ram_size: RAM size in bytes
+	 */
+	phys_size_t ram_size;
+	/**
+	 * @ram_top: top address of RAM used by U-Boot
+	 */
+	phys_addr_t ram_top;
+	/**
 	 * @flags: global data flags
 	 *
 	 * See &enum gd_flags
@@ -102,10 +110,6 @@ struct global_data {
 	 */
 	unsigned long ram_base;
 	/**
-	 * @ram_top: top address of RAM used by U-Boot
-	 */
-	phys_addr_t ram_top;
-	/**
 	 * @relocaddr: start address of U-Boot in RAM
 	 *
 	 * After relocation this field indicates the address to which U-Boot
@@ -114,10 +118,6 @@ struct global_data {
 	 * GDB using the 'add-symbol-file u-boot <relocaddr>' command.
 	 */
 	unsigned long relocaddr;
-	/**
-	 * @ram_size: RAM size in bytes
-	 */
-	phys_size_t ram_size;
 	/**
 	 * @irq_sp: IRQ stack pointer
 	 */
