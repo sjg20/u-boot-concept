@@ -59,6 +59,13 @@ struct global_data {
 	 */
 	unsigned long cpu_clk;
 	/**
+	 * @env_addr: address of environment structure
+	 *
+	 * @env_addr contains the address of the structure holding the
+	 * environment variables.
+	 */
+	unsigned long env_addr;
+	/**
 	 * @bus_clk: platform clock rate in Hz
 	 */
 	unsigned int bus_clk;
@@ -74,13 +81,6 @@ struct global_data {
 	 * @baudrate: baud rate of the serial interface
 	 */
 	unsigned int baudrate;
-	/**
-	 * @env_addr: address of environment structure
-	 *
-	 * @env_addr contains the address of the structure holding the
-	 * environment variables.
-	 */
-	unsigned long env_addr;
 	/**
 	 * @env_has_init: bit mask indicating environment locations
 	 *
