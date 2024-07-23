@@ -595,7 +595,7 @@ static int reserve_bootstage(void)
 	int size = bootstage_get_size();
 
 	gd->start_addr_sp = reserve_stack_aligned(size);
-	gd->new_bootstage = map_sysmem(gd->start_addr_sp, size);
+	gd->boardf->new_bootstage = map_sysmem(gd->start_addr_sp, size);
 	debug("Reserving %#x Bytes for bootstage at: %08lx\n", size,
 	      gd->start_addr_sp);
 #endif
@@ -685,13 +685,13 @@ static int reloc_bootstage(void)
 #ifdef CONFIG_BOOTSTAGE
 	if (gd->flags & GD_FLG_SKIP_RELOC)
 		return 0;
-	if (gd->new_bootstage) {
+	if (gd->boardf->new_bootstage) {
 		int size = bootstage_get_size();
 
 		debug("Copying bootstage from %p to %p, size %x\n",
-		      gd->bootstage, gd->new_bootstage, size);
-		memcpy(gd->new_bootstage, gd->bootstage, size);
-		gd->bootstage = gd->new_bootstage;
+		      gd->bootstage, gd->boardf->new_bootstage, size);
+		memcpy(gd->boardf->new_bootstage, gd->bootstage, size);
+		gd->bootstage = gd->boardf->new_bootstage;
 		bootstage_relocate();
 	}
 #endif
