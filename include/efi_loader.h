@@ -955,6 +955,19 @@ int efi_disk_probe(void *ctx, struct event *event);
 int efi_disk_remove(void *ctx, struct event *event);
 /* Called by board init to initialize the EFI memory map */
 int efi_memory_init(void);
+
+/**
+ * efi_memory_coop() - Allow EFI to use all available memory
+ *
+ * Up until this function is called, only a small portion of memory is available
+ * for use by the EFI memory-allocator. This function is called at the
+ * 'point of cooperation', before jumping into an EFI app, which needs to be
+ * able to make use of all the memory in the machine
+ *
+ * Return: efi_status_t (EFI_SUCCESS on success)
+ */
+int efi_memory_coop(void);
+
 /* Adds new or overrides configuration table entry to the system table */
 efi_status_t efi_install_configuration_table(const efi_guid_t *guid, void *table);
 /* Sets up a loaded image */
