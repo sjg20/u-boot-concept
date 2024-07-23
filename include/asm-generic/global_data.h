@@ -92,15 +92,6 @@ struct global_data {
 	 */
 	unsigned long board_type;
 #endif
-	/**
-	 * @have_console: console is available
-	 *
-	 * A value of 1 indicates that serial_init() was called and a console
-	 * is available.
-	 * A value of 0 indicates that console input and output drivers shall
-	 * not be called.
-	 */
-	unsigned long have_console;
 #if CONFIG_IS_ENABLED(PRE_CONSOLE_BUFFER)
 	/**
 	 * @precon_buf_idx: pre-console buffer index
@@ -219,7 +210,7 @@ struct global_data {
 #endif
 #ifdef CONFIG_TIMER
 	/**
-	 * @timer: timer instance for Driver Model
+s	 * @timer: timer instance for Driver Model
 	 */
 	struct udevice *timer;
 #endif
@@ -690,6 +681,12 @@ enum gd_flags {
 	 * @GD_FLG_HUSH_MODERN_PARSER: Use hush 2021 parser.
 	 */
 	GD_FLG_HUSH_MODERN_PARSER = 0x2000000,
+	/**
+	 * @GD_FLG_HAVE_CONSOLE: serial_init() was called and a console
+	 * is available. When not set, indicates that console input and output
+	 * drivers shall not be called.
+	 */
+	GD_FLG_HAVE_CONSOLE = 0x4000000,
 };
 
 #endif /* __ASSEMBLY__ */
