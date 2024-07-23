@@ -613,6 +613,13 @@ void mem_malloc_init(ulong start, ulong size)
 #endif
 }
 
+bool malloc_check_in_range(void *ptr)
+{
+	ulong val = (ulong)ptr;
+
+	return val >= mem_malloc_start && val < mem_malloc_end;
+}
+
 /* field-extraction macros */
 
 #define first(b) ((b)->fd)
