@@ -32,6 +32,9 @@ DECLARE_GLOBAL_DATA_PTR;
  */
 #define EFI_EARLY_REGION_SIZE	SZ_256K
 
+/* Set when all memory has been added for use by EFI */
+static bool efi_full_memory;
+
 efi_uintn_t efi_memory_map_key;
 
 /**
@@ -831,8 +834,25 @@ static void add_u_boot_and_runtime(void)
 
 int efi_memory_init(void)
 {
-	efi_add_known_memory();
+	efi_status_t ret;
 
+	/* restrict EFI to its own region until efi_memory_coop() is called */
+	ret = efi_add_memory_map_pg(gd->efi_region,
+				    EFI_EARLY_REGION_SIZE >> EFI_PAGE_SHIFT,
+				    EFI_CONVENTIONAL_MEMORY, false);
+
+	return ret;
+}
+
+int efi_memory_coop(void)
+{
+	if (efi_full_memory)
+		return 0;
+	log_debug("Enabling coop memory\n");
+
+	efi_full_memory = true;
+
+	efi_add_known_memory();
 	add_u_boot_and_runtime();
 
 #ifdef CONFIG_EFI_LOADER_BOUNCE_BUFFER
@@ -842,7 +862,7 @@ int efi_memory_init(void)
 	if (efi_allocate_pages(EFI_ALLOCATE_MAX_ADDRESS, EFI_BOOT_SERVICES_DATA,
 			       (64 * 1024 * 1024) >> EFI_PAGE_SHIFT,
 			       &efi_bounce_buffer_addr) != EFI_SUCCESS)
-		return -1;
+		return -ENOMEM;
 
 	efi_bounce_buffer = (void*)(uintptr_t)efi_bounce_buffer_addr;
 #endif
