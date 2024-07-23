@@ -24,6 +24,14 @@ DECLARE_GLOBAL_DATA_PTR;
 /* Magic number identifying memory allocated from pool */
 #define EFI_ALLOC_POOL_MAGIC 0x1fe67ddf6491caa2
 
+/* Flags controlling EFI memory-allocation - see enum efi_alloc_flags */
+static int alloc_flags;
+
+void efi_set_alloc(int flags)
+{
+	alloc_flags = flags;
+}
+
 efi_uintn_t efi_memory_map_key;
 
 struct efi_mem_list {
@@ -57,8 +65,12 @@ void *efi_bounce_buffer;
  * The checksum calculated in function checksum() is used in FreePool() to avoid
  * freeing memory not allocated by AllocatePool() and duplicate freeing.
  *
- * EFI requires 8 byte alignment for pool allocations, so we can
- * prepend each allocation with these header fields.
+ * EFI requires 8-byte alignment for pool allocations, so we can prepend each
+ * allocation with these header fields.
+ *
+ * Note that before the EFI app is booted, EFI_BOOT_SERVICES_DATA allocations
+ * are served using malloc(), bypassing this struct. This helps to avoid memory
+ * fragmentation, since efi_allocate_pages() uses any pages it likes.
  */
 struct efi_pool_allocation {
 	u64 num_pages;
@@ -631,18 +643,19 @@ void *efi_alloc_aligned_pages(u64 len, int memory_type, size_t align)
 /**
  * efi_allocate_pool - allocate memory from pool
  *
+ * This uses malloc() for EFI_BOOT_SERVICES_DATA allocations if EFIAF_USE_MALLOC
+ * is enabled
+ *
  * @pool_type:	type of the pool from which memory is to be allocated
  * @size:	number of bytes to be allocated
  * @buffer:	allocated memory
  * Return:	status code
  */
-efi_status_t efi_allocate_pool(enum efi_memory_type pool_type, efi_uintn_t size, void **buffer)
+efi_status_t efi_allocate_pool(enum efi_memory_type pool_type, efi_uintn_t size,
+			       void **buffer)
 {
 	efi_status_t r;
 	u64 addr;
-	struct efi_pool_allocation *alloc;
-	u64 num_pages = efi_size_in_pages(size +
-					  sizeof(struct efi_pool_allocation));
 
 	if (!buffer)
 		return EFI_INVALID_PARAMETER;
@@ -652,13 +665,43 @@ efi_status_t efi_allocate_pool(enum efi_memory_type pool_type, efi_uintn_t size,
 		return EFI_SUCCESS;
 	}
 
-	r = efi_allocate_pages(EFI_ALLOCATE_ANY_PAGES, pool_type, num_pages,
-			       &addr);
-	if (r == EFI_SUCCESS) {
-		alloc = (struct efi_pool_allocation *)(uintptr_t)addr;
-		alloc->num_pages = num_pages;
-		alloc->checksum = checksum(alloc);
-		*buffer = alloc->data;
+	if ((alloc_flags & EFIAF_USE_MALLOC) &&
+	    pool_type == EFI_BOOT_SERVICES_DATA) {
+		void *ptr;
+
+		/*
+		 * Some tests crash on qemu_arm etc. if the correct size is
+		 * allocated.
+		 * Adding 0x10 seems to fix test_efi_selftest_device_tree
+		 * Increasing it to 0x20 seems to fix test_efi_selftest_base
+		 * except * for riscv64 (in CI only). But 0x100 fixes CI too.
+		 *
+		 * This workaround can be dropped once these problems are
+		 * resolved
+		 */
+		ptr = memalign(8, size + 0x100);
+		if (!ptr)
+			return EFI_OUT_OF_RESOURCES;
+
+		*buffer = ptr;
+		r = EFI_SUCCESS;
+		log_debug("EFI pool: malloc(%zx) = %p\n", size, ptr);
+	} else {
+		u64 num_pages = efi_size_in_pages(size +
+					sizeof(struct efi_pool_allocation));
+
+		r = efi_allocate_pages(EFI_ALLOCATE_ANY_PAGES, pool_type,
+				       num_pages, &addr);
+		if (r == EFI_SUCCESS) {
+			struct efi_pool_allocation *alloc;
+
+			alloc = (struct efi_pool_allocation *)(uintptr_t)addr;
+			alloc->num_pages = num_pages;
+			alloc->checksum = checksum(alloc);
+			*buffer = alloc->data;
+			log_debug("EFI pool: pages alloc(%zx) type %d = %p\n",
+				  size, pool_type, *buffer);
+		}
 	}
 
 	return r;
@@ -695,27 +738,37 @@ void *efi_alloc(size_t size)
 efi_status_t efi_free_pool(void *buffer)
 {
 	efi_status_t ret;
-	struct efi_pool_allocation *alloc;
 
 	if (!buffer)
 		return EFI_INVALID_PARAMETER;
 
-	ret = efi_check_allocated((uintptr_t)buffer, true);
-	if (ret != EFI_SUCCESS)
-		return ret;
+	if (malloc_check_in_range(buffer)) {
+		log_debug("EFI pool: free(%p)\n", buffer);
+		free(buffer);
+		ret = EFI_SUCCESS;
+	} else {
+		struct efi_pool_allocation *alloc;
 
-	alloc = container_of(buffer, struct efi_pool_allocation, data);
+		ret = efi_check_allocated((uintptr_t)buffer, true);
+		if (ret != EFI_SUCCESS)
+			return ret;
 
-	/* Check that this memory was allocated by efi_allocate_pool() */
-	if (((uintptr_t)alloc & EFI_PAGE_MASK) ||
-	    alloc->checksum != checksum(alloc)) {
-		printf("%s: illegal free 0x%p\n", __func__, buffer);
-		return EFI_INVALID_PARAMETER;
+		alloc = container_of(buffer, struct efi_pool_allocation, data);
+
+		/*
+		 * Check that this memory was allocated by efi_allocate_pool()
+		 */
+		if (((uintptr_t)alloc & EFI_PAGE_MASK) ||
+		    alloc->checksum != checksum(alloc)) {
+			printf("%s: illegal free 0x%p\n", __func__, buffer);
+			return EFI_INVALID_PARAMETER;
+		}
+		/* Avoid double free */
+		alloc->checksum = 0;
+
+		ret = efi_free_pages((uintptr_t)alloc, alloc->num_pages);
+		log_debug("EFI pool: pages free(%p)\n", buffer);
 	}
-	/* Avoid double free */
-	alloc->checksum = 0;
-
-	ret = efi_free_pages((uintptr_t)alloc, alloc->num_pages);
 
 	return ret;
 }
@@ -935,6 +988,9 @@ static void add_u_boot_and_runtime(void)
 
 int efi_memory_init(void)
 {
+	/* use malloc() pool where possible */
+	efi_set_alloc(EFIAF_USE_MALLOC);
+
 	efi_add_known_memory();
 
 	add_u_boot_and_runtime();

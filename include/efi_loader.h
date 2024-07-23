@@ -796,6 +796,24 @@ int efi_disk_probe(void *ctx, struct event *event);
 int efi_disk_remove(void *ctx, struct event *event);
 /* Called by board init to initialize the EFI memory map */
 int efi_memory_init(void);
+
+/**
+ * enum efi_alloc_flags - controls EFI memory allocation
+ *
+ * @EFIAF_USE_MALLOC: Use malloc() pool for pool allocations of type
+ *	EFI_BOOT_SERVICES_DATA, otherwise use page allocation
+ */
+enum efi_alloc_flags {
+	EFIAF_USE_MALLOC	= BIT(0),
+};
+
+/**
+ * efi_set_alloc() - Set behaviour of EFI memory allocation
+ *
+ * @flags: new value for allocation flags (see enum efi_alloc_flags)
+ */
+void efi_set_alloc(int flags);
+
 /* Adds new or overrides configuration table entry to the system table */
 efi_status_t efi_install_configuration_table(const efi_guid_t *guid, void *table);
 /* Sets up a loaded image */

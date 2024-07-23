@@ -983,6 +983,13 @@ extern ulong mem_malloc_brk;
 
 void mem_malloc_init(ulong start, ulong size);
 
+/**
+ * malloc_check_in_range() - Check if a pointer is within the malloc() region
+ *
+ * Return: true if within malloc() region
+ */
+bool malloc_check_in_range(void *ptr);
+
 #ifdef __cplusplus
 };  /* end of extern "C" */
 #endif
