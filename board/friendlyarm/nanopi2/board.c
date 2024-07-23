@@ -492,12 +492,8 @@ int splash_screen_prepare(void)
 					 ARRAY_SIZE(splash_locations));
 	}
 
-	if (!err) {
-		char addr[64];
-
-		sprintf(addr, "0x%lx", gd->fb_base);
-		env_set("fb_addr", addr);
-	}
+	if (!err)
+		env_set_hex("fb_addr", video_get_fb());
 
 	return err;
 }
