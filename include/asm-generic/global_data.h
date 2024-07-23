@@ -210,7 +210,7 @@ struct global_data {
 #endif
 #ifdef CONFIG_TIMER
 	/**
-s	 * @timer: timer instance for Driver Model
+	 * @timer: timer instance for Driver Model
 	 */
 	struct udevice *timer;
 #endif
@@ -296,12 +296,6 @@ s	 * @timer: timer instance for Driver Model
 	 * @malloc_ptr: current address of early malloc()
 	 */
 	unsigned long malloc_ptr;
-#endif
-#ifdef CONFIG_PCI
-	/**
-	 * @hose: PCI hose for early use
-	 */
-	struct pci_controller *hose;
 #endif
 #ifdef CONFIG_PCI_BOOTDELAY
 	/**
