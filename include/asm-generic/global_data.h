@@ -55,10 +55,6 @@ struct global_data {
 	 */
 	unsigned long flags;
 	/**
-	 * @baudrate: baud rate of the serial interface
-	 */
-	unsigned int baudrate;
-	/**
 	 * @cpu_clk: CPU clock rate in Hz
 	 */
 	unsigned long cpu_clk;
@@ -74,6 +70,10 @@ struct global_data {
 	 * @mon_len: monitor length in bytes
 	 */
 	unsigned int mon_len;
+	/**
+	 * @baudrate: baud rate of the serial interface
+	 */
+	unsigned int baudrate;
 	/**
 	 * @env_addr: address of environment structure
 	 *
