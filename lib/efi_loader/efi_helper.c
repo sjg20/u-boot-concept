@@ -122,7 +122,7 @@ efi_status_t efi_load_option_dp_join(struct efi_device_path **dp,
 		struct efi_device_path *tmp_dp = *dp;
 
 		*dp = efi_dp_concat(tmp_dp, initrd_dp, *dp_size);
-		efi_free_pool(tmp_dp);
+		free(tmp_dp);
 		if (!*dp)
 			return EFI_OUT_OF_RESOURCES;
 		*dp_size += efi_dp_size(initrd_dp) + sizeof(EFI_DP_END);
@@ -132,7 +132,7 @@ efi_status_t efi_load_option_dp_join(struct efi_device_path **dp,
 		struct efi_device_path *tmp_dp = *dp;
 
 		*dp = efi_dp_concat(tmp_dp, fdt_dp, *dp_size);
-		efi_free_pool(tmp_dp);
+		free(tmp_dp);
 		if (!*dp)
 			return EFI_OUT_OF_RESOURCES;
 		*dp_size += efi_dp_size(fdt_dp) + sizeof(EFI_DP_END);

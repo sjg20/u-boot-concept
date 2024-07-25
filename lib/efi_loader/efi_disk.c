@@ -333,11 +333,11 @@ efi_fs_from_path(struct efi_device_path *full_path)
 	ret = efi_dp_split_file_path(full_path, &device_path, &file_path);
 	if (ret != EFI_SUCCESS)
 		return NULL;
-	efi_free_pool(file_path);
+	free(file_path);
 
 	/* Get the EFI object for the partition */
 	efiobj = efi_dp_find_obj(device_path, NULL, NULL);
-	efi_free_pool(device_path);
+	free(device_path);
 	if (!efiobj)
 		return NULL;
 
@@ -382,7 +382,7 @@ static void efi_disk_free_diskobj(struct efi_disk_obj *diskobj)
 	 * is expected to be called in error path.
 	 */
 	efi_delete_handle(&diskobj->header);
-	efi_free_pool(dp);
+	free(dp);
 	free(volume);
 }
 
@@ -455,7 +455,7 @@ static efi_status_t efi_disk_add_dev(
 		}
 
 		diskobj->dp = efi_dp_append_node(dp_parent, node);
-		efi_free_pool(node);
+		free(node);
 		diskobj->media.last_block = part_info->size - 1;
 		if (part_info->bootable & PART_EFI_SYSTEM_PARTITION)
 			esp_guid = &efi_system_partition_guid;
@@ -757,7 +757,7 @@ int efi_disk_remove(void *ctx, struct event *event)
 	if (ret != EFI_SUCCESS)
 		return -1;
 
-	efi_free_pool(dp);
+	free(dp);
 	free(volume);
 	dev_tag_del(dev, DM_TAG_EFI);
 
