@@ -8,7 +8,7 @@ compliant software like Linux, GRUB, and iPXE. Furthermore U-Boot itself
 can be run an UEFI payload.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    uefi.rst
    u-boot_on_efi.rst
