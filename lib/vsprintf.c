@@ -323,7 +323,7 @@ static char *device_path_string(char *buf, char *end, void *dp, int field_width,
 		return ERR_PTR(-ENOMEM);
 
 	buf = string16(buf, end, str, field_width, precision, flags);
-	efi_free_pool(str);
+	free(str);
 	return buf;
 }
 #endif
