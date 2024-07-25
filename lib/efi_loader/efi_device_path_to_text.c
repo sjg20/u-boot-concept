@@ -36,7 +36,7 @@ static u16 *efi_str_to_u16(char *str)
 	u16 *out, *dst;
 
 	len = sizeof(u16) * (utf8_utf16_strlen(str) + 1);
-	out = efi_alloc(len);
+	out = malloc(len);
 	if (!out)
 		return NULL;
 	dst = out;
