@@ -201,6 +201,8 @@ efi_status_t efi_binary_run(void *image, size_t size, void *fdt)
 {
 	efi_status_t ret;
 
+	efi_set_alloc(EFIAA_ALLOW);
+
 	/* Initialize EFI drivers */
 	ret = efi_init_obj_list();
 	if (ret != EFI_SUCCESS) {

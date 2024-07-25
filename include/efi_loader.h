@@ -797,6 +797,30 @@ int efi_disk_probe(void *ctx, struct event *event);
 int efi_disk_remove(void *ctx, struct event *event);
 /* Called by board init to initialize the EFI memory map */
 int efi_memory_init(void);
+
+/**
+ * enum efi_alloc_action - action to take when EFI does a page allocation
+ *
+ * @EFIAA_FAIL: Fail the allocation and print an error
+ * @EFIAA_WARN: Allow the allocation but print a warning
+ * @EFIAA_ALLOW: Allow the allocation with no message
+ */
+enum efi_alloc_action {
+	EFIAA_FAIL,
+	EFIAA_WARN,
+	EFIAA_ALLOW,
+};
+
+/**
+ * efi_set_alloc() - Set behaviour on page allocation
+ *
+ * This is useful for debugging use of the page allocator when malloc() should
+ * be used instead
+ *
+ * @allow: true to allow EFI to allocate pages, false to fail the allocation
+ */
+void efi_set_alloc(enum efi_alloc_action action);
+
 /* Adds new or overrides configuration table entry to the system table */
 efi_status_t efi_install_configuration_table(const efi_guid_t *guid, void *table);
 /* Sets up a loaded image */
