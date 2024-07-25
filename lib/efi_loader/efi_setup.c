@@ -193,6 +193,13 @@ int efi_init_early(void)
 	/* Allow unaligned memory access */
 	allow_unaligned();
 
+	/*
+	 * For now, allow EFI to allocate memory outside the malloc() region.
+	 * Once these bugs are fixed, this can be changed to EFIAA_FAIL, with
+	 * the allocations being allowed only when the EFI system is booting.
+	 */
+	efi_set_alloc(EFIAA_ALLOW);
+
 	/* Initialize root node */
 	ret = efi_root_node_register();
 	if (ret != EFI_SUCCESS)

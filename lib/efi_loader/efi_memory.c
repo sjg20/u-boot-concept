@@ -24,6 +24,43 @@ DECLARE_GLOBAL_DATA_PTR;
 /* Magic number identifying memory allocated from pool */
 #define EFI_ALLOC_POOL_MAGIC 0x1fe67ddf6491caa2
 
+/*
+ * This is true if EFI is permitted to allocate pages in memory. When false,
+ * such allocations will fail. This is useful for debugging page allocations
+ * which should in fact use malloc().
+ *
+ * This defaults to EFIAA_FAIL until set.
+ */
+static enum efi_alloc_action alloc_action;
+
+void efi_set_alloc(enum efi_alloc_action action)
+{
+	alloc_action = action;
+}
+
+/**
+ * efi_bad_alloc() - Indicate that an allocation is not allowed
+ *
+ * Set a breakpoint on this function to locate the bad allocation in the call
+ * stack
+ */
+static void efi_bad_alloc(void)
+{
+	log_err("EFI: alloc not allowed\n");
+}
+
+static bool check_allowed(void)
+{
+	if (alloc_action == EFIAA_FAIL) {
+		efi_bad_alloc();
+		return false;
+	} else if (alloc_action == EFIAA_WARN) {
+		log_warning("EFI: suspicious alloc detected\n");
+	}
+
+	return true;
+}
+
 efi_uintn_t efi_memory_map_key;
 
 struct efi_mem_list {
@@ -501,6 +538,9 @@ efi_status_t efi_allocate_pages(enum efi_allocate_type type,
 	efi_status_t ret;
 	uint64_t addr;
 
+	if (!check_allowed())
+		return EFI_UNSUPPORTED;
+
 	/* Check import parameters */
 	if (memory_type >= EFI_PERSISTENT_MEMORY_TYPE &&
 	    memory_type <= 0x6FFFFFFF)
@@ -648,6 +688,9 @@ efi_status_t efi_allocate_pool(enum efi_memory_type pool_type, efi_uintn_t size,
 	struct efi_pool_allocation *alloc;
 	u64 num_pages = efi_size_in_pages(size +
 					  sizeof(struct efi_pool_allocation));
+
+	if (!check_allowed())
+		return EFI_UNSUPPORTED;
 
 	if (!buffer)
 		return EFI_INVALID_PARAMETER;
@@ -951,6 +994,9 @@ int efi_memory_init(void)
 #ifdef CONFIG_EFI_LOADER_BOUNCE_BUFFER
 	/* Request a 32bit 64MB bounce buffer region */
 	uint64_t efi_bounce_buffer_addr = 0xffffffff;
+
+	/* this is the earliest page allocation, so allow it */
+	efi_set_alloc(EFIAA_ALLOW);
 
 	if (efi_allocate_pages(EFI_ALLOCATE_MAX_ADDRESS, EFI_BOOT_SERVICES_DATA,
 			       (64 * 1024 * 1024) >> EFI_PAGE_SHIFT,
