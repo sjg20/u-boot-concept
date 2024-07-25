@@ -193,6 +193,15 @@ static efi_status_t efi_binary_run_(void *image_ptr, size_t size, void *fdt,
 		return -1;
 	}
 
+#ifdef CONFIG_EFI_LOADER_BOUNCE_BUFFER
+	/*
+	 * Add a warning about this buffer, since it may conflict with other
+	 * things
+	 */
+	log_debug("EFI bounce buffer %p-%p\n", efi_bounce_buffer,
+		  efi_bounce_buffer + EFI_LOADER_BOUNCE_BUFFER_SIZE);
+#endif
+
 	ret = efi_install_fdt(fdt);
 	if (ret != EFI_SUCCESS)
 		return ret;
