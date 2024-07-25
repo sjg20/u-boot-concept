@@ -41,8 +41,8 @@ void efi_get_image_parameters(void **img_addr, size_t *img_size)
  */
 void efi_clear_bootdev(void)
 {
-	efi_free_pool(bootefi_device_path);
-	efi_free_pool(bootefi_image_path);
+	free(bootefi_device_path);
+	free(bootefi_image_path);
 	bootefi_device_path = NULL;
 	bootefi_image_path = NULL;
 	image_addr = NULL;
@@ -85,7 +85,7 @@ static efi_status_t calculate_paths(const char *dev, const char *devnr,
 		struct efi_device_path *image_tmp = image;
 
 		efi_dp_split_file_path(image, &device, &image);
-		efi_free_pool(image_tmp);
+		free(image_tmp);
 	}
 	*image_pathp = image;
 	log_debug("- boot device %pD\n", device);
@@ -297,7 +297,7 @@ out:
 		if (r != EFI_SUCCESS)
 			log_err("Uninstalling protocol interfaces failed\n");
 	}
-	efi_free_pool(file_path);
+	free(file_path);
 
 	return ret;
 }

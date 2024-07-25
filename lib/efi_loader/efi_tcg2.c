@@ -1271,7 +1271,7 @@ out2:
 	free(entry);
 	free(event);
 out1:
-	efi_free_pool(device_path);
+	free(device_path);
 
 	return ret;
 }
