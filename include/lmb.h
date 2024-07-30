@@ -96,6 +96,19 @@ void board_lmb_reserve(void);
 void arch_lmb_reserve(void);
 void arch_lmb_reserve_generic(ulong sp, ulong end, ulong align);
 
+#if CONFIG_IS_ENABLED(LMB)
+/**
+ * lmb_init() - Initialise the LMB memory
+ *
+ * Initialise the LMB-subsystem-related data structures.
+ *
+ * Return: 0 if OK, -ve on failure.
+ */
+int lmb_init(void);
+#else
+static int lmb_init(void) { return 0; }
+#endif
+
 /**
  * lmb_mem_regions_init() - Initialise the LMB memory
  * @mem_lst: Pointer to store location of free memory list

@@ -718,6 +718,47 @@ __weak void arch_lmb_reserve(void)
 	arch_lmb_reserve_generic(rsv_start, gd->ram_top, 16384);
 }
 
+static int lmb_setup(struct lmb *lmb)
+{
+	int ret;
+
+	ret = alist_init(&lmb->free_mem, sizeof(struct lmb_region),
+			 (uint)LMB_ALIST_INITIAL_SIZE);
+	if (!ret) {
+		log_debug("Unable to initialise the list for LMB free memory\n");
+		return -ENOMEM;
+	}
+
+	ret = alist_init(&lmb->used_mem, sizeof(struct lmb_region),
+			 (uint)LMB_ALIST_INITIAL_SIZE);
+	if (!ret) {
+		log_debug("Unable to initialise the list for LMB used memory\n");
+		return -ENOMEM;
+	}
+
+	return 0;
+}
+
+int lmb_init(void)
+{
+	bool ret;
+
+	ret = lmb_setup(&lmb);
+	if (ret) {
+		log_debug("Unable to init LMB\n");
+		return ret;
+	}
+	lmb_add_memory();
+
+	/* Reserve the U-Boot image region once U-Boot has relocated */
+	if (spl_phase() == PHASE_SPL)
+		lmb_reserve_common_spl();
+	else if (spl_phase() == PHASE_BOARD_R)
+		lmb_reserve_common((void *)gd->fdt_blob);
+
+	return 0;
+}
+
 /**
  * lmb_mem_regions_init() - Initialise the LMB memory
  * @mem_lst: Pointer to store location of free memory list
@@ -740,18 +781,10 @@ int lmb_mem_regions_init(struct alist **mem_lst, struct alist **used_lst,
 {
 	bool ret;
 
-	ret = alist_init(&lmb.free_mem, sizeof(struct lmb_region),
-			 (uint)LMB_ALIST_INITIAL_SIZE);
-	if (!ret) {
-		log_debug("Unable to initialise the list for LMB free memory\n");
-		return -1;
-	}
-
-	ret = alist_init(&lmb.used_mem, sizeof(struct lmb_region),
-			 (uint)LMB_ALIST_INITIAL_SIZE);
-	if (!ret) {
-		log_debug("Unable to initialise the list for LMB used memory\n");
-		return -1;
+	ret = lmb_setup(&lmb);
+	if (ret) {
+		log_debug("Unable to init LMB\n");
+		return ret;
 	}
 
 	if (mem_lst)
@@ -759,17 +792,6 @@ int lmb_mem_regions_init(struct alist **mem_lst, struct alist **used_lst,
 
 	if (used_lst)
 		*used_lst = &lmb.used_mem;
-
-	if (!add_rsv_mem)
-		return 0;
-
-	lmb_add_memory();
-
-	/* Reserve the U-Boot image region once U-Boot has relocated */
-	if (spl_phase() == PHASE_SPL)
-		lmb_reserve_common_spl();
-	else if (spl_phase() == PHASE_BOARD_R)
-		lmb_reserve_common((void *)gd->fdt_blob);
 
 	return 0;
 }
@@ -788,26 +810,6 @@ void __maybe_unused lmb_mem_regions_uninit(struct alist *mem_lst,
 {
 	alist_uninit(mem_lst);
 	alist_uninit(used_lst);
-}
-
-/**
- * initr_lmb() - Initialise the LMB lists
- *
- * Initialise the LMB lists needed for keeping the memory map. There
- * are two lists, in form of alloced list data structure. One for the
- * available memory, and one for the used memory.
- *
- * Return: 0 on success, -ve on error
- */
-int initr_lmb(void)
-{
-	int ret;
-
-	ret = lmb_mem_regions_init(NULL, NULL, true);
-	if (ret)
-		printf("Unable to initialise the LMB data structures\n");
-
-	return ret;
 }
 
 struct lmb *lmb_get(void)
