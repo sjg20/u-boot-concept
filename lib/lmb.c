@@ -396,14 +396,6 @@ static long lmb_add_region_flags(struct alist *lmb_rgn_lst, phys_addr_t base,
 	if (alist_err(lmb_rgn_lst))
 		return -1;
 
-	if (alist_empty(lmb_rgn_lst)) {
-		rgn[0].base = base;
-		rgn[0].size = size;
-		rgn[0].flags = flags;
-		lmb_rgn_lst->count = 1;
-		return 0;
-	}
-
 	/* First try and coalesce this LMB with another. */
 	for (i = 0; i < lmb_rgn_lst->count; i++) {
 		phys_addr_t rgnbase = rgn[i].base;
@@ -448,49 +440,38 @@ static long lmb_add_region_flags(struct alist *lmb_rgn_lst, phys_addr_t base,
 		}
 	}
 
-	if (i < lmb_rgn_lst->count - 1 &&
-	    rgn[i].flags == rgn[i + 1].flags) {
-		if (lmb_regions_adjacent(lmb_rgn_lst, i, i + 1)) {
-			lmb_coalesce_regions(lmb_rgn_lst, i, i + 1);
-			coalesced++;
-		} else if (lmb_regions_overlap(lmb_rgn_lst, i, i + 1)) {
-			/* fix overlapping area */
-			lmb_fix_over_lap_regions(lmb_rgn_lst, i, i + 1);
-			coalesced++;
+	if (lmb_rgn_lst->count && i < lmb_rgn_lst->count - 1) {
+		rgn = lmb_rgn_lst->data;
+		if (rgn[i].flags == rgn[i + 1].flags) {
+			if (lmb_regions_adjacent(lmb_rgn_lst, i, i + 1)) {
+				lmb_coalesce_regions(lmb_rgn_lst, i, i + 1);
+				coalesced++;
+			} else if (lmb_regions_overlap(lmb_rgn_lst, i, i + 1)) {
+				/* fix overlapping area */
+				lmb_fix_over_lap_regions(lmb_rgn_lst, i, i + 1);
+				coalesced++;
+			}
 		}
 	}
 
 	if (coalesced)
 		return coalesced;
 
-	if (alist_full(lmb_rgn_lst)) {
-		if (!alist_expand_by(lmb_rgn_lst, lmb_rgn_lst->alloc * 2))
-			return -1;
-		else
-			rgn = lmb_rgn_lst->data;
-	}
+	if (!alist_add_placeholder(lmb_rgn_lst))
+		return -1;
+	rgn = lmb_rgn_lst->data;
 
 	/* Couldn't coalesce the LMB, so add it to the sorted table. */
 	for (i = lmb_rgn_lst->count - 1; i >= 0; i--) {
-		if (base < rgn[i].base) {
-			rgn[i + 1].base = rgn[i].base;
-			rgn[i + 1].size = rgn[i].size;
-			rgn[i + 1].flags = rgn[i].flags;
+		if (i && base < rgn[i - 1].base) {
+			rgn[i] = rgn[i - 1];
 		} else {
-			rgn[i + 1].base = base;
-			rgn[i + 1].size = size;
-			rgn[i + 1].flags = flags;
+			rgn[i].base = base;
+			rgn[i].size = size;
+			rgn[i].flags = flags;
 			break;
 		}
 	}
-
-	if (base < rgn[0].base) {
-		rgn[0].base = base;
-		rgn[0].size = size;
-		rgn[0].flags = flags;
-	}
-
-	lmb_rgn_lst->count++;
 
 	return 0;
 }
