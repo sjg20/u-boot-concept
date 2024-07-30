@@ -13,7 +13,13 @@
  * Copyright (C) 2001 Peter Bergner, IBM Corp.
  */
 
-struct alist;
+#include <alist.h>
+
+struct lmb {
+	struct alist free_mem;
+	struct alist used_mem;
+};
+
 
 /**
  * enum lmb_flags - definition of memory region attributes
@@ -120,6 +126,8 @@ int lmb_mem_regions_init(struct alist **mem_lst, struct alist **used_lst,
  * lmb test routines.
  */
 void lmb_mem_regions_uninit(struct alist *mem_lst, struct alist *used_lst);
+
+struct lmb *lmb_get(void);
 
 #endif /* __KERNEL__ */
 

@@ -129,12 +129,12 @@ static int lmb_test_dump_region(struct unit_test_state *uts,
 
 static int lmb_test_dump_all(struct unit_test_state *uts)
 {
-	extern struct alist lmb_free_mem;
-	extern struct alist lmb_used_mem;
+	struct lmb *lmb = lmb_get();
 
+	ut_assertnonnull(lmb);
 	ut_assert_nextline("lmb_dump_all:");
-	ut_assertok(lmb_test_dump_region(uts, &lmb_free_mem, "memory"));
-	ut_assertok(lmb_test_dump_region(uts, &lmb_used_mem, "reserved"));
+	ut_assertok(lmb_test_dump_region(uts, &lmb->free_mem, "memory"));
+	ut_assertok(lmb_test_dump_region(uts, &lmb->used_mem, "reserved"));
 
 	return 0;
 }

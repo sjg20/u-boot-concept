@@ -24,8 +24,7 @@ DECLARE_GLOBAL_DATA_PTR;
 #define LMB_ALLOC_ANYWHERE	0
 #define LMB_ALIST_INITIAL_SIZE	4
 
-struct alist lmb_free_mem;
-struct alist lmb_used_mem;
+static struct lmb lmb;
 
 static void lmb_dump_region(struct alist *lmb_rgn_lst, char *name)
 {
@@ -50,8 +49,8 @@ static void lmb_dump_region(struct alist *lmb_rgn_lst, char *name)
 void lmb_dump_all_force(void)
 {
 	printf("lmb_dump_all:\n");
-	lmb_dump_region(&lmb_free_mem, "memory");
-	lmb_dump_region(&lmb_used_mem, "reserved");
+	lmb_dump_region(&lmb.free_mem, "memory");
+	lmb_dump_region(&lmb.used_mem, "reserved");
 }
 
 void lmb_dump_all(void)
@@ -499,7 +498,7 @@ static long lmb_add_region_flags(struct alist *lmb_rgn_lst, phys_addr_t base,
 /* This routine may be called with relocation disabled. */
 long lmb_add(phys_addr_t base, phys_size_t size, uint flags)
 {
-	struct alist *lmb_rgn_lst = &lmb_free_mem;
+	struct alist *lmb_rgn_lst = &lmb.free_mem;
 
 	return lmb_add_region_flags(lmb_rgn_lst, base, size, flags);
 }
@@ -507,7 +506,7 @@ long lmb_add(phys_addr_t base, phys_size_t size, uint flags)
 long lmb_free(phys_addr_t base, phys_size_t size, uint flags)
 {
 	struct lmb_region *rgn;
-	struct alist *lmb_rgn_lst = &lmb_used_mem;
+	struct alist *lmb_rgn_lst = &lmb.used_mem;
 	phys_addr_t rgnbegin, rgnend;
 	phys_addr_t end = base + size - 1;
 	int i;
@@ -557,7 +556,7 @@ long lmb_free(phys_addr_t base, phys_size_t size, uint flags)
 
 long lmb_reserve(phys_addr_t base, phys_size_t size, uint flags)
 {
-	struct alist *lmb_rgn_lst = &lmb_used_mem;
+	struct alist *lmb_rgn_lst = &lmb.used_mem;
 
 	return lmb_add_region_flags(lmb_rgn_lst, base, size, flags);
 }
@@ -589,10 +588,10 @@ static phys_addr_t __lmb_alloc_base(phys_size_t size, ulong align,
 	long i, rgn;
 	phys_addr_t base = 0;
 	phys_addr_t res_base;
-	struct lmb_region *lmb_used = lmb_used_mem.data;
-	struct lmb_region *lmb_memory = lmb_free_mem.data;
+	struct lmb_region *lmb_used = lmb.used_mem.data;
+	struct lmb_region *lmb_memory = lmb.free_mem.data;
 
-	for (i = lmb_free_mem.count - 1; i >= 0; i--) {
+	for (i = lmb.free_mem.count - 1; i >= 0; i--) {
 		phys_addr_t lmbbase = lmb_memory[i].base;
 		phys_size_t lmbsize = lmb_memory[i].size;
 
@@ -610,10 +609,10 @@ static phys_addr_t __lmb_alloc_base(phys_size_t size, ulong align,
 			continue;
 
 		while (base && lmbbase <= base) {
-			rgn = lmb_overlaps_region(&lmb_used_mem, base, size);
+			rgn = lmb_overlaps_region(&lmb.used_mem, base, size);
 			if (rgn < 0) {
 				/* This area isn't reserved, take it */
-				if (lmb_add_region_flags(&lmb_used_mem, base,
+				if (lmb_add_region_flags(&lmb.used_mem, base,
 							 size, flags) < 0)
 					return 0;
 				return base;
@@ -651,10 +650,10 @@ static phys_addr_t __lmb_alloc_addr(phys_addr_t base, phys_size_t size,
 				    enum lmb_flags flags)
 {
 	long rgn;
-	struct lmb_region *lmb_memory = lmb_free_mem.data;
+	struct lmb_region *lmb_memory = lmb.free_mem.data;
 
 	/* Check if the requested address is in one of the memory regions */
-	rgn = lmb_overlaps_region(&lmb_free_mem, base, size);
+	rgn = lmb_overlaps_region(&lmb.free_mem, base, size);
 	if (rgn >= 0) {
 		/*
 		 * Check if the requested end address is in the same memory
@@ -686,13 +685,13 @@ phys_size_t lmb_get_free_size(phys_addr_t addr)
 {
 	int i;
 	long rgn;
-	struct lmb_region *lmb_used = lmb_used_mem.data;
-	struct lmb_region *lmb_memory = lmb_free_mem.data;
+	struct lmb_region *lmb_used = lmb.used_mem.data;
+	struct lmb_region *lmb_memory = lmb.free_mem.data;
 
 	/* check if the requested address is in the memory regions */
-	rgn = lmb_overlaps_region(&lmb_free_mem, addr, 1);
+	rgn = lmb_overlaps_region(&lmb.free_mem, addr, 1);
 	if (rgn >= 0) {
-		for (i = 0; i < lmb_used_mem.count; i++) {
+		for (i = 0; i < lmb.used_mem.count; i++) {
 			if (addr < lmb_used[i].base) {
 				/* first reserved range > requested address */
 				return lmb_used[i].base - addr;
@@ -704,8 +703,8 @@ phys_size_t lmb_get_free_size(phys_addr_t addr)
 			}
 		}
 		/* if we come here: no reserved ranges above requested addr */
-		return lmb_memory[lmb_free_mem.count - 1].base +
-		       lmb_memory[lmb_free_mem.count - 1].size - addr;
+		return lmb_memory[lmb.free_mem.count - 1].base +
+		       lmb_memory[lmb.free_mem.count - 1].size - addr;
 	}
 	return 0;
 }
@@ -713,9 +712,9 @@ phys_size_t lmb_get_free_size(phys_addr_t addr)
 int lmb_is_reserved_flags(phys_addr_t addr, int flags)
 {
 	int i;
-	struct lmb_region *lmb_used = lmb_used_mem.data;
+	struct lmb_region *lmb_used = lmb.used_mem.data;
 
-	for (i = 0; i < lmb_used_mem.count; i++) {
+	for (i = 0; i < lmb.used_mem.count; i++) {
 		phys_addr_t upper = lmb_used[i].base +
 			lmb_used[i].size - 1;
 		if ((addr >= lmb_used[i].base) && (addr <= upper))
@@ -760,14 +759,14 @@ int lmb_mem_regions_init(struct alist **mem_lst, struct alist **used_lst,
 {
 	bool ret;
 
-	ret = alist_init(&lmb_free_mem, sizeof(struct lmb_region),
+	ret = alist_init(&lmb.free_mem, sizeof(struct lmb_region),
 			 (uint)LMB_ALIST_INITIAL_SIZE);
 	if (!ret) {
 		log_debug("Unable to initialise the list for LMB free memory\n");
 		return -1;
 	}
 
-	ret = alist_init(&lmb_used_mem, sizeof(struct lmb_region),
+	ret = alist_init(&lmb.used_mem, sizeof(struct lmb_region),
 			 (uint)LMB_ALIST_INITIAL_SIZE);
 	if (!ret) {
 		log_debug("Unable to initialise the list for LMB used memory\n");
@@ -775,10 +774,10 @@ int lmb_mem_regions_init(struct alist **mem_lst, struct alist **used_lst,
 	}
 
 	if (mem_lst)
-		*mem_lst = &lmb_free_mem;
+		*mem_lst = &lmb.free_mem;
 
 	if (used_lst)
-		*used_lst = &lmb_used_mem;
+		*used_lst = &lmb.used_mem;
 
 	if (!add_rsv_mem)
 		return 0;
@@ -828,4 +827,9 @@ int initr_lmb(void)
 		printf("Unable to initialise the LMB data structures\n");
 
 	return ret;
+}
+
+struct lmb *lmb_get(void)
+{
+	return &lmb;
 }
