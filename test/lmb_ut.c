@@ -61,6 +61,19 @@ static int check_lmb(struct unit_test_state *uts, struct alist *mem_lst,
 			     num_reserved, base1, size1, base2, size2, base3, \
 			     size3))
 
+static int setup_lmb_test(struct unit_test_state *uts, struct lmb *store,
+			  struct alist **mem_lstp, struct alist **used_lstp)
+{
+	struct lmb *lmb;
+
+	ut_assertok(lmb_push(store));
+	lmb = lmb_get();
+	*mem_lstp = &lmb->free_mem;
+	*used_lstp = &lmb->used_mem;
+
+	return 0;
+}
+
 static int test_multi_alloc(struct unit_test_state *uts, const phys_addr_t ram,
 			    const phys_size_t ram_size, const phys_addr_t ram0,
 			    const phys_size_t ram0_size,
@@ -73,6 +86,7 @@ static int test_multi_alloc(struct unit_test_state *uts, const phys_addr_t ram,
 	struct alist *mem_lst, *used_lst;
 	struct lmb_region *mem, *used;
 	phys_addr_t a, a2, b, b2, c, d;
+	struct lmb store;
 
 	/* check for overflow */
 	ut_assert(ram_end == 0 || ram_end > ram);
@@ -81,7 +95,7 @@ static int test_multi_alloc(struct unit_test_state *uts, const phys_addr_t ram,
 	ut_assert(alloc_64k_addr >= ram + 8);
 	ut_assert(alloc_64k_end <= ram_end - 8);
 
-	ut_asserteq(lmb_mem_regions_init(&mem_lst, &used_lst, false), 0);
+	ut_assertok(setup_lmb_test(uts, &store, &mem_lst, &used_lst));
 	mem = mem_lst->data;
 	used = used_lst->data;
 
@@ -183,7 +197,7 @@ static int test_multi_alloc(struct unit_test_state *uts, const phys_addr_t ram,
 		ut_asserteq(mem[0].size, ram_size);
 	}
 
-	lmb_mem_regions_uninit(mem_lst, used_lst);
+	lmb_pop(&store);
 
 	return 0;
 }
@@ -243,11 +257,12 @@ static int test_bigblock(struct unit_test_state *uts, const phys_addr_t ram)
 	struct lmb_region *mem, *used;
 	long ret;
 	phys_addr_t a, b;
+	struct lmb store;
 
 	/* check for overflow */
 	ut_assert(ram_end == 0 || ram_end > ram);
 
-	ut_asserteq(lmb_mem_regions_init(&mem_lst, &used_lst, false), 0);
+	ut_assertok(setup_lmb_test(uts, &store, &mem_lst, &used_lst));
 	mem = mem_lst->data;
 	used = used_lst->data;
 
@@ -284,7 +299,7 @@ static int test_bigblock(struct unit_test_state *uts, const phys_addr_t ram)
 	ASSERT_LMB(mem_lst, used_lst, ram, ram_size, 1, alloc_64k_addr, 0x10000,
 		   0, 0, 0, 0);
 
-	lmb_mem_regions_uninit(mem_lst, used_lst);
+	lmb_pop(&store);
 
 	return 0;
 }
@@ -315,11 +330,12 @@ static int test_noreserved(struct unit_test_state *uts, const phys_addr_t ram,
 	struct lmb_region *mem, *used;
 	const phys_addr_t alloc_size_aligned = (alloc_size + align - 1) &
 		~(align - 1);
+	struct lmb store;
 
 	/* check for overflow */
 	ut_assert(ram_end == 0 || ram_end > ram);
 
-	ut_asserteq(lmb_mem_regions_init(&mem_lst, &used_lst, false), 0);
+	ut_assertok(setup_lmb_test(uts, &store, &mem_lst, &used_lst));
 	mem = mem_lst->data;
 	used = used_lst->data;
 
@@ -366,7 +382,7 @@ static int test_noreserved(struct unit_test_state *uts, const phys_addr_t ram,
 	ut_asserteq(ret, 0);
 	ASSERT_LMB(mem_lst, used_lst, ram, ram_size, 0, 0, 0, 0, 0, 0, 0);
 
-	lmb_mem_regions_uninit(mem_lst, used_lst);
+	lmb_pop(&store);
 
 	return 0;
 }
@@ -411,8 +427,9 @@ static int lmb_test_lmb_at_0_norun(struct unit_test_state *uts)
 	struct lmb_region *mem, *used;
 	long ret;
 	phys_addr_t a, b;
+	struct lmb store;
 
-	ut_asserteq(lmb_mem_regions_init(&mem_lst, &used_lst, false), 0);
+	ut_assertok(setup_lmb_test(uts, &store, &mem_lst, &used_lst));
 	mem = mem_lst->data;
 	used = used_lst->data;
 
@@ -441,7 +458,7 @@ static int lmb_test_lmb_at_0_norun(struct unit_test_state *uts)
 	ut_asserteq(ret, 0);
 	ASSERT_LMB(mem_lst, used_lst, ram, ram_size, 0, 0, 0, 0, 0, 0, 0);
 
-	lmb_mem_regions_uninit(mem_lst, used_lst);
+	lmb_pop(&store);
 
 	return 0;
 }
@@ -455,8 +472,9 @@ static int lmb_test_lmb_overlapping_reserve_norun(struct unit_test_state *uts)
 	struct alist *mem_lst, *used_lst;
 	struct lmb_region *mem, *used;
 	long ret;
+	struct lmb store;
 
-	ut_asserteq(lmb_mem_regions_init(&mem_lst, &used_lst, false), 0);
+	ut_assertok(setup_lmb_test(uts, &store, &mem_lst, &used_lst));
 	mem = mem_lst->data;
 	used = used_lst->data;
 
@@ -496,7 +514,7 @@ static int lmb_test_lmb_overlapping_reserve_norun(struct unit_test_state *uts)
 	ASSERT_LMB(mem_lst, used_lst, ram, ram_size, 1, 0x40000000, 0x40000,
 		   0, 0, 0, 0);
 
-	lmb_mem_regions_uninit(mem_lst, used_lst);
+	lmb_pop(&store);
 
 	return 0;
 }
@@ -517,11 +535,12 @@ static int test_alloc_addr(struct unit_test_state *uts, const phys_addr_t ram)
 	const phys_size_t alloc_addr_c = ram + 0x8000000 * 3;
 	long ret;
 	phys_addr_t a, b, c, d, e;
+	struct lmb store;
 
 	/* check for overflow */
 	ut_assert(ram_end == 0 || ram_end > ram);
 
-	ut_asserteq(lmb_mem_regions_init(&mem_lst, &used_lst, false), 0);
+	ut_assertok(setup_lmb_test(uts, &store, &mem_lst, &used_lst));
 	mem = mem_lst->data;
 	used = used_lst->data;
 
@@ -618,7 +637,7 @@ static int test_alloc_addr(struct unit_test_state *uts, const phys_addr_t ram)
 		ut_asserteq(ret, 0);
 	}
 
-	lmb_mem_regions_uninit(mem_lst, used_lst);
+	lmb_pop(&store);
 
 	return 0;
 }
@@ -648,13 +667,15 @@ static int test_get_unreserved_size(struct unit_test_state *uts,
 	const phys_size_t alloc_addr_a = ram + 0x8000000;
 	const phys_size_t alloc_addr_b = ram + 0x8000000 * 2;
 	const phys_size_t alloc_addr_c = ram + 0x8000000 * 3;
+	struct lmb store;
 	long ret;
 	phys_size_t s;
 
 	/* check for overflow */
 	ut_assert(ram_end == 0 || ram_end > ram);
 
-	ut_asserteq(lmb_mem_regions_init(&mem_lst, &used_lst, false), 0);
+	ut_assertok(setup_lmb_test(uts, &store, &mem_lst, &used_lst));
+
 	mem = mem_lst->data;
 	used = used_lst->data;
 
@@ -693,7 +714,7 @@ static int test_get_unreserved_size(struct unit_test_state *uts,
 	s = lmb_get_free_size(ram_end - 4);
 	ut_asserteq(s, 4);
 
-	lmb_mem_regions_uninit(mem_lst, used_lst);
+	lmb_pop(&store);
 
 	return 0;
 }
@@ -718,9 +739,10 @@ static int lmb_test_lmb_flags_norun(struct unit_test_state *uts)
 	struct alist *mem_lst, *used_lst;
 	const phys_addr_t ram = 0x40000000;
 	const phys_size_t ram_size = 0x20000000;
+	struct lmb store;
 	long ret;
 
-	ut_asserteq(lmb_mem_regions_init(&mem_lst, &used_lst, false), 0);
+	ut_assertok(setup_lmb_test(uts, &store, &mem_lst, &used_lst));
 	mem = mem_lst->data;
 	used = used_lst->data;
 
@@ -798,7 +820,7 @@ static int lmb_test_lmb_flags_norun(struct unit_test_state *uts)
 	ut_asserteq(lmb_is_nomap(&used[1]), 0);
 	ut_asserteq(lmb_is_nomap(&used[2]), 1);
 
-	lmb_mem_regions_uninit(mem_lst, used_lst);
+	lmb_pop(&store);
 
 	return 0;
 }

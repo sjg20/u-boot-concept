@@ -739,6 +739,20 @@ static int lmb_setup(struct lmb *lmb)
 	return 0;
 }
 
+/**
+ * lmb_mem_regions_init() - Initialise the LMB memory
+ *
+ * Initialise the LMB subsystem related data structures. There are two
+ * alloced lists that are initialised, one for the free memory, and one
+ * for the used memory.
+ *
+ * Initialise the two lists as part of board init during boot. When called
+ * from a test, passes the pointers to the two lists to the caller. The
+ * caller is then required to call the corresponding function to uninit
+ * the lists.
+ *
+ * Return: 0 if OK, -ve on failure.
+ */
 int lmb_init(void)
 {
 	bool ret;
@@ -759,60 +773,26 @@ int lmb_init(void)
 	return 0;
 }
 
-/**
- * lmb_mem_regions_init() - Initialise the LMB memory
- * @mem_lst: Pointer to store location of free memory list
- * @used_lst: Pointer to store location of used memory list
- * @add_rsv_mem: flag to indicate if memory is to be added and reserved
- *
- * Initialise the LMB subsystem related data structures. There are two
- * alloced lists that are initialised, one for the free memory, and one
- * for the used memory.
- *
- * Initialise the two lists as part of board init during boot. When called
- * from a test, passes the pointers to the two lists to the caller. The
- * caller is then required to call the corresponding function to uninit
- * the lists.
- *
- * Return: 0 if OK, -ve on failure.
- */
-int lmb_mem_regions_init(struct alist **mem_lst, struct alist **used_lst,
-			 bool add_rsv_mem)
+struct lmb *lmb_get(void)
 {
-	bool ret;
+	return &lmb;
+}
 
+int lmb_push(struct lmb *store)
+{
+	int ret;
+
+	*store = lmb;
 	ret = lmb_setup(&lmb);
-	if (ret) {
-		log_debug("Unable to init LMB\n");
+	if (ret)
 		return ret;
-	}
-
-	if (mem_lst)
-		*mem_lst = &lmb.free_mem;
-
-	if (used_lst)
-		*used_lst = &lmb.used_mem;
 
 	return 0;
 }
 
-/**
- * lmb_mem_regions_uninit() - Unitialise the lmb lists
- * @mem_lst: Pointer to store location of free memory list
- * @used_lst: Pointer to store location of used memory list
- *
- * Unitialise the LMB lists for free and used memory that was
- * initialised as part of the init function. Called when running
- * lmb test routines.
- */
-void __maybe_unused lmb_mem_regions_uninit(struct alist *mem_lst,
-					   struct alist *used_lst)
+void lmb_pop(struct lmb *store)
 {
-	alist_uninit(mem_lst);
-	alist_uninit(used_lst);
-}
-
-struct lmb *lmb_get(void)
-{
-	return &lmb;
+	alist_uninit(&lmb.free_mem);
+	alist_uninit(&lmb.used_mem);
+	lmb = *store;
 }

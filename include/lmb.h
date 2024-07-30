@@ -110,35 +110,23 @@ static int lmb_init(void) { return 0; }
 #endif
 
 /**
- * lmb_mem_regions_init() - Initialise the LMB memory
- * @mem_lst: Pointer to store location of free memory list
- * @used_lst: Pointer to store location of used memory list
- * @add_rsv_mem: flag to indicate if memory is to be added and reserved
+ * lmb_push() - Store existing lmb state and set up a new state
  *
- * Initialise the LMB subsystem related data structures. There are two
- * alloced lists that are initialised, one for the free memory, and one
- * for the used memory.
+ * This is only used for testing
  *
- * Initialise the two lists as part of board init during boot. When called
- * from a test, passes the pointers to the two lists to the caller. The
- * caller is then required to call the corresponding function to uninit
- * the lists.
- *
- * Return: 0 if OK, -ve on failure.
+ * @store: Place to store the current lmb state
+ * Return: 0 if OK, -ENOMEM if out of memory
  */
-int lmb_mem_regions_init(struct alist **mem_lst, struct alist **used_lst,
-			 bool add_rsv_mem);
+int lmb_push(struct lmb *store);
 
 /**
- * lmb_mem_regions_uninit() - Unitialise the lmb lists
- * @mem_lst: Pointer to store location of free memory list
- * @used_lst: Pointer to store location of used memory list
+ * lmb_pop() - Restore an old lmb state
  *
- * Unitialise the LMB lists for free and used memory that was
- * initialised as part of the init function. Called when running
- * lmb test routines.
+ * This is only used for testing
+ *
+ * @store: lmb state to restore
  */
-void lmb_mem_regions_uninit(struct alist *mem_lst, struct alist *used_lst);
+void lmb_pop(struct lmb *store);
 
 struct lmb *lmb_get(void);
 
