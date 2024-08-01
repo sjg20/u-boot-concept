@@ -11,7 +11,7 @@
 	};
 
 	config {
-		u-boot,spl-payload-offset = <0x40000>;
+		u-boot,spl-payload-offset = <0xE0000>;
 	};
 };
 
@@ -80,7 +80,8 @@
 
 &spi1 {
 	spi_flash: flash@0 {
-		bootph-all;
+		bootph-pre-ram;
+		bootph-some-ram;
 	};
 };
 
