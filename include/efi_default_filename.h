@@ -5,7 +5,6 @@
  * file name is defined in this include.
  *
  * Copyright (c) 2022, Heinrich Schuchardt <xypron.glpk@gmx.de>
- * Copyright (c) 2022, Linaro Limited
  */
 
 #ifndef _EFI_DEFAULT_FILENAME_H
@@ -16,26 +15,8 @@
 #undef BOOTEFI_NAME
 
 #ifdef CONFIG_SANDBOX
-
-#if HOST_ARCH == HOST_ARCH_X86_64
-#define BOOTEFI_NAME "BOOTX64.EFI"
-#elif HOST_ARCH == HOST_ARCH_X86
-#define BOOTEFI_NAME "BOOTIA32.EFI"
-#elif HOST_ARCH == HOST_ARCH_AARCH64
-#define BOOTEFI_NAME "BOOTAA64.EFI"
-#elif HOST_ARCH == HOST_ARCH_ARM
-#define BOOTEFI_NAME "BOOTARM.EFI"
-#elif HOST_ARCH == HOST_ARCH_RISCV32
-#define BOOTEFI_NAME "BOOTRISCV32.EFI"
-#elif HOST_ARCH == HOST_ARCH_RISCV64
-#define BOOTEFI_NAME "BOOTRISCV64.EFI"
-#else
-#error Unsupported UEFI architecture
-#endif
-
-#else
-
-#if defined(CONFIG_ARM64)
+#define BOOTEFI_NAME "BOOTSBOX.EFI"
+#elif defined(CONFIG_ARM64)
 #define BOOTEFI_NAME "BOOTAA64.EFI"
 #elif defined(CONFIG_ARM)
 #define BOOTEFI_NAME "BOOTARM.EFI"
@@ -49,8 +30,6 @@
 #define BOOTEFI_NAME "BOOTRISCV64.EFI"
 #else
 #error Unsupported UEFI architecture
-#endif
-
 #endif
 
 #endif
