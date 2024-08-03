@@ -50,7 +50,6 @@ static int inject_response(struct unit_test_state *uts)
 /* Check 'bootflow scan/list' commands */
 static int bootflow_cmd(struct unit_test_state *uts)
 {
-	console_record_reset_enable();
 	ut_assertok(run_command("bootdev select 1", 0));
 	ut_assert_console_end();
 	ut_assertok(run_command("bootflow scan -lH", 0));
@@ -76,14 +75,14 @@ static int bootflow_cmd(struct unit_test_state *uts)
 
 	return 0;
 }
-BOOTSTD_TEST(bootflow_cmd, UT_TESTF_DM | UT_TESTF_SCAN_FDT);
+BOOTSTD_TEST(bootflow_cmd, UT_TESTF_DM | UT_TESTF_SCAN_FDT |
+	     UT_TESTF_CONSOLE_REC);
 
 /* Check 'bootflow scan' with a label / seq */
 static int bootflow_cmd_label(struct unit_test_state *uts)
 {
 	test_set_eth_enable(false);
 
-	console_record_reset_enable();
 	ut_assertok(run_command("bootflow scan -lH mmc1", 0));
 	ut_assert_nextline("Scanning for bootflows with label 'mmc1'");
 	ut_assert_skip_to_line("(1 bootflow, 1 valid)");
@@ -124,7 +123,7 @@ static int bootflow_cmd_label(struct unit_test_state *uts)
 	return 0;
 }
 BOOTSTD_TEST(bootflow_cmd_label, UT_TESTF_DM | UT_TESTF_SCAN_FDT |
-	     UT_TESTF_ETH_BOOTDEV);
+	     UT_TESTF_ETH_BOOTDEV | UT_TESTF_CONSOLE_REC);
 
 /* Check 'bootflow scan/list' commands using all bootdevs */
 static int bootflow_cmd_glob(struct unit_test_state *uts)
@@ -156,14 +155,14 @@ static int bootflow_cmd_glob(struct unit_test_state *uts)
 
 	return 0;
 }
-BOOTSTD_TEST(bootflow_cmd_glob, UT_TESTF_DM | UT_TESTF_SCAN_FDT);
+BOOTSTD_TEST(bootflow_cmd_glob, UT_TESTF_DM | UT_TESTF_SCAN_FDT |
+	     UT_TESTF_CONSOLE_REC);
 
 /* Check 'bootflow scan -e' */
 static int bootflow_cmd_scan_e(struct unit_test_state *uts)
 {
 	ut_assertok(bootstd_test_drop_bootdev_order(uts));
 
-	console_record_reset_enable();
 	ut_assertok(run_command("bootflow scan -aleGH", 0));
 	ut_assert_nextline("Scanning for bootflows in all bootdevs");
 	ut_assert_nextline("Seq  Method       State   Uclass    Part  Name                      Filename");
@@ -207,12 +206,12 @@ static int bootflow_cmd_scan_e(struct unit_test_state *uts)
 
 	return 0;
 }
-BOOTSTD_TEST(bootflow_cmd_scan_e, UT_TESTF_DM | UT_TESTF_SCAN_FDT);
+BOOTSTD_TEST(bootflow_cmd_scan_e, UT_TESTF_DM | UT_TESTF_SCAN_FDT |
+	     UT_TESTF_CONSOLE_REC);
 
 /* Check 'bootflow info' */
 static int bootflow_cmd_info(struct unit_test_state *uts)
 {
-	console_record_reset_enable();
 	ut_assertok(run_command("bootdev select 1", 0));
 	ut_assert_console_end();
 	ut_assertok(run_command("bootflow scan", 0));
@@ -248,12 +247,12 @@ static int bootflow_cmd_info(struct unit_test_state *uts)
 
 	return 0;
 }
-BOOTSTD_TEST(bootflow_cmd_info, UT_TESTF_DM | UT_TESTF_SCAN_FDT);
+BOOTSTD_TEST(bootflow_cmd_info, UT_TESTF_DM | UT_TESTF_SCAN_FDT |
+	     UT_TESTF_CONSOLE_REC);
 
 /* Check 'bootflow scan -b' to boot the first available bootdev */
 static int bootflow_scan_boot(struct unit_test_state *uts)
 {
-	console_record_reset_enable();
 	ut_assertok(inject_response(uts));
 	ut_assertok(run_command("bootflow scan -b", 0));
 	ut_assert_nextline(
@@ -270,7 +269,8 @@ static int bootflow_scan_boot(struct unit_test_state *uts)
 
 	return 0;
 }
-BOOTSTD_TEST(bootflow_scan_boot, UT_TESTF_DM | UT_TESTF_SCAN_FDT);
+BOOTSTD_TEST(bootflow_scan_boot, UT_TESTF_DM | UT_TESTF_SCAN_FDT |
+	     UT_TESTF_CONSOLE_REC);
 
 /* Check iterating through available bootflows */
 static int bootflow_iter(struct unit_test_state *uts)
@@ -368,7 +368,8 @@ static int bootflow_iter(struct unit_test_state *uts)
 
 	return 0;
 }
-BOOTSTD_TEST(bootflow_iter, UT_TESTF_DM | UT_TESTF_SCAN_FDT);
+BOOTSTD_TEST(bootflow_iter, UT_TESTF_DM | UT_TESTF_SCAN_FDT |
+	     UT_TESTF_CONSOLE_REC);
 
 #if defined(CONFIG_SANDBOX) && defined(CONFIG_BOOTMETH_GLOBAL)
 /* Check using the system bootdev */
@@ -386,7 +387,6 @@ static int bootflow_system(struct unit_test_state *uts)
 
 	/* We should get a single 'bootmgr' method right at the end */
 	bootstd_clear_glob();
-	console_record_reset_enable();
 	ut_assertok(run_command("bootflow scan -lH", 0));
 	ut_assert_skip_to_line(
 		"  0  efi_mgr      ready   (none)       0  <NULL>                    ");
@@ -397,7 +397,7 @@ static int bootflow_system(struct unit_test_state *uts)
 	return 0;
 }
 BOOTSTD_TEST(bootflow_system, UT_TESTF_DM | UT_TESTF_SCAN_PDATA |
-	     UT_TESTF_SCAN_FDT);
+	     UT_TESTF_SCAN_FDT | UT_TESTF_CONSOLE_REC);
 #endif
 
 /* Check disabling a bootmethod if it requests it */
@@ -438,7 +438,9 @@ static int bootflow_iter_disable(struct unit_test_state *uts)
 
 	return 0;
 }
-BOOTSTD_TEST(bootflow_iter_disable, UT_TESTF_DM | UT_TESTF_SCAN_FDT);
+BOOTSTD_TEST(bootflow_iter_disable, UT_TESTF_DM | UT_TESTF_SCAN_FDT |
+	     UT_TESTF_CONSOLE_REC
+);
 
 /* Check 'bootflow scan' with a bootmeth ordering including a global bootmeth */
 static int bootflow_scan_glob_bootmeth(struct unit_test_state *uts)
@@ -452,7 +454,6 @@ static int bootflow_scan_glob_bootmeth(struct unit_test_state *uts)
 	 * Make sure that the -G flag makes the scan fail, since this is not
 	 * supported when an ordering is provided
 	 */
-	console_record_reset_enable();
 	ut_assertok(bootmeth_set_order("efi firmware0"));
 	ut_assertok(run_command("bootflow scan -lGH", 0));
 	ut_assert_nextline("Scanning for bootflows in all bootdevs");
@@ -479,12 +480,13 @@ static int bootflow_scan_glob_bootmeth(struct unit_test_state *uts)
 
 	return 0;
 }
-BOOTSTD_TEST(bootflow_scan_glob_bootmeth, UT_TESTF_DM | UT_TESTF_SCAN_FDT);
+BOOTSTD_TEST(bootflow_scan_glob_bootmeth, UT_TESTF_DM | UT_TESTF_SCAN_FDT |
+	     UT_TESTF_CONSOLE_REC
+);
 
 /* Check 'bootflow boot' to boot a selected bootflow */
 static int bootflow_cmd_boot(struct unit_test_state *uts)
 {
-	console_record_reset_enable();
 	ut_assertok(run_command("bootdev select 1", 0));
 	ut_assert_console_end();
 	ut_assertok(run_command("bootflow scan", 0));
@@ -508,7 +510,8 @@ static int bootflow_cmd_boot(struct unit_test_state *uts)
 
 	return 0;
 }
-BOOTSTD_TEST(bootflow_cmd_boot, UT_TESTF_DM | UT_TESTF_SCAN_FDT);
+BOOTSTD_TEST(bootflow_cmd_boot, UT_TESTF_DM | UT_TESTF_SCAN_FDT |
+	     UT_TESTF_CONSOLE_REC);
 
 /**
  * prep_mmc_bootdev() - Set up an mmc bootdev so we can access other distros
@@ -675,7 +678,8 @@ static int bootflow_cmd_menu(struct unit_test_state *uts)
 
 	return 0;
 }
-BOOTSTD_TEST(bootflow_cmd_menu, UT_TESTF_DM | UT_TESTF_SCAN_FDT);
+BOOTSTD_TEST(bootflow_cmd_menu, UT_TESTF_DM | UT_TESTF_SCAN_FDT |
+	     UT_TESTF_CONSOLE_REC);
 
 /* Check 'bootflow scan -m' to select a bootflow using a menu */
 static int bootflow_scan_menu(struct unit_test_state *uts)
@@ -783,7 +787,6 @@ static int bootflow_cmd_hunt_single(struct unit_test_state *uts)
 
 	ut_assertok(bootstd_test_drop_bootdev_order(uts));
 
-	console_record_reset_enable();
 	ut_assertok(run_command("bootflow scan -l mmc1", 0));
 	ut_assert_nextline("Scanning for bootflows with label 'mmc1'");
 	ut_assert_skip_to_line("(1 bootflow, 1 valid)");
@@ -794,7 +797,8 @@ static int bootflow_cmd_hunt_single(struct unit_test_state *uts)
 
 	return 0;
 }
-BOOTSTD_TEST(bootflow_cmd_hunt_single, UT_TESTF_DM | UT_TESTF_SCAN_FDT);
+BOOTSTD_TEST(bootflow_cmd_hunt_single, UT_TESTF_DM | UT_TESTF_SCAN_FDT |
+	     UT_TESTF_CONSOLE_REC);
 
 /* Check searching for a uclass label using the hunters */
 static int bootflow_cmd_hunt_label(struct unit_test_state *uts)
@@ -808,7 +812,6 @@ static int bootflow_cmd_hunt_label(struct unit_test_state *uts)
 	test_set_eth_enable(false);
 	ut_assertok(bootstd_test_drop_bootdev_order(uts));
 
-	console_record_reset_enable();
 	ut_assertok(run_command("bootflow scan -l mmc", 0));
 
 	/* check that the hunter was used */
@@ -831,7 +834,8 @@ static int bootflow_cmd_hunt_label(struct unit_test_state *uts)
 
 	return 0;
 }
-BOOTSTD_TEST(bootflow_cmd_hunt_label, UT_TESTF_DM | UT_TESTF_SCAN_FDT);
+BOOTSTD_TEST(bootflow_cmd_hunt_label, UT_TESTF_DM | UT_TESTF_SCAN_FDT |
+	     UT_TESTF_CONSOLE_REC);
 
 /**
  * check_font() - Check that the font size for an item matches expectations
@@ -1127,7 +1131,6 @@ static int bootflow_cmdline(struct unit_test_state *uts)
 {
 	ut_assertok(run_command("bootflow scan mmc", 0));
 	ut_assertok(run_command("bootflow sel 0", 0));
-	console_record_reset_enable();
 
 	ut_asserteq(1, run_command("bootflow cmdline get fred", 0));
 	ut_assert_nextline("Argument not found");
@@ -1157,7 +1160,7 @@ static int bootflow_cmdline(struct unit_test_state *uts)
 
 	return 0;
 }
-BOOTSTD_TEST(bootflow_cmdline, 0);
+BOOTSTD_TEST(bootflow_cmdline, UT_TESTF_CONSOLE_REC);
 
 /* test a few special changes to a long command line */
 static int bootflow_cmdline_special(struct unit_test_state *uts)
@@ -1198,7 +1201,7 @@ static int bootflow_cros(struct unit_test_state *uts)
 
 	return 0;
 }
-BOOTSTD_TEST(bootflow_cros, 0);
+BOOTSTD_TEST(bootflow_cros, UT_TESTF_CONSOLE_REC);
 
 /* Test Android bootmeth  */
 static int bootflow_android(struct unit_test_state *uts)
@@ -1221,4 +1224,4 @@ static int bootflow_android(struct unit_test_state *uts)
 
 	return 0;
 }
-BOOTSTD_TEST(bootflow_android, 0);
+BOOTSTD_TEST(bootflow_android, UT_TESTF_CONSOLE_REC);
