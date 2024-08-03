@@ -20,6 +20,13 @@
 /* tracks whether bootstd_setup_for_tests() has been run yet */
 bool vbe_setup_done;
 
+/* Allow resetting the USB-started flag */
+#if defined(CONFIG_USB_HOST) || defined(CONFIG_USB_GADGET)
+extern bool usb_started;
+#else
+#include <usb.h>
+#endif
+
 /* set up MMC for VBE tests */
 int bootstd_setup_for_tests(void)
 {
@@ -86,6 +93,11 @@ int bootstd_test_check_mmc_hunter(struct unit_test_state *uts)
 	ut_asserteq(BIT(seq), std->hunters_used);
 
 	return 0;
+}
+
+void bootstd_reset_usb(void)
+{
+	usb_started = false;
 }
 
 int do_ut_bootstd(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
