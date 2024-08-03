@@ -838,8 +838,20 @@ efi_status_t efi_disk_get_device_name(const efi_handle_t handle, char *buf, int 
 efi_status_t efi_disks_register(void)
 {
 	struct udevice *dev;
+	struct uclass *uc;
 
-	uclass_foreach_dev_probe(UCLASS_BLK, dev) {
+	uclass_id_foreach_dev(UCLASS_BLK, dev, uc) {
+		/*
+		 * The virtio block-device hangs on sandbox when accessed since
+		 * there is nothing listening to the mailbox
+		 */
+		if (IS_ENABLED(CONFIG_SANDBOX)) {
+			struct blk_desc *desc = dev_get_uclass_plat(dev);
+
+			if (desc->uclass_id == UCLASS_VIRTIO)
+				continue;
+		}
+		device_probe(dev);
 	}
 
 	return EFI_SUCCESS;
