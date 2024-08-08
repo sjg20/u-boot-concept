@@ -416,13 +416,12 @@ static long lmb_add_region_flags(struct alist *lmb_rgn_lst, phys_addr_t base,
 	if (coalesced)
 		return coalesced;
 
-	if (alist_full(lmb_rgn_lst) &&
-	    !alist_expand_by(lmb_rgn_lst, lmb_rgn_lst->alloc))
+	if (!alist_add_placeholder(lmb_rgn_lst))
 		return -1;
 	rgn = lmb_rgn_lst->data;
 
 	/* Couldn't coalesce the LMB, so add it to the sorted table. */
-	for (i = lmb_rgn_lst->count; i >= 0; i--) {
+	for (i = lmb_rgn_lst->count - 1; i >= 0; i--) {
 		if (i && base < rgn[i - 1].base) {
 			rgn[i] = rgn[i - 1];
 		} else {
@@ -433,8 +432,6 @@ static long lmb_add_region_flags(struct alist *lmb_rgn_lst, phys_addr_t base,
 		}
 	}
 
-	lmb_rgn_lst->count++;
-
 	return 0;
 }
 
@@ -444,7 +441,6 @@ static long lmb_add_region(struct alist *lmb_rgn_lst, phys_addr_t base,
 	return lmb_add_region_flags(lmb_rgn_lst, base, size, LMB_NONE);
 }
 
-/* This routine may be called with relocation disabled. */
 long lmb_add(phys_addr_t base, phys_size_t size)
 {
 	long ret;
