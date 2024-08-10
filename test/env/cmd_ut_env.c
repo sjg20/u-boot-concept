@@ -11,20 +11,16 @@
 
 static int env_test_env_cmd(struct unit_test_state *uts)
 {
-	console_record_reset_enable();
 	ut_assertok(run_command("setenv non_default_var1 1", 0));
 	ut_assert_console_end();
 
-	console_record_reset_enable();
 	ut_assertok(run_command("setenv non_default_var2 1", 0));
 	ut_assert_console_end();
 
-	console_record_reset_enable();
 	ut_assertok(run_command("env print non_default_var1", 0));
 	ut_assert_nextline("non_default_var1=1");
 	ut_assert_console_end();
 
-	console_record_reset_enable();
 	ut_assertok(run_command("env default non_default_var1 non_default_var2", 0));
 	ut_assert_nextline("WARNING: 'non_default_var1' not in imported env, deleting it!");
 	ut_assert_nextline("WARNING: 'non_default_var2' not in imported env, deleting it!");
@@ -32,18 +28,15 @@ static int env_test_env_cmd(struct unit_test_state *uts)
 
 	console_record_reset_enable();
 	ut_asserteq(1, run_command("env exists non_default_var1", 0));
-	ut_assert_nextline_empty();
 	ut_assert_console_end();
 
-	console_record_reset_enable();
 	ut_asserteq(1, run_command("env exists non_default_var2", 0));
-	ut_assert_nextline_empty();
 	ut_assert_console_end();
 
 	return 0;
 }
 
-ENV_TEST(env_test_env_cmd, 0);
+ENV_TEST(env_test_env_cmd, UT_TESTF_CONSOLE_REC);
 
 int do_ut_env(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {
