@@ -12,7 +12,7 @@
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/rawnand.h>
 
-static int dm_test_nand(struct unit_test_state *uts, int dev, bool end)
+static int run_test_nand(struct unit_test_state *uts, int dev, bool end)
 {
 	nand_erase_options_t opts = { };
 	struct mtd_info *mtd;
@@ -24,6 +24,8 @@ static int dm_test_nand(struct unit_test_state *uts, int dev, bool end)
 	int i;
 	loff_t off = 0;
 	mtd_oob_ops_t ops = { };
+
+	printf("running: dev %d end %d\n", dev, end);
 
 	/* Seed RNG for bit errors */
 	srand((off >> 32) ^ off ^ ~dev);
@@ -88,17 +90,15 @@ static int dm_test_nand(struct unit_test_state *uts, int dev, bool end)
 	return 0;
 }
 
-#define DM_NAND_TEST(dev) \
-static int dm_test_nand##dev##_start(struct unit_test_state *uts) \
-{ \
-	return dm_test_nand(uts, dev, false); \
-} \
-DM_TEST(dm_test_nand##dev##_start, UTF_SCAN_FDT); \
-static int dm_test_nand##dev##_end(struct unit_test_state *uts) \
-{ \
-	return dm_test_nand(uts, dev, true); \
-} \
-DM_TEST(dm_test_nand##dev##_end, UTF_SCAN_FDT)
+static int dm_test_nand(struct unit_test_state *uts)
+{
+	int devnum;
 
-DM_NAND_TEST(0);
-DM_NAND_TEST(1);
+	for (devnum = 0; devnum < 2; devnum++) {
+		ut_assertok(run_test_nand(uts, devnum, false));
+		ut_assertok(run_test_nand(uts, devnum, true));
+	}
+
+	return 0;
+}
+DM_TEST(dm_test_nand, UTF_SCAN_FDT);
