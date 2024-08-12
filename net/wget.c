@@ -4,6 +4,8 @@
  * Copyright Duncan Hare <dh@synoia.com> 2017
  */
 
+#define LOG_DEBUG
+
 #include <asm/global_data.h>
 #include <command.h>
 #include <display_options.h>
@@ -105,6 +107,7 @@ static inline int store_block(uchar *src, unsigned int offset, unsigned int len)
 		if (!end_addr)
 			end_addr = ULONG_MAX;
 
+		debug_cond(DEBUG_WGET, "wget: offset %x\n", offset);
 		if (store_addr < image_load_addr ||
 		    store_addr + len > end_addr) {
 			printf("\nwget error: ");
@@ -394,8 +397,8 @@ static void wget_handler(uchar *pkt, u16 dport,
 		break;
 	case WGET_TRANSFERRING:
 		debug_cond(DEBUG_WGET,
-			   "wget: Transferring, seq=%x, ack=%x,len=%x\n",
-			   tcp_seq_num, tcp_ack_num, len);
+			   "wget: Transferring, seq=%x, ack=%x, init_seq=%x, len=%x\n",
+			   tcp_seq_num, tcp_ack_num, initial_data_seq_num, len);
 
 		if (next_data_seq_num != tcp_seq_num) {
 			debug_cond(DEBUG_WGET, "wget: seq=%x packet was lost\n", next_data_seq_num);
