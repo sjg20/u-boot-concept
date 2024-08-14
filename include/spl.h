@@ -265,6 +265,7 @@ struct spl_image_info {
 	u32 boot_device;
 	u32 offset;
 	u32 size;
+	u32 fdt_size;
 	u32 flags;
 	void *arg;
 #ifdef CONFIG_SPL_LEGACY_IMAGE_CRC_CHECK
@@ -317,6 +318,7 @@ typedef ulong (*spl_load_reader)(struct spl_load_info *load, ulong sector,
  * @priv: Private data for the device
  * @bl_len: Block length for reading in bytes
  * @phase: Image phase to load
+ * @fit_loaded: true if the FIT has been loaded, except for external data
  */
 struct spl_load_info {
 	spl_load_reader read;
@@ -326,6 +328,7 @@ struct spl_load_info {
 #endif
 #if CONFIG_IS_ENABLED(BOOTMETH_VBE)
 	u8 phase;
+	u8 fit_loaded;
 #endif
 };
 
@@ -362,6 +365,15 @@ static inline enum image_phase_t spl_get_phase(struct spl_load_info *info)
 	return info->phase;
 #else
 	return IH_PHASE_NONE;
+#endif
+}
+
+static inline bool spl_get_fit_loaded(struct spl_load_info *info)
+{
+#if CONFIG_IS_ENABLED(BOOTMETH_VBE)
+	return info->fit_loaded;
+#else
+	return false;
 #endif
 }
 
