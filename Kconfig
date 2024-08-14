@@ -763,3 +763,7 @@ source "lib/Kconfig"
 source "test/Kconfig"
 
 source "tools/Kconfig"
+
+source "lib/efi_loader/Kconfig"
+
+source "lib/efi/Kconfig"
