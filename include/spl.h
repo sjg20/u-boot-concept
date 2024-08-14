@@ -283,6 +283,14 @@ struct spl_image_info {
 	ulong dcrc_length;
 	ulong dcrc;
 #endif
+#if CONFIG_IS_ENABLED(RELOC_LOADER)
+	void *buf;
+	void *fdt_buf;
+	void *fdt_start;
+	void *rcode_buf;
+	uint *stack_prot;
+	ulong reloc_offset;
+#endif
 };
 
 /* function to jump to an image from SPL */
@@ -1115,5 +1123,9 @@ int spl_write_upl_handoff(struct spl_image_info *spl_image);
  * This must be called before upl_add_image(), etc.
  */
 void spl_upl_init(void);
+
+int spl_reloc_prepare(struct spl_image_info *image, ulong *addrp);
+
+int spl_reloc_jump(struct spl_image_info *image, spl_jump_to_image_t func);
 
 #endif
