@@ -275,6 +275,9 @@ struct spl_image_info {
 #endif
 };
 
+/* function to jump to an image from SPL */
+typedef void __noreturn (*spl_jump_to_image_t)(struct spl_image_info *);
+
 static inline void *spl_image_fdt_addr(struct spl_image_info *info)
 {
 #if CONFIG_IS_ENABLED(LOAD_FIT) || CONFIG_IS_ENABLED(LOAD_FIT_FULL)
@@ -1134,5 +1137,9 @@ int spl_write_upl_handoff(struct spl_image_info *spl_image);
  * This must be called before upl_add_image(), etc.
  */
 void spl_upl_init(void);
+
+int spl_reloc_prepare(struct spl_image_info *image, ulong *addrp);
+
+int spl_reloc_jump(struct spl_image_info *image, spl_jump_to_image_t func);
 
 #endif
