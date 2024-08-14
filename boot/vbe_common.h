@@ -11,7 +11,14 @@
 
 #include <linux/types.h>
 
-#define USE_BOOTMETH	false
+/*
+ * Controls whether we use a full bootmeth driver with VBE in this phase, or
+ * just access the information directly.
+ *
+ * For now VBE-simple uses the full bootmeth, but VBE-abrec does not, to reduce
+ * code size
+ */
+#define USE_BOOTMETH	CONFIG_IS_ENABLED(BOOTMETH_VBE_SIMPLE)
 
 struct spl_image_info;
 struct spl_load_info;
@@ -84,6 +91,14 @@ struct vbe_nvdata {
 	u32 flags;
 	u8 spare2[0x34];
 };
+
+ulong h_vbe_load_read(struct spl_load_info *load, ulong off, ulong size,
+		      void *buf);
+
+int vbe_read_fit(struct udevice *blk, ulong area_offset, ulong area_size,
+		 struct spl_image_info *image, ulong *load_addrp, char **namep);
+
+ofnode vbe_get_node(void);
 
 int vbe_read_nvdata(struct udevice *blk, ulong offset, ulong size, u8 *buf);
 
