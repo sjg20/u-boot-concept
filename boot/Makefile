@@ -63,7 +63,7 @@ obj-$(CONFIG_$(SPL_TPL_)LOAD_FIT) += common_fit.o
 obj-$(CONFIG_$(SPL_TPL_)EXPO) += expo.o scene.o expo_build.o
 obj-$(CONFIG_$(SPL_TPL_)EXPO) += scene_menu.o scene_textline.o
 
-obj-$(CONFIG_$(SPL_TPL_)BOOTMETH_VBE) += vbe.o
+obj-$(CONFIG_$(SPL_TPL_)BOOTMETH_VBE) += vbe.o vbe_common.o
 obj-$(CONFIG_$(SPL_TPL_)BOOTMETH_VBE_REQUEST) += vbe_request.o
 obj-$(CONFIG_$(SPL_TPL_)BOOTMETH_VBE_SIMPLE) += vbe_simple.o
 obj-$(CONFIG_$(SPL_TPL_)BOOTMETH_VBE_SIMPLE_FW) += vbe_simple_fw.o
