@@ -64,7 +64,7 @@ ifdef CONFIG_COREBOOT_SYSINFO
 obj-$(CONFIG_$(SPL_TPL_)EXPO) += expo_build_cb.o
 endif
 
-obj-$(CONFIG_$(PHASE_)BOOTMETH_VBE) += vbe.o
+obj-$(CONFIG_$(PHASE_)BOOTMETH_VBE) += vbe.o vbe_common.o
 obj-$(CONFIG_$(PHASE_)BOOTMETH_VBE_REQUEST) += vbe_request.o
 obj-$(CONFIG_$(PHASE_)BOOTMETH_VBE_SIMPLE) += vbe_simple.o
 obj-$(CONFIG_$(PHASE_)BOOTMETH_VBE_SIMPLE_FW) += vbe_simple_fw.o
