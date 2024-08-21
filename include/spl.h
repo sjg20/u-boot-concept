@@ -273,6 +273,14 @@ struct spl_image_info {
 	ulong dcrc_length;
 	ulong dcrc;
 #endif
+#if CONFIG_IS_ENABLED(RELOC_LOADER)
+	void *buf;
+	void *fdt_buf;
+	void *fdt_start;
+	void *rcode_buf;
+	uint *stack_prot;
+	ulong reloc_offset;
+#endif
 };
 
 /* function to jump to an image from SPL */
@@ -379,6 +387,7 @@ static inline void spl_load_init(struct spl_load_info *load,
 	load->read = h_read;
 	load->priv = priv;
 	spl_set_bl_len(load, bl_len);
+	spl_set_phase(load, IH_PHASE_NONE);
 }
 
 /*
