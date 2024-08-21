@@ -132,7 +132,8 @@ int clk_get_by_phandle(struct udevice *dev, const struct phandle_1_arg *cells,
  * device clock indices to provider clocks may be via device-tree properties,
  * board-provided mapping tables, or some other mechanism.
  *
- * Return: 0 if OK, or a negative error code.
+ * Return: 0 if OK, -EALREADY if the clock is already set up (so the caller
+ * ignore it), or another negative error code.
  */
 int clk_get_by_index(struct udevice *dev, int index, struct clk *clk);
 
@@ -259,7 +260,7 @@ static inline int clk_get_by_phandle(struct udevice *dev, const
 static inline int clk_get_by_index(struct udevice *dev, int index,
 				   struct clk *clk)
 {
-	return -ENOSYS;
+	return -EALREADY;
 }
 
 static inline int clk_get_by_index_nodev(ofnode node, int index,
