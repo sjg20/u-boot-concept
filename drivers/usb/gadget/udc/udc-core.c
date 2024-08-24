@@ -166,16 +166,14 @@ static void usb_udc_release(struct device *dev)
 }
 
 /**
- * usb_add_gadget_udc_release - adds a new gadget to the udc class driver list
+ * usb_add_gadget_udc - adds a new gadget to the udc class driver list
  * @parent: the parent device to this udc. Usually the controller driver's
  * device.
  * @gadget: the gadget to be added to the list.
- * @release: a gadget release function.
  *
  * Returns zero on success, negative errno otherwise.
  */
-int usb_add_gadget_udc_release(struct device *parent, struct usb_gadget *gadget,
-		void (*release)(struct device *dev))
+int usb_add_gadget_udc(struct device *parent, struct usb_gadget *gadget)
 {
 	struct usb_udc		*udc;
 	int			ret = -ENOMEM;
@@ -204,20 +202,6 @@ int usb_add_gadget_udc_release(struct device *parent, struct usb_gadget *gadget,
 
 err1:
 	return ret;
-}
-EXPORT_SYMBOL_GPL(usb_add_gadget_udc_release);
-
-/**
- * usb_add_gadget_udc - adds a new gadget to the udc class driver list
- * @parent: the parent device to this udc. Usually the controller
- * driver's device.
- * @gadget: the gadget to be added to the list
- *
- * Returns zero on success, negative errno otherwise.
- */
-int usb_add_gadget_udc(struct device *parent, struct usb_gadget *gadget)
-{
-	return usb_add_gadget_udc_release(parent, gadget, NULL);
 }
 EXPORT_SYMBOL_GPL(usb_add_gadget_udc);
 

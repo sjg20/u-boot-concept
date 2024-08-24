@@ -890,8 +890,6 @@ int usb_gadget_register_driver(struct usb_gadget_driver *driver);
  */
 int usb_gadget_unregister_driver(struct usb_gadget_driver *driver);
 
-int usb_add_gadget_udc_release(struct device *parent,
-		struct usb_gadget *gadget, void (*release)(struct device *dev));
 int usb_add_gadget_udc(struct device *parent, struct usb_gadget *gadget);
 void usb_del_gadget_udc(struct usb_gadget *gadget);
 /*-------------------------------------------------------------------------*/
