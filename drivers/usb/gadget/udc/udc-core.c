@@ -41,7 +41,6 @@ struct usb_udc {
 	struct list_head		list;
 };
 
-static struct class *udc_class;
 static LIST_HEAD(udc_list);
 DEFINE_MUTEX(udc_lock);
 
@@ -151,21 +150,6 @@ static inline void usb_gadget_udc_stop(struct usb_udc *udc)
 }
 
 /**
- * usb_udc_release - release the usb_udc struct
- * @dev: the dev member within usb_udc
- *
- * This is called by driver's core in order to free memory once the last
- * reference is released.
- */
-static void usb_udc_release(struct device *dev)
-{
-	struct usb_udc *udc;
-
-	udc = container_of(dev, struct usb_udc, dev);
-	kfree(udc);
-}
-
-/**
  * usb_add_gadget_udc - adds a new gadget to the udc class driver list
  * @parent: the parent device to this udc. Usually the controller driver's
  * device.
@@ -185,8 +169,6 @@ int usb_add_gadget_udc(struct device *parent, struct usb_gadget *gadget)
 	dev_set_name(&gadget->dev, "gadget");
 	gadget->dev.parent = parent;
 
-	udc->dev.release = usb_udc_release;
-	udc->dev.class = udc_class;
 	udc->dev.parent = parent;
 
 	udc->gadget = gadget;
@@ -247,6 +229,7 @@ found:
 
 	if (udc->driver)
 		usb_gadget_remove_driver(udc);
+	kfree(udc);
 }
 EXPORT_SYMBOL_GPL(usb_del_gadget_udc);
 
