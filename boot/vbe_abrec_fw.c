@@ -197,7 +197,7 @@ static int abrec_load_from_image(struct spl_image_info *image,
 	struct vbe_handoff *handoff;
 	int ret;
 
-	printf("load\n");
+	printf("load: %s\n", ofnode_read_string(ofnode_root(), "model"));
 	if (spl_phase() != PHASE_VPL && spl_phase() != PHASE_SPL &&
 		spl_phase() != PHASE_TPL)
 		return -ENOENT;
