@@ -631,7 +631,7 @@ int mtu3_gadget_setup(struct mtu3 *mtu)
 
 	mtu3_gadget_init_eps(mtu);
 
-	return usb_add_gadget_udc((struct device *)mtu->dev, &mtu->g);
+	return usb_add_gadget_udc(mtu->dev, &mtu->g);
 }
 
 void mtu3_gadget_cleanup(struct mtu3 *mtu)

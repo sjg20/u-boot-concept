@@ -231,7 +231,7 @@ static int omap2430_musb_probe(struct udevice *dev)
 		if (!host->host)
 			return -EIO;
 
-		return usb_add_gadget_udc((struct device *)otg_board_data, &host->host->g);
+		return usb_add_gadget_udc(dev, &host->host->g);
 	}
 
 	musbp = musb_register(&plat->plat, (struct device *)otg_board_data,

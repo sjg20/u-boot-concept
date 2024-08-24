@@ -130,7 +130,7 @@ static int ux500_musb_probe(struct udevice *dev)
 	if (!host->host)
 		return -EIO;
 
-	return usb_add_gadget_udc(&glue->dev, &host->host->g);
+	return usb_add_gadget_udc(dev, &host->host->g);
 #endif
 }
 

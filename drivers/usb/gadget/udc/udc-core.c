@@ -37,7 +37,7 @@
 struct usb_udc {
 	struct usb_gadget_driver	*driver;
 	struct usb_gadget		*gadget;
-	struct device			dev;
+	struct udevice			*dev;
 	struct list_head		list;
 };
 
@@ -157,7 +157,7 @@ static inline void usb_gadget_udc_stop(struct usb_udc *udc)
  *
  * Returns zero on success, negative errno otherwise.
  */
-int usb_add_gadget_udc(struct device *parent, struct usb_gadget *gadget)
+int usb_add_gadget_udc(struct udevice *parent, struct usb_gadget *gadget)
 {
 	struct usb_udc		*udc;
 	int			ret = -ENOMEM;
@@ -166,10 +166,9 @@ int usb_add_gadget_udc(struct device *parent, struct usb_gadget *gadget)
 	if (!udc)
 		goto err1;
 
-	dev_set_name(&gadget->dev, "gadget");
-	gadget->dev.parent = parent;
+	gadget->dev = parent;
 
-	udc->dev.parent = parent;
+	udc->dev = parent;
 
 	udc->gadget = gadget;
 
@@ -189,7 +188,7 @@ EXPORT_SYMBOL_GPL(usb_add_gadget_udc);
 
 static void usb_gadget_remove_driver(struct usb_udc *udc)
 {
-	dev_dbg(&udc->dev, "unregistering UDC driver [%s]\n",
+	dev_dbg(udc->dev, "unregistering UDC driver [%s]\n",
 			udc->driver->function);
 
 	usb_gadget_disconnect(udc->gadget);
@@ -216,13 +215,13 @@ void usb_del_gadget_udc(struct usb_gadget *gadget)
 		if (udc->gadget == gadget)
 			goto found;
 
-	dev_err(gadget->dev.parent, "gadget not registered.\n");
+	dev_err(gadget->dev, "gadget not registered.\n");
 	mutex_unlock(&udc_lock);
 
 	return;
 
 found:
-	dev_vdbg(gadget->dev.parent, "unregistering gadget\n");
+	dev_vdbg(gadget->dev, "unregistering gadget\n");
 
 	list_del(&udc->list);
 	mutex_unlock(&udc_lock);
@@ -260,7 +259,7 @@ static int udc_bind_to_driver(struct usb_udc *udc, struct usb_gadget_driver *dri
 {
 	int ret;
 
-	dev_dbg(&udc->dev, "registering UDC driver [%s]\n",
+	dev_dbg(udc->dev, "registering UDC driver [%s]\n",
 			driver->function);
 
 	udc->driver = driver;
@@ -280,7 +279,7 @@ static int udc_bind_to_driver(struct usb_udc *udc, struct usb_gadget_driver *dri
 	return 0;
 err1:
 	if (ret != -EISNAM)
-		dev_err(&udc->dev, "failed to start %s: %d\n",
+		dev_err(udc->dev, "failed to start %s: %d\n",
 			udc->driver->function, ret);
 	udc->driver = NULL;
 	return ret;

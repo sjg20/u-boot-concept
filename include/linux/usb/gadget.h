@@ -543,7 +543,7 @@ struct usb_gadget {
 	unsigned			a_hnp_support:1;
 	unsigned			a_alt_hnp_support:1;
 	const char			*name;
-	struct device			dev;
+	struct udevice			*dev;
 	void				*driver_data;
 	unsigned			quirk_ep_out_aligned_size:1;
 };
@@ -886,7 +886,7 @@ int usb_gadget_register_driver(struct usb_gadget_driver *driver);
  */
 int usb_gadget_unregister_driver(struct usb_gadget_driver *driver);
 
-int usb_add_gadget_udc(struct device *parent, struct usb_gadget *gadget);
+int usb_add_gadget_udc(struct udevice *parent, struct usb_gadget *gadget);
 void usb_del_gadget_udc(struct usb_gadget *gadget);
 /*-------------------------------------------------------------------------*/
 

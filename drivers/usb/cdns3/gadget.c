@@ -2660,7 +2660,7 @@ static int cdns3_gadget_start(struct cdns3 *cdns)
 	}
 
 	/* add USB gadget device */
-	ret = usb_add_gadget_udc((struct device *)priv_dev->dev,
+	ret = usb_add_gadget_udc(priv_dev->dev,
 				 &priv_dev->gadget);
 	if (ret < 0) {
 		dev_err(priv_dev->dev,

@@ -247,7 +247,7 @@ static int ti_musb_peripheral_probe(struct udevice *dev)
 
 	ti_musb_set_phy_power(dev, 1);
 	musb_gadget_setup(priv->periph);
-	return usb_add_gadget_udc((struct device *)dev, &priv->periph->g);
+	return usb_add_gadget_udc(dev, &priv->periph->g);
 }
 
 static int ti_musb_peripheral_remove(struct udevice *dev)

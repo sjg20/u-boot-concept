@@ -1135,7 +1135,7 @@ static int dwc2_udc_otg_probe(struct udevice *dev)
 
 	the_controller->driver = 0;
 
-	ret = usb_add_gadget_udc((struct device *)dev, &the_controller->gadget);
+	ret = usb_add_gadget_udc(dev, &the_controller->gadget);
 
 	return ret;
 }

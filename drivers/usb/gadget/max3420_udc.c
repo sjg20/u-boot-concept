@@ -836,7 +836,7 @@ static int max3420_udc_probe(struct udevice *dev)
 	max3420_setup_eps(udc);
 	max3420_setup_spi(udc);
 
-	usb_add_gadget_udc((struct device *)dev, &udc->gadget);
+	usb_add_gadget_udc(dev, &udc->gadget);
 
 	return 0;
 }
