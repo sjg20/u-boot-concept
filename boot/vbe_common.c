@@ -6,6 +6,8 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
+#define LOG_DEBUG
+
 #include <bootstage.h>
 #include <display_options.h>
 #include <dm.h>
