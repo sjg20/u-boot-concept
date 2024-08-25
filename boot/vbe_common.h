@@ -94,6 +94,42 @@ struct vbe_nvdata {
 };
 
 /**
+ * h_vbe_load_read() - Handle a load request from the SPL stack
+ *
+ * @load: Information about the load
+ * @off: Block offset for the load
+ * @size: Number of bytes to load
+ * @buf: Buffer to read into
+ * Returns: Number of bytes read, or -ve on error
+ */
+ulong h_vbe_load_read(struct spl_load_info *load, ulong off, ulong size,
+		      void *buf);
+
+/**
+ * vbe_read_fit() - Read an image from a FIT
+ *
+ * Reads the next-phase image from a FIT, so that we can jump to it
+ *
+ * @blk: Block device to read from
+ * @area_offset: Offset of the start of the FIT
+ * @area_size: Size of the FIT area
+ * @image: Place to put information about the image that is loaded
+ * @load_addrp: Returns the address to which the image was loaded
+ * @namep: If non-NULL, returns the (allocated) name of the loaded image
+ * Return: 0 if OK, -ve on error
+ */
+int vbe_read_fit(struct udevice *blk, ulong area_offset, ulong area_size,
+		 struct spl_image_info *image, ulong *load_addrp, char **namep);
+
+/**
+ * vbe_get_node() - Obtain the VBE firmware-node
+ *
+ * Returns the ofnode for the /bootstd/firmware0 node. If there is no such node,
+ * ofnode_null() is returned
+ */
+ofnode vbe_get_node(void);
+
+/**
  * vbe_read_nvdata() - Read the non-volatile data from a block device
  *
  * @blk: Device to read from
