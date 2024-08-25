@@ -28,23 +28,23 @@
 #include "vbe_common.h"
 
 binman_sym_declare(ulong, spl_a, image_pos);
-// binman_sym_declare(ulong, spl_b, image_pos);
-// binman_sym_declare(ulong, spl_recovery, image_pos);
+binman_sym_declare(ulong, spl_b, image_pos);
+binman_sym_declare(ulong, spl_recovery, image_pos);
 
 binman_sym_declare(ulong, spl_a, size);
-// binman_sym_declare(ulong, spl_b, size);
-// binman_sym_declare(ulong, spl_recovery, size);
+binman_sym_declare(ulong, spl_b, size);
+binman_sym_declare(ulong, spl_recovery, size);
 
 binman_sym_declare(ulong, u_boot_a, image_pos);
-// binman_sym_declare(ulong, u_boot_b, image_pos);
-// binman_sym_declare(ulong, u_boot_recovery, image_pos);
+binman_sym_declare(ulong, u_boot_b, image_pos);
+binman_sym_declare(ulong, u_boot_recovery, image_pos);
 
 binman_sym_declare(ulong, u_boot_a, size);
-// binman_sym_declare(ulong, u_boot_b, size);
-// binman_sym_declare(ulong, u_boot_recovery, size);
+binman_sym_declare(ulong, u_boot_b, size);
+binman_sym_declare(ulong, u_boot_recovery, size);
 
-binman_sym_declare(ulong, vpl, image_pos);
-binman_sym_declare(ulong, vpl, size);
+binman_sym_declare(ulong, vpl2, image_pos);
+binman_sym_declare(ulong, vpl2, size);
 
 static const char *pick_names[] = {"A", "B", "Recovery"};
 
@@ -143,7 +143,6 @@ static int abrec_run_vpl(struct udevice *blk, struct spl_image_info *image,
 		ub_offset = binman_sym(ulong, u_boot_a, image_pos);
 		ub_size = binman_sym(ulong, u_boot_a, size);
 		break;
-	/*
 	case VBEP_B:
 		offset = binman_sym(ulong, spl_b, image_pos);
 		size = binman_sym(ulong, spl_b, size);
@@ -156,7 +155,6 @@ static int abrec_run_vpl(struct udevice *blk, struct spl_image_info *image,
 		ub_offset = binman_sym(ulong, u_boot_recovery, image_pos);
 		ub_size = binman_sym(ulong, u_boot_recovery, size);
 		break;
-	*/
 	}
 	log_debug("pick=%d, offset=%lx size=%lx\n", pick, offset, size);
 	log_info("VBE: Firmware pick %s at %lx\n", pick_names[pick], offset);
@@ -255,8 +253,8 @@ static int abrec_load_from_image(struct spl_image_info *image,
 		if (spl_phase() == PHASE_TPL) {
 			ulong offset, size;
 
-			offset = binman_sym(ulong, vpl, image_pos);
-			size = binman_sym(ulong, vpl, size);
+			offset = binman_sym(ulong, vpl2, image_pos);
+			size = binman_sym(ulong, vpl2, size);
 			log_debug("VPL at offset %lx size %lx\n", offset, size);
 			ret = vbe_read_fit(blk, offset, size, image, NULL,
 					   NULL);
