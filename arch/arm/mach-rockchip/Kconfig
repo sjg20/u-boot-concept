@@ -259,7 +259,6 @@ config ROCKCHIP_RK3399
 	select SPL_SEPARATE_BSS if !VPL
 	select SPL_SERIAL
 	select SPL_DRIVERS_MISC
-	select TPL_DM if VPL
 	select SPL_RAW_IMAGE_SUPPORT if VPL
 	select CLK
 	select FIT
@@ -308,6 +307,7 @@ config ROCKCHIP_RK3399
 	imply TPL_SYS_MALLOC_SIMPLE
 	imply TPL_SYSCON
 	imply TPL_TINY_MEMSET
+	imply TPL_DM_MMC if VPL
 	help
 	  The Rockchip RK3399 is a ARM-based SoC with a dual-core Cortex-A72
 	  and quad-core Cortex-A53.

@@ -286,6 +286,11 @@ int vbe_read_fit(struct udevice *blk, ulong area_offset, ulong area_size,
 	return 0;
 }
 
+ofnode vbe_get_node(void)
+{
+	return ofnode_path("/bootstd/firmware0");
+}
+
 int vbe_read_version(struct udevice *blk, ulong offset, char *version,
 		     int max_size)
 {
