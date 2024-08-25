@@ -741,6 +741,17 @@ insert-template:
     properties are brought into the target node. See Templates_ below for
     more information.
 
+symbols-base:
+    When writing symbols into a binary, the value of that symbol is assumed to
+    be relative to the base address of the binary. This allow the binary to be
+    loaded in memory at its base address, so that symbols point into the binary
+    correctly. In some cases the binary is in fact not yet in memory, but must
+    be read from storage. In this case there is no base address for the symbols.
+    This property can be set to 0 to indicate this. Other values for
+    symbols-base are allowed, but care must be taken that the code which uses
+    the symbol is aware of the base being used. If omitted, the binary's base
+    address is used.
+
 The attributes supported for images and sections are described below. Several
 are similar to those for entries.
 

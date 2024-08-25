@@ -234,7 +234,7 @@ def GetSymbolOffset(elf_fname, sym_name, base_sym=None):
     return val - base
 
 def LookupAndWriteSymbols(elf_fname, entry, section, is_elf=False,
-                          base_sym=None):
+                          base_sym=None, base_addr=None):
     """Replace all symbols in an entry with their correct values
 
     The entry contents is updated so that values for referenced symbols will be
@@ -277,7 +277,8 @@ def LookupAndWriteSymbols(elf_fname, entry, section, is_elf=False,
     if not base and not is_elf:
         tout.debug(f'LookupAndWriteSymbols: no base: elf_fname={elf_fname}, base_sym={base_sym}, is_elf={is_elf}')
         return 0
-    base_addr = 0 if is_elf else base.address
+    if base_addr is None:
+        base_addr = 0 if is_elf else base.address
     count = 0
     for name, sym in syms.items():
         if name.startswith('_binman'):
