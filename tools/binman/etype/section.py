@@ -657,7 +657,10 @@ class Entry_section(Entry):
             return entry.offset
         elif prop_name == 'image_pos':
             value = entry.image_pos
-            if not self.GetImage()._end_4gb:
+            if not value:
+                tout.info(f'no value for {entry.name}')
+                return None
+            if not self.GetImage()._end_4gb and base_addr:
                 value += base_addr
             return value
         if prop_name == 'size':
