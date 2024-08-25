@@ -121,19 +121,6 @@ static void nuke(struct dwc2_ep *ep, int status);
 static int dwc2_udc_set_halt(struct usb_ep *_ep, int value);
 static void dwc2_udc_set_nak(struct dwc2_ep *ep);
 
-void set_udc_gadget_private_data(void *p)
-{
-	debug_cond(DEBUG_SETUP != 0,
-		   "%s: the_controller: 0x%p, p: 0x%p\n", __func__,
-		   the_controller, p);
-	the_controller->gadget.dev.device_data = p;
-}
-
-void *get_udc_gadget_private_data(struct usb_gadget *gadget)
-{
-	return gadget->dev.device_data;
-}
-
 static struct usb_ep_ops dwc2_ep_ops = {
 	.enable = dwc2_ep_enable,
 	.disable = dwc2_ep_disable,
