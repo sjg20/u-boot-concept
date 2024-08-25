@@ -60,7 +60,7 @@ static int setup_layout(struct spl_image_info *image, ulong *addrp)
 	uint need_size = image->size + image->fdt_size;
 	margin = buf_size - need_size;
 	printf("spl_reloc %s->%s: margin%s%lx limit %lx fdt_size %lx base %lx avail %x image %x fdt %lx need %x\n",
-	       spl_phase_name(xpl_phase()), xpl_phase_name(xpl_phase() + 1),
+	       xpl_name(xpl_phase()), xpl_name(xpl_phase() + 1),
 	       margin >= 0 ? " " : " -", abs(margin), limit, fdt_size, base,
 	       buf_size, image->size, image->fdt_size, need_size);
 	if (margin < 0) {
@@ -169,7 +169,7 @@ int spl_reloc_jump(struct spl_image_info *image, spl_jump_to_image_t jump)
 	rcode_func loader;
 	int ret;
 
-	log_debug("malloc usage %lx bytes (%ld KB of %d KB)\n", gd->malloc_ptr,
+	log_debug("malloc usage %x bytes (%d KB of %d KB)\n", gd->malloc_ptr,
 		  gd->malloc_ptr / 1024, CONFIG_VAL(SYS_MALLOC_F_LEN) / 1024);
 
 	if (*image->stack_prot != STACK_PROT_VALUE) {

@@ -96,7 +96,7 @@ int vbe_read_fit(struct udevice *blk, ulong area_offset, ulong area_size,
 	log_debug("check total size %x off_dt_strings %x\n", fdt_totalsize(buf),
 		  fdt_off_dt_strings(buf));
 
-	log_debug("malloc base %lx ptr %lx limit %lx top %lx\n",
+	log_debug("malloc base %lx ptr %x limit %x top %lx\n",
 		  gd->malloc_base, gd->malloc_ptr, gd->malloc_limit,
 		  gd->malloc_base + gd->malloc_limit);
 
