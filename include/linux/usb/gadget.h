@@ -544,17 +544,18 @@ struct usb_gadget {
 	unsigned			a_alt_hnp_support:1;
 	const char			*name;
 	struct device			dev;
+	void				*driver_data;
 	unsigned			quirk_ep_out_aligned_size:1;
 };
 
 static inline void set_gadget_data(struct usb_gadget *gadget, void *data)
 {
-	gadget->dev.driver_data = data;
+	gadget->driver_data = data;
 }
 
 static inline void *get_gadget_data(struct usb_gadget *gadget)
 {
-	return gadget->dev.driver_data;
+	return gadget->driver_data;
 }
 
 static inline struct usb_gadget *dev_to_usb_gadget(struct device *dev)
