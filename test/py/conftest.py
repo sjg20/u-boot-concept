@@ -157,7 +157,8 @@ def get_details(config):
                               env=env)
         if proc.returncode:
             raise ValueError(proc.stderr)
-        print('conftest: lab:', proc.stdout)
+        # For debugging
+        # print('conftest: lab:', proc.stdout)
         vals = {}
         for line in proc.stdout.splitlines():
             item, value = line.split(' ', maxsplit=1)
@@ -167,7 +168,6 @@ def get_details(config):
          build_dir_extra, source_dir) = (vals['board'],
             vals['board_extra'], vals['build_dir'], vals['build_dir_extra'],
             vals['source_dir'])
-        print('build_dir_extra', build_dir_extra)
     else:
         board_type = config.getoption('board_type')
         board_identity = config.getoption('board_identity')
