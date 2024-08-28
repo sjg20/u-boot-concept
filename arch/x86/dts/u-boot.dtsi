@@ -31,43 +31,27 @@
 		assume-size = <0x1ff000>;
 	};
 #endif
+
+	/* put the microcode in the first phase that boots */
 #ifdef CONFIG_TPL
-#ifdef CONFIG_HAVE_MICROCODE
 	u-boot-tpl-with-ucode-ptr {
 		offset = <CONFIG_TPL_TEXT_BASE>;
-	};
-	u-boot-tpl-dtb {
+		optional-ucode;
 	};
 #endif
-	u-boot-spl {
+#ifdef CONFIG_SPL
+	u-boot-spl-with-ucode-ptr {
 		type = "u-boot-spl";
 		offset = <CONFIG_X86_OFFSET_SPL>;
 	};
-	u-boot {
-		offset = <CONFIG_X86_OFFSET_U_BOOT>;
-	};
-#elif defined(CONFIG_SPL)
-	u-boot-spl-with-ucode-ptr {
-		offset = <CONFIG_X86_OFFSET_SPL>;
-	};
-	u-boot-dtb-with-ucode2 {
-		type = "u-boot-dtb-with-ucode";
-	};
-	u-boot {
-		offset = <CONFIG_X86_OFFSET_U_BOOT>;
-	};
-#else
-# ifdef CONFIG_HAVE_MICROCODE
-	/* If there is no SPL then we need to put microcode in U-Boot */
-	u-boot-with-ucode-ptr {
-		offset = <CONFIG_X86_OFFSET_U_BOOT>;
-	};
-# else
-	u-boot-nodtb {
-		offset = <CONFIG_X86_OFFSET_U_BOOT>;
-	};
-# endif
 #endif
+	/* If there is no SPL then we need to put microcode in U-Boot */
+// 	u-boot-with-ucode-ptr {
+// 		offset = <CONFIG_X86_OFFSET_U_BOOT>;
+// 	};
+	u-boot {
+		offset = <CONFIG_X86_OFFSET_U_BOOT>;
+	};
 #ifdef CONFIG_HAVE_MICROCODE
 	u-boot-dtb-with-ucode {
 	};
