@@ -695,7 +695,6 @@ void *efi_alloc(size_t size)
 		log_err("out of memory\n");
 		return NULL;
 	}
-	memset(buf, 0, size);
 
 	return buf;
 }
