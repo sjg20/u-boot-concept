@@ -772,7 +772,7 @@ efi_status_t efi_next_variable_name(efi_uintn_t *size, u16 **buf,
 /**
  * efi_alloc() - allocate boot-services-data pool-memory
  *
- * Allocate memory from pool and zero it out.
+ * Allocate memory from pool with type EFI_BOOT_SERVICES_DATA
  *
  * @len:	number of bytes to allocate
  * Return:	pointer to allocated memory or NULL
