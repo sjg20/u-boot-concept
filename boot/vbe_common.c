@@ -18,6 +18,11 @@
 #include <u-boot/crc.h>
 #include "vbe_common.h"
 
+binman_sym_declare(ulong, u_boot_vpl_nodtb, size);
+binman_sym_declare(ulong, u_boot_vpl_bss_pad, size);
+binman_sym_declare(ulong, u_boot_spl_nodtb, size);
+binman_sym_declare(ulong, u_boot_spl_bss_pad, size);
+
 ulong h_vbe_load_read(struct spl_load_info *load, ulong off, ulong size,
 		      void *buf)
 {
@@ -152,6 +157,14 @@ int vbe_read_fit(struct udevice *blk, ulong area_offset, ulong area_size,
 			  fdt_size);
 	}
 
+	for_spl = !USE_BOOTMETH && CONFIG_IS_ENABLED(RELOC_LOADER);
+	if (for_spl) {
+		image->size = len;
+		image->fdt_size = fdt_size;
+		ret = spl_reloc_prepare(image, &spl_load_addr);
+		if (ret)
+			return log_msg_ret("spl", ret);
+	}
 	image->os = IH_OS_U_BOOT;
 
 	/* For FIT external data, read in the external data */
@@ -221,6 +234,26 @@ int vbe_read_fit(struct udevice *blk, ulong area_offset, ulong area_size,
 				memmove(fdt_base_buf, fdt_base_buf + extra,
 					fdt_size);
 			}
+#if CONFIG_IS_ENABLED(RELOC_LOADER)
+			image->fdt_buf = fdt_base_buf;
+
+			ulong xpl_size;
+			ulong xpl_pad;
+			ulong fdt_start;
+
+			if (spl_phase() == PHASE_TPL) {
+				xpl_size = binman_sym(ulong, u_boot_vpl_nodtb, size);
+				xpl_pad = binman_sym(ulong, u_boot_vpl_bss_pad, size);
+			} else {
+				xpl_size = binman_sym(ulong, u_boot_spl_nodtb, size);
+				xpl_pad = binman_sym(ulong, u_boot_spl_bss_pad, size);
+			}
+			fdt_start = image->load_addr + xpl_size + xpl_pad;
+			log_debug("load_addr %lx xpl_size %lx copy-to %lx\n",
+				  image->load_addr, xpl_size + xpl_pad,
+				  fdt_start);
+			image->fdt_start = map_sysmem(fdt_start, fdt_size);
+#endif
 		}
 	}
 	if (load_addrp)
