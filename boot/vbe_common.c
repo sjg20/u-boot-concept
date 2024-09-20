@@ -109,6 +109,19 @@ int vbe_read_fit(struct udevice *blk, ulong area_offset, ulong area_size,
 	fit_uname_config = NULL;
 	log_debug("loading FIT\n");
 
+	if (spl_phase() == PHASE_SPL) {
+		struct spl_load_info info;
+
+		spl_load_init(&info, h_vbe_load_read, desc, desc->blksz);
+		spl_set_phase(&info, IH_PHASE_U_BOOT);
+		log_debug("doing SPL from %s blksz %lx log2blksz %x area_offset %lx + fdt_size %lx\n",
+			  blk->name, desc->blksz, desc->log2blksz, area_offset, ALIGN(size, 4));
+		ret = spl_load_simple_fit(image, &info, area_offset, buf);
+		log_debug("spl_load_abrec_fit() ret=%d\n", ret);
+
+		return ret;
+	}
+
 	ret = fit_image_load(&images, addr, &fit_uname, &fit_uname_config,
 			     IH_ARCH_DEFAULT, image_ph(phase, IH_TYPE_FIRMWARE),
 			     BOOTSTAGE_ID_FIT_SPL_START, FIT_LOAD_IGNORED,
