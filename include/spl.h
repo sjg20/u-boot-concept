@@ -51,7 +51,7 @@ static inline bool u_boot_first_phase(void)
 		if (IS_ENABLED(CONFIG_TPL_BUILD))
 			return true;
 	} else if (IS_ENABLED(CONFIG_SPL)) {
-		if (IS_ENABLED(CONFIG_SPL_BUILD))
+		if (IS_ENABLED(CONFIG_XPL_BUILD))
 			return true;
 	} else {
 		return true;
@@ -90,7 +90,7 @@ enum u_boot_phase {
  *
  * To include code only in SPL, you might do:
  *
- *    #if defined(CONFIG_SPL_BUILD) && !defined(CONFIG_TPL_BUILD)
+ *    #if defined(CONFIG_XPL_BUILD) && !defined(CONFIG_TPL_BUILD)
  *    ...
  *    #endif
  *
@@ -102,7 +102,7 @@ enum u_boot_phase {
  *
  * To include code only in U-Boot proper, you might do:
  *
- *    #ifndef CONFIG_SPL_BUILD
+ *    #ifndef CONFIG_XPL_BUILD
  *    ...
  *    #endif
  *
@@ -120,7 +120,7 @@ static inline enum u_boot_phase spl_phase(void)
 	return PHASE_TPL;
 #elif defined(CONFIG_VPL_BUILD)
 	return PHASE_VPL;
-#elif defined(CONFIG_SPL_BUILD)
+#elif defined(CONFIG_XPL_BUILD)
 	return PHASE_SPL;
 #else
 	DECLARE_GLOBAL_DATA_PTR;
@@ -135,7 +135,7 @@ static inline enum u_boot_phase spl_phase(void)
 /* returns true if in U-Boot proper, false if in SPL */
 static inline bool spl_in_proper(void)
 {
-#ifdef CONFIG_SPL_BUILD
+#ifdef CONFIG_XPL_BUILD
 	return false;
 #endif
 
@@ -154,7 +154,7 @@ static inline enum u_boot_phase spl_prev_phase(void)
 	return PHASE_NONE;
 #elif defined(CONFIG_VPL_BUILD)
 	return PHASE_TPL;	/* VPL requires TPL */
-#elif defined(CONFIG_SPL_BUILD)
+#elif defined(CONFIG_XPL_BUILD)
 	return IS_ENABLED(CONFIG_VPL) ? PHASE_VPL :
 		IS_ENABLED(CONFIG_TPL) ? PHASE_TPL :
 		PHASE_NONE;
@@ -227,7 +227,7 @@ static inline const char *spl_phase_prefix(enum u_boot_phase phase)
 }
 
 /* A string name for SPL or TPL */
-#ifdef CONFIG_SPL_BUILD
+#ifdef CONFIG_XPL_BUILD
 # ifdef CONFIG_TPL_BUILD
 #  define SPL_TPL_NAME	"TPL"
 # elif defined(CONFIG_VPL_BUILD)

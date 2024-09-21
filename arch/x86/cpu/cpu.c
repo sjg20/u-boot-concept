@@ -185,7 +185,7 @@ void show_boot_progress(int val)
 #endif
 
 #if !defined(CONFIG_SYS_COREBOOT) && !defined(CONFIG_EFI_STUB) && \
-	!defined(CONFIG_SPL_BUILD)
+	!defined(CONFIG_XPL_BUILD)
 /*
  * Implement a weak default function for boards that need to do some final init
  * before the system is ready.
