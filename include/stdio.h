@@ -9,9 +9,9 @@ int getchar(void);
 int tstc(void);
 
 /* stdout */
-#if !defined(CONFIG_SPL_BUILD) || \
+#if !defined(CONFIG_XPL_BUILD) || \
 	(defined(CONFIG_TPL_BUILD) && defined(CONFIG_TPL_SERIAL)) || \
-	(defined(CONFIG_SPL_BUILD) && !defined(CONFIG_TPL_BUILD) && \
+	(defined(CONFIG_XPL_BUILD) && !defined(CONFIG_TPL_BUILD) && \
 		defined(CONFIG_SPL_SERIAL))
 void putc(const char c);
 void puts(const char *s);

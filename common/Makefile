@@ -4,7 +4,7 @@
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 
 # core
-ifndef CONFIG_SPL_BUILD
+ifndef CONFIG_XPL_BUILD
 obj-y += init/
 obj-y += main.o
 obj-y += exports.o
@@ -42,12 +42,12 @@ obj-$(CONFIG_MENU) += menu.o
 obj-$(CONFIG_UPDATE_COMMON) += update.o
 obj-$(CONFIG_USB_KEYBOARD) += usb_kbd.o
 
-endif # !CONFIG_SPL_BUILD
+endif # !CONFIG_XPL_BUILD
 
 obj-$(CONFIG_$(SPL_TPL_)BOOTSTAGE) += bootstage.o
 obj-$(CONFIG_$(SPL_TPL_)BLOBLIST) += bloblist.o
 
-ifdef CONFIG_SPL_BUILD
+ifdef CONFIG_XPL_BUILD
 ifdef CONFIG_SPL_DFU
 obj-$(CONFIG_DFU_OVER_USB) += dfu.o
 endif
@@ -58,14 +58,14 @@ obj-$(CONFIG_SPL_USB_STORAGE) += usb_storage.o
 obj-$(CONFIG_SPL_MUSB_NEW) += usb.o
 obj-$(CONFIG_SPL_SPLASH_SCREEN) += splash.o
 obj-$(CONFIG_SPL_SPLASH_SOURCE) += splash_source.o
-endif # CONFIG_SPL_BUILD
+endif # CONFIG_XPL_BUILD
 
 #others
 obj-$(CONFIG_DDR_SPD) += ddr_spd.o
 obj-$(CONFIG_SPD_EEPROM) += ddr_spd.o
 obj-$(CONFIG_HWCONFIG) += hwconfig.o
 obj-$(CONFIG_BOUNCE_BUFFER) += bouncebuf.o
-ifdef CONFIG_SPL_BUILD
+ifdef CONFIG_XPL_BUILD
 ifdef CONFIG_TPL_BUILD
 obj-$(CONFIG_TPL_SERIAL) += console.o
 else
@@ -73,7 +73,7 @@ obj-$(CONFIG_SPL_SERIAL) += console.o
 endif
 else
 obj-y += console.o
-endif # CONFIG_SPL_BUILD
+endif # CONFIG_XPL_BUILD
 
 obj-$(CONFIG_CROS_EC) += cros_ec.o
 obj-y += dlmalloc.o
