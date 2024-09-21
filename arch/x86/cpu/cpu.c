@@ -247,7 +247,7 @@ static int last_stage_init(void)
 }
 EVENT_SPY_SIMPLE(EVT_LAST_STAGE_INIT, last_stage_init);
 
-#endif  /* !SYS_COREBOOT && !EFI_STUB && !SPL_BUILD */
+#endif  /* !SYS_COREBOOT && !EFI_STUB && !XPL_BUILD */
 
 static int x86_init_cpus(void)
 {
