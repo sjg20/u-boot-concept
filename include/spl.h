@@ -90,7 +90,7 @@ enum u_boot_phase {
  *
  * To include code only in SPL, you might do:
  *
- *    #if defined(CONFIG_XPL_BUILD) && !defined(CONFIG_TPL_BUILD)
+ *    #if defined(CONFIG_SPL_BUILD)
  *    ...
  *    #endif
  *
@@ -120,7 +120,7 @@ static inline enum u_boot_phase spl_phase(void)
 	return PHASE_TPL;
 #elif defined(CONFIG_VPL_BUILD)
 	return PHASE_VPL;
-#elif defined(CONFIG_XPL_BUILD)
+#elif defined(CONFIG_SPL_BUILD)
 	return PHASE_SPL;
 #else
 	DECLARE_GLOBAL_DATA_PTR;
@@ -154,7 +154,7 @@ static inline enum u_boot_phase spl_prev_phase(void)
 	return PHASE_NONE;
 #elif defined(CONFIG_VPL_BUILD)
 	return PHASE_TPL;	/* VPL requires TPL */
-#elif defined(CONFIG_XPL_BUILD)
+#elif defined(CONFIG_SPL_BUILD)
 	return IS_ENABLED(CONFIG_VPL) ? PHASE_VPL :
 		IS_ENABLED(CONFIG_TPL) ? PHASE_TPL :
 		PHASE_NONE;
