@@ -169,7 +169,7 @@ void board_debug_uart_init(void)
 }
 #endif
 
-#if defined(CONFIG_XPL_BUILD) && !defined(CONFIG_TPL_BUILD)
+#if defined(CONFIG_SPL_BUILD)
 static void rk3399_force_power_on_reset(void)
 {
 	ofnode node;

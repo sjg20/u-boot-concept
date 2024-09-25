@@ -33,8 +33,7 @@
 #define DESKEW_MDF_DIFF_VAL		(1)
 
 struct dram_info {
-#if defined(CONFIG_TPL_BUILD) || \
-	(!defined(CONFIG_TPL) && defined(CONFIG_XPL_BUILD))
+#if defined(CONFIG_TPL_BUILD) || defined(CONFIG_SPL_BUILD)
 	void __iomem *pctl;
 	void __iomem *phy;
 	struct rv1126_cru *cru;
@@ -48,8 +47,7 @@ struct dram_info {
 	struct rv1126_pmugrf *pmugrf;
 };
 
-#if defined(CONFIG_TPL_BUILD) || \
-	(!defined(CONFIG_TPL) && defined(CONFIG_XPL_BUILD))
+#if defined(CONFIG_TPL_BUILD) || defined(CONFIG_SPL_BUILD)
 
 #define GRF_BASE_ADDR			0xfe000000
 #define PMU_GRF_BASE_ADDR		0xfe020000
@@ -3506,8 +3504,7 @@ error:
 
 static int rv1126_dmc_probe(struct udevice *dev)
 {
-#if defined(CONFIG_TPL_BUILD) || \
-	(!defined(CONFIG_TPL) && defined(CONFIG_XPL_BUILD))
+#if defined(CONFIG_TPL_BUILD) || defined(CONFIG_SPL_BUILD)
 	if (rv1126_dmc_init(dev))
 		return 0;
 #else
