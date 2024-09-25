@@ -3,12 +3,5 @@
 obj-y += init.o
 obj-y += serial.o
 
-ifeq ($(CONFIG_XPL_BUILD),y)
-ifeq ($(CONFIG_TPL_BUILD),y)
-obj-y += tpl/
-else
-obj-y += spl/
-endif
-
-obj-y += sram_init.o
-endif
+obj-$(CONFIG_SPL_BUILD) += spl/ sram_init.o
+obj-$(CONFIG_TPL_BUILD) += tpl/ sram_init.o
