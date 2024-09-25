@@ -58,13 +58,8 @@ obj-$(CONFIG_FSP_VERSION1) += fsp1/
 obj-$(CONFIG_FSP_VERSION2) += fsp2/
 endif
 
-ifdef CONFIG_XPL_BUILD
-ifdef CONFIG_TPL_BUILD
-obj-y += tpl.o
-else
-obj-y += spl.o
-endif
-endif
+obj-$(CONFIG_SPL_BUILD) += spl.o
+obj-$(CONFIG_TPL_BUILD) += tpl.o
 
 lib-$(CONFIG_USE_PRIVATE_LIBGCC) += div64.o
 

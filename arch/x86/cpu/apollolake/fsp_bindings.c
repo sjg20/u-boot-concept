@@ -653,7 +653,7 @@ int fsp_m_update_config_from_dtb(ofnode node, struct fsp_m_config *cfg)
 }
 #endif
 
-#if !defined(CONFIG_XPL_BUILD) && !defined(CONFIG_TPL_BUILD)
+#if !defined(CONFIG_SPL_BUILD)
 const struct fsp_binding fsp_s_bindings[] = {
 	{
 	.type = FSP_UINT8,
