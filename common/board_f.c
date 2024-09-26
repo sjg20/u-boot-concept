@@ -559,11 +559,19 @@ static int reserve_fdt(void)
 		 * section, then it will be relocated with other data.
 		 */
 		if (gd->fdt_blob) {
+			int ret;
+
 			gd->boardf->fdt_size =
 				ALIGN(fdt_totalsize(gd->fdt_blob), 32);
 
+			/* Allow the board to request the FDT grow */
+			ret = event_notify_null(EVT_FT_GROW);
+			if (ret < 0)
+				return ret;
+			gd->boardf->fdt_inc = ret;
+
 			gd->start_addr_sp = reserve_stack_aligned(
-				gd->boardf->fdt_size);
+				gd->boardf->fdt_size + gd->boardf->fdt_inc);
 			gd->boardf->new_fdt = map_sysmem(gd->start_addr_sp,
 							 gd->boardf->fdt_size);
 			debug("Reserving %u Bytes for FDT at: %08lx\n",
@@ -657,7 +665,18 @@ static int reloc_fdt(void)
 	if (IS_ENABLED(CONFIG_OF_EMBED) || !gd->boardf->new_fdt)
 		return 0;
 
-	memcpy(gd->boardf->new_fdt, gd->fdt_blob, fdt_totalsize(gd->fdt_blob));
+	if (gd->boardf->fdt_inc) {
+		int ret;
+
+		ret = fdt_open_into(gd->fdt_blob, gd->boardf->new_fdt,
+				    gd->boardf->fdt_inc +
+				    gd->boardf->fdt_size);
+		if (ret)
+			return log_msg_ret("fdt", -EINVAL);
+	} else {
+		memcpy(gd->boardf->new_fdt, gd->fdt_blob,
+		       gd->boardf->fdt_size);
+	}
 	gd->fdt_blob = gd->boardf->new_fdt;
 
 	return 0;

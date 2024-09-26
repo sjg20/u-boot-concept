@@ -45,6 +45,7 @@ const char *const type_name[] = {
 	"fpga_load",
 
 	/* fdt hooks */
+	"ft_grow",
 	"ft_rewrite",
 	"ft_fixup",
 

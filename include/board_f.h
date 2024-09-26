@@ -23,6 +23,10 @@ struct board_f {
 	 */
 	unsigned int fdt_size;
 	/**
+	 * @fdt_inc: extra space to reserve for devicetree
+	 */
+	unsigned int fdt_inc;
+	/**
 	 * @new_bootstage: relocated boot stage information
 	 */
 	struct bootstage_data *new_bootstage;

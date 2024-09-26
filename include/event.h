@@ -143,6 +143,17 @@ enum event_t {
 	EVT_FPGA_LOAD,
 
 	/**
+	 * @EVT_FT_GROW
+	 * This even is triggers before relocation when space is being
+	 * allocated for the post-relocation FDT. It allows the FDT to grow in
+	 * size as it is relocated. This can be used to increase the space
+	 * available, so that an EVT_FT_REWRITE handler can work correctly.
+	 * The event handler should return the number of extra bytes required
+	 * for the FDT. If 0, no extra bytes are created.
+	 */
+	EVT_FT_GROW,
+
+	/**
 	 * @EVT_FT_REWRITE:
 	 * This event is triggered once the FDT has been relocated to its final
 	 * position during the init sequence. Boards can apply updates to this
