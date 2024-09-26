@@ -35,7 +35,7 @@ For example::
    if (IS_ENABLED(CONFIG_XPL_BUILD))
            foo();
 
-   if (spl_phase() == PHASE_TPL)
+   if (xpl_phase() == PHASE_TPL)
            bar();
 
 The building of xPL images can be enabled by CONFIG_SPL (etc.) options in
@@ -121,7 +121,7 @@ Further usages of U-Boot SPL comprise:
 Checking the boot phase
 -----------------------
 
-Use `spl_phase()` to find the current U-Boot phase, e.g. `PHASE_SPL`. You can
+Use `xpl_phase()` to find the current U-Boot phase, e.g. `PHASE_SPL`. You can
 also find the previous and next phase and get the phase name.
 
 
