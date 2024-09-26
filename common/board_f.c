@@ -935,6 +935,9 @@ static const init_fnc_t init_sequence_f[] = {
 	init_post,
 #endif
 	INIT_FUNC_WATCHDOG_RESET
+#if defined(CONFIG_OF_BOARD_FIXUP) && !defined(CONFIG_OF_INITIAL_DTB_READONLY)
+	fix_fdt,
+#endif
 	/*
 	 * Now that we have DRAM mapped and working, we can
 	 * relocate the code and continue running from DRAM.
@@ -949,9 +952,6 @@ static const init_fnc_t init_sequence_f[] = {
 	 */
 	setup_dest_addr,
 	INITCALL_EVENT(EVT_DEST_ADDR),
-#if defined(CONFIG_OF_BOARD_FIXUP) && !defined(CONFIG_OF_INITIAL_DTB_READONLY)
-	fix_fdt,
-#endif
 #ifdef CFG_PRAM
 	reserve_pram,
 #endif
