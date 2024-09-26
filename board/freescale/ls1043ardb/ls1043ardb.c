@@ -381,8 +381,10 @@ void nand_fixup(void)
 }
 
 #if IS_ENABLED(CONFIG_OF_BOARD_FIXUP)
-int board_fix_fdt(void *blob)
+static int update_nand_phy(void)
 {
+	void *blob = (void *)gd->fdt_blob;
+
 	/* nand driver fix up */
 	nand_fixup();
 
@@ -391,6 +393,7 @@ int board_fix_fdt(void *blob)
 
 	return 0;
 }
+EVENT_SPY_SIMPLE(EVT_FT_REWRITE, update_nand_phy);
 #endif
 
 u8 flash_read8(void *addr)
