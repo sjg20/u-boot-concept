@@ -333,11 +333,6 @@ __weak phys_addr_t board_get_usable_ram_top(phys_size_t total_size)
 	return gd->ram_top;
 }
 
-__weak int arch_setup_dest_addr(void)
-{
-	return 0;
-}
-
 static int setup_dest_addr(void)
 {
 	debug("Monitor len: %08x\n", gd->mon_len);
@@ -953,7 +948,6 @@ static const init_fnc_t init_sequence_f[] = {
 	 *  - board info struct
 	 */
 	setup_dest_addr,
-	arch_setup_dest_addr,
 	INITCALL_EVENT(EVT_DEST_ADDR),
 #if defined(CONFIG_OF_BOARD_FIXUP) && !defined(CONFIG_OF_INITIAL_DTB_READONLY)
 	fix_fdt,
