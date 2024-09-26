@@ -630,8 +630,10 @@ static int low_drive_freq_update(void *blob)
 
 #ifdef CONFIG_OF_BOARD_FIXUP
 #ifndef CONFIG_SPL_BUILD
-int board_fix_fdt(void *fdt)
+static int update_dtb_clocks(void)
 {
+	void *fdt = (void *)gd->fdt_blob;
+
 	/* Update dtb clocks for low drive mode */
 	if (is_voltage_mode(VOLT_LOW_DRIVE)) {
 		int nodeoff;
@@ -653,6 +655,7 @@ int board_fix_fdt(void *fdt)
 
 	return 0;
 }
+EVENT_SPY_SIMPLE(EVT_FT_REWRITE, update_dtb_clocks);
 #endif
 #endif
 
