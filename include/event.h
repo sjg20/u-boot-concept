@@ -143,6 +143,20 @@ enum event_t {
 	EVT_FPGA_LOAD,
 
 	/**
+	 * @EVT_FT_REWRITE:
+	 * This event is triggered once the FDT has been relocated to its final
+	 * position during the init sequence. Boards can apply updates to this
+	 * FDT before it is used by U-Boot after relocation. The FDT size may
+	 * not be increased by the event handler, but may be decreased. The FDT
+	 * to fix up is gd->fdt_blob which must be cast to void * to remove the
+	 * const property.
+	 *
+	 * Note that this is completely different from EVT_FT_FIXUP which is for
+	 * fixing up the FDT before booting the Operating System.
+	 */
+	EVT_FT_REWRITE,
+
+	/**
 	 * @EVT_FT_FIXUP:
 	 * This event is triggered during device-tree fix up after all
 	 * other device-tree fixups have been executed.
