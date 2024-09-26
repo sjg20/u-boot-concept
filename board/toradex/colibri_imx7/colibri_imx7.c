@@ -317,8 +317,9 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 #endif
 
 #ifdef CONFIG_USB_EHCI_MX7
-int board_fix_fdt(void *rw_fdt_blob)
+static int check_usb_port(void)
 {
+	void *rw_fdt_blob = (void *)gd->fdt_blob;
 	int ret;
 
 	/* i.MX 7Solo has only one single USB OTG1 but no USB host port */
@@ -341,6 +342,7 @@ int board_fix_fdt(void *rw_fdt_blob)
 
 	return 0;
 }
+EVENT_SPY_SIMPLE(EVT_FT_REWRITE, check_usb_port);
 
 #if defined(CONFIG_BOARD_LATE_INIT)
 int board_late_init(void)
