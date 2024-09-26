@@ -755,19 +755,6 @@ static int setup_reloc(void)
 	return 0;
 }
 
-#ifdef CONFIG_OF_BOARD_FIXUP
-/* Temporary weak function while migrating to events */
-__weak int board_fix_fdt(void *fdt)
-{
-	return 0;
-}
-
-static int fix_fdt(void)
-{
-	return board_fix_fdt((void *)gd->fdt_blob);
-}
-#endif
-
 /* ARM calls relocate_code from its crt0.S */
 #if !defined(CONFIG_ARM) && !defined(CONFIG_SANDBOX)
 
@@ -998,9 +985,6 @@ static const init_fnc_t init_sequence_f[] = {
 	reloc_bootstage,
 	reloc_bloblist,
 	reloc_fdt,
-#if defined(CONFIG_OF_BOARD_FIXUP)
-	fix_fdt,
-#endif
 	INITCALL_EVENT(EVT_FT_REWRITE),
 	setup_reloc,
 #if defined(CONFIG_X86) || defined(CONFIG_ARC)
