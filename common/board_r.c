@@ -52,7 +52,6 @@
 #include <pvblock.h>
 #include <scsi.h>
 #include <serial.h>
-#include <status_led.h>
 #include <stdio_dev.h>
 #include <timer.h>
 #include <trace.h>
@@ -461,29 +460,6 @@ static int initr_malloc_bootparams(void)
 }
 #endif
 
-static int initr_status_led(void)
-{
-	status_led_init();
-
-	return 0;
-}
-
-static int initr_boot_led_blink(void)
-{
-	status_led_boot_blink();
-
-	led_boot_blink();
-
-	return 0;
-}
-
-static int initr_boot_led_on(void)
-{
-	led_boot_on();
-
-	return 0;
-}
-
 #if defined(CONFIG_CMD_NET)
 static int initr_net(void)
 {
@@ -737,8 +713,6 @@ static init_fnc_t init_sequence_r[] = {
 #if defined(CONFIG_MICROBLAZE) || defined(CONFIG_M68K)
 	timer_init,		/* initialize timer */
 #endif
-	initr_status_led,
-	initr_boot_led_blink,
 	/* PPC has a udelay(20) here dating from 2002. Why? */
 #ifdef CONFIG_BOARD_LATE_INIT
 	board_late_init,
@@ -761,7 +735,6 @@ static init_fnc_t init_sequence_r[] = {
 #if defined(CFG_PRAM)
 	initr_mem,
 #endif
-	initr_boot_led_on,
 	run_main_loop,
 };
 
