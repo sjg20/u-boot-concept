@@ -654,13 +654,11 @@ static int init_post(void)
 
 static int reloc_fdt(void)
 {
-	if (!IS_ENABLED(CONFIG_OF_EMBED)) {
-		if (gd->boardf->new_fdt) {
-			memcpy(gd->boardf->new_fdt, gd->fdt_blob,
-			       fdt_totalsize(gd->fdt_blob));
-			gd->fdt_blob = gd->boardf->new_fdt;
-		}
-	}
+	if (IS_ENABLED(CONFIG_OF_EMBED) || !gd->boardf->new_fdt)
+		return 0;
+
+	memcpy(gd->boardf->new_fdt, gd->fdt_blob, fdt_totalsize(gd->fdt_blob));
+	gd->fdt_blob = gd->boardf->new_fdt;
 
 	return 0;
 }
