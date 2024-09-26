@@ -247,8 +247,9 @@ int board_late_init(void)
 	return 0;
 }
 
-int board_fix_fdt(void *rw_fdt_blob)
+static int update_i2c_dtb(void)
 {
+	void *rw_fdt_blob = (void *)gd->fdt_blob;
 	struct udevice *bus = NULL;
 	uint k;
 	char name[64];
@@ -271,6 +272,7 @@ int board_fix_fdt(void *rw_fdt_blob)
 
 	return 0;
 }
+EVENT_SPY_SIMPLE(EVT_FT_REWRITE, update_i2c_dtb);
 
 #ifndef CONFIG_SPL_BUILD
 static int last_stage_init(void)
