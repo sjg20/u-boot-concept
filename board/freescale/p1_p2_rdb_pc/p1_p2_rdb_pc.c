@@ -472,10 +472,13 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 #endif
 
 #ifdef CONFIG_OF_BOARD_FIXUP
-int board_fix_fdt(void *blob)
+static int update_dtb_things(void)
 {
+	void *blob = (void *)gd->fdt_blob;
+
 	p1_p2_rdb_pc_fix_fdt_model(blob);
 	fix_max6370_watchdog(blob);
 	return 0;
 }
+EVENT_SPY_SIMPLE(EVT_FT_REWRITE, update_dtb_things);
 #endif
