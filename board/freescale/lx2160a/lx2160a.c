@@ -74,8 +74,9 @@ int board_early_init_f(void)
 }
 
 #ifdef CONFIG_OF_BOARD_FIXUP
-int board_fix_fdt(void *fdt)
+static int update_dtb_things(void)
 {
+	void *fdt = (void *)gd->fdt_blob;
 	char *reg_names, *reg_name;
 	int names_len, old_name_len, new_name_len, remaining_names_len;
 	struct str_map {
@@ -141,6 +142,7 @@ int board_fix_fdt(void *fdt)
 		fdt_fixup_board_phy_revc(fdt);
 	return 0;
 }
+EVENT_SPY_SIMPLE(EVT_FT_REWRITE, update_dtb_things);
 #endif
 
 #if defined(CONFIG_TARGET_LX2160AQDS) || defined(CONFIG_TARGET_LX2162AQDS)
