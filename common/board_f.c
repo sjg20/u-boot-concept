@@ -935,9 +935,6 @@ static const init_fnc_t init_sequence_f[] = {
 	init_post,
 #endif
 	INIT_FUNC_WATCHDOG_RESET
-#if defined(CONFIG_OF_BOARD_FIXUP) && !defined(CONFIG_OF_INITIAL_DTB_READONLY)
-	fix_fdt,
-#endif
 	/*
 	 * Now that we have DRAM mapped and working, we can
 	 * relocate the code and continue running from DRAM.
@@ -965,10 +962,6 @@ static const init_fnc_t init_sequence_f[] = {
 	reserve_board,
 	reserve_global_data,
 	reserve_fdt,
-#if defined(CONFIG_OF_BOARD_FIXUP) && defined(CONFIG_OF_INITIAL_DTB_READONLY)
-	reloc_fdt,
-	fix_fdt,
-#endif
 	reserve_bootstage,
 	reserve_bloblist,
 	reserve_arch,
@@ -979,11 +972,13 @@ static const init_fnc_t init_sequence_f[] = {
 	setup_bdinfo,
 	display_new_sp,
 	INIT_FUNC_WATCHDOG_RESET
-#if !defined(CONFIG_OF_BOARD_FIXUP) || !defined(CONFIG_OF_INITIAL_DTB_READONLY)
-	reloc_fdt,
-#endif
 	reloc_bootstage,
 	reloc_bloblist,
+	reloc_fdt,
+#if defined(CONFIG_OF_BOARD_FIXUP)
+	/* Put this last in the sequence, so that it can grow down if needed */
+	fix_fdt,
+#endif
 	setup_reloc,
 #if defined(CONFIG_X86) || defined(CONFIG_ARC)
 	copy_uboot_to_ram,
