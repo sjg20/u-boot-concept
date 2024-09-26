@@ -1241,8 +1241,10 @@ static void fixup_atsha_node(void *blob)
 #endif
 
 #if IS_ENABLED(CONFIG_OF_BOARD_FIXUP)
-int board_fix_fdt(void *blob)
+int fixup_omnia(void *blob)
 {
+	void *blob = (void *)gd->fdt_blob;
+
 	if (omnia_mcu_has_feature(FEAT_PERIPH_MCU)) {
 		fixup_mcu_gpio_in_pcie_nodes(blob);
 		fixup_mcu_gpio_in_phy_wan_node(blob);
@@ -1255,6 +1257,7 @@ int board_fix_fdt(void *blob)
 
 	return 0;
 }
+EVENT_SPY_SIMPLE(EVT_FT_REWRITE, update_dtb_clocks);
 #endif
 
 int board_init(void)
