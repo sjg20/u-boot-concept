@@ -212,11 +212,14 @@ static int configure_phy_reset_gpios(void *blob)
 }
 
 #if defined(CONFIG_OF_BOARD_FIXUP)
-int board_fix_fdt(void *blob)
+static int update_phy_reset_gpios(void)
 {
+	void *blob = (void *)gd->fdt_blob;
+
 	/* Fix U-Boot device tree: */
 	return configure_phy_reset_gpios(blob);
 }
+EVENT_SPY_SIMPLE(EVT_FT_REWRITE, update_phy_reset_gpios);
 #endif /* CONFIG_OF_BOARD_FIXUP */
 
 #if defined(CONFIG_OF_BOARD_SETUP)
