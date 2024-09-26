@@ -21,7 +21,7 @@ struct board_f {
 	/**
 	 * @fdt_size: space reserved for relocated device space
 	 */
-	unsigned long fdt_size;
+	unsigned int fdt_size;
 	/**
 	 * @new_bootstage: relocated boot stage information
 	 */

@@ -566,7 +566,7 @@ static int reserve_fdt(void)
 				gd->boardf->fdt_size);
 			gd->boardf->new_fdt = map_sysmem(gd->start_addr_sp,
 							 gd->boardf->fdt_size);
-			debug("Reserving %lu Bytes for FDT at: %08lx\n",
+			debug("Reserving %u Bytes for FDT at: %08lx\n",
 			      gd->boardf->fdt_size, gd->start_addr_sp);
 		}
 	}
