@@ -633,6 +633,7 @@ config SYS_MONITOR_LEN
 
 config MP
 	bool "Support for multiprocessor"
+	select EVENT if PPC
 	help
 	  This provides an option to bringup different processors
 	  in multiprocessor cases.

@@ -31,7 +31,7 @@ int arch_reserve_stacks(void)
 	return 0;
 }
 
-int arch_setup_dest_addr(void)
+static int reserve_mp_boot_page(void)
 {
 #if defined(CONFIG_MP) && defined(CONFIG_E500)
 	/*
@@ -46,3 +46,4 @@ int arch_setup_dest_addr(void)
 
 	return 0;
 }
+EVENT_SPY_SIMPLE(EVT_DEST_ADDR, reserve_mp_boot_page);
