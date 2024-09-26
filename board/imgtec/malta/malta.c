@@ -177,9 +177,12 @@ int misc_init_r(void)
 /*
  * TODO: currently doesn't work because rw_fdt_blob points to a
  * NOR flash address. This needs some changes in board_init_f.
+ *
+ * Note: The event is called after the FDT is relocated, so it might work now
  */
-int board_fix_fdt(void *rw_fdt_blob)
+static int enable_malta_node(void)
 {
+	void *rw_fdt_blob = (void *)gd->fdt_blob;
 	int node = -1;
 
 	switch (malta_sys_con()) {
@@ -194,6 +197,7 @@ int board_fix_fdt(void *rw_fdt_blob)
 
 	return fdt_status_okay(rw_fdt_blob, node);
 }
+EVENT_SPY_SIMPLE(EVT_FT_REWRITE, enable_malta_node);
 #endif
 
 int board_early_init_r(void)
