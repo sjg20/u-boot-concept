@@ -118,8 +118,9 @@ struct ddr_conf *octeon_ddr_conf_table_get(int *count, int *def_ddr_freq)
 	return board_ddr_conf;
 }
 
-int board_fix_fdt(void *fdt)
+static int octeon_fixup(void)
 {
+	void *fdt = (void *)gd->fdt_blob;
 	u32 range_data[5 * 8];
 	bool rev4;
 	int node;
@@ -166,6 +167,7 @@ int board_fix_fdt(void *fdt)
 	}
 	return rc;
 }
+EVENT_SPY_SIMPLE(EVT_FT_REWRITE, octeon_fixup);
 
 int board_early_init_f(void)
 {
