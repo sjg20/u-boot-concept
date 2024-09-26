@@ -366,7 +366,7 @@ static int setup_dest_addr(void)
 	gd->relocaddr = gd->ram_top;
 	debug("Ram top: %08llX\n", (unsigned long long)gd->ram_top);
 
-	return arch_setup_dest_addr();
+	return 0;
 }
 
 #ifdef CFG_PRAM
@@ -953,6 +953,7 @@ static const init_fnc_t init_sequence_f[] = {
 	 *  - board info struct
 	 */
 	setup_dest_addr,
+	arch_setup_dest_addr,
 #if defined(CONFIG_OF_BOARD_FIXUP) && !defined(CONFIG_OF_INITIAL_DTB_READONLY)
 	fix_fdt,
 #endif
