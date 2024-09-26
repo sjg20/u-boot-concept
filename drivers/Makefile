@@ -45,9 +45,7 @@ obj-$(CONFIG_$(SPL_)VIDEO) += video/
 
 obj-y += bus/
 
-ifndef CONFIG_TPL_BUILD
-ifndef CONFIG_VPL_BUILD
-ifdef CONFIG_XPL_BUILD
+ifdef CONFIG_SPL_BUILD
 
 obj-$(CONFIG_SPL_CPU) += cpu/
 obj-$(CONFIG_SPL_CRYPTO) += crypto/
@@ -71,8 +69,6 @@ obj-$(CONFIG_SPL_LEGACY_BLOCK) += block/
 obj-$(CONFIG_SPL_THERMAL) += thermal/
 
 endif
-endif
-endif
 
 ifdef CONFIG_TPL_BUILD
 
@@ -80,7 +76,7 @@ obj-$(CONFIG_TPL_MPC8XXX_INIT_DDR) += ddr/fsl/
 
 endif
 
-ifeq ($(CONFIG_XPL_BUILD)$(CONFIG_TPL_BUILD),)
+ifeq ($(CONFIG_XPL_BUILD),)
 
 obj-y += ata/
 obj-$(CONFIG_DM_DEMO) += demo/
