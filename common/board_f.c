@@ -954,6 +954,7 @@ static const init_fnc_t init_sequence_f[] = {
 	 */
 	setup_dest_addr,
 	arch_setup_dest_addr,
+	INITCALL_EVENT(EVT_DEST_ADDR),
 #if defined(CONFIG_OF_BOARD_FIXUP) && !defined(CONFIG_OF_INITIAL_DTB_READONLY)
 	fix_fdt,
 #endif

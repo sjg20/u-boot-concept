@@ -105,6 +105,15 @@ enum event_t {
 	EVT_FSP_INIT_F,
 
 	/**
+	 * @EVT_DEST_ADDR:
+	 * This event is triggered once the starting gd->relocaddr is initially
+	 * set. Boards can reduce this value as they wish, to allocate memory
+	 * used after relocation for their own purpose. Other allocations (such
+	 * as U-Boot itself, FDT) happen starting from this new address.
+	 */
+	EVT_DEST_ADDR,
+
+	/**
 	 * @EVT_SETTINGS_R:
 	 * This event is triggered post-relocation and before console init.
 	 * This gives an option to perform any platform-dependent setup, which
