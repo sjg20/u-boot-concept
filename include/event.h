@@ -375,10 +375,15 @@ const char *event_type_name(enum event_t type);
  * convenient if the data is elsewhere, or is one of the members of the union.
  * So this uses a void * for @data, with a separate @size.
  *
+ * The return value is 0 if no spy replied to the event. The first spy
+ * which returns a non-zero value will stop transmission to any other
+ * spy, with this function returning that value.
+ *
  * @type: Event type
  * @data: Event data to be sent (e.g. union_event_data)
  * @size: Size of data in bytes
- * @return 0 if OK, -ve on error
+ * @return 0 if OK, positive informational value (event-type-dependent),
+ * -ve on error
  */
 int event_notify(enum event_t type, void *data, int size);
 
@@ -389,7 +394,8 @@ int event_notify(enum event_t type, void *data, int size);
  * Data is NULL and the size is 0
  *
  * @type: Event type
- * @return 0 if OK, -ve on error
+ * @return 0 if OK, positive informational value (event-type-dependent),
+ * -ve on error
  */
 int event_notify_null(enum event_t type);
 #else
