@@ -106,8 +106,9 @@ int riscv_board_reserved_mem_fixup(void *fdt)
 }
 
 #ifdef CONFIG_OF_BOARD_FIXUP
-int board_fix_fdt(void *fdt)
+int copy_reserved_nodes(void)
 {
+	void *fdt = (void *)gd->fdt_blob;
 	int err;
 
 	err = riscv_board_reserved_mem_fixup(fdt);
@@ -118,6 +119,7 @@ int board_fix_fdt(void *fdt)
 
 	return 0;
 }
+EVENT_SPY_SIMPLE(EVT_FT_REWRITE, copy_reserved_nodes);
 
 static int riscv_grow_fdt(void)
 {
@@ -130,8 +132,7 @@ static int riscv_grow_fdt(void)
 	return 1024;
 }
 EVENT_SPY_SIMPLE(EVT_FT_GROW, riscv_grow_fdt);
-
-#endif
+#endif /* CONFIG_OF_BOARD_FIXUP */
 
 int arch_fixup_fdt(void *blob)
 {
