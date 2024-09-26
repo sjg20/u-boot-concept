@@ -14,7 +14,7 @@ subsystems
    debugging
    design
    ethernet
-   fdt-fixup
+   fdt-rewrite
    fs_firmware_loader
    i2c-howto
    livetree

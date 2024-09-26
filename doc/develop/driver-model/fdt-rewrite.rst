@@ -60,31 +60,29 @@ components easily.
 Implementation
 --------------
 
-To take advantage of the pre-relocation device tree manipulation mechanism,
-boards have to implement the function board_fix_fdt, which has the following
-signature:
+To take advantage of the pre-relocation, devicetree-manipulation mechanism,
+boards have to implement the event EVT_FT_REWRITE.
 
-.. code-block:: c
-
-   int board_fix_fdt (void *rw_fdt_blob)
-
-The passed-in void pointer is a writeable pointer to the device tree, which can
+The event function should update the FDT at gd->fdt_blob, casting it to a
+non-const pointer. This can then
 be used to manipulate the device tree using e.g. functions from
 include/fdt_support.h. The return value should either be 0 in case of
-successful execution of the device tree manipulation or something else for a
-failure. Note that returning a non-null value from the function will
+successful execution of the device tree manipulation or a negative errno
+error code for a
+failure. Note that returning a non-zero value from the function will
 unrecoverably halt the boot process, as with any function from init_sequence_f
 (in common/board_f.c).
 
-Furthermore, the Kconfig option OF_BOARD_FIXUP has to be set for the function
-to be called::
+The event is always generated, but boards can use the the Kconfig option
+OF_BOARD_FIXUP to control whether the event handler is included in the
+build::
 
    Device Tree Control
    -> [*] Board-specific manipulation of Device Tree
 
 +----------------------------------------------------------+
 | WARNING: The actual manipulation of the device tree has  |
-| to be the _last_ set of operations in board_fix_fdt!     |
+| to be the _last_ set of operations in your handler!      |
 | Since the pre-relocation driver model does not adapt to  |
 | changes made to the device tree either, its references   |
 | into the device tree will be invalid after manipulating  |
@@ -92,13 +90,13 @@ to be called::
 | functions that rely on them are executed!                |
 +----------------------------------------------------------+
 
-Hence, the recommended layout of the board_fixup_fdt call-back function is the
-following:
+Hence, the recommended layout of the event-handler is the following:
 
 .. code-block:: c
 
-	int board_fix_fdt(void *rw_fdt_blob)
+	int update_the_fdt(void)
 	{
+		void *rw_fdt_blob = (void *)gd->fdt_blob;
 		/*
 		 * Collect information about device's hardware and store
 		 * them in e.g. local variables
@@ -106,7 +104,7 @@ following:
 
 		/* Do device tree manipulation using the values previously collected */
 
-		/* Return 0 on successful manipulation and non-zero otherwise */
+		/* Return 0 on successful manipulation and negative otherwise */
 	}
 
 If this convention is kept, both an "additive" approach, meaning that nodes for
@@ -117,8 +115,8 @@ as well as a combination of both approaches should work.
 Example
 -------
 
-The controlcenterdc board (board/gdsys/a38x/controlcenterdc.c) features a
-board_fix_fdt function, in which six GPIO expanders (which might be present or
+The controlcenterdc board (board/gdsys/a38x/controlcenterdc.c) features an
+event-handler, in which six GPIO expanders (which might be present or
 not, since they are on daughter boards) on a I2C bus are queried for, and
 subsequently deactivated in the device tree if they are not present.
 
@@ -128,5 +126,5 @@ it is safe to call it after the tree has already been manipulated.
 Work to be done
 ---------------
 
-* The application of device tree overlay should be possible in board_fixup_fdt,
+* The application of device tree overlay should be possible in the event handler,
   but has not been tested at this stage.
