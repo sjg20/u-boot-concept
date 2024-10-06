@@ -921,6 +921,16 @@ config CMD_MEM_SEARCH
 	  pressing return will show the next 10 matches. Environment variables
 	  are set for use with scripting (memmatches, memaddr, mempos).
 
+config CMD_MEMMAP
+	bool "memmap - Memory map"
+	default y if SANDBOX
+	help
+	  memmap command
+
+	  This shows the location of areas of memory used by U-Boot. This includes
+	  the malloc() region, U-Boot's code and data, bloblist and anything else
+	  that prevents a particular region being used for loading images.
+
 config CMD_MX_CYCLIC
 	bool "Enable cyclic md/mw commands"
 	depends on CMD_MEMORY

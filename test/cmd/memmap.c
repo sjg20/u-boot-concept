@@ -1,0 +1,35 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * Test for 'memmap' command
+ *
+ * Copyright 2024 Google LLC
+ * Written by Simon Glass <sjg@chromium.org>
+ */
+
+#include <dm/test.h>
+#include <test/cmd.h>
+#include <test/ut.h>
+
+/* Test 'memmap' command */
+static int cmd_test_memmap(struct unit_test_state *uts)
+{
+	ut_assertok(run_command("memmap", 0));
+	ut_assert_nextline("Region           Base     Size      End      Gap");
+	ut_assert_nextlinen("-");
+
+	/* For now we don't worry about checking the values */
+	ut_assert_nextlinen("video");
+	ut_assert_nextlinen("code");
+	ut_assert_nextlinen("malloc");
+	ut_assert_nextlinen("board_info");
+	ut_assert_nextlinen("global_data");
+	ut_assert_nextlinen("devicetree");
+	ut_assert_nextlinen("bootstage");
+	ut_assert_nextlinen("bloblist");
+	ut_assert_nextlinen("stack");
+	ut_assert_nextlinen("free");
+	ut_assert_console_end();
+
+	return 0;
+}
+CMD_TEST(cmd_test_memmap, UTF_CONSOLE);
