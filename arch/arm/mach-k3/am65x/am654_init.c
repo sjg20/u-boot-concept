@@ -8,6 +8,7 @@
 
 #include <fdt_support.h>
 #include <init.h>
+#include <mapmem.h>
 #include <asm/global_data.h>
 #include <asm/io.h>
 #include <spl.h>
@@ -165,7 +166,7 @@ void board_init_f(ulong dummy)
 #if defined(CONFIG_K3_LOAD_SYSFW) || defined(CONFIG_K3_AM654_DDRSS)
 	struct udevice *dev;
 	size_t pool_size;
-	void *pool_addr;
+	void *pool;
 	int ret;
 #endif
 	/*
@@ -204,14 +205,14 @@ void board_init_f(ulong dummy)
 	 * malloc pool of which we use all that's left.
 	 */
 	pool_size = CONFIG_VAL(SYS_MALLOC_F_LEN) - gd->malloc_ptr;
-	pool_addr = malloc(pool_size);
-	if (!pool_addr)
+	pool = malloc(pool_size);
+	if (!pool)
 		panic("ERROR: Can't allocate full malloc pool!\n");
 
-	mem_malloc_init((ulong)pool_addr, (ulong)pool_size);
+	mem_malloc_init(map_to_sysmem(pool), (ulong)pool_size);
 	gd->flags |= GD_FLG_FULL_MALLOC_INIT;
 	debug("%s: initialized an early full malloc pool at 0x%08lx of 0x%lx bytes\n",
-	      __func__, (unsigned long)pool_addr, (unsigned long)pool_size);
+	      __func__, (unsigned long)pool, (unsigned long)pool_size);
 	/*
 	 * Process pinctrl for the serial0 a.k.a. WKUP_UART0 module and continue
 	 * regardless of the result of pinctrl. Do this without probing the
