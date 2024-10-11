@@ -589,7 +589,7 @@ config BOOTMETH_EFI_BOOTMGR
 
 config BOOTMETH_QFW
 	bool "Boot method using QEMU parameters"
-	depends on QFW
+	depends on QFW && CMDLINE
 	default y
 	help
 	 Use QEMU parameters -kernel, -initrd, -append to determine the kernel,
