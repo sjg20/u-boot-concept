@@ -105,6 +105,17 @@ enum event_t {
 	EVT_FSP_INIT_F,
 
 	/**
+	 * @EVT_RESERVE:
+	 * This event is trigged after all other reservations are done, just
+	 * before the stack is placed. It can be used to reserve memory for any
+	 * other purpose. The memory thus reserved is available immediately and
+	 * will remain valid after relocation.
+	 *
+	 * To reserve memory, subtract the required amount of bytes from
+	 * gd->start_addr_sp
+	 */
+	EVT_RESERVE,
+	/**
 	 * @EVT_SETTINGS_R:
 	 * This event is triggered post-relocation and before console init.
 	 * This gives an option to perform any platform-dependent setup, which

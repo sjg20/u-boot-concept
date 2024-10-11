@@ -959,6 +959,7 @@ static const init_fnc_t init_sequence_f[] = {
 	reserve_bootstage,
 	reserve_bloblist,
 	reserve_arch,
+	INITCALL_EVENT(EVT_RESERVE),
 	reserve_stacks,
 	dram_init_banksize,
 	show_dram_config,
