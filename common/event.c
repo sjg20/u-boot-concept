@@ -36,7 +36,7 @@ const char *const type_name[] = {
 
 	/* init hooks */
 	"misc_init_f",
-	"fsp_init_r",
+	"fsp_init_f",
 	"settings_r",
 	"last_stage_init",
 
