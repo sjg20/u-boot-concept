@@ -967,6 +967,7 @@ static void initcall_run_f(void)
 	INITCALL(reserve_bootstage);
 	INITCALL(reserve_bloblist);
 	INITCALL(reserve_arch);
+	INITCALL_EVT(EVT_RESERVE);
 	INITCALL(reserve_stacks);
 	INITCALL(dram_init_banksize);
 	INITCALL(show_dram_config);
