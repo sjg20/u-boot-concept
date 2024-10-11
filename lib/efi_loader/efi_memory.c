@@ -27,6 +27,12 @@ DECLARE_GLOBAL_DATA_PTR;
 /* Magic number identifying memory allocated from pool */
 #define EFI_ALLOC_POOL_MAGIC 0x1fe67ddf6491caa2
 
+/*
+ * Amount of memory to reserve for EFI before relocation. This must be a
+ * multiple of EFI_PAGE_SIZE
+ */
+#define EFI_EARLY_REGION_SIZE	SZ_256K
+
 efi_uintn_t efi_memory_map_key;
 
 /**
@@ -863,3 +869,18 @@ int efi_memory_init(void)
 
 	return 0;
 }
+
+static int reserve_efi_region(void)
+{
+	/*
+	 * Reserve some memory for EFI. Since pool allocations consume 4KB each
+	 * and there are three allocations, allow 16KB of memory, enough for
+	 * four. This can be increased as needed.
+	 */
+	gd->efi_region = ALIGN_DOWN(gd->start_addr_sp - EFI_EARLY_REGION_SIZE,
+				    SZ_4K);
+	gd->start_addr_sp = gd->efi_region;
+
+	return 0;
+}
+EVENT_SPY_SIMPLE(EVT_RESERVE, reserve_efi_region);

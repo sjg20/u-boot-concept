@@ -22,5 +22,6 @@ EVT_LAST_STAGE_INIT   efi_block_device_create         .*lib/efi_driver/efi_block
 EVT_LAST_STAGE_INIT   install_smbios_table            .*lib/efi_loader/efi_smbios.c:.*
 EVT_LAST_STAGE_INIT   last_stage_init                 .*arch/sandbox/cpu/start.c:.*
 EVT_MISC_INIT_F       sandbox_early_getopt_check      .*arch/sandbox/cpu/start.c:.*
+EVT_RESERVE           reserve_efi_region              .*lib/efi_loader/efi_memory.c:.*
 EVT_TEST              h_adder_simple                  .*test/common/event.c:'''
     assert re.match(expect, out, re.MULTILINE) is not None

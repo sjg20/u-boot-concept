@@ -477,6 +477,12 @@ struct global_data {
 	 */
 	struct upl *upl;
 #endif
+#if CONFIG_IS_ENABLED(EFI_LOADER)
+	/**
+	 * @efi_region: Start of EFI's early-memory region
+	 */
+	ulong efi_region;
+#endif
 };
 #ifndef DO_DEPS_ONLY
 static_assert(sizeof(struct global_data) == GD_SIZE);
