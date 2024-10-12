@@ -257,6 +257,36 @@ bool alist_chk_ptr(const struct alist *lst, const void *ptr);
 	     _pos++)
 
 /**
+ * alist_for_each_start() - version which sets up a _start pointer too
+ *
+ * This is used for filtering out information in the list. It works by iterating
+ * through the list, copying elements down over the top of elements to be
+ * deleted.
+ *
+ * In this example, 'from' iterates through the list from start to end,, 'to'
+ * also begins at the start, but only increments if the element at 'from' should
+ * be kept. This provides an O(n) filtering operation. Note that
+ * alist_update_end() must be called after the loop, to update the count.
+ *
+ *	alist_for_each_start(from, to, &lst) {
+ *		if (from->val != 2)
+ *			*to++ = *from;
+ *	}
+ *	alist_update_end(&lst, to);
+ */
+#define alist_for_each_start(_pos, _start, _lst) \
+	for (_pos = _start = alist_getw(_lst, 0, typeof(*(_pos))); \
+	     alist_chk_ptr(_lst, _pos); \
+	     _pos++)
+
+/**
+ * alist_update_end() - Set the element count based on a given pointer
+ *
+ * Set the given element as the final one
+ */
+void alist_update_end(struct alist *lst, const void *end);
+
+/**
  * alist_empty() - Empty an alist
  *
  * This removes all entries from the list, without changing the allocated size
