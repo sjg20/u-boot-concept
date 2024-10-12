@@ -118,7 +118,8 @@ static int extlinux_pxe_read_file(struct udevice *dev, struct bootflow *bflow,
 {
 	char *tftp_argv[] = {"tftp", NULL, NULL, NULL};
 	struct pxe_context *ctx = dev_get_priv(dev);
-	char file_addr[17];
+	char file_addr[17], *fname;
+	struct bootflow_img *img;
 	ulong size;
 	int ret;
 
@@ -134,6 +135,17 @@ static int extlinux_pxe_read_file(struct udevice *dev, struct bootflow *bflow,
 	if (size > *sizep)
 		return log_msg_ret("spc", -ENOSPC);
 	*sizep = size;
+
+	fname = strdup(file_path);
+	if (!fname)
+		return log_msg_ret("pxf", -ENOMEM);
+	img = alist_add_placeholder(&bflow->images);
+	if (!img)
+		return log_msg_ret("pxi", -ENOMEM);
+	img->fname = fname;
+	img->type = type;
+	img->addr = addr;
+	img->size = size;
 
 	return 0;
 }
