@@ -133,6 +133,13 @@ static uint alist_calc_index(const struct alist *lst, const void *ptr)
 	return index;
 }
 
+bool alist_chk_ptr(const struct alist *lst, const void *ptr)
+{
+	int index = alist_calc_index(lst, ptr);
+
+	return index >= 0 && index < lst->count;
+}
+
 const void *alist_next_ptrd(const struct alist *lst, const void *ptr)
 {
 	int index = alist_calc_index(lst, ptr);

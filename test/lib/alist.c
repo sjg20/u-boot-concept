@@ -292,3 +292,47 @@ static int lib_test_alist_next(struct unit_test_state *uts)
 	return 0;
 }
 LIB_TEST(lib_test_alist_next, 0);
+
+/* Test alist_for_each()  */
+static int lib_test_alist_for_each(struct unit_test_state *uts)
+{
+	const struct my_struct *ptr;
+	struct my_struct data, *ptr2;
+	struct alist lst;
+	ulong start;
+	int sum;
+
+	start = ut_check_free();
+
+	ut_assert(alist_init_struct(&lst, struct my_struct));
+	data.val = 1;
+	data.other_val = 0;
+	alist_add(&lst, data);
+
+	data.val = 2;
+	alist_add(&lst, data);
+
+	data.val = 3;
+	alist_add(&lst, data);
+
+	sum = 0;
+	alist_for_each(ptr, &lst)
+		sum += ptr->val;
+	ut_asserteq(6, sum);
+
+	alist_for_eachw(ptr2, &lst)
+		ptr2->val += 1;
+
+	sum = 0;
+	alist_for_each(ptr, &lst)
+		sum += ptr->val;
+	ut_asserteq(9, sum);
+
+	alist_uninit(&lst);
+
+	/* Check for memory leaks */
+	ut_assertok(ut_check_delta(start));
+
+	return 0;
+}
+LIB_TEST(lib_test_alist_for_each, 0);
