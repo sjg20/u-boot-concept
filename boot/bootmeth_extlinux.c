@@ -126,7 +126,8 @@ static int extlinux_read_bootflow(struct udevice *dev, struct bootflow *bflow)
 		return log_msg_ret("try", ret);
 	size = bflow->size;
 
-	ret = bootmeth_alloc_file(bflow, 0x10000, 1);
+	ret = bootmeth_alloc_file(bootstd, bflow, 0x10000, 1,
+				  IH_TYPE_EXTLINUX_CFG);
 	if (ret)
 		return log_msg_ret("read", ret);
 
