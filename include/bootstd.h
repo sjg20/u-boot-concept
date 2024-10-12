@@ -10,6 +10,7 @@
 #define __bootstd_h
 
 #include <alist.h>
+#include <image.h>
 #include <dm/ofnode_decl.h>
 #include <linux/list.h>
 #include <linux/types.h>
@@ -39,6 +40,7 @@ struct udevice;
  * @theme: Node containing the theme information
  * @hunters_used: Bitmask of used hunters, indexed by their position in the
  * linker list. The bit is set if the hunter has been used already
+ * @images: List of loaded images (struct bootstd_img)
  */
 struct bootstd_priv {
 	const char **prefixes;
@@ -52,6 +54,26 @@ struct bootstd_priv {
 	struct udevice *vbe_bootmeth;
 	ofnode theme;
 	uint hunters_used;
+	struct alist images;
+};
+
+/**
+ * struct bootstd_img - Information about an image which has been loaded
+ *
+ * This keeps track of a single, loaded image.
+ *
+ * @bflow: Bootflow to which this file relates
+ * @fname: Filename used to load the image (allocated)
+ * @type: Image type (IH_TYPE_...)
+ * @addr: Address to which the image was loaded
+ * @size: Size of the image
+ */
+struct bootstd_img {
+	struct bootflow *bflow;
+	const char *fname;
+	enum image_type_t type;
+	ulong addr;
+	ulong size;
 };
 
 /**

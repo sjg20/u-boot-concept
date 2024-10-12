@@ -48,6 +48,7 @@ static void bootstd_clear_glob_(struct bootstd_priv *priv)
 	alist_for_eachw(bflow, &priv->bootflows)
 		bootflow_remove(bflow);
 	alist_empty(&priv->bootflows);
+	alist_empty(&priv->images);
 }
 
 void bootstd_clear_glob(void)
@@ -99,6 +100,7 @@ static int bootstd_remove(struct udevice *dev)
 {
 	struct bootstd_priv *priv = dev_get_priv(dev);
 
+	alist_uninit(&priv->images);
 	free(priv->prefixes);
 	free(priv->bootdev_order);
 	bootstd_clear_glob_(priv);
@@ -163,6 +165,7 @@ static int bootstd_probe(struct udevice *dev)
 	struct bootstd_priv *std = dev_get_priv(dev);
 
 	alist_init_struct(&std->bootflows, struct bootflow);
+	alist_init_struct(&std->images, struct bootstd_img);
 
 	return 0;
 }
