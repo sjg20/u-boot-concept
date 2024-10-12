@@ -336,3 +336,35 @@ static int lib_test_alist_for_each(struct unit_test_state *uts)
 	return 0;
 }
 LIB_TEST(lib_test_alist_for_each, 0);
+
+/* Test alist_empty()  */
+static int lib_test_alist_empty(struct unit_test_state *uts)
+{
+	struct my_struct data;
+	struct alist lst;
+	ulong start;
+
+	start = ut_check_free();
+
+	ut_assert(alist_init_struct(&lst, struct my_struct));
+	ut_asserteq(0, lst.count);
+	data.val = 1;
+	data.other_val = 0;
+	alist_add(&lst, data);
+	ut_asserteq(1, lst.count);
+	ut_asserteq(4, lst.alloc);
+
+	alist_empty(&lst);
+	ut_asserteq(0, lst.count);
+	ut_asserteq(4, lst.alloc);
+	ut_assertnonnull(lst.data);
+	ut_asserteq(sizeof(data), lst.obj_size);
+
+	alist_uninit(&lst);
+
+	/* Check for memory leaks */
+	ut_assertok(ut_check_delta(start));
+
+	return 0;
+}
+LIB_TEST(lib_test_alist_empty, 0);
