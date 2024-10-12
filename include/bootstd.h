@@ -9,6 +9,7 @@
 #ifndef __bootstd_h
 #define __bootstd_h
 
+#include <alist.h>
 #include <dm/ofnode_decl.h>
 #include <linux/list.h>
 #include <linux/types.h>
@@ -30,7 +31,8 @@ struct udevice;
  *	terminated)
  * @cur_bootdev: Currently selected bootdev (for commands)
  * @cur_bootflow: Currently selected bootflow (for commands)
- * @glob_head: Head for the global list of all bootflows across all bootdevs
+ * @bootflows: (struct bootflow) Global list of all bootflows across all
+ *	bootdevs
  * @bootmeth_count: Number of bootmeth devices in @bootmeth_order
  * @bootmeth_order: List of bootmeth devices to use, in order, NULL-terminated
  * @vbe_bootmeth: Currently selected VBE bootmeth, NULL if none
@@ -44,7 +46,7 @@ struct bootstd_priv {
 	const char **env_order;
 	struct udevice *cur_bootdev;
 	struct bootflow *cur_bootflow;
-	struct list_head glob_head;
+	struct alist bootflows;
 	int bootmeth_count;
 	struct udevice **bootmeth_order;
 	struct udevice *vbe_bootmeth;
