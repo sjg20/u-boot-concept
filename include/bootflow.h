@@ -613,4 +613,14 @@ int bootflow_cmdline_auto(struct bootflow *bflow, const char *arg);
  * Return: Image name, or "unknown" if not known
  */
 const char *bootflow_img_type_name(enum bootflow_img_t type);
+
+/*
+ * bootflow_get_seq() - Get the sequence number of a bootflow
+ *
+ * Bootflows are numbered by their position in the bootstd list.
+ *
+ * Return: Sequence number of bootflow (0 = first)
+ */
+int bootflow_get_seq(const struct bootflow *bflow);
+
 #endif
