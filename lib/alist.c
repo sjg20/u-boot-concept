@@ -106,6 +106,42 @@ const void *alist_get_ptr(const struct alist *lst, uint index)
 	return lst->data + index * lst->obj_size;
 }
 
+/**
+ * alist_calc_index() - Calculate the index of an item in the list
+ *
+ * The returned element number will be -1 if the list is empty or the pointer
+ * pointers to before the list starts.
+ *
+ * If the pointer points to after the last  item, the calculated element-number
+ * will be returned, even though it is greater than lst->count
+ *
+ * If
+ *
+ * @lst: alist to check
+ * @ptr: pointer to check
+ * Return: element number of the pointer
+ */
+static uint alist_calc_index(const struct alist *lst, const void *ptr)
+{
+	uint index;
+
+	if (!lst->count || ptr < lst->data)
+		return -1;
+
+	index = (ptr - lst->data) / lst->obj_size;
+
+	return index;
+}
+
+const void *alist_next_ptrd(const struct alist *lst, const void *ptr)
+{
+	int index = alist_calc_index(lst, ptr);
+
+	assert(index != -1);
+
+	return alist_get_ptr(lst, index + 1);
+}
+
 void *alist_ensure_ptr(struct alist *lst, uint index)
 {
 	uint minsize = index + 1;
