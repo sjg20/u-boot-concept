@@ -62,10 +62,13 @@ or::
 
    grep -l X86 configs/* | ./tools/qconfig.py -s -d -
 
+or::
+
+   ./tools/qconfig.py -s -D $(grep -l X86 configs/*)
+
 To process CONFIG_CMD_FPGAD only for a subset of configs based on path match::
 
-   ls configs/{hrcon*,iocon*,strider*} | \
-       ./tools/qconfig.py -C CONFIG_CMD_FPGAD -d -
+   ./tools/qconfig.py -C CONFIG_CMD_FPGAD -D configs/{amd_versal2,am68_sk}*
 
 
 Finding boards with particular CONFIG combinations
