@@ -972,3 +972,15 @@ const char *bootflow_img_type_name(enum bootflow_img_t type)
 
 	return name;
 }
+
+int bootflow_get_seq(const struct bootflow *bflow)
+{
+	struct bootstd_priv *std;
+	int ret;
+
+	ret = bootstd_get_priv(&std);
+	if (ret)
+		return ret;
+
+	return alist_calc_index(&std->bootflows, bflow);
+}
