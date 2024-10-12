@@ -161,7 +161,7 @@ int bootstd_prog_boot(void);
  *	caller must dispose of the memory used by the @bflow pointer itself
  * Return: 0 if OK, -ENOMEM if out of memory
  */
-int bootstd_add_bootflow(struct bootflow *bflow);
+struct bootflow *bootstd_add_bootflow(struct bootflow *bflow);
 
 /**
  * bootstd_clear_bootflows_for_bootdev() - Clear bootflows from a bootdev

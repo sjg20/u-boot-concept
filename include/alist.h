@@ -72,6 +72,21 @@ static inline bool alist_has(struct alist *lst, uint index)
 }
 
 /**
+ * alist_calc_index() - Calculate the index of an item in the list
+ *
+ * The returned element number will be -1 if the list is empty or the pointer
+ * pointers to before the list starts.
+ *
+ * If the pointer points to after the last item, the calculated element-number
+ * will be returned, even though it is greater than lst->count
+ *
+ * @lst: alist to check
+ * @ptr: pointer to check
+ * Return: element number of the pointer
+ */
+int alist_calc_index(const struct alist *lst, const void *ptr);
+
+/**
  * alist_err() - Check if the alist is still valid
  *
  * @lst: List to check

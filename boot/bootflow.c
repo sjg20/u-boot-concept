@@ -946,3 +946,15 @@ int bootflow_cmdline_auto(struct bootflow *bflow, const char *arg)
 
 	return 0;
 }
+
+int bootflow_get_seq(struct bootflow *bflow)
+{
+	struct bootstd_priv *std;
+	int ret;
+
+	ret = bootstd_get_priv(&std);
+	if (ret)
+		return ret;
+
+	return alist_calc_index(&std->bootflows, bflow);
+}

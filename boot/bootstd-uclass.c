@@ -61,20 +61,33 @@ void bootstd_clear_glob(void)
 	bootstd_clear_glob_(std);
 }
 
-int bootstd_add_bootflow(struct bootflow *bflow)
+struct bootflow *bootstd_add_bootflow_place(void)
+{
+	struct bootstd_priv *std;
+	struct bootflow *bflow;
+	int ret;
+
+	ret = bootstd_get_priv(&std);
+	if (ret)
+		return NULL;
+
+	bflow = alist_add_placeholder(&std->bootflows);
+	if (!bflow)
+		return NULL;
+
+	return bflow;
+}
+
+void bootstd_remove_bootflow_place(void)
 {
 	struct bootstd_priv *std;
 	int ret;
 
 	ret = bootstd_get_priv(&std);
 	if (ret)
-		return ret;
+		return;
 
-	bflow = alist_add(&std->bootflows, *bflow);
-	if (!bflow)
-		return log_msg_ret("bf2", -ENOMEM);
-
-	return 0;
+	std->bootflows.count--;
 }
 
 int bootstd_clear_bootflows_for_bootdev(struct udevice *dev)

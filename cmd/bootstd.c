@@ -7,6 +7,7 @@
  */
 
 #include <bootdev.h>
+#include <bootflow.h>
 #include <bootmeth.h>
 #include <bootstd.h>
 #include <command.h>
@@ -19,7 +20,7 @@ static int do_bootstd_images(struct cmd_tbl *cmdtp, int flag, int argc,
 {
 	const struct bootstd_img *img;
 	struct bootstd_priv *std;
-	int ret;
+	int ret, i;
 
 	ret = bootstd_get_priv(&std);
 	if (ret) {
@@ -27,16 +28,22 @@ static int do_bootstd_images(struct cmd_tbl *cmdtp, int flag, int argc,
 		return CMD_RET_FAILURE;
 	}
 
-	printf("Seq  Bootflow      Type             At      Size  Filename\n");
-	printf("---  --------      ---------  --------  --------  --------\n");
+	printf("Seq  Bootflow             Type                  At      Size  Filename\n");
+	printf("---  -------------------  --------------  --------  --------  ----------------\n");
 
 	/*
 	 * Use the ordering if we have one, so long as we are not trying to list
 	 * all bootmethds
 	 */
+	i = 0;
 	alist_for_each(img, &std->images) {
+		printf("%3d  %-20.20s %-15.15s %8lx  %8lx  %s\n",
+		       bootflow_get_seq(img->bflow), img->bflow->name,
+		       genimg_get_type_short_name(img->type),
+		       img->addr, img->size, img->fname);
+		i++;
 	}
-	printf("---  --------      ---------  --------  --------  --------\n");
+	printf("---  -------------------  --------------  --------  --------  ----------------\n");
 	printf("(%d image%s)\n", std->images.count,
 	       std->images.count != 1 ? "s" : "");
 

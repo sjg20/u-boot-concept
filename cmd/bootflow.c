@@ -132,7 +132,7 @@ static int do_bootflow_scan(struct cmd_tbl *cmdtp, int flag, int argc,
 	struct bootstd_priv *std;
 	struct bootflow_iter iter;
 	struct udevice *dev = NULL;
-	struct bootflow bflow;
+	struct bootflow *bflow;
 	bool all = false, boot = false, errors = false, no_global = false;
 	bool list = false, no_hunter = false, menu = false, text_mode = false;
 	int num_valid = 0;
@@ -200,23 +200,33 @@ static int do_bootflow_scan(struct cmd_tbl *cmdtp, int flag, int argc,
 		bootstd_clear_bootflows_for_bootdev(dev);
 	else
 		bootstd_clear_glob();
+
+	bflow = bootstd_add_bootflow_place();
+	if (!bflow) {
+		printf("Out of memory\n");
+		return CMD_RET_FAILURE;
+	}
 	for (i = 0,
-	     ret = bootflow_scan_first(dev, label, &iter, flags, &bflow);
+	     ret = bootflow_scan_first(dev, label, &iter, flags, bflow);
 	     i < 1000 && ret != -ENODEV;
-	     i++, ret = bootflow_scan_next(&iter, &bflow)) {
-		bflow.err = ret;
+	     i++, ret = bootflow_scan_next(&iter, bflow)) {
 		if (!ret)
 			num_valid++;
-		ret = bootstd_add_bootflow(&bflow);
-		if (ret) {
+		bflow->err = ret;
+		if (list)
+			show_bootflow(i, bflow, errors);
+		if (!menu && boot && !bflow->err)
+			bootflow_run_boot(&iter, bflow);
+		bflow = bootstd_add_bootflow_place();
+		if (!bflow) {
 			printf("Out of memory\n");
 			return CMD_RET_FAILURE;
 		}
-		if (list)
-			show_bootflow(i, &bflow, errors);
-		if (!menu && boot && !bflow.err)
-			bootflow_run_boot(&iter, &bflow);
 	}
+
+	/* remove the bootflow placeholder */
+	bootstd_remove_bootflow_place();
+
 	bootflow_iter_uninit(&iter);
 	if (list)
 		show_footer(i, num_valid);

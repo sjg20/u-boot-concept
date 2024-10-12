@@ -565,4 +565,29 @@ int bootflow_cmdline_get_arg(struct bootflow *bflow, const char *arg,
  */
 int bootflow_cmdline_auto(struct bootflow *bflow, const char *arg);
 
+/**
+ * bootflow_get_seq() - Get the sequence number of a bootflow
+ *
+ * Bootflows are numbered by their position in the bootstd list.
+ *
+ * Return: Sequence number of bootflow (0 = first)
+ */
+int bootflow_get_seq(struct bootflow *bflow);
+
+/**
+ * bootstd_add_bootflow_place() - Add a placeholder for a bootflow
+ *
+ * Adds a new empty bootflow which must be filled in by the caller
+ *
+ * Return: bootflow struct to fill in
+ */
+struct bootflow *bootstd_add_bootflow_place(void);
+
+/**
+ * bootstd_remove_bootflow_place() - Remove a previously added bootflow
+ *
+ * Used to cancel the placeholder
+ */
+void bootstd_remove_bootflow_place(void);
+
 #endif
