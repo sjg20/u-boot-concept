@@ -185,6 +185,7 @@ static const table_entry_t uimage_type[] = {
 	{	IH_TYPE_STARFIVE_SPL, "sfspl", "StarFive SPL Image" },
 	{	IH_TYPE_EXTLINUX_CFG, "extlinux_cfg", "Extlinux configuration" },
 	{	IH_TYPE_EFI, "efi", "EFI applicaiton" },
+	{	IH_TYPE_LOGO, "logo", "Logo image" },
 	{	-1,		    "",		  "",			},
 };
 
