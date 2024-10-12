@@ -32,6 +32,8 @@ from buildman import bsettings
 from buildman import kconfiglib
 from buildman import toolchain
 from u_boot_pylib import terminal
+from u_boot_pylib.terminal import tprint
+from u_boot_pylib import tools
 
 SHOW_GNU_MAKE = 'scripts/show-gnu-make'
 SLEEP_TIME=0.03
@@ -551,14 +553,25 @@ class Slot:
         orig_defconfig = os.path.join('configs', self.defconfig)
         new_defconfig = os.path.join(self.build_dir, 'defconfig')
         updated = not filecmp.cmp(orig_defconfig, new_defconfig)
+        success = True
 
         if updated:
-            self.log.append(
-                self.col.build(self.col.BLUE, 'defconfig updated', bright=True))
+            # Files with #include get mangled as savedefconfig doesn't know how to
+            # deal with them. Ignore them
+            success = b'#include' not in tools.read_file(orig_defconfig)
+            if success:
+                self.log.append(
+                    self.col.build(self.col.BLUE, 'defconfig updated',
+                                   bright=True))
+            else:
+                self.log.append(
+                    self.col.build(self.col.RED, 'ignored due to #include',
+                                   bright=True))
+                updated = False
 
         if not self.args.dry_run and updated:
             shutil.move(new_defconfig, orig_defconfig)
-        self.finish(True)
+        self.finish(success)
 
     def finish(self, success):
         """Display log along with progress and go to the idle state.
@@ -1664,7 +1677,9 @@ def move_done(progress):
     """
     col = progress.col
     if progress.failed:
-        print(col.build(col.RED, f'{progress.failure_msg}see {FAILED_LIST}', True))
+        if progress.good:
+            tprint(f'{progress.good} OK, ', newline=False, colour=col.GREEN)
+        tprint(f'{progress.failure_msg}see {FAILED_LIST}', colour=col.RED)
     else:
         # Add enough spaces to overwrite the progress indicator
         print(col.build(
