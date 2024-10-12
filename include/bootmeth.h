@@ -7,6 +7,7 @@
 #ifndef __bootmeth_h
 #define __bootmeth_h
 
+#include <image.h>
 #include <linux/bitops.h>
 
 struct blk_desc;
@@ -331,13 +332,16 @@ int bootmeth_try_file(struct bootflow *bflow, struct blk_desc *desc,
  *
  * Note that fs_set_blk_dev_with_part() must have been called previously.
  *
+ * @bootstd: Pointer to bootstd device
  * @bflow: Information about file to read
  * @size_limit: Maximum file size to permit
  * @align: Allocation alignment (1 for unaligned)
+ * @type: File type (IH_TYPE_...)
  * Return: 0 if OK, -E2BIG if file is too large, -ENOMEM if out of memory,
  *	other -ve on other error
  */
-int bootmeth_alloc_file(struct bootflow *bflow, uint size_limit, uint align);
+int bootmeth_alloc_file(struct udevice *bootstd, struct bootflow *bflow,
+			uint size_limit, uint align, enum image_type_t type);
 
 /**
  * bootmeth_alloc_other() - Allocate and read a file for a bootflow

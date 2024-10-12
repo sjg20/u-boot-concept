@@ -6,6 +6,7 @@
 
 #define LOG_CATEGORY UCLASS_BOOTSTD
 
+#include <alist.h>
 #include <blk.h>
 #include <bootflow.h>
 #include <bootmeth.h>
@@ -301,8 +302,12 @@ int bootmeth_try_file(struct bootflow *bflow, struct blk_desc *desc,
 	return 0;
 }
 
-int bootmeth_alloc_file(struct bootflow *bflow, uint size_limit, uint align)
+int bootmeth_alloc_file(struct udevice *bootstd, struct bootflow *bflow,
+			uint size_limit, uint align, enum image_type_t type)
 {
+	struct bootstd_priv *std;
+	struct bootstd_img *img;
+	const char *fname;
 	void *buf;
 	uint size;
 	int ret;
@@ -318,6 +323,19 @@ int bootmeth_alloc_file(struct bootflow *bflow, uint size_limit, uint align)
 
 	bflow->state = BOOTFLOWST_READY;
 	bflow->buf = buf;
+
+	fname = strdup(bflow->fname);
+	if (!fname)
+		return log_msg_ret("alf", -ENOMEM);
+	std = dev_get_priv(bootstd);
+	img = alist_add_placeholder(&std->images);
+	if (!img)
+		return log_msg_ret("als", -ENOMEM);
+	img->bflow = bflow;
+	img->fname = fname;
+	img->type = type;
+	img->addr = map_to_sysmem(buf);
+	img->size = size;
 
 	return 0;
 }
