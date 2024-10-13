@@ -3,6 +3,7 @@
 #ifndef __PXE_UTILS_H
 #define __PXE_UTILS_H
 
+#include <image.h>
 #include <linux/list.h>
 
 /*
@@ -80,8 +81,19 @@ struct pxe_menu {
 };
 
 struct pxe_context;
+
+/**
+ * Read a file
+ *
+ * @ctx: PXE context
+ * @file_path: Full path to filename to read
+ * @file_addr: String containing the to which to read the file
+ * @type: File type
+ * @fileszeip: Returns file size
+ */
 typedef int (*pxe_getfile_func)(struct pxe_context *ctx, const char *file_path,
-				char *file_addr, ulong *filesizep);
+				char *file_addr, enum image_type_t type,
+				ulong *filesizep);
 
 /**
  * struct pxe_context - context information for PXE parsing
