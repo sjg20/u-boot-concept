@@ -84,14 +84,15 @@ int bootmeth_boot(struct udevice *dev, struct bootflow *bflow)
 }
 
 int bootmeth_read_file(struct udevice *dev, struct bootflow *bflow,
-		       const char *file_path, ulong addr, ulong *sizep)
+		       const char *file_path, ulong addr,
+		       enum image_type_t type, ulong *sizep)
 {
 	const struct bootmeth_ops *ops = bootmeth_get_ops(dev);
 
 	if (!ops->read_file)
 		return -ENOSYS;
 
-	return ops->read_file(dev, bflow, file_path, addr, sizep);
+	return ops->read_file(dev, bflow, file_path, addr, type, sizep);
 }
 
 int bootmeth_get_bootflow(struct udevice *dev, struct bootflow *bflow)
@@ -376,9 +377,11 @@ int bootmeth_alloc_other(struct bootflow *bflow, const char *fname,
 }
 
 int bootmeth_common_read_file(struct udevice *dev, struct bootflow *bflow,
-			      const char *file_path, ulong addr, ulong *sizep)
+			      const char *file_path, ulong addr,
+			      enum image_type_t type, ulong *sizep)
 {
 	struct blk_desc *desc = NULL;
+	struct bootflow_img *img;
 	loff_t len_read;
 	loff_t size;
 	int ret;
@@ -404,6 +407,14 @@ int bootmeth_common_read_file(struct udevice *dev, struct bootflow *bflow,
 	if (ret)
 		return ret;
 	*sizep = len_read;
+
+	img = alist_add_placeholder(&bflow->images);
+	if (!img)
+		return log_msg_ret("cri", -ENOMEM);
+	img->fname = bflow->fname;
+	img->type = type;
+	img->addr = addr;
+	img->size = len_read;
 
 	return 0;
 }
