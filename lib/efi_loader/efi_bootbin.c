@@ -6,13 +6,16 @@
 
 #define LOG_CATEGORY LOGC_EFI
 
+#include <bootflow.h>
 #include <charset.h>
+#include <dm.h>
 #include <efi.h>
 #include <efi_loader.h>
 #include <env.h>
 #include <image.h>
 #include <log.h>
 #include <malloc.h>
+#include <mapmem.h>
 
 static struct efi_device_path *bootefi_image_path;
 static struct efi_device_path *bootefi_device_path;
@@ -249,6 +252,49 @@ out:
 			log_err("Uninstalling protocol interfaces failed\n");
 	}
 	efi_free_pool(file_path);
+
+	return ret;
+}
+
+efi_status_t efi_bootflow_run(struct bootflow *bflow)
+{
+	struct efi_device_path *device, *image;
+	const struct udevice *media_dev;
+	struct blk_desc *desc = NULL;
+	const char *dev_name;
+	char devnum_str[9];
+	char dirname[200];
+	char *last_slash;
+	efi_status_t ret;
+	void *fdt;
+
+	if (bflow->blk)
+		desc = dev_get_uclass_plat(bflow->blk);
+
+	media_dev = dev_get_parent(bflow->dev);
+	snprintf(devnum_str, sizeof(devnum_str), "%x:%x",
+		 desc ? desc->devnum : dev_seq(media_dev),
+		 bflow->part);
+
+	strlcpy(dirname, bflow->fname, sizeof(dirname));
+	last_slash = strrchr(dirname, '/');
+	if (last_slash)
+		*last_slash = '\0';
+	dev_name = device_get_uclass_id(media_dev) == UCLASS_MASS_STORAGE ?
+		 "usb" : blk_get_uclass_name(device_get_uclass_id(media_dev));
+
+	ret = calculate_paths(dev_name, devnum_str, dirname, &device, &image);
+	if (ret)
+		return ret;
+
+	if (bflow->flags & BOOTFLOWF_USE_BUILTIN_FDT) {
+		log_debug("Booting with built-in fdt\n");
+		fdt = EFI_FDT_USE_INTERNAL;
+	} else {
+		log_debug("Booting with external fdt\n");
+		fdt = map_sysmem(bflow->fdt_addr, 0);
+	}
+	ret = efi_binary_run_(bflow->buf, bflow->size, fdt, device, image);
 
 	return ret;
 }
