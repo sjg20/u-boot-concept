@@ -110,19 +110,14 @@ static void set_efi_bootdev(struct blk_desc *desc, struct bootflow *bflow)
 static int efiload_read_file(struct bootflow *bflow, ulong addr)
 {
 	struct blk_desc *desc = NULL;
-	loff_t bytes_read;
+	ulong size;
 	int ret;
 
 	if (bflow->blk)
 		 desc = dev_get_uclass_plat(bflow->blk);
-	ret = bootmeth_setup_fs(bflow, desc);
-	if (ret)
-		return log_msg_ret("set", ret);
 
-	ret = fs_read(bflow->fname, addr, 0, bflow->size, &bytes_read);
-	if (ret)
-		return log_msg_ret("read", ret);
-	bflow->buf = map_sysmem(addr, bflow->size);
+	ret = bootmeth_common_read_file(bflow->method, bflow, bflow->fname,
+					addr, &size);
 
 	set_efi_bootdev(desc, bflow);
 
