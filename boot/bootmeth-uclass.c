@@ -364,9 +364,11 @@ int bootmeth_alloc_file(struct bootflow *bflow, uint size_limit, uint align,
 }
 
 int bootmeth_alloc_other(struct bootflow *bflow, const char *fname,
-			 void **bufp, uint *sizep)
+			 enum image_type_t type, void **bufp, uint *sizep)
 {
 	struct blk_desc *desc = NULL;
+	struct bootflow_img *img;
+	char *img_fname;
 	char path[200];
 	loff_t size;
 	void *buf;
@@ -392,6 +394,17 @@ int bootmeth_alloc_other(struct bootflow *bflow, const char *fname,
 	ret = fs_read_alloc(path, size, 0, &buf);
 	if (ret)
 		return log_msg_ret("all", ret);
+
+	img_fname = strdup(fname);
+	if (!img_fname)
+		return log_msg_ret("alf", -ENOMEM);
+	img = alist_add_placeholder(&bflow->images);
+	if (!img)
+		return log_msg_ret("als", -ENOMEM);
+	img->fname = img_fname;
+	img->type = type;
+	img->addr = map_to_sysmem(buf);
+	img->size = size;
 
 	*bufp = buf;
 	*sizep = size;
