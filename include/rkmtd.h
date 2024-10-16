@@ -11,7 +11,7 @@
 #define __RKMTD__
 
 #include <part_efi.h>
-#include <u-boot/uuid.h>
+#include <uuid.h>
 
 #define LBA			64 + 512 + 33
 

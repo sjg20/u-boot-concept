@@ -8,7 +8,7 @@
 
 #include <efi.h>
 #include <efi_api.h>
-#include <u-boot/uuid.h>
+#include <uuid.h>
 
 void efi_show_tables(struct efi_system_table *systab)
 {

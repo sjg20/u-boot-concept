@@ -9,7 +9,7 @@
 #include <dm.h>
 #include <irq.h>
 #include <malloc.h>
-#include <u-boot/uuid.h>
+#include <uuid.h>
 #include <acpi/acpigen.h>
 #include <acpi/acpi_device.h>
 #include <acpi/acpi_table.h>

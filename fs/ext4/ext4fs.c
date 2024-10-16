@@ -27,7 +27,7 @@
 #include <div64.h>
 #include <malloc.h>
 #include <part.h>
-#include <u-boot/uuid.h>
+#include <uuid.h>
 
 int ext4fs_symlinknest;
 struct ext_filesystem ext_fs;

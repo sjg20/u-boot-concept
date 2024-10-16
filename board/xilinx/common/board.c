@@ -30,7 +30,7 @@
 #include <soc.h>
 #include <linux/ctype.h>
 #include <linux/kernel.h>
-#include <u-boot/uuid.h>
+#include <uuid.h>
 
 #include "fru.h"
 

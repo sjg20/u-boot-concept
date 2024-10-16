@@ -7,7 +7,7 @@
 
 #include <config.h>
 #include <malloc.h>
-#include <u-boot/uuid.h>
+#include <uuid.h>
 #include <linux/time.h>
 #include "btrfs.h"
 #include "crypto/hash.h"

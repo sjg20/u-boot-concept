@@ -11,7 +11,7 @@
 #include <log.h>
 #include <malloc.h>
 #include <sort.h>
-#include <u-boot/uuid.h>
+#include <uuid.h>
 #include <asm/global_data.h>
 
 DECLARE_GLOBAL_DATA_PTR;

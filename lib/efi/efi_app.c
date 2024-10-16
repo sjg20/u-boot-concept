@@ -17,7 +17,7 @@
 #include <init.h>
 #include <malloc.h>
 #include <sysreset.h>
-#include <u-boot/uuid.h>
+#include <uuid.h>
 #include <asm/global_data.h>
 #include <linux/err.h>
 #include <linux/types.h>

@@ -10,7 +10,7 @@
 #include <log.h>
 #include <malloc.h>
 #include <mtd.h>
-#include <u-boot/uuid.h>
+#include <uuid.h>
 #include <stdio.h>
 
 #include <dm/ofnode.h>
