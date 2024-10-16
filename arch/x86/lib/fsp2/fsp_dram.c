@@ -4,6 +4,7 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
+#define LOG_DEBUG
 #define LOG_CATEGORY LOGC_ARCH
 
 #include <handoff.h>
@@ -66,6 +67,7 @@ int dram_init(void)
 			return -ESTRPIPE;
 		}
 		gd->ram_size = ho->ram_size;
+		log_debug("ho %p ram %lx\n", ho, (ulong)ho->ram_size);
 		handoff_load_dram_banks(ho);
 #endif
 		ret = arch_fsps_preinit();

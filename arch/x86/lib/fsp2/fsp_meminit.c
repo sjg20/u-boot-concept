@@ -104,6 +104,7 @@ int fsp_memory_init(bool s3wake, bool use_spi_flash)
 	if (ret)
 		return log_msg_ret("SDRAM init fail\n", ret);
 
+	printf("fsp_memory_init() hob = %p\n", hob);
 	gd->arch.hob_list = hob;
 
 	ret = fspm_done(dev);

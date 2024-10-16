@@ -23,17 +23,27 @@ int fsp_scan_for_ram_size(void)
 	struct hob_res_desc *res_desc;
 
 	hdr = gd->arch.hob_list;
+	printf("gd %p size %x gd->arch.hob_list %p &ram_size %p\n", gd,
+	       sizeof(ram_size), gd->arch.hob_list, &ram_size);
 	while (!end_of_hob(hdr)) {
+		printf("hob type %x\n", hdr->type);
 		if (hdr->type == HOB_TYPE_RES_DESC) {
 			res_desc = (struct hob_res_desc *)hdr;
+			printf("- res_desc %x %lx\n", res_desc->type,
+			       (ulong)res_desc->len);
 			if (res_desc->type == RES_SYS_MEM ||
-			    res_desc->type == RES_MEM_RESERVED)
+			    res_desc->type == RES_MEM_RESERVED) {
+				printf("   - expect %lx\n ",
+				       (ulong)(ram_size + res_desc->len));
 				ram_size += res_desc->len;
+				printf("   - got %llx\n ", ram_size);
+			}
 		}
 		hdr = get_next_hob(hdr);
 	}
 
 	gd->ram_size = ram_size;
+	printf("FSP ram size %llx %llx\n", ram_size, gd->ram_size);
 	post_code(POST_DRAM);
 
 	return 0;

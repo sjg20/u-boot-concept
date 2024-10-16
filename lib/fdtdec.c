@@ -1667,7 +1667,7 @@ static void setup_multi_dtb_fit(void)
 int fdtdec_setup(void)
 {
 	int ret = -ENOENT;
-
+#if 0
 	/*
 	 * If allowing a bloblist, check that first. There was discussion about
 	 * adding an OF_BLOBLIST Kconfig, but this was rejected.
@@ -1692,7 +1692,7 @@ int fdtdec_setup(void)
 			}
 		}
 	}
-
+#endif
 	/* Otherwise, the devicetree is typically appended to U-Boot */
 	if (ret) {
 		if (IS_ENABLED(CONFIG_OF_SEPARATE)) {
