@@ -11,6 +11,9 @@
 
 #include <stdbool.h>
 
+/* Set this to 1 to support a 'full' flag */
+#define MEMBUF_FULL	0
+
 /**
  * @struct membuf: holds the state of a membuff - it is used for input and
  * output buffers. The buffer extends from @start to (@start + @size - 1).
@@ -36,6 +39,9 @@ struct membuf {
 	char *end;		/** the end of the buffer (start + length) */
 	char *head;		/** current buffer head */
 	char *tail;		/** current buffer tail */
+#if MEMBUF_FULL
+	bool full;		/** true if full (for when head == tail) */
+#endif
 };
 
 /**
