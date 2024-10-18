@@ -124,6 +124,10 @@
 			compatible = "u-boot,distro-efi";
 		};
 
+		efimgr {
+			compatible = "u-boot,efi-bootmgr";
+		};
+
 		theme {
 			font-size = <30>;
 			menu-inset = <3>;
