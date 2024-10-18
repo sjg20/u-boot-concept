@@ -23,6 +23,11 @@ static void membuf_zero(struct membuf *mb)
 static int membuf_check(struct unit_test_state *uts, struct membuf *mb,
 			int value)
 {
+	/* says it is full, but can't be */
+#if MEMBUF_FULL
+	ut_assert(!(mb->full && mb->head != mb->tail));
+#endif
+
 	/* head is out of range */
 	ut_assert(!(mb->head < mb->start || mb->head >= mb->end));
 
@@ -47,7 +52,7 @@ static int lib_test_membuf_one(struct unit_test_state *uts)
 		in[i + TEST_SIZE] = in[i];
 	}
 
-	test_size = TEST_SIZE;
+	test_size = TEST_SIZE + MEMBUF_FULL;
 
 	for (i = 1; i < TEST_COUNT; i++) {
 		membuf_zero(&mb);
@@ -92,7 +97,7 @@ static int lib_test_membuf_random(struct unit_test_state *uts)
 		in[i + TEST_SIZE] = in[i];
 	}
 
-	test_size = TEST_SIZE;
+	test_size = TEST_SIZE + MEMBUF_FULL;
 
 	inptr = in;
 	outptr = in;
@@ -145,7 +150,7 @@ static int lib_test_membuf_extend(struct unit_test_state *uts)
 		in[i + TEST_SIZE] = in[i];
 	}
 
-	test_size = TEST_SIZE - 1;
+	test_size = TEST_SIZE - 1 + MEMBUF_FULL;
 
 	for (cur = 0; cur <= test_size; cur++) {
 		ut_assertok(membuf_new(&mb, TEST_SIZE));
