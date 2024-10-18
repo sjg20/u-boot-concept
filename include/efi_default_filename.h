@@ -14,31 +14,21 @@
 
 #undef BOOTEFI_NAME
 
-#if HOST_ARCH == HOST_ARCH_X86_64
-#define BOOTEFI_NAME "BOOTX64.EFI"
-#endif
-
-#if HOST_ARCH == HOST_ARCH_X86
-#define BOOTEFI_NAME "BOOTIA32.EFI"
-#endif
-
-#if HOST_ARCH == HOST_ARCH_AARCH64
+#ifdef CONFIG_SANDBOX
+#define BOOTEFI_NAME "BOOTSBOX.EFI"
+#elif defined(CONFIG_ARM64)
 #define BOOTEFI_NAME "BOOTAA64.EFI"
-#endif
-
-#if HOST_ARCH == HOST_ARCH_ARM
+#elif defined(CONFIG_ARM)
 #define BOOTEFI_NAME "BOOTARM.EFI"
-#endif
-
-#if HOST_ARCH == HOST_ARCH_RISCV32
+#elif defined(CONFIG_X86_64)
+#define BOOTEFI_NAME "BOOTX64.EFI"
+#elif defined(CONFIG_X86)
+#define BOOTEFI_NAME "BOOTIA32.EFI"
+#elif defined(CONFIG_ARCH_RV32I)
 #define BOOTEFI_NAME "BOOTRISCV32.EFI"
-#endif
-
-#if HOST_ARCH == HOST_ARCH_RISCV64
+#elif defined(CONFIG_ARCH_RV64I)
 #define BOOTEFI_NAME "BOOTRISCV64.EFI"
-#endif
-
-#ifndef BOOTEFI_NAME
+#else
 #error Unsupported UEFI architecture
 #endif
 
