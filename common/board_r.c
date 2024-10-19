@@ -241,6 +241,10 @@ static int initr_dm(void)
 	if (ret)
 		return ret;
 
+	ret = dm_autoprobe();
+	if (ret)
+		return ret;
+
 	return 0;
 }
 #endif

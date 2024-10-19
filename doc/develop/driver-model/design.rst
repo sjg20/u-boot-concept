@@ -842,6 +842,16 @@ steps (see device_probe()):
       cause the uclass to do some housekeeping to record the device as
       activated and 'known' by the uclass.
 
+For some platforms, certain devices must be probed to get the platform into
+a working state. To help with this, drivers marked with DM_FLAG_PROBE_AFTER_BIND
+will be probed immediately after all devices are bound. For now, this happens in
+SPL, before relocation and after relocation. See the call to ``dm_autoprobe()``
+for where this is done.
+
+See here for discussion of this feature:
+
+:Link: https://patchwork.ozlabs.org/project/uboot/patch/20240626235717.272219-1-marex@denx.de/
+
 Running stage
 ^^^^^^^^^^^^^
 

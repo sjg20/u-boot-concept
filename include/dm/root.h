@@ -137,6 +137,16 @@ int dm_scan_other(bool pre_reloc_only);
 int dm_init_and_scan(bool pre_reloc_only);
 
 /**
+ * dm_autoprobe() - Probe devices which are marked for probe-after-bind
+ *
+ * This probes all devices with a DM_FLAG_PROBE_AFTER_BIND flag. It checks the
+ * entire tree, so parent nodes need not have the flag set.
+ *
+ * Return: 0 if OK, -ve on error
+ */
+int dm_autoprobe(void);
+
+/**
  * dm_init() - Initialise Driver Model structures
  *
  * This function will initialize roots of driver tree and class tree.

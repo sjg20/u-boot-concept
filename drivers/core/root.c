@@ -299,6 +299,17 @@ static int dm_probe_devices(struct udevice *dev)
 	return 0;
 }
 
+int dm_autoprobe(void)
+{
+	int ret;
+
+	ret = dm_probe_devices(gd->dm_root);
+	if (ret)
+		return log_msg_ret("pro", ret);
+
+	return 0;
+}
+
 /**
  * dm_scan() - Scan tables to bind devices
  *
@@ -331,7 +342,7 @@ static int dm_scan(bool pre_reloc_only)
 	if (ret)
 		return ret;
 
-	return dm_probe_devices(gd->dm_root);
+	return 0;
 }
 
 int dm_init_and_scan(bool pre_reloc_only)
