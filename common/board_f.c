@@ -811,8 +811,10 @@ static int initf_bootstage(void)
 
 static int initf_dm(void)
 {
-#if defined(CONFIG_DM) && CONFIG_IS_ENABLED(SYS_MALLOC_F)
 	int ret;
+
+	if (!CONFIG_IS_ENABLED(SYS_MALLOC_F))
+		return 0;
 
 	bootstage_start(BOOTSTAGE_ID_ACCUM_DM_F, "dm_f");
 	ret = dm_init_and_scan(true);
@@ -825,7 +827,6 @@ static int initf_dm(void)
 		if (ret)
 			return ret;
 	}
-#endif
 
 	return 0;
 }
