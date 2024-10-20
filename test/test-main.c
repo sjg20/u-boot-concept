@@ -404,6 +404,8 @@ static int test_post_run(struct unit_test_state *uts, struct unit_test *test)
 
 	blkcache_free();
 
+	ut_assertok(efi_mem_check(__func__));
+
 	return 0;
 }
 

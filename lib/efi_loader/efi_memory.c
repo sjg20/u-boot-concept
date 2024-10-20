@@ -44,11 +44,17 @@ static LIST_HEAD(efi_mem);
 void *efi_bounce_buffer;
 #endif
 
+#define CHECK_BYTE	'\x96'
+
+/* list of u64 addresses of pool blocks, to help find memory bugs */
+struct alist pool_list;
+
 /**
  * struct efi_pool_allocation - memory block allocated from pool
  *
  * @num_pages:	number of pages allocated
  * @checksum:	checksum
+ * @size:	size of memory allocated
  * @data:	allocated pool memory
  *
  * U-Boot services each UEFI AllocatePool() request as a separate
@@ -64,6 +70,7 @@ void *efi_bounce_buffer;
 struct efi_pool_allocation {
 	u64 num_pages;
 	u64 checksum;
+	uint size;
 	char data[] __aligned(ARCH_DMA_MINALIGN);
 };
 
@@ -632,7 +639,12 @@ efi_status_t efi_allocate_pool(enum efi_memory_type pool_type, efi_uintn_t size,
 		alloc = (struct efi_pool_allocation *)(uintptr_t)addr;
 		alloc->num_pages = num_pages;
 		alloc->checksum = checksum(alloc);
+		alloc->size = size;
+		memset(alloc->data, CHECK_BYTE, EFI_PAGE_SIZE - sizeof(*alloc));
 		*buffer = alloc->data;
+
+		alist_add(&pool_list, addr);
+		// printf("- alloc %llx size %lx\n", addr, size);
 	}
 
 	return r;
@@ -670,6 +682,8 @@ efi_status_t efi_free_pool(void *buffer)
 {
 	efi_status_t ret;
 	struct efi_pool_allocation *alloc;
+	u64 *addr = pool_list.data;
+	int i;
 
 	if (!buffer)
 		return EFI_INVALID_PARAMETER;
@@ -689,9 +703,41 @@ efi_status_t efi_free_pool(void *buffer)
 	/* Avoid double free */
 	alloc->checksum = 0;
 
+	/* Zero the allocation in the list */
+	for (i = 0; i < pool_list.count; i++, addr++) {
+		if (*addr == (ulong)alloc)
+			*addr = 0;
+	}
+
 	ret = efi_free_pages((uintptr_t)alloc, alloc->num_pages);
 
 	return ret;
+}
+
+int efi_mem_check(const char *tag)
+{
+	u64 *addr = pool_list.data;
+	int i;
+
+	for (i = 0; i < pool_list.count; i++, addr++) {
+		const struct efi_pool_allocation *alloc;
+		const char *ptr, *end;
+
+		if (!*addr)
+			continue;
+		alloc = (void *)(ulong)*addr;
+		// printf("addr %llx:\n", *addr);
+		for (ptr = alloc->data + alloc->size,
+		     end = (void *)alloc + EFI_PAGE_SIZE; ptr < end; ptr++) {
+			if (*ptr != CHECK_BYTE) {
+				printf("Error at %p: size %x offset %lx\n", ptr,
+				       alloc->size, (ulong)(ptr - alloc->data));
+				return -EFAULT;
+			}
+		}
+	}
+
+	return 0;
 }
 
 /**
@@ -849,6 +895,9 @@ int efi_memory_init(void)
 
 	efi_bounce_buffer = (void*)(uintptr_t)efi_bounce_buffer_addr;
 #endif
+
+	alist_init(&pool_list, sizeof(u64), 0);
+
 
 	return 0;
 }

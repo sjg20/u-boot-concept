@@ -669,4 +669,6 @@ int efi_get_mmap(struct efi_mem_desc **descp, int *sizep, uint *keyp,
  */
 void efi_show_tables(struct efi_system_table *systab);
 
+int efi_mem_check(const char *tag);
+
 #endif /* _LINUX_EFI_H */
