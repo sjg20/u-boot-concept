@@ -8,12 +8,8 @@
  * Copyright (c) 2022, Linaro Limited
  */
 
-#ifndef _EFI_DEFAULT_FILENAME_H
-#define _EFI_DEFAULT_FILENAME_H
-
+#include <efi.h>
 #include <host_arch.h>
-
-#undef BOOTEFI_NAME
 
 #ifdef CONFIG_SANDBOX
 
@@ -53,4 +49,7 @@
 
 #endif
 
-#endif
+const char *efi_get_basename(void)
+{
+	return BOOTEFI_NAME;
+}
