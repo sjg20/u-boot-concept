@@ -678,4 +678,29 @@ void efi_show_tables(struct efi_system_table *systab);
  */
 const char *efi_get_basename(void);
 
+#ifdef CONFIG_SANDBOX
+#include <asm/state.h>
+#endif
+
+static inline bool efi_use_host_arch(void)
+{
+#ifdef CONFIG_SANDBOX
+	struct sandbox_state *state = state_get_current();
+
+	return state->native;
+#else
+	return false;
+#endif
+}
+
+/**
+ * efi_get_pxe_arch() - Get the architecture value for PXE
+ *
+ * See:
+ * http://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xml
+ *
+ * Return: Architecture value
+ */
+int efi_get_pxe_arch(void);
+
 #endif /* _LINUX_EFI_H */
