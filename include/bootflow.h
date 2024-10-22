@@ -144,12 +144,14 @@ enum bootflow_img_t {
  * @type: Image type (IH_TYPE_...)
  * @addr: Address to which the image was loaded, 0 if not yet loaded
  * @size: Size of the image
+ * @fs_type: Filesystem where the file came from (FS_TYPE_ANY if not known)
  */
 struct bootflow_img {
 	char *fname;
 	enum bootflow_img_t type;
 	ulong addr;
 	ulong size;
+	uint fs_type;
 };
 
 /**
@@ -163,7 +165,7 @@ struct bootflow_img {
  *
  * Internal flags:
  * @BOOTFLOWIF_SINGLE_DEV: (internal) Just scan one bootdev
- * @BOOTFLOWIF_SKIP_GLOBAL: (internal) Don't scan global bootmeths
+` * @BOOTFLOWIF_SKIP_GLOBAL: (internal) Don't scan global bootmeths
  * @BOOTFLOWIF_SINGLE_UCLASS: (internal) Keep scanning through all devices in
  * this uclass (used with things like "mmc")
  * @BOOTFLOWIF_SINGLE_MEDIA: (internal) Scan one media device in the uclass (used
@@ -614,7 +616,7 @@ int bootflow_cmdline_auto(struct bootflow *bflow, const char *arg);
  */
 const char *bootflow_img_type_name(enum bootflow_img_t type);
 
-/*
+/**
  * bootflow_get_seq() - Get the sequence number of a bootflow
  *
  * Bootflows are numbered by their position in the bootstd list.

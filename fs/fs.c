@@ -5,6 +5,7 @@
 
 #define LOG_CATEGORY LOGC_CORE
 
+#include <bootstd.h>
 #include <command.h>
 #include <config.h>
 #include <display_options.h>
@@ -732,12 +733,14 @@ int do_size(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[],
 int do_load(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[],
 	    int fstype)
 {
+	struct blk_desc *dev_desc;
 	unsigned long addr;
 	const char *addr_str;
 	const char *filename;
 	loff_t bytes;
 	loff_t pos;
 	loff_t len_read;
+	int dev_part, type;
 	int ret;
 	unsigned long time;
 	char *ep;
@@ -781,6 +784,11 @@ int do_load(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[],
 	else
 		pos = 0;
 
+	/* save globals before they are cleared */
+	dev_desc = fs_dev_desc;
+	dev_part = fs_dev_part;
+	type = fs_type;
+
 	time = get_timer(0);
 	ret = _fs_read(filename, addr, pos, bytes, 1, &len_read);
 	time = get_timer(time);
@@ -803,6 +811,14 @@ int do_load(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[],
 
 	env_set_hex("fileaddr", addr);
 	env_set_hex("filesize", len_read);
+
+	if (IS_ENABLED(CONFIG_BOOTSTD) &&
+	    bootstd_img_add(dev_desc, dev_part, type, filename,
+			    (enum bootflow_img_t)IH_TYPE_INVALID, addr,
+			    len_read)) {
+		log_err("Failed to record file\n");
+		return CMD_RET_FAILURE;
+	}
 
 	return 0;
 }
