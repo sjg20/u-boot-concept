@@ -173,40 +173,6 @@ static efi_status_t efi_init_os_indications(void)
 }
 
 /**
- * efi_init_early() - Initialize core EFI and drivers
- *
- * Return:	status code
- */
-static int efi_init_early(void)
-{
-	efi_status_t ret;
-
-	/* Allow unaligned memory access */
-	allow_unaligned();
-
-	/* Initialize root node */
-	ret = efi_root_node_register();
-	if (ret != EFI_SUCCESS)
-		goto out;
-
-	ret = efi_console_register();
-	if (ret != EFI_SUCCESS)
-		goto out;
-
-	/* Initialize EFI driver uclass */
-	ret = efi_driver_init();
-	if (ret != EFI_SUCCESS)
-		goto out;
-
-	return 0;
-out:
-	/* never re-init UEFI subsystem */
-	efi_obj_list_initialized = ret;
-
-	return -1;
-}
-
-/**
  * efi_init_obj_list() - Initialize and populate EFI object list
  *
  * Return:	status code
@@ -219,15 +185,25 @@ efi_status_t efi_init_obj_list(void)
 	if (efi_obj_list_initialized != OBJ_LIST_NOT_INITIALIZED)
 		return efi_obj_list_initialized;
 
+	allow_unaligned();
+
 	if (efi_memory_init()) {
 		ret = EFI_OUT_OF_RESOURCES;
 		goto out;
 	}
 
-	if (efi_init_early()) {
-		ret = EFI_OUT_OF_RESOURCES;
+	ret = efi_root_node_register();
+	if (ret != EFI_SUCCESS)
 		goto out;
-	}
+
+	ret = efi_console_register();
+	if (ret != EFI_SUCCESS)
+		goto out;
+
+	/* Initialize EFI driver uclass */
+	ret = efi_driver_init();
+	if (ret != EFI_SUCCESS)
+		goto out;
 
 	/* Set up console modes */
 	efi_setup_console_size();
