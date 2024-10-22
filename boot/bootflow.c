@@ -988,3 +988,24 @@ int bootflow_get_seq(const struct bootflow *bflow)
 
 	return alist_calc_index(&std->bootflows, bflow);
 }
+
+struct bootflow_img *bootflow_img_add(struct bootflow *bflow, const char *fname,
+				      enum bootflow_img_t type, ulong addr,
+				      ulong size)
+{
+	struct bootflow_img img, *ptr;
+
+	memset(&img, '\0', sizeof(struct bootflow_img));
+	img.fname = strdup(fname);
+	if (!img.fname)
+		return NULL;
+
+	img.type = type;
+	img.addr = addr;
+	img.size = size;
+	ptr = alist_add(&bflow->images, img);
+	if (!ptr)
+		return NULL;
+
+	return ptr;
+}

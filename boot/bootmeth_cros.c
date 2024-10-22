@@ -206,7 +206,6 @@ static int cros_read_buf(struct bootflow *bflow, void *buf, ulong size,
 {
 	struct blk_desc *desc = dev_get_uclass_plat(bflow->blk);
 	ulong base, setup, cmdline, kern_base;
-	struct bootflow_img img;
 	ulong num_blks;
 	int ret;
 
@@ -245,24 +244,14 @@ static int cros_read_buf(struct bootflow *bflow, void *buf, ulong size,
 	if (ret)
 		return log_msg_ret("cmd", ret);
 
-	img.fname = strdup("setup");
-	if (!img.fname)
-		return log_msg_ret("cri", -ENOMEM);
-	img.type = (enum bootflow_img_t)IH_TYPE_X86_SETUP;
-	img.addr = setup;
-	img.size = 0x3000;
-	if (!alist_add(&bflow->images, img))
+	if (!bootflow_img_add(bflow, "setup",
+			      (enum bootflow_img_t)IH_TYPE_X86_SETUP,
+			      setup, 0x3000))
 		return log_msg_ret("cri", -ENOMEM);
 
 	bflow->x86_setup = map_sysmem(setup, 0);
 
-	img.fname = strdup("cmdline");
-	if (!img.fname)
-		return log_msg_ret("cri", -ENOMEM);
-	img.type = BFI_CMDLINE;
-	img.addr = cmdline;
-	img.size = 0x1000;
-	if (!alist_add(&bflow->images, img))
+	if (!bootflow_img_add(bflow, "cmdline", BFI_CMDLINE, cmdline, 0x1000))
 		return log_msg_ret("cri", -ENOMEM);
 
 	return 0;
@@ -283,7 +272,6 @@ static int cros_read_info(struct bootflow *bflow, const char *uuid,
 	struct udevice *blk = bflow->blk;
 	struct blk_desc *desc = dev_get_uclass_plat(blk);
 	ulong offset, size, before_base;
-	struct bootflow_img img;
 	void *buf;
 	int ret;
 
@@ -327,13 +315,9 @@ static int cros_read_info(struct bootflow *bflow, const char *uuid,
 	}
 	priv->info_buf = buf;
 
-	img.fname = strdup("kernel");
-	if (!img.fname)
-		return log_msg_ret("cri", -ENOMEM);
-	img.type = (enum bootflow_img_t)IH_TYPE_KERNEL;
-	img.addr = 0;
-	img.size = priv->body_size;
-	if (!alist_add(&bflow->images, img))
+	if (!bootflow_img_add(bflow, "kernel",
+			      (enum bootflow_img_t)IH_TYPE_KERNEL, 0,
+			      priv->body_size))
 		return log_msg_ret("cri", -ENOMEM);
 
 	return 0;
