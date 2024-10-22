@@ -444,9 +444,15 @@ struct global_data {
 #endif
 #if CONFIG_IS_ENABLED(EFI_LOADER)
 	/**
-	 * @efi_region: Start of EFI's early-memory region
+	 * @efi_region: Start of EFI's memory region
+	 *
+	 * Immediately after relocation this is within the U-Boot region, with
+	 * its own memory area.
+	 *
+	 * At some point, this space is exhausted, so a new EFI region starts
+	 * below the stack and grows downwards as needed.
 	 */
-	ulong efi_region;
+	ulong efi_base;
 #endif
 };
 #ifndef DO_DEPS_ONLY

@@ -179,6 +179,18 @@ static inline int lmb_read_check(phys_addr_t addr, phys_size_t len)
 	return lmb_alloc_addr(addr, len) == addr ? 0 : -1;
 }
 
+/**
+ * lmb_reduce_top() - Move the top of lmb memory downwards
+ *
+ * This is called to tell lmb that EFI wants more memory.
+ *
+ * @base: Current base of EFI memory
+ * @size: Requested additional amount of EFI memory
+ * @new_addr: Returns @base - @size on success
+ * Return: 0 on success, or -ve error code
+ */
+int lmb_reduce_top(ulong base, ulong size, phys_addr_t *new_addr);
+
 #endif /* __KERNEL__ */
 
 #endif /* _LINUX_LMB_H */

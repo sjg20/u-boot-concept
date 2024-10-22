@@ -219,8 +219,6 @@ static void lmb_reserve_uboot_region(void)
 	 */
 	debug("## Current stack ends at 0x%08lx ", (ulong)rsv_start);
 
-	/* adjust sp by 16K to be safe */
-	rsv_start -= SZ_16K;
 	for (bank = 0; bank < CONFIG_NR_DRAM_BANKS; bank++) {
 		if (!gd->bd->bi_dram[bank].size ||
 		    rsv_start < gd->bd->bi_dram[bank].start)
@@ -242,6 +240,18 @@ static void lmb_reserve_uboot_region(void)
 
 		break;
 	}
+}
+
+int lmb_reduce_top(ulong base, ulong size, phys_addr_t *new_addr)
+{
+	long addr;
+
+	*new_addr = base - size;
+	addr = lmb_reserve_flags(*new_addr, size, LMB_NOOVERWRITE);
+	if (addr < 0)
+		return -EFAULT;
+
+	return 0;
 }
 
 static void lmb_reserve_common(void *fdt_blob)

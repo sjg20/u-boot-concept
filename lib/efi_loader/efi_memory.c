@@ -481,9 +481,11 @@ efi_status_t efi_allocate_pages(enum efi_allocate_type type,
 	switch (type) {
 	case EFI_ALLOCATE_ANY_PAGES:
 		/* Any page */
-		addr = (u64)lmb_alloc_flags(len, EFI_PAGE_SIZE, flags);
-		if (!addr)
+		if (lmb_reduce_top(gd->efi_base, len, &addr))
 			return EFI_OUT_OF_RESOURCES;
+
+		gd->efi_base = addr;
+		*memory = addr;
 		break;
 	case EFI_ALLOCATE_MAX_ADDRESS:
 		/* Max address */
@@ -837,7 +839,7 @@ int efi_memory_init(void)
 	efi_status_t ret;
 
 	/* restrict EFI to its own region until efi_memory_coop() is called */
-	ret = efi_add_memory_map_pg((ulong)map_sysmem(gd->efi_region, 0),
+	ret = efi_add_memory_map_pg((ulong)map_sysmem(gd->efi_base, 0),
 				    EFI_EARLY_REGION_SIZE >> EFI_PAGE_SHIFT,
 				    EFI_CONVENTIONAL_MEMORY, false);
 
@@ -867,6 +869,10 @@ int efi_memory_coop(void)
 	efi_bounce_buffer = (void*)(uintptr_t)efi_bounce_buffer_addr;
 #endif
 
+	/* set up the bottom limit of EFI memory */
+	gd->efi_base = ALIGN_DOWN(gd->start_addr_sp - CONFIG_STACK_SIZE,
+				  EFI_PAGE_SIZE);
+
 	return 0;
 }
 
@@ -877,9 +883,9 @@ static int reserve_efi_region(void)
 	 * and there are three allocations, allow 16KB of memory, enough for
 	 * four. This can be increased as needed.
 	 */
-	gd->efi_region = ALIGN_DOWN(gd->start_addr_sp - EFI_EARLY_REGION_SIZE,
-				    SZ_4K);
-	gd->start_addr_sp = gd->efi_region;
+	gd->efi_base = ALIGN_DOWN(gd->start_addr_sp - EFI_EARLY_REGION_SIZE,
+				  EFI_PAGE_SIZE);
+	gd->start_addr_sp = gd->efi_base;
 
 	return 0;
 }
