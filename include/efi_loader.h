@@ -514,8 +514,6 @@ struct efi_register_notify_event {
 	struct list_head handles;
 };
 
-/* called at pre-initialization */
-int efi_init_early(void);
 /* Initialize efi execution environment */
 efi_status_t efi_init_obj_list(void);
 /* Append new boot option in BootOrder variable */

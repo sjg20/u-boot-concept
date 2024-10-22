@@ -173,13 +173,11 @@ static efi_status_t efi_init_os_indications(void)
 }
 
 /**
- * efi_init_early() - handle initialization at early stage
- *
- * expected to be called in board_init_r().
+ * efi_init_early() - Initialize core EFI and drivers
  *
  * Return:	status code
  */
-int efi_init_early(void)
+static int efi_init_early(void)
 {
 	efi_status_t ret;
 
@@ -220,6 +218,16 @@ efi_status_t efi_init_obj_list(void)
 	/* Initialize once only */
 	if (efi_obj_list_initialized != OBJ_LIST_NOT_INITIALIZED)
 		return efi_obj_list_initialized;
+
+	if (efi_memory_init()) {
+		ret = EFI_OUT_OF_RESOURCES;
+		goto out;
+	}
+
+	if (efi_init_early()) {
+		ret = EFI_OUT_OF_RESOURCES;
+		goto out;
+	}
 
 	/* Set up console modes */
 	efi_setup_console_size();

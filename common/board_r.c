@@ -633,9 +633,6 @@ static init_fnc_t init_sequence_r[] = {
 	set_cpu_clk_info, /* Setup clock information */
 #endif
 	initr_lmb,
-#ifdef CONFIG_EFI_LOADER
-	efi_memory_init,
-#endif
 	initr_binman,
 #ifdef CONFIG_FSP_VERSION2
 	arch_fsp_init_r,
@@ -676,9 +673,6 @@ static init_fnc_t init_sequence_r[] = {
 #if defined(CONFIG_PPC) || defined(CONFIG_M68K) || defined(CONFIG_X86)
 	/* initialize higher level parts of CPU like time base and timers */
 	cpu_init_r,
-#endif
-#ifdef CONFIG_EFI_LOADER
-	efi_init_early,
 #endif
 #ifdef CONFIG_CMD_NAND
 	initr_nand,
