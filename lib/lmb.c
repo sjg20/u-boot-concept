@@ -119,6 +119,18 @@ static void lmb_fix_over_lap_regions(struct alist *lmb_rgn_lst,
 	lmb_remove_region(lmb_rgn_lst, r2);
 }
 
+int lmb_reduce_top(ulong base, ulong size, phys_addr_t *new_addr)
+{
+	long addr;
+
+	*new_addr = base - size;
+	addr = lmb_reserve_flags(*new_addr, size, LMB_NOOVERWRITE);
+	if (addr < 0)
+		return -EFAULT;
+
+	return 0;
+}
+
 static long lmb_resize_regions(struct alist *lmb_rgn_lst,
 			       unsigned long idx_start,
 			       phys_addr_t base, phys_size_t size)

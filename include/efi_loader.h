@@ -17,9 +17,18 @@
 #include <pe.h>
 #include <linux/list.h>
 #include <linux/oid_registry.h>
+#include <linux/sizes.h>
 
 struct blk_desc;
 struct jmp_buf_data;
+
+/*
+ * Amount of memory to reserve for EFI before relocation. This must be a
+ * multiple of EFI_PAGE_SIZE. Since pool allocations consume 4KB each
+ * and there are three allocations, we need at least 12KB of memory. But
+ * partition-devices consume space also, so allow 'plenty'.
+ */
+#define EFI_EARLY_REGION_SIZE	SZ_256K
 
 #if CONFIG_IS_ENABLED(EFI_LOADER)
 
@@ -873,7 +882,7 @@ int efi_disk_remove(void *ctx, struct event *event);
 int efi_memory_init(void);
 
 /**
- * efi_memory_coop() - Allow EFI to use all available memory
+ * efi_memory_expand() - Allow EFI to use all available memory
  *
  * Up until this function is called, only a small portion of memory is available
  * for use by the EFI memory-allocator. This function is called at the
@@ -882,7 +891,7 @@ int efi_memory_init(void);
  *
  * Return: efi_status_t (EFI_SUCCESS on success)
  */
-int efi_memory_coop(void);
+int efi_memory_expand(void);
 
 /* Adds new or overrides configuration table entry to the system table */
 efi_status_t efi_install_configuration_table(const efi_guid_t *guid, void *table);

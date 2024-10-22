@@ -5,6 +5,7 @@
  *  Copyright (c) 2016 Alexander Graf
  */
 
+#include "efi.h"
 #define LOG_CATEGORY LOGC_EFI
 
 #include <efi_loader.h>
@@ -25,12 +26,6 @@ DECLARE_GLOBAL_DATA_PTR;
 
 /* Magic number identifying memory allocated from pool */
 #define EFI_ALLOC_POOL_MAGIC 0x1fe67ddf6491caa2
-
-/*
- * Amount of memory to reserve for EFI before relocation. This must be a
- * multiple of EFI_PAGE_SIZE
- */
-#define EFI_EARLY_REGION_SIZE	SZ_256K
 
 /* Set when all memory has been added for use by EFI */
 static bool efi_full_memory;
@@ -439,6 +434,90 @@ static efi_status_t efi_check_allocated(u64 addr, bool must_be_allocated)
 	return EFI_NOT_FOUND;
 }
 
+/**
+ * efi_find_free_memory() - find free memory pages
+ *
+ * @len:	size of memory area needed
+ * @max_addr:	highest address to allocate
+ * Return:	pointer to free memory area or 0
+ */
+static uint64_t efi_find_free_memory(uint64_t len, uint64_t max_addr)
+{
+	struct mem_node *lmem;
+
+	/*
+	 * Prealign input max address, so we simplify our matching
+	 * logic below and can just reuse it as return pointer.
+	 */
+	max_addr &= ~EFI_PAGE_MASK;
+
+	list_for_each_entry(lmem, &efi_mem, link) {
+		uint64_t desc_len = lmem->num_pages << EFI_PAGE_SHIFT;
+		uint64_t desc_end = lmem->base + desc_len;
+		uint64_t curmax = min(max_addr, desc_end);
+		uint64_t ret = curmax - len;
+
+		/* We only take memory from free RAM */
+		if (lmem->type != EFI_CONVENTIONAL_MEMORY)
+			continue;
+
+		/* Out of bounds for max_addr */
+		if ((ret + len) > max_addr)
+			continue;
+
+		/* Out of bounds for upper map limit */
+		if ((ret + len) > desc_end)
+			continue;
+
+		/* Out of bounds for lower map limit */
+		if (ret < lmem->base)
+			continue;
+
+		/* Return the highest address in this map within bounds */
+		return ret;
+	}
+
+	return 0;
+}
+
+static efi_status_t efi_reduce_base_by(ulong len)
+{
+	efi_status_t ret;
+	ulong remaining;
+
+	/* len must be 4K-aligned */
+	assert(!(len & (EFI_PAGE_SIZE - 1)));
+
+	remaining = gd->efi_base - gd->ram_base;
+	if (remaining < len)
+		return EFI_OUT_OF_RESOURCES;
+	gd->efi_base -= len;
+
+	ret = efi_add_memory_map_pg((ulong)map_sysmem(gd->efi_base, 0), len,
+				    EFI_CONVENTIONAL_MEMORY, false);
+
+	return ret;
+}
+
+static efi_status_t efi_reduce_base_to(ulong base)
+{
+	efi_status_t ret;
+	ulong len;
+
+	/* base must be 4K-aligned */
+	base = ALIGN(base, SZ_4K);
+
+	if (base < gd->ram_base || base >= gd->efi_base)
+		return EFI_OUT_OF_RESOURCES;
+	len = gd->efi_base - base;
+	gd->efi_base = base;
+
+	ret = efi_add_memory_map_pg((ulong)map_sysmem(gd->efi_base, 0), len,
+				    EFI_CONVENTIONAL_MEMORY, false);
+
+	return ret;
+}
+
 static efi_status_t efi_allocate_pages_(enum efi_allocate_type type,
 					enum efi_memory_type mem_type,
 					efi_uintn_t pages, uint64_t *memoryp)
@@ -463,17 +542,30 @@ static efi_status_t efi_allocate_pages_(enum efi_allocate_type type,
 	switch (type) {
 	case EFI_ALLOCATE_ANY_PAGES:
 		/* Any page */
-		addr = (u64)lmb_alloc_base_flags(len, EFI_PAGE_SIZE,
-						 LMB_ALLOC_ANYWHERE, flags);
-		if (!addr)
-			return EFI_OUT_OF_RESOURCES;
+		addr = efi_find_free_memory(len, -1ULL);
+		if (!addr) {
+			ret = efi_reduce_base_by(len);
+			if (ret != EFI_SUCCESS)
+				return ret;
+			addr = efi_find_free_memory(len, -1ULL);
+			if (!addr)
+				return EFI_OUT_OF_RESOURCES;
+		}
+		addr = map_to_sysmem((void *)(uintptr_t)addr);
 		break;
 	case EFI_ALLOCATE_MAX_ADDRESS:
 		/* Max address */
-		addr = (u64)lmb_alloc_base_flags(len, EFI_PAGE_SIZE, *memoryp,
-						 flags);
-		if (!addr)
-			return EFI_OUT_OF_RESOURCES;
+		addr = efi_find_free_memory(len, *memoryp);
+		if (!addr) {
+			ret = efi_reduce_base_to(map_to_sysmem(
+					(void *)(uintptr_t)addr) - len);
+			if (ret != EFI_SUCCESS)
+				return ret;
+			addr = efi_find_free_memory(len, *memoryp);
+			if (!addr)
+				return EFI_OUT_OF_RESOURCES;
+		}
+		addr = map_to_sysmem((void *)(uintptr_t)addr);
 		break;
 	case EFI_ALLOCATE_ADDRESS:
 		if (*memoryp & EFI_PAGE_MASK)
@@ -833,19 +925,24 @@ static void add_u_boot_and_runtime(void)
 	}
 }
 
-int efi_memory_init(void)
+static int efi_memory_set_base(void)
 {
-	efi_status_t ret;
+	// efi_status_t ret;
 
 	/* restrict EFI to its own region until efi_memory_coop() is called */
-	ret = efi_add_memory_map_pg(gd->efi_region,
-				    EFI_EARLY_REGION_SIZE >> EFI_PAGE_SHIFT,
-				    EFI_CONVENTIONAL_MEMORY, false);
+// 	ret = efi_add_memory_map_pg(gd->efi_region,
+// 				    EFI_EARLY_REGION_SIZE >> EFI_PAGE_SHIFT,
+// 				    EFI_CONVENTIONAL_MEMORY, false);
 
-	return ret;
+	/* set up the bottom limit of EFI memory */
+	gd->efi_base = ALIGN_DOWN(gd->start_addr_sp - CONFIG_STACK_SIZE,
+				  EFI_PAGE_SIZE);
+
+	return 0;
 }
+EVENT_SPY_SIMPLE(EVT_LAST_STAGE_INIT, efi_memory_set_base);
 
-int efi_memory_coop(void)
+int efi_memory_expand(void)
 {
 	if (efi_full_memory)
 		return 0;
@@ -873,14 +970,10 @@ int efi_memory_coop(void)
 
 static int reserve_efi_region(void)
 {
-	/*
-	 * Reserve some memory for EFI. Since pool allocations consume 4KB each
-	 * and there are three allocations, allow 16KB of memory, enough for
-	 * four. This can be increased as needed.
-	 */
-	gd->efi_region = ALIGN_DOWN(gd->start_addr_sp - EFI_EARLY_REGION_SIZE,
-				    SZ_4K);
-	gd->start_addr_sp = gd->efi_region;
+	/* Reserve some memory for EFI */
+	gd->efi_early_base = ALIGN_DOWN(gd->start_addr_sp -
+					EFI_EARLY_REGION_SIZE, EFI_PAGE_SIZE);
+	gd->start_addr_sp = gd->efi_early_base;
 
 	return 0;
 }

@@ -632,9 +632,6 @@ static init_fnc_t init_sequence_r[] = {
 	set_cpu_clk_info, /* Setup clock information */
 #endif
 	initr_lmb,
-#ifdef CONFIG_EFI_LOADER
-	efi_memory_init,
-#endif
 	initr_binman,
 #ifdef CONFIG_FSP_VERSION2
 	arch_fsp_init_r,
