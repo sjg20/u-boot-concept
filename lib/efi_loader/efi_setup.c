@@ -228,11 +228,6 @@ efi_status_t efi_init_obj_list(void)
 	if (efi_obj_list_initialized != OBJ_LIST_NOT_INITIALIZED)
 		return efi_obj_list_initialized;
 
-	/* Allow EFI to use all memory */
-	ret = efi_memory_coop();
-	if (ret != EFI_SUCCESS)
-		goto out;
-
 	/* Set up console modes */
 	efi_setup_console_size();
 
@@ -354,6 +349,11 @@ efi_status_t efi_init_obj_list(void)
 
 	/* Initialize EFI runtime services */
 	ret = efi_reset_system_init();
+	if (ret != EFI_SUCCESS)
+		goto out;
+
+	/* Allow EFI to use all memory, growing downwards */
+	ret = efi_memory_expand();
 	if (ret != EFI_SUCCESS)
 		goto out;
 

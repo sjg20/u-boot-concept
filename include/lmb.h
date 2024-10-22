@@ -207,6 +207,18 @@ phys_addr_t io_lmb_alloc(struct lmb *io_lmb, phys_size_t size, ulong align);
  */
 long io_lmb_free(struct lmb *io_lmb, phys_addr_t base, phys_size_t size);
 
+/*
+ * lmb_reduce_top() - Move the top of lmb memory downwards
+ *
+ * This is called to tell lmb that EFI wants more memory.
+ *
+ * @base: Current base of EFI memory
+ * @size: Requested additional amount of EFI memory
+ * @new_addr: Returns @base - @size on success
+ * Return: 0 on success, or -ve error code
+ */
+int lmb_reduce_top(ulong base, ulong size, phys_addr_t *new_addr);
+
 #endif /* __KERNEL__ */
 
 #endif /* _LINUX_LMB_H */

@@ -444,9 +444,23 @@ struct global_data {
 #endif
 #if CONFIG_IS_ENABLED(EFI_LOADER)
 	/**
-	 * @efi_region: Start of EFI's early-memory region
+	 * @efi_early_base: Base address of EFI's early memory-region
+	 *
+	 * Immediately after relocation this is within the U-Boot region, with
+	 * its own memory area.
+	 *
+	 * At some point, this space is exhausted, so a new EFI region starts
+	 * below the stack and grows downwards as needed. See @efi_base
 	 */
-	ulong efi_region;
+	ulong efi_early_base;
+
+	/**
+	 * @efi_base: Base address of EFI's expansion memory-region
+	 *
+	 * When early memory is exhausted, more is allocated starting from below
+	 * the stack. This is the base address, which grows downwards.
+	 */
+	ulong efi_base;
 #endif
 };
 #ifndef DO_DEPS_ONLY
@@ -579,6 +593,14 @@ static_assert(sizeof(struct global_data) == GD_SIZE);
 #define gd_video_top()		0
 #define gd_video_bottom()	0
 #define gd_video_size()		0
+#endif
+
+#if CONFIG_IS_ENABLED(EFI_LOADER)
+#define gd_efi_early_base()	gd->efi_early_base
+#define gd_efi_base()		gd->efi_base
+#else
+#define gd_efi_early_base()	0
+#define gd_efi_base()		0
 #endif
 
 /**

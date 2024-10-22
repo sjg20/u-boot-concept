@@ -37,14 +37,6 @@
 			size = <0x4000>;
 			alignment = <0x2000>;
 		};
-
-		reservation_test1: restest@a000 {
-			reg = <0x00d0a000 0x2000>;
-		};
-
-		reservation_test2: restest@7000 {
-			reg = <0x00d07000 0x1000>;
-		};
 	};
 
 	cros_ec: cros-ec {
