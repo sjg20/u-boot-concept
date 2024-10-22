@@ -838,6 +838,8 @@ static void add_u_boot_and_runtime(void)
 
 int efi_memory_init(void)
 {
+	efi_status_t ret = EFI_SUCCESS;
+
 	efi_add_known_memory();
 
 	add_u_boot_and_runtime();
@@ -846,13 +848,15 @@ int efi_memory_init(void)
 	/* Request a 32bit 64MB bounce buffer region */
 	uint64_t efi_bounce_buffer_addr = 0xffffffff;
 
-	if (efi_allocate_pages(EFI_ALLOCATE_MAX_ADDRESS, EFI_BOOT_SERVICES_DATA,
-			       (64 * 1024 * 1024) >> EFI_PAGE_SHIFT,
-			       &efi_bounce_buffer_addr) != EFI_SUCCESS)
-		return -1;
+	ret = efi_allocate_pages(EFI_ALLOCATE_MAX_ADDRESS,
+				 EFI_BOOT_SERVICES_DATA,
+				 (64 * 1024 * 1024) >> EFI_PAGE_SHIFT,
+				 &efi_bounce_buffer_addr);
+	if (ret != EFI_SUCCESS)
+		return ret;
 
 	efi_bounce_buffer = (void*)(uintptr_t)efi_bounce_buffer_addr;
 #endif
 
-	return 0;
+	return ret;
 }
