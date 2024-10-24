@@ -70,7 +70,6 @@ int efi_log_show(void)
 	struct efil_hdr *hdr = bloblist_find(BLOBLISTT_EFI_LOG, 0);
 	struct efil_allocate_pages *rec;
 
-
 	printf("EFI log\n");
 	if (!hdr)
 		return -ENOENT;

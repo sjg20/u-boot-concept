@@ -8,6 +8,7 @@
 #define LOG_CATEGORY LOGC_EFI
 
 #include <efi_loader.h>
+#include <efi_log.h>
 #include <efi_variable.h>
 #include <log.h>
 #include <asm-generic/unaligned.h>
@@ -220,6 +221,12 @@ efi_status_t efi_init_obj_list(void)
 	/* Initialize once only */
 	if (efi_obj_list_initialized != OBJ_LIST_NOT_INITIALIZED)
 		return efi_obj_list_initialized;
+
+	if (IS_ENABLED(CONFIG_EFI_LOG)) {
+		ret = efi_log_init();
+		if (ret)
+			return EFI_BUFFER_TOO_SMALL;
+	}
 
 	/* Set up console modes */
 	efi_setup_console_size();

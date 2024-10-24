@@ -40,4 +40,6 @@ int efi_loge_allocate_pages(efi_status_t ret, uint64_t *memory);
  */
 int efi_log_show(void);
 
+int efi_log_init(void);
+
 #endif /* __EFI_LOG_H */
