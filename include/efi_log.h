@@ -17,6 +17,8 @@ struct efil_allocate_pages {
 	int memory_type;
 	efi_uintn_t pages;
 	u64 *memory;
+	bool end;
+	efi_status_t ret;
 	u64 e_memory;
 };
 
@@ -27,13 +29,15 @@ struct efil_hdr {
 
 int efi_logs_allocate_pages(int type, int memory_type, efi_uintn_t pages,
 			    u64 *memory);
-int efi_loge_allocate_pages(efi_status_t r, uint64_t *memory);
+int efi_loge_allocate_pages(efi_status_t ret, uint64_t *memory);
 
 /**
  * efi_log_show() - Show the EFI log
  *
  * Displays the log of EFI boot-services calls
+ *
+ * Return: 0 on success, or -ve error code
  */
-void efi_log_show(void);
+int efi_log_show(void);
 
 #endif /* __EFI_LOG_H */

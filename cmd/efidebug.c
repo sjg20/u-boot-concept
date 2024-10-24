@@ -527,7 +527,10 @@ static int do_efi_show_images(struct cmd_tbl *cmdtp, int flag,
 static int do_efi_show_log(struct cmd_tbl *cmdtp, int flag,
 			   int argc, char *const argv[])
 {
-	efi_log_show();
+	if (efi_log_show()) {
+		printf("Failed\n");
+		return CMD_RET_FAILURE;
+	}
 
 	return CMD_RET_SUCCESS;
 }
