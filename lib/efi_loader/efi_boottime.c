@@ -432,7 +432,9 @@ static efi_status_t EFIAPI efi_allocate_pages_ext(int type, int memory_type,
 	efi_status_t r;
 
 	EFI_ENTRY("%d, %d, 0x%zx, %p", type, memory_type, pages, memory);
+	efi_logs_allocate_pages(type, memory_type, pages, memory);
 	r = efi_allocate_pages(type, memory_type, pages, memory);
+	efi_loge_allocate_pages(r, memory);
 	return EFI_EXIT(r);
 }
 

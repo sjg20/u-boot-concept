@@ -10,6 +10,7 @@
 #include <dm/device.h>
 #include <efi_dt_fixup.h>
 #include <efi_load_initrd.h>
+#include <efi_log.h>
 #include <efi_loader.h>
 #include <efi_rng.h>
 #include <efi_variable.h>
@@ -507,6 +508,26 @@ static int do_efi_show_images(struct cmd_tbl *cmdtp, int flag,
 			      int argc, char *const argv[])
 {
 	efi_print_image_infos(NULL);
+
+	return CMD_RET_SUCCESS;
+}
+
+/**
+ * do_efi_show_log() - show UEFI log of boot-services calls
+ *
+ * @cmdtp:	Command table
+ * @flag:	Command flag
+ * @argc:	Number of arguments
+ * @argv:	Argument array
+ * Return:	CMD_RET_SUCCESS on success, CMD_RET_RET_FAILURE on failure
+ *
+ * Implement efidebug "log" sub-command.
+ * Show UEFI log records.
+ */
+static int do_efi_show_log(struct cmd_tbl *cmdtp, int flag,
+			   int argc, char *const argv[])
+{
+	efi_log_show();
 
 	return CMD_RET_SUCCESS;
 }
@@ -1586,6 +1607,7 @@ static struct cmd_tbl cmd_efidebug_sub[] = {
 			 "", ""),
 	U_BOOT_CMD_MKENT(images, CONFIG_SYS_MAXARGS, 1, do_efi_show_images,
 			 "", ""),
+	U_BOOT_CMD_MKENT(log, CONFIG_SYS_MAXARGS, 1, do_efi_show_log, "", ""),
 	U_BOOT_CMD_MKENT(memmap, CONFIG_SYS_MAXARGS, 1, do_efi_show_memmap,
 			 "", ""),
 	U_BOOT_CMD_MKENT(tables, CONFIG_SYS_MAXARGS, 1, do_efi_show_tables,
@@ -1620,6 +1642,11 @@ static int do_efidebug(struct cmd_tbl *cmdtp, int flag,
 
 	argc--; argv++;
 
+	cp = find_cmd_tbl(argv[0], cmd_efidebug_sub,
+			  ARRAY_SIZE(cmd_efidebug_sub));
+	if (!cp)
+		return CMD_RET_USAGE;
+
 	/* Initialize UEFI drivers */
 	r = efi_init_obj_list();
 	if (r != EFI_SUCCESS) {
@@ -1627,11 +1654,6 @@ static int do_efidebug(struct cmd_tbl *cmdtp, int flag,
 		       r & ~EFI_ERROR_MASK);
 		return CMD_RET_FAILURE;
 	}
-
-	cp = find_cmd_tbl(argv[0], cmd_efidebug_sub,
-			  ARRAY_SIZE(cmd_efidebug_sub));
-	if (!cp)
-		return CMD_RET_USAGE;
 
 	return cp->cmd(cmdtp, flag, argc, argv);
 }
@@ -1680,6 +1702,8 @@ U_BOOT_LONGHELP(efidebug,
 	"  - show default EFI filename and PXE architecture\n"
 	"efidebug images\n"
 	"  - show loaded images\n"
+	"efidebug log\n"
+	"  - show UEFI log\n"
 	"efidebug memmap\n"
 	"  - show UEFI memory map\n"
 	"efidebug tables\n"
