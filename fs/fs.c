@@ -747,6 +747,11 @@ int do_load(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[],
 	if (argc > 7)
 		return CMD_RET_USAGE;
 
+	//HACK
+	//because EFI is integrated with DM we need to bring it up to map disks etc for DPs before
+	//this
+
+	efi_init_obj_list();
 	if (fs_set_blk_dev(argv[1], cmd_arg2(argc, argv), fstype)) {
 		log_err("Can't set block device\n");
 		return 1;
