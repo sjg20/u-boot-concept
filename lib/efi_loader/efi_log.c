@@ -20,7 +20,27 @@ static const char *tag_name[EFILT_COUNT] = {
 static const char *allocate_type_name[EFI_MAX_ALLOCATE_TYPE] = {
 	"any-pages",
 	"max-addr",
-	"alloc_addr",
+	"alloc-addr",
+};
+
+static const char *memory_type_name[EFI_MAX_MEMORY_TYPE] = {
+
+	"reserved",
+	"loader-code",
+	"loader-data",
+	"boot-code",
+	"boot-data",
+	"runtime-code",
+	"runtime-data",
+	"conventional",
+	"unusable-memory",
+	"acpi-reclaim",
+	"acpi-nvs",
+	"mmap-io",
+	"mmap-ioport",
+	"pal-code",
+	"persistent",
+	"unaccepted",
 };
 
 static int prep_rec(enum efil_tag tag, uint size, void **recp)
@@ -96,7 +116,25 @@ int efi_loge_allocate_pages(efi_status_t efi_ret, uint64_t *memory)
 
 static void show_enum(const char *type_name[], int type)
 {
-	printf("%s", type_name[type]);
+	printf("%s ", type_name[type]);
+}
+
+static void show_ulong(const char *prompt, ulong val)
+{
+	printf("%s %lx", prompt, val);
+	if (val >= 10)
+		printf("/%ld", val);
+	printf(" ");
+}
+
+static void show_addr(const char *prompt, ulong addr)
+{
+	printf("%s %lx ", prompt, addr);
+}
+
+static void show_ret(efi_status_t ret)
+{
+	printf("ret %ld", ret);
 }
 
 void show_rec(int seq, struct efil_rec_hdr *rec_hdr)
@@ -109,6 +147,14 @@ void show_rec(int seq, struct efil_rec_hdr *rec_hdr)
 		struct efil_allocate_pages *rec = start;
 
 		show_enum(allocate_type_name, rec->type);
+		show_enum(memory_type_name, rec->memory_type);
+		show_ulong("pages", (ulong)rec->pages);
+		show_addr("memory", (ulong)rec->memory);
+		if (rec_hdr->ended) {
+			show_addr("*memory",
+				  (ulong)map_to_sysmem((void *)rec->e_memory));
+			show_ret(rec_hdr->e_ret);
+		}
 	}
 	case EFILT_COUNT:
 		break;
