@@ -22,8 +22,18 @@ struct efil_allocate_pages {
 	u64 e_memory;
 };
 
+enum efil_tag {
+	EFILT_ALLOCATE_PAGES,
+};
+
+struct efil_rec_hdr {
+	enum efil_tag tag;
+	int size;
+};
+
 struct efil_hdr {
 	int upto;
+	int pending_upto;
 	int size;
 };
 

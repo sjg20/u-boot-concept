@@ -8,6 +8,7 @@
 #define LOG_CATEGORY LOGC_EFI
 
 #include <efi_loader.h>
+#include <efi_log.h>
 #include <init.h>
 #include <lmb.h>
 #include <log.h>
@@ -494,18 +495,9 @@ static uint64_t efi_find_free_memory(uint64_t len, uint64_t max_addr)
 	return 0;
 }
 
-/**
- * efi_allocate_pages - allocate memory pages
- *
- * @type:		type of allocation to be performed
- * @memory_type:	usage type of the allocated memory
- * @pages:		number of pages to be allocated
- * @memory:		allocated memory
- * Return:		status code
- */
-efi_status_t efi_allocate_pages(enum efi_allocate_type type,
-				enum efi_memory_type memory_type,
-				efi_uintn_t pages, uint64_t *memory)
+static efi_status_t efi_allocate_pages_(enum efi_allocate_type type,
+					enum efi_memory_type memory_type,
+					efi_uintn_t pages, uint64_t *memory)
 {
 	u64 len;
 	uint flags;
@@ -569,6 +561,19 @@ efi_status_t efi_allocate_pages(enum efi_allocate_type type,
 	*memory = addr;
 
 	return EFI_SUCCESS;
+}
+
+efi_status_t efi_allocate_pages(enum efi_allocate_type type,
+				enum efi_memory_type memory_type,
+				efi_uintn_t pages, uint64_t *memory)
+{
+	efi_status_t ret;
+
+	efi_logs_allocate_pages(type, memory_type, pages, memory);
+	ret = efi_allocate_pages_(type, memory_type, pages, memory);
+	efi_loge_allocate_pages(ret, memory);
+
+	return ret;
 }
 
 /**

@@ -13,21 +13,39 @@
 #include <errno.h>
 #include <log.h>
 
-static void *get_rec(uint size, int *errp)
+static int prep_rec(enum efil_tag tag, uint size, void **recp)
 {
 	struct efil_hdr *hdr = bloblist_find(BLOBLISTT_EFI_LOG, 0);
+	struct efil_rec_hdr *rec_hdr;
 
-	if (!hdr) {
-		*errp = -ENOENT;
-		return NULL;
-	}
-	if (hdr->upto + size > hdr->size) {
-		*errp = -ENOSPC;
-		return NULL;
-	}
-	*errp = 0;
+	if (!hdr)
+		return -ENOENT;
+	size += sizeof(struct efil_rec_hdr);
+	if (hdr->upto + size > hdr->size)
+		return -ENOSPC;
 
-	return (void *)hdr + hdr->upto;
+	hdr->pending_upto = hdr->upto + size;
+
+	rec_hdr = (void *)hdr + hdr->upto;
+	rec_hdr->size = size;
+	rec_hdr->tag = tag;
+	*recp = rec_hdr + 1;
+
+	return 0;
+}
+
+static void *finish_rec(void)
+{
+	struct efil_hdr *hdr = bloblist_find(BLOBLISTT_EFI_LOG, 0);
+	struct efil_rec_hdr *rec_hdr;
+
+	if (!hdr || !hdr->pending_upto)
+		return NULL;
+	rec_hdr = (void *)hdr + hdr->upto;
+	hdr->upto = hdr->pending_upto;
+	hdr->pending_upto = 0;
+
+	return rec_hdr + 1;
 }
 
 int efi_logs_allocate_pages(int type, int memory_type, efi_uintn_t pages,
@@ -36,7 +54,7 @@ int efi_logs_allocate_pages(int type, int memory_type, efi_uintn_t pages,
 	struct efil_allocate_pages *rec;
 	int ret;
 
-	rec = get_rec(sizeof(*rec), &ret);
+	ret = prep_rec(EFILT_ALLOCATE_PAGES, sizeof(*rec), (void **)&rec);
 	if (ret)
 		return ret;
 
@@ -53,11 +71,10 @@ int efi_logs_allocate_pages(int type, int memory_type, efi_uintn_t pages,
 int efi_loge_allocate_pages(efi_status_t efi_ret, uint64_t *memory)
 {
 	struct efil_allocate_pages *rec;
-	int ret;
 
-	rec = get_rec(sizeof(*rec), &ret);
-	if (ret)
-		return ret;
+	rec = finish_rec();
+	if (!rec)
+		return -ENOSPC;
 	rec->ret = efi_ret;
 	rec->e_memory = *memory;
 	rec->end = false;
@@ -68,13 +85,14 @@ int efi_loge_allocate_pages(efi_status_t efi_ret, uint64_t *memory)
 int efi_log_show(void)
 {
 	struct efil_hdr *hdr = bloblist_find(BLOBLISTT_EFI_LOG, 0);
-	struct efil_allocate_pages *rec;
+	struct efil_rec_hdr *rec_hdr;
 
 	printf("EFI log\n");
 	if (!hdr)
 		return -ENOENT;
-	rec = (void *)hdr + sizeof(*hdr);
-	while ((void *)rec - (void *)hdr < hdr->upto) {
+	for (rec_hdr = (void *)hdr + sizeof(*hdr);
+	     (void *)rec_hdr - (void *)hdr < hdr->upto;
+	     rec_hdr= (void *)rec_hdr+ rec_hdr->size) {
 		printf("here\n");
 	}
 
@@ -86,9 +104,11 @@ int efi_log_init(void)
 	struct efil_hdr *hdr;
 
 	hdr = bloblist_add(BLOBLISTT_EFI_LOG, CONFIG_EFI_LOG_SIZE, 0);
-	if (!hdr)
+	if (!hdr) {
+		log_warning("Failed to setup EFI log\n");
 		return log_msg_ret("eli", -ENOMEM);
-	hdr->upto = 0;
+	}
+	hdr->upto = sizeof(struct efil_hdr);
 	hdr->size = CONFIG_EFI_LOG_SIZE;
 
 	return 0;

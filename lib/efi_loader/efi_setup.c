@@ -187,6 +187,12 @@ int efi_init_early(void)
 	/* Allow unaligned memory access */
 	allow_unaligned();
 
+	if (IS_ENABLED(CONFIG_EFI_LOG)) {
+		ret = efi_log_init();
+		if (ret)
+			return -ENOSPC;
+	}
+
 	/* Initialize root node */
 	ret = efi_root_node_register();
 	if (ret != EFI_SUCCESS)
@@ -221,12 +227,6 @@ efi_status_t efi_init_obj_list(void)
 	/* Initialize once only */
 	if (efi_obj_list_initialized != OBJ_LIST_NOT_INITIALIZED)
 		return efi_obj_list_initialized;
-
-	if (IS_ENABLED(CONFIG_EFI_LOG)) {
-		ret = efi_log_init();
-		if (ret)
-			return EFI_BUFFER_TOO_SMALL;
-	}
 
 	/* Set up console modes */
 	efi_setup_console_size();
