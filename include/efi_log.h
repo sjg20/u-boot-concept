@@ -13,12 +13,10 @@
 #include <efi.h>
 
 struct efil_allocate_pages {
-	int type;
-	int memory_type;
+	enum efi_allocate_type type;
+	enum efi_memory_type memory_type;
 	efi_uintn_t pages;
 	u64 *memory;
-	bool end;
-	efi_status_t ret;
 	u64 e_memory;
 };
 
@@ -31,6 +29,8 @@ enum efil_tag {
 struct efil_rec_hdr {
 	enum efil_tag tag;
 	int size;
+	bool ended;
+	efi_status_t e_ret;
 };
 
 struct efil_hdr {

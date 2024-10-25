@@ -39,12 +39,13 @@ static int prep_rec(enum efil_tag tag, uint size, void **recp)
 	rec_hdr = (void *)hdr + hdr->upto;
 	rec_hdr->size = size;
 	rec_hdr->tag = tag;
+	rec_hdr->ended = false;
 	*recp = rec_hdr + 1;
 
 	return 0;
 }
 
-static void *finish_rec(void)
+static void *finish_rec(efi_status_t ret)
 {
 	struct efil_hdr *hdr = bloblist_find(BLOBLISTT_EFI_LOG, 0);
 	struct efil_rec_hdr *rec_hdr;
@@ -52,6 +53,10 @@ static void *finish_rec(void)
 	if (!hdr || !hdr->pending_upto)
 		return NULL;
 	rec_hdr = (void *)hdr + hdr->upto;
+	rec_hdr->ended = true;
+	rec_hdr->e_ret = ret;
+
+
 	hdr->upto = hdr->pending_upto;
 	hdr->pending_upto = 0;
 
@@ -73,7 +78,6 @@ int efi_logs_allocate_pages(int type, int memory_type, efi_uintn_t pages,
 	rec->pages = pages;
 	rec->memory = memory;
 	rec->e_memory = 0;
-	rec->end = false;
 
 	return 0;
 }
@@ -82,17 +86,18 @@ int efi_loge_allocate_pages(efi_status_t efi_ret, uint64_t *memory)
 {
 	struct efil_allocate_pages *rec;
 
-	rec = finish_rec();
+	rec = finish_rec(efi_ret);
 	if (!rec)
 		return -ENOSPC;
-	rec->ret = efi_ret;
 	rec->e_memory = *memory;
-	rec->end = false;
 
 	return 0;
 }
 
-static void show_enum(allocate_type_name, rec->type);
+static void show_enum(const char *type_name[], int type)
+{
+	printf("%s", type_name[type]);
+}
 
 void show_rec(int seq, struct efil_rec_hdr *rec_hdr)
 {
@@ -105,6 +110,8 @@ void show_rec(int seq, struct efil_rec_hdr *rec_hdr)
 
 		show_enum(allocate_type_name, rec->type);
 	}
+	case EFILT_COUNT:
+		break;
 	}
 	printf("\n");
 }
@@ -118,11 +125,10 @@ int efi_log_show(void)
 	printf("EFI log\n");
 	if (!hdr)
 		return -ENOENT;
-	for (i = 0; rec_hdr = (void *)hdr + sizeof(*hdr);
+	for (i = 0, rec_hdr = (void *)hdr + sizeof(*hdr);
 	     (void *)rec_hdr - (void *)hdr < hdr->upto;
 	     i++, rec_hdr = (void *)rec_hdr+ rec_hdr->size)
 		show_rec(i, rec_hdr);
-	}
 
 	return 0;
 }
