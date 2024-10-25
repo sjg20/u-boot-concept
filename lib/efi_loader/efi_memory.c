@@ -679,15 +679,8 @@ void *efi_alloc_aligned_pages(u64 len, int memory_type, size_t align)
 	return (void *)(uintptr_t)aligned_mem;
 }
 
-/**
- * efi_allocate_pool - allocate memory from pool
- *
- * @pool_type:	type of the pool from which memory is to be allocated
- * @size:	number of bytes to be allocated
- * @buffer:	allocated memory
- * Return:	status code
- */
-efi_status_t efi_allocate_pool(enum efi_memory_type pool_type, efi_uintn_t size, void **buffer)
+static efi_status_t efi_allocate_pool_(enum efi_memory_type pool_type,
+				       efi_uintn_t size, void **buffer)
 {
 	efi_status_t r;
 	u64 addr;
@@ -715,6 +708,26 @@ efi_status_t efi_allocate_pool(enum efi_memory_type pool_type, efi_uintn_t size,
 	return r;
 }
 
+/**
+ * efi_allocate_pool - allocate memory from pool
+ *
+ * @pool_type:	type of the pool from which memory is to be allocated
+ * @size:	number of bytes to be allocated
+ * @buffer:	allocated memory
+ * Return:	status code
+ */
+efi_status_t efi_allocate_pool(enum efi_memory_type pool_type, efi_uintn_t size,
+			       void **buffer)
+{
+	efi_status_t ret;
+
+	efi_logs_allocate_pool(pool_type, size, buffer);
+	ret = efi_allocate_pool_(pool_type, size, buffer);
+	efi_loge_allocate_pool(ret, buffer);
+
+	return ret;
+}
+
 void *efi_alloc(size_t size)
 {
 	void *buf;
@@ -728,13 +741,7 @@ void *efi_alloc(size_t size)
 	return buf;
 }
 
-/**
- * efi_free_pool() - free memory from pool
- *
- * @buffer:	start of memory to be freed
- * Return:	status code
- */
-efi_status_t efi_free_pool(void *buffer)
+efi_status_t efi_free_pool_(void *buffer)
 {
 	efi_status_t ret;
 	struct efi_pool_allocation *alloc;
@@ -758,6 +765,23 @@ efi_status_t efi_free_pool(void *buffer)
 	alloc->checksum = 0;
 
 	ret = efi_free_pages((uintptr_t)alloc, alloc->num_pages);
+
+	return ret;
+}
+
+/**
+ * efi_free_pool() - free memory from pool
+ *
+ * @buffer:	start of memory to be freed
+ * Return:	status code
+ */
+efi_status_t efi_free_pool(void *buffer)
+{
+	efi_status_t ret;
+
+	efi_logs_free_pool(buffer);
+	ret = efi_free_pool_(buffer);
+	efi_loge_free_pool(ret);
 
 	return ret;
 }
