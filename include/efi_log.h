@@ -20,8 +20,14 @@ struct efil_allocate_pages {
 	u64 e_memory;
 };
 
+struct efil_free_pages {
+	u64 memory;
+	efi_uintn_t pages;
+};
+
 enum efil_tag {
 	EFILT_ALLOCATE_PAGES,
+	EFILT_FREE_PAGES,
 
 	EFILT_COUNT,
 };
@@ -37,11 +43,16 @@ struct efil_hdr {
 	int upto;
 	int pending_upto;
 	int size;
+	bool full;
 };
 
 int efi_logs_allocate_pages(int type, int memory_type, efi_uintn_t pages,
 			    u64 *memory);
 int efi_loge_allocate_pages(efi_status_t ret, uint64_t *memory);
+
+int efi_logs_free_pages(uint64_t memory, efi_uintn_t pages);
+
+int efi_loge_free_pages(efi_status_t ret);
 
 /**
  * efi_log_show() - Show the EFI log

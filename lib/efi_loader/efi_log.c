@@ -15,6 +15,7 @@
 
 static const char *tag_name[EFILT_COUNT] = {
 	"allocate_pages",
+	"free_pages",
 };
 
 static const char *allocate_type_name[EFI_MAX_ALLOCATE_TYPE] = {
@@ -114,6 +115,32 @@ int efi_loge_allocate_pages(efi_status_t efi_ret, uint64_t *memory)
 	return 0;
 }
 
+int efi_logs_free_pages(uint64_t memory, efi_uintn_t pages)
+{
+	struct efil_free_pages *rec;
+	int ret;
+
+	ret = prep_rec(EFILT_FREE_PAGES, sizeof(*rec), (void **)&rec);
+	if (ret)
+		return ret;
+
+	rec->memory = memory;
+	rec->pages = pages;
+
+	return 0;
+}
+
+int efi_loge_free_pages(efi_status_t efi_ret)
+{
+	struct efil_allocate_pages *rec;
+
+	rec = finish_rec(efi_ret);
+	if (!rec)
+		return -ENOSPC;
+
+	return 0;
+}
+
 static void show_enum(const char *type_name[], int type)
 {
 	printf("%s ", type_name[type]);
@@ -155,6 +182,16 @@ void show_rec(int seq, struct efil_rec_hdr *rec_hdr)
 				  (ulong)map_to_sysmem((void *)rec->e_memory));
 			show_ret(rec_hdr->e_ret);
 		}
+		break;
+	}
+	case EFILT_FREE_PAGES: {
+		struct efil_free_pages *rec = start;
+
+		show_addr("memory", map_to_sysmem((void *)rec->memory));
+		show_ulong("pages", (ulong)rec->pages);
+		if (rec_hdr->ended)
+			show_ret(rec_hdr->e_ret);
+		break;
 	}
 	case EFILT_COUNT:
 		break;

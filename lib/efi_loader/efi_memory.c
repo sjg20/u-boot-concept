@@ -576,19 +576,12 @@ efi_status_t efi_allocate_pages(enum efi_allocate_type type,
 	return ret;
 }
 
-/**
- * efi_free_pages() - free memory pages
- *
- * @memory:	start of the memory area to be freed
- * @pages:	number of pages to be freed
- * Return:	status code
- */
-efi_status_t efi_free_pages(uint64_t memory, efi_uintn_t pages)
+efi_status_t efi_free_pages_(uint64_t memory, efi_uintn_t pages)
 {
+	efi_status_t ret;
 	u64 len;
 	uint flags;
 	long status;
-	efi_status_t ret;
 
 	ret = efi_check_allocated(memory, true);
 	if (ret != EFI_SUCCESS)
@@ -612,6 +605,24 @@ efi_status_t efi_free_pages(uint64_t memory, efi_uintn_t pages)
 				    false);
 	if (ret != EFI_SUCCESS)
 		return EFI_NOT_FOUND;
+
+	return ret;
+}
+
+/**
+ * efi_free_pages() - free memory pages
+ *
+ * @memory:	start of the memory area to be freed
+ * @pages:	number of pages to be freed
+ * Return:	status code
+ */
+efi_status_t efi_free_pages(uint64_t memory, efi_uintn_t pages)
+{
+	efi_status_t ret;
+
+	efi_logs_free_pages(memory, pages);
+	ret = efi_free_pages_(memory, pages);
+	efi_loge_free_pages(ret);
 
 	return ret;
 }
