@@ -13,6 +13,16 @@
 #include <errno.h>
 #include <log.h>
 
+static const char *tag_name[EFILT_COUNT] = {
+	"allocate_pages",
+};
+
+static const char *allocate_type_name[EFI_MAX_ALLOCATE_TYPE] = {
+	"any-pages",
+	"max-addr",
+	"alloc_addr",
+};
+
 static int prep_rec(enum efil_tag tag, uint size, void **recp)
 {
 	struct efil_hdr *hdr = bloblist_find(BLOBLISTT_EFI_LOG, 0);
@@ -82,18 +92,36 @@ int efi_loge_allocate_pages(efi_status_t efi_ret, uint64_t *memory)
 	return 0;
 }
 
+static void show_enum(allocate_type_name, rec->type);
+
+void show_rec(int seq, struct efil_rec_hdr *rec_hdr)
+{
+	void *start = (void *)rec_hdr + sizeof(struct efil_rec_hdr);
+
+	printf("%3d %s ", seq, tag_name[rec_hdr->tag]);
+	switch (rec_hdr->tag) {
+	case EFILT_ALLOCATE_PAGES: {
+		struct efil_allocate_pages *rec = start;
+
+		show_enum(allocate_type_name, rec->type);
+	}
+	}
+	printf("\n");
+}
+
 int efi_log_show(void)
 {
 	struct efil_hdr *hdr = bloblist_find(BLOBLISTT_EFI_LOG, 0);
 	struct efil_rec_hdr *rec_hdr;
+	int i;
 
 	printf("EFI log\n");
 	if (!hdr)
 		return -ENOENT;
-	for (rec_hdr = (void *)hdr + sizeof(*hdr);
+	for (i = 0; rec_hdr = (void *)hdr + sizeof(*hdr);
 	     (void *)rec_hdr - (void *)hdr < hdr->upto;
-	     rec_hdr= (void *)rec_hdr+ rec_hdr->size) {
-		printf("here\n");
+	     i++, rec_hdr = (void *)rec_hdr+ rec_hdr->size)
+		show_rec(i, rec_hdr);
 	}
 
 	return 0;

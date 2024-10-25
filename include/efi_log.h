@@ -24,6 +24,8 @@ struct efil_allocate_pages {
 
 enum efil_tag {
 	EFILT_ALLOCATE_PAGES,
+
+	EFILT_COUNT,
 };
 
 struct efil_rec_hdr {
