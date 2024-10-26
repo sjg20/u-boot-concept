@@ -14,9 +14,9 @@
 #include <log.h>
 
 static const char *tag_name[EFILT_COUNT] = {
-	"allocate_pages",
+	"alloc_pages",
 	"free_pages",
-	"allocate_pool",
+	"alloc_pool",
 	"free_pool",
 };
 
@@ -27,7 +27,6 @@ static const char *allocate_type_name[EFI_MAX_ALLOCATE_TYPE] = {
 };
 
 static const char *memory_type_name[EFI_MAX_MEMORY_TYPE] = {
-
 	"reserved",
 	"loader-code",
 	"loader-data",
@@ -44,6 +43,43 @@ static const char *memory_type_name[EFI_MAX_MEMORY_TYPE] = {
 	"pal-code",
 	"persistent",
 	"unaccepted",
+};
+
+static const char *error_name[EFI_ERROR_COUNT] = {
+	"OK",
+	"load",
+	"inval_param",
+	"unsupported",
+	"bad_buf_sz",
+	"buf_small",
+	"not_ready",
+	"device",
+	"write_prot",
+	"out_of_rsrc",
+	"vol_corrupt",
+	"vol_full",
+	"no_media",
+	"media_chg",
+	"not_found",
+	"no access",
+	"no_response",
+	"no_mapping",
+	"timeout",
+	"not_started",
+	"already",
+	"aborted",
+	"icmp",
+	"tftp",
+	"protocol",
+	"bad version",
+	"sec_violate",
+	"crc_error",
+	"end_media",
+	"end_file",
+	"inval_lang",
+	"compromised",
+	"ipaddr_busy",
+	"http",
 };
 
 static int prep_rec(enum efil_tag tag, uint size, void **recp)
@@ -217,27 +253,30 @@ static void show_addr(const char *prompt, ulong addr)
 
 static void show_ret(efi_status_t ret)
 {
-	if (ret)
-		printf("ret %lx", ret & ~EFI_ERROR_MASK);
+	int code;
+
+	code = ret & ~EFI_ERROR_MASK;
+	if (code < ARRAY_SIZE(error_name))
+		printf("ret %s", error_name[ret]);
 	else
-		printf("ret OK");
+		printf("ret %lx", ret);
 }
 
 void show_rec(int seq, struct efil_rec_hdr *rec_hdr)
 {
 	void *start = (void *)rec_hdr + sizeof(struct efil_rec_hdr);
 
-	printf("%3d %s ", seq, tag_name[rec_hdr->tag]);
+	printf("%3d %12s ", seq, tag_name[rec_hdr->tag]);
 	switch (rec_hdr->tag) {
 	case EFILT_ALLOCATE_PAGES: {
 		struct efil_allocate_pages *rec = start;
 
 		show_enum(allocate_type_name, rec->type);
 		show_enum(memory_type_name, rec->memory_type);
-		show_ulong("pages", (ulong)rec->pages);
-		show_addr("memory", (ulong)rec->memory);
+		show_ulong("pag", (ulong)rec->pages);
+		show_addr("mem", (ulong)rec->memory);
 		if (rec_hdr->ended) {
-			show_addr("*memory",
+			show_addr("*mem",
 				  (ulong)map_to_sysmem((void *)rec->e_memory));
 			show_ret(rec_hdr->e_ret);
 		}
@@ -246,8 +285,8 @@ void show_rec(int seq, struct efil_rec_hdr *rec_hdr)
 	case EFILT_FREE_PAGES: {
 		struct efil_free_pages *rec = start;
 
-		show_addr("memory", map_to_sysmem((void *)rec->memory));
-		show_ulong("pages", (ulong)rec->pages);
+		show_addr("mem", map_to_sysmem((void *)rec->memory));
+		show_ulong("pag", (ulong)rec->pages);
 		if (rec_hdr->ended)
 			show_ret(rec_hdr->e_ret);
 		break;
@@ -257,9 +296,9 @@ void show_rec(int seq, struct efil_rec_hdr *rec_hdr)
 
 		show_enum(memory_type_name, rec->pool_type);
 		show_ulong("size", (ulong)rec->size);
-		show_addr("buffer", (ulong)rec->buffer);
+		show_addr("buf", (ulong)rec->buffer);
 		if (rec_hdr->ended) {
-			show_addr("*buffer",
+			show_addr("*buf",
 				  (ulong)map_to_sysmem((void *)rec->e_buffer));
 			show_ret(rec_hdr->e_ret);
 		}
@@ -268,7 +307,7 @@ void show_rec(int seq, struct efil_rec_hdr *rec_hdr)
 	case EFILT_FREE_POOL: {
 		struct efil_free_pool *rec = start;
 
-		show_addr("buffer", map_to_sysmem(rec->buffer));
+		show_addr("buf", map_to_sysmem(rec->buffer));
 		if (rec_hdr->ended)
 			show_ret(rec_hdr->e_ret);
 		break;
