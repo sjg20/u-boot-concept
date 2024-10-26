@@ -8,6 +8,7 @@
 #define LOG_CATEGORY LOGC_EFI
 
 #include <efi_loader.h>
+#include <efi_log.h>
 #include <init.h>
 #include <lmb.h>
 #include <log.h>
@@ -438,18 +439,9 @@ static efi_status_t efi_check_allocated(u64 addr, bool must_be_allocated)
 	return EFI_NOT_FOUND;
 }
 
-/**
- * efi_allocate_pages - allocate memory pages
- *
- * @type:		type of allocation to be performed
- * @memory_type:	usage type of the allocated memory
- * @pages:		number of pages to be allocated
- * @memory:		allocated memory
- * Return:		status code
- */
-efi_status_t efi_allocate_pages(enum efi_allocate_type type,
-				enum efi_memory_type memory_type,
-				efi_uintn_t pages, uint64_t *memory)
+efi_status_t efi_allocate_pages_(enum efi_allocate_type type,
+				 enum efi_memory_type memory_type,
+				 efi_uintn_t pages, uint64_t *memory)
 {
 	u64 len;
 	uint flags;
@@ -511,13 +503,29 @@ efi_status_t efi_allocate_pages(enum efi_allocate_type type,
 }
 
 /**
- * efi_free_pages() - free memory pages
+ * efi_allocate_pages - allocate memory pages
  *
- * @memory:	start of the memory area to be freed
- * @pages:	number of pages to be freed
- * Return:	status code
+ * @type:		type of allocation to be performed
+ * @memory_type:	usage type of the allocated memory
+ * @pages:		number of pages to be allocated
+ * @memory:		allocated memory
+ * Return:		status code
  */
-efi_status_t efi_free_pages(uint64_t memory, efi_uintn_t pages)
+efi_status_t efi_allocate_pages(enum efi_allocate_type type,
+				enum efi_memory_type memory_type,
+				efi_uintn_t pages, uint64_t *memory)
+{
+	efi_status_t ret;
+	int ofs;
+
+	ofs = efi_logs_allocate_pages(type, memory_type, pages, memory);
+	ret = efi_allocate_pages_(type, memory_type, pages, memory);
+	efi_loge_allocate_pages(ofs, ret);
+
+	return ret;
+}
+
+efi_status_t efi_free_pages_(u64 memory, efi_uintn_t pages)
 {
 	u64 len;
 	uint flags;
@@ -546,6 +554,25 @@ efi_status_t efi_free_pages(uint64_t memory, efi_uintn_t pages)
 				    false);
 	if (ret != EFI_SUCCESS)
 		return EFI_NOT_FOUND;
+
+	return ret;
+}
+
+/**
+ * efi_free_pages() - free memory pages
+ *
+ * @memory:	start of the memory area to be freed
+ * @pages:	number of pages to be freed
+ * Return:	status code
+ */
+efi_status_t efi_free_pages(u64 memory, efi_uintn_t pages)
+{
+	efi_status_t ret;
+	int ofs;
+
+	ofs = efi_logs_free_pages(memory, pages);
+	ret = efi_free_pages_(memory, pages);
+	efi_loge_free_pages(ofs, ret);
 
 	return ret;
 }
@@ -602,15 +629,8 @@ void *efi_alloc_aligned_pages(u64 len, int memory_type, size_t align)
 	return (void *)(uintptr_t)aligned_mem;
 }
 
-/**
- * efi_allocate_pool - allocate memory from pool
- *
- * @pool_type:	type of the pool from which memory is to be allocated
- * @size:	number of bytes to be allocated
- * @buffer:	allocated memory
- * Return:	status code
- */
-efi_status_t efi_allocate_pool(enum efi_memory_type pool_type, efi_uintn_t size, void **buffer)
+static efi_status_t efi_allocate_pool_(enum efi_memory_type pool_type,
+				       efi_uintn_t size, void **buffer)
 {
 	efi_status_t r;
 	u64 addr;
@@ -639,6 +659,27 @@ efi_status_t efi_allocate_pool(enum efi_memory_type pool_type, efi_uintn_t size,
 }
 
 /**
+ * efi_allocate_pool - allocate memory from pool
+ *
+ * @pool_type:	type of the pool from which memory is to be allocated
+ * @size:	number of bytes to be allocated
+ * @buffer:	allocated memory
+ * Return:	status code
+ */
+efi_status_t efi_allocate_pool(enum efi_memory_type pool_type, efi_uintn_t size,
+			       void **buffer)
+{
+	efi_status_t ret;
+	int ofs;
+
+	ofs = efi_logs_allocate_pool(pool_type, size, buffer);
+	ret = efi_allocate_pool_(pool_type, size, buffer);
+	efi_loge_allocate_pool(ofs, ret);
+
+	return ret;
+}
+
+/**
  * efi_alloc() - allocate boot services data pool memory
  *
  * Allocate memory from pool and zero it out.
@@ -660,13 +701,7 @@ void *efi_alloc(size_t size)
 	return buf;
 }
 
-/**
- * efi_free_pool() - free memory from pool
- *
- * @buffer:	start of memory to be freed
- * Return:	status code
- */
-efi_status_t efi_free_pool(void *buffer)
+efi_status_t efi_free_pool_(void *buffer)
 {
 	efi_status_t ret;
 	struct efi_pool_allocation *alloc;
@@ -690,6 +725,24 @@ efi_status_t efi_free_pool(void *buffer)
 	alloc->checksum = 0;
 
 	ret = efi_free_pages((uintptr_t)alloc, alloc->num_pages);
+
+	return ret;
+}
+
+/**
+ * efi_free_pool() - free memory from pool
+ *
+ * @buffer:	start of memory to be freed
+ * Return:	status code
+ */
+efi_status_t efi_free_pool(void *buffer)
+{
+	efi_status_t ret;
+	int ofs;
+
+	ofs = efi_logs_free_pool(buffer);
+	ret = efi_free_pool_(buffer);
+	efi_loge_free_pool(ofs, ret);
 
 	return ret;
 }
