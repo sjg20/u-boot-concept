@@ -79,7 +79,6 @@ static void *finish_rec(efi_status_t ret)
 	rec_hdr->ended = true;
 	rec_hdr->e_ret = ret;
 
-
 	hdr->upto = hdr->pending_upto;
 	hdr->pending_upto = 0;
 

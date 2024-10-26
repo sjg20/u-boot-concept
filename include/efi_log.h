@@ -26,7 +26,7 @@ struct efil_free_pages {
 };
 
 struct efil_allocate_pool {
-	enum efi_allocate_type pool_type;
+	enum efi_memory_type pool_type;
 	efi_uintn_t size;
 	void *buffer;
 	void *e_buffer;
