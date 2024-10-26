@@ -50,6 +50,7 @@ static int prep_rec(enum efil_tag tag, uint size, void **recp)
 {
 	struct efil_hdr *hdr = bloblist_find(BLOBLISTT_EFI_LOG, 0);
 	struct efil_rec_hdr *rec_hdr;
+	int ofs;
 
 	if (!hdr)
 		return -ENOENT;
@@ -57,30 +58,28 @@ static int prep_rec(enum efil_tag tag, uint size, void **recp)
 	if (hdr->upto + size > hdr->size)
 		return -ENOSPC;
 
-	hdr->pending_upto = hdr->upto + size;
-
 	rec_hdr = (void *)hdr + hdr->upto;
 	rec_hdr->size = size;
 	rec_hdr->tag = tag;
 	rec_hdr->ended = false;
 	*recp = rec_hdr + 1;
 
-	return 0;
+	ofs = hdr->upto;
+	hdr->upto += size;
+
+	return ofs;
 }
 
-static void *finish_rec(efi_status_t ret)
+static void *finish_rec(int ofs, efi_status_t ret)
 {
 	struct efil_hdr *hdr = bloblist_find(BLOBLISTT_EFI_LOG, 0);
 	struct efil_rec_hdr *rec_hdr;
 
-	if (!hdr || !hdr->pending_upto)
+	if (!hdr || ofs < 0)
 		return NULL;
-	rec_hdr = (void *)hdr + hdr->upto;
+	rec_hdr = (void *)hdr + ofs;
 	rec_hdr->ended = true;
 	rec_hdr->e_ret = ret;
-
-	hdr->upto = hdr->pending_upto;
-	hdr->pending_upto = 0;
 
 	return rec_hdr + 1;
 }
@@ -93,7 +92,7 @@ int efi_logs_allocate_pages(enum efi_allocate_type type,
 	int ret;
 
 	ret = prep_rec(EFILT_ALLOCATE_PAGES, sizeof(*rec), (void **)&rec);
-	if (ret)
+	if (ret < 0)
 		return ret;
 
 	rec->type = type;
@@ -102,14 +101,14 @@ int efi_logs_allocate_pages(enum efi_allocate_type type,
 	rec->memory = memory;
 	rec->e_memory = 0;
 
-	return 0;
+	return ret;
 }
 
-int efi_loge_allocate_pages(efi_status_t efi_ret, uint64_t *memory)
+int efi_loge_allocate_pages(int ofs, efi_status_t efi_ret, uint64_t *memory)
 {
 	struct efil_allocate_pages *rec;
 
-	rec = finish_rec(efi_ret);
+	rec = finish_rec(ofs, efi_ret);
 	if (!rec)
 		return -ENOSPC;
 	rec->e_memory = *memory;
@@ -123,20 +122,20 @@ int efi_logs_free_pages(uint64_t memory, efi_uintn_t pages)
 	int ret;
 
 	ret = prep_rec(EFILT_FREE_PAGES, sizeof(*rec), (void **)&rec);
-	if (ret)
+	if (ret < 0)
 		return ret;
 
 	rec->memory = memory;
 	rec->pages = pages;
 
-	return 0;
+	return ret;
 }
 
-int efi_loge_free_pages(efi_status_t efi_ret)
+int efi_loge_free_pages(int ofs, efi_status_t efi_ret)
 {
 	struct efil_allocate_pages *rec;
 
-	rec = finish_rec(efi_ret);
+	rec = finish_rec(ofs, efi_ret);
 	if (!rec)
 		return -ENOSPC;
 
@@ -150,7 +149,7 @@ int efi_logs_allocate_pool(enum efi_memory_type pool_type, efi_uintn_t size,
 	int ret;
 
 	ret = prep_rec(EFILT_ALLOCATE_POOL, sizeof(*rec), (void **)&rec);
-	if (ret)
+	if (ret < 0)
 		return ret;
 
 	rec->pool_type = pool_type;
@@ -158,14 +157,14 @@ int efi_logs_allocate_pool(enum efi_memory_type pool_type, efi_uintn_t size,
 	rec->buffer = buffer;
 	rec->e_buffer = NULL;
 
-	return 0;
+	return ret;
 }
 
-int efi_loge_allocate_pool(efi_status_t efi_ret, void **buffer)
+int efi_loge_allocate_pool(int ofs, efi_status_t efi_ret, void **buffer)
 {
 	struct efil_allocate_pool *rec;
 
-	rec = finish_rec(efi_ret);
+	rec = finish_rec(ofs, efi_ret);
 	if (!rec)
 		return -ENOSPC;
 	rec->e_buffer = *buffer;
@@ -179,19 +178,19 @@ int efi_logs_free_pool(void *buffer)
 	int ret;
 
 	ret = prep_rec(EFILT_FREE_POOL, sizeof(*rec), (void **)&rec);
-	if (ret)
+	if (ret < 0)
 		return ret;
 
 	rec->buffer = buffer;
 
-	return 0;
+	return ret;
 }
 
-int efi_loge_free_pool(efi_status_t efi_ret)
+int efi_loge_free_pool(int ofs, efi_status_t efi_ret)
 {
 	struct efil_free_pool *rec;
 
-	rec = finish_rec(efi_ret);
+	rec = finish_rec(ofs, efi_ret);
 	if (!rec)
 		return -ENOSPC;
 

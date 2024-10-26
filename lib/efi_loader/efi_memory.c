@@ -568,10 +568,11 @@ efi_status_t efi_allocate_pages(enum efi_allocate_type type,
 				efi_uintn_t pages, uint64_t *memory)
 {
 	efi_status_t ret;
+	int ofs;
 
-	efi_logs_allocate_pages(type, memory_type, pages, memory);
+	ofs = efi_logs_allocate_pages(type, memory_type, pages, memory);
 	ret = efi_allocate_pages_(type, memory_type, pages, memory);
-	efi_loge_allocate_pages(ret, memory);
+	efi_loge_allocate_pages(ofs, ret, memory);
 
 	return ret;
 }
@@ -619,10 +620,11 @@ efi_status_t efi_free_pages_(uint64_t memory, efi_uintn_t pages)
 efi_status_t efi_free_pages(uint64_t memory, efi_uintn_t pages)
 {
 	efi_status_t ret;
+	int ofs;
 
-	efi_logs_free_pages(memory, pages);
+	ofs = efi_logs_free_pages(memory, pages);
 	ret = efi_free_pages_(memory, pages);
-	efi_loge_free_pages(ret);
+	efi_loge_free_pages(ofs, ret);
 
 	return ret;
 }
@@ -720,10 +722,11 @@ efi_status_t efi_allocate_pool(enum efi_memory_type pool_type, efi_uintn_t size,
 			       void **buffer)
 {
 	efi_status_t ret;
+	int ofs;
 
-	efi_logs_allocate_pool(pool_type, size, buffer);
+	ofs = efi_logs_allocate_pool(pool_type, size, buffer);
 	ret = efi_allocate_pool_(pool_type, size, buffer);
-	efi_loge_allocate_pool(ret, buffer);
+	efi_loge_allocate_pool(ofs, ret, buffer);
 
 	return ret;
 }
@@ -778,10 +781,11 @@ efi_status_t efi_free_pool_(void *buffer)
 efi_status_t efi_free_pool(void *buffer)
 {
 	efi_status_t ret;
+	int ofs;
 
-	efi_logs_free_pool(buffer);
+	ofs = efi_logs_free_pool(buffer);
 	ret = efi_free_pool_(buffer);
-	efi_loge_free_pool(ret);
+	efi_loge_free_pool(ofs, ret);
 
 	return ret;
 }

@@ -54,27 +54,25 @@ struct efil_rec_hdr {
 
 struct efil_hdr {
 	int upto;
-	int pending_upto;
 	int size;
-	bool full;
 };
 
 int efi_logs_allocate_pages(enum efi_allocate_type type,
 			    enum efi_memory_type memory_type, efi_uintn_t pages,
 			    u64 *memory);
-int efi_loge_allocate_pages(efi_status_t efi_ret, uint64_t *memory);
+int efi_loge_allocate_pages(int ofs, efi_status_t efi_ret, uint64_t *memory);
 
 int efi_logs_free_pages(uint64_t memory, efi_uintn_t pages);
 
-int efi_loge_free_pages(efi_status_t efi_ret);
+int efi_loge_free_pages(int ofs, efi_status_t efi_ret);
 
 int efi_logs_allocate_pool(enum efi_memory_type pool_type, efi_uintn_t size,
 			   void **buffer);
-int efi_loge_allocate_pool(efi_status_t efi_ret, void **memory);
+int efi_loge_allocate_pool(int ofs, efi_status_t efi_ret, void **memory);
 
 int efi_logs_free_pool(void *buffer);
 
-int efi_loge_free_pool(efi_status_t efi_ret);
+int efi_loge_free_pool(int ofs, efi_status_t efi_ret);
 
 /**
  * efi_log_show() - Show the EFI log
