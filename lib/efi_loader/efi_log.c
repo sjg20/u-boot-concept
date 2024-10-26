@@ -28,21 +28,21 @@ static const char *allocate_type_name[EFI_MAX_ALLOCATE_TYPE] = {
 
 static const char *memory_type_name[EFI_MAX_MEMORY_TYPE] = {
 	"reserved",
-	"loader-code",
-	"loader-data",
-	"boot-code",
-	"boot-data",
-	"runtime-code",
-	"runtime-data",
-	"conventional",
-	"unusable-memory",
-	"acpi-reclaim",
+	"ldr-code",
+	"ldr-data",
+	"bt-code",
+	"bt-data",
+	"rt-code",
+	"rt-data",
+	"convent",
+	"unusable",
+	"acpi-rec",
 	"acpi-nvs",
 	"mmap-io",
-	"mmap-ioport",
+	"mmap-iop",
 	"pal-code",
-	"persistent",
-	"unaccepted",
+	"persist",
+	"unaccept",
 };
 
 static const char *error_name[EFI_ERROR_COUNT] = {
@@ -273,7 +273,7 @@ void show_rec(int seq, struct efil_rec_hdr *rec_hdr)
 
 		show_enum(allocate_type_name, rec->type);
 		show_enum(memory_type_name, rec->memory_type);
-		show_ulong("pag", (ulong)rec->pages);
+		show_ulong("pgs", (ulong)rec->pages);
 		show_addr("mem", (ulong)rec->memory);
 		if (rec_hdr->ended) {
 			show_addr("*mem",
