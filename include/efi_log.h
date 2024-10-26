@@ -83,6 +83,8 @@ int efi_loge_free_pool(int ofs, efi_status_t efi_ret);
  */
 int efi_log_show(void);
 
+int efi_log_reset(void);
+
 int efi_log_init(void);
 
 #endif /* __EFI_LOG_H */

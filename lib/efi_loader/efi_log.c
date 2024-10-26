@@ -217,7 +217,10 @@ static void show_addr(const char *prompt, ulong addr)
 
 static void show_ret(efi_status_t ret)
 {
-	printf("ret %ld", ret);
+	if (ret)
+		printf("ret %lx", ret & ~EFI_ERROR_MASK);
+	else
+		printf("ret OK");
 }
 
 void show_rec(int seq, struct efil_rec_hdr *rec_hdr)
@@ -252,7 +255,7 @@ void show_rec(int seq, struct efil_rec_hdr *rec_hdr)
 	case EFILT_ALLOCATE_POOL: {
 		struct efil_allocate_pool *rec = start;
 
-		show_enum(allocate_type_name, rec->pool_type);
+		show_enum(memory_type_name, rec->pool_type);
 		show_ulong("size", (ulong)rec->size);
 		show_addr("buffer", (ulong)rec->buffer);
 		if (rec_hdr->ended) {
@@ -282,13 +285,26 @@ int efi_log_show(void)
 	struct efil_rec_hdr *rec_hdr;
 	int i;
 
-	printf("EFI log\n");
+	printf(	"EFI log (size %x)\n", hdr->upto);
 	if (!hdr)
 		return -ENOENT;
 	for (i = 0, rec_hdr = (void *)hdr + sizeof(*hdr);
 	     (void *)rec_hdr - (void *)hdr < hdr->upto;
-	     i++, rec_hdr = (void *)rec_hdr+ rec_hdr->size)
+	     i++, rec_hdr = (void *)rec_hdr + rec_hdr->size)
 		show_rec(i, rec_hdr);
+	printf("%d records\n", i);
+
+	return 0;
+}
+
+int efi_log_reset(void)
+{
+	struct efil_hdr *hdr = bloblist_find(BLOBLISTT_EFI_LOG, 0);
+
+	if (!hdr)
+		return -ENOENT;
+	hdr->upto = sizeof(struct efil_hdr);
+	hdr->size = CONFIG_EFI_LOG_SIZE;
 
 	return 0;
 }
@@ -302,8 +318,7 @@ int efi_log_init(void)
 		log_warning("Failed to setup EFI log\n");
 		return log_msg_ret("eli", -ENOMEM);
 	}
-	hdr->upto = sizeof(struct efil_hdr);
-	hdr->size = CONFIG_EFI_LOG_SIZE;
+	efi_log_reset();
 
 	return 0;
 }
