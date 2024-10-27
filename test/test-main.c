@@ -4,6 +4,8 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
+#define LOG_CATEGORY	LOGC_TEST
+
 #include <blk.h>
 #include <console.h>
 #include <cyclic.h>
@@ -379,6 +381,12 @@ static int test_pre_run(struct unit_test_state *uts, struct unit_test *test)
 			return -EAGAIN;
 		}
 	}
+	if (test->flags & UFT_BLOBLIST) {
+		log_debug("save bloblist %p\n", gd->bloblist);
+		uts->old_bloblist = gd->bloblist;
+		gd->bloblist = NULL;
+	}
+
 	ut_silence_console(uts);
 
 	return 0;
@@ -401,6 +409,11 @@ static int test_post_run(struct unit_test_state *uts, struct unit_test *test)
 
 	free(uts->of_other);
 	uts->of_other = NULL;
+
+	if (test->flags & UFT_BLOBLIST) {
+		gd->bloblist = uts->old_bloblist;
+		log_debug("restore bloblist %p\n", gd->bloblist);
+	}
 
 	blkcache_free();
 
