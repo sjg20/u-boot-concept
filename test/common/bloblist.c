@@ -6,13 +6,9 @@
 #include <bloblist.h>
 #include <log.h>
 #include <mapmem.h>
-#include <test/suites.h>
+#include <test/common.h>
 #include <test/test.h>
 #include <test/ut.h>
-
-/* Declare a new bloblist test */
-#define BLOBLIST_TEST(_name, _flags) \
-		UNIT_TEST(_name, _flags, bloblist_test)
 
 enum {
 	TEST_TAG		= BLOBLISTT_U_BOOT_SPL_HANDOFF,
@@ -91,7 +87,7 @@ static int bloblist_test_init(struct unit_test_state *uts)
 
 	return 1;
 }
-BLOBLIST_TEST(bloblist_test_init, 0);
+COMMON_TEST(bloblist_test_init, 0);
 
 static int bloblist_test_blob(struct unit_test_state *uts)
 {
@@ -131,7 +127,7 @@ static int bloblist_test_blob(struct unit_test_state *uts)
 
 	return 0;
 }
-BLOBLIST_TEST(bloblist_test_blob, 0);
+COMMON_TEST(bloblist_test_blob, 0);
 
 /* Check bloblist_ensure_size_ret() */
 static int bloblist_test_blob_ensure(struct unit_test_state *uts)
@@ -165,7 +161,7 @@ static int bloblist_test_blob_ensure(struct unit_test_state *uts)
 
 	return 0;
 }
-BLOBLIST_TEST(bloblist_test_blob_ensure, 0);
+COMMON_TEST(bloblist_test_blob_ensure, 0);
 
 static int bloblist_test_bad_blob(struct unit_test_state *uts)
 {
@@ -181,7 +177,7 @@ static int bloblist_test_bad_blob(struct unit_test_state *uts)
 
 	return 0;
 }
-BLOBLIST_TEST(bloblist_test_bad_blob, 0);
+COMMON_TEST(bloblist_test_bad_blob, 0);
 
 static int bloblist_test_checksum(struct unit_test_state *uts)
 {
@@ -254,7 +250,7 @@ static int bloblist_test_checksum(struct unit_test_state *uts)
 
 	return 0;
 }
-BLOBLIST_TEST(bloblist_test_checksum, 0);
+COMMON_TEST(bloblist_test_checksum, 0);
 
 /* Test the 'bloblist info' command */
 static int bloblist_test_cmd_info(struct unit_test_state *uts)
@@ -275,7 +271,7 @@ static int bloblist_test_cmd_info(struct unit_test_state *uts)
 
 	return 0;
 }
-BLOBLIST_TEST(bloblist_test_cmd_info, UTF_CONSOLE);
+COMMON_TEST(bloblist_test_cmd_info, UTF_CONSOLE);
 
 /* Test the 'bloblist list' command */
 static int bloblist_test_cmd_list(struct unit_test_state *uts)
@@ -297,7 +293,7 @@ static int bloblist_test_cmd_list(struct unit_test_state *uts)
 
 	return 0;
 }
-BLOBLIST_TEST(bloblist_test_cmd_list, UTF_CONSOLE);
+COMMON_TEST(bloblist_test_cmd_list, UTF_CONSOLE);
 
 /* Test alignment of bloblist blobs */
 static int bloblist_test_align(struct unit_test_state *uts)
@@ -355,7 +351,7 @@ static int bloblist_test_align(struct unit_test_state *uts)
 
 	return 0;
 }
-BLOBLIST_TEST(bloblist_test_align, 0);
+COMMON_TEST(bloblist_test_align, 0);
 
 /* Test relocation of a bloblist */
 static int bloblist_test_reloc(struct unit_test_state *uts)
@@ -389,7 +385,7 @@ static int bloblist_test_reloc(struct unit_test_state *uts)
 
 	return 0;
 }
-BLOBLIST_TEST(bloblist_test_reloc, 0);
+COMMON_TEST(bloblist_test_reloc, 0);
 
 /* Test expansion of a blob */
 static int bloblist_test_grow(struct unit_test_state *uts)
@@ -442,7 +438,7 @@ static int bloblist_test_grow(struct unit_test_state *uts)
 
 	return 0;
 }
-BLOBLIST_TEST(bloblist_test_grow, 0);
+COMMON_TEST(bloblist_test_grow, 0);
 
 /* Test shrinking of a blob */
 static int bloblist_test_shrink(struct unit_test_state *uts)
@@ -492,7 +488,7 @@ static int bloblist_test_shrink(struct unit_test_state *uts)
 
 	return 0;
 }
-BLOBLIST_TEST(bloblist_test_shrink, 0);
+COMMON_TEST(bloblist_test_shrink, 0);
 
 /* Test failing to adjust a blob size */
 static int bloblist_test_resize_fail(struct unit_test_state *uts)
@@ -527,7 +523,7 @@ static int bloblist_test_resize_fail(struct unit_test_state *uts)
 
 	return 0;
 }
-BLOBLIST_TEST(bloblist_test_resize_fail, 0);
+COMMON_TEST(bloblist_test_resize_fail, 0);
 
 /* Test expanding the last blob in a bloblist */
 static int bloblist_test_resize_last(struct unit_test_state *uts)
@@ -578,7 +574,7 @@ static int bloblist_test_resize_last(struct unit_test_state *uts)
 
 	return 0;
 }
-BLOBLIST_TEST(bloblist_test_resize_last, 0);
+COMMON_TEST(bloblist_test_resize_last, 0);
 
 /* Check a completely full bloblist */
 static int bloblist_test_blob_maxsize(struct unit_test_state *uts)
@@ -601,14 +597,4 @@ static int bloblist_test_blob_maxsize(struct unit_test_state *uts)
 
 	return 0;
 }
-BLOBLIST_TEST(bloblist_test_blob_maxsize, 0);
-
-int do_ut_bloblist(struct cmd_tbl *cmdtp, int flag, int argc,
-		   char *const argv[])
-{
-	struct unit_test *tests = UNIT_TEST_SUITE_START(bloblist_test);
-	const int n_ents = UNIT_TEST_SUITE_COUNT(bloblist_test);
-
-	return cmd_ut_category("bloblist", "bloblist_test_",
-			       tests, n_ents, argc, argv);
-}
+COMMON_TEST(bloblist_test_blob_maxsize, 0);

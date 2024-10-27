@@ -70,7 +70,6 @@ List available unit-test suites::
     Suites:
     all - execute all enabled tests
     addrmap - very basic test of addrmap command
-    bloblist - bloblist implementation
     bootstd - standard boot implementation
     compression - compressors and bootm decompression
     dm - driver model
@@ -89,8 +88,8 @@ List available unit-test suites::
 
 Run one of the suites::
 
-    => ut bloblist
-    Running 14 bloblist tests
+    => ut common
+    Running 21 common tests
     Test: bloblist_test_align: bloblist.c
     Test: bloblist_test_bad_blob: bloblist.c
     Test: bloblist_test_blob: bloblist.c
@@ -105,16 +104,32 @@ Run one of the suites::
     Test: bloblist_test_resize_fail: bloblist.c
     Test: bloblist_test_resize_last: bloblist.c
     Test: bloblist_test_shrink: bloblist.c
-    Failures: 0
+    Test: cli_ch_test: cread.c
+    Test: cread_test: cread.c
+    Test: dm_test_cyclic_running: cyclic.c
+    Test: test_autoboot: test_autoboot.c
+    Enter password "a" in 1 seconds to stop autoboot
+    Enter password "a" in 1 seconds to stop autoboot
+    Enter password "a" in 1 seconds to stop autoboot
+    Enter password "a" in 1 seconds to stop autoboot
+    Enter password "a" in 1 seconds to stop autoboot
+    Enter password "a" in 1 seconds to stop autoboot
+    Autoboot password unlock not successful
+    Test: test_event_base: event.c
+    Test: test_event_probe: event.c
+    Test: test_event_probe: event.c (flat tree)
+    Test: test_event_simple: event.c
+    Skipped: 2, Failures: 0
+    =>
 
 Run just a single test in a suite::
 
-    => ut bloblist bloblist_test_grow
+    => ut common bloblist_test_grow
     Test: bloblist_test_grow: bloblist.c
     Failures: 0
 
 Show information about tests::
 
     => ut info
-    Test suites: 21
-    Total tests: 642
+    Test suites: 29
+    Total tests: 806
