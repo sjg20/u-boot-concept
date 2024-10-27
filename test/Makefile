@@ -4,7 +4,6 @@
 
 obj-y += test-main.o
 
-obj-$(CONFIG_$(XPL_)CMDLINE) += bootm.o
 obj-$(CONFIG_$(XPL_)CMDLINE) += cmd/
 obj-$(CONFIG_$(XPL_)CMDLINE) += cmd_ut.o
 obj-y += dm/
