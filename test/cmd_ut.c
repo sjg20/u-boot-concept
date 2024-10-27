@@ -111,8 +111,6 @@ static struct cmd_tbl cmd_ut_sub[] = {
 			 "", ""),
 #endif
 #ifdef CONFIG_SANDBOX
-	U_BOOT_CMD_MKENT(compression, CONFIG_SYS_MAXARGS, 1, do_ut_compression,
-			 "", ""),
 	U_BOOT_CMD_MKENT(bootm, CONFIG_SYS_MAXARGS, 1, do_ut_bootm, "", ""),
 #endif
 	U_BOOT_CMD_MKENT(str, CONFIG_SYS_MAXARGS, 1, do_ut_str, "", ""),
@@ -203,9 +201,6 @@ U_BOOT_LONGHELP(ut,
 	"\ncmd - test various commands"
 #endif
 	"\ncommon   - tests for common/ directory"
-#ifdef CONFIG_SANDBOX
-	"\ncompression - compressors and bootm decompression"
-#endif
 #ifdef CONFIG_UT_DM
 	"\ndm - driver model"
 #endif
