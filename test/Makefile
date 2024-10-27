@@ -8,7 +8,6 @@ obj-$(CONFIG_$(XPL_)CMDLINE) += bootm.o
 obj-$(CONFIG_$(XPL_)CMDLINE) += cmd/
 obj-$(CONFIG_$(XPL_)CMDLINE) += cmd_ut.o
 obj-$(CONFIG_$(XPL_)CMDLINE) += command_ut.o
-obj-$(CONFIG_$(XPL_)UT_COMPRESSION) += compression.o
 obj-y += dm/
 obj-$(CONFIG_FUZZ) += fuzz/
 ifndef CONFIG_SANDBOX_VPL
