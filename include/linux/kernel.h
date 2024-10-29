@@ -35,9 +35,40 @@
 
 #define REPEAT_BYTE(x)	((~0ul / 0xff) * (x))
 
+/**
+ * ALIGN() - Rounds a value up to a given alignment
+ *
+ * @x: value to be rounded up
+ * @a: alignment factor. @a must be a power of two
+ * Return: lowest value >= @x which is a multiple of @a
+ *
+ * For example ALIGN(0x123, 8) == 0x128
+ */
 #define ALIGN(x,a)		__ALIGN_MASK((x),(typeof(x))(a)-1)
+
+/**
+ * ALIGN_DOWN() - Rounds a value down to a given alignment
+ *
+ * @x: value to be rounded down
+ * @a: alignment factor. @a must be a power of two
+ * Return: highest value <= @x which is a multiple of @a
+ *
+ * For example ALIGN_DOWN(0x123, 8) == 0x120
+ * ALIGN_DOWN(0x120, 16) == 0x120
+ */
 #define ALIGN_DOWN(x, a)	ALIGN((x) - ((a) - 1), (a))
+
+/**
+ * __ALIGN_MASK() - Rounds a value up to a given alignment-mask
+ *
+ * @x: value to be rounded up
+ * @mask: mask to apply, must be one less than a power of two
+ * Return: lowest value >= @x where the bits set in @mask are 0
+ *
+ * For example __ALIGN_MASK(0x123, 0xf) == 0x130
+ */
 #define __ALIGN_MASK(x,mask)	(((x)+(mask))&~(mask))
+
 #define PTR_ALIGN(p, a)		((typeof(p))ALIGN((unsigned long)(p), (a)))
 #define IS_ALIGNED(x, a)		(((x) & ((typeof(x))(a) - 1)) == 0)
 
