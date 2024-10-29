@@ -590,7 +590,7 @@ __weak int arch_reserve_stacks(void)
 static int reserve_stacks(void)
 {
 	/* make stack pointer 16-byte aligned */
-	gd->start_addr_sp = reserve_stack_aligned(16);
+	gd->start_addr_sp = reserve_stack_aligned(0);
 
 	/*
 	 * let the architecture-specific code tailor gd->start_addr_sp and
