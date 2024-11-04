@@ -139,7 +139,9 @@ RUN if [ "$TARGETPLATFORM" = "linux/amd64" ]; then \
 RUN chmod +r /boot/vmlinu*
 
 # Build GRUB UEFI targets for ARM & RISC-V, 32-bit and 64-bit
-RUN git clone git://git.savannah.gnu.org/grub.git /tmp/grub && \
+# This fails on arm64
+RUN if [ "$TARGETPLATFORM" = "linux/amd64" ]; then \
+	git clone git://git.savannah.gnu.org/grub.git /tmp/grub && \
 	cd /tmp/grub && \
 	git checkout grub-2.06 && \
 	git config --global user.name "GitLab CI Runner" && \
@@ -189,7 +191,8 @@ RUN git clone git://git.savannah.gnu.org/grub.git /tmp/grub && \
 	lsefisystab loadenv lvm minicmd normal part_msdos part_gpt reboot \
 	search search_fs_file search_fs_uuid search_label serial sleep test \
 	true && \
-	rm -rf /tmp/grub
+	rm -rf /tmp/grub; \
+	fi
 
 RUN git clone https://gitlab.com/qemu-project/qemu.git /tmp/qemu && \
 	cd /tmp/qemu && \
