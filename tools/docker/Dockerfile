@@ -2,12 +2,19 @@
 # This Dockerfile is used to build an image containing basic stuff to be used
 # to build U-Boot and run our test suites.
 
+# Build with (for example):
+# docker buildx build --platform linux/arm64/v8,linux/amd64 --tag sjg20/u-boot-gitlab-ci-runner-multiarch:jammy-20240808-03Nov2024 .
+
 FROM ubuntu:jammy-20240808
 LABEL org.opencontainers.image.authors="Tom Rini <trini@konsulko.com>"
 LABEL org.opencontainers.image.description=" This image is for building U-Boot inside a container"
 
 # Make sure apt is happy
 ENV DEBIAN_FRONTEND=noninteractive
+
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+RUN echo "Building $BUILDPLATFORM, for target $TARGETPLATFORM"
 
 # Add LLVM repository
 RUN apt-get update && apt-get install -y gnupg2 wget xz-utils && rm -rf /var/lib/apt/lists/*
