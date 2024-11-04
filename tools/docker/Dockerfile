@@ -240,7 +240,8 @@ RUN git clone https://github.com/stefanberger/swtpm /tmp/swtpm && \
 	rm -rf /tmp/swtpm
 
 # Build trace-cmd
-RUN mkdir /tmp/trace && \
+RUN if [ "$TARGETPLATFORM" = "linux/amd64" ]; then  \
+    mkdir /tmp/trace && \
     git clone https://git.kernel.org/pub/scm/libs/libtrace/libtraceevent.git /tmp/trace/libtraceevent && \
     cd /tmp/trace/libtraceevent && \
     make -j$(nproc) && \
@@ -253,7 +254,8 @@ RUN mkdir /tmp/trace && \
     cd /tmp/trace/trace-cmd && \
     make -j$(nproc) && \
     sudo make install && \
-    rm -rf /tmp/trace
+    rm -rf /tmp/trace; \
+    fi
 
 # Build coreboot
 RUN wget -O - https://coreboot.org/releases/coreboot-24.08.tar.xz | tar -C /tmp -xJ && \
