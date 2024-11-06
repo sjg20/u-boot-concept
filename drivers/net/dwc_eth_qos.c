@@ -1993,16 +1993,6 @@ static int eqos_probe(struct udevice *dev)
 		goto err_remove_resources_tegra;
 	}
 
-	/* TODO: remove it when power driver is ready
-	 * enable power of ethernet module by write register directly
-	 */
-	eqos->power_regs = dev_read_addr_index(dev, 1);
-	if (eqos->power_regs == FDT_ADDR_T_NONE) {
-		pr_err("dev_read_addr() gpio_regs failed");
-		return -ENODEV;
-	}
-	writel(0xd, eqos->power_regs + 0x344);
-
 #ifdef CONFIG_DM_ETH_PHY
 	eqos->mii = eth_phy_get_mdio_bus(dev);
 #endif
