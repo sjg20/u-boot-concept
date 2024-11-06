@@ -520,8 +520,7 @@
 
 		eth: ethernet@11021000 {
 			compatible = "mediatek,mt8195-gmac", "snps,dwmac-5.10a";
-			reg = <0 0x11021000 0 0x4000>,
-				  <0 0x10006000 0 0x1000>;
+			reg = <0 0x11021000 0 0x4000>;
 			interrupts = <GIC_SPI 716 IRQ_TYPE_LEVEL_HIGH 0>;
 			interrupt-names = "macirq";
 			clock-names = "axi",
