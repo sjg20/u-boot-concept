@@ -1148,6 +1148,45 @@ like::
 This is partly because there is no way for Buildman to know which fragments are
 valid on which boards.
 
+Specifying the build matrix with fragments
+------------------------------------------
+
+In order to build boards which can use fragments, Buildman needs to know which
+fragments are valid with which boards. The following scheme is proposed, but not
+currently implemented.
+
+In ``defconfig/``, files with a '.buildman' suffix are used to effectively
+create new boards for Buildman to build. All such files are processed, but it
+might be best to put all the information in a single file for now, e.g.
+``extended.buildman``.
+
+The syntax consists of a number of sections, each introduced by a name. For each
+section the fragment file is named (without the implied ``.config`` suffix),
+then the targets which can accept that fragment are specified, either by their
+board name, with wildcards, or a set of ``CONFIG`` options to check. All
+``CONFIG`` options must match for a board to be included in the set. To specify
+multiple fragments to be included, add them in the order which they should be
+applied, one per line.
+
+For example::
+
+   # Build RISC-V QEMU builds with ACPI
+   name: ACPI with supporting boards
+   fragment: acpi
+   targets:
+     qemu_riscv*
+
+   # Build Android variant of 'k3' boards, with DFU
+   name USB DFU for am62x boards
+   fragment: am62x_r5_usbdfu
+   fragment: am62x_a53_android
+   targets:
+     CONFIG_SYS_SOC="k3"
+
+Buildman normally ignores these files. To request that Buildman process these
+extended new 'boards', use the ``-X / --extend`` option. Note that this may
+significantly increase the number of boards which Buildman builds.
+
 Building with clang
 -------------------
 
