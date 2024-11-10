@@ -64,6 +64,17 @@ static inline int serial_in_shift(void *addr, int shift)
 
 #include <debug_uart.h>
 
+#define serial_dout(reg, value)	\
+	serial_out_shift((char *)com_port + \
+		((char *)reg - (char *)com_port) * \
+			(1 << CONFIG_DEBUG_UART_SHIFT), \
+		CONFIG_DEBUG_UART_SHIFT, value)
+#define serial_din(reg) \
+	serial_in_shift((char *)com_port + \
+		((char *)reg - (char *)com_port) * \
+			(1 << CONFIG_DEBUG_UART_SHIFT), \
+		CONFIG_DEBUG_UART_SHIFT)
+
 static inline void _debug_uart_init(void)
 {
 	struct ns16550 *com_port = (struct ns16550 *)CONFIG_VAL(DEBUG_UART_BASE);

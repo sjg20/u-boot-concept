@@ -91,6 +91,18 @@ static inline int serial_in_shift(void *addr, int shift)
 #endif
 }
 
+#define serial_dout(reg, value)	\
+	serial_out_shift((char *)com_port + \
+		((char *)reg - (char *)com_port) * \
+			(1 << CONFIG_DEBUG_UART_SHIFT), \
+		CONFIG_DEBUG_UART_SHIFT, value)
+
+#define serial_din(reg) \
+	serial_in_shift((char *)com_port + \
+		((char *)reg - (char *)com_port) * \
+			(1 << CONFIG_DEBUG_UART_SHIFT), \
+		CONFIG_DEBUG_UART_SHIFT)
+
 #if CONFIG_IS_ENABLED(DM_SERIAL)
 
 #ifndef CFG_SYS_NS16550_CLK
