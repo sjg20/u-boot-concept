@@ -12,6 +12,7 @@
 #include <asm/io.h>
 #include <linux/kernel.h>
 #include <linux/arm-smccc.h>
+#include <splash.h>
 
 #define MT8195_UPDATABLE_IMAGES	5
 
@@ -182,6 +183,23 @@ void set_dfu_alt_info(char *interface, char *devstr)
 }
 #endif
 #endif /* CONFIG_EFI_HAVE_CAPSULE_SUPPORT && CONFIG_EFI_PARTITION */
+
+#if IS_ENABLED(CONFIG_SPLASH_SCREEN) && IS_ENABLED(CONFIG_SPI_FLASH)
+static struct splash_location genio_1200_evk_spi_splash_locations[] = {
+	{
+		.name = "sf",
+		.storage = SPLASH_STORAGE_SF,
+		.flags = SPLASH_STORAGE_RAW,
+		.offset = 0x1580000,
+	},
+};
+
+int splash_screen_prepare(void)
+{
+	return splash_source_load(genio_1200_evk_spi_splash_locations,
+				  ARRAY_SIZE(genio_1200_evk_spi_splash_locations));
+}
+#endif
 
 int board_init(void)
 {
