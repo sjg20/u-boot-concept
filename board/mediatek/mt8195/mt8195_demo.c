@@ -205,15 +205,6 @@ int board_init(void)
 		writel(val, 0x1072102C);
 	}
 
-	/* Run scsi_scan() only when the board support NOR and UFS storage */
-	if (CONFIG_IS_ENABLED(UFS_MEDIATEK) && CONFIG_IS_ENABLED(MTK_SNOR)) {
-		ret = scsi_scan(true);
-		if (ret) {
-			printf("scsi scan failed\n");
-			return ret;
-		}
-	}
-
 	if (IS_ENABLED(CONFIG_EFI_HAVE_CAPSULE_SUPPORT) &&
 	    IS_ENABLED(CONFIG_EFI_PARTITION))
 		mediatek_capsule_update_board_setup();
