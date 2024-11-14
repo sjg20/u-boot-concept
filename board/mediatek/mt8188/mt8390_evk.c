@@ -24,11 +24,21 @@ static struct efi_fw_image fw_images[MT8390_UPDATABLE_IMAGES] = {0};
 
 struct efi_capsule_update_info update_info = {
 #if IS_ENABLED(CONFIG_MEDIATEK_IOT_AB_BOOT_SUPPORT)
+#if (IS_ENABLED(CONFIG_DFU_MTD))
+	.dfu_string = "mtd nor0=bl2.img part 1;"
+			"fip.bin part %d;firmware.vfat part %d;u-boot-env.bin part 9",
+#else
 	.dfu_string = "mmc 0=bl2.img raw 0x0 0x2000 mmcpart 1;"
 			"fip.bin part 0 %d;firmware.vfat part 0 %d;u-boot-env.bin raw 0x0 0x2000 mmcpart 2",
+#endif
+#else
+#if (IS_ENABLED(CONFIG_DFU_MTD))
+	.dfu_string = "mtd nor0=bl2.img part 1;"
+			"fip.bin part 2;firmware.vfat part 4;u-boot-env.bin part 9",
 #else
 	.dfu_string = "mmc 0=bl2.img raw 0x0 0x2000 mmcpart 1;"
 			"fip.bin part 0 1;firmware.vfat part 0 3;u-boot-env.bin raw 0x0 0x2000 mmcpart 2",
+#endif
 #endif
 	.images = fw_images,
 };
@@ -49,6 +59,12 @@ static bool board_is_genio_700_evk(void)
 {
 	return CONFIG_IS_ENABLED(TARGET_MT8188) &&
 		of_machine_is_compatible("mediatek,genio-700-evk");
+}
+
+static bool board_is_genio_700_evk_qspi(void)
+{
+	return CONFIG_IS_ENABLED(TARGET_MT8188) &&
+		of_machine_is_compatible("mediatek,genio-700-evk-qspi");
 }
 
 void mediatek_capsule_update_board_setup(void)
@@ -77,6 +93,24 @@ void mediatek_capsule_update_board_setup(void)
 		fw_images[2].fw_name = u"GENIO-700-EVK-BL2";
 		fw_images[3].fw_name = u"GENIO-700-EVK-FW";
 		fw_images[4].fw_name = u"GENIO-700-EVK-ENV";
+	} else if (board_is_genio_700_evk_qspi()) {
+		efi_guid_t image_type_guid = GENIO_700_EVK_QSPI_FIT_IMAGE_GUID;
+		efi_guid_t uboot_image_type_guid = GENIO_700_EVK_QSPI_FIP_IMAGE_GUID;
+		efi_guid_t bl2_image_type_guid = GENIO_700_EVK_QSPI_BL2_IMAGE_GUID;
+		efi_guid_t fw_image_type_guid = GENIO_700_EVK_QSPI_FW_IMAGE_GUID;
+		efi_guid_t env_image_type_guid = GENIO_700_EVK_QSPI_ENV_IMAGE_GUID;
+
+		guidcpy(&fw_images[0].image_type_id, &image_type_guid);
+		guidcpy(&fw_images[1].image_type_id, &uboot_image_type_guid);
+		guidcpy(&fw_images[2].image_type_id, &bl2_image_type_guid);
+		guidcpy(&fw_images[3].image_type_id, &fw_image_type_guid);
+		guidcpy(&fw_images[4].image_type_id, &env_image_type_guid);
+
+		fw_images[0].fw_name = u"GENIO-700-EVK-QSPI-FIT";
+		fw_images[1].fw_name = u"GENIO-700-EVK-QSPI-FIP";
+		fw_images[2].fw_name = u"GENIO-700-EVK-QSPI-BL2";
+		fw_images[3].fw_name = u"GENIO-700-EVK-QSPI-FW";
+		fw_images[4].fw_name = u"GENIO-700-EVK-QSPI-ENV";
 	}
 }
 
