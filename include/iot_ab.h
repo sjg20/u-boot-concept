@@ -26,10 +26,18 @@
 #define PART_BOOT_A		0
 #define PART_BOOT_B		1
 
+#if defined(CONFIG_MTD)
+#define BOOTCTRL_FIP_NUM	2
+#define BOOTCTRL_FW_NUM		4
+#else
 #define BOOTCTRL_FIP_NUM	1
 #define BOOTCTRL_FW_NUM		3
+#endif
 
-#if defined(CONFIG_UFS_MEDIATEK)
+#if defined(CONFIG_MTD)
+#define BOOTCTRL_DEV		"nor"
+#define BOOTCTRL_PART		"nor_misc"
+#elif defined(CONFIG_UFS_MEDIATEK)
 #define BOOTCTRL_DEV		"scsi"
 #define BOOTCTRL_PART		"2#misc"
 #else
