@@ -21,7 +21,10 @@ static struct efi_fw_image fw_images[MT8195_UPDATABLE_IMAGES] = {0};
 
 struct efi_capsule_update_info update_info = {
 #if IS_ENABLED(CONFIG_MEDIATEK_IOT_AB_BOOT_SUPPORT)
-#if IS_ENABLED(CONFIG_UFS_MEDIATEK)
+#if IS_ENABLED(CONFIG_DFU_MTD)
+	.dfu_string = "mtd nor0=bl2.img part 1;"
+			"fip.bin part %d;firmware.vfat part %d;u-boot-env.bin part 9",
+#elif IS_ENABLED(CONFIG_UFS_MEDIATEK)
 	.dfu_string = "ufs 0=bl2.img raw 0x0 0x400 dev 0;"
 			"fip.bin part 2 %d;firmware.vfat part 2 %d;u-boot-env.bin raw 0x0 0x400 dev 1",
 #else
