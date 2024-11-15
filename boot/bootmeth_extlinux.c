@@ -171,7 +171,8 @@ static int extlinux_read_bootflow(struct udevice *dev, struct bootflow *bflow)
 	return 0;
 }
 
-static int extlinux_boot(struct udevice *dev, struct bootflow *bflow)
+static int extlinux_process(struct udevice *dev, struct bootflow *bflow,
+			    bool no_boot)
 {
 	struct pxe_context ctx;
 	struct extlinux_info info;
@@ -189,6 +190,7 @@ static int extlinux_boot(struct udevice *dev, struct bootflow *bflow)
 			    false, plat->use_fallback, bflow);
 	if (ret)
 		return log_msg_ret("ctx", -EINVAL);
+	ctx.no_boot = no_boot;
 
 	ret = pxe_process(&ctx, addr, false);
 	if (ret)
@@ -196,6 +198,24 @@ static int extlinux_boot(struct udevice *dev, struct bootflow *bflow)
 
 	return 0;
 }
+
+static int extlinux_boot(struct udevice *dev, struct bootflow *bflow)
+{
+	return extlinux_process(dev, bflow, false);
+}
+
+#if CONFIG_IS_ENABLED(BOOTSTD_FULL)
+static int extlinux_read_all(struct udevice *dev, struct bootflow *bflow)
+{
+	int ret;
+
+	ret = extlinux_process(dev, bflow, true);
+	if (ret)
+		return log_msg_ret("era", -EINVAL);
+
+	return 0;
+}
+#endif
 
 static int extlinux_set_property(struct udevice *dev, const char *property, const char *value)
 {
@@ -246,6 +266,9 @@ static struct bootmeth_ops extlinux_bootmeth_ops = {
 	.read_file	= bootmeth_common_read_file,
 	.boot		= extlinux_boot,
 	.set_property	= extlinux_set_property,
+#if CONFIG_IS_ENABLED(BOOTSTD_FULL)
+	.read_all	= extlinux_read_all,
+#endif
 };
 
 static const struct udevice_id extlinux_bootmeth_ids[] = {
