@@ -88,8 +88,10 @@ static int loaddtb(char *devtype, char *devnum, int part, char *path, char *fdt_
 
 #if IS_ENABLED(CONFIG_CMD_FDTPROBE)
 	sprintf(cmd, "fdt authndtb %s", fdt_addr);
-	if (run_command_list(cmd, -1, 0) != CMD_RET_SUCCESS)
+	if (run_command_list(cmd, -1, 0) != CMD_RET_SUCCESS) {
+		panic("Invalid dtb/dtbo.");
 		return 1;
+	}
 #endif
 
 	sprintf(cmd, "fdt addr %s", fdt_addr);
@@ -142,6 +144,7 @@ static int loadoverlays(char *devtype, char *devnum, int part, char *base)
 		sprintf(cmd, "fdt authndtb %s", overlay_addr);
 		if (run_command_list(cmd, -1, 0) != CMD_RET_SUCCESS) {
 			rcode = 1;
+			panic("Invalid dtb/dtbo.");
 			goto out;
 		}
 #endif
