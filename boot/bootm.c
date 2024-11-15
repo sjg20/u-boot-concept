@@ -606,6 +606,8 @@ static int bootm_load_os(struct bootm_headers *images, int boot_progress)
 	ulong blob_end = os.end;
 	ulong image_start = os.image_start;
 	ulong image_len = os.image_len;
+	ulong bootm_len;
+
 	ulong flush_start = ALIGN_DOWN(load, ARCH_DMA_MINALIGN);
 	bool no_overlap;
 	void *load_buf, *image_buf;
@@ -632,12 +634,13 @@ static int bootm_load_os(struct bootm_headers *images, int boot_progress)
 
 	load_buf = map_sysmem(load, 0);
 	image_buf = map_sysmem(os.image_start, image_len);
+	bootm_len = IF_ENABLED_INT(CONFIG_SYS_BOOTM_LEN, CONFIG_SYS_BOOTM_LEN);
 	err = image_decomp(os.comp, load, os.image_start, os.type,
-			   load_buf, image_buf, image_len,
-			   CONFIG_SYS_BOOTM_LEN, &load_end);
+			   load_buf, image_buf, image_len, bootm_len,
+			   &load_end);
 	if (err) {
-		err = handle_decomp_error(os.comp, load_end - load,
-					  CONFIG_SYS_BOOTM_LEN, err);
+		err = handle_decomp_error(os.comp, load_end - load, bootm_len,
+					  err);
 		bootstage_error(BOOTSTAGE_ID_DECOMP_IMAGE);
 		return err;
 	}
