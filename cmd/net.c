@@ -411,8 +411,6 @@ static int netboot_common(enum proto_t proto, struct cmd_tbl *cmdtp, int argc,
 		return CMD_RET_USAGE;
 	}
 
-	bootstage_mark(BOOTSTAGE_ID_NET_START);
-
 	if (IS_ENABLED(CONFIG_IPV6) && !use_ip6) {
 		char *s, *e;
 		size_t len;
@@ -425,6 +423,8 @@ static int netboot_common(enum proto_t proto, struct cmd_tbl *cmdtp, int argc,
 				use_ip6 = true;
 		}
 	}
+
+	bootstage_mark(BOOTSTAGE_ID_NET_START);
 
 	size = net_loop(proto);
 	if (size < 0) {
