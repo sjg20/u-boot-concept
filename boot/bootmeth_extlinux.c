@@ -179,44 +179,59 @@ static int extlinux_read_bootflow(struct udevice *dev, struct bootflow *bflow)
 	return 0;
 }
 
-static int extlinux_process(struct udevice *dev, struct bootflow *bflow,
-			    bool no_boot)
+static int extlinux_setup(struct udevice *dev, struct bootflow *bflow,
+			  struct pxe_context *ctx)
 {
 	struct extlinux_plat *plat = dev_get_plat(dev);
-	ulong addr;
 	int ret;
-
-	addr = map_to_sysmem(bflow->buf);
 
 	plat->info.dev = dev;
 	plat->info.bflow = bflow;
 
-	ret = pxe_setup_ctx(&plat->ctx, extlinux_getfile, &plat->info, true,
+	ret = pxe_setup_ctx(ctx, extlinux_getfile, &plat->info, true,
 			    bflow->fname, false, plat->use_fallback, bflow);
 	if (ret)
-		return log_msg_ret("ctx", -EINVAL);
-	plat->ctx.no_boot = no_boot;
-
-	ret = pxe_process(&plat->ctx, addr, false);
-	if (ret)
-		return log_msg_ret("bread", -EINVAL);
+		return log_msg_ret("ctx", ret);
 
 	return 0;
 }
 
 static int extlinux_boot(struct udevice *dev, struct bootflow *bflow)
 {
-	return extlinux_process(dev, bflow, false);
+	struct extlinux_plat *plat = dev_get_plat(dev);
+	ulong addr;
+	int ret;
+
+	/* if we have already selected a label, just boot it */
+	if (plat->ctx.label) {
+		ret = pxe_do_boot(&plat->ctx);
+	} else {
+		ret = extlinux_setup(dev, bflow, &plat->ctx);
+		if (ret)
+			return log_msg_ret("elb", ret);
+		addr = map_to_sysmem(bflow->buf);
+		ret = pxe_process(&plat->ctx, addr, false);
+	}
+	if (ret)
+		return log_msg_ret("elb", -EFAULT);
+
+	return 0;
 }
 
 #if CONFIG_IS_ENABLED(BOOTSTD_FULL)
 static int extlinux_read_all(struct udevice *dev, struct bootflow *bflow)
 {
+	struct extlinux_plat *plat = dev_get_plat(dev);
+	ulong addr;
 	int ret;
 
-	ret = extlinux_process(dev, bflow, true);
+	ret = extlinux_setup(dev, bflow, &plat->ctx);
 	if (ret)
-		return log_msg_ret("era", -EINVAL);
+		return log_msg_ret("era", ret);
+	addr = map_to_sysmem(bflow->buf);
+	ret = pxe_probe(&plat->ctx, addr, false);
+	if (ret)
+		return log_msg_ret("elb", -EFAULT);
 
 	return 0;
 }
