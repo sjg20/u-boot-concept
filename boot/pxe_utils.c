@@ -605,15 +605,6 @@ static int label_run_boot(struct pxe_context *ctx, struct pxe_label *label,
 			      hextoul(initrd_filesize, NULL));
 	}
 
-	if (!bmi.conf_fdt) {
-		if (IS_ENABLED(CONFIG_SUPPORT_PASSING_ATAGS)) {
-			if (strcmp("-", label->fdt))
-				bmi.conf_fdt = env_get("fdt_addr");
-		} else {
-			bmi.conf_fdt = env_get("fdt_addr");
-		}
-	}
-
 	kernel_addr_r = genimg_get_kernel_addr(kernel_addr);
 	buf = map_sysmem(kernel_addr_r, 0);
 
@@ -791,6 +782,17 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 	ret = label_process_fdt(ctx, label, kernel_addr, &conf_fdt);
 	if (ret)
 		return ret;
+
+	if (!conf_fdt) {
+		if (IS_ENABLED(CONFIG_SUPPORT_PASSING_ATAGS)) {
+			if (strcmp("-", label->fdt))
+				conf_fdt = env_get("fdt_addr");
+		} else {
+			conf_fdt = env_get("fdt_addr");
+		}
+	}
+	if (ctx->bflow)
+		ctx->bflow->fdt_addr = hextoul(conf_fdt, NULL);
 
 	if (ctx->no_boot)
 		return 0;
