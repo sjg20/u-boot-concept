@@ -27,6 +27,7 @@ struct extlinux_info {
  *
  * @use_falllback: true to boot with the fallback option
  * @ctx: holds the PXE context, if it should be saved
+ * @info: information used for the getfile() method
  */
 struct extlinux_plat {
 	bool use_fallback;
