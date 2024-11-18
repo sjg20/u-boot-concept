@@ -21,47 +21,6 @@
 #include <mmc.h>
 #include <pxe_utils.h>
 
-/**
- * struct extlinux_plat - locate state for this bootmeth
- *
- * @use_falllback: true to boot with the fallback option
- * @ctx: holds the PXE context, if it should be saved
- */
-struct extlinux_plat {
-	bool use_fallback;
-	struct pxe_context ctx;
-	struct extlinux_info info;
-};
-
-enum extlinux_option_type {
-	EO_FALLBACK,
-	EO_INVALID
-};
-
-struct extlinux_option {
-	char *name;
-	enum extlinux_option_type option;
-};
-
-static const struct extlinux_option options[] = {
-	{"fallback", EO_FALLBACK},
-	{NULL, EO_INVALID}
-};
-
-static enum extlinux_option_type get_option(const char *option)
-{
-	int i = 0;
-
-	while (options[i].name) {
-		if (!strcmp(options[i].name, option))
-			return options[i].option;
-
-		i++;
-	}
-
-	return EO_INVALID;
-};
-
 static int extlinux_get_state_desc(struct udevice *dev, char *buf, int maxsize)
 {
 	if (IS_ENABLED(CONFIG_SANDBOX)) {
@@ -236,38 +195,6 @@ static int extlinux_read_all(struct udevice *dev, struct bootflow *bflow)
 	return 0;
 }
 #endif
-
-static int extlinux_set_property(struct udevice *dev, const char *property, const char *value)
-{
-	struct extlinux_plat *plat;
-	static enum extlinux_option_type option;
-
-	plat = dev_get_plat(dev);
-
-	option = get_option(property);
-	if (option == EO_INVALID) {
-		printf("Invalid option\n");
-		return -EINVAL;
-	}
-
-	switch (option) {
-	case EO_FALLBACK:
-		if (!strcmp(value, "1")) {
-			plat->use_fallback = true;
-		} else if (!strcmp(value, "0")) {
-			plat->use_fallback = false;
-		} else {
-			printf("Unexpected value '%s'\n", value);
-			return -EINVAL;
-		}
-		break;
-	default:
-		printf("Unrecognised property '%s'\n", property);
-		return -EINVAL;
-	}
-
-	return 0;
-}
 
 static int extlinux_bootmeth_bind(struct udevice *dev)
 {
