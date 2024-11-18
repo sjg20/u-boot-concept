@@ -137,28 +137,6 @@ static int extlinux_pxe_read_file(struct udevice *dev, struct bootflow *bflow,
 	return 0;
 }
 
-static int extlinux_pxe_boot(struct udevice *dev, struct bootflow *bflow)
-{
-	struct extlinux_plat *plat = dev_get_plat(dev);
-	struct pxe_context *ctx = &plat->ctx;
-	ulong addr;
-	int ret;
-
-	addr = map_to_sysmem(bflow->buf);
-	plat->info.dev = dev;
-	plat->info.bflow = bflow;
-	ret = pxe_setup_ctx(ctx, extlinux_pxe_getfile, &plat->info, false,
-			    bflow->subdir, false, plat->use_fallback, bflow);
-	if (ret)
-		return log_msg_ret("ctx", -EINVAL);
-
-	ret = pxe_process(ctx, addr, false);
-	if (ret)
-		return log_msg_ret("bread", -EINVAL);
-
-	return 0;
-}
-
 static int extlinux_bootmeth_pxe_bind(struct udevice *dev)
 {
 	struct bootmeth_uc_plat *plat = dev_get_uclass_plat(dev);
@@ -168,6 +146,18 @@ static int extlinux_bootmeth_pxe_bind(struct udevice *dev)
 
 	return 0;
 }
+
+static int extlinux_pxe_boot(struct udevice *dev, struct bootflow *bflow)
+{
+	return extlinux_boot(dev, bflow, extlinux_pxe_getfile);
+}
+
+#if CONFIG_IS_ENABLED(BOOTSTD_FULL)
+static int extlinux_pxe_read_all(struct udevice *dev, struct bootflow *bflow)
+{
+	return extlinux_read_all(dev, bflow, extlinux_pxe_getfile);
+}
+#endif
 
 static struct bootmeth_ops extlinux_bootmeth_pxe_ops = {
 	.check		= extlinux_pxe_check,

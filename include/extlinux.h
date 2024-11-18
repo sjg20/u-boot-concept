@@ -50,4 +50,10 @@ enum extlinux_option_type extlinux_get_option(const char *option);
 int extlinux_set_property(struct udevice *dev, const char *property,
 			  const char *value);
 
+int extlinux_setup(struct udevice *dev, struct bootflow *bflow,
+		   pxe_getfile_func getfile, struct pxe_context *ctx);
+
+int extlinux_boot(struct udevice *dev, struct bootflow *bflow,
+		  pxe_getfile_func getfile);
+
 #endif

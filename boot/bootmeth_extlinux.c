@@ -138,61 +138,17 @@ static int extlinux_read_bootflow(struct udevice *dev, struct bootflow *bflow)
 	return 0;
 }
 
-static int extlinux_setup(struct udevice *dev, struct bootflow *bflow,
-			  struct pxe_context *ctx)
+static int extlinux_local_boot(struct udevice *dev, struct bootflow *bflow)
 {
-	struct extlinux_plat *plat = dev_get_plat(dev);
-	int ret;
-
-	plat->info.dev = dev;
-	plat->info.bflow = bflow;
-
-	ret = pxe_setup_ctx(ctx, extlinux_getfile, &plat->info, true,
-			    bflow->fname, false, plat->use_fallback, bflow);
-	if (ret)
-		return log_msg_ret("ctx", ret);
-
-	return 0;
-}
-
-static int extlinux_boot(struct udevice *dev, struct bootflow *bflow)
-{
-	struct extlinux_plat *plat = dev_get_plat(dev);
-	ulong addr;
-	int ret;
-
-	/* if we have already selected a label, just boot it */
-	if (plat->ctx.label) {
-		ret = pxe_do_boot(&plat->ctx);
-	} else {
-		ret = extlinux_setup(dev, bflow, &plat->ctx);
-		if (ret)
-			return log_msg_ret("elb", ret);
-		addr = map_to_sysmem(bflow->buf);
-		ret = pxe_process(&plat->ctx, addr, false);
-	}
-	if (ret)
-		return log_msg_ret("elb", -EFAULT);
+	return extlinux_boot(dev, bflow, extlinux_getfile);
 
 	return 0;
 }
 
 #if CONFIG_IS_ENABLED(BOOTSTD_FULL)
-static int extlinux_read_all(struct udevice *dev, struct bootflow *bflow)
+static int extlinux_local_read_all(struct udevice *dev, struct bootflow *bflow)
 {
-	struct extlinux_plat *plat = dev_get_plat(dev);
-	ulong addr;
-	int ret;
-
-	ret = extlinux_setup(dev, bflow, &plat->ctx);
-	if (ret)
-		return log_msg_ret("era", ret);
-	addr = map_to_sysmem(bflow->buf);
-	ret = pxe_probe(&plat->ctx, addr, false);
-	if (ret)
-		return log_msg_ret("elb", -EFAULT);
-
-	return 0;
+	return extlinux_read_all(dev, bflow, extlinux_getfile);
 }
 #endif
 
@@ -211,10 +167,10 @@ static struct bootmeth_ops extlinux_bootmeth_ops = {
 	.check		= extlinux_check,
 	.read_bootflow	= extlinux_read_bootflow,
 	.read_file	= bootmeth_common_read_file,
-	.boot		= extlinux_boot,
+	.boot		= extlinux_local_boot,
 	.set_property	= extlinux_set_property,
 #if CONFIG_IS_ENABLED(BOOTSTD_FULL)
-	.read_all	= extlinux_read_all,
+	.read_all	= extlinux_local_read_all,
 #endif
 };
 

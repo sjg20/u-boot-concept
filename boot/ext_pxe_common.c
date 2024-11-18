@@ -10,6 +10,7 @@
 
 #include <dm.h>
 #include <extlinux.h>
+#include <mapmem.h>
 #include <linux/string.h>
 
 static const struct extlinux_option options[] = {
@@ -60,6 +61,64 @@ int extlinux_set_property(struct udevice *dev, const char *property,
 		printf("Unrecognised property '%s'\n", property);
 		return -EINVAL;
 	}
+
+	return 0;
+}
+
+int extlinux_setup(struct udevice *dev, struct bootflow *bflow,
+		   pxe_getfile_func getfile, struct pxe_context *ctx)
+{
+	struct extlinux_plat *plat = dev_get_plat(dev);
+	int ret;
+
+	plat->info.dev = dev;
+	plat->info.bflow = bflow;
+
+	ret = pxe_setup_ctx(ctx, getfile, &plat->info, true, bflow->fname,
+			    false, plat->use_fallback, bflow);
+	if (ret)
+		return log_msg_ret("ctx", ret);
+
+	return 0;
+}
+
+int extlinux_boot(struct udevice *dev, struct bootflow *bflow,
+		  pxe_getfile_func getfile)
+{
+	struct extlinux_plat *plat = dev_get_plat(dev);
+	ulong addr;
+	int ret;
+
+	/* if we have already selected a label, just boot it */
+	if (plat->ctx.label) {
+		ret = pxe_do_boot(&plat->ctx);
+	} else {
+		ret = extlinux_setup(dev, bflow, getfile, &plat->ctx);
+		if (ret)
+			return log_msg_ret("elb", ret);
+		addr = map_to_sysmem(bflow->buf);
+		ret = pxe_process(&plat->ctx, addr, false);
+	}
+	if (ret)
+		return log_msg_ret("elb", -EFAULT);
+
+	return 0;
+}
+
+int extlinux_read_all(struct udevice *dev, struct bootflow *bflow,
+		      pxe_getfile_func getfile)
+{
+	struct extlinux_plat *plat = dev_get_plat(dev);
+	ulong addr;
+	int ret;
+
+	ret = extlinux_setup(dev, bflow, getfile, &plat->ctx);
+	if (ret)
+		return log_msg_ret("era", ret);
+	addr = map_to_sysmem(bflow->buf);
+	ret = pxe_probe(&plat->ctx, addr, false);
+	if (ret)
+		return log_msg_ret("elb", -EFAULT);
 
 	return 0;
 }

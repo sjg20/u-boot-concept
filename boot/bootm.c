@@ -596,7 +596,7 @@ static int handle_decomp_error(int comp_type, size_t uncomp_size,
 }
 #endif
 
-#ifndef USE_HOSTCC
+#if !defined USE_HOSTCC
 static int bootm_load_os(struct bootm_headers *images, int boot_progress)
 {
 	struct image_info os = images->os;
