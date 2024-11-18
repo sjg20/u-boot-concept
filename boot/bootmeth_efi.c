@@ -6,6 +6,7 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
+#define LOG_DEBUG
 #define LOG_CATEGORY UCLASS_BOOTSTD
 
 #include <bootdev.h>
@@ -210,6 +211,7 @@ static int distro_efi_read_bootflow_net(struct bootflow *bflow)
 	if (size <= 0)
 		return log_msg_ret("sz", -EINVAL);
 	bflow->size = size;
+	bflow->buf = map_sysmem(addr, size);
 
 	/* bootfile should be setup by dhcp */
 	bootfile_name = env_get("bootfile");
@@ -218,10 +220,6 @@ static int distro_efi_read_bootflow_net(struct bootflow *bflow)
 	bflow->fname = strdup(bootfile_name);
 	if (!bflow->fname)
 		return log_msg_ret("fi0", -ENOMEM);
-
-	/* do the hideous EFI hack */
-	efi_set_bootdev("Net", "", bflow->fname, map_sysmem(addr, 0),
-			bflow->size);
 
 	/* read the DT file also */
 	fdt_addr_str = env_get("fdt_addr_r");
@@ -297,19 +295,10 @@ static int distro_efi_boot(struct udevice *dev, struct bootflow *bflow)
 			fdt = bflow->fdt_addr;
 
 	} else {
-		/*
-		 * This doesn't actually work for network devices:
-		 *
-		 * do_bootefi_image() No UEFI binary known at 0x02080000
-		 *
-		 * But this is the same behaviour for distro boot, so it can be
-		 * fixed here.
-		 */
-		fdt = env_get_hex("fdt_addr_r", 0);
+		log_debug("network boot\n");
+		if (efi_bootflow_run(bflow))
+			return log_msg_ret("run", -EINVAL);
 	}
-
-	if (efi_bootflow_run(bflow))
-		return log_msg_ret("run", -EINVAL);
 
 	return 0;
 }

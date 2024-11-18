@@ -164,6 +164,10 @@ static const struct {
 		EFI_DT_FIXUP_PROTOCOL_GUID,
 	},
 	{
+		"TCG",
+		EFI_TCG_PROTOCOL_GUID,
+		},
+	{
 		"TCG2",
 		EFI_TCG2_PROTOCOL_GUID,
 		},
@@ -246,6 +250,8 @@ static const struct {
 	{ "EFI_MEMORY_TYPE", EFI_MEMORY_TYPE },
 	{ "EFI_MEM_STATUS_CODE_REC", EFI_MEM_STATUS_CODE_REC },
 	{ "EFI_GUID_EFI_ACPI1", EFI_GUID_EFI_ACPI1 },
+	{ "Console-control protocol", EFI_GUID_CONSOLE_CONTROL },
+	{ "Shim-related", EFI_GUID_SHIM_RELATED },
 #endif
 #endif /* !USE_HOSTCC */
 };

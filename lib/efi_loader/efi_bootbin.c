@@ -4,6 +4,7 @@
  *  Copyright (c) 2016 Alexander Graf
  */
 
+#define LOG_DEBUG
 #define LOG_CATEGORY LOGC_EFI
 
 #include <bootflow.h>
@@ -56,8 +57,10 @@ efi_status_t calculate_paths(const char *dev, const char *devnr, const char *pat
 	efi_status_t ret;
 
 	ret = efi_dp_from_name(dev, devnr, path, &device, &image);
-	if (ret != EFI_SUCCESS)
+	if (ret != EFI_SUCCESS) {
+		log_debug("Failed to get a valid name\n");
 		return ret;
+	}
 
 	*device_pathp = device;
 	if (image) {
@@ -155,13 +158,17 @@ static efi_status_t efi_run_image(void *source_buffer, efi_uintn_t source_size,
 	efi_status_t ret;
 	u16 *load_options;
 
+	log_debug("device: %pD\n", device);
+	log_debug("image: %pD\n", image);
 	file_path = efi_dp_concat(device, image, 0);
+	log_debug("file_path: %pD\n", file_path);
 	msg_path = image;
 
 	log_info("Booting %pD\n", msg_path);
 
 	ret = EFI_CALL(efi_load_image(false, efi_root, file_path, source_buffer,
 				      source_size, &handle));
+	log_info("efi_load_image ret %lx\n", ret);
 	if (ret != EFI_SUCCESS) {
 		log_err("Loading image failed\n");
 		goto out;
@@ -172,6 +179,7 @@ static efi_status_t efi_run_image(void *source_buffer, efi_uintn_t source_size,
 	if (ret != EFI_SUCCESS)
 		goto out;
 
+	log_info("Calling do_bootefi_exec()\n");
 	ret = do_bootefi_exec(handle, load_options);
 
 out:
@@ -256,6 +264,35 @@ out:
 	return ret;
 }
 
+/**
+ * calc_dev_name() - Calculate the device name to give to EFI
+ *
+ * If not supported, this shows an error.
+ *
+ * Return name, or NULL if not supported
+ */
+static const char *calc_dev_name(struct bootflow *bflow)
+{
+	const struct udevice *media_dev;
+
+	media_dev = dev_get_parent(bflow->dev);
+
+	if (!bflow->blk) {
+		if (device_get_uclass_id(media_dev) == UCLASS_ETH)
+			return "Net";
+
+		log_err("Cannot boot EFI app on media '%s'\n",
+			dev_get_uclass_name(media_dev));
+
+		return NULL;
+	}
+
+	if (device_get_uclass_id(media_dev) == UCLASS_MASS_STORAGE)
+		return "usb";
+
+	return blk_get_uclass_name(device_get_uclass_id(media_dev));
+}
+
 efi_status_t efi_bootflow_run(struct bootflow *bflow)
 {
 	struct efi_device_path *device, *image;
@@ -268,24 +305,32 @@ efi_status_t efi_bootflow_run(struct bootflow *bflow)
 	efi_status_t ret;
 	void *fdt;
 
-	if (bflow->blk)
+	media_dev = dev_get_parent(bflow->dev);
+	if (bflow->blk) {
 		desc = dev_get_uclass_plat(bflow->blk);
 
-	media_dev = dev_get_parent(bflow->dev);
-	snprintf(devnum_str, sizeof(devnum_str), "%x:%x",
-		 desc ? desc->devnum : dev_seq(media_dev),
-		 bflow->part);
+		snprintf(devnum_str, sizeof(devnum_str), "%x:%x",
+			 desc ? desc->devnum : dev_seq(media_dev), bflow->part);
+	}
+	else {
+		*devnum_str = '\0';
+	}
 
 	strlcpy(dirname, bflow->fname, sizeof(dirname));
 	last_slash = strrchr(dirname, '/');
 	if (last_slash)
 		*last_slash = '\0';
-	dev_name = device_get_uclass_id(media_dev) == UCLASS_MASS_STORAGE ?
-		 "usb" : blk_get_uclass_name(device_get_uclass_id(media_dev));
+
+	dev_name = calc_dev_name(bflow);
+
+	log_info("dev_name '%s' devnum_str '%s' dirname '%s' fname '%s' media_dev '%s'\n",
+		 dev_name, devnum_str, dirname, bflow->fname, media_dev->name);
+	if (!dev_name)
+		return EFI_UNSUPPORTED;
 
 	ret = calculate_paths(dev_name, devnum_str, dirname, &device, &image);
 	if (ret)
-		return ret;
+		return EFI_UNSUPPORTED;
 
 	if (bflow->flags & BOOTFLOWF_USE_BUILTIN_FDT) {
 		log_debug("Booting with built-in fdt\n");

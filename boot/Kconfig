@@ -625,9 +625,9 @@ config BOOTMETH_VBE
 config BOOTMETH_DISTRO
 	bool  # Options needed to boot any distro
 	select BOOTMETH_SCRIPT if CMDLINE # E.g. Armbian uses scripts
-	select BOOTMETH_EXTLINUX  # E.g. Debian uses these
-	select BOOTMETH_EXTLINUX_PXE if CMD_PXE && CMD_NET && DM_ETH
-	select BOOTMETH_EFILOADER if EFI_BINARY_EXEC # E.g. Ubuntu uses this
+	imply BOOTMETH_EXTLINUX  # E.g. Debian uses these
+	imply BOOTMETH_EXTLINUX_PXE if CMD_PXE && CMD_NET && DM_ETH
+	imply BOOTMETH_EFILOADER if EFI_BINARY_EXEC # E.g. Ubuntu uses this
 
 config SPL_BOOTMETH_VBE
 	bool "Bootdev support for Verified Boot for Embedded (SPL)"

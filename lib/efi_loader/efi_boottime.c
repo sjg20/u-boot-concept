@@ -5,6 +5,8 @@
  * Copyright (c) 2016 Alexander Graf
  */
 
+#define LOG_DEBUG
+
 #include <bootm.h>
 #include <div64.h>
 #include <dm/device.h>
@@ -2124,6 +2126,7 @@ efi_status_t EFIAPI efi_load_image(bool boot_policy,
 	}
 
 	if (!source_buffer) {
+		log_info("No source_buffer: looking up image\n");
 		ret = efi_load_image_from_path(boot_policy, file_path,
 					       &dest_buffer, &source_size);
 		if (ret != EFI_SUCCESS)
@@ -2132,10 +2135,19 @@ efi_status_t EFIAPI efi_load_image(bool boot_policy,
 		dest_buffer = source_buffer;
 	}
 	/* split file_path which contains both the device and file parts */
-	efi_dp_split_file_path(file_path, &dp, &fp);
-	ret = efi_setup_loaded_image(dp, fp, image_obj, &info);
-	if (ret == EFI_SUCCESS)
+	log_info("splitting path\n");
+	ret = efi_dp_split_file_path(file_path, &dp, &fp);
+	log_info("split ret = %lx\n", ret);
+	log_info("- dp %pD\n", dp);
+	log_info("- fp %pD\n", fp);
+	if (ret == EFI_SUCCESS) {
+		ret = efi_setup_loaded_image(dp, fp, image_obj, &info);
+		log_info("efi_setup_loaded_image: ret=%lx\n", ret);
+	}
+	if (ret == EFI_SUCCESS) {
 		ret = efi_load_pe(*image_obj, dest_buffer, source_size, info);
+		log_info("efi_load_pe: ret=%lx\n", ret);
+	}
 	if (!source_buffer)
 		/* Release buffer to which file was loaded */
 		efi_free_pages(map_to_sysmem(dest_buffer),
