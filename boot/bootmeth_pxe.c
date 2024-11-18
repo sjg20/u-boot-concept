@@ -140,15 +140,14 @@ static int extlinux_pxe_read_file(struct udevice *dev, struct bootflow *bflow,
 static int extlinux_pxe_boot(struct udevice *dev, struct bootflow *bflow)
 {
 	struct extlinux_plat *plat = dev_get_plat(dev);
-	struct pxe_context *ctx = dev_get_priv(dev);
-	struct extlinux_info info;
+	struct pxe_context *ctx = &plat->ctx;
 	ulong addr;
 	int ret;
 
 	addr = map_to_sysmem(bflow->buf);
-	info.dev = dev;
-	info.bflow = bflow;
-	ret = pxe_setup_ctx(ctx, extlinux_pxe_getfile, &info, false,
+	plat->info.dev = dev;
+	plat->info.bflow = bflow;
+	ret = pxe_setup_ctx(ctx, extlinux_pxe_getfile, &plat->info, false,
 			    bflow->subdir, false, plat->use_fallback, bflow);
 	if (ret)
 		return log_msg_ret("ctx", -EINVAL);
@@ -189,6 +188,5 @@ U_BOOT_DRIVER(bootmeth_zpxe) = {
 	.of_match	= extlinux_bootmeth_pxe_ids,
 	.ops		= &extlinux_bootmeth_pxe_ops,
 	.bind		= extlinux_bootmeth_pxe_bind,
-	.priv_auto	= sizeof(struct pxe_context),
 	.plat_auto	= sizeof(struct extlinux_plat)
 };
