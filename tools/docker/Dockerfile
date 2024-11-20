@@ -28,7 +28,9 @@ ENV TCVER=13.2.0
 RUN echo "Building on $BUILDPLATFORM, for target $TARGETPLATFORM"
 
 # Add LLVM repository
-RUN apt-get update && apt-get install -y gnupg2 wget xz-utils && rm -rf /var/lib/apt/lists/*
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y gnupg2 wget xz-utils
 RUN wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
 RUN echo deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-17 main | tee /etc/apt/sources.list.d/llvm.list
 
@@ -53,7 +55,9 @@ RUN if [ "$TARGETPLATFORM" = "linux/amd64" ]; then \
 	fi
 
 # Update and install things from apt now
-RUN if [ "$TARGETPLATFORM" = "linux/amd64" ]; then \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    if [ "$TARGETPLATFORM" = "linux/amd64" ]; then \
 		EXTRA_PACKAGES="grub-efi-ia32-bin libc6-i386"; \
 	fi; \
 	apt-get update && apt-get install -y \
@@ -141,8 +145,7 @@ RUN if [ "$TARGETPLATFORM" = "linux/amd64" ]; then \
 	xilinx-bootgen \
 	xxd \
 	zip \
-	${EXTRA_PACKAGES} \
-	&& rm -rf /var/lib/apt/lists/*
+	${EXTRA_PACKAGES}
 
 # Make kernels readable for libguestfs tools to work correctly
 RUN chmod +r /boot/vmlinu*
