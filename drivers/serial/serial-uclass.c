@@ -242,11 +242,20 @@ static void _serial_flush(struct udevice *dev)
 		;
 }
 
+bool serial_is_disabled_(struct udevice *dev)
+{
+	struct serial_dev_plat *uplat = dev_get_uclass_plat(dev);
+
+	return uplat->disable;
+}
+
 static void _serial_putc(struct udevice *dev, char ch)
 {
 	struct dm_serial_ops *ops = serial_get_ops(dev);
 	int err;
 
+	if (serial_is_disabled(dev))
+		return;
 	if (ch == '\n')
 		_serial_putc(dev, '\r');
 
@@ -262,6 +271,8 @@ static int __serial_puts(struct udevice *dev, const char *str, size_t len)
 {
 	struct dm_serial_ops *ops = serial_get_ops(dev);
 
+	if (serial_is_disabled(dev))
+		return 0;
 	do {
 		ssize_t written = ops->puts(dev, str, len);
 
@@ -306,6 +317,8 @@ static int __serial_getc(struct udevice *dev)
 	struct dm_serial_ops *ops = serial_get_ops(dev);
 	int err;
 
+	if (serial_is_disabled(dev))
+		return 0;
 	do {
 		err = ops->getc(dev);
 		if (err == -EAGAIN)
@@ -318,6 +331,9 @@ static int __serial_getc(struct udevice *dev)
 static int __serial_tstc(struct udevice *dev)
 {
 	struct dm_serial_ops *ops = serial_get_ops(dev);
+
+	if (serial_is_disabled(dev))
+		return 0;
 
 	if (ops->pending)
 		return ops->pending(dev, true);
@@ -568,7 +584,7 @@ static int serial_post_probe(struct udevice *dev)
 	int ret;
 
 	/* Set the baud rate */
-	if (ops->setbrg) {
+	if (!serial_is_disabled(dev) && ops->setbrg) {
 		ret = ops->setbrg(dev, gd->baudrate);
 		if (ret)
 			return ret;
@@ -611,6 +627,7 @@ UCLASS_DRIVER(serial) = {
 	.flags		= DM_UC_FLAG_SEQ_ALIAS,
 	.post_probe	= serial_post_probe,
 	.pre_remove	= serial_pre_remove,
+	.per_device_plat_auto	= sizeof(struct serial_dev_plat),
 	.per_device_auto	= sizeof(struct serial_dev_priv),
 };
 #endif

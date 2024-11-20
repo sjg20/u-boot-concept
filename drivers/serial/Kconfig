@@ -99,6 +99,15 @@ config VPL_SERIAL_PRESENT
 	  This option enables the full UART in TPL, so if is it disabled,
 	  the full UART driver will be omitted, thus saving space.
 
+config SERIAL_CAN_DISABLE
+	bool "Serial ports can be silently disabled"
+	help
+	  Enable this to allow serial ports to be disabled at runtime. This is
+	  used when there is a UART driver available, but it cannot operate,
+	  perhaps because it does not have the required hardware information.
+	  An example is when coreboot boots into U-Boot but does not provide the
+	  serial information in its sysinfo tables
+
 config CONS_INDEX
 	int "UART used for console"
 	depends on SPECIFY_CONSOLE_INDEX

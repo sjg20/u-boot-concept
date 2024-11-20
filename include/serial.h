@@ -288,6 +288,19 @@ struct dm_serial_ops {
 };
 
 /**
+ * struct serial_dev_plat - plat data used by the uclass
+ *
+ * @disable: true to disable probing and using this device. This is used when
+ * there is a UART driver available, but it cannot operate, perhaps because it
+ * does not have the required hardware information. An example is when coreboot
+ * boots into U-Boot but does not provide the serial information in its sysinfo
+ * tables
+ */
+struct serial_dev_plat {
+	bool disable;
+};
+
+/**
  * struct serial_dev_priv - information about a device used by the uclass
  *
  * @sdev:	stdio device attached to this uart
@@ -308,6 +321,18 @@ struct serial_dev_priv {
 
 /* Access the serial operations for a device */
 #define serial_get_ops(dev)	((struct dm_serial_ops *)(dev)->driver->ops)
+
+bool serial_is_disabled_(struct udevice *dev);
+
+/* Provide a way to silently disable the port */
+static inline bool serial_is_disabled(struct udevice *dev)
+{
+#ifdef CONFIG_SERIAL_CAN_DISABLE
+	return serial_is_disabled_(dev);
+#else
+	return false;
+#endif
+}
 
 /**
  * serial_getconfig() - Get the uart configuration
