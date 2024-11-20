@@ -533,7 +533,8 @@ int ns16550_serial_probe(struct udevice *dev)
 		reset_deassert_bulk(&reset_bulk);
 
 	com_port->plat = dev_get_plat(dev);
-	ns16550_init(com_port, -1);
+	if (!serial_is_disabled(dev))
+		ns16550_init(com_port, -1);
 
 	return 0;
 }
