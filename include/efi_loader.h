@@ -1126,6 +1126,18 @@ struct efi_signature_store *efi_sigstore_parse_sigdb(u16 *name);
 
 bool efi_secure_boot_enabled(void);
 
+/**
+ * efi_set_secure_boot_enabled - set whether secure boot is enabled or not
+ *
+ * This should be only be used in tests.
+ *
+ * TODO(sjg@chromium.org): Consider how we can reinit the EFI state without
+ * restarting U-Boot
+ *
+ * @enable: true to enable, false to disable
+ */
+void efi_set_secure_boot_enabled(bool enable);
+
 bool efi_capsule_auth_enabled(void);
 
 void *efi_prepare_aligned_image(void *efi, u64 *efi_size);

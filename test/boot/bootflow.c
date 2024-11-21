@@ -1276,6 +1276,7 @@ static int bootflow_efi(struct unit_test_state *uts)
 	struct udevice *bootstd;
 	const char **old_order;
 
+	efi_set_secure_boot_enabled(false);
 	ut_assertok(uclass_first_device_err(UCLASS_BOOTSTD, &bootstd));
 	std = dev_get_priv(bootstd);
 	old_order = std->bootdev_order;

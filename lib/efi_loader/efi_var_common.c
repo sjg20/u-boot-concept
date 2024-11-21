@@ -362,6 +362,11 @@ bool efi_secure_boot_enabled(void)
 	return efi_secure_boot;
 }
 
+void efi_set_secure_boot_enabled(bool enable)
+{
+	efi_secure_boot = enable;
+}
+
 enum efi_auth_var_type efi_auth_var_get_type(const u16 *name,
 					     const efi_guid_t *guid)
 {
