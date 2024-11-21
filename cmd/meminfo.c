@@ -69,8 +69,13 @@ static int do_meminfo(struct cmd_tbl *cmdtp, int flag, int argc,
 	}
 	stk_bot = gd->start_addr_sp - CONFIG_STACK_SIZE;
 	print_region("stack", stk_bot, CONFIG_STACK_SIZE, &upto);
-	if (CONFIG_IS_ENABLED(EFI_LOADER))
-		print_region("efi", gd_efi_base(), upto - gd_efi_base(), &upto);
+	if (CONFIG_IS_ENABLED(EFI_LOADER)) {
+		ulong size = upto - gd_efi_base();
+
+		if (size)
+			print_region("efi", gd_efi_base(), upto - gd_efi_base(),
+				     &upto);
+	}
 	print_region("free", gd->ram_base, upto, &upto);
 
 	return 0;

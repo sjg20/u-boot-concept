@@ -29,10 +29,8 @@ static int cmd_test_meminfo(struct unit_test_state *uts)
 	ut_assert_nextlinen("devicetree");
 	ut_assert_nextlinen("bootstage");
 	ut_assert_nextlinen("bloblist");
+	ut_assert_nextlinen("efi_early");
 	ut_assert_nextlinen("stack");
-
-	/* we expect at least one lmb line, but don't know how many */
-	ut_assert_nextlinen("lmb");
 	ut_assert_skip_to_linen("free");
 
 	ut_assert_console_end();

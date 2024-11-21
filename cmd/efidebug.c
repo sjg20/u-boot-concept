@@ -1658,7 +1658,7 @@ static int do_efidebug(struct cmd_tbl *cmdtp, int flag,
 	 * Calling efi_init_obj_list() can add log records, so avoid it if just
 	 * showing the log
 	 */
-	if (cp->cmd != do_efi_show_log) {
+	if (cp->cmd != do_efi_show_log && cp->cmd != do_efi_show_memmap) {
 		/* Initialize UEFI drivers */
 		r = efi_init_obj_list();
 		if (r != EFI_SUCCESS) {
