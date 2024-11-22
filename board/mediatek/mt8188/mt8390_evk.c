@@ -185,7 +185,7 @@ int board_init(void)
 
 int check_board_id(void)
 {
-	unsigned int data;
+	unsigned int data = 0;
 
 	adc_channel_single_shot(MT8390_ADC_NAME, MT8390_BOARD_ID_ADC_CHANNEL, &data);
 
