@@ -748,6 +748,11 @@ efi_status_t efi_get_memory_map(efi_uintn_t *memory_map_size,
 	memory_map = &memory_map[map_entries - 1];
 	list_for_each_entry(lmem, &efi_mem, link) {
 		*memory_map = lmem->desc;
+		/* Convert to pointers, which is what the caller expects */
+		memory_map->physical_start =
+			(ulong)map_sysmem(lmem->desc.physical_start, 0);
+		memory_map->virtual_start =
+			(ulong)map_sysmem(lmem->desc.virtual_start, 0);
 		memory_map--;
 	}
 
