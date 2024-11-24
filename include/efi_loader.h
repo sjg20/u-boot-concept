@@ -791,7 +791,7 @@ void *efi_alloc_aligned_pages(u64 len, enum efi_memory_type mem_type,
  */
 efi_status_t efi_allocate_pages(enum efi_allocate_type type,
 				enum efi_memory_type mem_type,
-				efi_uintn_t pages, uint64_t *memoryp);
+				efi_uintn_t pages, void **memoryp);
 
 /**
  * efi_free_pages() - free memory pages
@@ -800,7 +800,7 @@ efi_status_t efi_allocate_pages(enum efi_allocate_type type,
  * @pages:	number of pages to be freed
  * Return:	status code
  */
-efi_status_t efi_free_pages(uint64_t memory, efi_uintn_t pages);
+efi_status_t efi_free_pages(void *memory, efi_uintn_t pages);
 
 /**
  * efi_allocate_pool - allocate memory from pool
@@ -833,7 +833,9 @@ efi_status_t efi_get_memory_map(efi_uintn_t *memory_map_size,
 
 /**
  * efi_add_memory_map() - Add a range into the EFI memory map
- * @start: start address, must be a multiple of EFI_PAGE_SIZE
+ * @start: start address, must be a multiple of EFI_PAGE_SIZE. Note that this
+ *	is an address, not a pointer. Use map_sysmem(start) to convert to a
+ *	pointer
  * @size: Size, in bytes
  * @mem_type: EFI type of memory added
  * Return: status code
@@ -844,8 +846,9 @@ efi_status_t efi_add_memory_map(u64 start, u64 size,
 /**
  * efi_add_memory_map_pg() - add pages to the memory map
  *
- * @start:			start address, must be a multiple of
- *				EFI_PAGE_SIZE
+ * @start: start address, must be a multiple of EFI_PAGE_SIZE. Note that this
+ *	is an address, not a pointer. Use map_sysmem(start) to convert to a
+ *	pointer
  * @pages:			number of pages to add
  * @mem_type:		EFI type of memory added
  * @overlap_conventional:	region may only overlap free(conventional)

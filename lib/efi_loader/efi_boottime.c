@@ -13,6 +13,7 @@
 #include <irq_func.h>
 #include <log.h>
 #include <malloc.h>
+#include <mapmem.h>
 #include <pe.h>
 #include <time.h>
 #include <u-boot/crc.h>
@@ -430,9 +431,15 @@ static efi_status_t EFIAPI efi_allocate_pages_ext(int type, int mem_type,
 						  uint64_t *memoryp)
 {
 	efi_status_t r;
+	void *ptr;
 
+	/* we should not read this unless type indicates it is being used */
+	if (type == EFI_ALLOCATE_MAX_ADDRESS || type == EFI_ALLOCATE_ADDRESS)
+		ptr = (void *)*memoryp;
 	EFI_ENTRY("%d, %d, 0x%zx, %p", type, mem_type, pages, memoryp);
-	r = efi_allocate_pages(type, mem_type, pages, memoryp);
+	r = efi_allocate_pages(type, mem_type, pages, &ptr);
+	*memoryp = (ulong)ptr;
+
 	return EFI_EXIT(r);
 }
 
@@ -454,7 +461,7 @@ static efi_status_t EFIAPI efi_free_pages_ext(uint64_t memory,
 	efi_status_t r;
 
 	EFI_ENTRY("%llx, 0x%zx", memory, pages);
-	r = efi_free_pages(memory, pages);
+	r = efi_free_pages((void *)memory, pages);
 	return EFI_EXIT(r);
 }
 
@@ -1950,8 +1957,8 @@ efi_status_t efi_load_image_from_file(struct efi_device_path *file_path,
 {
 	struct efi_file_handle *f;
 	efi_status_t ret;
-	u64 addr;
 	efi_uintn_t bs;
+	void *ptr;
 
 	/* Open file */
 	f = efi_file_from_path(file_path);
@@ -1970,17 +1977,17 @@ efi_status_t efi_load_image_from_file(struct efi_device_path *file_path,
 	 */
 	ret = efi_allocate_pages(EFI_ALLOCATE_ANY_PAGES,
 				 EFI_BOOT_SERVICES_DATA,
-				 efi_size_in_pages(bs), &addr);
+				 efi_size_in_pages(bs), &ptr);
 	if (ret != EFI_SUCCESS) {
 		ret = EFI_OUT_OF_RESOURCES;
 		goto error;
 	}
 
 	/* Read file */
-	EFI_CALL(ret = f->read(f, &bs, (void *)(uintptr_t)addr));
+	EFI_CALL(ret = f->read(f, &bs, ptr));
 	if (ret != EFI_SUCCESS)
-		efi_free_pages(addr, efi_size_in_pages(bs));
-	*buffer = (void *)(uintptr_t)addr;
+		efi_free_pages(ptr, efi_size_in_pages(bs));
+	*buffer = ptr;
 	*size = bs;
 error:
 	EFI_CALL(f->close(f));
@@ -2008,9 +2015,10 @@ efi_status_t efi_load_image_from_path(bool boot_policy,
 	struct efi_device_path *dp, *rem;
 	struct efi_load_file_protocol *load_file_protocol = NULL;
 	efi_uintn_t buffer_size;
-	uint64_t addr, pages;
+	ulong pages;
 	const efi_guid_t *guid;
 	struct efi_handler *handler;
+	void *ptr;
 
 	/* In case of failure nothing is returned */
 	*buffer = NULL;
@@ -2044,20 +2052,20 @@ efi_status_t efi_load_image_from_path(bool boot_policy,
 		goto out;
 	pages = efi_size_in_pages(buffer_size);
 	ret = efi_allocate_pages(EFI_ALLOCATE_ANY_PAGES, EFI_BOOT_SERVICES_DATA,
-				 pages, &addr);
+				 pages, &ptr);
 	if (ret != EFI_SUCCESS) {
 		ret = EFI_OUT_OF_RESOURCES;
 		goto out;
 	}
 	ret = EFI_CALL(load_file_protocol->load_file(
 					load_file_protocol, rem, boot_policy,
-					&buffer_size, (void *)(uintptr_t)addr));
+					&buffer_size, ptr));
 	if (ret != EFI_SUCCESS)
-		efi_free_pages(addr, pages);
+		efi_free_pages(ptr, pages);
 out:
 	efi_close_protocol(device, guid, efi_root, NULL);
 	if (ret == EFI_SUCCESS) {
-		*buffer = (void *)(uintptr_t)addr;
+		*buffer = ptr;
 		*size = buffer_size;
 	}
 
@@ -2120,8 +2128,7 @@ efi_status_t EFIAPI efi_load_image(bool boot_policy,
 		ret = efi_load_pe(*image_obj, dest_buffer, source_size, info);
 	if (!source_buffer)
 		/* Release buffer to which file was loaded */
-		efi_free_pages((uintptr_t)dest_buffer,
-			       efi_size_in_pages(source_size));
+		efi_free_pages(dest_buffer, efi_size_in_pages(source_size));
 	if (ret == EFI_SUCCESS || ret == EFI_SECURITY_VIOLATION) {
 		info->system_table = &systab;
 		info->parent_handle = parent_image;
@@ -3321,7 +3328,7 @@ close_next:
 		}
 	}
 
-	efi_free_pages((uintptr_t)loaded_image_protocol->image_base,
+	efi_free_pages(loaded_image_protocol->image_base,
 		       efi_size_in_pages(loaded_image_protocol->image_size));
 	efi_delete_handle(&image_obj->header);
 
