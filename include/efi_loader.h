@@ -791,7 +791,7 @@ void *efi_alloc_aligned_pages(u64 len, enum efi_memory_type mem_type,
  */
 efi_status_t efi_allocate_pages(enum efi_allocate_type type,
 				enum efi_memory_type mem_type,
-				efi_uintn_t pages, uint64_t *memoryp);
+				efi_uintn_t pages, void **memoryp);
 
 /**
  * efi_free_pages() - free memory pages
@@ -800,7 +800,7 @@ efi_status_t efi_allocate_pages(enum efi_allocate_type type,
  * @pages:	number of pages to be freed
  * Return:	status code
  */
-efi_status_t efi_free_pages(uint64_t memory, efi_uintn_t pages);
+efi_status_t efi_free_pages(void *memory, efi_uintn_t pages);
 
 /**
  * efi_allocate_pool - allocate memory from pool
