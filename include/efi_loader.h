@@ -919,9 +919,8 @@ struct efi_device_path *efi_dp_part_node(struct blk_desc *desc, int part);
 struct efi_device_path *efi_dp_from_file(const struct efi_device_path *dp,
 					 const char *path);
 struct efi_device_path *efi_dp_from_eth(void);
-struct efi_device_path *efi_dp_from_mem(enum efi_memory_type mem_type,
-					uint64_t start_address,
-					size_t size);
+struct efi_device_path *efi_dp_from_mem(enum efi_memory_type  mem_type,
+					void *start_ptr, size_t size);
 /* Determine the last device path node that is not the end node. */
 const struct efi_device_path *efi_dp_last_node(
 			const struct efi_device_path *dp);
