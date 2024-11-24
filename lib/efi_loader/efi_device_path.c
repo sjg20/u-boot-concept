@@ -5,6 +5,7 @@
  * (C) Copyright 2017 Rob Clark
  */
 
+#include "asm/io.h"
 #define LOG_CATEGORY LOGC_EFI
 
 #include <blk.h>

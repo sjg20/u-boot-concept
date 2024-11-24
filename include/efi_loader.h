@@ -782,22 +782,33 @@ efi_status_t efi_get_memory_map(efi_uintn_t *memory_map_size,
 				efi_uintn_t *map_key,
 				efi_uintn_t *descriptor_size,
 				uint32_t *descriptor_version);
-/* Adds a range into the EFI memory map */
-efi_status_t efi_add_memory_map(u64 start, u64 size, int memory_type);
+
+/**
+ * efi_add_memory_map() - Add a range into the EFI memory map
+ * @start: start address, must be a multiple of EFI_PAGE_SIZE. Note that this
+ *	is an address, not a pointer. Use map_sysmem(physical_start) to convert
+ *	to a pointer
+ * @size: Size, in bytes
+ * @memory_type: EFI type of memory added
+ * Return: status code
+ */
+efi_status_t efi_add_memory_map(ulong start, ulong size,
+				enum efi_memory_type memory_type);
 
 /**
  * efi_add_memory_map_pg() - add pages to the memory map
  *
- * @start:			start address, must be a multiple of
- *				EFI_PAGE_SIZE
+ * @start: start address, must be a multiple of EFI_PAGE_SIZE. Note that this
+ *	is an address, not a pointer. Use map_sysmem(physical_start) to convert
+ *	to a pointer
  * @pages:			number of pages to add
- * @memory_type:		type of memory added
+ * @memory_type:		EFI type of memory added
  * @overlap_conventional:	region may only overlap free(conventional)
  *				memory
  * Return:			status code
  */
-efi_status_t efi_add_memory_map_pg(u64 start, u64 pages,
-				   int memory_type,
+efi_status_t efi_add_memory_map_pg(ulong start, ulong pages,
+				   enum efi_memory_type memory_type,
 				   bool overlap_conventional);
 
 /* Called by board init to initialize the EFI drivers */

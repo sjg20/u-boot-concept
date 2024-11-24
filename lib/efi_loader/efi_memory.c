@@ -257,19 +257,8 @@ static s64 efi_mem_carve_out(struct efi_mem_list *map,
 	return EFI_CARVE_LOOP_AGAIN;
 }
 
-/**
- * efi_add_memory_map_pg() - add pages to the memory map
- *
- * @start:			start address, must be a multiple of
- *				EFI_PAGE_SIZE
- * @pages:			number of pages to add
- * @memory_type:		type of memory added
- * @overlap_conventional:	region may only overlap free(conventional)
- *				memory
- * Return:			status code
- */
-efi_status_t efi_add_memory_map_pg(u64 start, u64 pages,
-				   int memory_type,
+efi_status_t efi_add_memory_map_pg(ulong start, ulong pages,
+				   enum efi_memory_type memory_type,
 				   bool overlap_conventional)
 {
 	struct efi_mem_list *lmem;
@@ -278,7 +267,7 @@ efi_status_t efi_add_memory_map_pg(u64 start, u64 pages,
 	uint64_t carved_pages = 0;
 	struct efi_event *evt;
 
-	EFI_PRINT("%s: 0x%llx 0x%llx %d %s\n", __func__,
+	EFI_PRINT("%s: %lx %lx %d %s\n", __func__,
 		  start, pages, memory_type, overlap_conventional ?
 		  "yes" : "no");
 
@@ -381,19 +370,8 @@ efi_status_t efi_add_memory_map_pg(u64 start, u64 pages,
 	return EFI_SUCCESS;
 }
 
-/**
- * efi_add_memory_map() - add memory area to the memory map
- *
- * @start:		start address of the memory area
- * @size:		length in bytes of the memory area
- * @memory_type:	type of memory added
- *
- * Return:		status code
- *
- * This function automatically aligns the start and size of the memory area
- * to EFI_PAGE_SIZE.
- */
-efi_status_t efi_add_memory_map(u64 start, u64 size, int memory_type)
+efi_status_t efi_add_memory_map(ulong start, ulong size,
+				enum efi_memory_type memory_type)
 {
 	u64 pages;
 
