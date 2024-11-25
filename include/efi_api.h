@@ -69,8 +69,10 @@ struct efi_boot_services {
 	efi_status_t (EFIAPI *raise_tpl)(efi_uintn_t new_tpl);
 	void (EFIAPI *restore_tpl)(efi_uintn_t old_tpl);
 
-	efi_status_t (EFIAPI *allocate_pages)(int, int, efi_uintn_t,
-					      efi_physical_addr_t *);
+	efi_status_t (EFIAPI *allocate_pages)(enum efi_allocate_type type,
+					      enum efi_memory_type mem_type,
+					      efi_uintn_t pages,
+					      efi_physical_addr_t *memoryp);
 	efi_status_t (EFIAPI *free_pages)(efi_physical_addr_t, efi_uintn_t);
 	efi_status_t (EFIAPI *get_memory_map)(efi_uintn_t *memory_map_size,
 					      struct efi_mem_desc *desc,
