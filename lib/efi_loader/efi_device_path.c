@@ -975,7 +975,7 @@ struct efi_device_path __maybe_unused *efi_dp_from_eth(void)
 }
 
 /* Construct a device-path for memory-mapped image */
-struct efi_device_path *efi_dp_from_mem(uint32_t memory_type,
+struct efi_device_path *efi_dp_from_mem(enum efi_memory_type mem_type,
 					uint64_t start_address,
 					size_t size)
 {
@@ -990,7 +990,7 @@ struct efi_device_path *efi_dp_from_mem(uint32_t memory_type,
 	mdp->dp.type = DEVICE_PATH_TYPE_HARDWARE_DEVICE;
 	mdp->dp.sub_type = DEVICE_PATH_SUB_TYPE_MEMORY;
 	mdp->dp.length = sizeof(*mdp);
-	mdp->memory_type = memory_type;
+	mdp->memory_type = mem_type;
 	mdp->start_address = start_address;
 	mdp->end_address = start_address + size;
 	buf = &mdp[1];
