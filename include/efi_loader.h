@@ -773,24 +773,25 @@ void *efi_alloc(size_t len);
  * efi_alloc_aligned_pages() - allocate aligned memory pages
  *
  * @len:		len in bytes
- * @memory_type:	usage type of the allocated memory
+ * @mem_type:		usage type of the allocated memory
  * @align:		alignment in bytes
  * Return:		aligned memory or NULL
  */
-void *efi_alloc_aligned_pages(u64 len, int memory_type, size_t align);
+void *efi_alloc_aligned_pages(u64 len, enum efi_memory_type mem_type,
+			      size_t align);
 
 /**
  * efi_allocate_pages - allocate memory pages
  *
  * @type:		type of allocation to be performed
- * @memory_type:	usage type of the allocated memory
+ * @mem_type:		usage type of the allocated memory
  * @pages:		number of pages to be allocated
- * @memory:		returns a pointer to the allocated memory
+ * @memoryp:		returns a pointer to the allocated memory
  * Return:		status code
  */
 efi_status_t efi_allocate_pages(enum efi_allocate_type type,
-				enum efi_memory_type memory_type,
-				efi_uintn_t pages, uint64_t *memory);
+				enum efi_memory_type mem_type,
+				efi_uintn_t pages, uint64_t *memoryp);
 
 /**
  * efi_free_pages() - free memory pages
@@ -804,12 +805,12 @@ efi_status_t efi_free_pages(uint64_t memory, efi_uintn_t pages);
 /**
  * efi_allocate_pool - allocate memory from pool
  *
- * @pool_type:	type of the pool from which memory is to be allocated
+ * @mem_type:	memory type of the pool from which memory is to be allocated
  * @size:	number of bytes to be allocated
  * @buffer:	allocated memory
  * Return:	status code
  */
-efi_status_t efi_allocate_pool(enum efi_memory_type pool_type,
+efi_status_t efi_allocate_pool(enum efi_memory_type mem_type,
 			       efi_uintn_t size, void **buffer);
 
 /**
@@ -834,10 +835,11 @@ efi_status_t efi_get_memory_map(efi_uintn_t *memory_map_size,
  * efi_add_memory_map() - Add a range into the EFI memory map
  * @start: start address, must be a multiple of EFI_PAGE_SIZE
  * @size: Size, in bytes
- * @memory_type: EFI type of memory added
+ * @mem_type: EFI type of memory added
  * Return: status code
  */
-efi_status_t efi_add_memory_map(u64 start, u64 size, int memory_type);
+efi_status_t efi_add_memory_map(u64 start, u64 size,
+				enum efi_memory_type mem_type);
 
 /**
  * efi_add_memory_map_pg() - add pages to the memory map
@@ -845,13 +847,13 @@ efi_status_t efi_add_memory_map(u64 start, u64 size, int memory_type);
  * @start:			start address, must be a multiple of
  *				EFI_PAGE_SIZE
  * @pages:			number of pages to add
- * @memory_type:		EFI type of memory added
+ * @mem_type:		EFI type of memory added
  * @overlap_conventional:	region may only overlap free(conventional)
  *				memory
  * Return:			status code
  */
 efi_status_t efi_add_memory_map_pg(u64 start, u64 pages,
-				   int memory_type,
+				   enum efi_memory_type mem_type,
 				   bool overlap_conventional);
 
 /* Called by board init to initialize the EFI drivers */
@@ -910,7 +912,7 @@ struct efi_device_path *efi_dp_part_node(struct blk_desc *desc, int part);
 struct efi_device_path *efi_dp_from_file(const struct efi_device_path *dp,
 					 const char *path);
 struct efi_device_path *efi_dp_from_eth(void);
-struct efi_device_path *efi_dp_from_mem(uint32_t mem_type,
+struct efi_device_path *efi_dp_from_mem(enum efi_memory_type mem_type,
 					uint64_t start_address,
 					size_t size);
 /* Determine the last device path node that is not the end node. */
