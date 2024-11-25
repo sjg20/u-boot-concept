@@ -838,7 +838,7 @@ efi_status_t efi_get_memory_map(efi_uintn_t *memory_map_size,
  * @mem_type: EFI type of memory added
  * Return: status code
  */
-efi_status_t efi_add_memory_map(u64 start, u64 size,
+efi_status_t efi_add_memory_map(ulong start, ulong size,
 				enum efi_memory_type mem_type);
 
 /**
@@ -852,7 +852,7 @@ efi_status_t efi_add_memory_map(u64 start, u64 size,
  *				memory
  * Return:			status code
  */
-efi_status_t efi_add_memory_map_pg(u64 start, u64 pages,
+efi_status_t efi_add_memory_map_pg(ulong start, ulong pages,
 				   enum efi_memory_type mem_type,
 				   bool overlap_conventional);
 

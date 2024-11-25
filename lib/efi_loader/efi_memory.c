@@ -199,10 +199,10 @@ static s64 efi_mem_carve_out(struct efi_mem_list *map,
 {
 	struct efi_mem_list *newmap;
 	struct efi_mem_desc *map_desc = &map->desc;
-	uint64_t map_start = map_desc->physical_start;
-	uint64_t map_end = map_start + (map_desc->num_pages << EFI_PAGE_SHIFT);
-	uint64_t carve_start = carve_desc->physical_start;
-	uint64_t carve_end = carve_start +
+	ulong map_start = map_desc->physical_start;
+	ulong map_end = map_start + (map_desc->num_pages << EFI_PAGE_SHIFT);
+	ulong carve_start = carve_desc->physical_start;
+	ulong carve_end = carve_start +
 			     (carve_desc->num_pages << EFI_PAGE_SHIFT);
 
 	/* check whether we're overlapping */
@@ -257,17 +257,17 @@ static s64 efi_mem_carve_out(struct efi_mem_list *map,
 	return EFI_CARVE_LOOP_AGAIN;
 }
 
-efi_status_t efi_add_memory_map_pg(u64 start, u64 pages,
+efi_status_t efi_add_memory_map_pg(ulong start, ulong pages,
 				   enum efi_memory_type mem_type,
 				   bool overlap_conventional)
 {
 	struct efi_mem_list *lmem;
 	struct efi_mem_list *newlist;
 	bool carve_again;
-	uint64_t carved_pages = 0;
+	ulong carved_pages = 0;
 	struct efi_event *evt;
 
-	EFI_PRINT("%s: 0x%llx 0x%llx %d %s\n", __func__,
+	EFI_PRINT("%s: 0x%lx 0x%lx %d %s\n", __func__,
 		  start, pages, mem_type, overlap_conventional ?
 		  "yes" : "no");
 
@@ -370,10 +370,10 @@ efi_status_t efi_add_memory_map_pg(u64 start, u64 pages,
 	return EFI_SUCCESS;
 }
 
-efi_status_t efi_add_memory_map(u64 start, u64 size,
+efi_status_t efi_add_memory_map(ulong start, ulong size,
 				enum efi_memory_type mem_type)
 {
-	u64 pages;
+	ulong pages;
 
 	pages = efi_size_in_pages(size + (start & EFI_PAGE_MASK));
 	start &= ~EFI_PAGE_MASK;
@@ -396,13 +396,13 @@ efi_status_t efi_add_memory_map(u64 start, u64 size,
  * @must_be_allocated:	return success if the page is allocated
  * Return:		status code
  */
-static efi_status_t efi_check_allocated(u64 addr, bool must_be_allocated)
+static efi_status_t efi_check_allocated(ulong addr, bool must_be_allocated)
 {
 	struct efi_mem_list *item;
 
 	list_for_each_entry(item, &efi_mem, link) {
-		u64 start = item->desc.physical_start;
-		u64 end = start + (item->desc.num_pages << EFI_PAGE_SHIFT);
+		ulong start = item->desc.physical_start;
+		ulong end = start + (item->desc.num_pages << EFI_PAGE_SHIFT);
 
 		if (addr >= start && addr < end) {
 			if (must_be_allocated ^
@@ -420,7 +420,7 @@ efi_status_t efi_allocate_pages(enum efi_allocate_type type,
 				enum efi_memory_type mem_type,
 				efi_uintn_t pages, uint64_t *memory)
 {
-	u64 efi_addr, len;
+	ulong efi_addr, len;
 	uint flags;
 	efi_status_t ret;
 	phys_addr_t addr;
@@ -430,7 +430,7 @@ efi_status_t efi_allocate_pages(enum efi_allocate_type type,
 		return EFI_INVALID_PARAMETER;
 	if (!memory)
 		return EFI_INVALID_PARAMETER;
-	len = (u64)pages << EFI_PAGE_SHIFT;
+	len = (ulong)pages << EFI_PAGE_SHIFT;
 	/* Catch possible overflow on 64bit systems */
 	if (sizeof(efi_uintn_t) == sizeof(u64) &&
 	    (len >> EFI_PAGE_SHIFT) != (u64)pages)
@@ -491,7 +491,7 @@ efi_status_t efi_allocate_pages(enum efi_allocate_type type,
  */
 efi_status_t efi_free_pages(uint64_t memory, efi_uintn_t pages)
 {
-	u64 len;
+	ulong len;
 	long status;
 	efi_status_t ret;
 
@@ -506,7 +506,7 @@ efi_status_t efi_free_pages(uint64_t memory, efi_uintn_t pages)
 		return EFI_INVALID_PARAMETER;
 	}
 
-	len = (u64)pages << EFI_PAGE_SHIFT;
+	len = (ulong)pages << EFI_PAGE_SHIFT;
 	/*
 	 * The 'memory' variable for sandbox holds a pointer which has already
 	 * been mapped with map_sysmem() from efi_allocate_pages(). Convert
@@ -525,10 +525,10 @@ efi_status_t efi_free_pages(uint64_t memory, efi_uintn_t pages)
 void *efi_alloc_aligned_pages(u64 len, enum efi_memory_type mem_type,
 			      size_t align)
 {
-	u64 req_pages = efi_size_in_pages(len);
-	u64 true_pages = req_pages + efi_size_in_pages(align) - 1;
-	u64 free_pages;
-	u64 aligned_mem;
+	ulong req_pages = efi_size_in_pages(len);
+	ulong true_pages = req_pages + efi_size_in_pages(align) - 1;
+	ulong free_pages;
+	ulong aligned_mem;
 	efi_status_t r;
 	u64 mem;
 
@@ -572,7 +572,7 @@ efi_status_t efi_allocate_pool(enum efi_memory_type mem_type, efi_uintn_t size, 
 	efi_status_t r;
 	u64 addr;
 	struct efi_pool_allocation *alloc;
-	u64 num_pages = efi_size_in_pages(size +
+	ulong num_pages = efi_size_in_pages(size +
 					  sizeof(struct efi_pool_allocation));
 
 	if (!buffer)
