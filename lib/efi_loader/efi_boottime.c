@@ -511,6 +511,9 @@ static efi_status_t EFIAPI efi_allocate_pool_ext(int pool_type,
 
 	EFI_ENTRY("%d, %zu, %p", pool_type, size, buffer);
 	r = efi_allocate_pool(pool_type, size, buffer);
+	if (r == EFI_SUCCESS)
+		log_debug("*buffer = %p\n", *buffer);
+
 	return EFI_EXIT(r);
 }
 
