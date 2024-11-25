@@ -415,9 +415,9 @@ static void EFIAPI efi_restore_tpl(efi_uintn_t old_tpl)
 /**
  * efi_allocate_pages_ext() - allocate memory pages
  * @type:        type of allocation to be performed
- * @memory_type: usage type of the allocated memory
+ * @mem_type:    usage type of the allocated memory
  * @pages:       number of pages to be allocated
- * @memory:      allocated memory
+ * @memoryp:     allocated memory
  *
  * This function implements the AllocatePages service.
  *
@@ -426,14 +426,14 @@ static void EFIAPI efi_restore_tpl(efi_uintn_t old_tpl)
  *
  * Return: status code
  */
-static efi_status_t EFIAPI efi_allocate_pages_ext(int type, int memory_type,
+static efi_status_t EFIAPI efi_allocate_pages_ext(int type, int mem_type,
 						  efi_uintn_t pages,
-						  uint64_t *memory)
+						  uint64_t *memoryp)
 {
 	efi_status_t r;
 
-	EFI_ENTRY("%d, %d, 0x%zx, %p", type, memory_type, pages, memory);
-	r = efi_allocate_pages(type, memory_type, pages, memory);
+	EFI_ENTRY("%d, %d, 0x%zx, %p", type, mem_type, pages, memoryp);
+	r = efi_allocate_pages(type, mem_type, pages, memoryp);
 	return EFI_EXIT(r);
 }
 
