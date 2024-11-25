@@ -258,7 +258,7 @@ static s64 efi_mem_carve_out(struct efi_mem_list *map,
 }
 
 efi_status_t efi_add_memory_map_pg(u64 start, u64 pages,
-				   int memory_type,
+				   enum efi_memory_type mem_type,
 				   bool overlap_conventional)
 {
 	struct efi_mem_list *lmem;
@@ -268,10 +268,10 @@ efi_status_t efi_add_memory_map_pg(u64 start, u64 pages,
 	struct efi_event *evt;
 
 	EFI_PRINT("%s: 0x%llx 0x%llx %d %s\n", __func__,
-		  start, pages, memory_type, overlap_conventional ?
+		  start, pages, mem_type, overlap_conventional ?
 		  "yes" : "no");
 
-	if (memory_type >= EFI_MAX_MEMORY_TYPE)
+	if (mem_type >= EFI_MAX_MEMORY_TYPE)
 		return EFI_INVALID_PARAMETER;
 
 	if (!pages)
@@ -281,12 +281,12 @@ efi_status_t efi_add_memory_map_pg(u64 start, u64 pages,
 	newlist = calloc(1, sizeof(*newlist));
 	if (!newlist)
 		return EFI_OUT_OF_RESOURCES;
-	newlist->desc.type = memory_type;
+	newlist->desc.type = mem_type;
 	newlist->desc.physical_start = start;
 	newlist->desc.virtual_start = start;
 	newlist->desc.num_pages = pages;
 
-	switch (memory_type) {
+	switch (mem_type) {
 	case EFI_RUNTIME_SERVICES_CODE:
 	case EFI_RUNTIME_SERVICES_DATA:
 		newlist->desc.attribute = EFI_MEMORY_WB | EFI_MEMORY_RUNTIME;
@@ -370,14 +370,15 @@ efi_status_t efi_add_memory_map_pg(u64 start, u64 pages,
 	return EFI_SUCCESS;
 }
 
-efi_status_t efi_add_memory_map(u64 start, u64 size, int memory_type)
+efi_status_t efi_add_memory_map(u64 start, u64 size,
+				enum efi_memory_type mem_type)
 {
 	u64 pages;
 
 	pages = efi_size_in_pages(size + (start & EFI_PAGE_MASK));
 	start &= ~EFI_PAGE_MASK;
 
-	return efi_add_memory_map_pg(start, pages, memory_type, false);
+	return efi_add_memory_map_pg(start, pages, mem_type, false);
 }
 
 /**
@@ -416,8 +417,8 @@ static efi_status_t efi_check_allocated(u64 addr, bool must_be_allocated)
 }
 
 efi_status_t efi_allocate_pages(enum efi_allocate_type type,
-				enum efi_memory_type memory_type,
-				efi_uintn_t pages, uint64_t *memory)
+				enum efi_memory_type mem_type,
+				efi_uintn_t pages, uint64_t *memoryp)
 {
 	u64 efi_addr, len;
 	uint flags;
@@ -425,10 +426,9 @@ efi_status_t efi_allocate_pages(enum efi_allocate_type type,
 	phys_addr_t addr;
 
 	/* Check import parameters */
-	if (memory_type >= EFI_PERSISTENT_MEMORY_TYPE &&
-	    memory_type <= 0x6FFFFFFF)
+	if (mem_type >= EFI_PERSISTENT_MEMORY_TYPE && mem_type <= 0x6fffffff)
 		return EFI_INVALID_PARAMETER;
-	if (!memory)
+	if (!memoryp)
 		return EFI_INVALID_PARAMETER;
 	len = (u64)pages << EFI_PAGE_SHIFT;
 	/* Catch possible overflow on 64bit systems */
@@ -447,17 +447,17 @@ efi_status_t efi_allocate_pages(enum efi_allocate_type type,
 		break;
 	case EFI_ALLOCATE_MAX_ADDRESS:
 		/* Max address */
-		addr = map_to_sysmem((void *)(uintptr_t)*memory);
+		addr = map_to_sysmem((void *)(uintptr_t)*memoryp);
 		addr = (u64)lmb_alloc_base_flags(len, EFI_PAGE_SIZE, addr,
 						 flags);
 		if (!addr)
 			return EFI_OUT_OF_RESOURCES;
 		break;
 	case EFI_ALLOCATE_ADDRESS:
-		if (*memory & EFI_PAGE_MASK)
+		if (*memoryp & EFI_PAGE_MASK)
 			return EFI_NOT_FOUND;
 
-		addr = map_to_sysmem((void *)(uintptr_t)*memory);
+		addr = map_to_sysmem((void *)(uintptr_t)*memoryp);
 		addr = (u64)lmb_alloc_addr_flags(addr, len, flags);
 		if (!addr)
 			return EFI_NOT_FOUND;
@@ -469,7 +469,7 @@ efi_status_t efi_allocate_pages(enum efi_allocate_type type,
 
 	efi_addr = (u64)(uintptr_t)map_sysmem(addr, 0);
 	/* Reserve that map in our memory maps */
-	ret = efi_add_memory_map_pg(efi_addr, pages, memory_type, true);
+	ret = efi_add_memory_map_pg(efi_addr, pages, mem_type, true);
 	if (ret != EFI_SUCCESS) {
 		/* Map would overlap, bail out */
 		lmb_free_flags(addr, (u64)pages << EFI_PAGE_SHIFT, flags);
@@ -477,7 +477,7 @@ efi_status_t efi_allocate_pages(enum efi_allocate_type type,
 		return  EFI_OUT_OF_RESOURCES;
 	}
 
-	*memory = efi_addr;
+	*memoryp = efi_addr;
 
 	return EFI_SUCCESS;
 }
@@ -515,7 +515,8 @@ efi_status_t efi_free_pages(uint64_t memory, efi_uintn_t pages)
 	return ret;
 }
 
-void *efi_alloc_aligned_pages(u64 len, int memory_type, size_t align)
+void *efi_alloc_aligned_pages(u64 len, enum efi_memory_type mem_type,
+			      size_t align)
 {
 	u64 req_pages = efi_size_in_pages(len);
 	u64 true_pages = req_pages + efi_size_in_pages(align) - 1;
@@ -533,12 +534,12 @@ void *efi_alloc_aligned_pages(u64 len, int memory_type, size_t align)
 		return NULL;
 
 	if (align < EFI_PAGE_SIZE) {
-		r = efi_allocate_pages(EFI_ALLOCATE_ANY_PAGES, memory_type,
+		r = efi_allocate_pages(EFI_ALLOCATE_ANY_PAGES, mem_type,
 				       req_pages, &mem);
 		return (r == EFI_SUCCESS) ? (void *)(uintptr_t)mem : NULL;
 	}
 
-	r = efi_allocate_pages(EFI_ALLOCATE_ANY_PAGES, memory_type,
+	r = efi_allocate_pages(EFI_ALLOCATE_ANY_PAGES, mem_type,
 			       true_pages, &mem);
 	if (r != EFI_SUCCESS)
 		return NULL;
@@ -559,7 +560,8 @@ void *efi_alloc_aligned_pages(u64 len, int memory_type, size_t align)
 	return (void *)(uintptr_t)aligned_mem;
 }
 
-efi_status_t efi_allocate_pool(enum efi_memory_type pool_type, efi_uintn_t size, void **buffer)
+efi_status_t efi_allocate_pool(enum efi_memory_type mem_type, efi_uintn_t size,
+			       void **buffer)
 {
 	efi_status_t r;
 	u64 addr;
@@ -575,7 +577,7 @@ efi_status_t efi_allocate_pool(enum efi_memory_type pool_type, efi_uintn_t size,
 		return EFI_SUCCESS;
 	}
 
-	r = efi_allocate_pages(EFI_ALLOCATE_ANY_PAGES, pool_type, num_pages,
+	r = efi_allocate_pages(EFI_ALLOCATE_ANY_PAGES, mem_type, num_pages,
 			       &addr);
 	if (r == EFI_SUCCESS) {
 		alloc = (struct efi_pool_allocation *)(uintptr_t)addr;
