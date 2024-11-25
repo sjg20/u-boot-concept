@@ -765,9 +765,9 @@ void *efi_alloc_aligned_pages(u64 len, int memory_type, size_t align);
 /* More specific EFI memory allocator, called by EFI payloads */
 efi_status_t efi_allocate_pages(enum efi_allocate_type type,
 				enum efi_memory_type memory_type,
-				efi_uintn_t pages, uint64_t *memory);
+				efi_uintn_t pages, void **memoryp);
 /* EFI memory free function. */
-efi_status_t efi_free_pages(uint64_t memory, efi_uintn_t pages);
+efi_status_t efi_free_pages(void *memory, efi_uintn_t pages);
 /* EFI memory allocator for small allocations */
 efi_status_t efi_allocate_pool(enum efi_memory_type pool_type,
 			       efi_uintn_t size, void **buffer);

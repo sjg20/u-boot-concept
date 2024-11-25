@@ -5,6 +5,7 @@
  *  Copyright (c) 2016 Alexander Graf
  */
 
+#include "asm/io.h"
 #define LOG_CATEGORY LOGC_EFI
 
 #include <efi_loader.h>
@@ -199,18 +200,18 @@ static s64 efi_mem_carve_out(struct efi_mem_list *map,
 {
 	struct efi_mem_list *newmap;
 	struct efi_mem_desc *map_desc = &map->desc;
-	uint64_t map_start = map_desc->physical_start;
-	uint64_t map_end = map_start + (map_desc->num_pages << EFI_PAGE_SHIFT);
-	uint64_t carve_start = carve_desc->physical_start;
-	uint64_t carve_end = carve_start +
+	ulong map_start = map_desc->physical_start;
+	ulong map_end = map_start + (map_desc->num_pages << EFI_PAGE_SHIFT);
+	ulong carve_start = carve_desc->physical_start;
+	ulong carve_end = carve_start +
 			     (carve_desc->num_pages << EFI_PAGE_SHIFT);
 
 	/* check whether we're overlapping */
-	if ((carve_end <= map_start) || (carve_start >= map_end))
+	if (carve_end <= map_start || carve_start >= map_end)
 		return EFI_CARVE_NO_OVERLAP;
 
 	/* We're overlapping with non-RAM, warn the caller if desired */
-	if (overlap_conventional && (map_desc->type != EFI_CONVENTIONAL_MEMORY))
+	if (overlap_conventional && map_desc->type != EFI_CONVENTIONAL_MEMORY)
 		return EFI_CARVE_OVERLAPS_NONRAM;
 
 	/* Sanitize carve_start and carve_end to lie within our bounds */
@@ -427,9 +428,9 @@ static efi_status_t efi_check_allocated(u64 addr, bool must_be_allocated)
  */
 efi_status_t efi_allocate_pages(enum efi_allocate_type type,
 				enum efi_memory_type memory_type,
-				efi_uintn_t pages, uint64_t *memory)
+				efi_uintn_t pages, void **memoryp)
 {
-	u64 efi_addr, len;
+	u64 len;
 	uint flags;
 	efi_status_t ret;
 	phys_addr_t addr;
@@ -438,7 +439,7 @@ efi_status_t efi_allocate_pages(enum efi_allocate_type type,
 	if (memory_type >= EFI_PERSISTENT_MEMORY_TYPE &&
 	    memory_type <= 0x6FFFFFFF)
 		return EFI_INVALID_PARAMETER;
-	if (!memory)
+	if (!memoryp)
 		return EFI_INVALID_PARAMETER;
 	len = (u64)pages << EFI_PAGE_SHIFT;
 	/* Catch possible overflow on 64bit systems */
@@ -457,18 +458,18 @@ efi_status_t efi_allocate_pages(enum efi_allocate_type type,
 		break;
 	case EFI_ALLOCATE_MAX_ADDRESS:
 		/* Max address */
-		addr = map_to_sysmem((void *)(uintptr_t)*memory);
+		addr = map_to_sysmem(*memoryp);
 		addr = (u64)lmb_alloc_base_flags(len, EFI_PAGE_SIZE, addr,
 						 flags);
 		if (!addr)
 			return EFI_OUT_OF_RESOURCES;
 		break;
 	case EFI_ALLOCATE_ADDRESS:
-		if (*memory & EFI_PAGE_MASK)
+		addr = map_to_sysmem(*memoryp);
+		if (addr & EFI_PAGE_MASK)
 			return EFI_NOT_FOUND;
 
-		addr = map_to_sysmem((void *)(uintptr_t)*memory);
-		addr = (u64)lmb_alloc_addr_flags(addr, len, flags);
+		addr = lmb_alloc_addr_flags(addr, len, flags);
 		if (!addr)
 			return EFI_NOT_FOUND;
 		break;
@@ -477,17 +478,15 @@ efi_status_t efi_allocate_pages(enum efi_allocate_type type,
 		return EFI_INVALID_PARAMETER;
 	}
 
-	efi_addr = (u64)(uintptr_t)map_sysmem(addr, 0);
 	/* Reserve that map in our memory maps */
-	ret = efi_add_memory_map_pg(efi_addr, pages, memory_type, true);
+	ret = efi_add_memory_map_pg(addr, pages, memory_type, true);
 	if (ret != EFI_SUCCESS) {
 		/* Map would overlap, bail out */
 		lmb_free_flags(addr, (u64)pages << EFI_PAGE_SHIFT, flags);
-		unmap_sysmem((void *)(uintptr_t)efi_addr);
-		return  EFI_OUT_OF_RESOURCES;
+		return EFI_OUT_OF_RESOURCES;
 	}
 
-	*memory = efi_addr;
+	*memoryp = map_sysmem(addr, len);;
 
 	return EFI_SUCCESS;
 }
@@ -499,20 +498,21 @@ efi_status_t efi_allocate_pages(enum efi_allocate_type type,
  * @pages:	number of pages to be freed
  * Return:	status code
  */
-efi_status_t efi_free_pages(uint64_t memory, efi_uintn_t pages)
+efi_status_t efi_free_pages(void *memory, efi_uintn_t pages)
 {
+	ulong addr;
 	u64 len;
 	long status;
 	efi_status_t ret;
 
-	ret = efi_check_allocated(memory, true);
+	addr = map_to_sysmem((memory);
+	ret = efi_check_allocated(addr, true);
 	if (ret != EFI_SUCCESS)
 		return ret;
 
 	/* Sanity check */
-	if (!memory || (memory & EFI_PAGE_MASK) || !pages) {
-		printf("%s: illegal free 0x%llx, 0x%zx\n", __func__,
-		       memory, pages);
+	if (!addr || (addr & EFI_PAGE_MASK) || !pages) {
+		printf("%s: illegal free %lx, %zx\n", __func__, addr, pages);
 		return EFI_INVALID_PARAMETER;
 	}
 
@@ -592,7 +592,8 @@ void *efi_alloc_aligned_pages(u64 len, int memory_type, size_t align)
  * @buffer:	allocated memory
  * Return:	status code
  */
-efi_status_t efi_allocate_pool(enum efi_memory_type pool_type, efi_uintn_t size, void **buffer)
+efi_status_t efi_allocate_pool(enum efi_memory_type pool_type, efi_uintn_t size,
+			       void **buffer)
 {
 	efi_status_t r;
 	u64 addr;
@@ -611,10 +612,11 @@ efi_status_t efi_allocate_pool(enum efi_memory_type pool_type, efi_uintn_t size,
 	r = efi_allocate_pages(EFI_ALLOCATE_ANY_PAGES, pool_type, num_pages,
 			       &addr);
 	if (r == EFI_SUCCESS) {
-		alloc = (struct efi_pool_allocation *)(uintptr_t)addr;
+		alloc = map_sysmem(addr, size);
 		alloc->num_pages = num_pages;
 		alloc->checksum = checksum(alloc);
 		*buffer = alloc->data;
+		unmap_sysmem(alloc);
 	}
 
 	return r;

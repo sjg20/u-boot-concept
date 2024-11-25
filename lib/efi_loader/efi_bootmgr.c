@@ -1299,8 +1299,7 @@ efi_status_t efi_bootmgr_run(void *fdt)
 	if (!IS_ENABLED(CONFIG_GENERATE_ACPI_TABLE)) {
 		free(fdt_lo);
 		if (fdt_distro)
-			efi_free_pages((uintptr_t)fdt_distro,
-				       efi_size_in_pages(fdt_size));
+			efi_free_pages(fdt_distro, efi_size_in_pages(fdt_size));
 	}
 
 	if (ret != EFI_SUCCESS) {
