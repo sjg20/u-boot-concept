@@ -9,7 +9,6 @@
 #include <efi_loader.h>
 #include <efi_rng.h>
 #include <fdtdec.h>
-#include <mapmem.h>
 
 const efi_guid_t efi_guid_dt_fixup_protocol = EFI_DT_FIXUP_PROTOCOL_GUID;
 
@@ -21,13 +20,10 @@ const efi_guid_t efi_guid_dt_fixup_protocol = EFI_DT_FIXUP_PROTOCOL_GUID;
  * @nomap:	indicates that the memory range shall not be accessed by the
  *		UEFI payload
  */
-static void efi_reserve_memory(u64 addr, u64 size, bool nomap)
+static void efi_reserve_memory(ulong addr, ulong size, bool nomap)
 {
 	int type;
 	efi_uintn_t ret;
-
-	/* Convert from sandbox address space. */
-	addr = (uintptr_t)map_sysmem(addr, 0);
 
 	if (nomap)
 		type = EFI_RESERVED_MEMORY_TYPE;
@@ -36,7 +32,7 @@ static void efi_reserve_memory(u64 addr, u64 size, bool nomap)
 
 	ret = efi_add_memory_map(addr, size, type);
 	if (ret != EFI_SUCCESS)
-		log_err("Reserved memory mapping failed addr %llx size %llx\n",
+		log_err("Reserved memory mapping failed addr %lx size %lx\n",
 			addr, size);
 }
 
