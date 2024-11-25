@@ -786,7 +786,7 @@ void *efi_alloc_aligned_pages(u64 len, enum efi_memory_type mem_type,
  * @type:		type of allocation to be performed
  * @mem_type:		usage type of the allocated memory
  * @pages:		number of pages to be allocated
- * @memoryp:		returns a pointer to the allocated memory
+ * @memoryp:		returns the allocated address
  * Return:		status code
  */
 efi_status_t efi_allocate_pages(enum efi_allocate_type type,
@@ -796,7 +796,7 @@ efi_status_t efi_allocate_pages(enum efi_allocate_type type,
 /**
  * efi_free_pages() - free memory pages
  *
- * @memory:	start of the memory area to be freed
+ * @memory:	start-address of the memory area to be freed
  * @pages:	number of pages to be freed
  * Return:	status code
  */
