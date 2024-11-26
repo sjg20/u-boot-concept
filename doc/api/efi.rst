@@ -75,6 +75,9 @@ Image relocation
 Memory services
 ~~~~~~~~~~~~~~~
 
+.. kernel-doc:: lib/efi_loader/efi_loader.h
+   :internal:
+
 .. kernel-doc:: lib/efi_loader/efi_memory.c
    :internal:
 
