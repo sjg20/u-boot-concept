@@ -428,8 +428,6 @@ efi_status_t efi_allocate_pages(enum efi_allocate_type type,
 	/* Check import parameters */
 	if (mem_type >= EFI_PERSISTENT_MEMORY_TYPE && mem_type <= 0x6fffffff)
 		return EFI_INVALID_PARAMETER;
-	if (!memoryp)
-		return EFI_INVALID_PARAMETER;
 	len = (u64)pages << EFI_PAGE_SHIFT;
 	/* Catch possible overflow on 64bit systems */
 	if (sizeof(efi_uintn_t) == sizeof(u64) &&

@@ -433,6 +433,9 @@ static efi_status_t EFIAPI efi_allocate_pages_ext(int type, int mem_type,
 	efi_status_t r;
 	void *ptr;
 
+	if (!memoryp)
+		return EFI_INVALID_PARAMETER;
+
 	/* we should not read this unless type indicates it is being used */
 	if (type == EFI_ALLOCATE_MAX_ADDRESS || type == EFI_ALLOCATE_ADDRESS)
 		ptr = (void *)*memoryp;
