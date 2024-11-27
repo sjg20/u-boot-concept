@@ -298,7 +298,7 @@ efi_status_t efi_add_memory_map_pg(u64 start, u64 pages,
 	if (!newlist)
 		return EFI_OUT_OF_RESOURCES;
 	newlist->type = mem_type;
-	newlist->base = start;
+	newlist->base = (uintptr_t)map_sysmem(start, pages * EFI_PAGE_SIZE);
 	newlist->num_pages = pages;
 
 	switch (mem_type) {
