@@ -9,7 +9,6 @@
  * EFI application. It can be built either in 32-bit or 64-bit mode.
  */
 
-#include <debug_uart.h>
 #include <efi.h>
 #include <efi_api.h>
 #include <errno.h>
@@ -55,10 +54,6 @@ struct __packed desctab_info {
  * considering if we start needing more U-Boot functionality. Note that we
  * could then move get_codeseg32() to arch/x86/cpu/cpu.c.
  */
-void _debug_uart_init(void)
-{
-}
-
 void putc(const char ch)
 {
 	struct efi_priv *priv = efi_get_priv();
@@ -83,12 +78,21 @@ void puts(const char *str)
 		putc(*str++);
 }
 
-static void _debug_uart_putc(int ch)
+#ifdef CONFIG_DEBUG_UART
+
+#include <debug_uart.h>
+
+void _debug_uart_init(void)
+{
+}
+
+static inline void _debug_uart_putc(int ch)
 {
 	putc(ch);
 }
 
 DEBUG_UART_FUNCS
+#endif
 
 void *memcpy(void *dest, const void *src, size_t size)
 {
