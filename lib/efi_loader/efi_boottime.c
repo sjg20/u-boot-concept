@@ -13,6 +13,7 @@
 #include <irq_func.h>
 #include <log.h>
 #include <malloc.h>
+#include <mapmem.h>
 #include <pe.h>
 #include <time.h>
 #include <u-boot/crc.h>
@@ -512,7 +513,7 @@ static efi_status_t EFIAPI efi_allocate_pool_ext(int pool_type,
 	EFI_ENTRY("%d, %zu, %p", pool_type, size, buffer);
 	r = efi_allocate_pool(pool_type, size, buffer);
 	if (r == EFI_SUCCESS)
-		EFI_PRINT("*buffer = %p\n", *buffer);
+		EFI_PRINT("*buffer = %lx\n", (ulong)map_to_sysmem(*buffer));
 
 	return EFI_EXIT(r);
 }
@@ -532,7 +533,7 @@ static efi_status_t EFIAPI efi_free_pool_ext(void *buffer)
 {
 	efi_status_t r;
 
-	EFI_ENTRY("%p", buffer);
+	EFI_ENTRY("%lx", (ulong)map_to_sysmem(buffer));
 	r = efi_free_pool(buffer);
 	return EFI_EXIT(r);
 }
