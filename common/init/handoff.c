@@ -17,7 +17,7 @@ void handoff_save_dram(struct spl_handoff *ho)
 	int i;
 
 	ho->ram_size = gd->ram_size;
-	printf("spl: ram size %lx\n", (ulong)gd->ram_size);
+	printf("spl: ram size %llx\n", gd->ram_size);
 
 	for (i = 0; i < CONFIG_NR_DRAM_BANKS; i++) {
 		ho->ram_bank[i].start = bd->bi_dram[i].start;

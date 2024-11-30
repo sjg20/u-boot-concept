@@ -5,6 +5,7 @@
  * Copyright 2019 Google LLC
  * Written by Simon Glass <sjg@chromium.org>
  */
+#define LOG_DEBUG
 
 #include <binman.h>
 #include <dm.h>
