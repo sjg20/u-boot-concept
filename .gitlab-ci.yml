@@ -622,10 +622,11 @@ pcduino3_nano:
     ROLE: pcduino3_nano
   <<: *lab_dfn
 
-samus:
-  variables:
-    ROLE: samus
-  <<: *lab_dfn
+# samus has a hardware failure 30-Nov-24
+#samus:
+#  variables:
+#    ROLE: samus
+#  <<: *lab_dfn
 
 link:
   variables:
@@ -692,10 +693,11 @@ pine64:
     ROLE: pine64
   <<: *lab_dfn
 
-c4:
-  variables:
-    ROLE: c4
-  <<: *lab_dfn
+# c4 needs binman supported added, so signing works
+#c4:
+#  variables:
+#    ROLE: c4
+#  <<: *lab_dfn
 
 rpi4:
   variables:
@@ -731,6 +733,36 @@ rpi:
 vf2:
   variables:
     ROLE: vf2
+  <<: *lab_dfn
+
+colibrimx8:
+  variables:
+    ROLE: colibrimx8
+  <<: *lab_dfn
+
+rockpro64:
+  variables:
+    ROLE: rockpro64
+  <<: *lab_dfn
+
+rock3a:
+  variables:
+    ROLE: rock3a
+  <<: *lab_dfn
+
+rock5b:
+  variables:
+    ROLE: rock5b
+  <<: *lab_dfn
+
+rpi5:
+  variables:
+    ROLE: rpi5
+  <<: *lab_dfn
+
+zybo:
+  variables:
+    ROLE: zybo
   <<: *lab_dfn
 
 qemu-x86_64:
