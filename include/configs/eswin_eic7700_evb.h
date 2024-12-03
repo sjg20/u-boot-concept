@@ -1,10 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright 2024 Beijing ESWIN Computing Technology Co., Ltd.
+ * ESWIN uboot-2024
  *
- * Author: Xiang Xu <xuxiang@eswincomputing.com>
+ * Copyright 2024, Beijing ESWIN Computing Technology Co., Ltd.. All rights reserved.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, version 2.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ * Authors: Xiang Xu <xuxiang@eswincomputing.com>
  */
-
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
@@ -37,6 +50,8 @@
     "kernel_comp_size=0x10000000\0" \
     "boot_conf_addr_r=0xc0000000\0" \
     "emmc_dev=0\0" \
+    "splashimage=0xe0000000\0" \
+    "splashpos=1660,0\0" \
     "usbupdate=ext4load usb 0 0x90000000 usbupdate.scr;source 0x90000000\0" \
     "sdupdate=ext4load mmc 1:1 0x90000000 sdupdate.scr;source 0x90000000\0" \
     "typeid_efi=C12A7328-F81F-11D2-BA4B-00A0C93EC93B\0" \
