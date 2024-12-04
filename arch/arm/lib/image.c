@@ -30,9 +30,17 @@ struct Image_header {
 
 bool booti_is_valid(const void *img)
 {
-	struct Image_header *ih = img;
+	const struct Image_header *ih = img;
 
 	return ih->magic == le32_to_cpu(LINUX_ARM64_IMAGE_MAGIC);
+}
+
+ulong booti_get_size(const void *img)
+{
+	const struct Image_header *ih = img;
+
+	return ih->image_size;
+
 }
 
 int booti_setup(ulong image, ulong *relocated_addr, ulong *size,
@@ -46,7 +54,7 @@ int booti_setup(ulong image, ulong *relocated_addr, ulong *size,
 
 	ih = (struct Image_header *)map_sysmem(image, 0);
 
-	if (!booti_is_valid(lg)) {
+	if (!booti_is_valid(ih)) {
 		puts("Bad Linux ARM64 Image magic!\n");
 		return 1;
 	}
@@ -56,12 +64,12 @@ int booti_setup(ulong image, ulong *relocated_addr, ulong *size,
 	 * is of unknown endianness.  In these cases, the image_size
 	 * field is zero, and we can assume a fixed value of 0x80000.
 	 */
-	if (ih->image_size == 0) {
+	image_size = booti_get_size(ih);
+	if (!image_size) {
 		puts("Image lacks image_size field, assuming 16MiB\n");
 		image_size = 16 << 20;
 		text_offset = 0x80000;
 	} else {
-		image_size = le64_to_cpu(ih->image_size);
 		text_offset = le64_to_cpu(ih->text_offset);
 	}
 
