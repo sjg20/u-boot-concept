@@ -13,6 +13,25 @@
 	model = "MediaTek Genio-510 EVK with QSPI NOR Flash storage";
 	compatible = "mediatek,genio-510-evk-qspi", "mediatek,mt8370";
 
+	smbios {
+		compatible = "u-boot,sysinfo-smbios";
+		smbios {
+				system {
+						manufacturer = "MediaTek";
+						product = "Genio 510 EVK";
+						version = "P1V2 (SPI NOR)";
+						family = "MediaTek Genio";
+				};
+				baseboard {
+						manufacturer = "MediaTek";
+						product = "Genio 510 EVK P1V2 (SPI NOR)";
+				};
+				chassis {
+						manufacturer = "MediaTek";
+				};
+		};
+	};
+
 	memory@40000000 {
 		/* 4GB */
 		device_type = "memory";
