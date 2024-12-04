@@ -543,13 +543,16 @@ int do_ping(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[]);
 int do_tftpb(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[]);
 
 /**
- * wget_with_dns() - runs dns host IP address resulution before wget
+ * wget_do_request() - sends a wget request
+ *
+ * Sends a wget request, if DNS resolution is enabled it resolves the
+ * given uri.
  *
  * @dst_addr:	destination address to download the file
  * @uri:	uri string of target file of wget
  * Return:	zero on success, negative if failed
  */
-int wget_with_dns(ulong dst_addr, char *uri);
+int wget_do_request(ulong dst_addr, char *uri);
 /**
  * wget_validate_uri() - varidate the uri
  *
