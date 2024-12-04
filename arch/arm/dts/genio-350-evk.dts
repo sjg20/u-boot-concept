@@ -14,6 +14,26 @@
 	model = "MediaTek Genio-350 EVK";
 	compatible = "mediatek,genio-350-evk", "mediatek,mt8365";
 
+	smbios {
+		compatible = "u-boot,sysinfo-smbios";
+		smbios {
+				system {
+						manufacturer = "MediaTek";
+						product = "Genio 350 EVK";
+						version = "P1V3";
+						sku = "902-SSBE5-E03RH";
+						family = "MediaTek Genio";
+				};
+				baseboard {
+						manufacturer = "MediaTek";
+						product = "Genio 350 EVK P1V3";
+				};
+				chassis {
+						manufacturer = "MediaTek";
+				};
+		};
+	};
+
 	memory@40000000 {
 		device_type = "memory";
 		reg = <0 0x40000000 0 0xC0000000>;
