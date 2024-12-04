@@ -13,6 +13,26 @@
 	model = "MediaTek Genio-700 EVK";
 	compatible = "mediatek,genio-700-evk", "mediatek,mt8188";
 
+	smbios {
+		compatible = "u-boot,sysinfo-smbios";
+		smbios {
+				system {
+						manufacturer = "MediaTek";
+						product = "Genio 700 EVK";
+						version = "P1V4-A";
+						sku = "902-SSBE6-EG7RH";
+						family = "MediaTek Genio";
+				};
+				baseboard {
+						manufacturer = "MediaTek";
+						product = "Genio 700 EVK P1V4";
+				};
+				chassis {
+						manufacturer = "MediaTek";
+				};
+		};
+	};
+
 	memory@40000000 {
 		/* 8GB */
 		device_type = "memory";
