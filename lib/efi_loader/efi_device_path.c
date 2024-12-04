@@ -1185,8 +1185,9 @@ efi_status_t efi_dp_from_name(const char *dev, const char *devnr,
 
 		dp = efi_dp_from_mem(EFI_RESERVED_MEMORY_TYPE, image_ptr,
 				     image_size);
-	} else if (IS_ENABLED(CONFIG_NETDEVICES) && !strcmp(dev, "Net")) {
-		dp = efi_dp_from_eth();
+	} else if (IS_ENABLED(CONFIG_NETDEVICES) &&
+		   (!strcmp(dev, "Net") || !strcmp(dev, "Http"))) {
+		efi_net_get_dp(&dp);
 	} else if (!strcmp(dev, "Uart")) {
 		dp = efi_dp_from_uart();
 	} else {
