@@ -601,6 +601,7 @@ int boot_get_setup(struct bootm_headers *images, uint8_t arch, ulong *setup_star
 #define IMAGE_FORMAT_LEGACY	0x01	/* legacy image_header based format */
 #define IMAGE_FORMAT_FIT	0x02	/* new, libfdt based format */
 #define IMAGE_FORMAT_ANDROID	0x03	/* Android boot image */
+#define IMAGE_FORMAT_BOOTI	0x04	/* Arm64 boot image */
 
 /**
  * genimg_get_kernel_addr_fit() - Parse FIT specifier
@@ -631,6 +632,14 @@ ulong genimg_get_kernel_addr_fit(const char *const img_addr,
 ulong genimg_get_kernel_addr(char * const img_addr);
 int genimg_get_format(const void *img_addr);
 int genimg_has_config(struct bootm_headers *images);
+
+/**
+ * booti_is_valid() - Check if an image appears to be an Arm64 image
+ *
+ * @img: Pointer to image
+ * Return: true if the image has the Arm64 magic
+ */
+bool booti_is_valid(const void *img);
 
 /**
  * boot_get_fpga() - Locate the FPGA image

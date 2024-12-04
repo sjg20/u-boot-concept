@@ -138,6 +138,7 @@ static int boot_get_kernel(const char *addr_fit, struct bootm_headers *images,
 	const void *boot_img;
 	const void *vendor_boot_img;
 #endif
+	log_debug("get_kernel\n");
 	img_addr = genimg_get_kernel_addr_fit(addr_fit, &fit_uname_config,
 					      &fit_uname_kernel);
 
@@ -145,6 +146,7 @@ static int boot_get_kernel(const char *addr_fit, struct bootm_headers *images,
 		img_addr += image_load_offset;
 
 	bootstage_mark(BOOTSTAGE_ID_CHECK_MAGIC);
+	log_debug("img_addr = %lx\n", img_addr);
 
 	/* check image type, for FIT images get FIT kernel node */
 	*os_data = *os_len = 0;
@@ -544,6 +546,7 @@ int bootm_find_images(ulong img_addr, const char *conf_ramdisk,
 static int bootm_find_other(ulong img_addr, const char *conf_ramdisk,
 			    const char *conf_fdt)
 {
+	log_debug("find_other type %x os %x\n", images.os.type, images.os.os);
 	if ((images.os.type == IH_TYPE_KERNEL ||
 	     images.os.type == IH_TYPE_KERNEL_NOLOAD ||
 	     images.os.type == IH_TYPE_MULTI) &&
@@ -679,6 +682,7 @@ static int bootm_load_os(struct bootm_headers *images, int boot_progress)
 		ulong image_size;
 		int ret;
 
+		log_debug("calling booti_setup()\n");
 		ret = booti_setup(load, &relocated_addr, &image_size, false);
 		if (ret) {
 			printf("Failed to prep arm64 kernel (err=%d)\n", ret);
@@ -1139,7 +1143,9 @@ int booti_run(struct bootm_info *bmi)
 	else if (IS_ENABLED(CONFIG_ARM64))
 		images.os.arch = IH_ARCH_ARM64;
 
-	return boot_run(bmi, "booti", 0);
+	return boot_run(bmi, "booti", BOOTM_STATE_START | BOOTM_STATE_FINDOS |
+			BOOTM_STATE_PRE_LOAD | BOOTM_STATE_FINDOTHER |
+			BOOTM_STATE_LOADOS);
 }
 
 int bootm_boot_start(ulong addr, const char *cmdline)
