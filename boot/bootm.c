@@ -5,6 +5,9 @@
  */
 
 #ifndef USE_HOSTCC
+#define LOG_DEBUG
+#define LLG_CATEGORY	LOGC_BOOT
+
 #include <bootm.h>
 #include <bootstage.h>
 #include <cli.h>
@@ -1109,6 +1112,10 @@ int boot_run(struct bootm_info *bmi, const char *cmd, int extra_states)
 		states |= BOOTM_STATE_RAMDISK;
 	states |= extra_states;
 
+	log_debug("cmd '%s' states %x addr_img '%s' conf_ramdisk '%s' conf_fdt '%s' images %p\n",
+		  cmd, states, bmi->addr_img, bmi->conf_ramdisk, bmi->conf_fdt,
+		  bmi->images);
+
 	return bootm_run_states(bmi, states);
 }
 
@@ -1126,6 +1133,12 @@ int bootz_run(struct bootm_info *bmi)
 
 int booti_run(struct bootm_info *bmi)
 {
+	images.os.os = IH_OS_LINUX;
+	if (IS_ENABLED(CONFIG_RISCV_SMODE))
+		images.os.arch = IH_ARCH_RISCV;
+	else if (IS_ENABLED(CONFIG_ARM64))
+		images.os.arch = IH_ARCH_ARM64;
+
 	return boot_run(bmi, "booti", 0);
 }
 
@@ -1165,7 +1178,8 @@ void bootm_init(struct bootm_info *bmi)
 {
 	memset(bmi, '\0', sizeof(struct bootm_info));
 	bmi->boot_progress = true;
-	if (IS_ENABLED(CONFIG_CMD_BOOTM))
+	if (IS_ENABLED(CONFIG_CMD_BOOTM) || IS_ENABLED(CONFIG_CMD_BOOTZ) ||
+	    IS_ENABLED(CONFIG_CMD_BOOTI) || IS_ENABLED(CONFIG_PXE_UTILS))
 		bmi->images = &images;
 }
 
