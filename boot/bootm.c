@@ -234,9 +234,14 @@ static int boot_get_kernel(const char *addr_fit, struct bootm_headers *images,
 #endif
 	case IMAGE_FORMAT_BOOTI:
 		*os_data = img_addr;
-		*os_len = 0;
 		break;
 	default:
+		/* any compressed image is probably a booti image */
+		if (IS_ENABLED(CONFIG_CMD_BOOTI) &&
+		    image_decomp_type(buf, 2) != IH_COMP_NONE) {
+			*os_data = img_addr;
+			break;
+		}
 		bootstage_error(BOOTSTAGE_ID_CHECK_IMAGETYPE);
 		return -EPROTOTYPE;
 	}
@@ -293,6 +298,34 @@ static int bootm_pre_load(const char *addr_str)
 		ret = CMD_RET_FAILURE;
 
 	return ret;
+}
+
+static int found_booti_os(enum image_comp_t comp)
+{
+	images.os.load = images.os.image_start;
+	images.os.type = IH_TYPE_KERNEL;
+	images.os.os = IH_OS_LINUX;
+	images.os.comp = comp;
+	if (IS_ENABLED(CONFIG_RISCV_SMODE))
+		images.os.arch = IH_ARCH_RISCV;
+	else if (IS_ENABLED(CONFIG_ARM64))
+		images.os.arch = IH_ARCH_ARM64;
+	images.os.load = env_get_hex("kernel_comp_addr_r", 0);
+	images.os.image_len = env_get_ulong("kernel_comp_size", 16, 0);
+
+	log_debug("load %lx start %lx len %lx ep %lx os %x comp %x\n",
+		  images.os.load, images.os.image_start, images.os.image_len,
+		  images.ep, images.os.os, images.os.comp);
+	if (comp != IH_COMP_NONE) {
+		if (!images.os.load || !images.os.image_len) {
+			puts("kernel_comp_addr_r or kernel_comp_size is not provided!\n");
+			return -ENOTSUPP;
+		}
+		if (lmb_reserve(images.os.load, images.os.image_len) < 0)
+			return -EXDEV;
+	}
+
+	return 0;
 }
 
 /**
@@ -400,21 +433,31 @@ static int bootm_find_os(const char *cmd_name, const char *addr_fit)
 		break;
 #endif
 	case IMAGE_FORMAT_BOOTI:
-		ep_found = true;
-		images.os.load = images.os.image_start;
-		images.os.type = IH_TYPE_KERNEL;
-		images.os.os = IH_OS_LINUX;
-		if (IS_ENABLED(CONFIG_RISCV_SMODE))
-			images.os.arch = IH_ARCH_RISCV;
-		else if (IS_ENABLED(CONFIG_ARM64))
-			images.os.arch = IH_ARCH_ARM64;
-		log_debug("load %lx ep %lx os %x\n", images.os.load, images.ep,
-			  images.os.os);
+		if (IS_ENABLED(CONFIG_CMD_BOOTI)) {
+			if (found_booti_os(IH_COMP_NONE))
+				return 1;
+			ep_found = true;
+		}
 		break;
 	default:
+		/* any compressed image is probably a booti image */
+		if (IS_ENABLED(CONFIG_CMD_BOOTI)) {
+			int comp;
+
+			comp = image_decomp_type(os_hdr, 2);
+			if (comp != IH_COMP_NONE) {
+				if (found_booti_os(comp))
+					return 1;
+				ep_found = true;
+			}
+			break;
+		}
+
 		puts("ERROR: unknown image format type!\n");
 		return 1;
 	}
+
+
 
 	/* If we have a valid setup.bin, we will use that for entry (x86) */
 	if (images.os.arch == IH_ARCH_I386 ||
@@ -633,7 +676,6 @@ static int bootm_load_os(struct bootm_headers *images, int boot_progress)
 	void *load_buf, *image_buf;
 	int err;
 
-	log_debug("load_os\n");
 	/*
 	 * For a "noload" compressed kernel we need to allocate a buffer large
 	 * enough to decompress in to and use that as the load address now.
@@ -652,6 +694,8 @@ static int bootm_load_os(struct bootm_headers *images, int boot_progress)
 		debug("Allocated %lx bytes at %lx for kernel (size %lx) decompression\n",
 		      req_size, load, image_len);
 	}
+	log_debug("load_os load %lx image_start %lx image_len %lx\n", load,
+		  image_start, image_len);
 
 	load_buf = map_sysmem(load, 0);
 	image_buf = map_sysmem(os.image_start, image_len);
@@ -1241,6 +1285,11 @@ static int bootm_host_load_image(const void *fit, int req_image_type,
 
 	if (fit_image_get_comp(fit, noffset, &image_comp))
 		image_comp = IH_COMP_NONE;
+	log_debug("image_comp %x fit %p\n", image_comp, fit);
+	if (image_comp == IH_COMP_NONE && IS_ENABLED(CONFIG_CMD_BOOTI)) {
+		image_comp = image_decomp_type(fit, 2);
+		log_debug("image_comp2 %x\n", image_comp);
+	}
 
 	/* Allow the image to expand by a factor of 4, should be safe */
 	buf_size = (1 << 20) + len * 4;
