@@ -592,6 +592,7 @@ static int label_run_boot(struct pxe_context *ctx, struct pxe_label *label,
 	ulong kernel_addr_r;
 	int ret = 0;
 	void *buf;
+	int fmt;
 
 	bootm_init(&bmi);
 
@@ -610,8 +611,9 @@ static int label_run_boot(struct pxe_context *ctx, struct pxe_label *label,
 	buf = map_sysmem(kernel_addr_r, 0);
 
 	/* Try bootm for legacy and FIT format image */
-	if (genimg_get_format(buf) != IMAGE_FORMAT_INVALID &&
-	    IS_ENABLED(CONFIG_CMD_BOOTM)) {
+	fmt = genimg_get_format(buf);
+	if (IS_ENABLED(CONFIG_CMD_BOOTM) && (fmt == IMAGE_FORMAT_FIT ||
+		fmt == IMAGE_FORMAT_LEGACY)) {
 		log_debug("using bootm\n");
 		ret = bootm_run(&bmi);
 	/* Try booting an AArch64 Linux kernel image */

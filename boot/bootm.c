@@ -232,6 +232,10 @@ static int boot_get_kernel(const char *addr_fit, struct bootm_headers *images,
 		break;
 	}
 #endif
+	case IMAGE_FORMAT_BOOTI:
+		*os_data = img_addr;
+		*os_len = 0;
+		break;
 	default:
 		bootstage_error(BOOTSTAGE_ID_CHECK_IMAGETYPE);
 		return -EPROTOTYPE;
@@ -395,6 +399,18 @@ static int bootm_find_os(const char *cmd_name, const char *addr_fit)
 		}
 		break;
 #endif
+	case IMAGE_FORMAT_BOOTI:
+		ep_found = true;
+		images.os.load = images.os.image_start;
+		images.os.type = IH_TYPE_KERNEL;
+		images.os.os = IH_OS_LINUX;
+		if (IS_ENABLED(CONFIG_RISCV_SMODE))
+			images.os.arch = IH_ARCH_RISCV;
+		else if (IS_ENABLED(CONFIG_ARM64))
+			images.os.arch = IH_ARCH_ARM64;
+		log_debug("load %lx ep %lx os %x\n", images.os.load, images.ep,
+			  images.os.os);
+		break;
 	default:
 		puts("ERROR: unknown image format type!\n");
 		return 1;
@@ -617,6 +633,7 @@ static int bootm_load_os(struct bootm_headers *images, int boot_progress)
 	void *load_buf, *image_buf;
 	int err;
 
+	log_debug("load_os\n");
 	/*
 	 * For a "noload" compressed kernel we need to allocate a buffer large
 	 * enough to decompress in to and use that as the load address now.
@@ -1137,12 +1154,6 @@ int bootz_run(struct bootm_info *bmi)
 
 int booti_run(struct bootm_info *bmi)
 {
-	images.os.os = IH_OS_LINUX;
-	if (IS_ENABLED(CONFIG_RISCV_SMODE))
-		images.os.arch = IH_ARCH_RISCV;
-	else if (IS_ENABLED(CONFIG_ARM64))
-		images.os.arch = IH_ARCH_ARM64;
-
 	return boot_run(bmi, "booti", BOOTM_STATE_START | BOOTM_STATE_FINDOS |
 			BOOTM_STATE_PRE_LOAD | BOOTM_STATE_FINDOTHER |
 			BOOTM_STATE_LOADOS);
