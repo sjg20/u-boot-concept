@@ -234,7 +234,6 @@ static int boot_get_kernel(const char *addr_fit, struct bootm_headers *images,
 #endif
 	case IMAGE_FORMAT_BOOTI:
 		*os_data = img_addr;
-		*os_len = 0;
 		break;
 	default:
 		/* any compressed image is probably a booti image */
