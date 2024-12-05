@@ -219,6 +219,17 @@ config OF_OMIT_DTB
 	  This is used for boards which normally provide a devicetree via a
 	  runtime mechanism (such as OF_BOARD), to avoid confusion.
 
+config OF_EXPAND
+	hex # "Amount to allow the control FDT to expand"
+	default SYS_FDT_PAD if OF_LIBFDT
+	default 0
+	help
+	  Some boards make use of the control FDT to boot an OS, thus when
+	  image_setup_libfdt() adds extra things to the end of the FDT, there
+	  needs to be enough space.
+
+	  Set this to the number of bytes of extra space required for the FDT.
+
 config DEFAULT_DEVICE_TREE
 	string "Default Device Tree for DT control"
 	depends on OF_CONTROL
