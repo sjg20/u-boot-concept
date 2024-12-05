@@ -237,6 +237,12 @@ static int boot_get_kernel(const char *addr_fit, struct bootm_headers *images,
 		*os_len = 0;
 		break;
 	default:
+		/* any compressed image is probably a booti image */
+		if (IS_ENABLED(CONFIG_CMD_BOOTI) &&
+		    image_decomp_type(buf, 2) != IH_COMP_NONE) {
+			*os_data = img_addr;
+			break;
+		}
 		bootstage_error(BOOTSTAGE_ID_CHECK_IMAGETYPE);
 		return -EPROTOTYPE;
 	}
