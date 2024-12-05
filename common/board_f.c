@@ -542,8 +542,10 @@ static int reserve_fdt(void)
 		 * section, then it will be relocated with other data.
 		 */
 		if (gd->fdt_blob) {
-			gd->boardf->fdt_size =
-				ALIGN(fdt_totalsize(gd->fdt_blob), 32);
+			int size = fdt_totalsize(gd->fdt_blob);
+
+			gd->boardf->fdt_size = ALIGN(size + CONFIG_OF_EXPAND,
+						     32);
 
 			gd->start_addr_sp = reserve_stack_aligned(
 				gd->boardf->fdt_size);
