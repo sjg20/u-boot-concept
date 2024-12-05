@@ -898,28 +898,40 @@ int image_setup_linux(struct bootm_headers *images)
 	int ret;
 
 	/* This function cannot be called without lmb support */
+	log_debug("line %d\n", __LINE__);
 	if (!CONFIG_IS_ENABLED(LMB))
 		return -EFAULT;
+	log_debug("line %d\n", __LINE__);
 	if (CONFIG_IS_ENABLED(OF_LIBFDT))
 		boot_fdt_add_mem_rsv_regions(*of_flat_tree);
+	log_debug("line %d\n", __LINE__);
 
 	if (IS_ENABLED(CONFIG_SYS_BOOT_GET_CMDLINE)) {
+	log_debug("line %d\n", __LINE__);
 		ret = boot_get_cmdline(&images->cmdline_start,
 				       &images->cmdline_end);
+	log_debug("line %d\n", __LINE__);
 		if (ret) {
 			puts("ERROR with allocation of cmdline\n");
 			return ret;
 		}
 	}
+	log_debug("line %d\n", __LINE__);
 
 	if (CONFIG_IS_ENABLED(OF_LIBFDT)) {
+	log_debug("line %d\n", __LINE__);
 		ret = boot_relocate_fdt(of_flat_tree, &of_size);
+	log_debug("line %d\n", __LINE__);
 		if (ret)
 			return ret;
 	}
 
+	log_debug("line %d\n", __LINE__);
 	if (CONFIG_IS_ENABLED(OF_LIBFDT) && of_size) {
+	log_debug("line %d ft_addr %p *of_flat_tree = %p\n", __LINE__,
+		  images->ft_addr, *of_flat_tree);
 		ret = image_setup_libfdt(images, *of_flat_tree, true);
+	log_debug("line %d\n", __LINE__);
 		if (ret)
 			return ret;
 	}

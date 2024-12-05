@@ -421,6 +421,7 @@ static void set_serial_number(void)
 
 int misc_init_r(void)
 {
+	printf("rpi: misc_init_r()\n");
 	set_fdt_addr();
 	set_fdtfile();
 	set_usbethaddr();

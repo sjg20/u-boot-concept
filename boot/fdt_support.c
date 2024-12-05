@@ -333,6 +333,7 @@ int fdt_chosen(void *fdt)
 	int   err;
 	char  *str;		/* used to set string properties */
 
+	log_debug("fdt %d\n", __LINE__);
 	err = fdt_check_header(fdt);
 	if (err < 0) {
 		printf("fdt_chosen: %s\n", fdt_strerror(err));
@@ -340,7 +341,9 @@ int fdt_chosen(void *fdt)
 	}
 
 	/* find or create "/chosen" node. */
+	log_debug("fdt %d\n", __LINE__);
 	nodeoffset = fdt_find_or_add_subnode(fdt, 0, "chosen");
+	log_debug("fdt %d\n", __LINE__);
 	if (nodeoffset < 0)
 		return nodeoffset;
 
@@ -348,14 +351,18 @@ int fdt_chosen(void *fdt)
 	 * CONFIG_MEASURED_BOOT enabled: as dt modifications break measured boot
 	 * CONFIG_ARMV8_SEC_FIRMWARE_SUPPORT enabled: as that implementation does not use dm yet
 	 */
+	log_debug("fdt %d\n", __LINE__);
 	if (IS_ENABLED(CONFIG_DM_RNG) &&
 	    !IS_ENABLED(CONFIG_MEASURED_BOOT) &&
 	    !IS_ENABLED(CONFIG_ARMV8_SEC_FIRMWARE_SUPPORT))
 		fdt_kaslrseed(fdt, false);
+	log_debug("fdt %d\n", __LINE__);
 
 	if (IS_ENABLED(CONFIG_BOARD_RNG_SEED) && !board_rng_seed(&buf)) {
+	log_debug("fdt %d\n", __LINE__);
 		err = fdt_setprop(fdt, nodeoffset, "rng-seed",
 				  abuf_data(&buf), abuf_size(&buf));
+	log_debug("fdt %d\n", __LINE__);
 		abuf_uninit(&buf);
 		if (err < 0) {
 			printf("WARNING: could not set rng-seed %s.\n",
@@ -363,8 +370,10 @@ int fdt_chosen(void *fdt)
 			return err;
 		}
 	}
+	log_debug("fdt %d\n", __LINE__);
 
 	str = board_fdt_chosen_bootargs();
+	log_debug("fdt %d\n", __LINE__);
 
 	if (str) {
 		err = fdt_setprop(fdt, nodeoffset, "bootargs", str,
@@ -375,15 +384,18 @@ int fdt_chosen(void *fdt)
 			return err;
 		}
 	}
+	log_debug("fdt %d\n", __LINE__);
 
 	/* add u-boot version */
 	err = fdt_setprop(fdt, nodeoffset, "u-boot,version", PLAIN_VERSION,
 			  strlen(PLAIN_VERSION) + 1);
+	log_debug("fdt %d\n", __LINE__);
 	if (err < 0) {
 		printf("WARNING: could not set u-boot,version %s.\n",
 		       fdt_strerror(err));
 		return err;
 	}
+	log_debug("fdt %d\n", __LINE__);
 
 	return fdt_fixup_stdout(fdt, nodeoffset);
 }
