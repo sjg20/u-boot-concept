@@ -441,6 +441,19 @@ static int bootm_find_os(const char *cmd_name, const char *addr_fit)
 		}
 		break;
 	default:
+		/* any compressed image is probably a booti image */
+		if (IS_ENABLED(CONFIG_CMD_BOOTI)) {
+			int comp;
+
+			comp = image_decomp_type(os_hdr, 2);
+			if (comp != IH_COMP_NONE) {
+				if (found_booti_os(comp))
+					return 1;
+				ep_found = true;
+			}
+			break;
+		}
+
 		puts("ERROR: unknown image format type!\n");
 		return 1;
 	}
@@ -662,7 +675,6 @@ static int bootm_load_os(struct bootm_headers *images, int boot_progress)
 	void *load_buf, *image_buf;
 	int err;
 
-	log_debug("load_os\n");
 	/*
 	 * For a "noload" compressed kernel we need to allocate a buffer large
 	 * enough to decompress in to and use that as the load address now.
@@ -681,6 +693,8 @@ static int bootm_load_os(struct bootm_headers *images, int boot_progress)
 		debug("Allocated %lx bytes at %lx for kernel (size %lx) decompression\n",
 		      req_size, load, image_len);
 	}
+	log_debug("load_os load %lx image_start %lx image_len %lx\n", load,
+		  image_start, image_len);
 
 	load_buf = map_sysmem(load, 0);
 	image_buf = map_sysmem(os.image_start, image_len);
@@ -1080,6 +1094,8 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 	}
 #endif
 
+	log_debug("done relocate\n");
+
 	/* From now on, we need the OS boot function */
 	if (ret)
 		return ret;
@@ -1095,25 +1111,33 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 		bootstage_error(BOOTSTAGE_ID_CHECK_BOOT_OS);
 		return 1;
 	}
+	log_debug("boot_fn %p os %x\n", boot_fn, images->os.os);
 
 	/* Call various other states that are not generally used */
+	log_debug("cmdline\n");
 	if (!ret && (states & BOOTM_STATE_OS_CMDLINE))
 		ret = boot_fn(BOOTM_STATE_OS_CMDLINE, bmi);
 	if (!ret && (states & BOOTM_STATE_OS_BD_T))
 		ret = boot_fn(BOOTM_STATE_OS_BD_T, bmi);
+	log_debug("os prep\n");
 	if (!ret && (states & BOOTM_STATE_OS_PREP)) {
 		int flags = 0;
 		/* For Linux OS do all substitutions at console processing */
 		if (images->os.os == IH_OS_LINUX)
 			flags = BOOTM_CL_ALL;
+		log_debug("cmdline\n");
 		ret = bootm_process_cmdline_env(flags);
+		log_debug("cmdline ret\n");
 		if (ret) {
 			printf("Cmdline setup failed (err=%d)\n", ret);
 			ret = CMD_RET_FAILURE;
 			goto err;
 		}
+		log_debug("os_prep\n");
 		ret = boot_fn(BOOTM_STATE_OS_PREP, bmi);
 	}
+
+	log_debug("fake go\n");
 
 #ifdef CONFIG_TRACE
 	/* Pretend to run the OS, then run a user command */
@@ -1270,6 +1294,11 @@ static int bootm_host_load_image(const void *fit, int req_image_type,
 
 	if (fit_image_get_comp(fit, noffset, &image_comp))
 		image_comp = IH_COMP_NONE;
+	log_debug("image_comp %x fit %p\n", image_comp, fit);
+	if (image_comp == IH_COMP_NONE && IS_ENABLED(CONFIG_CMD_BOOTI)) {
+		image_comp = image_decomp_type(fit, 2);
+		log_debug("image_comp2 %x\n", image_comp);
+	}
 
 	/* Allow the image to expand by a factor of 4, should be safe */
 	buf_size = (1 << 20) + len * 4;

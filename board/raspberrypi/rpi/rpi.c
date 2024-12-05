@@ -572,7 +572,12 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 {
 	int node;
 
-	update_fdt_from_fw(blob, (void *)fw_dtb_pointer);
+	printf("ft_board_setup(): blob %p gd->fdt_blob %p\n", blob,
+	       gd->fdt_blob);
+	if (blob == gd->fdt_blob)
+		printf("ft_board_setup() - nothing to do\n");
+	else
+		update_fdt_from_fw(blob, (void *)gd->fdt_blob);
 
 	node = fdt_node_offset_by_compatible(blob, -1, "simple-framebuffer");
 	if (node < 0)
