@@ -315,12 +315,12 @@ static int found_booti_os(enum image_comp_t comp)
 		  images.os.load, images.os.image_start, images.os.image_len,
 		  images.ep, images.os.os, images.os.comp);
 	if (comp != IH_COMP_NONE) {
+		images.os.load = env_get_hex("kernel_comp_addr_r", 0);
+		images.os.image_len = env_get_ulong("kernel_comp_size", 16, 0);
 		if (!images.os.load || !images.os.image_len) {
 			puts("kernel_comp_addr_r or kernel_comp_size is not provided!\n");
 			return -ENOTSUPP;
 		}
-		images.os.load = env_get_hex("kernel_comp_addr_r", 0);
-		images.os.image_len = env_get_ulong("kernel_comp_size", 16, 0);
 		if (lmb_reserve(images.os.load, images.os.image_len) < 0)
 			return -EXDEV;
 	}

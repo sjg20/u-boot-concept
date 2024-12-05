@@ -331,13 +331,15 @@ static void set_fdtfile(void)
  */
 static void set_fdt_addr(void)
 {
-	if (env_get("fdt_addr"))
-		return;
+	printf("rpi: %s\n", env_get("fdt_addr"));
+// 	if (env_get("fdt_addr"))
+// 		return;
 
-	if (fdt_magic(fw_dtb_pointer) != FDT_MAGIC)
-		return;
+// 	if (fdt_magic(fw_dtb_pointer) != FDT_MAGIC)
+// 		return;
 
-	env_set_hex("fdt_addr", fw_dtb_pointer);
+	env_set_hex("fdt_addr", (ulong)gd->fdt_blob);
+	printf("rpi: set fdt %p\n", gd->fdt_blob);
 }
 
 /*

@@ -564,12 +564,16 @@ static int reserve_fdt(void)
 		 * section, then it will be relocated with other data.
 		 */
 		if (gd->fdt_blob) {
-			gd->boardf->fdt_size =
-				ALIGN(fdt_totalsize(gd->fdt_blob), 32);
+			int size = fdt_totalsize(gd->fdt_blob);
+
+			gd->boardf->fdt_size = ALIGN(size + CONFIG_OF_EXPAND,
+						     32);
 
 			gd->start_addr_sp = reserve_stack_aligned(
 				gd->boardf->fdt_size);
 			gd->boardf->new_fdt = map_sysmem(gd->start_addr_sp,
+							 gd->boardf->fdt_size);
+			gd->boardf->new_fdt = map_sysmem(0x10000000,
 							 gd->boardf->fdt_size);
 			debug("Reserving %lu Bytes for FDT at: %08lx\n",
 			      gd->boardf->fdt_size, gd->start_addr_sp);
@@ -653,10 +657,12 @@ static int init_post(void)
 static int reloc_fdt(void)
 {
 	if (!IS_ENABLED(CONFIG_OF_EMBED)) {
+		printf("new_fdt %p\n", gd->boardf->new_fdt);
 		if (gd->boardf->new_fdt) {
 			memcpy(gd->boardf->new_fdt, gd->fdt_blob,
 			       fdt_totalsize(gd->fdt_blob));
 			gd->fdt_blob = gd->boardf->new_fdt;
+			printf("- fdt_blob %p\n", gd->fdt_blob);
 		}
 	}
 
