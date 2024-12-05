@@ -311,8 +311,6 @@ static int found_booti_os(enum image_comp_t comp)
 		images.os.arch = IH_ARCH_RISCV;
 	else if (IS_ENABLED(CONFIG_ARM64))
 		images.os.arch = IH_ARCH_ARM64;
-	images.os.load = env_get_hex("kernel_comp_addr_r", 0);
-	images.os.image_len = env_get_ulong("kernel_comp_size", 16, 0);
 
 	log_debug("load %lx start %lx len %lx ep %lx os %x comp %x\n",
 		  images.os.load, images.os.image_start, images.os.image_len,
@@ -322,6 +320,8 @@ static int found_booti_os(enum image_comp_t comp)
 			puts("kernel_comp_addr_r or kernel_comp_size is not provided!\n");
 			return -ENOTSUPP;
 		}
+		images.os.load = env_get_hex("kernel_comp_addr_r", 0);
+		images.os.image_len = env_get_ulong("kernel_comp_size", 16, 0);
 		if (lmb_reserve(images.os.load, images.os.image_len) < 0)
 			return -EXDEV;
 	}
