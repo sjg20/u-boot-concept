@@ -331,13 +331,15 @@ static void set_fdtfile(void)
  */
 static void set_fdt_addr(void)
 {
-	if (env_get("fdt_addr"))
-		return;
+	printf("rpi: %s\n", env_get("fdt_addr"));
+// 	if (env_get("fdt_addr"))
+// 		return;
 
-	if (fdt_magic(fw_dtb_pointer) != FDT_MAGIC)
-		return;
+// 	if (fdt_magic(fw_dtb_pointer) != FDT_MAGIC)
+// 		return;
 
-	env_set_hex("fdt_addr", fw_dtb_pointer);
+	env_set_hex("fdt_addr", (ulong)gd->fdt_blob);
+	printf("rpi: set fdt %p\n", gd->fdt_blob);
 }
 
 /*
@@ -421,6 +423,7 @@ static void set_serial_number(void)
 
 int misc_init_r(void)
 {
+	printf("rpi: misc_init_r()\n");
 	set_fdt_addr();
 	set_fdtfile();
 	set_usbethaddr();
@@ -572,7 +575,7 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 {
 	int node;
 
-	update_fdt_from_fw(blob, (void *)fw_dtb_pointer);
+	update_fdt_from_fw(blob, (void *)gd->fdt_blob);
 
 	node = fdt_node_offset_by_compatible(blob, -1, "simple-framebuffer");
 	if (node < 0)

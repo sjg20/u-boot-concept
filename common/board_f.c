@@ -8,6 +8,7 @@
  * Sysgo Real-Time Solutions, GmbH <www.elinos.com>
  * Marius Groeger <mgroeger@sysgo.de>
  */
+#define LOG_DEBUG
 
 #include <config.h>
 #include <bloblist.h>
@@ -564,8 +565,10 @@ static int reserve_fdt(void)
 		 * section, then it will be relocated with other data.
 		 */
 		if (gd->fdt_blob) {
-			gd->boardf->fdt_size =
-				ALIGN(fdt_totalsize(gd->fdt_blob), 32);
+			int size = fdt_totalsize(gd->fdt_blob);
+
+			gd->boardf->fdt_size = ALIGN(size + CONFIG_OF_EXPAND,
+						     32);
 
 			gd->start_addr_sp = reserve_stack_aligned(
 				gd->boardf->fdt_size);
@@ -653,10 +656,12 @@ static int init_post(void)
 static int reloc_fdt(void)
 {
 	if (!IS_ENABLED(CONFIG_OF_EMBED)) {
+		printf("new_fdt %p\n", gd->boardf->new_fdt);
 		if (gd->boardf->new_fdt) {
 			memcpy(gd->boardf->new_fdt, gd->fdt_blob,
 			       fdt_totalsize(gd->fdt_blob));
 			gd->fdt_blob = gd->boardf->new_fdt;
+			printf("- fdt_blob %p\n", gd->fdt_blob);
 		}
 	}
 

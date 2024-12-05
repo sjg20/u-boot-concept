@@ -8,7 +8,10 @@
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  */
 
+#define LOG_DEBUG
+
 #include <command.h>
+#include <display_options.h>
 #include <fdt_support.h>
 #include <fdtdec.h>
 #include <env.h>
@@ -571,6 +574,7 @@ int image_setup_libfdt(struct bootm_headers *images, void *blob, bool lmb)
 	ulong *initrd_end = &images->initrd_end;
 	int ret, fdt_ret, of_size;
 
+	print_buffer((ulong)blob, blob, 1, 0x10, 0);
 	if (IS_ENABLED(CONFIG_OF_ENV_SETUP)) {
 		const char *fdt_fixup;
 
@@ -584,20 +588,24 @@ int image_setup_libfdt(struct bootm_headers *images, void *blob, bool lmb)
 		}
 	}
 
+	log_debug("here %d\n", __LINE__);
 	ret = -EPERM;
 
 	if (fdt_root(blob) < 0) {
 		printf("ERROR: root node setup failed\n");
 		goto err;
 	}
+	log_debug("here %d\n", __LINE__);
 	if (fdt_chosen(blob) < 0) {
 		printf("ERROR: /chosen node create failed\n");
 		goto err;
 	}
+	log_debug("here %d\n", __LINE__);
 	if (arch_fixup_fdt(blob) < 0) {
 		printf("ERROR: arch-specific fdt fixup failed\n");
 		goto err;
 	}
+	log_debug("here %d\n", __LINE__);
 
 	fdt_ret = optee_copy_fdt_nodes(blob);
 	if (fdt_ret) {
@@ -605,12 +613,14 @@ int image_setup_libfdt(struct bootm_headers *images, void *blob, bool lmb)
 		       fdt_strerror(fdt_ret));
 		goto err;
 	}
+	log_debug("here %d\n", __LINE__);
 
 	/* Store name of configuration node as u-boot,bootconf in /chosen node */
 	if (images->fit_uname_cfg)
 		fdt_find_and_setprop(blob, "/chosen", "u-boot,bootconf",
 					images->fit_uname_cfg,
 					strlen(images->fit_uname_cfg) + 1, 1);
+	log_debug("here %d\n", __LINE__);
 
 	/* Update ethernet nodes */
 	fdt_fixup_ethernet(blob);
@@ -618,6 +628,7 @@ int image_setup_libfdt(struct bootm_headers *images, void *blob, bool lmb)
 	/* Append PStore configuration */
 	fdt_fixup_pstore(blob);
 #endif
+	log_debug("here %d\n", __LINE__);
 	if (IS_ENABLED(CONFIG_OF_BOARD_SETUP)) {
 		const char *skip_board_fixup;
 
@@ -633,6 +644,7 @@ int image_setup_libfdt(struct bootm_headers *images, void *blob, bool lmb)
 			}
 		}
 	}
+	log_debug("here %d\n", __LINE__);
 	if (IS_ENABLED(CONFIG_OF_SYSTEM_SETUP)) {
 		fdt_ret = ft_system_setup(blob, gd->bd);
 		if (fdt_ret) {
@@ -641,12 +653,15 @@ int image_setup_libfdt(struct bootm_headers *images, void *blob, bool lmb)
 			goto err;
 		}
 	}
+	log_debug("here %d\n", __LINE__);
 
 	if (fdt_initrd(blob, *initrd_start, *initrd_end))
 		goto err;
+	log_debug("here %d\n", __LINE__);
 
 	if (!ft_verify_fdt(blob))
 		goto err;
+	log_debug("here %d\n", __LINE__);
 
 	/* after here we are using a livetree */
 	if (!of_live_active() && CONFIG_IS_ENABLED(EVENT)) {
@@ -663,24 +678,29 @@ int image_setup_libfdt(struct bootm_headers *images, void *blob, bool lmb)
 			}
 		}
 	}
+	log_debug("here %d\n", __LINE__);
 
 	/* Delete the old LMB reservation */
 	if (CONFIG_IS_ENABLED(LMB) && lmb)
 		lmb_free(map_to_sysmem(blob), fdt_totalsize(blob));
+	log_debug("here %d\n", __LINE__);
 
 	ret = fdt_shrink_to_minimum(blob, 0);
 	if (ret < 0)
 		goto err;
 	of_size = ret;
+	log_debug("here %d\n", __LINE__);
 
 	/* Create a new LMB reservation */
 	if (CONFIG_IS_ENABLED(LMB) && lmb)
 		lmb_reserve(map_to_sysmem(blob), of_size);
+	log_debug("here %d\n", __LINE__);
 
 #if defined(CONFIG_ARCH_KEYSTONE)
 	if (IS_ENABLED(CONFIG_OF_BOARD_SETUP))
 		ft_board_setup_ex(blob, gd->bd);
 #endif
+	log_debug("here %d\n", __LINE__);
 
 	return 0;
 err:

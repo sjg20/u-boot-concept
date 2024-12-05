@@ -457,8 +457,6 @@ static int bootm_find_os(const char *cmd_name, const char *addr_fit)
 		return 1;
 	}
 
-
-
 	/* If we have a valid setup.bin, we will use that for entry (x86) */
 	if (images.os.arch == IH_ARCH_I386 ||
 	    images.os.arch == IH_ARCH_X86_64) {
@@ -1095,6 +1093,8 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 	}
 #endif
 
+	log_debug("done relocate\n");
+
 	/* From now on, we need the OS boot function */
 	if (ret)
 		return ret;
@@ -1110,25 +1110,33 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 		bootstage_error(BOOTSTAGE_ID_CHECK_BOOT_OS);
 		return 1;
 	}
+	log_debug("boot_fn %p os %x\n", boot_fn, images->os.os);
 
 	/* Call various other states that are not generally used */
+	log_debug("cmdline\n");
 	if (!ret && (states & BOOTM_STATE_OS_CMDLINE))
 		ret = boot_fn(BOOTM_STATE_OS_CMDLINE, bmi);
 	if (!ret && (states & BOOTM_STATE_OS_BD_T))
 		ret = boot_fn(BOOTM_STATE_OS_BD_T, bmi);
+	log_debug("os prep\n");
 	if (!ret && (states & BOOTM_STATE_OS_PREP)) {
 		int flags = 0;
 		/* For Linux OS do all substitutions at console processing */
 		if (images->os.os == IH_OS_LINUX)
 			flags = BOOTM_CL_ALL;
+		log_debug("cmdline\n");
 		ret = bootm_process_cmdline_env(flags);
+		log_debug("cmdline ret\n");
 		if (ret) {
 			printf("Cmdline setup failed (err=%d)\n", ret);
 			ret = CMD_RET_FAILURE;
 			goto err;
 		}
+		log_debug("os_prep\n");
 		ret = boot_fn(BOOTM_STATE_OS_PREP, bmi);
 	}
+
+	log_debug("fake go\n");
 
 #ifdef CONFIG_TRACE
 	/* Pretend to run the OS, then run a user command */

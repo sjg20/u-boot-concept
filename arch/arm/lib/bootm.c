@@ -11,6 +11,8 @@
  * Copyright (C) 2001  Erik Mouw (J.A.K.Mouw@its.tudelft.nl)
  */
 
+#define LOG_DEBUG
+
 #include <bootm.h>
 #include <bootstage.h>
 #include <command.h>
@@ -203,6 +205,7 @@ static void boot_prep_linux(struct bootm_headers *images)
 		if (image_setup_linux(images)) {
 			panic("FDT creation failed!");
 		}
+		debug("setup_linux done\n");
 	} else if (BOOTM_ENABLE_TAGS) {
 		debug("using: ATAGS\n");
 		setup_start_tag(gd->bd);
@@ -235,6 +238,7 @@ static void boot_prep_linux(struct bootm_headers *images)
 	} else {
 		panic("FDT and ATAGS support not compiled in\n");
 	}
+	debug("board_prep_linux\n");
 
 	board_prep_linux(images);
 }
@@ -385,10 +389,12 @@ int do_bootm_linux(int flag, struct bootm_info *bmi)
 	if (flag & BOOTM_STATE_OS_BD_T || flag & BOOTM_STATE_OS_CMDLINE)
 		return -1;
 
+	log_debug("prep\n");
 	if (flag & BOOTM_STATE_OS_PREP) {
 		boot_prep_linux(images);
 		return 0;
 	}
+	log_debug("now go\n");
 
 	if (flag & (BOOTM_STATE_OS_GO | BOOTM_STATE_OS_FAKE_GO)) {
 		boot_jump_linux(images, flag);
