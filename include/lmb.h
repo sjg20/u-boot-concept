@@ -82,7 +82,6 @@ int lmb_init(void);
 void lmb_add_memory(void);
 
 long lmb_add(phys_addr_t base, phys_size_t size);
-long lmb_reserve(phys_addr_t base, phys_size_t size);
 /**
  * lmb_reserve_flags - Reserve one region with a specific flags bitfield.
  *
