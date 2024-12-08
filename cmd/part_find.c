@@ -107,7 +107,7 @@ static int part_find(int argc, char *const argv[])
 								   &loader_part_no)) {
 						char env[256];
 
-						ret = snprintf(env, sizeof(env), "%s %d:%d", blk_get_if_type_name(desc->if_type), desc->devnum, loader_part_no);
+						ret = snprintf(env, sizeof(env), "%s %x:%x", blk_get_if_type_name(desc->if_type), desc->devnum, loader_part_no);
 						if (ret < 0 || ret == sizeof(env))
 							return CMD_RET_FAILURE;
 						if (env_set("target_part", env))
@@ -123,7 +123,7 @@ static int part_find(int argc, char *const argv[])
 						break;
 					if (strcasecmp(argv[1], info.type_guid) == 0) {
 						char env[256];
-						ret = snprintf(env, sizeof(env), "%s %d:%d", blk_get_if_type_name(desc->if_type), desc->devnum, i);
+						ret = snprintf(env, sizeof(env), "%s %x:%x", blk_get_uclass_name(desc->uclass_id), desc->devnum, i);
 						if (ret < 0 || ret == sizeof(env))
 							return CMD_RET_FAILURE;
 						env_set("target_part", env);
