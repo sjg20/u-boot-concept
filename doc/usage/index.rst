@@ -100,6 +100,7 @@ Shell commands
    cmd/mv
    cmd/panic
    cmd/part
+   cmd/part_find
    cmd/pause
    cmd/pinmux
    cmd/printenv
