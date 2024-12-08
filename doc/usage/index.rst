@@ -95,6 +95,7 @@ Shell commands
    cmd/mtrr
    cmd/panic
    cmd/part
+   cmd/part_find
    cmd/pause
    cmd/pinmux
    cmd/printenv
