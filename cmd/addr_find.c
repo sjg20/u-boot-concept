@@ -5,7 +5,6 @@
  */
 
 #include <blk.h>
-#include <config.h>
 #include <command.h>
 #include <env.h>
 #include <fs.h>

@@ -14,6 +14,7 @@ obj-$(CONFIG_CMD_PAUSE) += test_pause.o
 endif
 obj-y += exit.o mem.o
 obj-$(CONFIG_X86) += cpuid.o msr.o
+obj-$(CONFIG_CMD_ADDR_FIND) += addr_find.o
 obj-$(CONFIG_CMD_ADDRMAP) += addrmap.o
 obj-$(CONFIG_CMD_BDI) += bdinfo.o
 obj-$(CONFIG_COREBOOT_SYSINFO) += coreboot.o
