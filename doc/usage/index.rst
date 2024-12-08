@@ -26,6 +26,7 @@ Shell commands
    :maxdepth: 1
 
    cmd/acpi
+   cmd/addr_find
    cmd/addrmap
    cmd/armffa
    cmd/askenv
