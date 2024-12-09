@@ -17,8 +17,8 @@ DECLARE_GLOBAL_DATA_PTR;
 int do_addr_find(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {
 	const char *filename;
+	phys_addr_t start;
 	loff_t size;
-	ulong addr;
 	int ret;
 
 	if (!gd->fdt_blob) {
@@ -47,24 +47,21 @@ int do_addr_find(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 		return CMD_RET_FAILURE;
 	}
 
-	addr = lmb_alloc(size, SZ_1M);
-	if (!addr) {
+	start = lmb_alloc(size, SZ_2M);
+	if ((long)start < 0) {
 		log_err("Failed to find enough RAM for 0x%llx bytes\n", size);
+
 		return CMD_RET_FAILURE;
 	}
 
-	if (env_set_hex("loadaddr", addr)) {
-		log_err("Could not set loadaddr\n");
-		return CMD_RET_FAILURE;
-	}
+	env_set_hex("loadaddr", start);
+	debug("Set loadaddr to %llx\n", (u64)start);
 
-	log_debug("Set loadaddr to %lx\n", addr);
-
-	return CMD_RET_SUCCESS;
+	return 0;
 }
 
 U_BOOT_CMD(
-	addr_find, 7, 1, do_addr_find,
+	addr_find, 4, 1, do_addr_find,
 	"find a load address suitable for a file",
 	"<interface> [<dev[:part]>] <filename>\n"
 	"- find a consecutive region of memory sufficiently large to hold\n"
