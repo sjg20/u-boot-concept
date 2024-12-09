@@ -4,7 +4,6 @@
  *
  */
 
-#include <config.h>
 #include <dm.h>
 #include <efi.h>
 #include <efi_api.h>
