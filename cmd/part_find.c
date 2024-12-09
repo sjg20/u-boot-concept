@@ -5,12 +5,10 @@
  */
 
 #include <blk.h>
-#include <config.h>
 #include <command.h>
 #include <dm.h>
 #include <env.h>
 #include <part.h>
-#if defined(CONFIG_EFI) || defined(CONFIG_EFI_APP)
 #include <efi.h>
 #include <efi_api.h>
 
@@ -47,21 +45,86 @@ static bool partition_is_on_device(const struct efi_device_path *device,
 	}
 	return false;
 }
-#endif
+
+/**
+ * part_self_find() - Check if a device contains the loaded-image path
+ *
+ * @udev: Block device to check
+ * @loaded_image_path: EFI path of the loaded image
+ * Return 0 if found, -ENOENT if not, other -ve value on error
+ */
+static int part_self_find(struct udevice *udev,
+			  struct efi_device_path *loaded_image_path)
+{
+	struct blk_desc *desc = dev_get_uclass_plat(udev);
+
+	if (desc->uclass_id == UCLASS_EFI_MEDIA) {
+		struct efi_media_plat *plat = dev_get_plat(udev->parent);
+		u32 loader_part_no;
+
+		if (partition_is_on_device(plat->device_path, loaded_image_path,
+					   &loader_part_no)) {
+			char env[256];
+			int ret;
+
+			ret = snprintf(env, sizeof(env), "%s %x:%x",
+				       blk_get_uclass_name(desc->uclass_id),
+				       desc->devnum, loader_part_no);
+			if (ret < 0 || ret == sizeof(env))
+				return -ENOSPC;
+			if (env_set("target_part", env))
+				return -ENOMEM;
+			return 0;
+		}
+	}
+
+	return -ENOENT;
+}
+
+/**
+ * part_blk_find() - Check if a device contains a partition with a type uuid
+ *
+ * @udev: Block device to check
+ * @uuid: UUID to search for (in string form)
+ * Return 0 if found, -ENOENT if not, other -ve value on error
+ */
+static int part_blk_find(struct udevice *udev, const char *uuid)
+{
+	struct blk_desc *desc = dev_get_uclass_plat(udev);
+	int i;
+
+	for (i = 1; i <= MAX_SEARCH_PARTITIONS; i++) {
+		struct disk_partition info;
+		int ret;
+
+		ret = part_get_info(desc, i, &info);
+		if (ret)
+			break;
+		if (strcasecmp(uuid, info.type_guid) == 0) {
+			char env[256];
+
+			ret = snprintf(env, sizeof(env), "%s %x:%x",
+				       blk_get_uclass_name(desc->uclass_id),
+				       desc->devnum, i);
+			if (ret < 0 || ret == sizeof(env))
+				return -ENOSPC;
+			debug("Setting target_part to %s\n", env);
+			if (env_set("target_part", env))
+				return -ENOMEM;
+			return 0;
+		}
+	}
+
+	return -ENOENT;
+}
 
 static int part_find(int argc, char *const argv[])
 {
-#if defined(CONFIG_EFI) || defined(CONFIG_EFI_APP)
 	efi_guid_t efi_devpath_guid = EFI_DEVICE_PATH_PROTOCOL_GUID;
 	struct efi_device_path *loaded_image_path = NULL;
-	struct efi_boot_services *boot = efi_get_boot();
-	struct efi_priv *priv = efi_get_priv();
 	bool part_self = false;
-#endif
 	struct driver *d = ll_entry_start(struct driver, driver);
 	const int n_ents = ll_entry_count(struct driver, driver);
-	struct disk_partition info;
-	struct blk_desc *desc;
 	struct driver *entry;
 	struct udevice *udev;
 	struct uclass *uc;
@@ -70,16 +133,20 @@ static int part_find(int argc, char *const argv[])
 	if (argc != 2)
 		return CMD_RET_USAGE;
 
-#if defined(CONFIG_EFI) || defined (CONFIG_EFI_APP)
-	part_self = !strncmp(argv[1], "self", 6);
-	if (part_self) {
-		ret = boot->handle_protocol(priv->loaded_image->device_handle,
-					&efi_devpath_guid,
-					(void **)&loaded_image_path);
-		if (ret)
-			log_warning("failed to get device path for loaded image (ret=%d)", ret);
+	if (IS_ENABLED(CONFIG_EFI)) {
+		struct efi_boot_services *boot = efi_get_boot();
+		struct efi_priv *priv = efi_get_priv();
+
+		part_self = !strncmp(argv[1], "self", 6);
+		if (part_self) {
+			ret = boot->handle_protocol(priv->loaded_image->device_handle,
+						    &efi_devpath_guid,
+						    (void **)&loaded_image_path);
+			if (ret)
+				log_warning("failed to get device path for loaded image (ret=%d)",
+					    ret);
+		}
 	}
-#endif
 
 	ret = uclass_get(UCLASS_BLK, &uc);
 	if (ret) {
@@ -90,50 +157,16 @@ static int part_find(int argc, char *const argv[])
 		if (entry->id != UCLASS_BLK)
 			continue;
 		uclass_foreach_dev(udev, uc) {
-			int i;
-
 			if (udev->driver != entry)
 				continue;
-			desc = dev_get_uclass_plat(udev);
-#if defined(CONFIG_EFI) || defined(CONFIG_EFI_APP)
-			if (part_self) {
-				if (desc->if_type == IF_TYPE_EFI_MEDIA) {
-					struct efi_media_plat *plat =
-						dev_get_plat(udev->parent);
-					__u32 loader_part_no;
-
-					if (partition_is_on_device(plat->device_path,
-								   loaded_image_path,
-								   &loader_part_no)) {
-						char env[256];
-
-						ret = snprintf(env, sizeof(env), "%s %x:%x", blk_get_if_type_name(desc->if_type), desc->devnum, loader_part_no);
-						if (ret < 0 || ret == sizeof(env))
-							return CMD_RET_FAILURE;
-						if (env_set("target_part", env))
-							return CMD_RET_FAILURE;
-						return CMD_RET_SUCCESS;
-					}
-				}
-			} else {
-#endif
-				for (i = 1; i <= MAX_SEARCH_PARTITIONS; i++) {
-					ret = part_get_info(desc, i, &info);
-					if (ret)
-						break;
-					if (strcasecmp(argv[1], info.type_guid) == 0) {
-						char env[256];
-						ret = snprintf(env, sizeof(env), "%s %x:%x", blk_get_uclass_name(desc->uclass_id), desc->devnum, i);
-						if (ret < 0 || ret == sizeof(env))
-							return CMD_RET_FAILURE;
-						env_set("target_part", env);
-						debug("Setting target_part to %s\n", env);
-						return CMD_RET_SUCCESS;
-					}
-				}
-#if defined(CONFIG_EFI) || defined(CONFIG_EFI_APP)
-			}
-#endif
+			if (IS_ENABLED(CONFIG_EFI) && part_self)
+				ret = part_self_find(udev, loaded_image_path);
+			else
+				ret = part_blk_find(udev, argv[1]);
+			if (!ret)
+				return 0;
+			if (ret != -ENOENT)
+				break;
 		}
 	}
 
