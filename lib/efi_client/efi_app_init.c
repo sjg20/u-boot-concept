@@ -60,8 +60,10 @@ int efi_bind_block(efi_handle_t handle, struct efi_block_io *blkio,
 	plat->handle = handle;
 	plat->blkio = blkio;
 	plat->device_path = malloc(device_path_len);
-	if (!plat->device_path)
+	if (!plat->device_path) {
+		free(plat);
 		return log_msg_ret("path", -ENOMEM);
+	}
 	memcpy(plat->device_path, device_path, device_path_len);
 
 	snprintf(name, sizeof(name), "efi_media_%x",
