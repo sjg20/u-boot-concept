@@ -16,12 +16,13 @@ DECLARE_GLOBAL_DATA_PTR;
 
 int do_addr_find(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {
-	struct lmb_region *mem, *reserved;
 	const char *filename;
-	struct lmb lmb;
+	phys_addr_t start;
 	loff_t size;
 	int ret;
-	int i, j;
+
+	if (argc < 3)
+		return CMD_RET_USAGE;
 
 	if (!gd->fdt_blob) {
 		log_err("No FDT setup\n");
@@ -49,36 +50,21 @@ int do_addr_find(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 		return CMD_RET_FAILURE;
 	}
 
-	lmb_init_and_reserve(&lmb, gd->bd, (void *)gd->fdt_blob);
-	mem = &lmb.memory;
-	reserved = &lmb.reserved;
+	start = lmb_alloc(size, SZ_2M);
+	if ((long)start < 0) {
+		log_err("Failed to find enough RAM for 0x%llx bytes\n", size);
 
-	for (i = 0; i < mem->cnt; i++) {
-		unsigned long long start, end;
-
-		start = mem->region[i].base;
-		end = mem->region[i].base + mem->region[i].size - 1;
-		if ((start + size) > end)
-			continue;
-		for (j = 0; j < reserved->cnt; j++) {
-			if ((reserved->region[j].base + reserved->region[j].size) < start)
-				continue;
-			if ((start + size) > reserved->region[j].base)
-				start = reserved->region[j].base + reserved->region[j].size;
-		}
-		if ((start + size) <= end) {
-			env_set_hex("loadaddr", start);
-			debug("Set loadaddr to 0x%llx\n", start);
-			return CMD_RET_SUCCESS;
-		}
+		return CMD_RET_FAILURE;
 	}
 
-	log_err("Failed to find enough RAM for 0x%llx bytes\n", size);
-	return CMD_RET_FAILURE;
+	env_set_hex("loadaddr", start);
+	debug("Set loadaddr to %llx\n", (u64)start);
+
+	return 0;
 }
 
 U_BOOT_CMD(
-	addr_find, 7, 1, do_addr_find,
+	addr_find, 4, 1, do_addr_find,
 	"find a load address suitable for a file",
 	"<interface> [<dev[:part]>] <filename>\n"
 	"- find a consecutive region of memory sufficiently large to hold\n"
