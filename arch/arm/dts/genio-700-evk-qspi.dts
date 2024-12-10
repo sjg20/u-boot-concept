@@ -18,13 +18,14 @@
 		smbios {
 				system {
 						manufacturer = "MediaTek";
-						product = "Genio 700 EVK";
-						version = "P1V4 (SPI NOR)";
+						product = "Genio 700 EVK P1V4 (SPI NOR Boot)";
+						version = "P1V4-A";
+						sku = "mtk-g700evkqspi-p1v4";
 						family = "MediaTek Genio";
 				};
 				baseboard {
 						manufacturer = "MediaTek";
-						product = "Genio 700 EVK P1V4 (SPI NOR)";
+						product = "Genio 700 EVK P1V4 (SPI NOR Reworked)";
 				};
 				chassis {
 						manufacturer = "MediaTek";
