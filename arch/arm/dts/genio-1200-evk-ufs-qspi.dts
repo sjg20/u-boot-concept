@@ -18,13 +18,14 @@
 		smbios {
 				system {
 						manufacturer = "MediaTek";
-						product = "Genio 1200 EVK";
-						version = "P1V2 (SPI NOR)";
+						product = "Genio 1200 EVK P1V2 (SPI NOR Boot to UFS)";
+						version = "P1V2";
+						sku = "mtk-g1200evkufsqspi-p1v2";
 						family = "MediaTek Genio";
 				};
 				baseboard {
 						manufacturer = "MediaTek";
-						product = "Genio 1200 EVK P1V2 (SPI NOR)";
+						product = "Genio 1200 EVK P1V2 (SPI NOR Reworked)";
 				};
 				chassis {
 						manufacturer = "MediaTek";
