@@ -1683,11 +1683,11 @@ int fdtdec_setup(void)
 			gd->fdt_blob = bloblist_find(BLOBLISTT_CONTROL_FDT, 0);
 			if (gd->fdt_blob) {
 				gd->fdt_src = FDTSRC_BLOBLIST;
-				log_debug("Devicetree is in bloblist at %p\n",
+				log_warning("Devicetree is in bloblist at %p\n",
 					  gd->fdt_blob);
 				ret = 0;
 			} else {
-				log_debug("No FDT found in bloblist\n");
+				log_warning("No FDT found in bloblist\n");
 				ret = -ENOENT;
 			}
 		}
@@ -1695,10 +1695,13 @@ int fdtdec_setup(void)
 
 	/* Otherwise, the devicetree is typically appended to U-Boot */
 	if (ret) {
+printf("%s:%d\n", __func__, __LINE__);
 		if (IS_ENABLED(CONFIG_OF_SEPARATE)) {
+printf("%s:%d\n", __func__, __LINE__);
 			gd->fdt_blob = fdt_find_separate();
 			gd->fdt_src = FDTSRC_SEPARATE;
 		} else { /* embed dtb in ELF file for testing / development */
+printf("%s:%d\n", __func__, __LINE__);
 			gd->fdt_blob = dtb_dt_embedded();
 			gd->fdt_src = FDTSRC_EMBED;
 		}
@@ -1706,30 +1709,44 @@ int fdtdec_setup(void)
 
 	/* Allow the board to override the fdt address. */
 	if (IS_ENABLED(CONFIG_OF_BOARD)) {
+printf("%s:%d\n", __func__, __LINE__);
 		gd->fdt_blob = board_fdt_blob_setup(&ret);
-		if (!ret)
+		if (!ret) {
+printf("%s:%d\n", __func__, __LINE__);
 			gd->fdt_src = FDTSRC_BOARD;
-		else if (ret != -EEXIST)
+		} else if (ret != -EEXIST) {
+printf("%s:%d\n", __func__, __LINE__);
 			return ret;
+		}
+printf("%s:%d\n", __func__, __LINE__);
 	}
 
+printf("%s:%d\n", __func__, __LINE__);
 	/* Allow the early environment to override the fdt address */
 	if (!IS_ENABLED(CONFIG_XPL_BUILD)) {
+printf("%s:%d\n", __func__, __LINE__);
 		ulong addr;
 
 		addr = env_get_hex("fdtcontroladdr", 0);
 		if (addr) {
+printf("%s:%d\n", __func__, __LINE__);
 			gd->fdt_blob = map_sysmem(addr, 0);
 			gd->fdt_src = FDTSRC_ENV;
 		}
 	}
 
-	if (CONFIG_IS_ENABLED(MULTI_DTB_FIT))
+	if (CONFIG_IS_ENABLED(MULTI_DTB_FIT)) {
+printf("%s:%d\n", __func__, __LINE__);
 		setup_multi_dtb_fit();
+	}
 
 	ret = fdtdec_prepare_fdt(gd->fdt_blob);
-	if (!ret)
+printf("%s:%d\n", __func__, __LINE__);
+	if (!ret) {
+printf("%s:%d\n", __func__, __LINE__);
 		ret = fdtdec_board_setup(gd->fdt_blob);
+	}
+
 	oftree_reset();
 
 	return ret;
