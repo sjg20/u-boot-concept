@@ -18,9 +18,9 @@
 		smbios {
 				system {
 						manufacturer = "MediaTek";
-						product = "Genio 510 EVK";
+						product = "Genio 510 EVK P1V2 (eMMC Boot)";
 						version = "P1V2";
-						sku = "902-SSBE7-EG1RH";
+						sku = "mtk-g510evk-p1v2";
 						family = "MediaTek Genio";
 				};
 				baseboard {
