@@ -45,6 +45,7 @@ stages:
     - export strategy="-s uboot -e off"
     - export USE_LABGRID_SJG=1
     # export verbose="-v"
+    - rm -rf ${OUT}
     - ${SRC}/test/py/test.py --role ${ROLE} --build-dir "${OUT}"
         --capture=tee-sys -k "not bootstd" || ret=$?
     - U_BOOT_BOARD_IDENTITY="${ROLE}" u-boot-test-release || true
