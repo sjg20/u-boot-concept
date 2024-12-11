@@ -66,13 +66,3 @@ bob:
   variables:
     ROLE: bob
   <<: *lab_dfn
-
-coral:
-  variables:
-    ROLE: coral
-  <<: *lab_dfn
-
-kevin:
-  variables:
-    ROLE: kevin
-  <<: *lab_dfn
