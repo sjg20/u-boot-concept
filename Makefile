@@ -6,6 +6,8 @@ SUBLEVEL =
 EXTRAVERSION = -rc4
 NAME =
 
+$(warning cwd $(shell pwd))
+
 # *DOCUMENTATION*
 # To see a list of typical targets execute "make help"
 # More info can be located in ./README
