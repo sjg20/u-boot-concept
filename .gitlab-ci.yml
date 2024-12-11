@@ -47,7 +47,6 @@ stages:
     # export verbose="-v"
     - echo rm -rf ${OUT}
     - rm -rf ${OUT}
-    - git describe HEAD
     - ${SRC}/test/py/test.py --role ${ROLE} --build-dir "${OUT}"
         --capture=tee-sys -k "not bootstd" || ret=$?
     - U_BOOT_BOARD_IDENTITY="${ROLE}" u-boot-test-release || true
@@ -62,7 +61,7 @@ stages:
       - "build/${BOARD}/multiplexed_log.css"
     expire_in: 1 week
 
-bob:
+rpi3:
   variables:
-    ROLE: bob
+    ROLE: rpi3
   <<: *lab_dfn
