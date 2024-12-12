@@ -1682,7 +1682,7 @@ int fdtdec_setup(void)
 	     !IS_ENABLED(CONFIG_TPL_BLOBLIST))) {
 printf("%s:%d\n", __func__, __LINE__);
 // The general case here WILL have made a bloblist so ret=0.
-		//ret = bloblist_maybe_init();
+		ret = bloblist_maybe_init();
 		/* We need a "Is there a bloblist here?" func. */
 printf("%s:%d (ret=%d)\n", __func__, __LINE__, ret);
 		if (!ret) {
