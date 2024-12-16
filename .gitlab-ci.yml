@@ -707,3 +707,9 @@ colibrimx8:
   variables:
     ROLE: colibrimx8
   <<: *lab_dfn
+
+# NVIDIA Jetson TK1
+tk1:
+  variables:
+    ROLE: tk1
+  <<: *lab_dfn
