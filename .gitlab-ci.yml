@@ -778,3 +778,9 @@ qemu-x86_64:
     ROLE: qemu-x86_64
     TEST_PY_TEST_SPEC: "and not sleep"
   <<: *lab_dfn
+
+# NVIDIA Jetson TK1
+tk1:
+  variables:
+    ROLE: tk1
+  <<: *lab_dfn
