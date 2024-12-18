@@ -131,6 +131,7 @@
 	"scriptaddr=0x40000000\0" \
 	"fdt_addr_r=0x44000000\0" \
 	"fdtoverlay_addr_r=0x44c00000\0" \
+	"fdt_resize=0x2000\0" \
 	"kernel_addr_r=0x45000000\0" \
 	"ramdisk_addr_r=0x46000000\0" \
 	"fdtfile=" CONFIG_DEFAULT_DEVICE_TREE ".dtb\0" \
@@ -145,6 +146,7 @@
 	"scriptaddr=0x40000000\0" \
 	"fdt_addr_r=0x44000000\0" \
 	"fdtoverlay_addr_r=0x44c00000\0" \
+	"fdt_resize=0x2000\0" \
 	"kernel_addr_r=0x45000000\0" \
 	"ramdisk_addr_r=0x46000000\0" \
 	"fdtfile=" CONFIG_DEFAULT_DEVICE_TREE ".dtb\0" \
