@@ -79,6 +79,7 @@ static int exists(char *devtype, char *devnum, int part, char *path)
 static int loaddtb(char *devtype, char *devnum, int part, char *path, char *fdt_addr)
 {
 	char cmd[128];
+	char *fdt_resize = env_get("fdt_resize");
 
 	printf("Loading dtb '%s'\n", path);
 
@@ -98,9 +99,14 @@ static int loaddtb(char *devtype, char *devnum, int part, char *path, char *fdt_
 	if (run_command_list(cmd, -1, 0) != CMD_RET_SUCCESS)
 		return 1;
 
-	sprintf(cmd, "fdt resize 8192");
-	if (run_command_list(cmd, -1, 0) != CMD_RET_SUCCESS)
-		return 1;
+	if (!fdt_resize) {
+		printf("Warning: 'fdt_resize' is not set, boot might fail.\n");
+	} else {
+		printf("fdt_resize is set to: %s\n", fdt_resize);
+		snprintf(cmd, sizeof(cmd), "fdt resize %s", fdt_resize);
+		if (run_command_list(cmd, -1, 0) != CMD_RET_SUCCESS)
+			return 1;
+	}
 
 	return CMD_RET_SUCCESS;
 }
