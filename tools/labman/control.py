@@ -29,8 +29,9 @@ def Labman(args, lab=None):
             lab = Lab()
             test_lab = lab
         lab.read(lab_fname)
-        if not remote and lab._host != socket.gethostname():
+        if not remote and lab._host != socket.gethostname() and args.cmd != 'prov':
             remote = lab._host
+            print(f'setting remote: {remote}')
 
     if args.single_threaded:
         lab.set_num_threads(0)
