@@ -534,6 +534,9 @@ efi_status_t EFIAPI efi_update_capsule(
 	struct efi_capsule_header *capsule;
 	unsigned int i;
 	efi_status_t ret;
+#if IS_ENABLED(CONFIG_MEDIATEK_IOT_AB_BOOT_SUPPORT)
+	unsigned int boot_ab = 0;
+#endif
 
 	EFI_ENTRY("%p, %zu, %llu\n", capsule_header_array, capsule_count,
 		  scatter_gather_list);
@@ -566,7 +569,16 @@ efi_status_t EFIAPI efi_update_capsule(
 
 		if (ret != EFI_SUCCESS)
 			goto out;
+
+#if IS_ENABLED(CONFIG_MEDIATEK_IOT_AB_BOOT_SUPPORT)
+		boot_ab++;
+#endif
 	}
+
+#if IS_ENABLED(CONFIG_MEDIATEK_IOT_AB_BOOT_SUPPORT)
+	if (boot_ab == capsule_count)
+		iot_ab_boot_select();
+#endif
 
 	if (IS_ENABLED(CONFIG_EFI_ESRT)) {
 		/* Rebuild the ESRT to reflect any updated FW images. */
