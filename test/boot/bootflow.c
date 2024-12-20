@@ -1645,6 +1645,7 @@ static int bootflow_extlinux_localboot(struct unit_test_state *uts)
 
 	/* read all the images, but don't actually boot */
 	ut_assertok(bootflow_read_all(bflow));
+	ut_assert_nextline("Doing local boot...");
 	ut_assert_nextline("1:\tlocal");
 	ut_assert_nextline("missing environment variable: localcmd");
 	ut_assert_nextline("Retrieving file: /vmlinuz");

@@ -621,6 +621,7 @@ def setup_localboot_image(cons):
     script = '''DEFAULT local
 
 LABEL local
+  SAY Doing local boot...
   LOCALBOOT 0
 '''
     vmlinux = 'vmlinuz'
