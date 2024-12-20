@@ -890,6 +890,7 @@ enum token_type {
 	T_BACKGROUND,
 	T_KASLRSEED,
 	T_FALLBACK,
+	T_SAY,
 	T_INVALID
 };
 
@@ -924,6 +925,7 @@ static const struct token keywords[] = {
 	{"background", T_BACKGROUND,},
 	{"kaslrseed", T_KASLRSEED,},
 	{"fallback", T_FALLBACK,},
+	{"say", T_SAY,},
 	{NULL, T_INVALID}
 };
 
@@ -1387,6 +1389,17 @@ static int parse_label(char **c, struct pxe_menu *cfg)
 
 		case T_EOL:
 			break;
+
+		case T_SAY: {
+			char *p = strchr(s, '\n');
+
+			if (p) {
+				printf("%.*s\n", (int)(p - *c) - 1, *c + 1);
+
+				*c = p;
+			}
+			break;
+		}
 
 		default:
 			/*
