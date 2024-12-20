@@ -543,12 +543,15 @@ BOOTSTD_TEST(bootflow_cmd_boot, UTF_DM | UTF_SCAN_FDT | UTF_CONSOLE);
 static int prep_mmc_bootdev(struct unit_test_state *uts, const char *mmc_dev,
 			    bool bind_cros_android, const char ***old_orderp)
 {
-	static const char *order[] = {"mmc2", "mmc1", NULL, NULL};
+	static const char **order;
 	struct udevice *dev, *bootstd;
 	struct bootstd_priv *std;
 	const char **old_order;
 	ofnode root, node;
 
+	order = calloc(sizeof(void *), 4);
+	order[0] = "mmc2";
+	order[1] = "mmc1";
 	order[2] = mmc_dev;
 
 	/* Enable the requested mmc node since we need a second bootflow */
@@ -608,6 +611,7 @@ static int scan_mmc_bootdev(struct unit_test_state *uts, const char *mmc_dev,
 	/* Restore the order used by the device tree */
 	ut_assertok(uclass_first_device_err(UCLASS_BOOTSTD, &bootstd));
 	std = dev_get_priv(bootstd);
+	free(std->bootdev_order);
 	std->bootdev_order = old_order;
 
 	return 0;
@@ -638,6 +642,7 @@ static int scan_mmc_android_bootdev(struct unit_test_state *uts, const char *mmc
 	/* Restore the order used by the device tree */
 	ut_assertok(uclass_first_device_err(UCLASS_BOOTSTD, &bootstd));
 	std = dev_get_priv(bootstd);
+	free(std->bootdev_order);
 	std->bootdev_order = old_order;
 
 	return 0;
@@ -729,6 +734,7 @@ static int bootflow_scan_menu(struct unit_test_state *uts)
 
 	std->bootdev_order = new_order; /* Blue Monday */
 	ut_assertok(run_command("bootflow scan -lm", 0));
+	free(std->bootdev_order);
 	std->bootdev_order = old_order;
 
 	ut_assertnull(std->cur_bootflow);
