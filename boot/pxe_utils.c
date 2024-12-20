@@ -800,7 +800,7 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 		}
 		unmap_sysmem(buf);
 	}
-	if (ctx->bflow)
+	if (ctx->bflow && conf_fdt)
 		ctx->bflow->fdt_addr = hextoul(conf_fdt, NULL);
 
 	if (IS_ENABLED(CONFIG_BOOTSTD_FULL) && ctx->no_boot) {
@@ -820,7 +820,7 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 				  ctx->initrd_addr_str, ctx->initrd_filesize,
 				  ctx->initrd_str);
 		}
-		if (!ctx->kernel_addr || !ctx->conf_fdt ||
+		if (!ctx->kernel_addr || (conf_fdt && !ctx->conf_fdt) ||
 		    (initrd_addr_str && (!ctx->initrd_addr_str ||
 		     !ctx->initrd_filesize || !ctx->initrd_str))) {
 			printf("malloc fail (saving label)\n");
