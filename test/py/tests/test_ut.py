@@ -57,6 +57,43 @@ def setup_image(cons, devnum, part_type, img_size=20, second_part=False,
                              stdin=spec.encode('utf-8'))
     return fname, mnt
 
+def setup_extlinux_image(cons, mmc_dev, vmlinux, initrd, dtbdir, script):
+    """Create a 20MB disk image with a single FAT partition"""
+    fname, mnt = setup_image(cons, mmc_dev, 0xc, second_part=True)
+
+    ext = os.path.join(mnt, 'extlinux')
+    mkdir_cond(ext)
+
+    conf = os.path.join(ext, 'extlinux.conf')
+    with open(conf, 'w', encoding='ascii') as fd:
+        print(script, file=fd)
+
+    inf = os.path.join(cons.config.persistent_data_dir, 'inf')
+    with open(inf, 'wb') as fd:
+        fd.write(gzip.compress(b'vmlinux'))
+    mkimage = cons.config.build_dir + '/tools/mkimage'
+    u_boot_utils.run_and_log(
+        cons, f'{mkimage} -f auto -d {inf} {os.path.join(mnt, vmlinux)}')
+
+    with open(os.path.join(mnt, initrd), 'w', encoding='ascii') as fd:
+        print('initrd', file=fd)
+
+    if dtbdir:
+        mkdir_cond(os.path.join(mnt, dtbdir))
+
+        dtb_file = os.path.join(mnt, f'{dtbdir}/sandbox.dtb')
+        u_boot_utils.run_and_log(
+            cons, f'dtc -o {dtb_file}', stdin=b'/dts-v1/; / {};')
+
+    fsfile = 'vfat18M.img'
+    u_boot_utils.run_and_log(cons, f'fallocate -l 18M {fsfile}')
+    u_boot_utils.run_and_log(cons, f'mkfs.vfat {fsfile}')
+    u_boot_utils.run_and_log(cons, ['sh', '-c', f'mcopy -i {fsfile} {mnt}/* ::/'])
+    u_boot_utils.run_and_log(cons, f'dd if={fsfile} of={fname} bs=1M seek=1')
+    u_boot_utils.run_and_log(cons, f'rm -rf {mnt}')
+    u_boot_utils.run_and_log(cons, f'rm -f {fsfile}')
+
+
 def setup_bootmenu_image(cons):
     """Create a 20MB disk image with a single ext4 partition
 
@@ -197,36 +234,8 @@ label Fedora-Workstation-armhfp-31-1.9 (5.3.7-301.fc31.armv7hl)
         append ro root=UUID=9732b35b-4cd5-458b-9b91-80f7047e0b8a rhgb quiet LANG=en_US.UTF-8 cma=192MB cma=256MB
         fdtdir /%s/
         initrd /%s''' % (vmlinux, dtbdir, initrd)
-    ext = os.path.join(mnt, 'extlinux')
-    mkdir_cond(ext)
 
-    conf = os.path.join(ext, 'extlinux.conf')
-    with open(conf, 'w', encoding='ascii') as fd:
-        print(script, file=fd)
-
-    inf = os.path.join(cons.config.persistent_data_dir, 'inf')
-    with open(inf, 'wb') as fd:
-        fd.write(gzip.compress(b'vmlinux'))
-    mkimage = cons.config.build_dir + '/tools/mkimage'
-    u_boot_utils.run_and_log(
-        cons, f'{mkimage} -f auto -d {inf} {os.path.join(mnt, vmlinux)}')
-
-    with open(os.path.join(mnt, initrd), 'w', encoding='ascii') as fd:
-        print('initrd', file=fd)
-
-    mkdir_cond(os.path.join(mnt, dtbdir))
-
-    dtb_file = os.path.join(mnt, f'{dtbdir}/sandbox.dtb')
-    u_boot_utils.run_and_log(
-        cons, f'dtc -o {dtb_file}', stdin=b'/dts-v1/; / {};')
-
-    fsfile = 'vfat18M.img'
-    u_boot_utils.run_and_log(cons, f'fallocate -l 18M {fsfile}')
-    u_boot_utils.run_and_log(cons, f'mkfs.vfat {fsfile}')
-    u_boot_utils.run_and_log(cons, ['sh', '-c', f'mcopy -i {fsfile} {mnt}/* ::/'])
-    u_boot_utils.run_and_log(cons, f'dd if={fsfile} of={fname} bs=1M seek=1')
-    u_boot_utils.run_and_log(cons, f'rm -rf {mnt}')
-    u_boot_utils.run_and_log(cons, f'rm -f {fsfile}')
+    setup_extlinux_image(cons, mmc_dev, vmlinux, initrd, dtbdir, script)
 
 def setup_cros_image(cons):
     """Create a 20MB disk image with ChromiumOS partitions"""
