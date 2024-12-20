@@ -1619,3 +1619,50 @@ static int bootflow_scan_extlinux(struct unit_test_state *uts)
 	return 0;
 }
 BOOTSTD_TEST(bootflow_scan_extlinux, UTF_DM | UTF_SCAN_FDT | UTF_CONSOLE);
+
+/* Check automatically generating a extlinux 'localboot' */
+static int bootflow_extlinux_localboot(struct unit_test_state *uts)
+{
+	const struct bootflow_img *img;
+	struct bootstd_priv *std;
+	const char **old_order;
+	struct bootflow *bflow;
+
+	ut_assertok(prep_mmc_bootdev(uts, "mmc9", false, &old_order));
+
+	ut_assertok(run_command("bootflow scan", 0));
+	ut_assert_console_end();
+
+	/* Restore the order used by the device tree */
+	ut_assertok(bootstd_get_priv(&std));
+	free(std->bootdev_order);
+	std->bootdev_order = old_order;
+
+	/* boot the second bootflow */
+	ut_asserteq(2, std->bootflows.count);
+	bflow = alist_getw(&std->bootflows, 1, struct bootflow);
+	std->cur_bootflow = bflow;
+
+	/* read all the images, but don't actually boot */
+	ut_assertok(bootflow_read_all(bflow));
+	ut_assert_nextline("1:\tlocal");
+	ut_assert_nextline("missing environment variable: localcmd");
+	ut_assert_nextline("Retrieving file: /vmlinuz");
+	ut_assert_nextline("Retrieving file: /initrd.img");
+
+	ut_assert_console_end();
+
+	ut_asserteq(3, bflow->images.count);
+
+	/* check the two localboot images */
+	img = alist_get(&bflow->images, 1, struct bootflow_img);
+	ut_asserteq(IH_TYPE_KERNEL, img->type);
+	ut_asserteq(0x1000000, img->addr);	/* kernel_addr_r */
+
+	img = alist_get(&bflow->images, 2, struct bootflow_img);
+	ut_asserteq(IH_TYPE_RAMDISK, img->type);
+	ut_asserteq(0x2000000, img->addr);	/* ramdisk_addr_r */
+
+	return 0;
+}
+BOOTSTD_TEST(bootflow_extlinux_localboot, UTF_DM | UTF_SCAN_FDT | UTF_CONSOLE);

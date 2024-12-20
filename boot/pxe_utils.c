@@ -642,6 +642,25 @@ static int label_run_boot(struct pxe_context *ctx, struct pxe_label *label,
 }
 
 /**
+ * generate_localboot() - Try to come up with a localboot definition
+ *
+ * Adds a default kernel and initrd filename for use with localboot
+ *
+ * @label: Label to process
+ * Return 0 if OK, -ENOMEM if out of memory
+ */
+static int generate_localboot(struct pxe_label *label)
+{
+	label->kernel = strdup("/vmlinuz");
+	label->kernel_label = strdup(label->kernel);
+	label->initrd = strdup("/initrd.img");
+	if (!label->kernel || !label->kernel_label || !label->initrd)
+		return -ENOMEM;
+
+	return 0;
+}
+
+/**
  * label_boot() - Boot according to the contents of a pxe_label
  *
  * If we can't boot for any reason, we return.  A successful boot never
@@ -678,9 +697,17 @@ static int label_boot(struct pxe_context *ctx, struct pxe_label *label)
 	label->attempted = 1;
 
 	if (label->localboot) {
-		if (label->localboot_val >= 0)
-			label_localboot(label);
-		return 0;
+		if (label->localboot_val >= 0) {
+			ret = label_localboot(label);
+
+			if (IS_ENABLED(CONFIG_BOOTMETH_EXTLINUX_LOCALBOOT) &&
+			    ret == -ENOENT)
+				ret = generate_localboot(label);
+			if (ret)
+				return ret;
+		} else {
+			return 0;
+		}
 	}
 
 	if (!label->kernel) {

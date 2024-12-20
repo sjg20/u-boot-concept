@@ -662,6 +662,15 @@ config BOOTMETH_EXTLINUX_PXE
 
 	  This provides a way to try out standard boot on an existing boot flow.
 
+config BOOTMETH_EXTLINUX_LOCALBOOT
+	bool "Boot method for extlinux localboot"
+	depends on BOOTMETH_EXTLINUX
+	default y
+	help
+	  Enables standard boot support for the extlinux 'localboot' feature.
+	  This attempts to find a kernel and initrd on the disk and boot it,
+	  in the case where there is no "localcmd" in the environment.
+
 config BOOTMETH_EFILOADER
 	bool "Bootdev support for EFI boot"
 	depends on EFI_BINARY_EXEC
