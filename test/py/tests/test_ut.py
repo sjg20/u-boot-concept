@@ -575,6 +575,22 @@ def setup_efi_image(cons):
     u_boot_utils.run_and_log(cons, f'rm -rf {mnt}')
     u_boot_utils.run_and_log(cons, f'rm -f {fsfile}')
 
+
+def setup_localboot_image(cons):
+    """Create a 20MB disk image with a single FAT partition"""
+    mmc_dev = 9
+    fname, mnt = setup_image(cons, mmc_dev, 0xc, second_part=True)
+
+    script = '''DEFAULT local
+
+LABEL local
+  LOCALBOOT 0
+'''
+    vmlinux = 'vmlinuz'
+    initrd = 'initrd.img'
+    setup_extlinux_image(cons, mmc_dev, vmlinux, initrd, None, script)
+
+
 @pytest.mark.buildconfigspec('cmd_bootflow')
 @pytest.mark.buildconfigspec('sandbox')
 def test_ut_dm_init_bootstd(u_boot_console):
@@ -586,6 +602,7 @@ def test_ut_dm_init_bootstd(u_boot_console):
     setup_cros_image(u_boot_console)
     setup_android_image(u_boot_console)
     setup_efi_image(u_boot_console)
+    setup_localboot_image(u_boot_console)
 
     # Restart so that the new mmc1.img is picked up
     u_boot_console.restart_uboot()
