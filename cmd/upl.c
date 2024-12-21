@@ -56,6 +56,11 @@ static int do_upl_write(struct cmd_tbl *cmdtp, int flag, int argc,
 	ulong addr;
 	int ret;
 
+	if (!IS_ENABLED(CONFIG_UNIT_TEST)) {
+		printf("Not yet implemented\n");
+		return CMD_RET_FAILURE;
+	}
+
 	upl_get_test_data(&uts, upl);
 
 	log_debug("Writing UPL\n");
