@@ -57,4 +57,6 @@ void upl_init(struct upl *upl)
 	alist_init_struct(&upl->mem, struct upl_mem);
 	alist_init_struct(&upl->memmap, struct upl_memmap);
 	alist_init_struct(&upl->memres, struct upl_memres);
+	alist_init_struct(&upl->serial.reg, struct memregion);
+	alist_init_struct(&upl->graphics.reg, struct memregion);
 }
