@@ -12,14 +12,8 @@
 #include <bloblist.h>
 #include <dm.h>
 #include <image.h>
-#include <mapmem.h>
-#include <serial.h>
 #include <spl.h>
 #include <upl.h>
-#include <video.h>
-#include <asm/global_data.h>
-#include <dm/read.h>
-#include <dm/uclass-internal.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -57,76 +51,6 @@ int _upl_add_image(int node, ulong load_addr, ulong size, const char *desc)
 	return 0;
 }
 
-static int write_serial(struct upl_serial *ser)
-{
-	struct udevice *dev = gd->cur_serial_dev;
-	struct serial_device_info info;
-	struct memregion region;
-	int ret;
-
-	if (!dev)
-		return log_msg_ret("ser", -ENOENT);
-	ret = serial_getinfo(dev, &info);
-	if (ret)
-		return log_msg_ret("inf", ret);
-
-	ser->compatible = ofnode_read_string(dev_ofnode(dev), "compatible");
-	ser->clock_frequency = info.clock;
-	ser->current_speed = gd->baudrate;
-	region.base = info.addr;
-	region.size = info.size;
-	if (!alist_add(&ser->reg, region))
-		return -ENOMEM;
-	ser->reg_io_shift = info.reg_shift;
-	ser->reg_offset = info.reg_offset;
-	ser->reg_io_width = info.reg_width;
-	ser->virtual_reg = 0;
-	ser->access_type = info.addr_space;
-
-	return 0;
-}
-
-static int write_graphics(struct upl_graphics *gra)
-{
-	struct video_uc_plat *plat;
-	struct video_priv *priv;
-	struct memregion region;
-	struct udevice *dev;
-
-	uclass_find_first_device(UCLASS_VIDEO, &dev);
-	if (!dev || !device_active(dev))
-		return log_msg_ret("vid", -ENOENT);
-
-	plat = dev_get_uclass_plat(dev);
-	region.base = plat->base;
-	region.size = plat->size;
-	if (!alist_add(&gra->reg, region))
-		return log_msg_ret("reg", -ENOMEM);
-
-	priv = dev_get_uclass_priv(dev);
-	gra->width = priv->xsize;
-	gra->height = priv->ysize;
-	gra->stride = priv->line_length;	/* private field */
-	switch (priv->format) {
-	case VIDEO_RGBA8888:
-	case VIDEO_X8R8G8B8:
-		gra->format = UPLGF_ARGB32;
-		break;
-	case VIDEO_X8B8G8R8:
-		gra->format = UPLGF_ABGR32;
-		break;
-	case VIDEO_X2R10G10B10:
-		log_debug("device '%s': VIDEO_X2R10G10B10 not supported\n",
-			  dev->name);
-		return log_msg_ret("for", -EPROTO);
-	case VIDEO_UNKNOWN:
-		log_debug("device '%s': Unknown video format\n", dev->name);
-		return log_msg_ret("for", -EPROTO);
-	}
-
-	return 0;
-}
-
 int spl_write_upl_handoff(struct spl_image_info *spl_image)
 {
 	struct upl *upl = &s_upl;
@@ -139,10 +63,10 @@ int spl_write_upl_handoff(struct spl_image_info *spl_image)
 	upl->addr_cells = IS_ENABLED(CONFIG_PHYS_64BIT) ? 2 : 1;
 	upl->size_cells = IS_ENABLED(CONFIG_PHYS_64BIT) ? 2 : 1;
 	upl->bootmode = UPLBM_DEFAULT;
-	ret = write_serial(&upl->serial);
+	ret = upl_add_serial(&upl->serial);
 	if (ret)
 		return log_msg_ret("ser", ret);
-	ret = write_graphics(&upl->graphics);
+	ret = upl_add_graphics(&upl->graphics);
 	if (ret && ret != -ENOENT)
 		return log_msg_ret("gra", ret);
 

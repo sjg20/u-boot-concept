@@ -371,6 +371,24 @@ static inline int upl_add_image(const void *fit, int node, ulong load_addr,
 	return 0;
 }
 
+/**
+ * upl_add_serial() - Add serial information to the UPL struct
+ *
+ * Writes details about the current serial port to the UPL struct
+ *
+ * Return: 0 if OK, -ve on error
+ */
+int upl_add_serial(struct upl_serial *ser);
+
+/**
+ * upl_add_graphics() - Add video information to the UPL struct
+ *
+ * Writes details about the current video device to the UPL struct
+ *
+ * Return: 0 if OK, -ve on error
+ */
+int upl_add_graphics(struct upl_graphics *gra);
+
 /** upl_init() - Set up a UPL struct */
 void upl_init(struct upl *upl);
 
