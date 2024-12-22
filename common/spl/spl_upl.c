@@ -75,7 +75,6 @@ static int write_serial(struct upl_serial *ser)
 	ser->current_speed = gd->baudrate;
 	region.base = info.addr;
 	region.size = info.size;
-	alist_init_struct(&ser->reg, struct memregion);
 	if (!alist_add(&ser->reg, region))
 		return -ENOMEM;
 	ser->reg_io_shift = info.reg_shift;
@@ -94,7 +93,6 @@ static int write_graphics(struct upl_graphics *gra)
 	struct memregion region;
 	struct udevice *dev;
 
-	alist_init_struct(&gra->reg, struct memregion);
 	uclass_find_first_device(UCLASS_VIDEO, &dev);
 	if (!dev || !device_active(dev))
 		return log_msg_ret("vid", -ENOENT);

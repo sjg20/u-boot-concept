@@ -286,7 +286,6 @@ static int decode_addr_size(const struct upl *upl, const char *buf, int size,
 	const char *ptr, *end = buf + size;
 	int i;
 
-	alist_init_struct(regions, struct memregion);
 	ptr = buf;
 	for (i = 0; ptr < end; i++) {
 		struct memregion reg;
