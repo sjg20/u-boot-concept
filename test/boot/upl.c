@@ -136,7 +136,6 @@ int upl_get_test_data(struct unit_test_state *uts, struct upl *upl)
 	upl->serial.compatible = "ns16550a";
 	upl->serial.clock_frequency = 1843200;
 	upl->serial.current_speed = 115200;
-	alist_init_struct(&upl->serial.reg, struct memregion);
 	ut_assertok(add_region(uts, &upl->serial.reg, 0xf1de0000, 0x100));
 	upl->serial.reg_io_shift = 2;
 	upl->serial.reg_offset = 0x40;
@@ -144,7 +143,6 @@ int upl_get_test_data(struct unit_test_state *uts, struct upl *upl)
 	upl->serial.virtual_reg = 0x20000000;
 	upl->serial.access_type = UPLAT_MMIO;
 
-	alist_init_struct(&upl->graphics.reg, struct memregion);
 	ut_assertok(add_region(uts, &upl->graphics.reg, 0xd0000000, 0x10000000));
 	upl->graphics.width = 1280;
 	upl->graphics.height = 1280;
