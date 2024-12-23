@@ -234,7 +234,7 @@ static int do_fpga_loadbp(struct cmd_tbl *cmdtp, int flag, int argc,
 static int do_fpga_loadmk(struct cmd_tbl *cmdtp, int flag, int argc,
 			  char *const argv[])
 {
-	size_t data_size = 0;
+	ulong data_size = 0;
 	void *fpga_data = NULL;
 #if defined(CONFIG_FIT)
 	const char *fit_uname = NULL;
