@@ -10,10 +10,14 @@
 #include <wdt.h>
 #include <dm/uclass-internal.h>
 #include <linux/arm-smccc.h>
+#include <asm/global_data.h>
 
 int arch_cpu_init(void)
 {
 	icache_enable();
+
+	/* Allow console to be disabled through CONFIG_DISABLE_CONSOLE */
+	gd->flags |= GD_FLG_DISABLE_CONSOLE;
 
 	return 0;
 }
