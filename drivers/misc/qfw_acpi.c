@@ -4,6 +4,7 @@
  * (C) Copyright 2021 Asherah Connor <ashe@kivikakk.ee>
  */
 
+#define LOG_DEBUG
 #define LOG_CATEGORY UCLASS_QFW
 
 #include <acpi/acpi_table.h>
@@ -208,7 +209,10 @@ ulong write_acpi_tables(ulong addr)
 
 	qfw_read_entry(dev, be16_to_cpu(file->cfg.select), size, table_loader);
 
+	log_debug("writing to %lx\n", addr);
 	for (i = 0; i < (size / sizeof(*entry)); i++) {
+		log_debug("- addr %lx\n", addr);
+
 		entry = table_loader + i;
 		switch (le32_to_cpu(entry->command)) {
 		case BIOS_LINKER_LOADER_COMMAND_ALLOCATE:

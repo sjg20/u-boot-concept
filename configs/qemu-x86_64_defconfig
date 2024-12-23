@@ -92,3 +92,4 @@ CONFIG_SPL_VIDEO=y
 # CONFIG_SPL_USE_TINY_PRINTF is not set
 CONFIG_GENERATE_ACPI_TABLE=y
 # CONFIG_GZIP is not set
+CONFIG_BOOTCOMMAND="virtio scan; load virtio 0 100000 upl.fit; upl exec 100000"
