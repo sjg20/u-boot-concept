@@ -1001,6 +1001,7 @@ menu "Blob list"
 config BLOBLIST
 	bool "Support for a bloblist"
 	select CRC32
+	default y if GENERATE_ACPI_TABLE || GENERATE_SMBIOS_TABLE
 	help
 	  This enables support for a bloblist in U-Boot, which can be passed
 	  from TPL to SPL to U-Boot proper (and potentially to Linux). The
@@ -1080,9 +1081,9 @@ config BLOBLIST_SIZE
 
 config BLOBLIST_SIZE_RELOC
 	hex "Size of bloblist after relocation"
+	default 0x20000 if GENERATE_ACPI_TABLE
 	default BLOBLIST_SIZE if BLOBLIST_FIXED || BLOBLIST_ALLOC
 	default 0x0 if BLOBLIST_PASSAGE
-	default 0x20000 if (ARM && EFI_LOADER && GENERATE_ACPI_TABLE)
 	help
 	  Sets the size of the bloblist in bytes after relocation. Since U-Boot
 	  has a lot more memory available then, it is possible to use a larger
