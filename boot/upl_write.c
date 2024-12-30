@@ -288,6 +288,48 @@ static int buffer_addr_size(const struct upl *upl, char *buf, int size,
 }
 
 /**
+ * write_mem_node() - Write a memory node and reg property
+ *
+ * Creates a new node and then adds a 'reg' property within it, listing each of
+ * the memory regions in @mem
+ *
+ * @upl: UPL state
+ * @parent: Parent node for the new node
+ * @mem: List of memory regions to write (struct memregion)
+ * @leaf: Name of memory node (so name is <leaf>@<unit_address>)
+ * @nodep: Returns the created node
+ * Returns 0 if OK, -ve on error
+ */
+static int write_mem_node(const struct upl *upl, ofnode parent,
+			  const struct alist *mem, const char *leaf,
+			  ofnode *nodep)
+{
+	char buf[mem->count * sizeof(64) * 2];
+	const struct memregion *first;
+	char name[26];
+	ofnode node;
+	int ret, len;
+
+	if (!mem->count) {
+		log_debug("Memory '%s' has no regions\n", leaf);
+		return log_msg_ret("reg", -EINVAL);
+	}
+	first = alist_get(mem, 0, struct memregion);
+	sprintf(name, "%s@0x%lx", leaf, first->base);
+	ret = ofnode_add_subnode(parent, name, &node);
+	if (ret)
+		return log_msg_ret("wmn", ret);
+
+	len = buffer_addr_size(upl, buf, sizeof(buf), mem->count, mem);
+	ret = ofnode_write_prop(node, UPLP_REG, buf, len, true);
+	if (ret)
+		return log_msg_ret("wm1", ret);
+	*nodep = node;
+
+	return 0;
+}
+
+/**
  * add_upl_memory() - Add /memory nodes to the tree
  *
  * @upl: UPL state
@@ -301,29 +343,15 @@ static int add_upl_memory(const struct upl *upl, ofnode root)
 	for (i = 0; i < upl->mem.count; i++) {
 		const struct upl_mem *mem = alist_get(&upl->mem, i,
 						      struct upl_mem);
-		char buf[mem->region.count * sizeof(64) * 2];
-		const struct memregion *first;
-		char name[26];
-		int ret, len;
 		ofnode node;
+		int ret;
 
-		if (!mem->region.count) {
-			log_debug("Memory %d has no regions\n", i);
-			return log_msg_ret("reg", -EINVAL);
-		}
-		first = alist_get(&mem->region, 0, struct memregion);
-		sprintf(name, UPLN_MEMORY "@0x%lx", first->base);
-		ret = ofnode_add_subnode(root, name, &node);
+		ret = write_mem_node(upl, root, &mem->region, UPLN_MEMORY,
+				     &node);
 		if (ret)
-			return log_msg_ret("mem", ret);
+			return log_msg_ret("ume", ret);
 
-		len = buffer_addr_size(upl, buf, sizeof(buf), mem->region.count,
-				       &mem->region);
-		if (len < 0)
-			return log_msg_ret("buf", len);
-
-		ret = ofnode_write_prop(node, UPLP_REG, buf, len, true);
-		if (!ret && mem->hotpluggable)
+		if (mem->hotpluggable)
 			ret = ofnode_write_bool(node, UPLP_HOTPLUGGABLE,
 						mem->hotpluggable);
 		if (ret)
