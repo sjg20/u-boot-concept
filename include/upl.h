@@ -169,11 +169,6 @@ struct upl_memres {
 	bool no_map;
 };
 
-enum upl_serial_access_type {
-	UPLSAT_MMIO,
-	UPLSAT_IO,
-};
-
 /* serial defaults */
 enum {
 	UPLD_REG_IO_SHIFT	= 0,
@@ -214,7 +209,7 @@ struct upl_serial {
 	uint reg_offset;
 	uint reg_io_width;
 	ulong virtual_reg;
-	enum upl_serial_access_type access_type;
+	enum upl_access_type access_type;
 };
 
 /**
