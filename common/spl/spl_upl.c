@@ -15,8 +15,6 @@
 #include <spl.h>
 #include <upl.h>
 
-DECLARE_GLOBAL_DATA_PTR;
-
 struct upl s_upl;
 
 void upl_set_fit_addr(ulong fit)
@@ -53,38 +51,22 @@ int _upl_add_image(int node, ulong load_addr, ulong size, const char *desc)
 
 int spl_write_upl_handoff(void)
 {
-	struct upl *upl = &s_upl;
-	ulong addr, size;
+	struct upl s_upl, *upl = &s_upl;
 	struct abuf buf;
-	ofnode root;
 	void *ptr;
 	int ret;
 
 	log_debug("UPL: Writing handoff - image_count=%d\n", upl->image.count);
-	upl->addr_cells = IS_ENABLED(CONFIG_PHYS_64BIT) ? 2 : 1;
-	upl->size_cells = IS_ENABLED(CONFIG_PHYS_64BIT) ? 2 : 1;
-	upl->bootmode = UPLBM_DEFAULT;
-	ret = upl_add_serial(&upl->serial);
-	if (ret)
-		return log_msg_ret("ser", ret);
-	ret = upl_add_graphics(&upl->graphics, &addr, &size);
-	if (ret && ret != -ENOENT)
-		return log_msg_ret("gra", ret);
 
-	root = ofnode_root();
-	ret = upl_write_handoff(upl, root, true);
+	ret = upl_write_to_buf(upl, ofnode_root(), &buf);
 	if (ret)
-		return log_msg_ret("wr", ret);
-
-	ret = oftree_to_fdt(oftree_default(), &buf);
-	if (ret)
-		return log_msg_ret("fdt", ret);
-	log_debug("FDT size %zx\n", abuf_size(&buf));
+		return log_msg_ret("wuh", ret);
 
 	ptr = bloblist_add(BLOBLISTT_CONTROL_FDT, abuf_size(&buf), 0);
 	if (!ptr)
 		return log_msg_ret("blo", -ENOENT);
 	memcpy(ptr, abuf_data(&buf), abuf_size(&buf));
+	abuf_uninit(&buf);
 
 	return 0;
 }

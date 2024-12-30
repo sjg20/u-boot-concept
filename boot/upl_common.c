@@ -8,6 +8,7 @@
 
 #define LOG_CATEGORY UCLASS_BOOTSTD
 
+#include <cpu.h>
 #include <dm.h>
 #include <serial.h>
 #include <string.h>
@@ -126,6 +127,53 @@ int upl_add_graphics(struct upl_graphics *gra, ulong *basep, ulong *sizep)
 		log_debug("device '%s': Unknown video format\n", dev->name);
 		return log_msg_ret("for", -EPROTO);
 	}
+
+	return 0;
+}
+
+int upl_create(struct upl *upl)
+{
+	ulong base, size;
+	int ret;
+
+	/* hard-code this for now to keep Tianocore happy */
+	upl->addr_cells = 2;
+	upl->size_cells = 1;
+
+	upl->bootmode = 0;
+	log_debug("conf_offset %d\n", upl->conf_offset);
+	if (IS_ENABLED(CONFIG_X86))
+		upl->addr_width =  cpu_phys_address_size();
+
+	/* no reserved memory */
+
+	ret = upl_add_serial(&upl->serial);
+	if (ret && ret != -ENOENT)
+		return log_msg_ret("ser", ret);
+	ret = upl_add_graphics(&upl->graphics, &base, &size);
+	if (ret && ret != -ENOENT)
+		return log_msg_ret("gra", ret);
+
+	return 0;
+}
+
+int upl_write_to_buf(struct upl *upl, ofnode root, struct abuf *buf)
+{
+	int ret;
+
+	ret = upl_create(upl);
+	if (ret)
+		return log_msg_ret("uwr", ret);
+
+	log_debug("writing to root node %d\n", ofnode_to_offset(root));
+	ret = upl_write_handoff(upl, root, true);
+	if (ret)
+		return log_msg_ret("wr", ret);
+
+	ret = oftree_to_fdt(oftree_default(), buf);
+	if (ret)
+		return log_msg_ret("fdt", ret);
+	log_debug("FDT size %zx\n", abuf_size(buf));
 
 	return 0;
 }
