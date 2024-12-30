@@ -47,7 +47,6 @@ int upl_get_test_data(struct unit_test_state *uts, struct upl *upl)
 	upl->fit = 0x789;
 	upl->conf_offset = 0x234;
 	upl->addr_width = 46;
-	upl->acpi_nvs_size = 0x100;
 
 	/* image[0] */
 	img.load = 0x1;
@@ -295,7 +294,6 @@ static int compare_upl(struct unit_test_state *uts, struct upl *base,
 	ut_asserteq(base->fit, cmp->fit);
 	ut_asserteq(base->conf_offset, cmp->conf_offset);
 	ut_asserteq(base->addr_width, cmp->addr_width);
-	ut_asserteq(base->acpi_nvs_size, cmp->acpi_nvs_size);
 
 	ut_asserteq(base->image.count, cmp->image.count);
 	for (i = 0; i < base->image.count; i++)
