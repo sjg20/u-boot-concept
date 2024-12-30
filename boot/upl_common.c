@@ -62,7 +62,7 @@ int upl_add_serial(struct upl_serial *ser)
 {
 	struct udevice *dev = gd->cur_serial_dev;
 	struct serial_device_info info;
-	struct memregion region;
+	u64 addr;
 	int ret;
 
 	if (!dev)
@@ -74,10 +74,13 @@ int upl_add_serial(struct upl_serial *ser)
 	ser->compatible = ofnode_read_string(dev_ofnode(dev), "compatible");
 	ser->clock_frequency = info.clock;
 	ser->current_speed = info.baudrate;
-	region.base = info.addr;
-	region.size = info.size;
-	if (!alist_add(&ser->reg, region))
-		return -ENOMEM;
+
+	/* Set bit 64 of the address if using I/O */
+	addr = info.addr;
+	if (info.addr_space == SERIAL_ADDRESS_SPACE_IO)
+		addr |= BIT_ULL(32);
+	ret = upl_add_region(&ser->reg, addr, info.size);
+
 	ser->reg_io_shift = info.reg_shift;
 	ser->reg_offset = info.reg_offset;
 	ser->reg_io_width = info.reg_width;
