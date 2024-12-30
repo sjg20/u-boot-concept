@@ -680,7 +680,7 @@ int upl_create_handoff_tree(const struct upl *upl, oftree *treep)
 	return 0;
 }
 
-int upl_create_handoff(struct upl *upl, ulong addr, struct abuf *buf)
+int upl_create_handoff(struct upl *upl, struct abuf *buf)
 {
 	oftree tree;
 	int ret;

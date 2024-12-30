@@ -42,6 +42,7 @@ obj-$(CONFIG_$(PHASE_)OF_LIBFDT) += fdt_support.o
 obj-$(CONFIG_$(PHASE_)FDT_SIMPLEFB) += fdt_simplefb.o
 
 obj-$(CONFIG_$(PHASE_)UPL) += upl_common.o
+obj-$(CONFIG_$(PHASE_)UPL_EXEC) += upl_exec.o
 obj-$(CONFIG_$(PHASE_)UPL_READ) += upl_read.o
 obj-$(CONFIG_$(PHASE_)UPL_WRITE) += upl_write.o
 

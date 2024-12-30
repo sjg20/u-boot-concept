@@ -112,12 +112,33 @@ static int do_upl_read(struct cmd_tbl *cmdtp, int flag, int argc,
 	return 0;
 }
 
+static int do_upl_exec(struct cmd_tbl *cmdtp, int flag, int argc,
+		       char *const argv[])
+{
+	ulong addr;
+	int ret;
+
+	if (argc < 2)
+		return CMD_RET_USAGE;
+
+	addr = hextoul(argv[1], NULL);
+	ret = upl_exec(addr);
+	if (ret) {
+		printf("Failed (err=%dE)\n", ret);
+		return CMD_RET_FAILURE;
+	}
+
+	return 0;
+}
+
 U_BOOT_LONGHELP(upl,
 	"info [-v]     - Check UPL status\n"
 	"upl read <addr>   - Read handoff information\n"
-	"upl write         - Write handoff information");
+	"upl write         - Write handoff information\n"
+	"upl exec          - Execute a loaded UPL");
 
 U_BOOT_CMD_WITH_SUBCMDS(upl, "Universal Payload support", upl_help_text,
 	U_BOOT_SUBCMD_MKENT(info, 2, 1, do_upl_info),
 	U_BOOT_SUBCMD_MKENT(read, 2, 1, do_upl_read),
-	U_BOOT_SUBCMD_MKENT(write, 1, 1, do_upl_write));
+	U_BOOT_SUBCMD_MKENT(write, 1, 1, do_upl_write),
+	U_BOOT_SUBCMD_MKENT(exec, 2, 1, do_upl_exec));
