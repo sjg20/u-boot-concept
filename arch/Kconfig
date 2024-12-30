@@ -310,6 +310,8 @@ config X86
 	imply SYSINFO if GENERATE_SMBIOS_TABLE
 	imply SYSINFO_SMBIOS if GENERATE_SMBIOS_TABLE
 	imply TIMESTAMP
+	imply CMD_MEMINFO
+	imply CMD_MEMINFO_MAP
 
 	# Thing to enable for when SPL/TPL are enabled: SPL
 	imply SPL_DM
