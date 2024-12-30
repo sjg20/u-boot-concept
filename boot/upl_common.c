@@ -136,6 +136,7 @@ int upl_add_graphics(struct upl_graphics *gra, ulong *basep, ulong *sizep)
 
 int upl_create(struct upl *upl)
 {
+	struct upl_mem mem;
 	ulong base, size;
 	int ret;
 
@@ -148,7 +149,14 @@ int upl_create(struct upl *upl)
 	if (IS_ENABLED(CONFIG_X86))
 		upl->addr_width =  cpu_phys_address_size();
 
-	/* no reserved memory */
+	memset(&mem, '\0', sizeof(mem));
+	alist_init_struct(&mem.region, struct memregion);
+
+	ret = upl_add_region(&mem.region, gd->ram_base, gd->ram_size);
+	if (ret)
+		return log_msg_ret("uar", ret);
+	if (!alist_add(&upl->mem, mem))
+		return log_msg_ret("arg", -ENOMEM);
 
 	ret = upl_add_serial(&upl->serial);
 	if (ret && ret != -ENOENT)
@@ -177,6 +185,18 @@ int upl_write_to_buf(struct upl *upl, ofnode root, struct abuf *buf)
 	if (ret)
 		return log_msg_ret("fdt", ret);
 	log_debug("FDT size %zx\n", abuf_size(buf));
+
+	return 0;
+}
+
+int upl_add_region(struct alist *lst, u64 base, ulong size)
+{
+	struct memregion region;
+
+	region.base = base;
+	region.size = size;
+	if (!alist_add(lst, region))
+		return log_msg_ret("uar", -ENOMEM);
 
 	return 0;
 }
