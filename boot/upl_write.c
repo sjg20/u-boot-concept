@@ -401,7 +401,7 @@ static int add_upl_memmap(const struct upl *upl, ofnode root)
 }
 
 /**
- * add_upl_memres() - Add /memory-reserved nodes to the tree
+ * add_upl_memres() - Add /reserved-memory nodes to the tree
  *
  * @upl: UPL state
  * @root: Parent node to contain the new node
@@ -413,7 +413,7 @@ static int add_upl_memres(const struct upl *upl, ofnode root,
 	ofnode mem_node;
 	int i, ret;
 
-	if (!upl->memmap.count)
+	if (!upl->memres.count)
 		return 0;
 	ret = ofnode_add_subnode(root, UPLN_MEMORY_RESERVED, &mem_node);
 	if (ret) {
