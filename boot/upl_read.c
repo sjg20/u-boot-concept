@@ -302,7 +302,7 @@ static int decode_upl_params(struct upl *upl, ofnode options)
 }
 
 /**
- * decode_upl_images() - Decode /options/upl-image nodes
+ * decode_upl_images() - Decode /options/upl-images nodes
  *
  * @node: /options node in which to look for the node
  * Return 0 if OK, -ve on error
@@ -312,7 +312,7 @@ static int decode_upl_images(struct upl *upl, ofnode options)
 	ofnode node, images;
 	int ret;
 
-	images = ofnode_find_subnode(options, UPLN_UPL_IMAGE);
+	images = ofnode_find_subnode(options, UPLN_UPL_IMAGES);
 	if (!ofnode_valid(images))
 		return log_msg_ret("img", -EINVAL);
 	log_debug("decoding '%s'\n", ofnode_get_name(images));

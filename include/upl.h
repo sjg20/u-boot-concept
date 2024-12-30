@@ -30,8 +30,8 @@ struct unit_test_state;
 #define UPLP_ADDR_WIDTH		"addr-width"
 #define UPLP_ACPI_NVS_SIZE	"acpi-nvs-size"
 
-#define UPLPATH_UPL_IMAGE	"/options/upl-image"
-#define UPLN_UPL_IMAGE		"upl-image"
+#define UPLPATH_UPL_IMAGES	"/options/upl-images"
+#define UPLN_UPL_IMAGES		"upl-images"
 #define UPLN_IMAGE		"image"
 #define UPLP_FIT		"fit"
 #define UPLP_CONF_OFFSET	"conf-offset"
