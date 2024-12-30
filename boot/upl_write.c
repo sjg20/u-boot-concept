@@ -268,18 +268,18 @@ static int add_upl_params(const struct upl *upl, ofnode options)
 }
 
 /**
- * add_upl_image() - Add /options/upl-image nodes and properties to the tree
+ * add_upl_images() - Add /options/upl-images nodes and properties to the tree
  *
  * @upl: UPL state
  * @node: /options node to add to
  * Return 0 if OK, -ve on error
  */
-static int add_upl_image(const struct upl *upl, ofnode options)
+static int add_upl_images(const struct upl *upl, ofnode options)
 {
 	ofnode node;
 	int ret, i;
 
-	ret = ofnode_add_subnode(options, UPLN_UPL_IMAGE, &node);
+	ret = ofnode_add_subnode(options, UPLN_UPL_IMAGES, &node);
 	if (ret)
 		return log_msg_ret("img", ret);
 
@@ -606,7 +606,7 @@ int upl_write_handoff(const struct upl *upl, ofnode root, bool skip_existing)
 	if (ret)
 		return log_msg_ret("ad1", ret);
 
-	ret = add_upl_image(upl, options);
+	ret = add_upl_images(upl, options);
 	if (ret)
 		return log_msg_ret("ad2", ret);
 
