@@ -244,7 +244,7 @@ static int add_upl_params(const struct upl *upl, ofnode options)
 }
 
 /**
- * add_upl_images() - Add /options/upl-images nodes and properties to the tree
+ * add_upl_images() - Add /options/upl-images/upl-image nodes / props to tree
  *
  * @upl: UPL state
  * @node: /options node to add to
@@ -508,7 +508,7 @@ static int add_upl_serial(const struct upl *upl, ofnode root,
 
 		len = encode_reg(upl, buf, sizeof(buf), 1, &ser->reg);
 		if (len < 0)
-			return log_msg_ret("buf", len);
+			return log_msg_ret("aus", len);
 
 		ret = ofnode_write_prop(node, UPLP_REG, buf, len, true);
 	}
@@ -549,7 +549,7 @@ static int add_upl_graphics(const struct upl *upl, ofnode root)
 	int ret;
 
 	if (!gra->reg.count)
-		return log_msg_ret("gra", -ENOENT);
+		return log_msg_ret("ugr", -ENOENT);
 	first = alist_get(&gra->reg, 0, struct memregion);
 	sprintf(name, UPLN_GRAPHICS "@%llx", first->base);
 	ret = ofnode_add_subnode(root, name, &node);
@@ -563,7 +563,7 @@ static int add_upl_graphics(const struct upl *upl, ofnode root)
 
 		len = encode_reg(upl, buf, sizeof(buf), 1, &gra->reg);
 		if (len < 0)
-			return log_msg_ret("buf", len);
+			return log_msg_ret("aug", len);
 
 		ret = ofnode_write_prop(node, UPLP_REG, buf, len, true);
 	}
@@ -595,7 +595,7 @@ int upl_write_handoff(const struct upl *upl, ofnode root, bool skip_existing)
 		return log_msg_ret("ad1", ret);
 	ret = ofnode_add_subnode(root, UPLN_OPTIONS, &options);
 	if (ret && ret != -EEXIST)
-		return log_msg_ret("opt", -EINVAL);
+		return log_msg_ret("opt", ret);
 
 	ret = add_upl_params(upl, options);
 	if (ret)
@@ -623,7 +623,7 @@ int upl_write_handoff(const struct upl *upl, ofnode root, bool skip_existing)
 
 	ret = add_upl_graphics(upl, root);
 	if (ret && ret != -ENOENT)
-		return log_msg_ret("ad6", ret);
+		return log_msg_ret("ad7", ret);
 
 	return 0;
 }
@@ -636,7 +636,7 @@ int upl_create_handoff_tree(const struct upl *upl, oftree *treep)
 
 	ret = oftree_new(&tree);
 	if (ret)
-		return log_msg_ret("new", ret);
+		return log_msg_ret("cht", -EINVAL);
 
 	root = oftree_root(tree);
 	if (!ofnode_valid(root))
