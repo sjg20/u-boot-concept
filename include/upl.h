@@ -21,6 +21,9 @@ struct unit_test_state;
 #define UPLP_ADDRESS_CELLS	"#address-cells"
 #define UPLP_SIZE_CELLS		"#size-cells"
 
+#define UPLN_CHOSEN		"chosen"
+#define UPLP_STDOUT_PATH	"stdout-path"
+
 #define UPLN_OPTIONS		"options"
 #define UPLN_UPL_PARAMS		"upl-params"
 #define UPLP_UPL_PARAMS_COMPAT	"upl"
