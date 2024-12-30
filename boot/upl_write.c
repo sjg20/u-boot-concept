@@ -178,7 +178,9 @@ static int add_upl_params(const struct upl *upl, ofnode options)
 	if (ret)
 		return log_msg_ret("img", ret);
 
-	ret = write_addr(upl, node, UPLP_SMBIOS, upl->smbios);
+	ret = ofnode_write_string(node, "compatible", UPLP_UPL_PARAMS_COMPAT);
+	if (!ret)
+		ret = write_addr(upl, node, UPLP_SMBIOS, upl->smbios);
 	if (!ret)
 		ret = write_addr(upl, node, UPLP_ACPI, upl->acpi);
 	if (!ret && upl->bootmode)

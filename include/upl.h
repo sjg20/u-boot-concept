@@ -23,6 +23,7 @@ struct unit_test_state;
 
 #define UPLN_OPTIONS		"options"
 #define UPLN_UPL_PARAMS		"upl-params"
+#define UPLP_UPL_PARAMS_COMPAT	"upl"
 #define UPLP_SMBIOS		"smbios"
 #define UPLP_ACPI		"acpi"
 #define UPLP_BOOTMODE		"bootmode"
