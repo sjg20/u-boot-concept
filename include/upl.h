@@ -416,6 +416,18 @@ int upl_create(struct upl *upl);
  * Return: 0 if OK, -ve on error
  */
 int upl_write_to_buf(struct upl *upl, ofnode root, struct abuf *buf);
+
+/**
+ * upl_add_region() - Add a region to a memory-region list
+ *
+ * Adds a new entry to the end of a list
+ *
+ * @lst: List to add to (struct memregion)
+ * @base: Base address of new region
+ * @size: Size of new region
+ * Return: 0 if OK, -ve on error
+ */
+int upl_add_region(struct alist *lst, u64 base, ulong size);
 #endif
 
 /** upl_init() - Set up a UPL struct */
