@@ -765,6 +765,7 @@ config BOOTMETH_SCRIPT
 config UPL
 	bool "upl - Universal Payload Specification"
 	imply CMD_UPL
+	imply UPL_EXEC
 	imply UPL_READ
 	imply UPL_WRITE
 	imply SPL_UPL if SPL
@@ -793,6 +794,13 @@ config UPL_WRITE
 	  implementation, useful for trying it out. See SPL_UPL_OUT
 	  for how to tell U-Boot SPL to actually write it before jumping to
 	  the next phase.
+
+config UPL_EXEC
+	bool "upl - Support for executing a UPL image"
+	help
+	  Provides support for executing a loaded UPL image, passing it a
+	  suitable handoff block. This can be used to pass control to a UPL from
+	  another firmware project.
 
 config UPL_IN
 	bool "upl - Read the UPL handoff on startup"
