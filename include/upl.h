@@ -226,6 +226,8 @@ enum upl_graphics_format {
 };
 
 /**
+ * struct upl_graphics - Information about graphics display
+ *
  * @reg: List of base address and size of registers (struct memregion)
  * @width: Width of display in pixels
  * @height: Height of display in pixels
@@ -385,9 +387,12 @@ int upl_add_serial(struct upl_serial *ser);
  *
  * Writes details about the current video device to the UPL struct
  *
+ * @gra: Struct to fill in
+ * @basep: Returns base address of framebuffer
+ * @sizep: Returns size of framebuffer
  * Return: 0 if OK, -ve on error
  */
-int upl_add_graphics(struct upl_graphics *gra);
+int upl_add_graphics(struct upl_graphics *gra, ulong *basep, ulong *sizep);
 
 /** upl_init() - Set up a UPL struct */
 void upl_init(struct upl *upl);

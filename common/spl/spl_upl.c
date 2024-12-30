@@ -54,6 +54,7 @@ int _upl_add_image(int node, ulong load_addr, ulong size, const char *desc)
 int spl_write_upl_handoff(void)
 {
 	struct upl *upl = &s_upl;
+	ulong addr, size;
 	struct abuf buf;
 	ofnode root;
 	void *ptr;
@@ -66,7 +67,7 @@ int spl_write_upl_handoff(void)
 	ret = upl_add_serial(&upl->serial);
 	if (ret)
 		return log_msg_ret("ser", ret);
-	ret = upl_add_graphics(&upl->graphics);
+	ret = upl_add_graphics(&upl->graphics, &addr, &size);
 	if (ret && ret != -ENOENT)
 		return log_msg_ret("gra", ret);
 
