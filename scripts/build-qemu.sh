@@ -176,7 +176,8 @@ arm)
 x86)
 	BOARD="qemu-x86"
 	BIOS="u-boot.rom"
-	qemu=qemu-system-i386
+	# Use 64-bit version to allow UPL to change to 64-bit mode later
+	qemu=qemu-system-x86_64
 	suffix="i386"
 	if [[ "${bitness}" == "64" ]]; then
 		BOARD="qemu-x86_64"
