@@ -425,26 +425,14 @@ static int add_upl_memres(const struct upl *upl, ofnode root,
 	for (i = 0; i < upl->memres.count; i++) {
 		const struct upl_memres *memres = alist_get(&upl->memres, i,
 							struct upl_memres);
-		char buf[memres->region.count * sizeof(64) * 2];
-		const struct memregion *first;
-		char name[26];
-		int ret, len;
 		ofnode node;
 
-		if (!memres->region.count) {
-			log_debug("Memory %d has no regions\n", i);
-			return log_msg_ret("reg", -EINVAL);
-		}
-		first = alist_get(&memres->region, 0, struct memregion);
-		sprintf(name, "%s@0x%lx", memres->name, first->base);
-		ret = ofnode_add_subnode(mem_node, name, &node);
+		ret = write_mem_node(upl, mem_node, &memres->region,
+				     memres->name, &node);
 		if (ret)
-			return log_msg_ret("memres", ret);
+			return log_msg_ret("umr", ret);
 
-		len = buffer_addr_size(upl, buf, sizeof(buf),
-				       memres->region.count, &memres->region);
-		ret = ofnode_write_prop(node, UPLP_REG, buf, len, true);
-		if (!ret && memres->no_map)
+		if (memres->no_map)
 			ret = ofnode_write_bool(node, UPLP_NO_MAP,
 						memres->no_map);
 		if (ret)
