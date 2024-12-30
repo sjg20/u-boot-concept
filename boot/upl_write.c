@@ -255,9 +255,10 @@ static int add_upl_params(const struct upl *upl, ofnode options)
  */
 static int add_upl_images(const struct upl *upl, ofnode options)
 {
+	const struct upl_image *img;
 	char name[40];
 	ofnode node;
-	int ret, i;
+	int ret;
 
 	snprintf(name, sizeof(name), UPLN_UPL_IMAGES "@%llx", upl->fit.base);
 	ret = ofnode_add_subnode(options, name, &node);
@@ -284,14 +285,12 @@ static int add_upl_images(const struct upl *upl, ofnode options)
 	if (ret)
 		return log_msg_ret("upi", ret);
 
-	for (i = 0; i < upl->image.count; i++) {
-		const struct upl_image *img;
+	alist_for_each(img, &upl->image) {
 		char buf[sizeof(u64) * 4];
 		ofnode subnode;
 		char name[30];
 		int len;
 
-		img = alist_get(&upl->image, i, struct upl_image);
 		snprintf(name, sizeof(name), UPLN_IMAGE "@%llx", img->reg.base);
 		ret = ofnode_add_subnode(node, name, &subnode);
 		if (ret)
@@ -371,11 +370,9 @@ static int write_mem_node(const struct upl *upl, ofnode parent,
  */
 static int add_upl_memory(const struct upl *upl, ofnode root)
 {
-	int i;
+	const struct upl_mem *mem;
 
-	for (i = 0; i < upl->mem.count; i++) {
-		const struct upl_mem *mem = alist_get(&upl->mem, i,
-						      struct upl_mem);
+	alist_for_each(mem, &upl->mem) {
 		ofnode node;
 		int ret;
 
@@ -403,8 +400,9 @@ static int add_upl_memory(const struct upl *upl, ofnode root)
  */
 static int add_upl_memmap(const struct upl *upl, ofnode root)
 {
+	const struct upl_memmap *memmap;
 	ofnode mem_node;
-	int i, ret;
+	int ret;
 
 	if (!upl->memmap.count)
 		return 0;
@@ -412,9 +410,7 @@ static int add_upl_memmap(const struct upl *upl, ofnode root)
 	if (ret)
 		return log_msg_ret("img", ret);
 
-	for (i = 0; i < upl->memmap.count; i++) {
-		const struct upl_memmap *memmap = alist_get(&upl->memmap, i,
-							struct upl_memmap);
+	alist_for_each(memmap, &upl->memmap) {
 		ofnode node;
 
 		ret = write_mem_node(upl, mem_node, &memmap->region,
@@ -443,8 +439,9 @@ static int add_upl_memmap(const struct upl *upl, ofnode root)
 static int add_upl_memres(const struct upl *upl, ofnode root,
 			  bool skip_existing)
 {
+	const struct upl_memres *memres;
 	ofnode mem_node;
-	int i, ret;
+	int ret;
 
 	if (!upl->memres.count)
 		return 0;
@@ -458,9 +455,7 @@ static int add_upl_memres(const struct upl *upl, ofnode root,
 	if (ret)
 		return log_msg_ret("im2", ret);
 
-	for (i = 0; i < upl->memres.count; i++) {
-		const struct upl_memres *memres = alist_get(&upl->memres, i,
-							struct upl_memres);
+	alist_for_each(memres, &upl->memres) {
 		ofnode node;
 
 		ret = write_mem_node(upl, mem_node, &memres->region,
