@@ -228,10 +228,6 @@ static int add_upl_params(const struct upl *upl, ofnode options)
 		return log_msg_ret("img", ret);
 
 	ret = ofnode_write_string(node, "compatible", UPLP_UPL_PARAMS_COMPAT);
-	if (!ret)
-		ret = write_addr(upl, node, UPLP_SMBIOS, upl->smbios);
-	if (!ret)
-		ret = write_addr(upl, node, UPLP_ACPI, upl->acpi);
 	if (!ret && upl->bootmode)
 		ret = ofnode_write_bitmask(node, UPLP_BOOTMODE, bootmode_names,
 					   UPLBM_COUNT, upl->bootmode);
@@ -350,6 +346,8 @@ static int write_mem_node(const struct upl *upl, ofnode parent,
 		return log_msg_ret("wmn", ret);
 
 	len = encode_reg(upl, buf, sizeof(buf), mem->count, mem);
+	if (len < 0)
+		return log_msg_ret("uer", ret);
 	ret = ofnode_write_prop(node, UPLP_REG, buf, len, true);
 	if (ret)
 		return log_msg_ret("wm1", ret);
@@ -437,7 +435,8 @@ static int add_upl_memres(const struct upl *upl, ofnode root,
 			  bool skip_existing)
 {
 	const struct upl_memres *memres;
-	ofnode mem_node;
+	struct alist region;
+	ofnode mem_node, node;
 	int ret;
 
 	if (!upl->memres.count)
@@ -453,8 +452,6 @@ static int add_upl_memres(const struct upl *upl, ofnode root,
 		return log_msg_ret("im2", ret);
 
 	alist_for_each(memres, &upl->memres) {
-		ofnode node;
-
 		ret = write_mem_node(upl, mem_node, &memres->region,
 				     memres->name, &node);
 		if (ret)
@@ -465,6 +462,33 @@ static int add_upl_memres(const struct upl *upl, ofnode root,
 						memres->no_map);
 		if (ret)
 			return log_msg_ret("lst", ret);
+	}
+
+	if (upl->smbios.base) {
+		alist_init_struct(&region, struct memregion);
+		if (!alist_add(&region, upl->smbios))
+			return log_msg_ret("ups", ret);
+		ret = write_mem_node(upl, mem_node, &region, UPLN_MEMORY,
+				     &node);
+		alist_uninit(&region);
+		if (ret)
+			return log_msg_ret("mrs", ret);
+		ret = ofnode_write_string(node, UPLP_COMPATIBLE, UPLP_SMBIOS);
+		if (ret)
+			return log_msg_ret("mrS", ret);
+	}
+	if (upl->acpi.base) {
+		alist_init_struct(&region, struct memregion);
+		if (!alist_add(&region, upl->acpi))
+			return log_msg_ret("upa", ret);
+		ret = write_mem_node(upl, mem_node, &region, UPLN_MEMORY,
+				     &node);
+		alist_uninit(&region);
+		if (ret)
+			return log_msg_ret("mra", ret);
+		ret = ofnode_write_string(node, UPLP_COMPATIBLE, UPLP_ACPI);
+		if (ret)
+			return log_msg_ret("mrA", ret);
 	}
 
 	return 0;

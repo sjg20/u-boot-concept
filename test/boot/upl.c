@@ -26,6 +26,7 @@ static int add_region(struct unit_test_state *uts, struct alist *lst,
 {
 	struct memregion region;
 
+	memset(&region, '\0', sizeof(region));
 	region.base = base;
 	region.size = size;
 	ut_assertnonnull(alist_add(lst, region));
@@ -44,8 +45,10 @@ int upl_get_test_data(struct unit_test_state *uts, struct upl *upl)
 
 	upl->addr_cells = 1;
 	upl->size_cells = 1;
-	upl->smbios = 0x123;
-	upl->acpi = 0x456;
+	upl->smbios.base = 0x123;
+	upl->smbios.size = 0x321;
+	upl->acpi.base = 0x456;
+	upl->acpi.size = 0x654;
 	upl->bootmode = BIT(UPLBM_DEFAULT) | BIT(UPLBM_S3);
 	upl->fit.base = 0x789;
 	upl->fit.size = 0xabc;
@@ -294,8 +297,10 @@ static int compare_upl(struct unit_test_state *uts, struct upl *base,
 	ut_asserteq(base->addr_cells, cmp->addr_cells);
 	ut_asserteq(base->size_cells, cmp->size_cells);
 
-	ut_asserteq(base->smbios, cmp->smbios);
-	ut_asserteq(base->acpi, cmp->acpi);
+	ut_asserteq(base->smbios.base, cmp->smbios.base);
+	ut_asserteq(base->smbios.size, cmp->smbios.size);
+	ut_asserteq(base->acpi.base, cmp->acpi.base);
+	ut_asserteq(base->acpi.size, cmp->acpi.size);
 	ut_asserteq(base->bootmode, cmp->bootmode);
 	ut_asserteq(base->fit.base, cmp->fit.base);
 	ut_asserteq(base->fit.size, cmp->fit.size);

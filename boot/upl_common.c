@@ -8,6 +8,7 @@
 
 #define LOG_CATEGORY UCLASS_BOOTSTD
 
+#include <bloblist.h>
 #include <cpu.h>
 #include <dm.h>
 #include <serial.h>
@@ -138,7 +139,8 @@ int upl_create(struct upl *upl)
 {
 	struct upl_mem mem;
 	ulong base, size;
-	int ret;
+	int ret, bsize;
+	void *ptr;
 
 	/* hard-code this for now to keep Tianocore happy */
 	upl->addr_cells = 2;
@@ -158,12 +160,28 @@ int upl_create(struct upl *upl)
 	if (!alist_add(&upl->mem, mem))
 		return log_msg_ret("arg", -ENOMEM);
 
+	ptr = bloblist_get_blob(BLOBLISTT_SMBIOS_TABLES, &bsize);
+	if (ptr) {
+		upl->smbios.base = map_to_sysmem(ptr);
+		upl->smbios.size = bsize;
+	}
+	ptr = bloblist_get_blob(BLOBLISTT_ACPI_TABLES, &bsize);
+	if (ptr) {
+		upl->acpi.base = map_to_sysmem(ptr);
+		upl->acpi.size = bsize;
+	}
+
 	ret = upl_add_serial(&upl->serial);
 	if (ret && ret != -ENOENT)
 		return log_msg_ret("ser", ret);
 	ret = upl_add_graphics(&upl->graphics, &base, &size);
 	if (ret && ret != -ENOENT)
 		return log_msg_ret("gra", ret);
+	if (!ret) {
+		ret = upl_add_memres(upl, UPLN_MEMORY, base, size, true);
+		if (ret)
+			return log_msg_ret("grr", ret);
+	}
 
 	return 0;
 }
@@ -197,6 +215,26 @@ int upl_add_region(struct alist *lst, u64 base, ulong size)
 	region.size = size;
 	if (!alist_add(lst, region))
 		return log_msg_ret("uar", -ENOMEM);
+
+	return 0;
+}
+
+int upl_add_memres(struct upl *upl, const char *name, u64 base, ulong size,
+		   bool no_map)
+{
+	struct upl_memres memres;
+	int ret;
+
+	log_debug("base = %llx size = %lx\n", base, size);
+	memset(&memres, '\0', sizeof(memres));
+	alist_init_struct(&memres.region, struct memregion);
+	memres.name = name;
+	memres.no_map = no_map;
+	ret = upl_add_region(&memres.region, base, size);
+	if (ret)
+		return log_msg_ret("uav", ret);
+	if (!alist_add(&upl->memres, memres))
+		return log_msg_ret("uaM", -ENOMEM);
 
 	return 0;
 }
