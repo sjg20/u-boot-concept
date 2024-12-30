@@ -182,9 +182,6 @@ static int add_upl_params(const struct upl *upl, ofnode options)
 					   UPLBM_COUNT, upl->bootmode);
 	if (!ret)
 		ret = ofnode_write_u32(node, UPLP_ADDR_WIDTH, upl->addr_width);
-	if (!ret)
-		ret = ofnode_write_u32(node, UPLP_ACPI_NVS_SIZE,
-				       upl->acpi_nvs_size);
 	if (ret)
 		return log_msg_ret("cnf", ret);
 

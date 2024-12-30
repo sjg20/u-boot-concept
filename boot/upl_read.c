@@ -222,9 +222,6 @@ static int decode_upl_params(struct upl *upl, ofnode options)
 	ret = read_uint(node, UPLP_ADDR_WIDTH, &upl->addr_width);
 	if (ret)
 		return log_msg_ret("add", ret);
-	ret = read_uint(node, UPLP_ACPI_NVS_SIZE, &upl->acpi_nvs_size);
-	if (ret)
-		return log_msg_ret("nvs", ret);
 
 	return 0;
 }
