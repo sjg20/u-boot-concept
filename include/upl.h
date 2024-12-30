@@ -159,12 +159,12 @@ struct upl_memmap {
 /**
  * struct upl_memres - Reserved memory
  *
- * @name: Node name to use
+ * @compat: Compatible string to use (NULL if none)
  * @region: Reserved memory region list (struct memregion)
  * @no_map: true to indicate that a virtual mapping must not be created
  */
 struct upl_memres {
-	const char *name;
+	const char *compat;
 	struct alist region;
 	bool no_map;
 };

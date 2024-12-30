@@ -121,13 +121,13 @@ int upl_get_test_data(struct unit_test_state *uts, struct upl *upl)
 	/* memres[0]: 1 region */
 	alist_init_struct(&memres.region, struct memregion);
 	memset(&memres, '\0', sizeof(memres));
-	memres.name = "mmio";
+	memres.compat = "mmio";
 	ut_assertok(add_region(uts, &memres.region, 0x2b, 0x2c));
 	ut_assertnonnull(alist_add(&upl->memres, memres));
 
 	/* memres[1]: 2 regions */
 	alist_init_struct(&memres.region, struct memregion);
-	memres.name = "memory";
+	memres.compat = "memory";
 	ut_assertok(add_region(uts, &memres.region, 0x2d, 0x2e));
 	ut_assertok(add_region(uts, &memres.region, 0x2f, 0x30));
 	memres.no_map = true;
@@ -231,7 +231,7 @@ static int compare_upl_memres(struct unit_test_state *uts,
 {
 	int i;
 
-	ut_assertok(check_device_name(uts, base->name, cmp->name));
+	ut_assertok(check_device_name(uts, base->compat, cmp->compat));
 	ut_asserteq(base->region.count, cmp->region.count);
 	ut_asserteq(base->no_map, cmp->no_map);
 	for (i = 0; i < base->region.count; i++)
