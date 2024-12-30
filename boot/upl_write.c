@@ -295,7 +295,7 @@ static int add_upl_memory(const struct upl *upl, ofnode root)
 	const struct upl_mem *mem;
 
 	alist_for_each(mem, &upl->mem) {
-		char buf[mem->region.count * sizeof(64) * 2];
+		char buf[mem->region.count * sizeof(u64) * 2];
 		const struct memregion *first;
 		char name[26];
 		int ret, len;
@@ -347,7 +347,7 @@ static int add_upl_memmap(const struct upl *upl, ofnode root)
 		return log_msg_ret("img", ret);
 
 	alist_for_each(memmap, &upl->memmap) {
-		char buf[memmap->region.count * sizeof(64) * 2];
+		char buf[memmap->region.count * sizeof(u64) * 2];
 		const struct memregion *first;
 		char name[26];
 		int ret, len;
@@ -406,7 +406,7 @@ static int add_upl_memres(const struct upl *upl, ofnode root,
 		return log_msg_ret("im2", ret);
 
 	alist_for_each(memres, &upl->memres) {
-		char buf[memres->region.count * sizeof(64) * 2];
+		char buf[memres->region.count * sizeof(u64) * 2];
 		const struct memregion *first;
 		char name[26];
 		int ret, len;
