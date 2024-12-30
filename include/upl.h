@@ -94,15 +94,19 @@ enum upl_boot_mode {
 /**
  * struct upl_image - UPL image informaiton
  *
- * @load: Address image was loaded to
+ * @base: address of image in memory (within FIT)
  * @size: Size of image in bytes
  * @offset: Offset of the image in the FIT (0=none)
+ * @load: Address image should be loaded to
+ * @entry: Entry address to jump to (must be within the image)
  * @desc: Description of the iamge (taken from the FIT)
  */
 struct upl_image {
-	ulong load;
+	ulong base;
 	ulong size;
 	uint offset;
+	ulong load;
+	ulong entry;
 	const char *description;
 };
 
