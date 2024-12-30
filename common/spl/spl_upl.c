@@ -38,8 +38,9 @@ int _upl_add_image(int node, ulong load_addr, ulong size, const char *desc)
 	struct upl *upl = &s_upl;
 	struct upl_image img;
 
-	img.load = load_addr;
-	img.size = size;
+	memset(&img, '\0', sizeof(img));
+	img.reg.base = load_addr;
+	img.reg.size = size;
 	img.offset = node;
 	img.description = desc;
 	if (!alist_add(&upl->image, img))

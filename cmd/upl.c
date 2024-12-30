@@ -37,8 +37,8 @@ static int do_upl_info(struct cmd_tbl *cmdtp, int flag, int argc,
 			const struct upl_image *img =
 				alist_get(&upl->image, i, struct upl_image);
 
-			printf("image %d: load %lx size %lx offset %x: %s\n", i,
-			       img->load, img->size, img->offset,
+			printf("image %d: load %llx size %lx entry %lx offset %x: %s\n",
+			       i, img->reg.base, img->reg.size, img->entry, img->offset,
 			       img->description);
 		}
 	}
