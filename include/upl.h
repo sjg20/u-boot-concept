@@ -314,6 +314,14 @@ int upl_create_handoff_tree(const struct upl *upl, oftree *treep);
 int upl_read_handoff(struct upl *upl, oftree tree);
 
 /**
+ * upl_exec() - Execulated a loaded UPL image
+ *
+ * @addr: Address of image
+ * Return: 0 on success, or -ve error
+ */
+int upl_exec(ulong addr);
+
+/**
  * upl_get_test_data() - Fill a UPL with some test data
  *
  * @uts: Test state (can be uninited)
@@ -370,7 +378,7 @@ int _upl_add_image(int node, ulong load_addr, ulong size, const char *desc);
 static inline int upl_add_image(const void *fit, int node, ulong load_addr,
 				ulong size)
 {
-	if (CONFIG_IS_ENABLED(UPL) && IS_ENABLED(CONFIG_XPL_BUILD)) {
+	if (CONFIG_IS_ENABLED(UPL)) {
 		const char *desc = fdt_getprop(fit, node, FIT_DESC_PROP, NULL);
 
 		return _upl_add_image(node, load_addr, size, desc);
@@ -449,6 +457,25 @@ int upl_add_region(struct alist *lst, u64 base, ulong size);
 int upl_add_memres(struct upl *upl, const char *compat, u64 base, ulong size,
 		   bool no_map);
 #endif
+
+/**
+ * upl_create_handoff() - Create a UPL handoff
+ *
+ * @upl: Returns the handoff structure that was created
+ * @buf: Returns buffer containing the final handoff info
+ * Return: 0 if OK, -ve on error
+ */
+int upl_create_handoff(struct upl *upl, struct abuf *buf);
+
+/**
+ * arch_upl_jump() - Jump to the UPL payload
+ *
+ * Jump to
+ *
+ * @entry: Address to jump to
+ * @buf: Buffer containing UPL-handoff information
+ */
+int arch_upl_jump(ulong entry, const struct abuf *buf);
 
 /** upl_init() - Set up a UPL struct */
 void upl_init(struct upl *upl);
