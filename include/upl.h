@@ -247,6 +247,43 @@ struct upl_graphics {
 	enum upl_graphics_format format;
 };
 
+/**
+ * struct pci_range - Information about a PCI 'ranges' entry
+ *
+ * The ranges property contains:
+ *
+ *   child_flags (1 cell)
+ *   child_base (1 or 2 cells)
+ *   parent_base (1 or 2 cells)
+ *   child_len (1 or 2 cells)
+ *
+ * @child_base: Child base address
+ * @child_flags: Child flags and space code (first cell of devicetree)
+ * @parent_base: Parent base address
+ * @child_size: Child-space size
+ * @first_bus: Bus number of the first child bus
+ * @last_bus: Bus number of the last child bus
+ */
+struct pci_range {
+	u64 parent_base;
+	u64 child_base;
+	ulong child_flags;
+	ulong child_len;
+	uint first_bus;
+	uint last_bus;
+};
+
+/**
+ * struct upl_pci - Information about PCI root bridge
+ *
+ * @reg: PCI ECAM region
+ * @range: List of ranges (struct pci_range)
+ */
+struct upl_pci {
+	struct memregion reg;
+	struct alist range;
+};
+
 /*
  * Information about the UPL state
  *
@@ -267,7 +304,7 @@ struct upl {
 
 	ulong smbios;
 	ulong acpi;
-	uint bootmode;
+	enum upl_boot_mode bootmode;
 	ulong fit;
 	uint conf_offset;
 	uint addr_width;
@@ -278,6 +315,7 @@ struct upl {
 	struct alist memres;
 	struct upl_serial serial;
 	struct upl_graphics graphics;
+	struct upl_pci pci;
 };
 
 /**
