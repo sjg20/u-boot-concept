@@ -16,6 +16,7 @@
 #include <asm/tables.h>
 #include <asm/coreboot_tables.h>
 #include <linux/log2.h>
+#include <linux/sizes.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -62,7 +63,11 @@ static struct table_info table_list[] = {
 	{ "acpi", write_acpi_tables, BLOBLISTT_ACPI_TABLES, 0x10000, 0x1000},
 #endif
 #ifdef CONFIG_GENERATE_SMBIOS_TABLE
-	{ "smbios", write_smbios_table, BLOBLISTT_SMBIOS_TABLES, 0x1000, 0x100},
+	/*
+	 * align this to a 4KB boundary, since UPL adds a reserved-memory node
+	 * for it
+	 */
+	{ "smbios", write_smbios_table, BLOBLISTT_SMBIOS_TABLES, SZ_4K, 0x1000},
 #endif
 };
 
