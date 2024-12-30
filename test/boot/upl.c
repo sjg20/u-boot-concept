@@ -53,16 +53,18 @@ int upl_get_test_data(struct unit_test_state *uts, struct upl *upl)
 	upl->acpi_nvs_size = 0x100;
 
 	/* image[0] */
-	img.load = 0x1;
-	img.size = 0x2;
+	img.reg.base = 0x1;
+	img.reg.size = 0x2;
 	img.offset = 0x3;
+	img.entry = 0x4;
 	img.description = "U-Boot";
 	ut_assertnonnull(alist_add(&upl->image, img));
 
 	/* image[1] */
-	img.load = 0x4;
-	img.size = 0x5;
-	img.offset = 0x6;
+	img.reg.base = 0x5;
+	img.reg.size = 0x6;
+	img.offset = 0x7;
+	img.entry = 0x8;
 	img.description = "ATF";
 	ut_assertnonnull(alist_add(&upl->image, img));
 
@@ -155,24 +157,24 @@ int upl_get_test_data(struct unit_test_state *uts, struct upl *upl)
 	return 0;
 }
 
-static int compare_upl_image(struct unit_test_state *uts,
-			     const struct upl_image *base,
-			     const struct upl_image *cmp)
-{
-	ut_asserteq(base->load, cmp->load);
-	ut_asserteq(base->size, cmp->size);
-	ut_asserteq(base->offset, cmp->offset);
-	ut_asserteq_str(base->description, cmp->description);
-
-	return 0;
-}
-
 static int compare_upl_memregion(struct unit_test_state *uts,
 				 const struct memregion *base,
 				 const struct memregion *cmp)
 {
 	ut_asserteq(base->base, cmp->base);
 	ut_asserteq(base->size, cmp->size);
+
+	return 0;
+}
+
+static int compare_upl_image(struct unit_test_state *uts,
+			     const struct upl_image *base,
+			     const struct upl_image *cmp)
+{
+	ut_assertok(compare_upl_memregion(uts, &base->reg, &cmp->reg));
+	ut_asserteq(base->offset, cmp->offset);
+	ut_asserteq(base->entry, cmp->entry);
+	ut_asserteq_str(base->description, cmp->description);
 
 	return 0;
 }
@@ -427,7 +429,7 @@ static int upl_test_info_norun(struct unit_test_state *uts)
 
 	img = alist_get(&upl->image, 1, struct upl_image);
 	ut_asserteq_str("firmware-1", fdt_get_name(fit, img->offset, NULL));
-	ut_asserteq(CONFIG_TEXT_BASE, img->load);
+	ut_asserteq(CONFIG_TEXT_BASE, img->reg.base);
 
 	return 0;
 }

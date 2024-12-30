@@ -47,39 +47,6 @@ static int read_addr(const struct upl *upl, ofnode node, const char *prop,
 }
 
 /**
- * read_size() - Read a size
- *
- * Reads a size in the correct format, either 32- or 64-bit
- *
- * @upl: UPL state
- * @node: Node to read from
- * @prop: Property name to read
- * @addr: Place to put the size
- * Return: 0 if OK, -ve on error
- */
-static int read_size(const struct upl *upl, ofnode node, const char *prop,
-		     ulong *sizep)
-{
-	int ret;
-
-	if (upl->size_cells == 1) {
-		u32 val;
-
-		ret = ofnode_read_u32(node, prop, &val);
-		if (!ret)
-			*sizep = val;
-	} else {
-		u64 val;
-
-		ret = ofnode_read_u64(node, prop, &val);
-		if (!ret)
-			*sizep = val;
-	}
-
-	return ret;
-}
-
-/**
  * ofnode_read_bitmask() - Read a bit mask from a string list
  *
  * @node: Node to read from
@@ -332,11 +299,19 @@ static int decode_upl_images(struct upl *upl, ofnode options)
 	ofnode_for_each_subnode(node, images) {
 		struct upl_image img;
 
-		ret = read_addr(upl, node, UPLP_LOAD, &img.load);
-		if (!ret)
-			ret = read_size(upl, node, UPLP_SIZE, &img.size);
-		if (!ret)
-			ret = read_uint(node, UPLP_OFFSET, &img.offset);
+		memset(&img, '\0', sizeof(img));
+		buf = ofnode_read_prop(node, UPLP_REG, &size);
+		if (!buf)
+			return log_msg_ret("dui", ret);
+		ret = decode_addr_size(upl, buf, size, &img.reg);
+		log_debug("node %s: ret=%d, base=%llx\n", ofnode_get_name(node),
+			  ret, img.reg.base);
+		if (ret < 0)
+			return log_msg_ret("duI", ret);
+
+		read_addr(upl, node, UPLP_ENTRY, &img.entry);
+
+		ret = read_uint(node, UPLP_OFFSET, &img.offset);
 		img.description = ofnode_read_string(node, UPLP_DESCRIPTION);
 		if (!img.description)
 			return log_msg_ret("sim", ret);

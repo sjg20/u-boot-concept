@@ -38,30 +38,6 @@ static int write_addr(const struct upl *upl, ofnode node, const char *prop,
 }
 
 /**
- * write_size() - Write a size
- *
- * Writes a size in the correct format, either 32- or 64-bit
- *
- * @upl: UPL state
- * @node: Node to write to
- * @prop: Property name to write
- * @size: Size to write
- * Return: 0 if OK, -ve on error
- */
-static int write_size(const struct upl *upl, ofnode node, const char *prop,
-		      ulong size)
-{
-	int ret;
-
-	if (upl->size_cells == 1)
-		ret = ofnode_write_u32(node, prop, size);
-	else
-		ret = ofnode_write_u64(node, prop, size);
-
-	return ret;
-}
-
-/**
  * ofnode_write_bitmask() - Write a bit mask as a string list
  *
  * @node: Node to write to
@@ -309,24 +285,34 @@ static int add_upl_images(const struct upl *upl, ofnode options)
 		return log_msg_ret("upi", ret);
 
 	for (i = 0; i < upl->image.count; i++) {
-		const struct upl_image *img = alist_get(&upl->image, i,
-							struct upl_image);
+		const struct upl_image *img;
+		char buf[sizeof(u64) * 4];
 		ofnode subnode;
-		char name[10];
+		char name[30];
+		int len;
 
-		snprintf(name, sizeof(name), UPLN_IMAGE "-%d", i + 1);
+		img = alist_get(&upl->image, i, struct upl_image);
+		snprintf(name, sizeof(name), UPLN_IMAGE "@%llx", img->reg.base);
 		ret = ofnode_add_subnode(node, name, &subnode);
 		if (ret)
 			return log_msg_ret("sub", ret);
 
-		ret = write_addr(upl, subnode, UPLP_LOAD, img->load);
-		if (!ret)
-			ret = write_size(upl, subnode, UPLP_SIZE, img->size);
+		len = encode_addr_size(upl, buf, sizeof(buf), &img->reg);
+		if (len < 0)
+			return log_msg_ret("rbf", len);
+		ret = ofnode_write_prop(subnode, UPLP_REG, buf, len, true);
+
+		if (!ret && img->entry) {
+			ret = write_addr(upl, subnode, UPLP_ENTRY, img->entry);
+			if (ret < 0)
+				return log_msg_ret("uwr", ret);
+		}
 		if (!ret && img->offset)
 			ret = ofnode_write_u32(subnode, UPLP_OFFSET,
 					       img->offset);
-		ret = ofnode_write_string(subnode, UPLP_DESCRIPTION,
-					  img->description);
+		if (!ret)
+			ret = ofnode_write_string(subnode, UPLP_DESCRIPTION,
+						  img->description);
 		if (ret)
 			return log_msg_ret("sim", ret);
 	}

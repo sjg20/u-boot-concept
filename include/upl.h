@@ -35,8 +35,7 @@ struct unit_test_state;
 #define UPLN_IMAGE		"image"
 #define UPLP_FIT		"fit"
 #define UPLP_CONF_OFFSET	"conf-offset"
-#define UPLP_LOAD		"load"
-#define UPLP_SIZE		"size"
+#define UPLP_ENTRY		"entry"
 #define UPLP_OFFSET		"offset"
 #define UPLP_DESCRIPTION	"description"
 
@@ -92,21 +91,6 @@ enum upl_boot_mode {
 };
 
 /**
- * struct upl_image - UPL image informaiton
- *
- * @load: Address image was loaded to
- * @size: Size of image in bytes
- * @offset: Offset of the image in the FIT (0=none)
- * @desc: Description of the iamge (taken from the FIT)
- */
-struct upl_image {
-	ulong load;
-	ulong size;
-	uint offset;
-	const char *description;
-};
-
-/**
  * struct memregion - Information about a region of memory
  *
  * @base: Base address
@@ -115,6 +99,22 @@ struct upl_image {
 struct memregion {
 	u64 base;
 	ulong size;
+};
+
+/**
+ * struct upl_image - UPL image informaiton
+ *
+ * @reg: address and size of image in memory (within FIT)
+ * @offset: Offset of the image in the FIT (0=none)
+ * @load: Address image should be loaded to
+ * @entry: Entry address to jump to (must be within the image), or 0 if none
+ * @desc: Description of the iamge (taken from the FIT)
+ */
+struct upl_image {
+	struct memregion reg;
+	uint offset;
+	ulong entry;
+	const char *description;
 };
 
 /**
