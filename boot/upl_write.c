@@ -630,3 +630,31 @@ int upl_create_handoff_tree(const struct upl *upl, oftree *treep)
 
 	return 0;
 }
+
+int upl_create_handoff(struct upl *upl, ulong addr, struct abuf *buf)
+{
+	oftree tree;
+	int ret;
+
+	ret = upl_create(upl);
+	if (ret) {
+		log_debug("Failed to create handoff (err=%dE)\n", ret);
+		return log_msg_ret("cho", ret);
+	}
+	log_debug("2a images %d\n", upl->image.count);
+
+	ret = oftree_new(&tree);
+	if (ret)
+		return log_msg_ret("new", ret);
+
+	ret = upl_write_handoff(upl, oftree_root(tree), true);
+	if (ret)
+		return log_msg_ret("wr", ret);
+
+	ret = oftree_to_fdt(tree, buf);
+	if (ret)
+		return log_msg_ret("fdt", ret);
+	oftree_dispose(tree);
+
+	return 0;
+}
