@@ -809,7 +809,7 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 			       "SPL hand-off write failed (err=%d)\n", ret);
 	}
 	if (CONFIG_IS_ENABLED(UPL_OUT) && (gd->flags & GD_FLG_UPL)) {
-		ret = spl_write_upl_handoff(&spl_image);
+		ret = spl_write_upl_handoff();
 		if (ret) {
 			printf(PHASE_PROMPT
 			       "UPL hand-off write failed (err=%d)\n", ret);
