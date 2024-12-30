@@ -144,18 +144,18 @@ static int ofnode_write_value(ofnode node, const char *prop,
 }
 
 /**
- * add_root_props() - Add root properties to the tree
+ * add_addr_size_cells() - Add #address/#size-cells properties to the tree
  *
  * @node: Node to add to
  * Return 0 if OK, -ve on error
  */
-static int add_root_props(const struct upl *upl, ofnode node)
+static int add_addr_size_cells(ofnode node, int addr_cells, int size_cells)
 {
 	int ret;
 
-	ret = ofnode_write_u32(node, UPLP_ADDRESS_CELLS, upl->addr_cells);
+	ret = ofnode_write_u32(node, UPLP_ADDRESS_CELLS, addr_cells);
 	if (!ret)
-		ret = ofnode_write_u32(node, UPLP_SIZE_CELLS, upl->size_cells);
+		ret = ofnode_write_u32(node, UPLP_SIZE_CELLS, size_cells);
 	if (ret)
 		return log_msg_ret("cel", ret);
 
@@ -407,6 +407,9 @@ static int add_upl_memres(const struct upl *upl, ofnode root,
 			return 0;
 		return log_msg_ret("img", ret);
 	}
+	ret = add_addr_size_cells(mem_node, upl->addr_cells, upl->size_cells);
+	if (ret)
+		return log_msg_ret("im2", ret);
 
 	for (i = 0; i < upl->memres.count; i++) {
 		const struct upl_memres *memres = alist_get(&upl->memres, i,
@@ -567,7 +570,7 @@ int upl_write_handoff(const struct upl *upl, ofnode root, bool skip_existing)
 	ofnode options;
 	int ret;
 
-	ret = add_root_props(upl, root);
+	ret = add_addr_size_cells(root, upl->addr_cells, upl->size_cells);
 	if (ret)
 		return log_msg_ret("ad1", ret);
 	ret = ofnode_add_subnode(root, UPLN_OPTIONS, &options);
