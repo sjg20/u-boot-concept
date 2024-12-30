@@ -288,6 +288,8 @@ struct upl_pci {
  *
  * @addr_cells: Number of address cells used in the handoff
  * @size_cells: Number of size cells used in the handoff
+ * @smbios: SMBIOS region, base is 0 if none
+ * @acpi: ACPI region, base is 0 if none
  * @bootmode: Boot-mode mask (enum upl_boot_mode)
  * @fit: Address and size of FIT image that was loaded
  * @conf_offset: Offset in FIT of the configuration that was selected
@@ -301,8 +303,8 @@ struct upl {
 	int addr_cells;
 	int size_cells;
 
-	ulong smbios;
-	ulong acpi;
+	struct memregion smbios;
+	struct memregion acpi;
 	enum upl_boot_mode bootmode;
 	struct memregion fit;
 	uint conf_offset;
@@ -475,6 +477,21 @@ int upl_write_to_buf(struct upl *upl, ofnode root, struct abuf *buf);
  * Return: 0 if OK, -ve on error
  */
 int upl_add_region(struct alist *lst, u64 base, ulong size);
+
+/**
+ * upl_add_memres() - Add a new reserved-memory region
+ *
+ * Adds a new entry to the end of the memres list
+ *
+ * @upl: UPL to add to
+ * @name: Node name to use for new region)
+ * @base: Base address of new region
+ * @size: Size of new region
+ * @no_map: true if the no-map property should be enabled
+ * Return: 0 if OK, -ve on error
+ */
+int upl_add_memres(struct upl *upl, const char *name, u64 base, ulong size,
+		   bool no_map);
 #endif
 
 /**

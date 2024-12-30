@@ -184,7 +184,7 @@ void *alist_add_placeholder(struct alist *lst);
  * @obj: Pointer to object to copy in
  * Returns: pointer to where the object was copied, or NULL if out of memory
  */
-void *alist_add_ptr(struct alist *lst, void *obj);
+void *alist_add_ptr(struct alist *lst, const void *obj);
 
 /**
  * alist_expand_by() - Expand a list by the given amount

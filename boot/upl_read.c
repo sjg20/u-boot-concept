@@ -248,12 +248,6 @@ static int decode_upl_params(struct upl *upl, ofnode options)
 		return log_msg_ret("par", -EINVAL);
 	log_debug("decoding '%s'\n", ofnode_get_name(node));
 
-	ret = read_addr(upl, node, UPLP_SMBIOS, &upl->smbios);
-	if (ret)
-		return log_msg_ret("smb", ret);
-	ret = read_addr(upl, node, UPLP_ACPI, &upl->acpi);
-	if (ret)
-		return log_msg_ret("acp", ret);
 	ret = ofnode_read_bitmask(node, UPLP_BOOTMODE, bootmode_names,
 				  UPLBM_COUNT, &upl->bootmode);
 	if (ret)
@@ -416,7 +410,7 @@ static int decode_upl_memres(struct upl *upl, ofnode root)
 
 	ofnode_for_each_subnode(node, root) {
 		struct upl_memres memres;
-		const char *buf;
+		const char *buf, *compat;
 		int size, len;
 
 		log_debug("decoding '%s'\n", ofnode_get_name(node));
@@ -433,6 +427,23 @@ static int decode_upl_memres(struct upl *upl, ofnode root)
 		if (len < 0)
 			return log_msg_ret("buf", len);
 		memres.no_map = ofnode_read_bool(node, UPLP_NO_MAP);
+
+		compat = ofnode_read_string(node, UPLP_COMPATIBLE);
+		if (compat && memres.region.count == 1) {
+			const struct memregion *rgn;
+
+			rgn = alist_get(&memres.region, 0, struct memregion);
+			if (!strcmp(compat, UPLP_SMBIOS))
+				upl->smbios = *rgn;
+			else if (!strcmp(compat, UPLP_ACPI))
+				upl->acpi = *rgn;
+			else
+				log_warning("Ignoring compat '%s'\n", compat);
+
+			/* don't add this node to the memres list */
+			alist_uninit(&memres.region);
+			continue;
+		}
 
 		if (!alist_add(&upl->memres, memres))
 			return log_msg_ret("mre", -ENOMEM);

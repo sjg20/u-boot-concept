@@ -167,7 +167,7 @@ void *alist_add_placeholder(struct alist *lst)
 	return alist_ensure_ptr(lst, lst->count);
 }
 
-void *alist_add_ptr(struct alist *lst, void *obj)
+void *alist_add_ptr(struct alist *lst, const void *obj)
 {
 	void *ptr;
 
