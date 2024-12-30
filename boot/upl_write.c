@@ -179,10 +179,6 @@ static int add_upl_params(const struct upl *upl, ofnode options)
 		return log_msg_ret("img", ret);
 
 	ret = ofnode_write_string(node, "compatible", UPLP_UPL_PARAMS_COMPAT);
-	if (!ret)
-		ret = write_addr(upl, node, UPLP_SMBIOS, upl->smbios);
-	if (!ret)
-		ret = write_addr(upl, node, UPLP_ACPI, upl->acpi);
 	if (!ret && upl->bootmode)
 		ret = ofnode_write_bitmask(node, UPLP_BOOTMODE, bootmode_names,
 					   UPLBM_COUNT, upl->bootmode);
