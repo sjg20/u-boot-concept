@@ -28,7 +28,6 @@ struct unit_test_state;
 #define UPLP_ACPI		"acpi"
 #define UPLP_BOOTMODE		"bootmode"
 #define UPLP_ADDR_WIDTH		"addr-width"
-#define UPLP_ACPI_NVS_SIZE	"acpi-nvs-size"
 
 #define UPLPATH_UPL_IMAGES	"/options/upl-images"
 #define UPLN_UPL_IMAGES		"upl-images"
@@ -253,7 +252,6 @@ struct upl_graphics {
  * @fit: Address and size of FIT image that was loaded
  * @conf_offset: Offset in FIT of the configuration that was selected
  * @addr_width: Adress-bus width of machine, e.g. 46 for 46 bits
- * @acpi_nvs_size: Size of the ACPI non-volatile-storage area in bytes
  * @image: Information about each image (struct upl_image)
  * @mem: Information about physical-memory regions (struct upl_mem)
  * @menmap: Information about logical-memory regions (struct upl_memmap)
@@ -269,7 +267,6 @@ struct upl {
 	struct memregion fit;
 	uint conf_offset;
 	uint addr_width;
-	uint acpi_nvs_size;
 
 	struct alist image;
 	struct alist mem;
