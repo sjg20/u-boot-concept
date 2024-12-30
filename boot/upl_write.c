@@ -382,31 +382,17 @@ static int add_upl_memmap(const struct upl *upl, ofnode root)
 	for (i = 0; i < upl->memmap.count; i++) {
 		const struct upl_memmap *memmap = alist_get(&upl->memmap, i,
 							struct upl_memmap);
-		char buf[memmap->region.count * sizeof(64) * 2];
-		const struct memregion *first;
-		char name[26];
-		int ret, len;
 		ofnode node;
 
-		if (!memmap->region.count) {
-			log_debug("Memory %d has no regions\n", i);
-			return log_msg_ret("reg", -EINVAL);
-		}
-		first = alist_get(&memmap->region, 0, struct memregion);
-		sprintf(name, "%s@0x%lx", memmap->name, first->base);
-		ret = ofnode_add_subnode(mem_node, name, &node);
+		ret = write_mem_node(upl, mem_node, &memmap->region,
+				     memmap->name, &node);
 		if (ret)
-			return log_msg_ret("memmap", ret);
-
-		len = buffer_addr_size(upl, buf, sizeof(buf),
-				       memmap->region.count, &memmap->region);
-		if (len < 0)
-			return log_msg_ret("buf", len);
-		ret = ofnode_write_prop(node, UPLP_REG, buf, len, true);
-		if (!ret && memmap->usage)
+			return log_msg_ret("umm", ret);
+		if (memmap->usage) {
 			ret = ofnode_write_bitmask(node, UPLP_USAGE,
 						   usage_names,
 						   UPLUS_COUNT, memmap->usage);
+		}
 		if (ret)
 			return log_msg_ret("lst", ret);
 	}
