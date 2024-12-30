@@ -14,6 +14,7 @@
 #include <alist.h>
 #include <image.h>
 #include <dm/ofnode_decl.h>
+#include <asm/types.h>
 
 struct unit_test_state;
 
@@ -111,7 +112,7 @@ struct upl_image {
  * @size: Size in bytes
  */
 struct memregion {
-	ulong base;
+	u64 base;
 	ulong size;
 };
 
@@ -254,8 +255,8 @@ struct upl_graphics {
  * @acpi_nvs_size: Size of the ACPI non-volatile-storage area in bytes
  * @image: Information about each image (struct upl_image)
  * @mem: Information about physical-memory regions (struct upl_mem)
- * @nennap: Information about logical-memory regions (struct upl_memmap)
- * @nennap: Information about reserved-memory regions (struct upl_memres)
+ * @menmap: Information about logical-memory regions (struct upl_memmap)
+ * @memres: Information about reserved-memory regions (struct upl_memres)
  */
 struct upl {
 	int addr_cells;
