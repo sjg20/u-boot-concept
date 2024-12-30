@@ -394,6 +394,29 @@ int upl_add_serial(struct upl_serial *ser);
  */
 int upl_add_graphics(struct upl_graphics *gra, ulong *basep, ulong *sizep);
 
+/**
+ * upl_create() - Create a basic UPL handoff structure
+ *
+ * Sets up common fields which don't depend on having a FIT available
+ *
+ * @upl: UPL structure to create
+ * Return: 0 if OK, -ve on error
+ */
+int upl_create(struct upl *upl);
+
+#ifndef USE_HOSTCC
+/**
+ * upl_write_to_buf() - Write a UPL struct to a tree then flatten it into a buf
+ *
+ * @upl: UPL struct to fill up
+ * @root: Root node to write UPL information to (this is updated before the
+ *	finally buffer is written)
+ * @buf: Buffer to contain the final flattened tree
+ * Return: 0 if OK, -ve on error
+ */
+int upl_write_to_buf(struct upl *upl, ofnode root, struct abuf *buf);
+#endif
+
 /** upl_init() - Set up a UPL struct */
 void upl_init(struct upl *upl);
 
