@@ -387,7 +387,7 @@ static int add_upl_memmap(const struct upl *upl, ofnode root)
 }
 
 /**
- * add_upl_memres() - Add /memory-reserved nodes to the tree
+ * add_upl_memres() - Add /reserved-memory nodes to the tree
  *
  * @upl: UPL state
  * @root: Parent node to contain the new node
@@ -399,7 +399,7 @@ static int add_upl_memres(const struct upl *upl, ofnode root,
 	ofnode mem_node;
 	int i, ret;
 
-	if (!upl->memmap.count)
+	if (!upl->memres.count)
 		return 0;
 	ret = ofnode_add_subnode(root, UPLN_MEMORY_RESERVED, &mem_node);
 	if (ret) {
@@ -422,10 +422,17 @@ static int add_upl_memres(const struct upl *upl, ofnode root,
 			return log_msg_ret("reg", -EINVAL);
 		}
 		first = alist_get(&memres->region, 0, struct memregion);
-		sprintf(name, "%s@0x%lx", memres->name, first->base);
+		sprintf(name, "memory@%lx", first->base);
 		ret = ofnode_add_subnode(mem_node, name, &node);
 		if (ret)
 			return log_msg_ret("memres", ret);
+
+		if (memres->compat) {
+			ret = ofnode_write_string(node, UPLP_COMPATIBLE,
+						  memres->compat);
+			if (ret)
+				return log_msg_ret("mrc", ret);
+		}
 
 		len = buffer_addr_size(upl, buf, sizeof(buf),
 				       memres->region.count, &memres->region);

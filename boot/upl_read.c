@@ -412,7 +412,7 @@ static int decode_upl_memres(struct upl *upl, ofnode root)
 		int size, len;
 
 		log_debug("decoding '%s'\n", ofnode_get_name(node));
-		memres.name = ofnode_get_name(node);
+		memres.compat = ofnode_read_string(node, UPLP_COMPATIBLE);
 
 		buf = ofnode_read_prop(node, UPLP_REG, &size);
 		if (!buf) {
