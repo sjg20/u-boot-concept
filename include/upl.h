@@ -429,6 +429,21 @@ int upl_write_to_buf(struct upl *upl, ofnode root, struct abuf *buf);
  * Return: 0 if OK, -ve on error
  */
 int upl_add_region(struct alist *lst, u64 base, ulong size);
+
+/**
+ * upl_add_memres() - Add a new reserved-memory region
+ *
+ * Adds a new entry to the end of the memres list
+ *
+ * @upl: UPL to add to
+ * @compat: Compatible string for new region (NULL if none)
+ * @base: Base address of new region
+ * @size: Size of new region
+ * @no_map: true if the no-map property should be enabled
+ * Return: 0 if OK, -ve on error
+ */
+int upl_add_memres(struct upl *upl, const char *compat, u64 base, ulong size,
+		   bool no_map);
 #endif
 
 /** upl_init() - Set up a UPL struct */
