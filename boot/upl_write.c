@@ -460,15 +460,41 @@ static int add_upl_serial(const struct upl *upl, ofnode root,
 	ofnode node;
 	int ret;
 
-	if (!ser->compatible || skip_existing)
+	if (!ser->compatible)
 		return 0;
 	if (!ser->reg.count)
 		return log_msg_ret("ser", -EINVAL);
+
+	ret = ofnode_add_subnode(root, UPLN_CHOSEN, &node);
+	if (ret)
+		return log_msg_ret("uch", ret);
+
+	if (ser->access_type == UPLAT_IO) {
+		ret = ofnode_write_string(node, UPLP_STDOUT_PATH, "/isa/serial");
+		if (ret)
+			return log_msg_ret("uc0", ret);
+
+		ret = ofnode_add_subnode(root, "isa", &node);
+		if (ret)
+			return log_msg_ret("uc1", ret);
+		if (ofnode_write_string(node, UPLP_UPL_PARAMS_COMPAT, "isa") ||
+		    add_addr_size_cells(node, 2, 1))
+			return log_msg_ret("uc2", -EINVAL);
+	}
+
 	first = alist_get(&ser->reg, 0, struct memregion);
 	sprintf(name, UPLN_SERIAL "@%llx", first->base);
-	ret = ofnode_add_subnode(root, name, &node);
-	if (ret)
-		return log_msg_ret("img", ret);
+	ret = ofnode_add_subnode(node, name, &node);
+	if (ret) {
+		if (ret == -EEXIST) {
+			if (skip_existing)
+				return 0;
+		} else {
+			return log_msg_ret("img", ret);
+		}
+	}
+
+	// ret = ofnode_write_string(node, UPLP_COMPATIBLE, "ns8250");
 	ret = ofnode_write_string(node, UPLP_COMPATIBLE, ser->compatible);
 	if (!ret)
 		ret = ofnode_write_u32(node, UPLP_CLOCK_FREQUENCY,
