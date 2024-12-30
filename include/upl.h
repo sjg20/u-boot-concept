@@ -328,7 +328,7 @@ struct upl {
  * @root: root node to write it to
  * @skip_existing: Avoid recreating any nodes which already exist in the
  * devicetree. For example, if there is a serial node, just leave it alone,
- * since don't need to create a new one
+ * since we don't need to create a new one
  * Return: 0 on success, -ve on error
  */
 int upl_write_handoff(const struct upl *upl, ofnode root, bool skip_existing);
