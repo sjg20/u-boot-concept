@@ -87,7 +87,7 @@ int upl_add_serial(struct upl_serial *ser)
 	return 0;
 }
 
-int upl_add_graphics(struct upl_graphics *gra)
+int upl_add_graphics(struct upl_graphics *gra, ulong *basep, ulong *sizep)
 {
 	struct video_uc_plat *plat;
 	struct video_priv *priv;
@@ -101,6 +101,8 @@ int upl_add_graphics(struct upl_graphics *gra)
 	plat = dev_get_uclass_plat(dev);
 	region.base = plat->base;
 	region.size = plat->size;
+	*basep = plat->base;
+	*sizep = plat->size;
 	if (!alist_add(&gra->reg, region))
 		return log_msg_ret("reg", -ENOMEM);
 
