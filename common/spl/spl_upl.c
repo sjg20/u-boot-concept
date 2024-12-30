@@ -51,7 +51,7 @@ int _upl_add_image(int node, ulong load_addr, ulong size, const char *desc)
 	return 0;
 }
 
-int spl_write_upl_handoff(struct spl_image_info *spl_image)
+int spl_write_upl_handoff(void)
 {
 	struct upl *upl = &s_upl;
 	struct abuf buf;
