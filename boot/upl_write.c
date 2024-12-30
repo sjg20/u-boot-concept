@@ -197,8 +197,9 @@ static int add_upl_params(const struct upl *upl, ofnode options)
  */
 static int add_upl_image(const struct upl *upl, ofnode options)
 {
+	const struct upl_image *img;
 	ofnode node;
-	int ret, i;
+	int ret;
 
 	ret = ofnode_add_subnode(options, UPLN_UPL_IMAGE, &node);
 	if (ret)
@@ -212,15 +213,13 @@ static int add_upl_image(const struct upl *upl, ofnode options)
 	if (ret)
 		return log_msg_ret("cnf", ret);
 
-	for (i = 0; i < upl->image.count; i++) {
-		const struct upl_image *img;
+	alist_for_each(img, &upl->image) {
 		char buf[sizeof(u64) * 4];
 		struct memregion reg;
 		ofnode subnode;
 		char name[30];
 		int len;
 
-		img = alist_get(&upl->image, i, struct upl_image);
 		snprintf(name, sizeof(name), UPLN_IMAGE "@%lx", img->load);
 		ret = ofnode_add_subnode(node, name, &subnode);
 		if (ret)
@@ -262,13 +261,10 @@ static int buffer_addr_size(const struct upl *upl, char *buf, int size,
 			    uint num_regions, const struct alist *region)
 {
 	char *ptr, *end = buf + size;
-	int i;
+	const struct memregion *reg;
 
 	ptr = buf;
-	for (i = 0; i < num_regions; i++) {
-		const struct memregion *reg = alist_get(region, i,
-							struct memregion);
-
+	alist_for_each(reg, region) {
 		if (upl->addr_cells == 1)
 			*(u32 *)ptr = cpu_to_fdt32(reg->base);
 		else
@@ -296,11 +292,9 @@ static int buffer_addr_size(const struct upl *upl, char *buf, int size,
  */
 static int add_upl_memory(const struct upl *upl, ofnode root)
 {
-	int i;
+	const struct upl_mem *mem;
 
-	for (i = 0; i < upl->mem.count; i++) {
-		const struct upl_mem *mem = alist_get(&upl->mem, i,
-						      struct upl_mem);
+	alist_for_each(mem, &upl->mem) {
 		char buf[mem->region.count * sizeof(64) * 2];
 		const struct memregion *first;
 		char name[26];
@@ -308,7 +302,7 @@ static int add_upl_memory(const struct upl *upl, ofnode root)
 		ofnode node;
 
 		if (!mem->region.count) {
-			log_debug("Memory %d has no regions\n", i);
+			log_debug("Memory has no regions\n");
 			return log_msg_ret("reg", -EINVAL);
 		}
 		first = alist_get(&mem->region, 0, struct memregion);
@@ -342,8 +336,9 @@ static int add_upl_memory(const struct upl *upl, ofnode root)
  */
 static int add_upl_memmap(const struct upl *upl, ofnode root)
 {
+	const struct upl_memmap *memmap;
 	ofnode mem_node;
-	int i, ret;
+	int ret;
 
 	if (!upl->memmap.count)
 		return 0;
@@ -351,9 +346,7 @@ static int add_upl_memmap(const struct upl *upl, ofnode root)
 	if (ret)
 		return log_msg_ret("img", ret);
 
-	for (i = 0; i < upl->memmap.count; i++) {
-		const struct upl_memmap *memmap = alist_get(&upl->memmap, i,
-							struct upl_memmap);
+	alist_for_each(memmap, &upl->memmap) {
 		char buf[memmap->region.count * sizeof(64) * 2];
 		const struct memregion *first;
 		char name[26];
@@ -361,7 +354,7 @@ static int add_upl_memmap(const struct upl *upl, ofnode root)
 		ofnode node;
 
 		if (!memmap->region.count) {
-			log_debug("Memory %d has no regions\n", i);
+			log_debug("Memory-map has no regions\n");
 			return log_msg_ret("reg", -EINVAL);
 		}
 		first = alist_get(&memmap->region, 0, struct memregion);
@@ -396,8 +389,9 @@ static int add_upl_memmap(const struct upl *upl, ofnode root)
 static int add_upl_memres(const struct upl *upl, ofnode root,
 			  bool skip_existing)
 {
+	const struct upl_memres *memres;
 	ofnode mem_node;
-	int i, ret;
+	int ret;
 
 	if (!upl->memres.count)
 		return 0;
@@ -411,9 +405,7 @@ static int add_upl_memres(const struct upl *upl, ofnode root,
 	if (ret)
 		return log_msg_ret("im2", ret);
 
-	for (i = 0; i < upl->memres.count; i++) {
-		const struct upl_memres *memres = alist_get(&upl->memres, i,
-							struct upl_memres);
+	alist_for_each(memres, &upl->memres) {
 		char buf[memres->region.count * sizeof(64) * 2];
 		const struct memregion *first;
 		char name[26];
@@ -421,7 +413,7 @@ static int add_upl_memres(const struct upl *upl, ofnode root,
 		ofnode node;
 
 		if (!memres->region.count) {
-			log_debug("Memory %d has no regions\n", i);
+			log_debug("Memory-reserved has no regions\n");
 			return log_msg_ret("reg", -EINVAL);
 		}
 		first = alist_get(&memres->region, 0, struct memregion);
