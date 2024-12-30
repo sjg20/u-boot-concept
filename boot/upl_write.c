@@ -336,7 +336,7 @@ static int write_mem_node(const struct upl *upl, ofnode parent,
 			  const struct alist *mem, const char *leaf,
 			  ofnode *nodep)
 {
-	char buf[mem->count * sizeof(64) * 2];
+	char buf[mem->count * sizeof(u64) * 2];
 	const struct memregion *first;
 	char name[26];
 	ofnode node;
