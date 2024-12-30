@@ -30,6 +30,7 @@ usage() {
 	echo "   -R <os>   - Select OS release (e.g. 24.04)"
 	echo "   -s        - Use serial only (no display)"
 	echo "   -S <seq>  - Select SCT sequence-file"
+	echo "   -u <file> - Run Universal Payload (UPL) file"
 	echo "   -w        - Use word version (32-bit)" ) >&2
 	exit 1
 }
@@ -69,11 +70,14 @@ serial=
 # Use kvm
 kvm=
 
+# Use UPL
+upl=
+
 # Set ubdir to the build directory where you build U-Boot out-of-tree
 # We avoid in-tree build because it gets confusing trying different builds
 ubdir=${ubdir-/tmp/b}
 
-while getopts "a:Beko:rR:sS:w" opt; do
+while getopts "a:Beko:rR:sS:u:w" opt; do
 	case "${opt}" in
 	a)
 		arch=$OPTARG
@@ -113,6 +117,9 @@ while getopts "a:Beko:rR:sS:w" opt; do
 	S)
 		seq=$OPTARG
 		;;
+	u)
+		upl=$OPTARG
+		;;
 	w)
 		bitness=32
 		;;
@@ -140,10 +147,23 @@ update_sct_seq() {
 	sudo losetup -d ${LOOP}
 }
 
+# Add a Universal Payload into the image
+add_upl() {
+	if [[ -z "${upl}" ]]; then
+		return
+	fi
+	qemu-img create upl.img 8M
+	mkfs.fat upl.img
+	mcopy -vs -i upl.img "${upl}" ::/upl.fit
+}
+
 # Run QEMU with U-Boot
 run_qemu() {
 	if [[ -n "${os_image}" ]]; then
 		extra+=" -drive if=virtio,file=${os_image},format=raw,id=hd0"
+	fi
+	if [[ -n "${upl}" ]]; then
+		extra+=" -drive if=virtio,file=upl.img,format=raw,id=hd0"
 	fi
 	if [[ -n "${serial}" ]]; then
 		extra+=" -display none -serial mon:stdio"
@@ -203,8 +223,9 @@ DIR=${ubdir}/${BOARD}
 
 if [[ -n "${build}" ]]; then
 	build_u_boot
-	update_sct_seq
 fi
+update_sct_seq
+add_upl
 
 if [[ -n "${run}" ]]; then
 	run_qemu
