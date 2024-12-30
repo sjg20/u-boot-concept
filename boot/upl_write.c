@@ -312,7 +312,7 @@ static int add_upl_memory(const struct upl *upl, ofnode root)
 			return log_msg_ret("reg", -EINVAL);
 		}
 		first = alist_get(&mem->region, 0, struct memregion);
-		sprintf(name, UPLN_MEMORY "@0x%lx", first->base);
+		sprintf(name, UPLN_MEMORY "@%llx", first->base);
 		ret = ofnode_add_subnode(root, name, &node);
 		if (ret)
 			return log_msg_ret("mem", ret);
@@ -365,7 +365,7 @@ static int add_upl_memmap(const struct upl *upl, ofnode root)
 			return log_msg_ret("reg", -EINVAL);
 		}
 		first = alist_get(&memmap->region, 0, struct memregion);
-		sprintf(name, "%s@0x%lx", memmap->name, first->base);
+		sprintf(name, "%s@%llx", memmap->name, first->base);
 		ret = ofnode_add_subnode(mem_node, name, &node);
 		if (ret)
 			return log_msg_ret("memmap", ret);
@@ -425,7 +425,7 @@ static int add_upl_memres(const struct upl *upl, ofnode root,
 			return log_msg_ret("reg", -EINVAL);
 		}
 		first = alist_get(&memres->region, 0, struct memregion);
-		sprintf(name, "memory@%lx", first->base);
+		sprintf(name, "memory@%llx", first->base);
 		ret = ofnode_add_subnode(mem_node, name, &node);
 		if (ret)
 			return log_msg_ret("memres", ret);
@@ -471,7 +471,7 @@ static int add_upl_serial(const struct upl *upl, ofnode root,
 	if (!ser->reg.count)
 		return log_msg_ret("ser", -EINVAL);
 	first = alist_get(&ser->reg, 0, struct memregion);
-	sprintf(name, UPLN_SERIAL "@0x%lx", first->base);
+	sprintf(name, UPLN_SERIAL "@%llx", first->base);
 	ret = ofnode_add_subnode(root, name, &node);
 	if (ret)
 		return log_msg_ret("img", ret);
@@ -531,7 +531,7 @@ static int add_upl_graphics(const struct upl *upl, ofnode root)
 	if (!gra->reg.count)
 		return log_msg_ret("gra", -ENOENT);
 	first = alist_get(&gra->reg, 0, struct memregion);
-	sprintf(name, UPLN_GRAPHICS "@0x%lx", first->base);
+	sprintf(name, UPLN_GRAPHICS "@%llx", first->base);
 	ret = ofnode_add_subnode(root, name, &node);
 	if (ret)
 		return log_msg_ret("gra", ret);
