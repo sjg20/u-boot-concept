@@ -144,6 +144,42 @@ static int ofnode_write_value(ofnode node, const char *prop,
 }
 
 /**
+ * encode_addr_size() - Write an address/size pair
+ *
+ * Writes an address and size into a buffer suitable for placing in a devicetree
+ * 'reg' property. This uses upl->addr/size_cells to determine the number of
+ * cells for each value
+ *
+ * @upl: UPL state
+ * @buf: Buffer to write to
+ * @size: Buffer size in bytes
+ * @reg: Region to process
+ * Returns: Number of bytes written, or -ENOSPC if the buffer is too small
+ */
+static int encode_addr_size(const struct upl *upl, char *buf, uint size,
+			    const struct memregion *reg)
+{
+	char *ptr = buf;
+
+	if (sizeof(fdt32_t) * (upl->addr_cells + upl->size_cells) > size)
+		return log_msg_ret("eas", -ENOSPC);
+
+	if (upl->addr_cells == 1)
+		*(u32 *)ptr = cpu_to_fdt32(reg->base);
+	else
+		*(u64 *)ptr = cpu_to_fdt64(reg->base);
+	ptr += upl->addr_cells * sizeof(u32);
+
+	if (upl->size_cells == 1)
+		*(u32 *)ptr = cpu_to_fdt32(reg->size);
+	else
+		*(u64 *)ptr = cpu_to_fdt64(reg->size);
+	ptr += upl->size_cells * sizeof(u32);
+
+	return ptr - buf;
+}
+
+/**
  * encode_reg() - Generate a set of addr/size pairs
  *
  * Each base/size value from each region is written to the buffer in a suitable
@@ -166,20 +202,12 @@ static int encode_reg(const struct upl *upl, char *buf, int size,
 	for (i = 0; i < num_regions; i++) {
 		const struct memregion *reg = alist_get(region, i,
 							struct memregion);
+		int ret;
 
-		if (upl->addr_cells == 1)
-			*(u32 *)ptr = cpu_to_fdt32(reg->base);
-		else
-			*(u64 *)ptr = cpu_to_fdt64(reg->base);
-		ptr += upl->addr_cells * sizeof(u32);
-
-		if (upl->size_cells == 1)
-			*(u32 *)ptr = cpu_to_fdt32(reg->size);
-		else
-			*(u64 *)ptr = cpu_to_fdt64(reg->size);
-		ptr += upl->size_cells * sizeof(u32);
-		if (ptr > end)
-			return log_msg_ret("uer", -ENOSPC);
+		ret = encode_addr_size(upl, ptr, end - ptr, reg);
+		if (ret < 0)
+			return log_msg_ret("uer", ret);
+		ptr += ret;
 	}
 
 	return ptr - buf;
