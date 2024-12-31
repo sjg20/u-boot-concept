@@ -173,6 +173,49 @@ static int read_uint(ofnode node, const char *prop, uint *valp)
 }
 
 /**
+ * decode_reg() - Decide a set of addr/size pairs
+ *
+ * Each base/size value from the devicetree is written to the region list
+ *
+ * @upl: UPL state
+ * @buf: Bytes to decode
+ * @size: Number of bytes to decode
+ * @regions: List of regions to process (struct memregion)
+ * Returns: number of regions found, if OK, else -ve on error
+ */
+static int decode_reg(const struct upl *upl, const char *buf, int size,
+		      struct alist *regions)
+{
+	const char *ptr, *end = buf + size;
+	int i;
+
+	alist_init_struct(regions, struct memregion);
+	ptr = buf;
+	for (i = 0; ptr < end; i++) {
+		struct memregion reg;
+
+		if (upl->addr_cells == 1)
+			reg.base = fdt32_to_cpu(*(u32 *)ptr);
+		else
+			reg.base = fdt64_to_cpu(*(u64 *)ptr);
+		ptr += upl->addr_cells * sizeof(u32);
+
+		if (upl->size_cells == 1)
+			reg.size = fdt32_to_cpu(*(u32 *)ptr);
+		else
+			reg.size = fdt64_to_cpu(*(u64 *)ptr);
+		ptr += upl->size_cells * sizeof(u32);
+		if (ptr > end)
+			return -ENOSPC;
+
+		if (!alist_add(regions, reg))
+			return log_msg_ret("reg", -ENOMEM);
+	}
+
+	return i;
+}
+
+/**
  * decode_root_props() - Decode root properties from the tree
  *
  * @upl: UPL state
@@ -270,49 +313,6 @@ static int decode_upl_images(struct upl *upl, ofnode options)
 }
 
 /**
- * decode_addr_size() - Decide a set of addr/size pairs
- *
- * Each base/size value from the devicetree is written to the region list
- *
- * @upl: UPL state
- * @buf: Bytes to decode
- * @size: Number of bytes to decode
- * @regions: List of regions to process (struct memregion)
- * Returns: number of regions found, if OK, else -ve on error
- */
-static int decode_addr_size(const struct upl *upl, const char *buf, int size,
-			    struct alist *regions)
-{
-	const char *ptr, *end = buf + size;
-	int i;
-
-	alist_init_struct(regions, struct memregion);
-	ptr = buf;
-	for (i = 0; ptr < end; i++) {
-		struct memregion reg;
-
-		if (upl->addr_cells == 1)
-			reg.base = fdt32_to_cpu(*(u32 *)ptr);
-		else
-			reg.base = fdt64_to_cpu(*(u64 *)ptr);
-		ptr += upl->addr_cells * sizeof(u32);
-
-		if (upl->size_cells == 1)
-			reg.size = fdt32_to_cpu(*(u32 *)ptr);
-		else
-			reg.size = fdt64_to_cpu(*(u64 *)ptr);
-		ptr += upl->size_cells * sizeof(u32);
-		if (ptr > end)
-			return -ENOSPC;
-
-		if (!alist_add(regions, reg))
-			return log_msg_ret("reg", -ENOMEM);
-	}
-
-	return i;
-}
-
-/**
  * node_matches_at() - Check if a node name matches "base@..."
  *
  * Return: true if the node name matches the base string followed by an @ sign;
@@ -345,7 +345,7 @@ static int decode_upl_memory_node(struct upl *upl, ofnode node)
 			    ofnode_get_name(node), UPLP_REG);
 		return log_msg_ret("reg", -EINVAL);
 	}
-	len = decode_addr_size(upl, buf, size, &mem.region);
+	len = decode_reg(upl, buf, size, &mem.region);
 	if (len < 0)
 		return log_msg_ret("buf", len);
 	mem.hotpluggable = ofnode_read_bool(node, UPLP_HOTPLUGGABLE);
@@ -381,7 +381,7 @@ static int decode_upl_memmap(struct upl *upl, ofnode root)
 			continue;
 		}
 
-		len = decode_addr_size(upl, buf, size, &memmap.region);
+		len = decode_reg(upl, buf, size, &memmap.region);
 		if (len < 0)
 			return log_msg_ret("buf", len);
 		ret = ofnode_read_bitmask(node, UPLP_USAGE, usage_names,
@@ -422,7 +422,7 @@ static int decode_upl_memres(struct upl *upl, ofnode root)
 			continue;
 		}
 
-		len = decode_addr_size(upl, buf, size, &memres.region);
+		len = decode_reg(upl, buf, size, &memres.region);
 		if (len < 0)
 			return log_msg_ret("buf", len);
 		memres.no_map = ofnode_read_bool(node, UPLP_NO_MAP);
@@ -467,7 +467,7 @@ static int decode_upl_serial(struct upl *upl, ofnode node)
 		return log_msg_ret("reg", -EINVAL);
 	}
 
-	len = decode_addr_size(upl, buf, sizeof(buf), &ser->reg);
+	len = decode_reg(upl, buf, sizeof(buf), &ser->reg);
 	if (len < 0)
 		return log_msg_ret("buf", len);
 
@@ -520,7 +520,7 @@ static int decode_upl_graphics(struct upl *upl, ofnode node)
 		return log_msg_ret("reg", -EINVAL);
 	}
 
-	len = decode_addr_size(upl, buf, size, &gra->reg);
+	len = decode_reg(upl, buf, size, &gra->reg);
 	if (len < 0)
 		return log_msg_ret("buf", len);
 
