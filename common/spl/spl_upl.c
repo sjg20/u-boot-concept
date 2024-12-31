@@ -21,14 +21,14 @@ void upl_set_fit_addr(ulong fit)
 {
 	struct upl *upl = &s_upl;
 
-	upl->fit = fit;
+	upl->fit.base = fit;
 }
 
 void upl_set_fit_info(ulong fit, int conf_offset, ulong entry_addr)
 {
 	struct upl *upl = &s_upl;
 
-	upl->fit = fit;
+	upl->fit.base = fit;
 	upl->conf_offset = conf_offset;
 	log_debug("upl: add fit %lx conf %x\n", fit, conf_offset);
 }
