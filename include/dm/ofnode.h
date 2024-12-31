@@ -589,7 +589,9 @@ bool ofnode_read_bool(ofnode node, const char *propname);
  * ofnode_find_subnode() - find a named subnode of a parent node
  *
  * @node:	valid reference to parent node
- * @subnode_name: name of subnode to find
+ * @subnode_name: name of subnode to find, including any unit address. If the
+ *	unit address is omitted, any subnode which matches the name (excluding
+ *	any unit address) is returned
  * Return: reference to subnode (which can be invalid if there is no such
  * subnode)
  */
