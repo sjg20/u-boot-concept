@@ -250,7 +250,7 @@ struct upl_graphics {
  * @addr_cells: Number of address cells used in the handoff
  * @size_cells: Number of size cells used in the handoff
  * @bootmode: Boot-mode mask (enum upl_boot_mode)
- * @fit: Address of FIT image that was loaded
+ * @fit: Address and size of FIT image that was loaded
  * @conf_offset: Offset in FIT of the configuration that was selected
  * @addr_width: Adress-bus width of machine, e.g. 46 for 46 bits
  * @acpi_nvs_size: Size of the ACPI non-volatile-storage area in bytes
@@ -266,7 +266,7 @@ struct upl {
 	ulong smbios;
 	ulong acpi;
 	uint bootmode;
-	ulong fit;
+	struct memregion fit;
 	uint conf_offset;
 	uint addr_width;
 	uint acpi_nvs_size;

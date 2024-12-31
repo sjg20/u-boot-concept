@@ -31,7 +31,7 @@ static int do_upl_info(struct cmd_tbl *cmdtp, int flag, int argc,
 	if (argc > 1 && !strcmp("-v", argv[1])) {
 		int i;
 
-		printf("fit %lx\n", upl->fit);
+		printf("fit %llx size %lx\n", upl->fit.base, upl->fit.size);
 		printf("conf_offset %x\n", upl->conf_offset);
 		for (i = 0; i < upl->image.count; i++) {
 			const struct upl_image *img =

@@ -244,6 +244,9 @@ static int add_upl_params(const struct upl *upl, ofnode options)
 	ofnode node;
 	int ret;
 
+	ret = add_addr_size_cells(options, upl->addr_cells, upl->size_cells);
+	if (ret)
+		return log_msg_ret("upa", ret);
 	ret = ofnode_add_subnode(options, UPLN_UPL_PARAMS, &node);
 	if (ret)
 		return log_msg_ret("img", ret);
@@ -276,20 +279,34 @@ static int add_upl_params(const struct upl *upl, ofnode options)
  */
 static int add_upl_images(const struct upl *upl, ofnode options)
 {
+	char name[40];
 	ofnode node;
 	int ret, i;
 
-	ret = ofnode_add_subnode(options, UPLN_UPL_IMAGES, &node);
+	snprintf(name, sizeof(name), UPLN_UPL_IMAGES "@%llx", upl->fit.base);
+	ret = ofnode_add_subnode(options, name, &node);
 	if (ret)
 		return log_msg_ret("img", ret);
 
-	if (upl->fit)
-		ret = ofnode_write_u32(node, UPLP_FIT, upl->fit);
-	if (!ret && upl->conf_offset)
+	if (upl->fit.base) {
+		char buf[4 * sizeof(u64)];
+
+		ret = encode_addr_size(upl, buf, sizeof(buf), &upl->fit);
+		if (ret < 0)
+			return log_msg_ret("uft", ret);
+		ret = ofnode_write_prop(node, UPLP_REG, buf, ret, true);
+		if (ret)
+			return log_msg_ret("ufw", ret);
+	}
+	if (upl->conf_offset)
 		ret = ofnode_write_u32(node, UPLP_CONF_OFFSET,
 				       upl->conf_offset);
 	if (ret)
 		return log_msg_ret("cnf", ret);
+
+	ret = add_addr_size_cells(node, upl->addr_cells, upl->size_cells);
+	if (ret)
+		return log_msg_ret("upi", ret);
 
 	for (i = 0; i < upl->image.count; i++) {
 		const struct upl_image *img = alist_get(&upl->image, i,

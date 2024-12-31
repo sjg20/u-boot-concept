@@ -310,6 +310,8 @@ static int decode_upl_params(struct upl *upl, ofnode options)
 static int decode_upl_images(struct upl *upl, ofnode options)
 {
 	ofnode node, images;
+	const char *buf;
+	int size;
 	int ret;
 
 	images = ofnode_find_subnode(options, UPLN_UPL_IMAGES);
@@ -317,9 +319,13 @@ static int decode_upl_images(struct upl *upl, ofnode options)
 		return log_msg_ret("img", -EINVAL);
 	log_debug("decoding '%s'\n", ofnode_get_name(images));
 
-	ret = read_addr(upl, images, UPLP_FIT, &upl->fit);
-	if (!ret)
-		ret = read_uint(images, UPLP_CONF_OFFSET, &upl->conf_offset);
+	buf = ofnode_read_prop(images, UPLP_REG, &size);
+	if (buf) {
+		ret = decode_addr_size(upl, buf, size, &upl->fit);
+		if (ret < 0)
+			return log_msg_ret("uft", ret);
+	}
+	ret = read_uint(images, UPLP_CONF_OFFSET, &upl->conf_offset);
 	if (ret)
 		return log_msg_ret("cnf", ret);
 

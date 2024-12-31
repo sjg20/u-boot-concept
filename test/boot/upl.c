@@ -46,7 +46,8 @@ int upl_get_test_data(struct unit_test_state *uts, struct upl *upl)
 	upl->smbios = 0x123;
 	upl->acpi = 0x456;
 	upl->bootmode = BIT(UPLBM_DEFAULT) | BIT(UPLBM_S3);
-	upl->fit = 0x789;
+	upl->fit.base = 0x789;
+	upl->fit.size = 0xabc;
 	upl->conf_offset = 0x234;
 	upl->addr_width = 46;
 	upl->acpi_nvs_size = 0x100;
@@ -294,7 +295,8 @@ static int compare_upl(struct unit_test_state *uts, struct upl *base,
 	ut_asserteq(base->smbios, cmp->smbios);
 	ut_asserteq(base->acpi, cmp->acpi);
 	ut_asserteq(base->bootmode, cmp->bootmode);
-	ut_asserteq(base->fit, cmp->fit);
+	ut_asserteq(base->fit.base, cmp->fit.base);
+	ut_asserteq(base->fit.size, cmp->fit.size);
 	ut_asserteq(base->conf_offset, cmp->conf_offset);
 	ut_asserteq(base->addr_width, cmp->addr_width);
 	ut_asserteq(base->acpi_nvs_size, cmp->acpi_nvs_size);
@@ -411,14 +413,14 @@ static int upl_test_info_norun(struct unit_test_state *uts)
 
 	ut_assertok(run_command("upl info -v", 0));
 	ut_assert_nextline("UPL state: active");
-	ut_assert_nextline("fit %lx", upl->fit);
+	ut_assert_nextline("fit %llx (size %lx)", upl->fit.base, upl->fit.size);
 	ut_assert_nextline("conf_offset %x", upl->conf_offset);
 	ut_assert_nextlinen("image 0");
 	ut_assert_nextlinen("image 1");
 	ut_assert_console_end();
 
 	/* check the offsets */
-	fit = map_sysmem(upl->fit, 0);
+	fit = map_sysmem(upl->fit.base, 0);
 	ut_asserteq_str("conf-1", fdt_get_name(fit, upl->conf_offset, NULL));
 
 	ut_asserteq(2, upl->image.count);
