@@ -173,6 +173,42 @@ static int read_uint(ofnode node, const char *prop, uint *valp)
 }
 
 /**
+ * decode_addr_size() - Read an address/size pair
+ *
+ * Reads an address and size from a buffer containing a devicetree 'reg'
+ * property. This uses upl->addr/size_cells to determine the number of cells for
+ * each value
+ *
+ * @upl: UPL state
+ * @buf: Buffer to read from
+ * @size: Buffer size in bytes
+ * @reg: Region to process
+ * Returns: Number of bytes written, or -ENOSPC if the buffer is too small
+ */
+static int decode_addr_size(const struct upl *upl, const char *buf, uint size,
+			    struct memregion *reg)
+{
+	const char *ptr = buf;
+
+	if (sizeof(fdt32_t) * (upl->addr_cells + upl->size_cells) > size)
+		return log_msg_ret("was", -ENOSPC);
+
+	if (upl->addr_cells == 1)
+		reg->base = fdt32_to_cpu(*(u32 *)ptr);
+	else
+		reg->base = fdt64_to_cpu(*(u64 *)ptr);
+	ptr += upl->addr_cells * sizeof(u32);
+
+	if (upl->size_cells == 1)
+		reg->size = fdt32_to_cpu(*(u32 *)ptr);
+	else
+		reg->size = fdt64_to_cpu(*(u64 *)ptr);
+	ptr += upl->size_cells * sizeof(u32);
+
+	return ptr - buf;
+}
+
+/**
  * decode_reg() - Decide a set of addr/size pairs
  *
  * Each base/size value from the devicetree is written to the region list
@@ -193,23 +229,16 @@ static int decode_reg(const struct upl *upl, const char *buf, int size,
 	ptr = buf;
 	for (i = 0; ptr < end; i++) {
 		struct memregion reg;
+		int ret;
 
-		if (upl->addr_cells == 1)
-			reg.base = fdt32_to_cpu(*(u32 *)ptr);
-		else
-			reg.base = fdt64_to_cpu(*(u64 *)ptr);
-		ptr += upl->addr_cells * sizeof(u32);
+		ret = decode_addr_size(upl, ptr, end - ptr, &reg);
+		if (ret < 0)
+			return log_msg_ret("udr", ret);
 
-		if (upl->size_cells == 1)
-			reg.size = fdt32_to_cpu(*(u32 *)ptr);
-		else
-			reg.size = fdt64_to_cpu(*(u64 *)ptr);
-		ptr += upl->size_cells * sizeof(u32);
-		if (ptr > end)
-			return -ENOSPC;
+		ptr += ret;
 
 		if (!alist_add(regions, reg))
-			return log_msg_ret("reg", -ENOMEM);
+			return log_msg_ret("udm", -ENOMEM);
 	}
 
 	return i;
