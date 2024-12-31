@@ -144,6 +144,48 @@ static int ofnode_write_value(ofnode node, const char *prop,
 }
 
 /**
+ * encode_reg() - Generate a set of addr/size pairs
+ *
+ * Each base/size value from each region is written to the buffer in a suitable
+ * format to be written to the devicetree
+ *
+ * @upl: UPL state
+ * @buf: Buffer to write to
+ * @size: Buffer size
+ * @num_regions: Number of regions to process
+ * @region: List of regions to process (struct memregion)
+ * Returns: Number of bytes written, or -ENOSPC if the buffer is too small
+ */
+static int encode_reg(const struct upl *upl, char *buf, int size,
+		      uint num_regions, const struct alist *region)
+{
+	char *ptr, *end = buf + size;
+	int i;
+
+	ptr = buf;
+	for (i = 0; i < num_regions; i++) {
+		const struct memregion *reg = alist_get(region, i,
+							struct memregion);
+
+		if (upl->addr_cells == 1)
+			*(u32 *)ptr = cpu_to_fdt32(reg->base);
+		else
+			*(u64 *)ptr = cpu_to_fdt64(reg->base);
+		ptr += upl->addr_cells * sizeof(u32);
+
+		if (upl->size_cells == 1)
+			*(u32 *)ptr = cpu_to_fdt32(reg->size);
+		else
+			*(u64 *)ptr = cpu_to_fdt64(reg->size);
+		ptr += upl->size_cells * sizeof(u32);
+		if (ptr > end)
+			return log_msg_ret("uer", -ENOSPC);
+	}
+
+	return ptr - buf;
+}
+
+/**
  * add_addr_size_cells() - Add #address/#size-cells properties to the tree
  *
  * @node: Node to add to
@@ -248,48 +290,6 @@ static int add_upl_image(const struct upl *upl, ofnode options)
 }
 
 /**
- * buffer_addr_size() - Generate a set of addr/size pairs
- *
- * Each base/size value from each region is written to the buffer in a suitable
- * format to be written to the devicetree
- *
- * @upl: UPL state
- * @buf: Buffer to write to
- * @size: Buffer size
- * @num_regions: Number of regions to process
- * @region: List of regions to process (struct memregion)
- * Returns: Number of bytes written, or -ENOSPC if the buffer is too small
- */
-static int buffer_addr_size(const struct upl *upl, char *buf, int size,
-			    uint num_regions, const struct alist *region)
-{
-	char *ptr, *end = buf + size;
-	int i;
-
-	ptr = buf;
-	for (i = 0; i < num_regions; i++) {
-		const struct memregion *reg = alist_get(region, i,
-							struct memregion);
-
-		if (upl->addr_cells == 1)
-			*(u32 *)ptr = cpu_to_fdt32(reg->base);
-		else
-			*(u64 *)ptr = cpu_to_fdt64(reg->base);
-		ptr += upl->addr_cells * sizeof(u32);
-
-		if (upl->size_cells == 1)
-			*(u32 *)ptr = cpu_to_fdt32(reg->size);
-		else
-			*(u64 *)ptr = cpu_to_fdt64(reg->size);
-		ptr += upl->size_cells * sizeof(u32);
-		if (ptr > end)
-			return -ENOSPC;
-	}
-
-	return ptr - buf;
-}
-
-/**
  * write_mem_node() - Write a memory node and reg property
  *
  * Creates a new node and then adds a 'reg' property within it, listing each of
@@ -322,7 +322,7 @@ static int write_mem_node(const struct upl *upl, ofnode parent,
 	if (ret)
 		return log_msg_ret("wmn", ret);
 
-	len = buffer_addr_size(upl, buf, sizeof(buf), mem->count, mem);
+	len = encode_reg(upl, buf, sizeof(buf), mem->count, mem);
 	ret = ofnode_write_prop(node, UPLP_REG, buf, len, true);
 	if (ret)
 		return log_msg_ret("wm1", ret);
@@ -483,7 +483,7 @@ static int add_upl_serial(const struct upl *upl, ofnode root,
 		char buf[16];
 		int len;
 
-		len = buffer_addr_size(upl, buf, sizeof(buf), 1, &ser->reg);
+		len = encode_reg(upl, buf, sizeof(buf), 1, &ser->reg);
 		if (len < 0)
 			return log_msg_ret("buf", len);
 
@@ -538,7 +538,7 @@ static int add_upl_graphics(const struct upl *upl, ofnode root)
 		char buf[16];
 		int len;
 
-		len = buffer_addr_size(upl, buf, sizeof(buf), 1, &gra->reg);
+		len = encode_reg(upl, buf, sizeof(buf), 1, &gra->reg);
 		if (len < 0)
 			return log_msg_ret("buf", len);
 
