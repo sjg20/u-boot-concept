@@ -186,7 +186,10 @@ static int dm_test_compare_node_name(struct unit_test_state *uts)
 	ut_assert(ofnode_valid(node));
 	ut_assert(ofnode_name_eq(node, "mmio-bus"));
 
-	ut_assert(!ofnode_name_eq(node, "mmio-bus@0"));
+	ut_assert(ofnode_name_eq(node, "mmio-bus@0"));
+	ut_assert(!ofnode_name_eq(node, "mmio-bus@1"));
+	ut_assert(!ofnode_name_eq(node, "mmio-bu"));
+	ut_assert(!ofnode_name_eq(node, "mmio-buss@0"));
 
 	return 0;
 }

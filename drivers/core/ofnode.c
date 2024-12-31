@@ -298,15 +298,25 @@ static ofnode ofnode_from_tree_offset(oftree tree, int offset)
 
 bool ofnode_name_eq(ofnode node, const char *name)
 {
-	const char *node_name;
-	size_t len;
+	const char *node_name, *p;
+	int len;
 
 	assert(ofnode_valid(node));
 
 	node_name = ofnode_get_name(node);
-	len = strchrnul(node_name, '@') - node_name;
 
-	return (strlen(name) == len) && !strncmp(node_name, name, len);
+	/* check the whole name */
+	if (!strcmp(node_name, name))
+		return true;
+
+	/* if @name has no unit address, try the node name without it */
+	len = strlen(name);
+	p = strchr(node_name, '@');
+	if (p && !strchr(name, '@') && len == p - node_name &&
+	    !strncmp(node_name, name, len))
+		return true;
+
+	return false;
 }
 
 int ofnode_read_u8(ofnode node, const char *propname, u8 *outp)

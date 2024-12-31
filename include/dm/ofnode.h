@@ -389,7 +389,9 @@ void oftree_dispose(oftree tree);
  * ofnode_name_eq() - Check a node name ignoring its unit address
  *
  * @node:	valid node to compared, which may have a unit address
- * @name:	name (without unit address) to compare with the node name
+ * @name:	name to compare with the node name. If this contains a unit
+ *		address, it is matched, otherwise the unit address is ignored
+ *		when searching for matches
  * Return: true if matches, false if it doesn't match
  */
 bool ofnode_name_eq(ofnode node, const char *name);
