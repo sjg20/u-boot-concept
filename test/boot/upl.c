@@ -6,6 +6,8 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
+#define LOG_CATEGORY UCLASS_BOOTSTD
+
 #include <abuf.h>
 #include <mapmem.h>
 #include <upl.h>
@@ -341,6 +343,10 @@ static int upl_test_base(struct unit_test_state *uts)
 	ut_assertok(upl_create_handoff_tree(&upl, &tree));
 	ut_assertok(oftree_to_fdt(tree, &buf));
 
+	if (_LOG_DEBUG) {
+		set_working_fdt_addr(abuf_addr(&buf));
+		ut_assertok(run_command("fdt print", 0));
+	}
 	/*
 	 * strings in check_tree and therefore check are only valid so long as
 	 * buf stays around. As soon as we call abuf_uninit they go away
