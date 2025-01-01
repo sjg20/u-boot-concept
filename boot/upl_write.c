@@ -307,6 +307,12 @@ static int add_upl_images(const struct upl *upl, ofnode options)
 						  img->description);
 		if (ret)
 			return log_msg_ret("sim", ret);
+
+		/* temporary hack for Tinaocore, until March 2025 */
+		ret = write_addr(upl, node, "addr", upl->fit.base);
+		if (ret < 0)
+			return log_msg_ret("uma", ret);
+
 	}
 
 	return 0;
