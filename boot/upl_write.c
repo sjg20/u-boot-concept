@@ -280,6 +280,7 @@ static int add_upl_images(const struct upl *upl, ofnode options)
 
 	alist_for_each(img, &upl->image) {
 		char buf[sizeof(u64) * 4];
+		const char *ptr = NULL;
 		ofnode subnode;
 		char name[30];
 		int len;
@@ -313,6 +314,15 @@ static int add_upl_images(const struct upl *upl, ofnode options)
 		if (ret < 0)
 			return log_msg_ret("uma", ret);
 
+		if (!strcmp(img->description, "UEFI Firmware Volume"))
+			ptr = "uefi-fv";
+		else if (!strcmp(img->description, "BDS Firmware Volume"))
+			ptr = "bds-fv";
+		if (ptr) {
+			ret = ofnode_write_string(node, "name", ptr);
+			if (ret < 0)
+				return log_msg_ret("uma", ret);
+		}
 	}
 
 	return 0;
