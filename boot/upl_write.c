@@ -537,14 +537,10 @@ static int add_upl_serial(const struct upl *upl, ofnode root,
 
 	parent = root;
 	if (ser->access_type == UPLAT_IO) {
-		ret = ofnode_write_string(node, UPLP_STDOUT_PATH, "/isa/serial");
-		if (ret)
-			return log_msg_ret("uc0", ret);
-
 		ret = ofnode_add_subnode(root, "isa", &node);
 		if (ret)
 			return log_msg_ret("uc1", ret);
-		if (ofnode_write_string(node, UPLP_UPL_PARAMS_COMPAT, "isa") ||
+		if (ofnode_write_string(node, UPLP_COMPATIBLE, "isa") ||
 		    add_addr_size_cells(node, 2, 1))
 			return log_msg_ret("uc2", -EINVAL);
 		parent = node;
@@ -563,7 +559,6 @@ static int add_upl_serial(const struct upl *upl, ofnode root,
 		}
 	}
 
-	// ret = ofnode_write_string(node, UPLP_COMPATIBLE, "ns8250");
 	ret = ofnode_write_string(node, UPLP_COMPATIBLE, ser->compatible);
 	if (!ret)
 		ret = ofnode_write_u32(node, UPLP_CLOCK_FREQUENCY,
