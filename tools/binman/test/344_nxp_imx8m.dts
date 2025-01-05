@@ -1,0 +1,28 @@
+// SPDX-License-Identifier: GPL-2.0+
+
+/dts-v1/;
+
+/ {
+	#address-cells = <1>;
+	#size-cells = <1>;
+
+	binman {
+		nxp-imx8mcst {
+			nxp,loader-address = <0x12340000>;
+			nxp,fast-auth;
+			offset = <0x58000>;
+			args;	/* Needed by mkimage etype superclass */
+
+			fit {
+				description = "test desc";
+				#address-cells = <1>;
+
+				images {
+				};
+
+				configurations {
+				};
+			};
+		};
+	};
+};

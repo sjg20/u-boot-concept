@@ -7822,9 +7822,45 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
         self.assertIn('Symbol-writing: no value for /binman/section/u-boot',
                       out)
 
-    def testNxpImx8Image(self):
-        """Test that binman can produce an iMX8 image"""
-        self._DoTestFile('339_nxp_imx8.dts')
+    def testNxpImx8MImage(self):
+        """Test that binman can produce an iMX8M image"""
+        self._DoTestFile('339_nxp_imx8m.dts')
+
+    def testNxpImx8MImageMkimageMissing(self):
+        """Test that binman can produce an iMX8M image"""
+        with test_util.capture_sys_output() as (_, stderr):
+            self._DoTestFile('339_nxp_imx8m.dts',
+                             force_missing_bintools='mkimage')
+        err = stderr.getvalue()
+        self.assertRegex(err, "Image 'image'.*missing bintools.*: mkimage")
+
+    def testNxpImx8MCSTSPL(self):
+        """Test that binman can sign an iMX8M SPL image"""
+        self._DoTestFile('343_nxp_imx8m.dts')
+
+    def testNxpImx8MCSTFIT(self):
+        """Test that binman can sign an iMX8M FIT image"""
+        self._DoTestFile('344_nxp_imx8m.dts')
+
+    def testNxpImx8MCSTUnknown(self):
+        """Test that binman can sign an iMX8M Unknown image"""
+        self._DoTestFile('345_nxp_imx8m.dts')
+
+    def testNxpImx8MCSTMkimageMissing(self):
+        """Test that binman can sign an iMX8M image"""
+        with test_util.capture_sys_output() as (_, stderr):
+            self._DoTestFile('343_nxp_imx8m.dts',
+                             force_missing_bintools='mkimage')
+        err = stderr.getvalue()
+        self.assertRegex(err, "Image 'image'.*missing bintools.*: mkimage")
+
+    def testNxpImx8MCSTtoolMissing(self):
+        """Test that binman can sign an iMX8M image"""
+        with test_util.capture_sys_output() as (_, stderr):
+            self._DoTestFile('343_nxp_imx8m.dts',
+                             force_missing_bintools='cst')
+        err = stderr.getvalue()
+        self.assertRegex(err, "Image 'image'.*missing bintools.*: cst")
 
     def testFitSignSimple(self):
         """Test that image with FIT and signature nodes can be signed"""

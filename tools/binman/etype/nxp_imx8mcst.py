@@ -181,10 +181,6 @@ class Entry_nxp_imx8mcst(Entry_mkimage):
         upto = 0x00
         for entry in super().GetEntries().values():
             entry.SetOffsetSize(upto, None)
-
-            # Give up if any entries lack a size
-            if entry.size is None:
-                return
             upto += entry.size
 
         Entry_section.SetImagePos(self, image_pos)
