@@ -821,8 +821,11 @@ static efi_status_t EFIAPI efi_set_virtual_address_map(
 		  descriptor_version, virtmap);
 
 	if (descriptor_version != EFI_MEMORY_DESCRIPTOR_VERSION ||
-	    descriptor_size < sizeof(struct efi_mem_desc))
+	    descriptor_size < sizeof(struct efi_mem_desc)) {
+		log_err("descriptor: version %d size %d\n",  descriptor_version,
+			descriptor_size);
 		goto out;
+	}
 
 	efi_virtmap = virtmap;
 	efi_descriptor_size = descriptor_size;
@@ -854,6 +857,7 @@ static efi_status_t EFIAPI efi_set_virtual_address_map(
 		 * We expose exactly one single runtime code section, so
 		 * something is definitely going wrong.
 		 */
+		log_err("rt_code_sections %d\n", rt_code_sections);
 		goto out;
 	}
 
