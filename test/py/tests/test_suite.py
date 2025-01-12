@@ -106,7 +106,7 @@ def process_ut_info(cons, output):
     test_count = {}
     for line in output.splitlines():
         if DEBUG_ME:
-            cons.log.info(f'line: {line}')
+            cons.log.info(f'line: {line.rstrip()}')
         m = re.match(r'Test suites: (.*)', line)
         if m:
             suite_count = int(m.group(1))
@@ -122,7 +122,7 @@ def process_ut_info(cons, output):
 @pytest.mark.buildconfigspec('sandbox')
 @pytest.mark.notbuildconfigspec('sandbox_spl')
 @pytest.mark.notbuildconfigspec('sandbox64')
-def test_suite(u_boot_console):
+def test_suite(u_boot_console, u_boot_config):
     """Perform various checks on the unit tests, including:
 
        - The number of suites matches that reported by the 'ut info'
@@ -135,6 +135,7 @@ def test_suite(u_boot_console):
 
     """
     cons = u_boot_console
+    buildconfig = u_boot_config.buildconfig
     with cons.log.section('Run all unit tests'):
         # ut hush hush_test_simple_dollar prints "Unknown command" on purpose.
         with u_boot_console.disable_check('unknown_command'):
@@ -144,9 +145,17 @@ def test_suite(u_boot_console):
     with cons.log.section('Check output'):
         suites, all_tests, exp_test_count, missing, extra = collect_info(cons,
                                                                          output)
+    cons.log.info(f'missing {missing}')
+    cons.log.info(f'extra {extra}')
 
     # Make sure we got a test count for each suite
-    assert suites - exp_test_count.keys() == set()
+    assert not (suites - exp_test_count.keys())
+
+    # Deal with missing suites
+    with cons.log.section('Check missing suites'):
+        if 'config_cmd_seama' not in buildconfig:
+            cons.log.info("CMD_SEAMA not enabled: Ignoring suite 'seama'")
+            missing.discard('seama')
 
     # Run 'ut info' and compare with the log results
     with cons.log.section('Check suite test-counts'):
@@ -160,8 +169,8 @@ def test_suite(u_boot_console):
             cons.log.error(f'missing: {sorted(list(missing))}')
             cons.log.error(f'extra: {sorted(list(extra))}')
 
-        assert not missing
-        assert not extra
+        assert not missing, f'Missing suites {missing}'
+        assert not extra, f'Extra suites {extra}'
 
         cons.log.info(str(exp_test_count))
         for suite in EXPECTED_SUITES:
