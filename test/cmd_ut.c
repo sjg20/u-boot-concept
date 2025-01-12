@@ -169,7 +169,7 @@ static struct suite suites[] = {
 	SUITE(measurement),
 #endif
 #ifdef CONFIG_SANDBOX
-	SUITE_CMD(bloblist, do_ut_bloblist),
+	SUITE(bloblist),
 	SUITE_CMD(bootm, do_ut_bootm),
 #endif
 #ifdef CONFIG_CMD_ADDRMAP
