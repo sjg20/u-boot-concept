@@ -2176,13 +2176,16 @@ System.map:	u-boot
 # ARM relocations should all be R_ARM_RELATIVE (32-bit) or
 # R_AARCH64_RELATIVE (64-bit).
 checkarmreloc: u-boot
-	@RELOC="`$(CROSS_COMPILE)readelf -r -W $< | cut -d ' ' -f 4 | \
+	@RELOCS="`$(CROSS_COMPILE)readelf -r -W $< | cut -d ' ' -f 4 | \
 		grep R_A | sort -u`"; \
-	if test "$$RELOC" != "R_ARM_RELATIVE" -a \
-		 "$$RELOC" != "R_AARCH64_RELATIVE"; then \
-		echo "$< contains unexpected relocations: $$RELOC"; \
-		false; \
-	fi
+	for reloc in $$RELOCS; do \
+		if [ "$$reloc" != "R_ARM_RELATIVE" -a \
+		     "$$reloc" != "R_AARCH64_RELATIVE" -a \
+		"$$reloc" != "R_AARCH64_NONE" ]; then \
+			echo "$< contains unexpected relocations: $$reloc"; \
+			exit 1; \
+		fi; \
+	done
 
 tools/version.h: include/version.h
 	$(Q)mkdir -p $(dir $@)

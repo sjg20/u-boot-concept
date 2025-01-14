@@ -44,8 +44,10 @@ static efi_status_t __efi_runtime EFIAPI efi_unimplemented(void);
  * header for each architecture (or a generic header) rather than being repeated
  * here.
  */
+#define R_NONE		0
 #if defined(__aarch64__)
 #define R_RELATIVE	R_AARCH64_RELATIVE
+#define R_AARCH64_NONE2 256
 #define R_MASK		0xffffffffULL
 #define IS_RELA		1
 #elif defined(__arm__)
@@ -742,6 +744,12 @@ void efi_runtime_relocate(ulong offset, struct efi_mem_desc *map)
 		      rel->info, *p, rel->offset);
 
 		switch (rel->info & R_MASK) {
+		/* Both 0 and 256 should be accepted as values of R_AARCH64_NONE */
+#ifdef CONFIG_ARM64
+		case R_AARCH64_NONE2:
+#endif
+		case R_NONE:
+			break;
 		case R_RELATIVE:
 #ifdef IS_RELA
 		newaddr = rel->addend + offset - CONFIG_TEXT_BASE;
