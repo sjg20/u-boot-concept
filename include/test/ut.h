@@ -530,4 +530,12 @@ int ut_run_list(struct unit_test_state *uts, const char *category,
 		const char *select_name, int runs_per_test, bool force_run,
 		const char *test_insert);
 
+/**
+ * ut_report() - Report stats on a test run
+ *
+ * @stats: Stats to show
+ * @prefix: Name of this run type, e.g. "Tests" or "Total tests"
+ */
+void ut_report(struct ut_stats *stats, const char *prefix);
+
 #endif
