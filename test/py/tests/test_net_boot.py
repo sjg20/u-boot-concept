@@ -2,7 +2,7 @@
 # (C) Copyright 2023, Advanced Micro Devices, Inc.
 
 import pytest
-import u_boot_utils
+import utils
 import test_net
 import re
 
@@ -130,7 +130,7 @@ def setup_tftpboot_boot(ubpy):
     setup_networking(ubpy)
     addr = f.get('addr', None)
     if not addr:
-        addr = u_boot_utils.find_ram_base(ubpy)
+        addr = utils.find_ram_base(ubpy)
 
     fn = f['fn']
     timeout = f.get('timeout', 50000)

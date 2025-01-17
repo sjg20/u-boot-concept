@@ -4,7 +4,7 @@
 import pytest
 import random
 import re
-import u_boot_utils
+import utils
 
 """
 Note: This test doesn't rely on boardenv_* configuration values but it can
@@ -296,7 +296,7 @@ def test_usb_fatls_fatinfo(ubpy):
         pytest.skip('No %s partition detected' % fs.upper())
 
 def usb_fatload_fatwrite(ubpy, fs, x, part):
-    addr = u_boot_utils.find_ram_base(ubpy)
+    addr = utils.find_ram_base(ubpy)
     size = random.randint(4, 1 * 1024 * 1024)
     output = ubpy.run_command('crc32 %x %x' % (addr, size))
     m = re.search('==> (.+?)', output)
@@ -391,7 +391,7 @@ def test_usb_ext4ls(ubpy):
         pytest.skip('No %s partition detected' % fs.upper())
 
 def usb_ext4load_ext4write(ubpy, fs, x, part):
-    addr = u_boot_utils.find_ram_base(ubpy)
+    addr = utils.find_ram_base(ubpy)
     size = random.randint(4, 1 * 1024 * 1024)
     output = ubpy.run_command('crc32 %x %x' % (addr, size))
     m = re.search('==> (.+?)', output)
@@ -505,7 +505,7 @@ def test_usb_ext2load(ubpy):
                 part_detect = 1
                 file, size, expected_crc32 = \
                     usb_ext4load_ext4write(ubpy, fs, x, part)
-                addr = u_boot_utils.find_ram_base(ubpy)
+                addr = utils.find_ram_base(ubpy)
 
                 offset = random.randrange(128, 1024, 128)
                 output = ubpy.run_command(
@@ -572,7 +572,7 @@ def test_usb_load(ubpy):
 
                 for part in partitions:
                     part_detect = 1
-                    addr = u_boot_utils.find_ram_base(ubpy)
+                    addr = utils.find_ram_base(ubpy)
 
                     if fs == 'fat':
                         file, size, expected_crc32 = \
@@ -616,7 +616,7 @@ def test_usb_save(ubpy):
 
                 for part in partitions:
                     part_detect = 1
-                    addr = u_boot_utils.find_ram_base(ubpy)
+                    addr = utils.find_ram_base(ubpy)
                     size = random.randint(4, 1 * 1024 * 1024)
                     file = '%s_%d' % ('uboot_test', size)
 

@@ -51,7 +51,7 @@ env__spi_lock_unlock = {
 import random
 import re
 import pytest
-import u_boot_utils
+import utils
 
 SPI_DATA = {}
 EXPECTED_ERASE = 'Erased: OK'
@@ -200,7 +200,7 @@ def test_spi_erase_block(ubpy):
 
 def spi_write_twice(ubpy, page_size, erase_size, total_size, timeout):
     ''' Random write till page size, random till size and full size '''
-    addr = u_boot_utils.find_ram_base(ubpy)
+    addr = utils.find_ram_base(ubpy)
 
     old_size = 0
     for size in (
@@ -273,7 +273,7 @@ def test_spi_write_twice(ubpy):
 def spi_write_continues(ubpy, page_size, erase_size, total_size, timeout):
     ''' Write with random size of data to continue SPI write case '''
     spi_erase_block(ubpy, erase_size, total_size)
-    addr = u_boot_utils.find_ram_base(ubpy)
+    addr = utils.find_ram_base(ubpy)
 
     output = ubpy.run_command(f'crc32 {hex(addr + 0x10000)} {hex(total_size)}')
     m = re.search('==> (.+?)$', output)
@@ -329,7 +329,7 @@ def spi_read_twice(ubpy, page_size, total_size, timeout):
     ''' Read the whole SPI flash twice, random_size till full flash size,
     random till page size '''
     for size in random.randint(4, page_size), random.randint(4, total_size), total_size:
-        addr = u_boot_utils.find_ram_base(ubpy)
+        addr = utils.find_ram_base(ubpy)
         size = size & ~3
         with ubpy.temporary_timeout(timeout):
             output = ubpy.run_command(
@@ -453,13 +453,13 @@ def protect_ops(ubpy, lock_addr, lock_size, ops="unlock"):
 
 def erase_write_ops(ubpy, start, size):
     ''' Basic erase and write operation for flash '''
-    addr = u_boot_utils.find_ram_base(ubpy)
+    addr = utils.find_ram_base(ubpy)
     flash_ops(ubpy, 'erase', start, size, 0, 0, EXPECTED_ERASE)
     flash_ops(ubpy, 'write', start, size, addr, 0, EXPECTED_WRITE)
 
 def spi_lock_unlock(ubpy, lock_addr, lock_size):
     ''' Lock unlock operations for SPI family flash '''
-    addr = u_boot_utils.find_ram_base(ubpy)
+    addr = utils.find_ram_base(ubpy)
     erase_size = get_erase_size()
 
     # Find the protected/un-protected region
@@ -614,7 +614,7 @@ def test_spi_negative(ubpy):
     total_size = get_total_size()
     erase_size = get_erase_size()
     page_size = get_page_size()
-    addr = u_boot_utils.find_ram_base(ubpy)
+    addr = utils.find_ram_base(ubpy)
     i = 0
     while i < loop:
         # Erase negative test

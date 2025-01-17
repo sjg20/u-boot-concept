@@ -5,7 +5,7 @@
 # tftpboot commands.
 
 import pytest
-import u_boot_utils
+import utils
 import uuid
 import datetime
 import re
@@ -315,7 +315,7 @@ def test_net_nfs(ubpy):
 
     addr = f.get('addr', None)
     if not addr:
-        addr = u_boot_utils.find_ram_base(ubpy)
+        addr = utils.find_ram_base(ubpy)
 
     fn = f['fn']
     output = ubpy.run_command('nfs %x %s' % (addr, fn))
@@ -411,7 +411,7 @@ def test_net_tftpput(ubpy):
 
     addr = f.get("addr", None)
     if not addr:
-        addr = u_boot_utils.find_ram_base(ubpy)
+        addr = utils.find_ram_base(ubpy)
 
     sz = f.get("size", None)
     timeout = f.get("timeout", ubpy.p.timeout)

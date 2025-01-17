@@ -4,7 +4,7 @@
 
 import os.path
 import pytest
-import u_boot_utils
+import utils
 import re
 import time
 
@@ -197,7 +197,7 @@ def test_tpm2_get_capability(ubpy):
         tpm2_sandbox_init(ubpy)
 
     force_init(ubpy)
-    ram = u_boot_utils.find_ram_base(ubpy)
+    ram = utils.find_ram_base(ubpy)
 
     read_cap = ubpy.run_command('tpm2 get_capability 0x6 0x20e 0x200 1') #0x%x 1' % ram)
     output = ubpy.run_command('echo $?')
@@ -220,7 +220,7 @@ def test_tpm2_dam_parameters(ubpy):
     if is_sandbox(ubpy):
         tpm2_sandbox_init(ubpy)
     force_init(ubpy)
-    ram = u_boot_utils.find_ram_base(ubpy)
+    ram = utils.find_ram_base(ubpy)
 
     # Set the DAM parameters to known values
     ubpy.run_command('tpm2 dam_parameters 3 10 0')
@@ -245,7 +245,7 @@ def test_tpm2_pcr_read(ubpy):
         tpm2_sandbox_init(ubpy)
 
     force_init(ubpy)
-    ram = u_boot_utils.find_ram_base(ubpy)
+    ram = utils.find_ram_base(ubpy)
 
     read_pcr = ubpy.run_command('tpm2 pcr_read 10 0x%x' % ram)
     output = ubpy.run_command('echo $?')
@@ -273,7 +273,7 @@ def test_tpm2_pcr_extend(ubpy):
     if is_sandbox(ubpy):
         tpm2_sandbox_init(ubpy)
     force_init(ubpy)
-    ram = u_boot_utils.find_ram_base(ubpy)
+    ram = utils.find_ram_base(ubpy)
 
     read_pcr = ubpy.run_command('tpm2 pcr_read 10 0x%x' % (ram + 0x20))
     output = ubpy.run_command('echo $?')

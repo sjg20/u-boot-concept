@@ -5,7 +5,7 @@
 
 import os
 
-import u_boot_utils as util
+import utils as util
 
 def make_fname(cons, basename):
     """Make a temporary filename

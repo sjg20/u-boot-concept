@@ -7,7 +7,7 @@
 # test, at shutdown etc. These hooks perform functions such as:
 # - Parsing custom command-line options.
 # - Pullilng in user-specified board configuration.
-# - Creating the U-Boot console test fixture.
+# - Creating the ubpy test fixture.
 # - Creating the HTML log file.
 # - Monitoring each test's results.
 # - Implementing custom pytest markers.
@@ -25,12 +25,12 @@ import re
 from _pytest.runner import runtestprotocol
 import subprocess
 import sys
+from spawn import BootFail, Timeout, Unexpected, handle_exception
 import time
-from u_boot_spawn import BootFail, Timeout, Unexpected, handle_exception
 
-# Globals: The HTML log file, and the connection to the U-Boot console.
+# Globals: The HTML log file, and the top-level fixture
 log = None
-console = None
+ubpy_fix = None
 
 TEST_PY_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -244,7 +244,7 @@ def pytest_configure(config):
             ubconfig.buildconfig.update(parser.items('root'))
 
     global log
-    global console
+    global ubpy_fix
     global ubconfig
 
     (board_type, board_type_extra, board_identity, build_dir, build_dir_extra,
@@ -339,11 +339,11 @@ def pytest_configure(config):
         os.environ['U_BOOT_' + v.upper()] = getattr(ubconfig, v)
 
     if board_type.startswith('sandbox'):
-        import u_boot_console_sandbox
-        console = u_boot_console_sandbox.ConsoleSandbox(log, ubconfig)
+        import console_sandbox
+        ubpy_fix = console_sandbox.ConsoleSandbox(log, ubconfig)
     else:
-        import u_boot_console_exec_attach
-        console = u_boot_console_exec_attach.ConsoleExecAttach(log, ubconfig)
+        import console_board
+        ubpy_fix = console_board.ConsoleExecAttach(log, ubconfig)
 
 
 def generate_ut_subtest(metafunc, fixture_name, sym_path):
@@ -362,7 +362,7 @@ def generate_ut_subtest(metafunc, fixture_name, sym_path):
     Returns:
         Nothing.
     """
-    fn = console.config.build_dir + sym_path
+    fn = ubpy_fix.config.build_dir + sym_path
     try:
         with open(fn, 'rt') as f:
             lines = f.readlines()
@@ -403,8 +403,8 @@ def generate_config(metafunc, fixture_name):
     """
 
     subconfigs = {
-        'brd': console.config.brd,
-        'env': console.config.env,
+        'brd': ubpy_fix.config.brd,
+        'env': ubpy_fix.config.env,
     }
     parts = fixture_name.split('__')
     if len(parts) < 2:
@@ -466,7 +466,7 @@ def u_boot_log(request):
          The fixture value.
      """
 
-     return console.log
+     return ubpy_fix.log
 
 @pytest.fixture(scope='session')
 def u_boot_config(request):
@@ -479,7 +479,7 @@ def u_boot_config(request):
          The fixture value.
      """
 
-     return console.config
+     return ubpy_fix.config
 
 @pytest.fixture(scope='function')
 def ubpy(request):
@@ -495,18 +495,18 @@ def ubpy(request):
         pytest.skip('Cannot get target connection')
         return None
     try:
-        console.ensure_spawned()
+        ubpy_fix.ensure_spawned()
     except OSError as err:
-        handle_exception(ubconfig, console, log, err, 'Lab failure', True)
+        handle_exception(ubconfig, ubpy_fix, log, err, 'Lab failure', True)
     except Timeout as err:
-        handle_exception(ubconfig, console, log, err, 'Lab timeout', True)
+        handle_exception(ubconfig, ubpy_fix, log, err, 'Lab timeout', True)
     except BootFail as err:
-        handle_exception(ubconfig, console, log, err, 'Boot fail', True,
-                         console.get_spawn_output())
+        handle_exception(ubconfig, ubpy_fix, log, err, 'Boot fail', True,
+                         ubpy.get_spawn_output())
     except Unexpected:
-        handle_exception(ubconfig, console, log, err, 'Unexpected test output',
+        handle_exception(ubconfig, ubpy_fix, log, err, 'Unexpected test output',
                          False)
-    return console
+    return ubpy_fix
 
 anchors = {}
 tests_not_run = []
@@ -613,8 +613,8 @@ def cleanup():
         Nothing.
     """
 
-    if console:
-        console.close()
+    if ubpy_fix:
+        ubpy_fix.close()
     if log:
         with log.section('Status Report', 'status_report'):
             log.status_pass('%d passed' % len(tests_passed))
@@ -835,7 +835,7 @@ def pytest_runtest_protocol(item, nextitem):
         test_durations[item.name] = duration
 
     if failure_cleanup:
-        console.drain_console()
+        ubpy_fix.drain_console()
 
     test_list.append(item.name)
     tests_not_run.remove(item.name)
@@ -845,7 +845,7 @@ def pytest_runtest_protocol(item, nextitem):
     except:
         # If something went wrong with logging, it's better to let the test
         # process continue, which may report other exceptions that triggered
-        # the logging issue (e.g. console.log wasn't created). Hence, just
+        # the logging issue (e.g. ubpy_fix.log wasn't created). Hence, just
         # squash the exception. If the test setup failed due to e.g. syntax
         # error somewhere else, this won't be seen. However, once that issue
         # is fixed, if this exception still exists, it will then be logged as
@@ -858,6 +858,6 @@ def pytest_runtest_protocol(item, nextitem):
     log.end_section(item.name)
 
     if failure_cleanup:
-        console.cleanup_spawn()
+        ubpy_fix.cleanup_spawn()
 
     return True
