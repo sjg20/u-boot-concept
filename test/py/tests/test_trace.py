@@ -277,9 +277,9 @@ check_flamegraph
 @pytest.mark.slow
 @pytest.mark.boardspec('sandbox')
 @pytest.mark.buildconfigspec('trace')
-def test_trace(u_boot_console):
+def test_trace(ubpy):
     """Test we can build sandbox with trace, collect and process a trace"""
-    cons = u_boot_console
+    cons = ubpy
 
     if not os.path.exists(TMPDIR):
         os.mkdir(TMPDIR)

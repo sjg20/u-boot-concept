@@ -11,7 +11,7 @@ def make_fname(cons, basename):
     """Make a temporary filename
 
     Args:
-        cons (ConsoleBase): u_boot_console to use
+        cons (ConsoleBase): ubpy to use
         basename (str): Base name of file to create (within temporary directory)
     Return:
         Temporary filename
@@ -23,7 +23,7 @@ def make_its(cons, base_its, params, basename='test.its'):
     """Make a sample .its file with parameters embedded
 
     Args:
-        cons (ConsoleBase): u_boot_console to use
+        cons (ConsoleBase): ubpy to use
         base_its (str): Template text for the .its file, typically containing
             %() references
         params (dict of str): Parameters to embed in the %() strings
@@ -43,7 +43,7 @@ def make_fit(cons, mkimage, base_its, params, basename='test.fit', base_fdt=None
     turn this into a .fit image.
 
     Args:
-        cons (ConsoleBase): u_boot_console to use
+        cons (ConsoleBase): ubpy to use
         mkimage (str): Filename of 'mkimage' utility
         base_its (str): Template text for the .its file, typically containing
             %() references
@@ -64,7 +64,7 @@ def make_kernel(cons, basename, text):
     """Make a sample kernel with test data
 
     Args:
-        cons (ConsoleBase): u_boot_console to use
+        cons (ConsoleBase): ubpy to use
         basename (str): base name to write to (will be placed in the temp dir)
         text (str): Contents of the kernel file (will be repeated 100 times)
     Returns:
@@ -82,7 +82,7 @@ def make_dtb(cons, base_fdt, basename):
     """Make a sample .dts file and compile it to a .dtb
 
     Returns:
-        cons (ConsoleBase): u_boot_console to use
+        cons (ConsoleBase): ubpy to use
         Filename of .dtb file created
     """
     src = make_fname(cons, f'{basename}.dts')

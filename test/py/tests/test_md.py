@@ -6,31 +6,31 @@ import pytest
 import u_boot_utils
 
 @pytest.mark.buildconfigspec('cmd_memory')
-def test_md(u_boot_console):
+def test_md(ubpy):
     """Test that md reads memory as expected, and that memory can be modified
     using the mw command."""
 
-    ram_base = u_boot_utils.find_ram_base(u_boot_console)
+    ram_base = u_boot_utils.find_ram_base(ubpy)
     addr = '%08x' % ram_base
     val = 'a5f09876'
     expected_response = addr + ': ' + val
-    u_boot_console.run_command('mw ' + addr + ' 0 10')
-    response = u_boot_console.run_command('md ' + addr + ' 10')
+    ubpy.run_command('mw ' + addr + ' 0 10')
+    response = ubpy.run_command('md ' + addr + ' 10')
     assert(not (expected_response in response))
-    u_boot_console.run_command('mw ' + addr + ' ' + val)
-    response = u_boot_console.run_command('md ' + addr + ' 10')
+    ubpy.run_command('mw ' + addr + ' ' + val)
+    response = ubpy.run_command('md ' + addr + ' 10')
     assert(expected_response in response)
 
 @pytest.mark.buildconfigspec('cmd_memory')
-def test_md_repeat(u_boot_console):
+def test_md_repeat(ubpy):
     """Test command repeat (via executing an empty command) operates correctly
     for "md"; the command must repeat and dump an incrementing address."""
 
-    ram_base = u_boot_utils.find_ram_base(u_boot_console)
+    ram_base = u_boot_utils.find_ram_base(ubpy)
     addr_base = '%08x' % ram_base
     words = 0x10
     addr_repeat = '%08x' % (ram_base + (words * 4))
-    u_boot_console.run_command('md %s %x' % (addr_base, words))
-    response = u_boot_console.run_command('')
+    ubpy.run_command('md %s %x' % (addr_base, words))
+    response = ubpy.run_command('')
     expected_response = addr_repeat + ': '
     assert(expected_response in response)
