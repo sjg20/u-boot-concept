@@ -22,7 +22,6 @@
 #include <dm/device-internal.h>
 #include <dm/lists.h>
 #include <linux/libfdt.h>
-#include <test/suites.h>
 #include <test/ut.h>
 #include "bootstd_common.h"
 #include "../../boot/bootflow_internal.h"
