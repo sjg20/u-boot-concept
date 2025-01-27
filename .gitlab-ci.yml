@@ -818,3 +818,9 @@ tk1:
   variables:
     ROLE: tk1
   <<: *lab_dfn
+
+# Firefly-RK3399 board running the rk3399-generic build
+vbe:
+  variables:
+    ROLE: vbe
+  <<: *lab_dfn
