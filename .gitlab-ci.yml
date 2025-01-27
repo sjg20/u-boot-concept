@@ -737,4 +737,9 @@ qemu-x86_64:
   variables:
     ROLE: qemu-x86_64
     TEST_PY_TEST_SPEC: "and not sleep"
+
+# Firefly-RK3399 board running the rk3399-generic build
+vbe:
+  variables:
+    ROLE: vbe
   <<: *lab_dfn
