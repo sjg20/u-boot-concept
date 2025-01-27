@@ -744,4 +744,9 @@ rpi5:
 zybo:
   variables:
     ROLE: zybo
+
+# Firefly-RK3399 board running the rk3399-generic build
+vbe:
+  variables:
+    ROLE: vbe
   <<: *lab_dfn
