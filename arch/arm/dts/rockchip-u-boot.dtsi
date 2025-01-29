@@ -170,6 +170,7 @@
 	simple-bin {
 		filename = "u-boot-rockchip.bin";
 		pad-byte = <0xff>;
+		skip-at-start = <0x8000>;
 
 #ifndef CONFIG_VPL
 		mkimage {
