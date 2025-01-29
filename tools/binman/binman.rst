@@ -1156,7 +1156,14 @@ called on all entries.
 It is not possible for an entry to mark itself absent at any other point in the
 processing. It must happen in the ObtainContents() method.
 
-The effect is as if the entry had never been present at all, since the image
+The effect depends on the type of entry.
+
+Blobs
+~~~~~
+For blobs, the effect depends on whether --fake-ext-blobs is passed
+to binman. (This is the case by default)
+In case --fake-ext-blobs is set, any missing entries will be faked.
+If not set, it is as if the entry had never been present at all, since the image
 is packed without it and it disappears from the list of entries.
 
 
