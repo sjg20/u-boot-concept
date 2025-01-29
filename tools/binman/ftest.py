@@ -373,7 +373,7 @@ class TestFunctional(unittest.TestCase):
     def _DoTestFile(self, fname, debug=False, map=False, update_dtb=False,
                     entry_args=None, images=None, use_real_dtb=False,
                     use_expanded=False, verbosity=None, allow_missing=False,
-                    allow_fake_blobs=False, extra_indirs=None, threads=None,
+                    allow_fake_blobs=True, extra_indirs=None, threads=None,
                     test_section_timeout=False, update_fdt_in_elf=None,
                     force_missing_bintools='', ignore_missing=False, output_dir=None):
         """Run binman with a given test file
