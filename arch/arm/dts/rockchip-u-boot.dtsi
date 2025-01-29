@@ -239,3 +239,7 @@
 #endif /* CONFIG_ROCKCHIP_SPI_IMAGE */
 };
 #endif /* CONFIG_SPL */
+
+#ifdef CONFIG_VPL
+#include "rockchip-vpl-u-boot.dtsi"
+#endif
