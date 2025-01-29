@@ -192,6 +192,10 @@
 #endif
 			offset = <CONFIG_SPL_PAD_TO>;
 		};
+#endif
+
+		fdtmap {
+		};
 	};
 
 #ifdef CONFIG_ROCKCHIP_SPI_IMAGE
@@ -223,6 +227,9 @@
 #endif
 			/* Sync with u-boot,spl-payload-offset if present */
 			offset = <CONFIG_SYS_SPI_U_BOOT_OFFS>;
+		};
+
+		fdtmap {
 		};
 	};
 #endif /* CONFIG_ROCKCHIP_SPI_IMAGE */
