@@ -6461,6 +6461,9 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
         self.assertRegex(
             err,
             "Image '.*' is missing optional external blobs but is still functional: tee-os")
+        self.assertNotRegex(
+            err,
+            "Image '.*' has faked external blobs and is non-functional: tee-os")
 
     def testFitTeeOsOptionalFitBad(self):
         """Test an image with a FIT with an optional OP-TEE binary"""
@@ -6497,6 +6500,19 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
         self.assertRegex(
             err,
             "Image '.*' is missing optional external blobs but is still functional: missing")
+
+    def testExtblobFakedOptional(self):
+        """Test an image with an external blob that is optional"""
+        with test_util.capture_sys_output() as (stdout, stderr):
+            data = self._DoReadFile('266_blob_ext_opt.dts')
+        self.assertEqual(REFCODE_DATA, data)
+        err = stderr.getvalue()
+        self.assertRegex(
+            err,
+            "Image '.*' is missing optional external blobs but is still functional: missing")
+        self.assertNotRegex(
+            err,
+            "Image '.*' has faked external blobs and is non-functional: missing")
 
     def testSectionInner(self):
         """Test an inner section with a size"""
