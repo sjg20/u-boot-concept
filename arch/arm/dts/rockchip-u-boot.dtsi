@@ -171,6 +171,7 @@
 		filename = "u-boot-rockchip.bin";
 		pad-byte = <0xff>;
 
+#ifndef CONFIG_VPL
 		mkimage {
 			filename = "idbloader.img";
 			args = "-n", CONFIG_SYS_SOC, "-T", "rksd";
@@ -196,10 +197,10 @@
 #endif
 			offset = <CONFIG_SPL_PAD_TO>;
 		};
-#endif
 
 		fdtmap {
 		};
+#endif /* !VPL */
 	};
 
 #ifdef CONFIG_ROCKCHIP_SPI_IMAGE
