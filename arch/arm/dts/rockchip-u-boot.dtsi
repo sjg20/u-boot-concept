@@ -167,6 +167,7 @@
 	};
 #endif /* HAS_FIT */
 
+#ifndef CONFIG_VPL
 	simple-bin {
 		filename = "u-boot-rockchip.bin";
 		pad-byte = <0xff>;
@@ -200,6 +201,7 @@
 		fdtmap {
 		};
 	};
+#endif /* !VPL */
 
 #ifdef CONFIG_ROCKCHIP_SPI_IMAGE
 	simple-bin-spi {
