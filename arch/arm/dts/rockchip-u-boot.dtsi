@@ -251,6 +251,7 @@
 	simple-bin {
 		filename = "u-boot-rockchip.bin";
 		pad-byte = <0xff>;
+		skip-at-start = <0x8000>;
 
 #ifdef CONFIG_VPL
 		alternates-fdt {
@@ -328,7 +329,7 @@
 		};
 		vbe-b {
 			type = "section";
-			offset = <(0x1000000)>;
+			offset = <0x1000000>;
 			spl-b {
 				insert-template = <&spl_template>;
 				size = <0x100000>;
