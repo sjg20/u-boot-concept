@@ -113,6 +113,7 @@
 	simple-bin {
 		filename = "u-boot-rockchip.bin";
 		pad-byte = <0xff>;
+		skip-at-start = <0x8000>;
 
 		alternates-fdt {
 			fdt-list-dir = "dts/upstream/src/arm64/rockchip";
