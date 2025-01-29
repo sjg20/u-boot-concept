@@ -209,6 +209,7 @@
 	simple-bin {
 		filename = "u-boot-rockchip.bin";
 		pad-byte = <0xff>;
+		skip-at-start = <0x8000>;
 
 		mkimage {
 			filename = "idbloader.img";
@@ -244,6 +245,7 @@
 	simple-bin-spi {
 		filename = "u-boot-rockchip-spi.bin";
 		pad-byte = <0xff>;
+		skip-at-start = <0x8000>;
 
 		mkimage {
 			filename = "idbloader-spi.img";
