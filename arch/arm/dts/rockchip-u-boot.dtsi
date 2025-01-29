@@ -72,6 +72,25 @@
 		fit,external-offset = <CONFIG_FIT_EXTERNAL_OFFSET>;
 		fit,align = <512>;
 		images {
+#ifdef CONFIG_VPL
+			spl {
+				description = "U-Boot SPL";
+				type = "firmware";
+				os = "u-boot";
+				arch = ARCH;
+				compression = "lz4";
+				load = <CONFIG_SPL_TEXT_BASE>;
+				entry = <CONFIG_SPL_TEXT_BASE>;
+				phase = "spl";
+				section {
+					compress = "lz4";
+					u-boot-spl-nodtb {
+					};
+					u-boot-spl-bss-pad {
+					};
+				};
+			};
+#endif /* VPL */
 			u-boot {
 				description = "U-Boot";
 				type = "standalone";
@@ -172,7 +191,11 @@
 				description = "NAME.dtb";
 				fdt = "fdt-SEQ";
 #ifdef CONFIG_ARM64
+# ifdef CONFIG_VPL
+				fit,firmware = "atf-1", "u-boot", "spl";
+# else
 				fit,firmware = "atf-1", "u-boot";
+# endif
 #else
 				fit,firmware = "op-tee", "u-boot";
 #endif
