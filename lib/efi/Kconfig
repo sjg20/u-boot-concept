@@ -17,7 +17,8 @@ choice
 
 config EFI_APP
 	bool "Support running as an EFI application"
-	depends on !ARM
+	depends on X86 || ARM
+	select POSITION_INDEPENDENT if ARM
 	select CHARSET
 	help
 	  Build U-Boot as an application which can be started from EFI. This
@@ -61,7 +62,7 @@ choice
 	  this may produce no error message - it just won't start!
 
 config EFI_STUB_32BIT
-	depends on !ARM
+	depends on X86 || ARM
 	bool "Produce a stub for running with 32-bit EFI"
 
 config EFI_STUB_64BIT

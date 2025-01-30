@@ -142,6 +142,11 @@ struct arch_global_data {
 /* TODO(sjg@chromium.org): Consider using a fixed register for gd on x86_64 */
 #define gd global_data_ptr
 
+static inline void set_gd(volatile gd_t *gd_ptr)
+{
+	global_data_ptr = gd_ptr;
+}
+
 #define DECLARE_GLOBAL_DATA_PTR   extern struct global_data *global_data_ptr
 # else
 static inline notrace gd_t *get_fs_gd_ptr(void)
