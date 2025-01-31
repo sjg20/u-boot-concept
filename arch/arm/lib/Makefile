@@ -21,16 +21,20 @@ obj-y   += setjmp_aarch64.o
 else
 obj-y   += setjmp.o
 endif  # ARM64
+endif  # CONFIG_EFI_APP
 
 ifndef CONFIG_XPL_BUILD
+ifndef CONFIG_EFI_APP
 ifdef CONFIG_ARM64
 obj-y	+= relocate_64.o
 else
 obj-y	+= relocate.o
 endif  # ARM64
-endif  # CONFIG_EFI_APP
+endif  # EFI_APP
+$(warning here)
+#obj-$(CONFIG_EFI_APP_64BIT) += crt0_aarch64_efi.o reloc_aarch64_efi.o
 
-obj-$(CONFIG_EFI_APP_64BIT) += crt0_aarch64_efi.o reloc_aarch64_efi.o
+obj-$(CONFIG_EFI_APP_64BIT) += $(EFI_CRT0) $(EFI_RELOC)
 
 obj-$(CONFIG_CPU_V7M) += cmd_boot.o
 obj-$(CONFIG_OF_LIBFDT) += bootm-fdt.o
@@ -133,14 +137,17 @@ endif  # SYS_THUMB_BUILD
 
 # For building EFI apps
 $(warning EFI_CRT0 $(EFI_CRT0))
-AFLAGS_$(EFI_CRT0) := $(CFLAGS_EFI) -fpic
-AFLAGS_REMOVE_$(EFI_CRT0) := $(CFLAGS_NON_EFI)
+AFLAGS_$(EFI_CRT0) := -fpic
+AFLAGS_REMOVE_$(EFI_CRT0) := -fno-PIE -fno-pic
 
 CFLAGS_$(EFI_RELOC) := $(CFLAGS_EFI)
-CFLAGS_REMOVE_$(EFI_RELOC) := $(CFLAGS_NON_EFI)
+CFLAGS_REMOVE_$(EFI_RELOC) := $(CFLAGS_NON_EFI) -fno-PIE -fno-pic $(FIXED_REG) -ffunction-sections -fdata-sections \
+		  -fstack-protector-strong
+
+$(warning CFLAGS_REMOVE_$(EFI_RELOC) $(CFLAGS_REMOVE_$(EFI_RELOC)))
 
 extra-$(CONFIG_EFI_STUB) += $(EFI_CRT0) $(EFI_RELOC)
 
-$(warning obj-y $(obj-y))
-$(warning obj- $(obj-))
+#$(warning obj-y $(obj-y))
+#$(warning obj- $(obj-))
 
