@@ -180,6 +180,12 @@ endif
 endif
 endif
 
+ifdef CONFIG_EFI_APP
+LDFLAGS_EFI_PAYLOAD := -Bsymbolic -Bsymbolic-functions -shared --no-undefined \
+		       -s -zexecstack
+KBUILD_LDFLAGS := $(LDFLAGS_EFI_PAYLOAD)
+endif
+
 ifdef CONFIG_ARM64
 EFI_LDS := elf_aarch64_efi.lds
 EFI_CRT0 := crt0_aarch64_efi.o

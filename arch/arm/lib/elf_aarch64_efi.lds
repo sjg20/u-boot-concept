@@ -16,6 +16,8 @@ PHDRS
 ENTRY(_start)
 SECTIONS
 {
+	_init = .;
+	_start = .;
 	image_base = .;
 	.hash : { *(.hash) }	/* this MUST come first, EFI expects it */
 	. = ALIGN(4096);
@@ -70,6 +72,7 @@ SECTIONS
 		_edata = .;
 	} :data
 	_data_size = _edata - _data;
+	_end = .;
 
 	. = ALIGN(4096);
 	.dynsym   : { *(.dynsym) }

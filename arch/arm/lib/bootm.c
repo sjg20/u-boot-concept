@@ -183,13 +183,13 @@ static void setup_end_tag(struct bd_info *bd)
 
 __weak void setup_board_tags(struct tag **in_params) {}
 
-#ifdef CONFIG_ARM64
 static void do_nonsec_virt_switch(void)
 {
-	smp_kick_all_cpus();
-	dcache_disable();	/* flush cache before swtiching to EL2 */
+	if (IS_ENABLED(CONFIG_ARM64) && !IS_ENABLED(CONFIG_EFI_APP)) {
+		smp_kick_all_cpus();
+		dcache_disable();	/* flush cache before swtiching to EL2 */
+	}
 }
-#endif
 
 __weak void board_prep_linux(struct bootm_headers *images) { }
 
