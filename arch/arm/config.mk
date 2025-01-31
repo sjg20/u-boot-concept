@@ -180,6 +180,15 @@ endif
 endif
 endif
 
+ifeq ($(CONFIG_EFI_APP),y)
+
+$(warning CFLAGS_EFI $(CFLAGS_EFI))
+PLATFORM_CPPFLAGS += $(CFLAGS_EFI)
+LDFLAGS_FINAL += -znocombreloc -shared
+LDSCRIPT := $(LDSCRIPT_EFI)
+
+endif
+
 ifdef CONFIG_ARM64
 EFI_LDS := elf_aarch64_efi.lds
 EFI_CRT0 := crt0_aarch64_efi.o

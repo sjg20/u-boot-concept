@@ -24,9 +24,9 @@ AFLAGS_crt0-efi-aarch64.o += -fPIC
 
 ifeq ($(CONFIG_EFI_APP),y)
 
-PLATFORM_CPPFLAGS += $(CFLAGS_EFI)
-LDFLAGS_FINAL += -znocombreloc -shared
-LDSCRIPT := $(LDSCRIPT_EFI)
-$(warning set LDSCRIPT $(LDSCRIPT))
+# PLATFORM_CPPFLAGS += $(CFLAGS_EFI)
+# LDFLAGS_FINAL += -znocombreloc -shared
+# LDSCRIPT := $(LDSCRIPT_EFI)
+# $(warning set LDSCRIPT $(LDSCRIPT))
 
 endif
