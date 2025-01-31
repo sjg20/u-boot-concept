@@ -5,7 +5,7 @@ Script to build an EFI thing suitable for booting with QEMU, possibly running
 it also.
 
 UEFI binaries for QEMU used for testing this script:
-
+`1
 OVMF-pure-efi.i386.fd at
 https://drive.google.com/file/d/1jWzOAZfQqMmS2_dAK2G518GhIgj9r2RY/view?usp=sharing
 
@@ -48,6 +48,8 @@ def parse_args():
         epilog='Script for running U-Boot as an EFI app/payload')
     parser.add_argument('-a', '--app', action='store_true',
                         help='Package up the app')
+    parser.add_argument('-A', '--arm', action='store_true',
+                        help='Run on ARM architecture')
     parser.add_argument('-k', '--kernel', action='store_true',
                         help='Add a kernel')
     parser.add_argument('-o', '--old', action='store_true',
@@ -128,26 +130,44 @@ class BuildEfi:
             serial_only (bool): True to run without a display
         """
         extra = []
+        efi_dir = self.get_setting("efi_dir")
         if bitness == 64:
-            qemu = 'qemu-system-x86_64'
-            bios = 'OVMF-pure-efi.x64.fd'
+            if self.args.arm :
+                qemu_arch = 'aarch64'
+                extra += ['--machine', 'virt', '-cpu', 'max']
+                # bios = 'OVMG-efi.aarch64.fd'
+                # bios = 'QEMU_EFI.fd'
+                bios = os.path.join(efi_dir, 'efi.img')
+                var_store = os.path.join(efi_dir, 'varstore.img')
+                extra += [
+                    '-drive', f'if=pflash,format=raw,file={bios},readonly=on',
+                    '-drive', f'if=pflash,format=raw,file={var_store}'
+                    ]
+                extra += ['-drive',
+                          f'id=hd0,file={self.img},if=none,format=raw',
+                          '-device', 'virtio-blk-device,drive=hd0']
+            else:
+                qemu_arch = 'x86_64'
+                bios = 'OVMF-pure-efi.x64.fd'
+                extra += ['-bios', os.path.join(efi_dir, bios)]
+                extra += ['-drive', f'id=disk,file={self.img},if=none,format=raw']
+                extra += ['-device', 'ahci,id=ahci']
+                extra += ['-device', 'ide-hd,drive=disk,bus=ahci.0']
         else:
-            qemu = 'qemu-system-i386'
+            qemu_arch = 'arm' if self.args.arm else 'i386'
             bios = 'OVMF-pure-efi.i386.fd'
+        qemu = f'qemu-system-{qemu_arch}'
         if serial_only:
-            extra = ['-display', 'none', '-serial', 'mon:stdio']
+            extra += ['-display', 'none', '-serial', 'mon:stdio']
             serial_msg = ' (Ctrl-a x to quit)'
         else:
-            extra = ['-serial', 'mon:stdio']
+            extra += ['-serial', 'mon:stdio']
             serial_msg = ''
         print(f'Running {qemu}{serial_msg}')
 
         # Use 512MB since U-Boot EFI likes to have 256MB to play with
-        cmd = [qemu, '-bios', os.path.join(self.get_setting("efi_dir"), bios)]
-        cmd += '-m', '512'
-        cmd += '-drive', f'id=disk,file={self.img},if=none,format=raw'
-        cmd += '-device', 'ahci,id=ahci'
-        cmd += '-device', 'ide-hd,drive=disk,bus=ahci.0'
+        cmd = [qemu]
+        cmd += '-m', '2048'
         cmd += '-nic', 'none'
         cmd += extra
         command.run(*cmd)
@@ -233,12 +253,13 @@ class BuildEfi:
         """This does all the work"""
         args = self.args
         bitness = 32 if args.word else 64
+        arch = 'arm' if args.arm else 'x86'
         build_type = 'payload' if args.payload else 'app'
         self.tmp = f'{self.build_dir}/efi{bitness}{build_type}'
-        build = f'efi-x86_{build_type}{bitness}'
+        build = f'efi-{arch}_{build_type}{bitness}'
 
         if args.old and bitness == 32:
-            build = f'efi-x86_{build_type}'
+            build = f'efi-{arch}_{build_type}'
 
         self.setup_files(build, build_type)
 
