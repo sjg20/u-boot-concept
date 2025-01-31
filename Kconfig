@@ -618,7 +618,7 @@ config MP
 config HAVE_TEXT_BASE
 	bool
 	depends on !NIOS2 && !XTENSA
-	depends on !EFI_APP
+	depends on (!EFI_APP || ARM)
 	default y
 
 config TEXT_BASE
