@@ -340,9 +340,11 @@ int of_live_build(const void *fdt_blob, struct device_node **rootp)
 	 * When booting with EFI_STUB we can automatically generate a framebuffer
 	 * node based on the EFI data.
 	 */
-	ret = of_populate_from_efi(*rootp);
-	if (ret)
-		debug("Failed to populate live tree nodes from EFI: err=%d\n", ret);
+	if (IS_ENABLED(CONFIG_EFI_STUB)) {
+		ret = of_populate_from_efi(*rootp);
+		if (ret)
+			debug("Failed to populate live tree nodes from EFI: err=%d\n", ret);
+	}
 
 	return ret;
 }
