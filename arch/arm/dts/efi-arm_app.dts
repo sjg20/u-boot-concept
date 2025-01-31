@@ -7,11 +7,9 @@
 
 /include/ "skeleton.dtsi"
 
-#include "tsc_timer.dtsi"
-
 / {
-	model = "EFI x86 Application";
-	compatible = "efi,x86-app";
+	model = "EFI ARM Application";
+	compatible = "efi,arm-app";
 
 	chosen {
 		stdout-path = &serial;
