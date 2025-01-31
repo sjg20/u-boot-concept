@@ -182,11 +182,13 @@ class BuildEfi:
         print(f'Packaging {build}')
         if not os.path.exists(self.tmp):
             os.mkdir(self.tmp)
-        tools.write_file(
-            f'{self.tmp}/startup.nsh', f'fs0:u-boot-{build_type}.efi',
-            binary=False)
-        shutil.copy(f'{self.build_dir}/{build}/u-boot-{build_type}.efi',
-                    self.tmp)
+        fname = f'u-boot-{build_type}.efi'
+        # fname = 'u-boot-payload.efi'
+        tools.write_file(f'{self.tmp}/startup.nsh', f'fs0:{fname}',
+                         binary=False)
+        # shutil.copy(f'/tmp/b/x1e/{fname}', self.tmp)
+
+        shutil.copy(f'{self.build_dir}/{build}/{fname}', self.tmp)
 
     def copy_files(self):
         """Copy files into the filesystem"""

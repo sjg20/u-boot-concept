@@ -16,7 +16,16 @@ PHDRS
 ENTRY(_start)
 SECTIONS
 {
-	.text 0x0 : {
+	image_base = .;
+	.hash : { *(.hash) }	/* this MUST come first, EFI expects it */
+	. = ALIGN(4096);
+	.eh_frame : {
+		*(.eh_frame)
+	}
+
+	. = ALIGN(4096);
+
+	.text : {
 		_text = .;
 		*(.text.head)
 		*(.text)
