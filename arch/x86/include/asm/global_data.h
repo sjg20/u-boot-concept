@@ -144,7 +144,9 @@ struct arch_global_data {
 
 static inline void set_gd(volatile gd_t *gd_ptr)
 {
-	global_data_ptr = gd_ptr;
+	extern struct global_data *global_data_ptr;
+
+	global_data_ptr = (void *)gd_ptr;
 }
 
 #define DECLARE_GLOBAL_DATA_PTR   extern struct global_data *global_data_ptr

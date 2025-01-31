@@ -19,5 +19,14 @@ EFIPAYLOAD_BFDARCH := aarch64
 LDFLAGS_EFI_PAYLOAD := -Bsymbolic -Bsymbolic-functions -shared --no-undefined \
 		       -s -zexecstack
 
-CPPFLAGS_REMOVE_crt0-efi-aarch64.o += $(CFLAGS_NON_EFI)
-CPPFLAGS_crt0-efi-aarch64.o += $(CFLAGS_EFI)
+AFLAGS_REMOVE_crt0-efi-aarch64.o += $(CFLAGS_NON_EFI)
+AFLAGS_crt0-efi-aarch64.o += -fPIC
+
+ifeq ($(CONFIG_EFI_APP),y)
+
+PLATFORM_CPPFLAGS += $(CFLAGS_EFI)
+LDFLAGS_FINAL += -znocombreloc -shared
+LDSCRIPT := $(LDSCRIPT_EFI)
+$(warning set LDSCRIPT $(LDSCRIPT))
+
+endif

@@ -145,7 +145,9 @@ SECTIONS
 
 	/DISCARD/ : { *(.dynsym) }
 	/DISCARD/ : { *(.dynstr*) }
+#ifndef CONFIG_EFI
 	/DISCARD/ : { *(.dynamic*) }
+#endif
 	/DISCARD/ : { *(.plt*) }
 	/DISCARD/ : { *(.interp*) }
 	/DISCARD/ : { *(.gnu*) }

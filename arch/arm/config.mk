@@ -127,8 +127,12 @@ endif
 endif
 
 ifneq ($(CONFIG_XPL_BUILD),y)
+
+ifndef CONFIG_EFI_APP
 # Check that only R_ARM_RELATIVE relocations are generated.
 INPUTS-y += checkarmreloc
+endif
+
 # The movt / movw can hardcode 16 bit parts of the addresses in the
 # instruction. Relocation is not supported for that case, so disable
 # such usage by requiring word relocations.
@@ -176,6 +180,12 @@ endif
 endif
 endif
 
+ifdef CONFIG_ARM64
+EFI_LDS := elf_aarch64_efi.lds
+EFI_CRT0 := crt0_aarch64_efi.o
+EFI_RELOC := reloc_aarch64_efi.o
+else
 EFI_LDS := elf_arm_efi.lds
 EFI_CRT0 := crt0_arm_efi.o
 EFI_RELOC := reloc_arm_efi.o
+endif

@@ -10,8 +10,8 @@
 
 #include <asm-generic/pe.h>
 
+#if 0
 	.section	.text.head
-
 	/*
 	 * Magic "MZ" signature for PE/COFF
 	 */
@@ -144,6 +144,8 @@ section_table:
 		 IMAGE_SCN_CNT_INITIALIZED_DATA)
 
 	.align		12
+#endif
+	.align		8
 _start:
 	stp		x29, x30, [sp, #-32]!
 	mov		x29, sp

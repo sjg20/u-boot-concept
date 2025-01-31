@@ -664,6 +664,7 @@ endif
 # If board code explicitly specified LDSCRIPT or CONFIG_SYS_LDSCRIPT, use
 # that (or fail if absent).  Otherwise, search for a linker script in a
 # standard location.
+$(warning pre LDSCRIPT $(LDSCRIPT))
 
 ifndef LDSCRIPT
 	#LDSCRIPT := $(srctree)/board/$(BOARDDIR)/u-boot.lds.debug
@@ -2116,6 +2117,7 @@ cmd_cpp_lds = $(CPP) -Wp,-MD,$(depfile) $(cpp_flags) $(LDPPFLAGS) \
 		-D__ASSEMBLY__ -x assembler-with-cpp -std=c99 -P -o $@ $<
 
 u-boot.lds: $(LDSCRIPT) prepare FORCE
+	$(warning LDSCRIPT $(LDSCRIPT))
 	$(call if_changed_dep,cpp_lds)
 
 spl/u-boot-spl.bin: spl/u-boot-spl
