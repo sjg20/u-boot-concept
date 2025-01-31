@@ -37,21 +37,22 @@ obj-$(CONFIG_OF_LIBFDT) += bootm-fdt.o
 obj-$(CONFIG_CMD_BOOTI) += bootm.o image.o
 obj-$(CONFIG_CMD_BOOTM) += bootm.o
 obj-$(CONFIG_CMD_BOOTZ) += bootm.o zimage.o
-else
+else  # XPL_BUILD
 obj-$(CONFIG_$(PHASE_)FRAMEWORK) += spl.o
 ifdef CONFIG_SPL_FRAMEWORK
 obj-$(CONFIG_CMD_BOOTI) += image.o
 obj-$(CONFIG_CMD_BOOTZ) += zimage.o
 endif
 obj-$(CONFIG_OF_LIBFDT) += bootm-fdt.o
-endif
+endif  # XPL_BUILD
+
 ifdef CONFIG_ARM64
 obj-$(CONFIG_$(PHASE_)USE_ARCH_MEMSET) += memset-arm64.o
 obj-$(CONFIG_$(PHASE_)USE_ARCH_MEMCPY) += memcpy-arm64.o
 else
 obj-$(CONFIG_$(PHASE_)USE_ARCH_MEMSET) += memset.o
 obj-$(CONFIG_$(PHASE_)USE_ARCH_MEMCPY) += memcpy.o
-endif
+endif  # ARM64
 obj-$(CONFIG_$(PHASE_)SYS_L2_PL310) += cache-pl310.o
 obj-$(CONFIG_$(PHASE_)SEMIHOSTING) += semihosting.o
 
@@ -72,12 +73,13 @@ obj-$(CONFIG_FSL_LAYERSCAPE) += ccn504.o
 ifneq ($(CONFIG_GICV2)$(CONFIG_GICV3),)
 obj-y	+= gic_64.o
 endif
+
 obj-$(CONFIG_DRIVER_GICV2)	+= gic-v2.o
 obj-$(CONFIG_GIC_V3_ITS)	+= gic-v3-its.o
 obj-y	+= interrupts_64.o
-else
+else  # CPU
 obj-y	+= interrupts.o
-endif
+endif  # CPU
 ifndef CONFIG_$(PHASE_)SYSRESET
 obj-y	+= reset.o
 endif
@@ -109,7 +111,7 @@ ifndef CONFIG_HAS_THUMB2
 ifndef CONFIG_ARM64
 CFLAGS_cache.o := -marm
 CFLAGS_cache-cp15.o := -marm
-endif
+endif  # ARM64
 
 # For .S, drop -mthumb* and other thumb-related options.
 # CFLAGS_REMOVE_* would not have an effet, so AFLAGS_REMOVE_*
@@ -126,8 +128,8 @@ AFLAGS_memcpy.o := -DMEMCPY_NO_THUMB_BUILD
 ifneq ($(CONFIG_SYS_ARM_ARCH),4)
 obj-y   += bitops.o
 endif
-endif
-endif
+endif  # CONFIG_HAS_THUMB2
+endif  # SYS_THUMB_BUILD
 
 # For building EFI apps
 $(warning EFI_CRT0 $(EFI_CRT0))
@@ -138,3 +140,7 @@ CFLAGS_$(EFI_RELOC) := $(CFLAGS_EFI)
 CFLAGS_REMOVE_$(EFI_RELOC) := $(CFLAGS_NON_EFI)
 
 extra-$(CONFIG_EFI_STUB) += $(EFI_CRT0) $(EFI_RELOC)
+
+$(warning obj-y $(obj-y))
+$(warning obj- $(obj-))
+
