@@ -19,6 +19,7 @@ SECTIONS
 	_init = .;
 	_start = .;
 	image_base = .;
+#if 0
 	.hash : { *(.hash) }	/* this MUST come first, EFI expects it */
 	. = ALIGN(4096);
 	.eh_frame : {
@@ -26,7 +27,7 @@ SECTIONS
 	}
 
 	. = ALIGN(4096);
-
+#endif
 	.text : {
 		_text = .;
 		*(.text.head)
@@ -42,7 +43,11 @@ SECTIONS
 	.rela.dyn : { *(.rela.dyn) }
 	.rela.plt : { *(.rela.plt) }
 	.rela.got : { *(.rela.got) }
-	.rela.data : { *(.rela.data) *(.rela.data*) }
+	.rela.data : {
+		*(.rela.data)
+		*(.rela.data*)
+		*(.rela__u_boot_list*)
+	}
 	_etext = .;
 	_text_size = . - _text;
 	. = ALIGN(4096);
@@ -69,6 +74,13 @@ SECTIONS
 		*(COMMON)
 		. = ALIGN(512);
 		_bss_end = .;
+
+		/* U-Boot lists and device tree */
+		. = ALIGN(8);
+		*(SORT(__u_boot_list*));
+		. = ALIGN(8);
+		*(.dtb*);
+
 		_edata = .;
 	} :data
 	_data_size = _edata - _data;
