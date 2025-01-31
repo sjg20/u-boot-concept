@@ -820,8 +820,10 @@ KBUILD_CPPFLAGS += $(KCPPFLAGS)
 KBUILD_AFLAGS += $(KAFLAGS)
 KBUILD_CFLAGS += $(KCFLAGS)
 
+ifndef CONFIG_EFI_APP
 KBUILD_LDFLAGS  += -z noexecstack
 KBUILD_LDFLAGS  += $(call ld-option,--no-warn-rwx-segments)
+endif
 
 KBUILD_HOSTCFLAGS += $(if $(CONFIG_TOOLS_DEBUG),-g)
 
@@ -1042,11 +1044,13 @@ INPUTS-$(CONFIG_X86) += u-boot-x86-start16.bin u-boot-x86-reset16.bin \
 
 LDFLAGS_u-boot += $(LDFLAGS_FINAL)
 
+ifndef CONFIG_EFI_APP
 # Avoid 'Not enough room for program headers' error on binutils 2.28 onwards.
 LDFLAGS_u-boot += $(call ld-option, --no-dynamic-linker)
 
 # ld.lld support
 LDFLAGS_u-boot += -z notext $(call ld-option,--apply-dynamic-relocs)
+endif
 
 LDFLAGS_u-boot += --build-id=none
 

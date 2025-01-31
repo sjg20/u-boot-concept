@@ -13,7 +13,7 @@ EFI_RELOC := reloc_aarch64_efi.o
 
 LDSCRIPT_EFI := $(srctree)/arch/arm/lib/elf_aarch64_efi.lds
 EFISTUB := crt0_aarch64_efi.o reloc_aarch64_efi.o
-OBJCOPYFLAGS_EFI += --target=efi-app-aarch64
+OBJCOPYFLAGS_EFI += -O binary  #--target=efi-app-aarch64
 #--target=pei-aarch64-little
 EFIPAYLOAD_BFDTARGET := pei-aarch64-little
 EFIPAYLOAD_BFDARCH := aarch64
@@ -25,8 +25,9 @@ AFLAGS_crt0-efi-aarch64.o += -fPIC
 
 ifeq ($(CONFIG_EFI_APP),y)
 
+KBUILD_LDFLAGS :=
 PLATFORM_CPPFLAGS += $(CFLAGS_EFI)
-LDFLAGS_FINAL += -znocombreloc -shared
+LDFLAGS_FINAL +=   -Bsymbolic -Bsymbolic-functions -shared --no-undefined -s -zexecstack
 LDSCRIPT := $(LDSCRIPT_EFI)
 $(warning set LDSCRIPT $(LDSCRIPT))
 

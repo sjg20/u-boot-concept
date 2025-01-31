@@ -14,7 +14,9 @@ CFLAGS_NON_EFI := -fno-pic $(FIXED_REG) -ffunction-sections -fdata-sections \
 CFLAGS_EFI := -fpic -fshort-wchar
 
 ifneq ($(LTO_ENABLE)$(CONFIG_USE_PRIVATE_LIBGCC),yy)
+ifndef CONFIG_EFI_APP
 LDFLAGS_FINAL += --gc-sections
+endif
 endif
 
 ifneq ($(LTO_ENABLE),y)
@@ -106,7 +108,9 @@ PLATFORM_LIBS := arch/arm/lib/eabi_compat.o \
 endif
 
 # needed for relocation
+ifndef CONFIG_EFI_APP
 LDFLAGS_u-boot += -pie
+endif
 
 #
 # FIXME: binutils versions < 2.22 have a bug in the assembler where
