@@ -19,7 +19,7 @@ SECTIONS
 	_init = .;
 	_start = .;
 	image_base = .;
-#if 0
+
 	.hash : { *(.hash) }	/* this MUST come first, EFI expects it */
 	. = ALIGN(4096);
 	.eh_frame : {
@@ -27,7 +27,7 @@ SECTIONS
 	}
 
 	. = ALIGN(4096);
-#endif
+
 	.text : {
 		_text = .;
 		*(.text.head)

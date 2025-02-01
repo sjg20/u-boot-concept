@@ -1002,7 +1002,8 @@ void board_init_f(ulong boot_flags)
 	printf("here2\n");
 	printf("here3 %d\n", 123);
 	printf("here4 %x\n", 123);
-	printf("here5 %p\n", gd);
+	printf("here5 %p\n", &boardf);
+	printf("here6 %p\n", gd);
 	gd->flags = boot_flags;
 	gd->flags &= ~GD_FLG_HAVE_CONSOLE;
 	gd->boardf = &boardf;
