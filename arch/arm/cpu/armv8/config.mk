@@ -27,7 +27,13 @@ ifeq ($(CONFIG_EFI_APP),y)
 
 KBUILD_LDFLAGS :=
 PLATFORM_CPPFLAGS += $(CFLAGS_EFI)
-LDFLAGS_FINAL +=   -Bsymbolic -Bsymbolic-functions -shared --no-undefined -zexecstack
+LDFLAGS_FINAL += -Bsymbolic  -shared --no-undefined
+LDFLAGS_FINAL += -zexecstack -znocombreloc
+LDFLAGS_FINAL += -Bsymbolic-functions
+LDFLAGS_FINAL += -z common-page-size=4096
+LDFLAGS_FINAL += --warn-common
 LDSCRIPT := $(LDSCRIPT_EFI)
+
+LDFLAGS_FINAL +=
 
 endif

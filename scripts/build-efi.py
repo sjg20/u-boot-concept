@@ -50,6 +50,8 @@ def parse_args():
                         help='Package up the app')
     parser.add_argument('-A', '--arm', action='store_true',
                         help='Run on ARM architecture')
+    parser.add_argument('-g', '--gnuefi', action='store_true',
+                        help='Add gnuefi app')
     parser.add_argument('-k', '--kernel', action='store_true',
                         help='Add a kernel')
     parser.add_argument('-o', '--old', action='store_true',
@@ -187,9 +189,13 @@ class BuildEfi:
         fname = f'u-boot-{build_type}.efi'
         if self.args.x1:
             fname = 'u-boot-payload.efi'
+        if self.args.gnuefi:
+            fname = 'printenv.efi'
         tools.write_file(f'{self.tmp}/startup.nsh', f'fs0:{fname}',
                          binary=False)
-        if self.args.x1:
+        if self.args.gnuefi:
+            shutil.copy(fname, self.tmp)
+        elif self.args.x1:
             shutil.copy(f'/tmp/b/x1e/{fname}', self.tmp)
         else:
             shutil.copy(f'{self.build_dir}/{build}/{fname}', self.tmp)

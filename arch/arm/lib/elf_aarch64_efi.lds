@@ -16,18 +16,20 @@ PHDRS
 ENTRY(_start)
 SECTIONS
 {
+	. = 0;
 	_init = .;
 	_start = .;
 	image_base = .;
-
+#if 1
 	.hash : { *(.hash) }	/* this MUST come first, EFI expects it */
+	.gnu.hash : { *(.gnu.hash) }
 	. = ALIGN(4096);
 	.eh_frame : {
 		*(.eh_frame)
 	}
 
 	. = ALIGN(4096);
-
+#endif
 	.text : {
 		_text = .;
 		*(.text.head)
@@ -35,24 +37,19 @@ SECTIONS
 		*(.text.*)
 		*(.gnu.linkonce.t.*)
 		*(.srodata)
-		*(.rodata*)
 		. = ALIGN(16);
-		*(.dynamic);
 		. = ALIGN(512);
 	}
-	.rela.dyn : { *(.rela.dyn) }
-	.rela.plt : { *(.rela.plt) }
-	.rela.got : { *(.rela.got) }
-	.rela.data : {
-		*(.rela.data)
-		*(.rela.data*)
-		*(.rela__u_boot_list*)
-	}
+	.dynamic : { *(.dynamic) }
 	_etext = .;
 	_text_size = . - _text;
-	. = ALIGN(4096);
+	. = ALIGN(65536);
+	.reloc : {
+		KEEP (*(.reloc))
+	}
 	.data : {
 		_data = .;
+		*(.rodata*)
 		*(.sdata)
 		*(.data)
 		*(.data1)
@@ -83,6 +80,17 @@ SECTIONS
 
 		_edata = .;
 	} :data
+
+	.rela.dyn : { *(.rela.dyn) }
+	.rela.plt : { *(.rela.plt) }
+	.rela.got : { *(.rela.got) }
+	.rela.data : {
+		*(.rela.data)
+		*(.rela.data*)
+		*(.rela__u_boot_list*)
+	}
+	. = ALIGN(512);
+
 	_data_size = _edata - _data;
 	_end = .;
 

@@ -11,7 +11,7 @@ endif
 
 CFLAGS_NON_EFI := -fno-pic $(FIXED_REG) -ffunction-sections -fdata-sections \
 		  -fstack-protector-strong
-CFLAGS_EFI := -fpic -fshort-wchar
+CFLAGS_EFI := -fpic -fshort-wchar -fno-merge-all-constants
 
 ifneq ($(LTO_ENABLE)$(CONFIG_USE_PRIVATE_LIBGCC),yy)
 ifndef CONFIG_EFI_APP
@@ -154,6 +154,17 @@ OBJCOPYFLAGS += -j .text -j .secure_text -j .secure_data -j .rodata -j .hash \
 		-j .data -j .got -j .got.plt -j __u_boot_list -j .rel.dyn \
 		-j .binman_sym_table -j .text_rest
 endif
+
+OBJCOPYFLAGS_EFI +=  -j .text -j .sdata -j .data -j .dynamic -j .dynsym \
+		-j .rel -j .rela -j .rel.* -j .rela.* -j .rel* -j .rela* \
+		-j .reloc -j .text -j .sdata -j .data -j .dynamic -j .rodata -j .rel \
+		 -j .rela -j .rel.* -j .rela.* -j .rel* -j .rela* \
+		 -j .areloc -j .reloc \
+		-O binary
+
+# -j .text -j .sdata -j .data -j .dynamic -j .rodata -j .rel \
+# 	    -j .rela -j .rel.* -j .rela.* -j .rel* -j .rela* \
+# 	    -j .areloc -j .reloc --target
 
 # if a dtb section exists we always have to include it
 # there are only two cases where it is generated
