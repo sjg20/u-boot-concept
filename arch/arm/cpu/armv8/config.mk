@@ -14,7 +14,9 @@ EFI_RELOC := reloc_aarch64_efi.o
 LDSCRIPT_EFI := $(srctree)/arch/arm/lib/elf_aarch64_efi.lds
 EFISTUB := crt0_aarch64_efi.o reloc_aarch64_efi.o
 #pei-aarch64-littleOBJCOPYFLAGS_EFI += -O binary  #--target=efi-app-aarch64
+#OBJCOPYFLAGS_EFI += -O binary  #--target=efi-app-aarch64
 #--target=pei-aarch64-little
+OBJCOPYFLAGS_EFI += -O binary --target=efi-app-aarch64
 EFIPAYLOAD_BFDTARGET := pei-aarch64-little
 EFIPAYLOAD_BFDARCH := aarch64
 LDFLAGS_EFI_PAYLOAD := -Bsymbolic -Bsymbolic-functions -shared --no-undefined \
