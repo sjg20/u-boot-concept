@@ -27,7 +27,7 @@ ifeq ($(CONFIG_EFI_APP),y)
 
 KBUILD_LDFLAGS :=
 PLATFORM_CPPFLAGS += $(CFLAGS_EFI)
-LDFLAGS_FINAL +=   -Bsymbolic -Bsymbolic-functions -shared --no-undefined -s -zexecstack
+LDFLAGS_FINAL +=   -Bsymbolic -Bsymbolic-functions -shared --no-undefined -zexecstack
 LDSCRIPT := $(LDSCRIPT_EFI)
 
 endif
