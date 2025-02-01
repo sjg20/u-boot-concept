@@ -664,7 +664,6 @@ endif
 # If board code explicitly specified LDSCRIPT or CONFIG_SYS_LDSCRIPT, use
 # that (or fail if absent).  Otherwise, search for a linker script in a
 # standard location.
-$(warning pre LDSCRIPT $(LDSCRIPT))
 
 ifndef LDSCRIPT
 	#LDSCRIPT := $(srctree)/board/$(BOARDDIR)/u-boot.lds.debug
@@ -1057,7 +1056,6 @@ LDFLAGS_u-boot += --build-id=none
 ifeq ($(CONFIG_ARC)$(CONFIG_NIOS2)$(CONFIG_X86)$(CONFIG_XTENSA),)
 ifndef CONFIG_EFI_APP
 LDFLAGS_u-boot += -Ttext $(CONFIG_TEXT_BASE)
-$(warning text)
 endif
 endif
 
@@ -1686,7 +1684,6 @@ endif # CONFIG_X86
 
 OBJCOPYFLAGS_u-boot-app.efi := $(OBJCOPYFLAGS_EFI)
 u-boot-app.efi: u-boot dts/dt.dtb FORCE
-	echo OBJCOPYFLAGS_EFI $(OBJCOPYFLAGS_EFI) >&2
 	$(if $(CONFIG_OF_SEPARATE),$(call if_changed,embeddtb))
 	$(call if_changed,zobjcopy)
 
@@ -2125,7 +2122,6 @@ cmd_cpp_lds = $(CPP) -Wp,-MD,$(depfile) $(cpp_flags) $(LDPPFLAGS) \
 		-D__ASSEMBLY__ -x assembler-with-cpp -std=c99 -P -o $@ $<
 
 u-boot.lds: $(LDSCRIPT) prepare FORCE
-	$(warning LDSCRIPT $(LDSCRIPT))
 	$(call if_changed_dep,cpp_lds)
 
 spl/u-boot-spl.bin: spl/u-boot-spl

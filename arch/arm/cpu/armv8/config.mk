@@ -29,6 +29,5 @@ KBUILD_LDFLAGS :=
 PLATFORM_CPPFLAGS += $(CFLAGS_EFI)
 LDFLAGS_FINAL +=   -Bsymbolic -Bsymbolic-functions -shared --no-undefined -s -zexecstack
 LDSCRIPT := $(LDSCRIPT_EFI)
-$(warning set LDSCRIPT $(LDSCRIPT))
 
 endif

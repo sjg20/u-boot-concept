@@ -31,7 +31,6 @@ else
 obj-y	+= relocate.o
 endif  # ARM64
 endif  # EFI_APP
-$(warning here)
 #obj-$(CONFIG_EFI_APP_64BIT) += crt0_aarch64_efi.o reloc_aarch64_efi.o
 
 obj-$(CONFIG_EFI_APP_64BIT) += $(EFI_CRT0) $(EFI_RELOC)
@@ -136,15 +135,12 @@ endif  # CONFIG_HAS_THUMB2
 endif  # SYS_THUMB_BUILD
 
 # For building EFI apps
-$(warning EFI_CRT0 $(EFI_CRT0))
 AFLAGS_$(EFI_CRT0) := -fpic
 AFLAGS_REMOVE_$(EFI_CRT0) := -fno-PIE -fno-pic
 
 CFLAGS_$(EFI_RELOC) := $(CFLAGS_EFI)
 CFLAGS_REMOVE_$(EFI_RELOC) := $(CFLAGS_NON_EFI) -fno-PIE -fno-pic $(FIXED_REG) -ffunction-sections -fdata-sections \
 		  -fstack-protector-strong
-
-$(warning CFLAGS_REMOVE_$(EFI_RELOC) $(CFLAGS_REMOVE_$(EFI_RELOC)))
 
 extra-$(CONFIG_EFI_STUB) += $(EFI_CRT0) $(EFI_RELOC)
 
