@@ -161,6 +161,11 @@ endif
 # 2) unit tests include device tree blobs
 OBJCOPYFLAGS += -j .dtb.init.rodata
 
+ifdef CONFIG_EFI_APP
+# OBJCOPYFLAGS_EFI += -j .hash -j .eh_frame -j .rela.data
+OBJCOPYFLAGS_EFI += --target=efi-app-aarch64
+endif  # CONFIG_EFI_APP
+
 ifdef CONFIG_EFI_LOADER
 OBJCOPYFLAGS += -j .efi_runtime -j .efi_runtime_rel
 endif
