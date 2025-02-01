@@ -650,6 +650,9 @@ void efi_puts(struct efi_priv *priv, const char *str);
  */
 void efi_putc(struct efi_priv *priv, const char ch);
 
+void efi_printf(struct efi_priv *priv, const char *str, ...)
+		__attribute__ ((format (__printf__, 2, 3)));
+
 /**
  * efi_store_memory_map() - Collect the memory-map info from EFI
  *

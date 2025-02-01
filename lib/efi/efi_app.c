@@ -87,11 +87,21 @@ static efi_status_t setup_memory(struct efi_priv *priv)
 	 * are very few assignments to global_data in U-Boot and this makes
 	 * it easier to find them.
 	 */
+	efi_putc(priv, '0');
 	ptr = efi_malloc(priv, sizeof(*ptr), &ret);
+	efi_putc(priv, '1');
 	if (!ptr)
 		return ret;
+	efi_putc(priv, '2');
 	memset(ptr, '\0', sizeof(*ptr));
+	efi_putc(priv, '3');
+
+	efi_printf(priv, "ptr %p\n", ptr);
+	efi_printf(priv, "gd addr %p\n", &global_data_ptr);
+	efi_printf(priv, "gd %p\n", global_data_ptr);
+
 	set_gd(ptr);
+	efi_putc(priv, '4');
 
 	gd->malloc_base = (ulong)efi_malloc(priv, CONFIG_VAL(SYS_MALLOC_F_LEN),
 					    &ret);
@@ -176,7 +186,9 @@ efi_status_t EFIAPI efi_main(efi_handle_t image,
 		printf("Failed to set up U-Boot: err=%lx\n", ret);
 		return ret;
 	}
+	efi_putc(priv, 'a');
 	efi_set_priv(priv);
+	efi_putc(priv, 'b');
 
 	/*
 	 * Set up the EFI debug UART so that printf() works. This is
@@ -184,14 +196,20 @@ efi_status_t EFIAPI efi_main(efi_handle_t image,
 	 * can use printf() freely.
 	 */
 	debug_uart_init();
+	efi_putc(priv, 'c');
+	efi_printf(priv, "\nmy test\n");
+	efi_printf(priv, "priv %lx\n", (ulong)priv);
+	efi_printf(priv, "priv2 %p\n", priv);
 
 	ret = setup_memory(priv);
+	efi_putc(priv, 'd');
 	if (ret) {
 		printf("Failed to set up memory: ret=%lx\n", ret);
 		return ret;
 	}
 
 	scan_tables(priv->sys_table);
+	efi_putc(priv, 'e');
 
 	/*
 	 * We could store the EFI memory map here, but it changes all the time,
@@ -202,6 +220,7 @@ efi_status_t EFIAPI efi_main(efi_handle_t image,
 	 *	return ret;
 	 */
 
+	efi_puts(priv, "starting\n");
 	printf("starting\n");
 
 	board_init_f(GD_FLG_SKIP_RELOC);

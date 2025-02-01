@@ -649,8 +649,9 @@ repeat:
 			if (IS_ERR(str))
 				return PTR_ERR(str);
 			/* Skip all alphanumeric pointer suffixes */
-			while (isalnum(fmt[1]))
-				fmt++;
+			// while (isalnum(fmt[1]))
+				// fmt++;
+			// fmt++;
 			continue;
 
 		case 'n':

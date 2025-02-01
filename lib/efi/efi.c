@@ -11,8 +11,8 @@
  */
 
 #include <debug_uart.h>
-#include <errno.h>
 #include <malloc.h>
+#include <vsprintf.h>
 #include <linux/err.h>
 #include <linux/types.h>
 #include <efi.h>
@@ -86,6 +86,16 @@ void efi_puts(struct efi_priv *priv, const char *str)
 {
 	while (*str)
 		efi_putc(priv, *str++);
+}
+
+void efi_printf(struct efi_priv *priv, const char *fmt, ...)
+{
+	char buf[CONFIG_SYS_CBSIZE];
+	va_list args;
+
+	va_start(args, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, args);
+	efi_puts(priv, buf);
 }
 
 int efi_init(struct efi_priv *priv, const char *banner, efi_handle_t image,

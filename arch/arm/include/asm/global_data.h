@@ -122,7 +122,7 @@ struct arch_global_data {
 #define gd global_data_ptr
 
 #elif defined(__clang__) || defined(LTO_ENABLE)
-
+s
 #define DECLARE_GLOBAL_DATA_PTR
 #define gd	get_gd()
 
@@ -140,7 +140,7 @@ static inline gd_t *get_gd(void)
 }
 
 #else
-
+s
 #ifdef CONFIG_ARM64
 #define DECLARE_GLOBAL_DATA_PTR		register volatile gd_t *gd asm ("x18")
 #else
@@ -155,6 +155,7 @@ static inline void set_gd(volatile gd_t *gd_ptr)
 
 	global_data_ptr = (void *)gd_ptr;
 #elif defined CONFIG_ARM64
+	d
 	__asm__ volatile("ldr x18, %0\n" : : "m"(gd_ptr));
 #elif __ARM_ARCH >= 7
 	__asm__ volatile("ldr r9, %0\n" : : "m"(gd_ptr));
