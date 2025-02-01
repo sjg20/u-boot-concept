@@ -155,12 +155,13 @@ OBJCOPYFLAGS += -j .text -j .secure_text -j .secure_data -j .rodata -j .hash \
 		-j .binman_sym_table -j .text_rest
 endif
 
-OBJCOPYFLAGS_EFI +=  -j .text -j .sdata -j .data -j .dynamic -j .dynsym \
-		-j .rel -j .rela -j .rel.* -j .rela.* -j .rel* -j .rela* \
-		-j .reloc -j .text -j .sdata -j .data -j .dynamic -j .rodata -j .rel \
+# OBJCOPYFLAGS_EFI +=  -j .text -j .sdata -j .data -j .dynamic -j .dynsym \
+# 		-j .rel -j .rela -j .rel.* -j .rela.* -j .rel* -j .rela* \
+# 		-j .reloc
+
+OBJCOPYFLAGS_EFI +=   -j .text -j .sdata -j .data -j .dynamic -j .rodata -j .rel \
 		 -j .rela -j .rel.* -j .rela.* -j .rel* -j .rela* \
-		 -j .areloc -j .reloc \
-		-O binary
+		 -j .areloc -j .reloc
 
 # -j .text -j .sdata -j .data -j .dynamic -j .rodata -j .rel \
 # 	    -j .rela -j .rel.* -j .rela.* -j .rel* -j .rela* \

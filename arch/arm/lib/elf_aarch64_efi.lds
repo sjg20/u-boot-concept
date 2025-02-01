@@ -20,16 +20,14 @@ SECTIONS
 	_init = .;
 	_start = .;
 	image_base = .;
-#if 1
+	ImageBase = .;
 	.hash : { *(.hash) }	/* this MUST come first, EFI expects it */
 	.gnu.hash : { *(.gnu.hash) }
 	. = ALIGN(4096);
-	.eh_frame : {
-		*(.eh_frame)
-	}
+  .eh_frame : { *(.eh_frame) }
+  .gcc_except_table : { *(.gcc_except_table*) }
 
 	. = ALIGN(4096);
-#endif
 	.text : {
 		_text = .;
 		*(.text.head)
@@ -81,15 +79,22 @@ SECTIONS
 		_edata = .;
 	} :data
 
-	.rela.dyn : { *(.rela.dyn) }
-	.rela.plt : { *(.rela.plt) }
-	.rela.got : { *(.rela.got) }
-	.rela.data : {
-		*(.rela.data)
-		*(.rela.data*)
+	. = ALIGN(4096);
+	.rela : {
+		*(.rela.text*)
 		*(.rela__u_boot_list*)
+		*(.rela.data*)
+		*(.rela.got)
+		*(.rela.dyn)
+		*(.rela.stab)
+		*(.rela.init_array*)
+		*(.rela.fini_array*)
+		*(.rela.ctors*)
+		*(.rela.dtors*)
 	}
-	. = ALIGN(512);
+	. = ALIGN(4096);
+	.rela.plt : { *(.rela.plt) }
+
 
 	_data_size = _edata - _data;
 	_end = .;

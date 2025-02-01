@@ -13,7 +13,7 @@ EFI_RELOC := reloc_aarch64_efi.o
 
 LDSCRIPT_EFI := $(srctree)/arch/arm/lib/elf_aarch64_efi.lds
 EFISTUB := crt0_aarch64_efi.o reloc_aarch64_efi.o
-OBJCOPYFLAGS_EFI += -O binary  #--target=efi-app-aarch64
+#pei-aarch64-littleOBJCOPYFLAGS_EFI += -O binary  #--target=efi-app-aarch64
 #--target=pei-aarch64-little
 EFIPAYLOAD_BFDTARGET := pei-aarch64-little
 EFIPAYLOAD_BFDARCH := aarch64
@@ -30,7 +30,7 @@ PLATFORM_CPPFLAGS += $(CFLAGS_EFI)
 LDFLAGS_FINAL += -Bsymbolic  -shared --no-undefined
 LDFLAGS_FINAL += -zexecstack -znocombreloc
 LDFLAGS_FINAL += -Bsymbolic-functions
-LDFLAGS_FINAL += -z common-page-size=4096
+LDFLAGS_FINAL += -z common-page-size=4096 -z max-page-size=4096
 LDFLAGS_FINAL += --warn-common
 LDSCRIPT := $(LDSCRIPT_EFI)
 
