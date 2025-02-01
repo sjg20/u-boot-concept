@@ -8,6 +8,7 @@
  * Sysgo Real-Time Solutions, GmbH <www.elinos.com>
  * Marius Groeger <mgroeger@sysgo.de>
  */
+#define LOG_DEBUG
 
 #include <config.h>
 #include <bloblist.h>
@@ -997,6 +998,11 @@ void board_init_f(ulong boot_flags)
 {
 	struct board_f boardf;
 
+	printf("here\n");
+	printf("here2\n");
+	printf("here3 %d\n", 123);
+	printf("here4 %x\n", 123);
+	printf("here5 %p\n", gd);
 	gd->flags = boot_flags;
 	gd->flags &= ~GD_FLG_HAVE_CONSOLE;
 	gd->boardf = &boardf;
