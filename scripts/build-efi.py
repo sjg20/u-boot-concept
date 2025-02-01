@@ -64,6 +64,8 @@ def parse_args():
                         help='Run QEMU with serial only (no display)')
     parser.add_argument('-w', '--word', action='store_true',
                         help='Use word version (32-bit) rather than 64-bit')
+    parser.add_argument('-x', '--x1', action='store_true',
+                        help='Use x1n version')
 
     args = parser.parse_args()
 
@@ -183,12 +185,14 @@ class BuildEfi:
         if not os.path.exists(self.tmp):
             os.mkdir(self.tmp)
         fname = f'u-boot-{build_type}.efi'
-        # fname = 'u-boot-payload.efi'
+        if self.args.x1:
+            fname = 'u-boot-payload.efi'
         tools.write_file(f'{self.tmp}/startup.nsh', f'fs0:{fname}',
                          binary=False)
-        # shutil.copy(f'/tmp/b/x1e/{fname}', self.tmp)
-
-        shutil.copy(f'{self.build_dir}/{build}/{fname}', self.tmp)
+        if self.args.x1:
+            shutil.copy(f'/tmp/b/x1e/{fname}', self.tmp)
+        else:
+            shutil.copy(f'{self.build_dir}/{build}/{fname}', self.tmp)
 
     def copy_files(self):
         """Copy files into the filesystem"""
@@ -247,9 +251,18 @@ class BuildEfi:
             try:
                 cmd = 'sudo', 'kpartx', '-d', self.img
                 command.output(*cmd)
-            except Exception:
+            except ValueError:
                 time.sleep(0.5)
                 command.output(*cmd)
+
+    def do_build(self, build):
+        """Build U-Boot for the selected board"""
+        res = command.run_one('buildman', '-w', '-o',
+                              f'{self.build_dir}/{build}', '--board', build,
+                              '-I', raise_on_error=False)
+        if res.return_code and res.return_code != 101:  # Allow warnings
+            raise ValueError(
+                f'buildman exited with {res.return_code}: {res.combined}')
 
     def start(self):
         """This does all the work"""
@@ -259,6 +272,8 @@ class BuildEfi:
         build_type = 'payload' if args.payload else 'app'
         self.tmp = f'{self.build_dir}/efi{bitness}{build_type}'
         build = f'efi-{arch}_{build_type}{bitness}'
+
+        self.do_build(build)
 
         if args.old and bitness == 32:
             build = f'efi-{arch}_{build_type}'
