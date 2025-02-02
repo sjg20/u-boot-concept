@@ -64,6 +64,8 @@ def parse_args():
                         help='Run QEMU with the image')
     parser.add_argument('-s', '--serial', action='store_true',
                         help='Run QEMU with serial only (no display)')
+    parser.add_argument('-t', '--out_app', action='store_true',
+                        help='Add try.c out app')
     parser.add_argument('-w', '--word', action='store_true',
                         help='Use word version (32-bit) rather than 64-bit')
     parser.add_argument('-x', '--x1', action='store_true',
@@ -189,11 +191,15 @@ class BuildEfi:
         fname = f'u-boot-{build_type}.efi'
         if self.args.x1:
             fname = 'u-boot-payload.efi'
-        if self.args.gnuefi:
+        elif self.args.gnuefi:
             fname = 'printenv.efi'
+        elif self.args.out_app:
+            fname = 'out.efi'
         tools.write_file(f'{self.tmp}/startup.nsh', f'fs0:{fname}',
                          binary=False)
         if self.args.gnuefi:
+            shutil.copy(fname, self.tmp)
+        elif self.args.out_app:
             shutil.copy(fname, self.tmp)
         elif self.args.x1:
             shutil.copy(f'/tmp/b/x1e/{fname}', self.tmp)

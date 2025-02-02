@@ -175,7 +175,7 @@ OBJCOPYFLAGS += -j .dtb.init.rodata
 
 ifdef CONFIG_EFI_APP
 OBJCOPYFLAGS_EFI += --target=efi-app-aarch64
-OBJCOPYFLAGS += -j .hash -j .eh_frame -j .rela.data
+# OBJCOPYFLAGS += -j .hash -j .eh_frame -j .rela.data
 endif  # CONFIG_EFI_APP
 
 ifdef CONFIG_EFI_LOADER
