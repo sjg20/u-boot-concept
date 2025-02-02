@@ -453,8 +453,10 @@ KBUILD_AFLAGS += $(call cc-option, -no-integrated-as)
 endif
 
 # Don't generate position independent code
-KBUILD_CFLAGS	+= $(call cc-option,-fno-PIE)
-KBUILD_AFLAGS	+= $(call cc-option,-fno-PIE)
+KBUILD_CFLAGS	+= $(call cc-option,-fPIE)
+KBUILD_AFLAGS	+= $(call cc-option,-fPIE)
+# KBUILD_CFLAGS	+= $(call cc-option,-fno-PIE)
+# KBUILD_AFLAGS	+= $(call cc-option,-fno-PIE)
 
 # Read UBOOTRELEASE from include/config/uboot.release (if it exists)
 UBOOTRELEASE = $(shell cat include/config/uboot.release 2> /dev/null)
@@ -1049,9 +1051,9 @@ LDFLAGS_u-boot += $(call ld-option, --no-dynamic-linker)
 
 # ld.lld support
 LDFLAGS_u-boot += -z notext $(call ld-option,--apply-dynamic-relocs)
-endif
 
 LDFLAGS_u-boot += --build-id=none
+endif
 
 ifeq ($(CONFIG_ARC)$(CONFIG_NIOS2)$(CONFIG_X86)$(CONFIG_XTENSA),)
 ifndef CONFIG_EFI_APP
@@ -1841,6 +1843,9 @@ cmd_smap = \
 		-c $(srctree)/common/system_map.c -o common/system_map.o
 
 u-boot:	$(u-boot-init) $(u-boot-main) $(u-boot-keep-syms-lto) u-boot.lds FORCE
+	$(warning KBUILD_LDFLAGS $(KBUILD_LDFLAGS))
+	$(warning LDFLAGS_u-boot $(LDFLAGS_u-boot))
+	$(warning PLATFORM_LIBS $(PLATFORM_LIBS))
 	+$(call if_changed,u-boot__)
 ifeq ($(CONFIG_KALLSYMS),y)
 	$(call cmd,smap)

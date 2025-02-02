@@ -9,9 +9,9 @@ else
 FIXED_REG := -ffixed-r9
 endif
 
-CFLAGS_NON_EFI := -fno-pic $(FIXED_REG) -ffunction-sections -fdata-sections \
-		  -fstack-protector-strong
-CFLAGS_EFI := -fpic -fshort-wchar -fno-merge-all-constants
+#CFLAGS_NON_EFI := -fno-pic $(FIXED_REG) -ffunction-sections -fdata-sections \
+#		  -fstack-protector-strong
+#CFLAGS_EFI := -fpic -fshort-wchar -fno-merge-all-constants
 
 ifneq ($(LTO_ENABLE)$(CONFIG_USE_PRIVATE_LIBGCC),yy)
 ifndef CONFIG_EFI_APP
@@ -20,11 +20,11 @@ endif
 endif
 
 ifneq ($(LTO_ENABLE),y)
-PLATFORM_RELFLAGS += -ffunction-sections -fdata-sections
+#PLATFORM_RELFLAGS += -ffunction-sections -fdata-sections
 endif
 
-PLATFORM_RELFLAGS += -fno-common $(FIXED_REG)
-PLATFORM_RELFLAGS += $(call cc-option, -msoft-float) \
+#PLATFORM_RELFLAGS += -fno-common $(FIXED_REG)
+# PLATFORM_RELFLAGS += $(call cc-option, -msoft-float) \
 		     $(call cc-option,-mgeneral-regs-only) \
       $(call cc-option,-mshort-load-bytes,$(call cc-option,-malignment-traps,))
 
@@ -141,7 +141,7 @@ endif
 # instruction. Relocation is not supported for that case, so disable
 # such usage by requiring word relocations.
 PLATFORM_CPPFLAGS += $(call cc-option, -mword-relocations)
-PLATFORM_CPPFLAGS += $(call cc-option, -fno-pic)
+# PLATFORM_CPPFLAGS += $(call cc-option, -fno-pic)
 endif
 
 # limit ourselves to the sections we want in the .bin.

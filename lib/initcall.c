@@ -8,13 +8,14 @@
 #include <log.h>
 #include <relocate.h>
 #include <asm/global_data.h>
+#include <asm/sections.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
 static ulong calc_reloc_ofs(void)
 {
 #ifdef CONFIG_EFI_APP
-	return (ulong)image_base;
+	return (ulong)ImageBase;
 #endif
 	/*
 	 * Sandbox is relocated by the OS, so symbols always appear at
