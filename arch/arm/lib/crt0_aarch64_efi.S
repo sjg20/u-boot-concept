@@ -11,7 +11,7 @@
 #include <asm-generic/pe.h>
 
 	.section	.text.head
-#if 1
+#if 0
 	/*
 	 * Magic "MZ" signature for PE/COFF
 	 */

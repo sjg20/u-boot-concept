@@ -27,11 +27,14 @@ ifeq ($(CONFIG_EFI_APP),y)
 
 KBUILD_LDFLAGS :=
 PLATFORM_CPPFLAGS += $(CFLAGS_EFI)
-LDFLAGS_FINAL += -Bsymbolic  -shared --no-undefined
-LDFLAGS_FINAL += -zexecstack -znocombreloc
-LDFLAGS_FINAL += -Bsymbolic-functions
 LDFLAGS_FINAL += -z common-page-size=4096 -z max-page-size=4096
-LDFLAGS_FINAL += --warn-common
+LDFLAGS_FINAL += -nostdlib --warn-common --no-undefined --fatal-warnings
+LDFLAGS_FINAL += --build-id=sha1 -z nocombreloc -shared -Bsymbolic
+
+# LDFLAGS_FINAL += --build-id sha1
+# LDFLAGS_FINAL += -Bsymbolic  -shared
+# LDFLAGS_FINAL += -zexecstack -znocombreloc
+# LDFLAGS_FINAL += -Bsymbolic-functions
 LDSCRIPT := $(LDSCRIPT_EFI)
 
 LDFLAGS_FINAL +=
