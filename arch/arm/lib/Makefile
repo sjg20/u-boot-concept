@@ -33,8 +33,8 @@ endif  # ARM64
 endif  # EFI_APP
 #obj-$(CONFIG_EFI_APP_64BIT) += crt0_aarch64_efi.o reloc_aarch64_efi.o
 
-obj-$(CONFIG_EFI_APP_64BIT) += $(EFI_RELOC)
-#obj-$(CONFIG_EFI_APP_64BIT) += $(EFI_CRT0) $(EFI_RELOC)
+# obj-$(CONFIG_EFI_APP_64BIT) += $(EFI_RELOC)
+obj-$(CONFIG_EFI_APP_64BIT) += $(EFI_CRT0) $(EFI_RELOC)
 
 obj-$(CONFIG_CPU_V7M) += cmd_boot.o
 obj-$(CONFIG_OF_LIBFDT) += bootm-fdt.o
