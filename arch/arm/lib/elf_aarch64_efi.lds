@@ -12,13 +12,11 @@ SECTIONS
 {
   . = 0;
   ImageBase = .;
-#if 0
   /* .hash and/or .gnu.hash MUST come first! */
   .hash : { *(.hash) }
   .gnu.hash : { *(.gnu.hash) }
   . = ALIGN(4096);
   .eh_frame : { *(.eh_frame) }
-#endif
   .gcc_except_table : { *(.gcc_except_table*) }
   . = ALIGN(4096);
   .text : {

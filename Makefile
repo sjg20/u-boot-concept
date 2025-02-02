@@ -855,7 +855,7 @@ UBOOTINCLUDE    := \
 NOSTDINC_FLAGS += -nostdinc -isystem $(shell $(CC) -print-file-name=include)
 
 $(warning KBUILD_CFLAGS $(KBUILD_CFLAGS))
-KBUILD_CFLAGS := -Wall -Wstrict-prototypes -Wno-format-security -fno-builtin \
+# KBUILD_CFLAGS := -Wall -Wstrict-prototypes -Wno-format-security -fno-builtin \
 	-ffreestanding -std=gnu11 -fshort-wchar -fno-strict-aliasing \
 	-fPIE -Os -fno-stack-protector -fno-delete-null-pointer-checks\
 	-Wno-pointer-sign -Wno-stringop-truncation -Wno-zero-length-bounds \
@@ -1093,7 +1093,7 @@ CHECKFLAGS += $(if $(CONFIG_64BIT),-m64,-m32)
 
 # Normally we fill empty space with 0xff
 quiet_cmd_objcopy = OBJCOPY $@
-cmd_objcopy = $(OBJCOPY) --gap-fill=0xff $(OBJCOPYFLAGS) \
+cmd_objcopy = $(OBJCOPY) $(OBJCOPYFLAGS) \
 	$(OBJCOPYFLAGS_$(@F)) $< $@
 
 # Inject the DTB into u-boot
@@ -1707,7 +1707,7 @@ endif # CONFIG_X86
 
 OBJCOPYFLAGS_u-boot-app.efi := $(OBJCOPYFLAGS_EFI)
 u-boot-app.efi: u-boot dts/dt.dtb FORCE
-	$(if $(CONFIG_OF_SEPARATE),$(call if_changed,embeddtb))
+	#$(if $(CONFIG_OF_SEPARATE),$(call if_changed,embeddtb))
 	$(warning OBJCOPYFLAGS_EFI $(OBJCOPYFLAGS_EFI))
 	$(call if_changed,objcopy)
 
@@ -1846,13 +1846,12 @@ quiet_cmd_u-boot__ ?= LTO     $@
 		-Wl,-Map,u-boot.map;						\
 		$(if $(ARCH_POSTLINK), $(MAKE) -f $(ARCH_POSTLINK) $@, true)
 else
+# 		arch/arm/lib/reloc_aarch64_efi.o
 quiet_cmd_u-boot__ ?= LD      $@
       cmd_u-boot__ ?= $(LD) $(KBUILD_LDFLAGS) $(LDFLAGS_u-boot) -o $@		\
-		-T u-boot.lds $(u-boot-init)					\
-		--whole-archive							\
-			$(u-boot-main)						\
-		--no-whole-archive						\
+		-T u-boot.lds					\
 		/vid/software/devel/efi/gnu-efi/aarch64/gnuefi/crt0-efi-aarch64.o \
+		~/u/try.o ~/u/fred.o ~/u/reloc_aarch64.o ~/u/entry.o \
 		$(PLATFORM_LIBS) -Map u-boot.map;				\
 		$(if $(ARCH_POSTLINK), $(MAKE) -f $(ARCH_POSTLINK) $@, true)
 endif

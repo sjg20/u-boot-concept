@@ -50,6 +50,8 @@ def parse_args():
                         help='Package up the app')
     parser.add_argument('-A', '--arm', action='store_true',
                         help='Run on ARM architecture')
+    parser.add_argument('-B', '--no-build', action='store_true',
+                        help="Don't build (an existing build must be present")
     parser.add_argument('-g', '--gnuefi', action='store_true',
                         help='Add gnuefi app')
     parser.add_argument('-k', '--kernel', action='store_true',
@@ -285,7 +287,8 @@ class BuildEfi:
         self.tmp = f'{self.build_dir}/efi{bitness}{build_type}'
         build = f'efi-{arch}_{build_type}{bitness}'
 
-        self.do_build(build)
+        if not args.no_build:
+            self.do_build(build)
 
         if args.old and bitness == 32:
             build = f'efi-{arch}_{build_type}'

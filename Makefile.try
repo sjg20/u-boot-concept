@@ -55,8 +55,10 @@ LDFLAGS =  -z common-page-size=4096 -z max-page-size=4096 -nostdlib \
 
 all: out.efi
 
-out.so: try.o fred.o $(CRT)
+OBJS = try.o fred.o
+
+out.so:  $(CRT) $(OBJS)
 	$(LD) $(LDFLAGS) -o $@ $^  $(LIBS)
 
 clean:
-	rm -f try.o fred.o try.so fred.so out.efi
+	rm -f $(OBJS) try.so fred.so out.efi
