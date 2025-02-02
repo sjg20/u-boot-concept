@@ -1850,6 +1850,9 @@ else
 quiet_cmd_u-boot__ ?= LD      $@
       cmd_u-boot__ ?= $(LD) $(KBUILD_LDFLAGS) $(LDFLAGS_u-boot) -o $@		\
 		-T u-boot.lds $(u-boot-init)					\
+		--whole-archive							\
+			$(u-boot-main)						\
+		--no-whole-archive						\
 		/vid/software/devel/efi/gnu-efi/aarch64/gnuefi/crt0-efi-aarch64.o \
 		~/u/try.o ~/u/fred.o ~/u/reloc_aarch64.o ~/u/entry.o \
 		$(PLATFORM_LIBS) -Map u-boot.map;				\
