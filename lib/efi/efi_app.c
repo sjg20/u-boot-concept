@@ -174,7 +174,7 @@ static void scan_tables(struct efi_system_table *sys_table)
  * U-Boot. If it returns, EFI will continue. Another way to get back to EFI
  * is via reset_cpu().
  */
-efi_status_t EFIAPI efi_main2(efi_handle_t image,
+efi_status_t EFIAPI efi_main(efi_handle_t image,
 			     struct efi_system_table *sys_table)
 {
 	struct efi_priv local_priv, *priv = &local_priv;

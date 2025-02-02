@@ -1,7 +1,7 @@
 void fred(void);
 
-int efi_main(void)
+int efi_main2(void)
 {
-	efi_main2();
+	efi_main();
 	return 0;
 }
