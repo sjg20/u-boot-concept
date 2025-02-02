@@ -1854,7 +1854,6 @@ quiet_cmd_u-boot__ ?= LD      $@
 			$(u-boot-main)						\
 		--no-whole-archive						\
 		/vid/software/devel/efi/gnu-efi/aarch64/gnuefi/crt0-efi-aarch64.o \
-		 ~/u/entry.o \
 		$(PLATFORM_LIBS) -Map u-boot.map;				\
 		$(if $(ARCH_POSTLINK), $(MAKE) -f $(ARCH_POSTLINK) $@, true)
 endif
