@@ -29,7 +29,7 @@ _start:
 	cbnz		x0, 0f
 
 	ldp		x0, x1, [sp, #16]
-	bl		_entry
+	bl		efi_main
 
 0:	ldp		x29, x30, [sp], #32
 	ret
