@@ -9,6 +9,11 @@
 #include <asm/arch-rockchip/bootrom.h>
 #include <asm/arch-rockchip/hardware.h>
 
+#define FIREWALL_DDR_BASE		0xff2e0000
+#define FW_DDR_MST6_REG 		0x58
+#define FW_DDR_MST7_REG 		0x5c
+#define FW_DDR_MST14_REG		0x78
+
 const char * const boot_devices[BROM_LAST_BOOTSOURCE + 1] = {
 	[BROM_BOOTSOURCE_EMMC] = "/soc/mmc@ffbf0000",
 	[BROM_BOOTSOURCE_SD] = "/soc/mmc@ffc30000",
@@ -40,7 +45,27 @@ void board_debug_uart_init(void)
 {
 }
 
-#ifdef CONFIG_XPL_BUILD
+int arch_cpu_init(void)
+{
+	u32 val;
+
+	if (!IS_ENABLED(CONFIG_SPL_BUILD))
+		return 0;
+
+	/* Set the emmc to access ddr memory */
+	val = readl(FIREWALL_DDR_BASE + FW_DDR_MST6_REG);
+	writel(val & 0x0000ffff, FIREWALL_DDR_BASE + FW_DDR_MST6_REG);
+
+	/* Set the fspi to access ddr memory */
+	val = readl(FIREWALL_DDR_BASE + FW_DDR_MST7_REG);
+	writel(val & 0xffff0000, FIREWALL_DDR_BASE + FW_DDR_MST7_REG);
+
+	/* Set the sdmmc to access ddr memory */
+	val = readl(FIREWALL_DDR_BASE + FW_DDR_MST14_REG);
+	writel(val & 0x0000ffff, FIREWALL_DDR_BASE + FW_DDR_MST14_REG);
+
+	return 0;
+}
 
 #define HP_TIMER_BASE			CONFIG_ROCKCHIP_STIMER_BASE
 #define HP_CTRL_REG			0x04
@@ -50,8 +75,12 @@ void board_debug_uart_init(void)
 
 void rockchip_stimer_init(void)
 {
-	u32 reg = readl(HP_TIMER_BASE + HP_CTRL_REG);
+	u32 reg;
 
+	if (!IS_ENABLED(CONFIG_XPL_BUILD))
+		return;
+
+	reg = readl(HP_TIMER_BASE + HP_CTRL_REG);
 	if (reg & TIMER_EN)
 		return;
 
@@ -60,7 +89,6 @@ void rockchip_stimer_init(void)
 	writel(0xffffffff, HP_TIMER_BASE + HP_LOAD_COUNT1_REG);
 	writel(TIMER_EN, HP_TIMER_BASE + HP_CTRL_REG);
 }
-#endif
 
 #define RK3528_OTP_CPU_CODE_OFFSET		0x02
 #define RK3528_OTP_CPU_CHIP_TYPE_OFFSET		0x28
