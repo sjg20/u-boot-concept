@@ -1849,7 +1849,7 @@ else
 # 		arch/arm/lib/reloc_aarch64_efi.o
 quiet_cmd_u-boot__ ?= LD      $@
       cmd_u-boot__ ?= $(LD) $(KBUILD_LDFLAGS) $(LDFLAGS_u-boot) -o $@		\
-		-T u-boot.lds $(u-boot-init)					\
+		-T u-boot.lds					\
 		/vid/software/devel/efi/gnu-efi/aarch64/gnuefi/crt0-efi-aarch64.o \
 		~/u/try.o ~/u/fred.o ~/u/reloc_aarch64.o ~/u/entry.o \
 		$(PLATFORM_LIBS) -Map u-boot.map;				\
