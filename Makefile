@@ -775,10 +775,12 @@ KBUILD_CFLAGS += $(call cc-disable-warning, maybe-uninitialized)
 # change __FILE__ to the relative path from the srctree
 KBUILD_CFLAGS	+= $(call cc-option,-fmacro-prefix-map=$(srctree)/=)
 
-KBUILD_CFLAGS	+= -gdwarf-4
+KBUILD_CFLAGS += -shared
+
+#KBUILD_CFLAGS	+= -gdwarf-4
 # $(KBUILD_AFLAGS) sets -g, which causes gcc to pass a suitable -g<format>
 # option to the assembler.
-KBUILD_AFLAGS	+= -gdwarf-4
+#KBUILD_AFLAGS	+= -gdwarf-4
 
 # Report stack usage if supported
 # ARC tools based on GCC 7.1 has an issue with stack usage
@@ -851,6 +853,25 @@ UBOOTINCLUDE    := \
 		-I$(srctree)/lib/lwip/u-boot)
 
 NOSTDINC_FLAGS += -nostdinc -isystem $(shell $(CC) -print-file-name=include)
+
+$(warning KBUILD_CFLAGS $(KBUILD_CFLAGS))
+KBUILD_CFLAGS := -Wall -Wstrict-prototypes -Wno-format-security -fno-builtin \
+	-ffreestanding -std=gnu11 -fshort-wchar -fno-strict-aliasing \
+	-fPIE -Os -fno-stack-protector -fno-delete-null-pointer-checks\
+	-Wno-pointer-sign -Wno-stringop-truncation -Wno-zero-length-bounds \
+	-Wno-array-bounds -Wno-stringop-overflow -Wno-maybe-uninitialized \
+	-fmacro-prefix-map=/scratch/sglass/cosarm/src/third_party/u-boot/files/= \
+	-shared -fstack-usage -Wno-format-nonliteral \
+	-Wno-address-of-packed-member -Wno-unused-but-set-variable \
+	-Werror=date-time -Wno-packed-not-aligned
+
+
+# KBUILD_CFLAGS :=  -Wno-error=pragmas -fPIE  -g -O2 -Wall -Wextra \
+	-Wno-pointer-sign -Werror -funsigned-char -fshort-wchar \
+	-fno-strict-aliasing -ffreestanding -fno-stack-protector \
+	-fno-stack-check -fno-merge-all-constants -DCONFIG_aarch64 -std=c11 \
+	\
+	-Wno-maybe-uninitialized Wno-format-security
 
 # FIX ME
 cpp_flags := $(KBUILD_CPPFLAGS) $(PLATFORM_CPPFLAGS) $(UBOOTINCLUDE) \

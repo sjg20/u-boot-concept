@@ -10,7 +10,7 @@
 
 #include <asm-generic/pe.h>
 
-	.section	.text.head
+	.section	.text
 #if 0
 	/*
 	 * Magic "MZ" signature for PE/COFF

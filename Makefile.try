@@ -1,0 +1,62 @@
+CROSS ?= /home/sglass/.buildman-toolchains/gcc-13.1.0-nolibc/aarch64-linux/bin/aarch64-linux-
+
+ARCH ?= aarch64
+
+CC         = $(CROSS)gcc
+LD         = $(CROSS)ld.bfd
+OBJCOPY    = $(CROSS)objcopy
+
+ifeq ($(ARCH), x86_64)
+  CFLAGS += -mno-red-zone
+  LIBDIR := $(PREFIX)/$(ARCH)/lib
+  LIBDIR += $(PREFIX)/$(ARCH)/gnuefi
+  ifeq ($(HOSTARCH), ia32)
+    ARCH3264 := -m64
+  endif
+endif
+
+LIBDIR ?= -L /home/sglass/.buildman-toolchains/gcc-13.1.0-nolibc/aarch64-linux/lib/gcc/aarch64-linux/13.1.0/
+# LIBS = -lefi -lgn
+# LIBS = -L /usr/lib/gcc/aarch64-linux-gnu/11 -l gcc
+
+# LIBS += -L ~/dev/gnu-efi/aarch64/gnuefi/ -l gnuefi -l efi
+# LIBS += -L ~/dev/gnu-efi/aarch64/lib/ -l efi
+# LIBS += -L $(LIBDIR) -lgcc
+LIBS += -L . -l gnuefi
+LIBS += -L . -l efi
+
+# alex
+# CRT = ~/dev/gnu-efi/aarch64/gnuefi/crt0-efi-aarch64.o
+CRT = /vid/software/devel/efi/gnu-efi/aarch64/gnuefi/crt0-efi-aarch64.o
+
+# CRT = /vid/software/devel/efi/gnu-efi/x86_64/gnuefi/crt0-efi-x86_64.o
+
+#LIBS = -l gcc -L . -l gnuefi -l efi
+
+FORMAT    = efi-app-$(ARCH)
+#LDSCRIPT  = $(TOPDIR)/gnuefi/elf_$(ARCH)_efi.lds
+LDSCRIPT  = /vid/software/devel/efi/gnu-efi/gnuefi/elf_aarch64_efi.lds
+
+
+CFLAGS     = $(ARCH3264) -g -Wall -fshort-wchar -fno-strict-aliasing \
+	-fno-merge-constants --std=gnu99 -D_GNU_SOURCE -ffreestanding -fPIE \
+	-fno-stack-protector -fno-stack-check -fno-merge-all-constants
+
+
+LDFLAGS =  -z common-page-size=4096 -z max-page-size=4096 -nostdlib \
+	--warn-common --no-undefined --fatal-warnings --build-id=sha1 \
+	-z nocombreloc -shared -Bsymbolic -T $(LDSCRIPT)
+
+%.efi : %.so
+	$(OBJCOPY) -j .text -j .sdata -j .data -j .dynamic -j .dynsym -j .rel \
+		-j .rela -j .reloc --target=$(FORMAT) $*.so $@
+
+.PRECIOUS: try.o out.so
+
+all: out.efi
+
+out.so: try.o fred.o $(CRT)
+	$(LD) $(LDFLAGS) -o $@ $^  $(LIBS)
+
+clean:
+	rm -f try.o fred.o try.so fred.so out.efi
