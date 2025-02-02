@@ -89,8 +89,7 @@ static int rk3568_set_to_rgmii(struct udevice *dev,
 
 	regmap_write(data->grf, con1,
 		     RK3568_GMAC_PHY_INTF_SEL_RGMII |
-		     RK3568_GMAC_RXCLK_DLY_ENABLE |
-		     RK3568_GMAC_TXCLK_DLY_ENABLE);
+		     DELAY_ENABLE(RK3568, tx_delay, rx_delay));
 
 	return 0;
 }
@@ -274,6 +273,10 @@ static void rk3576_set_clock_selection(struct udevice *dev, bool enable)
 	regmap_write(data->grf, offset_con, val);
 }
 
+#define RK3588_DELAY_ENABLE(id, tx, rx) \
+	(((tx) ? RK3588_GMAC_TXCLK_DLY_ENABLE(id) : RK3588_GMAC_TXCLK_DLY_DISABLE(id)) | \
+	 ((rx) ? RK3588_GMAC_RXCLK_DLY_ENABLE(id) : RK3588_GMAC_RXCLK_DLY_DISABLE(id)))
+
 /* sys_grf */
 #define RK3588_GRF_GMAC_CON7			0x031c
 #define RK3588_GRF_GMAC_CON8			0x0320
@@ -332,8 +335,7 @@ static int rk3588_set_to_rgmii(struct udevice *dev,
 		     RK3588_GMAC_CLK_RGMII_MODE(id));
 
 	regmap_write(data->grf, RK3588_GRF_GMAC_CON7,
-		     RK3588_GMAC_RXCLK_DLY_ENABLE(id) |
-		     RK3588_GMAC_TXCLK_DLY_ENABLE(id));
+		     RK3588_DELAY_ENABLE(id, tx_delay, rx_delay));
 
 	regmap_write(data->grf, offset_con,
 		     RK3588_GMAC_CLK_RX_DL_CFG(rx_delay) |
