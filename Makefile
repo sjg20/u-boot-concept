@@ -452,12 +452,9 @@ KBUILD_CFLAGS += $(call cc-option, -no-integrated-as)
 KBUILD_AFLAGS += $(call cc-option, -no-integrated-as)
 endif
 
-ifdef CONFIG_EFI_APP
-KBUILD_CFLAGS += -shared
-else
+# Don't generate position independent code
 KBUILD_CFLAGS	+= $(call cc-option,-fno-PIE)
 KBUILD_AFLAGS	+= $(call cc-option,-fno-PIE)
-endif
 
 # Read UBOOTRELEASE from include/config/uboot.release (if it exists)
 UBOOTRELEASE = $(shell cat include/config/uboot.release 2> /dev/null)
@@ -896,6 +893,9 @@ ifdef CONFIG_POST
 libs-y += post/
 endif
 libs-$(CONFIG_$(PHASE_)UNIT_TEST) += test/
+libs-$(CONFIG_UT_ENV) += test/env/
+libs-$(CONFIG_UT_OPTEE) += test/optee/
+libs-$(CONFIG_UT_OVERLAY) += test/overlay/
 
 libs-y += $(if $(wildcard $(srctree)/board/$(BOARDDIR)/Makefile),board/$(BOARDDIR)/)
 
@@ -1050,9 +1050,7 @@ LDFLAGS_u-boot += -z notext $(call ld-option,--apply-dynamic-relocs)
 LDFLAGS_u-boot += --build-id=none
 
 ifeq ($(CONFIG_ARC)$(CONFIG_NIOS2)$(CONFIG_X86)$(CONFIG_XTENSA),)
-ifdef CONFIG_HAVE_TEXT_BASE
 LDFLAGS_u-boot += -Ttext $(CONFIG_TEXT_BASE)
-endif
 endif
 
 # make the checker run with the right architecture
@@ -1153,6 +1151,13 @@ ifeq ($(CONFIG_OF_EMBED),y)
 	@echo >&2 "be used for debugging purposes. Please use"
 	@echo >&2 "CONFIG_OF_SEPARATE for boards in mainline."
 	@echo >&2 "See doc/develop/devicetree/control.rst for more info."
+	@echo >&2 "===================================================="
+endif
+ifneq ($(CONFIG_SPL_FIT_GENERATOR),)
+	@echo >&2 "===================== WARNING ======================"
+	@echo >&2 "This board uses CONFIG_SPL_FIT_GENERATOR. Please migrate"
+	@echo >&2 "to binman instead, to avoid the proliferation of"
+	@echo >&2 "arch-specific scripts with no tests."
 	@echo >&2 "===================================================="
 endif
 	$(call deprecated,CONFIG_WDT,DM watchdog,v2019.10,\
@@ -1391,21 +1396,12 @@ endif
 default_dt := $(if $(DEVICE_TREE),$(DEVICE_TREE),$(CONFIG_DEFAULT_DEVICE_TREE))
 endif
 
-binman_dtb := $(shell echo $(CONFIG_BINMAN_DTB))
-ifeq ($(strip $(binman_dtb)),)
-ifeq ($(CONFIG_OF_EMBED),y)
-binman_dtb = ./dts/dt.dtb
-else
-binman_dtb = ./u-boot.dtb
-endif
-endif
-
 quiet_cmd_binman = BINMAN  $@
 cmd_binman = $(srctree)/tools/binman/binman $(if $(BINMAN_DEBUG),-D) \
 		$(foreach f,$(BINMAN_TOOLPATHS),--toolpath $(f)) \
                 --toolpath $(objtree)/tools \
 		$(if $(BINMAN_VERBOSE),-v$(BINMAN_VERBOSE)) \
-		build -u -d $(binman_dtb) -O . -m \
+		build -u -d u-boot.dtb -O . -m \
 		--allow-missing --fake-ext-blobs \
 		$(if $(BINMAN_ALLOW_MISSING),--ignore-missing) \
 		-I . -I $(srctree) -I $(srctree)/board/$(BOARDDIR) \
@@ -1434,6 +1430,17 @@ OBJCOPYFLAGS_u-boot.ldr.srec := -I binary -O srec
 
 u-boot.ldr.hex u-boot.ldr.srec: u-boot.ldr FORCE
 	$(call if_changed,objcopy)
+
+# Boards with more complex image requirements can provide an .its source file
+# or a generator script
+# NOTE: Please do not use this. We are migrating away from Makefile rules to use
+# binman instead.
+ifneq ($(CONFIG_USE_SPL_FIT_GENERATOR),)
+U_BOOT_ITS := u-boot.its
+$(U_BOOT_ITS): $(U_BOOT_ITS_DEPS) FORCE
+	$(srctree)/$(CONFIG_SPL_FIT_GENERATOR) \
+	$(patsubst %,$(dt_dir)/%.dtb,$(subst ",,$(CONFIG_OF_LIST))) > $@
+endif
 
 ifdef CONFIG_SPL_LOAD_FIT
 MKIMAGEFLAGS_u-boot.img = -f auto -A $(ARCH) -T firmware -C none -O u-boot \

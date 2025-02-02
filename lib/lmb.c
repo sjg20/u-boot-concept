@@ -560,8 +560,7 @@ static void lmb_reserve_uboot_region(void)
 		lmb_reserve_flags(rsv_start, bank_end - rsv_start + 1,
 				  LMB_NOOVERWRITE);
 
-		if (!IS_ENABLED(CONFIG_EFI_APP) &&
-		    (gd->flags & GD_FLG_SKIP_RELOC))
+		if (gd->flags & GD_FLG_SKIP_RELOC)
 			lmb_reserve_flags((phys_addr_t)(uintptr_t)_start,
 					  gd->mon_len, LMB_NOOVERWRITE);
 

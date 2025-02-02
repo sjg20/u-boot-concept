@@ -368,6 +368,7 @@ int bootdev_next_prio(struct bootflow_iter *iter, struct udevice **devp);
  */
 int bootdev_setup_for_dev(struct udevice *parent, const char *drv_name);
 
+#if CONFIG_IS_ENABLED(BOOTSTD)
 /**
  * bootdev_setup_for_sibling_blk() - Bind a new bootdev device for a blk device
  *
@@ -382,33 +383,9 @@ int bootdev_setup_for_dev(struct udevice *parent, const char *drv_name);
  * Return: 0 if OK, -ve on error
  */
 int bootdev_setup_for_sibling_blk(struct udevice *blk, const char *drv_name);
-
-/**
- * bootdev_unbind_dev() - Unbind a bootdev device
- *
- * Remove and unbind a bootdev device which is a child of @parent. This should
- * be called from the driver's unbind() method or its uclass' post_bind()
- * method.
- *
- * @parent: Parent device (e.g. MMC or Ethernet)
- * Return: 0 if OK, -ve on error
- */
-int bootdev_unbind_dev(struct udevice *parent);
-
 #else
-static inline int bootdev_setup_for_dev(struct udevice *parent,
-					const char *drv_name)
-{
-	return 0;
-}
-
-static inline int bootdev_setup_for_sibling_blk(struct udevice *blk,
-						const char *drv_name)
-{
-	return 0;
-}
-
-static inline int bootdev_unbind_dev(struct udevice *parent)
+static int bootdev_setup_for_sibling_blk(struct udevice *blk,
+					 const char *drv_name)
 {
 	return 0;
 }
@@ -434,16 +411,33 @@ int bootdev_get_sibling_blk(struct udevice *dev, struct udevice **blkp);
 int bootdev_get_from_blk(struct udevice *blk, struct udevice **bootdevp);
 
 /**
- * bootdev_set_order() - Set the bootdev order
+ * bootdev_unbind_dev() - Unbind a bootdev device
  *
- * This selects the ordering to use for bootdevs
+ * Remove and unbind a bootdev device which is a child of @parent. This should
+ * be called from the driver's unbind() method or its uclass' post_bind()
+ * method.
  *
- * @order_str: NULL-terminated string list containing the ordering. This is a
- * comma-separate list of bootdev labels, e.g. "mmc usb". If empty then a
- * default ordering is used
- * Return: 0 if OK, -ENODEV if an unknown bootmeth is mentioned, -ENOMEM if
- * out of memory, -ENOENT if there are no bootmeth devices
+ * @parent: Parent device (e.g. MMC or Ethernet)
+ * Return: 0 if OK, -ve on error
  */
-int bootdev_set_order(const char *order_str);
+int bootdev_unbind_dev(struct udevice *parent);
+#else
+static inline int bootdev_setup_for_dev(struct udevice *parent,
+					const char *drv_name)
+{
+	return 0;
+}
+
+static inline int bootdev_setup_for_sibling_blk(struct udevice *blk,
+						const char *drv_name)
+{
+	return 0;
+}
+
+static inline int bootdev_unbind_dev(struct udevice *parent)
+{
+	return 0;
+}
+#endif
 
 #endif

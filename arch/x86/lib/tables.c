@@ -16,7 +16,6 @@
 #include <asm/tables.h>
 #include <asm/coreboot_tables.h>
 #include <linux/log2.h>
-#include <linux/sizes.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -45,13 +44,6 @@ struct table_info {
 	int align;
 };
 
-/* QEMU's tables include quite a bit of empty space */
-#ifdef CONFIG_QEMU
-#define ACPI_SIZE	(192 << 10)
-#else
-#define ACPI_SIZE	SZ_64K
-#endif
-
 static struct table_info table_list[] = {
 #ifdef CONFIG_GENERATE_PIRQ_TABLE
 	{ "pirq", write_pirq_routing_table },
@@ -67,14 +59,10 @@ static struct table_info table_list[] = {
 	 * that the calculation of gd->table_end works properly
 	 */
 #ifdef CONFIG_GENERATE_ACPI_TABLE
-	{ "acpi", write_acpi_tables, BLOBLISTT_ACPI_TABLES, ACPI_SIZE, SZ_4K},
+	{ "acpi", write_acpi_tables, BLOBLISTT_ACPI_TABLES, 0x10000, 0x1000},
 #endif
-#ifdef CONFIG_GENERATE_SMBIOS_TABLE
-	/*
-	 * align this to a 4K boundary, since UPL adds a reserved-memory node
-	 * for it
-	 */
-	{ "smbios", write_smbios_table, BLOBLISTT_SMBIOS_TABLES, SZ_4K, SZ_4K},
+#if defined(CONFIG_GENERATE_SMBIOS_TABLE) && !defined(CONFIG_QFW_SMBIOS)
+	{ "smbios", write_smbios_table, BLOBLISTT_SMBIOS_TABLES, 0x1000, 0x100},
 #endif
 };
 

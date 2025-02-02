@@ -183,7 +183,6 @@ static int efi_video_probe(struct udevice *dev)
 {
 	struct video_uc_plat *plat = dev_get_uclass_plat(dev);
 	struct video_priv *uc_priv = dev_get_uclass_priv(dev);
-	struct vesa_state mode_info;
 	struct vesa_mode_info *vesa = &mode_info.vesa;
 	u64 fb;
 	int ret;

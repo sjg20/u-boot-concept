@@ -69,10 +69,6 @@
 	bootph-all;
 };
 
-&otp {
-	bootph-some-ram;
-};
-
 &pcfg_pull_down {
 	bootph-all;
 };

@@ -5,7 +5,7 @@
 
 import pytest
 import time
-import utils
+import u_boot_utils
 
 """
 	test_gpio_input is intended to test the fix 4dbc107f4683.
@@ -14,51 +14,51 @@ import utils
 
 @pytest.mark.boardspec('sandbox')
 @pytest.mark.buildconfigspec('cmd_gpio')
-def test_gpio_input(ubman):
+def test_gpio_input(u_boot_console):
     """Test that gpio input correctly returns the value of a gpio pin."""
 
-    response = ubman.run_command('gpio input 0; echo rc:$?')
+    response = u_boot_console.run_command('gpio input 0; echo rc:$?')
     expected_response = 'rc:0'
     assert(expected_response in response)
-    response = ubman.run_command('gpio toggle 0; gpio input 0; echo rc:$?')
+    response = u_boot_console.run_command('gpio toggle 0; gpio input 0; echo rc:$?')
     expected_response = 'rc:1'
     assert(expected_response in response)
 
 @pytest.mark.boardspec('sandbox')
 @pytest.mark.buildconfigspec('cmd_gpio')
-def test_gpio_exit_statuses(ubman):
+def test_gpio_exit_statuses(u_boot_console):
     """Test that non-input gpio commands correctly return the command
     success/failure status."""
 
     expected_response = 'rc:0'
-    response = ubman.run_command('gpio clear 0; echo rc:$?')
+    response = u_boot_console.run_command('gpio clear 0; echo rc:$?')
     assert(expected_response in response)
-    response = ubman.run_command('gpio set 0; echo rc:$?')
+    response = u_boot_console.run_command('gpio set 0; echo rc:$?')
     assert(expected_response in response)
-    response = ubman.run_command('gpio toggle 0; echo rc:$?')
+    response = u_boot_console.run_command('gpio toggle 0; echo rc:$?')
     assert(expected_response in response)
-    response = ubman.run_command('gpio status -a; echo rc:$?')
+    response = u_boot_console.run_command('gpio status -a; echo rc:$?')
     assert(expected_response in response)
 
     expected_response = 'rc:1'
-    response = ubman.run_command('gpio nonexistent-command; echo rc:$?')
+    response = u_boot_console.run_command('gpio nonexistent-command; echo rc:$?')
     assert(expected_response in response)
-    response = ubman.run_command('gpio input 200; echo rc:$?')
+    response = u_boot_console.run_command('gpio input 200; echo rc:$?')
     assert(expected_response in response)
 
 @pytest.mark.boardspec('sandbox')
 @pytest.mark.buildconfigspec('cmd_gpio')
-def test_gpio_read(ubman):
+def test_gpio_read(u_boot_console):
     """Test that gpio read correctly sets the variable to the value of a gpio pin."""
 
-    ubman.run_command('gpio clear 0')
-    response = ubman.run_command('gpio read var 0; echo val:$var,rc:$?')
+    u_boot_console.run_command('gpio clear 0')
+    response = u_boot_console.run_command('gpio read var 0; echo val:$var,rc:$?')
     expected_response = 'val:0,rc:0'
     assert(expected_response in response)
-    response = ubman.run_command('gpio toggle 0; gpio read var 0; echo val:$var,rc:$?')
+    response = u_boot_console.run_command('gpio toggle 0; gpio read var 0; echo val:$var,rc:$?')
     expected_response = 'val:1,rc:0'
     assert(expected_response in response)
-    response = ubman.run_command('setenv var; gpio read var nonexistent-gpio; echo val:$var,rc:$?')
+    response = u_boot_console.run_command('setenv var; gpio read var nonexistent-gpio; echo val:$var,rc:$?')
     expected_response = 'val:,rc:1'
     assert(expected_response in response)
 
@@ -97,7 +97,7 @@ env__gpio_dev_config = {
 
 
 @pytest.mark.buildconfigspec('cmd_gpio')
-def test_gpio_status_all_generic(ubman):
+def test_gpio_status_all_generic(u_boot_console):
     """Test the 'gpio status' command.
 
 	Displays all gpio pins available on the Board.
@@ -108,7 +108,7 @@ def test_gpio_status_all_generic(ubman):
         number of such pins and mention that count in 'gpio_str_count'.
     """
 
-    f = ubman.config.env.get('env__gpio_dev_config',False)
+    f = u_boot_console.config.env.get('env__gpio_dev_config',False)
     if not f:
         pytest.skip("gpio not configured")
 
@@ -116,14 +116,14 @@ def test_gpio_status_all_generic(ubman):
 
     #Display all the GPIO ports
     cmd = 'gpio status -a'
-    response = ubman.run_command(cmd)
+    response = u_boot_console.run_command(cmd)
 
     for str_value in range(1,gpio_str_count + 1):
         assert f["gpio_str_%d" %(str_value)] in response
 
 
 @pytest.mark.buildconfigspec('cmd_gpio')
-def test_gpio_set_generic(ubman):
+def test_gpio_set_generic(u_boot_console):
     """Test the 'gpio set' command.
 
 	A specific gpio pin configured by user as output
@@ -132,7 +132,7 @@ def test_gpio_set_generic(ubman):
 
     """
 
-    f = ubman.config.env.get('env__gpio_dev_config',False)
+    f = u_boot_console.config.env.get('env__gpio_dev_config',False)
     if not f:
         pytest.skip("gpio not configured")
 
@@ -141,14 +141,14 @@ def test_gpio_set_generic(ubman):
 
 
     cmd = 'gpio set ' + gpio_pin_adr
-    response = ubman.run_command(cmd)
+    response = u_boot_console.run_command(cmd)
     good_response = gpio_set_value
     assert good_response in response
 
 
 
 @pytest.mark.buildconfigspec('cmd_gpio')
-def test_gpio_clear_generic(ubman):
+def test_gpio_clear_generic(u_boot_console):
     """Test the 'gpio clear' command.
 
 	A specific gpio pin configured by user as output
@@ -156,7 +156,7 @@ def test_gpio_clear_generic(ubman):
 	'clear' option
     """
 
-    f = ubman.config.env.get('env__gpio_dev_config',False)
+    f = u_boot_console.config.env.get('env__gpio_dev_config',False)
     if not f:
         pytest.skip("gpio not configured")
 
@@ -165,13 +165,13 @@ def test_gpio_clear_generic(ubman):
 
 
     cmd = 'gpio clear ' + gpio_pin_adr
-    response = ubman.run_command(cmd)
+    response = u_boot_console.run_command(cmd)
     good_response = gpio_clear_value
     assert good_response in response
 
 
 @pytest.mark.buildconfigspec('cmd_gpio')
-def test_gpio_toggle_generic(ubman):
+def test_gpio_toggle_generic(u_boot_console):
     """Test the 'gpio toggle' command.
 
 	A specific gpio pin configured by user as output
@@ -180,7 +180,7 @@ def test_gpio_toggle_generic(ubman):
     """
 
 
-    f = ubman.config.env.get('env__gpio_dev_config',False)
+    f = u_boot_console.config.env.get('env__gpio_dev_config',False)
     if not f:
         pytest.skip("gpio not configured")
 
@@ -189,18 +189,18 @@ def test_gpio_toggle_generic(ubman):
     gpio_clear_value = f['gpio_clear_value'];
 
     cmd = 'gpio set ' + gpio_pin_adr
-    response = ubman.run_command(cmd)
+    response = u_boot_console.run_command(cmd)
     good_response = gpio_set_value
     assert good_response in response
 
     cmd = 'gpio toggle ' + gpio_pin_adr
-    response = ubman.run_command(cmd)
+    response = u_boot_console.run_command(cmd)
     good_response = gpio_clear_value
     assert good_response in response
 
 
 @pytest.mark.buildconfigspec('cmd_gpio')
-def test_gpio_input_generic(ubman):
+def test_gpio_input_generic(u_boot_console):
     """Test the 'gpio input' command.
 
 	Specific gpio pins configured by user as input
@@ -208,7 +208,7 @@ def test_gpio_input_generic(ubman):
 	is verified for logic '1' and logic '0' states
     """
 
-    f = ubman.config.env.get('env__gpio_dev_config',False)
+    f = u_boot_console.config.env.get('env__gpio_dev_config',False)
     if not f:
         pytest.skip("gpio not configured")
 
@@ -217,7 +217,7 @@ def test_gpio_input_generic(ubman):
 
 
     cmd = 'gpio input ' + gpio_pin_adr
-    response = ubman.run_command(cmd)
+    response = u_boot_console.run_command(cmd)
     good_response = gpio_clear_value
     assert good_response in response
 
@@ -227,12 +227,12 @@ def test_gpio_input_generic(ubman):
 
 
     cmd = 'gpio input ' + gpio_pin_adr
-    response = ubman.run_command(cmd)
+    response = u_boot_console.run_command(cmd)
     good_response = gpio_set_value
     assert good_response in response
 
 @pytest.mark.buildconfigspec('cmd_gpio')
-def test_gpio_pins_generic(ubman):
+def test_gpio_pins_generic(u_boot_console):
     """Test various gpio related functionality, such as the input, set, clear,
        and toggle for the set of gpio pin list.
 
@@ -241,7 +241,7 @@ def test_gpio_pins_generic(ubman):
        commands.
     """
 
-    f = ubman.config.env.get('env__gpio_dev_config', False)
+    f = u_boot_console.config.env.get('env__gpio_dev_config', False)
     if not f:
         pytest.skip('gpio not configured')
 
@@ -251,31 +251,31 @@ def test_gpio_pins_generic(ubman):
 
     for gpin in gpio_pins:
         # gpio input
-        ubman.run_command(f'gpio input {gpin}')
+        u_boot_console.run_command(f'gpio input {gpin}')
         expected_response = f'{gpin}: input:'
-        response = ubman.run_command(f'gpio status -a {gpin}')
+        response = u_boot_console.run_command(f'gpio status -a {gpin}')
         assert expected_response in response
 
         # gpio set
-        ubman.run_command(f'gpio set {gpin}')
+        u_boot_console.run_command(f'gpio set {gpin}')
         expected_response = f'{gpin}: output: 1'
-        response = ubman.run_command(f'gpio status -a {gpin}')
+        response = u_boot_console.run_command(f'gpio status -a {gpin}')
         assert expected_response in response
 
         # gpio clear
-        ubman.run_command(f'gpio clear {gpin}')
+        u_boot_console.run_command(f'gpio clear {gpin}')
         expected_response = f'{gpin}: output: 0'
-        response = ubman.run_command(f'gpio status -a {gpin}')
+        response = u_boot_console.run_command(f'gpio status -a {gpin}')
         assert expected_response in response
 
         # gpio toggle
-        ubman.run_command(f'gpio toggle {gpin}')
+        u_boot_console.run_command(f'gpio toggle {gpin}')
         expected_response = f'{gpin}: output: 1'
-        response = ubman.run_command(f'gpio status -a {gpin}')
+        response = u_boot_console.run_command(f'gpio status -a {gpin}')
         assert expected_response in response
 
 @pytest.mark.buildconfigspec('cmd_gpio')
-def test_gpio_pins_input_output_generic(ubman):
+def test_gpio_pins_input_output_generic(u_boot_console):
     """Test gpio related functionality such as input and output for the list of
        shorted gpio pins provided as a pair of input and output pins. This test
        will fail, if the gpio pins are not shorted properly.
@@ -285,7 +285,7 @@ def test_gpio_pins_input_output_generic(ubman):
        pair to be tested for gpio input output case.
     """
 
-    f = ubman.config.env.get('env__gpio_dev_config', False)
+    f = u_boot_console.config.env.get('env__gpio_dev_config', False)
     if not f:
         pytest.skip('gpio not configured')
 
@@ -294,22 +294,22 @@ def test_gpio_pins_input_output_generic(ubman):
         pytest.skip('gpio pin list for input and output are not configured')
 
     for gpins in gpio_pins:
-        ubman.run_command(f'gpio input {gpins[0]}')
+        u_boot_console.run_command(f'gpio input {gpins[0]}')
         expected_response = f'{gpins[0]}: input:'
-        response = ubman.run_command(f'gpio status -a {gpins[0]}')
+        response = u_boot_console.run_command(f'gpio status -a {gpins[0]}')
         assert expected_response in response
 
-        ubman.run_command(f'gpio set {gpins[1]}')
+        u_boot_console.run_command(f'gpio set {gpins[1]}')
         expected_response = f'{gpins[1]}: output:'
-        response = ubman.run_command(f'gpio status -a {gpins[1]}')
+        response = u_boot_console.run_command(f'gpio status -a {gpins[1]}')
         assert expected_response in response
 
-        ubman.run_command(f'gpio clear {gpins[1]}')
+        u_boot_console.run_command(f'gpio clear {gpins[1]}')
         expected_response = f'{gpins[0]}: input: 0'
-        response = ubman.run_command(f'gpio status -a {gpins[0]}')
+        response = u_boot_console.run_command(f'gpio status -a {gpins[0]}')
         assert expected_response in response
 
-        ubman.run_command(f'gpio set {gpins[1]}')
+        u_boot_console.run_command(f'gpio set {gpins[1]}')
         expected_response = f'{gpins[0]}: input: 1'
-        response = ubman.run_command(f'gpio status -a {gpins[0]}')
+        response = u_boot_console.run_command(f'gpio status -a {gpins[0]}')
         assert expected_response in response

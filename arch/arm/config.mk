@@ -14,9 +14,7 @@ CFLAGS_NON_EFI := -fno-pic $(FIXED_REG) -ffunction-sections -fdata-sections \
 CFLAGS_EFI := -fpic -fshort-wchar
 
 ifneq ($(LTO_ENABLE)$(CONFIG_USE_PRIVATE_LIBGCC),yy)
-ifndef CONFIG_EFI_APP
 LDFLAGS_FINAL += --gc-sections
-endif
 endif
 
 ifneq ($(LTO_ENABLE),y)
@@ -149,9 +147,6 @@ OBJCOPYFLAGS += -j .text -j .secure_text -j .secure_data -j .rodata -j .hash \
 		-j .binman_sym_table -j .text_rest
 endif
 
-OBJCOPYFLAGS_EFI += $(OBJCOPYFLAGS) -j .dynamic -j .rela -j .reloc \
-	-j .embedded_dtb
-
 # if a dtb section exists we always have to include it
 # there are only two cases where it is generated
 # 1) OF_EMBEDED is turned on
@@ -181,13 +176,6 @@ endif
 endif
 endif
 
-ifdef CONFIG_ARM64
-EFI_LDS := elf_aarch64_efi.lds
-EFI_CRT0 := crt0_aarch64_efi.o
-EFI_RELOC := reloc_aarch64_efi.o
-EFI_TARGET := --target=efi-app-aarch64
-else
 EFI_LDS := elf_arm_efi.lds
 EFI_CRT0 := crt0_arm_efi.o
 EFI_RELOC := reloc_arm_efi.o
-endif

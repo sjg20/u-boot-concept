@@ -220,20 +220,6 @@ int vsprintf(char *buf, const char *fmt, va_list args);
 char *simple_itoa(ulong val);
 
 /**
- * simple_itoa_signed() - convert a signed integer to a string
- *
- * This returns a static string containing the decimal representation of the
- * given value. The returned value may be overwritten by other calls to other
- * simple... functions, so should be used immediately
- *
- * If the value is negative, a minus sign ('-') is prepended
- *
- * @val: Value to convert
- * Return: string containing the signed decimal representation of @val
- */
-char *simple_itoa_signed(long i);
-
-/**
  * simple_xtoa() - convert an unsigned integer to a hex string
  *
  * This returns a static string containing the hexadecimal representation of the

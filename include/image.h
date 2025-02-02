@@ -232,7 +232,6 @@ enum image_type_t {
 	IH_TYPE_FDT_LEGACY,		/* Binary Flat Device Tree Blob	in a Legacy Image */
 	IH_TYPE_RENESAS_SPKG,		/* Renesas SPKG image */
 	IH_TYPE_STARFIVE_SPL,		/* StarFive SPL image */
-	IH_TYPE_TFA_BL31,		/* TFA BL31 image */
 
 	IH_TYPE_COUNT,			/* Number of image types */
 };
@@ -1197,16 +1196,16 @@ int fit_image_get_type(const void *fit, int noffset, uint8_t *type);
 int fit_image_get_comp(const void *fit, int noffset, uint8_t *comp);
 int fit_image_get_load(const void *fit, int noffset, ulong *load);
 int fit_image_get_entry(const void *fit, int noffset, ulong *entry);
-int fit_image_get_emb_data(const void *fit, int noffset, const void **data,
-			   size_t *size);
+int fit_image_get_data(const void *fit, int noffset,
+				const void **data, size_t *size);
 int fit_image_get_data_offset(const void *fit, int noffset, int *data_offset);
 int fit_image_get_data_position(const void *fit, int noffset,
 				int *data_position);
 int fit_image_get_data_size(const void *fit, int noffset, int *data_size);
 int fit_image_get_data_size_unciphered(const void *fit, int noffset,
 				       size_t *data_size);
-int fit_image_get_data(const void *fit, int noffset, const void **data,
-		       size_t *size);
+int fit_image_get_data_and_size(const void *fit, int noffset,
+				const void **data, size_t *size);
 
 /**
  * fit_image_get_phase() - Get the phase from a FIT image
@@ -1724,24 +1723,6 @@ struct sig_header_s {
  */
 int image_pre_load(ulong addr);
 
-#if defined(USE_HOSTCC)
-/**
- * rsa_verify_openssl() - Verify a signature against some data with openssl API
- *
- * Verify a RSA PKCS1.5/PSS signature against an expected hash.
- *
- * @info:		Specifies the key and algorithms
- * @region:		Pointer to the input data
- * @region_count:	Number of region
- * @sig:		Signature
- * @sig_len:		Number of bytes in the signature
- * Return: 0 if verified, -ve on error
- */
-int rsa_verify_openssl(struct image_sign_info *info,
-		       const struct image_region region[], int region_count,
-		       uint8_t *sig, uint sig_len);
-#endif
-
 /**
  * fit_image_verify_required_sigs() - Verify signatures marked as 'required'
  *
@@ -1857,21 +1838,6 @@ struct cipher_algo {
 		       const unsigned char *data, int data_len,
 		       unsigned char **cipher, int *cipher_len);
 
-	/**
-	 * add_cipher_data() - Add cipher data to the FIT and device tree
-	 *
-	 * This is used to add the ciphered data to the FIT and other cipher
-	 * related information (key and initialization vector) to a device tree.
-	 *
-	 * @info: Pointer to image cipher information.
-	 * @keydest: Pointer to a device tree where the key and IV can be
-	 *           stored. keydest can be NULL when the key is retrieved at
-	 *           runtime by another mean.
-	 * @fit: Pointer to the FIT image.
-	 * @node_noffset: Offset where the cipher information are stored in the
-	 *                FIT.
-	 * return: 0 on success, a negative error code otherwise.
-	 */
 	int (*add_cipher_data)(struct image_cipher_info *info,
 			       void *keydest, void *fit, int node_noffset);
 

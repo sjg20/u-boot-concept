@@ -459,25 +459,6 @@ static int sandbox_cmdline_cb_native(struct sandbox_state *state,
 SANDBOX_CMDLINE_OPT_SHORT(native, 'N', 0,
 			  "Use native mode (host-based EFI boot filename)");
 
-static int sandbox_cmdline_cb_noflat(struct sandbox_state *state,
-				     const char *arg)
-{
-	state->no_flattree_tests = true;
-
-	return 0;
-}
-SANDBOX_CMDLINE_OPT_SHORT(noflat, 'F', 0, "Don't run second set of DM tests");
-
-static int sandbox_cmdline_cb_soft_fail(struct sandbox_state *state,
-					const char *arg)
-{
-	state->soft_fail = true;
-
-	return 0;
-}
-SANDBOX_CMDLINE_OPT_SHORT(soft_fail, 'f', 0,
-			  "continue test execution even after it fails");
-
 void state_show(struct sandbox_state *state)
 {
 	char **p;

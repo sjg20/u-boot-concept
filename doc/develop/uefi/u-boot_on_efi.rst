@@ -27,17 +27,16 @@ Running U-Boot on EFI is useful in several situations:
 
 Status
 ------
-Only x86 and ARM64 are supported at present. If you are using EFI on another
-architecture you may want to reconsider. However, much of the code is generic so
-could be ported.
+Only x86 is supported at present. If you are using EFI on another architecture
+you may want to reconsider. However, much of the code is generic so could be
+ported.
 
-U-Boot supports running as an EFI application for both 32- and 64-bit EFI on
-x86, and for 64-bit on ARM.
+U-Boot supports running as an EFI application for both 32- and 64-bit EFI.
 
-On x86, U-Boot supports building itself as a payload for either 32-bit or 64-bit
-EFI. U-Boot is packaged up and loaded in its entirety by EFI. Once started,
-U-Boot changes to 32-bit mode (currently) and takes over the machine. You can
-use devices, boot a kernel, etc.
+U-Boot supports building itself as a payload for either 32-bit or 64-bit EFI.
+U-Boot is packaged up and loaded in its entirety by EFI. Once started, U-Boot
+changes to 32-bit mode (currently) and takes over the machine. You can use
+devices, boot a kernel, etc.
 
 
 Build Instructions
@@ -97,7 +96,7 @@ that EFI does not support booting a 64-bit application from a 32-bit
 EFI (or vice versa). Also it will often fail to print an error message if
 you get this wrong.
 
-You may find the script `scripts/build-efi.py` helpful for building and testing
+You may find the script `scripts/build-efi.sh` helpful for building and testing
 U-Boot on UEFI on QEMU. It also includes links to UEFI binaries dating from
 2021.
 
@@ -202,7 +201,7 @@ Example run
 
 This shows running with serial enabled (see `include/configs/efi-x86_app.h`)::
 
-   $ scripts/build-efi.py -wsPr
+   $ scripts/build-efi.sh -wsPr
    Packaging efi-x86_app32
    Running qemu-system-i386
 

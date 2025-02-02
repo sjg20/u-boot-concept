@@ -126,7 +126,7 @@ int bootdev_find_in_blk(struct udevice *dev, struct udevice *blk,
 	 * us whether there is valid media there
 	 */
 	ret = part_get_info(desc, iter->part, &info);
-	log_debug("part_get_info() part=%d returned %d\n", iter->part, ret);
+	log_debug("part_get_info() returned %d\n", ret);
 	if (!iter->part && ret == -ENOENT)
 		ret = 0;
 
@@ -168,10 +168,8 @@ int bootdev_find_in_blk(struct udevice *dev, struct udevice *blk,
 		 */
 
 	/* if there are bootable partitions, scan only those */
-	} else if ((iter->flags & BOOTFLOWIF_ONLY_BOOTABLE) &&
-		   iter->first_bootable >= 0 &&
+	} else if (iter->first_bootable >= 0 &&
 		   (iter->first_bootable ? !info.bootable : iter->part != 1)) {
-		log_debug("Skipping non-bootable partition %d\n", iter->part);
 		return log_msg_ret("boot", -EINVAL);
 	} else {
 		ret = fs_set_blk_dev_with_part(desc, bflow->part);
@@ -188,9 +186,8 @@ int bootdev_find_in_blk(struct udevice *dev, struct udevice *blk,
 		bflow->state = BOOTFLOWST_FS;
 	}
 
-	log_debug("using method %s\n", bflow->method->name);
+	log_debug("method %s\n", bflow->method->name);
 	ret = bootmeth_read_bootflow(bflow->method, bflow);
-	log_debug("method %s returned ret=%d\n", bflow->method->name, ret);
 	if (ret)
 		return log_msg_ret("method", ret);
 
@@ -422,7 +419,7 @@ int bootdev_find_by_label(const char *label, struct udevice **devp,
 			  int *method_flagsp)
 {
 	int seq, ret, method_flags = 0;
-	struct udevice *bdev;
+	struct udevice *media;
 	struct uclass *uc;
 	enum uclass_id id;
 
@@ -434,27 +431,10 @@ int bootdev_find_by_label(const char *label, struct udevice **devp,
 		return log_msg_ret("uc", ret);
 	id = ret;
 
-	/*
-	 * Iterate through all the bootdevs looking for the first one for the
-	 * correct media uclass (e.g. UCLASS_MMC). We do it this way so that
-	 * iter_incr() can continue iterating through others with the same media
-	 * uclass, thus making sure that every relevant bootdev is used.
-	 *
-	 * If instead we found the first media device of the correct uclass,
-	 * then started with its bootdev, that bootdev may be somewhere in the
-	 * middle of the UCLASS_BOOTDEV ordering, thus we would leave out quite
-	 * a few bootdevs as the iteration continues
-	 */
-	uclass_id_foreach_dev(UCLASS_BOOTDEV, bdev, uc) {
-		struct udevice *media;
-
-		media = dev_get_parent(bdev);
-		if (device_get_uclass_id(media) != id) {
-			log_debug("- skip, media '%s' want id '%s'\n",
-				  dev_get_uclass_name(media),
-				  uclass_get_name(id));
-			continue;
-		}
+	/* Iterate through devices in the media uclass (e.g. UCLASS_MMC) */
+	uclass_id_foreach_dev(id, media, uc) {
+		struct udevice *bdev, *blk;
+		int ret;
 
 		/* if there is no seq, match anything */
 		if (seq != -1 && dev_seq(media) != seq) {
@@ -462,20 +442,33 @@ int bootdev_find_by_label(const char *label, struct udevice **devp,
 			continue;
 		}
 
-		log_debug("- found bdev, seq=%d id %s\n", dev_seq(bdev),
-			  uclass_get_name(id));
-		*devp = bdev;
+		ret = device_find_first_child_by_uclass(media, UCLASS_BOOTDEV,
+							&bdev);
+		if (ret) {
+			log_debug("- looking via blk, seq=%d, id=%d\n", seq,
+				  id);
+			ret = blk_find_device(id, seq, &blk);
+			if (!ret) {
+				log_debug("- get from blk %s\n", blk->name);
+				ret = bootdev_get_from_blk(blk, &bdev);
+			}
+		}
+		if (!ret) {
+			log_debug("- found %s\n", bdev->name);
+			*devp = bdev;
 
-		/*
-		 * if no sequence number was provided, we must scan all
-		 * bootdevs for this media uclass
-		 */
-		if (seq == -1)
-			method_flags |= BOOTFLOW_METHF_SINGLE_UCLASS;
-		if (method_flagsp)
-			*method_flagsp = method_flags;
-		log_debug("method flags %x\n", method_flags);
-		return 0;
+			/*
+			 * if no sequence number was provided, we must scan all
+			 * bootdevs for this media uclass
+			 */
+			if (seq == -1)
+				method_flags |= BOOTFLOW_METHF_SINGLE_UCLASS;
+			if (method_flagsp)
+				*method_flagsp = method_flags;
+			log_debug("method flags %x\n", method_flags);
+			return 0;
+		}
+		log_debug("- no device in %s\n", media->name);
 	}
 
 	return -ENOENT;
@@ -584,15 +577,10 @@ int bootdev_next_label(struct bootflow_iter *iter, struct udevice **devp,
 	struct udevice *dev;
 
 	log_debug("next\n");
-	if (iter->cur_label >= 0 && !iter->labels[iter->cur_label])
-		return log_msg_ret("fil", -ENODEV);
-
 	for (dev = NULL; !dev && iter->labels[++iter->cur_label];) {
 		const char *label = iter->labels[iter->cur_label];
 		int ret;
 
-		if (!label)
-			break;
 		log_debug("Scanning: %s\n", label);
 		ret = bootdev_hunt_and_find_by_label(label, &dev,
 						     method_flagsp);
@@ -935,43 +923,6 @@ void bootdev_list_hunters(struct bootstd_priv *std)
 	}
 
 	printf("(total hunters: %d)\n", n_ent);
-}
-
-int bootdev_set_order(const char *order_str)
-{
-	struct udevice *bootstd;
-	struct alist order;
-	const char *s, *p;
-	char *label;
-	int i;
-
-	LOGR("bsb", uclass_first_device_err(UCLASS_BOOTSTD, &bootstd));
-
-	alist_init_struct(&order, char *);
-	log_debug("order_str: %s\n", order_str);
-	if (order_str) {
-		for (i = 0, s = order_str; *s; s = p + (*p == ' '), i++) {
-			p = strchrnul(s, ' ');
-			label = strndup(s, p - s);
-			if (!label || !alist_add(&order, label))
-				goto err;
-		}
-	}
-	label = NULL;
-	if (!order.count)
-		bootstd_set_bootdev_order(bootstd, NULL);
-	else if (!alist_add(&order, label))
-		goto err;
-
-	bootstd_set_bootdev_order(bootstd,
-			  alist_uninit_move(&order, NULL, const char *));
-
-	return 0;
-
-err:
-	alist_uninit(&order);
-
-	return log_msg_ret("bso", -ENOMEM);
 }
 
 static int bootdev_pre_unbind(struct udevice *dev)

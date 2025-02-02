@@ -110,9 +110,8 @@ static int initr_reloc(void)
  */
 static int initr_caches(void)
 {
-	if (ll_boot_init())
-		enable_caches();
-
+	/* Enable caches */
+	enable_caches();
 	return 0;
 }
 #endif
@@ -124,9 +123,7 @@ __weak int fixup_cpu(void)
 
 static int initr_reloc_global_data(void)
 {
-#if defined(CONFIG_EFI_APP)
-	monitor_flash_len = (ulong)_end - (ulong)image_base;
-#elif defined __ARM__
+#ifdef __ARM__
 	monitor_flash_len = _end - __image_copy_start;
 #elif defined(CONFIG_RISCV)
 	monitor_flash_len = (ulong)_end - (ulong)_start;
@@ -289,9 +286,12 @@ static int initr_announce(void)
 	return 0;
 }
 
-static int __maybe_unused initr_binman(void)
+static int initr_binman(void)
 {
 	int ret;
+
+	if (!CONFIG_IS_ENABLED(BINMAN_FDT))
+		return 0;
 
 	ret = binman_init();
 	if (ret)
@@ -611,9 +611,7 @@ static init_fnc_t init_sequence_r[] = {
 #ifdef CONFIG_EFI_LOADER
 	efi_memory_init,
 #endif
-#ifdef CONFIG_BINMAN_FDT
 	initr_binman,
-#endif
 #ifdef CONFIG_FSP_VERSION2
 	arch_fsp_init_r,
 #endif

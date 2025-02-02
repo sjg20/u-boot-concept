@@ -65,7 +65,7 @@ extra_header_fields:
 	.long	_start - image_base		/* SizeOfHeaders */
 	.long	0				/* CheckSum */
 	.short	IMAGE_SUBSYSTEM_EFI_APPLICATION	/* Subsystem */
-#if CONFIG_ARCH_EFI
+#if CONFIG_VENDOR_EFI
 	.short	0				/* DllCharacteristics */
 #else
 	.short	IMAGE_DLLCHARACTERISTICS_NX_COMPAT

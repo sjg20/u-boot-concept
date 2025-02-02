@@ -11,7 +11,7 @@ import os.path
 import pytest
 import re
 import time
-import utils
+import u_boot_utils
 
 """
 Note: This test relies on:
@@ -74,13 +74,13 @@ writable_fs_partition value.
 """
 
 @pytest.mark.buildconfigspec('cmd_usb_mass_storage')
-def test_ums(ubman, env__usb_dev_port, env__block_devs):
+def test_ums(u_boot_console, env__usb_dev_port, env__block_devs):
     """Test the "ums" command; the host system must be able to enumerate a UMS
     device when "ums" is running, block and optionally file I/O are tested,
     and this device must disappear when "ums" is aborted.
 
     Args:
-        ubman: A U-Boot console connection.
+        u_boot_console: A U-Boot console connection.
         env__usb_dev_port: The single USB device-mode port specification on
             which to run the test. See the file-level comment above for
             details of the format.
@@ -96,7 +96,7 @@ def test_ums(ubman, env__usb_dev_port, env__block_devs):
     if not have_writable_fs_partition:
         # If 'writable_fs_subdir' is missing, we'll skip all parts of the
         # testing which mount filesystems.
-        ubman.log.warning(
+        u_boot_console.log.warning(
             'boardenv missing "writable_fs_partition"; ' +
             'UMS testing will be limited.')
 
@@ -109,14 +109,14 @@ def test_ums(ubman, env__usb_dev_port, env__block_devs):
     tgt_dev_type = env__block_devs[0]['type']
     tgt_dev_id = env__block_devs[0]['id']
     if have_writable_fs_partition:
-        mount_point = ubman.config.env['env__mount_points'][0]
+        mount_point = u_boot_console.config.env['env__mount_points'][0]
         mount_subdir = env__block_devs[0]['writable_fs_subdir']
         part_num = env__block_devs[0]['writable_fs_partition']
         host_ums_part_node = '%s-part%d' % (host_ums_dev_node, part_num)
     else:
         host_ums_part_node = host_ums_dev_node
 
-    test_f = utils.PersistentRandomFile(ubman, 'ums.bin',
+    test_f = u_boot_utils.PersistentRandomFile(u_boot_console, 'ums.bin',
         1024 * 1024);
     if have_writable_fs_partition:
         mounted_test_fn = mount_point + '/' + mount_subdir + test_f.fn
@@ -133,13 +133,13 @@ def test_ums(ubman, env__usb_dev_port, env__block_devs):
             Nothing.
         """
 
-        ubman.log.action(
+        u_boot_console.log.action(
             'Starting long-running U-Boot ums shell command')
         cmd = 'ums %s %s %s' % (tgt_usb_ctlr, tgt_dev_type, tgt_dev_id)
-        ubman.run_command(cmd, wait_for_prompt=False)
-        ubman.wait_for(re.compile('UMS: LUN.*[\r\n]'))
-        fh = utils.wait_until_open_succeeds(host_ums_part_node)
-        ubman.log.action('Reading raw data from UMS device')
+        u_boot_console.run_command(cmd, wait_for_prompt=False)
+        u_boot_console.wait_for(re.compile('UMS: LUN.*[\r\n]'))
+        fh = u_boot_utils.wait_until_open_succeeds(host_ums_part_node)
+        u_boot_console.log.action('Reading raw data from UMS device')
         fh.read(4096)
         fh.close()
 
@@ -153,9 +153,9 @@ def test_ums(ubman, env__usb_dev_port, env__block_devs):
             Nothing.
         """
 
-        ubman.log.action('Mounting exported UMS device')
+        u_boot_console.log.action('Mounting exported UMS device')
         cmd = ('/bin/mount', host_ums_part_node)
-        utils.run_and_log(ubman, cmd)
+        u_boot_utils.run_and_log(u_boot_console, cmd)
 
     def umount(ignore_errors):
         """Unmount the block device that U-Boot exports.
@@ -170,9 +170,9 @@ def test_ums(ubman, env__usb_dev_port, env__block_devs):
             Nothing.
         """
 
-        ubman.log.action('Unmounting UMS device')
+        u_boot_console.log.action('Unmounting UMS device')
         cmd = ('/bin/umount', host_ums_part_node)
-        utils.run_and_log(ubman, cmd, ignore_errors)
+        u_boot_utils.run_and_log(u_boot_console, cmd, ignore_errors)
 
     def stop_ums(ignore_errors):
         """Stop U-Boot's ums shell command from executing.
@@ -190,10 +190,10 @@ def test_ums(ubman, env__usb_dev_port, env__block_devs):
             Nothing.
         """
 
-        ubman.log.action(
+        u_boot_console.log.action(
             'Stopping long-running U-Boot ums shell command')
-        ubman.ctrlc()
-        utils.wait_until_file_open_fails(host_ums_part_node,
+        u_boot_console.ctrlc()
+        u_boot_utils.wait_until_file_open_fails(host_ums_part_node,
             ignore_errors)
 
     ignore_cleanup_errors = True
@@ -204,13 +204,13 @@ def test_ums(ubman, env__usb_dev_port, env__block_devs):
             return
         try:
             mount()
-            ubman.log.action('Writing test file via UMS')
+            u_boot_console.log.action('Writing test file via UMS')
             cmd = ('rm', '-f', mounted_test_fn)
-            utils.run_and_log(ubman, cmd)
+            u_boot_utils.run_and_log(u_boot_console, cmd)
             if os.path.exists(mounted_test_fn):
                 raise Exception('Could not rm target UMS test file')
             cmd = ('cp', test_f.abs_fn, mounted_test_fn)
-            utils.run_and_log(ubman, cmd)
+            u_boot_utils.run_and_log(u_boot_console, cmd)
             ignore_cleanup_errors = False
         finally:
             umount(ignore_errors=ignore_cleanup_errors)
@@ -222,10 +222,10 @@ def test_ums(ubman, env__usb_dev_port, env__block_devs):
         start_ums()
         try:
             mount()
-            ubman.log.action('Reading test file back via UMS')
-            read_back_hash = utils.md5sum_file(mounted_test_fn)
+            u_boot_console.log.action('Reading test file back via UMS')
+            read_back_hash = u_boot_utils.md5sum_file(mounted_test_fn)
             cmd = ('rm', '-f', mounted_test_fn)
-            utils.run_and_log(ubman, cmd)
+            u_boot_utils.run_and_log(u_boot_console, cmd)
             ignore_cleanup_errors = False
         finally:
             umount(ignore_errors=ignore_cleanup_errors)

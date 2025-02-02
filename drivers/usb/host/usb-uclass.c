@@ -574,20 +574,10 @@ static int usb_find_and_bind_driver(struct udevice *parent,
 		struct usb_dev_plat *plat;
 
 		for (id = entry->match; id->match_flags; id++) {
-			char dev_name[30], *str;
-
 			if (!usb_match_one_id(desc, iface, id))
 				continue;
 
 			drv = entry->driver;
-			snprintf(dev_name, sizeof(dev_name), "%s.p%d.%s",
-				 parent->name, port, drv->name);
-			str = strdup(dev_name);
-			if (!str) {
-				ret = -ENOMEM;
-				goto error;
-			}
-
 			/*
 			 * We could pass the descriptor to the driver as
 			 * plat (instead of NULL) and allow its bind()
@@ -596,10 +586,10 @@ static int usb_find_and_bind_driver(struct udevice *parent,
 			 * find another driver. For now this doesn't seem
 			 * necesssary, so just bind the first match.
 			 */
-			ret = device_bind(parent, drv, str, NULL, node, &dev);
+			ret = device_bind(parent, drv, drv->name, NULL, node,
+					  &dev);
 			if (ret)
 				goto error;
-			device_set_name_alloced(dev);
 			debug("%s: Match found: %s\n", __func__, drv->name);
 			dev->driver_data = id->driver_info;
 			plat = dev_get_parent_plat(dev);

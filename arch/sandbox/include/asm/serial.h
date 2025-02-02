@@ -44,7 +44,7 @@ void sandbox_serial_endisable(bool enabled);
  * @buf: holds input characters available to be read by this driver
  */
 struct sandbox_serial_priv {
-	struct membuf buf;
+	struct membuff buf;
 	char serial_buf[16];
 	bool start_of_line;
 };

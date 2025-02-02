@@ -23,10 +23,7 @@ usage() {
 	echo
 	echo "   -a <arch> - Select architecture (arm, x86)"
 	echo "   -B        - Don't build; assume a build exists"
-	echo "   -d <fname>- Root disk to use"
-	echo "   -D <dir>  - Directory to share into the guest"
 	echo "   -e        - Run UEFI Self-Certification Test (SCT)"
-	echo "   -E        - Run Tianocore instead of U-Boot"
 	echo "   -k        - Use kvm (kernel-based Virtual Machine)"
 	echo "   -o <name> - Run Operating System ('ubuntu' only for now)"
 	echo "   -r        - Run QEMU with the image"
@@ -38,8 +35,7 @@ usage() {
 }
 
 # Directory tree for OS images
-# imagedir=${imagedir-/vid/software/linux}
-imagedir=${imagedir-~/dev}
+imagedir=${imagedir-/vid/software/linux}
 
 # Directory for UEFI Self-Certification Test (SCT)
 sctdir=${sctdir-/vid/software/devel/uefi/sct}
@@ -62,9 +58,6 @@ extra=
 # Operating System to boot (ubuntu)
 os=
 
-# Root-disk filename
-disk=
-
 release=24.04.1
 
 # run the image with QEMU
@@ -76,18 +69,11 @@ serial=
 # Use kvm
 kvm=
 
-# virtfs directory
-virtfs_dir=
-
-bios=
-
-mem=512
-
 # Set ubdir to the build directory where you build U-Boot out-of-tree
 # We avoid in-tree build because it gets confusing trying different builds
 ubdir=${ubdir-/tmp/b}
 
-while getopts "a:Bd:D:eEko:rR:sS:w" opt; do
+while getopts "a:Beko:rR:sS:w" opt; do
 	case "${opt}" in
 	a)
 		arch=$OPTARG
@@ -95,18 +81,10 @@ while getopts "a:Bd:D:eEko:rR:sS:w" opt; do
 	B)
 		build=
 		;;
-	d)
-		disk=$OPTARG
-		mem=4G
-		extra+=" -smp 4"
-		;;
-	D)
-		virtfs_dir=$OPTARG
-		;;
 	e)
-		mem=4G
-		extra+=" -smp 4"
+		extra+=" -m 4G -smp 4"
 		extra+=" -display none"
+		extra+=" -device virtio-gpu-pci"
 		extra+=" -device qemu-xhci"
 		extra+=" -device usb-kbd"
 		extra+=" -drive file=${sctdir}/sct.img,format=raw,if=none,id=vda"
@@ -114,18 +92,14 @@ while getopts "a:Bd:D:eEko:rR:sS:w" opt; do
 		extra+=" -device virtio-net-device,netdev=net0"
 		extra+=" -netdev user,id=net0"
 		;;
-	E)
-		bios="/vid/software/devel/efi/OVMF-pure-efi.x64.fd"
-		;;
 	k)
-		kvm="-enable-kvm -cpu host"
+		kvm="-enable-kvm"
 		;;
 	o)
 		os=$OPTARG
 
 		# Expand memory and CPUs
-		mem=4G
-		extra+=" -smp 4"
+		extra+=" -m 4G -smp 4"
 		;;
 	r)
 		run=1
@@ -168,8 +142,6 @@ update_sct_seq() {
 
 # Run QEMU with U-Boot
 run_qemu() {
-	extra+=" -m ${mem}"
-	extra+=" -net user -net nic,model=virtio-net-pci"
 	if [[ -n "${os_image}" ]]; then
 		extra+=" -drive if=virtio,file=${os_image},format=raw,id=hd0"
 	fi
@@ -178,20 +150,8 @@ run_qemu() {
 	else
 		extra+=" -serial mon:stdio"
 	fi
-	if [[ -n "${disk}" ]]; then
-		extra+=" -drive if=virtio,file=${disk},format=raw,id=hd1"
-	fi
-	if [[ -n "${virtfs_dir}" ]]; then
-		extra+=" -chardev socket,id=char0,path=/tmp/virtiofs.sock"
-		extra+=" -device vhost-user-fs-pci,queue-size=1024,chardev=char0,tag=hostshare"
-		extra+=" -object memory-backend-file,id=mem,size=${mem},mem-path=/dev/shm,share=on"
-		extra+=" -numa node,memdev=mem"
-
-		/usr/libexec/virtiofsd --shared-dir ${virtfs_dir} \
-			--socket-path /tmp/virtiofs.sock --cache auto 2>/dev/null &
-	fi
-	echo "Running ${qemu} -bios "${bios}" ${kvm} ${extra}"
-	"${qemu}" -bios "${bios}" \
+	echo "Running ${qemu} ${extra}"
+	"${qemu}" -bios "$DIR/${BIOS}" \
 		-m 512 \
 		-nic none \
 		${kvm} \
@@ -240,8 +200,6 @@ ubuntu)
 esac
 
 DIR=${ubdir}/${BOARD}
-
-bios="${bios:-${DIR}/${BIOS}}"
 
 if [[ -n "${build}" ]]; then
 	build_u_boot

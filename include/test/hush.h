@@ -10,6 +10,6 @@
 #include <test/test.h>
 
 /* Declare a new environment test */
-#define HUSH_TEST(_name, _flags)	UNIT_TEST(_name, _flags, hush)
+#define HUSH_TEST(_name, _flags)	UNIT_TEST(_name, _flags, hush_test)
 
 #endif /* __TEST_HUSH_H__ */

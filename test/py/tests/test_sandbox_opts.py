@@ -4,25 +4,27 @@
 
 import pytest
 
-import utils
+import u_boot_utils as util
 
 # This is needed for Azure, since the default '..' directory is not writeable
 TMPDIR = '/tmp/test_cmdline'
 
 @pytest.mark.slow
 @pytest.mark.boardspec('sandbox')
-def test_sandbox_cmdline(ubman):
+def test_sandbox_cmdline(u_boot_console):
     """Test building sandbox without CONFIG_CMDLINE"""
+    cons = u_boot_console
 
-    utils.run_and_log(
-        ubman, ['./tools/buildman/buildman', '-m', '--board', 'sandbox',
+    out = util.run_and_log(
+        cons, ['./tools/buildman/buildman', '-m', '--board', 'sandbox',
                '-a', '~CMDLINE', '-o', TMPDIR])
 
 @pytest.mark.slow
 @pytest.mark.boardspec('sandbox')
-def test_sandbox_lto(ubman):
+def test_sandbox_lto(u_boot_console):
     """Test building sandbox without CONFIG_LTO"""
+    cons = u_boot_console
 
-    utils.run_and_log(
-        ubman, ['./tools/buildman/buildman', '-m', '--board', 'sandbox',
+    out = util.run_and_log(
+        cons, ['./tools/buildman/buildman', '-m', '--board', 'sandbox',
                '-a', '~LTO', '-o', TMPDIR])

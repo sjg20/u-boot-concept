@@ -45,15 +45,6 @@ config BINMAN_FDT
 	  locate entries in the firmware image. See binman.h for the available
 	  functionality.
 
-config BINMAN_DTB
-	string "binman DTB description"
-	depends on BINMAN
-	help
-	  This enables option to point to different DTB file with binman node which
-	  is outside of DTB used by the firmware. Use this option if information
-	  about generated images shouldn't be the part of target binary. Or on system
-	  with limited storage.
-
 config CC_OPTIMIZE_LIBS_FOR_SPEED
 	bool "Optimize libraries for speed"
 	help
@@ -746,16 +737,6 @@ config VPL_CRC8
 	  checksum with feedback to produce an 8-bit result. The code is small
 	  and it does not require a lookup table (unlike CRC32).
 
-config CRC16
-	bool "Support CRC16"
-	default y
-	help
-	  Enables CRC16 support. This is normally required. Two algorithms are
-	  provided:
-
-	    - CCITT, with a polynomical x^16 + x^12 + x^5 + 1
-	    - standard, with polynomial x^16 + x^15 + x^2 + 1 (0x8005)
-
 config SPL_CRC16
 	bool "Support CRC16 in SPL"
 	depends on SPL
@@ -1077,7 +1058,6 @@ menu "System tables"
 config BLOBLIST_TABLES
 	bool "Put tables in a bloblist"
 	depends on BLOBLIST
-	default y if X86
 	default y if (ARM && EFI_LOADER && GENERATE_ACPI_TABLE)
 	default n
 	help

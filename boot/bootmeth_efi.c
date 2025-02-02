@@ -103,7 +103,6 @@ static int distro_efi_try_bootflow_files(struct udevice *dev,
 	char fname[256];
 	int ret, seq;
 
-	log_debug("starting part %d\n", bflow->part);
 	/* We require a partition table */
 	if (!bflow->part) {
 		log_debug("no partitions\n");
@@ -117,8 +116,7 @@ static int distro_efi_try_bootflow_files(struct udevice *dev,
 		 desc = dev_get_uclass_plat(bflow->blk);
 	ret = bootmeth_try_file(bflow, desc, NULL, fname);
 	if (ret) {
-		log_debug("File '%s' not found (desc devnum %d)\n", fname,
-			  desc->devnum);
+		log_debug("File '%s' not found\n", fname);
 		return log_msg_ret("try", ret);
 	}
 
@@ -167,7 +165,6 @@ static int distro_efi_try_bootflow_files(struct udevice *dev,
 		log_debug("No device tree available\n");
 		bflow->flags |= BOOTFLOWF_USE_BUILTIN_FDT;
 	}
-	log_debug("found\n");
 
 	return 0;
 }

@@ -10,7 +10,7 @@
 #include <dm/device-internal.h>
 
 /* We only support up to 8 */
-#define SANDBOX_NUM_PORTS	8
+#define SANDBOX_NUM_PORTS	4
 
 struct sandbox_hub_plat {
 	struct usb_dev_plat plat;

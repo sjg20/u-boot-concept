@@ -9,7 +9,7 @@
 import os
 import os.path
 import pytest
-import utils
+import u_boot_utils
 
 """
 Note: This test relies on:
@@ -113,13 +113,13 @@ first_usb_dev_port = None
 
 @pytest.mark.buildconfigspec('cmd_dfu')
 @pytest.mark.requiredtool('dfu-util')
-def test_dfu(ubman, env__usb_dev_port, env__dfu_config):
+def test_dfu(u_boot_console, env__usb_dev_port, env__dfu_config):
     """Test the "dfu" command; the host system must be able to enumerate a USB
     device when "dfu" is running, various DFU transfers are tested, and the
     USB device must disappear when "dfu" is aborted.
 
     Args:
-        ubman: A U-Boot console connection.
+        u_boot_console: A U-Boot console connection.
         env__usb_dev_port: The single USB device-mode port specification on
             which to run the test. See the file-level comment above for
             details of the format.
@@ -143,15 +143,15 @@ def test_dfu(ubman, env__usb_dev_port, env__dfu_config):
             Nothing.
         """
 
-        utils.wait_until_file_open_fails(
+        u_boot_utils.wait_until_file_open_fails(
             env__usb_dev_port['host_usb_dev_node'], True)
-        fh = utils.attempt_to_open_file(
+        fh = u_boot_utils.attempt_to_open_file(
             env__usb_dev_port['host_usb_dev_node'])
         if fh:
             fh.close()
             raise Exception('USB device present before dfu command invoked')
 
-        ubman.log.action(
+        u_boot_console.log.action(
             'Starting long-running U-Boot dfu shell command')
 
         dfu_alt_info_env = env__dfu_config.get('alt_info_env_name', \
@@ -159,12 +159,12 @@ def test_dfu(ubman, env__usb_dev_port, env__dfu_config):
 
         cmd = 'setenv "%s" "%s"' % (dfu_alt_info_env,
                                     env__dfu_config['alt_info'])
-        ubman.run_command(cmd)
+        u_boot_console.run_command(cmd)
 
         cmd = 'dfu 0 ' + env__dfu_config['cmd_params']
-        ubman.run_command(cmd, wait_for_prompt=False)
-        ubman.log.action('Waiting for DFU USB device to appear')
-        fh = utils.wait_until_open_succeeds(
+        u_boot_console.run_command(cmd, wait_for_prompt=False)
+        u_boot_console.log.action('Waiting for DFU USB device to appear')
+        fh = u_boot_utils.wait_until_open_succeeds(
             env__usb_dev_port['host_usb_dev_node'])
         fh.close()
 
@@ -185,12 +185,12 @@ def test_dfu(ubman, env__usb_dev_port, env__dfu_config):
         """
 
         try:
-            ubman.log.action(
+            u_boot_console.log.action(
                 'Stopping long-running U-Boot dfu shell command')
-            ubman.ctrlc()
-            ubman.log.action(
+            u_boot_console.ctrlc()
+            u_boot_console.log.action(
                 'Waiting for DFU USB device to disappear')
-            utils.wait_until_file_open_fails(
+            u_boot_utils.wait_until_file_open_fails(
                 env__usb_dev_port['host_usb_dev_node'], ignore_errors)
         except:
             if not ignore_errors:
@@ -213,8 +213,8 @@ def test_dfu(ubman, env__usb_dev_port, env__dfu_config):
         cmd = ['dfu-util', '-a', alt_setting, up_dn_load_arg, fn]
         if 'host_usb_port_path' in env__usb_dev_port:
             cmd += ['-p', env__usb_dev_port['host_usb_port_path']]
-        utils.run_and_log(ubman, cmd)
-        ubman.wait_for('Ctrl+C to exit ...')
+        u_boot_utils.run_and_log(u_boot_console, cmd)
+        u_boot_console.wait_for('Ctrl+C to exit ...')
 
     def dfu_write(alt_setting, fn):
         """Write a file to the target board using DFU.
@@ -261,25 +261,25 @@ def test_dfu(ubman, env__usb_dev_port, env__dfu_config):
             Nothing.
         """
 
-        test_f = utils.PersistentRandomFile(ubman,
+        test_f = u_boot_utils.PersistentRandomFile(u_boot_console,
             'dfu_%d.bin' % size, size)
-        readback_fn = ubman.config.result_dir + '/dfu_readback.bin'
+        readback_fn = u_boot_console.config.result_dir + '/dfu_readback.bin'
 
-        ubman.log.action('Writing test data to DFU primary ' +
+        u_boot_console.log.action('Writing test data to DFU primary ' +
             'altsetting')
         dfu_write(alt_setting_test_file, test_f.abs_fn)
 
-        ubman.log.action('Writing dummy data to DFU secondary ' +
+        u_boot_console.log.action('Writing dummy data to DFU secondary ' +
             'altsetting to clear DFU buffers')
         dfu_write(alt_setting_dummy_file, dummy_f.abs_fn)
 
-        ubman.log.action('Reading DFU primary altsetting for ' +
+        u_boot_console.log.action('Reading DFU primary altsetting for ' +
             'comparison')
         dfu_read(alt_setting_test_file, readback_fn)
 
-        ubman.log.action('Comparing written and read data')
+        u_boot_console.log.action('Comparing written and read data')
         written_hash = test_f.content_hash
-        read_back_hash = utils.md5sum_file(readback_fn, size)
+        read_back_hash = u_boot_utils.md5sum_file(readback_fn, size)
         assert(written_hash == read_back_hash)
 
     # This test may be executed against multiple USB ports. The test takes a
@@ -295,7 +295,7 @@ def test_dfu(ubman, env__usb_dev_port, env__dfu_config):
     else:
         sizes = []
 
-    dummy_f = utils.PersistentRandomFile(ubman,
+    dummy_f = u_boot_utils.PersistentRandomFile(u_boot_console,
         'dfu_dummy.bin', 1024)
 
     alt_setting_test_file = env__dfu_config.get('alt_id_test_file', '0')
@@ -305,16 +305,16 @@ def test_dfu(ubman, env__usb_dev_port, env__dfu_config):
     try:
         start_dfu()
 
-        ubman.log.action(
+        u_boot_console.log.action(
             'Overwriting DFU primary altsetting with dummy data')
         dfu_write(alt_setting_test_file, dummy_f.abs_fn)
 
         for size in sizes:
-            with ubman.log.section('Data size %d' % size):
+            with u_boot_console.log.section('Data size %d' % size):
                 dfu_write_read_check(size)
                 # Make the status of each sub-test obvious. If the test didn't
                 # pass, an exception was thrown so this code isn't executed.
-                ubman.log.status_pass('OK')
+                u_boot_console.log.status_pass('OK')
         ignore_cleanup_errors = False
     finally:
         stop_dfu(ignore_cleanup_errors)

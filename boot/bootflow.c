@@ -170,12 +170,9 @@ static void scan_next_in_uclass(struct udevice **devp)
 	struct udevice *dev = *devp;
 	enum uclass_id cur_id = device_get_uclass_id(dev->parent);
 
-	log_debug("start at dev '%s'\n", dev->name);
 	do {
 		uclass_find_next_device(&dev);
-		log_debug("- trying '%s'\n", dev ? dev->name : "<end of list>");
 	} while (dev && cur_id != device_get_uclass_id(dev->parent));
-	log_debug("- found '%s'\n", dev ? dev->name : "<none>");
 
 	*devp = dev;
 }
@@ -198,25 +195,27 @@ static int iter_incr(struct bootflow_iter *iter)
 	if (iter->err == BF_NO_MORE_DEVICES)
 		return BF_NO_MORE_DEVICES;
 
-	/* Get the next boothmethod */
-	if (++iter->cur_method < iter->num_methods) {
-		iter->method = iter->method_order[iter->cur_method];
-		return 0;
-	}
-
-	/*
-	 * If we have finished scanning the global bootmeths, start the
-	 * normal bootdev scan
-	 */
-	if (IS_ENABLED(CONFIG_BOOTMETH_GLOBAL) && global) {
-		iter->num_methods = iter->first_glob_method;
-		iter->doing_global = false;
+	if (iter->err != BF_NO_MORE_PARTS) {
+		/* Get the next boothmethod */
+		if (++iter->cur_method < iter->num_methods) {
+			iter->method = iter->method_order[iter->cur_method];
+			return 0;
+		}
 
 		/*
-		 * Don't move to the next dev as we haven't tried this
-		 * one yet!
+		 * If we have finished scanning the global bootmeths, start the
+		 * normal bootdev scan
 		 */
-		inc_dev = false;
+		if (IS_ENABLED(CONFIG_BOOTMETH_GLOBAL) && global) {
+			iter->num_methods = iter->first_glob_method;
+			iter->doing_global = false;
+
+			/*
+			 * Don't move to the next dev as we haven't tried this
+			 * one yet!
+			 */
+			inc_dev = false;
+		}
 	}
 
 	if (iter->flags & BOOTFLOWIF_SINGLE_PARTITION)
@@ -283,8 +282,7 @@ static int iter_incr(struct bootflow_iter *iter)
 				ret = -ENODEV;
 			}
 		} else {
-			log_debug("labels %p flags %x\n", iter->labels,
-				  iter->method_flags);
+			log_debug("labels %p\n", iter->labels);
 			if (iter->labels) {
 				/*
 				 * when the label is "mmc" we want to scan all
@@ -292,8 +290,7 @@ static int iter_incr(struct bootflow_iter *iter)
 				 * bootdev_find_by_label() where this flag is
 				 * set up
 				 */
-				method_flags = iter->method_flags;
-				if (method_flags &
+				if (iter->method_flags &
 				    BOOTFLOW_METHF_SINGLE_UCLASS) {
 					scan_next_in_uclass(&dev);
 					log_debug("looking for next device %s: %s\n",
@@ -945,9 +942,8 @@ int bootflow_cmdline_auto(struct bootflow *bflow, const char *arg)
 	*buf = '\0';
 	if (!strcmp("earlycon", arg) && info.type == SERIAL_CHIP_16550_COMPATIBLE) {
 		snprintf(buf, sizeof(buf),
-			 "uart8250,%s,%#lx,%dn8",
-			 info.addr_space == SERIAL_ADDRESS_SPACE_IO ? "io" :
-			 "mmio", info.addr, info.baudrate);
+			 "uart8250,mmio32,%#lx,%dn8", info.addr,
+			 info.baudrate);
 	} else if (!strcmp("earlycon", arg) && info.type == SERIAL_CHIP_PL01X) {
 		snprintf(buf, sizeof(buf),
 			 "pl011,mmio32,%#lx,%dn8", info.addr,
@@ -958,7 +954,7 @@ int bootflow_cmdline_auto(struct bootflow *bflow, const char *arg)
 	}
 
 	if (!*buf) {
-		printf("Unknown param '%s'\n", arg);
+		printf("Unknown param '%s\n", arg);
 		return -ENOENT;
 	}
 

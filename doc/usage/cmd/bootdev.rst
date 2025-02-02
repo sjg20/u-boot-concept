@@ -13,7 +13,6 @@ Synopsis
 
     bootdev list [-p]        - list all available bootdevs (-p to probe)
     bootdev hunt [-l|<spec>] - use hunt drivers to find bootdevs
-    bootdev order [clear] | [<spec> ...]  - view or update bootdev order
     bootdev select <bm>      - select a bootdev by name
     bootdev info [-p]        - show information about a bootdev
 
@@ -78,27 +77,6 @@ Use `-l` to list the available bootdev hunters.
 To run hunters, specify the name of the hunter to run, e.g. "mmc". If no
 name is provided, all hunters are run.
 
-
-bootdev order
-~~~~~~~~~~~~~
-
-This allows the bootdev order to be examined or set. With no argument the
-current ordering is shown, one item per line.
-
-The argument can either be 'clear' or a space-separated list of labels. Each
-label can be the name of a bootdev (e.g. "mmc1.bootdev"), a bootdev sequence
-number ("3") or a media uclass ("mmc") with an optional sequence number (mmc2).
-
-Use `bootdev order clear` to clear any ordering and use the default.
-
-By default, the ordering is defined by the `boot_targets` environment variable
-or, failing that, the bootstd node in the devicetree ("bootdev-order" property).
-If no ordering is provided, then a default one is used.
-
-Note that this command does not check that the ordering is valid. In fact the
-meaning of the ordering depends on what the bootflow iterator discovers when it
-is used. Invalid entries will result in no bootdevs being found for that entry,
-so they are effectively skipped.
 
 bootdev select
 ~~~~~~~~~~~~~~
@@ -191,20 +169,6 @@ This shows using one of the available hunters, then listing them::
     Device 1: Vendor: sandbox Rev: 1.0 Prod: flash
                 Type: Hard Disk
                 Capacity: 0.0 MB = 0.0 GB (1 x 512)
-    =>
-
-This shows viewing and changing the ordering::
-
-    => bootdev order
-    mmc2
-    mmc1
-    => bootdev order 'mmc usb'
-    => bootdev order
-    mmc
-    usb
-    => bootdev order clear
-    => bootdev order
-    No ordering
     =>
 
 

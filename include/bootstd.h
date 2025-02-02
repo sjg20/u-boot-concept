@@ -24,9 +24,6 @@ struct udevice;
  * This is attached to the (only) bootstd device, so there is only one instance
  * of this struct. It provides overall information about bootdevs and bootflows.
  *
- * TODO(sjg@chromium.org): Convert prefixes, bootdev_order and env_order to use
- *	alist
- *
  * @prefixes: NULL-terminated list of prefixes to use for bootflow filenames,
  *	e.g. "/", "/boot/"; NULL if none
  * @bootdev_order: Order to use for bootdevs (or NULL if none), with each item
@@ -76,16 +73,6 @@ struct bootstd_priv {
  */
 const char *const *const bootstd_get_bootdev_order(struct udevice *dev,
 						   bool *okp);
-
-/**
- * bootstd_set_bootdev_order() - Set the boot-order list
- *
- * @dev: bootstd device
- * @order_str: list of string pointers, terminated by NULL, e.g.
- * {"mmc0", "mmc2", NULL}; or NULL to remove boot order. The array and its
- * members must be allocated by the caller
- */
-void bootstd_set_bootdev_order(struct udevice *dev, const char **order_str);
 
 /**
  * bootstd_get_prefixes() - Get the filename-prefixes list

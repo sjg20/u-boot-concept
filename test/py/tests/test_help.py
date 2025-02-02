@@ -4,33 +4,35 @@
 
 import pytest
 
-def test_help(ubman):
+def test_help(u_boot_console):
     """Test that the "help" command can be executed."""
 
-    lines = ubman.run_command('help')
-    if ubman.config.buildconfig.get('config_cmd_2048', 'n') == 'y':
+    lines = u_boot_console.run_command('help')
+    if u_boot_console.config.buildconfig.get('config_cmd_2048', 'n') == 'y':
         assert lines.splitlines()[0] == "2048      - The 2048 game"
     else:
         assert lines.splitlines()[0] == "?         - alias for 'help'"
 
 @pytest.mark.boardspec('sandbox')
-def test_help_no_devicetree(ubman):
+def test_help_no_devicetree(u_boot_console):
     try:
-        ubman.restart_uboot_with_flags([], use_dtb=False)
-        ubman.run_command('help')
-        output = ubman.get_spawn_output().replace('\r', '')
+        cons = u_boot_console
+        cons.restart_uboot_with_flags([], use_dtb=False)
+        cons.run_command('help')
+        output = cons.get_spawn_output().replace('\r', '')
         assert 'print command description/usage' in output
     finally:
         # Restart afterward to get the normal device tree back
-        ubman.restart_uboot()
+        u_boot_console.restart_uboot()
 
 @pytest.mark.boardspec('sandbox_vpl')
-def test_vpl_help(ubman):
+def test_vpl_help(u_boot_console):
     try:
-        ubman.restart_uboot()
-        ubman.run_command('help')
-        output = ubman.get_spawn_output().replace('\r', '')
+        cons = u_boot_console
+        cons.restart_uboot()
+        cons.run_command('help')
+        output = cons.get_spawn_output().replace('\r', '')
         assert 'print command description/usage' in output
     finally:
         # Restart afterward to get the normal device tree back
-        ubman.restart_uboot()
+        u_boot_console.restart_uboot()

@@ -38,7 +38,7 @@ enum {
  *
  */
 struct sandbox_keyb_priv {
-	struct membuf in;
+	struct membuff in;
 };
 
 struct sandbox_keyb_plat {
@@ -167,7 +167,7 @@ int sandbox_usb_keyb_add_string(struct udevice *dev,
 	struct sandbox_keyb_priv *priv = dev_get_priv(dev);
 	int ret;
 
-	ret = membuf_put(&priv->in, scancode, USB_KBD_BOOT_REPORT_SIZE);
+	ret = membuff_put(&priv->in, scancode, USB_KBD_BOOT_REPORT_SIZE);
 	if (ret != USB_KBD_BOOT_REPORT_SIZE)
 		return -ENOSPC;
 
@@ -194,7 +194,7 @@ static int sandbox_keyb_interrupt(struct udevice *dev, struct usb_device *udev,
 	if (length < USB_KBD_BOOT_REPORT_SIZE)
 		return 0;
 
-	membuf_get(&priv->in, buffer, USB_KBD_BOOT_REPORT_SIZE);
+	membuff_get(&priv->in, buffer, USB_KBD_BOOT_REPORT_SIZE);
 
 	return 0;
 }
@@ -220,7 +220,7 @@ static int sandbox_keyb_probe(struct udevice *dev)
 	struct sandbox_keyb_priv *priv = dev_get_priv(dev);
 
 	/* Provide an 80 character keyboard buffer */
-	return membuf_new(&priv->in, 80 * USB_KBD_BOOT_REPORT_SIZE);
+	return membuff_new(&priv->in, 80 * USB_KBD_BOOT_REPORT_SIZE);
 }
 
 static const struct dm_usb_ops sandbox_usb_keyb_ops = {

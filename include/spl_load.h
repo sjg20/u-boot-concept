@@ -20,15 +20,13 @@ static inline int _spl_load(struct spl_image_info *spl_image,
 	ulong base_offset, image_offset, overhead;
 	int read, ret;
 
-	log_debug("\nloading hdr from %lx to %p\n", (ulong)offset, header);
 	read = info->read(info, offset, ALIGN(sizeof(*header),
 					      spl_get_bl_len(info)), header);
 	if (read < (int)sizeof(*header))
 		return -EIO;
 
 	if (image_get_magic(header) == FDT_MAGIC) {
-		log_debug("Found FIT\n");
-		if (CONFIG_IS_ENABLED(LOAD_FIT_FULL)) {
+		if (IS_ENABLED(CONFIG_SPL_LOAD_FIT_FULL)) {
 			void *buf;
 
 			/*
@@ -50,12 +48,9 @@ static inline int _spl_load(struct spl_image_info *spl_image,
 			return spl_parse_image_header(spl_image, bootdev, buf);
 		}
 
-		if (CONFIG_IS_ENABLED(LOAD_FIT)) {
-			log_debug("Simple loading\n");
+		if (IS_ENABLED(CONFIG_SPL_LOAD_FIT))
 			return spl_load_simple_fit(spl_image, info, offset,
 						   header);
-		}
-		log_debug("No FIT support\n");
 	}
 
 	if (IS_ENABLED(CONFIG_SPL_LOAD_IMX_CONTAINER) &&

@@ -5,7 +5,7 @@
 import os.path
 import pytest
 
-def test_vpl(ubman, ut_vpl_subtest):
+def test_vpl(u_boot_console, ut_vpl_subtest):
     """Execute a "ut" subtest.
 
     The subtests are collected in function generate_ut_subtest() from linker
@@ -19,15 +19,16 @@ def test_vpl(ubman, ut_vpl_subtest):
     implemented in C function foo_test_bar().
 
     Args:
-        ubman (ConsoleBase): U-Boot console
+        u_boot_console (ConsoleBase): U-Boot console
         ut_subtest (str): VPL test to be executed (e.g. 'dm platdata_phandle')
     """
     try:
-        ubman.restart_uboot_with_flags(['-u', '-k', ut_vpl_subtest.split()[1]])
-        output = ubman.get_spawn_output().replace('\r', '')
-        assert 'failures: 0' in output
+        cons = u_boot_console
+        cons.restart_uboot_with_flags(['-u', '-k', ut_vpl_subtest.split()[1]])
+        output = cons.get_spawn_output().replace('\r', '')
+        assert 'Failures: 0' in output
     finally:
         # Restart afterward in case a non-VPL test is run next. This should not
         # happen since VPL tests are run in their own invocation of test.py, but
         # the cost of doing this is not too great at present.
-        ubman.restart_uboot()
+        u_boot_console.restart_uboot()

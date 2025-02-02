@@ -18,8 +18,8 @@ from buildman import bsettings
 from buildman import cmdline
 from buildman import control
 from buildman import toolchain
+from patman import gitutil
 from u_boot_pylib import command
-from u_boot_pylib import gitutil
 from u_boot_pylib import terminal
 from u_boot_pylib import test_util
 from u_boot_pylib import tools
@@ -232,8 +232,8 @@ class TestFunctional(unittest.TestCase):
         self._toolchains.Add('gcc', test=False)
 
     def _RunBuildman(self, *args):
-        all_args = [self._buildman_pathname] + list(args)
-        return command.run_one(*all_args, capture=True, capture_stderr=True)
+        return command.run_pipe([[self._buildman_pathname] + list(args)],
+                capture=True, capture_stderr=True)
 
     def _RunControl(self, *args, brds=False, clean_dir=False,
                     test_thread_exceptions=False, get_builder=True):
@@ -288,11 +288,11 @@ class TestFunctional(unittest.TestCase):
         """Test gitutils.Setup(), from outside the module itself"""
         command.TEST_RESULT = command.CommandResult(return_code=1)
         gitutil.setup()
-        self.assertEqual(gitutil.USE_NO_DECORATE, False)
+        self.assertEqual(gitutil.use_no_decorate, False)
 
         command.TEST_RESULT = command.CommandResult(return_code=0)
         gitutil.setup()
-        self.assertEqual(gitutil.USE_NO_DECORATE, True)
+        self.assertEqual(gitutil.use_no_decorate, True)
 
     def _HandleCommandGitLog(self, args):
         if args[-1] == '--':
@@ -445,7 +445,7 @@ class TestFunctional(unittest.TestCase):
             stage: Stage that we are at (mrproper, config, build)
             cwd: Directory where make should be run
             args: Arguments to pass to make
-            kwargs: Arguments to pass to command.run_one()
+            kwargs: Arguments to pass to command.run_pipe()
         """
         self._make_calls += 1
         out_dir = ''

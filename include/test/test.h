@@ -9,32 +9,11 @@
 #include <malloc.h>
 #include <linux/bitops.h>
 
-/**
- * struct ut_stats - Statistics about tests run
- *
- * @fail_count: Number of tests that failed
- * @skip_count: Number of tests that were skipped
- * @test_count: Number of tests run. If a test is run muiltiple times, only one
- *	is counted
- * @start: Timer value when test started
- * @duration_ms: Suite duration in milliseconds
- */
-struct ut_stats {
-	int fail_count;
-	int skip_count;
-	int test_count;
-	ulong start;
-	ulong duration_ms;
-};
-
 /*
  * struct unit_test_state - Entire state of test system
  *
- * @cur: Statistics for the current run
- * @total: Statistics for all test runs
- * @run_count: Number of times ut_run_list() has been called
- * @worst: Sute which had the first per-text run time
- * @worst_ms: Time taken by that test
+ * @fail_count: Number of tests that failed
+ * @skip_count: Number of tests that were skipped
  * @start: Store the starting mallinfo when doing leak test
  * @of_live: true to use livetree if available, false to use flattree
  * @of_root: Record of the livetree root node (used for setting up tests)
@@ -51,16 +30,12 @@ struct ut_stats {
  * @runs_per_test: Number of times to run each test (typically 1)
  * @force_run: true to run tests marked with the UTF_MANUAL flag
  * @old_bloblist: stores the old gd->bloblist pointer
- * @soft_fail: continue execution of the test even after it fails
  * @expect_str: Temporary string used to hold expected string value
  * @actual_str: Temporary string used to hold actual string value
  */
 struct unit_test_state {
-	struct ut_stats cur;
-	struct ut_stats total;
-	int run_count;
-	const struct suite *worst;
-	int worst_ms;
+	int fail_count;
+	int skip_count;
 	struct mallinfo start;
 	struct device_node *of_root;
 	bool of_live;
@@ -77,7 +52,6 @@ struct unit_test_state {
 	int runs_per_test;
 	bool force_run;
 	void *old_bloblist;
-	bool soft_fail;
 	char expect_str[512];
 	char actual_str[512];
 };
@@ -102,8 +76,6 @@ enum ut_flags {
 	UTF_ETH_BOOTDEV	= BIT(9),	/* enable Ethernet bootdevs */
 	UTF_SF_BOOTDEV	= BIT(10),	/* enable SPI flash bootdevs */
 	UFT_BLOBLIST	= BIT(11),	/* test changes gd->bloblist */
-	UTF_INIT	= BIT(12),	/* test inits a suite */
-	UTF_UNINIT	= BIT(13),	/* test uninits a suite */
 };
 
 /**
@@ -148,24 +120,6 @@ struct unit_test {
 		.file = __FILE__,					\
 		.name = #_name,						\
 		.flags = _flags,					\
-		.func = _name,						\
-	}
-
-/* init function for unit-test suite (the 'A' makes it first) */
-#define UNIT_TEST_INIT(_name, _flags, _suite)				\
-	ll_entry_declare(struct unit_test, A ## _name, ut_ ## _suite) = {	\
-		.file = __FILE__,					\
-		.name = #_name,						\
-		.flags = (_flags) | UTF_INIT,				\
-		.func = _name,						\
-	}
-
-/* uninit function for unit-test suite (the 'aaa' makes it last) */
-#define UNIT_TEST_UNINIT(_name, _flags, _suite)				\
-	ll_entry_declare(struct unit_test, zzz ## _name, ut_ ## _suite) = { \
-		.file = __FILE__,					\
-		.name = #_name,						\
-		.flags = (_flags) | UTF_UNINIT,				\
 		.func = _name,						\
 	}
 
@@ -287,28 +241,6 @@ static inline void test_sf_set_enable_bootdevs(bool enable)
 {
 #ifdef CONFIG_SANDBOX
 	sandbox_sf_set_enable_bootdevs(enable);
-#endif
-}
-
-static inline bool test_flattree_test_enabled(void)
-{
-#ifdef CONFIG_SANDBOX
-	struct sandbox_state *state = state_get_current();
-
-	return !state->no_flattree_tests;
-#else
-	return true;
-#endif
-}
-
-static inline bool test_soft_fail(void)
-{
-#ifdef CONFIG_SANDBOX
-	struct sandbox_state *state = state_get_current();
-
-	return state->soft_fail;
-#else
-	return false;
 #endif
 }
 

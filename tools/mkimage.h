@@ -37,11 +37,7 @@ static inline void *map_sysmem(ulong paddr, unsigned long len)
 	return (void *)(uintptr_t)paddr;
 }
 
-static inline void unmap_sysmem(const void *vaddr)
-{
-}
-
-static inline ulong map_to_sysmem(const void *ptr)
+static inline ulong map_to_sysmem(void *ptr)
 {
 	return (ulong)(uintptr_t)ptr;
 }

@@ -213,9 +213,6 @@ int bootmeth_check(struct udevice *dev, struct bootflow_iter *iter);
 /**
  * bootmeth_read_bootflow() - set up a bootflow for a device
  *
- * On entry fs_set_blk_dev_with_part() has been called so it should be possible
- * to read the file without calling that again.
- *
  * @dev:	Bootmethod device to check
  * @bflow:	On entry, provides dev, hwpart, part and method.
  *	Returns updated bootflow if found
@@ -304,8 +301,8 @@ int bootmeth_setup_iter_order(struct bootflow_iter *iter, bool include_global);
  *
  * This selects the ordering to use for bootmeths
  *
- * @order_str: String containing the ordering. This is a space-separate list of
- * bootmeth-device names, e.g. "extlinux efi". If empty then a default ordering
+ * @order_str: String containing the ordering. This is a comma-separate list of
+ * bootmeth-device names, e.g. "extlinux,efi". If empty then a default ordering
  * is used, based on the sequence number of devices (i.e. using aliases)
  * Return: 0 if OK, -ENODEV if an unknown bootmeth is mentioned, -ENOMEM if
  * out of memory, -ENOENT if there are no bootmeth devices
@@ -388,11 +385,12 @@ int bootmeth_alloc_file(struct bootflow *bflow, uint size_limit, uint align,
  * @bflow: Information about file to read
  * @fname: Filename to read from (within bootflow->subdir)
  * @type: File type (IH_TYPE_...)
- * @buf: Returns the allocated buffer
+ * @bufp: Returns a pointer to the allocated buffer
+ * @sizep: Returns the size of the buffer
  * Return: 0 if OK,  -ENOMEM if out of memory, other -ve on other error
  */
 int bootmeth_alloc_other(struct bootflow *bflow, const char *fname,
-			 enum bootflow_img_t type, struct abuf *buf);
+			 enum bootflow_img_t type, void **bufp, uint *sizep);
 
 /**
  * bootmeth_common_read_file() - Common handler for reading a file

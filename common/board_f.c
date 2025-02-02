@@ -261,9 +261,7 @@ static int init_func_i2c(void)
 
 static int setup_mon_len(void)
 {
-#if defined(CONFIG_EFI_APP)
-	gd->mon_len = (ulong)_end - (ulong)image_base;
-#elif defined(CONFIG_ARCH_NEXELL)
+#if defined(CONFIG_ARCH_NEXELL)
 	gd->mon_len = (ulong)__bss_end - (ulong)__image_copy_start;
 #elif defined(__ARM__) || defined(__MICROBLAZE__)
 	gd->mon_len = (ulong)__bss_end - (ulong)_start;
@@ -272,6 +270,8 @@ static int setup_mon_len(void)
 #elif defined(CONFIG_SANDBOX)
 	/* gcc does not provide _init in crti.o on RISC-V */
 	gd->mon_len = 0;
+#elif defined(CONFIG_EFI_APP)
+	gd->mon_len = (ulong)_end - (ulong)_init;
 #elif defined(CONFIG_NIOS2) || defined(CONFIG_XTENSA)
 	gd->mon_len = CONFIG_SYS_MONITOR_LEN;
 #elif defined(CONFIG_SH) || defined(CONFIG_RISCV)

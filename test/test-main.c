@@ -14,7 +14,6 @@
 #include <net.h>
 #include <of_live.h>
 #include <os.h>
-#include <spl.h>
 #include <usb.h>
 #include <dm/ofnode.h>
 #include <dm/root.h>
@@ -64,28 +63,14 @@ static enum fdtchk_t fdt_action(void)
 /* This is valid when a test is running, NULL otherwise */
 static struct unit_test_state *cur_test_state;
 
-struct unit_test_state *ut_get_state(void)
+struct unit_test_state *test_get_state(void)
 {
 	return cur_test_state;
 }
 
-void ut_set_state(struct unit_test_state *uts)
+void test_set_state(struct unit_test_state *uts)
 {
 	cur_test_state = uts;
-}
-
-void ut_init_state(struct unit_test_state *uts)
-{
-	memset(uts, '\0', sizeof(*uts));
-	uts->soft_fail = test_soft_fail();
-}
-
-void ut_uninit_state(struct unit_test_state *uts)
-{
-	if (IS_ENABLED(CONFIG_SANDBOX)) {
-		os_free(uts->fdt_copy);
-		os_free(uts->other_fdt);
-	}
 }
 
 /**
@@ -450,7 +435,7 @@ static int test_post_run(struct unit_test_state *uts, struct unit_test *test)
  */
 static int skip_test(struct unit_test_state *uts)
 {
-	uts->cur.skip_count++;
+	uts->skip_count++;
 
 	return -EAGAIN;
 }
@@ -462,7 +447,7 @@ static int skip_test(struct unit_test_state *uts)
  * the name of each test before running it.
  *
  * @uts: Test state to update. The caller should ensure that this is zeroed for
- *	the first call to this function. On exit, @uts->cur.fail_count is
+ *	the first call to this function. On exit, @uts->fail_count is
  *	incremented by the number of failures (0, one hopes)
  * @test_name: Test to run
  * @name: Name of test, possibly skipping a prefix that should not be displayed
@@ -481,7 +466,7 @@ static int ut_run_test(struct unit_test_state *uts, struct unit_test *test,
 	printf("Test: %s: %s%s\n", test_name, fname, note);
 
 	/* Allow access to test state from drivers */
-	ut_set_state(uts);
+	test_set_state(uts);
 
 	ret = test_pre_run(uts, test);
 	if (ret == -EAGAIN)
@@ -497,7 +482,7 @@ static int ut_run_test(struct unit_test_state *uts, struct unit_test *test,
 	if (ret)
 		return ret;
 
-	ut_set_state(NULL);
+	test_set_state( NULL);
 
 	return 0;
 }
@@ -512,15 +497,14 @@ static int ut_run_test(struct unit_test_state *uts, struct unit_test *test,
  * SPL.
  *
  * @uts: Test state to update. The caller should ensure that this is zeroed for
- *	the first call to this function. On exit, @uts->cur.fail_count is
+ *	the first call to this function. On exit, @uts->fail_count is
  *	incremented by the number of failures (0, one hopes)
  * @test: Test to run
- * @leaf: Part of the name to show, or NULL to use test->name
  * Return: 0 if all tests passed, -EAGAIN if the test should be skipped, -1 if
  *	any failed
  */
 static int ut_run_test_live_flat(struct unit_test_state *uts,
-				 struct unit_test *test, const char *leaf)
+				 struct unit_test *test)
 {
 	int runs, ret;
 
@@ -532,7 +516,7 @@ static int ut_run_test_live_flat(struct unit_test_state *uts,
 	if (CONFIG_IS_ENABLED(OF_LIVE)) {
 		if (!(test->flags & UTF_FLAT_TREE)) {
 			uts->of_live = true;
-			ret = ut_run_test(uts, test, leaf ?: test->name);
+			ret = ut_run_test(uts, test, test->name);
 			if (ret != -EAGAIN) {
 				ut_assertok(ret);
 				runs++;
@@ -551,7 +535,6 @@ static int ut_run_test_live_flat(struct unit_test_state *uts,
 	 * - the FDT is still valid and has not been updated by an earlier test
 	 *   (for sandbox we handle this by copying the tree, but not for other
 	 *    boards)
-	 * - the -F option is not enabled (on sandbox)
 	 */
 	if ((!CONFIG_IS_ENABLED(OF_LIVE) ||
 	     (test->flags & UTF_SCAN_FDT)) &&
@@ -559,10 +542,9 @@ static int ut_run_test_live_flat(struct unit_test_state *uts,
 	    (CONFIG_IS_ENABLED(OFNODE_MULTI_TREE) ||
 	     !(test->flags & UTF_OTHER_FDT)) &&
 	    (!runs || ut_test_run_on_flattree(test)) &&
-	    !(gd->flags & GD_FLG_FDT_CHANGED) &&
-	    test_flattree_test_enabled()) {
+	    !(gd->flags & GD_FLG_FDT_CHANGED)) {
 		uts->of_live = false;
-		ret = ut_run_test(uts, test, leaf ?: test->name);
+		ret = ut_run_test(uts, test, test->name);
 		if (ret != -EAGAIN) {
 			ut_assertok(ret);
 			runs++;
@@ -579,7 +561,7 @@ static int ut_run_test_live_flat(struct unit_test_state *uts,
  * the name of each test before running it.
  *
  * @uts: Test state to update. The caller should ensure that this is zeroed for
- *	the first call to this function. On exit, @uts->cur.fail_count is
+ *	the first call to this function. On exit, @uts->fail_count is
  *	incremented by the number of failures (0, one hopes)
  * @prefix: String prefix for the tests. Any tests that have this prefix will be
  *	printed without the prefix, so that it is easier to see the unique part
@@ -598,7 +580,6 @@ static int ut_run_tests(struct unit_test_state *uts, const char *prefix,
 			struct unit_test *tests, int count,
 			const char *select_name, const char *test_insert)
 {
-	int prefix_len = prefix ? strlen(prefix) : 0;
 	struct unit_test *test, *one;
 	int found = 0;
 	int pos = 0;
@@ -623,8 +604,7 @@ static int ut_run_tests(struct unit_test_state *uts, const char *prefix,
 		const char *test_name = test->name;
 		int ret, i, old_fail_count;
 
-		if (!(test->flags & (UTF_INIT | UTF_UNINIT)) &&
-		    !test_matches(prefix, test_name, select_name))
+		if (!test_matches(prefix, test_name, select_name))
 			continue;
 
 		if (test->flags & UTF_MANUAL) {
@@ -639,37 +619,34 @@ static int ut_run_tests(struct unit_test_state *uts, const char *prefix,
 			if (len < 6 || strcmp(test_name + len - 6, "_norun")) {
 				printf("Test '%s' is manual so must have a name ending in _norun\n",
 				       test_name);
-				uts->cur.fail_count++;
+				uts->fail_count++;
 				return -EBADF;
 			}
 			if (!uts->force_run) {
-				printf("Test: %s: skipped as it is manual (use -f to run it)\n",
-				       test_name);
+				if (select_name) {
+					printf("Test '%s' skipped as it is manual (use -f to run it)\n",
+					       test_name);
+				}
 				continue;
 			}
 		}
-		old_fail_count = uts->cur.fail_count;
+		old_fail_count = uts->fail_count;
 
-		uts->cur.test_count++;
 		if (one && upto == pos) {
-			ret = ut_run_test_live_flat(uts, one, NULL);
-			if (uts->cur.fail_count != old_fail_count) {
+			ret = ut_run_test_live_flat(uts, one);
+			if (uts->fail_count != old_fail_count) {
 				printf("Test '%s' failed %d times (position %d)\n",
 				       one->name,
-				       uts->cur.fail_count - old_fail_count,
-				       pos);
+				       uts->fail_count - old_fail_count, pos);
 			}
 			return -EBADF;
 		}
 
-		if (prefix_len && !strncmp(test_name, prefix, prefix_len))
-			test_name = test_name + prefix_len;
-
 		for (i = 0; i < uts->runs_per_test; i++)
-			ret = ut_run_test_live_flat(uts, test, test_name);
-		if (uts->cur.fail_count != old_fail_count) {
+			ret = ut_run_test_live_flat(uts, test);
+		if (uts->fail_count != old_fail_count) {
 			printf("Test '%s' failed %d times\n", test_name,
-			       uts->cur.fail_count - old_fail_count);
+			       uts->fail_count - old_fail_count);
 		}
 		found++;
 		if (ret == -EAGAIN)
@@ -680,50 +657,23 @@ static int ut_run_tests(struct unit_test_state *uts, const char *prefix,
 	if (select_name && !found)
 		return -ENOENT;
 
-	return uts->cur.fail_count ? -EBADF : 0;
+	return uts->fail_count ? -EBADF : 0;
 }
 
-void ut_report(struct ut_stats *stats, int run_count)
+int ut_run_list(const char *category, const char *prefix,
+		struct unit_test *tests, int count, const char *select_name,
+		int runs_per_test, bool force_run, const char *test_insert)
 {
-	if (run_count > 1)
-		printf("Suites run: %d, total tests", run_count);
-	else
-		printf("Tests");
-	printf(" run: %d, ", stats->test_count);
-	if (stats && stats->test_count) {
-		ulong dur = stats->duration_ms;
-
-		printf("%ld ms, average: %ld ms, ", dur,
-		       dur ? dur / stats->test_count : 0);
-	}
-	if (stats->skip_count)
-		printf("skipped: %d, ", stats->skip_count);
-	printf("failures: %d\n", stats->fail_count);
-}
-
-int ut_run_list(struct unit_test_state *uts, const char *category,
-		const char *prefix, struct unit_test *tests, int count,
-		const char *select_name, int runs_per_test, bool force_run,
-		const char *test_insert)
-{
-	;
+	struct unit_test_state uts = { .fail_count = 0 };
 	bool has_dm_tests = false;
-	ulong start_offset = 0;
-	ulong test_offset = 0;
 	int ret;
-
-	memset(&uts->cur, '\0', sizeof(struct ut_stats));
-	if (CONFIG_IS_ENABLED(UNIT_TEST_DURATION)) {
-		uts->cur.start = get_timer(0);
-		start_offset = timer_test_get_offset();
-	}
 
 	if (!CONFIG_IS_ENABLED(OF_PLATDATA) &&
 	    ut_list_has_dm_tests(tests, count, prefix, select_name)) {
 		has_dm_tests = true;
 		/*
 		 * If we have no device tree, or it only has a root node, then
-		 * these tests clearly aren't going to work...
+		 * these * tests clearly aren't going to work...
 		 */
 		if (!gd->fdt_blob || fdt_next_node(gd->fdt_blob, 0, NULL) < 0) {
 			puts("Please run with test device tree:\n"
@@ -735,39 +685,35 @@ int ut_run_list(struct unit_test_state *uts, const char *category,
 	if (!select_name)
 		printf("Running %d %s tests\n", count, category);
 
-	uts->of_root = gd_of_root();
-	uts->runs_per_test = runs_per_test;
+	uts.of_root = gd_of_root();
+	uts.runs_per_test = runs_per_test;
 	if (fdt_action() == FDTCHK_COPY && gd->fdt_blob) {
-		uts->fdt_size = fdt_totalsize(gd->fdt_blob);
-		uts->fdt_copy = os_malloc(uts->fdt_size);
-		if (!uts->fdt_copy) {
+		uts.fdt_size = fdt_totalsize(gd->fdt_blob);
+		uts.fdt_copy = os_malloc(uts.fdt_size);
+		if (!uts.fdt_copy) {
 			printf("Out of memory for device tree copy\n");
 			return -ENOMEM;
 		}
-		memcpy(uts->fdt_copy, gd->fdt_blob, uts->fdt_size);
+		memcpy(uts.fdt_copy, gd->fdt_blob, uts.fdt_size);
 	}
-	uts->force_run = force_run;
-	ret = ut_run_tests(uts, prefix, tests, count, select_name,
+	uts.force_run = force_run;
+	ret = ut_run_tests(&uts, prefix, tests, count, select_name,
 			   test_insert);
 
 	/* Best efforts only...ignore errors */
 	if (has_dm_tests)
-		dm_test_restore(uts->of_root);
+		dm_test_restore(uts.of_root);
+	if (IS_ENABLED(CONFIG_SANDBOX)) {
+		os_free(uts.fdt_copy);
+		os_free(uts.other_fdt);
+	}
 
+	if (uts.skip_count)
+		printf("Skipped: %d, ", uts.skip_count);
 	if (ret == -ENOENT)
 		printf("Test '%s' not found\n", select_name);
-	if (CONFIG_IS_ENABLED(UNIT_TEST_DURATION)) {
-		test_offset = timer_test_get_offset() - start_offset;
-
-		uts->cur.duration_ms = get_timer(uts->cur.start) - test_offset;
-	}
-	ut_report(&uts->cur, 1);
-
-	uts->total.skip_count += uts->cur.skip_count;
-	uts->total.fail_count += uts->cur.fail_count;
-	uts->total.test_count += uts->cur.test_count;
-	uts->total.duration_ms += uts->cur.duration_ms;
-	uts->run_count++;
+	else
+		printf("Failures: %d\n", uts.fail_count);
 
 	return ret;
 }

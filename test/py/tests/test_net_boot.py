@@ -2,7 +2,7 @@
 # (C) Copyright 2023, Advanced Micro Devices, Inc.
 
 import pytest
-import utils
+import u_boot_utils
 import test_net
 import re
 
@@ -117,26 +117,26 @@ env__pxe_boot_test_skip = False
         initrd rootfs.cpio.gz.u-boot
 """
 
-def setup_networking(ubman):
-    test_net.test_net_dhcp(ubman)
+def setup_networking(u_boot_console):
+    test_net.test_net_dhcp(u_boot_console)
     if not test_net.net_set_up:
-        test_net.test_net_setup_static(ubman)
+        test_net.test_net_setup_static(u_boot_console)
 
-def setup_tftpboot_boot(ubman):
-    f = ubman.config.env.get('env__net_tftp_bootable_file', None)
+def setup_tftpboot_boot(u_boot_console):
+    f = u_boot_console.config.env.get('env__net_tftp_bootable_file', None)
     if not f:
         pytest.skip('No TFTP bootable file to read')
 
-    setup_networking(ubman)
+    setup_networking(u_boot_console)
     addr = f.get('addr', None)
     if not addr:
-        addr = utils.find_ram_base(ubman)
+        addr = u_boot_utils.find_ram_base(u_boot_console)
 
     fn = f['fn']
     timeout = f.get('timeout', 50000)
 
-    with ubman.temporary_timeout(timeout):
-        output = ubman.run_command('tftpboot %x %s' % (addr, fn))
+    with u_boot_console.temporary_timeout(timeout):
+        output = u_boot_console.run_command('tftpboot %x %s' % (addr, fn))
 
     expected_text = 'Bytes transferred = '
     sz = f.get('size', None)
@@ -145,7 +145,7 @@ def setup_tftpboot_boot(ubman):
     assert expected_text in output
 
     expected_crc = f.get('crc32', None)
-    output = ubman.run_command('crc32 %x $filesize' % addr)
+    output = u_boot_console.run_command('crc32 %x $filesize' % addr)
     if expected_crc:
         assert expected_crc in output
 
@@ -157,7 +157,7 @@ def setup_tftpboot_boot(ubman):
     return addr, timeout, pattern, chk_type, chk_pattern, config
 
 @pytest.mark.buildconfigspec('cmd_tftpboot')
-def test_net_tftpboot_boot(ubman):
+def test_net_tftpboot_boot(u_boot_console):
     """Boot the loaded image
 
     A boot file (fit image) is downloaded from the TFTP server and booted using
@@ -167,11 +167,11 @@ def test_net_tftpboot_boot(ubman):
     The details of the file to download are provided by the boardenv_* file;
     see the comment at the beginning of this file.
     """
-    if ubman.config.env.get('env__tftp_boot_test_skip', True):
+    if u_boot_console.config.env.get('env__tftp_boot_test_skip', True):
         pytest.skip('TFTP boot test is not enabled!')
 
     addr, timeout, pattern, chk_type, chk_pattern, imcfg = setup_tftpboot_boot(
-        ubman
+        u_boot_console
     )
 
     if imcfg:
@@ -179,38 +179,38 @@ def test_net_tftpboot_boot(ubman):
     else:
         bootcmd = 'bootm %x' % addr
 
-    with ubman.enable_check(
+    with u_boot_console.enable_check(
         chk_type, chk_pattern
-    ), ubman.temporary_timeout(timeout):
+    ), u_boot_console.temporary_timeout(timeout):
         try:
             # wait_for_prompt=False makes the core code not wait for the U-Boot
             # prompt code to be seen, since it won't be on a successful kernel
             # boot
-            ubman.run_command(bootcmd, wait_for_prompt=False)
+            u_boot_console.run_command(bootcmd, wait_for_prompt=False)
 
             # Wait for boot log pattern
-            ubman.wait_for(pattern)
+            u_boot_console.wait_for(pattern)
         finally:
             # This forces the console object to be shutdown, so any subsequent
             # test will reset the board back into U-Boot. We want to force this
             # no matter whether the kernel boot passed or failed.
-            ubman.drain_console()
-            ubman.cleanup_spawn()
+            u_boot_console.drain_console()
+            u_boot_console.cleanup_spawn()
 
-def setup_pxe_boot(ubman):
-    f = ubman.config.env.get('env__net_pxe_bootable_file', None)
+def setup_pxe_boot(u_boot_console):
+    f = u_boot_console.config.env.get('env__net_pxe_bootable_file', None)
     if not f:
         pytest.skip('No PXE bootable file to read')
 
-    setup_networking(ubman)
-    bootfile = ubman.run_command('echo $bootfile')
+    setup_networking(u_boot_console)
+    bootfile = u_boot_console.run_command('echo $bootfile')
     if not bootfile:
         bootfile = '<NULL>'
 
     return f, bootfile
 
 @pytest.mark.buildconfigspec('cmd_pxe')
-def test_net_pxe_boot(ubman):
+def test_net_pxe_boot(u_boot_console):
     """Test the pxe boot command.
 
     A pxe configuration file is downloaded from the TFTP server and interpreted
@@ -219,19 +219,19 @@ def test_net_pxe_boot(ubman):
     The details of the file to download are provided by the boardenv_* file;
     see the comment at the beginning of this file.
     """
-    if ubman.config.env.get('env__pxe_boot_test_skip', True):
+    if u_boot_console.config.env.get('env__pxe_boot_test_skip', True):
         pytest.skip('PXE boot test is not enabled!')
 
-    f, bootfile = setup_pxe_boot(ubman)
+    f, bootfile = setup_pxe_boot(u_boot_console)
     addr = f.get('addr', None)
-    timeout = f.get('timeout', ubman.p.timeout)
+    timeout = f.get('timeout', u_boot_console.p.timeout)
     fn = f['fn']
 
     if addr:
-        ubman.run_command('setenv pxefile_addr_r %x' % addr)
+        u_boot_console.run_command('setenv pxefile_addr_r %x' % addr)
 
-    with ubman.temporary_timeout(timeout):
-        output = ubman.run_command('pxe get')
+    with u_boot_console.temporary_timeout(timeout):
+        output = u_boot_console.run_command('pxe get')
 
     expected_text = 'Bytes transferred = '
     sz = f.get('size', None)
@@ -250,18 +250,18 @@ def test_net_pxe_boot(ubman):
     else:
         pxe_boot_cmd = 'pxe boot %x' % addr
 
-    with ubman.enable_check(
+    with u_boot_console.enable_check(
         chk_type, chk_pattern
-    ), ubman.temporary_timeout(timeout):
+    ), u_boot_console.temporary_timeout(timeout):
         try:
-            ubman.run_command(pxe_boot_cmd, wait_for_prompt=False)
-            ubman.wait_for(pattern)
+            u_boot_console.run_command(pxe_boot_cmd, wait_for_prompt=False)
+            u_boot_console.wait_for(pattern)
         finally:
-            ubman.drain_console()
-            ubman.cleanup_spawn()
+            u_boot_console.drain_console()
+            u_boot_console.cleanup_spawn()
 
 @pytest.mark.buildconfigspec('cmd_pxe')
-def test_net_pxe_boot_config(ubman):
+def test_net_pxe_boot_config(u_boot_console):
     """Test the pxe boot command by selecting different combination of labels
 
     A pxe configuration file is downloaded from the TFTP server and interpreted
@@ -270,12 +270,12 @@ def test_net_pxe_boot_config(ubman):
     The details of the file to download are provided by the boardenv_* file;
     see the comment at the beginning of this file.
     """
-    if ubman.config.env.get('env__pxe_boot_test_skip', True):
+    if u_boot_console.config.env.get('env__pxe_boot_test_skip', True):
         pytest.skip('PXE boot test is not enabled!')
 
-    f, bootfile = setup_pxe_boot(ubman)
+    f, bootfile = setup_pxe_boot(u_boot_console)
     addr = f.get('addr', None)
-    timeout = f.get('timeout', ubman.p.timeout)
+    timeout = f.get('timeout', u_boot_console.p.timeout)
     fn = f['fn']
     local_label = f['local_label']
     empty_label = f['empty_label']
@@ -283,10 +283,10 @@ def test_net_pxe_boot_config(ubman):
     exp_str_empty = f['exp_str_empty']
 
     if addr:
-        ubman.run_command('setenv pxefile_addr_r %x' % addr)
+        u_boot_console.run_command('setenv pxefile_addr_r %x' % addr)
 
-    with ubman.temporary_timeout(timeout):
-        output = ubman.run_command('pxe get')
+    with u_boot_console.temporary_timeout(timeout):
+        output = u_boot_console.run_command('pxe get')
 
     expected_text = 'Bytes transferred = '
     sz = f.get('size', None)
@@ -305,20 +305,20 @@ def test_net_pxe_boot_config(ubman):
     else:
         pxe_boot_cmd = 'pxe boot %x' % addr
 
-    with ubman.enable_check(
+    with u_boot_console.enable_check(
         chk_type, chk_pattern
-    ), ubman.temporary_timeout(timeout):
+    ), u_boot_console.temporary_timeout(timeout):
         try:
-            ubman.run_command(pxe_boot_cmd, wait_for_prompt=False)
+            u_boot_console.run_command(pxe_boot_cmd, wait_for_prompt=False)
 
             # pxe config is loaded where multiple labels are there and need to
             # select particular label to boot and check for expected string
             # In this case, local label is selected and it should look for
             # localcmd env variable and if that variable is not defined it
             # should not boot it and come out to u-boot prompt
-            ubman.wait_for('Enter choice:')
-            ubman.run_command(local_label, wait_for_prompt=False)
-            expected_str = ubman.p.expect([exp_str_local])
+            u_boot_console.wait_for('Enter choice:')
+            u_boot_console.run_command(local_label, wait_for_prompt=False)
+            expected_str = u_boot_console.p.expect([exp_str_local])
             assert (
                 expected_str == 0
             ), f'Expected string: {exp_str_local} did not match!'
@@ -326,21 +326,21 @@ def test_net_pxe_boot_config(ubman):
             # In this case, empty label is selected and it should look for
             # kernel image path and if it is not set it should fail it and load
             # default label to boot
-            ubman.run_command(pxe_boot_cmd, wait_for_prompt=False)
-            ubman.wait_for('Enter choice:')
-            ubman.run_command(empty_label, wait_for_prompt=False)
-            expected_str = ubman.p.expect([exp_str_empty])
+            u_boot_console.run_command(pxe_boot_cmd, wait_for_prompt=False)
+            u_boot_console.wait_for('Enter choice:')
+            u_boot_console.run_command(empty_label, wait_for_prompt=False)
+            expected_str = u_boot_console.p.expect([exp_str_empty])
             assert (
                 expected_str == 0
             ), f'Expected string: {exp_str_empty} did not match!'
 
-            ubman.wait_for(pattern)
+            u_boot_console.wait_for(pattern)
         finally:
-            ubman.drain_console()
-            ubman.cleanup_spawn()
+            u_boot_console.drain_console()
+            u_boot_console.cleanup_spawn()
 
 @pytest.mark.buildconfigspec('cmd_pxe')
-def test_net_pxe_boot_config_invalid(ubman):
+def test_net_pxe_boot_config_invalid(u_boot_console):
     """Test the pxe boot command by selecting invalid label
 
     A pxe configuration file is downloaded from the TFTP server and interpreted
@@ -349,21 +349,21 @@ def test_net_pxe_boot_config_invalid(ubman):
     The details of the file to download are provided by the boardenv_* file;
     see the comment at the beginning of this file.
     """
-    if ubman.config.env.get('env__pxe_boot_test_skip', True):
+    if u_boot_console.config.env.get('env__pxe_boot_test_skip', True):
         pytest.skip('PXE boot test is not enabled!')
 
-    f, bootfile = setup_pxe_boot(ubman)
+    f, bootfile = setup_pxe_boot(u_boot_console)
     addr = f.get('addr', None)
-    timeout = f.get('timeout', ubman.p.timeout)
+    timeout = f.get('timeout', u_boot_console.p.timeout)
     fn = f['fn']
     invalid_label = f['invalid_label']
     exp_str_invalid = f['exp_str_invalid']
 
     if addr:
-        ubman.run_command('setenv pxefile_addr_r %x' % addr)
+        u_boot_console.run_command('setenv pxefile_addr_r %x' % addr)
 
-    with ubman.temporary_timeout(timeout):
-        output = ubman.run_command('pxe get')
+    with u_boot_console.temporary_timeout(timeout):
+        output = u_boot_console.run_command('pxe get')
 
     expected_text = 'Bytes transferred = '
     sz = f.get('size', None)
@@ -379,22 +379,22 @@ def test_net_pxe_boot_config_invalid(ubman):
     else:
         pxe_boot_cmd = 'pxe boot %x' % addr
 
-    with ubman.temporary_timeout(timeout):
+    with u_boot_console.temporary_timeout(timeout):
         try:
-            ubman.run_command(pxe_boot_cmd, wait_for_prompt=False)
+            u_boot_console.run_command(pxe_boot_cmd, wait_for_prompt=False)
 
             # pxe config is loaded where multiple labels are there and need to
             # select particular label to boot and check for expected string
             # In this case invalid label is selected, it should load invalid
             # label and if it fails it should load the default label to boot
-            ubman.wait_for('Enter choice:')
-            ubman.run_command(invalid_label, wait_for_prompt=False)
-            expected_str = ubman.p.expect([exp_str_invalid])
+            u_boot_console.wait_for('Enter choice:')
+            u_boot_console.run_command(invalid_label, wait_for_prompt=False)
+            expected_str = u_boot_console.p.expect([exp_str_invalid])
             assert (
                 expected_str == 0
             ), f'Expected string: {exp_str_invalid} did not match!'
 
-            ubman.wait_for(pattern)
+            u_boot_console.wait_for(pattern)
         finally:
-            ubman.drain_console()
-            ubman.cleanup_spawn()
+            u_boot_console.drain_console()
+            u_boot_console.cleanup_spawn()

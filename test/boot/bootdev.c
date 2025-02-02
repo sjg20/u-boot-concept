@@ -12,6 +12,7 @@
 #include <bootflow.h>
 #include <mapmem.h>
 #include <os.h>
+#include <test/suites.h>
 #include <test/ut.h>
 #include "bootstd_common.h"
 
@@ -221,17 +222,14 @@ static int bootdev_test_order(struct unit_test_state *uts)
 	ut_assertok(env_set("boot_targets", "mmc1 mmc2 usb"));
 	ut_assertok(bootflow_scan_first(NULL, NULL, &iter, 0, &bflow));
 
-	/* get the first usb device which has a backing file (flash1.img) */
-	ut_asserteq(0, bootflow_scan_next(&iter, &bflow));
-
-	/* get the second usb device which has a backing file (flash3.img) */
+	/* get the usb device which has a backing file (flash1.img) */
 	ut_asserteq(0, bootflow_scan_next(&iter, &bflow));
 
 	ut_asserteq(-ENODEV, bootflow_scan_next(&iter, &bflow));
-	ut_asserteq(6, iter.num_devs);
+	ut_asserteq(5, iter.num_devs);
 	ut_asserteq_str("mmc1.bootdev", iter.dev_used[0]->name);
 	ut_asserteq_str("mmc2.bootdev", iter.dev_used[1]->name);
-	ut_asserteq_str("hub1.p1.usb_mass_storage.lun0.bootdev",
+	ut_asserteq_str("usb_mass_storage.lun0.bootdev",
 			iter.dev_used[2]->name);
 	bootflow_iter_uninit(&iter);
 
@@ -267,17 +265,16 @@ static int bootdev_test_order(struct unit_test_state *uts)
 	ut_asserteq(2, iter.num_devs);
 
 	/*
-	 * Now scan past mmc1 and make sure that the 4 USB devices show up. The
-	 * first two have a backing file so returns success
+	 * Now scan past mmc1 and make sure that the 3 USB devices show up. The
+	 * first one has a backing file so returns success
 	 */
 	ut_asserteq(0, bootflow_scan_next(&iter, &bflow));
-	ut_asserteq(0, bootflow_scan_next(&iter, &bflow));
 	ut_asserteq(-ENODEV, bootflow_scan_next(&iter, &bflow));
-	ut_asserteq(7, iter.num_devs);
+	ut_asserteq(6, iter.num_devs);
 	ut_asserteq_str("mmc2.bootdev", iter.dev_used[0]->name);
 	ut_asserteq_str("mmc1.bootdev", iter.dev_used[1]->name);
 	ut_asserteq_str("mmc0.bootdev", iter.dev_used[2]->name);
-	ut_asserteq_str("hub1.p1.usb_mass_storage.lun0.bootdev",
+	ut_asserteq_str("usb_mass_storage.lun0.bootdev",
 			iter.dev_used[3]->name);
 	bootflow_iter_uninit(&iter);
 
@@ -334,20 +331,17 @@ static int bootdev_test_prio(struct unit_test_state *uts)
 	/* 3 MMC and 3 USB bootdevs: MMC should come before USB */
 	ut_assertok(bootflow_scan_first(NULL, NULL, &iter, 0, &bflow));
 
-	/* get the first usb device which has a backing file (flash1.img) */
-	ut_asserteq(0, bootflow_scan_next(&iter, &bflow));
-
-	/* get the second usb device which has a backing file (flash3.img) */
+	/* get the usb device which has a backing file (flash1.img) */
 	ut_asserteq(0, bootflow_scan_next(&iter, &bflow));
 
 	ut_asserteq(-ENODEV, bootflow_scan_next(&iter, &bflow));
-	ut_asserteq(7, iter.num_devs);
+	ut_asserteq(6, iter.num_devs);
 	ut_asserteq_str("mmc2.bootdev", iter.dev_used[0]->name);
-	ut_asserteq_str("hub1.p1.usb_mass_storage.lun0.bootdev",
+	ut_asserteq_str("usb_mass_storage.lun0.bootdev",
 			iter.dev_used[3]->name);
 
 	ut_assertok(bootdev_get_sibling_blk(iter.dev_used[3], &blk));
-	ut_asserteq_str("hub1.p1.usb_mass_storage.lun0", blk->name);
+	ut_asserteq_str("usb_mass_storage.lun0", blk->name);
 
 	/* adjust the priority of the first USB bootdev to the highest */
 	ucp = dev_get_uclass_plat(iter.dev_used[3]);
@@ -358,15 +352,12 @@ static int bootdev_test_prio(struct unit_test_state *uts)
 	ut_assertok(bootflow_scan_first(NULL, NULL, &iter, BOOTFLOWIF_HUNT,
 					&bflow));
 
-	/* get the first usb device which has a backing file (flash1.img) */
-	ut_asserteq(0, bootflow_scan_next(&iter, &bflow));
-
-	/* get the second usb device which has a backing file (flash3.img) */
+	/* get the usb device which has a backing file (flash1.img) */
 	ut_asserteq(0, bootflow_scan_next(&iter, &bflow));
 
 	ut_asserteq(-ENODEV, bootflow_scan_next(&iter, &bflow));
-	ut_asserteq(8, iter.num_devs);
-	ut_asserteq_str("hub1.p1.usb_mass_storage.lun0.bootdev",
+	ut_asserteq(7, iter.num_devs);
+	ut_asserteq_str("usb_mass_storage.lun0.bootdev",
 			iter.dev_used[0]->name);
 	ut_asserteq_str("mmc2.bootdev", iter.dev_used[1]->name);
 
@@ -403,7 +394,7 @@ static int bootdev_test_hunter(struct unit_test_state *uts)
 
 	ut_assertok(bootdev_hunt("usb1", false));
 	ut_assert_nextline(
-		"Bus usb@1: scanning bus usb@1 for devices... 6 USB Device(s) found");
+		"Bus usb@1: scanning bus usb@1 for devices... 5 USB Device(s) found");
 	ut_assert_console_end();
 
 	/* USB is 7th in the list, so bit 8 */
@@ -459,7 +450,7 @@ static int bootdev_test_cmd_hunt(struct unit_test_state *uts)
 	ut_assert_skip_to_line("Hunting with: spi_flash");
 	ut_assert_nextline("Hunting with: usb");
 	ut_assert_nextline(
-		"Bus usb@1: scanning bus usb@1 for devices... 6 USB Device(s) found");
+		"Bus usb@1: scanning bus usb@1 for devices... 5 USB Device(s) found");
 	ut_assert_nextline("Hunting with: virtio");
 	ut_assert_console_end();
 
@@ -519,7 +510,6 @@ static int bootdev_test_bootable(struct unit_test_state *uts)
 	iter.part = 0;
 	ut_assertok(uclass_get_device_by_name(UCLASS_BLK, "mmc1.blk", &blk));
 	iter.dev = blk;
-	iter.flags = BOOTFLOWIF_ONLY_BOOTABLE;
 	ut_assertok(device_find_next_child(&iter.dev));
 	uclass_first_device(UCLASS_BOOTMETH, &bflow.method);
 
@@ -562,7 +552,7 @@ static int bootdev_test_hunt_prio(struct unit_test_state *uts)
 	ut_assert_nextline("Hunting with: ide");
 	ut_assert_nextline("Hunting with: usb");
 	ut_assert_nextline(
-		"Bus usb@1: scanning bus usb@1 for devices... 6 USB Device(s) found");
+		"Bus usb@1: scanning bus usb@1 for devices... 5 USB Device(s) found");
 	ut_assert_console_end();
 
 	return 0;
@@ -612,7 +602,7 @@ static int bootdev_test_hunt_label(struct unit_test_state *uts)
 	test_set_skip_delays(true);
 	ut_assertok(bootdev_hunt_and_find_by_label("usb", &dev, &mflags));
 	ut_assertnonnull(dev);
-	ut_asserteq_str("hub1.p1.usb_mass_storage.lun0.bootdev", dev->name);
+	ut_asserteq_str("usb_mass_storage.lun0.bootdev", dev->name);
 	ut_asserteq(BOOTFLOW_METHF_SINGLE_UCLASS, mflags);
 	ut_assert_nextlinen("Bus usb@1: scanning bus usb@1");
 	ut_assert_console_end();
@@ -781,40 +771,3 @@ static int bootdev_test_next_prio(struct unit_test_state *uts)
 }
 BOOTSTD_TEST(bootdev_test_next_prio, UTF_DM | UTF_SCAN_FDT | UTF_SF_BOOTDEV |
 	     UTF_CONSOLE);
-
-/* Check 'bootdev order' command */
-static int bootdev_test_cmd_order(struct unit_test_state *uts)
-{
-	test_set_skip_delays(true);
-	bootstd_reset_usb();
-
-	ut_assertok(run_command("bootdev order", 0));
-	ut_assert_nextline("mmc2");
-	ut_assert_nextline("mmc1");
-	ut_assert_console_end();
-
-	ut_assertok(run_command("bootdev order clear", 0));
-	ut_assertok(run_command("bootdev order", 0));
-	ut_assert_nextline("No ordering");
-	ut_assert_console_end();
-
-	ut_assertok(run_command("bootdev order 'invalid mmc'", 0));
-	ut_assertok(run_command("bootdev order", 0));
-	ut_assert_nextline("invalid");
-	ut_assert_nextline("mmc");
-	ut_assert_console_end();
-
-	/* check handling of invalid label */
-	ut_assertok(run_command("bootflow scan -l", 0));
-	if (IS_ENABLED(CONFIG_LOGF_FUNC)) {
-		ut_assert_skip_to_line(
-			"  bootdev_next_label() Unknown uclass 'invalid' in label");
-	} else {
-		ut_assert_skip_to_line("Unknown uclass 'invalid' in label");
-	}
-	ut_assert_skip_to_line("(1 bootflow, 1 valid)");
-	ut_assert_console_end();
-
-	return 0;
-}
-BOOTSTD_TEST(bootdev_test_cmd_order, UTF_DM | UTF_SCAN_FDT | UTF_CONSOLE);

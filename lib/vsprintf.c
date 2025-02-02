@@ -845,40 +845,19 @@ int vprintf(const char *fmt, va_list args)
 }
 #endif
 
-static char local_toa[23];
+static char local_toa[22];
 
-char *simple_itoa_(ulong i, bool use_signed)
+char *simple_itoa(ulong i)
 {
-	/*
-	 * 21 digits plus sign and null terminator, good for 64-bit or smaller
-	 * ints
-	 */
-	char *p = &local_toa[22];
-	bool neg = false;
+	/* 21 digits plus null terminator, good for 64-bit or smaller ints */
+	char *p = &local_toa[21];
 
-	if (use_signed && (long)i < 0) {
-		i = -i;
-		neg = true;
-	}
 	*p-- = '\0';
 	do {
 		*p-- = '0' + i % 10;
 		i /= 10;
 	} while (i > 0);
-
-	if (neg)
-		*p-- = '-';
 	return p + 1;
-}
-
-char *simple_itoa(ulong i)
-{
-	return simple_itoa_(i, false);
-}
-
-char *simple_itoa_signed(long i)
-{
-	return simple_itoa_(i, true);
 }
 
 char *simple_xtoa(ulong num)

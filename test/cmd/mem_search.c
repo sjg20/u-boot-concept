@@ -14,7 +14,7 @@
 #define BUF_SIZE	0x100
 
 /* Declare a new mem test */
-#define MEM_TEST(_name, _flags)	UNIT_TEST(_name, _flags, mem)
+#define MEM_TEST(_name, _flags)	UNIT_TEST(_name, _flags, mem_test)
 
 /* Test 'ms' command with bytes */
 static int mem_test_ms_b(struct unit_test_state *uts)

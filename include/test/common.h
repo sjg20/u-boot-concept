@@ -10,6 +10,6 @@
 #include <test/test.h>
 
 /* Declare a new common function test */
-#define COMMON_TEST(_name, _flags) UNIT_TEST(_name, _flags, common)
+#define COMMON_TEST(_name, _flags) UNIT_TEST(_name, _flags, common_test)
 
 #endif /* __TEST_COMMON_H__ */

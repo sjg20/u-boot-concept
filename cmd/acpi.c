@@ -7,7 +7,6 @@
 #include <display_options.h>
 #include <log.h>
 #include <mapmem.h>
-#include <tables_csum.h>
 #include <acpi/acpi_table.h>
 #include <asm/acpi_table.h>
 #include <asm/global_data.h>
@@ -15,17 +14,6 @@
 #include <dm/acpi.h>
 
 DECLARE_GLOBAL_DATA_PTR;
-
-static const char *show_checksum(void *ptr, uint size, bool chksums)
-{
-	uint checksum;
-
-	if (!chksums)
-		return "";
-	checksum = table_compute_checksum(ptr, size);
-
-	return checksum ? "  bad" : "  OK";
-}
 
 /**
  * dump_hdr() - Dump an ACPI header
@@ -35,17 +23,16 @@ static const char *show_checksum(void *ptr, uint size, bool chksums)
  *
  * @hdr: ACPI header to dump
  */
-static void dump_hdr(struct acpi_table_header *hdr, bool chksums)
+static void dump_hdr(struct acpi_table_header *hdr)
 {
 	bool has_hdr = memcmp(hdr->signature, "FACS", ACPI_NAME_LEN);
 
 	printf("%.*s  %16lx  %5x", ACPI_NAME_LEN, hdr->signature,
 	       (ulong)map_to_sysmem(hdr), hdr->length);
 	if (has_hdr) {
-		printf("  v%02d %.6s %.8s %x %.4s %x%s\n", hdr->revision,
+		printf("  v%02d %.6s %.8s %x %.4s %x\n", hdr->revision,
 		       hdr->oem_id, hdr->oem_table_id, hdr->oem_revision,
-		       hdr->creator_id, hdr->creator_revision,
-		       show_checksum(hdr, hdr->length, chksums));
+		       hdr->creator_id, hdr->creator_revision);
 	} else {
 		printf("\n");
 	}
@@ -65,22 +52,22 @@ static int dump_table_name(const char *sig)
 	return 0;
 }
 
-static void list_fadt(struct acpi_fadt *fadt, bool chksums)
+static void list_fadt(struct acpi_fadt *fadt)
 {
 	if (fadt->header.revision >= 3 && fadt->x_dsdt)
-		dump_hdr(nomap_sysmem(fadt->x_dsdt, 0), chksums);
+		dump_hdr(nomap_sysmem(fadt->x_dsdt, 0));
 	else if (fadt->dsdt)
-		dump_hdr(nomap_sysmem(fadt->dsdt, 0), chksums);
-	if (!IS_ENABLED(CONFIG_X86) && !IS_ENABLED(CONFIG_SANDBOX) &&
+		dump_hdr(nomap_sysmem(fadt->dsdt, 0));
+	if (!IS_ENABLED(CONFIG_X86) &&
 	    !(fadt->flags & ACPI_FADT_HW_REDUCED_ACPI))
 		log_err("FADT not ACPI-hardware-reduced-compliant\n");
 	if (fadt->header.revision >= 3 && fadt->x_firmware_ctrl)
-		dump_hdr(nomap_sysmem(fadt->x_firmware_ctrl, 0), chksums);
+		dump_hdr(nomap_sysmem(fadt->x_firmware_ctrl, 0));
 	else if (fadt->firmware_ctrl)
-		dump_hdr(nomap_sysmem(fadt->firmware_ctrl, 0), chksums);
+		dump_hdr(nomap_sysmem(fadt->firmware_ctrl, 0));
 }
 
-static void list_rsdt(struct acpi_rsdp *rsdp, bool chksums)
+static void list_rsdt(struct acpi_rsdp *rsdp)
 {
 	int len, i, count;
 	struct acpi_rsdt *rsdt;
@@ -88,11 +75,11 @@ static void list_rsdt(struct acpi_rsdp *rsdp, bool chksums)
 
 	if (rsdp->rsdt_address) {
 		rsdt = nomap_sysmem(rsdp->rsdt_address, 0);
-		dump_hdr(&rsdt->header, chksums);
+		dump_hdr(&rsdt->header);
 	}
 	if (rsdp->xsdt_address) {
 		xsdt = nomap_sysmem(rsdp->xsdt_address, 0);
-		dump_hdr(&xsdt->header, chksums);
+		dump_hdr(&xsdt->header);
 		len = xsdt->header.length - sizeof(xsdt->header);
 		count = len / sizeof(u64);
 	} else if (rsdp->rsdt_address) {
@@ -113,28 +100,24 @@ static void list_rsdt(struct acpi_rsdp *rsdp, bool chksums)
 		if (!entry)
 			break;
 		hdr = nomap_sysmem(entry, 0);
-		dump_hdr(hdr, chksums);
+		dump_hdr(hdr);
 		if (!memcmp(hdr->signature, "FACP", ACPI_NAME_LEN))
-			list_fadt((struct acpi_fadt *)hdr, chksums);
+			list_fadt((struct acpi_fadt *)hdr);
 	}
 }
 
-static void list_rsdp(struct acpi_rsdp *rsdp, bool chksums)
+static void list_rsdp(struct acpi_rsdp *rsdp)
 {
-	printf("RSDP  %16lx  %5x  v%02d %.6s%s%s\n",
-	       (ulong)map_to_sysmem(rsdp), rsdp->length, rsdp->revision,
-	       rsdp->oem_id, show_checksum(rsdp, 0x14, chksums),
-	       show_checksum(rsdp, rsdp->length, chksums));
-	list_rsdt(rsdp, chksums);
+	printf("RSDP  %16lx  %5x  v%02d %.6s\n", (ulong)map_to_sysmem(rsdp),
+	       rsdp->length, rsdp->revision, rsdp->oem_id);
+	list_rsdt(rsdp);
 }
 
 static int do_acpi_list(struct cmd_tbl *cmdtp, int flag, int argc,
 			char *const argv[])
 {
 	struct acpi_rsdp *rsdp;
-	bool chksums;
 
-	chksums = argc >= 2 && !strcmp("-c", argv[1]);
 	rsdp = map_sysmem(gd_acpi_start(), 0);
 	if (!rsdp) {
 		printf("No ACPI tables present\n");
@@ -142,7 +125,7 @@ static int do_acpi_list(struct cmd_tbl *cmdtp, int flag, int argc,
 	}
 	printf("Name              Base   Size  Detail\n"
 	       "----  ----------------  -----  ----------------------------\n");
-	list_rsdp(rsdp, chksums);
+	list_rsdp(rsdp);
 
 	return 0;
 }
@@ -204,13 +187,13 @@ static int do_acpi_dump(struct cmd_tbl *cmdtp, int flag, int argc,
 }
 
 U_BOOT_LONGHELP(acpi,
-	"list [-c] - list ACPI tables [check checksums]\n"
+	"list  - list ACPI tables\n"
 	"acpi items [-d]   - List/dump each piece of ACPI data from devices\n"
 	"acpi set [<addr>] - Set or show address of ACPI tables\n"
 	"acpi dump <name>  - Dump ACPI table");
 
 U_BOOT_CMD_WITH_SUBCMDS(acpi, "ACPI tables", acpi_help_text,
-	U_BOOT_SUBCMD_MKENT(list, 2, 1, do_acpi_list),
+	U_BOOT_SUBCMD_MKENT(list, 1, 1, do_acpi_list),
 	U_BOOT_SUBCMD_MKENT(items, 2, 1, do_acpi_items),
 	U_BOOT_SUBCMD_MKENT(set, 2, 1, do_acpi_set),
 	U_BOOT_SUBCMD_MKENT(dump, 2, 1, do_acpi_dump));

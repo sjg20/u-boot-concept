@@ -5,17 +5,14 @@ variables:
   MIRROR_DOCKER: docker.io
   SJG_LAB: ""
   PLATFORM: linux/amd64,linux/arm64
-  GIT_CLONE_PATH: $CI_BUILDS_DIR/$CI_RUNNER_ID/$CI_CONCURRENT_ID/u-boot
 
 default:
   tags:
     - ${DEFAULT_TAG}
-  # Grab our configured image.  The source for this is found
-  # in the u-boot tree at tools/docker/Dockerfile
-  image: ${MIRROR_DOCKER}/trini/u-boot-gitlab-ci-runner:jammy-20240911.1-08Dec2024
-  services:
-    - name: container-$(CI_JOB_ID)
-      command: ["--rm"]
+
+# Grab our configured image.  The source for this is found
+# in the u-boot tree at tools/docker/Dockerfile
+image: ${MIRROR_DOCKER}/trini/u-boot-gitlab-ci-runner:jammy-20240911.1-08Dec2024
 
 # We run some tests in different order, to catch some failures quicker.
 stages:
@@ -92,7 +89,7 @@ stages:
     # "${var:+"-k $var"}" expands to "" if $var is empty, "-k $var" if not
     - export PATH=/opt/qemu/bin:/tmp/uboot-test-hooks/bin:${PATH};
       export PYTHONPATH=/tmp/uboot-test-hooks/py/travis-ci;
-      ./test/py/test.py -ra --bd ${TEST_PY_BD} ${TEST_PY_ID} ${TEST_PY_EXTRA}
+      ./test/py/test.py -ra --bd ${TEST_PY_BD} ${TEST_PY_ID}
         ${TEST_PY_TEST_SPEC:+"-k ${TEST_PY_TEST_SPEC}"}
         --build-dir "$UBOOT_TRAVIS_BUILD_DIR"
         --junitxml=/tmp/${TEST_PY_BD}/results.xml
@@ -229,9 +226,7 @@ Run binman, buildman, dtoc, Kconfig and patman testsuites:
       ./tools/buildman/buildman -T0 -o ${UBOOT_TRAVIS_BUILD_DIR} -w
         --board tools-only;
       set -e;
-      export TOOLPATH="--toolpath ${UBOOT_TRAVIS_BUILD_DIR}/tools --toolpath /opt/coreboot";
-      ./tools/binman/binman ${TOOLPATH} test;
-      ./tools/binman/binman ${TOOLPATH} test -T;
+      ./tools/binman/binman --toolpath ${UBOOT_TRAVIS_BUILD_DIR}/tools test;
       ./tools/buildman/buildman -t;
       ./tools/dtoc/dtoc -t;
       ./tools/patman/patman test;
@@ -278,7 +273,6 @@ Check packing of Python tools:
 sandbox test.py:
   variables:
     TEST_PY_BD: "sandbox"
-    TEST_PY_EXTRA: "--timing"
   <<: *buildman_and_testpy_dfn
 
 sandbox with clang test.py:
@@ -572,7 +566,7 @@ coreboot test.py:
     - export USE_LABGRID_SJG=1
     # export verbose="-v"
     - ${SRC}/test/py/test.py --role ${ROLE} --build-dir "${OUT}"
-        --capture=tee-sys -k "not bootstd ${TEST_PY_TEST_SPEC}" || ret=$?
+        --capture=tee-sys -k "not bootstd" || ret=$?
     - U_BOOT_BOARD_IDENTITY="${ROLE}" u-boot-test-release || true
     - if [[ $ret -ne 0 ]]; then
         exit $ret;
@@ -746,10 +740,4 @@ rpi5:
 zybo:
   variables:
     ROLE: zybo
-  <<: *lab_dfn
-
-qemu-x86_64:
-  variables:
-    ROLE: qemu-x86_64
-    TEST_PY_TEST_SPEC: "and not sleep"
   <<: *lab_dfn

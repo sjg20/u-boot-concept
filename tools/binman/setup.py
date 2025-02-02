@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0+
 
-from setuptools import setup
+from distutils.core import setup
 setup(name='binman',
       version='1.0',
       license='GPL-2.0+',

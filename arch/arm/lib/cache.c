@@ -6,7 +6,6 @@
 
 #include <config.h>
 #include <cpu_func.h>
-#include <init.h>
 #include <log.h>
 #include <malloc.h>
 #include <asm/cache.h>
@@ -139,8 +138,6 @@ int arch_reserve_mmu(void)
 
 __weak int arm_reserve_mmu(void)
 {
-	if (!ll_boot_init())
-		return 0;
 #if !(CONFIG_IS_ENABLED(SYS_ICACHE_OFF) && CONFIG_IS_ENABLED(SYS_DCACHE_OFF))
 	/* reserve TLB table */
 	gd->arch.tlb_size = PGTABLE_SIZE;

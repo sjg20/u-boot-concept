@@ -43,16 +43,18 @@ def rm_kconfig_include(path):
     Args:
         path: Path to search for and remove
     """
-    stdout = command.output('git', 'grep', path, raise_on_error=False)
+    cmd = ['git', 'grep', path]
+    stdout = command.run_pipe([cmd], capture=True, raise_on_error=False).stdout
     if not stdout:
         return
     fname = stdout.split(':')[0]
 
     print("Fixing up '%s' to remove reference to '%s'" % (fname, path))
-    stdout = command.run_one('sed', '-i', rf'\|{path}|d', fname,
-                             capture=True).stdout
+    cmd = ['sed', '-i', '\|%s|d' % path, fname]
+    stdout = command.run_pipe([cmd], capture=True).stdout
 
-    stdout = command.output('git', 'add', fname)
+    cmd = ['git', 'add', fname]
+    stdout = command.run_pipe([cmd], capture=True).stdout
 
 def rm_board(board):
     """Create a commit which removes a single board
@@ -66,7 +68,8 @@ def rm_board(board):
     """
 
     # Find all MAINTAINERS and Kconfig files which mention the board
-    stdout = command.output('git', 'grep', '-l', board)
+    cmd = ['git', 'grep', '-l', board]
+    stdout = command.run_pipe([cmd], capture=True).stdout
     maintain = []
     kconfig = []
     for line in stdout.splitlines():
@@ -106,14 +109,16 @@ def rm_board(board):
     # Search for Kconfig files in the resulting list. Remove any 'source' lines
     # which reference Kconfig files we want to remove
     for path in real:
-        stdout = command.output('find', path, raise_on_error=False)
+        cmd = ['find', path]
+        stdout = (command.run_pipe([cmd], capture=True, raise_on_error=False).
+                  stdout)
         for fname in stdout.splitlines():
             if fname.endswith('Kconfig'):
                 rm_kconfig_include(fname)
 
     # Remove unwanted files
     cmd = ['git', 'rm', '-r'] + real
-    stdout = command.output(*cmd, capture=True)
+    stdout = command.run_pipe([cmd], capture=True).stdout
 
     ## Change the messages as needed
     msg = '''arm: Remove %s board
@@ -126,11 +131,13 @@ Remove it.
         msg += 'Patch-cc: %s\n' % name
 
     # Create the commit
-    stdout = command.output('git', 'commit', '-s', '-m', msg)
+    cmd = ['git', 'commit', '-s', '-m', msg]
+    stdout = command.run_pipe([cmd], capture=True).stdout
 
     # Check if the board is mentioned anywhere else. The user will need to deal
     # with this
-    print(command.output('git', 'grep', '-il', board, raise_on_error=False))
+    cmd = ['git', 'grep', '-il', board]
+    print(command.run_pipe([cmd], capture=True, raise_on_error=False).stdout)
     print(' '.join(cmd))
 
 for board in sys.argv[1:]:

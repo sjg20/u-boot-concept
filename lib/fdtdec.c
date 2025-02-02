@@ -248,7 +248,6 @@ int fdtdec_get_pci_vendev(const void *blob, int node, u16 *vendor, u16 *device)
 	return -ENOENT;
 }
 
-#ifdef CONFIG_PCI
 int fdtdec_get_pci_bar32(const struct udevice *dev, struct fdt_pci_addr *addr,
 			 u32 *bar)
 {
@@ -265,7 +264,6 @@ int fdtdec_get_pci_bar32(const struct udevice *dev, struct fdt_pci_addr *addr,
 
 	return 0;
 }
-#endif
 
 int fdtdec_get_pci_bus_range(const void *blob, int node,
 			     struct fdt_resource *res)

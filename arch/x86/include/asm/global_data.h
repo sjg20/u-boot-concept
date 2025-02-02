@@ -110,7 +110,7 @@ struct arch_global_data {
 	int has_mtrr;
 	/* MRC training data */
 	struct mrc_output mrc[MRC_TYPE_COUNT];
-	ulong table;	/* coreboot/EFI table address from previous loader */
+	ulong table;			/* Table pointer from previous loader */
 	int turbo_state;		/* Current turbo state */
 	struct irq_routing_table *pirq_routing_table;
 	int dw_i2c_num_cards;		/* Used by designware i2c driver */
@@ -141,13 +141,6 @@ struct arch_global_data {
 
 /* TODO(sjg@chromium.org): Consider using a fixed register for gd on x86_64 */
 #define gd global_data_ptr
-
-static inline void set_gd(volatile gd_t *gd_ptr)
-{
-	extern struct global_data *global_data_ptr;
-
-	global_data_ptr = (void *)gd_ptr;
-}
 
 #define DECLARE_GLOBAL_DATA_PTR   extern struct global_data *global_data_ptr
 # else

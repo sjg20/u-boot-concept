@@ -544,8 +544,6 @@ source "arch/Kconfig.nxp"
 
 endif
 
-source "board/efi/Kconfig"
-
 source "board/keymile/Kconfig"
 
 choice

@@ -147,8 +147,7 @@ int ut_check_console_dump(struct unit_test_state *uts, int total_bytes);
 									\
 	if (!(cond)) {							\
 		ut_fail(uts, __FILE__, __LINE__, __func__, #cond);	\
-		if (!uts->soft_fail)					\
-			return CMD_RET_FAILURE;				\
+		return CMD_RET_FAILURE;					\
 	}								\
 	__ret;								\
 })
@@ -160,8 +159,7 @@ int ut_check_console_dump(struct unit_test_state *uts, int total_bytes);
 	if (!(cond)) {							\
 		ut_failf(uts, __FILE__, __LINE__, __func__, #cond,	\
 			 fmt, ##args);					\
-		if (!uts->soft_fail)					\
-			return CMD_RET_FAILURE;				\
+		return CMD_RET_FAILURE;					\
 	}								\
 	__ret;								\
 })
@@ -176,8 +174,7 @@ int ut_check_console_dump(struct unit_test_state *uts, int total_bytes);
 			 #expr1 " == " #expr2,				\
 			 "Expected %#x (%d), got %#x (%d)",		\
 			 _val1, _val1, _val2, _val2);			\
-		if (!uts->soft_fail)					\
-			return CMD_RET_FAILURE;				\
+		return CMD_RET_FAILURE;					\
 	}								\
 	__ret;								\
 })
@@ -195,8 +192,7 @@ int ut_check_console_dump(struct unit_test_state *uts, int total_bytes);
 			 (unsigned long long)_val1,			\
 			 (unsigned long long)_val2,			\
 			 (unsigned long long)_val2);			\
-		if (!uts->soft_fail)					\
-			return CMD_RET_FAILURE;				\
+		return CMD_RET_FAILURE;					\
 	}								\
 	__ret;								\
 })
@@ -210,8 +206,7 @@ int ut_check_console_dump(struct unit_test_state *uts, int total_bytes);
 		ut_failf(uts, __FILE__, __LINE__, __func__,		\
 			 #expr1 " = " #expr2,				\
 			 "Expected \"%s\", got \"%s\"", _val1, _val2);	\
-		if (!uts->soft_fail)					\
-			return CMD_RET_FAILURE;				\
+		return CMD_RET_FAILURE;					\
 	}								\
 	__ret;								\
 })
@@ -230,8 +225,7 @@ int ut_check_console_dump(struct unit_test_state *uts, int total_bytes);
 			 #expr1 " = " #expr2,				\
 			 "Expected \"%.*s\", got \"%.*s\"",		\
 			 _len, _val1, _len, _val2);			\
-		if (!uts->soft_fail)					\
-			return CMD_RET_FAILURE;				\
+		return CMD_RET_FAILURE;					\
 	}								\
 	__ret;								\
 })
@@ -251,8 +245,7 @@ int ut_check_console_dump(struct unit_test_state *uts, int total_bytes);
 			 #expr1 " = " #expr2,				\
 			 "Expected \"%s\", got \"%s\"",			\
 			 __buf1, __buf2);				\
-		if (!uts->soft_fail)					\
-			return CMD_RET_FAILURE;				\
+		return CMD_RET_FAILURE;					\
 	}								\
 	__ret;								\
 })
@@ -266,8 +259,7 @@ int ut_check_console_dump(struct unit_test_state *uts, int total_bytes);
 		ut_failf(uts, __FILE__, __LINE__, __func__,		\
 			 #expr1 " = " #expr2,				\
 			 "Expected %p, got %p", _val1, _val2);		\
-		if (!uts->soft_fail)					\
-			return CMD_RET_FAILURE;				\
+		return CMD_RET_FAILURE;					\
 	}								\
 	__ret;								\
 })
@@ -282,8 +274,7 @@ int ut_check_console_dump(struct unit_test_state *uts, int total_bytes);
 		ut_failf(uts, __FILE__, __LINE__, __func__,		\
 			 #expr1 " = " #expr2,				\
 			 "Expected %lx, got %lx", _val1, _val2);	\
-		if (!uts->soft_fail)					\
-			return CMD_RET_FAILURE;				\
+		return CMD_RET_FAILURE;					\
 	}								\
 	__ret;								\
 })
@@ -297,8 +288,7 @@ int ut_check_console_dump(struct unit_test_state *uts, int total_bytes);
 		ut_failf(uts, __FILE__, __LINE__, __func__,		\
 			 #expr " != NULL",				\
 			 "Expected NULL, got %p", _val);		\
-		if (!uts->soft_fail)					\
-			return CMD_RET_FAILURE;				\
+		return CMD_RET_FAILURE;					\
 	}								\
 	__ret;								\
 })
@@ -312,8 +302,7 @@ int ut_check_console_dump(struct unit_test_state *uts, int total_bytes);
 		ut_failf(uts, __FILE__, __LINE__, __func__,		\
 			 #expr " = NULL",				\
 			 "Expected non-null, got NULL");		\
-		if (!uts->soft_fail)					\
-			return CMD_RET_FAILURE;				\
+		return CMD_RET_FAILURE;					\
 	}								\
 	__ret;								\
 })
@@ -328,8 +317,7 @@ int ut_check_console_dump(struct unit_test_state *uts, int total_bytes);
 			 #expr " = NULL",				\
 			 "Expected pointer, got error %ld",		\
 			 PTR_ERR(_val));				\
-		if (!uts->soft_fail)					\
-			return CMD_RET_FAILURE;				\
+		return CMD_RET_FAILURE;					\
 	}								\
 	__ret;								\
 })
@@ -345,8 +333,7 @@ int ut_check_console_dump(struct unit_test_state *uts, int total_bytes);
 		ut_failf(uts, __FILE__, __LINE__, __func__,		\
 			 "console", "\nExpected '%s',\n     got '%s'",	\
 			 uts->expect_str, uts->actual_str);		\
-		if (!uts->soft_fail)					\
-			return CMD_RET_FAILURE;				\
+		return CMD_RET_FAILURE;					\
 	}								\
 	__ret;								\
 })
@@ -359,8 +346,7 @@ int ut_check_console_dump(struct unit_test_state *uts, int total_bytes);
 		ut_failf(uts, __FILE__, __LINE__, __func__,		\
 			 "console", "\nExpected '%s',\n     got '%s'",	\
 			 uts->expect_str, uts->actual_str);		\
-		if (!uts->soft_fail)					\
-			return CMD_RET_FAILURE;				\
+		return CMD_RET_FAILURE;					\
 	}								\
 	__ret;								\
 })
@@ -372,8 +358,7 @@ int ut_check_console_dump(struct unit_test_state *uts, int total_bytes);
 	if (ut_check_skipline(uts)) {					\
 		ut_failf(uts, __FILE__, __LINE__, __func__,		\
 			 "console", "\nExpected a line, got end");	\
-		if (!uts->soft_fail)					\
-			return CMD_RET_FAILURE;				\
+		return CMD_RET_FAILURE;					\
 	}								\
 	__ret;								\
 })
@@ -386,8 +371,7 @@ int ut_check_console_dump(struct unit_test_state *uts, int total_bytes);
 		ut_failf(uts, __FILE__, __LINE__, __func__,		\
 			 "console", "\nExpected '%s',\n     got to '%s'", \
 			 uts->expect_str, uts->actual_str);		\
-		if (!uts->soft_fail)					\
-			return CMD_RET_FAILURE;				\
+		return CMD_RET_FAILURE;					\
 	}								\
 	__ret;								\
 })
@@ -400,8 +384,7 @@ int ut_check_console_dump(struct unit_test_state *uts, int total_bytes);
 		ut_failf(uts, __FILE__, __LINE__, __func__,		\
 			 "console", "\nExpected '%s',\n     got to '%s'", \
 			 uts->expect_str, uts->actual_str);		\
-		if (!uts->soft_fail)					\
-			return CMD_RET_FAILURE;				\
+		return CMD_RET_FAILURE;					\
 	}								\
 	__ret;								\
 })
@@ -414,8 +397,7 @@ int ut_check_console_dump(struct unit_test_state *uts, int total_bytes);
 		ut_failf(uts, __FILE__, __LINE__, __func__,		\
 			 "console", "Expected no more output, got '%s'",\
 			 uts->actual_str);				\
-		if (!uts->soft_fail)					\
-			return CMD_RET_FAILURE;				\
+		return CMD_RET_FAILURE;					\
 	}								\
 	__ret;								\
 })
@@ -429,8 +411,7 @@ int ut_check_console_dump(struct unit_test_state *uts, int total_bytes);
 			 "console",					\
 			"Expected dump of length %x bytes, got '%s'",	\
 			 total_bytes, uts->actual_str);			\
-		if (!uts->soft_fail)					\
-			return CMD_RET_FAILURE;				\
+		return CMD_RET_FAILURE;					\
 	}								\
 	__ret;								\
 })
@@ -485,37 +466,18 @@ void ut_unsilence_console(struct unit_test_state *uts);
 void ut_set_skip_delays(struct unit_test_state *uts, bool skip_delays);
 
 /**
- * ut_state_get() - Get the active test state
+ * test_get_state() - Get the active test state
  *
  * Return: the currently active test state, or NULL if none
  */
-struct unit_test_state *ut_get_state(void);
+struct unit_test_state *test_get_state(void);
 
 /**
- * ut_set_state() - Set the active test state
+ * test_set_state() - Set the active test state
  *
  * @uts: Test state to use as currently active test state, or NULL if none
  */
-void ut_set_state(struct unit_test_state *uts);
-
-/**
- * ut_init_state() - Set up a new test state
- *
- * This must be called before using the test state with ut_run_tests()
- *
- * @uts: Test state to init
- */
-void ut_init_state(struct unit_test_state *uts);
-
-/**
- * ut_uninit_state() - Free memory used by test state
- *
- * This must be called before after the test state with ut_run_tests(). To later
- * reuse the test state to run more tests, call test_state_init() first
- *
- * @uts: Test state to uninit
- */
-void ut_uninit_state(struct unit_test_state *uts);
+void test_set_state(struct unit_test_state *uts);
 
 /**
  * ut_run_tests() - Run a set of tests
@@ -523,9 +485,6 @@ void ut_uninit_state(struct unit_test_state *uts);
  * This runs the test, handling any preparation and clean-up needed. It prints
  * the name of each test before running it.
  *
- * @uts: Unit-test state, which must be ready for use, i.e. ut_init_state()
- *	has been called. The caller is responsible for calling
- *	ut_uninit_state() after this function returns
  * @category: Category of these tests. This is a string printed at the start to
  *	announce the the number of tests
  * @prefix: String prefix for the tests. Any tests that have this prefix will be
@@ -544,17 +503,8 @@ void ut_uninit_state(struct unit_test_state *uts);
  * Pass NULL to disable this
  * Return: 0 if all tests passed, -1 if any failed
  */
-int ut_run_list(struct unit_test_state *uts, const char *category,
-		const char *prefix, struct unit_test *tests, int count,
-		const char *select_name, int runs_per_test, bool force_run,
-		const char *test_insert);
-
-/**
- * ut_report() - Report stats on a test run
- *
- * @stats: Stats to show
- * @run_count: Number of suites that were run
- */
-void ut_report(struct ut_stats *stats, int run_count);
+int ut_run_list(const char *name, const char *prefix, struct unit_test *tests,
+		int count, const char *select_name, int runs_per_test,
+		bool force_run, const char *test_insert);
 
 #endif

@@ -50,7 +50,8 @@ def run_tests(skip_net_tests, debug, verbose, args):
     # 'entry' module.
     result = test_util.run_test_suites(
         'buildman', debug, verbose, False, args.threads, test_name, [],
-        [test.TestBuild, func_test.TestFunctional, 'buildman.toolchain'])
+        [test.TestBuild, func_test.TestFunctional,
+         'buildman.toolchain', 'patman.gitutil'])
 
     return (0 if result.wasSuccessful() else 1)
 

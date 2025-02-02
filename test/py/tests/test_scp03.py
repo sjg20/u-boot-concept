@@ -11,17 +11,17 @@ For additional details check doc/usage/scp03.rst
 """
 
 import pytest
-import utils
+import u_boot_utils as util
 
 @pytest.mark.buildconfigspec('cmd_scp03')
-def test_scp03(ubman):
+def test_scp03(u_boot_console):
     """Enable and provision keys with SCP03
     """
 
     success_str1 = "SCP03 is enabled"
     success_str2 = "SCP03 is provisioned"
 
-    response = ubman.run_command('scp03 enable')
+    response = u_boot_console.run_command('scp03 enable')
     assert success_str1 in response
-    response = ubman.run_command('scp03 provision')
+    response = u_boot_console.run_command('scp03 provision')
     assert success_str2 in response

@@ -221,29 +221,14 @@ static int str_itoa(struct unit_test_state *uts)
 	ut_asserteq_str("123", simple_itoa(123));
 	ut_asserteq_str("0", simple_itoa(0));
 	ut_asserteq_str("2147483647", simple_itoa(0x7fffffff));
-	ut_asserteq_str("2147483647", simple_itoa_signed(0x7fffffff));
-	ut_asserteq_str("2147483648", simple_itoa(0x80000000));
-	if (IS_ENABLED(CONFIG_PHYS_64BIT)) {
-		ut_asserteq_str("2147483648", simple_itoa_signed(0x80000000));
-		ut_asserteq_str("4294967295", simple_itoa_signed(0xffffffff));
-	} else {
-		ut_asserteq_str("-2147483648", simple_itoa_signed(0x80000000));
-		ut_asserteq_str("-1", simple_itoa_signed(0xffffffff));
-	}
+	ut_asserteq_str("4294967295", simple_itoa(0xffffffff));
 
 	/* Use #ifdef here to avoid a compiler warning on 32-bit machines */
 #ifdef CONFIG_PHYS_64BIT
 	if (sizeof(ulong) == 8) {
 		ut_asserteq_str("9223372036854775807",
 				simple_itoa((1UL << 63) - 1));
-		ut_asserteq_str("9223372036854775807",
-				simple_itoa_signed((1UL << 63) - 1));
-		ut_asserteq_str("9223372036854775808",
-				simple_itoa((1UL << 63)));
-		ut_asserteq_str("-9223372036854775808",
-				simple_itoa_signed((1UL << 63)));
 		ut_asserteq_str("18446744073709551615", simple_itoa(-1));
-		ut_asserteq_str("-1", simple_itoa_signed(-1));
 	}
 #endif /* CONFIG_PHYS_64BIT */
 

@@ -7,7 +7,6 @@
 #define LOG_CATEGORY UCLASS_QFW
 
 #include <acpi/acpi_table.h>
-#include <bloblist.h>
 #include <errno.h>
 #include <malloc.h>
 #include <mapmem.h>
@@ -25,18 +24,17 @@ DECLARE_GLOBAL_DATA_PTR;
  *
  * @entry : BIOS linker command entry which tells where to allocate memory
  *          (either high memory or low memory)
- * @addr  : The address that should be used for low memory allocation. If the
+ * @addr  : The address that should be used for low memory allcation. If the
  *          memory allocation request is 'ZONE_HIGH' then this parameter will
  *          be ignored.
  * @return: 0 on success, or negative value on failure
  */
-static int bios_linker_allocate(struct acpi_ctx *ctx, struct udevice *dev,
+static int bios_linker_allocate(struct udevice *dev,
 				struct bios_linker_entry *entry, ulong *addr)
 {
 	uint32_t size, align;
 	struct fw_file *file;
 	unsigned long aligned_addr;
-	struct acpi_rsdp *rsdp;
 
 	align = le32_to_cpu(entry->alloc.align);
 	/* align must be power of 2 */
@@ -59,9 +57,7 @@ static int bios_linker_allocate(struct acpi_ctx *ctx, struct udevice *dev,
 	 * If allocation zone is ZONE_FSEG, then we use the 'addr' passed
 	 * in which is low memory
 	 */
-	if (IS_ENABLED(CONFIG_BLOBLIST_TABLES)) {
-		aligned_addr = ALIGN(*addr, align);
-	} else if (entry->alloc.zone == BIOS_LINKER_LOADER_ALLOC_ZONE_HIGH) {
+	if (entry->alloc.zone == BIOS_LINKER_LOADER_ALLOC_ZONE_HIGH) {
 		aligned_addr = (unsigned long)memalign(align, size);
 		if (!aligned_addr) {
 			printf("error: allocating resource\n");
@@ -86,13 +82,8 @@ static int bios_linker_allocate(struct acpi_ctx *ctx, struct udevice *dev,
 		       (void *)aligned_addr);
 	file->addr = aligned_addr;
 
-	rsdp = (void *)aligned_addr;
-	if (!strncmp(rsdp->signature, RSDP_SIG, sizeof(rsdp->signature)))
-		ctx->rsdp = rsdp;
-
 	/* adjust address for low memory allocation */
-	if (IS_ENABLED(CONFIG_BLOBLIST_TABLES) ||
-	    entry->alloc.zone == BIOS_LINKER_LOADER_ALLOC_ZONE_FSEG)
+	if (entry->alloc.zone == BIOS_LINKER_LOADER_ALLOC_ZONE_FSEG)
 		*addr = (aligned_addr + size);
 
 	return 0;
@@ -169,15 +160,6 @@ ulong write_acpi_tables(ulong addr)
 	struct bios_linker_entry *entry;
 	uint32_t size;
 	struct udevice *dev;
-	struct acpi_ctx *ctx;
-
-	ctx = malloc(sizeof(*ctx));
-	if (!ctx) {
-		printf("error: out of memory for acpi ctx\n");
-		return addr;
-	}
-
-	acpi_setup_ctx(ctx, addr);
 
 	ret = qfw_get_dev(&dev);
 	if (ret) {
@@ -217,23 +199,19 @@ ulong write_acpi_tables(ulong addr)
 	qfw_read_entry(dev, be16_to_cpu(file->cfg.select), size, table_loader);
 
 	for (i = 0; i < (size / sizeof(*entry)); i++) {
-		log_content("entry %d: addr %lx\n", i, addr);
 		entry = table_loader + i;
 		switch (le32_to_cpu(entry->command)) {
 		case BIOS_LINKER_LOADER_COMMAND_ALLOCATE:
-			log_content("   - %s\n", entry->alloc.file);
-			ret = bios_linker_allocate(ctx, dev, entry, &addr);
+			ret = bios_linker_allocate(dev, entry, &addr);
 			if (ret)
 				goto out;
 			break;
 		case BIOS_LINKER_LOADER_COMMAND_ADD_POINTER:
-			log_content("   - %s\n", entry->pointer.src_file);
 			ret = bios_linker_add_pointer(dev, entry);
 			if (ret)
 				goto out;
 			break;
 		case BIOS_LINKER_LOADER_COMMAND_ADD_CHECKSUM:
-			log_content("   - %s\n", entry->cksum.file);
 			ret = bios_linker_add_checksum(dev, entry);
 			if (ret)
 				goto out;
@@ -258,16 +236,6 @@ out:
 
 	free(table_loader);
 
-	if (!ctx->rsdp) {
-		printf("error: no RSDP found\n");
-		return addr;
-	}
-	struct acpi_rsdp *rsdp = ctx->rsdp;
-
-	rsdp->length = sizeof(*rsdp);
-	rsdp->xsdt_address = 0;
-	rsdp->ext_checksum = table_compute_checksum((u8 *)rsdp, sizeof(*rsdp));
-
 	gd_set_acpi_start(acpi_get_rsdp_addr());
 
 	return addr;
@@ -289,29 +257,6 @@ ulong acpi_get_rsdp_addr(void)
 	return file->addr;
 }
 
-void acpi_write_rsdp(struct acpi_rsdp *rsdp, struct acpi_rsdt *rsdt,
-		     struct acpi_xsdt *xsdt)
-{
-	memset(rsdp, 0, sizeof(struct acpi_rsdp));
-
-	memcpy(rsdp->signature, RSDP_SIG, 8);
-	memcpy(rsdp->oem_id, OEM_ID, 6);
-
-	if (rsdt)
-		rsdp->rsdt_address = nomap_to_sysmem(rsdt);
-
-	if (xsdt)
-		rsdp->xsdt_address = nomap_to_sysmem(xsdt);
-
-	rsdp->length = sizeof(struct acpi_rsdp);
-	rsdp->revision = ACPI_RSDP_REV_ACPI_2_0;
-
-	/* Calculate checksums */
-	rsdp->checksum = table_compute_checksum(rsdp, 20);
-	rsdp->ext_checksum = table_compute_checksum(rsdp,
-						    sizeof(struct acpi_rsdp));
-}
-
 #ifndef CONFIG_X86
 static int evt_write_acpi_tables(void)
 {
@@ -319,9 +264,9 @@ static int evt_write_acpi_tables(void)
 	void *ptr;
 
 	/* Reserve 64K for ACPI tables, aligned to a 4K boundary */
-	ptr = bloblist_add(BLOBLISTT_ACPI_TABLES, SZ_64K, 12);
+	ptr = memalign(SZ_4K, SZ_64K);
 	if (!ptr)
-		return -ENOBUFS;
+		return -ENOMEM;
 	addr = map_to_sysmem(ptr);
 
 	/* Generate ACPI tables */

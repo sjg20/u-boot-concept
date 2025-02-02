@@ -7,14 +7,14 @@ import pytest
 
 @pytest.mark.boardspec('sandbox')
 @pytest.mark.buildconfigspec('cmd_xxd')
-def test_xxd(ubman, xxd_data):
+def test_xxd(u_boot_console, xxd_data):
     """ Unit test for xxd
 
     Args:
-        ubman -- U-Boot console
+        u_boot_console -- U-Boot console
         xxd_data -- Path to the disk image used for testing.
     """
-    response = ubman.run_command_list([
+    response = u_boot_console.run_command_list([
         f'host bind 0 {xxd_data}',
         'xxd host 0 hello'])
 

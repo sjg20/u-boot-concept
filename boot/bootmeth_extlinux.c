@@ -75,15 +75,15 @@ static int extlinux_check(struct udevice *dev, struct bootflow_iter *iter)
  */
 static int extlinux_fill_info(struct bootflow *bflow)
 {
-	struct membuf mb;
+	struct membuff mb;
 	char line[200];
 	char *data;
 	int len;
 
 	log_debug("parsing bflow file size %x\n", bflow->size);
-	membuf_init(&mb, bflow->buf, bflow->size);
-	membuf_putraw(&mb, bflow->size, true, &data);
-	while (len = membuf_readline(&mb, line, sizeof(line) - 1, ' ', true), len) {
+	membuff_init(&mb, bflow->buf, bflow->size);
+	membuff_putraw(&mb, bflow->size, true, &data);
+	while (len = membuff_readline(&mb, line, sizeof(line) - 1, ' ', true), len) {
 		char *tok, *p = line;
 
 		tok = strsep(&p, " ");
@@ -108,18 +108,13 @@ static int extlinux_read_bootflow(struct udevice *dev, struct bootflow *bflow)
 	loff_t size;
 	int ret, i;
 
-	log_debug("starting part %d\n", bflow->part);
 	ret = uclass_first_device_err(UCLASS_BOOTSTD, &bootstd);
-	if (ret) {
-		log_debug("no bootstd\n");
+	if (ret)
 		return log_msg_ret("std", ret);
-	}
 
 	/* If a block device, we require a partition table */
-	if (bflow->blk && !bflow->part) {
-		log_debug("no partition table\n");
+	if (bflow->blk && !bflow->part)
 		return -ENOENT;
-	}
 
 	prefixes = bootstd_get_prefixes(bootstd);
 	i = 0;
@@ -127,13 +122,10 @@ static int extlinux_read_bootflow(struct udevice *dev, struct bootflow *bflow)
 	do {
 		prefix = prefixes ? prefixes[i] : NULL;
 
-		log_debug("try prefix %s\n", prefix);
 		ret = bootmeth_try_file(bflow, desc, prefix, EXTLINUX_FNAME);
 	} while (ret && prefixes && prefixes[++i]);
-	if (ret) {
-		log_debug("no file found\n");
+	if (ret)
 		return log_msg_ret("try", ret);
-	}
 	size = bflow->size;
 
 	ret = bootmeth_alloc_file(bflow, 0x10000, ARCH_DMA_MINALIGN,

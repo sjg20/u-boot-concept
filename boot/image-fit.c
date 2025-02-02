@@ -509,7 +509,7 @@ void fit_image_print(const void *fit, int image_noffset, const char *p)
 	fit_image_get_comp(fit, image_noffset, &comp);
 	printf("%s  Compression:  %s\n", p, genimg_get_comp_name(comp));
 
-	ret = fit_image_get_data(fit, image_noffset, &data, &size);
+	ret = fit_image_get_data_and_size(fit, image_noffset, &data, &size);
 
 	if (!tools_build()) {
 		printf("%s  Data Start:   ", p);
@@ -902,13 +902,13 @@ int fit_image_get_entry(const void *fit, int noffset, ulong *entry)
 }
 
 /**
- * fit_image_get_emb_data - get data property and its size for a given component image node
+ * fit_image_get_data - get data property and its size for a given component image node
  * @fit: pointer to the FIT format image header
  * @noffset: component image node offset
  * @data: double pointer to void, will hold data property's data address
  * @size: pointer to size_t, will hold data property's data size
  *
- * fit_image_get_emb_data() finds data property in a given component image node.
+ * fit_image_get_data() finds data property in a given component image node.
  * If the property is found its data start address and size are returned to
  * the caller.
  *
@@ -916,8 +916,8 @@ int fit_image_get_entry(const void *fit, int noffset, ulong *entry)
  *     0, on success
  *     -1, on failure
  */
-int fit_image_get_emb_data(const void *fit, int noffset, const void **data,
-			   size_t *size)
+int fit_image_get_data(const void *fit, int noffset,
+		const void **data, size_t *size)
 {
 	int len;
 
@@ -1031,14 +1031,14 @@ int fit_image_get_data_size_unciphered(const void *fit, int noffset,
 }
 
 /**
- * fit_image_get_data - get data and its size including
+ * fit_image_get_data_and_size - get data and its size including
  *				 both embedded and external data
  * @fit: pointer to the FIT format image header
  * @noffset: component image node offset
  * @data: double pointer to void, will hold data property's data address
  * @size: pointer to size_t, will hold data property's data size
  *
- * fit_image_get_data() finds data and its size including
+ * fit_image_get_data_and_size() finds data and its size including
  * both embedded and external data. If the property is found
  * its data start address and size are returned to the caller.
  *
@@ -1046,8 +1046,8 @@ int fit_image_get_data_size_unciphered(const void *fit, int noffset,
  *     0, on success
  *     otherwise, on failure
  */
-int fit_image_get_data(const void *fit, int noffset, const void **data,
-		       size_t *size)
+int fit_image_get_data_and_size(const void *fit, int noffset,
+				const void **data, size_t *size)
 {
 	bool external_data = false;
 	int offset;
@@ -1074,7 +1074,7 @@ int fit_image_get_data(const void *fit, int noffset, const void **data,
 			*size = len;
 		}
 	} else {
-		ret = fit_image_get_emb_data(fit, noffset, data, size);
+		ret = fit_image_get_data(fit, noffset, data, size);
 	}
 
 	return ret;
@@ -1432,7 +1432,7 @@ int fit_image_verify(const void *fit, int image_noffset)
 		goto err;
 	}
 	/* Get image data and data length */
-	if (fit_image_get_data(fit, image_noffset, &data, &size)) {
+	if (fit_image_get_data_and_size(fit, image_noffset, &data, &size)) {
 		err_msg = "Can't get image data/size";
 		goto err;
 	}
@@ -1781,7 +1781,8 @@ int fit_conf_find_compat(const void *fit, const void *fdt)
 			}
 
 			/* search in this config's kernel FDT */
-			if (fit_image_get_data(fit, kfdt_noffset, &fdt, &sz)) {
+			if (fit_image_get_data_and_size(fit, kfdt_noffset,
+							&fdt, &sz)) {
 				debug("Failed to get fdt \"%s\".\n", kfdt_name);
 				continue;
 			}
@@ -1907,30 +1908,24 @@ int fit_conf_get_prop_node(const void *fit, int noffset, const char *prop_name,
 	count = fit_conf_get_prop_node_count(fit, noffset, prop_name);
 	if (count < 0)
 		return count;
-	log_debug("looking for %s (%s, image-count %d):\n", prop_name,
-		  genimg_get_phase_name(image_ph_phase(sel_phase)), count);
 
 	/* check each image in the list */
 	for (i = 0; i < count; i++) {
-		enum image_phase_t phase = IH_PHASE_NONE;
+		enum image_phase_t phase;
 		int ret, node;
 
 		node = fit_conf_get_prop_node_index(fit, noffset, prop_name, i);
 		ret = fit_image_get_phase(fit, node, &phase);
-		log_debug("- %s (%s): ", fdt_get_name(fit, node, NULL),
-			  genimg_get_phase_name(phase));
 
 		/* if the image is for any phase, let's use it */
-		if (ret == -ENOENT || phase == sel_phase) {
-			log_debug("found\n");
+		if (ret == -ENOENT)
 			return node;
-		} else if (ret < 0) {
-			log_debug("err=%d\n", ret);
+		else if (ret < 0)
 			return ret;
-		}
-		log_debug("no match\n");
+
+		if (phase == sel_phase)
+			return node;
 	}
-	log_debug("- not found\n");
 
 	return -ENOENT;
 }
@@ -1946,7 +1941,7 @@ static int fit_get_data_tail(const void *fit, int noffset,
 	if (!fit_image_verify(fit, noffset))
 		return -EINVAL;
 
-	if (fit_image_get_data(fit, noffset, data, size))
+	if (fit_image_get_data_and_size(fit, noffset, data, size))
 		return -ENOENT;
 
 	if (!fit_get_desc(fit, noffset, &desc))
@@ -2018,15 +2013,13 @@ int fit_get_node_from_config(struct bootm_headers *images,
 }
 
 /**
- * fit_get_image_type_property() - get property name for sel_phase
+ * fit_get_image_type_property() - get property name for IH_TYPE_...
  *
  * Return: the properly name where we expect to find the image in the
  * config node
  */
-static const char *fit_get_image_type_property(int ph_type)
+static const char *fit_get_image_type_property(int type)
 {
-	int type = image_ph_type(ph_type);
-
 	/*
 	 * This is sort-of available in the uimage_type[] table in image.c
 	 * but we don't have access to the short name, and "fdt" is different
@@ -2078,9 +2071,8 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 	fit_uname = fit_unamep ? *fit_unamep : NULL;
 	fit_uname_config = fit_uname_configp ? *fit_uname_configp : NULL;
 	fit_base_uname_config = NULL;
-	prop_name = fit_get_image_type_property(ph_type);
-	printf("## Loading %s (%s) from FIT Image at %08lx ...\n",
-	       prop_name, genimg_get_phase_name(image_ph_phase(ph_type)), addr);
+	prop_name = fit_get_image_type_property(image_type);
+	printf("## Loading %s from FIT Image at %08lx ...\n", prop_name, addr);
 
 	bootstage_mark(bootstage_id + BOOTSTAGE_SUB_FORMAT);
 	ret = fit_check_format(fit, IMAGE_SIZE_INVAL);
@@ -2175,7 +2167,6 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 	type_ok = fit_image_check_type(fit, noffset, image_type) ||
 		  fit_image_check_type(fit, noffset, IH_TYPE_FIRMWARE) ||
 		  fit_image_check_type(fit, noffset, IH_TYPE_TEE) ||
-		  fit_image_check_type(fit, noffset, IH_TYPE_TFA_BL31) ||
 		  (image_type == IH_TYPE_KERNEL &&
 		   fit_image_check_type(fit, noffset, IH_TYPE_KERNEL_NOLOAD));
 
@@ -2207,7 +2198,8 @@ int fit_image_load(struct bootm_headers *images, ulong addr,
 	bootstage_mark(bootstage_id + BOOTSTAGE_SUB_CHECK_ALL_OK);
 
 	/* get image data address and length */
-	if (fit_image_get_data(fit, noffset, (const void **)&buf, &size)) {
+	if (fit_image_get_data_and_size(fit, noffset,
+					(const void **)&buf, &size)) {
 		printf("Could not find %s subimage data!\n", prop_name);
 		bootstage_error(bootstage_id + BOOTSTAGE_SUB_GET_DATA);
 		return -ENOENT;

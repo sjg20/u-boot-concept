@@ -10,6 +10,7 @@
 #include <mapmem.h>
 #include <asm/global_data.h>
 #include <dm/uclass.h>
+#include <test/suites.h>
 #include <test/ut.h>
 #include <dm.h>
 #include <env.h>
@@ -25,7 +26,7 @@
 DECLARE_GLOBAL_DATA_PTR;
 
 /* Declare a new bdinfo test */
-#define BDINFO_TEST(_name, _flags)	UNIT_TEST(_name, _flags, bdinfo)
+#define BDINFO_TEST(_name, _flags)	UNIT_TEST(_name, _flags, bdinfo_test)
 
 static int test_num_l(struct unit_test_state *uts, const char *name,
 		      ulong value)
@@ -281,3 +282,11 @@ static int bdinfo_test_eth(struct unit_test_state *uts)
 	return 0;
 }
 BDINFO_TEST(bdinfo_test_eth, UTF_CONSOLE);
+
+int do_ut_bdinfo(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+{
+	struct unit_test *tests = UNIT_TEST_SUITE_START(bdinfo_test);
+	const int n_ents = UNIT_TEST_SUITE_COUNT(bdinfo_test);
+
+	return cmd_ut_category("bdinfo", "bdinfo_test_", tests, n_ents, argc, argv);
+}

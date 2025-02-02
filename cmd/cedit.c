@@ -34,21 +34,22 @@ static int do_cedit_load(struct cmd_tbl *cmdtp, int flag, int argc,
 {
 	const char *fname;
 	struct expo *exp;
-	struct abuf buf;
 	oftree tree;
+	ulong size;
+	void *buf;
 	int ret;
 
 	if (argc < 4)
 		return CMD_RET_USAGE;
 	fname = argv[3];
 
-	ret = fs_load_alloc(argv[1], argv[2], argv[3], SZ_1M, 0, &buf);
+	ret = fs_load_alloc(argv[1], argv[2], argv[3], SZ_1M, 0, &buf, &size);
 	if (ret) {
 		printf("File not found\n");
 		return CMD_RET_FAILURE;
 	}
 
-	tree = oftree_from_fdt(abuf_uninit_move(&buf, NULL));
+	tree = oftree_from_fdt(buf);
 	if (!oftree_valid(tree)) {
 		printf("Cannot create oftree\n");
 		return CMD_RET_FAILURE;
@@ -124,30 +125,31 @@ static int do_cedit_read_fdt(struct cmd_tbl *cmdtp, int flag, int argc,
 			     char *const argv[])
 {
 	const char *fname;
-	struct abuf buf;
+	void *buf;
 	oftree tree;
+	ulong size;
 	int ret;
 
 	if (argc < 4)
 		return CMD_RET_USAGE;
 	fname = argv[3];
 
-	ret = fs_load_alloc(argv[1], argv[2], argv[3], SZ_1M, 0, &buf);
+	ret = fs_load_alloc(argv[1], argv[2], argv[3], SZ_1M, 0, &buf, &size);
 	if (ret) {
 		printf("File not found\n");
 		return CMD_RET_FAILURE;
 	}
 
-	tree = oftree_from_fdt(buf.data);
+	tree = oftree_from_fdt(buf);
 	if (!oftree_valid(tree)) {
-		abuf_uninit(&buf);
+		free(buf);
 		printf("Cannot create oftree\n");
 		return CMD_RET_FAILURE;
 	}
 
 	ret = cedit_read_settings(cur_exp, tree);
 	oftree_dispose(tree);
-	abuf_uninit(&buf);
+	free(buf);
 	if (ret) {
 		printf("Failed to read settings: %dE\n", ret);
 		return CMD_RET_FAILURE;

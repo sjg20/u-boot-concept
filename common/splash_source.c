@@ -395,10 +395,19 @@ static int splash_load_fit(struct splash_location *location, u32 bmp_load_addr)
 	}
 
 	/* Extract the splash data from FIT */
-	if (!fit_image_get_data(fit_header, node_offset, &internal_splash_data,
-				&internal_splash_size)) {
-		memmove((void *)(uintptr_t)bmp_load_addr, internal_splash_data,
-			internal_splash_size);
+	/* 1. Test if splash is in FIT internal data. */
+	if (!fit_image_get_data(fit_header, node_offset, &internal_splash_data, &internal_splash_size))
+		memmove((void *)(uintptr_t)bmp_load_addr, internal_splash_data, internal_splash_size);
+	/* 2. Test if splash is in FIT external data with fixed position. */
+	else if (!fit_image_get_data_position(fit_header, node_offset, &external_splash_addr))
+		is_splash_external = true;
+	/* 3. Test if splash is in FIT external data with offset. */
+	else if (!fit_image_get_data_offset(fit_header, node_offset, &external_splash_addr)) {
+		/* Align data offset to 4-byte boundary */
+		fit_size = ALIGN(fdt_totalsize(fit_header), 4);
+		/* External splash offset means the offset by end of FIT header */
+		external_splash_addr += location->offset + fit_size;
+		is_splash_external = true;
 	} else {
 		printf("Failed to get splash image from FIT\n");
 		return -ENODATA;

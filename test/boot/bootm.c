@@ -7,12 +7,13 @@
 
 #include <bootm.h>
 #include <asm/global_data.h>
+#include <test/suites.h>
 #include <test/test.h>
 #include <test/ut.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#define BOOTM_TEST(_name, _flags)	UNIT_TEST(_name, _flags, bootm)
+#define BOOTM_TEST(_name, _flags)	UNIT_TEST(_name, _flags, bootm_test)
 
 enum {
 	BUF_SIZE	= 1024,
@@ -255,3 +256,12 @@ static int bootm_test_subst_both(struct unit_test_state *uts)
 	return 0;
 }
 BOOTM_TEST(bootm_test_subst_both, 0);
+
+int do_ut_bootm(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+{
+	struct unit_test *tests = UNIT_TEST_SUITE_START(bootm_test);
+	const int n_ents = UNIT_TEST_SUITE_COUNT(bootm_test);
+
+	return cmd_ut_category("bootm", "bootm_test_", tests, n_ents,
+			       argc, argv);
+}

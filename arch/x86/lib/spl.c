@@ -84,6 +84,8 @@ static int x86_spl_init(void)
 	log_debug("x86 spl starting\n");
 	if (IS_ENABLED(TPL))
 		ret = x86_cpu_reinit_f();
+	else
+		ret = x86_cpu_init_f();
 	ret = spl_init();
 	if (ret) {
 		log_debug("spl_init() failed (err=%d)\n", ret);
@@ -281,7 +283,7 @@ void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
 {
 	int ret;
 
-	log_debug("Jumping to 64-bit U-Boot\n");
+	printf("Jumping to 64-bit U-Boot: Note many features are missing\n");
 	ret = cpu_jump_to_64bit_uboot(spl_image->entry_point);
 	debug("ret=%d\n", ret);
 	hang();
@@ -296,19 +298,11 @@ void spl_board_init(void)
 	if (IS_ENABLED(CONFIG_QEMU))
 		qemu_chipset_init();
 
-	if (CONFIG_IS_ENABLED(UPL_OUT))
-		gd->flags |= GD_FLG_UPL;
-
 	if (CONFIG_IS_ENABLED(VIDEO)) {
 		struct udevice *dev;
-		int ret;
 
 		/* Set up PCI video in SPL if required */
-		ret = uclass_first_device_err(UCLASS_PCI, &dev);
-		if (ret)
-			panic("Failed to set up PCI");
-		ret = uclass_first_device_err(UCLASS_VIDEO, &dev);
-		if (ret)
-			panic("Failed to set up video");
+		uclass_first_device_err(UCLASS_PCI, &dev);
+		uclass_first_device_err(UCLASS_VIDEO, &dev);
 	}
 }

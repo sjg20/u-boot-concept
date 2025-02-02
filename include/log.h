@@ -380,32 +380,6 @@ void __assert_fail(const char *assertion, const char *file, unsigned int line,
 #define log_msg_retz(_msg, _ret) ((void)(_msg), _ret)
 #endif
 
-/*
- * LOGR() - helper macro for calling a function and logging error returns
- *
- * Logs if the function returns a negative value
- *
- * Usage:   LOGR("abc", my_function(...));
- */
-#define LOGR(_msg, _expr)	do {		\
-	int _ret = _expr;			\
-	if (_ret < 0)				\
-		return log_msg_ret(_msg, _ret);	\
-	} while (0)
-
-/*
- * LOGZ() - helper macro for calling a function and logging error returns
- *
- * Logs if the function returns a non-zero value
- *
- * Usage:   LOGZ("abc", my_function(...));
- */
-#define LOGZ(_msg, _expr)	do {		\
-	int _ret = _expr;			\
-	if (_ret)				\
-		return log_msg_retz(_msg, _ret);	\
-	} while (0)
-
 /** * enum log_rec_flags - Flags for a log record */
 enum log_rec_flags {
 	/** @LOGRECF_FORCE_DEBUG: Force output of debug record */

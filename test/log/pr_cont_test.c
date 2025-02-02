@@ -8,6 +8,7 @@
 #include <console.h>
 #include <test/log.h>
 #include <test/test.h>
+#include <test/suites.h>
 #include <test/ut.h>
 #include <asm/global_data.h>
 #include <linux/printk.h>

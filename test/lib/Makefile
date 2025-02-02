@@ -6,6 +6,7 @@
 obj-$(CONFIG_$(XPL_)UT_COMPRESSION) += compression.o
 
 ifeq ($(CONFIG_XPL_BUILD),)
+obj-y += cmd_ut_lib.o
 obj-y += abuf.o
 obj-y += alist.o
 obj-$(CONFIG_EFI_LOADER) += efi_device_path.o
@@ -15,7 +16,6 @@ obj-y += hexdump.o
 obj-$(CONFIG_SANDBOX) += kconfig.o
 obj-y += lmb.o
 obj-$(CONFIG_HAVE_SETJMP) += longjmp.o
-obj-$(CONFIG_SANDBOX) += membuf.o
 obj-$(CONFIG_CONSOLE_RECORD) += test_print.o
 obj-$(CONFIG_SSCANF) += sscanf.o
 obj-$(CONFIG_$(XPL_)CMDLINE) += str.o

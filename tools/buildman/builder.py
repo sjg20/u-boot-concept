@@ -19,8 +19,8 @@ import time
 
 from buildman import builderthread
 from buildman import toolchain
+from patman import gitutil
 from u_boot_pylib import command
-from u_boot_pylib import gitutil
 from u_boot_pylib import terminal
 from u_boot_pylib import tools
 from u_boot_pylib.terminal import tprint
@@ -512,7 +512,7 @@ class Builder:
             stage: Stage that we are at (mrproper, config, oldconfig, build)
             cwd: Directory where make should be run
             args: Arguments to pass to make
-            kwargs: Arguments to pass to command.run_one()
+            kwargs: Arguments to pass to command.run_pipe()
         """
 
         def check_output(stream, data):
@@ -533,12 +533,11 @@ class Builder:
             return False
 
         self._restarting_config = False
-        self._terminated = False
+        self._terminated  = False
         cmd = [self.gnu_make] + list(args)
-        result = command.run_one(*cmd, capture=True, capture_stderr=True,
-                                 cwd=cwd, raise_on_error=False,
-                                 infile='/dev/null', output_func=check_output,
-                                 **kwargs)
+        result = command.run_pipe([cmd], capture=True, capture_stderr=True,
+                cwd=cwd, raise_on_error=False, infile='/dev/null',
+                output_func=check_output, **kwargs)
 
         if self._terminated:
             # Try to be helpful
@@ -1098,13 +1097,14 @@ class Builder:
                 diff = result[name]
                 if name.startswith('_'):
                     continue
-                colour = self.col.RED if diff > 0 else self.col.GREEN
+                if diff != 0:
+                    color = self.col.RED if diff > 0 else self.col.GREEN
                 msg = ' %s %+d' % (name, diff)
                 if not printed_target:
                     tprint('%10s  %-15s:' % ('', result['_target']),
                           newline=False)
                     printed_target = True
-                tprint(msg, colour=colour, newline=False)
+                tprint(msg, colour=color, newline=False)
             if printed_target:
                 tprint()
                 if show_bloat:
@@ -1355,7 +1355,6 @@ class Builder:
             for line in lines:
                 if not line:
                     continue
-                col = None
                 if line[0] == '+':
                     col = self.col.GREEN
                 elif line[0] == '-':

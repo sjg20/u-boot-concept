@@ -25,6 +25,7 @@
 #include <dm/lists.h>
 #include <dm/uclass-internal.h>
 #include <linux/libfdt.h>
+#include <test/suites.h>
 #include <test/ut.h>
 #include "bootstd_common.h"
 #include "../../boot/bootflow_internal.h"
@@ -301,9 +302,8 @@ static int bootflow_iter(struct unit_test_state *uts)
 
 	/* The first device is mmc2.bootdev which has no media */
 	ut_asserteq(-EPROTONOSUPPORT,
-		    bootflow_scan_first(NULL, NULL, &iter, BOOTFLOWIF_ALL |
-					BOOTFLOWIF_SKIP_GLOBAL |
-					BOOTFLOWIF_ONLY_BOOTABLE, &bflow));
+		    bootflow_scan_first(NULL, NULL, &iter,
+					BOOTFLOWIF_ALL | BOOTFLOWIF_SKIP_GLOBAL, &bflow));
 	ut_asserteq(2, iter.num_methods);
 	ut_asserteq(0, iter.cur_method);
 	ut_asserteq(0, iter.part);
@@ -1298,7 +1298,7 @@ static int bootflow_efi(struct unit_test_state *uts)
 
 	ut_assertok(run_command("bootflow scan", 0));
 	ut_assert_skip_to_line(
-		"Bus usb@1: scanning bus usb@1 for devices... 6 USB Device(s) found");
+		"Bus usb@1: scanning bus usb@1 for devices... 5 USB Device(s) found");
 
 	ut_assertok(run_command("bootflow list", 0));
 
@@ -1307,11 +1307,9 @@ static int bootflow_efi(struct unit_test_state *uts)
 	ut_assert_nextlinen("---");
 	ut_assert_nextlinen("  0  extlinux");
 	ut_assert_nextlinen(
-		"  1  efi          ready   usb_mass_    1  hub1.p2.usb_mass_storage. /EFI/BOOT/BOOTSBOX.EFI");
-	ut_assert_nextlinen(
-		"  2  extlinux     ready   usb_mass_    1  hub1.p4.usb_mass_storage. /extlinux/extlinux.conf");
+		"  1  efi          ready   usb_mass_    1  usb_mass_storage.lun0.boo /EFI/BOOT/BOOTSBOX.EFI");
 	ut_assert_nextlinen("---");
-	ut_assert_skip_to_line("(3 bootflows, 3 valid)");
+	ut_assert_skip_to_line("(2 bootflows, 2 valid)");
 	ut_assert_console_end();
 
 	ut_assertok(run_command("bootflow select 1", 0));
@@ -1325,7 +1323,7 @@ static int bootflow_efi(struct unit_test_state *uts)
 
 	ut_asserteq(1, run_command("bootflow boot", 0));
 	ut_assert_nextline(
-		"** Booting bootflow 'hub1.p2.usb_mass_storage.lun0.bootdev.part_1' with efi");
+		"** Booting bootflow 'usb_mass_storage.lun0.bootdev.part_1' with efi");
 	if (IS_ENABLED(CONFIG_LOGF_FUNC))
 		ut_assert_skip_to_line("       efi_run_image() Booting /\\EFI\\BOOT\\BOOTSBOX.EFI");
 	else

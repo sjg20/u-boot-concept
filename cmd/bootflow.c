@@ -174,7 +174,7 @@ static int do_bootflow_scan(struct cmd_tbl *cmdtp, int flag, int argc,
 
 	std->cur_bootflow = NULL;
 
-	flags = BOOTFLOWIF_ONLY_BOOTABLE;
+	flags = 0;
 	if (list)
 		flags |= BOOTFLOWIF_SHOW;
 	if (all)
@@ -419,7 +419,7 @@ static int do_bootflow_info(struct cmd_tbl *cmdtp, int flag, int argc,
 	printf("Logo:      %s\n", bflow->logo ?
 	       simple_xtoa((ulong)map_to_sysmem(bflow->logo)) : "(none)");
 	if (bflow->logo) {
-		printf("Logo size: %zx (%zd bytes)\n", bflow->logo_size,
+		printf("Logo size: %x (%d bytes)\n", bflow->logo_size,
 		       bflow->logo_size);
 	}
 	printf("FDT:       %s\n", bflow->fdt_fname);

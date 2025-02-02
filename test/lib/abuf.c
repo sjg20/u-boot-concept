@@ -46,29 +46,7 @@ static int lib_test_abuf_set(struct unit_test_state *uts)
 }
 LIB_TEST(lib_test_abuf_set, 0);
 
-/* Test abuf_init_const() */
-static int lib_test_abuf_init_const(struct unit_test_state *uts)
-{
-	struct abuf buf;
-	ulong start;
-	void *ptr;
-
-	start = ut_check_free();
-
-	ptr = map_sysmem(0x100, 0);
-
-	abuf_init_const(&buf, ptr, 10);
-	ut_asserteq_ptr(ptr, buf.data);
-	ut_asserteq(10, buf.size);
-
-	/* No memory should have been allocated */
-	ut_assertok(ut_check_delta(start));
-
-	return 0;
-}
-LIB_TEST(lib_test_abuf_init_const, 0);
-
-/* Test abuf_map_sysmem() and abuf_addr() */
+/* Test abuf_map_sysmem() */
 static int lib_test_abuf_map_sysmem(struct unit_test_state *uts)
 {
 	struct abuf buf;
@@ -81,8 +59,6 @@ static int lib_test_abuf_map_sysmem(struct unit_test_state *uts)
 	ut_asserteq_ptr(map_sysmem(0x100, 0), buf.data);
 	ut_asserteq(TEST_DATA_LEN, buf.size);
 	ut_asserteq(false, buf.alloced);
-
-	ut_asserteq(addr, abuf_addr(&buf));
 
 	return 0;
 }
@@ -419,87 +395,3 @@ static int lib_test_abuf_init(struct unit_test_state *uts)
 	return 0;
 }
 LIB_TEST(lib_test_abuf_init, 0);
-
-/* Test abuf_copy() */
-static int lib_test_abuf_copy(struct unit_test_state *uts)
-{
-	struct abuf buf, copy;
-	ulong start;
-
-	start = ut_check_free();
-
-	abuf_init_set(&buf, test_data, TEST_DATA_LEN);
-	ut_assert(abuf_copy(&buf, &copy));
-	ut_asserteq(buf.size, copy.size);
-	ut_assert(buf.data != copy.data);
-	ut_assert(copy.alloced);
-	abuf_uninit(&copy);
-	abuf_uninit(&buf);
-
-	/* Check for memory leaks */
-	ut_assertok(ut_check_delta(start));
-
-	return 0;
-}
-LIB_TEST(lib_test_abuf_copy, 0);
-
-/* Test abuf_printf() */
-static int lib_test_abuf_printf(struct unit_test_state *uts)
-{
-	struct abuf buf, fmt;
-	ulong start;
-	char *ptr;
-
-	start = ut_check_free();
-
-	/* start with a fresh buffer */
-	abuf_init(&buf);
-
-	/* check handling of out-of-memory condition */
-	malloc_enable_testing(0);
-	ut_asserteq(-ENOMEM, abuf_printf(&buf, "%s", ""));
-	malloc_enable_testing(1);
-
-	ut_asserteq(0, abuf_printf(&buf, "%s", ""));
-	ut_asserteq(1, buf.size);
-	ut_asserteq(true, buf.alloced);
-	ut_asserteq_str("", buf.data);
-
-	/* check expanding it, initially failing */
-	ut_asserteq(-ENOMEM, abuf_printf(&buf, "%s", "testing"));
-	malloc_disable_testing();
-
-	ut_asserteq(7, abuf_printf(&buf, "%s", "testing"));
-	ut_asserteq(8, buf.size);
-	ut_asserteq_str("testing", buf.data);
-
-	ut_asserteq(11, abuf_printf(&buf, "testing %d", 123));
-	ut_asserteq(12, buf.size);
-	ut_asserteq_str("testing 123", buf.data);
-
-	/* make it smaller; buffer should not shrink */
-	ut_asserteq(9, abuf_printf(&buf, "test %d", 456));
-	ut_asserteq(12, buf.size);
-	ut_asserteq_str("test 456", buf.data);
-
-	/* test the maximum size */
-	abuf_init(&fmt);
-	ut_assert(abuf_realloc(&fmt, 4100));
-	memset(fmt.data, 'x', 4100);
-	ptr = fmt.data;
-	ptr[4096] = '\0';
-
-	/* we are allowed up to 4K including the terminator */
-	ut_asserteq(-E2BIG, abuf_printf(&buf, "%s", ptr));
-	ptr[4095] = '\0';
-	ut_asserteq(4095, abuf_printf(&buf, "%s", ptr));
-
-	abuf_uninit(&fmt);
-	abuf_uninit(&buf);
-
-	/* Check for memory leaks */
-	ut_assertok(ut_check_delta(start));
-
-	return 0;
-}
-LIB_TEST(lib_test_abuf_printf, 0);
