@@ -10,6 +10,8 @@
 #ifndef _VESA_H
 #define _VESA_H
 
+struct udevice;
+
 /* these structs are for input from and output to OF */
 struct __packed vesa_screen_info {
 	u8 display_type;	/* 0=NONE, 1= analog, 2=digital */
