@@ -84,10 +84,10 @@ efi_status_t EFIAPI _relocate(long ldbase, Elf64_Dyn *dyn)
 	}
 	return EFI_SUCCESS;
 }
-
+/*
 efi_status_t EFIAPI _entry(efi_handle_t image,
 			   struct efi_system_table *sys_table)
 {
 	// return efi_main(image, sys_table);
 	return 0;
-}
+}*/
