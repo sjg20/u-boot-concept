@@ -48,6 +48,8 @@ def parse_args():
         epilog='Script for running U-Boot as an EFI app/payload')
     parser.add_argument('-a', '--app', action='store_true',
                         help='Package up the app')
+    parser.add_argument('-B', '--no-build', action='store_true',
+                        help="Don't build (an existing build must be present")
     parser.add_argument('-k', '--kernel', action='store_true',
                         help='Add a kernel')
     parser.add_argument('-o', '--old', action='store_true',
@@ -229,6 +231,15 @@ class BuildEfi:
                 time.sleep(0.5)
                 command.output(*cmd)
 
+    def do_build(self, build):
+        """Build U-Boot for the selected board"""
+        res = command.run_one('buildman', '-w', '-o',
+                              f'{self.build_dir}/{build}', '--board', build,
+                              '-I', raise_on_error=False)
+        if res.return_code and res.return_code != 101:  # Allow warnings
+            raise ValueError(
+                f'buildman exited with {res.return_code}: {res.combined}')
+
     def start(self):
         """This does all the work"""
         args = self.args
@@ -236,6 +247,9 @@ class BuildEfi:
         build_type = 'payload' if args.payload else 'app'
         self.tmp = f'{self.build_dir}/efi{bitness}{build_type}'
         build = f'efi-x86_{build_type}{bitness}'
+
+        if not args.no_build:
+            self.do_build(build)
 
         if args.old and bitness == 32:
             build = f'efi-x86_{build_type}'
