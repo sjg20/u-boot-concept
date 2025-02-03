@@ -16,6 +16,7 @@
 #include <command.h>
 #include <cpu_func.h>
 #include <dm.h>
+#include <init.h>
 #include <log.h>
 #include <asm/global_data.h>
 #include <dm/root.h>
@@ -186,8 +187,10 @@ __weak void setup_board_tags(struct tag **in_params) {}
 #ifdef CONFIG_ARM64
 static void do_nonsec_virt_switch(void)
 {
-	smp_kick_all_cpus();
-	dcache_disable();	/* flush cache before swtiching to EL2 */
+	if (ll_boot_init()) {
+		smp_kick_all_cpus();
+		dcache_disable();	/* flush cache before swtiching to EL2 */
+	}
 }
 #endif
 
