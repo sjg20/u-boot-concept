@@ -110,7 +110,7 @@ struct arch_global_data {
 	int has_mtrr;
 	/* MRC training data */
 	struct mrc_output mrc[MRC_TYPE_COUNT];
-	ulong table;			/* Table pointer from previous loader */
+	ulong table;	/* coreboot/EFI table address from previous loader */
 	int turbo_state;		/* Current turbo state */
 	struct irq_routing_table *pirq_routing_table;
 	int dw_i2c_num_cards;		/* Used by designware i2c driver */
