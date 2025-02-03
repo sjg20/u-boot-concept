@@ -108,7 +108,7 @@ struct arch_global_data {
 #ifdef CONFIG_SMBIOS
 	ulong smbios_start;		/* Start address of SMBIOS table */
 #endif
-#ifdef CONFIG_EFI_STUB
+#ifdef CONFIG_EFI
 	ulong table;
 #endif
 };
