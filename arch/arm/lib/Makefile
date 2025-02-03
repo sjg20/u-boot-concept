@@ -24,11 +24,13 @@ endif  # ARM64
 endif  # CONFIG_EFI_APP
 
 ifndef CONFIG_XPL_BUILD
+ifndef CONFIG_EFI_APP
 ifdef CONFIG_ARM64
 obj-y	+= relocate_64.o
 else
 obj-y	+= relocate.o
-endif
+endif  # ARM64
+endif  # EFI_APP
 
 obj-$(CONFIG_CPU_V7M) += cmd_boot.o
 obj-$(CONFIG_OF_LIBFDT) += bootm-fdt.o
