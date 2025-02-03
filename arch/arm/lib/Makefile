@@ -32,6 +32,8 @@ obj-y	+= relocate.o
 endif  # ARM64
 endif  # EFI_APP
 
+obj-$(CONFIG_EFI_APP) += $(EFI_CRT0) $(EFI_RELOC)
+
 obj-$(CONFIG_CPU_V7M) += cmd_boot.o
 obj-$(CONFIG_OF_LIBFDT) += bootm-fdt.o
 obj-$(CONFIG_CMD_BOOTI) += bootm.o image.o
