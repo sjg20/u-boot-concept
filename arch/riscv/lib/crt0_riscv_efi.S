@@ -41,14 +41,14 @@
 	/*
 	 * Magic "MZ" signature for PE/COFF
 	 */
-	.globl	ImageBase
-ImageBase:
+	.globl	image_base
+image_base:
 	.short	IMAGE_DOS_SIGNATURE		/* 'MZ' */
 	.skip	46				/* 'MZ' + pad + offset == 64 */
 	.long	0x43534952			/* Linux magic "RISCV */
 	.long	0x00000056
 	.long	0x05435352			/* Linux magic2 "RSC\x05*/
-	.long	pe_header - ImageBase		/* Offset to the PE header */
+	.long	pe_header - image_base		/* Offset to the PE header */
 pe_header:
 	.long	IMAGE_NT_SIGNATURE		/* 'PE' */
 coff_header:
@@ -66,17 +66,17 @@ optional_header:
 	.long	_edata - _start			/* SizeOfCode */
 	.long	0				/* SizeOfInitializedData */
 	.long	0				/* SizeOfUninitializedData */
-	.long	_start - ImageBase		/* AddressOfEntryPoint */
-	.long	_start - ImageBase		/* BaseOfCode */
+	.long	_start - image_base		/* AddressOfEntryPoint */
+	.long	_start - image_base		/* BaseOfCode */
 #if __riscv_xlen == 32
 	.long	0				/* BaseOfData */
 #endif
 
 extra_header_fields:
 #if __riscv_xlen == 32
-	.long	0				/* ImageBase */
+	.long	0				/* image_base */
 #else
-	.quad	0				/* ImageBase */
+	.quad	0				/* image_base */
 #endif
 	.long	0x200				/* SectionAlignment */
 	.long	0x200				/* FileAlignment */
@@ -88,12 +88,12 @@ extra_header_fields:
 	.short	0				/* MinorSubsystemVersion */
 	.long	0				/* Win32VersionValue */
 
-	.long	_edata - ImageBase		/* SizeOfImage */
+	.long	_edata - image_base		/* SizeOfImage */
 
 	/*
 	 * Everything before the kernel image is considered part of the header
 	 */
-	.long	_start - ImageBase		/* SizeOfHeaders */
+	.long	_start - image_base		/* SizeOfHeaders */
 	.long	0				/* CheckSum */
 	.short	IMAGE_SUBSYSTEM_EFI_APPLICATION /* Subsystem */
 #if CONFIG_VENDOR_EFI
@@ -149,9 +149,9 @@ section_table:
 	.byte	0
 	.byte	0			/* end of 0 padding of section name */
 	.long	_etext - _start		/* VirtualSize */
-	.long	_start - ImageBase	/* VirtualAddress */
+	.long	_start - image_base	/* VirtualAddress */
 	.long	_etext - _start		/* SizeOfRawData */
-	.long	_start - ImageBase	/* PointerToRawData */
+	.long	_start - image_base	/* PointerToRawData */
 	.long	0			/* PointerToRelocations (0 for executables) */
 	.long	0			/* PointerToLineNumbers (0 for executables) */
 	.short	0			/* NumberOfRelocations  (0 for executables) */
@@ -166,9 +166,9 @@ section_table:
 	.byte	0
 	.byte	0			/* end of 0 padding of section name */
 	.long	_edata - _data		/* VirtualSize */
-	.long	_data - ImageBase	/* VirtualAddress */
+	.long	_data - image_base	/* VirtualAddress */
 	.long	_edata - _data		/* SizeOfRawData */
-	.long	_data - ImageBase	/* PointerToRawData */
+	.long	_data - image_base	/* PointerToRawData */
 	.long	0			/* PointerToRelocations */
 	.long	0			/* PointerToLineNumbers */
 	.short	0			/* NumberOfRelocations */
@@ -185,7 +185,7 @@ _start:
 	SAVE_LONG(a1, 1)
 	SAVE_LONG(ra, 2)
 
-	lla		a0, ImageBase
+	lla		a0, image_base
 	lla		a1, _DYNAMIC
 	call		_relocate
 	bne		a0, zero, 0f
