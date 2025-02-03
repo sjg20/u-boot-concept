@@ -14,20 +14,11 @@
 #ifndef _SHA1_H
 #define _SHA1_H
 
+#include <linux/kconfig.h>
 #include <linux/types.h>
 
-#if defined(CONFIG_MBEDTLS_LIB_CRYPTO)
-/*
- * FIXME:
- * MbedTLS define the members of "mbedtls_sha256_context" as private,
- * but "state" needs to be access by arch/arm/cpu/armv8/sha1_ce_glue.
- * MBEDTLS_ALLOW_PRIVATE_ACCESS needs to be enabled to allow the external
- * access.
- * Directly including <external/mbedtls/library/common.h> is not allowed,
- * since this will include <malloc.h> and break the sandbox test.
- */
-#define MBEDTLS_ALLOW_PRIVATE_ACCESS
-
+#if CONFIG_IS_ENABLED(MBEDTLS_LIB_CRYPTO)
+#include "mbedtls_options.h"
 #include <mbedtls/sha1.h>
 #endif
 
@@ -47,7 +38,7 @@ extern "C" {
 
 extern const uint8_t sha1_der_prefix[];
 
-#if defined(CONFIG_MBEDTLS_LIB_CRYPTO)
+#if CONFIG_IS_ENABLED(MBEDTLS_LIB_CRYPTO)
 typedef mbedtls_sha1_context sha1_context;
 #else
 /**
