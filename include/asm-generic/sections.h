@@ -75,6 +75,8 @@ extern char __rel_dyn_start[], __rel_dyn_end[];
 extern char _image_binary_end[];
 extern char __dtb[];
 
+extern char image_base[];
+
 /*
  * This is the U-Boot entry point - prior to relocation it should be same
  * as __text_start
