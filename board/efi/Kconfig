@@ -1,3 +1,8 @@
+config VENDOR_EFI
+	bool
+	select OF_CONTROL
+	select DM_SERIAL
+
 if VENDOR_EFI
 
 if X86
@@ -38,6 +43,6 @@ endchoice
 source "board/efi/efi-x86_app/Kconfig"
 source "board/efi/efi-x86_payload/Kconfig"
 
-endif
+endif  # X86
 
-endif
+endif  # VENDOR_EFI

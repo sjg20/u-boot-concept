@@ -2157,6 +2157,10 @@ config ARCH_GXP
 	select OF_CONTROL
 	imply CMD_DM
 
+config VENDOR_EFI_ARM
+	bool "efi"
+	select VENDOR_EFI
+
 endchoice
 
 config SUPPORT_PASSING_ATAGS
