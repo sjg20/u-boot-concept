@@ -14,6 +14,10 @@ default:
 # in the u-boot tree at tools/docker/Dockerfile
 image: ${MIRROR_DOCKER}/trini/u-boot-gitlab-ci-runner:jammy-20240911.1-08Dec2024
 
+services:
+  - name: container:${CI_JOB_ID}`
+    command: ["--rm"]
+
 # We run some tests in different order, to catch some failures quicker.
 stages:
   - testsuites
