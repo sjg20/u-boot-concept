@@ -467,8 +467,9 @@ int bloblist_reloc(void *to, uint to_size);
  * If CONFIG_BLOBLIST_ALLOC is selected, it allocates memory for a bloblist of
  * size CONFIG_BLOBLIST_SIZE.
  *
- * If CONFIG_BLOBLIST_PASSAGE_MANDATORY is selected, bloblist in the incoming
- * standard passage is mandatorily required.
+ * If CONFIG_BLOBLIST_PASSAGE is selected, it uses the bloblist in the incoming
+ * standard passage. The size is detected automatically so CONFIG_BLOBLIST_SIZE
+ * can be 0.
  *
  * Sets GD_FLG_BLOBLIST_READY in global_data flags on success
  *
@@ -500,18 +501,9 @@ static inline int bloblist_maybe_init(void)
  * @rfdt:  Register that holds the FDT base address.
  * @rzero: Register that must be zero.
  * @rsig:  Register that holds signature and register conventions version.
- * @xlist: Register that holds the transfer list.
  * Return: 0 if OK, -EIO if the bloblist is not compliant to the register
  *	   conventions.
  */
-int bloblist_check_reg_conv(ulong rfdt, ulong rzero, ulong rsig, ulong xlist);
-
-/**
- * xferlist_from_boot_arg() - Get bloblist from the boot args.
- *
- * @addr: Address of the bloblist
- * Return: 0 if OK, else on error
- */
-int xferlist_from_boot_arg(ulong *addr);
+int bloblist_check_reg_conv(ulong rfdt, ulong rzero, ulong rsig);
 
 #endif /* __BLOBLIST_H */
