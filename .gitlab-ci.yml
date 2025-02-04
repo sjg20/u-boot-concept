@@ -541,13 +541,13 @@ vexpress_fvp test.py:
     - ${DEFAULT_AMD64_TAG}
   <<: *buildman_and_testpy_dfn
 
-vexpress_fvp_bloblist test.py:
-  variables:
-    TEST_PY_BD: "vexpress_fvp_bloblist"
-    TEST_PY_TEST_SPEC: "not sleep and not hostfs"
-  tags:
-    - ${DEFAULT_AMD64_TAG}
-  <<: *buildman_and_testpy_dfn
+#vexpress_fvp_bloblist test.py:
+#  variables:
+#    TEST_PY_BD: "vexpress_fvp_bloblist"
+#    TEST_PY_TEST_SPEC: "not sleep and not hostfs"
+#  tags:
+#    - ${DEFAULT_AMD64_TAG}
+#  <<: *buildman_and_testpy_dfn
 
 xilinx_zynq_virt test.py:
   variables:
