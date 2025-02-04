@@ -36,9 +36,12 @@ SECTIONS
                 __efi_runtime_stop = .;
 	}
 
-	.text_rest :
+	.text_rest ALIGN(4096) :
 	{
+		__text_start = .;
 		*(.text*)
+		. = ALIGN(4096);
+		__text_end = .;
 	}
 
 #ifdef CONFIG_ARMV8_PSCI
@@ -98,22 +101,16 @@ SECTIONS
 	}
 #endif
 
-	. = ALIGN(8);
-	.rodata : { *(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*))) }
-
-	. = ALIGN(8);
-	.data : {
-		*(.data*)
+	__start_rodata = ADDR(.rodata);
+	.rodata ALIGN(4096): {
+	    *(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*)))
 	}
 
-	. = ALIGN(8);
-
-	. = .;
-
-	. = ALIGN(8);
 	__u_boot_list : {
 		KEEP(*(SORT(__u_boot_list*)));
 	}
+
+	__end_rodata = ALIGN(4096);
 
 	.efi_runtime_rel : {
                 __efi_runtime_rel_start = .;
@@ -122,8 +119,23 @@ SECTIONS
                 __efi_runtime_rel_stop = .;
 	}
 
+	 __start_data = ADDR(.data);
+	.data ALIGN(4096): {
+		*(.data*)
+	}
+
 	. = ALIGN(8);
 	__image_copy_end = .;
+
+	/*
+	 * arch/arm/lib/crt0_64.S assumes __bss_start - __bss_end % 8 == 0
+	 */
+	.bss ALIGN(8) : {
+		__bss_start = .;
+		*(.bss*)
+		__bss_end = .;
+	}
+	__end_data = ALIGN(4096);
 
 	.rela.dyn : {
 		__rel_dyn_start = .;
@@ -132,16 +144,6 @@ SECTIONS
 	}
 
 	_end = .;
-
-	/*
-	 * arch/arm/lib/crt0_64.S assumes __bss_start - __bss_end % 8 == 0
-	 */
-	.bss ALIGN(8) : {
-		__bss_start = .;
-		*(.bss*)
-		. = ALIGN(8);
-		__bss_end = .;
-	}
 
 	/DISCARD/ : { *(.dynsym) }
 	/DISCARD/ : { *(.dynstr*) }
