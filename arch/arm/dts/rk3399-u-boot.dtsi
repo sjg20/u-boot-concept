@@ -46,7 +46,12 @@
 	       0x0 0xffa88800 0x0 0x1800
 	       0x0 0xffa8a000 0x0 0x2000
 	       0x0 0xffa8c000 0x0 0x1000>;
-	bootph-all;
+#ifdef CONFIG_VPL
+		bootph-pre-ram;
+		bootph-some-ram;
+#else
+		bootph-all;
+#endif
 	status = "okay";
 };
 
@@ -93,6 +98,10 @@
 };
 
 &sdmmc {
+#ifdef CONFIG_VPL
+	bootph-pre-sram;
+	bootph-verify;
+#endif
 	bootph-pre-ram;
 	bootph-some-ram;
 
