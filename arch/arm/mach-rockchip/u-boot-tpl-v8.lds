@@ -26,8 +26,17 @@ SECTIONS
 	.text : {
 		. = ALIGN(8);
 		CPUDIR/start.o (.text*)
+
+		/* put relocation code all together */
+		_rcode_start = .;
+		*(.text.rcode)
+		*(.text.rdata)
+		_rcode_end = .;
+
 		*(.text*)
 	}
+
+	_rcode_size = _rcode_end - _rcode_start;
 
 	.rodata : {
 		. = ALIGN(8);
@@ -55,6 +64,7 @@ SECTIONS
 		. = ALIGN(8);
 		__bss_end = .;
 	}
+	__bss_size = __bss_end - __bss_start;
 
 	/DISCARD/ : { *(.dynsym) }
 	/DISCARD/ : { *(.dynstr*) }
