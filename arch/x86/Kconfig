@@ -65,7 +65,7 @@ config VENDOR_COREBOOT
 config VENDOR_DFI
 	bool "dfi"
 
-config VENDOR_EFI
+config ARCH_EFI
 	bool "efi"
 
 config VENDOR_EMULATION
