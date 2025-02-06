@@ -2,6 +2,7 @@
 /*
  * Copyright 2024 9elements GmbH
  */
+#include <asm/system.h>
 #include <cpu.h>
 #include <dm.h>
 #include <irq.h>
@@ -130,10 +131,25 @@ struct acpi_ops armv8_cpu_acpi_ops = {
 };
 #endif
 
+/** pgprot_set_attrs() - Set page table permissions
+ *
+ * @addr: Physical address start
+ * @size: size of memory to change
+ * @perm: New permissions
+ *
+ * Return: 0 on success, negative otherwise
+ **/
+static int armv8_pgprot_set_attrs(const struct udevice *dev, phys_addr_t addr,
+				  size_t size, u64 perm)
+{
+	return pgprot_set_attrs(addr, size, perm);
+}
+
 static const struct cpu_ops cpu_ops = {
-	.get_count = armv8_cpu_get_count,
-	.get_desc  = armv8_cpu_get_desc,
-	.get_info  = armv8_cpu_get_info,
+	.get_count	  = armv8_cpu_get_count,
+	.get_desc	  = armv8_cpu_get_desc,
+	.get_info	  = armv8_cpu_get_info,
+	.pgprot_set_attrs = armv8_pgprot_set_attrs,
 };
 
 static const struct udevice_id cpu_ids[] = {

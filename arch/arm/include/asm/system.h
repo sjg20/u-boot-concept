@@ -298,6 +298,16 @@ void mmu_map_region(phys_addr_t start, u64 size, bool emerg);
  */
 void mmu_change_region_attr(phys_addr_t start, size_t size, u64 attrs, bool bbm);
 
+/** pgprot_set_attrs() - Set page table permissions
+ *
+ * @addr: Physical address start
+ * @size: size of memory to change
+ * @perm: New permissions
+ *
+ * Return: 0 on success, negative otherwise
+ **/
+int pgprot_set_attrs(phys_addr_t addr, size_t size, u64 perm);
+
 /*
  * smc_call() - issue a secure monitor call
  *

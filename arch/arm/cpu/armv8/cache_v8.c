@@ -7,8 +7,10 @@
  * Alexander Graf <agraf@suse.de>
  */
 
+#include <cpu.h>
 #include <cpu_func.h>
 #include <hang.h>
+#include <linux/errno.h>
 #include <log.h>
 #include <asm/cache.h>
 #include <asm/global_data.h>
@@ -1026,6 +1028,31 @@ skip_break:
 	flush_dcache_range(gd->arch.tlb_addr,
 			   gd->arch.tlb_addr + gd->arch.tlb_size);
 	__asm_invalidate_tlb_all();
+}
+
+int pgprot_set_attrs(phys_addr_t addr, size_t size, u64 perm)
+{
+	u64 attrs = PTE_BLOCK_MEMTYPE(MT_NORMAL) | PTE_BLOCK_INNER_SHARE |
+			PTE_TYPE_VALID;
+
+	switch (perm) {
+	case MMU_ATTR_RO:
+		attrs |= PTE_BLOCK_PXN | PTE_BLOCK_UXN | PTE_BLOCK_RO;
+		break;
+	case MMU_ATTR_RX:
+		attrs |= PTE_BLOCK_RO;
+		break;
+	case MMU_ATTR_RW:
+		attrs |= PTE_BLOCK_PXN | PTE_BLOCK_UXN;
+		break;
+	default:
+		log_err("Unknown attribute %llx\n", perm);
+		return -EINVAL;
+	}
+
+	mmu_change_region_attr(addr, size, attrs, false);
+
+	return 0;
 }
 
 #else	/* !CONFIG_IS_ENABLED(SYS_DCACHE_OFF) */
