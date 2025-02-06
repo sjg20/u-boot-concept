@@ -1,4 +1,4 @@
-if VENDOR_EFI
+if ARCH_EFI
 
 if X86
 
