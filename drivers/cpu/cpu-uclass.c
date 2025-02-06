@@ -114,6 +114,17 @@ int cpu_release_core(const struct udevice *dev, phys_addr_t addr)
 	return ops->release_core(dev, addr);
 }
 
+int cpu_pgprot_set_attrs(const struct udevice *dev, phys_addr_t addr,
+			 size_t size, u64 perm)
+{
+	struct cpu_ops *ops = cpu_get_ops(dev);
+
+	if (!ops->pgprot_set_attrs)
+		return -ENOSYS;
+
+	return ops->pgprot_set_attrs(dev, addr, size, perm);
+}
+
 U_BOOT_DRIVER(cpu_bus) = {
 	.name	= "cpu_bus",
 	.id	= UCLASS_SIMPLE_BUS,

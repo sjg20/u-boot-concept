@@ -43,6 +43,13 @@ enum {
 	CPU_FEAT_COUNT,
 };
 
+/* Page table permissions */
+enum pgprot_attrs {
+	MMU_ATTR_RO,
+	MMU_ATTR_RX,
+	MMU_ATTR_RW,
+};
+
 /**
  * struct cpu_info - Information about a CPU
  *
@@ -111,6 +118,17 @@ struct cpu_ops {
 	 * @return 0 if OK, -ve on error
 	 */
 	int (*release_core)(const struct udevice *dev, phys_addr_t addr);
+
+	/** pgprot_set_attrs() - Set page table permissions
+	 *
+	 * @dev:  Device to check (UCLASS_CPU)
+	 * @addr: Physical address start
+	 * @size: Size of memory to change
+	 * @perm: New permissions
+	 * @return 0 if OK, -ve on error
+	 **/
+	int (*pgprot_set_attrs)(const struct udevice *dev, phys_addr_t addr,
+			        size_t size, u64 perm);
 };
 
 #define cpu_get_ops(dev)        ((struct cpu_ops *)(dev)->driver->ops)
@@ -179,6 +197,18 @@ struct udevice *cpu_get_current_dev(void);
  * @return 0 if OK, -ve on error
  */
 int cpu_release_core(const struct udevice *dev, phys_addr_t addr);
+
+/** pgprot_set_attrs() - Set page table permissions
+ *
+ * @dev	  Device to use (UCLASS_CPU)
+ * @addr: Physical address start
+ * @size: Size of memory to change
+ * @perm: New permissions
+ * @return 0 if OK, -ve on error
+ *
+ **/
+int cpu_pgprot_set_attrs(const struct udevice *dev, phys_addr_t addr,
+			 size_t size, u64 perm);
 
 /**
  * cpu_phys_address_size() - Get the physical-address size for the CPU
