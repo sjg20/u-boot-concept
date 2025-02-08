@@ -41,7 +41,6 @@
 #endif
 		#address-cells = <1>;
 		fit,fdt-list = "of-list";
-		filename = "u-boot.itb";
 		fit,external-offset = <CONFIG_FIT_EXTERNAL_OFFSET>;
 		fit,align = <512>;
 		images {
@@ -208,8 +207,7 @@
 
 #if defined(CONFIG_ARM64) || defined(CONFIG_SPL_OPTEE_IMAGE)
 		fit {
-			type = "blob";
-			filename = "u-boot.itb";
+			insert-template = <&common_part>;
 #else
 		u-boot-img {
 #endif
