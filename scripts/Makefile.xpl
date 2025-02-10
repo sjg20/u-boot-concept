@@ -417,13 +417,8 @@ LDFLAGS_$(SPL_BIN) += $(call ld-option, --no-dynamic-linker)
 LDFLAGS_$(SPL_BIN) += --build-id=none
 
 # Pick the best match (e.g. SPL_TEXT_BASE for SPL, TPL_TEXT_BASE for TPL)
-<<<<<<< HEAD
-ifneq ($(CONFIG_$(PHASE_)PPL_TEXT_BASE),)
-LDFLAGS_$(SPL_BIN) += -Ttext $(CONFIG_$(PHASE_)PPL_TEXT_BASE)
-=======
 ifneq ($(CONFIG_TEXT_BASE),)
 LDFLAGS_$(SPL_BIN) += -Ttext $(CONFIG_TEXT_BASE)
->>>>>>> e7ea824a37e (Makefile: Drop SPL_ and SPL_TPL_ macros)
 endif
 
 ifdef CONFIG_TARGET_SOCFPGA_ARRIA10
