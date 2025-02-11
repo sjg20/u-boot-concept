@@ -187,18 +187,28 @@
 			};
 #elif defined(CONFIG_TPL)
 			u-boot-tpl {
+				type = "blob";
+				/* sync with /binman/simple-bin/mkimage/u-boot-tpl */
+				filename = "tpl/u-boot-tpl.bin";
 			};
 #endif
 			u-boot-spl {
+				type = "blob";
+				/* sync with /binman/simple-bin/mkimage/u-boot-spl */
+				filename = "spl/u-boot-spl.bin";
 			};
 		};
 
 #if defined(CONFIG_ARM64) || defined(CONFIG_SPL_OPTEE_IMAGE)
 		fit {
 			type = "blob";
+			/* sync with /binman/simple-bin/fit */
 			filename = "u-boot.itb";
 #else
 		u-boot-img {
+			type = "blob";
+			/* sync with /binman/simple-bin/u-boot-img */
+			filename = "u-boot.img";
 #endif
 			/* Sync with u-boot,spl-payload-offset if present */
 			offset = <CONFIG_SYS_SPI_U_BOOT_OFFS>;
