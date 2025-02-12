@@ -580,6 +580,8 @@ def test_usb_load(ubman):
                     elif fs in ['ext4', 'ext2']:
                         file, size, expected_crc32 = \
                             usb_ext4load_ext4write(ubman, fs, x, part)
+                    else:
+                        raise Exception('Unsupported filesystem type %s' % fs)
 
                     offset = random.randrange(128, 1024, 128)
                     output = ubman.run_command(
