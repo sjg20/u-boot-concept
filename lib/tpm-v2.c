@@ -142,7 +142,7 @@ u32 tpm2_nv_define_space(struct udevice *dev, u32 space_index,
 	 * chunks below.
 	 */
 	const int platform_len = sizeof(u32);
-	const int session_hdr_len = 13;
+	const int session_hdr_len = 15;
 	const int message_len = 14;
 	uint offset = TPM2_HDR_LEN + platform_len + session_hdr_len +
 		message_len;
@@ -155,11 +155,12 @@ u32 tpm2_nv_define_space(struct udevice *dev, u32 space_index,
 		/* handles 4 bytes */
 		tpm_u32(TPM2_RH_PLATFORM),	/* Primary platform seed */
 
-		/* session header 13 bytes */
+		/* session header 15 bytes */
 		tpm_u32(9),			/* Header size */
 		tpm_u32(TPM2_RS_PW),		/* Password authorisation */
 		tpm_u16(0),			/* nonce_size */
 		0,				/* session_attrs */
+		tpm_u16(0),			/* HMAC size */
 		tpm_u16(0),			/* auth_size */
 
 		/* message 14 bytes + policy */
