@@ -279,6 +279,7 @@ int dm_pci_run_vga_bios(struct udevice *dev, int (*int15_handler)(void),
 	if (exec_method & PCI_ROM_USE_NATIVE) {
 #ifdef CONFIG_X86
 		emulate = false;
+		emulate = true;
 #else
 		if (!(exec_method & PCI_ROM_ALLOW_FALLBACK)) {
 			printf("BIOS native execution is only available on x86\n");

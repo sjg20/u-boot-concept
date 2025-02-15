@@ -310,6 +310,7 @@ void irq_llsr(struct irq_regs *regs)
 	 */
 	if (regs->irq_id < 32) {
 		/* Architecture defined exception */
+		while (1);
 		do_exception(regs);
 	} else {
 		/* Hardware or User IRQ */
