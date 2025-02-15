@@ -5,6 +5,7 @@
  *  Copyright (c) 2016 Alexander Graf
  */
 
+#define LOG_DEBUG
 #define LOG_CATEGORY LOGC_EFI
 
 #include <dm.h>
@@ -551,6 +552,7 @@ efi_status_t efi_gop_register(void)
 	gopobj->info.pixels_per_scanline = col;
 	gopobj->bpix = bpix;
 	gopobj->fb = map_sysmem(fb_base, fb_size);
+	printf("\n\nfb at %p\n", gopobj->fb);
 
 	return EFI_SUCCESS;
 }

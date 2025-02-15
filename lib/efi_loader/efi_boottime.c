@@ -5,7 +5,11 @@
  * Copyright (c) 2016 Alexander Graf
  */
 
+<<<<<<< HEAD
 #define LOG_CATEGORY LOGC_EFI
+=======
+#define LOG_DEBUG
+>>>>>>> 4de2d6cd9bd (wip)
 
 #include <bootm.h>
 #include <div64.h>
@@ -260,8 +264,7 @@ static void efi_process_event_queue(void)
 		/* Events must be executed at the event's TPL */
 		old_tpl = efi_tpl;
 		efi_tpl = event->notify_tpl;
-		EFI_CALL_VOID(event->notify_function(event,
-						     event->notify_context));
+		event->notify_function(event, event->notify_context);
 		efi_tpl = old_tpl;
 		if (event->type == EVT_NOTIFY_SIGNAL)
 			event->is_signaled = 0;

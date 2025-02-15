@@ -74,7 +74,7 @@ while getopts "a:Bko:rR:sw" opt; do
 		build=
 		;;
 	k)
-		kvm="-enable-kvm"
+		kvm="-enable-kvm -cpu host"
 		;;
 	o)
 		os=$OPTARG
@@ -93,6 +93,7 @@ while getopts "a:Bko:rR:sw" opt; do
 		;;
 	w)
 		bitness=32
+		release=16.04.6
 		;;
 	*)
 		usage
@@ -115,7 +116,7 @@ run_qemu() {
 	else
 		extra+=" -serial mon:stdio"
 	fi
-	echo "Running ${qemu} ${extra}"
+	echo "Running ${qemu} ${kvm} ${extra}"
 	"${qemu}" -bios "$DIR/${BIOS}" \
 		-m 512 \
 		-nic none \
