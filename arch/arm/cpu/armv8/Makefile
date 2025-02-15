@@ -3,7 +3,9 @@
 # (C) Copyright 2000-2003
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 
+ifndef CONFIG_EFI_APP
 extra-y	:= start.o
+endif
 
 obj-y	+= cpu.o
 ifndef CONFIG_$(PHASE_)TIMER
