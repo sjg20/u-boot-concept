@@ -7,18 +7,19 @@
 
 OUTPUT_FORMAT("elf64-littleaarch64", "elf64-littleaarch64", "elf64-littleaarch64")
 OUTPUT_ARCH(aarch64)
-
-PHDRS
-{
-	data PT_LOAD FLAGS(3); /* SHF_WRITE | SHF_ALLOC */
-}
-
 ENTRY(_start)
 SECTIONS
 {
-	.text 0x0 : {
+	. = 0;
+	image_base = .;
+	/* .hash and/or .gnu.hash MUST come first! */
+	.hash : { *(.hash) }
+	.gnu.hash : { *(.gnu.hash) }
+	. = ALIGN(4096);
+	.eh_frame : { *(.eh_frame) }
+	. = ALIGN(4096);
+	.text : {
 		_text = .;
-		*(.text.head)
 		*(.text)
 		*(.text.*)
 		*(.gnu.linkonce.t.*)
@@ -28,12 +29,12 @@ SECTIONS
 		*(.dynamic);
 		. = ALIGN(512);
 	}
-	.rela.dyn : { *(.rela.dyn) }
-	.rela.plt : { *(.rela.plt) }
-	.rela.got : { *(.rela.got) }
-	.rela.data : { *(.rela.data) *(.rela.data*) }
 	_etext = .;
 	_text_size = . - _text;
+	. = ALIGN(65536);
+	.reloc : {
+		KEEP (*(.reloc))
+	}
 	. = ALIGN(4096);
 	.data : {
 		_data = .;
@@ -43,6 +44,10 @@ SECTIONS
 		*(.data.*)
 		*(.got.plt)
 		*(.got)
+		/* U-Boot lists and device tree */
+		. = ALIGN(8);
+		*(SORT(__u_boot_list*));
+		. = ALIGN(8);
 
 		/*
 		 * The EFI loader doesn't seem to like a .bss section, so we
@@ -59,8 +64,23 @@ SECTIONS
 		. = ALIGN(512);
 		_bss_end = .;
 		_edata = .;
-	} :data
+		_end = .;
+	}
 	_data_size = _edata - _data;
+
+	. = ALIGN(4096);
+	.rela : {
+		*(.rela.text*)
+		*(.rela.data*)
+		*(.rela.got)
+		*(.rela.dyn)
+		*(.rela.stab)
+		*(.rela.init_array*)
+		*(.rela.fini_array*)
+		*(.rela.ctors*)
+		*(.rela.dtors*)
+		*(.rela__u_boot_list*)
+	}
 
 	. = ALIGN(4096);
 	.dynsym   : { *(.dynsym) }
@@ -72,6 +92,9 @@ SECTIONS
 		*(.rel.reloc)
 		*(.eh_frame)
 		*(.note.GNU-stack)
+	}
+	.embedded_dtb : {
+		*(.embedded_dtb)
 	}
 	.comment 0 : { *(.comment) }
 }
