@@ -116,7 +116,7 @@ run_qemu() {
 	else
 		extra+=" -serial mon:stdio"
 	fi
-	echo "Running ${qemu} ${kvm} ${extra}"
+	echo "Running ${qemu} -bios $DIR/${BIOS} ${kvm} ${extra}"
 	"${qemu}" -bios "$DIR/${BIOS}" \
 		-m 512 \
 		-nic none \

@@ -5,11 +5,7 @@
  * Copyright (c) 2016 Alexander Graf
  */
 
-<<<<<<< HEAD
 #define LOG_CATEGORY LOGC_EFI
-=======
-#define LOG_DEBUG
->>>>>>> 4de2d6cd9bd (wip)
 
 #include <bootm.h>
 #include <div64.h>
