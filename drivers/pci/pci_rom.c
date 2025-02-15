@@ -22,6 +22,7 @@
  * Copyright 1997 -- 1999 Martin Mares <mj@atrey.karlin.mff.cuni.cz>
  */
 
+#define LOG_DEBUG
 #define LOG_CATEGORY UCLASS_PCI
 
 #include <bios_emul.h>
@@ -236,6 +237,13 @@ void setup_video(struct screen_info *screen_info)
 	screen_info->rsvd_pos = vesa->reserved_mask_pos;
 }
 
+int my_int15_handler(void)
+{
+	log_debug("here\n");
+
+	return 0;
+}
+
 int dm_pci_run_vga_bios(struct udevice *dev, int (*int15_handler)(void),
 			int exec_method)
 {
@@ -279,7 +287,6 @@ int dm_pci_run_vga_bios(struct udevice *dev, int (*int15_handler)(void),
 	if (exec_method & PCI_ROM_USE_NATIVE) {
 #ifdef CONFIG_X86
 		emulate = false;
-		emulate = true;
 #else
 		if (!(exec_method & PCI_ROM_ALLOW_FALLBACK)) {
 			printf("BIOS native execution is only available on x86\n");
@@ -319,7 +326,7 @@ int dm_pci_run_vga_bios(struct udevice *dev, int (*int15_handler)(void),
 	} else {
 #if defined(CONFIG_X86) && (CONFIG_IS_ENABLED(X86_32BIT_INIT) || CONFIG_TPL)
 		log_debug("Running video BIOS...");
-		bios_set_interrupt_handler(0x15, int15_handler);
+		bios_set_interrupt_handler(0x15, my_int15_handler);
 
 		bios_run_on_x86(dev, (unsigned long)ram, vesa_mode,
 				&mode_info);

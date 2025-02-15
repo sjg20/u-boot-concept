@@ -93,6 +93,7 @@ while getopts "a:Bko:rR:sw" opt; do
 		;;
 	w)
 		bitness=32
+		release=16.04.6
 		;;
 	*)
 		usage
