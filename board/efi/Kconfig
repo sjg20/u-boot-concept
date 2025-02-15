@@ -1,5 +1,7 @@
 if VENDOR_EFI
 
+if X86
+
 choice
 	prompt "Mainboard model"
 	optional
@@ -32,8 +34,6 @@ config TARGET_EFI_X86_PAYLOAD
 	  U-Boot is loaded as a payload from EFI.
 
 endchoice
-
-if X86
 
 source "board/efi/efi-x86_app/Kconfig"
 source "board/efi/efi-x86_payload/Kconfig"
