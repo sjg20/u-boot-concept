@@ -1,4 +1,4 @@
-if TARGET_EFI_PAYLOAD
+if TARGET_EFI_X86_PAYLOAD
 
 config SYS_BOARD
 	default "efi-x86_payload"
