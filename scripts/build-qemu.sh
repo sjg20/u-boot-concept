@@ -93,7 +93,7 @@ while getopts "a:Beko:rR:sS:w" opt; do
 		extra+=" -netdev user,id=net0"
 		;;
 	k)
-		kvm="-enable-kvm"
+		kvm="-enable-kvm -cpu host"
 		;;
 	o)
 		os=$OPTARG
@@ -150,7 +150,7 @@ run_qemu() {
 	else
 		extra+=" -serial mon:stdio"
 	fi
-	echo "Running ${qemu} ${extra}"
+	echo "Running ${qemu} -bios "$DIR/${BIOS}" ${kvm} ${extra}"
 	"${qemu}" -bios "$DIR/${BIOS}" \
 		-m 512 \
 		-nic none \
