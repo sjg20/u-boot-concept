@@ -16,6 +16,7 @@
  * since the MTRR registers are sometimes in flux.
  */
 
+#include <cpu.h>
 #include <cpu_func.h>
 #include <log.h>
 #include <sort.h>
@@ -70,9 +71,10 @@ static void set_var_mtrr(uint reg, uint type, uint64_t start, uint64_t size)
 {
 	u64 mask;
 
-	wrmsrl(MTRR_PHYS_BASE_MSR(reg), start | type);
 	mask = ~(size - 1);
-	mask &= (1ULL << CONFIG_CPU_ADDR_BITS) - 1;
+	mask &= (1ull << cpu_phys_address_size()) - 1;
+
+	wrmsrl(MTRR_PHYS_BASE_MSR(reg), start | type);
 	wrmsrl(MTRR_PHYS_MASK_MSR(reg), mask | MTRR_PHYS_MASK_VALID);
 }
 
@@ -205,7 +207,7 @@ int mtrr_add_request(int type, uint64_t start, uint64_t size)
 	debug("%d: type=%d, %08llx  %08llx\n", gd->arch.mtrr_req_count - 1,
 	      req->type, req->start, req->size);
 	mask = ~(req->size - 1);
-	mask &= (1ULL << CONFIG_CPU_ADDR_BITS) - 1;
+	mask &= (1ULL << cpu_phys_address_size()) - 1;
 	mask |= MTRR_PHYS_MASK_VALID;
 	debug("   %016llx %016llx\n", req->start | req->type, mask);
 
@@ -360,7 +362,7 @@ int mtrr_list(int reg_count, int cpu_select)
 
 		base = info.mtrr[i].base;
 		mask = info.mtrr[i].mask;
-		size = ~mask & ((1ULL << CONFIG_CPU_ADDR_BITS) - 1);
+		size = ~mask & ((1ULL << cpu_phys_address_size()) - 1);
 		size |= (1 << 12) - 1;
 		size += 1;
 		valid = mask & MTRR_PHYS_MASK_VALID;
