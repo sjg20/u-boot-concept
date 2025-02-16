@@ -67,14 +67,87 @@ void mtrr_close(struct mtrr_state *state, bool do_caches)
 		enable_caches();
 }
 
+/* fms: find most significant bit set, stolen from Linux Kernel Source. */
+static inline unsigned int fms(unsigned int x)
+{
+	unsigned int r;
+
+	__asm__("bsrl %1,%0\n\t"
+		"jnz 1f\n\t"
+		"movl $0,%0\n"
+		"1:" : "=r" (r) : "mr" (x));
+	return r;
+}
+
 static void set_var_mtrr(uint reg, uint type, uint64_t start, uint64_t size)
 {
-	u64 phys_mask, mask;
+	uint addr_size = cpu_phys_address_size();
+	// u64 phys_mask = ((1ull << addr_size) - 1);
+	const uint32_t upper_mask = (1U << (addr_size - 32)) - 1;
+	u64 mmask;
+	uint32_t addr_lsb;
+	uint32_t size_msb;
+	uint32_t mtrr_size;
+	u64 addr = start;
+	struct msr base;
+	struct msr mask;
 
-	phys_mask = ((1ull << cpu_phys_address_size()) - 1);
-	mask = (start - (1ull << 32)) & phys_mask;
+	addr_lsb = fls(addr);
+	size_msb = fms(size);
+
+	/* All MTRR entries need to have their base aligned to the mask
+	   size. The maximum size is calculated by a function of the
+	   min base bit set and maximum size bit set. */
+	if (addr_lsb > size_msb)
+		mtrr_size = 1 << size_msb;
+	else
+		mtrr_size = 1 << addr_lsb;
+
+	base.h = (uint64_t)addr >> 32;
+	base.l = addr | type;
+	mask.h = upper_mask;
+	mask.l = ~(mtrr_size - 1) | MTRR_PHYS_MASK_VALID;
+
+	mmask = ((1ull << addr_size) - 1) & ~0xffffffff;
+	mmask &= ~(mtrr_size - 1);
+	mmask |= (u64)upper_mask << 32;
+
+	// mmask = (-((1ull<<32)-start) & phys_mask) | 0x800;
+
+	printf("good: %llx %llx\n", base.q, mask.q);
+	printf(" bad: %llx %llx\n", start | type, mmask | MTRR_PHYS_MASK_VALID);
+
+	mmask = ~(size - 1);
+	mmask &= (1ull << cpu_phys_address_size()) - 1;
+	mmask |= MTRR_PHYS_MASK_VALID;
+
 	wrmsrl(MTRR_PHYS_BASE_MSR(reg), start | type);
-	wrmsrl(MTRR_PHYS_MASK_MSR(reg), mask | MTRR_PHYS_MASK_VALID);
+	wrmsrl(MTRR_PHYS_MASK_MSR(reg), mmask | MTRR_PHYS_MASK_VALID);
+
+	u32 mask_lo, mask_hi, base_lo, base_hi;
+	u64 tmp, lmask;
+	unsigned int hi;
+
+	rdmsr(MTRR_PHYS_BASE_MSR(reg), base_lo, base_hi);
+	rdmsr(MTRR_PHYS_MASK_MSR(reg), mask_lo, mask_hi);
+#define PAGE_MASK 4096
+
+	u32 phys_hi_rsvd = GENMASK(31, addr_size - 32);
+
+	/* Work out the shifted address mask: */
+	tmp = (u64)mask_hi << 32 | (mask_lo & PAGE_MASK);
+	lmask = (u64)phys_hi_rsvd << 32 | tmp;
+
+	/* Expand tmp with high bits to all 1s: */
+	hi = fls64(tmp);
+	if (hi > 0) {
+		tmp |= ~((1ULL<<(hi - 1)) - 1);
+
+		if (tmp != lmask) {
+			printf("mtrr: your BIOS has configured an incorrect mask, fixing it.\n");
+			lmask = tmp;
+		}
+	}
 }
 
 void mtrr_read_all(struct mtrr_info *info)
@@ -194,7 +267,7 @@ int mtrr_add_request(int type, uint64_t start, uint64_t size)
 	if (!gd->arch.has_mtrr)
 		return -ENOSYS;
 
-	if (!is_power_of_2(size))
+	if (!is_power_of_2_u64(size))
 		return -EINVAL;
 
 	if (gd->arch.mtrr_req_count == MAX_MTRR_REQUESTS)
@@ -203,12 +276,12 @@ int mtrr_add_request(int type, uint64_t start, uint64_t size)
 	req->type = type;
 	req->start = start;
 	req->size = size;
-	debug("%d: type=%d, %08llx  %08llx\n", gd->arch.mtrr_req_count - 1,
+	printf("%d: type=%d, %08llx  %08llx\n", gd->arch.mtrr_req_count - 1,
 	      req->type, req->start, req->size);
 	mask = ~(req->size - 1);
-	mask &= (1ULL << CONFIG_CPU_ADDR_BITS) - 1;
+	mask &= (1ULL << cpu_phys_address_size()) - 1;
 	mask |= MTRR_PHYS_MASK_VALID;
-	debug("   %016llx %016llx\n", req->start | req->type, mask);
+	printf("   %016llx %016llx\n", req->start | req->type, mask);
 
 	return 0;
 }
@@ -361,7 +434,7 @@ int mtrr_list(int reg_count, int cpu_select)
 
 		base = info.mtrr[i].base;
 		mask = info.mtrr[i].mask;
-		size = ~mask & ((1ULL << CONFIG_CPU_ADDR_BITS) - 1);
+		size = ~mask & ((1ULL << cpu_phys_address_size()) - 1);
 		size |= (1 << 12) - 1;
 		size += 1;
 		valid = mask & MTRR_PHYS_MASK_VALID;

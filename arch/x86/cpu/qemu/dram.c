@@ -51,10 +51,12 @@ int dram_init(void)
 	if (xpl_phase() == PHASE_BOARD_F) {
 		ret = mtrr_add_request(MTRR_TYPE_WRBACK, 0, gd->ram_size);
 		if (ret)
-			return ret;
-		ret = mtrr_commit(false);
-		if (ret)
-			return ret;
+			return log_msg_ret("mta", ret);
+		if (!IS_ENABLED(X86_32BIT_INIT)) {
+			ret = mtrr_commit(false);
+			if (ret)
+				return log_msg_ret("mtc", ret);
+		}
 	}
 
 	return 0;
