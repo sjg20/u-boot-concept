@@ -195,7 +195,7 @@ int mtrr_add_request(int type, uint64_t start, uint64_t size)
 	if (!gd->arch.has_mtrr)
 		return -ENOSYS;
 
-	if (!is_power_of_2(size))
+	if (!is_power_of_2_u64(size))
 		return -EINVAL;
 
 	if (gd->arch.mtrr_req_count == MAX_MTRR_REQUESTS)
