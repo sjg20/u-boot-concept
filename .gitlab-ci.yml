@@ -745,3 +745,8 @@ zybo:
   variables:
     ROLE: zybo
   <<: *lab_dfn
+
+qemu-x86_64:
+  variables:
+    ROLE: qemu-x86_64
+  <<: *lab_dfn
