@@ -94,3 +94,31 @@ developing features.  In that case, it can be useful as part of your own
 testing cycle to edit these pipelines in separate local commits to pair them
 down to just the jobs you're interested in.  These changes must be removed
 prior to submission.
+
+Using the lab
+-------------
+
+There is an 'sjg' lab connected to gitlab. By default, this is set to run
+manually, so you must click a button in the gitlab interface to kick off a run.
+
+You can control this behaviour by passing variables with your `git push`
+command.
+
+To skip CI altogether (assuming your remote is called `ci` and the branch is
+`feature`)::
+
+    git push ci -o ci.skip <branch>
+
+To request that the lab runs::
+
+    git push ci -o ci.variable=SJG_LAB=1 <branch>
+
+To request that *only* the lab runs::
+
+    git push ci -o ci.variable=SJG_LAB=1 ci.variable=LAB_ONLY=1 <branch>
+
+To request running on just a particular board in the lab, e.g. `snow`::
+
+    git push ci -o ci.variable=SJG_LAB=snow <branch>
+
+The `LAB_ONLY` and `SJG_ONLY` options can be specified together.
