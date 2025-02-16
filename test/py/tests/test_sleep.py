@@ -19,6 +19,7 @@ env__sleep_margin = 0.25
 
 """
 
+@pytest.mark.role('!qemu-x86_64')
 def test_sleep(ubman):
     """Test the sleep command, and validate that it sleeps for approximately
     the correct amount of time."""
