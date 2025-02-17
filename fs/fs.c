@@ -144,6 +144,12 @@ static inline int fs_mkdir_unsupported(const char *dirname)
 	return -1;
 }
 
+static inline int fs_rename_unsupported(const char *old_path,
+					const char *new_path)
+{
+	return -1;
+}
+
 struct fstype_info {
 	int fstype;
 	char *name;
@@ -184,6 +190,7 @@ struct fstype_info {
 	int (*unlink)(const char *filename);
 	int (*mkdir)(const char *dirname);
 	int (*ln)(const char *filename, const char *target);
+	int (*rename)(const char *old_path, const char *new_path);
 };
 
 static struct fstype_info fstypes[] = {
@@ -207,6 +214,7 @@ static struct fstype_info fstypes[] = {
 		.unlink = fs_unlink_unsupported,
 		.mkdir = fs_mkdir_unsupported,
 #endif
+		.rename = fs_rename_unsupported,
 		.uuid = fat_uuid,
 		.opendir = fat_opendir,
 		.readdir = fat_readdir,
@@ -239,6 +247,7 @@ static struct fstype_info fstypes[] = {
 		.closedir = ext4fs_closedir,
 		.unlink = fs_unlink_unsupported,
 		.mkdir = fs_mkdir_unsupported,
+		.rename = fs_rename_unsupported,
 	},
 #endif
 #if IS_ENABLED(CONFIG_SANDBOX) && !IS_ENABLED(CONFIG_XPL_BUILD)
@@ -258,6 +267,7 @@ static struct fstype_info fstypes[] = {
 		.unlink = fs_unlink_unsupported,
 		.mkdir = fs_mkdir_unsupported,
 		.ln = fs_ln_unsupported,
+		.rename = fs_rename_unsupported,
 	},
 #endif
 #if CONFIG_IS_ENABLED(SEMIHOSTING)
@@ -277,6 +287,7 @@ static struct fstype_info fstypes[] = {
 		.unlink = fs_unlink_unsupported,
 		.mkdir = fs_mkdir_unsupported,
 		.ln = fs_ln_unsupported,
+		.rename = fs_rename_unsupported,
 	},
 #endif
 #ifndef CONFIG_XPL_BUILD
@@ -297,6 +308,7 @@ static struct fstype_info fstypes[] = {
 		.unlink = fs_unlink_unsupported,
 		.mkdir = fs_mkdir_unsupported,
 		.ln = fs_ln_unsupported,
+		.rename = fs_rename_unsupported,
 	},
 #endif
 #endif
@@ -318,6 +330,7 @@ static struct fstype_info fstypes[] = {
 		.unlink = fs_unlink_unsupported,
 		.mkdir = fs_mkdir_unsupported,
 		.ln = fs_ln_unsupported,
+		.rename = fs_rename_unsupported,
 	},
 #endif
 #endif
@@ -340,6 +353,7 @@ static struct fstype_info fstypes[] = {
 		.ln = fs_ln_unsupported,
 		.unlink = fs_unlink_unsupported,
 		.mkdir = fs_mkdir_unsupported,
+		.rename = fs_rename_unsupported,
 	},
 #endif
 #if IS_ENABLED(CONFIG_FS_EROFS)
@@ -361,6 +375,7 @@ static struct fstype_info fstypes[] = {
 		.ln = fs_ln_unsupported,
 		.unlink = fs_unlink_unsupported,
 		.mkdir = fs_mkdir_unsupported,
+		.rename = fs_rename_unsupported,
 	},
 #endif
 	{
@@ -379,6 +394,7 @@ static struct fstype_info fstypes[] = {
 		.unlink = fs_unlink_unsupported,
 		.mkdir = fs_mkdir_unsupported,
 		.ln = fs_ln_unsupported,
+		.rename = fs_rename_unsupported,
 	},
 };
 
@@ -707,6 +723,22 @@ int fs_ln(const char *fname, const char *target)
 
 	if (ret < 0) {
 		log_err("** Unable to create link %s -> %s **\n", fname, target);
+		ret = -1;
+	}
+	fs_close();
+
+	return ret;
+}
+
+int fs_rename(const char *old_path, const char *new_path)
+{
+	struct fstype_info *info = fs_get_info(fs_type);
+	int ret;
+
+	ret = info->rename(old_path, new_path);
+
+	if (ret < 0) {
+		log_debug("Unable to rename %s -> %s\n", old_path, new_path);
 		ret = -1;
 	}
 	fs_close();
