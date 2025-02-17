@@ -38,7 +38,8 @@ usage() {
 }
 
 # Directory tree for OS images
-imagedir=${imagedir-/vid/software/linux}
+# imagedir=${imagedir-/vid/software/linux}
+imagedir=${imagedir-~/dev}
 
 # Directory for UEFI Self-Certification Test (SCT)
 sctdir=${sctdir-/vid/software/devel/uefi/sct}
