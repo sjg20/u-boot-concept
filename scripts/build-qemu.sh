@@ -23,6 +23,7 @@ usage() {
 	echo
 	echo "   -a <arch> - Select architecture (arm, x86)"
 	echo "   -B        - Don't build; assume a build exists"
+	echo "   -d <fname>- Root disk to use"
 	echo "   -e        - Run UEFI Self-Certification Test (SCT)"
 	echo "   -k        - Use kvm (kernel-based Virtual Machine)"
 	echo "   -o <name> - Run Operating System ('ubuntu' only for now)"
@@ -58,6 +59,8 @@ extra=
 # Operating System to boot (ubuntu)
 os=
 
+disk=
+
 release=24.04.1
 
 # run the image with QEMU
@@ -73,13 +76,17 @@ kvm=
 # We avoid in-tree build because it gets confusing trying different builds
 ubdir=${ubdir-/tmp/b}
 
-while getopts "a:Beko:rR:sS:w" opt; do
+while getopts "a:Bd:eko:rR:sS:w" opt; do
 	case "${opt}" in
 	a)
 		arch=$OPTARG
 		;;
 	B)
 		build=
+		;;
+	d)
+		disk=$OPTARG
+		extra+=" -m 4G -smp 4"
 		;;
 	e)
 		extra+=" -m 4G -smp 4"
@@ -115,7 +122,6 @@ while getopts "a:Beko:rR:sS:w" opt; do
 		;;
 	w)
 		bitness=32
-		release=16.04.6
 		;;
 	*)
 		usage
@@ -143,6 +149,7 @@ update_sct_seq() {
 
 # Run QEMU with U-Boot
 run_qemu() {
+	extra+=" -net user -net nic,model=virtio-net-pci"
 	if [[ -n "${os_image}" ]]; then
 		extra+=" -drive if=virtio,file=${os_image},format=raw,id=hd0"
 	fi
@@ -151,9 +158,12 @@ run_qemu() {
 	else
 		extra+=" -serial mon:stdio"
 	fi
-	echo "Running ${qemu} ${kvm} ${extra}"
+	if [[ -n "${disk}" ]]; then
+		extra+=" -drive if=virtio,file=${disk},format=raw,id=hd1"
+	fi
+	echo "Running ${qemu} -bios "$DIR/${BIOS}" ${kvm} ${extra}"
 	"${qemu}" -bios "$DIR/${BIOS}" \
-		-m 512 \
+		-m 512M \
 		-nic none \
 		${kvm} \
 		${extra}
