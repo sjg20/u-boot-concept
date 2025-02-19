@@ -23,6 +23,7 @@ usage() {
 	echo
 	echo "   -a <arch> - Select architecture (arm, x86)"
 	echo "   -B        - Don't build; assume a build exists"
+	echo "   -d <fname>- Root disk to use"
 	echo "   -e        - Run UEFI Self-Certification Test (SCT)"
 	echo "   -k        - Use kvm (kernel-based Virtual Machine)"
 	echo "   -o <name> - Run Operating System ('ubuntu' only for now)"
@@ -58,6 +59,9 @@ extra=
 # Operating System to boot (ubuntu)
 os=
 
+# Root-disk filename
+disk=
+
 release=24.04.1
 
 # run the image with QEMU
@@ -73,13 +77,17 @@ kvm=
 # We avoid in-tree build because it gets confusing trying different builds
 ubdir=${ubdir-/tmp/b}
 
-while getopts "a:Beko:rR:sS:w" opt; do
+while getopts "a:Bd:eko:rR:sS:w" opt; do
 	case "${opt}" in
 	a)
 		arch=$OPTARG
 		;;
 	B)
 		build=
+		;;
+	d)
+		disk=$OPTARG
+		extra+=" -m 4G -smp 4"
 		;;
 	e)
 		extra+=" -m 4G -smp 4"
@@ -149,6 +157,9 @@ run_qemu() {
 		extra+=" -display none -serial mon:stdio"
 	else
 		extra+=" -serial mon:stdio"
+	fi
+	if [[ -n "${disk}" ]]; then
+		extra+=" -drive if=virtio,file=${disk},format=raw,id=hd1"
 	fi
 	echo "Running ${qemu} -bios "$DIR/${BIOS}" ${kvm} ${extra}"
 	"${qemu}" -bios "$DIR/${BIOS}" \
