@@ -150,6 +150,7 @@ update_sct_seq() {
 
 # Run QEMU with U-Boot
 run_qemu() {
+	extra+=" -net user -net nic,model=virtio-net-pci"
 	if [[ -n "${os_image}" ]]; then
 		extra+=" -drive if=virtio,file=${os_image},format=raw,id=hd0"
 	fi
