@@ -1503,7 +1503,7 @@ int rsa_verify_openssl(struct image_sign_info *info,
 		goto out;
 	}
 
-	for (i=0 ; i < region_count ; ++i) {
+	for (i = 0; i < region_count; ++i) {
 		if (EVP_DigestVerifyUpdate(ctx, region[i].data,
 					   region[i].size) <= 0) {
 			ret = -EINVAL;
