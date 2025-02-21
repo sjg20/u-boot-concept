@@ -158,7 +158,7 @@ static int dm_test_usb_stop(struct unit_test_state *uts)
 	ut_assertok(uclass_get_device(UCLASS_MASS_STORAGE, 0, &dev));
 	ut_assertok(uclass_get_device(UCLASS_MASS_STORAGE, 1, &dev));
 	ut_assertok(uclass_get_device(UCLASS_MASS_STORAGE, 2, &dev));
-	ut_asserteq(6, count_usb_devices());
+	ut_asserteq(7, count_usb_devices());
 	ut_assertok(usb_stop());
 	ut_asserteq(0, count_usb_devices());
 
@@ -429,7 +429,7 @@ static int dm_test_usb_keyb(struct unit_test_state *uts)
 	/* Initially there should be no characters */
 	ut_asserteq(0, tstc());
 
-	ut_assertok(uclass_get_device_by_name(UCLASS_USB_EMUL, "keyb@3",
+	ut_assertok(uclass_get_device_by_name(UCLASS_USB_EMUL, "keyb@4",
 					      &dev));
 
 	/*
