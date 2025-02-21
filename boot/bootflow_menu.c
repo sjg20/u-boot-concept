@@ -175,18 +175,12 @@ int bootflow_menu_apply_theme(struct expo *exp, ofnode node)
 	return 0;
 }
 
-int bootflow_menu_run(struct bootstd_priv *std, bool text_mode,
-		      struct bootflow **bflowp)
+int bootflow_menu_start(struct bootstd_priv *std, bool text_mode,
+			struct expo **expp)
 {
-	struct bootflow *sel_bflow;
 	struct udevice *dev;
 	struct expo *exp;
-	uint sel_id;
-	bool done;
 	int ret;
-
-	sel_bflow = NULL;
-	*bflowp = NULL;
 
 	ret = bootflow_menu_new(&exp);
 	if (ret)
@@ -213,45 +207,41 @@ int bootflow_menu_run(struct bootstd_priv *std, bool text_mode,
 	if (text_mode)
 		expo_set_text_mode(exp, text_mode);
 
-	done = false;
-	do {
-		struct expo_action act;
+	*expp = exp;
 
-		ret = expo_poll(exp, &act);
-		if (!ret) {
-			switch (act.type) {
-			case EXPOACT_SELECT:
-				sel_id = act.select.id;
-				done = true;
-				break;
-			case EXPOACT_QUIT:
-				return -EPIPE;
-			default:
-				break;
-			}
-		} else if (ret != -EAGAIN) {
-			LOGR("bmr", ret);
-		}
-	} while (!done);
+	return 0;
+}
 
-	if (sel_id) {
+int bootflow_menu_poll(struct expo *exp, struct bootflow **bflowp)
+{
+	struct bootflow *sel_bflow;
+	struct expo_action act;
+	int ret;
+
+	sel_bflow = NULL;
+	*bflowp = NULL;
+
+	LOGR("bmp", expo_poll(exp, &act));
+
+	switch (act.type) {
+	case EXPOACT_SELECT: {
 		struct bootflow *bflow;
 		int i;
 
 		for (ret = bootflow_first_glob(&bflow), i = 0; !ret && i < 36;
 		     ret = bootflow_next_glob(&bflow), i++) {
-			if (i == sel_id - ITEM) {
-				sel_bflow = bflow;
-				break;
+			if (i == act.select.id - ITEM) {
+				*bflowp = bflow;
+				return 0;
 			}
 		}
+		break;
 	}
-
-	expo_destroy(exp);
-
-	if (!sel_bflow)
-		return -EAGAIN;
-	*bflowp = sel_bflow;
+	case EXPOACT_QUIT:
+		return -EPIPE;
+	default:
+		break;
+	}
 
 	return 0;
 }
