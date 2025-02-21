@@ -1308,8 +1308,10 @@ static int bootflow_efi(struct unit_test_state *uts)
 	ut_assert_nextlinen("  0  extlinux");
 	ut_assert_nextlinen(
 		"  1  efi          ready   usb_mass_    1  usb_mass_storage.lun0.boo /EFI/BOOT/BOOTSBOX.EFI");
+	ut_assert_nextlinen(
+		"  2  extlinux     ready   usb_mass_    1  usb_mass_storage.lun0.boo /extlinux/extlinux.conf");
 	ut_assert_nextlinen("---");
-	ut_assert_skip_to_line("(2 bootflows, 2 valid)");
+	ut_assert_skip_to_line("(3 bootflows, 3 valid)");
 	ut_assert_console_end();
 
 	ut_assertok(run_command("bootflow select 1", 0));

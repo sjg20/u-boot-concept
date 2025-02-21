@@ -1536,6 +1536,12 @@
 					sandbox,filepath = "testflash2.bin";
 				};
 
+				flash-stick@3 {
+					reg = <3>;
+					compatible = "sandbox,usb-flash";
+					sandbox,filepath = "flash3.img";
+				};
+
 				keyb@3 {
 					reg = <3>;
 					compatible = "sandbox,usb-keyb";
