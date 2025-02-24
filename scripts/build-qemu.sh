@@ -94,7 +94,20 @@ while getopts "a:Bd:D:eEko:rR:sS:w" opt; do
 		;;
 	d)
 		disk=$OPTARG
-		extra+=" -m 4G -smp 4"
+		extra+=" -m 4G"
+# 		extra+=" -smp 4"
+		;;
+	D)
+		virtfs_dir=$OPTARG
+		extra+=" -chardev socket,id=char0,path=/tmp/virtiofs.sock"
+		extra+=" -device vhost-user-fs-pci,queue-size=1024,chardev=char0,tag=hostshare"
+		extra+=" -object memory-backend-file,id=mem,size=4G,mem-path=/dev/shm,share=on"
+		extra+=" -numa node,memdev=mem"
+
+		/usr/libexec/virtiofsd --shared-dir ${virtfs_dir} \
+			--socket-path /tmp/virtiofs.sock --cache auto 2>/dev/null &
+
+# 		extra+=" -virtfs local,path=${virtfs_dir},mount_tag=hostshare,security_model=passthrough,id=virtfs0"
 		;;
 	D)
 		virtfs_dir=$OPTARG
