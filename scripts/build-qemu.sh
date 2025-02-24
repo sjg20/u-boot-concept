@@ -26,6 +26,7 @@ usage() {
 	echo "   -d <fname>- Root disk to use"
 	echo "   -D <dir>  - Directory to share into the guest"
 	echo "   -e        - Run UEFI Self-Certification Test (SCT)"
+	echo "   -E        - Run Tianocore instead of U-Boot"
 	echo "   -k        - Use kvm (kernel-based Virtual Machine)"
 	echo "   -o <name> - Run Operating System ('ubuntu' only for now)"
 	echo "   -r        - Run QEMU with the image"
@@ -77,11 +78,13 @@ kvm=
 # virtfs directory
 virtfs_dir=
 
+bios=
+
 # Set ubdir to the build directory where you build U-Boot out-of-tree
 # We avoid in-tree build because it gets confusing trying different builds
 ubdir=${ubdir-/tmp/b}
 
-while getopts "a:Bd:D:eko:rR:sS:w" opt; do
+while getopts "a:Bd:D:eEko:rR:sS:w" opt; do
 	case "${opt}" in
 	a)
 		arch=$OPTARG
@@ -113,6 +116,9 @@ while getopts "a:Bd:D:eko:rR:sS:w" opt; do
 		extra+=" -device virtio-blk-device,drive=vda,bootindex=1"
 		extra+=" -device virtio-net-device,netdev=net0"
 		extra+=" -netdev user,id=net0"
+		;;
+	E)
+		bios="/vid/software/devel/efi/OVMF-pure-efi.x64.fd"
 		;;
 	k)
 		kvm="-enable-kvm -cpu host"
@@ -176,8 +182,8 @@ run_qemu() {
 	if [[ -n "${disk}" ]]; then
 		extra+=" -drive if=virtio,file=${disk},format=raw,id=hd1"
 	fi
-	echo "Running ${qemu} -bios "$DIR/${BIOS}" ${kvm} ${extra}"
-	"${qemu}" -bios "$DIR/${BIOS}" \
+	echo "Running ${qemu} -bios "${bios}" ${kvm} ${extra}"
+	"${qemu}" -bios "${bios}" \
 		-m 512 \
 		-nic none \
 		${kvm} \
@@ -226,6 +232,8 @@ ubuntu)
 esac
 
 DIR=${ubdir}/${BOARD}
+
+bios="${bios:-${DIR}/${BIOS}}"
 
 if [[ -n "${build}" ]]; then
 	build_u_boot
