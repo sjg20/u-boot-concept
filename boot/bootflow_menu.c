@@ -135,6 +135,10 @@ int bootflow_menu_add(struct expo *exp, struct bootflow *bflow, int seq,
 	priv->num_bootflows++;
 	*scnp = scn;
 
+	ret = scene_arrange(scn);
+	if (ret)
+		return log_msg_ret("arr", ret);
+
 	return 0;
 }
 
@@ -239,35 +243,27 @@ int bootflow_menu_start(struct bootstd_priv *std, bool text_mode,
 	return 0;
 }
 
-int bootflow_menu_poll(struct expo *exp, struct bootflow **bflowp)
+int bootflow_menu_poll(struct expo *exp, int *seqp)
 {
 	struct bootflow *sel_bflow;
 	struct expo_action act;
-	int ret;
 
 	sel_bflow = NULL;
-	*bflowp = NULL;
+	*seqp = -1;
 
 	LOGR("bmp", expo_poll(exp, &act));
 
 	switch (act.type) {
 	case EXPOACT_SELECT: {
-		struct bootflow *bflow;
-		int i;
-
-		for (ret = bootflow_first_glob(&bflow), i = 0; !ret && i < 36;
-		     ret = bootflow_next_glob(&bflow), i++) {
-			if (i == act.select.id - ITEM) {
-				*bflowp = bflow;
-				return 0;
-			}
-		}
+		*seqp = act.select.id - ITEM;
 		break;
 	}
 	case EXPOACT_QUIT:
 		return -EPIPE;
+	case EXPOACT_POINT_ITEM:
+		return -ERESTART;
 	default:
-		break;
+		return -EAGAIN;
 	}
 
 	return 0;

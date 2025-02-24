@@ -138,14 +138,55 @@ static int do_bootdev_hunt(struct cmd_tbl *cmdtp, int flag, int argc,
 	return 0;
 }
 
+static int do_bootdev_order(struct cmd_tbl *cmdtp, int flag, int argc,
+			    char *const argv[])
+{
+	struct bootstd_priv *priv;
+	int ret = 0;
+
+	ret = bootstd_get_priv(&priv);
+	if (ret)
+		return ret;
+	if (argc == 2 && !strncmp(argv[1], "clear", strlen(argv[1]))) {
+		priv->bootdev_order = NULL;
+	} else if (argc >= 2) {
+		struct alist order;
+		int arg;
+
+		alist_init_struct(&order, char *);
+		for (arg = 1; arg < argc; arg++) {
+			char *val = strdup(argv[arg]);
+
+			if (!val || !alist_add(&order, val)) {
+				printf("Out of memory\n");
+				return CMD_RET_FAILURE;
+			}
+		}
+		priv->bootdev_order = alist_uninit_move_ptr(&order, NULL);
+	} else {
+		const char **order = priv->bootdev_order;
+
+		if (!order) {
+			printf("No ordering\n");
+		} else {
+			while (*order)
+				printf("%s\n", *order++);
+		}
+	}
+
+	return 0;
+}
+
 U_BOOT_LONGHELP(bootdev,
 	"list [-p]         - list all available bootdevs (-p to probe)\n"
 	"bootdev hunt [-l|<spec>]  - use hunt drivers to find bootdevs\n"
+	"bootdev order [clear] | [<spec>..]  - view of update bootdev order\n"
 	"bootdev select <bd>       - select a bootdev by name | label | seq\n"
 	"bootdev info [-p]         - show information about a bootdev (-p to probe)");
 
 U_BOOT_CMD_WITH_SUBCMDS(bootdev, "Boot devices", bootdev_help_text,
 	U_BOOT_SUBCMD_MKENT(list, 2, 1, do_bootdev_list),
 	U_BOOT_SUBCMD_MKENT(hunt, 2, 1, do_bootdev_hunt),
+	U_BOOT_SUBCMD_MKENT(order, CONFIG_SYS_MAXARGS, 1, do_bootdev_order),
 	U_BOOT_SUBCMD_MKENT(select, 2, 1, do_bootdev_select),
 	U_BOOT_SUBCMD_MKENT(info, 2, 1, do_bootdev_info));

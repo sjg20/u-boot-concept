@@ -213,6 +213,9 @@ int bootmeth_check(struct udevice *dev, struct bootflow_iter *iter);
 /**
  * bootmeth_read_bootflow() - set up a bootflow for a device
  *
+ * On entry fs_set_blk_dev_with_part() has been called so it should be possible
+ * to read the file without calling that again.
+ *
  * @dev:	Bootmethod device to check
  * @bflow:	On entry, provides dev, hwpart, part and method.
  *	Returns updated bootflow if found

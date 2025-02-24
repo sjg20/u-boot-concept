@@ -1,0 +1,24 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * Definition for how to boot Ubuntu 24.04
+ *
+ * This contains the various components needed to boot Ubuntu 24.04 Desktop. It
+ * provides a description of the process, similar to a grub.cfg file.
+ */
+
+&boot_ctl {
+	display {
+		compatible = "bootctl,simple-display", "bootctl,display";
+		graphical = "if-available";
+		textual = "if-available";
+	};
+
+	vars {
+		compatible = "bootctl,name-value-pairs";
+		filename = "bootstate.txt";
+	};
+
+	oslist {
+		compatible = "bootctl,extlinux-oslist";
+	};
+};

@@ -586,6 +586,8 @@ int bootdev_next_label(struct bootflow_iter *iter, struct udevice **devp,
 		const char *label = iter->labels[iter->cur_label];
 		int ret;
 
+		if (!label)
+			break;
 		log_debug("Scanning: %s\n", label);
 		ret = bootdev_hunt_and_find_by_label(label, &dev,
 						     method_flagsp);

@@ -44,6 +44,7 @@ enum uclass_id {
 	UCLASS_BLK,		/* Block device */
 	UCLASS_BLKMAP,		/* Composable virtual block device */
 	UCLASS_BOOTCOUNT,       /* Bootcount backing store */
+	UCLASS_BOOTCTL,		/* Boot-control drivers */
 	UCLASS_BOOTDEV,		/* Boot device for locating an OS to boot */
 	UCLASS_BOOTMETH,	/* Bootmethod for booting an OS */
 	UCLASS_BOOTSTD,		/* Standard boot driver */
