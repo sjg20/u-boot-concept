@@ -152,6 +152,7 @@ class BuildEfi:
             else:
                 qemu_arch = 'i386'
                 bios = 'OVMF-pure-efi.i386.fd'
+            extra += ['--machine', 'q35']
             extra += ['-bios', os.path.join(efi_dir, bios)]
             extra += ['-drive', f'id=disk,file={self.img},if=none,format=raw']
             extra += ['-device', 'ahci,id=ahci']
