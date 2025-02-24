@@ -24,6 +24,7 @@ usage() {
 	echo "   -a <arch> - Select architecture (arm, x86)"
 	echo "   -B        - Don't build; assume a build exists"
 	echo "   -d <fname>- Root disk to use"
+	echo "   -D <dir>  - Directory to share into the guest"
 	echo "   -e        - Run UEFI Self-Certification Test (SCT)"
 	echo "   -k        - Use kvm (kernel-based Virtual Machine)"
 	echo "   -o <name> - Run Operating System ('ubuntu' only for now)"
@@ -73,11 +74,14 @@ serial=
 # Use kvm
 kvm=
 
+# virtfs directory
+virtfs_dir=
+
 # Set ubdir to the build directory where you build U-Boot out-of-tree
 # We avoid in-tree build because it gets confusing trying different builds
 ubdir=${ubdir-/tmp/b}
 
-while getopts "a:Bd:eko:rR:sS:w" opt; do
+while getopts "a:Bd:D:eko:rR:sS:w" opt; do
 	case "${opt}" in
 	a)
 		arch=$OPTARG
@@ -88,6 +92,16 @@ while getopts "a:Bd:eko:rR:sS:w" opt; do
 	d)
 		disk=$OPTARG
 		extra+=" -m 4G -smp 4"
+		;;
+	D)
+		virtfs_dir=$OPTARG
+		extra+=" -chardev socket,id=char0,path=/tmp/virtiofs.sock"
+		extra+=" -device vhost-user-fs-pci,queue-size=1024,chardev=char0,tag=hostshare"
+		extra+=" -object memory-backend-file,id=mem,size=4G,mem-path=/dev/shm,share=on"
+		extra+=" -numa node,memdev=mem"
+
+		/usr/libexec/virtiofsd --shared-dir ${virtfs_dir} \
+			--socket-path /tmp/virtiofs.sock --cache auto 2>/dev/null &
 		;;
 	e)
 		extra+=" -m 4G -smp 4"
