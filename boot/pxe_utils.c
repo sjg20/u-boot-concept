@@ -601,7 +601,8 @@ static int label_run_boot(struct pxe_context *ctx, struct pxe_label *label,
 
 	if (initrd_addr_str) {
 		bmi.conf_ramdisk = initrd_str;
-		bootm_x86_set(&bmi, initrd_addr, hextoul(kernel_addr, NULL));
+		bootm_x86_set(&bmi, initrd_addr,
+			      hextoul(initrd_addr_str, NULL));
 		bootm_x86_set(&bmi, initrd_size,
 			      hextoul(initrd_filesize, NULL));
 	}
