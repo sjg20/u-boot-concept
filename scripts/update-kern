@@ -1,0 +1,19 @@
+#!/bin/bash
+# SPDX-License-Identifier: GPL-2.0+
+
+# Write a kernel into root.img
+
+kern=$1
+
+mnt=/mnt/x
+
+loop=$(sudo losetup --show -f -P  root.img)
+echo LOOP $loop
+sudo mount ${loop}p2 $mnt
+sudo cp -v $kern $mnt/boot
+
+# uncomment to edit extlinux.conf
+#sudo gedit $mnt/boot/extlinux/extlinux.conf
+
+sudo umount $mnt
+sudo losetup -d $loop
