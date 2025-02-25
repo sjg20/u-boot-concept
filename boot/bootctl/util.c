@@ -11,8 +11,9 @@
 #include <log.h>
 #include <stdarg.h>
 #include <vsprintf.h>
+#include "state.h"
+#include "ui.h"
 #include "util.h"
-#include "display.h"
 #include "oslist.h"
 
 /**
@@ -93,3 +94,13 @@ int bc_oslist_next(struct udevice *dev, struct oslist_iter *iter,
 
 	return 0;
 }
+
+int bc_state_read(struct udevice *dev)
+{
+	struct bc_state_ops *ops = bc_state_get_ops(dev);
+
+	LOGR("bon", ops->read(dev));
+
+	return 0;
+}
+

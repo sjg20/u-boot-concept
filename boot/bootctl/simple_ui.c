@@ -11,8 +11,8 @@
 #include <bootstd.h>
 #include <dm.h>
 #include <expo.h>
-#include "display.h"
 #include "oslist.h"
+#include "ui.h"
 #include "util.h"
 
 /**

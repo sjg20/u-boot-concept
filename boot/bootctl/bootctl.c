@@ -12,7 +12,7 @@
 #include <version.h>
 #include <dm/device-internal.h>
 #include "util.h"
-#include "display.h"
+#include "ui.h"
 #include "oslist.h"
 
 int bootctl_get_dev(enum uclass_id type, struct udevice **devp)
@@ -27,18 +27,24 @@ int bootctl_get_dev(enum uclass_id type, struct udevice **devp)
 
 int bootctl_run(void)
 {
-	struct udevice *disp, *oslist;
+	struct udevice *disp, *oslist, *state;
 	struct osinfo *selected;
 	struct oslist_iter iter;
 	bool running, scanning;
 
-	/* figure out the display to use */
+	/* figure out the UI to use */
 	LOGR("bgd", bootctl_get_dev(UCLASS_BOOTCTL_UI, &disp));
 	bc_printf(disp, "Canonical Sourceboot v%d.%02d\n",
 		  U_BOOT_VERSION_NUM, U_BOOT_VERSION_NUM_PATCH);
 
 	/* figure out the oslist to use */
 	LOGR("bgo", bootctl_get_dev(UCLASS_BOOTCTL_OSLIST, &oslist));
+
+	/* figure out the state to use */
+	LOGR("bgs", bootctl_get_dev(UCLASS_BOOTCTL_STATE, &state));
+
+	/* read in our state */
+	LOGR("bsr", bc_state_read(state));
 
 	LOGR("bds", bc_ui_show(disp));
 

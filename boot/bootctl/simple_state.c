@@ -22,13 +22,13 @@ static int simple_state_bind(struct udevice *dev)
 	return 0;
 }
 
-static int simple_state_first(struct udevice *dev)
+static int simple_state_read(struct udevice *dev)
 {
 	return 0;
 }
 
 static struct bc_state_ops ops = {
-	.first	= simple_state_first,
+	.read	= simple_state_read,
 };
 
 static const struct udevice_id simple_state_ids[] = {

@@ -27,15 +27,20 @@ struct bc_state {
  */
 struct bc_state_ops {
 	/**
-	 * first() - Find the first available OS
+	 * read() - Read in the current state
 	 *
-	 * @info: Returns info on success
-	 * Return 0 if OK, -ENOENT if there is no OS to boot
+	 * Return 0 if OK, -ENOENT if there is no state
 	 */
-	int (*first)(struct udevice *dev);
-
+	int (*read)(struct udevice *dev);
 };
 
 #define bc_state_get_ops(dev)  ((struct bc_state_ops *)(dev)->driver->ops)
+
+/**
+  * read() - Read in the current state
+  *
+  * Return 0 if OK, -ENOENT if there is no state
+  */
+int bc_state_read(struct udevice *dev);
 
 #endif
