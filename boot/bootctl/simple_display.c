@@ -53,7 +53,6 @@ static int simple_display_bind(struct udevice *dev)
 {
 	struct bootctl_uc_plat *ucp = dev_get_uclass_plat(dev);
 
-	ucp->type = BOOTCTLT_DISPLAY;
 	ucp->desc = "Graphical or textual display for user";
 
 	return 0;

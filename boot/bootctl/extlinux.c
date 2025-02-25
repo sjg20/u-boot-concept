@@ -17,7 +17,6 @@ static int extlinux_bind(struct udevice *dev)
 {
 	struct bootctl_uc_plat *ucp = dev_get_uclass_plat(dev);
 
-	ucp->type = BOOTCTLT_OSLIST;
 	ucp->desc = "Provides OSes to boot";
 
 	return 0;
@@ -58,7 +57,7 @@ static const struct udevice_id extlinux_ids[] = {
 
 U_BOOT_DRIVER(extlinux) = {
 	.name		= "extlinux",
-	.id		= UCLASS_BOOTCTL,
+	.id		= UCLASS_BOOTCTL_OSLIST,
 	.of_match	= extlinux_ids,
 	.bind		= extlinux_bind,
 	.ops		= &ops,

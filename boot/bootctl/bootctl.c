@@ -8,32 +8,21 @@
 
 #include <bootctl.h>
 #include <dm.h>
+#include <log.h>
 #include <version.h>
 #include <dm/device-internal.h>
 #include "util.h"
 #include "display.h"
 #include "oslist.h"
 
-int bootctl_get_dev(enum bootctl_type type, struct udevice **devp)
+int bootctl_get_dev(enum uclass_id type, struct udevice **devp)
 {
 	struct udevice *dev;
-	struct uclass *uc;
 
-	uclass_id_foreach_dev(UCLASS_BOOTCTL, dev, uc) {
-		struct bootctl_uc_plat *ucp = dev_get_uclass_plat(dev);
+	LOGR("bfd", uclass_first_device_err(type, &dev));
+	*devp = dev;
 
-		if (type == ucp->type) {
-			int ret;
-
-			*devp = dev;
-			ret = device_probe(dev);
-			if (ret)
-				return ret;
-			return 0;
-		}
-	}
-
-	return -ENOENT;
+	return 0;
 }
 
 int bootctl_run(void)
@@ -44,12 +33,12 @@ int bootctl_run(void)
 	bool running, scanning;
 
 	/* figure out the display to use */
-	LOGR("bgd", bootctl_get_dev(BOOTCTLT_DISPLAY, &disp));
+	LOGR("bgd", bootctl_get_dev(UCLASS_BOOTCTL_UI, &disp));
 	bc_printf(disp, "Canonical Sourceboot v%d.%02d\n",
 		  U_BOOT_VERSION_NUM, U_BOOT_VERSION_NUM_PATCH);
 
 	/* figure out the oslist to use */
-	LOGR("bgo", bootctl_get_dev(BOOTCTLT_OSLIST, &oslist));
+	LOGR("bgo", bootctl_get_dev(UCLASS_BOOTCTL_OSLIST, &oslist));
 
 	LOGR("bds", bc_display_show(disp));
 

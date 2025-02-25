@@ -10,11 +10,6 @@
 #include <command.h>
 #include <dm.h>
 
-static const char *bootctl_type_name[] = {
-	[BOOTCTLT_CORE]		= "core logic",
-	[BOOTCTLT_DISPLAY]	= "display",
-};
-
 static int do_bootctl_list(struct cmd_tbl *cmdtp, int flag, int argc,
 			   char *const argv[])
 {
@@ -30,7 +25,7 @@ static int do_bootctl_list(struct cmd_tbl *cmdtp, int flag, int argc,
 		struct bootctl_uc_plat *ucp = dev_get_uclass_plat(dev);
 
 		printf("%3d  %-15.15s %-15.15s %s\n", i, dev->name,
-		       bootctl_type_name[ucp->type], ucp->desc);
+		       dev_get_uclass_name(dev), ucp->desc);
 		i++;
 	}
 

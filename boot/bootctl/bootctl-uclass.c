@@ -38,3 +38,15 @@ UCLASS_DRIVER(bootctrl) = {
 #endif
 	.per_device_plat_auto	= sizeof(struct bootctl_uc_plat),
 };
+
+UCLASS_DRIVER(bootctrl_ui) = {
+	.id		= UCLASS_BOOTCTL_UI,
+	.name		= "bootctrl_ui",
+	.per_device_plat_auto	= sizeof(struct bootctl_uc_plat),
+};
+
+UCLASS_DRIVER(bootctrl_oslist) = {
+	.id		= UCLASS_BOOTCTL_OSLIST,
+	.name		= "bootctrl_oslist",
+	.per_device_plat_auto	= sizeof(struct bootctl_uc_plat),
+};
