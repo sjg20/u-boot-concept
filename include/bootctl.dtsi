@@ -7,6 +7,14 @@
  */
 
 &boot_ctl {
+	oslist {
+		compatible = "bootctl,extlinux-oslist";
+	};
+
+	strte {
+		compatible = "bootctl,state", "bootctl,simple-state";
+	};
+
 	ui {
 		compatible = "bootctl,simple-ui", "bootctl,ui";
 		graphical = "if-available";
@@ -16,9 +24,5 @@
 	vars {
 		compatible = "bootctl,name-value-pairs";
 		filename = "bootstate.txt";
-	};
-
-	oslist {
-		compatible = "bootctl,extlinux-oslist";
 	};
 };

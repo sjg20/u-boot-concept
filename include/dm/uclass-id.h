@@ -46,6 +46,7 @@ enum uclass_id {
 	UCLASS_BOOTCOUNT,       /* Bootcount backing store */
 	UCLASS_BOOTCTL,		/* Boot-control drivers */
 	UCLASS_BOOTCTL_OSLIST,	/* Provides list of Operating Systems to boot */
+	UCLASS_BOOTCTL_STATE,	/* Stores state information about booting */
 	UCLASS_BOOTCTL_UI,	/* Display of information to the user */
 	UCLASS_BOOTDEV,		/* Boot device for locating an OS to boot */
 	UCLASS_BOOTMETH,	/* Bootmethod for booting an OS */
