@@ -140,7 +140,7 @@ static const struct udevice_id simple_display_ids[] = {
 
 U_BOOT_DRIVER(simple_display) = {
 	.name		= "simple_display",
-	.id		= UCLASS_BOOTCTL,
+	.id		= UCLASS_BOOTCTL_UI,
 	.of_match	= simple_display_ids,
 	.bind		= simple_display_bind,
 	.probe		= simple_display_probe,
