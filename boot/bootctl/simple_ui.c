@@ -16,11 +16,11 @@
 #include "util.h"
 
 /**
- * struct display_priv - information about the display
+ * struct ui_priv - information about the display
  *
  * @osinfo: List of OSes to show
  */
-struct display_priv {
+struct ui_priv {
 	struct alist osinfo;
 	struct expo *expo;
 	bool need_refresh;
@@ -29,7 +29,7 @@ struct display_priv {
 /*
 static int refresh(struct udevice *dev)
 {
-	struct display_priv *priv = dev_get_priv(dev);
+	struct ui_priv *priv = dev_get_priv(dev);
 	struct osinfo *info;
 	int option = 0;
 
@@ -40,16 +40,16 @@ static int refresh(struct udevice *dev)
 }
 */
 
-static int simple_display_probe(struct udevice *dev)
+static int simple_ui_probe(struct udevice *dev)
 {
-	struct display_priv *priv = dev_get_priv(dev);
+	struct ui_priv *priv = dev_get_priv(dev);
 
 	alist_init_struct(&priv->osinfo, struct osinfo);
 
 	return 0;
 }
 
-static int simple_display_bind(struct udevice *dev)
+static int simple_ui_bind(struct udevice *dev)
 {
 	struct bootctl_uc_plat *ucp = dev_get_uclass_plat(dev);
 
@@ -58,16 +58,16 @@ static int simple_display_bind(struct udevice *dev)
 	return 0;
 }
 
-static int simple_display_print(struct udevice *dev, const char *msg)
+static int simple_ui_print(struct udevice *dev, const char *msg)
 {
 	printf("%s", msg);
 
 	return 0;
 }
 
-static int simple_display_show(struct udevice *dev)
+static int simple_ui_show(struct udevice *dev)
 {
-	struct display_priv *priv = dev_get_priv(dev);
+	struct ui_priv *priv = dev_get_priv(dev);
 	struct bootstd_priv *std;
 
 	LOGR("sdb", bootstd_get_priv(&std));
@@ -76,9 +76,9 @@ static int simple_display_show(struct udevice *dev)
 	return 0;
 }
 
-static int simple_display_add(struct udevice *dev, struct osinfo *info)
+static int simple_ui_add(struct udevice *dev, struct osinfo *info)
 {
-	struct display_priv *priv = dev_get_priv(dev);
+	struct ui_priv *priv = dev_get_priv(dev);
 	int seq = priv->osinfo.count;
 	struct scene *scn;
 
@@ -93,9 +93,9 @@ static int simple_display_add(struct udevice *dev, struct osinfo *info)
 	return 0;
 }
 
-static int simple_display_render(struct udevice *dev)
+static int simple_ui_render(struct udevice *dev)
 {
-	struct display_priv *priv = dev_get_priv(dev);
+	struct ui_priv *priv = dev_get_priv(dev);
 
 	if (priv->need_refresh) {
 		LOGR("sds", expo_render(priv->expo));
@@ -105,9 +105,9 @@ static int simple_display_render(struct udevice *dev)
 	return 0;
 }
 
-static int simple_display_poll(struct udevice *dev, struct osinfo **infop)
+static int simple_ui_poll(struct udevice *dev, struct osinfo **infop)
 {
-	struct display_priv *priv = dev_get_priv(dev);
+	struct ui_priv *priv = dev_get_priv(dev);
 	struct bootstd_priv *std;
 	struct osinfo *info;
 	int seq, ret;
@@ -124,26 +124,26 @@ static int simple_display_poll(struct udevice *dev, struct osinfo **infop)
 	return 0;
 }
 
-static struct bc_display_ops ops = {
-	.print	= simple_display_print,
-	.show	= simple_display_show,
-	.add	= simple_display_add,
-	.render	= simple_display_render,
-	.poll	= simple_display_poll,
+static struct bc_ui_ops ops = {
+	.print	= simple_ui_print,
+	.show	= simple_ui_show,
+	.add	= simple_ui_add,
+	.render	= simple_ui_render,
+	.poll	= simple_ui_poll,
 };
 
-static const struct udevice_id simple_display_ids[] = {
-	{ .compatible = "bootctl,simple-display" },
-	{ .compatible = "bootctl,display" },
+static const struct udevice_id simple_ui_ids[] = {
+	{ .compatible = "bootctl,simple-ui" },
+	{ .compatible = "bootctl,ui" },
 	{ }
 };
 
-U_BOOT_DRIVER(simple_display) = {
-	.name		= "simple_display",
+U_BOOT_DRIVER(simple_ui) = {
+	.name		= "simple_ui",
 	.id		= UCLASS_BOOTCTL_UI,
-	.of_match	= simple_display_ids,
-	.bind		= simple_display_bind,
-	.probe		= simple_display_probe,
+	.of_match	= simple_ui_ids,
+	.bind		= simple_ui_bind,
+	.probe		= simple_ui_probe,
 	.ops		= &ops,
-	.priv_auto	= sizeof(struct display_priv),
+	.priv_auto	= sizeof(struct ui_priv),
 };

@@ -14,9 +14,9 @@ struct oslist_iter;
 struct udevice;
 
 /**
- * struct bc_display_ops - Operations for displays
+ * struct bc_ui_ops - Operations for displays
  */
-struct bc_display_ops {
+struct bc_ui_ops {
 	/**
 	 * print() - Show a string on the display
 	 *
@@ -62,35 +62,35 @@ struct bc_display_ops {
 	int (*poll)(struct udevice *dev, struct osinfo **infop);
 };
 
-#define bc_display_get_ops(dev)  ((struct bc_display_ops *)(dev)->driver->ops)
+#define bc_ui_get_ops(dev)  ((struct bc_ui_ops *)(dev)->driver->ops)
 
 /**
- * bc_display_show() - Show the display, ready to accept boot options
+ * bc_ui_show() - Show the display, ready to accept boot options
  *
  * @dev: Display device
  * Return 0 if OK, -ve on error
  */
-int bc_display_show(struct udevice *dev);
+int bc_ui_show(struct udevice *dev);
 
 /**
- * bc_display_add() - Add an OS to the display, so the user can select it
+ * bc_ui_add() - Add an OS to the display, so the user can select it
  *
  * @dev: Display device
  * @info: Information about the OS to display
  * Return 0 if OK, -ve on error
  */
-int bc_display_add(struct udevice *dev, struct osinfo *info);
+int bc_ui_add(struct udevice *dev, struct osinfo *info);
 
 /**
- * bc_display_render() - Render any updates to the display
+ * bc_ui_render() - Render any updates to the display
  *
  * @dev: Display device
  * Return 0 if OK, -ve on error
  */
-int bc_display_render(struct udevice *dev);
+int bc_ui_render(struct udevice *dev);
 
 /**
- * bc_display_poll() - Check for user activity
+ * bc_ui_poll() - Check for user activity
  *
  * @dev: Display device
  * @infop: Returns osinfo the user selected
@@ -98,6 +98,6 @@ int bc_display_render(struct udevice *dev);
  *	the menu, -EAGAIN if nothin is chosen uet, other -ve on error
  * Return 0 if OK, -ve on error
  */
-int bc_display_poll(struct udevice *dev, struct osinfo **infop);
+int bc_ui_poll(struct udevice *dev, struct osinfo **infop);
 
 #endif

@@ -40,7 +40,7 @@ int bootctl_run(void)
 	/* figure out the oslist to use */
 	LOGR("bgo", bootctl_get_dev(UCLASS_BOOTCTL_OSLIST, &oslist));
 
-	LOGR("bds", bc_display_show(disp));
+	LOGR("bds", bc_ui_show(disp));
 
 	running = false;
 	scanning = false;
@@ -60,10 +60,10 @@ int bootctl_run(void)
 		}
 
 		if (!ret)
-			LOGR("bda", bc_display_add(disp, &info));
+			LOGR("bda", bc_ui_add(disp, &info));
 
-		LOGR("bdr", bc_display_render(disp));
-		ret = bc_display_poll(disp, &selected);
+		LOGR("bdr", bc_ui_render(disp));
+		ret = bc_ui_poll(disp, &selected);
 		if (!ret)
 			running = false;
 	} while (running);

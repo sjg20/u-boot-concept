@@ -6,5 +6,5 @@
 obj-y += bootctl-uclass.o
 obj-y += bootctl.o
 obj-y += extlinux.o
-obj-y += simple_display.o
+obj-y += simple_ui.o
 obj-y += util.o

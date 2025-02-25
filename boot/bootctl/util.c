@@ -24,7 +24,7 @@
  */
 int bc_printf(struct udevice *disp, const char *fmt, ...)
 {
-	struct bc_display_ops *ops = bc_display_get_ops(disp);
+	struct bc_ui_ops *ops = bc_ui_get_ops(disp);
 	char buf[CONFIG_SYS_CBSIZE];
 	va_list args;
 	int count;
@@ -38,36 +38,36 @@ int bc_printf(struct udevice *disp, const char *fmt, ...)
 	return count;
 }
 
-int bc_display_show(struct udevice *disp)
+int bc_ui_show(struct udevice *disp)
 {
-	struct bc_display_ops *ops = bc_display_get_ops(disp);
+	struct bc_ui_ops *ops = bc_ui_get_ops(disp);
 
 	LOGR("bds", ops->show(disp));
 
 	return 0;
 }
 
-int bc_display_add(struct udevice *dev, struct osinfo *info)
+int bc_ui_add(struct udevice *dev, struct osinfo *info)
 {
-	struct bc_display_ops *ops = bc_display_get_ops(dev);
+	struct bc_ui_ops *ops = bc_ui_get_ops(dev);
 
 	LOGR("bda", ops->add(dev, info));
 
 	return 0;
 }
 
-int bc_display_render(struct udevice *disp)
+int bc_ui_render(struct udevice *disp)
 {
-	struct bc_display_ops *ops = bc_display_get_ops(disp);
+	struct bc_ui_ops *ops = bc_ui_get_ops(disp);
 
 	LOGR("bds", ops->render(disp));
 
 	return 0;
 }
 
-int bc_display_poll(struct udevice *disp, struct osinfo **infop)
+int bc_ui_poll(struct udevice *disp, struct osinfo **infop)
 {
-	struct bc_display_ops *ops = bc_display_get_ops(disp);
+	struct bc_ui_ops *ops = bc_ui_get_ops(disp);
 
 	LOGR("bdp", ops->poll(disp, infop));
 

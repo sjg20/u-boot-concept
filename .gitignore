@@ -133,3 +133,6 @@ __pycache__
 
 # Clang's compilation database file
 /compile_commands.json
+
+# your contrib directory from https://source.denx.de/u-boot/u-boot-extras
+contrib/

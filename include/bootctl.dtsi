@@ -7,8 +7,8 @@
  */
 
 &boot_ctl {
-	display {
-		compatible = "bootctl,simple-display", "bootctl,display";
+	ui {
+		compatible = "bootctl,simple-ui", "bootctl,ui";
 		graphical = "if-available";
 		textual = "if-available";
 	};
