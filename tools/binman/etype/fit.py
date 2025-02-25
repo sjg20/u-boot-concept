@@ -534,8 +534,6 @@ class Entry_fit(Entry_section):
         def _find_keys_dir(node):
             for subnode in node.subnodes:
                 if subnode.name.startswith('signature'):
-                    if subnode.props.get('key-name-hint') is None:
-                        continue
                     hint = subnode.props['key-name-hint'].value
                     name = tools.get_input_filename(f"{hint}.key")
                     path = os.path.dirname(name)
