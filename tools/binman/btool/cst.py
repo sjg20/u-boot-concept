@@ -29,20 +29,17 @@ class Bintoolcst(bintool.Bintool):
         return self.run_cmd(*args)
 
     def fetch(self, method):
-        """Fetch handler for cst
-
-        This installs cst using the apt utility.
-
-        Args:
-            method (FETCH_...): Method to use
-
-        Returns:
-            True if the file was fetched and now installed, None if a method
-            other than FETCH_BIN was requested
-
-        Raises:
-            Valuerror: Fetching could not be completed
-        """
-        if method != bintool.FETCH_BIN:
+        """Build cst from git"""
+        if method != bintool.FETCH_BUILD:
             return None
-        return self.apt_install('imx-code-signing-tool')
+
+        from platform import architecture
+        arch = 'linux64' if architecture()[0] == '64bit' else 'linux32'
+        result = self.build_from_git(
+            'https://gitlab.apertis.org/pkg/imx-code-signing-tool',
+            ['all'],
+            f'code/obj.{arch}/cst',
+            flags=[f'OSTYPE={arch}', 'ENCRYPTION=yes'],
+            git_branch='debian/unstable',
+            make_path=f'code/obj.{arch}/')
+        return result
