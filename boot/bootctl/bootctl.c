@@ -11,6 +11,7 @@
 #include <log.h>
 #include <version.h>
 #include <dm/device-internal.h>
+#include "state.h"
 #include "util.h"
 #include "ui.h"
 #include "oslist.h"

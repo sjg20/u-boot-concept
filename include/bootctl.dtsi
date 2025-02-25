@@ -11,18 +11,15 @@
 		compatible = "bootctl,extlinux-oslist";
 	};
 
-	strte {
+	state {
 		compatible = "bootctl,state", "bootctl,simple-state";
+		filename = "bootctl.ini";
+		location = "hostfs, "0";
 	};
 
 	ui {
 		compatible = "bootctl,simple-ui", "bootctl,ui";
 		graphical = "if-available";
 		textual = "if-available";
-	};
-
-	vars {
-		compatible = "bootctl,name-value-pairs";
-		filename = "bootstate.txt";
 	};
 };

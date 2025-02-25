@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: GPL-2.0+
+
+# Implementation of files containing data
+#
+# Copyright 2025 Canonical Ltd
+# Written by Simon Glass <simon.glass@canonical.com>
+#
+
+config FILE
+	bool "Support file layer"
+	help
+	  Enables support for files which can be accessed, read and written
+	  as objects.
