@@ -6,6 +6,9 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
+#define LOG_DEBUG
+#define LOG_CATEGORY UCLASS_BOOTSTD
+
 #include <alist.h>
 #include <blk.h>
 #include <bootdev.h>
@@ -135,10 +138,15 @@ const char *const *const bootstd_get_bootdev_order(struct udevice *dev,
 void bootstd_set_bootdev_order(struct udevice *dev, const char **order_str)
 {
 	struct bootstd_priv *std = dev_get_priv(dev);
+	const char **name;
 
 	free(std->bootdev_order);  /* leak; convert to use alist */
 
 	std->bootdev_order = order_str;
+	log_debug("bootdev_order:");
+	for (name = order_str; *name; name++)
+		log_debug(" %s", *name);
+	log_debug("\n");
 }
 
 const char *const *const bootstd_get_prefixes(struct udevice *dev)

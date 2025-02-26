@@ -6,6 +6,7 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
+#define LOG_DEBUG
 #define LOG_CATEGORY UCLASS_BOOTSTD
 
 #include <asm/cache.h>
@@ -95,6 +96,7 @@ static int extlinux_fill_info(struct bootflow *bflow)
 			}
 		}
 	}
+	log_debug("valid bflow: os_name='%s'\n", bflow->os_name);
 
 	return 0;
 }
@@ -108,6 +110,7 @@ static int extlinux_read_bootflow(struct udevice *dev, struct bootflow *bflow)
 	loff_t size;
 	int ret, i;
 
+	log_debug("looking for bootflow\n");
 	ret = uclass_first_device_err(UCLASS_BOOTSTD, &bootstd);
 	if (ret)
 		return log_msg_ret("std", ret);

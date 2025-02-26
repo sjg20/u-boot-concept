@@ -1499,7 +1499,7 @@
 	usb_0: usb@0 {
 		compatible = "sandbox,usb";
 		status = "disabled";
-		hub {
+		hub0 {
 			compatible = "sandbox,usb-hub";
 			#address-cells = <1>;
 			#size-cells = <0>;
@@ -1513,7 +1513,7 @@
 	usb_1: usb@1 {
 		compatible = "sandbox,usb";
 		iommus = <&iommu>;
-		hub {
+		hub1 {
 			compatible = "usb-hub";
 			usb,device-class = <9>;
 			#address-cells = <1>;

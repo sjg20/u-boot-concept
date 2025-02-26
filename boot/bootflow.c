@@ -4,6 +4,7 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
+#define LOG_DEBUG
 #define LOG_CATEGORY UCLASS_BOOTSTD
 
 #include <bootdev.h>
@@ -293,7 +294,7 @@ static int iter_incr(struct bootflow_iter *iter)
 				if (iter->method_flags &
 				    BOOTFLOW_METHF_SINGLE_UCLASS) {
 					scan_next_in_uclass(&dev);
-					log_debug("looking for next device %s: %s\n",
+					log_debug("1looking for next device %s: %s\n",
 						  iter->dev->name,
 						  dev ? dev->name : "<none>");
 				} else {
@@ -305,8 +306,14 @@ static int iter_incr(struct bootflow_iter *iter)
 								 &method_flags);
 				}
 			} else {
-				ret = bootdev_next_prio(iter, &dev);
-				method_flags = 0;
+				scan_next_in_uclass(&dev);
+				log_debug("2looking for next device %s: %s\n",
+					  iter->dev->name,
+					  dev ? dev->name : "<none>");
+				if (!dev) {
+					ret = bootdev_next_prio(iter, &dev);
+					method_flags = 0;
+				}
 			}
 		}
 		log_debug("ret=%d, dev=%p %s\n", ret, dev,

@@ -47,17 +47,33 @@ static int bootctl_oslist(struct unit_test_state *uts)
 
 	ut_asserteq(-ENODEV, bc_oslist_next(dev, &iter, &info));
 
+	return 0;
+}
+BOOTCTL_TEST(bootctl_oslist, UTF_DM | UTF_SCAN_FDT);
+
+static int bootctl_oslist2(struct unit_test_state *uts)
+{
+	struct oslist_iter iter;
+	struct osinfo info;
+	struct bootflow *bflow = &info.bflow;
+	struct udevice *dev;
+
+	ut_assertok(bootctl_get_dev(UCLASS_BOOTCTL_OSLIST, &dev));
+	ut_asserteq_str("oslist", dev->name);
+
 	/* include usb in the bootdev order */
 	ut_assertok(bootdev_set_order("mmc usb"));
 
 	ut_assertok(bc_oslist_first(dev, &iter, &info));
 	ut_asserteq_str("mmc1.bootdev.part_1", bflow->name);
+	printf("got mmc\n");
 
 	ut_assertok(bc_oslist_next(dev, &iter, &info));
+	printf("got usb\n");
 	ut_asserteq_str("usb_mass_storage.lun0.bootdev.part_1", bflow->name);
 
 	ut_asserteq(-ENODEV, bc_oslist_next(dev, &iter, &info));
 
 	return 0;
 }
-BOOTCTL_TEST(bootctl_oslist, UTF_DM | UTF_SCAN_FDT);
+BOOTCTL_TEST(bootctl_oslist2, UTF_DM | UTF_SCAN_FDT);
