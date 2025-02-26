@@ -147,22 +147,18 @@ static int do_bootdev_order(struct cmd_tbl *cmdtp, int flag, int argc,
 	ret = bootstd_get_priv(&priv);
 	if (ret)
 		return ret;
-	if (argc == 2 && !strncmp(argv[1], "clear", strlen(argv[1]))) {
-		priv->bootdev_order = NULL;
-	} else if (argc >= 2) {
-		struct alist order;
-		int arg;
+	if (argc == 2) {
+		if (!strncmp(argv[1], "clear", strlen(argv[1]))) {
+			bootdev_set_order(NULL);
 
-		alist_init_struct(&order, char *);
-		for (arg = 1; arg < argc; arg++) {
-			char *val = strdup(argv[arg]);
-
-			if (!val || !alist_add(&order, val)) {
-				printf("Out of memory\n");
-				return CMD_RET_FAILURE;
-			}
+			return 0;
 		}
-		priv->bootdev_order = alist_uninit_move_ptr(&order, NULL);
+
+		ret = bootdev_set_order(argv[1]);
+		if (ret) {
+			printf("Failed (err=%dE)\n", ret);
+			return CMD_RET_FAILURE;
+		}
 	} else {
 		const char **order = priv->bootdev_order;
 
