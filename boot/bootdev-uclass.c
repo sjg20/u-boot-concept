@@ -423,7 +423,7 @@ int bootdev_find_by_label(const char *label, struct udevice **devp,
 			  int *method_flagsp)
 {
 	int seq, ret, method_flags = 0;
-	struct udevice *media;
+	struct udevice *bdev;
 	struct uclass *uc;
 	enum uclass_id id;
 
@@ -439,9 +439,12 @@ int bootdev_find_by_label(const char *label, struct udevice **devp,
 	// uclass_find_next_device() works
 
 	/* Iterate through devices in the media uclass (e.g. UCLASS_MMC) */
-	uclass_id_foreach_dev(id, media, uc) {
-		struct udevice *bdev, *blk;
-		int ret;
+	uclass_id_foreach_dev(UCLASS_BOOTDEV, bdev, uc) {
+		struct udevice *media, *blk;
+
+		media = dev_get_parent(bdev);
+		if (device_get_uclass_id(media) != id)
+			continue;
 
 		/* if there is no seq, match anything */
 		if (seq != -1 && dev_seq(media) != seq) {
@@ -449,33 +452,19 @@ int bootdev_find_by_label(const char *label, struct udevice **devp,
 			continue;
 		}
 
-		ret = device_find_first_child_by_uclass(media, UCLASS_BOOTDEV,
-							&bdev);
-		if (ret) {
-			log_debug("- looking via blk, seq=%d, id=%d\n", seq,
-				  id);
-			ret = blk_find_device(id, seq, &blk);
-			if (!ret) {
-				log_debug("- get from blk %s\n", blk->name);
-				ret = bootdev_get_from_blk(blk, &bdev);
-			}
-		}
-		if (!ret) {
-			log_debug("- found %s\n", bdev->name);
-			*devp = bdev;
+		log_debug("- found bdev, seq=%d, id=%d\n", dev_seq(bdev), id);
+		*devp = bdev;
 
-			/*
-			 * if no sequence number was provided, we must scan all
-			 * bootdevs for this media uclass
-			 */
-			if (seq == -1)
-				method_flags |= BOOTFLOW_METHF_SINGLE_UCLASS;
-			if (method_flagsp)
-				*method_flagsp = method_flags;
-			log_debug("method flags %x\n", method_flags);
-			return 0;
-		}
-		log_debug("- no device in %s\n", media->name);
+		/*
+		 * if no sequence number was provided, we must scan all
+		 * bootdevs for this media uclass
+		 */
+		if (seq == -1)
+			method_flags |= BOOTFLOW_METHF_SINGLE_UCLASS;
+		if (method_flagsp)
+			*method_flagsp = method_flags;
+		log_debug("method flags %x\n", method_flags);
+		return 0;
 	}
 
 	return -ENOENT;
