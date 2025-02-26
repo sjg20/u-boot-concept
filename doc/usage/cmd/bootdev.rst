@@ -13,6 +13,7 @@ Synopsis
 
     bootdev list [-p]        - list all available bootdevs (-p to probe)
     bootdev hunt [-l|<spec>] - use hunt drivers to find bootdevs
+    bootdev order [clear] | [<spec>,...]  - view or update bootdev order\n"
     bootdev select <bm>      - select a bootdev by name
     bootdev info [-p]        - show information about a bootdev
 

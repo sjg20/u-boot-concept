@@ -78,6 +78,15 @@ const char *const *const bootstd_get_bootdev_order(struct udevice *dev,
 						   bool *okp);
 
 /**
+ * bootstd_set_bootdev_order() - Set the boot-order list
+ *
+ * @dev: bootstd device
+ * @order_str: list of string pointers, terminated by NULL, e.g.
+ * {"mmc0", "mmc2", NULL}; or NULL to remove boot order
+ */
+void bootstd_set_bootdev_order(struct udevice *dev, const char **order_str);
+
+/**
  * bootstd_get_prefixes() - Get the filename-prefixes list
  *
  * This reads the prefixes, e.g. {"/", "/boot", NULL}
