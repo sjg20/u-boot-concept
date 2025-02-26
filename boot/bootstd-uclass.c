@@ -132,6 +132,15 @@ const char *const *const bootstd_get_bootdev_order(struct udevice *dev,
 	return std->bootdev_order;
 }
 
+void bootstd_set_bootdev_order(struct udevice *dev, const char **order_str)
+{
+	struct bootstd_priv *std = dev_get_priv(dev);
+
+	free(std->bootdev_order);  /* leak; convert to use alist */
+
+	std->bootdev_order = order_str;
+}
+
 const char *const *const bootstd_get_prefixes(struct udevice *dev)
 {
 	struct bootstd_priv *std = dev_get_priv(dev);
