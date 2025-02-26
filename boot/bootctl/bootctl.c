@@ -32,6 +32,7 @@ int bootctl_run(void)
 	struct osinfo *selected;
 	struct oslist_iter iter;
 	bool running, scanning;
+	int ret;
 
 	/* figure out the UI to use */
 	LOGR("bgd", bootctl_get_dev(UCLASS_BOOTCTL_UI, &disp));
@@ -45,7 +46,9 @@ int bootctl_run(void)
 	LOGR("bgs", bootctl_get_dev(UCLASS_BOOTCTL_STATE, &state));
 
 	/* read in our state */
-	LOGR("bsr", bc_state_read(state));
+	ret = bc_state_read(state);
+	if (ret == -EINVAL)
+		log_debug("Cannot read state, starting fresh (err=%dE)\n", ret);
 
 	LOGR("bds", bc_ui_show(disp));
 

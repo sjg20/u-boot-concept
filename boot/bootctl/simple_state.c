@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Simple control of which display/output to use while booting
+ * Provides a simple name/value pair
  *
  * Copyright 2025 Canonical Ltd
  * Written by Simon Glass <simon.glass@canonical.com>
@@ -88,8 +88,8 @@ static int simple_state_of_to_plat(struct udevice *dev)
 {
 	struct simple_state_priv *priv = dev_get_priv(dev);
 
-	LOGR("ssi", dev_read_string_index(dev, "ifname", 0, &priv->ifname));
-	LOGR("ssd", dev_read_string_index(dev, "dev-part", 0, &priv->dev_part));
+	LOGR("ssi", dev_read_string_index(dev, "location", 0, &priv->ifname));
+	LOGR("ssd", dev_read_string_index(dev, "location", 1, &priv->dev_part));
 	priv->filename = dev_read_string(dev, "filename");
 	if (!priv->ifname || !priv->dev_part || !priv->filename)
 		LOGR("ssp", -EINVAL);

@@ -12,9 +12,9 @@
 	};
 
 	state {
-		compatible = "bootctl,state", "bootctl,simple-state";
-		filename = "bootctl.ini";
+		compatible = "bootctl,simple-state", "bootctl,state";
 		location = "hostfs", "0";
+		filename = "bootctl.ini";
 	};
 
 	ui {
