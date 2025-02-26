@@ -14,7 +14,7 @@
 	state {
 		compatible = "bootctl,state", "bootctl,simple-state";
 		filename = "bootctl.ini";
-		location = "hostfs, "0";
+		location = "hostfs", "0";
 	};
 
 	ui {
