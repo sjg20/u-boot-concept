@@ -943,8 +943,8 @@ int bootdev_set_order(const char *order_str)
 	LOGR("bsb", uclass_first_device_err(UCLASS_BOOTSTD, &bootstd));
 
 	alist_init_struct(&order, char *);
+	log_debug("order_str: %s\n", order_str);
 	for (i = 0, s = order_str; *s; s = p + (*p == ' '), i++) {
-
 		p = strchrnul(s, ' ');
 		label = strndup(s, p - s);
 		if (!label || !alist_add(&order, label))
