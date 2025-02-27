@@ -15,6 +15,9 @@
 #include "ui.h"
 #include "util.h"
 
+/* Define to 1 to use text mode (for terminals), 0 for graphics */
+#define TEXT_MODE	0
+
 /**
  * struct ui_priv - information about the display
  *
@@ -71,7 +74,7 @@ static int simple_ui_show(struct udevice *dev)
 	struct bootstd_priv *std;
 
 	LOGR("sdb", bootstd_get_priv(&std));
-	LOGR("sds", bootflow_menu_start(std, true, &priv->expo));
+	LOGR("sds", bootflow_menu_start(std, TEXT_MODE, &priv->expo));
 
 	return 0;
 }
@@ -80,6 +83,7 @@ static int simple_ui_add(struct udevice *dev, struct osinfo *info)
 {
 	struct ui_priv *priv = dev_get_priv(dev);
 	int seq = priv->osinfo.count;
+	struct bootstd_priv *std;
 	struct scene *scn;
 
 	info = alist_add(&priv->osinfo, *info);
@@ -87,6 +91,13 @@ static int simple_ui_add(struct udevice *dev, struct osinfo *info)
 		return -ENOMEM;
 	LOGR("sda", bootflow_menu_add(priv->expo, &info->bflow, seq,
 				      &scn));
+
+	LOGR("arr", scene_arrange(scn));
+
+	LOGR("sup", bootstd_get_priv(&std));
+	if (ofnode_valid(std->theme))
+		LOGR("thm", bootflow_menu_apply_theme(priv->expo, std->theme));
+
 	priv->need_refresh = true;
 	// refresh(dev);
 
@@ -97,7 +108,7 @@ static int simple_ui_render(struct udevice *dev)
 {
 	struct ui_priv *priv = dev_get_priv(dev);
 
-	if (priv->need_refresh) {
+	if (priv->need_refresh || !TEXT_MODE) {
 		LOGR("sds", expo_render(priv->expo));
 		priv->need_refresh = false;
 	}

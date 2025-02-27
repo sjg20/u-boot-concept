@@ -111,7 +111,11 @@ static int prepare_for_boot(struct udevice *dev, struct osinfo *osinfo)
 			priv->state_saved = true;
 	}
 
-	/* devicetree fix-ups */
+	/* devicetree fix-ups go here */
+
+	ret = bootflow_boot(&osinfo->bflow);
+	if (ret)
+		log_warning("Boot failed (err=%dE)\n", ret);
 
 	return 0;
 }

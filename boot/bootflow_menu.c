@@ -135,10 +135,6 @@ int bootflow_menu_add(struct expo *exp, struct bootflow *bflow, int seq,
 	priv->num_bootflows++;
 	*scnp = scn;
 
-	ret = scene_arrange(scn);
-	if (ret)
-		return log_msg_ret("arr", ret);
-
 	return 0;
 }
 
