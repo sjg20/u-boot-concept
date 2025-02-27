@@ -8,10 +8,13 @@
  * with a nul terminator at the end. Strings are stored without quoting. Ints
  * are stored as decimal, perhaps with leading '-'. Bools are stored as 0 or 1
  *
+ * keys consist only of characters a-z, _ and 0-9
+ *
  * Copyright 2025 Canonical Ltd
  * Written by Simon Glass <simon.glass@canonical.com>
  */
 
+#define LOG_DEBUG
 #define LOG_CATEGORY	UCLASS_BOOTCTL
 
 #include <alist.h>
@@ -19,6 +22,7 @@
 #include <bootctl.h>
 #include <bootmeth.h>
 #include <bootstd.h>
+#include <ctype.h>
 #include <dm.h>
 #include <fs.h>
 #include <log.h>
@@ -89,9 +93,31 @@ static struct keyval *find_item(struct sstate_priv *priv, const char *key)
 static int add_val(struct sstate_priv *priv, const char *key,
 		   const char *val)
 {
+	int keylen, vallen;
 	struct keyval kv;
+	const unsigned char *p;
 
 	log_content("add %s=%s\n", key, val);
+	for (keylen = 0, p = key; keylen <= MAX_KEY_LEN && *p; keylen++, p++) {
+		if (!(*p == '_' || isdigit(*p) || islower(*p)) || *p >= 127) {
+			log_content("- invalid character %02x\n", *p);
+			LOGR("wvk", -EKEYREJECTED);
+		}
+	}
+	if (!keylen) {
+		log_content("- empty key\n");
+		LOGR("wve", -EINVAL);
+	}
+	if (keylen > MAX_KEY_LEN) {
+		log_content("- key too long %d\n", keylen);
+		LOGR("wvl", -EKEYREJECTED);
+	}
+	vallen = strnlen(val, MAX_VAL_LEN + 1);
+	if (vallen > MAX_VAL_LEN) {
+		log_content("- val too long\n");
+		LOGR("wvv", -E2BIG);
+	}
+
 	kv.key = strndup(key, MAX_KEY_LEN);
 	if (!kv.key)
 		LOGR("avk", -ENOMEM);
@@ -120,13 +146,18 @@ static int write_val(struct sstate_priv *priv, const char *key,
 		LOGR("wkn", -EINVAL);
 	kv = find_item(priv, key);
 	if (kv) {
-		int len = strnlen(val, MAX_VAL_LEN) + 1;
+		int len = strnlen(val, MAX_VAL_LEN + 1);
 		char *new;
 
+		if (len > MAX_VAL_LEN) {
+			log_content("- val too long\n");
+			LOGR("wvr", -E2BIG);
+		}
 		log_content("- update\n");
 		new = realloc(kv->val, len);
 		if (!new)
 			LOGR("wvr", -ENOMEM);
+		strlcpy(new, val, len + 1);
 		kv->val = new;
 	} else {
 		LOGR("swB", add_val(priv, key, val));
@@ -198,8 +229,11 @@ static int sstate_save_to_buf(struct udevice *dev, struct abuf *buf)
 	membuf_init(&inf, buf->data, buf->size);
 
 	alist_for_each(kv, &priv->items) {
-		int keylen = strnlen(kv->key, MAX_KEY_LEN);
-		int vallen = strnlen(kv->val, MAX_VAL_LEN);
+		int keylen = strnlen(kv->key, MAX_KEY_LEN + 1);
+		int vallen = strnlen(kv->val, MAX_VAL_LEN + 1);
+
+		if (keylen > MAX_KEY_LEN || vallen > MAX_VAL_LEN)
+			LOGR("ssp", -E2BIG);
 
 		log_content("save %s=%s\n", kv->key, kv->val);
 		if (membuf_put(&inf, kv->key, keylen) != keylen ||
@@ -293,6 +327,7 @@ static int sstate_write_int(struct udevice *dev, const char *prop, long val)
 {
 	struct sstate_priv *priv = dev_get_priv(dev);
 
+	log_debug("write_int %ld\n", val);
 	LOGR("swb", write_val(priv, prop, simple_itoa(val)));
 
 	return 0;
