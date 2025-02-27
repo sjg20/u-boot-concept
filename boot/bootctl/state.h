@@ -27,34 +27,34 @@ struct bc_state {
  */
 struct bc_state_ops {
 	/**
-	 * read() - Read in the current state
+	 * load() - Read in the current state
 	 *
 	 * Return: 0 if OK, -ENOENT if there is no state
 	 */
-	int (*read)(struct udevice *dev);
+	int (*load)(struct udevice *dev);
 
 	/**
-	 * write() - Write out the current state
+	 * save() - Write out the current state
 	 *
 	 * Return: 0 if OK, or -ve error code
 	 */
-	int (*write)(struct udevice *dev);
+	int (*save)(struct udevice *dev);
 };
 
 #define bc_state_get_ops(dev)  ((struct bc_state_ops *)(dev)->driver->ops)
 
 /**
-  * read() - Read in the current state
+  * bc_state_load() - Load state from a file
   *
   * Return: 0 if OK, -ENOENT if there is no state
   */
-int bc_state_read(struct udevice *dev);
+int bc_state_load(struct udevice *dev);
 
 /**
-  * write() - Write out the current state
+  * bc_state_save() - Save state to a file
   *
   * Return: 0 if OK, or -ve error code
   */
-int bc_state_write(struct udevice *dev);
+int bc_state_save(struct udevice *dev);
 
 #endif

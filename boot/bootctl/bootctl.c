@@ -46,7 +46,7 @@ int bootctl_run(void)
 	LOGR("bgs", bootctl_get_dev(UCLASS_BOOTCTL_STATE, &state));
 
 	/* read in our state */
-	ret = bc_state_read(state);
+	ret = bc_state_load(state);
 	if (ret == -EINVAL)
 		log_debug("Cannot read state, starting fresh (err=%dE)\n", ret);
 

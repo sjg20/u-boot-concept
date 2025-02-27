@@ -95,20 +95,20 @@ int bc_oslist_next(struct udevice *dev, struct oslist_iter *iter,
 	return 0;
 }
 
-int bc_state_read(struct udevice *dev)
+int bc_state_load(struct udevice *dev)
 {
 	struct bc_state_ops *ops = bc_state_get_ops(dev);
 
-	LOGR("bsr", ops->read(dev));
+	LOGR("bsr", ops->load(dev));
 
 	return 0;
 }
 
-int bc_state_write(struct udevice *dev)
+int bc_state_save(struct udevice *dev)
 {
 	struct bc_state_ops *ops = bc_state_get_ops(dev);
 
-	LOGR("bsw", ops->write(dev));
+	LOGR("bsw", ops->save(dev));
 
 	return 0;
 }

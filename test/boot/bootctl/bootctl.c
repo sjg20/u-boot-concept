@@ -90,7 +90,7 @@ static int bootctl_simple_state_write(struct unit_test_state *uts)
 	struct udevice *dev;
 
 	ut_assertok(bootctl_get_dev(UCLASS_BOOTCTL_STATE, &dev));
-	ut_assertok(bc_state_write(dev));
+	ut_assertok(bc_state_save(dev));
 
 	return 0;
 }
@@ -102,7 +102,7 @@ static int bootctl_simple_state_read(struct unit_test_state *uts)
 	struct udevice *dev;
 
 	ut_assertok(bootctl_get_dev(UCLASS_BOOTCTL_STATE, &dev));
-	ut_assertok(bc_state_read(dev));
+	ut_assertok(bc_state_load(dev));
 
 	return 0;
 }

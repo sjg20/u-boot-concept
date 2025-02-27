@@ -41,7 +41,7 @@ struct simple_state_priv {
 	struct alist items;
 };
 
-static int simple_state_read(struct udevice *dev)
+static int simple_state_load(struct udevice *dev)
 {
 	struct simple_state_priv *priv = dev_get_priv(dev);
 	struct membuf inf;
@@ -155,8 +155,8 @@ static int simple_state_bind(struct udevice *dev)
 }
 
 static struct bc_state_ops ops = {
-	.read	= simple_state_read,
-	.write	= simple_state_write,
+	.load	= simple_state_load,
+	.save	= simple_state_write,
 };
 
 static const struct udevice_id simple_state_ids[] = {
