@@ -438,13 +438,27 @@ int bootdev_find_by_label(const char *label, struct udevice **devp,
 	// make sure we always find the first one, sp
 	// uclass_find_next_device() works
 
-	/* Iterate through devices in the media uclass (e.g. UCLASS_MMC) */
+	/*
+	 * Iterate through all the bootdevs looking for the first one for the
+	 * correct media uclass (e.g. UCLASS_MMC). We do it this way so that
+	 * iter_incr() can continue iterating through others with the same media
+	 * uclass, thus making sure that every relevant bootdev is used.
+	 *
+	 * If instead we found the first media device of the correct uclass,
+	 * then started with its bootdev, that bootdev may be somewhere in the
+	 * middle of the UCLASS_BOOTDEV ordering, thus we would leave out quite
+	 * a few bootdevs as the iteration continues
+	 */
 	uclass_id_foreach_dev(UCLASS_BOOTDEV, bdev, uc) {
-		struct udevice *media, *blk;
+		struct udevice *media;
 
 		media = dev_get_parent(bdev);
-		if (device_get_uclass_id(media) != id)
+		if (device_get_uclass_id(media) != id) {
+			log_debug("- skip, media '%s' want id '%s'\n",
+				  dev_get_uclass_name(media),
+				  uclass_get_name(id));
 			continue;
+		}
 
 		/* if there is no seq, match anything */
 		if (seq != -1 && dev_seq(media) != seq) {
@@ -452,7 +466,8 @@ int bootdev_find_by_label(const char *label, struct udevice **devp,
 			continue;
 		}
 
-		log_debug("- found bdev, seq=%d, id=%d\n", dev_seq(bdev), id);
+		log_debug("- found bdev, seq=%d id %s\n", dev_seq(bdev),
+			  uclass_get_name(id));
 		*devp = bdev;
 
 		/*

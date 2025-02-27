@@ -12,6 +12,7 @@
 #include <test/ut.h>
 #include "bootctl_common.h"
 #include "../../../boot/bootctl/oslist.h"
+#include "../bootstd_common.h"
 
 static int bootctl_base(struct unit_test_state *uts)
 {
@@ -58,6 +59,9 @@ static int bootctl_oslist2(struct unit_test_state *uts)
 	struct bootflow *bflow = &info.bflow;
 	struct udevice *dev;
 
+	test_set_skip_delays(true);
+	bootstd_reset_usb();
+
 	ut_assertok(bootctl_get_dev(UCLASS_BOOTCTL_OSLIST, &dev));
 	ut_asserteq_str("oslist", dev->name);
 
@@ -70,9 +74,10 @@ static int bootctl_oslist2(struct unit_test_state *uts)
 
 	ut_assertok(bc_oslist_next(dev, &iter, &info));
 	printf("got usb\n");
-	ut_asserteq_str("usb_mass_storage.lun0.bootdev.part_1", bflow->name);
+	ut_asserteq_str("hub1.p4.usb_mass_storage.lun0.bootdev.part_1", bflow->name);
 
 	ut_asserteq(-ENODEV, bc_oslist_next(dev, &iter, &info));
+	printf("\n\n\n\ndone\n");
 
 	return 0;
 }
