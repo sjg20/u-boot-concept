@@ -11,10 +11,11 @@
 #include <log.h>
 #include <version.h>
 #include <dm/device-internal.h>
-#include "state.h"
-#include "util.h"
-#include "ui.h"
+#include "logic.h"
 #include "oslist.h"
+#include "state.h"
+#include "ui.h"
+#include "util.h"
 
 int bootctl_get_dev(enum uclass_id type, struct udevice **devp)
 {
@@ -28,59 +29,20 @@ int bootctl_get_dev(enum uclass_id type, struct udevice **devp)
 
 int bootctl_run(void)
 {
-	struct udevice *disp, *oslist, *state;
-	struct osinfo *selected;
-	struct oslist_iter iter;
-	bool running, scanning;
+	struct udevice *logic;
 	int ret;
 
+	printf("Canonical Sourceboot v%d.%02d\n", U_BOOT_VERSION_NUM,
+	       U_BOOT_VERSION_NUM_PATCH);
+
 	/* figure out the UI to use */
-	LOGR("bgd", bootctl_get_dev(UCLASS_BOOTCTL_UI, &disp));
-	bc_printf(disp, "Canonical Sourceboot v%d.%02d\n",
-		  U_BOOT_VERSION_NUM, U_BOOT_VERSION_NUM_PATCH);
+	LOGR("bgl", bootctl_get_dev(UCLASS_BOOTCTL, &logic));
 
-	/* figure out the oslist to use */
-	LOGR("bgo", bootctl_get_dev(UCLASS_BOOTCTL_OSLIST, &oslist));
+	LOGR("bcl", bc_logic_start(logic));
 
-	/* figure out the state to use */
-	LOGR("bgs", bootctl_get_dev(UCLASS_BOOTCTL_STATE, &state));
-
-	/* read in our state */
-	ret = bc_state_load(state);
-	if (ret == -EINVAL)
-		log_debug("Cannot read state, starting fresh (err=%dE)\n", ret);
-
-	LOGR("bds", bc_ui_show(disp));
-
-	running = false;
-	scanning = false;
-	selected = NULL;
 	do {
-		struct osinfo info;
-		int ret = -ENOENT;
-
-		if (!running) {
-			ret = bc_oslist_first(oslist, &iter, &info);
-			running = true;
-			scanning = !ret;
-		} else if (scanning) {
-			ret = bc_oslist_next(oslist, &iter, &info);
-			if (ret)
-				scanning = false;
-		}
-
-		if (!ret)
-			LOGR("bda", bc_ui_add(disp, &info));
-
-		LOGR("bdr", bc_ui_render(disp));
-		ret = bc_ui_poll(disp, &selected);
-		if (!ret)
-			running = false;
-	} while (running);
-
-	if (selected) {
-		printf("boot\n");
-	}
+		ret = bc_logic_poll(logic);
+	} while (ret != -ESHUTDOWN);
 
 	return 0;
 }

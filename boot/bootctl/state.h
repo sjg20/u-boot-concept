@@ -24,7 +24,7 @@ struct bc_state {
 };
 
 /**
- * struct bc_state_ops - Operations for displays
+ * struct bc_state_ops - Operations for the UI
  */
 struct bc_state_ops {
 	/**

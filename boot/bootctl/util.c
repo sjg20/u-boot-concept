@@ -11,10 +11,11 @@
 #include <log.h>
 #include <stdarg.h>
 #include <vsprintf.h>
+#include "logic.h"
+#include "oslist.h"
 #include "state.h"
 #include "ui.h"
 #include "util.h"
-#include "oslist.h"
 
 /**
  * bc_printf() - Print a string to the display
@@ -181,6 +182,24 @@ int bc_state_write_str(struct udevice *dev, const char *key, const char *val)
 	struct bc_state_ops *ops = bc_state_get_ops(dev);
 
 	LOGR("sws", ops->write_str(dev, key, val));
+
+	return 0;
+}
+
+int bc_logic_start(struct udevice *dev)
+{
+	struct bc_logic_ops *ops = bc_logic_get_ops(dev);
+
+	LOGR("bls", ops->start(dev));
+
+	return 0;
+}
+
+int bc_logic_poll(struct udevice *dev)
+{
+	struct bc_logic_ops *ops = bc_logic_get_ops(dev);
+
+	LOGR("blp", ops->poll(dev));
 
 	return 0;
 }
