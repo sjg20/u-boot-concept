@@ -18,6 +18,10 @@
 #include <linux/sizes.h>
 #include "state.h"
 
+enum {
+	MAX_LINE_LEN	= 250,
+};
+
 struct keyval {
 	char *key;
 	char *val;
@@ -42,7 +46,7 @@ static int simple_state_read(struct udevice *dev)
 	struct simple_state_priv *priv = dev_get_priv(dev);
 	struct membuf inf;
 	struct abuf buf;
-	char line[250];
+	char line[MAX_LINE_LEN];
 	bool ok;
 	int len;
 
@@ -71,6 +75,50 @@ static int simple_state_read(struct udevice *dev)
 
 		return log_msg_ret("ssr", -ENOMEM);
 	}
+
+	return 0;
+}
+
+static int simple_state_write(struct udevice *dev)
+{
+	struct simple_state_priv *priv = dev_get_priv(dev);
+	struct membuf inf;
+	struct keyval *kv;
+	struct abuf buf;
+	loff_t actwrite;
+	int ret;
+
+	abuf_init(&buf);
+	if (!abuf_realloc(&buf, SZ_4K))
+		LOGR("ssa", -ENOMEM);
+
+	membuf_init(&inf, buf.data, buf.size);
+
+	alist_for_each(kv, &priv->items) {
+		char str[MAX_LINE_LEN];
+		int len;
+
+		len = snprintf(str, MAX_LINE_LEN, "%s = %s\n", kv->key,
+			       kv->val);
+		if (membuf_put(&inf, str, len + 1) != len + 1)
+			ret = log_msg_ret("ssp", -ENOSPC);
+	}
+
+	if (!ret) {
+		ret = fs_set_blk_dev(priv->ifname, priv->dev_part, FS_TYPE_ANY);
+		if (ret)
+			ret = log_msg_ret("sss", ret);
+		else {
+			ret = fs_write(priv->filename, abuf_addr(&buf), 0,
+				       buf.size, &actwrite);
+			if (ret)
+				ret = log_msg_ret("ssw", ret);
+		}
+	}
+
+	abuf_uninit(&buf);
+	if (ret)
+		return ret;
 
 	return 0;
 }
@@ -108,6 +156,7 @@ static int simple_state_bind(struct udevice *dev)
 
 static struct bc_state_ops ops = {
 	.read	= simple_state_read,
+	.write	= simple_state_write,
 };
 
 static const struct udevice_id simple_state_ids[] = {

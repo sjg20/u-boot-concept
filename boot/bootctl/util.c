@@ -99,8 +99,16 @@ int bc_state_read(struct udevice *dev)
 {
 	struct bc_state_ops *ops = bc_state_get_ops(dev);
 
-	LOGR("bon", ops->read(dev));
+	LOGR("bsr", ops->read(dev));
 
 	return 0;
 }
 
+int bc_state_write(struct udevice *dev)
+{
+	struct bc_state_ops *ops = bc_state_get_ops(dev);
+
+	LOGR("bsw", ops->write(dev));
+
+	return 0;
+}

@@ -13,6 +13,7 @@
 #include "bootctl_common.h"
 #include "../../../boot/bootctl/oslist.h"
 #include "../bootstd_common.h"
+#include "../../../boot/bootctl/state.h"
 
 /* test that expected devices are available and can be probed */
 static int bootctl_base(struct unit_test_state *uts)
@@ -82,3 +83,27 @@ static int bootctl_oslist_usb(struct unit_test_state *uts)
 	return 0;
 }
 BOOTCTL_TEST(bootctl_oslist_usb, UTF_DM | UTF_SCAN_FDT);
+
+/* test writing state */
+static int bootctl_simple_state_write(struct unit_test_state *uts)
+{
+	struct udevice *dev;
+
+	ut_assertok(bootctl_get_dev(UCLASS_BOOTCTL_STATE, &dev));
+	ut_assertok(bc_state_write(dev));
+
+	return 0;
+}
+BOOTCTL_TEST(bootctl_simple_state_write, UTF_DM | UTF_SCAN_FDT);
+
+/* test reading state */
+static int bootctl_simple_state_read(struct unit_test_state *uts)
+{
+	struct udevice *dev;
+
+	ut_assertok(bootctl_get_dev(UCLASS_BOOTCTL_STATE, &dev));
+	ut_assertok(bc_state_read(dev));
+
+	return 0;
+}
+BOOTCTL_TEST(bootctl_simple_state_read, UTF_DM | UTF_SCAN_FDT);

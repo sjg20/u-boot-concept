@@ -29,9 +29,16 @@ struct bc_state_ops {
 	/**
 	 * read() - Read in the current state
 	 *
-	 * Return 0 if OK, -ENOENT if there is no state
+	 * Return: 0 if OK, -ENOENT if there is no state
 	 */
 	int (*read)(struct udevice *dev);
+
+	/**
+	 * write() - Write out the current state
+	 *
+	 * Return: 0 if OK, or -ve error code
+	 */
+	int (*write)(struct udevice *dev);
 };
 
 #define bc_state_get_ops(dev)  ((struct bc_state_ops *)(dev)->driver->ops)
@@ -39,8 +46,15 @@ struct bc_state_ops {
 /**
   * read() - Read in the current state
   *
-  * Return 0 if OK, -ENOENT if there is no state
+  * Return: 0 if OK, -ENOENT if there is no state
   */
 int bc_state_read(struct udevice *dev);
+
+/**
+  * write() - Write out the current state
+  *
+  * Return: 0 if OK, or -ve error code
+  */
+int bc_state_write(struct udevice *dev);
 
 #endif
