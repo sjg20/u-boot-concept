@@ -25,6 +25,8 @@
  * @opt_track_success: true to track whether the last boot succeeded (made it to
  *	user space)
  * @opt_skip_timeout: true to skip any boot timeout if the last boot succeeded
+ * @opt_labels: if non-NULL, a space-separated list of labels which can be used
+ *	to boot
  *
  * @ready: true if ready to start scanning for OSes and booting
  * @state_load_attempted: true if we have attempted to load state
@@ -44,6 +46,7 @@ struct logic_priv {
 	uint opt_timeout;
 	bool opt_track_success;
 	bool opt_skip_timeout;
+	const char *opt_labels;
 
 	bool starting;
 	bool state_load_attempted;
@@ -72,6 +75,10 @@ static int logic_start(struct udevice *dev)
 	/* figure out the state to use */
 	LOGR("bgs", bootctl_get_dev(UCLASS_BOOTCTL_STATE, &priv->state));
 
+	if (priv->opt_labels) {
+		LOGR("blo", bootdev_set_order(priv->opt_labels));
+	}
+
 	priv->starting = true;
 
 	return 0;
@@ -87,13 +94,19 @@ static int logic_start(struct udevice *dev)
 static int prepare_for_boot(struct udevice *dev, struct osinfo *osinfo)
 {
 	struct logic_priv *priv = dev_get_priv(dev);
+	int ret;
 
-	if (priv->state_loaded) {
-		int ret;
-
-		ret = bc_state_load(priv->state);
+	if (priv->opt_track_success) {
+		ret = bc_state_write_bool(priv->state, "recordfail", true);
 		if (ret)
-			log_debug("Cannot write state (err=%dE)\n", ret);
+			log_warning("Cannot set up recordfail (err=%dE)\n",
+				    ret);
+	}
+
+	if (priv->opt_persist_state) {
+		ret = bc_state_save(priv->state);
+		if (ret)
+			log_warning("Cannot save state (err=%dE)\n", ret);
 		else
 			priv->state_saved = true;
 	}
@@ -110,14 +123,14 @@ static int logic_poll(struct udevice *dev)
 	bool have_os;
 	int ret;
 
-	if (priv->opt_persist_state && !priv->state_loaded) {
+	if (priv->opt_persist_state && !priv->state_load_attempted) {
 		int ret;
 
 		/* read in our state */
 		priv->state_load_attempted = true;
 		ret = bc_state_load(priv->state);
 		if (ret)
-			log_debug("Cannot read state, starting fresh (err=%dE)\n", ret);
+			log_warning("Cannot load state, starting fresh (err=%dE)\n", ret);
 		else
 			priv->state_loaded = true;
 	}
@@ -172,6 +185,7 @@ static int logic_of_to_plat(struct udevice *dev)
 	priv->opt_skip_timeout = ofnode_read_bool(node,
 						"skip-timeout-on-success");
 	priv->opt_track_success = ofnode_read_bool(node, "track-success");
+	priv->opt_labels = ofnode_read_string(node, "labels");
 
 	return 0;
 }

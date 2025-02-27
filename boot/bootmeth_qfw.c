@@ -6,6 +6,7 @@
  * Written by Simon Glass <sjg@chromium.org>
  */
 
+#define LOG_DEBUG
 #define LOG_CATEGORY UCLASS_BOOTSTD
 
 #include <command.h>
@@ -13,6 +14,7 @@
 #include <bootflow.h>
 #include <bootmeth.h>
 #include <env.h>
+#include <log.h>
 #include <qfw.h>
 #include <dm.h>
 
@@ -30,13 +32,16 @@ static int qfw_check(struct udevice *dev, struct bootflow_iter *iter)
 
 static int qfw_read_bootflow(struct udevice *dev, struct bootflow *bflow)
 {
-	struct udevice *qfw_dev = dev_get_parent(bflow->dev);
+	struct udevice *qfw_dev;
 	ulong load, initrd;
 	int ret;
 
+	LOGR("qrb", uclass_first_device_err(UCLASS_QFW, &qfw_dev));
+
+	log_debug("starting, bootdev %p\n", qfw_dev);
 	load = env_get_hex("kernel_addr_r", 0);
 	initrd = env_get_hex("ramdisk_addr_r", 0);
-	log_debug("setup kernel %s %lx %lx\n", qfw_dev->name, load, initrd);
+	log_debug("setup kernel %lx %lx\n", load, initrd);
 	bflow->name = strdup("qfw");
 	if (!bflow->name)
 		return log_msg_ret("name", -ENOMEM);
@@ -44,7 +49,7 @@ static int qfw_read_bootflow(struct udevice *dev, struct bootflow *bflow)
 	ret = qemu_fwcfg_setup_kernel(qfw_dev, load, initrd);
 	log_debug("setup kernel result %d\n", ret);
 	if (ret)
-		return log_msg_ret("cmd", -EIO);
+		return log_msg_ret("cmd", ret);
 
 	bflow->state = BOOTFLOWST_READY;
 
@@ -55,6 +60,7 @@ static int qfw_read_file(struct udevice *dev, struct bootflow *bflow,
 			 const char *file_path, ulong addr,
 			 enum bootflow_img_t type, ulong *sizep)
 {
+	log_debug("starting\n");
 	return -ENOSYS;
 }
 
@@ -62,6 +68,7 @@ static int qfw_boot(struct udevice *dev, struct bootflow *bflow)
 {
 	int ret;
 
+	log_debug("starting\n");
 	ret = run_command("booti ${kernel_addr_r} ${ramdisk_addr_r}:${filesize} ${fdtcontroladdr}",
 			  0);
 	if (ret) {
@@ -77,6 +84,7 @@ static int qfw_bootmeth_bind(struct udevice *dev)
 	struct bootmeth_uc_plat *plat = dev_get_uclass_plat(dev);
 
 	plat->desc = "QEMU boot using firmware interface";
+	plat->flags = BOOTMETHF_GLOBAL;
 
 	return 0;
 }

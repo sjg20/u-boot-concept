@@ -43,7 +43,6 @@
 	};
 
 	boot_ctl: bootctl {
-		compatible = "bootctl";
 	};
 
 	pci {

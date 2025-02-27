@@ -27,6 +27,9 @@
 
 		/* track boot success / failure in state */
 		track-success;
+
+		/* restrict labels to boot (separated by space) */
+		labels = "virtio";
 	};
 
 	oslist {
@@ -37,8 +40,13 @@
 		compatible = "bootctl,simple-state", "bootctl,state";
 
 		/* revisit, as we may want to reference the hardware device */
+#ifdef CONFIG_SANDBOX
 		location = "hostfs", "0";
 		filename = "bootctl.ini";
+#else
+		location = "virtio", "0:2";
+		filename = "/boot/bootctl/bootctl.ini";
+#endif
 	};
 
 	ui {
