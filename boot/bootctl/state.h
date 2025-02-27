@@ -59,6 +59,13 @@ struct bc_state_ops {
 	 * Return: 0 if OK, or -ve error code
 	 */
 	int (*save)(struct udevice *dev);
+
+	/**
+	 * clear() - Clear all values
+	 *
+	 * Return: 0 if OK, or -ve error code
+	 */
+	int (*clear)(struct udevice *dev);
 };
 
 #define bc_state_get_ops(dev)  ((struct bc_state_ops *)(dev)->driver->ops)
@@ -98,5 +105,12 @@ int bc_state_load(struct udevice *dev);
   * Return: 0 if OK, or -ve error code
   */
 int bc_state_save(struct udevice *dev);
+
+/**
+ * bc_state_clear() - Clear all values
+ *
+ * Return: 0 if OK, or -ve error code
+ */
+int bc_state_clear(struct udevice *dev);
 
 #endif

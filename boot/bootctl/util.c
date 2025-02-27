@@ -99,7 +99,7 @@ int bc_state_load(struct udevice *dev)
 {
 	struct bc_state_ops *ops = bc_state_get_ops(dev);
 
-	LOGR("bsr", ops->load(dev));
+	LOGR("bsl", ops->load(dev));
 
 	return 0;
 }
@@ -108,7 +108,16 @@ int bc_state_save(struct udevice *dev)
 {
 	struct bc_state_ops *ops = bc_state_get_ops(dev);
 
-	LOGR("bsw", ops->save(dev));
+	LOGR("bss", ops->save(dev));
+
+	return 0;
+}
+
+int bc_state_clear(struct udevice *dev)
+{
+	struct bc_state_ops *ops = bc_state_get_ops(dev);
+
+	LOGR("bsc", ops->clear(dev));
 
 	return 0;
 }
@@ -117,7 +126,7 @@ int bc_state_read_bool(struct udevice *dev, const char *prop, bool *valp)
 {
 	struct bc_state_ops *ops = bc_state_get_ops(dev);
 
-	LOGR("bsw", ops->read_bool(dev, prop, valp));
+	LOGR("srb", ops->read_bool(dev, prop, valp));
 
 	return 0;
 }
@@ -126,7 +135,7 @@ int bc_state_write_bool(struct udevice *dev, const char *prop, bool val)
 {
 	struct bc_state_ops *ops = bc_state_get_ops(dev);
 
-	LOGR("bsw", ops->write_bool(dev, prop, val));
+	LOGR("swb", ops->write_bool(dev, prop, val));
 
 	return 0;
 }

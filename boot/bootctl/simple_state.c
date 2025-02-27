@@ -6,6 +6,8 @@
  * Written by Simon Glass <simon.glass@canonical.com>
  */
 
+#define LOG_CATEGORY	UCLASS_BOOTCTL
+
 #include <alist.h>
 #include <abuf.h>
 #include <bootctl.h>
@@ -19,7 +21,13 @@
 #include "state.h"
 
 enum {
-	MAX_LINE_LEN	= 250,
+	/* maximum length of a key, excluding nul terminator */
+	MAX_KEY_LEN	= 30,
+
+	/* maximum length of a value, excluding nul terminator */
+	MAX_VAL_LEN	= SZ_4K,
+	MAX_LINE_LEN	= MAX_KEY_LEN + MAX_VAL_LEN + 10,
+	MAX_FILE_SIZE	= SZ_64K,
 };
 
 struct keyval {
@@ -28,89 +36,189 @@ struct keyval {
 };
 
 /**
- * struct simple_state_priv - Private data for simple-state
+ * struct sstate_priv - Private data for simple-state
  *
  * @ifname: Interface which stores the state
  * @dev_part: Device and partition number which stores the state
  * @filename: Filename which stores the state
+ * @items: List of struct keyval
  */
-struct simple_state_priv {
+struct sstate_priv {
 	const char *ifname;
 	const char *dev_part;
-	const char *filename;
+	const char *fname;
 	struct alist items;
 };
 
-static int simple_state_load(struct udevice *dev)
+static void clear_vals(struct sstate_priv *priv)
 {
-	struct simple_state_priv *priv = dev_get_priv(dev);
+	struct keyval *kv;
+
+	log_debug("clearing\n");
+	alist_for_each(kv, &priv->items) {
+		free(kv->key);
+		free(kv->val);
+	}
+
+	alist_empty(&priv->items);
+}
+
+static struct keyval *find_item(struct sstate_priv *priv, const char *key)
+{
+	struct keyval *kv;
+
+	log_debug("find %s: ", key);
+	alist_for_each(kv, &priv->items) {
+		if (!strcmp(kv->key, key)) {
+			log_debug("found\n");
+			return kv;
+		}
+	}
+	log_debug("not found\n");
+
+	return NULL;
+}
+
+static int add_val(struct sstate_priv *priv, const char *key,
+		   const char *val)
+{
+	struct keyval kv;
+
+	log_content("add %s=%s\n", key, val);
+	kv.key = strndup(key, MAX_KEY_LEN);
+	if (!kv.key)
+		LOGR("avk", -ENOMEM);
+	kv.val = strndup(val, MAX_VAL_LEN);
+	if (!kv.val) {
+		free(kv.key);
+		LOGR("avv", -ENOMEM);
+	}
+
+	if (!alist_add(&priv->items, kv)) {
+		free(kv.key);
+		free(kv.val);
+		LOGR("avl", -ENOMEM);
+	}
+
+	return 0;
+}
+
+static int write_val(struct sstate_priv *priv, const char *key,
+		     const char *val)
+{
+	struct keyval *kv;
+
+	log_content("write %s=%s\n", key, val);
+	kv = find_item(priv, key);
+	if (kv) {
+		int len = strnlen(val, MAX_VAL_LEN) + 1;
+		char *new;
+
+		log_content("- update\n");
+		new = realloc(kv->val, len);
+		if (!new)
+			LOGR("wvr", -ENOMEM);
+		kv->val = new;
+	} else {
+		LOGR("swB", add_val(priv, key, val));
+	}
+	log_content("done\n");
+
+	return 0;
+}
+
+static int sstate_clear(struct udevice *dev)
+{
+	struct sstate_priv *priv = dev_get_priv(dev);
+
+	clear_vals(priv);
+
+	return 0;
+}
+
+static int sstate_load(struct udevice *dev)
+{
+	struct sstate_priv *priv = dev_get_priv(dev);
 	struct membuf inf;
 	struct abuf buf;
 	char line[MAX_LINE_LEN];
 	bool ok;
 	int len;
 
-	LOGR("ssa", fs_load_alloc(priv->ifname, priv->dev_part, priv->filename,
-				  SZ_64K, 0, &buf));
+	log_debug("loading\n");
+	clear_vals(priv);
+	log_debug("read file ifname '%s' dev_part '%s' fname '%s'\n",
+		  priv->ifname, priv->dev_part, priv->fname);
+	LOGR("ssa", fs_load_alloc(priv->ifname, priv->dev_part, priv->fname,
+				  MAX_FILE_SIZE, 0, &buf));
+	log_debug("parsing\n");
 	membuf_init(&inf, buf.data, buf.size);
 	for (ok = true;
 	     len = membuf_readline(&inf, line, sizeof(line), ' ', true),
 	     len && ok;) {
-		struct keyval kv = {strtok(line, "="), strtok(NULL, "=")};
+		char *key = strtok(line, "=");
+		char *val = strtok(NULL, "=");
 
-		if (kv.key && kv.val && !alist_add(&priv->items, kv))
-			ok = false;
+		if (key && val)
+			ok = !add_val(priv, key, val);
 	}
 
 	abuf_uninit(&buf);
 
 	if (!ok) {
-		struct keyval *kv;
-
-		/* avoid memory leaks */
-		alist_for_each(kv, &priv->items) {
-			free(kv->key);
-			free(kv->val);
-		}
-
+		clear_vals(priv);
 		return log_msg_ret("ssr", -ENOMEM);
 	}
 
 	return 0;
 }
 
-static int simple_state_write(struct udevice *dev)
+static int sstate_save(struct udevice *dev)
 {
-	struct simple_state_priv *priv = dev_get_priv(dev);
+	struct sstate_priv *priv = dev_get_priv(dev);
 	struct membuf inf;
 	struct keyval *kv;
 	struct abuf buf;
 	loff_t actwrite;
 	int ret;
 
+	log_debug("saving\n");
 	abuf_init(&buf);
-	if (!abuf_realloc(&buf, SZ_4K))
+	if (!abuf_realloc(&buf, MAX_FILE_SIZE))
 		LOGR("ssa", -ENOMEM);
 
 	membuf_init(&inf, buf.data, buf.size);
 
+	ret = 0;
 	alist_for_each(kv, &priv->items) {
-		char str[MAX_LINE_LEN];
-		int len;
+		int keylen = strnlen(kv->key, MAX_KEY_LEN) + 1;
+		int vallen = strnlen(kv->val, MAX_VAL_LEN) + 1;
 
-		len = snprintf(str, MAX_LINE_LEN, "%s = %s\n", kv->key,
-			       kv->val);
-		if (membuf_put(&inf, str, len + 1) != len + 1)
+		log_content("save %s=%s\n", kv->key, kv->val);
+		if (membuf_put(&inf, kv->key, keylen) != keylen ||
+		    membuf_put(&inf, "=", 1) != 1 ||
+		    membuf_put(&inf, kv->val, vallen) != vallen) {
 			ret = log_msg_ret("ssp", -ENOSPC);
+			break;
+		}
 	}
 
 	if (!ret) {
+		log_debug("set dest ifname '%s' dev_part '%s'\n",
+			  priv->ifname, priv->dev_part);
 		ret = fs_set_blk_dev(priv->ifname, priv->dev_part, FS_TYPE_ANY);
 		if (ret)
 			ret = log_msg_ret("sss", ret);
 		else {
-			ret = fs_write(priv->filename, abuf_addr(&buf), 0,
-				       buf.size, &actwrite);
+			char *data;
+			int size;
+
+			size = membuf_getraw(&inf, MAX_FILE_SIZE, true, &data);
+
+			log_debug("write fname '%s' size %x\n", priv->fname,
+				  size);
+			ret = fs_write(priv->fname, abuf_addr(&buf), 0, size,
+				       &actwrite);
 			if (ret)
 				ret = log_msg_ret("ssw", ret);
 		}
@@ -123,29 +231,56 @@ static int simple_state_write(struct udevice *dev)
 	return 0;
 }
 
-static int simple_state_probe(struct udevice *dev)
+static int sstate_read_bool(struct udevice *dev, const char *prop,
+				  bool *valp)
 {
-	struct simple_state_priv *priv = dev_get_priv(dev);
+	struct sstate_priv *priv = dev_get_priv(dev);
+	const struct keyval *kv;
+
+	log_debug("read_bool\n");
+	kv = find_item(priv, prop);
+	if (!kv)
+		LOGR("srb", -ENOENT);
+
+	*valp = !strcmp(kv->val, "1") ? true : false;
+	log_debug("- val %s: %d\n", kv->val, *valp);
+
+	return 0;
+}
+
+static int sstate_write_bool(struct udevice *dev, const char *prop,
+				   bool val)
+{
+	struct sstate_priv *priv = dev_get_priv(dev);
+
+	LOGR("swb", write_val(priv, prop, simple_itoa(val)));
+
+	return 0;
+}
+
+static int sstate_probe(struct udevice *dev)
+{
+	struct sstate_priv *priv = dev_get_priv(dev);
 
 	alist_init_struct(&priv->items, struct keyval);
 
 	return 0;
 }
 
-static int simple_state_of_to_plat(struct udevice *dev)
+static int sstate_of_to_plat(struct udevice *dev)
 {
-	struct simple_state_priv *priv = dev_get_priv(dev);
+	struct sstate_priv *priv = dev_get_priv(dev);
 
 	LOGR("ssi", dev_read_string_index(dev, "location", 0, &priv->ifname));
 	LOGR("ssd", dev_read_string_index(dev, "location", 1, &priv->dev_part));
-	priv->filename = dev_read_string(dev, "filename");
-	if (!priv->ifname || !priv->dev_part || !priv->filename)
+	priv->fname = dev_read_string(dev, "filename");
+	if (!priv->ifname || !priv->dev_part || !priv->fname)
 		LOGR("ssp", -EINVAL);
 
 	return 0;
 }
 
-static int simple_state_bind(struct udevice *dev)
+static int sstate_bind(struct udevice *dev)
 {
 	struct bootctl_uc_plat *ucp = dev_get_uclass_plat(dev);
 
@@ -155,11 +290,14 @@ static int simple_state_bind(struct udevice *dev)
 }
 
 static struct bc_state_ops ops = {
-	.load	= simple_state_load,
-	.save	= simple_state_write,
+	.load	= sstate_load,
+	.save	= sstate_save,
+	.clear	= sstate_clear,
+	.read_bool = sstate_read_bool,
+	.write_bool= sstate_write_bool,
 };
 
-static const struct udevice_id simple_state_ids[] = {
+static const struct udevice_id sstate_ids[] = {
 	{ .compatible = "bootctl,simple-state" },
 	{ .compatible = "bootctl,state" },
 	{ }
@@ -168,10 +306,10 @@ static const struct udevice_id simple_state_ids[] = {
 U_BOOT_DRIVER(simple_state) = {
 	.name		= "simple_state",
 	.id		= UCLASS_BOOTCTL_STATE,
-	.of_match	= simple_state_ids,
+	.of_match	= sstate_ids,
 	.ops		= &ops,
-	.bind		= simple_state_bind,
-	.probe		= simple_state_probe,
-	.of_to_plat	= simple_state_of_to_plat,
-	.priv_auto	= sizeof(struct simple_state_priv),
+	.bind		= sstate_bind,
+	.probe		= sstate_probe,
+	.of_to_plat	= sstate_of_to_plat,
+	.priv_auto	= sizeof(struct sstate_priv),
 };

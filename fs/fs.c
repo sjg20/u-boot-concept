@@ -1050,7 +1050,7 @@ int fs_load_alloc(const char *ifname, const char *dev_part_str,
 	if (ret)
 		return log_msg_ret("sz", -ENOENT);
 
-	if (size >= (max_size ?: SZ_1G))
+	if (size > (max_size ?: SZ_1G))
 		return log_msg_ret("sz", -E2BIG);
 
 	if (fs_set_blk_dev(ifname, dev_part_str, FS_TYPE_ANY))

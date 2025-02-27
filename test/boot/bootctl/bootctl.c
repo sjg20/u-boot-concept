@@ -101,6 +101,12 @@ static int bootctl_simple_state_base(struct unit_test_state *uts)
 	ut_assertok(bc_state_read_bool(dev, "mary", &bval));
 	ut_asserteq(true, bval);
 
+	ut_assertok(bc_state_save(dev));
+
+	ut_assertok(bc_state_clear(dev));
+	ut_asserteq(-ENOENT, bc_state_read_bool(dev, "fred", &bval));
+	ut_asserteq(-ENOENT, bc_state_read_bool(dev, "mary", &bval));
+
 	ut_assertok(bc_state_load(dev));
 
 	return 0;
