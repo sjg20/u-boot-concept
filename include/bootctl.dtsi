@@ -14,10 +14,19 @@
 
 	options {
 		/* use persistent storage for variables */
-		persistent-state;
+		persist-state;
 
 		/* store a default OS in the persistent storage */
 		default-os;
+
+		/* timeout in seconds before booting a default OS */
+		timeout = <30>;
+
+		/* skip timeout if boot was successful */
+		skip-timeout-on-success;
+
+		/* track boot success / failure in state */
+		track-success;
 	};
 
 	oslist {

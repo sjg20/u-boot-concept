@@ -22,6 +22,9 @@
  *
  * @opt_persist_state: true if state can be preserved across reboots
  * @opt_default_os: true if we record a default OS to boot
+ * @opt_track_success: true to track whether the last boot succeeded (made it to
+ *	user space)
+ * @opt_skip_timeout: true to skip any boot timeout if the last boot succeeded
  *
  * @ready: true if ready to start scanning for OSes and booting
  * @state_load_attempted: true if we have attempted to load state
@@ -38,6 +41,9 @@
 struct logic_priv {
 	bool opt_persist_state;
 	bool opt_default_os;
+	uint opt_timeout;
+	bool opt_track_success;
+	bool opt_skip_timeout;
 
 	bool starting;
 	bool state_load_attempted;
@@ -162,6 +168,10 @@ static int logic_of_to_plat(struct udevice *dev)
 
 	priv->opt_persist_state = ofnode_read_bool(node, "persist-state");
 	priv->opt_default_os = ofnode_read_bool(node, "default-os");
+	ofnode_read_u32(node, "timeout", &priv->opt_timeout);
+	priv->opt_skip_timeout = ofnode_read_bool(node,
+						"skip-timeout-on-success");
+	priv->opt_track_success = ofnode_read_bool(node, "track-success");
 
 	return 0;
 }

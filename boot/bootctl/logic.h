@@ -51,7 +51,8 @@ int bc_logic_start(struct udevice *dev);
 /**
  * * bc_logic_poll() - Poll the boot process
  *
- * Try to progress the boot towards a result
+ * Try to progress the boot towards a result. This handles looking for OSes and
+ * presenting them to the user, if any, as well as attempting to boot
  *
  * @dev: Logic device
  * Return: 0 if OK, or -ve error code
