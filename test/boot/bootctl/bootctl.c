@@ -6,6 +6,7 @@
  * Written by Simon Glass <simon.glass@canonical.com>
  */
 
+#include <stdbool.h>
 #include <bootctl.h>
 #include <bootmeth.h>
 #include <dm.h>
@@ -84,26 +85,41 @@ static int bootctl_oslist_usb(struct unit_test_state *uts)
 }
 BOOTCTL_TEST(bootctl_oslist_usb, UTF_DM | UTF_SCAN_FDT);
 
-/* test writing state */
-static int bootctl_simple_state_write(struct unit_test_state *uts)
+/* test basic use of state */
+static int bootctl_simple_state_base(struct unit_test_state *uts)
 {
 	struct udevice *dev;
+	bool bval;
 
 	ut_assertok(bootctl_get_dev(UCLASS_BOOTCTL_STATE, &dev));
-	ut_assertok(bc_state_save(dev));
+	ut_assertok(bc_state_write_bool(dev, "fred", false));
+	ut_assertok(bc_state_write_bool(dev, "mary", true));
 
-	return 0;
-}
-BOOTCTL_TEST(bootctl_simple_state_write, UTF_DM | UTF_SCAN_FDT);
+	ut_assertok(bc_state_read_bool(dev, "fred", &bval));
+	ut_asserteq(false, bval);
 
-/* test reading state */
-static int bootctl_simple_state_read(struct unit_test_state *uts)
-{
-	struct udevice *dev;
+	ut_assertok(bc_state_read_bool(dev, "mary", &bval));
+	ut_asserteq(true, bval);
 
-	ut_assertok(bootctl_get_dev(UCLASS_BOOTCTL_STATE, &dev));
 	ut_assertok(bc_state_load(dev));
 
 	return 0;
 }
-BOOTCTL_TEST(bootctl_simple_state_read, UTF_DM | UTF_SCAN_FDT);
+BOOTCTL_TEST(bootctl_simple_state_base, UTF_DM | UTF_SCAN_FDT);
+
+/* test loading / saving state */
+static int bootctl_simple_state_loadsave(struct unit_test_state *uts)
+{
+	struct udevice *dev;
+
+	ut_assertok(bootctl_get_dev(UCLASS_BOOTCTL_STATE, &dev));
+	ut_assertok(bc_state_write_bool(dev, "fred", false));
+	ut_assertok(bc_state_save(dev));
+
+	ut_assertok(bc_state_save(dev));
+
+	ut_assertok(bc_state_load(dev));
+
+	return 0;
+}
+BOOTCTL_TEST(bootctl_simple_state_loadsave, UTF_DM | UTF_SCAN_FDT);

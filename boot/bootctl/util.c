@@ -112,3 +112,21 @@ int bc_state_save(struct udevice *dev)
 
 	return 0;
 }
+
+int bc_state_read_bool(struct udevice *dev, const char *prop, bool *valp)
+{
+	struct bc_state_ops *ops = bc_state_get_ops(dev);
+
+	LOGR("bsw", ops->read_bool(dev, prop, valp));
+
+	return 0;
+}
+
+int bc_state_write_bool(struct udevice *dev, const char *prop, bool val)
+{
+	struct bc_state_ops *ops = bc_state_get_ops(dev);
+
+	LOGR("bsw", ops->write_bool(dev, prop, val));
+
+	return 0;
+}
