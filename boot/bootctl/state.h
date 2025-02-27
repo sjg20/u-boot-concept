@@ -48,6 +48,51 @@ struct bc_state_ops {
 	int (*write_bool)(struct udevice *dev, const char *key, bool val);
 
 	/**
+	 * read_int() - Read an integer value
+	 *
+	 * This holds a 64-bit integer
+	 *
+	 * @dev: Device to access
+	 * @key: Key to access
+	 * @valp: Returns integer value on success
+	 * Return: 0 if OK, or -ve error code
+	 */
+	int (*read_int)(struct udevice *dev, const char *key, long *valp);
+
+	/**
+	 * write_str() - Write an integer value
+	 *
+	 * This holds a 64-bit integer
+	 *
+	 * @dev: Device to access
+	 * @key: Key to access
+	 * @val: Value to write
+	 * Return: 0 if OK, or -ve error code
+	 */
+	int (*write_int)(struct udevice *dev, const char *key, long val);
+
+	/**
+	 * read_str() - Read a string value
+	 *
+	 * @dev: Device to access
+	 * @key: Key to access
+	 * @valp: Returns string value on success
+	 * Return: 0 if OK, or -ve error code
+	 */
+	int (*read_str)(struct udevice *dev, const char *key,
+			const char **valp);
+
+	/**
+	 * write_str() - Write a string value
+	 *
+	 * @dev: Device to access
+	 * @key: Key to access
+	 * @val: Value to write
+	 * Return: 0 if OK, or -ve error code
+	 */
+	int (*write_str)(struct udevice *dev, const char *key, const char *val);
+
+	/**
 	 * load() - Read in the current state
 	 *
 	 * Return: 0 if OK, or -ve error code
@@ -102,6 +147,50 @@ int bc_state_read_bool(struct udevice *dev, const char *key, bool *valp);
  * Return: 0 if OK, or -ve error code
  */
 int bc_state_write_bool(struct udevice *dev, const char *key, bool val);
+
+/**
+ * bc_state_read_int() - Read an integer value
+ *
+ * This holds a 64-bit integer
+ *
+ * @dev: Device to access
+ * @key: Key to access
+ * @valp: Returns integer value on success
+ * Return: 0 if OK, or -ve error code
+ */
+int bc_state_read_int(struct udevice *dev, const char *key, long *valp);
+
+/**
+ * bc_state_write_str() - Write an integer value
+ *
+ * This holds a 64-bit integer
+ *
+ * @dev: Device to access
+ * @key: Key to access
+ * @val: Value to write
+ * Return: 0 if OK, or -ve error code
+ */
+int bc_state_write_int(struct udevice *dev, const char *key, long val);
+
+/**
+ * bc_state_read_str() - Read a string value
+ *
+ * @dev: Device to access
+ * @key: Key to access
+ * @valp: Returns string value on success
+ * Return: 0 if OK, or -ve error code
+ */
+int bc_state_read_str(struct udevice *dev, const char *key, const char **valp);
+
+/**
+ * bc_state_write_str() - Write a string value
+ *
+ * @dev: Device to access
+ * @key: Key to access
+ * @val: Value to write
+ * Return: 0 if OK, or -ve error code
+ */
+int bc_state_write_str(struct udevice *dev, const char *key, const char *val);
 
 /**
   * bc_state_load() - Load state from a file

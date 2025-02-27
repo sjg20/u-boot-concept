@@ -847,16 +847,27 @@ int vprintf(const char *fmt, va_list args)
 
 static char local_toa[22];
 
-char *simple_itoa(ulong i)
+char *simple_itoa(long i)
 {
-	/* 21 digits plus null terminator, good for 64-bit or smaller ints */
-	char *p = &local_toa[21];
+	/*
+	 * 21 digits plus sign and null terminator, good for 64-bit or smaller
+	 * ints
+	 */
+	char *p = &local_toa[23];
+	bool neg = false;
 
+	if (i < 0) {
+		i = -i;
+		neg = true;
+	}
 	*p-- = '\0';
 	do {
 		*p-- = '0' + i % 10;
 		i /= 10;
 	} while (i > 0);
+
+	if (neg)
+		*p-- = '-';
 	return p + 1;
 }
 

@@ -5,7 +5,8 @@
  * The file format a ordered series of lines of the form:
  * key=value\n
  *
- * with a nul terminator at the end.
+ * with a nul terminator at the end. Strings are stored without quoting. Ints
+ * are stored as decimal, perhaps with leading '-'. Bools are stored as 0 or 1
  *
  * Copyright 2025 Canonical Ltd
  * Written by Simon Glass <simon.glass@canonical.com>
@@ -22,6 +23,7 @@
 #include <fs.h>
 #include <log.h>
 #include <malloc.h>
+#include <vsprintf.h>
 #include <linux/sizes.h>
 #include "state.h"
 
@@ -114,6 +116,8 @@ static int write_val(struct sstate_priv *priv, const char *key,
 	struct keyval *kv;
 
 	log_content("write %s=%s\n", key, val);
+	if (!key || !val)
+		LOGR("wkn", -EINVAL);
 	kv = find_item(priv, key);
 	if (kv) {
 		int len = strnlen(val, MAX_VAL_LEN) + 1;
@@ -244,8 +248,7 @@ static int sstate_save(struct udevice *dev)
 	return 0;
 }
 
-static int sstate_read_bool(struct udevice *dev, const char *prop,
-				  bool *valp)
+static int sstate_read_bool(struct udevice *dev, const char *prop, bool *valp)
 {
 	struct sstate_priv *priv = dev_get_priv(dev);
 	const struct keyval *kv;
@@ -261,12 +264,63 @@ static int sstate_read_bool(struct udevice *dev, const char *prop,
 	return 0;
 }
 
-static int sstate_write_bool(struct udevice *dev, const char *prop,
-				   bool val)
+static int sstate_write_bool(struct udevice *dev, const char *prop, bool val)
 {
 	struct sstate_priv *priv = dev_get_priv(dev);
 
 	LOGR("swb", write_val(priv, prop, simple_itoa(val)));
+
+	return 0;
+}
+
+static int sstate_read_int(struct udevice *dev, const char *prop, long *valp)
+{
+	struct sstate_priv *priv = dev_get_priv(dev);
+	const struct keyval *kv;
+
+	log_debug("read_bool\n");
+	kv = find_item(priv, prop);
+	if (!kv)
+		LOGR("srb", -ENOENT);
+
+	*valp = simple_strtol(kv->val, NULL, 10);
+	log_debug("- val %s: %ld\n", kv->val, *valp);
+
+	return 0;
+}
+
+static int sstate_write_int(struct udevice *dev, const char *prop, long val)
+{
+	struct sstate_priv *priv = dev_get_priv(dev);
+
+	LOGR("swb", write_val(priv, prop, simple_itoa(val)));
+
+	return 0;
+}
+
+static int sstate_read_str(struct udevice *dev, const char *prop,
+			   const char **valp)
+{
+	struct sstate_priv *priv = dev_get_priv(dev);
+	const struct keyval *kv;
+
+	log_debug("read_bool\n");
+	kv = find_item(priv, prop);
+	if (!kv)
+		LOGR("srb", -ENOENT);
+
+	*valp = kv->val;
+	log_debug("- val %s: %s\n", kv->val, *valp);
+
+	return 0;
+}
+
+static int sstate_write_str(struct udevice *dev, const char *prop,
+			    const char *str)
+{
+	struct sstate_priv *priv = dev_get_priv(dev);
+
+	LOGR("swb", write_val(priv, prop, str));
 
 	return 0;
 }
@@ -309,6 +363,10 @@ static struct bc_state_ops ops = {
 	.clear	= sstate_clear,
 	.read_bool = sstate_read_bool,
 	.write_bool= sstate_write_bool,
+	.read_int  = sstate_read_int,
+	.write_int = sstate_write_int,
+	.read_str  = sstate_read_str,
+	.write_str = sstate_write_str,
 };
 
 static const struct udevice_id sstate_ids[] = {

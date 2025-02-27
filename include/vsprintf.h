@@ -214,10 +214,12 @@ int vsprintf(char *buf, const char *fmt, va_list args);
  * given value. The returned value may be overwritten by other calls to other
  * simple... functions, so should be used immediately
  *
+ * If the value is negative, a minus sign ('-') is prepended
+ *
  * @val: Value to convert
  * Return: string containing the decimal representation of @val
  */
-char *simple_itoa(ulong val);
+char *simple_itoa(long val);
 
 /**
  * simple_xtoa() - convert an unsigned integer to a hex string

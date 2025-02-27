@@ -131,20 +131,56 @@ int bc_state_clear(struct udevice *dev)
 	return 0;
 }
 
-int bc_state_read_bool(struct udevice *dev, const char *prop, bool *valp)
+int bc_state_read_bool(struct udevice *dev, const char *key, bool *valp)
 {
 	struct bc_state_ops *ops = bc_state_get_ops(dev);
 
-	LOGR("srb", ops->read_bool(dev, prop, valp));
+	LOGR("srb", ops->read_bool(dev, key, valp));
 
 	return 0;
 }
 
-int bc_state_write_bool(struct udevice *dev, const char *prop, bool val)
+int bc_state_write_bool(struct udevice *dev, const char *key, bool val)
 {
 	struct bc_state_ops *ops = bc_state_get_ops(dev);
 
-	LOGR("swb", ops->write_bool(dev, prop, val));
+	LOGR("swb", ops->write_bool(dev, key, val));
+
+	return 0;
+}
+
+int bc_state_read_int(struct udevice *dev, const char *key, long *valp)
+{
+	struct bc_state_ops *ops = bc_state_get_ops(dev);
+
+	LOGR("sri", ops->read_int(dev, key, valp));
+
+	return 0;
+}
+
+int bc_state_write_int(struct udevice *dev, const char *key, long val)
+{
+	struct bc_state_ops *ops = bc_state_get_ops(dev);
+
+	LOGR("swi", ops->write_int(dev, key, val));
+
+	return 0;
+}
+
+int bc_state_read_str(struct udevice *dev, const char *key, const char **valp)
+{
+	struct bc_state_ops *ops = bc_state_get_ops(dev);
+
+	LOGR("srs", ops->read_str(dev, key, valp));
+
+	return 0;
+}
+
+int bc_state_write_str(struct udevice *dev, const char *key, const char *val)
+{
+	struct bc_state_ops *ops = bc_state_get_ops(dev);
+
+	LOGR("sws", ops->write_str(dev, key, val));
 
 	return 0;
 }

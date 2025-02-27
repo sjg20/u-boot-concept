@@ -90,12 +90,16 @@ BOOTCTL_TEST(bootctl_oslist_usb, UTF_DM | UTF_SCAN_FDT);
 static int bootctl_simple_state_base(struct unit_test_state *uts)
 {
 	struct udevice *dev;
+	const char *sval;
 	struct abuf buf;
 	bool bval;
+	long ival;
 
 	ut_assertok(bootctl_get_dev(UCLASS_BOOTCTL_STATE, &dev));
 	ut_assertok(bc_state_write_bool(dev, "fred", false));
 	ut_assertok(bc_state_write_bool(dev, "mary", true));
+	ut_assertok(bc_state_write_int(dev, "alex", 123));
+	ut_assertok(bc_state_write_str(dev, "john", "abc"));
 
 	ut_assertok(bc_state_read_bool(dev, "fred", &bval));
 	ut_asserteq(false, bval);
@@ -103,15 +107,25 @@ static int bootctl_simple_state_base(struct unit_test_state *uts)
 	ut_assertok(bc_state_read_bool(dev, "mary", &bval));
 	ut_asserteq(true, bval);
 
+	ut_assertok(bc_state_read_int(dev, "alex", &ival));
+	ut_asserteq(123, ival);
+
+	ut_assertok(bc_state_read_str(dev, "john", &sval));
+	ut_asserteq_str("abc", sval);
+
 	/* check the buffer contents, including the nul terminator */
 	ut_assertok(bc_state_save_to_buf(dev, &buf));
-	ut_asserteq_str("fred=0\nmary=1\n", buf.data);
-	ut_asserteq(strlen("fred=0\nmary=1\n") + 1, buf.size);
+	ut_asserteq_str("fred=0\nmary=1\nalex=123\njohn=abc\n", buf.data);
+	ut_asserteq(strlen("fred=0\nmary=1\nalex=123\njohn=abc\n") + 1,
+		    buf.size);
 	ut_asserteq(0, *((char *)buf.data + buf.size - 1));
+	abuf_uninit(&buf);
 
 	ut_assertok(bc_state_clear(dev));
 	ut_asserteq(-ENOENT, bc_state_read_bool(dev, "fred", &bval));
 	ut_asserteq(-ENOENT, bc_state_read_bool(dev, "mary", &bval));
+	ut_asserteq(-ENOENT, bc_state_read_bool(dev, "john", &bval));
+	ut_asserteq(-ENOENT, bc_state_read_bool(dev, "alex", &bval));
 
 	return 0;
 }
@@ -134,9 +148,31 @@ static int bootctl_simple_state_loadsave(struct unit_test_state *uts)
 	ut_asserteq_str("fred=0\nmary=1\n", buf);
 	ut_asserteq(strlen("fred=0\nmary=1\n") + 1, size);
 	ut_asserteq(0, buf[size - 1]);
+	os_free(buf);
 
 	ut_assertok(bc_state_load(dev));
 
 	return 0;
 }
 BOOTCTL_TEST(bootctl_simple_state_loadsave, UTF_DM | UTF_SCAN_FDT);
+
+/* test limits */
+static int bootctl_simple_state_limits(struct unit_test_state *uts)
+{
+	struct udevice *dev;
+	struct abuf buf;
+
+	ut_assertok(bootctl_get_dev(UCLASS_BOOTCTL_STATE, &dev));
+	ut_asserteq(-EINVAL, bc_state_write_bool(dev, NULL, false));
+	ut_asserteq(-EINVAL, bc_state_write_str(dev, "key", NULL));
+
+	/*
+	 * other things to add here:
+	 * - keys and string values too long
+	 * - negative integers and the limits of integer range
+	 */
+
+	return 0;
+}
+BOOTCTL_TEST(bootctl_simple_state_limits, UTF_DM | UTF_SCAN_FDT);
+
