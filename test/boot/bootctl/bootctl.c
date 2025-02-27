@@ -10,6 +10,7 @@
 #include <bootctl.h>
 #include <bootmeth.h>
 #include <dm.h>
+#include <os.h>
 #include <test/ut.h>
 #include "bootctl_common.h"
 #include "../../../boot/bootctl/oslist.h"
@@ -89,6 +90,7 @@ BOOTCTL_TEST(bootctl_oslist_usb, UTF_DM | UTF_SCAN_FDT);
 static int bootctl_simple_state_base(struct unit_test_state *uts)
 {
 	struct udevice *dev;
+	struct abuf buf;
 	bool bval;
 
 	ut_assertok(bootctl_get_dev(UCLASS_BOOTCTL_STATE, &dev));
@@ -101,14 +103,40 @@ static int bootctl_simple_state_base(struct unit_test_state *uts)
 	ut_assertok(bc_state_read_bool(dev, "mary", &bval));
 	ut_asserteq(true, bval);
 
-	ut_assertok(bc_state_save(dev));
+	/* check the buffer contents, including the nul terminator */
+	ut_assertok(bc_state_save_to_buf(dev, &buf));
+	ut_asserteq_str("fred=0\nmary=1\n", buf.data);
+	ut_asserteq(strlen("fred=0\nmary=1\n") + 1, buf.size);
+	ut_asserteq(0, *((char *)buf.data + buf.size - 1));
 
 	ut_assertok(bc_state_clear(dev));
 	ut_asserteq(-ENOENT, bc_state_read_bool(dev, "fred", &bval));
 	ut_asserteq(-ENOENT, bc_state_read_bool(dev, "mary", &bval));
 
+	return 0;
+}
+BOOTCTL_TEST(bootctl_simple_state_base, UTF_DM | UTF_SCAN_FDT);
+
+/* test loading / saving state */
+static int bootctl_simple_state_loadsave(struct unit_test_state *uts)
+{
+	struct udevice *dev;
+	char *buf;
+	int size;
+
+	ut_assertok(bootctl_get_dev(UCLASS_BOOTCTL_STATE, &dev));
+	ut_assertok(bc_state_write_bool(dev, "fred", false));
+	ut_assertok(bc_state_write_bool(dev, "mary", true));
+	ut_assertok(bc_state_save(dev));
+
+	/* check the file contents, including the nul terminator */
+	ut_assertok(os_read_file("bootctl.ini", (void **)&buf, &size));
+	ut_asserteq_str("fred=0\nmary=1\n", buf);
+	ut_asserteq(strlen("fred=0\nmary=1\n") + 1, size);
+	ut_asserteq(0, buf[size - 1]);
+
 	ut_assertok(bc_state_load(dev));
 
 	return 0;
 }
-BOOTCTL_TEST(bootctl_simple_state_base, UTF_DM | UTF_SCAN_FDT);
+BOOTCTL_TEST(bootctl_simple_state_loadsave, UTF_DM | UTF_SCAN_FDT);

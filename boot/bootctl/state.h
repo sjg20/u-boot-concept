@@ -9,6 +9,7 @@
 #ifndef __bootctl_state_h
 #define __bootctl_state_h
 
+#include <abuf.h>
 #include <alist.h>
 
 struct udevice;
@@ -30,21 +31,21 @@ struct bc_state_ops {
 	 * read_bool() - Read a boolean value
 	 *
 	 * @dev: Device to access
-	 * @prop: Property to access
+	 * @key: Key to access
 	 * @valp: Returns boolean value on success
 	 * Return: 0 if OK, or -ve error code
 	 */
-	int (*read_bool)(struct udevice *dev, const char *prop, bool *valp);
+	int (*read_bool)(struct udevice *dev, const char *key, bool *valp);
 
 	/**
 	 * write_bool() - Write a boolean value
 	 *
 	 * @dev: Device to access
-	 * @prop: Property to access
+	 * @key: Key to access
 	 * @val: Value to write
 	 * Return: 0 if OK, or -ve error code
 	 */
-	int (*write_bool)(struct udevice *dev, const char *prop, bool val);
+	int (*write_bool)(struct udevice *dev, const char *key, bool val);
 
 	/**
 	 * load() - Read in the current state
@@ -61,6 +62,16 @@ struct bc_state_ops {
 	int (*save)(struct udevice *dev);
 
 	/**
+	 * save_to_buf() - Write the current state to a buffer
+	 *
+	 * The buffer is inited and filled with the contents of the state as it
+	 * would be written to a file
+	 *
+	 * Return: 0 if OK, or -ve error code
+	 */
+	int (*save_to_buf)(struct udevice *dev, struct abuf *buf);
+
+	/**
 	 * clear() - Clear all values
 	 *
 	 * Return: 0 if OK, or -ve error code
@@ -74,21 +85,23 @@ struct bc_state_ops {
  * bc_state_read_bool() - Read a boolean value
  *
  * @dev: Device to access
- * @prop: Property to access
+ * @key: Key to access
  * @valp: Returns boolean value on success
  * Return: 0 if OK, or -ve error code
  */
-int bc_state_read_bool(struct udevice *dev, const char *prop, bool *valp);
+int bc_state_read_bool(struct udevice *dev, const char *key, bool *valp);
 
 /**
  * bc_state_write_bool() - Write a boolean value
  *
+ * Sets the value for a key, overwriting any existing value
+ *
  * @dev: Device to access
- * @prop: Property to access
+ * @key: Key to access
  * @val: Value to write
  * Return: 0 if OK, or -ve error code
  */
-int bc_state_write_bool(struct udevice *dev, const char *prop, bool val);
+int bc_state_write_bool(struct udevice *dev, const char *key, bool val);
 
 /**
   * bc_state_load() - Load state from a file
@@ -105,6 +118,16 @@ int bc_state_load(struct udevice *dev);
   * Return: 0 if OK, or -ve error code
   */
 int bc_state_save(struct udevice *dev);
+
+/**
+ * bc_state_save_to_buf() - Write the current state to a buffer
+ *
+ * The buffer is inited and filled with the contents of the state as it
+ * would be written to a file
+ *
+ * Return: 0 if OK, or -ve error code
+ */
+int bc_state_save_to_buf(struct udevice *dev, struct abuf *buf);
 
 /**
  * bc_state_clear() - Clear all values

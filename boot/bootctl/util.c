@@ -113,6 +113,15 @@ int bc_state_save(struct udevice *dev)
 	return 0;
 }
 
+int bc_state_save_to_buf(struct udevice *dev, struct abuf *buf)
+{
+	struct bc_state_ops *ops = bc_state_get_ops(dev);
+
+	LOGR("bsb", ops->save_to_buf(dev, buf));
+
+	return 0;
+}
+
 int bc_state_clear(struct udevice *dev)
 {
 	struct bc_state_ops *ops = bc_state_get_ops(dev);

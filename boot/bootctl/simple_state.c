@@ -2,6 +2,11 @@
 /*
  * Provides a simple name/value pair
  *
+ * The file format a ordered series of lines of the form:
+ * key=value\n
+ *
+ * with a nul terminator at the end.
+ *
  * Copyright 2025 Canonical Ltd
  * Written by Simon Glass <simon.glass@canonical.com>
  */
@@ -173,8 +178,9 @@ static int sstate_load(struct udevice *dev)
 	return 0;
 }
 
-static int sstate_save_to_buf(struct sstate_priv *priv, struct abuf *buf)
+static int sstate_save_to_buf(struct udevice *dev, struct abuf *buf)
 {
+	struct sstate_priv *priv = dev_get_priv(dev);
 	struct membuf inf;
 	struct keyval *kv;
 	char *data;
@@ -188,16 +194,18 @@ static int sstate_save_to_buf(struct sstate_priv *priv, struct abuf *buf)
 	membuf_init(&inf, buf->data, buf->size);
 
 	alist_for_each(kv, &priv->items) {
-		int keylen = strnlen(kv->key, MAX_KEY_LEN) + 1;
-		int vallen = strnlen(kv->val, MAX_VAL_LEN) + 1;
+		int keylen = strnlen(kv->key, MAX_KEY_LEN);
+		int vallen = strnlen(kv->val, MAX_VAL_LEN);
 
 		log_content("save %s=%s\n", kv->key, kv->val);
 		if (membuf_put(&inf, kv->key, keylen) != keylen ||
 		    membuf_put(&inf, "=", 1) != 1 ||
-		    membuf_put(&inf, kv->val, vallen) != vallen) {
+		    membuf_put(&inf, kv->val, vallen) != vallen ||
+		    membuf_put(&inf, "\n", 1) != 1)
 			LOGR("ssp", -ENOSPC);
-		}
 	}
+	if (membuf_put(&inf, "", 1) != 1)
+		LOGR("ssp", -ENOSPC);
 
 	size = membuf_getraw(&inf, MAX_FILE_SIZE, true, &data);
 	if (data != buf->data)
@@ -214,7 +222,7 @@ static int sstate_save(struct udevice *dev)
 	struct abuf buf;
 	int ret;
 
-	LOGR("sss", sstate_save_to_buf(priv, &buf));
+	LOGR("sss", sstate_save_to_buf(dev, &buf));
 
 	log_debug("set dest ifname '%s' dev_part '%s'\n", priv->ifname,
 		  priv->dev_part);
@@ -297,6 +305,7 @@ static int sstate_bind(struct udevice *dev)
 static struct bc_state_ops ops = {
 	.load	= sstate_load,
 	.save	= sstate_save,
+	.save_to_buf	 = sstate_save_to_buf,
 	.clear	= sstate_clear,
 	.read_bool = sstate_read_bool,
 	.write_bool= sstate_write_bool,
