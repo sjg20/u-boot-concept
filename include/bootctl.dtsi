@@ -4,11 +4,21 @@
  *
  * This contains the various components needed to boot Ubuntu 24.04 Desktop. It
  * provides a description of the process, similar to a grub.cfg file.
+ *
+ * The file format of this is TBD, but yaml might be a suitable choice. For now,
+ * devicetree is used as it is convenient for U-Boot
  */
 
 &boot_ctl {
 	compatible = "bootctl,ubuntu-desktop", "bootctl,base";
-	persistent-state;
+
+	options {
+		/* use persistent storage for variables */
+		persistent-state;
+
+		/* store a default OS in the persistent storage */
+		default-os;
+	};
 
 	oslist {
 		compatible = "bootctl,extlinux-oslist";
@@ -16,6 +26,8 @@
 
 	state {
 		compatible = "bootctl,simple-state", "bootctl,state";
+
+		/* revisit, as we may want to reference the hardware device */
 		location = "hostfs", "0";
 		filename = "bootctl.ini";
 	};

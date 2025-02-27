@@ -20,7 +20,8 @@
 /**
  * struct logic_priv - Information maintained by the boot logic as it works
  *
- * @have_persistent_state: true if state can be preserved across reboots
+ * @opt_persist_state: true if state can be preserved across reboots
+ * @opt_default_os: true if we record a default OS to boot
  *
  * @ready: true if ready to start scanning for OSes and booting
  * @state_load_attempted: true if we have attempted to load state
@@ -35,11 +36,13 @@
  * @state: provides persistent state
  */
 struct logic_priv {
-	bool have_persistent_state;
+	bool opt_persist_state;
+	bool opt_default_os;
 
 	bool starting;
 	bool state_load_attempted;
 	bool state_loaded;
+	bool state_saved;
 	bool ui_shown;
 	bool scanning;
 
@@ -68,6 +71,32 @@ static int logic_start(struct udevice *dev)
 	return 0;
 }
 
+/**
+ * prepare_for_boot() - Get ready to boot an OS
+ *
+ * @dev: Bootctrl logic device
+ * @osinfo: OS to boot
+ * Return: 0 if OK, -ve on error
+ */
+static int prepare_for_boot(struct udevice *dev, struct osinfo *osinfo)
+{
+	struct logic_priv *priv = dev_get_priv(dev);
+
+	if (priv->state_loaded) {
+		int ret;
+
+		ret = bc_state_load(priv->state);
+		if (ret)
+			log_debug("Cannot write state (err=%dE)\n", ret);
+		else
+			priv->state_saved = true;
+	}
+
+	/* devicetree fix-ups */
+
+	return 0;
+}
+
 static int logic_poll(struct udevice *dev)
 {
 	struct logic_priv *priv = dev_get_priv(dev);
@@ -75,13 +104,13 @@ static int logic_poll(struct udevice *dev)
 	bool have_os;
 	int ret;
 
-	if (priv->have_persistent_state && !priv->state_loaded) {
+	if (priv->opt_persist_state && !priv->state_loaded) {
 		int ret;
 
 		/* read in our state */
 		priv->state_load_attempted = true;
 		ret = bc_state_load(priv->state);
-		if (ret == -EINVAL)
+		if (ret)
 			log_debug("Cannot read state, starting fresh (err=%dE)\n", ret);
 		else
 			priv->state_loaded = true;
@@ -115,6 +144,8 @@ static int logic_poll(struct udevice *dev)
 	LOGR("bdo", bc_ui_poll(priv->ui, &priv->selected));
 
 	if (priv->selected) {
+		LOGR("lpb", prepare_for_boot(dev, priv->selected));
+
 		printf("boot\n");
 		/* boot OS here */
 
@@ -127,8 +158,10 @@ static int logic_poll(struct udevice *dev)
 static int logic_of_to_plat(struct udevice *dev)
 {
 	struct logic_priv *priv = dev_get_priv(dev);
+	ofnode node = ofnode_find_subnode(dev_ofnode(dev), "options");
 
-	priv->have_persistent_state = dev_read_bool(dev, "persistent-state");
+	priv->opt_persist_state = ofnode_read_bool(node, "persist-state");
+	priv->opt_default_os = ofnode_read_bool(node, "default-os");
 
 	return 0;
 }
