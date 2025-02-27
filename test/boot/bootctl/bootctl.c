@@ -14,6 +14,7 @@
 #include "../../../boot/bootctl/oslist.h"
 #include "../bootstd_common.h"
 
+/* test that expected devices are available and can be probed */
 static int bootctl_base(struct unit_test_state *uts)
 {
 	struct udevice *dev;
@@ -31,6 +32,7 @@ static int bootctl_base(struct unit_test_state *uts)
 }
 BOOTCTL_TEST(bootctl_base, UTF_DM | UTF_SCAN_FDT);
 
+/* test finding an OS */
 static int bootctl_oslist(struct unit_test_state *uts)
 {
 	struct oslist_iter iter;
@@ -52,7 +54,8 @@ static int bootctl_oslist(struct unit_test_state *uts)
 }
 BOOTCTL_TEST(bootctl_oslist, UTF_DM | UTF_SCAN_FDT);
 
-static int bootctl_oslist2(struct unit_test_state *uts)
+/* test finding OSes on mmc and usb */
+static int bootctl_oslist_usb(struct unit_test_state *uts)
 {
 	struct oslist_iter iter;
 	struct osinfo info;
@@ -70,15 +73,12 @@ static int bootctl_oslist2(struct unit_test_state *uts)
 
 	ut_assertok(bc_oslist_first(dev, &iter, &info));
 	ut_asserteq_str("mmc1.bootdev.part_1", bflow->name);
-	printf("got mmc\n");
 
 	ut_assertok(bc_oslist_next(dev, &iter, &info));
-	printf("got usb\n");
 	ut_asserteq_str("hub1.p4.usb_mass_storage.lun0.bootdev.part_1", bflow->name);
 
 	ut_asserteq(-ENODEV, bc_oslist_next(dev, &iter, &info));
-	printf("\n\n\n\ndone\n");
 
 	return 0;
 }
-BOOTCTL_TEST(bootctl_oslist2, UTF_DM | UTF_SCAN_FDT);
+BOOTCTL_TEST(bootctl_oslist_usb, UTF_DM | UTF_SCAN_FDT);
