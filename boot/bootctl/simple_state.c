@@ -173,23 +173,20 @@ static int sstate_load(struct udevice *dev)
 	return 0;
 }
 
-static int sstate_save(struct udevice *dev)
+static int sstate_save_to_buf(struct sstate_priv *priv, struct abuf *buf)
 {
-	struct sstate_priv *priv = dev_get_priv(dev);
 	struct membuf inf;
 	struct keyval *kv;
-	struct abuf buf;
-	loff_t actwrite;
-	int ret;
+	char *data;
+	int size;
 
 	log_debug("saving\n");
-	abuf_init(&buf);
-	if (!abuf_realloc(&buf, MAX_FILE_SIZE))
+	abuf_init(buf);
+	if (!abuf_realloc(buf, MAX_FILE_SIZE))
 		LOGR("ssa", -ENOMEM);
 
-	membuf_init(&inf, buf.data, buf.size);
+	membuf_init(&inf, buf->data, buf->size);
 
-	ret = 0;
 	alist_for_each(kv, &priv->items) {
 		int keylen = strnlen(kv->key, MAX_KEY_LEN) + 1;
 		int vallen = strnlen(kv->val, MAX_VAL_LEN) + 1;
@@ -198,30 +195,38 @@ static int sstate_save(struct udevice *dev)
 		if (membuf_put(&inf, kv->key, keylen) != keylen ||
 		    membuf_put(&inf, "=", 1) != 1 ||
 		    membuf_put(&inf, kv->val, vallen) != vallen) {
-			ret = log_msg_ret("ssp", -ENOSPC);
-			break;
+			LOGR("ssp", -ENOSPC);
 		}
 	}
 
-	if (!ret) {
-		log_debug("set dest ifname '%s' dev_part '%s'\n",
-			  priv->ifname, priv->dev_part);
-		ret = fs_set_blk_dev(priv->ifname, priv->dev_part, FS_TYPE_ANY);
+	size = membuf_getraw(&inf, MAX_FILE_SIZE, true, &data);
+	if (data != buf->data)
+		LOGR("ssp", -EFAULT);
+	buf->size = size;
+
+	return 0;
+}
+
+static int sstate_save(struct udevice *dev)
+{
+	struct sstate_priv *priv = dev_get_priv(dev);
+	loff_t actwrite;
+	struct abuf buf;
+	int ret;
+
+	LOGR("sss", sstate_save_to_buf(priv, &buf));
+
+	log_debug("set dest ifname '%s' dev_part '%s'\n", priv->ifname,
+		  priv->dev_part);
+	ret = fs_set_blk_dev(priv->ifname, priv->dev_part, FS_TYPE_ANY);
+	if (ret)
+		ret = log_msg_ret("sss", ret);
+	else {
+		log_debug("write fname '%s' size %zx\n", priv->fname, buf.size);
+		ret = fs_write(priv->fname, abuf_addr(&buf), 0, buf.size,
+			       &actwrite);
 		if (ret)
-			ret = log_msg_ret("sss", ret);
-		else {
-			char *data;
-			int size;
-
-			size = membuf_getraw(&inf, MAX_FILE_SIZE, true, &data);
-
-			log_debug("write fname '%s' size %x\n", priv->fname,
-				  size);
-			ret = fs_write(priv->fname, abuf_addr(&buf), 0, size,
-				       &actwrite);
-			if (ret)
-				ret = log_msg_ret("ssw", ret);
-		}
+			ret = log_msg_ret("ssw", ret);
 	}
 
 	abuf_uninit(&buf);

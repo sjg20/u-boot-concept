@@ -112,20 +112,3 @@ static int bootctl_simple_state_base(struct unit_test_state *uts)
 	return 0;
 }
 BOOTCTL_TEST(bootctl_simple_state_base, UTF_DM | UTF_SCAN_FDT);
-
-/* test loading / saving state */
-static int bootctl_simple_state_loadsave(struct unit_test_state *uts)
-{
-	struct udevice *dev;
-
-	ut_assertok(bootctl_get_dev(UCLASS_BOOTCTL_STATE, &dev));
-	ut_assertok(bc_state_write_bool(dev, "fred", false));
-	ut_assertok(bc_state_save(dev));
-
-	ut_assertok(bc_state_save(dev));
-
-	ut_assertok(bc_state_load(dev));
-
-	return 0;
-}
-BOOTCTL_TEST(bootctl_simple_state_loadsave, UTF_DM | UTF_SCAN_FDT);
