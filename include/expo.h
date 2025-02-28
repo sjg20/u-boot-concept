@@ -202,6 +202,12 @@ struct scene_obj_bbox {
 	int y1;
 };
 
+/* special values for dimensions */
+enum {
+	/* width of the display */
+	SCENEOB_DISPLAY_WIDTH	= 0xff000000,
+};
+
 /**
  * enum scene_obj_halign - Horizontal alignment of objects
  *
@@ -210,28 +216,16 @@ struct scene_obj_bbox {
  *
  * @SCENEOA_LEFT: Left of object is aligned with its x coordinate
  * @SCENEOA_RIGHT: Right of object is aligned with x + w
- * @SCENEOA_HCENTRE: Centre of object is aligned with centre of bounding box
- */
-enum scene_obj_halign : char {
-	SCENEOA_LEFT,
-	SCENEOA_RIGHT,
-	SCENEOA_HCENTRE,
-};
-
-/**
- * enum scene_obj_halign - Vertoca; alignment of objects
- *
- * Objects are normally drawn at top of their bounding box. This properly allows
- * aligning on the bottom or having the object centred.
- *
+ * @SCENEOA_CENTRE: Centre of object is aligned with centre of bounding box
  * @SCENEOA_TOP: Left of object is aligned with its x coordinate
  * @SCENEOA_BOTTOM: Right of object is aligned with x + w
- * @SCENEOA_VCENTRE: Centre of object is aligned with centre of bounding box
  */
-enum scene_obj_valign : char {
-	SCENEOA_TOP,
-	SCENEOA_BOTTOM,
-	SCENEOA_VCENTRE,
+enum scene_obj_align : char {
+	SCENEOA_LEFT,
+	SCENEOA_RIGHT,
+	SCENEOA_CENTRE,
+	SCENEOA_TOP = SCENEOA_LEFT,
+	SCENEOA_BOTTOM = SCENEOA_RIGHT,
 };
 
 /**
@@ -260,7 +254,9 @@ enum {
  * @name: Name of the object (allocated)
  * @id: ID number of the object
  * @type: Type of this object
- * @bbox: Dimensions for this object
+ * @bbox: Bounding box for this object
+ * @horiz: Horizonal alignment
+ * @vert: Vertical alignment
  * @flags: Flags for this object
  * @bit_length: Number of bits used for this object in CMOS RAM
  * @start_bit: Start bit to use for this object in CMOS RAM
@@ -272,8 +268,8 @@ struct scene_obj {
 	uint id;
 	enum scene_obj_t type;
 	struct scene_obj_bbox bbox;
-	enum scene_obj_valign valign;
-	enum scene_obj_halign halign;
+	enum scene_obj_align horiz;
+	enum scene_obj_align vert;
 	u8 flags;
 	u8 bit_length;
 	u16 start_bit;
@@ -681,6 +677,20 @@ int scene_obj_set_pos(struct scene *scn, uint id, int x, int y);
  * Returns: 0 if OK, -ENOENT if @id is invalid
  */
 int scene_obj_set_size(struct scene *scn, uint id, int w, int h);
+
+/**
+ * scene_obj_set_bbox() - Set the bounding box of an object
+ *
+ * @scn: Scene to update
+ * @id: ID of object to update
+ * @x0: x position, in pixels from left side
+ * @y0: y position, in pixels from top
+ * @x1: ending x position (right side)
+ * @y1: ending y position (botton side)
+ * Returns: 0 if OK, -ENOENT if @id is invalid
+ */
+int scene_obj_set_bbox(struct scene *scn, uint id, int x0, int y0, int x1,
+		       int y1);
 
 /**
  * scene_obj_set_hide() - Set whether an object is hidden
