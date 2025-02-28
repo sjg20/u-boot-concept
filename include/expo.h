@@ -234,7 +234,7 @@ struct scene_obj_dims {
 /* special values for dimensions */
 enum {
 	/* width of the display */
-	SCENEOB_DISPLAY_WIDTH	= 0xff000000,
+	SCENEOB_DISPLAY_MAX	= 0xff000000,
 
 	// SCENEOB_UNSET		= 0xfe000000,
 };

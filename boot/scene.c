@@ -554,10 +554,17 @@ int scene_calc_arrange(struct scene *scn, struct expo_arrange_info *arr)
 	return 0;
 }
 
-void handle_alignment(struct scene_obj *obj)
+static void handle_alignment(struct scene_obj *obj, int xsize, int ysize)
 {
-	int width = obj->bbox.x1 - obj->bbox.x0;
-	int height = obj->bbox.y1 - obj->bbox.y0;
+	int width, height;
+
+	if (obj->bbox.x1 == SCENEOB_DISPLAY_MAX)
+		obj->bbox.x1 = xsize ?: 1280;
+	if (obj->bbox.y1 == SCENEOB_DISPLAY_MAX)
+		obj->bbox.y1 = ysize ?: 1024;
+
+	width = obj->bbox.x1 - obj->bbox.x0;
+	height = obj->bbox.y1 - obj->bbox.y0;
 
 	switch (obj->horiz) {
 	case SCENEOA_CENTRE:
@@ -589,22 +596,30 @@ void handle_alignment(struct scene_obj *obj)
 int scene_arrange(struct scene *scn)
 {
 	struct expo_arrange_info arr;
+	int xsize = 0, ysize = 0;
 	struct scene_obj *obj;
+	struct udevice *dev;
 	int ret;
+
+	dev = scn->expo->display;
+	if (dev) {
+		struct video_priv *priv = dev_get_uclass_priv(dev);
+
+		xsize = priv->xsize;
+		ysize = priv->ysize;
+	}
 
 	ret = scene_calc_arrange(scn, &arr);
 	if (ret < 0)
 		return log_msg_ret("arr", ret);
 
 	list_for_each_entry(obj, &scn->obj_head, sibling) {
-		handle_alignment(obj);
+		handle_alignment(obj, xsize, ysize);
 
 		switch (obj->type) {
 		case SCENEOBJT_NONE:
-			break;
 		case SCENEOBJT_IMAGE:
 		case SCENEOBJT_TEXT:
-			handle_alignment(obj);
 			break;
 		case SCENEOBJT_MENU: {
 			struct scene_obj_menu *menu;
