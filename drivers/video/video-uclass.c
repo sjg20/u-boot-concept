@@ -223,16 +223,28 @@ int video_draw_box(struct udevice *dev, int x0, int y0, int x1, int y1,
 	int pbytes = VNBYTES(priv->bpix);
 	void *start, *line;
 	int pixels = x1 - x0;
-	int row, i;
+	int row;
 
 	start = priv->fb + y0 * priv->line_length;
 	start += x0 * pbytes;
 	line = start;
+	printf("draw\n");
 	for (row = y0; row < y1; row++) {
 		void *ptr = line;
+		int i;
 
-		fill_pixel_and_goto_next(&ptr, colour, pbytes, pbytes);
-
+		for (i = 0; i < width; i++)
+			fill_pixel_and_goto_next(&ptr, colour, pbytes, pbytes);
+		if (row < y0 + width || row >= y1 - width) {
+			for (i = 0; i < pixels - width * 2; i++)
+				fill_pixel_and_goto_next(&ptr, colour, pbytes,
+							 pbytes);
+		} else {
+			ptr += (pixels - width * 2) * pbytes;
+		}
+		for (i = 0; i < width; i++)
+			fill_pixel_and_goto_next(&ptr, colour, pbytes, pbytes);
+		line += priv->line_length;
 	}
 
 	return 0;

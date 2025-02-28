@@ -55,12 +55,13 @@ int bootflow_menu_new(struct expo **expp)
 		return log_msg_ret("scn", ret);
 
 	LOGR("bmb", scene_box(scn, "box", OBJ_BOX, 2, NULL));
+	ret |= scene_obj_set_bbox(scn, OBJ_BOX, 30, 90, 1366 - 30, 610);
 
 	ret = scene_menu(scn, "main", OBJ_MENU, &menu);
 	ret |= scene_obj_set_pos(scn, OBJ_MENU, MARGIN_LEFT, 100);
 	ret |= scene_txt_str(scn, "title", OBJ_MENU_TITLE, STR_MENU_TITLE,
 			     "U-Boot - Boot Menu", NULL);
-	ret |= scene_obj_set_bbox(scn, OBJ_MENU_TITLE, 0, 20,
+	ret |= scene_obj_set_bbox(scn, OBJ_MENU_TITLE, 0, 32,
 				  SCENEOB_DISPLAY_MAX, 30);
 	ret |= scene_obj_set_halign(scn, OBJ_MENU_TITLE, SCENEOA_CENTRE);
 
@@ -69,7 +70,7 @@ int bootflow_menu_new(struct expo **expp)
 	logo = video_get_u_boot_logo();
 	if (logo) {
 		ret |= scene_img(scn, "ulogo", OBJ_U_BOOT_LOGO, logo, NULL);
-		ret |= scene_obj_set_pos(scn, OBJ_U_BOOT_LOGO, -4, 4);
+		ret |= scene_obj_set_pos(scn, OBJ_U_BOOT_LOGO, 1165, 100);
 	}
 
 	ret |= scene_txt_str(scn, "prompt1a", OBJ_PROMPT1A, STR_PROMPT1A,

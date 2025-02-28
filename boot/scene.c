@@ -190,6 +190,27 @@ int scene_txt_str(struct scene *scn, const char *name, uint id, uint str_id,
 	return txt->obj.id;
 }
 
+int scene_box(struct scene *scn, const char *name, uint id, uint width,
+	      struct scene_obj_box **boxp)
+{
+	struct scene_obj_box *box;
+	int ret;
+
+	ret = scene_obj_add(scn, name, id, SCENEOBJT_BOX,
+			    sizeof(struct scene_obj_box),
+			    (struct scene_obj **)&box);
+	if (ret < 0)
+		return log_msg_ret("obj", ret);
+
+	box->width = width;
+
+	if (boxp)
+		*boxp = box;
+
+	return box->obj.id;
+}
+
+
 int scene_txt_set_font(struct scene *scn, uint id, const char *font_name,
 		       uint font_size)
 {
