@@ -11,6 +11,7 @@
 #include <bootstd.h>
 #include <dm.h>
 #include <expo.h>
+#include <video_console.h>
 #include "oslist.h"
 #include "ui.h"
 #include "util.h"
@@ -28,6 +29,7 @@ struct ui_priv {
 	struct alist osinfo;
 	struct expo *expo;
 	bool need_refresh;
+	struct udevice *console;
 };
 
 /*
@@ -97,6 +99,11 @@ static int simple_ui_show(struct udevice *dev)
 	LOGR("usa", scene_arrange(scn));
 
 	scene_set_highlight_id(scn, OBJ_MENU);
+
+	LOGR("suq", device_find_first_child_by_uclass(priv->expo->display,
+						      UCLASS_VIDEO_CONSOLE,
+						      &priv->console));
+	vidconsole_set_quiet(priv->console, true);
 
 	return 0;
 }
