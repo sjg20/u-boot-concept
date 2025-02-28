@@ -9,6 +9,7 @@
 
 #include <abuf.h>
 #include <dm/ofnode_decl.h>
+#include <linux/bitops.h>
 #include <linux/list.h>
 
 struct udevice;
@@ -235,7 +236,7 @@ enum {
 	/* width of the display */
 	SCENEOB_DISPLAY_WIDTH	= 0xff000000,
 
-	SCENEOB_UNSET		= 0xfe000000,
+	// SCENEOB_UNSET		= 0xfe000000,
 };
 
 /**
@@ -270,6 +271,7 @@ enum scene_obj_flags_t {
 	SCENEOF_HIDE	= 1 << 0,
 	SCENEOF_POINT	= 1 << 1,
 	SCENEOF_OPEN	= 1 << 2,
+	SCENEOF_SIZE_VALID	= BIT(3),
 };
 
 enum {

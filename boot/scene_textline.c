@@ -80,11 +80,11 @@ int scene_textline_calc_dims(struct scene_obj_textline *tline)
 	if (bbox.valid) {
 		obj->dims.x = bbox.x1 - bbox.x0;
 		obj->dims.y = bbox.y1 - bbox.y0;
-		if (obj->bbox.x1 == SCENEOB_UNSET)
+		if (!(obj->flags & SCENEOF_SIZE_VALID)) {
 			obj->bbox.x1 = obj->bbox.x0 + obj->dims.x;
-		if (obj->bbox.y1 == SCENEOB_UNSET)
 			obj->bbox.y1 = obj->bbox.y0 + obj->dims.x;
-
+			obj->flags |= SCENEOF_SIZE_VALID;
+		}
 		scene_obj_set_size(scn, tline->edit_id,
 				   obj->bbox.x1 - obj->bbox.x0,
 				   obj->bbox.y1 - obj->bbox.y0);

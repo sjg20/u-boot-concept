@@ -72,9 +72,28 @@ static int simple_ui_show(struct udevice *dev)
 {
 	struct ui_priv *priv = dev_get_priv(dev);
 	struct bootstd_priv *std;
+	struct scene *scn;
+	uint scene_id;
+	int ret;
 
 	LOGR("sdb", bootstd_get_priv(&std));
 	LOGR("sds", bootflow_menu_setup(std, TEXT_MODE, &priv->expo));
+
+	printf("theme %s\n", ofnode_get_name(std->theme));
+
+	if (ofnode_valid(std->theme))
+		LOGR("thm", expo_apply_theme(priv->expo, std->theme));
+
+	ret = expo_first_scene_id(priv->expo);
+	if (ret < 0)
+		return log_msg_ret("ufs", ret);
+	scene_id = ret;
+	scn = expo_lookup_scene_id(priv->expo, scene_id);
+
+	LOGR("ecd", expo_calc_dims(priv->expo));
+
+	printf("arrange\n");
+	LOGR("usa", scene_arrange(scn));
 
 	return 0;
 }

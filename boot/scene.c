@@ -117,8 +117,6 @@ int scene_obj_add(struct scene *scn, const char *name, uint id,
 	obj->id = resolve_id(scn->expo, id);
 	obj->scene = scn;
 	obj->type = type;
-	obj->bbox.x1 = SCENEOB_UNSET;
-	obj->bbox.y1 = SCENEOB_UNSET;
 	list_add_tail(&obj->sibling, &scn->obj_head);
 	*objp = obj;
 
@@ -228,6 +226,7 @@ int scene_obj_set_size(struct scene *scn, uint id, int w, int h)
 		return log_msg_ret("find", -ENOENT);
 	obj->bbox.x1 = obj->bbox.x0 + w;
 	obj->bbox.y1 = obj->bbox.y0 + h;
+	obj->flags |= SCENEOF_SIZE_VALID;
 
 	return 0;
 }
@@ -244,6 +243,7 @@ int scene_obj_set_bbox(struct scene *scn, uint id, int x0, int y0, int x1,
 	obj->bbox.y0 = y0;
 	obj->bbox.x1 = x1;
 	obj->bbox.y1 = y1;
+	obj->flags |= SCENEOF_SIZE_VALID;
 
 	return 0;
 }
@@ -411,8 +411,14 @@ static int scene_obj_render(struct scene_obj *obj, bool text_mode)
 	struct udevice *cons = text_mode ? NULL : exp->cons;
 	int x, y, ret;
 
-	x = obj->bbox.x0;
+	// x = obj->bbox.x0;
 	y = obj->bbox.y0;
+	// printf("xofs %d %d\n", obj->ofs.xofs, obj->ofs.yofs);
+	x = obj->bbox.x0 + obj->ofs.xofs;
+	// if (obj->ofs.xofs)
+		// printf("offset %s xofs %d\n", obj->name, obj->ofs.xofs);
+
+	// y = obj->bbox.y0 + obj->ofs.yofs;
 
 	switch (obj->type) {
 	case SCENEOBJT_NONE:
@@ -548,6 +554,38 @@ int scene_calc_arrange(struct scene *scn, struct expo_arrange_info *arr)
 	return 0;
 }
 
+void handle_alignment(struct scene_obj *obj)
+{
+	int width = obj->bbox.x1 - obj->bbox.x0;
+	int height = obj->bbox.y1 - obj->bbox.y0;
+
+	switch (obj->horiz) {
+	case SCENEOA_CENTRE:
+		obj->ofs.xofs = (width - obj->dims.x) / 2;
+		printf("centred %s dims.x %d xofs %d\n", obj->name, obj->dims.x,
+		       obj->ofs.xofs);
+		break;
+	case SCENEOA_RIGHT:
+		obj->ofs.xofs = width - obj->dims.x;
+		break;
+	case SCENEOA_LEFT:
+		obj->ofs.xofs = 0;
+		break;
+	}
+
+	switch (obj->vert) {
+	case SCENEOA_CENTRE:
+		obj->ofs.yofs = (height - obj->dims.y) / 2;
+		break;
+	case SCENEOA_TOP:
+		obj->ofs.yofs = height - obj->dims.y;
+		break;
+	case SCENEOA_BOTTOM:
+		obj->ofs.yofs = 0;
+		break;
+	}
+}
+
 int scene_arrange(struct scene *scn)
 {
 	struct expo_arrange_info arr;
@@ -559,10 +597,14 @@ int scene_arrange(struct scene *scn)
 		return log_msg_ret("arr", ret);
 
 	list_for_each_entry(obj, &scn->obj_head, sibling) {
+		handle_alignment(obj);
+
 		switch (obj->type) {
 		case SCENEOBJT_NONE:
+			break;
 		case SCENEOBJT_IMAGE:
 		case SCENEOBJT_TEXT:
+			handle_alignment(obj);
 			break;
 		case SCENEOBJT_MENU: {
 			struct scene_obj_menu *menu;
@@ -809,10 +851,11 @@ int scene_calc_dims(struct scene *scn, bool do_menus)
 					return log_msg_ret("get", ret);
 				obj->dims.x = width;
 				obj->dims.y = ret;
-				if (obj->bbox.x1 == SCENEOB_UNSET)
+				if (!(obj->flags & SCENEOF_SIZE_VALID)) {
 					obj->bbox.x1 = obj->bbox.x0 + width;
-				if (obj->bbox.y1 == SCENEOB_UNSET)
 					obj->bbox.y1 = obj->bbox.y0 + ret;
+					obj->flags |= SCENEOF_SIZE_VALID;
+				}
 			}
 			break;
 		}
