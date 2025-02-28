@@ -9,6 +9,7 @@
 #include <bootctl.h>
 #include <dm.h>
 #include <log.h>
+#include <time.h>
 #include <version.h>
 #include <dm/device-internal.h>
 #include "logic.h"
@@ -17,51 +18,8 @@
 #include "ui.h"
 #include "util.h"
 
-/**
- * struct logic_priv - Information maintained by the boot logic as it works
- *
- * @opt_persist_state: true if state can be preserved across reboots
- * @opt_default_os: true if we record a default OS to boot
- * @opt_track_success: true to track whether the last boot succeeded (made it to
- *	user space)
- * @opt_skip_timeout: true to skip any boot timeout if the last boot succeeded
- * @opt_labels: if non-NULL, a space-separated list of labels which can be used
- *	to boot
- * @opt_autoboot: true to autoboot the default OS after a timeout
- *
- * @ready: true if ready to start scanning for OSes and booting
- * @state_load_attempted: true if we have attempted to load state
- * @state_loaded: true if the state information has been loaded
- * @ui_shown: true if the UI has been shown / written
- * @scanning: true if scanning for new OSes
- *
- * @iter: oslist iterator, used to find new OSes
- * @selected: selected OS, or NULL if none has been selected yet
- * @ui: display / console device
- * @oslist: provides OSes to boot
- * @state: provides persistent state
- */
-struct logic_priv {
-	bool opt_persist_state;
-	bool opt_default_os;
-	uint opt_timeout;
-	bool opt_track_success;
-	bool opt_skip_timeout;
-	const char *opt_labels;
-	bool opt_autoboot;
-
-	bool starting;
-	bool state_load_attempted;
-	bool state_loaded;
-	bool state_saved;
-	bool ui_shown;
-	bool scanning;
-
-	struct oslist_iter iter;
-	struct osinfo *selected;
-	struct udevice *ui;
-	struct udevice *oslist;
-	struct udevice *state;
+enum {
+	COUNTDOWN_INTERVAL_MS	= 1000,	/* inteval between countdown updates */
 };
 
 static int logic_start(struct udevice *dev)
@@ -148,6 +106,9 @@ static int logic_poll(struct udevice *dev)
 
 	have_os = false;
 	if (priv->starting) {
+		priv->start_time = get_timer(0);
+		if (priv->opt_autoboot)
+			priv->next_countdown = COUNTDOWN_INTERVAL_MS;
 		priv->starting = false;
 		ret = bc_oslist_first(priv->oslist, &priv->iter, &info);
 		if (!ret) {
@@ -164,6 +125,13 @@ static int logic_poll(struct udevice *dev)
 
 	if (have_os)
 		LOGR("bda", bc_ui_add(priv->ui, &info));
+
+	if (priv->opt_autoboot &&
+	    get_timer(priv->start_time) > priv->next_countdown) {
+		ulong secs = get_timer(priv->start_time) / 1000;
+		priv->autoboot_remain_s = priv->opt_timeout - secs;
+		priv->next_countdown += COUNTDOWN_INTERVAL_MS;
+	}
 
 	LOGR("bdr", bc_ui_render(priv->ui));
 	LOGR("bdo", bc_ui_poll(priv->ui, &priv->selected));

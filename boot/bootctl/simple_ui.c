@@ -12,6 +12,7 @@
 #include <dm.h>
 #include <expo.h>
 #include <video_console.h>
+#include "logic.h"
 #include "oslist.h"
 #include "ui.h"
 #include "util.h"
@@ -24,12 +25,21 @@
  * struct ui_priv - information about the display
  *
  * @osinfo: List of OSes to show
+ * @expo: Expo containing the menu
+ * @priv: Logic status
+ * @need_refresh: true if the display needs a refresh
+ * @console: vidconsole device in use
+ * @autoboot_template: template string to use for autoboot
+ * @autoboot_str: Current string displayed for autoboot timeout
  */
 struct ui_priv {
 	struct alist osinfo;
 	struct expo *expo;
+	struct logic_priv *lpriv;
 	bool need_refresh;
 	struct udevice *console;
+	const char *autoboot_template;
+	char autoboot_str[200];
 };
 
 /*
@@ -49,8 +59,12 @@ static int refresh(struct udevice *dev)
 static int simple_ui_probe(struct udevice *dev)
 {
 	struct ui_priv *priv = dev_get_priv(dev);
+	struct udevice *ldev;
 
 	alist_init_struct(&priv->osinfo, struct osinfo);
+
+	LOGR("sup", uclass_first_device_err(UCLASS_BOOTCTL, &ldev));
+	priv->lpriv = dev_get_priv(ldev);
 
 	return 0;
 }
@@ -75,12 +89,17 @@ static int simple_ui_show(struct udevice *dev)
 {
 	struct ui_priv *priv = dev_get_priv(dev);
 	struct bootstd_priv *std;
+	const char *old_str;
 	struct scene *scn;
 	uint scene_id;
 	int ret;
 
 	LOGR("sdb", bootstd_get_priv(&std));
 	LOGR("sds", bootflow_menu_setup(std, TEXT_MODE, &priv->expo));
+
+	old_str = expo_set_str(priv->expo, STR_AUTOBOOT, priv->autoboot_str);
+	priv->autoboot_template = old_str;
+	strlcpy(priv->autoboot_str, old_str, sizeof(priv->autoboot_str));
 
 	printf("theme %s\n", ofnode_get_name(std->theme));
 
@@ -95,7 +114,6 @@ static int simple_ui_show(struct udevice *dev)
 
 	LOGR("ecd", expo_calc_dims(priv->expo));
 
-	printf("arrange\n");
 	LOGR("usa", scene_arrange(scn));
 
 	scene_set_highlight_id(scn, OBJ_MENU);
@@ -138,6 +156,9 @@ static int simple_ui_add(struct udevice *dev, struct osinfo *info)
 static int simple_ui_render(struct udevice *dev)
 {
 	struct ui_priv *priv = dev_get_priv(dev);
+
+	snprintf(priv->autoboot_str, sizeof(priv->autoboot_str),
+		 priv->autoboot_template, priv->lpriv->autoboot_remain_s);
 
 	if (priv->need_refresh || !TEXT_MODE) {
 		LOGR("sds", expo_render(priv->expo));

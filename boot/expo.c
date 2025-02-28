@@ -104,6 +104,22 @@ const char *expo_get_str(struct expo *exp, uint id)
 	return NULL;
 }
 
+const char *expo_set_str(struct expo *exp, uint id, char *new_str)
+{
+	struct expo_string *estr;
+
+	list_for_each_entry(estr, &exp->str_head, sibling) {
+		if (estr->id == id) {
+			const char *old = estr->str;
+
+			estr->str = new_str;
+			return old;
+		}
+	}
+
+	return NULL;
+}
+
 int expo_set_display(struct expo *exp, struct udevice *dev)
 {
 	struct udevice *cons;

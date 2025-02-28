@@ -519,6 +519,19 @@ int expo_str(struct expo *exp, const char *name, uint id, const char *str);
 const char *expo_get_str(struct expo *exp, uint id);
 
 /**
+ * expo_set_str() - Make a string writeable
+ *
+ * This allows a string to be updated under the control of the caller. The
+ * string must remain valid while the expo is active
+ *
+ * @exp: Expo to use
+ * @id: String ID to look up
+ * @new_str: New string pointer to use
+ * Return: old string, or NULL if not found
+ */
+const char *expo_set_str(struct expo *exp, uint id, char *new_str);
+
+/**
  * expo_set_display() - set the display to use for a expo
  *
  * @exp: Expo to update

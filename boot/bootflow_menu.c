@@ -86,7 +86,7 @@ int bootflow_menu_new(struct expo **expp)
 	     "for a command-line. ESC to return to previous menu",
 	     NULL);
 	ret |= scene_txt_str(scn, "autoboot", OBJ_AUTOBOOT, STR_AUTOBOOT,
-	     "The highlighted entry will be executed automatically in 30s.",
+	     "The highlighted entry will be executed automatically in %ds.",
 	     NULL);
 	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT1A, 0, 590,
 				  SCENEOB_DISPLAY_MAX, 30);
@@ -107,6 +107,7 @@ int bootflow_menu_new(struct expo **expp)
 	use_font = IS_ENABLED(CONFIG_CONSOLE_TRUETYPE);
 	scene_obj_set_hide(scn, OBJ_PROMPT1A, use_font);
 	scene_obj_set_hide(scn, OBJ_PROMPT1B, !use_font);
+	scene_obj_set_hide(scn, STR_AUTOBOOT, use_font);
 
 	ret |= scene_txt_str(scn, "cur_item", OBJ_POINTER, STR_POINTER, ">",
 			     NULL);
