@@ -177,6 +177,9 @@ int scene_menu_calc_dims(struct scene_obj_menu *menu)
 	}
 
 	if (bbox.valid) {
+		menu->obj.dims.x = bbox.x1 - bbox.x0;
+		menu->obj.dims.y = bbox.y1 - bbox.y0;
+
 		menu->obj.bbox.x1 = bbox.x1;
 		menu->obj.bbox.y1 = bbox.y1;
 	}

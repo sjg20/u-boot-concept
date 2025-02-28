@@ -117,6 +117,8 @@ int scene_obj_add(struct scene *scn, const char *name, uint id,
 	obj->id = resolve_id(scn->expo, id);
 	obj->scene = scn;
 	obj->type = type;
+	obj->bbox.x1 = SCENEOB_UNSET;
+	obj->bbox.y1 = SCENEOB_UNSET;
 	list_add_tail(&obj->sibling, &scn->obj_head);
 	*objp = obj;
 
@@ -242,6 +244,30 @@ int scene_obj_set_bbox(struct scene *scn, uint id, int x0, int y0, int x1,
 	obj->bbox.y0 = y0;
 	obj->bbox.x1 = x1;
 	obj->bbox.y1 = y1;
+
+	return 0;
+}
+
+int scene_obj_set_halign(struct scene *scn, uint id, enum scene_obj_align aln)
+{
+	struct scene_obj *obj;
+
+	obj = scene_obj_find(scn, id, SCENEOBJT_NONE);
+	if (!obj)
+		return log_msg_ret("osh", -ENOENT);
+	obj->horiz = aln;
+
+	return 0;
+}
+
+int scene_obj_set_valign(struct scene *scn, uint id, enum scene_obj_align aln)
+{
+	struct scene_obj *obj;
+
+	obj = scene_obj_find(scn, id, SCENEOBJT_NONE);
+	if (!obj)
+		return log_msg_ret("osv", -ENOENT);
+	obj->vert = aln;
 
 	return 0;
 }
@@ -781,8 +807,12 @@ int scene_calc_dims(struct scene *scn, bool do_menus)
 				ret = scene_obj_get_hw(scn, obj->id, &width);
 				if (ret < 0)
 					return log_msg_ret("get", ret);
-				obj->bbox.x1 = obj->bbox.x0 + width;
-				obj->bbox.y1 = obj->bbox.y0 + ret;
+				obj->dims.x = width;
+				obj->dims.y = ret;
+				if (obj->bbox.x1 == SCENEOB_UNSET)
+					obj->bbox.x1 = obj->bbox.x0 + width;
+				if (obj->bbox.y1 == SCENEOB_UNSET)
+					obj->bbox.y1 = obj->bbox.y0 + ret;
 			}
 			break;
 		}

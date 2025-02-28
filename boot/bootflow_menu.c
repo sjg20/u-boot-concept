@@ -60,8 +60,8 @@ int bootflow_menu_new(struct expo **expp)
 	ret |= scene_obj_set_pos(scn, OBJ_MENU, MARGIN_LEFT, 100);
 	ret |= scene_txt_str(scn, "title", OBJ_MENU_TITLE, STR_MENU_TITLE,
 			     "U-Boot - Boot Menu", NULL);
-	ret |= scene_obj_set_bbox(scn, OBJ_MENU_TITLE, 0, 20,
-				  SCENEOB_DISPLAY_WIDTH, 30);
+	ret |= scene_obj_set_bbox(scn, OBJ_MENU_TITLE, 0, 20, 1024, 30);
+	ret |= scene_obj_set_halign(scn, OBJ_MENU_TITLE, SCENEOA_CENTRE);
 
 	ret |= scene_menu_set_title(scn, OBJ_MENU, OBJ_PROMPT);
 

@@ -202,10 +202,40 @@ struct scene_obj_bbox {
 	int y1;
 };
 
+/**
+ * struct scene_obj_offset - Offsets for drawing the object
+ *
+ * Stores the offset from x0, x1 at which objects are drawn
+ *
+ * @xofs: x offset
+ * @yofs: y offset
+ */
+struct scene_obj_offset {
+	int xofs;
+	int yofs;
+};
+
+/**
+ * struct scene_obj_dims - Dimensions of the object being drawn
+ *
+ * Image and text objects have a dimension which can change depending on what
+ * they contain. For images this stores the size. For text it stores the size as
+ * rendered on the display
+ *
+ * @x: x dimension
+ * @y: y dimension
+ */
+struct scene_obj_dims {
+	int x;
+	int y;
+};
+
 /* special values for dimensions */
 enum {
 	/* width of the display */
 	SCENEOB_DISPLAY_WIDTH	= 0xff000000,
+
+	SCENEOB_UNSET		= 0xfe000000,
 };
 
 /**
@@ -255,6 +285,8 @@ enum {
  * @id: ID number of the object
  * @type: Type of this object
  * @bbox: Bounding box for this object
+ * @ofs: Offset from x0, y0 where the object is drawn
+ * @dims: Dimensions of the text/image (may be smaller than bbox)
  * @horiz: Horizonal alignment
  * @vert: Vertical alignment
  * @flags: Flags for this object
@@ -268,6 +300,8 @@ struct scene_obj {
 	uint id;
 	enum scene_obj_t type;
 	struct scene_obj_bbox bbox;
+	struct scene_obj_offset ofs;
+	struct scene_obj_dims dims;
 	enum scene_obj_align horiz;
 	enum scene_obj_align vert;
 	u8 flags;
@@ -691,6 +725,24 @@ int scene_obj_set_size(struct scene *scn, uint id, int w, int h);
  */
 int scene_obj_set_bbox(struct scene *scn, uint id, int x0, int y0, int x1,
 		       int y1);
+
+/**
+ * scene_obj_set_halign() - Set the horizontal alignment of an object
+ *
+ * @scn: Scene to update
+ * @id: ID of object to update
+ * Returns: 0 if OK, -ENOENT if @id is invalid
+ */
+int scene_obj_set_halign(struct scene *scn, uint id, enum scene_obj_align aln);
+
+/**
+ * scene_obj_set_valign() - Set the vertical alignment of an object
+ *
+ * @scn: Scene to update
+ * @id: ID of object to update
+ * Returns: 0 if OK, -ENOENT if @id is invalid
+ */
+int scene_obj_set_valign(struct scene *scn, uint id, enum scene_obj_align aln);
 
 /**
  * scene_obj_set_hide() - Set whether an object is hidden
