@@ -28,6 +28,9 @@
 		/* track boot success / failure in state */
 		track-success;
 
+		/* auto-boot the default OS after a timeout */
+		autoboot;
+
 		/* restrict labels to boot (separated by space) */
 #ifdef CONFIG_QEMU
 		labels = "virtio";

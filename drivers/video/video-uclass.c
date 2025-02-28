@@ -228,7 +228,6 @@ int video_draw_box(struct udevice *dev, int x0, int y0, int x1, int y1,
 	start = priv->fb + y0 * priv->line_length;
 	start += x0 * pbytes;
 	line = start;
-	printf("draw\n");
 	for (row = y0; row < y1; row++) {
 		void *ptr = line;
 		int i;

@@ -27,6 +27,7 @@
  * @opt_skip_timeout: true to skip any boot timeout if the last boot succeeded
  * @opt_labels: if non-NULL, a space-separated list of labels which can be used
  *	to boot
+ * @opt_autoboot: true to autoboot the default OS after a timeout
  *
  * @ready: true if ready to start scanning for OSes and booting
  * @state_load_attempted: true if we have attempted to load state
@@ -47,6 +48,7 @@ struct logic_priv {
 	bool opt_track_success;
 	bool opt_skip_timeout;
 	const char *opt_labels;
+	bool opt_autoboot;
 
 	bool starting;
 	bool state_load_attempted;
@@ -190,6 +192,7 @@ static int logic_of_to_plat(struct udevice *dev)
 						"skip-timeout-on-success");
 	priv->opt_track_success = ofnode_read_bool(node, "track-success");
 	priv->opt_labels = ofnode_read_string(node, "labels");
+	priv->opt_autoboot = ofnode_read_bool(node, "autoboot");
 
 	return 0;
 }

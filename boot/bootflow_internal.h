@@ -18,6 +18,7 @@ enum {
 	STR_PROMPT1B,
 	STR_PROMPT2,
 	STR_PROMPT3,
+	STR_AUTOBOOT,
 	STR_MENU_TITLE,
 	STR_POINTER,
 
@@ -34,6 +35,7 @@ enum {
 	OBJ_PROMPT3,
 	OBJ_MENU_TITLE,
 	OBJ_POINTER,
+	OBJ_AUTOBOOT,
 
 	/* strings for menu items */
 	STR_LABEL = 100,

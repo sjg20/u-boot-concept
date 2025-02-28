@@ -85,18 +85,24 @@ int bootflow_menu_new(struct expo **expp)
 	ret |= scene_txt_str(scn, "prompt3", OBJ_PROMPT3, STR_PROMPT3,
 	     "for a command-line. ESC to return to previous menu",
 	     NULL);
-	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT1A, 0, 640,
+	ret |= scene_txt_str(scn, "autoboot", OBJ_AUTOBOOT, STR_AUTOBOOT,
+	     "The highlighted entry will be executed automatically in 30s.",
+	     NULL);
+	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT1A, 0, 590,
 				  SCENEOB_DISPLAY_MAX, 30);
-	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT1B, 0, 640,
+	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT1B, 0, 620,
 				  SCENEOB_DISPLAY_MAX, 30);
-	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT2, 0, 670,
+	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT2, 0, 650,
 				  SCENEOB_DISPLAY_MAX, 30);
-	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT3, 0, 700,
+	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT3, 0, 680,
+				  SCENEOB_DISPLAY_MAX, 30);
+	ret |= scene_obj_set_bbox(scn, OBJ_AUTOBOOT, 0, 720,
 				  SCENEOB_DISPLAY_MAX, 30);
 	ret |= scene_obj_set_halign(scn, OBJ_PROMPT1A, SCENEOA_CENTRE);
 	ret |= scene_obj_set_halign(scn, OBJ_PROMPT1B, SCENEOA_CENTRE);
 	ret |= scene_obj_set_halign(scn, OBJ_PROMPT2, SCENEOA_CENTRE);
 	ret |= scene_obj_set_halign(scn, OBJ_PROMPT3, SCENEOA_CENTRE);
+	ret |= scene_obj_set_halign(scn, OBJ_AUTOBOOT, SCENEOA_CENTRE);
 
 	use_font = IS_ENABLED(CONFIG_CONSOLE_TRUETYPE);
 	scene_obj_set_hide(scn, OBJ_PROMPT1A, use_font);
