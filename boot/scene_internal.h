@@ -9,11 +9,30 @@
 #ifndef __SCENE_INTERNAL_H
 #define __SCENE_INTERNAL_H
 
+#include <linux/types.h>
+
 struct expo;
+struct expo_action;
+struct expo_arrange_info;
+struct expo_theme;
 struct scene_obj;
+struct scene_obj_menu;
+struct scene_obj_textline;
 struct vidconsole_bbox;
 
+enum scene_obj_t;
+
 typedef int (*expo_scene_obj_iterator)(struct scene_obj *obj, void *priv);
+
+enum scene_bbox_t {
+	SCENEBB_label,
+	SCENEBB_key,
+	SCENEBB_desc,
+	SCENEBB_curitem,
+	SCENEBB_all,
+
+	SCENEBB_count,
+};
 
 /**
  * expo_lookup_scene_id() - Look up a scene ID
@@ -334,15 +353,11 @@ int scene_textline_calc_dims(struct scene_obj_textline *tline);
  * scene_menu_calc_bbox() - Calculate bounding boxes for the menu
  *
  * @menu: Menu to process
- * @bbox: Returns bounding box of menu including prompts
- * @label_bbox: Returns bounding box of labels
- * @item_bbox: Returns bounding box of current item
+ * @bbox: List of bounding box to fill in
  * Return: 0 if OK, -ve on error
  */
 void scene_menu_calc_bbox(struct scene_obj_menu *menu,
-			  struct vidconsole_bbox *bbox,
-			  struct vidconsole_bbox *label_bbox,
-			  struct vidconsole_bbox *curitem_bbox);
+			  struct vidconsole_bbox *bbox);
 
 /**
  * scene_textline_calc_bbox() - Calculate bounding box for the textline
@@ -365,9 +380,7 @@ void scene_textline_calc_bbox(struct scene_obj_textline *menu,
  * @curiteml_bbox: Returns bounding box of current item
  * Return: 0 if OK, -ve on error
  */
-int scene_obj_calc_bbox(struct scene_obj *obj, struct vidconsole_bbox *bbox,
-			struct vidconsole_bbox *label_bbox,
-			struct vidconsole_bbox *curitem_bbox);
+int scene_obj_calc_bbox(struct scene_obj *obj, struct vidconsole_bbox *bbox);
 
 /**
  * scene_textline_open() - Open a textline object

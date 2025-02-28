@@ -134,18 +134,17 @@ static void menu_point_to_item(struct scene_obj_menu *menu, uint item_id)
 }
 
 void scene_menu_calc_bbox(struct scene_obj_menu *menu,
-			  struct vidconsole_bbox *bbox,
-			  struct vidconsole_bbox *label_bbox,
-			  struct vidconsole_bbox *curitem_bbox)
+			  struct vidconsole_bbox *bbox)
 {
 	const struct expo_theme *theme = &menu->obj.scene->expo->theme;
 	const struct scene_menuitem *item;
+	int i;
 
-	bbox->valid = false;
-	scene_bbox_union(menu->obj.scene, menu->title_id, 0, bbox);
+	for (i = 0; i < SCENEBB_count; i++)
+		bbox[i].valid = false;
 
-	label_bbox->valid = false;
-	curitem_bbox->valid = false;
+	scene_bbox_union(menu->obj.scene, menu->title_id, 0,
+			 &bbox[SCENEBB_all]);
 
 	// printf("scan\n");
 	list_for_each_entry(item, &menu->item_head, sibling) {
@@ -158,18 +157,18 @@ void scene_menu_calc_bbox(struct scene_obj_menu *menu,
 		scene_bbox_union(menu->obj.scene, item->desc_id, 0, &local);
 		scene_bbox_union(menu->obj.scene, item->preview_id, 0, &local);
 
-		scene_bbox_join(&local, 0, bbox);
+		scene_bbox_join(&local, 0, &bbox[SCENEBB_all]);
 
 		/* Get the bounding box of all labels */
 		scene_bbox_union(menu->obj.scene, item->label_id,
-				 theme->menu_inset, label_bbox);
+				 theme->menu_inset, &bbox[SCENEBB_label]);
 
 		if (menu->cur_item_id == item->id) {
 			// printf("- %d %d\n", menu->cur_item_id, item->id);
 		// printf("1bbox valid %d %x %d %d %d\n", local.valid,
 		//        local.x0, local.y0, local.x1,
 		//        local.y1);
-			scene_bbox_join(&local, 0, curitem_bbox);
+			scene_bbox_join(&local, 0, &bbox[SCENEBB_curitem]);
 		}
 	}
 	// printf("done\n");
@@ -178,30 +177,32 @@ void scene_menu_calc_bbox(struct scene_obj_menu *menu,
 	 * subtract the final menuitem's gap to keep the insert the same top
 	 * and bottom
 	 */
-	label_bbox->y1 -= theme->menuitem_gap_y;
+	bbox[SCENEBB_label].y1 -= theme->menuitem_gap_y;
 }
 
 int scene_menu_calc_dims(struct scene_obj_menu *menu)
 {
-	struct vidconsole_bbox bbox, label_bbox, curitem_bbox;
+	struct vidconsole_bbox bbox[SCENEBB_count], *cur;
 	const struct scene_menuitem *item;
 
-	scene_menu_calc_bbox(menu, &bbox, &label_bbox, &curitem_bbox);
+	scene_menu_calc_bbox(menu, bbox);
 
 	/* Make all labels the same width */
-	if (label_bbox.valid) {
+	cur = &bbox[SCENEBB_label];
+	if (cur->valid) {
 		list_for_each_entry(item, &menu->item_head, sibling) {
 			scene_obj_set_width(menu->obj.scene, item->label_id,
-					    label_bbox.x1 - label_bbox.x0);
+					    cur->x1 - cur->x0);
 		}
 	}
 
-	if (bbox.valid) {
-		menu->obj.dims.x = bbox.x1 - bbox.x0;
-		menu->obj.dims.y = bbox.y1 - bbox.y0;
+	cur = &bbox[SCENEBB_all];
+	if (cur->valid) {
+		menu->obj.dims.x = cur->x1 - cur->x0;
+		menu->obj.dims.y = cur->y1 - cur->y0;
 
-		menu->obj.bbox.x1 = bbox.x1;
-		menu->obj.bbox.y1 = bbox.y1;
+		menu->obj.bbox.x1 = cur->x1;
+		menu->obj.bbox.y1 = cur->y1;
 	}
 
 	return 0;

@@ -383,7 +383,7 @@ int scene_obj_get_hw(struct scene *scn, uint id, int *widthp)
 static void scene_render_background(struct scene_obj *obj, bool box_only,
 				    bool cur_item)
 {
-	struct vidconsole_bbox bbox, label_bbox, curitem_bbox, *sel;
+	struct vidconsole_bbox bbox[SCENEBB_count], *sel;
 	struct expo *exp = obj->scene->expo;
 	const struct expo_theme *theme = &exp->theme;
 	struct udevice *dev = exp->display;
@@ -404,10 +404,10 @@ static void scene_render_background(struct scene_obj *obj, bool box_only,
 	}
 
 	/* see if this object wants to render a background */
-	if (scene_obj_calc_bbox(obj, &bbox, &label_bbox, &curitem_bbox))
+	if (scene_obj_calc_bbox(obj, bbox))
 		return;
 
-	sel = cur_item ? &curitem_bbox : &label_bbox;
+	sel = cur_item ? &bbox[SCENEBB_curitem] : &bbox[SCENEBB_label];
 	if (!sel->valid)
 		return;
 
@@ -519,7 +519,7 @@ static int scene_obj_render(struct scene_obj *obj, bool text_mode)
 				scene_render_background(obj, false, false);
 			}
 		} else if (exp->show_highlight) {
-			scene_render_background(obj, false, true);
+			// scene_render_background(obj, false, true);
 		}
 
 		/*
@@ -854,9 +854,7 @@ int scene_send_key(struct scene *scn, int key, struct expo_action *event)
 	return 0;
 }
 
-int scene_obj_calc_bbox(struct scene_obj *obj, struct vidconsole_bbox *bbox,
-			struct vidconsole_bbox *label_bbox,
-			struct vidconsole_bbox *curitem_bbox)
+int scene_obj_calc_bbox(struct scene_obj *obj, struct vidconsole_bbox bbox[])
 {
 	switch (obj->type) {
 	case SCENEOBJT_NONE:
@@ -866,14 +864,15 @@ int scene_obj_calc_bbox(struct scene_obj *obj, struct vidconsole_bbox *bbox,
 	case SCENEOBJT_MENU: {
 		struct scene_obj_menu *menu = (struct scene_obj_menu *)obj;
 
-		scene_menu_calc_bbox(menu, bbox, label_bbox, curitem_bbox);
+		scene_menu_calc_bbox(menu, bbox);
 		break;
 	}
 	case SCENEOBJT_TEXTLINE: {
 		struct scene_obj_textline *tline;
 
 		tline = (struct scene_obj_textline *)obj;
-		scene_textline_calc_bbox(tline, bbox, label_bbox);
+		scene_textline_calc_bbox(tline, &bbox[SCENEBB_all],
+					 &bbox[SCENEBB_label]);
 		break;
 	}
 	}
