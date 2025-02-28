@@ -54,6 +54,8 @@ int bootflow_menu_new(struct expo **expp)
 	if (ret < 0)
 		return log_msg_ret("scn", ret);
 
+	LOGR("bmb", scene_box(scn, "box", OBJ_BOX, 2, NULL));
+
 	ret = scene_menu(scn, "main", OBJ_MENU, &menu);
 	ret |= scene_obj_set_pos(scn, OBJ_MENU, MARGIN_LEFT, 100);
 	ret |= scene_txt_str(scn, "title", OBJ_MENU_TITLE, STR_MENU_TITLE,

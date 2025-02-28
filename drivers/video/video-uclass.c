@@ -26,7 +26,7 @@
 #ifdef CONFIG_SANDBOX
 #include <asm/sdl.h>
 #endif
-
+#include "vidconsole_internal.h"
 /*
  * Theory of operation:
  *
@@ -212,6 +212,28 @@ int video_fill_part(struct udevice *dev, int xstart, int ystart, int xend,
 	}
 
 	video_damage(dev, xstart, ystart, xend - xstart, yend - ystart);
+
+	return 0;
+}
+
+int video_draw_box(struct udevice *dev, int x0, int y0, int x1, int y1,
+		   int width, u32 colour)
+{
+	struct video_priv *priv = dev_get_uclass_priv(dev);
+	int pbytes = VNBYTES(priv->bpix);
+	void *start, *line;
+	int pixels = x1 - x0;
+	int row, i;
+
+	start = priv->fb + y0 * priv->line_length;
+	start += x0 * pbytes;
+	line = start;
+	for (row = y0; row < y1; row++) {
+		void *ptr = line;
+
+		fill_pixel_and_goto_next(&ptr, colour, pbytes, pbytes);
+
+	}
 
 	return 0;
 }

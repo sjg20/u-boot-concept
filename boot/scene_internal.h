@@ -20,7 +20,7 @@ struct scene_obj_menu;
 struct scene_obj_textline;
 struct vidconsole_bbox;
 
-enum scene_obj_t;
+enum scene_obj_t : char;
 
 typedef int (*expo_scene_obj_iterator)(struct scene_obj *obj, void *priv);
 

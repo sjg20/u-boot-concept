@@ -26,6 +26,7 @@ enum {
 
 	/* objects */
 	OBJ_U_BOOT_LOGO,
+	OBJ_BOX,
 	OBJ_MENU,
 	OBJ_PROMPT1A,
 	OBJ_PROMPT1B,
