@@ -188,7 +188,7 @@ int scene_menu_calc_dims(struct scene_obj_menu *menu)
 
 	scene_menu_calc_bbox(menu, &bbox, &label_bbox, &curitem_bbox);
 
-	/* Make all labels the same size */
+	/* Make all labels the same width */
 	if (label_bbox.valid) {
 		list_for_each_entry(item, &menu->item_head, sibling) {
 			scene_obj_set_width(menu->obj.scene, item->label_id,

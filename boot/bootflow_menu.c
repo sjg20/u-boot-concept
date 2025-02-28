@@ -82,11 +82,11 @@ int bootflow_menu_new(struct expo **expp)
 	ret |= scene_txt_str(scn, "prompt3", OBJ_PROMPT3, STR_PROMPT3,
 	     "for a command-line. ESC to return to previous menu",
 	     NULL);
-	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT1A, 0, 600,
+	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT1A, 0, 640,
 				  SCENEOB_DISPLAY_MAX, 30);
-	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT1B, 0, 600,
+	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT1B, 0, 640,
 				  SCENEOB_DISPLAY_MAX, 30);
-	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT2, 0, 650,
+	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT2, 0, 670,
 				  SCENEOB_DISPLAY_MAX, 30);
 	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT3, 0, 700,
 				  SCENEOB_DISPLAY_MAX, 30);
