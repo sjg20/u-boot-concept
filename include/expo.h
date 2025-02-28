@@ -177,7 +177,7 @@ struct scene {
  * @SCENEOBJT_MENU: Menu containing items the user can select
  * @SCENEOBJT_TEXTLINE: Line of text the user can edit
  */
-enum scene_obj_t {
+enum scene_obj_t : char {
 	SCENEOBJT_NONE		= 0,
 	SCENEOBJT_IMAGE,
 	SCENEOBJT_TEXT,
@@ -200,6 +200,38 @@ struct scene_obj_bbox {
 	int y0;
 	int x1;
 	int y1;
+};
+
+/**
+ * enum scene_obj_halign - Horizontal alignment of objects
+ *
+ * Objects are normally drawn on the left size of their bounding box. This
+ * properly allows aligning on the right or having the object centred.
+ *
+ * @SCENEOA_LEFT: Left of object is aligned with its x coordinate
+ * @SCENEOA_RIGHT: Right of object is aligned with x + w
+ * @SCENEOA_HCENTRE: Centre of object is aligned with centre of bounding box
+ */
+enum scene_obj_halign : char {
+	SCENEOA_LEFT,
+	SCENEOA_RIGHT,
+	SCENEOA_HCENTRE,
+};
+
+/**
+ * enum scene_obj_halign - Vertoca; alignment of objects
+ *
+ * Objects are normally drawn at top of their bounding box. This properly allows
+ * aligning on the bottom or having the object centred.
+ *
+ * @SCENEOA_TOP: Left of object is aligned with its x coordinate
+ * @SCENEOA_BOTTOM: Right of object is aligned with x + w
+ * @SCENEOA_VCENTRE: Centre of object is aligned with centre of bounding box
+ */
+enum scene_obj_valign : char {
+	SCENEOA_TOP,
+	SCENEOA_BOTTOM,
+	SCENEOA_VCENTRE,
 };
 
 /**
@@ -240,6 +272,8 @@ struct scene_obj {
 	uint id;
 	enum scene_obj_t type;
 	struct scene_obj_bbox bbox;
+	enum scene_obj_valign valign;
+	enum scene_obj_halign halign;
 	u8 flags;
 	u8 bit_length;
 	u16 start_bit;
