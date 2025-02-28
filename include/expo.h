@@ -318,7 +318,7 @@ enum scene_menuitem_flags_t {
 };
 
 /**
- * struct scene_menitem - a menu item in a menu
+ * struct scene_menuitem - a menu item in a menu
  *
  * A menu item has:
  *
@@ -335,7 +335,7 @@ enum scene_menuitem_flags_t {
  * @value: Value for this item, or INT_MAX to use sequence
  * @sibling: Node to link this item to its siblings
  */
-struct scene_menitem {
+struct scene_menuitem {
 	char *name;
 	uint id;
 	uint key_id;
@@ -712,7 +712,7 @@ int scene_obj_get_hw(struct scene *scn, uint id, int *widthp);
  */
 int scene_menuitem(struct scene *scn, uint menu_id, const char *name, uint id,
 		   uint key_id, uint label_id, uint desc_id, uint preview_id,
-		   uint flags, struct scene_menitem **itemp);
+		   uint flags, struct scene_menuitem **itemp);
 
 /**
  * scene_arrange() - Arrange the scene to deal with object sizes

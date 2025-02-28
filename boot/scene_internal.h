@@ -266,7 +266,7 @@ int expo_iter_scene_objs(struct expo *exp, expo_scene_obj_iterator iter,
  * @id: ID to look for
  * Return: Menu item, or NULL if not found
  */
-struct scene_menitem *scene_menuitem_find(const struct scene_obj_menu *menu,
+struct scene_menuitem *scene_menuitem_find(const struct scene_obj_menu *menu,
 					  int id);
 
 /**
@@ -278,7 +278,7 @@ struct scene_menitem *scene_menuitem_find(const struct scene_obj_menu *menu,
  * @seq: Sequence number to look for
  * Return: menu item if found, else NULL
  */
-struct scene_menitem *scene_menuitem_find_seq(const struct scene_obj_menu *menu,
+struct scene_menuitem *scene_menuitem_find_seq(const struct scene_obj_menu *menu,
 					      uint seq);
 
 /**
@@ -288,7 +288,7 @@ struct scene_menitem *scene_menuitem_find_seq(const struct scene_obj_menu *menu,
  * @find_val: Value to look for
  * Return: menu item if found, else NULL
  */
-struct scene_menitem *scene_menuitem_find_val(const struct scene_obj_menu *menu,
+struct scene_menuitem *scene_menuitem_find_val(const struct scene_obj_menu *menu,
 					      int val);
 
 /**

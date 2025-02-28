@@ -251,7 +251,7 @@ static int menu_build(struct build_info *info, ofnode node, struct scene *scn,
 	}
 
 	for (i = 0; i < num_items; i++) {
-		struct scene_menitem *item;
+		struct scene_menuitem *item;
 		uint label, key, desc;
 
 		ret = add_txt_str_list(info, node, scn, "item-label", i, 0);

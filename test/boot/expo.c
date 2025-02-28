@@ -337,7 +337,7 @@ int h_test_iter(struct scene_obj *obj, void *vpriv)
 static int expo_object_menu(struct unit_test_state *uts)
 {
 	struct scene_obj_menu *menu;
-	struct scene_menitem *item;
+	struct scene_menuitem *item;
 	int id, label_id, desc_id, key_id, pointer_id, preview_id;
 	struct scene_obj_txt *ptr, *name1, *desc1, *key1, *tit, *prev1;
 	struct test_iter_priv priv;
@@ -656,7 +656,7 @@ BOOTSTD_TEST(expo_render_image, UTF_DM | UTF_SCAN_FDT | UTF_CONSOLE);
 static int expo_test_build(struct unit_test_state *uts)
 {
 	struct scene_obj_menu *menu;
-	struct scene_menitem *item;
+	struct scene_menuitem *item;
 	struct scene_obj_txt *txt;
 	struct scene_obj *obj;
 	struct scene *scn;
@@ -708,7 +708,7 @@ static int expo_test_build(struct unit_test_state *uts)
 	ut_asserteq(0, menu->pointer_id);
 
 	/* check the items */
-	item = list_first_entry(&menu->item_head, struct scene_menitem,
+	item = list_first_entry(&menu->item_head, struct scene_menuitem,
 				sibling);
 	ut_asserteq_str("00", item->name);
 	ut_asserteq(ID_CPU_SPEED_1, item->id);

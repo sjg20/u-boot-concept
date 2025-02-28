@@ -243,7 +243,7 @@ static int get_cur_menuitem_text(const struct scene_obj_menu *menu,
 				 const char **strp)
 {
 	struct scene *scn = menu->obj.scene;
-	const struct scene_menitem *mi;
+	const struct scene_menuitem *mi;
 	const struct scene_obj_txt *txt;
 	const char *str;
 
@@ -277,7 +277,7 @@ static int get_cur_menuitem_text(const struct scene_obj_menu *menu,
  */
 static int get_cur_menuitem_val(const struct scene_obj_menu *menu, int *valp)
 {
-	const struct scene_menitem *mi;
+	const struct scene_menuitem *mi;
 	int seq;
 
 	seq = 0;
@@ -762,7 +762,7 @@ done:
 static int h_read_settings_cmos(struct scene_obj *obj, void *vpriv)
 {
 	struct cedit_iter_priv *priv = vpriv;
-	const struct scene_menitem *mi;
+	const struct scene_menuitem *mi;
 	struct scene_obj_menu *menu;
 	int val, ret;
 	uint i;

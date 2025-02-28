@@ -96,7 +96,7 @@ static int menu_build(struct build_info *info,
 	for (ptr = (void *)info->tab + info->tab->header_length, i = 0;
 	     ptr < end; i++) {
 		const struct cb_cmos_enums *enums = ptr;
-		struct scene_menitem *item;
+		struct scene_menuitem *item;
 		uint label;
 
 		ptr += enums->size;

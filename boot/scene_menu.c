@@ -18,7 +18,7 @@
 #include <linux/input.h>
 #include "scene_internal.h"
 
-static void scene_menuitem_destroy(struct scene_menitem *item)
+static void scene_menuitem_destroy(struct scene_menuitem *item)
 {
 	free(item->name);
 	free(item);
@@ -26,16 +26,16 @@ static void scene_menuitem_destroy(struct scene_menitem *item)
 
 void scene_menu_destroy(struct scene_obj_menu *menu)
 {
-	struct scene_menitem *item, *next;
+	struct scene_menuitem *item, *next;
 
 	list_for_each_entry_safe(item, next, &menu->item_head, sibling)
 		scene_menuitem_destroy(item);
 }
 
-struct scene_menitem *scene_menuitem_find(const struct scene_obj_menu *menu,
+struct scene_menuitem *scene_menuitem_find(const struct scene_obj_menu *menu,
 					  int id)
 {
-	struct scene_menitem *item;
+	struct scene_menuitem *item;
 
 	list_for_each_entry(item, &menu->item_head, sibling) {
 		if (item->id == id)
@@ -45,10 +45,10 @@ struct scene_menitem *scene_menuitem_find(const struct scene_obj_menu *menu,
 	return NULL;
 }
 
-struct scene_menitem *scene_menuitem_find_seq(const struct scene_obj_menu *menu,
+struct scene_menuitem *scene_menuitem_find_seq(const struct scene_obj_menu *menu,
 					      uint seq)
 {
-	struct scene_menitem *item;
+	struct scene_menuitem *item;
 	uint i;
 
 	i = 0;
@@ -61,10 +61,10 @@ struct scene_menitem *scene_menuitem_find_seq(const struct scene_obj_menu *menu,
 	return NULL;
 }
 
-struct scene_menitem *scene_menuitem_find_val(const struct scene_obj_menu *menu,
+struct scene_menuitem *scene_menuitem_find_val(const struct scene_obj_menu *menu,
 					      int val)
 {
-	struct scene_menitem *item;
+	struct scene_menuitem *item;
 	uint i;
 
 	i = 0;
@@ -88,7 +88,7 @@ static int update_pointers(struct scene_obj_menu *menu, uint id, bool point)
 {
 	struct scene *scn = menu->obj.scene;
 	const bool stack = scn->expo->popup;
-	const struct scene_menitem *item;
+	const struct scene_menuitem *item;
 	int ret;
 
 	item = scene_menuitem_find(menu, id);
@@ -134,7 +134,7 @@ void scene_menu_calc_bbox(struct scene_obj_menu *menu,
 			  struct vidconsole_bbox *label_bbox)
 {
 	const struct expo_theme *theme = &menu->obj.scene->expo->theme;
-	const struct scene_menitem *item;
+	const struct scene_menuitem *item;
 
 	bbox->valid = false;
 	scene_bbox_union(menu->obj.scene, menu->title_id, 0, bbox);
@@ -163,7 +163,7 @@ void scene_menu_calc_bbox(struct scene_obj_menu *menu,
 int scene_menu_calc_dims(struct scene_obj_menu *menu)
 {
 	struct vidconsole_bbox bbox, label_bbox;
-	const struct scene_menitem *item;
+	const struct scene_menuitem *item;
 
 	scene_menu_calc_bbox(menu, &bbox, &label_bbox);
 
@@ -191,7 +191,7 @@ int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 	struct expo *exp = scn->expo;
 	const bool stack = exp->popup;
 	const struct expo_theme *theme = &exp->theme;
-	struct scene_menitem *item;
+	struct scene_menuitem *item;
 	uint sel_id;
 	int x, y;
 	int ret;
@@ -309,11 +309,11 @@ int scene_menu(struct scene *scn, const char *name, uint id,
 	return menu->obj.id;
 }
 
-static struct scene_menitem *scene_menu_find_key(struct scene *scn,
+static struct scene_menuitem *scene_menu_find_key(struct scene *scn,
 						  struct scene_obj_menu *menu,
 						  int key)
 {
-	struct scene_menitem *item;
+	struct scene_menuitem *item;
 
 	list_for_each_entry(item, &menu->item_head, sibling) {
 		if (item->key_id) {
@@ -336,7 +336,7 @@ int scene_menu_send_key(struct scene *scn, struct scene_obj_menu *menu, int key,
 			struct expo_action *event)
 {
 	const bool open = menu->obj.flags & SCENEOF_OPEN;
-	struct scene_menitem *item, *cur, *key_item;
+	struct scene_menuitem *item, *cur, *key_item;
 
 	cur = NULL;
 	key_item = NULL;
@@ -357,9 +357,9 @@ int scene_menu_send_key(struct scene *scn, struct scene_obj_menu *menu, int key,
 	switch (key) {
 	case BKEY_UP:
 		if (item != list_first_entry(&menu->item_head,
-					     struct scene_menitem, sibling)) {
+					     struct scene_menuitem, sibling)) {
 			item = list_entry(item->sibling.prev,
-					  struct scene_menitem, sibling);
+					  struct scene_menuitem, sibling);
 			event->type = EXPOACT_POINT_ITEM;
 			event->select.id = item->id;
 			log_debug("up to item %d\n", event->select.id);
@@ -368,7 +368,7 @@ int scene_menu_send_key(struct scene *scn, struct scene_obj_menu *menu, int key,
 	case BKEY_DOWN:
 		if (!list_is_last(&item->sibling, &menu->item_head)) {
 			item = list_entry(item->sibling.next,
-					  struct scene_menitem, sibling);
+					  struct scene_menuitem, sibling);
 			event->type = EXPOACT_POINT_ITEM;
 			event->select.id = item->id;
 			log_debug("down to item %d\n", event->select.id);
@@ -404,10 +404,10 @@ int scene_menu_send_key(struct scene *scn, struct scene_obj_menu *menu, int key,
 
 int scene_menuitem(struct scene *scn, uint menu_id, const char *name, uint id,
 		   uint key_id, uint label_id, uint desc_id, uint preview_id,
-		   uint flags, struct scene_menitem **itemp)
+		   uint flags, struct scene_menuitem **itemp)
 {
 	struct scene_obj_menu *menu;
-	struct scene_menitem *item;
+	struct scene_menuitem *item;
 
 	menu = scene_obj_find(scn, menu_id, SCENEOBJT_MENU);
 	if (!menu)
@@ -417,7 +417,7 @@ int scene_menuitem(struct scene *scn, uint menu_id, const char *name, uint id,
 	if (!scene_obj_find(scn, label_id, SCENEOBJT_TEXT))
 		return log_msg_ret("txt", -EINVAL);
 
-	item = calloc(1, sizeof(struct scene_menitem));
+	item = calloc(1, sizeof(struct scene_menuitem));
 	if (!item)
 		return log_msg_ret("item", -ENOMEM);
 	item->name = strdup(name);
@@ -488,7 +488,7 @@ int scene_menu_display(struct scene_obj_menu *menu)
 	struct scene *scn = menu->obj.scene;
 	struct scene_obj_txt *pointer;
 	struct expo *exp = scn->expo;
-	struct scene_menitem *item;
+	struct scene_menuitem *item;
 	const char *pstr;
 
 	printf("U-Boot    :    Boot Menu\n\n");
@@ -537,7 +537,7 @@ int scene_menu_display(struct scene_obj_menu *menu)
 
 int scene_menu_render_deps(struct scene *scn, struct scene_obj_menu *menu)
 {
-	struct scene_menitem *item;
+	struct scene_menuitem *item;
 
 	scene_render_deps(scn, menu->title_id);
 	scene_render_deps(scn, menu->cur_item_id);
