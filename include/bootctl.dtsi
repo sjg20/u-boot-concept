@@ -29,7 +29,9 @@
 		track-success;
 
 		/* restrict labels to boot (separated by space) */
+#ifdef CONFIG_QEMU
 		labels = "virtio";
+#endif
 	};
 
 	oslist {

@@ -74,7 +74,7 @@ static int simple_ui_show(struct udevice *dev)
 	struct bootstd_priv *std;
 
 	LOGR("sdb", bootstd_get_priv(&std));
-	LOGR("sds", bootflow_menu_start(std, TEXT_MODE, &priv->expo));
+	LOGR("sds", bootflow_menu_setup(std, TEXT_MODE, &priv->expo));
 
 	return 0;
 }
@@ -92,13 +92,12 @@ static int simple_ui_add(struct udevice *dev, struct osinfo *info)
 	LOGR("sda", bootflow_menu_add(priv->expo, &info->bflow, seq,
 				      &scn));
 
-	LOGR("arr", scene_arrange(scn));
-
 	LOGR("sup", bootstd_get_priv(&std));
 	if (ofnode_valid(std->theme))
 		LOGR("thm", bootflow_menu_apply_theme(priv->expo, std->theme));
 
 	priv->need_refresh = true;
+	printf("added\n");
 	// refresh(dev);
 
 	return 0;

@@ -84,10 +84,12 @@ int bootflow_menu_add(struct expo *exp, struct bootflow *bflow, int seq,
 {
 	struct menu_priv *priv = exp->priv;
 	char str[2], *label, *key;
+	struct udevice *media;
 	struct scene *scn;
 	uint preview_id;
 	uint scene_id;
 	bool add_gap;
+	char *name;
 	int ret;
 
 	ret = expo_first_scene_id(exp);
@@ -101,11 +103,20 @@ int bootflow_menu_add(struct expo *exp, struct bootflow *bflow, int seq,
 	key = strdup(str);
 	if (!key)
 		return log_msg_ret("key", -ENOMEM);
-	label = strdup(dev_get_parent(bflow->dev)->name);
+
+	media = dev_get_parent(bflow->dev);
+	if (device_get_uclass_id(media) == UCLASS_MASS_STORAGE)
+		name = "usb";
+	else
+		name = media->name;
+	printf("media %s\n", dev_get_uclass_name(media));
+	label = strdup(name);
+
 	if (!label) {
 		free(key);
 		return log_msg_ret("nam", -ENOMEM);
 	}
+	printf("label %s\n", label);
 
 	add_gap = priv->last_bootdev != bflow->dev;
 	priv->last_bootdev = bflow->dev;
@@ -203,7 +214,7 @@ int bootflow_menu_apply_theme(struct expo *exp, ofnode node)
 	return 0;
 }
 
-int bootflow_menu_start(struct bootstd_priv *std, bool text_mode,
+int bootflow_menu_setup(struct bootstd_priv *std, bool text_mode,
 			struct expo **expp)
 {
 	struct udevice *dev;
@@ -211,13 +222,6 @@ int bootflow_menu_start(struct bootstd_priv *std, bool text_mode,
 	int ret;
 
 	LOGR("bmn", bootflow_menu_new(&exp));
-	LOGR("bma", bootflow_menu_add_all(exp));
-
-	if (ofnode_valid(std->theme)) {
-		ret = bootflow_menu_apply_theme(exp, std->theme);
-		if (ret)
-			return log_msg_ret("thm", ret);
-	}
 
 	/* For now we only support a video console */
 	ret = uclass_first_device_err(UCLASS_VIDEO, &dev);
@@ -233,6 +237,27 @@ int bootflow_menu_start(struct bootstd_priv *std, bool text_mode,
 
 	if (text_mode)
 		expo_set_text_mode(exp, text_mode);
+
+	*expp = exp;
+
+	return 0;
+}
+
+int bootflow_menu_start(struct bootstd_priv *std, bool text_mode,
+			struct expo **expp)
+{
+	struct expo *exp;
+	int ret;
+
+	LOGR("bmn", bootflow_menu_setup(std, text_mode, &exp));
+
+	LOGR("bma", bootflow_menu_add_all(exp));
+
+	if (ofnode_valid(std->theme)) {
+		ret = bootflow_menu_apply_theme(exp, std->theme);
+		if (ret)
+			return log_msg_ret("thm", ret);
+	}
 
 	*expp = exp;
 
