@@ -93,8 +93,10 @@ static int simple_ui_add(struct udevice *dev, struct osinfo *info)
 				      &scn));
 
 	LOGR("sup", bootstd_get_priv(&std));
-	if (ofnode_valid(std->theme))
-		LOGR("thm", bootflow_menu_apply_theme(priv->expo, std->theme));
+	if (ofnode_valid(std->theme)) {
+		LOGR("thm", expo_apply_theme(priv->expo, std->theme));
+		// LOGR("th2", bootflow_menu_apply_theme(priv->expo, std->theme));
+	}
 
 	priv->need_refresh = true;
 	printf("added\n");

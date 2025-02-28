@@ -176,6 +176,7 @@ int bootflow_menu_add_all(struct expo *exp)
 	return 0;
 }
 
+#if 0
 int bootflow_menu_apply_theme(struct expo *exp, ofnode node)
 {
 	struct menu_priv *priv = exp->priv;
@@ -212,6 +213,7 @@ int bootflow_menu_apply_theme(struct expo *exp, ofnode node)
 
 	return 0;
 }
+#endif
 
 int bootflow_menu_setup(struct bootstd_priv *std, bool text_mode,
 			struct expo **expp)
@@ -253,7 +255,7 @@ int bootflow_menu_start(struct bootstd_priv *std, bool text_mode,
 	LOGR("bma", bootflow_menu_add_all(exp));
 
 	if (ofnode_valid(std->theme)) {
-		ret = bootflow_menu_apply_theme(exp, std->theme);
+		ret = expo_apply_theme(exp, std->theme);
 		if (ret)
 			return log_msg_ret("thm", ret);
 	}
