@@ -495,8 +495,11 @@ static int scene_obj_render(struct scene_obj *obj, bool text_mode)
 			}
 
 			if (obj->flags & SCENEOF_POINT) {
+				int inset;
+
+				inset = exp->popup ? theme->menu_inset : 0;
 				vidconsole_push_colour(cons, fore, back, &old);
-				video_fill_part(dev, x - theme->menu_inset, y,
+				video_fill_part(dev, x - inset, y,
 						obj->bbox.x1, obj->bbox.y1,
 						vid_priv->colour_bg);
 			}

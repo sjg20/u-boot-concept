@@ -150,6 +150,7 @@ int bootflow_menu_add(struct expo *exp, struct bootflow *bflow, int seq,
 	}
 
 	add_gap = priv->last_bootdev != bflow->dev;
+	add_gap = false;
 	priv->last_bootdev = bflow->dev;
 
 	ret = expo_str(exp, "prompt", STR_POINTER, ">");

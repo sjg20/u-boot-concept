@@ -108,13 +108,19 @@ static int update_pointers(struct scene_obj_menu *menu, uint id, bool point)
 	}
 
 	if (stack) {
+		uint id;
 		int val;
 
 		point &= scn->highlight_id == menu->obj.id;
 		val = point ? SCENEOF_POINT : 0;
-		scene_obj_flag_clrset(scn, item->key_id, SCENEOF_POINT, val);
-		scene_obj_flag_clrset(scn, item->label_id, SCENEOF_POINT, val);
-		scene_obj_flag_clrset(scn, item->desc_id, SCENEOF_POINT, val);
+		id = item->desc_id;
+		if (!id)
+			id = item->label_id;
+		if (!id)
+			id = item->key_id;
+		scene_obj_flag_clrset(scn, id, SCENEOF_POINT, val);
+		scene_obj_flag_clrset(scn, id, SCENEOF_POINT, val);
+		scene_obj_flag_clrset(scn, id, SCENEOF_POINT, val);
 	}
 
 	return 0;
@@ -159,9 +165,13 @@ void scene_menu_calc_bbox(struct scene_obj_menu *menu,
 
 		scene_bbox_join(&local, 0, &bbox[SCENEBB_all]);
 
-		/* Get the bounding box of all labels */
+		/* Get the bounding box of all individual fields */
 		scene_bbox_union(menu->obj.scene, item->label_id,
 				 theme->menu_inset, &bbox[SCENEBB_label]);
+		scene_bbox_union(menu->obj.scene, item->key_id,
+				 theme->menu_inset, &bbox[SCENEBB_key]);
+		scene_bbox_union(menu->obj.scene, item->desc_id,
+				 theme->menu_inset, &bbox[SCENEBB_desc]);
 
 		if (menu->cur_item_id == item->id) {
 			// printf("- %d %d\n", menu->cur_item_id, item->id);
@@ -187,13 +197,20 @@ int scene_menu_calc_dims(struct scene_obj_menu *menu)
 
 	scene_menu_calc_bbox(menu, bbox);
 
-	/* Make all labels the same width */
-	cur = &bbox[SCENEBB_label];
-	if (cur->valid) {
-		list_for_each_entry(item, &menu->item_head, sibling) {
+	/* Make all field types the same width */
+	list_for_each_entry(item, &menu->item_head, sibling) {
+		cur = &bbox[SCENEBB_label];
+		if (cur->valid)
 			scene_obj_set_width(menu->obj.scene, item->label_id,
 					    cur->x1 - cur->x0);
-		}
+		cur = &bbox[SCENEBB_key];
+		if (cur->valid)
+			scene_obj_set_width(menu->obj.scene, item->key_id,
+					    cur->x1 - cur->x0);
+		cur = &bbox[SCENEBB_desc];
+		if (cur->valid)
+			scene_obj_set_width(menu->obj.scene, item->desc_id,
+					    cur->x1 - cur->x0);
 	}
 
 	cur = &bbox[SCENEBB_all];
