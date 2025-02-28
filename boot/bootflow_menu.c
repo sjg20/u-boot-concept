@@ -60,6 +60,7 @@ int bootflow_menu_new(struct expo **expp)
 	ret |= scene_obj_set_pos(scn, OBJ_MENU, MARGIN_LEFT, 100);
 	ret |= scene_txt_str(scn, "title", OBJ_MENU_TITLE, STR_MENU_TITLE,
 			     "U-Boot - Boot Menu", NULL);
+	ret |= scene_obj_set_pos(scn, OBJ_MENU_TITLE, MARGIN_LEFT, 20);
 	ret |= scene_menu_set_title(scn, OBJ_MENU, OBJ_PROMPT);
 
 	logo = video_get_u_boot_logo();
@@ -86,10 +87,10 @@ int bootflow_menu_add(struct expo *exp, struct bootflow *bflow, int seq,
 	char str[2], *label, *key;
 	struct udevice *media;
 	struct scene *scn;
+	const char *name;
 	uint preview_id;
 	uint scene_id;
 	bool add_gap;
-	char *name;
 	int ret;
 
 	ret = expo_first_scene_id(exp);
@@ -109,14 +110,12 @@ int bootflow_menu_add(struct expo *exp, struct bootflow *bflow, int seq,
 		name = "usb";
 	else
 		name = media->name;
-	printf("media %s\n", dev_get_uclass_name(media));
 	label = strdup(name);
 
 	if (!label) {
 		free(key);
 		return log_msg_ret("nam", -ENOMEM);
 	}
-	printf("label %s\n", label);
 
 	add_gap = priv->last_bootdev != bflow->dev;
 	priv->last_bootdev = bflow->dev;
