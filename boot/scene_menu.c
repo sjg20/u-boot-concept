@@ -108,9 +108,13 @@ static int update_pointers(struct scene_obj_menu *menu, uint id, bool point)
 	}
 
 	if (stack) {
+		int val;
+
 		point &= scn->highlight_id == menu->obj.id;
-		scene_obj_flag_clrset(scn, item->label_id, SCENEOF_POINT,
-				      point ? SCENEOF_POINT : 0);
+		val = point ? SCENEOF_POINT : 0;
+		scene_obj_flag_clrset(scn, item->key_id, SCENEOF_POINT, val);
+		scene_obj_flag_clrset(scn, item->label_id, SCENEOF_POINT, val);
+		scene_obj_flag_clrset(scn, item->desc_id, SCENEOF_POINT, val);
 	}
 
 	return 0;
@@ -150,9 +154,9 @@ void scene_menu_calc_bbox(struct scene_obj_menu *menu,
 		local.valid = false;
 		scene_bbox_union(menu->obj.scene, item->label_id,
 				 theme->menu_inset, &local);
-		// scene_bbox_union(menu->obj.scene, item->key_id, 0, &local);
-		// scene_bbox_union(menu->obj.scene, item->desc_id, 0, &local);
-		// scene_bbox_union(menu->obj.scene, item->preview_id, 0, &local);
+		scene_bbox_union(menu->obj.scene, item->key_id, 0, &local);
+		scene_bbox_union(menu->obj.scene, item->desc_id, 0, &local);
+		scene_bbox_union(menu->obj.scene, item->preview_id, 0, &local);
 
 		scene_bbox_join(&local, 0, bbox);
 
@@ -165,7 +169,7 @@ void scene_menu_calc_bbox(struct scene_obj_menu *menu,
 		// printf("1bbox valid %d %x %d %d %d\n", local.valid,
 		//        local.x0, local.y0, local.x1,
 		//        local.y1);
-		// 	scene_bbox_join(&local, 0, curitem_bbox);
+			scene_bbox_join(&local, 0, curitem_bbox);
 		}
 	}
 	// printf("done\n");
@@ -187,9 +191,8 @@ int scene_menu_calc_dims(struct scene_obj_menu *menu)
 	/* Make all labels the same size */
 	if (label_bbox.valid) {
 		list_for_each_entry(item, &menu->item_head, sibling) {
-			scene_obj_set_size(menu->obj.scene, item->label_id,
-					   label_bbox.x1 - label_bbox.x0,
-					   label_bbox.y1 - label_bbox.y0);
+			scene_obj_set_width(menu->obj.scene, item->label_id,
+					    label_bbox.x1 - label_bbox.x0);
 		}
 	}
 

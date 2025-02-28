@@ -238,6 +238,18 @@ int scene_obj_set_size(struct scene *scn, uint id, int w, int h)
 	return 0;
 }
 
+int scene_obj_set_width(struct scene *scn, uint id, int w)
+{
+	struct scene_obj *obj;
+
+	obj = scene_obj_find(scn, id, SCENEOBJT_NONE);
+	if (!obj)
+		return log_msg_ret("find", -ENOENT);
+	obj->bbox.x1 = obj->bbox.x0 + w;
+
+	return 0;
+}
+
 int scene_obj_set_bbox(struct scene *scn, uint id, int x0, int y0, int x1,
 		       int y1)
 {
@@ -1059,7 +1071,7 @@ int scene_bbox_union(struct scene *scn, uint id, int inset,
 	obj = scene_obj_find(scn, id, SCENEOBJT_NONE);
 	if (!obj)
 		return log_msg_ret("obj", -ENOENT);
-	printf("- y %d-%d\n",  obj->bbox.y0,  obj->bbox.y1);
+	// printf("%s- y %d-%d\n", obj->name, obj->bbox.y0,  obj->bbox.y1);
 	local.x0 = obj->bbox.x0;
 	local.y0 = obj->bbox.y0;
 	local.x1 = obj->bbox.x1;

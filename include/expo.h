@@ -717,6 +717,16 @@ int scene_obj_set_pos(struct scene *scn, uint id, int x, int y);
 int scene_obj_set_size(struct scene *scn, uint id, int w, int h);
 
 /**
+ * scene_obj_set_width() - Set the width of an object
+ *
+ * @scn: Scene to update
+ * @id: ID of object to update
+ * @w: width in pixels
+ * Returns: 0 if OK, -ENOENT if @id is invalid
+ */
+int scene_obj_set_width(struct scene *scn, uint id, int w);
+
+/**
  * scene_obj_set_bbox() - Set the bounding box of an object
  *
  * @scn: Scene to update
