@@ -77,11 +77,12 @@ int scene_textline_calc_dims(struct scene_obj_textline *tline)
 		return log_msg_ret("nom", ret);
 
 	if (bbox.valid) {
-		tline->obj.bbox.w = bbox.x1 - bbox.x0;
-		tline->obj.bbox.h = bbox.y1 - bbox.y0;
+		tline->obj.bbox.x1 = bbox.x1;
+		tline->obj.bbox.y1 = bbox.y1;
 
-		scene_obj_set_size(scn, tline->edit_id, tline->obj.bbox.w,
-				   tline->obj.bbox.h);
+		scene_obj_set_size(scn, tline->edit_id,
+				   tline->obj.bbox.x1 - tline->obj.bbox.x0,
+				   tline->obj.bbox.y1 - tline->obj.bbox.y0);
 	}
 
 	return 0;

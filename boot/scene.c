@@ -224,8 +224,8 @@ int scene_obj_set_size(struct scene *scn, uint id, int w, int h)
 	obj = scene_obj_find(scn, id, SCENEOBJT_NONE);
 	if (!obj)
 		return log_msg_ret("find", -ENOENT);
-	obj->bbox.w = w;
-	obj->bbox.h = h;
+	obj->bbox.x1 = obj->bbox.x0 + w;
+	obj->bbox.y1 = obj->bbox.y0 + h;
 
 	return 0;
 }
@@ -420,8 +420,7 @@ static int scene_obj_render(struct scene_obj *obj, bool text_mode)
 			if (obj->flags & SCENEOF_POINT) {
 				vidconsole_push_colour(cons, fore, back, &old);
 				video_fill_part(dev, x - theme->menu_inset, y,
-						x + obj->bbox.w,
-						y + obj->bbox.h,
+						obj->bbox.x1, obj->bbox.y1,
 						vid_priv->colour_bg);
 			}
 			vidconsole_set_cursor_pos(cons, x, y);
@@ -766,8 +765,8 @@ int scene_calc_dims(struct scene *scn, bool do_menus)
 				ret = scene_obj_get_hw(scn, obj->id, &width);
 				if (ret < 0)
 					return log_msg_ret("get", ret);
-				obj->bbox.w = width;
-				obj->bbox.h = ret;
+				obj->bbox.x1 = obj->bbox.x0 + width;
+				obj->bbox.y1 = obj->bbox.y0 + ret;
 			}
 			break;
 		}
@@ -918,13 +917,13 @@ int scene_bbox_union(struct scene *scn, uint id, int inset,
 	if (bbox->valid) {
 		bbox->x0 = min(bbox->x0, obj->bbox.x0 - inset);
 		bbox->y0 = min(bbox->y0, obj->bbox.y0);
-		bbox->x1 = max(bbox->x1, obj->bbox.x0 + obj->bbox.w + inset);
-		bbox->y1 = max(bbox->y1, obj->bbox.y0 + obj->bbox.h);
+		bbox->x1 = max(bbox->x1, obj->bbox.x1 + inset);
+		bbox->y1 = max(bbox->y1, obj->bbox.y1);
 	} else {
 		bbox->x0 = obj->bbox.x0 - inset;
 		bbox->y0 = obj->bbox.y0;
-		bbox->x1 = obj->bbox.x0 + obj->bbox.w + inset;
-		bbox->y1 = obj->bbox.y0 + obj->bbox.h;
+		bbox->x1 = obj->bbox.x1 + inset;
+		bbox->y1 = obj->bbox.y1;
 		bbox->valid = true;
 	}
 

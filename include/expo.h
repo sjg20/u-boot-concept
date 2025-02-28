@@ -192,14 +192,14 @@ enum scene_obj_t {
  *
  * @x0: x position, in pixels from left side
  * @y0: y position, in pixels from top
- * @w: width, in pixels
- * @h: height, in pixels
+ * @x1: x position of right size
+ * @y1: y position of bottom
  */
 struct scene_obj_bbox {
 	int x0;
 	int y0;
-	int w;
-	int h;
+	int x1;
+	int y1;
 };
 
 /**
