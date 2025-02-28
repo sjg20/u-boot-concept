@@ -14,6 +14,7 @@
 #include "oslist.h"
 #include "ui.h"
 #include "util.h"
+#include "../bootflow_internal.h"
 
 /* Define to 1 to use text mode (for terminals), 0 for graphics */
 #define TEXT_MODE	0
@@ -94,6 +95,8 @@ static int simple_ui_show(struct udevice *dev)
 
 	printf("arrange\n");
 	LOGR("usa", scene_arrange(scn));
+
+	scene_set_highlight_id(scn, OBJ_MENU);
 
 	return 0;
 }

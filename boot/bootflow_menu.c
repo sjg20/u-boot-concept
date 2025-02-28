@@ -38,6 +38,7 @@ int bootflow_menu_new(struct expo **expp)
 	struct menu_priv *priv;
 	struct scene *scn;
 	struct expo *exp;
+	bool use_font;
 	void *logo;
 	int ret;
 
@@ -69,8 +70,10 @@ int bootflow_menu_new(struct expo **expp)
 		ret |= scene_obj_set_pos(scn, OBJ_U_BOOT_LOGO, -4, 4);
 	}
 
-	// up is \x18 and down is \x19
-	ret |= scene_txt_str(scn, "prompt1", OBJ_PROMPT1, STR_PROMPT1,
+	ret |= scene_txt_str(scn, "prompt1a", OBJ_PROMPT1A, STR_PROMPT1A,
+	     "Use the \x18 and \x19 keys to select which entry is highlighted.",
+	     NULL);
+	ret |= scene_txt_str(scn, "prompt1b", OBJ_PROMPT1B, STR_PROMPT1B,
 	     "Use the UP and DOWN keys to select which entry is highlighted.",
 	     NULL);
 	ret |= scene_txt_str(scn, "prompt2", OBJ_PROMPT2, STR_PROMPT2,
@@ -79,15 +82,22 @@ int bootflow_menu_new(struct expo **expp)
 	ret |= scene_txt_str(scn, "prompt3", OBJ_PROMPT3, STR_PROMPT3,
 	     "for a command-line. ESC to return to previous menu",
 	     NULL);
-	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT1, 0, 600,
+	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT1A, 0, 600,
+				  SCENEOB_DISPLAY_MAX, 30);
+	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT1B, 0, 600,
 				  SCENEOB_DISPLAY_MAX, 30);
 	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT2, 0, 650,
 				  SCENEOB_DISPLAY_MAX, 30);
 	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT3, 0, 700,
 				  SCENEOB_DISPLAY_MAX, 30);
-	ret |= scene_obj_set_halign(scn, OBJ_PROMPT1, SCENEOA_CENTRE);
+	ret |= scene_obj_set_halign(scn, OBJ_PROMPT1A, SCENEOA_CENTRE);
+	ret |= scene_obj_set_halign(scn, OBJ_PROMPT1B, SCENEOA_CENTRE);
 	ret |= scene_obj_set_halign(scn, OBJ_PROMPT2, SCENEOA_CENTRE);
 	ret |= scene_obj_set_halign(scn, OBJ_PROMPT3, SCENEOA_CENTRE);
+
+	use_font = IS_ENABLED(CONFIG_CONSOLE_TRUETYPE);
+	scene_obj_set_hide(scn, OBJ_PROMPT1A, use_font);
+	scene_obj_set_hide(scn, OBJ_PROMPT1B, !use_font);
 
 	ret |= scene_txt_str(scn, "cur_item", OBJ_POINTER, STR_POINTER, ">",
 			     NULL);
@@ -302,8 +312,22 @@ int bootflow_menu_poll(struct expo *exp, int *seqp)
 	}
 	case EXPOACT_QUIT:
 		return -EPIPE;
-	case EXPOACT_POINT_ITEM:
+	case EXPOACT_POINT_ITEM: {
+		/*
+		struct scene *scn;
+		uint scene_id;
+		int ret;
+
+		ret = expo_first_scene_id(exp);
+		if (ret < 0)
+			return log_msg_ret("ufs", ret);
+		scene_id = ret;
+		scn = expo_lookup_scene_id(exp, scene_id);
+
+		scene_set_highlight_id(scn, act.select.id);
+		*/
 		return -ERESTART;
+	}
 	default:
 		return -EAGAIN;
 	}
