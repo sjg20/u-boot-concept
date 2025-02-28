@@ -9,6 +9,8 @@
 #ifndef __SCENE_INTERNAL_H
 #define __SCENE_INTERNAL_H
 
+struct expo;
+struct scene_obj;
 struct vidconsole_bbox;
 
 typedef int (*expo_scene_obj_iterator)(struct scene_obj *obj, void *priv);
@@ -292,6 +294,19 @@ struct scene_menuitem *scene_menuitem_find_val(const struct scene_obj_menu *menu
 					      int val);
 
 /**
+ * scene_bbox_join() - update bouding box with a given src box
+ *
+ * Updates @dst so that it encompasses the bounding box @src
+ *
+ * @src: Input bounding box
+ * @inset: Amount of inset to use for width
+ * @dst: Bounding box to update
+ * Return: 0 if OK, -ve on error
+ */
+int scene_bbox_join(const struct vidconsole_bbox *src, int inset,
+		    struct vidconsole_bbox *dst);
+
+/**
  * scene_bbox_union() - update bouding box with the demensions of an object
  *
  * Updates @bbox so that it encompasses the bounding box of object @id
@@ -321,11 +336,13 @@ int scene_textline_calc_dims(struct scene_obj_textline *tline);
  * @menu: Menu to process
  * @bbox: Returns bounding box of menu including prompts
  * @label_bbox: Returns bounding box of labels
+ * @item_bbox: Returns bounding box of current item
  * Return: 0 if OK, -ve on error
  */
 void scene_menu_calc_bbox(struct scene_obj_menu *menu,
 			  struct vidconsole_bbox *bbox,
-			  struct vidconsole_bbox *label_bbox);
+			  struct vidconsole_bbox *label_bbox,
+			  struct vidconsole_bbox *curitem_bbox);
 
 /**
  * scene_textline_calc_bbox() - Calculate bounding box for the textline
@@ -345,10 +362,12 @@ void scene_textline_calc_bbox(struct scene_obj_textline *menu,
  * @obj: Object to process
  * @bbox: Returns bounding box of object including prompts
  * @label_bbox: Returns bounding box of labels (active area)
+ * @curiteml_bbox: Returns bounding box of current item
  * Return: 0 if OK, -ve on error
  */
 int scene_obj_calc_bbox(struct scene_obj *obj, struct vidconsole_bbox *bbox,
-			struct vidconsole_bbox *label_bbox);
+			struct vidconsole_bbox *label_bbox,
+			struct vidconsole_bbox *curitem_bbox);
 
 /**
  * scene_textline_open() - Open a textline object

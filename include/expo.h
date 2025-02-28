@@ -105,6 +105,7 @@ struct expo_theme {
  * type set to EXPOACT_NONE if there is no action
  * @text_mode: true to use text mode for the menu (no vidconsole)
  * @popup: true to use popup menus, instead of showing all items
+ * @show_highlight: show a highlight bar on the selected menu item
  * @priv: Private data for the controller
  * @theme: Information about fonts styles, etc.
  * @scene_head: List of scenes
@@ -120,6 +121,7 @@ struct expo {
 	struct expo_action action;
 	bool text_mode;
 	bool popup;
+	bool show_highlight;
 	void *priv;
 	struct expo_theme theme;
 	struct list_head scene_head;

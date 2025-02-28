@@ -119,6 +119,7 @@ static int simple_ui_add(struct udevice *dev, struct osinfo *info)
 		LOGR("thm", expo_apply_theme(priv->expo, std->theme));
 		// LOGR("th2", bootflow_menu_apply_theme(priv->expo, std->theme));
 	}
+	LOGR("ecd", expo_calc_dims(priv->expo));
 
 	priv->need_refresh = true;
 	printf("added\n");

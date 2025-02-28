@@ -105,6 +105,8 @@ int bootflow_menu_new(struct expo **expp)
 	if (ret < 0)
 		return log_msg_ret("new", -EINVAL);
 
+	exp->show_highlight = true;
+
 	*expp = exp;
 
 	return 0;

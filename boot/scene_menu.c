@@ -87,7 +87,7 @@ struct scene_menuitem *scene_menuitem_find_val(const struct scene_obj_menu *menu
 static int update_pointers(struct scene_obj_menu *menu, uint id, bool point)
 {
 	struct scene *scn = menu->obj.scene;
-	const bool stack = scn->expo->popup;
+	const bool stack = scn->expo->show_highlight;
 	const struct scene_menuitem *item;
 	int ret;
 
@@ -131,7 +131,8 @@ static void menu_point_to_item(struct scene_obj_menu *menu, uint item_id)
 
 void scene_menu_calc_bbox(struct scene_obj_menu *menu,
 			  struct vidconsole_bbox *bbox,
-			  struct vidconsole_bbox *label_bbox)
+			  struct vidconsole_bbox *label_bbox,
+			  struct vidconsole_bbox *curitem_bbox)
 {
 	const struct expo_theme *theme = &menu->obj.scene->expo->theme;
 	const struct scene_menuitem *item;
@@ -140,18 +141,34 @@ void scene_menu_calc_bbox(struct scene_obj_menu *menu,
 	scene_bbox_union(menu->obj.scene, menu->title_id, 0, bbox);
 
 	label_bbox->valid = false;
+	curitem_bbox->valid = false;
 
+	// printf("scan\n");
 	list_for_each_entry(item, &menu->item_head, sibling) {
+		struct vidconsole_bbox local;
+
+		local.valid = false;
 		scene_bbox_union(menu->obj.scene, item->label_id,
-				 theme->menu_inset, bbox);
-		scene_bbox_union(menu->obj.scene, item->key_id, 0, bbox);
-		scene_bbox_union(menu->obj.scene, item->desc_id, 0, bbox);
-		scene_bbox_union(menu->obj.scene, item->preview_id, 0, bbox);
+				 theme->menu_inset, &local);
+		// scene_bbox_union(menu->obj.scene, item->key_id, 0, &local);
+		// scene_bbox_union(menu->obj.scene, item->desc_id, 0, &local);
+		// scene_bbox_union(menu->obj.scene, item->preview_id, 0, &local);
+
+		scene_bbox_join(&local, 0, bbox);
 
 		/* Get the bounding box of all labels */
 		scene_bbox_union(menu->obj.scene, item->label_id,
 				 theme->menu_inset, label_bbox);
+
+		if (menu->cur_item_id == item->id) {
+			// printf("- %d %d\n", menu->cur_item_id, item->id);
+		// printf("1bbox valid %d %x %d %d %d\n", local.valid,
+		//        local.x0, local.y0, local.x1,
+		//        local.y1);
+		// 	scene_bbox_join(&local, 0, curitem_bbox);
+		}
 	}
+	// printf("done\n");
 
 	/*
 	 * subtract the final menuitem's gap to keep the insert the same top
@@ -162,10 +179,10 @@ void scene_menu_calc_bbox(struct scene_obj_menu *menu,
 
 int scene_menu_calc_dims(struct scene_obj_menu *menu)
 {
-	struct vidconsole_bbox bbox, label_bbox;
+	struct vidconsole_bbox bbox, label_bbox, curitem_bbox;
 	const struct scene_menuitem *item;
 
-	scene_menu_calc_bbox(menu, &bbox, &label_bbox);
+	scene_menu_calc_bbox(menu, &bbox, &label_bbox, &curitem_bbox);
 
 	/* Make all labels the same size */
 	if (label_bbox.valid) {

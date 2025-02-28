@@ -207,12 +207,19 @@ int scene_txt_set_font(struct scene *scn, uint id, const char *font_name,
 int scene_obj_set_pos(struct scene *scn, uint id, int x, int y)
 {
 	struct scene_obj *obj;
+	int w, h;
 
 	obj = scene_obj_find(scn, id, SCENEOBJT_NONE);
 	if (!obj)
 		return log_msg_ret("find", -ENOENT);
+	// printf("old %s %d %d - ", obj->name, obj->bbox.y0, obj->bbox.y1);
+	w = obj->bbox.x1 - obj->bbox.x0;
+	h = obj->bbox.y1 - obj->bbox.y0;
 	obj->bbox.x0 = x;
 	obj->bbox.y0 = y;
+	obj->bbox.x1 = obj->bbox.x0 + w;
+	obj->bbox.y1 = obj->bbox.y0 + h;
+	// printf("new %d %d\n", obj->bbox.y0, obj->bbox.y1);
 
 	return 0;
 }
@@ -359,12 +366,14 @@ int scene_obj_get_hw(struct scene *scn, uint id, int *widthp)
  * @obj: Object to render
  * @box_only: true to show a box around the object, but keep the normal
  * background colour inside
+ * @cur_item: true to render the background only for the current menu item
  */
-static void scene_render_background(struct scene_obj *obj, bool box_only)
+static void scene_render_background(struct scene_obj *obj, bool box_only,
+				    bool cur_item)
 {
+	struct vidconsole_bbox bbox, label_bbox, curitem_bbox, *sel;
 	struct expo *exp = obj->scene->expo;
 	const struct expo_theme *theme = &exp->theme;
-	struct vidconsole_bbox bbox, label_bbox;
 	struct udevice *dev = exp->display;
 	struct video_priv *vid_priv;
 	struct udevice *cons = exp->cons;
@@ -383,17 +392,25 @@ static void scene_render_background(struct scene_obj *obj, bool box_only)
 	}
 
 	/* see if this object wants to render a background */
-	if (scene_obj_calc_bbox(obj, &bbox, &label_bbox))
+	if (scene_obj_calc_bbox(obj, &bbox, &label_bbox, &curitem_bbox))
 		return;
 
+	sel = cur_item ? &curitem_bbox : &label_bbox;
+	if (!sel->valid)
+		return;
+
+	// if (cur_item) {
+	// 	printf("bbox valid %d %x %d %d %d\n", curitem_bbox.valid,
+	// 	       curitem_bbox.x0, curitem_bbox.y0, curitem_bbox.x1,
+	// 	       curitem_bbox.y1);
+	// }
 	vidconsole_push_colour(cons, fore, back, &old);
-	video_fill_part(dev, label_bbox.x0 - inset, label_bbox.y0 - inset,
-			label_bbox.x1 + inset, label_bbox.y1 + inset,
+	video_fill_part(dev, sel->x0 - inset, sel->y0 - inset,
+			sel->x1 + inset, sel->y1 + inset,
 			vid_priv->colour_fg);
 	vidconsole_pop_colour(cons, &old);
 	if (box_only) {
-		video_fill_part(dev, label_bbox.x0, label_bbox.y0,
-				label_bbox.x1, label_bbox.y1,
+		video_fill_part(dev, sel->x0, sel->y0, sel->x1, sel->y1,
 				vid_priv->colour_bg);
 	}
 }
@@ -481,13 +498,18 @@ static int scene_obj_render(struct scene_obj *obj, bool text_mode)
 	case SCENEOBJT_MENU: {
 		struct scene_obj_menu *menu = (struct scene_obj_menu *)obj;
 
-		if (exp->popup && (obj->flags & SCENEOF_OPEN)) {
-			if (!cons)
-				return -ENOTSUPP;
+		if (exp->popup) {
+			if (obj->flags & SCENEOF_OPEN) {
+				if (!cons)
+					return -ENOTSUPP;
 
-			/* draw a background behind the menu items */
-			scene_render_background(obj, false);
+				/* draw a background behind the menu items */
+				scene_render_background(obj, false, false);
+			}
+		} else if (exp->show_highlight) {
+			scene_render_background(obj, false, true);
 		}
+
 		/*
 		 * With a vidconsole, the text and item pointer are rendered as
 		 * normal objects so we don't need to do anything here. The menu
@@ -504,7 +526,7 @@ static int scene_obj_render(struct scene_obj *obj, bool text_mode)
 	}
 	case SCENEOBJT_TEXTLINE:
 		if (obj->flags & SCENEOF_OPEN)
-			scene_render_background(obj, true);
+			scene_render_background(obj, true, false);
 		break;
 	}
 
@@ -569,8 +591,6 @@ static void handle_alignment(struct scene_obj *obj, int xsize, int ysize)
 	switch (obj->horiz) {
 	case SCENEOA_CENTRE:
 		obj->ofs.xofs = (width - obj->dims.x) / 2;
-		printf("centred %s dims.x %d xofs %d\n", obj->name, obj->dims.x,
-		       obj->ofs.xofs);
 		break;
 	case SCENEOA_RIGHT:
 		obj->ofs.xofs = width - obj->dims.x;
@@ -823,7 +843,8 @@ int scene_send_key(struct scene *scn, int key, struct expo_action *event)
 }
 
 int scene_obj_calc_bbox(struct scene_obj *obj, struct vidconsole_bbox *bbox,
-			struct vidconsole_bbox *label_bbox)
+			struct vidconsole_bbox *label_bbox,
+			struct vidconsole_bbox *curitem_bbox)
 {
 	switch (obj->type) {
 	case SCENEOBJT_NONE:
@@ -833,7 +854,7 @@ int scene_obj_calc_bbox(struct scene_obj *obj, struct vidconsole_bbox *bbox,
 	case SCENEOBJT_MENU: {
 		struct scene_obj_menu *menu = (struct scene_obj_menu *)obj;
 
-		scene_menu_calc_bbox(menu, bbox, label_bbox);
+		scene_menu_calc_bbox(menu, bbox, label_bbox, curitem_bbox);
 		break;
 	}
 	case SCENEOBJT_TEXTLINE: {
@@ -1008,28 +1029,43 @@ int scene_iter_objs(struct scene *scn, expo_scene_obj_iterator iter,
 	return 0;
 }
 
+int scene_bbox_join(const struct vidconsole_bbox *src, int inset,
+		    struct vidconsole_bbox *dst)
+{
+	if (dst->valid) {
+		dst->x0 = min(dst->x0, src->x0 - inset);
+		dst->y0 = min(dst->y0, src->y0);
+		dst->x1 = max(dst->x1, src->x1 + inset);
+		dst->y1 = max(dst->y1, src->y1);
+	} else {
+		dst->x0 = src->x0 - inset;
+		dst->y0 = src->y0;
+		dst->x1 = src->x1 + inset;
+		dst->y1 = src->y1;
+		dst->valid = true;
+	}
+
+	return 0;
+}
+
 int scene_bbox_union(struct scene *scn, uint id, int inset,
 		     struct vidconsole_bbox *bbox)
 {
 	struct scene_obj *obj;
+	struct vidconsole_bbox local;
 
 	if (!id)
 		return 0;
 	obj = scene_obj_find(scn, id, SCENEOBJT_NONE);
 	if (!obj)
 		return log_msg_ret("obj", -ENOENT);
-	if (bbox->valid) {
-		bbox->x0 = min(bbox->x0, obj->bbox.x0 - inset);
-		bbox->y0 = min(bbox->y0, obj->bbox.y0);
-		bbox->x1 = max(bbox->x1, obj->bbox.x1 + inset);
-		bbox->y1 = max(bbox->y1, obj->bbox.y1);
-	} else {
-		bbox->x0 = obj->bbox.x0 - inset;
-		bbox->y0 = obj->bbox.y0;
-		bbox->x1 = obj->bbox.x1 + inset;
-		bbox->y1 = obj->bbox.y1;
-		bbox->valid = true;
-	}
+	printf("- y %d-%d\n",  obj->bbox.y0,  obj->bbox.y1);
+	local.x0 = obj->bbox.x0;
+	local.y0 = obj->bbox.y0;
+	local.x1 = obj->bbox.x1;
+	local.y1 = obj->bbox.y1;
+	local.valid = true;
+	scene_bbox_join(&local, inset, bbox);
 
 	return 0;
 }
