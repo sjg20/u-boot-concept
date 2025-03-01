@@ -305,6 +305,9 @@ static int iter_incr(struct bootflow_iter *iter)
 								 &method_flags);
 				}
 			} else {
+				ret = bootdev_next_prio(iter, &dev);
+				method_flags = 0;
+/*
 				scan_next_in_uclass(&dev);
 				log_debug("2looking for next device %s: %s\n",
 					  iter->dev->name,
@@ -313,6 +316,7 @@ static int iter_incr(struct bootflow_iter *iter)
 					ret = bootdev_next_prio(iter, &dev);
 					method_flags = 0;
 				}
+*/
 			}
 		}
 		log_debug("ret=%d, dev=%p %s\n", ret, dev,

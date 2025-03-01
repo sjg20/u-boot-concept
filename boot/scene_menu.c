@@ -524,6 +524,33 @@ int scene_menu_set_pointer(struct scene *scn, uint id, uint pointer_id)
 	return 0;
 }
 
+int scene_menu_set_point_item(struct scene *scn, uint id, uint sel_id)
+{
+	struct scene_obj_menu *menu;
+
+	menu = scene_obj_find(scn, id, SCENEOBJT_MENU);
+	if (!menu)
+		return log_msg_ret("menu", -ENOENT);
+
+	if (!scene_menuitem_find(menu, sel_id))
+		return log_msg_ret("menu", -EINVAL);
+
+	menu_point_to_item(menu, sel_id);
+
+	return 0;
+}
+
+int scene_menu_get_point_item(struct scene *scn, uint id)
+{
+	struct scene_obj_menu *menu;
+
+	menu = scene_obj_find(scn, id, SCENEOBJT_MENU);
+	if (!menu)
+		return log_msg_ret("menu", -ENOENT);
+
+	return menu->cur_item_id;
+}
+
 int scene_menu_display(struct scene_obj_menu *menu)
 {
 	struct scene *scn = menu->obj.scene;
