@@ -14,7 +14,6 @@
  * Written by Simon Glass <simon.glass@canonical.com>
  */
 
-#define LOG_DEBUG
 #define LOG_CATEGORY	UCLASS_BOOTCTL
 
 #include <alist.h>
@@ -192,7 +191,7 @@ static int sstate_load(struct udevice *dev)
 	LOGR("ssa", fs_load_alloc(priv->ifname, priv->dev_part, priv->fname,
 				  MAX_FILE_SIZE, 0, &buf));
 	log_debug("parsing\n");
-	membuf_init(&inf, buf.data, buf.size);
+	membuf_init_with_data(&inf, buf.data, buf.size);
 	for (ok = true;
 	     len = membuf_readline(&inf, line, sizeof(line), ' ', true),
 	     len && ok;) {

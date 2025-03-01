@@ -153,7 +153,6 @@ static int logic_poll(struct udevice *dev)
 	if (selected) {
 		struct osinfo *os;
 
-		printf("boot %d\n", seq);
 		os = alist_getw(&priv->osinfo, seq, struct osinfo);
 		LOGR("lpb", prepare_for_boot(dev, os));
 
