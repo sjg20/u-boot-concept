@@ -33,6 +33,7 @@ struct udevice;
  * @start_time: monotonic time when the boot started
  * @next_countdown: next monotonic time to check the timeout
  * @autoboot_remain_s: remaining autoboot time in seconds
+ * @autoboot_active: true if autoboot is active
  *
  * @iter: oslist iterator, used to find new OSes
  * @selected: selected OS, or NULL if none has been selected yet
@@ -58,6 +59,7 @@ struct logic_priv {
 	ulong start_time;
 	uint next_countdown;
 	uint autoboot_remain_s;
+	bool autoboot_active;
 
 	struct oslist_iter iter;
 	struct osinfo *selected;

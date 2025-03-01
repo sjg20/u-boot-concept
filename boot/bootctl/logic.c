@@ -107,8 +107,11 @@ static int logic_poll(struct udevice *dev)
 	have_os = false;
 	if (priv->starting) {
 		priv->start_time = get_timer(0);
-		if (priv->opt_autoboot)
+		if (priv->opt_autoboot) {
 			priv->next_countdown = COUNTDOWN_INTERVAL_MS;
+			priv->autoboot_remain_s = priv->opt_timeout;
+			priv->autoboot_active = true;
+		}
 		priv->starting = false;
 		ret = bc_oslist_first(priv->oslist, &priv->iter, &info);
 		if (!ret) {
@@ -126,7 +129,7 @@ static int logic_poll(struct udevice *dev)
 	if (have_os)
 		LOGR("bda", bc_ui_add(priv->ui, &info));
 
-	if (priv->opt_autoboot &&
+	if (priv->autoboot_active &&
 	    get_timer(priv->start_time) > priv->next_countdown) {
 		ulong secs = get_timer(priv->start_time) / 1000;
 		priv->autoboot_remain_s = priv->opt_timeout - secs;

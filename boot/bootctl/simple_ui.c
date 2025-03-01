@@ -26,6 +26,7 @@
  *
  * @osinfo: List of OSes to show
  * @expo: Expo containing the menu
+ * @scn: Current scene being shown
  * @priv: Logic status
  * @need_refresh: true if the display needs a refresh
  * @console: vidconsole device in use
@@ -35,6 +36,7 @@
 struct ui_priv {
 	struct alist osinfo;
 	struct expo *expo;
+	struct scene *scn;		/* consider dropping this */
 	struct logic_priv *lpriv;
 	bool need_refresh;
 	struct udevice *console;
@@ -117,6 +119,7 @@ static int simple_ui_show(struct udevice *dev)
 	LOGR("usa", scene_arrange(scn));
 
 	scene_set_highlight_id(scn, OBJ_MENU);
+	priv->scn = scn;
 
 	LOGR("suq", device_find_first_child_by_uclass(priv->expo->display,
 						      UCLASS_VIDEO_CONSOLE,
@@ -176,8 +179,11 @@ static int simple_ui_poll(struct udevice *dev, struct osinfo **infop)
 	int seq, ret;
 
 	ret = bootflow_menu_poll(priv->expo, &seq);
-	if (ret == -ERESTART)
+	if (ret == -ERESTART) {
 		priv->need_refresh = true;
+		priv->lpriv->autoboot_active = false;
+		scene_obj_set_hide(priv->scn, OBJ_AUTOBOOT, true);
+	}
 	LOGR("sdp", ret);
 
 	LOGR("sdb", bootstd_get_priv(&std));

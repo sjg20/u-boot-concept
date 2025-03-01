@@ -20,7 +20,7 @@
 		default-os;
 
 		/* timeout in seconds before booting a default OS */
-		timeout = <30>;
+		timeout = <5>;
 
 		/* skip timeout if boot was successful */
 		skip-timeout-on-success;
