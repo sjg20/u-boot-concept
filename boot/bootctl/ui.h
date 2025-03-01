@@ -60,8 +60,8 @@ struct bc_ui_ops {
 	 * @seqp: Returns the sequence number of the osinfo that is currently
 	 *	pointed to/highlighted, or -1 if nothing
 	 * @selectedp: Returns true if the user selected an item, else false
-	 * Return: 0 if OK, -EPIPE if the user tried to quit
-	 *	the menu, -EAGAIN if nothin is chosen uet, other -ve on error
+	 * Return: 0 if OK, -EPIPE if the user tried to quit the menu, other
+	 *	-ve on error
 	 */
 	int (*poll)(struct udevice *dev, int *seqp, bool *selectedp);
 };
@@ -100,8 +100,8 @@ int bc_ui_render(struct udevice *dev);
  * @seqp: Returns the sequence number of the osinfo that is currently
  *	pointed to/highlighted, or -1 if nothing
  * @selectedp: Returns true if the user selected an item, else false
- * Return: 0 if OK, -EPIPE if the user tried to quit
- *	the menu, -EAGAIN if nothin is chosen uet, other -ve on error
+ * Return: 0 if OK, -EPIPE if the user tried to quit the menu, other
+ *	-ve on error
  */
 int bc_ui_poll(struct udevice *dev, int *seqp, bool *selectedp);
 

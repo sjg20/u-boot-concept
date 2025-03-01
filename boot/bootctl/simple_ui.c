@@ -152,7 +152,6 @@ static int simple_ui_add(struct udevice *dev, struct osinfo *info)
 		scene_menu_set_point_item(scn, OBJ_MENU, ITEM + seq);
 
 	priv->need_refresh = true;
-	printf("added\n");
 	// refresh(dev);
 
 	return 0;
@@ -178,18 +177,27 @@ static int simple_ui_poll(struct udevice *dev, int *seqp, bool *selectedp)
 	struct ui_priv *priv = dev_get_priv(dev);
 	struct logic_priv *lpriv = priv->lpriv;
 	int seq, ret;
+	bool ok = true;
 
+	*seqp = -1;
 	ret = bootflow_menu_poll(priv->expo, &seq);
+	ok = !ret;
 	if (ret == -ERESTART) {
 		priv->need_refresh = true;
 		lpriv->autoboot_active = false;
 		scene_obj_set_hide(priv->scn, OBJ_AUTOBOOT, true);
+		ok = true;
+	} else if (ret == -EAGAIN) {
+		ok = true;
 	}
-	*seqp = seq;
-	if (ret)
-		return log_msg_ret("sdp", ret);
 
-	*selectedp = true;
+	*seqp = seq;
+	if (ret) {
+		if (!ok)
+			return log_msg_ret("sdp", ret);
+	} else {
+		*selectedp = true;
+	}
 
 	return 0;
 }

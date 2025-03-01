@@ -42,6 +42,8 @@ int bootctl_run(void)
 
 	do {
 		ret = bc_logic_poll(logic);
+		if (ret)
+			printf("logic err %dE\n", ret);
 	} while (ret != -ESHUTDOWN);
 
 	return 0;

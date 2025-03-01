@@ -133,7 +133,6 @@ static int logic_poll(struct udevice *dev)
 			priv->scanning = false;
 	}
 
-	printf("have_os %d\n", have_os);
 	if (have_os)
 		LOGR("bda", bc_ui_add(priv->ui, &info));
 
@@ -154,10 +153,10 @@ static int logic_poll(struct udevice *dev)
 	if (selected) {
 		struct osinfo *os;
 
+		printf("boot %d\n", seq);
 		os = alist_getw(&priv->osinfo, seq, struct osinfo);
 		LOGR("lpb", prepare_for_boot(dev, os));
 
-		printf("boot\n");
 		/* boot OS here */
 
 		return -ESHUTDOWN;
