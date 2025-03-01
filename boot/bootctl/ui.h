@@ -9,6 +9,8 @@
 #ifndef __bootctl_display_h
 #define __bootctl_display_h
 
+#include <stdbool.h>
+
 struct osinfo;
 struct oslist_iter;
 struct udevice;
@@ -55,11 +57,13 @@ struct bc_ui_ops {
 	 * poll() - Check for user activity
 	 *
 	 * @dev: Display device
-	 * @infop: Returns osinfo the user selected
-	 * Return 0 if user selected something, -EPIPE if the user tried to quit
+	 * @seqp: Returns the sequence number of the osinfo that is currently
+	 *	pointed to/highlighted, or -1 if nothing
+	 * @selectedp: Returns true if the user selected an item, else false
+	 * Return: 0 if OK, -EPIPE if the user tried to quit
 	 *	the menu, -EAGAIN if nothin is chosen uet, other -ve on error
 	 */
-	int (*poll)(struct udevice *dev, struct osinfo **infop);
+	int (*poll)(struct udevice *dev, int *seqp, bool *selectedp);
 };
 
 #define bc_ui_get_ops(dev)  ((struct bc_ui_ops *)(dev)->driver->ops)
@@ -93,11 +97,12 @@ int bc_ui_render(struct udevice *dev);
  * bc_ui_poll() - Check for user activity
  *
  * @dev: Display device
- * @infop: Returns osinfo the user selected
- * Return 0 if user selected something, -EPIPE if the user tried to quit
+ * @seqp: Returns the sequence number of the osinfo that is currently
+ *	pointed to/highlighted, or -1 if nothing
+ * @selectedp: Returns true if the user selected an item, else false
+ * Return: 0 if OK, -EPIPE if the user tried to quit
  *	the menu, -EAGAIN if nothin is chosen uet, other -ve on error
- * Return 0 if OK, -ve on error
  */
-int bc_ui_poll(struct udevice *dev, struct osinfo **infop);
+int bc_ui_poll(struct udevice *dev, int *seqp, bool *selectedp);
 
 #endif

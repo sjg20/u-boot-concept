@@ -312,9 +312,13 @@ int bootflow_menu_poll(struct expo *exp, int *seqp)
 {
 	struct bootflow *sel_bflow;
 	struct expo_action act;
+	struct scene *scn;
 
 	sel_bflow = NULL;
-	*seqp = -1;
+
+	scn = expo_lookup_scene_id(exp, exp->scene_id);
+
+	*seqp = scene_menu_get_point_item(scn, OBJ_MENU);
 
 	LOGR("bmp", expo_poll(exp, &act));
 

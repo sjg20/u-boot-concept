@@ -67,11 +67,11 @@ int bc_ui_render(struct udevice *disp)
 	return 0;
 }
 
-int bc_ui_poll(struct udevice *disp, struct osinfo **infop)
+int bc_ui_poll(struct udevice *disp, int *seqp, bool *selectedp)
 {
 	struct bc_ui_ops *ops = bc_ui_get_ops(disp);
 
-	LOGR("bdp", ops->poll(disp, infop));
+	LOGR("bdp", ops->poll(disp, seqp, selectedp));
 
 	return 0;
 }

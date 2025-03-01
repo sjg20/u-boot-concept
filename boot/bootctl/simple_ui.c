@@ -24,7 +24,6 @@
 /**
  * struct ui_priv - information about the display
  *
- * @osinfo: List of OSes to show
  * @expo: Expo containing the menu
  * @scn: Current scene being shown
  * @priv: Logic status
@@ -34,7 +33,6 @@
  * @autoboot_str: Current string displayed for autoboot timeout
  */
 struct ui_priv {
-	struct alist osinfo;
 	struct expo *expo;
 	struct scene *scn;		/* consider dropping this */
 	struct logic_priv *lpriv;
@@ -63,9 +61,8 @@ static int simple_ui_probe(struct udevice *dev)
 	struct ui_priv *priv = dev_get_priv(dev);
 	struct udevice *ldev;
 
-	alist_init_struct(&priv->osinfo, struct osinfo);
-
 	LOGR("sup", uclass_first_device_err(UCLASS_BOOTCTL, &ldev));
+
 	priv->lpriv = dev_get_priv(ldev);
 
 	return 0;
@@ -132,11 +129,12 @@ static int simple_ui_show(struct udevice *dev)
 static int simple_ui_add(struct udevice *dev, struct osinfo *info)
 {
 	struct ui_priv *priv = dev_get_priv(dev);
-	int seq = priv->osinfo.count;
+	struct logic_priv *lpriv = priv->lpriv;
+	int seq = lpriv->osinfo.count;
 	struct bootstd_priv *std;
 	struct scene *scn;
 
-	info = alist_add(&priv->osinfo, *info);
+	info = alist_add(&lpriv->osinfo, *info);
 	if (!info)
 		return -ENOMEM;
 	LOGR("sda", bootflow_menu_add(priv->expo, &info->bflow, seq,
@@ -148,6 +146,10 @@ static int simple_ui_add(struct udevice *dev, struct osinfo *info)
 		// LOGR("th2", bootflow_menu_apply_theme(priv->expo, std->theme));
 	}
 	LOGR("ecd", expo_calc_dims(priv->expo));
+
+	if (lpriv->default_os &&
+	    !strcmp(lpriv->default_os, info->bflow.os_name))
+		scene_menu_set_point_item(scn, OBJ_MENU, ITEM + seq);
 
 	priv->need_refresh = true;
 	printf("added\n");
@@ -171,24 +173,23 @@ static int simple_ui_render(struct udevice *dev)
 	return 0;
 }
 
-static int simple_ui_poll(struct udevice *dev, struct osinfo **infop)
+static int simple_ui_poll(struct udevice *dev, int *seqp, bool *selectedp)
 {
 	struct ui_priv *priv = dev_get_priv(dev);
-	struct bootstd_priv *std;
-	struct osinfo *info;
+	struct logic_priv *lpriv = priv->lpriv;
 	int seq, ret;
 
 	ret = bootflow_menu_poll(priv->expo, &seq);
 	if (ret == -ERESTART) {
 		priv->need_refresh = true;
-		priv->lpriv->autoboot_active = false;
+		lpriv->autoboot_active = false;
 		scene_obj_set_hide(priv->scn, OBJ_AUTOBOOT, true);
 	}
-	LOGR("sdp", ret);
+	*seqp = seq;
+	if (ret)
+		return log_msg_ret("sdp", ret);
 
-	LOGR("sdb", bootstd_get_priv(&std));
-	info = alist_getw(&priv->osinfo, seq, struct osinfo);
-	*infop = info;
+	*selectedp = true;
 
 	return 0;
 }

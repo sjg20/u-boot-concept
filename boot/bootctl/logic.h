@@ -34,9 +34,12 @@ struct udevice;
  * @next_countdown: next monotonic time to check the timeout
  * @autoboot_remain_s: remaining autoboot time in seconds
  * @autoboot_active: true if autoboot is active
+ * @default_os: name of the default OS to boot
+ * @osinfo: List of OSes to show
  *
  * @iter: oslist iterator, used to find new OSes
- * @selected: selected OS, or NULL if none has been selected yet
+ * @selected: index of selected OS in osinfo alist, or -1 if none has been
+ *	selected yet
  * @ui: display / console device
  * @oslist: provides OSes to boot
  * @state: provides persistent state
@@ -60,9 +63,10 @@ struct logic_priv {
 	uint next_countdown;
 	uint autoboot_remain_s;
 	bool autoboot_active;
+	const char *default_os;
+	struct alist osinfo;
 
 	struct oslist_iter iter;
-	struct osinfo *selected;
 	struct udevice *ui;
 	struct udevice *oslist;
 	struct udevice *state;

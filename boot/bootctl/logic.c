@@ -84,8 +84,9 @@ static int logic_poll(struct udevice *dev)
 {
 	struct logic_priv *priv = dev_get_priv(dev);
 	struct osinfo info;
+	bool selected;
 	bool have_os;
-	int ret;
+	int ret, seq;
 
 	if (priv->opt_persist_state && !priv->state_load_attempted) {
 		int ret;
@@ -112,6 +113,12 @@ static int logic_poll(struct udevice *dev)
 			priv->autoboot_remain_s = priv->opt_timeout;
 			priv->autoboot_active = true;
 		}
+
+		if (priv->opt_default_os) {
+			bc_state_read_str(priv->state, "default",
+					  &priv->default_os);
+		}
+
 		priv->starting = false;
 		ret = bc_oslist_first(priv->oslist, &priv->iter, &info);
 		if (!ret) {
@@ -126,21 +133,29 @@ static int logic_poll(struct udevice *dev)
 			priv->scanning = false;
 	}
 
+	printf("have_os %d\n", have_os);
 	if (have_os)
 		LOGR("bda", bc_ui_add(priv->ui, &info));
 
 	if (priv->autoboot_active &&
 	    get_timer(priv->start_time) > priv->next_countdown) {
 		ulong secs = get_timer(priv->start_time) / 1000;
-		priv->autoboot_remain_s = priv->opt_timeout - secs;
+		priv->autoboot_remain_s = max(priv->opt_timeout - secs, 0ul);
 		priv->next_countdown += COUNTDOWN_INTERVAL_MS;
 	}
 
 	LOGR("bdr", bc_ui_render(priv->ui));
-	LOGR("bdo", bc_ui_poll(priv->ui, &priv->selected));
+	LOGR("bdo", bc_ui_poll(priv->ui, &seq, &selected));
 
-	if (priv->selected) {
-		LOGR("lpb", prepare_for_boot(dev, priv->selected));
+	if (!selected && priv->autoboot_active && !priv->autoboot_remain_s &&
+	    seq >= 0)
+		selected = true;
+
+	if (selected) {
+		struct osinfo *os;
+
+		os = alist_getw(&priv->osinfo, seq, struct osinfo);
+		LOGR("lpb", prepare_for_boot(dev, os));
 
 		printf("boot\n");
 		/* boot OS here */
@@ -154,6 +169,7 @@ static int logic_poll(struct udevice *dev)
 static int logic_of_to_plat(struct udevice *dev)
 {
 	struct logic_priv *priv = dev_get_priv(dev);
+
 	ofnode node = ofnode_find_subnode(dev_ofnode(dev), "options");
 
 	priv->opt_persist_state = ofnode_read_bool(node, "persist-state");
@@ -164,6 +180,15 @@ static int logic_of_to_plat(struct udevice *dev)
 	priv->opt_track_success = ofnode_read_bool(node, "track-success");
 	priv->opt_labels = ofnode_read_string(node, "labels");
 	priv->opt_autoboot = ofnode_read_bool(node, "autoboot");
+
+	return 0;
+}
+
+static int logic_probe(struct udevice *dev)
+{
+	struct logic_priv *priv = dev_get_priv(dev);
+
+	alist_init_struct(&priv->osinfo, struct osinfo);
 
 	return 0;
 }
@@ -185,5 +210,6 @@ U_BOOT_DRIVER(bc_logic) = {
 	.of_match	= logic_ids,
 	.ops		= &ops,
 	.of_to_plat	= logic_of_to_plat,
+	.probe		= logic_probe,
 	.priv_auto	= sizeof(struct logic_priv),
 };
