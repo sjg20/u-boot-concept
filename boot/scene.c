@@ -210,6 +210,23 @@ int scene_box(struct scene *scn, const char *name, uint id, uint width,
 	return box->obj.id;
 }
 
+int scene_textedit(struct scene *scn, const char *name, uint id,
+		   struct scene_obj_textedit **teditp)
+{
+	struct scene_obj_textedit *tedit;
+	int ret;
+
+	ret = scene_obj_add(scn, name, id, SCENEOBJT_TEXTEDIT,
+			    sizeof(struct scene_obj_textedit),
+			    (struct scene_obj **)&tedit);
+	if (ret < 0)
+		return log_msg_ret("obj", ret);
+
+	if (teditp)
+		*teditp = tedit;
+
+	return tedit->obj.id;
+}
 
 int scene_txt_set_font(struct scene *scn, uint id, const char *font_name,
 		       uint font_size)
@@ -349,6 +366,7 @@ int scene_obj_get_hw(struct scene *scn, uint id, int *widthp)
 	case SCENEOBJT_NONE:
 	case SCENEOBJT_MENU:
 	case SCENEOBJT_TEXTLINE:
+	case SCENEOBJT_TEXTEDIT:
 	case SCENEOBJT_BOX:
 		break;
 	case SCENEOBJT_IMAGE: {
@@ -572,6 +590,9 @@ static int scene_obj_render(struct scene_obj *obj, bool text_mode)
 			       obj->bbox.y1, box->width, vid_priv->colour_fg);
 		break;
 	}
+	case SCENEOBJT_TEXTEDIT:
+		scene_render_background(obj, true, false);
+		break;
 	}
 
 	return 0;
@@ -591,6 +612,7 @@ int scene_calc_arrange(struct scene *scn, struct expo_arrange_info *arr)
 		case SCENEOBJT_IMAGE:
 		case SCENEOBJT_TEXT:
 		case SCENEOBJT_BOX:
+		case SCENEOBJT_TEXTEDIT:
 			break;
 		case SCENEOBJT_MENU: {
 			struct scene_obj_menu *menu;
@@ -686,6 +708,7 @@ int scene_arrange(struct scene *scn)
 		case SCENEOBJT_IMAGE:
 		case SCENEOBJT_TEXT:
 		case SCENEOBJT_BOX:
+		case SCENEOBJT_TEXTEDIT:
 			break;
 		case SCENEOBJT_MENU: {
 			struct scene_obj_menu *menu;
@@ -732,6 +755,7 @@ int scene_render_deps(struct scene *scn, uint id)
 		case SCENEOBJT_IMAGE:
 		case SCENEOBJT_TEXT:
 		case SCENEOBJT_BOX:
+		case SCENEOBJT_TEXTEDIT:
 			break;
 		case SCENEOBJT_MENU:
 			scene_menu_render_deps(scn,
@@ -897,6 +921,7 @@ int scene_obj_calc_bbox(struct scene_obj *obj, struct vidconsole_bbox bbox[])
 	case SCENEOBJT_IMAGE:
 	case SCENEOBJT_TEXT:
 	case SCENEOBJT_BOX:
+	case SCENEOBJT_TEXTEDIT:
 		return -ENOSYS;
 	case SCENEOBJT_MENU: {
 		struct scene_obj_menu *menu = (struct scene_obj_menu *)obj;
@@ -927,6 +952,7 @@ int scene_calc_dims(struct scene *scn, bool do_menus)
 		case SCENEOBJT_NONE:
 		case SCENEOBJT_TEXT:
 		case SCENEOBJT_BOX:
+		case SCENEOBJT_TEXTEDIT:
 		case SCENEOBJT_IMAGE: {
 			int width;
 
@@ -987,6 +1013,7 @@ int scene_apply_theme(struct scene *scn, struct expo_theme *theme)
 		case SCENEOBJT_MENU:
 		case SCENEOBJT_BOX:
 		case SCENEOBJT_TEXTLINE:
+		case SCENEOBJT_TEXTEDIT:
 			break;
 		case SCENEOBJT_TEXT:
 			scene_txt_set_font(scn, obj->id, NULL,
@@ -1029,6 +1056,7 @@ static int scene_obj_open(struct scene *scn, struct scene_obj *obj)
 	case SCENEOBJT_MENU:
 	case SCENEOBJT_TEXT:
 	case SCENEOBJT_BOX:
+	case SCENEOBJT_TEXTEDIT:
 		break;
 	case SCENEOBJT_TEXTLINE:
 		ret = scene_textline_open(scn,

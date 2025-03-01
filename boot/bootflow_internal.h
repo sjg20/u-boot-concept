@@ -36,6 +36,7 @@ enum {
 	OBJ_MENU_TITLE,
 	OBJ_POINTER,
 	OBJ_AUTOBOOT,
+	OBJ_TEXTEDIT,
 
 	/* strings for menu items */
 	STR_LABEL = 100,

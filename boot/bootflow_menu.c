@@ -55,7 +55,7 @@ int bootflow_menu_new(struct expo **expp)
 		return log_msg_ret("scn", ret);
 
 	LOGR("bmb", scene_box(scn, "box", OBJ_BOX, 2, NULL));
-	ret |= scene_obj_set_bbox(scn, OBJ_BOX, 30, 90, 1366 - 30, 610);
+	ret |= scene_obj_set_bbox(scn, OBJ_BOX, 30, 90, 1366 - 30, 720);
 
 	ret = scene_menu(scn, "main", OBJ_MENU, &menu);
 	ret |= scene_obj_set_pos(scn, OBJ_MENU, MARGIN_LEFT, 100);
@@ -108,6 +108,9 @@ int bootflow_menu_new(struct expo **expp)
 	scene_obj_set_hide(scn, OBJ_PROMPT1A, use_font);
 	scene_obj_set_hide(scn, OBJ_PROMPT1B, !use_font);
 	scene_obj_set_hide(scn, STR_AUTOBOOT, use_font);
+
+	ret |= scene_textedit(scn, "textedit", OBJ_TEXTEDIT, NULL);
+	ret |= scene_obj_set_bbox(scn, OBJ_TEXTEDIT, 50, 90, 1100, 610);
 
 	ret |= scene_txt_str(scn, "cur_item", OBJ_POINTER, STR_POINTER, ">",
 			     NULL);

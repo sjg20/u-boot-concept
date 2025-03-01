@@ -180,12 +180,14 @@ struct scene {
  * @SCENEOBJT_TEXT: Text line to render
  * @SCENEOBJT_MENU: Menu containing items the user can select
  * @SCENEOBJT_TEXTLINE: Line of text the user can edit
+ * @SCENEOBJT_TEXTEDIT: Simple text editor
  */
 enum scene_obj_t : char {
 	SCENEOBJT_NONE		= 0,
 	SCENEOBJT_IMAGE,
 	SCENEOBJT_TEXT,
 	SCENEOBJT_BOX,
+	SCENEOBJT_TEXTEDIT,
 
 	/* types from here on can be highlighted */
 	SCENEOBJT_MENU,
@@ -439,7 +441,7 @@ struct scene_obj_textline {
 };
 
 /**
- * struct scene_obj_box- information about a box in a scene
+ * struct scene_obj_box - information about a box in a scene
  *
  * A box surrounds a part of the screen with a border
  *
@@ -449,6 +451,17 @@ struct scene_obj_textline {
 struct scene_obj_box {
 	struct scene_obj obj;
 	uint width;
+};
+
+/**
+ * struct scene_obj_textedit - information about a box in a scene
+ *
+ * A text editor which allows users to edit a small text file
+ *
+ * @obj: Basic object information
+ */
+struct scene_obj_textedit {
+	struct scene_obj obj;
 };
 
 /**
@@ -718,11 +731,23 @@ int scene_textline(struct scene *scn, const char *name, uint id, uint max_chars,
  * @name: Name to use (this is allocated by this call)
  * @id: ID to use for the new object (0 to allocate one)
  * @width: Line-width in pixels
- * @tlinep: If non-NULL, returns the new object
+ * @boxp: If non-NULL, returns the new object
  * Returns: ID number for the object (typically @id), or -ve on error
  */
 int scene_box(struct scene *scn, const char *name, uint id, uint width,
 	      struct scene_obj_box **boxp);
+
+/**
+ *  scene_box() - create a box
+ *
+ * @scn: Scene to update
+ * @name: Name to use (this is allocated by this call)
+ * @id: ID to use for the new object (0 to allocate one)
+ * @teditp: If non-NULL, returns the new object
+ * Returns: ID number for the object (typically @id), or -ve on error
+ */
+int scene_textedit(struct scene *scn, const char *name, uint id,
+		   struct scene_obj_textedit **teditp);
 
 /**
  * scene_txt_set_font() - Set the font for an object
