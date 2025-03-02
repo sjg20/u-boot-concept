@@ -337,7 +337,10 @@ int scene_obj_flag_clrset(struct scene *scn, uint id, uint clr, uint set)
 	return 0;
 }
 
-static void handle_alignment(struct scene_obj *obj, struct scene_obj_bbox *bbox,
+static void handle_alignment(enum scene_obj_align horiz,
+			     enum scene_obj_align vert,
+			     struct scene_obj_bbox *bbox,
+			     struct scene_obj_dims *dims,
 			     int xsize, int ysize,
 			     struct scene_obj_offset *offset)
 {
@@ -351,24 +354,24 @@ static void handle_alignment(struct scene_obj *obj, struct scene_obj_bbox *bbox,
 	width = bbox->x1 - bbox->x0;
 	height = bbox->y1 - bbox->y0;
 
-	switch (obj->horiz) {
+	switch (horiz) {
 	case SCENEOA_CENTRE:
-		offset->xofs = (width - obj->dims.x) / 2;
+		offset->xofs = (width - dims->x) / 2;
 		break;
 	case SCENEOA_RIGHT:
-		offset->xofs = width - obj->dims.x;
+		offset->xofs = width - dims->x;
 		break;
 	case SCENEOA_LEFT:
 		offset->xofs = 0;
 		break;
 	}
 
-	switch (obj->vert) {
+	switch (vert) {
 	case SCENEOA_CENTRE:
-		offset->yofs = (height - obj->dims.y) / 2;
+		offset->yofs = (height - dims->y) / 2;
 		break;
 	case SCENEOA_TOP:
-		offset->yofs = height - obj->dims.y;
+		offset->yofs = height - dims->y;
 		break;
 	case SCENEOA_BOTTOM:
 		offset->yofs = 0;
@@ -724,7 +727,8 @@ int scene_arrange(struct scene *scn)
 		return log_msg_ret("arr", ret);
 
 	list_for_each_entry(obj, &scn->obj_head, sibling) {
-		handle_alignment(obj, &obj->bbox, xsize, ysize, &obj->ofs);
+		handle_alignment(obj->horiz, obj->vert, &obj->bbox, &obj->dims,
+				 xsize, ysize, &obj->ofs);
 
 		switch (obj->type) {
 		case SCENEOBJT_NONE:
