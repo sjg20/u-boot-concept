@@ -337,6 +337,45 @@ int scene_obj_flag_clrset(struct scene *scn, uint id, uint clr, uint set)
 	return 0;
 }
 
+static void handle_alignment(struct scene_obj *obj, struct scene_obj_bbox *bbox,
+			     int xsize, int ysize,
+			     struct scene_obj_offset *offset)
+{
+	int width, height;
+
+	if (bbox->x1 == SCENEOB_DISPLAY_MAX)
+		bbox->x1 = xsize ?: 1280;
+	if (bbox->y1 == SCENEOB_DISPLAY_MAX)
+		bbox->y1 = ysize ?: 1024;
+
+	width = bbox->x1 - bbox->x0;
+	height = bbox->y1 - bbox->y0;
+
+	switch (obj->horiz) {
+	case SCENEOA_CENTRE:
+		offset->xofs = (width - obj->dims.x) / 2;
+		break;
+	case SCENEOA_RIGHT:
+		offset->xofs = width - obj->dims.x;
+		break;
+	case SCENEOA_LEFT:
+		offset->xofs = 0;
+		break;
+	}
+
+	switch (obj->vert) {
+	case SCENEOA_CENTRE:
+		offset->yofs = (height - obj->dims.y) / 2;
+		break;
+	case SCENEOA_TOP:
+		offset->yofs = height - obj->dims.y;
+		break;
+	case SCENEOA_BOTTOM:
+		offset->yofs = 0;
+		break;
+	}
+}
+
 int scene_obj_get_hw(struct scene *scn, uint id, int *widthp)
 {
 	struct scene_obj *obj;
@@ -664,43 +703,6 @@ int scene_calc_arrange(struct scene *scn, struct expo_arrange_info *arr)
 	return 0;
 }
 
-static void handle_alignment(struct scene_obj *obj, int xsize, int ysize)
-{
-	int width, height;
-
-	if (obj->bbox.x1 == SCENEOB_DISPLAY_MAX)
-		obj->bbox.x1 = xsize ?: 1280;
-	if (obj->bbox.y1 == SCENEOB_DISPLAY_MAX)
-		obj->bbox.y1 = ysize ?: 1024;
-
-	width = obj->bbox.x1 - obj->bbox.x0;
-	height = obj->bbox.y1 - obj->bbox.y0;
-
-	switch (obj->horiz) {
-	case SCENEOA_CENTRE:
-		obj->ofs.xofs = (width - obj->dims.x) / 2;
-		break;
-	case SCENEOA_RIGHT:
-		obj->ofs.xofs = width - obj->dims.x;
-		break;
-	case SCENEOA_LEFT:
-		obj->ofs.xofs = 0;
-		break;
-	}
-
-	switch (obj->vert) {
-	case SCENEOA_CENTRE:
-		obj->ofs.yofs = (height - obj->dims.y) / 2;
-		break;
-	case SCENEOA_TOP:
-		obj->ofs.yofs = height - obj->dims.y;
-		break;
-	case SCENEOA_BOTTOM:
-		obj->ofs.yofs = 0;
-		break;
-	}
-}
-
 int scene_arrange(struct scene *scn)
 {
 	struct expo_arrange_info arr;
@@ -722,7 +724,7 @@ int scene_arrange(struct scene *scn)
 		return log_msg_ret("arr", ret);
 
 	list_for_each_entry(obj, &scn->obj_head, sibling) {
-		handle_alignment(obj, xsize, ysize);
+		handle_alignment(obj, &obj->bbox, xsize, ysize, &obj->ofs);
 
 		switch (obj->type) {
 		case SCENEOBJT_NONE:
