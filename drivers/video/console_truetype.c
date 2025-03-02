@@ -792,7 +792,7 @@ static int truetype_measure(struct udevice *dev, const char *name, uint size,
 
 			start = s - text;
 			last = 0;
-			width = 0;
+			neww = 0;
 		}
 
 		width = neww;

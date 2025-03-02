@@ -483,17 +483,21 @@ static int scene_txt_render(struct expo *exp, struct udevice *dev,
 				txt->obj.bbox.x1, txt->obj.bbox.y1,
 				vid_priv->colour_bg);
 	}
-	vidconsole_set_cursor_pos(cons, x, y);
-	// printf("str %ld ret %d\n", strlen(str), ret);
+	alist_for_each(mline, &txt->lines) {
+		int y = txt->obj.bbox.y0 + mline->bbox.y0;
+		vidconsole_set_cursor_pos(cons, x, y);
+		// printf("str %ld ret %d\n", strlen(str), ret);
 
-	mline = alist_get(&txt->lines, 0,
-				struct vidconsole_mline);
-	if (mline)
-		printf("mline->len = %d\n", mline->len);
-	vidconsole_put_stringn(cons, str,
-				mline ? mline->len : -1);
-	if (txt->obj.flags & SCENEOF_POINT)
-		vidconsole_pop_colour(cons, &old);
+		// mline = alist_get(&txt->lines, 0,
+					// struct vidconsole_mline);
+		// if (mline)
+			// printf("mline->len = %d\n", mline->len);
+		vidconsole_put_stringn(cons, str + mline->start,
+					mline ? mline->len : -1);
+		if (txt->obj.flags & SCENEOF_POINT)
+			vidconsole_pop_colour(cons, &old);
+
+	}
 
 	return 0;
 }
