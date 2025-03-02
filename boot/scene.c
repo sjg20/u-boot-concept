@@ -531,10 +531,10 @@ static int scene_txt_render(struct expo *exp, struct udevice *dev,
 		struct scene_obj_dims dims;
 		struct scene_obj_bbox bbox;
 
-		bbox.x0 = mline->bbox.x0;
-		bbox.y0 = mline->bbox.y0;
-		bbox.x1 = mline->bbox.x1;
-		bbox.y1 = mline->bbox.y1;
+		bbox.x0 = obj->bbox.x0;
+		bbox.y0 = obj->bbox.y0;
+		bbox.x1 = obj->bbox.x1;
+		bbox.y1 = obj->bbox.y1;
 		dims.x = mline->bbox.x1 - mline->bbox.x0;
 		dims.y = mline->bbox.y1 - mline->bbox.y0;
 		handle_alignment(obj->horiz, obj->vert, &bbox, &dims,
