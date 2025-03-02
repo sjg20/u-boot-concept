@@ -94,14 +94,14 @@ int bootflow_menu_new(struct expo **expp)
 	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT1B, 0, 620,
 				  SCENEOB_DISPLAY_MAX, 30);
 	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT2, 100, 650,
-				  1000, 60);
+				  1366 - 100, 60);
 	// ret |= scene_obj_set_bbox(scn, OBJ_PROMPT3, 0, 680,
 				  // SCENEOB_DISPLAY_MAX, 30);
 	ret |= scene_obj_set_bbox(scn, OBJ_AUTOBOOT, 0, 720,
 				  SCENEOB_DISPLAY_MAX, 30);
 	ret |= scene_obj_set_halign(scn, OBJ_PROMPT1A, SCENEOA_CENTRE);
 	ret |= scene_obj_set_halign(scn, OBJ_PROMPT1B, SCENEOA_CENTRE);
-	// ret |= scene_obj_set_halign(scn, OBJ_PROMPT2, SCENEOA_CENTRE);
+	ret |= scene_obj_set_halign(scn, OBJ_PROMPT2, SCENEOA_CENTRE);
 	// ret |= scene_obj_set_halign(scn, OBJ_PROMPT3, SCENEOA_CENTRE);
 	ret |= scene_obj_set_halign(scn, OBJ_AUTOBOOT, SCENEOA_CENTRE);
 
