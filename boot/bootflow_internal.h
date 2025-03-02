@@ -21,6 +21,7 @@ enum {
 	STR_AUTOBOOT,
 	STR_MENU_TITLE,
 	STR_POINTER,
+	STR_TEXTEDIT,
 
 	/* scene */
 	MAIN,
@@ -37,6 +38,8 @@ enum {
 	OBJ_POINTER,
 	OBJ_AUTOBOOT,
 	OBJ_TEXTEDIT,
+	// OBJ_TEXTEDIT_LINES,
+	// OBJ_TEXTEDIT_END = OBJ_TEXTEDIT_LINES + 50,
 
 	/* strings for menu items */
 	STR_LABEL = 100,
@@ -44,11 +47,11 @@ enum {
 	STR_KEY = 300,
 
 	/* menu items / components (bootflow number is added to these) */
-	ITEM = 400,
-	ITEM_LABEL = 500,
-	ITEM_DESC = 600,
-	ITEM_KEY = 700,
-	ITEM_PREVIEW = 800,
+	ITEM = 500,
+	ITEM_LABEL = 600,
+	ITEM_DESC = 700,
+	ITEM_KEY = 800,
+	ITEM_PREVIEW = 900,
 
 	/* left margin for the main menu */
 	MARGIN_LEFT	 = 100,

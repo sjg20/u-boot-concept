@@ -109,7 +109,8 @@ int bootflow_menu_new(struct expo **expp)
 	scene_obj_set_hide(scn, OBJ_PROMPT1B, !use_font);
 	scene_obj_set_hide(scn, STR_AUTOBOOT, use_font);
 
-	ret |= scene_textedit(scn, "textedit", OBJ_TEXTEDIT, NULL);
+	ret |= scene_textedit(scn, "textedit", OBJ_TEXTEDIT, STR_TEXTEDIT,
+			      NULL);
 	ret |= scene_obj_set_bbox(scn, OBJ_TEXTEDIT, 50, 90, 1100, 610);
 
 	ret |= scene_txt_str(scn, "cur_item", OBJ_POINTER, STR_POINTER, ">",

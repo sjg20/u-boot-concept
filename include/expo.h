@@ -462,6 +462,8 @@ struct scene_obj_box {
  */
 struct scene_obj_textedit {
 	struct scene_obj obj;
+	struct abuf buf;
+	uint strid;
 };
 
 /**
@@ -743,10 +745,11 @@ int scene_box(struct scene *scn, const char *name, uint id, uint width,
  * @scn: Scene to update
  * @name: Name to use (this is allocated by this call)
  * @id: ID to use for the new object (0 to allocate one)
+ * @strid: ID of the string to edit
  * @teditp: If non-NULL, returns the new object
  * Returns: ID number for the object (typically @id), or -ve on error
  */
-int scene_textedit(struct scene *scn, const char *name, uint id,
+int scene_textedit(struct scene *scn, const char *name, uint id, uint strid,
 		   struct scene_obj_textedit **teditp);
 
 /**

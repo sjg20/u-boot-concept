@@ -210,24 +210,6 @@ int scene_box(struct scene *scn, const char *name, uint id, uint width,
 	return box->obj.id;
 }
 
-int scene_textedit(struct scene *scn, const char *name, uint id,
-		   struct scene_obj_textedit **teditp)
-{
-	struct scene_obj_textedit *tedit;
-	int ret;
-
-	ret = scene_obj_add(scn, name, id, SCENEOBJT_TEXTEDIT,
-			    sizeof(struct scene_obj_textedit),
-			    (struct scene_obj **)&tedit);
-	if (ret < 0)
-		return log_msg_ret("obj", ret);
-
-	if (teditp)
-		*teditp = tedit;
-
-	return tedit->obj.id;
-}
-
 int scene_txt_set_font(struct scene *scn, uint id, const char *font_name,
 		       uint font_size)
 {
@@ -590,9 +572,14 @@ static int scene_obj_render(struct scene_obj *obj, bool text_mode)
 			       obj->bbox.y1, box->width, vid_priv->colour_fg);
 		break;
 	}
-	case SCENEOBJT_TEXTEDIT:
+	case SCENEOBJT_TEXTEDIT: {
+		struct scene_obj_textedit *ted;
+
+		ted = (struct scene_obj_textedit *)obj;
 		scene_render_background(obj, true, false);
+		scene_textedit_display(ted);
 		break;
+	}
 	}
 
 	return 0;
