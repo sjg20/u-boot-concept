@@ -100,7 +100,7 @@ static int simple_ui_show(struct udevice *dev)
 	priv->autoboot_template = old_str;
 	strlcpy(priv->autoboot_str, old_str, sizeof(priv->autoboot_str));
 
-	printf("theme %s\n", ofnode_get_name(std->theme));
+	printf("theme '%s'\n", ofnode_get_name(std->theme));
 
 	if (ofnode_valid(std->theme))
 		LOGR("thm", expo_apply_theme(priv->expo, std->theme));

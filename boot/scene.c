@@ -391,7 +391,6 @@ int scene_obj_get_hw(struct scene *scn, uint id, int *widthp)
 	case SCENEOBJT_NONE:
 	case SCENEOBJT_MENU:
 	case SCENEOBJT_TEXTLINE:
-	case SCENEOBJT_TEXTEDIT:
 	case SCENEOBJT_BOX:
 		break;
 	case SCENEOBJT_IMAGE: {
@@ -405,13 +404,19 @@ int scene_obj_get_hw(struct scene *scn, uint id, int *widthp)
 		return height;
 	}
 	case SCENEOBJT_TEXT: {
-		struct scene_obj_txt *txt = (struct scene_obj_txt *)obj;
+	case SCENEOBJT_TEXTEDIT:
+		struct scene_txt_generic *gen;
 		struct expo *exp = scn->expo;
 		struct vidconsole_bbox bbox;
 		int len, ret , limit;
 		const char *str;
 
-		str = expo_get_str(exp, txt->gen.str_id);
+		if (obj->type == SCENEOBJT_TEXT)
+			gen = &((struct scene_obj_txt *)obj)->gen;
+		else
+			gen = &((struct scene_obj_txtedit *)obj)->gen;
+
+		str = expo_get_str(exp, gen->str_id);
 		if (!str)
 			return log_msg_ret("str", -ENOENT);
 		len = strlen(str);
@@ -426,10 +431,10 @@ int scene_obj_get_hw(struct scene *scn, uint id, int *widthp)
 		limit = obj->flags & SCENEOF_SIZE_VALID ?
 			obj->bbox.x1 - obj->bbox.x0 : -1;
 
-		alist_init_struct(&txt->gen.lines, struct vidconsole_mline);
-		ret = vidconsole_measure(scn->expo->cons, txt->gen.font_name,
-					 txt->gen.font_size, str, limit, &bbox,
-					 &txt->gen.lines);
+		alist_init_struct(&gen->lines, struct vidconsole_mline);
+		ret = vidconsole_measure(scn->expo->cons, gen->font_name,
+					 gen->font_size, str, limit, &bbox,
+					 &gen->lines);
 		// printf("lines %d\n", txt->lines.count);
 		if (ret)
 			return log_msg_ret("mea", ret);
@@ -669,9 +674,9 @@ static int scene_obj_render(struct scene_obj *obj, bool text_mode)
 		break;
 	}
 	case SCENEOBJT_TEXTEDIT: {
-		struct scene_obj_textedit *ted;
+		struct scene_obj_txtedit *ted;
 
-		ted = (struct scene_obj_textedit *)obj;
+		ted = (struct scene_obj_txtedit *)obj;
 		scene_render_background(obj, true, false);
 		scene_textedit_display(ted);
 		break;

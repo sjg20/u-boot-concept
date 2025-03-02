@@ -18,7 +18,7 @@ struct expo_theme;
 struct scene_obj;
 struct scene_obj_menu;
 struct scene_obj_textline;
-struct scene_obj_textedit;
+struct scene_obj_txtedit;
 struct vidconsole_bbox;
 
 enum scene_obj_t : char;
@@ -417,6 +417,6 @@ int scene_textline_close(struct scene *scn, struct scene_obj_textline *tline);
  */
 int scene_calc_arrange(struct scene *scn, struct expo_arrange_info *arr);
 
-void scene_textedit_display(struct scene_obj_textedit *ted);
+void scene_textedit_display(struct scene_obj_txtedit *ted);
 
 #endif /* __SCENE_INTERNAL_H */

@@ -19,14 +19,14 @@ enum {
 };
 
 int scene_textedit(struct scene *scn, const char *name, uint id, uint str_id,
-		   struct scene_obj_textedit **teditp)
+		   struct scene_obj_txtedit **teditp)
 {
-	struct scene_obj_textedit *ted;
+	struct scene_obj_txtedit *ted;
 	char *buf;
 	int ret;
 
 	ret = scene_obj_add(scn, name, id, SCENEOBJT_TEXTEDIT,
-			    sizeof(struct scene_obj_textedit),
+			    sizeof(struct scene_obj_txtedit),
 			    (struct scene_obj **)&ted);
 	if (ret < 0)
 		return log_msg_ret("obj", ret);
@@ -47,6 +47,6 @@ int scene_textedit(struct scene *scn, const char *name, uint id, uint str_id,
 	return ted->obj.id;
 }
 
-void scene_textedit_display(struct scene_obj_textedit *ted)
+void scene_textedit_display(struct scene_obj_txtedit *ted)
 {
 }

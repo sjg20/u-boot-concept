@@ -339,9 +339,9 @@ struct scene_obj_img {
 };
 
 /**
- * struct scene_txt_gen  - Generic information common to text objects
+ * struct scene_txt_generic - Generic information common to text objects
  */
-struct scene_txt_gen {
+struct scene_txt_generic {
 	uint str_id;
 	const char *font_name;
 	uint font_size;
@@ -362,7 +362,7 @@ struct scene_txt_gen {
  */
 struct scene_obj_txt {
 	struct scene_obj obj;
-	struct scene_txt_gen gen;
+	struct scene_txt_generic gen;
 };
 
 /**
@@ -465,15 +465,15 @@ struct scene_obj_box {
 };
 
 /**
- * struct scene_obj_textedit - information about a box in a scene
+ * struct scene_obj_txtedit - information about a box in a scene
  *
  * A text editor which allows users to edit a small text file
  *
  * @obj: Basic object information
  */
-struct scene_obj_textedit {
+struct scene_obj_txtedit {
 	struct scene_obj obj;
-	struct scene_txt_gen gen;
+	struct scene_txt_generic gen;
 	struct abuf buf;
 };
 
@@ -761,7 +761,7 @@ int scene_box(struct scene *scn, const char *name, uint id, uint width,
  * Returns: ID number for the object (typically @id), or -ve on error
  */
 int scene_textedit(struct scene *scn, const char *name, uint id, uint strid,
-		   struct scene_obj_textedit **teditp);
+		   struct scene_obj_txtedit **teditp);
 
 /**
  * scene_txt_set_font() - Set the font for an object
