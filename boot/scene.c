@@ -382,6 +382,7 @@ int scene_obj_get_hw(struct scene *scn, uint id, int *widthp)
 
 		ret = vidconsole_measure(scn->expo->cons, txt->font_name,
 					 txt->font_size, str, &bbox);
+		// printf("str %ld ret %d\n", strlen(str), ret);
 		if (ret)
 			return log_msg_ret("mea", ret);
 		if (widthp)
@@ -526,6 +527,7 @@ static int scene_obj_render(struct scene_obj *obj, bool text_mode)
 						vid_priv->colour_bg);
 			}
 			vidconsole_set_cursor_pos(cons, x, y);
+			printf("str %ld ret %d\n", strlen(str), ret);
 			vidconsole_put_string(cons, str);
 			if (obj->flags & SCENEOF_POINT)
 				vidconsole_pop_colour(cons, &old);

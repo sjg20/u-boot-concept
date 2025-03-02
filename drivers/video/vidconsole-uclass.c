@@ -621,7 +621,7 @@ int vidconsole_measure(struct udevice *dev, const char *name, uint size,
 	int ret;
 
 	if (ops->measure) {
-		ret = ops->measure(dev, name, size, text, bbox);
+		ret = ops->measure(dev, name, size, text, bbox, NULL);
 		if (ret != -ENOSYS)
 			return ret;
 	}

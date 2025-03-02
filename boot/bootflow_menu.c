@@ -80,11 +80,12 @@ int bootflow_menu_new(struct expo **expp)
 	     "Use the UP and DOWN keys to select which entry is highlighted.",
 	     NULL);
 	ret |= scene_txt_str(scn, "prompt2", OBJ_PROMPT2, STR_PROMPT2,
-	     "Press enter to boot the selected OS, 'e' to edit the commands before booting or 'c'",
-	     NULL);
-	ret |= scene_txt_str(scn, "prompt3", OBJ_PROMPT3, STR_PROMPT3,
-	     "for a command-line. ESC to return to previous menu",
-	     NULL);
+	     "Press enter to boot the selected OS, 'e' to edit the commands "
+	     "before booting or 'c' for a command-line. ESC to return to "
+	     "previous menu", NULL);
+	// ret |= scene_txt_str(scn, "prompt3", OBJ_PROMPT3, STR_PROMPT3,
+	     // "for a command-line. ESC to return to previous menu",
+	     // NULL);
 	ret |= scene_txt_str(scn, "autoboot", OBJ_AUTOBOOT, STR_AUTOBOOT,
 	     "The highlighted entry will be executed automatically in %ds.",
 	     NULL);
@@ -93,15 +94,15 @@ int bootflow_menu_new(struct expo **expp)
 	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT1B, 0, 620,
 				  SCENEOB_DISPLAY_MAX, 30);
 	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT2, 0, 650,
-				  SCENEOB_DISPLAY_MAX, 30);
-	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT3, 0, 680,
-				  SCENEOB_DISPLAY_MAX, 30);
+				  SCENEOB_DISPLAY_MAX, 60);
+	// ret |= scene_obj_set_bbox(scn, OBJ_PROMPT3, 0, 680,
+				  // SCENEOB_DISPLAY_MAX, 30);
 	ret |= scene_obj_set_bbox(scn, OBJ_AUTOBOOT, 0, 720,
 				  SCENEOB_DISPLAY_MAX, 30);
 	ret |= scene_obj_set_halign(scn, OBJ_PROMPT1A, SCENEOA_CENTRE);
 	ret |= scene_obj_set_halign(scn, OBJ_PROMPT1B, SCENEOA_CENTRE);
-	ret |= scene_obj_set_halign(scn, OBJ_PROMPT2, SCENEOA_CENTRE);
-	ret |= scene_obj_set_halign(scn, OBJ_PROMPT3, SCENEOA_CENTRE);
+	// ret |= scene_obj_set_halign(scn, OBJ_PROMPT2, SCENEOA_CENTRE);
+	// ret |= scene_obj_set_halign(scn, OBJ_PROMPT3, SCENEOA_CENTRE);
 	ret |= scene_obj_set_halign(scn, OBJ_AUTOBOOT, SCENEOA_CENTRE);
 
 	use_font = IS_ENABLED(CONFIG_CONSOLE_TRUETYPE);

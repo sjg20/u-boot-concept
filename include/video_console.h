@@ -6,6 +6,7 @@
 #ifndef __video_console_h
 #define __video_console_h
 
+#include <alist.h>
 #include <video.h>
 
 struct abuf;
@@ -122,6 +123,18 @@ struct vidconsole_bbox {
 };
 
 /**
+ * vidconsole_mline - Holds information about a line of measured text
+ *
+ * @bbox: Bounding box of the line, assuming it starts at 0,0
+ * @start: String index of the first character in the line
+ * @len: Number of characters in the line
+ */
+struct vidconsole_mline {
+	struct vidconsole_bbox bbox;
+	int start;
+};
+
+/**
  * struct vidconsole_ops - Video console operations
  *
  * These operations work on either an absolute console position (measured
@@ -232,16 +245,24 @@ struct vidconsole_ops {
 	/**
 	 * measure() - Measure the bounds of some text
 	 *
+	 * The text can include newlines
+	 *
 	 * @dev:	Device to adjust
 	 * @name:	Font name to use (NULL to use default)
 	 * @size:	Font size to use (0 to use default)
 	 * @text:	Text to measure
+	 * @limit:	Width limit for each line, or -1 if none
 	 * @bbox:	Returns bounding box of text, assuming it is positioned
 	 *		at 0,0
+	 * @lines:	If non-NULL, provided, must be inited by caller. A
+	 *		separate struct vidconsole_mline is added for each line
+	 *		of text
+	 *
 	 * Returns: 0 on success, -ENOENT if no such font
 	 */
 	int (*measure)(struct udevice *dev, const char *name, uint size,
-		       const char *text, struct vidconsole_bbox *bbox);
+		       const char *text, struct vidconsole_bbox *bbox,
+		       struct alist *lines);
 
 	/**
 	 * nominal() - Measure the expected width of a line of text
