@@ -156,7 +156,7 @@ int scene_txt(struct scene *scn, const char *name, uint id, uint str_id,
 	if (ret < 0)
 		return log_msg_ret("obj", ret);
 
-	txt->str_id = str_id;
+	txt->gen.str_id = str_id;
 
 	if (txtp)
 		*txtp = txt;
@@ -183,7 +183,7 @@ int scene_txt_str(struct scene *scn, const char *name, uint id, uint str_id,
 	if (ret < 0)
 		return log_msg_ret("obj", ret);
 
-	txt->str_id = str_id;
+	txt->gen.str_id = str_id;
 
 	if (txtp)
 		*txtp = txt;
@@ -219,8 +219,8 @@ int scene_txt_set_font(struct scene *scn, uint id, const char *font_name,
 	txt = scene_obj_find(scn, id, SCENEOBJT_TEXT);
 	if (!txt)
 		return log_msg_ret("find", -ENOENT);
-	txt->font_name = font_name;
-	txt->font_size = font_size;
+	txt->gen.font_name = font_name;
+	txt->gen.font_size = font_size;
 
 	return 0;
 }
@@ -411,7 +411,7 @@ int scene_obj_get_hw(struct scene *scn, uint id, int *widthp)
 		int len, ret , limit;
 		const char *str;
 
-		str = expo_get_str(exp, txt->str_id);
+		str = expo_get_str(exp, txt->gen.str_id);
 		if (!str)
 			return log_msg_ret("str", -ENOENT);
 		len = strlen(str);
@@ -426,10 +426,10 @@ int scene_obj_get_hw(struct scene *scn, uint id, int *widthp)
 		limit = obj->flags & SCENEOF_SIZE_VALID ?
 			obj->bbox.x1 - obj->bbox.x0 : -1;
 
-		alist_init_struct(&txt->lines, struct vidconsole_mline);
-		ret = vidconsole_measure(scn->expo->cons, txt->font_name,
-					 txt->font_size, str, limit, &bbox,
-					 &txt->lines);
+		alist_init_struct(&txt->gen.lines, struct vidconsole_mline);
+		ret = vidconsole_measure(scn->expo->cons, txt->gen.font_name,
+					 txt->gen.font_size, str, limit, &bbox,
+					 &txt->gen.lines);
 		// printf("lines %d\n", txt->lines.count);
 		if (ret)
 			return log_msg_ret("mea", ret);
@@ -529,13 +529,13 @@ static int scene_txt_render(struct expo *exp, struct udevice *dev,
 				vid_priv->colour_bg);
 	}
 
-	mline = alist_get(&txt->lines, 0, typeof(*mline));
-	last = alist_get(&txt->lines, txt->lines.count - 1, typeof(*mline));
+	mline = alist_get(&txt->gen.lines, 0, typeof(*mline));
+	last = alist_get(&txt->gen.lines, txt->gen.lines.count - 1, typeof(*mline));
 	if (mline)
 		dims.y = last->bbox.y1 - mline->bbox.y0;
 	bbox.y0 = obj->bbox.y0;
 	bbox.y1 = obj->bbox.y1;
-	alist_for_each(mline, &txt->lines) {
+	alist_for_each(mline, &txt->gen.lines) {
 		struct scene_obj_offset offset;
 
 		bbox.x0 = obj->bbox.x0;
@@ -612,16 +612,16 @@ static int scene_obj_render(struct scene_obj *obj, bool text_mode)
 		if (!cons)
 			return -ENOTSUPP;
 
-		if (txt->font_name || txt->font_size) {
+		if (txt->gen.font_name || txt->gen.font_size) {
 			ret = vidconsole_select_font(cons,
-						     txt->font_name,
-						     txt->font_size);
+						     txt->gen.font_name,
+						     txt->gen.font_size);
 		} else {
 			ret = vidconsole_select_font(cons, NULL, 0);
 		}
 		if (ret && ret != -ENOSYS)
 			return log_msg_ret("font", ret);
-		str = expo_get_str(exp, txt->str_id);
+		str = expo_get_str(exp, txt->gen.str_id);
 		if (str) {
 			ret = scene_txt_render(exp, dev, cons, txt, x, y,
 					       str, theme->menu_inset);

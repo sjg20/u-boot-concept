@@ -339,6 +339,16 @@ struct scene_obj_img {
 };
 
 /**
+ * struct scene_txt_gen  - Generic information common to text objects
+ */
+struct scene_txt_gen {
+	uint str_id;
+	const char *font_name;
+	uint font_size;
+	struct alist lines;
+};
+
+/**
  * struct scene_obj_txt - information about a text object in a scene
  *
  * This is a single-line text object
@@ -352,10 +362,7 @@ struct scene_obj_img {
  */
 struct scene_obj_txt {
 	struct scene_obj obj;
-	uint str_id;
-	const char *font_name;
-	uint font_size;
-	struct alist lines;
+	struct scene_txt_gen gen;
 };
 
 /**
@@ -466,8 +473,8 @@ struct scene_obj_box {
  */
 struct scene_obj_textedit {
 	struct scene_obj obj;
+	struct scene_txt_gen gen;
 	struct abuf buf;
-	uint strid;
 };
 
 /**
