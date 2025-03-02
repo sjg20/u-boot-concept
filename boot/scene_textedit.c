@@ -40,6 +40,7 @@ int scene_textedit(struct scene *scn, const char *name, uint id, uint str_id,
 	ret = expo_str(scn->expo, name, str_id, buf);
 	if (ret != str_id)
 		return log_msg_ret("tes", -EPERM);
+	ted->gen.str_id = str_id;
 
 	if (teditp)
 		*teditp = ted;
