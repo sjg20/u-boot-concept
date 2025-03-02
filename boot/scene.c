@@ -502,6 +502,7 @@ static int scene_txt_render(struct expo *exp, struct udevice *dev,
 			    struct udevice *cons, struct scene_obj_txt *txt,
 			    int x, int y, const char *str, int menu_inset)
 {
+	struct scene_obj *obj = &txt->obj;
 	struct video_priv *vid_priv;
 	const struct vidconsole_mline *mline;
 	struct vidconsole_colour old;
@@ -516,17 +517,32 @@ static int scene_txt_render(struct expo *exp, struct udevice *dev,
 		back = VID_BLACK;
 	}
 
-	if (txt->obj.flags & SCENEOF_POINT) {
+	if (obj->flags & SCENEOF_POINT) {
 		int inset;
 
 		inset = exp->popup ? menu_inset : 0;
 		vidconsole_push_colour(cons, fore, back, &old);
 		video_fill_part(dev, x - inset, y,
-				txt->obj.bbox.x1, txt->obj.bbox.y1,
+				obj->bbox.x1, obj->bbox.y1,
 				vid_priv->colour_bg);
 	}
 	alist_for_each(mline, &txt->lines) {
-		y = txt->obj.bbox.y0 + mline->bbox.y0;
+		struct scene_obj_offset offset;
+		struct scene_obj_dims dims;
+		struct scene_obj_bbox bbox;
+
+		bbox.x0 = mline->bbox.x0;
+		bbox.y0 = mline->bbox.y0;
+		bbox.x1 = mline->bbox.x1;
+		bbox.y1 = mline->bbox.y1;
+		dims.x = mline->bbox.x1 - mline->bbox.x0;
+		dims.y = mline->bbox.y1 - mline->bbox.y0;
+		handle_alignment(obj->horiz, obj->vert, &bbox, &dims,
+				 obj->bbox.x1 - obj->bbox.x0,
+				 obj->bbox.y1 - obj->bbox.y0, &offset);
+
+		x = obj->bbox.x0 + offset.xofs;
+		y = obj->bbox.y0 + mline->bbox.y0;
 		vidconsole_set_cursor_pos(cons, x, y);
 		// printf("str %ld ret %d\n", strlen(str), ret);
 
@@ -536,7 +552,7 @@ static int scene_txt_render(struct expo *exp, struct udevice *dev,
 			// printf("mline->len = %d\n", mline->len);
 		vidconsole_put_stringn(cons, str + mline->start,
 					mline ? mline->len : -1);
-		if (txt->obj.flags & SCENEOF_POINT)
+		if (obj->flags & SCENEOF_POINT)
 			vidconsole_pop_colour(cons, &old);
 
 	}
