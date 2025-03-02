@@ -93,7 +93,7 @@ int bootflow_menu_new(struct expo **expp)
 				  SCENEOB_DISPLAY_MAX, 30);
 	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT1B, 0, 620,
 				  SCENEOB_DISPLAY_MAX, 30);
-	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT2, 30, 650,
+	ret |= scene_obj_set_bbox(scn, OBJ_PROMPT2, 100, 650,
 				  1000, 60);
 	// ret |= scene_obj_set_bbox(scn, OBJ_PROMPT3, 0, 680,
 				  // SCENEOB_DISPLAY_MAX, 30);

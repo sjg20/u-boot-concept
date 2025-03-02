@@ -484,7 +484,7 @@ static int scene_txt_render(struct expo *exp, struct udevice *dev,
 				vid_priv->colour_bg);
 	}
 	alist_for_each(mline, &txt->lines) {
-		int y = txt->obj.bbox.y0 + mline->bbox.y0;
+		y = txt->obj.bbox.y0 + mline->bbox.y0;
 		vidconsole_set_cursor_pos(cons, x, y);
 		// printf("str %ld ret %d\n", strlen(str), ret);
 
