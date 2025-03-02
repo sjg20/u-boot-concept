@@ -456,9 +456,54 @@ static void scene_render_background(struct scene_obj *obj, bool box_only,
 	}
 }
 
+static int scene_txt_render(struct expo *exp, struct udevice *dev,
+			    struct udevice *cons, struct scene_obj_txt *txt,
+			    int x, int y, const char *str, int menu_inset)
+{
+	struct video_priv *vid_priv;
+	const struct vidconsole_mline *mline;
+	struct vidconsole_colour old;
+	enum colour_idx fore, back;
+
+	vid_priv = dev_get_uclass_priv(dev);
+	if (vid_priv->white_on_black) {
+		fore = VID_BLACK;
+		back = VID_WHITE;
+	} else {
+		fore = VID_LIGHT_GRAY;
+		back = VID_BLACK;
+	}
+
+	if (txt->obj.flags & SCENEOF_POINT) {
+		int inset;
+
+		inset = exp->popup ? menu_inset : 0;
+		vidconsole_push_colour(cons, fore, back, &old);
+		video_fill_part(dev, x - inset, y,
+				txt->obj.bbox.x1, txt->obj.bbox.y1,
+				vid_priv->colour_bg);
+	}
+	vidconsole_set_cursor_pos(cons, x, y);
+	// printf("str %ld ret %d\n", strlen(str), ret);
+
+	mline = alist_get(&txt->lines, 0,
+				struct vidconsole_mline);
+	if (mline)
+		printf("mline->len = %d\n", mline->len);
+	vidconsole_put_stringn(cons, str,
+				mline ? mline->len : -1);
+	if (txt->obj.flags & SCENEOF_POINT)
+		vidconsole_pop_colour(cons, &old);
+
+	return 0;
+}
+
 /**
  * scene_obj_render() - Render an object
  *
+ * @obj: Object to render
+ * @text_mode: true to use text mode
+ * Return: 0 if OK, -ve on error
  */
 static int scene_obj_render(struct scene_obj *obj, bool text_mode)
 {
@@ -512,38 +557,8 @@ static int scene_obj_render(struct scene_obj *obj, bool text_mode)
 			return log_msg_ret("font", ret);
 		str = expo_get_str(exp, txt->str_id);
 		if (str) {
-			const struct vidconsole_mline *mline;
-			struct vidconsole_colour old;
-			enum colour_idx fore, back;
-
-			if (vid_priv->white_on_black) {
-				fore = VID_BLACK;
-				back = VID_WHITE;
-			} else {
-				fore = VID_LIGHT_GRAY;
-				back = VID_BLACK;
-			}
-
-			if (obj->flags & SCENEOF_POINT) {
-				int inset;
-
-				inset = exp->popup ? theme->menu_inset : 0;
-				vidconsole_push_colour(cons, fore, back, &old);
-				video_fill_part(dev, x - inset, y,
-						obj->bbox.x1, obj->bbox.y1,
-						vid_priv->colour_bg);
-			}
-			vidconsole_set_cursor_pos(cons, x, y);
-			// printf("str %ld ret %d\n", strlen(str), ret);
-
-			mline = alist_get(&txt->lines, 0,
-					  struct vidconsole_mline);
-			if (mline)
-				printf("mline->len = %d\n", mline->len);
-			vidconsole_put_stringn(cons, str,
-					       mline ? mline->len : -1);
-			if (obj->flags & SCENEOF_POINT)
-				vidconsole_pop_colour(cons, &old);
+			ret = scene_txt_render(exp, dev, cons, txt, x, y,
+					       str, theme->menu_inset);
 		}
 		break;
 	}

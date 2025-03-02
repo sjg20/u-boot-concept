@@ -516,7 +516,6 @@ int vidconsole_put_stringn(struct udevice *dev, const char *str, int maxlen)
 	if (maxlen != -1)
 		end = str + maxlen;
 	for (s = str; *s && (maxlen == -1 || s < end); s++) {
-	// for (s = str; *s; s++) {
 		ret = vidconsole_put_char(dev, *s);
 		if (ret)
 			return ret;

@@ -786,9 +786,9 @@ static int truetype_measure(struct udevice *dev, const char *name, uint size,
 			mline.len = (s - text) - start;
 			if (lines && !alist_add(lines, mline))
 				return log_msg_ret("ttm", -ENOMEM);
-			printf("line x1 %d y0 %d y1 %d start %d len %d\n",
-			       mline.bbox.x1, mline.bbox.y0, mline.bbox.y1,
-			       mline.start, mline.len);
+			log_debug("line x1 %d y0 %d y1 %d start %d len %d\n",
+				  mline.bbox.x1, mline.bbox.y0, mline.bbox.y1,
+				  mline.start, mline.len);
 
 			start = s - text;
 			last = 0;
