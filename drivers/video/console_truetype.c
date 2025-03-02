@@ -738,12 +738,12 @@ static int truetype_measure(struct udevice *dev, const char *name, uint size,
 {
 	struct console_tt_metrics *met;
 	struct vidconsole_mline mline;
+	const char *s, *last_space;
+	int width, last_width;
 	stbtt_fontinfo *font;
 	int lsb, advance;
-	const char *s;
 	int start;
 	int limit;
-	int width;
 	int last;
 	int ret;
 
@@ -763,9 +763,16 @@ static int truetype_measure(struct udevice *dev, const char *name, uint size,
 	width = 0;
 	bbox->y1 = 0;
 	start = 0;
+	last_space = NULL;
+	last_width = 0;
 	for (last = 0, s = text; *s; s++) {
 		int neww;
 		int ch = *s;
+
+		if (ch == ' ') {
+			last_space = s;
+			last_width = width;
+		}
 
 		/* First get some basic metrics about this character */
 		stbtt_GetCodepointHMetrics(font, ch, &advance, &lsb);
@@ -777,6 +784,10 @@ static int truetype_measure(struct udevice *dev, const char *name, uint size,
 
 		/* see if we need to start a new line */
 		if (limit != -1 && neww >= limit) {
+			if (last_space) {
+				s = last_space + 1;
+				width = last_width;
+			}
 			mline.bbox.x0 = 0;
 			mline.bbox.y0 = bbox->y1;
 			mline.bbox.x1 = tt_ceil((double)width * met->scale);;
