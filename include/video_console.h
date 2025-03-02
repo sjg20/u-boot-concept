@@ -132,6 +132,7 @@ struct vidconsole_bbox {
 struct vidconsole_mline {
 	struct vidconsole_bbox bbox;
 	int start;
+	int len;
 };
 
 /**
@@ -254,9 +255,9 @@ struct vidconsole_ops {
 	 * @limit:	Width limit for each line, or -1 if none
 	 * @bbox:	Returns bounding box of text, assuming it is positioned
 	 *		at 0,0
-	 * @lines:	If non-NULL, provided, must be inited by caller. A
-	 *		separate struct vidconsole_mline is added for each line
-	 *		of text
+	 * @lines:	If non-NULL, this must be an alist of
+	 *		struct vidconsole_mline inited by caller. A separate
+	 *		record is added for each line of text
 	 *
 	 * Returns: 0 on success, -ENOENT if no such font
 	 */
@@ -355,9 +356,9 @@ int vidconsole_select_font(struct udevice *dev, const char *name, uint size);
  * @limit:	Width limit for each line, or -1 if none
  * @bbox:	Returns bounding box of text, assuming it is positioned
  *		at 0,0
- * @lines:	If non-NULL, provided, must be inited by caller. A
- *		separate struct vidconsole_mline is added for each line
- *		of text
+ * @lines:	If non-NULL, this must be an alist of
+ *		struct vidconsole_mline inited by caller. A separate
+ *		record is added for each line of text
  *
  * Returns: 0 on success, -ENOENT if no such font
  */
@@ -501,6 +502,23 @@ int vidconsole_entry_start(struct udevice *dev);
 int vidconsole_put_char(struct udevice *dev, char ch);
 
 /**
+ * vidconsole_put_stringn() - Output part of a string to the current console pos
+ *
+ * Outputs part of a string to the console and advances the cursor. This
+ * function handles wrapping to new lines and scrolling the console. Special
+ * characters are handled also: \n, \r, \b and \t.
+ *
+ * The device always starts with the cursor at position 0,0 (top left). It
+ * can be adjusted manually using vidconsole_position_cursor().
+ *
+ * @dev:	Device to adjust
+ * @str:	String to write
+ * @maxlen:	Maximum chars to output, or -1 for all
+ * Return: 0 if OK, -ve on error
+ */
+int vidconsole_put_stringn(struct udevice *dev, const char *str, int maxlen);
+
+/**
  * vidconsole_put_string() - Output a string to the current console position
  *
  * Outputs a string to the console and advances the cursor. This function
@@ -512,6 +530,7 @@ int vidconsole_put_char(struct udevice *dev, char ch);
  *
  * @dev:	Device to adjust
  * @str:	String to write
+ * @maxlen:	Maximum chars to output, or -1 for all
  * Return: 0 if OK, -ve on error
  */
 int vidconsole_put_string(struct udevice *dev, const char *str);

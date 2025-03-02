@@ -8,6 +8,7 @@
 #define __EXPO_H
 
 #include <abuf.h>
+#include <alist.h>
 #include <dm/ofnode_decl.h>
 #include <linux/bitops.h>
 #include <linux/list.h>
@@ -346,12 +347,15 @@ struct scene_obj_img {
  * @str_id: ID of the text string to display
  * @font_name: Name of font (allocated by caller)
  * @font_size: Nominal size of font in pixels
+ * @lines: alist of struct vidconsole_mline with a separate record for each
+ *	line of text
  */
 struct scene_obj_txt {
 	struct scene_obj obj;
 	uint str_id;
 	const char *font_name;
 	uint font_size;
+	struct alist lines;
 };
 
 /**

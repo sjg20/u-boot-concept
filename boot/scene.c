@@ -8,6 +8,7 @@
 
 #define LOG_CATEGORY	LOGC_EXPO
 
+#include <alist.h>
 #include <dm.h>
 #include <expo.h>
 #include <malloc.h>
@@ -365,8 +366,8 @@ int scene_obj_get_hw(struct scene *scn, uint id, int *widthp)
 		struct scene_obj_txt *txt = (struct scene_obj_txt *)obj;
 		struct expo *exp = scn->expo;
 		struct vidconsole_bbox bbox;
+		int len, ret , limit;
 		const char *str;
-		int len, ret;
 
 		str = expo_get_str(exp, txt->str_id);
 		if (!str)
@@ -380,9 +381,14 @@ int scene_obj_get_hw(struct scene *scn, uint id, int *widthp)
 			return 16;
 		}
 
+		limit = obj->flags & SCENEOF_SIZE_VALID ?
+			obj->bbox.x1 - obj->bbox.x0 : -1;
+
+		alist_init_struct(&txt->lines, struct vidconsole_mline);
 		ret = vidconsole_measure(scn->expo->cons, txt->font_name,
-					 txt->font_size, str, -1, &bbox, NULL);
-		// printf("str %ld ret %d\n", strlen(str), ret);
+					 txt->font_size, str, limit, &bbox,
+					 &txt->lines);
+		// printf("lines %d\n", txt->lines.count);
 		if (ret)
 			return log_msg_ret("mea", ret);
 		if (widthp)
@@ -506,6 +512,7 @@ static int scene_obj_render(struct scene_obj *obj, bool text_mode)
 			return log_msg_ret("font", ret);
 		str = expo_get_str(exp, txt->str_id);
 		if (str) {
+			const struct vidconsole_mline *mline;
 			struct vidconsole_colour old;
 			enum colour_idx fore, back;
 
@@ -527,8 +534,14 @@ static int scene_obj_render(struct scene_obj *obj, bool text_mode)
 						vid_priv->colour_bg);
 			}
 			vidconsole_set_cursor_pos(cons, x, y);
-			printf("str %ld ret %d\n", strlen(str), ret);
-			vidconsole_put_string(cons, str);
+			// printf("str %ld ret %d\n", strlen(str), ret);
+
+			mline = alist_get(&txt->lines, 0,
+					  struct vidconsole_mline);
+			if (mline)
+				printf("mline->len = %d\n", mline->len);
+			vidconsole_put_stringn(cons, str,
+					       mline ? mline->len : -1);
 			if (obj->flags & SCENEOF_POINT)
 				vidconsole_pop_colour(cons, &old);
 		}

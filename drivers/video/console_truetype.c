@@ -733,13 +733,16 @@ static int truetype_select_font(struct udevice *dev, const char *name,
 }
 
 static int truetype_measure(struct udevice *dev, const char *name, uint size,
-			    const char *text, int limit,
+			    const char *text, int pixel_limit,
 			    struct vidconsole_bbox *bbox, struct alist *lines)
 {
 	struct console_tt_metrics *met;
+	struct vidconsole_mline mline;
 	stbtt_fontinfo *font;
 	int lsb, advance;
 	const char *s;
+	int start;
+	int limit;
 	int width;
 	int last;
 	int ret;
@@ -752,27 +755,65 @@ static int truetype_measure(struct udevice *dev, const char *name, uint size,
 	if (!*text)
 		return 0;
 
+	limit = -1;
+	if (pixel_limit != -1)
+		limit = tt_ceil((double)pixel_limit / met->scale);
+
 	font = &met->font;
 	width = 0;
+	bbox->y1 = 0;
+	start = 0;
 	for (last = 0, s = text; *s; s++) {
+		int neww;
 		int ch = *s;
-
-		/* Used kerning to fine-tune the position of this character */
-		if (last)
-			width += stbtt_GetCodepointKernAdvance(font, last, ch);
 
 		/* First get some basic metrics about this character */
 		stbtt_GetCodepointHMetrics(font, ch, &advance, &lsb);
+		neww = width + advance;
 
-		width += advance;
+		/* Use kerning to fine-tune the position of this character */
+		if (last)
+			neww += stbtt_GetCodepointKernAdvance(font, last, ch);
+
+		/* see if we need to start a new line */
+		if (limit != -1 && neww >= limit) {
+			mline.bbox.x0 = 0;
+			mline.bbox.y0 = bbox->y1;
+			mline.bbox.x1 = tt_ceil((double)width * met->scale);;
+			bbox->y1 += met->font_size;
+			mline.bbox.y1 = bbox->y1;
+			mline.start = start;
+			mline.len = (s - text) - start;
+			if (lines && !alist_add(lines, mline))
+				return log_msg_ret("ttm", -ENOMEM);
+			printf("line x1 %d y0 %d y1 %d start %d len %d\n",
+			       mline.bbox.x1, mline.bbox.y0, mline.bbox.y1,
+			       mline.start, mline.len);
+
+			start = s - text;
+			last = 0;
+			width = 0;
+		}
+
+		width = neww;
 		last = ch;
 	}
+
+	/* add the final line */
+	mline.bbox.x0 = 0;
+	mline.bbox.y0 = bbox->y1;
+	mline.bbox.x1 = tt_ceil((double)width * met->scale);;
+	bbox->y1 += met->font_size;
+	mline.bbox.y1 = bbox->y1;
+	mline.start = start;
+	mline.len = (s - text) - start;
+	if (lines && !alist_add(lines, mline))
+		return log_msg_ret("ttM", -ENOMEM);
 
 	bbox->valid = true;
 	bbox->x0 = 0;
 	bbox->y0 = 0;
 	bbox->x1 = tt_ceil((double)width * met->scale);
-	bbox->y1 = met->font_size;
 
 	return 0;
 }
