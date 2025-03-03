@@ -16,6 +16,7 @@
 #include <log.h>
 #include <malloc.h>
 #include <mapmem.h>
+#include <net.h>
 
 static struct efi_device_path *bootefi_image_path;
 static struct efi_device_path *bootefi_device_path;
@@ -54,6 +55,14 @@ efi_status_t calculate_paths(const char *dev, const char *devnr, const char *pat
 {
 	struct efi_device_path *image, *device;
 	efi_status_t ret;
+
+#if IS_ENABLED(CONFIG_NETDEVICES)
+	if (!strcmp(dev, "Net") || !strcmp(dev, "Http")) {
+		ret = efi_net_new_dp(dev, devnr, eth_get_dev());
+		if (ret != EFI_SUCCESS)
+			return ret;
+	}
+#endif
 
 	ret = efi_dp_from_name(dev, devnr, path, &device, &image);
 	if (ret != EFI_SUCCESS)
