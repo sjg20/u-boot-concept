@@ -746,7 +746,7 @@ static int truetype_measure(struct udevice *dev, const char *name, uint size,
 	int lsb, advance;
 	int start;
 	int limit;
-	int last;
+	int lastch;
 	int ret;
 
 	ret = get_metrics(dev, name, size, &met);
@@ -767,7 +767,7 @@ static int truetype_measure(struct udevice *dev, const char *name, uint size,
 	start = 0;
 	last_space = NULL;
 	last_width = 0;
-	for (last = 0, s = text; *s; s++) {
+	for (lastch = 0, s = text; *s; s++) {
 		int neww;
 		int ch = *s;
 
@@ -785,9 +785,9 @@ static int truetype_measure(struct udevice *dev, const char *name, uint size,
 		neww = width + advance;
 
 		/* Use kerning to fine-tune the position of this character */
-		if (last)
-			neww += stbtt_GetCodepointKernAdvance(font, last, ch);
-		last = ch;
+		if (lastch)
+			neww += stbtt_GetCodepointKernAdvance(font, lastch, ch);
+		lastch = ch;
 
 		/* see if we need to start a new line */
 		if (ch == '\n' || (limit != -1 && neww >= limit)) {
@@ -803,17 +803,18 @@ static int truetype_measure(struct udevice *dev, const char *name, uint size,
 			mline.bbox.y1 = bbox->y1;
 			mline.start = start;
 			mline.len = (s - text) - start;
+			if (ch == '\n')
+				mline.len--;
 			if (lines && !alist_add(lines, mline))
 				return log_msg_ret("ttm", -ENOMEM);
-			log_debug("line x1 %d y0 %d y1 %d start %d len %d\n",
+			log_debug("line x1 %d y0 %d y1 %d start %d len %d text '%.*s'\n",
 				  mline.bbox.x1, mline.bbox.y0, mline.bbox.y1,
-				  mline.start, mline.len);
-
-			if (ch == '\n')
-				s++;
+				  mline.start, mline.len, mline.len, text + mline.start);
 
 			start = s - text;
-			last = 0;
+			if (ch == '\n')
+				start++;
+			lastch = 0;
 			neww = 0;
 		}
 

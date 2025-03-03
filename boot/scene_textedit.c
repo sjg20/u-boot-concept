@@ -39,9 +39,10 @@ int scene_textedit(struct scene *scn, const char *name, uint id, uint str_id,
 
 	ret = expo_str(scn->expo, name, str_id, buf);
 	if (ret != str_id)
-		return log_msg_ret("tes", -EPERM);
-	ted->gen.str_id = str_id;
+		return log_msg_ret("tes", -EEXIST);
 
+	LOGR("teg", scene_txt_generic_init(scn->expo, &ted->gen, name, str_id,
+					   NULL));
 	if (teditp)
 		*teditp = ted;
 

@@ -19,6 +19,7 @@ struct scene_obj;
 struct scene_obj_menu;
 struct scene_obj_textline;
 struct scene_obj_txtedit;
+struct scene_txt_generic;
 struct vidconsole_bbox;
 
 enum scene_obj_t : char;
@@ -417,6 +418,9 @@ int scene_textline_close(struct scene *scn, struct scene_obj_textline *tline);
  */
 int scene_calc_arrange(struct scene *scn, struct expo_arrange_info *arr);
 
-void scene_textedit_display(struct scene_obj_txtedit *ted);
+void scene_txtedit_display(struct scene_obj_txtedit *ted);
+
+int scene_txt_generic_init(struct expo *exp, struct scene_txt_generic *gen,
+			   const char *name, uint str_id, const char *str);
 
 #endif /* __SCENE_INTERNAL_H */

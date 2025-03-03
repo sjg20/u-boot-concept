@@ -144,6 +144,26 @@ int scene_img(struct scene *scn, const char *name, uint id, char *data,
 	return img->obj.id;
 }
 
+int scene_txt_generic_init(struct expo *exp, struct scene_txt_generic *gen,
+			   const char *name, uint str_id, const char *str)
+{
+	if (str) {
+		int ret;
+
+		ret = expo_str(exp, name, str_id, str);
+		if (ret < 0)
+			return log_msg_ret("str", ret);
+		if (str_id && ret != str_id)
+			return log_msg_ret("id", -EEXIST);
+		str_id = ret;
+	}
+
+	gen->str_id = str_id;
+	alist_init_struct(&gen->lines, struct vidconsole_mline);
+
+	return 0;
+}
+
 int scene_txt(struct scene *scn, const char *name, uint id, uint str_id,
 	      struct scene_obj_txt **txtp)
 {
@@ -156,8 +176,8 @@ int scene_txt(struct scene *scn, const char *name, uint id, uint str_id,
 	if (ret < 0)
 		return log_msg_ret("obj", ret);
 
-	txt->gen.str_id = str_id;
-
+	LOGR("stg", scene_txt_generic_init(scn->expo, &txt->gen, name, str_id,
+					   NULL));
 	if (txtp)
 		*txtp = txt;
 
@@ -170,21 +190,14 @@ int scene_txt_str(struct scene *scn, const char *name, uint id, uint str_id,
 	struct scene_obj_txt *txt;
 	int ret;
 
-	ret = expo_str(scn->expo, name, str_id, str);
-	if (ret < 0)
-		return log_msg_ret("str", ret);
-	if (str_id && ret != str_id)
-		return log_msg_ret("id", -EEXIST);
-	str_id = ret;
-
 	ret = scene_obj_add(scn, name, id, SCENEOBJT_TEXT,
 			    sizeof(struct scene_obj_txt),
 			    (struct scene_obj **)&txt);
 	if (ret < 0)
 		return log_msg_ret("obj", ret);
 
-	txt->gen.str_id = str_id;
-
+	LOGR("tsg", scene_txt_generic_init(scn->expo, &txt->gen, name, str_id,
+					   NULL));
 	if (txtp)
 		*txtp = txt;
 
@@ -431,7 +444,6 @@ int scene_obj_get_hw(struct scene *scn, uint id, int *widthp)
 		limit = obj->flags & SCENEOF_SIZE_VALID ?
 			obj->bbox.x1 - obj->bbox.x0 : -1;
 
-		alist_init_struct(&gen->lines, struct vidconsole_mline);
 		ret = vidconsole_measure(scn->expo->cons, gen->font_name,
 					 gen->font_size, str, limit, &bbox,
 					 &gen->lines);
@@ -568,6 +580,12 @@ static int scene_txt_render(struct expo *exp, struct udevice *dev,
 
 		x = obj->bbox.x0 + offset.xofs;
 		y = obj->bbox.y0 + offset.yofs + mline->bbox.y0;
+		// if (!strcmp("textedit", obj->name))
+			// printf("x %d y %d\n", x, y);
+		if (y > bbox.y1) {
+			printf("clip\n");
+			break;
+		}
 		vidconsole_set_cursor_pos(cons, x, y);
 		// printf("str %ld ret %d\n", strlen(str), ret);
 
@@ -575,12 +593,10 @@ static int scene_txt_render(struct expo *exp, struct udevice *dev,
 					// struct vidconsole_mline);
 		// if (mline)
 			// printf("mline->len = %d\n", mline->len);
-		vidconsole_put_stringn(cons, str + mline->start,
-					mline ? mline->len : -1);
-		if (obj->flags & SCENEOF_POINT)
-			vidconsole_pop_colour(cons, &old);
-
+		vidconsole_put_stringn(cons, str + mline->start, mline->len);
 	}
+	if (obj->flags & SCENEOF_POINT)
+		vidconsole_pop_colour(cons, &old);
 
 	return 0;
 }
@@ -676,6 +692,7 @@ static int scene_obj_render(struct scene_obj *obj, bool text_mode)
 	case SCENEOBJT_TEXTEDIT: {
 		struct scene_obj_txtedit *ted = (struct scene_obj_txtedit *)obj;
 
+		printf("render\n");
 		ret = scene_txt_render(exp, dev, cons, obj, &ted->gen, x, y,
 				       theme->menu_inset);
 		break;
