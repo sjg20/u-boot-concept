@@ -48,6 +48,20 @@ int scene_textedit(struct scene *scn, const char *name, uint id, uint str_id,
 	return ted->obj.id;
 }
 
-void scene_textedit_display(struct scene_obj_txtedit *ted)
+void scene_txtedit_display(struct scene_obj_txtedit *ted)
 {
+}
+
+int scene_txted_set_font(struct scene *scn, uint id, const char *font_name,
+			 uint font_size)
+{
+	struct scene_obj_txtedit *ted;
+
+	ted = scene_obj_find(scn, id, SCENEOBJT_TEXTEDIT);
+	if (!ted)
+		return log_msg_ret("find", -ENOENT);
+	ted->gen.font_name = font_name;
+	ted->gen.font_size = font_size;
+
+	return 0;
 }

@@ -403,8 +403,8 @@ int scene_obj_get_hw(struct scene *scn, uint id, int *widthp)
 			*widthp = width;
 		return height;
 	}
-	case SCENEOBJT_TEXT: {
-	case SCENEOBJT_TEXTEDIT:
+	case SCENEOBJT_TEXT:
+	case SCENEOBJT_TEXTEDIT: {
 		struct scene_txt_generic *gen;
 		struct expo *exp = scn->expo;
 		struct vidconsole_bbox bbox;
@@ -435,7 +435,7 @@ int scene_obj_get_hw(struct scene *scn, uint id, int *widthp)
 		ret = vidconsole_measure(scn->expo->cons, gen->font_name,
 					 gen->font_size, str, limit, &bbox,
 					 &gen->lines);
-		// printf("lines %d\n", txt->lines.count);
+		printf("lines %s %d\n", obj->name, gen->lines.count);
 		if (ret)
 			return log_msg_ret("mea", ret);
 		if (widthp)
@@ -504,17 +504,33 @@ static void scene_render_background(struct scene_obj *obj, bool box_only,
 }
 
 static int scene_txt_render(struct expo *exp, struct udevice *dev,
-			    struct udevice *cons, struct scene_obj_txt *txt,
-			    int x, int y, const char *str, int menu_inset)
+			    struct udevice *cons, struct scene_obj *obj,
+			    struct scene_txt_generic *gen, int x, int y,
+			    int menu_inset)
 {
-	struct scene_obj *obj = &txt->obj;
 	struct video_priv *vid_priv;
 	const struct vidconsole_mline *mline, *last;
 	struct vidconsole_colour old;
 	enum colour_idx fore, back;
 	struct scene_obj_dims dims;
 	struct scene_obj_bbox bbox;
+	const char *str;
+	int ret;
 
+	if (!cons)
+		return -ENOTSUPP;
+
+	if (gen->font_name || gen->font_size) {
+		ret = vidconsole_select_font(cons,
+					     gen->font_name,
+					     gen->font_size);
+	} else {
+		ret = vidconsole_select_font(cons, NULL, 0);
+	}
+	if (ret && ret != -ENOSYS)
+		return log_msg_ret("font", ret);
+
+	str = expo_get_str(exp, gen->str_id);
 	vid_priv = dev_get_uclass_priv(dev);
 	if (vid_priv->white_on_black) {
 		fore = VID_BLACK;
@@ -534,13 +550,13 @@ static int scene_txt_render(struct expo *exp, struct udevice *dev,
 				vid_priv->colour_bg);
 	}
 
-	mline = alist_get(&txt->gen.lines, 0, typeof(*mline));
-	last = alist_get(&txt->gen.lines, txt->gen.lines.count - 1, typeof(*mline));
+	mline = alist_get(&gen->lines, 0, typeof(*mline));
+	last = alist_get(&gen->lines, gen->lines.count - 1, typeof(*mline));
 	if (mline)
 		dims.y = last->bbox.y1 - mline->bbox.y0;
 	bbox.y0 = obj->bbox.y0;
 	bbox.y1 = obj->bbox.y1;
-	alist_for_each(mline, &txt->gen.lines) {
+	alist_for_each(mline, &gen->lines) {
 		struct scene_obj_offset offset;
 
 		bbox.x0 = obj->bbox.x0;
@@ -612,25 +628,9 @@ static int scene_obj_render(struct scene_obj *obj, bool text_mode)
 	}
 	case SCENEOBJT_TEXT: {
 		struct scene_obj_txt *txt = (struct scene_obj_txt *)obj;
-		const char *str;
 
-		if (!cons)
-			return -ENOTSUPP;
-
-		if (txt->gen.font_name || txt->gen.font_size) {
-			ret = vidconsole_select_font(cons,
-						     txt->gen.font_name,
-						     txt->gen.font_size);
-		} else {
-			ret = vidconsole_select_font(cons, NULL, 0);
-		}
-		if (ret && ret != -ENOSYS)
-			return log_msg_ret("font", ret);
-		str = expo_get_str(exp, txt->gen.str_id);
-		if (str) {
-			ret = scene_txt_render(exp, dev, cons, txt, x, y,
-					       str, theme->menu_inset);
-		}
+		ret = scene_txt_render(exp, dev, cons, obj, &txt->gen, x, y,
+				       theme->menu_inset);
 		break;
 	}
 	case SCENEOBJT_MENU: {
@@ -674,11 +674,10 @@ static int scene_obj_render(struct scene_obj *obj, bool text_mode)
 		break;
 	}
 	case SCENEOBJT_TEXTEDIT: {
-		struct scene_obj_txtedit *ted;
+		struct scene_obj_txtedit *ted = (struct scene_obj_txtedit *)obj;
 
-		ted = (struct scene_obj_txtedit *)obj;
-		scene_render_background(obj, true, false);
-		scene_textedit_display(ted);
+		ret = scene_txt_render(exp, dev, cons, obj, &ted->gen, x, y,
+				       theme->menu_inset);
 		break;
 	}
 	}
@@ -1065,7 +1064,10 @@ int scene_apply_theme(struct scene *scn, struct expo_theme *theme)
 		case SCENEOBJT_MENU:
 		case SCENEOBJT_BOX:
 		case SCENEOBJT_TEXTLINE:
+			break;
 		case SCENEOBJT_TEXTEDIT:
+			scene_txted_set_font(scn, obj->id, NULL,
+					     theme->font_size);
 			break;
 		case SCENEOBJT_TEXT:
 			scene_txt_set_font(scn, obj->id, NULL,

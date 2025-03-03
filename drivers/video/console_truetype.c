@@ -3,6 +3,8 @@
  * Copyright (c) 2016 Google, Inc
  */
 
+#define LOG_DEBUG
+
 #include <abuf.h>
 #include <dm.h>
 #include <log.h>

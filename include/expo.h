@@ -552,8 +552,9 @@ const char *expo_get_str(struct expo *exp, uint id);
  *
  * @exp: Expo to use
  * @id: String ID to look up
- * @orig: Returns the original buffer, which can be used by the caller. It is
- *	no-longer used by expo so must be uninited by the caller
+ * @orig: If non-NULL, returns the original buffer, which can be used by the
+ *	caller. It is no-longer used by expo so must be uninited by the caller.
+ *	It contains a snapshot of the string contents
  * @orig: Returns a pointer to the new, writeable buffer
  * Return: 0 if OK, -ENOENT if the id was not found, -ENOMEM if out of memory
  */
@@ -776,6 +777,17 @@ int scene_textedit(struct scene *scn, const char *name, uint id, uint strid,
  */
 int scene_txt_set_font(struct scene *scn, uint id, const char *font_name,
 		       uint font_size);
+
+/**
+ * scene_txted_set_font() - Set the font for an object
+ *
+ * @scn: Scene to update
+ * @id: ID of object to update
+ * @font_name: Font name to use (allocated by caller)
+ * @font_size: Font size to use (nominal height in pixels)
+ */
+int scene_txted_set_font(struct scene *scn, uint id, const char *font_name,
+			 uint font_size);
 
 /**
  * scene_obj_set_pos() - Set the postion of an object

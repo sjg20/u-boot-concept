@@ -38,6 +38,7 @@ int bootflow_menu_new(struct expo **expp)
 	struct menu_priv *priv;
 	struct scene *scn;
 	struct expo *exp;
+	struct abuf *txt;
 	bool use_font;
 	void *logo;
 	int ret;
@@ -114,6 +115,52 @@ int bootflow_menu_new(struct expo **expp)
 	ret |= scene_textedit(scn, "textedit", OBJ_TEXTEDIT, STR_TEXTEDIT,
 			      NULL);
 	ret |= scene_obj_set_bbox(scn, OBJ_TEXTEDIT, 50, 90, 1100, 610);
+	if (ret < 0)
+		return log_msg_ret("neW", -EINVAL);
+
+	ret = expo_edit_str(exp, STR_TEXTEDIT, NULL, &txt);
+	if (ret < 0)
+		return log_msg_ret("net", -EINVAL);
+	ret = abuf_printf(txt, "Status:\n"
+"=======\n"
+"\n"
+"In general, all boards for which a default configuration file exists in the "
+"configs/ directory have been tested to some extent and can be considered "
+"'working'. In fact, many of them are used in production systems. "
+"\n"
+"In case of problems you can use\n"
+"\n"
+"     scripts/get_maintainer.pl <path>\n"
+"\n"
+"to identify the people or companies responsible for various boards and "
+"subsystems. Or have a look at the git log.\n"
+"\n"
+"\n");
+	/*
+"Where to get help:\n"
+"==================\n"
+"\n"
+"In case you have questions about, problems with or contributions for "
+"U-Boot, you should send a message to the U-Boot mailing list at "
+"<u-boot@lists.denx.de>. There is also an archive of previous traffic "
+"on the mailing list - please search the archive before asking FAQ's. "
+"Please see https://lists.denx.de/pipermail/u-boot and "
+"https://marc.info/?l=u-boot\n"
+"\n"
+"Where to get source code:\n"
+"=========================\n"
+"\n"
+"The U-Boot source code is maintained in the Git repository at "
+"https://source.denx.de/u-boot/u-boot.git ; you can browse it online at "
+"https://source.denx.de/u-boot/u-boot\n"
+"\n"
+"The 'Tags' links on this page allow you to download tarballs of "
+"any version you might be interested in. Official releases are also "
+"available from the DENX file server through HTTPS or FTP.\n"
+"https://ftp.denx.de/pub/u-boot/\n"
+"ftp://ftp.denx.de/pub/u-boot/\n"
+"");*/
+	printf("ret %d\n", ret);
 
 	ret |= scene_txt_str(scn, "cur_item", OBJ_POINTER, STR_POINTER, ">",
 			     NULL);
