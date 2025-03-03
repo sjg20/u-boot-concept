@@ -772,6 +772,10 @@ static int truetype_measure(struct udevice *dev, const char *name, uint size,
 		int ch = *s;
 
 		if (ch == ' ') {
+			/*
+			 * store the position and width so we can use it again
+			 * if we need to word-wrap
+			 */
 			last_space = s;
 			last_width = width;
 		}
@@ -783,13 +787,15 @@ static int truetype_measure(struct udevice *dev, const char *name, uint size,
 		/* Use kerning to fine-tune the position of this character */
 		if (last)
 			neww += stbtt_GetCodepointKernAdvance(font, last, ch);
+		last = ch;
 
 		/* see if we need to start a new line */
-		if (limit != -1 && neww >= limit) {
-			if (last_space) {
+		if (ch == '\n' || (limit != -1 && neww >= limit)) {
+			if (ch != '\n' && last_space) {
 				s = last_space + 1;
 				width = last_width;
 			}
+			last_space = NULL;
 			mline.bbox.x0 = 0;
 			mline.bbox.y0 = bbox->y1;
 			mline.bbox.x1 = tt_ceil((double)width * met->scale);;
@@ -803,13 +809,15 @@ static int truetype_measure(struct udevice *dev, const char *name, uint size,
 				  mline.bbox.x1, mline.bbox.y0, mline.bbox.y1,
 				  mline.start, mline.len);
 
+			if (ch == '\n')
+				s++;
+
 			start = s - text;
 			last = 0;
 			neww = 0;
 		}
 
 		width = neww;
-		last = ch;
 	}
 
 	/* add the final line */
