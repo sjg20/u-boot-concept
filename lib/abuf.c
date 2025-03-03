@@ -144,10 +144,8 @@ int abuf_printf(struct abuf *buf, const char *fmt, ...)
 	int len;
 
 	va_start(args, fmt);
-	printf("buf %p maxlen %x\n", buf->data, maxlen);
 	len = vsnprintf(buf->data, buf->size, fmt, args);
 	va_end(args);
-	printf("len %x\n", len);
 	if (len > 4096)
 		return -E2BIG;
 	if (len > maxlen) {
