@@ -139,7 +139,9 @@ static int logic_poll(struct udevice *dev)
 	if (priv->autoboot_active &&
 	    get_timer(priv->start_time) > priv->next_countdown) {
 		ulong secs = get_timer(priv->start_time) / 1000;
-		priv->autoboot_remain_s = max(priv->opt_timeout - secs, 0ul);
+
+		priv->autoboot_remain_s = secs >= priv->opt_timeout ? 0 :
+			max(priv->opt_timeout - secs, 0ul);
 		priv->next_countdown += COUNTDOWN_INTERVAL_MS;
 	}
 
@@ -147,12 +149,15 @@ static int logic_poll(struct udevice *dev)
 	LOGR("bdo", bc_ui_poll(priv->ui, &seq, &selected));
 
 	if (!selected && priv->autoboot_active && !priv->autoboot_remain_s &&
-	    seq >= 0)
+	    seq >= 0) {
+		log_info("Selecting %d due to timeout\n", seq);
 		selected = true;
+	}
 
 	if (selected) {
 		struct osinfo *os;
 
+		log_info("Selected %d\n", seq);
 		os = alist_getw(&priv->osinfo, seq, struct osinfo);
 		LOGR("lpb", prepare_for_boot(dev, os));
 

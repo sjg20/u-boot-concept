@@ -188,6 +188,7 @@ static int simple_ui_poll(struct udevice *dev, int *seqp, bool *selectedp)
 	bool ok = true;
 
 	*seqp = -1;
+	*selectedp = false;
 	ret = bootflow_menu_poll(priv->expo, &seq);
 	ok = !ret;
 	if (ret == -ERESTART) {

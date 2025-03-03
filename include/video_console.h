@@ -357,8 +357,8 @@ int vidconsole_select_font(struct udevice *dev, const char *name, uint size);
  * @bbox:	Returns bounding box of text, assuming it is positioned
  *		at 0,0
  * @lines:	If non-NULL, this must be an alist of
- *		struct vidconsole_mline inited by caller. A separate
- *		record is added for each line of text
+ *		struct vidconsole_mline inited by caller. The list is emptied
+ *		and then a separate record is added for each line of text
  *
  * Returns: 0 on success, -ENOENT if no such font
  */

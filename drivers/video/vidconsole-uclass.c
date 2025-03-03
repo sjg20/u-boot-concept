@@ -15,6 +15,7 @@
 #include <console.h>
 #include <log.h>
 #include <dm.h>
+#include <serial.h>
 #include <video.h>
 #include <video_console.h>
 #include <video_font.h>		/* Bitmap font for code page 437 */
@@ -513,13 +514,16 @@ int vidconsole_put_stringn(struct udevice *dev, const char *str, int maxlen)
 	const char *s, *end = NULL;
 	int ret;
 
+	serial_printf("maxlen %d: ", maxlen);
 	if (maxlen != -1)
 		end = str + maxlen;
 	for (s = str; *s && (maxlen == -1 || s < end); s++) {
+		serial_printf("%c", *s);
 		ret = vidconsole_put_char(dev, *s);
 		if (ret)
 			return ret;
 	}
+	serial_printf("; done\n");
 
 	return 0;
 }
@@ -629,6 +633,8 @@ int vidconsole_measure(struct udevice *dev, const char *name, uint size,
 	int ret;
 
 	if (ops->measure) {
+		if (lines)
+			alist_empty(lines);
 		ret = ops->measure(dev, name, size, text, limit, bbox, lines);
 		if (ret != -ENOSYS)
 			return ret;

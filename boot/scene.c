@@ -568,6 +568,10 @@ static int scene_txt_render(struct expo *exp, struct udevice *dev,
 		dims.y = last->bbox.y1 - mline->bbox.y0;
 	bbox.y0 = obj->bbox.y0;
 	bbox.y1 = obj->bbox.y1;
+
+	if (!strcmp("textedit", obj->name))
+		printf("lines %d\n", gen->lines.count);
+
 	alist_for_each(mline, &gen->lines) {
 		struct scene_obj_offset offset;
 
@@ -665,7 +669,7 @@ static int scene_obj_render(struct scene_obj *obj, bool text_mode)
 		}
 
 		/*
-		 * With a vidconsole, the text and item pointer are rendered as
+		 * With a vidconsole, the text and item pointer are rendered` as
 		 * normal objects so we don't need to do anything here. The menu
 		 * simply controls where they are positioned.
 		 */
@@ -695,6 +699,7 @@ static int scene_obj_render(struct scene_obj *obj, bool text_mode)
 		printf("render\n");
 		ret = scene_txt_render(exp, dev, cons, obj, &ted->gen, x, y,
 				       theme->menu_inset);
+		printf("render done\n");
 		break;
 	}
 	}

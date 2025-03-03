@@ -801,9 +801,10 @@ static int truetype_measure(struct udevice *dev, const char *name, uint size,
 			mline.bbox.x1 = tt_ceil((double)width * met->scale);;
 			bbox->y1 += met->font_size;
 			mline.bbox.y1 = bbox->y1;
+			mline.bbox.valid = true;
 			mline.start = start;
 			mline.len = (s - text) - start;
-			if (ch == '\n')
+			if (mline.len && ch == '\n')
 				mline.len--;
 			if (lines && !alist_add(lines, mline))
 				return log_msg_ret("ttm", -ENOMEM);
