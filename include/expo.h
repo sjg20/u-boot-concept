@@ -545,17 +545,20 @@ int expo_str(struct expo *exp, const char *name, uint id, const char *str);
 const char *expo_get_str(struct expo *exp, uint id);
 
 /**
- * expo_set_str() - Make a string writeable
+ * expo_edit_str() - Make a string writeable
  *
  * This allows a string to be updated under the control of the caller. The
- * string must remain valid while the expo is active
+ * buffer must remain valid while the expo is active.
  *
  * @exp: Expo to use
  * @id: String ID to look up
- * @new_str: New string pointer to use
- * Return: abuf, adjusted to hold the new string
+ * @orig: Returns the original buffer, which can be used by the caller. It is
+ *	no-longer used by expo so must be uninited by the caller
+ * @orig: Returns a pointer to the new, writeable buffer
+ * Return: 0 if OK, -ENOENT if the id was not found, -ENOMEM if out of memory
  */
-struct abuf *expo_get_str_buf(struct expo *exp, uint id);
+int expo_edit_str(struct expo *exp, uint id, struct abuf *orig,
+		  struct abuf **copyp);
 
 /**
  * expo_set_display() - set the display to use for a expo

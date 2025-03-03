@@ -30,7 +30,7 @@
  * @need_refresh: true if the display needs a refresh
  * @console: vidconsole device in use
  * @autoboot_template: template string to use for autoboot
- * @autoboot_str: Current string displayed for autoboot timeout
+ * @autoboot_str: current string displayed for autoboot timeout
  */
 struct ui_priv {
 	struct expo *expo;
@@ -39,7 +39,7 @@ struct ui_priv {
 	bool need_refresh;
 	struct udevice *console;
 	struct abuf autoboot_template;
-	char autoboot_str[200];
+	struct abuf *autoboot_str;
 };
 
 /*
@@ -89,16 +89,15 @@ static int simple_ui_show(struct udevice *dev)
 	struct ui_priv *priv = dev_get_priv(dev);
 	struct bootstd_priv *std;
 	struct scene *scn;
-	struct abuf *buf;
 	uint scene_id;
 	int ret;
 
 	LOGR("sdb", bootstd_get_priv(&std));
 	LOGR("sds", bootflow_menu_setup(std, TEXT_MODE, &priv->expo));
 
-	buf = expo_get_str_buf(priv->expo, STR_AUTOBOOT);
-	if (!abuf_copy(buf, &priv->autoboot_template))
-		LOGR("uac", -ENOMEM);
+	LOGR("ses", expo_edit_str(priv->expo, STR_AUTOBOOT,
+				  &priv->autoboot_template,
+				  &priv->autoboot_str));
 
 	printf("theme '%s'\n", ofnode_get_name(std->theme));
 
@@ -160,11 +159,15 @@ static int simple_ui_add(struct udevice *dev, struct osinfo *info)
 static int simple_ui_render(struct udevice *dev)
 {
 	struct ui_priv *priv = dev_get_priv(dev);
-	struct abuf *buf;
+	// char str[0x40];
 
-	buf = expo_get_str_buf(priv->expo, STR_AUTOBOOT);
-	strcpy(buf->data, "The highlighted entry will be executed automatically in %ds.");
-	snprintf(buf->data, buf->size - 1,
+	// strlcpy(str, priv->autoboot_template.data, buf->size);
+	// printf("buf %p\n", buf->data);
+	// strlcpy(buf->data, priv->autoboot_template.data, buf->size);
+	// strlcpy(buf->data,
+	// 	"The highlighted entry will be executed automatically in %ds.",
+	// 	buf->size);
+	snprintf(priv->autoboot_str->data, priv->autoboot_str->size - 1,
 		 (char *)priv->autoboot_template.data,
 		 priv->lpriv->autoboot_remain_s);
 

@@ -120,7 +120,7 @@ void abuf_init_set(struct abuf *abuf, void *data, size_t size)
 	abuf_set(abuf, data, size);
 }
 
-bool abuf_copy(const struct abuf *old, struct abuf *new)
+bool abuf_copy(const struct abuf *old, struct abuf *copy)
 {
 	char *data;
 
@@ -128,9 +128,8 @@ bool abuf_copy(const struct abuf *old, struct abuf *new)
 	if (!data)
 		return false;
 	memcpy(data, old->data, old->size);
-	abuf_init(new);
-	abuf_init_set(new, data, old->size);
-	new->alloced = true;
+	abuf_init_set(copy, data, old->size);
+	copy->alloced = true;
 
 	return true;
 }
