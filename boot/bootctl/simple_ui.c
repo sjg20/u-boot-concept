@@ -163,13 +163,14 @@ static int simple_ui_render(struct udevice *dev)
 
 	// strlcpy(str, priv->autoboot_template.data, buf->size);
 	// printf("buf %p\n", buf->data);
-	// strlcpy(buf->data, priv->autoboot_template.data, buf->size);
+	// strlcpy(priv->autoboot_str->data, priv->autoboot_template.data,
+		// priv->autoboot_str->size);
 	// strlcpy(buf->data,
 	// 	"The highlighted entry will be executed automatically in %ds.",
 	// 	buf->size);
-	snprintf(priv->autoboot_str->data, priv->autoboot_str->size - 1,
-		 (char *)priv->autoboot_template.data,
-		 priv->lpriv->autoboot_remain_s);
+	LOGR("uip", abuf_printf(priv->autoboot_str,
+				priv->autoboot_template.data,
+				priv->lpriv->autoboot_remain_s));
 
 	if (priv->need_refresh || !TEXT_MODE) {
 		LOGR("sds", expo_render(priv->expo));
