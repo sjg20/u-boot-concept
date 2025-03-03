@@ -139,7 +139,7 @@ struct expo {
  */
 struct expo_string {
 	uint id;
-	const char *str;
+	struct abuf buf;
 	struct list_head sibling;
 };
 
@@ -553,9 +553,9 @@ const char *expo_get_str(struct expo *exp, uint id);
  * @exp: Expo to use
  * @id: String ID to look up
  * @new_str: New string pointer to use
- * Return: old string, or NULL if not found
+ * Return: abuf, adjusted to hold the new string
  */
-const char *expo_set_str(struct expo *exp, uint id, char *new_str);
+struct abuf *expo_get_str_buf(struct expo *exp, uint id);
 
 /**
  * expo_set_display() - set the display to use for a expo

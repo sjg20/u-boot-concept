@@ -38,7 +38,7 @@ struct ui_priv {
 	struct logic_priv *lpriv;
 	bool need_refresh;
 	struct udevice *console;
-	const char *autoboot_template;
+	struct abuf autoboot_template;
 	char autoboot_str[200];
 };
 
@@ -88,17 +88,17 @@ static int simple_ui_show(struct udevice *dev)
 {
 	struct ui_priv *priv = dev_get_priv(dev);
 	struct bootstd_priv *std;
-	const char *old_str;
 	struct scene *scn;
+	struct abuf *buf;
 	uint scene_id;
 	int ret;
 
 	LOGR("sdb", bootstd_get_priv(&std));
 	LOGR("sds", bootflow_menu_setup(std, TEXT_MODE, &priv->expo));
 
-	old_str = expo_set_str(priv->expo, STR_AUTOBOOT, priv->autoboot_str);
-	priv->autoboot_template = old_str;
-	strlcpy(priv->autoboot_str, old_str, sizeof(priv->autoboot_str));
+	buf = expo_get_str_buf(priv->expo, STR_AUTOBOOT);
+	if (!abuf_copy(buf, &priv->autoboot_template))
+		LOGR("uac", -ENOMEM);
 
 	printf("theme '%s'\n", ofnode_get_name(std->theme));
 
@@ -160,9 +160,13 @@ static int simple_ui_add(struct udevice *dev, struct osinfo *info)
 static int simple_ui_render(struct udevice *dev)
 {
 	struct ui_priv *priv = dev_get_priv(dev);
+	struct abuf *buf;
 
-	snprintf(priv->autoboot_str, sizeof(priv->autoboot_str),
-		 priv->autoboot_template, priv->lpriv->autoboot_remain_s);
+	buf = expo_get_str_buf(priv->expo, STR_AUTOBOOT);
+	strcpy(buf->data, "The highlighted entry will be executed automatically in %ds.");
+	snprintf(buf->data, buf->size - 1,
+		 (char *)priv->autoboot_template.data,
+		 priv->lpriv->autoboot_remain_s);
 
 	if (priv->need_refresh || !TEXT_MODE) {
 		LOGR("sds", expo_render(priv->expo));

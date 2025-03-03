@@ -19,6 +19,7 @@ void abuf_set(struct abuf *abuf, void *data, size_t size)
 	abuf_uninit(abuf);
 	abuf->data = data;
 	abuf->size = size;
+	abuf->alloced = false;
 }
 
 #ifndef USE_HOSTCC
@@ -117,6 +118,21 @@ void abuf_init_set(struct abuf *abuf, void *data, size_t size)
 {
 	abuf_init(abuf);
 	abuf_set(abuf, data, size);
+}
+
+bool abuf_copy(const struct abuf *old, struct abuf *new)
+{
+	char *data;
+
+	data = malloc(old->size);
+	if (!data)
+		return false;
+	memcpy(data, old->data, old->size);
+	abuf_init(new);
+	abuf_init_set(new, data, old->size);
+	new->alloced = true;
+
+	return true;
 }
 
 void abuf_init_const(struct abuf *abuf, const void *data, size_t size)
