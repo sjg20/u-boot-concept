@@ -197,7 +197,7 @@ int scene_txt_str(struct scene *scn, const char *name, uint id, uint str_id,
 		return log_msg_ret("obj", ret);
 
 	LOGR("tsg", scene_txt_generic_init(scn->expo, &txt->gen, name, str_id,
-					   NULL));
+					   str));
 	if (txtp)
 		*txtp = txt;
 
