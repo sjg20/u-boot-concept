@@ -569,8 +569,8 @@ static int scene_txt_render(struct expo *exp, struct udevice *dev,
 	bbox.y0 = obj->bbox.y0;
 	bbox.y1 = obj->bbox.y1;
 
-	if (!strcmp("textedit", obj->name))
-		printf("lines %d\n", gen->lines.count);
+	// if (!strcmp("textedit", obj->name))
+		// printf("lines %d\n", gen->lines.count);
 
 	alist_for_each(mline, &gen->lines) {
 		struct scene_obj_offset offset;
@@ -584,10 +584,10 @@ static int scene_txt_render(struct expo *exp, struct udevice *dev,
 
 		x = obj->bbox.x0 + offset.xofs;
 		y = obj->bbox.y0 + offset.yofs + mline->bbox.y0;
-		if (!strcmp("textedit", obj->name))
-			printf("y %d y1 %d\n", y, bbox.y1);
+		// if (!strcmp("textedit", obj->name))
+			// printf("y %d y1 %d\n", y, bbox.y1);
 		if (y > bbox.y1) {
-			printf("clip\n");
+			// printf("clip\n");
 			break;
 		}
 		vidconsole_set_cursor_pos(cons, x, y);
@@ -696,10 +696,10 @@ static int scene_obj_render(struct scene_obj *obj, bool text_mode)
 	case SCENEOBJT_TEXTEDIT: {
 		struct scene_obj_txtedit *ted = (struct scene_obj_txtedit *)obj;
 
-		printf("render\n");
+		// printf("render\n");
 		ret = scene_txt_render(exp, dev, cons, obj, &ted->gen, x, y,
 				       theme->menu_inset);
-		printf("render done\n");
+		// printf("render done\n");
 		break;
 	}
 	}
