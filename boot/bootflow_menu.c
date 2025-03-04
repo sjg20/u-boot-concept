@@ -114,7 +114,7 @@ int bootflow_menu_new(struct expo **expp)
 
 	ret |= scene_textedit(scn, "textedit", OBJ_TEXTEDIT, STR_TEXTEDIT,
 			      NULL);
-	ret |= scene_obj_set_bbox(scn, OBJ_TEXTEDIT, 50, 90, 1100, 610);
+	ret |= scene_obj_set_bbox(scn, OBJ_TEXTEDIT, 50, 140, 1100, 500);
 	if (ret < 0)
 		return log_msg_ret("neW", -EINVAL);
 
@@ -135,15 +135,15 @@ int bootflow_menu_new(struct expo **expp)
 "to identify the people or companies responsible for various boards and "
 "subsystems. Or have a look at the git log.\n"
 "\n"
-"\n");
-	/*
+"\n"
 "Where to get help:\n"
 "==================\n"
 "\n"
 "In case you have questions about, problems with or contributions for "
 "U-Boot, you should send a message to the U-Boot mailing list at "
 "<u-boot@lists.denx.de>. There is also an archive of previous traffic "
-"on the mailing list - please search the archive before asking FAQ's. "
+"on the mailing list - please search the archive before asking FAQ's."
+"qwodfijqowdijqwdoijqwdoix"
 "Please see https://lists.denx.de/pipermail/u-boot and "
 "https://marc.info/?l=u-boot\n"
 "\n"
@@ -159,8 +159,8 @@ int bootflow_menu_new(struct expo **expp)
 "available from the DENX file server through HTTPS or FTP.\n"
 "https://ftp.denx.de/pub/u-boot/\n"
 "ftp://ftp.denx.de/pub/u-boot/\n"
-"");*/
-	printf("ret %d\n", ret);
+"");
+	printf("ret %d len %lx\n", ret, txt->size);
 
 	ret |= scene_txt_str(scn, "cur_item", OBJ_POINTER, STR_POINTER, ">",
 			     NULL);

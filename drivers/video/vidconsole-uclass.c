@@ -514,16 +514,16 @@ int vidconsole_put_stringn(struct udevice *dev, const char *str, int maxlen)
 	const char *s, *end = NULL;
 	int ret;
 
-	serial_printf("maxlen %d: ", maxlen);
+	// serial_printf("maxlen %d: ", maxlen);
 	if (maxlen != -1)
 		end = str + maxlen;
 	for (s = str; *s && (maxlen == -1 || s < end); s++) {
-		serial_printf("%c", *s);
+		// serial_printf("%c", *s);
 		ret = vidconsole_put_char(dev, *s);
 		if (ret)
 			return ret;
 	}
-	serial_printf("; done\n");
+	// serial_printf("; done\n");
 
 	return 0;
 }

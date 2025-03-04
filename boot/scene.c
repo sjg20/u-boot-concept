@@ -384,10 +384,10 @@ static void handle_alignment(enum scene_obj_align horiz,
 		offset->yofs = (height - dims->y) / 2;
 		break;
 	case SCENEOA_TOP:
-		offset->yofs = height - dims->y;
+		offset->yofs = 0;
 		break;
 	case SCENEOA_BOTTOM:
-		offset->yofs = 0;
+		offset->yofs = height - dims->y;
 		break;
 	}
 }
@@ -584,8 +584,8 @@ static int scene_txt_render(struct expo *exp, struct udevice *dev,
 
 		x = obj->bbox.x0 + offset.xofs;
 		y = obj->bbox.y0 + offset.yofs + mline->bbox.y0;
-		// if (!strcmp("textedit", obj->name))
-			// printf("x %d y %d\n", x, y);
+		if (!strcmp("textedit", obj->name))
+			printf("y %d y1 %d\n", y, bbox.y1);
 		if (y > bbox.y1) {
 			printf("clip\n");
 			break;
