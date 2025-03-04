@@ -9,17 +9,34 @@
 #include <errno.h>
 #include <log.h>
 #include <malloc.h>
-#include "membuff.h"
+#include "membuf.h"
 
-void membuff_purge(struct membuff *mb)
+static inline bool is_full(const struct membuf *mb)
+{
+#if MEMBUF_FULL
+	return mb->full;
+#else
+	return false;
+#endif
+}
+
+static inline void set_full(struct membuf *mb, bool full)
+{
+#if MEMBUF_FULL
+	mb->full = full;
+#endif
+}
+
+void membuf_purge(struct membuf *mb)
 {
 	/* set mb->head and mb->tail so the buffers look empty */
 	mb->head = mb->start;
 	mb->tail = mb->start;
+	set_full(mb, false);
 }
 
-static int membuff_putrawflex(struct membuff *mb, int maxlen, bool update,
-			      char ***data, int *offsetp)
+static int membuf_putrawflex(struct membuf *mb, int maxlen, bool update,
+			     char ***data, int *offsetp)
 {
 	int len;
 
@@ -36,21 +53,29 @@ static int membuff_putrawflex(struct membuff *mb, int maxlen, bool update,
 	 * if head is ahead of tail, we can write from head until the end of
 	 * the buffer
 	 */
-	if (mb->head >= mb->tail) {
+	if (mb->head >= mb->tail && !is_full(mb)) {
 		/* work out how many bytes can fit here */
-		len = mb->end - mb->head - 1;
+		len = mb->end - mb->head;
+		if (!MEMBUF_FULL)
+			len--;
 		if (maxlen >= 0 && len > maxlen)
 			len = maxlen;
 
 		/* update the head pointer to mark these bytes as written */
-		if (update)
+		if (update) {
 			mb->head += len;
+			if (mb->head == mb->end)
+				mb->head = mb->start;
+			if (len && mb->head == mb->tail)
+				set_full(mb, true);
+		}
 
 		/*
 		 * if the tail isn't at start of the buffer, then we can
 		 * write one more byte right at the end
 		 */
-		if ((maxlen < 0 || len < maxlen) && mb->tail != mb->start) {
+		if (!MEMBUF_FULL && (maxlen < 0 || len < maxlen) &&
+		    mb->tail != mb->start) {
 			len++;
 			if (update)
 				mb->head = mb->start;
@@ -59,43 +84,48 @@ static int membuff_putrawflex(struct membuff *mb, int maxlen, bool update,
 	/* otherwise now we can write until head almost reaches tail */
 	} else {
 		/* work out how many bytes can fit here */
-		len = mb->tail - mb->head - 1;
+		len = mb->tail - mb->head;
+		if (!MEMBUF_FULL)
+			len--;
 		if (maxlen >= 0 && len > maxlen)
 			len = maxlen;
 
 		/* update the head pointer to mark these bytes as written */
-		if (update)
+		if (update) {
 			mb->head += len;
+			if (MEMBUF_FULL && len && mb->head == mb->tail)
+				set_full(mb, true);
+		}
 	}
 
 	/* return the number of bytes which can be/must be written */
 	return len;
 }
 
-int membuff_putraw(struct membuff *mb, int maxlen, bool update, char **data)
+int membuf_putraw(struct membuf *mb, int maxlen, bool update, char **data)
 {
 	char **datap;
 	int offset;
 	int size;
 
-	size = membuff_putrawflex(mb, maxlen, update, &datap, &offset);
+	size = membuf_putrawflex(mb, maxlen, update, &datap, &offset);
 	*data = *datap + offset;
 
 	return size;
 }
 
-bool membuff_putbyte(struct membuff *mb, int ch)
+bool membuf_putbyte(struct membuf *mb, int ch)
 {
 	char *data;
 
-	if (membuff_putraw(mb, 1, true, &data) != 1)
+	if (membuf_putraw(mb, 1, true, &data) != 1)
 		return false;
 	*data = ch;
 
 	return true;
 }
 
-int membuff_getraw(struct membuff *mb, int maxlen, bool update, char **data)
+int membuf_getraw(struct membuf *mb, int maxlen, bool update, char **data)
 {
 	int len;
 
@@ -125,7 +155,7 @@ int membuff_getraw(struct membuff *mb, int maxlen, bool update, char **data)
 	 * and some more data between 'start' and 'head'(which we can't
 	 * return this time
 	 */
-	else if (mb->head < mb->tail) {
+	else if (is_full(mb) || mb->head < mb->tail) {
 		/* work out the amount of data */
 		*data = mb->tail;
 		len = mb->end - mb->tail;
@@ -135,6 +165,8 @@ int membuff_getraw(struct membuff *mb, int maxlen, bool update, char **data)
 			mb->tail += len;
 			if (mb->tail == mb->end)
 				mb->tail = mb->start;
+			if (len)
+				set_full(mb, false);
 		}
 	}
 
@@ -146,21 +178,21 @@ int membuff_getraw(struct membuff *mb, int maxlen, bool update, char **data)
 	return len;
 }
 
-int membuff_getbyte(struct membuff *mb)
+int membuf_getbyte(struct membuf *mb)
 {
 	char *data = 0;
 
-	return membuff_getraw(mb, 1, true, &data) != 1 ? -1 : *(uint8_t *)data;
+	return membuf_getraw(mb, 1, true, &data) != 1 ? -1 : *(uint8_t *)data;
 }
 
-int membuff_peekbyte(struct membuff *mb)
+int membuf_peekbyte(struct membuf *mb)
 {
 	char *data = 0;
 
-	return membuff_getraw(mb, 1, false, &data) != 1 ? -1 : *(uint8_t *)data;
+	return membuf_getraw(mb, 1, false, &data) != 1 ? -1 : *(uint8_t *)data;
 }
 
-int membuff_get(struct membuff *mb, char *buff, int maxlen)
+int membuf_get(struct membuf *mb, char *buff, int maxlen)
 {
 	char *data = 0, *buffptr = buff;
 	int len = 1, i;
@@ -171,7 +203,7 @@ int membuff_get(struct membuff *mb, char *buff, int maxlen)
 	 */
 	for (i = 0; len && i < 2; i++) {
 		/* get a pointer to the data available */
-		len = membuff_getraw(mb, maxlen, true, &data);
+		len = membuf_getraw(mb, maxlen, true, &data);
 
 		/* copy it into the buffer */
 		memcpy(buffptr, data, len);
@@ -183,14 +215,14 @@ int membuff_get(struct membuff *mb, char *buff, int maxlen)
 	return buffptr - buff;
 }
 
-int membuff_put(struct membuff *mb, const char *buff, int length)
+int membuf_put(struct membuf *mb, const char *buff, int length)
 {
 	char *data;
 	int towrite, i, written;
 
 	for (i = written = 0; i < 2; i++) {
 		/* ask where some data can be written */
-		towrite = membuff_putraw(mb, length, true, &data);
+		towrite = membuf_putraw(mb, length, true, &data);
 
 		/* and write it, updating the bytes length */
 		memcpy(data, buff, towrite);
@@ -203,14 +235,14 @@ int membuff_put(struct membuff *mb, const char *buff, int length)
 	return written;
 }
 
-bool membuff_isempty(struct membuff *mb)
+bool membuf_isempty(struct membuf *mb)
 {
-	return mb->head == mb->tail;
+	return !is_full(mb) && mb->head == mb->tail;
 }
 
-int membuff_avail(struct membuff *mb)
+int membuf_avail(struct membuf *mb)
 {
-	struct membuff copy;
+	struct membuf copy;
 	int i, avail;
 	char *data = 0;
 
@@ -219,18 +251,21 @@ int membuff_avail(struct membuff *mb)
 
 	/* now read everything out of the copied buffer */
 	for (i = avail = 0; i < 2; i++)
-		avail += membuff_getraw(&copy, -1, true, &data);
+		avail += membuf_getraw(&copy, -1, true, &data);
 
 	/* and return how much we read */
 	return avail;
 }
 
-int membuff_size(struct membuff *mb)
+int membuf_size(struct membuf *mb)
 {
 	return mb->end - mb->start;
 }
 
-bool membuff_makecontig(struct membuff *mb)
+#if MEMBUF_FULL == 0
+/* This has not been updated for MEMBUF_FULL */
+
+bool membuf_makecontig(struct membuf *mb)
 {
 	int topsize, botsize;
 
@@ -280,21 +315,23 @@ bool membuff_makecontig(struct membuff *mb)
 	/* all ok */
 	return true;
 }
+#endif
 
-int membuff_free(struct membuff *mb)
+int membuf_free(struct membuf *mb)
 {
 	return mb->end == mb->start ? 0 :
-			(mb->end - mb->start) - 1 - membuff_avail(mb);
+		(mb->end - mb->start) - MEMBUF_FULL - membuf_avail(mb);
 }
 
-int membuff_readline(struct membuff *mb, char *str, int maxlen, int minch, bool must_fit)
+int membuf_readline(struct membuf *mb, char *str, int maxlen, int minch,
+		    bool must_fit)
 {
 	int len;  /* number of bytes read (!= string length) */
 	char *s, *end;
 	bool ok = false;
 	char *orig = str;
 
-	end = mb->head >= mb->tail ? mb->head : mb->end;
+	end = mb->head < mb->tail || is_full(mb) ? mb->end : mb->head;
 	for (len = 0, s = mb->tail; s < end && len < maxlen - 1; str++) {
 		*str = *s++;
 		len++;
@@ -302,7 +339,7 @@ int membuff_readline(struct membuff *mb, char *str, int maxlen, int minch, bool 
 			ok = true;
 			break;
 		}
-		if (s == end && mb->tail > mb->head) {
+		if (s == end && (is_full(mb) || mb->tail > mb->head)) {
 			s = mb->start;
 			end = mb->head;
 		}
@@ -318,11 +355,13 @@ int membuff_readline(struct membuff *mb, char *str, int maxlen, int minch, bool 
 	/* terminate the string, update the membuff and return success */
 	*str = '\0';
 	mb->tail = s == mb->end ? mb->start : s;
+	if (len)
+		set_full(mb, false);
 
 	return len;
 }
 
-int membuff_extend_by(struct membuff *mb, int by, int max)
+int membuf_extend_by(struct membuf *mb, int by, int max)
 {
 	int oldhead, oldtail;
 	int size, orig;
@@ -349,41 +388,42 @@ int membuff_extend_by(struct membuff *mb, int by, int max)
 	mb->head = mb->start + oldhead;
 	mb->tail = mb->start + oldtail;
 
-	if (mb->head < mb->tail) {
+	if (is_full(mb) || mb->head < mb->tail) {
 		memmove(mb->tail + by, mb->tail, orig - oldtail);
 		mb->tail += by;
+		set_full(mb, false);
 	}
 	mb->end = mb->start + size;
 
 	return 0;
 }
 
-void membuff_init(struct membuff *mb, char *buff, int size)
+void membuf_init(struct membuf *mb, char *buff, int size)
 {
 	mb->start = buff;
 	mb->end = mb->start + size;
-	membuff_purge(mb);
+	membuf_purge(mb);
 }
 
-int membuff_new(struct membuff *mb, int size)
+int membuf_new(struct membuf *mb, int size)
 {
 	mb->start = malloc(size);
 	if (!mb->start)
 		return -ENOMEM;
 
-	membuff_init(mb, mb->start, size);
+	membuf_init(mb, mb->start, size);
 	return 0;
 }
 
-void membuff_uninit(struct membuff *mb)
+void membuf_uninit(struct membuf *mb)
 {
 	mb->end = NULL;
 	mb->start = NULL;
-	membuff_purge(mb);
+	membuf_purge(mb);
 }
 
-void membuff_dispose(struct membuff *mb)
+void membuf_dispose(struct membuf *mb)
 {
-	free(&mb->start);
-	membuff_uninit(mb);
+	free(mb->start);
+	membuf_uninit(mb);
 }
