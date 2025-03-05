@@ -19,6 +19,7 @@
 # https://drive.google.com/file/d/1c39YI9QtpByGQ4V0UNNQtGqttEzS-eFV/view?usp=sharing
 
 bzimage_fname=/tmp/kernel/arch/x86/boot/bzImage
+shim_fname=/scratch/sglass/shim/shimx64.efi
 
 set -e
 
@@ -32,6 +33,7 @@ usage() {
 	echo "   -P   - Create a partition table" 1>&2
 	echo "   -r   - Run QEMU with the image" 1>&2
 	echo "   -s   - Run QEMU with serial only (no display)" 1>&2
+	echo "   -S   - Add Shim to run before U-Boot" 1>&2
 	echo "   -w   - Use word version (32-bit)" 1>&2
 	exit 1
 }
@@ -58,11 +60,14 @@ old=
 # package up a kernel as well
 kernel=
 
+# run shim
+shim=
+
 # Set ubdir to the build directory where you build U-Boot out-of-tree
 # We avoid in-tree build because it gets confusing trying different builds
 ubdir=/tmp/b/
 
-while getopts "akopPrsw" opt; do
+while getopts "akopPrsSw" opt; do
 	case "${opt}" in
 	a)
 		type=app
@@ -88,6 +93,9 @@ while getopts "akopPrsw" opt; do
 	P)
 		part=1
 		;;
+	S)
+		shim=1
+		;;
 	*)
 		usage
 		;;
@@ -96,9 +104,14 @@ done
 
 run_qemu() {
 	extra=
+	ssh_port=5555
 	if [[ "${bitness}" = "64" ]]; then
 		qemu=qemu-system-x86_64
-		bios=OVMF-pure-efi.x64.fd
+		#bios=OVMF-pure-efi.x64.fd
+# 		bios=/usr/share/OVMF/OVMF_CODE_4M.secboot.fd
+		#bios=OVMF_CODE_4M.secboot.fd
+		bios=/usr/share/OVMF/OVMF_CODE_4M.secboot.fd
+		vars=OVMF_VARS_4M.ms.fd
 	else
 		qemu=qemu-system-i386
 		bios=OVMF-pure-efi.i386.fd
@@ -110,20 +123,35 @@ run_qemu() {
 	fi
 	echo "Running ${qemu}"
 	# Use 512MB since U-Boot EFI likes to have 256MB to play with
-	"${qemu}" -bios "${bios}" \
+	# -bios "${bios}" \
+	# https://wiki.debian.org/SecureBoot/VirtualMachine
+	# -net nic,model=virtio -net user,hostfwd=tcp::${ssh_port}-:22
+	#-global driver=cfi.pflash01,property=secure,value=on \
+	"${qemu}" \
 		-m 512 \
+	        -enable-kvm \
+		-object rng-random,filename=/dev/urandom,id=rng0 \
+	        -device virtio-rng-pci,rng=rng0  \
+		-drive if=pflash,format=raw,unit=0,file="${bios}",readonly=on \
+		-drive if=pflash,format=raw,unit=1,file="${vars}" \
+		-machine q35,smm=on \
 		-drive id=disk,file="${IMG}",if=none,format=raw \
 		-nic none -device ahci,id=ahci \
 		-device ide-hd,drive=disk,bus=ahci.0 ${extra}
+		#-cdrom /vid/software/linux/ubuntu/ubuntu-24.04.1-desktop-amd64.iso
 }
 
 setup_files() {
+	local fname
+
 	echo "Packaging ${BUILD}"
 	mkdir -p $TMP
-	cat >$TMP/startup.nsh <<EOF
-fs0:u-boot-${type}.efi
-EOF
-	sudo cp ${ubdir}/${BUILD}/u-boot-${type}.efi $TMP
+	if [[ -n "${shim}" ]]; then
+		echo "fs0:\\BOOT\\EFI\\SHIMX64.EFI" >$TMP/startup.nsh
+	else
+		echo "fs0:u-boot-${type}.efi" >$TMP/startup.nsh
+		sudo cp ${ubdir}/${BUILD}/u-boot-${type}.efi $TMP
+	fi
 
 	# Can copy in other files here:
 	#sudo cp ${ubdir}/$BUILD/image.bin $TMP/chromeos.rom
@@ -135,6 +163,13 @@ copy_files() {
 	sudo cp $TMP/* $MNT
 	if [[ -n "${kernel}" ]]; then
 		sudo cp ${bzimage_fname} $MNT/vmlinuz
+	fi
+	if [[ -n "${shim}" ]]; then
+		sudo mkdir -p $MNT/BOOT/EFI
+		sudo cp ${shim_fname} $MNT/BOOT/EFI/SHIMX64.EFI
+# 		sudo cp shimx64.efi $MNT/BOOT/EFI/SHIMX64.EFI
+		sudo cp ${ubdir}/${BUILD}/u-boot-${type}.efi $MNT/BOOT/EFI/grubx64.efi
+		ls $MNT/BOOT/EFI
 	fi
 }
 
