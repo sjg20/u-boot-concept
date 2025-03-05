@@ -29,6 +29,10 @@
 # Original exception was:
 #
 
-exec labgrid-client -r "${target}" -a query -n \
+# The -V option collects arguments until it see another flag, so make sure the
+# -a comes after those
+exec labgrid-client -r "${target}" \
+	-V do-build ${build:-1} -V build-adjust ${build_adjust:-:} \
+	-a query -n \
 	UBootProviderDriver:board,board_extra,source_dir,build_dir,build_dir_extra${config_arg} \
 	2>/dev/null
