@@ -13,6 +13,7 @@ import sys
 import traceback
 
 from patman import checkpatch
+from patman import cseries
 from patman import patchstream
 from u_boot_pylib import gitutil
 from u_boot_pylib import terminal
@@ -271,19 +272,27 @@ def do_patman(args):
             if not args.process_tags:
                 args.ignore_bad_tags = True
             send(args)
+        return
 
-    # Check status of patches in patchwork
-    elif args.cmd == 'status':
-        ret_code = 0
-        try:
+    ret_code = 0
+    try:
+        # Check status of patches in patchwork
+        if args.cmd == 'status':
             patchwork_status(args.branch, args.count, args.start, args.end,
                              args.dest_branch, args.force, args.show_comments,
                              args.patchwork_url)
-        except Exception as exc:
-            terminal.tprint(f'patman: {type(exc).__name__}: {exc}',
-                            colour=terminal.Color.RED)
-            if args.debug:
-                print()
-                traceback.print_exc()
-            ret_code = 1
-        sys.exit(ret_code)
+        elif args.cmd == 'series':
+            control.patchwork_series(args.subcmd)
+    except Exception as exc:
+        terminal.tprint(f'patman: {type(exc).__name__}: {exc}',
+                        colour=terminal.Color.RED)
+        if args.debug:
+            print()
+            traceback.print_exc()
+        ret_code = 1
+    sys.exit(ret_code)
+
+
+def patchwork_series(subcmd):
+    if subcmd == 'list':
+        cseries.do_list()

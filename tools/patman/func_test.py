@@ -18,6 +18,7 @@ import unittest
 
 from patman.commit import Commit
 from patman import control
+from patman import cseries
 from patman import patchstream
 from patman.patchstream import PatchStream
 from patman.series import Series
@@ -25,6 +26,7 @@ from patman import settings
 from u_boot_pylib import gitutil
 from u_boot_pylib import terminal
 from u_boot_pylib import tools
+from u_boot_pylib import tout
 
 import pygit2
 from patman import status
@@ -58,6 +60,7 @@ class TestFunctional(unittest.TestCase):
         self.tmpdir = tempfile.mkdtemp(prefix='patman.')
         self.gitdir = os.path.join(self.tmpdir, 'git')
         self.repo = None
+        tout.init(allow_colour=False)
 
     def tearDown(self):
         shutil.rmtree(self.tmpdir)
@@ -1429,3 +1432,51 @@ second line.'''
         msg += '\n\n' + signoff
         new_msg = patchstream.insert_tags(msg, tags)
         self.assertEqual(msg + '\n' + tag_str, new_msg)
+
+    def test_database_setup(self):
+        """Check setting up of the series database"""
+        cser = cseries.Cseries(self.tmpdir)
+        with capture_sys_output() as (_, err):
+            cser.open_database()
+        self.assertEqual(f'Creating new database {self.tmpdir}/.patman.db',
+                         err.getvalue().strip())
+        res = cser.cur.execute("SELECT name FROM series")
+        self.assertTrue(res)
+        cser.close_database()
+
+    def get_database(self):
+        cser = cseries.Cseries(self.tmpdir)
+        with capture_sys_output() as _:
+            cser.open_database()
+        return cser
+
+    def test_series_add(self):
+        cser = self.get_database()
+        self.assertFalse(cser.get_series_dict())
+
+        ser = Series()
+        ser.name = 'fred'
+        cser.add_series(ser)
+        slist = cser.get_series_dict()
+        self.assertEqual(1, len(slist))
+        self.assertEqual('fred', slist['fred'].name)
+        cser.close_database()
+
+    def test_series_list(self):
+        cser = self.get_database()
+        ser = Series()
+        ser.name = 'fred'
+        cser.add_series(ser)
+        ser = Series()
+        ser.name = 'mary'
+        cser.add_series(ser)
+
+        with capture_sys_output() as (out, _):
+            cser.do_list()
+        lines = out.getvalue().splitlines()
+        self.assertEqual(2, len(lines))
+        self.assertEqual('fred', lines[0])
+        self.assertEqual('mary', lines[1])
+        cser.close_database()
+
+    def test_do_series_add(self):
