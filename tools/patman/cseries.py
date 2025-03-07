@@ -17,7 +17,7 @@ from u_boot_pylib import tout
 
 
 class Cseries:
-    def __init__(self, topdir):
+    def __init__(self, topdir=None):
         self.topdir = topdir
         self.con = None
         self.cur = None
@@ -75,12 +75,6 @@ class Cseries:
         """
         res = self.cur.execute(f"INSERT INTO series VALUES ('{ser.name}')")
         self.con.commit()
-
-    def do_list(self):
-        sdict = self.get_series_dict()
-
-        for name, ser in sdict.items():
-            print(ser.name)
 
     def do_add(self, name, desc):
         sdict = self.get_series_dict()

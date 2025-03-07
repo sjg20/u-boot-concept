@@ -249,7 +249,20 @@ def patchwork_status(branch, count, start, end, dest_branch, force,
                                   show_comments, url)
 
 
-def do_patman(args):
+def patchwork_series(subcmd):
+    cser = cseries.Cseries()
+    try:
+        cser.open_database()
+        if subcmd == 'list':
+            sdict = cser.get_series_dict()
+
+            for name, ser in sdict.items():
+                print(ser.name)
+    finally:
+        cser.close_database()
+
+
+def do_patman(args, ):
     if args.cmd == 'send':
         # Called from git with a patch filename as argument
         # Printout a list of additional CC recipients for this patch
@@ -282,7 +295,7 @@ def do_patman(args):
                              args.dest_branch, args.force, args.show_comments,
                              args.patchwork_url)
         elif args.cmd == 'series':
-            control.patchwork_series(args.subcmd)
+            patchwork_series(args.subcmd)
     except Exception as exc:
         terminal.tprint(f'patman: {type(exc).__name__}: {exc}',
                         colour=terminal.Color.RED)
@@ -290,9 +303,4 @@ def do_patman(args):
             print()
             traceback.print_exc()
         ret_code = 1
-    sys.exit(ret_code)
-
-
-def patchwork_series(subcmd):
-    if subcmd == 'list':
-        cseries.do_list()
+    return ret_code
