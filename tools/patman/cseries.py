@@ -19,6 +19,7 @@ from u_boot_pylib import tout
 class Cseries:
     def __init__(self, topdir=None):
         self.topdir = topdir
+        self.gitdir = os.path.join(topdir, '.git')
         self.con = None
         self.cur = None
 
@@ -75,7 +76,8 @@ class Cseries:
         ser (Series): Series to add
         """
         # First check we have a branch with this name
-
+        if not gitutil.check_branch(ser.name, git_dir=self.gitdir):
+            raise ValueError(f"No branch named '{ser.name}'")
         res = self.cur.execute(
             f"INSERT INTO series VALUES ('{ser.name}', '{ser.desc}')")
         self.con.commit()

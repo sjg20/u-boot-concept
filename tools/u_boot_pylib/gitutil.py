@@ -735,6 +735,21 @@ def get_branch():
     return out
 
 
+def check_branch(name, git_dir=None):
+    """Check if a branch exists
+
+    Args:
+        name (str): Name of the branch to check
+    """
+    '--git-dir', git_dir
+    cmd = ['git']
+    if git_dir:
+        cmd += ['--git-dir', git_dir]
+    cmd += ['branch', '--list', name]
+    out = command.output_one_line(*cmd)
+    return out.strip() == name
+
+
 if __name__ == "__main__":
     import doctest
 

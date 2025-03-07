@@ -64,7 +64,7 @@ class TestFunctional(unittest.TestCase):
 
     def setUp(self):
         self.tmpdir = tempfile.mkdtemp(prefix='patman.')
-        self.gitdir = os.path.join(self.tmpdir, 'git')
+        self.gitdir = os.path.join(self.tmpdir, '.git')
         self.repo = None
         tout.init(allow_colour=False)
 
@@ -161,7 +161,7 @@ class TestFunctional(unittest.TestCase):
             Commit-changes: 2
             - Changes only for this commit
 
-'            Cover-changes: 4
+            Cover-changes: 4
             - Some notes for the cover letter
 
             Cover-letter:
@@ -374,7 +374,7 @@ Changes in v2:
             fname (str): Filename of file to create
             text (str): Text to put into the file
         """
-        path = os.path.join(self.gitdir, fname)
+        path = os.path.join(self.tmpdir, fname)
         tools.write_file(path, text, binary=False)
         index = self.repo.index
         index.add(fname)
@@ -1427,15 +1427,16 @@ second line.'''
         return cser
 
     def test_series_add(self):
+        self.make_git_tree()
         cser = self.get_database()
         self.assertFalse(cser.get_series_dict())
 
         ser = Series()
-        ser.name = 'fred'
+        ser.name = 'first'
         cser.add_series(ser)
         slist = cser.get_series_dict()
         self.assertEqual(1, len(slist))
-        self.assertEqual('fred', slist['fred'].name)
+        self.assertEqual('first', slist['first'].name)
         cser.close_database()
 
     def test_series_list(self):
@@ -1456,8 +1457,9 @@ second line.'''
         cser.close_database()
 
     def test_do_series_add(self):
+        self.make_git_tree()
         args = Namespace()
-        args = ['fred', 'my-description']
+        args = ['first', 'my-description']
         control.patchwork_series('add', args, test_db=self.tmpdir)
 
         cser = self.get_database()
@@ -1465,6 +1467,6 @@ second line.'''
         self.assertEqual(1, len(slist))
         ser = slist.get('fred')
         self.assertTrue(ser)
-        self.assertEqual('fred', ser.name)
+        self.assertEqual('first', ser.name)
         self.assertEqual('my-description', ser.desc)
         cser.close_database()
