@@ -74,6 +74,8 @@ class Cseries:
 
         ser (Series): Series to add
         """
+        # First check we have a branch with this name
+
         res = self.cur.execute(
             f"INSERT INTO series VALUES ('{ser.name}', '{ser.desc}')")
         self.con.commit()
