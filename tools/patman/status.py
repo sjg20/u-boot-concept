@@ -8,28 +8,17 @@ Allows creation of a new branch based on the old but with the review tags
 collected from patchwork.
 """
 
-import collections
-import concurrent.futures
-from itertools import repeat
-import re
+import asyncio
+from collections import defaultdict
 
+import aiohttp
 import pygit2
-import requests
 
-from patman import patchstream
-from patman.patchstream import PatchStream
 from u_boot_pylib import terminal
 from u_boot_pylib import tout
+from patman import patchstream
+from patman import patchwork
 
-# Patches which are part of a multi-patch series are shown with a prefix like
-# [prefix, version, sequence], for example '[RFC, v2, 3/5]'. All but the last
-# part is optional. This decodes the string into groups. For single patches
-# the [] part is not present:
-# Groups: (ignore, ignore, ignore, prefix, version, sequence, subject)
-RE_PATCH = re.compile(r'(\[(((.*),)?(.*),)?(.*)\]\s)?(.*)$')
-
-# This decodes the sequence string into a patch number and patch count
-RE_SEQ = re.compile(r'(\d+)/(\d+)')
 
 def to_int(vals):
     """Convert a list of strings into integers, using 0 if not an integer
@@ -42,88 +31,6 @@ def to_int(vals):
     """
     out = [int(val) if val.isdigit() else 0 for val in vals]
     return out
-
-
-class Patch(dict):
-    """Models a patch in patchwork
-
-    This class records information obtained from patchwork
-
-    Some of this information comes from the 'Patch' column:
-
-        [RFC,v2,1/3] dm: Driver and uclass changes for tiny-dm
-
-    This shows the prefix, version, seq, count and subject.
-
-    The other properties come from other columns in the display.
-
-    Properties:
-        pid (str): ID of the patch (typically an integer)
-        seq (int): Sequence number within series (1=first) parsed from sequence
-            string
-        count (int): Number of patches in series, parsed from sequence string
-        raw_subject (str): Entire subject line, e.g.
-            "[1/2,v2] efi_loader: Sort header file ordering"
-        prefix (str): Prefix string or None (e.g. 'RFC')
-        version (str): Version string or None (e.g. 'v2')
-        raw_subject (str): Raw patch subject
-        subject (str): Patch subject with [..] part removed (same as commit
-            subject)
-    """
-    def __init__(self, pid):
-        super().__init__()
-        self.id = pid  # Use 'id' to match what the Rest API provides
-        self.seq = None
-        self.count = None
-        self.prefix = None
-        self.version = None
-        self.raw_subject = None
-        self.subject = None
-
-    # These make us more like a dictionary
-    def __setattr__(self, name, value):
-        self[name] = value
-
-    def __getattr__(self, name):
-        return self[name]
-
-    def __hash__(self):
-        return hash(frozenset(self.items()))
-
-    def __str__(self):
-        return self.raw_subject
-
-    def parse_subject(self, raw_subject):
-        """Parse the subject of a patch into its component parts
-
-        See RE_PATCH for details. The parsed info is placed into seq, count,
-        prefix, version, subject
-
-        Args:
-            raw_subject (str): Subject string to parse
-
-        Raises:
-            ValueError: the subject cannot be parsed
-        """
-        self.raw_subject = raw_subject.strip()
-        mat = RE_PATCH.search(raw_subject.strip())
-        if not mat:
-            raise ValueError("Cannot parse subject '%s'" % raw_subject)
-        self.prefix, self.version, seq_info, self.subject = mat.groups()[3:]
-        mat_seq = RE_SEQ.match(seq_info) if seq_info else False
-        if mat_seq is None:
-            self.version = seq_info
-            seq_info = None
-        if self.version and not self.version.startswith('v'):
-            self.prefix = self.version
-            self.version = None
-        if seq_info:
-            if mat_seq:
-                self.seq = int(mat_seq.group(1))
-                self.count = int(mat_seq.group(2))
-        else:
-            self.seq = 1
-            self.count = 1
 
 
 class Review:
@@ -144,6 +51,79 @@ class Review:
         self.meta = ' : '.join([line for line in meta.splitlines() if line])
         self.snippets = snippets
 
+
+def process_reviews(content, comment_data, base_rtags):
+    """Process and return review data
+
+    Args:
+        content (str): Content text of the patch itself - see pwork.get_patch()
+        comment_data (list of dict): Comments for the patch - see
+            pwork._get_patch_comments()
+        base_rtags (dict): base review tags (before any comments)
+            key: Response tag (e.g. 'Reviewed-by')
+            value: Set of people who gave that response, each a name/email
+                string
+
+    Return: tuple:
+        dict: new review tags (noticed since the base_rtags)
+            key: Response tag (e.g. 'Reviewed-by')
+            value: Set of people who gave that response, each a name/email
+                string
+        list of patchwork.Review: reviews received on the patch
+    """
+    pstrm = patchstream.PatchStream.process_text(content, True)
+    rtags = defaultdict(set)
+    for response, people in pstrm.commit.rtags.items():
+        rtags[response].update(people)
+
+    reviews = []
+    for comment in comment_data:
+        pstrm = patchstream.PatchStream.process_text(comment['content'], True)
+        if pstrm.snippets:
+            submitter = comment['submitter']
+            person = f"{submitter['name']} <{submitter['email']}>"
+            reviews.append(Review(person, pstrm.snippets))
+        for response, people in pstrm.commit.rtags.items():
+            rtags[response].update(people)
+
+    # Find the tags that are not in the commit
+    new_rtags = defaultdict(set)
+    for tag, people in rtags.items():
+        for who in people:
+            is_new = (tag not in base_rtags or
+                      who not in base_rtags[tag])
+            if is_new:
+                new_rtags[tag].add(who)
+    return new_rtags, reviews
+
+
+def show_responses(col, rtags, indent, is_new):
+    """Show rtags collected
+
+    Args:
+        col (terminal.Colour): Colour object to use
+        rtags (dict): review tags to show
+            key: Response tag (e.g. 'Reviewed-by')
+            value: Set of people who gave that response, each a name/email
+                string
+        indent (str): Indentation string to write before each line
+        is_new (bool): True if this output should be highlighted
+
+    Returns:
+        int: Number of review tags displayed
+    """
+    count = 0
+    for tag in sorted(rtags.keys()):
+        people = rtags[tag]
+        for who in sorted(people):
+            terminal.tprint(indent + '%s %s: ' % ('+' if is_new else ' ', tag),
+                            newline=False, colour=col.GREEN, bright=is_new,
+                            col=col)
+            terminal.tprint(who, colour=col.WHITE, bright=is_new, col=col)
+            count += 1
+    return count
+
+
 def compare_with_series(series, patches):
     """Compare a list of patches with a series it came from
 
@@ -151,7 +131,7 @@ def compare_with_series(series, patches):
 
     Args:
         series (Series): Series to compare against
-        patches (:type: list of Patch): list of Patch objects to compare with
+        patches (list of Patch): list of Patch objects to compare with
 
     Returns:
         tuple
@@ -179,7 +159,6 @@ def compare_with_series(series, patches):
             warnings.append("Cannot find patch for commit %d ('%s')" %
                             (seq + 1, cmt.subject))
 
-
     # Check the names match
     commit_for_patch = {}
     all_commits = set(series.commits)
@@ -198,151 +177,98 @@ def compare_with_series(series, patches):
 
     return patch_for_commit, commit_for_patch, warnings
 
-def call_rest_api(url, subpath):
-    """Call the patchwork API and return the result as JSON
+
+def show_status(cover, patches, series, link, branch, show_comments,
+                show_cover_comments, col, warnings_on_stderr=True):
+    """Check the status of a series on Patchwork
+
+    This finds review tags and comments for a series in Patchwork, displaying
+    them to show what is new compared to the local series.
 
     Args:
-        url (str): URL of patchwork server, e.g. 'https://patchwork.ozlabs.org'
-        subpath (str): URL subpath to use
+        series (Series): Series object for the existing branch
+        link (str): Patch series ID number
+        branch (str): Existing branch to update, or None
+        show_comments (bool): True to show the comments on each patch
+        show_cover_comments (bool): True to show the comments on the
+            letter
+        col (terminal.Colour): Colour object
+        warnings_on_stderr (bool): Show warnings on stderr (instead of stdout)
 
-    Returns:
-        dict: Json result
-
-    Raises:
-        ValueError: the URL could not be read
+    Return: tuple:
+        int: Number of new review tags to add
+        list: List of review tags to add, one item for each commit, each a
+                dict:
+            key: Response tag (e.g. 'Reviewed-by')
+            value: Set of people who gave that response, each a name/email
+                string
+        COVER object, or None if none or not read_cover_comments
+        list of PATCH objects
     """
-    full_url = '%s/api/1.2/%s' % (url, subpath)
-    response = requests.get(full_url)
-    if response.status_code != 200:
-        raise ValueError("Could not read URL '%s'" % full_url)
-    return response.json()
+    compare = []
+    for pw_patch in patches:
+        patch = patchwork.Patch(pw_patch.id)
+        patch.parse_subject(pw_patch.series_data['name'])
+        compare.append(patch)
 
-def collect_patches(series, series_id, url, rest_api=call_rest_api):
-    """Collect patch information about a series from patchwork
+    count = len(series.commits)
+    new_rtag_list = [None] * count
+    review_list = [None] * count
 
-    Uses the Patchwork REST API to collect information provided by patchwork
-    about the status of each patch.
+    patch_for_commit, _, warnings = compare_with_series(series, compare)
+    for warn in warnings:
+        tout.do_output(tout.WARNING if warnings_on_stderr else tout.INFO, warn)
 
-    Args:
-        series (Series): Series object corresponding to the local branch
-            containing the series
-        series_id (str): Patch series ID number
-        url (str): URL of patchwork server, e.g. 'https://patchwork.ozlabs.org'
-        rest_api (function): API function to call to access Patchwork, for
-            testing
+    for seq, pw_patch in enumerate(patches):
+        compare[seq].patch = pw_patch
 
-    Returns:
-        list: List of patches sorted by sequence number, each a Patch object
+    for i in range(count):
+        pat = patch_for_commit.get(i)
+        if pat:
+            patch_data = pat.patch.data
+            comment_data = pat.patch.comments
+            new_rtag_list[i], review_list[i] = process_reviews(
+                patch_data['content'], comment_data, series.commits[i].rtags)
 
-    Raises:
-        ValueError: if the URL could not be read or the web page does not follow
-            the expected structure
-    """
-    data = rest_api(url, 'series/%s/' % series_id)
+    num_to_add = 0
 
-    # Get all the rows, which are patches
-    patch_dict = data['patches']
-    count = len(patch_dict)
-    num_commits = len(series.commits)
-    if count != num_commits:
-        tout.warning('Warning: Patchwork reports %d patches, series has %d' %
-                     (count, num_commits))
-
-    patches = []
-
-    # Work through each row (patch) one at a time, collecting the information
-    warn_count = 0
-    for pw_patch in patch_dict:
-        patch = Patch(pw_patch['id'])
-        patch.parse_subject(pw_patch['name'])
-        patches.append(patch)
-    if warn_count > 1:
-        tout.warning('   (total of %d warnings)' % warn_count)
-
-    # Sort patches by patch number
-    patches = sorted(patches, key=lambda x: x.seq)
-    return patches
-
-def find_new_responses(new_rtag_list, review_list, seq, cmt, patch, url,
-                       rest_api=call_rest_api):
-    """Find new rtags collected by patchwork that we don't know about
-
-    This is designed to be run in parallel, once for each commit/patch
-
-    Args:
-        new_rtag_list (list): New rtags are written to new_rtag_list[seq]
-            list, each a dict:
-                key: Response tag (e.g. 'Reviewed-by')
-                value: Set of people who gave that response, each a name/email
-                    string
-        review_list (list): New reviews are written to review_list[seq]
-            list, each a
-                List of reviews for the patch, each a Review
-        seq (int): Position in new_rtag_list to update
-        cmt (Commit): Commit object for this commit
-        patch (Patch): Corresponding Patch object for this patch
-        url (str): URL of patchwork server, e.g. 'https://patchwork.ozlabs.org'
-        rest_api (function): API function to call to access Patchwork, for
-            testing
-    """
-    if not patch:
-        return
-
-    # Get the content for the patch email itself as well as all comments
-    data = rest_api(url, 'patches/%s/' % patch.id)
-    pstrm = PatchStream.process_text(data['content'], True)
-
-    rtags = collections.defaultdict(set)
-    for response, people in pstrm.commit.rtags.items():
-        rtags[response].update(people)
-
-    data = rest_api(url, 'patches/%s/comments/' % patch.id)
-
-    reviews = []
-    for comment in data:
-        pstrm = PatchStream.process_text(comment['content'], True)
-        if pstrm.snippets:
+    if cover and show_cover_comments:
+        terminal.tprint(f'Cov {cover.name}', colour=col.BLACK, col=col,
+                        bright=False, back=col.YELLOW)
+        for seq, comment in enumerate(cover.comments):
             submitter = comment['submitter']
             person = '%s <%s>' % (submitter['name'], submitter['email'])
-            reviews.append(Review(person, pstrm.snippets))
-        for response, people in pstrm.commit.rtags.items():
-            rtags[response].update(people)
+            terminal.tprint(f'From: {person}: {comment['date']}',
+                            colour=col.RED, col=col)
+            print(comment['content'])
+            print()
 
-    # Find the tags that are not in the commit
-    new_rtags = collections.defaultdict(set)
-    base_rtags = cmt.rtags
-    for tag, people in rtags.items():
-        for who in people:
-            is_new = (tag not in base_rtags or
-                      who not in base_rtags[tag])
-            if is_new:
-                new_rtags[tag].add(who)
-    new_rtag_list[seq] = new_rtags
-    review_list[seq] = reviews
+    for seq, cmt in enumerate(series.commits):
+        patch = patch_for_commit.get(seq)
+        if not patch:
+            continue
+        terminal.tprint('%3d %s' % (patch.seq, patch.subject[:50]),
+                        colour=col.YELLOW, col=col)
+        cmt = series.commits[seq]
+        base_rtags = cmt.rtags
+        new_rtags = new_rtag_list[seq]
 
-def show_responses(rtags, indent, is_new):
-    """Show rtags collected
+        indent = ' ' * 2
+        show_responses(col, base_rtags, indent, False)
+        num_to_add += show_responses(col, new_rtags, indent, True)
+        if show_comments:
+            for review in review_list[seq]:
+                terminal.tprint('Review: %s' % review.meta, colour=col.RED,
+                                col=col)
+                for snippet in review.snippets:
+                    for line in snippet:
+                        quoted = line.startswith('>')
+                        terminal.tprint(
+                            f'    {line}',
+                            colour=col.MAGENTA if quoted else None, col=col)
+                    terminal.tprint()
+    return num_to_add, new_rtag_list, cover, patches
 
-    Args:
-        rtags (dict): review tags to show
-            key: Response tag (e.g. 'Reviewed-by')
-            value: Set of people who gave that response, each a name/email string
-        indent (str): Indentation string to write before each line
-        is_new (bool): True if this output should be highlighted
-
-    Returns:
-        int: Number of review tags displayed
-    """
-    col = terminal.Color()
-    count = 0
-    for tag in sorted(rtags.keys()):
-        people = rtags[tag]
-        for who in sorted(people):
-            terminal.tprint(indent + '%s %s: ' % ('+' if is_new else ' ', tag),
-                           newline=False, colour=col.GREEN, bright=is_new)
-            terminal.tprint(who, colour=col.WHITE, bright=is_new)
-            count += 1
-    return count
 
 def create_branch(series, new_rtag_list, branch, dest_branch, overwrite,
                   repo=None):
@@ -409,79 +335,82 @@ def create_branch(series, new_rtag_list, branch, dest_branch, overwrite,
             [parent.target])
     return num_added
 
-def check_patchwork_status(series, series_id, branch, dest_branch, force,
-                           show_comments, url, rest_api=call_rest_api,
-                           test_repo=None):
+
+def check_status(cover, patches, series, link, branch, dest_branch, force,
+                 show_comments, show_cover_comments, test_repo=None):
     """Check the status of a series on Patchwork
 
     This finds review tags and comments for a series in Patchwork, displaying
     them to show what is new compared to the local series.
 
     Args:
+        client (aiohttp.ClientSession): Session to use
         series (Series): Series object for the existing branch
-        series_id (str): Patch series ID number
+        link (str): Patch series ID number
         branch (str): Existing branch to update, or None
         dest_branch (str): Name of new branch to create, or None
         force (bool): True to force overwriting dest_branch if it exists
         show_comments (bool): True to show the comments on each patch
-        url (str): URL of patchwork server, e.g. 'https://patchwork.ozlabs.org'
-        rest_api (function): API function to call to access Patchwork, for
-            testing
+        show_cover_comments (bool): True to show the comments on the letter
         test_repo (pygit2.Repository): Repo to use (use None unless testing)
     """
-    patches = collect_patches(series, series_id, url, rest_api)
     col = terminal.Color()
-    count = len(series.commits)
-    new_rtag_list = [None] * count
-    review_list = [None] * count
+    with terminal.pager():
+        check_patch_count(len(series.commits), len(patches))
+        num_to_add, new_rtag_list, _, _ = show_status(
+            cover, patches, series, link, branch, show_comments,
+            show_cover_comments, col)
 
-    patch_for_commit, _, warnings = compare_with_series(series, patches)
-    for warn in warnings:
-        tout.warning(warn)
-
-    patch_list = [patch_for_commit.get(c) for c in range(len(series.commits))]
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=16) as executor:
-        futures = executor.map(
-            find_new_responses, repeat(new_rtag_list), repeat(review_list),
-            range(count), series.commits, patch_list, repeat(url),
-            repeat(rest_api))
-    for fresponse in futures:
-        if fresponse:
-            raise fresponse.exception()
-
-    num_to_add = 0
-    for seq, cmt in enumerate(series.commits):
-        patch = patch_for_commit.get(seq)
-        if not patch:
-            continue
-        terminal.tprint('%3d %s' % (patch.seq, patch.subject[:50]),
-                       colour=col.BLUE)
-        cmt = series.commits[seq]
-        base_rtags = cmt.rtags
-        new_rtags = new_rtag_list[seq]
-
-        indent = ' ' * 2
-        show_responses(base_rtags, indent, False)
-        num_to_add += show_responses(new_rtags, indent, True)
-        if show_comments:
-            for review in review_list[seq]:
-                terminal.tprint('Review: %s' % review.meta, colour=col.RED)
-                for snippet in review.snippets:
-                    for line in snippet:
-                        quoted = line.startswith('>')
-                        terminal.tprint('    %s' % line,
-                                       colour=col.MAGENTA if quoted else None)
-                    terminal.tprint()
-
-    terminal.tprint("%d new response%s available in patchwork%s" %
-                   (num_to_add, 's' if num_to_add != 1 else '',
-                    '' if dest_branch
-                    else ' (use -d to write them to a new branch)'))
-
-    if dest_branch:
-        num_added = create_branch(series, new_rtag_list, branch,
-                                  dest_branch, force, test_repo)
+        if not dest_branch and num_to_add:
+            msg = ' (use -d to write them to a new branch)'
+        else:
+            msg = ''
         terminal.tprint(
-            "%d response%s added from patchwork into new branch '%s'" %
-            (num_added, 's' if num_added != 1 else '', dest_branch))
+            f"{num_to_add} new response{'s' if num_to_add != 1 else ''} "
+            f'available in patchwork{msg}')
+
+        if dest_branch:
+            num_added = create_branch(series, new_rtag_list, branch,
+                                      dest_branch, force, test_repo)
+            terminal.tprint(
+                f"{num_added} response{'s' if num_added != 1 else ''} added "
+                f"from patchwork into new branch '{dest_branch}'")
+
+
+def check_patch_count(num_commits, num_patches):
+    """Check the number of commits and patches agree
+
+    Args:
+        num_commits (int): Number of commits
+        num_patches (int): Number of patches
+    """
+    if num_patches != num_commits:
+        tout.warning(f'Warning: Patchwork reports {num_patches} patches, '
+                     f'series has {num_commits}')
+
+
+async def _check_and_report_status(series, link, branch, dest_branch, force,
+                                   show_comments, show_cover_comments, pwork,
+                                   test_repo=None):
+    async with aiohttp.ClientSession() as client:
+        cover, patches = await pwork._series_get_state(
+            client, link, True, show_cover_comments)
+    return cover, patches
+
+
+def check_and_report_status(series, link, branch, dest_branch, force,
+                            show_comments, show_cover_comments, pwork,
+                            test_repo=None, single_thread=False):
+    if single_thread:
+        cover, patches = asyncio.run(_check_and_report_status(
+            series, link, branch, dest_branch, force, show_comments,
+            show_cover_comments, pwork, test_repo=test_repo))
+    else:
+        loop = asyncio.get_event_loop()
+        cover, patches = loop.run_until_complete(_check_and_report_status(
+                series, link, branch, dest_branch,  force, show_comments,
+                show_cover_comments, pwork, test_repo=test_repo))
+
+    check_status(
+        cover, patches, series, link, branch, dest_branch,  force,
+        show_comments, show_cover_comments, test_repo=test_repo)
