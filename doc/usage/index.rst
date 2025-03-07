@@ -94,6 +94,7 @@ Shell commands
    cmd/msr
    cmd/mtest
    cmd/mtrr
+   cmd/mv
    cmd/panic
    cmd/part
    cmd/pause
