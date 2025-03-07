@@ -1486,7 +1486,14 @@ second line.'''
 
     def test_do_series_add(self):
         args = Namespace()
-        args.cmd = 'series'
-        args.debug = False
-        args.subcmd = 'list'
-        control.do_patman(args)
+        args = ['fred', 'my-description']
+        control.patchwork_series('add', args, test_db=self.tmpdir)
+
+        cser = self.get_database()
+        slist = cser.get_series_dict()
+        self.assertEqual(1, len(slist))
+        ser = slist.get('fred')
+        self.assertTrue(ser)
+        self.assertEqual('fred', ser.name)
+        self.assertEqual('my-description', ser.desc)
+        cser.close_database()

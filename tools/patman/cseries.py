@@ -33,7 +33,7 @@ class Cseries:
         try:
             res = self.cur.execute('SELECT name FROM series')
         except OperationalError:
-            self.cur.execute('CREATE TABLE series(name)')
+            self.cur.execute('CREATE TABLE series(name, desc)')
         return self.cur
 
     def open_database(self):
@@ -60,11 +60,12 @@ class Cseries:
                 key: series name
                 value: Series
         """
-        res = self.cur.execute('SELECT name FROM series')
+        res = self.cur.execute('SELECT name, desc FROM series')
         sdict = OrderedDict()
-        for name, in res.fetchall():
+        for name, desc in res.fetchall():
             ser = Series()
             ser.name = name
+            ser.desc = desc
             sdict[name] = ser
         return sdict
 
@@ -73,7 +74,8 @@ class Cseries:
 
         ser (Series): Series to add
         """
-        res = self.cur.execute(f"INSERT INTO series VALUES ('{ser.name}')")
+        res = self.cur.execute(
+            f"INSERT INTO series VALUES ('{ser.name}', '{ser.desc}')")
         self.con.commit()
 
     def do_add(self, name, desc):

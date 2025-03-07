@@ -15,6 +15,7 @@ import traceback
 from patman import checkpatch
 from patman import cseries
 from patman import patchstream
+from patman.series import Series
 from u_boot_pylib import gitutil
 from u_boot_pylib import terminal
 
@@ -249,8 +250,8 @@ def patchwork_status(branch, count, start, end, dest_branch, force,
                                   show_comments, url)
 
 
-def patchwork_series(subcmd):
-    cser = cseries.Cseries()
+def patchwork_series(subcmd, args, test_db=None):
+    cser = cseries.Cseries(test_db)
     try:
         cser.open_database()
         if subcmd == 'list':
@@ -258,11 +259,19 @@ def patchwork_series(subcmd):
 
             for name, ser in sdict.items():
                 print(ser.name)
+        elif subcmd == 'add':
+            ser = Series()
+            ser.name = args[0]
+            if len(args) > 1:
+                ser.desc = args[1]
+            cser.add_series(ser)
+        else:
+            raise ValueError(f"Unknown series subcommand '{subcmd}'")
     finally:
         cser.close_database()
 
 
-def do_patman(args, ):
+def do_patman(args):
     if args.cmd == 'send':
         # Called from git with a patch filename as argument
         # Printout a list of additional CC recipients for this patch
@@ -285,7 +294,6 @@ def do_patman(args, ):
             if not args.process_tags:
                 args.ignore_bad_tags = True
             send(args)
-        return
 
     ret_code = 0
     try:
@@ -295,7 +303,7 @@ def do_patman(args, ):
                              args.dest_branch, args.force, args.show_comments,
                              args.patchwork_url)
         elif args.cmd == 'series':
-            patchwork_series(args.subcmd)
+            patchwork_series(args.subcmd, args.args)
     except Exception as exc:
         terminal.tprint(f'patman: {type(exc).__name__}: {exc}',
                         colour=terminal.Color.RED)
