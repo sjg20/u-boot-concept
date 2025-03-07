@@ -27,6 +27,7 @@ from patman import control
 from u_boot_pylib import terminal
 from u_boot_pylib import test_util
 from u_boot_pylib import tools
+from u_boot_pylib import tout
 
 
 def run_patman():
@@ -40,17 +41,19 @@ def run_patman():
     if not args.debug:
         sys.tracebacklimit = 0
 
+    tout.init(tout.INFO if args.verbose else tout.WARNING)
+
     # Run our meagre tests
     if args.cmd == 'test':
         # pylint: disable=C0415
         from patman import func_test
         from patman import test_checkpatch
 
+        to_run = args.testname if args.testname not in [None, 'test'] else None
         result = test_util.run_test_suites(
-            'patman', False, False, False, None, None, None,
+            'patman', False, False, False, None, to_run, None,
             [test_checkpatch.TestPatch, func_test.TestFunctional,
              'settings'])
-
         sys.exit(0 if result.wasSuccessful() else 1)
 
     # Process commits, produce patches files, check them, email them

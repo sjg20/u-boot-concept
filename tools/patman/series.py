@@ -32,6 +32,9 @@ class Series(dict):
         changes: (dict) List of changes for each version, The key is
             the integer version number
         allow_overwrite: Allow tags to overwrite an existing tag
+        base_commit (Commit): Commit object at the base of this series
+        branch (str): Branch name of this series
+        desc (str): Description of the series
     """
     def __init__(self):
         self.cc = []
@@ -44,6 +47,7 @@ class Series(dict):
         self.allow_overwrite = False
         self.base_commit = None
         self.branch = None
+        self.desc = ''
 
         # Written in MakeCcFile()
         #  key: name of patch file

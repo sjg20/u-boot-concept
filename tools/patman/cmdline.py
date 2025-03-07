@@ -125,6 +125,12 @@ def parse_args():
     status.add_argument('-f', '--force', action='store_true',
                         help='Force overwriting an existing branch')
 
+    series = subparsers.add_parser('series', help='Manage series of patches')
+    # series_sub = series.add_subparsers(dest='subcmd')
+    # series.add_argument('subcmd', help='series subcommand')
+
+    # series_sub = series.add_subparsers(dest='subcmd')
+
     # Parse options twice: first to get the project and second to handle
     # defaults properly (which depends on project)
     # Use parse_known_args() in case 'cmd' is omitted
