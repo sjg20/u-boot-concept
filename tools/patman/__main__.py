@@ -58,7 +58,8 @@ def run_patman():
 
     # Process commits, produce patches files, check them, email them
     else:
-        control.do_patman(args)
+        exit_code = control.do_patman(args)
+        sys.exit(exit_code)
 
 
 if __name__ == "__main__":

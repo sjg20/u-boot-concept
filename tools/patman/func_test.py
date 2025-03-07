@@ -47,6 +47,11 @@ def directory_excursion(directory):
         os.chdir(current)
 
 
+class Namespace:
+    def __init__(self, **kwargs):
+        self.__dict__.update(kwargs)
+
+
 class TestFunctional(unittest.TestCase):
     """Functional tests for checking that patman behaves correctly"""
     leb = (b'Lord Edmund Blackadd\xc3\xabr <weasel@blackadder.org>'.
@@ -1451,3 +1456,8 @@ second line.'''
         cser.close_database()
 
     def test_do_series_add(self):
+        args = Namespace()
+        args.cmd = 'series'
+        args.debug = False
+        args.subcmd = 'list'
+        control.do_patman(args)
