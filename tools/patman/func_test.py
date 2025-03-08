@@ -69,7 +69,8 @@ class TestFunctional(unittest.TestCase):
         tout.init(allow_colour=False)
 
     def tearDown(self):
-        shutil.rmtree(self.tmpdir)
+        # shutil.rmtree(self.tmpdir)
+        print(self.tmpdir)
         terminal.set_print_test_mode(False)
 
     @staticmethod
@@ -1421,12 +1422,18 @@ second line.'''
         cser.close_database()
 
     def get_database(self):
+        """Open the database and silence the warning output
+
+        Return:
+            Cseries: Resulting Cseries object
+        """
         cser = cseries.Cseries(self.tmpdir)
         with capture_sys_output() as _:
             cser.open_database()
         return cser
 
     def test_series_add(self):
+        """Test adding a new cseries"""
         self.make_git_tree()
         cser = self.get_database()
         self.assertFalse(cser.get_series_dict())
@@ -1440,6 +1447,7 @@ second line.'''
         cser.close_database()
 
     def test_series_list(self):
+        """Test listing cseries"""
         self.make_git_tree()
         cser = self.get_database()
         ser = Series()
@@ -1458,11 +1466,29 @@ second line.'''
         cser.close_database()
 
     def test_do_series_add(self):
+        """Add a new cseries"""
         self.make_git_tree()
         args = Namespace()
         args = ['first', 'my-description']
         with capture_sys_output() as (out, _):
             control.patchwork_series('add', args, test_db=self.tmpdir)
+
+        cser = self.get_database()
+        slist = cser.get_series_dict()
+        self.assertEqual(1, len(slist))
+        ser = slist.get('first')
+        self.assertTrue(ser)
+        self.assertEqual('first', ser.name)
+        self.assertEqual('my-description', ser.desc)
+        cser.close_database()
+
+    def test_do_series_add_auto(self):
+        """Add a new cseries without any arguments"""
+        self.make_git_tree()
+        args = Namespace()
+        gitutil.checkout('first', self.gitdir, force=True)
+        # with capture_sys_output() as (out, _):
+        control.patchwork_series('add', [], test_db=self.tmpdir)
 
         cser = self.get_database()
         slist = cser.get_series_dict()

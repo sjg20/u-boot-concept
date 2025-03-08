@@ -260,7 +260,11 @@ def patchwork_series(subcmd, args, test_db=None):
                 print(ser.name)
         elif subcmd == 'add':
             ser = Series()
-            ser.name = args[0]
+            if args:
+                ser.name = args[0]
+            else:
+                ser.name = gitutil.get_branch(cser.gitdir)
+                print('name', ser.name)
             if len(args) > 1:
                 ser.desc = args[1]
             cser.add_series(ser)
