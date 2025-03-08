@@ -1486,15 +1486,17 @@ second line.'''
         """Add a new cseries without any arguments"""
         self.make_git_tree()
         args = Namespace()
-        gitutil.checkout('first', self.gitdir, force=True)
+
+        # Use the 'second' branch, which has a cover letter
+        gitutil.checkout('second', self.gitdir, force=True)
         # with capture_sys_output() as (out, _):
         control.patchwork_series('add', [], test_db=self.tmpdir)
 
         cser = self.get_database()
         slist = cser.get_series_dict()
         self.assertEqual(1, len(slist))
-        ser = slist.get('first')
+        ser = slist.get('second')
         self.assertTrue(ser)
-        self.assertEqual('first', ser.name)
-        self.assertEqual('my-description', ser.desc)
+        self.assertEqual('second', ser.name)
+        self.assertEqual('Series for my board', ser.desc)
         cser.close_database()

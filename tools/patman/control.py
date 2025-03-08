@@ -264,9 +264,19 @@ def patchwork_series(subcmd, args, test_db=None):
                 ser.name = args[0]
             else:
                 ser.name = gitutil.get_branch(cser.gitdir)
-                print('name', ser.name)
             if len(args) > 1:
                 ser.desc = args[1]
+            else:
+                count = gitutil.count_commits_to_branch(ser.name, cser.gitdir)
+                if not count:
+                    raise ValueError('Cannot detect branch automatically')
+
+                series = patchstream.get_metadata(ser.name, 0, count,
+                                                  git_dir=cser.gitdir)
+                if not series.cover:
+                    raise ValueError("Branch '{ser.name}' has no cover letter")
+                ser.desc = series.cover[0]
+
             cser.add_series(ser)
         else:
             raise ValueError(f"Unknown series subcommand '{subcmd}'")
