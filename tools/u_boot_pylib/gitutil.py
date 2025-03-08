@@ -48,7 +48,7 @@ def log_cmd(commit_range, git_dir=None, oneline=False, reverse=False,
     return cmd
 
 
-def count_commits_to_branch(branch):
+def count_commits_to_branch(branch, git_dir=None):
     """Returns number of commits between HEAD and the tracking branch.
 
     This looks back to the tracking branch and works out the number of commits
@@ -61,11 +61,11 @@ def count_commits_to_branch(branch):
         Number of patches that exist on top of the branch
     """
     if branch:
-        us, _ = get_upstream('.git', branch)
+        us, _ = get_upstream(git_dir or '.git', branch)
         rev_range = f'{us}..{branch}'
     else:
         rev_range = '@{upstream}..'
-    cmd = log_cmd(rev_range, oneline=True)
+    cmd = log_cmd(rev_range, git_dir=git_dir, oneline=True)
     result = command.run_one(*cmd, capture=True, capture_stderr=True,
                              oneline=True, raise_on_error=False)
     if result.return_code:
@@ -701,7 +701,7 @@ def setup():
                        .return_code == 0)
 
 
-def get_hash(spec):
+def get_hash(spec, git_dir=None):
     """Get the hash of a commit
 
     Args:
@@ -710,8 +710,11 @@ def get_hash(spec):
     Returns:
         str: Hash of commit
     """
-    return command.output_one_line('git', 'show', '-s', '--pretty=format:%H',
-                                   spec)
+    cmd = ['git']
+    if git_dir:
+        cmd += ['--git-dir', git_dir]
+    cmd += ['show', '-s', '--pretty=format:%H', spec]
+    return command.output_one_line(*cmd)
 
 
 def get_head():
@@ -755,6 +758,31 @@ def check_branch(name, git_dir=None):
     # This produces '  <name>' or '* <name>'
     out = command.output(*cmd).rstrip()
     return out[2:] == name
+
+
+def get_commit_message(commit, git_dir=None):
+    """Gets the commit message for a commit
+
+    Args:
+        commit (str): commit to check
+        git_dir (str): Path to git repository (None to use default)
+
+    Return:
+        list of str: Lines from the commit message
+    """
+    cmd = ['git']
+    if git_dir:
+        cmd += ['--git-dir', git_dir]
+    cmd += ['show', '--quiet', commit]
+
+    out = command.output(*cmd)
+    # the header is followed by a blank line
+    lines = out.splitlines()
+    empty = lines.index('')
+    msg = lines[empty + 1:]
+    unindented = [line[4:] for line in msg]
+
+    return unindented
 
 
 if __name__ == "__main__":
