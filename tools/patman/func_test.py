@@ -69,8 +69,8 @@ class TestFunctional(unittest.TestCase):
         tout.init(allow_colour=False)
 
     def tearDown(self):
-        # shutil.rmtree(self.tmpdir)
-        print(self.tmpdir)
+        shutil.rmtree(self.tmpdir)
+        # print(self.tmpdir)
         terminal.set_print_test_mode(False)
 
     @staticmethod
@@ -1489,8 +1489,8 @@ second line.'''
 
         # Use the 'second' branch, which has a cover letter
         gitutil.checkout('second', self.gitdir, force=True)
-        # with capture_sys_output() as (out, _):
-        control.patchwork_series('add', [], test_db=self.tmpdir)
+        with capture_sys_output() as (out, _):
+            control.patchwork_series('add', [], test_db=self.tmpdir)
 
         cser = self.get_database()
         slist = cser.get_series_dict()
