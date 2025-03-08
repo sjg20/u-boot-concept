@@ -508,7 +508,7 @@ complicated as possible''')
         control.setup()
         orig_dir = os.getcwd()
         try:
-            os.chdir(self.gitdir)
+            os.chdir(self.tmpdir)
 
             # Check that it can detect the current branch
             self.assertEqual(2, gitutil.count_commits_to_branch(None))
@@ -555,7 +555,7 @@ complicated as possible''')
     def test_custom_get_maintainer_script(self):
         """Validate that a custom get_maintainer script gets used."""
         self.make_git_tree()
-        with directory_excursion(self.gitdir):
+        with directory_excursion(self.tmpdir):
             # Setup git.
             os.environ['GIT_CONFIG_GLOBAL'] = '/dev/null'
             os.environ['GIT_CONFIG_SYSTEM'] = '/dev/null'
@@ -1069,7 +1069,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         branch = 'first'
         dest_branch = 'first2'
         count = 2
-        gitdir = os.path.join(self.gitdir, '.git')
+        gitdir = self.gitdir
 
         # Set up the test git tree. We use branch 'first' which has two commits
         # in it
@@ -1440,32 +1440,34 @@ second line.'''
         cser.close_database()
 
     def test_series_list(self):
+        self.make_git_tree()
         cser = self.get_database()
         ser = Series()
-        ser.name = 'fred'
+        ser.name = 'first'
         cser.add_series(ser)
         ser = Series()
-        ser.name = 'mary'
+        ser.name = 'second'
         cser.add_series(ser)
 
         with capture_sys_output() as (out, _):
-            cser.do_list()
+            control.patchwork_series('list', [], test_db=self.tmpdir)
         lines = out.getvalue().splitlines()
         self.assertEqual(2, len(lines))
-        self.assertEqual('fred', lines[0])
-        self.assertEqual('mary', lines[1])
+        self.assertEqual('first', lines[0])
+        self.assertEqual('second', lines[1])
         cser.close_database()
 
     def test_do_series_add(self):
         self.make_git_tree()
         args = Namespace()
         args = ['first', 'my-description']
-        control.patchwork_series('add', args, test_db=self.tmpdir)
+        with capture_sys_output() as (out, _):
+            control.patchwork_series('add', args, test_db=self.tmpdir)
 
         cser = self.get_database()
         slist = cser.get_series_dict()
         self.assertEqual(1, len(slist))
-        ser = slist.get('fred')
+        ser = slist.get('first')
         self.assertTrue(ser)
         self.assertEqual('first', ser.name)
         self.assertEqual('my-description', ser.desc)
