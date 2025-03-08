@@ -741,16 +741,11 @@ def check_branch(name, git_dir=None):
     Args:
         name (str): Name of the branch to check
     """
-    '--git-dir', git_dir
     cmd = ['git']
     if git_dir:
         cmd += ['--git-dir', git_dir]
     cmd += ['branch', '--list', name]
     out = command.output_one_line(*cmd)
-    # result = command.run_one(*cmd, capture=True, capture_stderr=True,
-                             # oneline=True, raise_on_error=False)
-    # print(f"check '{name}': '{out}'")
-    # return result.stdout.strip() == name
     return out == name
 
 
