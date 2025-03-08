@@ -723,13 +723,18 @@ def get_head():
     return get_hash('HEAD')
 
 
-def get_branch():
+def get_branch(git_dir=None):
     """Get the branch we are currently on
 
     Return:
         str: branch name, or None if none
+        git_dir (str): Path to git repository (None to use default)
     """
-    out = command.output_one_line('git', 'rev-parse', '--abbrev-ref', 'HEAD')
+    cmd = ['git']
+    if git_dir:
+        cmd += ['--git-dir', git_dir]
+    cmd += ['rev-parse', '--abbrev-ref', 'HEAD']
+    out = command.output_one_line(*cmd)
     if out == 'HEAD':
         return None
     return out
@@ -740,13 +745,16 @@ def check_branch(name, git_dir=None):
 
     Args:
         name (str): Name of the branch to check
+        git_dir (str): Path to git repository (None to use default)
     """
     cmd = ['git']
     if git_dir:
         cmd += ['--git-dir', git_dir]
     cmd += ['branch', '--list', name]
-    out = command.output_one_line(*cmd)
-    return out == name
+
+    # This produces '  <name>' or '* <name>'
+    out = command.output(*cmd).rstrip()
+    return out[2:] == name
 
 
 if __name__ == "__main__":
