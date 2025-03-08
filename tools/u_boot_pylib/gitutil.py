@@ -747,7 +747,11 @@ def check_branch(name, git_dir=None):
         cmd += ['--git-dir', git_dir]
     cmd += ['branch', '--list', name]
     out = command.output_one_line(*cmd)
-    return out.strip() == name
+    # result = command.run_one(*cmd, capture=True, capture_stderr=True,
+                             # oneline=True, raise_on_error=False)
+    # print(f"check '{name}': '{out}'")
+    # return result.stdout.strip() == name
+    return out == name
 
 
 if __name__ == "__main__":
