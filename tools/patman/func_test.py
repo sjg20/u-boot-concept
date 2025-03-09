@@ -1485,10 +1485,10 @@ second line.'''
     def test_do_series_add_auto(self):
         """Add a new cseries without any arguments"""
         self.make_git_tree()
-        args = Namespace()
 
         # Use the 'second' branch, which has a cover letter
-        gitutil.checkout('second', self.gitdir, force=True)
+        gitutil.checkout('second', self.gitdir, work_tree=self.tmpdir,
+                         force=True)
         with capture_sys_output() as (out, _):
             control.patchwork_series('add', [], None, test_db=self.tmpdir)
 
