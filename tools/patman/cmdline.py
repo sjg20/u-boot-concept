@@ -32,33 +32,35 @@ def parse_args():
         them as specified by tags you place in the commits. Use -n to do a dry
         run first.'''
 
-    parser = argparse.ArgumentParser(epilog=epilog)
-    parser.add_argument('-b', '--branch', type=str,
+    parent = argparse.ArgumentParser(epilog=epilog, add_help=False)
+    parent.add_argument('-b', '--branch', type=str,
         help="Branch to process (by default, the current branch)")
-    parser.add_argument('-c', '--count', dest='count', type=int,
+    parent.add_argument('-c', '--count', dest='count', type=int,
         default=-1, help='Automatically create patches from top n commits')
-    parser.add_argument('-e', '--end', type=int, default=0,
+    parent.add_argument('-e', '--end', type=int, default=0,
         help='Commits to skip at end of patch list')
-    parser.add_argument('-D', '--debug', action='store_true',
+    parent.add_argument('-D', '--debug', action='store_true',
         help='Enabling debugging (provides a full traceback on error)')
-    parser.add_argument('-p', '--project', default=project.detect_project(),
+    parent.add_argument('-p', '--project', default=project.detect_project(),
                         help="Project name; affects default option values and "
                         "aliases [default: %(default)s]")
-    parser.add_argument('-P', '--patchwork-url',
+    parent.add_argument('-P', '--patchwork-url',
                         default='https://patchwork.ozlabs.org',
                         help='URL of patchwork server [default: %(default)s]')
-    parser.add_argument('-s', '--start', dest='start', type=int,
+    parent.add_argument('-s', '--start', dest='start', type=int,
         default=0, help='Commit to start creating patches from (0 = HEAD)')
-    parser.add_argument(
+    parent.add_argument(
         '-v', '--verbose', action='store_true', dest='verbose', default=False,
         help='Verbose output of errors and warnings')
-    parser.add_argument(
+    parent.add_argument(
         '-H', '--full-help', action='store_true', dest='full_help',
         default=False, help='Display the README file')
 
-    subparsers = parser.add_subparsers(dest='cmd')
+    main_parser = argparse.ArgumentParser()
+    subparsers = main_parser.add_subparsers(dest='cmd')
     send = subparsers.add_parser(
-        'send', help='Format, check and email patches (default command)')
+        'send', help='Format, check and email patches (default command)',
+        parents=[parent])
     send.add_argument('-i', '--ignore-errors', action='store_true',
            dest='ignore_errors', default=False,
            help='Send patches email even if patch errors are found')
@@ -111,11 +113,12 @@ def parse_args():
 
     # Only add the 'test' action if the test data files are available.
     if HAS_TESTS:
-        test_parser = subparsers.add_parser('test', help='Run tests')
+        test_parser = subparsers.add_parser('test', help='Run tests',
+                                            parents=[parent])
         test_parser.add_argument('testname', type=str, default=None, nargs='?',
                                  help="Specify the test to run")
 
-    status = subparsers.add_parser('status',
+    status = subparsers.add_parser('status', parents=[parent],
                                    help='Check status of patches in patchwork')
     status.add_argument('-C', '--show-comments', action='store_true',
                         help='Show comments from each patch')
@@ -125,7 +128,8 @@ def parse_args():
     status.add_argument('-f', '--force', action='store_true',
                         help='Force overwriting an existing branch')
 
-    series = subparsers.add_parser('series', help='Manage series of patches')
+    series = subparsers.add_parser('series', help='Manage series of patches',
+                                   parents=[parent])
     series_sub = series.add_subparsers(dest='subcmd')
     # series.add_argument('subcmd', help='series subcommand')
 
@@ -135,20 +139,23 @@ def parse_args():
     # defaults properly (which depends on project)
     # Use parse_known_args() in case 'cmd' is omitted
     argv = sys.argv[1:]
-    args, rest = parser.parse_known_args(argv)
+    print('1')
+    args, rest = main_parser.parse_known_args(argv)
     if hasattr(args, 'project'):
-        settings.Setup(parser, args.project)
-        args, rest = parser.parse_known_args(argv)
+        settings.Setup(main_parser, args.project)
+        print('2')
+        args, rest = main_parser.parse_known_args(argv)
 
     # If we have a command, it is safe to parse all arguments
+    print('3')
     if args.cmd:
-        args = parser.parse_args(argv)
+        args = main_parser.parse_args(argv)
     else:
         # No command, so insert it after the known arguments and before the ones
         # that presumably relate to the 'send' subcommand
         nargs = len(rest)
         argv = argv[:-nargs] + ['send'] + rest
-        args = parser.parse_args(argv)
+        args = main_parser.parse_args(argv)
 
     print('process_tags', args.process_tags)
 
