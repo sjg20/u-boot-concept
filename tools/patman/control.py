@@ -285,7 +285,7 @@ def patchwork_series(subcmd, args, series, test_db=None):
             cser.add_series(ser)
         elif subcmd == 'link':
             ser = cser.parse_series(series)
-            cser.add_link(ser, 4, args[0])
+            cser.add_link(ser, 4, args[0], args.update)
         else:
             raise ValueError(f"Unknown series subcommand '{subcmd}'")
     finally:

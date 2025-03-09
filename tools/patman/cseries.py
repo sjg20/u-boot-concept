@@ -117,8 +117,24 @@ class Cseries:
         ser.id, ser.name, ser.desc = desc = all[0]
         return ser
 
-    def add_link(self, ser, version, link):
-        """Add / update a series-link link for a series"""
+    def add_link(self, ser, version, link, update_commit):
+        """Add / update a series-link link for a series
+
+        Args:
+            ser (Series): Series object containing the ID
+            version (int): Version number
+            link (str): Patchwork link-string for the series
+            update_commit (bool): True to update the current commit with the
+                link
+        """
+        if update_commit:
+            if gitutil.get_branch(self.gitdir) != ser.name:
+                raise ValueError(f"Cannot update as not on branch '{ser.name}'")
+            repo = pygit2.init_repository(self.gitdir)
+            commit = repo.head.peel(pygit2.GIT_OBJ_COMMIT)
+            new_msg = commit.message + f'\nSeries-links: {link}'
+            amended = repo.create_commit(message=new_msg)
+            repo.head.set_target(amended)
 
         res = self.cur.execute(
             'INSERT INTO patchwork (version, link, series_id) VALUES'
