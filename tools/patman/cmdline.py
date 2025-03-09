@@ -130,6 +130,8 @@ def parse_args(argv=None):
 
     series = subparsers.add_parser('series', help='Manage series of patches')
     series.add_argument('-s', '--series', help='Name of series')
+    series.add_argument('-u', '--update', action='store_true',
+                        help='Update the branch commit')
     # series_sub = series.add_subparsers(dest='subcmd')
     # series.add_argument('subcmd', help='series subcommand')
 

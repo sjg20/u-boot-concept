@@ -269,11 +269,7 @@ def patchwork_series(subcmd, args, series, test_db=None):
             for name, ser in sdict.items():
                 print(ser.name)
         elif subcmd == 'add':
-            ser = Series()
-            if series:
-                ser.name = series
-            else:
-                ser.name = gitutil.get_branch(cser.gitdir)
+            ser = cser.parse_series(series)
             if args:
                 ser.desc = args[0]
             else:
@@ -288,6 +284,9 @@ def patchwork_series(subcmd, args, series, test_db=None):
                 ser.desc = series.cover[0]
 
             cser.add_series(ser)
+        elif subcmd == 'link':
+            ser = cser.parse_series(series)
+            cser.add_link(ser, 4, args[0])
         else:
             raise ValueError(f"Unknown series subcommand '{subcmd}'")
     finally:
