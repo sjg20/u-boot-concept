@@ -286,6 +286,8 @@ def patchwork_series(args, test_db=None):
             cser.add_link(ser, 4, args.extra[0], args.update)
         elif args.subcmd == 'archive':
             cser.set_archived(args.series, True)
+        elif args.subcmd == 'unarchive':
+            cser.set_archived(args.series, False)
         else:
             raise ValueError(f"Unknown series subcommand '{args.subcmd}'")
     finally:

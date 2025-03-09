@@ -1603,6 +1603,10 @@ second line.'''
         self.assertEqual(1, len(slist))
         self.assertEqual('first', slist['first'].name)
 
+        # or we unarchive it
+        cser.set_archived('first', False)
+        slist = cser.get_series_dict()
+        self.assertEqual(1, len(slist))
         cser.close_database()
 
     def test_series_archive_cmdline(self):
@@ -1620,8 +1624,8 @@ second line.'''
         # Archive it and make sure it is invisible
         cser.close_database()
         self.run_args('series', 'archive', '-s', 'first')
-
         cser.open_database()
+
         slist = cser.get_series_dict()
         self.assertFalse(slist)
 
@@ -1629,5 +1633,12 @@ second line.'''
         slist = cser.get_series_dict(include_archived=True)
         self.assertEqual(1, len(slist))
         self.assertEqual('first', slist['first'].name)
+
+        # or we unarchive it
+        cser.close_database()
+        self.run_args('series', 'unarchive', '-s', 'first')
+        cser.open_database()
+        slist = cser.get_series_dict()
+        self.assertEqual(1, len(slist))
 
         cser.close_database()
