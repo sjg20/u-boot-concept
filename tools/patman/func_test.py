@@ -16,6 +16,7 @@ import tempfile
 import unittest
 
 
+from patman import cmdline
 from patman.commit import Commit
 from patman import control
 from patman import cseries
@@ -1501,6 +1502,28 @@ second line.'''
         args = ['my-description']
         with capture_sys_output() as (out, _):
             control.patchwork_series('add', args, 'first', test_db=self.tmpdir)
+
+        cser = self.get_database()
+        slist = cser.get_series_dict()
+        self.assertEqual(1, len(slist))
+        ser = slist.get('first')
+        self.assertTrue(ser)
+        self.assertEqual('first', ser.name)
+        self.assertEqual('my-description', ser.desc)
+        cser.close_database()
+
+    def run_args(self, *argv):
+        args = cmdline.parse_args(argv)
+        exit_code = control.do_patman(args, self.tmpdir)
+        return exit_code
+
+    def test_do_series_add_cmdline(self):
+        """Add a new cseries"""
+        self.make_git_tree()
+        args = Namespace()
+        args = ['my-description']
+        # with capture_sys_output() as (out, _):
+        self.run_args('series', 'add', '-s', 'first', 'my-description')
 
         cser = self.get_database()
         slist = cser.get_series_dict()

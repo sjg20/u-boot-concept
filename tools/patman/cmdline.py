@@ -20,8 +20,11 @@ from patman import settings
 PATMAN_DIR = pathlib.Path(__file__).parent
 HAS_TESTS = os.path.exists(PATMAN_DIR / "func_test.py")
 
-def parse_args():
+def parse_args(argv=None):
     """Parse command line arguments from sys.argv[]
+
+    Args:
+        argv (str or None): Arguments to process, or None to use sys.argv[1:]
 
     Returns:
         tuple containing:
@@ -132,18 +135,22 @@ def parse_args():
 
     # series_sub = series.add_subparsers(dest='subcmd')
 
+    # series.add_argument('extra', type=str, nargs='*')
+
     # Parse options twice: first to get the project and second to handle
     # defaults properly (which depends on project)
     # Use parse_known_args() in case 'cmd' is omitted
-    argv = sys.argv[1:]
+    if not argv:
+        argv = sys.argv[1:]
     args, rest = parser.parse_known_args(argv)
     if hasattr(args, 'project'):
-        settings.Setup(parser, args.project)
+        settings.Setup(parser, args.project, argv)
         args, rest = parser.parse_known_args(argv)
 
     # If we have a command, it is safe to parse all arguments
     if args.cmd:
-        args = parser.parse_args(argv)
+        args, extra = parser.parse_known_args(argv)
+        args.extra = extra
     else:
         # No command, so insert it after the known arguments and before the ones
         # that presumably relate to the 'send' subcommand
