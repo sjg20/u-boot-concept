@@ -10,6 +10,8 @@ import os
 import sqlite3
 from sqlite3 import OperationalError
 
+import pygit2
+
 from patman import series
 from patman.series import Series
 from u_boot_pylib import gitutil
@@ -133,7 +135,7 @@ class Cseries:
             repo = pygit2.init_repository(self.gitdir)
             commit = repo.head.peel(pygit2.GIT_OBJ_COMMIT)
             new_msg = commit.message + f'\nSeries-links: {link}'
-            amended = repo.create_commit(message=new_msg)
+            amended = repo.amend_commit(commit, 'HEAD', message=new_msg)
             repo.head.set_target(amended)
 
         res = self.cur.execute(
@@ -162,4 +164,8 @@ class Cseries:
         """
         if not name:
             name = gitutil.get_branch(self.gitdir)
-        return self.get_series_by_name(name)
+        ser = self.get_series_by_name(name)
+        if not ser:
+            ser = Series()
+            ser.name = name
+        return ser
