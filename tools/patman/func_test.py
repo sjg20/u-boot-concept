@@ -1433,10 +1433,18 @@ second line.'''
             cser.open_database()
         return cser
 
+    def get_cser(self):
+        """Set up a git tree and database
+
+        Return:
+            Cseries: object
+        """
+        self.make_git_tree()
+        return self.get_database()
+
     def test_series_add(self):
         """Test adding a new cseries"""
-        self.make_git_tree()
-        cser = self.get_database()
+        cser = self.get_cser()
         self.assertFalse(cser.get_series_dict())
 
         ser = Series()
@@ -1449,8 +1457,7 @@ second line.'''
 
     def test_series_list(self):
         """Test listing cseries"""
-        self.make_git_tree()
-        cser = self.get_database()
+        cser = self.get_cser()
         ser = Series()
         ser.name = 'first'
         cser.add_series(ser)
@@ -1535,8 +1542,7 @@ second line.'''
 
     def test_series_link(self):
         """Test adding a patchwork link to a cseries"""
-        self.make_git_tree()
-        cser = self.get_database()
+        cser = self.get_cser()
 
         gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
                          force=True)
@@ -1554,8 +1560,7 @@ second line.'''
 
     def test_series_link_cmdline(self):
         """Test adding a patchwork link to a cseries using the cmdline"""
-        self.make_git_tree()
-        cser = self.get_database()
+        cser = self.get_cser()
 
         gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
                          force=True)
@@ -1573,5 +1578,29 @@ second line.'''
 
         series = patchstream.get_metadata_for_list('first', self.gitdir, 1)
         self.assertEqual('1234', series.links)
+
+        cser.close_database()
+
+    def test_series_archive(self):
+        """Test marking a series as archived"""
+        cser = self.get_cser()
+        ser = Series()
+        ser.name = 'first'
+        cser.add_series(ser)
+
+        # Check the series is visible in the list
+        slist = cser.get_series_dict()
+        self.assertEqual(1, len(slist))
+        self.assertEqual('first', slist['first'].name)
+
+        # Archive it and make sure it is invisible
+        cser.set_archived('first', True)
+        slist = cser.get_series_dict()
+        self.assertFalse(slist)
+
+        # ...unless we include archived items
+        slist = cser.get_series_dict(include_archived=True)
+        self.assertEqual(1, len(slist))
+        self.assertEqual('first', slist['first'].name)
 
         cser.close_database()
