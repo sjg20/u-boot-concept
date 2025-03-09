@@ -293,7 +293,7 @@ def patchwork_series(subcmd, args, series, test_db=None):
         cser.close_database()
 
 
-def do_patman(args):
+def do_patman(args, test_db=None):
     if args.cmd == 'send':
         # Called from git with a patch filename as argument
         # Printout a list of additional CC recipients for this patch
@@ -325,7 +325,10 @@ def do_patman(args):
                              args.dest_branch, args.force, args.show_comments,
                              args.patchwork_url)
         elif args.cmd == 'series':
-            patchwork_series(args.subcmd, args.args, args.series)
+            if not args.extra:
+                raise ValueError('patman series requires a subcommand')
+            subcmd = args.extra.pop(0)
+            patchwork_series(subcmd, args.extra, args.series, test_db)
     except Exception as exc:
         terminal.tprint(f'patman: {type(exc).__name__}: {exc}',
                         colour=terminal.Color.RED)

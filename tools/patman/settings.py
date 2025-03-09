@@ -226,7 +226,7 @@ nxp = Zhikang Zhang <zhikang.zhang@nxp.com>
     f.close()
 
 
-def _UpdateDefaults(main_parser, config):
+def _UpdateDefaults(main_parser, config, argv):
     """Update the given OptionParser defaults based on config.
 
     We'll walk through all of the settings from all parsers.
@@ -242,6 +242,7 @@ def _UpdateDefaults(main_parser, config):
             updated.
         config: An instance of _ProjectConfigParser that we will query
             for settings.
+        argv (list of str or None): Arguments to parse
     """
     # Find all the parsers and subparsers
     parsers = [main_parser]
@@ -253,7 +254,7 @@ def _UpdateDefaults(main_parser, config):
     defaults = {}
     parser_defaults = []
     for parser in parsers:
-        pdefs = parser.parse_known_args()[0]
+        pdefs = parser.parse_known_args(argv)[0]
         parser_defaults.append(pdefs)
         defaults.update(vars(pdefs))
 
@@ -334,7 +335,7 @@ def GetItems(config, section):
         return []
 
 
-def Setup(parser, project_name, config_fname=None):
+def Setup(parser, project_name, argv, config_fname=None):
     """Set up the settings module by reading config files.
 
     Unless `config_fname` is specified, a `.patman` config file local
@@ -349,6 +350,7 @@ def Setup(parser, project_name, config_fname=None):
             for sections named "project_section" as well.
         config_fname:   Config filename to read.  An error is raised if it
             does not exist.
+        argv (list of str or None): Arguments to parse, or None for default
     """
     # First read the git alias file if available
     _ReadAliasFile('doc/git-mailrc')
@@ -382,7 +384,7 @@ def Setup(parser, project_name, config_fname=None):
     for name, value in GetItems(config, 'bounces'):
         bounces.add(value)
 
-    _UpdateDefaults(parser, config)
+    _UpdateDefaults(parser, config, argv)
 
 
 # These are the aliases we understand, indexed by alias. Each member is a list.
