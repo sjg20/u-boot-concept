@@ -1486,15 +1486,15 @@ second line.'''
     def run_args(self, *argv):
         args = cmdline.parse_args(argv)
         exit_code = control.do_patman(args, self.tmpdir)
-        return exit_code
+        self.assertEqual(0, exit_code)
 
     def test_do_series_add_cmdline(self):
-        """Add a new cseries"""
+        """Add a new cseries using the cmdline"""
         self.make_git_tree()
         args = Namespace()
         args = ['my-description']
-        # with capture_sys_output() as (out, _):
-        self.run_args('series', 'add', '-s', 'first', 'my-description')
+        with capture_sys_output() as (out, _):
+            self.run_args('series', 'add', '-s', 'first', 'my-description')
 
         cser = self.get_database()
         slist = cser.get_series_dict()
@@ -1533,5 +1533,24 @@ second line.'''
         ser.name = 'first'
         cser.add_series(ser)
         cser.add_link(ser, 4, '1234')
+        self.assertEqual('1234', cser.get_link(ser, 4))
+        cser.close_database()
+
+    def test_series_link_cmdline(self):
+        """Test adding a patchwork link to a cseries using the cmdline"""
+        self.make_git_tree()
+        cser = self.get_database()
+
+        newser = Series()
+        newser.name = 'first'
+        cser.add_series(newser)
+
+        args = Namespace()
+        args = ['my-description']
+        # with capture_sys_output() as (out, _):
+        self.run_args('series', 'link', '-s', 'first', '-u', '1234')
+
+        ser = cser.get_series_by_name('first')
+        self.assertTrue(ser)
         self.assertEqual('1234', cser.get_link(ser, 4))
         cser.close_database()

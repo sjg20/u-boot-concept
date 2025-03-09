@@ -97,12 +97,33 @@ class Cseries:
         self.con.commit()
         ser.id = self.cur.lastrowid
 
+    def get_series_by_name(self, name):
+        """Get a Series object from the database by name
+
+        Args:
+            name (str): Name of series to get
+
+        Return:
+            Series: Object containing series info, or None if none
+        """
+        res = self.cur.execute(
+            f"SELECT id, name, desc FROM series WHERE name = '{name}'")
+        all = res.fetchall()
+        if not all:
+            return None
+        if len(all) > 1:
+            raise ValueError('Expected one match, but multiple matches found')
+        ser = Series()
+        ser.id, ser.name, ser.desc = desc = all[0]
+        return ser
+
     def add_link(self, ser, version, link):
         """Add / update a series-link link for a series"""
 
         res = self.cur.execute(
             'INSERT INTO patchwork (version, link, series_id) VALUES'
             f"('{version}', '{link}', {ser.id})")
+        self.con.commit()
 
     def get_link(self, ser, version):
         res = self.cur.execute('SELECT link FROM patchwork WHERE '
@@ -113,3 +134,16 @@ class Cseries:
         if len(all) > 1:
             raise ValueError('Expected one match, but multiple matches found')
         return all[0][0]
+
+    def parse_series(self, name):
+        """Parse the name of a series, or detect it from the current branch
+
+        Args:
+            name (str or None): name of series
+
+        Return:
+            Series: New object with the name and id set
+        """
+        if not name:
+            name = gitutil.get_branch(self.gitdir)
+        return self.get_series_by_name(name)
