@@ -249,28 +249,26 @@ def patchwork_status(branch, count, start, end, dest_branch, force,
                                   show_comments, url)
 
 
-def patchwork_series(subcmd, args, series, test_db=None):
+def patchwork_series(args, test_db=None):
     """Process a series subcommand
 
     Args:
-        subcmd (str): Subcommand to process
-        args (list of str): List of following arguments to process
-        series (str or None): Series name
+        args (Namespace): Arguments to process
         test_db (str or None): Directory containing the test database, None to
             use the normal one
     """
     cser = cseries.Cseries(test_db)
     try:
         cser.open_database()
-        if subcmd == 'list':
+        if args.subcmd == 'list':
             sdict = cser.get_series_dict()
 
             for name, ser in sdict.items():
                 print(ser.name)
-        elif subcmd == 'add':
-            ser = cser.parse_series(series)
-            if args:
-                ser.desc = args[0]
+        elif args.subcmd == 'add':
+            ser = cser.parse_series(args.series)
+            if args.extra:
+                ser.desc = args.extra[0]
             else:
                 count = gitutil.count_commits_to_branch(ser.name, cser.gitdir)
                 if not count:
@@ -283,11 +281,11 @@ def patchwork_series(subcmd, args, series, test_db=None):
                 ser.desc = series.cover[0]
 
             cser.add_series(ser)
-        elif subcmd == 'link':
-            ser = cser.parse_series(series)
-            cser.add_link(ser, 4, args[0], args.update)
+        elif args.subcmd == 'link':
+            ser = cser.parse_series(args.series)
+            cser.add_link(ser, 4, args.extra[0], args.update)
         else:
-            raise ValueError(f"Unknown series subcommand '{subcmd}'")
+            raise ValueError(f"Unknown series subcommand '{args.subcmd}'")
     finally:
         cser.close_database()
 
@@ -326,8 +324,8 @@ def do_patman(args, test_db=None):
         elif args.cmd == 'series':
             if not args.extra:
                 raise ValueError('patman series requires a subcommand')
-            subcmd = args.extra.pop(0)
-            patchwork_series(subcmd, args.extra, args.series, test_db)
+            args.subcmd = args.extra.pop(0)
+            patchwork_series(args, test_db)
     except Exception as exc:
         terminal.tprint(f'patman: {type(exc).__name__}: {exc}',
                         colour=terminal.Color.RED)

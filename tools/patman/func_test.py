@@ -1458,8 +1458,11 @@ second line.'''
         ser.name = 'second'
         cser.add_series(ser)
 
+        args = Namespace()
+        args.subcmd = 'list'
+        args.extra = []
         with capture_sys_output() as (out, _):
-            control.patchwork_series('list', [], None, test_db=self.tmpdir)
+            control.patchwork_series(args, test_db=self.tmpdir)
         lines = out.getvalue().splitlines()
         self.assertEqual(2, len(lines))
         self.assertEqual('first', lines[0])
@@ -1470,9 +1473,11 @@ second line.'''
         """Add a new cseries"""
         self.make_git_tree()
         args = Namespace()
-        args = ['my-description']
+        args.subcmd = 'add'
+        args.extra = ['my-description']
+        args.series = 'first'
         with capture_sys_output() as (out, _):
-            control.patchwork_series('add', args, 'first', test_db=self.tmpdir)
+            control.patchwork_series(args, test_db=self.tmpdir)
 
         cser = self.get_database()
         slist = cser.get_series_dict()
@@ -1484,7 +1489,7 @@ second line.'''
         cser.close_database()
 
     def run_args(self, *argv):
-        args = cmdline.parse_args(argv)
+        args = cmdline.parse_args(['-D'] + list(argv))
         exit_code = control.do_patman(args, self.tmpdir)
         self.assertEqual(0, exit_code)
 
@@ -1512,8 +1517,12 @@ second line.'''
         # Use the 'second' branch, which has a cover letter
         gitutil.checkout('second', self.gitdir, work_tree=self.tmpdir,
                          force=True)
+        args = Namespace()
+        args.subcmd = 'add'
+        args.extra = []
+        args.series = None
         with capture_sys_output() as (out, _):
-            control.patchwork_series('add', [], None, test_db=self.tmpdir)
+            control.patchwork_series(args, test_db=self.tmpdir)
 
         cser = self.get_database()
         slist = cser.get_series_dict()
@@ -1529,11 +1538,18 @@ second line.'''
         self.make_git_tree()
         cser = self.get_database()
 
+        gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
+                         force=True)
+
         ser = Series()
         ser.name = 'first'
         cser.add_series(ser)
         cser.add_link(ser, 4, '1234', True)
         self.assertEqual('1234', cser.get_link(ser, 4))
+
+        series = patchstream.get_metadata_for_list('first', self.gitdir, 1)
+        self.assertEqual('1234', series.links)
+
         cser.close_database()
 
     def test_series_link_cmdline(self):
@@ -1541,16 +1557,21 @@ second line.'''
         self.make_git_tree()
         cser = self.get_database()
 
+        gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
+                         force=True)
+
         newser = Series()
         newser.name = 'first'
         cser.add_series(newser)
 
-        args = Namespace()
-        args = ['my-description']
         # with capture_sys_output() as (out, _):
         self.run_args('series', 'link', '-s', 'first', '-u', '1234')
 
         ser = cser.get_series_by_name('first')
         self.assertTrue(ser)
         self.assertEqual('1234', cser.get_link(ser, 4))
+
+        series = patchstream.get_metadata_for_list('first', self.gitdir, 1)
+        self.assertEqual('1234', series.links)
+
         cser.close_database()
