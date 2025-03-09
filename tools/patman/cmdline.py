@@ -126,7 +126,8 @@ def parse_args():
                         help='Force overwriting an existing branch')
 
     series = subparsers.add_parser('series', help='Manage series of patches')
-    series_sub = series.add_subparsers(dest='subcmd')
+    series.add_argument('-s', '--series', help='Name of series')
+    # series_sub = series.add_subparsers(dest='subcmd')
     # series.add_argument('subcmd', help='series subcommand')
 
     # series_sub = series.add_subparsers(dest='subcmd')

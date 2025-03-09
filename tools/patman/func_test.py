@@ -1487,7 +1487,7 @@ second line.'''
         cser.add_series(ser)
 
         with capture_sys_output() as (out, _):
-            control.patchwork_series('list', [], test_db=self.tmpdir)
+            control.patchwork_series('list', [], None, test_db=self.tmpdir)
         lines = out.getvalue().splitlines()
         self.assertEqual(2, len(lines))
         self.assertEqual('first', lines[0])
@@ -1498,9 +1498,9 @@ second line.'''
         """Add a new cseries"""
         self.make_git_tree()
         args = Namespace()
-        args = ['first', 'my-description']
+        args = ['my-description']
         with capture_sys_output() as (out, _):
-            control.patchwork_series('add', args, test_db=self.tmpdir)
+            control.patchwork_series('add', args, 'first', test_db=self.tmpdir)
 
         cser = self.get_database()
         slist = cser.get_series_dict()
@@ -1519,7 +1519,7 @@ second line.'''
         # Use the 'second' branch, which has a cover letter
         gitutil.checkout('second', self.gitdir, force=True)
         with capture_sys_output() as (out, _):
-            control.patchwork_series('add', [], test_db=self.tmpdir)
+            control.patchwork_series('add', [], None, test_db=self.tmpdir)
 
         cser = self.get_database()
         slist = cser.get_series_dict()

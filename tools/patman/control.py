@@ -250,7 +250,16 @@ def patchwork_status(branch, count, start, end, dest_branch, force,
                                   show_comments, url)
 
 
-def patchwork_series(subcmd, args, test_db=None):
+def patchwork_series(subcmd, args, series, test_db=None):
+    """Process a series subcommand
+
+    Args:
+        subcmd (str): Subcommand to process
+        args (list of str): List of following arguments to process
+        series (str or None): Series name
+        test_db (str or None): Directory containing the test database, None to
+            use the normal one
+    """
     cser = cseries.Cseries(test_db)
     try:
         cser.open_database()
@@ -261,12 +270,12 @@ def patchwork_series(subcmd, args, test_db=None):
                 print(ser.name)
         elif subcmd == 'add':
             ser = Series()
-            if args:
-                ser.name = args[0]
+            if series:
+                ser.name = series
             else:
                 ser.name = gitutil.get_branch(cser.gitdir)
-            if len(args) > 1:
-                ser.desc = args[1]
+            if args:
+                ser.desc = args[0]
             else:
                 count = gitutil.count_commits_to_branch(ser.name, cser.gitdir)
                 if not count:
@@ -317,7 +326,7 @@ def do_patman(args):
                              args.dest_branch, args.force, args.show_comments,
                              args.patchwork_url)
         elif args.cmd == 'series':
-            patchwork_series(args.subcmd, args.args)
+            patchwork_series(args.subcmd, args.args, args.series)
     except Exception as exc:
         terminal.tprint(f'patman: {type(exc).__name__}: {exc}',
                         colour=terminal.Color.RED)
