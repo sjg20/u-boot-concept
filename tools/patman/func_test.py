@@ -1500,3 +1500,14 @@ second line.'''
         self.assertEqual('second', ser.name)
         self.assertEqual('Series for my board', ser.desc)
         cser.close_database()
+
+    def test_series_link(self):
+        """Test adding a patchwork link to a cseries"""
+        self.make_git_tree()
+        cser = self.get_database()
+
+        ser = Series()
+        ser.name = 'first'
+        cser.add_series(ser)
+        cser.add_link(ser, 4, '1234')
+        cser.close_database()

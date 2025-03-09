@@ -17,6 +17,11 @@ from u_boot_pylib import tout
 
 
 class Cseries:
+    """Database with information about series
+
+    This class handles database read/write as well as operations in a git
+    directory to update series information.
+    """
     def __init__(self, topdir=None):
         self.topdir = topdir
         self.gitdir = os.path.join(topdir, '.git')
@@ -34,7 +39,15 @@ class Cseries:
         try:
             res = self.cur.execute('SELECT name FROM series')
         except OperationalError:
-            self.cur.execute('CREATE TABLE series(name, desc)')
+            self.cur.execute(
+                'CREATE TABLE series (id INTEGER PRIMARY KEY AUTOINCREMENT,'
+                'name, desc)')
+
+            # version (int): Version number of the link
+            self.cur.execute(
+                'CREATE TABLE patchwork (id INTEGER PRIMARY KEY AUTOINCREMENT,'
+                'version INTEGER, link, series_id INTEGER,'
+                'FOREIGN KEY (series_id) REFERENCES series (id))')
         return self.cur
 
     def open_database(self):
@@ -73,21 +86,18 @@ class Cseries:
     def add_series(self, ser):
         """Add a series to the database
 
-        ser (Series): Series to add
+        Args:
+            ser (Series): Series to add
         """
         # First check we have a branch with this name
         if not gitutil.check_branch(ser.name, git_dir=self.gitdir):
             raise ValueError(f"No branch named '{ser.name}'")
         res = self.cur.execute(
-            f"INSERT INTO series VALUES ('{ser.name}', '{ser.desc}')")
+            f"INSERT INTO series (name, desc) VALUES ('{ser.name}', '{ser.desc}')")
         self.con.commit()
 
-    def do_add(self, name, desc):
-        sdict = self.get_series_dict()
-
-        if name in sdict:
-            raise ValueError("Series 'f{name}' already exists'")
-        ser = Series()
-        ser.name = name
-        ser.desc = desc
-        self.add_series(ser)
+    def add_link(self, version, link):
+        """Add / update a series-link link for a series"""
+        res = self.cur.execute(
+            'INSERT INTO patchwork (version, link, series_id) VALUES'
+            f"('{version}', '{link}', {ser.id})")
