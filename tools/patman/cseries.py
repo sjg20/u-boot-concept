@@ -43,7 +43,7 @@ class Cseries:
         except OperationalError:
             self.cur.execute(
                 'CREATE TABLE series (id INTEGER PRIMARY KEY AUTOINCREMENT,'
-                'name, desc)')
+                'name, desc, archived BIT)')
 
             # version (int): Version number of the link
             self.cur.execute(
@@ -68,7 +68,7 @@ class Cseries:
     def close_database(self):
         self.con.close()
 
-    def get_series_dict(self):
+    def get_series_dict(self, include_archived=False):
         """Get a dict of Series objects from the database
 
         Return:
@@ -76,7 +76,8 @@ class Cseries:
                 key: series name
                 value: Series
         """
-        res = self.cur.execute('SELECT name, desc FROM series')
+        res = self.cur.execute('SELECT name, desc FROM series ' +
+            ('WHERE archived = 0' if not include_archived else ''))
         sdict = OrderedDict()
         for name, desc in res.fetchall():
             ser = Series()
@@ -95,7 +96,8 @@ class Cseries:
         if not gitutil.check_branch(ser.name, git_dir=self.gitdir):
             raise ValueError(f"No branch named '{ser.name}'")
         res = self.cur.execute(
-            f"INSERT INTO series (name, desc) VALUES ('{ser.name}', '{ser.desc}')")
+            'INSERT INTO series (name, desc, archived) '
+            f"VALUES ('{ser.name}', '{ser.desc}', 0)")
         self.con.commit()
         ser.id = self.cur.lastrowid
 
@@ -169,3 +171,12 @@ class Cseries:
             ser = Series()
             ser.name = name
         return ser
+
+    def set_archived(self, series, archived):
+        ser = self.parse_series(series)
+        if not ser.id:
+            raise ValueError(f"Series '{ser.name}' not found in database")
+        ser.archived = archived
+        res = self.cur.execute(
+            f'UPDATE series SET archived = {int(archived)} WHERE '
+            f'id = {ser.id}')
