@@ -173,6 +173,13 @@ class Cseries:
         return ser
 
     def set_archived(self, series, archived):
+        """Set whether a series is archived or not
+
+        Args:
+            series (str): Name of series to use, or None to use current branch
+            archived (bool): Whether to mark the series as archived or
+                unarchived
+        """
         ser = self.parse_series(series)
         if not ser.id:
             raise ValueError(f"Series '{ser.name}' not found in database")
@@ -180,3 +187,4 @@ class Cseries:
         res = self.cur.execute(
             f'UPDATE series SET archived = {int(archived)} WHERE '
             f'id = {ser.id}')
+        self.con.commit()

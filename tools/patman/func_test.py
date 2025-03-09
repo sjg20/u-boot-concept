@@ -1633,3 +1633,30 @@ second line.'''
         self.assertEqual('first', slist['first'].name)
 
         cser.close_database()
+
+    def test_series_archive_cmdline(self):
+        """Test marking a series as archived with cmdline"""
+        cser = self.get_cser()
+        ser = Series()
+        ser.name = 'first'
+        cser.add_series(ser)
+
+        # Check the series is visible in the list
+        slist = cser.get_series_dict()
+        self.assertEqual(1, len(slist))
+        self.assertEqual('first', slist['first'].name)
+
+        # Archive it and make sure it is invisible
+        cser.close_database()
+        self.run_args('series', 'archive', '-s', 'first')
+
+        cser.open_database()
+        slist = cser.get_series_dict()
+        self.assertFalse(slist)
+
+        # ...unless we include archived items
+        slist = cser.get_series_dict(include_archived=True)
+        self.assertEqual(1, len(slist))
+        self.assertEqual('first', slist['first'].name)
+
+        cser.close_database()
