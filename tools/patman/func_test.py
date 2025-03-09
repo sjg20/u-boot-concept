@@ -1533,4 +1533,5 @@ second line.'''
         ser.name = 'first'
         cser.add_series(ser)
         cser.add_link(ser, 4, '1234')
+        self.assertEqual('1234', cser.get_link(ser, 4))
         cser.close_database()

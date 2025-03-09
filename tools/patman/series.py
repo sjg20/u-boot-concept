@@ -35,6 +35,7 @@ class Series(dict):
         base_commit (Commit): Commit object at the base of this series
         branch (str): Branch name of this series
         desc (str): Description of the series
+        id (int or None): Database rowid
     """
     def __init__(self):
         self.cc = []
@@ -48,6 +49,7 @@ class Series(dict):
         self.base_commit = None
         self.branch = None
         self.desc = ''
+        self.id = None
 
         # Written in MakeCcFile()
         #  key: name of patch file

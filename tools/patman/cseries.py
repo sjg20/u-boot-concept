@@ -95,9 +95,21 @@ class Cseries:
         res = self.cur.execute(
             f"INSERT INTO series (name, desc) VALUES ('{ser.name}', '{ser.desc}')")
         self.con.commit()
+        ser.id = self.cur.lastrowid
 
-    def add_link(self, version, link):
+    def add_link(self, ser, version, link):
         """Add / update a series-link link for a series"""
+
         res = self.cur.execute(
             'INSERT INTO patchwork (version, link, series_id) VALUES'
             f"('{version}', '{link}', {ser.id})")
+
+    def get_link(self, ser, version):
+        res = self.cur.execute('SELECT link FROM patchwork WHERE '
+            f"series_id = {ser.id} AND version = '{version}'")
+        all = res.fetchall()
+        if not all:
+            return None
+        if len(all) > 1:
+            raise ValueError('Expected one match, but multiple matches found')
+        return all[0][0]
