@@ -1476,9 +1476,11 @@ second line.'''
     def db_close(self):
         if self.cser and self.cser.cur:
             self.cser.close_database()
+            return True
+        return False
 
     def db_open(self):
-        if self.cser:
+        if self.cser and not self.cser.cur:
             self.cser.open_database()
 
     def test_series_add(self):
@@ -1535,10 +1537,12 @@ second line.'''
         self.db_close()
 
     def run_args(self, *argv):
-        self.db_close()
+        was_open = self.db_close()
         args = cmdline.parse_args(['-D'] + list(argv))
         exit_code = control.do_patman(args, self.tmpdir)
         self.assertEqual(0, exit_code)
+        if was_open:
+            self.db_open()
 
     def test_do_series_add_cmdline(self):
         """Add a new cseries using the cmdline"""
@@ -1664,7 +1668,7 @@ second line.'''
         # Archive it and make sure it is invisible
         self.db_close()
         self.run_args('series', 'archive', '-s', 'first')
-        cser.open_database()
+        self.db_open()
 
         slist = cser.get_series_dict()
         self.assertFalse(slist)
@@ -1678,7 +1682,7 @@ second line.'''
         self.db_close()
 
         self.run_args('series', 'unarchive', '-s', 'first')
-        cser.open_database()
+        self.db_open()
         slist = cser.get_series_dict()
         self.assertEqual(1, len(slist))
 
