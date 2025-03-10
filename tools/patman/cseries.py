@@ -67,6 +67,7 @@ class Cseries:
 
     def close_database(self):
         self.con.close()
+        self.cur = None
 
     def get_series_dict(self, include_archived=False):
         """Get a dict of Series objects from the database
