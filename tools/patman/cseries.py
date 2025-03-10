@@ -77,17 +77,32 @@ class Cseries:
         Return:
             OrderedDict:
                 key: series name
-                value: Series
+                value: Series with name and desc filled out
         """
-        res = self.cur.execute('SELECT name, desc FROM series ' +
+        res = self.cur.execute('SELECT id, name, desc FROM series ' +
             ('WHERE archived = 0' if not include_archived else ''))
         sdict = OrderedDict()
-        for name, desc in res.fetchall():
+        for idnum, name, desc in res.fetchall():
             ser = Series()
+            ser.idnum = idnum
             ser.name = name
             ser.desc = desc
             sdict[name] = ser
         return sdict
+
+    def get_patchwork_dict(self, include_archived=False):
+        """Get a list of patchwork entries from the database
+
+        Return:
+            OrderedDict:
+                key: series name
+                value: tuple:
+                    int: series_id
+                    int: version
+                    link: link string, or ''
+        """
+        res = self.cur.execute('SELECT series_id, version, link FROM patchwork')
+        return res.fetchall()
 
     def add_series(self, ser):
         """Add a series to the database
@@ -220,6 +235,12 @@ class Cseries:
             f'UPDATE series SET archived = {int(archived)} WHERE '
             f'id = {ser.id}')
         self.con.commit()
+
+    def do_list(self):
+        sdict = self.get_series_dict()
+
+        for name, ser in sdict.items():
+            print(f'{name:15.15} {ser.desc:.20}')
 
     def increment(self, series):
         """Increment a series to the next version and create a new branch

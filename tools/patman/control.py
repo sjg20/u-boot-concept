@@ -261,10 +261,7 @@ def patchwork_series(args, test_db=None):
     try:
         cser.open_database()
         if args.subcmd == 'list':
-            sdict = cser.get_series_dict()
-
-            for name, ser in sdict.items():
-                print(ser.name)
+            cser.do_list()
         elif args.subcmd == 'add':
             ser = cser.parse_series(args.series)
             if args.extra:

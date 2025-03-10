@@ -49,7 +49,7 @@ class Series(dict):
         self.base_commit = None
         self.branch = None
         self.desc = ''
-        self.id = None
+        self.idnum = None
 
         # Written in MakeCcFile()
         #  key: name of patch file
@@ -400,6 +400,14 @@ class Series(dict):
         return '%s%sPATCH%s%s' % (git_prefix, prefix, postfix, version)
 
     def get_link_for_version(self, find_vers):
+        """Look up the patchwork link for a particular version
+
+        Args:
+            find_vers (int): Version to find
+
+        Return:
+            str: Series-links entry for that version, or None if not found
+        """
         if not 'links' in self:
             return None
         for item in self.links.split():

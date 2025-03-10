@@ -1465,6 +1465,10 @@ second line.'''
         slist = cser.get_series_dict()
         self.assertEqual(1, len(slist))
         self.assertEqual('first', slist['first'].name)
+
+        plist = cser.get_patchwork_dict()
+        self.assertEqual(1, len(plist))
+        self.assertEqual((1, 1, ''), plist[0])
         self.db_close()
 
     def test_series_list(self):
@@ -1484,8 +1488,8 @@ second line.'''
             control.patchwork_series(args, test_db=self.tmpdir)
         lines = out.getvalue().splitlines()
         self.assertEqual(2, len(lines))
-        self.assertEqual('first', lines[0])
-        self.assertEqual('second', lines[1])
+        self.assertEqual('first           ', lines[0])
+        self.assertEqual('second          ', lines[1])
         self.db_close()
 
     def test_do_series_add(self):
@@ -1505,6 +1509,14 @@ second line.'''
         self.assertTrue(ser)
         self.assertEqual('first', ser.name)
         self.assertEqual('my-description', ser.desc)
+
+        args.subcmd = 'list'
+        with capture_sys_output() as (out, _):
+            control.patchwork_series(args, test_db=self.tmpdir)
+        lines = out.getvalue().splitlines()
+        self.assertEqual(1, len(lines))
+        self.assertEqual('first           my-description', lines[0])
+
         self.db_close()
 
     def run_args(self, *argv):
