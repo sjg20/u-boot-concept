@@ -66,6 +66,7 @@ class TestFunctional(unittest.TestCase):
         self.tmpdir = tempfile.mkdtemp(prefix='patman.')
         self.gitdir = os.path.join(self.tmpdir, '.git')
         self.repo = None
+        self.cser = None
         tout.init(allow_colour=False)
 
     def tearDown(self):
@@ -1460,6 +1461,7 @@ second line.'''
         cser = cseries.Cseries(self.tmpdir)
         with capture_sys_output() as _:
             cser.open_database()
+        self.cser = cser
         return cser
 
     def get_cser(self):
@@ -1470,6 +1472,14 @@ second line.'''
         """
         self.make_git_tree()
         return self.get_database()
+
+    def db_close(self):
+        if self.cser and self.cser.cur:
+            self.cser.close_database()
+
+    def db_open(self):
+        if self.cser:
+            self.cser.open_database()
 
     def test_series_add(self):
         """Test adding a new cseries"""
@@ -1482,7 +1492,7 @@ second line.'''
         slist = cser.get_series_dict()
         self.assertEqual(1, len(slist))
         self.assertEqual('first', slist['first'].name)
-        cser.close_database()
+        self.db_close()
 
     def test_series_list(self):
         """Test listing cseries"""
@@ -1503,7 +1513,7 @@ second line.'''
         self.assertEqual(2, len(lines))
         self.assertEqual('first', lines[0])
         self.assertEqual('second', lines[1])
-        cser.close_database()
+        self.db_close()
 
     def test_do_series_add(self):
         """Add a new cseries"""
@@ -1522,9 +1532,10 @@ second line.'''
         self.assertTrue(ser)
         self.assertEqual('first', ser.name)
         self.assertEqual('my-description', ser.desc)
-        cser.close_database()
+        self.db_close()
 
     def run_args(self, *argv):
+        self.db_close()
         args = cmdline.parse_args(['-D'] + list(argv))
         exit_code = control.do_patman(args, self.tmpdir)
         self.assertEqual(0, exit_code)
@@ -1544,7 +1555,7 @@ second line.'''
         self.assertTrue(ser)
         self.assertEqual('first', ser.name)
         self.assertEqual('my-description', ser.desc)
-        cser.close_database()
+        self.db_close()
 
     def test_do_series_add_auto(self):
         """Add a new cseries without any arguments"""
@@ -1585,7 +1596,7 @@ second line.'''
         series = patchstream.get_metadata_for_list('first', self.gitdir, 1)
         self.assertEqual('1234', series.links)
 
-        cser.close_database()
+        self.db_close()
 
     def test_series_link_cmdline(self):
         """Test adding a patchwork link to a cseries using the cmdline"""
@@ -1608,7 +1619,7 @@ second line.'''
         series = patchstream.get_metadata_for_list('first', self.gitdir, 1)
         self.assertEqual('1234', series.links)
 
-        cser.close_database()
+        self.db_close()
 
     def test_series_archive(self):
         """Test marking a series as archived"""
@@ -1636,7 +1647,7 @@ second line.'''
         cser.set_archived('first', False)
         slist = cser.get_series_dict()
         self.assertEqual(1, len(slist))
-        cser.close_database()
+        self.db_close()
 
     def test_series_archive_cmdline(self):
         """Test marking a series as archived with cmdline"""
@@ -1651,7 +1662,7 @@ second line.'''
         self.assertEqual('first', slist['first'].name)
 
         # Archive it and make sure it is invisible
-        cser.close_database()
+        self.db_close()
         self.run_args('series', 'archive', '-s', 'first')
         cser.open_database()
 
@@ -1664,10 +1675,11 @@ second line.'''
         self.assertEqual('first', slist['first'].name)
 
         # or we unarchive it
-        cser.close_database()
+        self.db_close()
+
         self.run_args('series', 'unarchive', '-s', 'first')
         cser.open_database()
         slist = cser.get_series_dict()
         self.assertEqual(1, len(slist))
 
-        cser.close_database()
+        self.db_close()
