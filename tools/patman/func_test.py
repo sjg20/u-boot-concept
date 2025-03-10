@@ -1488,8 +1488,8 @@ second line.'''
             control.patchwork_series(args, test_db=self.tmpdir)
         lines = out.getvalue().splitlines()
         self.assertEqual(2, len(lines))
-        self.assertEqual('first           ', lines[0])
-        self.assertEqual('second          ', lines[1])
+        self.assertEqual('first                                1', lines[0])
+        self.assertEqual('second                               1', lines[1])
         self.db_close()
 
     def test_do_series_add(self):
@@ -1515,7 +1515,7 @@ second line.'''
             control.patchwork_series(args, test_db=self.tmpdir)
         lines = out.getvalue().splitlines()
         self.assertEqual(1, len(lines))
-        self.assertEqual('first           my-description', lines[0])
+        self.assertEqual('first           my-description       1', lines[0])
 
         self.db_close()
 
