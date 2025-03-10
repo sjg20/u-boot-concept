@@ -7,11 +7,13 @@
 
 from collections import OrderedDict
 import os
+import re
 import sqlite3
 from sqlite3 import OperationalError
 
 import pygit2
 
+from patman import patchstream
 from patman import series
 from patman.series import Series
 from u_boot_pylib import gitutil
@@ -96,11 +98,40 @@ class Cseries:
         # First check we have a branch with this name
         if not gitutil.check_branch(ser.name, git_dir=self.gitdir):
             raise ValueError(f"No branch named '{ser.name}'")
+
+        count = gitutil.count_commits_to_branch(ser.name, self.gitdir)
+        if not count:
+            raise ValueError('Cannot detect branch automatically')
+
+        series = patchstream.get_metadata(ser.name, 0, count,
+                                          git_dir=self.gitdir)
+
+        # See if we can collect a version name, i.e. name<version>
+        version = 1
+        mat = re.search(r'\d+$', ser.name)
+        if mat:
+            version = int(re.group())
+            if version > 99:
+                raise ValueError(f"Version '{version}' exceeds 99")
+            name_len = len(ser.name) - len(version)
+            if not name_len:
+                raise ValueError(f"Series name '{ser.name}' cannot be a number")
+            ser.name = ser.name[:name_len]
+
+        if 'version' in series and int(series.version) != version:
+            raise ValueError(f"Series name '{ser.name}' suggests version {version} "
+                             f"but Series-version tag indicates {series.version}")
+
+        link = series.get_link_for_version(version) or ''
+
         res = self.cur.execute(
             'INSERT INTO series (name, desc, archived) '
             f"VALUES ('{ser.name}', '{ser.desc}', 0)")
-        self.con.commit()
         ser.id = self.cur.lastrowid
+        res = self.cur.execute(
+            'INSERT INTO patchwork (version, link, series_id) VALUES'
+            f"('{version}', '{link}', {ser.id})")
+        self.con.commit()
 
     def get_series_by_name(self, name):
         """Get a Series object from the database by name
@@ -189,3 +220,27 @@ class Cseries:
             f'UPDATE series SET archived = {int(archived)} WHERE '
             f'id = {ser.id}')
         self.con.commit()
+
+    def increment(self, series):
+        """Increment a series to the next version and create a new branch
+
+        Args:
+            series (str): Name of series to use, or None to use current branch
+        """
+        ser = self.parse_series(series)
+        if not ser.id:
+            raise ValueError(f"Series '{ser.name}' not found in database")
+
+        # Find the current version
+        res = self.cur.execute('SELECT MAX(version) FROM patchwork WHERE '
+            f"series_id = {ser.id}")
+        all = res.fetchall()
+        print('all', all)
+
+        # Create a new branch
+        repo = pygit2.init_repository(self.gitdir)
+
+        commit = repo.head.peel(pygit2.GIT_OBJ_COMMIT)
+        new_msg = commit.message + f'\nSeries-links: {link}'
+        amended = repo.amend_commit(commit, 'HEAD', message=new_msg)
+        repo.head.set_target(amended)

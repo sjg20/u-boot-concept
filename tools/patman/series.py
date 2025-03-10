@@ -398,3 +398,16 @@ class Series(dict):
         if self.get('postfix'):
            postfix = ' %s' % self['postfix']
         return '%s%sPATCH%s%s' % (git_prefix, prefix, postfix, version)
+
+    def get_link_for_version(self, find_vers):
+        if not 'links' in self:
+            return None
+        for item in self.links.split():
+            if ':' in item:
+                version, link = item.split(':')
+            else:
+                version = int(self.version) if 'version' in self else 1
+                link = item
+            if version == find_vers:
+                return link
+        return None

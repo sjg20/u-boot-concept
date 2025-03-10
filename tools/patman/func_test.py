@@ -1596,8 +1596,8 @@ second line.'''
 
         self.db_close()
 
-    def test_series_archive(self):
-        """Test marking a series as archived"""
+    def check_series_archive(self):
+        """Coroutine to run the archive test"""
         cser = self.get_cser()
         ser = Series()
         ser.name = 'first'
@@ -1607,54 +1607,58 @@ second line.'''
         slist = cser.get_series_dict()
         self.assertEqual(1, len(slist))
         self.assertEqual('first', slist['first'].name)
+
+        # Archive it and make sure it is invisible
+        yield cser
+        # cser.set_archived('first', True)
+        slist = cser.get_series_dict()
+        self.assertFalse(slist)
+
+        # ...unless we include archived items
+        slist = cser.get_series_dict(include_archived=True)
+        self.assertEqual(1, len(slist))
+        self.assertEqual('first', slist['first'].name)
+
+        # or we unarchive it
+        yield cser
+        # cser.set_archived('first', False)
+        slist = cser.get_series_dict()
+        self.assertEqual(1, len(slist))
+        self.db_close()
+        yield cser
+
+    def test_series_archive(self):
+        """Test marking a series as archived"""
+        cor = self.check_series_archive()
+        cser = next(cor)
 
         # Archive it and make sure it is invisible
         cser.set_archived('first', True)
-        slist = cser.get_series_dict()
-        self.assertFalse(slist)
-
-        # ...unless we include archived items
-        slist = cser.get_series_dict(include_archived=True)
-        self.assertEqual(1, len(slist))
-        self.assertEqual('first', slist['first'].name)
-
-        # or we unarchive it
+        cser = next(cor)
         cser.set_archived('first', False)
-        slist = cser.get_series_dict()
-        self.assertEqual(1, len(slist))
-        self.db_close()
+        cser = next(cor)
+        cor.close()
 
     def test_series_archive_cmdline(self):
         """Test marking a series as archived with cmdline"""
+        cor = self.check_series_archive()
+        cser = next(cor)
+
+        # Archive it and make sure it is invisible
+        self.run_args('series', 'archive', '-s', 'first')
+        cser = next(cor)
+        self.run_args('series', 'unarchive', '-s', 'first')
+        cser = next(cor)
+        cor.close()
+
+    def test_series_inc(self):
+        """Test incrementing the version"""
         cser = self.get_cser()
+
+        gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
+                         force=True)
         ser = Series()
         ser.name = 'first'
         cser.add_series(ser)
 
-        # Check the series is visible in the list
-        slist = cser.get_series_dict()
-        self.assertEqual(1, len(slist))
-        self.assertEqual('first', slist['first'].name)
-
-        # Archive it and make sure it is invisible
-        self.db_close()
-        self.run_args('series', 'archive', '-s', 'first')
-        self.db_open()
-
-        slist = cser.get_series_dict()
-        self.assertFalse(slist)
-
-        # ...unless we include archived items
-        slist = cser.get_series_dict(include_archived=True)
-        self.assertEqual(1, len(slist))
-        self.assertEqual('first', slist['first'].name)
-
-        # or we unarchive it
-        self.db_close()
-
-        self.run_args('series', 'unarchive', '-s', 'first')
-        self.db_open()
-        slist = cser.get_series_dict()
-        self.assertEqual(1, len(slist))
-
-        self.db_close()
+        cser.increment('first')
