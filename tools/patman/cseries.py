@@ -202,6 +202,20 @@ class Cseries:
             raise ValueError('Expected one match, but multiple matches found')
         return all[0][0]
 
+    def get_version_list(self, ser):
+        """Get a list of the versions available for a series
+
+        Args:
+            ser (Series): object
+
+        Return:
+            str: List of versions
+        """
+        res = self.cur.execute('SELECT version FROM patchwork WHERE '
+            f"series_id = {ser.idnum}")
+        all = res.fetchall()
+        return [item[0] for item in all]
+
     def parse_series(self, name):
         """Parse the name of a series, or detect it from the current branch
 
@@ -240,7 +254,9 @@ class Cseries:
         sdict = self.get_series_dict()
 
         for name, ser in sdict.items():
-            print(f'{name:15.15} {ser.desc:.20}')
+            versions = self.get_version_list(ser)
+            vlist = ' '.join([str(ver) for ver in sorted(versions)])
+            print(f'{name:15.15} {ser.desc:20.20} {vlist}')
 
     def increment(self, series):
         """Increment a series to the next version and create a new branch
@@ -256,7 +272,6 @@ class Cseries:
         res = self.cur.execute('SELECT MAX(version) FROM patchwork WHERE '
             f"series_id = {ser.id}")
         all = res.fetchall()
-        print('all', all)
 
         # Create a new branch
         repo = pygit2.init_repository(self.gitdir)
