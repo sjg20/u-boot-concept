@@ -443,7 +443,7 @@ def check_suppress_cc_config():
 
 def email_patches(series, cover_fname, args, dry_run, warn_on_error, cc_fname,
                   self_only=False, alias=None, in_reply_to=None, thread=False,
-                  smtp_server=None):
+                  smtp_server=None, cwd=None):
     """Email a patch series.
 
     Args:
@@ -463,6 +463,7 @@ def email_patches(series, cover_fname, args, dry_run, warn_on_error, cc_fname,
         thread (bool): True to add --thread to git send-email (make
             all patches reply to cover-letter or first patch in series)
         smtp_server (str or None): SMTP server to use to send patches
+        cwd (str): Path to use for patch files (None to use current dir)
 
     Returns:
         Git command that was/would be run

@@ -247,7 +247,7 @@ class Series(dict):
 
     def GetCcForCommit(self, commit, process_tags, warn_on_error,
                        add_maintainers, limit, get_maintainer_script,
-                       all_skips):
+                       all_skips, cwd):
         """Get the email CCs to use with a particular commit
 
         Uses subject tags and get_maintainers.pl script to find people to cc
@@ -267,6 +267,7 @@ class Series(dict):
             all_skips (set of str): Updated to include the set of bouncing email
                 addresses that were dropped from the output. This is essentially
                 a return value from this function.
+            cwd (str): Path to use for patch filenames (None to use current dir)
 
         Returns:
             list of str: List of email addresses to cc
@@ -280,8 +281,8 @@ class Series(dict):
         if type(add_maintainers) == type(cc):
             cc += add_maintainers
         elif add_maintainers:
-            cc += get_maintainer.get_maintainer(get_maintainer_script,
-                                                commit.patch)
+            fname = os.path.join(cwd or '', commit.patch)
+            cc += get_maintainer.get_maintainer(get_maintainer_script, fname)
         all_skips |= set(cc) & set(settings.bounces)
         cc = list(set(cc) - set(settings.bounces))
         if limit is not None:
@@ -289,7 +290,7 @@ class Series(dict):
         return cc
 
     def MakeCcFile(self, process_tags, cover_fname, warn_on_error,
-                   add_maintainers, limit, get_maintainer_script):
+                   add_maintainers, limit, get_maintainer_script, cwd):
         """Make a cc file for us to use for per-commit Cc automation
 
         Also stores in self._generated_cc to make ShowActions() faster.
@@ -305,6 +306,7 @@ class Series(dict):
             limit (int): Limit the length of the Cc list (None if no limit)
             get_maintainer_script (str): The file name of the get_maintainer.pl
                 script (or compatible).
+            cwd (str): Path to use for patch filenames (None to use current dir)
         Return:
             Filename of temp file created
         """
@@ -319,7 +321,8 @@ class Series(dict):
                 commit.seq = i
                 commit.future = executor.submit(
                     self.GetCcForCommit, commit, process_tags, warn_on_error,
-                    add_maintainers, limit, get_maintainer_script, all_skips)
+                    add_maintainers, limit, get_maintainer_script, all_skips,
+                    cwd)
 
             # Show progress any commits that are taking forever
             lastlen = 0

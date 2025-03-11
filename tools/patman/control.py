@@ -43,7 +43,7 @@ def prepare_patches(col, branch, count, start, end, ignore_binary, signoff,
         ignore_binary (bool): Don't generate patches for binary files
         keep_change_id (bool): Preserve the Change-Id tag.
         git_dir (str): Path to git repository (None to use default)
-        cwd (str): Path to use for git operations (None to use default)
+        cwd (str): Path to use for git operations (None to use current dir)
 
     Returns:
         Tuple:
@@ -76,7 +76,7 @@ def prepare_patches(col, branch, count, start, end, ignore_binary, signoff,
     return series, cover_fname, patch_files
 
 
-def check_patches(series, patch_files, run_checkpatch, verbose, use_tree):
+def check_patches(series, patch_files, run_checkpatch, verbose, use_tree, cwd):
     """Run some checks on a set of patches
 
     This santiy-checks the patman tags like Series-version and runs the patches
@@ -90,6 +90,7 @@ def check_patches(series, patch_files, run_checkpatch, verbose, use_tree):
         verbose (bool): True to print out every line of the checkpatch output as
             it is parsed
         use_tree (bool): If False we'll pass '--no-tree' to checkpatch.
+        cwd (str): Path to use for patch files (None to use current dir)
 
     Returns:
         bool: True if the patches had no errors, False if they did
@@ -99,7 +100,7 @@ def check_patches(series, patch_files, run_checkpatch, verbose, use_tree):
 
     # Check the patches
     if run_checkpatch:
-        ok = checkpatch.check_patches(verbose, patch_files, use_tree)
+        ok = checkpatch.check_patches(verbose, patch_files, use_tree, cwd)
     else:
         ok = True
     return ok
@@ -107,7 +108,7 @@ def check_patches(series, patch_files, run_checkpatch, verbose, use_tree):
 
 def email_patches(col, series, cover_fname, patch_files, process_tags, its_a_go,
                   ignore_bad_tags, add_maintainers, get_maintainer_script, limit,
-                  dry_run, in_reply_to, thread, smtp_server):
+                  dry_run, in_reply_to, thread, smtp_server, cwd=None):
     """Email patches to the recipients
 
     This emails out the patches and cover letter using 'git send-email'. Each
@@ -146,9 +147,11 @@ def email_patches(col, series, cover_fname, patch_files, process_tags, its_a_go,
         thread (bool): True to add --thread to git send-email (make all patches
             reply to cover-letter or first patch in series)
         smtp_server (str): SMTP server to use to send patches (None for default)
+        cwd (str): Path to use for patch files (None to use current dir)
     """
     cc_file = series.MakeCcFile(process_tags, cover_fname, not ignore_bad_tags,
-                                add_maintainers, limit, get_maintainer_script)
+                                add_maintainers, limit, get_maintainer_script,
+                                cwd)
 
     # Email the patches out (giving the user time to check / cancel)
     cmd = ''
@@ -156,7 +159,7 @@ def email_patches(col, series, cover_fname, patch_files, process_tags, its_a_go,
         cmd = gitutil.email_patches(
             series, cover_fname, patch_files, dry_run, not ignore_bad_tags,
             cc_file, in_reply_to=in_reply_to, thread=thread,
-            smtp_server=smtp_server)
+            smtp_server=smtp_server, cwd=cwd)
     else:
         print(col.build(col.RED, "Not sending emails due to errors/warnings"))
 
@@ -182,7 +185,7 @@ def send(args, git_dir=None, cwd=None):
         args.ignore_binary, args.add_signoff,
         keep_change_id=args.keep_change_id, git_dir=git_dir, cwd=cwd)
     ok = check_patches(series, patch_files, args.check_patch,
-                       args.verbose, args.check_patch_use_tree)
+                       args.verbose, args.check_patch_use_tree, cwd)
 
     ok = ok and gitutil.check_suppress_cc_config()
 
@@ -191,7 +194,7 @@ def send(args, git_dir=None, cwd=None):
         col, series, cover_fname, patch_files, args.process_tags,
         its_a_go, args.ignore_bad_tags, args.add_maintainers,
         args.get_maintainer_script, args.limit, args.dry_run,
-        args.in_reply_to, args.thread, args.smtp_server)
+        args.in_reply_to, args.thread, args.smtp_server, cwd=cwd)
 
 def patchwork_status(branch, count, start, end, dest_branch, force,
                      show_comments, url):
