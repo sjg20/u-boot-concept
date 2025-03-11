@@ -341,7 +341,10 @@ def create_patches(branch, start, count, ignore_binary, series, signoff=True,
         Filename of cover letter (None if none)
         List of filenames of patch files
     """
-    cmd = ['git', 'format-patch', '-M']
+    cmd = ['git']
+    if git_dir:
+        cmd += ['--git-dir', git_dir]
+    cmd += ['format-patch', '-M']
     if signoff:
         cmd.append('--signoff')
     if ignore_binary:
