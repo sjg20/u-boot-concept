@@ -132,6 +132,10 @@ def parse_args(argv=None):
     series.add_argument('-s', '--series', help='Name of series')
     series.add_argument('-u', '--update', action='store_true',
                         help='Update the branch commit')
+
+    upstream = subparsers.add_parser('upstream',
+                                     help='Manage upstream destinations')
+
     # series_sub = series.add_subparsers(dest='subcmd')
     # series.add_argument('subcmd', help='series subcommand')
 
