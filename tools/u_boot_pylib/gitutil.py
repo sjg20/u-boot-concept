@@ -56,6 +56,7 @@ def count_commits_to_branch(branch, git_dir=None):
 
     Args:
         branch (str or None): Branch to count from (None for current branch)
+        git_dir (str): Path to git repository (None to use default)
 
     Return:
         Number of patches that exist on top of the branch
@@ -322,7 +323,8 @@ def prune_worktrees(git_dir):
         raise OSError(f'git worktree prune: {result.stderr}')
 
 
-def create_patches(branch, start, count, ignore_binary, series, signoff=True):
+def create_patches(branch, start, count, ignore_binary, series, signoff=True,
+                   git_dir=None):
     """Create a series of patches from the top of the current branch.
 
     The patch files are written to the current directory using
