@@ -26,7 +26,7 @@ def setup():
 
 
 def prepare_patches(col, branch, count, start, end, ignore_binary, signoff,
-                    keep_change_id=False, git_dir=None):
+                    keep_change_id=False, git_dir=None, cwd=None):
     """Figure out what patches to generate, then generate them
 
     The patch files are written to the current directory, e.g. 0001_xxx.patch
@@ -43,6 +43,7 @@ def prepare_patches(col, branch, count, start, end, ignore_binary, signoff,
         ignore_binary (bool): Don't generate patches for binary files
         keep_change_id (bool): Preserve the Change-Id tag.
         git_dir (str): Path to git repository (None to use default)
+        cwd (str): Path to use for git operations (None to use default)
 
     Returns:
         Tuple:
@@ -65,12 +66,13 @@ def prepare_patches(col, branch, count, start, end, ignore_binary, signoff,
     to_do = count - end
     series = patchstream.get_metadata(branch, start, to_do, git_dir)
     cover_fname, patch_files = gitutil.create_patches(
-        branch, start, to_do, ignore_binary, series, signoff, git_dir)
+        branch, start, to_do, ignore_binary, series, signoff, git_dir=git_dir,
+        cwd=cwd)
 
     # Fix up the patch files to our liking, and insert the cover letter
-    patchstream.fix_patches(series, patch_files, keep_change_id)
+    patchstream.fix_patches(series, patch_files, keep_change_id, cwd=cwd)
     if cover_fname and series.get('cover'):
-        patchstream.insert_cover_letter(cover_fname, series, to_do)
+        patchstream.insert_cover_letter(cover_fname, series, to_do, cwd=cwd)
     return series, cover_fname, patch_files
 
 
@@ -166,19 +168,19 @@ def email_patches(col, series, cover_fname, patch_files, process_tags, its_a_go,
 
     os.remove(cc_file)
 
-def send(args, git_dir=None):
+def send(args, git_dir=None, cwd=None):
     """Create, check and send patches by email
 
     Args:
         args (argparse.Namespace): Arguments to patman
-        git_dir (str): Path to git repositiory (None to use default)
+        cwd (str): Path to use for git operations
     """
     setup()
     col = terminal.Color()
     series, cover_fname, patch_files = prepare_patches(
         col, args.branch, args.count, args.start, args.end,
         args.ignore_binary, args.add_signoff,
-        keep_change_id=args.keep_change_id, git_dir=git_dir)
+        keep_change_id=args.keep_change_id, git_dir=git_dir, cwd=cwd)
     ok = check_patches(series, patch_files, args.check_patch,
                        args.verbose, args.check_patch_use_tree)
 
@@ -296,7 +298,7 @@ def patchwork_series(args, test_db=None):
             if test_db:
                 git_dir = os.path.join(test_db, '.git')
 
-            send(args, git_dir=git_dir)
+            send(args, git_dir=git_dir, cwd=test_db)
         else:
             raise ValueError(f"Unknown series subcommand '{args.subcmd}'")
     finally:

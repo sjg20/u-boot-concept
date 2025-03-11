@@ -324,7 +324,7 @@ def prune_worktrees(git_dir):
 
 
 def create_patches(branch, start, count, ignore_binary, series, signoff=True,
-                   git_dir=None):
+                   git_dir=None, cwd=None):
     """Create a series of patches from the top of the current branch.
 
     The patch files are written to the current directory using
@@ -357,7 +357,7 @@ def create_patches(branch, start, count, ignore_binary, series, signoff=True,
     brname = branch or 'HEAD'
     cmd += [f'{brname}~{start + count}..{brname}~{start}']
 
-    stdout = command.run_list(cmd)
+    stdout = command.run_list(cmd, cwd=cwd)
     files = stdout.splitlines()
 
     # We have an extra file if there is a cover letter
