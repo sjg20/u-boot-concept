@@ -52,6 +52,9 @@ class Cseries:
                 'CREATE TABLE patchwork (id INTEGER PRIMARY KEY AUTOINCREMENT,'
                 'version INTEGER, link, series_id INTEGER,'
                 'FOREIGN KEY (series_id) REFERENCES series (id))')
+
+            self.cur.execute(
+                'CREATE TABLE upstream (name UNIQUE, url)')
         return self.cur
 
     def open_database(self):
@@ -90,19 +93,31 @@ class Cseries:
             sdict[name] = ser
         return sdict
 
-    def get_patchwork_dict(self, include_archived=False):
+    def get_patchwork_dict(self):
         """Get a list of patchwork entries from the database
 
         Return:
-            OrderedDict:
-                key: series name
-                value: tuple:
-                    int: series_id
-                    int: version
-                    link: link string, or ''
+            value: list of tuple:
+                int: series_id
+                int: version
+                link: link string, or ''
         """
         res = self.cur.execute('SELECT series_id, version, link FROM patchwork')
         return res.fetchall()
+
+    def get_upstream_dict(self):
+        """Get a list of upstream entries from the database
+
+        Return:
+            OrderedDict:
+                key (str): upstream name
+                value (str): url
+        """
+        res = self.cur.execute('SELECT name, url FROM upstream')
+        udict = OrderedDict()
+        for name, url in res.fetchall():
+            udict[name] = url,
+        return udict
 
     def add_series(self, ser):
         """Add a series to the database
@@ -326,3 +341,20 @@ class Cseries:
         if not ser.idnum:
             raise ValueError(f"Series '{ser.name}' not found in database")
 
+    def add_upstream(self, name, url):
+        """Add a new upstream tree
+
+        Args:
+            name (str): Name of the tree
+            url (str): URL for the tree
+        """
+        res = self.cur.execute(
+            f"INSERT INTO upstream (name, url) VALUES ('{name}', '{url}')")
+        self.con.commit()
+
+    def list_upstream(self):
+        udict = self.get_upstream_dict()
+
+        for name, item in udict.items():
+            url = item[0]
+            print(f'{name:15.15} {url}')

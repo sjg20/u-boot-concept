@@ -1743,3 +1743,46 @@ second line.'''
         self.assertTrue(os.path.exists(os.path.join(
             self.tmpdir, '0003-bootm-Make-it-boot.patch')))
 
+    def test_upstream_add(self):
+        cser = self.get_cser()
+
+        cser.add_upstream('us', 'https://source.denx.de/u-boot/u-boot.git')
+        ulist = cser.get_upstream_dict()
+        self.assertEqual(1, len(ulist))
+        self.assertEqual(('https://source.denx.de/u-boot/u-boot.git',),
+                         ulist['us'])
+
+        cser.add_upstream('ci', 'git@ci.u-boot.org:u-boot/u-boot.git')
+        ulist = cser.get_upstream_dict()
+        self.assertEqual(2, len(ulist))
+        self.assertEqual(('https://source.denx.de/u-boot/u-boot.git',),
+                         ulist['us'])
+        self.assertEqual(('git@ci.u-boot.org:u-boot/u-boot.git',),
+                         ulist['ci'])
+
+        with capture_sys_output() as (out, err):
+            cser.list_upstream()
+        lines = out.getvalue().splitlines()
+        self.assertEqual(2, len(lines))
+        self.assertEqual('us              https://source.denx.de/u-boot/u-boot.git',
+                         lines[0])
+        self.assertEqual('ci              git@ci.u-boot.org:u-boot/u-boot.git',
+                         lines[1])
+
+        self.db_close()
+
+    def test_upstream_add_cmdline(self):
+        cser = self.get_cser()
+
+        # with capture_sys_output() as (out, err):
+        self.run_args('upstream', 'add', 'us',
+                      'https://source.denx.de/u-boot/u-boot.git')
+
+        self.run_args('upstream', 'list')
+
+        ulist = cser.get_upstream_dict()
+        self.assertEqual(1, len(ulist))
+        self.assertEqual(('https://source.denx.de/u-boot/u-boot.git',),
+                         ulist['us'])
+
+        self.db_close()

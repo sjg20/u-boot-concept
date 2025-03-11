@@ -308,6 +308,23 @@ def patchwork_series(args, test_db=None):
         cser.close_database()
 
 
+def patchwork_upstream(args, test_db=None):
+    """Process an 'upstream' subcommand
+
+    Args:
+        args (Namespace): Arguments to process
+        test_db (str or None): Directory containing the test database, None to
+            use the normal one
+    """
+    cser = cseries.Cseries(test_db)
+    try:
+        cser.open_database()
+        if args.subcmd == 'add':
+            cser.add_upstream(*args.extra[0:2])
+    finally:
+        cser.close_database()
+
+
 def do_patman(args, test_db=None):
     if args.cmd == 'send':
         # Called from git with a patch filename as argument
@@ -344,6 +361,11 @@ def do_patman(args, test_db=None):
                 raise ValueError('patman series requires a subcommand')
             args.subcmd = args.extra.pop(0)
             patchwork_series(args, test_db)
+        elif args.cmd == 'upstream':
+            if not args.extra:
+                raise ValueError('patman upstream requires a subcommand')
+            args.subcmd = args.extra.pop(0)
+            patchwork_upstream(args, test_db)
     except Exception as exc:
         terminal.tprint(f'patman: {type(exc).__name__}: {exc}',
                         colour=terminal.Color.RED)
