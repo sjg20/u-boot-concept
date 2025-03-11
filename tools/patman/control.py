@@ -293,7 +293,11 @@ def patchwork_series(args, test_db=None):
             cser.increment(args.series)
         elif args.subcmd == 'send':
             args.dry_run = True
-            send(args, git_dir=test_db)
+            gitdir = None
+            if test_db:
+                git_dir = os.path.join(test_db, '.git')
+
+            send(args, git_dir=git_dir)
         else:
             raise ValueError(f"Unknown series subcommand '{args.subcmd}'")
     finally:
