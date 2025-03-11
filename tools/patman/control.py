@@ -286,6 +286,8 @@ def patchwork_series(args, test_db=None):
             cser.set_archived(args.series, True)
         elif args.subcmd == 'unarchive':
             cser.set_archived(args.series, False)
+        elif args.subcmd == 'inc':
+            cser.increment(args.series)
         else:
             raise ValueError(f"Unknown series subcommand '{args.subcmd}'")
     finally:
