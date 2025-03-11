@@ -1468,7 +1468,7 @@ second line.'''
 
         plist = cser.get_patchwork_dict()
         self.assertEqual(1, len(plist))
-        self.assertEqual((1, 1, ''), plist[0])
+        self.assertEqual((1, 1, None), plist[0])
         self.db_close()
 
     def test_series_list(self):
@@ -1663,8 +1663,8 @@ second line.'''
         cser = next(cor)
         cor.close()
 
-    def test_series_inc(self):
-        """Test incrementing the version"""
+    def check_series_inc(self):
+        """Coroutine to run the increment test"""
         cser = self.get_cser()
 
         gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
@@ -1673,4 +1673,53 @@ second line.'''
         ser.name = 'first'
         cser.add_series(ser)
 
+        with capture_sys_output() as (out, _):
+            yield cser
+        lines = out.getvalue().splitlines()
+        self.assertEqual(2, len(lines))
+        self.assertEqual('No existing Series-version found, using version 1',
+                         lines[0])
+        self.assertEqual('Added new branch first2', lines[1])
+
+        slist = cser.get_series_dict()
+        self.assertEqual(1, len(slist))
+
+        plist = cser.get_patchwork_dict()
+        self.assertEqual(2, len(plist))
+        self.assertEqual((1, 1, None), plist[0])
+        self.assertEqual((1, 2, None), plist[1])
+
+        series = patchstream.get_metadata_for_list('first2', self.gitdir, 1)
+        self.assertEqual('2', series.version)
+
+        series = patchstream.get_metadata_for_list('first', self.gitdir, 1)
+        self.assertNotIn('version', series)
+
+        self.assertEqual('first2', gitutil.get_branch(self.gitdir))
+        yield cser
+
+    def test_series_inc(self):
+        """Test incrementing the version"""
+        cor = self.check_series_inc()
+        cser = next(cor)
+
         cser.increment('first')
+        cser = next(cor)
+        cor.close()
+
+    def test_series_inc_cmdline(self):
+        """Test incrementing the version with cmdline"""
+        cor = self.check_series_inc()
+        cser = next(cor)
+
+        self.run_args('series', 'inc', '-s', 'first')
+
+        cser = next(cor)
+        cor.close()
+
+    def test_series_send(self):
+        """Test sending a series"""
+        cser = self.get_cser()
+
+        gitutil.checkout('second', self.gitdir, work_tree=self.tmpdir,
+                         force=True)

@@ -137,15 +137,15 @@ class Cseries:
             raise ValueError(f"Series name '{ser.name}' suggests version {version} "
                              f"but Series-version tag indicates {series.version}")
 
-        link = series.get_link_for_version(version) or ''
+        link = series.get_link_for_version(version)
 
         res = self.cur.execute(
             'INSERT INTO series (name, desc, archived) '
             f"VALUES ('{ser.name}', '{ser.desc}', 0)")
-        ser.id = self.cur.lastrowid
+        ser.idnum = self.cur.lastrowid
         res = self.cur.execute(
             'INSERT INTO patchwork (version, link, series_id) VALUES'
-            f"('{version}', '{link}', {ser.id})")
+            f"('{version}', ?, {ser.idnum})", (link,))
         self.con.commit()
 
     def get_series_by_name(self, name):
@@ -165,7 +165,7 @@ class Cseries:
         if len(all) > 1:
             raise ValueError('Expected one match, but multiple matches found')
         ser = Series()
-        ser.id, ser.name, ser.desc = desc = all[0]
+        ser.idnum, ser.name, ser.desc = desc = all[0]
         return ser
 
     def add_link(self, ser, version, link, update_commit):
@@ -189,12 +189,12 @@ class Cseries:
 
         res = self.cur.execute(
             'INSERT INTO patchwork (version, link, series_id) VALUES'
-            f"('{version}', '{link}', {ser.id})")
+            f"('{version}', '{link}', {ser.idnum})")
         self.con.commit()
 
     def get_link(self, ser, version):
         res = self.cur.execute('SELECT link FROM patchwork WHERE '
-            f"series_id = {ser.id} AND version = '{version}'")
+            f"series_id = {ser.idnum} AND version = '{version}'")
         all = res.fetchall()
         if not all:
             return None
@@ -242,12 +242,12 @@ class Cseries:
                 unarchived
         """
         ser = self.parse_series(series)
-        if not ser.id:
+        if not ser.idnum:
             raise ValueError(f"Series '{ser.name}' not found in database")
         ser.archived = archived
         res = self.cur.execute(
             f'UPDATE series SET archived = {int(archived)} WHERE '
-            f'id = {ser.id}')
+            f'id = {ser.idnum}')
         self.con.commit()
 
     def do_list(self):
@@ -265,18 +265,53 @@ class Cseries:
             series (str): Name of series to use, or None to use current branch
         """
         ser = self.parse_series(series)
-        if not ser.id:
+        if not ser.idnum:
             raise ValueError(f"Series '{ser.name}' not found in database")
 
         # Find the current version
         res = self.cur.execute('SELECT MAX(version) FROM patchwork WHERE '
-            f"series_id = {ser.id}")
-        all = res.fetchall()
+            f"series_id = {ser.idnum}")
+        max_vers = res.fetchall()[0][0]
 
         # Create a new branch
         repo = pygit2.init_repository(self.gitdir)
 
         commit = repo.head.peel(pygit2.GIT_OBJ_COMMIT)
-        new_msg = commit.message + f'\nSeries-links: {link}'
+        lines = commit.message.splitlines()
+
+        index = None
+        vers = None
+        for seq, line in enumerate(lines):
+            mat = re.match('Series-version:(.*)', line)
+            if mat:
+                index = line
+                vers = int(mat.group())
+        if not index:
+            print('No existing Series-version found, using version 1')
+            vers = 1
+        if vers != max_vers:
+            raise ValueError(
+                f'Expected version {max_vers} but Series-version is {vers}')
+        vers += 1
+
+        commit = repo.head.peel(pygit2.GIT_OBJ_COMMIT)
+
+        new_name = f'{ser.name}{vers}'
+        new_branch = repo.branches.create(new_name, commit)
+        repo.checkout(new_branch)
+
+        ver_string = f'Series-version: {vers}'
+        if index:
+            lines = (lines[:index] + ver_string + lines[index + 1:])
+        else:
+            lines.append(ver_string)
+        new_msg = '\n'.join(lines) + '\n'
         amended = repo.amend_commit(commit, 'HEAD', message=new_msg)
-        repo.head.set_target(amended)
+
+        res = self.cur.execute(
+            'INSERT INTO patchwork (version, series_id) VALUES'
+            f"('{vers}', {ser.idnum})")
+        self.con.commit()
+
+        # repo.head.set_target(amended)
+        print(f'Added new branch {new_name}')
