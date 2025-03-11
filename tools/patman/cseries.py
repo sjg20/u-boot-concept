@@ -315,3 +315,14 @@ class Cseries:
 
         # repo.head.set_target(amended)
         print(f'Added new branch {new_name}')
+
+    def send(self, series):
+        """Send out a series
+
+        Args:
+            series (str): Name of series to use, or None to use current branch
+        """
+        ser = self.parse_series(series)
+        if not ser.idnum:
+            raise ValueError(f"Series '{ser.name}' not found in database")
+

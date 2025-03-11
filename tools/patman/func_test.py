@@ -1723,3 +1723,5 @@ second line.'''
 
         gitutil.checkout('second', self.gitdir, work_tree=self.tmpdir,
                          force=True)
+
+        self.run_args('series', 'send')
