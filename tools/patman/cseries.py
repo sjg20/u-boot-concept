@@ -401,3 +401,15 @@ class Cseries:
         if len(all) != 1:
             return None
         return all[0][0]
+
+    def delete_upstream(self, name):
+        """Delete an upstream target
+
+        Args:
+            name (str): Name of the upstream remote to delete
+        """
+        res = self.cur.execute(
+            f"DELETE FROM upstream WHERE name = '{name}'")
+        if self.cur.rowcount != 1:
+            self.con.rollback()
+            raise ValueError(f"No such upstream '{name}'")
