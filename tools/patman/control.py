@@ -322,8 +322,6 @@ def patchwork_upstream(args, test_db=None):
         cser.open_database()
         if args.subcmd == 'add':
             cser.add_upstream(*args.extra[0:2])
-        elif args.subcmd == 'list':
-            cser.list_upstream()
         elif args.subcmd == 'default':
             if args.unset:
                 cser.set_default_upstream(None)
@@ -332,6 +330,10 @@ def patchwork_upstream(args, test_db=None):
             else:
                 result = cser.get_default_upstream()
                 print(result if result else 'unset')
+        elif args.subcmd == 'delete':
+            cser.delete_upstream(args.extra[0])
+        elif args.subcmd == 'list':
+            cser.list_upstream()
         else:
             raise ValueError(f"Unknown upstream subcommand '{args.subcmd}'")
     finally:

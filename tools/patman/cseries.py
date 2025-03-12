@@ -413,3 +413,4 @@ class Cseries:
         if self.cur.rowcount != 1:
             self.con.rollback()
             raise ValueError(f"No such upstream '{name}'")
+        self.con.commit()
