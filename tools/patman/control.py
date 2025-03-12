@@ -321,6 +321,8 @@ def patchwork_upstream(args, test_db=None):
         cser.open_database()
         if args.subcmd == 'add':
             cser.add_upstream(*args.extra[0:2])
+        elif args.subcmd == 'list':
+            cser.list_upstream()
         elif args.subcmd == 'default':
             if args.unset:
                 cser.set_default_upstream(None)

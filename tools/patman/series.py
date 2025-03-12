@@ -290,7 +290,7 @@ class Series(dict):
         return cc
 
     def MakeCcFile(self, process_tags, cover_fname, warn_on_error,
-                   add_maintainers, limit, get_maintainer_script, cwd):
+                   add_maintainers, limit, get_maintainer_script, cwd=None):
         """Make a cc file for us to use for per-commit Cc automation
 
         Also stores in self._generated_cc to make ShowActions() faster.

@@ -1751,41 +1751,32 @@ second line.'''
         cser.add_upstream('us', 'https://one')
         ulist = cser.get_upstream_dict()
         self.assertEqual(1, len(ulist))
-        self.assertEqual(('https://one',),
-                         ulist['us'])
+        self.assertEqual(('https://one', None), ulist['us'])
 
         cser.add_upstream('ci', 'git@two')
         ulist = cser.get_upstream_dict()
         self.assertEqual(2, len(ulist))
-        self.assertEqual(('https://one',),
-                         ulist['us'])
-        self.assertEqual(('git@two',),
-                         ulist['ci'])
+        self.assertEqual(('https://one', None), ulist['us'])
+        self.assertEqual(('git@two', None), ulist['ci'])
 
         with capture_sys_output() as (out, err):
             cser.list_upstream()
         lines = out.getvalue().splitlines()
         self.assertEqual(2, len(lines))
-        self.assertEqual('us              https://one',
-                         lines[0])
-        self.assertEqual('ci              git@two',
-                         lines[1])
+        self.assertEqual('us                       https://one', lines[0])
+        self.assertEqual('ci                       git@two', lines[1])
 
         self.db_close()
 
     def test_upstream_add_cmdline(self):
-        cser = self.get_cser()
-
         # with capture_sys_output() as (out, err):
-        self.run_args('upstream', 'add', 'us',
-                      'https://one')
+        self.run_args('upstream', 'add', 'us', 'https://one')
 
-        self.run_args('upstream', 'list')
-
-        ulist = cser.get_upstream_dict()
-        self.assertEqual(1, len(ulist))
-        self.assertEqual(('https://one',),
-                         ulist['us'])
+        with capture_sys_output() as (out, err):
+            self.run_args('upstream', 'list')
+        lines = out.getvalue().splitlines()
+        self.assertEqual(1, len(lines))
+        self.assertEqual('us                       https://one', lines[0])
 
         self.db_close()
 
@@ -1820,8 +1811,6 @@ second line.'''
         self.assertIsNone(cser.get_default_upstream())
 
     def test_upstream_default_cmdline(self):
-        cser = self.get_cser()
-
         with capture_sys_output() as (out, _):
             self.run_args('upstream', 'default', 'us', expected_ret=1)
         self.assertEqual("patman: ValueError: No such upstream 'us'",
@@ -1853,3 +1842,39 @@ second line.'''
         with capture_sys_output() as (out, _):
             self.run_args('upstream', 'default')
         self.assertEqual('unset', out.getvalue().strip())
+
+    def test_upstream_delete(self):
+        cser = self.get_cser()
+
+        with self.assertRaises(ValueError) as exc:
+            cser.delete_upstream('us')
+        self.assertEqual("No such upstream 'us'", str(exc.exception))
+
+        cser.add_upstream('us', 'https://one')
+        cser.add_upstream('ci', 'git@two')
+
+        cser.set_default_upstream('us')
+        cser.delete_upstream('us')
+        self.assertIsNone(cser.get_default_upstream())
+
+        cser.delete_upstream('ci')
+        ulist = cser.get_upstream_dict()
+        self.assertFalse(ulist)
+
+    def test_upstream_delete_cmdline(self):
+        cser = self.get_cser()
+
+        with self.assertRaises(ValueError) as exc:
+            cser.delete_upstream('us')
+        self.assertEqual("No such upstream 'us'", str(exc.exception))
+
+        cser.add_upstream('us', 'https://one')
+        cser.add_upstream('ci', 'git@two')
+
+        cser.set_default_upstream('us')
+        cser.delete_upstream('us')
+        self.assertIsNone(cser.get_default_upstream())
+
+        cser.delete_upstream('ci')
+        ulist = cser.get_upstream_dict()
+        self.assertFalse(ulist)
