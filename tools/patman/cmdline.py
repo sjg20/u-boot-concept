@@ -135,6 +135,8 @@ def parse_args(argv=None):
 
     upstream = subparsers.add_parser('upstream',
                                      help='Manage upstream destinations')
+    upstream.add_argument('-u', '--unset', action='store_true',
+                          help='Unset the default upstream')
 
     # series_sub = series.add_subparsers(dest='subcmd')
     # series.add_argument('subcmd', help='series subcommand')

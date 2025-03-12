@@ -54,7 +54,8 @@ class Cseries:
                 'FOREIGN KEY (series_id) REFERENCES series (id))')
 
             self.cur.execute(
-                'CREATE TABLE upstream (name UNIQUE, url)')
+                'CREATE TABLE upstream (name UNIQUE, url, is_default BIT)')
+            self.con.commit()
         return self.cur
 
     def open_database(self):
@@ -113,10 +114,10 @@ class Cseries:
                 key (str): upstream name
                 value (str): url
         """
-        res = self.cur.execute('SELECT name, url FROM upstream')
+        res = self.cur.execute('SELECT name, url, is_default FROM upstream')
         udict = OrderedDict()
-        for name, url in res.fetchall():
-            udict[name] = url,
+        for name, url, is_default in res.fetchall():
+            udict[name] = url, is_default
         return udict
 
     def add_series(self, ser):
@@ -355,6 +356,48 @@ class Cseries:
     def list_upstream(self):
         udict = self.get_upstream_dict()
 
-        for name, item in udict.items():
-            url = item[0]
-            print(f'{name:15.15} {url}')
+        for name, items in udict.items():
+            url, is_default = items
+            default = 'default' if is_default else ''
+            print(f'{name:15.15} {default:8} {url}')
+
+    def add_upstream(self, name, url):
+        """Add a new upstream tree
+
+        Args:
+            name (str): Name of the tree
+            url (str): URL for the tree
+        """
+        res = self.cur.execute(
+            f"INSERT INTO upstream (name, url) VALUES ('{name}', '{url}')")
+        self.con.commit()
+
+    def set_default_upstream(self, name):
+        """Set the default upstream target
+
+        Args:
+            name (str): Name of the upstream remote to set as default, or None
+                for none
+        """
+        res = self.cur.execute(
+            f"UPDATE upstream SET is_default = 0")
+        if name is not None:
+            res = self.cur.execute(
+                f"UPDATE upstream SET is_default = 1 WHERE name = '{name}'")
+            if self.cur.rowcount != 1:
+                self.con.rollback()
+                raise ValueError(f"No such upstream '{name}'")
+        self.con.commit()
+
+    def get_default_upstream(self):
+        """Get the default upstream target
+
+        Return:
+            str: Name of the upstream remote to set as default, or None if none
+        """
+        res = self.cur.execute(
+            f"SELECT name FROM upstream WHERE is_default = 1")
+        all = res.fetchall()
+        if len(all) != 1:
+            return None
+        return all[0][0]
