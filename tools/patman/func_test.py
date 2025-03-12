@@ -1488,7 +1488,7 @@ second line.'''
         cser = self.get_cser()
         self.assertFalse(cser.get_series_dict())
 
-        cser.add_series('first')
+        cser.add_series('first', '')
         slist = cser.get_series_dict()
         self.assertEqual(1, len(slist))
         self.assertEqual('first', slist['first'].name)
@@ -1501,7 +1501,7 @@ second line.'''
     def test_series_list(self):
         """Test listing cseries"""
         cser = self.get_cser()
-        cser.add_series('first')
+        cser.add_series('first', '')
         cser.add_series('second')
 
         args = Namespace()
@@ -1512,7 +1512,7 @@ second line.'''
         lines = out.getvalue().splitlines()
         self.assertEqual(2, len(lines))
         self.assertEqual('first                                1', lines[0])
-        self.assertEqual('second                               1', lines[1])
+        self.assertEqual('second          Series for my board  1', lines[1])
         self.db_close()
 
     def test_do_series_add(self):
@@ -1597,7 +1597,7 @@ second line.'''
         gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
                          force=True)
 
-        ser = cser.add_series('first')
+        ser = cser.add_series('first', '')
         cser.add_link(ser, 4, '1234', True)
         self.assertEqual('1234', cser.get_link(ser, 4))
 
@@ -1613,7 +1613,7 @@ second line.'''
         gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
                          force=True)
 
-        cser.add_series('first')
+        cser.add_series('first', '')
 
         # with capture_sys_output() as (out, _):
         self.run_args('series', 'link', '-s', 'first', '-u', '1234')
@@ -1630,7 +1630,7 @@ second line.'''
     def check_series_archive(self):
         """Coroutine to run the archive test"""
         cser = self.get_cser()
-        cser.add_series('first')
+        cser.add_series('first', '')
 
         # Check the series is visible in the list
         slist = cser.get_series_dict()
@@ -1686,7 +1686,7 @@ second line.'''
 
         gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
                          force=True)
-        cser.add_series('first')
+        cser.add_series('first', '')
 
         with capture_sys_output() as (out, _):
             yield cser

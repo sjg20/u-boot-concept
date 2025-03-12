@@ -120,12 +120,25 @@ class Cseries:
             udict[name] = url, is_default
         return udict
 
-    def add_series(self, name, desc=''):
+    def add_series(self, name, desc=None):
         """Add a series to the database
 
         Args:
             ser (Series): Series to add
         """
+        ser = self.parse_series(name)
+        name = ser.name
+        if desc is None:
+            count = gitutil.count_commits_to_branch(name, self.gitdir)
+            if not count:
+                raise ValueError('Cannot detect branch automatically')
+
+            series = patchstream.get_metadata(name, 0, count,
+                                              git_dir=self.gitdir)
+            if not series.cover:
+                raise ValueError(f"Branch '{name}' has no cover letter")
+            desc = series.cover[0]
+
         # First check we have a branch with this name
         if not gitutil.check_branch(name, git_dir=self.gitdir):
             raise ValueError(f"No branch named '{name}'")

@@ -272,21 +272,8 @@ def patchwork_series(args, test_db=None):
         if args.subcmd == 'list':
             cser.do_list()
         elif args.subcmd == 'add':
-            ser = cser.parse_series(args.series)
-            if args.extra:
-                ser.desc = args.extra[0]
-            else:
-                count = gitutil.count_commits_to_branch(ser.name, cser.gitdir)
-                if not count:
-                    raise ValueError('Cannot detect branch automatically')
-
-                series = patchstream.get_metadata(ser.name, 0, count,
-                                                  git_dir=cser.gitdir)
-                if not series.cover:
-                    raise ValueError("Branch '{ser.name}' has no cover letter")
-                ser.desc = series.cover[0]
-
-            cser.add_series(ser.name, ser.desc)
+            cser.add_series(args.series,
+                            args.extra[0] if len(args.extra) else None)
         elif args.subcmd == 'link':
             ser = cser.parse_series(args.series)
             cser.add_link(ser, 4, args.extra[0], args.update)
