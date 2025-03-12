@@ -285,7 +285,7 @@ def patchwork_series(args, test_db=None):
                     raise ValueError("Branch '{ser.name}' has no cover letter")
                 ser.desc = series.cover[0]
 
-            cser.add_series(ser)
+            cser.add_series(ser.name, ser.desc)
         elif args.subcmd == 'link':
             ser = cser.parse_series(args.series)
             cser.add_link(ser, 4, args.extra[0], args.update)
