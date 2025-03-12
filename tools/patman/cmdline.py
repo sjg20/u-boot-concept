@@ -133,7 +133,7 @@ def parse_args(argv=None):
     series.add_argument('-u', '--update', action='store_true',
                         help='Update the branch commit')
 
-    upstream = subparsers.add_parser('upstream',
+    upstream = subparsers.add_parser('upstream', aliases=['us'],
                                      help='Manage upstream destinations')
     upstream.add_argument('-u', '--unset', action='store_true',
                           help='Unset the default upstream')
