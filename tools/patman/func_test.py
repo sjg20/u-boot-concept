@@ -1851,7 +1851,10 @@ second line.'''
     def test_upstream_default_cmdline(self):
         cser = self.get_cser()
 
-        self.run_args('upstream', 'default', 'us', expected_ret=1)
+        with capture_sys_output() as (out, _):
+            self.run_args('upstream', 'default', 'us', expected_ret=1)
+        self.assertEqual("patman: ValueError: No such upstream 'us'",
+                         out.getvalue().strip())
 
         self.run_args('upstream', 'add', 'us',
                       'https://one')
@@ -1876,8 +1879,6 @@ second line.'''
             self.run_args('upstream', 'default', '--unset')
         self.assertFalse(out.getvalue().strip())
 
-        self.maxDiff = None
         with capture_sys_output() as (out, _):
-            self.run_args('upstream', 'default', bad=True)
+            self.run_args('upstream', 'default')
         self.assertEqual('unset', out.getvalue().strip())
-
