@@ -120,15 +120,12 @@ class Cseries:
             udict[name] = url, is_default
         return udict
 
-    def add_series(self, ser):
+    def add_series(self, name, desc=''):
         """Add a series to the database
 
         Args:
             ser (Series): Series to add
         """
-        name = ser.name
-        desc = ser.desc
-
         # First check we have a branch with this name
         if not gitutil.check_branch(name, git_dir=self.gitdir):
             raise ValueError(f"No branch named '{name}'")

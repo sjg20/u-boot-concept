@@ -1488,9 +1488,7 @@ second line.'''
         cser = self.get_cser()
         self.assertFalse(cser.get_series_dict())
 
-        ser = Series()
-        ser.name = 'first'
-        cser.add_series(ser)
+        cser.add_series('first')
         slist = cser.get_series_dict()
         self.assertEqual(1, len(slist))
         self.assertEqual('first', slist['first'].name)
@@ -1503,12 +1501,8 @@ second line.'''
     def test_series_list(self):
         """Test listing cseries"""
         cser = self.get_cser()
-        ser = Series()
-        ser.name = 'first'
-        cser.add_series(ser)
-        ser = Series()
-        ser.name = 'second'
-        cser.add_series(ser)
+        cser.add_series('first')
+        cser.add_series('second')
 
         args = Namespace()
         args.subcmd = 'list'
@@ -1603,9 +1597,7 @@ second line.'''
         gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
                          force=True)
 
-        ser = Series()
-        ser.name = 'first'
-        ser = cser.add_series(ser)
+        ser = cser.add_series('first')
         cser.add_link(ser, 4, '1234', True)
         self.assertEqual('1234', cser.get_link(ser, 4))
 
@@ -1621,9 +1613,7 @@ second line.'''
         gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
                          force=True)
 
-        newser = Series()
-        newser.name = 'first'
-        cser.add_series(newser)
+        cser.add_series('first')
 
         # with capture_sys_output() as (out, _):
         self.run_args('series', 'link', '-s', 'first', '-u', '1234')
@@ -1640,9 +1630,7 @@ second line.'''
     def check_series_archive(self):
         """Coroutine to run the archive test"""
         cser = self.get_cser()
-        ser = Series()
-        ser.name = 'first'
-        cser.add_series(ser)
+        cser.add_series('first')
 
         # Check the series is visible in the list
         slist = cser.get_series_dict()
@@ -1698,9 +1686,7 @@ second line.'''
 
         gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
                          force=True)
-        ser = Series()
-        ser.name = 'first'
-        cser.add_series(ser)
+        cser.add_series('first')
 
         with capture_sys_output() as (out, _):
             yield cser
