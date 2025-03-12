@@ -1519,11 +1519,13 @@ second line.'''
 
         self.db_close()
 
-    def run_args(self, *argv):
+    def run_args(self, *argv, expected_ret=0, bad=False):
         was_open = self.db_close()
         args = cmdline.parse_args(['-D'] + list(argv))
+        if bad:
+            print('args', args)
         exit_code = control.do_patman(args, self.tmpdir)
-        self.assertEqual(0, exit_code)
+        self.assertEqual(expected_ret, exit_code)
         if was_open:
             self.db_open()
 
@@ -1746,27 +1748,27 @@ second line.'''
     def test_upstream_add(self):
         cser = self.get_cser()
 
-        cser.add_upstream('us', 'https://source.denx.de/u-boot/u-boot.git')
+        cser.add_upstream('us', 'https://one')
         ulist = cser.get_upstream_dict()
         self.assertEqual(1, len(ulist))
-        self.assertEqual(('https://source.denx.de/u-boot/u-boot.git',),
+        self.assertEqual(('https://one',),
                          ulist['us'])
 
-        cser.add_upstream('ci', 'git@ci.u-boot.org:u-boot/u-boot.git')
+        cser.add_upstream('ci', 'git@two')
         ulist = cser.get_upstream_dict()
         self.assertEqual(2, len(ulist))
-        self.assertEqual(('https://source.denx.de/u-boot/u-boot.git',),
+        self.assertEqual(('https://one',),
                          ulist['us'])
-        self.assertEqual(('git@ci.u-boot.org:u-boot/u-boot.git',),
+        self.assertEqual(('git@two',),
                          ulist['ci'])
 
         with capture_sys_output() as (out, err):
             cser.list_upstream()
         lines = out.getvalue().splitlines()
         self.assertEqual(2, len(lines))
-        self.assertEqual('us              https://source.denx.de/u-boot/u-boot.git',
+        self.assertEqual('us              https://one',
                          lines[0])
-        self.assertEqual('ci              git@ci.u-boot.org:u-boot/u-boot.git',
+        self.assertEqual('ci              git@two',
                          lines[1])
 
         self.db_close()
@@ -1776,13 +1778,77 @@ second line.'''
 
         # with capture_sys_output() as (out, err):
         self.run_args('upstream', 'add', 'us',
-                      'https://source.denx.de/u-boot/u-boot.git')
+                      'https://one')
 
         self.run_args('upstream', 'list')
 
         ulist = cser.get_upstream_dict()
         self.assertEqual(1, len(ulist))
-        self.assertEqual(('https://source.denx.de/u-boot/u-boot.git',),
+        self.assertEqual(('https://one',),
                          ulist['us'])
 
         self.db_close()
+
+    def test_upstream_default(self):
+        cser = self.get_cser()
+
+        with self.assertRaises(ValueError) as exc:
+            cser.set_default_upstream('us')
+        self.assertEqual("No such upstream 'us'", str(exc.exception))
+
+        cser.add_upstream('us', 'https://one')
+        cser.add_upstream('ci', 'git@two')
+
+        self.assertIsNone(cser.get_default_upstream())
+
+        cser.set_default_upstream('us')
+        self.assertEqual('us', cser.get_default_upstream())
+
+        cser.set_default_upstream('us')
+
+        cser.set_default_upstream('ci')
+        self.assertEqual('ci', cser.get_default_upstream())
+
+        with capture_sys_output() as (out, err):
+            cser.list_upstream()
+        lines = out.getvalue().splitlines()
+        self.assertEqual(2, len(lines))
+        self.assertEqual('us                       https://one', lines[0])
+        self.assertEqual('ci              default  git@two', lines[1])
+
+        cser.set_default_upstream(None)
+        self.assertIsNone(cser.get_default_upstream())
+
+    def test_upstream_default_cmdline(self):
+        cser = self.get_cser()
+
+        self.run_args('upstream', 'default', 'us', expected_ret=1)
+
+        self.run_args('upstream', 'add', 'us',
+                      'https://one')
+        self.run_args('upstream', 'add', 'ci',
+                      'git@two')
+
+        with capture_sys_output() as (out, _):
+            self.run_args('upstream', 'default')
+        self.assertEqual('unset', out.getvalue().strip())
+
+        self.run_args('upstream', 'default', 'us')
+        with capture_sys_output() as (out, _):
+            self.run_args('upstream', 'default')
+        self.assertEqual('us', out.getvalue().strip())
+
+        self.run_args('upstream', 'default', 'ci')
+        with capture_sys_output() as (out, _):
+            self.run_args('upstream', 'default')
+        self.assertEqual('ci', out.getvalue().strip())
+
+        with capture_sys_output() as (out, _):
+            self.run_args('upstream', 'default', '--unset')
+        self.assertFalse(out.getvalue().strip())
+
+        self.maxDiff = None
+        with capture_sys_output() as (out, _):
+            self.run_args('upstream', 'default', bad=True)
+        self.assertEqual('unset', out.getvalue().strip())
+
