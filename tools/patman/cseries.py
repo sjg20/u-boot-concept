@@ -57,7 +57,7 @@ class Cseries:
                 'CREATE TABLE upstream (name UNIQUE, url, is_default BIT)')
 
             self.cur.execute(
-                'CREATE TABLE patch (id INTEGER PRIMARY KEY AUTOINCREMENT,'
+                'CREATE TABLE pcommit (id INTEGER PRIMARY KEY AUTOINCREMENT,'
                 'series_id INTEGER, subject, '
                 'FOREIGN KEY (series_id) REFERENCES series (id))')
 
@@ -126,19 +126,19 @@ class Cseries:
             udict[name] = url, is_default
         return udict
 
-    def get_commit_dict(self):
-        """Get a dict of patch entries from the database
+    def get_pcommit_dict(self):
+        """Get a dict of pcommits entries from the database
 
         Return:
             OrderedDict:
                 key (str): upstream name
                 value (str): url
         """
-        res = self.cur.execute('SELECT id, subject, series_id, FROM patch')
-        pdict = OrderedDict()
-        for name, url, is_default in res.fetchall():
-            udict[name] = url, is_default
-        return udict
+        res = self.cur.execute('SELECT id, subject, series_id, FROM pcommit')
+        pcdict = OrderedDict()
+        for idnum, subject, series_id in res.fetchall():
+            pcdict[name] = idnum, subject, series_id
+        return pcdict
 
     def add_series(self, name, desc=None):
         """Add a series to the database
@@ -192,7 +192,7 @@ class Cseries:
 
         for commit in series.commits:
             res = self.cur.execute(
-                'INSERT INTO patch (series_id, subject) VALUES (?, ?)',
+                'INSERT INTO pcommit (series_id, subject) VALUES (?, ?)',
                 (str(idnum), commit.subject))
 #            res = self.cur.execute(
                 # 'INSERT INTO patch (series_id, subject) VALUES ',
