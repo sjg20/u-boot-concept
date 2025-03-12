@@ -126,43 +126,51 @@ class Cseries:
         Args:
             ser (Series): Series to add
         """
-        # First check we have a branch with this name
-        if not gitutil.check_branch(ser.name, git_dir=self.gitdir):
-            raise ValueError(f"No branch named '{ser.name}'")
+        name = ser.name
+        desc = ser.desc
 
-        count = gitutil.count_commits_to_branch(ser.name, self.gitdir)
+        # First check we have a branch with this name
+        if not gitutil.check_branch(name, git_dir=self.gitdir):
+            raise ValueError(f"No branch named '{name}'")
+
+        count = gitutil.count_commits_to_branch(name, self.gitdir)
         if not count:
             raise ValueError('Cannot detect branch automatically')
 
-        series = patchstream.get_metadata(ser.name, 0, count,
+        series = patchstream.get_metadata(name, 0, count,
                                           git_dir=self.gitdir)
 
         # See if we can collect a version name, i.e. name<version>
         version = 1
-        mat = re.search(r'\d+$', ser.name)
+        mat = re.search(r'\d+$', name)
         if mat:
             version = int(re.group())
             if version > 99:
                 raise ValueError(f"Version '{version}' exceeds 99")
-            name_len = len(ser.name) - len(version)
+            name_len = len(name) - len(version)
             if not name_len:
-                raise ValueError(f"Series name '{ser.name}' cannot be a number")
-            ser.name = ser.name[:name_len]
+                raise ValueError(f"Series name '{name}' cannot be a number")
+            name = name[:name_len]
 
         if 'version' in series and int(series.version) != version:
-            raise ValueError(f"Series name '{ser.name}' suggests version {version} "
+            raise ValueError(f"Series name '{name}' suggests version {version} "
                              f"but Series-version tag indicates {series.version}")
 
         link = series.get_link_for_version(version)
 
         res = self.cur.execute(
             'INSERT INTO series (name, desc, archived) '
-            f"VALUES ('{ser.name}', '{ser.desc}', 0)")
-        ser.idnum = self.cur.lastrowid
+            f"VALUES ('{name}', '{desc}', 0)")
+        idnum = self.cur.lastrowid
         res = self.cur.execute(
             'INSERT INTO patchwork (version, link, series_id) VALUES'
-            f"('{version}', ?, {ser.idnum})", (link,))
+            f"('{version}', ?, {idnum})", (link,))
         self.con.commit()
+        ser = Series()
+        ser.name = name
+        ser.desc = desc
+        ser.idnum = idnum
+        return ser
 
     def get_series_by_name(self, name):
         """Get a Series object from the database by name
