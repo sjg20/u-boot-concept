@@ -1519,11 +1519,9 @@ second line.'''
 
         self.db_close()
 
-    def run_args(self, *argv, expected_ret=0, bad=False):
+    def run_args(self, *argv, expected_ret=0):
         was_open = self.db_close()
         args = cmdline.parse_args(['-D'] + list(argv))
-        if bad:
-            print('args', args)
         exit_code = control.do_patman(args, self.tmpdir)
         self.assertEqual(expected_ret, exit_code)
         if was_open:
@@ -1862,19 +1860,22 @@ second line.'''
         self.assertFalse(ulist)
 
     def test_upstream_delete_cmdline(self):
-        cser = self.get_cser()
+        with capture_sys_output() as (out, _):
+            self.run_args('upstream', 'delete', 'us', expected_ret=1)
+        self.assertEqual("patman: ValueError: No such upstream 'us'",
+                         out.getvalue().strip())
 
-        with self.assertRaises(ValueError) as exc:
-            cser.delete_upstream('us')
-        self.assertEqual("No such upstream 'us'", str(exc.exception))
+        self.run_args('upstream', 'add', 'us', 'https://one')
+        self.run_args('upstream', 'add', 'ci', 'git@two')
 
-        cser.add_upstream('us', 'https://one')
-        cser.add_upstream('ci', 'git@two')
+        self.run_args('upstream', 'default', 'us')
+        self.run_args('upstream', 'delete', 'us')
+        with capture_sys_output() as (out, _):
+            self.run_args('upstream', 'default', 'us', expected_ret=1)
+        self.assertEqual("patman: ValueError: No such upstream 'us'",
+                         out.getvalue().strip())
 
-        cser.set_default_upstream('us')
-        cser.delete_upstream('us')
-        self.assertIsNone(cser.get_default_upstream())
-
-        cser.delete_upstream('ci')
-        ulist = cser.get_upstream_dict()
-        self.assertFalse(ulist)
+        self.run_args('upstream', 'delete', 'ci')
+        with capture_sys_output() as (out, _):
+            self.run_args('upstream', 'list')
+        self.assertFalse(out.getvalue().strip())
