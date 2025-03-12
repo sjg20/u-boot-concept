@@ -376,7 +376,7 @@ def do_patman(args, test_db=None):
                 raise ValueError('patman series requires a subcommand')
             args.subcmd = args.extra.pop(0)
             patchwork_series(args, test_db)
-        elif args.cmd == 'upstream':
+        elif args.cmd in ('upstream', 'us'):
             if not args.extra:
                 raise ValueError('patman upstream requires a subcommand')
             args.subcmd = args.extra.pop(0)

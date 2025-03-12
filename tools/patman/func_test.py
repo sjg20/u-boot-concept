@@ -1894,8 +1894,8 @@ second line.'''
         self.assertEqual("patman: ValueError: No such upstream 'us'",
                          out.getvalue().strip())
 
-        self.run_args('upstream', 'add', 'us', 'https://one')
-        self.run_args('upstream', 'add', 'ci', 'git@two')
+        self.run_args('us', 'add', 'us', 'https://one')
+        self.run_args('us', 'add', 'ci', 'git@two')
 
         self.run_args('upstream', 'default', 'us')
         self.run_args('upstream', 'delete', 'us')
