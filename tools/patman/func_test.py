@@ -1576,7 +1576,7 @@ second line.'''
 
         ser = Series()
         ser.name = 'first'
-        cser.add_series(ser)
+        ser = cser.add_series(ser)
         cser.add_link(ser, 4, '1234', True)
         self.assertEqual('1234', cser.get_link(ser, 4))
 
