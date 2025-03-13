@@ -134,10 +134,10 @@ class Cseries:
                 key (str): upstream name
                 value (str): url
         """
-        res = self.cur.execute('SELECT id, subject, series_id, FROM pcommit')
+        res = self.cur.execute('SELECT id, subject, series_id FROM pcommit')
         pcdict = OrderedDict()
         for idnum, subject, series_id in res.fetchall():
-            pcdict[name] = idnum, subject, series_id
+            pcdict[idnum] = idnum, subject, series_id
         return pcdict
 
     def add_series(self, name, desc=None):
@@ -372,6 +372,41 @@ class Cseries:
 
         # repo.head.set_target(amended)
         print(f'Added new branch {new_name}')
+
+    def mark(self, name):
+        """Mark a series with Change-Id tags
+
+        Args:
+            name (str): Name of the series to mark
+        """
+        repo = pygit2.init_repository(self.gitdir)
+
+        ser = self.parse_series(name)
+        branch_name = ser.name
+        upstream_name = gitutil.get_upstream(self.gitdir, branch_name)
+
+        branch = repo.lookup_branch(branch_name)
+        upstream = repo.lookup_branch(upstream_name)
+
+        rebase = repo.rebase(branch.name, upstream.target, None)
+        fail = None
+        try:
+            while not fail:
+                operation = rebase.next()
+                if operation['type'] != pygit2.GIT_REBASE_OPERATION_APPLY:
+                    continue
+                try:
+                    rebase.commit()
+                except pygit2.GitError as exc:
+                    fail = str(exc.exception)
+        except StopIteration:
+            pass
+
+        if fail:
+            raise ValueError("Rebase failed: '{fail}'")
+
+        # Finish the rebase
+        rebase.finish()
 
     def send(self, series):
         """Send out a series
