@@ -130,6 +130,10 @@ def parse_args(argv=None):
 
     series = subparsers.add_parser('series', help='Manage series of patches')
     series.add_argument('-s', '--series', help='Name of series')
+    series.add_argument('-m', '--mark', action='store_true',
+                        help='Mark unmarked commits with a Change-Id field')
+    series.add_argument('-M', '--allow-unmarked', action='store_true',
+                        help="Don't require commits to be marked")
     series.add_argument('-u', '--update', action='store_true',
                         help='Update the branch commit')
 

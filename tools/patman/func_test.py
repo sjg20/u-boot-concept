@@ -1493,7 +1493,7 @@ second line.'''
         cser = self.get_cser()
         self.assertFalse(cser.get_series_dict())
 
-        cser.add_series('first', '')
+        cser.add_series('first', '', allow_unmarked=True)
         slist = cser.get_series_dict()
         self.assertEqual(1, len(slist))
         self.assertEqual('first', slist['first'].name)
@@ -1505,16 +1505,16 @@ second line.'''
         pclist = cser.get_pcommit_dict()
         self.assertEqual(2, len(pclist))
         self.assertIn(1, pclist)
-        self.assertEqual((1, 'i2c: I2C things', 1), pclist[1])
-        self.assertEqual((2, 'spi: SPI fixes', 1), pclist[2])
+        self.assertEqual((1, 'i2c: I2C things', 1, None), pclist[1])
+        self.assertEqual((2, 'spi: SPI fixes', 1, None), pclist[2])
 
         self.db_close()
 
     def test_series_list(self):
         """Test listing cseries"""
         cser = self.get_cser()
-        cser.add_series('first', '')
-        cser.add_series('second')
+        cser.add_series('first', '', allow_unmarked=True)
+        cser.add_series('second', allow_unmarked=True)
 
         args = Namespace()
         args.subcmd = 'list'
@@ -1534,6 +1534,8 @@ second line.'''
         args.subcmd = 'add'
         args.extra = ['my-description']
         args.series = 'first'
+        args.mark = False
+        args.allow_unmarked = True
         with capture_sys_output() as (out, _):
             control.patchwork_series(args, test_db=self.tmpdir)
 
@@ -1565,10 +1567,9 @@ second line.'''
     def test_do_series_add_cmdline(self):
         """Add a new cseries using the cmdline"""
         self.make_git_tree()
-        args = Namespace()
-        args = ['my-description']
         with capture_sys_output() as (out, _):
-            self.run_args('series', 'add', '-s', 'first', 'my-description')
+            self.run_args('series', 'add', '-M', '-s', 'first',
+                          'my-description')
 
         cser = self.get_database()
         slist = cser.get_series_dict()
@@ -1590,6 +1591,8 @@ second line.'''
         args.subcmd = 'add'
         args.extra = []
         args.series = None
+        args.mark = False
+        args.allow_unmarked = True
         with capture_sys_output() as (out, _):
             control.patchwork_series(args, test_db=self.tmpdir)
 
@@ -1609,7 +1612,7 @@ second line.'''
         gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
                          force=True)
 
-        ser = cser.add_series('first', '')
+        ser = cser.add_series('first', '', allow_unmarked=True)
         cser.add_link(ser, 4, '1234', True)
         self.assertEqual('1234', cser.get_link(ser, 4))
 
@@ -1625,7 +1628,7 @@ second line.'''
         gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
                          force=True)
 
-        cser.add_series('first', '')
+        cser.add_series('first', '', allow_unmarked=True)
 
         # with capture_sys_output() as (out, _):
         self.run_args('series', 'link', '-s', 'first', '-u', '1234')
@@ -1642,7 +1645,7 @@ second line.'''
     def check_series_archive(self):
         """Coroutine to run the archive test"""
         cser = self.get_cser()
-        cser.add_series('first', '')
+        cser.add_series('first', '', allow_unmarked=True)
 
         # Check the series is visible in the list
         slist = cser.get_series_dict()
@@ -1698,7 +1701,7 @@ second line.'''
 
         gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
                          force=True)
-        cser.add_series('first', '')
+        cser.add_series('first', '', allow_unmarked=True)
 
         with capture_sys_output() as (out, _):
             yield cser
@@ -1907,9 +1910,68 @@ second line.'''
             self.run_args('upstream', 'list')
         self.assertFalse(out.getvalue().strip())
 
-    def test_series_mark(self):
+    def test_series_add_mark(self):
         """Test marking a cseries with Change-Id fields"""
         cser = self.get_cser()
 
         cser.add_series('first', '', mark=True)
-        cser.mark('first')
+
+        pcdict = cser.get_pcommit_dict()
+
+        series = patchstream.get_metadata('first', 0, 2, git_dir=self.gitdir)
+        self.assertEqual(2, len(series.commits))
+        self.assertIn(1, pcdict)
+        idnum, subject, series_id, cid = pcdict[1]
+        self.assertEqual(1, idnum)
+        self.assertEqual('i2c: I2C things', subject)
+        self.assertEqual(1, series_id)
+        self.assertEqual(series.commits[0].change_id, cid)
+
+        self.assertIn(2, pcdict)
+        idnum, subject, series_id, cid = pcdict[2]
+        self.assertEqual(2, idnum)
+        self.assertEqual('spi: SPI fixes', subject)
+        self.assertEqual(1, series_id)
+        self.assertEqual(series.commits[1].change_id, cid)
+
+    def test_series_add_mark_cmdline(self):
+        """Test marking a cseries with Change-Id fields using the command line"""
+        cser = self.get_cser()
+
+        with capture_sys_output() as (out, _):
+            self.run_args('series', 'add', '-m', '-s', 'first',
+                          'my-description')
+
+        pcdict = cser.get_pcommit_dict()
+        idnum, subject, series_id, cid = pcdict[1]
+        self.assertTrue(cid)
+
+        idnum, subject, series_id, cid = pcdict[2]
+        self.assertTrue(cid)
+
+    def test_series_add_unmarked_cmdline(self):
+        """Test adding an unmarked cseries using the command line"""
+        cser = self.get_cser()
+
+        with capture_sys_output() as (out, _):
+            self.run_args('series', 'add', '-M', '-s', 'first',
+                          'my-description')
+
+        pcdict = cser.get_pcommit_dict()
+        idnum, subject, series_id, cid = pcdict[1]
+        self.assertFalse(cid)
+
+        idnum, subject, series_id, cid = pcdict[2]
+        self.assertFalse(cid)
+
+    def test_series_add_unmarked_bad_cmdline(self):
+        """Test failure to add an unmarked cseries using the command line"""
+        cser = self.get_cser()
+
+        with capture_sys_output() as (out, _):
+            self.run_args('series', 'add', '-s', 'first',
+                          'my-description', expected_ret=1)
+        self.assertEqual(
+            'patman: ValueError: 2 commit(s) are unmarked; please use -m or -M',
+            out.getvalue().strip())
+
