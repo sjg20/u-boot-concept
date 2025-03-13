@@ -81,6 +81,8 @@ virtfs_dir=
 
 bios=
 
+mem=512
+
 # Set ubdir to the build directory where you build U-Boot out-of-tree
 # We avoid in-tree build because it gets confusing trying different builds
 ubdir=${ubdir-/tmp/b}
@@ -95,35 +97,16 @@ while getopts "a:Bd:D:eEko:rR:sS:w" opt; do
 		;;
 	d)
 		disk=$OPTARG
-		extra+=" -m 4G"
-# 		extra+=" -smp 4"
+		mem=4G
+		extra+=" -smp 4"
 		;;
 	D)
 		virtfs_dir=$OPTARG
-		extra+=" -chardev socket,id=char0,path=/tmp/virtiofs.sock"
-		extra+=" -device vhost-user-fs-pci,queue-size=1024,chardev=char0,tag=hostshare"
-		extra+=" -object memory-backend-file,id=mem,size=4G,mem-path=/dev/shm,share=on"
-		extra+=" -numa node,memdev=mem"
-
-		/usr/libexec/virtiofsd --shared-dir ${virtfs_dir} \
-			--socket-path /tmp/virtiofs.sock --cache auto 2>/dev/null &
-
-# 		extra+=" -virtfs local,path=${virtfs_dir},mount_tag=hostshare,security_model=passthrough,id=virtfs0"
-		;;
-	D)
-		virtfs_dir=$OPTARG
-		extra+=" -chardev socket,id=char0,path=/tmp/virtiofs.sock"
-		extra+=" -device vhost-user-fs-pci,queue-size=1024,chardev=char0,tag=hostshare"
-		extra+=" -object memory-backend-file,id=mem,size=4G,mem-path=/dev/shm,share=on"
-		extra+=" -numa node,memdev=mem"
-
-		/usr/libexec/virtiofsd --shared-dir ${virtfs_dir} \
-			--socket-path /tmp/virtiofs.sock --cache auto 2>/dev/null &
 		;;
 	e)
-		extra+=" -m 4G -smp 4"
+		mem=4G
+		extra+=" -smp 4"
 		extra+=" -display none"
-		extra+=" -device virtio-gpu-pci"
 		extra+=" -device qemu-xhci"
 		extra+=" -device usb-kbd"
 		extra+=" -drive file=${sctdir}/sct.img,format=raw,if=none,id=vda"
@@ -141,7 +124,8 @@ while getopts "a:Bd:D:eEko:rR:sS:w" opt; do
 		os=$OPTARG
 
 		# Expand memory and CPUs
-		extra+=" -m 4G -smp 4"
+		mem=4G
+		extra+=" -smp 4"
 		;;
 	r)
 		run=1
@@ -184,6 +168,7 @@ update_sct_seq() {
 
 # Run QEMU with U-Boot
 run_qemu() {
+	extra+=" -m ${mem}"
 	extra+=" -net user -net nic,model=virtio-net-pci"
 	if [[ -n "${os_image}" ]]; then
 		extra+=" -drive if=virtio,file=${os_image},format=raw,id=hd0"
@@ -195,6 +180,15 @@ run_qemu() {
 	fi
 	if [[ -n "${disk}" ]]; then
 		extra+=" -drive if=virtio,file=${disk},format=raw,id=hd1"
+	fi
+	if [[ -n "${virtfs_dir}" ]]; then
+		extra+=" -chardev socket,id=char0,path=/tmp/virtiofs.sock"
+		extra+=" -device vhost-user-fs-pci,queue-size=1024,chardev=char0,tag=hostshare"
+		extra+=" -object memory-backend-file,id=mem,size=${mem},mem-path=/dev/shm,share=on"
+		extra+=" -numa node,memdev=mem"
+
+		/usr/libexec/virtiofsd --shared-dir ${virtfs_dir} \
+			--socket-path /tmp/virtiofs.sock --cache auto 2>/dev/null &
 	fi
 	echo "Running ${qemu} -bios "${bios}" ${kvm} ${extra}"
 	"${qemu}" -bios "${bios}" \

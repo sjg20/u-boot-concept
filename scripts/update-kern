@@ -13,7 +13,7 @@ sudo mount ${loop}p2 $mnt
 sudo cp -v $kern $mnt/boot
 
 # uncomment to edit extlinux.conf
-#sudo gedit $mnt/boot/extlinux/extlinux.conf
+sudo gedit $mnt/boot/extlinux/extlinux.conf
 
 sudo umount $mnt
 sudo losetup -d $loop
