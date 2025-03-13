@@ -1467,6 +1467,13 @@ second line.'''
         plist = cser.get_patchwork_dict()
         self.assertEqual(1, len(plist))
         self.assertEqual((1, 1, None), plist[0])
+
+        pclist = cser.get_pcommit_dict()
+        self.assertEqual(2, len(pclist))
+        self.assertIn(1, pclist)
+        self.assertEqual((1, 'i2c: I2C things', 1), pclist[1])
+        self.assertEqual((2, 'spi: SPI fixes', 1), pclist[2])
+
         self.db_close()
 
     def test_series_list(self):
@@ -1865,3 +1872,10 @@ second line.'''
         with capture_sys_output() as (out, _):
             self.run_args('upstream', 'list')
         self.assertFalse(out.getvalue().strip())
+
+    def test_series_mark(self):
+        """Test marking a cseries with Change-Id fields"""
+        cser = self.get_cser()
+
+        cser.add_series('first', '')
+        cser.mark('first')
