@@ -71,8 +71,8 @@ class TestFunctional(unittest.TestCase):
         tout.init(allow_colour=False)
 
     def tearDown(self):
-        # shutil.rmtree(self.tmpdir)
-        print(self.tmpdir)
+        shutil.rmtree(self.tmpdir)
+        # print(self.tmpdir)
         terminal.set_print_test_mode(False)
 
     @staticmethod
@@ -571,8 +571,6 @@ complicated as possible''')
             tools.run('git', 'config', 'user.email', 'dumdum@dummy.com')
             tools.run('git', 'branch', 'upstream')
             tools.run('git', 'branch', '--set-upstream-to=upstream')
-            tools.run('git', 'add', '.')
-            tools.run('git', 'commit', '-m', 'new commit')
 
             # Setup patman configuration.
             with open('.patman', 'w', buffering=1) as f:
@@ -584,6 +582,8 @@ complicated as possible''')
                 f.write('#!/usr/bin/env python\n'
                         'print("hello@there.com")\n')
             os.chmod('dummy-script.sh', 0x555)
+            tools.run('git', 'add', '.')
+            tools.run('git', 'commit', '-m', 'new commit')
 
             # Finally, do the test
             with capture_sys_output():
@@ -1882,5 +1882,5 @@ second line.'''
         """Test marking a cseries with Change-Id fields"""
         cser = self.get_cser()
 
-        cser.add_series('first', '')
+        cser.add_series('first', '', mark=True)
         cser.mark('first')
