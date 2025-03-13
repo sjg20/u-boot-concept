@@ -62,7 +62,7 @@ class Cseries:
 
             self.cur.execute(
                 'CREATE TABLE pcommit (id INTEGER PRIMARY KEY AUTOINCREMENT,'
-                'series_id INTEGER, subject, '
+                'series_id INTEGER, subject, cid,'
                 'FOREIGN KEY (series_id) REFERENCES series (id))')
 
             self.con.commit()
@@ -138,13 +138,13 @@ class Cseries:
                 key (str): upstream name
                 value (str): url
         """
-        res = self.cur.execute('SELECT id, subject, series_id FROM pcommit')
+        res = self.cur.execute('SELECT id, subject, series_id, cid FROM pcommit')
         pcdict = OrderedDict()
-        for idnum, subject, series_id in res.fetchall():
-            pcdict[idnum] = idnum, subject, series_id
+        for idnum, subject, series_id, cid in res.fetchall():
+            pcdict[idnum] = idnum, subject, series_id, cid
         return pcdict
 
-    def add_series(self, name, desc=None, mark=False):
+    def add_series(self, name, desc=None, mark=False, allow_unmarked=False):
         """Add a series to the database
 
         Args:
@@ -166,6 +166,21 @@ class Cseries:
             if not series.cover:
                 raise ValueError(f"Branch '{name}' has no cover letter")
             desc = series.cover[0]
+
+        if mark:
+            self.mark_series(name, series)
+
+            # Collect the commits again, as the hashes have changed
+            series = patchstream.get_metadata(name, 0, count,
+                                              git_dir=self.gitdir)
+
+        bad_count = 0
+        for commit in series.commits:
+            if not commit.change_id:
+                bad_count += 1
+        if bad_count and not allow_unmarked:
+            raise ValueError(
+                f'{bad_count} commit(s) are unmarked; please use -m or -M')
 
         # See if we can collect a version name, i.e. name<version>
         version = 1
@@ -195,8 +210,8 @@ class Cseries:
 
         for commit in series.commits:
             res = self.cur.execute(
-                'INSERT INTO pcommit (series_id, subject) VALUES (?, ?)',
-                (str(idnum), commit.subject))
+                'INSERT INTO pcommit (series_id, subject, cid) VALUES (?, ?, ?)',
+                (str(idnum), commit.subject, commit.change_id))
 
         self.con.commit()
         ser = Series()
@@ -386,26 +401,16 @@ class Cseries:
         # commit.committer
         # git var GIT_COMMITTER_IDENT ; echo "$refhash" ; cat "README"; } | git hash-object --stdin)
 
-    def mark(self, name):
+    def mark_series(self, name, series):
         """Mark a series with Change-Id tags
 
         Args:
             name (str): Name of the series to mark
         """
-        ser = self.parse_series(name)
-        name = ser.name
         upstream_name, warn = gitutil.get_upstream(self.gitdir, name)
-
-        count = gitutil.count_commits_to_branch(name, self.gitdir)
-        if not count:
-            raise ValueError('Cannot detect branch automatically')
-
-        series = patchstream.get_metadata(name, 0, count, git_dir=self.gitdir)
 
         repo = pygit2.init_repository(self.gitdir)
         branch = repo.lookup_branch(name)
-        # print('upstream_name', upstream_name)
-        # upstream = repo.lookup_branch(upstream_name)
         upstream = repo.lookup_reference(upstream_name)
 
         # Checkout the upstream commit in 'detached' mode

@@ -272,7 +272,8 @@ def patchwork_series(args, test_db=None):
             cser.do_list()
         elif args.subcmd == 'add':
             cser.add_series(args.series,
-                            args.extra[0] if len(args.extra) else None)
+                            args.extra[0] if len(args.extra) else None,
+                            mark=args.mark, allow_unmarked=args.allow_unmarked)
         elif args.subcmd == 'link':
             ser = cser.parse_series(args.series)
             cser.add_link(ser, 4, args.extra[0], args.update)
