@@ -782,6 +782,7 @@ DM_TEST(dm_test_video_damage, UTF_SCAN_PDATA | UTF_SCAN_FDT);
 static int dm_test_font_measure(struct unit_test_state *uts)
 {
 	const char *test_string = "There is always much to be said for not attempting more than you can do and for making a certainty of what you try. But this principle, like others in life and war, has its exceptions.";
+	const struct vidconsole_mline *line;
 	struct vidconsole_bbox bbox;
 	struct video_priv *priv;
 	struct udevice *dev, *cons;
@@ -795,13 +796,23 @@ static int dm_test_font_measure(struct unit_test_state *uts)
 	/* this is using the Nimbus font with size of 18 pixels */
 	ut_assertok(uclass_get_device(UCLASS_VIDEO_CONSOLE, 0, &cons));
 	vidconsole_position_cursor(cons, 0, 0);
+	alist_init_struct(&lines, struct vidconsole_mline);
 	ut_assertok(vidconsole_measure(cons, NULL, 0, test_string, &bbox,
 				       &lines));
 	ut_asserteq(0, bbox.x0);
 	ut_asserteq(0, bbox.y0);
 	ut_asserteq(0x47a, bbox.x1);
 	ut_asserteq(0x12, bbox.y1);
-	ut_asserteq(0, lines.count);
+	ut_asserteq(1, lines.count);
+
+	line = alist_get(&lines, 0, struct vidconsole_mline);
+	ut_assertnonnull(line);
+	ut_asserteq(0, line->bbox.x0);
+	ut_asserteq(0, line->bbox.y0);
+	ut_asserteq(0x47a, line->bbox.x1);
+	ut_asserteq(0x12, line->bbox.y1);
+	ut_asserteq(0, line->start);
+	ut_asserteq(strlen(test_string), line->len);
 
 	return 0;
 }
