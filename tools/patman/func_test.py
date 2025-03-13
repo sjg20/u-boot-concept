@@ -71,8 +71,8 @@ class TestFunctional(unittest.TestCase):
         tout.init(allow_colour=False)
 
     def tearDown(self):
-        shutil.rmtree(self.tmpdir)
-        # print(self.tmpdir)
+        # shutil.rmtree(self.tmpdir)
+        print(self.tmpdir)
         terminal.set_print_test_mode(False)
 
     @staticmethod
@@ -460,7 +460,7 @@ better than before''')
         target = repo.revparse_single('HEAD~2')
         # pylint doesn't seem to find this
         # pylint: disable=E1101
-        repo.reset(target.oid, pygit2.GIT_CHECKOUT_FORCE)
+        repo.reset(target.oid, pygit2.enums.ResetMode.HARD)
         self.make_commit_with_file('video: Some video improvements', '''
 Fix up the video so that
 it looks more purple. Purple is
@@ -499,6 +499,11 @@ complicated as possible''')
         repo.config.set_multivar('branch.second.merge', '', 'refs/heads/base')
 
         repo.branches.local.create('base', base_target)
+
+        target = repo.lookup_reference('refs/heads/first')
+        repo.checkout(target, strategy=pygit2.GIT_CHECKOUT_FORCE)
+        target = repo.revparse_single('HEAD')
+        repo.reset(target.oid, pygit2.enums.ResetMode.HARD)
         return repo
 
     def test_branch(self):
