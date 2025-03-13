@@ -157,8 +157,7 @@ class Cseries:
         if not count:
             raise ValueError('Cannot detect branch automatically')
 
-        series = patchstream.get_metadata(name, 0, count,
-                                          git_dir=self.gitdir)
+        series = patchstream.get_metadata(name, 0, count, git_dir=self.gitdir)
         if desc is None:
             if not series.cover:
                 raise ValueError(f"Branch '{name}' has no cover letter")
@@ -382,12 +381,30 @@ class Cseries:
         repo = pygit2.init_repository(self.gitdir)
 
         ser = self.parse_series(name)
-        branch_name = ser.name
-        upstream_name = gitutil.get_upstream(self.gitdir, branch_name)
+        name = ser.name
+        upstream_name, warn = gitutil.get_upstream(self.gitdir, name)
 
-        branch = repo.lookup_branch(branch_name)
+        branch = repo.lookup_branch(name)
         upstream = repo.lookup_branch(upstream_name)
 
+        count = gitutil.count_commits_to_branch(name, self.gitdir)
+        if not count:
+            raise ValueError('Cannot detect branch automatically')
+
+        series = patchstream.get_metadata(name, 0, count, git_dir=self.gitdir)
+
+        # current_head = current_branch.peel(pygit2.GIT_OBJ_COMMIT)
+
+        repo.checkout(upstream)
+        for commit in series.commits:
+            print('commit', commit.hash)
+            repo.cherrypick(commit.hash)
+            print('conflicts', repo.index.conflicts)
+            # current_head = current_branch.peel(pygit2.GIT_OBJ_COMMIT)
+            # self.repo.create_commit('HEAD', author, committer, message, tree,
+                                    # [self.repo.head.target])
+        branch.set_target(repo.head)
+        '''
         rebase = repo.rebase(branch.name, upstream.target, None)
         fail = None
         try:
@@ -407,6 +424,7 @@ class Cseries:
 
         # Finish the rebase
         rebase.finish()
+        '''
 
     def send(self, series):
         """Send out a series
