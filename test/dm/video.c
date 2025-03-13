@@ -17,6 +17,7 @@
 #include <asm/sdl.h>
 #include <dm/test.h>
 #include <dm/uclass-internal.h>
+#include <test/lib.h>
 #include <test/test.h>
 #include <test/ut.h>
 
@@ -887,3 +888,36 @@ static int dm_test_font_measure(struct unit_test_state *uts)
 	return 0;
 }
 DM_TEST(dm_test_font_measure, UTF_SCAN_FDT);
+
+/* Test silencing the video console */
+static int lib_test_video_silence(struct unit_test_state *uts)
+{
+	struct udevice *dev, *con;
+
+	/*
+	 * this test is in the lib suite and uses the same video console, since
+	 * if it is marked with UT_DM an old video console will be registered
+	 * with stdio, thus creating two consoles. This test will see the new
+	 * one but stdio still sees the old.
+	 */
+	ut_assertok(uclass_first_device_err(UCLASS_VIDEO, &dev));
+	ut_assertok(uclass_get_device(UCLASS_VIDEO_CONSOLE, 0, &con));
+	ut_assertok(vidconsole_clear_and_reset(con));
+	ut_unsilence_console(uts);
+
+	printf("message 1: console\n");
+	vidconsole_put_string(con, "message 1: video\n");
+
+	vidconsole_set_quiet(con, true);
+	printf("second message: console\n");
+	vidconsole_put_string(con, "second message: video\n");
+
+	vidconsole_set_quiet(con, false);
+	printf("final message: console\n");
+	vidconsole_put_string(con, "final message: video\n");
+	ut_asserteq(3892, compress_frame_buffer(uts, dev, false));
+	ut_assertok(check_copy_frame_buffer(uts, dev));
+
+	return 0;
+}
+LIB_TEST(lib_test_video_silence, 0);
