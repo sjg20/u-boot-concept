@@ -6,6 +6,7 @@
 """
 
 from collections import OrderedDict
+import hashlib
 import os
 import re
 import sqlite3
@@ -19,6 +20,9 @@ from patman.series import Series
 from u_boot_pylib import gitutil
 from u_boot_pylib import tout
 
+
+# Tag to use for Change IDs
+CHANGE_ID_TAG = 'Change-Id'
 
 class Cseries:
     """Database with information about series
@@ -372,6 +376,19 @@ class Cseries:
         # repo.head.set_target(amended)
         print(f'Added new branch {new_name}')
 
+    def make_cid(self, commit):
+        """Make a Change ID for a commit"""
+        sig = commit.committer
+        val = hashlib.sha1()
+        to_hash = f'{sig.name} <{sig.email}> {sig.time} {sig.offset}'
+        val.update(to_hash.encode('utf-8'))
+        val.update(str(commit.tree_id).encode('utf-8'))
+        val.update(commit.message.encode('utf-8'))
+        return val.hexdigest()
+
+        # commit.committer
+        # git var GIT_COMMITTER_IDENT ; echo "$refhash" ; cat "README"; } | git hash-object --stdin)
+
     def mark(self, name):
         """Mark a series with Change-Id tags
 
@@ -386,6 +403,7 @@ class Cseries:
 
         branch = repo.lookup_branch(name)
         upstream = repo.lookup_branch(upstream_name)
+        # print('upstream_name', upstream, upstream.oid)
 
         count = gitutil.count_commits_to_branch(name, self.gitdir)
         if not count:
@@ -395,15 +413,47 @@ class Cseries:
 
         # current_head = current_branch.peel(pygit2.GIT_OBJ_COMMIT)
 
-        repo.checkout(upstream)
-        for commit in series.commits:
-            print('commit', commit.hash)
-            repo.cherrypick(commit.hash)
-            print('conflicts', repo.index.conflicts)
+        commit_oid = upstream.peel(pygit2.GIT_OBJ_COMMIT).oid
+        commit = repo.get(commit_oid)
+        # repo.checkout(upstream)
+        repo.checkout_tree(commit)
+        repo.head.set_target(commit_oid)
+        cur = upstream
+        # print('cur', cur, upstream)
+        for cmt in series.commits:
+            # print('commit', cmt.hash)
+            repo.cherrypick(cmt.hash)
+            if repo.index.conflicts:
+                raise ValueError('Conflicts detected, please reset the tree')
+
+            tree_id = repo.index.write_tree()
+            cherry = repo.get(cmt.hash)
+
+            # commit = repo.head.peel(pygit2.GIT_OBJ_COMMIT)
+            # print('commit.hash', cherry.tree_id)
+
+            msg = cherry.message
+            if CHANGE_ID_TAG not in msg:
+                cid = self.make_cid(cherry)
+                msg = cherry.message + f'\n{CHANGE_ID_TAG}: {cid}'
+
+                repo.create_commit('HEAD', cherry.author, cherry.committer,
+                                   msg, tree_id, [cur.target])
+
+                cur = repo.head
+                # amended = repo.amend_commit(commit, 'HEAD', message=new_msg)
+                # repo.head.set_target(amended)
+                # print('added', cur)
+
+            repo.state_cleanup()
+
             # current_head = current_branch.peel(pygit2.GIT_OBJ_COMMIT)
             # self.repo.create_commit('HEAD', author, committer, message, tree,
                                     # [self.repo.head.target])
-        branch.set_target(repo.head)
+        # branch.set_target(repo.head)
+        target = repo.revparse_single('HEAD')
+        repo.create_reference(f'refs/heads/{name}', target.oid, force=True)
+
         '''
         rebase = repo.rebase(branch.name, upstream.target, None)
         fail = None
