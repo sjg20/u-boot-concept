@@ -144,13 +144,13 @@ def get_upstream(git_dir, branch):
         upstream, msg = guess_upstream(git_dir, branch)
         return upstream, msg
 
-    leaf = merge.split('/', maxsplit=2)[2:]
     if remote == '.':
-        if leaf:
-            return '/'.join(leaf), None
+        # if leaf:
+            # return '/'.join(leaf), None
         return merge, None
     if remote and merge:
         # Drop the initial refs/heads from merge
+        leaf = merge.split('/', maxsplit=2)[2:]
         return f'{remote}/{"/".join(leaf)}', None
     raise ValueError("Cannot determine upstream branch for branch "
                      f"'{branch}' remote='{remote}', merge='{merge}'")

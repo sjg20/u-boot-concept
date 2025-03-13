@@ -144,7 +144,7 @@ class Cseries:
             pcdict[idnum] = idnum, subject, series_id
         return pcdict
 
-    def add_series(self, name, desc=None):
+    def add_series(self, name, desc=None, mark=False):
         """Add a series to the database
 
         Args:
@@ -197,9 +197,6 @@ class Cseries:
             res = self.cur.execute(
                 'INSERT INTO pcommit (series_id, subject) VALUES (?, ?)',
                 (str(idnum), commit.subject))
-#            res = self.cur.execute(
-                # 'INSERT INTO patch (series_id, subject) VALUES ',
-                # f"('{str(idnum)}', '{commit.subject}')")
 
         self.con.commit()
         ser = Series()
@@ -395,15 +392,9 @@ class Cseries:
         Args:
             name (str): Name of the series to mark
         """
-        repo = pygit2.init_repository(self.gitdir)
-
         ser = self.parse_series(name)
         name = ser.name
         upstream_name, warn = gitutil.get_upstream(self.gitdir, name)
-
-        branch = repo.lookup_branch(name)
-        upstream = repo.lookup_branch(upstream_name)
-        # print('upstream_name', upstream, upstream.oid)
 
         count = gitutil.count_commits_to_branch(name, self.gitdir)
         if not count:
@@ -411,26 +402,25 @@ class Cseries:
 
         series = patchstream.get_metadata(name, 0, count, git_dir=self.gitdir)
 
-        # current_head = current_branch.peel(pygit2.GIT_OBJ_COMMIT)
+        repo = pygit2.init_repository(self.gitdir)
+        branch = repo.lookup_branch(name)
+        # print('upstream_name', upstream_name)
+        # upstream = repo.lookup_branch(upstream_name)
+        upstream = repo.lookup_reference(upstream_name)
 
+        # Checkout the upstream commit in 'detached' mode
         commit_oid = upstream.peel(pygit2.GIT_OBJ_COMMIT).oid
         commit = repo.get(commit_oid)
-        # repo.checkout(upstream)
         repo.checkout_tree(commit)
         repo.head.set_target(commit_oid)
         cur = upstream
-        # print('cur', cur, upstream)
         for cmt in series.commits:
-            # print('commit', cmt.hash)
             repo.cherrypick(cmt.hash)
             if repo.index.conflicts:
                 raise ValueError('Conflicts detected, please reset the tree')
 
             tree_id = repo.index.write_tree()
             cherry = repo.get(cmt.hash)
-
-            # commit = repo.head.peel(pygit2.GIT_OBJ_COMMIT)
-            # print('commit.hash', cherry.tree_id)
 
             msg = cherry.message
             if CHANGE_ID_TAG not in msg:
@@ -441,40 +431,11 @@ class Cseries:
                                    msg, tree_id, [cur.target])
 
                 cur = repo.head
-                # amended = repo.amend_commit(commit, 'HEAD', message=new_msg)
-                # repo.head.set_target(amended)
-                # print('added', cur)
-
             repo.state_cleanup()
 
-            # current_head = current_branch.peel(pygit2.GIT_OBJ_COMMIT)
-            # self.repo.create_commit('HEAD', author, committer, message, tree,
-                                    # [self.repo.head.target])
-        # branch.set_target(repo.head)
+        # Update the branch
         target = repo.revparse_single('HEAD')
         repo.create_reference(f'refs/heads/{name}', target.oid, force=True)
-
-        '''
-        rebase = repo.rebase(branch.name, upstream.target, None)
-        fail = None
-        try:
-            while not fail:
-                operation = rebase.next()
-                if operation['type'] != pygit2.GIT_REBASE_OPERATION_APPLY:
-                    continue
-                try:
-                    rebase.commit()
-                except pygit2.GitError as exc:
-                    fail = str(exc.exception)
-        except StopIteration:
-            pass
-
-        if fail:
-            raise ValueError("Rebase failed: '{fail}'")
-
-        # Finish the rebase
-        rebase.finish()
-        '''
 
     def send(self, series):
         """Send out a series
