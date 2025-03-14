@@ -109,12 +109,12 @@ static int dm_test_usb_fdt_node(struct unit_test_state *uts)
 	state_set_skip_delays(true);
 	ut_assertok(usb_init());
 	ut_assertok(uclass_get_device(UCLASS_MASS_STORAGE, 0, &dev));
-	node = ofnode_path("/usb@1/hub/usbstor@1");
+	node = ofnode_path("/usb@1/hub1/usbstor@1");
 	ut_asserteq(1, ofnode_equal(node, dev_ofnode(dev)));
 	ut_assertok(uclass_get_device(UCLASS_MASS_STORAGE, 1, &dev));
 	ut_asserteq(1, ofnode_equal(ofnode_null(), dev_ofnode(dev)));
 	ut_assertok(uclass_get_device(UCLASS_MASS_STORAGE, 2, &dev));
-	node = ofnode_path("/usb@1/hub/usbstor@3");
+	node = ofnode_path("/usb@1/hub1/usbstor@3");
 	ut_asserteq(1, ofnode_equal(node, dev_ofnode(dev)));
 	ut_assertok(usb_stop());
 
