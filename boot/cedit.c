@@ -129,6 +129,7 @@ int cedit_prepare(struct expo *exp, struct video_priv **vid_privp,
 		return log_msg_ret("sid", ret);
 
 	exp->popup = true;
+	exp->show_highlight = true;
 
 	/* This is not supported for now */
 	if (0)
