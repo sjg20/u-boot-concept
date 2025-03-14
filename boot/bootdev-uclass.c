@@ -936,6 +936,45 @@ void bootdev_list_hunters(struct bootstd_priv *std)
 	printf("(total hunters: %d)\n", n_ent);
 }
 
+int bootdev_set_order(const char *order_str)
+{
+	struct udevice *bootstd;
+	struct alist order;
+	const char *s, *p;
+	char *label;
+	int i, ret;
+
+	ret = uclass_first_device_err(UCLASS_BOOTSTD, &bootstd);
+	if (ret)
+		return log_msg_ret("bsb", ret);
+
+	alist_init_struct(&order, char *);
+	log_debug("order_str: %s\n", order_str);
+	if (order_str) {
+		for (i = 0, s = order_str; *s; s = p + (*p == ' '), i++) {
+			p = strchrnul(s, ' ');
+			label = strndup(s, p - s);
+			if (!label || !alist_add(&order, label))
+				goto err;
+		}
+	}
+	label = NULL;
+	if (!order.count)
+		bootstd_set_bootdev_order(bootstd, NULL);
+	else if (!alist_add(&order, label))
+		goto err;
+
+	bootstd_set_bootdev_order(bootstd,
+			  alist_uninit_move(&order, NULL, const char *));
+
+	return 0;
+
+err:
+	alist_uninit(&order);
+
+	return log_msg_ret("bso", -ENOMEM);
+}
+
 static int bootdev_pre_unbind(struct udevice *dev)
 {
 	int ret;
