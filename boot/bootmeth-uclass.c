@@ -360,13 +360,11 @@ int bootmeth_alloc_file(struct bootflow *bflow, uint size_limit, uint align,
 }
 
 int bootmeth_alloc_other(struct bootflow *bflow, const char *fname,
-			 enum bootflow_img_t type, void **bufp, uint *sizep)
+			 enum bootflow_img_t type, struct abuf *buf)
 {
 	struct blk_desc *desc = NULL;
-	struct abuf buf;
 	char path[200];
 	loff_t size;
-	size_t bsize;
 	int ret;
 
 	snprintf(path, sizeof(path), "%s%s", bflow->subdir, fname);
@@ -386,15 +384,13 @@ int bootmeth_alloc_other(struct bootflow *bflow, const char *fname,
 	if (ret)
 		return log_msg_ret("fs", ret);
 
-	ret = fs_read_alloc(path, size, 0, &buf);
+	ret = fs_read_alloc(path, size, 0, buf);
 	if (ret)
 		return log_msg_ret("all", ret);
 
-	if (!bootflow_img_add(bflow, bflow->fname, type, abuf_addr(&buf), size))
+	if (!bootflow_img_add(bflow, bflow->fname, type, map_to_sysmem(buf),
+			      size))
 		return log_msg_ret("boi", -ENOMEM);
-
-	*bufp = abuf_uninit_move(&buf, &bsize);
-	*sizep = bsize;
 
 	return 0;
 }
