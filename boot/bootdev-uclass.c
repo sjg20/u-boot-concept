@@ -126,7 +126,7 @@ int bootdev_find_in_blk(struct udevice *dev, struct udevice *blk,
 	 * us whether there is valid media there
 	 */
 	ret = part_get_info(desc, iter->part, &info);
-	log_debug("part_get_info() returned %d\n", ret);
+	log_debug("part_get_info() part=%d returned %d\n", iter->part, ret);
 	if (!iter->part && ret == -ENOENT)
 		ret = 0;
 
@@ -188,8 +188,9 @@ int bootdev_find_in_blk(struct udevice *dev, struct udevice *blk,
 		bflow->state = BOOTFLOWST_FS;
 	}
 
-	log_debug("method %s\n", bflow->method->name);
+	log_debug("using method %s\n", bflow->method->name);
 	ret = bootmeth_read_bootflow(bflow->method, bflow);
+	log_debug("method %s returned ret=%d\n", bflow->method->name, ret);
 	if (ret)
 		return log_msg_ret("method", ret);
 
