@@ -307,6 +307,16 @@ config CMD_BOOTM_PRE_LOAD
 	 This stage allow to check or modify the image provided
 	 to the bootm command.
 
+config CMD_BOOTCTL
+	bool "bootctl"
+	depends on BOOTCTL
+	default y
+	help
+	  Provide information about the bootctl system, including access to
+	  drivers and other features.
+
+	  This command is not necessary for bootctl to work.
+
 config CMD_BOOTDEV
 	bool "bootdev"
 	depends on BOOTSTD

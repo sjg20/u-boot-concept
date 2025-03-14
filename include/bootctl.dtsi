@@ -1,0 +1,124 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * Definition for how to boot Ubuntu 24.04
+ *
+ * This contains the various components needed to boot Ubuntu 24.04 Desktop. It
+ * provides a description of the process, similar to a grub.cfg file.
+ *
+ * The file format of this is TBD, but yaml might be a suitable choice. For now,
+ * devicetree is used as it is convenient for U-Boot
+ */
+
+&boot_ctl {
+	compatible = "bootctl,ubuntu-desktop", "bootctl,logic";
+
+	options {
+		/* use persistent storage for variables */
+		persist-state;
+
+		/* store a default OS in the persistent storage */
+		default-os;
+
+		/* timeout in seconds before booting a default OS */
+		timeout = <5>;
+
+		/* skip timeout if boot was successful */
+		skip-timeout-on-success;
+
+		/* track boot success / failure in state */
+		track-success;
+
+		/* auto-boot the default OS after a timeout */
+		autoboot;
+
+		/* measure loaded images, etc. */
+#ifndef CONFIG_QEMU
+		measure;
+#endif
+
+		/* restrict labels to boot (separated by space) */
+#ifdef CONFIG_QEMU
+		labels = "virtio";
+#endif
+	};
+
+	measure {
+		compatible = "bootctl,simple-measure";
+
+		tpm-log-size = <0x10000>;
+
+		/*
+		 * should we use compatible strings for each subnode? That might
+		 * provide more flexibility for expansion
+		 */
+
+		os {
+			method = "tpm-pcr";
+			pcr-number = <6>;
+			algos = "sha256";
+		};
+
+		initrd {
+			method = "tpm-pcr";
+			pcr-number = <9>;
+			algos = "sha256";
+		};
+
+		fdt {
+			method = "tpm-pcr";
+			pcr-number = <8>;
+			algos = "sha256";
+		};
+
+		cmdline {
+			method = "tpm-pcr";
+			pcr-number = <8>;
+			algos = "sha256";
+			optional;
+		};
+	};
+
+	oslist-extlinux {
+		compatible = "bootctl,extlinux-oslist";
+
+		/* indicates the filesystems needed to access extlinux */
+		filesystems {
+			ext4 {
+				/* add enabled options here? */
+			};
+
+			fat {
+			};
+		};
+	};
+
+	oslist-efi {
+		compatible = "bootctl,efifile-oslist";
+
+		/* indicates the filesystems needed to access EFI files */
+		filesystems {
+			fat {
+			};
+		};
+	};
+
+	state {
+		compatible = "bootctl,simple-state", "bootctl,state";
+
+		/* revisit, as we may want to reference the hardware device */
+#ifdef CONFIG_SANDBOX
+		location = "hostfs", "0";
+		filename = "bootctl.ini";
+#else
+		location = "virtio", "0:2";
+		filename = "/boot/bootctl/bootctl.ini";
+#endif
+	};
+
+	ui {
+		compatible = "bootctl,simple-ui", "bootctl,ui";
+		graphical = "if-available";
+		textual = "if-available";
+		logo = /incbin/("/home/sglass/u/boot/bootctl/canonical.bmp");
+	};
+};

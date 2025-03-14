@@ -10,6 +10,8 @@ obj-$(CONFIG_EXPO) += expo.o
 obj-$(CONFIG_CEDIT) += cedit.o
 endif
 
+obj-$(CONFIG_UT_BOOTCTL) += bootctl/
+
 ifdef CONFIG_SANDBOX
 obj-$(CONFIG_$(PHASE_)CMDLINE) += bootm.o
 endif

@@ -497,6 +497,16 @@ config BOOT_DEFAULTS
 	  of U-Boot to boot various images. Currently much functionality is
 	  tied to enabling the command that exercises it.
 
+config BOOTCTL
+	bool "Support for boot schema"
+	depends on BOOTSTD
+	default y
+	help
+	  This supports the Canonical boot schema, providing a way to discover
+	  and boot Operating Systems in an open and declarative manner.
+
+	  For now, this is experimental.
+
 menuconfig BOOTSTD
 	bool "Standard boot"
 	default y if BLK
