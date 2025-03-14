@@ -4,6 +4,7 @@
  * Roger Knecht <rknecht@pm.de>
  */
 
+#include <abuf.h>
 #include <command.h>
 #include <fs.h>
 #include <malloc.h>
@@ -12,11 +13,10 @@
 static int do_cat(struct cmd_tbl *cmdtp, int flag, int argc,
 		  char *const argv[])
 {
+	struct abuf buf;
 	char *ifname;
 	char *dev;
 	char *file;
-	char *buffer;
-	ulong file_size;
 	int ret;
 
 	if (argc < 4)
@@ -26,8 +26,7 @@ static int do_cat(struct cmd_tbl *cmdtp, int flag, int argc,
 	dev = argv[2];
 	file = argv[3];
 
-	ret = fs_load_alloc(ifname, dev, file, 0, 0, (void **)&buffer,
-			    &file_size);
+	ret = fs_load_alloc(ifname, dev, file, 0, 0, &buf);
 
 	// check file exists
 	switch (ret) {
@@ -51,10 +50,10 @@ static int do_cat(struct cmd_tbl *cmdtp, int flag, int argc,
 	}
 
 	// print file content
-	buffer[file_size] = '\0';
-	puts(buffer);
+	((char *)buf.data)[buf.size] = '\0';
+	puts(buf.data);
 
-	free(buffer);
+	abuf_uninit(&buf);
 
 	return 0;
 }
