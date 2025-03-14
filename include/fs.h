@@ -359,15 +359,15 @@ int fs_read_alloc(const char *fname, ulong size, uint align, struct abuf *buf);
  * @fname: Filename to read
  * @max_size: Maximum allowed size for the file (use 0 for 1GB)
  * @align: Alignment to use for memory allocation (0 for default)
- * @bufp: On success, returns the allocated buffer with the nul-terminated file
- *	in it
- * @sizep: On success, returns the size of the file
+ * @buf: On success, returns the allocated buffer with the nul-terminated file
+ *	in it. The buffer size is set to the size excluding the terminator. The
+ *	buffer is inited by this function and must be uninited by the caller
  * Return: 0 if OK, -ENOMEM if out of memory, -ENOENT if the file does not
  * exist, -ENOMEDIUM if the device does not exist, -E2BIG if the file is too
  * large (greater than @max_size), -EIO if read failed
  */
 int fs_load_alloc(const char *ifname, const char *dev_part_str,
-		  const char *fname, ulong max_size, ulong align, void **bufp,
-		  ulong *sizep);
+		  const char *fname, ulong max_size, ulong align,
+		  struct abuf *buf);
 
 #endif /* _FS_H */
