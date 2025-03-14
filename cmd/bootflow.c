@@ -114,6 +114,7 @@ __maybe_unused static int bootflow_handle_menu(struct bootstd_priv *std,
 	LOGR("bhs", bootflow_menu_start(std, text_mode, &exp));
 
 	do {
+		LOGR("bhr", expo_render(exp));
 		ret = bootflow_menu_poll(exp, &bflow);
 	} while (ret == -EAGAIN);
 

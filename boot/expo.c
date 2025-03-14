@@ -320,8 +320,6 @@ int expo_poll(struct expo *exp, struct expo_action *act)
 {
 	int ichar, key;
 
-	LOGR("ere", expo_render(exp));
-
 	ichar = cli_ch_process(&exp->cch, 0);
 	if (!ichar) {
 		int i;
