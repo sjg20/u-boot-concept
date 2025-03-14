@@ -7,6 +7,7 @@
 
 #include <rtc.h>
 
+struct abuf;
 struct cmd_tbl;
 
 #define FS_TYPE_ANY	0
@@ -326,11 +327,12 @@ int do_fs_types(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[]);
  * @fname: Filename to read
  * @size: Size of file to read (must be correct!)
  * @align: Alignment to use for memory allocation (0 for default: ARCH_DMA_MINALIGN)
- * @bufp: On success, returns the allocated buffer with the nul-terminated file
- *	in it
+ * @buf: On success, returns the allocated buffer with the nul-terminated file
+ *	in it. The buffer size is set to the size excluding the terminator. The
+ *	buffer is inited by this function and must be uninited by the caller
  * Return: 0 if OK, -ENOMEM if out of memory, -EIO if read failed
  */
-int fs_read_alloc(const char *fname, ulong size, uint align, void **bufp);
+int fs_read_alloc(const char *fname, ulong size, uint align, struct abuf *buf);
 
 /**
  * fs_load_alloc() - Load a file into allocated space
