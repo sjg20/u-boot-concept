@@ -332,7 +332,8 @@ int bootmeth_alloc_file(struct bootflow *bflow, uint size_limit, uint align,
 			enum bootflow_img_t type)
 {
 	struct blk_desc *desc = NULL;
-	void *buf;
+	struct abuf buf;
+	ulong addr;
 	uint size;
 	int ret;
 
@@ -346,13 +347,13 @@ int bootmeth_alloc_file(struct bootflow *bflow, uint size_limit, uint align,
 		return log_msg_ret("all", ret);
 
 	bflow->state = BOOTFLOWST_READY;
-	bflow->buf = buf;
+	addr = abuf_addr(&buf);
+	bflow->buf = abuf_uninit_move(&buf, NULL);
 
 	if (bflow->blk)
 		desc = dev_get_uclass_plat(bflow->blk);
 
-	if (!bootflow_img_add(bflow, bflow->fname, type, map_to_sysmem(buf),
-			      size))
+	if (!bootflow_img_add(bflow, bflow->fname, type, addr, size))
 		return log_msg_ret("bai", -ENOMEM);
 
 	return 0;
@@ -362,9 +363,10 @@ int bootmeth_alloc_other(struct bootflow *bflow, const char *fname,
 			 enum bootflow_img_t type, void **bufp, uint *sizep)
 {
 	struct blk_desc *desc = NULL;
+	struct abuf buf;
 	char path[200];
 	loff_t size;
-	void *buf;
+	size_t bsize;
 	int ret;
 
 	snprintf(path, sizeof(path), "%s%s", bflow->subdir, fname);
@@ -388,12 +390,11 @@ int bootmeth_alloc_other(struct bootflow *bflow, const char *fname,
 	if (ret)
 		return log_msg_ret("all", ret);
 
-	if (!bootflow_img_add(bflow, bflow->fname, type, map_to_sysmem(buf),
-			      size))
+	if (!bootflow_img_add(bflow, bflow->fname, type, abuf_addr(&buf), size))
 		return log_msg_ret("boi", -ENOMEM);
 
-	*bufp = buf;
-	*sizep = size;
+	*bufp = abuf_uninit_move(&buf, &bsize);
+	*sizep = bsize;
 
 	return 0;
 }
