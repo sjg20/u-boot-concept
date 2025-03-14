@@ -5,6 +5,7 @@
 
 #define LOG_CATEGORY LOGC_CORE
 
+#include <abuf.h>
 #include <bootstd.h>
 #include <command.h>
 #include <config.h>
@@ -1153,11 +1154,9 @@ int fs_read_alloc(const char *fname, ulong size, uint align, struct abuf *buf)
 }
 
 int fs_load_alloc(const char *ifname, const char *dev_part_str,
-		  const char *fname, ulong max_size, ulong align, void **bufp,
-		  ulong *sizep)
+		  const char *fname, ulong max_size, ulong align,
+		  struct abuf *buf)
 {
-	struct abuf buf;
-	size_t bsize;
 	loff_t size;
 	int ret;
 
@@ -1174,11 +1173,9 @@ int fs_load_alloc(const char *ifname, const char *dev_part_str,
 	if (fs_set_blk_dev(ifname, dev_part_str, FS_TYPE_ANY))
 		return log_msg_ret("set", -ENOMEDIUM);
 
-	ret = fs_read_alloc(fname, size, align, &buf);
+	ret = fs_read_alloc(fname, size, align, buf);
 	if (ret)
 		return log_msg_ret("al", ret);
-	*bufp = abuf_uninit_move(&buf, &bsize);
-	*sizep = bsize;
 
 	return 0;
 }
