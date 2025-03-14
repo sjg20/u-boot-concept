@@ -50,6 +50,7 @@ static int do_ut_info(bool show_suites);
 SUITE_DECL(addrmap);
 SUITE_DECL(bdinfo);
 SUITE_DECL(bloblist);
+SUITE_DECL(bootctl);
 SUITE_DECL(bootm);
 SUITE_DECL(bootstd);
 SUITE_DECL(cmd);
@@ -77,6 +78,7 @@ static struct suite suites[] = {
 	SUITE(addrmap, "very basic test of addrmap command"),
 	SUITE(bdinfo, "bdinfo (board info) command"),
 	SUITE(bloblist, "bloblist implementation"),
+	SUITE(bootctl, "bootctl (boot schema)"),
 	SUITE(bootm, "bootm command"),
 	SUITE(bootstd, "standard boot implementation"),
 	SUITE(cmd, "various commands"),
