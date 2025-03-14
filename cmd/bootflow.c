@@ -109,14 +109,16 @@ __maybe_unused static int bootflow_handle_menu(struct bootstd_priv *std,
 {
 	struct expo *exp;
 	struct bootflow *bflow;
-	int ret;
+	int ret, seq;
 
 	LOGR("bhs", bootflow_menu_start(std, text_mode, &exp));
 
+	ret = -ERESTART;
 	do {
-		LOGR("bhr", expo_render(exp));
-		ret = bootflow_menu_poll(exp, &bflow);
-	} while (ret == -EAGAIN);
+		if (ret == -ERESTART)
+			LOGR("bhr", expo_render(exp));
+		ret = bootflow_menu_poll(exp, &seq);
+	} while (ret == -EAGAIN || ret == -ERESTART);
 
 	if (ret == -EPIPE) {
 		printf("Nothing chosen\n");
@@ -124,6 +126,7 @@ __maybe_unused static int bootflow_handle_menu(struct bootstd_priv *std,
 	} else if (ret) {
 		printf("Menu failed (err=%d)\n", ret);
 	} else {
+		bflow = alist_getw(&std->bootflows, seq, struct bootflow);
 		printf("Selected: %s\n", bflow->os_name ? bflow->os_name :
 		       bflow->name);
 		std->cur_bootflow = bflow;
