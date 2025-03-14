@@ -433,4 +433,17 @@ int bootdev_get_sibling_blk(struct udevice *dev, struct udevice **blkp);
  */
 int bootdev_get_from_blk(struct udevice *blk, struct udevice **bootdevp);
 
+/**
+ * bootdev_set_order() - Set the bootdev order
+ *
+ * This selects the ordering to use for bootdevs
+ *
+ * @order_str: NULL-terminated string list containing the ordering. This is a
+ * comma-separate list of bootdev labels, e.g. "mmc usb". If empty then a
+ * default ordering is used
+ * Return: 0 if OK, -ENODEV if an unknown bootmeth is mentioned, -ENOMEM if
+ * out of memory, -ENOENT if there are no bootmeth devices
+ */
+int bootdev_set_order(const char *order_str);
+
 #endif
