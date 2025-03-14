@@ -421,7 +421,7 @@ int bootdev_find_by_label(const char *label, struct udevice **devp,
 			  int *method_flagsp)
 {
 	int seq, ret, method_flags = 0;
-	struct udevice *media;
+	struct udevice *bdev;
 	struct uclass *uc;
 	enum uclass_id id;
 
@@ -433,10 +433,27 @@ int bootdev_find_by_label(const char *label, struct udevice **devp,
 		return log_msg_ret("uc", ret);
 	id = ret;
 
-	/* Iterate through devices in the media uclass (e.g. UCLASS_MMC) */
-	uclass_id_foreach_dev(id, media, uc) {
-		struct udevice *bdev, *blk;
-		int ret;
+	/*
+	 * Iterate through all the bootdevs looking for the first one for the
+	 * correct media uclass (e.g. UCLASS_MMC). We do it this way so that
+	 * iter_incr() can continue iterating through others with the same media
+	 * uclass, thus making sure that every relevant bootdev is used.
+	 *
+	 * If instead we found the first media device of the correct uclass,
+	 * then started with its bootdev, that bootdev may be somewhere in the
+	 * middle of the UCLASS_BOOTDEV ordering, thus we would leave out quite
+	 * a few bootdevs as the iteration continues
+	 */
+	uclass_id_foreach_dev(UCLASS_BOOTDEV, bdev, uc) {
+		struct udevice *media;
+
+		media = dev_get_parent(bdev);
+		if (device_get_uclass_id(media) != id) {
+			log_debug("- skip, media '%s' want id '%s'\n",
+				  dev_get_uclass_name(media),
+				  uclass_get_name(id));
+			continue;
+		}
 
 		/* if there is no seq, match anything */
 		if (seq != -1 && dev_seq(media) != seq) {
@@ -444,33 +461,20 @@ int bootdev_find_by_label(const char *label, struct udevice **devp,
 			continue;
 		}
 
-		ret = device_find_first_child_by_uclass(media, UCLASS_BOOTDEV,
-							&bdev);
-		if (ret) {
-			log_debug("- looking via blk, seq=%d, id=%d\n", seq,
-				  id);
-			ret = blk_find_device(id, seq, &blk);
-			if (!ret) {
-				log_debug("- get from blk %s\n", blk->name);
-				ret = bootdev_get_from_blk(blk, &bdev);
-			}
-		}
-		if (!ret) {
-			log_debug("- found %s\n", bdev->name);
-			*devp = bdev;
+		log_debug("- found bdev, seq=%d id %s\n", dev_seq(bdev),
+			  uclass_get_name(id));
+		*devp = bdev;
 
-			/*
-			 * if no sequence number was provided, we must scan all
-			 * bootdevs for this media uclass
-			 */
-			if (seq == -1)
-				method_flags |= BOOTFLOW_METHF_SINGLE_UCLASS;
-			if (method_flagsp)
-				*method_flagsp = method_flags;
-			log_debug("method flags %x\n", method_flags);
-			return 0;
-		}
-		log_debug("- no device in %s\n", media->name);
+		/*
+		 * if no sequence number was provided, we must scan all
+		 * bootdevs for this media uclass
+		 */
+		if (seq == -1)
+			method_flags |= BOOTFLOW_METHF_SINGLE_UCLASS;
+		if (method_flagsp)
+			*method_flagsp = method_flags;
+		log_debug("method flags %x\n", method_flags);
+		return 0;
 	}
 
 	return -ENOENT;
@@ -586,6 +590,8 @@ int bootdev_next_label(struct bootflow_iter *iter, struct udevice **devp,
 		const char *label = iter->labels[iter->cur_label];
 		int ret;
 
+		if (!label)
+			break;
 		log_debug("Scanning: %s\n", label);
 		ret = bootdev_hunt_and_find_by_label(label, &dev,
 						     method_flagsp);
