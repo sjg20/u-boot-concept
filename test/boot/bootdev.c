@@ -781,3 +781,40 @@ static int bootdev_test_next_prio(struct unit_test_state *uts)
 }
 BOOTSTD_TEST(bootdev_test_next_prio, UTF_DM | UTF_SCAN_FDT | UTF_SF_BOOTDEV |
 	     UTF_CONSOLE);
+
+/* Check 'bootdev order' command */
+static int bootdev_test_cmd_order(struct unit_test_state *uts)
+{
+	test_set_skip_delays(true);
+	bootstd_reset_usb();
+
+	ut_assertok(run_command("bootdev order", 0));
+	ut_assert_nextline("mmc2");
+	ut_assert_nextline("mmc1");
+	ut_assert_console_end();
+
+	ut_assertok(run_command("bootdev order clear", 0));
+	ut_assertok(run_command("bootdev order", 0));
+	ut_assert_nextline("No ordering");
+	ut_assert_console_end();
+
+	ut_assertok(run_command("bootdev order 'invalid mmc'", 0));
+	ut_assertok(run_command("bootdev order", 0));
+	ut_assert_nextline("invalid");
+	ut_assert_nextline("mmc");
+	ut_assert_console_end();
+
+	/* check handling of invalid label */
+	ut_assertok(run_command("bootflow scan -l", 0));
+	if (IS_ENABLED(CONFIG_LOGF_FUNC)) {
+		ut_assert_skip_to_line(
+			"  bootdev_next_label() Unknown uclass 'invalid' in label");
+	} else {
+		ut_assert_skip_to_line("Unknown uclass 'invalid' in label");
+	}
+	ut_assert_skip_to_line("(1 bootflow, 1 valid)");
+	ut_assert_console_end();
+
+	return 0;
+}
+BOOTSTD_TEST(bootdev_test_cmd_order, UTF_DM | UTF_SCAN_FDT | UTF_CONSOLE);
