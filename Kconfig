@@ -448,6 +448,7 @@ endif # EXPERT
 config PHYS_64BIT
 	bool "64bit physical address support"
 	select FDT_64BIT
+	default y if HOST_64BIT
 	help
 	  Say Y here to support 64bit physical memory address.
 	  This can be used not only for 64bit SoCs, but also for
