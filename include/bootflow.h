@@ -101,7 +101,7 @@ struct bootflow {
 	char *subdir;
 	char *fname;
 	void *logo;
-	uint logo_size;
+	size_t logo_size;
 	char *buf;
 	int size;
 	int err;
