@@ -290,32 +290,26 @@ int bootflow_menu_start(struct bootstd_priv *std, bool text_mode,
 	return 0;
 }
 
-int bootflow_menu_poll(struct expo *exp, struct bootflow **bflowp)
+int bootflow_menu_poll(struct expo *exp, int *seqp)
 {
 	struct bootflow *sel_bflow;
 	struct expo_action act;
-	int ret;
+	struct scene *scn;
+	int item;
 
 	sel_bflow = NULL;
-	*bflowp = NULL;
+
+	scn = expo_lookup_scene_id(exp, exp->scene_id);
+
+	item = scene_menu_get_cur_item(scn, OBJ_MENU);
+	*seqp = item > 0 ? item - ITEM : -1;
 
 	LOGR("bmp", expo_poll(exp, &act));
 
 	switch (act.type) {
-	case EXPOACT_SELECT: {
-		struct bootflow *bflow;
-		int i;
-
-		for (ret = bootflow_first_glob(&bflow), i = 0; !ret && i < 36;
-		     ret = bootflow_next_glob(&bflow), i++) {
-			if (i == act.select.id - ITEM) {
-				*bflowp = bflow;
-				// printf("found %p\n", bflow);
-				return 0;
-			}
-		}
+	case EXPOACT_SELECT: 
+		*seqp = act.select.id - ITEM;
 		break;
-	}
 	case EXPOACT_POINT_ITEM: {
 		struct scene *scn = expo_lookup_scene_id(exp, MAIN);
 
@@ -323,13 +317,13 @@ int bootflow_menu_poll(struct expo *exp, struct bootflow **bflowp)
 			return log_msg_ret("bms", -ENOENT);
 		LOGR("bmp", scene_menu_select_item(scn, OBJ_MENU,
 						   act.select.id));
-		break;
+		return -ERESTART;
 	}
 	case EXPOACT_QUIT:
 		return -EPIPE;
 	default:
-		break;
+		return -EAGAIN;
 	}
 
-	return -EAGAIN;
+	return 0;
 }
