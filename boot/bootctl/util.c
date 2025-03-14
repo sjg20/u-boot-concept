@@ -21,6 +21,19 @@
 #include <bootctl/ui.h>
 #include <bootctl/util.h>
 
+/*
+ * LOGR() - helper macro for calling a function and logging error returns
+ *
+ * Logs if the function returns a negative value
+ *
+ * Usage:   LOGR("abc", my_function(...));
+ */
+#define LOGR(_msg, _expr)	do {		\
+	int _ret = _expr;			\
+	if (_ret < 0)				\
+		return log_msg_ret(_msg, _ret);	\
+	} while (0)
+
 /**
  * bc_printf() - Print a string to the display
  *
