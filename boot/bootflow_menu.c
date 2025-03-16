@@ -234,6 +234,8 @@ int bootflow_menu_start(struct bootstd_priv *std, bool text_mode,
 	if (text_mode)
 		expo_set_text_mode(exp, text_mode);
 
+	LOGR("bmd", expo_calc_dims(exp));
+
 	*expp = exp;
 
 	return 0;
