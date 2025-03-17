@@ -11,11 +11,11 @@ from fstest_defs import *
 # pylint: disable=E0611
 from tests import fs_helper
 
-supported_fs_basic = ['fat16', 'fat32', 'ext4']
-supported_fs_ext = ['fat12', 'fat16', 'fat32']
+supported_fs_basic = ['fat16', 'fat32', 'ext4', 'fs_generic']
+supported_fs_ext = ['fat12', 'fat16', 'fat32', 'fs_generic']
 supported_fs_fat = ['fat12', 'fat16']
-supported_fs_mkdir = ['fat12', 'fat16', 'fat32']
-supported_fs_unlink = ['fat12', 'fat16', 'fat32']
+supported_fs_mkdir = ['fat12', 'fat16', 'fat32', 'fs_generic']
+supported_fs_unlink = ['fat12', 'fat16', 'fat32', 'fs_generic']
 supported_fs_symlink = ['ext4']
 
 #
@@ -102,6 +102,22 @@ def pytest_generate_tests(metafunc):
 #
 # Helper functions
 #
+def fstype_to_prefix(fs_type):
+    """Convert a file system type to an U-Boot command prefix
+
+    Args:
+        fs_type: File system type.
+
+    Return:
+        A corresponding command prefix for file system type.
+    """
+    if fs_type == 'fs_generic':
+        return ''
+    elif re.match('fat', fs_type):
+        return 'fat'
+    else:
+        return fs_type
+
 def fstype_to_ubname(fs_type):
     """Convert a file system type to an U-Boot specific string
 
@@ -135,6 +151,8 @@ def check_ubconfig(config, fs_type):
     """
     if not config.buildconfig.get('config_cmd_%s' % fs_type, None):
         pytest.skip('.config feature "CMD_%s" not enabled' % fs_type.upper())
+    if fs_type == 'fs_generic':
+        return
     if not config.buildconfig.get('config_%s_write' % fs_type, None):
         pytest.skip('.config feature "%s_WRITE" not enabled'
         % fs_type.upper())
@@ -172,6 +190,8 @@ def fs_obj_basic(request, u_boot_config):
         volume file name and  a list of MD5 hashes.
     """
     fs_type = request.param
+    fs_cmd_prefix = fstype_to_prefix(fs_type)
+    fs_cmd_write = 'save' if fs_type == 'fs_generic' else 'write'
     fs_img = ''
 
     fs_ubtype = fstype_to_ubname(fs_type)
@@ -261,7 +281,7 @@ def fs_obj_basic(request, u_boot_config):
         pytest.skip('Setup failed for filesystem: ' + fs_type + '. {}'.format(err))
         return
     else:
-        yield [fs_ubtype, fs_img, md5val]
+        yield [fs_ubtype, fs_cmd_prefix, fs_cmd_write, fs_img, md5val]
     finally:
         call('rm -rf %s' % scratch_dir, shell=True)
         call('rm -f %s' % fs_img, shell=True)
@@ -282,6 +302,8 @@ def fs_obj_ext(request, u_boot_config):
         volume file name and  a list of MD5 hashes.
     """
     fs_type = request.param
+    fs_cmd_prefix = fstype_to_prefix(fs_type)
+    fs_cmd_write = 'save' if fs_type == 'fs_generic' else 'write'
     fs_img = ''
 
     fs_ubtype = fstype_to_ubname(fs_type)
@@ -351,7 +373,7 @@ def fs_obj_ext(request, u_boot_config):
         pytest.skip('Setup failed for filesystem: ' + fs_type)
         return
     else:
-        yield [fs_ubtype, fs_img, md5val]
+        yield [fs_ubtype, fs_cmd_prefix, fs_cmd_write, fs_img, md5val]
     finally:
         call('rm -rf %s' % scratch_dir, shell=True)
         call('rm -f %s' % fs_img, shell=True)
@@ -372,6 +394,7 @@ def fs_obj_mkdir(request, u_boot_config):
         volume file name.
     """
     fs_type = request.param
+    fs_cmd_prefix = fstype_to_prefix(fs_type)
     fs_img = ''
 
     fs_ubtype = fstype_to_ubname(fs_type)
@@ -384,7 +407,7 @@ def fs_obj_mkdir(request, u_boot_config):
         pytest.skip('Setup failed for filesystem: ' + fs_type)
         return
     else:
-        yield [fs_ubtype, fs_img]
+        yield [fs_ubtype, fs_cmd_prefix, fs_img]
     call('rm -f %s' % fs_img, shell=True)
 
 #
@@ -403,6 +426,7 @@ def fs_obj_unlink(request, u_boot_config):
         volume file name.
     """
     fs_type = request.param
+    fs_cmd_prefix = fstype_to_prefix(fs_type)
     fs_img = ''
 
     fs_ubtype = fstype_to_ubname(fs_type)
@@ -450,7 +474,7 @@ def fs_obj_unlink(request, u_boot_config):
         pytest.skip('Setup failed for filesystem: ' + fs_type)
         return
     else:
-        yield [fs_ubtype, fs_img]
+        yield [fs_ubtype, fs_cmd_prefix, fs_img]
     finally:
         call('rm -rf %s' % scratch_dir, shell=True)
         call('rm -f %s' % fs_img, shell=True)
