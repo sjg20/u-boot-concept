@@ -1,3 +1,4 @@
+
 // SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright 2023 Google LLC
@@ -230,6 +231,7 @@ static int cedit_render(struct unit_test_state *uts)
 {
 	struct video_priv *vid_priv;
 	extern struct expo *cur_exp;
+	struct expo_action act;
 	struct udevice *dev;
 	struct scene *scn;
 	struct expo *exp;
@@ -242,6 +244,21 @@ static int cedit_render(struct unit_test_state *uts)
 	ut_assertok(expo_render(exp));
 	ut_asserteq(4929, video_compress_fb(uts, dev, false));
 	ut_assertok(video_check_copy_fb(uts, dev));
+
+	/* move to the second field */
+	act.type = EXPOACT_POINT_OBJ;
+	act.select.id = ID_POWER_LOSS;
+	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
+	ut_assertok(expo_render(exp));
+	ut_asserteq(4986, video_compress_fb(uts, dev, false));
+
+	/* open the menu */
+	act.type = EXPOACT_OPEN;
+	act.select.id = ID_POWER_LOSS;
+	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
+	ut_assertok(expo_render(exp));
+	ut_asserteq(5393, video_compress_fb(uts, dev, false));
+
 	expo_destroy(exp);
 	cur_exp = NULL;
 
