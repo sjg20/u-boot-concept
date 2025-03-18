@@ -154,8 +154,11 @@ int cedit_do_action(struct expo *exp, struct scene *scn,
 {
 	switch (act->type) {
 	case EXPOACT_NONE:
-	case EXPOACT_POINT_ITEM:
 		return -EAGAIN;
+	case EXPOACT_POINT_ITEM:
+		LOGR("cdp", scene_menu_select_item(scn, scn->highlight_id,
+						   act->select.id));
+		break;
 	case EXPOACT_POINT_OBJ:
 		scene_set_highlight_id(scn, act->select.id);
 		cedit_arange(exp, vid_priv, scn->id);
