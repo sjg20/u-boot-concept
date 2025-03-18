@@ -229,6 +229,7 @@ BOOTSTD_TEST(cedit_cmos, UTF_CONSOLE);
 /* Check the cedit displays correctely */
 static int cedit_render(struct unit_test_state *uts)
 {
+	struct scene_obj_menu *menu;
 	struct video_priv *vid_priv;
 	extern struct expo *cur_exp;
 	struct expo_action act;
@@ -241,6 +242,11 @@ static int cedit_render(struct unit_test_state *uts)
 	exp = cur_exp;
 	ut_assertok(uclass_first_device_err(UCLASS_VIDEO, &dev));
 	ut_asserteq(ID_SCENE1, cedit_prepare(exp, &vid_priv, &scn));
+
+	menu = scene_obj_find(scn, ID_POWER_LOSS, SCENEOBJT_MENU);
+	ut_assertnonnull(menu);
+	ut_asserteq(ID_AC_OFF, menu->cur_item_id);
+
 	ut_assertok(expo_render(exp));
 	ut_asserteq(4929, video_compress_fb(uts, dev, false));
 	ut_assertok(video_check_copy_fb(uts, dev));
@@ -258,6 +264,22 @@ static int cedit_render(struct unit_test_state *uts)
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_assertok(expo_render(exp));
 	ut_asserteq(5393, video_compress_fb(uts, dev, false));
+
+	/* move to the second item */
+	act.type = EXPOACT_POINT_ITEM;
+	act.select.id = ID_AC_ON;
+	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
+	ut_assertok(expo_render(exp));
+	ut_asserteq(5365, video_compress_fb(uts, dev, false));
+
+	/* select it */
+	act.type = EXPOACT_SELECT;
+	act.select.id = ID_AC_ON;
+	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
+	ut_assertok(expo_render(exp));
+	ut_asserteq(4980, video_compress_fb(uts, dev, false));
+
+	ut_asserteq(ID_AC_ON, menu->cur_item_id);
 
 	expo_destroy(exp);
 	cur_exp = NULL;
