@@ -170,9 +170,12 @@ static void scan_next_in_uclass(struct udevice **devp)
 	struct udevice *dev = *devp;
 	enum uclass_id cur_id = device_get_uclass_id(dev->parent);
 
+	log_debug("start at dev '%s'\n", dev->name);
 	do {
 		uclass_find_next_device(&dev);
+		log_debug("- trying '%s'\n", dev ? dev->name : "<end of list>");
 	} while (dev && cur_id != device_get_uclass_id(dev->parent));
+	log_debug("- found '%s'\n", dev ? dev->name : "<none>");
 
 	*devp = dev;
 }
@@ -282,7 +285,8 @@ static int iter_incr(struct bootflow_iter *iter)
 				ret = -ENODEV;
 			}
 		} else {
-			log_debug("labels %p\n", iter->labels);
+			log_debug("labels %p flags %x\n", iter->labels,
+				  iter->method_flags);
 			if (iter->labels) {
 				/*
 				 * when the label is "mmc" we want to scan all
