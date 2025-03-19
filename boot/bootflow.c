@@ -288,7 +288,8 @@ static int iter_incr(struct bootflow_iter *iter)
 				 * bootdev_find_by_label() where this flag is
 				 * set up
 				 */
-				if (iter->method_flags &
+				method_flags = iter->method_flags;
+				if (method_flags &
 				    BOOTFLOW_METHF_SINGLE_UCLASS) {
 					scan_next_in_uclass(&dev);
 					log_debug("looking for next device %s: %s\n",
