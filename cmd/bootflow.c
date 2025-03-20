@@ -115,8 +115,10 @@ __maybe_unused static int bootflow_handle_menu(struct bootstd_priv *std,
 
 	ret = -ERESTART;
 	do {
-		if (ret == -ERESTART)
+		if (ret == -ERESTART) {
+			LOGR("bha", expo_arrange(exp));
 			LOGR("bhr", expo_render(exp));
+		}
 		ret = bootflow_menu_poll(exp, &seq);
 	} while (ret == -EAGAIN || ret == -ERESTART);
 

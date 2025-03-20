@@ -267,7 +267,7 @@ static int cedit_render(struct unit_test_state *uts)
 	ut_asserteq(4929, video_compress_fb(uts, dev, false));
 	ut_assertok(video_check_copy_fb(uts, dev));
 
-	/* move to the second field */
+	/* move to the second menu */
 	act.type = EXPOACT_POINT_OBJ;
 	act.select.id = ID_POWER_LOSS;
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
@@ -287,6 +287,20 @@ static int cedit_render(struct unit_test_state *uts)
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_assertok(expo_render(exp));
 	ut_asserteq(5365, video_compress_fb(uts, dev, false));
+
+	/* close the menu */
+	act.type = EXPOACT_CLOSE;
+	act.select.id = ID_POWER_LOSS;
+	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
+	ut_assertok(expo_render(exp));
+	ut_asserteq(4980, video_compress_fb(uts, dev, false));
+
+	/* open the menu one more time, to make sure things are the same */
+	act.type = EXPOACT_OPEN;
+	act.select.id = ID_POWER_LOSS;
+	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
+	ut_assertok(expo_render(exp));
+	ut_asserteq(5364, video_compress_fb(uts, dev, false));
 
 	/* select it */
 	act.type = EXPOACT_SELECT;

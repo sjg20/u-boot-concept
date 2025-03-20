@@ -62,8 +62,7 @@ void scene_textline_calc_bbox(struct scene_obj_textline *tline,
 
 int scene_textline_calc_dims(struct scene_obj_textline *tline)
 {
-	struct scene_obj *obj = &tline->obj;
-	struct scene *scn = obj->scene;
+	struct scene *scn = tline->obj.scene;
 	struct vidconsole_bbox bbox;
 	struct scene_obj_txt *txt;
 	int ret;
@@ -78,16 +77,10 @@ int scene_textline_calc_dims(struct scene_obj_textline *tline)
 		return log_msg_ret("nom", ret);
 
 	if (bbox.valid) {
+		struct scene_obj *obj = &txt->obj;
+
 		obj->dims.x = bbox.x1 - bbox.x0;
 		obj->dims.y = bbox.y1 - bbox.y0;
-		if (!(obj->flags & SCENEOF_SIZE_VALID)) {
-			obj->bbox.x1 = obj->bbox.x0 + obj->dims.x;
-			obj->bbox.y1 = obj->bbox.y0 + obj->dims.y;
-			obj->flags |= SCENEOF_SIZE_VALID;
-		}
-		scene_obj_set_size(scn, tline->edit_id,
-				   obj->bbox.x1 - obj->bbox.x0,
-				   obj->bbox.y1 - obj->bbox.y0);
 	}
 
 	return 0;
@@ -101,16 +94,16 @@ int scene_textline_arrange(struct scene *scn, struct expo_arrange_info *arr,
 	int x, y;
 	int ret;
 
-	x = tline->obj.bbox.x0;
-	y = tline->obj.bbox.y0;
+	x = tline->obj.req_bbox.x0;
+	y = tline->obj.req_bbox.y0;
 	if (tline->label_id) {
 		ret = scene_obj_set_pos(scn, tline->label_id,
-					tline->obj.bbox.x0, y);
+					tline->obj.req_bbox.x0, y);
 		if (ret < 0)
 			return log_msg_ret("tit", ret);
 
 		ret = scene_obj_set_pos(scn, tline->edit_id,
-					tline->obj.bbox.x0 + 200, y);
+					tline->obj.req_bbox.x0 + 200, y);
 		if (ret < 0)
 			return log_msg_ret("tit", ret);
 

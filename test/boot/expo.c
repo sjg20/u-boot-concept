@@ -277,8 +277,8 @@ static int expo_object_attr(struct unit_test_state *uts)
 	ut_assert(id > 0);
 
 	ut_assertok(scene_obj_set_pos(scn, OBJ_LOGO, 123, 456));
-	ut_asserteq(123, img->obj.bbox.x0);
-	ut_asserteq(456, img->obj.bbox.y0);
+	ut_asserteq(123, img->obj.req_bbox.x0);
+	ut_asserteq(456, img->obj.req_bbox.y0);
 
 	ut_asserteq(-ENOENT, scene_obj_set_pos(scn, OBJ_TEXT2, 0, 0));
 
@@ -367,8 +367,8 @@ static int expo_object_menu(struct unit_test_state *uts)
 	ut_asserteq(0, menu->pointer_id);
 
 	ut_assertok(scene_obj_set_pos(scn, OBJ_MENU, 50, 400));
-	ut_asserteq(50, menu->obj.bbox.x0);
-	ut_asserteq(400, menu->obj.bbox.y0);
+	ut_asserteq(50, menu->obj.req_bbox.x0);
+	ut_asserteq(400, menu->obj.req_bbox.y0);
 
 	id = scene_txt_str(scn, "title", OBJ_MENU_TITLE, STR_MENU_TITLE,
 			   "Main Menu", &tit);
@@ -421,11 +421,11 @@ static int expo_object_menu(struct unit_test_state *uts)
 	ut_asserteq(menu->obj.bbox.x0, name1->obj.bbox.x0);
 	ut_asserteq(menu->obj.bbox.y0 + 32, name1->obj.bbox.y0);
 
-	ut_asserteq(menu->obj.bbox.x0 + 230, key1->obj.bbox.x0);
-	ut_asserteq(menu->obj.bbox.y0 + 32, key1->obj.bbox.y0);
-
 	ut_asserteq(menu->obj.bbox.x0 + 200, ptr->obj.bbox.x0);
 	ut_asserteq(menu->obj.bbox.y0 + 32, ptr->obj.bbox.y0);
+
+	ut_asserteq(menu->obj.bbox.x0 + 230, key1->obj.bbox.x0);
+	ut_asserteq(menu->obj.bbox.y0 + 32, key1->obj.bbox.y0);
 
 	ut_asserteq(menu->obj.bbox.x0 + 280, desc1->obj.bbox.x0);
 	ut_asserteq(menu->obj.bbox.y0 + 32, desc1->obj.bbox.y0);
@@ -523,7 +523,7 @@ static int expo_render_image(struct unit_test_state *uts)
 	id = scene_txt_str(scn, "label1", ITEM1_LABEL, STR_ITEM1_LABEL, "Play",
 			   NULL);
 	ut_assert(id > 0);
-	id = scene_txt_str(scn, "item1 txt", ITEM1_DESC, STR_ITEM1_DESC,
+	id = scene_txt_str(scn, "item1-txt", ITEM1_DESC, STR_ITEM1_DESC,
 			   "Lord Melchett", NULL);
 	ut_assert(id > 0);
 	id = scene_txt_str(scn, "item1-key", ITEM1_KEY, STR_ITEM1_KEY, "1",
@@ -548,7 +548,7 @@ static int expo_render_image(struct unit_test_state *uts)
 	id = scene_txt_str(scn, "label2", ITEM2_LABEL, STR_ITEM2_LABEL, "Now",
 			   NULL);
 	ut_assert(id > 0);
-	id = scene_txt_str(scn, "item2 txt", ITEM2_DESC, STR_ITEM2_DESC,
+	id = scene_txt_str(scn, "item2-txt", ITEM2_DESC, STR_ITEM2_DESC,
 			   "Lord Percy", NULL);
 	ut_assert(id > 0);
 	id = scene_txt_str(scn, "item2-key", ITEM2_KEY, STR_ITEM2_KEY, "2",
@@ -588,7 +588,6 @@ static int expo_render_image(struct unit_test_state *uts)
 	/* render without a scene */
 	ut_asserteq(-ECHILD, expo_render(exp));
 
-	ut_assertok(expo_calc_dims(exp));
 	ut_assertok(scene_arrange(scn));
 
 	/* check dimensions of text */
@@ -625,31 +624,31 @@ static int expo_render_image(struct unit_test_state *uts)
 	/* same for the key */
 	obj = scene_obj_find(scn, ITEM1_KEY, SCENEOBJT_NONE);
 	ut_assertnonnull(obj);
-	ut_asserteq(280, obj->bbox.x0);
+	ut_asserteq(278, obj->bbox.x0);
 	ut_asserteq(436, obj->bbox.y0);
-	ut_asserteq(280 + 9, obj->bbox.x1);
+	ut_asserteq(278 + 9, obj->bbox.x1);
 	ut_asserteq(436 + 18, obj->bbox.y1);
 
 	obj = scene_obj_find(scn, ITEM2_KEY, SCENEOBJT_NONE);
 	ut_assertnonnull(obj);
-	ut_asserteq(280, obj->bbox.x0);
+	ut_asserteq(278, obj->bbox.x0);
 	ut_asserteq(454, obj->bbox.y0);
-	ut_asserteq(280 + 9, obj->bbox.x1);
+	ut_asserteq(278 + 9, obj->bbox.x1);
 	ut_asserteq(454 + 18, obj->bbox.y1);
 
 	/* and the description */
 	obj = scene_obj_find(scn, ITEM1_DESC, SCENEOBJT_NONE);
 	ut_assertnonnull(obj);
-	ut_asserteq(330, obj->bbox.x0);
+	ut_asserteq(329, obj->bbox.x0);
 	ut_asserteq(436, obj->bbox.y0);
-	ut_asserteq(330 + 89, obj->bbox.x1);
+	ut_asserteq(329 + 89, obj->bbox.x1);
 	ut_asserteq(436 + 18, obj->bbox.y1);
 
 	obj = scene_obj_find(scn, ITEM2_DESC, SCENEOBJT_NONE);
 	ut_assertnonnull(obj);
-	ut_asserteq(330, obj->bbox.x0);
+	ut_asserteq(329, obj->bbox.x0);
 	ut_asserteq(454, obj->bbox.y0);
-	ut_asserteq(330 + 89, obj->bbox.x1);
+	ut_asserteq(329 + 89, obj->bbox.x1);
 	ut_asserteq(454 + 18, obj->bbox.y1);
 
 	/* check dimensions of menu */
@@ -657,16 +656,16 @@ static int expo_render_image(struct unit_test_state *uts)
 	ut_assertnonnull(obj);
 	ut_asserteq(50, obj->bbox.x0);
 	ut_asserteq(400, obj->bbox.y0);
-	ut_asserteq(50 + 160, obj->bbox.x1);
-	ut_asserteq(400 + 160, obj->bbox.y1);
+	ut_asserteq(50 + 368, obj->bbox.x1);
+	ut_asserteq(400 + 72, obj->bbox.y1);
 
 	scene_obj_set_width(scn, OBJ_MENU, 170);
-	ut_asserteq(50 + 170, obj->bbox.x1);
+	ut_asserteq(50 + 170, obj->req_bbox.x1);
 	scene_obj_set_bbox(scn, OBJ_MENU, 60, 410, 50 + 160, 400 + 160);
-	ut_asserteq(60, obj->bbox.x0);
-	ut_asserteq(410, obj->bbox.y0);
-	ut_asserteq(50 + 160, obj->bbox.x1);
-	ut_asserteq(400 + 160, obj->bbox.y1);
+	ut_asserteq(60, obj->req_bbox.x0);
+	ut_asserteq(410, obj->req_bbox.y0);
+	ut_asserteq(50 + 160, obj->req_bbox.x1);
+	ut_asserteq(400 + 160, obj->req_bbox.y1);
 
 	/* reset back to normal */
 	scene_obj_set_bbox(scn, OBJ_MENU, 50, 400, 50 + 160, 400 + 160);
