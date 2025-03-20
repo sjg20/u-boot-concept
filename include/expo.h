@@ -284,12 +284,20 @@ enum scene_obj_align {
  * can be selected)
  * @SCENEOF_SIZE_VALID: object's size (width/height) is valid, so any adjustment
  * to x0/y0 should maintain the width/height of the object
+ * @SCENEOF_SYNC_POS: object's position has changed
+ * @SCENEOF_SYNC_SIZE: object's size (width/height) has changed
+ * @SCENEOF_SYNC_WIDTH: object's widget has changed
+ * @SCENEOF_SYNC_BBOX: object's bounding box has changed
  */
 enum scene_obj_flags_t {
 	SCENEOF_HIDE	= 1 << 0,
 	SCENEOF_POINT	= 1 << 1,
 	SCENEOF_OPEN	= 1 << 2,
 	SCENEOF_SIZE_VALID	= BIT(3),
+	SCENEOF_SYNC_POS		= BIT(4),
+	SCENEOF_SYNC_SIZE	= BIT(5),
+	SCENEOF_SYNC_WIDTH	= BIT(6),
+	SCENEOF_SYNC_BBOX	= BIT(7),
 };
 
 enum {
@@ -304,7 +312,9 @@ enum {
  * @name: Name of the object (allocated)
  * @id: ID number of the object
  * @type: Type of this object
- * @bbox: Bounding box for this object
+ * @req_bbox: Requested bounding box for this object, synced to @bbox when scene is
+ * arranged
+ * @bbox: Bounding box for this object (internal use only)
  * @ofs: Offset from x0, y0 where the object is drawn (internal use only)
  * @dims: Dimensions of the text/image; may be smaller than bbox
  * (internal use only)
@@ -320,6 +330,7 @@ struct scene_obj {
 	char *name;
 	uint id;
 	enum scene_obj_t type;
+	struct scene_obj_bbox req_bbox;
 	struct scene_obj_bbox bbox;
 	struct scene_obj_offset ofs;
 	struct scene_obj_dims dims;
@@ -821,6 +832,9 @@ int scene_txted_set_font(struct scene *scn, uint id, const char *font_name,
 /**
  * scene_obj_set_pos() - Set the postion of an object
  *
+ * The given position is marked as 'requested' and will be applied when the
+ * scene is next arranged
+ *
  * @scn: Scene to update
  * @id: ID of object to update
  * @x: x position, in pixels from left side
@@ -831,6 +845,9 @@ int scene_obj_set_pos(struct scene *scn, uint id, int x, int y);
 
 /**
  * scene_obj_set_size() - Set the size of an object
+ *
+ * The given size is marked as 'requested' and will be applied when the scene
+ * is next arranged
  *
  * @scn: Scene to update
  * @id: ID of object to update
@@ -843,6 +860,9 @@ int scene_obj_set_size(struct scene *scn, uint id, int w, int h);
 /**
  * scene_obj_set_width() - Set the width of an object
  *
+ * The given width is marked as 'requested' and will be applied when the scene
+ * is next arranged
+ *
  * @scn: Scene to update
  * @id: ID of object to update
  * @w: width in pixels
@@ -852,6 +872,9 @@ int scene_obj_set_width(struct scene *scn, uint id, int w);
 
 /**
  * scene_obj_set_bbox() - Set the bounding box of an object
+ *
+ * The given bounding box is marked as 'requested' and will be applied when the
+ * scene is next arranged
  *
  * @scn: Scene to update
  * @id: ID of object to update

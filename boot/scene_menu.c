@@ -102,8 +102,8 @@ static int update_pointers(struct scene_obj_menu *menu, uint id, bool point)
 		label = scene_obj_find(scn, item->label_id, SCENEOBJT_NONE);
 
 		ret = scene_obj_set_pos(scn, menu->pointer_id,
-					menu->obj.bbox.x0 + menu->pointer_xofs,
-					label->bbox.y0);
+					menu->obj.req_bbox.x0 +
+					menu->pointer_xofs, label->req_bbox.y0);
 		if (ret < 0)
 			return log_msg_ret("ptr", ret);
 	}
@@ -238,8 +238,8 @@ int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 	memset(dims, '\0', sizeof(dims));
 	scene_menu_calc_dims(scn, menu, dims);
 
-	startx = menu->obj.bbox.x0;
-	y = menu->obj.bbox.y0;
+	startx = menu->obj.req_bbox.x0;
+	y = menu->obj.req_bbox.y0;
 	if (menu->title_id) {
 		int width;
 
@@ -358,9 +358,8 @@ int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 	if (sel_id)
 		menu_point_to_item(menu, sel_id);
 	menu->obj.dims.y = dims[SCENEBB_all].y;
-	menu->obj.bbox.x1 = menu->obj.bbox.x0 + menu->obj.dims.x;
-	menu->obj.bbox.y1 = menu->obj.bbox.y0 + menu->obj.dims.y;
-	menu->obj.flags |= SCENEOF_SIZE_VALID;
+	scene_obj_set_size(scn, menu->obj.id, menu->obj.dims.x,
+			   menu->obj.dims.y);
 
 	return 0;
 }

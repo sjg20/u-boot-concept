@@ -113,6 +113,16 @@ int scene_obj_add(struct scene *scn, const char *name, uint id,
 int scene_obj_flag_clrset(struct scene *scn, uint id, uint clr, uint set);
 
 /**
+ * scene_sync_bbox() - Apply any requested changes to object positions
+ *
+ * Updates each object's bbox to match the req_bbox using the SCENEOF_SYNC_...
+ * flags
+ *
+ * @scn: Scene to update
+ */
+int scene_sync_bbox(struct scene *scn);
+
+/**
  * scene_calc_dims() - Calculate the dimensions of the scene objects
  *
  * Updates the width and height of all objects based on their contents
