@@ -302,8 +302,9 @@ enum {
  * @id: ID number of the object
  * @type: Type of this object
  * @bbox: Bounding box for this object
- * @ofs: Offset from x0, y0 where the object is drawn
- * @dims: Dimensions of the text/image (may be smaller than bbox)
+ * @ofs: Offset from x0, y0 where the object is drawn (internal use only)
+ * @dims: Dimensions of the text/image; may be smaller than bbox
+ * (internal use only)
  * @horiz: Horizonal alignment
  * @vert: Vertical alignment
  * @flags: Flags for this object
