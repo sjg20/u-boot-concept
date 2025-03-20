@@ -277,8 +277,8 @@ static int expo_object_attr(struct unit_test_state *uts)
 	ut_assert(id > 0);
 
 	ut_assertok(scene_obj_set_pos(scn, OBJ_LOGO, 123, 456));
-	ut_asserteq(123, img->obj.bbox.x0);
-	ut_asserteq(456, img->obj.bbox.y0);
+	ut_asserteq(123, img->obj.req_bbox.x0);
+	ut_asserteq(456, img->obj.req_bbox.y0);
 
 	ut_asserteq(-ENOENT, scene_obj_set_pos(scn, OBJ_TEXT2, 0, 0));
 
@@ -367,8 +367,8 @@ static int expo_object_menu(struct unit_test_state *uts)
 	ut_asserteq(0, menu->pointer_id);
 
 	ut_assertok(scene_obj_set_pos(scn, OBJ_MENU, 50, 400));
-	ut_asserteq(50, menu->obj.bbox.x0);
-	ut_asserteq(400, menu->obj.bbox.y0);
+	ut_asserteq(50, menu->obj.req_bbox.x0);
+	ut_asserteq(400, menu->obj.req_bbox.y0);
 
 	id = scene_txt_str(scn, "title", OBJ_MENU_TITLE, STR_MENU_TITLE,
 			   "Main Menu", &tit);
@@ -660,12 +660,12 @@ static int expo_render_image(struct unit_test_state *uts)
 	ut_asserteq(400 + 160, obj->bbox.y1);
 
 	scene_obj_set_width(scn, OBJ_MENU, 170);
-	ut_asserteq(50 + 170, obj->bbox.x1);
+	ut_asserteq(50 + 170, obj->req_bbox.x1);
 	scene_obj_set_bbox(scn, OBJ_MENU, 60, 410, 50 + 160, 400 + 160);
-	ut_asserteq(60, obj->bbox.x0);
-	ut_asserteq(410, obj->bbox.y0);
-	ut_asserteq(50 + 160, obj->bbox.x1);
-	ut_asserteq(400 + 160, obj->bbox.y1);
+	ut_asserteq(60, obj->req_bbox.x0);
+	ut_asserteq(410, obj->req_bbox.y0);
+	ut_asserteq(50 + 160, obj->req_bbox.x1);
+	ut_asserteq(400 + 160, obj->req_bbox.y1);
 
 	/* reset back to normal */
 	scene_obj_set_bbox(scn, OBJ_MENU, 50, 400, 50 + 160, 400 + 160);

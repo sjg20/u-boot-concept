@@ -288,12 +288,20 @@ enum scene_obj_align {
  * can be selected)
  * @SCENEOF_SIZE_VALID: object's size (width/height) is valid, so any adjustment
  * to x0/y0 should maintain the width/height of the object
+ * @SCENEOF_SYNC_POS: object's position has changed
+ * @SCENEOF_SYNC_SIZE: object's size (width/height) has changed
+ * @SCENEOF_SYNC_WIDTH: object's widget has changed
+ * @SCENEOF_SYNC_BBOX: object's bounding box has changed
  */
 enum scene_obj_flags_t {
 	SCENEOF_HIDE	= 1 << 0,
 	SCENEOF_POINT	= 1 << 1,
 	SCENEOF_OPEN	= 1 << 2,
 	SCENEOF_SIZE_VALID	= BIT(3),
+	SCENEOF_SYNC_POS		= BIT(4),
+	SCENEOF_SYNC_SIZE	= BIT(5),
+	SCENEOF_SYNC_WIDTH	= BIT(6),
+	SCENEOF_SYNC_BBOX	= BIT(7),
 };
 
 enum {
@@ -308,7 +316,9 @@ enum {
  * @name: Name of the object (allocated)
  * @id: ID number of the object
  * @type: Type of this object
- * @bbox: Bounding box for this object
+ * @req_bbox: Requested bounding box for this object, synced to @bbox when scene is
+ * arranged
+ * @bbox: Bounding box for this object (internal use only)
  * @ofs: Offset from x0, y0 where the object is drawn (internal use only)
  * @dims: Dimensions of the text/image; may be smaller than bbox
  * (internal use only)
@@ -324,6 +334,7 @@ struct scene_obj {
 	char *name;
 	uint id;
 	enum scene_obj_t type;
+	struct scene_obj_bbox req_bbox;
 	struct scene_obj_bbox bbox;
 	struct scene_obj_offset ofs;
 	struct scene_obj_dims dims;
