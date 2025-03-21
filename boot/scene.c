@@ -1003,56 +1003,69 @@ int scene_obj_calc_bbox(struct scene_obj *obj, struct vidconsole_bbox bbox[])
 	return 0;
 }
 
-int scene_calc_dims(struct scene *scn, bool do_menus)
+int scene_calc_dims(struct scene *scn)
 {
 	struct scene_obj *obj;
-	int ret;
+	int ret, i;
 
-	list_for_each_entry(obj, &scn->obj_head, sibling) {
-		switch (obj->type) {
-		case SCENEOBJT_NONE:
-		case SCENEOBJT_TEXT:
-		case SCENEOBJT_BOX:
-		case SCENEOBJT_TEXTEDIT:
-		case SCENEOBJT_IMAGE: {
-			int width;
+	/*
+	 * Do the menus last so that all the menus' text objects
+	 * are dimensioned. Many objects are referenced by a menu and the size
+	 * and position is set by the menu
+	 */
+	for (i = 0; i < 2; i++) {
+		bool do_menus = i;
 
-			if (!do_menus) {
-				ret = scene_obj_get_hw(scn, obj->id, &width);
-				if (ret < 0)
-					return log_msg_ret("get", ret);
-				obj->dims.x = width;
-				obj->dims.y = ret;
-				if (!(obj->flags & SCENEOF_SIZE_VALID)) {
-					obj->bbox.x1 = obj->bbox.x0 + width;
-					obj->bbox.y1 = obj->bbox.y0 + ret;
-					obj->flags |= SCENEOF_SIZE_VALID;
+		list_for_each_entry(obj, &scn->obj_head, sibling) {
+			switch (obj->type) {
+			case SCENEOBJT_NONE:
+			case SCENEOBJT_TEXT:
+			case SCENEOBJT_BOX:
+			case SCENEOBJT_TEXTEDIT:
+			case SCENEOBJT_IMAGE: {
+				int width;
+
+				if (!do_menus) {
+					ret = scene_obj_get_hw(scn, obj->id,
+							       &width);
+					if (ret < 0)
+						return log_msg_ret("get", ret);
+					obj->dims.x = width;
+					obj->dims.y = ret;
+					if (!(obj->flags & SCENEOF_SIZE_VALID)) {
+						obj->bbox.x1 = obj->bbox.x0 +
+							width;
+						obj->bbox.y1 = obj->bbox.y0 +
+							ret;
+						obj->flags |=
+							SCENEOF_SIZE_VALID;
+					}
 				}
+				break;
 			}
-			break;
-		}
-		case SCENEOBJT_MENU: {
-			struct scene_obj_menu *menu;
+			case SCENEOBJT_MENU: {
+				struct scene_obj_menu *menu;
 
-			if (do_menus) {
-				menu = (struct scene_obj_menu *)obj;
+				if (do_menus) {
+					menu = (struct scene_obj_menu *)obj;
 
-				ret = scene_menu_calc_dims(menu);
+					ret = scene_menu_calc_dims(menu);
+					if (ret)
+						return log_msg_ret("men", ret);
+				}
+				break;
+			}
+			case SCENEOBJT_TEXTLINE: {
+				struct scene_obj_textline *tline;
+
+				tline = (struct scene_obj_textline *)obj;
+				ret = scene_textline_calc_dims(tline);
 				if (ret)
 					return log_msg_ret("men", ret);
+
+				break;
 			}
-			break;
-		}
-		case SCENEOBJT_TEXTLINE: {
-			struct scene_obj_textline *tline;
-
-			tline = (struct scene_obj_textline *)obj;
-			ret = scene_textline_calc_dims(tline);
-			if (ret)
-				return log_msg_ret("men", ret);
-
-			break;
-		}
+			}
 		}
 	}
 
