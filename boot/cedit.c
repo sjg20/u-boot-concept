@@ -98,6 +98,7 @@ int cedit_arange(struct expo *exp, struct video_priv *vpriv, uint scene_id)
 			break;
 		}
 	}
+	LOGR("cac", scene_arrange(scn));
 
 	return 0;
 }
