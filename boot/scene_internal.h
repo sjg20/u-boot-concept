@@ -117,10 +117,9 @@ int scene_obj_flag_clrset(struct scene *scn, uint id, uint clr, uint set);
  * Updates the width and height of all objects based on their contents
  *
  * @scn: Scene to update
- * @do_menus: true to calculate only menus, false to calculate everything else
  * Returns 0 if OK, -ENOTSUPP if there is no graphical console
  */
-int scene_calc_dims(struct scene *scn, bool do_menus);
+int scene_calc_dims(struct scene *scn);
 
 /**
  * scene_menu_arrange() - Set the position of things in the menu
