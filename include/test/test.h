@@ -288,4 +288,15 @@ static inline void test_sf_set_enable_bootdevs(bool enable)
 #endif
 }
 
+static inline bool test_flattree_test_enabled(void)
+{
+#ifdef CONFIG_SANDBOX
+	struct sandbox_state *state = state_get_current();
+
+	return !state->no_flattree_tests;
+#else
+	return true;
+#endif
+}
+
 #endif /* __TEST_TEST_H */
