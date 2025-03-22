@@ -550,6 +550,7 @@ static int ut_run_test_live_flat(struct unit_test_state *uts,
 	 * - the FDT is still valid and has not been updated by an earlier test
 	 *   (for sandbox we handle this by copying the tree, but not for other
 	 *    boards)
+	 * - the -F option is not enabled (on sandbox)
 	 */
 	if ((!CONFIG_IS_ENABLED(OF_LIVE) ||
 	     (test->flags & UTF_SCAN_FDT)) &&
@@ -557,7 +558,8 @@ static int ut_run_test_live_flat(struct unit_test_state *uts,
 	    (CONFIG_IS_ENABLED(OFNODE_MULTI_TREE) ||
 	     !(test->flags & UTF_OTHER_FDT)) &&
 	    (!runs || ut_test_run_on_flattree(test)) &&
-	    !(gd->flags & GD_FLG_FDT_CHANGED)) {
+	    !(gd->flags & GD_FLG_FDT_CHANGED) &&
+	    test_flattree_test_enabled()) {
 		uts->of_live = false;
 		ret = ut_run_test(uts, test, leaf ?: test->name);
 		if (ret != -EAGAIN) {
