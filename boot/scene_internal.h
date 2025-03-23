@@ -111,6 +111,8 @@ int scene_obj_add(struct scene *scn, const char *name, uint id,
  */
 int scene_obj_flag_clrset(struct scene *scn, uint id, uint clr, uint set);
 
+int scene_resolve_bbox(struct scene *scn);
+
 /**
  * scene_calc_dims() - Calculate the dimensions of the scene objects
  *
