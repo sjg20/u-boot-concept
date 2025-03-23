@@ -211,6 +211,22 @@ int expo_first_scene_id(struct expo *exp)
 	return scn->id;
 }
 
+int expo_arrange(struct expo *exp)
+{
+	struct scene *scn;
+
+	if (!exp->scene_id)
+		return 0;
+
+	scn = expo_lookup_scene_id(exp, exp->scene_id);
+	if (!scn)
+		return log_msg_ret("scn", -ENOENT);
+
+	LOGR("ear", scene_arrange(scn));
+
+	return 0;
+}
+
 int expo_render(struct expo *exp)
 {
 	struct udevice *dev = exp->display;
