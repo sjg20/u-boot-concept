@@ -284,7 +284,7 @@ static int cedit_render(struct unit_test_state *uts)
 	act.select.id = ID_POWER_LOSS;
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(5419, video_compress_fb(uts, dev, false));
+	ut_asserteq(5404, video_compress_fb(uts, dev, false));
 
 	/* close the menu */
 	act.type = EXPOACT_CLOSE;
@@ -298,7 +298,7 @@ static int cedit_render(struct unit_test_state *uts)
 	act.select.id = ID_POWER_LOSS;
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(5419, video_compress_fb(uts, dev, false));
+	ut_asserteq(5404, video_compress_fb(uts, dev, false));
 
 	/* close the menu */
 	act.type = EXPOACT_CLOSE;
@@ -311,13 +311,13 @@ static int cedit_render(struct unit_test_state *uts)
 	act.select.id = ID_POWER_LOSS;
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(5419, video_compress_fb(uts, dev, false));
+	ut_asserteq(5404, video_compress_fb(uts, dev, false));
 
 	act.type = EXPOACT_POINT_ITEM;
 	act.select.id = ID_AC_ON;
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(5399, video_compress_fb(uts, dev, false));
+	ut_asserteq(5394, video_compress_fb(uts, dev, false));
 
 	/* select it */
 	act.type = EXPOACT_SELECT;
@@ -340,7 +340,7 @@ static int cedit_render(struct unit_test_state *uts)
 	act.select.id = ID_MACHINE_NAME;
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(4864, video_compress_fb(uts, dev, false));
+	ut_asserteq(4843, video_compress_fb(uts, dev, false));
 
 	/*
 	 * Send some keypresses. Note that the console must be enabled so that
@@ -356,7 +356,7 @@ static int cedit_render(struct unit_test_state *uts)
 	ut_silence_console(uts);
 	ut_assertok(cedit_arange(exp, vid_priv, scn->id));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(5040, video_compress_fb(uts, dev, false));
+	ut_asserteq(5025, video_compress_fb(uts, dev, false));
 
 	expo_destroy(exp);
 	cur_exp = NULL;

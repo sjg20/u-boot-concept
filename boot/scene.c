@@ -525,7 +525,7 @@ static void scene_render_background(struct scene_obj *obj, bool box_only,
 
 	vidconsole_push_colour(cons, fore, back, &old);
 	video_fill_part(dev, sel->x0 - inset, sel->y0 - inset,
-			sel->x1 + inset, sel->y1 + inset,
+			sel->x1, sel->y1 + inset,
 			vid_priv->colour_fg);
 	vidconsole_pop_colour(cons, &old);
 	if (box_only) {
