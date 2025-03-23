@@ -258,7 +258,7 @@ int bootflow_menu_start(struct bootstd_priv *std, bool text_mode,
 	LOGR("bma", bootflow_menu_add_all(exp));
 
 	if (ofnode_valid(std->theme)) {
-		ret = expo_apply_theme(exp, std->theme);
+		ret = expo_setup_theme(exp, std->theme);
 		if (ret)
 			return log_msg_ret("thm", ret);
 	}
