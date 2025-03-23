@@ -243,9 +243,7 @@ int bootflow_menu_setup(struct bootstd_priv *std, bool text_mode,
 int bootflow_menu_start(struct bootstd_priv *std, bool text_mode,
 			struct expo **expp)
 {
-	struct scene *scn;
 	struct expo *exp;
-	uint scene_id;
 	int ret;
 
 	LOGR("bmn", bootflow_menu_setup(std, text_mode, &exp));
@@ -260,15 +258,7 @@ int bootflow_menu_start(struct bootstd_priv *std, bool text_mode,
 
 	LOGR("bmd", expo_calc_dims(exp));
 
-	ret = expo_first_scene_id(exp);
-	if (ret < 0)
-		return log_msg_ret("scn", ret);
-	scene_id = ret;
-	scn = expo_lookup_scene_id(exp, scene_id);
-
-	scene_set_highlight_id(scn, OBJ_MENU);
-
-	ret = scene_arrange(scn);
+	ret = expo_arrange(exp);
 	if (ret)
 		return log_msg_ret("arr", ret);
 

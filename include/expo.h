@@ -624,6 +624,17 @@ int expo_first_scene_id(struct expo *exp);
 int expo_render(struct expo *exp);
 
 /**
+ * expo_arrange() - Arrange the current scene to deal with object sizes
+ *
+ * Updates any menus in the current scene so that their objects are in the right
+ * place. Does nothing if there is no scene
+ *
+ * @scn: Scene to arrange
+ * Returns: 0 if OK, -ve on error
+ */
+int expo_arrange(struct expo *exp);
+
+/**
  * expo_set_text_mode() - Controls whether the expo renders in text mode
  *
  * @exp: Expo to update
