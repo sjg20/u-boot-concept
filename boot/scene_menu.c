@@ -228,7 +228,7 @@ int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 	const struct expo_theme *theme = &exp->theme;
 	struct scene_menitem *item;
 	uint sel_id;
-	int x, y;
+	int startx, x, y;
 	int ret;
 
 	menu->obj.dims.x = 0;
@@ -237,12 +237,12 @@ int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 	memset(dims, '\0', sizeof(dims));
 	scene_menu_calc_dims(scn, menu, dims);
 
-	x = menu->obj.bbox.x0;
+	startx = menu->obj.bbox.x0;
 	y = menu->obj.bbox.y0;
 	if (menu->title_id) {
 		int width;
 
-		ret = scene_obj_set_pos(scn, menu->title_id, menu->obj.bbox.x0, y);
+		ret = scene_obj_set_pos(scn, menu->title_id, startx, y);
 		if (ret < 0)
 			return log_msg_ret("tit", ret);
 
@@ -251,7 +251,7 @@ int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 			return log_msg_ret("hei", ret);
 
 		if (stack)
-			x += arr->label_width + theme->menu_title_margin_x;
+			startx += arr->label_width + theme->menu_title_margin_x;
 		else
 			y += ret * 2;
 	}
@@ -267,6 +267,7 @@ int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 		bool selected;
 		int height;
 
+		x = startx;
 		ret = scene_obj_get_hw(scn, item->label_id, NULL);
 		if (ret < 0)
 			return log_msg_ret("get", ret);
@@ -291,19 +292,23 @@ int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 			return log_msg_ret("nam", ret);
 		scene_obj_set_hide(scn, item->label_id,
 				   stack && !open && !selected);
+		x += 200;
 
 		/* space for the pointer */
-		if (menu->pointer_id)
-			menu->pointer_xofs = 200;
+		if (menu->pointer_id) {
+			menu->pointer_xofs = x - startx;
+			x += 30;
+		}
 
 		if (item->key_id) {
-			ret = scene_obj_set_pos(scn, item->key_id, x + 230, y);
+			ret = scene_obj_set_pos(scn, item->key_id, x, y);
 			if (ret < 0)
 				return log_msg_ret("key", ret);
+			x += 50;
 		}
 
 		if (item->desc_id) {
-			ret = scene_obj_set_pos(scn, item->desc_id, x + 280, y);
+			ret = scene_obj_set_pos(scn, item->desc_id, x, y);
 			if (ret < 0)
 				return log_msg_ret("des", ret);
 		}
