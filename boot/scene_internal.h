@@ -260,16 +260,6 @@ int scene_textline_render_deps(struct scene *scn,
 			       struct scene_obj_textline *tline);
 
 /**
- * scene_menu_calc_dims() - Calculate the dimensions of a menu
- *
- * Updates the width and height of the menu based on its contents
- *
- * @menu: Menu to update
- * Returns 0 if OK, -ENOTSUPP if there is no graphical console
- */
-int scene_menu_calc_dims(struct scene_obj_menu *menu);
-
-/**
  * scene_iter_objs() - Iterate through all scene objects
  *
  * @scn: Scene to process
