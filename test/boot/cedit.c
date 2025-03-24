@@ -243,6 +243,7 @@ static int cedit_render(struct unit_test_state *uts)
 	struct expo_action evt;
 	struct expo_action act;
 	struct udevice *dev, *con;
+	struct expo_theme *theme;
 	struct stdio_dev *sdev;
 	struct scene *scn;
 	struct expo *exp;
@@ -254,6 +255,9 @@ static int cedit_render(struct unit_test_state *uts)
 	sdev = stdio_get_by_name("vidconsole");
 	ut_assertnonnull(sdev);
 	con = sdev->priv;
+
+	theme = &exp->theme;
+	theme->menuitem_gap_y = 2;
 
 	dev = dev_get_parent(con);
 	vid_priv = dev_get_uclass_priv(dev);
@@ -279,7 +283,7 @@ static int cedit_render(struct unit_test_state *uts)
 	act.select.id = ID_POWER_LOSS;
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(5393, video_compress_fb(uts, dev, false));
+	ut_asserteq(5390, video_compress_fb(uts, dev, false));
 
 	/* close the menu */
 	act.type = EXPOACT_CLOSE;
@@ -293,7 +297,7 @@ static int cedit_render(struct unit_test_state *uts)
 	act.select.id = ID_POWER_LOSS;
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(5393, video_compress_fb(uts, dev, false));
+	ut_asserteq(5390, video_compress_fb(uts, dev, false));
 
 	/* close the menu */
 	act.type = EXPOACT_CLOSE;
@@ -306,13 +310,13 @@ static int cedit_render(struct unit_test_state *uts)
 	act.select.id = ID_POWER_LOSS;
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(5393, video_compress_fb(uts, dev, false));
+	ut_asserteq(5390, video_compress_fb(uts, dev, false));
 
 	act.type = EXPOACT_POINT_ITEM;
 	act.select.id = ID_AC_ON;
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(5365, video_compress_fb(uts, dev, false));
+	ut_asserteq(5410, video_compress_fb(uts, dev, false));
 
 	/* select it */
 	act.type = EXPOACT_SELECT;
