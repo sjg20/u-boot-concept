@@ -395,6 +395,7 @@ struct scene_obj_txt {
  * @title_id: ID of the title text, or 0 if none
  * @cur_item_id: ID of the current menu item, or 0 if none
  * @pointer_id: ID of the object pointing to the current selection
+ * @pointer_xofs: x position of pointer relative to the left side of the menu
  * @item_head: List of items in the menu
  */
 struct scene_obj_menu {
@@ -402,6 +403,7 @@ struct scene_obj_menu {
 	uint title_id;
 	uint cur_item_id;
 	uint pointer_id;
+	int pointer_xofs;
 	struct list_head item_head;
 };
 

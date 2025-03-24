@@ -421,11 +421,11 @@ static int expo_object_menu(struct unit_test_state *uts)
 	ut_asserteq(menu->obj.bbox.x0, name1->obj.bbox.x0);
 	ut_asserteq(menu->obj.bbox.y0 + 32, name1->obj.bbox.y0);
 
-	ut_asserteq(menu->obj.bbox.x0 + 230, key1->obj.bbox.x0);
-	ut_asserteq(menu->obj.bbox.y0 + 32, key1->obj.bbox.y0);
-
 	ut_asserteq(menu->obj.bbox.x0 + 200, ptr->obj.bbox.x0);
 	ut_asserteq(menu->obj.bbox.y0 + 32, ptr->obj.bbox.y0);
+
+	ut_asserteq(menu->obj.bbox.x0 + 230, key1->obj.bbox.x0);
+	ut_asserteq(menu->obj.bbox.y0 + 32, key1->obj.bbox.y0);
 
 	ut_asserteq(menu->obj.bbox.x0 + 280, desc1->obj.bbox.x0);
 	ut_asserteq(menu->obj.bbox.y0 + 32, desc1->obj.bbox.y0);
