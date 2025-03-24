@@ -376,3 +376,9 @@ int expo_poll(struct expo *exp, struct expo_action *act)
 
 	return 0;
 }
+
+void expo_req_size(struct expo *exp, int width, int height)
+{
+	exp->req_width = width;
+	exp->req_height = height;
+}
