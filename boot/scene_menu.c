@@ -192,45 +192,37 @@ void scene_menu_calc_bbox(struct scene_obj_menu *menu,
 	bbox[SCENEBB_label].y1 -= theme->menuitem_gap_y;
 }
 
-int scene_menu_calc_dims(struct scene_obj_menu *menu)
+static void scene_menu_calc_dims(struct scene *scn, struct scene_obj_menu *menu,
+				 struct scene_obj_dims *dims)
 {
-	struct vidconsole_bbox bbox[SCENEBB_count], *cur;
 	const struct scene_menitem *item;
 
-	scene_menu_calc_bbox(menu, bbox);
-
-	/* Make all field types the same width */
 	list_for_each_entry(item, &menu->item_head, sibling) {
-		cur = &bbox[SCENEBB_label];
-		if (cur->valid)
-			scene_obj_set_width(menu->obj.scene, item->label_id,
-					    cur->x1 - cur->x0);
-		cur = &bbox[SCENEBB_key];
-		if (cur->valid)
-			scene_obj_set_width(menu->obj.scene, item->key_id,
-					    cur->x1 - cur->x0);
-		cur = &bbox[SCENEBB_desc];
-		if (cur->valid)
-			scene_obj_set_width(menu->obj.scene, item->desc_id,
-					    cur->x1 - cur->x0);
+		struct scene_obj_dims local;
+
+		local.x = 0;
+		local.y = 0;
+		scene_dims_union(menu->obj.scene, item->label_id, &local);
+		scene_dims_union(menu->obj.scene, item->key_id, &local);
+		scene_dims_union(menu->obj.scene, item->desc_id, &local);
+		scene_dims_union(menu->obj.scene, item->preview_id, &local);
+		scene_dims_join(&local, &dims[SCENEBB_all]);
+
+		/* Get the dimensions all individual fields */
+		scene_dims_union(menu->obj.scene, item->label_id,
+				 &dims[SCENEBB_label]);
+		scene_dims_union(menu->obj.scene, item->key_id,
+				 &dims[SCENEBB_key]);
+		scene_dims_union(menu->obj.scene, item->desc_id,
+				 &dims[SCENEBB_desc]);
 	}
-
-	cur = &bbox[SCENEBB_all];
-	if (cur->valid) {
-		menu->obj.dims.x = cur->x1 - cur->x0;
-		menu->obj.dims.y = cur->y1 - cur->y0;
-
-		menu->obj.bbox.x1 = cur->x1;
-		menu->obj.bbox.y1 = cur->y1;
-	}
-
-	return 0;
 }
 
 int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 		       struct scene_obj_menu *menu)
 {
 	const bool open = menu->obj.flags & SCENEOF_OPEN;
+	struct scene_obj_dims dims[SCENEBB_count];
 	struct expo *exp = scn->expo;
 	const bool stack = exp->popup;
 	const struct expo_theme *theme = &exp->theme;
@@ -238,6 +230,12 @@ int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 	uint sel_id;
 	int x, y;
 	int ret;
+
+	menu->obj.dims.x = 0;
+	menu->obj.dims.y = 0;
+
+	memset(dims, '\0', sizeof(dims));
+	scene_menu_calc_dims(scn, menu, dims);
 
 	x = menu->obj.bbox.x0;
 	y = menu->obj.bbox.y0;
@@ -327,12 +325,23 @@ int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 				return log_msg_ret("hid", ret);
 		}
 
+		menu->obj.dims.x = 160;
 		if (!stack || open)
 			y += height + theme->menuitem_gap_y;
 	}
 
+	list_for_each_entry(item, &menu->item_head, sibling) {
+		scene_obj_set_width(menu->obj.scene, item->label_id,
+				    dims[SCENEBB_label].x + theme->menu_inset);
+		scene_obj_set_width(menu->obj.scene, item->key_id,
+				    dims[SCENEBB_key].x + theme->menu_inset);
+		scene_obj_set_width(menu->obj.scene, item->desc_id,
+				    dims[SCENEBB_desc].x + theme->menu_inset);
+	}
+
 	if (sel_id)
 		menu_point_to_item(menu, sel_id);
+	menu->obj.dims.y = dims[SCENEBB_all].y;
 	menu->obj.bbox.x1 = menu->obj.bbox.x0 + menu->obj.dims.x;
 	menu->obj.bbox.y1 = menu->obj.bbox.y0 + menu->obj.dims.y;
 	menu->obj.flags |= SCENEOF_SIZE_VALID;
