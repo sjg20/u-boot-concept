@@ -50,13 +50,14 @@ void scene_textline_calc_bbox(struct scene_obj_textline *tline,
 			      struct vidconsole_bbox *edit_bbox)
 {
 	const struct expo_theme *theme = &tline->obj.scene->expo->theme;
+	int inset = theme->menu_inset;
 
 	bbox->valid = false;
-	scene_bbox_union(tline->obj.scene, tline->label_id, 0, bbox);
-	scene_bbox_union(tline->obj.scene, tline->edit_id, 0, bbox);
+	scene_bbox_union(tline->obj.scene, tline->label_id, inset, bbox);
+	scene_bbox_union(tline->obj.scene, tline->edit_id, inset, bbox);
 
 	edit_bbox->valid = false;
-	scene_bbox_union(tline->obj.scene, tline->edit_id, theme->menu_inset,
+	scene_bbox_union(tline->obj.scene, tline->edit_id, inset,
 			 edit_bbox);
 }
 
