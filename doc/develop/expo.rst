@@ -218,6 +218,10 @@ menu-title-margin-x
     Number of pixels between right side of menu title to the left size of the
     menu labels
 
+textline-label-margin-x
+    Number of pixels between right side of textline label to the left size of
+    the editor
+
 Pop-up mode
 -----------
 
