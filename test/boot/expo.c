@@ -588,7 +588,6 @@ static int expo_render_image(struct unit_test_state *uts)
 	/* render without a scene */
 	ut_asserteq(-ECHILD, expo_render(exp));
 
-	ut_assertok(expo_calc_dims(exp));
 	ut_assertok(scene_arrange(scn));
 
 	/* check dimensions of text */
