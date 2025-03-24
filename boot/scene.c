@@ -1219,3 +1219,23 @@ int scene_bbox_union(struct scene *scn, uint id, int inset,
 
 	return 0;
 }
+
+void scene_dims_join(struct scene_obj_dims *src, struct scene_obj_dims *dst)
+{
+	dst->x = max(dst->x, src->x);
+	dst->y = max(dst->y, src->y);
+}
+
+int scene_dims_union(struct scene *scn, uint id, struct scene_obj_dims *dims)
+{
+	struct scene_obj *obj;
+
+	if (!id)
+		return 0;
+	obj = scene_obj_find(scn, id, SCENEOBJT_NONE);
+	if (!obj)
+		return log_msg_ret("obj", -ENOENT);
+	scene_dims_join(&obj->dims, dims);
+
+	return 0;
+}

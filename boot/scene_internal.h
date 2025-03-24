@@ -16,6 +16,7 @@ struct expo_action;
 struct expo_arrange_info;
 struct expo_theme;
 struct scene_obj;
+struct scene_obj_dims;
 struct scene_obj_menu;
 struct scene_obj_textline;
 struct scene_obj_txtedit;
@@ -325,7 +326,7 @@ struct scene_menitem *scene_menuitem_find_val(const struct scene_obj_menu *menu,
 					      int val);
 
 /**
- * scene_bbox_join() - update bouding box with a given src box
+ * scene_bbox_join() - update bounding box with a given src bbox
  *
  * Updates @dst so that it encompasses the bounding box @src
  *
@@ -338,11 +339,11 @@ int scene_bbox_join(const struct vidconsole_bbox *src, int inset,
 		    struct vidconsole_bbox *dst);
 
 /**
- * scene_bbox_union() - update bouding box with the demensions of an object
+ * scene_bbox_union() - update bounding box with the bbox of an object
  *
  * Updates @bbox so that it encompasses the bounding box of object @id
  *
- * @snd: Scene containing object
+ * @scn: Scene containing object
  * @id: Object id
  * @inset: Amount of inset to use for width
  * @bbox: Bounding box to update
@@ -350,6 +351,28 @@ int scene_bbox_join(const struct vidconsole_bbox *src, int inset,
  */
 int scene_bbox_union(struct scene *scn, uint id, int inset,
 		     struct vidconsole_bbox *bbox);
+
+/**
+ * scene_bbox_join() - update dimensions with a given src dimensions
+ *
+ * Updates @dst so that it encompasses the dimensions of @src
+ *
+ * @src: Input dimensions
+ * @dst: Dimensions to update
+ */
+void scene_dims_join(struct scene_obj_dims *src, struct scene_obj_dims *dst);
+
+/**
+ * scene_dims_union() - update dimensions with the dimensions of an object
+ *
+ * Updates @dims so that it encompasses the dimensions of object @id
+ *
+ * @scn: Scene containing object
+ * @id: Object id
+ * @dims: Dimensions to update
+ * Return: 0 if OK, -ve on error
+ */
+int scene_dims_union(struct scene *scn, uint id, struct scene_obj_dims *dims);
 
 /**
  * scene_textline_calc_dims() - Calculate the dimensions of a textline
