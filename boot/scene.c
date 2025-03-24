@@ -737,6 +737,31 @@ int scene_calc_arrange(struct scene *scn, struct expo_arrange_info *arr)
 	return 0;
 }
 
+/**
+ * scene_set_default_bbox() - Set a default for each object's size
+ *
+ * If there is not already a size, use the dims property to set one
+ */
+static int scene_set_default_bbox(struct scene *scn)
+{
+	struct scene_obj *obj;
+
+	list_for_each_entry(obj, &scn->obj_head, sibling) {
+		switch (obj->type) {
+		case SCENEOBJT_IMAGE:
+		case SCENEOBJT_TEXT:
+			if (!(obj->flags & SCENEOF_SIZE_VALID)) {
+				scene_obj_set_size(scn, obj->id, obj->dims.x,
+						   obj->dims.y);
+			}
+		default:
+			break;
+		}
+	}
+
+	return 0;
+}
+
 int scene_arrange(struct scene *scn)
 {
 	struct expo_arrange_info arr;
@@ -753,6 +778,12 @@ int scene_arrange(struct scene *scn)
 		ysize = priv->ysize;
 	}
 
+	ret = scene_calc_dims(scn);
+	if (ret)
+		return log_msg_ret("scd", ret);
+	ret = scene_set_default_bbox(scn);
+	if (ret)
+		return log_msg_ret("sce", ret);
 	ret = scene_calc_arrange(scn, &arr);
 	if (ret < 0)
 		return log_msg_ret("arr", ret);
@@ -1032,14 +1063,6 @@ int scene_calc_dims(struct scene *scn)
 						return log_msg_ret("get", ret);
 					obj->dims.x = width;
 					obj->dims.y = ret;
-					if (!(obj->flags & SCENEOF_SIZE_VALID)) {
-						obj->bbox.x1 = obj->bbox.x0 +
-							width;
-						obj->bbox.y1 = obj->bbox.y0 +
-							ret;
-						obj->flags |=
-							SCENEOF_SIZE_VALID;
-					}
 				}
 				break;
 			}
