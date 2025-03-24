@@ -222,7 +222,7 @@ int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 		       struct scene_obj_menu *menu)
 {
 	const bool open = menu->obj.flags & SCENEOF_OPEN;
-	struct scene_obj_dims dims[SCENEBB_count];
+	struct scene_obj_dims dims[SCENEBB_count], pointer_dims;
 	struct expo *exp = scn->expo;
 	const bool stack = exp->popup;
 	const struct expo_theme *theme = &exp->theme;
@@ -231,6 +231,7 @@ int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 	int startx, x, y;
 	int ret;
 
+	memset(&pointer_dims, '\0', sizeof(pointer_dims));
 	menu->obj.dims.x = 0;
 	menu->obj.dims.y = 0;
 
@@ -254,6 +255,16 @@ int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 			startx += arr->label_width + theme->menu_title_margin_x;
 		else
 			y += ret * 2;
+	}
+
+	if (menu->pointer_id) {
+		const struct scene_obj *obj;
+
+		obj = scene_obj_find(scn, menu->pointer_id, SCENEOBJT_NONE);
+		if (!obj)
+			return log_msg_ret("obj", -ENOENT);
+
+		pointer_dims = obj->dims;
 	}
 
 	/*
@@ -295,9 +306,9 @@ int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 		x += 200;
 
 		/* space for the pointer */
-		if (menu->pointer_id) {
+		if (pointer_dims.x) {
 			menu->pointer_xofs = x - startx;
-			x += 30;
+			x += 12 + pointer_dims.x + 9;
 		}
 
 		if (item->key_id) {
