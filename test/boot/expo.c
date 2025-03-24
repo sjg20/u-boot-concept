@@ -523,7 +523,7 @@ static int expo_render_image(struct unit_test_state *uts)
 	id = scene_txt_str(scn, "label1", ITEM1_LABEL, STR_ITEM1_LABEL, "Play",
 			   NULL);
 	ut_assert(id > 0);
-	id = scene_txt_str(scn, "item1 txt", ITEM1_DESC, STR_ITEM1_DESC,
+	id = scene_txt_str(scn, "item1-txt", ITEM1_DESC, STR_ITEM1_DESC,
 			   "Lord Melchett", NULL);
 	ut_assert(id > 0);
 	id = scene_txt_str(scn, "item1-key", ITEM1_KEY, STR_ITEM1_KEY, "1",
@@ -548,7 +548,7 @@ static int expo_render_image(struct unit_test_state *uts)
 	id = scene_txt_str(scn, "label2", ITEM2_LABEL, STR_ITEM2_LABEL, "Now",
 			   NULL);
 	ut_assert(id > 0);
-	id = scene_txt_str(scn, "item2 txt", ITEM2_DESC, STR_ITEM2_DESC,
+	id = scene_txt_str(scn, "item2-txt", ITEM2_DESC, STR_ITEM2_DESC,
 			   "Lord Percy", NULL);
 	ut_assert(id > 0);
 	id = scene_txt_str(scn, "item2-key", ITEM2_KEY, STR_ITEM2_KEY, "2",
