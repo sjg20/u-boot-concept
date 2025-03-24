@@ -296,7 +296,7 @@ int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 			return log_msg_ret("nam", ret);
 		scene_obj_set_hide(scn, item->label_id,
 				   stack && !open && !selected);
-		x += 200;
+		x += dims[SCENEBB_label].x + 50 + 100 + 18;
 
 		/* space for the pointer */
 		if (pointer_dims.x) {
@@ -308,13 +308,14 @@ int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 			ret = scene_obj_set_pos(scn, item->key_id, x, y);
 			if (ret < 0)
 				return log_msg_ret("key", ret);
-			x += 50;
+			x += dims[SCENEBB_key].x + 30 + 12;
 		}
 
 		if (item->desc_id) {
 			ret = scene_obj_set_pos(scn, item->desc_id, x, y);
 			if (ret < 0)
 				return log_msg_ret("des", ret);
+			x += dims[SCENEBB_desc].x;
 		}
 
 		if (item->preview_id) {
@@ -334,7 +335,7 @@ int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 				return log_msg_ret("hid", ret);
 		}
 
-		menu->obj.dims.x = 160;
+		menu->obj.dims.x = x - startx;
 		if (!stack || open)
 			y += height + theme->menuitem_gap_y;
 	}

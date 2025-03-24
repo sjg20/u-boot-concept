@@ -624,31 +624,31 @@ static int expo_render_image(struct unit_test_state *uts)
 	/* same for the key */
 	obj = scene_obj_find(scn, ITEM1_KEY, SCENEOBJT_NONE);
 	ut_assertnonnull(obj);
-	ut_asserteq(280, obj->bbox.x0);
+	ut_asserteq(277, obj->bbox.x0);
 	ut_asserteq(436, obj->bbox.y0);
-	ut_asserteq(280 + 9, obj->bbox.x1);
+	ut_asserteq(277 + 9, obj->bbox.x1);
 	ut_asserteq(436 + 18, obj->bbox.y1);
 
 	obj = scene_obj_find(scn, ITEM2_KEY, SCENEOBJT_NONE);
 	ut_assertnonnull(obj);
-	ut_asserteq(280, obj->bbox.x0);
+	ut_asserteq(277, obj->bbox.x0);
 	ut_asserteq(454, obj->bbox.y0);
-	ut_asserteq(280 + 9, obj->bbox.x1);
+	ut_asserteq(277 + 9, obj->bbox.x1);
 	ut_asserteq(454 + 18, obj->bbox.y1);
 
 	/* and the description */
 	obj = scene_obj_find(scn, ITEM1_DESC, SCENEOBJT_NONE);
 	ut_assertnonnull(obj);
-	ut_asserteq(330, obj->bbox.x0);
+	ut_asserteq(328, obj->bbox.x0);
 	ut_asserteq(436, obj->bbox.y0);
-	ut_asserteq(330 + 89, obj->bbox.x1);
+	ut_asserteq(328 + 89, obj->bbox.x1);
 	ut_asserteq(436 + 18, obj->bbox.y1);
 
 	obj = scene_obj_find(scn, ITEM2_DESC, SCENEOBJT_NONE);
 	ut_assertnonnull(obj);
-	ut_asserteq(330, obj->bbox.x0);
+	ut_asserteq(328, obj->bbox.x0);
 	ut_asserteq(454, obj->bbox.y0);
-	ut_asserteq(330 + 89, obj->bbox.x1);
+	ut_asserteq(328 + 89, obj->bbox.x1);
 	ut_asserteq(454 + 18, obj->bbox.y1);
 
 	/* check dimensions of menu */
@@ -656,7 +656,7 @@ static int expo_render_image(struct unit_test_state *uts)
 	ut_assertnonnull(obj);
 	ut_asserteq(50, obj->bbox.x0);
 	ut_asserteq(400, obj->bbox.y0);
-	ut_asserteq(50 + 160, obj->bbox.x1);
+	ut_asserteq(50 + 367, obj->bbox.x1);
 	ut_asserteq(400 + 160, obj->bbox.y1);
 
 	scene_obj_set_width(scn, OBJ_MENU, 170);
@@ -678,11 +678,12 @@ static int expo_render_image(struct unit_test_state *uts)
 	/* render it */
 	expo_set_scene_id(exp, SCENE1);
 	ut_assertok(expo_render(exp));
-	ut_asserteq(18786, video_compress_fb(uts, dev, false));
+	ut_asserteq(18767, video_compress_fb(uts, dev, false));
 
 	ut_asserteq(0, scn->highlight_id);
 	ut_assertok(scene_arrange(scn));
 	ut_asserteq(0, scn->highlight_id);
+	ut_asserteq(18767, video_compress_fb(uts, dev, false));
 
 	scene_set_highlight_id(scn, OBJ_MENU);
 	ut_asserteq(OBJ_MENU, scn->highlight_id);
@@ -694,11 +695,11 @@ static int expo_render_image(struct unit_test_state *uts)
 	ut_assert(!(obj->flags & SCENEOF_HIDE));
 
 	ut_assertok(expo_render(exp));
-	ut_asserteq(20433, video_compress_fb(uts, dev, false));
+	ut_asserteq(20386, video_compress_fb(uts, dev, false));
 
 	ut_assertok(scene_arrange(scn));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(20433, video_compress_fb(uts, dev, false));
+	ut_asserteq(20386, video_compress_fb(uts, dev, false));
 
 	/* move down */
 	ut_assertok(expo_send_key(exp, BKEY_DOWN));
@@ -711,7 +712,8 @@ static int expo_render_image(struct unit_test_state *uts)
 	ut_asserteq(ITEM2, scene_menu_get_cur_item(scn, OBJ_MENU));
 	ut_assertok(scene_arrange(scn));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(19673, video_compress_fb(uts, dev, false));
+
+	ut_asserteq(19665, video_compress_fb(uts, dev, false));
 	ut_assertok(video_check_copy_fb(uts, dev));
 
 	/* hide the text editor since the following tets don't need it */
@@ -720,18 +722,18 @@ static int expo_render_image(struct unit_test_state *uts)
 	/* do some alignment checks */
 	ut_assertok(scene_obj_set_halign(scn, OBJ_TEXT3, SCENEOA_CENTRE));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(16368, video_compress_fb(uts, dev, false));
+	ut_asserteq(16332, video_compress_fb(uts, dev, false));
 	ut_assertok(scene_obj_set_halign(scn, OBJ_TEXT3, SCENEOA_RIGHT));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(16321, video_compress_fb(uts, dev, false));
+	ut_asserteq(16297, video_compress_fb(uts, dev, false));
 
 	ut_assertok(scene_obj_set_halign(scn, OBJ_TEXT3, SCENEOA_LEFT));
 	ut_assertok(scene_obj_set_valign(scn, OBJ_TEXT3, SCENEOA_CENTRE));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(18763, video_compress_fb(uts, dev, false));
+	ut_asserteq(18745, video_compress_fb(uts, dev, false));
 	ut_assertok(scene_obj_set_valign(scn, OBJ_TEXT3, SCENEOA_BOTTOM));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(18714, video_compress_fb(uts, dev, false));
+	ut_asserteq(18663, video_compress_fb(uts, dev, false));
 
 	/* make sure only the preview for the second item is shown */
 	obj = scene_obj_find(scn, ITEM1_PREVIEW, SCENEOBJT_NONE);
@@ -757,7 +759,7 @@ static int expo_render_image(struct unit_test_state *uts)
 	exp->show_highlight = true;
 	ut_assertok(scene_arrange(scn));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(18844, video_compress_fb(uts, dev, false));
+	ut_asserteq(18860, video_compress_fb(uts, dev, false));
 
 	/* now try in text mode */
 	expo_set_text_mode(exp, true);
