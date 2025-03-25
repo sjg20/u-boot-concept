@@ -314,7 +314,7 @@ static int textline_build(struct build_info *info, ofnode node,
 	ret = ofnode_read_u32(node, "edit-id", &id);
 	if (ret)
 		return log_msg_ret("id", -ENOENT);
-	edit_id = ret;
+	edit_id = id;
 
 	ret = scene_txt_str(scn, "edit", edit_id, 0, abuf_data(&ted->buf),
 			    NULL);
