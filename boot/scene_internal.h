@@ -375,16 +375,6 @@ void scene_dims_join(struct scene_obj_dims *src, struct scene_obj_dims *dst);
 int scene_dims_union(struct scene *scn, uint id, struct scene_obj_dims *dims);
 
 /**
- * scene_textline_calc_dims() - Calculate the dimensions of a textline
- *
- * Updates the width and height of the textline based on its contents
- *
- * @tline: Textline to update
- * Returns 0 if OK, -ENOTSUPP if there is no graphical console
- */
-int scene_textline_calc_dims(struct scene_obj_textline *tline);
-
-/**
  * scene_menu_calc_bbox() - Calculate bounding boxes for the menu
  *
  * @menu: Menu to process

@@ -50,20 +50,30 @@ void scene_textline_calc_bbox(struct scene_obj_textline *tline,
 			      struct vidconsole_bbox *edit_bbox)
 {
 	const struct expo_theme *theme = &tline->obj.scene->expo->theme;
-	int inset = theme->menu_inset;
+	int inset = theme->menu_text_pad_x;
 
 	bbox->valid = false;
 	scene_bbox_union(tline->obj.scene, tline->label_id, inset, bbox);
 	scene_bbox_union(tline->obj.scene, tline->edit_id, inset, bbox);
 
 	edit_bbox->valid = false;
-	scene_bbox_union(tline->obj.scene, tline->edit_id, inset,
-			 edit_bbox);
+	scene_bbox_union(tline->obj.scene, tline->edit_id, inset, edit_bbox);
 }
 
-int scene_textline_calc_dims(struct scene_obj_textline *tline)
+/**
+ * scene_textline_calc_dims() - Calculate the dimensions of a textline
+ *
+ * Updates the width and height of the textline based on its contents
+ *
+ * @tline: Textline to check
+ * @dims: Returns dimensions of edit object
+ * Returns 0 if OK, -ENOTSUPP if there is no graphical console
+ */
+static int scene_textline_calc_dims(struct scene_obj_textline *tline,
+				    struct scene_obj_dims *edit_dims)
 {
 	struct scene *scn = tline->obj.scene;
+	const struct expo_theme *theme = &scn->expo->theme;
 	struct vidconsole_bbox bbox;
 	struct scene_obj_txt *txt;
 	int ret;
@@ -78,10 +88,8 @@ int scene_textline_calc_dims(struct scene_obj_textline *tline)
 		return log_msg_ret("nom", ret);
 
 	if (bbox.valid) {
-		struct scene_obj *obj = &txt->obj;
-
-		obj->dims.x = bbox.x1 - bbox.x0;
-		obj->dims.y = bbox.y1 - bbox.y0;
+		edit_dims->x = bbox.x1 - bbox.x0 + theme->menu_text_pad_x * 2;
+		edit_dims->y = bbox.y1 - bbox.y0;
 	}
 
 	return 0;
@@ -91,9 +99,14 @@ int scene_textline_arrange(struct scene *scn, struct expo_arrange_info *arr,
 			   struct scene_obj_textline *tline)
 {
 	const bool open = tline->obj.flags & SCENEOF_OPEN;
+	const struct expo_theme *theme = &scn->expo->theme;
+	int pad_x = theme->menu_text_pad_x;
+	struct scene_obj_dims edit_dims;
 	bool point;
 	int x, y;
 	int ret;
+
+	LOGR("sta", scene_textline_calc_dims(tline, &edit_dims));
 
 	x = tline->obj.req_bbox.x0;
 	y = tline->obj.req_bbox.y0;
@@ -102,15 +115,15 @@ int scene_textline_arrange(struct scene *scn, struct expo_arrange_info *arr,
 		if (ret < 0)
 			return log_msg_ret("tit", ret);
 
-		ret = scene_obj_set_pos(scn, tline->edit_id, x + 200, y);
+		x += arr->label_width + theme->textline_label_margin_x;
+	}
+	if (tline->edit_id) {
+		ret = scene_obj_set_bbox(scn, tline->edit_id,
+					 x + theme->menu_inset, y,
+					 x + edit_dims.x + pad_x * 2,
+					 y + edit_dims.y);
 		if (ret < 0)
-			return log_msg_ret("tit", ret);
-
-		ret = scene_obj_get_hw(scn, tline->label_id, NULL);
-		if (ret < 0)
-			return log_msg_ret("hei", ret);
-
-		y += ret * 2;
+			return log_msg_ret("tie", ret);
 	}
 
 	point = scn->highlight_id == tline->obj.id;
