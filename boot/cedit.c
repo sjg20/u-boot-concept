@@ -52,6 +52,7 @@ struct cedit_iter_priv {
 
 int cedit_arange(struct expo *exp, struct video_priv *vpriv, uint scene_id)
 {
+	struct expo_theme *theme = &exp->theme;
 	struct expo_arrange_info arr;
 	struct scene_obj_txt *txt;
 	struct scene_obj *obj;
@@ -88,15 +89,16 @@ int cedit_arange(struct expo *exp, struct video_priv *vpriv, uint scene_id)
 			scene_obj_set_pos(scn, obj->id, 50, y);
 			scene_menu_arrange(scn, &arr,
 					   (struct scene_obj_menu *)obj);
-			y += 50;
+			y += obj->dims.y;
 			break;
 		case SCENEOBJT_TEXTLINE:
 			scene_obj_set_pos(scn, obj->id, 50, y);
 			scene_textline_arrange(scn, &arr,
 					(struct scene_obj_textline *)obj);
-			y += 50;
+			y += obj->dims.y;
 			break;
 		}
+		y += theme->menuitem_gap_y;
 	}
 	LOGR("cac", scene_arrange(scn));
 
