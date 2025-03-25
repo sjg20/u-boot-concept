@@ -301,6 +301,7 @@ int expo_setup_theme(struct expo *exp, ofnode node)
 	memset(theme, '\0', sizeof(struct expo_theme));
 	ofnode_read_u32(node, "font-size", &theme->font_size);
 	ofnode_read_u32(node, "menu-inset", &theme->menu_inset);
+	ofnode_read_u32(node, "menu-text-pad-x", &theme->menu_text_pad_x);
 	ofnode_read_u32(node, "menuitem-gap-y", &theme->menuitem_gap_y);
 	ofnode_read_u32(node, "menu-title-margin-x",
 			&theme->menu_title_margin_x);

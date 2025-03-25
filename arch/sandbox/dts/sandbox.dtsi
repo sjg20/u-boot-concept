@@ -45,6 +45,7 @@
 
 		cedit-theme {
 			font-size = <30>;
+			menu-text-pad-x = <1>;
 			menu-inset = <3>;
 			menuitem-gap-y = <1>;
 		};

@@ -525,7 +525,7 @@ static void scene_render_background(struct scene_obj *obj, bool box_only,
 
 	vidconsole_push_colour(cons, fore, back, &old);
 	video_fill_part(dev, sel->x0 - inset, sel->y0 - inset,
-			sel->x1, sel->y1 + inset,
+			sel->x1 + inset, sel->y1 + inset,
 			vid_priv->colour_fg);
 	vidconsole_pop_colour(cons, &old);
 	if (box_only) {
@@ -537,7 +537,7 @@ static void scene_render_background(struct scene_obj *obj, bool box_only,
 static int scene_txt_render(struct expo *exp, struct udevice *dev,
 			    struct udevice *cons, struct scene_obj *obj,
 			    struct scene_txt_generic *gen, int x, int y,
-			    int menu_inset)
+			    int text_pad_x)
 {
 	const struct vidconsole_mline *mline, *last;
 	struct video_priv *vid_priv;
@@ -573,11 +573,8 @@ static int scene_txt_render(struct expo *exp, struct udevice *dev,
 	}
 
 	if (obj->flags & SCENEOF_POINT) {
-		int inset;
-
-		inset = exp->popup ? menu_inset : 0;
 		vidconsole_push_colour(cons, fore, back, &old);
-		video_fill_part(dev, x - inset, y,
+		video_fill_part(dev, x, y,
 				obj->bbox.x1, obj->bbox.y1,
 				vid_priv->colour_bg);
 	}
@@ -604,7 +601,7 @@ static int scene_txt_render(struct expo *exp, struct udevice *dev,
 				 obj->bbox.x1 - obj->bbox.x0,
 				 obj->bbox.y1 - obj->bbox.y0, &offset);
 
-		x = obj->bbox.x0 + offset.xofs;
+		x = obj->bbox.x0 + offset.xofs + text_pad_x;
 		y = obj->bbox.y0 + offset.yofs + mline->bbox.y0;
 		if (y > bbox.y1)
 			break;	/* clip this line and any following */
@@ -656,7 +653,7 @@ static int scene_obj_render(struct scene_obj *obj, bool text_mode)
 		struct scene_obj_txt *txt = (struct scene_obj_txt *)obj;
 
 		ret = scene_txt_render(exp, dev, cons, obj, &txt->gen, x, y,
-				       theme->menu_inset);
+				       theme->menu_text_pad_x);
 		break;
 	}
 	case SCENEOBJT_MENU: {
@@ -703,7 +700,7 @@ static int scene_obj_render(struct scene_obj *obj, bool text_mode)
 		struct scene_obj_txtedit *ted = (struct scene_obj_txtedit *)obj;
 
 		ret = scene_txt_render(exp, dev, cons, obj, &ted->gen, x, y,
-				       theme->menu_inset);
+				       theme->menu_text_pad_x);
 		break;
 	}
 	}

@@ -79,7 +79,9 @@ struct expo_action {
  * struct expo_theme - theme for the expo
  *
  * @font_size: Default font size for all text
- * @menu_inset: Inset width (on each side and top/bottom) for menu items
+ * @menu_inset: Inset width (on each side and top/bottom) for menu items, used
+ * to display a background for the menu label when it is open
+ * @menu_text_pad_x: Padding width before and after text in menuitem objects
  * @menuitem_gap_y: Gap between menu items in pixels
  * @menu_title_margin_x: Gap between right side of menu title and left size of
  *	menu label
@@ -89,6 +91,7 @@ struct expo_action {
 struct expo_theme {
 	u32 font_size;
 	u32 menu_inset;
+	u32 menu_text_pad_x;
 	u32 menuitem_gap_y;
 	u32 menu_title_margin_x;
 	bool white_on_black;

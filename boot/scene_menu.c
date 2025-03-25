@@ -145,7 +145,7 @@ void scene_menu_calc_bbox(struct scene_obj_menu *menu,
 {
 	const struct expo_theme *theme = &menu->obj.scene->expo->theme;
 	const struct scene_menitem *item;
-	int inset = theme->menu_inset;
+	int inset = theme->menu_text_pad_x;
 	int i;
 
 	for (i = 0; i < SCENEBB_count; i++)
@@ -220,6 +220,7 @@ int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 	const bool stack = exp->popup;
 	const struct expo_theme *theme = &exp->theme;
 	struct scene_menitem *item;
+	int pad_x = theme->menu_text_pad_x * 2;
 	uint sel_id;
 	int startx, x, y;
 	int ret;
@@ -342,11 +343,11 @@ int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 
 	list_for_each_entry(item, &menu->item_head, sibling) {
 		scene_obj_set_width(menu->obj.scene, item->label_id,
-				    dims[SCENEBB_label].x + theme->menu_inset);
+				    dims[SCENEBB_label].x + pad_x);
 		scene_obj_set_width(menu->obj.scene, item->key_id,
-				    dims[SCENEBB_key].x + theme->menu_inset);
+				    dims[SCENEBB_key].x + pad_x);
 		scene_obj_set_width(menu->obj.scene, item->desc_id,
-				    dims[SCENEBB_desc].x + theme->menu_inset);
+				    dims[SCENEBB_desc].x + pad_x);
 	}
 
 	if (sel_id)
