@@ -446,8 +446,25 @@ int scene_obj_get_hw(struct scene *scn, uint id, int *widthp)
 			return 16;
 		}
 
-		limit = obj->flags & SCENEOF_SIZE_VALID ?
-			obj->bbox.x1 - obj->bbox.x0 : -1;
+		if (obj->flags & SCENEOF_SIZE_VALID) {
+			int x1 = obj->bbox.x1;
+			struct udevice *dev;
+			int xsize = 1280;
+
+			dev = scn->expo->display;
+			if (dev) {
+				struct video_priv *priv = dev_get_uclass_priv(dev);
+
+				xsize = priv->xsize;
+			}
+
+			if (x1 == SCENEOB_DISPLAY_MAX)
+				x1 = xsize;
+			limit = x1 - obj->bbox.x0;
+		} else {
+			limit = -1;
+		}
+		log_debug("obj %s limit %d\n", obj->name, limit);
 
 		ret = vidconsole_measure(scn->expo->cons, gen->font_name,
 					 gen->font_size, str, limit, &bbox,
