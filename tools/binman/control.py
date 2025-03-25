@@ -530,6 +530,35 @@ def _RemoveTemplates(parent):
     for node in del_nodes:
         node.Delete()
 
+def prop_bootph_to_parent(node, prop):
+    """Propagates bootph-* property to all the parent
+    nodes up the hierarchy
+    """
+    parent = node.parent
+    if parent == None or parent.props.get(prop):
+       return
+
+    while parent:
+        parent.AddEmptyProp(prop, 0)
+        parent = parent.parent
+
+def scan_and_prop_bootph(node):
+    """Scan the device tree and set the bootph-* property if its present
+    in subnode
+
+    This is used to set the bootph-* property in the parent node if a
+    "bootph-*" property is found in any of the subnodes of the parent
+    node.
+    """
+    bootph_prop = ['bootph-all', 'bootph-some-ram', 'bootph-pre-ram', 'bootph-pre-sram']
+
+    for props in bootph_prop:
+        if node.props.get(props):
+            prop_bootph_to_parent(node, props)
+
+    for subnode in node.subnodes:
+       scan_and_prop_bootph(subnode)
+
 def PrepareImagesAndDtbs(dtb_fname, select_images, update_fdt, use_expanded, indir):
     """Prepare the images to be processed and select the device tree
 
@@ -567,8 +596,10 @@ def PrepareImagesAndDtbs(dtb_fname, select_images, update_fdt, use_expanded, ind
         indir = []
     dtb_fname = fdt_util.EnsureCompiled(dtb_fname, indir=indir)
     fname = tools.get_output_filename('u-boot.dtb.out')
-    tools.write_file(fname, tools.read_file(dtb_fname))
-    dtb = fdt.FdtScan(fname)
+    dtb = fdt.FdtScan(dtb_fname)
+    scan_and_prop_bootph(dtb.GetRoot())
+    dtb.Sync(True)
+    tools.write_file(dtb_fname, dtb.GetContents())
 
     node = _FindBinmanNode(dtb)
     if not node:
