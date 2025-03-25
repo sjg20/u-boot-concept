@@ -1085,39 +1085,27 @@ int scene_sync_bbox(struct scene *scn)
 int scene_calc_dims(struct scene *scn)
 {
 	struct scene_obj *obj;
-	int ret, i;
+	int ret;
 
-	/*
-	 * Do the menus last so that all the menus' text objects
-	 * are dimensioned. Many objects are referenced by a menu and the size
-	 * and position is set by the menu
-	 */
-	for (i = 0; i < 2; i++) {
-		bool do_menus = i;
+	list_for_each_entry(obj, &scn->obj_head, sibling) {
+		switch (obj->type) {
+		case SCENEOBJT_NONE:
+		case SCENEOBJT_TEXT:
+		case SCENEOBJT_BOX:
+		case SCENEOBJT_TEXTEDIT:
+		case SCENEOBJT_IMAGE: {
+			int width;
 
-		list_for_each_entry(obj, &scn->obj_head, sibling) {
-			switch (obj->type) {
-			case SCENEOBJT_NONE:
-			case SCENEOBJT_TEXT:
-			case SCENEOBJT_BOX:
-			case SCENEOBJT_TEXTEDIT:
-			case SCENEOBJT_IMAGE: {
-				int width;
-
-				if (!do_menus) {
-					ret = scene_obj_get_hw(scn, obj->id,
-							       &width);
-					if (ret < 0)
-						return log_msg_ret("get", ret);
-					obj->dims.x = width;
-					obj->dims.y = ret;
-				}
-				break;
-			}
-			case SCENEOBJT_MENU:
-			case SCENEOBJT_TEXTLINE:
-				break;
-			}
+			ret = scene_obj_get_hw(scn, obj->id, &width);
+			if (ret < 0)
+				return log_msg_ret("get", ret);
+			obj->dims.x = width;
+			obj->dims.y = ret;
+			break;
+		}
+		case SCENEOBJT_MENU:
+		case SCENEOBJT_TEXTLINE:
+			break;
 		}
 	}
 
