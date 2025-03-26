@@ -48,11 +48,17 @@
 	};
 #elif defined(CONFIG_SPL)
 	u-boot-spl-with-ucode-ptr {
+		no-expanded;
 		offset = <CONFIG_X86_OFFSET_SPL>;
 	};
+# ifdef CONFIG_HAVE_MICROCODE
 	u-boot-dtb-with-ucode2 {
 		type = "u-boot-dtb-with-ucode";
 	};
+#else
+	u-boot-spl-dtb {
+	};
+# endif
 	u-boot {
 		offset = <CONFIG_X86_OFFSET_U_BOOT>;
 	};
