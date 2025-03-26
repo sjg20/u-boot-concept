@@ -410,6 +410,7 @@ int scene_menu_send_key(struct scene *scn, struct scene_obj_menu *menu, int key,
 {
 	const bool open = menu->obj.flags & SCENEOF_OPEN;
 	struct scene_menitem *item, *cur, *key_item;
+	bool changed = false;
 
 	cur = NULL;
 	key_item = NULL;
@@ -433,19 +434,28 @@ int scene_menu_send_key(struct scene *scn, struct scene_obj_menu *menu, int key,
 					     struct scene_menitem, sibling)) {
 			item = list_entry(item->sibling.prev,
 					  struct scene_menitem, sibling);
-			event->type = EXPOACT_POINT_ITEM;
-			event->select.id = item->id;
-			log_debug("up to item %d\n", event->select.id);
+			changed = true;
 		}
+		/*
+		 * issue an event even if the pointer did not move, so the
+		 * caller knows that an attempt was made, e.g. to cancel an
+		 * autoboot timeout
+		 */
+		event->type = EXPOACT_POINT_ITEM;
+		event->select.id = item->id;
+		event->select.changed = changed;
+		log_debug("up to item %d\n", event->select.id);
 		break;
 	case BKEY_DOWN:
 		if (!list_is_last(&item->sibling, &menu->item_head)) {
 			item = list_entry(item->sibling.next,
 					  struct scene_menitem, sibling);
-			event->type = EXPOACT_POINT_ITEM;
-			event->select.id = item->id;
-			log_debug("down to item %d\n", event->select.id);
+			changed = true;
 		}
+		event->type = EXPOACT_POINT_ITEM;
+		event->select.id = item->id;
+		event->select.changed = changed;
+		log_debug("down to item %d\n", event->select.id);
 		break;
 	case BKEY_SELECT:
 		event->type = EXPOACT_SELECT;

@@ -65,12 +65,15 @@ enum expoact_type {
  * @type: Action type (EXPOACT_NONE if there is no action)
  * @select: Used for EXPOACT_POINT_ITEM and EXPOACT_SELECT
  * @select.id: ID number of the object affected.
+ * @select.changed: true if the selection has changed since last time (only
+ * valid for EXPOACT_POINT_ITEM)
  */
 struct expo_action {
 	enum expoact_type type;
 	union {
 		struct {
 			int id;
+			bool changed;
 		} select;
 	};
 };
