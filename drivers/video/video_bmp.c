@@ -242,10 +242,10 @@ static void video_splash_align_axis(int *axis, unsigned long panel_size,
 	*axis = max(0, (int)axis_alignment);
 }
 
-void video_bmp_get_info(void *bmp_image, ulong *widthp, ulong *heightp,
+void video_bmp_get_info(const void *bmp_image, ulong *widthp, ulong *heightp,
 			uint *bpixp)
 {
-	struct bmp_image *bmp = bmp_image;
+	const struct bmp_image *bmp = bmp_image;
 
 	*widthp = get_unaligned_le32(&bmp->header.width);
 	*heightp = get_unaligned_le32(&bmp->header.height);

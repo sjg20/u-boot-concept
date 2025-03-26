@@ -1173,6 +1173,19 @@ void scene_highlight_first(struct scene *scn)
 	}
 }
 
+int scene_img_set_data(struct scene *scn, uint id, const void *data, int size)
+{
+	struct scene_obj_img *img;
+
+	img = scene_obj_find(scn, id, SCENEOBJT_IMAGE);
+	if (!img)
+		return log_msg_ret("sid", -ENOENT);
+	img->data = data;
+	/* TODO: Consider using an abuf for the image */
+
+	return 0;
+}
+
 static int scene_obj_open(struct scene *scn, struct scene_obj *obj)
 {
 	int ret;
