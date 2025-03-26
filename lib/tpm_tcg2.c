@@ -215,7 +215,7 @@ static int tcg2_log_append_check(struct tcg2_event_log *elog, u32 pcr_index,
 	return 0;
 }
 
-static int tcg2_log_init(struct udevice *dev, struct tcg2_event_log *elog)
+int tcg2_log_init(struct udevice *dev, struct tcg2_event_log *elog)
 {
 	struct tcg_efi_spec_id_event *ev;
 	struct tcg_pcr_event *log;
