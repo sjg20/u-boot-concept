@@ -170,6 +170,9 @@ struct expo_string {
  * @id: ID number of the scene
  * @title_id: String ID of title of the scene (allocated)
  * @highlight_id: ID of highlighted object, if any
+ * @xscale: Value (* SCALE_FRAC_DIV) to multiply req coordinates by to get the
+ *	display coords. (xdisplay = xreq * xscale / SCALE_FRAC_DIV)
+ *
  * @cls: cread state to use for input
  * @buf: Buffer for input
  * @entry_save: Buffer to hold vidconsole text-entry information
@@ -182,6 +185,9 @@ struct scene {
 	uint id;
 	uint title_id;
 	uint highlight_id;
+	uint xscale;
+	uint yscale;
+	uint fscale;
 	struct cli_line_state cls;
 	struct abuf buf;
 	struct abuf entry_save;
@@ -519,7 +525,7 @@ struct scene_obj_txtedit {
 /**
  * struct expo_arrange_info - Information used when arranging a scene
  *
- * @label_width: Maximum width of labels in scene
+ * @label_width: Maximum width of labels in scene in pixels (unscaled)
  */
 struct expo_arrange_info {
 	int label_width;
@@ -990,8 +996,8 @@ int scene_menu_get_cur_item(struct scene *scn, uint id);
  *
  * @scn: Scene to check
  * @id: ID of menu object to check
- * @widthp: If non-NULL, returns width of object in pixels
- * Returns: Height of object in pixels
+ * @widthp: If non-NULL, returns width of object in pixels (unscaled)
+ * Returns: Height of object in pixels (unscaled)
  */
 int scene_obj_get_hw(struct scene *scn, uint id, int *widthp);
 

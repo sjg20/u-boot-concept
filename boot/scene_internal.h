@@ -461,4 +461,8 @@ int scene_calc_arrange(struct scene *scn, struct expo_arrange_info *arr);
 int scene_txt_generic_init(struct expo *exp, struct scene_txt_generic *gen,
 			   const char *name, uint str_id, const char *str);
 
+int scn_xscale(struct scene *scn, int val);
+int scn_yscale(struct scene *scn, int val);
+int scn_fscale(struct scene *scn, int val);
+
 #endif /* __SCENE_INTERNAL_H */
