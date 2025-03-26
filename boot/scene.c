@@ -19,6 +19,11 @@
 #include <linux/input.h>
 #include "scene_internal.h"
 
+enum {
+	/* scale factor is stored as (factor * SCALE_FRAC_DIV) */
+	SCALE_FRAC_DIV		= 256,
+};
+
 int scene_new(struct expo *exp, const char *name, uint id, struct scene **scnp)
 {
 	struct scene *scn;
@@ -358,6 +363,35 @@ int scene_obj_flag_clrset(struct scene *scn, uint id, uint clr, uint set)
 	return 0;
 }
 
+int scn_xscale(struct scene *scn, int val)
+{
+	uint result;
+
+	// if (val == SCENEOB_DISPLAY_MAX)
+		// val = scn->expo->req_width;
+	// else
+	result = val * scn->xscale / SCALE_FRAC_DIV;
+	// printf("xscale %d = %d\n", val, result);
+
+	return result;
+}
+
+int scn_yscale(struct scene *scn, int val)
+{
+	// if (val == SCENEOB_DISPLAY_MAX)
+		// val = scn->expo->req_height;
+	// else
+	return val * scn->yscale / SCALE_FRAC_DIV;
+}
+
+int scn_fscale(struct scene *scn, int val)
+{
+	// if (val == SCENEOB_DISPLAY_MAX)
+		// val = scn->expo->req_height;
+	// else
+	return val * scn->fscale / SCALE_FRAC_DIV;
+}
+
 static void handle_alignment(enum scene_obj_align horiz,
 			     enum scene_obj_align vert,
 			     struct scene_obj_bbox *bbox,
@@ -367,10 +401,10 @@ static void handle_alignment(enum scene_obj_align horiz,
 {
 	int width, height;
 
-	if (bbox->x1 == SCENEOB_DISPLAY_MAX)
-		bbox->x1 = xsize ?: 1280;
-	if (bbox->y1 == SCENEOB_DISPLAY_MAX)
-		bbox->y1 = ysize ?: 1024;
+	// if (bbox->x1 == SCENEOB_DISPLAY_MAX)
+		// bbox->x1 = xsize ?: 1280;
+	// if (bbox->y1 == SCENEOB_DISPLAY_MAX)
+		// bbox->y1 = ysize ?: 1024;
 
 	width = bbox->x1 - bbox->x0;
 	height = bbox->y1 - bbox->y0;
@@ -450,13 +484,30 @@ int scene_obj_get_hw(struct scene *scn, uint id, int *widthp)
 			return 16;
 		}
 
-		limit = obj->flags & SCENEOF_SIZE_VALID ?
-			obj->req_bbox.x1 - obj->req_bbox.x0 : -1;
+		if (obj->flags & SCENEOF_SIZE_VALID) {
+			int x1 = obj->req_bbox.x1;
+			// struct udevice *dev;
+			// int xsize = 1280;
+   //
+			// dev = scn->expo->display;
+			// if (dev) {
+			// 	struct video_priv *priv = dev_get_uclass_priv(dev);
+   //
+			// 	xsize = priv->xsize;
+			// }
+
+			// if (x1 == SCENEOB_DISPLAY_MAX)
+				// x1 = xsize;
+			limit = x1 - obj->req_bbox.x0;
+			limit = scn_xscale(scn, limit);
+		} else {
+			limit = -1;
+		}
 		log_debug("obj %s limit %d\n", obj->name, limit);
 
 		ret = vidconsole_measure(scn->expo->cons, gen->font_name,
-					 gen->font_size, str, limit, &bbox,
-					 &gen->lines);
+					 scn_fscale(scn, gen->font_size), str,
+					 limit, &bbox, &gen->lines);
 		if (ret)
 			return log_msg_ret("mea", ret);
 		if (widthp)
@@ -538,7 +589,7 @@ static int scene_txt_render(struct expo *exp, struct udevice *dev,
 
 	if (gen->font_name || gen->font_size) {
 		ret = vidconsole_select_font(cons, gen->font_name,
-					     gen->font_size);
+					     scn_fscale(obj->scene, gen->font_size));
 	} else {
 		ret = vidconsole_select_font(cons, NULL, 0);
 	}
@@ -766,6 +817,28 @@ static int scene_set_default_bbox(struct scene *scn)
 	return 0;
 }
 
+static int scene_set_scale(struct scene *scn)
+{
+	struct expo *exp = scn->expo;
+	struct video_priv *priv;
+	struct udevice *dev;
+
+	scn->xscale = SCALE_FRAC_DIV;
+	scn->yscale = SCALE_FRAC_DIV;
+	scn->fscale = SCALE_FRAC_DIV;
+	dev = scn->expo->display;
+	if (!dev)
+		return 0;
+
+	priv = dev_get_uclass_priv(dev);
+	scn->xscale = priv->xsize * SCALE_FRAC_DIV / exp->req_width;
+	scn->yscale = priv->ysize * SCALE_FRAC_DIV / exp->req_height;
+	scn->fscale = min(scn->xscale, scn->yscale);
+	// printf("scale %d %d %d\n", scn->xscale, scn->yscale, scn->fscale);
+
+	return 0;
+}
+
 int scene_arrange(struct scene *scn)
 {
 	struct expo_arrange_info arr;
@@ -823,6 +896,9 @@ int scene_arrange(struct scene *scn)
 		}
 		}
 	}
+	ret = scene_set_scale(scn);
+	if (ret)
+		return log_msg_ret("sas", ret);
 	ret = scene_sync_bbox(scn);
 	if (ret)
 		return log_msg_ret("saf", ret);
@@ -1054,21 +1130,27 @@ int scene_sync_bbox(struct scene *scn)
 				int width = obj->bbox.x1 - obj->bbox.x0;
 				int height = obj->bbox.y1 - obj->bbox.y0;
 
-				obj->bbox.x1 = obj->req_bbox.x0 + width;
-				obj->bbox.y1 = obj->req_bbox.y0 + height;
+				obj->bbox.x1 = scn_xscale(scn, obj->req_bbox.x0) + width;
+				obj->bbox.y1 = scn_yscale(scn, obj->req_bbox.y0) + height;
 			}
-			obj->bbox.x0 = obj->req_bbox.x0;
-			obj->bbox.y0 = obj->req_bbox.y0;
+			obj->bbox.x0 = scn_xscale(scn, obj->req_bbox.x0);
+			obj->bbox.y0 = scn_yscale(scn, obj->req_bbox.y0);
 		}
 
 		if (obj->flags & SCENEOF_SYNC_SIZE) {
-			obj->bbox.x1 = obj->bbox.x0 + req_width;
-			obj->bbox.y1 = obj->bbox.y0 + req_height;
+			obj->bbox.x1 = obj->bbox.x0 + scn_xscale(scn, req_width);
+			obj->bbox.y1 = obj->bbox.y0 + scn_yscale(scn, req_height);
 		}
 		if (obj->flags & SCENEOF_SYNC_WIDTH)
-			obj->bbox.x1 = obj->bbox.x0 + req_width;
-		if (obj->flags & SCENEOF_SYNC_BBOX)
-			obj->bbox = obj->req_bbox;
+			obj->bbox.x1 = obj->bbox.x0 + scn_xscale(scn, req_width);
+		if (obj->flags & SCENEOF_SYNC_BBOX) {
+			obj->bbox.x0 = scn_xscale(scn, obj->req_bbox.x0);
+			obj->bbox.y0 = scn_yscale(scn, obj->req_bbox.y0);
+			obj->bbox.x1 = scn_xscale(scn, obj->req_bbox.x1);
+			obj->bbox.y1 = scn_yscale(scn, obj->req_bbox.y1);
+		}
+		// printf("coords %d %d - %d %d\n", obj->bbox.x0, obj->bbox.y0,
+		       // obj->bbox.x1, obj->bbox.y1);
 		obj->flags &= ~(SCENEOF_SYNC_POS | SCENEOF_SYNC_SIZE |
 				SCENEOF_SYNC_WIDTH | SCENEOF_SYNC_BBOX);
 	}
