@@ -310,6 +310,7 @@ class BuildQemu:
                 tout.warning(f"Disk image '{self.img_fname}' not found")
 
         sock = Path('/tmp/virtiofs.sock')
+        proc = None
         if self.args.share_dir:
             virtfs_dir = Path(self.args.share_dir)
             if not virtfs_dir.is_dir():

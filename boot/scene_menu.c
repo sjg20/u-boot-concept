@@ -240,7 +240,7 @@ int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 
 	startx = menu->obj.req_bbox.x0;
 	y = menu->obj.req_bbox.y0;
-	if (menu->title_id) {
+	if (0 && menu->title_id) {
 		int width;
 
 		ret = scene_obj_set_pos(scn, menu->title_id, startx, y);

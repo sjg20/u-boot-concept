@@ -855,6 +855,9 @@ int scene_arrange(struct scene *scn)
 		ysize = priv->ysize;
 	}
 
+	ret = scene_set_scale(scn);
+	if (ret)
+		return log_msg_ret("sas", ret);
 	ret = scene_calc_dims(scn);
 	if (ret)
 		return log_msg_ret("scd", ret);
@@ -865,6 +868,10 @@ int scene_arrange(struct scene *scn)
 	if (ret < 0)
 		return log_msg_ret("arr", ret);
 
+	ret = scene_sync_bbox(scn);
+	if (ret)
+		return log_msg_ret("saf", ret);
+	
 	list_for_each_entry(obj, &scn->obj_head, sibling) {
 		handle_alignment(obj->horiz, obj->vert, &obj->bbox, &obj->dims,
 				 xsize, ysize, &obj->ofs);
@@ -896,12 +903,6 @@ int scene_arrange(struct scene *scn)
 		}
 		}
 	}
-	ret = scene_set_scale(scn);
-	if (ret)
-		return log_msg_ret("sas", ret);
-	ret = scene_sync_bbox(scn);
-	if (ret)
-		return log_msg_ret("saf", ret);
 
 	return 0;
 }
