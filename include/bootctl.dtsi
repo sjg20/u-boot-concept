@@ -60,19 +60,19 @@
 
 		initrd {
 			method = "tpm-pcr";
-			pcr-number = <6>;
+			pcr-number = <9>;
 			algos = "sha256";
 		};
 
 		fdt {
 			method = "tpm-pcr";
-			pcr-number = <6>;
+			pcr-number = <8>;
 			algos = "sha256";
 		};
 
 		cmdline {
 			method = "tpm-pcr";
-			pcr-number = <6>;
+			pcr-number = <8>;
 			algos = "sha256";
 			optional;
 		};

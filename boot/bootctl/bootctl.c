@@ -23,8 +23,12 @@
 int bootctl_get_dev(enum uclass_id type, struct udevice **devp)
 {
 	struct udevice *dev;
+	int ret;
 
-	LOGR("bfd", uclass_first_device_err(type, &dev));
+	ret = uclass_first_device_err(type, &dev);
+	if (ret)
+		return log_msg_ret("bfd", ret);
+
 	*devp = dev;
 
 	return 0;
@@ -35,14 +39,20 @@ int bootctl_run(void)
 	struct udevice *logic;
 	int ret;
 
-	printf("Canonical Sourceboot (U-Boot v%d.%02d)\n", U_BOOT_VERSION_NUM,
+	printf("Canonical Sourceboot (using U-Boot v%d.%02d)\n", U_BOOT_VERSION_NUM,
 	       U_BOOT_VERSION_NUM_PATCH);
 
 	/* figure out the UI to use */
-	LOGR("bgl", bootctl_get_dev(UCLASS_BOOTCTL, &logic));
+	ret = bootctl_get_dev(UCLASS_BOOTCTL, &logic);
+	if (ret)
+		return log_msg_ret("bgl", ret);
 
-	LOGR("bcl", bc_logic_prepare(logic));
-	LOGR("bcL", bc_logic_start(logic));
+	ret = bc_logic_prepare(logic);
+	if (ret)
+		return log_msg_ret("bcl", ret);
+	ret = bc_logic_start(logic);
+	if (ret)
+		return log_msg_ret("bcL", ret);
 
 	do {
 		ret = bc_logic_poll(logic);
