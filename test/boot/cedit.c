@@ -271,7 +271,7 @@ static int cedit_render(struct unit_test_state *uts)
 	ut_asserteq(ID_AC_OFF, menu->cur_item_id);
 
 	ut_assertok(expo_render(exp));
-	ut_asserteq(4888, video_compress_fb(uts, dev, false));
+	ut_asserteq(4926, video_compress_fb(uts, dev, false));
 	ut_assertok(video_check_copy_fb(uts, dev));
 
 	/* move to the second menu */
@@ -279,54 +279,54 @@ static int cedit_render(struct unit_test_state *uts)
 	act.select.id = ID_POWER_LOSS;
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(4967, video_compress_fb(uts, dev, false));
+	ut_asserteq(5000, video_compress_fb(uts, dev, false));
 
 	/* open the menu */
 	act.type = EXPOACT_OPEN;
 	act.select.id = ID_POWER_LOSS;
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(5397, video_compress_fb(uts, dev, false));
+	ut_asserteq(5390, video_compress_fb(uts, dev, false));
 
 	/* close the menu */
 	act.type = EXPOACT_CLOSE;
 	act.select.id = ID_POWER_LOSS;
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(4967, video_compress_fb(uts, dev, false));
+	ut_asserteq(5000, video_compress_fb(uts, dev, false));
 
 	/* open the menu again to check it looks the same */
 	act.type = EXPOACT_OPEN;
 	act.select.id = ID_POWER_LOSS;
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(5397, video_compress_fb(uts, dev, false));
+	ut_asserteq(5390, video_compress_fb(uts, dev, false));
 
 	/* close the menu */
 	act.type = EXPOACT_CLOSE;
 	act.select.id = ID_POWER_LOSS;
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(4967, video_compress_fb(uts, dev, false));
+	ut_asserteq(5000, video_compress_fb(uts, dev, false));
 
 	act.type = EXPOACT_OPEN;
 	act.select.id = ID_POWER_LOSS;
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(5397, video_compress_fb(uts, dev, false));
+	ut_asserteq(5390, video_compress_fb(uts, dev, false));
 
 	act.type = EXPOACT_POINT_ITEM;
 	act.select.id = ID_AC_ON;
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(5341, video_compress_fb(uts, dev, false));
+	ut_asserteq(5363, video_compress_fb(uts, dev, false));
 
 	/* select it */
 	act.type = EXPOACT_SELECT;
 	act.select.id = ID_AC_ON;
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(4939, video_compress_fb(uts, dev, false));
+	ut_asserteq(4964, video_compress_fb(uts, dev, false));
 
 	ut_asserteq(ID_AC_ON, menu->cur_item_id);
 
@@ -335,14 +335,14 @@ static int cedit_render(struct unit_test_state *uts)
 	act.select.id = ID_MACHINE_NAME;
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(4850, video_compress_fb(uts, dev, false));
+	ut_asserteq(4868, video_compress_fb(uts, dev, false));
 
 	/* open it */
 	act.type = EXPOACT_OPEN;
 	act.select.id = ID_MACHINE_NAME;
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(4883, video_compress_fb(uts, dev, false));
+	ut_asserteq(4871, video_compress_fb(uts, dev, false));
 
 	/*
 	 * Send some keypresses. Note that the console must be enabled so that
@@ -358,7 +358,7 @@ static int cedit_render(struct unit_test_state *uts)
 	ut_silence_console(uts);
 	ut_assertok(cedit_arange(exp, vid_priv, scn->id));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(5033, video_compress_fb(uts, dev, false));
+	ut_asserteq(5076, video_compress_fb(uts, dev, false));
 
 	expo_destroy(exp);
 	cur_exp = NULL;
@@ -401,7 +401,7 @@ static int cedit_render_lineedit(struct unit_test_state *uts)
 	ut_asserteq(20, tline->pos);
 
 	ut_assertok(expo_render(exp));
-	ut_asserteq(5315, video_compress_fb(uts, dev, false));
+	ut_asserteq(5344, video_compress_fb(uts, dev, false));
 	ut_assertok(video_check_copy_fb(uts, dev));
 
 	/* move to the line-edit field */
@@ -409,14 +409,14 @@ static int cedit_render_lineedit(struct unit_test_state *uts)
 	act.select.id = ID_MACHINE_NAME;
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(5372, video_compress_fb(uts, dev, false));
+	ut_asserteq(5408, video_compress_fb(uts, dev, false));
 
 	/* open it */
 	act.type = EXPOACT_OPEN;
 	act.select.id = ID_MACHINE_NAME;
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(5259, video_compress_fb(uts, dev, false));
+	ut_asserteq(5291, video_compress_fb(uts, dev, false));
 
 	/* delete some characters */
 	ut_unsilence_console(uts);
@@ -427,7 +427,7 @@ static int cedit_render_lineedit(struct unit_test_state *uts)
 
 	ut_assertok(cedit_arange(exp, vid_priv, scn->id));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(5126, video_compress_fb(uts, dev, false));
+	ut_asserteq(5209, video_compress_fb(uts, dev, false));
 
 	expo_destroy(exp);
 	cur_exp = NULL;
