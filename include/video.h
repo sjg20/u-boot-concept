@@ -310,7 +310,7 @@ void video_sync_all(void);
  * @heightp: Returns height in pixels
  * @bpixp: Returns log2 of bits per pixel
  */
-void video_bmp_get_info(void *bmp_image, ulong *widthp, ulong *heightp,
+void video_bmp_get_info(const void *bmp_image, ulong *widthp, ulong *heightp,
 			uint *bpixp);
 
 /**

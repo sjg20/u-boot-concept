@@ -262,6 +262,7 @@ static int expo_object_attr(struct unit_test_state *uts)
 	struct expo *exp;
 	ulong start_mem;
 	char name[100];
+	char image[10];
 	ofnode node;
 	char *data;
 	int id;
@@ -304,6 +305,11 @@ static int expo_object_attr(struct unit_test_state *uts)
 	ut_assert(ofnode_valid(node));
 	ut_assertok(expo_setup_theme(exp, node));
 	ut_asserteq(30, txt->gen.font_size);
+
+	/* try setting up a fake image */
+	strcpy(image, "wibble");
+	ut_assertok(scene_img_set_data(scn, OBJ_LOGO, image, sizeof(image)));
+	ut_asserteq_str("wibble", img->data);
 
 	expo_destroy(exp);
 
