@@ -302,7 +302,7 @@ int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 			return log_msg_ret("nam", ret);
 		scene_obj_set_hide(scn, item->label_id,
 				   stack && !open && !selected);
-		x += 200;
+		x += dims[SCENEBB_label].x + 50 + 18;
 
 		/* space for the pointer */
 		if (pointer_dims.x) {
