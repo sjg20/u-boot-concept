@@ -287,19 +287,21 @@ static int console_truetype_putc_xy(struct udevice *dev, uint x, uint y,
 	u8 *bits, *data;
 	int advance;
 	void *start, *end, *line;
-	int row;
+	int row, kern;
 
 	/* First get some basic metrics about this character */
 	stbtt_GetCodepointHMetrics(font, cp, &advance, &lsb);
 
 	/*
 	 * First out our current X position in fractional pixels. If we wrote
-	 * a character previously, using kerning to fine-tune the position of
+	 * a character previously, use kerning to fine-tune the position of
 	 * this character */
 	xpos = frac(VID_TO_PIXEL((double)x));
+	kern = 0;
 	if (vc_priv->last_ch) {
-		xpos += met->scale * stbtt_GetCodepointKernAdvance(font,
-							vc_priv->last_ch, cp);
+		kern = stbtt_GetCodepointKernAdvance(font, vc_priv->last_ch,
+						     cp);
+		xpos += met->scale * kern;
 	}
 
 	/*
@@ -310,7 +312,7 @@ static int console_truetype_putc_xy(struct udevice *dev, uint x, uint y,
 	 */
 	x_shift = xpos - (double)tt_floor(xpos);
 	xpos += advance * met->scale;
-	width_frac = (int)VID_TO_POS(advance * met->scale);
+	width_frac = (int)VID_TO_POS((kern + advance) * met->scale);
 	if (x + width_frac >= vc_priv->xsize_frac)
 		return -EAGAIN;
 
