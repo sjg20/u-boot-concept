@@ -1488,6 +1488,22 @@ static int bootstd_images(struct unit_test_state *uts)
 	ptr = map_sysmem(img->addr, 0);
 	ut_asserteq(0, *(ulong *)ptr);
 
+	/* check we can find images */
+	bflow = alist_get(&std->bootflows, 1, struct bootflow);
+	img = bootflow_img_find(bflow, (enum bootflow_img_t)IH_TYPE_SCRIPT);
+	ut_assertnonnull(img);
+	ut_asserteq(IH_TYPE_SCRIPT, img->type);
+	ut_asserteq(map_to_sysmem(bflow->buf), img->addr);
+	ut_asserteq(bflow->size, img->size);
+
+	img = bootflow_img_find(bflow, BFI_LOGO);
+	ut_assertnonnull(img);
+	ut_asserteq(BFI_LOGO, img->type);
+	ut_asserteq(map_to_sysmem(bflow->logo), img->addr);
+	ut_asserteq(bflow->logo_size, img->size);
+
+	ut_assertnull(bootflow_img_find(bflow, BFI_CMDLINE));
+
 	ut_assert_console_end();
 
 	return 0;
