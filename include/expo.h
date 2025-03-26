@@ -368,7 +368,7 @@ static inline bool scene_obj_can_highlight(const struct scene_obj *obj)
  */
 struct scene_obj_img {
 	struct scene_obj obj;
-	char *data;
+	const char *data;
 };
 
 /**
@@ -707,6 +707,17 @@ void scene_highlight_first(struct scene *scn);
  * @id: ID of object to highlight
  */
 void scene_set_highlight_id(struct scene *scn, uint id);
+
+/**
+ * scene_img_set_data() - Set the image data for an image object
+ *
+ * @scn: Scene to update
+ * @id: ID of existing image obejct
+ * @data: Image data to use
+ * @size: Size of image data
+ * Returns: 0 if OK, -ENOENT if @id is invalid
+ */
+int scene_img_set_data(struct scene *scn, uint id, const void *data, int size);
 
 /**
  * scene_set_open() - Set whether an item is open or not
