@@ -388,7 +388,7 @@ int bootmeth_alloc_other(struct bootflow *bflow, const char *fname,
 	if (ret)
 		return log_msg_ret("all", ret);
 
-	if (!bootflow_img_add(bflow, bflow->fname, type, map_to_sysmem(buf),
+	if (!bootflow_img_add(bflow, bflow->fname, type, abuf_addr(buf),
 			      size))
 		return log_msg_ret("boi", -ENOMEM);
 
