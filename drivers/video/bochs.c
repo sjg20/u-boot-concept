@@ -81,7 +81,11 @@ static int bochs_init_fb(struct udevice *dev)
 	/* disable blanking */
 	bochs_vga_write(mmio, VGA_ATT_W - VGA_INDEX, VGA_AR_ENABLE_DISPLAY);
 
-	plat->base = fb;
+	/* Use double buffering if enabled */
+	if (IS_ENABLED(CONFIG_VIDEO_COPY) && plat->base)
+		plat->copy_base = fb;
+	else
+		plat->base = fb;
 
 	return 0;
 }
