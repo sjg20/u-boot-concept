@@ -83,13 +83,29 @@ static int extlinux_fill_info(struct bootflow *bflow)
 	log_debug("parsing bflow file size %x\n", bflow->size);
 	membuf_init(&mb, bflow->buf, bflow->size);
 	membuf_putraw(&mb, bflow->size, true, &data);
-	while (len = membuf_readline(&mb, line, sizeof(line) - 1, ' ', true), len) {
+	while (len = membuf_readline(&mb, line, sizeof(line) - 1, 0, true), len) {
 		char *tok, *p = line;
+		const char *name = NULL;
 
+		if (*p == '#')
+			continue;
+		while (*p == ' ' || *p == '\t')
+			p++;
 		tok = strsep(&p, " ");
 		if (p) {
 			if (!strcmp("label", tok)) {
-				bflow->os_name = strdup(p);
+				name = p;
+				if (bflow->os_name)
+					break;	/* just find the first */
+			} else if (!strcmp("menu", tok)) {
+				tok = strsep(&p, " ");
+				if (!strcmp("label", tok)) {
+					name = p;
+				}
+			}
+			if (name) {
+				free(bflow->os_name);
+				bflow->os_name = strdup(name);
 				if (!bflow->os_name)
 					return log_msg_ret("os", -ENOMEM);
 			}
