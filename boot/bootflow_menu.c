@@ -309,6 +309,8 @@ int bootflow_menu_poll(struct expo *exp, int *seqp)
 		ret = scene_menu_select_item(scn, OBJ_MENU, act.select.id);
 		if (ret)
 			return log_msg_ret("bmp", ret);
+		if (act.select.changed)
+			return -EREMCHG;
 		return -ERESTART;
 	}
 	case EXPOACT_QUIT:
