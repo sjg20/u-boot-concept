@@ -7973,5 +7973,22 @@ fdt         fdtmap                Extract the devicetree blob from the fdtmap
         """Test an image with an FIT with multiple FDT images using NAME"""
         self.CheckFitFdt('345_fit_fdt_name.dts', use_seq_num=False)
 
+    def testBootphPropagation(self):
+        """Test that bootph-* properties are propagated correctly to supernodes"""
+        data, _, _, out_dtb_fname = self._DoReadFileDtb('347_bootph_prop.dts',
+                                                        use_real_dtb=True, update_dtb=True)
+        dtb = fdt.Fdt(out_dtb_fname)
+        dtb.Scan()
+        root = dtb.GetRoot()
+        parent_node = root.FindNode('dummy-parent')
+        subnode1 = parent_node.FindNode('subnode-1')
+        subnode2 = parent_node.FindNode('subnode-2')
+        subnode3 = parent_node.FindNode('subnode-3')
+
+        self.assertIn('bootph-pre-ram', subnode1.props, "Child node is missing 'bootph-pre-ram' property")
+        self.assertIn('bootph-all', subnode1.props, "Child node is missing 'bootph-all' property")
+        self.assertIn('bootph-pre-ram', parent_node.props, "Parent node is missing 'bootph-pre-ram' property")
+        self.assertIn('bootph-all', parent_node.props, "Parent node is missing 'bootph-all' property")
+
 if __name__ == "__main__":
     unittest.main()
