@@ -647,6 +647,17 @@ const char *bootflow_img_type_name(enum bootflow_img_t type);
 struct bootflow_img *bootflow_img_add(struct bootflow *bflow, const char *fname,
 				      enum bootflow_img_t type, ulong addr,
 				      ulong size);
+
+/**
+ * bootflow_img_find() - Find the first image of a given type
+ *
+ * @bflow: Bootflow to search
+ * @type: Image type to search for
+ * Return: Pointer to image, or NULL if not found
+ */
+const struct bootflow_img *bootflow_img_find(const struct bootflow *bflow,
+					     enum bootflow_img_t type);
+
 /**
  * bootflow_get_seq() - Get the sequence number of a bootflow
  *
