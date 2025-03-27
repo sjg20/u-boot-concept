@@ -142,7 +142,7 @@ config GICV3_SUPPORT_GIC600
 
 config STATIC_RELA
 	bool
-	default y if ARM64
+	default y if ARM64 && !EFI_APP
 
 config DMA_ADDR_T_64BIT
 	bool
@@ -2157,6 +2157,10 @@ config ARCH_GXP
 	select DM
 	select OF_CONTROL
 	imply CMD_DM
+
+config ARCH_EFI_ARM
+	bool "efi"
+	select ARCH_EFI
 
 endchoice
 

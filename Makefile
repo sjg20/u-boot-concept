@@ -452,9 +452,12 @@ KBUILD_CFLAGS += $(call cc-option, -no-integrated-as)
 KBUILD_AFLAGS += $(call cc-option, -no-integrated-as)
 endif
 
-# Don't generate position independent code
+ifdef CONFIG_EFI_APP
+KBUILD_CFLAGS += -shared
+else
 KBUILD_CFLAGS	+= $(call cc-option,-fno-PIE)
 KBUILD_AFLAGS	+= $(call cc-option,-fno-PIE)
+endif
 
 # Read UBOOTRELEASE from include/config/uboot.release (if it exists)
 UBOOTRELEASE = $(shell cat include/config/uboot.release 2> /dev/null)
@@ -1047,7 +1050,9 @@ LDFLAGS_u-boot += -z notext $(call ld-option,--apply-dynamic-relocs)
 LDFLAGS_u-boot += --build-id=none
 
 ifeq ($(CONFIG_ARC)$(CONFIG_NIOS2)$(CONFIG_X86)$(CONFIG_XTENSA),)
+ifdef CONFIG_HAVE_TEXT_BASE
 LDFLAGS_u-boot += -Ttext $(CONFIG_TEXT_BASE)
+endif
 endif
 
 # make the checker run with the right architecture

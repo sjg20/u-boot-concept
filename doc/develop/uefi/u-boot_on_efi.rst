@@ -27,16 +27,17 @@ Running U-Boot on EFI is useful in several situations:
 
 Status
 ------
-Only x86 is supported at present. If you are using EFI on another architecture
-you may want to reconsider. However, much of the code is generic so could be
-ported.
+Only x86 and ARM64 are supported at present. If you are using EFI on another
+architecture you may want to reconsider. However, much of the code is generic so
+could be ported.
 
-U-Boot supports running as an EFI application for both 32- and 64-bit EFI.
+U-Boot supports running as an EFI application for both 32- and 64-bit EFI on
+x86, and for 64-bit on ARM.
 
-U-Boot supports building itself as a payload for either 32-bit or 64-bit EFI.
-U-Boot is packaged up and loaded in its entirety by EFI. Once started, U-Boot
-changes to 32-bit mode (currently) and takes over the machine. You can use
-devices, boot a kernel, etc.
+On x86, U-Boot supports building itself as a payload for either 32-bit or 64-bit
+EFI. U-Boot is packaged up and loaded in its entirety by EFI. Once started,
+U-Boot changes to 32-bit mode (currently) and takes over the machine. You can
+use devices, boot a kernel, etc.
 
 
 Build Instructions

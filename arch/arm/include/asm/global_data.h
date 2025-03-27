@@ -108,14 +108,20 @@ struct arch_global_data {
 #ifdef CONFIG_SMBIOS
 	ulong smbios_start;		/* Start address of SMBIOS table */
 #endif
-#ifdef CONFIG_EFI_STUB
-	ulong table;
+#ifdef CONFIG_EFI
+	ulong table;	/* holds the table address from previous EFI firmware */
 #endif
 };
 
 #include <asm-generic/global_data.h>
 
-#if defined(__clang__) || defined(LTO_ENABLE)
+#ifdef CONFIG_EFI_APP
+
+#define DECLARE_GLOBAL_DATA_PTR   extern struct global_data *global_data_ptr
+
+#define gd global_data_ptr
+
+#elif defined(__clang__) || defined(LTO_ENABLE)
 
 #define DECLARE_GLOBAL_DATA_PTR
 #define gd	get_gd()
@@ -144,7 +150,11 @@ static inline gd_t *get_gd(void)
 
 static inline void set_gd(volatile gd_t *gd_ptr)
 {
-#ifdef CONFIG_ARM64
+#ifdef CONFIG_EFI_APP
+	extern struct global_data *global_data_ptr;
+
+	global_data_ptr = (void *)gd_ptr;
+#elif defined CONFIG_ARM64
 	__asm__ volatile("ldr x18, %0\n" : : "m"(gd_ptr));
 #elif __ARM_ARCH >= 7
 	__asm__ volatile("ldr r9, %0\n" : : "m"(gd_ptr));

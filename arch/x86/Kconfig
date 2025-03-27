@@ -65,8 +65,9 @@ config VENDOR_COREBOOT
 config VENDOR_DFI
 	bool "dfi"
 
-config VENDOR_EFI
+config ARCH_EFI_X86
 	bool "efi"
+	select ARCH_EFI
 
 config VENDOR_EMULATION
 	bool "emulation"
@@ -100,7 +101,6 @@ source "board/advantech/Kconfig"
 source "board/congatec/Kconfig"
 source "board/coreboot/Kconfig"
 source "board/dfi/Kconfig"
-source "board/efi/Kconfig"
 source "board/emulation/Kconfig"
 source "board/google/Kconfig"
 source "board/intel/Kconfig"

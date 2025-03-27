@@ -110,8 +110,9 @@ static int initr_reloc(void)
  */
 static int initr_caches(void)
 {
-	/* Enable caches */
-	enable_caches();
+	if (ll_boot_init())
+		enable_caches();
+
 	return 0;
 }
 #endif
@@ -123,7 +124,9 @@ __weak int fixup_cpu(void)
 
 static int initr_reloc_global_data(void)
 {
-#ifdef __ARM__
+#if defined(CONFIG_EFI_APP)
+	monitor_flash_len = (ulong)_end - (ulong)image_base;
+#elif defined __ARM__
 	monitor_flash_len = _end - __image_copy_start;
 #elif defined(CONFIG_RISCV)
 	monitor_flash_len = (ulong)_end - (ulong)_start;
