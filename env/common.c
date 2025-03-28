@@ -375,7 +375,7 @@ static int env_update_fdt_addr_from_bloblist(void)
 	 * fdt_addr is by default used by booti, bootm and bootefi,
 	 * thus set it to point to the fdt embedded in a bloblist if it exists.
 	 */
-	if (!CONFIG_IS_ENABLED(BLOBLIST) || gd->fdt_src != FDTSRC_BLOBLIST)
+	if (!CONFIG_IS_ENABLED(BLOBLIST) || gd->fdt_src != FDTSRC_PASSAGE)
 		return 0;
 
 	return env_set_hex("fdt_addr", (uintptr_t)map_to_sysmem(gd->fdt_blob));

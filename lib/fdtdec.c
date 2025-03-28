@@ -19,6 +19,7 @@
 #include <log.h>
 #include <malloc.h>
 #include <net.h>
+#include <passage.h>
 #include <spl.h>
 #include <env.h>
 #include <errno.h>
@@ -90,7 +91,7 @@ static const char *const fdt_src_name[] = {
 	[FDTSRC_BOARD] = "board",
 	[FDTSRC_EMBED] = "embed",
 	[FDTSRC_ENV] = "env",
-	[FDTSRC_BLOBLIST] = "bloblist",
+	[FDTSRC_PASSAGE] = "passage",
 };
 
 extern u8 __dtb_dt_begin[];	/* embedded device tree blob */
@@ -1691,9 +1692,16 @@ int fdtdec_setup(void)
 {
 	int ret;
 
+	/* The devicetree is typically appended to U-Boot */
 	if (CONFIG_IS_ENABLED(OF_PASSAGE)) {
-		printf("Previous phase failed to provide standard passage\n");
-		return -ENOENT;
+		if (!passage_valid()) {
+			printf("Previous phase failed to provide standard passage\n");
+			bloblist_show_list();
+			return -ENOENT;
+		}
+		gd->fdt_blob = map_sysmem(gd_passage_dtb(), 0);
+		gd->fdt_src = FDTSRC_PASSAGE;
+		log_debug("Devicetree is in bloblist at %p\n", gd->fdt_blob);
 	} else {
 		/* The devicetree is typically appended to U-Boot */
 		if (IS_ENABLED(CONFIG_OF_SEPARATE)) {
