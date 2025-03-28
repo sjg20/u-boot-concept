@@ -11,6 +11,7 @@
 #include <log.h>
 #include <malloc.h>
 #include <mapmem.h>
+#include <passage.h>
 #include <spl.h>
 #include <tables_csum.h>
 #include <asm/global_data.h>
@@ -516,37 +517,36 @@ int bloblist_init(void)
 {
 	bool fixed = IS_ENABLED(CONFIG_BLOBLIST_FIXED);
 	int ret = -ENOENT;
-	ulong addr = 0, size;
-	/*
-	 * If U-Boot is not in the first phase, an existing bloblist must be
-	 * at a fixed address.
+	ulong addr, size;
+	bool expected;
+
+	/**
+	 * We don't expect to find an existing bloblist in the first phase of
+	 * U-Boot that runs. The only way to receive the address of an allocated
+	 * bloblist from a previous stage is with standard passage, so without
+	 * that, the bloblist must be at a fixed address.
 	 */
-	bool from_addr = fixed && !xpl_is_first_phase();
+	expected = (fixed && !xpl_is_first_phase()) || passage_valid();
 	if (xpl_prev_phase() == PHASE_TPL && !IS_ENABLED(CONFIG_TPL_BLOBLIST))
-		from_addr = false;
+		expected = false;
 	if (fixed)
 		addr = IF_ENABLED_INT(CONFIG_BLOBLIST_FIXED,
 				      CONFIG_BLOBLIST_ADDR);
 	size = CONFIG_BLOBLIST_SIZE;
-
-
-	/*
-	 * If the current boot stage is the first phase of U-Boot, then an
-	 * architecture-specific routine should be used to handle the bloblist
-	 * passed from the previous boot loader
-	 */
-	if (xpl_is_first_phase() && !IS_ENABLED(CONFIG_BLOBLIST_ALLOC))
-		ret = xferlist_from_boot_arg(addr, size);
-	else if (from_addr)
+	if (expected) {
+		if (passage_valid()) {
+			addr = gd_passage_bloblist();
+			size = 0;
+		}
 		ret = bloblist_check(addr, size);
-
-	if (ret)
-		log_warning("Bloblist at %lx not found (err=%d)\n",
-			    addr, ret);
-	else
-		/* Get the real size */
-		size = gd->bloblist->total_size;
-
+		if (ret) {
+			log_warning("Expected bloblist at %lx not found (err=%d)\n",
+				    addr, ret);
+		} else {
+			/* Get the real size, if it is not what we expected */
+			size = gd->bloblist->total_size;
+		}
+	}
 	if (ret) {
 		/*
 		 * If we don't have a bloblist from a fixed address, or the one
@@ -560,8 +560,7 @@ int bloblist_init(void)
 				return log_msg_ret("alloc", -ENOMEM);
 			addr = map_to_sysmem(ptr);
 		} else if (!fixed) {
-			return log_msg_ret("BLOBLIST_FIXED is not enabled",
-					   ret);
+			return log_msg_ret("!fixed", ret);
 		}
 		log_debug("Creating new bloblist size %lx at %lx\n", size,
 			  addr);
