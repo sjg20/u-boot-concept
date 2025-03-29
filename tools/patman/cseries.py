@@ -417,8 +417,8 @@ class Cseries:
         # commit.committer
         # git var GIT_COMMITTER_IDENT ; echo "$refhash" ; cat "README"; } | git hash-object --stdin)
 
-    def mark_series(self, name, series, dry_run=False):
-        """Mark a series with Change-Id tags
+    def _process_series(self, vals, name, series, dry_run=False):
+        """Rewrite a series
 
         Args:
             name (str): Name of the series to mark
@@ -453,19 +453,16 @@ class Cseries:
             cherry = repo.get(cmt.hash)
             tout.detail(f"cherry {oid(cherry.oid)}")
 
-            msg = cherry.message
-            info = 'has tag'
-            if CHANGE_ID_TAG not in msg:
-                cid = self.make_cid(cherry)
-                msg = cherry.message + f'\n{CHANGE_ID_TAG}: {cid}'
+            vals.update({'msg': cherry.message,
+                    'skip': False,
+                    'info': ''})
+            yield cherry
 
-                tout.detail(f"   - adding tag")
-                info = 'tagged'
             repo.create_commit('HEAD', cherry.author, cherry.committer,
-                                msg, tree_id, [cur.target])
+                               vals['msg'], tree_id, [cur.target])
             cur = repo.head
             repo.state_cleanup()
-            tout.info(f"- {info} {oid(cmt.hash)} as {oid(cur.target)}: {cmt}")
+            tout.info(f"- {vals['info']} {oid(cmt.hash)} as {oid(cur.target)}: {cmt}")
 
         # Update the branch
         target = repo.revparse_single('HEAD')
@@ -477,7 +474,48 @@ class Cseries:
             repo.head.set_target(branch_oid)
         else:
             repo.create_reference(f'refs/heads/{name}', target.oid, force=True)
-        return target.oid
+        vals['oid'] = target.oid
+        # return target.oid
+
+    def mark_series(self, name, series, dry_run=False):
+        """Mark a series with Change-Id tags
+
+        Args:
+            name (str): Name of the series to mark
+            series (Series): Series object
+            dry_run (bool): True to do a dry run, restoring the original tree
+                afterwards
+
+        Return:
+            pygit.oid: oid of the new branch
+        """
+        vals = {}
+        for cherry in self._process_series(vals, name, series, dry_run):
+            msg = cherry.message
+            if CHANGE_ID_TAG not in msg:
+                cid = self.make_cid(cherry)
+                vals['msg'] = cherry.message + f'\n{CHANGE_ID_TAG}: {cid}'
+
+                tout.detail(f"   - adding tag")
+                vals['info'] = 'tagged'
+            else:
+                vals['info'] = 'has tag'
+
+        return vals['oid']
+        # return target.oid
+
+    def unmark_series(self, name, series, dry_run=False):
+        """Remove Change-Id tags from a series
+
+        Args:
+            name (str): Name of the series to unmark
+            series (Series): Series object
+            dry_run (bool): True to do a dry run, restoring the original tree
+                afterwards
+
+        Return:
+            pygit.oid: oid of the new branch
+        """
 
     def send(self, series):
         """Send out a series
