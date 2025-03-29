@@ -32,7 +32,7 @@ class Cseries:
     """
     def __init__(self, topdir=None):
         self.topdir = topdir
-        self.gitdir = os.path.join(topdir, '.git')
+        self.gitdir = None
         self.con = None
         self.cur = None
 
@@ -73,6 +73,7 @@ class Cseries:
             self.topdir = gitutil.get_top_level()
             if not self.topdir:
                 raise ValueError('No git repo detected in current directory')
+        self.gitdir = os.path.join(self.topdir, '.git')
         fname = f'{self.topdir}/.patman.db'
         if not os.path.exists(fname):
             tout.warning(f'Creating new database {fname}')
@@ -459,8 +460,12 @@ class Cseries:
             name (str): Name of the tree
             url (str): URL for the tree
         """
-        res = self.cur.execute(
-            f"INSERT INTO upstream (name, url) VALUES ('{name}', '{url}')")
+        try:
+            res = self.cur.execute(
+                f"INSERT INTO upstream (name, url) VALUES ('{name}', '{url}')")
+        except sqlite3.IntegrityError as exc:
+            if 'UNIQUE constraint failed: upstream.name' in str(exc):
+                raise ValueError(f"Upstream '{name}' already exists")
         self.con.commit()
 
     def list_upstream(self):
@@ -470,17 +475,6 @@ class Cseries:
             url, is_default = items
             default = 'default' if is_default else ''
             print(f'{name:15.15} {default:8} {url}')
-
-    def add_upstream(self, name, url):
-        """Add a new upstream tree
-
-        Args:
-            name (str): Name of the tree
-            url (str): URL for the tree
-        """
-        res = self.cur.execute(
-            f"INSERT INTO upstream (name, url) VALUES ('{name}', '{url}')")
-        self.con.commit()
 
     def set_default_upstream(self, name):
         """Set the default upstream target
