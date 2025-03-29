@@ -134,6 +134,8 @@ def parse_args(argv=None):
                         help='Mark unmarked commits with a Change-Id field')
     series.add_argument('-M', '--allow-unmarked', action='store_true',
                         help="Don't require commits to be marked")
+    series.add_argument('-n', '--dry-run', action='store_true', dest='dry_run',
+            default=False, help="Do a dry run (create but don't email patches)")
     series.add_argument('-u', '--update', action='store_true',
                         help='Update the branch commit')
 

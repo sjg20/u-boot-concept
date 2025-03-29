@@ -24,6 +24,12 @@ from u_boot_pylib import tout
 # Tag to use for Change IDs
 CHANGE_ID_TAG = 'Change-Id'
 
+# Length of hash to display
+HASH_LEN = 10
+
+def oid(oid_val):
+    return str(oid_val)[:HASH_LEN];
+
 class Cseries:
     """Database with information about series
 
@@ -35,6 +41,7 @@ class Cseries:
         self.gitdir = None
         self.con = None
         self.cur = None
+        self.quiet = False
 
     def check_database(self, con):
         """Check that the database has the required tables and is up-to-date
@@ -49,7 +56,7 @@ class Cseries:
         except OperationalError:
             self.cur.execute(
                 'CREATE TABLE series (id INTEGER PRIMARY KEY AUTOINCREMENT,'
-                'name, desc, archived BIT)')
+                'name UNIQUE, desc, archived BIT)')
 
             # version (int): Version number of the link
             self.cur.execute(
@@ -145,7 +152,8 @@ class Cseries:
             pcdict[idnum] = idnum, subject, series_id, cid
         return pcdict
 
-    def add_series(self, name, desc=None, mark=False, allow_unmarked=False):
+    def add_series(self, name, desc=None, mark=False, allow_unmarked=False,
+                   dry_run=False):
         """Add a series to the database
 
         Args:
@@ -154,6 +162,7 @@ class Cseries:
         ser = self.parse_series(name)
         name = ser.name
 
+        tout.info(f"Adding series '{name}': mark {mark} allow_unmarked {allow_unmarked}")
         # First check we have a branch with this name
         if not gitutil.check_branch(name, git_dir=self.gitdir):
             raise ValueError(f"No branch named '{name}'")
@@ -169,10 +178,10 @@ class Cseries:
             desc = series.cover[0]
 
         if mark:
-            self.mark_series(name, series)
+            oid = self.mark_series(name, series, dry_run=dry_run)
 
             # Collect the commits again, as the hashes have changed
-            series = patchstream.get_metadata(name, 0, count,
+            series = patchstream.get_metadata(oid, 0, count,
                                               git_dir=self.gitdir)
 
         bad_count = 0
@@ -201,24 +210,30 @@ class Cseries:
 
         link = series.get_link_for_version(version)
 
-        res = self.cur.execute(
-            'INSERT INTO series (name, desc, archived) '
-            f"VALUES ('{name}', '{desc}', 0)")
-        idnum = self.cur.lastrowid
-        res = self.cur.execute(
-            'INSERT INTO patchwork (version, link, series_id) VALUES'
-            f"('{version}', ?, {idnum})", (link,))
-
-        for commit in series.commits:
+        if not dry_run:
             res = self.cur.execute(
-                'INSERT INTO pcommit (series_id, subject, cid) VALUES (?, ?, ?)',
-                (str(idnum), commit.subject, commit.change_id))
+                'INSERT INTO series (name, desc, archived) '
+                f"VALUES ('{name}', '{desc}', 0)")
+            idnum = self.cur.lastrowid
+            res = self.cur.execute(
+                'INSERT INTO patchwork (version, link, series_id) VALUES'
+                f"('{version}', ?, {idnum})", (link,))
 
-        self.con.commit()
+            for commit in series.commits:
+                res = self.cur.execute(
+                    'INSERT INTO pcommit (series_id, subject, cid) VALUES (?, ?, ?)',
+                    (str(idnum), commit.subject, commit.change_id))
+
+            self.con.commit()
+        else:
+            idnum = None
         ser = Series()
         ser.name = name
         ser.desc = desc
         ser.idnum = idnum
+
+        if dry_run:
+            tout.info('Dry run completed')
         return ser
 
     def get_series_by_name(self, name):
@@ -402,11 +417,17 @@ class Cseries:
         # commit.committer
         # git var GIT_COMMITTER_IDENT ; echo "$refhash" ; cat "README"; } | git hash-object --stdin)
 
-    def mark_series(self, name, series):
+    def mark_series(self, name, series, dry_run=False):
         """Mark a series with Change-Id tags
 
         Args:
             name (str): Name of the series to mark
+            series (Series): Series object
+            dry_run (bool): True to do a dry run, restoring the original tree
+                afterwards
+
+        Return:
+            pygit.oid: oid of the new branch
         """
         upstream_name, warn = gitutil.get_upstream(self.gitdir, name)
 
@@ -415,33 +436,48 @@ class Cseries:
         upstream = repo.lookup_reference(upstream_name)
 
         # Checkout the upstream commit in 'detached' mode
+        tout.info(f"Checking out upstream commit {upstream.name}")
         commit_oid = upstream.peel(pygit2.GIT_OBJ_COMMIT).oid
         commit = repo.get(commit_oid)
         repo.checkout_tree(commit)
         repo.head.set_target(commit_oid)
         cur = upstream
+        tout.info(f"Processing {len(series.commits)} commits from branch '{name}'")
         for cmt in series.commits:
+            tout.detail(f"- adding {oid(cmt.hash)} {cmt}")
             repo.cherrypick(cmt.hash)
             if repo.index.conflicts:
-                raise ValueError('Conflicts detected, please reset the tree')
+                raise ValueError('Conflicts detected')
 
             tree_id = repo.index.write_tree()
             cherry = repo.get(cmt.hash)
+            tout.detail(f"cherry {oid(cherry.oid)}")
 
             msg = cherry.message
+            info = 'has tag'
             if CHANGE_ID_TAG not in msg:
                 cid = self.make_cid(cherry)
                 msg = cherry.message + f'\n{CHANGE_ID_TAG}: {cid}'
 
-                repo.create_commit('HEAD', cherry.author, cherry.committer,
-                                   msg, tree_id, [cur.target])
-
-                cur = repo.head
+                tout.detail(f"   - adding tag")
+                info = 'tagged'
+            repo.create_commit('HEAD', cherry.author, cherry.committer,
+                                msg, tree_id, [cur.target])
+            cur = repo.head
             repo.state_cleanup()
+            tout.info(f"- {info} {oid(cmt.hash)} as {oid(cur.target)}: {cmt}")
 
         # Update the branch
         target = repo.revparse_single('HEAD')
-        repo.create_reference(f'refs/heads/{name}', target.oid, force=True)
+        tout.info(f"Updating branch {name} to {str(target.oid)[:HASH_LEN]}")
+        if dry_run:
+            branch_oid = branch.peel(pygit2.GIT_OBJ_COMMIT).oid
+            print('branch_oid', branch_oid)
+            repo.checkout_tree(repo.get(branch_oid))
+            repo.head.set_target(branch_oid)
+        else:
+            repo.create_reference(f'refs/heads/{name}', target.oid, force=True)
+        return target.oid
 
     def send(self, series):
         """Send out a series
