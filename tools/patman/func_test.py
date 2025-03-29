@@ -1956,13 +1956,36 @@ second line.'''
         """Test marking a cseries with Change-Id fields"""
         cser = self.get_cser()
 
-        cser.add_series('first', '', mark=True, dry_run=True)
-        cser.add_series('first', '', mark=True, dry_run=True)
+        with capture_sys_output() as (out, _):
+            cser.add_series('first', '', mark=True, dry_run=True)
+        lines = iter(out.getvalue().splitlines())
+        self.assertEqual(
+            "Adding series 'first': mark True allow_unmarked False",
+            next(lines))
+        self.assertEqual('Checking out upstream commit refs/heads/base',
+                         next(lines))
+        self.assertEqual("Processing 2 commits from branch 'first'",
+                         next(lines))
+        self.assertRegex(next(lines), r'- tagged .* as .*: i2c: I2C things')
+        self.assertRegex(next(lines), '- tagged .* as .*: spi: SPI fixes')
+        self.assertRegex(next(lines), 'Updating branch first to .*')
+        self.assertRegex(next(lines), 'branch_oid .*')
+        self.assertEqual('Dry run completed', next(lines))
+
+        # Doing another dry run should produce the same result
+        with capture_sys_output() as (out2, _):
+            cser.add_series('first', '', mark=True, dry_run=True)
+        self.assertEqual(out.getvalue(), out2.getvalue())
 
         tools.write_file(os.path.join(self.tmpdir, 'i2c.c'), b'123')
-        with self.assertRaises(pygit2.GitError) as exc:
-            cser.add_series('first', '', mark=True, dry_run=True)
+        with capture_sys_output() as (out, _):
+            with self.assertRaises(pygit2.GitError) as exc:
+                cser.add_series('first', '', mark=True, dry_run=True)
         self.assertEqual('1 conflict prevents checkout', str(exc.exception))
+        self.assertEqual(
+            "Adding series 'first': mark True allow_unmarked False\n"
+            "Checking out upstream commit refs/heads/base\n",
+            out.getvalue())
 
         pcdict = cser.get_pcommit_dict()
         self.assertFalse(pcdict)
