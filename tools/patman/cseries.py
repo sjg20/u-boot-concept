@@ -353,7 +353,7 @@ class Cseries:
             vlist = ' '.join([str(ver) for ver in sorted(versions)])
             print(f'{name:15.15} {ser.desc:20.20} {vlist}')
 
-    def increment(self, series):
+    def increment(self, series, dry_run=False):
         """Increment a series to the next version and create a new branch
 
         Args:
@@ -388,8 +388,6 @@ class Cseries:
             raise ValueError(
                 f'Expected version {max_vers} but Series-version is {vers}')
         vers += 1
-
-        commit = repo.head.peel(pygit2.GIT_OBJ_COMMIT)
 
         new_name = f'{ser.name}{vers}'
         new_branch = repo.branches.create(new_name, commit)
