@@ -1464,7 +1464,11 @@ second line.'''
         cser = self.get_cser()
         self.assertFalse(cser.get_series_dict())
 
-        cser.add_series('first', '', allow_unmarked=True)
+        with capture_sys_output() as (out, _):
+            cser.add_series('first', '', allow_unmarked=True)
+        self.assertEqual("Adding series 'first': mark False allow_unmarked True",
+                         out.getvalue().strip())
+
         slist = cser.get_series_dict()
         self.assertEqual(1, len(slist))
         self.assertEqual('first', slist['first'].name)
@@ -1484,8 +1488,9 @@ second line.'''
     def test_series_list(self):
         """Test listing cseries"""
         cser = self.get_cser()
-        cser.add_series('first', '', allow_unmarked=True)
-        cser.add_series('second', allow_unmarked=True)
+        with capture_sys_output() as (out, _):
+            cser.add_series('first', '', allow_unmarked=True)
+            cser.add_series('second', allow_unmarked=True)
 
         args = Namespace()
         args.subcmd = 'list'
@@ -1507,6 +1512,7 @@ second line.'''
         args.series = 'first'
         args.mark = False
         args.allow_unmarked = True
+        args.dry_run = False
         with capture_sys_output() as (out, _):
             control.patchwork_series(args, test_db=self.tmpdir)
 
@@ -1564,6 +1570,7 @@ second line.'''
         args.series = None
         args.mark = False
         args.allow_unmarked = True
+        args.dry_run = False
         with capture_sys_output() as (out, _):
             control.patchwork_series(args, test_db=self.tmpdir)
 
@@ -1583,7 +1590,8 @@ second line.'''
         gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
                          force=True)
 
-        ser = cser.add_series('first', '', allow_unmarked=True)
+        with capture_sys_output() as (out, _):
+            ser = cser.add_series('first', '', allow_unmarked=True)
         cser.add_link(ser, 4, '1234', True)
         self.assertEqual('1234', cser.get_link(ser, 4))
 
@@ -1599,7 +1607,8 @@ second line.'''
         gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
                          force=True)
 
-        cser.add_series('first', '', allow_unmarked=True)
+        with capture_sys_output() as (out, _):
+            cser.add_series('first', '', allow_unmarked=True)
 
         # with capture_sys_output() as (out, _):
         self.run_args('series', 'link', '-s', 'first', '-u', '1234')
@@ -1616,7 +1625,8 @@ second line.'''
     def check_series_archive(self):
         """Coroutine to run the archive test"""
         cser = self.get_cser()
-        cser.add_series('first', '', allow_unmarked=True)
+        with capture_sys_output() as (out, _):
+            cser.add_series('first', '', allow_unmarked=True)
 
         # Check the series is visible in the list
         slist = cser.get_series_dict()
@@ -1672,7 +1682,8 @@ second line.'''
 
         gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
                          force=True)
-        cser.add_series('first', '', allow_unmarked=True)
+        with capture_sys_output() as (out, _):
+            cser.add_series('first', '', allow_unmarked=True)
 
         with capture_sys_output() as (out, _):
             yield cser
@@ -1773,8 +1784,8 @@ second line.'''
         self.db_close()
 
     def test_upstream_add_cmdline(self):
-        # with capture_sys_output() as (out, err):
-        self.run_args('upstream', 'add', 'us', 'https://one')
+        with capture_sys_output() as (out, err):
+            self.run_args('upstream', 'add', 'us', 'https://one')
 
         with capture_sys_output() as (out, err):
             self.run_args('upstream', 'list')
@@ -1890,7 +1901,8 @@ second line.'''
         """Test marking a cseries with Change-Id fields"""
         cser = self.get_cser()
 
-        cser.add_series('first', '', mark=True)
+        with capture_sys_output() as (out, _):
+            cser.add_series('first', '', mark=True)
 
         pcdict = cser.get_pcommit_dict()
 
@@ -1916,11 +1928,13 @@ second line.'''
 
         # TODO: check that it requires a clean tree
         tools.write_file(os.path.join(self.tmpdir, 'fname'), b'123')
-        cser.add_series('first', '', mark=True)
+        with capture_sys_output() as (out, _):
+            cser.add_series('first', '', mark=True)
 
         tools.write_file(os.path.join(self.tmpdir, 'i2c.c'), b'123')
         with self.assertRaises(pygit2.GitError) as exc:
-            cser.add_series('first', '', mark=True)
+            with capture_sys_output() as (out, _):
+                cser.add_series('first', '', mark=True)
         self.assertEqual('1 conflict prevents checkout', str(exc.exception))
 
     def test_series_add_mark_dry_run(self):
@@ -1997,9 +2011,10 @@ second line.'''
         with capture_sys_output() as (out, _):
             self.run_args('series', 'add', '-s', 'first',
                           'my-description', expected_ret=1)
+        last_line = out.getvalue().splitlines()[-2]
         self.assertEqual(
             'patman: ValueError: 2 commit(s) are unmarked; please use -m or -M',
-            out.getvalue().strip())
+            last_line)
 
     def test_series_unmark(self):
         """Test unmarking a cseries, i.e. removing Change-Id fields"""
