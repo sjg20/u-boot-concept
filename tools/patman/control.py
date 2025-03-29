@@ -292,7 +292,7 @@ def patchwork_series(args, test_db=None):
 
             send(args, git_dir=git_dir, cwd=test_db)
         elif args.subcmd == 'unmark':
-            cser.unmark(arg.series, dry_run=args.dry_run)
+            cser.unmark_series(args.series, dry_run=args.dry_run)
         else:
             raise ValueError(f"Unknown series subcommand '{args.subcmd}'")
     finally:

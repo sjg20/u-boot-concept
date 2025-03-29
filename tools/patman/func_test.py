@@ -1940,7 +1940,6 @@ second line.'''
         self.assertRegex(next(lines), r'- tagged .* as .*: i2c: I2C things')
         self.assertRegex(next(lines), '- tagged .* as .*: spi: SPI fixes')
         self.assertRegex(next(lines), 'Updating branch first to .*')
-        self.assertRegex(next(lines), 'branch_oid .*')
         self.assertEqual('Dry run completed', next(lines))
 
         # Doing another dry run should produce the same result
@@ -2002,3 +2001,35 @@ second line.'''
             'patman: ValueError: 2 commit(s) are unmarked; please use -m or -M',
             out.getvalue().strip())
 
+    def test_series_unmark(self):
+        """Test unmarking a cseries, i.e. removing Change-Id fields"""
+        cser = self.get_cser()
+
+        # check the allow_unmarked flag
+        with capture_sys_output() as (out, _):
+            with self.assertRaises(ValueError) as exc:
+                cser.unmark_series('first', dry_run=True)
+        self.assertEqual('Unmarked commits 2/2', str(exc.exception))
+
+        with capture_sys_output() as (out, _):
+            with self.assertRaises(ValueError) as exc:
+                cser.unmark_series('first', dry_run=True)
+            self.assertEqual('Unmarked commits 2/2', str(exc.exception))
+
+        with capture_sys_output() as (out, _):
+            cser.add_series('first', '', mark=True)
+
+        with capture_sys_output() as (out, _):
+            cser.unmark_series('first', dry_run=True)
+        lines = iter(out.getvalue().splitlines())
+        self.assertEqual(
+            "Unmarking series 'first': allow_unmarked False",
+            next(lines))
+        self.assertEqual('Checking out upstream commit refs/heads/base',
+                         next(lines))
+        self.assertEqual("Processing 2 commits from branch 'first'",
+                         next(lines))
+        self.assertRegex(next(lines), '- untagged .* as .*: i2c: I2C things')
+        self.assertRegex(next(lines), '- untagged .* as .*: spi: SPI fixes')
+        self.assertRegex(next(lines), 'Updating branch first to .*')
+        self.assertEqual('Dry run completed', next(lines))
