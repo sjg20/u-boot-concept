@@ -621,3 +621,20 @@ class Cseries:
             self.con.rollback()
             raise ValueError(f"No such upstream '{name}'")
         self.con.commit()
+
+    def remove_series(self, name):
+        """Remove a series from the database
+
+        Args:
+            name (str): Name of series to add, or None to use current one
+        """
+        ser = self.parse_series(name)
+        name = ser.name
+
+        res = self.cur.execute(
+            f"DELETE FROM series WHERE name = '{name}'")
+        if self.cur.rowcount != 1:
+            self.con.rollback()
+            raise ValueError(f"No such series '{name}'")
+        self.con.commit()
+        tout.info(f"Removed series '{name}'")
