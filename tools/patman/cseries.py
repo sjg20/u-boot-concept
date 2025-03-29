@@ -238,6 +238,7 @@ class Cseries:
         ser.desc = desc
         ser.idnum = idnum
 
+        tout.info(f"Added series '{name}'")
         if dry_run:
             tout.info('Dry run completed')
         return ser

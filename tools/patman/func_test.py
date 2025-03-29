@@ -1466,8 +1466,11 @@ second line.'''
 
         with capture_sys_output() as (out, _):
             cser.add_series('first', '', allow_unmarked=True)
+        lines = out.getvalue().strip().splitlines()
         self.assertEqual("Adding series 'first': mark False allow_unmarked True",
-                         out.getvalue().strip())
+                         lines[0])
+        self.assertEqual("Added series 'first'", lines[1])
+        self.assertEqual(2, len(lines))
 
         slist = cser.get_series_dict()
         self.assertEqual(1, len(slist))
@@ -1952,6 +1955,7 @@ second line.'''
         self.assertRegex(next(lines), r'- tagged .* as .*: i2c: I2C things')
         self.assertRegex(next(lines), '- tagged .* as .*: spi: SPI fixes')
         self.assertRegex(next(lines), 'Updating branch first to .*')
+        self.assertEqual("Added series 'first'", next(lines))
         self.assertEqual('Dry run completed', next(lines))
 
         # Doing another dry run should produce the same result
