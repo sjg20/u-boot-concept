@@ -11,6 +11,7 @@ import os
 import re
 import sqlite3
 from sqlite3 import OperationalError
+from types import SimpleNamespace
 
 import pygit2
 
@@ -29,6 +30,14 @@ HASH_LEN = 10
 
 def oid(oid_val):
     return str(oid_val)[:HASH_LEN];
+
+class Namespace(SimpleNamespace):
+    def __init__(self, **kwargs):
+        self.__dict__.update(kwargs)
+
+    def update(self, other):
+        self.__dict__.update(other)
+
 
 class Cseries:
     """Database with information about series
@@ -453,16 +462,16 @@ class Cseries:
             cherry = repo.get(cmt.hash)
             tout.detail(f"cherry {oid(cherry.oid)}")
 
-            vals.update({'msg': cherry.message,
-                    'skip': False,
-                    'info': ''})
+            vals.msg = cherry.message
+            vals.skip = False
+            vals.info = ''
             yield cherry
 
             repo.create_commit('HEAD', cherry.author, cherry.committer,
-                               vals['msg'], tree_id, [cur.target])
+                               vals.msg, tree_id, [cur.target])
             cur = repo.head
             repo.state_cleanup()
-            tout.info(f"- {vals['info']} {oid(cmt.hash)} as {oid(cur.target)}: {cmt}")
+            tout.info(f"- {vals.info} {oid(cmt.hash)} as {oid(cur.target)}: {cmt}")
 
         # Update the branch
         target = repo.revparse_single('HEAD')
@@ -474,7 +483,7 @@ class Cseries:
             repo.head.set_target(branch_oid)
         else:
             repo.create_reference(f'refs/heads/{name}', target.oid, force=True)
-        vals['oid'] = target.oid
+        vals.oid = target.oid
         # return target.oid
 
     def mark_series(self, name, series, dry_run=False):
@@ -489,19 +498,19 @@ class Cseries:
         Return:
             pygit.oid: oid of the new branch
         """
-        vals = {}
+        vals = Namespace()
         for cherry in self._process_series(vals, name, series, dry_run):
             msg = cherry.message
             if CHANGE_ID_TAG not in msg:
                 cid = self.make_cid(cherry)
-                vals['msg'] = cherry.message + f'\n{CHANGE_ID_TAG}: {cid}'
+                vals.msg = cherry.message + f'\n{CHANGE_ID_TAG}: {cid}'
 
                 tout.detail(f"   - adding tag")
-                vals['info'] = 'tagged'
+                vals.info = 'tagged'
             else:
-                vals['info'] = 'has tag'
+                vals.info = 'has tag'
 
-        return vals['oid']
+        return vals.oid
         # return target.oid
 
     def unmark_series(self, name, series, dry_run=False):
