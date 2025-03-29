@@ -1787,6 +1787,11 @@ second line.'''
         self.assertEqual(('https://one', None), ulist['us'])
         self.assertEqual(('git@two', None), ulist['ci'])
 
+        # Try to add a duplicate
+        with self.assertRaises(ValueError) as exc:
+            cser.add_upstream('ci', 'git@three')
+        self.assertEqual("Upstream 'ci' already exists", str(exc.exception))
+
         with capture_sys_output() as (out, err):
             cser.list_upstream()
         lines = out.getvalue().splitlines()
