@@ -31,13 +31,6 @@ HASH_LEN = 10
 def oid(oid_val):
     return str(oid_val)[:HASH_LEN];
 
-class Namespace(SimpleNamespace):
-    def __init__(self, **kwargs):
-        self.__dict__.update(kwargs)
-
-    def update(self, other):
-        self.__dict__.update(other)
-
 
 class Cseries:
     """Database with information about series
@@ -161,17 +154,10 @@ class Cseries:
             pcdict[idnum] = idnum, subject, series_id, cid
         return pcdict
 
-    def add_series(self, name, desc=None, mark=False, allow_unmarked=False,
-                   dry_run=False):
-        """Add a series to the database
-
-        Args:
-            ser (Series): Series to add
-        """
+    def _prep_series(self, name):
         ser = self.parse_series(name)
         name = ser.name
 
-        tout.info(f"Adding series '{name}': mark {mark} allow_unmarked {allow_unmarked}")
         # First check we have a branch with this name
         if not gitutil.check_branch(name, git_dir=self.gitdir):
             raise ValueError(f"No branch named '{name}'")
@@ -181,6 +167,17 @@ class Cseries:
             raise ValueError('Cannot detect branch automatically')
 
         series = patchstream.get_metadata(name, 0, count, git_dir=self.gitdir)
+        return name, series
+
+    def add_series(self, name, desc=None, mark=False, allow_unmarked=False,
+                   dry_run=False):
+        """Add a series to the database
+
+        Args:
+            name (str): Name of series to add, or None to use current one
+        """
+        name, series = self._prep_series(name)
+        tout.info(f"Adding series '{name}': mark {mark} allow_unmarked {allow_unmarked}")
         if desc is None:
             if not series.cover:
                 raise ValueError(f"Branch '{name}' has no cover letter")
@@ -190,7 +187,7 @@ class Cseries:
             oid = self.mark_series(name, series, dry_run=dry_run)
 
             # Collect the commits again, as the hashes have changed
-            series = patchstream.get_metadata(oid, 0, count,
+            series = patchstream.get_metadata(oid, 0, len(series.commits),
                                               git_dir=self.gitdir)
 
         bad_count = 0
@@ -478,13 +475,11 @@ class Cseries:
         tout.info(f"Updating branch {name} to {str(target.oid)[:HASH_LEN]}")
         if dry_run:
             branch_oid = branch.peel(pygit2.GIT_OBJ_COMMIT).oid
-            print('branch_oid', branch_oid)
             repo.checkout_tree(repo.get(branch_oid))
             repo.head.set_target(branch_oid)
         else:
             repo.create_reference(f'refs/heads/{name}', target.oid, force=True)
         vals.oid = target.oid
-        # return target.oid
 
     def mark_series(self, name, series, dry_run=False):
         """Mark a series with Change-Id tags
@@ -498,33 +493,58 @@ class Cseries:
         Return:
             pygit.oid: oid of the new branch
         """
-        vals = Namespace()
+        vals = SimpleNamespace()
         for cherry in self._process_series(vals, name, series, dry_run):
-            msg = cherry.message
-            if CHANGE_ID_TAG not in msg:
+            if CHANGE_ID_TAG not in cherry.message:
                 cid = self.make_cid(cherry)
                 vals.msg = cherry.message + f'\n{CHANGE_ID_TAG}: {cid}'
-
                 tout.detail(f"   - adding tag")
                 vals.info = 'tagged'
             else:
                 vals.info = 'has tag'
 
         return vals.oid
-        # return target.oid
 
-    def unmark_series(self, name, series, dry_run=False):
+    def unmark_series(self, name, allow_unmarked=False, dry_run=False):
         """Remove Change-Id tags from a series
 
         Args:
             name (str): Name of the series to unmark
-            series (Series): Series object
             dry_run (bool): True to do a dry run, restoring the original tree
                 afterwards
 
         Return:
             pygit.oid: oid of the new branch
         """
+        name, series = self._prep_series(name)
+        tout.info(f"Unmarking series '{name}': allow_unmarked {allow_unmarked}")
+
+        if not allow_unmarked:
+            bad = []
+            for cmt in series.commits:
+                if not cmt.change_id:
+                    bad.append(cmt)
+            if bad:
+                print(f'{len(bad)} commit(s) are missing marks')
+                for cmt in bad:
+                    print(f' - {oid(cmt.hash)} {cmt.subject}')
+                raise ValueError(
+                    f'Unmarked commits {len(bad)}/{len(series.commits)}')
+        vals = SimpleNamespace()
+        for cherry in self._process_series(vals, name, series, dry_run):
+            if CHANGE_ID_TAG in cherry.message:
+                pos = cherry.message.index(CHANGE_ID_TAG)
+                cid = self.make_cid(cherry)
+                vals.msg = cherry.message[:pos]
+
+                tout.detail(f"   - removing tag")
+                vals.info = 'untagged'
+            else:
+                vals.info = 'no tag'
+
+        if dry_run:
+            tout.info('Dry run completed')
+        return vals.oid
 
     def send(self, series):
         """Send out a series
