@@ -1831,10 +1831,8 @@ second line.'''
         self.assertEqual("patman: ValueError: No such upstream 'us'",
                          out.getvalue().strip())
 
-        self.run_args('upstream', 'add', 'us',
-                      'https://one')
-        self.run_args('upstream', 'add', 'ci',
-                      'git@two')
+        self.run_args('upstream', 'add', 'us', 'https://one')
+        self.run_args('upstream', 'add', 'ci', 'git@two')
 
         with capture_sys_output() as (out, _):
             self.run_args('upstream', 'default')
@@ -2048,3 +2046,38 @@ second line.'''
         self.assertRegex(next(lines), '- untagged .* as .*: spi: SPI fixes')
         self.assertRegex(next(lines), 'Updating branch first to .*')
         self.assertEqual('Dry run completed', next(lines))
+
+    def test_series_remove(self):
+        """Test removing a series"""
+        cser = self.get_cser()
+
+        with self.assertRaises(ValueError) as exc:
+            cser.remove_series('first')
+        self.assertEqual("No such series 'first'", str(exc.exception))
+
+        with capture_sys_output() as (out, _):
+            cser.add_series('first', '', mark=True)
+        self.assertTrue(cser.get_series_dict())
+
+        with capture_sys_output() as (out, _):
+            cser.remove_series('first')
+        self.assertEqual("Removed series 'first'", out.getvalue().strip())
+        self.assertFalse(cser.get_series_dict())
+
+    def test_series_remove_cmdline(self):
+        """Test removing a series using the command line"""
+        cser = self.get_cser()
+
+        with capture_sys_output() as (out, _):
+            self.run_args('series', 'remove', 'first', expected_ret=1)
+        self.assertEqual("patman: ValueError: No such series 'first'",
+                         out.getvalue().strip())
+
+        with capture_sys_output() as (out, _):
+            cser.add_series('first', '', mark=True)
+        self.assertTrue(cser.get_series_dict())
+
+        with capture_sys_output() as (out, _):
+            cser.remove_series('first')
+        self.assertEqual("Removed series 'first'", out.getvalue().strip())
+        self.assertFalse(cser.get_series_dict())
