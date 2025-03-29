@@ -67,7 +67,7 @@ class TestFunctional(unittest.TestCase):
         self.gitdir = os.path.join(self.tmpdir, '.git')
         self.repo = None
         self.cser = None
-        tout.init(allow_colour=False)
+        tout.init(tout.INFO, allow_colour=False)
 
     def tearDown(self):
         shutil.rmtree(self.tmpdir)
@@ -1938,6 +1938,34 @@ second line.'''
         self.assertEqual('spi: SPI fixes', subject)
         self.assertEqual(1, series_id)
         self.assertEqual(series.commits[1].change_id, cid)
+
+    def test_series_add_mark_fail(self):
+        """Test marking a cseries when the tree is dirty"""
+        cser = self.get_cser()
+
+        # TODO: check that it requires a clean tree
+        tools.write_file(os.path.join(self.tmpdir, 'fname'), b'123')
+        cser.add_series('first', '', mark=True)
+
+        tools.write_file(os.path.join(self.tmpdir, 'i2c.c'), b'123')
+        with self.assertRaises(pygit2.GitError) as exc:
+            cser.add_series('first', '', mark=True)
+        self.assertEqual('1 conflict prevents checkout', str(exc.exception))
+
+    def test_series_add_mark_dry_run(self):
+        """Test marking a cseries with Change-Id fields"""
+        cser = self.get_cser()
+
+        cser.add_series('first', '', mark=True, dry_run=True)
+        cser.add_series('first', '', mark=True, dry_run=True)
+
+        tools.write_file(os.path.join(self.tmpdir, 'i2c.c'), b'123')
+        with self.assertRaises(pygit2.GitError) as exc:
+            cser.add_series('first', '', mark=True, dry_run=True)
+        self.assertEqual('1 conflict prevents checkout', str(exc.exception))
+
+        pcdict = cser.get_pcommit_dict()
+        self.assertFalse(pcdict)
 
     def test_series_add_mark_cmdline(self):
         """Test marking a cseries with Change-Id fields using the command line"""
