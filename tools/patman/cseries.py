@@ -354,6 +354,7 @@ class Cseries:
                 list of possible matches, or None, each a dict:
                     'id': series ID
                     'name': series name
+                str: series name (in case None was passed in)
         """
         ser, version = self.parse_series_and_version(series, version)
         versions = self.get_version_list(ser)
@@ -362,7 +363,7 @@ class Cseries:
                 f"Series '{ser.name}' does not have a version {version}")
 
         pws, options = pwork.find_series(ser.name, version)
-        return pws, options
+        return pws, options, ser.name
 
     def do_auto_link(self, pwork, series, version, update_commit):
         """Automatically find a series link by looking in patchwork
@@ -376,16 +377,15 @@ class Cseries:
             update_commit (bool): True to update the current commit with the
                 link
         """
-        pws, options = self.search_link(pwork, series, version)
+        pws, options, series_name = self.search_link(pwork, series, version)
 
         if not pws:
-            tout.error("Cannot find series '{ser.name}'")
             print('Possible matches:')
             for opt in options:
                 print(f"{opt['id']:5}  {opt['name']}")
-            return 1
+            raise ValueError(f"Cannot find series '{series}'")
 
-        self.set_link(series, version, pws, update_commit)
+        self.set_link(series_name, version, pws, update_commit)
 
     def get_version_list(self, ser):
         """Get a list of the versions available for a series
