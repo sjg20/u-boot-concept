@@ -1523,6 +1523,35 @@ second line.'''
 
         self.db_close()
 
+    def test_series_add_manual(self):
+        """Test adding a new cseries with a version number"""
+        cser = self.get_cser()
+        self.assertFalse(cser.get_series_dict())
+
+        repo = pygit2.init_repository(self.gitdir)
+        first_target = repo.revparse_single('first')
+        repo.branches.local.create('first2', first_target)
+        repo.config.set_multivar('branch.first2.remote', '', '.')
+        repo.config.set_multivar('branch.first2.merge', '', 'refs/heads/base')
+
+        with capture_sys_output() as (out, _):
+            cser.add_series('first2', 'description', allow_unmarked=True)
+        lines = out.getvalue().splitlines()
+        self.assertEqual(
+            "Adding series 'first2': mark False allow_unmarked True",
+            lines[0])
+        self.assertEqual("Added series 'first'", lines[1])
+        self.assertEqual(2, len(lines))
+
+        slist = cser.get_series_dict()
+        self.assertEqual(1, len(slist))
+        self.assertEqual('first', slist['first'].name)
+
+        # We should have just one entry, with version 2
+        plist = cser.get_patchwork_dict()
+        self.assertEqual(1, len(plist))
+        self.assertEqual((1, 2, None), plist[0])
+
     def test_series_list(self):
         """Test listing cseries"""
         cser = self.get_cser()
@@ -1725,15 +1754,16 @@ second line.'''
         if re_series:
             series_num = re_series.group(1)
             return [
-                {'id': 56, 'name': 'contains first name'},
-                {'id': 43, 'name': 'has first in it'},
-                {'id': 1234, 'name': 'first'},
-                {'id': 456, 'name': 'second'},
+                {'id': 56, 'name': 'contains first name', 'version': '1'},
+                {'id': 43, 'name': 'has first in it', 'version': '1'},
+                {'id': 1234, 'name': 'first', 'version': '1'},
+                {'id': 456, 'name': 'second', 'version': '1'},
+                {'id': 457, 'name': 'second', 'version': '2'},
             ]
         raise ValueError('Fake Patchwork does not understand: %s' % subpath)
 
     def test_series_link_auto_version(self):
-        """Test finding the patchwork link for a cseries"""
+        """Test finding the patchwork link for a cseries automatically"""
         cser = self.get_cser()
 
         with capture_sys_output() as (out, _):
@@ -1760,7 +1790,7 @@ second line.'''
             cser.increment('first')
 
     def test_series_link_auto_name(self):
-        """Test finding the patchwork link for a cseries"""
+        """Test finding the patchwork link for a cseries with auto name"""
         cser = self.get_cser()
 
         with capture_sys_output() as (out, _):
@@ -1787,7 +1817,7 @@ second line.'''
         self.assertEqual((1, 2, '2345'), plist[1])
 
     def test_series_link_auto_name_version(self):
-        """Test finding the patchwork link for a cseries"""
+        """Test finding patchwork link for a cseries with auto name + version"""
         cser = self.get_cser()
 
         with capture_sys_output() as (out, _):
@@ -1813,6 +1843,29 @@ second line.'''
         self.assertEqual(2, len(plist))
         self.assertEqual((1, 1, '1234'), plist[0])
         self.assertEqual((1, 2, '2345'), plist[1])
+
+    def test_series_link_missing(self):
+        """Test finding patchwork link for a cseries but it is missing"""
+        cser = self.get_cser()
+
+        with capture_sys_output() as (out, _):
+            cser.add_series('second', '', allow_unmarked=True)
+
+        with capture_sys_output():
+            cser.increment('second')
+            cser.increment('second')
+
+        pwork = Patchwork.for_testing(self._fake_patchwork_cser_link)
+        pwork.set_project(PROJ_ID)
+        self.assertFalse(cser.get_project())
+        cser.set_project(pwork, 'U-Boot')
+
+        self.assertEqual((456, None), cser.search_link(pwork, 'second', 1))
+        self.assertEqual((457, None), cser.search_link(pwork, 'second', 2))
+        self.assertEqual(
+            (None, [{'id': 456, 'name': 'second', 'version': '1'},
+                    {'id': 457, 'name': 'second', 'version': '2'}]),
+            cser.search_link(pwork, 'second', 3))
 
     def check_series_archive(self):
         """Coroutine to run the archive test"""
