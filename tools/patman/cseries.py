@@ -354,16 +354,20 @@ class Cseries:
                 list of possible matches, or None, each a dict:
                     'id': series ID
                     'name': series name
-                str: series name (in case None was passed in)
+                str: series name
+                int: series version
+                str: series description
         """
         ser, version = self.parse_series_and_version(series, version)
         versions = self.get_version_list(ser)
         if version not in versions:
             raise ValueError(
                 f"Series '{ser.name}' does not have a version {version}")
+        if not ser.desc:
+            raise ValueError(f"Series '{ser.name}' has an empty description")
 
-        pws, options = pwork.find_series(ser.name, version)
-        return pws, options, ser.name
+        pws, options = pwork.find_series(ser.desc, version)
+        return pws, options, ser.name, version, ser.desc
 
     def do_auto_link(self, pwork, series, version, update_commit):
         """Automatically find a series link by looking in patchwork
@@ -377,15 +381,17 @@ class Cseries:
             update_commit (bool): True to update the current commit with the
                 link
         """
-        pws, options, series_name = self.search_link(pwork, series, version)
+        pws, options, name, version, desc = self.search_link(pwork, series,
+                                                             version)
 
         if not pws:
-            print('Possible matches:')
+            print(f"Possible matches for '{name}' version {version} desc '{desc}':")
             for opt in options:
-                print(f"{opt['id']:5}  {opt['name']}")
-            raise ValueError(f"Cannot find series '{series}'")
+                print('  Link  Version  Description')
+                print(f"{opt['id']:5}  {opt['version']:7}  {opt['name']}")
+            raise ValueError(f"Cannot find series '{desc}'")
 
-        self.set_link(series_name, version, pws, update_commit)
+        self.set_link(name, version, pws, update_commit)
 
     def get_version_list(self, ser):
         """Get a list of the versions available for a series

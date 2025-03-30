@@ -1470,7 +1470,7 @@ second line.'''
         self.assertFalse(cser.get_series_dict())
 
         with capture_sys_output() as (out, _):
-            cser.add_series('first', '', allow_unmarked=True)
+            cser.add_series('first', 'my description', allow_unmarked=True)
         lines = out.getvalue().strip().splitlines()
         self.assertEqual(
             "Adding series 'first': mark False allow_unmarked True",
@@ -1481,6 +1481,7 @@ second line.'''
         slist = cser.get_series_dict()
         self.assertEqual(1, len(slist))
         self.assertEqual('first', slist['first'].name)
+        self.assertEqual('my description', slist['first'].desc)
 
         plist = cser.get_patchwork_dict()
         self.assertEqual(1, len(plist))
@@ -1727,9 +1728,9 @@ second line.'''
             return [
                 {'id': 56, 'name': 'contains first name', 'version': '1'},
                 {'id': 43, 'name': 'has first in it', 'version': '1'},
-                {'id': 1234, 'name': 'first', 'version': '1'},
-                {'id': 456, 'name': 'second', 'version': '1'},
-                {'id': 457, 'name': 'second', 'version': '2'},
+                {'id': 1234, 'name': 'first series', 'version': '1'},
+                {'id': 456, 'name': 'Series for my board', 'version': '1'},
+                {'id': 457, 'name': 'Series for my board', 'version': '2'},
             ]
         raise ValueError('Fake Patchwork does not understand: %s' % subpath)
 
@@ -1738,28 +1739,31 @@ second line.'''
         cser = self.get_cser()
 
         with capture_sys_output() as (out, _):
-            cser.add_series('first', '', allow_unmarked=True)
+            cser.add_series('second', allow_unmarked=True)
 
         # Set link with detected version
         with capture_sys_output() as (out, _):
-            cser.set_link('first', None, '1234', True)
+            cser.set_link('second', None, '456', True)
         self.assertEqual(
-            "Setting link for series 'first' version 1 to 1234",
+            "Setting link for series 'second' version 1 to 456",
             out.getvalue().strip())
 
         with capture_sys_output():
-            cser.increment('first')
+            cser.increment('second')
 
         pwork = Patchwork.for_testing(self._fake_patchwork_cser_link)
         pwork.set_project(PROJ_ID)
         self.assertFalse(cser.get_project())
         cser.set_project(pwork, 'U-Boot')
 
-        self.assertEqual((1234, None, 'first'),
-                         cser.search_link(pwork, 'first', 1))
+        self.assertEqual((456, None, 'second', 1, 'Series for my board'),
+                         cser.search_link(pwork, 'second', 1))
 
         with capture_sys_output():
-            cser.increment('first')
+            cser.increment('second')
+
+        self.assertEqual((457, None, 'second', 2, 'Series for my board'),
+                         cser.search_link(pwork, 'second', 2))
 
     def test_series_link_auto_name(self):
         """Test finding the patchwork link for a cseries with auto name"""
@@ -1821,7 +1825,7 @@ second line.'''
         cser = self.get_cser()
 
         with capture_sys_output() as (out, _):
-            cser.add_series('second', '', allow_unmarked=True)
+            cser.add_series('second', allow_unmarked=True)
 
         with capture_sys_output():
             cser.increment('second')
@@ -1832,19 +1836,20 @@ second line.'''
         self.assertFalse(cser.get_project())
         cser.set_project(pwork, 'U-Boot')
 
-        self.assertEqual((456, None, 'second'),
+        self.assertEqual((456, None, 'second', 1, 'Series for my board'),
                          cser.search_link(pwork, 'second', 1))
-        self.assertEqual((457, None, 'second'),
+        self.assertEqual((457, None, 'second', 2, 'Series for my board'),
                          cser.search_link(pwork, 'second', 2))
+        res = cser.search_link(pwork, 'second', 3)
         self.assertEqual(
             (None,
-             [{'id': 456, 'name': 'second', 'version': '1'},
-              {'id': 457, 'name': 'second', 'version': '2'}],
-             'second'),
-            cser.search_link(pwork, 'second', 3))
+             [{'id': 456, 'name': 'Series for my board', 'version': '1'},
+              {'id': 457, 'name': 'Series for my board', 'version': '2'}],
+             'second', 3, 'Series for my board'),
+             res)
 
     def check_series_auto_link(self):
-        """Test finding patchwork link for a cseries but it is missing"""
+        """Common code for auto-link tests"""
         cser = self.get_cser()
 
         pwork = Patchwork.for_testing(self._fake_patchwork_cser_link)
@@ -1854,41 +1859,48 @@ second line.'''
 
         with capture_sys_output() as (out, _):
             cser.add_series('first', '', allow_unmarked=True)
+            cser.add_series('second', allow_unmarked=True)
 
         yield cser, pwork
 
         self.db_open()
 
         plist = cser.get_patchwork_dict()
-        self.assertEqual(1, len(plist))
-        self.assertEqual((1, 1, '1234'), plist[0])
+        self.assertEqual(2, len(plist))
+        self.assertEqual((1, 1, None), plist[0])
+        self.assertEqual((2, 1, '456'), plist[1])
         yield cser
 
     def test_series_auto_link(self):
-        """Test finding patchwork link for a cseries but it is missing"""
+        """Test linking a cseries to its patchwork series by description"""
         cor = self.check_series_auto_link()
         cser, pwork = next(cor)
 
-        with capture_sys_output() as (out, _):
+        with self.assertRaises(ValueError) as exc:
             cser.do_auto_link(pwork, 'first', None, True)
+        self.assertIn("Series 'first' has an empty description",
+                      str(exc.exception))
+
+        with capture_sys_output() as (out, _):
+            cser.do_auto_link(pwork, 'second', None, True)
         self.assertEqual(
-                "Setting link for series 'first' version 1 to 1234",
+                "Setting link for series 'second' version 1 to 456",
                 out.getvalue().strip())
 
         cser = next(cor)
         cor.close()
 
     def test_series_auto_link_cmdline(self):
-        """Test finding missing patchwork link for a cseries from cmdline"""
+        """Test linking to patchwork series by description on cmdline"""
         cor = self.check_series_auto_link()
         cser, pwork = next(cor)
         self.db_close()
 
         with capture_sys_output() as (out, _):
-            self.run_args('series', 'auto-link', '-M', '-s', 'first', '-u',
+            self.run_args('series', 'auto-link', '-M', '-s', 'second', '-u',
                         pwork=pwork)
         self.assertEqual(
-                "Setting link for series 'first' version 1 to 1234",
+                "Setting link for series 'second' version 1 to 456",
                 out.getvalue().strip())
 
         cser = next(cor)
