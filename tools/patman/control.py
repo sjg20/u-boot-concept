@@ -269,17 +269,17 @@ def series(args, test_db=None):
     cser = cseries.Cseries(test_db)
     try:
         cser.open_database()
+        arg0 = args.extra[0] if len(args.extra) else None
         if args.subcmd == 'list':
             cser.do_list()
         elif args.subcmd == 'add':
-            cser.add_series(args.series,
-                            args.extra[0] if len(args.extra) else None,
+            cser.add_series(args.series, arg0,
                             mark=args.mark, allow_unmarked=args.allow_unmarked,
                             dry_run=args.dry_run)
         elif args.subcmd == 'remove':
             cser.remove_series(args.series)
         elif args.subcmd == 'set-link':
-            cser.set_link(args.series, args.version, args.extra[0], args.update)
+            cser.set_link(args.series, args.version, arg0, args.update)
         elif args.subcmd == 'get-link':
             link = cser.get_link(args.series, args.version)
             print(link)

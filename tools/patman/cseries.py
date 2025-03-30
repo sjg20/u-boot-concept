@@ -158,8 +158,9 @@ class Cseries:
         return pcdict
 
     def _prep_series(self, name):
-        ser = self.parse_series(name)
-        name = ser.name
+        ser, version = self.parse_series_and_version(name, None)
+        if not name:
+            name = ser.name
 
         # First check we have a branch with this name
         if not gitutil.check_branch(name, git_dir=self.gitdir):
@@ -190,7 +191,8 @@ class Cseries:
         tout.info(f"Adding series '{name}': mark {mark} allow_unmarked {allow_unmarked}")
         if desc is None:
             if not series.cover:
-                raise ValueError(f"Branch '{name}' has no cover letter")
+                raise ValueError(
+                    f"Branch '{name}' has no cover letter - please provide description")
             desc = series.cover[0]
 
         if mark:
@@ -209,16 +211,12 @@ class Cseries:
                 f'{bad_count} commit(s) are unmarked; please use -m or -M')
 
         # See if we can collect a version name, i.e. name<version>
-        version = 1
-        mat = re.search(r'\d+$', name)
-        if mat:
-            version = int(re.group())
-            if version > 99:
-                raise ValueError(f"Version '{version}' exceeds 99")
-            name_len = len(name) - len(version)
-            if not name_len:
-                raise ValueError(f"Series name '{name}' cannot be a number")
-            name = name[:name_len]
+        ser, version = self.parse_series_and_version(name, None)
+        if version > 99:
+            raise ValueError(f"Version '{version}' exceeds 99")
+        if not ser.name:
+            raise ValueError(f"Series name '{name}' cannot be a number")
+        name = ser.name
 
         if 'version' in series and int(series.version) != version:
             raise ValueError(f"Series name '{name}' suggests version {version} "
@@ -295,7 +293,8 @@ class Cseries:
         ser, version = self.parse_series_and_version(series, version)
         versions = self.get_version_list(ser)
         if version not in versions:
-            raise ValueError(f"Series '{ser.name}' does not have a version {version}")
+            raise ValueError(
+                f"Series '{ser.name}' does not have a version {version}")
 
         if update_commit:
             cur_name = gitutil.get_branch(self.gitdir)
@@ -351,6 +350,8 @@ class Cseries:
 
         Args:
             pwork (Patchwork): Patchwork object to use
+            series (str): Series name to search for
+            version (int): Version to search for
 
         Returns:
             tuple:
@@ -365,7 +366,7 @@ class Cseries:
             raise ValueError(
                 f"Series '{ser.name}' does not have a version {version}")
 
-        pws, options = pwork.find_series(ser.name)
+        pws, options = pwork.find_series(ser.name, version)
         return pws, options
 
     def do_search_link(self, pwork, series, version):
