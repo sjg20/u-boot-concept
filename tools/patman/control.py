@@ -15,6 +15,7 @@ import traceback
 from patman import checkpatch
 from patman import cseries
 from patman import patchstream
+from patman.patchwork import Patchwork
 from patman.series import Series
 from u_boot_pylib import gitutil
 from u_boot_pylib import terminal
@@ -253,8 +254,9 @@ def patchwork_status(branch, count, start, end, dest_branch, force,
     # Import this here to avoid failing on other commands if the dependencies
     # are not present
     from patman import status
+    patchwork = patchwork.Patchwork(url)
     status.check_patchwork_status(series, found[0], branch, dest_branch, force,
-                                  show_comments, url)
+                                  show_comments, patchwork)
 
 
 def series(args, test_db=None):
@@ -347,7 +349,8 @@ def patchwork(args, test_db=None):
     try:
         cser.open_database()
         if args.subcmd == 'set-project':
-            cser.set_project(args.patchwork_url, args.extra[0])
+            pwork = Patchwork(args.patchwork_url)
+            cser.set_project(pwork, args.extra[0])
         elif args.subcmd == 'get-project':
             name, pwid = cser.get_project()
             print(f'Name: {name}')
