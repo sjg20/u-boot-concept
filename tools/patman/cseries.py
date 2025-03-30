@@ -287,7 +287,7 @@ class Cseries:
 
         Args:
             series (str): Name of series to use, or None to use current branch
-            version (int): Version number
+            version (int): Version number, or None to detect from name
             link (str): Patchwork link-string for the series
             update_commit (bool): True to update the current commit with the
                 link
@@ -387,10 +387,25 @@ class Cseries:
         Return:
             str: List of versions
         """
+        if ser.idnum is None:
+            raise ValueError('Unknown series idnum')
         res = self.cur.execute('SELECT version FROM patchwork WHERE '
             f"series_id = {ser.idnum}")
         all = res.fetchall()
         return [item[0] for item in all]
+
+    def split_name_version(self, in_name):
+        m_ver = re.match(r'([^0-9]*)(\d*)', in_name)
+        if m_ver:
+            name = m_ver.group(1)
+            if m_ver.group(2):
+                version = int(m_ver.group(2))
+            else:
+                version = 1
+        else:
+            name = in_name
+            version = 1
+        return name, version
 
     def parse_series(self, name):
         """Parse the name of a series, or detect it from the current branch
@@ -404,17 +419,25 @@ class Cseries:
         """
         if not name:
             name = gitutil.get_branch(self.gitdir)
+        name, version = self.split_name_version(name)
         ser = self.get_series_by_name(name)
         if not ser:
             ser = Series()
             ser.name = name
         return ser
 
-    def parse_series_and_version(self, name, version):
+    def parse_series_and_version(self, name, in_version):
         """Parse the name and version of a series, or detect from current branch
 
+        Figures out the name from in_name, or if that is None, from the current
+            branch.
+
+        Uses the version in_version, or if that is None, uses the int at the end
+        of the name (e.g. 'series' is version 1, 'series4' is version 4)
+
         Args:
-            name (str or None): name of series
+            in_name (str or None): name of series
+            in_version (str or None): version of series
 
         Return:
             tuple:
@@ -425,16 +448,13 @@ class Cseries:
         """
         if not name:
             name = gitutil.get_branch(self.gitdir)
+        name, version = self.split_name_version(name)
         ser = self.get_series_by_name(name)
         if not ser:
             ser = Series()
             ser.name = name
-        if not version:
-            ver_m = re.match(r'[^0-9]*(\d*)', name)
-            if ver_m and ver_m.group(1):
-                version = int(ver_m.group(1))
-            else:
-                version = 1
+        if in_version:
+            version = in_version
         return ser, version
 
     def set_archived(self, series, archived):

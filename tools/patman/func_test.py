@@ -1703,7 +1703,7 @@ second line.'''
             ]
         raise ValueError('Fake Patchwork does not understand: %s' % subpath)
 
-    def test_series_link_auto(self):
+    def test_series_link_auto_version(self):
         """Test finding the patchwork link for a cseries"""
         cser = self.get_cser()
 
@@ -1713,11 +1713,12 @@ second line.'''
         # Set link with detected version
         with capture_sys_output() as (out, _):
             cser.set_link('first', None, '1234', True)
-            self.assertEqual(
-                "Setting link for series 'first' version 1 to 1234",
-                out.getvalue().strip())
+        self.assertEqual(
+            "Setting link for series 'first' version 1 to 1234",
+            out.getvalue().strip())
 
-        cser.increment('first')
+        with capture_sys_output():
+            cser.increment('first')
 
         pwork = Patchwork.for_testing(self._fake_patchwork_cser_link)
         pwork.set_project(PROJ_ID)
@@ -1725,6 +1726,36 @@ second line.'''
         cser.set_project(pwork, 'U-Boot')
 
         self.assertEqual((1234, None), cser.search_link(pwork, 'first', 1))
+
+        with capture_sys_output():
+            cser.increment('first')
+
+    def test_series_link_auto_name(self):
+        """Test finding the patchwork link for a cseries"""
+        cser = self.get_cser()
+
+        with capture_sys_output() as (out, _):
+            cser.add_series('first', '', allow_unmarked=True)
+
+        # Set link with detected name
+        with self.assertRaises(ValueError) as exc:
+            cser.set_link(None, 2, '2345', True)
+        self.assertEqual(
+            "Series 'first' does not have a version 2", str(exc.exception))
+
+        with capture_sys_output():
+            cser.increment('first')
+
+        with capture_sys_output() as (out, _):
+            cser.set_link(None, 2, '2345', True)
+        self.assertEqual(
+                "Setting link for series 'first' version 2 to 2345",
+                out.getvalue().strip())
+
+        plist = cser.get_patchwork_dict()
+        self.assertEqual(2, len(plist))
+        self.assertEqual((1, 1, None), plist[0])
+        self.assertEqual((1, 2, '2345'), plist[1])
 
     def check_series_archive(self):
         """Coroutine to run the archive test"""
