@@ -278,8 +278,11 @@ def series(args, test_db=None):
                             dry_run=args.dry_run)
         elif args.subcmd == 'remove':
             cser.remove_series(args.series)
-        elif args.subcmd == 'link':
-            cser.add_link(args.series, args.version, args.extra[0], args.update)
+        elif args.subcmd == 'set-link':
+            cser.set_link(args.series, args.version, args.extra[0], args.update)
+        elif args.subcmd == 'get-link':
+            link = cser.get_link(args.series, args.version)
+            print(link)
         elif args.subcmd == 'archive':
             cser.set_archived(args.series, True)
         elif args.subcmd == 'unarchive':
