@@ -292,7 +292,7 @@ class Cseries:
             update_commit (bool): True to update the current commit with the
                 link
         """
-        ser = self.parse_series(series)
+        ser, version = self.parse_series_and_version(series, version)
         versions = self.get_version_list(ser)
         if version not in versions:
             raise ValueError(f"Series '{ser.name}' does not have a version {version}")
@@ -311,6 +311,8 @@ class Cseries:
             if cur_name == branch_name:
                 repo.head.set_target(amended)
 
+        tout.info(
+            f"Setting link for series '{ser.name}' version {version} to {link}")
         res = self.cur.execute(
             f"UPDATE patchwork SET link = '{link}' WHERE "
             'series_id = ? AND version = ?', (ser.idnum, version))
@@ -341,13 +343,40 @@ class Cseries:
             raise ValueError('Expected one match, but multiple matches found')
         return all[0][0]
 
-    def search_link(self, series, version):
+    def search_link(self, pwork, series, version):
+        """Search patch for the link for a series
+
+        Returns either the single match, or None, in which case the second part
+        of the tuple is filled in
+
+        Args:
+            pwork (Patchwork): Patchwork object to use
+
+        Returns:
+            tuple:
+                int: ID of the series found, or None
+                list of possible matches, or None, each a dict:
+                    'id': series ID
+                    'name': series name
+        """
         ser = self.parse_series(series)
         versions = self.get_version_list(ser)
         if version not in versions:
             raise ValueError(
                 f"Series '{ser.name}' does not have a version {version}")
 
+        pws, options = pwork.find_series(ser.name)
+        return pws, options
+
+    def do_search_link(self, pwork, series, version):
+        pws, options = self.search_link(pwork, series, version)
+
+        if not pws:
+            tout.error("Cannot find series '{ser.name}'")
+            print('Possible matches:')
+            for opt in options:
+                print(f"{opt['id']:5}  {opt['name']}")
+            return 1
 
     def get_version_list(self, ser):
         """Get a list of the versions available for a series
@@ -380,6 +409,33 @@ class Cseries:
             ser = Series()
             ser.name = name
         return ser
+
+    def parse_series_and_version(self, name, version):
+        """Parse the name and version of a series, or detect from current branch
+
+        Args:
+            name (str or None): name of series
+
+        Return:
+            tuple:
+                Series: New object with the name set; idnum is also set if the
+                    series exists in the database
+                int: Series version-number detected from the name
+                    (e.g. 'fred' is version 1, 'fred2' is version 2)
+        """
+        if not name:
+            name = gitutil.get_branch(self.gitdir)
+        ser = self.get_series_by_name(name)
+        if not ser:
+            ser = Series()
+            ser.name = name
+        if not version:
+            ver_m = re.match(r'[^0-9]*(\d*)', name)
+            if ver_m and ver_m.group(1):
+                version = int(ver_m.group(1))
+            else:
+                version = 1
+        return ser, version
 
     def set_archived(self, series, archived):
         """Set whether a series is archived or not
@@ -745,8 +801,8 @@ class Cseries:
         """Set the name of the project
 
         Args:
-            name (str): Name of the project to use in patchwork
             pwork (Patchwork): Patchwork object to use
+            name (str): Name of the project to use in patchwork
         """
         res = pwork.request(f'projects/')
         pwid = None
@@ -773,3 +829,17 @@ class Cseries:
         if len(all) != 1:
             return None
         return all[0]
+
+    def get_project_id(self):
+        """Get the patwork ID of the project
+
+        Returns:
+            int: ID number
+
+        Raises:
+            ValueError: if there is no project
+        """
+        res = self.get_project()
+        if not res:
+            raise ValueError('Current project is not known')
+        return res[1]

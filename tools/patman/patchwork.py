@@ -18,6 +18,7 @@ class Patchwork:
         """
         self.url = url
         self.fake_request = None
+        self.proj_id = None
 
     def request(self, subpath):
         """Call the patchwork API and return the result as JSON
@@ -46,3 +47,14 @@ class Patchwork:
         pwork = Patchwork(None)
         pwork.fake_request = func
         return pwork
+
+    def find_series(self, name):
+        query = name.replace(' ', '+')
+        res = self.request(f'series/?project={self.proj_id}&q={query}')
+        for ser in res:
+            if ser['name'] == name:
+                return ser['id'], None
+        return none, res
+
+    def set_project(self, project_id):
+        self.proj_id = project_id

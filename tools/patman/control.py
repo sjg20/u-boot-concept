@@ -258,7 +258,6 @@ def patchwork_status(branch, count, start, end, dest_branch, force,
     status.check_patchwork_status(series, found[0], branch, dest_branch, force,
                                   show_comments, patchwork)
 
-
 def series(args, test_db=None):
     """Process a series subcommand
 

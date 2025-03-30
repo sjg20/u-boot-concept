@@ -37,6 +37,8 @@ from patman import status
 PATMAN_DIR = pathlib.Path(__file__).parent
 TEST_DATA_DIR = PATMAN_DIR / 'test/'
 
+# Fake patchwork project ID for U-Boot
+PROJ_ID = 6
 
 @contextlib.contextmanager
 def directory_excursion(directory):
@@ -1609,7 +1611,8 @@ second line.'''
 
         with capture_sys_output() as (out, _):
             cser.increment('first')
-        cser.set_link('first', 2, '1234', True)
+        with capture_sys_output() as (out, _):
+            cser.set_link('first', 2, '1234', True)
 
         self.assertEqual('1234', cser.get_link('first', 2))
 
@@ -1653,8 +1656,13 @@ second line.'''
             cser.increment('first')
             cser.increment('first')
 
-        self.run_args('series', 'set-link', '-s', 'first', '-V', '4', '-u',
-                        '1234')
+        with capture_sys_output() as (out, _):
+            self.run_args('series', 'set-link', '-s', 'first', '-V', '4', '-u',
+                            '1234')
+        self.assertEqual(
+            "Setting link for series 'first' version 4 to 1234",
+            out.getvalue().strip())
+
         with capture_sys_output() as (out, _):
             self.run_args('series', 'get-link', '-s', 'first', '-V', '4')
         self.assertIn('1234', out.getvalue())
@@ -1671,6 +1679,30 @@ second line.'''
 
         self.db_close()
 
+    def _fake_patchwork_cser_link(self, subpath):
+        """Fake Patchwork server for the function below
+
+        This handles accessing a series, providing a list consisting of a
+        single patch
+
+        Args:
+            subpath (str): URL subpath to use
+        """
+        if subpath == 'projects/':
+            return [
+                {'id':PROJ_ID, 'name': 'U-Boot'},
+                {'id':9, 'name': 'other'}]
+        re_series = re.match(r'series/\?project=(\d+)&q=.*$', subpath)
+        if re_series:
+            series_num = re_series.group(1)
+            return [
+                {'id': 56, 'name': 'contains first name'},
+                {'id': 43, 'name': 'has first in it'},
+                {'id': 1234, 'name': 'first'},
+                {'id': 456, 'name': 'second'},
+            ]
+        raise ValueError('Fake Patchwork does not understand: %s' % subpath)
+
     def test_series_link_auto(self):
         """Test finding the patchwork link for a cseries"""
         cser = self.get_cser()
@@ -1678,7 +1710,21 @@ second line.'''
         with capture_sys_output() as (out, _):
             cser.add_series('first', '', allow_unmarked=True)
 
-        self.assertEqual('1234', cser.search_link('first', 1))
+        # Set link with detected version
+        with capture_sys_output() as (out, _):
+            cser.set_link('first', None, '1234', True)
+            self.assertEqual(
+                "Setting link for series 'first' version 1 to 1234",
+                out.getvalue().strip())
+
+        cser.increment('first')
+
+        pwork = Patchwork.for_testing(self._fake_patchwork_cser_link)
+        pwork.set_project(PROJ_ID)
+        self.assertFalse(cser.get_project())
+        cser.set_project(pwork, 'U-Boot')
+
+        self.assertEqual((1234, None), cser.search_link(pwork, 'first', 1))
 
     def check_series_archive(self):
         """Coroutine to run the archive test"""
@@ -2238,16 +2284,9 @@ second line.'''
         """
         if subpath == 'projects/':
             return [
-                {'id':6, 'name': 'U-Boot'},
+                {'id':PROJ_ID, 'name': 'U-Boot'},
                 {'id':9, 'name': 'other'}]
-        re_series = re.match(r'series/(\d*)/$', subpath)
-        if re_series:
-            series_num = re_series.group(1)
-            if series_num == '1234':
-                return {'patches': [
-                    {'id': '1', 'name': 'Some patch'}]}
         raise ValueError('Fake Patchwork does not understand: %s' % subpath)
-
 
     def test_patchwork_set_project(self):
         """Test setting the project ID"""
@@ -2264,7 +2303,7 @@ second line.'''
 
         name, pwid = cser.get_project()
         self.assertEqual('U-Boot', name)
-        self.assertEqual(6, pwid)
+        self.assertEqual(PROJ_ID, pwid)
 
     def test_patchwork_get_project_cmdline(self):
         """Test setting the project ID"""
