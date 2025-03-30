@@ -1524,6 +1524,37 @@ second line.'''
         self.assertEqual(1, len(plist))
         self.assertEqual((1, 2, None), plist[0])
 
+    def test_series_add_different(self):
+        """Test adding a different vers. of a series from the checked out one"""
+        cser = self.get_cser()
+
+        repo = pygit2.init_repository(self.gitdir)
+        first_target = repo.revparse_single('first')
+        repo.branches.local.create('first2', first_target)
+        repo.config.set_multivar('branch.first2.remote', '', '.')
+        repo.config.set_multivar('branch.first2.merge', '', 'refs/heads/base')
+
+        target = repo.lookup_reference('refs/heads/first2')
+        repo.checkout(target, strategy=pygit2.GIT_CHECKOUT_FORCE)
+
+        # Add first2 initially
+        with capture_sys_output() as (out, _):
+            cser.add_series(None, 'description', allow_unmarked=True)
+
+        # Now add first: it should be added as a new version
+        with capture_sys_output() as (out, _):
+            cser.add_series('first', 'description', allow_unmarked=True)
+
+        slist = cser.get_series_dict()
+        self.assertEqual(1, len(slist))
+        self.assertEqual('first', slist['first'].name)
+
+        # We should have two entries, one of each version
+        plist = cser.get_patchwork_dict()
+        self.assertEqual(2, len(plist))
+        self.assertEqual((1, 2, None), plist[0])
+        self.assertEqual((1, 1, None), plist[1])
+
     def test_series_list(self):
         """Test listing cseries"""
         cser = self.get_cser()

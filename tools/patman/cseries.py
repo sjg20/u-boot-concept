@@ -215,22 +215,24 @@ class Cseries:
 
         link = series.get_link_for_version(version)
 
-        if not dry_run:
+        idnum = self.find_series_by_name(name)
+        if not idnum:
             res = self.cur.execute(
                 'INSERT INTO series (name, desc, archived) '
                 f"VALUES ('{name}', '{desc}', 0)")
             idnum = self.cur.lastrowid
+        res = self.cur.execute(
+            'INSERT INTO patchwork (version, link, series_id) VALUES'
+            f"('{version}', ?, {idnum})", (link,))
+
+        for commit in series.commits:
             res = self.cur.execute(
-                'INSERT INTO patchwork (version, link, series_id) VALUES'
-                f"('{version}', ?, {idnum})", (link,))
-
-            for commit in series.commits:
-                res = self.cur.execute(
-                    'INSERT INTO pcommit (series_id, subject, cid) VALUES (?, ?, ?)',
-                    (str(idnum), commit.subject, commit.change_id))
-
+                'INSERT INTO pcommit (series_id, subject, cid) VALUES (?, ?, ?)',
+                (str(idnum), commit.subject, commit.change_id))
+        if not dry_run:
             self.con.commit()
         else:
+            self.con.rollback()
             idnum = None
         ser = Series()
         ser.name = name
@@ -835,6 +837,23 @@ class Cseries:
             raise ValueError(f"No such series '{name}'")
         self.con.commit()
         tout.info(f"Removed series '{name}'")
+
+    def find_series_by_name(self, name):
+        """Find a series and return its details
+
+        Args:
+            name (str): Name to search for
+
+        Returns:
+            idnum, or None if not found
+        """
+        res = self.cur.execute(
+            'SELECT id FROM series WHERE '
+            f"name = '{name}' AND archived = 0")
+        all = res.fetchall()
+        if len(all) != 1:
+            return None
+        return all[0][0]
 
     def set_project(self, pwork, name):
         """Set the name of the project
