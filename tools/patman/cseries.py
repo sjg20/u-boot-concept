@@ -741,13 +741,14 @@ class Cseries:
         self.con.commit()
         tout.info(f"Removed series '{name}'")
 
-    def set_project(self, url, name):
+    def set_project(self, pwork, name):
         """Set the name of the project
 
         Args:
             name (str): Name of the project to use in patchwork
+            pwork (Patchwork): Patchwork object to use
         """
-        res = status.call_rest_api(url, f'projects/')
+        res = pwork.request(f'projects/')
         pwid = None
         for proj in res:
             if proj['name'] == name:

@@ -14,7 +14,6 @@ from itertools import repeat
 import re
 
 import pygit2
-import requests
 
 from patman import patchstream
 from patman.patchstream import PatchStream
@@ -198,26 +197,7 @@ def compare_with_series(series, patches):
 
     return patch_for_commit, commit_for_patch, warnings
 
-def call_rest_api(url, subpath):
-    """Call the patchwork API and return the result as JSON
-
-    Args:
-        url (str): URL of patchwork server, e.g. 'https://patchwork.ozlabs.org'
-        subpath (str): URL subpath to use
-
-    Returns:
-        dict: Json result
-
-    Raises:
-        ValueError: the URL could not be read
-    """
-    full_url = '%s/api/1.2/%s' % (url, subpath)
-    response = requests.get(full_url)
-    if response.status_code != 200:
-        raise ValueError("Could not read URL '%s'" % full_url)
-    return response.json()
-
-def collect_patches(series, series_id, url, rest_api=call_rest_api):
+def collect_patches(series, series_id, patchwork):
     """Collect patch information about a series from patchwork
 
     Uses the Patchwork REST API to collect information provided by patchwork
@@ -227,9 +207,7 @@ def collect_patches(series, series_id, url, rest_api=call_rest_api):
         series (Series): Series object corresponding to the local branch
             containing the series
         series_id (str): Patch series ID number
-        url (str): URL of patchwork server, e.g. 'https://patchwork.ozlabs.org'
-        rest_api (function): API function to call to access Patchwork, for
-            testing
+        patchwork (Patchwork): Patchwork class to handle communications
 
     Returns:
         list: List of patches sorted by sequence number, each a Patch object
@@ -238,7 +216,7 @@ def collect_patches(series, series_id, url, rest_api=call_rest_api):
         ValueError: if the URL could not be read or the web page does not follow
             the expected structure
     """
-    data = rest_api(url, 'series/%s/' % series_id)
+    data = patchwork.request('series/%s/' % series_id)
 
     # Get all the rows, which are patches
     patch_dict = data['patches']
@@ -263,8 +241,7 @@ def collect_patches(series, series_id, url, rest_api=call_rest_api):
     patches = sorted(patches, key=lambda x: x.seq)
     return patches
 
-def find_new_responses(new_rtag_list, review_list, seq, cmt, patch, url,
-                       rest_api=call_rest_api):
+def find_new_responses(new_rtag_list, review_list, seq, cmt, patch, patchwork):
     """Find new rtags collected by patchwork that we don't know about
 
     This is designed to be run in parallel, once for each commit/patch
@@ -281,22 +258,20 @@ def find_new_responses(new_rtag_list, review_list, seq, cmt, patch, url,
         seq (int): Position in new_rtag_list to update
         cmt (Commit): Commit object for this commit
         patch (Patch): Corresponding Patch object for this patch
-        url (str): URL of patchwork server, e.g. 'https://patchwork.ozlabs.org'
-        rest_api (function): API function to call to access Patchwork, for
-            testing
+        patchwork (Patchwork): Patchwork class to handle communications
     """
     if not patch:
         return
 
     # Get the content for the patch email itself as well as all comments
-    data = rest_api(url, 'patches/%s/' % patch.id)
+    data = patchwork.request('patches/%s/' % patch.id)
     pstrm = PatchStream.process_text(data['content'], True)
 
     rtags = collections.defaultdict(set)
     for response, people in pstrm.commit.rtags.items():
         rtags[response].update(people)
 
-    data = rest_api(url, 'patches/%s/comments/' % patch.id)
+    data = patchwork.request('patches/%s/comments/' % patch.id)
 
     reviews = []
     for comment in data:
@@ -410,8 +385,7 @@ def create_branch(series, new_rtag_list, branch, dest_branch, overwrite,
     return num_added
 
 def check_patchwork_status(series, series_id, branch, dest_branch, force,
-                           show_comments, url, rest_api=call_rest_api,
-                           test_repo=None):
+                           show_comments, patchwork, test_repo=None):
     """Check the status of a series on Patchwork
 
     This finds review tags and comments for a series in Patchwork, displaying
@@ -424,12 +398,10 @@ def check_patchwork_status(series, series_id, branch, dest_branch, force,
         dest_branch (str): Name of new branch to create, or None
         force (bool): True to force overwriting dest_branch if it exists
         show_comments (bool): True to show the comments on each patch
-        url (str): URL of patchwork server, e.g. 'https://patchwork.ozlabs.org'
-        rest_api (function): API function to call to access Patchwork, for
-            testing
+        patchwork (Patchwork): Patchwork class to handle communications
         test_repo (pygit2.Repository): Repo to use (use None unless testing)
     """
-    patches = collect_patches(series, series_id, url, rest_api)
+    patches = collect_patches(series, series_id, patchwork)
     col = terminal.Color()
     count = len(series.commits)
     new_rtag_list = [None] * count
@@ -444,8 +416,7 @@ def check_patchwork_status(series, series_id, branch, dest_branch, force,
     with concurrent.futures.ThreadPoolExecutor(max_workers=16) as executor:
         futures = executor.map(
             find_new_responses, repeat(new_rtag_list), repeat(review_list),
-            range(count), series.commits, patch_list, repeat(url),
-            repeat(rest_api))
+            range(count), series.commits, patch_list, repeat(patchwork))
     for fresponse in futures:
         if fresponse:
             raise fresponse.exception()
