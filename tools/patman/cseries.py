@@ -301,6 +301,8 @@ class Cseries:
             if cur_name == branch_name:
                 repo.head.set_target(amended)
 
+        if link is None:
+            link = ''
         tout.info(
             f"Setting link for series '{ser.name}' version {version} to {link}")
         res = self.cur.execute(

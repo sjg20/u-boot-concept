@@ -1867,6 +1867,28 @@ second line.'''
                     {'id': 457, 'name': 'second', 'version': '2'}]),
             cser.search_link(pwork, 'second', 3))
 
+    def test_series_auto_link(self):
+        """Test finding patchwork link for a cseries but it is missing"""
+        cser = self.get_cser()
+
+        pwork = Patchwork.for_testing(self._fake_patchwork_cser_link)
+        pwork.set_project(PROJ_ID)
+        self.assertFalse(cser.get_project())
+        cser.set_project(pwork, 'U-Boot')
+
+        with capture_sys_output() as (out, _):
+            cser.add_series('first', '', allow_unmarked=True)
+
+        with capture_sys_output() as (out, _):
+            cser.do_auto_link(pwork, 'first', None, True)
+        self.assertEqual(
+                "Setting link for series 'first' version 1 to 1234",
+                out.getvalue().strip())
+
+        plist = cser.get_patchwork_dict()
+        self.assertEqual(1, len(plist))
+        self.assertEqual((1, 1, '1234'), plist[0])
+
     def check_series_archive(self):
         """Coroutine to run the archive test"""
         cser = self.get_cser()
