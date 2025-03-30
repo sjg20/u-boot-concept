@@ -159,8 +159,7 @@ class Cseries:
 
     def _prep_series(self, name):
         ser, version = self.parse_series_and_version(name, None)
-        if not name:
-            name = ser.name
+        name = ser.name
 
         # First check we have a branch with this name
         if not gitutil.check_branch(name, git_dir=self.gitdir):
@@ -171,14 +170,14 @@ class Cseries:
             raise ValueError('Cannot detect branch automatically')
 
         series = patchstream.get_metadata(name, 0, count, git_dir=self.gitdir)
-        return name, series
+        return name, series, version
 
     def add_series(self, name, desc=None, mark=False, allow_unmarked=False,
                    dry_run=False):
         """Add a series to the database
 
         Args:
-            name (str): Name of series to add, or None to use current one
+            in_name (str): Name of series to add, or None to use current one
             desc (str): Description to use, or None to use the series subject
             mark (str): True to mark each commit with a change ID
             allow_unmarked (str): True to not require each commit to be marked
@@ -187,7 +186,7 @@ class Cseries:
         Return:
             Series: Series information
         """
-        name, series = self._prep_series(name)
+        name, series, version = self._prep_series(name)
         tout.info(f"Adding series '{name}': mark {mark} allow_unmarked {allow_unmarked}")
         if desc is None:
             if not series.cover:
@@ -209,14 +208,6 @@ class Cseries:
         if bad_count and not allow_unmarked:
             raise ValueError(
                 f'{bad_count} commit(s) are unmarked; please use -m or -M')
-
-        # See if we can collect a version name, i.e. name<version>
-        ser, version = self.parse_series_and_version(name, None)
-        if version > 99:
-            raise ValueError(f"Version '{version}' exceeds 99")
-        if not ser.name:
-            raise ValueError(f"Series name '{name}' cannot be a number")
-        name = ser.name
 
         if 'version' in series and int(series.version) != version:
             raise ValueError(f"Series name '{name}' suggests version {version} "
@@ -246,7 +237,7 @@ class Cseries:
         ser.desc = desc
         ser.idnum = idnum
 
-        tout.info(f"Added series '{name}'")
+        tout.info(f"Added series '{name}' version {version}")
         if dry_run:
             tout.info('Dry run completed')
         return ser
@@ -450,6 +441,10 @@ class Cseries:
         if not name:
             name = gitutil.get_branch(self.gitdir)
         name, version = self.split_name_version(name)
+        if version > 99:
+            raise ValueError(f"Version '{version}' exceeds 99")
+        if not name:
+            raise ValueError(f"Series name '{name}' cannot be a number")
         ser = self.get_series_by_name(name)
         if not ser:
             ser = Series()
@@ -695,7 +690,7 @@ class Cseries:
         Return:
             pygit.oid: oid of the new branch
         """
-        name, series = self._prep_series(name)
+        name, series, version = self._prep_series(name)
         tout.info(f"Unmarking series '{name}': allow_unmarked {allow_unmarked}")
 
         if not allow_unmarked:
