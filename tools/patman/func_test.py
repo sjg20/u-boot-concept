@@ -34,6 +34,7 @@ from patman import status
 
 PATMAN_DIR = pathlib.Path(__file__).parent
 TEST_DATA_DIR = PATMAN_DIR / 'test/'
+URL = 'https://patchwork.ozlabs.org'
 
 
 @contextlib.contextmanager
@@ -1529,7 +1530,7 @@ second line.'''
         args.subcmd = 'list'
         args.extra = []
         with capture_sys_output() as (out, _):
-            control.patchwork_series(args, test_db=self.tmpdir)
+            control.series(args, test_db=self.tmpdir)
         lines = out.getvalue().splitlines()
         self.assertEqual(2, len(lines))
         self.assertEqual('first                                1', lines[0])
@@ -1547,7 +1548,7 @@ second line.'''
         args.allow_unmarked = True
         args.dry_run = False
         with capture_sys_output() as (out, _):
-            control.patchwork_series(args, test_db=self.tmpdir)
+            control.series(args, test_db=self.tmpdir)
 
         cser = self.get_database()
         slist = cser.get_series_dict()
@@ -1559,7 +1560,7 @@ second line.'''
 
         args.subcmd = 'list'
         with capture_sys_output() as (out, _):
-            control.patchwork_series(args, test_db=self.tmpdir)
+            control.series(args, test_db=self.tmpdir)
         lines = out.getvalue().splitlines()
         self.assertEqual(1, len(lines))
         self.assertEqual('first           my-description       1', lines[0])
@@ -1605,7 +1606,7 @@ second line.'''
         args.allow_unmarked = True
         args.dry_run = False
         with capture_sys_output() as (out, _):
-            control.patchwork_series(args, test_db=self.tmpdir)
+            control.series(args, test_db=self.tmpdir)
 
         cser = self.get_database()
         slist = cser.get_series_dict()
@@ -1624,12 +1625,25 @@ second line.'''
                          force=True)
 
         with capture_sys_output() as (out, _):
-            ser = cser.add_series('first', '', allow_unmarked=True)
-        cser.add_link(ser, 4, '1234', True)
-        self.assertEqual('1234', cser.get_link(ser, 4))
+            cser.add_series('first', '', allow_unmarked=True)
 
-        series = patchstream.get_metadata_for_list('first', self.gitdir, 1)
+        with self.assertRaises(ValueError) as exc:
+            cser.add_link('first', 2, '1234', True)
+        self.assertEqual("Series 'first' does not have a version 2",
+                         str(exc.exception))
+
+        self.assertEqual('first', gitutil.get_branch(self.gitdir))
+
+        with capture_sys_output() as (out, _):
+            cser.increment('first')
+        cser.add_link('first', 2, '1234', True)
+
+        self.assertEqual('1234', cser.get_link('first', 2))
+
+        series = patchstream.get_metadata_for_list('first2', self.gitdir, 1)
         self.assertEqual('1234', series.links)
+
+        self.assertEqual('first2', gitutil.get_branch(self.gitdir))
 
         self.db_close()
 
@@ -1644,7 +1658,7 @@ second line.'''
             cser.add_series('first', '', allow_unmarked=True)
 
         # with capture_sys_output() as (out, _):
-        self.run_args('series', 'link', '-s', 'first', '-u', '1234')
+        self.run_args('series', 'link', '-s', 'first', '-V', '4', '-u', '1234')
 
         ser = cser.get_series_by_name('first')
         self.assertTrue(ser)
@@ -2192,3 +2206,60 @@ second line.'''
             cser.remove_series('first')
         self.assertEqual("Removed series 'first'", out.getvalue().strip())
         self.assertFalse(cser.get_series_dict())
+
+    def test_patchwork_set_project(self):
+        """Test setting the project ID"""
+        cser = self.get_cser()
+
+        cser.set_project(URL, 'U-Boot')
+
+    def test_patchwork_get_project(self):
+        """Test setting the project ID"""
+        cser = self.get_cser()
+
+        self.assertFalse(cser.get_project())
+
+        cser.set_project(URL, 'U-Boot')
+
+        name, pwid = cser.get_project()
+        self.assertEqual('U-Boot', name)
+        self.assertEqual(18, pwid)
+
+    def test_patchwork_get_project_cmdline(self):
+        """Test setting the project ID"""
+        cser = self.get_cser()
+
+        self.assertFalse(cser.get_project())
+
+        self.run_args('-P', URL, 'patchwork', 'set-project', 'U-Boot')
+
+        name, pwid = cser.get_project()
+        self.assertEqual('U-Boot', name)
+        self.assertEqual(18, pwid)
+
+        with capture_sys_output() as (out, _):
+            self.run_args('-P', URL, 'patchwork', 'get-project', 'U-Boot')
+        self.assertEqual("Name: U-Boot\nID: 18\n", out.getvalue())
+
+    def test_series_link_auto(self):
+        """Test finding the patchwork link for a cseries"""
+        cser = self.get_cser()
+
+        gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
+                         force=True)
+
+        with capture_sys_output() as (out, _):
+            cser.add_series('first', '', allow_unmarked=True)
+
+        with self.assertRaises(ValueError) as exc:
+            cser.add_link('first', None, None, True)
+        self.assertEqual("Series 'first' does not have a version 2",
+                         str(exc.exception))
+
+        self.assertEqual('first', gitutil.get_branch(self.gitdir))
+
+        with capture_sys_output() as (out, _):
+            cser.increment('first')
+        cser.add_link('first', 2, '1234', True)
+
+        self.assertEqual('1234', cser.get_link('first', 2))

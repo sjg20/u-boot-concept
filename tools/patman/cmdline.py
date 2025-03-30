@@ -138,11 +138,16 @@ def parse_args(argv=None):
             default=False, help="Do a dry run (create but don't email patches)")
     series.add_argument('-u', '--update', action='store_true',
                         help='Update the branch commit')
+    series.add_argument('-V', '--version', type=int,
+                        help='Version number to link')
 
     upstream = subparsers.add_parser('upstream', aliases=['us'],
                                      help='Manage upstream destinations')
     upstream.add_argument('-u', '--unset', action='store_true',
                           help='Unset the default upstream')
+
+    patchwork = subparsers.add_parser('patchwork', aliases=['pw'],
+                                      help='Manage patchwork connection')
 
     # series_sub = series.add_subparsers(dest='subcmd')
     # series.add_argument('subcmd', help='series subcommand')
