@@ -175,6 +175,13 @@ class Cseries:
 
         Args:
             name (str): Name of series to add, or None to use current one
+            desc (str): Description to use, or None to use the series subject
+            mark (str): True to mark each commit with a change ID
+            allow_unmarked (str): True to not require each commit to be marked
+            dry_run (bool): True to do a dry run
+
+        Return:
+            Series: Series information
         """
         name, series = self._prep_series(name)
         tout.info(f"Adding series '{name}': mark {mark} allow_unmarked {allow_unmarked}")
@@ -358,6 +365,7 @@ class Cseries:
 
         Args:
             series (str): Name of series to use, or None to use current branch
+            dry_run (bool): True to do a dry run
         """
         ser = self.parse_series(series)
         if not ser.idnum:
@@ -414,6 +422,49 @@ class Cseries:
         tout.info(f'Added new branch {new_name}')
         if dry_run:
             tout.info('Dry run completed')
+
+    def decrement(self, series, dry_run=False):
+        """Decrement a series to the previous version and delete the branch
+
+        Args:
+            series (str): Name of series to use, or None to use current branch
+            dry_run (bool): True to do a dry run
+        """
+        ser = self.parse_series(series)
+        if not ser.idnum:
+            raise ValueError(f"Series '{ser.name}' not found in database")
+
+        # Find the current version
+        res = self.cur.execute('SELECT MAX(version) FROM patchwork WHERE '
+            f"series_id = {ser.idnum}")
+        max_vers = res.fetchall()[0][0]
+        if max_vers < 2:
+            raise ValueError(f"Series '{ser.name}' only has one version")
+
+        tout.info(f"Removing series '{ser.name}' version {max_vers}")
+
+        new_max = max_vers - 1
+
+        repo = pygit2.init_repository(self.gitdir)
+        if not dry_run:
+            name = ser.name + (f'{new_max}' if new_max > 1 else '')
+            branch = repo.lookup_branch(name)
+            repo.checkout(branch)
+
+            del_name = f'{ser.name}{max_vers}'
+            del_branch = repo.lookup_branch(del_name)
+            branch_oid = del_branch.peel(pygit2.GIT_OBJ_COMMIT).oid
+            del_branch.delete()
+            print(f"Deleted branch '{del_name}' {oid(branch_oid)}")
+
+        res = self.cur.execute(
+            'DELETE FROM patchwork WHERE series_id = ? and version = ?',
+            (ser.idnum, max_vers))
+        if not dry_run:
+            self.con.commit()
+        else:
+            self.con.rollback()
+
 
     def make_cid(self, commit):
         """Make a Change ID for a commit"""
