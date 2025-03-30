@@ -401,7 +401,7 @@ def do_patman(args, test_db=None, pwork=None):
             if not args.extra:
                 raise ValueError('patman series requires a subcommand')
             args.subcmd = args.extra.pop(0)
-            series(args, test_db)
+            series(args, test_db, pwork)
         elif args.cmd in ('upstream', 'us'):
             if not args.extra:
                 raise ValueError('patman upstream requires a subcommand')

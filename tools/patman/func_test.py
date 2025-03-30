@@ -1755,7 +1755,8 @@ second line.'''
         self.assertFalse(cser.get_project())
         cser.set_project(pwork, 'U-Boot')
 
-        self.assertEqual((1234, None), cser.search_link(pwork, 'first', 1))
+        self.assertEqual((1234, None, 'first'),
+                         cser.search_link(pwork, 'first', 1))
 
         with capture_sys_output():
             cser.increment('first')
@@ -1831,11 +1832,15 @@ second line.'''
         self.assertFalse(cser.get_project())
         cser.set_project(pwork, 'U-Boot')
 
-        self.assertEqual((456, None), cser.search_link(pwork, 'second', 1))
-        self.assertEqual((457, None), cser.search_link(pwork, 'second', 2))
+        self.assertEqual((456, None, 'second'),
+                         cser.search_link(pwork, 'second', 1))
+        self.assertEqual((457, None, 'second'),
+                         cser.search_link(pwork, 'second', 2))
         self.assertEqual(
-            (None, [{'id': 456, 'name': 'second', 'version': '1'},
-                    {'id': 457, 'name': 'second', 'version': '2'}]),
+            (None,
+             [{'id': 456, 'name': 'second', 'version': '1'},
+              {'id': 457, 'name': 'second', 'version': '2'}],
+             'second'),
             cser.search_link(pwork, 'second', 3))
 
     def check_series_auto_link(self):
@@ -1847,13 +1852,12 @@ second line.'''
         self.assertFalse(cser.get_project())
         cser.set_project(pwork, 'U-Boot')
 
-        yield cser
-
         with capture_sys_output() as (out, _):
-            cser.do_auto_link(pwork, 'first', None, True)
-        self.assertEqual(
-                "Setting link for series 'first' version 1 to 1234",
-                out.getvalue().strip())
+            cser.add_series('first', '', allow_unmarked=True)
+
+        yield cser, pwork
+
+        self.db_open()
 
         plist = cser.get_patchwork_dict()
         self.assertEqual(1, len(plist))
@@ -1863,20 +1867,30 @@ second line.'''
     def test_series_auto_link(self):
         """Test finding patchwork link for a cseries but it is missing"""
         cor = self.check_series_auto_link()
-        cser = next(cor)
+        cser, pwork = next(cor)
 
         with capture_sys_output() as (out, _):
-            cser.add_series('first', '', allow_unmarked=True)
+            cser.do_auto_link(pwork, 'first', None, True)
+        self.assertEqual(
+                "Setting link for series 'first' version 1 to 1234",
+                out.getvalue().strip())
+
         cser = next(cor)
         cor.close()
 
     def test_series_auto_link_cmdline(self):
         """Test finding missing patchwork link for a cseries from cmdline"""
         cor = self.check_series_auto_link()
-        cser = next(cor)
+        cser, pwork = next(cor)
+        self.db_close()
 
         with capture_sys_output() as (out, _):
-            self.run_args('series', 'add', '-M', '-s', 'first', '')
+            self.run_args('series', 'auto-link', '-M', '-s', 'first', '-u',
+                        pwork=pwork)
+        self.assertEqual(
+                "Setting link for series 'first' version 1 to 1234",
+                out.getvalue().strip())
+
         cser = next(cor)
         cor.close()
 

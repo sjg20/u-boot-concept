@@ -63,7 +63,7 @@ class Patchwork:
                 if int(ser['version']) == version:
                     return ser['id'], None
                 name_found.append(ser)
-        return None, name_found or ser
+        return None, name_found or res
 
     def set_project(self, project_id):
         self.proj_id = project_id
