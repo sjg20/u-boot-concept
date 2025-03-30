@@ -341,8 +341,10 @@ class Cseries:
 
         Args:
             pwork (Patchwork): Patchwork object to use
-            series (str): Series name to search for
-            version (int): Version to search for
+            series (str): Series name to search for, or None for current series
+                that is checked out
+            version (int): Version to search for, or None for current version
+                detected from branch name
 
         Returns:
             tuple:
@@ -351,7 +353,7 @@ class Cseries:
                     'id': series ID
                     'name': series name
         """
-        ser = self.parse_series(series)
+        ser, version = self.parse_series_and_version(series, version)
         versions = self.get_version_list(ser)
         if version not in versions:
             raise ValueError(
