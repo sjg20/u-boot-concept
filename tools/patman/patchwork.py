@@ -48,18 +48,18 @@ class Patchwork:
         pwork.fake_request = func
         return pwork
 
-    def find_series(self, name, version):
+    def find_series(self, desc, version):
         """Find a series on the server
 
         Args:
-            name (str): Name to search for
+            desc (str): Description to search for
             version (int): Version number to search for
         """
-        query = name.replace(' ', '+')
+        query = desc.replace(' ', '+')
         res = self.request(f'series/?project={self.proj_id}&q={query}')
         name_found = []
         for ser in res:
-            if ser['name'] == name:
+            if ser['name'] == desc:
                 if int(ser['version']) == version:
                     return ser['id'], None
                 name_found.append(ser)
