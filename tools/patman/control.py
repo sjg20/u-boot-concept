@@ -295,7 +295,7 @@ def series(args, test_db=None):
             cser.decrement(args.series, args.dry_run)
         elif args.subcmd == 'send':
             args.dry_run = True
-            gitdir = None
+            git_dir = None
             if test_db:
                 git_dir = os.path.join(test_db, '.git')
 
