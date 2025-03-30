@@ -1663,10 +1663,20 @@ second line.'''
         self.assertIn("Series 'first' does not have a version 4",
                       out.getvalue())
 
-        self.assertEqual(None, cser.get_link('first', 4))
+        with self.assertRaises(ValueError) as exc:
+            cser.get_link('first', 4)
+        self.assertEqual("Series 'first' does not have a version 4",
+                         str(exc.exception))
 
         with capture_sys_output() as (out, _):
             cser.increment('first')
+
+        with self.assertRaises(ValueError) as exc:
+            cser.get_link('first', 4)
+        self.assertEqual("Series 'first' does not have a version 4",
+                         str(exc.exception))
+
+        with capture_sys_output() as (out, _):
             cser.increment('first')
             cser.increment('first')
 
@@ -1679,9 +1689,23 @@ second line.'''
         series = patchstream.get_metadata_for_list('first4', self.gitdir, 1)
         self.assertEqual('1234', series.links)
 
-        self.run_args('series', 'get-link', '-s', 'first', '-V', '5')
+        with capture_sys_output() as (out, _):
+            self.run_args('series', 'get-link', '-s', 'first', '-V', '5',
+                          expected_ret=1)
+
+        self.assertIn("Series 'first' does not have a version 5",
+                      out.getvalue())
 
         self.db_close()
+
+    def test_series_link_auto(self):
+        """Test finding the patchwork link for a cseries"""
+        cser = self.get_cser()
+
+        with capture_sys_output() as (out, _):
+            cser.add_series('first', '', allow_unmarked=True)
+
+        self.assertEqual('1234', cser.search_link('first', 1))
 
     def check_series_archive(self):
         """Coroutine to run the archive test"""
@@ -1832,19 +1856,21 @@ second line.'''
         plist = cser.get_patchwork_dict()
         self.assertEqual(1, len(plist))
 
+        # Try decrementing when there is only one version
         with self.assertRaises(ValueError) as exc:
             cser.decrement('first')
-        self.assertEqual("Series 'first' only has one version", str(exc.exception))
+        self.assertEqual("Series 'first' only has one version",
+                         str(exc.exception))
 
+        # Add a version; now there should be two
         with capture_sys_output() as (out, _):
             cser.increment('first')
-
         plist = cser.get_patchwork_dict()
         self.assertEqual(2, len(plist))
 
+        # Remove version two, using dry run (i.e. no effect)
         with capture_sys_output() as (out, _):
             cser.decrement('first', dry_run=True)
-
         plist = cser.get_patchwork_dict()
         self.assertEqual(2, len(plist))
 
@@ -1853,6 +1879,7 @@ second line.'''
         self.assertTrue(branch)
         branch_oid = branch.peel(pygit2.GIT_OBJ_COMMIT).oid
 
+        # Now remove version two for real
         with capture_sys_output() as (out, _):
             cser.decrement('first')
         lines = out.getvalue().splitlines()
@@ -1866,6 +1893,12 @@ second line.'''
 
         branch = repo.lookup_branch('first2')
         self.assertFalse(branch)
+
+        # Removing the only version should not be allowed
+        with self.assertRaises(ValueError) as exc:
+            cser.decrement('first', dry_run=True)
+        self.assertEqual("Series 'first' only has one version",
+                         str(exc.exception))
 
     def test_series_send(self):
         """Test sending a series"""
@@ -2254,26 +2287,3 @@ second line.'''
         with capture_sys_output() as (out, _):
             self.run_args('-P', URL, 'patchwork', 'get-project', 'U-Boot')
         self.assertEqual("Name: U-Boot\nID: 18\n", out.getvalue())
-
-    def test_series_link_auto(self):
-        """Test finding the patchwork link for a cseries"""
-        cser = self.get_cser()
-
-        gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
-                         force=True)
-
-        with capture_sys_output() as (out, _):
-            cser.add_series('first', '', allow_unmarked=True)
-
-        with self.assertRaises(ValueError) as exc:
-            cser.set_link('first', None, None, True)
-        self.assertEqual("Series 'first' does not have a version 2",
-                         str(exc.exception))
-
-        self.assertEqual('first', gitutil.get_branch(self.gitdir))
-
-        with capture_sys_output() as (out, _):
-            cser.increment('first')
-        cser.set_link('first', 2, '1234', True)
-
-        self.assertEqual('1234', cser.get_link('first', 2))
