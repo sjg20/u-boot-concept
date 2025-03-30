@@ -391,7 +391,8 @@ class Cseries:
 
         new_name = f'{ser.name}{vers}'
         new_branch = repo.branches.create(new_name, commit)
-        repo.checkout(new_branch)
+        if not dry_run:
+            repo.checkout(new_branch)
 
         ver_string = f'Series-version: {vers}'
         if index:
@@ -404,10 +405,15 @@ class Cseries:
         res = self.cur.execute(
             'INSERT INTO patchwork (version, series_id) VALUES'
             f"('{vers}', {ser.idnum})")
-        self.con.commit()
+        if not dry_run:
+            self.con.commit()
+        else:
+            self.con.rollback()
 
         # repo.head.set_target(amended)
-        print(f'Added new branch {new_name}')
+        tout.info(f'Added new branch {new_name}')
+        if dry_run:
+            tout.info('Dry run completed')
 
     def make_cid(self, commit):
         """Make a Change ID for a commit"""

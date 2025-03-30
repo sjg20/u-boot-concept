@@ -1496,8 +1496,9 @@ second line.'''
         with capture_sys_output() as (out, _):
             cser.add_series('first', '', allow_unmarked=True)
         lines = out.getvalue().strip().splitlines()
-        self.assertEqual("Adding series 'first': mark False allow_unmarked True",
-                         lines[0])
+        self.assertEqual(
+            "Adding series 'first': mark False allow_unmarked True",
+            lines[0])
         self.assertEqual("Added series 'first'", lines[1])
         self.assertEqual(2, len(lines))
 
@@ -1749,6 +1750,9 @@ second line.'''
 
         cser.increment('first')
         cser = next(cor)
+
+        self.assertEqual('first2', gitutil.get_branch(self.gitdir))
+
         cor.close()
 
     def test_series_inc_cmdline(self):
@@ -1760,6 +1764,33 @@ second line.'''
 
         cser = next(cor)
         cor.close()
+
+    def test_series_inc_dryrun(self):
+        """Test incrementing the version with cmdline"""
+        cser = self.get_cser()
+
+        gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
+                         force=True)
+        with capture_sys_output() as (out, _):
+            cser.add_series('first', '', allow_unmarked=True)
+
+        with capture_sys_output() as (out, _):
+            cser.increment('first', dry_run=True)
+
+        lines = out.getvalue().splitlines()
+        self.assertEqual(3, len(lines))
+        self.assertEqual('No existing Series-version found, using version 1',
+                         lines[0])
+        self.assertEqual('Added new branch first2', lines[1])
+        self.assertEqual('Dry run completed', lines[2])
+
+        # Make sure that nothing was added
+        plist = cser.get_patchwork_dict()
+        self.assertEqual(1, len(plist))
+        self.assertEqual((1, 1, None), plist[0])
+
+        # We should still be on the same branch
+        self.assertEqual('first', gitutil.get_branch(self.gitdir))
 
     def test_series_send(self):
         """Test sending a series"""

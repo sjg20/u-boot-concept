@@ -287,6 +287,8 @@ def patchwork_series(args, test_db=None):
             cser.set_archived(args.series, False)
         elif args.subcmd == 'inc':
             cser.increment(args.series, args.dry_run)
+        elif args.subcmd == 'dec':
+            cser.decrement(args.series, args.dry_run)
         elif args.subcmd == 'send':
             args.dry_run = True
             gitdir = None
