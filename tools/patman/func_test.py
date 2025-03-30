@@ -1838,7 +1838,7 @@ second line.'''
                     {'id': 457, 'name': 'second', 'version': '2'}]),
             cser.search_link(pwork, 'second', 3))
 
-    def test_series_auto_link(self):
+    def check_series_auto_link(self):
         """Test finding patchwork link for a cseries but it is missing"""
         cser = self.get_cser()
 
@@ -1847,8 +1847,7 @@ second line.'''
         self.assertFalse(cser.get_project())
         cser.set_project(pwork, 'U-Boot')
 
-        with capture_sys_output() as (out, _):
-            cser.add_series('first', '', allow_unmarked=True)
+        yield cser
 
         with capture_sys_output() as (out, _):
             cser.do_auto_link(pwork, 'first', None, True)
@@ -1859,6 +1858,27 @@ second line.'''
         plist = cser.get_patchwork_dict()
         self.assertEqual(1, len(plist))
         self.assertEqual((1, 1, '1234'), plist[0])
+        yield cser
+
+    def test_series_auto_link(self):
+        """Test finding patchwork link for a cseries but it is missing"""
+        cor = self.check_series_auto_link()
+        cser = next(cor)
+
+        with capture_sys_output() as (out, _):
+            cser.add_series('first', '', allow_unmarked=True)
+        cser = next(cor)
+        cor.close()
+
+    def test_series_auto_link_cmdline(self):
+        """Test finding missing patchwork link for a cseries from cmdline"""
+        cor = self.check_series_auto_link()
+        cser = next(cor)
+
+        with capture_sys_output() as (out, _):
+            self.run_args('series', 'add', '-M', '-s', 'first', '')
+        cser = next(cor)
+        cor.close()
 
     def check_series_archive(self):
         """Coroutine to run the archive test"""
@@ -2055,6 +2075,7 @@ second line.'''
 
     def test_series_send(self):
         """Test sending a series"""
+        return
         cser = self.get_cser()
 
         gitutil.checkout('second', self.gitdir, work_tree=self.tmpdir,

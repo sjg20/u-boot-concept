@@ -258,13 +258,14 @@ def patchwork_status(branch, count, start, end, dest_branch, force,
     status.check_patchwork_status(series, found[0], branch, dest_branch, force,
                                   show_comments, patchwork)
 
-def series(args, test_db=None):
+def series(args, test_db=None, pwork=None):
     """Process a series subcommand
 
     Args:
         args (Namespace): Arguments to process
         test_db (str or None): Directory containing the test database, None to
             use the normal one
+        pwork (Patchwork): Patchwork object to use
     """
     cser = cseries.Cseries(test_db)
     try:
@@ -281,7 +282,9 @@ def series(args, test_db=None):
         elif args.subcmd == 'set-link':
             cser.set_link(args.series, args.version, arg0, args.update)
         elif args.subcmd == 'auto-link':
-            cser.do_auto_link(args.series, args.version, args.update)
+            if not pwork:
+                pwork = Patchwork(args.patchwork_url)
+            cser.do_auto_link(pwork, args.series, args.version, args.update)
         elif args.subcmd == 'get-link':
             link = cser.get_link(args.series, args.version)
             print(link)
@@ -345,6 +348,7 @@ def patchwork(args, test_db=None, pwork=None):
         args (Namespace): Arguments to process
         test_db (str or None): Directory containing the test database, None to
             use the normal one
+        pwork (Patchwork): Patchwork object to use
     """
     cser = cseries.Cseries(test_db)
     try:
