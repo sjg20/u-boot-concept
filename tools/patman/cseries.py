@@ -282,7 +282,7 @@ class Cseries:
         """
         return name + (f'{version}' if version > 1 else '')
 
-    def add_link(self, series, version, link, update_commit):
+    def set_link(self, series, version, link, update_commit):
         """Add / update a series-link link for a series
 
         Args:
@@ -419,8 +419,8 @@ class Cseries:
         for seq, line in enumerate(lines):
             mat = re.match('Series-version:(.*)', line)
             if mat:
-                index = line
-                vers = int(mat.group())
+                index = seq
+                vers = int(mat.group(1))
         if not index:
             print('No existing Series-version found, using version 1')
             vers = 1
@@ -436,7 +436,7 @@ class Cseries:
 
         ver_string = f'Series-version: {vers}'
         if index:
-            lines = (lines[:index] + ver_string + lines[index + 1:])
+            lines = (lines[:index] + [ver_string] + lines[index + 1:])
         else:
             lines.append(ver_string)
         new_msg = '\n'.join(lines) + '\n'

@@ -1599,7 +1599,7 @@ second line.'''
             cser.add_series('first', '', allow_unmarked=True)
 
         with self.assertRaises(ValueError) as exc:
-            cser.add_link('first', 2, '1234', True)
+            cser.set_link('first', 2, '1234', True)
         self.assertEqual("Series 'first' does not have a version 2",
                          str(exc.exception))
 
@@ -1607,7 +1607,7 @@ second line.'''
 
         with capture_sys_output() as (out, _):
             cser.increment('first')
-        cser.add_link('first', 2, '1234', True)
+        cser.set_link('first', 2, '1234', True)
 
         self.assertEqual('1234', cser.get_link('first', 2))
 
@@ -1628,15 +1628,29 @@ second line.'''
         with capture_sys_output() as (out, _):
             cser.add_series('first', '', allow_unmarked=True)
 
-        # with capture_sys_output() as (out, _):
-        self.run_args('series', 'link', '-s', 'first', '-V', '4', '-u', '1234')
+        with capture_sys_output() as (out, _):
+            self.run_args('series', 'set-link', '-s', 'first', '-V', '4', '-u',
+                          '1234', expected_ret=1)
+        self.assertIn("Series 'first' does not have a version 4",
+                      out.getvalue())
 
-        ser = cser.get_series_by_name('first')
-        self.assertTrue(ser)
-        self.assertEqual('1234', cser.get_link(ser, 4))
+        self.assertEqual(None, cser.get_link('first', 4))
 
-        series = patchstream.get_metadata_for_list('first', self.gitdir, 1)
+        with capture_sys_output() as (out, _):
+            cser.increment('first')
+            cser.increment('first')
+            cser.increment('first')
+
+        self.run_args('series', 'set-link', '-s', 'first', '-V', '4', '-u',
+                        '1234')
+        with capture_sys_output() as (out, _):
+            self.run_args('series', 'get-link', '-s', 'first', '-V', '4')
+        self.assertIn('1234', out.getvalue())
+
+        series = patchstream.get_metadata_for_list('first4', self.gitdir, 1)
         self.assertEqual('1234', series.links)
+
+        self.run_args('series', 'get-link', '-s', 'first', '-V', '5')
 
         self.db_close()
 
@@ -2223,7 +2237,7 @@ second line.'''
             cser.add_series('first', '', allow_unmarked=True)
 
         with self.assertRaises(ValueError) as exc:
-            cser.add_link('first', None, None, True)
+            cser.set_link('first', None, None, True)
         self.assertEqual("Series 'first' does not have a version 2",
                          str(exc.exception))
 
@@ -2231,6 +2245,6 @@ second line.'''
 
         with capture_sys_output() as (out, _):
             cser.increment('first')
-        cser.add_link('first', 2, '1234', True)
+        cser.set_link('first', 2, '1234', True)
 
         self.assertEqual('1234', cser.get_link('first', 2))
