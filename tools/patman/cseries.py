@@ -360,7 +360,18 @@ class Cseries:
         pws, options = pwork.find_series(ser.name, version)
         return pws, options
 
-    def do_search_link(self, pwork, series, version):
+    def do_auto_link(self, pwork, series, version, update_commit):
+        """Automatically find a series link by looking in patchwork
+
+        Args:
+            pwork (Patchwork): Patchwork object to use
+            series (str): Series name to search for, or None for current series
+                that is checked out
+            version (int): Version to search for, or None for current version
+                detected from branch name
+            update_commit (bool): True to update the current commit with the
+                link
+        """
         pws, options = self.search_link(pwork, series, version)
 
         if not pws:
@@ -369,6 +380,8 @@ class Cseries:
             for opt in options:
                 print(f"{opt['id']:5}  {opt['name']}")
             return 1
+
+        self.set_link(series, version, pws, update_commit)
 
     def get_version_list(self, ser):
         """Get a list of the versions available for a series
