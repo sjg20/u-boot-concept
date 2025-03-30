@@ -339,7 +339,7 @@ def upstream(args, test_db=None):
         cser.close_database()
 
 
-def patchwork(args, test_db=None):
+def patchwork(args, test_db=None, pwork=None):
     """Process a 'patchwork' subcommand
     Args:
         args (Namespace): Arguments to process
@@ -350,7 +350,8 @@ def patchwork(args, test_db=None):
     try:
         cser.open_database()
         if args.subcmd == 'set-project':
-            pwork = Patchwork(args.patchwork_url)
+            if not pwork:
+                pwork = Patchwork(args.patchwork_url)
             cser.set_project(pwork, args.extra[0])
         elif args.subcmd == 'get-project':
             name, pwid = cser.get_project()
@@ -361,7 +362,7 @@ def patchwork(args, test_db=None):
     finally:
         cser.close_database()
 
-def do_patman(args, test_db=None):
+def do_patman(args, test_db=None, pwork=None):
     if args.cmd == 'send':
         # Called from git with a patch filename as argument
         # Printout a list of additional CC recipients for this patch
@@ -406,7 +407,7 @@ def do_patman(args, test_db=None):
             if not args.extra:
                 raise ValueError('patman patchwork requires a subcommand')
             args.subcmd = args.extra.pop(0)
-            patchwork(args, test_db)
+            patchwork(args, test_db, pwork)
     except Exception as exc:
         terminal.tprint(f'patman: {type(exc).__name__}: {exc}',
                         colour=terminal.Color.RED)
