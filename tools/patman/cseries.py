@@ -327,6 +327,11 @@ class Cseries:
             str: Patchwork link as a string, e.g. '12325'
         """
         ser = self.parse_series(series)
+        versions = self.get_version_list(ser)
+        if version not in versions:
+            raise ValueError(
+                f"Series '{ser.name}' does not have a version {version}")
+
         res = self.cur.execute('SELECT link FROM patchwork WHERE '
             f"series_id = {ser.idnum} AND version = '{version}'")
         all = res.fetchall()
@@ -335,6 +340,14 @@ class Cseries:
         if len(all) > 1:
             raise ValueError('Expected one match, but multiple matches found')
         return all[0][0]
+
+    def search_link(self, series, version):
+        ser = self.parse_series(series)
+        versions = self.get_version_list(ser)
+        if version not in versions:
+            raise ValueError(
+                f"Series '{ser.name}' does not have a version {version}")
+
 
     def get_version_list(self, ser):
         """Get a list of the versions available for a series
@@ -357,7 +370,8 @@ class Cseries:
             name (str or None): name of series
 
         Return:
-            Series: New object with the name and id set
+            Series: New object with the name set; idnum is also set if the
+                series exists in the database
         """
         if not name:
             name = gitutil.get_branch(self.gitdir)
