@@ -1792,6 +1792,53 @@ second line.'''
         # We should still be on the same branch
         self.assertEqual('first', gitutil.get_branch(self.gitdir))
 
+    def test_series_dec(self):
+        """Test decrementing the version"""
+        cser = self.get_cser()
+
+        gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
+                         force=True)
+        with capture_sys_output() as (out, _):
+            cser.add_series('first', '', allow_unmarked=True)
+
+        plist = cser.get_patchwork_dict()
+        self.assertEqual(1, len(plist))
+
+        with self.assertRaises(ValueError) as exc:
+            cser.decrement('first')
+        self.assertEqual("Series 'first' only has one version", str(exc.exception))
+
+        with capture_sys_output() as (out, _):
+            cser.increment('first')
+
+        plist = cser.get_patchwork_dict()
+        self.assertEqual(2, len(plist))
+
+        with capture_sys_output() as (out, _):
+            cser.decrement('first', dry_run=True)
+
+        plist = cser.get_patchwork_dict()
+        self.assertEqual(2, len(plist))
+
+        repo = pygit2.init_repository(self.gitdir)
+        branch = repo.lookup_branch('first2')
+        self.assertTrue(branch)
+        branch_oid = branch.peel(pygit2.GIT_OBJ_COMMIT).oid
+
+        with capture_sys_output() as (out, _):
+            cser.decrement('first')
+        lines = out.getvalue().splitlines()
+        self.assertEqual(2, len(lines))
+        self.assertEqual("Removing series 'first' version 2", lines[0])
+        self.assertEqual(
+            f"Deleted branch 'first2' {str(branch_oid)[:10]}", lines[1])
+
+        plist = cser.get_patchwork_dict()
+        self.assertEqual(1, len(plist))
+
+        branch = repo.lookup_branch('first2')
+        self.assertFalse(branch)
+
     def test_series_send(self):
         """Test sending a series"""
         cser = self.get_cser()
