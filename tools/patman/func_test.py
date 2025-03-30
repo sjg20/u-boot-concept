@@ -1786,6 +1786,34 @@ second line.'''
         self.assertEqual((1, 1, None), plist[0])
         self.assertEqual((1, 2, '2345'), plist[1])
 
+    def test_series_link_auto_name_version(self):
+        """Test finding the patchwork link for a cseries"""
+        cser = self.get_cser()
+
+        with capture_sys_output() as (out, _):
+            cser.add_series('first', '', allow_unmarked=True)
+
+        # Set link with detected name and version
+        with capture_sys_output() as (out, _):
+            cser.set_link(None, None, '1234', True)
+        self.assertEqual(
+                "Setting link for series 'first' version 1 to 1234",
+                out.getvalue().strip())
+
+        with capture_sys_output():
+            cser.increment('first')
+
+        with capture_sys_output() as (out, _):
+            cser.set_link(None, None, '2345', True)
+        self.assertEqual(
+                "Setting link for series 'first' version 2 to 2345",
+                out.getvalue().strip())
+
+        plist = cser.get_patchwork_dict()
+        self.assertEqual(2, len(plist))
+        self.assertEqual((1, 1, '1234'), plist[0])
+        self.assertEqual((1, 2, '2345'), plist[1])
+
     def check_series_archive(self):
         """Coroutine to run the archive test"""
         cser = self.get_cser()
