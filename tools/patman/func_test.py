@@ -36,7 +36,6 @@ from patman import status
 
 PATMAN_DIR = pathlib.Path(__file__).parent
 TEST_DATA_DIR = PATMAN_DIR / 'test/'
-URL = 'https://patchwork.ozlabs.org'
 
 
 @contextlib.contextmanager
@@ -1541,10 +1540,10 @@ second line.'''
 
         self.db_close()
 
-    def run_args(self, *argv, expected_ret=0):
+    def run_args(self, *argv, expected_ret=0, pwork=None):
         was_open = self.db_close()
         args = cmdline.parse_args(['-D'] + list(argv))
-        exit_code = control.do_patman(args, self.tmpdir)
+        exit_code = control.do_patman(args, self.tmpdir, pwork)
         self.assertEqual(expected_ret, exit_code)
         if was_open:
             self.db_open()
@@ -2228,23 +2227,44 @@ second line.'''
         self.assertEqual("Removed series 'first'", out.getvalue().strip())
         self.assertFalse(cser.get_series_dict())
 
+    def _fake_patchwork_cser(self, subpath):
+        """Fake Patchwork server for the function below
+
+        This handles accessing a series, providing a list consisting of a
+        single patch
+
+        Args:
+            subpath (str): URL subpath to use
+        """
+        if subpath == 'projects/':
+            return [
+                {'id':6, 'name': 'U-Boot'},
+                {'id':9, 'name': 'other'}]
+        re_series = re.match(r'series/(\d*)/$', subpath)
+        if re_series:
+            series_num = re_series.group(1)
+            if series_num == '1234':
+                return {'patches': [
+                    {'id': '1', 'name': 'Some patch'}]}
+        raise ValueError('Fake Patchwork does not understand: %s' % subpath)
+
+
     def test_patchwork_set_project(self):
         """Test setting the project ID"""
         cser = self.get_cser()
-        pwork = Patchwork(URL)
+        pwork = Patchwork.for_testing(self._fake_patchwork_cser)
         cser.set_project(pwork, 'U-Boot')
 
     def test_patchwork_get_project(self):
         """Test setting the project ID"""
         cser = self.get_cser()
-
+        pwork = Patchwork.for_testing(self._fake_patchwork_cser)
         self.assertFalse(cser.get_project())
-        pwork = Patchwork(URL)
         cser.set_project(pwork, 'U-Boot')
 
         name, pwid = cser.get_project()
         self.assertEqual('U-Boot', name)
-        self.assertEqual(18, pwid)
+        self.assertEqual(6, pwid)
 
     def test_patchwork_get_project_cmdline(self):
         """Test setting the project ID"""
@@ -2252,12 +2272,15 @@ second line.'''
 
         self.assertFalse(cser.get_project())
 
-        self.run_args('-P', URL, 'patchwork', 'set-project', 'U-Boot')
+        pwork = Patchwork.for_testing(self._fake_patchwork_cser)
+        self.run_args('-P', 'https://url', 'patchwork', 'set-project', 'U-Boot',
+                      pwork=pwork)
 
         name, pwid = cser.get_project()
         self.assertEqual('U-Boot', name)
-        self.assertEqual(18, pwid)
+        self.assertEqual(6, pwid)
 
         with capture_sys_output() as (out, _):
-            self.run_args('-P', URL, 'patchwork', 'get-project', 'U-Boot')
-        self.assertEqual("Name: U-Boot\nID: 18\n", out.getvalue())
+            self.run_args('-P', 'https://url', 'patchwork', 'get-project',
+                          'U-Boot')
+        self.assertEqual("Name: U-Boot\nID: 6\n", out.getvalue())
