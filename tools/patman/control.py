@@ -257,7 +257,7 @@ def patchwork_status(branch, count, start, end, dest_branch, force,
                                   show_comments, url)
 
 
-def patchwork_series(args, test_db=None):
+def series(args, test_db=None):
     """Process a series subcommand
 
     Args:
@@ -278,8 +278,7 @@ def patchwork_series(args, test_db=None):
         elif args.subcmd == 'remove':
             cser.remove_series(args.series)
         elif args.subcmd == 'link':
-            ser = cser.parse_series(args.series)
-            cser.add_link(ser, 4, args.extra[0], args.update)
+            cser.add_link(args.series, args.version, args.extra[0], args.update)
         elif args.subcmd == 'archive':
             cser.set_archived(args.series, True)
         elif args.subcmd == 'unarchive':
@@ -303,7 +302,7 @@ def patchwork_series(args, test_db=None):
         cser.close_database()
 
 
-def patchwork_upstream(args, test_db=None):
+def upstream(args, test_db=None):
     """Process an 'upstream' subcommand
 
     Args:
@@ -333,6 +332,27 @@ def patchwork_upstream(args, test_db=None):
     finally:
         cser.close_database()
 
+
+def patchwork(args, test_db=None):
+    """Process a 'patchwork' subcommand
+    Args:
+        args (Namespace): Arguments to process
+        test_db (str or None): Directory containing the test database, None to
+            use the normal one
+    """
+    cser = cseries.Cseries(test_db)
+    try:
+        cser.open_database()
+        if args.subcmd == 'set-project':
+            cser.set_project(args.patchwork_url, args.extra[0])
+        elif args.subcmd == 'get-project':
+            name, pwid = cser.get_project()
+            print(f'Name: {name}')
+            print(f'ID: {pwid}')
+        else:
+            raise ValueError(f"Unknown patchwork subcommand '{args.subcmd}'")
+    finally:
+        cser.close_database()
 
 def do_patman(args, test_db=None):
     if args.cmd == 'send':
@@ -369,12 +389,17 @@ def do_patman(args, test_db=None):
             if not args.extra:
                 raise ValueError('patman series requires a subcommand')
             args.subcmd = args.extra.pop(0)
-            patchwork_series(args, test_db)
+            series(args, test_db)
         elif args.cmd in ('upstream', 'us'):
             if not args.extra:
                 raise ValueError('patman upstream requires a subcommand')
             args.subcmd = args.extra.pop(0)
-            patchwork_upstream(args, test_db)
+            upstream(args, test_db)
+        elif args.cmd in ('patchwork', 'pw'):
+            if not args.extra:
+                raise ValueError('patman patchwork requires a subcommand')
+            args.subcmd = args.extra.pop(0)
+            patchwork(args, test_db)
     except Exception as exc:
         terminal.tprint(f'patman: {type(exc).__name__}: {exc}',
                         colour=terminal.Color.RED)

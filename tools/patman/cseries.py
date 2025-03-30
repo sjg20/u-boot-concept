@@ -18,6 +18,7 @@ import pygit2
 from patman import patchstream
 from patman import series
 from patman.series import Series
+from patman import status
 from u_boot_pylib import gitutil
 from u_boot_pylib import tout
 
@@ -74,6 +75,8 @@ class Cseries:
                 'series_id INTEGER, subject, cid,'
                 'FOREIGN KEY (series_id) REFERENCES series (id))')
 
+            self.cur.execute(
+                'CREATE TABLE settings (name UNIQUE, pwid INT)')
             self.con.commit()
         return self.cur
 
@@ -270,31 +273,60 @@ class Cseries:
         ser.idnum, ser.name, ser.desc = desc = all[0]
         return ser
 
-    def add_link(self, ser, version, link, update_commit):
+    def get_branch_name(self, name, version):
+        """Get the branch name for a particular version
+
+        Args:
+            name (str): Base name of branch
+            version (int): Version number to use
+        """
+        return name + (f'{version}' if version > 1 else '')
+
+    def add_link(self, series, version, link, update_commit):
         """Add / update a series-link link for a series
 
         Args:
-            ser (Series): Series object containing the ID
+            series (str): Name of series to use, or None to use current branch
             version (int): Version number
             link (str): Patchwork link-string for the series
             update_commit (bool): True to update the current commit with the
                 link
         """
+        ser = self.parse_series(series)
+        versions = self.get_version_list(ser)
+        if version not in versions:
+            raise ValueError(f"Series '{ser.name}' does not have a version {version}")
+
         if update_commit:
-            if gitutil.get_branch(self.gitdir) != ser.name:
-                raise ValueError(f"Cannot update as not on branch '{ser.name}'")
+            cur_name = gitutil.get_branch(self.gitdir)
+
             repo = pygit2.init_repository(self.gitdir)
             commit = repo.head.peel(pygit2.GIT_OBJ_COMMIT)
             new_msg = commit.message + f'\nSeries-links: {link}'
             amended = repo.amend_commit(commit, 'HEAD', message=new_msg)
-            repo.head.set_target(amended)
+
+            branch_name = self.get_branch_name(ser.name, version)
+            branch = repo.lookup_branch(branch_name)
+
+            if cur_name == branch_name:
+                repo.head.set_target(amended)
 
         res = self.cur.execute(
-            'INSERT INTO patchwork (version, link, series_id) VALUES'
-            f"('{version}', '{link}', {ser.idnum})")
+            f"UPDATE patchwork SET link = '{link}' WHERE "
+            'series_id = ? AND version = ?', (ser.idnum, version))
         self.con.commit()
 
-    def get_link(self, ser, version):
+    def get_link(self, series, version):
+        """Get the patchwork link for a version of a series
+
+        Args:
+            series (str): Name of series to use, or None to use current branch
+            version (int): Version number
+
+        Return:
+            str: Patchwork link as a string, e.g. '12325'
+        """
+        ser = self.parse_series(series)
         res = self.cur.execute('SELECT link FROM patchwork WHERE '
             f"series_id = {ser.idnum} AND version = '{version}'")
         all = res.fetchall()
@@ -447,7 +479,7 @@ class Cseries:
 
         repo = pygit2.init_repository(self.gitdir)
         if not dry_run:
-            name = ser.name + (f'{new_max}' if new_max > 1 else '')
+            name = self.get_branch_name(ser.name, new_max)
             branch = repo.lookup_branch(name)
             repo.checkout(branch)
 
@@ -694,3 +726,35 @@ class Cseries:
             raise ValueError(f"No such series '{name}'")
         self.con.commit()
         tout.info(f"Removed series '{name}'")
+
+    def set_project(self, url, name):
+        """Set the name of the project
+
+        Args:
+            name (str): Name of the project to use in patchwork
+        """
+        res = status.call_rest_api(url, f'projects/')
+        pwid = None
+        for proj in res:
+            if proj['name'] == name:
+                pwid = proj['id']
+        if not pwid:
+            raise ValueError(f"Unknown project name '{name}'")
+        res = self.cur.execute(
+                f'INSERT INTO settings (name, pwid) VALUES (?, ?)',
+                (name, pwid))
+        self.con.commit()
+
+    def get_project(self):
+        """Get the name of the project
+
+        Returns:
+            tuple:
+                name (str): Project name, e.g. 'U-Boot'
+                pwid (int): Patchworks project ID for this project
+        """
+        res = self.cur.execute(f"SELECT name, pwid FROM settings")
+        all = res.fetchall()
+        if len(all) != 1:
+            return None
+        return all[0]
