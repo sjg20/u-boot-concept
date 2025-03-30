@@ -215,21 +215,35 @@ class Cseries:
 
         link = series.get_link_for_version(version)
 
+        msg = 'Added'
+        added = False
         idnum = self.find_series_by_name(name)
         if not idnum:
             res = self.cur.execute(
                 'INSERT INTO series (name, desc, archived) '
                 f"VALUES ('{name}', '{desc}', 0)")
             idnum = self.cur.lastrowid
-        res = self.cur.execute(
-            'INSERT INTO patchwork (version, link, series_id) VALUES'
-            f"('{version}', ?, {idnum})", (link,))
+            added = True
+            msg += f" series '{name}'"
 
-        for commit in series.commits:
+        if version not in self.get_version_list(idnum):
             res = self.cur.execute(
-                'INSERT INTO pcommit (series_id, subject, cid) VALUES (?, ?, ?)',
-                (str(idnum), commit.subject, commit.change_id))
-        if not dry_run:
+                'INSERT INTO patchwork (version, link, series_id) VALUES'
+                f"('{version}', ?, {idnum})", (link,))
+            msg += f" version {version}"
+            if not added:
+                msg += f" to existing series '{name}'"
+            added = True
+
+            for commit in series.commits:
+                res = self.cur.execute(
+                    'INSERT INTO pcommit (series_id, subject, cid) '
+                    'VALUES (?, ?, ?)',
+                    (str(idnum), commit.subject, commit.change_id))
+        if not added:
+            tout.info(f"Series '{name}' version {version} already exists")
+            msg = None
+        elif not dry_run:
             self.con.commit()
         else:
             self.con.rollback()
@@ -239,7 +253,8 @@ class Cseries:
         ser.desc = desc
         ser.idnum = idnum
 
-        tout.info(f"Added series '{name}' version {version}")
+        if msg:
+            tout.info(msg)
         if dry_run:
             tout.info('Dry run completed')
         return ser
@@ -284,7 +299,7 @@ class Cseries:
                 link
         """
         ser, version = self.parse_series_and_version(series, version)
-        versions = self.get_version_list(ser)
+        versions = self.get_version_list(ser.idnum)
         if version not in versions:
             raise ValueError(
                 f"Series '{ser.name}' does not have a version {version}")
@@ -323,7 +338,7 @@ class Cseries:
             str: Patchwork link as a string, e.g. '12325'
         """
         ser = self.parse_series(series)
-        versions = self.get_version_list(ser)
+        versions = self.get_version_list(ser.idnum)
         if version not in versions:
             raise ValueError(
                 f"Series '{ser.name}' does not have a version {version}")
@@ -361,7 +376,7 @@ class Cseries:
                 str: series description
         """
         ser, version = self.parse_series_and_version(series, version)
-        versions = self.get_version_list(ser)
+        versions = self.get_version_list(ser.idnum)
         if version not in versions:
             raise ValueError(
                 f"Series '{ser.name}' does not have a version {version}")
@@ -395,19 +410,19 @@ class Cseries:
 
         self.set_link(name, version, pws, update_commit)
 
-    def get_version_list(self, ser):
+    def get_version_list(self, idnum):
         """Get a list of the versions available for a series
 
         Args:
-            ser (Series): object
+            idnum (int): ID of series to look up
 
         Return:
             str: List of versions
         """
-        if ser.idnum is None:
+        if idnum is None:
             raise ValueError('Unknown series idnum')
         res = self.cur.execute('SELECT version FROM patchwork WHERE '
-            f"series_id = {ser.idnum}")
+            f"series_id = {idnum}")
         all = res.fetchall()
         return [item[0] for item in all]
 
@@ -498,8 +513,9 @@ class Cseries:
     def do_list(self):
         sdict = self.get_series_dict()
 
+        print(f"{'Name':15} {'Description':20} Versions")
         for name, ser in sdict.items():
-            versions = self.get_version_list(ser)
+            versions = self.get_version_list(ser.idnum)
             vlist = ' '.join([str(ver) for ver in sorted(versions)])
             print(f'{name:15.15} {ser.desc:20.20} {vlist}')
 

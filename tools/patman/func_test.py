@@ -1553,10 +1553,8 @@ second line.'''
         self.assertEqual(1, len(plist))
         self.assertEqual((1, 2, None), plist[0])
 
-    def test_series_add_different(self):
-        """Test adding a different vers. of a series from the checked out one"""
-        cser = self.get_cser()
-
+    def add_first2(self, checkout):
+        """Add a new first2 branch, a copy of first"""
         repo = pygit2.init_repository(self.gitdir)
         first_target = repo.revparse_single('first')
         repo.branches.local.create('first2', first_target)
@@ -1566,13 +1564,31 @@ second line.'''
         target = repo.lookup_reference('refs/heads/first2')
         repo.checkout(target, strategy=pygit2.GIT_CHECKOUT_FORCE)
 
+    def test_series_add_different(self):
+        """Test adding a different vers. of a series from the checked out one"""
+        cser = self.get_cser()
+
+        self.add_first2(True)
+
         # Add first2 initially
         with capture_sys_output() as (out, _):
             cser.add_series(None, 'description', allow_unmarked=True)
+        lines = out.getvalue().splitlines()
+        self.assertEqual(
+            "Adding series 'first': mark False allow_unmarked True",
+            lines[0])
+        self.assertEqual("Added series 'first' version 2", lines[1])
+        self.assertEqual(2, len(lines))
 
         # Now add first: it should be added as a new version
         with capture_sys_output() as (out, _):
             cser.add_series('first', 'description', allow_unmarked=True)
+        lines = out.getvalue().splitlines()
+        self.assertEqual(
+            "Adding series 'first': mark False allow_unmarked True",
+            lines[0])
+        self.assertEqual("Added version 1 to existing series 'first'", lines[1])
+        self.assertEqual(2, len(lines))
 
         slist = cser.get_series_dict()
         self.assertEqual(1, len(slist))
@@ -1583,6 +1599,51 @@ second line.'''
         self.assertEqual(2, len(plist))
         self.assertEqual((1, 2, None), plist[0])
         self.assertEqual((1, 1, None), plist[1])
+
+    def test_series_add_dup(self):
+        """Test adding a series twice"""
+        cser = self.get_cser()
+        with capture_sys_output() as (out, _):
+            cser.add_series(None, 'description', allow_unmarked=True)
+
+        with capture_sys_output() as (out, _):
+            cser.add_series(None, 'description', allow_unmarked=True)
+        self.assertIn("Series 'first' version 1 already exists",
+                      out.getvalue().strip())
+
+        self.add_first2(False)
+
+        with capture_sys_output() as (out, _):
+            cser.add_series(None, 'description', allow_unmarked=True)
+        lines = out.getvalue().splitlines()
+        self.assertEqual("Added version 2 to existing series 'first'", lines[1])
+
+    def test_series_add_dup_reverse(self):
+        """Test adding a series twice, v2 then v1"""
+        cser = self.get_cser()
+        self.add_first2(True)
+        with capture_sys_output() as (out, _):
+            cser.add_series(None, 'description', allow_unmarked=True)
+        self.assertIn("Added series 'first' version 2", out.getvalue().strip())
+
+        with capture_sys_output() as (out, _):
+            cser.add_series('first', 'description', allow_unmarked=True)
+        self.assertIn("Added version 1 to existing series 'first'",
+                      out.getvalue().strip())
+
+    def test_series_add_dup_reverse_cmdline(self):
+        """Test adding a series twice, v2 then v1"""
+        cser = self.get_cser()
+        self.add_first2(True)
+        with capture_sys_output() as (out, _):
+            self.run_args('series', 'add', '-M', 'description')
+        self.assertIn("Added series 'first' version 2", out.getvalue().strip())
+
+        with capture_sys_output() as (out, _):
+            self.run_args('series', 'add', '-s', 'first', '-M', 'description')
+            cser.add_series('first', 'description', allow_unmarked=True)
+        self.assertIn("Added version 1 to existing series 'first'",
+                      out.getvalue().strip())
 
     def test_series_list(self):
         """Test listing cseries"""
@@ -1597,9 +1658,11 @@ second line.'''
         with capture_sys_output() as (out, _):
             control.series(args, test_db=self.tmpdir)
         lines = out.getvalue().splitlines()
-        self.assertEqual(2, len(lines))
-        self.assertEqual('first                                1', lines[0])
-        self.assertEqual('second          Series for my board  1', lines[1])
+        self.assertEqual(3, len(lines))
+        self.assertEqual('Name            Description          Versions',
+                         lines[0])
+        self.assertEqual('first                                1', lines[1])
+        self.assertEqual('second          Series for my board  1', lines[2])
         self.db_close()
 
     def test_do_series_add(self):
@@ -1627,8 +1690,8 @@ second line.'''
         with capture_sys_output() as (out, _):
             control.series(args, test_db=self.tmpdir)
         lines = out.getvalue().splitlines()
-        self.assertEqual(1, len(lines))
-        self.assertEqual('first           my-description       1', lines[0])
+        self.assertEqual(2, len(lines))
+        self.assertEqual('first           my-description       1', lines[1])
 
         self.db_close()
 
