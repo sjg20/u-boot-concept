@@ -281,7 +281,7 @@ def series(args, test_db=None, pwork=None):
         elif args.subcmd == 'remove':
             cser.remove_series(args.series, dry_run=args.dry_run)
         elif args.subcmd == 'remove-version':
-            cser.remove_series(args.series, args.version, dry_run=args.dry_run)
+            cser.remove_version(args.series, args.version, dry_run=args.dry_run)
         elif args.subcmd == 'set-link':
             cser.set_link(args.series, args.version, arg0, args.update)
         elif args.subcmd == 'auto-link':
