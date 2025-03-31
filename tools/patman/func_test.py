@@ -2096,8 +2096,6 @@ second line.'''
         cser.increment('first')
         cser = next(cor)
 
-        self.assertEqual('first2', gitutil.get_branch(self.gitdir))
-
         cor.close()
 
     def test_series_inc_cmdline(self):
@@ -2530,62 +2528,6 @@ second line.'''
         self.assertEqual("Removed series 'first'", out.getvalue().strip())
         self.assertFalse(cser.get_series_dict())
 
-    def test_series_remove_multiple(self):
-        """Test removing a series with more than one version"""
-        cser = self.get_cser()
-
-        self.add_first2(True)
-
-        with capture_sys_output() as (out, _):
-            cser.add_series(None, '', mark=True)
-            cser.add_series('first', '', mark=True)
-        self.assertTrue(cser.get_series_dict())
-
-        # Do a dry-run removal
-        with capture_sys_output() as (out, _):
-            cser.remove_version('first', 1, dry_run=True)
-        self.assertEqual("Removed version 1 from series 'first'\n"
-                         'Dry run completed', out.getvalue().strip())
-        self.assertEqual({'first'}, cser.get_series_dict().keys())
-
-        plist = cser.get_patchwork_dict()
-        self.assertEqual(2, len(plist))
-        self.assertEqual((1, 2, None), plist[0])
-        self.assertEqual((1, 1, None), plist[1])
-
-        # Now remove for real
-        with capture_sys_output() as (out, _):
-            cser.remove_version('first', 1)
-        self.assertEqual("Removed version 1 from series 'first'",
-                         out.getvalue().strip())
-        self.assertEqual({'first'}, cser.get_series_dict().keys())
-        plist = cser.get_patchwork_dict()
-        self.assertEqual(1, len(plist))
-
-        with self.assertRaises(ValueError) as exc:
-            cser.remove_version('first', 2, dry_run=True)
-        self.assertEqual(
-            "Series 'first' only has one version: remove the series",
-            str(exc.exception))
-        self.assertEqual({'first'}, cser.get_series_dict().keys())
-
-        plist = cser.get_patchwork_dict()
-        self.assertEqual(1, len(plist))
-        self.assertEqual((1, 2, None), plist[0])
-
-        with capture_sys_output() as (out, _):
-            cser.remove_series('first', dry_run=True)
-        self.assertEqual("Removed series 'first'\nDry run completed",
-                         out.getvalue().strip())
-        self.assertTrue(cser.get_series_dict())
-        self.assertTrue(cser.get_patchwork_dict())
-
-        with capture_sys_output() as (out, _):
-            cser.remove_series('first')
-        self.assertEqual("Removed series 'first'", out.getvalue().strip())
-        self.assertFalse(cser.get_series_dict())
-        self.assertFalse(cser.get_patchwork_dict())
-
     def test_series_remove_cmdline(self):
         """Test removing a series using the command line"""
         cser = self.get_cser()
@@ -2603,6 +2545,110 @@ second line.'''
             cser.remove_series('first')
         self.assertEqual("Removed series 'first'", out.getvalue().strip())
         self.assertFalse(cser.get_series_dict())
+
+    def check_series_remove_multiple(self):
+        """Check for removing a series with more than one version"""
+        cser = self.get_cser()
+
+        self.add_first2(True)
+
+        with capture_sys_output() as (out, _):
+            cser.add_series(None, '', mark=True)
+            cser.add_series('first', '', mark=True)
+        self.assertTrue(cser.get_series_dict())
+
+        # Do a dry-run removal
+        with capture_sys_output() as (out, _):
+            yield cser
+        self.assertEqual("Removed version 1 from series 'first'\n"
+                         'Dry run completed', out.getvalue().strip())
+        self.assertEqual({'first'}, cser.get_series_dict().keys())
+
+        plist = cser.get_patchwork_dict()
+        self.assertEqual(2, len(plist))
+        self.assertEqual((1, 2, None), plist[0])
+        self.assertEqual((1, 1, None), plist[1])
+
+        # Now remove for real
+        with capture_sys_output() as (out, _):
+            yield cser
+        self.assertEqual("Removed version 1 from series 'first'",
+                         out.getvalue().strip())
+        self.assertEqual({'first'}, cser.get_series_dict().keys())
+        plist = cser.get_patchwork_dict()
+        self.assertEqual(1, len(plist))
+
+        yield cser
+        self.assertEqual({'first'}, cser.get_series_dict().keys())
+
+        plist = cser.get_patchwork_dict()
+        self.assertEqual(1, len(plist))
+        self.assertEqual((1, 2, None), plist[0])
+
+        with capture_sys_output() as (out, _):
+            yield cser
+        self.assertEqual("Removed series 'first'\nDry run completed",
+                         out.getvalue().strip())
+        self.assertTrue(cser.get_series_dict())
+        self.assertTrue(cser.get_patchwork_dict())
+
+        with capture_sys_output() as (out, _):
+            yield cser
+        self.assertEqual("Removed series 'first'", out.getvalue().strip())
+        self.assertFalse(cser.get_series_dict())
+        self.assertFalse(cser.get_patchwork_dict())
+
+    def test_series_remove_multiple(self):
+        """Test removing a series with more than one version"""
+        cor = self.check_series_remove_multiple()
+        cser = next(cor)
+
+        cser.remove_version('first', 1, dry_run=True)
+        cser = next(cor)
+
+        cser.remove_version('first', 1)
+        cser = next(cor)
+
+        with self.assertRaises(ValueError) as exc:
+            cser.remove_version('first', 2, dry_run=True)
+        self.assertEqual(
+            "Series 'first' only has one version: remove the series",
+            str(exc.exception))
+        cser = next(cor)
+
+        cser.remove_series('first', dry_run=True)
+        cser = next(cor)
+
+        cser.remove_series('first')
+
+        cor.close()
+
+    def test_series_remove_multiple_cmdline(self):
+        """Test removing a series with more than one version on cmdline"""
+        cor = self.check_series_remove_multiple()
+        cser = next(cor)
+
+        self.run_args('series', '-n', 'remove-version', '-s', 'first',
+                      '-V', '1')
+        cser = next(cor)
+
+        self.run_args('series', 'remove-version', '-s', 'first', '-V', '1')
+        cser = next(cor)
+
+        with capture_sys_output() as (out, _):
+            self.run_args('series', '-n', 'remove-version', '-s', 'first',
+                        '-V', '2', expected_ret=1)
+        self.assertIn(
+            "Series 'first' only has one version: remove the series",
+            out.getvalue().strip())
+        cser = next(cor)
+
+        self.run_args('series', '-n', 'remove', '-s', 'first')
+        cser = next(cor)
+
+        self.run_args('series', 'remove', '-s', 'first')
+
+        cor.close()
 
     def _fake_patchwork_cser(self, subpath):
         """Fake Patchwork server for the function below

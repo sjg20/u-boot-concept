@@ -872,7 +872,7 @@ class Cseries:
             version (int): Version number to remove
             dry_run (bool): True to do a dry run
         """
-        ser = self.parse_series(name)
+        ser, version = self.parse_series_and_version(name, version)
         name = ser.name
 
         versions = self.get_version_list(ser.idnum)
