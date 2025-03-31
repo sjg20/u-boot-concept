@@ -2144,8 +2144,8 @@ second line.'''
         with capture_sys_output() as (out, _):
             cser.add_series('first', '', allow_unmarked=True)
 
-        plist = cser.get_patchwork_dict()
-        self.assertEqual(1, len(plist))
+        pclist = cser.get_pcommit_dict()
+        self.assertEqual(2, len(pclist))
 
         # Try decrementing when there is only one version
         with self.assertRaises(ValueError) as exc:
@@ -2159,6 +2159,9 @@ second line.'''
         plist = cser.get_patchwork_dict()
         self.assertEqual(2, len(plist))
 
+        pclist = cser.get_pcommit_dict()
+        self.assertEqual(4, len(pclist))
+
         # Remove version two, using dry run (i.e. no effect)
         with capture_sys_output() as (out, _):
             cser.decrement('first', dry_run=True)
@@ -2169,6 +2172,9 @@ second line.'''
         branch = repo.lookup_branch('first2')
         self.assertTrue(branch)
         branch_oid = branch.peel(pygit2.GIT_OBJ_COMMIT).oid
+
+        pclist = cser.get_pcommit_dict()
+        self.assertEqual(4, len(pclist))
 
         # Now remove version two for real
         with capture_sys_output() as (out, _):
@@ -2181,6 +2187,9 @@ second line.'''
 
         plist = cser.get_patchwork_dict()
         self.assertEqual(1, len(plist))
+
+        pclist = cser.get_pcommit_dict()
+        self.assertEqual(2, len(pclist))
 
         branch = repo.lookup_branch('first2')
         self.assertFalse(branch)
@@ -2522,11 +2531,16 @@ second line.'''
         with capture_sys_output() as (out, _):
             cser.add_series('first', '', mark=True)
         self.assertTrue(cser.get_series_dict())
+        pclist = cser.get_pcommit_dict()
+        self.assertEqual(2, len(pclist))
 
         with capture_sys_output() as (out, _):
             cser.remove_series('first')
         self.assertEqual("Removed series 'first'", out.getvalue().strip())
         self.assertFalse(cser.get_series_dict())
+
+        pclist = cser.get_pcommit_dict()
+        self.assertFalse(len(pclist))
 
     def test_series_remove_cmdline(self):
         """Test removing a series using the command line"""
@@ -2556,6 +2570,8 @@ second line.'''
             cser.add_series(None, '', mark=True)
             cser.add_series('first', '', mark=True)
         self.assertTrue(cser.get_series_dict())
+        pclist = cser.get_pcommit_dict()
+        self.assertEqual(4, len(pclist))
 
         # Do a dry-run removal
         with capture_sys_output() as (out, _):
@@ -2577,6 +2593,8 @@ second line.'''
         self.assertEqual({'first'}, cser.get_series_dict().keys())
         plist = cser.get_patchwork_dict()
         self.assertEqual(1, len(plist))
+        pclist = cser.get_pcommit_dict()
+        self.assertEqual(2, len(pclist))
 
         yield cser
         self.assertEqual({'first'}, cser.get_series_dict().keys())
@@ -2700,3 +2718,11 @@ second line.'''
             self.run_args('-P', 'https://url', 'patchwork', 'get-project',
                           'U-Boot')
         self.assertEqual("Name: U-Boot\nID: 6\n", out.getvalue())
+
+    def test_patchwork_list_patches(self):
+        """Test listing the patches for a series"""
+        cser = self.get_cser()
+        with capture_sys_output() as (out, _):
+            cser.add_series(None, '', allow_unmarked=True)
+
+        cser.list_patches(None, None)
