@@ -2753,10 +2753,22 @@ second line.'''
         cser = self.get_cser()
         with capture_sys_output() as (out, _):
             cser.add_series(None, '', allow_unmarked=True)
+            cser.add_series('second', allow_unmarked=True)
+            target = self.repo.lookup_reference('refs/heads/second')
+            self.repo.checkout(target, strategy=pygit2.GIT_CHECKOUT_FORCE)
+            cser.increment('second')
 
         with capture_sys_output() as (out, _):
-            cser.list_patches(None, None)
-        lines = out.getvalue().splitlines()
-        self.assertEqual('i2c: I2C things', lines[0])
-        self.assertEqual('spi: SPI fixes', lines[1])
-        self.assertEqual(2, len(lines))
+            cser.list_patches('first', 1)
+        lines = iter(out.getvalue().splitlines())
+        self.assertEqual("Branch 'first':", next(lines))
+        self.assertRegex(next(lines), r'  0 .* i2c: I2C things')
+        self.assertRegex(next(lines), r'  1 .* spi: SPI fixes')
+
+        with capture_sys_output() as (out, _):
+            cser.list_patches('second2', 2)
+        lines = iter(out.getvalue().splitlines())
+        self.assertEqual("Branch 'second2':", next(lines))
+        self.assertRegex(next(lines), '  0 .* video: Some video improvements')
+        self.assertRegex(next(lines), '  1 .* serial: Add a serial driver')
+        self.assertRegex(next(lines), '  2 .* bootm: Make it boot')
