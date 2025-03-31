@@ -18,6 +18,7 @@ import pygit2
 from patman import patchstream
 from patman.series import Series
 from u_boot_pylib import gitutil
+from u_boot_pylib import terminal
 from u_boot_pylib import tout
 
 
@@ -33,7 +34,8 @@ HASH_LEN = 10
 # subject (str): patch subject
 # pwid (int): link to patchwork series/version record
 # cid (str): Change-ID value
-PCOMMIT = namedtuple('pcommit', 'id,seq,subject,pwid,cid')
+# status (str): Current status in patchwork
+PCOMMIT = namedtuple('pcommit', 'id,seq,subject,pwid,cid,state')
 
 
 def oid(oid_val):
@@ -46,12 +48,13 @@ class Cseries:
     This class handles database read/write as well as operations in a git
     directory to update series information.
     """
-    def __init__(self, topdir=None):
+    def __init__(self, topdir=None, colour=terminal.COLOR_IF_TERMINAL):
         self.topdir = topdir
         self.gitdir = None
         self.con = None
         self.cur = None
         self.quiet = False
+        self.col = terminal.Color(colour)
 
     def check_database(self, con):
         """Check that the database has the required tables and is up-to-date
@@ -68,7 +71,6 @@ class Cseries:
                 'CREATE TABLE series (id INTEGER PRIMARY KEY AUTOINCREMENT,'
                 'name UNIQUE, desc, archived BIT)')
 
-            # version (int): Version number of the link
             self.cur.execute(
                 'CREATE TABLE patchwork (id INTEGER PRIMARY KEY AUTOINCREMENT,'
                 'version INTEGER, link, series_id INTEGER,'
@@ -78,9 +80,11 @@ class Cseries:
                 'CREATE TABLE upstream (name UNIQUE, url, is_default BIT)')
 
             # cid is the Change-Id
+            # patchwork_id is the ID of the patch on the patchwork server
             self.cur.execute(
                 'CREATE TABLE pcommit (id INTEGER PRIMARY KEY AUTOINCREMENT,'
-                'pwid INTEGER, seq INTEGER, subject, cid,'
+                'pwid INTEGER, seq INTEGER, subject, patchwork_id INTEGER, cid,'
+                'state, '
                 'FOREIGN KEY (pwid) REFERENCES patchwork (id))')
 
             self.cur.execute(
@@ -161,13 +165,13 @@ class Cseries:
                 key (int): record ID
                 value (PCOMMIT): record data
         """
-        query = 'SELECT id, seq, subject, pwid, cid FROM pcommit'
+        query = 'SELECT id, seq, subject, pwid, cid, state FROM pcommit'
         if find_pwid is not None:
             query += f' WHERE pwid = {find_pwid}'
         res = self.cur.execute(query)
         pcdict = OrderedDict()
-        for idnum, seq, subject, pwid, cid in res.fetchall():
-            pc = PCOMMIT(idnum, seq, subject, pwid, cid)
+        for idnum, seq, subject, pwid, cid, state in res.fetchall():
+            pc = PCOMMIT(idnum, seq, subject, pwid, cid, state)
             if find_pwid is not None:
                 pcdict[seq] = pc
             else:
@@ -1046,6 +1050,54 @@ class Cseries:
             raise ValueError('Current project is not known')
         return res[1]
 
+    def build_col(self, state, prefix=''):
+        bright = True
+        if state == 'accepted':
+            col = self.col.GREEN
+        elif state == 'awaiting-upstream':
+            bright = False
+            col = self.col.GREEN
+        elif state in ['changes-requested']:
+            col = self.col.CYAN
+        elif state in ['rejected', 'deferred', 'not-applicable',
+                        'superseded', 'handled-elsewhere']:
+            col = self.col.RED
+        elif not state:
+            state = 'unknown'
+            col = self.col.MAGENTA
+        else:
+            # under-review, rfc, needs-review-ack
+            col = self.col.WHITE
+        pad = ' ' * (17 - len(state))
+        col_state = self.col.build(col, prefix + state, bright)
+        return col_state, pad
+
+    def _list_patches(self, branch, pwc, series):
+        """List patches along with optional status info
+
+        Args:
+            branch (str): Branch name
+            pwc (dict): pcommit records:
+                key (int): seq
+                value (PCOMMIT): Record from database
+            series (Series): Series to show
+        """
+        lines = []
+        states = defaultdict(int)
+        for seq, item in enumerate(pwc.values()):
+            cmt = series.commits[seq]
+            assert cmt.subject == item.subject
+            col_state, pad = self.build_col(item.state)
+            line = f'{seq:3} {col_state}{pad} {oid(cmt.hash)} {item.subject}'
+            lines.append(line)
+            states[item.state] += 1
+        all = ''
+        for state, count in states.items():
+            all += ' ' + self.build_col(state, f'{count}:')[0]
+        print(f"Branch '{branch}' (total {len(pwc)}):{all}:")
+        for line in lines:
+            print(line)
+
     def list_patches(self, series, version):
         """List patches in a series
 
@@ -1062,13 +1114,7 @@ class Cseries:
         branch = self.join_name_version(ser.name, version)
         series = patchstream.get_metadata(branch, 0, count, git_dir=self.gitdir)
 
-        print(f"Branch '{branch}':")
-        for seq, (_, xseq, subject, _, cid) in enumerate(pwc.values()):
-            cmt = series.commits[seq]
-            if cmt.subject != subject:
-                raise ValueError(
-                    f"Ordering problem: '{cmt.subject}' vs '{subject}'")
-            print(f'{seq:3} {oid(cmt.hash)} {subject}')
+        self._list_patches(branch, pwc, series)
 
     def get_series_pwid(self, idnum, version):
         """Get the patchwork ID of a series version
@@ -1077,11 +1123,59 @@ class Cseries:
             idnum (int): id of the series to look up
             version (int): version number to look up
         """
+        return self.get_series_pwid_link(idnum, version)[0]
+
+    def get_series_pwid_link(self, idnum, version):
+        """Get the patchwork ID of a series version
+
+        Args:
+            idnum (int): id of the series to look up
+            version (int): version number to look up
+        """
         res = self.cur.execute(
-            f"SELECT id FROM patchwork WHERE series_id = ? AND version = ?",
+            f"SELECT id, link FROM patchwork WHERE series_id = ? AND version = ?",
             (idnum,version))
         all = res.fetchall()
         if not all:
             raise ValueError(f'No matching series for id {idnum}')
-        pwid = all[0][0]
-        return pwid
+        return all[0]
+
+    def series_status(self, pwork, series, version):
+        """Get the patchwork status of a series
+
+        Args:
+            pwork (Patchwork): Patchwork object to use
+            series (str): Name of series to use, or None to use current branch
+            version (int): Version number, or None to detect from name
+        """
+        ser, version = self.parse_series_and_version(series, version)
+        self.ensure_version(ser, version)
+        pwid, link = self.get_series_pwid_link(ser.idnum, version)
+        pwc = self.get_pcommit_dict(pwid)
+
+        count = len(pwc)
+        branch = self.join_name_version(ser.name, version)
+        series = patchstream.get_metadata(branch, 0, count, git_dir=self.gitdir)
+
+        self._list_patches(branch, pwc, series)
+
+    def series_sync(self, pwork, series, version):
+        """Sync the series static from patchwork
+
+        Args:
+            pwork (Patchwork): Patchwork object to use
+            series (str): Name of series to use, or None to use current branch
+            version (int): Version number, or None to detect from name
+        """
+        ser, version = self.parse_series_and_version(series, version)
+        self.ensure_version(ser, version)
+        pwid, link = self.get_series_pwid_link(ser.idnum, version)
+        state_list = pwork.series_get_state(link)
+
+        pwc = self.get_pcommit_dict(pwid)
+
+        for seq, item in enumerate(pwc.values()):
+            res = self.cur.execute(
+                'UPDATE pcommit set state = ? WHERE id = ?',
+                (state_list[seq], item.id))
+        self.con.commit()
