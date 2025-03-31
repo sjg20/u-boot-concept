@@ -70,10 +70,11 @@ class Cseries:
             self.cur.execute(
                 'CREATE TABLE upstream (name UNIQUE, url, is_default BIT)')
 
+            # cid is the Change-Id
             self.cur.execute(
                 'CREATE TABLE pcommit (id INTEGER PRIMARY KEY AUTOINCREMENT,'
-                'series_id INTEGER, subject, cid,'
-                'FOREIGN KEY (series_id) REFERENCES series (id))')
+                'pwid INTEGER, subject, cid,'
+                'FOREIGN KEY (pwid) REFERENCES patchwork (id))')
 
             self.cur.execute(
                 'CREATE TABLE settings (name UNIQUE, pwid INT)')
@@ -151,10 +152,29 @@ class Cseries:
                 key (str): upstream name
                 value (str): url
         """
-        res = self.cur.execute('SELECT id, subject, series_id, cid FROM pcommit')
+        res = self.cur.execute('SELECT id, subject, pwid, cid FROM pcommit')
         pcdict = OrderedDict()
-        for idnum, subject, series_id, cid in res.fetchall():
-            pcdict[idnum] = idnum, subject, series_id, cid
+        for idnum, subject, pwid, cid in res.fetchall():
+            pcdict[idnum] = idnum, subject, pwid, cid
+        return pcdict
+
+    def get_pcommit_dict_for_pwid(self, pwid):
+        """Get a dict of pcommits entries from the database
+
+        Args:
+            pwid (int): patchwork ID of series version
+
+        Return:
+            OrderedDict:
+                key (str): upstream name
+                value (str): url
+        """
+        res = self.cur.execute(
+            'SELECT id, subject, pwid, cid FROM pcommit WHERE pwid = ?',
+            (pwid,))
+        pcdict = OrderedDict()
+        for idnum, subject, pwid, cid in res.fetchall():
+            pcdict[idnum] = idnum, subject, pwid, cid
         return pcdict
 
     def _prep_series(self, name):
@@ -230,16 +250,13 @@ class Cseries:
             res = self.cur.execute(
                 'INSERT INTO patchwork (version, link, series_id) VALUES'
                 f"('{version}', ?, {idnum})", (link,))
+            pwid = self.cur.lastrowid
             msg += f" version {version}"
             if not added:
                 msg += f" to existing series '{name}'"
             added = True
 
-            for commit in series.commits:
-                res = self.cur.execute(
-                    'INSERT INTO pcommit (series_id, subject, cid) '
-                    'VALUES (?, ?, ?)',
-                    (str(idnum), commit.subject, commit.change_id))
+            self.add_series_commits(series, pwid)
         if not added:
             tout.info(f"Series '{name}' version {version} already exists")
             msg = None
@@ -258,6 +275,19 @@ class Cseries:
         if dry_run:
             tout.info('Dry run completed')
         return ser
+
+    def add_series_commits(self, series, pwid):
+        """Add a commits from a series into the database
+
+        Args:
+            series (Series): Series containing commits to add
+            pwid (int): patchwork-table ID to use for each commit
+        """
+        for commit in series.commits:
+            res = self.cur.execute(
+                'INSERT INTO pcommit (pwid, subject, cid) '
+                'VALUES (?, ?, ?)',
+                (str(pwid), commit.subject, commit.change_id))
 
     def get_series_by_name(self, name):
         """Get a Series object from the database by name
@@ -288,6 +318,22 @@ class Cseries:
         """
         return name + (f'{version}' if version > 1 else '')
 
+    def ensure_version(self, ser, version):
+        """Ensure that a version exists in a series
+
+        Args:
+            ser (Series): Series information, with idnum and name used here
+            version (int): Version to check
+
+        Returns:
+            list of int: List of versions
+        """
+        versions = self.get_version_list(ser.idnum)
+        if version not in versions:
+            raise ValueError(
+                f"Series '{ser.name}' does not have a version {version}")
+        return versions
+
     def set_link(self, series, version, link, update_commit):
         """Add / update a series-link link for a series
 
@@ -299,10 +345,7 @@ class Cseries:
                 link
         """
         ser, version = self.parse_series_and_version(series, version)
-        versions = self.get_version_list(ser.idnum)
-        if version not in versions:
-            raise ValueError(
-                f"Series '{ser.name}' does not have a version {version}")
+        self.ensure_version(ser, version)
 
         if update_commit:
             cur_name = gitutil.get_branch(self.gitdir)
@@ -338,10 +381,7 @@ class Cseries:
             str: Patchwork link as a string, e.g. '12325'
         """
         ser = self.parse_series(series)
-        versions = self.get_version_list(ser.idnum)
-        if version not in versions:
-            raise ValueError(
-                f"Series '{ser.name}' does not have a version {version}")
+        self.ensure_version(ser, version)
 
         res = self.cur.execute('SELECT link FROM patchwork WHERE '
             f"series_id = {ser.idnum} AND version = '{version}'")
@@ -376,10 +416,7 @@ class Cseries:
                 str: series description
         """
         ser, version = self.parse_series_and_version(series, version)
-        versions = self.get_version_list(ser.idnum)
-        if version not in versions:
-            raise ValueError(
-                f"Series '{ser.name}' does not have a version {version}")
+        self.ensure_version(ser, version)
         if not ser.desc:
             raise ValueError(f"Series '{ser.name}' has an empty description")
 
@@ -519,14 +556,14 @@ class Cseries:
             vlist = ' '.join([str(ver) for ver in sorted(versions)])
             print(f'{name:15.15} {ser.desc:20.20} {vlist}')
 
-    def increment(self, series, dry_run=False):
+    def increment(self, series_name, dry_run=False):
         """Increment a series to the next version and create a new branch
 
         Args:
             series (str): Name of series to use, or None to use current branch
             dry_run (bool): True to do a dry run
         """
-        ser = self.parse_series(series)
+        ser = self.parse_series(series_name)
         if not ser.idnum:
             raise ValueError(f"Series '{ser.name}' not found in database")
 
@@ -569,13 +606,24 @@ class Cseries:
         new_msg = '\n'.join(lines) + '\n'
         amended = repo.amend_commit(commit, 'HEAD', message=new_msg)
 
+        old_pwid = self.get_series_pwid(ser.idnum, max_vers)
+        pcd = self.get_pcommit_dict_for_pwid(old_pwid)
+
         res = self.cur.execute(
             'INSERT INTO patchwork (version, series_id) VALUES'
             f"('{vers}', {ser.idnum})")
+        pwid = self.cur.lastrowid
+
+        for idnum, subject, _, cid in pcd.values():
+            res = self.cur.execute(
+                'INSERT INTO pcommit (pwid, subject, cid) VALUES (?, ?, ?)',
+                (str(pwid), subject, cid))
+
         if not dry_run:
             self.con.commit()
         else:
             self.con.rollback()
+
 
         # repo.head.set_target(amended)
         tout.info(f'Added new branch {new_name}')
@@ -616,9 +664,13 @@ class Cseries:
             del_branch.delete()
             print(f"Deleted branch '{del_name}' {oid(branch_oid)}")
 
+        old_pwid = self.get_series_pwid(ser.idnum, max_vers)
+
         res = self.cur.execute(
             'DELETE FROM patchwork WHERE series_id = ? and version = ?',
             (ser.idnum, max_vers))
+        res = self.cur.execute(
+            'DELETE FROM pcommit WHERE pwid = ?', (old_pwid,))
         if not dry_run:
             self.con.commit()
         else:
@@ -852,6 +904,11 @@ class Cseries:
             self.con.rollback()
             raise ValueError(f"No such series '{name}'")
 
+        res = self.cur.execute('SELECT id FROM patchwork WHERE series_id = ?',
+                               (ser.idnum,))
+        all = [str(i) for i in res.fetchall()[0]]
+        vals = ', '.join(all[0])
+        res = self.cur.execute(f'DELETE FROM pcommit WHERE pwid IN ({vals})')
         res = self.cur.execute('DELETE FROM patchwork WHERE series_id = ?',
                                (ser.idnum,))
         if not dry_run:
@@ -875,15 +932,14 @@ class Cseries:
         ser, version = self.parse_series_and_version(name, version)
         name = ser.name
 
-        versions = self.get_version_list(ser.idnum)
-        if version not in versions:
-            raise ValueError(
-                f"Series '{ser.name}' does not have a version {version}")
+        versions = self.ensure_version(ser, version)
 
         if versions == [version]:
             raise ValueError(
                 f"Series '{ser.name}' only has one version: remove the series")
 
+        pwid = self.get_series_pwid(ser.idnum, version)
+        res = self.cur.execute(f'DELETE FROM pcommit WHERE pwid = ?', (pwid,))
         res = self.cur.execute(
             'DELETE FROM patchwork WHERE series_id = ? and version = ?',
             (ser.idnum, version))
@@ -959,3 +1015,29 @@ class Cseries:
         if not res:
             raise ValueError('Current project is not known')
         return res[1]
+
+    def list_patches(self, series, version):
+        """List patches in a series
+
+        Args:
+            series (str): Name of series to use, or None to use current branch
+            version (int): Version number, or None to detect from name
+        """
+        ser, version = self.parse_series_and_version(series, version)
+        self.ensure_version(ser, version)
+
+    def get_series_pwid(self, idnum, version):
+        """Get the patchwork ID of a series version
+
+        Args:
+            idnum (int): id of the series to look up
+            version (int): version number to look up
+        """
+        res = self.cur.execute(
+            f"SELECT id FROM patchwork WHERE series_id = ? AND version = ?",
+            (idnum,version))
+        all = res.fetchall()
+        if not all:
+            raise ValueError(f'No matching series for id {idnum}')
+        pwid = all[0][0]
+        return pwid
