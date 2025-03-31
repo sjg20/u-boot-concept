@@ -2725,4 +2725,9 @@ second line.'''
         with capture_sys_output() as (out, _):
             cser.add_series(None, '', allow_unmarked=True)
 
-        cser.list_patches(None, None)
+        with capture_sys_output() as (out, _):
+            cser.list_patches(None, None)
+        lines = out.getvalue().splitlines()
+        self.assertEqual('i2c: I2C things', lines[0])
+        self.assertEqual('spi: SPI fixes', lines[1])
+        self.assertEqual(2, len(lines))

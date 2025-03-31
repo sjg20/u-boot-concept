@@ -16,9 +16,7 @@ from types import SimpleNamespace
 import pygit2
 
 from patman import patchstream
-from patman import series
 from patman.series import Series
-from patman import status
 from u_boot_pylib import gitutil
 from u_boot_pylib import tout
 
@@ -145,12 +143,16 @@ class Cseries:
         return udict
 
     def get_pcommit_dict(self):
-        """Get a dict of pcommits entries from the database
+        """Get a dict of all pcommits entries from the database
 
         Return:
             OrderedDict:
-                key (str): upstream name
-                value (str): url
+                key (int): record ID
+                value (tuple): record data
+                    idnum (int): record ID
+                    subject (str): patch subject
+                    pwid (int): link to patchwork series/version record
+                    cid (str): Change-ID value
         """
         res = self.cur.execute('SELECT id, subject, pwid, cid FROM pcommit')
         pcdict = OrderedDict()
@@ -159,15 +161,21 @@ class Cseries:
         return pcdict
 
     def get_pcommit_dict_for_pwid(self, pwid):
-        """Get a dict of pcommits entries from the database
+        """Get a dict of selected pcommits entries from the database
+
+        Finds the records associated with a particular series and version
 
         Args:
             pwid (int): patchwork ID of series version
 
         Return:
             OrderedDict:
-                key (str): upstream name
-                value (str): url
+                key (int): record ID
+                value (tuple): record data
+                    idnum (int): record ID
+                    subject (str): patch subject
+                    pwid (int): link to patchwork series/version record
+                    cid (str): Change-ID value
         """
         res = self.cur.execute(
             'SELECT id, subject, pwid, cid FROM pcommit WHERE pwid = ?',
@@ -1025,6 +1033,10 @@ class Cseries:
         """
         ser, version = self.parse_series_and_version(series, version)
         self.ensure_version(ser, version)
+        pwid = self.get_series_pwid(ser.idnum, version)
+        pwc = self.get_pcommit_dict_for_pwid(pwid)
+        for idnum, (_, subject, _, cid) in pwc.items():
+            print(subject)
 
     def get_series_pwid(self, idnum, version):
         """Get the patchwork ID of a series version
