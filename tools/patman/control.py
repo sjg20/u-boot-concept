@@ -274,6 +274,8 @@ def series(args, test_db=None, pwork=None):
         arg0 = args.extra[0] if len(args.extra) else None
         if args.subcmd == 'list':
             cser.do_list()
+        elif args.subcmd == 'list-patches':
+            cser.list_patches(args.series, args.version)
         elif args.subcmd == 'add':
             cser.add_series(args.series, arg0,
                             mark=args.mark, allow_unmarked=args.allow_unmarked,
