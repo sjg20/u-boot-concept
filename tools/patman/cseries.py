@@ -1010,7 +1010,7 @@ class Cseries:
             return None
         return all[0][0]
 
-    def set_project(self, pwork, name):
+    def set_project(self, pwork, name, quiet=False):
         """Set the name of the project
 
         Args:
@@ -1024,10 +1024,13 @@ class Cseries:
                 pwid = proj['id']
         if not pwid:
             raise ValueError(f"Unknown project name '{name}'")
+        res = self.cur.execute(f'DELETE FROM settings')
         res = self.cur.execute(
                 f'INSERT INTO settings (name, pwid) VALUES (?, ?)',
                 (name, pwid))
         self.con.commit()
+        if not quiet:
+            tout.info(f"Project '{name}', patchwork ID {pwid}")
 
     def get_project(self):
         """Get the name of the project
