@@ -54,6 +54,12 @@ class Patchwork:
         Args:
             desc (str): Description to search for
             version (int): Version number to search for
+
+        Returns:
+            tuple:
+                str: Series ID, or None if not found
+                list of dict, or None if found
+                    each dict is the server result from a possible series
         """
         query = desc.replace(' ', '+')
         res = self.request(f'series/?project={self.proj_id}&q={query}')
@@ -66,4 +72,40 @@ class Patchwork:
         return None, name_found or res
 
     def set_project(self, project_id):
+        """Set the project ID
+
+        The patchwork server has multiple projects. This allows the ID of the
+        relevant project to be selected
+
+        Args:
+            project_id (int): Project ID to use
+        """
         self.proj_id = project_id
+
+    def get_series(self, series_id):
+        """Read information about a series
+
+        Args:
+            series_id (str): Patchwork series ID
+
+        Returns:
+            dict containing patchwork's series information
+        """
+        return self.request(f'series/{series_id}/')
+
+    def series_get_state(self, series_id):
+        """Sync the series information against patwork, to find patch status
+
+        Args:
+            series_id (str): Patchwork series ID
+        """
+        data = self.get_series(series_id)
+        patch_dict = data['patches']
+
+        result = []
+        for pat in patch_dict:
+            # print('name', pat['name'])
+            patch_id = pat['id']
+            data = self.request('patches/%s/' % patch_id)
+            result.append(data['state'])
+        return result

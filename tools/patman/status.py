@@ -216,7 +216,7 @@ def collect_patches(series, series_id, patchwork):
         ValueError: if the URL could not be read or the web page does not follow
             the expected structure
     """
-    data = patchwork.request('series/%s/' % series_id)
+    data = patchwork.get_series(series_id)
 
     # Get all the rows, which are patches
     patch_dict = data['patches']
