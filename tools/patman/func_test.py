@@ -1490,8 +1490,8 @@ second line.'''
         pclist = cser.get_pcommit_dict()
         self.assertEqual(2, len(pclist))
         self.assertIn(1, pclist)
-        self.assertEqual((1, 'i2c: I2C things', 1, None), pclist[1])
-        self.assertEqual((2, 'spi: SPI fixes', 1, None), pclist[2])
+        self.assertEqual((1, 0, 'i2c: I2C things', 1, None), pclist[1])
+        self.assertEqual((2, 1, 'spi: SPI fixes', 1, None), pclist[2])
 
         self.db_close()
 
@@ -2379,14 +2379,14 @@ second line.'''
         series = patchstream.get_metadata('first', 0, 2, git_dir=self.gitdir)
         self.assertEqual(2, len(series.commits))
         self.assertIn(1, pcdict)
-        idnum, subject, series_id, cid = pcdict[1]
+        idnum, seq, subject, series_id, cid = pcdict[1]
         self.assertEqual(1, idnum)
         self.assertEqual('i2c: I2C things', subject)
         self.assertEqual(1, series_id)
         self.assertEqual(series.commits[0].change_id, cid)
 
         self.assertIn(2, pcdict)
-        idnum, subject, series_id, cid = pcdict[2]
+        idnum, seq, subject, series_id, cid = pcdict[2]
         self.assertEqual(2, idnum)
         self.assertEqual('spi: SPI fixes', subject)
         self.assertEqual(1, series_id)
@@ -2454,10 +2454,10 @@ second line.'''
                           'my-description')
 
         pcdict = cser.get_pcommit_dict()
-        idnum, subject, series_id, cid = pcdict[1]
+        idnum, seq, subject, series_id, cid = pcdict[1]
         self.assertTrue(cid)
 
-        idnum, subject, series_id, cid = pcdict[2]
+        idnum, seq, subject, series_id, cid = pcdict[2]
         self.assertTrue(cid)
 
     def test_series_add_unmarked_cmdline(self):
@@ -2469,10 +2469,10 @@ second line.'''
                           'my-description')
 
         pcdict = cser.get_pcommit_dict()
-        idnum, subject, series_id, cid = pcdict[1]
+        idnum, seq, subject, series_id, cid = pcdict[1]
         self.assertFalse(cid)
 
-        idnum, subject, series_id, cid = pcdict[2]
+        idnum, seq, subject, series_id, cid = pcdict[2]
         self.assertFalse(cid)
 
     def test_series_add_unmarked_bad_cmdline(self):
