@@ -71,7 +71,7 @@ class Cseries:
             # cid is the Change-Id
             self.cur.execute(
                 'CREATE TABLE pcommit (id INTEGER PRIMARY KEY AUTOINCREMENT,'
-                'pwid INTEGER, subject, cid,'
+                'pwid INTEGER, seq INTEGER, subject, cid,'
                 'FOREIGN KEY (pwid) REFERENCES patchwork (id))')
 
             self.cur.execute(
@@ -150,14 +150,16 @@ class Cseries:
                 key (int): record ID
                 value (tuple): record data
                     idnum (int): record ID
+                    seq (int): Patch sequence in series (0 is first)
                     subject (str): patch subject
                     pwid (int): link to patchwork series/version record
                     cid (str): Change-ID value
         """
-        res = self.cur.execute('SELECT id, subject, pwid, cid FROM pcommit')
+        res = self.cur.execute(
+            'SELECT id, seq, subject, pwid, cid FROM pcommit')
         pcdict = OrderedDict()
-        for idnum, subject, pwid, cid in res.fetchall():
-            pcdict[idnum] = idnum, subject, pwid, cid
+        for idnum, seq, subject, pwid, cid in res.fetchall():
+            pcdict[idnum] = idnum, seq, subject, pwid, cid
         return pcdict
 
     def get_pcommit_dict_for_pwid(self, pwid):
@@ -170,19 +172,20 @@ class Cseries:
 
         Return:
             OrderedDict:
-                key (int): record ID
+                key (int): seq
                 value (tuple): record data
                     idnum (int): record ID
+                    seq (int): Patch sequence in series (0 is first)
                     subject (str): patch subject
                     pwid (int): link to patchwork series/version record
                     cid (str): Change-ID value
         """
         res = self.cur.execute(
-            'SELECT id, subject, pwid, cid FROM pcommit WHERE pwid = ?',
+            'SELECT id, seq, subject, pwid, cid FROM pcommit WHERE pwid = ?',
             (pwid,))
         pcdict = OrderedDict()
-        for idnum, subject, pwid, cid in res.fetchall():
-            pcdict[idnum] = idnum, subject, pwid, cid
+        for idnum, seq, subject, pwid, cid in res.fetchall():
+            pcdict[seq] = idnum, seq, subject, pwid, cid
         return pcdict
 
     def _prep_series(self, name):
@@ -291,11 +294,11 @@ class Cseries:
             series (Series): Series containing commits to add
             pwid (int): patchwork-table ID to use for each commit
         """
-        for commit in series.commits:
+        for seq, commit in enumerate(series.commits):
             res = self.cur.execute(
-                'INSERT INTO pcommit (pwid, subject, cid) '
-                'VALUES (?, ?, ?)',
-                (str(pwid), commit.subject, commit.change_id))
+                'INSERT INTO pcommit (pwid, seq, subject, cid) '
+                'VALUES (?, ?, ?, ?)',
+                (str(pwid), seq, commit.subject, commit.change_id))
 
     def get_series_by_name(self, name):
         """Get a Series object from the database by name
@@ -472,6 +475,19 @@ class Cseries:
         return [item[0] for item in all]
 
     def split_name_version(self, in_name):
+        """Split a branch name into its series name and its version
+
+        For example:
+            'series' returns ('series', 1)
+            'series3' returns ('series', 3)
+        Args:
+            in_name (str): Name to parse
+
+        Return:
+            tuple:
+                str: series name
+                int: series version
+        """
         m_ver = re.match(r'([^0-9]*)(\d*)', in_name)
         if m_ver:
             name = m_ver.group(1)
@@ -483,6 +499,24 @@ class Cseries:
             name = in_name
             version = 1
         return name, version
+
+    def join_name_version(self, in_name, version):
+        """Convert a series name plus a version into a branch name
+
+        For example:
+            ('series', 1) returns 'series'
+            ('series', 3) returns 'series3'
+
+        Args:
+            in_name (str): Series name
+            version (int): Version number
+
+        Return:
+            str: associated branch name
+        """
+        if version == 1:
+            return in_name
+        return f'{in_name}{version}'
 
     def parse_series(self, name):
         """Parse the name of a series, or detect it from the current branch
@@ -601,7 +635,7 @@ class Cseries:
                 f'Expected version {max_vers} but Series-version is {vers}')
         vers += 1
 
-        new_name = f'{ser.name}{vers}'
+        new_name = self.join_name_version(ser.name, vers)
         new_branch = repo.branches.create(new_name, commit)
         if not dry_run:
             repo.checkout(new_branch)
@@ -622,16 +656,15 @@ class Cseries:
             f"('{vers}', {ser.idnum})")
         pwid = self.cur.lastrowid
 
-        for idnum, subject, _, cid in pcd.values():
+        for idnum, seq, subject, _, cid in pcd.values():
             res = self.cur.execute(
-                'INSERT INTO pcommit (pwid, subject, cid) VALUES (?, ?, ?)',
-                (str(pwid), subject, cid))
+                'INSERT INTO pcommit (pwid, seq, subject, cid) VALUES '
+                '(?, ?, ?, ?)', (str(pwid), seq, subject, cid))
 
         if not dry_run:
             self.con.commit()
         else:
             self.con.rollback()
-
 
         # repo.head.set_target(amended)
         tout.info(f'Added new branch {new_name}')
@@ -1035,8 +1068,18 @@ class Cseries:
         self.ensure_version(ser, version)
         pwid = self.get_series_pwid(ser.idnum, version)
         pwc = self.get_pcommit_dict_for_pwid(pwid)
-        for idnum, (_, subject, _, cid) in pwc.items():
-            print(subject)
+
+        count = len(pwc)
+        branch = self.join_name_version(ser.name, version)
+        series = patchstream.get_metadata(branch, 0, count, git_dir=self.gitdir)
+
+        print(f"Branch '{branch}':")
+        for seq, (_, xseq, subject, _, cid) in enumerate(pwc.values()):
+            cmt = series.commits[seq]
+            if cmt.subject != subject:
+                raise ValueError(
+                    f"Ordering problem: '{cmt.subject}' vs '{subject}'")
+            print(f'{seq:3} {oid(cmt.hash)} {subject}')
 
     def get_series_pwid(self, idnum, version):
         """Get the patchwork ID of a series version
