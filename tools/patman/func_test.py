@@ -2615,6 +2615,7 @@ second line.'''
         self.assertEqual("Removed series 'first'", out.getvalue().strip())
         self.assertFalse(cser.get_series_dict())
         self.assertFalse(cser.get_patchwork_dict())
+        yield cser
 
     def test_series_remove_multiple(self):
         """Test removing a series with more than one version"""
@@ -2638,6 +2639,7 @@ second line.'''
         cser = next(cor)
 
         cser.remove_series('first')
+        cser = next(cor)
 
         cor.close()
 
@@ -2719,7 +2721,7 @@ second line.'''
                           'U-Boot')
         self.assertEqual("Name: U-Boot\nID: 6\n", out.getvalue())
 
-    def test_patchwork_list_patches(self):
+    def check_patchwork_list_patches(self):
         """Test listing the patches for a series"""
         cser = self.get_cser()
         with capture_sys_output() as (out, _):
@@ -2730,16 +2732,38 @@ second line.'''
             cser.increment('second')
 
         with capture_sys_output() as (out, _):
-            cser.list_patches('first', 1)
+            yield cser
         lines = iter(out.getvalue().splitlines())
         self.assertEqual("Branch 'first':", next(lines))
         self.assertRegex(next(lines), r'  0 .* i2c: I2C things')
         self.assertRegex(next(lines), r'  1 .* spi: SPI fixes')
 
         with capture_sys_output() as (out, _):
-            cser.list_patches('second2', 2)
+            yield cser
         lines = iter(out.getvalue().splitlines())
         self.assertEqual("Branch 'second2':", next(lines))
         self.assertRegex(next(lines), '  0 .* video: Some video improvements')
         self.assertRegex(next(lines), '  1 .* serial: Add a serial driver')
         self.assertRegex(next(lines), '  2 .* bootm: Make it boot')
+        yield cser
+
+    def test_patchwork_list_patches(self):
+        """Test listing the patches for a series"""
+        cor = self.check_patchwork_list_patches()
+        cser = next(cor)
+        cser.list_patches('first', 1)
+        cser = next(cor)
+        cser.list_patches('second2', 2)
+        cser = next(cor)
+        cor.close()
+
+    def test_patchwork_list_patches_cmdline(self):
+        """Test listing the patches for a series using the cmdline"""
+        cor = self.check_patchwork_list_patches()
+        cser = next(cor)
+        self.run_args('series', 'list-patches', '-s', 'first')
+        cser.list_patches('first', 1)
+        cser = next(cor)
+        cser.list_patches('second2', 2)
+        cser = next(cor)
+        cor.close()
