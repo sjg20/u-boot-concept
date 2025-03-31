@@ -624,7 +624,6 @@ class Cseries:
         else:
             self.con.rollback()
 
-
     def make_cid(self, commit):
         """Make a Change ID for a commit"""
         sig = commit.committer
@@ -837,11 +836,12 @@ class Cseries:
             raise ValueError(f"No such upstream '{name}'")
         self.con.commit()
 
-    def remove_series(self, name):
+    def remove_series(self, name, dry_run=False):
         """Remove a series from the database
 
         Args:
-            name (str): Name of series to add, or None to use current one
+            name (str): Name of series to remove, or None to use current one
+            dry_run (bool): True to do a dry run
         """
         ser = self.parse_series(name)
         name = ser.name
@@ -851,8 +851,50 @@ class Cseries:
         if self.cur.rowcount != 1:
             self.con.rollback()
             raise ValueError(f"No such series '{name}'")
+
+        res = self.cur.execute('DELETE FROM patchwork WHERE series_id = ?',
+                               (ser.idnum,))
+        if not dry_run:
+            self.con.commit()
+        else:
+            self.con.rollback()
+
         self.con.commit()
         tout.info(f"Removed series '{name}'")
+        if dry_run:
+            tout.info('Dry run completed')
+
+    def remove_version(self, name, version, dry_run=False):
+        """Remove a version of a series from the database
+
+        Args:
+            name (str): Name of series to remove, or None to use current one
+            version (int): Version number to remove
+            dry_run (bool): True to do a dry run
+        """
+        ser = self.parse_series(name)
+        name = ser.name
+
+        versions = self.get_version_list(ser.idnum)
+        if version not in versions:
+            raise ValueError(
+                f"Series '{ser.name}' does not have a version {version}")
+
+        if versions == [version]:
+            raise ValueError(
+                f"Series '{ser.name}' only has one version: remove the series")
+
+        res = self.cur.execute(
+            'DELETE FROM patchwork WHERE series_id = ? and version = ?',
+            (ser.idnum, version))
+        if not dry_run:
+            self.con.commit()
+        else:
+            self.con.rollback()
+
+        tout.info(f"Removed version {version} from series '{name}'")
+        if dry_run:
+            tout.info('Dry run completed')
 
     def find_series_by_name(self, name):
         """Find a series and return its details
