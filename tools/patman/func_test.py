@@ -1519,6 +1519,7 @@ second line.'''
         pclist = cser.get_pcommit_dict()
         self.assertEqual(2, len(pclist))
         self.assertIn(1, pclist)
+        print('pclist', pclist)
         self.assertEqual((1, 0, 'i2c: I2C things', 1, None), pclist[1])
         self.assertEqual((2, 1, 'spi: SPI fixes', 1, None), pclist[2])
 
@@ -1877,7 +1878,7 @@ second line.'''
         pwork = Patchwork.for_testing(self._fake_patchwork_cser_link)
         pwork.set_project(PROJ_ID)
         self.assertFalse(cser.get_project())
-        cser.set_project(pwork, 'U-Boot')
+        cser.set_project(pwork, 'U-Boot', quiet=True)
 
         self.assertEqual((456, None, 'second', 1, 'Series for my board'),
                          cser.search_link(pwork, 'second', 1))
@@ -1957,7 +1958,7 @@ second line.'''
         pwork = Patchwork.for_testing(self._fake_patchwork_cser_link)
         pwork.set_project(PROJ_ID)
         self.assertFalse(cser.get_project())
-        cser.set_project(pwork, 'U-Boot')
+        cser.set_project(pwork, 'U-Boot', quiet=True)
 
         self.assertEqual((456, None, 'second', 1, 'Series for my board'),
                          cser.search_link(pwork, 'second', 1))
@@ -1978,7 +1979,7 @@ second line.'''
         pwork = Patchwork.for_testing(self._fake_patchwork_cser_link)
         pwork.set_project(PROJ_ID)
         self.assertFalse(cser.get_project())
-        cser.set_project(pwork, 'U-Boot')
+        cser.set_project(pwork, 'U-Boot', quiet=True)
 
         with capture_sys_output() as (out, _):
             cser.add_series('first', '', allow_unmarked=True)
@@ -2204,6 +2205,7 @@ second line.'''
 
         pclist = cser.get_pcommit_dict()
         self.assertEqual(4, len(pclist))
+        print('before', pclist)
 
         # Now remove version two for real
         with capture_sys_output() as (out, _):
@@ -2218,6 +2220,7 @@ second line.'''
         self.assertEqual(1, len(plist))
 
         pclist = cser.get_pcommit_dict()
+        print('after', pclist)
         self.assertEqual(2, len(pclist))
 
         branch = repo.lookup_branch('first2')
@@ -2718,14 +2721,20 @@ second line.'''
         """Test setting the project ID"""
         cser = self.get_cser()
         pwork = Patchwork.for_testing(self._fake_patchwork_cser)
-        cser.set_project(pwork, 'U-Boot')
+        with capture_sys_output() as (out, _):
+            cser.set_project(pwork, 'U-Boot')
+        self.assertEqual(f"Project 'U-Boot', patchwork ID {PROJ_ID}",
+                         out.getvalue().strip())
 
     def test_patchwork_get_project(self):
         """Test setting the project ID"""
         cser = self.get_cser()
         pwork = Patchwork.for_testing(self._fake_patchwork_cser)
         self.assertFalse(cser.get_project())
-        cser.set_project(pwork, 'U-Boot')
+        with capture_sys_output() as (out, _):
+            cser.set_project(pwork, 'U-Boot')
+        self.assertEqual(f"Project 'U-Boot', patchwork ID {PROJ_ID}",
+                         out.getvalue().strip())
 
         name, pwid = cser.get_project()
         self.assertEqual('U-Boot', name)
@@ -2738,8 +2747,11 @@ second line.'''
         self.assertFalse(cser.get_project())
 
         pwork = Patchwork.for_testing(self._fake_patchwork_cser)
-        self.run_args('-P', 'https://url', 'patchwork', 'set-project', 'U-Boot',
-                      pwork=pwork)
+        with capture_sys_output() as (out, _):
+            self.run_args('-P', 'https://url', 'patchwork', 'set-project',
+                          'U-Boot', pwork=pwork)
+        self.assertEqual(f"Project 'U-Boot', patchwork ID {PROJ_ID}",
+                         out.getvalue().strip())
 
         name, pwid = cser.get_project()
         self.assertEqual('U-Boot', name)
@@ -2748,7 +2760,8 @@ second line.'''
         with capture_sys_output() as (out, _):
             self.run_args('-P', 'https://url', 'patchwork', 'get-project',
                           'U-Boot')
-        self.assertEqual("Name: U-Boot\nID: 6\n", out.getvalue())
+        self.assertEqual(f"Project 'U-Boot', patchwork ID {PROJ_ID}",
+                         out.getvalue().strip())
 
     def check_patchwork_list_patches(self):
         """Test listing the patches for a series"""

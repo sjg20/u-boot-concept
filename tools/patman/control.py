@@ -289,7 +289,11 @@ def series(args, test_db=None, pwork=None):
         elif args.subcmd == 'auto-link':
             if not pwork:
                 pwork = Patchwork(args.patchwork_url)
-                pwork.proj_id = cser.get_project()[1]
+                proj = cser.get_project()
+                if not proj:
+                    raise ValueError(
+                        "Please set project ID with 'patman patchwork set-project'")
+                pwork.proj_id = proj[1]
             cser.do_auto_link(pwork, args.series, args.version, args.update)
         elif args.subcmd == 'get-link':
             link = cser.get_link(args.series, args.version)
@@ -369,8 +373,7 @@ def patchwork(args, test_db=None, pwork=None):
             if not info:
                 raise ValueError("Project has not been set; use 'patman patchwork set-project'")
             name, pwid = info
-            print(f'Name: {name}')
-            print(f'ID: {pwid}')
+            print(f"Project '{name}', patchwork ID {pwid}")
         else:
             raise ValueError(f"Unknown patchwork subcommand '{args.subcmd}'")
     finally:
