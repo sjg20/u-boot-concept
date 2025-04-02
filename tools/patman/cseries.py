@@ -71,9 +71,12 @@ class Cseries:
                 'CREATE TABLE series (id INTEGER PRIMARY KEY AUTOINCREMENT,'
                 'name UNIQUE, desc, archived BIT)')
 
+            # Provides a series_id/version pair, which is used to refer to a
+            # particular series version sent to patchwork. This stores the link
+            # to patchwork
             self.cur.execute(
                 'CREATE TABLE ser_ver (id INTEGER PRIMARY KEY AUTOINCREMENT,'
-                'version INTEGER, link, series_id INTEGER,'
+                'series_id INTEGER, version INTEGER, link,'
                 'FOREIGN KEY (series_id) REFERENCES series (id))')
 
             self.cur.execute(
