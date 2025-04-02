@@ -1520,9 +1520,9 @@ second line.'''
         pclist = cser.get_pcommit_dict()
         self.assertEqual(2, len(pclist))
         self.assertIn(1, pclist)
-        self.assertEqual(PCOMMIT(1, 0, 'i2c: I2C things', 1, None, None),
+        self.assertEqual(PCOMMIT(1, 0, 'i2c: I2C things', 1, None, None, None),
                          pclist[1])
-        self.assertEqual(PCOMMIT(2, 1, 'spi: SPI fixes', 1, None, None),
+        self.assertEqual(PCOMMIT(2, 1, 'spi: SPI fixes', 1, None, None, None),
                          pclist[2])
 
         self.db_close()

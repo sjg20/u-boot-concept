@@ -5,7 +5,14 @@
 """Provides a basic API for the patchwork server
 """
 
+from collections import namedtuple
 import requests
+
+# Information about a patch on patchwork
+# id: Patchwork ID of patch
+# state: Current state, e.g. 'accepted'
+PATCH = namedtuple('patch', 'id,state')
+
 
 class Patchwork:
     """Class to handle communication with patchwork
@@ -98,14 +105,16 @@ class Patchwork:
 
         Args:
             series_id (str): Patchwork series ID
+
+        Return:
+            list of PATCH: patch information for each patch in the series
         """
         data = self.get_series(series_id)
         patch_dict = data['patches']
 
         result = []
         for pat in patch_dict:
-            # print('name', pat['name'])
             patch_id = pat['id']
             data = self.request('patches/%s/' % patch_id)
-            result.append(data['state'])
+            result.append(PATCH(patch_id, data['state']))
         return result
