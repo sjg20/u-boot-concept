@@ -2386,13 +2386,13 @@ second line.'''
         self.assertIn(1, pcdict)
         self.assertEqual(1, pcdict[1].id)
         self.assertEqual('i2c: I2C things', pcdict[1].subject)
-        self.assertEqual(1, pcdict[1].pwid)
+        self.assertEqual(1, pcdict[1].svid)
         self.assertEqual(series.commits[0].change_id, pcdict[1].cid)
 
         self.assertIn(2, pcdict)
         self.assertEqual(2, pcdict[2].id)
         self.assertEqual('spi: SPI fixes', pcdict[2].subject)
-        self.assertEqual(1, pcdict[2].pwid)
+        self.assertEqual(1, pcdict[2].svid)
         self.assertEqual(series.commits[1].change_id, pcdict[2].cid)
 
     def test_series_add_mark_fail(self):

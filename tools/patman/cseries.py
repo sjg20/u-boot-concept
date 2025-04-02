@@ -86,12 +86,12 @@ class Cseries:
             # patchwork_id is the ID of the patch on the patchwork server
             self.cur.execute(
                 'CREATE TABLE pcommit (id INTEGER PRIMARY KEY AUTOINCREMENT,'
-                'pwid INTEGER, seq INTEGER, subject, patchwork_id INTEGER, cid,'
+                'svid INTEGER, seq INTEGER, subject, patchwork_id INTEGER, cid,'
                 'state, '
-                'FOREIGN KEY (pwid) REFERENCES ser_ver (id))')
+                'FOREIGN KEY (svid) REFERENCES ser_ver (id))')
 
             self.cur.execute(
-                'CREATE TABLE settings (name UNIQUE, pwid INT)')
+                'CREATE TABLE settings (name UNIQUE, proj_id INT)')
             self.con.commit()
         return self.cur
 
@@ -158,25 +158,26 @@ class Cseries:
             udict[name] = url, is_default
         return udict
 
-    def get_pcommit_dict(self, find_pwid=None):
+    def get_pcommit_dict(self, find_svid=None):
         """Get a dict of all pcommits entries from the database
 
-        Return:
-            pwid (int): If not None, finds the records associated with a
+        Args:
+            find_svid (int): If not None, finds the records associated with a
                 particular series and version
 
+        Return:
             OrderedDict:
                 key (int): record ID
                 value (PCOMMIT): record data
         """
-        query = 'SELECT id, seq, subject, pwid, cid, state FROM pcommit'
-        if find_pwid is not None:
-            query += f' WHERE pwid = {find_pwid}'
+        query = 'SELECT id, seq, subject, svid, cid, state FROM pcommit'
+        if find_svid is not None:
+            query += f' WHERE svid = {find_svid}'
         res = self.cur.execute(query)
         pcdict = OrderedDict()
-        for idnum, seq, subject, pwid, cid, state in res.fetchall():
-            pc = PCOMMIT(idnum, seq, subject, pwid, cid, state)
-            if find_pwid is not None:
+        for idnum, seq, subject, svid, cid, state in res.fetchall():
+            pc = PCOMMIT(idnum, seq, subject, svid, cid, state)
+            if find_svid is not None:
                 pcdict[seq] = pc
             else:
                 pcdict[idnum] = pc
@@ -699,13 +700,13 @@ class Cseries:
             del_branch.delete()
             print(f"Deleted branch '{del_name}' {oid(branch_oid)}")
 
-        old_pwid = self.get_series_pwid(ser.idnum, max_vers)
+        old_svid = self.get_series_pwid(ser.idnum, max_vers)
 
         res = self.cur.execute(
             'DELETE FROM ser_ver WHERE series_id = ? and version = ?',
             (ser.idnum, max_vers))
         res = self.cur.execute(
-            'DELETE FROM pcommit WHERE pwid = ?', (old_pwid,))
+            'DELETE FROM pcommit WHERE svid = ?', (old_svid,))
         if not dry_run:
             self.con.commit()
         else:
@@ -943,7 +944,7 @@ class Cseries:
                                (ser.idnum,))
         all = [str(i) for i in res.fetchall()[0]]
         vals = ', '.join(all[0])
-        res = self.cur.execute(f'DELETE FROM pcommit WHERE pwid IN ({vals})')
+        res = self.cur.execute(f'DELETE FROM pcommit WHERE svid IN ({vals})')
         res = self.cur.execute('DELETE FROM ser_ver WHERE series_id = ?',
                                (ser.idnum,))
         if not dry_run:
@@ -973,8 +974,8 @@ class Cseries:
             raise ValueError(
                 f"Series '{ser.name}' only has one version: remove the series")
 
-        pwid = self.get_series_pwid(ser.idnum, version)
-        res = self.cur.execute(f'DELETE FROM pcommit WHERE pwid = ?', (pwid,))
+        svid = self.get_series_pwid(ser.idnum, version)
+        res = self.cur.execute(f'DELETE FROM pcommit WHERE svid = ?', (svid,))
         res = self.cur.execute(
             'DELETE FROM ser_ver WHERE series_id = ? and version = ?',
             (ser.idnum, version))
@@ -1012,19 +1013,19 @@ class Cseries:
             name (str): Name of the project to use in patchwork
         """
         res = pwork.request(f'projects/')
-        pwid = None
+        proj_id = None
         for proj in res:
             if proj['name'] == name:
-                pwid = proj['id']
-        if not pwid:
+                proj_id = proj['id']
+        if not proj_id:
             raise ValueError(f"Unknown project name '{name}'")
         res = self.cur.execute(f'DELETE FROM settings')
         res = self.cur.execute(
-                f'INSERT INTO settings (name, pwid) VALUES (?, ?)',
-                (name, pwid))
+                f'INSERT INTO settings (name, proj_id) VALUES (?, ?)',
+                (name, proj_id))
         self.con.commit()
         if not quiet:
-            tout.info(f"Project '{name}', patchwork ID {pwid}")
+            tout.info(f"Project '{name}', patchwork ID {proj_id}")
 
     def get_project(self):
         """Get the name of the project
@@ -1032,9 +1033,9 @@ class Cseries:
         Returns:
             tuple:
                 name (str): Project name, e.g. 'U-Boot'
-                pwid (int): Patchworks project ID for this project
+                proj_id (int): Patchworks project ID for this project
         """
-        res = self.cur.execute(f"SELECT name, pwid FROM settings")
+        res = self.cur.execute(f"SELECT name, proj_id FROM settings")
         all = res.fetchall()
         if len(all) != 1:
             return None
@@ -1111,8 +1112,8 @@ class Cseries:
         """
         ser, version = self.parse_series_and_version(series, version)
         self.ensure_version(ser, version)
-        pwid = self.get_series_pwid(ser.idnum, version)
-        pwc = self.get_pcommit_dict(pwid)
+        svid = self.get_series_pwid(ser.idnum, version)
+        pwc = self.get_pcommit_dict(svid)
 
         count = len(pwc)
         branch = self.join_name_version(ser.name, version)
@@ -1165,8 +1166,8 @@ class Cseries:
         """
         ser, version = self.parse_series_and_version(series, version)
         self.ensure_version(ser, version)
-        pwid, link = self.get_series_pwid_link(ser.idnum, version)
-        pwc = self.get_pcommit_dict(pwid)
+        svid, link = self.get_series_pwid_link(ser.idnum, version)
+        pwc = self.get_pcommit_dict(svid)
 
         count = len(pwc)
         branch = self.join_name_version(ser.name, version)
@@ -1184,10 +1185,10 @@ class Cseries:
         """
         ser, version = self.parse_series_and_version(series, version)
         self.ensure_version(ser, version)
-        pwid, link = self.get_series_pwid_link(ser.idnum, version)
+        svid, link = self.get_series_pwid_link(ser.idnum, version)
         state_list = pwork.series_get_state(link)
 
-        pwc = self.get_pcommit_dict(pwid)
+        pwc = self.get_pcommit_dict(svid)
 
         for seq, item in enumerate(pwc.values()):
             res = self.cur.execute(
