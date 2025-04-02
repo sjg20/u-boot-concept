@@ -1513,7 +1513,7 @@ second line.'''
         self.assertEqual('first', slist['first'].name)
         self.assertEqual('my description', slist['first'].desc)
 
-        plist = cser.get_patchwork_dict()
+        plist = cser.get_ser_ver_dict()
         self.assertEqual(1, len(plist))
         self.assertEqual((1, 1, None), plist[0])
 
@@ -1552,7 +1552,7 @@ second line.'''
         self.assertEqual('first', slist['first'].name)
 
         # We should have just one entry, with version 2
-        plist = cser.get_patchwork_dict()
+        plist = cser.get_ser_ver_dict()
         self.assertEqual(1, len(plist))
         self.assertEqual((1, 2, None), plist[0])
 
@@ -1598,7 +1598,7 @@ second line.'''
         self.assertEqual('first', slist['first'].name)
 
         # We should have two entries, one of each version
-        plist = cser.get_patchwork_dict()
+        plist = cser.get_ser_ver_dict()
         self.assertEqual(2, len(plist))
         self.assertEqual((1, 2, None), plist[0])
         self.assertEqual((1, 1, None), plist[1])
@@ -1915,7 +1915,7 @@ second line.'''
                 "Setting link for series 'first' version 2 to 2345",
                 out.getvalue().strip())
 
-        plist = cser.get_patchwork_dict()
+        plist = cser.get_ser_ver_dict()
         self.assertEqual(2, len(plist))
         self.assertEqual((1, 1, None), plist[0])
         self.assertEqual((1, 2, '2345'), plist[1])
@@ -1943,7 +1943,7 @@ second line.'''
                 "Setting link for series 'first' version 2 to 2345",
                 out.getvalue().strip())
 
-        plist = cser.get_patchwork_dict()
+        plist = cser.get_ser_ver_dict()
         self.assertEqual(2, len(plist))
         self.assertEqual((1, 1, '1234'), plist[0])
         self.assertEqual((1, 2, '2345'), plist[1])
@@ -1993,7 +1993,7 @@ second line.'''
 
         self.db_open()
 
-        plist = cser.get_patchwork_dict()
+        plist = cser.get_ser_ver_dict()
         self.assertEqual(2, len(plist))
         self.assertEqual((1, 1, None), plist[0])
         self.assertEqual((2, 1, '456'), plist[1])
@@ -2108,7 +2108,7 @@ second line.'''
         slist = cser.get_series_dict()
         self.assertEqual(1, len(slist))
 
-        plist = cser.get_patchwork_dict()
+        plist = cser.get_ser_ver_dict()
         self.assertEqual(2, len(plist))
         self.assertEqual((1, 1, None), plist[0])
         self.assertEqual((1, 2, None), plist[1])
@@ -2162,7 +2162,7 @@ second line.'''
         self.assertEqual('Dry run completed', lines[2])
 
         # Make sure that nothing was added
-        plist = cser.get_patchwork_dict()
+        plist = cser.get_ser_ver_dict()
         self.assertEqual(1, len(plist))
         self.assertEqual((1, 1, None), plist[0])
 
@@ -2190,7 +2190,7 @@ second line.'''
         # Add a version; now there should be two
         with capture_sys_output() as (out, _):
             cser.increment('first')
-        plist = cser.get_patchwork_dict()
+        plist = cser.get_ser_ver_dict()
         self.assertEqual(2, len(plist))
 
         pclist = cser.get_pcommit_dict()
@@ -2199,7 +2199,7 @@ second line.'''
         # Remove version two, using dry run (i.e. no effect)
         with capture_sys_output() as (out, _):
             cser.decrement('first', dry_run=True)
-        plist = cser.get_patchwork_dict()
+        plist = cser.get_ser_ver_dict()
         self.assertEqual(2, len(plist))
 
         repo = pygit2.init_repository(self.gitdir)
@@ -2219,7 +2219,7 @@ second line.'''
         self.assertEqual(
             f"Deleted branch 'first2' {str(branch_oid)[:10]}", lines[1])
 
-        plist = cser.get_patchwork_dict()
+        plist = cser.get_ser_ver_dict()
         self.assertEqual(1, len(plist))
 
         pclist = cser.get_pcommit_dict()
@@ -2607,7 +2607,7 @@ second line.'''
                          'Dry run completed', out.getvalue().strip())
         self.assertEqual({'first'}, cser.get_series_dict().keys())
 
-        plist = cser.get_patchwork_dict()
+        plist = cser.get_ser_ver_dict()
         self.assertEqual(2, len(plist))
         self.assertEqual((1, 2, None), plist[0])
         self.assertEqual((1, 1, None), plist[1])
@@ -2618,7 +2618,7 @@ second line.'''
         self.assertEqual("Removed version 1 from series 'first'",
                          out.getvalue().strip())
         self.assertEqual({'first'}, cser.get_series_dict().keys())
-        plist = cser.get_patchwork_dict()
+        plist = cser.get_ser_ver_dict()
         self.assertEqual(1, len(plist))
         pclist = cser.get_pcommit_dict()
         self.assertEqual(2, len(pclist))
@@ -2626,7 +2626,7 @@ second line.'''
         yield cser
         self.assertEqual({'first'}, cser.get_series_dict().keys())
 
-        plist = cser.get_patchwork_dict()
+        plist = cser.get_ser_ver_dict()
         self.assertEqual(1, len(plist))
         self.assertEqual((1, 2, None), plist[0])
 
@@ -2635,13 +2635,13 @@ second line.'''
         self.assertEqual("Removed series 'first'\nDry run completed",
                          out.getvalue().strip())
         self.assertTrue(cser.get_series_dict())
-        self.assertTrue(cser.get_patchwork_dict())
+        self.assertTrue(cser.get_ser_ver_dict())
 
         with capture_sys_output() as (out, _):
             yield cser
         self.assertEqual("Removed series 'first'", out.getvalue().strip())
         self.assertFalse(cser.get_series_dict())
-        self.assertFalse(cser.get_patchwork_dict())
+        self.assertFalse(cser.get_ser_ver_dict())
         yield cser
 
     def test_series_remove_multiple(self):
