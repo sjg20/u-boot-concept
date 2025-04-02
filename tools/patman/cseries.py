@@ -32,10 +32,10 @@ HASH_LEN = 10
 # id (int): record ID
 # seq (int): Patch sequence in series (0 is first)
 # subject (str): patch subject
-# svid (int): link to patchwork series/version record
-# cid (str): Change-ID value
+# svid (int): ID of series/version record in ser_ver table
+# change_id (str): Change-ID value
 # status (str): Current status in patchwork
-PCOMMIT = namedtuple('pcommit', 'id,seq,subject,svid,cid,state')
+PCOMMIT = namedtuple('pcommit', 'id,seq,subject,svid,change_id,state')
 
 
 def oid(oid_val):
@@ -82,12 +82,12 @@ class Cseries:
             self.cur.execute(
                 'CREATE TABLE upstream (name UNIQUE, url, is_default BIT)')
 
-            # cid is the Change-Id
+            # change_id is the Change-Id
             # patchwork_id is the ID of the patch on the patchwork server
             self.cur.execute(
                 'CREATE TABLE pcommit (id INTEGER PRIMARY KEY AUTOINCREMENT,'
-                'svid INTEGER, seq INTEGER, subject, patchwork_id INTEGER, cid,'
-                'state, '
+                'svid INTEGER, seq INTEGER, subject, patchwork_id INTEGER, '
+                'change_id, state, '
                 'FOREIGN KEY (svid) REFERENCES ser_ver (id))')
 
             self.cur.execute(
@@ -170,13 +170,13 @@ class Cseries:
                 key (int): record ID
                 value (PCOMMIT): record data
         """
-        query = 'SELECT id, seq, subject, svid, cid, state FROM pcommit'
+        query = 'SELECT id, seq, subject, svid, change_id, state FROM pcommit'
         if find_svid is not None:
             query += f' WHERE svid = {find_svid}'
         res = self.cur.execute(query)
         pcdict = OrderedDict()
-        for idnum, seq, subject, svid, cid, state in res.fetchall():
-            pc = PCOMMIT(idnum, seq, subject, svid, cid, state)
+        for idnum, seq, subject, svid, change_id, state in res.fetchall():
+            pc = PCOMMIT(idnum, seq, subject, svid, change_id, state)
             if find_svid is not None:
                 pcdict[seq] = pc
             else:
@@ -291,7 +291,7 @@ class Cseries:
         """
         for seq, commit in enumerate(series.commits):
             res = self.cur.execute(
-                'INSERT INTO pcommit (svid, seq, subject, cid) '
+                'INSERT INTO pcommit (svid, seq, subject, change_id) '
                 'VALUES (?, ?, ?, ?)',
                 (str(svid), seq, commit.subject, commit.change_id))
 
@@ -653,8 +653,8 @@ class Cseries:
 
         for pcm in pcd.values():
             res = self.cur.execute(
-                'INSERT INTO pcommit (svid, seq, subject, cid) VALUES '
-                '(?, ?, ?, ?)', (svid, pcm.seq, pcm.subject, pcm.cid))
+                'INSERT INTO pcommit (svid, seq, subject, change_id) VALUES '
+                '(?, ?, ?, ?)', (svid, pcm.seq, pcm.subject, pcm.change_id))
 
         if not dry_run:
             self.con.commit()
@@ -712,7 +712,7 @@ class Cseries:
         else:
             self.con.rollback()
 
-    def make_cid(self, commit):
+    def make_change_id(self, commit):
         """Make a Change ID for a commit"""
         sig = commit.committer
         val = hashlib.sha1()
@@ -798,8 +798,8 @@ class Cseries:
         vals = SimpleNamespace()
         for cherry in self._process_series(vals, name, series, dry_run):
             if CHANGE_ID_TAG not in cherry.message:
-                cid = self.make_cid(cherry)
-                vals.msg = cherry.message + f'\n{CHANGE_ID_TAG}: {cid}'
+                change_id = self.make_change_id(cherry)
+                vals.msg = cherry.message + f'\n{CHANGE_ID_TAG}: {change_id}'
                 tout.detail(f"   - adding tag")
                 vals.info = 'tagged'
             else:
@@ -836,7 +836,7 @@ class Cseries:
         for cherry in self._process_series(vals, name, series, dry_run):
             if CHANGE_ID_TAG in cherry.message:
                 pos = cherry.message.index(CHANGE_ID_TAG)
-                cid = self.make_cid(cherry)
+                change_id = self.make_change_id(cherry)
                 vals.msg = cherry.message[:pos]
 
                 tout.detail(f"   - removing tag")
