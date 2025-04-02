@@ -72,7 +72,7 @@ class Cseries:
                 'name UNIQUE, desc, archived BIT)')
 
             self.cur.execute(
-                'CREATE TABLE patchwork (id INTEGER PRIMARY KEY AUTOINCREMENT,'
+                'CREATE TABLE ser_ver (id INTEGER PRIMARY KEY AUTOINCREMENT,'
                 'version INTEGER, link, series_id INTEGER,'
                 'FOREIGN KEY (series_id) REFERENCES series (id))')
 
@@ -85,7 +85,7 @@ class Cseries:
                 'CREATE TABLE pcommit (id INTEGER PRIMARY KEY AUTOINCREMENT,'
                 'pwid INTEGER, seq INTEGER, subject, patchwork_id INTEGER, cid,'
                 'state, '
-                'FOREIGN KEY (pwid) REFERENCES patchwork (id))')
+                'FOREIGN KEY (pwid) REFERENCES ser_ver (id))')
 
             self.cur.execute(
                 'CREATE TABLE settings (name UNIQUE, pwid INT)')
@@ -129,7 +129,7 @@ class Cseries:
             sdict[name] = ser
         return sdict
 
-    def get_patchwork_dict(self):
+    def get_ser_ver_dict(self):
         """Get a list of patchwork entries from the database
 
         Return:
@@ -138,7 +138,7 @@ class Cseries:
                 int: version
                 link: link string, or ''
         """
-        res = self.cur.execute('SELECT series_id, version, link FROM patchwork')
+        res = self.cur.execute('SELECT series_id, version, link FROM ser_ver')
         return res.fetchall()
 
     def get_upstream_dict(self):
@@ -249,7 +249,7 @@ class Cseries:
 
         if version not in self.get_version_list(idnum):
             res = self.cur.execute(
-                'INSERT INTO patchwork (version, link, series_id) VALUES'
+                'INSERT INTO ser_ver (version, link, series_id) VALUES'
                 f"('{version}', ?, {idnum})", (link,))
             pwid = self.cur.lastrowid
             msg += f" version {version}"
@@ -367,7 +367,7 @@ class Cseries:
         tout.info(
             f"Setting link for series '{ser.name}' version {version} to {link}")
         res = self.cur.execute(
-            f"UPDATE patchwork SET link = '{link}' WHERE "
+            f"UPDATE ser_ver SET link = '{link}' WHERE "
             'series_id = ? AND version = ?', (ser.idnum, version))
         self.con.commit()
 
@@ -384,7 +384,7 @@ class Cseries:
         ser = self.parse_series(series)
         self.ensure_version(ser, version)
 
-        res = self.cur.execute('SELECT link FROM patchwork WHERE '
+        res = self.cur.execute('SELECT link FROM ser_ver WHERE '
             f"series_id = {ser.idnum} AND version = '{version}'")
         all = res.fetchall()
         if not all:
@@ -459,7 +459,7 @@ class Cseries:
         """
         if idnum is None:
             raise ValueError('Unknown series idnum')
-        res = self.cur.execute('SELECT version FROM patchwork WHERE '
+        res = self.cur.execute('SELECT version FROM ser_ver WHERE '
             f"series_id = {idnum}")
         all = res.fetchall()
         return [item[0] for item in all]
@@ -600,7 +600,7 @@ class Cseries:
             raise ValueError(f"Series '{ser.name}' not found in database")
 
         # Find the current version
-        res = self.cur.execute('SELECT MAX(version) FROM patchwork WHERE '
+        res = self.cur.execute('SELECT MAX(version) FROM ser_ver WHERE '
             f"series_id = {ser.idnum}")
         max_vers = res.fetchall()[0][0]
 
@@ -642,7 +642,7 @@ class Cseries:
         pcd = self.get_pcommit_dict(old_pwid)
 
         res = self.cur.execute(
-            'INSERT INTO patchwork (version, series_id) VALUES'
+            'INSERT INTO ser_ver (version, series_id) VALUES'
             f"('{vers}', {ser.idnum})")
         pwid = self.cur.lastrowid
 
@@ -673,7 +673,7 @@ class Cseries:
             raise ValueError(f"Series '{ser.name}' not found in database")
 
         # Find the current version
-        res = self.cur.execute('SELECT MAX(version) FROM patchwork WHERE '
+        res = self.cur.execute('SELECT MAX(version) FROM ser_ver WHERE '
             f"series_id = {ser.idnum}")
         max_vers = res.fetchall()[0][0]
         if max_vers < 2:
@@ -698,7 +698,7 @@ class Cseries:
         old_pwid = self.get_series_pwid(ser.idnum, max_vers)
 
         res = self.cur.execute(
-            'DELETE FROM patchwork WHERE series_id = ? and version = ?',
+            'DELETE FROM ser_ver WHERE series_id = ? and version = ?',
             (ser.idnum, max_vers))
         res = self.cur.execute(
             'DELETE FROM pcommit WHERE pwid = ?', (old_pwid,))
@@ -935,12 +935,12 @@ class Cseries:
             self.con.rollback()
             raise ValueError(f"No such series '{name}'")
 
-        res = self.cur.execute('SELECT id FROM patchwork WHERE series_id = ?',
+        res = self.cur.execute('SELECT id FROM ser_ver WHERE series_id = ?',
                                (ser.idnum,))
         all = [str(i) for i in res.fetchall()[0]]
         vals = ', '.join(all[0])
         res = self.cur.execute(f'DELETE FROM pcommit WHERE pwid IN ({vals})')
-        res = self.cur.execute('DELETE FROM patchwork WHERE series_id = ?',
+        res = self.cur.execute('DELETE FROM ser_ver WHERE series_id = ?',
                                (ser.idnum,))
         if not dry_run:
             self.con.commit()
@@ -972,7 +972,7 @@ class Cseries:
         pwid = self.get_series_pwid(ser.idnum, version)
         res = self.cur.execute(f'DELETE FROM pcommit WHERE pwid = ?', (pwid,))
         res = self.cur.execute(
-            'DELETE FROM patchwork WHERE series_id = ? and version = ?',
+            'DELETE FROM ser_ver WHERE series_id = ? and version = ?',
             (ser.idnum, version))
         if not dry_run:
             self.con.commit()
@@ -1133,7 +1133,7 @@ class Cseries:
             version (int): version number to look up
         """
         res = self.cur.execute(
-            f"SELECT id, link FROM patchwork WHERE series_id = ? AND version = ?",
+            f"SELECT id, link FROM ser_ver WHERE series_id = ? AND version = ?",
             (idnum,version))
         all = res.fetchall()
         if not all:
