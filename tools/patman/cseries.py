@@ -32,10 +32,10 @@ HASH_LEN = 10
 # id (int): record ID
 # seq (int): Patch sequence in series (0 is first)
 # subject (str): patch subject
-# pwid (int): link to patchwork series/version record
+# svid (int): link to patchwork series/version record
 # cid (str): Change-ID value
 # status (str): Current status in patchwork
-PCOMMIT = namedtuple('pcommit', 'id,seq,subject,pwid,cid,state')
+PCOMMIT = namedtuple('pcommit', 'id,seq,subject,svid,cid,state')
 
 
 def oid(oid_val):
@@ -162,8 +162,9 @@ class Cseries:
         """Get a dict of all pcommits entries from the database
 
         Return:
-            pwid (int): If not not, finds the records associated with a
+            pwid (int): If not None, finds the records associated with a
                 particular series and version
+
             OrderedDict:
                 key (int): record ID
                 value (PCOMMIT): record data
@@ -254,13 +255,13 @@ class Cseries:
             res = self.cur.execute(
                 'INSERT INTO ser_ver (series_id, version, link) VALUES '
                 '(?, ?, ?)', (series_id, version, link))
-            pwid = self.cur.lastrowid
+            svid = self.cur.lastrowid
             msg += f" version {version}"
             if not added:
                 msg += f" to existing series '{name}'"
             added = True
 
-            self.add_series_commits(series, pwid)
+            self.add_series_commits(series, svid)
         if not added:
             tout.info(f"Series '{name}' version {version} already exists")
             msg = None
@@ -280,18 +281,18 @@ class Cseries:
             tout.info('Dry run completed')
         return ser
 
-    def add_series_commits(self, series, pwid):
+    def add_series_commits(self, series, svid):
         """Add a commits from a series into the database
 
         Args:
             series (Series): Series containing commits to add
-            pwid (int): patchwork-table ID to use for each commit
+            svid (int): ser_ver-table ID to use for each commit
         """
         for seq, commit in enumerate(series.commits):
             res = self.cur.execute(
-                'INSERT INTO pcommit (pwid, seq, subject, cid) '
+                'INSERT INTO pcommit (svid, seq, subject, cid) '
                 'VALUES (?, ?, ?, ?)',
-                (str(pwid), seq, commit.subject, commit.change_id))
+                (str(svid), seq, commit.subject, commit.change_id))
 
     def get_series_by_name(self, name):
         """Get a Series object from the database by name
@@ -641,18 +642,18 @@ class Cseries:
         new_msg = '\n'.join(lines) + '\n'
         amended = repo.amend_commit(commit, 'HEAD', message=new_msg)
 
-        old_pwid = self.get_series_pwid(ser.idnum, max_vers)
-        pcd = self.get_pcommit_dict(old_pwid)
+        old_svid = self.get_series_pwid(ser.idnum, max_vers)
+        pcd = self.get_pcommit_dict(old_svid)
 
         res = self.cur.execute(
             'INSERT INTO ser_ver (series_id, version) VALUES (?, ?)',
             (ser.idnum, vers))
-        pwid = self.cur.lastrowid
+        svid = self.cur.lastrowid
 
         for pcm in pcd.values():
             res = self.cur.execute(
-                'INSERT INTO pcommit (pwid, seq, subject, cid) VALUES '
-                '(?, ?, ?, ?)', (pwid, pcm.seq, pcm.subject, pcm.cid))
+                'INSERT INTO pcommit (svid, seq, subject, cid) VALUES '
+                '(?, ?, ?, ?)', (svid, pcm.seq, pcm.subject, pcm.cid))
 
         if not dry_run:
             self.con.commit()
