@@ -241,22 +241,19 @@ class Cseries:
 
         msg = 'Added'
         added = False
-        idnum = self.find_series_by_name(name)
-        if not idnum:
+        series_id = self.find_series_by_name(name)
+        if not series_id:
             res = self.cur.execute(
                 'INSERT INTO series (name, desc, archived) '
                 f"VALUES ('{name}', '{desc}', 0)")
-            idnum = self.cur.lastrowid
+            series_id = self.cur.lastrowid
             added = True
             msg += f" series '{name}'"
 
-        if version not in self.get_version_list(idnum):
-            # res = self.cur.execute(
-            #     'INSERT INTO ser_ver (version, link, series_id) VALUES'
-            #     f"('{version}', ?, {idnum})", (link,))
+        if version not in self.get_version_list(series_id):
             res = self.cur.execute(
-                'INSERT INTO ser_ver (version, link, series_id) VALUES '
-                '(?, ?, ?)', (version, link, idnum))
+                'INSERT INTO ser_ver (series_id, version, link) VALUES '
+                '(?, ?, ?)', (series_id, version, link))
             pwid = self.cur.lastrowid
             msg += f" version {version}"
             if not added:
@@ -271,11 +268,11 @@ class Cseries:
             self.con.commit()
         else:
             self.con.rollback()
-            idnum = None
+            series_id = None
         ser = Series()
         ser.name = name
         ser.desc = desc
-        ser.idnum = idnum
+        ser.idnum = series_id
 
         if msg:
             tout.info(msg)
