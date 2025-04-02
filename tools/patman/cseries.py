@@ -255,8 +255,8 @@ class Cseries:
             #     'INSERT INTO ser_ver (version, link, series_id) VALUES'
             #     f"('{version}', ?, {idnum})", (link,))
             res = self.cur.execute(
-                'INSERT INTO ser_ver (version, link, series_id) VALUES'
-                f"('{version}', ?, {idnum})", (link,))
+                'INSERT INTO ser_ver (version, link, series_id) VALUES '
+                '(?, ?, ?)', (version, link, idnum))
             pwid = self.cur.lastrowid
             msg += f" version {version}"
             if not added:
