@@ -643,7 +643,7 @@ class Cseries:
         new_msg = '\n'.join(lines) + '\n'
         amended = repo.amend_commit(commit, 'HEAD', message=new_msg)
 
-        old_svid = self.get_series_pwid(ser.idnum, max_vers)
+        old_svid = self.get_series_svid(ser.idnum, max_vers)
         pcd = self.get_pcommit_dict(old_svid)
 
         res = self.cur.execute(
@@ -700,7 +700,7 @@ class Cseries:
             del_branch.delete()
             print(f"Deleted branch '{del_name}' {oid(branch_oid)}")
 
-        old_svid = self.get_series_pwid(ser.idnum, max_vers)
+        old_svid = self.get_series_svid(ser.idnum, max_vers)
 
         res = self.cur.execute(
             'DELETE FROM ser_ver WHERE series_id = ? and version = ?',
@@ -974,7 +974,7 @@ class Cseries:
             raise ValueError(
                 f"Series '{ser.name}' only has one version: remove the series")
 
-        svid = self.get_series_pwid(ser.idnum, version)
+        svid = self.get_series_svid(ser.idnum, version)
         res = self.cur.execute(f'DELETE FROM pcommit WHERE svid = ?', (svid,))
         res = self.cur.execute(
             'DELETE FROM ser_ver WHERE series_id = ? and version = ?',
@@ -1112,7 +1112,7 @@ class Cseries:
         """
         ser, version = self.parse_series_and_version(series, version)
         self.ensure_version(ser, version)
-        svid = self.get_series_pwid(ser.idnum, version)
+        svid = self.get_series_svid(ser.idnum, version)
         pwc = self.get_pcommit_dict(svid)
 
         count = len(pwc)
@@ -1121,7 +1121,7 @@ class Cseries:
 
         self._list_patches(branch, pwc, series)
 
-    def get_series_pwid(self, series_id, version):
+    def get_series_svid(self, series_id, version):
         """Get the patchwork ID of a series version
 
         Args:
@@ -1134,9 +1134,9 @@ class Cseries:
         Raises:
             ValueError: No matching series found
         """
-        return self.get_series_pwid_link(series_id, version)[0]
+        return self.get_series_svid_link(series_id, version)[0]
 
-    def get_series_pwid_link(self, series_id, version):
+    def get_series_svid_link(self, series_id, version):
         """Get the patchwork ID of a series version
 
         Args:
@@ -1166,7 +1166,7 @@ class Cseries:
         """
         ser, version = self.parse_series_and_version(series, version)
         self.ensure_version(ser, version)
-        svid, link = self.get_series_pwid_link(ser.idnum, version)
+        svid, link = self.get_series_svid_link(ser.idnum, version)
         pwc = self.get_pcommit_dict(svid)
 
         count = len(pwc)
@@ -1185,7 +1185,7 @@ class Cseries:
         """
         ser, version = self.parse_series_and_version(series, version)
         self.ensure_version(ser, version)
-        svid, link = self.get_series_pwid_link(ser.idnum, version)
+        svid, link = self.get_series_svid_link(ser.idnum, version)
         state_list = pwork.series_get_state(link)
 
         pwc = self.get_pcommit_dict(svid)

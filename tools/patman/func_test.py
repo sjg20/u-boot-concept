@@ -2858,7 +2858,7 @@ second line.'''
         cser.series_sync(pwork, 'second', None)
 
         ser = cser.get_series_by_name('second')
-        pwid, link = cser.get_series_pwid_link(ser.idnum, 1)
+        pwid, link = cser.get_series_svid_link(ser.idnum, 1)
         pwc = cser.get_pcommit_dict(pwid)
         self.assertEqual('accepted', pwc[0].state)
         self.assertEqual('changes-requested', pwc[1].state)
