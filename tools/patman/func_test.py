@@ -1623,9 +1623,17 @@ second line.'''
     def test_series_list(self):
         """Test listing cseries"""
         cser = self.get_cser()
+        pwork = Patchwork.for_testing(self._fake_patchwork_cser_link)
+        pwork.set_project(PROJ_ID)
+
         with capture_sys_output() as (out, _):
             cser.add_series('first', '', allow_unmarked=True)
             cser.add_series('second', allow_unmarked=True)
+            cser.increment('second')
+            cser.do_auto_link(pwork, 'second', 2, True)
+        with capture_sys_output() as (out, _):
+            cser.series_sync(pwork, 'second', 2)
+        self.assertEqual('3 patch(es) updated', out.getvalue().strip())
 
         args = Namespace()
         args.subcmd = 'list'
@@ -1637,7 +1645,7 @@ second line.'''
         self.assertEqual('Name            Description          Accepted  Versions',
                          lines[0])
         self.assertEqual('first                                     -/2  1', lines[1])
-        self.assertEqual('second          Series for my board       0/3  1', lines[2])
+        self.assertEqual('second          Series for my board       1/3  1 2', lines[2])
         self.db_close()
 
     def test_do_series_add(self):
@@ -1831,7 +1839,7 @@ second line.'''
                 {'id': 456, 'name': 'Series for my board', 'version': '1'},
                 {'id': 457, 'name': 'Series for my board', 'version': '2'},
             ]
-        raise ValueError('Fake Patchwork does not understand: %s' % subpath)
+        return self._fake_patchwork_cser(subpath)
 
     def test_series_link_auto_version(self):
         """Test finding the patchwork link for a cseries automatically"""
@@ -2695,9 +2703,9 @@ second line.'''
         if subpath.startswith('series/'):
             return {
                 'patches': [
-                    {'id': 10, 'state': 'accepted'},
-                    {'id': 11, 'state': 'changes-requested'},
-                    {'id': 12, 'state': 'rejected'},
+                    {'id': 10},
+                    {'id': 11},
+                    {'id': 12},
                 ]
             }
         if subpath.startswith('patches/'):
