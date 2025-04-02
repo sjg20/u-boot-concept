@@ -35,7 +35,8 @@ HASH_LEN = 10
 # svid (int): ID of series/version record in ser_ver table
 # change_id (str): Change-ID value
 # status (str): Current status in patchwork
-PCOMMIT = namedtuple('pcommit', 'id,seq,subject,svid,change_id,state')
+# patch_id (in): Patchwork's patch ID for this patch
+PCOMMIT = namedtuple('pcommit', 'id,seq,subject,svid,change_id,state,patch_id')
 
 
 def oid(oid_val):
@@ -83,10 +84,10 @@ class Cseries:
                 'CREATE TABLE upstream (name UNIQUE, url, is_default BIT)')
 
             # change_id is the Change-Id
-            # patchwork_id is the ID of the patch on the patchwork server
+            # patch_id is the ID of the patch on the patchwork server
             self.cur.execute(
                 'CREATE TABLE pcommit (id INTEGER PRIMARY KEY AUTOINCREMENT,'
-                'svid INTEGER, seq INTEGER, subject, patchwork_id INTEGER, '
+                'svid INTEGER, seq INTEGER, subject, patch_id INTEGER, '
                 'change_id, state, '
                 'FOREIGN KEY (svid) REFERENCES ser_ver (id))')
 
@@ -159,7 +160,7 @@ class Cseries:
         return udict
 
     def get_pcommit_dict(self, find_svid=None):
-        """Get a dict of all pcommits entries from the database
+        """Get a dict of pcommits entries from the database
 
         Args:
             find_svid (int): If not None, finds the records associated with a
@@ -167,16 +168,16 @@ class Cseries:
 
         Return:
             OrderedDict:
-                key (int): record ID
+                key (int): record ID if find_svid is None, else seq
                 value (PCOMMIT): record data
         """
-        query = 'SELECT id, seq, subject, svid, change_id, state FROM pcommit'
+        query = 'SELECT id, seq, subject, svid, change_id, state, patch_id FROM pcommit'
         if find_svid is not None:
             query += f' WHERE svid = {find_svid}'
         res = self.cur.execute(query)
         pcdict = OrderedDict()
-        for idnum, seq, subject, svid, change_id, state in res.fetchall():
-            pc = PCOMMIT(idnum, seq, subject, svid, change_id, state)
+        for idnum, seq, subject, svid, change_id, state, patch_id in res.fetchall():
+            pc = PCOMMIT(idnum, seq, subject, svid, change_id, state, patch_id)
             if find_svid is not None:
                 pcdict[seq] = pc
             else:
@@ -1093,7 +1094,8 @@ class Cseries:
             cmt = series.commits[seq]
             assert cmt.subject == item.subject
             col_state, pad = self.build_col(item.state)
-            line = f'{seq:3} {col_state}{pad} {oid(cmt.hash)} {item.subject}'
+            patch_id = item.patch_id if item.patch_id else ''
+            line = f'{seq:3} {col_state}{pad} {patch_id:7} {oid(cmt.hash)} {item.subject}'
             lines.append(line)
             states[item.state] += 1
         all = ''
@@ -1157,7 +1159,7 @@ class Cseries:
         return all[0]
 
     def series_status(self, pwork, series, version):
-        """Get the patchwork status of a series
+        """Show the patchwork status of a series
 
         Args:
             pwork (Patchwork): Patchwork object to use
@@ -1176,7 +1178,7 @@ class Cseries:
         self._list_patches(branch, pwc, series)
 
     def series_sync(self, pwork, series, version):
-        """Sync the series static from patchwork
+        """Sync the series status from patchwork
 
         Args:
             pwork (Patchwork): Patchwork object to use
@@ -1186,12 +1188,12 @@ class Cseries:
         ser, version = self.parse_series_and_version(series, version)
         self.ensure_version(ser, version)
         svid, link = self.get_series_svid_link(ser.idnum, version)
-        state_list = pwork.series_get_state(link)
+        patches = pwork.series_get_state(link)
 
         pwc = self.get_pcommit_dict(svid)
 
         for seq, item in enumerate(pwc.values()):
             res = self.cur.execute(
-                'UPDATE pcommit set state = ? WHERE id = ?',
-                (state_list[seq], item.id))
+                'UPDATE pcommit set patch_id = ?, state = ? WHERE id = ?',
+                (patches[seq].id, patches[seq].state, item.id))
         self.con.commit()
