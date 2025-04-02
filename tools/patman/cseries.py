@@ -1119,28 +1119,39 @@ class Cseries:
 
         self._list_patches(branch, pwc, series)
 
-    def get_series_pwid(self, idnum, version):
+    def get_series_pwid(self, series_id, version):
         """Get the patchwork ID of a series version
 
         Args:
-            idnum (int): id of the series to look up
+            series_id (int): id of the series to look up
             version (int): version number to look up
+
+        Return:
+            str: link found
+
+        Raises:
+            ValueError: No matching series found
         """
-        return self.get_series_pwid_link(idnum, version)[0]
+        return self.get_series_pwid_link(series_id, version)[0]
 
-    def get_series_pwid_link(self, idnum, version):
+    def get_series_pwid_link(self, series_id, version):
         """Get the patchwork ID of a series version
 
         Args:
-            idnum (int): id of the series to look up
+            series_id (int): series ID to look up
             version (int): version number to look up
+
+        Return:
+            tuple:
+                int: record id
+                str: link
         """
         res = self.cur.execute(
             f"SELECT id, link FROM ser_ver WHERE series_id = ? AND version = ?",
-            (idnum,version))
+            (series_id, version))
         all = res.fetchall()
         if not all:
-            raise ValueError(f'No matching series for id {idnum}')
+            raise ValueError(f'No matching series for id {series_id}')
         return all[0]
 
     def series_status(self, pwork, series, version):
