@@ -645,8 +645,8 @@ class Cseries:
         pcd = self.get_pcommit_dict(old_pwid)
 
         res = self.cur.execute(
-            'INSERT INTO ser_ver (series_id, version) VALUES'
-            f"({ser.idnum}, '{vers}')")
+            'INSERT INTO ser_ver (series_id, version) VALUES (?, ?)',
+            (ser.idnum, vers))
         pwid = self.cur.lastrowid
 
         for pcm in pcd.values():
