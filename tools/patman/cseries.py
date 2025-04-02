@@ -5,7 +5,7 @@
 """Handles the 'series' subcommand
 """
 
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict, namedtuple
 import hashlib
 import os
 import re
@@ -26,6 +26,15 @@ CHANGE_ID_TAG = 'Change-Id'
 
 # Length of hash to display
 HASH_LEN = 10
+
+# Record from the pcommit table:
+# id (int): record ID
+# seq (int): Patch sequence in series (0 is first)
+# subject (str): patch subject
+# pwid (int): link to patchwork series/version record
+# cid (str): Change-ID value
+PCOMMIT = namedtuple('pcommit', 'id,seq,subject,pwid,cid')
+
 
 def oid(oid_val):
     return str(oid_val)[:HASH_LEN];
@@ -142,50 +151,27 @@ class Cseries:
             udict[name] = url, is_default
         return udict
 
-    def get_pcommit_dict(self):
+    def get_pcommit_dict(self, find_pwid=None):
         """Get a dict of all pcommits entries from the database
 
         Return:
+            pwid (int): If not not, finds the records associated with a
+                particular series and version
             OrderedDict:
                 key (int): record ID
-                value (tuple): record data
-                    idnum (int): record ID
-                    seq (int): Patch sequence in series (0 is first)
-                    subject (str): patch subject
-                    pwid (int): link to patchwork series/version record
-                    cid (str): Change-ID value
+                value (PCOMMIT): record data
         """
-        res = self.cur.execute(
-            'SELECT id, seq, subject, pwid, cid FROM pcommit')
+        query = 'SELECT id, seq, subject, pwid, cid FROM pcommit'
+        if find_pwid is not None:
+            query += f' WHERE pwid = {find_pwid}'
+        res = self.cur.execute(query)
         pcdict = OrderedDict()
         for idnum, seq, subject, pwid, cid in res.fetchall():
-            pcdict[idnum] = idnum, seq, subject, pwid, cid
-        return pcdict
-
-    def get_pcommit_dict_for_pwid(self, pwid):
-        """Get a dict of selected pcommits entries from the database
-
-        Finds the records associated with a particular series and version
-
-        Args:
-            pwid (int): patchwork ID of series version
-
-        Return:
-            OrderedDict:
-                key (int): seq
-                value (tuple): record data
-                    idnum (int): record ID
-                    seq (int): Patch sequence in series (0 is first)
-                    subject (str): patch subject
-                    pwid (int): link to patchwork series/version record
-                    cid (str): Change-ID value
-        """
-        res = self.cur.execute(
-            'SELECT id, seq, subject, pwid, cid FROM pcommit WHERE pwid = ?',
-            (pwid,))
-        pcdict = OrderedDict()
-        for idnum, seq, subject, pwid, cid in res.fetchall():
-            pcdict[seq] = idnum, seq, subject, pwid, cid
+            pc = PCOMMIT(idnum, seq, subject, pwid, cid)
+            if find_pwid is not None:
+                pcdict[seq] = pc
+            else:
+                pcdict[idnum] = pc
         return pcdict
 
     def _prep_series(self, name):
@@ -649,17 +635,17 @@ class Cseries:
         amended = repo.amend_commit(commit, 'HEAD', message=new_msg)
 
         old_pwid = self.get_series_pwid(ser.idnum, max_vers)
-        pcd = self.get_pcommit_dict_for_pwid(old_pwid)
+        pcd = self.get_pcommit_dict(old_pwid)
 
         res = self.cur.execute(
             'INSERT INTO patchwork (version, series_id) VALUES'
             f"('{vers}', {ser.idnum})")
         pwid = self.cur.lastrowid
 
-        for idnum, seq, subject, _, cid in pcd.values():
+        for pcm in pcd.values():
             res = self.cur.execute(
                 'INSERT INTO pcommit (pwid, seq, subject, cid) VALUES '
-                '(?, ?, ?, ?)', (str(pwid), seq, subject, cid))
+                '(?, ?, ?, ?)', (pwid, pcm.seq, pcm.subject, pcm.cid))
 
         if not dry_run:
             self.con.commit()
@@ -1070,7 +1056,7 @@ class Cseries:
         ser, version = self.parse_series_and_version(series, version)
         self.ensure_version(ser, version)
         pwid = self.get_series_pwid(ser.idnum, version)
-        pwc = self.get_pcommit_dict_for_pwid(pwid)
+        pwc = self.get_pcommit_dict(pwid)
 
         count = len(pwc)
         branch = self.join_name_version(ser.name, version)

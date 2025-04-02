@@ -20,6 +20,7 @@ from patman import cmdline
 from patman.commit import Commit
 from patman import control
 from patman import cseries
+from patman.cseries import PCOMMIT
 from patman import patchstream
 from patman.patchstream import PatchStream
 from patman.patchwork import Patchwork
@@ -1490,9 +1491,10 @@ second line.'''
         pclist = cser.get_pcommit_dict()
         self.assertEqual(2, len(pclist))
         self.assertIn(1, pclist)
-        print('pclist', pclist)
-        self.assertEqual((1, 0, 'i2c: I2C things', 1, None), pclist[1])
-        self.assertEqual((2, 1, 'spi: SPI fixes', 1, None), pclist[2])
+        self.assertEqual(PCOMMIT(1, 0, 'i2c: I2C things', 1, None),
+                         pclist[1])
+        self.assertEqual(PCOMMIT(2, 1, 'spi: SPI fixes', 1, None),
+                         pclist[2])
 
         self.db_close()
 
@@ -2176,7 +2178,6 @@ second line.'''
 
         pclist = cser.get_pcommit_dict()
         self.assertEqual(4, len(pclist))
-        print('before', pclist)
 
         # Now remove version two for real
         with capture_sys_output() as (out, _):
@@ -2191,7 +2192,6 @@ second line.'''
         self.assertEqual(1, len(plist))
 
         pclist = cser.get_pcommit_dict()
-        print('after', pclist)
         self.assertEqual(2, len(pclist))
 
         branch = repo.lookup_branch('first2')
@@ -2382,18 +2382,16 @@ second line.'''
         series = patchstream.get_metadata('first', 0, 2, git_dir=self.gitdir)
         self.assertEqual(2, len(series.commits))
         self.assertIn(1, pcdict)
-        idnum, seq, subject, series_id, cid = pcdict[1]
-        self.assertEqual(1, idnum)
-        self.assertEqual('i2c: I2C things', subject)
-        self.assertEqual(1, series_id)
-        self.assertEqual(series.commits[0].change_id, cid)
+        self.assertEqual(1, pcdict[1].id)
+        self.assertEqual('i2c: I2C things', pcdict[1].subject)
+        self.assertEqual(1, pcdict[1].pwid)
+        self.assertEqual(series.commits[0].change_id, pcdict[1].cid)
 
         self.assertIn(2, pcdict)
-        idnum, seq, subject, series_id, cid = pcdict[2]
-        self.assertEqual(2, idnum)
-        self.assertEqual('spi: SPI fixes', subject)
-        self.assertEqual(1, series_id)
-        self.assertEqual(series.commits[1].change_id, cid)
+        self.assertEqual(2, pcdict[2].id)
+        self.assertEqual('spi: SPI fixes', pcdict[2].subject)
+        self.assertEqual(1, pcdict[2].pwid)
+        self.assertEqual(series.commits[1].change_id, pcdict[2].cid)
 
     def test_series_add_mark_fail(self):
         """Test marking a cseries when the tree is dirty"""
@@ -2457,11 +2455,8 @@ second line.'''
                           'my-description')
 
         pcdict = cser.get_pcommit_dict()
-        idnum, seq, subject, series_id, cid = pcdict[1]
-        self.assertTrue(cid)
-
-        idnum, seq, subject, series_id, cid = pcdict[2]
-        self.assertTrue(cid)
+        self.assertTrue(pcdict[1].cid)
+        self.assertTrue(pcdict[2].cid)
 
     def test_series_add_unmarked_cmdline(self):
         """Test adding an unmarked cseries using the command line"""
@@ -2472,11 +2467,8 @@ second line.'''
                           'my-description')
 
         pcdict = cser.get_pcommit_dict()
-        idnum, seq, subject, series_id, cid = pcdict[1]
-        self.assertFalse(cid)
-
-        idnum, seq, subject, series_id, cid = pcdict[2]
-        self.assertFalse(cid)
+        self.assertFalse(pcdict[1].cid)
+        self.assertFalse(pcdict[2].cid)
 
     def test_series_add_unmarked_bad_cmdline(self):
         """Test failure to add an unmarked cseries using the command line"""
