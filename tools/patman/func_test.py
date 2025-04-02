@@ -2416,13 +2416,13 @@ second line.'''
         self.assertEqual(1, pcdict[1].id)
         self.assertEqual('i2c: I2C things', pcdict[1].subject)
         self.assertEqual(1, pcdict[1].svid)
-        self.assertEqual(series.commits[0].change_id, pcdict[1].cid)
+        self.assertEqual(series.commits[0].change_id, pcdict[1].change_id)
 
         self.assertIn(2, pcdict)
         self.assertEqual(2, pcdict[2].id)
         self.assertEqual('spi: SPI fixes', pcdict[2].subject)
         self.assertEqual(1, pcdict[2].svid)
-        self.assertEqual(series.commits[1].change_id, pcdict[2].cid)
+        self.assertEqual(series.commits[1].change_id, pcdict[2].change_id)
 
     def test_series_add_mark_fail(self):
         """Test marking a cseries when the tree is dirty"""
@@ -2486,8 +2486,8 @@ second line.'''
                           'my-description', pwork=True)
 
         pcdict = cser.get_pcommit_dict()
-        self.assertTrue(pcdict[1].cid)
-        self.assertTrue(pcdict[2].cid)
+        self.assertTrue(pcdict[1].change_id)
+        self.assertTrue(pcdict[2].change_id)
 
     def test_series_add_unmarked_cmdline(self):
         """Test adding an unmarked cseries using the command line"""
@@ -2498,8 +2498,8 @@ second line.'''
                           'my-description', pwork=True)
 
         pcdict = cser.get_pcommit_dict()
-        self.assertFalse(pcdict[1].cid)
-        self.assertFalse(pcdict[2].cid)
+        self.assertFalse(pcdict[1].change_id)
+        self.assertFalse(pcdict[2].change_id)
 
     def test_series_add_unmarked_bad_cmdline(self):
         """Test failure to add an unmarked cseries using the command line"""
