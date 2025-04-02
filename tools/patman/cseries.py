@@ -251,6 +251,9 @@ class Cseries:
             msg += f" series '{name}'"
 
         if version not in self.get_version_list(idnum):
+            # res = self.cur.execute(
+            #     'INSERT INTO ser_ver (version, link, series_id) VALUES'
+            #     f"('{version}', ?, {idnum})", (link,))
             res = self.cur.execute(
                 'INSERT INTO ser_ver (version, link, series_id) VALUES'
                 f"('{version}', ?, {idnum})", (link,))
