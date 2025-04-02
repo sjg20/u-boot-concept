@@ -1665,8 +1665,8 @@ second line.'''
         self.assertEqual(3, len(lines))
         self.assertEqual('Name            Description          Accepted  Versions',
                          lines[0])
-        self.assertEqual('first                                       0  1', lines[1])
-        self.assertEqual('second          Series for my board         0  1', lines[2])
+        self.assertEqual('first                                     0/2  1', lines[1])
+        self.assertEqual('second          Series for my board       0/3  1', lines[2])
         self.db_close()
 
     def test_do_series_add(self):
@@ -1695,7 +1695,7 @@ second line.'''
             control.series(args, test_db=self.tmpdir, pwork=True)
         lines = out.getvalue().splitlines()
         self.assertEqual(2, len(lines))
-        self.assertEqual('first           my-description              0  1', lines[1])
+        self.assertEqual('first           my-description            0/2  1', lines[1])
 
         self.db_close()
 

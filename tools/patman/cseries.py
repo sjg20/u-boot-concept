@@ -593,12 +593,14 @@ class Cseries:
             svid = self.get_series_svid(ser.idnum, versions[-1])
             pwc = self.get_pcommit_dict(svid)
             accepted = 0
+            count = len(pwc.values())
             for pcm in pwc.values():
                 accepted += pcm.state == 'accepted'
 
             vlist = ' '.join([str(ver) for ver in sorted(versions)])
+            status = f'{accepted}/{count}'
 
-            print(f'{name:15.15} {ser.desc:20.20} {accepted:8}  {vlist}')
+            print(f'{name:15.15} {ser.desc:20.20} {status.rjust(8)}  {vlist}')
 
     def increment(self, series_name, dry_run=False):
         """Increment a series to the next version and create a new branch
