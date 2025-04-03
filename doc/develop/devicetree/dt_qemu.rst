@@ -46,3 +46,8 @@ You can then run qemu with the merged devicetree, e.g.::
 
 Note that there seems to be a bug in some versions of qemu where the output of
 dumpdtb does not quite match what is provided to U-Boot.
+
+See also the
+`rejected QEMU patch <https://patchwork.kernel.org/project/qemu-devel/patch/20231117021840.117874-1-sjg@chromium.org>`_
+and
+`discussion <https://patchwork.kernel.org/project/qemu-devel/patch/20210926183410.256484-1-sjg@chromium.org>`_.
