@@ -190,7 +190,7 @@ config OF_BOARD
 	  earlier stage should enable OF_HAS_PRIOR_STAGE.
 
 config OF_HAS_PRIOR_STAGE
-	bool
+	bool "Device tree comes from prior-stage firmware"
 	help
 	  Indicates that a prior stage of the firmware (before U-Boot proper)
 	  makes use of device tree and this board normally boots with that prior
@@ -205,8 +205,13 @@ config OF_HAS_PRIOR_STAGE
 	  development purposes, but it is not recommended, and likely will not
 	  even work, for production systems.
 
-	  Note: This option must be set in Kconfig and cannot be enabled or
-	  disabled in the board's defconfig file.
+	  Note: This option can be updated in the board's defconfig file if
+	  needed. E.g. for QEMU to support FIT validation the devicetree must
+	  include a public key.
+
+	  See also this for context:
+
+	  https://patchwork.kernel.org/project/qemu-devel/patch/20210926183410.256484-1-sjg@chromium.org/#24481799
 
 config OF_OMIT_DTB
 	bool "Omit the device tree output when building"
