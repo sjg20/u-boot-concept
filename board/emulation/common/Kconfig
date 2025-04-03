@@ -13,3 +13,15 @@ config MTDPARTS_NOR1
 	help
 	  This define the partition of nor1 used to build mtparts dynamically
 	  for the u-boot env stored on nor1.
+
+config QEMU_MANUAL_DTB
+	bool "Manually provide a device tree to QEMU"
+	help
+	  For some use cases, such as FIT validation where a public key must be
+	  placed in U-Boot's device tree, we need to override the device tree
+	  that QEMU would normally provide to us.
+
+	  Note: this work-around is necessary since Linaro has blocked
+	  addition of a feature to support additions to the QEMU devicetree:
+
+	    Link: https://patchwork.kernel.org/project/qemu-devel/patch/20210926183410.256484-1-sjg@chromium.org/#24481799
