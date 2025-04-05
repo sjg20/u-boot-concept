@@ -2250,14 +2250,6 @@ static efi_status_t EFIAPI efi_exit_boot_services(efi_handle_t image_handle,
 			list_del(&evt->link);
 	}
 
-	if (!efi_st_keep_devices) {
-		bootm_disable_interrupts();
-		if (IS_ENABLED(CONFIG_USB_DEVICE))
-			udc_disconnect();
-		board_quiesce_devices();
-		dm_remove_devices_active();
-	}
-
 	/* Patch out unsupported runtime function */
 	efi_runtime_detach();
 
@@ -2279,6 +2271,19 @@ static efi_status_t EFIAPI efi_exit_boot_services(efi_handle_t image_handle,
 	/* Give the payload some time to boot */
 	efi_set_watchdog(0);
 	schedule();
+
+	/*
+	 * this should be the last thing done, to avoid memory allocations
+	 * between removing devices and the OS taking over
+	 */
+	if (!efi_st_keep_devices) {
+		bootm_disable_interrupts();
+		if (IS_ENABLED(CONFIG_USB_DEVICE))
+			udc_disconnect();
+		board_quiesce_devices();
+		dm_remove_devices_active();
+	}
+
 out:
 	if (IS_ENABLED(CONFIG_EFI_TCG2_PROTOCOL)) {
 		if (ret != EFI_SUCCESS)
