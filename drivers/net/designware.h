@@ -247,6 +247,18 @@ struct dw_eth_dev {
 
 int designware_eth_of_to_plat(struct udevice *dev);
 int designware_eth_probe(struct udevice *dev);
+
+/**
+ * designware_eth_remove() - Remove the device
+ *
+ * Disables DMA and marks the device as remove. This must be called before
+ * booting an OS, to ensure that DMA is inactive.
+ *
+ * @dev: Device to remove
+ * Return 0 if OK, -ve on error
+ */
+int designware_eth_remove(struct udevice *dev);
+
 extern const struct eth_ops designware_eth_ops;
 
 struct dw_eth_pdata {
