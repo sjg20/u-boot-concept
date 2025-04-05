@@ -44,6 +44,11 @@ static int dwmac_s700_probe(struct udevice *dev)
 	return designware_eth_probe(dev);
 }
 
+static int dwmac_s700_remove(struct udevice *dev)
+{
+	return designware_eth_remove(dev);
+}
+
 static int dwmac_s700_of_to_plat(struct udevice *dev)
 {
 	return designware_eth_of_to_plat(dev);
@@ -60,6 +65,7 @@ U_BOOT_DRIVER(dwmac_s700) = {
 	.of_match = dwmac_s700_ids,
 	.of_to_plat = dwmac_s700_of_to_plat,
 	.probe  = dwmac_s700_probe,
+	.remove	= dwmac_s700_remove,
 	.ops    = &designware_eth_ops,
 	.priv_auto	= sizeof(struct dw_eth_dev),
 	.plat_auto	= sizeof(struct eth_pdata),

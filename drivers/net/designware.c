@@ -805,7 +805,7 @@ clk_err:
 	return err;
 }
 
-static int designware_eth_remove(struct udevice *dev)
+int designware_eth_remove(struct udevice *dev)
 {
 	struct dw_eth_dev *priv = dev_get_priv(dev);
 

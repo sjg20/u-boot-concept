@@ -130,6 +130,11 @@ static int dwmac_socfpga_probe(struct udevice *dev)
 	return designware_eth_probe(dev);
 }
 
+static int dwmac_socfpga_remove(struct udevice *dev)
+{
+	return designware_eth_remove(dev);
+}
+
 static const struct udevice_id dwmac_socfpga_ids[] = {
 	{ .compatible = "altr,socfpga-stmmac" },
 	{ }
@@ -141,6 +146,7 @@ U_BOOT_DRIVER(dwmac_socfpga) = {
 	.of_match	= dwmac_socfpga_ids,
 	.of_to_plat = dwmac_socfpga_of_to_plat,
 	.probe		= dwmac_socfpga_probe,
+	.remove		= dwmac_socfpga_remove,
 	.ops		= &designware_eth_ops,
 	.priv_auto	= sizeof(struct dw_eth_dev),
 	.plat_auto	= sizeof(struct dwmac_socfpga_plat),

@@ -145,6 +145,11 @@ static int dwmac_meson8b_probe(struct udevice *dev)
 	return designware_eth_probe(dev);
 }
 
+static int dwmac_meson8b_remove(struct udevice *dev)
+{
+	return designware_eth_remove(dev);
+}
+
 static const struct udevice_id dwmac_meson8b_ids[] = {
 	{ .compatible = "amlogic,meson-gxbb-dwmac", .data = (ulong)dwmac_setup_gx },
 	{ .compatible = "amlogic,meson-g12a-dwmac", .data = (ulong)dwmac_setup_axg },
@@ -158,6 +163,7 @@ U_BOOT_DRIVER(dwmac_meson8b) = {
 	.of_match	= dwmac_meson8b_ids,
 	.of_to_plat = dwmac_meson8b_of_to_plat,
 	.probe		= dwmac_meson8b_probe,
+	.remove		= dwmac_meson8b_remove,
 	.ops		= &designware_eth_ops,
 	.priv_auto	= sizeof(struct dw_eth_dev),
 	.plat_auto	= sizeof(struct dwmac_meson8b_plat),
