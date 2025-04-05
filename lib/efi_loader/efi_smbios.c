@@ -35,6 +35,7 @@ efi_status_t efi_smbios_register(void)
 	void *buf;
 
 	addr = gd_smbios_start();
+	printf("register %lx\n", addr);
 	if (!addr) {
 		log_err("No SMBIOS tables to install\n");
 		return EFI_NOT_FOUND;
