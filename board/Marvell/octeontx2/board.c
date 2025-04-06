@@ -61,16 +61,6 @@ void octeontx2_board_get_mac_addr(u8 index, u8 *mac_addr)
 
 void board_quiesce_devices(void)
 {
-	struct uclass *uc_dev;
-	int ret;
-
-	/* Removes all CGX and RVU AF devices */
-	ret = uclass_get(UCLASS_MISC, &uc_dev);
-	if (uc_dev)
-		ret = uclass_destroy(uc_dev);
-	if (ret)
-		printf("couldn't remove misc (cgx/rvu_af) devices\n");
-
 	/* SMC call - removes all LF<->PF mappings */
 	smc_disable_rvu_lfs(0);
 }
