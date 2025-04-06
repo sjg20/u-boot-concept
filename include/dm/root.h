@@ -169,16 +169,16 @@ int dm_uninit(void);
 int dm_remove_devices_flags(uint flags);
 
 /**
- * dm_remove_devices_active - Call remove function of all active drivers heeding
+ * dm_remove_dma_devices - Call remove function of all active drivers heeding
  *                            device dependencies as far as know, i.e. removing
  *                            devices marked with DM_FLAG_VITAL last.
  *
  * All active devices will be removed
  */
-void dm_remove_devices_active(void);
+void dm_remove_dma_devices(void);
 #else
 static inline int dm_remove_devices_flags(uint flags) { return 0; }
-static inline void dm_remove_devices_active(void) { }
+static inline void dm_remove_dma_devices(void) { }
 #endif
 
 /**

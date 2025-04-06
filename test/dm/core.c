@@ -1057,7 +1057,7 @@ static int dm_test_remove_active(struct unit_test_state *uts)
 	ut_asserteq(true, device_active(dma_vital));
 
 	/* Remove active devices in an ordered way */
-	dm_remove_devices_active();
+	dm_remove_dma_devices();
 
 	/* Check that all devices are inactive right now */
 	ut_asserteq(true, device_active(normal));
