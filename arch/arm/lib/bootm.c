@@ -74,10 +74,10 @@ static void announce_and_cleanup(int fake)
 	 * Call remove function of all devices with a removal flag set.
 	 * This may be useful for last-stage operations, like cancelling
 	 * of DMA operation or releasing device internal buffers.
-	 * dm_remove_devices_active() ensures that vital devices are removed in
+	 * dm_remove_dma_devices() ensures that vital devices are removed in
 	 * a second round.
 	 */
-	dm_remove_devices_active();
+	dm_remove_dma_devices();
 
 	cleanup_before_linux();
 }

@@ -57,7 +57,7 @@ static void announce_and_cleanup(int fake)
 	 * This may be useful for last-stage operations, like cancelling
 	 * of DMA operation or releasing device internal buffers.
 	 */
-	dm_remove_devices_active();
+	dm_remove_dma_devices();
 
 	cleanup_before_linux();
 }

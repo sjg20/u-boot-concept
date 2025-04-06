@@ -148,7 +148,7 @@ int dm_remove_devices_flags(uint flags)
 	return 0;
 }
 
-void dm_remove_devices_active(void)
+void dm_remove_dma_devices(void)
 {
 	/* Remove non-vital devices first */
 	device_remove(dm_root(), DM_REMOVE_ACTIVE_ALL | DM_REMOVE_NON_VITAL);
