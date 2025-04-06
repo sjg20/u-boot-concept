@@ -885,7 +885,7 @@ U_BOOT_DRIVER(eth_designware) = {
 	.ops	= &designware_eth_ops,
 	.priv_auto	= sizeof(struct dw_eth_dev),
 	.plat_auto	= sizeof(struct dw_eth_pdata),
-	.flags = DM_FLAG_ALLOC_PRIV_DMA,
+	.flags = DM_FLAG_ALLOC_PRIV_DMA | DM_FLAG_ACTIVE_DMA,
 };
 
 static struct pci_device_id supported[] = {
