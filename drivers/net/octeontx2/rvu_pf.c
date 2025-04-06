@@ -107,7 +107,7 @@ U_BOOT_DRIVER(rvu_pf) = {
 	.ops    = &nix_eth_ops,
 	.priv_auto	= sizeof(struct rvu_pf),
 	.plat_auto	= sizeof(struct eth_pdata),
-	.flags = DM_FLAG_OS_PREPARE,
+	.flags	= DM_FLAG_OS_PREPARE,
 };
 
 static struct pci_device_id rvu_pf_supported[] = {

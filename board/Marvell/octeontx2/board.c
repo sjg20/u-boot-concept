@@ -64,11 +64,6 @@ void board_quiesce_devices(void)
 	struct uclass *uc_dev;
 	int ret;
 
-	if (IS_ENABLED(CONFIG_OCTEONTX2_CGX_INTF)) {
-		/* Bring down all cgx lmac links */
-		cgx_intf_shutdown();
-	}
-
 	/* Removes all CGX and RVU AF devices */
 	ret = uclass_get(UCLASS_MISC, &uc_dev);
 	if (uc_dev)

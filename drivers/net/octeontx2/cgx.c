@@ -272,6 +272,9 @@ int cgx_remove(struct udevice *dev)
 	struct cgx *cgx = dev_get_priv(dev);
 	int i;
 
+	/* Bring down all cgx lmac links */
+	cgx_intf_shutdown();
+
 	debug("%s: cgx remove reg_base %p cgx_id %d",
 	      __func__, cgx->reg_base, cgx->cgx_id);
 	for (i = 0; i < cgx->lmac_count; i++)
@@ -286,6 +289,7 @@ U_BOOT_DRIVER(cgx) = {
 	.probe	= cgx_probe,
 	.remove	= cgx_remove,
 	.priv_auto	= sizeof(struct cgx),
+	.flags	= DM_FLAG_OS_PREPARE,
 };
 
 static struct pci_device_id cgx_supported[] = {
