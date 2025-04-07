@@ -697,11 +697,7 @@ class Cseries:
 
             vals.msg = '\n'.join(out) + '\n'
 
-        if not dry_run:
-            repo.checkout(new_branch)
-            # branch = repo.lookup_branch(branch_name)
-            # new_branch.upstream = branch.upstream
-        else:
+        if dry_run:
             branch = repo.lookup_branch(branch_name)
             repo.checkout(branch.name)
 
