@@ -2160,11 +2160,16 @@ second line.'''
             cser.increment('first', dry_run=True)
 
         lines = out.getvalue().splitlines()
-        self.assertEqual(3, len(lines))
-        self.assertEqual('No existing Series-version found, using version 1',
+        self.assertEqual(7, len(lines))
+        self.assertEqual('Checking out upstream commit refs/heads/base',
                          lines[0])
-        self.assertEqual('Added new branch first2', lines[1])
-        self.assertEqual('Dry run completed', lines[2])
+        self.assertEqual("Processing 2 commits from branch 'first2'",
+                         lines[1])
+        self.assertRegex(lines[2], '-  .* as .*: i2c: I2C things')
+        self.assertRegex(lines[3], '-  .* as .*: spi: SPI fixes')
+        self.assertRegex(lines[4], 'Updating branch first2 to .*')
+        self.assertEqual('Added new branch first2', lines[5])
+        self.assertEqual('Dry run completed', lines[6])
 
         # Make sure that nothing was added
         plist = cser.get_ser_ver_dict()
