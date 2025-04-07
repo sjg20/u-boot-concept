@@ -1864,12 +1864,23 @@ second line.'''
         with capture_sys_output() as (out, _):
             cser.add_series('second', allow_unmarked=True)
 
+        # Make sure that the link is there
+        count = 3
+        series = patchstream.get_metadata('second', 0, count,
+                                          git_dir=self.gitdir)
+        self.assertEqual('183237', series.links)
+
         # Set link with detected version
         with capture_sys_output() as (out, _):
             cser.set_link('second', None, '456', True)
         self.assertEqual(
             "Setting link for series 'second' version 1 to 456",
             out.getvalue().strip())
+
+        # Make sure that the link was set
+        series = patchstream.get_metadata('second', 0, count,
+                                          git_dir=self.gitdir)
+        self.assertEqual('1:456', series.links)
 
         with capture_sys_output():
             cser.increment('second')
