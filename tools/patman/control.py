@@ -319,6 +319,8 @@ def series(args, test_db=None, pwork=None):
             send(args, git_dir=git_dir, cwd=test_db)
         elif args.subcmd == 'unmark':
             cser.unmark_series(args.series, dry_run=args.dry_run)
+        elif args.subcmd == 'progress':
+            cser.progress(args.series)
         else:
             raise ValueError(f"Unknown series subcommand '{args.subcmd}'")
     finally:

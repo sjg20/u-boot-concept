@@ -1649,8 +1649,8 @@ second line.'''
         self.assertIn("Added version 1 to existing series 'first'",
                       out.getvalue().strip())
 
-    def test_series_list(self):
-        """Test listing cseries"""
+    def setup_second(self):
+        """Set up the 'second' series synced with the fake patchwork"""
         cser = self.get_cser()
         pwork = Patchwork.for_testing(self._fake_patchwork_cser_link)
         pwork.set_project(PROJ_ID)
@@ -1663,6 +1663,11 @@ second line.'''
         with capture_sys_output() as (out, _):
             cser.series_sync(pwork, 'second', 2)
         self.assertEqual('3 patch(es) updated', out.getvalue().strip())
+        return cser
+
+    def test_series_list(self):
+        """Test listing cseries"""
+        self.setup_second()
 
         args = Namespace()
         args.subcmd = 'list'
@@ -1676,6 +1681,17 @@ second line.'''
         self.assertEqual('first                                     -/2  1', lines[1])
         self.assertEqual('second          Series for my board       1/3  1 2', lines[2])
         self.db_close()
+
+    def test_series_progress(self):
+        """Test showing progress for a cseries"""
+        self.setup_second()
+
+        args = Namespace()
+        args.subcmd = 'progress'
+        args.series = 'second'
+        args.extra = []
+        # with capture_sys_output() as (out, _):
+        control.series(args, test_db=self.tmpdir, pwork=True)
 
     def test_do_series_add(self):
         """Add a new cseries"""
