@@ -402,6 +402,25 @@ class Series(dict):
            postfix = ' %s' % self['postfix']
         return '%s%sPATCH%s%s' % (git_prefix, prefix, postfix, version)
 
+    def get_links(self):
+        """Look up the patchwork links for each version
+
+        Return:
+            dict:
+                key (int): Version number
+                value (str): Link string
+        """
+        links = {}
+        if 'links' in self:
+            for item in self.links.split():
+                if ':' in item:
+                    version, link = item.split(':')
+                else:
+                    version = self.version if 'version' in self else '1'
+                    link = item
+                links[int(version)] = link
+        return links
+
     def get_link_for_version(self, find_vers):
         """Look up the patchwork link for a particular version
 
@@ -411,14 +430,4 @@ class Series(dict):
         Return:
             str: Series-links entry for that version, or None if not found
         """
-        if not 'links' in self:
-            return None
-        for item in self.links.split():
-            if ':' in item:
-                version, link = item.split(':')
-            else:
-                version = int(self.version) if 'version' in self else 1
-                link = item
-            if version == find_vers:
-                return link
-        return None
+        return self.get_links().get(find_vers)
