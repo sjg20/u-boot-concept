@@ -708,7 +708,6 @@ class Cseries:
             new_branch.upstream = branch.upstream
         else:
             branch = repo.lookup_branch(branch_name)
-            # print('branch', branch.name)
             repo.checkout(branch.name)
 
         old_svid = self.get_series_svid(ser.idnum, max_vers)
@@ -884,6 +883,7 @@ class Cseries:
 
         Args:
             name (str): Name of the series to unmark
+            allow_unmarked (bool): Allow commits to be (already) unmarked
             dry_run (bool): True to do a dry run, restoring the original tree
                 afterwards
 
