@@ -676,7 +676,7 @@ class Cseries:
         repo.checkout(upstream_name)
 
         added_version = False
-        for vals in self._process_series(new_name, series, True, dry_run):
+        for vals in self._process_series(new_name, series, new_name, dry_run):
             out = []
             for line in vals.msg.splitlines():
                 m_ver = re.match('Series-version:(.*)', line)
@@ -788,7 +788,7 @@ class Cseries:
         # commit.committer
         # git var GIT_COMMITTER_IDENT ; echo "$refhash" ; cat "README"; } | git hash-object --stdin)
 
-    def _process_series(self, name, series, new_branch=False, dry_run=False):
+    def _process_series(self, name, series, new_name=None, dry_run=False):
         """Rewrite a series
 
         Args:
@@ -803,11 +803,11 @@ class Cseries:
         upstream_name = gitutil.get_upstream(self.gitdir, name)[0]
 
         repo = pygit2.init_repository(self.gitdir)
-        branch = repo.lookup_branch(name)
         upstream = repo.lookup_reference(upstream_name)
+        branch = repo.lookup_branch(name)
 
         tout.info(f"Checking out upstream commit {upstream.name}")
-        if not new_branch:
+        if not new_name:
             commit_oid = upstream.peel(pygit2.GIT_OBJ_COMMIT).oid
             commit = repo.get(commit_oid)
             repo.checkout_tree(commit)
