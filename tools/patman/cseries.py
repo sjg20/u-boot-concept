@@ -194,8 +194,9 @@ class Cseries:
                 name (str): Series name
                 desc (str): Series description
         """
+        print('idnum', idnum, type(idnum))
         res = self.cur.execute('SELECT name, desc FROM series WHERE id = ?',
-                               idnum)
+                               (idnum,))
         all = res.fetchall()
         if len(all) != 1:
             raise ValueError('No series found (id {idnum} len {len(all})', all)
@@ -1360,6 +1361,7 @@ class Cseries:
     def progress(self, series):
         ser = self.parse_series(series)
         max_vers = self.series_max_version(ser.idnum)
+        name, desc = self.get_series_info(ser.idnum)
         for ver in range(1, max_vers + 1):
             status = self.series_get_version_stats(ser.idnum, ver)
-            print(ver, status)
+            print(f"Series: '{name}' version {ver}:{status}: {desc}")
