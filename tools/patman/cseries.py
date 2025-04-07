@@ -1202,12 +1202,19 @@ class Cseries:
         ser, version = self.parse_series_and_version(series, version)
         self.ensure_version(ser, version)
         svid, link = self.get_series_svid_link(ser.idnum, version)
+        if not link:
+            raise ValueError(
+                "No patchwork link is available: use 'patman series auto-link'")
         patches = pwork.series_get_state(link)
 
         pwc = self.get_pcommit_dict(svid)
 
+        updated = 0
         for seq, item in enumerate(pwc.values()):
-            res = self.cur.execute(
-                'UPDATE pcommit set patch_id = ?, state = ? WHERE id = ?',
-                (patches[seq].id, patches[seq].state, item.id))
+            if patches[seq].id:
+                res = self.cur.execute(
+                    'UPDATE pcommit set patch_id = ?, state = ? WHERE id = ?',
+                    (patches[seq].id, patches[seq].state, item.id))
+                updated += self.cur.rowcount
         self.con.commit()
+        tout.info(f'{updated} patch(es) updated')

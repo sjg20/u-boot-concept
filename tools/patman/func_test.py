@@ -2826,7 +2826,9 @@ second line.'''
 
         with capture_sys_output() as (out, _):
             cser.add_series('second', 'description', allow_unmarked=True)
-        cser.series_sync(pwork, 'second', None)
+        with capture_sys_output() as (out, _):
+            cser.series_sync(pwork, 'second', None)
+        self.assertEqual('3 patch(es) updated', out.getvalue().strip())
 
         ser = cser.get_series_by_name('second')
         pwid, link = cser.get_series_svid_link(ser.idnum, 1)
