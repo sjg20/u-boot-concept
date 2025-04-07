@@ -670,12 +670,13 @@ class Cseries:
 
         new_name = self.join_name_version(ser.name, vers)
         new_branch = repo.branches.create(new_name, commit)
+        new_branch.upstream = branch.upstream
 
         upstream_name = gitutil.get_upstream(self.gitdir, branch_name)[0]
+        repo.checkout(upstream_name)
 
         added_version = False
-        for vals in self._process_series(new_name, series, upstream_name,
-                                         dry_run):
+        for vals in self._process_series(new_name, series, True, dry_run):
             out = []
             for line in vals.msg.splitlines():
                 m_ver = re.match('Series-version:(.*)', line)
@@ -702,8 +703,8 @@ class Cseries:
 
         if not dry_run:
             repo.checkout(new_branch)
-            branch = repo.lookup_branch(branch_name)
-            new_branch.upstream = branch.upstream
+            # branch = repo.lookup_branch(branch_name)
+            # new_branch.upstream = branch.upstream
         else:
             branch = repo.lookup_branch(branch_name)
             repo.checkout(branch.name)
@@ -787,12 +788,11 @@ class Cseries:
         # commit.committer
         # git var GIT_COMMITTER_IDENT ; echo "$refhash" ; cat "README"; } | git hash-object --stdin)
 
-    def _process_series(self, name, series, upstream_name_in=None,
-                        dry_run=False):
+    def _process_series(self, name, series, new_branch=False, dry_run=False):
         """Rewrite a series
 
         Args:
-            name (str): Name of the branch to mark
+            name (str): Name of the branch to process
             series (Series): Series object
             dry_run (bool): True to do a dry run, restoring the original tree
                 afterwards
@@ -800,18 +800,14 @@ class Cseries:
         Return:
             pygit.oid: oid of the new branch
         """
-        upstream_name = upstream_name_in
-        if not upstream_name:
-            upstream_name = gitutil.get_upstream(self.gitdir, name)[0]
+        upstream_name = gitutil.get_upstream(self.gitdir, name)[0]
 
         repo = pygit2.init_repository(self.gitdir)
         branch = repo.lookup_branch(name)
         upstream = repo.lookup_reference(upstream_name)
 
         tout.info(f"Checking out upstream commit {upstream.name}")
-        if upstream_name_in:
-            repo.checkout(upstream.name)
-        else:
+        if not new_branch:
             commit_oid = upstream.peel(pygit2.GIT_OBJ_COMMIT).oid
             commit = repo.get(commit_oid)
             repo.checkout_tree(commit)
