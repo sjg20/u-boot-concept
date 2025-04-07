@@ -1682,17 +1682,6 @@ second line.'''
         self.assertEqual('second          Series for my board       1/3  1 2', lines[2])
         self.db_close()
 
-    def test_series_progress(self):
-        """Test showing progress for a cseries"""
-        self.setup_second()
-
-        args = Namespace()
-        args.subcmd = 'progress'
-        args.series = 'second'
-        args.extra = []
-        # with capture_sys_output() as (out, _):
-        control.series(args, test_db=self.tmpdir, pwork=True)
-
     def test_do_series_add(self):
         """Add a new cseries"""
         self.make_git_tree()
@@ -2943,3 +2932,14 @@ second line.'''
         self.assertEqual('accepted', pwc[0].state)
         self.assertEqual('changes-requested', pwc[1].state)
         self.assertEqual('rejected', pwc[2].state)
+
+    def test_series_progress(self):
+        """Test showing progress for a cseries"""
+        self.setup_second()
+
+        args = Namespace()
+        args.subcmd = 'progress'
+        args.series = 'second'
+        args.extra = []
+        # with capture_sys_output() as (out, _):
+        control.series(args, test_db=self.tmpdir, pwork=True)
