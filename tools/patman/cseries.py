@@ -872,7 +872,7 @@ class Cseries:
             if CHANGE_ID_TAG not in cherry.message:
                 change_id = self.make_change_id(cherry)
                 vals.msg = cherry.message + f'\n{CHANGE_ID_TAG}: {change_id}'
-                tout.detail(f"   - adding tag")
+                tout.detail("   - adding tag")
                 vals.info = 'tagged'
             else:
                 vals.info = 'has tag'
@@ -890,7 +890,7 @@ class Cseries:
         Return:
             pygit.oid: oid of the new branch
         """
-        name, series, version = self._prep_series(name)
+        name, series, _ = self._prep_series(name)
         tout.info(f"Unmarking series '{name}': allow_unmarked {allow_unmarked}")
 
         if not allow_unmarked:
@@ -908,10 +908,9 @@ class Cseries:
         for cherry in self._process_series(vals, name, series, dry_run=dry_run):
             if CHANGE_ID_TAG in cherry.message:
                 pos = cherry.message.index(CHANGE_ID_TAG)
-                change_id = self.make_change_id(cherry)
                 vals.msg = cherry.message[:pos]
 
-                tout.detail(f"   - removing tag")
+                tout.detail("   - removing tag")
                 vals.info = 'untagged'
             else:
                 vals.info = 'no tag'
