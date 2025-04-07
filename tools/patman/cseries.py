@@ -637,11 +637,51 @@ class Cseries:
 
             print(f'{name:15.15} {ser.desc:20.20} {status.rjust(8)}  {vlist}')
 
+    def update_series(self, name, series, max_vers, new_name=None,
+                      dry_run=False, vers=None, add_link=None):
+        """Rewrite a series to update the Series-version/Series-links lines
+
+        Args:
+            name (str): Name of the branch to process
+            series (Series): Series object
+            dry_run (bool): True to do a dry run, restoring the original tree
+                afterwards
+
+        Return:
+            pygit.oid: oid of the new branch
+        """
+        added_version = False
+        for vals in self._process_series(name, series, new_name, dry_run):
+            out = []
+            for line in vals.msg.splitlines():
+                m_ver = re.match('Series-version:(.*)', line)
+                m_links = re.match('Series-links:(.*)', line)
+                if m_ver and vers:
+                    vals.info += f'added version {vers}'
+                    out.append(f'Series-version: {vers}')
+                    added_version = True
+                elif m_links:
+                    new_links = ''
+                    for link in m_links.group(1).strip().split():
+                        if ':' not in link:
+                            new_links += f'{max_vers}:{link} '
+                        else:
+                            new_links += f'{link} '
+                    vals.info += f'added links {new_links}'
+                    out.append(f'Series-links: {new_links.strip()}')
+                else:
+                    out.append(line)
+            if vals.final and not added_version:
+                out.append(f'Series-version: {vers}')
+
+            vals.msg = '\n'.join(out) + '\n'
+
     def increment(self, series_name, dry_run=False):
         """Increment a series to the next version and create a new branch
 
         Args:
-            series (str): Name of series to use, or None to use current branch
+            series_name (str): Name of series to use, or None to use current
+                branch
             dry_run (bool): True to do a dry run
         """
         ser = self.parse_series(series_name)
@@ -665,31 +705,8 @@ class Cseries:
         vers = max_vers + 1
         new_name = self.join_name_version(ser.name, vers)
 
-        added_version = False
-        for vals in self._process_series(series_name, series, new_name, dry_run):
-            out = []
-            for line in vals.msg.splitlines():
-                m_ver = re.match('Series-version:(.*)', line)
-                m_links = re.match('Series-links:(.*)', line)
-                if m_ver:
-                    vals.info += f'added version {vers}'
-                    out.append(f'Series-version: {vers}')
-                    added_version = True
-                elif m_links:
-                    new_links = ''
-                    for link in m_links.group(1).strip().split():
-                        if ':' not in link:
-                            new_links += f'{max_vers}:{link} '
-                        else:
-                            new_links += f'{link} '
-                    vals.info += f'added links {new_links}'
-                    out.append(f'Series-links: {new_links.strip()}')
-                else:
-                    out.append(line)
-            if vals.final and not added_version:
-                out.append(f'Series-version: {vers}')
-
-            vals.msg = '\n'.join(out) + '\n'
+        self.update_series(series_name, series, max_vers, new_name, dry_run,
+                           vers=vers)
 
         old_svid = self.get_series_svid(ser.idnum, max_vers)
         pcd = self.get_pcommit_dict(old_svid)
@@ -776,6 +793,7 @@ class Cseries:
         Args:
             name (str): Name of the branch to process
             series (Series): Series object
+            new_name (str or None): New name, if a new branch is to be created
             dry_run (bool): True to do a dry run, restoring the original tree
                 afterwards
 
