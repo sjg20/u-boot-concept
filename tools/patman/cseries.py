@@ -184,6 +184,24 @@ class Cseries:
                 pcdict[idnum] = pc
         return pcdict
 
+    def get_series_info(self, idnum):
+        """Get information for a series from the database
+
+        Args:
+            idnum (int): Series ID to look up
+        Return:
+            tuple:
+                name (str): Series name
+                desc (str): Series description
+        """
+        res = self.cur.execute('SELECT name, desc FROM series WHERE id = ?',
+                               idnum)
+        all = res.fetchall()
+        if len(all) != 1:
+            raise ValueError('No series found (id {idnum} len {len(all})', all)
+        return all[0]
+
+
     def _prep_series(self, name):
         ser, version = self.parse_series_and_version(name, None)
         name = ser.name
@@ -585,21 +603,35 @@ class Cseries:
             f'id = {ser.idnum}')
         self.con.commit()
 
+    def series_get_version_stats(self, idnum, vers):
+        """Get the stats for a series
+
+        Args:
+            idnum (int): ID number of series to process
+            vers (int): Version number to process
+
+        Return:
+        """
+        svid, link = self.get_series_svid_link(idnum, vers)
+        pwc = self.get_pcommit_dict(svid)
+        count = len(pwc.values())
+        if link:
+            accepted = 0
+            for pcm in pwc.values():
+                accepted += pcm.state == 'accepted'
+        else:
+            accepted = '-'
+        status = f'{accepted}/{count}'
+        return status
+
     def do_list(self):
         sdict = self.get_series_dict()
         print(f"{'Name':15} {'Description':20} {'Accepted'}  Versions")
         for name, ser in sdict.items():
             versions = self.get_version_list(ser.idnum)
-            svid, link = self.get_series_svid_link(ser.idnum, versions[-1])
-            pwc = self.get_pcommit_dict(svid)
-            count = len(pwc.values())
-            if link:
-                accepted = 0
-                for pcm in pwc.values():
-                    accepted += pcm.state == 'accepted'
-            else:
-                accepted = '-'
-            status = f'{accepted}/{count}'
+            status = self.series_get_version_stats(
+                ser.idnum, self.series_max_version(ser.idnum))
+
             vlist = ' '.join([str(ver) for ver in sorted(versions)])
 
             print(f'{name:15.15} {ser.desc:20.20} {status.rjust(8)}  {vlist}')
@@ -615,10 +647,7 @@ class Cseries:
         if not ser.idnum:
             raise ValueError(f"Series '{ser.name}' not found in database")
 
-        # Find the current version
-        res = self.cur.execute('SELECT MAX(version) FROM ser_ver WHERE '
-            f"series_id = {ser.idnum}")
-        max_vers = res.fetchall()[0][0]
+        max_vers = self.series_max_version(ser.idnum)
 
         branch_name = self.get_branch_name(ser.name, max_vers)
         svid = self.get_series_svid(ser.idnum, max_vers)
@@ -772,10 +801,7 @@ class Cseries:
         if not ser.idnum:
             raise ValueError(f"Series '{ser.name}' not found in database")
 
-        # Find the current version
-        res = self.cur.execute('SELECT MAX(version) FROM ser_ver WHERE '
-            f"series_id = {ser.idnum}")
-        max_vers = res.fetchall()[0][0]
+        max_vers = self.series_max_version(ser.idnum)
         if max_vers < 2:
             raise ValueError(f"Series '{ser.name}' only has one version")
 
@@ -1320,3 +1346,20 @@ class Cseries:
                 updated += self.cur.rowcount
         self.con.commit()
         tout.info(f'{updated} patch(es) updated')
+
+    def series_max_version(self, idnum):
+        """Find the latest version of a series
+
+        Args:
+            idnum (int): Series ID to look up
+        """
+        res = self.cur.execute('SELECT MAX(version) FROM ser_ver WHERE '
+                               f"series_id = {idnum}")
+        return res.fetchall()[0][0]
+
+    def progress(self, series):
+        ser = self.parse_series(series)
+        max_vers = self.series_max_version(ser.idnum)
+        for ver in range(1, max_vers + 1):
+            status = self.series_get_version_stats(ser.idnum, ver)
+            print(ver, status)
