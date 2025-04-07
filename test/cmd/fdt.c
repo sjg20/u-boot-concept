@@ -1295,8 +1295,8 @@ static int fdt_test_chosen(struct unit_test_state *uts)
 	ut_assertok(run_commandf("fdt print /chosen"));
 	ut_assert_nextline("chosen {");
 	ut_assert_nextline("\tlinux,initrd-end = <0x%08x 0x%08x>;",
-			   upper_32_bits(0x1234 + 0x5678 - 1),
-			   lower_32_bits(0x1234 + 0x5678 - 1));
+			   upper_32_bits(0x1234 + 0x5678),
+			   lower_32_bits(0x1234 + 0x5678));
 	ut_assert_nextline("\tlinux,initrd-start = <0x%08x 0x%08x>;",
 			   upper_32_bits(0x1234), lower_32_bits(0x1234));
 	ut_assert_nextlinen("\tu-boot,version = "); /* Ignore the version string */
