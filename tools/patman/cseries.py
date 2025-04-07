@@ -670,7 +670,7 @@ class Cseries:
 
         new_name = self.join_name_version(ser.name, vers)
         new_branch = repo.branches.create(new_name, commit)
-        new_branch.upstream = branch.upstream
+        # new_branch.upstream = branch.upstream
 
         added_version = False
         for vals in self._process_series(series_name, series, new_name, dry_run):
@@ -807,6 +807,8 @@ class Cseries:
         if new_name:
             name = new_name
             repo.checkout(upstream_name)
+            new_branch = repo.lookup_branch(name)
+            new_branch.upstream = branch.upstream
         else:
             commit_oid = upstream.peel(pygit2.GIT_OBJ_COMMIT).oid
             commit = repo.get(commit_oid)
