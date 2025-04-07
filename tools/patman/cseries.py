@@ -639,6 +639,7 @@ class Cseries:
         commit = branch.peel(pygit2.GIT_OBJ_COMMIT)
 
         new_name = self.join_name_version(ser.name, vers)
+        # print('name', branch_name, new_name)
         new_branch = repo.branches.create(new_name, commit)
         # if not dry_run:
             # repo.checkout(new_branch)
@@ -733,7 +734,9 @@ class Cseries:
             branch = repo.lookup_branch(branch_name)
             new_branch.upstream = branch.upstream
         else:
-            repo.checkout(branch_name)
+            branch = repo.lookup_branch(branch_name)
+            # print('branch', branch.name)
+            repo.checkout(branch.name)
 
         old_svid = self.get_series_svid(ser.idnum, max_vers)
         pcd = self.get_pcommit_dict(old_svid)
