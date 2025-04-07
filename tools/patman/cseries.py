@@ -693,9 +693,9 @@ class Cseries:
 
             vals.msg = '\n'.join(out) + '\n'
 
-        if dry_run:
-            branch = repo.lookup_branch(branch_name)
-            repo.checkout(branch.name)
+        # if dry_run:
+        #     branch = repo.lookup_branch(branch_name)
+        #     repo.checkout(branch.name)
 
         old_svid = self.get_series_svid(ser.idnum, max_vers)
         pcd = self.get_pcommit_dict(old_svid)
@@ -843,7 +843,7 @@ class Cseries:
             repo.checkout_tree(repo.get(branch_oid))
             repo.head.set_target(branch_oid)
             if new_name:
-                branch = repo.lookup_branch(name)
+                # branch = repo.lookup_branch(name)
                 repo.checkout(branch.name)
         else:
             repo.create_reference(f'refs/heads/{name}', target.oid, force=True)
