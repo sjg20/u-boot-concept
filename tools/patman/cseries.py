@@ -673,10 +673,9 @@ class Cseries:
 
         upstream_name = gitutil.get_upstream(self.gitdir, branch_name)[0]
 
-        vals = SimpleNamespace()
         added_version = False
-        for _ in self._process_series(vals, new_name, series, upstream_name,
-                                      dry_run):
+        for vals in self._process_series(new_name, series, upstream_name,
+                                         dry_run):
             out = []
             for line in vals.msg.splitlines():
                 m_ver = re.match('Series-version:(.*)', line)
@@ -694,7 +693,6 @@ class Cseries:
                             new_links += f'{link} '
                     vals.info += f'added links {new_links}'
                     out.append(f'Series-links: {new_links.strip()}')
-                    added_links = True
                 else:
                     out.append(line)
             if vals.final and not added_version:
@@ -789,7 +787,7 @@ class Cseries:
         # commit.committer
         # git var GIT_COMMITTER_IDENT ; echo "$refhash" ; cat "README"; } | git hash-object --stdin)
 
-    def _process_series(self, vals, name, series, upstream_name_in=None,
+    def _process_series(self, name, series, upstream_name_in=None,
                         dry_run=False):
         """Rewrite a series
 
@@ -804,7 +802,7 @@ class Cseries:
         """
         upstream_name = upstream_name_in
         if not upstream_name:
-            upstream_name, warn = gitutil.get_upstream(self.gitdir, name)
+            upstream_name = gitutil.get_upstream(self.gitdir, name)[0]
 
         repo = pygit2.init_repository(self.gitdir)
         branch = repo.lookup_branch(name)
@@ -819,6 +817,7 @@ class Cseries:
             repo.checkout_tree(commit)
             repo.head.set_target(commit_oid)
         cur = upstream
+        vals = SimpleNamespace()
         vals.final = False
         tout.info(f"Processing {len(series.commits)} commits from branch '{name}'")
         for seq, cmt in enumerate(series.commits):
@@ -831,11 +830,12 @@ class Cseries:
             cherry = repo.get(cmt.hash)
             tout.detail(f"cherry {oid(cherry.oid)}")
 
+            vals.cherry = cherry
             vals.msg = cherry.message
             vals.skip = False
             vals.info = ''
             vals.final = seq == len(series.commits) - 1
-            yield cherry
+            yield vals
 
             repo.create_commit('HEAD', cherry.author, cherry.committer,
                                vals.msg, tree_id, [cur.target])
@@ -866,11 +866,11 @@ class Cseries:
         Return:
             pygit.oid: oid of the new branch
         """
-        vals = SimpleNamespace()
-        for cherry in self._process_series(vals, name, series, dry_run=dry_run):
-            if CHANGE_ID_TAG not in cherry.message:
-                change_id = self.make_change_id(cherry)
-                vals.msg = cherry.message + f'\n{CHANGE_ID_TAG}: {change_id}'
+        vals = None
+        for vals in self._process_series(name, series, dry_run=dry_run):
+            if CHANGE_ID_TAG not in vals.msg:
+                change_id = self.make_change_id(vals.cherry)
+                vals.msg = vals.msg + f'\n{CHANGE_ID_TAG}: {change_id}'
                 tout.detail("   - adding tag")
                 vals.info = 'tagged'
             else:
@@ -904,11 +904,11 @@ class Cseries:
                     print(f' - {oid(cmt.hash)} {cmt.subject}')
                 raise ValueError(
                     f'Unmarked commits {len(bad)}/{len(series.commits)}')
-        vals = SimpleNamespace()
-        for cherry in self._process_series(vals, name, series, dry_run=dry_run):
-            if CHANGE_ID_TAG in cherry.message:
-                pos = cherry.message.index(CHANGE_ID_TAG)
-                vals.msg = cherry.message[:pos]
+        vals = None
+        for vals in self._process_series(name, series, dry_run=dry_run):
+            if CHANGE_ID_TAG in vals.msg:
+                pos = vals.msg.index(CHANGE_ID_TAG)
+                vals.msg = vals.msg[:pos]
 
                 tout.detail("   - removing tag")
                 vals.info = 'untagged'
