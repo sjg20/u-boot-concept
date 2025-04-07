@@ -74,8 +74,8 @@ class TestFunctional(unittest.TestCase):
         tout.init(tout.INFO, allow_colour=False)
 
     def tearDown(self):
-        # shutil.rmtree(self.tmpdir)
-        print(self.tmpdir)
+        shutil.rmtree(self.tmpdir)
+        # print(self.tmpdir)
         terminal.set_print_test_mode(False)
 
     @staticmethod
@@ -2435,8 +2435,8 @@ second line.'''
 
         # TODO: check that it requires a clean tree
         tools.write_file(os.path.join(self.tmpdir, 'fname'), b'123')
-        # with capture_sys_output() as (out, _):
-        cser.add_series('first', '', mark=True)
+        with capture_sys_output() as (out, _):
+            cser.add_series('first', '', mark=True)
 
         tools.write_file(os.path.join(self.tmpdir, 'i2c.c'), b'123')
         with self.assertRaises(pygit2.GitError) as exc:
