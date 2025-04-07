@@ -360,38 +360,28 @@ class Cseries:
                 f"Series '{ser.name}' does not have a version {version}")
         return versions
 
-    def set_link(self, series, version, link, update_commit):
+    def set_link(self, series_name, version, link, update_commit):
         """Add / update a series-links link for a series
 
         Args:
-            series (str): Name of series to use, or None to use current branch
+            series_name (str): Name of series to use, or None to use current
+                branch
             version (int): Version number, or None to detect from name
             link (str): Patchwork link-string for the series
             update_commit (bool): True to update the current commit with the
                 link
         """
-        ser, version = self.parse_series_and_version(series, version)
+        ser, version = self.parse_series_and_version(series_name, version)
         self.ensure_version(ser, version)
 
         if update_commit:
-            cur_name = gitutil.get_branch(self.gitdir)
-
-            repo = pygit2.init_repository(self.gitdir)
-            commit = repo.head.peel(pygit2.GIT_OBJ_COMMIT)
-            new_msg = commit.message + f'\nSeries-links: {version}:{link}'
-            amended = repo.amend_commit(commit, 'HEAD', message=new_msg)
-
-            branch_name = self.get_branch_name(ser.name, version)
-            branch = repo.lookup_branch(branch_name)
-
-            if cur_name == branch_name:
-                repo.head.set_target(amended)
-
+            name, series, max_vers = self._prep_series(ser.name)
+            self.update_series(name, series, max_vers, None, add_link=link)
         if link is None:
             link = ''
         tout.info(
             f"Setting link for series '{ser.name}' version {version} to {link}")
-        res = self.cur.execute(
+        self.cur.execute(
             f"UPDATE ser_ver SET link = '{link}' WHERE "
             'series_id = ? AND version = ?', (ser.idnum, version))
         self.con.commit()
@@ -644,35 +634,56 @@ class Cseries:
         Args:
             name (str): Name of the branch to process
             series (Series): Series object
+            max_vers (int): Version number of the series being updated, or
+                None if the version is not changing
             dry_run (bool): True to do a dry run, restoring the original tree
                 afterwards
+            vers (int or None): Version number to add to the series, if any
+            add_link (str or None): Link to add to the series, if any
 
         Return:
             pygit.oid: oid of the new branch
         """
         added_version = False
+        added_link = False
         for vals in self._process_series(name, series, new_name, dry_run):
             out = []
             for line in vals.msg.splitlines():
                 m_ver = re.match('Series-version:(.*)', line)
                 m_links = re.match('Series-links:(.*)', line)
                 if m_ver and vers:
+                    if ('version' in series and
+                        int(series.version) != max_vers):
+                        tout.warning(
+                            f'Branch {name}: Series-version tag '
+                            f'{series.version} does not patch expected version '
+                            f'{max_vers}')
                     vals.info += f'added version {vers}'
                     out.append(f'Series-version: {vers}')
                     added_version = True
-                elif m_links:
+                elif m_links and add_link is not None:
                     new_links = ''
+                    print('max_vers', max_vers)
+                    this_ver = vers or max_vers
                     for link in m_links.group(1).strip().split():
                         if ':' not in link:
-                            new_links += f'{max_vers}:{link} '
+                            if max_vers != this_ver:
+                                new_links += f'{max_vers}:{link} '
+                                print('new_links', new_links)
                         else:
                             new_links += f'{link} '
+                    if add_link:
+                        new_links = f'{this_ver}:{add_link} {new_links}'
                     vals.info += f'added links {new_links}'
                     out.append(f'Series-links: {new_links.strip()}')
+                    added_link = True
                 else:
                     out.append(line)
-            if vals.final and not added_version:
-                out.append(f'Series-version: {vers}')
+            if vals.final:
+                if vers and not added_version:
+                    out.append(f'Series-version: {vers}')
+                if add_link and not added_link:
+                    out.append(f'Series-links: {vers}:{add_link}')
 
             vals.msg = '\n'.join(out) + '\n'
 
@@ -696,15 +707,12 @@ class Cseries:
         count = len(pwc.values())
         series = patchstream.get_metadata(branch_name, 0, count,
                                           git_dir=self.gitdir)
-        if 'version' in series and int(series.version) != max_vers:
-            raise ValueError(
-                f'Branch {branch_name}: Series-version tag {series.version} '
-                f'does not patch expected version {max_vers}')
 
         # Create a new branch
         vers = max_vers + 1
         new_name = self.join_name_version(ser.name, vers)
 
+        print('update', vers)
         self.update_series(series_name, series, max_vers, new_name, dry_run,
                            vers=vers)
 

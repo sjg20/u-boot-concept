@@ -74,8 +74,8 @@ class TestFunctional(unittest.TestCase):
         tout.init(tout.INFO, allow_colour=False)
 
     def tearDown(self):
-        shutil.rmtree(self.tmpdir)
-        # print(self.tmpdir)
+        # shutil.rmtree(self.tmpdir)
+        print(self.tmpdir)
         terminal.set_print_test_mode(False)
 
     @staticmethod
@@ -1792,13 +1792,13 @@ second line.'''
 
         with capture_sys_output() as (out, _):
             cser.increment('first')
-        with capture_sys_output() as (out, _):
-            cser.set_link('first', 2, '1234', True)
+        # with capture_sys_output() as (out, _):
+        cser.set_link('first', 2, '2345', True)
 
-        self.assertEqual('1234', cser.get_link('first', 2))
+        self.assertEqual('2345', cser.get_link('first', 2))
 
         series = patchstream.get_metadata_for_list('first2', self.gitdir, 1)
-        self.assertEqual('2:1234', series.links)
+        self.assertEqual('2:2345', series.links)
 
         self.assertEqual('first2', gitutil.get_branch(self.gitdir))
 
@@ -1904,7 +1904,7 @@ second line.'''
             cser.set_link('second', None, '456', True)
         self.assertEqual(
             "Setting link for series 'second' version 1 to 456",
-            out.getvalue().strip())
+            out.getvalue().splitlines()[-1])
 
         # Make sure that the link was set
         series = patchstream.get_metadata('second', 0, count,
@@ -1913,6 +1913,10 @@ second line.'''
 
         with capture_sys_output():
             cser.increment('second')
+
+        # Make sure that the new series gets the same link
+        series = patchstream.get_metadata('second2', 0, 3,
+                                          git_dir=self.gitdir)
 
         pwork = Patchwork.for_testing(self._fake_patchwork_cser_link)
         pwork.set_project(PROJ_ID)
