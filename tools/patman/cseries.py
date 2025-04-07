@@ -840,22 +840,27 @@ class Cseries:
 
         # Checkout the upstream commit in 'detached' mode
         tout.info(f"Checking out upstream commit {upstream.name}")
-        # repo.checkout(upstream.name)
+        # commit_oid = upstream.peel(pygit2.GIT_OBJ_COMMIT).oid
+        # commit = repo.get(commit_oid)
+        # repo.checkout_tree(commit)
+        # repo.head.set_target(commit_oid)
+        # repo.head = commit
+        # commit = repo.revparse_single(upstream.name)
+        # print('upstream_name_in', upstream_name_in)
         if upstream_name_in:
-            commit = repo.revparse_single(upstream.name)
-            branch_oid = branch.peel(pygit2.GIT_OBJ_COMMIT).oid
-            repo.checkout_tree(repo.get(branch_oid))
+            repo.checkout(upstream.name)
         else:
+            # print('name', upstream.name)
             commit_oid = upstream.peel(pygit2.GIT_OBJ_COMMIT).oid
             commit = repo.get(commit_oid)
             repo.checkout_tree(commit)
             repo.head.set_target(commit_oid)
-        # repo.head = commit
-        # commit = repo.revparse_single(upstream.name)
-        # branch_oid = branch.peel(pygit2.GIT_OBJ_COMMIT).oid
-        # repo.checkout_tree(repo.get(branch_oid))
-        # repo.checkout_tree(commit)
-
+            # commit = repo.revparse_single(upstream.name)
+            # branch_oid = branch.peel(pygit2.GIT_OBJ_COMMIT).oid
+            # repo.checkout_tree(repo.get(branch_oid))
+            # repo.head.set_target(branch_oid)
+            # repo.checkout(branch)
+            # raise ValueError('here')
         cur = upstream
         vals.final = False
         tout.info(f"Processing {len(series.commits)} commits from branch '{name}'")
