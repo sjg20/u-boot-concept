@@ -670,7 +670,6 @@ class Cseries:
 
         new_name = self.join_name_version(ser.name, vers)
         new_branch = repo.branches.create(new_name, commit)
-        # new_branch.upstream = branch.upstream
 
         added_version = False
         for vals in self._process_series(series_name, series, new_name, dry_run):
@@ -850,6 +849,8 @@ class Cseries:
             repo.head.set_target(branch_oid)
         else:
             repo.create_reference(f'refs/heads/{name}', target.oid, force=True)
+            if new_name:
+                repo.checkout(new_branch)
         vals.oid = target.oid
 
     def mark_series(self, name, series, dry_run=False):
