@@ -790,14 +790,14 @@ class Cseries:
 
         tout.info(f"Checking out upstream commit {upstream.name}")
         if new_name:
-            branch = repo.lookup_branch(name)
+            # Create a new branch, pointing to upstream commit
             commit = branch.peel(pygit2.GIT_OBJ_COMMIT)
             new_branch = repo.branches.create(new_name, commit)
             name = new_name
             repo.checkout(upstream_name)
-            new_branch = repo.lookup_branch(name)
             new_branch.upstream = branch.upstream
         else:
+            # Check out the upstream commit (detached HEAD)
             commit_oid = upstream.peel(pygit2.GIT_OBJ_COMMIT).oid
             commit = repo.get(commit_oid)
             repo.checkout_tree(commit)
@@ -833,12 +833,12 @@ class Cseries:
         target = repo.revparse_single('HEAD')
         tout.info(f"Updating branch {name} to {str(target.oid)[:HASH_LEN]}")
         if dry_run:
-            branch_oid = branch.peel(pygit2.GIT_OBJ_COMMIT).oid
-            repo.checkout_tree(repo.get(branch_oid))
-            repo.head.set_target(branch_oid)
             if new_name:
-                # branch = repo.lookup_branch(name)
                 repo.checkout(branch.name)
+            else:
+                branch_oid = branch.peel(pygit2.GIT_OBJ_COMMIT).oid
+                repo.checkout_tree(repo.get(branch_oid))
+                repo.head.set_target(branch_oid)
         else:
             repo.create_reference(f'refs/heads/{name}', target.oid, force=True)
             if new_name:
