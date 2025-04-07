@@ -663,8 +663,6 @@ class Cseries:
 
         # Create a new branch
         vers = max_vers + 1
-        repo = pygit2.init_repository(self.gitdir)
-
         new_name = self.join_name_version(ser.name, vers)
 
         added_version = False
@@ -692,10 +690,6 @@ class Cseries:
                 out.append(f'Series-version: {vers}')
 
             vals.msg = '\n'.join(out) + '\n'
-
-        # if dry_run:
-        #     branch = repo.lookup_branch(branch_name)
-        #     repo.checkout(branch.name)
 
         old_svid = self.get_series_svid(ser.idnum, max_vers)
         pcd = self.get_pcommit_dict(old_svid)
