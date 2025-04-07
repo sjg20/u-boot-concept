@@ -672,9 +672,6 @@ class Cseries:
         new_branch = repo.branches.create(new_name, commit)
         new_branch.upstream = branch.upstream
 
-        upstream_name = gitutil.get_upstream(self.gitdir, branch_name)[0]
-        repo.checkout(upstream_name)
-
         added_version = False
         for vals in self._process_series(series_name, series, new_name, dry_run):
             out = []
@@ -809,6 +806,7 @@ class Cseries:
         tout.info(f"Checking out upstream commit {upstream.name}")
         if new_name:
             name = new_name
+            repo.checkout(upstream_name)
         else:
             commit_oid = upstream.peel(pygit2.GIT_OBJ_COMMIT).oid
             commit = repo.get(commit_oid)
