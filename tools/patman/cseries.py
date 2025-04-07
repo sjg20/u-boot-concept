@@ -676,7 +676,7 @@ class Cseries:
         repo.checkout(upstream_name)
 
         added_version = False
-        for vals in self._process_series(new_name, series, new_name, dry_run):
+        for vals in self._process_series(series_name, series, new_name, dry_run):
             out = []
             for line in vals.msg.splitlines():
                 m_ver = re.match('Series-version:(.*)', line)
@@ -807,7 +807,9 @@ class Cseries:
         branch = repo.lookup_branch(name)
 
         tout.info(f"Checking out upstream commit {upstream.name}")
-        if not new_name:
+        if new_name:
+            name = new_name
+        else:
             commit_oid = upstream.peel(pygit2.GIT_OBJ_COMMIT).oid
             commit = repo.get(commit_oid)
             repo.checkout_tree(commit)
