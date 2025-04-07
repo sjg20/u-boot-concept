@@ -361,7 +361,7 @@ class Cseries:
         return versions
 
     def set_link(self, series, version, link, update_commit):
-        """Add / update a series-link link for a series
+        """Add / update a series-links link for a series
 
         Args:
             series (str): Name of series to use, or None to use current branch
@@ -378,7 +378,7 @@ class Cseries:
 
             repo = pygit2.init_repository(self.gitdir)
             commit = repo.head.peel(pygit2.GIT_OBJ_COMMIT)
-            new_msg = commit.message + f'\nSeries-links: {link}'
+            new_msg = commit.message + f'\nSeries-links: {version}:{link}'
             amended = repo.amend_commit(commit, 'HEAD', message=new_msg)
 
             branch_name = self.get_branch_name(ser.name, version)
@@ -669,29 +669,14 @@ class Cseries:
         commit = branch.peel(pygit2.GIT_OBJ_COMMIT)
 
         new_name = self.join_name_version(ser.name, vers)
-        # print('name', branch_name, new_name)
         new_branch = repo.branches.create(new_name, commit)
-        # if not dry_run:
-            # repo.checkout(new_branch)
-        '''
-        repo.config.set_multivar('branch.{new_name}.remote', '', '.')
-        merge = list(repo.config.get_multivar(f'branch.{branch_name}.merge'))
-        print('list', branch_name, merge)
-        merge_name = merge[0]
-        repo.config.set_multivar('branch.{new_name}.merge', '', merge_name)
 
-        check = list(repo.config.get_multivar(f'branch.{new_name}.merge'))
-        print('check', check)
-        '''
-
-        upstream_name, warn = gitutil.get_upstream(self.gitdir, branch_name)
-        # upstream_name, warn = gitutil.get_upstream(self.gitdir, new_name)
-        # print('upstream_name', upstream_name)
+        upstream_name = gitutil.get_upstream(self.gitdir, branch_name)[0]
 
         vals = SimpleNamespace()
         added_version = False
-        for cherry in self._process_series(vals, new_name, series,
-                                           upstream_name, dry_run):
+        for _ in self._process_series(vals, new_name, series, upstream_name,
+                                      dry_run):
             out = []
             for line in vals.msg.splitlines():
                 m_ver = re.match('Series-version:(.*)', line)
@@ -716,49 +701,7 @@ class Cseries:
                 out.append(f'Series-version: {vers}')
 
             vals.msg = '\n'.join(out) + '\n'
-        '''
-        lines = commit.message.splitlines()
 
-        ver_index = None
-        link_index = None
-        vers = None
-        for seq, line in enumerate(lines):
-            mat = re.match('Series-version:(.*)', line)
-            if mat:
-                ver_index = seq
-                vers = int(mat.group(1))
-            mat = re.match('Series-links:(.*)', line)
-            if mat:
-                link_index = seq
-                link = mat.group(1).strip()
-        if not ver_index:
-            print('No existing Series-version found, using version 1')
-            vers = 1
-        if vers != max_vers:
-            raise ValueError(
-                f'Expected version {max_vers} but Series-version is {vers}')
-        old_vers = vers
-        vers += 1
-
-        ver_string = f'Series-version: {vers}'
-        if ver_index:
-            lines = (lines[:ver_index] + [ver_string] + lines[ver_index + 1:])
-        else:
-            lines.append(ver_string)
-        print('link_index', link_index, link)
-        if link_index:
-            new_link = 'Series-links:'
-            for item in link.split():
-                if ':' not in link:
-                    new_link += f' {old_vers}:{link}'
-                else:
-                    new_link += f' {link}'
-            print(f'Updating links line to: {new_link}')
-            lines = (lines[:link_index] + [new_link] + lines[link_index + 1:])
-
-        new_msg = '\n'.join(lines) + '\n'
-        amended = repo.amend_commit(commit, 'HEAD', message=new_msg)
-        '''
         if not dry_run:
             repo.checkout(new_branch)
             branch = repo.lookup_branch(branch_name)
@@ -771,13 +714,13 @@ class Cseries:
         old_svid = self.get_series_svid(ser.idnum, max_vers)
         pcd = self.get_pcommit_dict(old_svid)
 
-        res = self.cur.execute(
+        self.cur.execute(
             'INSERT INTO ser_ver (series_id, version) VALUES (?, ?)',
             (ser.idnum, vers))
         svid = self.cur.lastrowid
 
         for pcm in pcd.values():
-            res = self.cur.execute(
+            self.cur.execute(
                 'INSERT INTO pcommit (svid, seq, subject, change_id) VALUES '
                 '(?, ?, ?, ?)', (svid, pcm.seq, pcm.subject, pcm.change_id))
 
@@ -868,29 +811,14 @@ class Cseries:
         branch = repo.lookup_branch(name)
         upstream = repo.lookup_reference(upstream_name)
 
-        # Checkout the upstream commit in 'detached' mode
         tout.info(f"Checking out upstream commit {upstream.name}")
-        # commit_oid = upstream.peel(pygit2.GIT_OBJ_COMMIT).oid
-        # commit = repo.get(commit_oid)
-        # repo.checkout_tree(commit)
-        # repo.head.set_target(commit_oid)
-        # repo.head = commit
-        # commit = repo.revparse_single(upstream.name)
-        # print('upstream_name_in', upstream_name_in)
         if upstream_name_in:
             repo.checkout(upstream.name)
         else:
-            # print('name', upstream.name)
             commit_oid = upstream.peel(pygit2.GIT_OBJ_COMMIT).oid
             commit = repo.get(commit_oid)
             repo.checkout_tree(commit)
             repo.head.set_target(commit_oid)
-            # commit = repo.revparse_single(upstream.name)
-            # branch_oid = branch.peel(pygit2.GIT_OBJ_COMMIT).oid
-            # repo.checkout_tree(repo.get(branch_oid))
-            # repo.head.set_target(branch_oid)
-            # repo.checkout(branch)
-            # raise ValueError('here')
         cur = upstream
         vals.final = False
         tout.info(f"Processing {len(series.commits)} commits from branch '{name}'")

@@ -1769,7 +1769,7 @@ second line.'''
         self.assertEqual('1234', cser.get_link('first', 2))
 
         series = patchstream.get_metadata_for_list('first2', self.gitdir, 1)
-        self.assertEqual('1234', series.links)
+        self.assertEqual('2:1234', series.links)
 
         self.assertEqual('first2', gitutil.get_branch(self.gitdir))
 
@@ -1821,7 +1821,7 @@ second line.'''
         self.assertIn('1234', out.getvalue())
 
         series = patchstream.get_metadata_for_list('first4', self.gitdir, 1)
-        self.assertEqual('1234', series.links)
+        self.assertEqual('4:1234', series.links)
 
         with capture_sys_output() as (out, _):
             self.run_args('series', 'get-link', '-s', 'first', '-V', '5',
