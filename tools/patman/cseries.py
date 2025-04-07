@@ -623,7 +623,7 @@ class Cseries:
         else:
             accepted = '-'
         status = f'{accepted}/{count}'
-        return status
+        return status, pwc
 
     def do_list(self):
         sdict = self.get_series_dict()
@@ -631,7 +631,7 @@ class Cseries:
         for name, ser in sdict.items():
             versions = self.get_version_list(ser.idnum)
             status = self.series_get_version_stats(
-                ser.idnum, self.series_max_version(ser.idnum))
+                ser.idnum, self.series_max_version(ser.idnum))[0]
 
             vlist = ' '.join([str(ver) for ver in sorted(versions)])
 
@@ -1277,9 +1277,19 @@ class Cseries:
         return res.fetchall()[0][0]
 
     def progress(self, series):
+        """Show progress information for all versions in a series
+
+        Args:
+            series (str): Name of series to use, or None to use current branch
+        """
         ser = self.parse_series(series)
         max_vers = self.series_max_version(ser.idnum)
         name, desc = self.get_series_info(ser.idnum)
         for ver in range(1, max_vers + 1):
-            status = self.series_get_version_stats(ser.idnum, ver)
-            print(f"Series: '{name}' version {ver}:{status}: {desc}")
+            status, pwc = self.series_get_version_stats(ser.idnum, ver)
+            print(f"'{name}' v{ver} (accepted {status}) {desc}")
+            count = len(pwc)
+            branch = self.join_name_version(ser.name, ver)
+            series = patchstream.get_metadata(branch, 0, count,
+                                              git_dir=self.gitdir)
+            self._list_patches(branch, pwc, series)
