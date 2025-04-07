@@ -734,11 +734,12 @@ class Cseries:
         # commit.committer
         # git var GIT_COMMITTER_IDENT ; echo "$refhash" ; cat "README"; } | git hash-object --stdin)
 
-    def _process_series(self, vals, name, series, dry_run=False):
+    def _process_series(self, vals, name, series, upstream_name=None,
+                        dry_run=False):
         """Rewrite a series
 
         Args:
-            name (str): Name of the series to mark
+            name (str): Name of the branch to mark
             series (Series): Series object
             dry_run (bool): True to do a dry run, restoring the original tree
                 afterwards
@@ -746,7 +747,8 @@ class Cseries:
         Return:
             pygit.oid: oid of the new branch
         """
-        upstream_name, warn = gitutil.get_upstream(self.gitdir, name)
+        if not upstream_name:
+            upstream_name, warn = gitutil.get_upstream(self.gitdir, name)
 
         repo = pygit2.init_repository(self.gitdir)
         branch = repo.lookup_branch(name)
@@ -759,8 +761,9 @@ class Cseries:
         repo.checkout_tree(commit)
         repo.head.set_target(commit_oid)
         cur = upstream
+        vals.final = False
         tout.info(f"Processing {len(series.commits)} commits from branch '{name}'")
-        for cmt in series.commits:
+        for seq, cmt in enumerate(series.commits):
             tout.detail(f"- adding {oid(cmt.hash)} {cmt}")
             repo.cherrypick(cmt.hash)
             if repo.index.conflicts:
@@ -773,6 +776,7 @@ class Cseries:
             vals.msg = cherry.message
             vals.skip = False
             vals.info = ''
+            vals.final = seq == len(series.commits) - 1
             yield cherry
 
             repo.create_commit('HEAD', cherry.author, cherry.committer,
@@ -805,7 +809,7 @@ class Cseries:
             pygit.oid: oid of the new branch
         """
         vals = SimpleNamespace()
-        for cherry in self._process_series(vals, name, series, dry_run):
+        for cherry in self._process_series(vals, name, series, dry_run=dry_run):
             if CHANGE_ID_TAG not in cherry.message:
                 change_id = self.make_change_id(cherry)
                 vals.msg = cherry.message + f'\n{CHANGE_ID_TAG}: {change_id}'
@@ -842,7 +846,7 @@ class Cseries:
                 raise ValueError(
                     f'Unmarked commits {len(bad)}/{len(series.commits)}')
         vals = SimpleNamespace()
-        for cherry in self._process_series(vals, name, series, dry_run):
+        for cherry in self._process_series(vals, name, series, dry_run=dry_run):
             if CHANGE_ID_TAG in cherry.message:
                 pos = cherry.message.index(CHANGE_ID_TAG)
                 change_id = self.make_change_id(cherry)
