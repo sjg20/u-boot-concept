@@ -842,6 +842,9 @@ class Cseries:
             branch_oid = branch.peel(pygit2.GIT_OBJ_COMMIT).oid
             repo.checkout_tree(repo.get(branch_oid))
             repo.head.set_target(branch_oid)
+            if new_name:
+                branch = repo.lookup_branch(name)
+                repo.checkout(branch.name)
         else:
             repo.create_reference(f'refs/heads/{name}', target.oid, force=True)
             if new_name:
