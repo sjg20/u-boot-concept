@@ -665,11 +665,7 @@ class Cseries:
         vers = max_vers + 1
         repo = pygit2.init_repository(self.gitdir)
 
-        branch = repo.lookup_branch(branch_name)
-        commit = branch.peel(pygit2.GIT_OBJ_COMMIT)
-
         new_name = self.join_name_version(ser.name, vers)
-        new_branch = repo.branches.create(new_name, commit)
 
         added_version = False
         for vals in self._process_series(series_name, series, new_name, dry_run):
@@ -800,6 +796,9 @@ class Cseries:
 
         tout.info(f"Checking out upstream commit {upstream.name}")
         if new_name:
+            branch = repo.lookup_branch(name)
+            commit = branch.peel(pygit2.GIT_OBJ_COMMIT)
+            new_branch = repo.branches.create(new_name, commit)
             name = new_name
             repo.checkout(upstream_name)
             new_branch = repo.lookup_branch(name)
