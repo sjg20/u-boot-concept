@@ -1163,7 +1163,7 @@ class Cseries:
             raise ValueError('Current project is not known')
         return res[1]
 
-    def build_col(self, state, prefix=''):
+    def build_col(self, state, prefix='', base_str=None):
         bright = True
         if state == 'accepted':
             col = self.col.GREEN
@@ -1181,8 +1181,9 @@ class Cseries:
         else:
             # under-review, rfc, needs-review-ack
             col = self.col.WHITE
-        pad = ' ' * (17 - len(state))
-        col_state = self.col.build(col, prefix + state, bright)
+        out = base_str or state
+        pad = ' ' * (17 - len(out))
+        col_state = self.col.build(col, prefix + out, bright)
         return col_state, pad
 
     def _list_patches(self, branch, pwc, series):
@@ -1205,10 +1206,10 @@ class Cseries:
             line = f'{seq:3} {col_state}{pad} {patch_id:7} {oid(cmt.hash)} {item.subject}'
             lines.append(line)
             states[item.state] += 1
-        all = ''
+        out = ''
         for state, count in states.items():
-            all += ' ' + self.build_col(state, f'{count}:')[0]
-        print(f"Branch '{branch}' (total {len(pwc)}):{all}")
+            out += ' ' + self.build_col(state, f'{count}:')[0]
+        print(f"Branch '{branch}' (total {len(pwc)}):{out}")
         for line in lines:
             print(line)
 
@@ -1326,8 +1327,7 @@ class Cseries:
         """Show progress information for all versions in a series
 
         Args:
-            series (str): Name of series to use, or None to show progress for
-                all series
+            ser (Series): Series to use
             show_all (bool): True to show all versions of a series, False to
                 show only the final version
         """
@@ -1368,3 +1368,39 @@ class Cseries:
         for ser in sdict.values():
             self._progress_one(ser, show_all)
             print()
+
+    def _summary_one(self, ser):
+        """Show summary information for the latest version in a series
+
+        Args:
+            series (str): Name of series to use, or None to show progress for
+                all series
+        """
+        max_vers = self.series_max_version(ser.idnum)
+        name, desc = self.get_series_info(ser.idnum)
+        stats, pwc = self.series_get_version_stats(ser.idnum, max_vers)
+        states = {x.state for x in pwc.values()}
+        state = 'accepted'
+        for val in ['awaiting-upstream', 'changes-requested', 'rejected',
+                    'deferred', 'not-applicable', 'superseded',
+                    'handled-elsewhere']:
+            if val in states:
+                state = val
+        state_str, pad = self.build_col(state, base_str=name)
+        print(f"{state_str}{pad}  {stats.rjust(6)}  {desc}")
+
+    def summary(self, series):
+        """Show summary information for all series
+
+        Args:
+            ser (Series): Series to use
+        """
+        print(f"{'Name':17}  Status  Description")
+        print(f"{'-' * 17}  {'-' * 6}  {'-' * 30}")
+        if series is not None:
+            self._summary_one(self.parse_series(series))
+            return
+
+        sdict = self.get_series_dict()
+        for ser in sdict.values():
+            self._summary_one(ser)
