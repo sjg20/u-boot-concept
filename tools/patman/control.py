@@ -321,6 +321,8 @@ def series(args, test_db=None, pwork=None):
             cser.unmark_series(args.series, dry_run=args.dry_run)
         elif args.subcmd == 'progress':
             cser.progress(args.series, args.all)
+        elif args.subcmd == 'summary':
+            cser.summary(args.series)
         else:
             raise ValueError(f"Unknown series subcommand '{args.subcmd}'")
     finally:

@@ -2996,3 +2996,20 @@ second line.'''
         lines = iter(out.getvalue().splitlines())
         self._check_first(lines)
         self._check_second(lines, True)
+
+    def test_series_summary(self):
+        self.setup_second()
+
+        args = Namespace(subcmd='summary', series=None, extra = [])
+        with capture_sys_output() as (out, _):
+            control.series(args, test_db=self.tmpdir, pwork=True)
+        lines = out.getvalue().splitlines()
+        self.assertEqual(
+            'Name               Status  Description',
+            lines[0])
+        self.assertEqual(
+            '-----------------  ------  ------------------------------',
+            lines[1])
+        self.assertEqual('first                 -/2  ', lines[2])
+        self.assertEqual('second                1/3  Series for my board',
+                         lines[3])
