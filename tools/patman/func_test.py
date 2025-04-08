@@ -2825,14 +2825,14 @@ second line.'''
         with capture_sys_output() as (out, _):
             yield cser
         lines = iter(out.getvalue().splitlines())
-        self.assertEqual("Branch 'first' (total 2): 2:unknown:", next(lines))
+        self.assertEqual("Branch 'first' (total 2): 2:unknown", next(lines))
         self.assertRegex(next(lines), r'  0 .* i2c: I2C things')
         self.assertRegex(next(lines), r'  1 .* spi: SPI fixes')
 
         with capture_sys_output() as (out, _):
             yield cser
         lines = iter(out.getvalue().splitlines())
-        self.assertEqual("Branch 'second2' (total 3): 3:unknown:", next(lines))
+        self.assertEqual("Branch 'second2' (total 3): 3:unknown", next(lines))
         self.assertRegex(next(lines), '  0 .* video: Some video improvements')
         self.assertRegex(next(lines), '  1 .* serial: Add a serial driver')
         self.assertRegex(next(lines), '  2 .* bootm: Make it boot')
@@ -2874,7 +2874,7 @@ second line.'''
             cser.series_status(pwork, 'second', None)
         lines = iter(out.getvalue().splitlines())
         self.assertEqual(
-            "Branch 'second' (total 3): 3:unknown:", next(lines))
+            "Branch 'second' (total 3): 3:unknown", next(lines))
         self.assertRegex(
             next(lines),
             "  0 unknown         .* video: Some video improvements")
@@ -2895,10 +2895,10 @@ second line.'''
             cser.add_series('second', 'description', allow_unmarked=True)
         with capture_sys_output() as (out, _):
             cser.series_sync(pwork, 'second', None)
-        # # # # # # # self.assertEqual('3 patch(es) updated', out.getvalue().strip())
+        self.assertEqual('3 patch(es) updated', out.getvalue().strip())
 
         ser = cser.get_series_by_name('second')
-        pwid, link = cser.get_series_svid_link(ser.idnum, 1)
+        pwid = cser.get_series_svid(ser.idnum, 1)
         pwc = cser.get_pcommit_dict(pwid)
         self.assertEqual('accepted', pwc[0].state)
         self.assertEqual('changes-requested', pwc[1].state)
@@ -2908,9 +2908,32 @@ second line.'''
         """Test showing progress for a cseries"""
         self.setup_second()
 
-        args = Namespace()
-        args.subcmd = 'progress'
+        args = Namespace(subcmd='progress')
         args.series = 'second'
         args.extra = []
-        # with capture_sys_output() as (out, _):
-        control.series(args, test_db=self.tmpdir, pwork=True)
+        with capture_sys_output() as (out, _):
+            control.series(args, test_db=self.tmpdir, pwork=True)
+        lines = iter(out.getvalue().splitlines())
+        self.assertEqual("Branch 'second' (total 3): 3:unknown", next(lines))
+        self.assertRegex(
+            next(lines),
+            '  0 unknown                   .* video: Some video improvements')
+        self.assertRegex(
+            next(lines),
+            '  1 unknown                   .* serial: Add a serial driver')
+        self.assertRegex(
+            next(lines),
+            '  2 unknown                   .* bootm: Make it boot')
+        self.assertEqual('', next(lines))
+        self.assertEqual(
+            "Branch 'second2' (total 3): 1:accepted 1:changes-requested 1:rejected",
+            next(lines))
+        self.assertRegex(
+            next(lines),
+            '  0 accepted               10 .* video: Some video improvements')
+        self.assertRegex(
+            next(lines),
+            '  1 changes-requested      11 .* serial: Add a serial driver')
+        self.assertRegex(
+            next(lines),
+            '  2 rejected               12 .* bootm: Make it boot')
