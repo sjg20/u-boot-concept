@@ -38,6 +38,13 @@ HASH_LEN = 10
 # patch_id (in): Patchwork's patch ID for this patch
 PCOMMIT = namedtuple('pcommit', 'id,seq,subject,svid,change_id,state,patch_id')
 
+# Shorter version of some states, to save horizontal space
+SHORTEN_STATE = {
+    'handled-elsewhere': 'elsewhere',
+    'awaiting-upstream': 'awaiting',
+    'not-applicable': 'n/a',
+    'changes-requested': 'changes',
+}
 
 def oid(oid_val):
     return str(oid_val)[:HASH_LEN];
@@ -1190,8 +1197,8 @@ class Cseries:
         else:
             # under-review, rfc, needs-review-ack
             col = self.col.WHITE
-        out = base_str or state
-        pad = ' ' * (17 - len(out))
+        out = base_str or SHORTEN_STATE.get(state, state)
+        pad = ' ' * (10 - len(out))
         col_state = self.col.build(col, prefix + out, bright)
         return col_state, pad
 
@@ -1199,7 +1206,7 @@ class Cseries:
         """List patches along with optional status info
 
         Args:
-            branch (str): Branch name
+            branch (str): Branch name        if self.show_progress
             pwc (dict): pcommit records:
                 key (int): seq
                 value (PCOMMIT): Record from database
@@ -1219,6 +1226,9 @@ class Cseries:
         for state, count in states.items():
             out += ' ' + self.build_col(state, f'{count}:')[0]
         print(f"Branch '{branch}' (total {len(pwc)}):{out}")
+        print(self.col.build(
+            self.col.MAGENTA,
+            f"Seq State      PatchId {'Commit'.ljust(HASH_LEN)} Subject"))
         for line in lines:
             print(line)
 

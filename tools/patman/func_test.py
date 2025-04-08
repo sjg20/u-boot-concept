@@ -1759,7 +1759,8 @@ second line.'''
         """Add a new cseries"""
         self.make_git_tree()
         args = Namespace(subcmd='add', extra=['my-description'], series='first',
-                         mark=False, allow_unmarked=True, dry_run=False)
+                         mark=False, allow_unmarked=True, upstream=None,
+                         dry_run=False)
         with capture_sys_output() as (out, _):
             control.series(args, test_db=self.tmpdir, pwork=True)
 
@@ -1812,7 +1813,7 @@ second line.'''
         gitutil.checkout('second', self.gitdir, work_tree=self.tmpdir,
                          force=True)
         args = Namespace(subcmd='add', extra=[], series=None, mark=False,
-                         allow_unmarked=True, dry_run=False)
+                         allow_unmarked=True, upstream=None, dry_run=False)
         with capture_sys_output():
             control.series(args, test_db=self.tmpdir, pwork=True)
 
@@ -2920,6 +2921,7 @@ second line.'''
             yield cser
         lines = iter(out.getvalue().splitlines())
         self.assertEqual("Branch 'first' (total 2): 2:unknown", next(lines))
+        self.assertIn('PatchId', next(lines))
         self.assertRegex(next(lines), r'  0 .* i2c: I2C things')
         self.assertRegex(next(lines), r'  1 .* spi: SPI fixes')
 
@@ -2927,6 +2929,7 @@ second line.'''
             yield cser
         lines = iter(out.getvalue().splitlines())
         self.assertEqual("Branch 'second2' (total 3): 3:unknown", next(lines))
+        self.assertIn('PatchId', next(lines))
         self.assertRegex(next(lines), '  0 .* video: Some video improvements')
         self.assertRegex(next(lines), '  1 .* serial: Add a serial driver')
         self.assertRegex(next(lines), '  2 .* bootm: Make it boot')
@@ -2946,7 +2949,7 @@ second line.'''
         """Test listing the patches for a series using the cmdline"""
         cor = self.check_series_list_patches()
         cser = next(cor)
-        self.run_args('series', 'list-patches', '-s', 'first', pwork=True)
+        self.run_args('series', 'patches', '-s', 'first', pwork=True)
         cser.list_patches('first', 1)
         cser = next(cor)
         cser.list_patches('second2', 2)
@@ -2969,6 +2972,7 @@ second line.'''
         lines = iter(out.getvalue().splitlines())
         self.assertEqual(
             "Branch 'second' (total 3): 3:unknown", next(lines))
+        self.assertIn('PatchId', next(lines))
         self.assertRegex(
             next(lines),
             "  0 unknown         .* video: Some video improvements")
@@ -3004,28 +3008,30 @@ second line.'''
         if show_all:
             self.assertEqual("Branch 'second' (total 3): 3:unknown",
                              next(lines))
+            self.assertIn('PatchId', next(lines))
             self.assertRegex(
                 next(lines),
-                '  0 unknown                   .* video: Some video improvements')
+                '  0 unknown            .* video: Some video improvements')
             self.assertRegex(
                 next(lines),
-                '  1 unknown                   .* serial: Add a serial driver')
+                '  1 unknown            .* serial: Add a serial driver')
             self.assertRegex(
                 next(lines),
-                '  2 unknown                   .* bootm: Make it boot')
+                '  2 unknown            .* bootm: Make it boot')
             self.assertEqual('', next(lines))
         self.assertEqual(
-            "Branch 'second2' (total 3): 1:accepted 1:changes-requested 1:rejected",
+            "Branch 'second2' (total 3): 1:accepted 1:changes 1:rejected",
             next(lines))
+        self.assertIn('PatchId', next(lines))
         self.assertRegex(
             next(lines),
-            '  0 accepted               10 .* video: Some video improvements')
+            '  0 accepted        10 .* video: Some video improvements')
         self.assertRegex(
             next(lines),
-            '  1 changes-requested      11 .* serial: Add a serial driver')
+            '  1 changes         11 .* serial: Add a serial driver')
         self.assertRegex(
             next(lines),
-            '  2 rejected               12 .* bootm: Make it boot')
+            '  2 rejected        12 .* bootm: Make it boot')
 
     def test_series_progress(self):
         """Test showing progress for a cseries"""
@@ -3047,12 +3053,13 @@ second line.'''
     def _check_first(self, lines):
         self.assertEqual('first:  (versions: 1)', next(lines))
         self.assertEqual("Branch 'first' (total 2): 2:unknown", next(lines))
+        self.assertIn('PatchId', next(lines))
         self.assertRegex(
             next(lines),
-            '  0 unknown                   .* i2c: I2C things')
+            '  0 unknown            .* i2c: I2C things')
         self.assertRegex(
             next(lines),
-            '  1 unknown                   .* spi: SPI fixes')
+            '  1 unknown            .* spi: SPI fixes')
         self.assertEqual('', next(lines))
 
     def test_series_progress_all(self):
@@ -3087,6 +3094,5 @@ second line.'''
         self.assertEqual(
             '-----------------  ------  ------------------------------',
             lines[1])
-        self.assertEqual('first                 -/2  ', lines[2])
-        self.assertEqual('second                1/3  Series for my board',
-                         lines[3])
+        self.assertEqual('first          -/2  ', lines[2])
+        self.assertEqual('second         1/3  Series for my board', lines[3])

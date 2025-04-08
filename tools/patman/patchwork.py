@@ -6,7 +6,11 @@
 """
 
 from collections import namedtuple
+import concurrent
+from itertools import repeat
 import requests
+
+from u_boot_pylib import terminal
 
 # Information about a patch on patchwork
 # id: Patchwork ID of patch
@@ -17,7 +21,7 @@ PATCH = namedtuple('patch', 'id,state')
 class Patchwork:
     """Class to handle communication with patchwork
     """
-    def __init__(self, url):
+    def __init__(self, url, show_progress=True):
         """Set up a new patchwork handler
 
         Args:
@@ -26,6 +30,7 @@ class Patchwork:
         self.url = url
         self.fake_request = None
         self.proj_id = None
+        self.show_progress = show_progress
 
     def request(self, subpath):
         """Call the patchwork API and return the result as JSON
@@ -51,7 +56,7 @@ class Patchwork:
 
     @staticmethod
     def for_testing(func):
-        pwork = Patchwork(None)
+        pwork = Patchwork(None, show_progress=False)
         pwork.fake_request = func
         return pwork
 
@@ -100,6 +105,14 @@ class Patchwork:
         """
         return self.request(f'series/{series_id}/')
 
+    def _get_patch_status(self, patch_dict, seq, result, count):
+        patch_id = patch_dict[seq]['id']
+        data = self.request(f'patches/{patch_id}/')
+        result[seq] = PATCH(patch_id, data['state'])
+        done = len([1 for i in range(len(result)) if result[i]])
+        if self.show_progress:
+            terminal.tprint(f'\r{count - done}  ', newline=False)
+
     def series_get_state(self, series_id):
         """Sync the series information against patwork, to find patch status
 
@@ -112,9 +125,13 @@ class Patchwork:
         data = self.get_series(series_id)
         patch_dict = data['patches']
 
-        result = []
-        for pat in patch_dict:
-            patch_id = pat['id']
-            data = self.request('patches/%s/' % patch_id)
-            result.append(PATCH(patch_id, data['state']))
+        count = len(patch_dict)
+        result = [None] * count
+        with concurrent.futures.ThreadPoolExecutor(max_workers=16) as executor:
+            futures = executor.map(
+                self._get_patch_status, repeat(patch_dict), range(count),
+                repeat(result), repeat(count))
+        if self.show_progress:
+            terminal.print_clear()
+
         return result

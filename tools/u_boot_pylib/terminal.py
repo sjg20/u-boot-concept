@@ -202,6 +202,14 @@ def echo_print_test_lines():
         if line.newline:
             print()
 
+def have_terminal():
+    """Check if we have an interactive terminal or not
+
+    Returns:
+        bool: true if an interactive terminal is attached
+    """
+    return os.isatty(sys.stdout.fileno())
+
 
 class Color(object):
     """Conditionally wraps text in ANSI color escape sequences."""
