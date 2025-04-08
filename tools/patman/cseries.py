@@ -614,6 +614,11 @@ class Cseries:
             vers (int): Version number to process
 
         Return:
+            tuple:
+                str: Status string, '<accepted>/<count>'
+                OrderedDict:
+                    key (int): record ID if find_svid is None, else seq
+                    value (PCOMMIT): record data
         """
         svid, link = self.get_series_svid_link(idnum, vers)
         pwc = self.get_pcommit_dict(svid)
@@ -1300,7 +1305,7 @@ class Cseries:
         updated = 0
         for seq, item in enumerate(pwc.values()):
             if patches[seq].id:
-                res = self.cur.execute(
+                self.cur.execute(
                     'UPDATE pcommit set patch_id = ?, state = ? WHERE id = ?',
                     (patches[seq].id, patches[seq].state, item.id))
                 updated += self.cur.rowcount
@@ -1317,40 +1322,49 @@ class Cseries:
                                f"series_id = {idnum}")
         return res.fetchall()[0][0]
 
-    def _progress_one(self, ser):
+    def _progress_one(self, ser, show_all):
         """Show progress information for all versions in a series
 
         Args:
             series (str): Name of series to use, or None to show progress for
                 all series
+            show_all (bool): True to show all versions of a series, False to
+                show only the final version
         """
         max_vers = self.series_max_version(ser.idnum)
         name, desc = self.get_series_info(ser.idnum)
-        print(self.col.build(self.col.BLACK, f'{name}: {desc}', bright=False,
-                             back=self.col.YELLOW))
+        coloured = self.col.build(self.col.BLACK, desc, bright=False,
+                                  back=self.col.YELLOW)
+        versions = [str(x) for x in range(1, max_vers + 1)]
+        print(f"{name}: {coloured} (versions: {' '.join(versions)})")
+        add_blank_line = False
         for ver in range(1, max_vers + 1):
-            if ver != 1:
+            if not show_all and ver != max_vers:
+                continue
+            if add_blank_line:
                 print()
-            status, pwc = self.series_get_version_stats(ser.idnum, ver)
-            # print(f"{name}: {self.col.build(self.col.YELLOW, desc)}")
+            _, pwc = self.series_get_version_stats(ser.idnum, ver)
             count = len(pwc)
             branch = self.join_name_version(ser.name, ver)
             series = patchstream.get_metadata(branch, 0, count,
                                               git_dir=self.gitdir)
             self._list_patches(branch, pwc, series)
+            add_blank_line = True
 
-    def progress(self, series):
+    def progress(self, series, show_all):
         """Show progress information for all versions in a series
 
         Args:
             series (str): Name of series to use, or None to show progress for
                 all series
+            show_all (bool): True to show all versions of a series, False to
+                show only the final version
         """
         if series is not None:
-            self._progress_one(self.parse_series(series))
+            self._progress_one(self.parse_series(series), show_all)
             return
 
         sdict = self.get_series_dict()
         for ser in sdict.values():
-            self._progress_one(ser)
+            self._progress_one(ser, show_all)
             print()
