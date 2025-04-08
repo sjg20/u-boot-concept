@@ -421,10 +421,11 @@ Changes in v2:
     def make_git_tree(self):
         """Make a simple git tree suitable for testing
 
-        It has three branches:
+        It has four branches:
             'base' has two commits: PCI, main
             'first' has base as upstream and two more commits: I2C, SPI
             'second' has base as upstream and three more: video, serial, bootm
+            'third4' has second as upstream and four more: usb, main, test, lib
 
         Returns:
             pygit2.Repository: repository
@@ -518,6 +519,29 @@ command to make the code as
 complicated as possible''')
         second_target = repo.revparse_single('HEAD')
 
+        self.make_commit_with_file('usb: Try out the new DMA feature', '''
+This is just a fix that
+ensures that DMA is enabled
+''', 'usb-uclass.c', '''Here is the USB
+implementation and as you can see it
+it very nice''')
+        self.make_commit_with_file('main: Change to the main program', '''
+Here we adjust the main
+program just a little bit
+''', 'main.c', '''This is the text of the main program''')
+        self.make_commit_with_file('test: Check that everything works', '''
+This checks that all the
+various things we've been
+adding actually work.
+''', 'test.c', '''Here is the test code and it seems OK''')
+        self.make_commit_with_file('lib: Sort out the extra library', '''
+The extra library is currently
+broken. Fix it so that we can
+use it in various place.
+''', 'lib.c', '''Some library code is here
+and a little more''')
+        third_target = repo.revparse_single('HEAD')
+
         repo.branches.local.create('first', first_target)
         repo.config.set_multivar('branch.first.remote', '', '.')
         repo.config.set_multivar('branch.first.merge', '', 'refs/heads/base')
@@ -527,6 +551,10 @@ complicated as possible''')
         repo.config.set_multivar('branch.second.merge', '', 'refs/heads/base')
 
         repo.branches.local.create('base', base_target)
+
+        repo.branches.local.create('third4', third_target)
+        repo.config.set_multivar('branch.third4.remote', '', '.')
+        repo.config.set_multivar('branch.third4.merge', '', 'refs/heads/second')
 
         target = repo.lookup_reference('refs/heads/first')
         repo.checkout(target, strategy=pygit2.GIT_CHECKOUT_FORCE)
@@ -1781,7 +1809,8 @@ second line.'''
         self.assertEqual("Processing 2 commits from branch 'first2'",
                          lines[1])
         self.assertRegex(lines[2], '-  .* as .*: i2c: I2C things')
-        self.assertRegex(lines[3], '-  .* as .*: spi: SPI fixes')
+        self.assertRegex(lines[3],
+                         '- added version 2 .* as .*: spi: SPI fixes')
         self.assertRegex(lines[4], 'Updating branch first2 to .*')
         self.assertEqual("Setting link for series 'first' version 2 to 2345",
                          lines[5])

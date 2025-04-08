@@ -215,7 +215,8 @@ class Cseries:
                 version: Version number, e.g. 2
         """
         ser, version = self.parse_series_and_version(name, None)
-        name = ser.name
+        if not name:
+            name = ser.name
 
         # First check we have a branch with this name
         if not gitutil.check_branch(name, git_dir=self.gitdir):
@@ -226,7 +227,7 @@ class Cseries:
             raise ValueError('Cannot detect branch automatically')
 
         series = patchstream.get_metadata(name, 0, count, git_dir=self.gitdir)
-        return name, series, version
+        return ser.name, series, version
 
     def add_series(self, name, desc=None, mark=False, allow_unmarked=False,
                    dry_run=False):
@@ -251,10 +252,10 @@ class Cseries:
             desc = series.cover[0]
 
         if mark:
-            oid = self.mark_series(name, series, dry_run=dry_run)
+            add_oid = self.mark_series(name, series, dry_run=dry_run)
 
             # Collect the commits again, as the hashes have changed
-            series = patchstream.get_metadata(oid, 0, len(series.commits),
+            series = patchstream.get_metadata(add_oid, 0, len(series.commits),
                                               git_dir=self.gitdir)
 
         bad_count = 0
@@ -275,7 +276,7 @@ class Cseries:
         added = False
         series_id = self.find_series_by_name(name)
         if not series_id:
-            res = self.cur.execute(
+            self.cur.execute(
                 'INSERT INTO series (name, desc, archived) '
                 f"VALUES ('{name}', '{desc}', 0)")
             series_id = self.cur.lastrowid
@@ -283,7 +284,7 @@ class Cseries:
             msg += f" series '{name}'"
 
         if version not in self.get_version_list(series_id):
-            res = self.cur.execute(
+            self.cur.execute(
                 'INSERT INTO ser_ver (series_id, version, link) VALUES '
                 '(?, ?, ?)', (series_id, version, link))
             svid = self.cur.lastrowid
@@ -320,7 +321,7 @@ class Cseries:
             svid (int): ser_ver-table ID to use for each commit
         """
         for seq, commit in enumerate(series.commits):
-            res = self.cur.execute(
+            self.cur.execute(
                 'INSERT INTO pcommit (svid, seq, subject, change_id) '
                 'VALUES (?, ?, ?, ?)',
                 (str(svid), seq, commit.subject, commit.change_id))
@@ -387,7 +388,7 @@ class Cseries:
         if update_commit:
             branch_name = self.get_branch_name(ser.name, version)
             _, series, max_vers = self._prep_series(branch_name)
-            self.update_series(branch_name, series, max_vers, vers=version,
+            self.update_series(branch_name, series, max_vers, add_vers=version,
                                add_link=link)
         if link is None:
             link = ''
@@ -645,7 +646,7 @@ class Cseries:
             print(f'{name:15.15} {ser.desc:20.20} {status.rjust(8)}  {vlist}')
 
     def update_series(self, name, series, max_vers, new_name=None,
-                      dry_run=False, vers=None, add_link=None):
+                      dry_run=False, add_vers=None, add_link=None):
         """Rewrite a series to update the Series-version/Series-links lines
 
         This updates the series in git; it does not update the database
@@ -670,19 +671,19 @@ class Cseries:
             for line in vals.msg.splitlines():
                 m_ver = re.match('Series-version:(.*)', line)
                 m_links = re.match('Series-links:(.*)', line)
-                if m_ver and vers:
+                if m_ver and add_vers:
                     if ('version' in series and
                         int(series.version) != max_vers):
                         tout.warning(
                             f'Branch {name}: Series-version tag '
                             f'{series.version} does not patch expected version '
                             f'{max_vers}')
-                    vals.info += f'added version {vers}'
-                    out.append(f'Series-version: {vers}')
+                    vals.info += f'added version {max_vers}'
+                    out.append(f'Series-version: {max_vers}')
                     added_version = True
                 elif m_links and add_link is not None:
                     new_links = ''
-                    this_ver = vers or max_vers
+                    this_ver = max_vers
                     for link in m_links.group(1).strip().split():
                         if ':' not in link:
                             if max_vers != this_ver:
@@ -697,10 +698,10 @@ class Cseries:
                 else:
                     out.append(line)
             if vals.final:
-                if vers and not added_version:
-                    out.append(f'Series-version: {vers}')
+                if add_vers and not added_version:
+                    out.append(f'Series-version: {add_vers}')
                 if add_link and not added_link:
-                    out.append(f'Series-links: {vers}:{add_link}')
+                    out.append(f'Series-links: {max_vers}:{add_link}')
 
             vals.msg = '\n'.join(out) + '\n'
 
@@ -730,7 +731,7 @@ class Cseries:
         new_name = self.join_name_version(ser.name, vers)
 
         self.update_series(series_name, series, max_vers, new_name, dry_run,
-                           vers=vers)
+                           add_vers=vers)
 
         old_svid = self.get_series_svid(ser.idnum, max_vers)
         pcd = self.get_pcommit_dict(old_svid)
