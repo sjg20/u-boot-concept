@@ -1640,9 +1640,7 @@ second line.'''
         """Test listing cseries"""
         self.setup_second()
 
-        args = Namespace()
-        args.subcmd = 'list'
-        args.extra = []
+        args = Namespace(subcmd='list', extra=[])
         with capture_sys_output() as (out, _):
             control.series(args, test_db=self.tmpdir, pwork=True)
         lines = out.getvalue().splitlines()
@@ -1656,13 +1654,8 @@ second line.'''
     def test_do_series_add(self):
         """Add a new cseries"""
         self.make_git_tree()
-        args = Namespace()
-        args.subcmd = 'add'
-        args.extra = ['my-description']
-        args.series = 'first'
-        args.mark = False
-        args.allow_unmarked = True
-        args.dry_run = False
+        args = Namespace(subcmd='add', extra=['my-description'], series='first',
+                         mark=False, allow_unmarked=True, dry_run=False)
         with capture_sys_output() as (out, _):
             control.series(args, test_db=self.tmpdir, pwork=True)
 
@@ -1714,14 +1707,9 @@ second line.'''
         # Use the 'second' branch, which has a cover letter
         gitutil.checkout('second', self.gitdir, work_tree=self.tmpdir,
                          force=True)
-        args = Namespace()
-        args.subcmd = 'add'
-        args.extra = []
-        args.series = None
-        args.mark = False
-        args.allow_unmarked = True
-        args.dry_run = False
-        with capture_sys_output() as (out, _):
+        args = Namespace(subcmd='add', extra=[], series=None, mark=False,
+                         allow_unmarked=True, dry_run=False)
+        with capture_sys_output():
             control.series(args, test_db=self.tmpdir, pwork=True)
 
         cser = self.get_database()
@@ -2013,7 +2001,7 @@ second line.'''
         self.assertFalse(cser.get_project())
         cser.set_project(pwork, 'U-Boot', quiet=True)
 
-        with capture_sys_output() as (out, _):
+        with capture_sys_output():
             cser.add_series('first', '', allow_unmarked=True)
             cser.add_series('second', allow_unmarked=True)
 
@@ -2049,7 +2037,7 @@ second line.'''
     def test_series_auto_link_cmdline(self):
         """Test linking to patchwork series by description on cmdline"""
         cor = self.check_series_auto_link()
-        cser, pwork = next(cor)
+        _, pwork = next(cor)
         self.db_close()
 
         with capture_sys_output() as (out, _):
@@ -2059,7 +2047,7 @@ second line.'''
                 "Setting link for series 'second' version 1 to 456",
                 out.getvalue().splitlines()[-1])
 
-        cser = next(cor)
+        next(cor)
         cor.close()
 
     def check_series_archive(self):
@@ -2172,7 +2160,7 @@ second line.'''
 
         self.run_args('series', 'inc', '-s', 'first', pwork=True)
 
-        cser = next(cor)
+        next(cor)
         cor.close()
 
     def test_series_inc_dryrun(self):
@@ -2904,16 +2892,8 @@ second line.'''
         self.assertEqual('changes-requested', pwc[1].state)
         self.assertEqual('rejected', pwc[2].state)
 
-    def test_series_progress(self):
-        """Test showing progress for a cseries"""
-        self.setup_second()
-
-        args = Namespace(subcmd='progress')
-        args.series = 'second'
-        args.extra = []
-        with capture_sys_output() as (out, _):
-            control.series(args, test_db=self.tmpdir, pwork=True)
-        lines = iter(out.getvalue().splitlines())
+    def _check_second(self, lines):
+        self.assertEqual('second: Series for my board', next(lines))
         self.assertEqual("Branch 'second' (total 3): 3:unknown", next(lines))
         self.assertRegex(
             next(lines),
@@ -2937,3 +2917,32 @@ second line.'''
         self.assertRegex(
             next(lines),
             '  2 rejected               12 .* bootm: Make it boot')
+
+    def test_series_progress(self):
+        """Test showing progress for a cseries"""
+        self.setup_second()
+
+        args = Namespace(subcmd='progress', series='second', extra = [])
+        with capture_sys_output() as (out, _):
+            control.series(args, test_db=self.tmpdir, pwork=True)
+        lines = iter(out.getvalue().splitlines())
+        self._check_second(lines)
+
+    def test_series_progress_all(self):
+        """Test showing progress for all cseries"""
+        self.setup_second()
+
+        args = Namespace(subcmd='progress', series=None, extra = [])
+        with capture_sys_output() as (out, _):
+            control.series(args, test_db=self.tmpdir, pwork=True)
+        lines = iter(out.getvalue().splitlines())
+        self.assertEqual('first: ', next(lines))
+        self.assertEqual("Branch 'first' (total 2): 2:unknown", next(lines))
+        self.assertRegex(
+            next(lines),
+            '  0 unknown                   .* i2c: I2C things')
+        self.assertRegex(
+            next(lines),
+            '  1 unknown                   .* spi: SPI fixes')
+        self.assertEqual('', next(lines))
+        self._check_second(lines)

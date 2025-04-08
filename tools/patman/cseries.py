@@ -1317,22 +1317,40 @@ class Cseries:
                                f"series_id = {idnum}")
         return res.fetchall()[0][0]
 
-    def progress(self, series):
+    def _progress_one(self, ser):
         """Show progress information for all versions in a series
 
         Args:
-            series (str): Name of series to use, or None to use current branch
+            series (str): Name of series to use, or None to show progress for
+                all series
         """
-        ser = self.parse_series(series)
         max_vers = self.series_max_version(ser.idnum)
         name, desc = self.get_series_info(ser.idnum)
+        print(self.col.build(self.col.BLACK, f'{name}: {desc}', bright=False,
+                             back=self.col.YELLOW))
         for ver in range(1, max_vers + 1):
             if ver != 1:
                 print()
             status, pwc = self.series_get_version_stats(ser.idnum, ver)
-            # print(f"'{name}' v{ver} (accepted {status}) {desc}")
+            # print(f"{name}: {self.col.build(self.col.YELLOW, desc)}")
             count = len(pwc)
             branch = self.join_name_version(ser.name, ver)
             series = patchstream.get_metadata(branch, 0, count,
                                               git_dir=self.gitdir)
             self._list_patches(branch, pwc, series)
+
+    def progress(self, series):
+        """Show progress information for all versions in a series
+
+        Args:
+            series (str): Name of series to use, or None to show progress for
+                all series
+        """
+        if series is not None:
+            self._progress_one(self.parse_series(series))
+            return
+
+        sdict = self.get_series_dict()
+        for ser in sdict.values():
+            self._progress_one(ser)
+            print()
