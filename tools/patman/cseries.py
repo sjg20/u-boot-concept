@@ -294,6 +294,8 @@ class Cseries:
             added = True
 
             self.add_series_commits(series, svid)
+            count = len(series.commits)
+            msg += f" ({count} commit{'s' if count > 1 else ''})"
         if not added:
             tout.info(f"Series '{name}' version {version} already exists")
             msg = None

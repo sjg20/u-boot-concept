@@ -1533,7 +1533,7 @@ second line.'''
         self.assertEqual(
             "Adding series 'first': mark False allow_unmarked True",
             lines[0])
-        self.assertEqual("Added series 'first' version 1", lines[1])
+        self.assertEqual("Added series 'first' version 1 (2 commits)", lines[1])
         self.assertEqual(2, len(lines))
 
         slist = cser.get_series_dict()
@@ -1572,7 +1572,7 @@ second line.'''
         self.assertEqual(
             "Adding series 'first': mark False allow_unmarked True",
             lines[0])
-        self.assertEqual("Added series 'first' version 2", lines[1])
+        self.assertEqual("Added series 'first' version 2 (2 commits)", lines[1])
         self.assertEqual(2, len(lines))
 
         slist = cser.get_series_dict()
@@ -1608,7 +1608,7 @@ second line.'''
         self.assertEqual(
             "Adding series 'first': mark False allow_unmarked True",
             lines[0])
-        self.assertEqual("Added series 'first' version 2", lines[1])
+        self.assertEqual("Added series 'first' version 2 (2 commits)", lines[1])
         self.assertEqual(2, len(lines))
 
         # Now add first: it should be added as a new version
@@ -1618,7 +1618,8 @@ second line.'''
         self.assertEqual(
             "Adding series 'first': mark False allow_unmarked True",
             lines[0])
-        self.assertEqual("Added version 1 to existing series 'first'", lines[1])
+        self.assertEqual(
+            "Added version 1 to existing series 'first' (2 commits)", lines[1])
         self.assertEqual(2, len(lines))
 
         slist = cser.get_series_dict()
@@ -1647,7 +1648,8 @@ second line.'''
         with capture_sys_output() as (out, _):
             cser.add_series(None, 'description', allow_unmarked=True)
         lines = out.getvalue().splitlines()
-        self.assertEqual("Added version 2 to existing series 'first'", lines[1])
+        self.assertEqual(
+            "Added version 2 to existing series 'first' (2 commits)", lines[1])
 
     def test_series_add_dup_reverse(self):
         """Test adding a series twice, v2 then v1"""
@@ -1686,7 +1688,7 @@ second line.'''
         lines = out.getvalue().splitlines()
         self.assertEqual(
             "Adding series 'third': mark False allow_unmarked True", lines[0])
-        self.assertEqual("Added series 'third' version 4", lines[1])
+        self.assertEqual("Added series 'third' version 4 (4 commits)", lines[1])
         self.assertEqual(2, len(lines))
 
         sdict = cser.get_series_dict()
@@ -2565,7 +2567,8 @@ second line.'''
         self.assertRegex(next(lines), r'- tagged .* as .*: i2c: I2C things')
         self.assertRegex(next(lines), '- tagged .* as .*: spi: SPI fixes')
         self.assertRegex(next(lines), 'Updating branch first to .*')
-        self.assertEqual("Added series 'first' version 1", next(lines))
+        self.assertEqual("Added series 'first' version 1 (2 commits)",
+                         next(lines))
         self.assertEqual('Dry run completed', next(lines))
 
         # Doing another dry run should produce the same result
