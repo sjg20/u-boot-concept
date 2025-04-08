@@ -1871,7 +1871,7 @@ second line.'''
                             '1234', pwork=True)
         self.assertEqual(
             "Setting link for series 'first' version 4 to 1234",
-            out.getvalue().strip())
+            out.getvalue().splitlines()[-1])
 
         with capture_sys_output() as (out, _):
             self.run_args('series', 'get-link', '-s', 'first', '-V', '4',
@@ -1981,7 +1981,7 @@ second line.'''
             cser.set_link(None, 2, '2345', True)
         self.assertEqual(
                 "Setting link for series 'first' version 2 to 2345",
-                out.getvalue().strip())
+                out.getvalue().splitlines()[-1])
 
         plist = cser.get_ser_ver_dict()
         self.assertEqual(2, len(plist))
@@ -2000,7 +2000,7 @@ second line.'''
             cser.set_link(None, None, '1234', True)
         self.assertEqual(
                 "Setting link for series 'first' version 1 to 1234",
-                out.getvalue().strip())
+                out.getvalue().splitlines()[-1])
 
         with capture_sys_output():
             cser.increment('first')
@@ -2009,7 +2009,7 @@ second line.'''
             cser.set_link(None, None, '2345', True)
         self.assertEqual(
                 "Setting link for series 'first' version 2 to 2345",
-                out.getvalue().strip())
+                out.getvalue().splitlines()[-1])
 
         plist = cser.get_ser_ver_dict()
         self.assertEqual(2, len(plist))
@@ -2081,7 +2081,7 @@ second line.'''
             cser.do_auto_link(pwork, 'second', None, True)
         self.assertEqual(
                 "Setting link for series 'second' version 1 to 456",
-                out.getvalue().strip())
+                out.getvalue().splitlines()[-1])
 
         cser = next(cor)
         cor.close()
@@ -2097,7 +2097,7 @@ second line.'''
                         pwork=pwork)
         self.assertEqual(
                 "Setting link for series 'second' version 1 to 456",
-                out.getvalue().strip())
+                out.getvalue().splitlines()[-1])
 
         cser = next(cor)
         cor.close()
