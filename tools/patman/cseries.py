@@ -194,7 +194,6 @@ class Cseries:
                 name (str): Series name
                 desc (str): Series description
         """
-        print('idnum', idnum, type(idnum))
         res = self.cur.execute('SELECT name, desc FROM series WHERE id = ?',
                                (idnum,))
         all = res.fetchall()
@@ -1204,7 +1203,7 @@ class Cseries:
         all = ''
         for state, count in states.items():
             all += ' ' + self.build_col(state, f'{count}:')[0]
-        print(f"Branch '{branch}' (total {len(pwc)}):{all}:")
+        print(f"Branch '{branch}' (total {len(pwc)}):{all}")
         for line in lines:
             print(line)
 
@@ -1328,8 +1327,10 @@ class Cseries:
         max_vers = self.series_max_version(ser.idnum)
         name, desc = self.get_series_info(ser.idnum)
         for ver in range(1, max_vers + 1):
+            if ver != 1:
+                print()
             status, pwc = self.series_get_version_stats(ser.idnum, ver)
-            print(f"'{name}' v{ver} (accepted {status}) {desc}")
+            # print(f"'{name}' v{ver} (accepted {status}) {desc}")
             count = len(pwc)
             branch = self.join_name_version(ser.name, ver)
             series = patchstream.get_metadata(branch, 0, count,
