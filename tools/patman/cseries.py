@@ -215,7 +215,8 @@ class Cseries:
                 version: Version number, e.g. 2
         """
         ser, version = self.parse_series_and_version(name, None)
-        name = ser.name
+        if not name:
+            name = ser.name
 
         # First check we have a branch with this name
         if not gitutil.check_branch(name, git_dir=self.gitdir):
@@ -226,7 +227,7 @@ class Cseries:
             raise ValueError('Cannot detect branch automatically')
 
         series = patchstream.get_metadata(name, 0, count, git_dir=self.gitdir)
-        return name, series, version
+        return ser.name, series, version
 
     def add_series(self, name, desc=None, mark=False, allow_unmarked=False,
                    dry_run=False):
@@ -251,10 +252,10 @@ class Cseries:
             desc = series.cover[0]
 
         if mark:
-            oid = self.mark_series(name, series, dry_run=dry_run)
+            add_oid = self.mark_series(name, series, dry_run=dry_run)
 
             # Collect the commits again, as the hashes have changed
-            series = patchstream.get_metadata(oid, 0, len(series.commits),
+            series = patchstream.get_metadata(add_oid, 0, len(series.commits),
                                               git_dir=self.gitdir)
 
         bad_count = 0
@@ -275,7 +276,7 @@ class Cseries:
         added = False
         series_id = self.find_series_by_name(name)
         if not series_id:
-            res = self.cur.execute(
+            self.cur.execute(
                 'INSERT INTO series (name, desc, archived) '
                 f"VALUES ('{name}', '{desc}', 0)")
             series_id = self.cur.lastrowid
@@ -283,7 +284,7 @@ class Cseries:
             msg += f" series '{name}'"
 
         if version not in self.get_version_list(series_id):
-            res = self.cur.execute(
+            self.cur.execute(
                 'INSERT INTO ser_ver (series_id, version, link) VALUES '
                 '(?, ?, ?)', (series_id, version, link))
             svid = self.cur.lastrowid
@@ -293,6 +294,8 @@ class Cseries:
             added = True
 
             self.add_series_commits(series, svid)
+            count = len(series.commits)
+            msg += f" ({count} commit{'s' if count > 1 else ''})"
         if not added:
             tout.info(f"Series '{name}' version {version} already exists")
             msg = None
@@ -320,7 +323,7 @@ class Cseries:
             svid (int): ser_ver-table ID to use for each commit
         """
         for seq, commit in enumerate(series.commits):
-            res = self.cur.execute(
+            self.cur.execute(
                 'INSERT INTO pcommit (svid, seq, subject, change_id) '
                 'VALUES (?, ?, ?, ?)',
                 (str(svid), seq, commit.subject, commit.change_id))

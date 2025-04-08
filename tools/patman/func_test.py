@@ -397,10 +397,11 @@ Changes in v2:
     def make_git_tree(self):
         """Make a simple git tree suitable for testing
 
-        It has three branches:
+        It has four branches:
             'base' has two commits: PCI, main
             'first' has base as upstream and two more commits: I2C, SPI
             'second' has base as upstream and three more: video, serial, bootm
+            'third4' has second as upstream and four more: usb, main, test, lib
 
         Returns:
             pygit2.Repository: repository
@@ -494,6 +495,29 @@ command to make the code as
 complicated as possible''')
         second_target = repo.revparse_single('HEAD')
 
+        self.make_commit_with_file('usb: Try out the new DMA feature', '''
+This is just a fix that
+ensures that DMA is enabled
+''', 'usb-uclass.c', '''Here is the USB
+implementation and as you can see it
+it very nice''')
+        self.make_commit_with_file('main: Change to the main program', '''
+Here we adjust the main
+program just a little bit
+''', 'main.c', '''This is the text of the main program''')
+        self.make_commit_with_file('test: Check that everything works', '''
+This checks that all the
+various things we've been
+adding actually work.
+''', 'test.c', '''Here is the test code and it seems OK''')
+        self.make_commit_with_file('lib: Sort out the extra library', '''
+The extra library is currently
+broken. Fix it so that we can
+use it in various place.
+''', 'lib.c', '''Some library code is here
+and a little more''')
+        third_target = repo.revparse_single('HEAD')
+
         repo.branches.local.create('first', first_target)
         repo.config.set_multivar('branch.first.remote', '', '.')
         repo.config.set_multivar('branch.first.merge', '', 'refs/heads/base')
@@ -503,6 +527,10 @@ complicated as possible''')
         repo.config.set_multivar('branch.second.merge', '', 'refs/heads/base')
 
         repo.branches.local.create('base', base_target)
+
+        repo.branches.local.create('third4', third_target)
+        repo.config.set_multivar('branch.third4.remote', '', '.')
+        repo.config.set_multivar('branch.third4.merge', '', 'refs/heads/second')
 
         target = repo.lookup_reference('refs/heads/first')
         repo.checkout(target, strategy=pygit2.GIT_CHECKOUT_FORCE)
@@ -1476,7 +1504,7 @@ second line.'''
         self.assertEqual(
             "Adding series 'first': mark False allow_unmarked True",
             lines[0])
-        self.assertEqual("Added series 'first' version 1", lines[1])
+        self.assertEqual("Added series 'first' version 1 (2 commits)", lines[1])
         self.assertEqual(2, len(lines))
 
         slist = cser.get_series_dict()
@@ -1515,7 +1543,7 @@ second line.'''
         self.assertEqual(
             "Adding series 'first': mark False allow_unmarked True",
             lines[0])
-        self.assertEqual("Added series 'first' version 2", lines[1])
+        self.assertEqual("Added series 'first' version 2 (2 commits)", lines[1])
         self.assertEqual(2, len(lines))
 
         slist = cser.get_series_dict()
@@ -1551,7 +1579,7 @@ second line.'''
         self.assertEqual(
             "Adding series 'first': mark False allow_unmarked True",
             lines[0])
-        self.assertEqual("Added series 'first' version 2", lines[1])
+        self.assertEqual("Added series 'first' version 2 (2 commits)", lines[1])
         self.assertEqual(2, len(lines))
 
         # Now add first: it should be added as a new version
@@ -1561,7 +1589,8 @@ second line.'''
         self.assertEqual(
             "Adding series 'first': mark False allow_unmarked True",
             lines[0])
-        self.assertEqual("Added version 1 to existing series 'first'", lines[1])
+        self.assertEqual(
+            "Added version 1 to existing series 'first' (2 commits)", lines[1])
         self.assertEqual(2, len(lines))
 
         slist = cser.get_series_dict()
@@ -1590,7 +1619,8 @@ second line.'''
         with capture_sys_output() as (out, _):
             cser.add_series(None, 'description', allow_unmarked=True)
         lines = out.getvalue().splitlines()
-        self.assertEqual("Added version 2 to existing series 'first'", lines[1])
+        self.assertEqual(
+            "Added version 2 to existing series 'first' (2 commits)", lines[1])
 
     def test_series_add_dup_reverse(self):
         """Test adding a series twice, v2 then v1"""
@@ -1619,6 +1649,31 @@ second line.'''
             cser.add_series('first', 'description', allow_unmarked=True)
         self.assertIn("Added version 1 to existing series 'first'",
                       out.getvalue().strip())
+
+    def test_series_third(self):
+        """Test adding a series which is v4 but has no earlier version"""
+        cser = self.get_cser()
+        with capture_sys_output() as (out, _):
+            cser.add_series('third4', 'The glorious third series', mark=False,
+                            allow_unmarked=True)
+        lines = out.getvalue().splitlines()
+        self.assertEqual(
+            "Adding series 'third': mark False allow_unmarked True", lines[0])
+        self.assertEqual("Added series 'third' version 4 (4 commits)", lines[1])
+        self.assertEqual(2, len(lines))
+
+        sdict = cser.get_series_dict()
+        self.assertIn('third', sdict)
+        chk = sdict['third']
+        self.assertEqual('third', chk['name'])
+        self.assertEqual('The glorious third series', chk['desc'])
+
+        svid = cser.get_series_svid(chk['idnum'], 4)
+        self.assertEqual(4, len(cser.get_pcommit_dict(svid)))
+
+        # Remove the series and add it again with just two commits
+        with capture_sys_output():
+            cser.remove_series('third4')
 
     def setup_second(self):
         """Set up the 'second' series synced with the fake patchwork"""
@@ -1743,8 +1798,8 @@ second line.'''
         self.assertEqual('first', gitutil.get_branch(self.gitdir))
         with capture_sys_output() as (out, _):
             cser.increment('first')
-        with capture_sys_output() as (out, _):
-            cser.set_link('first', 2, '2345', True)
+        # with capture_sys_output() as (out, _):
+        cser.set_link('first', 2, '2345', True)
         lines = out.getvalue().splitlines()
         self.assertEqual(6, len(lines))
         self.assertEqual('Checking out upstream commit refs/heads/base',
@@ -2482,7 +2537,8 @@ second line.'''
         self.assertRegex(next(lines), r'- tagged .* as .*: i2c: I2C things')
         self.assertRegex(next(lines), '- tagged .* as .*: spi: SPI fixes')
         self.assertRegex(next(lines), 'Updating branch first to .*')
-        self.assertEqual("Added series 'first' version 1", next(lines))
+        self.assertEqual("Added series 'first' version 1 (2 commits)",
+                         next(lines))
         self.assertEqual('Dry run completed', next(lines))
 
         # Doing another dry run should produce the same result
