@@ -2892,19 +2892,22 @@ second line.'''
         self.assertEqual('changes-requested', pwc[1].state)
         self.assertEqual('rejected', pwc[2].state)
 
-    def _check_second(self, lines):
-        self.assertEqual('second: Series for my board', next(lines))
-        self.assertEqual("Branch 'second' (total 3): 3:unknown", next(lines))
-        self.assertRegex(
-            next(lines),
-            '  0 unknown                   .* video: Some video improvements')
-        self.assertRegex(
-            next(lines),
-            '  1 unknown                   .* serial: Add a serial driver')
-        self.assertRegex(
-            next(lines),
-            '  2 unknown                   .* bootm: Make it boot')
-        self.assertEqual('', next(lines))
+    def _check_second(self, lines, show_all):
+        self.assertEqual('second: Series for my board (versions: 1 2)',
+                         next(lines))
+        if show_all:
+            self.assertEqual("Branch 'second' (total 3): 3:unknown",
+                             next(lines))
+            self.assertRegex(
+                next(lines),
+                '  0 unknown                   .* video: Some video improvements')
+            self.assertRegex(
+                next(lines),
+                '  1 unknown                   .* serial: Add a serial driver')
+            self.assertRegex(
+                next(lines),
+                '  2 unknown                   .* bootm: Make it boot')
+            self.assertEqual('', next(lines))
         self.assertEqual(
             "Branch 'second2' (total 3): 1:accepted 1:changes-requested 1:rejected",
             next(lines))
@@ -2922,21 +2925,21 @@ second line.'''
         """Test showing progress for a cseries"""
         self.setup_second()
 
-        args = Namespace(subcmd='progress', series='second', extra = [])
+        args = Namespace(subcmd='progress', series='second', extra = [],
+                         all=False)
         with capture_sys_output() as (out, _):
             control.series(args, test_db=self.tmpdir, pwork=True)
         lines = iter(out.getvalue().splitlines())
-        self._check_second(lines)
+        self._check_second(lines, False)
 
-    def test_series_progress_all(self):
-        """Test showing progress for all cseries"""
-        self.setup_second()
-
-        args = Namespace(subcmd='progress', series=None, extra = [])
+        args.all = True
         with capture_sys_output() as (out, _):
             control.series(args, test_db=self.tmpdir, pwork=True)
         lines = iter(out.getvalue().splitlines())
-        self.assertEqual('first: ', next(lines))
+        self._check_second(lines, True)
+
+    def _check_first(self, lines):
+        self.assertEqual('first:  (versions: 1)', next(lines))
         self.assertEqual("Branch 'first' (total 2): 2:unknown", next(lines))
         self.assertRegex(
             next(lines),
@@ -2945,4 +2948,22 @@ second line.'''
             next(lines),
             '  1 unknown                   .* spi: SPI fixes')
         self.assertEqual('', next(lines))
-        self._check_second(lines)
+
+    def test_series_progress_all(self):
+        """Test showing progress for all cseries"""
+        self.setup_second()
+
+        args = Namespace(subcmd='progress', series=None, extra = [],
+                         all=False)
+        with capture_sys_output() as (out, _):
+            control.series(args, test_db=self.tmpdir, pwork=True)
+        lines = iter(out.getvalue().splitlines())
+        self._check_first(lines)
+        self._check_second(lines, False)
+
+        args.all = True
+        with capture_sys_output() as (out, _):
+            control.series(args, test_db=self.tmpdir, pwork=True)
+        lines = iter(out.getvalue().splitlines())
+        self._check_first(lines)
+        self._check_second(lines, True)

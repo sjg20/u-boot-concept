@@ -129,13 +129,15 @@ def parse_args(argv=None):
                         help='Force overwriting an existing branch')
 
     series = subparsers.add_parser('series', help='Manage series of patches')
-    series.add_argument('-s', '--series', help='Name of series')
+    series.add_argument('-a', '--all', action='store_true',
+                        help='Show all series versions, not just the last')
     series.add_argument('-m', '--mark', action='store_true',
                         help='Mark unmarked commits with a Change-Id field')
     series.add_argument('-M', '--allow-unmarked', action='store_true',
                         help="Don't require commits to be marked")
     series.add_argument('-n', '--dry-run', action='store_true', dest='dry_run',
             default=False, help="Do a dry run (create but don't email patches)")
+    series.add_argument('-s', '--series', help='Name of series')
     series.add_argument('-u', '--update', action='store_true',
                         help='Update the branch commit')
     series.add_argument('-V', '--version', type=int,
