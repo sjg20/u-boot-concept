@@ -207,9 +207,10 @@ class Color(object):
     """Conditionally wraps text in ANSI color escape sequences."""
     BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
     BOLD = -1
-    BRIGHT_START = '\033[1;%dm'
-    NORMAL_START = '\033[22;%dm'
+    BRIGHT_START = '\033[1;%d%sm'
+    NORMAL_START = '\033[22;%d%sm'
     BOLD_START = '\033[1m'
+    BACK_EXTRA = ';%d'
     RESET = '\033[0m'
 
     def __init__(self, colored=COLOR_IF_TERMINAL):
@@ -226,7 +227,7 @@ class Color(object):
         except:
             self._enabled = False
 
-    def start(self, color, bright=True):
+    def start(self, color, bright=True, back=None):
         """Returns a start color code.
 
         Args:
@@ -237,8 +238,11 @@ class Color(object):
           color, otherwise returns empty string
         """
         if self._enabled:
+            if color == self.BOLD:
+                return self.BOLD_START
             base = self.BRIGHT_START if bright else self.NORMAL_START
-            return base % (color + 30)
+            extra = self.BACK_EXTRA % (back + 40) if back else ''
+            return base % (color + 30, extra)
         return ''
 
     def stop(self):
@@ -252,7 +256,7 @@ class Color(object):
             return self.RESET
         return ''
 
-    def build(self, color, text, bright=True):
+    def build(self, color, text, bright=True, back=None):
         """Returns text with conditionally added color escape sequences.
 
         Keyword arguments:
@@ -267,12 +271,7 @@ class Color(object):
         """
         if not self._enabled:
             return text
-        if color == self.BOLD:
-            start = self.BOLD_START
-        else:
-            base = self.BRIGHT_START if bright else self.NORMAL_START
-            start = base % (color + 30)
-        return start + text + self.RESET
+        return self.start(color, bright, back) + text + self.RESET
 
 
 # Use this to suppress stdout/stderr output:
