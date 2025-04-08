@@ -204,6 +204,17 @@ class Cseries:
 
 
     def _prep_series(self, name):
+        """Prepare to work with a series
+
+        Args:
+            name (str): Branch name with version appended, e.g. 'fix2'
+
+        Return:
+            tuple:
+                str: Series name, e.g. 'fix'
+                series: Series object
+                version: Version number, e.g. 2
+        """
         ser, version = self.parse_series_and_version(name, None)
         name = ser.name
 
@@ -223,7 +234,7 @@ class Cseries:
         """Add a series to the database
 
         Args:
-            in_name (str): Name of series to add, or None to use current one
+            name (str): Name of series to add, or None to use current one
             desc (str): Description to use, or None to use the series subject
             mark (str): True to mark each commit with a change ID
             allow_unmarked (str): True to not require each commit to be marked
@@ -375,8 +386,10 @@ class Cseries:
         self.ensure_version(ser, version)
 
         if update_commit:
-            name, series, max_vers = self._prep_series(ser.name)
-            self.update_series(name, series, max_vers, None, add_link=link)
+            branch_name = self.get_branch_name(ser.name, version)
+            _, series, max_vers = self._prep_series(branch_name)
+            self.update_series(branch_name, series, max_vers, vers=version,
+                               add_link=link)
         if link is None:
             link = ''
         tout.info(
@@ -631,6 +644,8 @@ class Cseries:
                       dry_run=False, vers=None, add_link=None):
         """Rewrite a series to update the Series-version/Series-links lines
 
+        This updates the series in git; it does not update the database
+
         Args:
             name (str): Name of the branch to process
             series (Series): Series object
@@ -663,13 +678,11 @@ class Cseries:
                     added_version = True
                 elif m_links and add_link is not None:
                     new_links = ''
-                    print('max_vers', max_vers)
                     this_ver = vers or max_vers
                     for link in m_links.group(1).strip().split():
                         if ':' not in link:
                             if max_vers != this_ver:
                                 new_links += f'{max_vers}:{link} '
-                                print('new_links', new_links)
                         else:
                             new_links += f'{link} '
                     if add_link:
@@ -712,7 +725,6 @@ class Cseries:
         vers = max_vers + 1
         new_name = self.join_name_version(ser.name, vers)
 
-        print('update', vers)
         self.update_series(series_name, series, max_vers, new_name, dry_run,
                            vers=vers)
 
@@ -820,7 +832,11 @@ class Cseries:
             commit = branch.peel(pygit2.GIT_OBJ_COMMIT)
             new_branch = repo.branches.create(new_name, commit)
             name = new_name
-            repo.checkout(upstream_name)
+            commit_oid = upstream.peel(pygit2.GIT_OBJ_COMMIT).oid
+            commit = repo.get(commit_oid)
+            repo.checkout_tree(commit)
+            repo.set_head(commit_oid)
+
             new_branch.upstream = branch.upstream
         else:
             # Check out the upstream commit (detached HEAD)

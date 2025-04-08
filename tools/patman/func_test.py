@@ -74,8 +74,8 @@ class TestFunctional(unittest.TestCase):
         tout.init(tout.INFO, allow_colour=False)
 
     def tearDown(self):
-        # shutil.rmtree(self.tmpdir)
-        print(self.tmpdir)
+        shutil.rmtree(self.tmpdir)
+        # print(self.tmpdir)
         terminal.set_print_test_mode(False)
 
     @staticmethod
@@ -1777,6 +1777,10 @@ second line.'''
         """Test adding a patchwork link to a cseries"""
         cser = self.get_cser()
 
+        repo = pygit2.init_repository(self.gitdir)
+        first = repo.lookup_branch('first').peel(pygit2.GIT_OBJ_COMMIT).oid
+        base = repo.lookup_branch('base').peel(pygit2.GIT_OBJ_COMMIT).oid
+
         gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
                          force=True)
 
@@ -1789,11 +1793,21 @@ second line.'''
                          str(exc.exception))
 
         self.assertEqual('first', gitutil.get_branch(self.gitdir))
-
         with capture_sys_output() as (out, _):
             cser.increment('first')
-        # with capture_sys_output() as (out, _):
-        cser.set_link('first', 2, '2345', True)
+        with capture_sys_output() as (out, _):
+            cser.set_link('first', 2, '2345', True)
+        lines = out.getvalue().splitlines()
+        self.assertEqual(6, len(lines))
+        self.assertEqual('Checking out upstream commit refs/heads/base',
+                         lines[0])
+        self.assertEqual("Processing 2 commits from branch 'first2'",
+                         lines[1])
+        self.assertRegex(lines[2], '-  .* as .*: i2c: I2C things')
+        self.assertRegex(lines[3], '-  .* as .*: spi: SPI fixes')
+        self.assertRegex(lines[4], 'Updating branch first2 to .*')
+        self.assertEqual("Setting link for series 'first' version 2 to 2345",
+                         lines[5])
 
         self.assertEqual('2345', cser.get_link('first', 2))
 
@@ -1801,6 +1815,21 @@ second line.'''
         self.assertEqual('2:2345', series.links)
 
         self.assertEqual('first2', gitutil.get_branch(self.gitdir))
+
+        # Check the original series was left alone
+        self.assertEqual(
+            first, repo.lookup_branch('first').peel(pygit2.GIT_OBJ_COMMIT).oid)
+        count = 2
+        series1 = patchstream.get_metadata_for_list('first', self.gitdir, count)
+        self.assertFalse('links' in series1)
+        self.assertFalse('version' in series1)
+
+        # Check that base is left alone
+        self.assertEqual(
+            base, repo.lookup_branch('base').peel(pygit2.GIT_OBJ_COMMIT).oid)
+        series1 = patchstream.get_metadata_for_list('base', self.gitdir, count)
+        self.assertFalse('links' in series1)
+        self.assertFalse('version' in series1)
 
         self.db_close()
 
