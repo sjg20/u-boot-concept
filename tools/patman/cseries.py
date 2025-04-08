@@ -202,7 +202,7 @@ class Cseries:
         return all[0]
 
 
-    def _prep_series(self, name):
+    def _prep_series(self, name, end=None):
         """Prepare to work with a series
 
         Args:
@@ -222,7 +222,7 @@ class Cseries:
         if not gitutil.check_branch(name, git_dir=self.gitdir):
             raise ValueError(f"No branch named '{name}'")
 
-        count = gitutil.count_commits_to_branch(name, self.gitdir)
+        count = gitutil.count_commits_to_branch(name, self.gitdir, end)
         if not count:
             raise ValueError('Cannot detect branch automatically')
 
@@ -230,7 +230,7 @@ class Cseries:
         return ser.name, series, version
 
     def add_series(self, name, desc=None, mark=False, allow_unmarked=False,
-                   dry_run=False):
+                   end=None, dry_run=False):
         """Add a series to the database
 
         Args:
@@ -238,13 +238,19 @@ class Cseries:
             desc (str): Description to use, or None to use the series subject
             mark (str): True to mark each commit with a change ID
             allow_unmarked (str): True to not require each commit to be marked
+            end (str): Add only commits up to but exclu
             dry_run (bool): True to do a dry run
 
         Return:
             Series: Series information
         """
-        name, series, version = self._prep_series(name)
+        name, series, version = self._prep_series(name, end)
         tout.info(f"Adding series '{name}': mark {mark} allow_unmarked {allow_unmarked}")
+        if end:
+            repo = pygit2.init_repository(self.gitdir)
+            target = repo.revparse_single(end)
+            first_line = target.message.splitlines()[0]
+            tout.info(f'Ending before {oid(target.id)} {first_line}')
         if desc is None:
             if not series.cover:
                 raise ValueError(

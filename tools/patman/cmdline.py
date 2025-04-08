@@ -40,8 +40,6 @@ def parse_args(argv=None):
         help="Branch to process (by default, the current branch)")
     parser.add_argument('-c', '--count', dest='count', type=int,
         default=-1, help='Automatically create patches from top n commits')
-    parser.add_argument('-e', '--end', type=int, default=0,
-        help='Commits to skip at end of patch list')
     parser.add_argument('-D', '--debug', action='store_true',
         help='Enabling debugging (provides a full traceback on error)')
     parser.add_argument('-p', '--project', default=project.detect_project(),
@@ -62,6 +60,8 @@ def parse_args(argv=None):
     subparsers = parser.add_subparsers(dest='cmd')
     send = subparsers.add_parser(
         'send', help='Format, check and email patches (default command)')
+    parser.add_argument('-e', '--end', type=int, default=0,
+        help='Commits to skip at end of patch list')
     send.add_argument('-i', '--ignore-errors', action='store_true',
            dest='ignore_errors', default=False,
            help='Send patches email even if patch errors are found')
@@ -140,6 +140,7 @@ def parse_args(argv=None):
     series.add_argument('-s', '--series', help='Name of series')
     series.add_argument('-u', '--update', action='store_true',
                         help='Update the branch commit')
+    series.add_argument('-U', '--upstream', help='Commit to end before')
     series.add_argument('-V', '--version', type=int,
                         help='Version number to link')
 

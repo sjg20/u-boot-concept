@@ -48,7 +48,7 @@ def log_cmd(commit_range, git_dir=None, oneline=False, reverse=False,
     return cmd
 
 
-def count_commits_to_branch(branch, git_dir=None):
+def count_commits_to_branch(branch, git_dir=None, end=None):
     """Returns number of commits between HEAD and the tracking branch.
 
     This looks back to the tracking branch and works out the number of commits
@@ -57,11 +57,14 @@ def count_commits_to_branch(branch, git_dir=None):
     Args:
         branch (str or None): Branch to count from (None for current branch)
         git_dir (str): Path to git repository (None to use default)
+        end (str): End commit to stop before
 
     Return:
         Number of patches that exist on top of the branch
     """
-    if branch:
+    if end:
+        rev_range = f'{end}..{branch}'
+    elif branch:
         us, _ = get_upstream(git_dir or '.git', branch)
         rev_range = f'{us}..{branch}'
     else:
