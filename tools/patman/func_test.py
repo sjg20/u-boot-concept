@@ -1677,6 +1677,31 @@ second line.'''
         self.assertIn("Added version 1 to existing series 'first'",
                       out.getvalue().strip())
 
+    def test_series_third(self):
+        """Test adding a series which is v4 but has no earlier version"""
+        cser = self.get_cser()
+        with capture_sys_output() as (out, _):
+            cser.add_series('third4', 'The glorious third series', mark=False,
+                            allow_unmarked=True)
+        lines = out.getvalue().splitlines()
+        self.assertEqual(
+            "Adding series 'third': mark False allow_unmarked True", lines[0])
+        self.assertEqual("Added series 'third' version 4", lines[1])
+        self.assertEqual(2, len(lines))
+
+        sdict = cser.get_series_dict()
+        self.assertIn('third', sdict)
+        chk = sdict['third']
+        self.assertEqual('third', chk['name'])
+        self.assertEqual('The glorious third series', chk['desc'])
+
+        svid = cser.get_series_svid(chk['idnum'], 4)
+        self.assertEqual(4, len(cser.get_pcommit_dict(svid)))
+
+        # Remove the series and add it again with just two commits
+        with capture_sys_output():
+            cser.remove_series('third4')
+
     def setup_second(self):
         """Set up the 'second' series synced with the fake patchwork"""
         cser = self.get_cser()
