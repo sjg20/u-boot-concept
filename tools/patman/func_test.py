@@ -1548,10 +1548,12 @@ second line.'''
         pclist = cser.get_pcommit_dict()
         self.assertEqual(2, len(pclist))
         self.assertIn(1, pclist)
-        self.assertEqual(PCOMMIT(1, 0, 'i2c: I2C things', 1, None, None, None),
-                         pclist[1])
-        self.assertEqual(PCOMMIT(2, 1, 'spi: SPI fixes', 1, None, None, None),
-                         pclist[2])
+        self.assertEqual(
+            PCOMMIT(1, 0, 'i2c: I2C things', 1, None, None, None, None),
+            pclist[1])
+        self.assertEqual(
+            PCOMMIT(2, 1, 'spi: SPI fixes', 1, None, None, None, None),
+            pclist[2])
 
         self.db_close()
 
@@ -2852,14 +2854,24 @@ second line.'''
                     {'id': 12},
                 ]
             }
+        m_patch_id = re.search(r'patches/(\d*)/', subpath)
+        patch_id = m_patch_id.group(1) if m_patch_id else ''
+        if subpath.endswith('comments/'):
+            if patch_id == '10':
+                return [1, 2]
+            if patch_id == '11':
+                return []
+            if patch_id == '12':
+                return [4, 5, 6]
+
         if subpath.startswith('patches/'):
-            if subpath.endswith('10/'):
+            if patch_id == '10':
                 return {'state': 'accepted'}
-            if subpath.endswith('11/'):
+            if patch_id == '11':
                 return {'state': 'changes-requested'}
-            if subpath.endswith('12/'):
+            if patch_id == '12':
                 return {'state': 'rejected'}
-        raise ValueError('Fake Patchwork does not understand: %s' % subpath)
+        raise ValueError(f'Fake Patchwork does not understand: {subpath}')
 
     def test_patchwork_set_project(self):
         """Test setting the project ID"""
@@ -2975,13 +2987,13 @@ second line.'''
         self.assertIn('PatchId', next(lines))
         self.assertRegex(
             next(lines),
-            "  0 unknown         .* video: Some video improvements")
+            "  0 unknown      -       .* video: Some video improvements")
         self.assertRegex(
             next(lines),
-            "  1 unknown         .* serial: Add a serial driver")
+            "  1 unknown      -       .* serial: Add a serial driver")
         self.assertRegex(
             next(lines),
-            "  2 unknown         .* bootm: Make it boot")
+            "  2 unknown      -       .* bootm: Make it boot")
 
     def test_series_sync(self):
         cser = self.get_cser()
@@ -3011,13 +3023,13 @@ second line.'''
             self.assertIn('PatchId', next(lines))
             self.assertRegex(
                 next(lines),
-                '  0 unknown            .* video: Some video improvements')
+                '  0 unknown      -         .* video: Some video improvements')
             self.assertRegex(
                 next(lines),
-                '  1 unknown            .* serial: Add a serial driver')
+                '  1 unknown      -         .* serial: Add a serial driver')
             self.assertRegex(
                 next(lines),
-                '  2 unknown            .* bootm: Make it boot')
+                '  2 unknown      -         .* bootm: Make it boot')
             self.assertEqual('', next(lines))
         self.assertEqual(
             "Branch 'second2' (total 3): 1:accepted 1:changes 1:rejected",
@@ -3025,13 +3037,13 @@ second line.'''
         self.assertIn('PatchId', next(lines))
         self.assertRegex(
             next(lines),
-            '  0 accepted        10 .* video: Some video improvements')
+            '  0 accepted     2      10 .* video: Some video improvements')
         self.assertRegex(
             next(lines),
-            '  1 changes         11 .* serial: Add a serial driver')
+            '  1 changes      -      11 .* serial: Add a serial driver')
         self.assertRegex(
             next(lines),
-            '  2 rejected        12 .* bootm: Make it boot')
+            '  2 rejected     3      12 .* bootm: Make it boot')
 
     def test_series_progress(self):
         """Test showing progress for a cseries"""
@@ -3056,10 +3068,10 @@ second line.'''
         self.assertIn('PatchId', next(lines))
         self.assertRegex(
             next(lines),
-            '  0 unknown            .* i2c: I2C things')
+            '  0 unknown      -        .* i2c: I2C things')
         self.assertRegex(
             next(lines),
-            '  1 unknown            .* spi: SPI fixes')
+            '  1 unknown      -        .* spi: SPI fixes')
         self.assertEqual('', next(lines))
 
     def test_series_progress_all(self):

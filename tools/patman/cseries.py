@@ -36,7 +36,9 @@ HASH_LEN = 10
 # change_id (str): Change-ID value
 # status (str): Current status in patchwork
 # patch_id (in): Patchwork's patch ID for this patch
-PCOMMIT = namedtuple('pcommit', 'id,seq,subject,svid,change_id,state,patch_id')
+PCOMMIT = namedtuple(
+    'pcommit',
+    'id,seq,subject,svid,change_id,state,patch_id,num_comments')
 
 # Shorter version of some states, to save horizontal space
 SHORTEN_STATE = {
@@ -95,7 +97,7 @@ class Cseries:
             self.cur.execute(
                 'CREATE TABLE pcommit (id INTEGER PRIMARY KEY AUTOINCREMENT,'
                 'svid INTEGER, seq INTEGER, subject, patch_id INTEGER, '
-                'change_id, state, '
+                'change_id, state, num_comments INTEGER, '
                 'FOREIGN KEY (svid) REFERENCES ser_ver (id))')
 
             self.cur.execute(
@@ -178,13 +180,16 @@ class Cseries:
                 key (int): record ID if find_svid is None, else seq
                 value (PCOMMIT): record data
         """
-        query = 'SELECT id, seq, subject, svid, change_id, state, patch_id FROM pcommit'
+        query = ('SELECT id, seq, subject, svid, change_id, state, patch_id, '
+                 'num_comments FROM pcommit')
         if find_svid is not None:
             query += f' WHERE svid = {find_svid}'
         res = self.cur.execute(query)
         pcdict = OrderedDict()
-        for idnum, seq, subject, svid, change_id, state, patch_id in res.fetchall():
-            pc = PCOMMIT(idnum, seq, subject, svid, change_id, state, patch_id)
+        for (idnum, seq, subject, svid, change_id, state, patch_id,
+             num_comments) in res.fetchall():
+            pc = PCOMMIT(idnum, seq, subject, svid, change_id, state, patch_id,
+                         num_comments)
             if find_svid is not None:
                 pcdict[seq] = pc
             else:
@@ -1219,7 +1224,10 @@ class Cseries:
             assert cmt.subject == item.subject
             col_state, pad = self.build_col(item.state)
             patch_id = item.patch_id if item.patch_id else ''
-            line = f'{seq:3} {col_state}{pad} {patch_id:7} {oid(cmt.hash)} {item.subject}'
+            num_comments = (f'{item.num_comments:3}' if item.num_comments
+                            else '  -')
+            line = (f'{seq:3} {col_state}{pad} {num_comments} '
+                    f'{patch_id:7} {oid(cmt.hash)} {item.subject}')
             lines.append(line)
             states[item.state] += 1
         out = ''
@@ -1228,7 +1236,7 @@ class Cseries:
         print(f"Branch '{branch}' (total {len(pwc)}):{out}")
         print(self.col.build(
             self.col.MAGENTA,
-            f"Seq State      PatchId {'Commit'.ljust(HASH_LEN)} Subject"))
+            f"Seq State      Com PatchId {'Commit'.ljust(HASH_LEN)} Subject"))
         for line in lines:
             print(line)
 
@@ -1324,10 +1332,12 @@ class Cseries:
 
         updated = 0
         for seq, item in enumerate(pwc.values()):
-            if patches[seq].id:
+            patch = patches[seq]
+            if patch.id:
                 self.cur.execute(
-                    'UPDATE pcommit set patch_id = ?, state = ? WHERE id = ?',
-                    (patches[seq].id, patches[seq].state, item.id))
+                    'UPDATE pcommit SET '
+                    'patch_id = ?, state = ?, num_comments = ? WHERE id = ?',
+                    (patch.id, patch.state, patch.num_comments, item.id))
                 updated += self.cur.rowcount
         self.con.commit()
         tout.info(f'{updated} patch(es) updated')

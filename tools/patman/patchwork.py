@@ -15,7 +15,7 @@ from u_boot_pylib import terminal
 # Information about a patch on patchwork
 # id: Patchwork ID of patch
 # state: Current state, e.g. 'accepted'
-PATCH = namedtuple('patch', 'id,state')
+PATCH = namedtuple('patch', 'id,state,num_comments')
 
 
 class Patchwork:
@@ -30,13 +30,12 @@ class Patchwork:
         self.url = url
         self.fake_request = None
         self.proj_id = None
-        self.show_progress = show_progress
+        self._show_progress = show_progress
 
     def request(self, subpath):
         """Call the patchwork API and return the result as JSON
 
         Args:
-            url (str): URL of patchwork server, e.g. 'https://patchwork.ozlabs.org'
             subpath (str): URL subpath to use
 
         Returns:
@@ -108,9 +107,14 @@ class Patchwork:
     def _get_patch_status(self, patch_dict, seq, result, count):
         patch_id = patch_dict[seq]['id']
         data = self.request(f'patches/{patch_id}/')
-        result[seq] = PATCH(patch_id, data['state'])
+        state = data['state']
+        data = self.request(f'patches/{patch_id}/comments/')
+        num_comments = len(data)
+
+        result[seq] = PATCH(patch_id, state, num_comments)
         done = len([1 for i in range(len(result)) if result[i]])
-        if self.show_progress:
+
+        if self._show_progress:
             terminal.tprint(f'\r{count - done}  ', newline=False)
 
     def series_get_state(self, series_id):
@@ -131,7 +135,10 @@ class Patchwork:
             futures = executor.map(
                 self._get_patch_status, repeat(patch_dict), range(count),
                 repeat(result), repeat(count))
-        if self.show_progress:
+        for fresponse in futures:
+            if fresponse:
+                raise fresponse.exception()
+        if self._show_progress:
             terminal.print_clear()
 
         return result
