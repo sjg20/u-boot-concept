@@ -20,56 +20,6 @@ int __weak bootz_setup(ulong image, ulong *start, ulong *end)
 	return -1;
 }
 
-/*
- * zImage booting support
- */
-static int bootz_start(struct cmd_tbl *cmdtp, int flag, int argc,
-		       char *const argv[], struct bootm_headers *images)
-{
-	ulong zi_start, zi_end;
-	struct bootm_info bmi;
-	int ret;
-
-	bootm_init(&bmi);
-	if (argc)
-		bmi.addr_img = argv[0];
-	if (argc > 1)
-		bmi.conf_ramdisk = argv[1];
-	if (argc > 2)
-		bmi.conf_fdt = argv[2];
-	/* do not set up argc and argv[] since nothing uses them */
-
-	ret = bootm_run_states(&bmi, BOOTM_STATE_START);
-
-	/* Setup Linux kernel zImage entry point */
-	if (!argc) {
-		images->ep = image_load_addr;
-		debug("*  kernel: default image load address = 0x%08lx\n",
-				image_load_addr);
-	} else {
-		images->ep = hextoul(argv[0], NULL);
-		debug("*  kernel: cmdline image address = 0x%08lx\n",
-			images->ep);
-	}
-
-	ret = bootz_setup(images->ep, &zi_start, &zi_end);
-	if (ret != 0)
-		return 1;
-
-	lmb_reserve(images->ep, zi_end - zi_start);
-
-	/*
-	 * Handle the BOOTM_STATE_FINDOTHER state ourselves as we do not
-	 * have a header that provide this informaiton.
-	 */
-	if (bootm_find_images(image_load_addr, cmd_arg1(argc, argv),
-			      cmd_arg2(argc, argv), images->ep,
-			      zi_end - zi_start))
-		return 1;
-
-	return 0;
-}
-
 int do_bootz(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {
 	struct bootm_info bmi;
@@ -77,17 +27,6 @@ int do_bootz(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 
 	/* Consume 'bootz' */
 	argc--; argv++;
-
-	if (bootz_start(cmdtp, flag, argc, argv, &images))
-		return 1;
-
-	/*
-	 * We are doing the BOOTM_STATE_LOADOS state ourselves, so must
-	 * disable interrupts ourselves
-	 */
-	bootm_disable_interrupts();
-
-	images.os.os = IH_OS_LINUX;
 
 	bootm_init(&bmi);
 	if (argc)
@@ -99,8 +38,10 @@ int do_bootz(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	bmi.cmd_name = "bootz";
 
 	ret = bootz_run(&bmi);
+	if (ret)
+		return CMD_RET_FAILURE;
 
-	return ret;
+	return 0;
 }
 
 U_BOOT_LONGHELP(bootz,
