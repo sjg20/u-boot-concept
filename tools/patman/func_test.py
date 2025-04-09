@@ -2986,10 +2986,8 @@ second line.'''
         with capture_sys_output() as (out, _):
             cser.add_series('second', 'description', allow_unmarked=True)
 
-        pwork = Patchwork.for_testing(self._fake_patchwork_cser_link)
-        pwork.set_project(PROJ_ID, PROJ_LINK_NAME)
         with capture_sys_output() as (out, _):
-            cser.series_status(pwork, 'second', None)
+            cser.series_status('second', None)
         lines = iter(out.getvalue().splitlines())
         self.assertEqual(
             "Branch 'second' (total 3): 3:unknown", next(lines))

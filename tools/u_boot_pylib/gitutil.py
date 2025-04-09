@@ -89,7 +89,6 @@ def name_revision(commit_hash):
         Name of revision, if any, else None
     """
     stdout = command.output_one_line('git', 'name-rev', commit_hash)
-    print('stdout', stdout)
 
     # We expect a commit, a space, then a revision name
     name = stdout.split(' ')[1].strip()

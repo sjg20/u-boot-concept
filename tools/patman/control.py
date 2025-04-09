@@ -280,39 +280,33 @@ def series(args, test_db=None, pwork=None):
             _, proj_id, link_name = cser.get_project()
             pwork.set_project(proj_id, link_name)
         arg0 = args.extra[0] if len(args.extra) else None
-        if args.subcmd == 'list':
-            cser.do_list()
-        elif args.subcmd == 'patches':
-            cser.list_patches(args.series, args.version)
-        elif args.subcmd == 'add':
+        if args.subcmd == 'add':
             cser.add_series(args.series, arg0,
                             mark=args.mark, allow_unmarked=args.allow_unmarked,
                             end=args.upstream, dry_run=args.dry_run)
+        elif args.subcmd == 'archive':
+            cser.set_archived(args.series, True)
+        elif args.subcmd == 'auto-link':
+            cser.do_auto_link(pwork, args.series, args.version, args.update)
+        elif args.subcmd == 'dec':
+            cser.decrement(args.series, args.dry_run)
+        elif args.subcmd == 'get-link':
+            link = cser.get_link(args.series, args.version)
+            print(link)
+        elif args.subcmd == 'inc':
+            cser.increment(args.series, args.dry_run)
+        elif args.subcmd == 'list':
+            cser.do_list()
+        elif args.subcmd == 'open':
+            cser.open_series(pwork, args.series, args.version)
+        elif args.subcmd == 'patches':
+            cser.list_patches(args.series, args.version)
+        elif args.subcmd == 'progress':
+            cser.progress(args.series, args.all)
         elif args.subcmd == 'remove':
             cser.remove_series(args.series, dry_run=args.dry_run)
         elif args.subcmd == 'remove-version':
             cser.remove_version(args.series, args.version, dry_run=args.dry_run)
-        elif args.subcmd == 'set-link':
-            cser.set_link(args.series, args.version, arg0, args.update)
-        elif args.subcmd == 'auto-link':
-            cser.do_auto_link(pwork, args.series, args.version, args.update)
-        elif args.subcmd == 'get-link':
-            link = cser.get_link(args.series, args.version)
-            print(link)
-        elif args.subcmd == 'archive':
-            cser.set_archived(args.series, True)
-        elif args.subcmd == 'unarchive':
-            cser.set_archived(args.series, False)
-        elif args.subcmd == 'inc':
-            cser.increment(args.series, args.dry_run)
-        elif args.subcmd == 'dec':
-            cser.decrement(args.series, args.dry_run)
-        elif args.subcmd == 'status':
-            cser.series_status(pwork, args.series, args.version)
-        elif args.subcmd == 'sync':
-            cser.series_sync(pwork, args.series, args.version)
-        elif args.subcmd == 'open':
-            cser.open_series(pwork, args.series, args.version)
         elif args.subcmd == 'send':
             args.dry_run = True
             git_dir = None
@@ -320,12 +314,18 @@ def series(args, test_db=None, pwork=None):
                 git_dir = os.path.join(test_db, '.git')
 
             send(args, git_dir=git_dir, cwd=test_db)
-        elif args.subcmd == 'unmark':
-            cser.unmark_series(args.series, dry_run=args.dry_run)
-        elif args.subcmd == 'progress':
-            cser.progress(args.series, args.all)
+        elif args.subcmd == 'set-link':
+            cser.set_link(args.series, args.version, arg0, args.update)
+        elif args.subcmd == 'status':
+            cser.series_status(args.series, args.version)
         elif args.subcmd == 'summary':
             cser.summary(args.series)
+        elif args.subcmd == 'sync':
+            cser.series_sync(pwork, args.series, args.version)
+        elif args.subcmd == 'unarchive':
+            cser.set_archived(args.series, False)
+        elif args.subcmd == 'unmark':
+            cser.unmark_series(args.series, dry_run=args.dry_run)
         else:
             raise ValueError(f"Unknown series subcommand '{args.subcmd}'")
     finally:

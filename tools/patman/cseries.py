@@ -67,16 +67,13 @@ class Cseries:
         self.quiet = False
         self.col = terminal.Color(colour)
 
-    def check_database(self, con):
+    def check_database(self):
         """Check that the database has the required tables and is up-to-date
-
-        Args:
-            con (sqlite3.Connection): Database connection
         """
         # Check if a series table is present
         self.cur = self.con.cursor()
         try:
-            res = self.cur.execute('SELECT name FROM series')
+            self.cur.execute('SELECT name FROM series')
         except OperationalError:
             self.cur.execute(
                 'CREATE TABLE series (id INTEGER PRIMARY KEY AUTOINCREMENT,'
@@ -107,6 +104,7 @@ class Cseries:
         return self.cur
 
     def open_database(self):
+        """Open the database read for use"""
         if not self.topdir:
             self.topdir = gitutil.get_top_level()
             if not self.topdir:
@@ -117,10 +115,11 @@ class Cseries:
             tout.warning(f'Creating new database {fname}')
         self.con = sqlite3.connect(fname, autocommit=False)
 
-        self.cur = self.check_database(self.con)
+        self.cur = self.check_database()
         return self.cur
 
     def close_database(self):
+        """Close the database"""
         self.con.close()
         self.cur = None
 
@@ -209,10 +208,10 @@ class Cseries:
         """
         res = self.cur.execute('SELECT name, desc FROM series WHERE id = ?',
                                (idnum,))
-        all = res.fetchall()
-        if len(all) != 1:
-            raise ValueError('No series found (id {idnum} len {len(all})', all)
-        return all[0]
+        recs = res.fetchall()
+        if len(recs) != 1:
+            raise ValueError(f'No series found (id {idnum} len {len(recs)})')
+        return recs[0]
 
 
     def _prep_series(self, name, end=None):
@@ -358,13 +357,13 @@ class Cseries:
         """
         res = self.cur.execute(
             f"SELECT id, name, desc FROM series WHERE name = '{name}'")
-        all = res.fetchall()
-        if not all:
+        recs = res.fetchall()
+        if not recs:
             return None
-        if len(all) > 1:
+        if len(recs) > 1:
             raise ValueError('Expected one match, but multiple matches found')
         ser = Series()
-        ser.idnum, ser.name, ser.desc = desc = all[0]
+        ser.idnum, ser.name, ser.desc = desc = recs[0]
         return ser
 
     def get_branch_name(self, name, version):
@@ -435,12 +434,12 @@ class Cseries:
 
         res = self.cur.execute('SELECT link FROM ser_ver WHERE '
             f"series_id = {ser.idnum} AND version = '{version}'")
-        all = res.fetchall()
-        if not all:
+        recs = res.fetchall()
+        if not recs:
             return None
-        if len(all) > 1:
+        if len(recs) > 1:
             raise ValueError('Expected one match, but multiple matches found')
-        return all[0][0]
+        return recs[0][0]
 
     def search_link(self, pwork, series, version):
         """Search patch for the link for a series
@@ -510,8 +509,8 @@ class Cseries:
             raise ValueError('Unknown series idnum')
         res = self.cur.execute('SELECT version FROM ser_ver WHERE '
             f"series_id = {idnum}")
-        all = res.fetchall()
-        return [item[0] for item in all]
+        recs = res.fetchall()
+        return [item[0] for item in recs]
 
     def split_name_version(self, in_name):
         """Split a branch name into its series name and its version
@@ -569,7 +568,7 @@ class Cseries:
         """
         if not name:
             name = gitutil.get_branch(self.gitdir)
-        name, version = self.split_name_version(name)
+        name, _ = self.split_name_version(name)
         ser = self.get_series_by_name(name)
         if not ser:
             ser = Series()
@@ -586,7 +585,7 @@ class Cseries:
         of the name (e.g. 'series' is version 1, 'series4' is version 4)
 
         Args:
-            in_name (str or None): name of series
+            name (str or None): name of series
             in_version (str or None): version of series
 
         Return:
@@ -623,7 +622,7 @@ class Cseries:
         if not ser.idnum:
             raise ValueError(f"Series '{ser.name}' not found in database")
         ser.archived = archived
-        res = self.cur.execute(
+        self.cur.execute(
             f'UPDATE series SET archived = {int(archived)} WHERE '
             f'id = {ser.idnum}')
         self.con.commit()
@@ -655,6 +654,11 @@ class Cseries:
         return status, pwc
 
     def do_list(self):
+        """List all series
+
+        Lines all series along with their description, number of patches
+        accepted and  the available versions
+        """
         sdict = self.get_series_dict()
         print(f"{'Name':15} {'Description':20} {'Accepted'}  Versions")
         for name, ser in sdict.items():
@@ -751,7 +755,7 @@ class Cseries:
         vers = max_vers + 1
         new_name = self.join_name_version(ser.name, vers)
 
-        self.update_series(series_name, series, max_vers, new_name, dry_run,
+        self.update_series(ser.name, series, max_vers, new_name, dry_run,
                            add_vers=vers)
 
         old_svid = self.get_series_svid(ser.idnum, max_vers)
@@ -810,10 +814,10 @@ class Cseries:
 
         old_svid = self.get_series_svid(ser.idnum, max_vers)
 
-        res = self.cur.execute(
+        self.cur.execute(
             'DELETE FROM ser_ver WHERE series_id = ? and version = ?',
             (ser.idnum, max_vers))
-        res = self.cur.execute(
+        self.cur.execute(
             'DELETE FROM pcommit WHERE svid = ?', (old_svid,))
         if not dry_run:
             self.con.commit()
@@ -996,11 +1000,11 @@ class Cseries:
             url (str): URL for the tree
         """
         try:
-            res = self.cur.execute(
+            self.cur.execute(
                 f"INSERT INTO upstream (name, url) VALUES ('{name}', '{url}')")
         except sqlite3.IntegrityError as exc:
             if 'UNIQUE constraint failed: upstream.name' in str(exc):
-                raise ValueError(f"Upstream '{name}' already exists")
+                raise ValueError(f"Upstream '{name}' already exists") from exc
         self.con.commit()
 
     def list_upstream(self):
@@ -1018,10 +1022,9 @@ class Cseries:
             name (str): Name of the upstream remote to set as default, or None
                 for none
         """
-        res = self.cur.execute(
-            f"UPDATE upstream SET is_default = 0")
+        self.cur.execute(f"UPDATE upstream SET is_default = 0")
         if name is not None:
-            res = self.cur.execute(
+            self.cur.execute(
                 f"UPDATE upstream SET is_default = 1 WHERE name = '{name}'")
             if self.cur.rowcount != 1:
                 self.con.rollback()
@@ -1035,11 +1038,11 @@ class Cseries:
             str: Name of the upstream remote to set as default, or None if none
         """
         res = self.cur.execute(
-            f"SELECT name FROM upstream WHERE is_default = 1")
-        all = res.fetchall()
-        if len(all) != 1:
+            "SELECT name FROM upstream WHERE is_default = 1")
+        recs = res.fetchall()
+        if len(recs) != 1:
             return None
-        return all[0][0]
+        return recs[0][0]
 
     def delete_upstream(self, name):
         """Delete an upstream target
@@ -1047,7 +1050,7 @@ class Cseries:
         Args:
             name (str): Name of the upstream remote to delete
         """
-        res = self.cur.execute(
+        self.cur.execute(
             f"DELETE FROM upstream WHERE name = '{name}'")
         if self.cur.rowcount != 1:
             self.con.rollback()
@@ -1072,8 +1075,8 @@ class Cseries:
 
         res = self.cur.execute('SELECT id FROM ser_ver WHERE series_id = ?',
                                (ser.idnum,))
-        all = [str(i) for i in res.fetchall()[0]]
-        vals = ', '.join(all[0])
+        recs = [str(i) for i in res.fetchall()[0]]
+        vals = ', '.join(recs[0])
         res = self.cur.execute(f'DELETE FROM pcommit WHERE svid IN ({vals})')
         res = self.cur.execute('DELETE FROM ser_ver WHERE series_id = ?',
                                (ser.idnum,))
@@ -1105,8 +1108,8 @@ class Cseries:
                 f"Series '{ser.name}' only has one version: remove the series")
 
         svid = self.get_series_svid(ser.idnum, version)
-        res = self.cur.execute(f'DELETE FROM pcommit WHERE svid = ?', (svid,))
-        res = self.cur.execute(
+        self.cur.execute('DELETE FROM pcommit WHERE svid = ?', (svid,))
+        self.cur.execute(
             'DELETE FROM ser_ver WHERE series_id = ? and version = ?',
             (ser.idnum, version))
         if not dry_run:
@@ -1130,10 +1133,10 @@ class Cseries:
         res = self.cur.execute(
             'SELECT id FROM series WHERE '
             f"name = '{name}' AND archived = 0")
-        all = res.fetchall()
-        if len(all) != 1:
+        recs = res.fetchall()
+        if len(recs) != 1:
             return None
-        return all[0][0]
+        return recs[0][0]
 
     def set_project(self, pwork, name, quiet=False):
         """Set the name of the project
@@ -1141,6 +1144,7 @@ class Cseries:
         Args:
             pwork (Patchwork): Patchwork object to use
             name (str): Name of the project to use in patchwork
+            quiet (bool): True to skip writing the message
         """
         res = pwork.request('projects/')
         proj_id = None
@@ -1168,13 +1172,24 @@ class Cseries:
                 proj_id (int): Patchworks project ID for this project
                 link_name (str): Patchwork's link-name for the project
         """
-        res = self.cur.execute(f"SELECT name, proj_id, link_name FROM settings")
-        all = res.fetchall()
-        if len(all) != 1:
+        res = self.cur.execute("SELECT name, proj_id, link_name FROM settings")
+        recs = res.fetchall()
+        if len(recs) != 1:
             return None
-        return all[0]
+        return recs[0]
 
     def build_col(self, state, prefix='', base_str=None):
+        """Build a patch-state string with colour
+
+        Args:
+            state (str): State to colourise (also indicates the colour to use)
+            prefix (str): Prefix string to also colourise
+            base_str (str or None): String to show instead of state, or None to
+                show state
+
+        Return:
+            str: String with ANSI colour characters
+        """
         bright = True
         if state == 'accepted':
             col = self.col.GREEN
@@ -1281,24 +1296,23 @@ class Cseries:
                 str: link
         """
         res = self.cur.execute(
-            f"SELECT id, link FROM ser_ver WHERE series_id = ? AND version = ?",
+            "SELECT id, link FROM ser_ver WHERE series_id = ? AND version = ?",
             (series_id, version))
-        all = res.fetchall()
-        if not all:
+        recs = res.fetchall()
+        if not recs:
             raise ValueError(f'No matching series for id {series_id}')
-        return all[0]
+        return recs[0]
 
-    def series_status(self, pwork, series, version):
+    def series_status(self, series, version):
         """Show the patchwork status of a series
 
         Args:
-            pwork (Patchwork): Patchwork object to use
             series (str): Name of series to use, or None to use current branch
             version (int): Version number, or None to detect from name
         """
         ser, version = self.parse_series_and_version(series, version)
         self.ensure_version(ser, version)
-        svid, link = self.get_series_svid_link(ser.idnum, version)
+        svid, _ = self.get_series_svid_link(ser.idnum, version)
         pwc = self.get_pcommit_dict(svid)
 
         count = len(pwc)
@@ -1417,7 +1431,7 @@ class Cseries:
         """Show summary information for all series
 
         Args:
-            ser (Series): Series to use
+            series (str): Name of series to use
         """
         print(f"{'Name':17}  Status  Description")
         print(f"{'-' * 17}  {'-' * 6}  {'-' * 30}")
@@ -1435,10 +1449,31 @@ class Cseries:
         Args:
             pwork (Patchwork): Patchwork object to use
             name (str): Name of series to open
+            version (str): Version number to open
         """
         ser, version = self.parse_series_and_version(name, version)
         link = self.get_link(ser.name, version)
         pwork.url = 'https://patchwork.ozlabs.org'
         url = pwork.get_series_url(link)
         print(f'Opening {url}')
-        command.output('xdg-open', url)
+
+        # With Firefox, GTK produces lots of warnings, so suppress them
+        # Gtk-Message: 06:48:20.692: Failed to load module "xapp-gtk3-module"
+        # Gtk-Message: 06:48:20.692: Not loading module "atk-bridge": The functionality is provided by GTK natively. Please try to not load it.
+        # Gtk-Message: 06:48:20.692: Failed to load module "appmenu-gtk-module"
+        # Gtk-Message: 06:48:20.692: Failed to load module "appmenu-gtk-module"
+        # [262145, Main Thread] WARNING: GTK+ module /snap/firefox/5987/gnome-platform/usr/lib/gtk-2.0/modules/libcanberra-gtk-module.so cannot be loaded.
+        # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same process is not supported.: 'glib warning', file /build/firefox/parts/firefox/build/toolkit/xre/nsSigHandlers.cpp:201
+        #
+        # (firefox_firefox:262145): Gtk-WARNING **: 06:48:20.728: GTK+ module /snap/firefox/5987/gnome-platform/usr/lib/gtk-2.0/modules/libcanberra-gtk-module.so cannot be loaded.
+        # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same process is not supported.
+        # Gtk-Message: 06:48:20.728: Failed to load module "canberra-gtk-module"
+        # [262145, Main Thread] WARNING: GTK+ module /snap/firefox/5987/gnome-platform/usr/lib/gtk-2.0/modules/libcanberra-gtk-module.so cannot be loaded.
+        # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same process is not supported.: 'glib warning', file /build/firefox/parts/firefox/build/toolkit/xre/nsSigHandlers.cpp:201
+        #
+        # (firefox_firefox:262145): Gtk-WARNING **: 06:48:20.729: GTK+ module /snap/firefox/5987/gnome-platform/usr/lib/gtk-2.0/modules/libcanberra-gtk-module.so cannot be loaded.
+        # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same process is not supported.
+        # Gtk-Message: 06:48:20.729: Failed to load module "canberra-gtk-module"
+        # ATTENTION: default value of option mesa_glthread overridden by environment.
+
+        command.output('xdg-open', url, capture_stderr=True)
