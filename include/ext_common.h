@@ -67,8 +67,7 @@ struct cmd_tbl;
 #define EXT2_BLOCK_SIZE(data)	   (1 << LOG2_BLOCK_SIZE(data))
 
 /* Log2 size of ext2 block in bytes.  */
-#define LOG2_BLOCK_SIZE(data)	   (le32_to_cpu		   \
-				    (data->sblock.log2_block_size) \
+#define LOG2_BLOCK_SIZE(data)	(le32_to_cpu((data)->sblock.log2_block_size) \
 				    + EXT2_MIN_BLOCK_LOG_SIZE)
 
 #define EXT2_FT_DIR	2

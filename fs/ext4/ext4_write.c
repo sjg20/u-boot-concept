@@ -25,6 +25,7 @@
 #include <malloc.h>
 #include <memalign.h>
 #include <part.h>
+#include <linux/overflow.h>
 #include <linux/stat.h>
 #include <div64.h>
 #include "ext4_common.h"
@@ -108,8 +109,15 @@ int ext4fs_get_bgdtable(void)
 {
 	int status;
 	struct ext_filesystem *fs = get_fs();
-	int gdsize_total = ROUND(fs->no_blkgrp * fs->gdsize, fs->blksz);
+	size_t alloc_size;
+	int gdsize_total;
+
+	if (check_mul_overflow(fs->no_blkgrp, fs->gdsize, &alloc_size))
+		return -1;
+	gdsize_total = ROUND(alloc_size, fs->blksz);
 	fs->no_blk_pergdt = gdsize_total / fs->blksz;
+	if (!fs->no_blk_pergdt)
+		return -1;
 
 	/* allocate memory for gdtable */
 	fs->gdtable = zalloc(gdsize_total);
@@ -117,7 +125,7 @@ int ext4fs_get_bgdtable(void)
 		return -ENOMEM;
 	/* read the group descriptor table */
 	status = ext4fs_devread((lbaint_t)fs->gdtable_blkno * fs->sect_perblk,
-				0, fs->blksz * fs->no_blk_pergdt, fs->gdtable);
+				0, gdsize_total, fs->gdtable);
 	if (status == 0)
 		goto fail;
 
@@ -599,10 +607,17 @@ int ext4fs_init(void)
 	int i;
 	uint32_t real_free_blocks = 0;
 	struct ext_filesystem *fs = get_fs();
+	size_t alloc_size;
+
+	/* check for a reasonable block size, no more than 64K */
+	if (LOG2_BLOCK_SIZE(ext4fs_root) > 16)
+		goto fail;
 
 	/* populate fs */
 	fs->blksz = EXT2_BLOCK_SIZE(ext4fs_root);
 	fs->sect_perblk = fs->blksz >> fs->dev_desc->log2blksz;
+	if (!fs->sect_perblk)
+		goto fail;
 
 	/* get the superblock */
 	fs->sb = zalloc(SUPERBLOCK_SIZE);
@@ -629,7 +644,9 @@ int ext4fs_init(void)
 	}
 
 	/* load all the available bitmap block of the partition */
-	fs->blk_bmaps = zalloc(fs->no_blkgrp * sizeof(char *));
+	if (check_mul_overflow(fs->no_blkgrp, sizeof(char *), &alloc_size))
+		goto fail;
+	fs->blk_bmaps = zalloc(alloc_size);
 	if (!fs->blk_bmaps)
 		goto fail;
 	for (i = 0; i < fs->no_blkgrp; i++) {
@@ -649,7 +666,7 @@ int ext4fs_init(void)
 	}
 
 	/* load all the available inode bitmap of the partition */
-	fs->inode_bmaps = zalloc(fs->no_blkgrp * sizeof(unsigned char *));
+	fs->inode_bmaps = zalloc(alloc_size);
 	if (!fs->inode_bmaps)
 		goto fail;
 	for (i = 0; i < fs->no_blkgrp; i++) {
