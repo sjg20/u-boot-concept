@@ -860,14 +860,12 @@ class Cseries:
         if new_name:
             # Create a new branch, pointing to upstream commit
             commit = branch.peel(pygit2.GIT_OBJ_COMMIT)
-            new_branch = repo.branches.create(new_name, commit)
             name = new_name
             commit_oid = upstream.peel(pygit2.GIT_OBJ_COMMIT).oid
             commit = repo.get(commit_oid)
             repo.checkout_tree(commit)
             repo.set_head(commit_oid)
 
-            new_branch.upstream = branch.upstream
         else:
             # Check out the upstream commit (detached HEAD)
             commit_oid = upstream.peel(pygit2.GIT_OBJ_COMMIT).oid
@@ -912,6 +910,9 @@ class Cseries:
                 repo.checkout_tree(repo.get(branch_oid))
                 repo.head.set_target(branch_oid)
         else:
+            if new_name:
+                new_branch = repo.branches.create(new_name, commit)
+                new_branch.upstream = branch.upstream
             repo.create_reference(f'refs/heads/{name}', target.oid, force=True)
             if new_name:
                 repo.checkout(new_branch)
