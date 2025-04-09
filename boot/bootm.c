@@ -1185,6 +1185,39 @@ int bootm_run(struct bootm_info *bmi)
 
 int bootz_run(struct bootm_info *bmi)
 {
+	struct bootm_headers *images = bmi->images;
+	ulong zi_start, zi_end;
+	int ret;
+
+	ret = bootm_run_states(bmi, BOOTM_STATE_START);
+	if (ret)
+		return ret;
+
+	images->ep = bmi->addr_img ? hextoul(bmi->addr_img, NULL) :
+		image_load_addr;
+
+	ret = bootz_setup(images->ep, &zi_start, &zi_end);
+	if (ret)
+		return ret;
+
+	lmb_reserve(images->ep, zi_end - zi_start);
+
+	/*
+	 * Handle the BOOTM_STATE_FINDOTHER state ourselves as we do not
+	 * have a header that provide this informaiton.
+	 */
+	if (bootm_find_images(images->ep, bmi->conf_ramdisk, bmi->conf_fdt,
+			      images->ep, zi_end - zi_start))
+		return -EINVAL;
+
+	/*
+	 * We are doing the BOOTM_STATE_LOADOS state ourselves, so must
+	 * disable interrupts ourselves
+	 */
+	bootm_disable_interrupts();
+
+	images->os.os = IH_OS_LINUX;
+
 	return boot_run(bmi, "bootz", 0);
 }
 
