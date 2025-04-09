@@ -26,6 +26,7 @@ from patman.patchstream import PatchStream
 from patman.patchwork import Patchwork
 from patman.series import Series
 from patman import settings
+from u_boot_pylib import command
 from u_boot_pylib import gitutil
 from u_boot_pylib import terminal
 from u_boot_pylib import tools
@@ -39,6 +40,8 @@ TEST_DATA_DIR = PATMAN_DIR / 'test/'
 
 # Fake patchwork project ID for U-Boot
 PROJ_ID = 6
+PROJ_LINK_NAME = 'uboot'
+
 
 @contextlib.contextmanager
 def directory_excursion(directory):
@@ -1730,7 +1733,7 @@ second line.'''
         """Set up the 'second' series synced with the fake patchwork"""
         cser = self.get_cser()
         pwork = Patchwork.for_testing(self._fake_patchwork_cser_link)
-        pwork.set_project(PROJ_ID)
+        pwork.set_project(PROJ_ID, PROJ_LINK_NAME)
 
         with capture_sys_output() as (out, _):
             cser.add_series('first', '', allow_unmarked=True)
@@ -1957,8 +1960,8 @@ second line.'''
         """
         if subpath == 'projects/':
             return [
-                {'id':PROJ_ID, 'name': 'U-Boot'},
-                {'id':9, 'name': 'other'}]
+                {'id':PROJ_ID, 'name': 'U-Boot', 'link_name': 'uboot'},
+                {'id':9, 'name': 'other', 'link_name': 'other'}]
         re_series = re.match(r'series/\?project=(\d+)&q=.*$', subpath)
         if re_series:
             series_num = re_series.group(1)
@@ -2004,7 +2007,7 @@ second line.'''
                                           git_dir=self.gitdir)
 
         pwork = Patchwork.for_testing(self._fake_patchwork_cser_link)
-        pwork.set_project(PROJ_ID)
+        pwork.set_project(PROJ_ID, PROJ_LINK_NAME)
         self.assertFalse(cser.get_project())
         cser.set_project(pwork, 'U-Boot', quiet=True)
 
@@ -2084,7 +2087,7 @@ second line.'''
             cser.increment('second')
 
         pwork = Patchwork.for_testing(self._fake_patchwork_cser_link)
-        pwork.set_project(PROJ_ID)
+        pwork.set_project(PROJ_ID, PROJ_LINK_NAME)
         self.assertFalse(cser.get_project())
         cser.set_project(pwork, 'U-Boot', quiet=True)
 
@@ -2105,7 +2108,7 @@ second line.'''
         cser = self.get_cser()
 
         pwork = Patchwork.for_testing(self._fake_patchwork_cser_link)
-        pwork.set_project(PROJ_ID)
+        pwork.set_project(PROJ_ID, PROJ_LINK_NAME)
         self.assertFalse(cser.get_project())
         cser.set_project(pwork, 'U-Boot', quiet=True)
 
@@ -2844,7 +2847,7 @@ second line.'''
         """
         if subpath == 'projects/':
             return [
-                {'id':PROJ_ID, 'name': 'U-Boot'},
+                {'id':PROJ_ID, 'name': 'U-Boot', 'link_name': PROJ_LINK_NAME},
                 {'id':9, 'name': 'other'}]
         if subpath.startswith('series/'):
             return {
@@ -2879,8 +2882,9 @@ second line.'''
         pwork = Patchwork.for_testing(self._fake_patchwork_cser)
         with capture_sys_output() as (out, _):
             cser.set_project(pwork, 'U-Boot')
-        self.assertEqual(f"Project 'U-Boot', patchwork ID {PROJ_ID}",
-                         out.getvalue().strip())
+        self.assertEqual(
+            f"Project 'U-Boot' patchwork-ID {PROJ_ID} link-name uboot",
+            out.getvalue().strip())
 
     def test_patchwork_get_project(self):
         """Test setting the project ID"""
@@ -2889,12 +2893,14 @@ second line.'''
         self.assertFalse(cser.get_project())
         with capture_sys_output() as (out, _):
             cser.set_project(pwork, 'U-Boot')
-        self.assertEqual(f"Project 'U-Boot', patchwork ID {PROJ_ID}",
-                         out.getvalue().strip())
+        self.assertEqual(
+            f"Project 'U-Boot' patchwork-ID {PROJ_ID} link-name uboot",
+            out.getvalue().strip())
 
-        name, pwid = cser.get_project()
+        name, pwid, link_name = cser.get_project()
         self.assertEqual('U-Boot', name)
         self.assertEqual(PROJ_ID, pwid)
+        self.assertEqual('uboot', link_name)
 
     def test_patchwork_get_project_cmdline(self):
         """Test setting the project ID"""
@@ -2906,18 +2912,21 @@ second line.'''
         with capture_sys_output() as (out, _):
             self.run_args('-P', 'https://url', 'patchwork', 'set-project',
                           'U-Boot', pwork=pwork)
-        self.assertEqual(f"Project 'U-Boot', patchwork ID {PROJ_ID}",
-                         out.getvalue().strip())
+        self.assertEqual(
+            f"Project 'U-Boot' patchwork-ID {PROJ_ID} link-name uboot",
+            out.getvalue().strip())
 
-        name, pwid = cser.get_project()
+        name, pwid, link_name = cser.get_project()
         self.assertEqual('U-Boot', name)
         self.assertEqual(6, pwid)
+        self.assertEqual('uboot', link_name)
 
         with capture_sys_output() as (out, _):
             self.run_args('-P', 'https://url', 'patchwork', 'get-project',
                           'U-Boot')
-        self.assertEqual(f"Project 'U-Boot', patchwork ID {PROJ_ID}",
-                         out.getvalue().strip())
+        self.assertEqual(
+            f"Project 'U-Boot' patchwork-ID {PROJ_ID} link-name uboot",
+            out.getvalue().strip())
 
     def check_series_list_patches(self):
         """Test listing the patches for a series"""
@@ -2978,7 +2987,7 @@ second line.'''
             cser.add_series('second', 'description', allow_unmarked=True)
 
         pwork = Patchwork.for_testing(self._fake_patchwork_cser_link)
-        pwork.set_project(PROJ_ID)
+        pwork.set_project(PROJ_ID, PROJ_LINK_NAME)
         with capture_sys_output() as (out, _):
             cser.series_status(pwork, 'second', None)
         lines = iter(out.getvalue().splitlines())
@@ -3040,7 +3049,7 @@ second line.'''
             '  0 accepted     2      10 .* video: Some video improvements')
         self.assertRegex(
             next(lines),
-            '  1 changes      -      11 .* serial: Add a serial driver')
+            '  1 changes             11 .* serial: Add a serial driver')
         self.assertRegex(
             next(lines),
             '  2 rejected     3      12 .* bootm: Make it boot')
@@ -3108,3 +3117,26 @@ second line.'''
             lines[1])
         self.assertEqual('first          -/2  ', lines[2])
         self.assertEqual('second         1/3  Series for my board', lines[3])
+
+    def test_series_open(self):
+        cser = self.get_cser()
+        pwork = Patchwork.for_testing(self._fake_patchwork_cser_link)
+        self.assertFalse(cser.get_project())
+        pwork.set_project(PROJ_ID, PROJ_LINK_NAME)
+
+        with capture_sys_output():
+            cser.add_series('second', allow_unmarked=True)
+            cser.increment('second')
+            cser.do_auto_link(pwork, 'second', 2, True)
+            cser.series_sync(pwork, 'second', 2)
+
+        with capture_sys_output() as (out, _):
+            try:
+                command.TEST_RESULT = command.CommandResult()
+                cser.open_series(pwork, 'second2', 2)
+            finally:
+                command.TEST_RESULT = None
+        self.assertEqual(
+            'Opening https://patchwork.ozlabs.org/project/uboot/list/'
+            '?series=457&state=*&archive=both',
+            out.getvalue().strip())

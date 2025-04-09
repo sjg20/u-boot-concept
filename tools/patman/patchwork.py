@@ -30,6 +30,7 @@ class Patchwork:
         self.url = url
         self.fake_request = None
         self.proj_id = None
+        self.link_name = None
         self._show_progress = show_progress
 
     def request(self, subpath):
@@ -82,16 +83,20 @@ class Patchwork:
                 name_found.append(ser)
         return None, name_found or res
 
-    def set_project(self, project_id):
+    def set_project(self, project_id, link_name):
         """Set the project ID
 
-        The patchwork server has multiple projects. This allows the ID of the
-        relevant project to be selected
+        The patchwork server has multiple projects. This allows the ID and
+        link_name of the relevant project to be selected
+
+        This function is used for testing
 
         Args:
-            project_id (int): Project ID to use
+            project_id (int): Project ID to use, e.g. 6
+            link_name (str): Name to use for project URL links, e.g. 'uboot'
         """
         self.proj_id = project_id
+        self.link_name = link_name
 
     def get_series(self, series_id):
         """Read information about a series
@@ -103,6 +108,17 @@ class Patchwork:
             dict containing patchwork's series information
         """
         return self.request(f'series/{series_id}/')
+
+    def get_series_url(self, series_id):
+        """Get the URL for a series
+
+        Args:
+            series_id (str): Patchwork series ID
+
+        Returns:
+            str: URL for the series page
+        """
+        return f'{self.url}/project/{self.link_name}/list/?series={series_id}&state=*&archive=both'
 
     def _get_patch_status(self, patch_dict, seq, result, count):
         patch_id = patch_dict[seq]['id']

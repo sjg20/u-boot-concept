@@ -277,7 +277,8 @@ def series(args, test_db=None, pwork=None):
             if not proj:
                 raise ValueError(
                     "Please set project ID with 'patman patchwork set-project'")
-            pwork.proj_id = proj[1]
+            _, proj_id, link_name = cser.get_project()
+            pwork.set_project(proj_id, link_name)
         arg0 = args.extra[0] if len(args.extra) else None
         if args.subcmd == 'list':
             cser.do_list()
@@ -310,6 +311,8 @@ def series(args, test_db=None, pwork=None):
             cser.series_status(pwork, args.series, args.version)
         elif args.subcmd == 'sync':
             cser.series_sync(pwork, args.series, args.version)
+        elif args.subcmd == 'open':
+            cser.open_series(pwork, args.series, args.version)
         elif args.subcmd == 'send':
             args.dry_run = True
             git_dir = None
@@ -380,8 +383,8 @@ def patchwork(args, test_db=None, pwork=None):
             info = cser.get_project()
             if not info:
                 raise ValueError("Project has not been set; use 'patman patchwork set-project'")
-            name, pwid = info
-            print(f"Project '{name}', patchwork ID {pwid}")
+            name, pwid, link_name = info
+            print(f"Project '{name}' patchwork-ID {pwid} link-name {link_name}")
         else:
             raise ValueError(f"Unknown patchwork subcommand '{args.subcmd}'")
     finally:

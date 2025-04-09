@@ -17,6 +17,7 @@ import pygit2
 
 from patman import patchstream
 from patman.series import Series
+from u_boot_pylib import command
 from u_boot_pylib import gitutil
 from u_boot_pylib import terminal
 from u_boot_pylib import tout
@@ -101,7 +102,7 @@ class Cseries:
                 'FOREIGN KEY (svid) REFERENCES ser_ver (id))')
 
             self.cur.execute(
-                'CREATE TABLE settings (name UNIQUE, proj_id INT)')
+                'CREATE TABLE settings (name UNIQUE, proj_id INT, link_name)')
             self.con.commit()
         return self.cur
 
@@ -1141,48 +1142,37 @@ class Cseries:
             pwork (Patchwork): Patchwork object to use
             name (str): Name of the project to use in patchwork
         """
-        res = pwork.request(f'projects/')
+        res = pwork.request('projects/')
         proj_id = None
         for proj in res:
             if proj['name'] == name:
                 proj_id = proj['id']
+                link_name = proj['link_name']
         if not proj_id:
             raise ValueError(f"Unknown project name '{name}'")
-        res = self.cur.execute(f'DELETE FROM settings')
+        res = self.cur.execute('DELETE FROM settings')
         res = self.cur.execute(
-                f'INSERT INTO settings (name, proj_id) VALUES (?, ?)',
-                (name, proj_id))
+                'INSERT INTO settings (name, proj_id, link_name) '
+                'VALUES (?, ?, ?)',
+                (name, proj_id, link_name))
         self.con.commit()
         if not quiet:
-            tout.info(f"Project '{name}', patchwork ID {proj_id}")
+            tout.info(f"Project '{name}' patchwork-ID {proj_id} link-name {link_name}")
 
     def get_project(self):
-        """Get the name of the project
+        """Get the details of the project
 
         Returns:
             tuple:
                 name (str): Project name, e.g. 'U-Boot'
                 proj_id (int): Patchworks project ID for this project
+                link_name (str): Patchwork's link-name for the project
         """
-        res = self.cur.execute(f"SELECT name, proj_id FROM settings")
+        res = self.cur.execute(f"SELECT name, proj_id, link_name FROM settings")
         all = res.fetchall()
         if len(all) != 1:
             return None
         return all[0]
-
-    def get_project_id(self):
-        """Get the patwork ID of the project
-
-        Returns:
-            int: ID number
-
-        Raises:
-            ValueError: if there is no project
-        """
-        res = self.get_project()
-        if not res:
-            raise ValueError('Current project is not known')
-        return res[1]
 
     def build_col(self, state, prefix='', base_str=None):
         bright = True
@@ -1224,9 +1214,14 @@ class Cseries:
             assert cmt.subject == item.subject
             col_state, pad = self.build_col(item.state)
             patch_id = item.patch_id if item.patch_id else ''
-            num_comments = (f'{item.num_comments:3}' if item.num_comments
-                            else '  -')
-            line = (f'{seq:3} {col_state}{pad} {num_comments} '
+            if item.num_comments:
+                comments = str(item.num_comments)
+            elif item.num_comments is None:
+                comments = '-'
+            else:
+                comments = ''
+
+            line = (f'{seq:3} {col_state}{pad} {comments.rjust(3)} '
                     f'{patch_id:7} {oid(cmt.hash)} {item.subject}')
             lines.append(line)
             states[item.state] += 1
@@ -1433,3 +1428,17 @@ class Cseries:
         sdict = self.get_series_dict()
         for ser in sdict.values():
             self._summary_one(ser)
+
+    def open_series(self, pwork, name, version):
+        """Open the patchwork page for a series
+
+        Args:
+            pwork (Patchwork): Patchwork object to use
+            name (str): Name of series to open
+        """
+        ser, version = self.parse_series_and_version(name, version)
+        link = self.get_link(ser.name, version)
+        pwork.url = 'https://patchwork.ozlabs.org'
+        url = pwork.get_series_url(link)
+        print(f'Opening {url}')
+        command.output('xdg-open', url)
