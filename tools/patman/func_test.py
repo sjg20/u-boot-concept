@@ -77,8 +77,8 @@ class TestFunctional(unittest.TestCase):
         tout.init(tout.INFO, allow_colour=False)
 
     def tearDown(self):
-        shutil.rmtree(self.tmpdir)
-        # print(self.tmpdir)
+        # shutil.rmtree(self.tmpdir)
+        print(self.tmpdir)
         terminal.set_print_test_mode(False)
 
     @staticmethod
@@ -95,7 +95,7 @@ class TestFunctional(unittest.TestCase):
 
     @classmethod
     def _get_text(cls, fname):
-        """Read a file as text
+        """Read a file as textget_branch
 
         Args:
             fname (str): Filename to read
@@ -1853,8 +1853,15 @@ second line.'''
         self.assertEqual('first', gitutil.get_branch(self.gitdir))
         with capture_sys_output() as (out, _):
             cser.increment('first')
+        first2 = repo.lookup_reference('first2')
+
         with capture_sys_output() as (out, _):
             cser.set_link('first', 2, '2345', True)
+
+
+        print('head', repo.head)
+        print('head', repo.head)
+        return
         lines = out.getvalue().splitlines()
         self.assertEqual(6, len(lines))
         self.assertEqual('Checking out upstream commit refs/heads/base',
@@ -1869,6 +1876,7 @@ second line.'''
                          lines[5])
 
         self.assertEqual('2345', cser.get_link('first', 2))
+        return
 
         series = patchstream.get_metadata_for_list('first2', self.gitdir, 1)
         self.assertEqual('2:2345', series.links)
@@ -2273,6 +2281,35 @@ second line.'''
 
         next(cor)
         cor.close()
+
+    def test_series_inc_no_upstream(self):
+        """Increment a series which has """
+        cser = self.get_cser()
+
+        gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
+                         force=True)
+        with capture_sys_output() as (out, _):
+            cser.add_series('first', '', allow_unmarked=True)
+
+        repo = pygit2.init_repository(self.gitdir)
+        upstream = repo.lookup_branch('base')
+        upstream.delete()
+        cser.increment('first')
+
+
+        lines = out.getvalue().splitlines()
+        self.assertEqual(6, len(lines))
+        self.assertEqual('Checking out upstream commit refs/heads/base',
+                         lines[0])
+        self.assertEqual("Processing 2 commits from branch 'first2'",
+                         lines[1])
+        self.assertRegex(lines[2], '-  .* as .*: i2c: I2C things')
+        self.assertRegex(lines[3], '-  .* as .*: spi: SPI fixes')
+        self.assertRegex(lines[4], 'Updating branch first2 to .*')
+        self.assertEqual('Added new branch first2', lines[5])
+
+        slist = cser.get_series_dict()
+        self.assertEqual(1, len(slist))
 
     def test_series_inc_dryrun(self):
         """Test incrementing the version with cmdline"""

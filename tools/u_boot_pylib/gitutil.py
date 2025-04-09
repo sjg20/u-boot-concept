@@ -89,9 +89,11 @@ def name_revision(commit_hash):
         Name of revision, if any, else None
     """
     stdout = command.output_one_line('git', 'name-rev', commit_hash)
+    if not stdout:
+        return None
 
     # We expect a commit, a space, then a revision name
-    name = stdout.split(' ')[1].strip()
+    name = stdout.split()[1].strip()
     return name
 
 
@@ -111,6 +113,7 @@ def guess_upstream(git_dir, branch):
             Name of upstream branch (e.g. 'upstream/master') or None if none
             Warning/error message, or None if none
     """
+    print('branch', branch)
     cmd = log_cmd(branch, git_dir=git_dir, oneline=True, count=100)
     result = command.run_one(*cmd, capture=True, capture_stderr=True,
                              raise_on_error=False)
@@ -748,7 +751,7 @@ def get_branch(git_dir=None):
     if git_dir:
         cmd += ['--git-dir', git_dir]
     cmd += ['rev-parse', '--abbrev-ref', 'HEAD']
-    out = command.output_one_line(*cmd)
+    out = command.output_one_line(*cmd, raise_on_error=False)
     if out == 'HEAD':
         return None
     return out
