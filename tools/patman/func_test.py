@@ -77,8 +77,8 @@ class TestFunctional(unittest.TestCase):
         tout.init(tout.INFO, allow_colour=False)
 
     def tearDown(self):
-        # shutil.rmtree(self.tmpdir)
-        print(self.tmpdir)
+        shutil.rmtree(self.tmpdir)
+        # print(self.tmpdir)
         terminal.set_print_test_mode(False)
 
     @staticmethod
@@ -1853,30 +1853,25 @@ second line.'''
         self.assertEqual('first', gitutil.get_branch(self.gitdir))
         with capture_sys_output() as (out, _):
             cser.increment('first')
-        first2 = repo.lookup_branch('first2')
-        print('first2', first2.name)
+        self.assertTrue(repo.lookup_branch('first2'))
 
-        # with capture_sys_output() as (out, _):
-        cser.set_link('first', 2, '2345', True)
+        with capture_sys_output() as (out, _):
+            cser.set_link('first', 2, '2345', True)
 
-        print('first2', first2.name)
-        print('head', repo.head)
-        print('head', repo.head)
-        # lines = out.getvalue().splitlines()
-        # self.assertEqual(6, len(lines))
-        # self.assertEqual('Checking out upstream commit refs/heads/base',
-        #                  lines[0])
-        # self.assertEqual("Processing 2 commits from branch 'first2'",
-        #                  lines[1])
-        # self.assertRegex(lines[2], '-  .* as .*: i2c: I2C things')
-        # self.assertRegex(lines[3],
-        #                  '- added version 2 .* as .*: spi: SPI fixes')
-        # self.assertRegex(lines[4], 'Updating branch first2 to .*')
-        # self.assertEqual("Setting link for series 'first' version 2 to 2345",
-        #                  lines[5])
+        lines = out.getvalue().splitlines()
+        self.assertEqual(6, len(lines))
+        self.assertEqual('Checking out upstream commit refs/heads/base',
+                         lines[0])
+        self.assertEqual("Processing 2 commits from branch 'first2'",
+                         lines[1])
+        self.assertRegex(lines[2], '-  .* as .*: i2c: I2C things')
+        self.assertRegex(lines[3],
+                         '- added version 2 .* as .*: spi: SPI fixes')
+        self.assertRegex(lines[4], 'Updating branch first2 to .*')
+        self.assertEqual("Setting link for series 'first' version 2 to 2345",
+                         lines[5])
 
         self.assertEqual('2345', cser.get_link('first', 2))
-        # return
 
         series = patchstream.get_metadata_for_list('first2', self.gitdir, 2)
         self.assertEqual('2:2345', series.links)
@@ -2294,13 +2289,11 @@ second line.'''
         repo = pygit2.init_repository(self.gitdir)
         upstream = repo.lookup_branch('base')
         upstream.delete()
-        cser.increment('first')
-
-
+        with capture_sys_output() as (out, _):
+            cser.increment('first')
         lines = out.getvalue().splitlines()
         self.assertEqual(6, len(lines))
-        self.assertEqual('Checking out upstream commit refs/heads/base',
-                         lines[0])
+        self.assertRegex(lines[0], 'Checking out upstream commit .*')
         self.assertEqual("Processing 2 commits from branch 'first2'",
                          lines[1])
         self.assertRegex(lines[2], '-  .* as .*: i2c: I2C things')

@@ -866,7 +866,7 @@ class Cseries:
             # Try just counting commits
             # print('failed')
             commit = repo.revparse_single(f'{name}~{count}')
-            upstream_name = commit
+            upstream_name = oid(commit.oid)
             upstream = commit
         branch = repo.lookup_branch(name)
 
@@ -929,7 +929,8 @@ class Cseries:
         else:
             if new_name:
                 new_branch = repo.branches.create(new_name, target)
-                new_branch.upstream = branch.upstream
+                if branch.upstream:
+                    new_branch.upstream = branch.upstream
                 # new_branch = repo.lookup_branch(name)
                 # new_branch.upstream = branch.upstream
                 # commit = new_branch.peel(pygit2.GIT_OBJ_COMMIT)
