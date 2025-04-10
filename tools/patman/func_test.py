@@ -3166,3 +3166,50 @@ second line.'''
             'xdg-open',
             'https://patchwork.ozlabs.org/project/uboot/list/?series=457&state=*&archive=both'
             ])
+
+    def test_name_version(self):
+        """Test handling of series names and versions"""
+        cser = self.get_cser()
+        repo = self.repo
+
+        self.assertEqual(('fred', None), cser.split_name_version('fred'))
+        self.assertEqual(('mary', 2), cser.split_name_version('mary2'))
+
+        ser, version = cser.parse_series_and_version(None, None)
+        self.assertEqual('first', ser.name)
+        self.assertEqual(1, version)
+
+        ser, version = cser.parse_series_and_version('first', None)
+        self.assertEqual('first', ser.name)
+        self.assertEqual(1, version)
+
+        ser, version = cser.parse_series_and_version('first', 2)
+        self.assertEqual('first', ser.name)
+        self.assertEqual(2, version)
+
+        with self.assertRaises(ValueError) as exc:
+            cser.parse_series_and_version('123', 2)
+        self.assertEqual(
+            "Series name '123' cannot be a number, use '<name><version>'",
+            str(exc.exception))
+
+        with self.assertRaises(ValueError) as exc:
+            cser.parse_series_and_version('first', 100)
+        self.assertEqual("Version '100' exceeds 99", str(exc.exception))
+
+        with self.assertRaises(ValueError) as exc:
+            cser.parse_series_and_version('mary3', 4)
+        self.assertEqual(
+            'Version mismatch: -V has 4 but branch name indicates 3',
+            str(exc.exception))
+
+        # Move off the branch and check for a sensible error
+        commit = repo.revparse_single('first~')
+        repo.checkout_tree(commit)
+        repo.set_head(commit.oid)
+
+        with self.assertRaises(ValueError) as exc:
+            cser.parse_series_and_version(None, None)
+        self.assertEqual('No branch detected: please use -s <series>',
+                         str(exc.exception))
+

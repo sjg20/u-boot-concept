@@ -525,18 +525,16 @@ class Cseries:
         Return:
             tuple:
                 str: series name
-                int: series version
+                int: series version, or None if there is none in in_name
         """
         m_ver = re.match(r'([^0-9]*)(\d*)', in_name)
+        version = None
         if m_ver:
             name = m_ver.group(1)
             if m_ver.group(2):
                 version = int(m_ver.group(2))
-            else:
-                version = 1
         else:
             name = in_name
-            version = 1
         return name, version
 
     def join_name_version(self, in_name, version):
@@ -576,7 +574,7 @@ class Cseries:
             ser.name = name
         return ser
 
-    def parse_series_and_version(self, name, in_version):
+    def parse_series_and_version(self, in_name, in_version):
         """Parse the name and version of a series, or detect from current branch
 
         Figures out the name from in_name, or if that is None, from the current
@@ -596,13 +594,23 @@ class Cseries:
                 int: Series version-number detected from the name
                     (e.g. 'fred' is version 1, 'fred2' is version 2)
         """
+        name = in_name
         if not name:
             name = gitutil.get_branch(self.gitdir)
+            if not name:
+                raise ValueError('No branch detected: please use -s <series>')
         name, version = self.split_name_version(name)
+        if not name:
+            raise ValueError(f"Series name '{in_name}' cannot be a number, use '<name><version>'")
+        if not version:
+            version = in_version
+        if in_version and version != in_version:
+            raise ValueError(
+                f"Version mismatch: -V has {in_version} but branch name indicates {version}")
+        if not version:
+            version = 1
         if version > 99:
             raise ValueError(f"Version '{version}' exceeds 99")
-        if not name:
-            raise ValueError(f"Series name '{name}' cannot be a number")
         ser = self.get_series_by_name(name)
         if not ser:
             ser = Series()
@@ -1298,12 +1306,20 @@ class Cseries:
         for line in lines:
             print(line)
 
-    def list_patches(self, series, version):
-        """List patches in a series
+    def _get_patches(self, series, version):
+        """Get a Series object containing the patches in a series
 
         Args:
             series (str): Name of series to use, or None to use current branch
             version (int): Version number, or None to detect from name
+
+        Return:
+            tuple:
+                str: Name of branch, e.g. 'mary2'
+                Series: Series object containing the commits
+                OrderedDict:
+                    key (int): record ID if find_svid is None, else seq
+                    value (PCOMMIT): record data
         """
         ser, version = self.parse_series_and_version(series, version)
         self.ensure_version(ser, version)
@@ -1313,7 +1329,16 @@ class Cseries:
         count = len(pwc)
         branch = self.join_name_version(ser.name, version)
         series = patchstream.get_metadata(branch, 0, count, git_dir=self.gitdir)
+        return branch, series, pwc
 
+    def list_patches(self, series, version):
+        """List patches in a series
+
+        Args:
+            series (str): Name of series to use, or None to use current branch
+            version (int): Version number, or None to detect from name
+        """
+        branch, series, pwc = self._get_patches(series, version)
         self._list_patches(branch, pwc, series)
 
     def get_series_svid(self, series_id, version):
@@ -1358,15 +1383,7 @@ class Cseries:
             series (str): Name of series to use, or None to use current branch
             version (int): Version number, or None to detect from name
         """
-        ser, version = self.parse_series_and_version(series, version)
-        self.ensure_version(ser, version)
-        svid, _ = self.get_series_svid_link(ser.idnum, version)
-        pwc = self.get_pcommit_dict(svid)
-
-        count = len(pwc)
-        branch = self.join_name_version(ser.name, version)
-        series = patchstream.get_metadata(branch, 0, count, git_dir=self.gitdir)
-
+        branch, series, pwc = self._get_patches(series, version)
         self._list_patches(branch, pwc, series)
 
     def series_sync(self, pwork, series, version):
