@@ -18,6 +18,7 @@ import pygit2
 from patman import patchstream
 from patman.series import Series
 from u_boot_pylib import command
+from u_boot_pylib import cros_subprocess
 from u_boot_pylib import gitutil
 from u_boot_pylib import terminal
 from u_boot_pylib import tout
@@ -932,8 +933,8 @@ class Cseries:
             repo.create_commit('HEAD', cherry.author, cherry.committer,
                                vals.msg, tree_id, [cur.target])
             cur = repo.head
-            repo.state_cleanup()
             tout.info(f"- {vals.info} {oid(cmt.hash)} as {oid(cur.target)}: {cmt}")
+        repo.state_cleanup()
 
         # Update the branch
         target = repo.revparse_single('HEAD')
@@ -1522,5 +1523,4 @@ class Cseries:
         # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same process is not supported.
         # Gtk-Message: 06:48:20.729: Failed to load module "canberra-gtk-module"
         # ATTENTION: default value of option mesa_glthread overridden by environment.
-
-        command.output('xdg-open', url, capture_stderr=True)
+        cros_subprocess.Popen([f'xdg-open', url])
