@@ -11,7 +11,7 @@ import sqlite3
 from u_boot_pylib import tout
 
 # Schema version
-LATEST = 1
+LATEST = 2
 
 
 class Database:
@@ -64,7 +64,12 @@ class Database:
         self.con.commit()
 
     def _migrate_to_v1(self):
+        """Add a schema_version table"""
         self.cur.execute('CREATE TABLE schema_version (version INTEGER)')
+
+    def _migrate_to_v2(self):
+        """Store the number of cover-letter comments in the schema"""
+        self.cur.execute('ALTER TABLE series ADD COLUMN cover_num_comments')
 
     def migrate_to(self, dest_version):
         while True:
@@ -76,6 +81,8 @@ class Database:
             tout.info(f'Update database to v{version}')
             if version == 1:
                 self._migrate_to_v1()
+            elif version == 2:
+                self._migrate_to_v2()
             self.cur.execute('DELETE FROM schema_version')
             self.cur.execute('INSERT INTO schema_version (version) VALUES (?)',
                              (version,))

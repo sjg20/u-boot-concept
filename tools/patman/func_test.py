@@ -21,7 +21,7 @@ from patman.commit import Commit
 from patman import control
 from patman import cseries
 from patman.cseries import PCOMMIT
-from patman.database import Database
+from patman import database
 from patman import patchstream
 from patman.patchstream import PatchStream
 from patman.patchwork import Patchwork
@@ -3217,7 +3217,7 @@ second line.'''
 
     def test_migrate(self):
         """Test migration to later schema versions"""
-        db = Database(f'{self.tmpdir}/.patman.db')
+        db = database.Database(f'{self.tmpdir}/.patman.db')
         with capture_sys_output() as (out, _):
             db.open_it()
         self.assertEqual('', out.getvalue().strip())
@@ -3227,7 +3227,10 @@ second line.'''
         self.assertEqual('Create database v0', out.getvalue().strip())
         self.assertEqual(0, db.get_schema_version())
 
-        with capture_sys_output() as (out, _):
-            db.migrate_to(1)
-        self.assertEqual('Update database to v1', out.getvalue().strip())
-        self.assertEqual(1, db.get_schema_version())
+        for version in range(1, database.LATEST + 1):
+            with capture_sys_output() as (out, _):
+                db.migrate_to(version)
+            self.assertEqual(f'Update database to v{version}',
+                             out.getvalue().strip())
+            self.assertEqual(version, db.get_schema_version())
+        self.assertEqual(2, database.LATEST)
