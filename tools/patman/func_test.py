@@ -2278,7 +2278,7 @@ second line.'''
         cor.close()
 
     def test_series_inc_no_upstream(self):
-        """Increment a series which has """
+        """Increment a series which has no upstream branch"""
         cser = self.get_cser()
 
         gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,

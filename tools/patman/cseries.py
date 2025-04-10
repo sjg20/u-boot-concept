@@ -750,7 +750,7 @@ class Cseries:
         count = len(pwc.values())
         series = patchstream.get_metadata(branch_name, 0, count,
                                           git_dir=self.gitdir)
-        # tout.info(f"Increment '{ser.name} v{max_vers}: {count} patches")
+        tout.info(f"Increment '{ser.name} v{max_vers}: {count} patches")
 
         # Create a new branch
         vers = max_vers + 1
@@ -851,9 +851,9 @@ class Cseries:
         Return:
             pygit.oid: oid of the new branch
         """
-        # print('name', name, new_name)
+        print('name', name, new_name)
         upstream_name = gitutil.get_upstream(self.gitdir, name)[0]
-        # print('upstream_name', upstream_name)
+        print('upstream_name', upstream_name)
 
         count = len(series.commits)
         tout.debug(f"_process_series name '{name}' new_name '{new_name}' "
@@ -864,10 +864,11 @@ class Cseries:
             upstream_name = upstream.name
         except KeyError:
             # Try just counting commits
-            # print('failed')
+            print('failed', count)
             commit = repo.revparse_single(f'{name}~{count}')
             upstream_name = oid(commit.oid)
             upstream = commit
+            print('upstream_name', upstream_name)
         branch = repo.lookup_branch(name)
 
         other = repo.revparse_single(f'{name}~{count}')
@@ -880,8 +881,17 @@ class Cseries:
             name = new_name
             commit_oid = upstream.peel(pygit2.GIT_OBJ_COMMIT).oid
             commit = repo.get(commit_oid)
-            repo.checkout_tree(commit)
-            repo.set_head(commit_oid)
+            print('checkout', commit)
+            # repo.checkout_tree(commit)
+            # repo.set_head(commit_oid)
+            out = repo.get(commit_oid)
+            # ref = repo.lookup_reference(branch.name)
+
+            print('out', out)
+            print('hex', out.hex)
+            repo.checkout(branch)
+            # need to checkout the upstream branch or commit
+            print('done')
         else:
             # Check out the upstream commit (detached HEAD)
             commit_oid = upstream.peel(pygit2.GIT_OBJ_COMMIT).oid
@@ -889,6 +899,7 @@ class Cseries:
             repo.checkout_tree(commit)
             repo.set_head(commit_oid)
         cur = repo.head
+        print('start')
         vals = SimpleNamespace()
         vals.final = False
         tout.info(f"Processing {count} commits from branch '{name}'")
