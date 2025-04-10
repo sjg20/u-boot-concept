@@ -1376,7 +1376,7 @@ class Cseries:
         if not link:
             raise ValueError(
                 "No patchwork link is available: use 'patman series auto-link'")
-        patches = pwork.series_get_state(link)
+        cover, patches = pwork.series_get_state(link)
 
         pwc = self.get_pcommit_dict(svid)
 
@@ -1389,6 +1389,12 @@ class Cseries:
                     'patch_id = ?, state = ?, num_comments = ? WHERE id = ?',
                     (patch.id, patch.state, patch.num_comments, item.id))
                 updated += self.rowcount()
+        if cover:
+            self.db.execute(
+                'UPDATE series SET link = ?, cover_num_comments = ? '
+                'WHERE id = ?',
+                (cover.id, cover.num_comments, ser.idnum))
+
         self.commit()
         tout.info(f'{updated} patch(es) updated')
 

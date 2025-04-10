@@ -69,6 +69,7 @@ class Database:
 
     def _migrate_to_v2(self):
         """Store the number of cover-letter comments in the schema"""
+        self.cur.execute('ALTER TABLE series ADD COLUMN link')
         self.cur.execute('ALTER TABLE series ADD COLUMN cover_num_comments')
 
     def migrate_to(self, dest_version):

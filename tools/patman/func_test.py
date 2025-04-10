@@ -2888,11 +2888,12 @@ second line.'''
                     {'id': 10},
                     {'id': 11},
                     {'id': 12},
-                ]
+                ],
+                'cover_letter': 39,
             }
-        m_patch_id = re.search(r'patches/(\d*)/', subpath)
-        patch_id = m_patch_id.group(1) if m_patch_id else ''
-        if subpath.endswith('comments/'):
+        m_pc = re.search(r'patches/(\d*)/comments/', subpath)
+        patch_id = m_pc.group(1) if m_pc else ''
+        if patch_id:
             if patch_id == '10':
                 return [1, 2]
             if patch_id == '11':
@@ -2900,6 +2901,17 @@ second line.'''
             if patch_id == '12':
                 return [4, 5, 6]
 
+        m_cover_id = re.search(r'covers/(\d*)/comments/', subpath)
+        cover_id = m_cover_id.group(1) if m_cover_id else ''
+        if cover_id:
+            if cover_id == '39':
+                return [
+                    { 'content': 'some comment', },
+                    { 'content': 'another comment', },
+                ]
+
+        m_pat = re.search(r'patches/(\d*)/', subpath)
+        patch_id = m_pat.group(1) if m_pat else ''
         if subpath.startswith('patches/'):
             if patch_id == '10':
                 return {'state': 'accepted'}
@@ -3163,11 +3175,12 @@ second line.'''
 
         with mock.patch.object(cros_subprocess.Popen, '__init__',
                                return_value=None) as method:
-            cser.open_series(pwork, 'second2', 2)
-        method.assert_called_once_with([
-            'xdg-open',
-            'https://patchwork.ozlabs.org/project/uboot/list/?series=457&state=*&archive=both'
-            ])
+            with capture_sys_output() as (out, _):
+                cser.open_series(pwork, 'second2', 2)
+
+        url = 'https://patchwork.ozlabs.org/project/uboot/list/?series=457&state=*&archive=both'
+        method.assert_called_once_with(['xdg-open', url])
+        self.assertEqual(f'Opening {url}', out.getvalue().strip())
 
     def test_name_version(self):
         """Test handling of series names and versions"""
