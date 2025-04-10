@@ -750,7 +750,7 @@ class Cseries:
         count = len(pwc.values())
         series = patchstream.get_metadata(branch_name, 0, count,
                                           git_dir=self.gitdir)
-        tout.info(f"Increment '{ser.name} v{max_vers}: {count} patches")
+        # tout.info(f"Increment '{ser.name} v{max_vers}: {count} patches")
 
         # Create a new branch
         vers = max_vers + 1
@@ -851,7 +851,7 @@ class Cseries:
         Return:
             pygit.oid: oid of the new branch
         """
-        print('name', name, new_name)
+        # print('name', name, new_name)
         upstream_name = gitutil.get_upstream(self.gitdir, name)[0]
         # print('upstream_name', upstream_name)
 
