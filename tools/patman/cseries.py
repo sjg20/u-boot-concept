@@ -851,6 +851,7 @@ class Cseries:
         Return:
             pygit.oid: oid of the new branch
         """
+        print('name', name, new_name)
         upstream_name = gitutil.get_upstream(self.gitdir, name)[0]
         # print('upstream_name', upstream_name)
 
@@ -927,17 +928,20 @@ class Cseries:
                 repo.head.set_target(branch_oid)
         else:
             if new_name:
-                new_branch = repo.branches.create(name, target)
+                new_branch = repo.branches.create(new_name, target)
                 new_branch.upstream = branch.upstream
                 # new_branch = repo.lookup_branch(name)
                 # new_branch.upstream = branch.upstream
                 # commit = new_branch.peel(pygit2.GIT_OBJ_COMMIT)
                 # repo.checkout(commit)
-                repo.create_reference(f'refs/heads/{name}', target.oid,
-                                      force=True)
                 ref = repo.lookup_reference(f'refs/heads/{name}')
                 repo.checkout(ref)
                 # git branch --set-upstream-to first first2
+            else:
+                # repo.create_reference(f'refs/heads/{name}', target.oid,
+                                      # force=True)
+                branch.set_target(target.oid)
+                repo.checkout(branch)
         vals.oid = target.oid
 
     def mark_series(self, name, series, dry_run=False):

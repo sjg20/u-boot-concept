@@ -1853,32 +1853,32 @@ second line.'''
         self.assertEqual('first', gitutil.get_branch(self.gitdir))
         with capture_sys_output() as (out, _):
             cser.increment('first')
-        first2 = repo.lookup_reference('first2')
+        first2 = repo.lookup_branch('first2')
+        print('first2', first2.name)
 
-        with capture_sys_output() as (out, _):
-            cser.set_link('first', 2, '2345', True)
+        # with capture_sys_output() as (out, _):
+        cser.set_link('first', 2, '2345', True)
 
-
+        print('first2', first2.name)
         print('head', repo.head)
         print('head', repo.head)
-        return
-        lines = out.getvalue().splitlines()
-        self.assertEqual(6, len(lines))
-        self.assertEqual('Checking out upstream commit refs/heads/base',
-                         lines[0])
-        self.assertEqual("Processing 2 commits from branch 'first2'",
-                         lines[1])
-        self.assertRegex(lines[2], '-  .* as .*: i2c: I2C things')
-        self.assertRegex(lines[3],
-                         '- added version 2 .* as .*: spi: SPI fixes')
-        self.assertRegex(lines[4], 'Updating branch first2 to .*')
-        self.assertEqual("Setting link for series 'first' version 2 to 2345",
-                         lines[5])
+        # lines = out.getvalue().splitlines()
+        # self.assertEqual(6, len(lines))
+        # self.assertEqual('Checking out upstream commit refs/heads/base',
+        #                  lines[0])
+        # self.assertEqual("Processing 2 commits from branch 'first2'",
+        #                  lines[1])
+        # self.assertRegex(lines[2], '-  .* as .*: i2c: I2C things')
+        # self.assertRegex(lines[3],
+        #                  '- added version 2 .* as .*: spi: SPI fixes')
+        # self.assertRegex(lines[4], 'Updating branch first2 to .*')
+        # self.assertEqual("Setting link for series 'first' version 2 to 2345",
+        #                  lines[5])
 
         self.assertEqual('2345', cser.get_link('first', 2))
-        return
+        # return
 
-        series = patchstream.get_metadata_for_list('first2', self.gitdir, 1)
+        series = patchstream.get_metadata_for_list('first2', self.gitdir, 2)
         self.assertEqual('2:2345', series.links)
 
         self.assertEqual('first2', gitutil.get_branch(self.gitdir))
