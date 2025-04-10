@@ -863,7 +863,9 @@ class Cseries:
         try:
             upstream = repo.lookup_reference(upstream_name)
             upstream_name = upstream.name
+            commit = upstream.peel(pygit2.GIT_OBJ_COMMIT)
         except KeyError:
+            # print('err')
             # Try just counting commits
             # print('failed', count)
             upstream_name = f'{name}~{count}'
@@ -880,8 +882,8 @@ class Cseries:
         if new_name:
             name = new_name
             # Create a new branch, pointing to upstream commit
-            if not commit:
-                commit = branch.peel(pygit2.GIT_OBJ_COMMIT)
+            # if not commit:
+                # commit = branch.peel(pygit2.GIT_OBJ_COMMIT)
                 # commit_oid = upstream.peel(pygit2.GIT_OBJ_COMMIT).oid
             # commit = repo.get(commit_oid)
             # print('checkout', commit)
