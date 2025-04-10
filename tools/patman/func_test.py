@@ -14,7 +14,7 @@ import shutil
 import sys
 import tempfile
 import unittest
-
+from unittest import mock
 
 from patman import cmdline
 from patman.commit import Commit
@@ -27,6 +27,7 @@ from patman.patchwork import Patchwork
 from patman.series import Series
 from patman import settings
 from u_boot_pylib import command
+from u_boot_pylib import cros_subprocess
 from u_boot_pylib import gitutil
 from u_boot_pylib import terminal
 from u_boot_pylib import tools
@@ -3158,13 +3159,10 @@ second line.'''
             cser.do_auto_link(pwork, 'second', 2, True)
             cser.series_sync(pwork, 'second', 2)
 
-        with capture_sys_output() as (out, _):
-            try:
-                command.TEST_RESULT = command.CommandResult()
-                cser.open_series(pwork, 'second2', 2)
-            finally:
-                command.TEST_RESULT = None
-        self.assertEqual(
-            'Opening https://patchwork.ozlabs.org/project/uboot/list/'
-            '?series=457&state=*&archive=both',
-            out.getvalue().strip())
+        with mock.patch.object(cros_subprocess.Popen, '__init__',
+                               return_value=None) as method:
+            cser.open_series(pwork, 'second2', 2)
+        method.assert_called_once_with([
+            'xdg-open',
+            'https://patchwork.ozlabs.org/project/uboot/list/?series=457&state=*&archive=both'
+            ])
