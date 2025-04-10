@@ -16,6 +16,7 @@ from types import SimpleNamespace
 import pygit2
 
 from patman import patchstream
+from patman.database import Database
 from patman.series import Series
 from u_boot_pylib import command
 from u_boot_pylib import cros_subprocess
@@ -63,46 +64,11 @@ class Cseries:
     def __init__(self, topdir=None, colour=terminal.COLOR_IF_TERMINAL):
         self.topdir = topdir
         self.gitdir = None
-        self.con = None
-        self.cur = None
+        self.db = None
+        # self.con = None
+        # self.cur = None
         self.quiet = False
         self.col = terminal.Color(colour)
-
-    def check_database(self):
-        """Check that the database has the required tables and is up-to-date
-        """
-        # Check if a series table is present
-        self.cur = self.con.cursor()
-        try:
-            self.cur.execute('SELECT name FROM series')
-        except OperationalError:
-            self.cur.execute(
-                'CREATE TABLE series (id INTEGER PRIMARY KEY AUTOINCREMENT,'
-                'name UNIQUE, desc, archived BIT)')
-
-            # Provides a series_id/version pair, which is used to refer to a
-            # particular series version sent to patchwork. This stores the link
-            # to patchwork
-            self.cur.execute(
-                'CREATE TABLE ser_ver (id INTEGER PRIMARY KEY AUTOINCREMENT,'
-                'series_id INTEGER, version INTEGER, link,'
-                'FOREIGN KEY (series_id) REFERENCES series (id))')
-
-            self.cur.execute(
-                'CREATE TABLE upstream (name UNIQUE, url, is_default BIT)')
-
-            # change_id is the Change-Id
-            # patch_id is the ID of the patch on the patchwork server
-            self.cur.execute(
-                'CREATE TABLE pcommit (id INTEGER PRIMARY KEY AUTOINCREMENT,'
-                'svid INTEGER, seq INTEGER, subject, patch_id INTEGER, '
-                'change_id, state, num_comments INTEGER, '
-                'FOREIGN KEY (svid) REFERENCES ser_ver (id))')
-
-            self.cur.execute(
-                'CREATE TABLE settings (name UNIQUE, proj_id INT, link_name)')
-            self.con.commit()
-        return self.cur
 
     def open_database(self):
         """Open the database read for use"""
@@ -112,17 +78,27 @@ class Cseries:
                 raise ValueError('No git repo detected in current directory')
         self.gitdir = os.path.join(self.topdir, '.git')
         fname = f'{self.topdir}/.patman.db'
-        if not os.path.exists(fname):
-            tout.warning(f'Creating new database {fname}')
-        self.con = sqlite3.connect(fname, autocommit=False)
-
-        self.cur = self.check_database()
-        return self.cur
+        self.db = Database(fname)
+        self.db.open_it()
+        # self.cur = self.db.cur
+        # self.con = self.db.con
+        # return self.cur
 
     def close_database(self):
         """Close the database"""
-        self.con.close()
-        self.cur = None
+        self.db.close()
+
+    def commit(self):
+        self.db.commit()
+
+    def rollback(self):
+        self.db.rollback()
+
+    def lastrowid(self):
+        return self.db.lastrowid()
+
+    def rowcount(self):
+        return self.db.rowcount()
 
     def get_series_dict(self, include_archived=False):
         """Get a dict of Series objects from the database
@@ -132,7 +108,7 @@ class Cseries:
                 key: series name
                 value: Series with name and desc filled out
         """
-        res = self.cur.execute('SELECT id, name, desc FROM series ' +
+        res = self.db.execute('SELECT id, name, desc FROM series ' +
             ('WHERE archived = 0' if not include_archived else ''))
         sdict = OrderedDict()
         for idnum, name, desc in res.fetchall():
@@ -152,7 +128,7 @@ class Cseries:
                 int: version
                 link: link string, or ''
         """
-        res = self.cur.execute('SELECT series_id, version, link FROM ser_ver')
+        res = self.db.execute('SELECT series_id, version, link FROM ser_ver')
         return res.fetchall()
 
     def get_upstream_dict(self):
@@ -163,7 +139,7 @@ class Cseries:
                 key (str): upstream name
                 value (str): url
         """
-        res = self.cur.execute('SELECT name, url, is_default FROM upstream')
+        res = self.db.execute('SELECT name, url, is_default FROM upstream')
         udict = OrderedDict()
         for name, url, is_default in res.fetchall():
             udict[name] = url, is_default
@@ -185,7 +161,7 @@ class Cseries:
                  'num_comments FROM pcommit')
         if find_svid is not None:
             query += f' WHERE svid = {find_svid}'
-        res = self.cur.execute(query)
+        res = self.db.execute(query)
         pcdict = OrderedDict()
         for (idnum, seq, subject, svid, change_id, state, patch_id,
              num_comments) in res.fetchall():
@@ -207,7 +183,7 @@ class Cseries:
                 name (str): Series name
                 desc (str): Series description
         """
-        res = self.cur.execute('SELECT name, desc FROM series WHERE id = ?',
+        res = self.db.execute('SELECT name, desc FROM series WHERE id = ?',
                                (idnum,))
         recs = res.fetchall()
         if len(recs) != 1:
@@ -295,18 +271,18 @@ class Cseries:
         added = False
         series_id = self.find_series_by_name(name)
         if not series_id:
-            self.cur.execute(
+            self.db.execute(
                 'INSERT INTO series (name, desc, archived) '
                 f"VALUES ('{name}', '{desc}', 0)")
-            series_id = self.cur.lastrowid
+            series_id = self.lastrowid()
             added = True
             msg += f" series '{name}'"
 
         if version not in self.get_version_list(series_id):
-            self.cur.execute(
+            self.db.execute(
                 'INSERT INTO ser_ver (series_id, version, link) VALUES '
                 '(?, ?, ?)', (series_id, version, link))
-            svid = self.cur.lastrowid
+            svid = self.lastrowid()
             msg += f" version {version}"
             if not added:
                 msg += f" to existing series '{name}'"
@@ -319,9 +295,9 @@ class Cseries:
             tout.info(f"Series '{name}' version {version} already exists")
             msg = None
         elif not dry_run:
-            self.con.commit()
+            self.commit()
         else:
-            self.con.rollback()
+            self.rollback()
             series_id = None
         ser = Series()
         ser.name = name
@@ -342,7 +318,7 @@ class Cseries:
             svid (int): ser_ver-table ID to use for each commit
         """
         for seq, commit in enumerate(series.commits):
-            self.cur.execute(
+            self.db.execute(
                 'INSERT INTO pcommit (svid, seq, subject, change_id) '
                 'VALUES (?, ?, ?, ?)',
                 (str(svid), seq, commit.subject, commit.change_id))
@@ -356,7 +332,7 @@ class Cseries:
         Return:
             Series: Object containing series info, or None if none
         """
-        res = self.cur.execute(
+        res = self.db.execute(
             f"SELECT id, name, desc FROM series WHERE name = '{name}'")
         recs = res.fetchall()
         if not recs:
@@ -415,10 +391,10 @@ class Cseries:
             link = ''
         tout.info(
             f"Setting link for series '{ser.name}' version {version} to {link}")
-        self.cur.execute(
+        self.db.execute(
             f"UPDATE ser_ver SET link = '{link}' WHERE "
             'series_id = ? AND version = ?', (ser.idnum, version))
-        self.con.commit()
+        self.commit()
 
     def get_link(self, series, version):
         """Get the patchwork link for a version of a series
@@ -433,7 +409,7 @@ class Cseries:
         ser = self.parse_series(series)
         self.ensure_version(ser, version)
 
-        res = self.cur.execute('SELECT link FROM ser_ver WHERE '
+        res = self.db.execute('SELECT link FROM ser_ver WHERE '
             f"series_id = {ser.idnum} AND version = '{version}'")
         recs = res.fetchall()
         if not recs:
@@ -508,7 +484,7 @@ class Cseries:
         """
         if idnum is None:
             raise ValueError('Unknown series idnum')
-        res = self.cur.execute('SELECT version FROM ser_ver WHERE '
+        res = self.db.execute('SELECT version FROM ser_ver WHERE '
             f"series_id = {idnum}")
         recs = res.fetchall()
         return [item[0] for item in recs]
@@ -631,10 +607,10 @@ class Cseries:
         if not ser.idnum:
             raise ValueError(f"Series '{ser.name}' not found in database")
         ser.archived = archived
-        self.cur.execute(
+        self.db.execute(
             f'UPDATE series SET archived = {int(archived)} WHERE '
             f'id = {ser.idnum}')
-        self.con.commit()
+        self.commit()
 
     def series_get_version_stats(self, idnum, vers):
         """Get the stats for a series
@@ -771,20 +747,20 @@ class Cseries:
         old_svid = self.get_series_svid(ser.idnum, max_vers)
         pcd = self.get_pcommit_dict(old_svid)
 
-        self.cur.execute(
+        self.db.execute(
             'INSERT INTO ser_ver (series_id, version) VALUES (?, ?)',
             (ser.idnum, vers))
-        svid = self.cur.lastrowid
+        svid = self.lastrowid()
 
         for pcm in pcd.values():
-            self.cur.execute(
+            self.db.execute(
                 'INSERT INTO pcommit (svid, seq, subject, change_id) VALUES '
                 '(?, ?, ?, ?)', (svid, pcm.seq, pcm.subject, pcm.change_id))
 
         if not dry_run:
-            self.con.commit()
+            self.commit()
         else:
-            self.con.rollback()
+            self.rollback()
 
         # repo.head.set_target(amended)
         tout.info(f'Added new branch {new_name}')
@@ -824,15 +800,15 @@ class Cseries:
 
         old_svid = self.get_series_svid(ser.idnum, max_vers)
 
-        self.cur.execute(
+        self.db.execute(
             'DELETE FROM ser_ver WHERE series_id = ? and version = ?',
             (ser.idnum, max_vers))
-        self.cur.execute(
+        self.db.execute(
             'DELETE FROM pcommit WHERE svid = ?', (old_svid,))
         if not dry_run:
-            self.con.commit()
+            self.commit()
         else:
-            self.con.rollback()
+            self.rollback()
 
     def make_change_id(self, commit):
         """Make a Change ID for a commit"""
@@ -1056,12 +1032,12 @@ class Cseries:
             url (str): URL for the tree
         """
         try:
-            self.cur.execute(
+            self.db.execute(
                 f"INSERT INTO upstream (name, url) VALUES ('{name}', '{url}')")
         except sqlite3.IntegrityError as exc:
             if 'UNIQUE constraint failed: upstream.name' in str(exc):
                 raise ValueError(f"Upstream '{name}' already exists") from exc
-        self.con.commit()
+        self.commit()
 
     def list_upstream(self):
         udict = self.get_upstream_dict()
@@ -1078,14 +1054,14 @@ class Cseries:
             name (str): Name of the upstream remote to set as default, or None
                 for none
         """
-        self.cur.execute(f"UPDATE upstream SET is_default = 0")
+        self.db.execute(f"UPDATE upstream SET is_default = 0")
         if name is not None:
-            self.cur.execute(
+            self.db.execute(
                 f"UPDATE upstream SET is_default = 1 WHERE name = '{name}'")
-            if self.cur.rowcount != 1:
-                self.con.rollback()
+            if self.rowcount() != 1:
+                self.rollback()
                 raise ValueError(f"No such upstream '{name}'")
-        self.con.commit()
+        self.commit()
 
     def get_default_upstream(self):
         """Get the default upstream target
@@ -1093,7 +1069,7 @@ class Cseries:
         Return:
             str: Name of the upstream remote to set as default, or None if none
         """
-        res = self.cur.execute(
+        res = self.db.execute(
             "SELECT name FROM upstream WHERE is_default = 1")
         recs = res.fetchall()
         if len(recs) != 1:
@@ -1106,12 +1082,12 @@ class Cseries:
         Args:
             name (str): Name of the upstream remote to delete
         """
-        self.cur.execute(
+        self.db.execute(
             f"DELETE FROM upstream WHERE name = '{name}'")
-        if self.cur.rowcount != 1:
-            self.con.rollback()
+        if self.rowcount() != 1:
+            self.rollback()
             raise ValueError(f"No such upstream '{name}'")
-        self.con.commit()
+        self.commit()
 
     def remove_series(self, name, dry_run=False):
         """Remove a series from the database
@@ -1123,25 +1099,25 @@ class Cseries:
         ser = self.parse_series(name)
         name = ser.name
 
-        res = self.cur.execute(
+        res = self.db.execute(
             f"DELETE FROM series WHERE name = '{name}'")
-        if self.cur.rowcount != 1:
-            self.con.rollback()
+        if self.rowcount() != 1:
+            self.rollback()
             raise ValueError(f"No such series '{name}'")
 
-        res = self.cur.execute('SELECT id FROM ser_ver WHERE series_id = ?',
+        res = self.db.execute('SELECT id FROM ser_ver WHERE series_id = ?',
                                (ser.idnum,))
         recs = [str(i) for i in res.fetchall()[0]]
         vals = ', '.join(recs[0])
-        res = self.cur.execute(f'DELETE FROM pcommit WHERE svid IN ({vals})')
-        res = self.cur.execute('DELETE FROM ser_ver WHERE series_id = ?',
+        res = self.db.execute(f'DELETE FROM pcommit WHERE svid IN ({vals})')
+        res = self.db.execute('DELETE FROM ser_ver WHERE series_id = ?',
                                (ser.idnum,))
         if not dry_run:
-            self.con.commit()
+            self.commit()
         else:
-            self.con.rollback()
+            self.rollback()
 
-        self.con.commit()
+        self.commit()
         tout.info(f"Removed series '{name}'")
         if dry_run:
             tout.info('Dry run completed')
@@ -1164,14 +1140,14 @@ class Cseries:
                 f"Series '{ser.name}' only has one version: remove the series")
 
         svid = self.get_series_svid(ser.idnum, version)
-        self.cur.execute('DELETE FROM pcommit WHERE svid = ?', (svid,))
-        self.cur.execute(
+        self.db.execute('DELETE FROM pcommit WHERE svid = ?', (svid,))
+        self.db.execute(
             'DELETE FROM ser_ver WHERE series_id = ? and version = ?',
             (ser.idnum, version))
         if not dry_run:
-            self.con.commit()
+            self.commit()
         else:
-            self.con.rollback()
+            self.rollback()
 
         tout.info(f"Removed version {version} from series '{name}'")
         if dry_run:
@@ -1186,7 +1162,7 @@ class Cseries:
         Returns:
             idnum, or None if not found
         """
-        res = self.cur.execute(
+        res = self.db.execute(
             'SELECT id FROM series WHERE '
             f"name = '{name}' AND archived = 0")
         recs = res.fetchall()
@@ -1210,12 +1186,12 @@ class Cseries:
                 link_name = proj['link_name']
         if not proj_id:
             raise ValueError(f"Unknown project name '{name}'")
-        res = self.cur.execute('DELETE FROM settings')
-        res = self.cur.execute(
+        res = self.db.execute('DELETE FROM settings')
+        res = self.db.execute(
                 'INSERT INTO settings (name, proj_id, link_name) '
                 'VALUES (?, ?, ?)',
                 (name, proj_id, link_name))
-        self.con.commit()
+        self.commit()
         if not quiet:
             tout.info(f"Project '{name}' patchwork-ID {proj_id} link-name {link_name}")
 
@@ -1228,7 +1204,7 @@ class Cseries:
                 proj_id (int): Patchworks project ID for this project
                 link_name (str): Patchwork's link-name for the project
         """
-        res = self.cur.execute("SELECT name, proj_id, link_name FROM settings")
+        res = self.db.execute("SELECT name, proj_id, link_name FROM settings")
         recs = res.fetchall()
         if len(recs) != 1:
             return None
@@ -1368,7 +1344,7 @@ class Cseries:
                 int: record id
                 str: link
         """
-        res = self.cur.execute(
+        res = self.db.execute(
             "SELECT id, link FROM ser_ver WHERE series_id = ? AND version = ?",
             (series_id, version))
         recs = res.fetchall()
@@ -1408,12 +1384,12 @@ class Cseries:
         for seq, item in enumerate(pwc.values()):
             patch = patches[seq]
             if patch.id:
-                self.cur.execute(
+                self.db.execute(
                     'UPDATE pcommit SET '
                     'patch_id = ?, state = ?, num_comments = ? WHERE id = ?',
                     (patch.id, patch.state, patch.num_comments, item.id))
-                updated += self.cur.rowcount
-        self.con.commit()
+                updated += self.rowcount()
+        self.commit()
         tout.info(f'{updated} patch(es) updated')
 
     def series_max_version(self, idnum):
@@ -1422,7 +1398,7 @@ class Cseries:
         Args:
             idnum (int): Series ID to look up
         """
-        res = self.cur.execute('SELECT MAX(version) FROM ser_ver WHERE '
+        res = self.db.execute('SELECT MAX(version) FROM ser_ver WHERE '
                                f"series_id = {idnum}")
         return res.fetchall()[0][0]
 

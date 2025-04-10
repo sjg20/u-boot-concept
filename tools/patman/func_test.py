@@ -1491,7 +1491,7 @@ second line.'''
             cser.open_database()
         self.assertEqual(f'Creating new database {self.tmpdir}/.patman.db',
                          err.getvalue().strip())
-        res = cser.cur.execute("SELECT name FROM series")
+        res = cser.db.execute("SELECT name FROM series")
         self.assertTrue(res)
         cser.close_database()
 
@@ -1517,13 +1517,13 @@ second line.'''
         return self.get_database()
 
     def db_close(self):
-        if self.cser and self.cser.cur:
+        if self.cser and self.cser.db.cur:
             self.cser.close_database()
             return True
         return False
 
     def db_open(self):
-        if self.cser and not self.cser.cur:
+        if self.cser and not self.cser.db.cur:
             self.cser.open_database()
 
     def test_series_add(self):
@@ -1676,7 +1676,8 @@ second line.'''
         self.add_first2(True)
         with capture_sys_output() as (out, _):
             self.run_args('series', 'add', '-M', 'description', pwork=True)
-        self.assertIn("Added series 'first' version 2", out.getvalue().strip())
+        self.assertIn("Added series 'first' version 2 (2 commits)",
+                      out.getvalue().strip())
 
         with capture_sys_output() as (out, _):
             self.run_args('series', 'add', '-s', 'first', '-M', 'description',

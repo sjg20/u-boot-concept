@@ -1,0 +1,90 @@
+# SPDX-License-Identifier: GPL-2.0+
+#
+# Copyright 2025 Simon Glass <sjg@chromium.org>
+#
+"""Handles the patman database
+"""
+
+import os
+import sqlite3
+
+from u_boot_pylib import tout
+
+
+class Database:
+    """Database of information used by patman"""
+    def __init__(self, db_path):
+        self.con = None
+        self.cur = None
+        self.db_path = db_path
+
+    def create(self):
+        self.cur.execute(
+            'CREATE TABLE series (id INTEGER PRIMARY KEY AUTOINCREMENT,'
+            'name UNIQUE, desc, archived BIT)')
+
+        # Provides a series_id/version pair, which is used to refer to a
+        # particular series version sent to patchwork. This stores the link
+        # to patchwork
+        self.cur.execute(
+            'CREATE TABLE ser_ver (id INTEGER PRIMARY KEY AUTOINCREMENT,'
+            'series_id INTEGER, version INTEGER, link,'
+            'FOREIGN KEY (series_id) REFERENCES series (id))')
+
+        self.cur.execute(
+            'CREATE TABLE upstream (name UNIQUE, url, is_default BIT)')
+
+        # change_id is the Change-Id
+        # patch_id is the ID of the patch on the patchwork server
+        self.cur.execute(
+            'CREATE TABLE pcommit (id INTEGER PRIMARY KEY AUTOINCREMENT,'
+            'svid INTEGER, seq INTEGER, subject, patch_id INTEGER, '
+            'change_id, state, num_comments INTEGER, '
+            'FOREIGN KEY (svid) REFERENCES ser_ver (id))')
+
+        self.cur.execute(
+            'CREATE TABLE settings (name UNIQUE, proj_id INT, link_name)')
+        self.con.commit()
+
+    def prepare(self):
+        """Ensure that the database is up to date and ready for use
+
+        Args:
+            con (sqlite.)
+        """
+        self.cur = self.con.cursor()
+        try:
+            self.cur.execute('SELECT name FROM series')
+        except sqlite3.OperationalError:
+            self.create()
+
+    def open_it(self):
+        """Open the database read for use"""
+        if not os.path.exists(self.db_path):
+            tout.warning(f'Creating new database {self.db_path}')
+        self.con = sqlite3.connect(self.db_path, autocommit=False)
+        self.prepare()
+
+    def commit(self):
+        self.con.commit()
+
+    def rollback(self):
+        self.con.rollback()
+
+    def close(self):
+        self.con.close()
+        self.cur = None
+        self.con = None
+
+    def execute(self, query, args=None):
+        if args:
+            res = self.cur.execute(query, args)
+        else:
+            res = self.cur.execute(query)
+        return res
+
+    def lastrowid(self):
+        return self.cur.lastrowid
+
+    def rowcount(self):
+        return self.cur.rowcount
