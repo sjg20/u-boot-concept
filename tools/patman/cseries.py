@@ -79,7 +79,7 @@ class Cseries:
         self.gitdir = os.path.join(self.topdir, '.git')
         fname = f'{self.topdir}/.patman.db'
         self.db = Database(fname)
-        self.db.open_it()
+        self.db.start()
         # self.cur = self.db.cur
         # self.con = self.db.con
         # return self.cur

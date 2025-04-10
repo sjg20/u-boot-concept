@@ -21,6 +21,7 @@ from patman.commit import Commit
 from patman import control
 from patman import cseries
 from patman.cseries import PCOMMIT
+from patman.database import Database
 from patman import patchstream
 from patman.patchstream import PatchStream
 from patman.patchwork import Patchwork
@@ -2504,7 +2505,7 @@ second line.'''
         with capture_sys_output() as (out, _):
             self.run_args('upstream', 'default', 'us', expected_ret=1)
         self.assertEqual("patman: ValueError: No such upstream 'us'",
-                         out.getvalue().strip())
+                         out.getvalue().strip().splitlines()[-1])
 
         self.run_args('upstream', 'add', 'us', 'https://one')
         self.run_args('upstream', 'add', 'ci', 'git@two')
@@ -2553,7 +2554,7 @@ second line.'''
         with capture_sys_output() as (out, _):
             self.run_args('upstream', 'delete', 'us', expected_ret=1)
         self.assertEqual("patman: ValueError: No such upstream 'us'",
-                         out.getvalue().strip())
+                         out.getvalue().strip().splitlines()[-1])
 
         self.run_args('us', 'add', 'us', 'https://one')
         self.run_args('us', 'add', 'ci', 'git@two')
@@ -3214,3 +3215,19 @@ second line.'''
         self.assertEqual('No branch detected: please use -s <series>',
                          str(exc.exception))
 
+    def test_migrate(self):
+        """Test migration to later schema versions"""
+        db = Database(f'{self.tmpdir}/.patman.db')
+        with capture_sys_output() as (out, _):
+            db.open_it()
+        self.assertEqual('', out.getvalue().strip())
+
+        with capture_sys_output() as (out, _):
+            db.ensure_exists()
+        self.assertEqual('Create database v0', out.getvalue().strip())
+        self.assertEqual(0, db.get_schema_version())
+
+        with capture_sys_output() as (out, _):
+            db.migrate_to(1)
+        self.assertEqual('Update database to v1', out.getvalue().strip())
+        self.assertEqual(1, db.get_schema_version())

@@ -10,6 +10,9 @@ import sqlite3
 
 from u_boot_pylib import tout
 
+# Schema version
+LATEST = 1
+
 
 class Database:
     """Database of information used by patman"""
@@ -18,7 +21,21 @@ class Database:
         self.cur = None
         self.db_path = db_path
 
-    def create(self):
+    def start(self):
+        """Open the database read for use"""
+        self.open_it()
+        self.ensure_exists()
+        self.migrate_to(LATEST)
+
+    def open_it(self):
+        """Open the database read for use"""
+        if not os.path.exists(self.db_path):
+            tout.warning(f'Creating new database {self.db_path}')
+        self.con = sqlite3.connect(self.db_path, autocommit=False)
+        self.cur = self.con.cursor()
+
+    def create_v0(self):
+        tout.info('Create database v0')
         self.cur.execute(
             'CREATE TABLE series (id INTEGER PRIMARY KEY AUTOINCREMENT,'
             'name UNIQUE, desc, archived BIT)')
@@ -46,24 +63,40 @@ class Database:
             'CREATE TABLE settings (name UNIQUE, proj_id INT, link_name)')
         self.con.commit()
 
-    def prepare(self):
-        """Ensure that the database is up to date and ready for use
+    def _migrate_to_v1(self):
+        self.cur.execute('CREATE TABLE schema_version (version INTEGER)')
 
-        Args:
-            con (sqlite.)
-        """
-        self.cur = self.con.cursor()
+    def migrate_to(self, dest_version):
+        while True:
+            version = self.get_schema_version()
+            if version == dest_version:
+                break
+
+            version += 1
+            tout.info(f'Update database to v{version}')
+            if version == 1:
+                self._migrate_to_v1()
+            self.cur.execute('DELETE FROM schema_version')
+            self.cur.execute('INSERT INTO schema_version (version) VALUES (?)',
+                             (version,))
+            self.con.commit()
+
+    def get_schema_version(self):
+        version = 0
+        try:
+            # If there is no schema, assume v0
+            self.cur.execute('SELECT version FROM schema_version')
+            version = self.cur.fetchone()[0]
+        except sqlite3.OperationalError:
+            version = 0
+        return version
+
+    def ensure_exists(self):
+        # If there is no database at all, create one
         try:
             self.cur.execute('SELECT name FROM series')
         except sqlite3.OperationalError:
-            self.create()
-
-    def open_it(self):
-        """Open the database read for use"""
-        if not os.path.exists(self.db_path):
-            tout.warning(f'Creating new database {self.db_path}')
-        self.con = sqlite3.connect(self.db_path, autocommit=False)
-        self.prepare()
+            self.create_v0()
 
     def commit(self):
         self.con.commit()
