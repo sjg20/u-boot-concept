@@ -3297,16 +3297,16 @@ second line.'''
         cser = self.setup_second()
 
         # Add a new commit
+        self.repo = pygit2.init_repository(self.gitdir)
         self.make_commit_with_file(
             'wip: Try out a new thing', 'Just checking', 'wibble.c',
             '''changes to wibble''')
+        target = self.repo.revparse_single('HEAD')
+        self.repo.reset(target.oid, pygit2.enums.ResetMode.HARD)
+        # return
         name = gitutil.get_branch(self.gitdir)
-        print('name', name)
         upstream_name = gitutil.get_upstream(self.gitdir, name)
-        print('upstream_name', upstream_name)
-
         name, ser, series, version, msg = cser._prep_series(None)
-        print('prep done', name)
         # We now have 4 commits numbered 0 (second~3) to 3 (the one we just
         # added). Drop commit 2 from the branch
         cser.filter_commits(name, series, 2)
@@ -3315,4 +3315,4 @@ second line.'''
                          allow_unmarked=True, upstream=None, extra=[],
                          dry_run=False)
         # with capture_sys_output() as (out, _):
-        # control.series(args, test_db=self.tmpdir, pwork=True)
+        control.series(args, test_db=self.tmpdir, pwork=True)

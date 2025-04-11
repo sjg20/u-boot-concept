@@ -977,12 +977,9 @@ class Cseries:
         count = len(series.commits)
         repo, cur, branch, name = self._prepare_process(name, count)
         for seq, cmt in enumerate(series.commits):
-            # if seq != seq_to_drop:
-            print('pick')
-            tree_id, cherry = self._pick_commit(repo, cmt)
-            print('finish')
-            cur = self._finish_commit(repo, tree_id, cherry, cur)
-        print('finish process')
+            if seq != seq_to_drop:
+                tree_id, cherry = self._pick_commit(repo, cmt)
+                cur = self._finish_commit(repo, tree_id, cherry, cur)
         self._finish_process(repo, branch, name)
 
     def _process_series(self, name, series, new_name=None, dry_run=False):
@@ -1633,8 +1630,8 @@ class Cseries:
 
         Args:
             commits (dict of Commit): Possible matches
-                key: sequence number of patch (from 0)
-                value: Commit object
+                key (int): sequence number of patch (from 0)
+                value (Commit): Commit object
             pcm (PCOMMIT): Patch to check
 
         Return:
@@ -1646,20 +1643,22 @@ class Cseries:
                 return seq
         return None
 
-    def _find_matched_patch(self, match_set, cmt):
+    def _find_matched_patch(self, patches, cmt):
         """Find a patch in a list of possible matches
 
         Args:
-            match_set (set of PCOMMIT): Possible matches
+            patches: dict of ossible matches
+                key (int): sequence number of patch
+                value (PCOMMIT): patch
             cmt (Commit): Commit to check
 
         Return:
-            Commit: Matching commit, or None if none
+            int: Sequence number of matching patch, or None if not found
         """
-        for pcm in match_set:
+        for seq, pcm in patches.items():
             tout.debug(f"- match subject: '{pcm.subject}'")
-            if pcm.subject == cmt.subject:
-                return pcm
+            if cmt.subject == pcm.subject:
+                return seq
         return None
 
     def scan(self, branch_name, mark=False, allow_unmarked=False, end=None,
@@ -1697,18 +1696,19 @@ class Cseries:
                 del to_add[i]
         if to_add:
             tout.info('Adding:')
-            for seq in to_add:
-                tout.info(f'  {seq:3} {to_add[seq].subject}')
+            for seq, pcm in to_add.items():
+                tout.info(f'  {seq:3} {pcm.subject}')
 
         # Now check for patches in the database that are not in the branch
-        to_remove = set(pcdict.values())
+        to_remove = {}
+        for i, pcd in enumerate(pcdict.values()):
+            to_remove[i] = pcd
         for cmt in series.commits:
             tout.debug(f'cmt {cmt.subject}')
-            pcm = self._find_matched_patch(to_remove, cmt)
-            if pcm:
-                to_remove.remove(pcm)
+            i = self._find_matched_patch(to_remove, cmt)
+            if i is not None:
+                del to_remove[i]
         if to_remove:
             tout.info('Removing:')
-            for pcm in to_add:
-                tout.info(f'  - {pcm.subject}')
-        print('to_remove', to_remove)
+            for seq, cmt in to_remove.items():
+                tout.info(f'  {seq:3} {cmt.subject}')
