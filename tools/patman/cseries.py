@@ -205,7 +205,7 @@ class Cseries:
         """
         ser, version = self.parse_series_and_version(name, None)
         if not name:
-            name = ser.name
+            name = self.get_branch_name(ser.name, version)
 
         # First check we have a branch with this name
         if not gitutil.check_branch(name, git_dir=self.gitdir):
@@ -225,11 +225,12 @@ class Cseries:
 
         return name, ser, series, version, msg
 
-    def _handle_mark(self, name, series, version, mark, allow_unmarked,
+    def _handle_mark(self, branch_name, series, version, mark, allow_unmarked,
                      dry_run):
         """Handle marking a series, checking for unmarked commits, etc.
 
         Args:
+            branch_name (str): Name of branch to sync, or None for current one
             mark (str): True to mark each commit with a change ID
             allow_unmarked (str): True to not require each commit to be marked
             dry_run (bool): True to do a dry run
@@ -238,7 +239,7 @@ class Cseries:
             ValueError: Series being unmarked when it should be marked, etc.
         """
         if mark:
-            add_oid = self.mark_series(name, series, dry_run=dry_run)
+            add_oid = self.mark_series(branch_name, series, dry_run=dry_run)
 
             # Collect the commits again, as the hashes have changed
             series = patchstream.get_metadata(add_oid, 0, len(series.commits),
@@ -253,7 +254,7 @@ class Cseries:
                 f'{bad_count} commit(s) are unmarked; please use -m or -M')
 
         if 'version' in series and int(series.version) != version:
-            raise ValueError(f"Series name '{name}' suggests version {version} "
+            raise ValueError(f"Series name '{branch_name}' suggests version {version} "
                              f"but Series-version tag indicates {series.version}")
         return series
 
@@ -609,8 +610,6 @@ class Cseries:
         if not ser:
             ser = Series()
             ser.name = name
-        if in_version:
-            version = in_version
         return ser, version
 
     def set_archived(self, series, archived):
@@ -1622,7 +1621,7 @@ class Cseries:
             dry_run (bool): True to do a dry run
         """
         name, ser, series, version, msg = self._prep_series(branch_name, end)
-        print(f'series len {len(series.commits)}')
+        print(f'series {name} len {len(series.commits)}')
         svid = self.get_ser_ver(ser.idnum, version)[0]
         pcdict = self.get_pcommit_dict(svid)
 

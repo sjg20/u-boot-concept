@@ -3250,7 +3250,6 @@ second line.'''
         self.assertEqual('second', ser.name)
         self.assertEqual(2, version)
 
-
     def test_migrate(self):
         """Test migration to later schema versions"""
         db = database.Database(f'{self.tmpdir}/.patman.db')
@@ -3276,7 +3275,7 @@ second line.'''
 
     def test_series_scan(self):
         """Test scanning a series for updates"""
-        self.setup_second()
+        cser = self.setup_second()
 
         # Add a new commit
         self.make_commit_with_file(
