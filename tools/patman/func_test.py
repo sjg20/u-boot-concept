@@ -3001,7 +3001,6 @@ second line.'''
         lines = iter(out.getvalue().splitlines())
         self.assertEqual("Branch 'second2' (total 3): 3:unknown", next(lines))
         self.assertIn('PatchId', next(lines))
-        self.assertRegex(next(lines), ' *Series for my board')
         self.assertRegex(next(lines), '  0 .* video: Some video improvements')
         self.assertRegex(next(lines), '  1 .* serial: Add a serial driver')
         self.assertRegex(next(lines), '  2 .* bootm: Make it boot')
@@ -3043,7 +3042,6 @@ second line.'''
         self.assertEqual(
             "Branch 'second' (total 3): 3:unknown", next(lines))
         self.assertIn('PatchId', next(lines))
-        self.assertRegex(next(lines), ' *description')
         self.assertRegex(
             next(lines),
             "  0 unknown      -       .* video: Some video improvements")
@@ -3081,7 +3079,6 @@ second line.'''
             self.assertEqual("Branch 'second' (total 3): 3:unknown",
                              next(lines))
             self.assertIn('PatchId', next(lines))
-            self.assertRegex(next(lines), ' *Series for my board')
             self.assertRegex(
                 next(lines),
                 '  0 unknown      -         .* video: Some video improvements')
@@ -3097,7 +3094,7 @@ second line.'''
             next(lines))
         self.assertIn('PatchId', next(lines))
         self.assertEqual(
-            'Cov              2      39            Series for my board',
+            'Cov              2      39            The name of the cover letter',
             next(lines))
         self.assertRegex(
             next(lines),

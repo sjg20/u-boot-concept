@@ -1303,21 +1303,21 @@ class Cseries:
             OrderedDict:
                 key (int): record ID if find_svid is None, else seq
                 value (PCOMMIT): record data
-            str: series description
+            str: series name (for this version)
             str: cover_id
             int: cover_num_comments
         """
         ser, version = self.parse_series_and_version(series, version)
         self.ensure_version(ser, version)
-        desc = self.get_series_info(ser.idnum)[1]
-        svid, _, cover_id, num_comments = self.get_ser_ver(ser.idnum, version)
+        svid, _, cover_id, num_comments, name = self.get_ser_ver(ser.idnum,
+                                                                 version)
         pwc = self.get_pcommit_dict(svid)
 
         count = len(pwc)
         branch = self.join_name_version(ser.name, version)
         series = patchstream.get_metadata(branch, 0, count, git_dir=self.gitdir)
 
-        return branch, series, pwc, desc, cover_id, num_comments
+        return branch, series, pwc, name, cover_id, num_comments
 
     def list_patches(self, series, version):
         """List patches in a series
@@ -1326,8 +1326,8 @@ class Cseries:
             series (str): Name of series to use, or None to use current branch
             version (int): Version number, or None to detect from name
         """
-        branch, series, pwc, desc, cover_id, num_comments = self._get_patches(series, version)
-        self._list_patches(branch, pwc, series, desc, cover_id, num_comments)
+        branch, series, pwc, name, cover_id, num_comments = self._get_patches(series, version)
+        self._list_patches(branch, pwc, series, name, cover_id, num_comments)
 
     def get_series_svid(self, series_id, version):
         """Get the patchwork ID of a series version
@@ -1371,9 +1371,10 @@ class Cseries:
             str: link
             str: cover_id
             int: cover_num_comments
+            str: cover-letter name
         """
         res = self.db.execute(
-            'SELECT id, link, cover_id, cover_num_comments FROM ser_ver '
+            'SELECT id, link, cover_id, cover_num_comments, name FROM ser_ver '
             'WHERE series_id = ? AND version = ?', (series_id, version))
         recs = res.fetchall()
         if not recs:
@@ -1463,9 +1464,10 @@ class Cseries:
             branch = self.join_name_version(ser.name, ver)
             series = patchstream.get_metadata(branch, 0, count,
                                               git_dir=self.gitdir)
-            _, _, cover_id, num_comments = self.get_ser_ver(ser.idnum, ver)
+            _, _, cover_id, num_comments, name = self.get_ser_ver(ser.idnum,
+                                                                  ver)
 
-            self._list_patches(branch, pwc, series, desc, cover_id,
+            self._list_patches(branch, pwc, series, name, cover_id,
                                num_comments)
             add_blank_line = True
 
