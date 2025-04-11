@@ -853,9 +853,7 @@ class Cseries:
         Return:
             pygit.oid: oid of the new branch
         """
-        # print('name', name, new_name)
         upstream_name = gitutil.get_upstream(self.gitdir, name)[0]
-        # print('upstream_name', upstream_name)
 
         count = len(series.commits)
         tout.debug(f"_process_series name '{name}' new_name '{new_name}' "
@@ -867,41 +865,18 @@ class Cseries:
             upstream_name = upstream.name
             commit = upstream.peel(pygit2.GIT_OBJ_COMMIT)
         except KeyError:
-            # print('err')
-            # Try just counting commits
-            # print('failed', count)
             upstream_name = f'{name}~{count}'
             commit = repo.revparse_single(upstream_name)
-            # print('commit', commit)
-            # upstream_name = oid(commit.oid)
-            # upstream = commit
-            # print('upstream_name', upstream_name)
         branch = repo.lookup_branch(name)
-
-        # print('upstream', upstream)
 
         tout.info(f"Checking out upstream commit {upstream_name}")
         if new_name:
             name = new_name
-            # Create a new branch, pointing to upstream commit
-            # if not commit:
-                # commit = branch.peel(pygit2.GIT_OBJ_COMMIT)
-                # commit_oid = upstream.peel(pygit2.GIT_OBJ_COMMIT).oid
-            # commit = repo.get(commit_oid)
-            # print('checkout', commit)
             repo.checkout_tree(commit, strategy=pygit2.GIT_CHECKOUT_FORCE |
                                pygit2.GIT_CHECKOUT_RECREATE_MISSING)
             repo.set_head(commit.oid)
-            # out = repo.get(commit_oid)
-            # ref = repo.lookup_reference(branch.name)
-
-            # print('out', out)
-            # print('hex', out.hex)
-            # repo.checkout(upstream_name)
             repo.checkout_tree(commit)
             repo.set_head(commit.oid)
-            # need to checkout the upstream branch or commit
-            # print('done')
         else:
             # Check out the upstream commit (detached HEAD)
             commit_oid = upstream.peel(pygit2.GIT_OBJ_COMMIT).oid
@@ -909,12 +884,10 @@ class Cseries:
             repo.checkout_tree(commit)
             repo.set_head(commit_oid)
         cur = repo.head
-        # print('start')
         vals = SimpleNamespace()
         vals.final = False
         tout.info(f"Processing {count} commits from branch '{name}'")
         for seq, cmt in enumerate(series.commits):
-            # print('cur', cur, cur.target)
             tout.detail(f"- adding {oid(cmt.hash)} {cmt}")
             repo.cherrypick(cmt.hash)
             if repo.index.conflicts:
@@ -952,16 +925,9 @@ class Cseries:
                 new_branch = repo.branches.create(new_name, target)
                 if branch.upstream:
                     new_branch.upstream = branch.upstream
-                # new_branch = repo.lookup_branch(name)
-                # new_branch.upstream = branch.upstream
-                # commit = new_branch.peel(pygit2.GIT_OBJ_COMMIT)
-                # repo.checkout(commit)
                 ref = repo.lookup_reference(f'refs/heads/{name}')
                 repo.checkout(ref)
-                # git branch --set-upstream-to first first2
             else:
-                # repo.create_reference(f'refs/heads/{name}', target.oid,
-                                      # force=True)
                 branch.set_target(target.oid)
                 repo.checkout(branch)
         vals.oid = target.oid
