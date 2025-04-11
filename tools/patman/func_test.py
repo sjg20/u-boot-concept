@@ -79,8 +79,8 @@ class TestFunctional(unittest.TestCase):
         tout.init(tout.INFO, allow_colour=False)
 
     def tearDown(self):
-        # shutil.rmtree(self.tmpdir)
-        print(self.tmpdir)
+        shutil.rmtree(self.tmpdir)
+        # print(self.tmpdir)
         terminal.set_print_test_mode(False)
 
     @staticmethod
@@ -3237,6 +3237,19 @@ second line.'''
             cser.parse_series_and_version(None, None)
         self.assertEqual('No branch detected: please use -s <series>',
                          str(exc.exception))
+
+    def test_name_version_extra(self):
+        """More tests for some corner cases"""
+        cser = self.setup_second()
+
+        ser, version = cser.parse_series_and_version(None, None)
+        self.assertEqual('second', ser.name)
+        self.assertEqual(2, version)
+
+        ser, version = cser.parse_series_and_version('second2', None)
+        self.assertEqual('second', ser.name)
+        self.assertEqual(2, version)
+
 
     def test_migrate(self):
         """Test migration to later schema versions"""
