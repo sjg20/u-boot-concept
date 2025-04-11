@@ -125,10 +125,11 @@ class Cseries:
             link: link string, or ''
             str: Cover-letter ID
             int: Number of cover-letter comments
+            str: Cover-letter name
         """
         res = self.db.execute(
-            'SELECT series_id, version, link, cover_id, cover_num_comments '
-            'FROM ser_ver')
+            'SELECT series_id, version, link, cover_id, cover_num_comments, '
+            'name FROM ser_ver')
         return res.fetchall()
 
     def get_upstream_dict(self):
@@ -1419,9 +1420,9 @@ class Cseries:
                 updated += self.rowcount()
         if cover:
             self.db.execute(
-                'UPDATE ser_ver SET cover_id = ?, cover_num_comments = ? '
-                'WHERE id = ?',
-                (cover.id, cover.num_comments, svid))
+                'UPDATE ser_ver SET cover_id = ?, cover_num_comments = ?, '
+                'name = ? WHERE id = ?',
+                (cover.id, cover.num_comments, cover.name, svid))
 
         self.commit()
         tout.info(f'{updated} patch(es) updated')

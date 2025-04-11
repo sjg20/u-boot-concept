@@ -1548,7 +1548,7 @@ second line.'''
 
         plist = cser.get_ser_ver_dict()
         self.assertEqual(1, len(plist))
-        self.assertEqual((1, 1, None, None, None), plist[0])
+        self.assertEqual((1, 1, None, None, None, None), plist[0])
 
         pclist = cser.get_pcommit_dict()
         self.assertEqual(2, len(pclist))
@@ -1589,7 +1589,7 @@ second line.'''
         # We should have just one entry, with version 2
         plist = cser.get_ser_ver_dict()
         self.assertEqual(1, len(plist))
-        self.assertEqual((1, 2, None, None, None), plist[0])
+        self.assertEqual((1, 2, None, None, None, None), plist[0])
 
     def add_first2(self, checkout):
         """Add a new first2 branch, a copy of first"""
@@ -1636,8 +1636,8 @@ second line.'''
         # We should have two entries, one of each version
         plist = cser.get_ser_ver_dict()
         self.assertEqual(2, len(plist))
-        self.assertEqual((1, 2, None, None, None), plist[0])
-        self.assertEqual((1, 1, None, None, None), plist[1])
+        self.assertEqual((1, 2, None, None, None, None), plist[0])
+        self.assertEqual((1, 1, None, None, None, None), plist[1])
 
     def test_series_add_dup(self):
         """Test adding a series twice"""
@@ -2050,8 +2050,8 @@ second line.'''
 
         plist = cser.get_ser_ver_dict()
         self.assertEqual(2, len(plist))
-        self.assertEqual((1, 1, None, None, None), plist[0])
-        self.assertEqual((1, 2, '2345', None, None), plist[1])
+        self.assertEqual((1, 1, None, None, None, None), plist[0])
+        self.assertEqual((1, 2, '2345', None, None, None), plist[1])
 
     def test_series_link_auto_name_version(self):
         """Test finding patchwork link for a cseries with auto name + version"""
@@ -2078,8 +2078,8 @@ second line.'''
 
         plist = cser.get_ser_ver_dict()
         self.assertEqual(2, len(plist))
-        self.assertEqual((1, 1, '1234', None, None), plist[0])
-        self.assertEqual((1, 2, '2345', None, None), plist[1])
+        self.assertEqual((1, 1, '1234', None, None, None), plist[0])
+        self.assertEqual((1, 2, '2345', None, None, None), plist[1])
 
     def test_series_link_missing(self):
         """Test finding patchwork link for a cseries but it is missing"""
@@ -2128,8 +2128,8 @@ second line.'''
 
         plist = cser.get_ser_ver_dict()
         self.assertEqual(2, len(plist))
-        self.assertEqual((1, 1, None, None, None), plist[0])
-        self.assertEqual((2, 1, '456', None, None), plist[1])
+        self.assertEqual((1, 1, None, None, None, None), plist[0])
+        self.assertEqual((2, 1, '456', None, None, None), plist[1])
         yield cser
 
     def test_series_auto_link(self):
@@ -2248,8 +2248,8 @@ second line.'''
 
         plist = cser.get_ser_ver_dict()
         self.assertEqual(2, len(plist))
-        self.assertEqual((1, 1, None, None, None), plist[0])
-        self.assertEqual((1, 2, None, None, None), plist[1])
+        self.assertEqual((1, 1, None, None, None, None), plist[0])
+        self.assertEqual((1, 2, None, None, None, None), plist[1])
 
         series = patchstream.get_metadata_for_list('first2', self.gitdir, 1)
         self.assertEqual('2', series.version)
@@ -2334,7 +2334,7 @@ second line.'''
         # Make sure that nothing was added
         plist = cser.get_ser_ver_dict()
         self.assertEqual(1, len(plist))
-        self.assertEqual((1, 1, None, None, None), plist[0])
+        self.assertEqual((1, 1, None, None, None, None), plist[0])
 
         # We should still be on the same branch
         self.assertEqual('first', gitutil.get_branch(self.gitdir))
@@ -2780,8 +2780,8 @@ second line.'''
 
         plist = cser.get_ser_ver_dict()
         self.assertEqual(2, len(plist))
-        self.assertEqual((1, 2, None, None, None), plist[0])
-        self.assertEqual((1, 1, None, None, None), plist[1])
+        self.assertEqual((1, 2, None, None, None, None), plist[0])
+        self.assertEqual((1, 1, None, None, None, None), plist[1])
 
         # Now remove for real
         with capture_sys_output() as (out, _):
@@ -2799,7 +2799,7 @@ second line.'''
 
         plist = cser.get_ser_ver_dict()
         self.assertEqual(1, len(plist))
-        self.assertEqual((1, 2, None, None, None), plist[0])
+        self.assertEqual((1, 2, None, None, None, None), plist[0])
 
         with capture_sys_output() as (out, _):
             yield cser
@@ -2872,8 +2872,9 @@ second line.'''
     def _fake_patchwork_cser(self, subpath):
         """Fake Patchwork server for the function below
 
-        This handles accessing a series, providing a list consisting of a
-        single patch
+        This handles accessing a series, providing a list consisting of three
+        patches, a cover letter and some comments. It also allows three patches
+        to be queried.
 
         Args:
             subpath (str): URL subpath to use
@@ -2891,6 +2892,7 @@ second line.'''
                 ],
                 'cover_letter': {
                     'id': 39,
+                    'name': 'The name of the cover letter',
                 }
             }
         m_pc = re.search(r'patches/(\d*)/comments/', subpath)

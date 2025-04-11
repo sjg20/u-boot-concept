@@ -69,7 +69,8 @@ class Database:
     def _migrate_to_v3(self):
         """Store the number of cover-letter comments in the schema"""
         self.cur.execute('ALTER TABLE ser_ver ADD COLUMN cover_id')
-        self.cur.execute('ALTER TABLE ser_ver ADD COLUMN cover_num_comments')
+        self.cur.execute('ALTER TABLE ser_ver ADD COLUMN cover_num_comments INTEGER')
+        self.cur.execute('ALTER TABLE ser_ver ADD COLUMN name')
 
     def migrate_to(self, dest_version):
         while True:

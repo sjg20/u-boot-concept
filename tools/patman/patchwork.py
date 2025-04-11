@@ -22,7 +22,8 @@ PATCH = namedtuple('patch', 'id,state,num_comments')
 # id (int): Patchwork ID of cover letter
 # state (str): Current state, e.g. 'accepted'
 # num_comments (int): Number of comments
-COVER = namedtuple('cover', 'id,num_comments')
+# name (str): Series name
+COVER = namedtuple('cover', 'id,num_comments,name')
 
 
 class Patchwork:
@@ -358,6 +359,6 @@ class Patchwork:
         if cover:
             cover_id = cover['id']
             info = self.get_cover_comments(cover_id)
-            cover = COVER(cover_id, len(info))
+            cover = COVER(cover_id, len(info), cover['name'])
 
         return cover, result
