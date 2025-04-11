@@ -12,6 +12,7 @@
 
 #include <abuf.h>
 #include <efi_stub.h>
+#include <event.h>
 #include <log.h>
 #include <linux/libfdt.h>
 #include <of_live.h>
@@ -322,6 +323,7 @@ int unflatten_device_tree(const void *blob, struct device_node **mynodes)
 int of_live_build(const void *fdt_blob, struct device_node **rootp)
 {
 	int ret;
+	union event_data evt;
 
 	debug("%s: start\n", __func__);
 	ret = unflatten_device_tree(fdt_blob, rootp);
@@ -344,6 +346,15 @@ int of_live_build(const void *fdt_blob, struct device_node **rootp)
 		ret = of_populate_from_efi(*rootp);
 		if (ret)
 			debug("Failed to populate live tree nodes from EFI: err=%d\n", ret);
+	}
+
+	if (CONFIG_IS_ENABLED(EVENT)) {
+		evt.of_live_built.root = *rootp;
+		ret = event_notify(EVT_OF_LIVE_BUILT, &evt, sizeof(evt));
+		if (ret) {
+			log_debug("Failed to notify livetree build event: err=%d\n", ret);
+			return ret;
+		}
 	}
 
 	return ret;
