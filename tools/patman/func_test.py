@@ -1548,7 +1548,7 @@ second line.'''
 
         plist = cser.get_ser_ver_dict()
         self.assertEqual(1, len(plist))
-        self.assertEqual((1, 1, None), plist[0])
+        self.assertEqual((1, 1, None, None, None), plist[0])
 
         pclist = cser.get_pcommit_dict()
         self.assertEqual(2, len(pclist))
@@ -1589,7 +1589,7 @@ second line.'''
         # We should have just one entry, with version 2
         plist = cser.get_ser_ver_dict()
         self.assertEqual(1, len(plist))
-        self.assertEqual((1, 2, None), plist[0])
+        self.assertEqual((1, 2, None, None, None), plist[0])
 
     def add_first2(self, checkout):
         """Add a new first2 branch, a copy of first"""
@@ -1636,8 +1636,8 @@ second line.'''
         # We should have two entries, one of each version
         plist = cser.get_ser_ver_dict()
         self.assertEqual(2, len(plist))
-        self.assertEqual((1, 2, None), plist[0])
-        self.assertEqual((1, 1, None), plist[1])
+        self.assertEqual((1, 2, None, None, None), plist[0])
+        self.assertEqual((1, 1, None, None, None), plist[1])
 
     def test_series_add_dup(self):
         """Test adding a series twice"""
@@ -2050,8 +2050,8 @@ second line.'''
 
         plist = cser.get_ser_ver_dict()
         self.assertEqual(2, len(plist))
-        self.assertEqual((1, 1, None), plist[0])
-        self.assertEqual((1, 2, '2345'), plist[1])
+        self.assertEqual((1, 1, None, None, None), plist[0])
+        self.assertEqual((1, 2, '2345', None, None), plist[1])
 
     def test_series_link_auto_name_version(self):
         """Test finding patchwork link for a cseries with auto name + version"""
@@ -2078,8 +2078,8 @@ second line.'''
 
         plist = cser.get_ser_ver_dict()
         self.assertEqual(2, len(plist))
-        self.assertEqual((1, 1, '1234'), plist[0])
-        self.assertEqual((1, 2, '2345'), plist[1])
+        self.assertEqual((1, 1, '1234', None, None), plist[0])
+        self.assertEqual((1, 2, '2345', None, None), plist[1])
 
     def test_series_link_missing(self):
         """Test finding patchwork link for a cseries but it is missing"""
@@ -2128,8 +2128,8 @@ second line.'''
 
         plist = cser.get_ser_ver_dict()
         self.assertEqual(2, len(plist))
-        self.assertEqual((1, 1, None), plist[0])
-        self.assertEqual((2, 1, '456'), plist[1])
+        self.assertEqual((1, 1, None, None, None), plist[0])
+        self.assertEqual((2, 1, '456', None, None), plist[1])
         yield cser
 
     def test_series_auto_link(self):
@@ -2248,8 +2248,8 @@ second line.'''
 
         plist = cser.get_ser_ver_dict()
         self.assertEqual(2, len(plist))
-        self.assertEqual((1, 1, None), plist[0])
-        self.assertEqual((1, 2, None), plist[1])
+        self.assertEqual((1, 1, None, None, None), plist[0])
+        self.assertEqual((1, 2, None, None, None), plist[1])
 
         series = patchstream.get_metadata_for_list('first2', self.gitdir, 1)
         self.assertEqual('2', series.version)
@@ -2334,7 +2334,7 @@ second line.'''
         # Make sure that nothing was added
         plist = cser.get_ser_ver_dict()
         self.assertEqual(1, len(plist))
-        self.assertEqual((1, 1, None), plist[0])
+        self.assertEqual((1, 1, None, None, None), plist[0])
 
         # We should still be on the same branch
         self.assertEqual('first', gitutil.get_branch(self.gitdir))
@@ -2780,8 +2780,8 @@ second line.'''
 
         plist = cser.get_ser_ver_dict()
         self.assertEqual(2, len(plist))
-        self.assertEqual((1, 2, None), plist[0])
-        self.assertEqual((1, 1, None), plist[1])
+        self.assertEqual((1, 2, None, None, None), plist[0])
+        self.assertEqual((1, 1, None, None, None), plist[1])
 
         # Now remove for real
         with capture_sys_output() as (out, _):
@@ -2799,7 +2799,7 @@ second line.'''
 
         plist = cser.get_ser_ver_dict()
         self.assertEqual(1, len(plist))
-        self.assertEqual((1, 2, None), plist[0])
+        self.assertEqual((1, 2, None, None, None), plist[0])
 
         with capture_sys_output() as (out, _):
             yield cser
@@ -2889,7 +2889,9 @@ second line.'''
                     {'id': 11},
                     {'id': 12},
                 ],
-                'cover_letter': 39,
+                'cover_letter': {
+                    'id': 39,
+                }
             }
         m_pc = re.search(r'patches/(\d*)/comments/', subpath)
         patch_id = m_pc.group(1) if m_pc else ''
@@ -2996,6 +2998,7 @@ second line.'''
         lines = iter(out.getvalue().splitlines())
         self.assertEqual("Branch 'second2' (total 3): 3:unknown", next(lines))
         self.assertIn('PatchId', next(lines))
+        self.assertRegex(next(lines), ' *Series for my board')
         self.assertRegex(next(lines), '  0 .* video: Some video improvements')
         self.assertRegex(next(lines), '  1 .* serial: Add a serial driver')
         self.assertRegex(next(lines), '  2 .* bootm: Make it boot')
@@ -3037,6 +3040,7 @@ second line.'''
         self.assertEqual(
             "Branch 'second' (total 3): 3:unknown", next(lines))
         self.assertIn('PatchId', next(lines))
+        self.assertRegex(next(lines), ' *description')
         self.assertRegex(
             next(lines),
             "  0 unknown      -       .* video: Some video improvements")
@@ -3073,6 +3077,7 @@ second line.'''
             self.assertEqual("Branch 'second' (total 3): 3:unknown",
                              next(lines))
             self.assertIn('PatchId', next(lines))
+            self.assertRegex(next(lines), ' *Series for my board')
             self.assertRegex(
                 next(lines),
                 '  0 unknown      -         .* video: Some video improvements')
@@ -3087,6 +3092,9 @@ second line.'''
             "Branch 'second2' (total 3): 1:accepted 1:changes 1:rejected",
             next(lines))
         self.assertIn('PatchId', next(lines))
+        self.assertEqual(
+            'Cov              2      39            Series for my board',
+            next(lines))
         self.assertRegex(
             next(lines),
             '  0 accepted     2      10 .* video: Some video improvements')
@@ -3171,7 +3179,7 @@ second line.'''
             cser.add_series('second', allow_unmarked=True)
             cser.increment('second')
             cser.do_auto_link(pwork, 'second', 2, True)
-            cser.series_sync(pwork, 'second', 2)
+        cser.series_sync(pwork, 'second', 2)
 
         with mock.patch.object(cros_subprocess.Popen, '__init__',
                                return_value=None) as method:
@@ -3231,19 +3239,22 @@ second line.'''
     def test_migrate(self):
         """Test migration to later schema versions"""
         db = database.Database(f'{self.tmpdir}/.patman.db')
-        with capture_sys_output() as (out, _):
+        with capture_sys_output() as (out, err):
             db.open_it()
-        self.assertEqual('', out.getvalue().strip())
+        self.assertEqual(
+            f'Creating new database {self.tmpdir}/.patman.db',
+            err.getvalue().strip())
 
-        with capture_sys_output() as (out, _):
-            db.ensure_exists()
-        self.assertEqual('Create database v0', out.getvalue().strip())
         self.assertEqual(0, db.get_schema_version())
+
+        # self.assertEqual('Create database v0', out.getvalue().strip())
 
         for version in range(1, database.LATEST + 1):
             with capture_sys_output() as (out, _):
                 db.migrate_to(version)
+            self.assertTrue(os.path.exists(
+                f'{self.tmpdir}/.patman.dbold.v{version - 1}'))
             self.assertEqual(f'Update database to v{version}',
                              out.getvalue().strip())
             self.assertEqual(version, db.get_schema_version())
-        self.assertEqual(2, database.LATEST)
+        self.assertEqual(3, database.LATEST)

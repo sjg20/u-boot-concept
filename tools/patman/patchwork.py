@@ -353,9 +353,10 @@ class Patchwork:
         if self._show_progress:
             terminal.print_clear()
 
-        cover_id = data['cover_letter']
-        cover = None
-        if cover_id:
+        cover = data['cover_letter']
+        cover_id = None
+        if cover:
+            cover_id = cover['id']
             info = self.get_cover_comments(cover_id)
             cover = COVER(cover_id, len(info))
 

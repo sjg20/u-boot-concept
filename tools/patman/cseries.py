@@ -80,9 +80,6 @@ class Cseries:
         fname = f'{self.topdir}/.patman.db'
         self.db = Database(fname)
         self.db.start()
-        # self.cur = self.db.cur
-        # self.con = self.db.con
-        # return self.cur
 
     def close_database(self):
         """Close the database"""
@@ -122,13 +119,16 @@ class Cseries:
     def get_ser_ver_dict(self):
         """Get a list of patchwork entries from the database
 
-        Return:
-            value: list of tuple:
-                int: series_id
-                int: version
-                link: link string, or ''
+        Return: value: list of tuple:
+            int: series_id
+            int: version
+            link: link string, or ''
+            str: Cover-letter ID
+            int: Number of cover-letter comments
         """
-        res = self.db.execute('SELECT series_id, version, link FROM ser_ver')
+        res = self.db.execute(
+            'SELECT series_id, version, link, cover_id, cover_num_comments '
+            'FROM ser_ver')
         return res.fetchall()
 
     def get_upstream_dict(self):
@@ -178,13 +178,12 @@ class Cseries:
 
         Args:
             idnum (int): Series ID to look up
-        Return:
-            tuple:
-                name (str): Series name
-                desc (str): Series description
+        Return: tuple:
+            str: Series name
+            str: Series description
         """
         res = self.db.execute('SELECT name, desc FROM series WHERE id = ?',
-                               (idnum,))
+                              (idnum,))
         recs = res.fetchall()
         if len(recs) != 1:
             raise ValueError(f'No series found (id {idnum} len {len(recs)})')
@@ -1244,7 +1243,7 @@ class Cseries:
         col_state = self.col.build(col, prefix + out, bright)
         return col_state, pad
 
-    def _list_patches(self, branch, pwc, series):
+    def _list_patches(self, branch, pwc, series, desc, cover_id, num_comments):
         """List patches along with optional status info
 
         Args:
@@ -1279,6 +1278,14 @@ class Cseries:
         print(self.col.build(
             self.col.MAGENTA,
             f"Seq State      Com PatchId {'Commit'.ljust(HASH_LEN)} Subject"))
+
+        comments = '' if num_comments is None else str(num_comments)
+        if desc or comments or cover_id:
+            cov = 'Cov' if cover_id else ''
+            print(self.col.build(
+                self.col.WHITE,
+                f"{cov:14} {comments.rjust(3)} {cover_id or '':7}            {desc}",
+                bright=False))
         for line in lines:
             print(line)
 
@@ -1289,23 +1296,27 @@ class Cseries:
             series (str): Name of series to use, or None to use current branch
             version (int): Version number, or None to detect from name
 
-        Return:
-            tuple:
-                str: Name of branch, e.g. 'mary2'
-                Series: Series object containing the commits
-                OrderedDict:
-                    key (int): record ID if find_svid is None, else seq
-                    value (PCOMMIT): record data
+        Return: tuple:
+            str: Name of branch, e.g. 'mary2'
+            Series: Series object containing the commits
+            OrderedDict:
+                key (int): record ID if find_svid is None, else seq
+                value (PCOMMIT): record data
+            str: series description
+            str: cover_id
+            int: cover_num_comments
         """
         ser, version = self.parse_series_and_version(series, version)
         self.ensure_version(ser, version)
-        svid = self.get_series_svid(ser.idnum, version)
+        desc = self.get_series_info(ser.idnum)[1]
+        svid, _, cover_id, num_comments = self.get_ser_ver(ser.idnum, version)
         pwc = self.get_pcommit_dict(svid)
 
         count = len(pwc)
         branch = self.join_name_version(ser.name, version)
         series = patchstream.get_metadata(branch, 0, count, git_dir=self.gitdir)
-        return branch, series, pwc
+
+        return branch, series, pwc, desc, cover_id, num_comments
 
     def list_patches(self, series, version):
         """List patches in a series
@@ -1314,8 +1325,8 @@ class Cseries:
             series (str): Name of series to use, or None to use current branch
             version (int): Version number, or None to detect from name
         """
-        branch, series, pwc = self._get_patches(series, version)
-        self._list_patches(branch, pwc, series)
+        branch, series, pwc, desc, cover_id, num_comments = self._get_patches(series, version)
+        self._list_patches(branch, pwc, series, desc, cover_id, num_comments)
 
     def get_series_svid(self, series_id, version):
         """Get the patchwork ID of a series version
@@ -1344,9 +1355,25 @@ class Cseries:
                 int: record id
                 str: link
         """
+        recs = self.get_ser_ver(series_id, version)
+        return recs[0:2]
+
+    def get_ser_ver(self, series_id, version):
+        """Get the patchwork ID of a series version
+
+        Args:
+            series_id (int): series ID to look up
+            version (int): version number to look up
+
+        Return: tuple:
+            int: record id
+            str: link
+            str: cover_id
+            int: cover_num_comments
+        """
         res = self.db.execute(
-            "SELECT id, link FROM ser_ver WHERE series_id = ? AND version = ?",
-            (series_id, version))
+            'SELECT id, link, cover_id, cover_num_comments FROM ser_ver '
+            'WHERE series_id = ? AND version = ?', (series_id, version))
         recs = res.fetchall()
         if not recs:
             raise ValueError(f'No matching series for id {series_id}')
@@ -1359,8 +1386,9 @@ class Cseries:
             series (str): Name of series to use, or None to use current branch
             version (int): Version number, or None to detect from name
         """
-        branch, series, pwc = self._get_patches(series, version)
-        self._list_patches(branch, pwc, series)
+        branch, series, pwc, desc, cover_id, num_comments = self._get_patches(
+            series, version)
+        self._list_patches(branch, pwc, series, desc, cover_id, num_comments)
 
     def series_sync(self, pwork, series, version):
         """Sync the series status from patchwork
@@ -1391,9 +1419,9 @@ class Cseries:
                 updated += self.rowcount()
         if cover:
             self.db.execute(
-                'UPDATE series SET link = ?, cover_num_comments = ? '
+                'UPDATE ser_ver SET cover_id = ?, cover_num_comments = ? '
                 'WHERE id = ?',
-                (cover.id, cover.num_comments, ser.idnum))
+                (cover.id, cover.num_comments, svid))
 
         self.commit()
         tout.info(f'{updated} patch(es) updated')
@@ -1433,7 +1461,10 @@ class Cseries:
             branch = self.join_name_version(ser.name, ver)
             series = patchstream.get_metadata(branch, 0, count,
                                               git_dir=self.gitdir)
-            self._list_patches(branch, pwc, series)
+            _, _, cover_id, num_comments = self.get_ser_ver(ser.idnum, ver)
+
+            self._list_patches(branch, pwc, series, desc, cover_id,
+                               num_comments)
             add_blank_line = True
 
     def progress(self, series, show_all):
