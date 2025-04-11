@@ -922,11 +922,10 @@ class Cseries:
                 new_branch = repo.branches.create(new_name, target)
                 if branch.upstream:
                     new_branch.upstream = branch.upstream
-                ref = repo.lookup_reference(f'refs/heads/{name}')
-                repo.checkout(ref)
+                branch = new_branch
             else:
                 branch.set_target(target.oid)
-                repo.checkout(branch)
+            repo.checkout(branch)
         vals.oid = target.oid
 
     def mark_series(self, name, series, dry_run=False):
