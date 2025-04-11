@@ -79,8 +79,8 @@ class TestFunctional(unittest.TestCase):
         tout.init(tout.INFO, allow_colour=False)
 
     def tearDown(self):
-        shutil.rmtree(self.tmpdir)
-        # print(self.tmpdir)
+        # shutil.rmtree(self.tmpdir)
+        print(self.tmpdir)
         terminal.set_print_test_mode(False)
 
     @staticmethod
@@ -3270,7 +3270,8 @@ second line.'''
             'wip: Try out a new thing', 'Just checking', 'wibble.c',
             '''changes to wibble''')
 
-        args = Namespace(subcmd='scan', series='second', version=2, extra=[],
+        args = Namespace(subcmd='scan', series=None, mark=False,
+                         allow_unmarked=True, upstream=None, extra=[],
                          dry_run=False)
         # with capture_sys_output() as (out, _):
         control.series(args, test_db=self.tmpdir, pwork=True)

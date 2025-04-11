@@ -225,6 +225,38 @@ class Cseries:
 
         return ser.name, series, version, msg
 
+    def _handle_mark(self, name, series, version, mark, allow_unmarked,
+                     dry_run):
+        """Handle marking a series, checking for unmarked commits, etc.
+
+        Args:
+            mark (str): True to mark each commit with a change ID
+            allow_unmarked (str): True to not require each commit to be marked
+            dry_run (bool): True to do a dry run
+
+        Raises:
+            ValueError: Series being unmarked when it should be marked, etc.
+        """
+        if mark:
+            add_oid = self.mark_series(name, series, dry_run=dry_run)
+
+            # Collect the commits again, as the hashes have changed
+            series = patchstream.get_metadata(add_oid, 0, len(series.commits),
+                                              git_dir=self.gitdir)
+
+        bad_count = 0
+        for commit in series.commits:
+            if not commit.change_id:
+                bad_count += 1
+        if bad_count and not allow_unmarked:
+            raise ValueError(
+                f'{bad_count} commit(s) are unmarked; please use -m or -M')
+
+        if 'version' in series and int(series.version) != version:
+            raise ValueError(f"Series name '{name}' suggests version {version} "
+                             f"but Series-version tag indicates {series.version}")
+        return series
+
     def add_series(self, branch_name, desc=None, mark=False,
                    allow_unmarked=False, end=None, dry_run=False):
         """Add a series to the database
@@ -251,25 +283,8 @@ class Cseries:
                     f"Branch '{name}' has no cover letter - please provide description")
             desc = series.cover[0]
 
-        if mark:
-            add_oid = self.mark_series(name, series, dry_run=dry_run)
-
-            # Collect the commits again, as the hashes have changed
-            series = patchstream.get_metadata(add_oid, 0, len(series.commits),
-                                              git_dir=self.gitdir)
-
-        bad_count = 0
-        for commit in series.commits:
-            if not commit.change_id:
-                bad_count += 1
-        if bad_count and not allow_unmarked:
-            raise ValueError(
-                f'{bad_count} commit(s) are unmarked; please use -m or -M')
-
-        if 'version' in series and int(series.version) != version:
-            raise ValueError(f"Series name '{name}' suggests version {version} "
-                             f"but Series-version tag indicates {series.version}")
-
+        series = self._handle_mark(name, series, version, mark, allow_unmarked,
+                                   dry_run)
         link = series.get_link_for_version(version)
 
         msg = 'Added'
@@ -1383,7 +1398,8 @@ class Cseries:
             'WHERE series_id = ? AND version = ?', (series_id, version))
         recs = res.fetchall()
         if not recs:
-            raise ValueError(f'No matching series for id {series_id}')
+            raise ValueError(
+                f'No matching series for id {series_id} version {version}')
         return recs[0]
 
     def series_status(self, series, version):
@@ -1564,6 +1580,22 @@ class Cseries:
         # ATTENTION: default value of option mesa_glthread overridden by environment.
         cros_subprocess.Popen([f'xdg-open', url])
 
+    def _find_matched_commit(self, match_set, pcm):
+        """Find a commit in a list of possible matches
+
+        Args:
+            match_set (set of Commit): Possible matches
+            pcm (PCOMMIT): Commit to check
+
+        Return:
+            Commit: Matching commit, or None if none
+        """
+        for cmt in match_set:
+            print(f"match subject: '{pcm.subject}', '{cmt.subject}'")
+            if pcm.subject == cmt.subject:
+                return cmt
+        return None
+
     def scan(self, branch_name, mark=False, allow_unmarked=False, end=None,
              dry_run=False):
         """Scan a branch and make updates to the database if it has changed
@@ -1576,8 +1608,24 @@ class Cseries:
             dry_run (bool): True to do a dry run
         """
         name, series, version, msg = self._prep_series(branch_name, end)
+        ser = self.get_series_by_name(name)
+        if not ser:
+            raise ValueError(
+                f"Series '{name}' not found, please use 'patman series add'")
+        svid = self.get_ser_ver(ser.idnum, version)[0]
+        pcdict = self.get_pcommit_dict(svid)
 
         tout.info(
-            f"Syncing series '{name}': mark {mark} allow_unmarked {allow_unmarked}")
+            f"Syncing series '{name}' v{version}: mark {mark} allow_unmarked {allow_unmarked}")
         if msg:
             tout.info(msg)
+
+        series = self._handle_mark(name, series, version, mark, allow_unmarked,
+                                   dry_run)
+        to_find = set(series.commits)
+        for pcm in pcdict.values():
+            print('pcm', pcm.subject)
+            cmt = self._find_matched_commit(to_find, pcm)
+            if cmt:
+                to_find.remove(cmt)
+        print('remaining', to_find)
