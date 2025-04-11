@@ -1536,7 +1536,7 @@ second line.'''
             cser.add_series('first', 'my description', allow_unmarked=True)
         lines = out.getvalue().strip().splitlines()
         self.assertEqual(
-            "Adding series 'first': mark False allow_unmarked True",
+            "Adding series 'first' v1: mark False allow_unmarked True",
             lines[0])
         self.assertEqual("Added series 'first' version 1 (2 commits)", lines[1])
         self.assertEqual(2, len(lines))
@@ -1577,7 +1577,7 @@ second line.'''
             cser.add_series('first2', 'description', allow_unmarked=True)
         lines = out.getvalue().splitlines()
         self.assertEqual(
-            "Adding series 'first': mark False allow_unmarked True",
+            "Adding series 'first' v2: mark False allow_unmarked True",
             lines[0])
         self.assertEqual("Added series 'first' version 2 (2 commits)", lines[1])
         self.assertEqual(2, len(lines))
@@ -1613,7 +1613,7 @@ second line.'''
             cser.add_series(None, 'description', allow_unmarked=True)
         lines = out.getvalue().splitlines()
         self.assertEqual(
-            "Adding series 'first': mark False allow_unmarked True",
+            "Adding series 'first' v2: mark False allow_unmarked True",
             lines[0])
         self.assertEqual("Added series 'first' version 2 (2 commits)", lines[1])
         self.assertEqual(2, len(lines))
@@ -1623,7 +1623,7 @@ second line.'''
             cser.add_series('first', 'description', allow_unmarked=True)
         lines = out.getvalue().splitlines()
         self.assertEqual(
-            "Adding series 'first': mark False allow_unmarked True",
+            "Adding series 'first' v1: mark False allow_unmarked True",
             lines[0])
         self.assertEqual(
             "Added version 1 to existing series 'first' (2 commits)", lines[1])
@@ -1695,7 +1695,7 @@ second line.'''
                             allow_unmarked=True)
         lines = out.getvalue().splitlines()
         self.assertEqual(
-            "Adding series 'third': mark False allow_unmarked True", lines[0])
+            "Adding series 'third' v4: mark False allow_unmarked True", lines[0])
         self.assertEqual("Added series 'third' version 4 (4 commits)", lines[1])
         self.assertEqual(2, len(lines))
 
@@ -1717,7 +1717,8 @@ second line.'''
                                 allow_unmarked=True, end='third4~2')
         lines = out.getvalue().splitlines()
         self.assertEqual(
-            "Adding series 'third': mark False allow_unmarked True", lines[0])
+            "Adding series 'third' v4: mark False allow_unmarked True",
+            lines[0])
         self.assertRegex(
             lines[1],
             'Ending before .* main: Change to the main program')
@@ -2618,7 +2619,7 @@ second line.'''
             cser.add_series('first', '', mark=True, dry_run=True)
         lines = iter(out.getvalue().splitlines())
         self.assertEqual(
-            "Adding series 'first': mark True allow_unmarked False",
+            "Adding series 'first' v1: mark True allow_unmarked False",
             next(lines))
         self.assertEqual('Checking out upstream commit refs/heads/base',
                          next(lines))
@@ -2642,7 +2643,7 @@ second line.'''
                 cser.add_series('first', '', mark=True, dry_run=True)
         self.assertEqual('1 conflict prevents checkout', str(exc.exception))
         self.assertEqual(
-            "Adding series 'first': mark True allow_unmarked False\n"
+            "Adding series 'first' v1: mark True allow_unmarked False\n"
             "Checking out upstream commit refs/heads/base\n",
             out.getvalue())
 
@@ -3259,3 +3260,17 @@ second line.'''
                              out.getvalue().strip())
             self.assertEqual(version, db.get_schema_version())
         self.assertEqual(3, database.LATEST)
+
+    def test_series_scan(self):
+        """Test scanning a series for updates"""
+        self.setup_second()
+
+        # Add a new commit
+        self.make_commit_with_file(
+            'wip: Try out a new thing', 'Just checking', 'wibble.c',
+            '''changes to wibble''')
+
+        args = Namespace(subcmd='scan', series='second', version=2, extra=[],
+                         dry_run=False)
+        # with capture_sys_output() as (out, _):
+        control.series(args, test_db=self.tmpdir, pwork=True)

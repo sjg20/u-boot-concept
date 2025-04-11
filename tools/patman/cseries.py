@@ -197,11 +197,11 @@ class Cseries:
         Args:
             name (str): Branch name with version appended, e.g. 'fix2'
 
-        Return:
-            tuple:
-                str: Series name, e.g. 'fix'
-                series: Series object
-                version: Version number, e.g. 2
+        Return: tuple:
+            str: Series name, e.g. 'fix'
+            Series: Collected series information
+            int: Version number, e.g. 2
+            str: Message to show
         """
         ser, version = self.parse_series_and_version(name, None)
         if not name:
@@ -216,14 +216,21 @@ class Cseries:
             raise ValueError('Cannot detect branch automatically')
 
         series = patchstream.get_metadata(name, 0, count, git_dir=self.gitdir)
-        return ser.name, series, version
+        msg = None
+        if end:
+            repo = pygit2.init_repository(self.gitdir)
+            target = repo.revparse_single(end)
+            first_line = target.message.splitlines()[0]
+            msg = (f'Ending before {oid(target.id)} {first_line}')
 
-    def add_series(self, name, desc=None, mark=False, allow_unmarked=False,
-                   end=None, dry_run=False):
+        return ser.name, series, version, msg
+
+    def add_series(self, branch_name, desc=None, mark=False,
+                   allow_unmarked=False, end=None, dry_run=False):
         """Add a series to the database
 
         Args:
-            name (str): Name of series to add, or None to use current one
+            branch_name (str): Name of branch to sync, or None for current one
             desc (str): Description to use, or None to use the series subject
             mark (str): True to mark each commit with a change ID
             allow_unmarked (str): True to not require each commit to be marked
@@ -233,13 +240,11 @@ class Cseries:
         Return:
             Series: Series information
         """
-        name, series, version = self._prep_series(name, end)
-        tout.info(f"Adding series '{name}': mark {mark} allow_unmarked {allow_unmarked}")
-        if end:
-            repo = pygit2.init_repository(self.gitdir)
-            target = repo.revparse_single(end)
-            first_line = target.message.splitlines()[0]
-            tout.info(f'Ending before {oid(target.id)} {first_line}')
+        name, series, version, msg = self._prep_series(branch_name, end)
+        tout.info(f"Adding series '{name}' v{version}: mark {mark} "
+                  f'allow_unmarked {allow_unmarked}')
+        if msg:
+            tout.info(msg)
         if desc is None:
             if not series.cover:
                 raise ValueError(
@@ -384,7 +389,7 @@ class Cseries:
 
         if update_commit:
             branch_name = self.get_branch_name(ser.name, version)
-            _, series, max_vers = self._prep_series(branch_name)
+            _, series, max_vers, _ = self._prep_series(branch_name)
             self.update_series(branch_name, series, max_vers, add_vers=version,
                                add_link=link)
         if link is None:
@@ -985,7 +990,7 @@ class Cseries:
         Return:
             pygit.oid: oid of the new branch
         """
-        name, series, _ = self._prep_series(name)
+        name, series, _, _ = self._prep_series(name)
         tout.info(f"Unmarking series '{name}': allow_unmarked {allow_unmarked}")
 
         if not allow_unmarked:
@@ -1558,3 +1563,21 @@ class Cseries:
         # Gtk-Message: 06:48:20.729: Failed to load module "canberra-gtk-module"
         # ATTENTION: default value of option mesa_glthread overridden by environment.
         cros_subprocess.Popen([f'xdg-open', url])
+
+    def scan(self, branch_name, mark=False, allow_unmarked=False, end=None,
+             dry_run=False):
+        """Scan a branch and make updates to the database if it has changed
+
+        Args:
+            branch_name (str): Name of branch to sync, or None for current one
+            mark (str): True to mark each commit with a change ID
+            allow_unmarked (str): True to not require each commit to be marked
+            end (str): Add only commits up to but exclu
+            dry_run (bool): True to do a dry run
+        """
+        name, series, version, msg = self._prep_series(branch_name, end)
+
+        tout.info(
+            f"Syncing series '{name}': mark {mark} allow_unmarked {allow_unmarked}")
+        if msg:
+            tout.info(msg)

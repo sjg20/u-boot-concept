@@ -308,6 +308,8 @@ def series(args, test_db=None, pwork=None):
             cser.remove_series(args.series, dry_run=args.dry_run)
         elif args.subcmd == 'remove-version':
             cser.remove_version(args.series, args.version, dry_run=args.dry_run)
+        elif args.subcmd == 'scan':
+            cser.scan(args.series, args.version, dry_run=args.dry_run)
         elif args.subcmd == 'send':
             args.dry_run = True
             git_dir = None
