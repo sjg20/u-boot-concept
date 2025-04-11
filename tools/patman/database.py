@@ -138,3 +138,13 @@ class Database:
 
     def rowcount(self):
         return self.cur.rowcount
+
+    def remove_pcommits(self, id_list):
+        """Delete all the pcommits in a list
+
+        Args:
+            id_list (list of int): List of IDs of pcommits to delete
+        """
+        recs = [str(i) for i in id_list]
+        vals = ', '.join(recs[0])
+        # res = self.execute(f'DELETE FROM pcommit WHERE id IN({vals})'),

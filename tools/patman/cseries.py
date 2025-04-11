@@ -1577,20 +1577,22 @@ class Cseries:
         # ATTENTION: default value of option mesa_glthread overridden by environment.
         cros_subprocess.Popen([f'xdg-open', url])
 
-    def _find_matched_commit(self, match_set, pcm):
+    def _find_matched_commit(self, commits, pcm):
         """Find a commit in a list of possible matches
 
         Args:
-            match_set (set of Commit): Possible matches
+            commits (dict of Commit): Possible matches
+                key: sequence number of patch (from 0)
+                value: Commit object
             pcm (PCOMMIT): Patch to check
 
         Return:
-            Commit: Matching commit, or None if none
+            int: Sequence number of matching commit, or None if not found
         """
-        for cmt in match_set:
+        for seq, cmt in commits.items():
             tout.debug(f"- match subject: '{cmt.subject}'")
             if pcm.subject == cmt.subject:
-                return cmt
+                return seq
         return None
 
     def _find_matched_patch(self, match_set, cmt):
@@ -1633,21 +1635,29 @@ class Cseries:
         series = self._handle_mark(name, series, version, mark, allow_unmarked,
                                    dry_run)
 
-        # First check for patches that have been removed from the branch
-        to_find = set(series.commits)
-        print('to_find', to_find)
+        # First check for new patches that are not in the database
+        to_add = {}
+        for i, cmt in enumerate(series.commits):
+            to_add[i] = cmt
         for pcm in pcdict.values():
             tout.debug(f'pcm {pcm.subject}')
-            cmt = self._find_matched_commit(to_find, pcm)
-            if cmt:
-                to_find.remove(cmt)
-        print('to_find', to_find)
+            i = self._find_matched_commit(to_add, pcm)
+            if i is not None:
+                del to_add[i]
+        if to_add:
+            tout.info('Adding:')
+            for seq in to_add:
+                tout.info(f'  {seq:3} {to_add[seq].subject}')
 
-        # Now check for patches that have been added
-        to_find = set(pcdict.values())
+        # Now check for patches in the database that are not in the branch
+        to_remove = set(pcdict.values())
         for cmt in series.commits:
             tout.debug(f'cmt {cmt.subject}')
-            pcm = self._find_matched_patch(to_find, cmt)
+            pcm = self._find_matched_patch(to_remove, cmt)
             if pcm:
-                to_find.remove(pcm)
-        print('to_find', to_find)
+                to_remove.remove(pcm)
+        if to_remove:
+            tout.info('Removing:')
+            for pcm in to_add:
+                tout.info(f'  - {pcm.subject}')
+        print('to_remove', to_remove)

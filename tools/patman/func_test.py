@@ -3261,8 +3261,6 @@ second line.'''
 
         self.assertEqual(0, db.get_schema_version())
 
-        # self.assertEqual('Create database v0', out.getvalue().strip())
-
         for version in range(1, database.LATEST + 1):
             with capture_sys_output() as (out, _):
                 db.migrate_to(version)
