@@ -1585,15 +1585,31 @@ class Cseries:
 
         Args:
             match_set (set of Commit): Possible matches
-            pcm (PCOMMIT): Commit to check
+            pcm (PCOMMIT): Patch to check
 
         Return:
             Commit: Matching commit, or None if none
         """
         for cmt in match_set:
-            print(f"match subject: '{pcm.subject}', '{cmt.subject}'")
+            tout.debug(f"- match subject: '{cmt.subject}'")
             if pcm.subject == cmt.subject:
                 return cmt
+        return None
+
+    def _find_matched_patch(self, match_set, cmt):
+        """Find a patch in a list of possible matches
+
+        Args:
+            match_set (set of PCOMMIT): Possible matches
+            cmt (Commit): Commit to check
+
+        Return:
+            Commit: Matching commit, or None if none
+        """
+        for pcm in match_set:
+            tout.debug(f"- match subject: '{pcm.subject}'")
+            if pcm.subject == cmt.subject:
+                return pcm
         return None
 
     def scan(self, branch_name, mark=False, allow_unmarked=False, end=None,
@@ -1622,10 +1638,21 @@ class Cseries:
 
         series = self._handle_mark(name, series, version, mark, allow_unmarked,
                                    dry_run)
+
+        # First check for patches that have been removed from the branch
         to_find = set(series.commits)
         for pcm in pcdict.values():
-            print('pcm', pcm.subject)
+            tout.debug(f'pcm {pcm.subject}')
             cmt = self._find_matched_commit(to_find, pcm)
             if cmt:
                 to_find.remove(cmt)
-        print('remaining', to_find)
+        print('to_find', to_find)
+
+        # Now check for patches that have been added
+        to_find = set(pcdict.values())
+        for cmt in series.commits:
+            tout.debug(f'cmt {cmt.subject}')
+            pcm = self._find_matched_patch(to_find, cmt)
+            if pcm:
+                to_find.remove(pcm)
+        print('to_find', to_find)
