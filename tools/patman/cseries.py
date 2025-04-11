@@ -975,14 +975,13 @@ class Cseries:
                 from 0, which is the one after the upstream branch, to count - 1
         """
         count = len(series.commits)
-        return
         repo, cur, branch, name = self._prepare_process(name, count)
         for seq, cmt in enumerate(series.commits):
-            if seq != seq_to_drop:
-                print('pick')
-                tree_id, cherry = self._pick_commit(repo, cmt)
-                print('finish')
-                cur = self._finish_commit(repo, tree_id, cherry, cur)
+            # if seq != seq_to_drop:
+            print('pick')
+            tree_id, cherry = self._pick_commit(repo, cmt)
+            print('finish')
+            cur = self._finish_commit(repo, tree_id, cherry, cur)
         print('finish process')
         self._finish_process(repo, branch, name)
 
