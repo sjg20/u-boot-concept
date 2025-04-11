@@ -43,7 +43,7 @@ def run_patman():
 
     tout.init(tout.INFO if args.verbose else tout.WARNING)
 
-    # Run our meagre tests
+    # Run our resonably good tests
     if args.cmd == 'test':
         # pylint: disable=C0415
         from patman import func_test
@@ -51,7 +51,7 @@ def run_patman():
 
         to_run = args.testname if args.testname not in [None, 'test'] else None
         result = test_util.run_test_suites(
-            'patman', False, False, False, None, to_run, None,
+            'patman', False, False, args.test_preserve_dirs, None, to_run, None,
             [test_checkpatch.TestPatch, func_test.TestFunctional,
              'settings'])
         sys.exit(0 if result.wasSuccessful() else 1)

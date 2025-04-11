@@ -54,6 +54,9 @@ def parse_args(argv=None):
         '-v', '--verbose', action='store_true', dest='verbose', default=False,
         help='Verbose output of errors and warnings')
     parser.add_argument(
+        '-X', '--test-preserve-dirs', action='store_true',
+        help='Preserve and display test-created directories')
+    parser.add_argument(
         '-H', '--full-help', action='store_true', dest='full_help',
         default=False, help='Display the README file')
 

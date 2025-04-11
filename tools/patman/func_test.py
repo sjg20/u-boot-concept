@@ -70,6 +70,8 @@ class TestFunctional(unittest.TestCase):
     mary = 'Mary Bloggs <mary@napierwallies.co.nz>'
     commits = None
     patches = None
+    verbosity = tout.INFO
+    preserve_outdirs = False
 
     def setUp(self):
         self.tmpdir = tempfile.mkdtemp(prefix='patman.')
@@ -79,9 +81,27 @@ class TestFunctional(unittest.TestCase):
         tout.init(tout.INFO, allow_colour=False)
 
     def tearDown(self):
-        shutil.rmtree(self.tmpdir)
-        # print(self.tmpdir)
+        if self.preserve_outdirs:
+            print(self.tmpdir)
+        else:
+            shutil.rmtree(self.tmpdir)
         terminal.set_print_test_mode(False)
+
+    @classmethod
+    def setup_test_args(cls, preserve_indir=False, preserve_outdirs=False,
+                        toolpath=None, verbosity=None):
+        """Accept arguments controlling test execution
+
+        Args:
+            preserve_indir: not used
+            preserve_outdir: Preserve the output directories used by tests. Each
+                test has its own, so this is normally only useful when running a
+                single test.
+            toolpath: not used
+        """
+        cls.preserve_outdirs = preserve_outdirs
+        cls.toolpath = toolpath
+        cls.verbosity = verbosity
 
     @staticmethod
     def _get_path(fname):
