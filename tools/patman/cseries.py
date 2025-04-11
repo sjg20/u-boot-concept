@@ -827,6 +827,59 @@ class Cseries:
         else:
             self.rollback()
 
+    def _prepare_process(self, name, count, new_name=None):
+        """Get ready to process all commits in a branch
+
+        Args:
+            name (str): Name of the branch to process
+            count (int): Number of commits
+            new_name (str or None): New name, if a new branch is to be created
+
+        Return: tuple:
+            pygit2.repo: Repo to use
+            name (str): (Possibly new) name of branch to process
+            Pygit2.branch: Original branch, for later use
+        """
+        upstream_name = gitutil.get_upstream(self.gitdir, name)[0]
+
+        tout.debug(f"_process_series name '{name}' new_name '{new_name}' "
+                   f"upstream_name '{upstream_name}'")
+        repo = pygit2.init_repository(self.gitdir)
+        commit = None
+        try:
+            upstream = repo.lookup_reference(upstream_name)
+            upstream_name = upstream.name
+            commit = upstream.peel(pygit2.GIT_OBJ_COMMIT)
+        except KeyError:
+            upstream_name = f'{name}~{count}'
+            commit = repo.revparse_single(upstream_name)
+        branch = repo.lookup_branch(name)
+
+        tout.info(f"Checking out upstream commit {upstream_name}")
+        if new_name:
+            name = new_name
+            repo.checkout_tree(commit, strategy=pygit2.GIT_CHECKOUT_FORCE |
+                               pygit2.GIT_CHECKOUT_RECREATE_MISSING)
+            repo.set_head(commit.oid)
+
+        # Check out the upstream commit (detached HEAD)
+        repo.checkout_tree(commit)
+        repo.set_head(commit.oid)
+
+        return repo, branch, name
+
+    def filter_commits(self, name, series, seq_to_drop):
+        """Filter commits to drop one
+
+        Args:
+            name (str): Name of the branch to process
+            series (Series): Series object
+            seq_to_drop (int): Commit sequence to drop; commits are numbered
+                from 0, which is the one after the upstream branch, to count - 1
+        """
+        count = len(series.commits)
+        repo, branch, _ = self._prepare_process(name, count)
+
     def make_change_id(self, commit):
         """Make a Change ID for a commit"""
         sig = commit.committer
@@ -853,33 +906,8 @@ class Cseries:
         Return:
             pygit.oid: oid of the new branch
         """
-        upstream_name = gitutil.get_upstream(self.gitdir, name)[0]
-
         count = len(series.commits)
-        tout.debug(f"_process_series name '{name}' new_name '{new_name}' "
-                   f"upstream_name '{upstream_name}'")
-        repo = pygit2.init_repository(self.gitdir)
-        commit = None
-        try:
-            upstream = repo.lookup_reference(upstream_name)
-            upstream_name = upstream.name
-            commit = upstream.peel(pygit2.GIT_OBJ_COMMIT)
-        except KeyError:
-            upstream_name = f'{name}~{count}'
-            commit = repo.revparse_single(upstream_name)
-        branch = repo.lookup_branch(name)
-
-        tout.info(f"Checking out upstream commit {upstream_name}")
-        if new_name:
-            name = new_name
-            repo.checkout_tree(commit, strategy=pygit2.GIT_CHECKOUT_FORCE |
-                               pygit2.GIT_CHECKOUT_RECREATE_MISSING)
-            repo.set_head(commit.oid)
-
-        # Check out the upstream commit (detached HEAD)
-        repo.checkout_tree(commit)
-        repo.set_head(commit.oid)
-
+        repo, branch, name= self._prepare_process(name, count, new_name)
         cur = repo.head
         vals = SimpleNamespace()
         vals.final = False
