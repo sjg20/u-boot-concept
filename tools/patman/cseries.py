@@ -1425,7 +1425,8 @@ class Cseries:
                 (cover.id, cover.num_comments, cover.name, svid))
 
         self.commit()
-        tout.info(f'{updated} patch(es) updated')
+        tout.info(f"{updated} patch{'es' if updated > 1 else ''}"
+                  f"{' and cover letter' if cover else ''} updated")
 
     def series_max_version(self, idnum):
         """Find the latest version of a series

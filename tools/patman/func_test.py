@@ -1745,7 +1745,8 @@ second line.'''
             cser.do_auto_link(pwork, 'second', 2, True)
         with capture_sys_output() as (out, _):
             cser.series_sync(pwork, 'second', 2)
-        self.assertEqual('3 patch(es) updated', out.getvalue().strip())
+        self.assertEqual('3 patches and cover letter updated',
+                         out.getvalue().strip())
         return cser
 
     def test_series_list(self):
@@ -3063,7 +3064,8 @@ second line.'''
             cser.add_series('second', 'description', allow_unmarked=True)
         with capture_sys_output() as (out, _):
             cser.series_sync(pwork, 'second', None)
-        self.assertEqual('3 patch(es) updated', out.getvalue().strip())
+        self.assertEqual('3 patches and cover letter updated',
+                         out.getvalue().strip())
 
         ser = cser.get_series_by_name('second')
         pwid = cser.get_series_svid(ser.idnum, 1)
