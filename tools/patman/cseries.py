@@ -869,18 +869,6 @@ class Cseries:
 
         return repo, repo.head, branch, name
 
-    def filter_commits(self, name, series, seq_to_drop):
-        """Filter commits to drop one
-
-        Args:
-            name (str): Name of the branch to process
-            series (Series): Series object
-            seq_to_drop (int): Commit sequence to drop; commits are numbered
-                from 0, which is the one after the upstream branch, to count - 1
-        """
-        count = len(series.commits)
-        repo, cur, branch, _ = self._prepare_process(name, count)
-
     def _pick_commit(self, repo, cmt):
         """Apply a commit to the source tree, without commiting it
 
@@ -906,7 +894,7 @@ class Cseries:
         tout.detail(f"cherry {oid(cherry.oid)}")
         return tree_id, cherry
 
-    def _finish_commit(self, repo, tree_id, cherry, cur, msg):
+    def _finish_commit(self, repo, tree_id, cherry, cur, msg=None):
         """Complete a commit
 
         This must be called after _pick_commit()
@@ -917,22 +905,27 @@ class Cseries:
             cherry (commit): Commit object which holds the author and committter
             commit (pygit2.oid): Old commit being cherry-picked
             cur (pygit2.reference): Reference to parent to use for the commit
-            msg (str): Commit subject and message
+            msg (str): Commit subject and message, or None to use cherry.message
         """
+        if msg is None:
+            msg = cherry.message
         repo.create_commit('HEAD', cherry.author, cherry.committer,
                            msg, tree_id, [cur.target])
         return repo.head
 
-    def _finish_process(self, repo, branch, name, new_name, dry_run=False):
+    def _finish_process(self, repo, branch, name, new_name=None, dry_run=False):
         """Finish processing commits
 
         Args:
             repo (pygit2.repo): Repo to use
-            branch (Pygit2.branch): Branch returned by _prepare_process()
+            branch (pygit2.branch): Branch returned by _prepare_process()
             name (str): Name of the branch to process
             new_name (str or None): New name, if a new branch is being created
             dry_run (bool): True to do a dry run, restoring the original tree
                 afterwards
+
+        Return:
+            pygit2.reference: Final commit after everything is completed
         """
         repo.state_cleanup()
 
@@ -971,6 +964,27 @@ class Cseries:
         val.update(str(commit.tree_id).encode('utf-8'))
         val.update(commit.message.encode('utf-8'))
         return val.hexdigest()
+
+    def filter_commits(self, name, series, seq_to_drop):
+        """Filter commits to drop one
+
+        Args:
+            name (str): Name of the branch to process
+            series (Series): Series object
+            seq_to_drop (int): Commit sequence to drop; commits are numbered
+                from 0, which is the one after the upstream branch, to count - 1
+        """
+        count = len(series.commits)
+        return
+        repo, cur, branch, name = self._prepare_process(name, count)
+        for seq, cmt in enumerate(series.commits):
+            if seq != seq_to_drop:
+                print('pick')
+                tree_id, cherry = self._pick_commit(repo, cmt)
+                print('finish')
+                cur = self._finish_commit(repo, tree_id, cherry, cur)
+        print('finish process')
+        self._finish_process(repo, branch, name)
 
     def _process_series(self, name, series, new_name=None, dry_run=False):
         """Rewrite a series
