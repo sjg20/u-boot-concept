@@ -223,7 +223,7 @@ class Cseries:
             first_line = target.message.splitlines()[0]
             msg = (f'Ending before {oid(target.id)} {first_line}')
 
-        return ser.name, series, version, msg
+        return name, ser, series, version, msg
 
     def _handle_mark(self, name, series, version, mark, allow_unmarked,
                      dry_run):
@@ -272,8 +272,8 @@ class Cseries:
         Return:
             Series: Series information
         """
-        name, series, version, msg = self._prep_series(branch_name, end)
-        tout.info(f"Adding series '{name}' v{version}: mark {mark} "
+        name, ser, series, version, msg = self._prep_series(branch_name, end)
+        tout.info(f"Adding series '{ser.name}' v{version}: mark {mark} "
                   f'allow_unmarked {allow_unmarked}')
         if msg:
             tout.info(msg)
@@ -289,14 +289,14 @@ class Cseries:
 
         msg = 'Added'
         added = False
-        series_id = self.find_series_by_name(name)
+        series_id = self.find_series_by_name(ser.name)
         if not series_id:
             self.db.execute(
                 'INSERT INTO series (name, desc, archived) '
-                f"VALUES ('{name}', '{desc}', 0)")
+                f"VALUES ('{ser.name}', '{desc}', 0)")
             series_id = self.lastrowid()
             added = True
-            msg += f" series '{name}'"
+            msg += f" series '{ser.name}'"
 
         if version not in self.get_version_list(series_id):
             self.db.execute(
@@ -305,22 +305,20 @@ class Cseries:
             svid = self.lastrowid()
             msg += f" v{version}"
             if not added:
-                msg += f" to existing series '{name}'"
+                msg += f" to existing series '{ser.name}'"
             added = True
 
             self.add_series_commits(series, svid)
             count = len(series.commits)
             msg += f" ({count} commit{'s' if count > 1 else ''})"
         if not added:
-            tout.info(f"Series '{name}' v{version} already exists")
+            tout.info(f"Series '{ser.name}' v{version} already exists")
             msg = None
         elif not dry_run:
             self.commit()
         else:
             self.rollback()
             series_id = None
-        ser = Series()
-        ser.name = name
         ser.desc = desc
         ser.idnum = series_id
 
@@ -404,7 +402,7 @@ class Cseries:
 
         if update_commit:
             branch_name = self.get_branch_name(ser.name, version)
-            _, series, max_vers, _ = self._prep_series(branch_name)
+            _, _, series, max_vers, _ = self._prep_series(branch_name)
             self.update_series(branch_name, series, max_vers, add_vers=version,
                                add_link=link)
         if link is None:
@@ -1005,7 +1003,7 @@ class Cseries:
         Return:
             pygit.oid: oid of the new branch
         """
-        name, series, _, _ = self._prep_series(name)
+        name, _, series, _, _ = self._prep_series(name)
         tout.info(f"Unmarking series '{name}': allow_unmarked {allow_unmarked}")
 
         if not allow_unmarked:
@@ -1623,12 +1621,8 @@ class Cseries:
             end (str): Add only commits up to but exclu
             dry_run (bool): True to do a dry run
         """
-        name, series, version, msg = self._prep_series(branch_name, end)
+        name, ser, series, version, msg = self._prep_series(branch_name, end)
         print(f'series len {len(series.commits)}')
-        ser = self.get_series_by_name(name)
-        if not ser:
-            raise ValueError(
-                f"Series '{name}' not found, please use 'patman series add'")
         svid = self.get_ser_ver(ser.idnum, version)[0]
         pcdict = self.get_pcommit_dict(svid)
 
