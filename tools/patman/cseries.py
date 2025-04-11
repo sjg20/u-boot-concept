@@ -191,7 +191,7 @@ class Cseries:
         return recs[0]
 
 
-    def _prep_series(self, branch_name, end=None):
+    def _prep_series(self, name, end=None):
         """Prepare to work with a series
 
         Args:
@@ -203,10 +203,8 @@ class Cseries:
             int: Version number, e.g. 2
             str: Message to show
         """
-        ser, version = self.parse_series_and_version(branch_name, None)
-        if branch_name:
-            name = branch_name
-
+        ser, version = self.parse_series_and_version(name, None)
+        if not name:
             name = ser.name
 
         # First check we have a branch with this name
@@ -216,7 +214,6 @@ class Cseries:
         count = gitutil.count_commits_to_branch(name, self.gitdir, end)
         if not count:
             raise ValueError('Cannot detect branch automatically')
-        # print(f'branch {name} count {count}')
 
         series = patchstream.get_metadata(name, 0, count, git_dir=self.gitdir)
         msg = None
