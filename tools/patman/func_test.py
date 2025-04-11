@@ -1538,7 +1538,7 @@ second line.'''
         self.assertEqual(
             "Adding series 'first' v1: mark False allow_unmarked True",
             lines[0])
-        self.assertEqual("Added series 'first' version 1 (2 commits)", lines[1])
+        self.assertEqual("Added series 'first' v1 (2 commits)", lines[1])
         self.assertEqual(2, len(lines))
 
         slist = cser.get_series_dict()
@@ -1579,7 +1579,7 @@ second line.'''
         self.assertEqual(
             "Adding series 'first' v2: mark False allow_unmarked True",
             lines[0])
-        self.assertEqual("Added series 'first' version 2 (2 commits)", lines[1])
+        self.assertEqual("Added series 'first' v2 (2 commits)", lines[1])
         self.assertEqual(2, len(lines))
 
         slist = cser.get_series_dict()
@@ -1615,7 +1615,7 @@ second line.'''
         self.assertEqual(
             "Adding series 'first' v2: mark False allow_unmarked True",
             lines[0])
-        self.assertEqual("Added series 'first' version 2 (2 commits)", lines[1])
+        self.assertEqual("Added series 'first' v2 (2 commits)", lines[1])
         self.assertEqual(2, len(lines))
 
         # Now add first: it should be added as a new version
@@ -1626,7 +1626,7 @@ second line.'''
             "Adding series 'first' v1: mark False allow_unmarked True",
             lines[0])
         self.assertEqual(
-            "Added version 1 to existing series 'first' (2 commits)", lines[1])
+            "Added v1 to existing series 'first' (2 commits)", lines[1])
         self.assertEqual(2, len(lines))
 
         slist = cser.get_series_dict()
@@ -1647,7 +1647,7 @@ second line.'''
 
         with capture_sys_output() as (out, _):
             cser.add_series(None, 'description', allow_unmarked=True)
-        self.assertIn("Series 'first' version 1 already exists",
+        self.assertIn("Series 'first' v1 already exists",
                       out.getvalue().strip())
 
         self.add_first2(False)
@@ -1656,7 +1656,7 @@ second line.'''
             cser.add_series(None, 'description', allow_unmarked=True)
         lines = out.getvalue().splitlines()
         self.assertEqual(
-            "Added version 2 to existing series 'first' (2 commits)", lines[1])
+            "Added v2 to existing series 'first' (2 commits)", lines[1])
 
     def test_series_add_dup_reverse(self):
         """Test adding a series twice, v2 then v1"""
@@ -1664,11 +1664,11 @@ second line.'''
         self.add_first2(True)
         with capture_sys_output() as (out, _):
             cser.add_series(None, 'description', allow_unmarked=True)
-        self.assertIn("Added series 'first' version 2", out.getvalue().strip())
+        self.assertIn("Added series 'first' v2", out.getvalue().strip())
 
         with capture_sys_output() as (out, _):
             cser.add_series('first', 'description', allow_unmarked=True)
-        self.assertIn("Added version 1 to existing series 'first'",
+        self.assertIn("Added v1 to existing series 'first'",
                       out.getvalue().strip())
 
     def test_series_add_dup_reverse_cmdline(self):
@@ -1677,14 +1677,14 @@ second line.'''
         self.add_first2(True)
         with capture_sys_output() as (out, _):
             self.run_args('series', 'add', '-M', 'description', pwork=True)
-        self.assertIn("Added series 'first' version 2 (2 commits)",
+        self.assertIn("Added series 'first' v2 (2 commits)",
                       out.getvalue().strip())
 
         with capture_sys_output() as (out, _):
             self.run_args('series', 'add', '-s', 'first', '-M', 'description',
                           pwork=True)
             cser.add_series('first', 'description', allow_unmarked=True)
-        self.assertIn("Added version 1 to existing series 'first'",
+        self.assertIn("Added v1 to existing series 'first'",
                       out.getvalue().strip())
 
     def test_series_add_skip_version(self):
@@ -1696,7 +1696,7 @@ second line.'''
         lines = out.getvalue().splitlines()
         self.assertEqual(
             "Adding series 'third' v4: mark False allow_unmarked True", lines[0])
-        self.assertEqual("Added series 'third' version 4 (4 commits)", lines[1])
+        self.assertEqual("Added series 'third' v4 (4 commits)", lines[1])
         self.assertEqual(2, len(lines))
 
         sdict = cser.get_series_dict()
@@ -1722,7 +1722,7 @@ second line.'''
         self.assertRegex(
             lines[1],
             'Ending before .* main: Change to the main program')
-        self.assertEqual("Added series 'third' version 4 (2 commits)", lines[2])
+        self.assertEqual("Added series 'third' v4 (2 commits)", lines[2])
 
         sdict = cser.get_series_dict()
         self.assertIn('third', sdict)
@@ -1873,7 +1873,7 @@ second line.'''
         self.assertRegex(lines[3],
                          '- added version 2 .* as .*: spi: SPI fixes')
         self.assertRegex(lines[4], 'Updating branch first2 to .*')
-        self.assertEqual("Setting link for series 'first' version 2 to 2345",
+        self.assertEqual("Setting link for series 'first' v2 to 2345",
                          lines[5])
 
         self.assertEqual('2345', cser.get_link('first', 2))
@@ -1937,7 +1937,7 @@ second line.'''
             self.run_args('series', 'set-link', '-s', 'first', '-V', '4', '-u',
                             '1234', pwork=True)
         self.assertEqual(
-            "Setting link for series 'first' version 4 to 1234",
+            "Setting link for series 'first' v4 to 1234",
             out.getvalue().splitlines()[-1])
 
         with capture_sys_output() as (out, _):
@@ -1999,7 +1999,7 @@ second line.'''
         with capture_sys_output() as (out, _):
             cser.set_link('second', None, '456', True)
         self.assertEqual(
-            "Setting link for series 'second' version 1 to 456",
+            "Setting link for series 'second' v1 to 456",
             out.getvalue().splitlines()[-1])
 
         # Make sure that the link was set
@@ -2047,7 +2047,7 @@ second line.'''
         with capture_sys_output() as (out, _):
             cser.set_link(None, 2, '2345', True)
         self.assertEqual(
-                "Setting link for series 'first' version 2 to 2345",
+                "Setting link for series 'first' v2 to 2345",
                 out.getvalue().splitlines()[-1])
 
         plist = cser.get_ser_ver_dict()
@@ -2066,7 +2066,7 @@ second line.'''
         with capture_sys_output() as (out, _):
             cser.set_link(None, None, '1234', True)
         self.assertEqual(
-                "Setting link for series 'first' version 1 to 1234",
+                "Setting link for series 'first' v1 to 1234",
                 out.getvalue().splitlines()[-1])
 
         with capture_sys_output():
@@ -2075,7 +2075,7 @@ second line.'''
         with capture_sys_output() as (out, _):
             cser.set_link(None, None, '2345', True)
         self.assertEqual(
-                "Setting link for series 'first' version 2 to 2345",
+                "Setting link for series 'first' v2 to 2345",
                 out.getvalue().splitlines()[-1])
 
         plist = cser.get_ser_ver_dict()
@@ -2147,7 +2147,7 @@ second line.'''
         with capture_sys_output() as (out, _):
             cser.do_auto_link(pwork, 'second', None, True)
         self.assertEqual(
-                "Setting link for series 'second' version 1 to 456",
+                "Setting link for series 'second' v1 to 456",
                 out.getvalue().splitlines()[-1])
 
         cser = next(cor)
@@ -2163,7 +2163,7 @@ second line.'''
             self.run_args('series', 'auto-link', '-M', '-s', 'second', '-u',
                         pwork=pwork)
         self.assertEqual(
-                "Setting link for series 'second' version 1 to 456",
+                "Setting link for series 'second' v1 to 456",
                 out.getvalue().splitlines()[-1])
 
         next(cor)
@@ -2387,7 +2387,7 @@ second line.'''
             cser.decrement('first')
         lines = out.getvalue().splitlines()
         self.assertEqual(2, len(lines))
-        self.assertEqual("Removing series 'first' version 2", lines[0])
+        self.assertEqual("Removing series 'first' v2", lines[0])
         self.assertEqual(
             f"Deleted branch 'first2' {str(branch_oid)[:10]}", lines[1])
 
@@ -2628,7 +2628,7 @@ second line.'''
         self.assertRegex(next(lines), r'- tagged .* as .*: i2c: I2C things')
         self.assertRegex(next(lines), '- tagged .* as .*: spi: SPI fixes')
         self.assertRegex(next(lines), 'Updating branch first to .*')
-        self.assertEqual("Added series 'first' version 1 (2 commits)",
+        self.assertEqual("Added series 'first' v1 (2 commits)",
                          next(lines))
         self.assertEqual('Dry run completed', next(lines))
 

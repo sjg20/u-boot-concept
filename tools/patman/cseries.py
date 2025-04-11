@@ -288,7 +288,7 @@ class Cseries:
                 'INSERT INTO ser_ver (series_id, version, link) VALUES '
                 '(?, ?, ?)', (series_id, version, link))
             svid = self.lastrowid()
-            msg += f" version {version}"
+            msg += f" v{version}"
             if not added:
                 msg += f" to existing series '{name}'"
             added = True
@@ -297,7 +297,7 @@ class Cseries:
             count = len(series.commits)
             msg += f" ({count} commit{'s' if count > 1 else ''})"
         if not added:
-            tout.info(f"Series '{name}' version {version} already exists")
+            tout.info(f"Series '{name}' v{version} already exists")
             msg = None
         elif not dry_run:
             self.commit()
@@ -395,7 +395,7 @@ class Cseries:
         if link is None:
             link = ''
         tout.info(
-            f"Setting link for series '{ser.name}' version {version} to {link}")
+            f"Setting link for series '{ser.name}' v{version} to {link}")
         self.db.execute(
             f"UPDATE ser_ver SET link = '{link}' WHERE "
             'series_id = ? AND version = ?', (ser.idnum, version))
@@ -470,7 +470,7 @@ class Cseries:
                                                              version)
 
         if not pws:
-            print(f"Possible matches for '{name}' version {version} desc '{desc}':")
+            print(f"Possible matches for '{name}' v{version} desc '{desc}':")
             for opt in options:
                 print('  Link  Version  Description')
                 print(f"{opt['id']:5}  {opt['version']:7}  {opt['name']}")
@@ -787,7 +787,7 @@ class Cseries:
         if max_vers < 2:
             raise ValueError(f"Series '{ser.name}' only has one version")
 
-        tout.info(f"Removing series '{ser.name}' version {max_vers}")
+        tout.info(f"Removing series '{ser.name}' v{max_vers}")
 
         new_max = max_vers - 1
 
