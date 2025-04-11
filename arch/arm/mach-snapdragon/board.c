@@ -149,7 +149,6 @@ void __weak qcom_board_init(void)
 int board_init(void)
 {
 	show_psci_version();
-	qcom_of_fixup_nodes();
 	qcom_board_init();
 	return 0;
 }
