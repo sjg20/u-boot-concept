@@ -836,7 +836,7 @@ class Cseries:
             new_name (str or None): New name, if a new branch is to be created
 
         Return: tuple:
-            pygit2.repo: Repo to use
+            repo (pygit2.repo): Repo to use
             pygit2.oid: Upstream commit, onto which commits should be added
             name (str): (Possibly new) name of branch to process
             Pygit2.branch: Original branch, for later use
@@ -882,6 +882,18 @@ class Cseries:
         repo, cur, branch, _ = self._prepare_process(name, count)
 
     def _pick_commit(self, repo, cmt):
+        """Apply a commit to the source tree, without commiting it
+
+        This must be called before _finish_commit()
+
+        Args:
+            repo (pygit2.repo): Repo to use
+            cmt (Commit): Commit to apply
+
+        Return: tuple:
+            tree_id (pygit2.oid): Oid of index with source-changes applied
+            commit (pygit2.oid): Old commit being cherry-picked
+        """
         tout.detail(f"- adding {oid(cmt.hash)} {cmt}")
         repo.cherrypick(cmt.hash)
         if repo.index.conflicts:
@@ -893,12 +905,29 @@ class Cseries:
         return tree_id, cherry
 
     def _finish_commit(self, repo, tree_id, cherry, cur, msg):
+        """Complete a commit
+
+        This must be called after _pic_commit
+
+        Args:
+            repo (pygit2.repo): Repo to use
+            tree_id (pygit2.oid): Oid of index with source-changes applied
+            cherry (commit): Commit object which holds the author and committter
+            commit (pygit2.oid): Old commit being cherry-picked
+            cur (pygit2.reference): Reference to parent to use for the commit
+            msg (str): Commit subject and message
+        """
         repo.create_commit('HEAD', cherry.author, cherry.committer,
                            msg, tree_id, [cur.target])
         return repo.head
 
     def make_change_id(self, commit):
-        """Make a Change ID for a commit"""
+        """Make a Change ID for a commit
+
+        This is similar to the gerrit script:
+        git var GIT_COMMITTER_IDENT ; echo "$refhash" ; cat "README"; }
+            | git hash-object --stdin)
+        """
         sig = commit.committer
         val = hashlib.sha1()
         to_hash = f'{sig.name} <{sig.email}> {sig.time} {sig.offset}'
@@ -906,9 +935,6 @@ class Cseries:
         val.update(str(commit.tree_id).encode('utf-8'))
         val.update(commit.message.encode('utf-8'))
         return val.hexdigest()
-
-        # commit.committer
-        # git var GIT_COMMITTER_IDENT ; echo "$refhash" ; cat "README"; } | git hash-object --stdin)
 
     def _process_series(self, name, series, new_name=None, dry_run=False):
         """Rewrite a series

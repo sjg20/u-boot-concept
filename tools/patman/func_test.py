@@ -79,8 +79,8 @@ class TestFunctional(unittest.TestCase):
         tout.init(tout.INFO, allow_colour=False)
 
     def tearDown(self):
-        # shutil.rmtree(self.tmpdir)
-        print(self.tmpdir)
+        shutil.rmtree(self.tmpdir)
+        # print(self.tmpdir)
         terminal.set_print_test_mode(False)
 
     @staticmethod
