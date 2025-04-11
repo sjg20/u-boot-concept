@@ -70,7 +70,7 @@ class TestFunctional(unittest.TestCase):
     mary = 'Mary Bloggs <mary@napierwallies.co.nz>'
     commits = None
     patches = None
-    verbosity = tout.INFO
+    verbosity = False
     preserve_outdirs = False
 
     def setUp(self):
@@ -78,7 +78,8 @@ class TestFunctional(unittest.TestCase):
         self.gitdir = os.path.join(self.tmpdir, '.git')
         self.repo = None
         self.cser = None
-        tout.init(tout.INFO, allow_colour=False)
+        tout.init(tout.DEBUG if self.verbosity else tout.INFO,
+                  allow_colour=False)
 
     def tearDown(self):
         if self.preserve_outdirs:

@@ -51,8 +51,8 @@ def run_patman():
 
         to_run = args.testname if args.testname not in [None, 'test'] else None
         result = test_util.run_test_suites(
-            'patman', False, False, args.test_preserve_dirs, None, to_run, None,
-            [test_checkpatch.TestPatch, func_test.TestFunctional,
+            'patman', False, args.verbose, args.test_preserve_dirs, None,
+            to_run, None, [test_checkpatch.TestPatch, func_test.TestFunctional,
              'settings'])
         sys.exit(0 if result.wasSuccessful() else 1)
 
