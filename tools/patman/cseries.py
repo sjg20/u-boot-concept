@@ -884,7 +884,9 @@ class Cseries:
     def _pick_commit(self, repo, cmt):
         """Apply a commit to the source tree, without commiting it
 
-        This must be called before _finish_commit()
+        _prepare_process() must be called before starting to pick commits
+
+        This function must be called before _finish_commit()
 
         Args:
             repo (pygit2.repo): Repo to use
@@ -907,7 +909,7 @@ class Cseries:
     def _finish_commit(self, repo, tree_id, cherry, cur, msg):
         """Complete a commit
 
-        This must be called after _pic_commit
+        This must be called after _pick_commit()
 
         Args:
             repo (pygit2.repo): Repo to use
@@ -920,6 +922,40 @@ class Cseries:
         repo.create_commit('HEAD', cherry.author, cherry.committer,
                            msg, tree_id, [cur.target])
         return repo.head
+
+    def _finish_process(self, repo, branch, name, new_name, dry_run=False):
+        """Finish processing commits
+
+        Args:
+            repo (pygit2.repo): Repo to use
+            branch (Pygit2.branch): Branch returned by _prepare_process()
+            name (str): Name of the branch to process
+            new_name (str or None): New name, if a new branch is being created
+            dry_run (bool): True to do a dry run, restoring the original tree
+                afterwards
+        """
+        repo.state_cleanup()
+
+        # Update the branch
+        target = repo.revparse_single('HEAD')
+        tout.info(f"Updating branch {name} to {str(target.oid)[:HASH_LEN]}")
+        if dry_run:
+            if new_name:
+                repo.checkout(branch.name)
+            else:
+                branch_oid = branch.peel(pygit2.GIT_OBJ_COMMIT).oid
+                repo.checkout_tree(repo.get(branch_oid))
+                repo.head.set_target(branch_oid)
+        else:
+            if new_name:
+                new_branch = repo.branches.create(new_name, target)
+                if branch.upstream:
+                    new_branch.upstream = branch.upstream
+                branch = new_branch
+            else:
+                branch.set_target(target.oid)
+            repo.checkout(branch)
+        return target
 
     def make_change_id(self, commit):
         """Make a Change ID for a commit
@@ -965,27 +1001,7 @@ class Cseries:
 
             cur = self._finish_commit(repo, tree_id, cherry, cur, vals.msg)
             tout.info(f"- {vals.info} {oid(cmt.hash)} as {oid(cur.target)}: {cmt}")
-        repo.state_cleanup()
-
-        # Update the branch
-        target = repo.revparse_single('HEAD')
-        tout.info(f"Updating branch {name} to {str(target.oid)[:HASH_LEN]}")
-        if dry_run:
-            if new_name:
-                repo.checkout(branch.name)
-            else:
-                branch_oid = branch.peel(pygit2.GIT_OBJ_COMMIT).oid
-                repo.checkout_tree(repo.get(branch_oid))
-                repo.head.set_target(branch_oid)
-        else:
-            if new_name:
-                new_branch = repo.branches.create(new_name, target)
-                if branch.upstream:
-                    new_branch.upstream = branch.upstream
-                branch = new_branch
-            else:
-                branch.set_target(target.oid)
-            repo.checkout(branch)
+        target = self._finish_process(repo, branch, name, new_name, dry_run)
         vals.oid = target.oid
 
     def mark_series(self, name, series, dry_run=False):
