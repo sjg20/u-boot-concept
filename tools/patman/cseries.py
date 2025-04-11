@@ -837,6 +837,7 @@ class Cseries:
 
         Return: tuple:
             pygit2.repo: Repo to use
+            pygit2.oid: Upstream commit, onto which commits should be added
             name (str): (Possibly new) name of branch to process
             Pygit2.branch: Original branch, for later use
         """
@@ -866,7 +867,7 @@ class Cseries:
         repo.checkout_tree(commit)
         repo.set_head(commit.oid)
 
-        return repo, branch, name
+        return repo, repo.head, branch, name
 
     def filter_commits(self, name, series, seq_to_drop):
         """Filter commits to drop one
@@ -878,7 +879,23 @@ class Cseries:
                 from 0, which is the one after the upstream branch, to count - 1
         """
         count = len(series.commits)
-        repo, branch, _ = self._prepare_process(name, count)
+        repo, cur, branch, _ = self._prepare_process(name, count)
+
+    def _pick_commit(self, repo, cmt):
+        tout.detail(f"- adding {oid(cmt.hash)} {cmt}")
+        repo.cherrypick(cmt.hash)
+        if repo.index.conflicts:
+            raise ValueError('Conflicts detected')
+
+        tree_id = repo.index.write_tree()
+        cherry = repo.get(cmt.hash)
+        tout.detail(f"cherry {oid(cherry.oid)}")
+        return tree_id, cherry
+
+    def _finish_commit(self, repo, tree_id, cherry, cur, msg):
+        repo.create_commit('HEAD', cherry.author, cherry.committer,
+                           msg, tree_id, [cur.target])
+        return repo.head
 
     def make_change_id(self, commit):
         """Make a Change ID for a commit"""
@@ -907,21 +924,12 @@ class Cseries:
             pygit.oid: oid of the new branch
         """
         count = len(series.commits)
-        repo, branch, name= self._prepare_process(name, count, new_name)
-        cur = repo.head
+        repo, cur, branch, name = self._prepare_process(name, count, new_name)
         vals = SimpleNamespace()
         vals.final = False
         tout.info(f"Processing {count} commits from branch '{name}'")
         for seq, cmt in enumerate(series.commits):
-            tout.detail(f"- adding {oid(cmt.hash)} {cmt}")
-            repo.cherrypick(cmt.hash)
-            if repo.index.conflicts:
-                raise ValueError('Conflicts detected')
-
-            tree_id = repo.index.write_tree()
-            cherry = repo.get(cmt.hash)
-            tout.detail(f"cherry {oid(cherry.oid)}")
-
+            tree_id, cherry = self._pick_commit(repo, cmt)
             vals.cherry = cherry
             vals.msg = cherry.message
             vals.skip = False
@@ -929,9 +937,7 @@ class Cseries:
             vals.final = seq == len(series.commits) - 1
             yield vals
 
-            repo.create_commit('HEAD', cherry.author, cherry.committer,
-                               vals.msg, tree_id, [cur.target])
-            cur = repo.head
+            cur = self._finish_commit(repo, tree_id, cherry, cur, vals.msg)
             tout.info(f"- {vals.info} {oid(cmt.hash)} as {oid(cur.target)}: {cmt}")
         repo.state_cleanup()
 
