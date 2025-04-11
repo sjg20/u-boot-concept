@@ -875,14 +875,11 @@ class Cseries:
             repo.checkout_tree(commit, strategy=pygit2.GIT_CHECKOUT_FORCE |
                                pygit2.GIT_CHECKOUT_RECREATE_MISSING)
             repo.set_head(commit.oid)
-            repo.checkout_tree(commit)
-            repo.set_head(commit.oid)
-        else:
-            # Check out the upstream commit (detached HEAD)
-            commit_oid = upstream.peel(pygit2.GIT_OBJ_COMMIT).oid
-            commit = repo.get(commit_oid)
-            repo.checkout_tree(commit)
-            repo.set_head(commit_oid)
+
+        # Check out the upstream commit (detached HEAD)
+        repo.checkout_tree(commit)
+        repo.set_head(commit.oid)
+
         cur = repo.head
         vals = SimpleNamespace()
         vals.final = False
