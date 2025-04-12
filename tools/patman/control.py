@@ -280,9 +280,8 @@ def series(args, test_db=None, pwork=None):
                     "Please set project ID with 'patman patchwork set-project'")
             _, proj_id, link_name = cser.get_project()
             pwork.set_project(proj_id, link_name)
-        arg0 = args.extra[0] if len(args.extra) else None
         if args.subcmd == 'add':
-            cser.add_series(args.series, arg0,
+            cser.add_series(args.series, args.desc,
                             mark=args.mark, allow_unmarked=args.allow_unmarked,
                             end=args.upstream, dry_run=args.dry_run)
         elif args.subcmd == 'archive':
@@ -320,7 +319,7 @@ def series(args, test_db=None, pwork=None):
 
             send(args, git_dir=git_dir, cwd=test_db)
         elif args.subcmd == 'set-link':
-            cser.set_link(args.series, args.version, arg0, args.update)
+            cser.set_link(args.series, args.version, args.link, args.update)
         elif args.subcmd == 'status':
             cser.series_status(args.series, args.version)
         elif args.subcmd == 'summary':

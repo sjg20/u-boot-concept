@@ -40,6 +40,7 @@ def run_patman():
 
     if not args.debug:
         sys.tracebacklimit = 0
+    print('args.no_capture', args.no_capture)
 
     tout.init(tout.INFO if args.verbose else tout.WARNING)
 
@@ -51,9 +52,9 @@ def run_patman():
 
         to_run = args.testname if args.testname not in [None, 'test'] else None
         result = test_util.run_test_suites(
-            'patman', False, args.verbose, args.test_preserve_dirs, None,
-            to_run, None, [test_checkpatch.TestPatch, func_test.TestFunctional,
-             'settings'])
+            'patman', False, args.verbose, args.no_capture,
+            args.test_preserve_dirs, None, to_run, None,
+            [test_checkpatch.TestPatch, func_test.TestFunctional, 'settings'])
         sys.exit(0 if result.wasSuccessful() else 1)
 
     # Process commits, produce patches files, check them, email them

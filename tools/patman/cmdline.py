@@ -35,6 +35,21 @@ def parse_args(argv=None):
         them as specified by tags you place in the commits. Use -n to do a dry
         run first.'''
 
+    '''
+    main_parser = argparse.ArgumentParser()
+    main_subparsers = main_parser.add_subparsers()
+    option1_parser = main_subparsers.add_parser('option1')
+    option1_subparsers = option1_parser.add_subparsers()
+    option1_subparsers.add_parser('cmd1')
+    option1_subparsers.add_parser('cmd2')
+    option2_parser = main_subparsers.add_parser('option2')
+    option2_subparsers = option2_parser.add_subparsers()
+    option2_subparsers.add_parser('cmd3')
+    option2_subparsers.add_parser('cmd4')
+    main_parser.parse_args()
+    return
+    '''
+
     parser = argparse.ArgumentParser(epilog=epilog)
     parser.add_argument('-b', '--branch', type=str,
         help="Branch to process (by default, the current branch)")
@@ -42,6 +57,8 @@ def parse_args(argv=None):
         default=-1, help='Automatically create patches from top n commits')
     parser.add_argument('-D', '--debug', action='store_true',
         help='Enabling debugging (provides a full traceback on error)')
+    parser.add_argument('-N', '--no-capture', action='store_true',
+        help='Disable capturing of console output in tests')
     parser.add_argument('-p', '--project', default=project.detect_project(),
                         help="Project name; affects default option values and "
                         "aliases [default: %(default)s]")
@@ -134,10 +151,6 @@ def parse_args(argv=None):
     series = subparsers.add_parser('series', help='Manage series of patches')
     series.add_argument('-a', '--all', action='store_true',
                         help='Show all series versions, not just the last')
-    series.add_argument('-m', '--mark', action='store_true',
-                        help='Mark unmarked commits with a Change-Id field')
-    series.add_argument('-M', '--allow-unmarked', action='store_true',
-                        help="Don't require commits to be marked")
     series.add_argument('-n', '--dry-run', action='store_true', dest='dry_run',
             default=False, help="Do a dry run (create but don't email patches)")
     series.add_argument('-s', '--series', help='Name of series')
@@ -146,10 +159,38 @@ def parse_args(argv=None):
     series.add_argument('-U', '--upstream', help='Commit to end before')
     series.add_argument('-V', '--version', type=int,
                         help='Version number to link')
-    series_subparsers = series.add_subparsers()
-    sub = series_subparsers.add_parser('add')
-    # sub.add_argument('extra', nargs='*')
-    sub.add_argument('desc', help='Series description / cover-letter title')
+    series_subparsers = series.add_subparsers(dest='subcmd')
+    add = series_subparsers.add_parser('add')
+    add.add_argument('-d', '--desc',
+                     help='Series description / cover-letter title')
+    add.add_argument('-m', '--mark', action='store_true',
+                     help='Mark unmarked commits with a Change-Id field')
+    add.add_argument('-M', '--allow-unmarked', action='store_true',
+                     help="Don't require commits to be marked")
+    series_subparsers.add_parser('archive')
+    series_subparsers.add_parser('auto-link')
+    series_subparsers.add_parser('dec')
+    series_subparsers.add_parser('get-link')
+    series_subparsers.add_parser('inc')
+    series_subparsers.add_parser('list')
+    series_subparsers.add_parser('open')
+    series_subparsers.add_parser('patches')
+    series_subparsers.add_parser('progress')
+    series_subparsers.add_parser('remove')
+    series_subparsers.add_parser('remove-version')
+    scan = series_subparsers.add_parser('scan')
+    scan.add_argument('-m', '--mark', action='store_true',
+                      help='Mark unmarked commits with a Change-Id field')
+    scan.add_argument('-M', '--allow-unmarked', action='store_true',
+                      help="Don't require commits to be marked")
+    series_subparsers.add_parser('send')
+    setl = series_subparsers.add_parser('set-link')
+    setl.add_argument(
+        'link', help='Link to use, i.e. patchwork series number (e.g. 452329)')
+    series_subparsers.add_parser('summary')
+    series_subparsers.add_parser('sync')
+    series_subparsers.add_parser('unarchive')
+    series_subparsers.add_parser('unmark')
 
     upstream = subparsers.add_parser('upstream', aliases=['us'],
                                      help='Manage upstream destinations')
@@ -158,6 +199,7 @@ def parse_args(argv=None):
 
     patchwork = subparsers.add_parser('patchwork', aliases=['pw'],
                                       help='Manage patchwork connection')
+
     # Parse options twice: first to get the project and second to handle
     # defaults properly (which depends on project)
     # Use parse_known_args() in case 'cmd' is omitted
@@ -171,8 +213,7 @@ def parse_args(argv=None):
 
     # If we have a command, it is safe to parse all arguments
     if args.cmd:
-        args, extra = parser.parse_known_args(argv)
-        args.extra = extra
+        args = parser.parse_args(argv)
     else:
         # No command, so insert it after the known arguments and before the ones
         # that presumably relate to the 'send' subcommand

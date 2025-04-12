@@ -21,6 +21,10 @@ except:
     use_concurrent = False
 
 
+# Set this to False to disable output-capturing globally
+USE_CAPTURE = True
+
+
 def run_test_coverage(prog, filter_fname, exclude_list, build_dir,
                       required=None, extra_args=None, single_thread='-P1',
                       args=None, allow_failures=None):
@@ -155,8 +159,8 @@ class FullTextTestResult(unittest.TextTestResult):
         super().addSkip(test, reason)
 
 
-def run_test_suites(toolname, debug, verbosity, test_preserve_dirs, processes,
-                    test_name, toolpath, class_and_module_list):
+def run_test_suites(toolname, debug, verbosity, no_capture, test_preserve_dirs,
+                    processes, test_name, toolpath, class_and_module_list):
     """Run a series of test suites and collect the results
 
     Args:
@@ -179,6 +183,11 @@ def run_test_suites(toolname, debug, verbosity, test_preserve_dirs, processes,
         sys.argv.append('-D')
     if verbosity:
         sys.argv.append('-v%d' % verbosity)
+    if no_capture:
+        global USE_CAPTURE
+        sys.argv.append('-N')
+        USE_CAPTURE = False
+        print('no_capture', no_capture)
     if toolpath:
         for path in toolpath:
             sys.argv += ['--toolpath', path]
@@ -207,7 +216,7 @@ def run_test_suites(toolname, debug, verbosity, test_preserve_dirs, processes,
             setup_test_args = getattr(module, 'setup_test_args')
             setup_test_args(preserve_indir=test_preserve_dirs,
                 preserve_outdirs=test_preserve_dirs and test_name is not None,
-                toolpath=toolpath, verbosity=verbosity)
+                toolpath=toolpath, verbosity=verbosity, no_capture=no_capture)
         if test_name:
             # Since Python v3.5 If an ImportError or AttributeError occurs
             # while traversing a name then a synthetic test that raises that

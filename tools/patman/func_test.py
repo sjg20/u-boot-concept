@@ -92,7 +92,7 @@ class TestFunctional(unittest.TestCase):
 
     @classmethod
     def setup_test_args(cls, preserve_indir=False, preserve_outdirs=False,
-                        toolpath=None, verbosity=None):
+                        toolpath=None, verbosity=None, no_capture=False):
         """Accept arguments controlling test execution
 
         Args:
@@ -105,6 +105,7 @@ class TestFunctional(unittest.TestCase):
         cls.preserve_outdirs = preserve_outdirs
         cls.toolpath = toolpath
         cls.verbosity = verbosity
+        cls.no_capture = no_capture
 
     @staticmethod
     def _get_path(fname):
@@ -1828,8 +1829,8 @@ second line.'''
         """Add a new cseries using the cmdline"""
         self.make_git_tree()
         with capture_sys_output() as (out, _):
-            self.run_args('series', 'add', '-M', '-s', 'first',
-                          'my-description', pwork=True)
+            self.run_args('series', '-s', 'first', 'add', '-M',
+                          '-d', 'my-description', pwork=True)
 
         cser = self.get_database()
         slist = cser.get_series_dict()
@@ -3328,7 +3329,7 @@ second line.'''
 +   2 Just checking
 '''
         with capture_sys_output() as (out, _):
-            self.run_args('series', 'scan', '-M', '-n', pwork=True)
+            self.run_args('series', '-n', 'scan', '-M', pwork=True)
         self.assertEqual(expect + 'Dry run completed\n', out.getvalue())
 
         new_pcdict = cser.get_pcommit_dict(svid).values()

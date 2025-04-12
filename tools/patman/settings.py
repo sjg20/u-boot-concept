@@ -254,6 +254,8 @@ def _UpdateDefaults(main_parser, config, argv):
     defaults = {}
     parser_defaults = []
     for parser in parsers:
+        if parser.prog == 'patman series':
+            continue
         pdefs = parser.parse_known_args(argv)[0]
         parser_defaults.append(pdefs)
         defaults.update(vars(pdefs))
