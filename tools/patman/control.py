@@ -39,7 +39,7 @@ def prepare_patches(col, branch, count, start, end, ignore_binary, signoff,
         branch (str): Branch to create patches from (None = current)
         count (int): Number of patches to produce, or -1 to produce patches for
             the current branch back to the upstream commit
-        start (int): Start partch to use (0=first / top of branch)
+        start (int): Start patch to use (0=first / top of branch)
         end (int): End patch to use (0=last one in series, 1=one before that,
             etc.)
         ignore_binary (bool): Don't generate patches for binary files
@@ -427,9 +427,6 @@ def do_patman(args, test_db=None, pwork=None):
                              args.dest_branch, args.force, args.show_comments,
                              args.patchwork_url)
         elif args.cmd == 'series':
-            if not args.extra:
-                raise ValueError('patman series requires a subcommand')
-            args.subcmd = args.extra.pop(0)
             series(args, test_db, pwork)
         elif args.cmd in ('upstream', 'us'):
             if not args.extra:

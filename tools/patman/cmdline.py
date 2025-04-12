@@ -146,6 +146,18 @@ def parse_args(argv=None):
     series.add_argument('-U', '--upstream', help='Commit to end before')
     series.add_argument('-V', '--version', type=int,
                         help='Version number to link')
+    # series.add_argument('subcmd', choices=['add', 'archive'])
+    # series_sub = series.add_subparsers(dest='subcmd')
+    # subparsers.add_parser('add')
+    # series_sub = series.add_parser(dest='subcmd')
+    # sp2 = series.add_subparsers(dest='foo')
+    # print('parse', parser._subparsers._actions)
+    # parser._subparsers._actions[-1].add_parser('extra')
+
+    # series_sub = series.add_parser(action=argparse._SubParsersAction)
+    series_sub = series.add_subparsers()
+    series_subp = series_sub.add_parser('subcmd')
+    series_subp.add_argument('extra', nargs='*')
 
     upstream = subparsers.add_parser('upstream', aliases=['us'],
                                      help='Manage upstream destinations')
@@ -167,6 +179,9 @@ def parse_args(argv=None):
     # Use parse_known_args() in case 'cmd' is omitted
     if not argv:
         argv = sys.argv[1:]
+    # args = parser.parse_args(argv)
+    # return args
+
     args, rest = parser.parse_known_args(argv)
     if hasattr(args, 'project'):
         settings.Setup(parser, args.project, argv)
