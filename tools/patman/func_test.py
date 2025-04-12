@@ -3209,7 +3209,7 @@ second line.'''
             cser.add_series('second', allow_unmarked=True)
             cser.increment('second')
             cser.do_auto_link(pwork, 'second', 2, True)
-        cser.series_sync(pwork, 'second', 2)
+            cser.series_sync(pwork, 'second', 2)
 
         with mock.patch.object(cros_subprocess.Popen, '__init__',
                                return_value=None) as method:
@@ -3313,7 +3313,7 @@ second line.'''
 
         name = gitutil.get_branch(self.gitdir)
         # upstream_name = gitutil.get_upstream(self.gitdir, name)
-        name, ser, series, version, msg = cser._prep_series(None)
+        name, ser, series, version, _ = cser._prep_series(None)
 
         # We now have 4 commits numbered 0 (second~3) to 3 (the one we just
         # added). Drop commit 1 from the branch
