@@ -246,5 +246,6 @@ def parse_args(argv=None):
         args = parser.parse_args(argv)
 
     print('process_tags', args.process_tags)
+    print('allow_unmarked', args.allow_unmarked)
 
     return args

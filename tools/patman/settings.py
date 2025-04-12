@@ -256,18 +256,32 @@ def _UpdateDefaults(main_parser, config, argv):
     defaults = {}
     parser_defaults = []
     argv = list(argv)
+    pos = None
+    s_arg = None
     if '-s' in argv:
-        pos = argv.index('-s')
-        argv = argv[:pos] + argv[pos + 2:]
+        pos = argv.index('-s') + 1
 
     for parser in parsers:
         # This has a sub-command so we can't update its defaults
         old_err = sys.stderr
+        print()
         parser.catch_error = True
+        for action in parser._actions:
+            if '-s' in action.option_strings:
+                print('parser', parser)
+                print('type', action.type)
+                if action.type == int:
+                    argv = argv[:pos] + ['0'] + argv[pos + 1:]
+                else:
+                    argv = argv[:pos] + ['0'] + argv[pos + 1:]
+
+        # argv = argv[:pos] + ['-s', '1'] + argv[pos + 2:]
+        print('args', argv)
         try:
             # Suppress any usage message
             capture_err = StringIO()
-            sys.stderr = capture_err
+            # sys.stderr = capture_err
+            # pdefs = parser.parse_args(argv)
             pdefs = parser.parse_known_args(argv)[0]
 
         # Catch any exception from ErrorCatchingArgumentParser
@@ -276,7 +290,7 @@ def _UpdateDefaults(main_parser, config, argv):
         # a string in one parser and an int in another, then the int parser will
         # fail if an invalid integer is provided
         except ValueError as exc:
-            print('err')
+            print('err', parser)
             continue
         finally:
             parser.catch_error = False
@@ -298,9 +312,9 @@ def _UpdateDefaults(main_parser, config, argv):
         else:
             print("WARNING: Unknown setting %s" % name)
     print('default process_tags', defaults['process_tags'])
+    print('default allow_unmarked', defaults['allow_unmarked'])
 
     # Set all the defaults and manually propagate them to subparsers
-    print('def', defaults['process_tags'])
     main_parser.set_defaults(**defaults)
     for parser, pdefs in zip(parsers, parser_defaults):
         parser.set_defaults(**{k: v for k, v in defaults.items()
