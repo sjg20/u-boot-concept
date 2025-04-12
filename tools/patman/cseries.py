@@ -76,12 +76,16 @@ class Cseries:
                 raise ValueError('No git repo detected in current directory')
         self.gitdir = os.path.join(self.topdir, '.git')
         fname = f'{self.topdir}/.patman.db'
-        self.db = Database(fname)
-        self.db.start()
+        self.db, is_new = Database.get_instance(fname)
+        if is_new:
+            self.db.start()
+        else:
+            self.db.open_it()
 
     def close_database(self):
         """Close the database"""
-        self.db.close()
+        if self.db:
+            self.db.close()
 
     def commit(self):
         self.db.commit()
@@ -825,13 +829,14 @@ class Cseries:
         else:
             self.rollback()
 
-    def _prepare_process(self, name, count, new_name=None):
+    def _prepare_process(self, name, count, new_name=None, quiet=False):
         """Get ready to process all commits in a branch
 
         Args:
             name (str): Name of the branch to process
             count (int): Number of commits
             new_name (str or None): New name, if a new branch is to be created
+            quiet (bool): True to avoid output (used for testing)
 
         Return: tuple:
             repo (pygit2.repo): Repo to use
@@ -854,7 +859,8 @@ class Cseries:
             commit = repo.revparse_single(upstream_name)
         branch = repo.lookup_branch(name)
 
-        tout.info(f"Checking out upstream commit {upstream_name}")
+        if not quiet:
+            tout.info(f"Checking out upstream commit {upstream_name}")
         if new_name:
             name = new_name
             repo.checkout_tree(commit, strategy=pygit2.GIT_CHECKOUT_FORCE |
@@ -911,7 +917,8 @@ class Cseries:
                            msg, tree_id, [cur.target])
         return repo.head
 
-    def _finish_process(self, repo, branch, name, new_name=None, dry_run=False):
+    def _finish_process(self, repo, branch, name, new_name=None, dry_run=False,
+                        quiet=False):
         """Finish processing commits
 
         Args:
@@ -921,6 +928,7 @@ class Cseries:
             new_name (str or None): New name, if a new branch is being created
             dry_run (bool): True to do a dry run, restoring the original tree
                 afterwards
+            quiet (bool): True to avoid output (used for testing)
 
         Return:
             pygit2.reference: Final commit after everything is completed
@@ -929,7 +937,8 @@ class Cseries:
 
         # Update the branch
         target = repo.revparse_single('HEAD')
-        tout.info(f"Updating branch {name} to {str(target.oid)[:HASH_LEN]}")
+        if not quiet:
+            tout.info(f"Updating branch {name} to {str(target.oid)[:HASH_LEN]}")
         if dry_run:
             if new_name:
                 repo.checkout(branch.name)
@@ -978,7 +987,7 @@ class Cseries:
             if seq != seq_to_drop:
                 tree_id, cherry = self._pick_commit(repo, cmt)
                 cur = self._finish_commit(repo, tree_id, cherry, cur)
-        self._finish_process(repo, branch, name)
+        self._finish_process(repo, branch, name, quiet=True)
 
     def _process_series(self, name, series, new_name=None, dry_run=False):
         """Rewrite a series
@@ -1670,8 +1679,16 @@ class Cseries:
             end (str): Add only commits up to but exclu
             dry_run (bool): True to do a dry run
         """
+        def _show_item(oper, seq, subject):
+            col = None
+            if oper == '+':
+                col = self.col.GREEN
+            elif oper == '-':
+                col = self.col.RED
+            out = self.col.build(col, subject) if col else subject
+            tout.info(f'{oper} {seq:3} {out}')
+
         name, ser, series, version, msg = self._prep_series(branch_name, end)
-        print(f'series {name} len {len(series.commits)}')
         svid = self.get_ser_ver(ser.idnum, version)[0]
         pcdict = self.get_pcommit_dict(svid)
 
@@ -1684,32 +1701,37 @@ class Cseries:
                                    dry_run)
 
         # First check for new patches that are not in the database
-        to_add = {}
-        for i, cmt in enumerate(series.commits):
-            to_add[i] = cmt
+        to_add = dict(enumerate(series.commits))
         for pcm in pcdict.values():
             tout.debug(f'pcm {pcm.subject}')
             i = self._find_matched_commit(to_add, pcm)
             if i is not None:
                 del to_add[i]
-        if to_add:
-            tout.info('Adding:')
-            for seq, pcm in to_add.items():
-                tout.info(f'  {seq:3} {pcm.subject}')
 
         # Now check for patches in the database that are not in the branch
-        to_remove = {}
-        for i, pcd in enumerate(pcdict.values()):
-            to_remove[i] = pcd
+        to_remove = dict(enumerate(pcdict.values()))
         for cmt in series.commits:
             tout.debug(f'cmt {cmt.subject}')
             i = self._find_matched_patch(to_remove, cmt)
             if i is not None:
                 del to_remove[i]
-        if to_remove:
-            tout.info('Removing:')
-            for seq, cmt in to_remove.items():
-                tout.info(f'  {seq:3} {cmt.subject}')
+
+        for seq, cmt in enumerate(series.commits):
+            if seq in to_remove:
+                _show_item('-', seq, to_remove[seq].subject)
+                del to_remove[seq]
+            if seq in to_add:
+                _show_item('+', seq, to_add[seq].subject)
+                del to_add[seq]
+            else:
+                _show_item(' ', seq, cmt.subject)
+        seq = len(series.commits)
+        for cmt in to_add.items():
+            _show_item('+', seq, cmt.subject)
+            seq += 1
+        for seq, pcm in to_remove.items():
+            _show_item('+', seq, pcm.subject)
+
         self.db.execute('DELETE FROM pcommit WHERE svid = ?', (svid,))
         self.add_series_commits(series, svid)
         if not dry_run:

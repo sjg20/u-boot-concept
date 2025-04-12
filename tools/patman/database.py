@@ -17,10 +17,29 @@ LATEST = 3
 
 class Database:
     """Database of information used by patman"""
+
+    # dict of databases:
+    # key: filename
+    # value: Database object
+    instances = {}
+
     def __init__(self, db_path):
+        if db_path in Database.instances:
+            # Two connections to the database can cause:
+            # sqlite3.OperationalError: database is locked
+            raise ValueError(f"There is already a database for '{db_path}'")
         self.con = None
         self.cur = None
         self.db_path = db_path
+        self.is_open = False
+        Database.instances[db_path] = self
+
+    @staticmethod
+    def get_instance(db_path):
+        db = Database.instances.get(db_path)
+        if db:
+            return db, False
+        return Database(db_path), True
 
     def start(self):
         """Open the database read for use"""
@@ -29,15 +48,21 @@ class Database:
 
     def open_it(self):
         """Open the database ready for use, creating it if necessary"""
+        if self.is_open:
+            raise ValueError('Already open')
         if not os.path.exists(self.db_path):
             tout.warning(f'Creating new database {self.db_path}')
         self.con = sqlite3.connect(self.db_path, autocommit=False)
         self.cur = self.con.cursor()
+        self.is_open = True
 
     def close(self):
+        if not self.is_open:
+            raise ValueError('Already closed')
         self.con.close()
         self.cur = None
         self.con = None
+        self.is_open = False
 
     def create_v1(self):
         self.cur.execute(

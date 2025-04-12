@@ -44,6 +44,8 @@ TEST_DATA_DIR = PATMAN_DIR / 'test/'
 PROJ_ID = 6
 PROJ_LINK_NAME = 'uboot'
 
+# pylint: disable=protected-access
+
 
 @contextlib.contextmanager
 def directory_excursion(directory):
@@ -1775,6 +1777,7 @@ second line.'''
         """Test listing cseries"""
         self.setup_second()
 
+        self.db_close()
         args = Namespace(subcmd='list', extra=[])
         with capture_sys_output() as (out, _):
             control.series(args, test_db=self.tmpdir, pwork=True)
@@ -1803,6 +1806,7 @@ second line.'''
         self.assertEqual('first', ser.name)
         self.assertEqual('my-description', ser.desc)
 
+        self.db_close()
         args.subcmd = 'list'
         with capture_sys_output() as (out, _):
             control.series(args, test_db=self.tmpdir, pwork=True)
@@ -3134,6 +3138,7 @@ second line.'''
 
         args = Namespace(subcmd='progress', series='second', extra = [],
                          all=False)
+        self.db_close()
         with capture_sys_output() as (out, _):
             control.series(args, test_db=self.tmpdir, pwork=True)
         lines = iter(out.getvalue().splitlines())
@@ -3161,6 +3166,7 @@ second line.'''
         """Test showing progress for all cseries"""
         self.setup_second()
 
+        self.db_close()
         args = Namespace(subcmd='progress', series=None, extra = [],
                          all=False)
         with capture_sys_output() as (out, _):
@@ -3179,6 +3185,7 @@ second line.'''
     def test_series_summary(self):
         self.setup_second()
 
+        self.db_close()
         args = Namespace(subcmd='summary', series=None, extra = [])
         with capture_sys_output() as (out, _):
             control.series(args, test_db=self.tmpdir, pwork=True)
@@ -3303,16 +3310,30 @@ second line.'''
             '''changes to wibble''')
         target = self.repo.revparse_single('HEAD')
         self.repo.reset(target.oid, pygit2.enums.ResetMode.HARD)
-        # return
-        name = gitutil.get_branch(self.gitdir)
-        upstream_name = gitutil.get_upstream(self.gitdir, name)
-        name, ser, series, version, msg = cser._prep_series(None)
-        # We now have 4 commits numbered 0 (second~3) to 3 (the one we just
-        # added). Drop commit 2 from the branch
-        cser.filter_commits(name, series, 2)
 
+        name = gitutil.get_branch(self.gitdir)
+        # upstream_name = gitutil.get_upstream(self.gitdir, name)
+        name, ser, series, version, msg = cser._prep_series(None)
+
+        # We now have 4 commits numbered 0 (second~3) to 3 (the one we just
+        # added). Drop commit 1 from the branch
+        cser.filter_commits(name, series, 1)
         args = Namespace(subcmd='scan', series=None, mark=False,
                          allow_unmarked=True, upstream=None, extra=[],
-                         dry_run=False)
-        # with capture_sys_output() as (out, _):
-        control.series(args, test_db=self.tmpdir, pwork=True)
+                         dry_run=True)
+        svid = cser.get_ser_ver(ser.idnum, version)[0]
+        old_pcdict = cser.get_pcommit_dict(svid).values()
+
+        self.run_args('series', 'scan', '-M', '-n', pwork=True)
+
+        new_pcdict = cser.get_pcommit_dict(svid).values()
+        self.assertEqual(list(old_pcdict), list(new_pcdict))
+
+        self.run_args('series', 'scan', '-M', pwork=True)
+        new_pcdict = cser.get_pcommit_dict(svid).values()
+        self.assertEqual(len(old_pcdict), len(new_pcdict))
+        chk = list(new_pcdict)
+        self.assertNotEqual(list(old_pcdict), list(new_pcdict))
+        self.assertEqual('video: Some video improvements', chk[0].subject)
+        self.assertEqual('bootm: Make it boot', chk[1].subject)
+        self.assertEqual('Just checking', chk[2].subject)
