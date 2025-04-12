@@ -265,18 +265,21 @@ def _UpdateDefaults(main_parser, config, argv):
         # print('args', argv)
         # print('parser', parser)
         try:
+            parser.catch_error = True
             pdefs = parser.parse_known_args(argv)[0]
-        except:
-            print('\n\nexception')
+        except ValueError as exc:
+            print('\n\nexception', str(exc))
             continue
+        finally:
+            parser.catch_error = False
         # print('pdefs', pdefs)
         parser_defaults.append(pdefs)
         defaults.update(vars(pdefs))
         # print('defaults', defaults)
-    del defaults['cmd']
-    del defaults['subcmd']
-    del defaults['testname']
-    print('defaults', defaults)
+    # del defaults['cmd']
+    # del defaults['subcmd']
+    # del defaults['testname']
+    # print('defaults', defaults)
 
     # Go through the settings and collect defaults
     for name, val in config.items('settings'):

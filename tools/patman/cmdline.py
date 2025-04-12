@@ -20,6 +20,18 @@ from patman import settings
 PATMAN_DIR = pathlib.Path(__file__).parent
 HAS_TESTS = os.path.exists(PATMAN_DIR / "func_test.py")
 
+
+class ErrorCatchingArgumentParser(argparse.ArgumentParser):
+    def __init__(self, **kwargs):
+        self.catch_error = False
+        super().__init__(**kwargs)
+
+    def exit(self, status=0, message=None):
+        if self.catch_error:
+            raise ValueError('Bad argument')
+        exit(status)
+
+
 def add_send_args(par):
     par.add_argument('-i', '--ignore-errors', action='store_true',
            dest='ignore_errors', default=False,
@@ -80,7 +92,8 @@ def parse_args(argv=None):
         them as specified by tags you place in the commits. Use -n to do a dry
         run first.'''
 
-    parser = argparse.ArgumentParser(epilog=epilog)
+    # parser = argparse.ArgumentParser(epilog=epilog)
+    parser = ErrorCatchingArgumentParser(epilog=epilog)
     parser.add_argument('-D', '--debug', action='store_true',
         help='Enabling debugging (provides a full traceback on error)')
     parser.add_argument('-N', '--no-capture', action='store_true',
