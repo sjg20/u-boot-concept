@@ -272,6 +272,7 @@ def _UpdateDefaults(main_parser, config):
             print("WARNING: Unknown setting %s" % name)
 
     # Set all the defaults and manually propagate them to subparsers
+    print('def', defaults['process_tags'])
     main_parser.set_defaults(**defaults)
     for parser, pdefs in zip(parsers, parser_defaults):
         parser.set_defaults(**{k: v for k, v in defaults.items()

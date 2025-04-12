@@ -144,4 +144,6 @@ def parse_args():
         argv = argv[:-nargs] + ['send'] + rest
         args = parser.parse_args(argv)
 
+    print('process_tags', args.process_tags)
+
     return args
