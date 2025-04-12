@@ -26,10 +26,6 @@ class ErrorCatchingArgumentParser(argparse.ArgumentParser):
         self.catch_error = False
         super().__init__(**kwargs)
 
-    def print_help(self, *args):
-        if not self.catch_error:
-            super().print_help(*args)
-
     def exit(self, status=0, message=None):
         if self.catch_error:
             raise ValueError('Bad argument')
