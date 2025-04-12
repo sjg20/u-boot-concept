@@ -81,10 +81,6 @@ def parse_args(argv=None):
         run first.'''
 
     parser = argparse.ArgumentParser(epilog=epilog)
-    parser.add_argument('-b', '--branch', type=str,
-        help="Branch to process (by default, the current branch)")
-    parser.add_argument('-c', '--count', dest='count', type=int,
-        default=-1, help='Automatically create patches from top n commits')
     parser.add_argument('-D', '--debug', action='store_true',
         help='Enabling debugging (provides a full traceback on error)')
     parser.add_argument('-N', '--no-capture', action='store_true',
@@ -110,6 +106,10 @@ def parse_args(argv=None):
     subparsers = parser.add_subparsers(dest='cmd')
     send = subparsers.add_parser(
         'send', help='Format, check and email patches (default command)')
+    send.add_argument('-b', '--branch', type=str,
+        help="Branch to process (by default, the current branch)")
+    send.add_argument('-c', '--count', dest='count', type=int,
+        default=-1, help='Automatically create patches from top n commits')
     send.add_argument('-e', '--end', type=int, default=0,
         help='Commits to skip at end of patch list')
     send.add_argument('-n', '--dry-run', action='store_true', dest='dry_run',
