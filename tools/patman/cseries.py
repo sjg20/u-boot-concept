@@ -1738,3 +1738,4 @@ class Cseries:
             self.commit()
         else:
             self.rollback()
+            tout.info('Dry run completed')

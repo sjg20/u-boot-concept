@@ -3318,18 +3318,26 @@ second line.'''
         # We now have 4 commits numbered 0 (second~3) to 3 (the one we just
         # added). Drop commit 1 from the branch
         cser.filter_commits(name, series, 1)
-        args = Namespace(subcmd='scan', series=None, mark=False,
-                         allow_unmarked=True, upstream=None, extra=[],
-                         dry_run=True)
         svid = cser.get_ser_ver(ser.idnum, version)[0]
         old_pcdict = cser.get_pcommit_dict(svid).values()
 
-        self.run_args('series', 'scan', '-M', '-n', pwork=True)
+        expect = '''Syncing series 'second2' v2: mark False allow_unmarked True
+    0 video: Some video improvements
+-   1 serial: Add a serial driver
+    1 bootm: Make it boot
++   2 Just checking
+'''
+        with capture_sys_output() as (out, _):
+            self.run_args('series', 'scan', '-M', '-n', pwork=True)
+        self.assertEqual(expect + 'Dry run completed\n', out.getvalue())
 
         new_pcdict = cser.get_pcommit_dict(svid).values()
         self.assertEqual(list(old_pcdict), list(new_pcdict))
 
-        self.run_args('series', 'scan', '-M', pwork=True)
+        with capture_sys_output() as (out, _):
+            self.run_args('series', 'scan', '-M', pwork=True)
+        self.assertEqual(expect, out.getvalue())
+
         new_pcdict = cser.get_pcommit_dict(svid).values()
         self.assertEqual(len(old_pcdict), len(new_pcdict))
         chk = list(new_pcdict)
