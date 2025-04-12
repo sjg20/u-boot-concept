@@ -184,7 +184,7 @@ def parse_args(argv=None):
                       help='Mark unmarked commits with a Change-Id field')
     scan.add_argument('-M', '--allow-unmarked', action='store_true',
                       help="Don't require commits to be marked")
-    ssend = series_subparsers.add_parser('publish', aliases=['pub'])
+    ssend = series_subparsers.add_parser('send')
     add_send_args(ssend)
     setl = series_subparsers.add_parser('set-link')
     setl.add_argument('-u', '--update', action='store_true',
@@ -233,9 +233,7 @@ def parse_args(argv=None):
     args, rest = parser.parse_known_args(argv)
     if hasattr(args, 'project'):
         settings.Setup(parser, args.project, argv)
-        print('args', argv)
         args, rest = parser.parse_known_args(argv)
-        print('done')
 
     # If we have a command, it is safe to parse all arguments
     if args.cmd:

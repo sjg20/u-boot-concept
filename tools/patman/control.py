@@ -146,8 +146,8 @@ def do_series(args, test_db=None, pwork=None):
             cser.scan(args.series, mark=args.mark,
                       allow_unmarked=args.allow_unmarked, end=args.upstream,
                       dry_run=args.dry_run)
-        elif args.subcmd == 'publish':
-            cser.publish_series(args)
+        elif args.subcmd == 'send':
+            cser.send_series(args)
         elif args.subcmd == 'set-link':
             cser.set_link(args.series, args.version, args.link, args.update)
         elif args.subcmd == 'status':

@@ -2431,7 +2431,7 @@ second line.'''
         self.assertEqual("Series 'first' only has one version",
                          str(exc.exception))
 
-    def test_series_publish(self):
+    def test_series_send(self):
         """Test sending a series"""
         cser, pwork = self.setup_second()
 
@@ -2443,7 +2443,7 @@ second line.'''
         self.assertEqual('3', series.version)
 
         with capture_sys_output() as (out, err):
-            self.run_args('series', '-n', 'publish', pwork=pwork)
+            self.run_args('series', '-n', 'send', pwork=pwork)
         lines = out.getvalue().splitlines()
         err_lines = err.getvalue().splitlines()
         self.assertIn('Send a total of 3 patches with a cover letter',
