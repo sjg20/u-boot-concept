@@ -255,21 +255,15 @@ def _UpdateDefaults(main_parser, config, argv):
     # Collect the defaults from each parser
     defaults = {}
     parser_defaults = []
-    # argv = list(argv)
-    # if '-s' in argv:
-        # pos = argv.index('-s')
-        # argv = argv[:pos] + argv[pos + 2:]
 
     for parser in parsers:
         # This has a sub-command so we can't update its defaults
-        # if hasattr(parser, 'no_defaults'):
-            # continue
         old_err = sys.stderr
         parser.catch_error = True
         try:
             # Suppress any usage message
             capture_err = StringIO()
-            # sys.stderr = capture_err
+            sys.stderr = capture_err
             pdefs = parser.parse_known_args(argv)[0]
 
         # Catch any exception from ErrorCatchingArgumentParser
@@ -279,13 +273,11 @@ def _UpdateDefaults(main_parser, config, argv):
         # fail if an invalid integer is provided
         except ValueError as exc:
             continue
-            print('err')
         finally:
             parser.catch_error = False
             sys.stderr = old_err
         parser_defaults.append(pdefs)
         defaults.update(vars(pdefs))
-    print('default process_tags', defaults['process_tags'])
 
     # Go through the settings and collect defaults
     for name, val in config.items('settings'):
