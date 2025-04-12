@@ -25,6 +25,7 @@ from patman import database
 from patman import patchstream
 from patman.patchstream import PatchStream
 from patman.patchwork import Patchwork
+from patman import send
 from patman.series import Series
 from patman import settings
 from u_boot_pylib import command
@@ -608,7 +609,7 @@ and a little more''')
             self.assertEqual(2, gitutil.count_commits_to_branch(None))
             col = terminal.Color()
             with terminal.capture() as _:
-                _, cover_fname, patch_files = control.prepare_patches(
+                _, cover_fname, patch_files = send.prepare_patches(
                     col, branch=None, count=-1, start=0, end=0,
                     ignore_binary=False, signoff=True)
             self.assertIsNone(cover_fname)
@@ -617,7 +618,7 @@ and a little more''')
             # Check that it can detect a different branch
             self.assertEqual(3, gitutil.count_commits_to_branch('second'))
             with terminal.capture() as _:
-                series, cover_fname, patch_files = control.prepare_patches(
+                series, cover_fname, patch_files = send.prepare_patches(
                     col, branch='second', count=-1, start=0, end=0,
                     ignore_binary=False, signoff=True)
             self.assertIsNotNone(cover_fname)
@@ -636,7 +637,7 @@ and a little more''')
 
             # Check that it can skip patches at the end
             with terminal.capture() as _:
-                _, cover_fname, patch_files = control.prepare_patches(
+                _, cover_fname, patch_files = send.prepare_patches(
                     col, branch='second', count=-1, start=0, end=1,
                     ignore_binary=False, signoff=True)
             self.assertIsNotNone(cover_fname)
@@ -1796,7 +1797,7 @@ second line.'''
         self.db_close()
         args = Namespace(subcmd='list', extra=[])
         with capture_sys_output() as (out, _):
-            control.series(args, test_db=self.tmpdir, pwork=True)
+            control.do_series(args, test_db=self.tmpdir, pwork=True)
         lines = out.getvalue().splitlines()
         self.assertEqual(3, len(lines))
         self.assertEqual('Name            Description          Accepted  Versions',
@@ -1812,7 +1813,7 @@ second line.'''
                          mark=False, allow_unmarked=True, upstream=None,
                          dry_run=False)
         with capture_sys_output() as (out, _):
-            control.series(args, test_db=self.tmpdir, pwork=True)
+            control.do_series(args, test_db=self.tmpdir, pwork=True)
 
         cser = self.get_database()
         slist = cser.get_series_dict()
@@ -1825,7 +1826,7 @@ second line.'''
         self.db_close()
         args.subcmd = 'list'
         with capture_sys_output() as (out, _):
-            control.series(args, test_db=self.tmpdir, pwork=True)
+            control.do_series(args, test_db=self.tmpdir, pwork=True)
         lines = out.getvalue().splitlines()
         self.assertEqual(2, len(lines))
         self.assertEqual('first           my-description            -/2  1', lines[1])
@@ -1859,7 +1860,7 @@ second line.'''
                          allow_unmarked=True, upstream=None, dry_run=False,
                          desc=None)
         with capture_sys_output():
-            control.series(args, test_db=self.tmpdir, pwork=True)
+            control.do_series(args, test_db=self.tmpdir, pwork=True)
 
         cser = self.get_database()
         slist = cser.get_series_dict()
@@ -1869,6 +1870,24 @@ second line.'''
         self.assertEqual('second', ser.name)
         self.assertEqual('Series for my board', ser.desc)
         cser.close_database()
+
+    def _check_inc(self, out):
+        """Check output from an 'increment' operation
+
+        Args:
+            out (StringIO): Text to check
+        """
+        lines = iter(out.getvalue().splitlines())
+
+        self.assertEqual("Increment 'first' v1: 2 patches", next(lines))
+        self.assertRegex(next(lines), 'Checking out upstream commit .*')
+        self.assertEqual("Processing 2 commits from branch 'first2'",
+                         next(lines))
+        self.assertRegex(next(lines), '-  .* as .*: i2c: I2C things')
+        self.assertRegex(next(lines), '-  .* as .*: spi: SPI fixes')
+        self.assertRegex(next(lines), 'Updating branch first2 to .*')
+        self.assertEqual('Added new branch first2', next(lines))
+        return lines
 
     def test_series_link(self):
         """Test adding a patchwork link to a cseries"""
@@ -2268,16 +2287,7 @@ second line.'''
 
         with capture_sys_output() as (out, _):
             yield cser
-        lines = out.getvalue().splitlines()
-        self.assertEqual(6, len(lines))
-        self.assertEqual('Checking out upstream commit refs/heads/base',
-                         lines[0])
-        self.assertEqual("Processing 2 commits from branch 'first2'",
-                         lines[1])
-        self.assertRegex(lines[2], '-  .* as .*: i2c: I2C things')
-        self.assertRegex(lines[3], '-  .* as .*: spi: SPI fixes')
-        self.assertRegex(lines[4], 'Updating branch first2 to .*')
-        self.assertEqual('Added new branch first2', lines[5])
+        self._check_inc(out)
 
         slist = cser.get_series_dict()
         self.assertEqual(1, len(slist))
@@ -2330,15 +2340,6 @@ second line.'''
         upstream.delete()
         with capture_sys_output() as (out, _):
             cser.increment('first')
-        lines = out.getvalue().splitlines()
-        self.assertEqual(6, len(lines))
-        self.assertRegex(lines[0], 'Checking out upstream commit .*')
-        self.assertEqual("Processing 2 commits from branch 'first2'",
-                         lines[1])
-        self.assertRegex(lines[2], '-  .* as .*: i2c: I2C things')
-        self.assertRegex(lines[3], '-  .* as .*: spi: SPI fixes')
-        self.assertRegex(lines[4], 'Updating branch first2 to .*')
-        self.assertEqual('Added new branch first2', lines[5])
 
         slist = cser.get_series_dict()
         self.assertEqual(1, len(slist))
@@ -2354,18 +2355,8 @@ second line.'''
 
         with capture_sys_output() as (out, _):
             cser.increment('first', dry_run=True)
-
-        lines = out.getvalue().splitlines()
-        self.assertEqual(7, len(lines))
-        self.assertEqual('Checking out upstream commit refs/heads/base',
-                         lines[0])
-        self.assertEqual("Processing 2 commits from branch 'first2'",
-                         lines[1])
-        self.assertRegex(lines[2], '-  .* as .*: i2c: I2C things')
-        self.assertRegex(lines[3], '-  .* as .*: spi: SPI fixes')
-        self.assertRegex(lines[4], 'Updating branch first2 to .*')
-        self.assertEqual('Added new branch first2', lines[5])
-        self.assertEqual('Dry run completed', lines[6])
+        lines = self._check_inc(out)
+        self.assertEqual('Dry run completed', next(lines))
 
         # Make sure that nothing was added
         plist = cser.get_ser_ver_dict()
@@ -2445,7 +2436,8 @@ second line.'''
         cser, pwork = self.setup_second()
 
         # Create a third version
-        cser.increment('second')
+        with capture_sys_output() as (out, err):
+            cser.increment('second')
         series = patchstream.get_metadata_for_list('second3', self.gitdir, 3)
         self.assertEqual('2:457', series.links)
         self.assertEqual('3', series.version)
@@ -3150,13 +3142,13 @@ second line.'''
                          all=False)
         self.db_close()
         with capture_sys_output() as (out, _):
-            control.series(args, test_db=self.tmpdir, pwork=True)
+            control.do_series(args, test_db=self.tmpdir, pwork=True)
         lines = iter(out.getvalue().splitlines())
         self._check_second(lines, False)
 
         args.all = True
         with capture_sys_output() as (out, _):
-            control.series(args, test_db=self.tmpdir, pwork=True)
+            control.do_series(args, test_db=self.tmpdir, pwork=True)
         lines = iter(out.getvalue().splitlines())
         self._check_second(lines, True)
 
@@ -3180,14 +3172,14 @@ second line.'''
         args = Namespace(subcmd='progress', series=None, extra = [],
                          all=False)
         with capture_sys_output() as (out, _):
-            control.series(args, test_db=self.tmpdir, pwork=True)
+            control.do_series(args, test_db=self.tmpdir, pwork=True)
         lines = iter(out.getvalue().splitlines())
         self._check_first(lines)
         self._check_second(lines, False)
 
         args.all = True
         with capture_sys_output() as (out, _):
-            control.series(args, test_db=self.tmpdir, pwork=True)
+            control.do_series(args, test_db=self.tmpdir, pwork=True)
         lines = iter(out.getvalue().splitlines())
         self._check_first(lines)
         self._check_second(lines, True)
@@ -3198,7 +3190,7 @@ second line.'''
         self.db_close()
         args = Namespace(subcmd='summary', series=None, extra = [])
         with capture_sys_output() as (out, _):
-            control.series(args, test_db=self.tmpdir, pwork=True)
+            control.do_series(args, test_db=self.tmpdir, pwork=True)
         lines = out.getvalue().splitlines()
         self.assertEqual(
             'Name               Status  Description',
@@ -3355,6 +3347,3 @@ second line.'''
         self.assertEqual('video: Some video improvements', chk[0].subject)
         self.assertEqual('bootm: Make it boot', chk[1].subject)
         self.assertEqual('Just checking', chk[2].subject)
-
-        with capture_sys_output() as (out, _):
-            self.run_args('series', '-n', 'send', pwork=True)

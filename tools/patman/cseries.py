@@ -708,8 +708,9 @@ class Cseries:
                             f'Branch {name}: Series-version tag '
                             f'{series.version} does not match expected version '
                             f'{max_vers}')
-                    vals.info += f'added version {max_vers}'
-                    out.append(f'Series-version: {max_vers}')
+                    if add_vers:
+                        vals.info += f'added version {add_vers}'
+                        out.append(f'Series-version: {add_vers}')
                     added_version = True
                 elif m_links and add_link is not None:
                     new_links = ''
@@ -755,13 +756,13 @@ class Cseries:
         count = len(pwc.values())
         series = patchstream.get_metadata(branch_name, 0, count,
                                           git_dir=self.gitdir)
-        tout.info(f"Increment '{ser.name} v{max_vers}: {count} patches")
+        tout.info(f"Increment '{ser.name}' v{max_vers}: {count} patches")
 
         # Create a new branch
         vers = max_vers + 1
         new_name = self.join_name_version(ser.name, vers)
 
-        self.update_series(ser.name, series, vers, new_name, dry_run,
+        self.update_series(ser.name, series, max_vers, new_name, dry_run,
                            add_vers=vers)
 
         old_svid = self.get_series_svid(ser.idnum, max_vers)
@@ -1086,16 +1087,6 @@ class Cseries:
         if dry_run:
             tout.info('Dry run completed')
         return vals.oid
-
-    def send(self, series):
-        """Send out a series
-
-        Args:
-            series (str): Name of series to use, or None to use current branch
-        """
-        ser = self.parse_series(series)
-        if not ser.idnum:
-            raise ValueError(f"Series '{ser.name}' not found in database")
 
     def add_upstream(self, name, url):
         """Add a new upstream tree
@@ -1747,4 +1738,17 @@ class Cseries:
         Args:
             args (argparse.Namespace): Arguments to patman
         """
+    def send(self, name):
+        """Send out a series
+
+        Args:
+            series (str): Name of series to use, or None to use current branch
+        """
+        ser, version = self.parse_series_and_version(name, None)
+        if not name:
+            name = self.get_branch_name(ser.name, version)
+        if not ser.idnum:
+            raise ValueError(f"Series '{ser.name}' not found in database")
+
+        print('gitdir', self.gitdir)
         send.send(args, git_dir=self.gitdir, cwd=self.topdir)
