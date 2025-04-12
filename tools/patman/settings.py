@@ -9,8 +9,10 @@ except Exception:
     import ConfigParser
 
 import argparse
+from io import StringIO
 import os
 import re
+import sys
 
 from u_boot_pylib import gitutil
 
@@ -262,8 +264,12 @@ def _UpdateDefaults(main_parser, config, argv):
         # This has a sub-command so we can't update its defaults
         if hasattr(parser, 'no_defaults'):
             continue
+        old_err = sys.stderr
+        parser.catch_error = True
         try:
-            parser.catch_error = True
+            # Suppress any usage message
+            capture_err = StringIO()
+            sys.stderr = capture_err
             pdefs = parser.parse_known_args(argv)[0]
 
         # Catch any exception from ErrorCatchingArgumentParser
@@ -275,6 +281,7 @@ def _UpdateDefaults(main_parser, config, argv):
             continue
         finally:
             parser.catch_error = False
+            sys.stderr = old_err
         parser_defaults.append(pdefs)
         defaults.update(vars(pdefs))
 
