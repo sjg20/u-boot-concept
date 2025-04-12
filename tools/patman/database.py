@@ -129,6 +129,12 @@ class Database:
             self.commit()
 
     def get_schema_version(self):
+        """Get the version of the database's schema
+
+        Return:
+            int: Database version, 0 means there is no data; anything less than
+                LATEST means the schema is out of date and must be updated
+        """
         # If there is no database at all, assume v0
         version = 0
         try:

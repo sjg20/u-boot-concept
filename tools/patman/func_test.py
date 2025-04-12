@@ -1698,8 +1698,8 @@ second line.'''
         """Test adding a series twice, v2 then v1"""
         cser = self.get_cser()
         self.add_first2(True)
-        with capture_sys_output() as (out, _):
-            self.run_args('series', 'add', '-M', 'description', pwork=True)
+        # with capture_sys_output() as (out, _):
+        self.run_args('series', 'add', '-M', 'description', pwork=True)
         self.assertIn("Added series 'first' v2 (2 commits)",
                       out.getvalue().strip())
 
