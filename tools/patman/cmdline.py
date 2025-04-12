@@ -20,6 +20,12 @@ from patman import settings
 PATMAN_DIR = pathlib.Path(__file__).parent
 HAS_TESTS = os.path.exists(PATMAN_DIR / "func_test.py")
 
+class CustomArgumentParser(argparse.ArgumentParser):
+    def error(self, message):
+        sys.stderr.write(f'Error: {message}\n')
+        self.print_help()
+        sys.exit(2)
+
 def parse_args():
     """Parse command line arguments from sys.argv[]
 
@@ -32,13 +38,8 @@ def parse_args():
         them as specified by tags you place in the commits. Use -n to do a dry
         run first.'''
 
-    parser = argparse.ArgumentParser(epilog=epilog)
-    parser.add_argument('-b', '--branch', type=str,
-        help="Branch to process (by default, the current branch)")
-    parser.add_argument('-c', '--count', dest='count', type=int,
-        default=-1, help='Automatically create patches from top n commits')
-    parser.add_argument('-e', '--end', type=int, default=0,
-        help='Commits to skip at end of patch list')
+    # parser = argparse.ArgumentParser(epilog=epilog)
+    parser = CustomArgumentParser(epilog=epilog)
     parser.add_argument('-D', '--debug', action='store_true',
         help='Enabling debugging (provides a full traceback on error)')
     parser.add_argument('-p', '--project', default=project.detect_project(),
@@ -57,8 +58,16 @@ def parse_args():
         default=False, help='Display the README file')
 
     subparsers = parser.add_subparsers(dest='cmd')
+    # subparsers.required = True
+
     send = subparsers.add_parser(
-        'send', help='Format, check and email patches (default command)')
+        'send', help='Format, check and email patches')
+    send.add_argument('-b', '--branch', type=str,
+        help="Branch to process (by default, the current branch)")
+    send.add_argument('-c', '--count', dest='count', type=int,
+        default=-1, help='Automatically create patches from top n commits')
+    send.add_argument('-e', '--end', type=int, default=0,
+        help='Commits to skip at end of patch list')
     send.add_argument('-i', '--ignore-errors', action='store_true',
            dest='ignore_errors', default=False,
            help='Send patches email even if patch errors are found')
@@ -127,21 +136,10 @@ def parse_args():
 
     # Parse options twice: first to get the project and second to handle
     # defaults properly (which depends on project)
-    # Use parse_known_args() in case 'cmd' is omitted
     argv = sys.argv[1:]
-    args, rest = parser.parse_known_args(argv)
+    args = parser.parse_args(argv)
     if hasattr(args, 'project'):
         settings.Setup(parser, args.project)
-        args, rest = parser.parse_known_args(argv)
-
-    # If we have a command, it is safe to parse all arguments
-    if args.cmd:
-        args = parser.parse_args(argv)
-    else:
-        # No command, so insert it after the known arguments and before the ones
-        # that presumably relate to the 'send' subcommand
-        nargs = len(rest)
-        argv = argv[:-nargs] + ['send'] + rest
         args = parser.parse_args(argv)
 
     print('process_tags', args.process_tags)
