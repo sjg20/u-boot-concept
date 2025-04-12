@@ -184,7 +184,7 @@ def parse_args(argv=None):
                       help='Mark unmarked commits with a Change-Id field')
     scan.add_argument('-M', '--allow-unmarked', action='store_true',
                       help="Don't require commits to be marked")
-    ssend = series_subparsers.add_parser('send')
+    ssend = series_subparsers.add_parser('publish', aliases=['pub'])
     add_send_args(ssend)
     setl = series_subparsers.add_parser('set-link')
     setl.add_argument('-u', '--update', action='store_true',
