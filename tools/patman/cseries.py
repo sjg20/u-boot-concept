@@ -1733,17 +1733,12 @@ class Cseries:
             tout.info('Dry run completed')
 
     def send_series(self, args):
-        """Send a series
-
-        Args:
-            args (argparse.Namespace): Arguments to patman
-        """
-    def send(self, name):
         """Send out a series
 
         Args:
-            series (str): Name of series to use, or None to use current branch
+            args: Arguments provided
         """
+        name = args.series
         ser, version = self.parse_series_and_version(name, None)
         if not name:
             name = self.get_branch_name(ser.name, version)
