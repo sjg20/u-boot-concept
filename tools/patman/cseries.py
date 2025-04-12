@@ -705,7 +705,7 @@ class Cseries:
                         int(series.version) != max_vers):
                         tout.warning(
                             f'Branch {name}: Series-version tag '
-                            f'{series.version} does not patch expected version '
+                            f'{series.version} does not match expected version '
                             f'{max_vers}')
                     vals.info += f'added version {max_vers}'
                     out.append(f'Series-version: {max_vers}')
@@ -754,13 +754,13 @@ class Cseries:
         count = len(pwc.values())
         series = patchstream.get_metadata(branch_name, 0, count,
                                           git_dir=self.gitdir)
-        # tout.info(f"Increment '{ser.name} v{max_vers}: {count} patches")
+        tout.info(f"Increment '{ser.name} v{max_vers}: {count} patches")
 
         # Create a new branch
         vers = max_vers + 1
         new_name = self.join_name_version(ser.name, vers)
 
-        self.update_series(ser.name, series, max_vers, new_name, dry_run,
+        self.update_series(ser.name, series, vers, new_name, dry_run,
                            add_vers=vers)
 
         old_svid = self.get_series_svid(ser.idnum, max_vers)
@@ -1739,3 +1739,7 @@ class Cseries:
         else:
             self.rollback()
             tout.info('Dry run completed')
+
+    def send_series(self, args):
+        """Send a series"""
+        control.send(args, git_dir=self.git_dir, cwd=test_db)

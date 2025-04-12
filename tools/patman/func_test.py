@@ -85,7 +85,7 @@ class TestFunctional(unittest.TestCase):
 
     def tearDown(self):
         if self.preserve_outdirs:
-            print(self.tmpdir)
+            print(f'Output dir: {self.tmpdir}')
         else:
             shutil.rmtree(self.tmpdir)
         terminal.set_print_test_mode(False)
@@ -536,6 +536,7 @@ Series for my board
 This series implements support
 for my glorious board.
 END
+Series-to: u-boot
 Series-links: 183237
 ''', 'serial.c', '''The code for the
 serial driver is here''')
@@ -1551,6 +1552,14 @@ second line.'''
         if self.cser and not self.cser.db.cur:
             self.cser.open_database()
 
+    def run_args(self, *argv, expected_ret=0, pwork=None):
+        was_open = self.db_close()
+        args = cmdline.parse_args(['-D'] + list(argv))
+        exit_code = control.do_patman(args, self.tmpdir, pwork)
+        self.assertEqual(expected_ret, exit_code)
+        if was_open:
+            self.db_open()
+
     def test_series_add(self):
         """Test adding a new cseries"""
         cser = self.get_cser()
@@ -1759,7 +1768,12 @@ second line.'''
         self.assertEqual(2, len(cser.get_pcommit_dict(svid)))
 
     def setup_second(self):
-        """Set up the 'second' series synced with the fake patchwork"""
+        """Set up the 'second' series synced with the fake patchwork
+
+        Return: tuple:
+            Cseries: New Cseries object
+            pwork: Patchwork object
+        """
         cser = self.get_cser()
         pwork = Patchwork.for_testing(self._fake_patchwork_cser_link)
         pwork.set_project(PROJ_ID, PROJ_LINK_NAME)
@@ -1773,7 +1787,7 @@ second line.'''
             cser.series_sync(pwork, 'second', 2)
         self.assertEqual('3 patches and cover letter updated',
                          out.getvalue().strip())
-        return cser
+        return cser, pwork
 
     def test_series_list(self):
         """Test listing cseries"""
@@ -1817,14 +1831,6 @@ second line.'''
         self.assertEqual('first           my-description            -/2  1', lines[1])
 
         self.db_close()
-
-    def run_args(self, *argv, expected_ret=0, pwork=None):
-        was_open = self.db_close()
-        args = cmdline.parse_args(['-D'] + list(argv))
-        exit_code = control.do_patman(args, self.tmpdir, pwork)
-        self.assertEqual(expected_ret, exit_code)
-        if was_open:
-            self.db_open()
 
     def test_do_series_add_cmdline(self):
         """Add a new cseries using the cmdline"""
@@ -2436,14 +2442,16 @@ second line.'''
 
     def test_series_send(self):
         """Test sending a series"""
-        return
-        cser = self.get_cser()
+        cser, pwork = self.setup_second()
 
-        gitutil.checkout('second', self.gitdir, work_tree=self.tmpdir,
-                         force=True)
+        # Create a third version
+        cser.increment('second')
+        series = patchstream.get_metadata_for_list('second3', self.gitdir, 3)
+        self.assertEqual('2:457', series.links)
+        self.assertEqual('3', series.version)
 
         with capture_sys_output() as (out, err):
-            self.run_args('series', 'send')
+            self.run_args('series', 'send', '--no-check', pwork=pwork)
         self.assertIn('Send a total of 3 patches with a cover letter',
                       out.getvalue())
         self.assertIn('video.c:1: warning: Missing or malformed SPDX-License-Identifier tag in line 1',
@@ -3270,7 +3278,7 @@ second line.'''
 
     def test_name_version_extra(self):
         """More tests for some corner cases"""
-        cser = self.setup_second()
+        cser, pwork = self.setup_second()
 
         ser, version = cser.parse_series_and_version(None, None)
         self.assertEqual('second', ser.name)
@@ -3303,7 +3311,7 @@ second line.'''
 
     def test_series_scan(self):
         """Test scanning a series for updates"""
-        cser = self.setup_second()
+        cser, pwork = self.setup_second()
 
         # Add a new commit
         self.repo = pygit2.init_repository(self.gitdir)
@@ -3347,3 +3355,6 @@ second line.'''
         self.assertEqual('video: Some video improvements', chk[0].subject)
         self.assertEqual('bootm: Make it boot', chk[1].subject)
         self.assertEqual('Just checking', chk[2].subject)
+
+        with capture_sys_output() as (out, _):
+            self.run_args('series', '-n', 'send', pwork=True)
