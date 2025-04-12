@@ -91,8 +91,6 @@ def parse_args(argv=None):
     parser.add_argument('-P', '--patchwork-url',
                         default='https://patchwork.ozlabs.org',
                         help='URL of patchwork server [default: %(default)s]')
-    parser.add_argument('-s', '--start', dest='start', type=int,
-        default=0, help='Commit to start creating patches from (0 = HEAD)')
     parser.add_argument(
         '-v', '--verbose', action='store_true', dest='verbose', default=False,
         help='Verbose output of errors and warnings')
@@ -114,6 +112,8 @@ def parse_args(argv=None):
         help='Commits to skip at end of patch list')
     send.add_argument('-n', '--dry-run', action='store_true', dest='dry_run',
            default=False, help="Do a dry run (create but don't email patches)")
+    send.add_argument('-s', '--start', dest='start', type=int,
+        default=0, help='Commit to start creating patches from (0 = HEAD)')
     send.add_argument('--cc-cmd', dest='cc_cmd', type=str, action='store',
            default=None, help='Output cc list for patch file (used by git)')
     add_send_args(send)
