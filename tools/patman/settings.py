@@ -253,6 +253,11 @@ def _UpdateDefaults(main_parser, config, argv):
     # Collect the defaults from each parser
     defaults = {}
     parser_defaults = []
+    argv = list(argv)
+    if '-s' in argv:
+        pos = argv.index('-s')
+        argv = argv[:pos] + argv[pos + 2:]
+    # print('argv', argv)
     for parser in parsers:
         # This has a sub-command so we can't update its defaults
         if hasattr(parser, 'no_defaults'):
