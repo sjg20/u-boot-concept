@@ -257,14 +257,26 @@ def _UpdateDefaults(main_parser, config, argv):
     if '-s' in argv:
         pos = argv.index('-s')
         argv = argv[:pos] + argv[pos + 2:]
-    # print('argv', argv)
+
     for parser in parsers:
         # This has a sub-command so we can't update its defaults
         if hasattr(parser, 'no_defaults'):
             continue
-        pdefs = parser.parse_known_args(argv)[0]
+        # print('args', argv)
+        # print('parser', parser)
+        try:
+            pdefs = parser.parse_known_args(argv)[0]
+        except:
+            print('\n\nexception')
+            continue
+        # print('pdefs', pdefs)
         parser_defaults.append(pdefs)
         defaults.update(vars(pdefs))
+        # print('defaults', defaults)
+    del defaults['cmd']
+    del defaults['subcmd']
+    del defaults['testname']
+    print('defaults', defaults)
 
     # Go through the settings and collect defaults
     for name, val in config.items('settings'):
@@ -277,6 +289,7 @@ def _UpdateDefaults(main_parser, config, argv):
             elif isinstance(default_val, str):
                 val = config.get('settings', name)
             defaults[name] = val
+            print(f'set default {name}={val}')
         else:
             print("WARNING: Unknown setting %s" % name)
 
@@ -286,6 +299,7 @@ def _UpdateDefaults(main_parser, config, argv):
     for parser, pdefs in zip(parsers, parser_defaults):
         parser.set_defaults(**{k: v for k, v in defaults.items()
                                if k in pdefs})
+    print('done')
 
 
 def _ReadAliasFile(fname):

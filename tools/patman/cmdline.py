@@ -220,7 +220,9 @@ def parse_args(argv=None):
     args, rest = parser.parse_known_args(argv)
     if hasattr(args, 'project'):
         settings.Setup(parser, args.project, argv)
+        print('args', argv)
         args, rest = parser.parse_known_args(argv)
+        print('done')
 
     # If we have a command, it is safe to parse all arguments
     if args.cmd:
