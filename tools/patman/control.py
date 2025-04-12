@@ -348,17 +348,17 @@ def upstream(args, test_db=None):
     try:
         cser.open_database()
         if args.subcmd == 'add':
-            cser.add_upstream(*args.extra[0:2])
+            cser.add_upstream(args.remote_name, args.url)
         elif args.subcmd == 'default':
             if args.unset:
                 cser.set_default_upstream(None)
-            elif len(args.extra):
-                cser.set_default_upstream(args.extra[0])
+            elif args.remote_name:
+                cser.set_default_upstream(args.remote_name)
             else:
                 result = cser.get_default_upstream()
                 print(result if result else 'unset')
         elif args.subcmd == 'delete':
-            cser.delete_upstream(args.extra[0])
+            cser.delete_upstream(args.remote_name)
         elif args.subcmd == 'list':
             cser.list_upstream()
         else:
@@ -377,12 +377,11 @@ def patchwork(args, test_db=None, pwork=None):
     """
     cser = cseries.Cseries(test_db)
     try:
-        arg0 = args.extra[0] if len(args.extra) else None
         cser.open_database()
         if args.subcmd == 'set-project':
             if not pwork:
                 pwork = Patchwork(args.patchwork_url)
-            cser.set_project(pwork, arg0)
+            cser.set_project(pwork, args.project_name)
         elif args.subcmd == 'get-project':
             info = cser.get_project()
             if not info:
@@ -428,14 +427,8 @@ def do_patman(args, test_db=None, pwork=None):
         elif args.cmd == 'series':
             series(args, test_db, pwork)
         elif args.cmd in ('upstream', 'us'):
-            if not args.extra:
-                raise ValueError('patman upstream requires a subcommand')
-            args.subcmd = args.extra.pop(0)
             upstream(args, test_db)
         elif args.cmd in ('patchwork', 'pw'):
-            if not args.extra:
-                raise ValueError('patman patchwork requires a subcommand')
-            args.subcmd = args.extra.pop(0)
             patchwork(args, test_db, pwork)
     except Exception as exc:
         terminal.tprint(f'patman: {type(exc).__name__}: {exc}',

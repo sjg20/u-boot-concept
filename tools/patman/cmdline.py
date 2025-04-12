@@ -35,21 +35,6 @@ def parse_args(argv=None):
         them as specified by tags you place in the commits. Use -n to do a dry
         run first.'''
 
-    '''
-    main_parser = argparse.ArgumentParser()
-    main_subparsers = main_parser.add_subparsers()
-    option1_parser = main_subparsers.add_parser('option1')
-    option1_subparsers = option1_parser.add_subparsers()
-    option1_subparsers.add_parser('cmd1')
-    option1_subparsers.add_parser('cmd2')
-    option2_parser = main_subparsers.add_parser('option2')
-    option2_subparsers = option2_parser.add_subparsers()
-    option2_subparsers.add_parser('cmd3')
-    option2_subparsers.add_parser('cmd4')
-    main_parser.parse_args()
-    return
-    '''
-
     parser = argparse.ArgumentParser(epilog=epilog)
     parser.add_argument('-b', '--branch', type=str,
         help="Branch to process (by default, the current branch)")
@@ -149,13 +134,12 @@ def parse_args(argv=None):
                         help='Force overwriting an existing branch')
 
     series = subparsers.add_parser('series', help='Manage series of patches')
+    series.no_defaults = True
     series.add_argument('-a', '--all', action='store_true',
                         help='Show all series versions, not just the last')
     series.add_argument('-n', '--dry-run', action='store_true', dest='dry_run',
             default=False, help="Do a dry run (create but don't email patches)")
     series.add_argument('-s', '--series', help='Name of series')
-    series.add_argument('-u', '--update', action='store_true',
-                        help='Update the branch commit')
     series.add_argument('-U', '--upstream', help='Commit to end before')
     series.add_argument('-V', '--version', type=int,
                         help='Version number to link')
@@ -168,7 +152,9 @@ def parse_args(argv=None):
     add.add_argument('-M', '--allow-unmarked', action='store_true',
                      help="Don't require commits to be marked")
     series_subparsers.add_parser('archive')
-    series_subparsers.add_parser('auto-link')
+    auto = series_subparsers.add_parser('auto-link')
+    auto.add_argument('-u', '--update', action='store_true',
+                      help='Update the branch commit')
     series_subparsers.add_parser('dec')
     series_subparsers.add_parser('get-link')
     series_subparsers.add_parser('inc')
@@ -185,6 +171,8 @@ def parse_args(argv=None):
                       help="Don't require commits to be marked")
     series_subparsers.add_parser('send')
     setl = series_subparsers.add_parser('set-link')
+    setl.add_argument('-u', '--update', action='store_true',
+                      help='Update the branch commit')
     setl.add_argument(
         'link', help='Link to use, i.e. patchwork series number (e.g. 452329)')
     series_subparsers.add_parser('summary')
@@ -194,11 +182,31 @@ def parse_args(argv=None):
 
     upstream = subparsers.add_parser('upstream', aliases=['us'],
                                      help='Manage upstream destinations')
-    upstream.add_argument('-u', '--unset', action='store_true',
-                          help='Unset the default upstream')
+    upstream.no_defaults = True
+    upstream_subparsers = upstream.add_subparsers(dest='subcmd')
+    uadd = upstream_subparsers.add_parser('add')
+    uadd.add_argument(
+        'remote_name', help="Git remote name used for this upstream, e.g. 'us'")
+    uadd.add_argument(
+        'url', help="URL to use for this upstream, e.g. 'https://gitlab.denx.de/u-boot/u-boot.git'")
+    udel = upstream_subparsers.add_parser('delete')
+    udel.add_argument(
+        'remote_name', help="Git remote name used for this upstream, e.g. 'us'")
+    upstream_subparsers.add_parser('list')
+    udef = upstream_subparsers.add_parser('default')
+    udef.add_argument('-u', '--unset', action='store_true',
+                      help='Unset the default upstream')
+    udef.add_argument('remote_name', nargs='?',
+                      help="Git remote name used for this upstream, e.g. 'us'")
 
     patchwork = subparsers.add_parser('patchwork', aliases=['pw'],
                                       help='Manage patchwork connection')
+    patchwork.no_defaults = True
+    patchwork_subparsers = patchwork.add_subparsers(dest='subcmd')
+    patchwork_subparsers.add_parser('get-project')
+    uset = patchwork_subparsers.add_parser('set-project')
+    uset.add_argument(
+        'project_name', help="Patchwork project name, e.g. 'U-Boot'")
 
     # Parse options twice: first to get the project and second to handle
     # defaults properly (which depends on project)

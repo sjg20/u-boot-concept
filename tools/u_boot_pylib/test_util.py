@@ -187,7 +187,6 @@ def run_test_suites(toolname, debug, verbosity, no_capture, test_preserve_dirs,
         global USE_CAPTURE
         sys.argv.append('-N')
         USE_CAPTURE = False
-        print('no_capture', no_capture)
     if toolpath:
         for path in toolpath:
             sys.argv += ['--toolpath', path]

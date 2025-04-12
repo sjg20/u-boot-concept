@@ -40,7 +40,6 @@ def run_patman():
 
     if not args.debug:
         sys.tracebacklimit = 0
-    print('args.no_capture', args.no_capture)
 
     tout.init(tout.INFO if args.verbose else tout.WARNING)
 
