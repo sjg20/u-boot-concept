@@ -2443,12 +2443,14 @@ second line.'''
         self.assertEqual('3', series.version)
 
         with capture_sys_output() as (out, err):
-            self.run_args('series', 'send', '--no-check', pwork=pwork)
+            self.run_args('series', '-n', 'send', pwork=pwork)
+        lines = out.getvalue().splitlines()
+        err_lines = err.getvalue().splitlines()
         self.assertIn('Send a total of 3 patches with a cover letter',
                       out.getvalue())
         self.assertIn('video.c:1: warning: Missing or malformed SPDX-License-Identifier tag in line 1',
                       err.getvalue())
-        self.assertIn('<patch>:17: warning: added, moved or deleted file(s), does MAINTAINERS need updating?',
+        self.assertIn('<patch>:19: warning: added, moved or deleted file(s), does MAINTAINERS need updating?',
                       err.getvalue())
         self.assertIn('bootm.c:1: check: Avoid CamelCase: <Fix>',
                       err.getvalue())

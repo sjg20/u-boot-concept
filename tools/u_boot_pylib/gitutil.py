@@ -545,7 +545,7 @@ send --cc-cmd cc-fname" cover p1 p2'
     cmd += args
     cmdstr = ' '.join(cmd)
     if not dry_run:
-        os.system(cmdstr)
+        command.run(*cmd, capture=False, capture_stderr=False, cwd=cwd)
     return cmdstr
 
 
