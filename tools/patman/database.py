@@ -34,6 +34,11 @@ class Database:
         self.con = sqlite3.connect(self.db_path, autocommit=False)
         self.cur = self.con.cursor()
 
+    def close(self):
+        self.con.close()
+        self.cur = None
+        self.con = None
+
     def create_v1(self):
         self.cur.execute(
             'CREATE TABLE series (id INTEGER PRIMARY KEY AUTOINCREMENT,'
@@ -60,7 +65,6 @@ class Database:
 
         self.cur.execute(
             'CREATE TABLE settings (name UNIQUE, proj_id INT, link_name)')
-        self.con.commit()
 
     def _migrate_to_v2(self):
         """Add a schema_version table"""
@@ -97,7 +101,7 @@ class Database:
                 self.cur.execute('DELETE FROM schema_version')
                 self.cur.execute('INSERT INTO schema_version (version) VALUES (?)',
                                  (version,))
-            self.con.commit()
+            self.commit()
 
     def get_schema_version(self):
         # If there is no database at all, assume v0
@@ -120,11 +124,6 @@ class Database:
 
     def rollback(self):
         self.con.rollback()
-
-    def close(self):
-        self.con.close()
-        self.cur = None
-        self.con = None
 
     def execute(self, query, args=None):
         if args:

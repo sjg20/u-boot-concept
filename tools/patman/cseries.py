@@ -65,8 +65,6 @@ class Cseries:
         self.topdir = topdir
         self.gitdir = None
         self.db = None
-        # self.con = None
-        # self.cur = None
         self.quiet = False
         self.col = terminal.Color(colour)
 
@@ -1712,3 +1710,9 @@ class Cseries:
             tout.info('Removing:')
             for seq, cmt in to_remove.items():
                 tout.info(f'  {seq:3} {cmt.subject}')
+        self.db.execute('DELETE FROM pcommit WHERE svid = ?', (svid,))
+        self.add_series_commits(series, svid)
+        if not dry_run:
+            self.commit()
+        else:
+            self.rollback()
