@@ -24,12 +24,11 @@ def setup():
     gitutil.setup()
 
 
-def do_send(args, git_dir=None, cwd=None):
+def do_send(args):
     """Create, check and send patches by email
 
     Args:
         args (argparse.Namespace): Arguments to patman
-        cwd (str): Path to use for git operations
     """
     setup()
     send.send(args)

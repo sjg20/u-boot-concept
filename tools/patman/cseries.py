@@ -17,6 +17,7 @@ import pygit2
 
 from patman import patchstream
 from patman.database import Database
+from patman import send
 from patman.series import Series
 from u_boot_pylib import command
 from u_boot_pylib import cros_subprocess
@@ -1741,5 +1742,9 @@ class Cseries:
             tout.info('Dry run completed')
 
     def send_series(self, args):
-        """Send a series"""
-        control.send(args, git_dir=self.git_dir, cwd=test_db)
+        """Send a series
+
+        Args:
+            args (argparse.Namespace): Arguments to patman
+        """
+        send.send(args, git_dir=self.gitdir, cwd=self.topdir)

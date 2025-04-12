@@ -21,6 +21,10 @@ PATMAN_DIR = pathlib.Path(__file__).parent
 HAS_TESTS = os.path.exists(PATMAN_DIR / "func_test.py")
 
 def add_send_args(send):
+    send.add_argument('-b', '--branch', type=str,
+        help="Branch to process (by default, the current branch)")
+    send.add_argument('-c', '--count', dest='count', type=int,
+        default=-1, help='Automatically create patches from top n commits')
     send.add_argument('-i', '--ignore-errors', action='store_true',
            dest='ignore_errors', default=False,
            help='Send patches email even if patch errors are found')
@@ -37,6 +41,8 @@ def add_send_args(send):
         help='File name of the get_maintainer.pl (or compatible) script.')
     send.add_argument('-r', '--in-reply-to', type=str, action='store',
                       help="Message ID that this series is in reply to")
+    send.add_argument('-s', '--start', dest='start', type=int,
+        default=0, help='Commit to start creating patches from (0 = HEAD)')
     send.add_argument('-t', '--ignore-bad-tags', action='store_true',
                       default=False,
                       help='Ignore bad tags / aliases (default=warn)')
@@ -81,10 +87,6 @@ def parse_args(argv=None):
         run first.'''
 
     parser = argparse.ArgumentParser(epilog=epilog)
-    parser.add_argument('-b', '--branch', type=str,
-        help="Branch to process (by default, the current branch)")
-    parser.add_argument('-c', '--count', dest='count', type=int,
-        default=-1, help='Automatically create patches from top n commits')
     parser.add_argument('-D', '--debug', action='store_true',
         help='Enabling debugging (provides a full traceback on error)')
     parser.add_argument('-N', '--no-capture', action='store_true',
@@ -95,8 +97,6 @@ def parse_args(argv=None):
     parser.add_argument('-P', '--patchwork-url',
                         default='https://patchwork.ozlabs.org',
                         help='URL of patchwork server [default: %(default)s]')
-    parser.add_argument('-s', '--start', dest='start', type=int,
-        default=0, help='Commit to start creating patches from (0 = HEAD)')
     parser.add_argument(
         '-v', '--verbose', action='store_true', dest='verbose', default=False,
         help='Verbose output of errors and warnings')
