@@ -20,49 +20,49 @@ from patman import settings
 PATMAN_DIR = pathlib.Path(__file__).parent
 HAS_TESTS = os.path.exists(PATMAN_DIR / "func_test.py")
 
-def add_send_args(send):
-    send.add_argument('-i', '--ignore-errors', action='store_true',
+def add_send_args(par):
+    par.add_argument('-i', '--ignore-errors', action='store_true',
            dest='ignore_errors', default=False,
            help='Send patches email even if patch errors are found')
-    send.add_argument('-l', '--limit-cc', dest='limit', type=int, default=None,
+    par.add_argument('-l', '--limit-cc', dest='limit', type=int, default=None,
            help='Limit the cc list to LIMIT entries [default: %(default)s]')
-    send.add_argument('-m', '--no-maintainers', action='store_false',
+    par.add_argument('-m', '--no-maintainers', action='store_false',
            dest='add_maintainers', default=True,
            help="Don't cc the file maintainers automatically")
-    send.add_argument(
+    par.add_argument(
         '--get-maintainer-script', dest='get_maintainer_script', type=str,
         action='store',
         default=os.path.join(gitutil.get_top_level(), 'scripts',
                              'get_maintainer.pl') + ' --norolestats',
         help='File name of the get_maintainer.pl (or compatible) script.')
-    send.add_argument('-r', '--in-reply-to', type=str, action='store',
+    par.add_argument('-r', '--in-reply-to', type=str, action='store',
                       help="Message ID that this series is in reply to")
-    send.add_argument('-t', '--ignore-bad-tags', action='store_true',
+    par.add_argument('-t', '--ignore-bad-tags', action='store_true',
                       default=False,
                       help='Ignore bad tags / aliases (default=warn)')
-    send.add_argument('-T', '--thread', action='store_true', dest='thread',
+    par.add_argument('-T', '--thread', action='store_true', dest='thread',
                       default=False, help='Create patches as a single thread')
-    send.add_argument('--no-binary', action='store_true', dest='ignore_binary',
+    par.add_argument('--no-binary', action='store_true', dest='ignore_binary',
                       default=False,
                       help="Do not output contents of changes in binary files")
-    send.add_argument('--no-check', action='store_false', dest='check_patch',
+    par.add_argument('--no-check', action='store_false', dest='check_patch',
                       default=True,
                       help="Don't check for patch compliance")
-    send.add_argument(
+    par.add_argument(
         '--tree', dest='check_patch_use_tree', default=False,
         action='store_true',
         help=("Set `tree` to True. If `tree` is False then we'll pass "
               "'--no-tree' to checkpatch (default: tree=%(default)s)"))
-    send.add_argument('--no-tree', dest='check_patch_use_tree',
+    par.add_argument('--no-tree', dest='check_patch_use_tree',
                       action='store_false', help="Set `tree` to False")
-    send.add_argument(
+    par.add_argument(
         '--no-tags', action='store_false', dest='process_tags', default=True,
         help="Don't process subject tags as aliases")
-    send.add_argument('--no-signoff', action='store_false', dest='add_signoff',
+    par.add_argument('--no-signoff', action='store_false', dest='add_signoff',
                       default=True, help="Don't add Signed-off-by to patches")
-    send.add_argument('--smtp-server', type=str,
+    par.add_argument('--smtp-server', type=str,
                       help="Specify the SMTP server to 'git send-email'")
-    send.add_argument('--keep-change-id', action='store_true',
+    par.add_argument('--keep-change-id', action='store_true',
                       help='Preserve Change-Id tags in patches to send.')
 
 def parse_args(argv=None):
