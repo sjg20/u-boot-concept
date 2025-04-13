@@ -234,9 +234,10 @@ def parse_args(argv=None):
     if not argv:
         argv = sys.argv[1:]
 
+    defaults = {}
     args, rest = parser.parse_known_args(argv)
     if hasattr(args, 'project'):
-        settings.Setup(parser, args.project, argv)
+        defaults = settings.Setup(parser, args.project, argv)
         args, rest = parser.parse_known_args(argv)
 
     # If we have a command, it is safe to parse all arguments
@@ -250,6 +251,8 @@ def parse_args(argv=None):
         argv = argv[:-nargs] + ['send'] + rest
         args = parser.parse_args(argv)
 
+    if 'allow_unmarked' in defaults:
+        args.allow_unmarked = True
     print('process_tags', args.process_tags)
     print('allow_unmarked', args.allow_unmarked)
     print('default', parser.get_default('allow_unmarked'))

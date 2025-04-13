@@ -333,6 +333,7 @@ def _UpdateDefaults(main_parser, config, argv):
                                if k in pdefs})
         if 'allow_unmarked' in pdefs:
             print('here', parser, defaults['allow_unmarked'])
+    return defaults
 
 
 def _ReadAliasFile(fname):
@@ -440,7 +441,7 @@ def Setup(parser, project_name, argv, config_fname=None):
     for name, value in GetItems(config, 'bounces'):
         bounces.add(value)
 
-    _UpdateDefaults(parser, config, argv)
+    return _UpdateDefaults(parser, config, argv)
 
 
 # These are the aliases we understand, indexed by alias. Each member is a list.
