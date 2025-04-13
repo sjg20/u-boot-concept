@@ -461,6 +461,11 @@ Changes in v2:
         Returns:
             pygit2.Repository: repository
         """
+        tools.write_file(os.path.join(self.tmpdir, '.gitconfig'), '''[user]
+           name = Test User
+           email = me@test.com
+           ''', binary=False)
+
         repo = pygit2.init_repository(self.gitdir)
         self.repo = repo
         new_tree = repo.TreeBuilder().write()
@@ -3082,6 +3087,16 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
         cser.list_patches('second2', 2)
         cser = next(cor)
         cor.close()
+
+    def test_series_list_patches_detail(self):
+        """Test listing the patches for a series"""
+        cser = self.get_cser()
+        with terminal.capture():
+            cser.add_series(None, '', allow_unmarked=True)
+            cser.add_series('second', allow_unmarked=True)
+            target = self.repo.lookup_reference('refs/heads/second')
+            self.repo.checkout(target, strategy=pygit2.GIT_CHECKOUT_FORCE)
+            cser.increment('second')
 
     '''
     def _check_series_status(self, out):
