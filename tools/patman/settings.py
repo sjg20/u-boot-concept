@@ -386,8 +386,8 @@ def Setup(parser, project_name, argv, config_fname=None):
         parser:         The parser to update.
         project_name:   Name of project that we're working on; we'll look
             for sections named "project_section" as well.
-        config_fname:   Config filename to read.  An error is raised if it
-            does not exist.
+        config_fname:   Config filename to read, or None for default, or False
+            for an empty config.  An error is raised if it does not exist.
         argv (list of str or None): Arguments to parse, or None for default
     """
     # First read the git alias file if available
@@ -397,12 +397,15 @@ def Setup(parser, project_name, argv, config_fname=None):
     if config_fname and not os.path.exists(config_fname):
         raise Exception(f'provided {config_fname} does not exist')
 
-    if not config_fname:
+    if config_fname is None:
         config_fname = '%s/.patman' % os.getenv('HOME')
-    has_config = os.path.exists(config_fname)
-
     git_local_config_fname = os.path.join(gitutil.get_top_level(), '.patman')
-    has_git_local_config = os.path.exists(git_local_config_fname)
+
+    has_config = False
+    has_git_local_config = False
+    if config_fname is not False:
+        has_config = os.path.exists(config_fname)
+        has_git_local_config = os.path.exists(git_local_config_fname)
 
     # Read the git local config last, so that its values override
     # those of the global config, if any.
@@ -411,7 +414,7 @@ def Setup(parser, project_name, argv, config_fname=None):
     if has_git_local_config:
         config.read(git_local_config_fname)
 
-    if not (has_config or has_git_local_config):
+    if config_fname is not False and not (has_config or has_git_local_config):
         print("No config file found.\nCreating ~/.patman...\n")
         CreatePatmanConfigFile(config_fname)
 

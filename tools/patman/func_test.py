@@ -1555,7 +1555,7 @@ second line.'''
 
     def run_args(self, *argv, expected_ret=0, pwork=None):
         was_open = self.db_close()
-        args = cmdline.parse_args(['-D'] + list(argv))
+        args = cmdline.parse_args(['-D'] + list(argv), config_fname=False)
         exit_code = control.do_patman(args, self.tmpdir, pwork)
         self.assertEqual(expected_ret, exit_code)
         if was_open:

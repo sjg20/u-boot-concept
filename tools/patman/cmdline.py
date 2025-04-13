@@ -78,11 +78,13 @@ def add_send_args(par):
     par.add_argument('--keep-change-id', action='store_true',
                       help='Preserve Change-Id tags in patches to send.')
 
-def parse_args(argv=None):
+def parse_args(argv=None, config_fname=None):
     """Parse command line arguments from sys.argv[]
 
     Args:
         argv (str or None): Arguments to process, or None to use sys.argv[1:]
+        config_fname (str): Config file to read, or None for default, or False
+            for an empty config
 
     Returns:
         tuple containing:
@@ -242,7 +244,7 @@ def parse_args(argv=None):
     defaults = {}
     args, rest = parser.parse_known_args(argv)
     if hasattr(args, 'project'):
-        defaults = settings.Setup(parser, args.project, argv)
+        defaults = settings.Setup(parser, args.project, argv, config_fname)
         args, rest = parser.parse_known_args(argv)
 
     # If we have a command, it is safe to parse all arguments
@@ -255,7 +257,9 @@ def parse_args(argv=None):
         argv = argv[:-nargs] + ['send'] + rest
         args = parser.parse_args(argv)
 
-    if 'allow_unmarked' in defaults:
-        args.allow_unmarked = defaults['allow_unmarked']
+    # Workaround, as this doesn't seem to happen automatically
+    # if 'allow_unmarked' in defaults:
+        # print('val', defaults['allow_unmarked'])
+        # args.allow_unmarked = defaults['allow_unmarked']
 
     return args
