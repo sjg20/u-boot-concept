@@ -21,11 +21,11 @@ from u_boot_pylib import terminal
 from u_boot_pylib import tout
 
 # Patches which are part of a multi-patch series are shown with a prefix like
-# [prefix, version, sequence], for example '[RFC, v2, 3/5]'. All but the last
+# [prefix, version, sequence], for example '[RFC v2 3/5]'. All but the last
 # part is optional. This decodes the string into groups. For single patches
 # the [] part is not present:
 # Groups: (ignore, ignore, ignore, prefix, version, sequence, subject)
-RE_PATCH = re.compile(r'(\[(((.*),)?(.*),)?(.*)\]\s)?(.*)$')
+RE_PATCH = re.compile(r'(\[(((.*) )?(.*) )?(.*)\]\s)?(.*)$')
 
 # This decodes the sequence string into a patch number and patch count
 RE_SEQ = re.compile(r'(\d+)/(\d+)')

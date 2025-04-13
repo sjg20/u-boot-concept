@@ -893,8 +893,16 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         self.assertEqual(None, patch.prefix)
         self.assertEqual(None, patch.version)
 
+        # With PATCH prefix
+        patch.parse_subject('[PATCH 2/5] Testing')
+        self.assertEqual('Testing', patch.subject)
+        self.assertEqual(2, patch.seq)
+        self.assertEqual(5, patch.count)
+        self.assertEqual('PATCH', patch.prefix)
+        self.assertEqual(None, patch.version)
+
         # RFC patch
-        patch.parse_subject('[RFC,3/7] Testing')
+        patch.parse_subject('[RFC 3/7] Testing')
         self.assertEqual('Testing', patch.subject)
         self.assertEqual(3, patch.seq)
         self.assertEqual(7, patch.count)
@@ -902,7 +910,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         self.assertEqual(None, patch.version)
 
         # Version patch
-        patch.parse_subject('[v2,3/7] Testing')
+        patch.parse_subject('[v2 3/7] Testing')
         self.assertEqual('Testing', patch.subject)
         self.assertEqual(3, patch.seq)
         self.assertEqual(7, patch.count)
@@ -910,7 +918,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         self.assertEqual('v2', patch.version)
 
         # All fields
-        patch.parse_subject('[RESEND,v2,3/7] Testing')
+        patch.parse_subject('[RESEND v2 3/7] Testing')
         self.assertEqual('Testing', patch.subject)
         self.assertEqual(3, patch.seq)
         self.assertEqual(7, patch.count)
@@ -2906,11 +2914,11 @@ second line.'''
         if subpath.startswith('series/'):
             return {
                 'patches': [
-                    {'id': '10', 'name': 'video: Some video improvements',
+                    {'id': '10', 'name': '[PATCH 1/3] video: Some video improvements',
                      'content': ''},
-                    {'id': '11', 'name': 'serial: Add a serial driver',
+                    {'id': '11', 'name': '[PATCH 2/3] serial: Add a serial driver',
                      'content': ''},
-                    {'id': '12', 'name': 'bootm: Make it boot',
+                    {'id': '12', 'name': '[PATCH 3/3] bootm: Make it boot',
                      'content': ''},
                 ],
                 'cover_letter': {
@@ -2924,7 +2932,20 @@ second line.'''
             if patch_id == '10':
                 return [
                     {'id': 1, 'content': ''},
-                    {'id': 2, 'content': ''},
+                    {'id': 2,
+                     'content': '''On some date Mary Smith <msmith@wibble.com>> wrote:
+> This was my original patch
+> which is being quoted
+
+I like the approach here and I would love to see more of it.
+
+Reviewed-by: Fred Bloggs <fred@bloggs.com>
+''',
+                     'submitter': {
+                         'name': 'Fred Bloggs',
+                         'email': 'fred@bloggs.com',
+                         }
+                    },
                 ]
             if patch_id == '11':
                 return []
@@ -3451,5 +3472,43 @@ second line.'''
         """Test getting the status of a series, including comments"""
         cser, pwork = self.setup_second()
 
+        # Use single threading for easy debugging, but the multithreaded version
+        # should produce the same output
         with capture_sys_output() as (out, _):
             cser.series_status(pwork, 'second', 2, False, single_thread=True)
+        with capture_sys_output() as (out2, _):
+            cser.series_status(pwork, 'second', 2, False, single_thread=False)
+        self.assertEqual(out.getvalue(), out2.getvalue())
+        lines = iter(out.getvalue().splitlines())
+        self.assertEqual('  1 video: Some video improvements', next(lines))
+        self.assertEqual('  + Reviewed-by: Fred Bloggs <fred@bloggs.com>',
+                         next(lines))
+        self.assertEqual('  2 serial: Add a serial driver', next(lines))
+        self.assertEqual('  3 bootm: Make it boot', next(lines))
+        self.assertEqual(
+            '1 new response available in patchwork (use -d to write them to a new branch)',
+            next(lines))
+
+        with capture_sys_output() as (out, _):
+            cser.series_status(pwork, 'second', 2, show_comments=True,
+                               single_thread=False)
+        lines = iter(out.getvalue().splitlines())
+        self.assertEqual('  1 video: Some video improvements', next(lines))
+        self.assertEqual('  + Reviewed-by: Fred Bloggs <fred@bloggs.com>',
+                         next(lines))
+        self.assertEqual('Review: Fred Bloggs <fred@bloggs.com>', next(lines))
+        self.assertEqual('    > This was my original patch', next(lines))
+        self.assertEqual('    > which is being quoted', next(lines))
+        self.assertEqual(
+            '    I like the approach here and I would love to see more of it.',
+            next(lines))
+        self.assertEqual('', next(lines))
+        self.assertEqual('  2 serial: Add a serial driver', next(lines))
+        self.assertEqual('  3 bootm: Make it boot', next(lines))
+        self.assertEqual(
+            '1 new response available in patchwork (use -d to write them to a new branch)',
+            next(lines))
+
+    def test_series_status_cmdline(self):
+        # todo
+        pass
