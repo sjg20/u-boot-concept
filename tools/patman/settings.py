@@ -260,9 +260,8 @@ def _UpdateDefaults(main_parser, config, argv):
 
     for parser in parsers:
         argv = orig_argv
-        if hasattr(parser, 'defaults_cmds'):
+        if hasattr(parser, 'defaults_cmd'):
             argv = parser.defaults_cmd
-        old_err = sys.stderr
         parser.message = None
         try:
             parser.catch_error = True
