@@ -461,14 +461,22 @@ Changes in v2:
         Returns:
             pygit2.Repository: repository
         """
-        tools.write_file(os.path.join(self.tmpdir, '.gitconfig'), '''[user]
-           name = Test User
-           email = me@test.com
-           ''', binary=False)
+        # tools.write_file(os.path.join(self.tmpdir, '.gitconfig'), '''[user]
+        #    name = Test User
+        #    email = me@test.com
+        #    ''', binary=False)
+        # cfg = os.path.join(self.tmpdir, '.gitconfig')
+        os.environ['GIT_CONFIG_GLOBAL'] = '/dev/null'
+        os.environ['GIT_CONFIG_SYSTEM'] = '/dev/null'
 
         repo = pygit2.init_repository(self.gitdir)
         self.repo = repo
         new_tree = repo.TreeBuilder().write()
+
+        common = ['git', f'--git-dir={self.gitdir}', 'config']
+        tools.run(*(common + ['user.name', 'Dummy']), cwd=self.gitdir)
+        tools.run(*(common + ['user.email', 'dumdum@dummy.com']),
+                  cwd=self.gitdir)
 
         # pylint doesn't seem to find this
         # pylint: disable=E1101
