@@ -150,7 +150,7 @@ def parse_args(argv=None):
                         help='Force overwriting an existing branch')
 
     series = subparsers.add_parser('series', help='Manage series of patches')
-    series.no_defaults = True
+    series.defaults_cmd = ['list']
     series.add_argument('-a', '--all', action='store_true',
                         help='Show all series versions, not just the last')
     series.add_argument('-n', '--dry-run', action='store_true', dest='dry_run',
@@ -200,7 +200,7 @@ def parse_args(argv=None):
 
     upstream = subparsers.add_parser('upstream', aliases=['us'],
                                      help='Manage upstream destinations')
-    upstream.no_defaults = True
+    upstream.defaults_cmd = ['list']
     upstream_subparsers = upstream.add_subparsers(dest='subcmd')
     uadd = upstream_subparsers.add_parser('add')
     uadd.add_argument(
@@ -219,7 +219,7 @@ def parse_args(argv=None):
 
     patchwork = subparsers.add_parser('patchwork', aliases=['pw'],
                                       help='Manage patchwork connection')
-    patchwork.no_defaults = True
+    patchwork.defaults_cmd = ['get-project']
     patchwork_subparsers = patchwork.add_subparsers(dest='subcmd')
     patchwork_subparsers.add_parser('get-project')
     uset = patchwork_subparsers.add_parser('set-project')

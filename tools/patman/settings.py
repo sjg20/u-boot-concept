@@ -260,8 +260,8 @@ def _UpdateDefaults(main_parser, config, argv):
 
     for parser in parsers:
         argv = orig_argv
-        if hasattr(parser, 'no_defaults'):
-            argv = orig_argv[1:]
+        if hasattr(parser, 'defaults_cmds'):
+            argv = parser.defaults_cmd
         old_err = sys.stderr
         parser.message = None
         try:
@@ -269,6 +269,9 @@ def _UpdateDefaults(main_parser, config, argv):
             pdefs = parser.parse_known_args(argv)[0]
         finally:
             parser.catch_error = False
+
+        if parser.message:
+            print('argv', argv, parser.message)
 
         parser_defaults.append(pdefs)
         defaults.update(vars(pdefs))
