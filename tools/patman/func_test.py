@@ -3045,17 +3045,7 @@ second line.'''
         cser = next(cor)
         cor.close()
 
-    def test_series_status(self):
-        cser = self.get_cser()
-        pwork = Patchwork.for_testing(self._fake_patchwork_cser)
-        self.assertFalse(cser.get_project())
-        cser.set_project(pwork, 'U-Boot', quiet=True)
-
-        with capture_sys_output() as (out, _):
-            cser.add_series('second', 'description', allow_unmarked=True)
-
-        with capture_sys_output() as (out, _):
-            cser.series_status('second', None)
+    def _check_series_status(self, out):
         lines = iter(out.getvalue().splitlines())
         self.assertEqual(
             "Branch 'second' (total 3): 3:unknown", next(lines))
@@ -3069,6 +3059,22 @@ second line.'''
         self.assertRegex(
             next(lines),
             "  2 unknown      -       .* bootm: Make it boot")
+
+    def test_series_status(self):
+        cser = self.get_cser()
+        with capture_sys_output():
+            cser.add_series('second', 'description', allow_unmarked=True)
+        with capture_sys_output() as (out, _):
+            cser.series_status('second', None)
+        self._check_series_status(out)
+
+    def test_series_status_cmdline(self):
+        cser = self.get_cser()
+        with capture_sys_output():
+            cser.add_series('second', 'description', allow_unmarked=True)
+        with capture_sys_output() as (out, _):
+            self.run_args('series',  '-s', 'second', 'status', pwork=True)
+        self._check_series_status(out)
 
     def test_series_sync(self):
         cser = self.get_cser()
