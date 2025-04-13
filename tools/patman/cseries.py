@@ -1827,13 +1827,16 @@ class Cseries:
         send.send(args, git_dir=self.gitdir, cwd=self.topdir)
 
     def series_status(self, pwork, series, version, show_comments,
-                      single_thread=False):
+                      show_cover_comments=False, single_thread=False):
         """Show the series status from patchwork
 
         Args:
             pwork (Patchwork): Patchwork object to use
             series (str): Name of series to use, or None to use current branch
             version (int): Version number, or None to detect from name
+            show_comments (bool): Show all comments on each patch
+            show_cover_comments (bool): Show all comments on the cover letter
+            single_thread (bool): Avoid using the threads
         """
         branch, series, _, _, link, _, _ = self._get_patches(
             series, version)

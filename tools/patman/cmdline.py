@@ -209,6 +209,8 @@ def parse_args(argv=None, config_fname=None):
     setl.add_argument(
         'link', help='Link to use, i.e. patchwork series number (e.g. 452329)')
     stat = series_subparsers.add_parser('status')
+    stat.add_argument('-c', '--show-cover-comments', action='store_true',
+                      help='Show comments from the cover letter')
     stat.add_argument('-C', '--show-comments', action='store_true',
                       help='Show comments from each patch')
 

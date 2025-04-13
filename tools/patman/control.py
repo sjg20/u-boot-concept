@@ -154,7 +154,7 @@ def do_series(args, test_db=None, pwork=None):
             cser.set_link(args.series, args.version, args.link, args.update)
         elif args.subcmd == 'status':
             cser.series_status(pwork, args.series, args.version,
-                               args.show_comments)
+                               args.show_comments, args.show_cover_comments)
         elif args.subcmd == 'summary':
             cser.summary(args.series)
         elif args.subcmd == 'sync':
