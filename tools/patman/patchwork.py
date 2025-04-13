@@ -330,7 +330,7 @@ class Patchwork:
             terminal.tprint(f'\r{count - done}  ', newline=False)
 
     def series_get_state(self, series_id):
-        """Sync the series information against patwork, to find patch status
+        """Sync the series information against patchwork, to find patch status
 
         Args:
             series_id (str): Patchwork series ID

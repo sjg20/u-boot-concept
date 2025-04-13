@@ -255,7 +255,7 @@ def find_new_responses(new_rtag_list, review_list, seq, cmt, patch, patchwork):
         review_list (list): New reviews are written to review_list[seq]
             list, each a
                 List of reviews for the patch, each a Review
-        seq (int): Position in new_rtag_list to update
+        seq (int): Position in new_rtag_list and review_list to update
         cmt (Commit): Commit object for this commit
         patch (Patch): Corresponding Patch object for this patch
         patchwork (Patchwork): Patchwork class to handle communications

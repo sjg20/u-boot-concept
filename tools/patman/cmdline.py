@@ -143,7 +143,7 @@ def parse_args(argv=None, config_fname=None):
 
     status = subparsers.add_parser('status',
                                    help='Check status of patches in patchwork')
-    status.add_argument('-C', '--show-comments', action='store_true',
+    status.add_argument('-c', '--show-comments', action='store_true',
                         help='Show comments from each patch')
     status.add_argument(
         '-d', '--dest-branch', type=str,
@@ -209,10 +209,10 @@ def parse_args(argv=None, config_fname=None):
     setl.add_argument(
         'link', help='Link to use, i.e. patchwork series number (e.g. 452329)')
     stat = series_subparsers.add_parser('status')
-    stat.add_argument('-c', '--show-cover-comments', action='store_true',
-                      help='Show comments from the cover letter')
-    stat.add_argument('-C', '--show-comments', action='store_true',
+    stat.add_argument('-c', '--show-comments', action='store_true',
                       help='Show comments from each patch')
+    stat.add_argument('-C', '--show-cover-comments', action='store_true',
+                      help='Show comments from the cover letter')
 
     series_subparsers.add_parser('summary')
     series_subparsers.add_parser('sync')
