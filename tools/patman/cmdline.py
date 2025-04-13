@@ -23,13 +23,16 @@ HAS_TESTS = os.path.exists(PATMAN_DIR / "func_test.py")
 
 class ErrorCatchingArgumentParser(argparse.ArgumentParser):
     def __init__(self, **kwargs):
-        self.catch_error = False
+        # self.catch_error = False
         super().__init__(**kwargs)
 
-    def exit(self, status=0, message=None):
-        if self.catch_error:
-            raise ValueError('Bad argument')
-        exit(status)
+    def error(self, message):
+        self.message = message
+    #
+    # def exit(self, status=0, message=None):
+    #     if self.catch_error:
+    #         raise ValueError('Bad argument')
+    #     exit(status)
 
 
 def add_send_args(par):
@@ -165,6 +168,7 @@ def parse_args(argv=None):
     add.add_argument('-m', '--mark', action='store_true',
                      help='Mark unmarked commits with a Change-Id field')
     add.add_argument('-M', '--allow-unmarked', action='store_true',
+                     default=False,
                      help="Don't require commits to be marked")
     series_subparsers.add_parser('archive')
     auto = series_subparsers.add_parser('auto-link')
@@ -238,6 +242,7 @@ def parse_args(argv=None):
     # If we have a command, it is safe to parse all arguments
     if args.cmd:
         args = parser.parse_args(argv)
+        print('args', args)
     else:
         # No command, so insert it after the known arguments and before the ones
         # that presumably relate to the 'send' subcommand
@@ -247,5 +252,7 @@ def parse_args(argv=None):
 
     print('process_tags', args.process_tags)
     print('allow_unmarked', args.allow_unmarked)
+    print('default', parser.get_default('allow_unmarked'))
+    print('default', series.get_default('allow_unmarked'))
 
     return args
