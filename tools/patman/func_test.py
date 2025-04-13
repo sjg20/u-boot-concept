@@ -1952,6 +1952,19 @@ second line.'''
         self.assertFalse('links' in series1)
         self.assertFalse('version' in series1)
 
+        # Check out second and try to update first
+        gitutil.checkout('second', self.gitdir, work_tree=self.tmpdir,
+                         force=True)
+        with capture_sys_output():
+            cser.set_link('first', 1, '16', True)
+
+        # Overwrite the link
+        with capture_sys_output():
+            cser.set_link('first', 1, '17', True)
+
+        series2 = patchstream.get_metadata_for_list('first', self.gitdir, count)
+        self.assertEqual('1:17', series2.links)
+
         self.db_close()
 
     def test_series_link_cmdline(self):
@@ -3330,7 +3343,7 @@ second line.'''
         cser, pwork = self.setup_second()
 
         # Create a third version
-        with capture_sys_output() as (out, err):
+        with capture_sys_output():
             cser.increment('second')
         series = patchstream.get_metadata_for_list('second3', self.gitdir, 3)
         self.assertEqual('2:457', series.links)
@@ -3368,16 +3381,43 @@ second line.'''
         cser, pwork = self.setup_second()
 
         # Create a third version
-        with capture_sys_output() as (out, err):
+        with capture_sys_output():
             cser.increment('second')
         series = patchstream.get_metadata_for_list('second3', self.gitdir, 3)
         self.assertEqual('2:457', series.links)
         self.assertEqual('3', series.version)
 
-        with capture_sys_output() as (out, err):
+        with capture_sys_output():
             self.run_args('series', '-n', 'send', pwork=pwork)
 
         cser.set_fake_time(h_sleep)
-        cser.do_auto_link(pwork, 'second3', 3, True, 200)
-        # self.run_args('series', '-n', 'auto-link', '--wait', '200',
-                      # pwork=pwork)
+        with capture_sys_output() as (out, _):
+            cser.do_auto_link(pwork, 'second3', 3, True, 200)
+        lines = iter(out.getvalue().splitlines())
+        for i in range(7):
+            self.assertEqual(
+                "Possible matches for 'second' v3 desc 'Series for my board':",
+                 next(lines), f'failed at i={i}')
+            self.assertEqual('  Link  Version  Description', next(lines))
+            self.assertEqual('   456        1  Series for my board', next(lines))
+            self.assertEqual('   457        2  Series for my board', next(lines))
+            self.assertEqual('Sleeping for 20 seconds', next(lines))
+        self.assertEqual('Link completed after 140 seconds', next(lines))
+        self.assertEqual('Checking out upstream commit refs/heads/base',
+                         next(lines))
+        self.assertEqual(
+            "Processing 3 commits from branch 'second3'", next(lines))
+        self.assertRegex(
+            next(lines),
+            "-  .* as .*: video: Some video improvements")
+        self.assertRegex(
+            next(lines),
+            "- added links '3:500 2:457'  .* as .*: serial: Add a serial driver")
+        self.assertRegex(
+            next(lines),
+            "- added version 3 .* as .*: bootm: Make it boot")
+        self.assertRegex(
+            next(lines),
+            "Updating branch second3 to .*")
+        self.assertEqual(
+            "Setting link for series 'second' v3 to 500", next(lines))
