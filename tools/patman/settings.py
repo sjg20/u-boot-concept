@@ -269,11 +269,12 @@ def _UpdateDefaults(main_parser, config, argv):
         # This has a sub-command so we can't update its defaults
         old_err = sys.stderr
         # print()
-        # parser.catch_error = True
         parser.message = None
-        for action in parser._actions:
-            if '-s' in action.option_strings:
-                pass
+        try:
+            parser.catch_error = True
+            # for action in parser._actions:
+            # if '-s' in action.option_strings:
+                # pass
                 # print('parser', parser)
                 # print('type', action.type)
                 # if action.type == int:
@@ -289,7 +290,9 @@ def _UpdateDefaults(main_parser, config, argv):
             # sys.stderr = capture_err
             # pdefs = parser.parse_args(argv)
             # print('ok')
-        pdefs = parser.parse_known_args(argv)[0]
+            pdefs = parser.parse_known_args(argv)[0]
+        finally:
+            parser.catch_error = False
 
         # Catch any exception from ErrorCatchingArgumentParser
         # this can happen when we have arguments with the same name but
@@ -305,7 +308,7 @@ def _UpdateDefaults(main_parser, config, argv):
         # if parser.message:
             # print('parser.message', parser.message, argv)
             # parser_defaults.append({})
-        print('pdefs', parser.prog, pdefs)
+        # print('pdefs', parser.prog, pdefs)
         parser_defaults.append(pdefs)
         defaults.update(vars(pdefs))
 
@@ -322,17 +325,17 @@ def _UpdateDefaults(main_parser, config, argv):
             defaults[name] = val
         else:
             print("WARNING: Unknown setting %s" % name)
-    print('default process_tags', defaults['process_tags'])
-    print('default allow_unmarked', defaults['allow_unmarked'])
+    # print('default process_tags', defaults['process_tags'])
+    # print('default allow_unmarked', defaults['allow_unmarked'])
 
     # Set all the defaults and manually propagate them to subparsers
     main_parser.set_defaults(**defaults)
-    print('len', len(parsers), len(parser_defaults))
+    # print('len', len(parsers), len(parser_defaults))
     for parser, pdefs in zip(parsers, parser_defaults):
         parser.set_defaults(**{k: v for k, v in defaults.items()
                                if k in pdefs})
-        if 'allow_unmarked' in pdefs:
-            print('here', parser, defaults['allow_unmarked'])
+        # if 'allow_unmarked' in pdefs:
+            # print('here', parser, defaults['allow_unmarked'])
     return defaults
 
 
