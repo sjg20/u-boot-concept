@@ -1352,7 +1352,8 @@ class Cseries:
         col_state = self.col.build(col, prefix + out, bright)
         return col_state, pad
 
-    def _list_patches(self, branch, pwc, series, desc, cover_id, num_comments):
+    def _list_patches(self, branch, pwc, series, desc, cover_id, num_comments,
+                      show_commit, show_patch):
         """List patches along with optional status info
 
         Args:
@@ -1361,6 +1362,11 @@ class Cseries:
                 key (int): seq
                 value (PCOMMIT): Record from database
             series (Series): Series to show
+            desc (str): Series title
+            cover_id (int): Cover-letter ID
+            num_comments (int): The number of comments on the cover letter
+            show_commit (bool): True to show the commit and diffstate
+            show_patch (bool): True to show the patch
         """
         lines = []
         states = defaultdict(int)
@@ -1383,20 +1389,21 @@ class Cseries:
         out = ''
         for state, count in states.items():
             out += ' ' + self.build_col(state, f'{count}:')[0]
-        print(f"Branch '{branch}' (total {len(pwc)}):{out}")
-        print(self.col.build(
-            self.col.MAGENTA,
-            f"Seq State      Com PatchId {'Commit'.ljust(HASH_LEN)} Subject"))
-
-        comments = '' if num_comments is None else str(num_comments)
-        if desc or comments or cover_id:
-            cov = 'Cov' if cover_id else ''
+        with terminal.pager():
+            print(f"Branch '{branch}' (total {len(pwc)}):{out}")
             print(self.col.build(
-                self.col.WHITE,
-                f"{cov:14} {comments.rjust(3)} {cover_id or '':7}            {desc}",
-                bright=False))
-        for line in lines:
-            print(line)
+                self.col.MAGENTA,
+                f"Seq State      Com PatchId {'Commit'.ljust(HASH_LEN)} Subject"))
+
+            comments = '' if num_comments is None else str(num_comments)
+            if desc or comments or cover_id:
+                cov = 'Cov' if cover_id else ''
+                print(self.col.build(
+                    self.col.WHITE,
+                    f"{cov:14} {comments.rjust(3)} {cover_id or '':7}            {desc}",
+                    bright=False))
+            for line in lines:
+                print(line)
 
     def _get_patches(self, series, version):
         """Get a Series object containing the patches in a series
@@ -1427,16 +1434,20 @@ class Cseries:
 
         return branch, series, pwc, name, link, cover_id, num_comments
 
-    def list_patches(self, series, version):
+    def list_patches(self, series, version, show_commit=False,
+                     show_patch=False):
         """List patches in a series
 
         Args:
             series (str): Name of series to use, or None to use current branch
             version (int): Version number, or None to detect from name
+            show_commit (bool): True to show the commit and diffstate
+            show_patch (bool): True to show the patch
         """
         branch, series, pwc, name, _, cover_id, num_comments = (
             self._get_patches(series, version))
-        self._list_patches(branch, pwc, series, name, cover_id, num_comments)
+        self._list_patches(branch, pwc, series, name, cover_id, num_comments,
+                           show_commit, show_patch)
 
     def get_series_svid(self, series_id, version):
         """Get the patchwork ID of a series version
@@ -1580,7 +1591,7 @@ class Cseries:
                                                                   ver)
 
             self._list_patches(branch, pwc, series, name, cover_id,
-                               num_comments)
+                               num_comments, False, False)
             add_blank_line = True
 
     def progress(self, series, show_all):
