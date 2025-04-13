@@ -1400,6 +1400,7 @@ class Cseries:
         for state, freq in states.items():
             out += ' ' + self.build_col(state, f'{freq}:')[0]
         with terminal.pager():
+            name = ''
             if not list_patches:
                 name = desc or ''
                 name = self.col.build(self.col.YELLOW, name[:30].ljust(30))
@@ -1474,7 +1475,7 @@ class Cseries:
         branch, series, pwc, name, _, cover_id, num_comments = (
             self._get_patches(series, version))
         self._list_patches(branch, pwc, series, name, cover_id, num_comments,
-                           show_commit, show_patch)
+                           show_commit, show_patch, True)
 
     def get_series_svid(self, series_id, version):
         """Get the patchwork ID of a series version
@@ -1646,7 +1647,7 @@ class Cseries:
         for ser in sdict.values():
             self._progress_one(ser, show_all_versions, list_patches)
             if list_patches:
-                print()
+                argsprint()
 
     def _summary_one(self, ser):
         """Show summary information for the latest version in a series

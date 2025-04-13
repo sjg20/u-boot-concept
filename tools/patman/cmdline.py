@@ -158,7 +158,6 @@ def parse_args(argv=None, config_fname=None):
     series.add_argument('-n', '--dry-run', action='store_true', dest='dry_run',
             default=False, help="Do a dry run (create but don't email patches)")
     series.add_argument('-s', '--series', help='Name of series')
-    series.add_argument('-U', '--upstream', help='Commit to end before')
     series.add_argument('-V', '--version', type=int,
                         help='Version number to link')
     series_subparsers = series.add_subparsers(dest='subcmd')
@@ -170,6 +169,7 @@ def parse_args(argv=None, config_fname=None):
     add.add_argument('-M', '--allow-unmarked', action='store_true',
                      default=False,
                      help="Don't require commits to be marked")
+    add.add_argument('-U', '--upstream', help='Commit to end before')
     series_subparsers.add_parser('archive')
     auto = series_subparsers.add_parser('auto-link')
     auto.add_argument('-u', '--update', action='store_true',
@@ -201,6 +201,7 @@ def parse_args(argv=None, config_fname=None):
                       help='Mark unmarked commits with a Change-Id field')
     scan.add_argument('-M', '--allow-unmarked', action='store_true',
                       help="Don't require commits to be marked")
+    scan.add_argument('-U', '--upstream', help='Commit to end before')
     ssend = series_subparsers.add_parser('send')
     add_send_args(ssend)
     auto.add_argument('-a', '--autolink-wait', type=int, default=0,
