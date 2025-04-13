@@ -21,6 +21,7 @@ from patman import patchstream
 from patman.database import Database
 from patman import send
 from patman.series import Series
+from patman import status
 from u_boot_pylib import command
 from u_boot_pylib import cros_subprocess
 from u_boot_pylib import gitutil
@@ -1416,15 +1417,15 @@ class Cseries:
         """
         ser, version = self.parse_series_and_version(series, version)
         self.ensure_version(ser, version)
-        svid, _, cover_id, num_comments, name = self.get_ser_ver(ser.idnum,
-                                                                 version)
+        svid, link, cover_id, num_comments, name = self.get_ser_ver(ser.idnum,
+                                                                    version)
         pwc = self.get_pcommit_dict(svid)
 
         count = len(pwc)
         branch = self.join_name_version(ser.name, version)
         series = patchstream.get_metadata(branch, 0, count, git_dir=self.gitdir)
 
-        return branch, series, pwc, name, cover_id, num_comments
+        return branch, series, pwc, name, link, cover_id, num_comments
 
     def list_patches(self, series, version):
         """List patches in a series
@@ -1433,7 +1434,8 @@ class Cseries:
             series (str): Name of series to use, or None to use current branch
             version (int): Version number, or None to detect from name
         """
-        branch, series, pwc, name, cover_id, num_comments = self._get_patches(series, version)
+        branch, series, pwc, name, _, cover_id, num_comments = (
+            self._get_patches(series, version))
         self._list_patches(branch, pwc, series, name, cover_id, num_comments)
 
     def get_series_svid(self, series_id, version):
@@ -1496,8 +1498,8 @@ class Cseries:
             series (str): Name of series to use, or None to use current branch
             version (int): Version number, or None to detect from name
         """
-        branch, series, pwc, desc, cover_id, num_comments = self._get_patches(
-            series, version)
+        branch, series, pwc, desc, _, cover_id, num_comments = (
+            self._get_patches(series, version))
         self._list_patches(branch, pwc, series, desc, cover_id, num_comments)
 
     def series_sync(self, pwork, series, version):
@@ -1790,3 +1792,18 @@ class Cseries:
 
         print('gitdir', self.gitdir)
         send.send(args, git_dir=self.gitdir, cwd=self.topdir)
+
+    def series_status(self, pwork, series, version, show_comments,
+                      single_thread=False):
+        """Sync the series status from patchwork
+
+        Args:
+            pwork (Patchwork): Patchwork object to use
+            series (str): Name of series to use, or None to use current branch
+            version (int): Version number, or None to detect from name
+        """
+        branch, series, pwc, desc, link, _, _ = self._get_patches(
+            series, version)
+        status.check_patchwork_status(series, link, branch, None, False,
+                                      show_comments, pwork, self.gitdir,
+                                      single_thread)

@@ -264,17 +264,17 @@ def find_new_responses(new_rtag_list, review_list, seq, cmt, patch, patchwork):
         return
 
     # Get the content for the patch email itself as well as all comments
-    data = patchwork.request('patches/%s/' % patch.id)
-    pstrm = PatchStream.process_text(data['content'], True)
+    patch_data = patchwork.request('patches/%s/' % patch.id)
+    pstrm = PatchStream.process_text(patch_data['content'], True)
 
     rtags = collections.defaultdict(set)
     for response, people in pstrm.commit.rtags.items():
         rtags[response].update(people)
 
-    data = patchwork.request('patches/%s/comments/' % patch.id)
+    comment_data = patchwork.request('patches/%s/comments/' % patch.id)
 
     reviews = []
-    for comment in data:
+    for comment in comment_data:
         pstrm = PatchStream.process_text(comment['content'], True)
         if pstrm.snippets:
             submitter = comment['submitter']
@@ -385,7 +385,8 @@ def create_branch(series, new_rtag_list, branch, dest_branch, overwrite,
     return num_added
 
 def check_patchwork_status(series, series_id, branch, dest_branch, force,
-                           show_comments, patchwork, test_repo=None):
+                           show_comments, patchwork, test_repo=None,
+                           single_thread=False):
     """Check the status of a series on Patchwork
 
     This finds review tags and comments for a series in Patchwork, displaying
@@ -413,13 +414,18 @@ def check_patchwork_status(series, series_id, branch, dest_branch, force,
 
     patch_list = [patch_for_commit.get(c) for c in range(len(series.commits))]
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=16) as executor:
-        futures = executor.map(
-            find_new_responses, repeat(new_rtag_list), repeat(review_list),
-            range(count), series.commits, patch_list, repeat(patchwork))
-    for fresponse in futures:
-        if fresponse:
-            raise fresponse.exception()
+    if single_thread:
+        for i in range(count):
+            find_new_responses(new_rtag_list, review_list, i, series.commits[i],
+                               patch_list[i], patchwork)
+    else:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=16) as executor:
+            futures = executor.map(
+                find_new_responses, repeat(new_rtag_list), repeat(review_list),
+                range(count), series.commits, patch_list, repeat(patchwork))
+        for fresponse in futures:
+            if fresponse:
+                raise fresponse.exception()
 
     num_to_add = 0
     for seq, cmt in enumerate(series.commits):

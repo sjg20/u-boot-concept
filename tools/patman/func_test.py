@@ -2906,9 +2906,12 @@ second line.'''
         if subpath.startswith('series/'):
             return {
                 'patches': [
-                    {'id': 10},
-                    {'id': 11},
-                    {'id': 12},
+                    {'id': '10', 'name': 'video: Some video improvements',
+                     'content': ''},
+                    {'id': '11', 'name': 'serial: Add a serial driver',
+                     'content': ''},
+                    {'id': '12', 'name': 'bootm: Make it boot',
+                     'content': ''},
                 ],
                 'cover_letter': {
                     'id': 39,
@@ -2919,11 +2922,21 @@ second line.'''
         patch_id = m_pc.group(1) if m_pc else ''
         if patch_id:
             if patch_id == '10':
-                return [1, 2]
+                return [
+                    {'id': 1, 'content': ''},
+                    {'id': 2, 'content': ''},
+                ]
             if patch_id == '11':
                 return []
             if patch_id == '12':
-                return [4, 5, 6]
+                return [
+                    {'id': 4, 'content': ''},
+                    {'id': 5, 'content': ''},
+                    {'id': 6, 'content': ''},
+                ]
+            raise ValueError(
+                f'Fake Patchwork does not understand patch_id {patch_id} '
+                f'type {type(patch_id)}: {subpath}')
 
         m_cover_id = re.search(r'covers/(\d*)/comments/', subpath)
         cover_id = m_cover_id.group(1) if m_cover_id else ''
@@ -2933,16 +2946,20 @@ second line.'''
                     { 'content': 'some comment', },
                     { 'content': 'another comment', },
                 ]
+            raise ValueError(f'Fake Patchwork unknown cover_id: {cover_id}')
 
         m_pat = re.search(r'patches/(\d*)/', subpath)
         patch_id = m_pat.group(1) if m_pat else ''
         if subpath.startswith('patches/'):
             if patch_id == '10':
-                return {'state': 'accepted'}
+                return {'state': 'accepted',
+                        'content': 'Reviewed-by: Fred Bloggs <fred@bloggs.com>'}
             if patch_id == '11':
-                return {'state': 'changes-requested'}
+                return {'state': 'changes-requested', 'content': ''}
             if patch_id == '12':
-                return {'state': 'rejected'}
+                return {'state': 'rejected',
+                        'content': "I don't like this at all, sorry"}
+            raise ValueError(f'Fake Patchwork unknown patch_id: {patch_id}')
         raise ValueError(f'Fake Patchwork does not understand: {subpath}')
 
     def test_patchwork_set_project(self):
@@ -3427,3 +3444,9 @@ second line.'''
             "Updating branch second3 to .*")
         self.assertEqual(
             "Setting link for series 'second' v3 to 500", next(lines))
+
+    def test_series_status(self):
+        """Test getting the status of a series, including comments"""
+        cser, pwork = self.setup_second()
+
+        cser.series_status(pwork, 'second', 2, False, single_thread=True)
