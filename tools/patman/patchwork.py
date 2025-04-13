@@ -23,7 +23,8 @@ PATCH = namedtuple('patch', 'id,state,num_comments')
 # state (str): Current state, e.g. 'accepted'
 # num_comments (int): Number of comments
 # name (str): Series name
-COVER = namedtuple('cover', 'id,num_comments,name')
+# comments (list of dict): Comments
+COVER = namedtuple('cover', 'id,num_comments,name,comments')
 
 
 class Patchwork:
@@ -329,6 +330,22 @@ class Patchwork:
         if self._show_progress:
             terminal.tprint(f'\r{count - done}  ', newline=False)
 
+    def get_series_cover(self, data):
+        """Get the cover information (including comments)
+
+        Args:
+            data (dict): Return value from self.get_series()
+
+        Returns:
+        """
+        cover = data['cover_letter']
+        cover_id = None
+        if cover:
+            cover_id = cover['id']
+            info = self.get_cover_comments(cover_id)
+            cover = COVER(cover_id, len(info), cover['name'], info)
+        return cover
+
     def series_get_state(self, series_id):
         """Sync the series information against patchwork, to find patch status
 
@@ -354,11 +371,6 @@ class Patchwork:
         if self._show_progress:
             terminal.print_clear()
 
-        cover = data['cover_letter']
-        cover_id = None
-        if cover:
-            cover_id = cover['id']
-            info = self.get_cover_comments(cover_id)
-            cover = COVER(cover_id, len(info), cover['name'])
+        cover = self.get_series_cover(data)
 
         return cover, result

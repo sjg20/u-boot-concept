@@ -197,7 +197,7 @@ def compare_with_series(series, patches):
 
     return patch_for_commit, commit_for_patch, warnings
 
-def collect_patches(series, series_id, patchwork):
+def collect_patches(series, series_id, patchwork, read_cover_comments):
     """Collect patch information about a series from patchwork
 
     Uses the Patchwork REST API to collect information provided by patchwork
@@ -208,6 +208,7 @@ def collect_patches(series, series_id, patchwork):
             containing the series
         series_id (str): Patch series ID number
         patchwork (Patchwork): Patchwork class to handle communications
+        read_cover_comments (bool): True to read the comments on the cover letter
 
     Returns:
         list: List of patches sorted by sequence number, each a Patch object
@@ -239,7 +240,13 @@ def collect_patches(series, series_id, patchwork):
 
     # Sort patches by patch number
     patches = sorted(patches, key=lambda x: x.seq)
-    return patches
+
+    # Get any cover-letter info
+    cover = None
+    if read_cover_comments:
+        cover = patchwork.get_series_cover(data)
+
+    return patches, cover
 
 def find_new_responses(new_rtag_list, review_list, seq, cmt, patch, patchwork):
     """Find new rtags collected by patchwork that we don't know about
@@ -405,7 +412,8 @@ def check_patchwork_status(series, series_id, branch, dest_branch, force,
         patchwork (Patchwork): Patchwork class to handle communications
         test_repo (pygit2.Repository): Repo to use (use None unless testing)
     """
-    patches = collect_patches(series, series_id, patchwork)
+    patches, cover = collect_patches(series, series_id, patchwork,
+                                     show_cover_comments)
     col = terminal.Color()
     count = len(series.commits)
     new_rtag_list = [None] * count
@@ -432,6 +440,18 @@ def check_patchwork_status(series, series_id, branch, dest_branch, force,
 
     with terminal.pager():
         num_to_add = 0
+
+        if cover:
+            terminal.tprint(f'Cov {cover.name}', colour=col.BLACK, col=col,
+                            bright=False, back=col.YELLOW)
+            for seq, comment in enumerate(cover.comments):
+                submitter = comment['submitter']
+                person = '%s <%s>' % (submitter['name'], submitter['email'])
+                terminal.tprint(f'From: {person}: {comment['date']}',
+                                colour=col.RED, col=col)
+                print(comment['content'])
+                print()
+
         for seq, cmt in enumerate(series.commits):
             patch = patch_for_commit.get(seq)
             if not patch:

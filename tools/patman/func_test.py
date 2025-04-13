@@ -2977,8 +2977,20 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
         if cover_id:
             if cover_id == '39':
                 return [
-                    { 'content': 'some comment', },
-                    { 'content': 'another comment', },
+                    { 'content': 'some comment',
+                      'submitter': {
+                              'name': 'A user',
+                              'email': 'user@user.com',
+                          },
+                      'date': 'Sun 13 Apr 14:06:02 MDT 2025',
+                     },
+                    { 'content': 'another comment',
+                      'submitter': {
+                              'name': 'Ghenkis Kham',
+                              'email': 'gk@eurasia.gov',
+                          },
+                      'date': 'Sun 13 Apr 13:06:02 MDT 2025',
+                     },
                 ]
             raise ValueError(f'Fake Patchwork unknown cover_id: {cover_id}')
 
@@ -3556,8 +3568,22 @@ Date:   .*
         self.assertEqual(
             "Setting link for series 'second' v3 to 500", next(lines))
 
-    def _check_status(self, out, has_comments):
+    def _check_status(self, out, has_comments, has_cover_comments):
         lines = iter(out.getvalue().splitlines())
+        if has_cover_comments:
+            self.assertEqual('Cov The name of the cover letter', next(lines))
+            self.assertEqual(
+                'From: A user <user@user.com>: Sun 13 Apr 14:06:02 MDT 2025',
+                next(lines))
+            self.assertEqual('some comment', next(lines))
+            self.assertEqual('', next(lines))
+
+            self.assertEqual(
+                'From: Ghenkis Kham <gk@eurasia.gov>: Sun 13 Apr 13:06:02 MDT 2025',
+                next(lines))
+            self.assertEqual('another comment', next(lines))
+            self.assertEqual('', next(lines))
+
         self.assertEqual('  1 video: Some video improvements', next(lines))
         self.assertEqual('  + Reviewed-by: Fred Bloggs <fred@bloggs.com>',
                          next(lines))
@@ -3588,12 +3614,17 @@ Date:   .*
         with terminal.capture() as (out2, _):
             cser.series_status(pwork, 'second', 2, False, single_thread=False)
         self.assertEqual(out.getvalue(), out2.getvalue())
-        self._check_status(out, False)
+        self._check_status(out, False, False)
 
         with terminal.capture() as (out, _):
             cser.series_status(pwork, 'second', 2, show_comments=True,
                                single_thread=False)
-        self._check_status(out, True)
+        self._check_status(out, True, False)
+
+        with terminal.capture() as (out, _):
+            cser.series_status(pwork, 'second', 2, show_comments=True,
+                               show_cover_comments=True, single_thread=False)
+        self._check_status(out, True, True)
 
     def test_series_status_cmdline(self):
         """Test getting the status of a series, including comments"""
@@ -3604,9 +3635,14 @@ Date:   .*
         with terminal.capture() as (out, _):
             self.run_args('series', '-s' 'second', '-V', '2', 'status',
                           pwork=pwork)
-        self._check_status(out, False)
+        self._check_status(out, False, False)
 
         with terminal.capture() as (out, _):
             cser.series_status(pwork, 'second', 2, show_comments=True,
                                single_thread=False)
-        self._check_status(out, True)
+        self._check_status(out, True, False)
+
+        with terminal.capture() as (out, _):
+            cser.series_status(pwork, 'second', 2, show_comments=True,
+                               show_cover_comments=True, single_thread=False)
+        self._check_status(out, True, True)

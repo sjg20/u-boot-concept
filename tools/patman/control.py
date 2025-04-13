@@ -93,7 +93,7 @@ def patchwork_status(branch, count, start, end, dest_branch, force,
     from patman import status
     patchwork = patchwork.Patchwork(url)
     status.check_patchwork_status(series, found[0], branch, dest_branch, force,
-                                  show_comments, patchwork)
+                                  show_comments, False, patchwork)
 
 def do_series(args, test_db=None, pwork=None):
     """Process a series subcommand

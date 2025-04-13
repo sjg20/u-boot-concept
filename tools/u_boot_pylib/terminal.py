@@ -141,7 +141,7 @@ def trim_ascii_len(text, size):
 
 
 def tprint(text='', newline=True, colour=None, limit_to_line=False,
-           bright=True, col=None):
+           bright=True, back=None, col=None):
     """Handle a line of output to the terminal.
 
     In test mode this is recorded in a list. Otherwise it is output to the
@@ -157,10 +157,10 @@ def tprint(text='', newline=True, colour=None, limit_to_line=False,
     if print_test_mode:
         print_test_list.append(PrintLine(text, colour, newline, bright))
     else:
-        if colour:
+        if colour is not None:
             if not col:
                 col = Color()
-            text = col.build(colour, text, bright=bright)
+            text = col.build(colour, text, bright=bright, back=back)
         if newline:
             print(text)
             last_print_len = None
