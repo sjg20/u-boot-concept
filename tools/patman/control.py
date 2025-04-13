@@ -139,7 +139,8 @@ def do_series(args, test_db=None, pwork=None):
             cser.list_patches(args.series, args.version, args.commit,
                               args.patch)
         elif args.subcmd == 'progress':
-            cser.progress(args.series, args.all)
+            cser.progress(args.series, args.show_all_versions,
+                          args.list_patches)
         elif args.subcmd == 'remove':
             cser.remove_series(args.series, dry_run=args.dry_run)
         elif args.subcmd == 'remove-version':

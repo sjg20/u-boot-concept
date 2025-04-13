@@ -155,8 +155,6 @@ def parse_args(argv=None, config_fname=None):
     series.defaults_cmds = [
         ['set-link', 'fred'],
     ]
-    series.add_argument('-a', '--all', action='store_true',
-                        help='Show all series versions, not just the last')
     series.add_argument('-n', '--dry-run', action='store_true', dest='dry_run',
             default=False, help="Do a dry run (create but don't email patches)")
     series.add_argument('-s', '--series', help='Name of series')
@@ -190,7 +188,12 @@ def parse_args(argv=None, config_fname=None):
     pat.add_argument('-p', '--patch', action='store_true',
                      help='Show the patch body')
 
-    series_subparsers.add_parser('progress')
+    prog = series_subparsers.add_parser('progress')
+    prog.add_argument('-a', '--show-all-versions', action='store_true',
+                      help='Show all series versions, not just the last')
+    prog.add_argument('-l', '--list-patches', action='store_true',
+                      help='List patch subject and status')
+
     series_subparsers.add_parser('remove')
     series_subparsers.add_parser('remove-version')
     scan = series_subparsers.add_parser('scan')

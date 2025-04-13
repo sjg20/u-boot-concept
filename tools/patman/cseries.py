@@ -1354,7 +1354,7 @@ class Cseries:
         return col_state, pad
 
     def _list_patches(self, branch, pwc, series, desc, cover_id, num_comments,
-                      show_commit, show_patch):
+                      show_commit, show_patch, list_patches):
         """List patches along with optional status info
 
         Args:
@@ -1368,6 +1368,8 @@ class Cseries:
             num_comments (int): The number of comments on the cover letter
             show_commit (bool): True to show the commit and diffstate
             show_patch (bool): True to show the patch
+            list_patches (bool): True to list all patches for each series,
+                False to just show the series summary on a single line
         """
         lines = []
         states = defaultdict(int)
@@ -1390,7 +1392,6 @@ class Cseries:
             else:
                 subject = item.subject
 
-            back=self.col.YELLOW
             line = (f'{seq:3} {col_state}{pad} {comments.rjust(3)} '
                     f'{patch_id:7} {oid(cmt.hash)} {subject}')
             lines.append(line)
@@ -1399,7 +1400,13 @@ class Cseries:
         for state, freq in states.items():
             out += ' ' + self.build_col(state, f'{freq}:')[0]
         with terminal.pager():
-            print(f"Branch '{branch}' (total {len(pwc)}):{out}")
+            if not list_patches:
+                name = desc or ''
+                name = self.col.build(self.col.YELLOW, name[:30].ljust(30))
+                print(f"{branch:15}  {name}  {len(pwc):5} {out}")
+                return
+            print(f"Branch '{branch}' (total {len(pwc)}):{out}{name}")
+
             print(self.col.build(
                 self.col.MAGENTA,
                 f"Seq State      Com PatchId {'Commit'.ljust(HASH_LEN)} Subject"))
@@ -1582,23 +1589,27 @@ class Cseries:
                                f"series_id = {idnum}")
         return res.fetchall()[0][0]
 
-    def _progress_one(self, ser, show_all):
+    def _progress_one(self, ser, show_all_versions, list_patches):
         """Show progress information for all versions in a series
 
         Args:
             ser (Series): Series to use
-            show_all (bool): True to show all versions of a series, False to
-                show only the final version
+            show_all_versions (bool): True to show all versions of a series,
+                False to show only the final version
+            list_patches (bool): True to list all patches for each series,
+                False to just show the series summary on a single line
         """
         max_vers = self.series_max_version(ser.idnum)
         name, desc = self.get_series_info(ser.idnum)
         coloured = self.col.build(self.col.BLACK, desc, bright=False,
                                   back=self.col.YELLOW)
-        versions = [str(x) for x in range(1, max_vers + 1)]
-        print(f"{name}: {coloured} (versions: {' '.join(versions)})")
+        versions = self.get_version_list(ser.idnum)
+        vstr = list(map(str, versions))
+        if list_patches:
+            print(f"{name}: {coloured} (versions: {' '.join(vstr)})")
         add_blank_line = False
-        for ver in range(1, max_vers + 1):
-            if not show_all and ver != max_vers:
+        for ver in versions:
+            if not show_all_versions and ver != max_vers:
                 continue
             if add_blank_line:
                 print()
@@ -1611,10 +1622,10 @@ class Cseries:
                                                                   ver)
 
             self._list_patches(branch, pwc, series, name, cover_id,
-                               num_comments, False, False)
+                               num_comments, False, False, list_patches)
             add_blank_line = True
 
-    def progress(self, series, show_all):
+    def progress(self, series, show_all_versions, list_patches):
         """Show progress information for all versions in a series
 
         Args:
@@ -1624,13 +1635,18 @@ class Cseries:
                 show only the final version
         """
         if series is not None:
-            self._progress_one(self.parse_series(series), show_all)
+            self._progress_one(self.parse_series(series), show_all_versions,
+                               list_patches)
             return
 
         sdict = self.get_series_dict()
+        print(self.col.build(
+            self.col.MAGENTA,
+            f"{'Name':15}  {'Description':30}  Count  {'Status'}"))
         for ser in sdict.values():
-            self._progress_one(ser, show_all)
-            print()
+            self._progress_one(ser, show_all_versions, list_patches)
+            if list_patches:
+                print()
 
     def _summary_one(self, ser):
         """Show summary information for the latest version in a series
