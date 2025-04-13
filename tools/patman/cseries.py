@@ -15,6 +15,7 @@ import time
 from types import SimpleNamespace
 
 import pygit2
+from pygit2.enums import CheckoutStrategy
 
 from patman import patchstream
 from patman.database import Database
@@ -909,12 +910,10 @@ class Cseries:
             tout.info(f"Checking out upstream commit {upstream_name}")
         if new_name:
             name = new_name
-            repo.checkout_tree(commit, strategy=pygit2.GIT_CHECKOUT_FORCE |
-                               pygit2.GIT_CHECKOUT_RECREATE_MISSING)
-            repo.set_head(commit.oid)
 
         # Check out the upstream commit (detached HEAD)
-        repo.checkout_tree(commit)
+        repo.checkout_tree(commit, strategy=CheckoutStrategy.FORCE |
+                           CheckoutStrategy.RECREATE_MISSING)
         repo.set_head(commit.oid)
 
         return repo, repo.head, branch, name
