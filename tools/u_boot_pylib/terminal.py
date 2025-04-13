@@ -8,10 +8,14 @@ This module handles terminal interaction including ANSI color codes.
 """
 
 from contextlib import contextmanager
+<<<<<<< HEAD
 from io import StringIO
+=======
+>>>>>>> 8211ff20b85 (pager)
 import os
 import re
 import shutil
+import subprocess
 import sys
 
 # Selection of when we want our output to be colored
@@ -132,7 +136,8 @@ def trim_ascii_len(text, size):
     return out
 
 
-def tprint(text='', newline=True, colour=None, limit_to_line=False, bright=True):
+def tprint(text='', newline=True, colour=None, limit_to_line=False,
+           bright=True, col=None):
     """Handle a line of output to the terminal.
 
     In test mode this is recorded in a list. Otherwise it is output to the
@@ -149,7 +154,8 @@ def tprint(text='', newline=True, colour=None, limit_to_line=False, bright=True)
         print_test_list.append(PrintLine(text, colour, newline, bright))
     else:
         if colour:
-            col = Color()
+            if not col:
+                col = Color()
             text = col.build(colour, text, bright=bright)
         if newline:
             print(text)
@@ -294,3 +300,29 @@ def capture():
         yield capture_out, capture_err
     finally:
         sys.stdout, sys.stderr = old_out, old_err
+
+
+@contextmanager
+def pager():
+    """Simple pager for outputting lots of text
+
+    Usage:
+        with terminal.pager():
+            print(...)
+    """
+    proc = None
+    old_stdout = None
+    try:
+        less = os.getenv('PAGER')
+        if less != 'none' and os.isatty(sys.stdout.fileno()):
+            if not less:
+                less = 'less -R --quit-if-one-screen'
+            proc = subprocess.Popen(less, stdin=subprocess.PIPE, text=True,
+                                    shell=True)
+            old_stdout = sys.stdout
+            sys.stdout = proc.stdin
+        yield
+    finally:
+        if proc:
+            sys.stdout = old_stdout
+            proc.communicate()
