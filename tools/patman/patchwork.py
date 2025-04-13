@@ -320,7 +320,7 @@ class Patchwork:
         patch_id = patch_dict[seq]['id']
         data = self.get_patch(patch_id)
         state = data['state']
-        data = self.request(f'patches/{patch_id}/comments/')
+        data = self.get_patch_comments(patch_id)
         num_comments = len(data)
 
         result[seq] = PATCH(patch_id, state, num_comments)

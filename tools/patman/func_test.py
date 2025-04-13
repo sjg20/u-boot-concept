@@ -1125,7 +1125,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         series.commits = [commit1, commit2]
         terminal.set_print_test_mode()
         status.check_patchwork_status(series, '1234', None, None, False, False,
-                                      pwork)
+                                      False, pwork)
         lines = iter(terminal.get_print_test_lines())
         col = terminal.Color()
         self.assertEqual(terminal.PrintLine('  1 Subject 1', col.YELLOW),
@@ -1239,7 +1239,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         terminal.set_print_test_mode()
         pwork = Patchwork.for_testing(self._fake_patchwork3)
         status.check_patchwork_status(series, '1234', branch, dest_branch,
-                                      False, False, pwork, repo)
+                                      False, False, False, pwork, repo)
         lines = terminal.get_print_test_lines()
         self.assertEqual(12, len(lines))
         self.assertEqual(
@@ -1441,7 +1441,7 @@ Reviewed-by: %s
         terminal.set_print_test_mode()
         pwork = Patchwork.for_testing(self._fake_patchwork2)
         col = status.check_patchwork_status(series, '1234', None, None, False,
-                                            True, pwork)
+                                            True, False, pwork)
         lines = iter(terminal.get_print_test_lines())
         col = terminal.Color()
         self.assertEqual(terminal.PrintLine('  1 Subject 1', col.YELLOW),

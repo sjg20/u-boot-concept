@@ -1841,5 +1841,5 @@ class Cseries:
         branch, series, _, _, link, _, _ = self._get_patches(
             series, version)
         status.check_patchwork_status(series, link, branch, None, False,
-                                      show_comments, pwork, self.gitdir,
-                                      single_thread)
+                                      show_comments, show_cover_comments, pwork,
+                                      self.gitdir, single_thread)

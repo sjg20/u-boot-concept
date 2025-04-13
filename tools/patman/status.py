@@ -264,14 +264,14 @@ def find_new_responses(new_rtag_list, review_list, seq, cmt, patch, patchwork):
         return
 
     # Get the content for the patch email itself as well as all comments
-    patch_data = patchwork.request('patches/%s/' % patch.id)
+    patch_data = patchwork.get_patch(patch.id)
     pstrm = PatchStream.process_text(patch_data['content'], True)
 
     rtags = collections.defaultdict(set)
     for response, people in pstrm.commit.rtags.items():
         rtags[response].update(people)
 
-    comment_data = patchwork.request('patches/%s/comments/' % patch.id)
+    comment_data = patchwork.get_patch_comments(patch.id)
 
     reviews = []
     for comment in comment_data:
@@ -386,8 +386,8 @@ def create_branch(series, new_rtag_list, branch, dest_branch, overwrite,
     return num_added
 
 def check_patchwork_status(series, series_id, branch, dest_branch, force,
-                           show_comments, patchwork, test_repo=None,
-                           single_thread=False):
+                           show_comments, show_cover_comments, patchwork,
+                           test_repo=None, single_thread=False):
     """Check the status of a series on Patchwork
 
     This finds review tags and comments for a series in Patchwork, displaying
@@ -400,6 +400,8 @@ def check_patchwork_status(series, series_id, branch, dest_branch, force,
         dest_branch (str): Name of new branch to create, or None
         force (bool): True to force overwriting dest_branch if it exists
         show_comments (bool): True to show the comments on each patch
+        show_cover_comments (bool): True to show the comments on the
+            letter
         patchwork (Patchwork): Patchwork class to handle communications
         test_repo (pygit2.Repository): Repo to use (use None unless testing)
     """
