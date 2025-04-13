@@ -3097,7 +3097,57 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
             target = self.repo.lookup_reference('refs/heads/second')
             self.repo.checkout(target, strategy=pygit2.GIT_CHECKOUT_FORCE)
             cser.increment('second')
-        cser.list_patches('first', 1, show_commit=True)
+
+        with terminal.capture() as (out, _):
+            cser.list_patches('first', 1, show_commit=True)
+        self.maxDiff = None
+        # lines = [x.rstrip() for x in out.getvalue().splitlines()]) + '\n'
+        expect = r'''Branch 'first' (total 2): 2:unknown
+Seq State      Com PatchId Commit     Subject
+  0 unknown      -         .* i2c: I2C things
+
+commit .*
+Author: Test user <test@email.com>
+Date:   .*
+
+    i2c: I2C things
+
+    This has some stuff to do with I2C
+
+ i2c.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+
+  1 unknown      -         .* spi: SPI fixes
+
+commit .*
+Author: Test user <test@email.com>
+Date:   .*
+
+    spi: SPI fixes
+
+    SPI needs some fixes
+    and here they are
+
+    Signed-off-by: Lord Edmund Blackaddër <weasel@blackadder.org>
+
+    Series-to: u-boot
+    Commit-notes:
+    title of the series
+    This is the cover letter for the series
+    with various details
+    END
+
+ spi.c | 3 +++
+ 1 file changed, 3 insertions(+)
+'''
+        lines = iter(out.getvalue().splitlines())
+        for seq, eline in enumerate(expect.splitlines()):
+            line = next(lines).rstrip()
+            if '*' in eline:
+                self.assertRegex(line, eline, f'line {seq + 1}')
+            else:
+                self.assertEqual(eline, line, f'line {seq + 1}')
 
     '''
     def _check_series_status(self, out):

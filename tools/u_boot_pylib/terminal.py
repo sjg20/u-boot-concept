@@ -245,6 +245,13 @@ class Color(object):
         except:
             self._enabled = False
 
+    def enabled(self):
+        """Check if colour is enabled
+
+        Return: True if enabled, else False
+        """
+        return self._enabled
+
     def start(self, color, bright=True, back=None):
         """Returns a start color code.
 

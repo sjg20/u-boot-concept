@@ -799,7 +799,8 @@ def get_commit_message(commit, git_dir=None):
     return unindented
 
 
-def show_commit(commit, msg=True, diffstat=False, patch=False, git_dir=None):
+def show_commit(commit, msg=True, diffstat=False, patch=False, colour=True,
+                git_dir=None):
     """Runs 'git show' and returns the output
 
     Args:
@@ -815,7 +816,9 @@ def show_commit(commit, msg=True, diffstat=False, patch=False, git_dir=None):
     cmd = ['git']
     if git_dir:
         cmd += ['--git-dir', git_dir]
-    cmd += ['show', '--quiet', '--color']
+    cmd += ['show', '--quiet']
+    if colour:
+        cmd.append('--color')
     if not msg:
         cmd.append('--oneline')
     if diffstat:

@@ -1371,6 +1371,7 @@ class Cseries:
         """
         lines = []
         states = defaultdict(int)
+        count = len(pwc)
         for seq, item in enumerate(pwc.values()):
             cmt = series.commits[seq]
             assert cmt.subject == item.subject
@@ -1395,8 +1396,8 @@ class Cseries:
             lines.append(line)
             states[item.state] += 1
         out = ''
-        for state, count in states.items():
-            out += ' ' + self.build_col(state, f'{count}:')[0]
+        for state, freq in states.items():
+            out += ' ' + self.build_col(state, f'{freq}:')[0]
         with terminal.pager():
             print(f"Branch '{branch}' (total {len(pwc)}):{out}")
             print(self.col.build(
@@ -1410,17 +1411,19 @@ class Cseries:
                     self.col.WHITE,
                     f"{cov:14} {comments.rjust(3)} {cover_id or '':7}            {desc}",
                     bright=False))
-            for seq in range(len(pwc.values())):
+            for seq in range(count):
                 line = lines[seq]
                 print(line)
                 if show_commit or show_patch:
                     print()
                     cmt = series.commits[seq]
-                    msg = gitutil.show_commit(cmt.hash, show_commit, True,
-                                              show_patch, git_dir=self.gitdir)
+                    msg = gitutil.show_commit(
+                        cmt.hash, show_commit, True, show_patch,
+                        colour=self.col.enabled(), git_dir=self.gitdir)
                     sys.stdout.write(msg)
-                    print()
-                    print()
+                    if seq != count - 1:
+                        print()
+                        print()
 
     def _get_patches(self, series, version):
         """Get a Series object containing the patches in a series
