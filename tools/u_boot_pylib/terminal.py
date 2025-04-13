@@ -29,6 +29,10 @@ last_print_len = None
 # stackoverflow.com/questions/14693701/how-can-i-remove-the-ansi-escape-sequences-from-a-string-in-python
 ansi_escape = re.compile(r'\x1b(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
 
+# True if we are capturing console output
+CAPTURING = False
+
+
 class PrintLine:
     """A line of text output
 
@@ -290,13 +294,17 @@ class Color(object):
 #   ...do something...
 @contextmanager
 def capture():
+    global CAPTURING
+
     capture_out, capture_err = StringIO(), StringIO()
     old_out, old_err = sys.stdout, sys.stderr
     try:
+        CAPTURING = True
         sys.stdout, sys.stderr = capture_out, capture_err
         yield capture_out, capture_err
     finally:
         sys.stdout, sys.stderr = old_out, old_err
+        CAPTURING = False
 
 
 @contextmanager
@@ -311,7 +319,7 @@ def pager():
     old_stdout = None
     try:
         less = os.getenv('PAGER')
-        if less != 'none' and os.isatty(sys.stdout.fileno()):
+        if not CAPTURING and less != 'none' and os.isatty(sys.stdout.fileno()):
             if not less:
                 less = 'less -R --quit-if-one-screen'
             proc = subprocess.Popen(less, stdin=subprocess.PIPE, text=True,
