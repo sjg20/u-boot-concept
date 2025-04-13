@@ -12,6 +12,7 @@ import sys
 import unittest
 
 from u_boot_pylib import command
+from u_boot_pylib import terminal
 
 use_concurrent = True
 try:
@@ -19,10 +20,6 @@ try:
     from concurrencytest import fork_for_tests
 except:
     use_concurrent = False
-
-
-# Set this to False to disable output-capturing globally
-USE_CAPTURE = True
 
 
 def run_test_coverage(prog, filter_fname, exclude_list, build_dir,
@@ -184,9 +181,8 @@ def run_test_suites(toolname, debug, verbosity, no_capture, test_preserve_dirs,
     if verbosity:
         sys.argv.append('-v%d' % verbosity)
     if no_capture:
-        global USE_CAPTURE
         sys.argv.append('-N')
-        USE_CAPTURE = False
+        terminal.USE_CAPTURE = False
     if toolpath:
         for path in toolpath:
             sys.argv += ['--toolpath', path]

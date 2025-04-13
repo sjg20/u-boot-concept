@@ -32,6 +32,9 @@ ansi_escape = re.compile(r'\x1b(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
 # True if we are capturing console output
 CAPTURING = False
 
+# Set this to False to disable output-capturing globally
+USE_CAPTURE = True
+
 
 class PrintLine:
     """A line of text output
@@ -305,6 +308,9 @@ def capture():
     finally:
         sys.stdout, sys.stderr = old_out, old_err
         CAPTURING = False
+        if not USE_CAPTURE:
+            sys.stdout.write(capture_out.getvalue())
+            sys.stderr.write(capture_err.getvalue())
 
 
 @contextmanager

@@ -183,7 +183,13 @@ def parse_args(argv=None, config_fname=None):
     series_subparsers.add_parser('inc')
     series_subparsers.add_parser('list')
     series_subparsers.add_parser('open')
-    series_subparsers.add_parser('patches')
+    pat = series_subparsers.add_parser(
+        'patches', epilog='Show a list of patches and optional details')
+    pat.add_argument('-c', '--commit', action='store_true',
+                     help='Show the commit and diffstat')
+    pat.add_argument('-p', '--patch', action='store_true',
+                     help='Show the patch body')
+
     series_subparsers.add_parser('progress')
     series_subparsers.add_parser('remove')
     series_subparsers.add_parser('remove-version')
