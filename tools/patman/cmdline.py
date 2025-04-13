@@ -202,7 +202,10 @@ def parse_args(argv=None, config_fname=None):
                       help='Update the branch commit')
     setl.add_argument(
         'link', help='Link to use, i.e. patchwork series number (e.g. 452329)')
-    series_subparsers.add_parser('status')
+    stat = series_subparsers.add_parser('status')
+    stat.add_argument('-C', '--show-comments', action='store_true',
+                      help='Show comments from each patch')
+
     series_subparsers.add_parser('summary')
     series_subparsers.add_parser('sync')
     series_subparsers.add_parser('unarchive')

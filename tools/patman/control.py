@@ -152,7 +152,8 @@ def do_series(args, test_db=None, pwork=None):
         elif args.subcmd == 'set-link':
             cser.set_link(args.series, args.version, args.link, args.update)
         elif args.subcmd == 'status':
-            cser.series_status(args.series, args.version)
+            cser.series_status(pwork, args.series, args.version,
+                               args.show_comments)
         elif args.subcmd == 'summary':
             cser.summary(args.series)
         elif args.subcmd == 'sync':

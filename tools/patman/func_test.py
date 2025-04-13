@@ -3468,6 +3468,27 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
         self.assertEqual(
             "Setting link for series 'second' v3 to 500", next(lines))
 
+    def _check_status(self, out, has_comments):
+        lines = iter(out.getvalue().splitlines())
+        self.assertEqual('  1 video: Some video improvements', next(lines))
+        self.assertEqual('  + Reviewed-by: Fred Bloggs <fred@bloggs.com>',
+                         next(lines))
+        if has_comments:
+            self.assertEqual(
+                'Review: Fred Bloggs <fred@bloggs.com>', next(lines))
+            self.assertEqual('    > This was my original patch', next(lines))
+            self.assertEqual('    > which is being quoted', next(lines))
+            self.assertEqual(
+                '    I like the approach here and I would love to see more of it.',
+                next(lines))
+            self.assertEqual('', next(lines))
+
+        self.assertEqual('  2 serial: Add a serial driver', next(lines))
+        self.assertEqual('  3 bootm: Make it boot', next(lines))
+        self.assertEqual(
+            '1 new response available in patchwork (use -d to write them to a new branch)',
+            next(lines))
+
     def test_series_status(self):
         """Test getting the status of a series, including comments"""
         cser, pwork = self.setup_second()
@@ -3479,36 +3500,25 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
         with capture_sys_output() as (out2, _):
             cser.series_status(pwork, 'second', 2, False, single_thread=False)
         self.assertEqual(out.getvalue(), out2.getvalue())
-        lines = iter(out.getvalue().splitlines())
-        self.assertEqual('  1 video: Some video improvements', next(lines))
-        self.assertEqual('  + Reviewed-by: Fred Bloggs <fred@bloggs.com>',
-                         next(lines))
-        self.assertEqual('  2 serial: Add a serial driver', next(lines))
-        self.assertEqual('  3 bootm: Make it boot', next(lines))
-        self.assertEqual(
-            '1 new response available in patchwork (use -d to write them to a new branch)',
-            next(lines))
+        self._check_status(out, False)
 
         with capture_sys_output() as (out, _):
             cser.series_status(pwork, 'second', 2, show_comments=True,
                                single_thread=False)
-        lines = iter(out.getvalue().splitlines())
-        self.assertEqual('  1 video: Some video improvements', next(lines))
-        self.assertEqual('  + Reviewed-by: Fred Bloggs <fred@bloggs.com>',
-                         next(lines))
-        self.assertEqual('Review: Fred Bloggs <fred@bloggs.com>', next(lines))
-        self.assertEqual('    > This was my original patch', next(lines))
-        self.assertEqual('    > which is being quoted', next(lines))
-        self.assertEqual(
-            '    I like the approach here and I would love to see more of it.',
-            next(lines))
-        self.assertEqual('', next(lines))
-        self.assertEqual('  2 serial: Add a serial driver', next(lines))
-        self.assertEqual('  3 bootm: Make it boot', next(lines))
-        self.assertEqual(
-            '1 new response available in patchwork (use -d to write them to a new branch)',
-            next(lines))
+        self._check_status(out, True)
 
     def test_series_status_cmdline(self):
-        # todo
-        pass
+        """Test getting the status of a series, including comments"""
+        cser, pwork = self.setup_second()
+
+        # Use single threading for easy debugging, but the multithreaded version
+        # should produce the same output
+        with capture_sys_output() as (out, _):
+            self.run_args('series', '-s' 'second', '-V', '2', 'status',
+                          pwork=pwork)
+        self._check_status(out, False)
+
+        with capture_sys_output() as (out, _):
+            cser.series_status(pwork, 'second', 2, show_comments=True,
+                               single_thread=False)
+        self._check_status(out, True)
