@@ -11,6 +11,7 @@ import os
 import re
 import sqlite3
 from sqlite3 import OperationalError
+import time
 from types import SimpleNamespace
 
 import pygit2
@@ -68,6 +69,8 @@ class Cseries:
         self.db = None
         self.quiet = False
         self.col = terminal.Color(colour)
+        self.fake_time = None
+        self._fake_sleep = None
 
     def open_database(self):
         """Open the database read for use"""
@@ -99,6 +102,25 @@ class Cseries:
 
     def rowcount(self):
         return self.db.rowcount()
+
+    def set_fake_time(self, fake_sleep):
+        self.fake_time = 0
+        self._fake_sleep = fake_sleep
+
+    def inc_fake_time(self, inc_s):
+        self.fake_time += inc_s
+
+    def get_time(self):
+        if self.fake_time is not None:
+            return self.fake_time
+        return time.monotonic()
+
+    def sleep(self, time_s):
+        print(f'Sleeping for {time_s} seconds')
+        if self.fake_time is not None:
+            self._fake_sleep(time_s)
+        else:
+            time.sleep(time_s)
 
     def get_series_dict(self, include_archived=False):
         """Get a dict of Series objects from the database
@@ -471,7 +493,7 @@ class Cseries:
         pws, options = pwork.find_series(ser.desc, version)
         return pws, options, ser.name, version, ser.desc
 
-    def do_auto_link(self, pwork, series, version, update_commit):
+    def do_auto_link(self, pwork, series, version, update_commit, wait_s=0):
         """Automatically find a series link by looking in patchwork
 
         Args:
@@ -483,15 +505,26 @@ class Cseries:
             update_commit (bool): True to update the current commit with the
                 link
         """
-        pws, options, name, version, desc = self.search_link(pwork, series,
-                                                             version)
+        start = self.get_time()
+        stop = start + wait_s
+        sleep_time = 20
+        while True:
+            pws, options, name, version, desc = self.search_link(
+                pwork, series, version)
+            if pws:
+                if wait_s:
+                    tout.info(f'Link completed after {self.get_time() - start} seconds')
+                break
 
-        if not pws:
             print(f"Possible matches for '{name}' v{version} desc '{desc}':")
+            print('  Link  Version  Description')
             for opt in options:
-                print('  Link  Version  Description')
-                print(f"{opt['id']:5}  {opt['version']:7}  {opt['name']}")
-            raise ValueError(f"Cannot find series '{desc}'")
+                print(f"{opt['id']:6}  {opt['version'].rjust(7)}  {opt['name']}")
+            if not wait_s or self.get_time() > stop:
+                delay = f' after {wait_s} seconds' if wait_s else ''
+                raise ValueError(f"Cannot find series '{desc}{delay}'")
+
+            self.sleep(sleep_time)
 
         self.set_link(name, version, pws, update_commit)
 

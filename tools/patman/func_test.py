@@ -81,6 +81,7 @@ class TestFunctional(unittest.TestCase):
         self.gitdir = os.path.join(self.tmpdir, '.git')
         self.repo = None
         self.cser = None
+        self.autolink_extra = None
         tout.init(tout.DEBUG if self.verbosity else tout.INFO,
                   allow_colour=False)
 
@@ -2026,13 +2027,16 @@ second line.'''
         re_series = re.match(r'series/\?project=(\d+)&q=.*$', subpath)
         if re_series:
             series_num = re_series.group(1)
-            return [
+            result = [
                 {'id': 56, 'name': 'contains first name', 'version': '1'},
                 {'id': 43, 'name': 'has first in it', 'version': '1'},
                 {'id': 1234, 'name': 'first series', 'version': '1'},
                 {'id': 456, 'name': 'Series for my board', 'version': '1'},
                 {'id': 457, 'name': 'Series for my board', 'version': '2'},
             ]
+            if self.autolink_extra:
+                result += [self.autolink_extra]
+            return result;
         return self._fake_patchwork_cser(subpath)
 
     def test_series_link_auto_version(self):
@@ -2430,38 +2434,6 @@ second line.'''
             cser.decrement('first', dry_run=True)
         self.assertEqual("Series 'first' only has one version",
                          str(exc.exception))
-
-    def test_series_send(self):
-        """Test sending a series"""
-        cser, pwork = self.setup_second()
-
-        # Create a third version
-        with capture_sys_output() as (out, err):
-            cser.increment('second')
-        series = patchstream.get_metadata_for_list('second3', self.gitdir, 3)
-        self.assertEqual('2:457', series.links)
-        self.assertEqual('3', series.version)
-
-        with capture_sys_output() as (out, err):
-            self.run_args('series', '-n', 'send', pwork=pwork)
-        lines = out.getvalue().splitlines()
-        err_lines = err.getvalue().splitlines()
-        self.assertIn('Send a total of 3 patches with a cover letter',
-                      out.getvalue())
-        self.assertIn('video.c:1: warning: Missing or malformed SPDX-License-Identifier tag in line 1',
-                      err.getvalue())
-        self.assertIn('<patch>:19: warning: added, moved or deleted file(s), does MAINTAINERS need updating?',
-                      err.getvalue())
-        self.assertIn('bootm.c:1: check: Avoid CamelCase: <Fix>',
-                      err.getvalue())
-        self.assertIn('Cc:  Anatolij Gustschin <agust@denx.de>', out.getvalue())
-
-        self.assertTrue(os.path.exists(os.path.join(
-            self.tmpdir, '0001-video-Some-video-improvements.patch')))
-        self.assertTrue(os.path.exists(os.path.join(
-            self.tmpdir, '0002-serial-Add-a-serial-driver.patch')))
-        self.assertTrue(os.path.exists(os.path.join(
-            self.tmpdir, '0003-bootm-Make-it-boot.patch')))
 
     def test_upstream_add(self):
         cser = self.get_cser()
@@ -3349,3 +3321,60 @@ second line.'''
         self.assertEqual('video: Some video improvements', chk[0].subject)
         self.assertEqual('bootm: Make it boot', chk[1].subject)
         self.assertEqual('Just checking', chk[2].subject)
+
+    def test_series_send(self):
+        """Test sending a series"""
+        cser, pwork = self.setup_second()
+
+        # Create a third version
+        with capture_sys_output() as (out, err):
+            cser.increment('second')
+        series = patchstream.get_metadata_for_list('second3', self.gitdir, 3)
+        self.assertEqual('2:457', series.links)
+        self.assertEqual('3', series.version)
+
+        with capture_sys_output() as (out, err):
+            self.run_args('series', '-n', 'send', pwork=pwork)
+        lines = out.getvalue().splitlines()
+        err_lines = err.getvalue().splitlines()
+        self.assertIn('Send a total of 3 patches with a cover letter',
+                      out.getvalue())
+        self.assertIn('video.c:1: warning: Missing or malformed SPDX-License-Identifier tag in line 1',
+                      err.getvalue())
+        self.assertIn('<patch>:19: warning: added, moved or deleted file(s), does MAINTAINERS need updating?',
+                      err.getvalue())
+        self.assertIn('bootm.c:1: check: Avoid CamelCase: <Fix>',
+                      err.getvalue())
+        self.assertIn('Cc:  Anatolij Gustschin <agust@denx.de>', out.getvalue())
+
+        self.assertTrue(os.path.exists(os.path.join(
+            self.tmpdir, '0001-video-Some-video-improvements.patch')))
+        self.assertTrue(os.path.exists(os.path.join(
+            self.tmpdir, '0002-serial-Add-a-serial-driver.patch')))
+        self.assertTrue(os.path.exists(os.path.join(
+            self.tmpdir, '0003-bootm-Make-it-boot.patch')))
+
+    def test_series_send_and_link(self):
+        """Test sending a series and then adding its link to the database"""
+        def h_sleep(time_s):
+            if cser.get_time() > 100:
+                self.autolink_extra = {'id': 500, 'name': 'Series for my board',
+                                       'version': '3'}
+            cser.inc_fake_time(time_s)
+
+        cser, pwork = self.setup_second()
+
+        # Create a third version
+        with capture_sys_output() as (out, err):
+            cser.increment('second')
+        series = patchstream.get_metadata_for_list('second3', self.gitdir, 3)
+        self.assertEqual('2:457', series.links)
+        self.assertEqual('3', series.version)
+
+        with capture_sys_output() as (out, err):
+            self.run_args('series', '-n', 'send', pwork=pwork)
+
+        cser.set_fake_time(h_sleep)
+        cser.do_auto_link(pwork, 'second3', 3, True, 200)
+        # self.run_args('series', '-n', 'auto-link', '--wait', '200',
+                      # pwork=pwork)

@@ -176,6 +176,8 @@ def parse_args(argv=None, config_fname=None):
     auto = series_subparsers.add_parser('auto-link')
     auto.add_argument('-u', '--update', action='store_true',
                       help='Update the branch commit')
+    auto.add_argument('-w', '--wait', type=int, default=0,
+        help='Number of seconds to wait for patchwork to get a sent series')
     series_subparsers.add_parser('dec')
     series_subparsers.add_parser('get-link')
     series_subparsers.add_parser('inc')
@@ -192,6 +194,9 @@ def parse_args(argv=None, config_fname=None):
                       help="Don't require commits to be marked")
     ssend = series_subparsers.add_parser('send')
     add_send_args(ssend)
+    auto.add_argument('-a', '--autolink-wait', type=int, default=0,
+        help='Number of seconds to wait for patchwork to get a sent series')
+
     setl = series_subparsers.add_parser('set-link')
     setl.add_argument('-u', '--update', action='store_true',
                       help='Update the branch commit')
@@ -242,6 +247,7 @@ def parse_args(argv=None, config_fname=None):
         argv = sys.argv[1:]
 
     defaults = {}
+    # print('argv', argv)
     args, rest = parser.parse_known_args(argv)
     if hasattr(args, 'project'):
         defaults = settings.Setup(parser, args.project, argv, config_fname)
