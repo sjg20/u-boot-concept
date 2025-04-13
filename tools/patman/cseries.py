@@ -746,18 +746,11 @@ class Cseries:
                         out.append(f'Series-version: {add_vers}')
                     added_version = True
                 elif m_links and add_link is not None:
-                    new_links = ''
-                    this_ver = max_vers
-                    for link in m_links.group(1).strip().split():
-                        if ':' not in link:
-                            if max_vers != this_ver:
-                                new_links += f'{max_vers}:{link} '
-                        else:
-                            new_links += f'{link} '
-                    if add_link:
-                        new_links = f'{this_ver}:{add_link} {new_links}'
-                    vals.info += f"added links '{new_links}'"
-                    out.append(f'Series-links: {new_links.strip()}')
+                    links = series.get_links(m_links.group(1), max_vers)
+                    links[max_vers] = add_link
+                    new_links = series.build_links(links)
+                    vals.info += f"added links '{new_links}' "
+                    out.append(f'Series-links: {new_links}')
                     added_link = True
                 else:
                     out.append(line)

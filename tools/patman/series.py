@@ -402,24 +402,48 @@ class Series(dict):
            postfix = ' %s' % self['postfix']
         return '%s%sPATCH%s%s' % (git_prefix, prefix, postfix, version)
 
-    def get_links(self):
+    def get_links(self, links_str=None, cur_version=None):
         """Look up the patchwork links for each version
+
+        Args:
+            links_str (str): Links string to parse, or None to use self.links
+            cur_version (int): Default version to assume for un-versioned links,
+                or None to use self.version
 
         Return:
             dict:
                 key (int): Version number
                 value (str): Link string
         """
+        if links_str is None:
+            links_str = self.links if 'links' in self else ''
+        if cur_version is None:
+            cur_version = int(self.version) if 'version' in self else 1
+        assert isinstance(cur_version, int)
         links = {}
-        if 'links' in self:
-            for item in self.links.split():
-                if ':' in item:
-                    version, link = item.split(':')
-                else:
-                    version = self.version if 'version' in self else '1'
-                    link = item
+        for item in links_str.split():
+            if ':' in item:
+                version, link = item.split(':')
                 links[int(version)] = link
+            else:
+                links[cur_version] = item
         return links
+
+    def build_links(self, links):
+        """Build a string containing the links
+
+        Args:
+            links (dict):
+                key (int): Version number
+                value (str): Link string
+
+        Return:
+            str: Link string, e.g. '2:4433 1:2872'
+        """
+        out = ''
+        for vers in sorted(links.keys(), reverse=True):
+            out += f' {vers}:{links[vers]}'
+        return out[1:]
 
     def get_link_for_version(self, find_vers):
         """Look up the patchwork link for a particular version
