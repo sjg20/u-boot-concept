@@ -742,7 +742,7 @@ class Cseries:
                             f'{series.version} does not match expected version '
                             f'{max_vers}')
                     if add_vers:
-                        vals.info += f'added version {add_vers}'
+                        vals.info += f'added version {add_vers} '
                         out.append(f'Series-version: {add_vers}')
                     added_version = True
                 elif m_links and add_link is not None:
@@ -756,16 +756,19 @@ class Cseries:
                             new_links += f'{link} '
                     if add_link:
                         new_links = f'{this_ver}:{add_link} {new_links}'
-                    vals.info += f'added links {new_links}'
+                    vals.info += f"added links '{new_links}'"
                     out.append(f'Series-links: {new_links.strip()}')
                     added_link = True
                 else:
                     out.append(line)
             if vals.final:
                 if add_vers and not added_version:
+                    vals.info += f'added version {add_vers} '
                     out.append(f'Series-version: {add_vers}')
                 if add_link and not added_link:
-                    out.append(f'Series-links: {max_vers}:{add_link}')
+                    new_links = f'{max_vers}:{add_link}'
+                    vals.info += f"added links '{new_links}' "
+                    out.append(f'Series-links: {new_links}')
 
             vals.msg = '\n'.join(out) + '\n'
 

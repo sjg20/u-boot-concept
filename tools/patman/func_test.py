@@ -1885,7 +1885,7 @@ second line.'''
         self.assertEqual("Processing 2 commits from branch 'first2'",
                          next(lines))
         self.assertRegex(next(lines), '-  .* as .*: i2c: I2C things')
-        self.assertRegex(next(lines), '-  .* as .*: spi: SPI fixes')
+        self.assertRegex(next(lines), '- added version 2 .* as .*: spi: SPI fixes')
         self.assertRegex(next(lines), 'Updating branch first2 to .*')
         self.assertEqual('Added new branch first2', next(lines))
         return lines
@@ -1989,10 +1989,13 @@ second line.'''
 
         with capture_sys_output() as (out, _):
             self.run_args('series', '-s', 'first', '-V', '4', 'set-link', '-u',
-                          '1234', pwork=True)
-        self.assertEqual(
-            "Setting link for series 'first' v4 to 1234",
-            out.getvalue().splitlines()[-1])
+                      '1234', pwork=True)
+        lines = out.getvalue().splitlines()
+        self.assertRegex(
+            lines[-3],
+            "- added version 4 added links '4:1234' .* as .*: spi: SPI fixes")
+        self.assertEqual("Setting link for series 'first' v4 to 1234",
+                         lines[-1])
 
         with capture_sys_output() as (out, _):
             self.run_args('series', '-s', 'first', '-V', '4', 'get-link',
