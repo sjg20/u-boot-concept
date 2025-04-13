@@ -31,11 +31,6 @@ class ErrorCatchingArgumentParser(argparse.ArgumentParser):
             self.message = message
         else:
             super().error(message)
-    #
-    # def exit(self, status=0, message=None):
-    #     if self.catch_error:
-    #         raise ValueError('Bad argument')
-    #     exit(status)
 
 
 def add_send_args(par):
@@ -246,7 +241,6 @@ def parse_args(argv=None):
     # If we have a command, it is safe to parse all arguments
     if args.cmd:
         args = parser.parse_args(argv)
-        # print('args', args)
     else:
         # No command, so insert it after the known arguments and before the ones
         # that presumably relate to the 'send' subcommand
@@ -256,10 +250,5 @@ def parse_args(argv=None):
 
     if 'allow_unmarked' in defaults:
         args.allow_unmarked = defaults['allow_unmarked']
-    # print('process_tags', args.process_tags)
-    if 'allow_unmarked' in args:
-        print('allow_unmarked', args.allow_unmarked)
-    # print('default', parser.get_default('allow_unmarked'))
-    # print('default', series.get_default('allow_unmarked'))
 
     return args
