@@ -1491,6 +1491,7 @@ class Cseries:
                 f'No matching series for id {series_id} version {version}')
         return recs[0]
 
+    '''
     def series_status(self, series, version):
         """Show the patchwork status of a series
 
@@ -1501,6 +1502,7 @@ class Cseries:
         branch, series, pwc, desc, _, cover_id, num_comments = (
             self._get_patches(series, version))
         self._list_patches(branch, pwc, series, desc, cover_id, num_comments)
+    '''
 
     def series_sync(self, pwork, series, version):
         """Sync the series status from patchwork
@@ -1795,14 +1797,14 @@ class Cseries:
 
     def series_status(self, pwork, series, version, show_comments,
                       single_thread=False):
-        """Sync the series status from patchwork
+        """Show the series status from patchwork
 
         Args:
             pwork (Patchwork): Patchwork object to use
             series (str): Name of series to use, or None to use current branch
             version (int): Version number, or None to detect from name
         """
-        branch, series, pwc, desc, link, _, _ = self._get_patches(
+        branch, series, _, _, link, _, _ = self._get_patches(
             series, version)
         status.check_patchwork_status(series, link, branch, None, False,
                                       show_comments, pwork, self.gitdir,

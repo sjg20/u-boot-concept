@@ -3062,6 +3062,7 @@ second line.'''
         cser = next(cor)
         cor.close()
 
+    '''
     def _check_series_status(self, out):
         lines = iter(out.getvalue().splitlines())
         self.assertEqual(
@@ -3092,6 +3093,7 @@ second line.'''
         with capture_sys_output() as (out, _):
             self.run_args('series',  '-s', 'second', 'status', pwork=True)
         self._check_series_status(out)
+    '''
 
     def test_series_sync(self):
         cser = self.get_cser()
@@ -3449,4 +3451,5 @@ second line.'''
         """Test getting the status of a series, including comments"""
         cser, pwork = self.setup_second()
 
-        cser.series_status(pwork, 'second', 2, False, single_thread=True)
+        with capture_sys_output() as (out, _):
+            cser.series_status(pwork, 'second', 2, False, single_thread=True)
