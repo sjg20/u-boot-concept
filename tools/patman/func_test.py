@@ -679,7 +679,7 @@ and a little more''')
 
             # Finally, do the test
             with terminal.capture():
-                output = tools.run(PATMAN_DIR / 'patman', '--dry-run')
+                output = tools.run(PATMAN_DIR / 'patman', 'send', '--dry-run')
                 # Assert the email address is part of the dry-run
                 # output.
                 self.assertIn('hello@there.com', output)
