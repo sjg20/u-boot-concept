@@ -283,9 +283,9 @@ def _UpdateDefaults(main_parser, config, argv):
             finally:
                 parser.catch_error = False
 
-            if parser.message:
-                print('bad', argv, parser.message)
-                bad = True
+            # if parser.message:
+                # print('bad', argv, parser.message)
+                # bad = True
 
             parser_defaults.append(pdefs)
             defaults.update(vars(pdefs))

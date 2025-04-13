@@ -2705,7 +2705,7 @@ second line.'''
         self.assertFalse(pcdict[2].change_id)
 
     def test_series_add_unmarked_bad_cmdline(self):
-        """Test failure to add an unmarked cseries using the command line"""
+        """Test failure to add an unmarked cseries using a bad command line"""
         cser = self.get_cser()
 
         with capture_sys_output() as (out, _):
