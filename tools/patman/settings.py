@@ -258,22 +258,41 @@ def _UpdateDefaults(main_parser, config, argv):
     argv = list(argv)
     orig_argv = argv
 
+    bad = False
+    full_parser_list = []
     for parser in parsers:
-        argv = orig_argv
-        if hasattr(parser, 'defaults_cmd'):
-            argv = parser.defaults_cmd
-        parser.message = None
-        try:
-            parser.catch_error = True
-            pdefs = parser.parse_known_args(argv)[0]
-        finally:
-            parser.catch_error = False
+        argv_list = [orig_argv]
+        special_cases = []
+        if hasattr(parser, 'defaults_cmds'):
+           special_cases = parser.defaults_cmds
+        for action in parser._actions:
+            if action.choices:
+                argv_list = []
+                for choice in action.choices:
+                    argv = None
+                    for case in special_cases:
+                        if case[0] == choice:
+                            argv = case
+                    argv_list.append(argv or [choice])
 
-        if parser.message:
-            print('argv', argv, parser.message)
+        for argv in argv_list:
+            parser.message = None
+            try:
+                parser.catch_error = True
+                pdefs = parser.parse_known_args(argv)[0]
+            finally:
+                parser.catch_error = False
 
-        parser_defaults.append(pdefs)
-        defaults.update(vars(pdefs))
+            if parser.message:
+                print('bad', argv, parser.message)
+                bad = True
+
+            parser_defaults.append(pdefs)
+            defaults.update(vars(pdefs))
+            full_parser_list.append(parser)
+    if bad:
+        print('Internal parsing error')
+        sys.exit(1)
 
     # Go through the settings and collect defaults
     for name, val in config.items('settings'):
@@ -291,7 +310,8 @@ def _UpdateDefaults(main_parser, config, argv):
 
     # Set all the defaults and manually propagate them to subparsers
     main_parser.set_defaults(**defaults)
-    for parser, pdefs in zip(parsers, parser_defaults):
+    assert len(full_parser_list) == len(parser_defaults)
+    for parser, pdefs in zip(full_parser_list, parser_defaults):
         parser.set_defaults(**{k: v for k, v in defaults.items()
                                if k in pdefs})
     return defaults
