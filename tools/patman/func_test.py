@@ -2608,10 +2608,12 @@ second line.'''
             cser.add_series('first', '', mark=True)
 
         tools.write_file(os.path.join(self.tmpdir, 'i2c.c'), b'123')
-        with self.assertRaises(pygit2.GitError) as exc:
+        with self.assertRaises(ValueError) as exc:
             with capture_sys_output() as (out, _):
                 cser.add_series('first', '', mark=True)
-        self.assertEqual('1 conflict prevents checkout', str(exc.exception))
+        self.assertEqual(
+            "Modified files exist: use 'git status' to check",
+            str(exc.exception))
 
     def test_series_add_mark_dry_run(self):
         """Test marking a cseries with Change-Id fields"""
@@ -2641,13 +2643,11 @@ second line.'''
 
         tools.write_file(os.path.join(self.tmpdir, 'i2c.c'), b'123')
         with capture_sys_output() as (out, _):
-            with self.assertRaises(pygit2.GitError) as exc:
+            with self.assertRaises(ValueError) as exc:
                 cser.add_series('first', '', mark=True, dry_run=True)
-        self.assertEqual('1 conflict prevents checkout', str(exc.exception))
         self.assertEqual(
-            "Adding series 'first' v1: mark True allow_unmarked False\n"
-            "Checking out upstream commit refs/heads/base\n",
-            out.getvalue())
+            "Modified files exist: use 'git status' to check",
+            str(exc.exception))
 
         pcdict = cser.get_pcommit_dict()
         self.assertFalse(pcdict)
