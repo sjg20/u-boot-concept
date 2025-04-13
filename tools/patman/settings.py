@@ -294,6 +294,8 @@ def _UpdateDefaults(main_parser, config, argv):
         finally:
             parser.catch_error = False
 
+        if parser.message:
+            print('parser.message', parser.message)
         # Catch any exception from ErrorCatchingArgumentParser
         # this can happen when we have arguments with the same name but
         # different types in two different parsers. For example, if '-s' takes

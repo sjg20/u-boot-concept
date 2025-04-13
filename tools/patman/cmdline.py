@@ -29,6 +29,8 @@ class ErrorCatchingArgumentParser(argparse.ArgumentParser):
     def error(self, message):
         if self.catch_error:
             self.message = message
+        else:
+            super().error(message)
     #
     # def exit(self, status=0, message=None):
     #     if self.catch_error:
