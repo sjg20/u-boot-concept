@@ -435,7 +435,7 @@ def check_patchwork_status(series, series_id, branch, dest_branch, force,
             if not patch:
                 continue
             terminal.tprint('%3d %s' % (patch.seq, patch.subject[:50]),
-                           colour=col.BLUE, col=col)
+                           colour=col.YELLOW, col=col)
             cmt = series.commits[seq]
             base_rtags = cmt.rtags
             new_rtags = new_rtag_list[seq]

@@ -1427,11 +1427,11 @@ Reviewed-by: %s
         series.commits = [commit1, commit2]
         terminal.set_print_test_mode()
         pwork = Patchwork.for_testing(self._fake_patchwork2)
-        status.check_patchwork_status(series, '1234', None, None, False, True,
-                                      pwork)
+        col = status.check_patchwork_status(series, '1234', None, None, False,
+                                            True, pwork)
         lines = iter(terminal.get_print_test_lines())
         col = terminal.Color()
-        self.assertEqual(terminal.PrintLine('  1 Subject 1', col.BLUE),
+        self.assertEqual(terminal.PrintLine('  1 Subject 1', col.YELLOW),
                          next(lines))
         self.assertEqual(
             terminal.PrintLine('  + Reviewed-by: ', col.GREEN, newline=False),
@@ -1452,7 +1452,7 @@ Reviewed-by: %s
             '    Here is my comment above the above...', None), next(lines))
         self.assertEqual(terminal.PrintLine('', None), next(lines))
 
-        self.assertEqual(terminal.PrintLine('  2 Subject 2', col.BLUE),
+        self.assertEqual(terminal.PrintLine('  2 Subject 2', col.YELLOW),
                          next(lines))
         self.assertEqual(
             terminal.PrintLine('  + Reviewed-by: ', col.GREEN, newline=False),
@@ -1523,7 +1523,7 @@ second line.'''
     def test_database_setup(self):
         """Check setting up of the series database"""
         cser = cseries.Cseries(self.tmpdir)
-        with capture_sys_output() as (_, err):
+        with terminal.capture() as (_, err):
             cser.open_database()
         self.assertEqual(f'Creating new database {self.tmpdir}/.patman.db',
                          err.getvalue().strip())
@@ -1538,7 +1538,7 @@ second line.'''
             Cseries: Resulting Cseries object
         """
         cser = cseries.Cseries(self.tmpdir, terminal.COLOR_NEVER)
-        with capture_sys_output() as _:
+        with terminal.capture() as _:
             cser.open_database()
         self.cser = cser
         return cser
@@ -1575,7 +1575,7 @@ second line.'''
         cser = self.get_cser()
         self.assertFalse(cser.get_series_dict())
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.add_series('first', 'my description', allow_unmarked=True)
         lines = out.getvalue().strip().splitlines()
         self.assertEqual(
@@ -1616,7 +1616,7 @@ second line.'''
         repo.config.set_multivar('branch.first2.remote', '', '.')
         repo.config.set_multivar('branch.first2.merge', '', 'refs/heads/base')
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.add_series('first2', 'description', allow_unmarked=True)
         lines = out.getvalue().splitlines()
         self.assertEqual(
@@ -1652,7 +1652,7 @@ second line.'''
         self.add_first2(True)
 
         # Add first2 initially
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.add_series(None, 'description', allow_unmarked=True)
         lines = out.getvalue().splitlines()
         self.assertEqual(
@@ -1662,7 +1662,7 @@ second line.'''
         self.assertEqual(2, len(lines))
 
         # Now add first: it should be added as a new version
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.add_series('first', 'description', allow_unmarked=True)
         lines = out.getvalue().splitlines()
         self.assertEqual(
@@ -1685,17 +1685,17 @@ second line.'''
     def test_series_add_dup(self):
         """Test adding a series twice"""
         cser = self.get_cser()
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.add_series(None, 'description', allow_unmarked=True)
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.add_series(None, 'description', allow_unmarked=True)
         self.assertIn("Series 'first' v1 already exists",
                       out.getvalue().strip())
 
         self.add_first2(False)
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.add_series(None, 'description', allow_unmarked=True)
         lines = out.getvalue().splitlines()
         self.assertEqual(
@@ -1705,11 +1705,11 @@ second line.'''
         """Test adding a series twice, v2 then v1"""
         cser = self.get_cser()
         self.add_first2(True)
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.add_series(None, 'description', allow_unmarked=True)
         self.assertIn("Added series 'first' v2", out.getvalue().strip())
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.add_series('first', 'description', allow_unmarked=True)
         self.assertIn("Added v1 to existing series 'first'",
                       out.getvalue().strip())
@@ -1718,13 +1718,13 @@ second line.'''
         """Test adding a series twice, v2 then v1"""
         cser = self.get_cser()
         self.add_first2(True)
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             self.run_args('series', 'add', '-M', '-d', 'description',
                           pwork=True)
         self.assertIn("Added series 'first' v2 (2 commits)",
                       out.getvalue().strip())
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             self.run_args('series', '-s', 'first', 'add', '-M',
                           '-d', 'description', pwork=True)
             cser.add_series('first', 'description', allow_unmarked=True)
@@ -1734,7 +1734,7 @@ second line.'''
     def test_series_add_skip_version(self):
         """Test adding a series which is v4 but has no earlier version"""
         cser = self.get_cser()
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.add_series('third4', 'The glorious third series', mark=False,
                             allow_unmarked=True)
         lines = out.getvalue().splitlines()
@@ -1753,10 +1753,10 @@ second line.'''
         self.assertEqual(4, len(cser.get_pcommit_dict(svid)))
 
         # Remove the series and add it again with just two commits
-        with capture_sys_output():
+        with terminal.capture():
             cser.remove_series('third4')
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.add_series('third4', 'The glorious third series', mark=False,
                                 allow_unmarked=True, end='third4~2')
         lines = out.getvalue().splitlines()
@@ -1788,12 +1788,12 @@ second line.'''
         pwork = Patchwork.for_testing(self._fake_patchwork_cser_link)
         pwork.set_project(PROJ_ID, PROJ_LINK_NAME)
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.add_series('first', '', allow_unmarked=True)
             cser.add_series('second', allow_unmarked=True)
             cser.increment('second')
             cser.do_auto_link(pwork, 'second', 2, True)
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.series_sync(pwork, 'second', 2)
         self.assertEqual('3 patches and cover letter updated',
                          out.getvalue().strip())
@@ -1805,7 +1805,7 @@ second line.'''
 
         self.db_close()
         args = Namespace(subcmd='list', extra=[])
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             control.do_series(args, test_db=self.tmpdir, pwork=True)
         lines = out.getvalue().splitlines()
         self.assertEqual(3, len(lines))
@@ -1821,7 +1821,7 @@ second line.'''
         args = Namespace(subcmd='add', desc='my-description', series='first',
                          mark=False, allow_unmarked=True, upstream=None,
                          dry_run=False)
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             control.do_series(args, test_db=self.tmpdir, pwork=True)
 
         cser = self.get_database()
@@ -1834,7 +1834,7 @@ second line.'''
 
         self.db_close()
         args.subcmd = 'list'
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             control.do_series(args, test_db=self.tmpdir, pwork=True)
         lines = out.getvalue().splitlines()
         self.assertEqual(2, len(lines))
@@ -1845,7 +1845,7 @@ second line.'''
     def test_do_series_add_cmdline(self):
         """Add a new cseries using the cmdline"""
         self.make_git_tree()
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             self.run_args('series', '-s', 'first', 'add', '-M',
                           '-d', 'my-description', pwork=True)
 
@@ -1868,7 +1868,7 @@ second line.'''
         args = Namespace(subcmd='add', extra=[], series=None, mark=False,
                          allow_unmarked=True, upstream=None, dry_run=False,
                          desc=None)
-        with capture_sys_output():
+        with terminal.capture():
             control.do_series(args, test_db=self.tmpdir, pwork=True)
 
         cser = self.get_database()
@@ -1909,7 +1909,7 @@ second line.'''
         gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
                          force=True)
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.add_series('first', '', allow_unmarked=True)
 
         with self.assertRaises(ValueError) as exc:
@@ -1918,11 +1918,11 @@ second line.'''
                          str(exc.exception))
 
         self.assertEqual('first', gitutil.get_branch(self.gitdir))
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.increment('first')
         self.assertTrue(repo.lookup_branch('first2'))
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.set_link('first', 2, '2345', True)
 
         lines = out.getvalue().splitlines()
@@ -1963,11 +1963,11 @@ second line.'''
         # Check out second and try to update first
         gitutil.checkout('second', self.gitdir, work_tree=self.tmpdir,
                          force=True)
-        with capture_sys_output():
+        with terminal.capture():
             cser.set_link('first', 1, '16', True)
 
         # Overwrite the link
-        with capture_sys_output():
+        with terminal.capture():
             cser.set_link('first', 1, '17', True)
 
         series2 = patchstream.get_metadata_for_list('first', self.gitdir, count)
@@ -1982,10 +1982,10 @@ second line.'''
         gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
                          force=True)
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.add_series('first', '', allow_unmarked=True)
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             self.run_args('series', '-s', 'first', '-V', '4', 'set-link','-u',
                           '1234', expected_ret=1, pwork=True)
         self.assertIn("Series 'first' does not have a version 4",
@@ -1996,7 +1996,7 @@ second line.'''
         self.assertEqual("Series 'first' does not have a version 4",
                          str(exc.exception))
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.increment('first')
 
         with self.assertRaises(ValueError) as exc:
@@ -2004,11 +2004,11 @@ second line.'''
         self.assertEqual("Series 'first' does not have a version 4",
                          str(exc.exception))
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.increment('first')
             cser.increment('first')
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             self.run_args('series', '-s', 'first', '-V', '4', 'set-link', '-u',
                       '1234', pwork=True)
         lines = out.getvalue().splitlines()
@@ -2018,7 +2018,7 @@ second line.'''
         self.assertEqual("Setting link for series 'first' v4 to 1234",
                          lines[-1])
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             self.run_args('series', '-s', 'first', '-V', '4', 'get-link',
                           pwork=True)
         self.assertIn('1234', out.getvalue())
@@ -2026,7 +2026,7 @@ second line.'''
         series = patchstream.get_metadata_for_list('first4', self.gitdir, 1)
         self.assertEqual('4:1234', series.links)
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             self.run_args('series', '-s', 'first', '-V', '5', 'get-link',
                           expected_ret=1, pwork=True)
 
@@ -2067,7 +2067,7 @@ second line.'''
         """Test finding the patchwork link for a cseries automatically"""
         cser = self.get_cser()
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.add_series('second', allow_unmarked=True)
 
         # Make sure that the link is there
@@ -2077,7 +2077,7 @@ second line.'''
         self.assertEqual('183237', series.links)
 
         # Set link with detected version
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.set_link('second', None, '456', True)
         self.assertEqual(
             "Setting link for series 'second' v1 to 456",
@@ -2088,7 +2088,7 @@ second line.'''
                                           git_dir=self.gitdir)
         self.assertEqual('1:456', series.links)
 
-        with capture_sys_output():
+        with terminal.capture():
             cser.increment('second')
 
         # Make sure that the new series gets the same link
@@ -2103,7 +2103,7 @@ second line.'''
         self.assertEqual((456, None, 'second', 1, 'Series for my board'),
                          cser.search_link(pwork, 'second', 1))
 
-        with capture_sys_output():
+        with terminal.capture():
             cser.increment('second')
 
         self.assertEqual((457, None, 'second', 2, 'Series for my board'),
@@ -2113,7 +2113,7 @@ second line.'''
         """Test finding the patchwork link for a cseries with auto name"""
         cser = self.get_cser()
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.add_series('first', '', allow_unmarked=True)
 
         # Set link with detected name
@@ -2122,10 +2122,10 @@ second line.'''
         self.assertEqual(
             "Series 'first' does not have a version 2", str(exc.exception))
 
-        with capture_sys_output():
+        with terminal.capture():
             cser.increment('first')
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.set_link(None, 2, '2345', True)
         self.assertEqual(
                 "Setting link for series 'first' v2 to 2345",
@@ -2140,20 +2140,20 @@ second line.'''
         """Test finding patchwork link for a cseries with auto name + version"""
         cser = self.get_cser()
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.add_series('first', '', allow_unmarked=True)
 
         # Set link with detected name and version
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.set_link(None, None, '1234', True)
         self.assertEqual(
                 "Setting link for series 'first' v1 to 1234",
                 out.getvalue().splitlines()[-1])
 
-        with capture_sys_output():
+        with terminal.capture():
             cser.increment('first')
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.set_link(None, None, '2345', True)
         self.assertEqual(
                 "Setting link for series 'first' v2 to 2345",
@@ -2168,10 +2168,10 @@ second line.'''
         """Test finding patchwork link for a cseries but it is missing"""
         cser = self.get_cser()
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.add_series('second', allow_unmarked=True)
 
-        with capture_sys_output():
+        with terminal.capture():
             cser.increment('second')
             cser.increment('second')
 
@@ -2201,7 +2201,7 @@ second line.'''
         self.assertFalse(cser.get_project())
         cser.set_project(pwork, 'U-Boot', quiet=True)
 
-        with capture_sys_output():
+        with terminal.capture():
             cser.add_series('first', '', allow_unmarked=True)
             cser.add_series('second', allow_unmarked=True)
 
@@ -2225,7 +2225,7 @@ second line.'''
         self.assertIn("Series 'first' has an empty description",
                       str(exc.exception))
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.do_auto_link(pwork, 'second', None, True)
         self.assertEqual(
                 "Setting link for series 'second' v1 to 456",
@@ -2240,7 +2240,7 @@ second line.'''
         _, pwork = next(cor)
         self.db_close()
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             self.run_args('series', '-s', 'second', 'auto-link', '-u',
                           pwork=pwork)
         self.assertEqual(
@@ -2253,7 +2253,7 @@ second line.'''
     def check_series_archive(self):
         """Coroutine to run the archive test"""
         cser = self.get_cser()
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.add_series('first', '', allow_unmarked=True)
 
         # Check the series is visible in the list
@@ -2310,10 +2310,10 @@ second line.'''
 
         gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
                          force=True)
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.add_series('first', '', allow_unmarked=True)
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             yield cser
         self._check_inc(out)
 
@@ -2360,13 +2360,13 @@ second line.'''
 
         gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
                          force=True)
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.add_series('first', '', allow_unmarked=True)
 
         repo = pygit2.init_repository(self.gitdir)
         upstream = repo.lookup_branch('base')
         upstream.delete()
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.increment('first')
 
         slist = cser.get_series_dict()
@@ -2378,10 +2378,10 @@ second line.'''
 
         gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
                          force=True)
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.add_series('first', '', allow_unmarked=True)
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.increment('first', dry_run=True)
         lines = self._check_inc(out)
         self.assertEqual('Dry run completed', next(lines))
@@ -2400,7 +2400,7 @@ second line.'''
 
         gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
                          force=True)
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.add_series('first', '', allow_unmarked=True)
 
         pclist = cser.get_pcommit_dict()
@@ -2413,7 +2413,7 @@ second line.'''
                          str(exc.exception))
 
         # Add a version; now there should be two
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.increment('first')
         plist = cser.get_ser_ver_dict()
         self.assertEqual(2, len(plist))
@@ -2422,7 +2422,7 @@ second line.'''
         self.assertEqual(4, len(pclist))
 
         # Remove version two, using dry run (i.e. no effect)
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.decrement('first', dry_run=True)
         plist = cser.get_ser_ver_dict()
         self.assertEqual(2, len(plist))
@@ -2436,7 +2436,7 @@ second line.'''
         self.assertEqual(4, len(pclist))
 
         # Now remove version two for real
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.decrement('first')
         lines = out.getvalue().splitlines()
         self.assertEqual(2, len(lines))
@@ -2478,7 +2478,7 @@ second line.'''
             cser.add_upstream('ci', 'git@three')
         self.assertEqual("Upstream 'ci' already exists", str(exc.exception))
 
-        with capture_sys_output() as (out, err):
+        with terminal.capture() as (out, err):
             cser.list_upstream()
         lines = out.getvalue().splitlines()
         self.assertEqual(2, len(lines))
@@ -2488,10 +2488,10 @@ second line.'''
         self.db_close()
 
     def test_upstream_add_cmdline(self):
-        with capture_sys_output() as (out, err):
+        with terminal.capture() as (out, err):
             self.run_args('upstream', 'add', 'us', 'https://one')
 
-        with capture_sys_output() as (out, err):
+        with terminal.capture() as (out, err):
             self.run_args('upstream', 'list')
         lines = out.getvalue().splitlines()
         self.assertEqual(1, len(lines))
@@ -2519,7 +2519,7 @@ second line.'''
         cser.set_default_upstream('ci')
         self.assertEqual('ci', cser.get_default_upstream())
 
-        with capture_sys_output() as (out, err):
+        with terminal.capture() as (out, err):
             cser.list_upstream()
         lines = out.getvalue().splitlines()
         self.assertEqual(2, len(lines))
@@ -2530,7 +2530,7 @@ second line.'''
         self.assertIsNone(cser.get_default_upstream())
 
     def test_upstream_default_cmdline(self):
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             self.run_args('upstream', 'default', 'us', expected_ret=1)
         self.assertEqual("patman: ValueError: No such upstream 'us'",
                          out.getvalue().strip().splitlines()[-1])
@@ -2538,25 +2538,25 @@ second line.'''
         self.run_args('upstream', 'add', 'us', 'https://one')
         self.run_args('upstream', 'add', 'ci', 'git@two')
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             self.run_args('upstream', 'default')
         self.assertEqual('unset', out.getvalue().strip())
 
         self.run_args('upstream', 'default', 'us')
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             self.run_args('upstream', 'default')
         self.assertEqual('us', out.getvalue().strip())
 
         self.run_args('upstream', 'default', 'ci')
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             self.run_args('upstream', 'default')
         self.assertEqual('ci', out.getvalue().strip())
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             self.run_args('upstream', 'default', '--unset')
         self.assertFalse(out.getvalue().strip())
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             self.run_args('upstream', 'default')
         self.assertEqual('unset', out.getvalue().strip())
 
@@ -2579,7 +2579,7 @@ second line.'''
         self.assertFalse(ulist)
 
     def test_upstream_delete_cmdline(self):
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             self.run_args('upstream', 'delete', 'us', expected_ret=1)
         self.assertEqual("patman: ValueError: No such upstream 'us'",
                          out.getvalue().strip().splitlines()[-1])
@@ -2589,13 +2589,13 @@ second line.'''
 
         self.run_args('upstream', 'default', 'us')
         self.run_args('upstream', 'delete', 'us')
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             self.run_args('upstream', 'default', 'us', expected_ret=1)
         self.assertEqual("patman: ValueError: No such upstream 'us'",
                          out.getvalue().strip())
 
         self.run_args('upstream', 'delete', 'ci')
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             self.run_args('upstream', 'list')
         self.assertFalse(out.getvalue().strip())
 
@@ -2603,7 +2603,7 @@ second line.'''
         """Test marking a cseries with Change-Id fields"""
         cser = self.get_cser()
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.add_series('first', '', mark=True)
 
         pcdict = cser.get_pcommit_dict()
@@ -2628,12 +2628,12 @@ second line.'''
 
         # TODO: check that it requires a clean tree
         tools.write_file(os.path.join(self.tmpdir, 'fname'), b'123')
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.add_series('first', '', mark=True)
 
         tools.write_file(os.path.join(self.tmpdir, 'i2c.c'), b'123')
         with self.assertRaises(ValueError) as exc:
-            with capture_sys_output() as (out, _):
+            with terminal.capture() as (out, _):
                 cser.add_series('first', '', mark=True)
         self.assertEqual(
             "Modified files exist: use 'git status' to check",
@@ -2643,7 +2643,7 @@ second line.'''
         """Test marking a cseries with Change-Id fields"""
         cser = self.get_cser()
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.add_series('first', '', mark=True, dry_run=True)
         lines = iter(out.getvalue().splitlines())
         self.assertEqual(
@@ -2661,12 +2661,12 @@ second line.'''
         self.assertEqual('Dry run completed', next(lines))
 
         # Doing another dry run should produce the same result
-        with capture_sys_output() as (out2, _):
+        with terminal.capture() as (out2, _):
             cser.add_series('first', '', mark=True, dry_run=True)
         self.assertEqual(out.getvalue(), out2.getvalue())
 
         tools.write_file(os.path.join(self.tmpdir, 'i2c.c'), b'123')
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             with self.assertRaises(ValueError) as exc:
                 cser.add_series('first', '', mark=True, dry_run=True)
         self.assertEqual(
@@ -2680,7 +2680,7 @@ second line.'''
         """Test marking a cseries with Change-Id fields using the command line"""
         cser = self.get_cser()
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             self.run_args('series', '-s', 'first', 'add', '-m',
                           '-d', 'my-description', pwork=True)
 
@@ -2692,7 +2692,7 @@ second line.'''
         """Test adding an unmarked cseries using the command line"""
         cser = self.get_cser()
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             self.run_args('series', '-s', 'first', 'add', '-M',
                           '-d', 'my-description', pwork=True)
 
@@ -2704,7 +2704,7 @@ second line.'''
         """Test failure to add an unmarked cseries using a bad command line"""
         cser = self.get_cser()
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             self.run_args('series', '-s', 'first', 'add',
                           '-d', 'my-description', expected_ret=1, pwork=True)
         last_line = out.getvalue().splitlines()[-2]
@@ -2717,20 +2717,20 @@ second line.'''
         cser = self.get_cser()
 
         # check the allow_unmarked flag
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             with self.assertRaises(ValueError) as exc:
                 cser.unmark_series('first', dry_run=True)
         self.assertEqual('Unmarked commits 2/2', str(exc.exception))
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             with self.assertRaises(ValueError) as exc:
                 cser.unmark_series('first', dry_run=True)
             self.assertEqual('Unmarked commits 2/2', str(exc.exception))
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.add_series('first', '', mark=True)
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.unmark_series('first', dry_run=True)
         lines = iter(out.getvalue().splitlines())
         self.assertEqual(
@@ -2753,13 +2753,13 @@ second line.'''
             cser.remove_series('first')
         self.assertEqual("No such series 'first'", str(exc.exception))
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.add_series('first', '', mark=True)
         self.assertTrue(cser.get_series_dict())
         pclist = cser.get_pcommit_dict()
         self.assertEqual(2, len(pclist))
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.remove_series('first')
         self.assertEqual("Removed series 'first'", out.getvalue().strip())
         self.assertFalse(cser.get_series_dict())
@@ -2771,17 +2771,17 @@ second line.'''
         """Test removing a series using the command line"""
         cser = self.get_cser()
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             self.run_args('series', '-s', 'first', 'remove', expected_ret=1,
                           pwork=True)
         self.assertEqual("patman: ValueError: No such series 'first'",
                          out.getvalue().strip())
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.add_series('first', '', mark=True)
         self.assertTrue(cser.get_series_dict())
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.remove_series('first')
         self.assertEqual("Removed series 'first'", out.getvalue().strip())
         self.assertFalse(cser.get_series_dict())
@@ -2792,7 +2792,7 @@ second line.'''
 
         self.add_first2(True)
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.add_series(None, '', mark=True)
             cser.add_series('first', '', mark=True)
         self.assertTrue(cser.get_series_dict())
@@ -2800,7 +2800,7 @@ second line.'''
         self.assertEqual(4, len(pclist))
 
         # Do a dry-run removal
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             yield cser
         self.assertEqual("Removed version 1 from series 'first'\n"
                          'Dry run completed', out.getvalue().strip())
@@ -2812,7 +2812,7 @@ second line.'''
         self.assertEqual((1, 1, None, None, None, None), plist[1])
 
         # Now remove for real
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             yield cser
         self.assertEqual("Removed version 1 from series 'first'",
                          out.getvalue().strip())
@@ -2829,14 +2829,14 @@ second line.'''
         self.assertEqual(1, len(plist))
         self.assertEqual((1, 2, None, None, None, None), plist[0])
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             yield cser
         self.assertEqual("Removed series 'first'\nDry run completed",
                          out.getvalue().strip())
         self.assertTrue(cser.get_series_dict())
         self.assertTrue(cser.get_ser_ver_dict())
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             yield cser
         self.assertEqual("Removed series 'first'", out.getvalue().strip())
         self.assertFalse(cser.get_series_dict())
@@ -2882,7 +2882,7 @@ second line.'''
                       pwork=True)
         cser = next(cor)
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             self.run_args('series', '-n', '-s', 'first', '-V', '2',
                           'remove-version', expected_ret=1, pwork=True)
         self.assertIn(
@@ -2987,7 +2987,7 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
         """Test setting the project ID"""
         cser = self.get_cser()
         pwork = Patchwork.for_testing(self._fake_patchwork_cser)
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.set_project(pwork, 'U-Boot')
         self.assertEqual(
             f"Project 'U-Boot' patchwork-ID {PROJ_ID} link-name uboot",
@@ -2998,7 +2998,7 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
         cser = self.get_cser()
         pwork = Patchwork.for_testing(self._fake_patchwork_cser)
         self.assertFalse(cser.get_project())
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.set_project(pwork, 'U-Boot')
         self.assertEqual(
             f"Project 'U-Boot' patchwork-ID {PROJ_ID} link-name uboot",
@@ -3016,7 +3016,7 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
         self.assertFalse(cser.get_project())
 
         pwork = Patchwork.for_testing(self._fake_patchwork_cser)
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             self.run_args('-P', 'https://url', 'patchwork', 'set-project',
                           'U-Boot', pwork=pwork)
         self.assertEqual(
@@ -3028,7 +3028,7 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
         self.assertEqual(6, pwid)
         self.assertEqual('uboot', link_name)
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             self.run_args('-P', 'https://url', 'patchwork', 'get-project')
         self.assertEqual(
             f"Project 'U-Boot' patchwork-ID {PROJ_ID} link-name uboot",
@@ -3037,14 +3037,14 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
     def check_series_list_patches(self):
         """Test listing the patches for a series"""
         cser = self.get_cser()
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.add_series(None, '', allow_unmarked=True)
             cser.add_series('second', allow_unmarked=True)
             target = self.repo.lookup_reference('refs/heads/second')
             self.repo.checkout(target, strategy=pygit2.GIT_CHECKOUT_FORCE)
             cser.increment('second')
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             yield cser
         lines = iter(out.getvalue().splitlines())
         self.assertEqual("Branch 'first' (total 2): 2:unknown", next(lines))
@@ -3052,7 +3052,7 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
         self.assertRegex(next(lines), r'  0 .* i2c: I2C things')
         self.assertRegex(next(lines), r'  1 .* spi: SPI fixes')
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             yield cser
         lines = iter(out.getvalue().splitlines())
         self.assertEqual("Branch 'second2' (total 3): 3:unknown", next(lines))
@@ -3101,17 +3101,17 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
 
     def test_series_status(self):
         cser = self.get_cser()
-        with capture_sys_output():
+        with terminal.capture():
             cser.add_series('second', 'description', allow_unmarked=True)
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.series_status('second', None)
         self._check_series_status(out)
 
     def test_series_status_cmdline(self):
         cser = self.get_cser()
-        with capture_sys_output():
+        with terminal.capture():
             cser.add_series('second', 'description', allow_unmarked=True)
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             self.run_args('series',  '-s', 'second', 'status', pwork=True)
         self._check_series_status(out)
     '''
@@ -3122,9 +3122,9 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
         self.assertFalse(cser.get_project())
         cser.set_project(pwork, 'U-Boot', quiet=True)
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.add_series('second', 'description', allow_unmarked=True)
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.series_sync(pwork, 'second', None)
         self.assertEqual('3 patches and cover letter updated',
                          out.getvalue().strip())
@@ -3177,13 +3177,13 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
         args = Namespace(subcmd='progress', series='second', extra = [],
                          all=False)
         self.db_close()
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             control.do_series(args, test_db=self.tmpdir, pwork=True)
         lines = iter(out.getvalue().splitlines())
         self._check_second(lines, False)
 
         args.all = True
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             control.do_series(args, test_db=self.tmpdir, pwork=True)
         lines = iter(out.getvalue().splitlines())
         self._check_second(lines, True)
@@ -3207,14 +3207,14 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
         self.db_close()
         args = Namespace(subcmd='progress', series=None, extra = [],
                          all=False)
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             control.do_series(args, test_db=self.tmpdir, pwork=True)
         lines = iter(out.getvalue().splitlines())
         self._check_first(lines)
         self._check_second(lines, False)
 
         args.all = True
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             control.do_series(args, test_db=self.tmpdir, pwork=True)
         lines = iter(out.getvalue().splitlines())
         self._check_first(lines)
@@ -3225,7 +3225,7 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
 
         self.db_close()
         args = Namespace(subcmd='summary', series=None, extra = [])
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             control.do_series(args, test_db=self.tmpdir, pwork=True)
         lines = out.getvalue().splitlines()
         self.assertEqual(
@@ -3243,7 +3243,7 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
         self.assertFalse(cser.get_project())
         pwork.set_project(PROJ_ID, PROJ_LINK_NAME)
 
-        with capture_sys_output():
+        with terminal.capture():
             cser.add_series('second', allow_unmarked=True)
             cser.increment('second')
             cser.do_auto_link(pwork, 'second', 2, True)
@@ -3251,7 +3251,7 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
 
         with mock.patch.object(cros_subprocess.Popen, '__init__',
                                return_value=None) as method:
-            with capture_sys_output() as (out, _):
+            with terminal.capture() as (out, _):
                 cser.open_series(pwork, 'second2', 2)
 
         url = 'https://patchwork.ozlabs.org/project/uboot/list/?series=457&state=*&archive=both'
@@ -3319,7 +3319,7 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
     def test_migrate(self):
         """Test migration to later schema versions"""
         db = database.Database(f'{self.tmpdir}/.patman.db')
-        with capture_sys_output() as (out, err):
+        with terminal.capture() as (out, err):
             db.open_it()
         self.assertEqual(
             f'Creating new database {self.tmpdir}/.patman.db',
@@ -3328,7 +3328,7 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
         self.assertEqual(0, db.get_schema_version())
 
         for version in range(1, database.LATEST + 1):
-            with capture_sys_output() as (out, _):
+            with terminal.capture() as (out, _):
                 db.migrate_to(version)
             self.assertTrue(os.path.exists(
                 f'{self.tmpdir}/.patman.dbold.v{version - 1}'))
@@ -3365,14 +3365,14 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
     1 bootm: Make it boot
 +   2 Just checking
 '''
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             self.run_args('series', '-n', 'scan', '-M', pwork=True)
         self.assertEqual(expect + 'Dry run completed\n', out.getvalue())
 
         new_pcdict = cser.get_pcommit_dict(svid).values()
         self.assertEqual(list(old_pcdict), list(new_pcdict))
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             self.run_args('series', 'scan', '-M', pwork=True)
         self.assertEqual(expect, out.getvalue())
 
@@ -3389,13 +3389,13 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
         cser, pwork = self.setup_second()
 
         # Create a third version
-        with capture_sys_output():
+        with terminal.capture():
             cser.increment('second')
         series = patchstream.get_metadata_for_list('second3', self.gitdir, 3)
         self.assertEqual('2:457', series.links)
         self.assertEqual('3', series.version)
 
-        with capture_sys_output() as (out, err):
+        with terminal.capture() as (out, err):
             self.run_args('series', '-n', 'send', pwork=pwork)
         lines = out.getvalue().splitlines()
         err_lines = err.getvalue().splitlines()
@@ -3427,17 +3427,17 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
         cser, pwork = self.setup_second()
 
         # Create a third version
-        with capture_sys_output():
+        with terminal.capture():
             cser.increment('second')
         series = patchstream.get_metadata_for_list('second3', self.gitdir, 3)
         self.assertEqual('2:457', series.links)
         self.assertEqual('3', series.version)
 
-        with capture_sys_output():
+        with terminal.capture():
             self.run_args('series', '-n', 'send', pwork=pwork)
 
         cser.set_fake_time(h_sleep)
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.do_auto_link(pwork, 'second3', 3, True, 200)
         lines = iter(out.getvalue().splitlines())
         for i in range(7):
@@ -3495,14 +3495,14 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
 
         # Use single threading for easy debugging, but the multithreaded version
         # should produce the same output
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.series_status(pwork, 'second', 2, False, single_thread=True)
-        with capture_sys_output() as (out2, _):
+        with terminal.capture() as (out2, _):
             cser.series_status(pwork, 'second', 2, False, single_thread=False)
         self.assertEqual(out.getvalue(), out2.getvalue())
         self._check_status(out, False)
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.series_status(pwork, 'second', 2, show_comments=True,
                                single_thread=False)
         self._check_status(out, True)
@@ -3513,12 +3513,12 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
 
         # Use single threading for easy debugging, but the multithreaded version
         # should produce the same output
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             self.run_args('series', '-s' 'second', '-V', '2', 'status',
                           pwork=pwork)
         self._check_status(out, False)
 
-        with capture_sys_output() as (out, _):
+        with terminal.capture() as (out, _):
             cser.series_status(pwork, 'second', 2, show_comments=True,
                                single_thread=False)
         self._check_status(out, True)

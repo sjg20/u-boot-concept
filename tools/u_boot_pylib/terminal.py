@@ -8,10 +8,7 @@ This module handles terminal interaction including ANSI color codes.
 """
 
 from contextlib import contextmanager
-<<<<<<< HEAD
 from io import StringIO
-=======
->>>>>>> 8211ff20b85 (pager)
 import os
 import re
 import shutil
