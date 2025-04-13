@@ -3097,6 +3097,7 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
             target = self.repo.lookup_reference('refs/heads/second')
             self.repo.checkout(target, strategy=pygit2.GIT_CHECKOUT_FORCE)
             cser.increment('second')
+        cser.list_patches('first', 1, show_commit=True)
 
     '''
     def _check_series_status(self, out):

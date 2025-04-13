@@ -799,6 +799,34 @@ def get_commit_message(commit, git_dir=None):
     return unindented
 
 
+def show_commit(commit, msg=True, diffstat=False, patch=False, git_dir=None):
+    """Runs 'git show' and returns the output
+
+    Args:
+        commit (str): commit to check
+        diffstat (bool): True to include the diffstat
+        msg (bool): Show the commit message
+        patch (bool): True to include the patch
+        git_dir (str): Path to git repository (None to use default)
+
+    Return:
+        list of str: Lines from the commit message
+    """
+    cmd = ['git']
+    if git_dir:
+        cmd += ['--git-dir', git_dir]
+    cmd += ['show', '--quiet', '--color']
+    if not msg:
+        cmd.append('--oneline')
+    if diffstat:
+        cmd.append('--stat')
+    if patch:
+        cmd.append('--patch')
+    cmd.append(commit)
+
+    return command.output(*cmd)
+
+
 if __name__ == "__main__":
     import doctest
 

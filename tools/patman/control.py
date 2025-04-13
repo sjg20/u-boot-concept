@@ -136,7 +136,8 @@ def do_series(args, test_db=None, pwork=None):
         elif args.subcmd == 'open':
             cser.open_series(pwork, args.series, args.version)
         elif args.subcmd == 'patches':
-            cser.list_patches(args.series, args.version)
+            cser.list_patches(args.series, args.version, args.commit,
+                              args.patch)
         elif args.subcmd == 'progress':
             cser.progress(args.series, args.all)
         elif args.subcmd == 'remove':

@@ -11,6 +11,7 @@ import os
 import re
 import sqlite3
 from sqlite3 import OperationalError
+import sys
 import time
 from types import SimpleNamespace
 
@@ -1382,8 +1383,15 @@ class Cseries:
             else:
                 comments = ''
 
+            if show_commit or show_patch:
+                subject = self.col.build(self.col.BLACK, item.subject,
+                                         bright=False, back=self.col.YELLOW)
+            else:
+                subject = item.subject
+
+            back=self.col.YELLOW
             line = (f'{seq:3} {col_state}{pad} {comments.rjust(3)} '
-                    f'{patch_id:7} {oid(cmt.hash)} {item.subject}')
+                    f'{patch_id:7} {oid(cmt.hash)} {subject}')
             lines.append(line)
             states[item.state] += 1
         out = ''
@@ -1402,8 +1410,17 @@ class Cseries:
                     self.col.WHITE,
                     f"{cov:14} {comments.rjust(3)} {cover_id or '':7}            {desc}",
                     bright=False))
-            for line in lines:
+            for seq in range(len(pwc.values())):
+                line = lines[seq]
                 print(line)
+                if show_commit or show_patch:
+                    print()
+                    cmt = series.commits[seq]
+                    msg = gitutil.show_commit(cmt.hash, show_commit, True,
+                                              show_patch, git_dir=self.gitdir)
+                    sys.stdout.write(msg)
+                    print()
+                    print()
 
     def _get_patches(self, series, version):
         """Get a Series object containing the patches in a series
