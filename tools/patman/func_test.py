@@ -3100,8 +3100,6 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
 
         with terminal.capture() as (out, _):
             cser.list_patches('first', 1, show_commit=True)
-        self.maxDiff = None
-        # lines = [x.rstrip() for x in out.getvalue().splitlines()]) + '\n'
         expect = r'''Branch 'first' (total 2): 2:unknown
 Seq State      Com PatchId Commit     Subject
   0 unknown      -         .* i2c: I2C things
@@ -3148,6 +3146,22 @@ Date:   .*
                 self.assertRegex(line, eline, f'line {seq + 1}')
             else:
                 self.assertEqual(eline, line, f'line {seq + 1}')
+
+        # Show just the patch; this should exclude the commit message
+        with terminal.capture() as (out, _):
+            cser.list_patches('first', 1, show_patch=True)
+        chk = out.getvalue()
+        self.assertIn('SPI fixes', chk)                 # subject
+        self.assertNotIn('SPI needs some fixes', chk)   # commit body
+        self.assertIn('make SPI work', chk)             # patch body
+
+        # Show both
+        with terminal.capture() as (out, _):
+            cser.list_patches('first', 1, show_commit=True, show_patch=True)
+        chk = out.getvalue()
+        self.assertIn('SPI fixes', chk)                 # subject
+        self.assertIn('SPI needs some fixes', chk)   # commit body
+        self.assertIn('make SPI work', chk)             # patch body
 
     '''
     def _check_series_status(self, out):
