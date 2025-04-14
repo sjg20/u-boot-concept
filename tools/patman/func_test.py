@@ -3328,13 +3328,13 @@ Date:   .*
             self.run_args('series', 'progress', pwork=True)
         lines = iter(out.getvalue().splitlines())
         self.assertEqual(
-            'Name             Description                     Count  Status',
+            'Name             Description                               Count  Status',
             next(lines))
         self.assertEqual(
-            'first                                                2  2:unknown',
+            'first                                                          2  2:unknown',
             next(lines))
         self.assertEqual(
-            'second2          The name of the cover letter        3  '
+            'second2          The name of the cover letter                  3  '
             '1:accepted 1:changes 1:rejected',
             next(lines))
 
@@ -3347,16 +3347,16 @@ Date:   .*
                           pwork=True)
         lines = iter(out.getvalue().splitlines())
         self.assertEqual(
-            'Name             Description                     Count  Status',
+            'Name             Description                               Count  Status',
             next(lines))
         self.assertEqual(
-            'first                                                2  2:unknown',
+            'first                                                          2  2:unknown',
             next(lines))
         self.assertEqual(
-            'second                                               3  3:unknown',
+            'second                                                         3  3:unknown',
             next(lines))
         self.assertEqual(
-            'second2          The name of the cover letter        3  '
+            'second2          The name of the cover letter                  3  '
             '1:accepted 1:changes 1:rejected',
             next(lines))
 

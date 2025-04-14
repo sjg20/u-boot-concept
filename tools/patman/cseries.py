@@ -1403,8 +1403,8 @@ class Cseries:
             name = ''
             if not list_patches:
                 name = desc or ''
-                name = self.col.build(self.col.YELLOW, name[:30].ljust(30))
-                print(f"{branch:15}  {name}  {len(pwc):5} {out}")
+                name = self.col.build(self.col.YELLOW, name[:41].ljust(41))
+                print(f"{branch:16} {name} {len(pwc):5} {out}")
                 return
             print(f"Branch '{branch}' (total {len(pwc)}):{out}{name}")
 
@@ -1644,7 +1644,7 @@ class Cseries:
         if not list_patches:
             print(self.col.build(
                 self.col.MAGENTA,
-                f"{'Name':15}  {'Description':30}  Count  {'Status'}"))
+                f"{'Name':16} {'Description':41} Count  {'Status'}"))
         for ser in sdict.values():
             self._progress_one(ser, show_all_versions, list_patches)
             if list_patches:
