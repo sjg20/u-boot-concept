@@ -1808,9 +1808,35 @@ second line.'''
                 cser.add_series('first', 'my description', allow_unmarked=True)
         self.assertEqual(
             "Series name 'first' suggests version 1 but Series-version tag "
-            'indicates 2', str(exc.exception))
+            'indicates 2 (see --force-version)', str(exc.exception))
 
-        # Now try again
+        # Now try again with --force-version which should force version 1
+        with terminal.capture() as (out, err):
+            cser.add_series('first', 'my description', allow_unmarked=True,
+                            force_version=True)
+        lines = iter(out.getvalue().splitlines())
+        self.assertEqual(
+            "Adding series 'first' v1: mark False allow_unmarked True",
+            next(lines))
+        self.assertEqual('Checking out upstream commit refs/heads/base',
+                         next(lines))
+        self.assertEqual(
+            "Processing 2 commits from branch 'first'", next(lines))
+        self.assertRegex(next(lines),
+                         '-  .* as .*: i2c: I2C things')
+        self.assertRegex(
+            next(lines),
+            '- deleted version 1  .* as .*: spi: SPI fixes')
+        self.assertRegex(next(lines), 'Updating branch first to .*')
+        self.assertEqual("Added series 'first' v1 (2 commits)", next(lines))
+        try:
+            self.assertEqual('extra line', next(lines))
+        except StopIteration:
+            pass
+
+        # Since this is v1 the Series-version tag should have been removed
+        series = patchstream.get_metadata('first', 0, 2, git_dir=self.gitdir)
+        self.assertNotIn('version', series)
 
     def setup_second(self):
         """Set up the 'second' series synced with the fake patchwork

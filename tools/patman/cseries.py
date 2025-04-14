@@ -248,7 +248,7 @@ class Cseries:
             repo = pygit2.init_repository(self.gitdir)
             target = repo.revparse_single(end)
             first_line = target.message.splitlines()[0]
-            msg = (f'Ending before {oid(target.id)} {first_line}')
+            msg = f'Ending before {oid(target.id)} {first_line}'
 
         return name, ser, series, version, msg
 
@@ -258,15 +258,36 @@ class Cseries:
 
         Args:
             branch_name (str): Name of branch to sync, or None for current one
+            series (Series): Series object
+            version (int): branch version, e.g. 2 for 'mychange2'
             mark (str): True to mark each commit with a change ID
             allow_unmarked (str): True to not require each commit to be marked
             force_version (bool): True if ignore a Series-version tag that
                 doesn't match its branch name
             dry_run (bool): True to do a dry run
 
+        Returns:
+            Series: Updated series object, if the series was marked
+
         Raises:
             ValueError: Series being unmarked when it should be marked, etc.
         """
+        if 'version' in series and int(series.version) != version:
+            msg = (f"Series name '{branch_name}' suggests version {version} "
+                   f"but Series-version tag indicates {series.version}")
+            if not force_version:
+                raise ValueError(msg + ' (see --force-version)')
+
+            tout.warning(msg)
+            tout.warning(f'Updating Series-version tag to version {version}')
+            self.update_series(branch_name, series, int(series.version),
+                               new_name=None, dry_run=dry_run, add_vers=version)
+
+            # Collect the commits again, as the hashes have changed
+            series = patchstream.get_metadata(branch_name, 0,
+                                              len(series.commits),
+                                              git_dir=self.gitdir)
+
         if mark:
             add_oid = self.mark_series(branch_name, series, dry_run=dry_run)
 
@@ -282,16 +303,11 @@ class Cseries:
             raise ValueError(
                 f'{bad_count} commit(s) are unmarked; please use -m or -M')
 
-        if 'version' in series and int(series.version) != version:
-            msg = (f"Series name '{branch_name}' suggests version {version} "
-                   f"but Series-version tag indicates {series.version}")
-            if not force_version:
-                raise ValueError(msg)
-
         return series
 
     def add_series(self, branch_name, desc=None, mark=False,
-                   allow_unmarked=False, end=None, dry_run=False):
+                   allow_unmarked=False, end=None, force_version=False,
+                   dry_run=False):
         """Add a series to the database
 
         Args:
@@ -317,7 +333,7 @@ class Cseries:
             desc = series.cover[0]
 
         series = self._handle_mark(name, series, version, mark, allow_unmarked,
-                                   False, dry_run)
+                                   force_version, dry_run)
         link = series.get_link_for_version(version)
 
         msg = 'Added'
@@ -750,8 +766,11 @@ class Cseries:
                             f'{series.version} does not match expected version '
                             f'{max_vers}')
                     if add_vers:
-                        vals.info += f'added version {add_vers} '
-                        out.append(f'Series-version: {add_vers}')
+                        if add_vers == 1:
+                            vals.info += f'deleted version {add_vers} '
+                        else:
+                            vals.info += f'added version {add_vers} '
+                            out.append(f'Series-version: {add_vers}')
                     added_version = True
                 elif m_links and add_link is not None:
                     links = series.get_links(m_links.group(1), max_vers)
@@ -763,10 +782,10 @@ class Cseries:
                 else:
                     out.append(line)
             if vals.final:
-                if add_vers and not added_version:
+                if not added_version and add_vers and add_vers > 1:
                     vals.info += f'added version {add_vers} '
                     out.append(f'Series-version: {add_vers}')
-                if add_link and not added_link:
+                if not added_link and add_link:
                     new_links = f'{max_vers}:{add_link}'
                     vals.info += f"added links '{new_links}' "
                     out.append(f'Series-links: {new_links}')
