@@ -6,12 +6,15 @@
 #include <linux/types.h>
 #include <errno.h>
 #include <bloblist.h>
+#include <stdio.h>
 #include "xferlist.h"
 
 int xferlist_from_boot_arg(ulong *addrp, ulong *fdtp)
 {
 	int ret;
 
+	printf("regs %lx %lx %lx %lx\n", saved_args[0], saved_args[2],
+				      saved_args[1], saved_args[3]);
 	ret = bloblist_check_reg_conv(saved_args[0], saved_args[2],
 				      saved_args[1], saved_args[3]);
 	if (ret)

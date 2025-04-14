@@ -527,7 +527,7 @@ int bloblist_init(void)
 	 * install the bloblist passed from previous loader to this fixed
 	 * address.
 	 */
-	bool from_boot_arg = fixed && xpl_is_first_phase();
+	bool from_boot_arg = !fixed && xpl_is_first_phase();
 
 	if (xpl_prev_phase() == PHASE_TPL && !IS_ENABLED(CONFIG_TPL_BLOBLIST))
 		from_addr = false;
@@ -536,6 +536,7 @@ int bloblist_init(void)
 				      CONFIG_BLOBLIST_ADDR);
 	size = CONFIG_BLOBLIST_SIZE;
 
+	printf("from_boot_arg %d\n", from_boot_arg);
 	if (from_boot_arg) {
 		ret = xferlist_from_boot_arg(&addr, NULL);
 		/*
