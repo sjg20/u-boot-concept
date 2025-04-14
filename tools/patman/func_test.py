@@ -3320,6 +3320,46 @@ Date:   .*
         self._check_first(lines)
         self._check_second(lines, True)
 
+    def test_series_progress_no_patches(self):
+        """Test showing progress for all cseries without patches"""
+        self.setup_second()
+
+        with terminal.capture() as (out, _):
+            self.run_args('series', 'progress', pwork=True)
+        lines = iter(out.getvalue().splitlines())
+        self.assertEqual(
+            'Name             Description                     Count  Status',
+            next(lines))
+        self.assertEqual(
+            'first                                                2  2:unknown',
+            next(lines))
+        self.assertEqual(
+            'second2          The name of the cover letter        3  '
+            '1:accepted 1:changes 1:rejected',
+            next(lines))
+
+    def test_series_progress_all_no_patches(self):
+        """Test showing progress for all cseries versions without patches"""
+        self.setup_second()
+
+        with terminal.capture() as (out, _):
+            self.run_args('series', 'progress', '--show-all-versions',
+                          pwork=True)
+        lines = iter(out.getvalue().splitlines())
+        self.assertEqual(
+            'Name             Description                     Count  Status',
+            next(lines))
+        self.assertEqual(
+            'first                                                2  2:unknown',
+            next(lines))
+        self.assertEqual(
+            'second                                               3  3:unknown',
+            next(lines))
+        self.assertEqual(
+            'second2          The name of the cover letter        3  '
+            '1:accepted 1:changes 1:rejected',
+            next(lines))
+
     def test_series_summary(self):
         self.setup_second()
 

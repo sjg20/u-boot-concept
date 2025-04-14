@@ -1624,7 +1624,7 @@ class Cseries:
 
             self._list_patches(branch, pwc, series, name, cover_id,
                                num_comments, False, False, list_patches)
-            add_blank_line = True
+            add_blank_line = list_patches
 
     def progress(self, series, show_all_versions, list_patches):
         """Show progress information for all versions in a series
