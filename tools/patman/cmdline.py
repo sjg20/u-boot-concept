@@ -164,6 +164,9 @@ def parse_args(argv=None, config_fname=None):
     add = series_subparsers.add_parser('add')
     add.add_argument('-d', '--desc',
                      help='Series description / cover-letter title')
+    add.add_argument(
+        '-f', '--force-version', action='store_true',
+        help='Change the Series-version on a series to match its branch')
     add.add_argument('-m', '--mark', action='store_true',
                      help='Mark unmarked commits with a Change-Id field')
     add.add_argument('-M', '--allow-unmarked', action='store_true',

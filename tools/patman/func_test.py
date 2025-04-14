@@ -1790,6 +1790,28 @@ second line.'''
         svid = cser.get_series_svid(chk['idnum'], 4)
         self.assertEqual(2, len(cser.get_pcommit_dict(svid)))
 
+    def test_series_add_wrong_version(self):
+        """Test adding a series with an incorrect branch name or version
+
+        This updates branch 'first' to have version 2, then tries to add it.
+        """
+        cser = self.get_cser()
+        self.assertFalse(cser.get_series_dict())
+
+        with terminal.capture():
+            _, _, series, max_vers, _ = cser._prep_series('first')
+            cser.update_series('first', series, max_vers, None, False,
+                               add_vers=2)
+
+        with self.assertRaises(ValueError) as exc:
+            with terminal.capture():
+                cser.add_series('first', 'my description', allow_unmarked=True)
+        self.assertEqual(
+            "Series name 'first' suggests version 1 but Series-version tag "
+            'indicates 2', str(exc.exception))
+
+        # Now try again
+
     def setup_second(self):
         """Set up the 'second' series synced with the fake patchwork
 

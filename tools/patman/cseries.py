@@ -218,7 +218,6 @@ class Cseries:
             raise ValueError(f'No series found (id {idnum} len {len(recs)})')
         return recs[0]
 
-
     def _prep_series(self, name, end=None):
         """Prepare to work with a series
 
@@ -254,13 +253,15 @@ class Cseries:
         return name, ser, series, version, msg
 
     def _handle_mark(self, branch_name, series, version, mark, allow_unmarked,
-                     dry_run):
+                     force_version, dry_run):
         """Handle marking a series, checking for unmarked commits, etc.
 
         Args:
             branch_name (str): Name of branch to sync, or None for current one
             mark (str): True to mark each commit with a change ID
             allow_unmarked (str): True to not require each commit to be marked
+            force_version (bool): True if ignore a Series-version tag that
+                doesn't match its branch name
             dry_run (bool): True to do a dry run
 
         Raises:
@@ -282,8 +283,11 @@ class Cseries:
                 f'{bad_count} commit(s) are unmarked; please use -m or -M')
 
         if 'version' in series and int(series.version) != version:
-            raise ValueError(f"Series name '{branch_name}' suggests version {version} "
-                             f"but Series-version tag indicates {series.version}")
+            msg = (f"Series name '{branch_name}' suggests version {version} "
+                   f"but Series-version tag indicates {series.version}")
+            if not force_version:
+                raise ValueError(msg)
+
         return series
 
     def add_series(self, branch_name, desc=None, mark=False,
@@ -313,7 +317,7 @@ class Cseries:
             desc = series.cover[0]
 
         series = self._handle_mark(name, series, version, mark, allow_unmarked,
-                                   dry_run)
+                                   False, dry_run)
         link = series.get_link_for_version(version)
 
         msg = 'Added'
@@ -694,7 +698,7 @@ class Cseries:
         status = f'{accepted}/{count}'
         return status, pwc
 
-    def do_list(self):
+    def series_do_list(self):
         """List all series
 
         Lines all series along with their description, number of patches
@@ -702,7 +706,8 @@ class Cseries:
         """
         sdict = self.get_series_dict()
         print(f"{'Name':15} {'Description':20} {'Accepted'}  Versions")
-        for name, ser in sdict.items():
+        for name in sorted(sdict):
+            ser = sdict[name]
             versions = self.get_version_list(ser.idnum)
             status = self.series_get_version_stats(
                 ser.idnum, self.series_max_version(ser.idnum))[0]
@@ -1645,7 +1650,8 @@ class Cseries:
             print(self.col.build(
                 self.col.MAGENTA,
                 f"{'Name':16} {'Description':41} Count  {'Status'}"))
-        for ser in sdict.values():
+        for name in sorted(sdict):
+            ser = sdict[name]
             self._progress_one(ser, show_all_versions, list_patches)
             if list_patches:
                 print()
@@ -1786,7 +1792,7 @@ class Cseries:
             tout.info(msg)
 
         series = self._handle_mark(name, series, version, mark, allow_unmarked,
-                                   dry_run)
+                                   False, dry_run)
 
         # First check for new patches that are not in the database
         to_add = dict(enumerate(series.commits))
