@@ -860,7 +860,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         pwork = Patchwork.for_testing(self._fake_patchwork)
 
         with terminal.capture() as (_, err):
-            status.collect_patches(series, 1234, pwork)
+            status.collect_patches(series, 1234, pwork, False)
         self.assertIn('Warning: Patchwork reports 1 patches, series has 0',
                       err.getvalue())
 
@@ -870,7 +870,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         series.commits = [Commit('abcd')]
 
         pwork = Patchwork.for_testing(self._fake_patchwork)
-        patches = status.collect_patches(series, 1234, pwork)
+        patches, _ = status.collect_patches(series, 1234, pwork, False)
         self.assertEqual(1, len(patches))
         patch = patches[0]
         self.assertEqual('1', patch.id)
@@ -1858,7 +1858,7 @@ second line.'''
     def test_do_series_add_cmdline(self):
         """Add a new cseries using the cmdline"""
         self.make_git_tree()
-        with terminal.capture() as (out, _):
+        with terminal.capture():
             self.run_args('series', '-s', 'first', 'add', '-M',
                           '-d', 'my-description', pwork=True)
 
@@ -3275,14 +3275,14 @@ Date:   .*
         self.setup_second()
 
         args = Namespace(subcmd='progress', series='second', extra = [],
-                         all=False)
+                         show_all_versions=False, list_patches=True)
         self.db_close()
         with terminal.capture() as (out, _):
             control.do_series(args, test_db=self.tmpdir, pwork=True)
         lines = iter(out.getvalue().splitlines())
         self._check_second(lines, False)
 
-        args.all = True
+        args.show_all_versions = True
         with terminal.capture() as (out, _):
             control.do_series(args, test_db=self.tmpdir, pwork=True)
         lines = iter(out.getvalue().splitlines())
@@ -3306,14 +3306,14 @@ Date:   .*
 
         self.db_close()
         args = Namespace(subcmd='progress', series=None, extra = [],
-                         all=False)
+                         show_all_versions=False, list_patches=True)
         with terminal.capture() as (out, _):
             control.do_series(args, test_db=self.tmpdir, pwork=True)
         lines = iter(out.getvalue().splitlines())
         self._check_first(lines)
         self._check_second(lines, False)
 
-        args.all = True
+        args.show_all_versions = True
         with terminal.capture() as (out, _):
             control.do_series(args, test_db=self.tmpdir, pwork=True)
         lines = iter(out.getvalue().splitlines())
@@ -3406,7 +3406,7 @@ Date:   .*
 
     def test_name_version_extra(self):
         """More tests for some corner cases"""
-        cser, pwork = self.setup_second()
+        cser, _ = self.setup_second()
 
         ser, version = cser.parse_series_and_version(None, None)
         self.assertEqual('second', ser.name)
@@ -3439,7 +3439,7 @@ Date:   .*
 
     def test_series_scan(self):
         """Test scanning a series for updates"""
-        cser, pwork = self.setup_second()
+        cser, _ = self.setup_second()
 
         # Add a new commit
         self.repo = pygit2.init_repository(self.gitdir)

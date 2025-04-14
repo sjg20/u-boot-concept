@@ -1641,13 +1641,14 @@ class Cseries:
             return
 
         sdict = self.get_series_dict()
-        print(self.col.build(
-            self.col.MAGENTA,
-            f"{'Name':15}  {'Description':30}  Count  {'Status'}"))
+        if not list_patches:
+            print(self.col.build(
+                self.col.MAGENTA,
+                f"{'Name':15}  {'Description':30}  Count  {'Status'}"))
         for ser in sdict.values():
             self._progress_one(ser, show_all_versions, list_patches)
             if list_patches:
-                argsprint()
+                print()
 
     def _summary_one(self, ser):
         """Show summary information for the latest version in a series
