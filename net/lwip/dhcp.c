@@ -113,7 +113,8 @@ int do_dhcp(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {
 	int ret;
 
-	net_lwip_set_current();
+	if (net_lwip_eth_start() < 0)
+		return CMD_RET_FAILURE;
 
 	ret = dhcp_loop(eth_get_dev());
 	if (ret)
