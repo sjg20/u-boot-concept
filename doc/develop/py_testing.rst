@@ -82,19 +82,19 @@ with the following content to overcome the problem:
 The script should be chmod 755. It will be invoked whenever the initial RAM file
 system is updated.
 
-Using `virtualenv` to provide requirements
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Using a Python sandbox to provide requirements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The recommended way to run the test suite, in order to ensure reproducibility
-is to use `virtualenv` to set up the necessary environment.  This can be done
-via the following commands:
+is to use a Python sandbox such as `python -m venv` to set up the necessary
+environment.  This can be done via the following commands:
 
 
 .. code-block:: console
 
     $ cd /path/to/u-boot
-    $ sudo apt-get install python3 python3-virtualenv
-    $ virtualenv -p /usr/bin/python3 venv
+    $ sudo apt-get install python3 python3-venv
+    $ python3 -m venv venv
     $ . ./venv/bin/activate
     $ pip install -r test/py/requirements.txt
 
