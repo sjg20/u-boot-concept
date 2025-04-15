@@ -519,6 +519,18 @@ int netboot_run(enum proto_t proto, ulong addr, const char *fname, ulong size,
  */
 int dhcp_run(ulong addr, const char *fname, bool autoload);
 
+
+/**
+ * do_ping - Run the ping command
+ *
+ * @cmdtp: Unused
+ * @flag: Command flags (CMD_FLAG_...)
+ * @argc: Number of arguments
+ * @argv: List of arguments
+ * Return: result (see enum command_ret_t)
+ */
+int do_ping(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[]);
+
 /**
  * do_tftpb - Run the tftpboot command
  *
