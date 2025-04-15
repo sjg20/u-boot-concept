@@ -240,7 +240,8 @@ class Cseries:
 
         count = gitutil.count_commits_to_branch(name, self.gitdir, end)
         if not count:
-            raise ValueError('Cannot detect branch automatically')
+            raise ValueError(
+                'Cannot detect branch automatically: Perhaps use -U <upstream-commit> ?')
 
         series = patchstream.get_metadata(name, 0, count, git_dir=self.gitdir)
         msg = None
@@ -542,7 +543,7 @@ class Cseries:
             print(f"Possible matches for '{name}' v{version} desc '{desc}':")
             print('  Link  Version  Description')
             for opt in options:
-                print(f"{opt['id']:6}  {opt['version'].rjust(7)}  {opt['name']}")
+                print(f"{opt['id']:6}  {opt['version']:7}  {opt['name']}")
             if not wait_s or self.get_time() > stop:
                 delay = f' after {wait_s} seconds' if wait_s else ''
                 raise ValueError(f"Cannot find series '{desc}{delay}'")
@@ -1400,7 +1401,12 @@ class Cseries:
         count = len(pwc)
         for seq, item in enumerate(pwc.values()):
             cmt = series.commits[seq]
-            assert cmt.subject == item.subject
+            if cmt.subject != item.subject:
+                tout.warning(f'''Inconsistent commit-subject:
+Commit: {cmt.hash}
+Database: '{item.subject}'
+Branch:   '{cmt.subject}
+Please use 'patman series scan' to resolve this''')
             col_state, pad = self.build_col(item.state)
             patch_id = item.patch_id if item.patch_id else ''
             if item.num_comments:

@@ -3609,7 +3609,7 @@ Date:   .*
         def h_sleep(time_s):
             if cser.get_time() > 100:
                 self.autolink_extra = {'id': 500, 'name': 'Series for my board',
-                                       'version': '3'}
+                                       'version': 3}
             cser.inc_fake_time(time_s)
 
         cser, pwork = self.setup_second()
