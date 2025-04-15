@@ -467,6 +467,9 @@ struct in_addr env_get_ip(char *var);
 
 int net_init(void);
 
+/* Called when a network operation fails to know if it should be re-tried */
+int net_start_again(void);
+
 /* NET compatibility */
 enum proto_t;
 int net_loop(enum proto_t protocol);
