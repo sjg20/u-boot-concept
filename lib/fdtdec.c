@@ -1689,35 +1689,13 @@ void fdtdec_setup_embed(void)
 
 int fdtdec_setup(void)
 {
-	int ret = -ENOENT;
+	int ret;
 
-	/*
-	 * If allowing a bloblist, check that first. There was discussion about
-	 * adding an OF_BLOBLIST Kconfig, but this was rejected.
-	 *
-	 * The necessary test is whether the previous phase passed a bloblist,
-	 * not whether this phase creates one.
-	 */
-	if (CONFIG_IS_ENABLED(BLOBLIST) &&
-	    (xpl_prev_phase() != PHASE_TPL ||
-	     IS_ENABLED(CONFIG_TPL_BLOBLIST))) {
-		ret = bloblist_maybe_init();
-		if (!ret) {
-			gd->fdt_blob = bloblist_find(BLOBLISTT_CONTROL_FDT, 0);
-			if (gd->fdt_blob) {
-				gd->fdt_src = FDTSRC_BLOBLIST;
-				log_debug("Devicetree is in bloblist at %p\n",
-					  gd->fdt_blob);
-				goto setup_fdt;
-			} else {
-				log_debug("No FDT found in bloblist\n");
-				ret = -ENOENT;
-			}
-		}
-	}
-
-	/* Otherwise, the devicetree is typically appended to U-Boot */
-	if (ret) {
+	if (CONFIG_IS_ENABLED(OF_PASSAGE)) {
+		printf("Previous phase failed to provide standard passage\n");
+		return -ENOENT;
+	} else {
+		/* The devicetree is typically appended to U-Boot */
 		if (IS_ENABLED(CONFIG_OF_SEPARATE)) {
 			gd->fdt_blob = fdt_find_separate();
 			gd->fdt_src = FDTSRC_SEPARATE;
@@ -1752,7 +1730,6 @@ int fdtdec_setup(void)
 		}
 	}
 
-setup_fdt:
 	if (CONFIG_IS_ENABLED(MULTI_DTB_FIT))
 		setup_multi_dtb_fit();
 
