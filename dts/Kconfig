@@ -159,6 +159,14 @@ config OF_EMBED
 	  and development only and is not recommended for production devices.
 	  Boards in the mainline U-Boot tree should not use it.
 
+config OF_PASSAGE
+	bool "DTB is provided by a standard passage, in a bloblist"
+	help
+	  Select this to read the devicetree using the standard passage
+	  mechanism, i.e. from a previous phase in bloblist using arch-specific
+	  register conventions. If enabled, the previous phase must provide
+	  the devicetree, or U-Boot will not function correctly.
+
 endchoice
 
 config OF_INITIAL_DTB_READONLY
