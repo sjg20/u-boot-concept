@@ -1,0 +1,173 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0+
+"""
+Script to build an EFI thing suitable for booting with QEMU, possibly running
+it also.
+
+UEFI binaries for QEMU used for testing this script:
+
+OVMF-pure-efi.i386.fd at
+https://drive.google.com/file/d/1jWzOAZfQqMmS2_dAK2G518GhIgj9r2RY/view?usp=sharing
+
+OVMF-pure-efi.x64.fd at
+https://drive.google.com/file/d/1c39YI9QtpByGQ4V0UNNQtGqttEzS-eFV/view?usp=sharing
+
+Use ~/.build-efi to configure the various paths used by this script.
+"""
+
+from argparse import ArgumentParser
+import os
+import shutil
+
+from build_helper import Helper
+
+# pylint: disable=C0413
+from u_boot_pylib import command
+from u_boot_pylib import tools
+
+
+def parse_args():
+    """Parse the program arguments
+
+    Return:
+        Namespace object
+    """
+    parser = ArgumentParser(
+        epilog='Script for running U-Boot as an EFI app/payload')
+    parser.add_argument('-a', '--app', action='store_true',
+                        help='Package up the app')
+    parser.add_argument('-A', '--arm', action='store_true',
+                        help='Run on ARM architecture')
+    parser.add_argument('-B', '--no-build', action='store_true',
+                        help="Don't build (an existing build must be present")
+    parser.add_argument('-k', '--kernel', action='store_true',
+                        help='Add a kernel')
+    parser.add_argument('-o', '--old', action='store_true',
+                        help='Use old EFI app build (before 32/64 split)')
+    parser.add_argument('-p', '--payload', action='store_true',
+                        help='Package up the payload')
+    parser.add_argument('-P', '--partition', action='store_true',
+                        help='Create a partition table')
+    parser.add_argument('-r', '--run', action='store_true',
+                        help='Run QEMU with the image')
+    parser.add_argument('-s', '--serial', action='store_true',
+                        help='Run QEMU with serial only (no display)')
+    parser.add_argument('-w', '--word', action='store_true',
+                        help='Use word version (32-bit) rather than 64-bit')
+
+    args = parser.parse_args()
+
+    if args.app and args.payload:
+        raise ValueError('Please choose either app or payload, not both')
+    return args
+
+
+class BuildEfi:
+    """Class to collect together the various bits of state while running"""
+    def __init__(self, args):
+        self.helper = Helper()
+        self.helper.read_settings()
+        self.img = self.helper.get_setting('efi_image_file', 'efi.img')
+        self.build_dir = self.helper.get_setting("build_dir", '/tmp')
+        self.args = args
+
+    def run_qemu(self, bitness, serial_only):
+        """Run QEMU
+
+        Args:
+            bitness (int): Bitness to use, 32 or 64
+            serial_only (bool): True to run without a display
+        """
+        extra = []
+        efi_dir = self.helper.get_setting('efi_dir')
+        if self.args.arm:
+            qemu_arch = 'aarch64'
+            extra += ['--machine', 'virt', '-cpu', 'max']
+            bios = os.path.join(efi_dir, 'OVMF-pure-efi.aarch64.fd.64m')
+            var_store = os.path.join(efi_dir, 'varstore.img')
+            extra += [
+                '-drive', f'if=pflash,format=raw,file={bios},readonly=on',
+                '-drive', f'if=pflash,format=raw,file={var_store}'
+                ]
+            extra += ['-drive',
+                      f'id=hd0,file={self.img},if=none,format=raw',
+                      '-device', 'virtio-blk-device,drive=hd0']
+        else:  # x86
+            if bitness == 64:
+                qemu_arch = 'x86_64'
+                bios = 'OVMF-pure-efi.x64.fd'
+            else:
+                qemu_arch = 'i386'
+                bios = 'OVMF-pure-efi.i386.fd'
+            extra += ['-bios', os.path.join(efi_dir, bios)]
+            extra += ['-drive', f'id=disk,file={self.img},if=none,format=raw']
+            extra += ['-device', 'ahci,id=ahci']
+            extra += ['-device', 'ide-hd,drive=disk,bus=ahci.0']
+        qemu = f'qemu-system-{qemu_arch}'
+        if serial_only:
+            extra += ['-display', 'none', '-serial', 'mon:stdio']
+            serial_msg = ' (Ctrl-a x to quit)'
+        else:
+            if self.args.arm:
+                extra += ['-device', 'virtio-gpu-pci']
+            extra += ['-serial', 'mon:stdio']
+            serial_msg = ''
+        print(f'Running {qemu}{serial_msg}')
+
+        # Use 512MB since U-Boot EFI likes to have 256MB to play with
+        cmd = [qemu]
+        cmd += '-m', '512'
+        cmd += '-nic', 'none'
+        cmd += extra
+        command.run(*cmd)
+
+    def setup_files(self, build, build_type, dst):
+        """Set up files in the staging area
+
+        Args:
+            build (str): Name of build being packaged, e.g. 'efi-x86_app32'
+            build_type (str): Build type ('app' or 'payload')
+            dst (str): Destination directory
+        """
+        print(f'Packaging {build}')
+        fname = f'u-boot-{build_type}.efi'
+        tools.write_file(f'{dst}/startup.nsh', f'fs0:{fname}', binary=False)
+        shutil.copy(f'{self.build_dir}/{build}/{fname}', dst)
+
+    def do_build(self, build):
+        """Build U-Boot for the selected board"""
+        res = command.run_one('buildman', '-w', '-o',
+                              f'{self.build_dir}/{build}', '--board', build,
+                              '-I', raise_on_error=False)
+        if res.return_code and res.return_code != 101:  # Allow warnings
+            raise ValueError(
+                f'buildman exited with {res.return_code}: {res.combined}')
+
+    def start(self):
+        """This does all the work"""
+        args = self.args
+        bitness = 32 if args.word else 64
+        arch = 'arm' if args.arm else 'x86'
+        build_type = 'payload' if args.payload else 'app'
+        build = f'efi-{arch}_{build_type}{bitness}'
+
+        if not args.no_build:
+            self.do_build(build)
+
+        if args.old and bitness == 32:
+            build = f'efi-{arch}_{build_type}'
+
+        with self.helper.make_disk(self.img, fs_type='vfat',
+                                   use_part=args.partition) as dirpath:
+            self.setup_files(build, build_type, dirpath)
+            if self.args.kernel:
+                bzimage = self.helper.get_setting('bzimage_file', 'bzImage')
+                command.run('cp', bzimage, f'{dirpath}/vmlinuz')
+
+        if args.run:
+            self.run_qemu(bitness, args.serial)
+
+
+if __name__ == "__main__":
+    efi = BuildEfi(parse_args())
+    efi.start()
