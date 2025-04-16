@@ -1673,21 +1673,11 @@ int fdtdec_setup(void)
 {
 	int ret;
 
-	/* The devicetree is typically appended to U-Boot */
-	if (CONFIG_IS_ENABLED(OF_BLOBLIST)) {
-		ret = bloblist_maybe_init();
-		if (ret)
-			return ret;
-		gd->fdt_blob = bloblist_find(BLOBLISTT_CONTROL_FDT, 0);
-		if (!gd->fdt_blob) {
-			printf("Not FDT found in bloblist\n");
-			bloblist_show_list();
-			return -ENOENT;
-		}
-		gd->fdt_src = FDTSRC_BLOBLIST;
-		bloblist_show_list();
-		log_debug("Devicetree is in bloblist at %p\n", gd->fdt_blob);
+	if (CONFIG_IS_ENABLED(OF_PASSAGE)) {
+		printf("Previous phase failed to provide standard passage\n");
+		return -ENOENT;
 	} else {
+		/* The devicetree is typically appended to U-Boot */
 		if (IS_ENABLED(CONFIG_OF_SEPARATE)) {
 			gd->fdt_blob = fdt_find_separate();
 			gd->fdt_src = FDTSRC_SEPARATE;
