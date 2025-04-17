@@ -1067,12 +1067,6 @@ config BLOBLIST_ALLOC
 	  change at runtime.
 
 config BLOBLIST_PASSAGE
-	bool "Use bloblist in-place"
-	help
-	  Use a bloblist in the incoming standard passage. The size is detected
-	  automatically so CONFIG_BLOBLIST_SIZE can be 0.
-
-config BLOBLIST_PASSAGE
 	bool "Obtain bloblist from standard passage information"
 	help
 	  Rather than allocating the bloblist, get it from the standard
@@ -1094,7 +1088,6 @@ config BLOBLIST_ADDR
 
 config BLOBLIST_SIZE
 	hex "Size of bloblist"
-	default 0x0 if BLOBLIST_PASSAGE
 	default 0x400
 	help
 	  Sets the size of the bloblist in bytes. This must include all
