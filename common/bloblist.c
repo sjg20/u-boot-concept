@@ -504,15 +504,6 @@ int bloblist_reloc(void *to, uint to_size)
 	return 0;
 }
 
-/*
- * Weak default function for getting bloblist from boot args.
- */
-int __weak xferlist_from_boot_arg(ulong __always_unused addr,
-				  ulong __always_unused size)
-{
-	return -ENOENT;
-}
-
 int bloblist_init(void)
 {
 	bool fixed = IS_ENABLED(CONFIG_BLOBLIST_FIXED);
@@ -577,26 +568,6 @@ int bloblist_init(void)
 	bloblist_show_stats();
 	bloblist_show_list();
 #endif
-
-	return 0;
-}
-
-int bloblist_check_reg_conv(ulong rfdt, ulong rzero, ulong rsig)
-{
-	ulong version = BLOBLIST_REGCONV_VER;
-	ulong sigval;
-
-	sigval = (IS_ENABLED(CONFIG_64BIT)) ?
-			((BLOBLIST_MAGIC & ((1UL << BLOBLIST_REGCONV_SHIFT_64) - 1)) |
-			 ((version  & BLOBLIST_REGCONV_MASK) << BLOBLIST_REGCONV_SHIFT_64)) :
-			((BLOBLIST_MAGIC & ((1UL << BLOBLIST_REGCONV_SHIFT_32) - 1)) |
-			 ((version  & BLOBLIST_REGCONV_MASK) << BLOBLIST_REGCONV_SHIFT_32));
-
-	if (rzero || rsig != sigval ||
-	    rfdt != (ulong)bloblist_find(BLOBLISTT_CONTROL_FDT, 0)) {
-		gd->bloblist = NULL;  /* Reset the gd bloblist pointer */
-		return -EIO;
-	}
 
 	return 0;
 }
