@@ -3,6 +3,8 @@
 #ifndef _LIMITS_H
 #define _LIMITS_H
 
+#include <linux/limits.h>
+
 #define INT_MAX     0x7fffffff
 #define UINT_MAX    0xffffffffU
 #define CHAR_BIT    8
