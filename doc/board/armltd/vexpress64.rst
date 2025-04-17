@@ -103,7 +103,7 @@ bloblist, or utilizing a standard passage-provided bloblist with automatic size
 detection.
 
 By default, ``vexpress_fvp_bloblist_defconfig`` uses the standard passage method mandatorily
-(CONFIG_BLOBLIST_PASSAGE_MANDATORY) because TF-A provides a Transfer List in non-secure
+(CONFIG_OF_PASSAGE) because TF-A provides a Transfer List in non-secure
 memory that U-Boot can utilise. This Bloblist, which is referred to as a Transfer List in
 TF-A, contains all necessary data for the handoff process, including DT and ACPI
 tables.
