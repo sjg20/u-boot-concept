@@ -425,7 +425,7 @@ def build_email_list(in_list, tag=None, alias=None, warn_on_error=True):
         if item not in result:
             result.append(item)
     if tag:
-        return [f'{tag} {quote}{email}{quote}' for email in result]
+        return [x for email in result for x in (tag, email)]
     return result
 
 
@@ -545,13 +545,13 @@ send --cc-cmd cc-fname" cover p1 p2'
 
     cmd += to
     cmd += cc
-    cmd += ['--cc-cmd', f'"{sys.argv[0]} send --cc-cmd {cc_fname}"']
+    cmd += ['--cc-cmd', f'{sys.argv[0]} send --cc-cmd {cc_fname}']
     if cover_fname:
         cmd.append(cover_fname)
     cmd += args
-    cmdstr = ' '.join(cmd)
     if not dry_run:
         command.run(*cmd, capture=False, capture_stderr=False, cwd=cwd)
+    cmdstr = ' '.join([f'"{x}"' if ' ' in x else x for x in cmd])
     return cmdstr
 
 
