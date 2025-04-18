@@ -654,6 +654,21 @@ static int handle_decomp_error(int comp_type, size_t uncomp_size,
 #endif
 
 #ifndef USE_HOSTCC
+
+/**
+ * booti_is_supported() - Check whether a Linux 'Image' is supported
+ *
+ * @os: OS to check
+ * Return: true if CMD_BOOTI is enabled and the arch suports this format
+ */
+static bool booti_is_supported(struct image_info *os)
+{
+	if (!IS_ENABLED(CONFIG_CMD_BOOTI) || os->os != IH_OS_LINUX)
+		return false;
+
+	return os->arch == IH_ARCH_ARM64;
+}
+
 static int bootm_load_os(struct bootm_headers *images, int boot_progress)
 {
 	struct image_info os = images->os;
@@ -729,8 +744,7 @@ static int bootm_load_os(struct bootm_headers *images, int boot_progress)
 		}
 	}
 
-	if (IS_ENABLED(CONFIG_CMD_BOOTI) && images->os.arch == IH_ARCH_ARM64 &&
-	    images->os.os == IH_OS_LINUX) {
+	if (booti_is_supported(&images->os)) {
 		ulong relocated_addr;
 		ulong image_size;
 		int ret;
