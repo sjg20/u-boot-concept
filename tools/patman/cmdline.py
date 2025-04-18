@@ -34,6 +34,10 @@ class ErrorCatchingArgumentParser(argparse.ArgumentParser):
 
 
 def add_send_args(par):
+    par.add_argument('-c', '--count', dest='count', type=int,
+        default=-1, help='Automatically create patches from top n commits')
+    par.add_argument('-e', '--end', type=int, default=0,
+        help='Commits to skip at end of patch list')
     par.add_argument('-i', '--ignore-errors', action='store_true',
            dest='ignore_errors', default=False,
            help='Send patches email even if patch errors are found')
@@ -50,6 +54,8 @@ def add_send_args(par):
         help='File name of the get_maintainer.pl (or compatible) script.')
     par.add_argument('-r', '--in-reply-to', type=str, action='store',
                       help="Message ID that this series is in reply to")
+    par.add_argument('-s', '--start', dest='start', type=int,
+        default=0, help='Commit to start creating patches from (0 = HEAD)')
     par.add_argument('-t', '--ignore-bad-tags', action='store_true',
                       default=False,
                       help='Ignore bad tags / aliases (default=warn)')
@@ -122,14 +128,8 @@ def parse_args(argv=None, config_fname=None):
         'send', help='Format, check and email patches (default command)')
     send.add_argument('-b', '--branch', type=str,
         help="Branch to process (by default, the current branch)")
-    send.add_argument('-c', '--count', dest='count', type=int,
-        default=-1, help='Automatically create patches from top n commits')
-    send.add_argument('-e', '--end', type=int, default=0,
-        help='Commits to skip at end of patch list')
     send.add_argument('-n', '--dry-run', action='store_true', dest='dry_run',
            default=False, help="Do a dry run (create but don't email patches)")
-    send.add_argument('-s', '--start', dest='start', type=int,
-        default=0, help='Commit to start creating patches from (0 = HEAD)')
     send.add_argument('--cc-cmd', dest='cc_cmd', type=str, action='store',
            default=None, help='Output cc list for patch file (used by git)')
     add_send_args(send)
