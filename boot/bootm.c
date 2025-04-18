@@ -666,7 +666,7 @@ static bool booti_is_supported(struct image_info *os)
 	if (!IS_ENABLED(CONFIG_CMD_BOOTI) || os->os != IH_OS_LINUX)
 		return false;
 
-	return os->arch == IH_ARCH_ARM64;
+	return os->arch == IH_ARCH_ARM64 || os->arch == IH_ARCH_RISCV;
 }
 
 static int bootm_load_os(struct bootm_headers *images, int boot_progress)
