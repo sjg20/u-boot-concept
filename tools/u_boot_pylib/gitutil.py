@@ -837,6 +837,22 @@ def show_commit(commit, msg=True, diffstat=False, patch=False, colour=True,
     return command.output(*cmd)
 
 
+def check_dirty(git_dir=None):
+    """Check if the tree is dirty
+
+    Args:
+        git_dir (str): Path to git repository (None to use default)
+
+    Return:
+        str: List of dirty filenames and state
+    """
+    cmd = ['git']
+    if git_dir:
+        cmd += ['--git-dir', git_dir]
+    cmd += ['status', '--porcelain', '--untracked-files=no']
+    return command.output(*cmd).splitlines()
+
+
 if __name__ == "__main__":
     import doctest
 

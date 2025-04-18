@@ -889,18 +889,6 @@ class Cseries:
         else:
             self.rollback()
 
-    def _check_dirty(self, repo):
-        """Check if the tree is dirty
-
-        Args:
-            repo (pygit2.repo): Repo to use
-
-        Return:
-            bool: True if the tree is dirty, False if clean
-        """
-        state = repo.status(untracked_files='no')
-        return bool(state)
-
     def _prepare_process(self, name, count, new_name=None, quiet=False):
         """Get ready to process all commits in a branch
 
@@ -920,9 +908,11 @@ class Cseries:
 
         tout.debug(f"_process_series name '{name}' new_name '{new_name}' "
                    f"upstream_name '{upstream_name}'")
+        dirty = gitutil.check_dirty(self.gitdir)
+        if dirty:
+            raise ValueError(
+                f"Modified files exist: use 'git status' to check: {dirty[:5]}")
         repo = pygit2.init_repository(self.gitdir)
-        if self._check_dirty(repo):
-            raise ValueError("Modified files exist: use 'git status' to check")
 
         commit = None
         try:
