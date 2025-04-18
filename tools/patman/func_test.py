@@ -3584,7 +3584,7 @@ Date:   .*
         self.assertEqual('3', series.version)
 
         with terminal.capture() as (out, err):
-            self.run_args('series', '-n', 'send', pwork=pwork)
+            self.run_args('series', '-n', 'send', '--no-autolink', pwork=pwork)
         lines = out.getvalue().splitlines()
         err_lines = err.getvalue().splitlines()
         self.assertIn('Send a total of 3 patches with a cover letter',
