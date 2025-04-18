@@ -528,6 +528,7 @@ class Cseries:
                 detected from branch name
             update_commit (bool): True to update the current commit with the
                 link
+            wait_s (int): Number of seconds to wait for the autolink to succeed
         """
         start = self.get_time()
         stop = start + wait_s
@@ -1387,7 +1388,7 @@ class Cseries:
             pwc (dict): pcommit records:
                 key (int): seq
                 value (PCOMMIT): Record from database
-            series (Series): Series to show
+            series (Series): Series to show, or None to just use the database
             desc (str): Series title
             cover_id (int): Cover-letter ID
             num_comments (int): The number of comments on the cover letter
@@ -1859,13 +1860,18 @@ Please use 'patman series scan' to resolve this''')
             self.rollback()
             tout.info('Dry run completed')
 
-    def send_series(self, args):
+    def send_series(self, pwork, name, autolink, autolink_wait, args):
         """Send out a series
 
         Args:
-            args: Arguments provided
+            pwork (Patchwork): Patchwork object to use
+            series (str): Series name to search for, or None for current series
+                that is checked out
+            autolink (bool): True to auto-link the series after sending
+            args: 'send' arguments provided
+            autolink_wait (int): Number of seconds to wait for the autolink to
+                succeed
         """
-        name = args.series
         ser, version = self.parse_series_and_version(name, None)
         if not name:
             name = self.get_branch_name(ser.name, version)
@@ -1873,6 +1879,9 @@ Please use 'patman series scan' to resolve this''')
             raise ValueError(f"Series '{ser.name}' not found in database")
 
         send.send(args, git_dir=self.gitdir, cwd=self.topdir)
+
+        if not args.dry_run and autolink:
+            self.do_auto_link(pwork, name, version, True, wait_s=autolink_wait)
 
     def series_status(self, pwork, series, version, show_comments,
                       show_cover_comments=False, single_thread=False):
