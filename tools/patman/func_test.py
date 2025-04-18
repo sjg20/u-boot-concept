@@ -1868,7 +1868,7 @@ second line.'''
             cser.add_series('first', '', allow_unmarked=True)
             cser.add_series('second', allow_unmarked=True)
             cser.increment('second')
-            cser.do_auto_link(pwork, 'second', 2, True)
+            cser.do_autolink(pwork, 'second', 2, True)
         with terminal.capture() as (out, _):
             cser.series_sync(pwork, 'second', 2)
         self.assertEqual('3 patches and cover letter updated',
@@ -2109,6 +2109,27 @@ second line.'''
         self.assertIn("Series 'first' does not have a version 5",
                       out.getvalue())
 
+        # Checkout 'first' and try to get the link from 'first4'
+        gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
+                         force=True)
+
+        with terminal.capture() as (out, _):
+            self.run_args('series', '-s', 'first4', 'get-link', pwork=True)
+        self.assertIn('1234', out.getvalue())
+
+        # This should get the link for 'first'
+        with terminal.capture() as (out, _):
+            self.run_args('series', 'get-link', pwork=True)
+        self.assertIn('None', out.getvalue())
+
+        # Checkout 'first4' again; this should get the link for 'first4'
+        gitutil.checkout('first4', self.gitdir, work_tree=self.tmpdir,
+                         force=True)
+
+        with terminal.capture() as (out, _):
+            self.run_args('series', 'get-link', pwork=True)
+        self.assertIn('1234', out.getvalue())
+
         self.db_close()
 
     def _fake_patchwork_cser_link(self, subpath):
@@ -2268,8 +2289,8 @@ second line.'''
              'second', 3, 'Series for my board'),
              res)
 
-    def check_series_auto_link(self):
-        """Common code for auto-link tests"""
+    def check_series_autolink(self):
+        """Common code for autolink tests"""
         cser = self.get_cser()
 
         pwork = Patchwork.for_testing(self._fake_patchwork_cser_link)
@@ -2291,18 +2312,18 @@ second line.'''
         self.assertEqual((2, 1, '456', None, None, None), plist[1])
         yield cser
 
-    def test_series_auto_link(self):
+    def test_series_autolink(self):
         """Test linking a cseries to its patchwork series by description"""
-        cor = self.check_series_auto_link()
+        cor = self.check_series_autolink()
         cser, pwork = next(cor)
 
         with self.assertRaises(ValueError) as exc:
-            cser.do_auto_link(pwork, 'first', None, True)
+            cser.do_autolink(pwork, 'first', None, True)
         self.assertIn("Series 'first' has an empty description",
                       str(exc.exception))
 
         with terminal.capture() as (out, _):
-            cser.do_auto_link(pwork, 'second', None, True)
+            cser.do_autolink(pwork, 'second', None, True)
         self.assertEqual(
                 "Setting link for series 'second' v1 to 456",
                 out.getvalue().splitlines()[-1])
@@ -2310,14 +2331,14 @@ second line.'''
         cser = next(cor)
         cor.close()
 
-    def test_series_auto_link_cmdline(self):
+    def test_series_autolink_cmdline(self):
         """Test linking to patchwork series by description on cmdline"""
-        cor = self.check_series_auto_link()
+        cor = self.check_series_autolink()
         _, pwork = next(cor)
         self.db_close()
 
         with terminal.capture() as (out, _):
-            self.run_args('series', '-s', 'second', 'auto-link', '-u',
+            self.run_args('series', '-s', 'second', 'autolink', '-u',
                           pwork=pwork)
         self.assertEqual(
                 "Setting link for series 'second' v1 to 456",
@@ -3449,7 +3470,7 @@ Date:   .*
         with terminal.capture():
             cser.add_series('second', allow_unmarked=True)
             cser.increment('second')
-            cser.do_auto_link(pwork, 'second', 2, True)
+            cser.do_autolink(pwork, 'second', 2, True)
             cser.series_sync(pwork, 'second', 2)
 
         with mock.patch.object(cros_subprocess.Popen, '__init__',
@@ -3641,7 +3662,7 @@ Date:   .*
 
         cser.set_fake_time(h_sleep)
         with terminal.capture() as (out, _):
-            cser.do_auto_link(pwork, 'second3', 3, True, 200)
+            cser.do_autolink(pwork, 'second3', 3, True, 200)
         lines = iter(out.getvalue().splitlines())
         for i in range(7):
             self.assertEqual(

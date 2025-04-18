@@ -469,12 +469,12 @@ class Cseries:
 
         Args:
             series (str): Name of series to use, or None to use current branch
-            version (int): Version number
+            version (int): Version number or None for current
 
         Return:
             str: Patchwork link as a string, e.g. '12325'
         """
-        ser = self.parse_series(series)
+        ser, version = self.parse_series_and_version(series, version)
         self.ensure_version(ser, version)
 
         res = self.db.execute('SELECT link FROM ser_ver WHERE '
@@ -517,7 +517,7 @@ class Cseries:
         pws, options = pwork.find_series(ser.desc, version)
         return pws, options, ser.name, version, ser.desc
 
-    def do_auto_link(self, pwork, series, version, update_commit, wait_s=0):
+    def do_autolink(self, pwork, series, version, update_commit, wait_s=0):
         """Automatically find a series link by looking in patchwork
 
         Args:
@@ -1579,7 +1579,7 @@ Please use 'patman series scan' to resolve this''')
         svid, link = self.get_series_svid_link(ser.idnum, version)
         if not link:
             raise ValueError(
-                "No patchwork link is available: use 'patman series auto-link'")
+                "No patchwork link is available: use 'patman series autolink'")
         cover, patches = pwork.series_get_state(link)
 
         pwc = self.get_pcommit_dict(svid)
@@ -1873,7 +1873,7 @@ Please use 'patman series scan' to resolve this''')
         send.send(args, git_dir=self.gitdir, cwd=self.topdir)
 
         if not args.dry_run and autolink:
-            self.do_auto_link(pwork, name, version, True, wait_s=autolink_wait)
+            self.do_autolink(pwork, name, version, True, wait_s=autolink_wait)
 
     def series_status(self, pwork, series, version, show_comments,
                       show_cover_comments=False, single_thread=False):

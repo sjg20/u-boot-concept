@@ -174,7 +174,7 @@ def parse_args(argv=None, config_fname=None):
                      help="Don't require commits to be marked")
     add.add_argument('-U', '--upstream', help='Commit to end before')
     series_subparsers.add_parser('archive')
-    auto = series_subparsers.add_parser('auto-link')
+    auto = series_subparsers.add_parser('autolink')
     auto.add_argument('-u', '--update', action='store_true',
                       help='Update the branch commit')
     auto.add_argument('-w', '--autolink-wait', type=int, default=0,

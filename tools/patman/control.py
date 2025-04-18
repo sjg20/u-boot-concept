@@ -121,8 +121,8 @@ def do_series(args, test_db=None, pwork=None):
                             end=args.upstream, dry_run=args.dry_run)
         elif args.subcmd == 'archive':
             cser.set_archived(args.series, True)
-        elif args.subcmd == 'auto-link':
-            cser.do_auto_link(pwork, args.series, args.version, args.update,
+        elif args.subcmd == 'autolink':
+            cser.do_autolink(pwork, args.series, args.version, args.update,
                               args.autolink_wait)
         elif args.subcmd == 'dec':
             cser.decrement(args.series, args.dry_run)
