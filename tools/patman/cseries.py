@@ -1872,7 +1872,6 @@ Please use 'patman series scan' to resolve this''')
         if not ser.idnum:
             raise ValueError(f"Series '{ser.name}' not found in database")
 
-        print('gitdir', self.gitdir)
         send.send(args, git_dir=self.gitdir, cwd=self.topdir)
 
     def series_status(self, pwork, series, version, show_comments,

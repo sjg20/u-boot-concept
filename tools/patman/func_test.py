@@ -2113,11 +2113,11 @@ second line.'''
         if re_series:
             series_num = re_series.group(1)
             result = [
-                {'id': 56, 'name': 'contains first name', 'version': '1'},
-                {'id': 43, 'name': 'has first in it', 'version': '1'},
-                {'id': 1234, 'name': 'first series', 'version': '1'},
-                {'id': 456, 'name': 'Series for my board', 'version': '1'},
-                {'id': 457, 'name': 'Series for my board', 'version': '2'},
+                {'id': 56, 'name': 'contains first name', 'version': 1},
+                {'id': 43, 'name': 'has first in it', 'version': 1},
+                {'id': 1234, 'name': 'first series', 'version': 1},
+                {'id': 456, 'name': 'Series for my board', 'version': 1},
+                {'id': 457, 'name': 'Series for my board', 'version': 2},
             ]
             if self.autolink_extra:
                 result += [self.autolink_extra]
@@ -2248,8 +2248,8 @@ second line.'''
         res = cser.search_link(pwork, 'second', 3)
         self.assertEqual(
             (None,
-             [{'id': 456, 'name': 'Series for my board', 'version': '1'},
-              {'id': 457, 'name': 'Series for my board', 'version': '2'}],
+             [{'id': 456, 'name': 'Series for my board', 'version': 1},
+              {'id': 457, 'name': 'Series for my board', 'version': 2}],
              'second', 3, 'Series for my board'),
              res)
 
