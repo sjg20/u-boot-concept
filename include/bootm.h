@@ -44,6 +44,8 @@ struct cmd_tbl;
  * @argc: Number of arguments to the command (excluding the actual command).
  *	This is 0 if there are no arguments
  * @argv: NULL-terminated list of arguments, or NULL if there are no arguments
+ * @ignore_bootm_len: Ignore the value CONFIG_SYS_BOOTM_LEN and use 10x the
+ *	compressed length as the maximum uncompressed size
  *
  * For zboot:
  * @bzimage_addr: Address of the bzImage to boot, or 0 if the image has already
@@ -69,6 +71,7 @@ struct bootm_info {
 	const char *cmd_name;
 	int argc;
 	char *const *argv;
+	bool ignore_bootm_len;
 
 	/* zboot items */
 #ifdef CONFIG_X86

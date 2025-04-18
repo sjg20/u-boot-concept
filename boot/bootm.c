@@ -669,8 +669,9 @@ static bool booti_is_supported(struct image_info *os)
 	return os->arch == IH_ARCH_ARM64 || os->arch == IH_ARCH_RISCV;
 }
 
-static int bootm_load_os(struct bootm_headers *images, int boot_progress)
+static int bootm_load_os(struct bootm_info *bmi, int boot_progress)
 {
+	struct bootm_headers *images = bmi->images;
 	struct image_info os = images->os;
 	ulong load = os.load;
 	ulong load_end;
@@ -681,6 +682,7 @@ static int bootm_load_os(struct bootm_headers *images, int boot_progress)
 	ulong flush_start = ALIGN_DOWN(load, ARCH_DMA_MINALIGN);
 	bool no_overlap;
 	void *load_buf, *image_buf;
+	ulong decomp_len;
 	int err;
 
 	/*
@@ -706,11 +708,12 @@ static int bootm_load_os(struct bootm_headers *images, int boot_progress)
 
 	load_buf = map_sysmem(load, 0);
 	image_buf = map_sysmem(os.image_start, image_len);
+	decomp_len = bmi->ignore_bootm_len ? image_len * 10 : bootm_len();
 	err = image_decomp(os.comp, load, os.image_start, os.type,
-			   load_buf, image_buf, image_len, bootm_len(),
+			   load_buf, image_buf, image_len, decomp_len,
 			   &load_end);
 	if (err) {
-		err = handle_decomp_error(os.comp, load_end - load, bootm_len(),
+		err = handle_decomp_error(os.comp, load_end - load, decomp_len,
 					  err);
 		bootstage_error(BOOTSTAGE_ID_DECOMP_IMAGE);
 		return err;
@@ -1073,7 +1076,7 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 	if (!ret && (states & BOOTM_STATE_LOADOS)) {
 		iflag = bootm_disable_interrupts();
 		board_fixup_os(&images->os);
-		ret = bootm_load_os(images, 0);
+		ret = bootm_load_os(bmi, 0);
 		if (ret && ret != BOOTM_ERR_OVERLAP)
 			goto err;
 		else if (ret == BOOTM_ERR_OVERLAP)
@@ -1237,6 +1240,8 @@ int bootz_run(struct bootm_info *bmi)
 
 int booti_run(struct bootm_info *bmi)
 {
+	bmi->ignore_bootm_len = true;
+
 	return boot_run(bmi, "booti", BOOTM_STATE_START | BOOTM_STATE_FINDOS |
 			BOOTM_STATE_PRE_LOAD | BOOTM_STATE_FINDOTHER |
 			BOOTM_STATE_LOADOS);
