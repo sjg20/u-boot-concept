@@ -551,7 +551,8 @@ send --cc-cmd cc-fname" cover p1 p2'
     cmd += args
     if not dry_run:
         command.run(*cmd, capture=False, capture_stderr=False, cwd=cwd)
-    cmdstr = ' '.join([f'"{x}"' if ' ' in x else x for x in cmd])
+    cmdstr = ' '.join([f'"{x}"' if ' ' in x and not '"' in x else x
+                       for x in cmd])
     return cmdstr
 
 

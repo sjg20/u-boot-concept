@@ -1401,13 +1401,15 @@ class Cseries:
         states = defaultdict(int)
         count = len(pwc)
         for seq, item in enumerate(pwc.values()):
-            cmt = series.commits[seq]
-            if cmt.subject != item.subject:
-                tout.warning(f'''Inconsistent commit-subject:
+            if series:
+                cmt = series.commits[seq]
+                if cmt.subject != item.subject:
+                    tout.warning(f'''Inconsistent commit-subject:
 Commit: {cmt.hash}
 Database: '{item.subject}'
 Branch:   '{cmt.subject}
 Please use 'patman series scan' to resolve this''')
+
             col_state, pad = self.build_col(item.state)
             patch_id = item.patch_id if item.patch_id else ''
             if item.num_comments:
@@ -1455,7 +1457,7 @@ Please use 'patman series scan' to resolve this''')
                 print(line)
                 if show_commit or show_patch:
                     print()
-                    cmt = series.commits[seq]
+                    cmt = series.commits[seq] if series else ''
                     msg = gitutil.show_commit(
                         cmt.hash, show_commit, True, show_patch,
                         colour=self.col.enabled(), git_dir=self.gitdir)
