@@ -50,7 +50,7 @@ class Patchwork:
         self._show_progress = show_progress
         self.semaphore = asyncio.Semaphore(MAX_CONCURRENT)
 
-    async def request(self, subpath):
+    async def _request(self, client, subpath):
         """Call the patchwork API and return the result as JSON
 
         Args:
@@ -67,12 +67,11 @@ class Patchwork:
 
         full_url = '%s/api/1.2/%s' % (self.url, subpath)
         async with self.semaphore:
-            async with aiohttp.ClientSession() as client:
-                print('full_url', full_url)
-                async with client.get(full_url) as response:
-                    if response.status != 200:
-                        raise ValueError("Could not read URL '%s'" % full_url)
-                    return await response.json()
+            print('full_url', full_url)
+            async with client.get(full_url) as response:
+                if response.status != 200:
+                    raise ValueError("Could not read URL '%s'" % full_url)
+                return await response.json()
 
     @staticmethod
     def for_testing(func):
@@ -81,7 +80,8 @@ class Patchwork:
         return pwork
 
     async def get_projects(self):
-        return await self.request('projects/')
+        async with aiohttp.ClientSession() as client:
+            return await self._request(client, 'projects/')
 
     async def find_series(self, desc, version):
         """Find a series on the server
@@ -97,7 +97,9 @@ class Patchwork:
                     each dict is the server result from a possible series
         """
         query = desc.replace(' ', '+')
-        res = await self.request(f'series/?project={self.proj_id}&q={query}')
+        async with aiohttp.ClientSession() as client:
+            res = await self._request(
+                client, f'series/?project={self.proj_id}&q={query}')
         name_found = []
         for ser in res:
             if ser['name'] == desc:
@@ -164,7 +166,8 @@ class Patchwork:
                 "name": "[U-Boot] moveconfig: fix error message in do_autoconf()",
                 "mbox": "https://patchwork.ozlabs.org/project/uboot/patch/20170827080051.816-1-judge.packham@gmail.com/mbox/"
         """
-        return await self.request(f'series/{series_id}/')
+        async with aiohttp.ClientSession() as client:
+            return await self._request(client, f'series/{series_id}/')
 
     async def get_patch(self, patch_id):
         """Read information about a patch
@@ -175,7 +178,8 @@ class Patchwork:
         Returns:
             dict containing patchwork's patch information
         """
-        return await self.request(f'patches/{patch_id}/')
+        async with aiohttp.ClientSession() as client:
+            return await self._request(client, f'patches/{patch_id}/')
 
     async def get_patch_comments(self, patch_id):
         """Read comments about a patch
@@ -199,7 +203,8 @@ class Patchwork:
             content (str): Content of email, e.g. 'On 20.06.24 15:19, Simon Glass wrote:\n>...'
             headers: dict: email headers, see get_cover() for an example
         """
-        return await self.request(f'patches/{patch_id}/comments/')
+        async with aiohttp.ClientSession() as client:
+            return await self._request(client, f'patches/{patch_id}/comments/')
 
     async def get_cover(self, cover_id):
         """Read information about a cover letter
@@ -289,9 +294,10 @@ class Patchwork:
                 "X-Virus-Status": "Clean"
             content (str): Email content, e.g. 'This series adds a cover-coverage check to CI for Binman. The iMX8 tests\nare still not completed,...'
         """
-        return await self.request(f'covers/{cover_id}/')
+        async with aiohttp.ClientSession() as client:
+            return await self._request(client, f'covers/{cover_id}/')
 
-    async def get_cover_comments(self, cover_id):
+    async def _get_cover_comments(self, client, cover_id):
         """Read comments about a cover letter
 
         Args:
@@ -318,7 +324,7 @@ class Patchwork:
             content (str): Email content, e.g. 'Hi,\n\nOn Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:\n>\n> This '...
             headers: dict: email headers, see get_cover() for an example
         """
-        return await self.request(f'covers/{cover_id}/comments/')
+        return await self._request(client, f'covers/{cover_id}/comments/')
 
     async def get_series_url(self, series_id):
         """Get the URL for a series
@@ -339,6 +345,7 @@ class Patchwork:
 
         return PATCH(patch_id, state, num_comments)
 
+    '''
     def _ext_get_patch_status(self, exc, patch_id):
         """Executor version of _get_patch_stat()
 
@@ -355,6 +362,7 @@ class Patchwork:
         num_comments = len(fcomment_data.result(timeout=TIMEOUT))
 
         return PATCH(patch_id, state, num_comments)
+    '''
 
     async def get_series_cover(self, data):
         """Get the cover information (including comments)
@@ -369,7 +377,8 @@ class Patchwork:
         cover_id = None
         if cover:
             cover_id = cover['id']
-            info = await self.get_cover_comments(cover_id)
+            async with aiohttp.ClientSession() as client:
+                info = await self._get_cover_comments(client, cover_id)
             cover = COVER(cover_id, len(info), cover['name'], info)
         return cover
 

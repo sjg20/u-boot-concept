@@ -1625,7 +1625,7 @@ second line.'''
 
         plist = cser.get_ser_ver_list()
         self.assertEqual(1, len(plist))
-        self.assertEqual((1, 1, None, None, None, None), plist[0])
+        self.assertEqual((1, 1, 1, None, None, None, None), plist[0])
 
         pclist = cser.get_pcommit_dict()
         self.assertEqual(2, len(pclist))
@@ -1680,7 +1680,7 @@ second line.'''
         # We should have just one entry, with version 2
         plist = cser.get_ser_ver_list()
         self.assertEqual(1, len(plist))
-        self.assertEqual((1, 2, None, None, None, None), plist[0])
+        self.assertEqual((1, 1, 2, None, None, None, None), plist[0])
 
     def add_first2(self, checkout):
         """Add a new first2 branch, a copy of first"""
@@ -1727,8 +1727,8 @@ second line.'''
         # We should have two entries, one of each version
         plist = cser.get_ser_ver_list()
         self.assertEqual(2, len(plist))
-        self.assertEqual((1, 2, None, None, None, None), plist[0])
-        self.assertEqual((1, 1, None, None, None, None), plist[1])
+        self.assertEqual((1, 1, 2, None, None, None, None), plist[0])
+        self.assertEqual((2, 1, 1, None, None, None, None), plist[1])
 
     def test_series_add_dup(self):
         """Test adding a series twice"""
@@ -1892,7 +1892,8 @@ second line.'''
             cser.add_series('second', allow_unmarked=True)
             cser.increment('second')
         if do_sync:
-            cser.do_autolink(pwork, 'second', 2, True)
+            with terminal.capture() as (out, _):
+                cser.do_autolink(pwork, 'second', 2, True)
             with terminal.capture() as (out, _):
                 cser.series_sync(pwork, 'second', 2)
             lines = out.getvalue().splitlines()
@@ -2258,8 +2259,8 @@ second line.'''
 
         plist = cser.get_ser_ver_list()
         self.assertEqual(2, len(plist))
-        self.assertEqual((1, 1, None, None, None, None), plist[0])
-        self.assertEqual((1, 2, '2345', None, None, None), plist[1])
+        self.assertEqual((1, 1, 1, None, None, None, None), plist[0])
+        self.assertEqual((2, 1, 2, '2345', None, None, None), plist[1])
 
     def test_series_link_auto_name_version(self):
         """Test finding patchwork link for a cseries with auto name + version"""
@@ -2286,8 +2287,8 @@ second line.'''
 
         plist = cser.get_ser_ver_list()
         self.assertEqual(2, len(plist))
-        self.assertEqual((1, 1, '1234', None, None, None), plist[0])
-        self.assertEqual((1, 2, '2345', None, None, None), plist[1])
+        self.assertEqual((1, 1, 1, '1234', None, None, None), plist[0])
+        self.assertEqual((2, 1, 2, '2345', None, None, None), plist[1])
 
     def test_series_link_missing(self):
         """Test finding patchwork link for a cseries but it is missing"""
@@ -2336,8 +2337,8 @@ second line.'''
 
         plist = cser.get_ser_ver_list()
         self.assertEqual(2, len(plist))
-        self.assertEqual((1, 1, None, None, None, None), plist[0])
-        self.assertEqual((2, 1, '456', None, None, None), plist[1])
+        self.assertEqual((1, 1, 1, None, None, None, None), plist[0])
+        self.assertEqual((2, 2, 1, '456', None, None, None), plist[1])
         yield cser
 
     def test_series_autolink(self):
@@ -2445,10 +2446,10 @@ second line.'''
         slist = cser.get_series_dict()
         self.assertEqual(1, len(slist))
 
-        plist = cser.get_ser_ver_dict()
+        plist = cser.get_ser_ver_list()
         self.assertEqual(2, len(plist))
-        self.assertEqual((1, 1, None, None, None, None), plist[0])
-        self.assertEqual((1, 2, None, None, None, None), plist[1])
+        self.assertEqual((1, 1, 1, None, None, None, None), plist[0])
+        self.assertEqual((2, 1, 2, None, None, None, None), plist[1])
 
         series = patchstream.get_metadata_for_list('first2', self.gitdir, 1)
         self.assertEqual('2', series.version)
@@ -2512,9 +2513,9 @@ second line.'''
         self.assertEqual('Dry run completed', next(lines))
 
         # Make sure that nothing was added
-        plist = cser.get_ser_ver_dict()
+        plist = cser.get_ser_ver_list()
         self.assertEqual(1, len(plist))
-        self.assertEqual((1, 1, None, None, None, None), plist[0])
+        self.assertEqual((1, 1, 1, None, None, None, None), plist[0])
 
         # We should still be on the same branch
         self.assertEqual('first', gitutil.get_branch(self.gitdir))
@@ -2931,10 +2932,10 @@ second line.'''
                          'Dry run completed', out.getvalue().strip())
         self.assertEqual({'first'}, cser.get_series_dict().keys())
 
-        plist = cser.get_ser_ver_dict()
+        plist = cser.get_ser_ver_list()
         self.assertEqual(2, len(plist))
-        self.assertEqual((1, 2, None, None, None, None), plist[0])
-        self.assertEqual((1, 1, None, None, None, None), plist[1])
+        self.assertEqual((1, 1, 2, None, None, None, None), plist[0])
+        self.assertEqual((2, 1, 1, None, None, None, None), plist[1])
 
         # Now remove for real
         with terminal.capture() as (out, _):
@@ -2942,7 +2943,7 @@ second line.'''
         self.assertEqual("Removed version 1 from series 'first'",
                          out.getvalue().strip())
         self.assertEqual({'first'}, cser.get_series_dict().keys())
-        plist = cser.get_ser_ver_dict()
+        plist = cser.get_ser_ver_list()
         self.assertEqual(1, len(plist))
         pclist = cser.get_pcommit_dict()
         self.assertEqual(2, len(pclist))
@@ -2950,22 +2951,22 @@ second line.'''
         yield cser
         self.assertEqual({'first'}, cser.get_series_dict().keys())
 
-        plist = cser.get_ser_ver_dict()
+        plist = cser.get_ser_ver_list()
         self.assertEqual(1, len(plist))
-        self.assertEqual((1, 2, None, None, None, None), plist[0])
+        self.assertEqual((1, 1, 2, None, None, None, None), plist[0])
 
         with terminal.capture() as (out, _):
             yield cser
         self.assertEqual("Removed series 'first'\nDry run completed",
                          out.getvalue().strip())
         self.assertTrue(cser.get_series_dict())
-        self.assertTrue(cser.get_ser_ver_dict())
+        self.assertTrue(cser.get_ser_ver_list())
 
         with terminal.capture() as (out, _):
             yield cser
         self.assertEqual("Removed series 'first'", out.getvalue().strip())
         self.assertFalse(cser.get_series_dict())
-        self.assertFalse(cser.get_ser_ver_dict())
+        self.assertFalse(cser.get_ser_ver_list())
         yield cser
 
     def test_series_remove_multiple(self):
