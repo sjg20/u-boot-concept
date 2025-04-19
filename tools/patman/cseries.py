@@ -1646,7 +1646,8 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 if ser[2]:
                     to_fetch[svid] = ser[2]
 
-        result = self.loop.run_until_complete(pwork.series_get_states(to_fetch))
+        result, requests = self.loop.run_until_complete(
+            pwork.series_get_states(to_fetch))
 
         updated = 0
         updated_cover = 0
@@ -1659,7 +1660,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         tout.info(
             f"{updated} patch{'es' if updated != 1 else ''} and "
             f"{updated_cover} cover letter{'s' if updated_cover != 1 else ''} "
-            'updated')
+            f'updated ({requests} requests)')
 
     def series_max_version(self, idnum):
         """Find the latest version of a series

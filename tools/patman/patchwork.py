@@ -49,6 +49,7 @@ class Patchwork:
         self.link_name = None
         self._show_progress = show_progress
         self.semaphore = asyncio.Semaphore(MAX_CONCURRENT)
+        self.request_count = 0
 
     async def _request(self, client, subpath):
         """Call the patchwork API and return the result as JSON
@@ -62,6 +63,7 @@ class Patchwork:
         Raises:
             ValueError: the URL could not be read
         """
+        self.request_count += 1
         if self.fake_request:
             return self.fake_request(subpath)
 
@@ -83,7 +85,7 @@ class Patchwork:
         async with aiohttp.ClientSession() as client:
             return await self._request(client, 'projects/')
 
-    async def find_series(self, desc, version):
+    async def _find_series(self, desc, version):
         """Find a series on the server
 
         Args:
@@ -107,6 +109,10 @@ class Patchwork:
                     return ser['id'], None
                 name_found.append(ser)
         return None, name_found or res
+
+    async def find_series(self, desc, version):
+        async with aiohttp.ClientSession() as client:
+            return await self._find_series(desc, version)
 
     def set_project(self, project_id, link_name):
         """Set the project ID
@@ -469,7 +475,7 @@ class Patchwork:
                 list of PATCH: patch information for each patch in series
         """
         result = {}
-        self.expected_reqs = 0
+        self.request_count = 0
         async with aiohttp.ClientSession() as client:
             tasks = [asyncio.create_task(self._get_one_state(client, svid, link, result))
                      for svid, link in sync_data.items()]
@@ -489,7 +495,7 @@ class Patchwork:
 
         # results = [result[svid] for svid in sync_data]
 
-        return results
+        return results, self.request_count
         '''
             data = await self.get_series(link)
             print('data', data)
