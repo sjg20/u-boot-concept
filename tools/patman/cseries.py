@@ -666,7 +666,7 @@ class Cseries:
         if not version:
             version = 1
         if version > 99:
-            raise ValueError(f"Version '{version}' exceeds 99")
+            raise ValueError(f"Version {version} exceeds 99")
         ser = self.get_series_by_name(name)
         if not ser:
             ser = Series()
@@ -1580,12 +1580,16 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         if not link:
             raise ValueError(
                 "No patchwork link is available: use 'patman series autolink'")
+        tout.info(
+            f"Updating series '{ser.name}' version {version} from link '{link}'")
         cover, patches = pwork.series_get_state(link)
 
         pwc = self.get_pcommit_dict(svid)
 
         updated = 0
         for seq, item in enumerate(pwc.values()):
+            if seq > len(patches):
+                continue
             patch = patches[seq]
             if patch.id:
                 self.db.execute(
@@ -1600,7 +1604,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 (cover.id, cover.num_comments, cover.name, svid))
 
         self.commit()
-        tout.info(f"{updated} patch{'es' if updated > 1 else ''}"
+        tout.info(f"{updated} patch{'es' if updated != 1 else ''}"
                   f"{' and cover letter' if cover else ''} updated")
 
     def series_max_version(self, idnum):

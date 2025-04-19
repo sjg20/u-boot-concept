@@ -1885,8 +1885,12 @@ second line.'''
             cser.do_autolink(pwork, 'second', 2, True)
         with terminal.capture() as (out, _):
             cser.series_sync(pwork, 'second', 2)
-        self.assertEqual('3 patches and cover letter updated',
-                         out.getvalue().strip())
+        lines = out.getvalue().splitlines()
+        self.assertEqual("Updating series 'second' version 2 from link '457'",
+                         lines[0])
+        self.assertEqual('3 patches and cover letter updated', lines[1])
+        self.assertEqual(2, len(lines))
+
         return cser, pwork
 
     def test_series_list(self):
@@ -3324,8 +3328,12 @@ Date:   .*
             cser.add_series('second', 'description', allow_unmarked=True)
         with terminal.capture() as (out, _):
             cser.series_sync(pwork, 'second', None)
-        self.assertEqual('3 patches and cover letter updated',
-                         out.getvalue().strip())
+        lines = out.getvalue().splitlines()
+        self.assertEqual(
+            "Updating series 'second' version 1 from link '183237'",
+            lines[0])
+        self.assertEqual('3 patches and cover letter updated', lines[1])
+        self.assertEqual(2, len(lines))
 
         ser = cser.get_series_by_name('second')
         pwid = cser.get_series_svid(ser.idnum, 1)
@@ -3524,7 +3532,7 @@ Date:   .*
 
         with self.assertRaises(ValueError) as exc:
             cser.parse_series_and_version('first', 100)
-        self.assertEqual("Version '100' exceeds 99", str(exc.exception))
+        self.assertEqual("Version 100 exceeds 99", str(exc.exception))
 
         with self.assertRaises(ValueError) as exc:
             cser.parse_series_and_version('mary3', 4)
