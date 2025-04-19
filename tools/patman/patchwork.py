@@ -390,8 +390,8 @@ class Patchwork:
         """Sync a selection of series information from patchwork
 
         Args:
-            sync_data (dict of series IDs to sync):
-                key (int): Series ID
+            sync_data (dict of svids to sync):
+                key (int): Series-version ID
                 value (str): Series link
 
         Return:
@@ -399,15 +399,16 @@ class Patchwork:
                 COVER object, or None
                 list of PATCH: patch information for each patch in series
         """
-        for ser_id in sync_data:
-            data = await self.get_series(ser_id)
+        result = {}
+        for svid, link in sync_data.items():
+            data = await self.get_series(link)
             patch_dict = data['patches']
 
             count = len(patch_dict)
             patches = [None] * count
             for i in range(count):
                 patches[i] = await self._get_patch_status(patch_dict[i]['id'])
-            print('patches', patches)
 
             cover = await self.get_series_cover(data)
-            sync_data[ser_id] = cover, patches
+            result[svid] = cover, patches
+        return result

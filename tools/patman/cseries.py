@@ -1639,20 +1639,18 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         else:
             # Find the maximum version for each series
             max_vers = self.series_all_max_versions()
-            print('max_vers', max_vers)
 
             # Get a list of links to fetch
-            for svid, max_ver in max_vers:
+            for svid, _ in max_vers:
                 ser = sdict[svid]
                 if ser[2]:
                     to_fetch[svid] = ser[2]
-        print('to_fetch', to_fetch)
 
-        self.loop.run_until_complete(pwork.series_get_states(to_fetch))
+        result = self.loop.run_until_complete(pwork.series_get_states(to_fetch))
 
         updated = 0
         updated_cover = 0
-        for svid, (cover, patches) in to_fetch.items():
+        for svid, (cover, patches) in result.items():
             updated += self._sync_one(svid, cover, patches)
             if cover:
                 updated_cover += 1

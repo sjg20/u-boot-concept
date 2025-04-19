@@ -1891,8 +1891,8 @@ second line.'''
             cser.add_series('first', '', allow_unmarked=True)
             cser.add_series('second', allow_unmarked=True)
             cser.increment('second')
-            cser.do_autolink(pwork, 'second', 2, True)
         if do_sync:
+            cser.do_autolink(pwork, 'second', 2, True)
             with terminal.capture() as (out, _):
                 cser.series_sync(pwork, 'second', 2)
             lines = out.getvalue().splitlines()
@@ -3367,6 +3367,8 @@ Date:   .*
             cser.increment('first')
             cser.set_link('first', 1, '123', True)
             cser.set_link('first', 2, '1234', True)
+            cser.set_link('first', 3, '31', True)
+            cser.do_autolink(pwork, 'second', 2, True)
 
         cser.series_sync_all(pwork)
 
