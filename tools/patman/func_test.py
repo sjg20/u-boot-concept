@@ -453,33 +453,14 @@ Changes in v2:
         tools.write_file(path, text, binary=False)
         index = self.repo.index
         index.add(fname)
-        print('fname', fname)
-        index.write()
         # pylint doesn't seem to find this
         # pylint: disable=E1101
         author = pygit2.Signature('Test user', 'test@email.com')
         committer = author
         tree = index.write_tree()
         message = subject + '\n' + body
-        print('repo.head', self.repo.head.target)
-        prev_target = self.repo.head.target
-        oid = self.repo.create_commit('HEAD', author, committer, message,
-                                         tree, [self.repo.head.target])
-        print(f'target {self.repo.head.target} prev {prev_target}')
-        self.repo.head.set_target(oid)
-        print('oid', oid)
-        print('state', oid, self.repo.head, self.repo.status())
-        index = self.repo.index
-        index.read()
-        # os.system(f'git --git-dir {self.gitdir} status')
-        print('pygit2', self.repo.status(untracked_files='no'))
-
-        self._check_dirty(self.repo)
-        print('dirty', gitutil.check_dirty(self.gitdir, self.tmpdir))
-        # if fname == 'pci.c':
-            # sys.exit(1)
-            # pass
-        print()
+        self.repo.create_commit('HEAD', author, committer, message, tree,
+                                [self.repo.head.target])
 
     def make_git_tree(self):
         """Make a simple git tree suitable for testing
@@ -2731,7 +2712,7 @@ second line.'''
             with terminal.capture() as (out, _):
                 cser.add_series('first', '', mark=True)
         self.assertEqual(
-            "Modified files exist: use 'git status' to check",
+            "Modified files exist: use 'git status' to check: [' M i2c.c']",
             str(exc.exception))
 
     def test_series_add_mark_dry_run(self):
@@ -2765,7 +2746,7 @@ second line.'''
             with self.assertRaises(ValueError) as exc:
                 cser.add_series('first', '', mark=True, dry_run=True)
         self.assertEqual(
-            "Modified files exist: use 'git status' to check",
+            "Modified files exist: use 'git status' to check: [' M i2c.c']",
             str(exc.exception))
 
         pcdict = cser.get_pcommit_dict()

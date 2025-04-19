@@ -846,23 +846,13 @@ def check_dirty(git_dir=None, work_tree=None):
     Return:
         str: List of dirty filenames and state
     """
-    # cmd = ['git']
-    # if git_dir:
-    #     cmd += ['--git-dir', git_dir]
-    # cmd += ['log']
-    # out = command.output(*cmd).splitlines()
-    # print('out', out)
-
     cmd = ['git']
     if git_dir:
         cmd += ['--git-dir', git_dir]
     if work_tree:
         cmd += ['--work-tree', work_tree]
     cmd += ['status', '--porcelain', '--untracked-files=no']
-    print('cmd', cmd)
-    out = command.output(*cmd).splitlines()
-    print(out)
-    return out
+    return command.output(*cmd).splitlines()
 
 
 if __name__ == "__main__":
