@@ -3372,13 +3372,15 @@ Date:   .*
 
         with terminal.capture() as (out, _):
             cser.series_sync_all(pwork)
-        self.assertEqual('5 patches and 2 cover letters updated (16 requests)',
-                         out.getvalue().strip())
+        self.assertEqual(
+            '5 patches and 2 cover letters updated, 0 missing links (16 requests)',
+            out.getvalue().strip())
 
         with terminal.capture() as (out, _):
             cser.series_sync_all(pwork, sync_all_versions=True)
-        self.assertEqual('12 patches and 5 cover letters updated (40 requests)',
-                         out.getvalue().strip())
+        self.assertEqual(
+            '12 patches and 5 cover letters updated, 0 missing links (40 requests)',
+            out.getvalue().strip())
 
     def _check_second(self, lines, show_all):
         self.assertEqual('second: Series for my board (versions: 1 2)',

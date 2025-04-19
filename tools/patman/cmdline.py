@@ -227,7 +227,10 @@ def setup_parser():
 
     series_subparsers.add_parser('summary')
     series_subparsers.add_parser('sync')
-    series_subparsers.add_parser('sync-all')
+    sall = series_subparsers.add_parser('sync-all')
+    sall.add_argument('-a', '--sync-all-versions', action='store_true',
+                      help='Sync all series versions, not just the last')
+
     series_subparsers.add_parser('unarchive')
     series_subparsers.add_parser('unmark')
 

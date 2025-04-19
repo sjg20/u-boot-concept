@@ -1636,15 +1636,23 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             sync_all_versions (bool): True to sync all versions of a series,
                 False to sync only the latest version
 
-        Return: dict:
-            key (int): svid
-            value (str): patchwork link for the series
+        Return: tuple:
+            dict:
+                key (int): svid
+                value (str): patchwork link for the series
+            int: number of items with missing links (which are therefore not
+                included in dict)
         """
+        missing = 0
         sdict = self.get_ser_ver_dict()
         to_fetch = {}
 
         if sync_all_versions:
-            to_fetch = self.get_ser_ver_dict()
+            for svid, _, _, link, _, _, _ in self.get_ser_ver_list():
+                if link:
+                    to_fetch[svid] = link
+                else:
+                    missing += 1
         else:
             # Find the maximum version for each series
             max_vers = self.series_all_max_versions()
@@ -1654,7 +1662,9 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 ser = sdict[svid]
                 if ser[2]:
                     to_fetch[svid] = ser[2]
-        return to_fetch
+                else:
+                    missing += 1
+        return to_fetch, missing
 
     def series_sync_all(self, pwork, sync_all_versions=False):
         """Sync all series status from patchwork
@@ -1664,7 +1674,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             sync_all_versions (bool): True to sync all versions of a series,
                 False to sync only the latest version
         """
-        to_fetch = self._get_fetch_dict(sync_all_versions)
+        to_fetch, missing = self._get_fetch_dict(sync_all_versions)
 
         result, requests = self.loop.run_until_complete(
             pwork.series_get_states(to_fetch))
@@ -1680,7 +1690,8 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         tout.info(
             f"{updated} patch{'es' if updated != 1 else ''} and "
             f"{updated_cover} cover letter{'s' if updated_cover != 1 else ''} "
-            f'updated ({requests} requests)')
+            f'updated, {missing} missing '
+            f"link{'s' if missing != 1 else ''} ({requests} requests)")
 
     def series_max_version(self, idnum):
         """Find the latest version of a series

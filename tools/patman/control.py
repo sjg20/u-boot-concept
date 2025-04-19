@@ -163,7 +163,7 @@ def do_series(args, test_db=None, pwork=None):
         elif args.subcmd == 'sync':
             cser.series_sync(pwork, args.series, args.version)
         elif args.subcmd == 'sync-all':
-            cser.series_sync_all(pwork)
+            cser.series_sync_all(pwork, args.sync_all_versions)
         elif args.subcmd == 'unarchive':
             cser.set_archived(args.series, False)
         elif args.subcmd == 'unmark':
