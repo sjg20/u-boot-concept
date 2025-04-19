@@ -277,11 +277,12 @@ def _UpdateDefaults(main_parser, config, argv):
 
         for argv in argv_list:
             parser.message = None
+            old_val = parser.catch_error
             try:
                 parser.catch_error = True
                 pdefs = parser.parse_known_args(argv)[0]
             finally:
-                parser.catch_error = False
+                parser.catch_error = old_val
 
             # if parser.message:
                 # print('bad', argv, parser.message)

@@ -35,7 +35,9 @@ class ErrorCatchingArgumentParser(argparse.ArgumentParser):
 
     def exit(self):
         if self.catch_error:
-            self.exit_state = status
+            self.exit_state = True
+        else:
+            super().exit()
 
 
 def add_send_args(par):
@@ -262,7 +264,9 @@ def setup_parser():
         'project_name', help="Patchwork project name, e.g. 'U-Boot'")
     parsers = {
         'main': parser,
-        'series': series_subparsers,
+        'series': series,
+        'patchwork': patchwork,
+        'upstream': upstream,
         }
     return parsers
 

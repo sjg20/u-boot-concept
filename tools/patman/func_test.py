@@ -3772,10 +3772,19 @@ Date:   .*
         self._check_status(out, True, True)
 
     def test_series_no_subcmd(self):
-        """Test handling of 'series' without a subcommand"""
-        # pass
+        """Test handling of things without a subcommand"""
         parsers = cmdline.setup_parser()
-        parsers['main'].catch_error = True
+        parsers['series'].catch_error = True
         with terminal.capture() as (out, _):
             cmdline.parse_args(['series'], parsers=parsers)
         self.assertIn('usage: patman series', out.getvalue())
+
+        parsers['patchwork'].catch_error = True
+        with terminal.capture() as (out, _):
+            cmdline.parse_args(['patchwork'], parsers=parsers)
+        self.assertIn('usage: patman patchwork', out.getvalue())
+
+        parsers['upstream'].catch_error = True
+        with terminal.capture() as (out, _):
+            cmdline.parse_args(['upstream'], parsers=parsers)
+        self.assertIn('usage: patman upstream', out.getvalue())
