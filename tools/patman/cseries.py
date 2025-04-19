@@ -1398,7 +1398,7 @@ class Cseries:
 Commit: {cmt.hash}
 Database: '{item.subject}'
 Branch:   '{cmt.subject}
-Please use 'patman series scan' to resolve this''')
+Please use 'patman series -s {branch} scan' to resolve this''')
 
             col_state, pad = self.build_col(item.state)
             patch_id = item.patch_id if item.patch_id else ''
@@ -1422,39 +1422,38 @@ Please use 'patman series scan' to resolve this''')
         out = ''
         for state, freq in states.items():
             out += ' ' + self.build_col(state, f'{freq}:')[0]
-        with terminal.pager():
-            name = ''
-            if not list_patches:
-                name = desc or ''
-                name = self.col.build(self.col.YELLOW, name[:41].ljust(41))
-                print(f"{branch:16} {name} {len(pwc):5} {out}")
-                return
-            print(f"Branch '{branch}' (total {len(pwc)}):{out}{name}")
+        name = ''
+        if not list_patches:
+            name = desc or ''
+            name = self.col.build(self.col.YELLOW, name[:41].ljust(41))
+            print(f"{branch:16} {name} {len(pwc):5} {out}")
+            return
+        print(f"Branch '{branch}' (total {len(pwc)}):{out}{name}")
 
+        print(self.col.build(
+            self.col.MAGENTA,
+            f"Seq State      Com PatchId {'Commit'.ljust(HASH_LEN)} Subject"))
+
+        comments = '' if num_comments is None else str(num_comments)
+        if desc or comments or cover_id:
+            cov = 'Cov' if cover_id else ''
             print(self.col.build(
-                self.col.MAGENTA,
-                f"Seq State      Com PatchId {'Commit'.ljust(HASH_LEN)} Subject"))
-
-            comments = '' if num_comments is None else str(num_comments)
-            if desc or comments or cover_id:
-                cov = 'Cov' if cover_id else ''
-                print(self.col.build(
-                    self.col.WHITE,
-                    f"{cov:14} {comments.rjust(3)} {cover_id or '':7}            {desc}",
-                    bright=False))
-            for seq in range(count):
-                line = lines[seq]
-                print(line)
-                if show_commit or show_patch:
+                self.col.WHITE,
+                f"{cov:14} {comments.rjust(3)} {cover_id or '':7}            {desc}",
+                bright=False))
+        for seq in range(count):
+            line = lines[seq]
+            print(line)
+            if show_commit or show_patch:
+                print()
+                cmt = series.commits[seq] if series else ''
+                msg = gitutil.show_commit(
+                    cmt.hash, show_commit, True, show_patch,
+                    colour=self.col.enabled(), git_dir=self.gitdir)
+                sys.stdout.write(msg)
+                if seq != count - 1:
                     print()
-                    cmt = series.commits[seq] if series else ''
-                    msg = gitutil.show_commit(
-                        cmt.hash, show_commit, True, show_patch,
-                        colour=self.col.enabled(), git_dir=self.gitdir)
-                    sys.stdout.write(msg)
-                    if seq != count - 1:
-                        print()
-                        print()
+                    print()
 
     def _get_patches(self, series, version):
         """Get a Series object containing the patches in a series
@@ -1497,8 +1496,9 @@ Please use 'patman series scan' to resolve this''')
         """
         branch, series, pwc, name, _, cover_id, num_comments = (
             self._get_patches(series, version))
-        self._list_patches(branch, pwc, series, name, cover_id, num_comments,
-                           show_commit, show_patch, True)
+        with terminal.pager():
+            self._list_patches(branch, pwc, series, name, cover_id,
+                               num_comments, show_commit, show_patch, True)
 
     def get_series_svid(self, series_id, version):
         """Get the patchwork ID of a series version
@@ -1629,6 +1629,7 @@ Please use 'patman series scan' to resolve this''')
                                   back=self.col.YELLOW)
         versions = self.get_version_list(ser.idnum)
         vstr = list(map(str, versions))
+
         if list_patches:
             print(f"{name}: {coloured} (versions: {' '.join(vstr)})")
         add_blank_line = False
@@ -1658,21 +1659,22 @@ Please use 'patman series scan' to resolve this''')
             show_all (bool): True to show all versions of a series, False to
                 show only the final version
         """
-        if series is not None:
-            self._progress_one(self.parse_series(series), show_all_versions,
-                               list_patches)
-            return
+        with terminal.pager():
+            if series is not None:
+                self._progress_one(self.parse_series(series), show_all_versions,
+                                   list_patches)
+                return
 
-        sdict = self.get_series_dict()
-        if not list_patches:
-            print(self.col.build(
-                self.col.MAGENTA,
-                f"{'Name':16} {'Description':41} Count  {'Status'}"))
-        for name in sorted(sdict):
-            ser = sdict[name]
-            self._progress_one(ser, show_all_versions, list_patches)
-            if list_patches:
-                print()
+            sdict = self.get_series_dict()
+            if not list_patches:
+                print(self.col.build(
+                    self.col.MAGENTA,
+                    f"{'Name':16} {'Description':41} Count  {'Status'}"))
+            for name in sorted(sdict):
+                ser = sdict[name]
+                self._progress_one(ser, show_all_versions, list_patches)
+                if list_patches:
+                    print()
 
     def _summary_one(self, ser):
         """Show summary information for the latest version in a series
