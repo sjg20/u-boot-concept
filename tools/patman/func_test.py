@@ -1893,7 +1893,7 @@ second line.'''
             cser.increment('second')
         if do_sync:
             with terminal.capture() as (out, _):
-                cser.do_autolink(pwork, 'second', 2, True)
+                cser.autolink(pwork, 'second', 2, True)
             with terminal.capture() as (out, _):
                 cser.series_sync(pwork, 'second', 2)
             lines = out.getvalue().splitlines()
@@ -2347,12 +2347,12 @@ second line.'''
         cser, pwork = next(cor)
 
         with self.assertRaises(ValueError) as exc:
-            cser.do_autolink(pwork, 'first', None, True)
+            cser.autolink(pwork, 'first', None, True)
         self.assertIn("Series 'first' has an empty description",
                       str(exc.exception))
 
         with terminal.capture() as (out, _):
-            cser.do_autolink(pwork, 'second', None, True)
+            cser.autolink(pwork, 'second', None, True)
         self.assertEqual(
                 "Setting link for series 'second' v1 to 456",
                 out.getvalue().splitlines()[-1])
@@ -3369,7 +3369,7 @@ Date:   .*
             cser.set_link('first', 1, '123', True)
             cser.set_link('first', 2, '1234', True)
             cser.set_link('first', 3, '31', True)
-            cser.do_autolink(pwork, 'second', 2, True)
+            cser.autolink(pwork, 'second', 2, True)
 
         cser.series_sync_all(pwork)
 
@@ -3523,7 +3523,7 @@ Date:   .*
         with terminal.capture():
             cser.add_series('second', allow_unmarked=True)
             cser.increment('second')
-            cser.do_autolink(pwork, 'second', 2, True)
+            cser.autolink(pwork, 'second', 2, True)
             cser.series_sync(pwork, 'second', 2)
 
         with mock.patch.object(cros_subprocess.Popen, '__init__',
@@ -3715,7 +3715,7 @@ Date:   .*
 
         cser.set_fake_time(h_sleep)
         with terminal.capture() as (out, _):
-            cser.do_autolink(pwork, 'second3', 3, True, 200)
+            cser.autolink(pwork, 'second3', 3, True, 200)
         lines = iter(out.getvalue().splitlines())
         for i in range(7):
             self.assertEqual(

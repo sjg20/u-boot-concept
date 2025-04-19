@@ -528,7 +528,7 @@ class Cseries:
             ser.desc, version))
         return pws, options, ser.name, version, ser.desc
 
-    def do_autolink(self, pwork, series, version, update_commit, wait_s=0):
+    def autolink(self, pwork, series, version, update_commit, wait_s=0):
         """Automatically find a series link by looking in patchwork
 
         Args:
@@ -1948,7 +1948,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         send.send(args, git_dir=self.gitdir, cwd=self.topdir)
 
         if not args.dry_run and autolink:
-            self.do_autolink(pwork, name, version, True, wait_s=autolink_wait)
+            self.autolink(pwork, name, version, True, wait_s=autolink_wait)
 
     def series_status(self, pwork, series, version, show_comments,
                       show_cover_comments=False, single_thread=False):
