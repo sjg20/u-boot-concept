@@ -85,7 +85,7 @@ class Patchwork:
         async with aiohttp.ClientSession() as client:
             return await self._request(client, 'projects/')
 
-    async def _find_series(self, desc, version):
+    async def _find_series(self, client, desc, version):
         """Find a series on the server
 
         Args:
@@ -99,9 +99,8 @@ class Patchwork:
                     each dict is the server result from a possible series
         """
         query = desc.replace(' ', '+')
-        async with aiohttp.ClientSession() as client:
-            res = await self._request(
-                client, f'series/?project={self.proj_id}&q={query}')
+        res = await self._request(
+            client, f'series/?project={self.proj_id}&q={query}')
         name_found = []
         for ser in res:
             if ser['name'] == desc:
@@ -112,7 +111,22 @@ class Patchwork:
 
     async def find_series(self, desc, version):
         async with aiohttp.ClientSession() as client:
-            return await self._find_series(desc, version)
+            return await self._find_series(client, desc, version)
+
+    async def find_series_list(self, to_find):
+        """Find the link for each series in a list
+
+        Args:
+            to_find: list of tuple:
+                str: description
+                int: version
+        """
+        async with aiohttp.ClientSession() as client:
+            tasks = [asyncio.create_task(
+                self._find_series(client, desc, version))
+                for desc, version in to_find]
+            results = await asyncio.gather(*tasks)
+        return results
 
     def set_project(self, project_id, link_name):
         """Set the project ID

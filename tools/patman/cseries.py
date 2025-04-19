@@ -564,6 +564,12 @@ class Cseries:
 
         self.set_link(name, version, pws, update_commit)
 
+    def autolink_all(self, pwork, update_commit):
+        to_fetch = self._get_fetch_dict(sync_all_versions)
+
+        pws, options = self.loop.run_until_complete(pwork.find_series_list(
+            ser.desc, version))
+
     def get_version_list(self, idnum):
         """Get a list of the versions available for a series
 
@@ -1623,13 +1629,16 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         tout.info(f"{updated} patch{'es' if updated != 1 else ''}"
                   f"{' and cover letter' if cover else ''} updated")
 
-    def series_sync_all(self, pwork, sync_all_versions=False):
-        """Sync all series status from patchwork
+    def _get_fetch_dict(self, sync_all_versions):
+        """Get a dict of ser_vers to fetch, along with their patchwork links
 
         Args:
-            pwork (Patchwork): Patchwork object to use
             sync_all_versions (bool): True to sync all versions of a series,
                 False to sync only the latest version
+
+        Return: dict:
+            key (int): svid
+            value (str): patchwork link for the series
         """
         sdict = self.get_ser_ver_dict()
         to_fetch = {}
@@ -1645,6 +1654,17 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 ser = sdict[svid]
                 if ser[2]:
                     to_fetch[svid] = ser[2]
+        return to_fetch
+
+    def series_sync_all(self, pwork, sync_all_versions=False):
+        """Sync all series status from patchwork
+
+        Args:
+            pwork (Patchwork): Patchwork object to use
+            sync_all_versions (bool): True to sync all versions of a series,
+                False to sync only the latest version
+        """
+        to_fetch = self._get_fetch_dict(sync_all_versions)
 
         result, requests = self.loop.run_until_complete(
             pwork.series_get_states(to_fetch))

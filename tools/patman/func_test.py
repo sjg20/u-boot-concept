@@ -2376,6 +2376,10 @@ second line.'''
         next(cor)
         cor.close()
 
+    def test_series_autolink_all(self):
+        """Test linking all cseries to their patchwork series by description"""
+
+
     def check_series_archive(self):
         """Coroutine to run the archive test"""
         cser = self.get_cser()
@@ -3357,11 +3361,6 @@ Date:   .*
         """Sync all series at once"""
         cser, pwork = self.setup_second(False)
 
-        # cser = self.get_cser()
-        # pwork = Patchwork.for_testing(self._fake_patchwork_cser)
-        # self.assertFalse(cser.get_project())
-        # cser.set_project(pwork, 'U-Boot', quiet=True)
-
         with terminal.capture():
             cser.add_series('first', 'description', allow_unmarked=True)
             cser.increment('first')
@@ -3371,7 +3370,15 @@ Date:   .*
             cser.set_link('first', 3, '31', True)
             cser.autolink(pwork, 'second', 2, True)
 
-        cser.series_sync_all(pwork)
+        with terminal.capture() as (out, _):
+            cser.series_sync_all(pwork)
+        self.assertEqual('5 patches and 2 cover letters updated (16 requests)',
+                         out.getvalue().strip())
+
+        with terminal.capture() as (out, _):
+            cser.series_sync_all(pwork, sync_all_versions=True)
+        self.assertEqual('12 patches and 5 cover letters updated (40 requests)',
+                         out.getvalue().strip())
 
     def _check_second(self, lines, show_all):
         self.assertEqual('second: Series for my board (versions: 1 2)',
