@@ -197,7 +197,7 @@ def compare_with_series(series, patches):
 
     return patch_for_commit, commit_for_patch, warnings
 
-def collect_patches(series, series_id, patchwork, read_cover_comments):
+async def collect_patches(series, series_id, patchwork, read_cover_comments):
     """Collect patch information about a series from patchwork
 
     Uses the Patchwork REST API to collect information provided by patchwork
@@ -217,7 +217,7 @@ def collect_patches(series, series_id, patchwork, read_cover_comments):
         ValueError: if the URL could not be read or the web page does not follow
             the expected structure
     """
-    data = patchwork.get_series(series_id)
+    data = await patchwork.get_series(series_id)
 
     # Get all the rows, which are patches
     patch_dict = data['patches']
@@ -244,7 +244,7 @@ def collect_patches(series, series_id, patchwork, read_cover_comments):
     # Get any cover-letter info
     cover = None
     if read_cover_comments:
-        cover = patchwork.get_series_cover(data)
+        cover = await patchwork.get_series_cover(data)
 
     return patches, cover
 

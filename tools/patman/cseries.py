@@ -5,6 +5,7 @@
 """Handles the 'series' subcommand
 """
 
+import asyncio
 from collections import OrderedDict, defaultdict, namedtuple
 import hashlib
 import os
@@ -74,6 +75,7 @@ class Cseries:
         self.col = terminal.Color(colour)
         self.fake_time = None
         self._fake_sleep = None
+        self.loop = asyncio.get_event_loop()
 
     def open_database(self):
         """Open the database read for use"""
@@ -514,7 +516,8 @@ class Cseries:
         if not ser.desc:
             raise ValueError(f"Series '{ser.name}' has an empty description")
 
-        pws, options = pwork.find_series(ser.desc, version)
+        pws, options = self.loop.run_until_complete(pwork.find_series(
+            ser.desc, version))
         return pws, options, ser.name, version, ser.desc
 
     def do_autolink(self, pwork, series, version, update_commit, wait_s=0):
@@ -1303,7 +1306,7 @@ class Cseries:
             name (str): Name of the project to use in patchwork
             quiet (bool): True to skip writing the message
         """
-        res = pwork.request('projects/')
+        res = self.loop.run_until_complete(pwork.request('projects/'))
         proj_id = None
         for proj in res:
             if proj['name'] == name:
@@ -1582,7 +1585,8 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 "No patchwork link is available: use 'patman series autolink'")
         tout.info(
             f"Updating series '{ser.name}' version {version} from link '{link}'")
-        cover, patches = pwork.series_get_state(link)
+        cover, patches = self.loop.run_until_complete(
+            pwork.series_get_state(link))
 
         pwc = self.get_pcommit_dict(svid)
 
@@ -1627,7 +1631,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             if ser[2]:
                 to_fetch[ser_id] = ser[2]
 
-        pwork.series_get_states(self, to_fetch):
+        self.loop.run_until_complete(pwork.series_get_states(self, to_fetch))
 
     def series_max_version(self, idnum):
         """Find the latest version of a series
@@ -1764,7 +1768,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         ser, version = self.parse_series_and_version(name, version)
         link = self.get_link(ser.name, version)
         pwork.url = 'https://patchwork.ozlabs.org'
-        url = pwork.get_series_url(link)
+        url = self.loop.run_until_complete(pwork.get_series_url(link))
         print(f'Opening {url}')
 
         # With Firefox, GTK produces lots of warnings, so suppress them

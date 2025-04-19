@@ -6,6 +6,7 @@
 
 """Functional tests for checking that patman behaves correctly"""
 
+import asyncio
 import contextlib
 import os
 import pathlib
@@ -85,6 +86,7 @@ class TestFunctional(unittest.TestCase):
         self.autolink_extra = None
         tout.init(tout.DEBUG if self.verbosity else tout.INFO,
                   allow_colour=False)
+        self.loop = asyncio.get_event_loop()
 
     def tearDown(self):
         if self.preserve_outdirs:
@@ -875,7 +877,8 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         pwork = Patchwork.for_testing(self._fake_patchwork)
 
         with terminal.capture() as (_, err):
-            status.collect_patches(series, 1234, pwork, False)
+            self.loop.run_until_complete(status.collect_patches(
+                series, 1234, pwork, False))
         self.assertIn('Warning: Patchwork reports 1 patches, series has 0',
                       err.getvalue())
 
@@ -885,7 +888,9 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         series.commits = [Commit('abcd')]
 
         pwork = Patchwork.for_testing(self._fake_patchwork)
-        patches, _ = status.collect_patches(series, 1234, pwork, False)
+
+        patches, _ = self.loop.run_until_complete(status.collect_patches(
+            series, 1234, pwork, False))
         self.assertEqual(1, len(patches))
         patch = patches[0]
         self.assertEqual('1', patch.id)

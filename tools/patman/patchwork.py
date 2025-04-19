@@ -5,8 +5,8 @@
 """Provides a basic API for the patchwork server
 """
 
+import asyncio
 from collections import namedtuple
-import concurrent
 from itertools import repeat
 import requests
 
@@ -45,7 +45,7 @@ class Patchwork:
         self.link_name = None
         self._show_progress = show_progress
 
-    def request(self, subpath):
+    async def request(self, subpath):
         """Call the patchwork API and return the result as JSON
 
         Args:
@@ -61,7 +61,7 @@ class Patchwork:
             return self.fake_request(subpath)
 
         full_url = '%s/api/1.2/%s' % (self.url, subpath)
-        response = requests.get(full_url)
+        response = await aiohttp.request(full_url)
         if response.status_code != 200:
             raise ValueError("Could not read URL '%s'" % full_url)
         return response.json()
@@ -72,7 +72,7 @@ class Patchwork:
         pwork.fake_request = func
         return pwork
 
-    def find_series(self, desc, version):
+    async def find_series(self, desc, version):
         """Find a series on the server
 
         Args:
@@ -86,7 +86,7 @@ class Patchwork:
                     each dict is the server result from a possible series
         """
         query = desc.replace(' ', '+')
-        res = self.request(f'series/?project={self.proj_id}&q={query}')
+        res = await self.request(f'series/?project={self.proj_id}&q={query}')
         name_found = []
         for ser in res:
             if ser['name'] == desc:
@@ -110,7 +110,7 @@ class Patchwork:
         self.proj_id = project_id
         self.link_name = link_name
 
-    def get_series(self, series_id):
+    async def get_series(self, series_id):
         """Read information about a series
 
         Args:
@@ -153,9 +153,9 @@ class Patchwork:
                 "name": "[U-Boot] moveconfig: fix error message in do_autoconf()",
                 "mbox": "https://patchwork.ozlabs.org/project/uboot/patch/20170827080051.816-1-judge.packham@gmail.com/mbox/"
         """
-        return self.request(f'series/{series_id}/')
+        return await self.request(f'series/{series_id}/')
 
-    def get_patch(self, patch_id):
+    async def get_patch(self, patch_id):
         """Read information about a patch
 
         Args:
@@ -164,9 +164,9 @@ class Patchwork:
         Returns:
             dict containing patchwork's patch information
         """
-        return self.request(f'patches/{patch_id}/')
+        return await self.request(f'patches/{patch_id}/')
 
-    def get_patch_comments(self, patch_id):
+    async def get_patch_comments(self, patch_id):
         """Read comments about a patch
 
         Args:
@@ -188,9 +188,9 @@ class Patchwork:
             content (str): Content of email, e.g. 'On 20.06.24 15:19, Simon Glass wrote:\n>...'
             headers: dict: email headers, see get_cover() for an example
         """
-        return self.request(f'patches/{patch_id}/comments/')
+        return await self.request(f'patches/{patch_id}/comments/')
 
-    def get_cover(self, cover_id):
+    async def get_cover(self, cover_id):
         """Read information about a cover letter
 
         Args:
@@ -278,9 +278,9 @@ class Patchwork:
                 "X-Virus-Status": "Clean"
             content (str): Email content, e.g. 'This series adds a cover-coverage check to CI for Binman. The iMX8 tests\nare still not completed,...'
         """
-        return self.request(f'covers/{cover_id}/')
+        return await self.request(f'covers/{cover_id}/')
 
-    def get_cover_comments(self, cover_id):
+    async def get_cover_comments(self, cover_id):
         """Read comments about a cover letter
 
         Args:
@@ -307,9 +307,9 @@ class Patchwork:
             content (str): Email content, e.g. 'Hi,\n\nOn Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:\n>\n> This '...
             headers: dict: email headers, see get_cover() for an example
         """
-        return self.request(f'covers/{cover_id}/comments/')
+        return await self.request(f'covers/{cover_id}/comments/')
 
-    def get_series_url(self, series_id):
+    async def get_series_url(self, series_id):
         """Get the URL for a series
 
         Args:
@@ -320,18 +320,13 @@ class Patchwork:
         """
         return f'{self.url}/project/{self.link_name}/list/?series={series_id}&state=*&archive=both'
 
-    def _get_patch_status(self, patch_dict, seq, result, count):
-        patch_id = patch_dict[seq]['id']
-        data = self.get_patch(patch_id)
+    async def _get_patch_status(self, patch_id):
+        data = await self.get_patch(patch_id)
         state = data['state']
-        comment_data = self.get_patch_comments(patch_id)
+        comment_data = await self.get_patch_comments(patch_id)
         num_comments = len(comment_data)
 
-        result[seq] = PATCH(patch_id, state, num_comments)
-        done = len([1 for i in range(len(result)) if result[i]])
-
-        if self._show_progress:
-            terminal.tprint(f'\r{count - done}  ', newline=False)
+        return PATCH(patch_id, state, num_comments)
 
     def _ext_get_patch_status(self, exc, patch_id):
         """Executor version of _get_patch_stat()
@@ -350,7 +345,7 @@ class Patchwork:
 
         return PATCH(patch_id, state, num_comments)
 
-    def get_series_cover(self, data):
+    async def get_series_cover(self, data):
         """Get the cover information (including comments)
 
         Args:
@@ -363,11 +358,11 @@ class Patchwork:
         cover_id = None
         if cover:
             cover_id = cover['id']
-            info = self.get_cover_comments(cover_id)
+            info = await self.get_cover_comments(cover_id)
             cover = COVER(cover_id, len(info), cover['name'], info)
         return cover
 
-    def series_get_state(self, series_id):
+    async def series_get_state(self, series_id):
         """Sync the series information against patchwork, to find patch status
 
         Args:
@@ -377,25 +372,21 @@ class Patchwork:
             COVER object, or None
             list of PATCH: patch information for each patch in the series
         """
-        data = self.get_series(series_id)
+        data = await self.get_series(series_id)
         patch_dict = data['patches']
 
         count = len(patch_dict)
         result = [None] * count
-        with concurrent.futures.ThreadPoolExecutor(max_workers=16) as executor:
-            futures = executor.map(
-                self._get_patch_status, repeat(patch_dict), range(count),
-                repeat(result), repeat(count))
-        for fresponse in futures:
-            if fresponse:
-                raise fresponse.exception()
+        for i in range(count):
+            result[i] = await self._get_patch_status(patch_dict[i]['id'])
         if self._show_progress:
             terminal.print_clear()
 
-        cover = self.get_series_cover(data)
+        cover = await self.get_series_cover(data)
 
         return cover, result
 
+    '''
     def series_get_states(self, sync_data):
         """Sync a selection of series information from patchwork
 
@@ -425,3 +416,4 @@ class Patchwork:
                 cover = self.get_series_cover(data)
 
                 return cover, result
+    '''
