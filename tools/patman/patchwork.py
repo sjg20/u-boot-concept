@@ -31,7 +31,7 @@ COVER = namedtuple('cover', 'id,num_comments,name,comments')
 TIMEOUT = 10
 
 # Max concurrent request
-MAX_CONCURRENT = 20
+MAX_CONCURRENT = 50
 
 
 class Patchwork:
@@ -67,7 +67,7 @@ class Patchwork:
 
         full_url = '%s/api/1.2/%s' % (self.url, subpath)
         async with self.semaphore:
-            print('full_url', full_url)
+            # print('full_url', full_url)
             async with client.get(full_url) as response:
                 if response.status != 200:
                     raise ValueError("Could not read URL '%s'" % full_url)
@@ -347,6 +347,17 @@ class Patchwork:
         return f'{self.url}/project/{self.link_name}/list/?series={series_id}&state=*&archive=both'
 
     async def _get_patch_status(self, client, patch_id):
+        """Get the patch status
+
+            client: asynio client session
+            patch_id (int): Patch ID to look up in patchwork
+
+        Return:
+            PATCH: Patch information
+
+        Requests:
+            1 for patch, 1 for patch comments
+        """
         data = await self._get_patch(client, patch_id)
         state = data['state']
         comment_data = await self._get_patch_comments(client, patch_id)
@@ -423,17 +434,24 @@ class Patchwork:
         return cover, result
 
     async def _get_one_state(self, client, svid, link, result):
+        # 1 request
         data = await self._get_series(client, link)
         patch_dict = data['patches']
 
         count = len(patch_dict)
-        patches = [None] * count
-        for i in range(count):
-            patches[i] = await self._get_patch_status(client,
-                                                      patch_dict[i]['id'])
+        # patches = [None] * count
+        tasks = [asyncio.create_task(
+            self._get_patch_status(client, patch_dict[i]['id']))
+            for i in range(count)]
+        # for i in range(count):
+            # 2 requests for each patch
+            # patches[i] = await self._get_patch_status(client,
+                                                      # patch_dict[i]['id'])
+        patches = await asyncio.gather(*tasks)
 
+        # 1 request for cover-letter comments, if there is one
         cover = await self._get_series_cover(client, data)
-        result[svid] = cover, patches
+        result[svid] = svid, cover, patches
         return svid, cover, patches
 
     async def series_get_states(self, sync_data):
@@ -451,22 +469,23 @@ class Patchwork:
                 list of PATCH: patch information for each patch in series
         """
         result = {}
+        self.expected_reqs = 0
         async with aiohttp.ClientSession() as client:
-            tasks = [self._get_one_state(client, svid, link, result)
+            tasks = [asyncio.create_task(self._get_one_state(client, svid, link, result))
                      for svid, link in sync_data.items()]
             results = await asyncio.gather(*tasks)
-        '''
-        while tasks:
-            pending = len(asyncio.all_tasks())
-            print(f"Number of currently pending tasks: {pending}")
+            '''
+            while tasks:
+                pending = len(asyncio.all_tasks())
+                print(f"Number of currently pending tasks: {pending}")
 
-            done, pending = await asyncio.wait(
-                tasks,  return_when=asyncio.FIRST_COMPLETED)
-            print(f"Number of tasks just completed: {len(done)}")
-            print(f"Number of tasks remaining: {len(pending)}")
+                done, pending = await asyncio.wait(
+                    tasks, return_when=asyncio.FIRST_COMPLETED)
+                print(f"Number of tasks just completed: {len(done)}")
+                print(f"Number of tasks remaining: {len(pending)}")
 
-            tasks = list(pending)  # Update the list of tasks to wait on in the next iteration
-        '''
+                tasks = list(pending)  # Update the list of tasks to wait on in the next iteration
+            '''
 
         # results = [result[svid] for svid in sync_data]
 

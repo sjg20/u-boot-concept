@@ -1647,7 +1647,6 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                     to_fetch[svid] = ser[2]
 
         result = self.loop.run_until_complete(pwork.series_get_states(to_fetch))
-        print('result', result)
 
         updated = 0
         updated_cover = 0
