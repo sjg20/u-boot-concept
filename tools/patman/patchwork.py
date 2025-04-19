@@ -432,7 +432,7 @@ class Patchwork:
             patches[i] = await self._get_patch_status(client,
                                                       patch_dict[i]['id'])
 
-        cover = await self.get_series_cover(data)
+        cover = await self._get_series_cover(client, data)
         result[svid] = cover, patches
         return svid, cover, patches
 
