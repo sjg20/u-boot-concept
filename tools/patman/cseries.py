@@ -1588,7 +1588,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
 
         updated = 0
         for seq, item in enumerate(pwc.values()):
-            if seq > len(patches):
+            if seq >= len(patches):
                 continue
             patch = patches[seq]
             if patch.id:
