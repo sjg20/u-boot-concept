@@ -1936,6 +1936,6 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         """
         branch, series, _, _, link, _, _ = self._get_patches(
             series, version)
-        status.check_patchwork_status(series, link, branch, None, False,
-                                      show_comments, show_cover_comments, pwork,
-                                      self.gitdir, single_thread)
+        self.loop.run_until_complete(status.check_patchwork_status(
+            series, link, branch, None, False, show_comments,
+            show_cover_comments, pwork, self.gitdir, single_thread))

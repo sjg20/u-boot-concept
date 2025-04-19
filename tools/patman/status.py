@@ -248,37 +248,35 @@ async def collect_patches(series, series_id, patchwork, read_cover_comments):
 
     return patches, cover
 
-def find_new_responses(new_rtag_list, review_list, seq, cmt, patch, patchwork):
+async def find_new_responses(cmt, patch, patchwork):
     """Find new rtags collected by patchwork that we don't know about
 
     This is designed to be run in parallel, once for each commit/patch
 
     Args:
-        new_rtag_list (list): New rtags are written to new_rtag_list[seq]
-            list, each a dict:
-                key: Response tag (e.g. 'Reviewed-by')
-                value: Set of people who gave that response, each a name/email
-                    string
-        review_list (list): New reviews are written to review_list[seq]
-            list, each a
-                List of reviews for the patch, each a Review
         seq (int): Position in new_rtag_list and review_list to update
         cmt (Commit): Commit object for this commit
         patch (Patch): Corresponding Patch object for this patch
         patchwork (Patchwork): Patchwork class to handle communications
+    Return: tuple:
+        new_rtags (dict)
+            key: Response tag (e.g. 'Reviewed-by')
+            value: Set of people who gave that response, each a name/email
+                string
+        list of Review: List of reviews for the patch
     """
     if not patch:
         return
 
     # Get the content for the patch email itself as well as all comments
-    patch_data = patchwork.get_patch(patch.id)
+    patch_data = await patchwork.get_patch(patch.id)
     pstrm = PatchStream.process_text(patch_data['content'], True)
 
     rtags = collections.defaultdict(set)
     for response, people in pstrm.commit.rtags.items():
         rtags[response].update(people)
 
-    comment_data = patchwork.get_patch_comments(patch.id)
+    comment_data = await patchwork.get_patch_comments(patch.id)
 
     reviews = []
     for comment in comment_data:
@@ -299,8 +297,9 @@ def find_new_responses(new_rtag_list, review_list, seq, cmt, patch, patchwork):
                       who not in base_rtags[tag])
             if is_new:
                 new_rtags[tag].add(who)
-    new_rtag_list[seq] = new_rtags
-    review_list[seq] = reviews
+    return new_rtags, reviews
+    # new_rtag_list[seq] = new_rtags
+    # review_list[seq] = reviews
 
 def show_responses(col, rtags, indent, is_new):
     """Show rtags collected
@@ -392,9 +391,9 @@ def create_branch(series, new_rtag_list, branch, dest_branch, overwrite,
             [parent.target])
     return num_added
 
-def check_patchwork_status(series, series_id, branch, dest_branch, force,
-                           show_comments, show_cover_comments, patchwork,
-                           test_repo=None, single_thread=False):
+async def check_patchwork_status(series, series_id, branch, dest_branch, force,
+                                 show_comments, show_cover_comments, patchwork,
+                                 test_repo=None, single_thread=False):
     """Check the status of a series on Patchwork
 
     This finds review tags and comments for a series in Patchwork, displaying
@@ -412,8 +411,8 @@ def check_patchwork_status(series, series_id, branch, dest_branch, force,
         patchwork (Patchwork): Patchwork class to handle communications
         test_repo (pygit2.Repository): Repo to use (use None unless testing)
     """
-    patches, cover = collect_patches(series, series_id, patchwork,
-                                     show_cover_comments)
+    patches, cover = await collect_patches(series, series_id, patchwork,
+                                           show_cover_comments)
     col = terminal.Color()
     count = len(series.commits)
     new_rtag_list = [None] * count
@@ -425,18 +424,9 @@ def check_patchwork_status(series, series_id, branch, dest_branch, force,
 
     patch_list = [patch_for_commit.get(c) for c in range(len(series.commits))]
 
-    if single_thread:
-        for i in range(count):
-            find_new_responses(new_rtag_list, review_list, i, series.commits[i],
-                               patch_list[i], patchwork)
-    else:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=16) as executor:
-            futures = executor.map(
-                find_new_responses, repeat(new_rtag_list), repeat(review_list),
-                range(count), series.commits, patch_list, repeat(patchwork))
-        for fresponse in futures:
-            if fresponse:
-                raise fresponse.exception()
+    for i in range(count):
+        new_rtag_list[i], review_list[i] = await find_new_responses(
+            series.commits[i], patch_list[i], patchwork)
 
     with terminal.pager():
         num_to_add = 0

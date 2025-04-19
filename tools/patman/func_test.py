@@ -1105,13 +1105,13 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
 
         # Check that the tags are picked up on the first patch
         pwork = Patchwork.for_testing(self._fake_patchwork2)
-        status.find_new_responses(new_rtag_list, review_list, 0, commit1,
-                                  patch1, pwork)
+        new_rtag_list[0], review_list[0] = self.loop.run_until_complete(
+            status.find_new_responses(commit1, patch1, pwork))
         self.assertEqual(new_rtag_list[0], {'Reviewed-by': {self.joe}})
 
         # Now the second patch
-        status.find_new_responses(new_rtag_list, review_list, 1, commit2,
-                                  patch2, pwork)
+        new_rtag_list[1], review_list[1] = self.loop.run_until_complete(
+            status.find_new_responses(commit2, patch2, pwork))
         self.assertEqual(new_rtag_list[1], {
             'Reviewed-by': {self.mary, self.fred},
             'Tested-by': {self.leb}})
@@ -1120,16 +1120,16 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         # 'new' tags when scanning comments
         new_rtag_list = [None] * count
         commit1.rtags = {'Reviewed-by': {self.joe}}
-        status.find_new_responses(new_rtag_list, review_list, 0, commit1,
-                                  patch1, pwork)
+        new_rtag_list[0], review_list[0] = self.loop.run_until_complete(
+            status.find_new_responses(commit1, patch1, pwork))
         self.assertEqual(new_rtag_list[0], {})
 
         # For the second commit, add Ed and Fred, so only Mary should be left
         commit2.rtags = {
             'Tested-by': {self.leb},
             'Reviewed-by': {self.fred}}
-        status.find_new_responses(new_rtag_list, review_list, 1, commit2,
-                                  patch2, pwork)
+        new_rtag_list[1], review_list[1] = self.loop.run_until_complete(
+            status.find_new_responses(commit2, patch2, pwork))
         self.assertEqual(new_rtag_list[1], {'Reviewed-by': {self.mary}})
 
         # Check that the output patches expectations:
@@ -1144,8 +1144,8 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         series = Series()
         series.commits = [commit1, commit2]
         terminal.set_print_test_mode()
-        status.check_patchwork_status(series, '1234', None, None, False, False,
-                                      False, pwork)
+        self.loop.run_until_complete(status.check_patchwork_status(
+            series, '1234', None, None, False, False, False, pwork))
         lines = iter(terminal.get_print_test_lines())
         col = terminal.Color()
         self.assertEqual(terminal.PrintLine('  1 Subject 1', col.YELLOW),
@@ -1258,8 +1258,9 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
 
         terminal.set_print_test_mode()
         pwork = Patchwork.for_testing(self._fake_patchwork3)
-        status.check_patchwork_status(series, '1234', branch, dest_branch,
-                                      False, False, False, pwork, repo)
+        self.loop.run_until_complete(status.check_patchwork_status(
+            series, '1234', branch, dest_branch, False, False, False, pwork,
+            repo))
         lines = terminal.get_print_test_lines()
         self.assertEqual(12, len(lines))
         self.assertEqual(
@@ -1460,8 +1461,8 @@ Reviewed-by: %s
         series.commits = [commit1, commit2]
         terminal.set_print_test_mode()
         pwork = Patchwork.for_testing(self._fake_patchwork2)
-        col = status.check_patchwork_status(series, '1234', None, None, False,
-                                            True, False, pwork)
+        col = self.loop.run_until_complete(status.check_patchwork_status(
+            series, '1234', None, None, False, True, False, pwork))
         lines = iter(terminal.get_print_test_lines())
         col = terminal.Color()
         self.assertEqual(terminal.PrintLine('  1 Subject 1', col.YELLOW),
