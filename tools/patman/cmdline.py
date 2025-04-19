@@ -23,6 +23,7 @@ HAS_TESTS = os.path.exists(PATMAN_DIR / "func_test.py")
 
 class ErrorCatchingArgumentParser(argparse.ArgumentParser):
     def __init__(self, **kwargs):
+        self.exit_state = None
         self.catch_error = False
         super().__init__(**kwargs)
 
@@ -31,6 +32,10 @@ class ErrorCatchingArgumentParser(argparse.ArgumentParser):
             self.message = message
         else:
             super().error(message)
+
+    def exit(self):
+        if self.catch_error:
+            self.exit_state = status
 
 
 def add_send_args(par):
@@ -84,18 +89,11 @@ def add_send_args(par):
     par.add_argument('--keep-change-id', action='store_true',
                       help='Preserve Change-Id tags in patches to send.')
 
-def parse_args(argv=None, config_fname=None):
+def setup_parser():
     """Parse command line arguments from sys.argv[]
 
-    Args:
-        argv (str or None): Arguments to process, or None to use sys.argv[1:]
-        config_fname (str): Config file to read, or None for default, or False
-            for an empty config
-
     Returns:
-        tuple containing:
-            options: command line options
-            args: command lin arguments
+        argparse.Parser object
     """
     epilog = '''Create patches from commits in a branch, check them and email
         them as specified by tags you place in the commits. Use -n to do a dry
@@ -161,6 +159,7 @@ def parse_args(argv=None, config_fname=None):
     series.add_argument('-V', '--version', type=int,
                         help='Version number to link')
     series_subparsers = series.add_subparsers(dest='subcmd')
+    # series_subparsers.required = True
     add = series_subparsers.add_parser('add')
     add.add_argument('-d', '--desc',
                      help='Series description / cover-letter title')
@@ -261,6 +260,29 @@ def parse_args(argv=None, config_fname=None):
     uset = patchwork_subparsers.add_parser('set-project')
     uset.add_argument(
         'project_name', help="Patchwork project name, e.g. 'U-Boot'")
+    parsers = {
+        'main': parser,
+        'series': series_subparsers,
+        }
+    return parsers
+
+
+def parse_args(argv=None, config_fname=None, parsers=None):
+    """Parse command line arguments from sys.argv[]
+
+    Args:
+        argv (str or None): Arguments to process, or None to use sys.argv[1:]
+        config_fname (str): Config file to read, or None for default, or False
+            for an empty config
+
+    Returns:
+        tuple containing:
+            options: command line options
+            args: command lin arguments
+    """
+    if not parsers:
+        parsers = setup_parser()
+    parser = parsers['main']
 
     # Parse options twice: first to get the project and second to handle
     # defaults properly (which depends on project)
@@ -289,5 +311,9 @@ def parse_args(argv=None, config_fname=None):
     # if 'allow_unmarked' in defaults:
         # print('val', defaults['allow_unmarked'])
         # args.allow_unmarked = defaults['allow_unmarked']
+
+    if args.cmd in ['series', 'upstream', 'patchwork'] and not args.subcmd:
+        subparser = parsers[args.cmd]
+        parser.parse_args([args.cmd, '--help'])
 
     return args

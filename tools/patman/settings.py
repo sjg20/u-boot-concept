@@ -307,6 +307,10 @@ def _UpdateDefaults(main_parser, config, argv):
             defaults[name] = val
         else:
             print("WARNING: Unknown setting %s" % name)
+    if 'cmd' in defaults:
+        del defaults['cmd']
+    if 'subcmd' in defaults:
+        del defaults['subcmd']
 
     # Set all the defaults and manually propagate them to subparsers
     main_parser.set_defaults(**defaults)

@@ -3770,3 +3770,12 @@ Date:   .*
             cser.series_status(pwork, 'second', 2, show_comments=True,
                                show_cover_comments=True, single_thread=False)
         self._check_status(out, True, True)
+
+    def test_series_no_subcmd(self):
+        """Test handling of 'series' without a subcommand"""
+        # pass
+        parsers = cmdline.setup_parser()
+        parsers['main'].catch_error = True
+        with terminal.capture() as (out, _):
+            cmdline.parse_args(['series'], parsers=parsers)
+        self.assertIn('usage: patman series', out.getvalue())
