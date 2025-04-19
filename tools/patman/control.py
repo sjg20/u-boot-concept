@@ -105,9 +105,10 @@ def do_series(args, test_db=None, pwork=None):
         pwork (Patchwork): Patchwork object to use
     """
     cser = cseries.Cseries(test_db)
+    needs_patchwork = ['autolink', 'open', 'send', 'status', 'sync']
     try:
         cser.open_database()
-        if not pwork:
+        if not pwork and args.subcmd in needs_patchwork:
             pwork = Patchwork(args.patchwork_url)
             proj = cser.get_project()
             if not proj:

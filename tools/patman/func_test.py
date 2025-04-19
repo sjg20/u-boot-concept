@@ -1633,6 +1633,20 @@ second line.'''
 
         self.db_close()
 
+    def test_series_not_checked_out(self):
+        """Test adding a new cseries when a different one is checked out"""
+        cser = self.get_cser()
+        self.assertFalse(cser.get_series_dict())
+
+        with terminal.capture() as (out, _):
+            cser.add_series('second', allow_unmarked=True)
+        lines = out.getvalue().strip().splitlines()
+        self.assertEqual(
+            "Adding series 'second' v1: mark False allow_unmarked True",
+            lines[0])
+        self.assertEqual("Added series 'second' v1 (3 commits)", lines[1])
+        self.assertEqual(2, len(lines))
+
     def test_series_add_manual(self):
         """Test adding a new cseries with a version number"""
         cser = self.get_cser()
