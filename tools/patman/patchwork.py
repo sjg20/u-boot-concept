@@ -321,8 +321,8 @@ class Patchwork:
         patch_id = patch_dict[seq]['id']
         data = self.get_patch(patch_id)
         state = data['state']
-        data = self.get_patch_comments(patch_id)
-        num_comments = len(data)
+        comment_data = self.get_patch_comments(patch_id)
+        num_comments = len(comment_data)
 
         result[seq] = PATCH(patch_id, state, num_comments)
         done = len([1 for i in range(len(result)) if result[i]])
@@ -337,6 +337,7 @@ class Patchwork:
             data (dict): Return value from self.get_series()
 
         Returns:
+            COVER object, or None if no cover letter
         """
         cover = data['cover_letter']
         cover_id = None
