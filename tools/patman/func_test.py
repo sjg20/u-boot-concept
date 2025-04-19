@@ -3342,6 +3342,25 @@ Date:   .*
         self.assertEqual('changes-requested', pwc[1].state)
         self.assertEqual('rejected', pwc[2].state)
 
+    def test_series_sync_all(self):
+        """Sync all series at once"""
+        cser, pwork = self.setup_second()
+
+        # cser = self.get_cser()
+        # pwork = Patchwork.for_testing(self._fake_patchwork_cser)
+        # self.assertFalse(cser.get_project())
+        # cser.set_project(pwork, 'U-Boot', quiet=True)
+
+        with terminal.capture():
+            cser.add_series('first', 'description', allow_unmarked=True)
+            cser.increment('first')
+            cser.increment('first')
+            cser.set_link('first', 2, '123', True)
+            cser.set_link('first', 2, '1234', True)
+
+        cser.series_sync_all(pwork)
+
+
     def _check_second(self, lines, show_all):
         self.assertEqual('second: Series for my board (versions: 1 2)',
                          next(lines))

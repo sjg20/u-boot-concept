@@ -26,6 +26,9 @@ PATCH = namedtuple('patch', 'id,state,num_comments')
 # comments (list of dict): Comments
 COVER = namedtuple('cover', 'id,num_comments,name,comments')
 
+# Timeout waiting for patchwork
+TIMEOUT = 10
+
 
 class Patchwork:
     """Class to handle communication with patchwork
@@ -330,6 +333,23 @@ class Patchwork:
         if self._show_progress:
             terminal.tprint(f'\r{count - done}  ', newline=False)
 
+    def _ext_get_patch_status(self, exc, patch_id):
+        """Executor version of _get_patch_stat()
+
+        Args:
+            exc (concurrent.futures.Executor): Executor to use
+            patch_id (int): Patch ID to look up in patchwork
+
+        Return:
+            PATCH: Patch object found
+        """
+        fdata = exc.submit(self.get_patch, patch_id)
+        state = fdata.result(timeout=TIMEOUT)['state']
+        fcomment_data = exc.submit(self.get_patch_comments, patch_id)
+        num_comments = len(fcomment_data.result(timeout=TIMEOUT))
+
+        return PATCH(patch_id, state, num_comments)
+
     def get_series_cover(self, data):
         """Get the cover information (including comments)
 
@@ -375,3 +395,33 @@ class Patchwork:
         cover = self.get_series_cover(data)
 
         return cover, result
+
+    def series_get_states(self, sync_data):
+        """Sync a selection of series information from patchwork
+
+        Args:
+            sync_data (dict of series IDs to sync):
+                key (int): Series ID
+                value (None): Value for this function to fill in with tuple:
+                    COVER object, or None
+                    list of PATCH: patch information for each patch in series
+        """
+        with concurrent.futures.ThreadPoolExecutor(max_workers=16) as ext:
+            for ser_id in sync_data:
+                fdata = ext.submit(self.get_series, series_id)
+                patch_dict = fdata.result(timeout=TIMEOUT)['patches']
+
+                count = len(patch_dict)
+                result = [None] * count
+                for i in range(count):
+                    result[i] = stat = self._get_patch_status(, repeat(patch_dict), range(count),
+                        repeat(result), repeat(count))
+                for fresponse in futures:
+                    if fresponse:
+                        raise fresponse.exception()
+                if self._show_progress:
+                    terminal.print_clear()
+
+                cover = self.get_series_cover(data)
+
+                return cover, result

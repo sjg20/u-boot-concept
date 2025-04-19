@@ -1607,15 +1607,52 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         tout.info(f"{updated} patch{'es' if updated != 1 else ''}"
                   f"{' and cover letter' if cover else ''} updated")
 
+    def series_sync_all(self, pwork, all_versions=False):
+        """Sync all series status from patchwork
+
+        Args:
+            pwork (Patchwork): Patchwork object to use
+            show_all_versions (bool): True to show all versions of a series,
+                False to show only the final version
+        """
+        sdict = self.get_ser_ver_dict()
+        to_fetch = {}
+
+        # Find the maximum version for each series
+        max_vers = self.series_all_max_versions()
+
+        # Get a list of links to fetch
+        for ser_id, max_ver in max_vers:
+            ser = sdict[ser_id]
+            if ser[2]:
+                to_fetch[ser_id] = ser[2]
+
+        pwork.series_get_states(self, to_fetch):
+
     def series_max_version(self, idnum):
         """Find the latest version of a series
 
         Args:
             idnum (int): Series ID to look up
+
+        Return:
+            int: maximum version
         """
         res = self.db.execute('SELECT MAX(version) FROM ser_ver WHERE '
                                f"series_id = {idnum}")
         return res.fetchall()[0][0]
+
+    def series_all_max_versions(self):
+        """Find the latest version of all series
+
+        Return: list of:
+            int: Series ID
+            int: Maximum version
+        """
+        res = self.db.execute(
+            'SELECT series_id, MAX(version) FROM ser_ver GROUP BY series_id')
+        versions = res.fetchall()
+        return versions
 
     def _progress_one(self, ser, show_all_versions, list_patches):
         """Show progress information for all versions in a series
