@@ -50,7 +50,6 @@ class Patchwork:
         self._show_progress = show_progress
         self.semaphore = asyncio.Semaphore(MAX_CONCURRENT)
 
-
     async def request(self, subpath):
         """Call the patchwork API and return the result as JSON
 
@@ -398,7 +397,7 @@ class Patchwork:
 
         return cover, result
 
-    async def _get_one_state(self, svid, link):
+    async def _get_one_state(self, svid, link, result):
         data = await self.get_series(link)
         patch_dict = data['patches']
 
@@ -408,7 +407,8 @@ class Patchwork:
             patches[i] = await self._get_patch_status(patch_dict[i]['id'])
 
         cover = await self.get_series_cover(data)
-        return cover, patches
+        result[svid] = cover, patches
+        return svid, cover, patches
 
     async def series_get_states(self, sync_data):
         """Sync a selection of series information from patchwork
@@ -419,15 +419,31 @@ class Patchwork:
                 value (str): Series link
 
         Return:
-            Same dict, but with value changed to a tuple:
-                COVER object, or None
+            list of items, each a tuple:
+                int: svid
+                COVER: Cover letter, or None if none
                 list of PATCH: patch information for each patch in series
         """
-        tasks = [self._get_one_state(svid, link)
+        result = {}
+        tasks = [self._get_one_state(svid, link, result)
                  for svid, link in sync_data.items()]
-        print('tasks', tasks)
+        '''
+        while tasks:
+            pending = len(asyncio.all_tasks())
+            print(f"Number of currently pending tasks: {pending}")
+
+            done, pending = await asyncio.wait(
+                tasks,  return_when=asyncio.FIRST_COMPLETED)
+            print(f"Number of tasks just completed: {len(done)}")
+            print(f"Number of tasks remaining: {len(pending)}")
+
+            tasks = list(pending)  # Update the list of tasks to wait on in the next iteration
+        '''
+
         results = await asyncio.gather(*tasks)
-        print(results)
+        # results = [result[svid] for svid in sync_data]
+
+        return results
         '''
             data = await self.get_series(link)
             print('data', data)

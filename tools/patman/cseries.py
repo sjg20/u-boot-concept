@@ -1647,13 +1647,15 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                     to_fetch[svid] = ser[2]
 
         result = self.loop.run_until_complete(pwork.series_get_states(to_fetch))
+        print('result', result)
 
         updated = 0
         updated_cover = 0
-        for svid, (cover, patches) in result.items():
+        for svid, cover, patches in result:
             updated += self._sync_one(svid, cover, patches)
             if cover:
                 updated_cover += 1
+        self.commit()
 
         tout.info(
             f"{updated} patch{'es' if updated != 1 else ''} and "

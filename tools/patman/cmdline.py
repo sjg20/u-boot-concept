@@ -227,6 +227,7 @@ def setup_parser():
 
     series_subparsers.add_parser('summary')
     series_subparsers.add_parser('sync')
+    series_subparsers.add_parser('sync-all')
     series_subparsers.add_parser('unarchive')
     series_subparsers.add_parser('unmark')
 
