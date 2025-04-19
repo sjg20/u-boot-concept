@@ -1314,7 +1314,7 @@ class Cseries:
             name (str): Name of the project to use in patchwork
             quiet (bool): True to skip writing the message
         """
-        res = self.loop.run_until_complete(pwork.request('projects/'))
+        res = self.loop.run_until_complete(pwork.get_projects())
         proj_id = None
         for proj in res:
             if proj['name'] == name:

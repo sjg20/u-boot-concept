@@ -80,6 +80,9 @@ class Patchwork:
         pwork.fake_request = func
         return pwork
 
+    async def get_projects(self):
+        return await self.request('projects/')
+
     async def find_series(self, desc, version):
         """Find a series on the server
 
