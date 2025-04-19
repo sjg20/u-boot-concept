@@ -837,7 +837,7 @@ def show_commit(commit, msg=True, diffstat=False, patch=False, colour=True,
     return command.output(*cmd)
 
 
-def check_dirty(git_dir=None):
+def check_dirty(git_dir=None, work_tree=None):
     """Check if the tree is dirty
 
     Args:
@@ -846,11 +846,23 @@ def check_dirty(git_dir=None):
     Return:
         str: List of dirty filenames and state
     """
+    # cmd = ['git']
+    # if git_dir:
+    #     cmd += ['--git-dir', git_dir]
+    # cmd += ['log']
+    # out = command.output(*cmd).splitlines()
+    # print('out', out)
+
     cmd = ['git']
     if git_dir:
         cmd += ['--git-dir', git_dir]
+    if work_tree:
+        cmd += ['--work-tree', work_tree]
     cmd += ['status', '--porcelain', '--untracked-files=no']
-    return command.output(*cmd).splitlines()
+    print('cmd', cmd)
+    out = command.output(*cmd).splitlines()
+    print(out)
+    return out
 
 
 if __name__ == "__main__":

@@ -908,7 +908,7 @@ class Cseries:
 
         tout.debug(f"_process_series name '{name}' new_name '{new_name}' "
                    f"upstream_name '{upstream_name}'")
-        dirty = gitutil.check_dirty(self.gitdir)
+        dirty = gitutil.check_dirty(self.gitdir, self.topdir)
         if dirty:
             raise ValueError(
                 f"Modified files exist: use 'git status' to check: {dirty[:5]}")

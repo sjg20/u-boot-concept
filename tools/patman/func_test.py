@@ -16,6 +16,15 @@ import tempfile
 import unittest
 from unittest import mock
 
+import pygit2
+from pygit2.enums import CheckoutStrategy
+
+from u_boot_pylib import cros_subprocess
+from u_boot_pylib import gitutil
+from u_boot_pylib import terminal
+from u_boot_pylib import tools
+from u_boot_pylib import tout
+
 from patman import cmdline
 from patman.commit import Commit
 from patman import control
@@ -28,14 +37,6 @@ from patman.patchwork import Patchwork
 from patman import send
 from patman.series import Series
 from patman import settings
-from u_boot_pylib import command
-from u_boot_pylib import cros_subprocess
-from u_boot_pylib import gitutil
-from u_boot_pylib import terminal
-from u_boot_pylib import tools
-from u_boot_pylib import tout
-
-import pygit2
 from patman import status
 
 PATMAN_DIR = pathlib.Path(__file__).parent
@@ -427,6 +428,18 @@ Changes in v2:
         self.assertEqual('base-commit: 1a44532', lines[pos + 3])
         self.assertEqual('branch: mybranch', lines[pos + 4])
 
+    def _check_dirty(self, repo):
+        """Check if the tree is dirty
+
+        Args:
+            repo (pygit2.repo): Repo to use
+
+        Return:
+            bool: True if the tree is dirty, False if clean
+        """
+        state = repo.status(untracked_files='no')
+        return bool(state)
+
     def make_commit_with_file(self, subject, body, fname, text):
         """Create a file and add it to the git repo with a new commit
 
@@ -440,14 +453,33 @@ Changes in v2:
         tools.write_file(path, text, binary=False)
         index = self.repo.index
         index.add(fname)
+        print('fname', fname)
+        index.write()
         # pylint doesn't seem to find this
         # pylint: disable=E1101
         author = pygit2.Signature('Test user', 'test@email.com')
         committer = author
         tree = index.write_tree()
         message = subject + '\n' + body
-        self.repo.create_commit('HEAD', author, committer, message, tree,
-                                [self.repo.head.target])
+        print('repo.head', self.repo.head.target)
+        prev_target = self.repo.head.target
+        oid = self.repo.create_commit('HEAD', author, committer, message,
+                                         tree, [self.repo.head.target])
+        print(f'target {self.repo.head.target} prev {prev_target}')
+        self.repo.head.set_target(oid)
+        print('oid', oid)
+        print('state', oid, self.repo.head, self.repo.status())
+        index = self.repo.index
+        index.read()
+        # os.system(f'git --git-dir {self.gitdir} status')
+        print('pygit2', self.repo.status(untracked_files='no'))
+
+        self._check_dirty(self.repo)
+        print('dirty', gitutil.check_dirty(self.gitdir, self.tmpdir))
+        # if fname == 'pci.c':
+            # sys.exit(1)
+            # pass
+        print()
 
     def make_git_tree(self):
         """Make a simple git tree suitable for testing
@@ -605,6 +637,8 @@ and a little more''')
         repo.checkout(target, strategy=pygit2.GIT_CHECKOUT_FORCE)
         target = repo.revparse_single('HEAD')
         repo.reset(target.oid, pygit2.enums.ResetMode.HARD)
+
+        self.assertFalse(gitutil.check_dirty(self.gitdir, self.tmpdir))
         return repo
 
     def test_branch(self):
