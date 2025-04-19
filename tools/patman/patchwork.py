@@ -5,6 +5,7 @@
 """Provides a basic API for the patchwork server
 """
 
+import aiohttp
 import asyncio
 from collections import namedtuple
 from itertools import repeat
@@ -61,8 +62,9 @@ class Patchwork:
             return self.fake_request(subpath)
 
         full_url = '%s/api/1.2/%s' % (self.url, subpath)
-        response = await aiohttp.request(full_url)
-        if response.status_code != 200:
+        async with aiohttp.ClientSession() as client:
+            response = await client.get(full_url)
+        if response.status != 200:
             raise ValueError("Could not read URL '%s'" % full_url)
         return response.json()
 
@@ -373,6 +375,7 @@ class Patchwork:
             list of PATCH: patch information for each patch in the series
         """
         data = await self.get_series(series_id)
+        print('data', data)
         patch_dict = data['patches']
 
         count = len(patch_dict)
@@ -402,6 +405,7 @@ class Patchwork:
         result = {}
         for svid, link in sync_data.items():
             data = await self.get_series(link)
+            print('data', data)
             patch_dict = data['patches']
 
             count = len(patch_dict)
