@@ -30,6 +30,9 @@ COVER = namedtuple('cover', 'id,num_comments,name,comments')
 # Timeout waiting for patchwork
 TIMEOUT = 10
 
+# Max concurrent request
+MAX_CONCURRENT = 20
+
 
 class Patchwork:
     """Class to handle communication with patchwork
@@ -45,6 +48,8 @@ class Patchwork:
         self.proj_id = None
         self.link_name = None
         self._show_progress = show_progress
+        self.semaphore = asyncio.Semaphore(MAX_CONCURRENT)
+
 
     async def request(self, subpath):
         """Call the patchwork API and return the result as JSON
@@ -62,11 +67,13 @@ class Patchwork:
             return self.fake_request(subpath)
 
         full_url = '%s/api/1.2/%s' % (self.url, subpath)
-        async with aiohttp.ClientSession() as client:
-            response = await client.get(full_url)
-        if response.status != 200:
-            raise ValueError("Could not read URL '%s'" % full_url)
-        return response.json()
+        async with self.semaphore:
+            async with aiohttp.ClientSession() as client:
+                print('full_url', full_url)
+                async with client.get(full_url) as response:
+                    if response.status != 200:
+                        raise ValueError("Could not read URL '%s'" % full_url)
+                    return await response.json()
 
     @staticmethod
     def for_testing(func):
@@ -375,19 +382,33 @@ class Patchwork:
             list of PATCH: patch information for each patch in the series
         """
         data = await self.get_series(series_id)
-        print('data', data)
         patch_dict = data['patches']
 
         count = len(patch_dict)
         result = [None] * count
-        for i in range(count):
-            result[i] = await self._get_patch_status(patch_dict[i]['id'])
+        tasks = [self._get_patch_status(patch_dict[i]['id'])
+                                        for i in range(count)]
+        result = await asyncio.gather(*tasks)
+        # for i in range(count):
+            # result[i] = await self._get_patch_status(patch_dict[i]['id'])
         if self._show_progress:
             terminal.print_clear()
 
         cover = await self.get_series_cover(data)
 
         return cover, result
+
+    async def _get_one_state(self, svid, link):
+        data = await self.get_series(link)
+        patch_dict = data['patches']
+
+        count = len(patch_dict)
+        patches = [None] * count
+        for i in range(count):
+            patches[i] = await self._get_patch_status(patch_dict[i]['id'])
+
+        cover = await self.get_series_cover(data)
+        return cover, patches
 
     async def series_get_states(self, sync_data):
         """Sync a selection of series information from patchwork
@@ -402,8 +423,12 @@ class Patchwork:
                 COVER object, or None
                 list of PATCH: patch information for each patch in series
         """
-        result = {}
-        for svid, link in sync_data.items():
+        tasks = [self._get_one_state(svid, link)
+                 for svid, link in sync_data.items()]
+        print('tasks', tasks)
+        results = await asyncio.gather(*tasks)
+        print(results)
+        '''
             data = await self.get_series(link)
             print('data', data)
             patch_dict = data['patches']
@@ -416,3 +441,4 @@ class Patchwork:
             cover = await self.get_series_cover(data)
             result[svid] = cover, patches
         return result
+        '''
