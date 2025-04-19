@@ -1623,7 +1623,7 @@ second line.'''
         self.assertEqual('first', slist['first'].name)
         self.assertEqual('my description', slist['first'].desc)
 
-        plist = cser.get_ser_ver_dict()
+        plist = cser.get_ser_ver_list()
         self.assertEqual(1, len(plist))
         self.assertEqual((1, 1, None, None, None, None), plist[0])
 
@@ -1678,7 +1678,7 @@ second line.'''
         self.assertEqual('first', slist['first'].name)
 
         # We should have just one entry, with version 2
-        plist = cser.get_ser_ver_dict()
+        plist = cser.get_ser_ver_list()
         self.assertEqual(1, len(plist))
         self.assertEqual((1, 2, None, None, None, None), plist[0])
 
@@ -1725,7 +1725,7 @@ second line.'''
         self.assertEqual('first', slist['first'].name)
 
         # We should have two entries, one of each version
-        plist = cser.get_ser_ver_dict()
+        plist = cser.get_ser_ver_list()
         self.assertEqual(2, len(plist))
         self.assertEqual((1, 2, None, None, None, None), plist[0])
         self.assertEqual((1, 1, None, None, None, None), plist[1])
@@ -1873,8 +1873,11 @@ second line.'''
         series = patchstream.get_metadata('first', 0, 2, git_dir=self.gitdir)
         self.assertNotIn('version', series)
 
-    def setup_second(self):
+    def setup_second(self, do_sync=True):
         """Set up the 'second' series synced with the fake patchwork
+
+        Args:
+            do_sync (bool): True to sync the series
 
         Return: tuple:
             Cseries: New Cseries object
@@ -1889,13 +1892,14 @@ second line.'''
             cser.add_series('second', allow_unmarked=True)
             cser.increment('second')
             cser.do_autolink(pwork, 'second', 2, True)
-        with terminal.capture() as (out, _):
-            cser.series_sync(pwork, 'second', 2)
-        lines = out.getvalue().splitlines()
-        self.assertEqual("Updating series 'second' version 2 from link '457'",
-                         lines[0])
-        self.assertEqual('3 patches and cover letter updated', lines[1])
-        self.assertEqual(2, len(lines))
+        if do_sync:
+            with terminal.capture() as (out, _):
+                cser.series_sync(pwork, 'second', 2)
+            lines = out.getvalue().splitlines()
+            self.assertEqual(
+                "Updating series 'second' version 2 from link '457'", lines[0])
+            self.assertEqual('3 patches and cover letter updated', lines[1])
+            self.assertEqual(2, len(lines))
 
         return cser, pwork
 
@@ -2252,7 +2256,7 @@ second line.'''
                 "Setting link for series 'first' v2 to 2345",
                 out.getvalue().splitlines()[-1])
 
-        plist = cser.get_ser_ver_dict()
+        plist = cser.get_ser_ver_list()
         self.assertEqual(2, len(plist))
         self.assertEqual((1, 1, None, None, None, None), plist[0])
         self.assertEqual((1, 2, '2345', None, None, None), plist[1])
@@ -2280,7 +2284,7 @@ second line.'''
                 "Setting link for series 'first' v2 to 2345",
                 out.getvalue().splitlines()[-1])
 
-        plist = cser.get_ser_ver_dict()
+        plist = cser.get_ser_ver_list()
         self.assertEqual(2, len(plist))
         self.assertEqual((1, 1, '1234', None, None, None), plist[0])
         self.assertEqual((1, 2, '2345', None, None, None), plist[1])
@@ -2330,7 +2334,7 @@ second line.'''
 
         self.db_open()
 
-        plist = cser.get_ser_ver_dict()
+        plist = cser.get_ser_ver_list()
         self.assertEqual(2, len(plist))
         self.assertEqual((1, 1, None, None, None, None), plist[0])
         self.assertEqual((2, 1, '456', None, None, None), plist[1])
@@ -3350,7 +3354,7 @@ Date:   .*
 
     def test_series_sync_all(self):
         """Sync all series at once"""
-        cser, pwork = self.setup_second()
+        cser, pwork = self.setup_second(False)
 
         # cser = self.get_cser()
         # pwork = Patchwork.for_testing(self._fake_patchwork_cser)
@@ -3361,11 +3365,10 @@ Date:   .*
             cser.add_series('first', 'description', allow_unmarked=True)
             cser.increment('first')
             cser.increment('first')
-            cser.set_link('first', 2, '123', True)
+            cser.set_link('first', 1, '123', True)
             cser.set_link('first', 2, '1234', True)
 
         cser.series_sync_all(pwork)
-
 
     def _check_second(self, lines, show_all):
         self.assertEqual('second: Series for my board (versions: 1 2)',

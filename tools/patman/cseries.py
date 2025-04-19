@@ -146,10 +146,11 @@ class Cseries:
             sdict[name] = ser
         return sdict
 
-    def get_ser_ver_dict(self):
+    def get_ser_ver_list(self):
         """Get a list of patchwork entries from the database
 
         Return: value: list of tuple:
+            int: ser_ver id
             int: series_id
             int: version
             link: link string, or ''
@@ -158,9 +159,16 @@ class Cseries:
             str: Cover-letter name
         """
         res = self.db.execute(
-            'SELECT series_id, version, link, cover_id, cover_num_comments, '
+            'SELECT id, series_id, version, link, cover_id, cover_num_comments, '
             'name FROM ser_ver')
         return res.fetchall()
+
+    def get_ser_ver_dict(self):
+        svlist = self.get_ser_ver_list()
+        svdict = {}
+        for svid, ser_id, ver, link, cover_id, cover_num_comm, name in svlist:
+            svdict[svid] = ser_id, ver, link, cover_id, cover_num_comm, name
+        return svdict
 
     def get_upstream_dict(self):
         """Get a list of upstream entries from the database
@@ -1568,6 +1576,27 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             self._get_patches(series, version))
         self._list_patches(branch, pwc, series, desc, cover_id, num_comments)
     '''
+    def _sync_one(self, svid, cover, patches):
+        pwc = self.get_pcommit_dict(svid)
+
+        updated = 0
+        for seq, item in enumerate(pwc.values()):
+            if seq >= len(patches):
+                continue
+            patch = patches[seq]
+            if patch.id:
+                self.db.execute(
+                    'UPDATE pcommit SET '
+                    'patch_id = ?, state = ?, num_comments = ? WHERE id = ?',
+                    (patch.id, patch.state, patch.num_comments, item.id))
+                updated += self.rowcount()
+        if cover:
+            self.db.execute(
+                'UPDATE ser_ver SET cover_id = ?, cover_num_comments = ?, '
+                'name = ? WHERE id = ?',
+                (cover.id, cover.num_comments, cover.name, svid))
+
+        return updated
 
     def series_sync(self, pwork, series, version):
         """Sync the series status from patchwork
@@ -1588,50 +1617,50 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         cover, patches = self.loop.run_until_complete(
             pwork.series_get_state(link))
 
-        pwc = self.get_pcommit_dict(svid)
-
-        updated = 0
-        for seq, item in enumerate(pwc.values()):
-            if seq >= len(patches):
-                continue
-            patch = patches[seq]
-            if patch.id:
-                self.db.execute(
-                    'UPDATE pcommit SET '
-                    'patch_id = ?, state = ?, num_comments = ? WHERE id = ?',
-                    (patch.id, patch.state, patch.num_comments, item.id))
-                updated += self.rowcount()
-        if cover:
-            self.db.execute(
-                'UPDATE ser_ver SET cover_id = ?, cover_num_comments = ?, '
-                'name = ? WHERE id = ?',
-                (cover.id, cover.num_comments, cover.name, svid))
-
+        updated = self._sync_one(svid, cover, patches)
         self.commit()
+
         tout.info(f"{updated} patch{'es' if updated != 1 else ''}"
                   f"{' and cover letter' if cover else ''} updated")
 
-    def series_sync_all(self, pwork, all_versions=False):
+    def series_sync_all(self, pwork, sync_all_versions=False):
         """Sync all series status from patchwork
 
         Args:
             pwork (Patchwork): Patchwork object to use
-            show_all_versions (bool): True to show all versions of a series,
-                False to show only the final version
+            sync_all_versions (bool): True to sync all versions of a series,
+                False to sync only the latest version
         """
         sdict = self.get_ser_ver_dict()
         to_fetch = {}
 
-        # Find the maximum version for each series
-        max_vers = self.series_all_max_versions()
+        if sync_all_versions:
+            to_fetch = self.get_ser_ver_dict()
+        else:
+            # Find the maximum version for each series
+            max_vers = self.series_all_max_versions()
+            print('max_vers', max_vers)
 
-        # Get a list of links to fetch
-        for ser_id, max_ver in max_vers:
-            ser = sdict[ser_id]
-            if ser[2]:
-                to_fetch[ser_id] = ser[2]
+            # Get a list of links to fetch
+            for svid, max_ver in max_vers:
+                ser = sdict[svid]
+                if ser[2]:
+                    to_fetch[svid] = ser[2]
+        print('to_fetch', to_fetch)
 
-        self.loop.run_until_complete(pwork.series_get_states(self, to_fetch))
+        self.loop.run_until_complete(pwork.series_get_states(to_fetch))
+
+        updated = 0
+        updated_cover = 0
+        for svid, (cover, patches) in to_fetch.items():
+            updated += self._sync_one(svid, cover, patches)
+            if cover:
+                updated_cover += 1
+
+        tout.info(
+            f"{updated} patch{'es' if updated != 1 else ''} and "
+            f"{updated_cover} cover letter{'s' if updated_cover != 1 else ''} "
+            'updated')
 
     def series_max_version(self, idnum):
         """Find the latest version of a series
@@ -1650,11 +1679,11 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         """Find the latest version of all series
 
         Return: list of:
-            int: Series ID
+            int: ser_ver ID
             int: Maximum version
         """
         res = self.db.execute(
-            'SELECT series_id, MAX(version) FROM ser_ver GROUP BY series_id')
+            'SELECT id, MAX(version) FROM ser_ver GROUP BY series_id')
         versions = res.fetchall()
         return versions
 

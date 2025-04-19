@@ -386,34 +386,28 @@ class Patchwork:
 
         return cover, result
 
-    '''
-    def series_get_states(self, sync_data):
+    async def series_get_states(self, sync_data):
         """Sync a selection of series information from patchwork
 
         Args:
             sync_data (dict of series IDs to sync):
                 key (int): Series ID
-                value (None): Value for this function to fill in with tuple:
-                    COVER object, or None
-                    list of PATCH: patch information for each patch in series
+                value (str): Series link
+
+        Return:
+            Same dict, but with value changed to a tuple:
+                COVER object, or None
+                list of PATCH: patch information for each patch in series
         """
-        with concurrent.futures.ThreadPoolExecutor(max_workers=16) as ext:
-            for ser_id in sync_data:
-                fdata = ext.submit(self.get_series, series_id)
-                patch_dict = fdata.result(timeout=TIMEOUT)['patches']
+        for ser_id in sync_data:
+            data = await self.get_series(ser_id)
+            patch_dict = data['patches']
 
-                count = len(patch_dict)
-                result = [None] * count
-                for i in range(count):
-                    result[i] = stat = self._get_patch_status(, repeat(patch_dict), range(count),
-                        repeat(result), repeat(count))
-                for fresponse in futures:
-                    if fresponse:
-                        raise fresponse.exception()
-                if self._show_progress:
-                    terminal.print_clear()
+            count = len(patch_dict)
+            patches = [None] * count
+            for i in range(count):
+                patches[i] = await self._get_patch_status(patch_dict[i]['id'])
+            print('patches', patches)
 
-                cover = self.get_series_cover(data)
-
-                return cover, result
-    '''
+            cover = await self.get_series_cover(data)
+            sync_data[ser_id] = cover, patches
