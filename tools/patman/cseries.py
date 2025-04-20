@@ -164,6 +164,18 @@ class Cseries:
         return res.fetchall()
 
     def get_ser_ver_dict(self):
+        """Get a dict of patchwork entries from the database
+
+        Return: dict contain all records:
+            key (int): ser_ver id
+            value (tuple):
+                int: series_id
+                int: version
+                link: link string, or ''
+                str: Cover-letter ID
+                int: Number of cover-letter comments
+                str: Cover-letter name
+        """
         svlist = self.get_ser_ver_list()
         svdict = {}
         for svid, ser_id, ver, link, cover_id, cover_num_comm, name in svlist:
@@ -564,12 +576,28 @@ class Cseries:
 
         self.set_link(name, version, pws, update_commit)
 
-    def autolink_all(self, pwork, update_commit):
-        to_find, already = self._get_fetch_dict(False, False)
-        print(to_find)
+    def autolink_all(self, pwork, update_commit, sync_all_versions):
+        """Automatically find a series link by looking in patchwork
 
-        # pws, options = self.loop.run_until_complete(pwork.find_series_list(
-            # ser.desc, version))
+        Args:
+            pwork (Patchwork): Patchwork object to use
+            update_commit (bool): True to update the current commit with the
+                link
+            sync_all_versions (bool): True to sync all versions of a series,
+                False to sync only the latest version
+        """
+        to_find, already = self._get_fetch_dict(False, sync_all_versions)
+
+        # Get rid of things without a description
+        valid = {}
+        bad = []
+        for svid, (link, desc) in to_find.items():
+            if not desc:
+                print('no desc', svid)
+
+        results = self.loop.run_until_complete(pwork.find_series_list(to_find))
+        for ser_id, link, options in results:
+            print('ser_id', ser_id, link, options)
 
     def get_version_list(self, idnum):
         """Get a list of the versions available for a series
@@ -1642,7 +1670,9 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         Return: tuple:
             dict:
                 key (int): svid
-                value (str): patchwork link for the series
+                value (tuple):
+                   str: patchwork link for the series
+                   desc: cover-letter name / series description
             int: number of items which don't match (which are therefore not
                 included in dict)
         """
@@ -1651,9 +1681,9 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         to_fetch = {}
 
         if sync_all_versions:
-            for svid, _, _, link, _, _, _ in self.get_ser_ver_list():
+            for svid, _, _, link, _, _, desc in self.get_ser_ver_list():
                 if bool(link) == has_link:
-                    to_fetch[svid] = link
+                    to_fetch[svid] = link, desc
                 else:
                     other += 1
         else:
@@ -1664,7 +1694,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             for svid, _ in max_vers:
                 ser = sdict[svid]
                 if bool(ser[2]) == has_link:
-                    to_fetch[svid] = ser[2]
+                    to_fetch[svid] = ser[2], ser[5]
                 else:
                     other += 1
         return to_fetch, other

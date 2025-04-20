@@ -77,23 +77,43 @@ class Patchwork:
 
     @staticmethod
     def for_testing(func):
+        """Get an instance to use for testing
+
+        Args:
+            func (function): Function to call to handle requests. The function
+                is passed a URL and is expected to return a dict with the
+                resulting data
+
+        Returns:
+            Patchwork: testing instance
+        """
         pwork = Patchwork(None, show_progress=False)
         pwork.fake_request = func
         return pwork
 
     async def get_projects(self):
+        """Get a list of projects on the server
+
+        Returns:
+            list of dict, one for each project
+                'name' (str): Project name, e.g. 'U-Boot'
+                'id' (int): Project ID, e.g. 9
+                'link_name' (str): Project's link-name, e.g. 'uboot'
+        """
         async with aiohttp.ClientSession() as client:
             return await self._request(client, 'projects/')
 
-    async def _find_series(self, client, desc, version):
+    async def _find_series(self, client, svid, desc, version):
         """Find a series on the server
 
         Args:
+            svid (int): ser_ver ID
             desc (str): Description to search for
             version (int): Version number to search for
 
         Returns:
             tuple:
+                int: ser_ver ID (as passed in
                 str: Series ID, or None if not found
                 list of dict, or None if found
                     each dict is the server result from a possible series
@@ -107,25 +127,47 @@ class Patchwork:
                 if int(ser['version']) == version:
                     return ser['id'], None
                 name_found.append(ser)
-        return None, name_found or res
+        return svid, None, name_found or res
 
     async def find_series(self, desc, version):
+        """Find a series based on its description and version
+
+        Args:
+            desc (str): Description (cover-letter title)
+            version (int): Version number
+
+        Return:
+            tuple:
+                str: Series ID, or None if not found
+                list of dict, or None if found
+                    each dict is the server result from a possible series
+        """
         async with aiohttp.ClientSession() as client:
-            return await self._find_series(client, desc, version)
+            return await self._find_series(client, desc, version)[1:]
 
     async def find_series_list(self, to_find):
         """Find the link for each series in a list
 
         Args:
-            to_find: list of tuple:
-                str: description
-                int: version
+            to_find (dict of svids to sync):
+                key (int): ser_ver ID
+                value (tuple):
+                    str: Series link
+                    str: Series description
+
+        Return:
+            list of tuple, one for each item in to_find:
+                svid: ser_ver_ID
+                str: Series link, or None if not found
+                list of dict, or None if found
+                    each dict is the server result from a possible series
         """
         async with aiohttp.ClientSession() as client:
             tasks = [asyncio.create_task(
-                self._find_series(client, desc, version))
-                for desc, version in to_find]
+                self._find_series(client, svid, desc, version))
+                for svid, (desc, version) in to_find.items()]
             results = await asyncio.gather(*tasks)
+
         return results
 
     def set_project(self, project_id, link_name):
@@ -480,7 +522,9 @@ class Patchwork:
         Args:
             sync_data (dict of svids to sync):
                 key (int): Series-version ID
-                value (str): Series link
+                value (tuple):
+                    str: Series link
+                    str: Series description
 
         Return:
             list of items, each a tuple:
@@ -491,8 +535,11 @@ class Patchwork:
         result = {}
         self.request_count = 0
         async with aiohttp.ClientSession() as client:
-            tasks = [asyncio.create_task(self._get_one_state(client, svid, link, result))
-                     for svid, link in sync_data.items()]
+            tasks = [
+                asyncio.create_task(self._get_one_state(
+                    client, svid, link, result))
+                for svid, (link, _) in sync_data.items()
+                ]
             results = await asyncio.gather(*tasks)
             '''
             while tasks:

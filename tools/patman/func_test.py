@@ -2389,6 +2389,7 @@ second line.'''
             cser.add_series('first', '', allow_unmarked=True)
             cser.add_series('second', allow_unmarked=True)
 
+        cser.autolink_all(pwork, True, True)
 
     def check_series_archive(self):
         """Coroutine to run the archive test"""
