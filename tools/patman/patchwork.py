@@ -55,6 +55,7 @@ class Patchwork:
         """Call the patchwork API and return the result as JSON
 
         Args:
+            client (aiohttp.ClientSession_: Session to use
             subpath (str): URL subpath to use
 
         Returns:
@@ -197,7 +198,7 @@ class Patchwork:
         self.proj_id = project_id
         self.link_name = link_name
 
-    async def _get_series(self, client, series_id):
+    async def get_series(self, client, series_id):
         """Read information about a series
 
         Args:
@@ -242,11 +243,7 @@ class Patchwork:
         """
         return await self._request(client, f'series/{series_id}/')
 
-    async def get_series(self, series_id):
-        async with aiohttp.ClientSession() as client:
-            return await self._get_series(client, series_id)
-
-    async def _get_patch(self, client, patch_id):
+    async def get_patch(self, client, patch_id):
         """Read information about a patch
 
         Args:
@@ -256,10 +253,6 @@ class Patchwork:
             dict containing patchwork's patch information
         """
         return await self._request(client, f'patches/{patch_id}/')
-
-    async def get_patch(self, patch_id):
-        async with aiohttp.ClientSession() as client:
-            return await self._get_patch(client, patch_id)
 
     async def _get_patch_comments(self, client, patch_id):
         """Read comments about a patch
@@ -549,7 +542,7 @@ class Patchwork:
                 asyncio.create_task(self._get_one_state(
                     client, svid, link, result))
                 for svid, link in sync_data.items()
-                ]
+            ]
             results = await asyncio.gather(*tasks)
             '''
             while tasks:

@@ -8,6 +8,8 @@ Allows creation of a new branch based on the old but with the review tags
 collected from patchwork.
 """
 
+import aiohttp
+import asyncio
 import collections
 import concurrent.futures
 from itertools import repeat
@@ -197,13 +199,16 @@ def compare_with_series(series, patches):
 
     return patch_for_commit, commit_for_patch, warnings
 
-async def collect_patches(series, series_id, patchwork, read_cover_comments):
+
+async def collect_patches(client, series, series_id, patchwork,
+                          read_cover_comments):
     """Collect patch information about a series from patchwork
 
     Uses the Patchwork REST API to collect information provided by patchwork
     about the status of each patch.
 
     Args:
+        client (aiohttp.ClientSession): Session to use
         series (Series): Series object corresponding to the local branch
             containing the series
         series_id (str): Patch series ID number
@@ -217,7 +222,7 @@ async def collect_patches(series, series_id, patchwork, read_cover_comments):
         ValueError: if the URL could not be read or the web page does not follow
             the expected structure
     """
-    data = await patchwork.get_series(series_id)
+    data = await patchwork.get_series(client, series_id)
 
     # Get all the rows, which are patches
     patch_dict = data['patches']
@@ -248,16 +253,19 @@ async def collect_patches(series, series_id, patchwork, read_cover_comments):
 
     return patches, cover
 
-async def find_new_responses(cmt, patch, patchwork):
+
+async def find_new_responses(client, cmt, patch, patchwork):
     """Find new rtags collected by patchwork that we don't know about
 
     This is designed to be run in parallel, once for each commit/patch
 
     Args:
+        client (aiohttp.ClientSession): Session to use
         seq (int): Position in new_rtag_list and review_list to update
         cmt (Commit): Commit object for this commit
         patch (Patch): Corresponding Patch object for this patch
         patchwork (Patchwork): Patchwork class to handle communications
+
     Return: tuple:
         new_rtags (dict)
             key: Response tag (e.g. 'Reviewed-by')
@@ -269,7 +277,7 @@ async def find_new_responses(cmt, patch, patchwork):
         return
 
     # Get the content for the patch email itself as well as all comments
-    patch_data = await patchwork.get_patch(patch.id)
+    patch_data = await patchwork.get_patch(client, patch.id)
     pstrm = PatchStream.process_text(patch_data['content'], True)
 
     rtags = collections.defaultdict(set)
@@ -391,15 +399,16 @@ def create_branch(series, new_rtag_list, branch, dest_branch, overwrite,
             [parent.target])
     return num_added
 
-async def check_patchwork_status(series, series_id, branch, dest_branch, force,
-                                 show_comments, show_cover_comments, patchwork,
-                                 test_repo=None, single_thread=False):
+async def async_check_pwork(client, series, series_id, branch, dest_branch,
+                            force, show_comments, show_cover_comments,
+                            patchwork, test_repo=None, single_thread=False):
     """Check the status of a series on Patchwork
 
     This finds review tags and comments for a series in Patchwork, displaying
     them to show what is new compared to the local series.
 
     Args:
+        client (aiohttp.ClientSession): Session to use
         series (Series): Series object for the existing branch
         series_id (str): Patch series ID number
         branch (str): Existing branch to update, or None
@@ -411,7 +420,7 @@ async def check_patchwork_status(series, series_id, branch, dest_branch, force,
         patchwork (Patchwork): Patchwork class to handle communications
         test_repo (pygit2.Repository): Repo to use (use None unless testing)
     """
-    patches, cover = await collect_patches(series, series_id, patchwork,
+    patches, cover = await collect_patches(client, series, series_id, patchwork,
                                            show_cover_comments)
     col = terminal.Color()
     count = len(series.commits)
@@ -426,7 +435,7 @@ async def check_patchwork_status(series, series_id, branch, dest_branch, force,
 
     for i in range(count):
         new_rtag_list[i], review_list[i] = await find_new_responses(
-            series.commits[i], patch_list[i], patchwork)
+            client, series.commits[i], patch_list[i], patchwork)
 
     with terminal.pager():
         num_to_add = 0
@@ -478,3 +487,23 @@ async def check_patchwork_status(series, series_id, branch, dest_branch, force,
             terminal.tprint(
                 "%d response%s added from patchwork into new branch '%s'" %
                 (num_added, 's' if num_added != 1 else '', dest_branch))
+
+
+async def _check_patchwork_status(series, series_id, branch, dest_branch, force,
+                           show_comments, show_cover_comments, patchwork,
+                           test_repo=None, single_thread=False):
+    async with aiohttp.ClientSession() as client:
+       await async_check_pwork(
+            client, series, series_id, branch, dest_branch,  force,
+            show_comments, show_cover_comments, patchwork,
+            test_repo=test_repo, single_thread=single_thread)
+
+
+def check_patchwork_status(series, series_id, branch, dest_branch, force,
+                           show_comments, show_cover_comments, patchwork,
+                           test_repo=None, single_thread=False):
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(_check_patchwork_status(
+            series, series_id, branch, dest_branch,  force, show_comments,
+            show_cover_comments, patchwork, test_repo=test_repo,
+            single_thread=single_thread))
