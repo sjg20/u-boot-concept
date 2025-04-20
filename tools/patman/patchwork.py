@@ -146,8 +146,8 @@ class Patchwork:
         """
         async with aiohttp.ClientSession() as client:
             # We don't know the svid and it isn't needed, so use -1
-            _, _, link, options = await self._find_series(client, -1, desc,
-                                                          version)
+            _, _, link, options = await self._find_series(client, -1, -1,
+                                                          version, desc)
         return link, options
 
     async def find_series_list(self, to_find):
@@ -173,7 +173,7 @@ class Patchwork:
         """
         async with aiohttp.ClientSession() as client:
             tasks = [asyncio.create_task(
-                self._find_series(client, svid, ser_id, desc, version))
+                self._find_series(client, svid, ser_id, version, desc))
                 for svid, (ser_id, version, link, desc) in to_find.items()]
             results = await asyncio.gather(*tasks)
 

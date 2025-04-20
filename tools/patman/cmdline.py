@@ -175,11 +175,13 @@ def setup_parser():
                      help="Don't require commits to be marked")
     add.add_argument('-U', '--upstream', help='Commit to end before')
     series_subparsers.add_parser('archive')
+
     auto = series_subparsers.add_parser('autolink')
     auto.add_argument('-u', '--update', action='store_true',
                       help='Update the branch commit')
     auto.add_argument('-w', '--autolink-wait', type=int, default=0,
         help='Number of seconds to wait for patchwork to get a sent series')
+
     series_subparsers.add_parser('dec')
     series_subparsers.add_parser('get-link')
     series_subparsers.add_parser('inc')
