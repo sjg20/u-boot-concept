@@ -22,6 +22,7 @@ It also has some Patchwork features:
 - shows review tags from Patchwork so you can update your local patches
 - pulls these down into a new branch on request
 - lists comments received on a series
+- manage local series and their status on patchwork
 
 It is intended to automate patch creation and make it a less
 error-prone process. It is useful for U-Boot and Linux work so far,
@@ -657,6 +658,218 @@ so to send them:
     patman
 
 and it will create and send the version 2 series.
+
+
+Series Management
+-----------------
+
+Sometimes you might have several series in flight at the same time. Each of
+these receives comments and you want to create a new version of each series with
+those comments addressed.
+
+Patman provides a few subcommands which are helpful for managing series.
+
+Series and branches
+~~~~~~~~~~~~~~~~~~~
+
+'patman series' works with the concept of a series. It maintains a local
+database (.patman.db in your top-level git tree) and uses that to keep track of
+series and patches.
+
+Each series goes through muliple versions. Patman requires that the first
+version of your series is in a branch without a numeric suffix. Branch names
+like 'serial' and 'video' are OK, but 'part3' is not. This is because Patman
+uses the number at the end of the branch name to indicate the version.
+
+If your series name is 'video', then you can have a 'video' branch for version
+1 of the series, 'video2' for version 2 and 'video3' for version 3. All three
+branches are for the same series. Patman keeps track of these different
+versions. It handles the branch naming automatically, but you need to be aware
+of what it is doing.
+
+You will have an easier time if the branch names you use with 'patman series'
+are short, no more than 15 characters. This is the amount of columnar space in
+listings. You can add a longer description as the series description. If you
+are used to having very descriptive branch names, remember that patman lets you
+add metadata into commit which is automatically removed before sending.
+
+This documentation uses the term 'series' to mean all the versions of a series
+and 'series/version' to mean a particular version of a series.
+
+Updating commits
+~~~~~~~~~~~~~~~~
+
+Since Patman provides quite a bit of automation, it updates your commits in
+some cases, effectively doing a rebase of a branch in order to change the tags
+in the commits. It never makes code changes.
+
+In extremis ou can use 'git reflog' to revert something that Patman did.
+
+
+Series subcommands
+~~~~~~~~~~~~~~~~~~
+
+Here is a short overview of the available subcommands:
+
+    add
+        Add a new series. Use this on an existing branch to tell Patman about it.
+
+    archive
+        Archive a series when you have finished upstreaming it. Archived series
+        are not shown by most commands.
+
+    unarchive
+        Unarchive a series when you decide you need to do something more with
+        it.
+
+    autolink
+        Search patchwork for the series link for your series, so Patman can
+        track the status
+
+    autolink-all
+        Same but for all series
+
+    inc
+        Increase the series number, effectively creating a new branch with the
+        next highest version number. The new branch is created based on the
+        existing branch. So if you use 'patman series inc' on branch 'video2'
+        it will create branch 'video3' and add v3 into its database
+
+    dec
+        Decrease the series number, thus deleting the current branch and
+        removing that version from the data. If you use this comment on branch
+        'video3' Patman will delete version 3 and branch 'video3'.
+
+    get-link
+        Shows the Patchwork link for a series/version
+
+    list
+        Lists the series in the database
+
+    mark
+        Mark a series with 'Change-Id' tags so that Patman can track patches
+        even when the subject changes. Unmarked patches just use the subject to
+        decided which is which.
+
+    unmark
+        Remove 'Change-Id' tags from a series.
+
+    open
+        Open a series in Patchwork using your web browser
+
+    patches
+        Show the patches in a particular series/version
+
+    progress
+        Show upstream progress for your series, or for all series
+
+    remove
+        Remove a series entirely, including all versions
+
+    remove-version
+        Remove a particular version of a series. This is similar to 'dec'
+        except that any version can be removed, not just the latest one.
+
+    scan
+        Scan the local branch and update the database with the set of patches
+        in that branch. This throws away the old patches.
+
+    send
+        Send a series out as patches. This is similar to 'patman send' except
+        that it can send any series, not just the current branch. It also
+        waits a little for patchwork to see the cover letter, so it can find
+        out the patchwork link for the series.
+
+    set-link
+        Sets the Patchwork link for a series-version manually.
+
+    status
+        Run 'patman status' on a series. This is similar to 'patman status'
+        except that it can get status on any series, not just the current
+        branch
+
+    summary
+        Shows a quick summary of series with their status and description.
+
+    sync
+        Sync the status of a series with Pathwork, so that
+        'patman series progress' can show the right information.
+
+    sync-all
+        Sync the status of all series.
+
+
+Patman series workflow
+~~~~~~~~~~~~~~~~~~~~~~
+
+Here is a run-through of how to incorporate 'patman series' into your workflow.
+
+Firstly, set up your project::
+
+    patman patchwork set-project U-Boot
+
+This just tells Patman to look on the Patchwork server for a project of that
+name. Internally Patman stores the ID and URL 'link-name' for the project, so it
+can access it.
+
+If you need to use a different patchwork server, use the `--patchwork-url`
+option or put the URL in your Patman-settings file.
+
+Now create a branch. For our example we are going to send out a series related
+to video so the branch will be called 'video'. The upstream remove is called
+'us'::
+
+    git checkout -b video us/master
+
+We now have a branch and so we can do some commits::
+
+    <edit files>
+    git add ...
+    <edit files>
+    git add -u
+    git commit ...
+    git commit ...
+
+We now have a few commits in our 'video' branch. Let's tell patman about it::
+
+    patman series add
+
+Like most commands, if no series is given (`patman series -s video add`) then
+the current branch is assumed. Since the branch is called 'video' patman knows
+that it is version one of the video series.
+
+You'll likely get a warning that there is no cover letter. Let's add some tags
+to the top commit::
+
+    Series-to: u-boot
+    Series-cc: ...
+    Cover-letter:
+    video: Improve syncing performance with cyclic
+
+Trying again::
+
+    patman series add
+
+You'll likely get a warning that the commits are unmarked. You can either let
+patman add Change-Id values itself with the `-m` flag, or tell it not to worry
+about it with `-M`. You must choose one or the other. Let's leave the commits
+unmarked::
+
+    patman series add -M
+
+Congratulations, you've now got a patman database!
+
+Now let's send out the series. We will add tags to the top commit::
+
+To send it::
+
+    patman series send
+
+You should send 'git send-email' start up and you can confirm the sending of
+each email.
+
+After that, patman waits a bit to see if it can find your new series appearing
+on Patchwork.
 
 
 General points
