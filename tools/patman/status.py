@@ -434,8 +434,10 @@ async def async_check_pwork(client, series, series_id, branch, dest_branch,
     patch_list = [patch_for_commit.get(c) for c in range(len(series.commits))]
 
     for i in range(count):
-        new_rtag_list[i], review_list[i] = await find_new_responses(
+        result = await find_new_responses(
             client, series.commits[i], patch_list[i], patchwork)
+        if result:
+            new_rtag_list[i], review_list[i] = result
 
     with terminal.pager():
         num_to_add = 0
