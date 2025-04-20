@@ -2378,6 +2378,16 @@ second line.'''
 
     def test_series_autolink_all(self):
         """Test linking all cseries to their patchwork series by description"""
+        cser = self.get_cser()
+
+        pwork = Patchwork.for_testing(self._fake_patchwork_cser_link)
+        pwork.set_project(PROJ_ID, PROJ_LINK_NAME)
+        self.assertFalse(cser.get_project())
+        cser.set_project(pwork, 'U-Boot', quiet=True)
+
+        with terminal.capture():
+            cser.add_series('first', '', allow_unmarked=True)
+            cser.add_series('second', allow_unmarked=True)
 
 
     def check_series_archive(self):
