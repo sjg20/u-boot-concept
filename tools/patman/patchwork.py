@@ -103,18 +103,20 @@ class Patchwork:
         async with aiohttp.ClientSession() as client:
             return await self._request(client, 'projects/')
 
-    async def _find_series(self, client, svid, desc, version):
+    async def _find_series(self, client, svid, ser_id, desc, version):
         """Find a series on the server
 
         Args:
             svid (int): ser_ver ID
+            ser_id (int): series ID
             desc (str): Description to search for
             version (int): Version number to search for
 
         Returns:
             tuple:
-                int: ser_ver ID (as passed in
-                str: Series ID, or None if not found
+                int: ser_ver ID (as passed in)
+                int: series ID (as passed in)
+                str: Series link, or None if not found
                 list of dict, or None if found
                     each dict is the server result from a possible series
         """
@@ -125,9 +127,9 @@ class Patchwork:
         for ser in res:
             if ser['name'] == desc:
                 if int(ser['version']) == version:
-                    return svid, ser['id'], None
+                    return svid, ser_id, ser['id'], None
                 name_found.append(ser)
-        return svid, None, name_found or res
+        return svid, ser_id, None, name_found or res
 
     async def find_series(self, desc, version):
         """Find a series based on its description and version
@@ -144,8 +146,8 @@ class Patchwork:
         """
         async with aiohttp.ClientSession() as client:
             # We don't know the svid and it isn't needed, so use -1
-            _, link, options = await self._find_series(client, -1, desc,
-                                                       version)
+            _, _, link, options = await self._find_series(client, -1, desc,
+                                                          version)
         return link, options
 
     async def find_series_list(self, to_find):
@@ -155,20 +157,22 @@ class Patchwork:
             to_find (dict of svids to sync):
                 key (int): ser_ver ID
                 value (tuple):
+                    int: Series ID
                     str: Series link
                     str: Series description
 
         Return:
             list of tuple, one for each item in to_find:
-                svid: ser_ver_ID
+                int: ser_ver_ID
+                int: series ID
                 str: Series link, or None if not found
                 list of dict, or None if found
                     each dict is the server result from a possible series
         """
         async with aiohttp.ClientSession() as client:
             tasks = [asyncio.create_task(
-                self._find_series(client, svid, desc, version))
-                for svid, (desc, version) in to_find.items()]
+                self._find_series(client, svid, ser_id, desc, version))
+                for svid, (ser_id, desc, version) in to_find.items()]
             results = await asyncio.gather(*tasks)
 
         return results

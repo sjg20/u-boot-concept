@@ -458,6 +458,35 @@ class Cseries:
                 f"Series '{ser.name}' does not have a version {version}")
         return versions
 
+    def _set_link(self, ser_id, name, version, link, update_commit):
+        """Add / update a series-links link for a series
+
+        Args:
+            ser_id (int): Series ID number
+            name (str): Series name (used to find the branch)
+            version (int): Version number, or None to detect from name
+            link (str): Patchwork link-string for the series
+            update_commit (bool): True to update the current commit with the
+                link
+
+        Return:
+            bool: True if the database was update, False if the ser_id or
+                version was not found
+        """
+        if update_commit:
+            branch_name = self.get_branch_name(name, version)
+            _, _, series, max_vers, _ = self._prep_series(branch_name)
+            self.update_series(branch_name, series, max_vers, add_vers=version,
+                               add_link=link)
+        if link is None:
+            link = ''
+        self.db.execute(
+            f"UPDATE ser_ver SET link = '{link}' WHERE "
+            'series_id = ? AND version = ?', (ser_id, version))
+        updated = self.rowcount() != 0
+        self.commit()
+        return updated
+
     def set_link(self, series_name, version, link, update_commit):
         """Add / update a series-links link for a series
 
@@ -472,19 +501,9 @@ class Cseries:
         ser, version = self.parse_series_and_version(series_name, version)
         self.ensure_version(ser, version)
 
-        if update_commit:
-            branch_name = self.get_branch_name(ser.name, version)
-            _, _, series, max_vers, _ = self._prep_series(branch_name)
-            self.update_series(branch_name, series, max_vers, add_vers=version,
-                               add_link=link)
-        if link is None:
-            link = ''
-        tout.info(
-            f"Setting link for series '{ser.name}' v{version} to {link}")
-        self.db.execute(
-            f"UPDATE ser_ver SET link = '{link}' WHERE "
-            'series_id = ? AND version = ?', (ser.idnum, version))
+        self._set_link(ser.idnum, ser.name, version, link, update_commit)
         self.commit()
+        tout.info(f"Setting link for series '{ser.name}' v{version} to {link}")
 
     def get_link(self, series, version):
         """Get the patchwork link for a version of a series
@@ -576,12 +595,10 @@ class Cseries:
 
         self.set_link(name, version, pws, update_commit)
 
-    def _get_autolink_dict(self, has_link, sync_all_versions):
+    def _get_autolink_dict(self, sync_all_versions):
         """Get a dict of ser_vers to fetch, along with their patchwork links
 
         Args:
-            has_link (bool): True to add links to the dict, False to add svids
-                with missing links
             sync_all_versions (bool): True to sync all versions of a series,
                 False to sync only the latest version
 
@@ -589,33 +606,34 @@ class Cseries:
             dict:
                 key (int): svid
                 value (tuple):
+                   int: series ID
                    str: patchwork link for the series
                    desc: cover-letter name / series description
             int: number of items which don't match (which are therefore not
                 included in dict)
         """
-        other = 0
+        already = 0
         sdict = self.get_ser_ver_dict()
         to_fetch = {}
 
         if sync_all_versions:
-            for svid, _, _, link, _, _, desc in self.get_ser_ver_list():
-                if bool(link) == has_link:
-                    to_fetch[svid] = link, desc
+            for svid, ser_id, _, link, _, _, desc in self.get_ser_ver_list():
+                if not link:
+                    to_fetch[svid] = ser_id, link, desc
                 else:
-                    other += 1
+                    already += 1
         else:
             # Find the maximum version for each series
             max_vers = self.series_all_max_versions()
 
             # Get a list of links to fetch
-            for svid, _ in max_vers:
+            for svid, ser_id, _ in max_vers:
                 ser = sdict[svid]
-                if bool(ser[2]) == has_link:
-                    to_fetch[svid] = ser[2], ser[5]
+                if not ser[2]:
+                    to_fetch[svid] = ser_id, ser[2], ser[5]
                 else:
-                    other += 1
-        return to_fetch, other
+                    already += 1
+        return to_fetch, already
 
     def autolink_all(self, pwork, update_commit, sync_all_versions):
         """Automatically find a series link by looking in patchwork
@@ -627,18 +645,40 @@ class Cseries:
             sync_all_versions (bool): True to sync all versions of a series,
                 False to sync only the latest version
         """
-        to_find, already = self._get_fetch_dict(False, sync_all_versions)
+        to_find, already = self._get_autolink_dict(sync_all_versions)
 
         # Get rid of things without a description
         valid = {}
-        bad = []
-        for svid, (link, desc) in to_find.items():
-            if not desc:
-                print('no desc', svid)
+        no_desc = 0
+        for svid, (ser_id, link, desc) in to_find.items():
+            if desc:
+                valid[svid] = ser_id, link, desc
+            else:
+                no_desc += 1
 
-        results = self.loop.run_until_complete(pwork.find_series_list(to_find))
-        for ser_id, link, options in results:
-            print('ser_id', ser_id, link, options)
+        not_found = 0
+        updated = 0
+        failed = 0
+        results = self.loop.run_until_complete(pwork.find_series_list(valid))
+        for svid, ser_id, link, options in results:
+            if link:
+                if self._set_link(ser_id, name, version, link, update_commit):
+                    updated += 1
+                else:
+                    failed += 1
+            else:
+                not_found += 1
+
+        msg = f'{updated} series linked'
+        if already:
+            msg += f', {already} already linked'
+        if not_found:
+            msg += f', {not_found} not found'
+        if no_desc:
+            msg += f', {no_desc} missing description'
+        if failed:
+            msg += f', {failed} updated failed'
+        tout.info(msg)
 
     def get_version_list(self, idnum):
         """Get a list of the versions available for a series
@@ -1727,7 +1767,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             max_vers = self.series_all_max_versions()
 
             # Get a list of links to fetch
-            for svid, _ in max_vers:
+            for svid, _, _ in max_vers:
                 ser = sdict[svid]
                 if ser[2]:
                     to_fetch[svid] = ser[2]
@@ -1780,10 +1820,11 @@ Please use 'patman series -s {branch} scan' to resolve this''')
 
         Return: list of:
             int: ser_ver ID
+            int: series ID
             int: Maximum version
         """
-        res = self.db.execute(
-            'SELECT id, MAX(version) FROM ser_ver GROUP BY series_id')
+        res = self.db.execute('SELECT id, series_id, MAX(version) FROM ser_ver '
+                              'GROUP BY series_id')
         versions = res.fetchall()
         return versions
 
