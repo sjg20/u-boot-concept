@@ -2386,16 +2386,28 @@ second line.'''
         cser.set_project(pwork, 'U-Boot', quiet=True)
 
         with terminal.capture():
-            cser.add_series('first', 'my description', allow_unmarked=True)
+            cser.add_series('first', 'first series', allow_unmarked=True)
             cser.add_series('second', allow_unmarked=True)
             cser.increment('first')
 
-        cser.autolink_all(pwork, update_commit=True, sync_all_versions=True)
+        with terminal.capture():
+            summary = cser.autolink_all(pwork, update_commit=True,
+                                        sync_all_versions=True,
+                                        show_summary=False)
+        self.assertEqual(3, len(summary))
+        items = iter(summary.values())
+        self.assertEqual(
+            ('first', 1, None, 'first series', 'linked:1234'), next(items))
+        self.assertEqual(
+            ('first', 2, None, 'first series', 'not found'), next(items))
+        self.assertEqual(
+            ('second', 1, '183237', 'Series for my board', 'already:183237'),
+            next(items))
 
     def check_series_archive(self):
         """Coroutine to run the archive test"""
         cser = self.get_cser()
-        with terminal.capture() as (out, _):
+        with terminal.capture():
             cser.add_series('first', '', allow_unmarked=True)
 
         # Check the series is visible in the list

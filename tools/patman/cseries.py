@@ -656,7 +656,8 @@ class Cseries:
                 to_fetch[svid] = ser_id, ser.name, version, svinfo[2], ser.desc
         return to_fetch
 
-    def autolink_all(self, pwork, update_commit, sync_all_versions):
+    def autolink_all(self, pwork, update_commit, sync_all_versions,
+                     show_summary=True):
         """Automatically find a series link by looking in patchwork
 
         Args:
@@ -665,6 +666,17 @@ class Cseries:
                 link
             sync_all_versions (bool): True to sync all versions of a series,
                 False to sync only the latest version
+            show_summary (bool): True to show a summary of how things went
+
+        Return:
+            OrderedDict of summary info:
+                key (int): ser_ver ID
+                value (tuple):
+                    str: series name
+                    int: series version
+                    str: series link, or None if none
+                    str: series description
+                    str: autolink result
         """
         sdict = self.get_series_dict_by_id()
         all_ser_vers = self._get_autolink_dict(sdict, sync_all_versions)
@@ -692,7 +704,7 @@ class Cseries:
         for svid, ser_id, link, _ in results:
 
             if link:
-                version = all_ser_vers[svid][1]
+                version = all_ser_vers[svid][2]
                 if self._set_link(ser_id, sdict[ser_id].name, version,
                                   link, update_commit):
                     updated += 1
@@ -710,21 +722,23 @@ class Cseries:
             _, name, version, link, desc = all_ser_vers[svid]
             summary[svid] = name, version, link, desc, state[svid]
 
-        msg = f'{updated} series linked'
-        if already:
-            msg += f', {already} already linked'
-        if not_found:
-            msg += f', {not_found} not found'
-        if no_desc:
-            msg += f', {no_desc} missing description'
-        if failed:
-            msg += f', {failed} updated failed'
-        tout.info(msg)
+        if show_summary:
+            msg = f'{updated} series linked'
+            if already:
+                msg += f', {already} already linked'
+            if not_found:
+                msg += f', {not_found} not found'
+            if no_desc:
+                msg += f', {no_desc} missing description'
+            if failed:
+                msg += f', {failed} updated failed'
+            tout.info(msg)
 
-        tout.info('')
-        tout.info(f"{'Name':15} Version  {'Description':20}  Result")
-        for name, version, link, desc, state in summary.values():
-            tout.info(f"{name:15.15} {version:7}  {desc or '':20.20}  {state}")
+            tout.info('')
+            tout.info(f"{'Name':15} Version  {'Description':20}  Result")
+            for name, version, link, desc, state in summary.values():
+                tout.info(f"{name:15.15} {version:7}  {desc or '':20.20}  "
+                          '{state}')
 
         return summary
 
