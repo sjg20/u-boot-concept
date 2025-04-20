@@ -2486,6 +2486,53 @@ second line.'''
             ('second', 1, '183237', 'Series for my board', 'linked:456'),
             next(items))
 
+    def test_series_autolink_cmdline(self):
+        """Test command-line operation
+
+        This just uses mocks for now since we can rely on the direct tests for
+        the actual operation.
+        """
+        cser = self.get_cser()
+        with (mock.patch.object(cseries.Cseries, 'autolink_all',
+                                return_value=None) as method):
+            self.run_args('series', 'autolink-all', pwork=True)
+        method.assert_called_once_with(True, update_commit=False,
+                                       link_all_versions=False,
+                                       replace_existing=False, dry_run=False,
+                                       show_summary=True)
+
+        with (mock.patch.object(cseries.Cseries, 'autolink_all',
+                                return_value=None) as method):
+            self.run_args('series', 'autolink-all', '-a', pwork=True)
+        method.assert_called_once_with(True, update_commit=False,
+                                       link_all_versions=True,
+                                       replace_existing=False, dry_run=False,
+                                       show_summary=True)
+
+        with (mock.patch.object(cseries.Cseries, 'autolink_all',
+                                return_value=None) as method):
+            self.run_args('series', 'autolink-all', '-a', '-r', pwork=True)
+        method.assert_called_once_with(True, update_commit=False,
+                                       link_all_versions=True,
+                                       replace_existing=True, dry_run=False,
+                                       show_summary=True)
+
+        with (mock.patch.object(cseries.Cseries, 'autolink_all',
+                                return_value=None) as method):
+            self.run_args('series', '-n', 'autolink-all', '-r', pwork=True)
+        method.assert_called_once_with(True, update_commit=False,
+                                       link_all_versions=False,
+                                       replace_existing=True, dry_run=True,
+                                       show_summary=True)
+
+        with (mock.patch.object(cseries.Cseries, 'autolink_all',
+                                return_value=None) as method):
+            self.run_args('series', 'autolink-all', '-u', pwork=True)
+        method.assert_called_once_with(True, update_commit=True,
+                                       link_all_versions=False,
+                                       replace_existing=False, dry_run=False,
+                                       show_summary=True)
+
     def check_series_archive(self):
         """Coroutine to run the archive test"""
         cser = self.get_cser()

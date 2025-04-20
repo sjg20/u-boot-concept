@@ -220,7 +220,7 @@ def setup_parser():
     add_send_args(ssend)
     ssend.add_argument('--no-autolink', action='store_false', default=True,
         dest='autolink',
-        help='Monitor patchwork after sending so the series can be auto-linked')
+        help='Monitor patchwork after sending so the series can be autolinked')
     ssend.add_argument('-w', '--autolink-wait', type=int, default=180,
         help='Number of seconds to wait for patchwork to get a sent series')
 

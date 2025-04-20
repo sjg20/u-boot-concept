@@ -620,7 +620,7 @@ class Cseries:
 
         self.set_link(name, version, pws, update_commit)
 
-    def _get_autolink_dict(self, sdict, sync_all_versions):
+    def _get_autolink_dict(self, sdict, link_all_versions):
         """Get a dict of ser_vers to fetch, along with their patchwork links
 
         Note that this returns items that already have links, as well as those
@@ -630,7 +630,7 @@ class Cseries:
             sdict:
                 key: series ID
                 value: Series with idnum, name and desc filled out
-            sync_all_versions (bool): True to sync all versions of a series,
+            link_all_versions (bool): True to sync all versions of a series,
                 False to sync only the latest version
 
         Return: tuple:
@@ -646,7 +646,7 @@ class Cseries:
         svdict = self.get_ser_ver_dict()
         to_fetch = {}
 
-        if sync_all_versions:
+        if link_all_versions:
             for svid, ser_id, version, link, _, _, _ in \
                     self.get_ser_ver_list():
                 ser = sdict[ser_id]
@@ -662,7 +662,7 @@ class Cseries:
                 to_fetch[svid] = ser_id, ser.name, version, svinfo[2], ser.desc
         return to_fetch
 
-    def autolink_all(self, pwork, update_commit, sync_all_versions,
+    def autolink_all(self, pwork, update_commit, link_all_versions,
                      replace_existing, dry_run, show_summary=True):
         """Automatically find a series link by looking in patchwork
 
@@ -670,7 +670,7 @@ class Cseries:
             pwork (Patchwork): Patchwork object to use
             update_commit (bool): True to update the current commit with the
                 link
-            sync_all_versions (bool): True to sync all versions of a series,
+            link_all_versions (bool): True to sync all versions of a series,
                 False to sync only the latest version
             replace_existing (bool): True to sync a series even if it already
                 has a link
@@ -688,7 +688,7 @@ class Cseries:
                     str: autolink result
         """
         sdict = self.get_series_dict_by_id()
-        all_ser_vers = self._get_autolink_dict(sdict, sync_all_versions)
+        all_ser_vers = self._get_autolink_dict(sdict, link_all_versions)
 
         # Get rid of things without a description
         valid = {}
