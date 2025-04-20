@@ -617,6 +617,9 @@ class Cseries:
     def _get_autolink_dict(self, sync_all_versions):
         """Get a dict of ser_vers to fetch, along with their patchwork links
 
+        Note that this returns items that already have links, as well as those
+        without links
+
         Args:
             sync_all_versions (bool): True to sync all versions of a series,
                 False to sync only the latest version
@@ -627,22 +630,16 @@ class Cseries:
                 value (tuple):
                    int: series ID
                    int: series version
-                   str: patchwork link for the series
+                   str: patchwork link for the series, or None if none
                    desc: cover-letter name / series description
-            int: number of items which don't match (which are therefore not
-                included in dict)
         """
-        already = 0
         sdict = self.get_ser_ver_dict()
         to_fetch = {}
 
         if sync_all_versions:
             for svid, ser_id, version, link, _, _, desc in \
                     self.get_ser_ver_list():
-                if not link:
-                    to_fetch[svid] = ser_id, version, link, desc
-                else:
-                    already += 1
+                to_fetch[svid] = ser_id, version, link, desc
         else:
             # Find the maximum version for each series
             max_vers = self.series_all_max_versions()
@@ -650,11 +647,8 @@ class Cseries:
             # Get a list of links to fetch
             for svid, ser_id, version in max_vers:
                 ser = sdict[svid]
-                if not ser[2]:
-                    to_fetch[svid] = ser_id, version, ser[2], ser[5]
-                else:
-                    already += 1
-        return to_fetch, already
+                to_fetch[svid] = ser_id, version, ser[2], ser[5]
+        return to_fetch
 
     def autolink_all(self, pwork, update_commit, sync_all_versions):
         """Automatically find a series link by looking in patchwork
@@ -666,34 +660,43 @@ class Cseries:
             sync_all_versions (bool): True to sync all versions of a series,
                 False to sync only the latest version
         """
-        to_find, already = self._get_autolink_dict(sync_all_versions)
+        sdict = self.get_series_dict_by_id()
+        all_ser_vers = self._get_autolink_dict(sync_all_versions)
 
         # Get rid of things without a description
         valid = {}
+        state = {}
         no_desc = 0
-        for svid, (ser_id, version, link, desc) in to_find.items():
-            if desc:
-                valid[svid] = ser_id, version, link, desc
-            else:
-                no_desc += 1
-
         not_found = 0
         updated = 0
         failed = 0
+        already = 0
+        for svid, (ser_id, version, link, desc) in all_ser_vers.items():
+            if link:
+                state[svid] = f'already:{link}'
+                already += 1
+            elif desc:
+                valid[svid] = ser_id, version, link, desc
+            else:
+                no_desc += 1
+                state[svid] = 'missing description'
+
         results = self.loop.run_until_complete(pwork.find_series_list(valid))
 
-        sdict = self.get_series_dict_by_id()
         for svid, ser_id, link, _ in results:
 
             if link:
-                version = to_find[svid][1]
+                version = all_ser_vers[svid][1]
                 if self._set_link(ser_id, sdict[ser_id].name, version,
                                   link, update_commit):
                     updated += 1
+                    state[svid] = f'linked:{link}'
                 else:
                     failed += 1
+                    state[svid] = 'failed'
             else:
                 not_found += 1
+                state[svid] = 'not found'
 
         msg = f'{updated} series linked'
         if already:
@@ -705,6 +708,11 @@ class Cseries:
         if failed:
             msg += f', {failed} updated failed'
         tout.info(msg)
+
+        tout.info(f"{'Name':15} {'Description':20} Version  Result")
+        for svid, (ser_id, version, link, desc) in all_ser_vers.items():
+            tout.info(f"{sdict[ser_id].name:15.15} {desc or '':20.20} "
+                      f'{version:7}  {state[svid]}')
 
     def get_version_list(self, idnum):
         """Get a list of the versions available for a series
@@ -876,7 +884,7 @@ class Cseries:
         accepted and  the available versions
         """
         sdict = self.get_series_dict()
-        print(f"{'Name':15} {'Description':20} {'Accepted'}  Versions")
+        print(f"{'Name':15} {'Description':20} Accepted  Versions")
         for name in sorted(sdict):
             ser = sdict[name]
             versions = self.get_version_list(ser.idnum)

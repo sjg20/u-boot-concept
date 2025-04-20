@@ -2385,10 +2385,10 @@ second line.'''
         self.assertFalse(cser.get_project())
         cser.set_project(pwork, 'U-Boot', quiet=True)
 
-        with terminal.capture():
-            cser.add_series('first', 'my description', allow_unmarked=True)
-            cser.add_series('second', allow_unmarked=True)
-            cser.increment('first')
+        # with terminal.capture():
+        cser.add_series('first', 'my description', allow_unmarked=True)
+        cser.add_series('second', allow_unmarked=True)
+        cser.increment('first')
 
         cser.autolink_all(pwork, True, True)
 
