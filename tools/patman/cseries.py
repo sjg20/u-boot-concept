@@ -708,7 +708,7 @@ class Cseries:
                 no_desc += 1
                 state[svid] = 'missing description'
 
-        results = self.loop.run_until_complete(pwork.find_series_list(valid))
+        results, requests = self.loop.run_until_complete(pwork.find_series_list(valid))
 
         for svid, ser_id, link, _ in results:
             if link:
@@ -740,13 +740,13 @@ class Cseries:
                 msg += f', {no_desc} missing description'
             if failed:
                 msg += f', {failed} updated failed'
-            tout.info(msg)
+            tout.info(msg + f' ({requests} requests)')
 
             tout.info('')
-            tout.info(f"{'Name':15} Version  {'Description':20}  Result")
+            tout.info(f"{'Name':15} Version  {'Description':40}  Result")
             for name, version, link, desc, state in summary.values():
-                tout.info(f"{name:15.15} {version:7}  {desc or '':20.20}  "
-                          '{state}')
+                tout.info(f"{name:15.15} {version:7}  {desc or '':40.40}  "
+                          f'{state}')
         if dry_run:
             tout.info('Dry run completed')
 

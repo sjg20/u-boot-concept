@@ -2401,7 +2401,8 @@ second line.'''
         cser, pwork = self._autolink_setup()
         with terminal.capture() as (out, _):
             summary = cser.autolink_all(pwork, update_commit=True,
-                                        sync_all_versions=True, dry_run=True,
+                                        link_all_versions=True,
+                                        replace_existing=False, dry_run=True,
                                         show_summary=False)
         self.assertEqual(3, len(summary))
         items = iter(summary.values())
@@ -2418,7 +2419,7 @@ second line.'''
         # A second dry run should do exactly the same thing
         with terminal.capture() as (out2, _):
             summary2 = cser.autolink_all(pwork, update_commit=True,
-                                         sync_all_versions=True,
+                                         link_all_versions=True,
                                          replace_existing=False, dry_run=True,
                                          show_summary=False)
         self.assertEqual(out.getvalue(), out2.getvalue())
@@ -2427,7 +2428,7 @@ second line.'''
         # Now do it for real
         with terminal.capture():
             summary = cser.autolink_all(pwork, update_commit=True,
-                                        sync_all_versions=True,
+                                        link_all_versions=True,
                                         replace_existing=False, dry_run=False,
                                         show_summary=False)
 
@@ -2444,7 +2445,7 @@ second line.'''
         cser, pwork = self._autolink_setup()
         with terminal.capture() as (out, _):
             summary = cser.autolink_all(pwork, update_commit=True,
-                                        sync_all_versions=False,
+                                        link_all_versions=False,
                                         replace_existing=False, dry_run=False,
                                         show_summary=False)
         self.assertEqual(2, len(summary))
@@ -2460,7 +2461,7 @@ second line.'''
         cser, pwork = self._autolink_setup()
         with terminal.capture():
             cser.autolink_all(pwork, update_commit=False,
-                              sync_all_versions=True, replace_existing=False,
+                              link_all_versions=True, replace_existing=False,
                               dry_run=False,
                               show_summary=False)
 
@@ -2472,7 +2473,7 @@ second line.'''
         cser, pwork = self._autolink_setup()
         with terminal.capture() as (out, _):
             summary = cser.autolink_all(pwork, update_commit=True,
-                                        sync_all_versions=True,
+                                        link_all_versions=True,
                                         replace_existing=True, dry_run=False,
                                         show_summary=False)
         self.assertEqual(3, len(summary))
@@ -2492,7 +2493,7 @@ second line.'''
         This just uses mocks for now since we can rely on the direct tests for
         the actual operation.
         """
-        cser = self.get_cser()
+        cser, pwork = self._autolink_setup()
         with (mock.patch.object(cseries.Cseries, 'autolink_all',
                                 return_value=None) as method):
             self.run_args('series', 'autolink-all', pwork=True)
@@ -2532,6 +2533,27 @@ second line.'''
                                        link_all_versions=False,
                                        replace_existing=False, dry_run=False,
                                        show_summary=True)
+
+        # Now do a real one to check the patchwork handling and output
+        with terminal.capture() as (out, _):
+            self.run_args('series', 'autolink-all', '-a', pwork=pwork)
+        lines = iter(out.getvalue().splitlines())
+        self.assertEqual(
+            '1 series linked, 1 already linked, 1 not found (2 requests)',
+             next(lines))
+        self.assertEqual('', next(lines))
+        self.assertEqual(
+            'Name            Version  Description                               Result',
+            next(lines))
+        self.assertEqual(
+            'first                 1  first series                              linked:1234',
+            next(lines))
+        self.assertEqual(
+            'first                 2  first series                              not found',
+            next(lines))
+        self.assertEqual(
+            'second                1  Series for my board                       already:183237',
+            next(lines))
 
     def check_series_archive(self):
         """Coroutine to run the archive test"""

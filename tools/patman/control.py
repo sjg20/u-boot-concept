@@ -105,7 +105,10 @@ def do_series(args, test_db=None, pwork=None):
         pwork (Patchwork): Patchwork object to use
     """
     cser = cseries.Cseries(test_db)
-    needs_patchwork = ['autolink', 'open', 'send', 'status', 'sync', 'sync-all']
+    needs_patchwork = [
+        'autolink', 'autolink-all', 'open', 'send', 'status', 'sync',
+        'sync-all'
+        ]
     try:
         cser.open_database()
         if not pwork and args.subcmd in needs_patchwork:

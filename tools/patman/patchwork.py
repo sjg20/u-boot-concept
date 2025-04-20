@@ -138,11 +138,12 @@ class Patchwork:
             desc (str): Description (cover-letter title)
             version (int): Version number
 
-        Return:
+        Return: tuple:
             tuple:
                 str: Series ID, or None if not found
                 list of dict, or None if found
                     each dict is the server result from a possible series
+            int: number of server requests done
         """
         async with aiohttp.ClientSession() as client:
             # We don't know the svid and it isn't needed, so use -1
@@ -162,7 +163,7 @@ class Patchwork:
                     str: Series link
                     str: Series description
 
-        Return:
+        Return: tuple:
             list of tuple, one for each item in to_find:
                 int: ser_ver_ID
                 int: series ID
@@ -170,14 +171,16 @@ class Patchwork:
                 str: Series link, or None if not found
                 list of dict, or None if found
                     each dict is the server result from a possible series
+            int: number of server requests done
         """
+        self.request_count = 0
         async with aiohttp.ClientSession() as client:
             tasks = [asyncio.create_task(
                 self._find_series(client, svid, ser_id, version, desc))
                 for svid, (ser_id, version, link, desc) in to_find.items()]
             results = await asyncio.gather(*tasks)
 
-        return results
+        return results, self.request_count
 
     def set_project(self, project_id, link_name):
         """Set the project ID
