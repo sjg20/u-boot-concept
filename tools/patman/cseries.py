@@ -576,6 +576,47 @@ class Cseries:
 
         self.set_link(name, version, pws, update_commit)
 
+    def _get_autolink_dict(self, has_link, sync_all_versions):
+        """Get a dict of ser_vers to fetch, along with their patchwork links
+
+        Args:
+            has_link (bool): True to add links to the dict, False to add svids
+                with missing links
+            sync_all_versions (bool): True to sync all versions of a series,
+                False to sync only the latest version
+
+        Return: tuple:
+            dict:
+                key (int): svid
+                value (tuple):
+                   str: patchwork link for the series
+                   desc: cover-letter name / series description
+            int: number of items which don't match (which are therefore not
+                included in dict)
+        """
+        other = 0
+        sdict = self.get_ser_ver_dict()
+        to_fetch = {}
+
+        if sync_all_versions:
+            for svid, _, _, link, _, _, desc in self.get_ser_ver_list():
+                if bool(link) == has_link:
+                    to_fetch[svid] = link, desc
+                else:
+                    other += 1
+        else:
+            # Find the maximum version for each series
+            max_vers = self.series_all_max_versions()
+
+            # Get a list of links to fetch
+            for svid, _ in max_vers:
+                ser = sdict[svid]
+                if bool(ser[2]) == has_link:
+                    to_fetch[svid] = ser[2], ser[5]
+                else:
+                    other += 1
+        return to_fetch, other
+
     def autolink_all(self, pwork, update_commit, sync_all_versions):
         """Automatically find a series link by looking in patchwork
 
@@ -1658,34 +1699,29 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         tout.info(f"{updated} patch{'es' if updated != 1 else ''}"
                   f"{' and cover letter' if cover else ''} updated")
 
-    def _get_fetch_dict(self, has_link, sync_all_versions):
+    def _get_fetch_dict(self, sync_all_versions):
         """Get a dict of ser_vers to fetch, along with their patchwork links
 
         Args:
-            has_link (bool): True to add links to the dict, False to add svids
-                with missing links
             sync_all_versions (bool): True to sync all versions of a series,
                 False to sync only the latest version
 
         Return: tuple:
-            dict:
+            dict: things to fetch
                 key (int): svid
-                value (tuple):
-                   str: patchwork link for the series
-                   desc: cover-letter name / series description
-            int: number of items which don't match (which are therefore not
-                included in dict)
+                value (str): patchwork link for the series
+            int: number of series which are missing a link
         """
-        other = 0
+        missing = 0
         sdict = self.get_ser_ver_dict()
         to_fetch = {}
 
         if sync_all_versions:
             for svid, _, _, link, _, _, desc in self.get_ser_ver_list():
-                if bool(link) == has_link:
+                if link:
                     to_fetch[svid] = link, desc
                 else:
-                    other += 1
+                    missing += 1
         else:
             # Find the maximum version for each series
             max_vers = self.series_all_max_versions()
@@ -1693,11 +1729,11 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             # Get a list of links to fetch
             for svid, _ in max_vers:
                 ser = sdict[svid]
-                if bool(ser[2]) == has_link:
-                    to_fetch[svid] = ser[2], ser[5]
+                if ser[2]:
+                    to_fetch[svid] = ser[2]
                 else:
-                    other += 1
-        return to_fetch, other
+                    missing += 1
+        return to_fetch, missing
 
     def series_sync_all(self, pwork, sync_all_versions=False):
         """Sync all series status from patchwork
@@ -1707,7 +1743,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             sync_all_versions (bool): True to sync all versions of a series,
                 False to sync only the latest version
         """
-        to_fetch, missing = self._get_fetch_dict(True, sync_all_versions)
+        to_fetch, missing = self._get_fetch_dict(sync_all_versions)
 
         result, requests = self.loop.run_until_complete(
             pwork.series_get_states(to_fetch))

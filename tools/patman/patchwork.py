@@ -125,7 +125,7 @@ class Patchwork:
         for ser in res:
             if ser['name'] == desc:
                 if int(ser['version']) == version:
-                    return ser['id'], None
+                    return svid, ser['id'], None
                 name_found.append(ser)
         return svid, None, name_found or res
 
@@ -143,7 +143,10 @@ class Patchwork:
                     each dict is the server result from a possible series
         """
         async with aiohttp.ClientSession() as client:
-            return await self._find_series(client, desc, version)[1:]
+            # We don't know the svid and it isn't needed, so use -1
+            _, link, options = await self._find_series(client, -1, desc,
+                                                       version)
+        return link, options
 
     async def find_series_list(self, to_find):
         """Find the link for each series in a list
@@ -522,9 +525,7 @@ class Patchwork:
         Args:
             sync_data (dict of svids to sync):
                 key (int): Series-version ID
-                value (tuple):
-                    str: Series link
-                    str: Series description
+                value (str): Series link
 
         Return:
             list of items, each a tuple:
@@ -538,7 +539,7 @@ class Patchwork:
             tasks = [
                 asyncio.create_task(self._get_one_state(
                     client, svid, link, result))
-                for svid, (link, _) in sync_data.items()
+                for svid, link in sync_data.items()
                 ]
             results = await asyncio.gather(*tasks)
             '''
