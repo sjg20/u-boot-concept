@@ -103,14 +103,14 @@ class Patchwork:
         async with aiohttp.ClientSession() as client:
             return await self._request(client, 'projects/')
 
-    async def _find_series(self, client, svid, ser_id, desc, version):
+    async def _find_series(self, client, svid, ser_id, version, desc):
         """Find a series on the server
 
         Args:
             svid (int): ser_ver ID
             ser_id (int): series ID
-            desc (str): Description to search for
             version (int): Version number to search for
+            desc (str): Description to search for
 
         Returns:
             tuple:
@@ -158,6 +158,7 @@ class Patchwork:
                 key (int): ser_ver ID
                 value (tuple):
                     int: Series ID
+                    int: Series version
                     str: Series link
                     str: Series description
 
@@ -165,6 +166,7 @@ class Patchwork:
             list of tuple, one for each item in to_find:
                 int: ser_ver_ID
                 int: series ID
+                int: Series version
                 str: Series link, or None if not found
                 list of dict, or None if found
                     each dict is the server result from a possible series
@@ -172,7 +174,7 @@ class Patchwork:
         async with aiohttp.ClientSession() as client:
             tasks = [asyncio.create_task(
                 self._find_series(client, svid, ser_id, desc, version))
-                for svid, (ser_id, desc, version) in to_find.items()]
+                for svid, (ser_id, version, link, desc) in to_find.items()]
             results = await asyncio.gather(*tasks)
 
         return results

@@ -146,6 +146,25 @@ class Cseries:
             sdict[name] = ser
         return sdict
 
+    def get_series_dict_by_id(self, include_archived=False):
+        """Get a dict of Series objects from the database
+
+        Return:
+            OrderedDict:
+                key: series ID
+                value: Series with name and desc filled out
+        """
+        res = self.db.execute('SELECT id, name, desc FROM series ' +
+            ('WHERE archived = 0' if not include_archived else ''))
+        sdict = OrderedDict()
+        for idnum, name, desc in res.fetchall():
+            ser = Series()
+            ser.idnum = idnum
+            ser.name = name
+            ser.desc = desc
+            sdict[idnum] = ser
+        return sdict
+
     def get_ser_ver_list(self):
         """Get a list of patchwork entries from the database
 
@@ -464,7 +483,7 @@ class Cseries:
         Args:
             ser_id (int): Series ID number
             name (str): Series name (used to find the branch)
-            version (int): Version number, or None to detect from name
+            version (int): Version number (used to update the database)
             link (str): Patchwork link-string for the series
             update_commit (bool): True to update the current commit with the
                 link
@@ -607,6 +626,7 @@ class Cseries:
                 key (int): svid
                 value (tuple):
                    int: series ID
+                   int: series version
                    str: patchwork link for the series
                    desc: cover-letter name / series description
             int: number of items which don't match (which are therefore not
@@ -617,9 +637,10 @@ class Cseries:
         to_fetch = {}
 
         if sync_all_versions:
-            for svid, ser_id, _, link, _, _, desc in self.get_ser_ver_list():
+            for svid, ser_id, version, link, _, _, desc in \
+                    self.get_ser_ver_list():
                 if not link:
-                    to_fetch[svid] = ser_id, link, desc
+                    to_fetch[svid] = ser_id, version, link, desc
                 else:
                     already += 1
         else:
@@ -627,10 +648,10 @@ class Cseries:
             max_vers = self.series_all_max_versions()
 
             # Get a list of links to fetch
-            for svid, ser_id, _ in max_vers:
+            for svid, ser_id, version in max_vers:
                 ser = sdict[svid]
                 if not ser[2]:
-                    to_fetch[svid] = ser_id, ser[2], ser[5]
+                    to_fetch[svid] = ser_id, version, ser[2], ser[5]
                 else:
                     already += 1
         return to_fetch, already
@@ -650,9 +671,9 @@ class Cseries:
         # Get rid of things without a description
         valid = {}
         no_desc = 0
-        for svid, (ser_id, link, desc) in to_find.items():
+        for svid, (ser_id, version, link, desc) in to_find.items():
             if desc:
-                valid[svid] = ser_id, link, desc
+                valid[svid] = ser_id, version, link, desc
             else:
                 no_desc += 1
 
@@ -660,9 +681,14 @@ class Cseries:
         updated = 0
         failed = 0
         results = self.loop.run_until_complete(pwork.find_series_list(valid))
-        for svid, ser_id, link, options in results:
+
+        sdict = self.get_series_dict_by_id()
+        for svid, ser_id, link, _ in results:
+
             if link:
-                if self._set_link(ser_id, name, version, link, update_commit):
+                version = to_find[svid][1]
+                if self._set_link(ser_id, sdict[ser_id].name, version,
+                                  link, update_commit):
                     updated += 1
                 else:
                     failed += 1
