@@ -2376,8 +2376,13 @@ second line.'''
         next(cor)
         cor.close()
 
-    def test_series_autolink_all(self):
-        """Test linking all cseries to their patchwork series by description"""
+    def _autolink_setup(self):
+        """Set things up for autolink tests
+
+        Return: tuple:
+            Cseries object
+            Patchwork object
+        """
         cser = self.get_cser()
 
         pwork = Patchwork.for_testing(self._fake_patchwork_cser_link)
@@ -2389,7 +2394,11 @@ second line.'''
             cser.add_series('first', 'first series', allow_unmarked=True)
             cser.add_series('second', allow_unmarked=True)
             cser.increment('first')
-        print()
+        return cser, pwork
+
+    def test_series_autolink_all(self):
+        """Test linking all cseries to their patchwork series by description"""
+        cser, pwork = self._autolink_setup()
         with terminal.capture() as (out, _):
             summary = cser.autolink_all(pwork, update_commit=True,
                                         sync_all_versions=True, dry_run=True,
@@ -2427,6 +2436,32 @@ second line.'''
 
         series = patchstream.get_metadata_for_list('first', self.gitdir, 2)
         self.assertEqual('1:1234', series.links)
+
+    def test_series_autolink_latest(self):
+        """Test linking the lastest versions"""
+        cser, pwork = self._autolink_setup()
+        with terminal.capture() as (out, _):
+            summary = cser.autolink_all(pwork, update_commit=True,
+                                        sync_all_versions=False, dry_run=False,
+                                        show_summary=False)
+        self.assertEqual(2, len(summary))
+        items = iter(summary.values())
+        self.assertEqual(
+            ('first', 2, None, 'first series', 'not found'), next(items))
+        self.assertEqual(
+            ('second', 1, '183237', 'Series for my board', 'already:183237'),
+            next(items))
+
+    def test_series_autolink_no_update(self):
+        """Test linking the lastest versions without updating commits"""
+        cser, pwork = self._autolink_setup()
+        with terminal.capture():
+            summary = cser.autolink_all(pwork, update_commit=False,
+                                        sync_all_versions=True, dry_run=False,
+                                        show_summary=False)
+
+        series = patchstream.get_metadata_for_list('first', self.gitdir, 2)
+        self.assertNotIn('links', series)
 
     def check_series_archive(self):
         """Coroutine to run the archive test"""

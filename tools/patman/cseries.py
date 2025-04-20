@@ -709,7 +709,6 @@ class Cseries:
         results = self.loop.run_until_complete(pwork.find_series_list(valid))
 
         for svid, ser_id, link, _ in results:
-
             if link:
                 version = all_ser_vers[svid][2]
                 if self._set_link(ser_id, sdict[ser_id].name, version,
