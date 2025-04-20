@@ -477,7 +477,8 @@ class Cseries:
                 f"Series '{ser.name}' does not have a version {version}")
         return versions
 
-    def _set_link(self, ser_id, name, version, link, update_commit):
+    def _set_link(self, ser_id, name, version, link, update_commit,
+                  dry_run=False):
         """Add / update a series-links link for a series
 
         Args:
@@ -487,6 +488,7 @@ class Cseries:
             link (str): Patchwork link-string for the series
             update_commit (bool): True to update the current commit with the
                 link
+            dry_run (bool): True to do a dry run
 
         Return:
             bool: True if the database was update, False if the ser_id or
@@ -496,14 +498,18 @@ class Cseries:
             branch_name = self.get_branch_name(name, version)
             _, _, series, max_vers, _ = self._prep_series(branch_name)
             self.update_series(branch_name, series, max_vers, add_vers=version,
-                               add_link=link)
+                               dry_run=dry_run, add_link=link)
         if link is None:
             link = ''
         self.db.execute(
             f"UPDATE ser_ver SET link = '{link}' WHERE "
             'series_id = ? AND version = ?', (ser_id, version))
         updated = self.rowcount() != 0
-        self.commit()
+        if dry_run:
+            self.rollback()
+        else:
+            self.commit()
+
         return updated
 
     def set_link(self, series_name, version, link, update_commit):
@@ -657,7 +663,7 @@ class Cseries:
         return to_fetch
 
     def autolink_all(self, pwork, update_commit, sync_all_versions,
-                     show_summary=True):
+                     dry_run, show_summary=True):
         """Automatically find a series link by looking in patchwork
 
         Args:
@@ -666,6 +672,7 @@ class Cseries:
                 link
             sync_all_versions (bool): True to sync all versions of a series,
                 False to sync only the latest version
+            dry_run (bool): True to do a dry run
             show_summary (bool): True to show a summary of how things went
 
         Return:
@@ -706,7 +713,7 @@ class Cseries:
             if link:
                 version = all_ser_vers[svid][2]
                 if self._set_link(ser_id, sdict[ser_id].name, version,
-                                  link, update_commit):
+                                  link, update_commit, dry_run=dry_run):
                     updated += 1
                     state[svid] = f'linked:{link}'
                 else:
@@ -739,6 +746,8 @@ class Cseries:
             for name, version, link, desc, state in summary.values():
                 tout.info(f"{name:15.15} {version:7}  {desc or '':20.20}  "
                           '{state}')
+        if dry_run:
+            tout.info('Dry run completed')
 
         return summary
 

@@ -2389,10 +2389,10 @@ second line.'''
             cser.add_series('first', 'first series', allow_unmarked=True)
             cser.add_series('second', allow_unmarked=True)
             cser.increment('first')
-
-        with terminal.capture():
+        print()
+        with terminal.capture() as (out, _):
             summary = cser.autolink_all(pwork, update_commit=True,
-                                        sync_all_versions=True,
+                                        sync_all_versions=True, dry_run=True,
                                         show_summary=False)
         self.assertEqual(3, len(summary))
         items = iter(summary.values())
@@ -2403,6 +2403,15 @@ second line.'''
         self.assertEqual(
             ('second', 1, '183237', 'Series for my board', 'already:183237'),
             next(items))
+        self.assertEqual('Dry run completed', out.getvalue().splitlines()[-1])
+
+        # A second dry run should do exactly the same thing
+        with terminal.capture() as (out2, _):
+            summary2 = cser.autolink_all(pwork, update_commit=True,
+                                        sync_all_versions=True, dry_run=True,
+                                        show_summary=False)
+        self.assertEqual(out.getvalue(), out2.getvalue())
+        self.assertEqual(summary, summary2)
 
     def check_series_archive(self):
         """Coroutine to run the archive test"""
