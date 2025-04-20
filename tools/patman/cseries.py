@@ -1909,6 +1909,10 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 False to show only the final version
             list_patches (bool): True to list all patches for each series,
                 False to just show the series summary on a single line
+
+        Return: tuple
+            int: Number of series shown
+            int: Number of patches shown
         """
         max_vers = self.series_max_version(ser.idnum)
         name, desc = self.get_series_info(ser.idnum)
@@ -1920,6 +1924,8 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         if list_patches:
             print(f"{name}: {coloured} (versions: {' '.join(vstr)})")
         add_blank_line = False
+        total_series = 0
+        total_patches = 0
         for ver in versions:
             if not show_all_versions and ver != max_vers:
                 continue
@@ -1936,6 +1942,9 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             self._list_patches(branch, pwc, series, name, cover_id,
                                num_comments, False, False, list_patches)
             add_blank_line = list_patches
+            total_series += 1
+            total_patches += count
+        return total_series, total_patches
 
     def progress(self, series, show_all_versions, list_patches):
         """Show progress information for all versions in a series
@@ -1952,16 +1961,28 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                                    list_patches)
                 return
 
+            total_patches = 0
+            total_series = 0
             sdict = self.get_series_dict()
+            border = None
             if not list_patches:
                 print(self.col.build(
                     self.col.MAGENTA,
                     f"{'Name':16} {'Description':41} Count  {'Status'}"))
+                border = f"{'-' * 15}  {'-' * 40}  -----  {'-' * 15}"
+                print(border)
             for name in sorted(sdict):
                 ser = sdict[name]
-                self._progress_one(ser, show_all_versions, list_patches)
+                num_series, num_patches = self._progress_one(
+                    ser, show_all_versions, list_patches)
                 if list_patches:
                     print()
+                total_series += num_series
+                total_patches += num_patches
+            if not list_patches:
+                print(border)
+                total = f'{total_series} series'
+                print(f"{total:15}  {'':40}  {total_patches:5}")
 
     def _summary_one(self, ser):
         """Show summary information for the latest version in a series
