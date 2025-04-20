@@ -182,6 +182,14 @@ def setup_parser():
     auto.add_argument('-w', '--autolink-wait', type=int, default=0,
         help='Number of seconds to wait for patchwork to get a sent series')
 
+    aall = series_subparsers.add_parser('autolink-all')
+    aall.add_argument('-a', '--link-all-versions', action='store_true',
+                      help='Link all series versions, not just the latest')
+    aall.add_argument('-r', '--replace-existing', action='store_true',
+                      help='Replace existing links')
+    aall.add_argument('-u', '--update', action='store_true',
+                      help='Update the branch commit')
+
     series_subparsers.add_parser('dec')
     series_subparsers.add_parser('get-link')
     series_subparsers.add_parser('inc')
@@ -196,7 +204,7 @@ def setup_parser():
 
     prog = series_subparsers.add_parser('progress')
     prog.add_argument('-a', '--show-all-versions', action='store_true',
-                      help='Show all series versions, not just the last')
+                      help='Show all series versions, not just the latest')
     prog.add_argument('-l', '--list-patches', action='store_true',
                       help='List patch subject and status')
 
@@ -231,7 +239,7 @@ def setup_parser():
     series_subparsers.add_parser('sync')
     sall = series_subparsers.add_parser('sync-all')
     sall.add_argument('-a', '--sync-all-versions', action='store_true',
-                      help='Sync all series versions, not just the last')
+                      help='Sync all series versions, not just the latest')
 
     series_subparsers.add_parser('unarchive')
     series_subparsers.add_parser('unmark')

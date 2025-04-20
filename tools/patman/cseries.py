@@ -663,7 +663,7 @@ class Cseries:
         return to_fetch
 
     def autolink_all(self, pwork, update_commit, sync_all_versions,
-                     dry_run, show_summary=True):
+                     replace_existing, dry_run, show_summary=True):
         """Automatically find a series link by looking in patchwork
 
         Args:
@@ -672,6 +672,8 @@ class Cseries:
                 link
             sync_all_versions (bool): True to sync all versions of a series,
                 False to sync only the latest version
+            replace_existing (bool): True to sync a series even if it already
+                has a link
             dry_run (bool): True to do a dry run
             show_summary (bool): True to show a summary of how things went
 
@@ -697,7 +699,7 @@ class Cseries:
         failed = 0
         already = 0
         for svid, (ser_id, name, version, link, desc) in all_ser_vers.items():
-            if link:
+            if link and not replace_existing:
                 state[svid] = f'already:{link}'
                 already += 1
             elif desc:
