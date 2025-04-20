@@ -27,7 +27,7 @@ from u_boot_pylib import tout
 # part is optional. This decodes the string into groups. For single patches
 # the [] part is not present:
 # Groups: (ignore, ignore, ignore, prefix, version, sequence, subject)
-RE_PATCH = re.compile(r'(\[(((.*) )?(.*) )?(.*)\]\s)?(.*)$')
+RE_PATCH = re.compile(r'(\[(((.*),)?(.*),)?(.*)\]\s)?(.*)$')
 
 # This decodes the sequence string into a patch number and patch count
 RE_SEQ = re.compile(r'(\d+)/(\d+)')
@@ -200,7 +200,7 @@ def compare_with_series(series, patches):
     return patch_for_commit, commit_for_patch, warnings
 
 
-async def collect_patches(client, series, series_id, patchwork,
+async def _collect_patches(client, series, series_id, patchwork,
                           read_cover_comments):
     """Collect patch information about a series from patchwork
 
@@ -254,7 +254,7 @@ async def collect_patches(client, series, series_id, patchwork,
     return patches, cover
 
 
-async def find_new_responses(client, cmt, patch, patchwork):
+async def _find_responses(client, cmt, patch, patchwork):
     """Find new rtags collected by patchwork that we don't know about
 
     This is designed to be run in parallel, once for each commit/patch
@@ -399,9 +399,10 @@ def create_branch(series, new_rtag_list, branch, dest_branch, overwrite,
             [parent.target])
     return num_added
 
-async def async_check_pwork(client, series, series_id, branch, dest_branch,
-                            force, show_comments, show_cover_comments,
-                            patchwork, test_repo=None, single_thread=False):
+
+async def _check_status(client, series, series_id, branch, dest_branch, force,
+                        show_comments, show_cover_comments, patchwork,
+                        test_repo=None):
     """Check the status of a series on Patchwork
 
     This finds review tags and comments for a series in Patchwork, displaying
@@ -420,8 +421,8 @@ async def async_check_pwork(client, series, series_id, branch, dest_branch,
         patchwork (Patchwork): Patchwork class to handle communications
         test_repo (pygit2.Repository): Repo to use (use None unless testing)
     """
-    patches, cover = await collect_patches(client, series, series_id, patchwork,
-                                           show_cover_comments)
+    patches, cover = await _collect_patches(client, series, series_id,
+                                            patchwork, show_cover_comments)
     col = terminal.Color()
     count = len(series.commits)
     new_rtag_list = [None] * count
@@ -432,12 +433,13 @@ async def async_check_pwork(client, series, series_id, branch, dest_branch,
         tout.warning(warn)
 
     patch_list = [patch_for_commit.get(c) for c in range(len(series.commits))]
-
+    tasks = [asyncio.create_task(_find_responses(
+                 client, series.commits[i], patch_list[i], patchwork))
+                 for i in range(count)]
+    results = await asyncio.gather(*tasks)
     for i in range(count):
-        result = await find_new_responses(
-            client, series.commits[i], patch_list[i], patchwork)
-        if result:
-            new_rtag_list[i], review_list[i] = result
+        if results[i]:
+            new_rtag_list[i], review_list[i] = results[i]
 
     with terminal.pager():
         num_to_add = 0
@@ -480,7 +482,7 @@ async def async_check_pwork(client, series, series_id, branch, dest_branch,
 
         terminal.tprint("%d new response%s available in patchwork%s" %
                        (num_to_add, 's' if num_to_add != 1 else '',
-                        '' if dest_branch
+                        '' if dest_branch or not num_to_add
                         else ' (use -d to write them to a new branch)'))
 
         if dest_branch:
@@ -491,21 +493,47 @@ async def async_check_pwork(client, series, series_id, branch, dest_branch,
                 (num_added, 's' if num_added != 1 else '', dest_branch))
 
 
-async def _check_patchwork_status(series, series_id, branch, dest_branch, force,
-                           show_comments, show_cover_comments, patchwork,
-                           test_repo=None, single_thread=False):
+async def check_status(series, series_id, branch, dest_branch, force,
+                       show_comments, show_cover_comments, patchwork,
+                       test_repo=None):
     async with aiohttp.ClientSession() as client:
-       await async_check_pwork(
+       await _check_status(
             client, series, series_id, branch, dest_branch,  force,
-            show_comments, show_cover_comments, patchwork,
-            test_repo=test_repo, single_thread=single_thread)
+            show_comments, show_cover_comments, patchwork, test_repo=test_repo)
 
 
 def check_patchwork_status(series, series_id, branch, dest_branch, force,
                            show_comments, show_cover_comments, patchwork,
                            test_repo=None, single_thread=False):
+    if single_thread:
+        asyncio.run(check_status(series, series_id, branch, dest_branch, force,
+                                 show_comments, show_cover_comments, patchwork,
+                                 test_repo=test_repo))
+    else:
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(check_status(
+                series, series_id, branch, dest_branch,  force, show_comments,
+                show_cover_comments, patchwork, test_repo=test_repo))
+
+
+async def async_collect_patches(series, series_id, patchwork,
+                                read_cover_comments):
+    async with aiohttp.ClientSession() as client:
+       return await _collect_patches(client, series, series_id, patchwork,
+                                     read_cover_comments)
+
+
+def collect_patches(series, series_id, patchwork, read_cover_comments):
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(_check_patchwork_status(
-            series, series_id, branch, dest_branch,  force, show_comments,
-            show_cover_comments, patchwork, test_repo=test_repo,
-            single_thread=single_thread))
+    return loop.run_until_complete(async_collect_patches(
+        series, series_id, patchwork, read_cover_comments))
+
+
+async def find_responses(cmt, patch, patchwork):
+    async with aiohttp.ClientSession() as client:
+        return await _find_responses(client, cmt, patch, patchwork)
+
+
+def find_new_responses(cmt, patch, patchwork):
+    loop = asyncio.get_event_loop()
+    return loop.run_until_complete(find_responses(cmt, patch, patchwork))

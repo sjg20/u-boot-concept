@@ -6,6 +6,7 @@
 
 """Functional tests for checking that patman behaves correctly"""
 
+import aiohttp
 import asyncio
 import contextlib
 import os
@@ -177,6 +178,15 @@ class TestFunctional(unittest.TestCase):
             shutil.copy(self._get_path(src_fname), fname)
 
         return cover_fname, fname_list
+
+    def assertFinished(self, itr):
+        """Assert that an iterator is finished
+
+        Args:
+            itr (iter): Iterator to check
+        """
+        val = [x for x in itr]
+        self.assertFalse(val)
 
     def test_basic(self):
         """Tests the basic flow of patman
@@ -877,8 +887,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         pwork = Patchwork.for_testing(self._fake_patchwork)
 
         with terminal.capture() as (_, err):
-            self.loop.run_until_complete(status.collect_patches(
-                series, 1234, pwork, False))
+            status.collect_patches(series, 1234, pwork, False)
         self.assertIn('Warning: Patchwork reports 1 patches, series has 0',
                       err.getvalue())
 
@@ -889,8 +898,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
 
         pwork = Patchwork.for_testing(self._fake_patchwork)
 
-        patches, _ = self.loop.run_until_complete(status.collect_patches(
-            series, 1234, pwork, False))
+        patches, _ = status.collect_patches(series, 1234, pwork, False)
         self.assertEqual(1, len(patches))
         patch = patches[0]
         self.assertEqual('1', patch.id)
@@ -927,7 +935,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         self.assertEqual(None, patch.version)
 
         # With PATCH prefix
-        patch.parse_subject('[PATCH 2/5] Testing')
+        patch.parse_subject('[PATCH,2/5] Testing')
         self.assertEqual('Testing', patch.subject)
         self.assertEqual(2, patch.seq)
         self.assertEqual(5, patch.count)
@@ -935,7 +943,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         self.assertEqual(None, patch.version)
 
         # RFC patch
-        patch.parse_subject('[RFC 3/7] Testing')
+        patch.parse_subject('[RFC,3/7] Testing')
         self.assertEqual('Testing', patch.subject)
         self.assertEqual(3, patch.seq)
         self.assertEqual(7, patch.count)
@@ -943,7 +951,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         self.assertEqual(None, patch.version)
 
         # Version patch
-        patch.parse_subject('[v2 3/7] Testing')
+        patch.parse_subject('[v2,3/7] Testing')
         self.assertEqual('Testing', patch.subject)
         self.assertEqual(3, patch.seq)
         self.assertEqual(7, patch.count)
@@ -951,7 +959,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         self.assertEqual('v2', patch.version)
 
         # All fields
-        patch.parse_subject('[RESEND v2 3/7] Testing')
+        patch.parse_subject('[RESEND,v2,3/7] Testing')
         self.assertEqual('Testing', patch.subject)
         self.assertEqual(3, patch.seq)
         self.assertEqual(7, patch.count)
@@ -1105,13 +1113,13 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
 
         # Check that the tags are picked up on the first patch
         pwork = Patchwork.for_testing(self._fake_patchwork2)
-        new_rtag_list[0], review_list[0] = self.loop.run_until_complete(
-            status.find_new_responses(commit1, patch1, pwork))
+        new_rtag_list[0], review_list[0] = status.find_new_responses(
+            commit1, patch1, pwork)
         self.assertEqual(new_rtag_list[0], {'Reviewed-by': {self.joe}})
 
         # Now the second patch
-        new_rtag_list[1], review_list[1] = self.loop.run_until_complete(
-            status.find_new_responses(commit2, patch2, pwork))
+        new_rtag_list[1], review_list[1] = status.find_new_responses(
+            commit2, patch2, pwork)
         self.assertEqual(new_rtag_list[1], {
             'Reviewed-by': {self.mary, self.fred},
             'Tested-by': {self.leb}})
@@ -1120,16 +1128,16 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         # 'new' tags when scanning comments
         new_rtag_list = [None] * count
         commit1.rtags = {'Reviewed-by': {self.joe}}
-        new_rtag_list[0], review_list[0] = self.loop.run_until_complete(
-            status.find_new_responses(commit1, patch1, pwork))
+        new_rtag_list[0], review_list[0] = status.find_new_responses(
+            commit1, patch1, pwork)
         self.assertEqual(new_rtag_list[0], {})
 
         # For the second commit, add Ed and Fred, so only Mary should be left
         commit2.rtags = {
             'Tested-by': {self.leb},
             'Reviewed-by': {self.fred}}
-        new_rtag_list[1], review_list[1] = self.loop.run_until_complete(
-            status.find_new_responses(commit2, patch2, pwork))
+        new_rtag_list[1], review_list[1] = status.find_new_responses(
+            commit2, patch2, pwork)
         self.assertEqual(new_rtag_list[1], {'Reviewed-by': {self.mary}})
 
         # Check that the output patches expectations:
@@ -1144,8 +1152,8 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         series = Series()
         series.commits = [commit1, commit2]
         terminal.set_print_test_mode()
-        self.loop.run_until_complete(status.check_patchwork_status(
-            series, '1234', None, None, False, False, False, pwork))
+        status.check_patchwork_status(
+            series, '1234', None, None, False, False, False, pwork)
         lines = iter(terminal.get_print_test_lines())
         col = terminal.Color()
         self.assertEqual(terminal.PrintLine('  1 Subject 1', col.YELLOW),
@@ -1258,9 +1266,9 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
 
         terminal.set_print_test_mode()
         pwork = Patchwork.for_testing(self._fake_patchwork3)
-        self.loop.run_until_complete(status.check_patchwork_status(
+        status.check_patchwork_status(
             series, '1234', branch, dest_branch, False, False, False, pwork,
-            repo))
+            repo)
         lines = terminal.get_print_test_lines()
         self.assertEqual(12, len(lines))
         self.assertEqual(
@@ -1461,8 +1469,8 @@ Reviewed-by: %s
         series.commits = [commit1, commit2]
         terminal.set_print_test_mode()
         pwork = Patchwork.for_testing(self._fake_patchwork2)
-        col = self.loop.run_until_complete(status.check_patchwork_status(
-            series, '1234', None, None, False, True, False, pwork))
+        col = status.check_patchwork_status(
+            series, '1234', None, None, False, True, False, pwork)
         lines = iter(terminal.get_print_test_lines())
         col = terminal.Color()
         self.assertEqual(terminal.PrintLine('  1 Subject 1', col.YELLOW),
@@ -3219,11 +3227,11 @@ second line.'''
         if subpath.startswith('series/'):
             return {
                 'patches': [
-                    {'id': '10', 'name': '[PATCH 1/3] video: Some video improvements',
+                    {'id': '10', 'name': '[PATCH,1/3] video: Some video improvements',
                      'content': ''},
-                    {'id': '11', 'name': '[PATCH 2/3] serial: Add a serial driver',
+                    {'id': '11', 'name': '[PATCH,2/3] serial: Add a serial driver',
                      'content': ''},
-                    {'id': '12', 'name': '[PATCH 3/3] bootm: Make it boot',
+                    {'id': '12', 'name': '[PATCH,3/3] bootm: Make it boot',
                      'content': ''},
                 ],
                 'cover_letter': {
@@ -3651,6 +3659,7 @@ Date:   .*
         self.assertEqual(
             'Name             Description                               Count  Status',
             next(lines))
+        self.assertTrue(next(lines).startswith('--'))
         self.assertEqual(
             'first                                                          2  2:unknown',
             next(lines))
@@ -3658,6 +3667,9 @@ Date:   .*
             'second2          The name of the cover letter                  3  '
             '1:accepted 1:changes 1:rejected',
             next(lines))
+        self.assertTrue(next(lines).startswith('--'))
+        self.assertEqual(['2', 'series', '5'], next(lines).split())
+        self.assertFinished(lines)
 
     def test_series_progress_all_no_patches(self):
         """Test showing progress for all cseries versions without patches"""
@@ -3670,6 +3682,7 @@ Date:   .*
         self.assertEqual(
             'Name             Description                               Count  Status',
             next(lines))
+        self.assertTrue(next(lines).startswith('--'))
         self.assertEqual(
             'first                                                          2  2:unknown',
             next(lines))
@@ -3680,6 +3693,9 @@ Date:   .*
             'second2          The name of the cover letter                  3  '
             '1:accepted 1:changes 1:rejected',
             next(lines))
+        self.assertTrue(next(lines).startswith('--'))
+        self.assertEqual(['3', 'series', '8'], next(lines).split())
+        self.assertFinished(lines)
 
     def test_series_summary(self):
         self.setup_second()
@@ -3972,6 +3988,10 @@ Date:   .*
         # should produce the same output
         with terminal.capture() as (out, _):
             cser.series_status(pwork, 'second', 2, False, single_thread=True)
+        self._check_status(out, False, False)
+        self.loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.loop)
+
         with terminal.capture() as (out2, _):
             cser.series_status(pwork, 'second', 2, False, single_thread=False)
         self.assertEqual(out.getvalue(), out2.getvalue())

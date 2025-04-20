@@ -425,7 +425,7 @@ class Patchwork:
         Requests:
             1 for patch, 1 for patch comments
         """
-        data = await self._get_patch(client, patch_id)
+        data = await self.get_patch(client, patch_id)
         state = data['state']
         comment_data = await self._get_patch_comments(client, patch_id)
         num_comments = len(comment_data)
@@ -483,7 +483,7 @@ class Patchwork:
             list of PATCH: patch information for each patch in the series
         """
         async with aiohttp.ClientSession() as client:
-            data = await self._get_series(client, series_id)
+            data = await self.get_series(client, series_id)
             patch_dict = data['patches']
 
             count = len(patch_dict)
@@ -502,7 +502,7 @@ class Patchwork:
 
     async def _get_one_state(self, client, svid, link, result):
         # 1 request
-        data = await self._get_series(client, link)
+        data = await self.get_series(client, link)
         patch_dict = data['patches']
 
         count = len(patch_dict)
