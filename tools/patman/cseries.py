@@ -704,9 +704,11 @@ class Cseries:
                 not_found += 1
                 state[svid] = 'not found'
 
-        summary = {}
-        for svid, (ser_id, name, version, link, desc) in all_ser_vers.items():
-            summary[name] = name, version, link, desc, state[svid]
+        # Create a summary sorted by name and version
+        summary = OrderedDict()
+        for svid in sorted(all_ser_vers, key=lambda k: all_ser_vers[k][1:2]):
+            _, name, version, link, desc = all_ser_vers[svid]
+            summary[svid] = name, version, link, desc, state[svid]
 
         msg = f'{updated} series linked'
         if already:
@@ -720,10 +722,10 @@ class Cseries:
         tout.info(msg)
 
         tout.info('')
-        tout.info(f"{'Name':15} {'Description':20} Version  Result")
-        for svid, (ser_id, name, version, link, desc) in all_ser_vers.items():
-            tout.info(f"{name:15.15} {desc or '':20.20} "
-                      f'{version:7}  {state[svid]}')
+        tout.info(f"{'Name':15} Version  {'Description':20}  Result")
+        for name, version, link, desc, state in summary.values():
+            tout.info(f"{name:15.15} {version:7}  {desc or '':20.20}  {state}")
+
         return summary
 
     def get_version_list(self, idnum):
