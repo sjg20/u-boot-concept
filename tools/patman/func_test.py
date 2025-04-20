@@ -2396,8 +2396,9 @@ second line.'''
                                         show_summary=False)
         self.assertEqual(3, len(summary))
         items = iter(summary.values())
+        linked = next(items)
         self.assertEqual(
-            ('first', 1, None, 'first series', 'linked:1234'), next(items))
+            ('first', 1, None, 'first series', 'linked:1234'), linked)
         self.assertEqual(
             ('first', 2, None, 'first series', 'not found'), next(items))
         self.assertEqual(
@@ -2408,10 +2409,24 @@ second line.'''
         # A second dry run should do exactly the same thing
         with terminal.capture() as (out2, _):
             summary2 = cser.autolink_all(pwork, update_commit=True,
-                                        sync_all_versions=True, dry_run=True,
-                                        show_summary=False)
+                                         sync_all_versions=True, dry_run=True,
+                                         show_summary=False)
         self.assertEqual(out.getvalue(), out2.getvalue())
         self.assertEqual(summary, summary2)
+
+        # Now do it for real
+        with terminal.capture():
+            summary = cser.autolink_all(pwork, update_commit=True,
+                                        sync_all_versions=True, dry_run=False,
+                                        show_summary=False)
+
+        # Check the link was updated
+        pdict = cser.get_ser_ver_dict()
+        svid = list(summary)[0]
+        self.assertEqual('1234', pdict[svid][2])
+
+        series = patchstream.get_metadata_for_list('first', self.gitdir, 2)
+        self.assertEqual('1:1234', series.links)
 
     def check_series_archive(self):
         """Coroutine to run the archive test"""
