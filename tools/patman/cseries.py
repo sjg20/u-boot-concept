@@ -61,10 +61,6 @@ SER_VER = namedtuple(
     'ser_ver',
     'idnum,series_id,version,link,cover_id,cover_num_comments,name')
 
-SER_VERL = namedtuple(
-    'ser_verl',
-    'series_id,version,link,cover_id,cover_num_comments,name')
-
 def oid(oid_val):
     """Convert a string into a shortened hash
 
@@ -263,19 +259,12 @@ class Cseries:
 
         Return: dict contain all records:
             key (int): ser_ver id
-            value (tuple):
-                int: series_id
-                int: version
-                link: link string, or ''
-                str: Cover-letter ID
-                int: Number of cover-letter comments
-                str: Cover-letter name
+            value (SER_VER): Information about one ser_ver record
         """
         svlist = self.get_ser_ver_list()
         svdict = {}
-        for svid, ser_id, ver, link, cover_id, cover_num_comm, name in svlist:
-            svdict[svid] = SER_VERL(ser_id, ver, link, cover_id, cover_num_comm,
-                                    name)
+        for sver in svlist:
+            svdict[sver.idnum] = sver
         return svdict
 
     def get_upstream_dict(self):
