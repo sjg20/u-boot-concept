@@ -3061,7 +3061,7 @@ second line.'''
         self.assertRegex(next(lines), '- unmarked .* as .*: spi: SPI fixes')
         self.assertRegex(next(lines), 'Updating branch first to .*')
         self.assertEqual('Dry run completed', next(lines))
-        yield cser
+        yield None
 
     def test_series_unmark(self):
         """Test unmarking a cseries, i.e. removing Change-Id fields"""
@@ -3074,27 +3074,32 @@ second line.'''
                 cser.unmark_series('first', dry_run=True)
         self.assertEqual('Unmarked commits 2/2', str(exc.exception))
 
-        with terminal.capture() as (out, _):
-            with self.assertRaises(ValueError) as exc:
-                cser.unmark_series('first', dry_run=True)
-            self.assertEqual('Unmarked commits 2/2', str(exc.exception))
-
         cser = next(cor)
-
         cser.add_series('first', '', mark=True)
-        cser = next(cor)
 
-        cser.unmark_series('first', dry_run=True)
         cser = next(cor)
+        cser.unmark_series('first', dry_run=True)
+
+        self.assertFalse(next(cor))
 
     def test_series_unmark_cmdline(self):
         """Test the unmark command"""
-        # with (mock.patch.object(cseries.Cseries, 'unmark_series',
-                                # return_value=None) as method):
-        cser = self.get_cser()
+        cor = self.check_series_unmark()
+        next(cor)
 
-        self.run_args('series', 'unmark', pwork=True)
-        method.assert_called_once_with(True, update_commit=False)
+        # check the allow_unmarked flag
+        with terminal.capture() as (out, _):
+            self.run_args('series', 'unmark', expected_ret=1, pwork=True)
+        self.assertIn('Unmarked commits 2/2', out.getvalue())
+
+        next(cor)
+        self.run_args('series', '-s', 'first', 'add',  '-d', '', '--mark',
+                      pwork=True)
+
+        next(cor)
+        self.run_args('series', '-s', 'first', '-n', 'unmark', pwork=True)
+
+        self.assertFalse(next(cor))
 
     def test_series_remove(self):
         """Test removing a series"""
