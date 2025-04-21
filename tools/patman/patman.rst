@@ -869,7 +869,47 @@ You should send 'git send-email' start up and you can confirm the sending of
 each email.
 
 After that, patman waits a bit to see if it can find your new series appearing
-on Patchwork.
+on Patchwork. With a bit of luck this will only take 20 seconds or so. Then your
+series is linked.
+
+To sync your series with patchwork::
+
+    patman series sync
+
+Now you can check your progress::
+
+    patman series progress
+
+Later on you get some comments, or perhaps you just decide to make a change on
+your own. You have several options.
+
+The first option is that you can just create a new branch::
+
+    git checkout -b video2 video
+
+then you can add this 'v2' series to Patman with::
+
+    patman series add
+
+The second option is to get patman to create the new 'video2' branch::
+
+    patman inc
+
+The third option is to collect some tags using the 'patman status' command and
+put them in a new branch::
+
+    patman status -d video2
+
+One day the fourth option will be to ask patman to collect tags as part of the
+'patman inc' command.
+
+Again, you do your edits, perhaps adding/removing patches, rebasing on -master
+and so on. Then, send your v2::
+
+    patman series send
+
+At this point you have the basics. Some of the subcommands useful options, so
+be sure to check out the help.
 
 
 General points

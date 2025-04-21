@@ -150,12 +150,6 @@ class Database:
             return 1
         return version
 
-    def commit(self):
-        self.con.commit()
-
-    def rollback(self):
-        self.con.rollback()
-
     def execute(self, query, args=None):
         if args:
             res = self.cur.execute(query, args)
@@ -163,10 +157,28 @@ class Database:
             res = self.cur.execute(query)
         return res
 
+    def commit(self):
+        """Commit changes to the database"""
+        self.con.commit()
+
+    def rollback(self):
+        """Roll back changes to the database"""
+        self.con.rollback()
+
     def lastrowid(self):
+        """Get the last row-ID reported by the database
+
+        Return:
+            int: Value for lastrowid
+        """
         return self.cur.lastrowid
 
     def rowcount(self):
+        """Get the row-count reported by the database
+
+        Return:
+            int: Value for rowcount
+        """
         return self.cur.rowcount
 
     def remove_pcommits(self, id_list):

@@ -44,7 +44,8 @@ HASH_LEN = 10
 # svid (int): ID of series/version record in ser_ver table
 # change_id (str): Change-ID value
 # status (str): Current status in patchwork
-# patch_id (in): Patchwork's patch ID for this patch
+# patch_id (int): Patchwork's patch ID for this patch
+# num_comments (int): Number of comments attached to the commit
 PCOMMIT = namedtuple(
     'pcommit',
     'id,seq,subject,svid,change_id,state,patch_id,num_comments')
@@ -58,7 +59,19 @@ SHORTEN_STATE = {
 }
 
 def oid(oid_val):
-    return str(oid_val)[:HASH_LEN];
+    """Convert a string into a shortened hash
+
+    The number of hex digits git uses for showing hashes depends on the size of
+    the repo. For the purposes of showing hashes to the user in lists, we use a
+    fixed value for now
+
+    Args:
+        str or Pygit2.oid: Hash value to shorten
+
+    Return:
+        str: Shortened hash
+    """
+    return str(oid_val)[:HASH_LEN]
 
 
 class Cseries:
@@ -68,27 +81,47 @@ class Cseries:
     directory to update series information.
     """
     def __init__(self, topdir=None, colour=terminal.COLOR_IF_TERMINAL):
+        """Set up a new Cseries
+
+        Args:
+            topdir (str): Top-level directory of the repo
+            colour (terminal.enum): Whether to enable ANSI colour or not
+
+        Properties:
+            gitdir (str): Git directory (typically topdir + '/.git')
+            db (Database): Database handler
+            col (terminal.Colour): Colour object
+            _fake_time (float): Holds the current fake time for tests, in
+                seconds
+            _fake_sleep (func): Function provided by a test; called to fake a
+                'time.sleep()' call and take whatever action it wants to take.
+                The only argument is the (Float) time to sleep for; it returns
+                nothing
+            loop (asyncio event loop): Loop used for Patchwork operations
+        """
         self.topdir = topdir
         self.gitdir = None
         self.db = None
-        self.quiet = False
         self.col = terminal.Color(colour)
-        self.fake_time = None
+        self._fake_time = None
         self._fake_sleep = None
         self.loop = asyncio.get_event_loop()
 
     def open_database(self):
-        """Open the database read for use"""
+        """Open the database ready for use"""
         if not self.topdir:
             self.topdir = gitutil.get_top_level()
             if not self.topdir:
                 raise ValueError('No git repo detected in current directory')
         self.gitdir = os.path.join(self.topdir, '.git')
         fname = f'{self.topdir}/.patman.db'
+
+        # For the first instance, start it up with the expected schema
         self.db, is_new = Database.get_instance(fname)
         if is_new:
             self.db.start()
         else:
+            # If a previous test has already checked the schema, just open it
             self.db.open_it()
 
     def close_database(self):
@@ -97,38 +130,79 @@ class Cseries:
             self.db.close()
 
     def commit(self):
+        """Commit changes to the database"""
         self.db.commit()
 
     def rollback(self):
+        """Roll back changes to the database"""
         self.db.rollback()
 
     def lastrowid(self):
+        """Get the last row-ID reported by the database
+
+        Return:
+            int: Value for lastrowid
+        """
         return self.db.lastrowid()
 
     def rowcount(self):
+        """Get the row-count reported by the database
+
+        Return:
+            int: Value for rowcount
+        """
         return self.db.rowcount()
 
     def set_fake_time(self, fake_sleep):
-        self.fake_time = 0
+        """Setup the fake timer
+
+        Args:
+            fake_sleep (func(float)): Function to call to fake a sleep
+        """
+        self._fake_time = 0
         self._fake_sleep = fake_sleep
 
     def inc_fake_time(self, inc_s):
-        self.fake_time += inc_s
+        """Increment the fake time
+
+        Args:
+            inc_s (float): Amount to increment the fake time by
+        """
+        self._fake_time += inc_s
 
     def get_time(self):
-        if self.fake_time is not None:
-            return self.fake_time
+        """Get the current time, fake or real
+
+        This function should always be used to read the time so that faking the
+        time works correctly in tests.
+
+        Return:
+            float: Fake time, if time is being faked, else real time
+        """
+        if self._fake_time is not None:
+            return self._fake_time
         return time.monotonic()
 
     def sleep(self, time_s):
+        """Sleep for a while
+
+        This function should always be used to sleep so that faking the time
+        works correctly in tests.
+
+        Args:
+            time_s (float): Amount of seconds to sleep for
+        """
         print(f'Sleeping for {time_s} seconds')
-        if self.fake_time is not None:
+        if self._fake_time is not None:
             self._fake_sleep(time_s)
         else:
             time.sleep(time_s)
 
     def get_series_dict(self, include_archived=False):
         """Get a dict of Series objects from the database
+
+        Args:
+            include_archived (bool): True to include archives series
 
         Return:
             OrderedDict:
