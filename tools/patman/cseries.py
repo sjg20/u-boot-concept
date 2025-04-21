@@ -433,9 +433,6 @@ class Cseries:
             allow_unmarked (str): True to not require each commit to be marked
             end (str): Add only commits up to but exclu
             dry_run (bool): True to do a dry run
-
-        Return:
-            Series: Series information
         """
         name, ser, series, version, msg = self._prep_series(branch_name, end)
         tout.info(f"Adding series '{ser.name}' v{version}: mark {mark} "
@@ -491,7 +488,6 @@ class Cseries:
             tout.info(msg)
         if dry_run:
             tout.info('Dry run completed')
-        return ser
 
     def add_series_commits(self, series, svid):
         """Add a commits from a series into the database
