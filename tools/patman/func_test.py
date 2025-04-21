@@ -2978,8 +2978,8 @@ second line.'''
                          next(lines))
         self.assertEqual("Processing 2 commits from branch 'first'",
                          next(lines))
-        self.assertRegex(next(lines), r'- tagged .* as .*: i2c: I2C things')
-        self.assertRegex(next(lines), '- tagged .* as .*: spi: SPI fixes')
+        self.assertRegex(next(lines), r'- marked .* as .*: i2c: I2C things')
+        self.assertRegex(next(lines), '- marked .* as .*: spi: SPI fixes')
         self.assertRegex(next(lines), 'Updating branch first to .*')
         self.assertEqual("Added series 'first' v1 (2 commits)",
                          next(lines))
@@ -3037,6 +3037,32 @@ second line.'''
             'patman: ValueError: 2 commit(s) are unmarked; please use -m or -M',
             last_line)
 
+    def check_series_unmark(self):
+        """Test unmarking a cseries, i.e. removing Change-Id fields"""
+        cser = self.get_cser()
+
+        yield cser
+
+        # check the allow_unmarked flag
+        with terminal.capture() as (out, _):
+            yield cser
+
+        with terminal.capture() as (out, _):
+            yield cser
+
+        lines = iter(out.getvalue().splitlines())
+        self.assertEqual(
+            "Unmarking series 'first': allow_unmarked False",
+            next(lines))
+        self.assertEqual('Checking out upstream commit refs/heads/base',
+                         next(lines))
+        self.assertEqual("Processing 2 commits from branch 'first'",
+                         next(lines))
+        self.assertRegex(next(lines), '- unmarked .* as .*: i2c: I2C things')
+        self.assertRegex(next(lines), '- unmarked .* as .*: spi: SPI fixes')
+        self.assertRegex(next(lines), 'Updating branch first to .*')
+        self.assertEqual('Dry run completed', next(lines))
+
     def test_series_unmark(self):
         """Test unmarking a cseries, i.e. removing Change-Id fields"""
         cser = self.get_cser()
@@ -3065,10 +3091,32 @@ second line.'''
                          next(lines))
         self.assertEqual("Processing 2 commits from branch 'first'",
                          next(lines))
-        self.assertRegex(next(lines), '- untagged .* as .*: i2c: I2C things')
-        self.assertRegex(next(lines), '- untagged .* as .*: spi: SPI fixes')
+        self.assertRegex(next(lines), '- unmarked .* as .*: i2c: I2C things')
+        self.assertRegex(next(lines), '- unmarked .* as .*: spi: SPI fixes')
         self.assertRegex(next(lines), 'Updating branch first to .*')
         self.assertEqual('Dry run completed', next(lines))
+
+    '''
+    def test_series_unmark(self):
+        """Test unmarking a cseries, i.e. removing Change-Id fields"""
+        cor = self.check_series_unmark()
+        cser = next(cor)
+
+        with terminal.capture() as (out, _):
+            with self.assertRaises(ValueError) as exc:
+                cser.unmark_series('first', dry_run=True)
+            self.assertEqual('Unmarked commits 2/2', str(exc.exception))
+
+        cser = next(cor)
+        cser.unmark_series('first', allow_unmarked=True, dry_run=True)
+
+        cser = next(cor)
+        cser.add_series('first', '', mark=True)
+
+        cser = next(cor)
+        cser.unmark_series('first', dry_run=True)
+        cser = next(cor)
+    '''
 
     def test_series_remove(self):
         """Test removing a series"""

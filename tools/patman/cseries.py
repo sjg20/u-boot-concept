@@ -1385,10 +1385,10 @@ class Cseries:
             if CHANGE_ID_TAG not in vals.msg:
                 change_id = self.make_change_id(vals.cherry)
                 vals.msg = vals.msg + f'\n{CHANGE_ID_TAG}: {change_id}'
-                tout.detail("   - adding tag")
-                vals.info = 'tagged'
+                tout.detail("   - adding mark")
+                vals.info = 'marked'
             else:
-                vals.info = 'has tag'
+                vals.info = 'has mark'
 
         return vals.oid
 
@@ -1424,10 +1424,10 @@ class Cseries:
                 pos = vals.msg.index(CHANGE_ID_TAG)
                 vals.msg = vals.msg[:pos]
 
-                tout.detail("   - removing tag")
-                vals.info = 'untagged'
+                tout.detail("   - removing mark")
+                vals.info = 'unmarked'
             else:
-                vals.info = 'no tag'
+                vals.info = 'no mark'
 
         if dry_run:
             tout.info('Dry run completed')
