@@ -823,10 +823,13 @@ class Cseries:
             tout.info(msg + f' ({requests} requests)')
 
             tout.info('')
-            tout.info(f"{'Name':15} Version  {'Description':40}  Result")
+            tout.info(f"{'Name':15}  Version  {'Description':40}  Result")
+            border = f"{'-' * 15}  -------  {'-' * 40}  {'-' * 15}"
+            print(border)
             for name, version, link, desc, state in summary.values():
-                tout.info(f"{name:15.15} {version:7}  {desc or '':40.40}  "
+                tout.info(f"{name:16.16} {version:7}  {desc or '':40.40}  "
                           f'{state}')
+            print(border)
         if dry_run:
             tout.info('Dry run completed')
 
@@ -1655,7 +1658,7 @@ class Cseries:
         return col_state, pad
 
     def _list_patches(self, branch, pwc, series, desc, cover_id, num_comments,
-                      show_commit, show_patch, list_patches):
+                      show_commit, show_patch, list_patches, state_totals):
         """List patches along with optional status info
 
         Args:
@@ -1671,6 +1674,9 @@ class Cseries:
             show_patch (bool): True to show the patch
             list_patches (bool): True to list all patches for each series,
                 False to just show the series summary on a single line
+            state_totals (dict): Holds totals for each state across all patches
+                key (str): state name
+                value (int): Number of patches in that state
         """
         lines = []
         states = defaultdict(int)
@@ -1707,6 +1713,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         out = ''
         for state, freq in states.items():
             out += ' ' + self.build_col(state, f'{freq}:')[0]
+            state_totals[state] += freq
         name = ''
         if not list_patches:
             name = desc or ''
@@ -1782,8 +1789,10 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         branch, series, pwc, name, _, cover_id, num_comments = (
             self._get_patches(series, version))
         with terminal.pager():
+            state_totals = defaultdict(int)
             self._list_patches(branch, pwc, series, name, cover_id,
-                               num_comments, show_commit, show_patch, True)
+                               num_comments, show_commit, show_patch, True,
+                               state_totals)
 
     def get_series_svid(self, series_id, version):
         """Get the patchwork ID of a series version
@@ -1974,7 +1983,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         versions = res.fetchall()
         return versions
 
-    def _progress_one(self, ser, show_all_versions, list_patches):
+    def _progress_one(self, ser, show_all_versions, list_patches, state_totals):
         """Show progress information for all versions in a series
 
         Args:
@@ -1983,6 +1992,9 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 False to show only the final version
             list_patches (bool): True to list all patches for each series,
                 False to just show the series summary on a single line
+            state_totals (dict): Holds totals for each state across all patches
+                key (str): state name
+                value (int): Number of patches in that state
 
         Return: tuple
             int: Number of series shown
@@ -2014,7 +2026,8 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                                                                   ver)
 
             self._list_patches(branch, pwc, series, name, cover_id,
-                               num_comments, False, False, list_patches)
+                               num_comments, False, False, list_patches,
+                               state_totals)
             add_blank_line = list_patches
             total_series += 1
             total_patches += count
@@ -2030,9 +2043,10 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 show only the final version
         """
         with terminal.pager():
+            state_totals = defaultdict(int)
             if series is not None:
                 self._progress_one(self.parse_series(series), show_all_versions,
-                                   list_patches)
+                                   list_patches, state_totals)
                 return
 
             total_patches = 0
@@ -2048,7 +2062,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             for name in sorted(sdict):
                 ser = sdict[name]
                 num_series, num_patches = self._progress_one(
-                    ser, show_all_versions, list_patches)
+                    ser, show_all_versions, list_patches, state_totals)
                 if list_patches:
                     print()
                 total_series += num_series
@@ -2056,7 +2070,11 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             if not list_patches:
                 print(border)
                 total = f'{total_series} series'
-                print(f"{total:15}  {'':40}  {total_patches:5}")
+                out = ''
+                for state, freq in state_totals.items():
+                    out += ' ' + self.build_col(state, f'{freq}:')[0]
+
+                print(f"{total:15}  {'':40}  {total_patches:5} {out}")
 
     def _summary_one(self, ser):
         """Show summary information for the latest version in a series

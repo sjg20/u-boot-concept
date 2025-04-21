@@ -2560,17 +2560,20 @@ second line.'''
              next(lines))
         self.assertEqual('', next(lines))
         self.assertEqual(
-            'Name            Version  Description                               Result',
+            'Name             Version  Description                               Result',
+            next(lines))
+        self.assertTrue(next(lines).startswith('--'))
+        self.assertEqual(
+            'first                  1  first series                              linked:1234',
             next(lines))
         self.assertEqual(
-            'first                 1  first series                              linked:1234',
+            'first                  2  first series                              not found',
             next(lines))
         self.assertEqual(
-            'first                 2  first series                              not found',
+            'second                 1  Series for my board                       already:183237',
             next(lines))
-        self.assertEqual(
-            'second                1  Series for my board                       already:183237',
-            next(lines))
+        self.assertTrue(next(lines).startswith('--'))
+        self.assertFinished(lines)
 
     def check_series_archive(self):
         """Coroutine to run the archive test"""
@@ -3677,7 +3680,9 @@ Date:   .*
             '1:accepted 1:changes 1:rejected',
             next(lines))
         self.assertTrue(next(lines).startswith('--'))
-        self.assertEqual(['2', 'series', '5'], next(lines).split())
+        self.assertEqual(
+            ['2', 'series', '5', '2:unknown', '1:accepted', '1:changes', '1:rejected'],
+            next(lines).split())
         self.assertFinished(lines)
 
     def test_series_progress_all_no_patches(self):
@@ -3703,7 +3708,9 @@ Date:   .*
             '1:accepted 1:changes 1:rejected',
             next(lines))
         self.assertTrue(next(lines).startswith('--'))
-        self.assertEqual(['3', 'series', '8'], next(lines).split())
+        self.assertEqual(
+            ['3', 'series', '8', '5:unknown', '1:accepted', '1:changes', '1:rejected'],
+            next(lines).split())
         self.assertFinished(lines)
 
     def test_series_summary(self):
