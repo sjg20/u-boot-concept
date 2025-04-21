@@ -3,6 +3,11 @@
 # Copyright 2025 Simon Glass <sjg@chromium.org>
 #
 """Handles the patman database
+
+This uses sqlite3 with a local file.
+
+To adjsut the schema, increment LATEST, create a migrate_to_v<x>() function
+and write some code in migrate_to() to call it.
 """
 
 import os
@@ -19,11 +24,16 @@ class Database:
     """Database of information used by patman"""
 
     # dict of databases:
-    # key: filename
-    # value: Database object
+    #   key: filename
+    #   value: Database object
     instances = {}
 
     def __init__(self, db_path):
+        """Set up a new database object
+
+        Args:
+            db_path (str): Path to the database
+        """
         if db_path in Database.instances:
             # Two connections to the database can cause:
             # sqlite3.OperationalError: database is locked
@@ -36,18 +46,29 @@ class Database:
 
     @staticmethod
     def get_instance(db_path):
+        """Get the database instance for a path
+
+        This is provides to ensure that different callers can obtain the
+        same database object when accessing the same database file.
+
+        Args:
+            db_path (str): Path to the database
+
+        Return:
+            Database: Database instance, which is created if necessary
+        """
         db = Database.instances.get(db_path)
         if db:
             return db, False
         return Database(db_path), True
 
     def start(self):
-        """Open the database read for use"""
+        """Open the database read for use, migrate to latest schema"""
         self.open_it()
         self.migrate_to(LATEST)
 
     def open_it(self):
-        """Open the database ready for use, creating it if necessary"""
+        """Open the database, creating it if necessary"""
         if self.is_open:
             raise ValueError('Already open')
         if not os.path.exists(self.db_path):
@@ -57,6 +78,7 @@ class Database:
         self.is_open = True
 
     def close(self):
+        """Close the database"""
         if not self.is_open:
             raise ValueError('Already closed')
         self.con.close()
@@ -65,6 +87,7 @@ class Database:
         self.is_open = False
 
     def create_v1(self):
+        """Create a database with the v1 schema"""
         self.cur.execute(
             'CREATE TABLE series (id INTEGER PRIMARY KEY AUTOINCREMENT,'
             'name UNIQUE, desc, archived BIT)')
@@ -102,6 +125,11 @@ class Database:
         self.cur.execute('ALTER TABLE ser_ver ADD COLUMN name')
 
     def migrate_to(self, dest_version):
+        """Migrate the database to the selected version
+
+        Args:
+            dest_version (int): Version to migrate to
+        """
         while True:
             version = self.get_schema_version()
             if version == dest_version:
@@ -150,12 +178,17 @@ class Database:
             return 1
         return version
 
-    def execute(self, query, args=None):
-        if args:
-            res = self.cur.execute(query, args)
-        else:
-            res = self.cur.execute(query)
-        return res
+    def execute(self, query, parameters=()):
+        """Execute a database query
+
+        Args:
+            query (str): Query string
+            parameters (list of values): Parameters to pass
+
+        Return:
+
+        """
+        return self.cur.execute(query, parameters)
 
     def commit(self):
         """Commit changes to the database"""
@@ -180,13 +213,3 @@ class Database:
             int: Value for rowcount
         """
         return self.cur.rowcount
-
-    def remove_pcommits(self, id_list):
-        """Delete all the pcommits in a list
-
-        Args:
-            id_list (list of int): List of IDs of pcommits to delete
-        """
-        recs = [str(i) for i in id_list]
-        vals = ', '.join(recs[0])
-        # res = self.execute(f'DELETE FROM pcommit WHERE id IN({vals})'),

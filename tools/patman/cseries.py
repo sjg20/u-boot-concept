@@ -11,7 +11,6 @@ import hashlib
 import os
 import re
 import sqlite3
-from sqlite3 import OperationalError
 import sys
 import time
 from types import SimpleNamespace
@@ -19,16 +18,16 @@ from types import SimpleNamespace
 import pygit2
 from pygit2.enums import CheckoutStrategy
 
+from u_boot_pylib import cros_subprocess
+from u_boot_pylib import gitutil
+from u_boot_pylib import terminal
+from u_boot_pylib import tout
+
 from patman import patchstream
 from patman.database import Database
 from patman import send
 from patman.series import Series
 from patman import status
-from u_boot_pylib import command
-from u_boot_pylib import cros_subprocess
-from u_boot_pylib import gitutil
-from u_boot_pylib import terminal
-from u_boot_pylib import tout
 
 
 # Tag to use for Change IDs
@@ -390,7 +389,7 @@ class Cseries:
             branch_name (str): Name of branch to sync, or None for current one
             in_series (Series): Series object
             version (int): branch version, e.g. 2 for 'mychange2'
-            mark (str): True to mark each commit with a change ID
+            mark (bool): True to mark each commit with a change ID
             allow_unmarked (str): True to not require each commit to be marked
             force_version (bool): True if ignore a Series-version tag that
                 doesn't match its branch name
@@ -537,7 +536,7 @@ class Cseries:
         if len(recs) > 1:
             raise ValueError('Expected one match, but multiple matches found')
         ser = Series()
-        ser.idnum, ser.name, ser.desc = desc = recs[0]
+        ser.idnum, ser.name, ser.desc = recs[0]
         return ser
 
     def get_branch_name(self, name, version):
@@ -927,7 +926,7 @@ class Cseries:
         of the name (e.g. 'series' is version 1, 'series4' is version 4)
 
         Args:
-            name (str or None): name of series
+            in_name (str or None): name of series
             in_version (str or None): version of series
 
         Return:
@@ -1000,8 +999,7 @@ class Cseries:
                 accepted += pcm.state == 'accepted'
         else:
             accepted = '-'
-        status = f'{accepted}/{count}'
-        return status, pwc
+        return f'{accepted}/{count}', pwc
 
     def series_do_list(self):
         """List all series
@@ -1014,12 +1012,12 @@ class Cseries:
         for name in sorted(sdict):
             ser = sdict[name]
             versions = self.get_version_list(ser.idnum)
-            status = self.series_get_version_stats(
+            stat = self.series_get_version_stats(
                 ser.idnum, self.series_max_version(ser.idnum))[0]
 
             vlist = ' '.join([str(ver) for ver in sorted(versions)])
 
-            print(f'{name:15.15} {ser.desc:20.20} {status.rjust(8)}  {vlist}')
+            print(f'{name:15.15} {ser.desc:20.20} {stat.rjust(8)}  {vlist}')
 
     def update_series(self, name, series, max_vers, new_name=None,
                       dry_run=False, add_vers=None, add_link=None):
@@ -1452,6 +1450,10 @@ class Cseries:
         self.commit()
 
     def list_upstream(self):
+        """List the upstream repos
+
+        Shows a list of the repos, obtained from the database
+        """
         udict = self.get_upstream_dict()
 
         for name, items in udict.items():
@@ -1466,7 +1468,7 @@ class Cseries:
             name (str): Name of the upstream remote to set as default, or None
                 for none
         """
-        self.db.execute(f"UPDATE upstream SET is_default = 0")
+        self.db.execute("UPDATE upstream SET is_default = 0")
         if name is not None:
             self.db.execute(
                 f"UPDATE upstream SET is_default = 1 WHERE name = '{name}'")
@@ -1840,18 +1842,6 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 f'No matching series for id {series_id} version {version}')
         return recs[0]
 
-    '''
-    def series_status(self, series, version):
-        """Show the patchwork status of a series
-
-        Args:
-            series (str): Name of series to use, or None to use current branch
-            version (int): Version number, or None to detect from name
-        """
-        branch, series, pwc, desc, _, cover_id, num_comments = (
-            self._get_patches(series, version))
-        self._list_patches(branch, pwc, series, desc, cover_id, num_comments)
-    '''
     def _sync_one(self, svid, cover, patches):
         pwc = self.get_pcommit_dict(svid)
 
@@ -2124,23 +2114,34 @@ Please use 'patman series -s {branch} scan' to resolve this''')
 
         # With Firefox, GTK produces lots of warnings, so suppress them
         # Gtk-Message: 06:48:20.692: Failed to load module "xapp-gtk3-module"
-        # Gtk-Message: 06:48:20.692: Not loading module "atk-bridge": The functionality is provided by GTK natively. Please try to not load it.
+        # Gtk-Message: 06:48:20.692: Not loading module "atk-bridge": The
+        #  functionality is provided by GTK natively. Please try to not load it.
         # Gtk-Message: 06:48:20.692: Failed to load module "appmenu-gtk-module"
         # Gtk-Message: 06:48:20.692: Failed to load module "appmenu-gtk-module"
-        # [262145, Main Thread] WARNING: GTK+ module /snap/firefox/5987/gnome-platform/usr/lib/gtk-2.0/modules/libcanberra-gtk-module.so cannot be loaded.
-        # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same process is not supported.: 'glib warning', file /build/firefox/parts/firefox/build/toolkit/xre/nsSigHandlers.cpp:201
+        # [262145, Main Thread] WARNING: GTK+ module /snap/firefox/5987/gnome-platform
+        #  /usr/lib/gtk-2.0/modules/libcanberra-gtk-module.so cannot be loaded.
+        # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same process
+        #   is not supported.: 'glib warning', file /build/firefox/parts/firefox/
+        #   build/toolkit/xre/nsSigHandlers.cpp:201
         #
-        # (firefox_firefox:262145): Gtk-WARNING **: 06:48:20.728: GTK+ module /snap/firefox/5987/gnome-platform/usr/lib/gtk-2.0/modules/libcanberra-gtk-module.so cannot be loaded.
+        # (firefox_firefox:262145): Gtk-WARNING **: 06:48:20.728: GTK+ module
+        #   /snap/firefox/5987/gnome-platform/usr/lib/gtk-2.0/modules/libcanberra-gtk-module.so
+        #   cannot be loaded.
         # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same process is not supported.
         # Gtk-Message: 06:48:20.728: Failed to load module "canberra-gtk-module"
-        # [262145, Main Thread] WARNING: GTK+ module /snap/firefox/5987/gnome-platform/usr/lib/gtk-2.0/modules/libcanberra-gtk-module.so cannot be loaded.
-        # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same process is not supported.: 'glib warning', file /build/firefox/parts/firefox/build/toolkit/xre/nsSigHandlers.cpp:201
+        # [262145, Main Thread] WARNING: GTK+ module /snap/firefox/5987/gnome-platform/
+        #   usr/lib/gtk-2.0/modules/libcanberra-gtk-module.so cannot be loaded.
+        # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same process is not
+        #   supported.: 'glib warning', file /build/firefox/parts/firefox/build/
+        #   toolkit/xre/nsSigHandlers.cpp:201
         #
-        # (firefox_firefox:262145): Gtk-WARNING **: 06:48:20.729: GTK+ module /snap/firefox/5987/gnome-platform/usr/lib/gtk-2.0/modules/libcanberra-gtk-module.so cannot be loaded.
+        # (firefox_firefox:262145): Gtk-WARNING **: 06:48:20.729: GTK+ module
+        #   /snap/firefox/5987/gnome-platform/usr/lib/gtk-2.0/modules/
+        #   libcanberra-gtk-module.so cannot be loaded.
         # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same process is not supported.
         # Gtk-Message: 06:48:20.729: Failed to load module "canberra-gtk-module"
         # ATTENTION: default value of option mesa_glthread overridden by environment.
-        cros_subprocess.Popen([f'xdg-open', url])
+        cros_subprocess.Popen(['xdg-open', url])
 
     def _find_matched_commit(self, commits, pcm):
         """Find a commit in a list of possible matches
