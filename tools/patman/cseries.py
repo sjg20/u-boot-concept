@@ -274,7 +274,8 @@ class Cseries:
         svlist = self.get_ser_ver_list()
         svdict = {}
         for svid, ser_id, ver, link, cover_id, cover_num_comm, name in svlist:
-            svdict[svid] = SER_VERL(ser_id, ver, link, cover_id, cover_num_comm, name)
+            svdict[svid] = SER_VERL(ser_id, ver, link, cover_id, cover_num_comm,
+                                    name)
         return svdict
 
     def get_upstream_dict(self):
@@ -1922,8 +1923,8 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             # Get a list of links to fetch
             for svid, _, _ in max_vers:
                 ser = sdict[svid]
-                if ser[2]:
-                    to_fetch[svid] = ser[2]
+                if ser.link:
+                    to_fetch[svid] = ser.link
                 else:
                     missing += 1
         return to_fetch, missing

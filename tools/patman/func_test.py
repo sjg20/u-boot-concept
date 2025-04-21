@@ -2442,7 +2442,7 @@ second line.'''
         # Check the link was updated
         pdict = cser.get_ser_ver_dict()
         svid = list(summary)[0]
-        self.assertEqual('1234', pdict[svid][2])
+        self.assertEqual('1234', pdict[svid].link)
 
         series = patchstream.get_metadata_for_list('first', self.gitdir, 2)
         self.assertEqual('1:1234', series.links)
@@ -2450,7 +2450,7 @@ second line.'''
     def test_series_autolink_latest(self):
         """Test linking the lastest versions"""
         cser, pwork = self._autolink_setup()
-        with terminal.capture() as (out, _):
+        with terminal.capture():
             summary = cser.autolink_all(pwork, update_commit=True,
                                         link_all_versions=False,
                                         replace_existing=False, dry_run=False,
@@ -2478,7 +2478,7 @@ second line.'''
     def test_series_autolink_replace(self):
         """Test linking the lastest versions without updating commits"""
         cser, pwork = self._autolink_setup()
-        with terminal.capture() as (out, _):
+        with terminal.capture():
             summary = cser.autolink_all(pwork, update_commit=True,
                                         link_all_versions=True,
                                         replace_existing=True, dry_run=False,
@@ -2727,8 +2727,8 @@ second line.'''
         # Add a version; now there should be two
         with terminal.capture() as (out, _):
             cser.increment('first')
-        plist = cser.get_ser_ver_dict()
-        self.assertEqual(2, len(plist))
+        svdict = cser.get_ser_ver_dict()
+        self.assertEqual(2, len(svdict))
 
         pclist = cser.get_pcommit_dict()
         self.assertEqual(4, len(pclist))
@@ -2736,8 +2736,8 @@ second line.'''
         # Remove version two, using dry run (i.e. no effect)
         with terminal.capture() as (out, _):
             cser.decrement('first', dry_run=True)
-        plist = cser.get_ser_ver_dict()
-        self.assertEqual(2, len(plist))
+        svdict = cser.get_ser_ver_dict()
+        self.assertEqual(2, len(svdict))
 
         repo = pygit2.init_repository(self.gitdir)
         branch = repo.lookup_branch('first2')
@@ -2756,8 +2756,8 @@ second line.'''
         self.assertEqual(
             f"Deleted branch 'first2' {str(branch_oid)[:10]}", lines[1])
 
-        plist = cser.get_ser_ver_dict()
-        self.assertEqual(1, len(plist))
+        svdict = cser.get_ser_ver_dict()
+        self.assertEqual(1, len(svdict))
 
         pclist = cser.get_pcommit_dict()
         self.assertEqual(2, len(pclist))
