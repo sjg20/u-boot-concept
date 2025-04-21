@@ -3043,7 +3043,6 @@ second line.'''
 
         yield cser
 
-        # check the allow_unmarked flag
         with terminal.capture() as (out, _):
             yield cser
 
@@ -3062,10 +3061,13 @@ second line.'''
         self.assertRegex(next(lines), '- unmarked .* as .*: spi: SPI fixes')
         self.assertRegex(next(lines), 'Updating branch first to .*')
         self.assertEqual('Dry run completed', next(lines))
+        yield cser
 
     def test_series_unmark(self):
         """Test unmarking a cseries, i.e. removing Change-Id fields"""
-        cser = self.get_cser()
+        # cser = self.get_cser()
+        cor = self.check_series_unmark()
+        cser = next(cor)
 
         # check the allow_unmarked flag
         with terminal.capture() as (out, _):
@@ -3078,45 +3080,13 @@ second line.'''
                 cser.unmark_series('first', dry_run=True)
             self.assertEqual('Unmarked commits 2/2', str(exc.exception))
 
-        with terminal.capture() as (out, _):
-            cser.add_series('first', '', mark=True)
-
-        with terminal.capture() as (out, _):
-            cser.unmark_series('first', dry_run=True)
-        lines = iter(out.getvalue().splitlines())
-        self.assertEqual(
-            "Unmarking series 'first': allow_unmarked False",
-            next(lines))
-        self.assertEqual('Checking out upstream commit refs/heads/base',
-                         next(lines))
-        self.assertEqual("Processing 2 commits from branch 'first'",
-                         next(lines))
-        self.assertRegex(next(lines), '- unmarked .* as .*: i2c: I2C things')
-        self.assertRegex(next(lines), '- unmarked .* as .*: spi: SPI fixes')
-        self.assertRegex(next(lines), 'Updating branch first to .*')
-        self.assertEqual('Dry run completed', next(lines))
-
-    '''
-    def test_series_unmark(self):
-        """Test unmarking a cseries, i.e. removing Change-Id fields"""
-        cor = self.check_series_unmark()
         cser = next(cor)
 
-        with terminal.capture() as (out, _):
-            with self.assertRaises(ValueError) as exc:
-                cser.unmark_series('first', dry_run=True)
-            self.assertEqual('Unmarked commits 2/2', str(exc.exception))
-
-        cser = next(cor)
-        cser.unmark_series('first', allow_unmarked=True, dry_run=True)
-
-        cser = next(cor)
         cser.add_series('first', '', mark=True)
-
         cser = next(cor)
+
         cser.unmark_series('first', dry_run=True)
         cser = next(cor)
-    '''
 
     def test_series_remove(self):
         """Test removing a series"""
