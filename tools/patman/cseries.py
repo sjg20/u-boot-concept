@@ -57,9 +57,13 @@ SHORTEN_STATE = {
     'changes-requested': 'changes',
 }
 
+# Information about a series/version record
 SER_VER = namedtuple(
     'ser_ver',
     'idnum,series_id,version,link,cover_id,cover_num_comments,name')
+
+# Summary info returned from Cseries.autolink_all()
+AUTOLINK = namedtuple('autolink', 'name,version,link,desc,result')
 
 def oid(oid_val):
     """Convert a string into a shortened hash
@@ -760,12 +764,7 @@ class Cseries:
         Return:
             OrderedDict of summary info:
                 key (int): ser_ver ID
-                value (tuple):
-                    str: series name
-                    int: series version
-                    str: series link, or None if none
-                    str: series description
-                    str: autolink result
+                value (AUTOLINK): result of autolinking on this ser_ver
         """
         sdict = self.get_series_dict_by_id()
         all_ser_vers = self._get_autolink_dict(sdict, link_all_versions)
@@ -788,7 +787,8 @@ class Cseries:
                 no_desc += 1
                 state[svid] = 'missing description'
 
-        results, requests = self.loop.run_until_complete(pwork.find_series_list(valid))
+        results, requests = self.loop.run_until_complete(
+            pwork.find_series_list(valid))
 
         for svid, ser_id, link, _ in results:
             if link:
@@ -808,7 +808,7 @@ class Cseries:
         summary = OrderedDict()
         for svid in sorted(all_ser_vers, key=lambda k: all_ser_vers[k][1:2]):
             _, name, version, link, desc = all_ser_vers[svid]
-            summary[svid] = name, version, link, desc, state[svid]
+            summary[svid] = AUTOLINK(name, version, link, desc, state[svid])
 
         if show_summary:
             msg = f'{updated} series linked'
