@@ -341,7 +341,7 @@ class Cseries:
 
         Return: tuple:
             str: Series name, e.g. 'fix'
-            Series: Collected series information
+            Series: Collected series information, including name
             int: Version number, e.g. 2
             str: Message to show
         """
@@ -368,13 +368,13 @@ class Cseries:
 
         return name, ser, series, version, msg
 
-    def _handle_mark(self, branch_name, series, version, mark, allow_unmarked,
+    def _handle_mark(self, branch_name, in_series, version, mark, allow_unmarked,
                      force_version, dry_run):
         """Handle marking a series, checking for unmarked commits, etc.
 
         Args:
             branch_name (str): Name of branch to sync, or None for current one
-            series (Series): Series object
+            in_series (Series): Series object
             version (int): branch version, e.g. 2 for 'mychange2'
             mark (str): True to mark each commit with a change ID
             allow_unmarked (str): True to not require each commit to be marked
@@ -383,11 +383,13 @@ class Cseries:
             dry_run (bool): True to do a dry run
 
         Returns:
-            Series: Updated series object, if the series was marked
+            Series: New series object, if the series was marked;
+                copy_db_fields_to() is used to copy fields over
 
         Raises:
             ValueError: Series being unmarked when it should be marked, etc.
         """
+        series = in_series
         if 'version' in series and int(series.version) != version:
             msg = (f"Series name '{branch_name}' suggests version {version} "
                    f"but Series-version tag indicates {series.version}")
