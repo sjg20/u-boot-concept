@@ -1920,11 +1920,18 @@ second line.'''
         with terminal.capture() as (out, _):
             control.do_series(args, test_db=self.tmpdir, pwork=True)
         lines = out.getvalue().splitlines()
-        self.assertEqual(3, len(lines))
-        self.assertEqual('Name            Description          Accepted  Versions',
-                         lines[0])
-        self.assertEqual('first                                     -/2  1', lines[1])
-        self.assertEqual('second          Series for my board       1/3  1 2', lines[2])
+        self.assertEqual(5, len(lines))
+        self.assertEqual(
+            'Name             Description                               Accepted  Versions',
+            lines[0])
+        self.assertTrue(lines[1].startswith('--'))
+        self.assertEqual(
+            'first                                                           -/2  1',
+            lines[2])
+        self.assertEqual(
+            'second           Series for my board                            1/3  1 2',
+            lines[3])
+        self.assertTrue(lines[4].startswith('--'))
         self.db_close()
 
     def test_do_series_add(self):
@@ -1949,8 +1956,11 @@ second line.'''
         with terminal.capture() as (out, _):
             control.do_series(args, test_db=self.tmpdir, pwork=True)
         lines = out.getvalue().splitlines()
-        self.assertEqual(2, len(lines))
-        self.assertEqual('first           my-description            -/2  1', lines[1])
+        self.assertEqual(4, len(lines))
+        self.assertTrue(lines[1].startswith('--'))
+        self.assertEqual(
+            'first            my-description                                 -/2  1',
+            lines[2])
 
         self.db_close()
 

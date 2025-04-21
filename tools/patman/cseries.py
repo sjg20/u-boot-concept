@@ -994,14 +994,16 @@ class Cseries:
             accepted = '-'
         return f'{accepted}/{count}', pwc
 
-    def series_do_list(self):
+    def series_list(self):
         """List all series
 
         Lines all series along with their description, number of patches
         accepted and  the available versions
         """
         sdict = self.get_series_dict()
-        print(f"{'Name':15} {'Description':20} Accepted  Versions")
+        print(f"{'Name':15}  {'Description':40}  Accepted  Versions")
+        border = f"{'-' * 15}  {'-' * 40}  --------  {'-' * 15}"
+        print(border)
         for name in sorted(sdict):
             ser = sdict[name]
             versions = self.get_version_list(ser.idnum)
@@ -1010,7 +1012,8 @@ class Cseries:
 
             vlist = ' '.join([str(ver) for ver in sorted(versions)])
 
-            print(f'{name:15.15} {ser.desc:20.20} {stat.rjust(8)}  {vlist}')
+            print(f'{name:16.16} {ser.desc:41.41} {stat.rjust(8)}  {vlist}')
+        print(border)
 
     def update_series(self, name, series, max_vers, new_name=None,
                       dry_run=False, add_vers=None, add_link=None):
