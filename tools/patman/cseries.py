@@ -750,7 +750,7 @@ class Cseries:
             for svid, ser_id, version in max_vers:
                 svinfo = svdict[svid]
                 ser = sdict[ser_id]
-                to_fetch[svid] = ser_id, ser.name, version, svinfo[2], ser.desc
+                to_fetch[svid] = ser_id, ser.name, version, svinfo.link, ser.desc
         return to_fetch
 
     def autolink_all(self, pwork, update_commit, link_all_versions,
