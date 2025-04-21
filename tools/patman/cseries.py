@@ -274,7 +274,7 @@ class Cseries:
         svlist = self.get_ser_ver_list()
         svdict = {}
         for svid, ser_id, ver, link, cover_id, cover_num_comm, name in svlist:
-            svdict[svid] = ser_id, ver, link, cover_id, cover_num_comm, name
+            svdict[svid] = SER_VERL(ser_id, ver, link, cover_id, cover_num_comm, name)
         return svdict
 
     def get_upstream_dict(self):
