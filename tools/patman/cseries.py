@@ -368,6 +368,19 @@ class Cseries:
 
         return name, ser, series, version, msg
 
+    def copy_db_fields_to(self, series, in_series):
+        """Copy over fields used by Cseries from one series to another
+
+        This copes desc, idnum and name
+
+        Args:
+            series (Series): Series to copy to
+            in_series (Series): Series to copy from
+        """
+        series.desc = in_series.desc
+        series.idnum = in_series.idnum
+        series.name = in_series.name
+
     def _handle_mark(self, branch_name, in_series, version, mark, allow_unmarked,
                      force_version, dry_run):
         """Handle marking a series, checking for unmarked commits, etc.
@@ -405,6 +418,7 @@ class Cseries:
             series = patchstream.get_metadata(branch_name, 0,
                                               len(series.commits),
                                               git_dir=self.gitdir)
+            #self.copy_db_fields_to(series, in_series)
 
         if mark:
             add_oid = self.mark_series(branch_name, series, dry_run=dry_run)
@@ -412,6 +426,7 @@ class Cseries:
             # Collect the commits again, as the hashes have changed
             series = patchstream.get_metadata(add_oid, 0, len(series.commits),
                                               git_dir=self.gitdir)
+            #self.copy_db_fields_to(series, in_series)
 
         bad_count = 0
         for commit in series.commits:
