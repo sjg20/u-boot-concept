@@ -194,6 +194,7 @@ def setup_parser():
     series_subparsers.add_parser('get-link')
     series_subparsers.add_parser('inc')
     series_subparsers.add_parser('list')
+    series_subparsers.add_parser('mark')
     series_subparsers.add_parser('open')
     pat = series_subparsers.add_parser(
         'patches', epilog='Show a list of patches and optional details')

@@ -3065,7 +3065,6 @@ second line.'''
 
     def test_series_unmark(self):
         """Test unmarking a cseries, i.e. removing Change-Id fields"""
-        # cser = self.get_cser()
         cor = self.check_series_unmark()
         cser = next(cor)
 
@@ -3087,6 +3086,15 @@ second line.'''
 
         cser.unmark_series('first', dry_run=True)
         cser = next(cor)
+
+    def test_series_unmark_cmdline(self):
+        """Test the unmark command"""
+        # with (mock.patch.object(cseries.Cseries, 'unmark_series',
+                                # return_value=None) as method):
+        cser = self.get_cser()
+
+        self.run_args('series', 'unmark', pwork=True)
+        method.assert_called_once_with(True, update_commit=False)
 
     def test_series_remove(self):
         """Test removing a series"""
