@@ -57,6 +57,14 @@ SHORTEN_STATE = {
     'changes-requested': 'changes',
 }
 
+SER_VER = namedtuple(
+    'ser_ver',
+    'idnum,series_id,version,link,cover_id,cover_num_comments,name')
+
+SER_VERL = namedtuple(
+    'ser_verl',
+    'series_id,version,link,cover_id,cover_num_comments,name')
+
 def oid(oid_val):
     """Convert a string into a shortened hash
 
@@ -241,19 +249,14 @@ class Cseries:
     def get_ser_ver_list(self):
         """Get a list of patchwork entries from the database
 
-        Return: value: list of tuple:
-            int: ser_ver id
-            int: series_id
-            int: version
-            link: link string, or ''
-            str: Cover-letter ID
-            int: Number of cover-letter comments
-            str: Cover-letter name
+        Return:
+            list of SER_VER
         """
         res = self.db.execute(
             'SELECT id, series_id, version, link, cover_id, cover_num_comments, '
             'name FROM ser_ver')
-        return res.fetchall()
+        items = res.fetchall()
+        return [SER_VER(*x) for x in items]
 
     def get_ser_ver_dict(self):
         """Get a dict of patchwork entries from the database
