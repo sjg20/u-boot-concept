@@ -359,6 +359,7 @@ class Cseries:
                 'Cannot detect branch automatically: Perhaps use -U <upstream-commit> ?')
 
         series = patchstream.get_metadata(name, 0, count, git_dir=self.gitdir)
+        self.copy_db_fields_to(series, ser)
         msg = None
         if end:
             repo = pygit2.init_repository(self.gitdir)
@@ -366,7 +367,7 @@ class Cseries:
             first_line = target.message.splitlines()[0]
             msg = f'Ending before {oid(target.id)} {first_line}'
 
-        return name, ser, series, version, msg
+        return name, series, version, msg
 
     def copy_db_fields_to(self, series, in_series):
         """Copy over fields used by Cseries from one series to another
@@ -381,8 +382,8 @@ class Cseries:
         series.idnum = in_series.idnum
         series.name = in_series.name
 
-    def _handle_mark(self, branch_name, in_series, version, mark, allow_unmarked,
-                     force_version, dry_run):
+    def _handle_mark(self, branch_name, in_series, version, mark,
+                     allow_unmarked, force_version, dry_run):
         """Handle marking a series, checking for unmarked commits, etc.
 
         Args:
@@ -418,7 +419,7 @@ class Cseries:
             series = patchstream.get_metadata(branch_name, 0,
                                               len(series.commits),
                                               git_dir=self.gitdir)
-            #self.copy_db_fields_to(series, in_series)
+            self.copy_db_fields_to(series, in_series)
 
         if mark:
             add_oid = self.mark_series(branch_name, series, dry_run=dry_run)
@@ -426,7 +427,7 @@ class Cseries:
             # Collect the commits again, as the hashes have changed
             series = patchstream.get_metadata(add_oid, 0, len(series.commits),
                                               git_dir=self.gitdir)
-            #self.copy_db_fields_to(series, in_series)
+            self.copy_db_fields_to(series, in_series)
 
         bad_count = 0
         for commit in series.commits:
@@ -451,20 +452,20 @@ class Cseries:
             end (str): Add only commits up to but exclu
             dry_run (bool): True to do a dry run
         """
-        name, ser, series, version, msg = self._prep_series(branch_name, end)
+        name, ser, version, msg = self._prep_series(branch_name, end)
         tout.info(f"Adding series '{ser.name}' v{version}: mark {mark} "
                   f'allow_unmarked {allow_unmarked}')
         if msg:
             tout.info(msg)
         if desc is None:
-            if not series.cover:
+            if not ser.cover:
                 raise ValueError(
                     f"Branch '{name}' has no cover letter - please provide description")
-            desc = series.cover[0]
+            desc = ser.cover[0]
 
-        series = self._handle_mark(name, series, version, mark, allow_unmarked,
-                                   force_version, dry_run)
-        link = series.get_link_for_version(version)
+        ser = self._handle_mark(name, ser, version, mark, allow_unmarked,
+                                force_version, dry_run)
+        link = ser.get_link_for_version(version)
 
         msg = 'Added'
         added = False
@@ -487,8 +488,8 @@ class Cseries:
                 msg += f" to existing series '{ser.name}'"
             added = True
 
-            self.add_series_commits(series, svid)
-            count = len(series.commits)
+            self.add_series_commits(ser, svid)
+            count = len(ser.commits)
             msg += f" ({count} commit{'s' if count > 1 else ''})"
         if not added:
             tout.info(f"Series '{ser.name}' v{version} already exists")
@@ -583,8 +584,8 @@ class Cseries:
         """
         if update_commit:
             branch_name = self.get_branch_name(name, version)
-            _, _, series, max_vers, _ = self._prep_series(branch_name)
-            self.update_series(branch_name, series, max_vers, add_vers=version,
+            _, ser, max_vers, _ = self._prep_series(branch_name)
+            self.update_series(branch_name, ser, max_vers, add_vers=version,
                                dry_run=dry_run, add_link=link)
         if link is None:
             link = ''
@@ -1406,12 +1407,12 @@ class Cseries:
         Return:
             pygit.oid: oid of the new branch
         """
-        name, _, series, _, _ = self._prep_series(name)
+        name, ser, _, _ = self._prep_series(name)
         tout.info(f"Unmarking series '{name}': allow_unmarked {allow_unmarked}")
 
         if not allow_unmarked:
             bad = []
-            for cmt in series.commits:
+            for cmt in ser.commits:
                 if not cmt.change_id:
                     bad.append(cmt)
             if bad:
@@ -1419,9 +1420,9 @@ class Cseries:
                 for cmt in bad:
                     print(f' - {oid(cmt.hash)} {cmt.subject}')
                 raise ValueError(
-                    f'Unmarked commits {len(bad)}/{len(series.commits)}')
+                    f'Unmarked commits {len(bad)}/{len(ser.commits)}')
         vals = None
-        for vals in self._process_series(name, series, dry_run=dry_run):
+        for vals in self._process_series(name, ser, dry_run=dry_run):
             if CHANGE_ID_TAG in vals.msg:
                 pos = vals.msg.index(CHANGE_ID_TAG)
                 vals.msg = vals.msg[:pos]
@@ -2197,7 +2198,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             out = self.col.build(col, subject) if col else subject
             tout.info(f'{oper} {seq:3} {out}')
 
-        name, ser, series, version, msg = self._prep_series(branch_name, end)
+        name, ser, version, msg = self._prep_series(branch_name, end)
         svid = self.get_ser_ver(ser.idnum, version)[0]
         pcdict = self.get_pcommit_dict(svid)
 
@@ -2206,11 +2207,11 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         if msg:
             tout.info(msg)
 
-        series = self._handle_mark(name, series, version, mark, allow_unmarked,
-                                   False, dry_run)
+        ser = self._handle_mark(name, ser, version, mark, allow_unmarked,
+                                False, dry_run)
 
         # First check for new patches that are not in the database
-        to_add = dict(enumerate(series.commits))
+        to_add = dict(enumerate(ser.commits))
         for pcm in pcdict.values():
             tout.debug(f'pcm {pcm.subject}')
             i = self._find_matched_commit(to_add, pcm)
@@ -2219,13 +2220,13 @@ Please use 'patman series -s {branch} scan' to resolve this''')
 
         # Now check for patches in the database that are not in the branch
         to_remove = dict(enumerate(pcdict.values()))
-        for cmt in series.commits:
+        for cmt in ser.commits:
             tout.debug(f'cmt {cmt.subject}')
             i = self._find_matched_patch(to_remove, cmt)
             if i is not None:
                 del to_remove[i]
 
-        for seq, cmt in enumerate(series.commits):
+        for seq, cmt in enumerate(ser.commits):
             if seq in to_remove:
                 _show_item('-', seq, to_remove[seq].subject)
                 del to_remove[seq]
@@ -2234,7 +2235,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 del to_add[seq]
             else:
                 _show_item(' ', seq, cmt.subject)
-        seq = len(series.commits)
+        seq = len(ser.commits)
         for cmt in to_add.items():
             _show_item('+', seq, cmt.subject)
             seq += 1
@@ -2242,7 +2243,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             _show_item('+', seq, pcm.subject)
 
         self.db.execute('DELETE FROM pcommit WHERE svid = ?', (svid,))
-        self.add_series_commits(series, svid)
+        self.add_series_commits(ser, svid)
         if not dry_run:
             self.commit()
         else:

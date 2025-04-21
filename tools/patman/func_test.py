@@ -1842,9 +1842,8 @@ second line.'''
         self.assertFalse(cser.get_series_dict())
 
         with terminal.capture():
-            _, _, series, max_vers, _ = cser._prep_series('first')
-            cser.update_series('first', series, max_vers, None, False,
-                               add_vers=2)
+            _, ser, max_vers, _ = cser._prep_series('first')
+            cser.update_series('first', ser, max_vers, None, False, add_vers=2)
 
         with self.assertRaises(ValueError) as exc:
             with terminal.capture():
@@ -3828,11 +3827,11 @@ Date:   .*
 
         name = gitutil.get_branch(self.gitdir)
         # upstream_name = gitutil.get_upstream(self.gitdir, name)
-        name, ser, series, version, _ = cser._prep_series(None)
+        name, ser, version, _ = cser._prep_series(None)
 
         # We now have 4 commits numbered 0 (second~3) to 3 (the one we just
         # added). Drop commit 1 from the branch
-        cser.filter_commits(name, series, 1)
+        cser.filter_commits(name, ser, 1)
         svid = cser.get_ser_ver(ser.idnum, version)[0]
         old_pcdict = cser.get_pcommit_dict(svid).values()
 
