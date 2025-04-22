@@ -540,12 +540,9 @@ class Patchwork:
         count = len(patch_list)
         # patches = [None] * count
         tasks = [asyncio.create_task(
-            self._get_patch_status(client, patch_list[i]['id']))
-            for i in range(count)]
-        # for i in range(count):
-            # 2 requests for each patch
-            # patches[i] = await self._get_patch_status(client,
-                                                      # patch_dict[i]['id'])
+                 self._get_patch_status(client, patch_list[i]['id']))
+                 for i in range(count)]
+        # 2 requests for each patch
         patches = await asyncio.gather(*tasks)
 
         # 1 request for cover-letter comments, if there is one
@@ -566,6 +563,7 @@ class Patchwork:
                 int: svid
                 COVER: Cover letter, or None if none
                 list of PATCH: patch information for each patch in series
+                list of patches, see get_series()['patches']
         """
         result = {}
         self.request_count = 0
@@ -576,33 +574,5 @@ class Patchwork:
                 for svid, link in sync_data.items()
             ]
             results = await asyncio.gather(*tasks)
-            '''
-            while tasks:
-                pending = len(asyncio.all_tasks())
-                print(f"Number of currently pending tasks: {pending}")
-
-                done, pending = await asyncio.wait(
-                    tasks, return_when=asyncio.FIRST_COMPLETED)
-                print(f"Number of tasks just completed: {len(done)}")
-                print(f"Number of tasks remaining: {len(pending)}")
-
-                tasks = list(pending)  # Update the list of tasks to wait on in the next iteration
-            '''
-
-        # results = [result[svid] for svid in sync_data]
 
         return results, self.request_count
-        '''
-            data = await self.get_series(link)
-            print('data', data)
-            patch_dict = data['patches']
-
-            count = len(patch_dict)
-            patches = [None] * count
-            for i in range(count):
-                patches[i] = await self._get_patch_status(patch_dict[i]['id'])
-
-            cover = await self.get_series_cover(data)
-            result[svid] = cover, patches
-        return result
-        '''
