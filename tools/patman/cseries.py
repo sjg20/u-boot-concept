@@ -1909,7 +1909,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 f'No matching series for id {series_id} version {version}')
         return recs[0]
 
-    def _sync_one(self, svid, cover, patches, patch_list):
+    def _sync_one(self, svid, cover, patches, patch_list, gather_tags):
         """Sync one series to the database
 
         Args:
@@ -1920,6 +1920,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 name (str): Cover-letter name
             patch_list (list of dict): Patches in the series from patchwork,
                 with key 'name' containing the patch name
+            gather_tags (bool): True to gather review/test tags
         """
         pwc = self.get_pcommit_dict(svid)
 
@@ -1946,13 +1947,14 @@ Please use 'patman series -s {branch} scan' to resolve this''')
 
         return updated
 
-    def series_sync(self, pwork, series, version):
+    def series_sync(self, pwork, series, version, gather_tags=False):
         """Sync the series status from patchwork
 
         Args:
             pwork (Patchwork): Patchwork object to use
             series (str): Name of series to use, or None to use current branch
             version (int): Version number, or None to detect from name
+            gather_tags (bool): True to gather review/test tags
         """
         ser, version = self.parse_series_and_version(series, version)
         self.ensure_version(ser, version)
@@ -1965,7 +1967,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         cover, patches, patch_list = self.loop.run_until_complete(
             pwork.series_get_state(link))
 
-        updated = self._sync_one(svid, cover, patches, patch_list)
+        updated = self._sync_one(svid, cover, patches, patch_list, gather_tags)
         self.commit()
 
         tout.info(f"{updated} patch{'es' if updated != 1 else ''}"
@@ -2007,13 +2009,15 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                     missing += 1
         return to_fetch, missing
 
-    def series_sync_all(self, pwork, sync_all_versions=False):
+    def series_sync_all(self, pwork, sync_all_versions=False,
+                        gather_tags=False):
         """Sync all series status from patchwork
 
         Args:
             pwork (Patchwork): Patchwork object to use
             sync_all_versions (bool): True to sync all versions of a series,
                 False to sync only the latest version
+            gather_tags (bool): True to gather review/test tags
         """
         to_fetch, missing = self._get_fetch_dict(sync_all_versions)
 
@@ -2023,7 +2027,8 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         updated = 0
         updated_cover = 0
         for svid, cover, patches, patch_list in result:
-            updated += self._sync_one(svid, cover, patches, patch_list)
+            updated += self._sync_one(svid, cover, patches, patch_list,
+                                      gather_tags)
             if cover:
                 updated_cover += 1
         self.commit()

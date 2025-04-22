@@ -91,6 +91,146 @@ def add_send_args(par):
     par.add_argument('--keep-change-id', action='store_true',
                       help='Preserve Change-Id tags in patches to send.')
 
+
+def _add_show_comments(parser):
+    parser.add_argument('-c', '--show-comments', action='store_true',
+                        help='Show comments from each patch')
+
+def add_series_args(subparsers):
+    """Add the 'series' subparsers
+
+    Args:
+        subparsers (argparse action): Subparser parent
+
+    Return:
+        ArgumentParser: series subparser
+    """
+    def _add_allow_unmarked(parser):
+        parser.add_argument('-M', '--allow-unmarked', action='store_true',
+                            default=False,
+                            help="Don't require commits to be marked")
+
+    def _add_mark(parser):
+        parser.add_argument('-m', '--mark', action='store_true',
+                            help='Mark unmarked commits with a Change-Id field')
+
+    def _add_update(parser):
+        parser.add_argument('-u', '--update', action='store_true',
+                            help='Update the branch commit')
+
+    def _add_wait(parser):
+        parser.add_argument(
+            '-w', '--autolink-wait', type=int, default=0,
+            help='Number of seconds to wait for patchwork to get a sent series')
+
+    def _add_upstream(parser):
+        parser.add_argument('-U', '--upstream', help='Commit to end before')
+
+    series = subparsers.add_parser('series', help='Manage series of patches')
+    series.defaults_cmds = [
+        ['set-link', 'fred'],
+    ]
+    series.add_argument('-n', '--dry-run', action='store_true', dest='dry_run',
+            default=False, help="Do a dry run (create but don't email patches)")
+    series.add_argument('-s', '--series', help='Name of series')
+    series.add_argument('-V', '--version', type=int,
+                        help='Version number to link')
+    series_subparsers = series.add_subparsers(dest='subcmd')
+
+    # This causes problem at present, perhaps due to the 'defaults' handling in
+    # settings
+    # series_subparsers.required = True
+
+    add = series_subparsers.add_parser('add')
+    add.add_argument('-D', '--desc',
+                     help='Series description / cover-letter title')
+    add.add_argument(
+        '-f', '--force-version', action='store_true',
+        help='Change the Series-version on a series to match its branch')
+    _add_mark(add)
+    _add_allow_unmarked(add)
+    _add_upstream(add)
+
+    series_subparsers.add_parser('archive')
+
+    auto = series_subparsers.add_parser('autolink')
+    _add_update(auto)
+    _add_wait(auto)
+
+    aall = series_subparsers.add_parser('autolink-all')
+    aall.add_argument('-a', '--link-all-versions', action='store_true',
+                      help='Link all series versions, not just the latest')
+    aall.add_argument('-r', '--replace-existing', action='store_true',
+                      help='Replace existing links')
+    _add_update(aall)
+
+    series_subparsers.add_parser('dec')
+    series_subparsers.add_parser('get-link')
+    series_subparsers.add_parser('inc')
+    series_subparsers.add_parser('list')
+
+    mar = series_subparsers.add_parser('mark')
+    mar.add_argument('-m', '--allow-marked', action='store_true',
+                     default=False,
+                     help="Don't require commits to be unmarked")
+
+    series_subparsers.add_parser('open')
+    pat = series_subparsers.add_parser(
+        'patches', epilog='Show a list of patches and optional details')
+    pat.add_argument('-t', '--commit', action='store_true',
+                     help='Show the commit and diffstat')
+    pat.add_argument('-p', '--patch', action='store_true',
+                     help='Show the patch body')
+
+    prog = series_subparsers.add_parser('progress')
+    prog.add_argument('-a', '--show-all-versions', action='store_true',
+                      help='Show all series versions, not just the latest')
+    prog.add_argument('-l', '--list-patches', action='store_true',
+                      help='List patch subject and status')
+
+    series_subparsers.add_parser('remove')
+    series_subparsers.add_parser('remove-version')
+
+    scan = series_subparsers.add_parser('scan')
+    _add_mark(scan)
+    _add_allow_unmarked(scan)
+    _add_upstream(scan)
+
+    ssend = series_subparsers.add_parser('send')
+    add_send_args(ssend)
+    ssend.add_argument('--no-autolink', action='store_false', default=True,
+        dest='autolink',
+        help='Monitor patchwork after sending so the series can be autolinked')
+    _add_wait(ssend)
+
+    setl = series_subparsers.add_parser('set-link')
+    _add_update(setl)
+
+    setl.add_argument(
+        'link', help='Link to use, i.e. patchwork series number (e.g. 452329)')
+    stat = series_subparsers.add_parser('status')
+    _add_show_comments(stat)
+    stat.add_argument('-C', '--show-cover-comments', action='store_true',
+                      help='Show comments from the cover letter')
+
+    series_subparsers.add_parser('summary')
+
+    syn = series_subparsers.add_parser('sync')
+    syn.add_argument('-g', '--gather-tags', action='store_true',
+                     help='Gather review/test tags and update local series')
+
+    sall = series_subparsers.add_parser('sync-all')
+    sall.add_argument('-a', '--sync-all-versions', action='store_true',
+                      help='Sync all series versions, not just the latest')
+
+    series_subparsers.add_parser('unarchive')
+
+    unm = series_subparsers.add_parser('unmark')
+    _add_allow_unmarked(unm)
+
+    return series
+
+
 def setup_parser():
     """Parse command line arguments from sys.argv[]
 
@@ -143,116 +283,14 @@ def setup_parser():
 
     status = subparsers.add_parser('status',
                                    help='Check status of patches in patchwork')
-    status.add_argument('-c', '--show-comments', action='store_true',
-                        help='Show comments from each patch')
+    _add_show_comments(status)
     status.add_argument(
         '-d', '--dest-branch', type=str,
         help='Name of branch to create with collected responses')
     status.add_argument('-f', '--force', action='store_true',
                         help='Force overwriting an existing branch')
 
-    series = subparsers.add_parser('series', help='Manage series of patches')
-    series.defaults_cmds = [
-        ['set-link', 'fred'],
-    ]
-    series.add_argument('-n', '--dry-run', action='store_true', dest='dry_run',
-            default=False, help="Do a dry run (create but don't email patches)")
-    series.add_argument('-s', '--series', help='Name of series')
-    series.add_argument('-V', '--version', type=int,
-                        help='Version number to link')
-    series_subparsers = series.add_subparsers(dest='subcmd')
-    # series_subparsers.required = True
-    add = series_subparsers.add_parser('add')
-    add.add_argument('-d', '--desc',
-                     help='Series description / cover-letter title')
-    add.add_argument(
-        '-f', '--force-version', action='store_true',
-        help='Change the Series-version on a series to match its branch')
-    add.add_argument('-m', '--mark', action='store_true',
-                     help='Mark unmarked commits with a Change-Id field')
-    add.add_argument('-M', '--allow-unmarked', action='store_true',
-                     default=False,
-                     help="Don't require commits to be marked")
-    add.add_argument('-U', '--upstream', help='Commit to end before')
-    series_subparsers.add_parser('archive')
-
-    auto = series_subparsers.add_parser('autolink')
-    auto.add_argument('-u', '--update', action='store_true',
-                      help='Update the branch commit')
-    auto.add_argument('-w', '--autolink-wait', type=int, default=0,
-        help='Number of seconds to wait for patchwork to get a sent series')
-
-    aall = series_subparsers.add_parser('autolink-all')
-    aall.add_argument('-a', '--link-all-versions', action='store_true',
-                      help='Link all series versions, not just the latest')
-    aall.add_argument('-r', '--replace-existing', action='store_true',
-                      help='Replace existing links')
-    aall.add_argument('-u', '--update', action='store_true',
-                      help='Update the branch commit')
-
-    series_subparsers.add_parser('dec')
-    series_subparsers.add_parser('get-link')
-    series_subparsers.add_parser('inc')
-    series_subparsers.add_parser('list')
-
-    mar = series_subparsers.add_parser('mark')
-    mar.add_argument('-m', '--allow-marked', action='store_true',
-                     default=False,
-                     help="Don't require commits to be unmarked")
-
-    series_subparsers.add_parser('open')
-    pat = series_subparsers.add_parser(
-        'patches', epilog='Show a list of patches and optional details')
-    pat.add_argument('-c', '--commit', action='store_true',
-                     help='Show the commit and diffstat')
-    pat.add_argument('-p', '--patch', action='store_true',
-                     help='Show the patch body')
-
-    prog = series_subparsers.add_parser('progress')
-    prog.add_argument('-a', '--show-all-versions', action='store_true',
-                      help='Show all series versions, not just the latest')
-    prog.add_argument('-l', '--list-patches', action='store_true',
-                      help='List patch subject and status')
-
-    series_subparsers.add_parser('remove')
-    series_subparsers.add_parser('remove-version')
-    scan = series_subparsers.add_parser('scan')
-    scan.add_argument('-m', '--mark', action='store_true',
-                      help='Mark unmarked commits with a Change-Id field')
-    scan.add_argument('-M', '--allow-unmarked', action='store_true',
-                      help="Don't require commits to be marked")
-    scan.add_argument('-U', '--upstream', help='Commit to end before')
-    ssend = series_subparsers.add_parser('send')
-    add_send_args(ssend)
-    ssend.add_argument('--no-autolink', action='store_false', default=True,
-        dest='autolink',
-        help='Monitor patchwork after sending so the series can be autolinked')
-    ssend.add_argument('-w', '--autolink-wait', type=int, default=180,
-        help='Number of seconds to wait for patchwork to get a sent series')
-
-    setl = series_subparsers.add_parser('set-link')
-    setl.add_argument('-u', '--update', action='store_true',
-                      help='Update the branch commit')
-    setl.add_argument(
-        'link', help='Link to use, i.e. patchwork series number (e.g. 452329)')
-    stat = series_subparsers.add_parser('status')
-    stat.add_argument('-c', '--show-comments', action='store_true',
-                      help='Show comments from each patch')
-    stat.add_argument('-C', '--show-cover-comments', action='store_true',
-                      help='Show comments from the cover letter')
-
-    series_subparsers.add_parser('summary')
-    series_subparsers.add_parser('sync')
-    sall = series_subparsers.add_parser('sync-all')
-    sall.add_argument('-a', '--sync-all-versions', action='store_true',
-                      help='Sync all series versions, not just the latest')
-
-    series_subparsers.add_parser('unarchive')
-
-    unm = series_subparsers.add_parser('unmark')
-    unm.add_argument('-M', '--allow-unmarked', action='store_true',
-                     default=False,
-                     help="Don't require commits to be marked")
+    series = add_series_args(subparsers)
 
     upstream = subparsers.add_parser('upstream', aliases=['us'],
                                      help='Manage upstream destinations')

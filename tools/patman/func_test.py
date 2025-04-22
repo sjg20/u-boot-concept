@@ -1776,14 +1776,14 @@ second line.'''
         cser = self.get_cser()
         self.add_first2(True)
         with terminal.capture() as (out, _):
-            self.run_args('series', 'add', '-M', '-d', 'description',
+            self.run_args('series', 'add', '-M', '-D', 'description',
                           pwork=True)
         self.assertIn("Added series 'first' v2 (2 commits)",
                       out.getvalue().strip())
 
         with terminal.capture() as (out, _):
             self.run_args('series', '-s', 'first', 'add', '-M',
-                          '-d', 'description', pwork=True)
+                          '-D', 'description', pwork=True)
             cser.add_series('first', 'description', allow_unmarked=True)
         self.assertIn("Added v1 to existing series 'first'",
                       out.getvalue().strip())
@@ -1919,7 +1919,7 @@ second line.'''
             with terminal.capture() as (out, _):
                 cser.autolink(pwork, 'second', 2, True)
             with terminal.capture() as (out, _):
-                cser.series_sync(pwork, 'second', 2)
+                cser.series_sync(pwork, 'second', 2, False)
             lines = out.getvalue().splitlines()
             self.assertEqual(
                 "Updating series 'second' version 2 from link '457'", lines[0])
@@ -1986,7 +1986,7 @@ second line.'''
         self.make_git_tree()
         with terminal.capture():
             self.run_args('series', '-s', 'first', 'add', '-M',
-                          '-d', 'my-description', pwork=True)
+                          '-D', 'my-description', pwork=True)
 
         cser = self.get_database()
         slist = cser.get_series_dict()
@@ -3025,7 +3025,7 @@ second line.'''
 
         with terminal.capture() as (out, _):
             self.run_args('series', '-s', 'first', 'add', '-m',
-                          '-d', 'my-description', pwork=True)
+                          '-D', 'my-description', pwork=True)
 
         pcdict = cser.get_pcommit_dict()
         self.assertTrue(pcdict[1].change_id)
@@ -3037,7 +3037,7 @@ second line.'''
 
         with terminal.capture():
             self.run_args('series', '-s', 'first', 'add', '-M',
-                          '-d', 'my-description', pwork=True)
+                          '-D', 'my-description', pwork=True)
 
         pcdict = cser.get_pcommit_dict()
         self.assertFalse(pcdict[1].change_id)
@@ -3049,7 +3049,7 @@ second line.'''
 
         with terminal.capture() as (out, _):
             self.run_args('series', '-s', 'first', 'add',
-                          '-d', 'my-description', expected_ret=1, pwork=True)
+                          '-D', 'my-description', expected_ret=1, pwork=True)
         last_line = out.getvalue().splitlines()[-2]
         self.assertEqual(
             'patman: ValueError: 2 commit(s) are unmarked; please use -m or -M',
@@ -3124,7 +3124,7 @@ second line.'''
         self.assertIn('Unmarked commits 2/2', out.getvalue())
 
         next(cor)
-        self.run_args('series', '-s', 'first', 'add',  '-d', '', '--mark',
+        self.run_args('series', '-s', 'first', 'add',  '-D', '', '--mark',
                       pwork=True)
 
         next(cor)
@@ -3721,7 +3721,7 @@ Date:   .*
         with terminal.capture() as (out, _):
             cser.add_series('second', 'description', allow_unmarked=True)
         with terminal.capture() as (out, _):
-            cser.series_sync(pwork, 'second', None)
+            cser.series_sync(pwork, 'second', None, False)
         lines = out.getvalue().splitlines()
         self.assertEqual(
             "Updating series 'second' version 1 from link '183237'",
@@ -3924,7 +3924,7 @@ Date:   .*
             cser.add_series('second', allow_unmarked=True)
             cser.increment('second')
             cser.autolink(pwork, 'second', 2, True)
-            cser.series_sync(pwork, 'second', 2)
+            cser.series_sync(pwork, 'second', 2, False)
 
         with mock.patch.object(cros_subprocess.Popen, '__init__',
                                return_value=None) as method:
