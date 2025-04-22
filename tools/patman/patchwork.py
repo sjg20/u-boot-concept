@@ -55,7 +55,7 @@ class Patchwork:
         """Call the patchwork API and return the result as JSON
 
         Args:
-            client (aiohttp.ClientSession_: Session to use
+            client (aiohttp.ClientSession): Session to use
             subpath (str): URL subpath to use
 
         Returns:
@@ -104,14 +104,28 @@ class Patchwork:
         async with aiohttp.ClientSession() as client:
             return await self._request(client, 'projects/')
 
-    async def _find_series(self, client, svid, ser_id, version, desc):
+    async def _query_series(self, client, desc):
+        """Query series by name
+
+        Args:
+            client: asynio client session
+            desc: String to search for
+
+        Return:
+            list of series matches, each a dict, see get_series()
+        """
+        query = desc.replace(' ', '+')
+        return await self._request(
+            client, f'series/?project={self.proj_id}&q={query}')
+
+    async def _find_series(self, client, svid, ser_id, version, ser):
         """Find a series on the server
 
         Args:
             svid (int): ser_ver ID
             ser_id (int): series ID
             version (int): Version number to search for
-            desc (str): Description to search for
+            ser (Series): Contains description (cover-letter title)
 
         Returns:
             tuple:
@@ -121,15 +135,27 @@ class Patchwork:
                 list of dict, or None if found
                     each dict is the server result from a possible series
         """
-        query = desc.replace(' ', '+')
-        res = await self._request(
-            client, f'series/?project={self.proj_id}&q={query}')
+        desc = ser.desc
         name_found = []
-        for ser in res:
-            if ser['name'] == desc:
-                if int(ser['version']) == version:
-                    return svid, ser_id, ser['id'], None
-                name_found.append(ser)
+
+        # Do a series query on the description
+        res = await self._query_series(client, desc)
+        for pws in res:
+            if pws['name'] == desc:
+                if int(pws['version']) == version:
+                    return svid, ser_id, pws['id'], None
+                name_found.append(pws)
+
+        # When there is no cover letter, patchwork uses the first patch as the
+        # series name
+        cmt = ser.commits[0]
+        res = await self._query_series(client, cmt.subject)
+        for pws in res:
+            if pws['name'] == cmt.subject:
+                if int(pws['version']) == version:
+                    return svid, ser_id, pws['id'], None
+                name_found.append(pws)
+
         return svid, ser_id, None, name_found or res
 
     async def find_series(self, ser, version):
@@ -149,7 +175,7 @@ class Patchwork:
         async with aiohttp.ClientSession() as client:
             # We don't know the svid and it isn't needed, so use -1
             _, _, link, options = await self._find_series(client, -1, -1,
-                                                          version, ser.desc)
+                                                          version, ser)
         return link, options
 
     async def find_series_list(self, to_find):
@@ -202,6 +228,7 @@ class Patchwork:
         """Read information about a series
 
         Args:
+            client: asynio client session
             series_id (str): Patchwork series ID
 
         Returns: dict containing patchwork's series information
@@ -247,6 +274,7 @@ class Patchwork:
         """Read information about a patch
 
         Args:
+            client: asynio client session
             patch_id (str): Patchwork patch ID
 
         Returns:
@@ -258,6 +286,7 @@ class Patchwork:
         """Read comments about a patch
 
         Args:
+            client: asynio client session
             patch_id (str): Patchwork patch ID
 
         Returns: list of dict: list of comments:
@@ -377,6 +406,7 @@ class Patchwork:
         """Read comments about a cover letter
 
         Args:
+            client: asynio client session
             cover_id (str): Patchwork cover-letter ID
 
         Returns: list of dict: list of comments, each:
@@ -455,6 +485,7 @@ class Patchwork:
         """Get the cover information (including comments)
 
         Args:
+            client: asynio client session
             data (dict): Return value from self.get_series()
 
         Returns:
@@ -481,14 +512,15 @@ class Patchwork:
         Return: tuple:
             COVER object, or None
             list of PATCH: patch information for each patch in the series
+            list of patches, see get_series()['patches']
         """
         async with aiohttp.ClientSession() as client:
             data = await self.get_series(client, series_id)
-            patch_dict = data['patches']
+            patch_list = data['patches']
 
-            count = len(patch_dict)
+            count = len(patch_list)
             result = [None] * count
-            tasks = [self._get_patch_status(client, patch_dict[i]['id'])
+            tasks = [self._get_patch_status(client, patch_list[i]['id'])
                                             for i in range(count)]
             result = await asyncio.gather(*tasks)
             # for i in range(count):
@@ -498,17 +530,17 @@ class Patchwork:
 
             cover = await self._get_series_cover(client, data)
 
-        return cover, result
+        return cover, result, patch_list
 
     async def _get_one_state(self, client, svid, link, result):
         # 1 request
         data = await self.get_series(client, link)
-        patch_dict = data['patches']
+        patch_list = data['patches']
 
-        count = len(patch_dict)
+        count = len(patch_list)
         # patches = [None] * count
         tasks = [asyncio.create_task(
-            self._get_patch_status(client, patch_dict[i]['id']))
+            self._get_patch_status(client, patch_list[i]['id']))
             for i in range(count)]
         # for i in range(count):
             # 2 requests for each patch

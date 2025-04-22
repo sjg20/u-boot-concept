@@ -2213,6 +2213,7 @@ second line.'''
                 {'id': 1234, 'name': 'first series', 'version': 1},
                 {'id': 456, 'name': 'Series for my board', 'version': 1},
                 {'id': 457, 'name': 'Series for my board', 'version': 2},
+                {'id': 12345, 'name': 'i2c: I2C things', 'version': 1},
             ]
             if self.autolink_extra:
                 result += [self.autolink_extra]

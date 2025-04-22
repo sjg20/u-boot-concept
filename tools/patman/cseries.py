@@ -1883,7 +1883,18 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 f'No matching series for id {series_id} version {version}')
         return recs[0]
 
-    def _sync_one(self, svid, cover, patches):
+    def _sync_one(self, svid, cover, patches, patch_list):
+        """Sync one series to the database
+
+        Args:
+            svid (int): Ser/ver ID
+            cover (dict or None): Cover letter from patchwork, with keys:
+                id (int): Cover-letter ID in patchwork
+                num_comments (int): Number of comments
+                name (str): Cover-letter name
+            patch_list (list of dict): Patches in the series from patchwork,
+                with key 'name' containing the patch name
+        """
         pwc = self.get_pcommit_dict(svid)
 
         updated = 0
@@ -1902,6 +1913,10 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 'UPDATE ser_ver SET cover_id = ?, cover_num_comments = ?, '
                 'name = ? WHERE id = ?',
                 (cover.id, cover.num_comments, cover.name, svid))
+        else:
+            patch = patch_list[0]
+            self.db.execute('UPDATE ser_ver SET name = ? WHERE id = ?',
+                            (patch['name'], svid))
 
         return updated
 
@@ -1921,10 +1936,10 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 "No patchwork link is available: use 'patman series autolink'")
         tout.info(
             f"Updating series '{ser.name}' version {version} from link '{link}'")
-        cover, patches = self.loop.run_until_complete(
+        cover, patches, patch_dict = self.loop.run_until_complete(
             pwork.series_get_state(link))
 
-        updated = self._sync_one(svid, cover, patches)
+        updated = self._sync_one(svid, cover, patches, patch_dict)
         self.commit()
 
         tout.info(f"{updated} patch{'es' if updated != 1 else ''}"
