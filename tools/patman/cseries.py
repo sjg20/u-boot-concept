@@ -659,8 +659,9 @@ class Cseries:
                 int: series version
                 str: series description
         """
-        ser, version = self.parse_series_and_version(series, version)
-        self.ensure_version(ser, version)
+        _, ser, version, _, _, _, _, _ = (
+            self._get_patches(series, version))
+
         if not ser.desc:
             raise ValueError(f"Series '{ser.name}' has an empty description")
 
@@ -1809,7 +1810,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         series = patchstream.get_metadata(branch, 0, count, git_dir=self.gitdir)
         self.copy_db_fields_to(series, ser)
 
-        return branch, series, pwc, name, link, cover_id, num_comments
+        return branch, series, version, pwc, name, link, cover_id, num_comments
 
     def list_patches(self, series, version, show_commit=False,
                      show_patch=False):
@@ -1821,7 +1822,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             show_commit (bool): True to show the commit and diffstate
             show_patch (bool): True to show the patch
         """
-        branch, series, pwc, name, _, cover_id, num_comments = (
+        branch, series, version, pwc, name, _, cover_id, num_comments = (
             self._get_patches(series, version))
         with terminal.pager():
             state_totals = defaultdict(int)
@@ -1960,7 +1961,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             for svid, _, _ in max_vers:
                 ser = sdict[svid]
                 if ser.link:
-                    to_fetch[svid] = ser.link
+                    to_fetch[svid] = ser.link, ser.name
                 else:
                     missing += 1
         return to_fetch, missing
@@ -2335,7 +2336,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             show_cover_comments (bool): Show all comments on the cover letter
             single_thread (bool): Avoid using the threads
         """
-        branch, series, _, _, link, _, _ = self._get_patches(
+        branch, series, version, _, _, link, _, _ = self._get_patches(
             series, version)
         status.check_patchwork_status(
             series, link, branch, None, False, show_comments,
