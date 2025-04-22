@@ -3036,9 +3036,8 @@ second line.'''
             last_line)
 
     def check_series_unmark(self):
-        """Test unmarking a cseries, i.e. removing Change-Id fields"""
+        """Checker for unmarking tests"""
         cser = self.get_cser()
-
         yield cser
 
         with terminal.capture() as (out, _):
@@ -3124,13 +3123,14 @@ second line.'''
 
         self.assertFalse(next(cor))
 
-    def test_series_mark(self):
-        """Test marking a cseries, i.e. addomg Change-Id fields"""
+    def check_series_mark(self):
+        """Checker for marking tests"""
         cser = self.get_cser()
+        yield cser
 
         # Start with a dry run, which should do nothing
         with terminal.capture():
-            cser.mark_series('first', dry_run=True)
+            yield cser
 
         series = patchstream.get_metadata_for_list('first', self.gitdir, 2)
         self.assertEqual(2, len(series.commits))
@@ -3139,7 +3139,7 @@ second line.'''
 
         # Now do a real run
         with terminal.capture():
-            cser.mark_series('first', dry_run=False)
+            yield cser
 
         series = patchstream.get_metadata_for_list('first', self.gitdir, 2)
         self.assertEqual(2, len(series.commits))
@@ -3154,15 +3154,40 @@ second line.'''
 
         # Use the --marked flag to make it succeed
         with terminal.capture():
-            cser.mark_series('first', allow_marked=True, dry_run=False)
+            yield cser
         self.assertEqual('Marked commits 2/2', str(exc.exception))
 
         series2 = patchstream.get_metadata_for_list('first', self.gitdir, 2)
         self.assertEqual(2, len(series2.commits))
         self.assertEqual(series.commits[0].change_id,
                          series2.commits[0].change_id)
-        self.assertTrue(series.commits[1].change_id,
-                        series2.commits[1].change_id)
+        self.assertEqual(series.commits[1].change_id,
+                         series2.commits[1].change_id)
+        yield None
+
+    def test_series_mark(self):
+        """Test marking a cseries, i.e. adding Change-Id fields"""
+        cor = self.check_series_mark()
+        cser = next(cor)
+
+        # Start with a dry run, which should do nothing
+        cser = next(cor)
+        cser.mark_series('first', dry_run=True)
+        cser = next(cor)
+
+        # Now do a real run
+        cser.mark_series('first', dry_run=False)
+
+        # Try to mark again, which should fail
+        with terminal.capture():
+            with self.assertRaises(ValueError) as exc:
+                cser.mark_series('first', dry_run=False)
+        self.assertEqual('Marked commits 2/2', str(exc.exception))
+
+        # Use the --marked flag to make it succeed
+        cser = next(cor)
+        cser.mark_series('first', allow_marked=True, dry_run=False)
+        self.assertFalse(next(cor))
 
     # need cmdline test
 
