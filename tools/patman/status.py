@@ -212,8 +212,6 @@ async def _find_responses(client, cmt, patch, pwork):
             if is_new:
                 new_rtags[tag].add(who)
     return new_rtags, reviews
-    # new_rtag_list[seq] = new_rtags
-    # review_list[seq] = reviews
 
 def show_responses(col, rtags, indent, is_new):
     """Show rtags collected

@@ -126,6 +126,12 @@ def add_series_args(subparsers):
     def _add_upstream(parser):
         parser.add_argument('-U', '--upstream', help='Commit to end before')
 
+    def _add_gather(parser):
+        parser.add_argument(
+            '-G', '--no-gather-tags', dest='gather_tags', default=True,
+            action='store_false',
+            help="Don't gather review/test tags / update local series")
+
     series = subparsers.add_parser('series', help='Manage series of patches')
     series.defaults_cmds = [
         ['set-link', 'fred'],
@@ -216,12 +222,12 @@ def add_series_args(subparsers):
     series_subparsers.add_parser('summary')
 
     syn = series_subparsers.add_parser('sync')
-    syn.add_argument('-g', '--gather-tags', action='store_true',
-                     help='Gather review/test tags and update local series')
+    _add_gather(syn)
 
     sall = series_subparsers.add_parser('sync-all')
     sall.add_argument('-a', '--sync-all-versions', action='store_true',
                       help='Sync all series versions, not just the latest')
+    _add_gather(sall)
 
     series_subparsers.add_parser('unarchive')
 
