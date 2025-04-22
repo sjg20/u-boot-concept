@@ -1807,6 +1807,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         count = len(pwc)
         branch = self.join_name_version(ser.name, version)
         series = patchstream.get_metadata(branch, 0, count, git_dir=self.gitdir)
+        self.copy_db_fields_to(series, ser)
 
         return branch, series, pwc, name, link, cover_id, num_comments
 
