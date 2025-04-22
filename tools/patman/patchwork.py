@@ -155,6 +155,7 @@ class Patchwork:
                 if int(pws['version']) == version:
                     return svid, ser_id, pws['id'], None
                 name_found.append(pws)
+            print(pws['name'], cmt.subject)
 
         return svid, ser_id, None, name_found or res
 

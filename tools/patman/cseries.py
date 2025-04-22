@@ -842,11 +842,20 @@ class Cseries:
             tout.info('')
             tout.info(f"{'Name':15}  Version  {'Description':40}  Result")
             border = f"{'-' * 15}  -------  {'-' * 40}  {'-' * 15}"
-            print(border)
+            tout.info(border)
             for name, version, link, desc, state in summary.values():
+                bright = True
+                if state.startswith('already'):
+                    col = self.col.GREEN
+                    bright = False
+                elif state.startswith('linked'):
+                    col = self.col.MAGENTA
+                else:
+                    col = self.col.RED
+                col_state = self.col.build(col, state, bright)
                 tout.info(f"{name:16.16} {version:7}  {desc or '':40.40}  "
-                          f'{state}')
-            print(border)
+                          f'{col_state}')
+            tout.info(border)
         if dry_run:
             tout.info('Dry run completed')
 
