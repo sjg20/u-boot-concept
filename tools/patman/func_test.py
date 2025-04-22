@@ -1880,6 +1880,19 @@ second line.'''
         series = patchstream.get_metadata('first', 0, 2, git_dir=self.gitdir)
         self.assertNotIn('version', series)
 
+    def test_series_add_no_cover(self):
+        """Test patchwork when adding a series which has no cover letter"""
+        cser = self.get_cser()
+        pwork = Patchwork.for_testing(self._fake_patchwork_cser_link)
+        pwork.set_project(PROJ_ID, PROJ_LINK_NAME)
+
+        with terminal.capture() as (out, _):
+            cser.add_series('first', 'my name for this', mark=False,
+                            allow_unmarked=True)
+        self.assertIn("Added series 'first' v1 (2 commits)", out.getvalue())
+
+        cser.autolink(pwork, 'first', 1, True)
+
     def setup_second(self, do_sync=True):
         """Set up the 'second' series synced with the fake patchwork
 

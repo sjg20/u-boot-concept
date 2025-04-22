@@ -659,8 +659,7 @@ class Cseries:
                 int: series version
                 str: series description
         """
-        _, ser, version, _, _, _, _, _ = (
-            self._get_patches(series, version))
+        _, ser, version, _, _, _, _, _ = self._get_patches(series, version)
 
         if not ser.desc:
             raise ValueError(f"Series '{ser.name}' has an empty description")
