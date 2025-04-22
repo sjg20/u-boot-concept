@@ -734,7 +734,15 @@ class Cseries:
             for svid, ser_id, version, link, _, _, _ in \
                     self.get_ser_ver_list():
                 ser = sdict[ser_id]
-                to_fetch[svid] = ser_id, ser.name, version, link, ser.desc
+
+                pwc = self.get_pcommit_dict(svid)
+                count = len(pwc)
+                branch = self.join_name_version(ser.name, version)
+                series = patchstream.get_metadata(branch, 0, count,
+                                                  git_dir=self.gitdir)
+                self.copy_db_fields_to(series, ser)
+
+                to_fetch[svid] = ser_id, series.name, version, link, series
         else:
             # Find the maximum version for each series
             max_vers = self.series_all_max_versions()
@@ -743,7 +751,16 @@ class Cseries:
             for svid, ser_id, version in max_vers:
                 svinfo = svdict[svid]
                 ser = sdict[ser_id]
-                to_fetch[svid] = ser_id, ser.name, version, svinfo.link, ser.desc
+
+                pwc = self.get_pcommit_dict(svid)
+                count = len(pwc)
+                branch = self.join_name_version(ser.name, version)
+                series = patchstream.get_metadata(branch, 0, count,
+                                                  git_dir=self.gitdir)
+                self.copy_db_fields_to(series, ser)
+
+                to_fetch[svid] = (ser_id, series.name, version, svinfo.link,
+                                  series)
         return to_fetch
 
     def autolink_all(self, pwork, update_commit, link_all_versions,
@@ -807,8 +824,8 @@ class Cseries:
         # Create a summary sorted by name and version
         summary = OrderedDict()
         for svid in sorted(all_ser_vers, key=lambda k: all_ser_vers[k][1:2]):
-            _, name, version, link, desc = all_ser_vers[svid]
-            summary[svid] = AUTOLINK(name, version, link, desc, state[svid])
+            _, name, version, link, ser = all_ser_vers[svid]
+            summary[svid] = AUTOLINK(name, version, link, ser.desc, state[svid])
 
         if show_summary:
             msg = f'{updated} series linked'
@@ -1936,10 +1953,10 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 "No patchwork link is available: use 'patman series autolink'")
         tout.info(
             f"Updating series '{ser.name}' version {version} from link '{link}'")
-        cover, patches, patch_dict = self.loop.run_until_complete(
+        cover, patches, patch_list = self.loop.run_until_complete(
             pwork.series_get_state(link))
 
-        updated = self._sync_one(svid, cover, patches, patch_dict)
+        updated = self._sync_one(svid, cover, patches, patch_list)
         self.commit()
 
         tout.info(f"{updated} patch{'es' if updated != 1 else ''}"
@@ -1996,8 +2013,8 @@ Please use 'patman series -s {branch} scan' to resolve this''')
 
         updated = 0
         updated_cover = 0
-        for svid, cover, patches in result:
-            updated += self._sync_one(svid, cover, patches)
+        for svid, cover, patches, patch_list in result:
+            updated += self._sync_one(svid, cover, patches, patch_list)
             if cover:
                 updated_cover += 1
         self.commit()

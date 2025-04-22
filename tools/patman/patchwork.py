@@ -523,8 +523,6 @@ class Patchwork:
             tasks = [self._get_patch_status(client, patch_list[i]['id'])
                                             for i in range(count)]
             result = await asyncio.gather(*tasks)
-            # for i in range(count):
-                # result[i] = await self._get_patch_status(patch_dict[i]['id'])
             if self._show_progress:
                 terminal.print_clear()
 
@@ -538,7 +536,6 @@ class Patchwork:
         patch_list = data['patches']
 
         count = len(patch_list)
-        # patches = [None] * count
         tasks = [asyncio.create_task(
                  self._get_patch_status(client, patch_list[i]['id']))
                  for i in range(count)]
@@ -548,7 +545,7 @@ class Patchwork:
         # 1 request for cover-letter comments, if there is one
         cover = await self._get_series_cover(client, data)
         result[svid] = svid, cover, patches
-        return svid, cover, patches
+        return svid, cover, patches, patch_list
 
     async def series_get_states(self, sync_data):
         """Sync a selection of series information from patchwork
