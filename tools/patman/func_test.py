@@ -3017,7 +3017,7 @@ second line.'''
         """Test adding an unmarked cseries using the command line"""
         cser = self.get_cser()
 
-        with terminal.capture() as (out, _):
+        with terminal.capture():
             self.run_args('series', '-s', 'first', 'add', '-M',
                           '-d', 'my-description', pwork=True)
 
@@ -3027,8 +3027,6 @@ second line.'''
 
     def test_series_add_unmarked_bad_cmdline(self):
         """Test failure to add an unmarked cseries using a bad command line"""
-        cser = self.get_cser()
-
         with terminal.capture() as (out, _):
             self.run_args('series', '-s', 'first', 'add',
                           '-d', 'my-description', expected_ret=1, pwork=True)
@@ -3069,7 +3067,7 @@ second line.'''
         cser = next(cor)
 
         # check the allow_unmarked flag
-        with terminal.capture() as (out, _):
+        with terminal.capture():
             with self.assertRaises(ValueError) as exc:
                 cser.unmark_series('first', dry_run=True)
         self.assertEqual('Unmarked commits 2/2', str(exc.exception))
@@ -3081,6 +3079,31 @@ second line.'''
         cser.unmark_series('first', dry_run=True)
 
         self.assertFalse(next(cor))
+
+    def test_series_unmark_middle(self):
+        """Test unmarking with Change-Id fields not last in the commit"""
+        cser = self.get_cser()
+        with terminal.capture():
+            cser.add_series('first', '', allow_unmarked=True)
+
+        # Add some change IDs in the middle of the commit message
+        with terminal.capture():
+            name, ser, _, _ = cser._prep_series('first')
+            old_msgs = []
+            for vals in cser._process_series(name, ser):
+                old_msgs.append(vals.msg)
+                lines = vals.msg.splitlines()
+                change_id = cser.make_change_id(vals.cherry)
+                extra = [f'{cseries.CHANGE_ID_TAG}: {change_id}']
+                vals.msg = '\n'.join(lines[:2] + extra + lines[2:]) + '\n'
+
+        with terminal.capture():
+            cser.unmark_series('first')
+
+        # We should get back the original commit message
+        series = patchstream.get_metadata('first', 0, 2, git_dir=self.gitdir)
+        self.assertEqual(old_msgs[0], series.commits[0].msg)
+        self.assertEqual(old_msgs[1], series.commits[1].msg)
 
     def test_series_unmark_cmdline(self):
         """Test the unmark command"""
@@ -3100,6 +3123,48 @@ second line.'''
         self.run_args('series', '-s', 'first', '-n', 'unmark', pwork=True)
 
         self.assertFalse(next(cor))
+
+    def test_series_mark(self):
+        """Test marking a cseries, i.e. addomg Change-Id fields"""
+        cser = self.get_cser()
+
+        # Start with a dry run, which should do nothing
+        with terminal.capture():
+            cser.mark_series('first', dry_run=True)
+
+        series = patchstream.get_metadata_for_list('first', self.gitdir, 2)
+        self.assertEqual(2, len(series.commits))
+        self.assertFalse(series.commits[0].change_id)
+        self.assertFalse(series.commits[1].change_id)
+
+        # Now do a real run
+        with terminal.capture():
+            cser.mark_series('first', dry_run=False)
+
+        series = patchstream.get_metadata_for_list('first', self.gitdir, 2)
+        self.assertEqual(2, len(series.commits))
+        self.assertTrue(series.commits[0].change_id)
+        self.assertTrue(series.commits[1].change_id)
+
+        # Try to mark again, which should fail
+        with terminal.capture():
+            with self.assertRaises(ValueError) as exc:
+                cser.mark_series('first', dry_run=False)
+        self.assertEqual('Marked commits 2/2', str(exc.exception))
+
+        # Use the --marked flag to make it succeed
+        with terminal.capture():
+            cser.mark_series('first', allow_marked=True, dry_run=False)
+        self.assertEqual('Marked commits 2/2', str(exc.exception))
+
+        series2 = patchstream.get_metadata_for_list('first', self.gitdir, 2)
+        self.assertEqual(2, len(series2.commits))
+        self.assertEqual(series.commits[0].change_id,
+                         series2.commits[0].change_id)
+        self.assertTrue(series.commits[1].change_id,
+                        series2.commits[1].change_id)
+
+    # need cmdline test
 
     def test_series_remove(self):
         """Test removing a series"""

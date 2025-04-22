@@ -418,7 +418,7 @@ class Cseries:
             self.copy_db_fields_to(series, in_series)
 
         if mark:
-            add_oid = self.mark_series(branch_name, series, dry_run=dry_run)
+            add_oid = self._mark_series(branch_name, series, dry_run=dry_run)
 
             # Collect the commits again, as the hashes have changed
             series = patchstream.get_metadata(add_oid, 0, len(series.commits),
@@ -1368,7 +1368,7 @@ class Cseries:
         target = self._finish_process(repo, branch, name, new_name, dry_run)
         vals.oid = target.oid
 
-    def mark_series(self, name, series, dry_run=False):
+    def _mark_series(self, name, series, dry_run=False):
         """Mark a series with Change-Id tags
 
         Args:
@@ -1391,6 +1391,38 @@ class Cseries:
                 vals.info = 'has mark'
 
         return vals.oid
+
+    def mark_series(self, in_name, allow_marked=False, dry_run=False):
+        """Add Change-Id tags to a series
+
+        Args:
+            in_name (str): Name of the series to unmark
+            allow_marked (bool): Allow commits to be (already) marked
+            dry_run (bool): True to do a dry run, restoring the original tree
+                afterwards
+
+        Return:
+            pygit.oid: oid of the new branch
+        """
+        name, ser, _, _ = self._prep_series(in_name)
+        tout.info(f"Marking series '{name}': allow_marked {allow_marked}")
+
+        if not allow_marked:
+            bad = []
+            for cmt in ser.commits:
+                if cmt.change_id:
+                    bad.append(cmt)
+            if bad:
+                print(f'{len(bad)} commit(s) already have marks')
+                for cmt in bad:
+                    print(f' - {oid(cmt.hash)} {cmt.subject}')
+                raise ValueError(
+                    f'Marked commits {len(bad)}/{len(ser.commits)}')
+        new_oid = self._mark_series(in_name, ser, dry_run=dry_run)
+
+        if dry_run:
+            tout.info('Dry run completed')
+        return new_oid
 
     def unmark_series(self, name, allow_unmarked=False, dry_run=False):
         """Remove Change-Id tags from a series
@@ -1421,8 +1453,10 @@ class Cseries:
         vals = None
         for vals in self._process_series(name, ser, dry_run=dry_run):
             if CHANGE_ID_TAG in vals.msg:
-                pos = vals.msg.index(CHANGE_ID_TAG)
-                vals.msg = vals.msg[:pos]
+                lines = vals.msg.splitlines()
+                updated = [line for line in lines
+                           if not line.startswith(CHANGE_ID_TAG)]
+                vals.msg = '\n'.join(updated)
 
                 tout.detail("   - removing mark")
                 vals.info = 'unmarked'
