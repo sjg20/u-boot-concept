@@ -35,6 +35,7 @@ from patman.cseries import PCOMMIT
 from patman import database
 from patman import patchstream
 from patman.patchstream import PatchStream
+from patman import patchwork
 from patman.patchwork import Patchwork
 from patman import send
 from patman.series import Series
@@ -1399,7 +1400,7 @@ line8
         commit2 = Commit('ef12')
         commit2.subject = 'Subject 2'
 
-        patch1 = status.Patch('1')
+        patch1 = patchwork.Patch('1')
         patch1.parse_subject('[1/2] Subject 1')
         patch1.name = patch1.raw_subject
         patch1.content = 'This is my patch content'
@@ -1420,7 +1421,7 @@ Reviewed-by: %s
 
         patch1.comments = [comment1a]
 
-        patch2 = status.Patch('2')
+        patch2 = patchwork.Patch('2')
         patch2.parse_subject('[2/2] Subject 2')
         patch2.name = patch2.raw_subject
         patch2.content = 'Some other patch content'
