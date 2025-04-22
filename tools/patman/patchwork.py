@@ -132,11 +132,11 @@ class Patchwork:
                 name_found.append(ser)
         return svid, ser_id, None, name_found or res
 
-    async def find_series(self, desc, version):
+    async def find_series(self, ser, version):
         """Find a series based on its description and version
 
         Args:
-            desc (str): Description (cover-letter title)
+            ser (Series): Contains description (cover-letter title)
             version (int): Version number
 
         Return: tuple:
@@ -149,7 +149,7 @@ class Patchwork:
         async with aiohttp.ClientSession() as client:
             # We don't know the svid and it isn't needed, so use -1
             _, _, link, options = await self._find_series(client, -1, -1,
-                                                          version, desc)
+                                                          version, ser.desc)
         return link, options
 
     async def find_series_list(self, to_find):

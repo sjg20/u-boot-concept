@@ -665,7 +665,7 @@ class Cseries:
             raise ValueError(f"Series '{ser.name}' has an empty description")
 
         pws, options = self.loop.run_until_complete(pwork.find_series(
-            ser.desc, version))
+            ser, version))
         return pws, options, ser.name, version, ser.desc
 
     def autolink(self, pwork, series, version, update_commit, wait_s=0):
@@ -1790,7 +1790,8 @@ Please use 'patman series -s {branch} scan' to resolve this''')
 
         Return: tuple:
             str: Name of branch, e.g. 'mary2'
-            Series: Series object containing the commits
+            Series: Series object containing the commits and idnum, desc, name
+            int: Version number of series, e.g. 2
             OrderedDict:
                 key (int): record ID if find_svid is None, else seq
                 value (PCOMMIT): record data
