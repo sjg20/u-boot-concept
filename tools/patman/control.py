@@ -144,6 +144,9 @@ def do_series(args, test_db=None, pwork=None):
             cser.series_list()
         elif args.subcmd == 'open':
             cser.open_series(pwork, args.series, args.version)
+        elif args.subcmd == 'mark':
+            cser.mark_series(args.series, args.allow_marked,
+                             dry_run=args.dry_run)
         elif args.subcmd == 'patches':
             cser.list_patches(args.series, args.version, args.commit,
                               args.patch)
@@ -175,7 +178,8 @@ def do_series(args, test_db=None, pwork=None):
         elif args.subcmd == 'unarchive':
             cser.set_archived(args.series, False)
         elif args.subcmd == 'unmark':
-            cser.unmark_series(args.series, dry_run=args.dry_run)
+            cser.unmark_series(args.series, args.allow_unmarked,
+                               dry_run=args.dry_run)
         else:
             raise ValueError(f"Unknown series subcommand '{args.subcmd}'")
     finally:

@@ -3027,6 +3027,8 @@ second line.'''
 
     def test_series_add_unmarked_bad_cmdline(self):
         """Test failure to add an unmarked cseries using a bad command line"""
+        self.get_cser()
+
         with terminal.capture() as (out, _):
             self.run_args('series', '-s', 'first', 'add',
                           '-d', 'my-description', expected_ret=1, pwork=True)
@@ -3058,6 +3060,15 @@ second line.'''
         self.assertRegex(next(lines), '- unmarked .* as .*: spi: SPI fixes')
         self.assertRegex(next(lines), 'Updating branch first to .*')
         self.assertEqual('Dry run completed', next(lines))
+
+        with terminal.capture() as (out, _):
+            yield cser
+        self.assertIn('- unmarked', out.getvalue())
+
+        with terminal.capture() as (out, _):
+            yield cser
+        self.assertIn('- no mark', out.getvalue())
+
         yield None
 
     def test_series_unmark(self):
@@ -3076,6 +3087,36 @@ second line.'''
 
         cser = next(cor)
         cser.unmark_series('first', dry_run=True)
+
+        cser = next(cor)
+        cser.unmark_series('first')
+        cser = next(cor)
+        cser.unmark_series('first', allow_unmarked=True)
+
+        self.assertFalse(next(cor))
+
+    def test_series_unmark_cmdline(self):
+        """Test the unmark command"""
+        cor = self.check_series_unmark()
+        next(cor)
+
+        # check the allow_unmarked flag
+        with terminal.capture() as (out, _):
+            self.run_args('series', 'unmark', expected_ret=1, pwork=True)
+        self.assertIn('Unmarked commits 2/2', out.getvalue())
+
+        next(cor)
+        self.run_args('series', '-s', 'first', 'add',  '-d', '', '--mark',
+                      pwork=True)
+
+        next(cor)
+        self.run_args('series', '-s', 'first', '-n', 'unmark', pwork=True)
+
+        next(cor)
+        self.run_args('series', '-s', 'first', 'unmark', pwork=True)
+        next(cor)
+        self.run_args('series', '-s', 'first', 'unmark', '--allow-unmarked',
+                      pwork=True)
 
         self.assertFalse(next(cor))
 
@@ -3103,25 +3144,6 @@ second line.'''
         series = patchstream.get_metadata('first', 0, 2, git_dir=self.gitdir)
         self.assertEqual(old_msgs[0], series.commits[0].msg)
         self.assertEqual(old_msgs[1], series.commits[1].msg)
-
-    def test_series_unmark_cmdline(self):
-        """Test the unmark command"""
-        cor = self.check_series_unmark()
-        next(cor)
-
-        # check the allow_unmarked flag
-        with terminal.capture() as (out, _):
-            self.run_args('series', 'unmark', expected_ret=1, pwork=True)
-        self.assertIn('Unmarked commits 2/2', out.getvalue())
-
-        next(cor)
-        self.run_args('series', '-s', 'first', 'add',  '-d', '', '--mark',
-                      pwork=True)
-
-        next(cor)
-        self.run_args('series', '-s', 'first', '-n', 'unmark', pwork=True)
-
-        self.assertFalse(next(cor))
 
     def check_series_mark(self):
         """Checker for marking tests"""
@@ -3184,12 +3206,35 @@ second line.'''
                 cser.mark_series('first', dry_run=False)
         self.assertEqual('Marked commits 2/2', str(exc.exception))
 
-        # Use the --marked flag to make it succeed
+        # Use the --allow-marked flag to make it succeed
         cser = next(cor)
         cser.mark_series('first', allow_marked=True, dry_run=False)
         self.assertFalse(next(cor))
 
-    # need cmdline test
+    def test_series_mark_cmdline(self):
+        """Test marking a cseries, i.e. adding Change-Id fields"""
+        cor = self.check_series_mark()
+        cser = next(cor)
+
+        # Start with a dry run, which should do nothing
+        cser = next(cor)
+        self.run_args('series', '-n', '-s', 'first', 'mark', pwork=True)
+        cser = next(cor)
+
+        # Now do a real run
+        self.run_args('series', '-s', 'first', 'mark', pwork=True)
+
+        # Try to mark again, which should fail
+        with terminal.capture() as (out, _):
+            self.run_args('series', '-s', 'first', 'mark', expected_ret=1,
+                          pwork=True)
+        self.assertIn('Marked commits 2/2', out.getvalue())
+
+        # Use the --allow-marked flag to make it succeed
+        cser = next(cor)
+        self.run_args('series', '-s', 'first', 'mark', '--allow-marked',
+                      pwork=True)
+        self.assertFalse(next(cor))
 
     def test_series_remove(self):
         """Test removing a series"""

@@ -194,7 +194,12 @@ def setup_parser():
     series_subparsers.add_parser('get-link')
     series_subparsers.add_parser('inc')
     series_subparsers.add_parser('list')
-    series_subparsers.add_parser('mark')
+
+    mar = series_subparsers.add_parser('mark')
+    mar.add_argument('-m', '--allow-marked', action='store_true',
+                     default=False,
+                     help="Don't require commits to be unmarked")
+
     series_subparsers.add_parser('open')
     pat = series_subparsers.add_parser(
         'patches', epilog='Show a list of patches and optional details')
@@ -243,7 +248,11 @@ def setup_parser():
                       help='Sync all series versions, not just the latest')
 
     series_subparsers.add_parser('unarchive')
-    series_subparsers.add_parser('unmark')
+
+    unm = series_subparsers.add_parser('unmark')
+    unm.add_argument('-M', '--allow-unmarked', action='store_true',
+                     default=False,
+                     help="Don't require commits to be marked")
 
     upstream = subparsers.add_parser('upstream', aliases=['us'],
                                      help='Manage upstream destinations')
