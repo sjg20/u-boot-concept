@@ -224,7 +224,7 @@ class Patchwork:
         """Query series by name
 
         Args:
-            client: asynio client session
+            client (aiohttp.ClientSession): Session to use
             desc: String to search for
 
         Return:
@@ -238,6 +238,7 @@ class Patchwork:
         """Find a series on the server
 
         Args:
+            client (aiohttp.ClientSession): Session to use
             svid (int): ser_ver ID
             ser_id (int): series ID
             version (int): Version number to search for
@@ -347,7 +348,7 @@ class Patchwork:
         """Read information about a series
 
         Args:
-            client: asynio client session
+            client (aiohttp.ClientSession): Session to use
             series_id (str): Patchwork series ID
 
         Returns: dict containing patchwork's series information
@@ -393,7 +394,7 @@ class Patchwork:
         """Read information about a patch
 
         Args:
-            client: asynio client session
+            client (aiohttp.ClientSession): Session to use
             patch_id (str): Patchwork patch ID
 
         Returns: dict containing patchwork's patch information
@@ -466,7 +467,7 @@ Signed-off-by: Andre Detsch <adetsch@br.ibm.com>",
         """Read comments about a patch
 
         Args:
-            client: asynio client session
+            client (aiohttp.ClientSession): Session to use
             patch_id (str): Patchwork patch ID
 
         Returns: list of dict: list of comments:
@@ -492,10 +493,11 @@ Signed-off-by: Andre Detsch <adetsch@br.ibm.com>",
         async with aiohttp.ClientSession() as client:
             return await self._get_patch_comments(client, patch_id)
 
-    async def get_cover(self, cover_id):
+    async def get_cover(self, client, cover_id):
         """Read information about a cover letter
 
         Args:
+            client (aiohttp.ClientSession): Session to use
             cover_id (int): Patchwork cover-letter ID
 
         Returns: dict containing patchwork's cover-letter information:
@@ -665,7 +667,7 @@ are still not completed,...'
         """Read comments about a cover letter
 
         Args:
-            client: asynio client session
+            client (aiohttp.ClientSession): Session to use
             cover_id (str): Patchwork cover-letter ID
 
         Returns: list of dict: list of comments, each:
@@ -709,7 +711,8 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
     async def _get_patch_status(self, client, patch_id):
         """Get the patch status
 
-            client: asynio client session
+        Args:
+            client (aiohttp.ClientSession): Session to use
             patch_id (int): Patch ID to look up in patchwork
 
         Return:
@@ -728,7 +731,7 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
         """Get the cover information (including comments)
 
         Args:
-            client: asynio client session
+            client (aiohttp.ClientSession): Session to use
             data (dict): Return value from self.get_series()
 
         Returns:
@@ -751,7 +754,7 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
         """Sync the series information against patchwork, to find patch status
 
         Args:
-            client: asynio client session
+            client (aiohttp.ClientSession): Session to use
             series_id (str): Patchwork series ID
             read_comments (bool): True to read the comments on the patches
             read_cover_comments (bool): True to read the comments on the cover

@@ -40,7 +40,7 @@ def compare_with_series(series, patches):
 
     Args:
         series (Series): Series to compare against
-        patches (:type: list of Patch): list of Patch objects to compare with
+        patches (list of Patch): list of Patch objects to compare with
 
     Returns:
         tuple
