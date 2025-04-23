@@ -186,11 +186,9 @@ async def _find_responses(client, cmt, patch, pwork):
     # Get the content for the patch email itself as well as all comments
     patch_data = await pwork.get_patch(client, patch.id)
     comment_data = await pwork.get_patch_comments(patch.id)
+    return patch_data, comment_data
 
-    new_rtags, reviews = process_reviews(patch_data['content'], comment_data,
-                                         cmt.rtags)
-
-    return new_rtags, reviews
+    # return new_rtags, reviews
 
 def show_responses(col, rtags, indent, is_new):
     """Show rtags collected
@@ -324,7 +322,9 @@ async def _check_status(client, series, series_id, branch, dest_branch, force,
     results = await asyncio.gather(*tasks)
     for i in range(count):
         if results[i]:
-            new_rtag_list[i], review_list[i] = results[i]
+            patch_data, comment_data = results[i]
+            new_rtag_list[i], review_list[i] = process_reviews(
+                patch_data['content'], comment_data, series.commits[i].rtags)
 
     with terminal.pager():
         num_to_add = 0
