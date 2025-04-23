@@ -408,8 +408,3 @@ def collect_patches(expect_count, series_id, patchwork, read_comments,
 async def find_responses(patch, patchwork):
     async with aiohttp.ClientSession() as client:
         return await _find_responses(client, patch, patchwork)
-
-
-def find_new_responses(patch, patchwork):
-    loop = asyncio.get_event_loop()
-    return loop.run_until_complete(find_responses(patch, patchwork))
