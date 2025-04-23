@@ -33,24 +33,6 @@ def to_int(vals):
     return out
 
 
-class Review:
-    """Represents a single review email collected in Patchwork
-
-    Patches can attract multiple reviews. Each consists of an author/date and
-    a variable number of 'snippets', which are groups of quoted and unquoted
-    text.
-    """
-    def __init__(self, meta, snippets):
-        """Create new Review object
-
-        Args:
-            meta (str): Text containing review author and date
-            snippets (list): List of snippets in th review, each a list of text
-                lines
-        """
-        self.meta = ' : '.join([line for line in meta.splitlines() if line])
-        self.snippets = snippets
-
 def compare_with_series(series, patches):
     """Compare a list of patches with a series it came from
 
@@ -190,7 +172,7 @@ async def _find_responses(client, cmt, patch, pwork):
         if pstrm.snippets:
             submitter = comment['submitter']
             person = '%s <%s>' % (submitter['name'], submitter['email'])
-            reviews.append(Review(person, pstrm.snippets))
+            reviews.append(patchwork.Review(person, pstrm.snippets))
         for response, people in pstrm.commit.rtags.items():
             rtags[response].update(people)
 

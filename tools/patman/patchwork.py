@@ -128,6 +128,25 @@ class Patch(dict):
             self.count = 1
 
 
+class Review:
+    """Represents a single review email collected in Patchwork
+
+    Patches can attract multiple reviews. Each consists of an author/date and
+    a variable number of 'snippets', which are groups of quoted and unquoted
+    text.
+    """
+    def __init__(self, meta, snippets):
+        """Create new Review object
+
+        Args:
+            meta (str): Text containing review author and date
+            snippets (list): List of snippets in th review, each a list of text
+                lines
+        """
+        self.meta = ' : '.join([line for line in meta.splitlines() if line])
+        self.snippets = snippets
+
+
 class Patchwork:
     """Class to handle communication with patchwork
     """
