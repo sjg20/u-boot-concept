@@ -377,7 +377,7 @@ async def check_status(series, series_id, branch, dest_branch, force,
                        show_comments, show_cover_comments, patchwork,
                        test_repo=None):
     async with aiohttp.ClientSession() as client:
-       await _check_status(
+        await _check_status(
             client, series, series_id, branch, dest_branch,  force,
             show_comments, show_cover_comments, patchwork, test_repo=test_repo)
 
@@ -399,7 +399,7 @@ def check_patchwork_status(series, series_id, branch, dest_branch, force,
 async def async_collect_patches(expect_count, series_id, patchwork,
                                 read_comments, read_cover_comments):
     async with aiohttp.ClientSession() as client:
-       return await _collect_patches(client, expect_count, series_id, patchwork,
+        return await _collect_patches(client, expect_count, series_id, patchwork,
                                      read_comments, read_cover_comments)
 
 

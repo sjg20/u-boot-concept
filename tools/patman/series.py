@@ -454,13 +454,14 @@ class Series(dict):
             out += f' {vers}:{links[vers]}'
         return out[1:]
 
-    def get_link_for_version(self, find_vers):
+    def get_link_for_version(self, find_vers, links_str=None):
         """Look up the patchwork link for a particular version
 
         Args:
             find_vers (int): Version to find
+            links_str (str): Links string to parse, or None to use self.links
 
         Return:
             str: Series-links entry for that version, or None if not found
         """
-        return self.get_links().get(find_vers)
+        return self.get_links(links_str).get(find_vers)

@@ -17,6 +17,7 @@ from patman import send
 from patman.patchwork import Patchwork
 from u_boot_pylib import gitutil
 from u_boot_pylib import terminal
+from u_boot_pylib import tout
 
 
 def setup():
@@ -60,6 +61,8 @@ def patchwork_status(branch, count, start, end, dest_branch, force,
     Raises:
         ValueError: if the branch has no Series-link value
     """
+    if not branch:
+        branch = gitutil.get_branch()
     if count == -1:
         # Work out how many patches to send if we can
         count = gitutil.count_commits_to_branch(branch) - start
@@ -79,10 +82,11 @@ def patchwork_status(branch, count, start, end, dest_branch, force,
     if not links:
         raise ValueError("Branch has no Series-links value")
 
-    # Find the link without a version number (we don't support versions yet)
-    found = [link for link in links.split() if not ':' in link]
+    _, version = cseries.split_name_version(branch)
+    found = series.get_link_for_version(version, links)
     if not found:
-        raise ValueError('Series-links has no current version (without :)')
+        raise ValueError('Series-links has no link for v{version}')
+    tout.debug(f"Link '{found}")
 
     # Allow the series to override the URL
     if 'patchwork_url' in series:
@@ -91,9 +95,9 @@ def patchwork_status(branch, count, start, end, dest_branch, force,
     # Import this here to avoid failing on other commands if the dependencies
     # are not present
     from patman import status
-    patchwork = patchwork.Patchwork(url)
-    status.check_patchwork_status(series, found[0], branch, dest_branch, force,
-                                  show_comments, False, patchwork)
+    pwork = Patchwork(url)
+    status.check_patchwork_status(series, found, branch, dest_branch, force,
+                                  show_comments, False, pwork)
 
 def do_series(args, test_db=None, pwork=None):
     """Process a series subcommand

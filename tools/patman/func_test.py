@@ -3942,8 +3942,8 @@ Date:   .*
         cser = self.get_cser()
         repo = self.repo
 
-        self.assertEqual(('fred', None), cser.split_name_version('fred'))
-        self.assertEqual(('mary', 2), cser.split_name_version('mary2'))
+        self.assertEqual(('fred', None), cseries.split_name_version('fred'))
+        self.assertEqual(('mary', 2), cseries.split_name_version('mary2'))
 
         ser, version = cser.parse_series_and_version(None, None)
         self.assertEqual('first', ser.name)
