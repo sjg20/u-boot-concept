@@ -182,9 +182,11 @@ async def _find_responses(client, patch, pwork):
         return
 
     # Get the content for the patch email itself as well as all comments
-    patch_data = await pwork.get_patch(client, patch.id)
-    comment_data = await pwork.get_patch_comments(patch.id)
-    return patch_data, comment_data
+    pat = await pwork._get_patch_status(client, patch.id)
+    # patch_data = await pwork.get_patch(client, patch.id)
+    # comment_data = await pwork.get_patch_comments(patch.id)
+    return pat.data, pat.comments
+    # return patch_data, comment_data
 
 def show_responses(col, rtags, indent, is_new):
     """Show rtags collected
