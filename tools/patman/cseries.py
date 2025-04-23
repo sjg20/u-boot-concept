@@ -1910,7 +1910,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 f'No matching series for id {series_id} version {version}')
         return recs[0]
 
-    def _sync_one(self, svid, cover, patches, patch_list, gather_tags):
+    def _sync_one(self, svid, cover, patches, gather_tags):
         """Sync one series to the database
 
         Args:
@@ -1919,8 +1919,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 id (int): Cover-letter ID in patchwork
                 num_comments (int): Number of comments
                 name (str): Cover-letter name
-            patch_list (list of dict): Patches in the series from patchwork,
-                with key 'name' containing the patch name
+            patch_list (list of PATCH): Patches in the series
         """
         pwc = self.get_pcommit_dict(svid)
 
@@ -1941,9 +1940,8 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 'name = ? WHERE id = ?',
                 (cover.id, cover.num_comments, cover.name, svid))
         else:
-            patch = patch_list[0]
             self.db.execute('UPDATE ser_ver SET name = ? WHERE id = ?',
-                            (patch['name'], svid))
+                            (patch_list[0].name, svid))
 
         return updated
 
@@ -1964,10 +1962,10 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 "No patchwork link is available: use 'patman series autolink'")
         tout.info(
             f"Updating series '{ser.name}' version {version} from link '{link}'")
-        cover, patches, patch_list = self.loop.run_until_complete(
+        cover, patches = self.loop.run_until_complete(
             pwork.series_get_state(link, True, True))
 
-        updated = self._sync_one(svid, cover, patches, patch_list, gather_tags)
+        updated = self._sync_one(svid, cover, patches, gather_tags)
         self.commit()
 
         tout.info(f"{updated} patch{'es' if updated != 1 else ''}"
@@ -2027,8 +2025,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         updated = 0
         updated_cover = 0
         for svid, cover, patches, patch_list in result:
-            updated += self._sync_one(svid, cover, patches, patch_list,
-                                      gather_tags)
+            updated += self._sync_one(svid, cover, patches, gather_tags)
             if cover:
                 updated_cover += 1
         self.commit()

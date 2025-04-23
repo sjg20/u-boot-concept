@@ -900,12 +900,12 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
 
         pwork = Patchwork.for_testing(self._fake_patchwork)
 
-        patches, _, _ = status.collect_patches(len(series.commits), 1234, pwork,
+        _, patches = status.collect_patches(len(series.commits), 1234, pwork,
                                             False, False)
         self.assertEqual(1, len(patches))
         patch = patches[0]
         self.assertEqual('1', patch.id)
-        self.assertEqual('Some patch', patch.raw_subject)
+        self.assertEqual('Some patch', patch.series_data['name'])
 
     def test_parse_subject(self):
         """Test parsing of the patch subject"""

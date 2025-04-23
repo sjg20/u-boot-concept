@@ -120,28 +120,7 @@ async def _collect_patches(client, expect_count, series_id, pwork,
         tout.warning(f'Warning: Patchwork reports {count} patches, series has '
                      f'{expect_count}')
 
-    patches = []
-
-    # Work through each row (patch) one at a time, collecting the information
-    '''
-    for pw_patch in patch_list:
-        patch = patchwork.Patch(pw_patch['id'])
-        patch.parse_subject(pw_patch['name'])
-        patches.append(patch)
-    results = []
-    # print('result', result)
-    for pwp in result:
-        pat = patchwork.Patch(pwp.data['id'])
-        pat.parse_subject(pwp.data['name'])
-        pwp.data['seq'] = pat.seq
-        results.append(pwp)
-    '''
-
-    # Sort patches by patch number
-    # patches = sorted(patches, key=lambda x: x.seq)
-    # results = sorted(results, key=lambda x: x.data['seq'])
-
-    return patch_list, cover
+    return cover, patch_list
 
 
 def process_reviews(content, comment_data, base_rtags):
@@ -307,14 +286,14 @@ async def _check_status(client, series, series_id, branch, dest_branch, force,
         pwork (Patchwork): Patchwork class to handle communications
         test_repo (pygit2.Repository): Repo to use (use None unless testing)
     """
-    patches, cover = await _collect_patches(client, len(series.commits),
+    cover, patches = await _collect_patches(client, len(series.commits),
                                             series_id, pwork, True,
                                             show_cover_comments)
 
     compare = []
     for pw_patch in patches:
-        patch = patchwork.Patch(pw_patch['id'])
-        patch.parse_subject(pw_patch['name'])
+        patch = patchwork.Patch(pw_patch.id)
+        patch.parse_subject(pw_patch.series_data['name'])
         compare.append(patch)
 
     col = terminal.Color()
@@ -327,25 +306,15 @@ async def _check_status(client, series, series_id, branch, dest_branch, force,
         tout.warning(warn)
 
     for seq, pw_patch in enumerate(patches):
-        compare[seq].data = pw_patch
+        compare[seq].patch = pw_patch
 
-    '''
-    patch_list = [patch_for_commit.get(c) for c in range(len(series.commits))]
-    tasks = [asyncio.create_task(_find_responses(
-                 client, patch_list[i], patchwork))
-                 for i in range(count)]
-    results = await asyncio.gather(*tasks)
-    '''
-    # patch_list = [patch_for_commit.get(c) for c in range(len(series.commits))]
     for i in range(count):
         pat = patch_for_commit.get(i)
         if pat:
-            # patch_data, comment_data = results[i]
-            patch_data = pat.data
-            patch = patch_data['patch_obj']
-            comment_data = patch.comments
+            patch_data = pat.patch.data
+            comment_data = pat.patch.comments
             new_rtag_list[i], review_list[i] = process_reviews(
-                patch.data['content'], comment_data, series.commits[i].rtags)
+                patch_data['content'], comment_data, series.commits[i].rtags)
 
     with terminal.pager():
         num_to_add = 0

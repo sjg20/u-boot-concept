@@ -19,7 +19,7 @@ from u_boot_pylib import terminal
 # data (dict): Patch data as returned from get_patch()
 # state (str): Current state, e.g. 'accepted'
 # comments (list of dict): Comments
-PATCH = namedtuple('patch', 'id,state,data,comments')
+PATCH = namedtuple('patch', 'id,state,data,comments,series_data')
 
 # Information about a cover-letter on patchwork
 # id (int): Patchwork ID of cover letter
@@ -73,7 +73,6 @@ class Patch(dict):
         subject (str): Patch subject with [..] part removed (same as commit
             subject)
         data (dict or None): Patch data:
-
     """
     def __init__(self, pid):
         super().__init__()
@@ -723,7 +722,7 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
         state = data['state']
         comment_data = await self._get_patch_comments(client, patch_id)
 
-        return PATCH(patch_id, state, data, comment_data)
+        return PATCH(patch_id, state, data, comment_data, None)
 
     async def _get_series_cover(self, client, data):
         """Get the cover information (including comments)
@@ -760,23 +759,28 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
 
         Return: tuple:
             COVER object, or None if none or not read_cover_comments
-            list of patches, see get_series()['patches'] with:
-                'patch_obj': PATCH object
+            list of PATCH objects
         """
         data = await self.get_series(client, series_id)
         patch_list = list(data['patches'])
 
         count = len(patch_list)
+        patches = []
         if read_comments:
             # Returns a list of PATCH objects
             tasks = [self._get_patch_status(client, patch_list[i]['id'])
                                             for i in range(count)]
 
-            result = await asyncio.gather(*tasks)
-            for patch, result in zip(patch_list, result):
-                patch['patch_obj'] = result
+            patch_status = await asyncio.gather(*tasks)
+            for patch_data, status in zip(patch_list, patch_status):
+                idnum, state, pdata, comments, _ = status
+
+                patches.append(PATCH(idnum, state, pdata, comments,
+                                     patch_data))
         else:
-            result = None
+            for i in range(count):
+                patch = patch_list[i]
+                patches.append(PATCH(patch['id'], None, None, None, patch))
         if self._show_progress:
             terminal.print_clear()
 
@@ -785,7 +789,7 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
         else:
             cover = None
 
-        return cover, patch_list
+        return cover, patches
 
     async def series_get_state(self, series_id, read_comments,
                                read_cover_comments):
