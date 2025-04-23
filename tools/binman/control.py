@@ -592,10 +592,11 @@ def PrepareImagesAndDtbs(dtb_fname, select_images, update_fdt, use_expanded, ind
         indir = []
     dtb_fname = fdt_util.EnsureCompiled(dtb_fname, indir=indir)
     fname = tools.get_output_filename('u-boot.dtb.out')
-    dtb = fdt.FdtScan(dtb_fname)
-    scan_and_prop_bootph(dtb.GetRoot())
-    dtb.Sync(True)
-    tools.write_file(dtb_fname, dtb.GetContents())
+    tools.write_file(fname, tools.read_file(dtb_fname))
+    dtb = fdt.FdtScan(fname)
+    # dtb = fdt.FdtScan(dtb_fname)
+    # dtb.Sync(True)
+    #tools.write_file(dtb_fname, dtb.GetContents())
 
     node = _FindBinmanNode(dtb)
     if not node:
@@ -609,6 +610,7 @@ def PrepareImagesAndDtbs(dtb_fname, select_images, update_fdt, use_expanded, ind
 
         _RemoveTemplates(node)
         dtb.Sync(True)
+        # scan_and_prop_bootph(dtb.GetRoot())
 
         # Rescan the dtb to pick up the new phandles
         dtb.Scan()
