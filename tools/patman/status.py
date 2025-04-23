@@ -161,15 +161,13 @@ def process_reviews(content, comment_data, base_rtags):
     return new_rtags, reviews
 
 
-async def _find_responses(client, cmt, patch, pwork):
+async def _find_responses(client, patch, pwork):
     """Find new rtags collected by patchwork that we don't know about
 
     This is designed to be run in parallel, once for each commit/patch
 
     Args:
         client (aiohttp.ClientSession): Session to use
-        seq (int): Position in new_rtag_list and review_list to update
-        cmt (Commit): Commit object for this commit
         patch (Patch): Corresponding Patch object for this patch
         pwork (Patchwork): Patchwork class to handle communications
 
@@ -187,8 +185,6 @@ async def _find_responses(client, cmt, patch, pwork):
     patch_data = await pwork.get_patch(client, patch.id)
     comment_data = await pwork.get_patch_comments(patch.id)
     return patch_data, comment_data
-
-    # return new_rtags, reviews
 
 def show_responses(col, rtags, indent, is_new):
     """Show rtags collected
@@ -317,7 +313,7 @@ async def _check_status(client, series, series_id, branch, dest_branch, force,
 
     patch_list = [patch_for_commit.get(c) for c in range(len(series.commits))]
     tasks = [asyncio.create_task(_find_responses(
-                 client, series.commits[i], patch_list[i], patchwork))
+                 client, patch_list[i], patchwork))
                  for i in range(count)]
     results = await asyncio.gather(*tasks)
     for i in range(count):
@@ -415,11 +411,11 @@ def collect_patches(expect_count, series_id, patchwork, read_comments,
         expect_count, series_id, patchwork, read_comments, read_cover_comments))
 
 
-async def find_responses(cmt, patch, patchwork):
+async def find_responses(patch, patchwork):
     async with aiohttp.ClientSession() as client:
-        return await _find_responses(client, cmt, patch, patchwork)
+        return await _find_responses(client, patch, patchwork)
 
 
-def find_new_responses(cmt, patch, patchwork):
+def find_new_responses(patch, patchwork):
     loop = asyncio.get_event_loop()
-    return loop.run_until_complete(find_responses(cmt, patch, patchwork))
+    return loop.run_until_complete(find_responses(patch, patchwork))
