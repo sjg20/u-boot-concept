@@ -1092,10 +1092,37 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
             pat.data['content'], pat.comments, self.commits[0].rtags)
         return new_rtag_list, review_list
 
+    async def _find_responses(self, client, patch, pwork):
+        """Find new rtags collected by patchwork that we don't know about
+
+        This is designed to be run in parallel, once for each commit/patch
+
+        Args:
+            client (aiohttp.ClientSession): Session to use
+            patch (Patch): Corresponding Patch object for this patch
+            pwork (Patchwork): Patchwork class to handle communications
+
+        Return: tuple:
+            new_rtags (dict)
+                key: Response tag (e.g. 'Reviewed-by')
+                value: Set of people who gave that response, each a name/email
+                    string
+            list of Review: List of reviews for the patch
+        """
+        if not patch:
+            return
+
+        # Get the content for the patch email itself as well as all comments
+        pat = await pwork._get_patch_status(client, patch.id)
+        return pat.data, pat.comments
+
+    async def find_responses(self, patch, patchwork):
+        async with aiohttp.ClientSession() as client:
+            return await self._find_responses(client, patch, patchwork)
 
     def find_new_responses(self, patch, patchwork):
         loop = asyncio.get_event_loop()
-        return loop.run_until_complete(status.find_responses(patch, patchwork))
+        return loop.run_until_complete(self.find_responses(patch, patchwork))
 
 
     def test_find_new_responses(self):

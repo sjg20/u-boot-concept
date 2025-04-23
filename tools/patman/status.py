@@ -150,30 +150,6 @@ def process_reviews(content, comment_data, base_rtags):
     return new_rtags, reviews
 
 
-async def _find_responses(client, patch, pwork):
-    """Find new rtags collected by patchwork that we don't know about
-
-    This is designed to be run in parallel, once for each commit/patch
-
-    Args:
-        client (aiohttp.ClientSession): Session to use
-        patch (Patch): Corresponding Patch object for this patch
-        pwork (Patchwork): Patchwork class to handle communications
-
-    Return: tuple:
-        new_rtags (dict)
-            key: Response tag (e.g. 'Reviewed-by')
-            value: Set of people who gave that response, each a name/email
-                string
-        list of Review: List of reviews for the patch
-    """
-    if not patch:
-        return
-
-    # Get the content for the patch email itself as well as all comments
-    pat = await pwork._get_patch_status(client, patch.id)
-    return pat.data, pat.comments
-
 def show_responses(col, rtags, indent, is_new):
     """Show rtags collected
 
@@ -403,8 +379,3 @@ def collect_patches(expect_count, series_id, patchwork, read_comments,
     loop = asyncio.get_event_loop()
     return loop.run_until_complete(async_collect_patches(
         expect_count, series_id, patchwork, read_comments, read_cover_comments))
-
-
-async def find_responses(patch, patchwork):
-    async with aiohttp.ClientSession() as client:
-        return await _find_responses(client, patch, patchwork)
