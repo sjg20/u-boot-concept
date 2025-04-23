@@ -1919,7 +1919,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 id (int): Cover-letter ID in patchwork
                 num_comments (int): Number of comments
                 name (str): Cover-letter name
-            patch_list (list of PATCH): Patches in the series
+            patch_list (list of Patchx): Patches in the series
         """
         pwc = self.get_pcommit_dict(svid)
 

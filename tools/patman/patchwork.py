@@ -19,7 +19,7 @@ from u_boot_pylib import terminal
 # data (dict): Patch data as returned from get_patch()
 # state (str): Current state, e.g. 'accepted'
 # comments (list of dict): Comments
-PATCH = namedtuple('patch', 'id,state,data,comments,series_data')
+#PATCH = namedtuple('patch', 'id,state,data,comments,series_data')
 
 # Information about a cover-letter on patchwork
 # id (int): Patchwork ID of cover letter
@@ -47,7 +47,7 @@ RE_SEQ = re.compile(r'(\d+)/(\d+)')
 RE_PATCH = re.compile(r'(\[(((.*),)?(.*),)?(.*)\]\s)?(.*)$')
 
 
-class Patch(dict):
+class Patchx(dict):
     """Models a patch in patchwork
 
     This class records information obtained from patchwork
@@ -74,7 +74,8 @@ class Patch(dict):
             subject)
         data (dict or None): Patch data:
     """
-    def __init__(self, pid):
+    def __init__(self, pid, state=None, data=None, comments=None,
+                 series_data=None):
         super().__init__()
         self.id = pid  # Use 'id' to match what the Rest API provides
         self.seq = None
@@ -83,7 +84,11 @@ class Patch(dict):
         self.version = None
         self.raw_subject = None
         self.subject = None
-        self.data = None
+        self.state = state
+        self.data = data
+        self.comments = comments
+        self.series_data = series_data
+        self.name = None
 
     # These make us more like a dictionary
     def __setattr__(self, name, value):
@@ -269,7 +274,7 @@ class Patchwork:
 
         res = await self._query_series(client, cmt.subject)
         for pws in res:
-            patch = Patch(0)
+            patch = Patchx(0)
             patch.parse_subject(pws['name'])
             if patch.subject == cmt.subject:
                 if int(pws['version']) == version:
@@ -725,7 +730,7 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
         state = data['state']
         comment_data = await self._get_patch_comments(client, patch_id)
 
-        return PATCH(patch_id, state, data, comment_data, None)
+        return Patchx(patch_id, state, data, comment_data)
 
     async def _get_series_cover(self, client, data):
         """Get the cover information (including comments)
@@ -776,14 +781,12 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
 
             patch_status = await asyncio.gather(*tasks)
             for patch_data, status in zip(patch_list, patch_status):
-                idnum, state, pdata, comments, _ = status
-
-                patches.append(PATCH(idnum, state, pdata, comments,
-                                     patch_data))
+                status.series_data = patch_data
+                patches.append(status)
         else:
             for i in range(count):
                 patch = patch_list[i]
-                patches.append(PATCH(patch['id'], None, None, None, patch))
+                patches.append(Patchx(patch['id'], series_data=patch))
         if self._show_progress:
             terminal.print_clear()
 
