@@ -134,6 +134,29 @@ async def _collect_patches(client, expect_count, series_id, pwork,
     return patches, cover
 
 
+def process_reviews(comment_data, base_rtags):
+    reviews = []
+    for comment in comment_data:
+        pstrm = PatchStream.process_text(comment['content'], True)
+        if pstrm.snippets:
+            submitter = comment['submitter']
+            person = '%s <%s>' % (submitter['name'], submitter['email'])
+            reviews.append(patchwork.Review(person, pstrm.snippets))
+        for response, people in pstrm.commit.rtags.items():
+            rtags[response].update(people)
+
+    # Find the tags that are not in the commit
+    new_rtags = collections.defaultdict(set)
+    base_rtags = base_rtags
+    for tag, people in rtags.items():
+        for who in people:
+            is_new = (tag not in base_rtags or
+                      who not in base_rtags[tag])
+            if is_new:
+                new_rtags[tag].add(who)
+    return new_rtags, reviews
+
+
 async def _find_responses(client, cmt, patch, pwork):
     """Find new rtags collected by patchwork that we don't know about
 
@@ -158,13 +181,12 @@ async def _find_responses(client, cmt, patch, pwork):
 
     # Get the content for the patch email itself as well as all comments
     patch_data = await pwork.get_patch(client, patch.id)
-    pstrm = PatchStream.process_text(patch_data['content'], True)
+    comment_data = await pwork.get_patch_comments(patch.id)
 
+    pstrm = PatchStream.process_text(patch_data['content'], True)
     rtags = collections.defaultdict(set)
     for response, people in pstrm.commit.rtags.items():
         rtags[response].update(people)
-
-    comment_data = await pwork.get_patch_comments(patch.id)
 
     reviews = []
     for comment in comment_data:
