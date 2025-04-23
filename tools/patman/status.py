@@ -111,7 +111,7 @@ async def _collect_patches(client, expect_count, series_id, pwork,
         ValueError: if the URL could not be read or the web page does not follow
             the expected structure
     """
-    cover, result, patch_list = await pwork._series_get_state(
+    cover, patch_list = await pwork._series_get_state(
         client, series_id, read_comments, read_cover_comments)
 
     # Get all the rows, which are patches
@@ -123,15 +123,25 @@ async def _collect_patches(client, expect_count, series_id, pwork,
     patches = []
 
     # Work through each row (patch) one at a time, collecting the information
+    '''
     for pw_patch in patch_list:
         patch = patchwork.Patch(pw_patch['id'])
         patch.parse_subject(pw_patch['name'])
         patches.append(patch)
+    results = []
+    # print('result', result)
+    for pwp in result:
+        pat = patchwork.Patch(pwp.data['id'])
+        pat.parse_subject(pwp.data['name'])
+        pwp.data['seq'] = pat.seq
+        results.append(pwp)
+    '''
 
     # Sort patches by patch number
-    patches = sorted(patches, key=lambda x: x.seq)
+    # patches = sorted(patches, key=lambda x: x.seq)
+    # results = sorted(results, key=lambda x: x.data['seq'])
 
-    return patches, cover, result
+    return patch_list, cover
 
 
 def process_reviews(content, comment_data, base_rtags):
@@ -277,7 +287,7 @@ def create_branch(series, new_rtag_list, branch, dest_branch, overwrite,
 
 
 async def _check_status(client, series, series_id, branch, dest_branch, force,
-                        show_comments, show_cover_comments, patchwork,
+                        show_comments, show_cover_comments, pwork,
                         test_repo=None):
     """Check the status of a series on Patchwork
 
@@ -294,21 +304,30 @@ async def _check_status(client, series, series_id, branch, dest_branch, force,
         show_comments (bool): True to show the comments on each patch
         show_cover_comments (bool): True to show the comments on the
             letter
-        patchwork (Patchwork): Patchwork class to handle communications
+        pwork (Patchwork): Patchwork class to handle communications
         test_repo (pygit2.Repository): Repo to use (use None unless testing)
     """
-    patches, cover, results = await _collect_patches(client, len(series.commits),
-                                            series_id, patchwork, True,
+    patches, cover = await _collect_patches(client, len(series.commits),
+                                            series_id, pwork, True,
                                             show_cover_comments)
+
+    compare = []
+    for pw_patch in patches:
+        patch = patchwork.Patch(pw_patch['id'])
+        patch.parse_subject(pw_patch['name'])
+        compare.append(patch)
 
     col = terminal.Color()
     count = len(series.commits)
     new_rtag_list = [None] * count
     review_list = [None] * count
 
-    patch_for_commit, _, warnings = compare_with_series(series, patches)
+    patch_for_commit, _, warnings = compare_with_series(series, compare)
     for warn in warnings:
         tout.warning(warn)
+
+    for seq, pw_patch in enumerate(patches):
+        compare[seq].data = pw_patch
 
     '''
     patch_list = [patch_for_commit.get(c) for c in range(len(series.commits))]
@@ -317,14 +336,16 @@ async def _check_status(client, series, series_id, branch, dest_branch, force,
                  for i in range(count)]
     results = await asyncio.gather(*tasks)
     '''
+    # patch_list = [patch_for_commit.get(c) for c in range(len(series.commits))]
     for i in range(count):
-        if results[i]:
-            pat = results[i]
+        pat = patch_for_commit.get(i)
+        if pat:
             # patch_data, comment_data = results[i]
             patch_data = pat.data
-            comment_data = pat.comments
+            patch = patch_data['patch_obj']
+            comment_data = patch.comments
             new_rtag_list[i], review_list[i] = process_reviews(
-                patch_data['content'], comment_data, series.commits[i].rtags)
+                patch.data['content'], comment_data, series.commits[i].rtags)
 
     with terminal.pager():
         num_to_add = 0

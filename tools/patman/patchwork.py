@@ -72,6 +72,8 @@ class Patch(dict):
         raw_subject (str): Raw patch subject
         subject (str): Patch subject with [..] part removed (same as commit
             subject)
+        data (dict or None): Patch data:
+
     """
     def __init__(self, pid):
         super().__init__()
@@ -82,6 +84,7 @@ class Patch(dict):
         self.version = None
         self.raw_subject = None
         self.subject = None
+        self.data = None
 
     # These make us more like a dictionary
     def __setattr__(self, name, value):
@@ -394,8 +397,69 @@ class Patchwork:
             client: asynio client session
             patch_id (str): Patchwork patch ID
 
-        Returns:
-            dict containing patchwork's patch information
+        Returns: dict containing patchwork's patch information
+            "id": 185,
+            "url": "https://patchwork.ozlabs.org/api/1.2/patches/185/",
+            "web_url": "https://patchwork.ozlabs.org/project/cbe-oss-dev/patch/200809050416.27831.adetsch@br.ibm.com/",
+            project (dict): project information (id, url, name, link_name,
+                    list_id, list_email, etc.
+            "msgid": "<200809050416.27831.adetsch@br.ibm.com>",
+            "list_archive_url": null,
+            "date": "2008-09-05T07:16:27",
+            "name": "powerpc/spufs: Fix possible scheduling of a context to multiple SPEs",
+            "commit_ref": "b2e601d14deb2083e2a537b47869ab3895d23a28",
+            "pull_url": null,
+            "state": "accepted",
+            "archived": false,
+            "hash": "bc1c0b80d7cff66c0d1e5f3f8f4d10eb36176f0d",
+            "submitter": {
+                "id": 93,
+                "url": "https://patchwork.ozlabs.org/api/1.2/people/93/",
+                "name": "Andre Detsch",
+                "email": "adetsch@br.ibm.com"
+            },
+            "delegate": {
+                "id": 1,
+                "url": "https://patchwork.ozlabs.org/api/1.2/users/1/",
+                "username": "jk",
+                "first_name": "Jeremy",
+                "last_name": "Kerr",
+                "email": "jk@ozlabs.org"
+            },
+            "mbox": "https://patchwork.ozlabs.org/project/cbe-oss-dev/patch/200809050416.27831.adetsch@br.ibm.com/mbox/",
+            "series": [],
+            "comments": "https://patchwork.ozlabs.org/api/patches/185/comments/",
+            "check": "pending",
+            "checks": "https://patchwork.ozlabs.org/api/patches/185/checks/",
+            "tags": {},
+            "related": [],
+            "headers": {...}
+            "content": "We currently have a race when scheduling a context to a SPE -
+after we have found a runnable context in spusched_tick, the same
+context may have been scheduled by spu_activate().
+
+This may result in a panic if we try to unschedule a context that has
+been freed in the meantime.
+
+This change exits spu_schedule() if the context has already been
+scheduled, so we don't end up scheduling it twice.
+
+Signed-off-by: Andre Detsch <adetsch@br.ibm.com>",
+            "diff": '''Index: spufs/arch/powerpc/platforms/cell/spufs/sched.c
+                ===================================================================
+                --- spufs.orig/arch/powerpc/platforms/cell/spufs/sched.c
+                +++ spufs/arch/powerpc/platforms/cell/spufs/sched.c
+                @@ -727,7 +727,8 @@ static void spu_schedule(struct spu *spu
+                 \t/* not a candidate for interruptible because it's called either
+                 \t   from the scheduler thread or from spu_deactivate */
+                 \tmutex_lock(&ctx->state_mutex);
+                -\t__spu_schedule(spu, ctx);
+                +\tif (ctx->state == SPU_STATE_SAVED)
+                +\t\t__spu_schedule(spu, ctx);
+                 \tspu_release(ctx);
+                 }
+                '''
+            "prefixes": ["3/3", ...]
         """
         return await self._request(client, f'patches/{patch_id}/')
 
@@ -419,7 +483,8 @@ class Patchwork:
                 "url": "https://patchwork.ozlabs.org/api/people/61270/",
                 "name": "Heinrich Schuchardt",
                 "email": "xypron.glpk@gmx.de"
-            content (str): Content of email, e.g. 'On 20.06.24 15:19, Simon Glass wrote:\n>...'
+            content (str): Content of email, e.g. 'On 20.06.24 15:19, Simon Glass wrote:
+>...'
             headers: dict: email headers, see get_cover() for an example
         """
         return await self._request(client, f'patches/{patch_id}/comments/')
@@ -467,34 +532,109 @@ class Patchwork:
                 "X-Original-To": "incoming@patchwork.ozlabs.org",
                 "Delivered-To": "patchwork-incoming@legolas.ozlabs.org",
                 "Authentication-Results": [
-                    "legolas.ozlabs.org;\n\tdkim=pass (1024-bit key;\n unprotected) header.d=chromium.org header.i=@chromium.org header.a=rsa-sha256\n header.s=google header.b=dG8yqtoK;\n\tdkim-atps=neutral",
-                    "legolas.ozlabs.org;\n spf=pass (sender SPF authorized) smtp.mailfrom=lists.denx.de\n (client-ip=85.214.62.61; helo=phobos.denx.de;\n envelope-from=u-boot-bounces@lists.denx.de; receiver=patchwork.ozlabs.org)",
-                    "phobos.denx.de;\n dmarc=pass (p=none dis=none) header.from=chromium.org",
-                    "phobos.denx.de;\n spf=pass smtp.mailfrom=u-boot-bounces@lists.denx.de",
-                    "phobos.denx.de;\n\tdkim=pass (1024-bit key;\n unprotected) header.d=chromium.org header.i=@chromium.org\n header.b=\"dG8yqtoK\";\n\tdkim-atps=neutral",
-                    "phobos.denx.de;\n dmarc=pass (p=none dis=none) header.from=chromium.org",
-                    "phobos.denx.de;\n spf=pass smtp.mailfrom=sjg@chromium.org"
+                    "legolas.ozlabs.org;
+\tdkim=pass (1024-bit key;
+ unprotected) header.d=chromium.org header.i=@chromium.org header.a=rsa-sha256
+ header.s=google header.b=dG8yqtoK;
+\tdkim-atps=neutral",
+                    "legolas.ozlabs.org;
+ spf=pass (sender SPF authorized) smtp.mailfrom=lists.denx.de
+ (client-ip=85.214.62.61; helo=phobos.denx.de;
+ envelope-from=u-boot-bounces@lists.denx.de; receiver=patchwork.ozlabs.org)",
+                    "phobos.denx.de;
+ dmarc=pass (p=none dis=none) header.from=chromium.org",
+                    "phobos.denx.de;
+ spf=pass smtp.mailfrom=u-boot-bounces@lists.denx.de",
+                    "phobos.denx.de;
+\tdkim=pass (1024-bit key;
+ unprotected) header.d=chromium.org header.i=@chromium.org
+ header.b=\"dG8yqtoK\";
+\tdkim-atps=neutral",
+                    "phobos.denx.de;
+ dmarc=pass (p=none dis=none) header.from=chromium.org",
+                    "phobos.denx.de;
+ spf=pass smtp.mailfrom=sjg@chromium.org"
                 ],
                 "Received": [
-                    "from phobos.denx.de (phobos.denx.de [85.214.62.61])\n\t(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)\n\t key-exchange X25519 server-signature ECDSA (secp384r1))\n\t(No client certificate requested)\n\tby legolas.ozlabs.org (Postfix) with ESMTPS id 4Z6bd50jLhz1yD0\n\tfor <incoming@patchwork.ozlabs.org>; Wed,  5 Mar 2025 00:10:00 +1100 (AEDT)",
-                    "from h2850616.stratoserver.net (localhost [IPv6:::1])\n\tby phobos.denx.de (Postfix) with ESMTP id 434E88144A;\n\tTue,  4 Mar 2025 14:09:58 +0100 (CET)",
-                    "by phobos.denx.de (Postfix, from userid 109)\n id 8CBF98144A; Tue,  4 Mar 2025 14:09:57 +0100 (CET)",
-                    "from mail-io1-xd2e.google.com (mail-io1-xd2e.google.com\n [IPv6:2607:f8b0:4864:20::d2e])\n (using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits))\n (No client certificate requested)\n by phobos.denx.de (Postfix) with ESMTPS id 48AE281426\n for <u-boot@lists.denx.de>; Tue,  4 Mar 2025 14:09:55 +0100 (CET)",
-                    "by mail-io1-xd2e.google.com with SMTP id\n ca18e2360f4ac-85ae33109f6so128326139f.2\n for <u-boot@lists.denx.de>; Tue, 04 Mar 2025 05:09:55 -0800 (PST)",
-                    "from chromium.org (c-73-203-119-151.hsd1.co.comcast.net.\n [73.203.119.151]) by smtp.gmail.com with ESMTPSA id\n ca18e2360f4ac-858753cd304sm287383839f.33.2025.03.04.05.09.49\n (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);\n Tue, 04 Mar 2025 05:09:50 -0800 (PST)"
+                    "from phobos.denx.de (phobos.denx.de [85.214.62.61])
+\t(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+\t key-exchange X25519 server-signature ECDSA (secp384r1))
+\t(No client certificate requested)
+\tby legolas.ozlabs.org (Postfix) with ESMTPS id 4Z6bd50jLhz1yD0
+\tfor <incoming@patchwork.ozlabs.org>; Wed,  5 Mar 2025 00:10:00 +1100 (AEDT)",
+                    "from h2850616.stratoserver.net (localhost [IPv6:::1])
+\tby phobos.denx.de (Postfix) with ESMTP id 434E88144A;
+\tTue,  4 Mar 2025 14:09:58 +0100 (CET)",
+                    "by phobos.denx.de (Postfix, from userid 109)
+ id 8CBF98144A; Tue,  4 Mar 2025 14:09:57 +0100 (CET)",
+                    "from mail-io1-xd2e.google.com (mail-io1-xd2e.google.com
+ [IPv6:2607:f8b0:4864:20::d2e])
+ (using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits))
+ (No client certificate requested)
+ by phobos.denx.de (Postfix) with ESMTPS id 48AE281426
+ for <u-boot@lists.denx.de>; Tue,  4 Mar 2025 14:09:55 +0100 (CET)",
+                    "by mail-io1-xd2e.google.com with SMTP id
+ ca18e2360f4ac-85ae33109f6so128326139f.2
+ for <u-boot@lists.denx.de>; Tue, 04 Mar 2025 05:09:55 -0800 (PST)",
+                    "from chromium.org (c-73-203-119-151.hsd1.co.comcast.net.
+ [73.203.119.151]) by smtp.gmail.com with ESMTPSA id
+ ca18e2360f4ac-858753cd304sm287383839f.33.2025.03.04.05.09.49
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Tue, 04 Mar 2025 05:09:50 -0800 (PST)"
                 ],
                 "X-Spam-Checker-Version": "SpamAssassin 3.4.2 (2018-09-13) on phobos.denx.de",
                 "X-Spam-Level": "",
-                "X-Spam-Status": "No, score=-2.1 required=5.0 tests=BAYES_00,DKIMWL_WL_HIGH,\n DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,DKIM_VALID_EF,\n RCVD_IN_DNSWL_BLOCKED,SPF_HELO_NONE,SPF_PASS autolearn=ham\n autolearn_force=no version=3.4.2",
-                "DKIM-Signature": "v=1; a=rsa-sha256; c=relaxed/relaxed;\n d=chromium.org; s=google; t=1741093792; x=1741698592; darn=lists.denx.de;\n h=content-transfer-encoding:mime-version:message-id:date:subject:cc\n :to:from:from:to:cc:subject:date:message-id:reply-to;\n bh=B2zsLws430/BEZfatNjeaNnrcxmYUstVjp1pSXgNQjc=;\n b=dG8yqtoKpSy15RHagnPcppzR8KbFCRXa2OBwXfwGoyN6M15tOJsUu2tpCdBFYiL5Mk\n hQz5iDLV8p0Bs+fP4XtNEx7KeYfTZhiqcRFvdCLwYtGray/IHtOZaNoHLajrstic/OgE\n 01ymu6gOEboU32eQ8uC8pdCYQ4UCkfKJwmiiU=",
-                "X-Google-DKIM-Signature": "v=1; a=rsa-sha256; c=relaxed/relaxed;\n d=1e100.net; s=20230601; t=1741093792; x=1741698592;\n h=content-transfer-encoding:mime-version:message-id:date:subject:cc\n :to:from:x-gm-message-state:from:to:cc:subject:date:message-id\n :reply-to;\n bh=B2zsLws430/BEZfatNjeaNnrcxmYUstVjp1pSXgNQjc=;\n b=eihzJf4i9gin9usvz4hnAvvbLV9/yB7hGPpwwW/amgnPUyWCeQstgvGL7WDLYYnukH\n 161p4mt7+cCj7Hao/jSPvVZeuKiBNPkS4YCuP3QjXfdk2ziQ9IjloVmGarWZUOlYJ5iQ\n dZnxypUkuFfLcEDSwUmRO1dvLi3nH8PDlae3yT2H87LeHaxhXWdzHxQdPc86rkYyCqCr\n qBC2CTS31jqSuiaI+7qB3glvbJbSEXkunz0iDewTJDvZfmuloxTipWUjRJ1mg9UJcZt5\n 9xIuTq1n9aYf1RcQlrEOQhdBAQ0/IJgvmZtzPZi9L+ppBva1ER/xm06nMA7GEUtyGwun\n c6pA==",
-                "X-Gm-Message-State": "AOJu0Yybx3b1+yClf/IfIbQd9u8sxzK9ixPP2HimXF/dGZfSiS7Cb+O5\n WrAkvtp7m3KPM/Mpv0sSZ5qrfTnKnb3WZyv6Oe5Q1iUjAftGNwbSxob5eJ/0y3cgrTdzE4sIWPE\n =",
-                "X-Gm-Gg": "ASbGncu5gtgpXEPGrpbTRJulqFrFj1YPAAmKk4MiXA8/3J1A+25F0Uug2KeFUrZEjkG\n KMdPg/C7e2emIvfM+Jl+mKv0ITBvhbyNCyY1q2U1s1cayZF05coZ9ewzGxXJGiEqLMG69uBmmIi\n rBEvCnkXS+HVZobDQMtOsezpc+Ju8JRA7+y1R0WIlutl1mQARct6p0zTkuZp75QyB6dm/d0KYgd\n iux/t/f0HC2CxstQlTlJYzKL6UJgkB5/UorY1lW/0NDRS6P1iemPQ7I3EPLJO8tM5ZrpJE7qgNP\n xy0jXbUv44c48qJ1VszfY5USB8fRG7nwUYxNu6N1PXv9xWbl+z2xL68qNYUrFlHsB8ILTXAyzyr\n Cdj+Sxg==",
-                "X-Google-Smtp-Source": "\n AGHT+IFeVk5D4YEfJgPxOfg3ikO6Q7IhaDzABGkAPI6HA0ubK85OPhUHK08gV7enBQ8OdoE/ttqEjw==",
-                "X-Received": "by 2002:a05:6602:640f:b0:855:63c8:abb5 with SMTP id\n ca18e2360f4ac-85881fdba3amr1839428939f.13.1741093792636;\n Tue, 04 Mar 2025 05:09:52 -0800 (PST)",
+                "X-Spam-Status": "No, score=-2.1 required=5.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+ DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,DKIM_VALID_EF,
+ RCVD_IN_DNSWL_BLOCKED,SPF_HELO_NONE,SPF_PASS autolearn=ham
+ autolearn_force=no version=3.4.2",
+                "DKIM-Signature": "v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=chromium.org; s=google; t=1741093792; x=1741698592; darn=lists.denx.de;
+ h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+ :to:from:from:to:cc:subject:date:message-id:reply-to;
+ bh=B2zsLws430/BEZfatNjeaNnrcxmYUstVjp1pSXgNQjc=;
+ b=dG8yqtoKpSy15RHagnPcppzR8KbFCRXa2OBwXfwGoyN6M15tOJsUu2tpCdBFYiL5Mk
+ hQz5iDLV8p0Bs+fP4XtNEx7KeYfTZhiqcRFvdCLwYtGray/IHtOZaNoHLajrstic/OgE
+ 01ymu6gOEboU32eQ8uC8pdCYQ4UCkfKJwmiiU=",
+                "X-Google-DKIM-Signature": "v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20230601; t=1741093792; x=1741698592;
+ h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+ :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+ :reply-to;
+ bh=B2zsLws430/BEZfatNjeaNnrcxmYUstVjp1pSXgNQjc=;
+ b=eihzJf4i9gin9usvz4hnAvvbLV9/yB7hGPpwwW/amgnPUyWCeQstgvGL7WDLYYnukH
+ 161p4mt7+cCj7Hao/jSPvVZeuKiBNPkS4YCuP3QjXfdk2ziQ9IjloVmGarWZUOlYJ5iQ
+ dZnxypUkuFfLcEDSwUmRO1dvLi3nH8PDlae3yT2H87LeHaxhXWdzHxQdPc86rkYyCqCr
+ qBC2CTS31jqSuiaI+7qB3glvbJbSEXkunz0iDewTJDvZfmuloxTipWUjRJ1mg9UJcZt5
+ 9xIuTq1n9aYf1RcQlrEOQhdBAQ0/IJgvmZtzPZi9L+ppBva1ER/xm06nMA7GEUtyGwun
+ c6pA==",
+                "X-Gm-Message-State": "AOJu0Yybx3b1+yClf/IfIbQd9u8sxzK9ixPP2HimXF/dGZfSiS7Cb+O5
+ WrAkvtp7m3KPM/Mpv0sSZ5qrfTnKnb3WZyv6Oe5Q1iUjAftGNwbSxob5eJ/0y3cgrTdzE4sIWPE
+ =",
+                "X-Gm-Gg": "ASbGncu5gtgpXEPGrpbTRJulqFrFj1YPAAmKk4MiXA8/3J1A+25F0Uug2KeFUrZEjkG
+ KMdPg/C7e2emIvfM+Jl+mKv0ITBvhbyNCyY1q2U1s1cayZF05coZ9ewzGxXJGiEqLMG69uBmmIi
+ rBEvCnkXS+HVZobDQMtOsezpc+Ju8JRA7+y1R0WIlutl1mQARct6p0zTkuZp75QyB6dm/d0KYgd
+ iux/t/f0HC2CxstQlTlJYzKL6UJgkB5/UorY1lW/0NDRS6P1iemPQ7I3EPLJO8tM5ZrpJE7qgNP
+ xy0jXbUv44c48qJ1VszfY5USB8fRG7nwUYxNu6N1PXv9xWbl+z2xL68qNYUrFlHsB8ILTXAyzyr
+ Cdj+Sxg==",
+                "X-Google-Smtp-Source": "
+ AGHT+IFeVk5D4YEfJgPxOfg3ikO6Q7IhaDzABGkAPI6HA0ubK85OPhUHK08gV7enBQ8OdoE/ttqEjw==",
+                "X-Received": "by 2002:a05:6602:640f:b0:855:63c8:abb5 with SMTP id
+ ca18e2360f4ac-85881fdba3amr1839428939f.13.1741093792636;
+ Tue, 04 Mar 2025 05:09:52 -0800 (PST)",
                 "From": "Simon Glass <sjg@chromium.org>",
                 "To": "U-Boot Mailing List <u-boot@lists.denx.de>",
-                "Cc": "Simon Glass <sjg@chromium.org>, Alexander Kochetkov <al.kochet@gmail.com>,\n Alper Nebi Yasak <alpernebiyasak@gmail.com>,\n Brandon Maier <brandon.maier@collins.com>,\n Jerome Forissier <jerome.forissier@linaro.org>,\n Jiaxun Yang <jiaxun.yang@flygoat.com>,\n Neha Malcom Francis <n-francis@ti.com>,\n Patrick Rudolph <patrick.rudolph@9elements.com>,\n Paul HENRYS <paul.henrys_ext@softathome.com>, Peng Fan <peng.fan@nxp.com>,\n Philippe Reynes <philippe.reynes@softathome.com>,\n Stefan Herbrechtsmeier <stefan.herbrechtsmeier@weidmueller.com>,\n Tom Rini <trini@konsulko.com>",
+                "Cc": "Simon Glass <sjg@chromium.org>, Alexander Kochetkov <al.kochet@gmail.com>,
+ Alper Nebi Yasak <alpernebiyasak@gmail.com>,
+ Brandon Maier <brandon.maier@collins.com>,
+ Jerome Forissier <jerome.forissier@linaro.org>,
+ Jiaxun Yang <jiaxun.yang@flygoat.com>,
+ Neha Malcom Francis <n-francis@ti.com>,
+ Patrick Rudolph <patrick.rudolph@9elements.com>,
+ Paul HENRYS <paul.henrys_ext@softathome.com>, Peng Fan <peng.fan@nxp.com>,
+ Philippe Reynes <philippe.reynes@softathome.com>,
+ Stefan Herbrechtsmeier <stefan.herbrechtsmeier@weidmueller.com>,
+ Tom Rini <trini@konsulko.com>",
                 "Subject": "[PATCH 0/7] binman: Check code-coverage requirements",
                 "Date": "Tue,  4 Mar 2025 06:09:37 -0700",
                 "Message-ID": "<20250304130947.109799-1-sjg@chromium.org>",
@@ -505,16 +645,19 @@ class Patchwork:
                 "X-Mailman-Version": "2.1.39",
                 "Precedence": "list",
                 "List-Id": "U-Boot discussion <u-boot.lists.denx.de>",
-                "List-Unsubscribe": "<https://lists.denx.de/options/u-boot>,\n <mailto:u-boot-request@lists.denx.de?subject=unsubscribe>",
+                "List-Unsubscribe": "<https://lists.denx.de/options/u-boot>,
+ <mailto:u-boot-request@lists.denx.de?subject=unsubscribe>",
                 "List-Archive": "<https://lists.denx.de/pipermail/u-boot/>",
                 "List-Post": "<mailto:u-boot@lists.denx.de>",
                 "List-Help": "<mailto:u-boot-request@lists.denx.de?subject=help>",
-                "List-Subscribe": "<https://lists.denx.de/listinfo/u-boot>,\n <mailto:u-boot-request@lists.denx.de?subject=subscribe>",
+                "List-Subscribe": "<https://lists.denx.de/listinfo/u-boot>,
+ <mailto:u-boot-request@lists.denx.de?subject=subscribe>",
                 "Errors-To": "u-boot-bounces@lists.denx.de",
                 "Sender": "\"U-Boot\" <u-boot-bounces@lists.denx.de>",
                 "X-Virus-Scanned": "clamav-milter 0.103.8 at phobos.denx.de",
                 "X-Virus-Status": "Clean"
-            content (str): Email content, e.g. 'This series adds a cover-coverage check to CI for Binman. The iMX8 tests\nare still not completed,...'
+            content (str): Email content, e.g. 'This series adds a cover-coverage check to CI for Binman. The iMX8 tests
+are still not completed,...'
         """
         async with aiohttp.ClientSession() as client:
             return await self._request(client, f'covers/{cover_id}/')
@@ -544,7 +687,11 @@ class Patchwork:
                 "url": "https://patchwork.ozlabs.org/api/people/6170/",
                 "name": "Simon Glass",
                 "email": "sjg@chromium.org"
-            content (str): Email content, e.g. 'Hi,\n\nOn Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:\n>\n> This '...
+            content (str): Email content, e.g. 'Hi,
+
+On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
+>
+> This '...
             headers: dict: email headers, see get_cover() for an example
         """
         return await self._request(client, f'covers/{cover_id}/comments/')
@@ -613,19 +760,21 @@ class Patchwork:
 
         Return: tuple:
             COVER object, or None if none or not read_cover_comments
-            list of PATCH: patch information for each patch in the series, or
-                None if not read_comments
-            list of patches, see get_series()['patches']
+            list of patches, see get_series()['patches'] with:
+                'patch_obj': PATCH object
         """
         data = await self.get_series(client, series_id)
-        patch_list = data['patches']
+        patch_list = list(data['patches'])
 
         count = len(patch_list)
         if read_comments:
-            result = [None] * count
+            # Returns a list of PATCH objects
             tasks = [self._get_patch_status(client, patch_list[i]['id'])
                                             for i in range(count)]
+
             result = await asyncio.gather(*tasks)
+            for patch, result in zip(patch_list, result):
+                patch['patch_obj'] = result
         else:
             result = None
         if self._show_progress:
@@ -636,7 +785,7 @@ class Patchwork:
         else:
             cover = None
 
-        return cover, result, patch_list
+        return cover, patch_list
 
     async def series_get_state(self, series_id, read_comments,
                                read_cover_comments):
