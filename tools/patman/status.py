@@ -106,7 +106,7 @@ def compare_with_series(series, patches):
     return patch_for_commit, commit_for_patch, warnings
 
 
-async def _collect_patches(client, series, series_id, pwork,
+async def _collect_patches(client, expect_count, series_id, pwork,
                           read_cover_comments):
     """Collect patch information about a series from patchwork
 
@@ -115,8 +115,7 @@ async def _collect_patches(client, series, series_id, pwork,
 
     Args:
         client (aiohttp.ClientSession): Session to use
-        series (Series): Series object corresponding to the local branch
-            containing the series
+        expect_count (int): Number of patches expected
         series_id (str): Patch series ID number
         pwork (Patchwork): Patchwork class to handle communications
         read_cover_comments (bool): True to read the comments on the cover letter
@@ -133,21 +132,17 @@ async def _collect_patches(client, series, series_id, pwork,
     # Get all the rows, which are patches
     patch_dict = data['patches']
     count = len(patch_dict)
-    num_commits = len(series.commits)
-    if count != num_commits:
-        tout.warning('Warning: Patchwork reports %d patches, series has %d' %
-                     (count, num_commits))
+    if count != expect_count:
+        tout.warning(f'Warning: Patchwork reports {count} patches, series has '
+                     f'{expect_count}')
 
     patches = []
 
     # Work through each row (patch) one at a time, collecting the information
-    warn_count = 0
     for pw_patch in patch_dict:
         patch = patchwork.Patch(pw_patch['id'])
         patch.parse_subject(pw_patch['name'])
         patches.append(patch)
-    if warn_count > 1:
-        tout.warning('   (total of %d warnings)' % warn_count)
 
     # Sort patches by patch number
     patches = sorted(patches, key=lambda x: x.seq)
@@ -325,8 +320,10 @@ async def _check_status(client, series, series_id, branch, dest_branch, force,
         patchwork (Patchwork): Patchwork class to handle communications
         test_repo (pygit2.Repository): Repo to use (use None unless testing)
     """
-    patches, cover = await _collect_patches(client, series, series_id,
-                                            patchwork, show_cover_comments)
+    patches, cover = await _collect_patches(client, len(series.commits),
+                                            series_id, patchwork,
+                                            show_cover_comments)
+
     col = terminal.Color()
     count = len(series.commits)
     new_rtag_list = [None] * count
@@ -420,17 +417,17 @@ def check_patchwork_status(series, series_id, branch, dest_branch, force,
                 show_cover_comments, patchwork, test_repo=test_repo))
 
 
-async def async_collect_patches(series, series_id, patchwork,
+async def async_collect_patches(expect_count, series_id, patchwork,
                                 read_cover_comments):
     async with aiohttp.ClientSession() as client:
-       return await _collect_patches(client, series, series_id, patchwork,
+       return await _collect_patches(client, expect_count, series_id, patchwork,
                                      read_cover_comments)
 
 
-def collect_patches(series, series_id, patchwork, read_cover_comments):
+def collect_patches(expect_count, series_id, patchwork, read_cover_comments):
     loop = asyncio.get_event_loop()
     return loop.run_until_complete(async_collect_patches(
-        series, series_id, patchwork, read_cover_comments))
+        expect_count, series_id, patchwork, read_cover_comments))
 
 
 async def find_responses(cmt, patch, patchwork):

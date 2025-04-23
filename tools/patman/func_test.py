@@ -888,7 +888,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         pwork = Patchwork.for_testing(self._fake_patchwork)
 
         with terminal.capture() as (_, err):
-            status.collect_patches(series, 1234, pwork, False)
+            status.collect_patches(len(series.commits), 1234, pwork, False)
         self.assertIn('Warning: Patchwork reports 1 patches, series has 0',
                       err.getvalue())
 
@@ -899,7 +899,8 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
 
         pwork = Patchwork.for_testing(self._fake_patchwork)
 
-        patches, _ = status.collect_patches(series, 1234, pwork, False)
+        patches, _ = status.collect_patches(len(series.commits), 1234, pwork,
+                                            False)
         self.assertEqual(1, len(patches))
         patch = patches[0]
         self.assertEqual('1', patch.id)

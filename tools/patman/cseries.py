@@ -1920,7 +1920,6 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 name (str): Cover-letter name
             patch_list (list of dict): Patches in the series from patchwork,
                 with key 'name' containing the patch name
-            gather_tags (bool): True to gather review/test tags
         """
         pwc = self.get_pcommit_dict(svid)
 
