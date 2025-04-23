@@ -124,6 +124,24 @@ async def _collect_patches(client, expect_count, series_id, pwork,
 
 
 def process_reviews(content, comment_data, base_rtags):
+    """Process and return review data
+
+    Args:
+        content (str): Content text of the patch itself - see pwork.get_patch()
+        comment_data (list of dict): Comments for the patch - see
+            pwork._get_patch_comments()
+        base_rtags (dict): base review tags (before any comments)
+            key: Response tag (e.g. 'Reviewed-by')
+            value: Set of people who gave that response, each a name/email
+                string
+
+    Return: tuple:
+        dict: new review tags (noticed since the base_rtags)
+            key: Response tag (e.g. 'Reviewed-by')
+            value: Set of people who gave that response, each a name/email
+                string
+        list of patchwork.Review: reviews received on the patch
+    """
     pstrm = PatchStream.process_text(content, True)
     rtags = collections.defaultdict(set)
     for response, people in pstrm.commit.rtags.items():
@@ -365,17 +383,3 @@ def check_patchwork_status(series, series_id, branch, dest_branch, force,
         loop.run_until_complete(check_status(
                 series, series_id, branch, dest_branch,  force, show_comments,
                 show_cover_comments, patchwork, test_repo=test_repo))
-
-
-async def async_collect_patches(expect_count, series_id, patchwork,
-                                read_comments, read_cover_comments):
-    async with aiohttp.ClientSession() as client:
-        return await _collect_patches(client, expect_count, series_id, patchwork,
-                                     read_comments, read_cover_comments)
-
-
-def collect_patches(expect_count, series_id, patchwork, read_comments,
-                    read_cover_comments):
-    loop = asyncio.get_event_loop()
-    return loop.run_until_complete(async_collect_patches(
-        expect_count, series_id, patchwork, read_comments, read_cover_comments))

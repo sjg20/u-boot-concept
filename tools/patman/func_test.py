@@ -881,6 +881,19 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
                     {'id': '1', 'name': 'Some patch'}]}
         raise ValueError('Fake Patchwork does not understand: %s' % subpath)
 
+    async def async_collect_patches(self, expect_count, series_id, patchwork,
+                                    read_comments, read_cover_comments):
+        async with aiohttp.ClientSession() as client:
+            return await status._collect_patches(
+                client, expect_count, series_id, patchwork, read_comments,
+                read_cover_comments)
+
+    def collect_patches(self, expect_count, series_id, patchwork, read_comments,
+                        read_cover_comments):
+        loop = asyncio.get_event_loop()
+        return loop.run_until_complete(self.async_collect_patches(
+            expect_count, series_id, patchwork, read_comments, read_cover_comments))
+
     def test_status_mismatch(self):
         """Test Patchwork patches not matching the series"""
         series = Series()
@@ -888,8 +901,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         pwork = Patchwork.for_testing(self._fake_patchwork)
 
         with terminal.capture() as (_, err):
-            status.collect_patches(len(series.commits), 1234, pwork, False,
-                                   False)
+            self.collect_patches(len(series.commits), 1234, pwork, False, False)
         self.assertIn('Warning: Patchwork reports 1 patches, series has 0',
                       err.getvalue())
 
@@ -900,8 +912,8 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
 
         pwork = Patchwork.for_testing(self._fake_patchwork)
 
-        _, patches = status.collect_patches(len(series.commits), 1234, pwork,
-                                            False, False)
+        _, patches = self.collect_patches(len(series.commits), 1234, pwork,
+                                          False, False)
         self.assertEqual(1, len(patches))
         patch = patches[0]
         self.assertEqual('1', patch.id)
