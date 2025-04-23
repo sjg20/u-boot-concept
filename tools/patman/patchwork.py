@@ -600,10 +600,11 @@ class Patchwork:
         async with aiohttp.ClientSession() as client:
             return await self._get_series_cover(client, data)
 
-    async def series_get_state(self, series_id):
+    async def _series_get_state(self, client, series_id):
         """Sync the series information against patchwork, to find patch status
 
         Args:
+            client: asynio client session
             series_id (str): Patchwork series ID
 
         Return: tuple:
@@ -611,21 +612,24 @@ class Patchwork:
             list of PATCH: patch information for each patch in the series
             list of patches, see get_series()['patches']
         """
-        async with aiohttp.ClientSession() as client:
-            data = await self.get_series(client, series_id)
-            patch_list = data['patches']
+        data = await self.get_series(client, series_id)
+        patch_list = data['patches']
 
-            count = len(patch_list)
-            result = [None] * count
-            tasks = [self._get_patch_status(client, patch_list[i]['id'])
-                                            for i in range(count)]
-            result = await asyncio.gather(*tasks)
-            if self._show_progress:
-                terminal.print_clear()
+        count = len(patch_list)
+        result = [None] * count
+        tasks = [self._get_patch_status(client, patch_list[i]['id'])
+                                        for i in range(count)]
+        result = await asyncio.gather(*tasks)
+        if self._show_progress:
+            terminal.print_clear()
 
-            cover = await self._get_series_cover(client, data)
+        cover = await self._get_series_cover(client, data)
 
         return cover, result, patch_list
+
+    async def series_get_state(self, series_id):
+        async with aiohttp.ClientSession() as client:
+            return await self._series_get_state(client, series_id)
 
     async def _get_one_state(self, client, svid, link, result):
         # 1 request
