@@ -1427,6 +1427,7 @@ Reviewed-by: %s
 ''' % self.joe}
 
         patch1.comments = [comment1a]
+        patch1.state = 'new'
 
         patch2 = patchwork.Patch('2')
         patch2.parse_subject('[2/2] Subject 2')
@@ -1456,6 +1457,7 @@ A comment
 Reviewed-by: %s
 ''' % self.fred}
         patch2.comments = [comment2a, comment2b]
+        patch2.state = 'new'
 
         # This test works by setting up commits and patch for use by the fake
         # Rest API function _fake_patchwork2(). It calls various functions in
@@ -1477,7 +1479,7 @@ Reviewed-by: %s
         series.commits = [commit1, commit2]
         terminal.set_print_test_mode()
         pwork = Patchwork.for_testing(self._fake_patchwork2)
-        col = status.check_patchwork_status(
+        status.check_patchwork_status(
             series, '1234', None, None, False, True, False, pwork)
         lines = iter(terminal.get_print_test_lines())
         col = terminal.Color()

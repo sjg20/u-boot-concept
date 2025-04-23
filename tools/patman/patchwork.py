@@ -578,25 +578,6 @@ class Patchwork:
 
         return PATCH(patch_id, state, data, comment_data)
 
-    '''
-    def _ext_get_patch_status(self, exc, patch_id):
-        """Executor version of _get_patch_stat()
-
-        Args:
-            exc (concurrent.futures.Executor): Executor to use
-            patch_id (int): Patch ID to look up in patchwork
-
-        Return:
-            PATCH: Patch object found
-        """
-        fdata = exc.submit(self.get_patch, patch_id)
-        state = fdata.result(timeout=TIMEOUT)['state']
-        fcomment_data = exc.submit(self.get_patch_comments, patch_id)
-        num_comments = len(fcomment_data.result(timeout=TIMEOUT))
-
-        return PATCH(patch_id, state, num_comments)
-    '''
-
     async def _get_series_cover(self, client, data):
         """Get the cover information (including comments)
 
