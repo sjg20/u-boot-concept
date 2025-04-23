@@ -900,7 +900,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
 
         pwork = Patchwork.for_testing(self._fake_patchwork)
 
-        patches, _ = status.collect_patches(len(series.commits), 1234, pwork,
+        patches, _, _ = status.collect_patches(len(series.commits), 1234, pwork,
                                             False, False)
         self.assertEqual(1, len(patches))
         patch = patches[0]
@@ -1062,7 +1062,6 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
             url (str): URL of patchwork server
             subpath (str): URL subpath to use
         """
-        print(f'subpath {subpath}')
         re_series = re.match(r'series/(\d*)/$', subpath)
         re_patch = re.match(r'patches/(\d*)/$', subpath)
         re_comments = re.match(r'patches/(\d*)/comments/$', subpath)
@@ -1094,6 +1093,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         comment1a = {'content': 'Reviewed-by: %s\n' % self.joe}
 
         patch1.comments = [comment1a]
+        patch1.state = 'new'
 
         patch2 = patchwork.Patch('2')
         patch2.parse_subject('[2/2] Subject 2')
@@ -1104,6 +1104,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
                        (self.mary, self.leb)}
         comment2b = {'content': 'Reviewed-by: %s' % self.fred}
         patch2.comments = [comment2a, comment2b]
+        patch2.state = 'new'
 
         # This test works by setting up commits and patch for use by the fake
         # Rest API function _fake_patchwork2(). It calls various functions in
@@ -1242,6 +1243,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         comment1a = {'content': 'Reviewed-by: %s\n' % self.joe}
 
         patch1.comments = [comment1a]
+        patch1.state = 'new'
 
         patch2 = patchwork.Patch('2')
         patch2.parse_subject('[2/2] %s' % series.commits[1].subject)
@@ -1253,6 +1255,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         comment2b = {
             'content': 'Reviewed-by: %s' % self.fred}
         patch2.comments = [comment2a, comment2b]
+        patch2.state = 'new'
 
         # This test works by setting up patches for use by the fake Rest API
         # function _fake_patchwork3(). The fake patch comments above should

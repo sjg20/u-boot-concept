@@ -111,7 +111,7 @@ async def _collect_patches(client, expect_count, series_id, pwork,
         ValueError: if the URL could not be read or the web page does not follow
             the expected structure
     """
-    cover, _, patch_list = await pwork._series_get_state(
+    cover, result, patch_list = await pwork._series_get_state(
         client, series_id, read_comments, read_cover_comments)
 
     # Get all the rows, which are patches
@@ -131,7 +131,7 @@ async def _collect_patches(client, expect_count, series_id, pwork,
     # Sort patches by patch number
     patches = sorted(patches, key=lambda x: x.seq)
 
-    return patches, cover
+    return patches, cover, result
 
 
 def process_reviews(content, comment_data, base_rtags):
@@ -297,8 +297,8 @@ async def _check_status(client, series, series_id, branch, dest_branch, force,
         patchwork (Patchwork): Patchwork class to handle communications
         test_repo (pygit2.Repository): Repo to use (use None unless testing)
     """
-    patches, cover = await _collect_patches(client, len(series.commits),
-                                            series_id, patchwork, False,
+    patches, cover, results = await _collect_patches(client, len(series.commits),
+                                            series_id, patchwork, True,
                                             show_cover_comments)
 
     col = terminal.Color()
@@ -310,14 +310,19 @@ async def _check_status(client, series, series_id, branch, dest_branch, force,
     for warn in warnings:
         tout.warning(warn)
 
+    '''
     patch_list = [patch_for_commit.get(c) for c in range(len(series.commits))]
     tasks = [asyncio.create_task(_find_responses(
                  client, patch_list[i], patchwork))
                  for i in range(count)]
     results = await asyncio.gather(*tasks)
+    '''
     for i in range(count):
         if results[i]:
-            patch_data, comment_data = results[i]
+            pat = results[i]
+            # patch_data, comment_data = results[i]
+            patch_data = pat.data
+            comment_data = pat.comments
             new_rtag_list[i], review_list[i] = process_reviews(
                 patch_data['content'], comment_data, series.commits[i].rtags)
 
