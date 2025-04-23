@@ -1062,6 +1062,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
             url (str): URL of patchwork server
             subpath (str): URL subpath to use
         """
+        print(f'subpath {subpath}')
         re_series = re.match(r'series/(\d*)/$', subpath)
         re_patch = re.match(r'patches/(\d*)/$', subpath)
         re_comments = re.match(r'patches/(\d*)/comments/$', subpath)

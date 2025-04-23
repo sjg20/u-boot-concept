@@ -16,9 +16,10 @@ from u_boot_pylib import terminal
 
 # Information about a patch on patchwork
 # id (int): Patchwork ID of patch
+# data (dict): Patch data as returned from get_patch()
 # state (str): Current state, e.g. 'accepted'
 # comments (list of dict): Comments
-PATCH = namedtuple('patch', 'id,state,comments')
+PATCH = namedtuple('patch', 'id,state,data,comments')
 
 # Information about a cover-letter on patchwork
 # id (int): Patchwork ID of cover letter
@@ -574,9 +575,8 @@ class Patchwork:
         data = await self.get_patch(client, patch_id)
         state = data['state']
         comment_data = await self._get_patch_comments(client, patch_id)
-        # num_comments = len(comment_data)
 
-        return PATCH(patch_id, state, comment_data)
+        return PATCH(patch_id, state, data, comment_data)
 
     '''
     def _ext_get_patch_status(self, exc, patch_id):
