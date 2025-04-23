@@ -600,36 +600,49 @@ class Patchwork:
         async with aiohttp.ClientSession() as client:
             return await self._get_series_cover(client, data)
 
-    async def _series_get_state(self, client, series_id):
+    async def _series_get_state(self, client, series_id, read_comments,
+                                read_cover_comments):
         """Sync the series information against patchwork, to find patch status
 
         Args:
             client: asynio client session
             series_id (str): Patchwork series ID
+            read_comments (bool): True to read the comments on the patches
+            read_cover_comments (bool): True to read the comments on the cover
+                letter
 
         Return: tuple:
-            COVER object, or None
-            list of PATCH: patch information for each patch in the series
+            COVER object, or None if none or not read_cover_comments
+            list of PATCH: patch information for each patch in the series, or
+                None if not read_comments
             list of patches, see get_series()['patches']
         """
         data = await self.get_series(client, series_id)
         patch_list = data['patches']
 
         count = len(patch_list)
-        result = [None] * count
-        tasks = [self._get_patch_status(client, patch_list[i]['id'])
-                                        for i in range(count)]
-        result = await asyncio.gather(*tasks)
+        if read_comments:
+            result = [None] * count
+            tasks = [self._get_patch_status(client, patch_list[i]['id'])
+                                            for i in range(count)]
+            result = await asyncio.gather(*tasks)
+        else:
+            result = None
         if self._show_progress:
             terminal.print_clear()
 
-        cover = await self._get_series_cover(client, data)
+        if read_cover_comments:
+            cover = await self._get_series_cover(client, data)
+        else:
+            cover = None
 
         return cover, result, patch_list
 
-    async def series_get_state(self, series_id):
+    async def series_get_state(self, series_id, read_comments,
+                               read_cover_comments):
         async with aiohttp.ClientSession() as client:
-            return await self._series_get_state(client, series_id)
+            return await self._series_get_state(
+                client, series_id, read_comments, read_cover_comments)
 
     async def _get_one_state(self, client, svid, link, result):
         # 1 request

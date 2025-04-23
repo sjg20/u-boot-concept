@@ -107,7 +107,7 @@ def compare_with_series(series, patches):
 
 
 async def _collect_patches(client, expect_count, series_id, pwork,
-                          read_cover_comments):
+                           read_comments, read_cover_comments):
     """Collect patch information about a series from patchwork
 
     Uses the Patchwork REST API to collect information provided by patchwork
@@ -118,7 +118,9 @@ async def _collect_patches(client, expect_count, series_id, pwork,
         expect_count (int): Number of patches expected
         series_id (str): Patch series ID number
         pwork (Patchwork): Patchwork class to handle communications
-        read_cover_comments (bool): True to read the comments on the cover letter
+        read_comments (bool): True to read the comments on the patches
+        read_cover_comments (bool): True to read the comments on the cover
+            letter
 
     Returns:
         list: List of patches sorted by sequence number, each a Patch object
@@ -127,11 +129,11 @@ async def _collect_patches(client, expect_count, series_id, pwork,
         ValueError: if the URL could not be read or the web page does not follow
             the expected structure
     """
-    data = await pwork.get_series(client, series_id)
+    cover, _, patch_list = await pwork._series_get_state(
+        client, series_id, read_comments, read_cover_comments)
 
     # Get all the rows, which are patches
-    patch_dict = data['patches']
-    count = len(patch_dict)
+    count = len(patch_list)
     if count != expect_count:
         tout.warning(f'Warning: Patchwork reports {count} patches, series has '
                      f'{expect_count}')
@@ -139,18 +141,13 @@ async def _collect_patches(client, expect_count, series_id, pwork,
     patches = []
 
     # Work through each row (patch) one at a time, collecting the information
-    for pw_patch in patch_dict:
+    for pw_patch in patch_list:
         patch = patchwork.Patch(pw_patch['id'])
         patch.parse_subject(pw_patch['name'])
         patches.append(patch)
 
     # Sort patches by patch number
     patches = sorted(patches, key=lambda x: x.seq)
-
-    # Get any cover-letter info
-    cover = None
-    if read_cover_comments:
-        cover = await pwork.get_series_cover(data)
 
     return patches, cover
 
@@ -321,7 +318,7 @@ async def _check_status(client, series, series_id, branch, dest_branch, force,
         test_repo (pygit2.Repository): Repo to use (use None unless testing)
     """
     patches, cover = await _collect_patches(client, len(series.commits),
-                                            series_id, patchwork,
+                                            series_id, patchwork, False,
                                             show_cover_comments)
 
     col = terminal.Color()
@@ -418,16 +415,17 @@ def check_patchwork_status(series, series_id, branch, dest_branch, force,
 
 
 async def async_collect_patches(expect_count, series_id, patchwork,
-                                read_cover_comments):
+                                read_comments, read_cover_comments):
     async with aiohttp.ClientSession() as client:
        return await _collect_patches(client, expect_count, series_id, patchwork,
-                                     read_cover_comments)
+                                     read_comments, read_cover_comments)
 
 
-def collect_patches(expect_count, series_id, patchwork, read_cover_comments):
+def collect_patches(expect_count, series_id, patchwork, read_comments,
+                    read_cover_comments):
     loop = asyncio.get_event_loop()
     return loop.run_until_complete(async_collect_patches(
-        expect_count, series_id, patchwork, read_cover_comments))
+        expect_count, series_id, patchwork, read_comments, read_cover_comments))
 
 
 async def find_responses(cmt, patch, patchwork):

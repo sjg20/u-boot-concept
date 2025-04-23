@@ -1964,7 +1964,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         tout.info(
             f"Updating series '{ser.name}' version {version} from link '{link}'")
         cover, patches, patch_list = self.loop.run_until_complete(
-            pwork.series_get_state(link))
+            pwork.series_get_state(link, True, True))
 
         updated = self._sync_one(svid, cover, patches, patch_list, gather_tags)
         self.commit()
