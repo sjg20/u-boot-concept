@@ -189,32 +189,7 @@ async def _find_responses(client, cmt, patch, pwork):
 
     new_rtags, reviews = process_reviews(patch_data['content'], comment_data,
                                          cmt.rtags)
-    '''
-    pstrm = PatchStream.process_text(patch_data['content'], True)
-    rtags = collections.defaultdict(set)
-    for response, people in pstrm.commit.rtags.items():
-        rtags[response].update(people)
 
-    reviews = []
-    for comment in comment_data:
-        pstrm = PatchStream.process_text(comment['content'], True)
-        if pstrm.snippets:
-            submitter = comment['submitter']
-            person = '%s <%s>' % (submitter['name'], submitter['email'])
-            reviews.append(patchwork.Review(person, pstrm.snippets))
-        for response, people in pstrm.commit.rtags.items():
-            rtags[response].update(people)
-
-    # Find the tags that are not in the commit
-    new_rtags = collections.defaultdict(set)
-    base_rtags = cmt.rtags
-    for tag, people in rtags.items():
-        for who in people:
-            is_new = (tag not in base_rtags or
-                      who not in base_rtags[tag])
-            if is_new:
-                new_rtags[tag].add(who)
-    '''
     return new_rtags, reviews
 
 def show_responses(col, rtags, indent, is_new):
