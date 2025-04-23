@@ -1116,14 +1116,19 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         pat = await pwork._get_patch_status(client, patch.id)
         return pat.data, pat.comments
 
-    async def find_responses(self, patch, patchwork):
+    async def find_responses(self, patch, pwork):
         async with aiohttp.ClientSession() as client:
-            return await self._find_responses(client, patch, patchwork)
+            return await self._find_responses(client, patch, pwork)
 
-    def find_new_responses(self, patch, patchwork):
+    def find_new_responses(self, patch, pwork):
         loop = asyncio.get_event_loop()
-        return loop.run_until_complete(self.find_responses(patch, patchwork))
+        return loop.run_until_complete(self.find_responses(patch, pwork))
 
+    def find_new_rtags(self, patch, rtags, pwork):
+        patch_data, comment_data = self.find_new_responses(patch, pwork)
+        new_rtag_list, review_list = status.process_reviews(
+            patch_data['content'], comment_data, rtags)
+        return new_rtag_list, review_list
 
     def test_find_new_responses(self):
         """Test operation of find_new_responses()"""
@@ -1164,16 +1169,14 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
 
         # Check that the tags are picked up on the first patch
         pwork = Patchwork.for_testing(self._fake_patchwork2)
-        patch_data, comment_data = self.find_new_responses(patch1, pwork)
-        new_rtag_list[0], review_list[0] = status.process_reviews(
-            patch_data['content'], comment_data, self.commits[0].rtags)
-        self.assertEqual(new_rtag_list[0], {'Reviewed-by': {self.joe}})
+        new_rtag_list, review_list = self.find_new_rtags(
+            patch1, self.commits[0].rtags, pwork)
+        self.assertEqual(new_rtag_list, {'Reviewed-by': {self.joe}})
 
         # Now the second patch
-        patch_data, comment_data = self.find_new_responses(patch2, pwork)
-        new_rtag_list[1], review_list[1] = status.process_reviews(
-            patch_data['content'], comment_data, self.commits[1].rtags)
-        self.assertEqual(new_rtag_list[1], {
+        new_rtag_list, review_list = self.find_new_rtags(
+            patch2, self.commits[0].rtags, pwork)
+        self.assertEqual(new_rtag_list, {
             'Reviewed-by': {self.mary, self.fred},
             'Tested-by': {self.leb}})
 
@@ -1181,19 +1184,17 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         # 'new' tags when scanning comments
         new_rtag_list = [None] * count
         commit1.rtags = {'Reviewed-by': {self.joe}}
-        patch_data, comment_data = self.find_new_responses(patch1, pwork)
-        new_rtag_list[0], review_list[0] = status.process_reviews(
-            patch_data['content'], comment_data, commit1.rtags)
-        self.assertEqual(new_rtag_list[0], {})
+        new_rtag_list, review_list = self.find_new_rtags(
+            patch1, commit1.rtags, pwork)
+        self.assertEqual(new_rtag_list, {})
 
         # For the second commit, add Ed and Fred, so only Mary should be left
         commit2.rtags = {
             'Tested-by': {self.leb},
             'Reviewed-by': {self.fred}}
-        patch_data, comment_data = self.find_new_responses(patch2, pwork)
-        new_rtag_list[1], review_list[1] = status.process_reviews(
-            patch_data['content'], comment_data, commit2.rtags)
-        self.assertEqual(new_rtag_list[1], {'Reviewed-by': {self.mary}})
+        new_rtag_list, review_list = self.find_new_rtags(
+            patch2, commit2.rtags, pwork)
+        self.assertEqual(new_rtag_list, {'Reviewed-by': {self.mary}})
 
         # Check that the output patches expectations:
         #   1 Subject 1
