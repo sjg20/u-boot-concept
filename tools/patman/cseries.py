@@ -1933,7 +1933,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 self.db.execute(
                     'UPDATE pcommit SET '
                     'patch_id = ?, state = ?, num_comments = ? WHERE id = ?',
-                    (patch.id, patch.state, patch.num_comments, item.id))
+                    (patch.id, patch.state, len(patch.comments), item.id))
                 updated += self.rowcount()
         if cover:
             self.db.execute(
