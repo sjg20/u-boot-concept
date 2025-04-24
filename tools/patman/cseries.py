@@ -2447,7 +2447,8 @@ Please use 'patman series -s {branch} scan' to resolve this''')
 
         for old_branch, branch in todo.values():
             tout.info(f"Renaming branch '{old_branch}' to '{branch}'")
-            gitutil.rename_branch(old_branch, branch, self.gitdir)
+            if not dry_run:
+                gitutil.rename_branch(old_branch, branch, self.gitdir)
 
         # Change the series name; nothing needs to change in ser_ver
         self.db.execute('UPDATE series SET name = ? WHERE id = ?',

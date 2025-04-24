@@ -162,7 +162,7 @@ def do_series(args, test_db=None, pwork=None):
         elif args.subcmd == 'remove-version':
             cser.remove_version(args.series, args.version, dry_run=args.dry_run)
         elif args.subcmd == 'rename':
-            cser.series_rename(args.series, args.new_name)
+            cser.series_rename(args.series, args.new_name, dry_run=args.dry_run)
         elif args.subcmd == 'scan':
             cser.scan(args.series, mark=args.mark,
                       allow_unmarked=args.allow_unmarked, end=args.upstream,

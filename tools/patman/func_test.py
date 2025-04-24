@@ -4331,14 +4331,26 @@ Date:   .*
             cser.increment('first')
         self.assertEqual('first3', gitutil.get_branch(self.gitdir))
 
+        # Do the dry run
         with terminal.capture() as (out, _):
             yield cser
-        lines = iter(out.getvalue().splitlines())
-        self.assertEqual("Renaming branch 'first' to 'newname'", next(lines))
-        self.assertEqual("Renaming branch 'first2' to 'newname2'", next(lines))
-        self.assertEqual("Renaming branch 'first3' to 'newname3'", next(lines))
-        self.assertEqual("Renamed series 'first' to 'newname'", next(lines))
-        self.assertFinished(lines)
+        lines = out.getvalue().splitlines()
+        itr = iter(lines)
+        self.assertEqual("Renaming branch 'first' to 'newname'", next(itr))
+        self.assertEqual("Renaming branch 'first2' to 'newname2'", next(itr))
+        self.assertEqual("Renaming branch 'first3' to 'newname3'", next(itr))
+        self.assertEqual("Renamed series 'first' to 'newname'", next(itr))
+        self.assertEqual("Dry run completed", next(itr))
+        self.assertFinished(itr)
+
+        # Check nothing changed
+        self.assertEqual('first3', gitutil.get_branch(self.gitdir))
+        sdict = cser.get_series_dict()
+        self.assertIn('first', sdict)
+
+        # Now do it for real
+        with terminal.capture() as (out, _):
+            yield cser
 
         self.assertEqual('newname3', gitutil.get_branch(self.gitdir))
 
@@ -4352,6 +4364,9 @@ Date:   .*
         cor = self.check_series_rename()
         cser = next(cor)
 
+        cser.series_rename('first', 'newname', dry_run=True)
+        cser = next(cor)
+
         cser.series_rename('first', 'newname')
         self.assertFalse(next(cor))
 
@@ -4361,9 +4376,13 @@ Date:   .*
         next(cor)
 
         self.db_close()
-        self.run_args('series', '-s', 'first', 'rename', '-N', 'newname',
+        self.run_args('series', '-n', '-s', 'first', 'rename', '-N', 'newname',
                       pwork=True)
         self.db_open()
+        next(cor)
+        self.run_args('series', '-s', 'first', 'rename', '-N', 'newname',
+                      pwork=True)
+
         self.assertFalse(next(cor))
 
     def test_series_rename_bad(self):
