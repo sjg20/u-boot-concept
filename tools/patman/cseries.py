@@ -2384,3 +2384,71 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         status.check_patchwork_status(
             series, link, branch, None, False, show_comments,
             show_cover_comments, pwork, self.gitdir, single_thread)
+
+    def series_rename(self, series, name, dry_run=False):
+        """Rename a series
+
+        Renames a series and changes the name of any branches which match
+        versions present in the database
+
+        Args:
+            series (str): Name of series to use, or None to use current branch
+            name (str): new name to use (must not include version number)
+            dry_run (bool): True to do a dry run
+        """
+        old_ser, _ =  self.parse_series_and_version(series, None)
+        if not old_ser.idnum:
+            raise ValueError(f"Series '{old_ser.name}' not found in database")
+        if old_ser.name != series:
+            raise ValueError(
+                f"Invalid series name '{series}': did you use the branch name?")
+        chk, _ = split_name_version(name)
+        if chk != name:
+            raise ValueError(
+                f"Invalid series name '{name}': did you use the branch name?")
+        if chk == old_ser.name:
+            raise ValueError(f"Cannot rename series '{old_ser.name}' to itself")
+        if self.get_series_by_name(name):
+            raise ValueError(f"Cannot rename: series '{name}' already exists")
+
+        versions = self.get_version_list(old_ser.idnum)
+        missing = []
+        exists = []
+        todo = {}
+        for ver in versions:
+            ok = True
+            old_branch = self.get_branch_name(old_ser.name, ver)
+            if not gitutil.check_branch(old_branch, self.gitdir):
+                missing.append(old_branch)
+                ok = False
+
+            branch = self.get_branch_name(name, ver)
+            if gitutil.check_branch(branch, self.gitdir):
+                exists.append(branch)
+                ok = False
+
+            if ok:
+                todo[ver] = [old_branch, branch]
+
+        if missing or exists:
+            msg = 'Cannot rename'
+            if missing:
+                msg += f": branches missing: {', '.join(missing)}"
+            if exists:
+                msg += f": branches exist: {', '.join(exists)}"
+            raise ValueError(msg)
+
+        for old_branch, branch in todo.values():
+            tout.info(f"Renaming branch '{old_branch}' to '{branch}'")
+            gitutil.rename_branch(old_branch, branch, self.gitdir)
+
+        # Change the series name; nothing needs to change in ser_ver
+        self.db.execute('UPDATE series SET name = ? WHERE id = ?',
+                        (name, old_ser.idnum))
+
+        if not dry_run:
+            self.commit()
+        else:
+            self.rollback()
+
+        tout.info(f"Renamed series '{series}' to '{name}'")

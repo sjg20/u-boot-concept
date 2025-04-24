@@ -4316,3 +4316,88 @@ Date:   .*
         with terminal.capture() as (out, _):
             cmdline.parse_args(['upstream'], parsers=parsers)
         self.assertIn('usage: patman upstream', out.getvalue())
+
+    def test_series_rename(self):
+        """Test renaming of a series"""
+        cser = self.get_cser()
+
+        with terminal.capture() as (out, _):
+            cser.add_series('first', 'my name', allow_unmarked=True)
+
+        # Remember the old series
+        old = cser.get_series_by_name('first')
+
+        self.assertEqual('first', gitutil.get_branch(self.gitdir))
+        with terminal.capture() as (out, _):
+            cser.increment('first')
+            cser.increment('first')
+        self.assertEqual('first3', gitutil.get_branch(self.gitdir))
+
+        with terminal.capture() as (out, _):
+            cser.series_rename('first', 'newname')
+        lines = iter(out.getvalue().splitlines())
+        self.assertEqual("Renaming branch 'first' to 'newname'", next(lines))
+        self.assertEqual("Renaming branch 'first2' to 'newname2'", next(lines))
+        self.assertEqual("Renaming branch 'first3' to 'newname3'", next(lines))
+        self.assertEqual("Renamed series 'first' to 'newname'", next(lines))
+        self.assertFinished(lines)
+
+        self.assertEqual('newname3', gitutil.get_branch(self.gitdir))
+
+        # Check the series ID did not change
+        ser = cser.get_series_by_name('newname')
+        self.assertEqual(old.idnum, ser.idnum)
+
+    def test_series_rename_bad(self):
+        """Test renaming when it is not allowed"""
+        cser = self.get_cser()
+        with terminal.capture():
+            cser.add_series('first', 'my name', allow_unmarked=True)
+            cser.increment('first')
+            cser.increment('first')
+
+        with self.assertRaises(ValueError) as exc:
+            cser.series_rename('first', 'first')
+        self.assertEqual("Cannot rename series 'first' to itself",
+                         str(exc.exception))
+
+        with self.assertRaises(ValueError) as exc:
+            cser.series_rename('first2', 'newname')
+        self.assertEqual(
+            "Invalid series name 'first2': did you use the branch name?",
+            str(exc.exception))
+
+        with self.assertRaises(ValueError) as exc:
+            cser.series_rename('first', 'newname2')
+        self.assertEqual(
+            "Invalid series name 'newname2': did you use the branch name?",
+            str(exc.exception))
+
+        with self.assertRaises(ValueError) as exc:
+            cser.series_rename('first', 'second')
+        self.assertEqual("Cannot rename: branches exist: second",
+                         str(exc.exception))
+
+        with terminal.capture():
+            cser.add_series('second', 'another name', allow_unmarked=True)
+            cser.increment('second')
+
+        with self.assertRaises(ValueError) as exc:
+            cser.series_rename('first', 'second')
+        self.assertEqual("Cannot rename: series 'second' already exists",
+                         str(exc.exception))
+
+        # Rename second2 so that it gets in the way of the rename
+        gitutil.rename_branch('second2', 'newname2', self.gitdir)
+        with self.assertRaises(ValueError) as exc:
+            cser.series_rename('first', 'newname')
+        self.assertEqual("Cannot rename: branches exist: newname2",
+                         str(exc.exception))
+
+        # Rename first3 and make sure it stops the rename
+        gitutil.rename_branch('first3', 'tempbranch', self.gitdir)
+        with self.assertRaises(ValueError) as exc:
+            cser.series_rename('first', 'newname')
+        self.assertEqual(
+            "Cannot rename: branches missing: first3: branches exist: newname2",
+            str(exc.exception))

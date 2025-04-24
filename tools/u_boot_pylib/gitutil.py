@@ -781,6 +781,26 @@ def check_branch(name, git_dir=None):
     return out[2:] == name
 
 
+def rename_branch(old_name, name, git_dir=None):
+    """Check if a branch exists
+
+    Args:
+        old_name (str): Name of the branch to rename
+        name (str): New name for the branch
+        git_dir (str): Path to git repository (None to use default)
+
+    Return:
+        str: Output from command
+    """
+    cmd = ['git']
+    if git_dir:
+        cmd += ['--git-dir', git_dir]
+    cmd += ['branch', '--move', old_name, name]
+
+    # This produces '  <name>' or '* <name>'
+    return command.output(*cmd).rstrip()
+
+
 def get_commit_message(commit, git_dir=None):
     """Gets the commit message for a commit
 
