@@ -1005,11 +1005,13 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         patch3 = patchwork.Patch('3')
         patch3.subject = 'Subject 2'
 
+        pwork = Patchwork(None)
+
         series = Series()
         series.commits = [commit1]
         patches = [patch1]
         patch_for_commit, commit_for_patch, warnings = (
-            status.compare_with_series(series, patches))
+            pwork.compare_with_series(series, patches))
         self.assertEqual(1, len(patch_for_commit))
         self.assertEqual(patch1, patch_for_commit[0])
         self.assertEqual(1, len(commit_for_patch))
@@ -1018,7 +1020,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         series.commits = [commit1]
         patches = [patch1, patch2]
         patch_for_commit, commit_for_patch, warnings = (
-            status.compare_with_series(series, patches))
+            pwork.compare_with_series(series, patches))
         self.assertEqual(1, len(patch_for_commit))
         self.assertEqual(patch1, patch_for_commit[0])
         self.assertEqual(1, len(commit_for_patch))
@@ -1029,7 +1031,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         series.commits = [commit1, commit2]
         patches = [patch1]
         patch_for_commit, commit_for_patch, warnings = (
-            status.compare_with_series(series, patches))
+            pwork.compare_with_series(series, patches))
         self.assertEqual(1, len(patch_for_commit))
         self.assertEqual(patch1, patch_for_commit[0])
         self.assertEqual(1, len(commit_for_patch))
@@ -1040,7 +1042,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         series.commits = [commit1, commit2, commit3]
         patches = [patch1, patch2]
         patch_for_commit, commit_for_patch, warnings = (
-            status.compare_with_series(series, patches))
+            pwork.compare_with_series(series, patches))
         self.assertEqual(2, len(patch_for_commit))
         self.assertEqual(patch1, patch_for_commit[0])
         self.assertEqual(patch2, patch_for_commit[1])
@@ -1054,7 +1056,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         series.commits = [commit1, commit2]
         patches = [patch1, patch2, patch3]
         patch_for_commit, commit_for_patch, warnings = (
-            status.compare_with_series(series, patches))
+            pwork.compare_with_series(series, patches))
         self.assertEqual(1, len(patch_for_commit))
         self.assertEqual(patch1, patch_for_commit[0])
         self.assertEqual(2, len(commit_for_patch))

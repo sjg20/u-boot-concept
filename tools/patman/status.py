@@ -31,61 +31,6 @@ def to_int(vals):
     return out
 
 
-def compare_with_series(series, patches):
-    """Compare a list of patches with a series it came from
-
-    This prints any problems as warnings
-
-    Args:
-        series (Series): Series to compare against
-        patches (list of Patch): list of Patch objects to compare with
-
-    Returns:
-        tuple
-            dict:
-                key: Commit number (0...n-1)
-                value: Patch object for that commit
-            dict:
-                key: Patch number  (0...n-1)
-                value: Commit object for that patch
-    """
-    # Check the names match
-    warnings = []
-    patch_for_commit = {}
-    all_patches = set(patches)
-    for seq, cmt in enumerate(series.commits):
-        pmatch = [p for p in all_patches if p.subject == cmt.subject]
-        if len(pmatch) == 1:
-            patch_for_commit[seq] = pmatch[0]
-            all_patches.remove(pmatch[0])
-        elif len(pmatch) > 1:
-            warnings.append("Multiple patches match commit %d ('%s'):\n   %s" %
-                            (seq + 1, cmt.subject,
-                             '\n   '.join([p.subject for p in pmatch])))
-        else:
-            warnings.append("Cannot find patch for commit %d ('%s')" %
-                            (seq + 1, cmt.subject))
-
-
-    # Check the names match
-    commit_for_patch = {}
-    all_commits = set(series.commits)
-    for seq, patch in enumerate(patches):
-        cmatch = [c for c in all_commits if c.subject == patch.subject]
-        if len(cmatch) == 1:
-            commit_for_patch[seq] = cmatch[0]
-            all_commits.remove(cmatch[0])
-        elif len(cmatch) > 1:
-            warnings.append("Multiple commits match patch %d ('%s'):\n   %s" %
-                            (seq + 1, patch.subject,
-                             '\n   '.join([c.subject for c in cmatch])))
-        else:
-            warnings.append("Cannot find commit for patch %d ('%s')" %
-                            (seq + 1, patch.subject))
-
-    return patch_for_commit, commit_for_patch, warnings
-
-
 async def _collect_patches(client, expect_count, series_id, pwork,
                            read_comments, read_cover_comments):
     """Collect patch information about a series from patchwork
@@ -248,7 +193,7 @@ async def _check_status(client, series, series_id, branch, dest_branch, force,
     new_rtag_list = [None] * count
     review_list = [None] * count
 
-    patch_for_commit, _, warnings = compare_with_series(series, compare)
+    patch_for_commit, _, warnings = pwork.compare_with_series(series, compare)
     for warn in warnings:
         tout.warning(warn)
 
