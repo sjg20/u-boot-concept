@@ -1948,7 +1948,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
 
         return updated
 
-    def series_sync(self, pwork, series, version, gather_tags=False):
+    def series_sync(self, pwork, series, version, gather_tags, dry_run=False):
         """Sync the series status from patchwork
 
         Args:
@@ -1956,6 +1956,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             series (str): Name of series to use, or None to use current branch
             version (int): Version number, or None to detect from name
             gather_tags (bool): True to gather review/test tags
+            dry_run (bool): True to do a dry run
         """
         ser, version = self.parse_series_and_version(series, version)
         self.ensure_version(ser, version)
@@ -1969,10 +1970,15 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             pwork.series_get_state(link, True, True))
 
         updated = self._sync_one(svid, cover, patches, gather_tags)
-        self.commit()
 
         tout.info(f"{updated} patch{'es' if updated != 1 else ''}"
                   f"{' and cover letter' if cover else ''} updated")
+
+        if not dry_run:
+            self.commit()
+        else:
+            self.rollback()
+            tout.info('Dry run completed')
 
     def _get_fetch_dict(self, sync_all_versions):
         """Get a dict of ser_vers to fetch, along with their patchwork links

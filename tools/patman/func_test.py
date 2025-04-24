@@ -3750,40 +3750,8 @@ Date:   .*
         self.assertIn('SPI needs some fixes', chk)   # commit body
         self.assertIn('make SPI work', chk)             # patch body
 
-    '''
-    def _check_series_status(self, out):
-        lines = iter(out.getvalue().splitlines())
-        self.assertEqual(
-            "Branch 'second' (total 3): 3:unknown", next(lines))
-        self.assertIn('PatchId', next(lines))
-        self.assertRegex(
-            next(lines),
-            "  0 unknown      -       .* video: Some video improvements")
-        self.assertRegex(
-            next(lines),
-            "  1 unknown      -       .* serial: Add a serial driver")
-        self.assertRegex(
-            next(lines),
-            "  2 unknown      -       .* bootm: Make it boot")
-
-    def test_series_status(self):
-        cser = self.get_cser()
-        with terminal.capture():
-            cser.add_series('second', 'description', allow_unmarked=True)
-        with terminal.capture() as (out, _):
-            cser.series_status('second', None)
-        self._check_series_status(out)
-
-    def test_series_status_cmdline(self):
-        cser = self.get_cser()
-        with terminal.capture():
-            cser.add_series('second', 'description', allow_unmarked=True)
-        with terminal.capture() as (out, _):
-            self.run_args('series',  '-s', 'second', 'status', pwork=True)
-        self._check_series_status(out)
-    '''
-
     def test_series_sync(self):
+        """Test syncing a series"""
         cser = self.get_cser()
         pwork = Patchwork.for_testing(self._fake_patchwork_cser)
         self.assertFalse(cser.get_project())
@@ -3791,17 +3759,30 @@ Date:   .*
 
         with terminal.capture() as (out, _):
             cser.add_series('second', 'description', allow_unmarked=True)
+
+        ser = cser.get_series_by_name('second')
+        pwid = cser.get_series_svid(ser.idnum, 1)
+
+        # First do a dry run
         with terminal.capture() as (out, _):
-            cser.series_sync(pwork, 'second', None, False)
+            cser.series_sync(pwork, 'second', None, False, dry_run=True)
         lines = out.getvalue().splitlines()
         self.assertEqual(
             "Updating series 'second' version 1 from link '183237'",
             lines[0])
         self.assertEqual('3 patches and cover letter updated', lines[1])
-        self.assertEqual(2, len(lines))
+        self.assertEqual('Dry run completed', lines[2])
+        self.assertEqual(3, len(lines))
 
-        ser = cser.get_series_by_name('second')
-        pwid = cser.get_series_svid(ser.idnum, 1)
+        pwc = cser.get_pcommit_dict(pwid)
+        self.assertIsNone(pwc[0].state)
+        self.assertIsNone(pwc[1].state)
+        self.assertIsNone(pwc[2].state)
+
+        # Now do it for real
+        with terminal.capture() as (out, _):
+            cser.series_sync(pwork, 'second', None, False)
+
         pwc = cser.get_pcommit_dict(pwid)
         self.assertEqual('accepted', pwc[0].state)
         self.assertEqual('changes-requested', pwc[1].state)
@@ -4349,8 +4330,10 @@ Date:   .*
         self.assertIn('first', sdict)
 
         # Now do it for real
-        with terminal.capture() as (out, _):
+        with terminal.capture() as (out2, _):
             yield cser
+        lines2 = out2.getvalue().splitlines()
+        self.assertEqual(lines[:-1], lines2)
 
         self.assertEqual('newname3', gitutil.get_branch(self.gitdir))
 
