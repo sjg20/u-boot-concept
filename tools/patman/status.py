@@ -9,7 +9,6 @@ collected from patchwork.
 """
 
 import asyncio
-import collections
 
 import aiohttp
 import pygit2
@@ -17,7 +16,6 @@ import pygit2
 from u_boot_pylib import terminal
 from u_boot_pylib import tout
 from patman import patchstream
-from patman.patchstream import PatchStream
 from patman import patchwork
 
 def to_int(vals):
@@ -121,51 +119,6 @@ async def _collect_patches(client, expect_count, series_id, pwork,
                      f'{expect_count}')
 
     return cover, patch_list
-
-
-def process_reviews(content, comment_data, base_rtags):
-    """Process and return review data
-
-    Args:
-        content (str): Content text of the patch itself - see pwork.get_patch()
-        comment_data (list of dict): Comments for the patch - see
-            pwork._get_patch_comments()
-        base_rtags (dict): base review tags (before any comments)
-            key: Response tag (e.g. 'Reviewed-by')
-            value: Set of people who gave that response, each a name/email
-                string
-
-    Return: tuple:
-        dict: new review tags (noticed since the base_rtags)
-            key: Response tag (e.g. 'Reviewed-by')
-            value: Set of people who gave that response, each a name/email
-                string
-        list of patchwork.Review: reviews received on the patch
-    """
-    pstrm = PatchStream.process_text(content, True)
-    rtags = collections.defaultdict(set)
-    for response, people in pstrm.commit.rtags.items():
-        rtags[response].update(people)
-
-    reviews = []
-    for comment in comment_data:
-        pstrm = PatchStream.process_text(comment['content'], True)
-        if pstrm.snippets:
-            submitter = comment['submitter']
-            person = f"{submitter['name']} <{submitter['email']}>"
-            reviews.append(patchwork.Review(person, pstrm.snippets))
-        for response, people in pstrm.commit.rtags.items():
-            rtags[response].update(people)
-
-    # Find the tags that are not in the commit
-    new_rtags = collections.defaultdict(set)
-    for tag, people in rtags.items():
-        for who in people:
-            is_new = (tag not in base_rtags or
-                      who not in base_rtags[tag])
-            if is_new:
-                new_rtags[tag].add(who)
-    return new_rtags, reviews
 
 
 def show_responses(col, rtags, indent, is_new):
@@ -307,7 +260,7 @@ async def _check_status(client, series, series_id, branch, dest_branch, force,
         if pat:
             patch_data = pat.patch.data
             comment_data = pat.patch.comments
-            new_rtag_list[i], review_list[i] = process_reviews(
+            new_rtag_list[i], review_list[i] = pwork.process_reviews(
                 patch_data['content'], comment_data, series.commits[i].rtags)
 
     with terminal.pager():

@@ -1100,7 +1100,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         loop = asyncio.get_event_loop()
         pat = loop.run_until_complete(self._find_new_responses(patch, pwork))
 
-        new_rtag_list, review_list = status.process_reviews(
+        new_rtag_list, review_list = pwork.process_reviews(
             pat.data['content'], pat.comments, self.commits[0].rtags)
         return new_rtag_list, review_list
 
@@ -1138,7 +1138,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
 
     def find_new_rtags(self, patch, rtags, pwork):
         patch_data, comment_data = self.find_new_responses(patch, pwork)
-        new_rtag_list, review_list = status.process_reviews(
+        new_rtag_list, review_list = pwork.process_reviews(
             patch_data['content'], comment_data, rtags)
         return new_rtag_list, review_list
 
