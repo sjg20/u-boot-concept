@@ -134,8 +134,8 @@ async def _check_status(client, series, series_id, branch, dest_branch, force,
             num_added = create_branch(series, new_rtag_list, branch,
                                       dest_branch, force, test_repo)
             terminal.tprint(
-                "%d response%s added from patchwork into new branch '%s'" %
-                (num_added, 's' if num_added != 1 else '', dest_branch))
+                f"{num_added} response{'s' if num_added != 1 else ''} added "
+                f"from patchwork into new branch '{dest_branch}'")
 
 
 async def check_status(series, series_id, branch, dest_branch, force,
