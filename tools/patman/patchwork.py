@@ -13,6 +13,7 @@ import re
 import requests
 
 from u_boot_pylib import terminal
+from u_boot_pylib import tout
 from patman.patchstream import PatchStream
 
 # Information about a patch on patchwork
@@ -947,3 +948,147 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
                                 (seq + 1, patch.subject))
 
         return patch_for_commit, commit_for_patch, warnings
+
+    def show_responses(self, col, rtags, indent, is_new):
+        """Show rtags collected
+
+        Args:
+            col (terminal.Colour): Colour object to use
+            rtags (dict): review tags to show
+                key: Response tag (e.g. 'Reviewed-by')
+                value: Set of people who gave that response, each a name/email string
+            indent (str): Indentation string to write before each line
+            is_new (bool): True if this output should be highlighted
+
+        Returns:
+            int: Number of review tags displayed
+        """
+        count = 0
+        for tag in sorted(rtags.keys()):
+            people = rtags[tag]
+            for who in sorted(people):
+                terminal.tprint(indent + '%s %s: ' % ('+' if is_new else ' ', tag),
+                               newline=False, colour=col.GREEN, bright=is_new,
+                               col=col)
+                terminal.tprint(who, colour=col.WHITE, bright=is_new, col=col)
+                count += 1
+        return count
+
+    async def _collect_patches(self, client, expect_count, series_id,
+                               read_comments, read_cover_comments):
+        """Collect patch information about a series from patchwork
+
+        Uses the Patchwork REST API to collect information provided by patchwork
+        about the status of each patch.
+
+        Args:
+            client (aiohttp.ClientSession): Session to use
+            expect_count (int): Number of patches expected
+            series_id (str): Patch series ID number
+            pwork (Patchwork): Patchwork class to handle communications
+            read_comments (bool): True to read the comments on the patches
+            read_cover_comments (bool): True to read the comments on the cover
+                letter
+
+        Returns:
+            list: List of patches sorted by sequence number, each a Patch object
+
+        Raises:
+            ValueError: if the URL could not be read or the web page does not follow
+                the expected structure
+        """
+        cover, patch_list = await self._series_get_state(
+            client, series_id, read_comments, read_cover_comments)
+
+        # Get all the rows, which are patches
+        count = len(patch_list)
+        if count != expect_count:
+            tout.warning(f'Warning: Patchwork reports {count} patches, series has '
+                         f'{expect_count}')
+
+        return cover, patch_list
+
+    async def _check_status(self, client, series, series_id, branch,
+                            show_comments, show_cover_comments):
+        """Check the status of a series on Patchwork
+
+        This finds review tags and comments for a series in Patchwork, displaying
+        them to show what is new compared to the local series.
+
+        Args:
+            client (aiohttp.ClientSession): Session to use
+            series (Series): Series object for the existing branch
+            series_id (str): Patch series ID number
+            branch (str): Existing branch to update, or None
+            show_comments (bool): True to show the comments on each patch
+            show_cover_comments (bool): True to show the comments on the
+                letter
+        """
+        cover, patches = await self._collect_patches(
+            client, len(series.commits), series_id, True, show_cover_comments)
+
+        compare = []
+        for pw_patch in patches:
+            patch = Patch(pw_patch.id)
+            patch.parse_subject(pw_patch.series_data['name'])
+            compare.append(patch)
+
+        col = terminal.Color()
+        count = len(series.commits)
+        new_rtag_list = [None] * count
+        review_list = [None] * count
+
+        patch_for_commit, _, warnings = self.compare_with_series(series,
+                                                                 compare)
+        for warn in warnings:
+            tout.warning(warn)
+
+        for seq, pw_patch in enumerate(patches):
+            compare[seq].patch = pw_patch
+
+        for i in range(count):
+            pat = patch_for_commit.get(i)
+            if pat:
+                patch_data = pat.patch.data
+                comment_data = pat.patch.comments
+                new_rtag_list[i], review_list[i] = self.process_reviews(
+                    patch_data['content'], comment_data, series.commits[i].rtags)
+
+        num_to_add = 0
+
+        if cover:
+            terminal.tprint(f'Cov {cover.name}', colour=col.BLACK, col=col,
+                            bright=False, back=col.YELLOW)
+            for seq, comment in enumerate(cover.comments):
+                submitter = comment['submitter']
+                person = '%s <%s>' % (submitter['name'], submitter['email'])
+                terminal.tprint(f'From: {person}: {comment['date']}',
+                                colour=col.RED, col=col)
+                print(comment['content'])
+                print()
+
+        for seq, cmt in enumerate(series.commits):
+            patch = patch_for_commit.get(seq)
+            if not patch:
+                continue
+            terminal.tprint('%3d %s' % (patch.seq, patch.subject[:50]),
+                           colour=col.YELLOW, col=col)
+            cmt = series.commits[seq]
+            base_rtags = cmt.rtags
+            new_rtags = new_rtag_list[seq]
+
+            indent = ' ' * 2
+            self.show_responses(col, base_rtags, indent, False)
+            num_to_add += self.show_responses(col, new_rtags, indent, True)
+            if show_comments:
+                for review in review_list[seq]:
+                    terminal.tprint('Review: %s' % review.meta, colour=col.RED,
+                                    col=col)
+                    for snippet in review.snippets:
+                        for line in snippet:
+                            quoted = line.startswith('>')
+                            terminal.tprint(
+                                f'    {line}',
+                                colour=col.MAGENTA if quoted else None, col=col)
+                        terminal.tprint()
+        return num_to_add, new_rtag_list

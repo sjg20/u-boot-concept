@@ -30,67 +30,6 @@ def to_int(vals):
     out = [int(val) if val.isdigit() else 0 for val in vals]
     return out
 
-
-async def _collect_patches(client, expect_count, series_id, pwork,
-                           read_comments, read_cover_comments):
-    """Collect patch information about a series from patchwork
-
-    Uses the Patchwork REST API to collect information provided by patchwork
-    about the status of each patch.
-
-    Args:
-        client (aiohttp.ClientSession): Session to use
-        expect_count (int): Number of patches expected
-        series_id (str): Patch series ID number
-        pwork (Patchwork): Patchwork class to handle communications
-        read_comments (bool): True to read the comments on the patches
-        read_cover_comments (bool): True to read the comments on the cover
-            letter
-
-    Returns:
-        list: List of patches sorted by sequence number, each a Patch object
-
-    Raises:
-        ValueError: if the URL could not be read or the web page does not follow
-            the expected structure
-    """
-    cover, patch_list = await pwork._series_get_state(
-        client, series_id, read_comments, read_cover_comments)
-
-    # Get all the rows, which are patches
-    count = len(patch_list)
-    if count != expect_count:
-        tout.warning(f'Warning: Patchwork reports {count} patches, series has '
-                     f'{expect_count}')
-
-    return cover, patch_list
-
-
-def show_responses(col, rtags, indent, is_new):
-    """Show rtags collected
-
-    Args:
-        col (terminal.Colour): Colour object to use
-        rtags (dict): review tags to show
-            key: Response tag (e.g. 'Reviewed-by')
-            value: Set of people who gave that response, each a name/email string
-        indent (str): Indentation string to write before each line
-        is_new (bool): True if this output should be highlighted
-
-    Returns:
-        int: Number of review tags displayed
-    """
-    count = 0
-    for tag in sorted(rtags.keys()):
-        people = rtags[tag]
-        for who in sorted(people):
-            terminal.tprint(indent + '%s %s: ' % ('+' if is_new else ' ', tag),
-                           newline=False, colour=col.GREEN, bright=is_new,
-                           col=col)
-            terminal.tprint(who, colour=col.WHITE, bright=is_new, col=col)
-            count += 1
-    return count
-
 def create_branch(series, new_rtag_list, branch, dest_branch, overwrite,
                   repo=None):
     """Create a new branch with review tags added
@@ -178,79 +117,18 @@ async def _check_status(client, series, series_id, branch, dest_branch, force,
         pwork (Patchwork): Patchwork class to handle communications
         test_repo (pygit2.Repository): Repo to use (use None unless testing)
     """
-    cover, patches = await _collect_patches(client, len(series.commits),
-                                            series_id, pwork, True,
-                                            show_cover_comments)
-
-    compare = []
-    for pw_patch in patches:
-        patch = patchwork.Patch(pw_patch.id)
-        patch.parse_subject(pw_patch.series_data['name'])
-        compare.append(patch)
-
-    col = terminal.Color()
-    count = len(series.commits)
-    new_rtag_list = [None] * count
-    review_list = [None] * count
-
-    patch_for_commit, _, warnings = pwork.compare_with_series(series, compare)
-    for warn in warnings:
-        tout.warning(warn)
-
-    for seq, pw_patch in enumerate(patches):
-        compare[seq].patch = pw_patch
-
-    for i in range(count):
-        pat = patch_for_commit.get(i)
-        if pat:
-            patch_data = pat.patch.data
-            comment_data = pat.patch.comments
-            new_rtag_list[i], review_list[i] = pwork.process_reviews(
-                patch_data['content'], comment_data, series.commits[i].rtags)
-
     with terminal.pager():
-        num_to_add = 0
+        num_to_add, new_rtag_list = await pwork._check_status(
+            client, series, series_id, branch, show_comments,
+            show_cover_comments)
 
-        if cover:
-            terminal.tprint(f'Cov {cover.name}', colour=col.BLACK, col=col,
-                            bright=False, back=col.YELLOW)
-            for seq, comment in enumerate(cover.comments):
-                submitter = comment['submitter']
-                person = '%s <%s>' % (submitter['name'], submitter['email'])
-                terminal.tprint(f'From: {person}: {comment['date']}',
-                                colour=col.RED, col=col)
-                print(comment['content'])
-                print()
-
-        for seq, cmt in enumerate(series.commits):
-            patch = patch_for_commit.get(seq)
-            if not patch:
-                continue
-            terminal.tprint('%3d %s' % (patch.seq, patch.subject[:50]),
-                           colour=col.YELLOW, col=col)
-            cmt = series.commits[seq]
-            base_rtags = cmt.rtags
-            new_rtags = new_rtag_list[seq]
-
-            indent = ' ' * 2
-            show_responses(col, base_rtags, indent, False)
-            num_to_add += show_responses(col, new_rtags, indent, True)
-            if show_comments:
-                for review in review_list[seq]:
-                    terminal.tprint('Review: %s' % review.meta, colour=col.RED,
-                                    col=col)
-                    for snippet in review.snippets:
-                        for line in snippet:
-                            quoted = line.startswith('>')
-                            terminal.tprint(
-                                f'    {line}',
-                                colour=col.MAGENTA if quoted else None, col=col)
-                        terminal.tprint()
-
-        terminal.tprint("%d new response%s available in patchwork%s" %
-                       (num_to_add, 's' if num_to_add != 1 else '',
-                        '' if dest_branch or not num_to_add
-                        else ' (use -d to write them to a new branch)'))
+        if not dest_branch and num_to_add:
+            msg = ' (use -d to write them to a new branch)'
+        else:
+            msg = ''
+        terminal.tprint(
+            f"{num_to_add} new response{'s' if num_to_add != 1 else ''} "
+            f'available in patchwork{msg}')
 
         if dest_branch:
             num_added = create_branch(series, new_rtag_list, branch,
