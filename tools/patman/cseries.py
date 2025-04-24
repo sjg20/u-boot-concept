@@ -550,6 +550,9 @@ class Cseries:
         Return:
             Series: Object containing series info, or None if none
         """
+        sdict = self.get_series_dict()
+
+
         res = self.db.execute(
             f"SELECT id, name, desc FROM series WHERE name = '{name}'")
         recs = res.fetchall()
@@ -2456,3 +2459,5 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             self.rollback()
 
         tout.info(f"Renamed series '{series}' to '{name}'")
+        if dry_run:
+            tout.info('Dry run completed')

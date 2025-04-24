@@ -194,6 +194,9 @@ def add_series_args(subparsers):
     prog.add_argument('-l', '--list-patches', action='store_true',
                       help='List patch subject and status')
 
+    ren = series_subparsers.add_parser('rename')
+    ren.add_argument('-N', '--new-name', help='New name for the series')
+
     series_subparsers.add_parser('remove')
     series_subparsers.add_parser('remove-version')
 

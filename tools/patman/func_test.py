@@ -4317,10 +4317,8 @@ Date:   .*
             cmdline.parse_args(['upstream'], parsers=parsers)
         self.assertIn('usage: patman upstream', out.getvalue())
 
-    def test_series_rename(self):
-        """Test renaming of a series"""
+    def check_series_rename(self):
         cser = self.get_cser()
-
         with terminal.capture() as (out, _):
             cser.add_series('first', 'my name', allow_unmarked=True)
 
@@ -4334,7 +4332,7 @@ Date:   .*
         self.assertEqual('first3', gitutil.get_branch(self.gitdir))
 
         with terminal.capture() as (out, _):
-            cser.series_rename('first', 'newname')
+            yield cser
         lines = iter(out.getvalue().splitlines())
         self.assertEqual("Renaming branch 'first' to 'newname'", next(lines))
         self.assertEqual("Renaming branch 'first2' to 'newname2'", next(lines))
@@ -4347,6 +4345,26 @@ Date:   .*
         # Check the series ID did not change
         ser = cser.get_series_by_name('newname')
         self.assertEqual(old.idnum, ser.idnum)
+        yield None
+
+    def test_series_rename(self):
+        """Test renaming of a series"""
+        cor = self.check_series_rename()
+        cser = next(cor)
+
+        cser.series_rename('first', 'newname')
+        self.assertFalse(next(cor))
+
+    def test_series_rename_cmdline(self):
+        """Test renaming of a series with the cmdline"""
+        cor = self.check_series_rename()
+        next(cor)
+
+        self.db_close()
+        self.run_args('series', '-s', 'first', 'rename', '-N', 'newname',
+                      pwork=True)
+        self.db_open()
+        self.assertFalse(next(cor))
 
     def test_series_rename_bad(self):
         """Test renaming when it is not allowed"""
