@@ -2381,6 +2381,10 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         """
         branch, series, version, _, _, link, _, _ = self._get_patches(
             series, version)
+        if not link:
+            raise ValueError(
+                f"Series '{series.name}' v{version} has no patchwork link: "
+                f"Try 'patman series -s {branch} autolink'")
         status.check_patchwork_status(
             series, link, branch, None, False, show_comments,
             show_cover_comments, pwork, self.gitdir, single_thread)
