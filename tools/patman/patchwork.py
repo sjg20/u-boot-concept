@@ -47,7 +47,7 @@ RE_SEQ = re.compile(r'(\d+)/(\d+)')
 RE_PATCH = re.compile(r'(\[(((.*),)?(.*),)?(.*)\]\s)?(.*)$')
 
 
-class Patchx(dict):
+class Patch(dict):
     """Models a patch in patchwork
 
     This class records information obtained from patchwork
@@ -274,7 +274,7 @@ class Patchwork:
 
         res = await self._query_series(client, cmt.subject)
         for pws in res:
-            patch = Patchx(0)
+            patch = Patch(0)
             patch.parse_subject(pws['name'])
             if patch.subject == cmt.subject:
                 if int(pws['version']) == version:
@@ -730,7 +730,7 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
         state = data['state']
         comment_data = await self._get_patch_comments(client, patch_id)
 
-        return Patchx(patch_id, state, data, comment_data)
+        return Patch(patch_id, state, data, comment_data)
 
     async def _get_series_cover(self, client, data):
         """Get the cover information (including comments)
@@ -786,7 +786,7 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
         else:
             for i in range(count):
                 patch = patch_list[i]
-                patches.append(Patchx(patch['id'], series_data=patch))
+                patches.append(Patch(patch['id'], series_data=patch))
         if self._show_progress:
             terminal.print_clear()
 

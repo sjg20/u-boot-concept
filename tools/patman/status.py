@@ -286,7 +286,7 @@ async def _check_status(client, series, series_id, branch, dest_branch, force,
 
     compare = []
     for pw_patch in patches:
-        patch = patchwork.Patchx(pw_patch.id)
+        patch = patchwork.Patch(pw_patch.id)
         patch.parse_subject(pw_patch.series_data['name'])
         compare.append(patch)
 
