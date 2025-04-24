@@ -1992,7 +1992,7 @@ second line.'''
             with terminal.capture() as (out, _):
                 cser.autolink(pwork, 'second', 2, True)
             with terminal.capture() as (out, _):
-                cser.series_sync(pwork, 'second', 2, False)
+                cser.series_sync(pwork, 'second', 2, False, False, False)
             lines = out.getvalue().splitlines()
             self.assertEqual(
                 "Updating series 'second' version 2 from link '457'", lines[0])
@@ -3767,7 +3767,8 @@ Date:   .*
 
         # First do a dry run
         with terminal.capture() as (out, _):
-            cser.series_sync(pwork, 'second', None, False, dry_run=True)
+            cser.series_sync(pwork, 'second', None, False, False, False,
+                             dry_run=True)
         lines = out.getvalue().splitlines()
         self.assertEqual(
             "Updating series 'second' version 1 from link '183237'",
@@ -3781,9 +3782,17 @@ Date:   .*
         self.assertIsNone(pwc[1].state)
         self.assertIsNone(pwc[2].state)
 
+        # Now try it again, gathering tags
+        # with terminal.capture() as (out, _):
+        cser.series_sync(pwork, 'second', None, False, False, True,
+                             dry_run=True)
+
+        return
+
         # Now do it for real
-        with terminal.capture() as (out, _):
-            cser.series_sync(pwork, 'second', None, False)
+        # with terminal.capture() as (out, _):
+        cser.series_sync(pwork, 'second', None, False, False, False,
+                             False)
 
         pwc = cser.get_pcommit_dict(pwid)
         self.assertEqual('accepted', pwc[0].state)
@@ -3978,7 +3987,7 @@ Date:   .*
             cser.add_series('second', allow_unmarked=True)
             cser.increment('second')
             cser.autolink(pwork, 'second', 2, True)
-            cser.series_sync(pwork, 'second', 2, False)
+            cser.series_sync(pwork, 'second', 2, False, False, False)
 
         with mock.patch.object(cros_subprocess.Popen, '__init__',
                                return_value=None) as method:

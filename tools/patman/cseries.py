@@ -15,6 +15,7 @@ import sys
 import time
 from types import SimpleNamespace
 
+import aiohttp
 import pygit2
 from pygit2.enums import CheckoutStrategy
 
@@ -471,6 +472,8 @@ class Cseries:
             mark (str): True to mark each commit with a change ID
             allow_unmarked (str): True to not require each commit to be marked
             end (str): Add only commits up to but exclu
+            force_version (bool): True if ignore a Series-version tag that
+                doesn't match its branch name
             dry_run (bool): True to do a dry run
         """
         name, ser, version, msg = self._prep_series(branch_name, end)
@@ -550,9 +553,6 @@ class Cseries:
         Return:
             Series: Object containing series info, or None if none
         """
-        sdict = self.get_series_dict()
-
-
         res = self.db.execute(
             f"SELECT id, name, desc FROM series WHERE name = '{name}'")
         recs = res.fetchall()
@@ -1059,9 +1059,11 @@ class Cseries:
             series (Series): Series object
             max_vers (int): Version number of the series being updated, or
                 None if the version is not changing
+            new_name (str or None): New name, if a new branch is to be created
             dry_run (bool): True to do a dry run, restoring the original tree
                 afterwards
             vers (int or None): Version number to add to the series, if any
+            add_vers (int or None): Version number to add to the series, if any
             add_link (str or None): Link to add to the series, if any
 
         Return:
@@ -1945,21 +1947,26 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 (cover.id, cover.num_comments, cover.name, svid))
         else:
             self.db.execute('UPDATE ser_ver SET name = ? WHERE id = ?',
-                            (patch_list[0].name, svid))
+                            (patches[0].name, svid))
 
         return updated
 
-    def series_sync(self, pwork, series, version, gather_tags, dry_run=False):
+    async def _series_sync(self, client, pwork, name, version,
+                           show_comments, show_cover_comments, gather_tags,
+                           dry_run):
         """Sync the series status from patchwork
 
         Args:
             pwork (Patchwork): Patchwork object to use
-            series (str): Name of series to use, or None to use current branch
+            name (str): Name of series to use, or None to use current branch
             version (int): Version number, or None to detect from name
+            show_comments (bool): True to show the comments on each patch
+            show_cover_comments (bool): True to show the comments on the cover
+                letter
             gather_tags (bool): True to gather review/test tags
             dry_run (bool): True to do a dry run
         """
-        ser, version = self.parse_series_and_version(series, version)
+        ser, version = self.parse_series_and_version(name, version)
         self.ensure_version(ser, version)
         svid, link = self.get_series_svid_link(ser.idnum, version)
         if not link:
@@ -1967,19 +1974,44 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 "No patchwork link is available: use 'patman series autolink'")
         tout.info(
             f"Updating series '{ser.name}' version {version} from link '{link}'")
-        cover, patches = self.loop.run_until_complete(
-            pwork.series_get_state(link, True, True))
+        if gather_tags:
+            pwc = self.get_pcommit_dict(svid)
+            count = len(pwc)
+            branch = self.join_name_version(ser.name, version)
+            series = patchstream.get_metadata(branch, 0, count,
+                                              git_dir=self.gitdir)
 
-        updated = self._sync_one(svid, cover, patches, gather_tags)
+            num_to_add, new_rtag_list = await pwork._check_status(
+                client, series, link, self.get_branch_name(ser.name, version),
+                show_comments, show_cover_comments)
+            print('num_to_add', num_to_add, new_rtag_list)
+        else:
+            cover, patches = await pwork.series_get_state(link, True, True)
 
-        tout.info(f"{updated} patch{'es' if updated != 1 else ''}"
-                  f"{' and cover letter' if cover else ''} updated")
+            updated = self._sync_one(svid, cover, patches, gather_tags)
+
+            tout.info(f"{updated} patch{'es' if updated != 1 else ''}"
+                      f"{' and cover letter' if cover else ''} updated")
 
         if not dry_run:
             self.commit()
         else:
             self.rollback()
             tout.info('Dry run completed')
+
+    async def do_series_sync(self, pwork, series, version, show_comments,
+                             show_cover_comments, gather_tags, dry_run):
+        async with aiohttp.ClientSession() as client:
+            await self._series_sync(client, pwork, series, version,
+                                    show_comments, show_cover_comments,
+                                    gather_tags, dry_run)
+
+    def series_sync(self, pwork, series, version, show_comments,
+                    show_cover_comments, gather_tags, dry_run=False):
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(self.do_series_sync(
+            pwork, series, version, show_comments, show_cover_comments,
+            gather_tags, dry_run))
 
     def _get_fetch_dict(self, sync_all_versions):
         """Get a dict of ser_vers to fetch, along with their patchwork links
