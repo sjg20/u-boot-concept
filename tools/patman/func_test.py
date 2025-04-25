@@ -1991,7 +1991,7 @@ second line.'''
             with terminal.capture() as (out, _):
                 cser.autolink(pwork, 'second', 2, True)
             with terminal.capture() as (out, _):
-                cser.series_sync(pwork, 'second', 2, False, False, False)
+                cser.series_sync(pwork, 'second', 2, False, True, False)
             lines = out.getvalue().splitlines()
             self.assertEqual(
                 "Updating series 'second' version 2 from link '457'", lines[0])

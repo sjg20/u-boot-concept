@@ -1991,6 +1991,8 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 "No patchwork link is available: use 'patman series autolink'")
         tout.info(
             f"Updating series '{ser.name}' version {version} from link '{link}'")
+        cover, patches = await pwork._series_get_state(
+            client, link, True, show_cover_comments)
         if gather_tags:
             pwc = self.get_pcommit_dict(svid)
             count = len(pwc)
@@ -1998,18 +2000,12 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             series = patchstream.get_metadata(branch, 0, count,
                                               git_dir=self.gitdir)
 
-            cover, patches = await pwork._series_get_state(
-                client, link, True, show_cover_comments)
-
             _, new_rtag_list, cover, patches = status.show_status(
                 cover, patches,
                 series, link, self.get_branch_name(ser.name, version),
                 show_comments, show_cover_comments)
             self.update_series(ser.name, series, version, None, dry_run,
                                add_rtags=new_rtag_list)
-        else:
-            cover, patches = await pwork._series_get_state(
-                client, link, True, show_cover_comments)
 
         updated = self._sync_one(svid, cover, patches)
         tout.info(f"{updated} patch{'es' if updated != 1 else ''}"
