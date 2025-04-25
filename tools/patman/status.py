@@ -30,6 +30,99 @@ def to_int(vals):
     out = [int(val) if val.isdigit() else 0 for val in vals]
     return out
 
+
+    def _check_status(self, cover, patches, series, link, branch,
+                      show_comments, show_cover_comments):
+        """Check the status of a series on Patchwork
+
+        This finds review tags and comments for a series in Patchwork, displaying
+        them to show what is new compared to the local series.
+
+        Args:
+            series (Series): Series object for the existing branch
+            link (str): Patch series ID number
+            branch (str): Existing branch to update, or None
+            show_comments (bool): True to show the comments on each patch
+            show_cover_comments (bool): True to show the comments on the
+                letter
+
+        Return: tuple:
+            int: Number of new review tags to add
+            list: List of review tags to add, one item for each commit, each a
+                    dict:
+                key: Response tag (e.g. 'Reviewed-by')
+                value: Set of people who gave that response, each a name/email
+                    string
+            COVER object, or None if none or not read_cover_comments
+            list of PATCH objects
+        """
+        compare = []
+        for pw_patch in patches:
+            patch = Patch(pw_patch.id)
+            patch.parse_subject(pw_patch.series_data['name'])
+            compare.append(patch)
+
+        col = terminal.Color()
+        count = len(series.commits)
+        new_rtag_list = [None] * count
+        review_list = [None] * count
+
+        patch_for_commit, _, warnings = self.compare_with_series(series,
+                                                                 compare)
+        for warn in warnings:
+            tout.warning(warn)
+
+        for seq, pw_patch in enumerate(patches):
+            compare[seq].patch = pw_patch
+
+        for i in range(count):
+            pat = patch_for_commit.get(i)
+            if pat:
+                patch_data = pat.patch.data
+                comment_data = pat.patch.comments
+                new_rtag_list[i], review_list[i] = self.process_reviews(
+                    patch_data['content'], comment_data, series.commits[i].rtags)
+
+        num_to_add = 0
+
+        if cover:
+            terminal.tprint(f'Cov {cover.name}', colour=col.BLACK, col=col,
+                            bright=False, back=col.YELLOW)
+            for seq, comment in enumerate(cover.comments):
+                submitter = comment['submitter']
+                person = '%s <%s>' % (submitter['name'], submitter['email'])
+                terminal.tprint(f'From: {person}: {comment['date']}',
+                                colour=col.RED, col=col)
+                print(comment['content'])
+                print()
+
+        for seq, cmt in enumerate(series.commits):
+            patch = patch_for_commit.get(seq)
+            if not patch:
+                continue
+            terminal.tprint('%3d %s' % (patch.seq, patch.subject[:50]),
+                           colour=col.YELLOW, col=col)
+            cmt = series.commits[seq]
+            base_rtags = cmt.rtags
+            new_rtags = new_rtag_list[seq]
+
+            indent = ' ' * 2
+            self.show_responses(col, base_rtags, indent, False)
+            num_to_add += self.show_responses(col, new_rtags, indent, True)
+            if show_comments:
+                for review in review_list[seq]:
+                    terminal.tprint('Review: %s' % review.meta, colour=col.RED,
+                                    col=col)
+                    for snippet in review.snippets:
+                        for line in snippet:
+                            quoted = line.startswith('>')
+                            terminal.tprint(
+                                f'    {line}',
+                                colour=col.MAGENTA if quoted else None, col=col)
+                        terminal.tprint()
+        return num_to_add, new_rtag_list, cover, patches
+
+
 def create_branch(series, new_rtag_list, branch, dest_branch, overwrite,
                   repo=None):
     """Create a new branch with review tags added
@@ -96,9 +189,9 @@ def create_branch(series, new_rtag_list, branch, dest_branch, overwrite,
     return num_added
 
 
-async def _check_status(client, cover, patches, series, link, branch, dest_branch, force,
-                        show_comments, show_cover_comments, pwork,
-                        test_repo=None):
+def check_status(cover, patches, series, link, branch, dest_branch, force,
+                       show_comments, show_cover_comments, pwork,
+                       test_repo=None):
     """Check the status of a series on Patchwork
 
     This finds review tags and comments for a series in Patchwork, displaying
@@ -138,29 +231,6 @@ async def _check_status(client, cover, patches, series, link, branch, dest_branc
                 f"from patchwork into new branch '{dest_branch}'")
 
 
-async def check_status(cover, patches, series, link, branch, dest_branch, force,
-                       show_comments, show_cover_comments, patchwork,
-                       test_repo=None):
-    async with aiohttp.ClientSession() as client:
-        await _check_status(
-            client, cover, patches, series, link, branch, dest_branch,  force,
-            show_comments, show_cover_comments, patchwork, test_repo=test_repo)
-
-
-def check_patchwork_status(cover, patches, series, link, branch, dest_branch, force,
-                           show_comments, show_cover_comments, patchwork,
-                           test_repo=None, single_thread=False):
-    if single_thread:
-        asyncio.run(check_status(cover, patches, series, link, branch, dest_branch, force,
-                                 show_comments, show_cover_comments, patchwork,
-                                 test_repo=test_repo))
-    else:
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(check_status(
-                cover, patches, series, link, branch, dest_branch,  force, show_comments,
-                show_cover_comments, patchwork, test_repo=test_repo))
-
-
 #######################
 async def check_and_report_status(series, link, branch, dest_branch, force,
                        show_comments, show_cover_comments, patchwork,
@@ -168,8 +238,8 @@ async def check_and_report_status(series, link, branch, dest_branch, force,
     async with aiohttp.ClientSession() as client:
         cover, patches = await patchwork._collect_patches(
             client, len(series.commits), link, True, show_cover_comments)
-        await _check_status(
-            client, cover, patches, series, link, branch, dest_branch,  force,
+        check_status(
+            cover, patches, series, link, branch, dest_branch,  force,
             show_comments, show_cover_comments, patchwork, test_repo=test_repo)
 
 
