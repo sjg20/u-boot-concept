@@ -334,8 +334,7 @@ def create_branch(series, new_rtag_list, branch, dest_branch, overwrite,
 
 
 def check_status(cover, patches, series, link, branch, dest_branch, force,
-                       show_comments, show_cover_comments, pwork,
-                       test_repo=None):
+                       show_comments, show_cover_comments, test_repo=None):
     """Check the status of a series on Patchwork
 
     This finds review tags and comments for a series in Patchwork, displaying
@@ -351,7 +350,6 @@ def check_status(cover, patches, series, link, branch, dest_branch, force,
         show_comments (bool): True to show the comments on each patch
         show_cover_comments (bool): True to show the comments on the
             letter
-        pwork (Patchwork): Patchwork class to handle communications
         test_repo (pygit2.Repository): Repo to use (use None unless testing)
     """
     with terminal.pager():
@@ -399,4 +397,4 @@ def check_and_report_patchwork_status(series, link, branch, dest_branch, force,
 
     check_status(
         cover, patches, series, link, branch, dest_branch,  force,
-        show_comments, show_cover_comments, patchwork, test_repo=test_repo)
+        show_comments, show_cover_comments, test_repo=test_repo)
