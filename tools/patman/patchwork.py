@@ -16,12 +16,15 @@ from u_boot_pylib import terminal
 from u_boot_pylib import tout
 from patman.patchstream import PatchStream
 
-# Information about a patch on patchwork
-# id (int): Patchwork ID of patch
-# data (dict): Patch data as returned from get_patch()
-# state (str): Current state, e.g. 'accepted'
-# comments (list of dict): Comments
-#PATCH = namedtuple('patch', 'id,state,data,comments,series_data')
+# Information passed to series_get_states()
+# link (str): Patchwork link for series
+# name (str): name or description (not used)
+# series (Series): Series object as returned from patchstream.get_metadata()
+# branch (str): Local branch name
+# show_comments (bool): True to show comments
+# show_cover_comments (bool): True to show cover-letter comments
+STATE_INFO = namedtuple(
+    'patch', 'link,name,series,branch,show_comments,show_cover_comments')
 
 # Information about a cover-letter on patchwork
 # id (int): Patchwork ID of cover letter
@@ -828,9 +831,7 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
         Args:
             sync_data (dict of svids to sync):
                 key (int): Series-version ID
-                value (tuple):
-                    str: Series link
-                    str: Series name
+                value (STATE_INFO): information to use for syncing
 
         Return:
             list of items, each a tuple:
@@ -844,8 +845,8 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
         async with aiohttp.ClientSession() as client:
             tasks = [
                 asyncio.create_task(self._get_one_state(
-                    client, svid, link, result))
-                for svid, (link, name) in sync_data.items()
+                    client, svid, sync.link, result))
+                for svid, sync in sync_data.items()
             ]
             results = await asyncio.gather(*tasks)
 

@@ -26,6 +26,7 @@ from u_boot_pylib import tout
 
 from patman import patchstream
 from patman.database import Database
+from patman import patchwork
 from patman import send
 from patman.series import Series
 from patman import status
@@ -2045,9 +2046,17 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         to_fetch = {}
 
         if sync_all_versions:
-            for svid, _, _, link, _, _, desc in self.get_ser_ver_list():
+            for svid, series_id, version, link, _, _, desc in \
+                    self.get_ser_ver_list():
+                name, _ = self.get_series_info(series_id)
+                pwc = self.get_pcommit_dict(svid)
+                count = len(pwc)
+                branch = self.join_name_version(name, version)
+                series = patchstream.get_metadata(branch, 0, count,
+                                                  git_dir=self.gitdir)
                 if link:
-                    to_fetch[svid] = link, desc
+                    to_fetch[svid] = patchwork.STATE_INFO(
+                        link, desc, series, branch, False, False)
                 else:
                     missing += 1
         else:
@@ -2055,10 +2064,17 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             max_vers = self.series_all_max_versions()
 
             # Get a list of links to fetch
-            for svid, _, _ in max_vers:
+            for svid, series_id, version in max_vers:
                 ser = sdict[svid]
+                name, _ = self.get_series_info(series_id)
+                pwc = self.get_pcommit_dict(svid)
+                count = len(pwc)
+                branch = self.join_name_version(name, version)
+                series = patchstream.get_metadata(branch, 0, count,
+                                                  git_dir=self.gitdir)
                 if ser.link:
-                    to_fetch[svid] = ser.link, ser.name
+                    to_fetch[svid] = patchwork.STATE_INFO(
+                        ser.link, ser.name, series, branch, False, False)
                 else:
                     missing += 1
         return to_fetch, missing
@@ -2077,7 +2093,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
 
         if gather_tags:
             pass
-        else
+        else:
             result, requests = self.loop.run_until_complete(
                 pwork.series_get_states(to_fetch))
 
