@@ -3752,8 +3752,8 @@ Date:   .*
         self.assertIn('SPI needs some fixes', chk)   # commit body
         self.assertIn('make SPI work', chk)             # patch body
 
-    def test_series_sync(self):
-        """Test syncing a series"""
+    def check_series_sync(self):
+        """Checker for syncing a series"""
         cser = self.get_cser()
         pwork = Patchwork.for_testing(self._fake_patchwork_cser)
         self.assertFalse(cser.get_project())
@@ -3767,8 +3767,7 @@ Date:   .*
 
         # First do a dry run
         with terminal.capture() as (out, _):
-            cser.series_sync(pwork, 'second', None, False, False, False,
-                             dry_run=True)
+            yield cser, pwork
         lines = out.getvalue().splitlines()
         self.assertEqual(
             "Updating series 'second' version 1 from link '183237'",
@@ -3784,8 +3783,7 @@ Date:   .*
 
         # Now try it again, gathering tags
         with terminal.capture() as (out, _):
-            cser.series_sync(pwork, 'second', None, False, False, True,
-                                 dry_run=True)
+            yield cser, pwork
         lines = out.getvalue().splitlines()
         itr = iter(lines)
         self.assertEqual(
@@ -3816,8 +3814,7 @@ Date:   .*
 
         # Now do it for real
         with terminal.capture() as (out, _):
-            cser.series_sync(pwork, 'second', None, False, False, True,
-                                 False)
+            yield cser, pwork
         lines2 = out.getvalue().splitlines()
         self.assertEqual(lines2, lines[:-1])
 
@@ -3834,6 +3831,46 @@ Date:   .*
         self.assertEqual('accepted', pwc[0].state)
         self.assertEqual('changes-requested', pwc[1].state)
         self.assertEqual('rejected', pwc[2].state)
+        yield None
+
+    def test_series_sync(self):
+        """Test syncing a series"""
+        cor = self.check_series_sync()
+        cser, pwork = next(cor)
+        cser.series_sync(pwork, 'second', None, False, False, False,
+                         dry_run=True)
+
+        cser, pwork = next(cor)
+        cser.series_sync(pwork, 'second', None, False, False, True,
+                         dry_run=True)
+
+        cser, pwork = next(cor)
+        cser.series_sync(pwork, 'second', None, False, False, True,
+                             False)
+        self.assertFalse(next(cor))
+
+    def test_series_sync_cmdline(self):
+        """Test syncing a series"""
+        cor = self.check_series_sync()
+        _, pwork = next(cor)
+        self.db_close()
+        self.run_args('series', '-n', '-s', 'second', 'sync', '-G', pwork=pwork)
+        # cser.series_sync(pwork, 'second', None, False, False, False,
+                         # dry_run=True)
+        self.db_open()
+
+        _, pwork = next(cor)
+        self.run_args('series', '-n', '-s', 'second', 'sync', pwork=pwork)
+        # cser.series_sync(pwork, 'second', None, False, False, True,
+                         # dry_run=True)
+        self.db_close()
+
+        _, pwork = next(cor)
+        self.run_args('series', '-s', 'second', 'sync', pwork=pwork)
+        self.db_open()
+        # cser.series_sync(pwork, 'second', None, False, False, True,
+                             # False)
+        self.assertFalse(next(cor))
 
     def test_series_sync_all(self):
         """Sync all series at once"""

@@ -96,6 +96,12 @@ def _add_show_comments(parser):
     parser.add_argument('-c', '--show-comments', action='store_true',
                         help='Show comments from each patch')
 
+
+def _add_show_cover_comments(parser):
+    parser.add_argument('-C', '--show-cover-comments', action='store_true',
+                        help='Show comments from the cover letter')
+
+
 def add_series_args(subparsers):
     """Add the 'series' subparsers
 
@@ -219,13 +225,14 @@ def add_series_args(subparsers):
         'link', help='Link to use, i.e. patchwork series number (e.g. 452329)')
     stat = series_subparsers.add_parser('status')
     _add_show_comments(stat)
-    stat.add_argument('-C', '--show-cover-comments', action='store_true',
-                      help='Show comments from the cover letter')
+    _add_show_cover_comments(stat)
 
     series_subparsers.add_parser('summary')
 
     syn = series_subparsers.add_parser('sync')
     _add_gather(syn)
+    _add_show_comments(syn)
+    _add_show_cover_comments(syn)
 
     sall = series_subparsers.add_parser('sync-all')
     sall.add_argument('-a', '--sync-all-versions', action='store_true',
