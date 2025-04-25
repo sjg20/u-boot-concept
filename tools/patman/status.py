@@ -118,7 +118,7 @@ async def _check_status(client, series, series_id, branch, dest_branch, force,
         test_repo (pygit2.Repository): Repo to use (use None unless testing)
     """
     with terminal.pager():
-        num_to_add, new_rtag_list = await pwork._check_status(
+        num_to_add, new_rtag_list, _, _ = await pwork._check_status(
             client, series, series_id, branch, show_comments,
             show_cover_comments)
 

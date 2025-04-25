@@ -1049,7 +1049,8 @@ class Cseries:
         print(border)
 
     def update_series(self, name, series, max_vers, new_name=None,
-                      dry_run=False, add_vers=None, add_link=None):
+                      dry_run=False, add_vers=None, add_link=None,
+                      add_rtags=None):
         """Rewrite a series to update the Series-version/Series-links lines
 
         This updates the series in git; it does not update the database
@@ -1057,14 +1058,18 @@ class Cseries:
         Args:
             name (str): Name of the branch to process
             series (Series): Series object
-            max_vers (int): Version number of the series being updated, or
-                None if the version is not changing
+            max_vers (int): Version number of the series being updated
             new_name (str or None): New name, if a new branch is to be created
             dry_run (bool): True to do a dry run, restoring the original tree
                 afterwards
             vers (int or None): Version number to add to the series, if any
             add_vers (int or None): Version number to add to the series, if any
             add_link (str or None): Link to add to the series, if any
+            add_rtags (list of dict): List of review tags to add, one item for
+                    each commit, each a dict:
+                key: Response tag (e.g. 'Reviewed-by')
+                value: Set of people who gave that response, each a name/email
+                    string
 
         Return:
             pygit.oid: oid of the new branch
@@ -1109,6 +1114,15 @@ class Cseries:
                     out.append(f'Series-links: {new_links}')
 
             vals.msg = '\n'.join(out) + '\n'
+            if add_rtags and add_rtags[vals.seq]:
+                lines = []
+                for tag, people in add_rtags[vals.seq].items():
+                    for who in people:
+                        lines.append(f'{tag}: {who}')
+                vals.msg = patchstream.insert_tags(vals.msg.rstrip(),
+                                                   sorted(lines))
+                vals.info += (f'added {len(lines)} '
+                              f"tag{'' if len(lines) == 1 else 's'}")
 
     def increment(self, series_name, dry_run=False):
         """Increment a series to the next version and create a new branch
@@ -1393,6 +1407,7 @@ class Cseries:
             vals.skip = False
             vals.info = ''
             vals.final = seq == len(series.commits) - 1
+            vals.seq = seq
             yield vals
 
             cur = self._finish_commit(repo, tree_id, cherry, cur, vals.msg)
@@ -1915,7 +1930,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 f'No matching series for id {series_id} version {version}')
         return recs[0]
 
-    def _sync_one(self, svid, cover, patches, gather_tags):
+    def _sync_one(self, svid, cover, patches):
         """Sync one series to the database
 
         Args:
@@ -1925,7 +1940,6 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 num_comments (int): Number of comments
                 name (str): Cover-letter name
             patches (list of Patch): Patches in the series
-            gather_tags (bool): True to gather review/test tags
         """
         pwc = self.get_pcommit_dict(svid)
 
@@ -1981,17 +1995,17 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             series = patchstream.get_metadata(branch, 0, count,
                                               git_dir=self.gitdir)
 
-            num_to_add, new_rtag_list = await pwork._check_status(
+            _, new_rtag_list, cover, patches = await pwork._check_status(
                 client, series, link, self.get_branch_name(ser.name, version),
                 show_comments, show_cover_comments)
-            print('num_to_add', num_to_add, new_rtag_list)
+            self.update_series(ser.name, series, version, None, dry_run,
+                               add_rtags=new_rtag_list)
         else:
             cover, patches = await pwork.series_get_state(link, True, True)
 
-            updated = self._sync_one(svid, cover, patches, gather_tags)
-
-            tout.info(f"{updated} patch{'es' if updated != 1 else ''}"
-                      f"{' and cover letter' if cover else ''} updated")
+        updated = self._sync_one(svid, cover, patches)
+        tout.info(f"{updated} patch{'es' if updated != 1 else ''}"
+                  f"{' and cover letter' if cover else ''} updated")
 
         if not dry_run:
             self.commit()

@@ -990,8 +990,9 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
             read_cover_comments (bool): True to read the comments on the cover
                 letter
 
-        Returns:
-            list: List of patches sorted by sequence number, each a Patch object
+        Return: tuple:
+            COVER object, or None if none or not read_cover_comments
+            list of PATCH objects
 
         Raises:
             ValueError: if the URL could not be read or the web page does not follow
@@ -1023,6 +1024,16 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
             show_comments (bool): True to show the comments on each patch
             show_cover_comments (bool): True to show the comments on the
                 letter
+
+        Return: tuple:
+            int: Number of new review tags to add
+            list: List of review tags to add, one item for each commit, each a
+                    dict:
+                key: Response tag (e.g. 'Reviewed-by')
+                value: Set of people who gave that response, each a name/email
+                    string
+            COVER object, or None if none or not read_cover_comments
+            list of PATCH objects
         """
         cover, patches = await self._collect_patches(
             client, len(series.commits), series_id, True, show_cover_comments)
@@ -1091,4 +1102,4 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
                                 f'    {line}',
                                 colour=col.MAGENTA if quoted else None, col=col)
                         terminal.tprint()
-        return num_to_add, new_rtag_list
+        return num_to_add, new_rtag_list, cover, patches

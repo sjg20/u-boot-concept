@@ -3783,17 +3783,53 @@ Date:   .*
         self.assertIsNone(pwc[2].state)
 
         # Now try it again, gathering tags
-        # with terminal.capture() as (out, _):
-        cser.series_sync(pwork, 'second', None, False, False, True,
-                             dry_run=True)
+        with terminal.capture() as (out, _):
+            cser.series_sync(pwork, 'second', None, False, False, True,
+                                 dry_run=True)
+        lines = out.getvalue().splitlines()
+        itr = iter(lines)
+        self.assertEqual(
+            "Updating series 'second' version 1 from link '183237'", next(itr))
+        self.assertEqual('  1 video: Some video improvements', next(itr))
+        self.assertEqual('  + Reviewed-by: Fred Bloggs <fred@bloggs.com>',
+                         next(itr))
+        self.assertEqual('  2 serial: Add a serial driver', next(itr))
+        self.assertEqual('  3 bootm: Make it boot', next(itr))
 
-        return
+        self.assertEqual('Checking out upstream commit refs/heads/base',
+                         next(itr))
+        self.assertEqual("Processing 3 commits from branch 'second'", next(itr))
+        self.assertRegex(
+            next(itr), "- added 1 tag .* as .*: video: Some video improvements")
+        self.assertRegex(next(itr), "- .* as .*: serial: Add a serial driver")
+        self.assertRegex(next(itr), "- .* as .*: bootm: Make it boot")
+        self.assertRegex(next(itr), "Updating branch second to .*")
+        self.assertEqual('3 patches updated', next(itr))
+        self.assertEqual('Dry run completed', next(itr))
+        self.assertFinished(itr)
+
+        # Make sure that no tags were added to the branch
+        series = patchstream.get_metadata_for_list('second', self.gitdir, 3)
+        for cmt in series.commits:
+            self.assertFalse(cmt.rtags,
+                             'Commit {cmt.subject} rtags {cmt.rtags}')
 
         # Now do it for real
-        # with terminal.capture() as (out, _):
-        cser.series_sync(pwork, 'second', None, False, False, False,
-                             False)
+        with terminal.capture() as (out, _):
+            cser.series_sync(pwork, 'second', None, False, False, True,
+                                 False)
+        lines2 = out.getvalue().splitlines()
+        self.assertEqual(lines2, lines[:-1])
 
+        # Make sure that the tags were added to the branch
+        series = patchstream.get_metadata_for_list('second', self.gitdir, 3)
+        self.assertEqual(
+            {'Reviewed-by': {'Fred Bloggs <fred@bloggs.com>'}},
+            series.commits[0].rtags)
+        self.assertFalse(series.commits[1].rtags)
+        self.assertFalse(series.commits[2].rtags)
+
+        # Make sure the status was updated
         pwc = cser.get_pcommit_dict(pwid)
         self.assertEqual('accepted', pwc[0].state)
         self.assertEqual('changes-requested', pwc[1].state)
