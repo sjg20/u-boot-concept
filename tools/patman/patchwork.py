@@ -815,7 +815,7 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
             return await self._series_get_state(
                 client, series_id, read_comments, read_cover_comments)
 
-    async def _get_one_state(self, client, svid, sync, gather_tags, result):
+    async def _get_one_state(self, client, svid, sync, gather_tags):
         """Get the state of one svid
 
         Args:
@@ -823,7 +823,6 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
             svid (int): ser_ver ID number
             sync (STATE_REQ): Info needed for the sync
             gather_tags (bool): True to gather review/test tags
-            result (dict): Holds the result
 
         Return:
             STATE_RESP: Response for the state
@@ -845,7 +844,6 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
 
         # 1 request for cover-letter comments, if there is one
         cover = await self._get_series_cover(client, data)
-        result[svid] = svid, cover, patches
         return STATE_RESP(svid, cover, patches, patch_list)
 
     async def series_get_states(self, sync_data, gather_tags):
@@ -862,12 +860,11 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
                 STATE_RESP: Response for the state
             int: Total number of patchwork requests issued
         """
-        result = {}
         self.request_count = 0
         async with aiohttp.ClientSession() as client:
             tasks = [
                 asyncio.create_task(self._get_one_state(
-                    client, svid, sync, gather_tags, result))
+                    client, svid, sync, gather_tags))
                 for svid, sync in sync_data.items()
             ]
             results = await asyncio.gather(*tasks)
