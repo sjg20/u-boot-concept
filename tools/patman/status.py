@@ -176,7 +176,7 @@ def compare_with_series(series, patches):
     return patch_for_commit, commit_for_patch, warnings
 
 
-def _check_status(cover, patches, series, link, branch,
+def show_status(cover, patches, series, link, branch,
                   show_comments, show_cover_comments):
     """Check the status of a series on Patchwork
 
@@ -355,7 +355,7 @@ def check_status(cover, patches, series, link, branch, dest_branch, force,
         test_repo (pygit2.Repository): Repo to use (use None unless testing)
     """
     with terminal.pager():
-        num_to_add, new_rtag_list, _, _ = _check_status(
+        num_to_add, new_rtag_list, _, _ = show_status(
             cover, patches, series, link, branch, show_comments,
             show_cover_comments)
 
@@ -375,12 +375,11 @@ def check_status(cover, patches, series, link, branch, dest_branch, force,
                 f"from patchwork into new branch '{dest_branch}'")
 
 
-#######################
 async def check_and_report_status(series, link, branch, dest_branch, force,
-                       show_comments, show_cover_comments, patchwork,
+                       show_comments, show_cover_comments, pwork,
                        test_repo=None):
     async with aiohttp.ClientSession() as client:
-        cover, patches = await patchwork._collect_patches(
+        cover, patches = await pwork._collect_patches(
             client, len(series.commits), link, True, show_cover_comments)
     return cover, patches
 
