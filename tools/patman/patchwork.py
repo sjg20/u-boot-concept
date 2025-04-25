@@ -809,6 +809,21 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
                 client, series_id, read_comments, read_cover_comments)
 
     async def _get_one_state(self, client, svid, sync, result):
+        """Get the state of one svid
+
+        Args:
+            client (aiohttp.ClientSession): Session to use
+            svid (int): ser_ver ID number
+            sync (STATE_INFO): Info needed for the sync
+            result (dict): Holds the result
+
+        Return: tuple:
+            int: ser_ver ID number
+            COVER: Cover-letter info
+            list of Patch: Information on each patch
+            list of dict: raw patch info from Patchwork (see get_series()
+                'patches' item)
+        """
         # 1 request
         data = await self.get_series(client, sync.link)
         patch_list = data['patches']
