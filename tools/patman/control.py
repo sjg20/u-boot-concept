@@ -83,10 +83,10 @@ def patchwork_status(branch, count, start, end, dest_branch, force,
         raise ValueError("Branch has no Series-links value")
 
     _, version = cseries.split_name_version(branch)
-    found = series.get_link_for_version(version, links)
-    if not found:
+    link = series.get_link_for_version(version, links)
+    if not link:
         raise ValueError('Series-links has no link for v{version}')
-    tout.debug(f"Link '{found}")
+    tout.debug(f"Link '{link}")
 
     # Allow the series to override the URL
     if 'patchwork_url' in series:
@@ -96,7 +96,7 @@ def patchwork_status(branch, count, start, end, dest_branch, force,
     # are not present
     from patman import status
     pwork = Patchwork(url)
-    status.check_patchwork_status(series, found, branch, dest_branch, force,
+    status.check_and_report_patchwork_status(series, link, branch, dest_branch, force,
                                   show_comments, False, pwork)
 
 def do_series(args, test_db=None, pwork=None):

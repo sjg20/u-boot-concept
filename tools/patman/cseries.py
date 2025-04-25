@@ -1996,8 +1996,8 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             series = patchstream.get_metadata(branch, 0, count,
                                               git_dir=self.gitdir)
 
-            cover, patches = await pwork._collect_patches(
-                client, len(series.commits), link, True, show_cover_comments)
+            cover, patches = await pwork._series_get_state(
+                client, link, True, show_cover_comments)
 
             _, new_rtag_list, cover, patches = status.show_status(
                 cover, patches,

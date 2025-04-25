@@ -855,38 +855,3 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
             results = await asyncio.gather(*tasks)
 
         return results, self.request_count
-
-    async def _collect_patches(self, client, expect_count, link,
-                               read_comments, read_cover_comments):
-        """Collect patch information about a series from patchwork
-
-        Uses the Patchwork REST API to collect information provided by patchwork
-        about the status of each patch.
-
-        Args:
-            client (aiohttp.ClientSession): Session to use
-            expect_count (int): Number of patches expected
-            link (str): Patch series ID number
-            pwork (Patchwork): Patchwork class to handle communications
-            read_comments (bool): True to read the comments on the patches
-            read_cover_comments (bool): True to read the comments on the cover
-                letter
-
-        Return: tuple:
-            COVER object, or None if none or not read_cover_comments
-            list of PATCH objects
-
-        Raises:
-            ValueError: if the URL could not be read or the web page does not follow
-                the expected structure
-        """
-        cover, patch_list = await self._series_get_state(
-            client, link, read_comments, read_cover_comments)
-
-        # Get all the rows, which are patches
-        count = len(patch_list)
-        if count != expect_count:
-            tout.warning(f'Warning: Patchwork reports {count} patches, series has '
-                         f'{expect_count}')
-
-        return cover, patch_list

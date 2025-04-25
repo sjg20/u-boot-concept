@@ -373,27 +373,39 @@ def check_status(cover, patches, series, link, branch, dest_branch, force,
                 f"from patchwork into new branch '{dest_branch}'")
 
 
+def check_patch_count(num_commits, num_patches):
+    """Check the number of commits and patches agree
+
+    Args:
+        num_commits (int): Number of commits
+        num_patches (int): Number of patches
+    """
+    if num_patches != num_commits:
+        tout.warning(f'Warning: Patchwork reports {num_patches} patches, '
+                     f'series has {num_commits}')
+
+
 async def check_and_report_status(series, link, branch, dest_branch, force,
                        show_comments, show_cover_comments, pwork,
                        test_repo=None):
     async with aiohttp.ClientSession() as client:
-        cover, patches = await pwork._collect_patches(
-            client, len(series.commits), link, True, show_cover_comments)
+        cover, patches = await pwork._series_get_state(
+            client, link, True, show_cover_comments)
     return cover, patches
 
 
 def check_and_report_patchwork_status(series, link, branch, dest_branch, force,
-                           show_comments, show_cover_comments, patchwork,
+                           show_comments, show_cover_comments, pwork,
                            test_repo=None, single_thread=False):
     if single_thread:
-        cover, patches = asyncio.run(check_and_report_status(series, link, branch, dest_branch, force,
-                                 show_comments, show_cover_comments, patchwork,
-                                 test_repo=test_repo))
+        cover, patches = asyncio.run(check_and_report_status(
+            series, link, branch, dest_branch, force, show_comments,
+            show_cover_comments, pwork, test_repo=test_repo))
     else:
         loop = asyncio.get_event_loop()
         cover, patches = loop.run_until_complete(check_and_report_status(
                 series, link, branch, dest_branch,  force, show_comments,
-                show_cover_comments, patchwork, test_repo=test_repo))
+                show_cover_comments, pwork, test_repo=test_repo))
 
     check_status(
         cover, patches, series, link, branch, dest_branch,  force,
