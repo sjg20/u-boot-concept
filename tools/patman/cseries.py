@@ -2056,7 +2056,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                                                   git_dir=self.gitdir)
                 if link:
                     to_fetch[svid] = patchwork.STATE_REQ(
-                        link, desc, series, branch, False, False)
+                        link, desc, series_id, series, branch, False, False)
                 else:
                     missing += 1
         else:
@@ -2074,7 +2074,8 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                                                   git_dir=self.gitdir)
                 if ser.link:
                     to_fetch[svid] = patchwork.STATE_REQ(
-                        ser.link, ser.name, series, branch, False, False)
+                        ser.link, ser.name, series_id, series, branch, False,
+                        False)
                 else:
                     missing += 1
         return to_fetch, missing

@@ -18,13 +18,15 @@ from patman.patchstream import PatchStream
 
 # Information passed to series_get_states()
 # link (str): Patchwork link for series
-# name (str): name or description (not used)
+# name (str): Name or description (not used)
+# series_id (int): Series ID in database
 # series (Series): Series object as returned from patchstream.get_metadata()
 # branch (str): Local branch name
 # show_comments (bool): True to show comments
 # show_cover_comments (bool): True to show cover-letter comments
 STATE_REQ = namedtuple(
-    'state_req', 'link,name,series,branch,show_comments,show_cover_comments')
+    'state_req',
+    'link,name,series_id,series,branch,show_comments,show_cover_comments')
 
 # Responses from series_get_states()
 # int: ser_ver ID number
@@ -361,12 +363,12 @@ class Patchwork:
         self.proj_id = project_id
         self.link_name = link_name
 
-    async def get_series(self, client, series_id):
+    async def get_series(self, client, link):
         """Read information about a series
 
         Args:
             client (aiohttp.ClientSession): Session to use
-            series_id (str): Patchwork series ID
+            link (str): Patchwork series ID
 
         Returns: dict containing patchwork's series information
             id (int): series ID unique across patchwork instance, e.g. 3
@@ -405,7 +407,7 @@ class Patchwork:
                 "name": "[U-Boot] moveconfig: fix error message in do_autoconf()",
                 "mbox": "https://patchwork.ozlabs.org/project/uboot/patch/20170827080051.816-1-judge.packham@gmail.com/mbox/"
         """
-        return await self._request(client, f'series/{series_id}/')
+        return await self._request(client, f'series/{link}/')
 
     async def get_patch(self, client, patch_id):
         """Read information about a patch
@@ -714,16 +716,16 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
         """
         return await self._request(client, f'covers/{cover_id}/comments/')
 
-    async def get_series_url(self, series_id):
+    async def get_series_url(self, link):
         """Get the URL for a series
 
         Args:
-            series_id (str): Patchwork series ID
+            link (str): Patchwork series ID
 
         Returns:
             str: URL for the series page
         """
-        return f'{self.url}/project/{self.link_name}/list/?series={series_id}&state=*&archive=both'
+        return f'{self.url}/project/{self.link_name}/list/?series={link}&state=*&archive=both'
 
     async def _get_patch_status(self, client, patch_id):
         """Get the patch status
@@ -766,13 +768,13 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
         async with aiohttp.ClientSession() as client:
             return await self._get_series_cover(client, data)
 
-    async def _series_get_state(self, client, series_id, read_comments,
+    async def _series_get_state(self, client, link, read_comments,
                                 read_cover_comments):
         """Sync the series information against patchwork, to find patch status
 
         Args:
             client (aiohttp.ClientSession): Session to use
-            series_id (str): Patchwork series ID
+            link (str): Patchwork series ID
             read_comments (bool): True to read the comments on the patches
             read_cover_comments (bool): True to read the comments on the cover
                 letter
@@ -781,7 +783,7 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
             COVER object, or None if none or not read_cover_comments
             list of PATCH objects
         """
-        data = await self.get_series(client, series_id)
+        data = await self.get_series(client, link)
         patch_list = list(data['patches'])
 
         count = len(patch_list)
@@ -809,11 +811,11 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
 
         return cover, patches
 
-    async def series_get_state(self, series_id, read_comments,
+    async def series_get_state(self, link, read_comments,
                                read_cover_comments):
         async with aiohttp.ClientSession() as client:
             return await self._series_get_state(
-                client, series_id, read_comments, read_cover_comments)
+                client, link, read_comments, read_cover_comments)
 
     async def _get_one_state(self, client, svid, sync, gather_tags):
         """Get the state of one svid
@@ -831,20 +833,22 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
         data = await self.get_series(client, sync.link)
         patch_list = data['patches']
 
-        # if gather_tags:
-            # cover, patch_list = await self._series_get_state(
-                # client, series_id, read_comments, read_cover_comments)
+        if gather_tags:
+            cover, patch_list = await self._series_get_state(
+                client, sync.series_id, sync.show_comments,
+                sync.show_cover_comments)
+            return STATE_RESP(svid, cover, patches, patch_list)
+        else:
+            count = len(patch_list)
+            tasks = [asyncio.create_task(
+                     self._get_patch_status(client, patch_list[i]['id']))
+                     for i in range(count)]
+            # 2 requests for each patch
+            patches = await asyncio.gather(*tasks)
 
-        count = len(patch_list)
-        tasks = [asyncio.create_task(
-                 self._get_patch_status(client, patch_list[i]['id']))
-                 for i in range(count)]
-        # 2 requests for each patch
-        patches = await asyncio.gather(*tasks)
-
-        # 1 request for cover-letter comments, if there is one
-        cover = await self._get_series_cover(client, data)
-        return STATE_RESP(svid, cover, patches, patch_list)
+            # 1 request for cover-letter comments, if there is one
+            cover = await self._get_series_cover(client, data)
+            return STATE_RESP(svid, cover, patches, patch_list)
 
     async def series_get_states(self, sync_data, gather_tags):
         """Sync a selection of series information from patchwork
@@ -994,7 +998,7 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
                 count += 1
         return count
 
-    async def _collect_patches(self, client, expect_count, series_id,
+    async def _collect_patches(self, client, expect_count, link,
                                read_comments, read_cover_comments):
         """Collect patch information about a series from patchwork
 
@@ -1004,7 +1008,7 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
         Args:
             client (aiohttp.ClientSession): Session to use
             expect_count (int): Number of patches expected
-            series_id (str): Patch series ID number
+            link (str): Patch series ID number
             pwork (Patchwork): Patchwork class to handle communications
             read_comments (bool): True to read the comments on the patches
             read_cover_comments (bool): True to read the comments on the cover
@@ -1019,7 +1023,7 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
                 the expected structure
         """
         cover, patch_list = await self._series_get_state(
-            client, series_id, read_comments, read_cover_comments)
+            client, link, read_comments, read_cover_comments)
 
         # Get all the rows, which are patches
         count = len(patch_list)
@@ -1029,7 +1033,7 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
 
         return cover, patch_list
 
-    async def _check_status(self, client, series, series_id, branch,
+    async def _check_status(self, client, series, link, branch,
                             show_comments, show_cover_comments):
         """Check the status of a series on Patchwork
 
@@ -1039,7 +1043,7 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
         Args:
             client (aiohttp.ClientSession): Session to use
             series (Series): Series object for the existing branch
-            series_id (str): Patch series ID number
+            link (str): Patch series ID number
             branch (str): Existing branch to update, or None
             show_comments (bool): True to show the comments on each patch
             show_cover_comments (bool): True to show the comments on the
@@ -1056,7 +1060,7 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
             list of PATCH objects
         """
         cover, patches = await self._collect_patches(
-            client, len(series.commits), series_id, True, show_cover_comments)
+            client, len(series.commits), link, True, show_cover_comments)
 
         compare = []
         for pw_patch in patches:
