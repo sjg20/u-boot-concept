@@ -1848,6 +1848,8 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             int: cover_num_comments
         """
         ser, version = self.parse_series_and_version(series, version)
+        if not ser.idnum:
+            raise ValueError(f"Unknown series '{series}'")
         self.ensure_version(ser, version)
         svid, link, cover_id, num_comments, name = self.get_ser_ver(ser.idnum,
                                                                     version)
