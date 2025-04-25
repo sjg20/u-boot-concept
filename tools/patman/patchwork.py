@@ -1033,15 +1033,14 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
 
         return cover, patch_list
 
-    async def _check_status(self, client, cover, patches, series, link, branch,
-                            show_comments, show_cover_comments):
+    def _check_status(self, cover, patches, series, link, branch,
+                      show_comments, show_cover_comments):
         """Check the status of a series on Patchwork
 
         This finds review tags and comments for a series in Patchwork, displaying
         them to show what is new compared to the local series.
 
         Args:
-            client (aiohttp.ClientSession): Session to use
             series (Series): Series object for the existing branch
             link (str): Patch series ID number
             branch (str): Existing branch to update, or None
