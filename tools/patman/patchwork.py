@@ -787,7 +787,7 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
         count = len(patch_list)
         patches = []
         if read_comments:
-            # Returns a list of PATCH objects
+            # Returns a list of Patch objects
             tasks = [self._get_patch_status(client, patch_list[i]['id'])
                                             for i in range(count)]
 
@@ -815,13 +815,14 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
             return await self._series_get_state(
                 client, series_id, read_comments, read_cover_comments)
 
-    async def _get_one_state(self, client, svid, sync, result):
+    async def _get_one_state(self, client, svid, sync, gather_tags, result):
         """Get the state of one svid
 
         Args:
             client (aiohttp.ClientSession): Session to use
             svid (int): ser_ver ID number
-            # sync (STATE_REQ): Info needed for the sync
+            sync (STATE_REQ): Info needed for the sync
+            gather_tags (bool): True to gather review/test tags
             result (dict): Holds the result
 
         Return:
@@ -830,6 +831,10 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
         # 1 request
         data = await self.get_series(client, sync.link)
         patch_list = data['patches']
+
+        # if gather_tags:
+            # cover, patch_list = await self._series_get_state(
+                # client, series_id, read_comments, read_cover_comments)
 
         count = len(patch_list)
         tasks = [asyncio.create_task(
@@ -862,7 +867,7 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
         async with aiohttp.ClientSession() as client:
             tasks = [
                 asyncio.create_task(self._get_one_state(
-                    client, svid, sync, result))
+                    client, svid, sync, gather_tags, result))
                 for svid, sync in sync_data.items()
             ]
             results = await asyncio.gather(*tasks)
