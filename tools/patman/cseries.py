@@ -2080,7 +2080,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         return to_fetch, missing
 
     def series_sync_all(self, pwork, sync_all_versions=False,
-                        gather_tags=False, dry_run=True):
+                        gather_tags=False, dry_run=False):
         """Sync all series status from patchwork
 
         Args:
@@ -2107,6 +2107,11 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             f"{updated_cover} cover letter{'s' if updated_cover != 1 else ''} "
             f'updated, {missing} missing '
             f"link{'s' if missing != 1 else ''} ({requests} requests)")
+        if not dry_run:
+            self.commit()
+        else:
+            self.rollback()
+            tout.info('Dry run completed')
 
     def series_max_version(self, idnum):
         """Find the latest version of a series
