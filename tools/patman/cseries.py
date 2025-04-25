@@ -2009,7 +2009,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                                add_rtags=new_rtag_list)
         else:
             cover, patches = await pwork._series_get_state(
-                client, link, True, True)
+                client, link, True, show_cover_comments)
 
         updated = self._sync_one(svid, cover, patches)
         tout.info(f"{updated} patch{'es' if updated != 1 else ''}"

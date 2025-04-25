@@ -3771,7 +3771,7 @@ Date:   .*
         self.assertEqual(
             "Updating series 'second' version 1 from link '183237'",
             lines[0])
-        self.assertEqual('3 patches and cover letter updated', lines[1])
+        self.assertEqual('3 patches updated', lines[1])
         self.assertEqual('Dry run completed', lines[2])
         self.assertEqual(3, len(lines))
 
