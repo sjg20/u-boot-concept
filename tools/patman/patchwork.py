@@ -23,7 +23,7 @@ from patman.patchstream import PatchStream
 # branch (str): Local branch name
 # show_comments (bool): True to show comments
 # show_cover_comments (bool): True to show cover-letter comments
-STATE_INFO = namedtuple(
+STATE_REQ = namedtuple(
     'patch', 'link,name,series,branch,show_comments,show_cover_comments')
 
 # Information about a cover-letter on patchwork
@@ -814,7 +814,7 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
         Args:
             client (aiohttp.ClientSession): Session to use
             svid (int): ser_ver ID number
-            sync (STATE_INFO): Info needed for the sync
+            # sync (STATE_REQ): Info needed for the sync
             result (dict): Holds the result
 
         Return: tuple:
@@ -846,7 +846,7 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
         Args:
             sync_data (dict of svids to sync):
                 key (int): Series-version ID
-                value (STATE_INFO): information to use for syncing
+                value (STATE_REQ): information to use for syncing
             gather_tags (bool): True to gather review/test tags
 
         Return:

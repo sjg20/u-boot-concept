@@ -2055,7 +2055,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 series = patchstream.get_metadata(branch, 0, count,
                                                   git_dir=self.gitdir)
                 if link:
-                    to_fetch[svid] = patchwork.STATE_INFO(
+                    to_fetch[svid] = patchwork.STATE_REQ(
                         link, desc, series, branch, False, False)
                 else:
                     missing += 1
@@ -2073,7 +2073,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 series = patchstream.get_metadata(branch, 0, count,
                                                   git_dir=self.gitdir)
                 if ser.link:
-                    to_fetch[svid] = patchwork.STATE_INFO(
+                    to_fetch[svid] = patchwork.STATE_REQ(
                         ser.link, ser.name, series, branch, False, False)
                 else:
                     missing += 1
