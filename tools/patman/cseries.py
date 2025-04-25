@@ -2095,7 +2095,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             pass
         else:
             result, requests = self.loop.run_until_complete(
-                pwork.series_get_states(to_fetch))
+                pwork.series_get_states(to_fetch, gather_tags))
 
         updated = 0
         updated_cover = 0

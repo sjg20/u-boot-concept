@@ -808,9 +808,9 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
             return await self._series_get_state(
                 client, series_id, read_comments, read_cover_comments)
 
-    async def _get_one_state(self, client, svid, link, result):
+    async def _get_one_state(self, client, svid, sync, result):
         # 1 request
-        data = await self.get_series(client, link)
+        data = await self.get_series(client, sync.link)
         patch_list = data['patches']
 
         count = len(patch_list)
@@ -825,13 +825,14 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
         result[svid] = svid, cover, patches
         return svid, cover, patches, patch_list
 
-    async def series_get_states(self, sync_data):
+    async def series_get_states(self, sync_data, gather_tags):
         """Sync a selection of series information from patchwork
 
         Args:
             sync_data (dict of svids to sync):
                 key (int): Series-version ID
                 value (STATE_INFO): information to use for syncing
+            gather_tags (bool): True to gather review/test tags
 
         Return:
             list of items, each a tuple:
@@ -845,7 +846,7 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
         async with aiohttp.ClientSession() as client:
             tasks = [
                 asyncio.create_task(self._get_one_state(
-                    client, svid, sync.link, result))
+                    client, svid, sync, result))
                 for svid, sync in sync_data.items()
             ]
             results = await asyncio.gather(*tasks)
