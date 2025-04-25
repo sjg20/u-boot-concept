@@ -2081,7 +2081,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         updated = 0
         updated_cover = 0
         for svid, cover, patches, patch_list in result:
-            updated += self._sync_one(svid, cover, patches, gather_tags)
+            updated += self._sync_one(svid, cover, patches)
             if cover:
                 updated_cover += 1
         self.commit()

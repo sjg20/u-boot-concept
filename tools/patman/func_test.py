@@ -3850,29 +3850,23 @@ Date:   .*
         self.assertFalse(next(cor))
 
     def test_series_sync_cmdline(self):
-        """Test syncing a series"""
+        """Test syncing a series with cmdline"""
         cor = self.check_series_sync()
         _, pwork = next(cor)
         self.db_close()
         self.run_args('series', '-n', '-s', 'second', 'sync', '-G', pwork=pwork)
-        # cser.series_sync(pwork, 'second', None, False, False, False,
-                         # dry_run=True)
         self.db_open()
 
         _, pwork = next(cor)
         self.run_args('series', '-n', '-s', 'second', 'sync', pwork=pwork)
-        # cser.series_sync(pwork, 'second', None, False, False, True,
-                         # dry_run=True)
         self.db_close()
 
         _, pwork = next(cor)
         self.run_args('series', '-s', 'second', 'sync', pwork=pwork)
         self.db_open()
-        # cser.series_sync(pwork, 'second', None, False, False, True,
-                             # False)
         self.assertFalse(next(cor))
 
-    def test_series_sync_all(self):
+    def check_series_sync_all(self):
         """Sync all series at once"""
         cser, pwork = self.setup_second(False)
 
@@ -3886,16 +3880,42 @@ Date:   .*
             cser.autolink(pwork, 'second', 2, True)
 
         with terminal.capture() as (out, _):
-            cser.series_sync_all(pwork)
+            yield cser, pwork
         self.assertEqual(
             '5 patches and 2 cover letters updated, 0 missing links (16 requests)',
             out.getvalue().strip())
 
         with terminal.capture() as (out, _):
-            cser.series_sync_all(pwork, sync_all_versions=True)
+            yield cser, pwork
         self.assertEqual(
             '12 patches and 5 cover letters updated, 0 missing links (40 requests)',
             out.getvalue().strip())
+        yield None
+
+    def test_series_sync_all(self):
+        """Sync all series at once"""
+        cor = self.check_series_sync_all()
+
+        cser, pwork = next(cor)
+        cser.series_sync_all(pwork)
+
+        cser, pwork = next(cor)
+        cser.series_sync_all(pwork, sync_all_versions=True)
+
+        self.assertFalse(next(cor))
+
+    def test_series_sync_all_cmdline(self):
+        """Sync all series at once using cmdline"""
+        cor = self.check_series_sync_all()
+
+        cser, pwork = next(cor)
+        self.run_args('series', '-s', 'second', 'sync-all', '-G', pwork=pwork)
+
+        cser, pwork = next(cor)
+        self.run_args('series', '-s', 'second', 'sync-all', '-G', '-a',
+                      pwork=pwork)
+
+        self.assertFalse(next(cor))
 
     def _check_second(self, lines, show_all):
         self.assertEqual('second: Series for my board (versions: 1 2)',
