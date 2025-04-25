@@ -96,7 +96,7 @@ def patchwork_status(branch, count, start, end, dest_branch, force,
     # are not present
     from patman import status
     pwork = Patchwork(url)
-    status.check_and_report_patchwork_status(series, link, branch, dest_branch, force,
+    status.check_and_report_status(series, link, branch, dest_branch, force,
                                   show_comments, False, pwork)
 
 def do_series(args, test_db=None, pwork=None):

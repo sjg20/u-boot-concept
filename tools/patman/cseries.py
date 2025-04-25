@@ -2469,7 +2469,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             raise ValueError(
                 f"Series '{series.name}' v{version} has no patchwork link: "
                 f"Try 'patman series -s {branch} autolink'")
-        status.check_and_report_patchwork_status(
+        status.check_and_report_status(
             series, link, branch, None, False, show_comments,
             show_cover_comments, pwork, self.gitdir, single_thread)
 

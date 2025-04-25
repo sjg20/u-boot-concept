@@ -386,7 +386,7 @@ def check_patch_count(num_commits, num_patches):
                      f'series has {num_commits}')
 
 
-async def check_and_report_status(series, link, branch, dest_branch, force,
+async def _check_and_report_status(series, link, branch, dest_branch, force,
                        show_comments, show_cover_comments, pwork,
                        test_repo=None):
     async with aiohttp.ClientSession() as client:
@@ -395,16 +395,16 @@ async def check_and_report_status(series, link, branch, dest_branch, force,
     return cover, patches
 
 
-def check_and_report_patchwork_status(series, link, branch, dest_branch, force,
+def check_and_report_status(series, link, branch, dest_branch, force,
                            show_comments, show_cover_comments, pwork,
                            test_repo=None, single_thread=False):
     if single_thread:
-        cover, patches = asyncio.run(check_and_report_status(
+        cover, patches = asyncio.run(_check_and_report_status(
             series, link, branch, dest_branch, force, show_comments,
             show_cover_comments, pwork, test_repo=test_repo))
     else:
         loop = asyncio.get_event_loop()
-        cover, patches = loop.run_until_complete(check_and_report_status(
+        cover, patches = loop.run_until_complete(_check_and_report_status(
                 series, link, branch, dest_branch,  force, show_comments,
                 show_cover_comments, pwork, test_repo=test_repo))
 
