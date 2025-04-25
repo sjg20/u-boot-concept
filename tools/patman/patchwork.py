@@ -820,9 +820,8 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
         Return: tuple:
             int: ser_ver ID number
             COVER: Cover-letter info
-            list of Patch: Information on each patch
-            list of dict: raw patch info from Patchwork (see get_series()
-                'patches' item)
+            list of Patch: Information on each patch in the series
+            list of dict: patches, see get_series()['patches']
         """
         # 1 request
         data = await self.get_series(client, sync.link)
@@ -853,8 +852,8 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
             list of items, each a tuple:
                 int: svid
                 COVER: Cover letter, or None if none
-                list of PATCH: patch information for each patch in series
-                list of patches, see get_series()['patches']
+                list of Patch: Information on each patch in the series
+                list of dict: patches, see get_series()['patches']
         """
         result = {}
         self.request_count = 0

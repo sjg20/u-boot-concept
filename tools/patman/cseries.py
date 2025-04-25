@@ -2091,10 +2091,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         """
         to_fetch, missing = self._get_fetch_dict(sync_all_versions)
 
-        if gather_tags:
-            pass
-        else:
-            result, requests = self.loop.run_until_complete(
+        result, requests = self.loop.run_until_complete(
                 pwork.series_get_states(to_fetch, gather_tags))
 
         updated = 0

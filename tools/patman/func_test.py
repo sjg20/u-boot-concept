@@ -3888,6 +3888,12 @@ Date:   .*
         with terminal.capture() as (out, _):
             yield cser, pwork
         self.assertEqual(
+            '5 patches and 2 cover letters updated, 0 missing links (16 requests)',
+            out.getvalue().strip())
+
+        with terminal.capture() as (out, _):
+            yield cser, pwork
+        self.assertEqual(
             '12 patches and 5 cover letters updated, 0 missing links (40 requests)',
             out.getvalue().strip())
         yield None
@@ -3897,10 +3903,13 @@ Date:   .*
         cor = self.check_series_sync_all()
 
         cser, pwork = next(cor)
-        cser.series_sync_all(pwork, dry_run=True)
+        cser.series_sync_all(pwork, False, False, dry_run=True)
 
         cser, pwork = next(cor)
-        cser.series_sync_all(pwork, sync_all_versions=True)
+        cser.series_sync_all(pwork, False, True, dry_run=True)
+
+        cser, pwork = next(cor)
+        cser.series_sync_all(pwork, True, True)
 
         self.assertFalse(next(cor))
 
