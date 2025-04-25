@@ -3897,7 +3897,7 @@ Date:   .*
         cor = self.check_series_sync_all()
 
         cser, pwork = next(cor)
-        cser.series_sync_all(pwork)
+        cser.series_sync_all(pwork, dry_run=True)
 
         cser, pwork = next(cor)
         cser.series_sync_all(pwork, sync_all_versions=True)

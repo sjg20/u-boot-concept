@@ -2064,7 +2064,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         return to_fetch, missing
 
     def series_sync_all(self, pwork, sync_all_versions=False,
-                        gather_tags=False):
+                        gather_tags=False, dry_run=True):
         """Sync all series status from patchwork
 
         Args:
@@ -2075,8 +2075,11 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         """
         to_fetch, missing = self._get_fetch_dict(sync_all_versions)
 
-        result, requests = self.loop.run_until_complete(
-            pwork.series_get_states(to_fetch))
+        if gather_tags:
+            pass
+        else
+            result, requests = self.loop.run_until_complete(
+                pwork.series_get_states(to_fetch))
 
         updated = 0
         updated_cover = 0
