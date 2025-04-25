@@ -1222,7 +1222,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         series = Series()
         series.commits = [commit1, commit2]
         terminal.set_print_test_mode()
-        status.check_patchwork_status(
+        status.check_and_report_patchwork_status(
             series, '1234', None, None, False, False, False, pwork)
         lines = iter(terminal.get_print_test_lines())
         col = terminal.Color()
@@ -1338,7 +1338,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
 
         terminal.set_print_test_mode()
         pwork = Patchwork.for_testing(self._fake_patchwork3)
-        status.check_patchwork_status(
+        status.check_and_report_patchwork_status(
             series, '1234', branch, dest_branch, False, False, False, pwork,
             repo)
         lines = terminal.get_print_test_lines()
@@ -1543,7 +1543,7 @@ Reviewed-by: %s
         series.commits = [commit1, commit2]
         terminal.set_print_test_mode()
         pwork = Patchwork.for_testing(self._fake_patchwork2)
-        status.check_patchwork_status(
+        status.check_and_report_patchwork_status(
             series, '1234', None, None, False, True, False, pwork)
         lines = iter(terminal.get_print_test_lines())
         col = terminal.Color()

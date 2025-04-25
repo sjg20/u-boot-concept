@@ -834,7 +834,7 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
         patch_list = data['patches']
 
         if gather_tags:
-            cover, patch_list = await self._series_get_state(
+            cover, patches = await self._series_get_state(
                 client, sync.series_id, sync.show_comments,
                 sync.show_cover_comments)
             return STATE_RESP(svid, cover, patches, patch_list)
@@ -1033,7 +1033,7 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
 
         return cover, patch_list
 
-    async def _check_status(self, client, series, link, branch,
+    async def _check_status(self, client, cover, patches, series, link, branch,
                             show_comments, show_cover_comments):
         """Check the status of a series on Patchwork
 
@@ -1059,9 +1059,6 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
             COVER object, or None if none or not read_cover_comments
             list of PATCH objects
         """
-        cover, patches = await self._collect_patches(
-            client, len(series.commits), link, True, show_cover_comments)
-
         compare = []
         for pw_patch in patches:
             patch = Patch(pw_patch.id)

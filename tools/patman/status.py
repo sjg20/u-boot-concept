@@ -96,7 +96,7 @@ def create_branch(series, new_rtag_list, branch, dest_branch, overwrite,
     return num_added
 
 
-async def _check_status(client, series, series_id, branch, dest_branch, force,
+async def _check_status(client, cover, patches, series, series_id, branch, dest_branch, force,
                         show_comments, show_cover_comments, pwork,
                         test_repo=None):
     """Check the status of a series on Patchwork
@@ -119,7 +119,7 @@ async def _check_status(client, series, series_id, branch, dest_branch, force,
     """
     with terminal.pager():
         num_to_add, new_rtag_list, _, _ = await pwork._check_status(
-            client, series, series_id, branch, show_comments,
+            client, cover, patches, series, series_id, branch, show_comments,
             show_cover_comments)
 
         if not dest_branch and num_to_add:
@@ -138,24 +138,51 @@ async def _check_status(client, series, series_id, branch, dest_branch, force,
                 f"from patchwork into new branch '{dest_branch}'")
 
 
-async def check_status(series, series_id, branch, dest_branch, force,
+async def check_status(cover, patches, series, series_id, branch, dest_branch, force,
                        show_comments, show_cover_comments, patchwork,
                        test_repo=None):
     async with aiohttp.ClientSession() as client:
         await _check_status(
-            client, series, series_id, branch, dest_branch,  force,
+            client, cover, patches, series, series_id, branch, dest_branch,  force,
             show_comments, show_cover_comments, patchwork, test_repo=test_repo)
 
 
-def check_patchwork_status(series, series_id, branch, dest_branch, force,
+def check_patchwork_status(cover, patches, series, series_id, branch, dest_branch, force,
                            show_comments, show_cover_comments, patchwork,
                            test_repo=None, single_thread=False):
     if single_thread:
-        asyncio.run(check_status(series, series_id, branch, dest_branch, force,
+        asyncio.run(check_status(cover, patches, series, series_id, branch, dest_branch, force,
                                  show_comments, show_cover_comments, patchwork,
                                  test_repo=test_repo))
     else:
         loop = asyncio.get_event_loop()
         loop.run_until_complete(check_status(
+                cover, patches, series, series_id, branch, dest_branch,  force, show_comments,
+                show_cover_comments, patchwork, test_repo=test_repo))
+
+
+#######################
+async def check_and_report_status(series, series_id, branch, dest_branch, force,
+                       show_comments, show_cover_comments, patchwork,
+                       test_repo=None):
+    async with aiohttp.ClientSession() as client:
+        cover, patches = await patchwork._collect_patches(
+            client, len(series.commits), series_id, True, show_cover_comments)
+        await _check_status(
+            client, cover, patches, series, series_id, branch, dest_branch,  force,
+            show_comments, show_cover_comments, patchwork, test_repo=test_repo)
+
+
+def check_and_report_patchwork_status(series, series_id, branch, dest_branch, force,
+                           show_comments, show_cover_comments, patchwork,
+                           test_repo=None, single_thread=False):
+    if single_thread:
+        asyncio.run(check_and_report_status(series, series_id, branch, dest_branch, force,
+                                 show_comments, show_cover_comments, patchwork,
+                                 test_repo=test_repo))
+    else:
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(check_and_report_status(
                 series, series_id, branch, dest_branch,  force, show_comments,
                 show_cover_comments, patchwork, test_repo=test_repo))
+

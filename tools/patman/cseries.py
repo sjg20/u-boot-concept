@@ -1996,8 +1996,12 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             series = patchstream.get_metadata(branch, 0, count,
                                               git_dir=self.gitdir)
 
+            cover, patches = await pwork._collect_patches(
+                client, len(series.commits), link, True, show_cover_comments)
+
             _, new_rtag_list, cover, patches = await pwork._check_status(
-                client, series, link, self.get_branch_name(ser.name, version),
+                client, cover, patches,
+                series, link, self.get_branch_name(ser.name, version),
                 show_comments, show_cover_comments)
             self.update_series(ser.name, series, version, None, dry_run,
                                add_rtags=new_rtag_list)
@@ -2463,7 +2467,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             raise ValueError(
                 f"Series '{series.name}' v{version} has no patchwork link: "
                 f"Try 'patman series -s {branch} autolink'")
-        status.check_patchwork_status(
+        status.check_and_report_patchwork_status(
             series, link, branch, None, False, show_comments,
             show_cover_comments, pwork, self.gitdir, single_thread)
 
