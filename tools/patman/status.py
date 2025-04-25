@@ -9,6 +9,7 @@ collected from patchwork.
 """
 
 import asyncio
+from collections import defaultdict
 
 import aiohttp
 import pygit2
@@ -31,96 +32,239 @@ def to_int(vals):
     return out
 
 
-    def _check_status(self, cover, patches, series, link, branch,
-                      show_comments, show_cover_comments):
-        """Check the status of a series on Patchwork
+class Review:
+    """Represents a single review email collected in Patchwork
 
-        This finds review tags and comments for a series in Patchwork, displaying
-        them to show what is new compared to the local series.
+    Patches can attract multiple reviews. Each consists of an author/date and
+    a variable number of 'snippets', which are groups of quoted and unquoted
+    text.
+    """
+    def __init__(self, meta, snippets):
+        """Create new Review object
 
         Args:
-            series (Series): Series object for the existing branch
-            link (str): Patch series ID number
-            branch (str): Existing branch to update, or None
-            show_comments (bool): True to show the comments on each patch
-            show_cover_comments (bool): True to show the comments on the
-                letter
-
-        Return: tuple:
-            int: Number of new review tags to add
-            list: List of review tags to add, one item for each commit, each a
-                    dict:
-                key: Response tag (e.g. 'Reviewed-by')
-                value: Set of people who gave that response, each a name/email
-                    string
-            COVER object, or None if none or not read_cover_comments
-            list of PATCH objects
+            meta (str): Text containing review author and date
+            snippets (list): List of snippets in th review, each a list of text
+                lines
         """
-        compare = []
-        for pw_patch in patches:
-            patch = Patch(pw_patch.id)
-            patch.parse_subject(pw_patch.series_data['name'])
-            compare.append(patch)
+        self.meta = ' : '.join([line for line in meta.splitlines() if line])
+        self.snippets = snippets
 
-        col = terminal.Color()
-        count = len(series.commits)
-        new_rtag_list = [None] * count
-        review_list = [None] * count
 
-        patch_for_commit, _, warnings = self.compare_with_series(series,
-                                                                 compare)
-        for warn in warnings:
-            tout.warning(warn)
+def process_reviews(content, comment_data, base_rtags):
+    """Process and return review data
 
-        for seq, pw_patch in enumerate(patches):
-            compare[seq].patch = pw_patch
+    Args:
+        content (str): Content text of the patch itself - see pwork.get_patch()
+        comment_data (list of dict): Comments for the patch - see
+            pwork._get_patch_comments()
+        base_rtags (dict): base review tags (before any comments)
+            key: Response tag (e.g. 'Reviewed-by')
+            value: Set of people who gave that response, each a name/email
+                string
 
-        for i in range(count):
-            pat = patch_for_commit.get(i)
-            if pat:
-                patch_data = pat.patch.data
-                comment_data = pat.patch.comments
-                new_rtag_list[i], review_list[i] = self.process_reviews(
-                    patch_data['content'], comment_data, series.commits[i].rtags)
+    Return: tuple:
+        dict: new review tags (noticed since the base_rtags)
+            key: Response tag (e.g. 'Reviewed-by')
+            value: Set of people who gave that response, each a name/email
+                string
+        list of patchwork.Review: reviews received on the patch
+    """
+    pstrm = patchstream.PatchStream.process_text(content, True)
+    rtags = defaultdict(set)
+    for response, people in pstrm.commit.rtags.items():
+        rtags[response].update(people)
 
-        num_to_add = 0
+    reviews = []
+    for comment in comment_data:
+        pstrm = patchstream.PatchStream.process_text(comment['content'], True)
+        if pstrm.snippets:
+            submitter = comment['submitter']
+            person = f"{submitter['name']} <{submitter['email']}>"
+            reviews.append(Review(person, pstrm.snippets))
+        for response, people in pstrm.commit.rtags.items():
+            rtags[response].update(people)
 
-        if cover:
-            terminal.tprint(f'Cov {cover.name}', colour=col.BLACK, col=col,
-                            bright=False, back=col.YELLOW)
-            for seq, comment in enumerate(cover.comments):
-                submitter = comment['submitter']
-                person = '%s <%s>' % (submitter['name'], submitter['email'])
-                terminal.tprint(f'From: {person}: {comment['date']}',
-                                colour=col.RED, col=col)
-                print(comment['content'])
-                print()
+    # Find the tags that are not in the commit
+    new_rtags = defaultdict(set)
+    for tag, people in rtags.items():
+        for who in people:
+            is_new = (tag not in base_rtags or
+                      who not in base_rtags[tag])
+            if is_new:
+                new_rtags[tag].add(who)
+    return new_rtags, reviews
 
-        for seq, cmt in enumerate(series.commits):
-            patch = patch_for_commit.get(seq)
-            if not patch:
-                continue
-            terminal.tprint('%3d %s' % (patch.seq, patch.subject[:50]),
-                           colour=col.YELLOW, col=col)
-            cmt = series.commits[seq]
-            base_rtags = cmt.rtags
-            new_rtags = new_rtag_list[seq]
+def show_responses(col, rtags, indent, is_new):
+    """Show rtags collected
 
-            indent = ' ' * 2
-            self.show_responses(col, base_rtags, indent, False)
-            num_to_add += self.show_responses(col, new_rtags, indent, True)
-            if show_comments:
-                for review in review_list[seq]:
-                    terminal.tprint('Review: %s' % review.meta, colour=col.RED,
-                                    col=col)
-                    for snippet in review.snippets:
-                        for line in snippet:
-                            quoted = line.startswith('>')
-                            terminal.tprint(
-                                f'    {line}',
-                                colour=col.MAGENTA if quoted else None, col=col)
-                        terminal.tprint()
-        return num_to_add, new_rtag_list, cover, patches
+    Args:
+        col (terminal.Colour): Colour object to use
+        rtags (dict): review tags to show
+            key: Response tag (e.g. 'Reviewed-by')
+            value: Set of people who gave that response, each a name/email string
+        indent (str): Indentation string to write before each line
+        is_new (bool): True if this output should be highlighted
+
+    Returns:
+        int: Number of review tags displayed
+    """
+    count = 0
+    for tag in sorted(rtags.keys()):
+        people = rtags[tag]
+        for who in sorted(people):
+            terminal.tprint(indent + '%s %s: ' % ('+' if is_new else ' ', tag),
+                           newline=False, colour=col.GREEN, bright=is_new,
+                           col=col)
+            terminal.tprint(who, colour=col.WHITE, bright=is_new, col=col)
+            count += 1
+    return count
+
+
+def compare_with_series(series, patches):
+    """Compare a list of patches with a series it came from
+
+    This prints any problems as warnings
+
+    Args:
+        series (Series): Series to compare against
+        patches (list of Patch): list of Patch objects to compare with
+
+    Returns:
+        tuple
+            dict:
+                key: Commit number (0...n-1)
+                value: Patch object for that commit
+            dict:
+                key: Patch number  (0...n-1)
+                value: Commit object for that patch
+    """
+    # Check the names match
+    warnings = []
+    patch_for_commit = {}
+    all_patches = set(patches)
+    for seq, cmt in enumerate(series.commits):
+        pmatch = [p for p in all_patches if p.subject == cmt.subject]
+        if len(pmatch) == 1:
+            patch_for_commit[seq] = pmatch[0]
+            all_patches.remove(pmatch[0])
+        elif len(pmatch) > 1:
+            warnings.append("Multiple patches match commit %d ('%s'):\n   %s" %
+                            (seq + 1, cmt.subject,
+                             '\n   '.join([p.subject for p in pmatch])))
+        else:
+            warnings.append("Cannot find patch for commit %d ('%s')" %
+                            (seq + 1, cmt.subject))
+
+
+    # Check the names match
+    commit_for_patch = {}
+    all_commits = set(series.commits)
+    for seq, patch in enumerate(patches):
+        cmatch = [c for c in all_commits if c.subject == patch.subject]
+        if len(cmatch) == 1:
+            commit_for_patch[seq] = cmatch[0]
+            all_commits.remove(cmatch[0])
+        elif len(cmatch) > 1:
+            warnings.append("Multiple commits match patch %d ('%s'):\n   %s" %
+                            (seq + 1, patch.subject,
+                             '\n   '.join([c.subject for c in cmatch])))
+        else:
+            warnings.append("Cannot find commit for patch %d ('%s')" %
+                            (seq + 1, patch.subject))
+
+    return patch_for_commit, commit_for_patch, warnings
+
+
+def _check_status(cover, patches, series, link, branch,
+                  show_comments, show_cover_comments):
+    """Check the status of a series on Patchwork
+
+    This finds review tags and comments for a series in Patchwork, displaying
+    them to show what is new compared to the local series.
+
+    Args:
+        series (Series): Series object for the existing branch
+        link (str): Patch series ID number
+        branch (str): Existing branch to update, or None
+        show_comments (bool): True to show the comments on each patch
+        show_cover_comments (bool): True to show the comments on the
+            letter
+
+    Return: tuple:
+        int: Number of new review tags to add
+        list: List of review tags to add, one item for each commit, each a
+                dict:
+            key: Response tag (e.g. 'Reviewed-by')
+            value: Set of people who gave that response, each a name/email
+                string
+        COVER object, or None if none or not read_cover_comments
+        list of PATCH objects
+    """
+    compare = []
+    for pw_patch in patches:
+        patch = patchwork.Patch(pw_patch.id)
+        patch.parse_subject(pw_patch.series_data['name'])
+        compare.append(patch)
+
+    col = terminal.Color()
+    count = len(series.commits)
+    new_rtag_list = [None] * count
+    review_list = [None] * count
+
+    patch_for_commit, _, warnings = compare_with_series(series, compare)
+    for warn in warnings:
+        tout.warning(warn)
+
+    for seq, pw_patch in enumerate(patches):
+        compare[seq].patch = pw_patch
+
+    for i in range(count):
+        pat = patch_for_commit.get(i)
+        if pat:
+            patch_data = pat.patch.data
+            comment_data = pat.patch.comments
+            new_rtag_list[i], review_list[i] = process_reviews(
+                patch_data['content'], comment_data, series.commits[i].rtags)
+
+    num_to_add = 0
+
+    if cover:
+        terminal.tprint(f'Cov {cover.name}', colour=col.BLACK, col=col,
+                        bright=False, back=col.YELLOW)
+        for seq, comment in enumerate(cover.comments):
+            submitter = comment['submitter']
+            person = '%s <%s>' % (submitter['name'], submitter['email'])
+            terminal.tprint(f'From: {person}: {comment['date']}',
+                            colour=col.RED, col=col)
+            print(comment['content'])
+            print()
+
+    for seq, cmt in enumerate(series.commits):
+        patch = patch_for_commit.get(seq)
+        if not patch:
+            continue
+        terminal.tprint('%3d %s' % (patch.seq, patch.subject[:50]),
+                       colour=col.YELLOW, col=col)
+        cmt = series.commits[seq]
+        base_rtags = cmt.rtags
+        new_rtags = new_rtag_list[seq]
+
+        indent = ' ' * 2
+        show_responses(col, base_rtags, indent, False)
+        num_to_add += show_responses(col, new_rtags, indent, True)
+        if show_comments:
+            for review in review_list[seq]:
+                terminal.tprint('Review: %s' % review.meta, colour=col.RED,
+                                col=col)
+                for snippet in review.snippets:
+                    for line in snippet:
+                        quoted = line.startswith('>')
+                        terminal.tprint(
+                            f'    {line}',
+                            colour=col.MAGENTA if quoted else None, col=col)
+                    terminal.tprint()
+    return num_to_add, new_rtag_list, cover, patches
 
 
 def create_branch(series, new_rtag_list, branch, dest_branch, overwrite,
@@ -211,7 +355,7 @@ def check_status(cover, patches, series, link, branch, dest_branch, force,
         test_repo (pygit2.Repository): Repo to use (use None unless testing)
     """
     with terminal.pager():
-        num_to_add, new_rtag_list, _, _ = pwork._check_status(
+        num_to_add, new_rtag_list, _, _ = _check_status(
             cover, patches, series, link, branch, show_comments,
             show_cover_comments)
 

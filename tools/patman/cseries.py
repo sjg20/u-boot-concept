@@ -1999,7 +1999,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             cover, patches = await pwork._collect_patches(
                 client, len(series.commits), link, True, show_cover_comments)
 
-            _, new_rtag_list, cover, patches = pwork._check_status(
+            _, new_rtag_list, cover, patches = status._check_status(
                 cover, patches,
                 series, link, self.get_branch_name(ser.name, version),
                 show_comments, show_cover_comments)

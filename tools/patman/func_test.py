@@ -1011,7 +1011,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         series.commits = [commit1]
         patches = [patch1]
         patch_for_commit, commit_for_patch, warnings = (
-            pwork.compare_with_series(series, patches))
+            status.compare_with_series(series, patches))
         self.assertEqual(1, len(patch_for_commit))
         self.assertEqual(patch1, patch_for_commit[0])
         self.assertEqual(1, len(commit_for_patch))
@@ -1020,7 +1020,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         series.commits = [commit1]
         patches = [patch1, patch2]
         patch_for_commit, commit_for_patch, warnings = (
-            pwork.compare_with_series(series, patches))
+            status.compare_with_series(series, patches))
         self.assertEqual(1, len(patch_for_commit))
         self.assertEqual(patch1, patch_for_commit[0])
         self.assertEqual(1, len(commit_for_patch))
@@ -1031,7 +1031,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         series.commits = [commit1, commit2]
         patches = [patch1]
         patch_for_commit, commit_for_patch, warnings = (
-            pwork.compare_with_series(series, patches))
+            status.compare_with_series(series, patches))
         self.assertEqual(1, len(patch_for_commit))
         self.assertEqual(patch1, patch_for_commit[0])
         self.assertEqual(1, len(commit_for_patch))
@@ -1042,7 +1042,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         series.commits = [commit1, commit2, commit3]
         patches = [patch1, patch2]
         patch_for_commit, commit_for_patch, warnings = (
-            pwork.compare_with_series(series, patches))
+            status.compare_with_series(series, patches))
         self.assertEqual(2, len(patch_for_commit))
         self.assertEqual(patch1, patch_for_commit[0])
         self.assertEqual(patch2, patch_for_commit[1])
@@ -1056,7 +1056,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         series.commits = [commit1, commit2]
         patches = [patch1, patch2, patch3]
         patch_for_commit, commit_for_patch, warnings = (
-            pwork.compare_with_series(series, patches))
+            status.compare_with_series(series, patches))
         self.assertEqual(1, len(patch_for_commit))
         self.assertEqual(patch1, patch_for_commit[0])
         self.assertEqual(2, len(commit_for_patch))
@@ -1140,7 +1140,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
 
     def find_new_rtags(self, patch, rtags, pwork):
         patch_data, comment_data = self.find_new_responses(patch, pwork)
-        new_rtag_list, review_list = pwork.process_reviews(
+        new_rtag_list, review_list = status.process_reviews(
             patch_data['content'], comment_data, rtags)
         return new_rtag_list, review_list
 
