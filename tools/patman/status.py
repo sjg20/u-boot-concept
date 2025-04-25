@@ -353,6 +353,7 @@ def check_status(cover, patches, series, link, branch, dest_branch, force,
         test_repo (pygit2.Repository): Repo to use (use None unless testing)
     """
     with terminal.pager():
+        check_patch_count(len(series.commits), len(patches))
         num_to_add, new_rtag_list, _, _ = show_status(
             cover, patches, series, link, branch, show_comments,
             show_cover_comments)
