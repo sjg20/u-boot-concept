@@ -3920,11 +3920,14 @@ Date:   .*
         cor = self.check_series_sync_all()
 
         cser, pwork = next(cor)
-        self.run_args('series', '-s', 'second', 'sync-all', '-G', pwork=pwork)
+        self.run_args('series', '-n', '-s', 'second', 'sync-all', '-G',
+                      pwork=pwork)
 
         cser, pwork = next(cor)
-        self.run_args('series', '-s', 'second', 'sync-all', '-G', '-a',
-                      pwork=pwork)
+        self.run_args('series', '-n', '-s', 'second', 'sync-all', pwork=pwork)
+
+        cser, pwork = next(cor)
+        self.run_args('series',  '-s', 'second', 'sync-all', '-a', pwork=pwork)
 
         self.assertFalse(next(cor))
 

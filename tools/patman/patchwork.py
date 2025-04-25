@@ -24,7 +24,14 @@ from patman.patchstream import PatchStream
 # show_comments (bool): True to show comments
 # show_cover_comments (bool): True to show cover-letter comments
 STATE_REQ = namedtuple(
-    'patch', 'link,name,series,branch,show_comments,show_cover_comments')
+    'state_req', 'link,name,series,branch,show_comments,show_cover_comments')
+
+# Responses from series_get_states()
+# int: ser_ver ID number
+# COVER: Cover-letter info
+# list of Patch: Information on each patch in the series
+# list of dict: patches, see get_series()['patches']
+STATE_RESP = namedtuple('state_resp', 'svid,cover,patches,patch_list')
 
 # Information about a cover-letter on patchwork
 # id (int): Patchwork ID of cover letter
@@ -817,11 +824,8 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
             # sync (STATE_REQ): Info needed for the sync
             result (dict): Holds the result
 
-        Return: tuple:
-            int: ser_ver ID number
-            COVER: Cover-letter info
-            list of Patch: Information on each patch in the series
-            list of dict: patches, see get_series()['patches']
+        Return:
+            STATE_RESP: Response for the state
         """
         # 1 request
         data = await self.get_series(client, sync.link)
@@ -837,7 +841,7 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
         # 1 request for cover-letter comments, if there is one
         cover = await self._get_series_cover(client, data)
         result[svid] = svid, cover, patches
-        return svid, cover, patches, patch_list
+        return STATE_RESP(svid, cover, patches, patch_list)
 
     async def series_get_states(self, sync_data, gather_tags):
         """Sync a selection of series information from patchwork
@@ -848,12 +852,10 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
                 value (STATE_REQ): information to use for syncing
             gather_tags (bool): True to gather review/test tags
 
-        Return:
-            list of items, each a tuple:
-                int: svid
-                COVER: Cover letter, or None if none
-                list of Patch: Information on each patch in the series
-                list of dict: patches, see get_series()['patches']
+        Return: tuple
+            list of items, each:
+                STATE_RESP: Response for the state
+            int: Total number of patchwork requests issued
         """
         result = {}
         self.request_count = 0

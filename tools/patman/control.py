@@ -183,7 +183,7 @@ def do_series(args, test_db=None, pwork=None):
                              args.gather_tags, dry_run=args.dry_run)
         elif args.subcmd == 'sync-all':
             cser.series_sync_all(pwork, args.sync_all_versions,
-                                 args.gather_tags)
+                                 args.gather_tags, args.dry_run)
         elif args.subcmd == 'unarchive':
             cser.set_archived(args.series, False)
         elif args.subcmd == 'unmark':
