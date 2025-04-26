@@ -1104,7 +1104,10 @@ class Cseries:
                     if add_link:
                         links[max_vers] = add_link
                     new_links = series.build_links(links)
-                    vals.info += f"added links '{new_links}' "
+                    if add_link:
+                        vals.info += f"added links '{new_links}' "
+                    else:
+                        vals.info += f"updated links '{new_links}' "
                     out.append(f'Series-links: {new_links}')
                     added_link = True
                 else:
@@ -2016,7 +2019,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
 
             _, new_rtag_list, cover, patches = status.show_status(
                 cover, patches, series, link, branch, show_comments,
-                show_cover_comments)
+                show_cover_comments, self.col)
             self.update_series(series_name, series, version, None, dry_run,
                                add_rtags=new_rtag_list)
 
@@ -2084,18 +2087,19 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 pwork, svid, link, ser.name, version, show_comments, show_cover_comments,
                 gather_tags, dry_run))
 
-        updated, updated_cover = self._sync_one(
-            svid, ser.name, version, link, show_comments, show_cover_comments,
-            gather_tags, cover, patches, dry_run)
-        tout.info(f"{updated} patch{'es' if updated != 1 else ''}"
-                  f"{' and cover letter' if updated_cover else ''} updated "
-                  f'({stats.request_count} requests)')
+        with terminal.pager():
+            updated, updated_cover = self._sync_one(
+                svid, ser.name, version, link, show_comments, show_cover_comments,
+                gather_tags, cover, patches, dry_run)
+            tout.info(f"{updated} patch{'es' if updated != 1 else ''}"
+                      f"{' and cover letter' if updated_cover else ''} updated "
+                      f'({stats.request_count} requests)')
 
-        if not dry_run:
-            self.commit()
-        else:
-            self.rollback()
-            tout.info('Dry run completed')
+            if not dry_run:
+                self.commit()
+            else:
+                self.rollback()
+                tout.info('Dry run completed')
 
     def _get_fetch_dict(self, sync_all_versions):
         """Get a dict of ser_vers to fetch, along with their patchwork links

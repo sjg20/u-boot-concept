@@ -4029,7 +4029,8 @@ Date:   .*
             self.assertEqual("Processing 2 commits from branch 'first'", next(itr))
             self.assertRegex(next(itr),
                              '- added 1 tag .* as .*: i2c: I2C things')
-            self.assertRegex(next(itr), '-  .* as .*: spi: SPI fixes')
+            self.assertRegex(
+                next(itr), "- updated links '1:123'  .* as .*: spi: SPI fixes")
             self.assertRegex(next(itr), 'Updating branch first to .*')
             self.assertEqual('', next(itr))
 
@@ -4060,7 +4061,7 @@ Date:   .*
                 '- added 1 tag .* as .*: video: Some video improvements')
             self.assertRegex(
                 next(itr),
-                '-  .* as .*: serial: Add a serial driver')
+                "- updated links '2:456'  .* as .*: serial: Add a serial driver")
             self.assertRegex(next(itr), '-  .* as .*: bootm: Make it boot')
             self.assertRegex(next(itr), 'Updating branch second to .*')
             self.assertEqual('', next(itr))
@@ -4084,7 +4085,8 @@ Date:   .*
             self.assertEqual("Processing 2 commits from branch 'first'", next(itr))
             self.assertRegex(next(itr),
                              '- added 1 tag .* as .*: i2c: I2C things')
-            self.assertRegex(next(itr), '-  .* as .*: spi: SPI fixes')
+            self.assertRegex(
+                next(itr), "- updated links '1:123'  .* as .*: spi: SPI fixes")
             self.assertRegex(next(itr), 'Updating branch first to .*')
             self.assertEqual('', next(itr))
 
@@ -4100,7 +4102,8 @@ Date:   .*
                 "Processing 2 commits from branch 'first'", next(itr))
             self.assertRegex(
                 next(itr), '- added 1 tag .* as .*: i2c: I2C things')
-            self.assertRegex(next(itr), '-  .* as .*: spi: SPI fixes')
+            self.assertRegex(
+                next(itr), "- updated links '1:123'  .* as .*: spi: SPI fixes")
             self.assertRegex(next(itr), 'Updating branch first to .*')
             self.assertEqual('', next(itr))
             self.assertEqual("Syncing 'first' v3", next(itr))
@@ -4116,7 +4119,8 @@ Date:   .*
                 "Processing 2 commits from branch 'first'", next(itr))
             self.assertRegex(
                 next(itr), '- added 1 tag .* as .*: i2c: I2C things')
-            self.assertRegex(next(itr), '-  .* as .*: spi: SPI fixes')
+            self.assertRegex(
+                next(itr), "- updated links '1:123'  .* as .*: spi: SPI fixes")
             self.assertRegex(next(itr), 'Updating branch first to .*')
             self.assertEqual('', next(itr))
 
@@ -4153,7 +4157,7 @@ Date:   .*
                 '- added 1 tag .* as .*: video: Some video improvements')
             self.assertRegex(
                 next(itr),
-                '-  .* as .*: serial: Add a serial driver')
+                "- updated links '1:456'  .* as .*: serial: Add a serial driver")
             self.assertRegex(next(itr), '-  .* as .*: bootm: Make it boot')
             self.assertRegex(next(itr), 'Updating branch second to .*')
             self.assertEqual('', next(itr))
@@ -4191,7 +4195,7 @@ Date:   .*
                 '- added 1 tag .* as .*: video: Some video improvements')
             self.assertRegex(
                 next(itr),
-                '-  .* as .*: serial: Add a serial driver')
+                "- updated links '1:456'  .* as .*: serial: Add a serial driver")
             self.assertRegex(next(itr), '-  .* as .*: bootm: Make it boot')
             self.assertRegex(next(itr), 'Updating branch second to .*')
             self.assertEqual('', next(itr))

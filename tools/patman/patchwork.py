@@ -42,8 +42,8 @@ STATE_RESP = namedtuple('state_resp', 'svid,cover,patches,patch_list')
 # comments (list of dict): Comments
 COVER = namedtuple('cover', 'id,num_comments,name,comments')
 
-# Timeout waiting for patchwork
-TIMEOUT = 10
+# Number of retries
+RETRIES = 3
 
 # Max concurrent request
 MAX_CONCURRENT = 50
@@ -179,6 +179,7 @@ class Patchwork:
         Raises:
             ValueError: the URL could not be read
         """
+        print('subpath', subpath)
         self.request_count += 1
         if self.fake_request:
             return self.fake_request(subpath)
@@ -186,10 +187,17 @@ class Patchwork:
         full_url = '%s/api/1.2/%s' % (self.url, subpath)
         async with self.semaphore:
             # print('full_url', full_url)
-            async with client.get(full_url) as response:
-                if response.status != 200:
-                    raise ValueError("Could not read URL '%s'" % full_url)
-                return await response.json()
+            for i in range(RETRIES + 1):
+                try:
+                    async with client.get(full_url) as response:
+                        if response.status != 200:
+                            raise ValueError("Could not read URL '%s'" % full_url)
+                        return await response.json()
+                    break;
+                except aiohttp.client_exceptions.ServerDisconnectedError:
+                    if i == RETRIES:
+                        raise
+
 
     @staticmethod
     def for_testing(func):

@@ -177,7 +177,7 @@ def compare_with_series(series, patches):
 
 
 def show_status(cover, patches, series, link, branch,
-                  show_comments, show_cover_comments):
+                  show_comments, show_cover_comments, col):
     """Check the status of a series on Patchwork
 
     This finds review tags and comments for a series in Patchwork, displaying
@@ -190,6 +190,7 @@ def show_status(cover, patches, series, link, branch,
         show_comments (bool): True to show the comments on each patch
         show_cover_comments (bool): True to show the comments on the
             letter
+        col (terminal.Colour): Colour object
 
     Return: tuple:
         int: Number of new review tags to add
@@ -207,7 +208,6 @@ def show_status(cover, patches, series, link, branch,
         patch.parse_subject(pw_patch.series_data['name'])
         compare.append(patch)
 
-    col = terminal.Color()
     count = len(series.commits)
     new_rtag_list = [None] * count
     review_list = [None] * count
@@ -352,11 +352,12 @@ def check_status(cover, patches, series, link, branch, dest_branch, force,
             letter
         test_repo (pygit2.Repository): Repo to use (use None unless testing)
     """
+    col = terminal.Color()
     with terminal.pager():
         check_patch_count(len(series.commits), len(patches))
         num_to_add, new_rtag_list, _, _ = show_status(
             cover, patches, series, link, branch, show_comments,
-            show_cover_comments)
+            show_cover_comments, col)
 
         if not dest_branch and num_to_add:
             msg = ' (use -d to write them to a new branch)'
