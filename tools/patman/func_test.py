@@ -1962,8 +1962,8 @@ second line.'''
         self.assertEqual(
             "Adding series 'first' v1: mark False allow_unmarked True",
             next(lines))
-        self.assertEqual('Checking out upstream commit refs/heads/base',
-                         next(lines))
+        self.assertRegex(
+            next(lines), 'Checking out upstream commit refs/heads/base: .*')
         self.assertEqual(
             "Processing 2 commits from branch 'first'", next(lines))
         self.assertRegex(next(lines),
@@ -2363,8 +2363,8 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         lines = out.getvalue().splitlines()
         self.assertEqual(6, len(lines))
-        self.assertEqual('Checking out upstream commit refs/heads/base',
-                         lines[0])
+        self.assertRegex(
+            lines[0], 'Checking out upstream commit refs/heads/base: .*')
         self.assertEqual("Processing 2 commits from branch 'first2'",
                          lines[1])
         self.assertRegex(lines[2], '-  .* as .*: i2c: I2C things')
@@ -3270,8 +3270,8 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.assertEqual(
             "Adding series 'first' v1: mark True allow_unmarked False",
             next(lines))
-        self.assertEqual('Checking out upstream commit refs/heads/base',
-                         next(lines))
+        self.assertRegex(
+            next(lines), 'Checking out upstream commit refs/heads/base: .*')
         self.assertEqual("Processing 2 commits from branch 'first'",
                          next(lines))
         self.assertRegex(next(lines), r'- marked .* as .*: i2c: I2C things')
@@ -3348,8 +3348,8 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.assertEqual(
             "Unmarking series 'first': allow_unmarked False",
             next(lines))
-        self.assertEqual('Checking out upstream commit refs/heads/base',
-                         next(lines))
+        self.assertRegex(
+            next(lines), 'Checking out upstream commit refs/heads/base: .*')
         self.assertEqual("Processing 2 commits from branch 'first'",
                          next(lines))
         self.assertRegex(next(lines), '- unmarked .* as .*: i2c: I2C things')
@@ -3902,8 +3902,8 @@ Date:   .*
         self.assertEqual('  2 serial: Add a serial driver', next(itr))
         self.assertEqual('  3 bootm: Make it boot', next(itr))
 
-        self.assertEqual('Checking out upstream commit refs/heads/base',
-                         next(itr))
+        self.assertRegex(
+            next(itr), 'Checking out upstream commit refs/heads/base: .*')
         self.assertEqual("Processing 3 commits from branch 'second'", next(itr))
         self.assertRegex(
             next(itr), "- added 1 tag .* as .*: video: Some video improvements")
@@ -4010,7 +4010,8 @@ Date:   .*
             self.assertEqual('  1 i2c: I2C things', next(itr))
             self.assertEqual('  + Tested-by: Mary Smith <msmith@wibble.com>   # yak', next(itr))
             self.assertEqual('  2 spi: SPI fixes', next(itr))
-            self.assertEqual('Checking out upstream commit refs/heads/base', next(itr))
+            self.assertRegex(
+                next(itr), 'Checking out upstream commit refs/heads/base: .*')
             self.assertEqual("Processing 2 commits from branch 'first'", next(itr))
             self.assertRegex(next(itr),
                              '- added 1 tag .* as .*: i2c: I2C things')
@@ -4036,8 +4037,8 @@ Date:   .*
                 '  + Reviewed-by: Fred Bloggs <fred@bloggs.com>', next(itr))
             self.assertEqual('  2 serial: Add a serial driver', next(itr))
             self.assertEqual('  3 bootm: Make it boot', next(itr))
-            self.assertEqual(
-                'Checking out upstream commit refs/heads/base', next(itr))
+            self.assertRegex(
+                next(itr), 'Checking out upstream commit refs/heads/base: .*')
             self.assertEqual(
                 "Processing 3 commits from branch 'second'", next(itr))
             self.assertRegex(
@@ -4064,7 +4065,8 @@ Date:   .*
             self.assertEqual('  1 i2c: I2C things', next(itr))
             self.assertEqual('  + Tested-by: Mary Smith <msmith@wibble.com>   # yak', next(itr))
             self.assertEqual('  2 spi: SPI fixes', next(itr))
-            self.assertEqual('Checking out upstream commit refs/heads/base', next(itr))
+            self.assertRegex(
+                next(itr), 'Checking out upstream commit refs/heads/base: .*')
             self.assertEqual("Processing 2 commits from branch 'first'", next(itr))
             self.assertRegex(next(itr),
                              '- added 1 tag .* as .*: i2c: I2C things')
@@ -4078,8 +4080,8 @@ Date:   .*
                 '  + Tested-by: Mary Smith <msmith@wibble.com>   # yak',
                 next(itr))
             self.assertEqual('  2 spi: SPI fixes', next(itr))
-            self.assertEqual(
-                'Checking out upstream commit refs/heads/base', next(itr))
+            self.assertRegex(
+                next(itr), 'Checking out upstream commit refs/heads/base: .*')
             self.assertEqual(
                 "Processing 2 commits from branch 'first'", next(itr))
             self.assertRegex(
@@ -4094,8 +4096,8 @@ Date:   .*
                 '  + Tested-by: Mary Smith <msmith@wibble.com>   # yak',
                 next(itr))
             self.assertEqual('  2 spi: SPI fixes', next(itr))
-            self.assertEqual(
-                'Checking out upstream commit refs/heads/base', next(itr))
+            self.assertRegex(
+                next(itr), 'Checking out upstream commit refs/heads/base: .*')
             self.assertEqual(
                 "Processing 2 commits from branch 'first'", next(itr))
             self.assertRegex(
@@ -4128,8 +4130,8 @@ Date:   .*
             self.assertEqual('', next(itr))
             self.assertEqual('  2 serial: Add a serial driver', next(itr))
             self.assertEqual('  3 bootm: Make it boot', next(itr))
-            self.assertEqual(
-                'Checking out upstream commit refs/heads/base', next(itr))
+            self.assertRegex(
+                next(itr), 'Checking out upstream commit refs/heads/base: .*')
             self.assertEqual(
                 "Processing 3 commits from branch 'second'", next(itr))
             self.assertRegex(
@@ -4166,8 +4168,8 @@ Date:   .*
             self.assertEqual('', next(itr))
             self.assertEqual('  2 serial: Add a serial driver', next(itr))
             self.assertEqual('  3 bootm: Make it boot', next(itr))
-            self.assertEqual(
-                'Checking out upstream commit refs/heads/base', next(itr))
+            self.assertRegex(
+                next(itr), 'Checking out upstream commit refs/heads/base: .*')
             self.assertEqual(
                 "Processing 3 commits from branch 'second'", next(itr))
             self.assertRegex(
@@ -4215,7 +4217,8 @@ Date:   .*
         self.run_args('series', '-n', '-s', 'second', 'sync-all', pwork=pwork)
 
         cser, pwork = next(cor)
-        self.run_args('series',  '-s', 'second', 'sync-all', '-a', pwork=pwork)
+        self.run_args('series',  '-s', 'second', 'sync-all', '-a', '-c',
+                      pwork=pwork)
 
         self.assertFalse(next(cor))
 
@@ -4584,8 +4587,8 @@ Date:   .*
             self.assertEqual('   457        2  Series for my board', next(lines))
             self.assertEqual('Sleeping for 20 seconds', next(lines))
         self.assertEqual('Link completed after 140 seconds', next(lines))
-        self.assertEqual('Checking out upstream commit refs/heads/base',
-                         next(lines))
+        self.assertRegex(
+            next(lines), 'Checking out upstream commit refs/heads/base: .*')
         self.assertEqual(
             "Processing 3 commits from branch 'second3'", next(lines))
         self.assertRegex(
@@ -4614,7 +4617,7 @@ Date:   .*
             self.assertEqual('', next(lines))
 
             self.assertEqual(
-                'From: Ghenkis Kham <gk@eurasia.gov>: Sun 13 Apr 13:06:02 MDT 2025',
+                'From: Ghenkis Khan <gk@eurasia.gov>: Sun 13 Apr 13:06:02 MDT 2025',
                 next(lines))
             self.assertEqual('another comment', next(lines))
             self.assertEqual('', next(lines))

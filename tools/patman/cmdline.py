@@ -238,6 +238,8 @@ def add_series_args(subparsers):
     sall.add_argument('-a', '--sync-all-versions', action='store_true',
                       help='Sync all series versions, not just the latest')
     _add_gather(sall)
+    _add_show_comments(sall)
+    _add_show_cover_comments(sall)
 
     series_subparsers.add_parser('unarchive')
 
