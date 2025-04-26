@@ -2024,26 +2024,13 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             gather_tags (bool): True to gather review/test tags
             dry_run (bool): True to do a dry run
         """
-        with pwork.collect_stats() as stats:
-            cover, patches = await pwork._series_get_state(
-                client, link, True, show_cover_comments)
-        updated, updated_cover = self._sync_one(
-            svid, name, version, link, show_comments, show_cover_comments,
-            gather_tags, cover, patches, dry_run)
-        tout.info(f"{updated} patch{'es' if updated != 1 else ''}"
-                  f"{' and cover letter' if updated_cover else ''} updated "
-                  f'({stats.request_count} requests)')
-
-        if not dry_run:
-            self.commit()
-        else:
-            self.rollback()
-            tout.info('Dry run completed')
+        return await pwork._series_get_state(
+            client, link, True, show_cover_comments)
 
     async def do_series_sync(self, pwork, svid, link, series, version, show_comments,
                              show_cover_comments, gather_tags, dry_run):
         async with aiohttp.ClientSession() as client:
-            await self._series_sync(client, pwork, svid, link, series, version,
+            return await self._series_sync(client, pwork, svid, link, series, version,
                                     show_comments, show_cover_comments,
                                     gather_tags, dry_run)
 
@@ -2057,10 +2044,25 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 "No patchwork link is available: use 'patman series autolink'")
         tout.info(
             f"Updating series '{ser.name}' version {version} from link '{link}'")
+
         loop = asyncio.get_event_loop()
-        loop.run_until_complete(self.do_series_sync(
-            pwork, svid, link, ser.name, version, show_comments, show_cover_comments,
-            gather_tags, dry_run))
+        with pwork.collect_stats() as stats:
+            cover, patches = loop.run_until_complete(self.do_series_sync(
+                pwork, svid, link, ser.name, version, show_comments, show_cover_comments,
+                gather_tags, dry_run))
+
+        updated, updated_cover = self._sync_one(
+            svid, ser.name, version, link, show_comments, show_cover_comments,
+            gather_tags, cover, patches, dry_run)
+        tout.info(f"{updated} patch{'es' if updated != 1 else ''}"
+                  f"{' and cover letter' if updated_cover else ''} updated "
+                  f'({stats.request_count} requests)')
+
+        if not dry_run:
+            self.commit()
+        else:
+            self.rollback()
+            tout.info('Dry run completed')
 
     def _get_fetch_dict(self, sync_all_versions):
         """Get a dict of ser_vers to fetch, along with their patchwork links
