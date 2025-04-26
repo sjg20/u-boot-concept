@@ -1256,7 +1256,8 @@ class Cseries:
         branch = repo.lookup_branch(name)
 
         if not quiet:
-            tout.info(f"Checking out upstream commit {upstream_name}")
+            tout.info(
+                f"Checking out upstream commit {upstream_name}: {oid(commit.oid)}")
         if new_name:
             name = new_name
 
