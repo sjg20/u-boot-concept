@@ -2049,7 +2049,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         missing = 0
         svdict = self.get_ser_ver_dict()
         sdict = self.get_series_dict_by_id()
-        to_fetch = OrderedDict()
+        to_fetch = {}
 
         if sync_all_versions:
             for svid, series_id, version, link, _, _, desc in \
@@ -2074,7 +2074,16 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                         False, False)
                 else:
                     missing += 1
-        return to_fetch, missing
+
+        # order by series name, version
+        ordered = OrderedDict()
+        for svid in sorted(
+                to_fetch,
+                key=lambda k: (to_fetch[k].series_name, to_fetch[k].version)):
+            sync = to_fetch[svid]
+            ordered[svid] = sync
+
+        return ordered, missing
 
     async def _series_sync_all(self, client, pwork, show_cover_comments,
                                to_fetch):
@@ -2091,8 +2100,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             list of PATCH objects
         """
         with pwork.collect_stats() as stats:
-            tasks = [pwork._series_get_state(client, sync.link, True,
-                                             show_cover_comments)
+            tasks = [pwork._series_get_state(client, sync.link, True, True)
                      for sync in to_fetch.values()]
             result = await asyncio.gather(*tasks)
         return result, stats.request_count
@@ -2114,13 +2122,17 @@ Please use 'patman series -s {branch} scan' to resolve this''')
 
         tot_updated = 0
         tot_cover = 0
+        add_newline = False
         for (svid, sync), (cover, patches) in zip(to_fetch.items(), result):
+            if add_newline:
+                tout.info('')
             tout.info(f"Syncing '{sync.series_name}' v{sync.version}")
             updated, updated_cover = self._sync_one(
                 svid, sync.series_name, sync.version, sync.link, show_comments,
                 show_cover_comments, gather_tags, cover, patches, dry_run)
             tot_updated += updated
             tot_cover += updated_cover
+            add_newline = gather_tags
 
         tout.info(
             f"{tot_updated} patch{'es' if tot_updated != 1 else ''} and "

@@ -2164,12 +2164,15 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                      },
                     { 'content': 'another comment',
                       'submitter': {
-                              'name': 'Ghenkis Kham',
+                              'name': 'Ghenkis Khan',
                               'email': 'gk@eurasia.gov',
                           },
                       'date': 'Sun 13 Apr 13:06:02 MDT 2025',
                      },
                 ]
+            if cover_id == 29:
+                return []
+
             raise ValueError(f'Fake Patchwork unknown cover_id: {cover_id}')
 
         raise ValueError(f'Fake Patchwork does not understand: {subpath}')
@@ -3991,7 +3994,7 @@ Date:   .*
             self.assertEqual(
                 "Syncing 'first' v3\n"
                 "Syncing 'second' v2\n"
-                '5 patches and 0 cover letters updated, 0 missing links (12 requests)\n'
+                '5 patches and 2 cover letters updated, 0 missing links (14 requests)\n'
                 'Dry run completed',
                 out.getvalue().strip())
 
@@ -4002,6 +4005,7 @@ Date:   .*
             lines = out.getvalue().splitlines()
             itr = iter(lines)
             self.assertEqual("Syncing 'first' v3", next(itr))
+            self.assertEqual('Cov Cover letter for first', next(itr))
             self.assertEqual('  1 i2c: I2C things', next(itr))
             self.assertEqual('  + Tested-by: Mary Smith <msmith@wibble.com>   # yak', next(itr))
             self.assertEqual('  2 spi: SPI fixes', next(itr))
@@ -4011,8 +4015,21 @@ Date:   .*
                              '- added 1 tag .* as .*: i2c: I2C things')
             self.assertRegex(next(itr), '-  .* as .*: spi: SPI fixes')
             self.assertRegex(next(itr), 'Updating branch first to .*')
+            self.assertEqual('', next(itr))
 
             self.assertEqual("Syncing 'second' v2", next(itr))
+            self.assertEqual('Cov The name of the cover letter', next(itr))
+            self.assertEqual(
+                'From: A user <user@user.com>: Sun 13 Apr 14:06:02 MDT 2025',
+                next(itr))
+            self.assertEqual('some comment', next(itr))
+            self.assertEqual('', next(itr))
+            self.assertEqual(
+                'From: Ghenkis Khan <gk@eurasia.gov>: Sun 13 Apr 13:06:02 MDT 2025',
+                 next(itr))
+            self.assertEqual('another comment', next(itr))
+            self.assertEqual('', next(itr))
+
             self.assertEqual('  1 video: Some video improvements', next(itr))
             self.assertEqual(
                 '  + Reviewed-by: Fred Bloggs <fred@bloggs.com>', next(itr))
@@ -4032,23 +4049,70 @@ Date:   .*
             self.assertRegex(next(itr), 'Updating branch second to .*')
 
             self.assertEqual(
-                '5 patches and 0 cover letters updated, 0 missing links (12 requests)',
+                '5 patches and 2 cover letters updated, 0 missing links (14 requests)',
                 next(itr))
             self.assertEqual('Dry run completed', next(itr))
             self.assertFinished(itr)
 
-        with self.stage('gather, !dry_run'):
+        with self.stage('gather, patch comments,!dry_run'):
             with terminal.capture() as (out, _):
                 yield cser, pwork
             lines = out.getvalue().splitlines()
             itr = iter(lines)
+            self.assertEqual("Syncing 'first' v1", next(itr))
+            self.assertEqual('  1 i2c: I2C things', next(itr))
+            self.assertEqual('  + Tested-by: Mary Smith <msmith@wibble.com>   # yak', next(itr))
+            self.assertEqual('  2 spi: SPI fixes', next(itr))
+            self.assertEqual('Checking out upstream commit refs/heads/base', next(itr))
+            self.assertEqual("Processing 2 commits from branch 'first'", next(itr))
+            self.assertRegex(next(itr),
+                             '- added 1 tag .* as .*: i2c: I2C things')
+            self.assertRegex(next(itr), '-  .* as .*: spi: SPI fixes')
+            self.assertRegex(next(itr), 'Updating branch first to .*')
+            self.assertEqual('', next(itr))
+
+            self.assertEqual("Syncing 'first' v2", next(itr))
+            self.assertEqual('  1 i2c: I2C things', next(itr))
+            self.assertEqual(
+                '  + Tested-by: Mary Smith <msmith@wibble.com>   # yak',
+                next(itr))
+            self.assertEqual('  2 spi: SPI fixes', next(itr))
+            self.assertEqual(
+                'Checking out upstream commit refs/heads/base', next(itr))
+            self.assertEqual(
+                "Processing 2 commits from branch 'first'", next(itr))
+            self.assertRegex(
+                next(itr), '- added 1 tag .* as .*: i2c: I2C things')
+            self.assertRegex(next(itr), '-  .* as .*: spi: SPI fixes')
+            self.assertRegex(next(itr), 'Updating branch first to .*')
+            self.assertEqual('', next(itr))
+            self.assertEqual("Syncing 'first' v3", next(itr))
+            self.assertEqual('Cov Cover letter for first', next(itr))
+            self.assertEqual('  1 i2c: I2C things', next(itr))
+            self.assertEqual(
+                '  + Tested-by: Mary Smith <msmith@wibble.com>   # yak',
+                next(itr))
+            self.assertEqual('  2 spi: SPI fixes', next(itr))
+            self.assertEqual(
+                'Checking out upstream commit refs/heads/base', next(itr))
+            self.assertEqual(
+                "Processing 2 commits from branch 'first'", next(itr))
+            self.assertRegex(
+                next(itr), '- added 1 tag .* as .*: i2c: I2C things')
+            self.assertRegex(next(itr), '-  .* as .*: spi: SPI fixes')
+            self.assertRegex(next(itr), 'Updating branch first to .*')
+            self.assertEqual('', next(itr))
+
+            self.assertEqual("Syncing 'second' v1", next(itr))
+            self.assertEqual('Cov The name of the cover letter', next(itr))
+
             self.assertEqual(
                 "Syncing 'first' v1\n"
                 "Syncing 'first' v2\n"
                 "Syncing 'first' v3\n"
                 "Syncing 'second' v1\n"
                 "Syncing 'second' v2\n"
-                '12 patches and 5 cover letters updated, 0 missing links (29 requests)',
+                '12 patches and 3 cover letters updated, 0 missing links (32 requests)',
                 out.getvalue().strip())
 
         yield None
@@ -4056,16 +4120,18 @@ Date:   .*
     def test_series_sync_all(self):
         """Sync all series at once"""
         cor = self.check_series_sync_all()
-
         cser, pwork = next(cor)
-        cser.series_sync_all(pwork, False, False, False, False, dry_run=True)
 
+        # no options
+        cser.series_sync_all(pwork, False, True, False, False, dry_run=True)
         cser, pwork = next(cor)
+
+        # gather
         cser.series_sync_all(pwork, False, False, False, True, dry_run=True)
-
         cser, pwork = next(cor)
-        cser.series_sync_all(pwork, False, False, True, True)
 
+        # gather, patch comments,!dry_run
+        cser.series_sync_all(pwork, True, False, True, True)
         self.assertFalse(next(cor))
 
     def test_series_sync_all_cmdline(self):

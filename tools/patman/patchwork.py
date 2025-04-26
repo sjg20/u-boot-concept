@@ -759,7 +759,9 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
         Returns:
             COVER object, or None if no cover letter
         """
-        cover = data['cover_letter']
+        # Patchwork should always provide this, but use get() so that we don't
+        # have to provide it in our fake patchwork _fake_patchwork_cser()
+        cover = data.get('cover_letter')
         cover_id = None
         if cover:
             cover_id = cover['id']
