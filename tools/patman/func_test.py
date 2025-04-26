@@ -2470,7 +2470,7 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
 
         # Set link with detected version
         with terminal.capture() as (out, _):
-            cser.set_link('second', None, '456', True)
+            cser.set_link('second', None, f'{SERIES_ID_SECOND_V1}', True)
         self.assertEqual(
             "Setting link for series 'second' v1 to 456",
             out.getvalue().splitlines()[-1])
@@ -2478,7 +2478,7 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
         # Make sure that the link was set
         series = patchstream.get_metadata('second', 0, count,
                                           git_dir=self.gitdir)
-        self.assertEqual('1:456', series.links)
+        self.assertEqual(f'1:{SERIES_ID_SECOND_V1}', series.links)
 
         with terminal.capture():
             cser.increment('second')
@@ -2492,8 +2492,9 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
         self.assertFalse(cser.get_project())
         cser.set_project(pwork, 'U-Boot', quiet=True)
 
-        self.assertEqual((456, None, 'second', 1, 'Series for my board'),
-                         cser.search_link(pwork, 'second', 1))
+        self.assertEqual(
+            ({SERIES_ID_SECOND_V1}, None, 'second', 1, 'Series for my board'),
+            cser.search_link(pwork, 'second', 1))
 
         with terminal.capture():
             cser.increment('second')
@@ -2572,14 +2573,15 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
         self.assertFalse(cser.get_project())
         cser.set_project(pwork, 'U-Boot', quiet=True)
 
-        self.assertEqual((456, None, 'second', 1, 'Series for my board'),
-                         cser.search_link(pwork, 'second', 1))
+        self.assertEqual(
+            (SERIES_ID_SECOND_V1, None, 'second', 1, 'Series for my board'),
+            cser.search_link(pwork, 'second', 1))
         self.assertEqual((457, None, 'second', 2, 'Series for my board'),
                          cser.search_link(pwork, 'second', 2))
         res = cser.search_link(pwork, 'second', 3)
         self.assertEqual(
             (None,
-             [{'id': 456, 'name': 'Series for my board', 'version': 1},
+             [{'id': SERIES_ID_SECOND_V1, 'name': 'Series for my board', 'version': 1},
               {'id': 457, 'name': 'Series for my board', 'version': 2}],
              'second', 3, 'Series for my board'),
              res)
@@ -2604,7 +2606,8 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
         plist = cser.get_ser_ver_list()
         self.assertEqual(2, len(plist))
         self.assertEqual((1, 1, 1, None, None, None, None), plist[0])
-        self.assertEqual((2, 2, 1, '456', None, None, None), plist[1])
+        self.assertEqual((2, 2, 1, f'{SERIES_ID_SECOND_V1}', None, None, None),
+                         plist[1])
         yield cser
 
     def test_series_autolink(self):
@@ -2620,7 +2623,7 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
         with terminal.capture() as (out, _):
             cser.autolink(pwork, 'second', None, True)
         self.assertEqual(
-                "Setting link for series 'second' v1 to 456",
+                f"Setting link for series 'second' v1 to {SERIES_ID_SECOND_V1}",
                 out.getvalue().splitlines()[-1])
 
         cser = next(cor)
@@ -2636,7 +2639,7 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
             self.run_args('series', '-s', 'second', 'autolink', '-u',
                           pwork=pwork)
         self.assertEqual(
-                "Setting link for series 'second' v1 to 456",
+                f"Setting link for series 'second' v1 to {SERIES_ID_SECOND_V1}",
                 out.getvalue().splitlines()[-1])
 
         next(cor)
@@ -2750,7 +2753,8 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
         self.assertEqual(
             ('first', 2, None, 'first series', 'not found'), next(items))
         self.assertEqual(
-            ('second', 1, '183237', 'Series for my board', 'linked:456'),
+            ('second', 1, '183237', 'Series for my board',
+             f'linked:{SERIES_ID_SECOND_V1}'),
             next(items))
 
     def test_series_autolink_cmdline(self):
