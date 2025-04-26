@@ -2134,6 +2134,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             tot_cover += updated_cover
             add_newline = gather_tags
 
+        tout.info('')
         tout.info(
             f"{tot_updated} patch{'es' if tot_updated != 1 else ''} and "
             f"{tot_cover} cover letter{'s' if tot_cover != 1 else ''} "

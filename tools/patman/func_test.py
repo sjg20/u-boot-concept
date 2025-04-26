@@ -3994,6 +3994,7 @@ Date:   .*
             self.assertEqual(
                 "Syncing 'first' v3\n"
                 "Syncing 'second' v2\n"
+                '\n'
                 '5 patches and 2 cover letters updated, 0 missing links (14 requests)\n'
                 'Dry run completed',
                 out.getvalue().strip())
@@ -4047,7 +4048,7 @@ Date:   .*
                 '-  .* as .*: serial: Add a serial driver')
             self.assertRegex(next(itr), '-  .* as .*: bootm: Make it boot')
             self.assertRegex(next(itr), 'Updating branch second to .*')
-
+            self.assertEqual('', next(itr))
             self.assertEqual(
                 '5 patches and 2 cover letters updated, 0 missing links (14 requests)',
                 next(itr))
@@ -4105,15 +4106,83 @@ Date:   .*
 
             self.assertEqual("Syncing 'second' v1", next(itr))
             self.assertEqual('Cov The name of the cover letter', next(itr))
-
             self.assertEqual(
-                "Syncing 'first' v1\n"
-                "Syncing 'first' v2\n"
-                "Syncing 'first' v3\n"
-                "Syncing 'second' v1\n"
-                "Syncing 'second' v2\n"
+                'From: A user <user@user.com>: Sun 13 Apr 14:06:02 MDT 2025',
+                next(itr))
+            self.assertEqual('some comment', next(itr))
+            self.assertEqual('', next(itr))
+            self.assertEqual(
+                'From: Ghenkis Khan <gk@eurasia.gov>: Sun 13 Apr 13:06:02 MDT 2025',
+                 next(itr))
+            self.assertEqual('another comment', next(itr))
+            self.assertEqual('', next(itr))
+            self.assertEqual('  1 video: Some video improvements', next(itr))
+            self.assertEqual(
+                '  + Reviewed-by: Fred Bloggs <fred@bloggs.com>', next(itr))
+            self.assertEqual('Review: Fred Bloggs <fred@bloggs.com>', next(itr))
+            self.assertEqual('    > This was my original patch', next(itr))
+            self.assertEqual('    > which is being quoted', next(itr))
+            self.assertEqual(
+                '    I like the approach here and I would love to see more of it.',
+                next(itr))
+            self.assertEqual('', next(itr))
+            self.assertEqual('  2 serial: Add a serial driver', next(itr))
+            self.assertEqual('  3 bootm: Make it boot', next(itr))
+            self.assertEqual(
+                'Checking out upstream commit refs/heads/base', next(itr))
+            self.assertEqual(
+                "Processing 3 commits from branch 'second'", next(itr))
+            self.assertRegex(
+                next(itr),
+                '- added 1 tag .* as .*: video: Some video improvements')
+            self.assertRegex(
+                next(itr),
+                '-  .* as .*: serial: Add a serial driver')
+            self.assertRegex(next(itr), '-  .* as .*: bootm: Make it boot')
+            self.assertRegex(next(itr), 'Updating branch second to .*')
+            self.assertEqual('', next(itr))
+
+            self.assertEqual("Syncing 'second' v2", next(itr))
+            self.assertEqual('Cov The name of the cover letter', next(itr))
+            self.assertEqual(
+                'From: A user <user@user.com>: Sun 13 Apr 14:06:02 MDT 2025',
+                next(itr))
+            self.assertEqual('some comment', next(itr))
+            self.assertEqual('', next(itr))
+            self.assertEqual(
+                'From: Ghenkis Khan <gk@eurasia.gov>: Sun 13 Apr 13:06:02 MDT 2025',
+                 next(itr))
+            self.assertEqual('another comment', next(itr))
+            self.assertEqual('', next(itr))
+            self.assertEqual('  1 video: Some video improvements', next(itr))
+            self.assertEqual(
+                '  + Reviewed-by: Fred Bloggs <fred@bloggs.com>', next(itr))
+            self.assertEqual('Review: Fred Bloggs <fred@bloggs.com>', next(itr))
+            self.assertEqual('    > This was my original patch', next(itr))
+            self.assertEqual('    > which is being quoted', next(itr))
+            self.assertEqual(
+                '    I like the approach here and I would love to see more of it.',
+                next(itr))
+            self.assertEqual('', next(itr))
+            self.assertEqual('  2 serial: Add a serial driver', next(itr))
+            self.assertEqual('  3 bootm: Make it boot', next(itr))
+            self.assertEqual(
+                'Checking out upstream commit refs/heads/base', next(itr))
+            self.assertEqual(
+                "Processing 3 commits from branch 'second'", next(itr))
+            self.assertRegex(
+                next(itr),
+                '- added 1 tag .* as .*: video: Some video improvements')
+            self.assertRegex(
+                next(itr),
+                '-  .* as .*: serial: Add a serial driver')
+            self.assertRegex(next(itr), '-  .* as .*: bootm: Make it boot')
+            self.assertRegex(next(itr), 'Updating branch second to .*')
+            self.assertEqual('', next(itr))
+            self.assertEqual(
                 '12 patches and 3 cover letters updated, 0 missing links (32 requests)',
-                out.getvalue().strip())
+                next(itr))
+            self.assertFinished(itr)
 
         yield None
 
