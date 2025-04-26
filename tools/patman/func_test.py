@@ -1995,7 +1995,10 @@ second line.'''
                 {'id':9, 'name': 'other', 'link_name': 'other'}
             ]
 
-        if subpath.startswith('series/'):
+        # Read information about a series, given its link (patchwork series ID)
+        m_series = re.match(r'series/(\d+)/$', subpath)
+        series_id = m_series.group(1) if m_series else ''
+        if series_id:
             return {
                 'patches': [
                     {'id': '10', 'name': '[PATCH,1/3] video: Some video improvements',
