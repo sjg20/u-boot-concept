@@ -1320,7 +1320,7 @@ class Cseries:
         tout.detail(f"cherry {oid(cherry.oid)}")
         return tree_id, cherry
 
-    def _finish_commit(self, repo, commit, cur, msg=None):
+    def _finish_commit(self, repo, tree_id, commit, cur, msg=None):
         """Complete a commit
 
         This must be called after _pick_commit()
@@ -1335,8 +1335,10 @@ class Cseries:
         """
         if msg is None:
             msg = commit.message
+        if not tree_id:
+            tree_id = commit.tree_id
         repo.create_commit('HEAD', commit.author, commit.committer,
-                           msg, commit.tree_id, [cur.target])
+                           msg, tree_id, [cur.target])
         return repo.head
 
     def _finish_process(self, repo, branch, name, cur, old_head, new_name=None,
@@ -1424,12 +1426,15 @@ class Cseries:
                 from 0, which is the one after the upstream branch, to count - 1
         """
         count = len(series.commits)
-        repo, cur, branch, name = self._prepare_process(name, count, quiet=True)
+        repo, cur, branch, name, commit, commits, old_head = self._prepare_process(name, count, quiet=True)
+        repo.checkout_tree(commit, strategy=CheckoutStrategy.FORCE |
+                           CheckoutStrategy.RECREATE_MISSING)
+        repo.set_head(commit.oid)
         for seq, cmt in enumerate(series.commits):
             if seq != seq_to_drop:
                 tree_id, cherry = self._pick_commit(repo, cmt)
                 cur = self._finish_commit(repo, tree_id, cherry, cur)
-        self._finish_process(repo, branch, name, quiet=True)
+        self._finish_process(repo, branch, name, cur, None, quiet=True)
 
     def _process_series(self, name, series, new_name=None, switch=False,
                         dry_run=False):
@@ -1464,7 +1469,7 @@ class Cseries:
             vals.seq = seq
             yield vals
 
-            cur = self._finish_commit(repo, commit, cur, vals.msg)
+            cur = self._finish_commit(repo, None, commit, cur, vals.msg)
             tout.info(f"- {vals.info} {oid(cmt.hash)} as {oid(cur.target)}: {cmt}")
         # print('ps2 old_head', old_head)
         target = self._finish_process(repo, branch, name, cur, old_head, new_name, switch, dry_run)

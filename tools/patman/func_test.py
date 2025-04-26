@@ -4482,6 +4482,8 @@ Date:   .*
     def test_series_scan(self):
         """Test scanning a series for updates"""
         cser, _ = self.setup_second()
+        target = self.repo.lookup_reference('refs/heads/second2')
+        self.repo.checkout(target, strategy=pygit2.GIT_CHECKOUT_FORCE)
 
         # Add a new commit
         self.repo = pygit2.init_repository(self.gitdir)
@@ -4491,12 +4493,12 @@ Date:   .*
         target = self.repo.revparse_single('HEAD')
         self.repo.reset(target.oid, pygit2.enums.ResetMode.HARD)
 
-        name = gitutil.get_branch(self.gitdir)
+        # name = gitutil.get_branch(self.gitdir)
         # upstream_name = gitutil.get_upstream(self.gitdir, name)
         name, ser, version, _ = cser._prep_series(None)
 
         # We now have 4 commits numbered 0 (second~3) to 3 (the one we just
-        # added). Drop commit 1 from the branch
+        # added). Drop commit 1 (the 'serial' one) from the branch
         cser.filter_commits(name, ser, 1)
         svid = cser.get_ser_ver(ser.idnum, version)[0]
         old_pcdict = cser.get_pcommit_dict(svid).values()
