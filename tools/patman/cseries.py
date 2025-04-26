@@ -2009,7 +2009,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
 
         return updated, 1 if cover else 0
 
-    async def _series_sync(self, client, pwork, name, version,
+    async def _series_sync(self, client, pwork, svid, link, name, version,
                            show_comments, show_cover_comments, gather_tags,
                            dry_run):
         """Sync the series status from patchwork
@@ -2024,19 +2024,11 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             gather_tags (bool): True to gather review/test tags
             dry_run (bool): True to do a dry run
         """
-        ser, version = self.parse_series_and_version(name, version)
-        self.ensure_version(ser, version)
-        svid, link = self.get_series_svid_link(ser.idnum, version)
-        if not link:
-            raise ValueError(
-                "No patchwork link is available: use 'patman series autolink'")
-        tout.info(
-            f"Updating series '{ser.name}' version {version} from link '{link}'")
         with pwork.collect_stats() as stats:
             cover, patches = await pwork._series_get_state(
                 client, link, True, show_cover_comments)
         updated, updated_cover = self._sync_one(
-            svid, ser.name, version, link, show_comments, show_cover_comments,
+            svid, name, version, link, show_comments, show_cover_comments,
             gather_tags, cover, patches, dry_run)
         tout.info(f"{updated} patch{'es' if updated != 1 else ''}"
                   f"{' and cover letter' if updated_cover else ''} updated "
@@ -2048,18 +2040,26 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             self.rollback()
             tout.info('Dry run completed')
 
-    async def do_series_sync(self, pwork, series, version, show_comments,
+    async def do_series_sync(self, pwork, svid, link, series, version, show_comments,
                              show_cover_comments, gather_tags, dry_run):
         async with aiohttp.ClientSession() as client:
-            await self._series_sync(client, pwork, series, version,
+            await self._series_sync(client, pwork, svid, link, series, version,
                                     show_comments, show_cover_comments,
                                     gather_tags, dry_run)
 
     def series_sync(self, pwork, series, version, show_comments,
                     show_cover_comments, gather_tags, dry_run=False):
+        ser, version = self.parse_series_and_version(series, version)
+        self.ensure_version(ser, version)
+        svid, link = self.get_series_svid_link(ser.idnum, version)
+        if not link:
+            raise ValueError(
+                "No patchwork link is available: use 'patman series autolink'")
+        tout.info(
+            f"Updating series '{ser.name}' version {version} from link '{link}'")
         loop = asyncio.get_event_loop()
         loop.run_until_complete(self.do_series_sync(
-            pwork, series, version, show_comments, show_cover_comments,
+            pwork, svid, link, ser.name, version, show_comments, show_cover_comments,
             gather_tags, dry_run))
 
     def _get_fetch_dict(self, sync_all_versions):
