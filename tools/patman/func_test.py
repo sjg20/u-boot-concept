@@ -583,7 +583,7 @@ better than before''')
 
         target = repo.revparse_single('HEAD~2')
         # pylint doesn't seem to find this
-        # pylint: disable=E1101
+        # # pylint: disable=E1101
         repo.reset(target.oid, pygit2.enums.ResetMode.HARD)
         self.make_commit_with_file('video: Some video improvements', '''
 Fix up the video so that
@@ -1981,9 +1981,9 @@ second line.'''
     def _fake_patchwork_cser(self, subpath):
         """Fake Patchwork server for the function below
 
-        This handles accessing a series, providing a list consisting of three
-        patches, a cover letter and some comments. It also allows three patches
-        to be queried.
+        This handles accessing various things used by the tests below. It has
+        hard-coded data, about from self.autolink_extra which can be adjusted
+        by the test.
 
         Args:
             subpath (str): URL subpath to use
@@ -2012,22 +2012,41 @@ second line.'''
 
         # Read information about a series, given its link (patchwork series ID)
         m_series = re.match(r'series/(\d+)/$', subpath)
-        series_id = m_series.group(1) if m_series else ''
+        series_id = int(m_series.group(1)) if m_series else ''
         if series_id:
-            return {
-                'patches': [
-                    {'id': '10', 'name': '[PATCH,1/3] video: Some video improvements',
-                     'content': ''},
-                    {'id': '11', 'name': '[PATCH,2/3] serial: Add a serial driver',
-                     'content': ''},
-                    {'id': '12', 'name': '[PATCH,3/3] bootm: Make it boot',
-                     'content': ''},
-                ],
-                'cover_letter': {
-                    'id': 39,
-                    'name': 'The name of the cover letter',
+            if series_id == 1234:
+                # series 'first'
+                return {
+                    'patches': [
+                        {'id': '10', 'name': '[PATCH,1/3] video: Some video improvements',
+                         'content': ''},
+                        {'id': '11', 'name': '[PATCH,2/3] serial: Add a serial driver',
+                         'content': ''},
+                        {'id': '12', 'name': '[PATCH,3/3] bootm: Make it boot',
+                         'content': ''},
+                    ],
+                    'cover_letter': {
+                        'id': 39,
+                        'name': 'The name of the cover letter',
+                    }
                 }
-            }
+            if series_id == 31:
+                # series 'first3'
+                return {
+                    'patches': [
+                        {'id': '10', 'name': '[PATCH,1/3] video: Some video improvements',
+                         'content': ''},
+                        {'id': '11', 'name': '[PATCH,2/3] serial: Add a serial driver',
+                         'content': ''},
+                        {'id': '12', 'name': '[PATCH,3/3] bootm: Make it boot',
+                         'content': ''},
+                    ],
+                    'cover_letter': {
+                        'id': 39,
+                        'name': 'Cover letter for first3',
+                    }
+                }
+            raise ValueError(f'Fake Patchwork unknown series_id: {series_id}')
 
         # Read patch status
         m_pat = re.search(r'patches/(\d*)/$', subpath)
