@@ -2089,10 +2089,6 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
         Args:
             subpath (str): URL subpath to use
         """
-        if subpath == 'projects/':
-            return [
-                {'id':PROJ_ID, 'name': 'U-Boot', 'link_name': 'uboot'},
-                {'id':9, 'name': 'other', 'link_name': 'other'}]
         re_series = re.match(r'series/\?project=(\d+)&q=.*$', subpath)
         if re_series:
             series_num = re_series.group(1)
