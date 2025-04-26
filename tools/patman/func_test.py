@@ -4020,17 +4020,17 @@ Date:   .*
             next(lines))
         self.assertIn('PatchId', next(lines))
         self.assertEqual(
-            'Cov              2      39            The name of the cover letter',
+            'Cov              2     139            The name of the cover letter',
             next(lines))
         self.assertRegex(
             next(lines),
-            '  0 accepted     2      10 .* video: Some video improvements')
+            '  0 accepted     2     110 .* video: Some video improvements')
         self.assertRegex(
             next(lines),
-            '  1 changes             11 .* serial: Add a serial driver')
+            '  1 changes            111 .* serial: Add a serial driver')
         self.assertRegex(
             next(lines),
-            '  2 rejected     3      12 .* bootm: Make it boot')
+            '  2 rejected     3     112 .* bootm: Make it boot')
 
     def test_series_progress(self):
         """Test showing progress for a cseries"""
