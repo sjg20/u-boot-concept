@@ -3881,14 +3881,14 @@ Date:   .*
         with terminal.capture() as (out, _):
             yield cser, pwork
         self.assertEqual(
-            '5 patches and 2 cover letters updated, 0 missing links (16 requests)\n'
+            '5 patches and 0 cover letters updated, 0 missing links (14 requests)\n'
             'Dry run completed',
             out.getvalue().strip())
 
         with terminal.capture() as (out, _):
             yield cser, pwork
         self.assertEqual(
-            '5 patches and 2 cover letters updated, 0 missing links (16 requests)\n'
+            '5 patches and 0 cover letters updated, 0 missing links (14 requests)\n'
             'Dry run completed',
             out.getvalue().strip())
 

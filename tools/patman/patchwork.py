@@ -19,12 +19,13 @@ from patman.patchstream import PatchStream
 # Information passed to series_get_states()
 # link (str): Patchwork link for series
 # name (str): Name or description (not used)
+# version (int): Version number of series
 # series_id (int): Series ID in database
 # show_comments (bool): True to show comments
 # show_cover_comments (bool): True to show cover-letter comments
 STATE_REQ = namedtuple(
     'state_req',
-    'link,name,series_id,show_comments,show_cover_comments')
+    'link,name,series_id,version,show_comments,show_cover_comments')
 
 # Responses from series_get_states()
 # int: ser_ver ID number
@@ -205,6 +206,29 @@ class Patchwork:
         pwork = Patchwork(None, show_progress=False)
         pwork.fake_request = func
         return pwork
+
+    class _Stats:
+        def __init__(self, parent):
+            self.parent = parent
+            self.request_count = 0
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            self.request_count = self.parent.request_count
+
+    def collect_stats(self):
+        """Context manager to count requests across a range of patchwork calls
+
+        Usage:
+            pwork = Patchwork(...)
+            with pwork.count_requests() as counter:
+                pwork.something()
+            print(f'{counter.count} requests')
+        """
+        self.request_count = 0
+        return self._Stats(self)
 
     async def get_projects(self):
         """Get a list of projects on the server
