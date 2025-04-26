@@ -4722,6 +4722,9 @@ Date:   .*
         self.assertEqual('first', gitutil.get_branch(self.gitdir))
         with terminal.capture() as (out, _):
             cser.increment('first')
+        self.assertEqual('first2', gitutil.get_branch(self.gitdir))
+
+        with terminal.capture() as (out, _):
             cser.increment('first')
         self.assertEqual('first3', gitutil.get_branch(self.gitdir))
 

@@ -1051,7 +1051,7 @@ class Cseries:
 
     def update_series(self, name, series, max_vers, new_name=None,
                       dry_run=False, add_vers=None, add_link=None,
-                      add_rtags=None):
+                      add_rtags=None, switch=False):
         """Rewrite a series to update the Series-version/Series-links lines
 
         This updates the series in git; it does not update the database
@@ -1077,7 +1077,8 @@ class Cseries:
         """
         added_version = False
         added_link = False
-        for vals in self._process_series(name, series, new_name, dry_run):
+        for vals in self._process_series(name, series, new_name, switch,
+                                         dry_run):
             out = []
             for line in vals.msg.splitlines():
                 m_ver = re.match('Series-version:(.*)', line)
@@ -1140,6 +1141,7 @@ class Cseries:
         max_vers = self.series_max_version(ser.idnum)
 
         branch_name = self.get_branch_name(ser.name, max_vers)
+        on_branch = gitutil.get_branch(self.gitdir) == branch_name
         svid = self.get_series_svid(ser.idnum, max_vers)
         pwc = self.get_pcommit_dict(svid)
         count = len(pwc.values())
@@ -1152,7 +1154,7 @@ class Cseries:
         new_name = self.join_name_version(ser.name, vers)
 
         self.update_series(ser.name, series, max_vers, new_name, dry_run,
-                           add_vers=vers)
+                           add_vers=vers, switch=on_branch)
 
         old_svid = self.get_series_svid(ser.idnum, max_vers)
         pcd = self.get_pcommit_dict(old_svid)
@@ -1337,7 +1339,8 @@ class Cseries:
                            msg, commit.tree_id, [cur.target])
         return repo.head
 
-    def _finish_process(self, repo, branch, name, cur, old_head, new_name=None, dry_run=False,
+    def _finish_process(self, repo, branch, name, cur, old_head, new_name=None,
+                        switch=False, dry_run=False,
                         quiet=False):
         """Finish processing commits
 
@@ -1387,10 +1390,13 @@ class Cseries:
             repo.set_head(branch.name)
             # print('branch', branch.name)
         if old_head:
-            # print('2old_head', old_head, repo.head)
+            #print('switch', switch)
+            #print('2old_head', old_head, repo.head)
+            #print('old_head name', old_head.name)
             # ref = repo.lookup_branch(old_head)
             # repo.set_head(repo.head)
-            repo.set_head(old_head.name)
+            if not switch:
+                repo.set_head(old_head.name)
         return target
 
     def make_change_id(self, commit):
@@ -1425,7 +1431,8 @@ class Cseries:
                 cur = self._finish_commit(repo, tree_id, cherry, cur)
         self._finish_process(repo, branch, name, quiet=True)
 
-    def _process_series(self, name, series, new_name=None, dry_run=False):
+    def _process_series(self, name, series, new_name=None, switch=False,
+                        dry_run=False):
         """Rewrite a series
 
         Args:
@@ -1460,7 +1467,7 @@ class Cseries:
             cur = self._finish_commit(repo, commit, cur, vals.msg)
             tout.info(f"- {vals.info} {oid(cmt.hash)} as {oid(cur.target)}: {cmt}")
         # print('ps2 old_head', old_head)
-        target = self._finish_process(repo, branch, name, cur, old_head, new_name, dry_run)
+        target = self._finish_process(repo, branch, name, cur, old_head, new_name, switch, dry_run)
         vals.oid = target.oid
 
     def _mark_series(self, name, series, dry_run=False):
