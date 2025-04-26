@@ -1978,6 +1978,133 @@ second line.'''
         series = patchstream.get_metadata('first', 0, 2, git_dir=self.gitdir)
         self.assertNotIn('version', series)
 
+    def _fake_patchwork_cser(self, subpath):
+        """Fake Patchwork server for the function below
+
+        This handles accessing a series, providing a list consisting of three
+        patches, a cover letter and some comments. It also allows three patches
+        to be queried.
+
+        Args:
+            subpath (str): URL subpath to use
+        """
+        if subpath == 'projects/':
+            return [
+                {'id':PROJ_ID, 'name': 'U-Boot', 'link_name': PROJ_LINK_NAME},
+                {'id':9, 'name': 'other'}]
+        if subpath.startswith('series/'):
+            return {
+                'patches': [
+                    {'id': '10', 'name': '[PATCH,1/3] video: Some video improvements',
+                     'content': ''},
+                    {'id': '11', 'name': '[PATCH,2/3] serial: Add a serial driver',
+                     'content': ''},
+                    {'id': '12', 'name': '[PATCH,3/3] bootm: Make it boot',
+                     'content': ''},
+                ],
+                'cover_letter': {
+                    'id': 39,
+                    'name': 'The name of the cover letter',
+                }
+            }
+        m_pc = re.search(r'patches/(\d*)/comments/', subpath)
+        patch_id = m_pc.group(1) if m_pc else ''
+        if patch_id:
+            if patch_id == '10':
+                return [
+                    {'id': 1, 'content': ''},
+                    {'id': 2,
+                     'content': '''On some date Mary Smith <msmith@wibble.com>> wrote:
+> This was my original patch
+> which is being quoted
+
+I like the approach here and I would love to see more of it.
+
+Reviewed-by: Fred Bloggs <fred@bloggs.com>
+''',
+                     'submitter': {
+                         'name': 'Fred Bloggs',
+                         'email': 'fred@bloggs.com',
+                         }
+                    },
+                ]
+            if patch_id == '11':
+                return []
+            if patch_id == '12':
+                return [
+                    {'id': 4, 'content': ''},
+                    {'id': 5, 'content': ''},
+                    {'id': 6, 'content': ''},
+                ]
+            raise ValueError(
+                f'Fake Patchwork does not understand patch_id {patch_id} '
+                f'type {type(patch_id)}: {subpath}')
+
+        m_cover_id = re.search(r'covers/(\d*)/comments/', subpath)
+        cover_id = m_cover_id.group(1) if m_cover_id else ''
+        if cover_id:
+            if cover_id == '39':
+                return [
+                    { 'content': 'some comment',
+                      'submitter': {
+                              'name': 'A user',
+                              'email': 'user@user.com',
+                          },
+                      'date': 'Sun 13 Apr 14:06:02 MDT 2025',
+                     },
+                    { 'content': 'another comment',
+                      'submitter': {
+                              'name': 'Ghenkis Kham',
+                              'email': 'gk@eurasia.gov',
+                          },
+                      'date': 'Sun 13 Apr 13:06:02 MDT 2025',
+                     },
+                ]
+            raise ValueError(f'Fake Patchwork unknown cover_id: {cover_id}')
+
+        m_pat = re.search(r'patches/(\d*)/', subpath)
+        patch_id = m_pat.group(1) if m_pat else ''
+        if subpath.startswith('patches/'):
+            if patch_id == '10':
+                return {'state': 'accepted',
+                        'content': 'Reviewed-by: Fred Bloggs <fred@bloggs.com>'}
+            if patch_id == '11':
+                return {'state': 'changes-requested', 'content': ''}
+            if patch_id == '12':
+                return {'state': 'rejected',
+                        'content': "I don't like this at all, sorry"}
+            raise ValueError(f'Fake Patchwork unknown patch_id: {patch_id}')
+        raise ValueError(f'Fake Patchwork does not understand: {subpath}')
+
+    def _fake_patchwork_cser_link(self, subpath):
+        """Fake Patchwork server for the function below
+
+        This handles accessing a series, providing a list consisting of a
+        single patch
+
+        Args:
+            subpath (str): URL subpath to use
+        """
+        if subpath == 'projects/':
+            return [
+                {'id':PROJ_ID, 'name': 'U-Boot', 'link_name': 'uboot'},
+                {'id':9, 'name': 'other', 'link_name': 'other'}]
+        re_series = re.match(r'series/\?project=(\d+)&q=.*$', subpath)
+        if re_series:
+            series_num = re_series.group(1)
+            result = [
+                {'id': 56, 'name': 'contains first name', 'version': 1},
+                {'id': 43, 'name': 'has first in it', 'version': 1},
+                {'id': 1234, 'name': 'first series', 'version': 1},
+                {'id': 456, 'name': 'Series for my board', 'version': 1},
+                {'id': 457, 'name': 'Series for my board', 'version': 2},
+                {'id': 12345, 'name': 'i2c: I2C things', 'version': 1},
+            ]
+            if self.autolink_extra:
+                result += [self.autolink_extra]
+            return result;
+        return self._fake_patchwork_cser(subpath)
+
     def test_series_add_no_cover(self):
         """Test patchwork when adding a series which has no cover letter"""
         cser = self.get_cser()
@@ -2292,35 +2419,6 @@ second line.'''
         self.assertIn('1234', out.getvalue())
 
         self.db_close()
-
-    def _fake_patchwork_cser_link(self, subpath):
-        """Fake Patchwork server for the function below
-
-        This handles accessing a series, providing a list consisting of a
-        single patch
-
-        Args:
-            subpath (str): URL subpath to use
-        """
-        if subpath == 'projects/':
-            return [
-                {'id':PROJ_ID, 'name': 'U-Boot', 'link_name': 'uboot'},
-                {'id':9, 'name': 'other', 'link_name': 'other'}]
-        re_series = re.match(r'series/\?project=(\d+)&q=.*$', subpath)
-        if re_series:
-            series_num = re_series.group(1)
-            result = [
-                {'id': 56, 'name': 'contains first name', 'version': 1},
-                {'id': 43, 'name': 'has first in it', 'version': 1},
-                {'id': 1234, 'name': 'first series', 'version': 1},
-                {'id': 456, 'name': 'Series for my board', 'version': 1},
-                {'id': 457, 'name': 'Series for my board', 'version': 2},
-                {'id': 12345, 'name': 'i2c: I2C things', 'version': 1},
-            ]
-            if self.autolink_extra:
-                result += [self.autolink_extra]
-            return result;
-        return self._fake_patchwork_cser(subpath)
 
     def test_series_link_auto_version(self):
         """Test finding the patchwork link for a cseries automatically"""
@@ -3504,104 +3602,6 @@ second line.'''
 
         cor.close()
 
-    def _fake_patchwork_cser(self, subpath):
-        """Fake Patchwork server for the function below
-
-        This handles accessing a series, providing a list consisting of three
-        patches, a cover letter and some comments. It also allows three patches
-        to be queried.
-
-        Args:
-            subpath (str): URL subpath to use
-        """
-        if subpath == 'projects/':
-            return [
-                {'id':PROJ_ID, 'name': 'U-Boot', 'link_name': PROJ_LINK_NAME},
-                {'id':9, 'name': 'other'}]
-        if subpath.startswith('series/'):
-            return {
-                'patches': [
-                    {'id': '10', 'name': '[PATCH,1/3] video: Some video improvements',
-                     'content': ''},
-                    {'id': '11', 'name': '[PATCH,2/3] serial: Add a serial driver',
-                     'content': ''},
-                    {'id': '12', 'name': '[PATCH,3/3] bootm: Make it boot',
-                     'content': ''},
-                ],
-                'cover_letter': {
-                    'id': 39,
-                    'name': 'The name of the cover letter',
-                }
-            }
-        m_pc = re.search(r'patches/(\d*)/comments/', subpath)
-        patch_id = m_pc.group(1) if m_pc else ''
-        if patch_id:
-            if patch_id == '10':
-                return [
-                    {'id': 1, 'content': ''},
-                    {'id': 2,
-                     'content': '''On some date Mary Smith <msmith@wibble.com>> wrote:
-> This was my original patch
-> which is being quoted
-
-I like the approach here and I would love to see more of it.
-
-Reviewed-by: Fred Bloggs <fred@bloggs.com>
-''',
-                     'submitter': {
-                         'name': 'Fred Bloggs',
-                         'email': 'fred@bloggs.com',
-                         }
-                    },
-                ]
-            if patch_id == '11':
-                return []
-            if patch_id == '12':
-                return [
-                    {'id': 4, 'content': ''},
-                    {'id': 5, 'content': ''},
-                    {'id': 6, 'content': ''},
-                ]
-            raise ValueError(
-                f'Fake Patchwork does not understand patch_id {patch_id} '
-                f'type {type(patch_id)}: {subpath}')
-
-        m_cover_id = re.search(r'covers/(\d*)/comments/', subpath)
-        cover_id = m_cover_id.group(1) if m_cover_id else ''
-        if cover_id:
-            if cover_id == '39':
-                return [
-                    { 'content': 'some comment',
-                      'submitter': {
-                              'name': 'A user',
-                              'email': 'user@user.com',
-                          },
-                      'date': 'Sun 13 Apr 14:06:02 MDT 2025',
-                     },
-                    { 'content': 'another comment',
-                      'submitter': {
-                              'name': 'Ghenkis Kham',
-                              'email': 'gk@eurasia.gov',
-                          },
-                      'date': 'Sun 13 Apr 13:06:02 MDT 2025',
-                     },
-                ]
-            raise ValueError(f'Fake Patchwork unknown cover_id: {cover_id}')
-
-        m_pat = re.search(r'patches/(\d*)/', subpath)
-        patch_id = m_pat.group(1) if m_pat else ''
-        if subpath.startswith('patches/'):
-            if patch_id == '10':
-                return {'state': 'accepted',
-                        'content': 'Reviewed-by: Fred Bloggs <fred@bloggs.com>'}
-            if patch_id == '11':
-                return {'state': 'changes-requested', 'content': ''}
-            if patch_id == '12':
-                return {'state': 'rejected',
-                        'content': "I don't like this at all, sorry"}
-            raise ValueError(f'Fake Patchwork unknown patch_id: {patch_id}')
-        raise ValueError(f'Fake Patchwork does not understand: {subpath}')
-
     def test_patchwork_set_project(self):
         """Test setting the project ID"""
         cser = self.get_cser()
@@ -3909,13 +3909,15 @@ Date:   .*
             with terminal.capture() as (out, _):
                 yield cser, pwork
             self.assertEqual(
+                "Syncing 'first' v3\n"
+                "Syncing 'second' v2\n"
                 '5 patches and 0 cover letters updated, 0 missing links (14 requests)\n'
                 'Dry run completed',
                 out.getvalue().strip())
 
         with self.stage('gather'):
-            with terminal.capture() as (out, _):
-                yield cser, pwork
+            # with terminal.capture() as (out, _):
+            yield cser, pwork
             self.assertEqual(
                 '5 patches and 0 cover letters updated, 0 missing links (14 requests)\n'
                 'Dry run completed',

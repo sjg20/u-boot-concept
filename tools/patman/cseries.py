@@ -2115,6 +2115,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         tot_updated = 0
         tot_cover = 0
         for (svid, sync), (cover, patches) in zip(to_fetch.items(), result):
+            tout.info(f"Syncing '{sync.series_name}' v{sync.version}")
             updated, updated_cover = self._sync_one(
                 svid, sync.series_name, sync.version, sync.link, show_comments,
                 show_cover_comments, gather_tags, cover, patches, dry_run)
@@ -2131,7 +2132,6 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         else:
             self.rollback()
             tout.info('Dry run completed')
-        self.commit()
 
     def series_max_version(self, idnum):
         """Find the latest version of a series
