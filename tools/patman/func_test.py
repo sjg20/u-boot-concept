@@ -606,7 +606,7 @@ This series implements support
 for my glorious board.
 END
 Series-to: u-boot
-Series-links: 183237
+Series-links: {SERIES_ID_SECOND_V1}
 ''', 'serial.c', '''The code for the
 serial driver is here''')
         self.make_commit_with_file('bootm: Make it boot', '''
@@ -2466,7 +2466,7 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
         count = 3
         series = patchstream.get_metadata('second', 0, count,
                                           git_dir=self.gitdir)
-        self.assertEqual('183237', series.links)
+        self.assertEqual(f'{SERIES_ID_SECOND_V1}', series.links)
 
         # Set link with detected version
         with terminal.capture() as (out, _):
@@ -2493,7 +2493,7 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
         cser.set_project(pwork, 'U-Boot', quiet=True)
 
         self.assertEqual(
-            ({SERIES_ID_SECOND_V1}, None, 'second', 1, 'Series for my board'),
+            (SERIES_ID_SECOND_V1, None, 'second', 1, 'Series for my board'),
             cser.search_link(pwork, 'second', 1))
 
         with terminal.capture():
@@ -2681,7 +2681,8 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
         self.assertEqual(
             ('first', 2, None, 'first series', 'not found'), next(items))
         self.assertEqual(
-            ('second', 1, '183237', 'Series for my board', 'already:183237'),
+            ('second', 1, f'{SERIES_ID_SECOND_V1}', 'Series for my board',
+             f'already:{SERIES_ID_SECOND_V1}'),
             next(items))
         self.assertEqual('Dry run completed', out.getvalue().splitlines()[-1])
 
@@ -2722,7 +2723,8 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
         self.assertEqual(
             ('first', 2, None, 'first series', 'not found'), next(items))
         self.assertEqual(
-            ('second', 1, '183237', 'Series for my board', 'already:183237'),
+            ('second', 1, f'{SERIES_ID_SECOND_V1}', 'Series for my board',
+             f'already:{SERIES_ID_SECOND_V1}'),
             next(items))
 
     def test_series_autolink_no_update(self):
@@ -2753,7 +2755,7 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
         self.assertEqual(
             ('first', 2, None, 'first series', 'not found'), next(items))
         self.assertEqual(
-            ('second', 1, '183237', 'Series for my board',
+            ('second', 1, f'{SERIES_ID_SECOND_V1}', 'Series for my board',
              f'linked:{SERIES_ID_SECOND_V1}'),
             next(items))
 
@@ -2813,17 +2815,21 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
              next(lines))
         self.assertEqual('', next(lines))
         self.assertEqual(
-            'Name             Version  Description                               Result',
+            'Name             Version  Description                               '
+            'Result',
             next(lines))
         self.assertTrue(next(lines).startswith('--'))
         self.assertEqual(
-            'first                  1  first series                              linked:1234',
+            'first                  1  first series                              '
+            'linked:1234',
             next(lines))
         self.assertEqual(
-            'first                  2  first series                              not found',
+            'first                  2  first series                              '
+            'not found',
             next(lines))
         self.assertEqual(
-            'second                 1  Series for my board                       already:183237',
+            f'second                 1  Series for my board                       '
+            f'already:{SERIES_ID_SECOND_V1}',
             next(lines))
         self.assertTrue(next(lines).startswith('--'))
         self.assertFinished(lines)
@@ -3834,7 +3840,7 @@ Date:   .*
             yield cser, pwork
         lines = out.getvalue().splitlines()
         self.assertEqual(
-            "Updating series 'second' version 1 from link '183237'",
+            f"Updating series 'second' version 1 from link '{SERIES_ID_SECOND_V1}'",
             lines[0])
         self.assertEqual('3 patches updated (7 requests)', lines[1])
         self.assertEqual('Dry run completed', lines[2])
@@ -3851,7 +3857,8 @@ Date:   .*
         lines = out.getvalue().splitlines()
         itr = iter(lines)
         self.assertEqual(
-            "Updating series 'second' version 1 from link '183237'", next(itr))
+            f"Updating series 'second' version 1 from link '{SERIES_ID_SECOND_V1}'",
+             next(itr))
         self.assertEqual('  1 video: Some video improvements', next(itr))
         self.assertEqual('  + Reviewed-by: Fred Bloggs <fred@bloggs.com>',
                          next(itr))
