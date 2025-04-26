@@ -2003,13 +2003,15 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 "No patchwork link is available: use 'patman series autolink'")
         tout.info(
             f"Updating series '{ser.name}' version {version} from link '{link}'")
-        cover, patches = await pwork._series_get_state(
-            client, link, True, show_cover_comments)
+        with pwork.collect_stats() as stats:
+            cover, patches = await pwork._series_get_state(
+                client, link, True, show_cover_comments)
         updated, updated_cover = self._sync_one(
             svid, ser.name, version, link, show_comments, show_cover_comments,
             gather_tags, cover, patches, dry_run)
         tout.info(f"{updated} patch{'es' if updated != 1 else ''}"
-                  f"{' and cover letter' if updated_cover else ''} updated")
+                  f"{' and cover letter' if updated_cover else ''} updated "
+                  f'({stats.request_count} requests)')
 
         if not dry_run:
             self.commit()

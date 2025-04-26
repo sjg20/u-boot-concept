@@ -1995,7 +1995,8 @@ second line.'''
             lines = out.getvalue().splitlines()
             self.assertEqual(
                 "Updating series 'second' version 2 from link '457'", lines[0])
-            self.assertEqual('3 patches and cover letter updated', lines[1])
+            self.assertEqual('3 patches and cover letter updated (8 requests)',
+                             lines[1])
             self.assertEqual(2, len(lines))
 
         return cser, pwork
@@ -3771,7 +3772,7 @@ Date:   .*
         self.assertEqual(
             "Updating series 'second' version 1 from link '183237'",
             lines[0])
-        self.assertEqual('3 patches updated', lines[1])
+        self.assertEqual('3 patches updated (7 requests)', lines[1])
         self.assertEqual('Dry run completed', lines[2])
         self.assertEqual(3, len(lines))
 
@@ -3801,7 +3802,7 @@ Date:   .*
         self.assertRegex(next(itr), "- .* as .*: serial: Add a serial driver")
         self.assertRegex(next(itr), "- .* as .*: bootm: Make it boot")
         self.assertRegex(next(itr), "Updating branch second to .*")
-        self.assertEqual('3 patches updated', next(itr))
+        self.assertEqual('3 patches updated (7 requests)', next(itr))
         self.assertEqual('Dry run completed', next(itr))
         self.assertFinished(itr)
 
