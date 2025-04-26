@@ -2009,7 +2009,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             svid, ser.name, version, link, show_comments, show_cover_comments,
             gather_tags, cover, patches, dry_run)
         tout.info(f"{updated} patch{'es' if updated != 1 else ''}"
-                  f"{' and cover letter' if cover else ''} updated")
+                  f"{' and cover letter' if updated_cover else ''} updated")
 
         if not dry_run:
             self.commit()
@@ -2045,15 +2045,18 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             int: number of series which are missing a link
         """
         missing = 0
-        sdict = self.get_ser_ver_dict()
+        svdict = self.get_ser_ver_dict()
+        sdict = self.get_series_dict_by_id()
         to_fetch = OrderedDict()
 
         if sync_all_versions:
             for svid, series_id, version, link, _, _, desc in \
                     self.get_ser_ver_list():
+                ser_ver = svdict[svid]
                 if link:
                     to_fetch[svid] = patchwork.STATE_REQ(
-                        link, desc, series_id, version, False, False)
+                        link, series_id, sdict[series_id].name, version, False,
+                        False)
                 else:
                     missing += 1
         else:
@@ -2062,10 +2065,11 @@ Please use 'patman series -s {branch} scan' to resolve this''')
 
             # Get a list of links to fetch
             for svid, series_id, version in max_vers:
-                ser = sdict[svid]
-                if ser.link:
+                ser_ver = svdict[svid]
+                if ser_ver.link:
                     to_fetch[svid] = patchwork.STATE_REQ(
-                        ser.link, ser.name, series_id, version, False, False)
+                        ser_ver.link, series_id, sdict[series_id].name, version,
+                        False, False)
                 else:
                     missing += 1
         return to_fetch, missing
@@ -2106,26 +2110,18 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         result, requests = loop.run_until_complete(self.do_series_sync_all(
                 pwork, show_cover_comments, to_fetch))
 
-        updated = 0
-        updated_cover = 0
+        tot_updated = 0
+        tot_cover = 0
         for (svid, sync), (cover, patches) in zip(to_fetch.items(), result):
             updated, updated_cover = self._sync_one(
-                svid, ser.name, version, link, show_comments, show_cover_comments,
-                gather_tags, cover, patches, dry_run)
-
-            name, _ = self.get_series_info(sync.series_id)
-            pwc = self.get_pcommit_dict(svid)
-            count = len(pwc)
-            branch = self.join_name_version(name, sync.version)
-            series = patchstream.get_metadata(branch, 0, count,
-                                              git_dir=self.gitdir)
-        updated += self._sync_one(svid, cover, patches)
-        if cover:
-            updated_cover += 1
+                svid, sync.series_name, sync.version, sync.link, show_comments,
+                show_cover_comments, gather_tags, cover, patches, dry_run)
+            tot_updated += updated
+            tot_cover += updated_cover
 
         tout.info(
-            f"{updated} patch{'es' if updated != 1 else ''} and "
-            f"{updated_cover} cover letter{'s' if updated_cover != 1 else ''} "
+            f"{tot_updated} patch{'es' if tot_updated != 1 else ''} and "
+            f"{tot_cover} cover letter{'s' if tot_cover != 1 else ''} "
             f'updated, {missing} missing '
             f"link{'s' if missing != 1 else ''} ({requests} requests)")
         if not dry_run:
