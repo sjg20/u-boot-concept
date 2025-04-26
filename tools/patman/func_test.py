@@ -1995,6 +1995,21 @@ second line.'''
                 {'id':9, 'name': 'other', 'link_name': 'other'}
             ]
 
+        # Search for series by their cover-letter name
+        re_search = re.match(r'series/\?project=(\d+)&q=.*$', subpath)
+        if re_search:
+            result = [
+                {'id': 56, 'name': 'contains first name', 'version': 1},
+                {'id': 43, 'name': 'has first in it', 'version': 1},
+                {'id': 1234, 'name': 'first series', 'version': 1},
+                {'id': 456, 'name': 'Series for my board', 'version': 1},
+                {'id': 457, 'name': 'Series for my board', 'version': 2},
+                {'id': 12345, 'name': 'i2c: I2C things', 'version': 1},
+            ]
+            if self.autolink_extra:
+                result += [self.autolink_extra]
+            return result
+
         # Read information about a series, given its link (patchwork series ID)
         m_series = re.match(r'series/(\d+)/$', subpath)
         series_id = m_series.group(1) if m_series else ''
@@ -2087,35 +2102,10 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
 
         raise ValueError(f'Fake Patchwork does not understand: {subpath}')
 
-    def _fake_patchwork_cser_link(self, subpath):
-        """Fake Patchwork server for the function below
-
-        This handles accessing a series, providing a list consisting of a
-        single patch
-
-        Args:
-            subpath (str): URL subpath to use
-        """
-        re_series = re.match(r'series/\?project=(\d+)&q=.*$', subpath)
-        if re_series:
-            series_num = re_series.group(1)
-            result = [
-                {'id': 56, 'name': 'contains first name', 'version': 1},
-                {'id': 43, 'name': 'has first in it', 'version': 1},
-                {'id': 1234, 'name': 'first series', 'version': 1},
-                {'id': 456, 'name': 'Series for my board', 'version': 1},
-                {'id': 457, 'name': 'Series for my board', 'version': 2},
-                {'id': 12345, 'name': 'i2c: I2C things', 'version': 1},
-            ]
-            if self.autolink_extra:
-                result += [self.autolink_extra]
-            return result;
-        return self._fake_patchwork_cser(subpath)
-
     def test_series_add_no_cover(self):
         """Test patchwork when adding a series which has no cover letter"""
         cser = self.get_cser()
-        pwork = Patchwork.for_testing(self._fake_patchwork_cser_link)
+        pwork = Patchwork.for_testing(self._fake_patchwork_cser)
         pwork.set_project(PROJ_ID, PROJ_LINK_NAME)
 
         with terminal.capture() as (out, _):
@@ -2139,7 +2129,7 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
             pwork: Patchwork object
         """
         cser = self.get_cser()
-        pwork = Patchwork.for_testing(self._fake_patchwork_cser_link)
+        pwork = Patchwork.for_testing(self._fake_patchwork_cser)
         pwork.set_project(PROJ_ID, PROJ_LINK_NAME)
 
         with terminal.capture() as (out, _):
@@ -2459,7 +2449,7 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
         series = patchstream.get_metadata('second2', 0, 3,
                                           git_dir=self.gitdir)
 
-        pwork = Patchwork.for_testing(self._fake_patchwork_cser_link)
+        pwork = Patchwork.for_testing(self._fake_patchwork_cser)
         pwork.set_project(PROJ_ID, PROJ_LINK_NAME)
         self.assertFalse(cser.get_project())
         cser.set_project(pwork, 'U-Boot', quiet=True)
@@ -2539,7 +2529,7 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
             cser.increment('second')
             cser.increment('second')
 
-        pwork = Patchwork.for_testing(self._fake_patchwork_cser_link)
+        pwork = Patchwork.for_testing(self._fake_patchwork_cser)
         pwork.set_project(PROJ_ID, PROJ_LINK_NAME)
         self.assertFalse(cser.get_project())
         cser.set_project(pwork, 'U-Boot', quiet=True)
@@ -2560,7 +2550,7 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
         """Common code for autolink tests"""
         cser = self.get_cser()
 
-        pwork = Patchwork.for_testing(self._fake_patchwork_cser_link)
+        pwork = Patchwork.for_testing(self._fake_patchwork_cser)
         pwork.set_project(PROJ_ID, PROJ_LINK_NAME)
         self.assertFalse(cser.get_project())
         cser.set_project(pwork, 'U-Boot', quiet=True)
@@ -2623,7 +2613,7 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
         """
         cser = self.get_cser()
 
-        pwork = Patchwork.for_testing(self._fake_patchwork_cser_link)
+        pwork = Patchwork.for_testing(self._fake_patchwork_cser)
         pwork.set_project(PROJ_ID, PROJ_LINK_NAME)
         self.assertFalse(cser.get_project())
         cser.set_project(pwork, 'U-Boot', quiet=True)
@@ -4125,7 +4115,7 @@ Date:   .*
 
     def test_series_open(self):
         cser = self.get_cser()
-        pwork = Patchwork.for_testing(self._fake_patchwork_cser_link)
+        pwork = Patchwork.for_testing(self._fake_patchwork_cser)
         self.assertFalse(cser.get_project())
         pwork.set_project(PROJ_ID, PROJ_LINK_NAME)
 
