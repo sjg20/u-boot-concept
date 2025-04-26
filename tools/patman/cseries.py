@@ -1280,7 +1280,7 @@ class Cseries:
 
         if new_name:
             name = new_name
-            old_head = None
+            # old_head = None
         repo.set_head(commit.oid)
 
         commits = []

@@ -4447,6 +4447,8 @@ Date:   .*
     def test_name_version_extra(self):
         """More tests for some corner cases"""
         cser, _ = self.setup_second()
+        target = self.repo.lookup_reference('refs/heads/second2')
+        self.repo.checkout(target, strategy=pygit2.GIT_CHECKOUT_FORCE)
 
         ser, version = cser.parse_series_and_version(None, None)
         self.assertEqual('second', ser.name)
