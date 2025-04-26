@@ -1378,7 +1378,7 @@ class Cseries:
                 branch = new_branch
             else:
                 # branch.set_target(target.oid)
-                print('cur', cur, cur.target)
+                # print('cur', cur, cur.target)
                 branch.set_target(cur.target)
                 # branch = cur
             # repo.checkout(branch)
