@@ -48,6 +48,9 @@ TEST_DATA_DIR = PATMAN_DIR / 'test/'
 # Fake patchwork project ID for U-Boot
 PROJ_ID = 6
 PROJ_LINK_NAME = 'uboot'
+SERIES_ID_SECOND_V1 = 456
+SERIES_ID_SECOND_V2 = 457
+TITLE_SECOND = 'Series for my board'
 
 # pylint: disable=protected-access
 
@@ -593,12 +596,12 @@ a very nice colour.
 Purple and purple
 Even more purple
 Could not be any more purple''')
-        self.make_commit_with_file('serial: Add a serial driver', '''
+        self.make_commit_with_file('serial: Add a serial driver', f'''
 Here is the serial driver
 for my chip.
 
 Cover-letter:
-Series for my board
+{TITLE_SECOND}
 This series implements support
 for my glorious board.
 END
@@ -2002,8 +2005,8 @@ second line.'''
                 {'id': 56, 'name': 'contains first name', 'version': 1},
                 {'id': 43, 'name': 'has first in it', 'version': 1},
                 {'id': 1234, 'name': 'first series', 'version': 1},
-                {'id': 456, 'name': 'Series for my board', 'version': 1},
-                {'id': 457, 'name': 'Series for my board', 'version': 2},
+                {'id': SERIES_ID_SECOND_V1, 'name': TITLE_SECOND, 'version': 1},
+                {'id': SERIES_ID_SECOND_V2, 'name': TITLE_SECOND, 'version': 2},
                 {'id': 12345, 'name': 'i2c: I2C things', 'version': 1},
             ]
             if self.autolink_extra:
@@ -2014,8 +2017,8 @@ second line.'''
         m_series = re.match(r'series/(\d+)/$', subpath)
         series_id = int(m_series.group(1)) if m_series else ''
         if series_id:
-            if series_id == 1234:
-                # series 'first'
+            if series_id == SERIES_ID_SECOND_V1:
+                # series 'second'
                 return {
                     'patches': [
                         {'id': '10', 'name': '[PATCH,1/3] video: Some video improvements',
@@ -2027,6 +2030,22 @@ second line.'''
                     ],
                     'cover_letter': {
                         'id': 39,
+                        'name': 'The name of the cover letter',
+                    }
+                }
+            if series_id == SERIES_ID_SECOND_V2:
+                # series 'second2'
+                return {
+                    'patches': [
+                        {'id': '110', 'name': '[PATCH,v2,1/3] video: Some video improvements',
+                         'content': ''},
+                        {'id': '111', 'name': '[PATCH,v2,2/3] serial: Add a serial driver',
+                         'content': ''},
+                        {'id': '112', 'name': '[PATCH,v2,3/3] bootm: Make it boot',
+                         'content': ''},
+                    ],
+                    'cover_letter': {
+                        'id': 139,
                         'name': 'The name of the cover letter',
                     }
                 }
@@ -2050,23 +2069,23 @@ second line.'''
 
         # Read patch status
         m_pat = re.search(r'patches/(\d*)/$', subpath)
-        patch_id = m_pat.group(1) if m_pat else ''
+        patch_id = int(m_pat.group(1)) if m_pat else ''
         if patch_id:
-            if patch_id == '10':
+            if patch_id in [10, 110]:
                 return {'state': 'accepted',
                         'content': 'Reviewed-by: Fred Bloggs <fred@bloggs.com>'}
-            if patch_id == '11':
+            if patch_id in [11, 111]:
                 return {'state': 'changes-requested', 'content': ''}
-            if patch_id == '12':
+            if patch_id in [12, 112]:
                 return {'state': 'rejected',
                         'content': "I don't like this at all, sorry"}
             raise ValueError(f'Fake Patchwork unknown patch_id: {patch_id}')
 
         # Read comments a from patch
         m_comm = re.search(r'patches/(\d*)/comments/', subpath)
-        patch_id = m_comm.group(1) if m_comm else ''
+        patch_id = int(m_comm.group(1)) if m_comm else ''
         if patch_id:
-            if patch_id == '10':
+            if patch_id in [10, 110]:
                 return [
                     {'id': 1, 'content': ''},
                     {'id': 2,
@@ -2084,9 +2103,9 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
                          }
                     },
                 ]
-            if patch_id == '11':
+            if patch_id in [11, 111]:
                 return []
-            if patch_id == '12':
+            if patch_id in [12, 112]:
                 return [
                     {'id': 4, 'content': ''},
                     {'id': 5, 'content': ''},
@@ -2098,9 +2117,9 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
 
         # Read comments from a cover letter
         m_cover_id = re.search(r'covers/(\d*)/comments/', subpath)
-        cover_id = m_cover_id.group(1) if m_cover_id else ''
+        cover_id = int(m_cover_id.group(1)) if m_cover_id else ''
         if cover_id:
-            if cover_id == '39':
+            if cover_id in [39, 139]:
                 return [
                     { 'content': 'some comment',
                       'submitter': {
