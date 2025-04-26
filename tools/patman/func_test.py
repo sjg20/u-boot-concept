@@ -151,6 +151,31 @@ class TestFunctional(unittest.TestCase):
         fname = re.sub('[ :]', '-', subject)
         return fname.replace('--', '-')
 
+    class _Stage:
+        def __init__(self, name):
+            self.name = name
+
+        def __enter__(self):
+            print(f"--- starting '{self.name}'")
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            print(f"--- finished '{self.name}'\n")
+
+    def stage(self, name):
+        """Context manager to count requests across a range of patchwork calls
+
+        Args:
+            name (str): Stage name
+
+        Return:
+            _Stage: contect object
+
+        Usage:
+            with self.stage('name'):
+                ...do things
+        """
+        return self._Stage(name)
+
     def _create_patches_for_test(self, series):
         """Create patch files for use by tests
 
@@ -3868,36 +3893,41 @@ Date:   .*
 
     def check_series_sync_all(self):
         """Sync all series at once"""
-        cser, pwork = self.setup_second(False)
+        with self.stage('setup'):
+            cser, pwork = self.setup_second(False)
 
-        with terminal.capture():
-            cser.add_series('first', 'description', allow_unmarked=True)
-            cser.increment('first')
-            cser.increment('first')
-            cser.set_link('first', 1, '123', True)
-            cser.set_link('first', 2, '1234', True)
-            cser.set_link('first', 3, '31', True)
-            cser.autolink(pwork, 'second', 2, True)
+            with terminal.capture():
+                cser.add_series('first', 'description', allow_unmarked=True)
+                cser.increment('first')
+                cser.increment('first')
+                cser.set_link('first', 1, '123', True)
+                cser.set_link('first', 2, '1234', True)
+                cser.set_link('first', 3, '31', True)
+                cser.autolink(pwork, 'second', 2, True)
 
-        with terminal.capture() as (out, _):
-            yield cser, pwork
-        self.assertEqual(
-            '5 patches and 0 cover letters updated, 0 missing links (14 requests)\n'
-            'Dry run completed',
-            out.getvalue().strip())
+        with self.stage('no options'):
+            with terminal.capture() as (out, _):
+                yield cser, pwork
+            self.assertEqual(
+                '5 patches and 0 cover letters updated, 0 missing links (14 requests)\n'
+                'Dry run completed',
+                out.getvalue().strip())
 
-        with terminal.capture() as (out, _):
-            yield cser, pwork
-        self.assertEqual(
-            '5 patches and 0 cover letters updated, 0 missing links (14 requests)\n'
-            'Dry run completed',
-            out.getvalue().strip())
+        with self.stage('gather'):
+            with terminal.capture() as (out, _):
+                yield cser, pwork
+            self.assertEqual(
+                '5 patches and 0 cover letters updated, 0 missing links (14 requests)\n'
+                'Dry run completed',
+                out.getvalue().strip())
 
-        with terminal.capture() as (out, _):
-            yield cser, pwork
-        self.assertEqual(
-            '12 patches and 5 cover letters updated, 0 missing links (40 requests)',
-            out.getvalue().strip())
+        with self.stage('gather, !dry_run'):
+            with terminal.capture() as (out, _):
+                yield cser, pwork
+            self.assertEqual(
+                '12 patches and 5 cover letters updated, 0 missing links (40 requests)',
+                out.getvalue().strip())
+
         yield None
 
     def test_series_sync_all(self):
