@@ -2013,8 +2013,10 @@ second line.'''
                     'name': 'The name of the cover letter',
                 }
             }
-        m_pc = re.search(r'patches/(\d*)/comments/', subpath)
-        patch_id = m_pc.group(1) if m_pc else ''
+
+        # Read comments a from patch
+        m_comm = re.search(r'patches/(\d*)/comments/', subpath)
+        patch_id = m_comm.group(1) if m_comm else ''
         if patch_id:
             if patch_id == '10':
                 return [
