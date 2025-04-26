@@ -1097,9 +1097,12 @@ class Cseries:
                             vals.info += f'added version {add_vers} '
                             out.append(f'Series-version: {add_vers}')
                     added_version = True
-                elif m_links and add_link is not None:
+                elif m_links:
+                    # print('ver', max_vers, add_vers)
+                    #if add_link is not None:
                     links = series.get_links(m_links.group(1), max_vers)
-                    links[max_vers] = add_link
+                    if add_link:
+                        links[max_vers] = add_link
                     new_links = series.build_links(links)
                     vals.info += f"added links '{new_links}' "
                     out.append(f'Series-links: {new_links}')
@@ -1153,7 +1156,7 @@ class Cseries:
         vers = max_vers + 1
         new_name = self.join_name_version(ser.name, vers)
 
-        self.update_series(ser.name, series, max_vers, new_name, dry_run,
+        self.update_series(branch_name, series, max_vers, new_name, dry_run,
                            add_vers=vers, switch=on_branch)
 
         old_svid = self.get_series_svid(ser.idnum, max_vers)
@@ -2528,11 +2531,12 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 succeed
         """
         ser, version = self.parse_series_and_version(name, None)
-        if not name:
-            name = self.get_branch_name(ser.name, version)
+        # if not name:
+            # name = self.get_branch_name(ser.name, version)
         if not ser.idnum:
             raise ValueError(f"Series '{ser.name}' not found in database")
 
+        args.branch = self.get_branch_name(ser.name, version)
         send.send(args, git_dir=self.gitdir, cwd=self.topdir)
 
         if not args.dry_run and autolink:

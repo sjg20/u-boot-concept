@@ -2210,7 +2210,19 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         with terminal.capture() as (out, _):
             cser.add_series('first', '', allow_unmarked=True)
             cser.add_series('second', allow_unmarked=True)
+
+        series = patchstream.get_metadata_for_list('second', self.gitdir, 3)
+        self.assertEqual('456', series.links)
+
+        with terminal.capture() as (out, _):
             cser.increment('second')
+
+        series = patchstream.get_metadata_for_list('second', self.gitdir, 3)
+        self.assertEqual('456', series.links)
+
+        series = patchstream.get_metadata_for_list('second2', self.gitdir, 3)
+        self.assertEqual('1:456', series.links)
+
         if do_sync:
             with terminal.capture() as (out, _):
                 cser.autolink(pwork, 'second', 2, True)
@@ -4536,11 +4548,12 @@ Date:   .*
         with terminal.capture():
             cser.increment('second')
         series = patchstream.get_metadata_for_list('second3', self.gitdir, 3)
-        self.assertEqual('2:457', series.links)
+        self.assertEqual('2:457 1:456', series.links)
         self.assertEqual('3', series.version)
 
         with terminal.capture() as (out, err):
-            self.run_args('series', '-n', 'send', '--no-autolink', pwork=pwork)
+            self.run_args('series', '-n', '-s', 'second3', 'send',
+                          '--no-autolink', pwork=pwork)
         lines = out.getvalue().splitlines()
         err_lines = err.getvalue().splitlines()
         self.assertIn('Send a total of 3 patches with a cover letter',
@@ -4574,7 +4587,7 @@ Date:   .*
         with terminal.capture():
             cser.increment('second')
         series = patchstream.get_metadata_for_list('second3', self.gitdir, 3)
-        self.assertEqual('2:457', series.links)
+        self.assertEqual('2:457 1:456', series.links)
         self.assertEqual('3', series.version)
 
         with terminal.capture():
@@ -4602,7 +4615,7 @@ Date:   .*
             "-  .* as .*: video: Some video improvements")
         self.assertRegex(
             next(lines),
-            "- added links '3:500 2:457'  .* as .*: serial: Add a serial driver")
+            "- added links '3:500 2:457 1:456'  .* as .*: serial: Add a serial driver")
         self.assertRegex(
             next(lines),
             "- added version 3 .* as .*: bootm: Make it boot")
