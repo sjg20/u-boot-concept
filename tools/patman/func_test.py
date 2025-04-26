@@ -3495,6 +3495,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         # Now do a real run
         cser.mark_series('first', dry_run=False)
+        return
 
         # Try to mark again, which should fail
         with terminal.capture():

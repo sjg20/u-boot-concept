@@ -1255,6 +1255,14 @@ class Cseries:
             commit = repo.revparse_single(upstream_name)
         branch = repo.lookup_branch(name)
 
+        # rebase = repo.rebase(branch, upstream)
+        #, Signature("Author Name", "author@example.com"), Signature("Committer Name", "committer@example.com"))
+
+
+ #Signature("Author Name", "author@example.com"), Signature("Committer Name", "committer@example.com"))
+
+        # annotated_branch_head = repo.lookup_annotated_commit(branch.target)
+
         if not quiet:
             tout.info(
                 f"Checking out upstream commit {upstream_name}: {oid(commit.oid)}")
@@ -1262,11 +1270,11 @@ class Cseries:
             name = new_name
 
         # Check out the upstream commit (detached HEAD)
-        repo.checkout_tree(commit, strategy=CheckoutStrategy.FORCE |
-                           CheckoutStrategy.RECREATE_MISSING)
+        # repo.checkout_tree(commit, strategy=CheckoutStrategy.FORCE |
+                           # CheckoutStrategy.RECREATE_MISSING)
         repo.set_head(commit.oid)
 
-        return repo, repo.head, branch, name
+        return repo, repo.head, branch, name, commit
 
     def _pick_commit(self, repo, cmt):
         """Apply a commit to the source tree, without commiting it
@@ -1293,7 +1301,7 @@ class Cseries:
         tout.detail(f"cherry {oid(cherry.oid)}")
         return tree_id, cherry
 
-    def _finish_commit(self, repo, tree_id, cherry, cur, msg=None):
+    def _finish_commit(self, repo, commit, cur, msg=None):
         """Complete a commit
 
         This must be called after _pick_commit()
@@ -1307,12 +1315,12 @@ class Cseries:
             msg (str): Commit subject and message, or None to use cherry.message
         """
         if msg is None:
-            msg = cherry.message
-        repo.create_commit('HEAD', cherry.author, cherry.committer,
-                           msg, tree_id, [cur.target])
+            msg = commit.message
+        repo.create_commit('HEAD', commit.author, commit.committer,
+                           msg, commit.tree_id, [cur.target])
         return repo.head
 
-    def _finish_process(self, repo, branch, name, new_name=None, dry_run=False,
+    def _finish_process(self, repo, branch, name, cur, new_name=None, dry_run=False,
                         quiet=False):
         """Finish processing commits
 
@@ -1339,7 +1347,8 @@ class Cseries:
                 repo.checkout(branch.name)
             else:
                 branch_oid = branch.peel(pygit2.GIT_OBJ_COMMIT).oid
-                repo.checkout_tree(repo.get(branch_oid))
+                # repo.checkout_tree(repo.get(branch_oid))
+                # repo.checkout_tree(repo.get(branch_oid))
                 repo.head.set_target(branch_oid)
         else:
             if new_name:
@@ -1348,8 +1357,11 @@ class Cseries:
                     new_branch.upstream = branch.upstream
                 branch = new_branch
             else:
-                branch.set_target(target.oid)
-            repo.checkout(branch)
+                # branch.set_target(target.oid)
+                print('cur', cur)
+                # branch.set_target(cur)
+                branch = cur
+            # repo.checkout(branch)
         return target
 
     def make_change_id(self, commit):
@@ -1398,23 +1410,24 @@ class Cseries:
             pygit.oid: oid of the new branch
         """
         count = len(series.commits)
-        repo, cur, branch, name = self._prepare_process(name, count, new_name)
+        repo, cur, branch, name, commit = self._prepare_process(name, count, new_name)
         vals = SimpleNamespace()
         vals.final = False
         tout.info(f"Processing {count} commits from branch '{name}'")
         for seq, cmt in enumerate(series.commits):
-            tree_id, cherry = self._pick_commit(repo, cmt)
-            vals.cherry = cherry
-            vals.msg = cherry.message
+            # tree_id, cherry = self._pick_commit(repo, cmt)
+            vals.cherry = commit
+            # vals.msg = cherry.message
+            vals.msg = commit.message
             vals.skip = False
             vals.info = ''
             vals.final = seq == len(series.commits) - 1
             vals.seq = seq
             yield vals
 
-            cur = self._finish_commit(repo, tree_id, cherry, cur, vals.msg)
+            cur = self._finish_commit(repo, commit, cur, vals.msg)
             tout.info(f"- {vals.info} {oid(cmt.hash)} as {oid(cur.target)}: {cmt}")
-        target = self._finish_process(repo, branch, name, new_name, dry_run)
+        target = self._finish_process(repo, branch, name, cur, new_name, dry_run)
         vals.oid = target.oid
 
     def _mark_series(self, name, series, dry_run=False):
