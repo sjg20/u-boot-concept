@@ -20,13 +20,11 @@ from patman.patchstream import PatchStream
 # link (str): Patchwork link for series
 # name (str): Name or description (not used)
 # series_id (int): Series ID in database
-# series (Series): Series object as returned from patchstream.get_metadata()
-# branch (str): Local branch name
 # show_comments (bool): True to show comments
 # show_cover_comments (bool): True to show cover-letter comments
 STATE_REQ = namedtuple(
     'state_req',
-    'link,name,series_id,series,branch,show_comments,show_cover_comments')
+    'link,name,series_id,show_comments,show_cover_comments')
 
 # Responses from series_get_states()
 # int: ser_ver ID number

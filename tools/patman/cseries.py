@@ -2051,15 +2051,9 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         if sync_all_versions:
             for svid, series_id, version, link, _, _, desc in \
                     self.get_ser_ver_list():
-                name, _ = self.get_series_info(series_id)
-                pwc = self.get_pcommit_dict(svid)
-                count = len(pwc)
-                branch = self.join_name_version(name, version)
-                series = patchstream.get_metadata(branch, 0, count,
-                                                  git_dir=self.gitdir)
                 if link:
                     to_fetch[svid] = patchwork.STATE_REQ(
-                        link, desc, series_id, series, branch, False, False)
+                        link, desc, series_id, False, False)
                 else:
                     missing += 1
         else:
@@ -2069,22 +2063,15 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             # Get a list of links to fetch
             for svid, series_id, version in max_vers:
                 ser = sdict[svid]
-                name, _ = self.get_series_info(series_id)
-                pwc = self.get_pcommit_dict(svid)
-                count = len(pwc)
-                branch = self.join_name_version(name, version)
-                series = patchstream.get_metadata(branch, 0, count,
-                                                  git_dir=self.gitdir)
                 if ser.link:
                     to_fetch[svid] = patchwork.STATE_REQ(
-                        ser.link, ser.name, series_id, series, branch, False,
-                        False)
+                        ser.link, ser.name, series_id, False, False)
                 else:
                     missing += 1
         return to_fetch, missing
 
-    def series_sync_all(self, pwork, sync_all_versions=False,
-                        gather_tags=False, dry_run=False):
+    async def _series_sync_all(self, client, pwork, show_cover_comments,
+                               to_fetch):
         """Sync all series status from patchwork
 
         Args:
@@ -2093,14 +2080,64 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 False to sync only the latest version
             gather_tags (bool): True to gather review/test tags
         """
+        # result, requests = self.loop.run_until_complete(
+                # pwork.series_get_states(to_fetch, gather_tags))
+
+        tasks = [pwork.series_get_state(client, sync.link, True,
+                                        show_cover_comments)
+                 for sync in to_fetch]
+        result = await asyncio.gather(*tasks)
+        return result
+
+    async def do_series_sync_all(self, pwork, show_cover_comments,
+                                 to_fetch):
+        async with aiohttp.ClientSession() as client:
+            return await self._series_sync_all(
+                client, pwork, show_cover_comments, to_fetch)
+
+    async def series_sync_all(self, pwork, show_comments,
+                               show_cover_comments, sync_all_versions=False,
+                               gather_tags=False, dry_run=False):
         to_fetch, missing = self._get_fetch_dict(sync_all_versions)
 
-        result, requests = self.loop.run_until_complete(
-                pwork.series_get_states(to_fetch, gather_tags))
+        loop = asyncio.get_event_loop()
+        result = loop.run_until_complete(self.do_series_sync_all(
+                pwork, show_cover_comments, to_fetch))
 
         updated = 0
         updated_cover = 0
         for resp in result:
+            name, _ = self.get_series_info(series_id)
+            pwc = self.get_pcommit_dict(svid)
+            count = len(pwc)
+            branch = self.join_name_version(name, version)
+            series = patchstream.get_metadata(branch, 0, count,
+                                              git_dir=self.gitdir)
+            updated += self._sync_one(resp.svid, resp.cover, resp.patches)
+            if resp.cover:
+                updated_cover += 1
+        self.commit()
+
+        tout.info(
+            f"{updated} patch{'es' if updated != 1 else ''} and "
+            f"{updated_cover} cover letter{'s' if updated_cover != 1 else ''} "
+            f'updated, {missing} missing '
+            f"link{'s' if missing != 1 else ''} ({requests} requests)")
+        if not dry_run:
+            self.commit()
+        else:
+            self.rollback()
+            tout.info('Dry run completed')
+
+        updated = 0
+        updated_cover = 0
+        for resp in result:
+            name, _ = self.get_series_info(series_id)
+            pwc = self.get_pcommit_dict(svid)
+            count = len(pwc)
+            branch = self.join_name_version(name, version)
+            series = patchstream.get_metadata(branch, 0, count,
+                                              git_dir=self.gitdir)
             updated += self._sync_one(resp.svid, resp.cover, resp.patches)
             if resp.cover:
                 updated_cover += 1

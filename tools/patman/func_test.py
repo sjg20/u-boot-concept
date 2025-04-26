@@ -3904,13 +3904,13 @@ Date:   .*
         cor = self.check_series_sync_all()
 
         cser, pwork = next(cor)
-        cser.series_sync_all(pwork, False, False, dry_run=True)
+        cser.series_sync_all(pwork, False, False, False, False, dry_run=True)
 
         cser, pwork = next(cor)
-        cser.series_sync_all(pwork, False, True, dry_run=True)
+        cser.series_sync_all(pwork, False, False, False, True, dry_run=True)
 
         cser, pwork = next(cor)
-        cser.series_sync_all(pwork, True, True)
+        cser.series_sync_all(pwork, False, False, True, True)
 
         self.assertFalse(next(cor))
 
