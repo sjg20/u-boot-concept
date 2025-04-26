@@ -2014,6 +2014,20 @@ second line.'''
                 }
             }
 
+        # Read patch status
+        m_pat = re.search(r'patches/(\d*)/$', subpath)
+        patch_id = m_pat.group(1) if m_pat else ''
+        if patch_id:
+            if patch_id == '10':
+                return {'state': 'accepted',
+                        'content': 'Reviewed-by: Fred Bloggs <fred@bloggs.com>'}
+            if patch_id == '11':
+                return {'state': 'changes-requested', 'content': ''}
+            if patch_id == '12':
+                return {'state': 'rejected',
+                        'content': "I don't like this at all, sorry"}
+            raise ValueError(f'Fake Patchwork unknown patch_id: {patch_id}')
+
         # Read comments a from patch
         m_comm = re.search(r'patches/(\d*)/comments/', subpath)
         patch_id = m_comm.group(1) if m_comm else ''
@@ -2071,18 +2085,6 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
                 ]
             raise ValueError(f'Fake Patchwork unknown cover_id: {cover_id}')
 
-        m_pat = re.search(r'patches/(\d*)/', subpath)
-        patch_id = m_pat.group(1) if m_pat else ''
-        if subpath.startswith('patches/'):
-            if patch_id == '10':
-                return {'state': 'accepted',
-                        'content': 'Reviewed-by: Fred Bloggs <fred@bloggs.com>'}
-            if patch_id == '11':
-                return {'state': 'changes-requested', 'content': ''}
-            if patch_id == '12':
-                return {'state': 'rejected',
-                        'content': "I don't like this at all, sorry"}
-            raise ValueError(f'Fake Patchwork unknown patch_id: {patch_id}')
         raise ValueError(f'Fake Patchwork does not understand: {subpath}')
 
     def _fake_patchwork_cser_link(self, subpath):
