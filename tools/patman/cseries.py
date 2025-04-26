@@ -1276,11 +1276,11 @@ class Cseries:
 
         commits = []
         cmt = repo.get(branch.target)
-        print('cmt', cmt)
+        # print('cmt', cmt)
         for i in range(count):
             commits.append(cmt)
             cmt = cmt.parents[0]
-        print('commits', type(commits), commits, list(reversed(commits)))
+        # print('commits', type(commits), commits, list(reversed(commits)))
 
         return repo, repo.head, branch, name, commit, list(reversed(commits))
 
@@ -1424,7 +1424,7 @@ class Cseries:
         """
         count = len(series.commits)
         repo, cur, branch, name, commit, commits = self._prepare_process(name, count, new_name)
-        print('2commits', commits)
+        # print('2commits', commits)
         vals = SimpleNamespace()
         vals.final = False
         tout.info(f"Processing {count} commits from branch '{name}'")

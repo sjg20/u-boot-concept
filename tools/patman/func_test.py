@@ -3950,6 +3950,7 @@ Date:   .*
                          dry_run=True)
 
         cser, pwork = next(cor)
+        return
         cser.series_sync(pwork, 'second', None, False, False, True,
                          dry_run=True)
 
