@@ -1344,12 +1344,16 @@ class Cseries:
             tout.info(f"Updating branch {name} to {str(target.oid)[:HASH_LEN]}")
         if dry_run:
             if new_name:
-                repo.checkout(branch.name)
+                # repo.checkout(branch.name)
+                repo.head.set_target(branch.target)
             else:
                 branch_oid = branch.peel(pygit2.GIT_OBJ_COMMIT).oid
                 # repo.checkout_tree(repo.get(branch_oid))
                 # repo.checkout_tree(repo.get(branch_oid))
                 repo.head.set_target(branch_oid)
+            repo.head.set_target(branch.target)
+            # print('branch', branch)
+            repo.set_head(branch.name)
         else:
             if new_name:
                 new_branch = repo.branches.create(new_name, target)
@@ -1362,6 +1366,7 @@ class Cseries:
                 # branch.set_target(cur)
                 branch = cur
             # repo.checkout(branch)
+            repo.set_head(branch.name)
         return target
 
     def make_change_id(self, commit):
