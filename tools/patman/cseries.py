@@ -1266,13 +1266,21 @@ class Cseries:
         if not quiet:
             tout.info(
                 f"Checking out upstream commit {upstream_name}: {oid(commit.oid)}")
-        if new_name:
-            name = new_name
 
         # Check out the upstream commit (detached HEAD)
         # repo.checkout_tree(commit, strategy=CheckoutStrategy.FORCE |
                            # CheckoutStrategy.RECREATE_MISSING)
-        # repo.set_head(commit.oid)
+        old_head = repo.head
+        if old_head.shorthand == name:
+            old_head = None
+        else:
+            # print('** old head different', old_head.name, old_head.shorthand, name)
+            old_head = repo.head
+            pass
+
+        if new_name:
+            name = new_name
+        repo.set_head(commit.oid)
 
         commits = []
         cmt = repo.get(branch.target)
@@ -1282,7 +1290,7 @@ class Cseries:
             cmt = cmt.parents[0]
         # print('commits', type(commits), commits, list(reversed(commits)))
 
-        return repo, repo.head, branch, name, commit, list(reversed(commits))
+        return repo, repo.head, branch, name, commit, list(reversed(commits)), old_head
 
     def _pick_commit(self, repo, cmt):
         """Apply a commit to the source tree, without commiting it
@@ -1328,7 +1336,7 @@ class Cseries:
                            msg, commit.tree_id, [cur.target])
         return repo.head
 
-    def _finish_process(self, repo, branch, name, cur, new_name=None, dry_run=False,
+    def _finish_process(self, repo, branch, name, cur, old_head, new_name=None, dry_run=False,
                         quiet=False):
         """Finish processing commits
 
@@ -1360,7 +1368,7 @@ class Cseries:
                 # repo.checkout_tree(repo.get(branch_oid))
                 repo.head.set_target(branch_oid)
             repo.head.set_target(branch.target)
-            # print('branch', branch)
+            # print('branch', branch.name)
             repo.set_head(branch.name)
         else:
             if new_name:
@@ -1370,11 +1378,18 @@ class Cseries:
                 branch = new_branch
             else:
                 # branch.set_target(target.oid)
-                print('cur', cur)
-                # branch.set_target(cur)
-                branch = cur
+                print('cur', cur, cur.target)
+                branch.set_target(cur.target)
+                # branch = cur
             # repo.checkout(branch)
+            # print('cur', cur.oid)
             repo.set_head(branch.name)
+            # print('branch', branch.name)
+        if old_head:
+            # print('2old_head', old_head, repo.head)
+            # ref = repo.lookup_branch(old_head)
+            # repo.set_head(repo.head)
+            repo.set_head(old_head.name)
         return target
 
     def make_change_id(self, commit):
@@ -1423,8 +1438,9 @@ class Cseries:
             pygit.oid: oid of the new branch
         """
         count = len(series.commits)
-        repo, cur, branch, name, commit, commits = self._prepare_process(name, count, new_name)
+        repo, cur, branch, name, commit, commits, old_head = self._prepare_process(name, count, new_name)
         # print('2commits', commits)
+        # print('ps old_head', old_head)
         vals = SimpleNamespace()
         vals.final = False
         tout.info(f"Processing {count} commits from branch '{name}'")
@@ -1442,7 +1458,8 @@ class Cseries:
 
             cur = self._finish_commit(repo, commit, cur, vals.msg)
             tout.info(f"- {vals.info} {oid(cmt.hash)} as {oid(cur.target)}: {cmt}")
-        target = self._finish_process(repo, branch, name, cur, new_name, dry_run)
+        # print('ps2 old_head', old_head)
+        target = self._finish_process(repo, branch, name, cur, old_head, new_name, dry_run)
         vals.oid = target.oid
 
     def _mark_series(self, name, series, dry_run=False):
