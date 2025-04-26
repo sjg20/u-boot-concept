@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# # -*- coding: utf-8 -*-
 # SPDX-License-Identifier:	GPL-2.0+
 #
 # Copyright 2017 Google, Inc
@@ -48,6 +48,7 @@ TEST_DATA_DIR = PATMAN_DIR / 'test/'
 # Fake patchwork project ID for U-Boot
 PROJ_ID = 6
 PROJ_LINK_NAME = 'uboot'
+SERIES_ID_FIRST_V3 = 31
 SERIES_ID_SECOND_V1 = 456
 SERIES_ID_SECOND_V2 = 457
 TITLE_SECOND = 'Series for my board'
@@ -2049,21 +2050,37 @@ second line.'''
                         'name': 'The name of the cover letter',
                     }
                 }
-            if series_id == 31:
+            if series_id == SERIES_ID_FIRST_V3:
                 # series 'first3'
                 return {
                     'patches': [
-                        {'id': '10', 'name': '[PATCH,1/3] video: Some video improvements',
+                        {'id': 20, 'name': '[PATCH,v3,1/2] i2c: I2C things',
                          'content': ''},
-                        {'id': '11', 'name': '[PATCH,2/3] serial: Add a serial driver',
-                         'content': ''},
-                        {'id': '12', 'name': '[PATCH,3/3] bootm: Make it boot',
+                        {'id': 21, 'name': '[PATCH,v3,2/2] spi: SPI fixes',
                          'content': ''},
                     ],
                     'cover_letter': {
-                        'id': 39,
-                        'name': 'Cover letter for first3',
+                        'id': 29,
+                        'name': 'Cover letter for first',
                     }
+                }
+            if series_id == 123:
+                return {
+                    'patches': [
+                        {'id': 20, 'name': '[PATCH,1/2] i2c: I2C things',
+                         'content': ''},
+                        {'id': 21, 'name': '[PATCH,2/2] spi: SPI fixes',
+                         'content': ''},
+                    ],
+                }
+            if series_id == 1234:
+                return {
+                    'patches': [
+                        {'id': 20, 'name': '[PATCH,v2,1/2] i2c: I2C things',
+                         'content': ''},
+                        {'id': 21, 'name': '[PATCH,v2,2/2] spi: SPI fixes',
+                         'content': ''},
+                    ],
                 }
             raise ValueError(f'Fake Patchwork unknown series_id: {series_id}')
 
@@ -2079,6 +2096,10 @@ second line.'''
             if patch_id in [12, 112]:
                 return {'state': 'rejected',
                         'content': "I don't like this at all, sorry"}
+            if patch_id == 20:
+                return {'state': 'awaiting-upstream', 'content': ''}
+            if patch_id == 21:
+                return {'state': 'not-applicable', 'content': ''}
             raise ValueError(f'Fake Patchwork unknown patch_id: {patch_id}')
 
         # Read comments a from patch
@@ -2089,7 +2110,7 @@ second line.'''
                 return [
                     {'id': 1, 'content': ''},
                     {'id': 2,
-                     'content': '''On some date Mary Smith <msmith@wibble.com>> wrote:
+                     'content': '''On some date Mary Smith <msmith@wibble.com> wrote:
 > This was my original patch
 > which is being quoted
 
@@ -2111,9 +2132,22 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
                     {'id': 5, 'content': ''},
                     {'id': 6, 'content': ''},
                 ]
+            if patch_id == 20:
+                return [
+                    {'id': 7, 'content': '''On some date Alex Miller <alex@country.org> wrote:
+
+> Sometimes we need to create a patch.
+> This is one of those times
+
+Tested-by: Mary Smith <msmith@wibble.com>   # yak
+'''},
+                    {'id': 8, 'content': ''},
+                ]
+            if patch_id == 21:
+                return []
             raise ValueError(
-                f'Fake Patchwork does not understand patch_id {patch_id} '
-                f'type {type(patch_id)}: {subpath}')
+                f'Fake Patchwork does not understand patch_id {patch_id}: '
+                f'{subpath}')
 
         # Read comments from a cover letter
         m_cover_id = re.search(r'covers/(\d*)/comments/', subpath)
@@ -3948,7 +3982,7 @@ Date:   .*
                 cser.increment('first')
                 cser.set_link('first', 1, '123', True)
                 cser.set_link('first', 2, '1234', True)
-                cser.set_link('first', 3, '31', True)
+                cser.set_link('first', 3, f'{SERIES_ID_FIRST_V3}', True)
                 cser.autolink(pwork, 'second', 2, True)
 
         with self.stage('no options'):
@@ -3957,23 +3991,64 @@ Date:   .*
             self.assertEqual(
                 "Syncing 'first' v3\n"
                 "Syncing 'second' v2\n"
-                '5 patches and 0 cover letters updated, 0 missing links (14 requests)\n'
+                '5 patches and 0 cover letters updated, 0 missing links (12 requests)\n'
                 'Dry run completed',
                 out.getvalue().strip())
 
+        self.maxDiff = None
         with self.stage('gather'):
-            # with terminal.capture() as (out, _):
-            yield cser, pwork
+            with terminal.capture() as (out, _):
+                yield cser, pwork
+            lines = out.getvalue().splitlines()
+            itr = iter(lines)
+            self.assertEqual("Syncing 'first' v3", next(itr))
+            self.assertEqual('  1 i2c: I2C things', next(itr))
+            self.assertEqual('  + Tested-by: Mary Smith <msmith@wibble.com>   # yak', next(itr))
+            self.assertEqual('  2 spi: SPI fixes', next(itr))
+            self.assertEqual('Checking out upstream commit refs/heads/base', next(itr))
+            self.assertEqual("Processing 2 commits from branch 'first'", next(itr))
+            self.assertRegex(next(itr),
+                             '- added 1 tag .* as .*: i2c: I2C things')
+            self.assertRegex(next(itr), '-  .* as .*: spi: SPI fixes')
+            self.assertRegex(next(itr), 'Updating branch first to .*')
+
+            self.assertEqual("Syncing 'second' v2", next(itr))
+            self.assertEqual('  1 video: Some video improvements', next(itr))
             self.assertEqual(
-                '5 patches and 0 cover letters updated, 0 missing links (14 requests)\n'
-                'Dry run completed',
-                out.getvalue().strip())
+                '  + Reviewed-by: Fred Bloggs <fred@bloggs.com>', next(itr))
+            self.assertEqual('  2 serial: Add a serial driver', next(itr))
+            self.assertEqual('  3 bootm: Make it boot', next(itr))
+            self.assertEqual(
+                'Checking out upstream commit refs/heads/base', next(itr))
+            self.assertEqual(
+                "Processing 3 commits from branch 'second'", next(itr))
+            self.assertRegex(
+                next(itr),
+                '- added 1 tag .* as .*: video: Some video improvements')
+            self.assertRegex(
+                next(itr),
+                '-  .* as .*: serial: Add a serial driver')
+            self.assertRegex(next(itr), '-  .* as .*: bootm: Make it boot')
+            self.assertRegex(next(itr), 'Updating branch second to .*')
+
+            self.assertEqual(
+                '5 patches and 0 cover letters updated, 0 missing links (12 requests)',
+                next(itr))
+            self.assertEqual('Dry run completed', next(itr))
+            self.assertFinished(itr)
 
         with self.stage('gather, !dry_run'):
             with terminal.capture() as (out, _):
                 yield cser, pwork
+            lines = out.getvalue().splitlines()
+            itr = iter(lines)
             self.assertEqual(
-                '12 patches and 5 cover letters updated, 0 missing links (40 requests)',
+                "Syncing 'first' v1\n"
+                "Syncing 'first' v2\n"
+                "Syncing 'first' v3\n"
+                "Syncing 'second' v1\n"
+                "Syncing 'second' v2\n"
+                '12 patches and 5 cover letters updated, 0 missing links (29 requests)',
                 out.getvalue().strip())
 
         yield None
