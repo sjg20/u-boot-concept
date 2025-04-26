@@ -1988,10 +1988,13 @@ second line.'''
         Args:
             subpath (str): URL subpath to use
         """
+        # Get a list of projects
         if subpath == 'projects/':
             return [
                 {'id':PROJ_ID, 'name': 'U-Boot', 'link_name': PROJ_LINK_NAME},
-                {'id':9, 'name': 'other'}]
+                {'id':9, 'name': 'other', 'link_name': 'other'}
+            ]
+
         if subpath.startswith('series/'):
             return {
                 'patches': [
@@ -2040,6 +2043,7 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
                 f'Fake Patchwork does not understand patch_id {patch_id} '
                 f'type {type(patch_id)}: {subpath}')
 
+        # Read comments from a cover letter
         m_cover_id = re.search(r'covers/(\d*)/comments/', subpath)
         cover_id = m_cover_id.group(1) if m_cover_id else ''
         if cover_id:
