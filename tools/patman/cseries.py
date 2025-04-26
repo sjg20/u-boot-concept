@@ -1272,9 +1272,17 @@ class Cseries:
         # Check out the upstream commit (detached HEAD)
         # repo.checkout_tree(commit, strategy=CheckoutStrategy.FORCE |
                            # CheckoutStrategy.RECREATE_MISSING)
-        repo.set_head(commit.oid)
+        # repo.set_head(commit.oid)
 
-        return repo, repo.head, branch, name, commit
+        commits = []
+        cmt = repo.get(branch.target)
+        print('cmt', cmt)
+        for i in range(count):
+            commits.append(cmt)
+            cmt = cmt.parents[0]
+        print('commits', type(commits), commits, list(reversed(commits)))
+
+        return repo, repo.head, branch, name, commit, list(reversed(commits))
 
     def _pick_commit(self, repo, cmt):
         """Apply a commit to the source tree, without commiting it
@@ -1415,12 +1423,14 @@ class Cseries:
             pygit.oid: oid of the new branch
         """
         count = len(series.commits)
-        repo, cur, branch, name, commit = self._prepare_process(name, count, new_name)
+        repo, cur, branch, name, commit, commits = self._prepare_process(name, count, new_name)
+        print('2commits', commits)
         vals = SimpleNamespace()
         vals.final = False
         tout.info(f"Processing {count} commits from branch '{name}'")
         for seq, cmt in enumerate(series.commits):
             # tree_id, cherry = self._pick_commit(repo, cmt)
+            commit = commits[seq]
             vals.cherry = commit
             # vals.msg = cherry.message
             vals.msg = commit.message
