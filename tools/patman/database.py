@@ -410,6 +410,24 @@ class Database:
             raise ValueError('Expected one match, but multiple matches found')
         return recs[0][0]
 
+    def ser_ver_set_link(self, series_idnum, version, link):
+        """Set the link for a series version
+
+        Args:
+            series_idnum (int): ID num of the series
+            version (int): Version number to search for
+            link (str): Patchwork link for the ser_ver
+
+        Return:
+            bool: True if the record was found and updated, else False
+        """
+        if link is None:
+            link = ''
+        self.execute(
+            'UPDATE ser_ver SET link = ? WHERE series_id = ? AND version = ?',
+            (str(link), series_idnum, version))
+        return self.rowcount() != 0
+
     def ser_ver_add(self, series_idnum, version, link=None):
         """Add a new ser_ver record
 

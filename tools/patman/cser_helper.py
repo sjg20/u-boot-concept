@@ -460,13 +460,10 @@ class CseriesHelper:
             branch_name = self._get_branch_name(name, version)
             _, ser, max_vers, _ = self._prep_series(branch_name)
             self._update_series(branch_name, ser, max_vers, add_vers=version,
-                               dry_run=dry_run, add_link=link)
+                                dry_run=dry_run, add_link=link)
         if link is None:
             link = ''
-        self.db.execute(
-            f"UPDATE ser_ver SET link = '{link}' WHERE "
-            'series_id = ? AND version = ?', (ser_id, version))
-        updated = self.rowcount() != 0
+        updated = 1 if self.db.ser_ver_set_link(ser_id, version, link) else 0
         if dry_run:
             self.rollback()
         else:
