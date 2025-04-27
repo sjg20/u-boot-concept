@@ -375,12 +375,39 @@ class Database:
             (series_idnum, version, link))
         return self.lastrowid()
 
-    def ser_ver_get_for_series(self, series_idnum, version=None):
+    def ser_ver_get_for_series(self, series_idnum, version):
         """Get a list of ser_ver records for a given series ID
 
         Args:
             series_idnum (int): ID num of the series to search
-            version (int): Version number to search fo, or None for all
+            version (int): Version number to search for
+
+        Return: tuple:
+            int: record id
+            str: link
+            str: cover_id
+            int: cover_num_comments
+            str: cover-letter name
+
+        Raises:
+            ValueError: There is no matching idnum/version
+        """
+        res = self.execute(
+            'SELECT id, link, cover_id, cover_num_comments, name FROM ser_ver '
+            'WHERE series_id = ? AND version = ?', (series_idnum, version))
+        recs = res.fetchall()
+        if not recs:
+            raise ValueError(
+                f'No matching series for id {series_idnum} version {version}')
+        return recs[0]
+
+
+    def ser_ver_get_ids_for_series(self, series_idnum, version=None):
+        """Get a list of ser_ver records for a given series ID
+
+        Args:
+            series_idnum (int): ID num of the series to search
+            version (int): Version number to search for, or None for all
 
         Return:
             list of int: List of svids for the matching records
@@ -408,7 +435,7 @@ class Database:
         """
         if remove_pcommits:
             # Figure out svids to delete
-            svids = self.ser_ver_get_for_series(series_idnum, version)
+            svids = self.ser_ver_get_ids_for_series(series_idnum, version)
 
             self.pcommit_delete_list(svids)
 

@@ -707,7 +707,7 @@ class Cseries(cser_helper.CseriesHelper):
         return recs[0:2]
 
     def get_ser_ver(self, series_id, version):
-        """Get the patchwork ID of a series version
+        """Get the patchwork details for a series version
 
         Args:
             series_id (int): series ID to look up
@@ -719,15 +719,11 @@ class Cseries(cser_helper.CseriesHelper):
             str: cover_id
             int: cover_num_comments
             str: cover-letter name
+
+        Raises:
+            ValueError: There is no matching idnum/version
         """
-        res = self.db.execute(
-            'SELECT id, link, cover_id, cover_num_comments, name FROM ser_ver '
-            'WHERE series_id = ? AND version = ?', (series_id, version))
-        recs = res.fetchall()
-        if not recs:
-            raise ValueError(
-                f'No matching series for id {series_id} version {version}')
-        return recs[0]
+        return self.db.ser_ver_get_for_series(series_id, version)
 
     def series_sync(self, pwork, series, version, show_comments,
                     show_cover_comments, gather_tags, dry_run=False):
