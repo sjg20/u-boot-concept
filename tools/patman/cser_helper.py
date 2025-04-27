@@ -1394,7 +1394,4 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             int: series ID
             int: Maximum version
         """
-        res = self.db.execute('SELECT id, series_id, MAX(version) FROM ser_ver '
-                              'GROUP BY series_id')
-        versions = res.fetchall()
-        return versions
+        return self.db.series_get_all_max_versions()
