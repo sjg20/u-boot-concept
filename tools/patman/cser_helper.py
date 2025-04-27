@@ -255,31 +255,13 @@ class CseriesHelper:
                 key (int): record ID if find_svid is None, else seq
                 value (PCOMMIT): record data
         """
-        query = ('SELECT id, seq, subject, svid, change_id, state, patch_id, '
-                 'num_comments FROM pcommit')
-        if find_svid is not None:
-            query += f' WHERE svid = {find_svid}'
-        res = self.db.execute(query)
         pcdict = OrderedDict()
-        for (idnum, seq, subject, svid, change_id, state, patch_id,
-             num_comments) in res.fetchall():
-            pc = PCOMMIT(idnum, seq, subject, svid, change_id, state, patch_id,
-                         num_comments)
-            if find_svid is not None:
-                pcdict[seq] = pc
-            else:
-                pcdict[idnum] = pc
-        return pcdict
-
-        '''
-        pcdict = OrderedDict()
-        for rec in self.db.pcommit_get_list():
+        for rec in self.db.pcommit_get_list(find_svid):
             if find_svid is not None:
                 pcdict[rec.seq] = rec
             else:
                 pcdict[rec.idnum] = rec
         return pcdict
-        '''
 
     def _get_series_info(self, idnum):
         """Get information for a series from the database
