@@ -220,7 +220,7 @@ def upstream(args, test_db=None):
         elif args.subcmd == 'delete':
             cser.delete_upstream(args.remote_name)
         elif args.subcmd == 'list':
-            cser.list_upstream()
+            cser.upstream_list()
         else:
             raise ValueError(f"Unknown upstream subcommand '{args.subcmd}'")
     finally:

@@ -3122,7 +3122,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.assertEqual("Upstream 'ci' already exists", str(exc.exception))
 
         with terminal.capture() as (out, err):
-            cser.list_upstream()
+            cser.upstream_list()
         lines = out.getvalue().splitlines()
         self.assertEqual(2, len(lines))
         self.assertEqual('us                       https://one', lines[0])
@@ -3163,7 +3163,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.assertEqual('ci', cser.get_default_upstream())
 
         with terminal.capture() as (out, err):
-            cser.list_upstream()
+            cser.upstream_list()
         lines = out.getvalue().splitlines()
         self.assertEqual(2, len(lines))
         self.assertEqual('us                       https://one', lines[0])

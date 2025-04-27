@@ -1603,7 +1603,7 @@ class Cseries:
                 raise ValueError(f"Upstream '{name}' already exists") from exc
         self.commit()
 
-    def list_upstream(self):
+    def upstream_list(self):
         """List the upstream repos
 
         Shows a list of the repos, obtained from the database
