@@ -37,6 +37,152 @@ class Cseries(cser_helper.CseriesHelper):
         """
         super().__init__(topdir, colour)
 
+    def add(self, branch_name, desc=None, mark=False,
+                   allow_unmarked=False, end=None, force_version=False,
+                   dry_run=False):
+        """Add a series (or new version of a series) to the database
+
+        Args:
+            branch_name (str): Name of branch to sync, or None for current one
+            desc (str): Description to use, or None to use the series subject
+            mark (str): True to mark each commit with a change ID
+            allow_unmarked (str): True to not require each commit to be marked
+            end (str): Add only commits up to but exclu
+            force_version (bool): True if ignore a Series-version tag that
+                doesn't match its branch name
+            dry_run (bool): True to do a dry run
+        """
+        name, ser, version, msg = self._prep_series(branch_name, end)
+        tout.info(f"Adding series '{ser.name}' v{version}: mark {mark} "
+                  f'allow_unmarked {allow_unmarked}')
+        if msg:
+            tout.info(msg)
+        if desc is None:
+            if not ser.cover:
+                raise ValueError(f"Branch '{name}' has no cover letter - "
+                                 'please provide description')
+            desc = ser.cover[0]
+
+        ser = self._handle_mark(name, ser, version, mark, allow_unmarked,
+                                force_version, dry_run)
+        link = ser.get_link_for_version(version)
+
+        msg = 'Added'
+        added = False
+        series_id = self.db.series_find_by_name(ser.name)
+        if not series_id:
+            series_id = self.db.series_add(ser.name, desc)
+            added = True
+            msg += f" series '{ser.name}'"
+
+        if version not in self._get_version_list(series_id):
+            svid = self.db.ser_ver_add(series_id, version, link)
+            msg += f" v{version}"
+            if not added:
+                msg += f" to existing series '{ser.name}'"
+            added = True
+
+            self._add_series_commits(ser, svid)
+            count = len(ser.commits)
+            msg += f" ({count} commit{'s' if count > 1 else ''})"
+        if not added:
+            tout.info(f"Series '{ser.name}' v{version} already exists")
+            msg = None
+        elif not dry_run:
+            self.commit()
+        else:
+            self.rollback()
+            series_id = None
+        ser.desc = desc
+        ser.idnum = series_id
+
+        if msg:
+            tout.info(msg)
+        if dry_run:
+            tout.info('Dry run completed')
+
+    def increment(self, series_name, dry_run=False):
+        """Increment a series to the next version and create a new branch
+
+        Args:
+            series_name (str): Name of series to use, or None to use current
+                branch
+            dry_run (bool): True to do a dry run
+        """
+        ser = self._parse_series(series_name)
+        if not ser.idnum:
+            raise ValueError(f"Series '{ser.name}' not found in database")
+
+        max_vers = self._series_max_version(ser.idnum)
+
+        branch_name = self._get_branch_name(ser.name, max_vers)
+        on_branch = gitutil.get_branch(self.gitdir) == branch_name
+        svid = self.get_series_svid(ser.idnum, max_vers)
+        pwc = self.get_pcommit_dict(svid)
+        count = len(pwc.values())
+        series = patchstream.get_metadata(branch_name, 0, count,
+                                          git_dir=self.gitdir)
+        tout.info(f"Increment '{ser.name}' v{max_vers}: {count} patches")
+
+        # Create a new branch
+        vers = max_vers + 1
+        new_name = self._join_name_version(ser.name, vers)
+
+        self._update_series(branch_name, series, max_vers, new_name, dry_run,
+                            add_vers=vers, switch=on_branch)
+
+        old_svid = self.get_series_svid(ser.idnum, max_vers)
+        pcd = self.get_pcommit_dict(old_svid)
+
+        svid = self.db.ser_ver_add(ser.idnum, vers)
+        self.db.pcommit_add_list(svid, pcd.values())
+        if not dry_run:
+            self.commit()
+        else:
+            self.rollback()
+
+        # repo.head.set_target(amended)
+        tout.info(f'Added new branch {new_name}')
+        if dry_run:
+            tout.info('Dry run completed')
+
+    def decrement(self, series, dry_run=False):
+        """Decrement a series to the previous version and delete the branch
+
+        Args:
+            series (str): Name of series to use, or None to use current branch
+            dry_run (bool): True to do a dry run
+        """
+        ser = self._parse_series(series)
+        if not ser.idnum:
+            raise ValueError(f"Series '{ser.name}' not found in database")
+
+        max_vers = self._series_max_version(ser.idnum)
+        if max_vers < 2:
+            raise ValueError(f"Series '{ser.name}' only has one version")
+
+        tout.info(f"Removing series '{ser.name}' v{max_vers}")
+
+        new_max = max_vers - 1
+
+        repo = pygit2.init_repository(self.gitdir)
+        if not dry_run:
+            name = self._get_branch_name(ser.name, new_max)
+            branch = repo.lookup_branch(name)
+            repo.checkout(branch)
+
+            del_name = f'{ser.name}{max_vers}'
+            del_branch = repo.lookup_branch(del_name)
+            branch_oid = del_branch.peel(pygit2.GIT_OBJ_COMMIT).oid
+            del_branch.delete()
+            print(f"Deleted branch '{del_name}' {oid(branch_oid)}")
+
+        self.db.ser_ver_remove(ser.idnum, max_vers)
+        if not dry_run:
+            self.commit()
+        else:
+            self.rollback()
+
     def link_set(self, series_name, version, link, update_commit):
         """Add / update a series-links link for a series
 
@@ -270,152 +416,6 @@ class Cseries(cser_helper.CseriesHelper):
         """
         return self.db.settings_get()
 
-    def increment(self, series_name, dry_run=False):
-        """Increment a series to the next version and create a new branch
-
-        Args:
-            series_name (str): Name of series to use, or None to use current
-                branch
-            dry_run (bool): True to do a dry run
-        """
-        ser = self._parse_series(series_name)
-        if not ser.idnum:
-            raise ValueError(f"Series '{ser.name}' not found in database")
-
-        max_vers = self._series_max_version(ser.idnum)
-
-        branch_name = self._get_branch_name(ser.name, max_vers)
-        on_branch = gitutil.get_branch(self.gitdir) == branch_name
-        svid = self.get_series_svid(ser.idnum, max_vers)
-        pwc = self.get_pcommit_dict(svid)
-        count = len(pwc.values())
-        series = patchstream.get_metadata(branch_name, 0, count,
-                                          git_dir=self.gitdir)
-        tout.info(f"Increment '{ser.name}' v{max_vers}: {count} patches")
-
-        # Create a new branch
-        vers = max_vers + 1
-        new_name = self._join_name_version(ser.name, vers)
-
-        self._update_series(branch_name, series, max_vers, new_name, dry_run,
-                            add_vers=vers, switch=on_branch)
-
-        old_svid = self.get_series_svid(ser.idnum, max_vers)
-        pcd = self.get_pcommit_dict(old_svid)
-
-        svid = self.db.ser_ver_add(ser.idnum, vers)
-        self.db.pcommit_add_list(svid, pcd.values())
-        if not dry_run:
-            self.commit()
-        else:
-            self.rollback()
-
-        # repo.head.set_target(amended)
-        tout.info(f'Added new branch {new_name}')
-        if dry_run:
-            tout.info('Dry run completed')
-
-    def decrement(self, series, dry_run=False):
-        """Decrement a series to the previous version and delete the branch
-
-        Args:
-            series (str): Name of series to use, or None to use current branch
-            dry_run (bool): True to do a dry run
-        """
-        ser = self._parse_series(series)
-        if not ser.idnum:
-            raise ValueError(f"Series '{ser.name}' not found in database")
-
-        max_vers = self._series_max_version(ser.idnum)
-        if max_vers < 2:
-            raise ValueError(f"Series '{ser.name}' only has one version")
-
-        tout.info(f"Removing series '{ser.name}' v{max_vers}")
-
-        new_max = max_vers - 1
-
-        repo = pygit2.init_repository(self.gitdir)
-        if not dry_run:
-            name = self._get_branch_name(ser.name, new_max)
-            branch = repo.lookup_branch(name)
-            repo.checkout(branch)
-
-            del_name = f'{ser.name}{max_vers}'
-            del_branch = repo.lookup_branch(del_name)
-            branch_oid = del_branch.peel(pygit2.GIT_OBJ_COMMIT).oid
-            del_branch.delete()
-            print(f"Deleted branch '{del_name}' {oid(branch_oid)}")
-
-        self.db.ser_ver_remove(ser.idnum, max_vers)
-        if not dry_run:
-            self.commit()
-        else:
-            self.rollback()
-
-    def add(self, branch_name, desc=None, mark=False,
-                   allow_unmarked=False, end=None, force_version=False,
-                   dry_run=False):
-        """Add a series (or new version of a series) to the database
-
-        Args:
-            branch_name (str): Name of branch to sync, or None for current one
-            desc (str): Description to use, or None to use the series subject
-            mark (str): True to mark each commit with a change ID
-            allow_unmarked (str): True to not require each commit to be marked
-            end (str): Add only commits up to but exclu
-            force_version (bool): True if ignore a Series-version tag that
-                doesn't match its branch name
-            dry_run (bool): True to do a dry run
-        """
-        name, ser, version, msg = self._prep_series(branch_name, end)
-        tout.info(f"Adding series '{ser.name}' v{version}: mark {mark} "
-                  f'allow_unmarked {allow_unmarked}')
-        if msg:
-            tout.info(msg)
-        if desc is None:
-            if not ser.cover:
-                raise ValueError(f"Branch '{name}' has no cover letter - "
-                                 'please provide description')
-            desc = ser.cover[0]
-
-        ser = self._handle_mark(name, ser, version, mark, allow_unmarked,
-                                force_version, dry_run)
-        link = ser.get_link_for_version(version)
-
-        msg = 'Added'
-        added = False
-        series_id = self.db.series_find_by_name(ser.name)
-        if not series_id:
-            series_id = self.db.series_add(ser.name, desc)
-            added = True
-            msg += f" series '{ser.name}'"
-
-        if version not in self._get_version_list(series_id):
-            svid = self.db.ser_ver_add(series_id, version, link)
-            msg += f" v{version}"
-            if not added:
-                msg += f" to existing series '{ser.name}'"
-            added = True
-
-            self._add_series_commits(ser, svid)
-            count = len(ser.commits)
-            msg += f" ({count} commit{'s' if count > 1 else ''})"
-        if not added:
-            tout.info(f"Series '{ser.name}' v{version} already exists")
-            msg = None
-        elif not dry_run:
-            self.commit()
-        else:
-            self.rollback()
-            series_id = None
-        ser.desc = desc
-        ser.idnum = series_id
-
-        if msg:
-            tout.info(msg)
-        if dry_run:
-            tout.info('Dry run completed')
-
     def send(self, pwork, name, autolink, autolink_wait, args):
         """Send out a series
 
@@ -545,7 +545,7 @@ class Cseries(cser_helper.CseriesHelper):
         self.db.series_set_archived(ser.idnum, archived)
         self.commit()
 
-    def series_list(self):
+    def list(self):
         """List all series
 
         Lines all series along with their description, number of patches

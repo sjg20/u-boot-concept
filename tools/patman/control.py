@@ -145,7 +145,7 @@ def do_series(args, test_db=None, pwork=None):
         elif args.subcmd == 'inc':
             cser.increment(args.series, args.dry_run)
         elif args.subcmd == 'list':
-            cser.series_list()
+            cser.list()
         elif args.subcmd == 'open':
             cser.open(pwork, args.series, args.version)
         elif args.subcmd == 'mark':
