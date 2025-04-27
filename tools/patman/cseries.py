@@ -309,7 +309,7 @@ class Cseries(cser_helper.CseriesHelper):
             archived (bool): Whether to mark the series as archived or
                 unarchived
         """
-        ser = self._parse_series(series)
+        ser = self._parse_series(series, include_archived=True)
         if not ser.idnum:
             raise ValueError(f"Series '{ser.name}' not found in database")
         self.db.series_set_archived(ser.idnum, archived)

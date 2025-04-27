@@ -1358,7 +1358,6 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         with self.stage('archive'):
             # Archive it and make sure it is invisible
             yield cser
-            # cser.set_archived('first', True)
             slist = cser.db.series_get_dict()
             self.assertFalse(slist)
 
@@ -1370,7 +1369,6 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         with self.stage('unarchive'):
             # or we unarchive it
             yield cser
-            # cser.set_archived('first', False)
             slist = cser.db.series_get_dict()
             self.assertEqual(1, len(slist))
 

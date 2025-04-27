@@ -397,16 +397,17 @@ class CseriesHelper:
 
         self.db.pcommit_add_list(svid, to_add)
 
-    def _get_series_by_name(self, name):
+    def _get_series_by_name(self, name, include_archived=False):
         """Get a Series object from the database by name
 
         Args:
             name (str): Name of series to get
+            include_archived (bool): True to search in archives series
 
         Return:
             Series: Object containing series info, or None if none
         """
-        idnum = self.db.series_find_by_name(name)
+        idnum = self.db.series_find_by_name(name, include_archived)
         if not idnum:
             return None
         name, desc = self.db.series_get_info(idnum)
@@ -566,11 +567,12 @@ class CseriesHelper:
             return in_name
         return f'{in_name}{version}'
 
-    def _parse_series(self, name):
+    def _parse_series(self, name, include_archived=False):
         """Parse the name of a series, or detect it from the current branch
 
         Args:
             name (str or None): name of series
+            include_archived (bool): True to search in archives series
 
         Return:
             Series: New object with the name set; idnum is also set if the
@@ -579,7 +581,7 @@ class CseriesHelper:
         if not name:
             name = gitutil.get_branch(self.gitdir)
         name, _ = split_name_version(name)
-        ser = self._get_series_by_name(name)
+        ser = self._get_series_by_name(name, include_archived)
         if not ser:
             ser = Series()
             ser.name = name

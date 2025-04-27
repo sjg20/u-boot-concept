@@ -264,7 +264,7 @@ class Database:
             sdict[ser.idnum] = ser
         return sdict
 
-    def series_find_by_name(self, name):
+    def series_find_by_name(self, name, include_archived=False):
         """Find a series and return its details
 
         Args:
@@ -274,8 +274,8 @@ class Database:
             idnum, or None if not found
         """
         res = self.execute(
-            'SELECT id FROM series WHERE '
-            f"name = '{name}' AND archived = 0")
+            'SELECT id FROM series WHERE name = ?' +
+            ('AND archived = 0' if not include_archived else ''), (name,))
         recs = res.fetchall()
 
         # This shouldn't happen
