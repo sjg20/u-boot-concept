@@ -662,10 +662,12 @@ class CseriesHelper:
             quiet (bool): True to avoid output (used for testing)
 
         Return: tuple:
-            repo (pygit2.repo): Repo to use
+            pygit2.repo: Repo to use
             pygit2.oid: Upstream commit, onto which commits should be added
-            name (str): (Possibly new) name of branch to process
             Pygit2.branch: Original branch, for later use
+            str: (Possibly new) name of branch to process
+            list of Commit: commits to process, in order
+            pygit2.Reference: Original head before processing started
         """
         upstream_guess = gitutil.get_upstream(self.gitdir, name)[0]
 
@@ -752,10 +754,9 @@ class CseriesHelper:
         Args:
             repo (pygit2.repo): Repo to use
             tree_id (pygit2.oid): Oid of index with source-changes applied
-            cherry (commit): Commit object which holds the author and committter
             commit (pygit2.oid): Old commit being cherry-picked
             cur (pygit2.reference): Reference to parent to use for the commit
-            msg (str): Commit subject and message, or None to use cherry.message
+            msg (str): Commit subject and message; None to use commit.message
         """
         if msg is None:
             msg = commit.message
@@ -860,7 +861,8 @@ class CseriesHelper:
             pygit.oid: oid of the new branch
         """
         count = len(series.commits)
-        repo, cur, branch, name, commit, commits, old_head = self._prepare_process(name, count, new_name)
+        repo, cur, branch, name, _, commits, old_head = self._prepare_process(
+            name, count, new_name)
         vals = SimpleNamespace()
         vals.final = False
         tout.info(f"Processing {count} commits from branch '{name}'")
@@ -875,8 +877,10 @@ class CseriesHelper:
             yield vals
 
             cur = self._finish_commit(repo, None, commit, cur, vals.msg)
-            tout.info(f"- {vals.info} {oid(cmt.hash)} as {oid(cur.target)}: {cmt}")
-        target = self._finish_process(repo, branch, name, cur, old_head, new_name, switch, dry_run)
+            tout.info(f'- {vals.info} {oid(cmt.hash)} as {oid(cur.target)}: '
+                      f'{cmt}')
+        target = self._finish_process(repo, branch, name, cur, old_head,
+                                      new_name, switch, dry_run)
         vals.oid = target.oid
 
     def _mark_series(self, name, series, dry_run=False):
