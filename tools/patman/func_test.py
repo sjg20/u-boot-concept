@@ -3451,7 +3451,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             for vals in cser._process_series(name, ser):
                 old_msgs.append(vals.msg)
                 lines = vals.msg.splitlines()
-                change_id = cser.make_change_id(vals.cherry)
+                change_id = cser._make_change_id(vals.cherry)
                 extra = [f'{cseries.CHANGE_ID_TAG}: {change_id}']
                 vals.msg = '\n'.join(lines[:2] + extra + lines[2:]) + '\n'
 
@@ -4489,7 +4489,7 @@ Date:   .*
 
         # We now have 4 commits numbered 0 (second~3) to 3 (the one we just
         # added). Drop commit 1 (the 'serial' one) from the branch
-        cser.filter_commits(name, ser, 1)
+        cser._filter_commits(name, ser, 1)
         svid = cser.get_ser_ver(ser.idnum, version)[0]
         old_pcdict = cser.get_pcommit_dict(svid).values()
 

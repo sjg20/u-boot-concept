@@ -1415,7 +1415,7 @@ class Cseries:
                 repo.set_head(old_head.name)
         return target
 
-    def make_change_id(self, commit):
+    def _make_change_id(self, commit):
         """Make a Change ID for a commit
 
         This is similar to the gerrit script:
@@ -1430,7 +1430,7 @@ class Cseries:
         val.update(commit.message.encode('utf-8'))
         return val.hexdigest()
 
-    def filter_commits(self, name, series, seq_to_drop):
+    def _filter_commits(self, name, series, seq_to_drop):
         """Filter commits to drop one
 
         Args:
@@ -1504,7 +1504,7 @@ class Cseries:
         vals = None
         for vals in self._process_series(name, series, dry_run=dry_run):
             if CHANGE_ID_TAG not in vals.msg:
-                change_id = self.make_change_id(vals.cherry)
+                change_id = self._make_change_id(vals.cherry)
                 vals.msg = vals.msg + f'\n{CHANGE_ID_TAG}: {change_id}'
                 tout.detail("   - adding mark")
                 vals.info = 'marked'
