@@ -78,11 +78,7 @@ class TestFunctional(unittest.TestCase, TestCommon):
         self.repo = None
 
     def tearDown(self):
-        if self.preserve_outdirs:
-            print(f'Output dir: {self.tmpdir}')
-        else:
-            shutil.rmtree(self.tmpdir)
-        terminal.set_print_test_mode(False)
+        TestCommon.tearDown(self)
 
     @staticmethod
     def _get_path(fname):

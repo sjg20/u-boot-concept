@@ -5,11 +5,13 @@
 """Functional tests for checking that patman behaves correctly"""
 
 import os
+import shutil
 import tempfile
 
 import pygit2
 
 from u_boot_pylib import gitutil
+from u_boot_pylib import terminal
 from u_boot_pylib import tools
 from u_boot_pylib import tout
 
@@ -52,6 +54,13 @@ class TestCommon:
         self.gitdir = os.path.join(self.tmpdir, '.git')
         tout.init(tout.DEBUG if self.verbosity else tout.INFO,
                   allow_colour=False)
+
+    def tearDown(self):
+        if self.preserve_outdirs:
+            print(f'Output dir: {self.tmpdir}')
+        else:
+            shutil.rmtree(self.tmpdir)
+        terminal.set_print_test_mode(False)
 
     def make_commit_with_file(self, subject, body, fname, text):
         """Create a file and add it to the git repo with a new commit

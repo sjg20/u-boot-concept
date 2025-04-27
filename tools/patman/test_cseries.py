@@ -40,6 +40,9 @@ class TestCseries(unittest.TestCase, TestCommon):
         self.loop = asyncio.get_event_loop()
         self.cser = None
 
+    def tearDown(self):
+        TestCommon.tearDown(self)
+
     class _Stage:
         def __init__(self, name):
             self.name = name
