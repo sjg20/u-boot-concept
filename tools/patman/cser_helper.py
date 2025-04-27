@@ -1146,6 +1146,42 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                     print()
                     print()
 
+    def _find_matched_commit(self, commits, pcm):
+        """Find a commit in a list of possible matches
+
+        Args:
+            commits (dict of Commit): Possible matches
+                key (int): sequence number of patch (from 0)
+                value (Commit): Commit object
+            pcm (PCOMMIT): Patch to check
+
+        Return:
+            int: Sequence number of matching commit, or None if not found
+        """
+        for seq, cmt in commits.items():
+            tout.debug(f"- match subject: '{cmt.subject}'")
+            if pcm.subject == cmt.subject:
+                return seq
+        return None
+
+    def _find_matched_patch(self, patches, cmt):
+        """Find a patch in a list of possible matches
+
+        Args:
+            patches: dict of ossible matches
+                key (int): sequence number of patch
+                value (PCOMMIT): patch
+            cmt (Commit): Commit to check
+
+        Return:
+            int: Sequence number of matching patch, or None if not found
+        """
+        for seq, pcm in patches.items():
+            tout.debug(f"- match subject: '{pcm.subject}'")
+            if cmt.subject == pcm.subject:
+                return seq
+        return None
+
     def _sync_one(self, svid, series_name, version, link, show_comments,
                   show_cover_comments, gather_tags, cover, patches, dry_run):
         """Sync one series to the database
@@ -1190,7 +1226,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
 
         return updated, 1 if cover else 0
 
-    async def _series_sync(self, client, pwork, svid, link, name, version,
+    async def _sync(self, client, pwork, svid, link, name, version,
                            show_comments, show_cover_comments, gather_tags,
                            dry_run):
         """Sync the series status from patchwork
@@ -1212,7 +1248,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                              show_comments, show_cover_comments, gather_tags,
                              dry_run):
         async with aiohttp.ClientSession() as client:
-            return await self._series_sync(
+            return await self._sync(
                 client, pwork, svid, link, series,  version, show_comments,
                 show_cover_comments, gather_tags, dry_run)
 
@@ -1363,42 +1399,6 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 state = val
         state_str, pad = self._build_col(state, base_str=name)
         print(f"{state_str}{pad}  {stats.rjust(6)}  {desc}")
-
-    def _find_matched_commit(self, commits, pcm):
-        """Find a commit in a list of possible matches
-
-        Args:
-            commits (dict of Commit): Possible matches
-                key (int): sequence number of patch (from 0)
-                value (Commit): Commit object
-            pcm (PCOMMIT): Patch to check
-
-        Return:
-            int: Sequence number of matching commit, or None if not found
-        """
-        for seq, cmt in commits.items():
-            tout.debug(f"- match subject: '{cmt.subject}'")
-            if pcm.subject == cmt.subject:
-                return seq
-        return None
-
-    def _find_matched_patch(self, patches, cmt):
-        """Find a patch in a list of possible matches
-
-        Args:
-            patches: dict of ossible matches
-                key (int): sequence number of patch
-                value (PCOMMIT): patch
-            cmt (Commit): Commit to check
-
-        Return:
-            int: Sequence number of matching patch, or None if not found
-        """
-        for seq, pcm in patches.items():
-            tout.debug(f"- match subject: '{pcm.subject}'")
-            if cmt.subject == pcm.subject:
-                return seq
-        return None
 
     def _series_max_version(self, idnum):
         """Find the latest version of a series
