@@ -18,8 +18,9 @@ from u_boot_pylib import gitutil
 from u_boot_pylib import terminal
 from u_boot_pylib import tools
 from patman import control
+from patman import cser_helper
 from patman import cseries
-from patman.cseries import PCOMMIT
+from patman.cser_helper import PCOMMIT
 from patman import database
 from patman import patchstream
 from patman.patchwork import Patchwork
@@ -1922,7 +1923,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                 old_msgs.append(vals.msg)
                 lines = vals.msg.splitlines()
                 change_id = cser._make_change_id(vals.cherry)
-                extra = [f'{cseries.CHANGE_ID_TAG}: {change_id}']
+                extra = [f'{cser_helper.CHANGE_ID_TAG}: {change_id}']
                 vals.msg = '\n'.join(lines[:2] + extra + lines[2:]) + '\n'
 
         with terminal.capture():
@@ -2944,8 +2945,9 @@ Date:   .*
         cser = self.get_cser()
         repo = self.repo
 
-        self.assertEqual(('fred', None), cseries.split_name_version('fred'))
-        self.assertEqual(('mary', 2), cseries.split_name_version('mary2'))
+        self.assertEqual(('fred', None),
+                         cser_helper.split_name_version('fred'))
+        self.assertEqual(('mary', 2), cser_helper.split_name_version('mary2'))
 
         ser, version = cser._parse_series_and_version(None, None)
         self.assertEqual('first', ser.name)
