@@ -216,6 +216,21 @@ class Database:
         """
         return self.cur.rowcount
 
+    def _get_series_list(self, include_archived):
+        """Get a list of Series objects from the database
+
+        Args:
+            include_archived (bool): True to include archives series
+
+        Return:
+            list of Series
+        """
+        res = self.execute(
+            'SELECT id, name, desc FROM series ' +
+            ('WHERE archived = 0' if not include_archived else ''))
+        return [Series.from_fields(idnum=idnum, name=name, desc=desc)
+                for idnum, name, desc in res.fetchall()]
+
     def get_series_dict(self, include_archived=False):
         """Get a dict of Series objects from the database
 
@@ -227,16 +242,9 @@ class Database:
                 key: series name
                 value: Series with idnum, name and desc filled out
         """
-        res = self.execute(
-            'SELECT id, name, desc FROM series ' +
-            ('WHERE archived = 0' if not include_archived else ''))
         sdict = OrderedDict()
-        for idnum, name, desc in res.fetchall():
-            ser = Series()
-            ser.idnum = idnum
-            ser.name = name
-            ser.desc = desc
-            sdict[name] = ser
+        for ser in self._get_series_list(include_archived):
+            sdict[ser.name] = ser
         return sdict
 
     def get_series_dict_by_id(self, include_archived=False):
@@ -247,15 +255,7 @@ class Database:
                 key: series ID
                 value: Series with idnum, name and desc filled out
         """
-        res = self.execute(
-            'SELECT id, name, desc FROM series ' +
-            ('WHERE archived = 0' if not include_archived else ''))
         sdict = OrderedDict()
-        for idnum, name, desc in res.fetchall():
-            ser = Series()
-            ser.idnum = idnum
-            ser.name = name
-            ser.desc = desc
-            sdict[idnum] = ser
+        for ser in self._get_series_list(include_archived):
+            sdict[ser.idnum] = ser
         return sdict
-

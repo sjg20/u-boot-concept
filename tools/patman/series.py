@@ -70,6 +70,14 @@ class Series(dict):
     def __getattr__(self, name):
         return self[name]
 
+    @staticmethod
+    def from_fields(idnum, name, desc):
+        ser = Series()
+        ser.idnum = idnum
+        ser.name = name
+        ser.desc = desc
+        return ser
+
     def AddTag(self, commit, line, name, value):
         """Add a new Series-xxx tag along with its value.
 
