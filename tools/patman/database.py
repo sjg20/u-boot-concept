@@ -517,3 +517,33 @@ class Database:
         if self.rowcount() != 1:
             self.rollback()
             raise ValueError(f"No such upstream '{name}'")
+
+    # settings functions
+
+    def settings_update(self, name, proj_id, link_name):
+        """Set the patchwork settings of the project
+
+        Args:
+            name (str): Name of the project to use in patchwork
+            proj_id (int): Project ID for the project
+            link_name (str): Link name for the project
+        """
+        self.execute('DELETE FROM settings')
+        self.execute(
+                'INSERT INTO settings (name, proj_id, link_name) '
+                'VALUES (?, ?, ?)', (name, proj_id, link_name))
+
+    def settings_get(self):
+        """Get the patchwork settings of the project
+
+        Returns:
+            tuple or None if there are no settings:
+                name (str): Project name, e.g. 'U-Boot'
+                proj_id (int): Patchworks project ID for this project
+                link_name (str): Patchwork's link-name for the project
+        """
+        res = self.execute("SELECT name, proj_id, link_name FROM settings")
+        recs = res.fetchall()
+        if len(recs) != 1:
+            return None
+        return recs[0]

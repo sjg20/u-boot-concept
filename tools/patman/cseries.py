@@ -582,11 +582,7 @@ class Cseries(cser_helper.CseriesHelper):
             raise ValueError(
                 f"Series '{ser.name}' only has one version: remove the series")
 
-        svid = self.get_series_svid(ser.idnum, version)
-        self.db.execute('DELETE FROM pcommit WHERE svid = ?', (svid,))
-        self.db.execute(
-            'DELETE FROM ser_ver WHERE series_id = ? and version = ?',
-            (ser.idnum, version))
+        self.db.ser_ver_remove(ser.idnum, version)
         if not dry_run:
             self.commit()
         else:
@@ -612,11 +608,7 @@ class Cseries(cser_helper.CseriesHelper):
                 link_name = proj['link_name']
         if not proj_id:
             raise ValueError(f"Unknown project name '{name}'")
-        res = self.db.execute('DELETE FROM settings')
-        res = self.db.execute(
-                'INSERT INTO settings (name, proj_id, link_name) '
-                'VALUES (?, ?, ?)',
-                (name, proj_id, link_name))
+        self.db.settings_update(name, proj_id, link_name)
         self.commit()
         if not quiet:
             tout.info(f"Project '{name}' patchwork-ID {proj_id} link-name {link_name}")
@@ -625,16 +617,12 @@ class Cseries(cser_helper.CseriesHelper):
         """Get the details of the project
 
         Returns:
-            tuple:
+            tuple or None if there are no settings:
                 name (str): Project name, e.g. 'U-Boot'
                 proj_id (int): Patchworks project ID for this project
                 link_name (str): Patchwork's link-name for the project
         """
-        res = self.db.execute("SELECT name, proj_id, link_name FROM settings")
-        recs = res.fetchall()
-        if len(recs) != 1:
-            return None
-        return recs[0]
+        return self.db.settings_get()
 
     def build_col(self, state, prefix='', base_str=None):
         """Build a patch-state string with colour
