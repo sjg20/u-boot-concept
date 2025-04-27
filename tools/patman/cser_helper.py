@@ -1384,9 +1384,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         Return:
             int: maximum version
         """
-        res = self.db.execute('SELECT MAX(version) FROM ser_ver WHERE '
-                               f"series_id = {idnum}")
-        return res.fetchall()[0][0]
+        return self.db.series_get_max_version(idnum)
 
     def _series_all_max_versions(self):
         """Find the latest version of all series

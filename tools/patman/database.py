@@ -335,6 +335,20 @@ class Database:
                            (series_idnum,))
         return [x[0] for x in res.fetchall()]
 
+    def series_get_max_version(self, series_idnum):
+        """Get the highest version number available for a series
+
+        Args:
+            series_idnum (int): ID of series to look up
+
+        Return:
+            int: Maximum version number
+        """
+        res = self.execute(
+            'SELECT MAX(version) FROM ser_ver WHERE series_id = ?',
+            (series_idnum,))
+        return res.fetchall()[0][0]
+
     def series_add(self, name, desc):
         """Add a new series record
 
