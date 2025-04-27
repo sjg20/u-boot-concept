@@ -692,7 +692,7 @@ class Cseries(cser_helper.CseriesHelper):
             tout.info('Dry run completed')
         return vals.oid
 
-    def series_sync(self, pwork, series, version, show_comments,
+    def sync(self, pwork, series, version, show_comments,
                     show_cover_comments, gather_tags, dry_run=False):
         ser, version = self._parse_series_and_version(series, version)
         self._ensure_version(ser, version)
@@ -724,7 +724,7 @@ class Cseries(cser_helper.CseriesHelper):
                 self.rollback()
                 tout.info('Dry run completed')
 
-    def series_sync_all(self, pwork, show_comments, show_cover_comments,
+    def sync_all(self, pwork, show_comments, show_cover_comments,
                         sync_all_versions, gather_tags, dry_run=False):
         to_fetch, missing = self._get_fetch_dict(sync_all_versions)
 

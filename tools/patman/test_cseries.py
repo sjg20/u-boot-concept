@@ -685,7 +685,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                 with terminal.capture() as (out, _):
                     cser.link_auto(pwork, 'second', 2, True)
                 with terminal.capture() as (out, _):
-                    cser.series_sync(pwork, 'second', 2, False, True, False)
+                    cser.sync(pwork, 'second', 2, False, True, False)
                 lines = out.getvalue().splitlines()
                 self.assertEqual(
                     "Updating series 'second' version 2 from link '457'", lines[0])
@@ -2490,17 +2490,17 @@ Date:   .*
         cser, pwork = next(cor)
 
         # sync (dry_run)
-        cser.series_sync(pwork, 'second', None, False, False, False,
+        cser.sync(pwork, 'second', None, False, False, False,
                          dry_run=True)
         cser, pwork = next(cor)
 
         # gather (dry_run)
-        cser.series_sync(pwork, 'second', None, False, False, True,
+        cser.sync(pwork, 'second', None, False, False, True,
                          dry_run=True)
         cser, pwork = next(cor)
 
         # gather (real)
-        cser.series_sync(pwork, 'second', None, False, False, True)
+        cser.sync(pwork, 'second', None, False, False, True)
 
         self.assertFalse(next(cor))
 
@@ -2714,15 +2714,15 @@ Date:   .*
         cser, pwork = next(cor)
 
         # no options
-        cser.series_sync_all(pwork, False, True, False, False, dry_run=True)
+        cser.sync_all(pwork, False, True, False, False, dry_run=True)
         cser, pwork = next(cor)
 
         # gather
-        cser.series_sync_all(pwork, False, False, False, True, dry_run=True)
+        cser.sync_all(pwork, False, False, False, True, dry_run=True)
         cser, pwork = next(cor)
 
         # gather, patch comments, !dry_run
-        cser.series_sync_all(pwork, True, False, True, True)
+        cser.sync_all(pwork, True, False, True, True)
 
         self.assertFalse(next(cor))
 
@@ -2927,7 +2927,7 @@ Date:   .*
             cser.add('second', allow_unmarked=True)
             cser.increment('second')
             cser.link_auto(pwork, 'second', 2, True)
-            cser.series_sync(pwork, 'second', 2, False, False, False)
+            cser.sync(pwork, 'second', 2, False, False, False)
 
         with mock.patch.object(cros_subprocess.Popen, '__init__',
                                return_value=None) as method:

@@ -178,11 +178,11 @@ def do_series(args, test_db=None, pwork=None):
         elif args.subcmd == 'summary':
             cser.summary(args.series)
         elif args.subcmd == 'sync':
-            cser.series_sync(pwork, args.series, args.version,
+            cser.sync(pwork, args.series, args.version,
                              args.show_comments, args.show_cover_comments,
                              args.gather_tags, dry_run=args.dry_run)
         elif args.subcmd == 'sync-all':
-            cser.series_sync_all(
+            cser.sync_all(
                 pwork, args.show_comments, args.show_cover_comments,
                 args.sync_all_versions, args.gather_tags, args.dry_run)
         elif args.subcmd == 'unarchive':
