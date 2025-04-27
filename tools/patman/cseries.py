@@ -370,7 +370,7 @@ class Cseries:
         """
         ser, version = self.parse_series_and_version(name, None)
         if not name:
-            name = self.get_branch_name(ser.name, version)
+            name = self._get_branch_name(ser.name, version)
 
         # First check we have a branch with this name
         if not gitutil.check_branch(name, git_dir=self.gitdir):
@@ -565,7 +565,7 @@ class Cseries:
         ser.idnum, ser.name, ser.desc = recs[0]
         return ser
 
-    def get_branch_name(self, name, version):
+    def _get_branch_name(self, name, version):
         """Get the branch name for a particular version
 
         Args:
@@ -574,7 +574,7 @@ class Cseries:
         """
         return name + (f'{version}' if version > 1 else '')
 
-    def ensure_version(self, ser, version):
+    def _ensure_version(self, ser, version):
         """Ensure that a version exists in a series
 
         Args:
@@ -608,7 +608,7 @@ class Cseries:
                 version was not found
         """
         if update_commit:
-            branch_name = self.get_branch_name(name, version)
+            branch_name = self._get_branch_name(name, version)
             _, ser, max_vers, _ = self._prep_series(branch_name)
             self.update_series(branch_name, ser, max_vers, add_vers=version,
                                dry_run=dry_run, add_link=link)
@@ -637,7 +637,7 @@ class Cseries:
                 link
         """
         ser, version = self.parse_series_and_version(series_name, version)
-        self.ensure_version(ser, version)
+        self._ensure_version(ser, version)
 
         self._set_link(ser.idnum, ser.name, version, link, update_commit)
         self.commit()
@@ -654,7 +654,7 @@ class Cseries:
             str: Patchwork link as a string, e.g. '12325'
         """
         ser, version = self.parse_series_and_version(series, version)
-        self.ensure_version(ser, version)
+        self._ensure_version(ser, version)
 
         res = self.db.execute('SELECT link FROM ser_ver WHERE '
             f"series_id = {ser.idnum} AND version = '{version}'")
@@ -1146,7 +1146,7 @@ class Cseries:
 
         max_vers = self.series_max_version(ser.idnum)
 
-        branch_name = self.get_branch_name(ser.name, max_vers)
+        branch_name = self._get_branch_name(ser.name, max_vers)
         on_branch = gitutil.get_branch(self.gitdir) == branch_name
         svid = self.get_series_svid(ser.idnum, max_vers)
         pwc = self.get_pcommit_dict(svid)
@@ -1206,7 +1206,7 @@ class Cseries:
 
         repo = pygit2.init_repository(self.gitdir)
         if not dry_run:
-            name = self.get_branch_name(ser.name, new_max)
+            name = self._get_branch_name(ser.name, new_max)
             branch = repo.lookup_branch(name)
             repo.checkout(branch)
 
@@ -1701,7 +1701,7 @@ class Cseries:
         ser, version = self.parse_series_and_version(name, version)
         name = ser.name
 
-        versions = self.ensure_version(ser, version)
+        versions = self._ensure_version(ser, version)
 
         if versions == [version]:
             raise ValueError(
@@ -1923,7 +1923,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         ser, version = self.parse_series_and_version(series, version)
         if not ser.idnum:
             raise ValueError(f"Unknown series '{series}'")
-        self.ensure_version(ser, version)
+        self._ensure_version(ser, version)
         svid, link, cover_id, num_comments, name = self.get_ser_ver(ser.idnum,
                                                                     version)
         pwc = self.get_pcommit_dict(svid)
@@ -2081,7 +2081,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
     def series_sync(self, pwork, series, version, show_comments,
                     show_cover_comments, gather_tags, dry_run=False):
         ser, version = self.parse_series_and_version(series, version)
-        self.ensure_version(ser, version)
+        self._ensure_version(ser, version)
         svid, link = self.get_series_svid_link(ser.idnum, version)
         if not link:
             raise ValueError(
@@ -2546,11 +2546,11 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         """
         ser, version = self.parse_series_and_version(name, None)
         # if not name:
-            # name = self.get_branch_name(ser.name, version)
+            # name = self._get_branch_name(ser.name, version)
         if not ser.idnum:
             raise ValueError(f"Series '{ser.name}' not found in database")
 
-        args.branch = self.get_branch_name(ser.name, version)
+        args.branch = self._get_branch_name(ser.name, version)
         send.send(args, git_dir=self.gitdir, cwd=self.topdir)
 
         if not args.dry_run and autolink:
@@ -2610,12 +2610,12 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         todo = {}
         for ver in versions:
             ok = True
-            old_branch = self.get_branch_name(old_ser.name, ver)
+            old_branch = self._get_branch_name(old_ser.name, ver)
             if not gitutil.check_branch(old_branch, self.gitdir):
                 missing.append(old_branch)
                 ok = False
 
-            branch = self.get_branch_name(name, ver)
+            branch = self._get_branch_name(name, ver)
             if gitutil.check_branch(branch, self.gitdir):
                 exists.append(branch)
                 ok = False
