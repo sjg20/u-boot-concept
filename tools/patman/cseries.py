@@ -665,7 +665,7 @@ class Cseries:
             raise ValueError('Expected one match, but multiple matches found')
         return recs[0][0]
 
-    def search_link(self, pwork, series, version):
+    def link_search(self, pwork, series, version):
         """Search patch for the link for a series
 
         Returns either the single match, or None, in which case the second part
@@ -714,7 +714,7 @@ class Cseries:
         stop = start + wait_s
         sleep_time = 20
         while True:
-            pws, options, name, version, desc = self.search_link(
+            pws, options, name, version, desc = self.link_search(
                 pwork, series, version)
             if pws:
                 if wait_s:

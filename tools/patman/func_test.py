@@ -2547,13 +2547,13 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         self.assertEqual(
             (SERIES_ID_SECOND_V1, None, 'second', 1, 'Series for my board'),
-            cser.search_link(pwork, 'second', 1))
+            cser.link_search(pwork, 'second', 1))
 
         with terminal.capture():
             cser.increment('second')
 
         self.assertEqual((457, None, 'second', 2, 'Series for my board'),
-                         cser.search_link(pwork, 'second', 2))
+                         cser.link_search(pwork, 'second', 2))
 
     def test_series_link_auto_name(self):
         """Test finding the patchwork link for a cseries with auto name"""
@@ -2628,10 +2628,10 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         self.assertEqual(
             (SERIES_ID_SECOND_V1, None, 'second', 1, 'Series for my board'),
-            cser.search_link(pwork, 'second', 1))
+            cser.link_search(pwork, 'second', 1))
         self.assertEqual((457, None, 'second', 2, 'Series for my board'),
-                         cser.search_link(pwork, 'second', 2))
-        res = cser.search_link(pwork, 'second', 3)
+                         cser.link_search(pwork, 'second', 2))
+        res = cser.link_search(pwork, 'second', 3)
         self.assertEqual(
             (None,
              [{'id': SERIES_ID_SECOND_V1, 'name': 'Series for my board', 'version': 1},
