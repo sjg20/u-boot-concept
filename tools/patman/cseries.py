@@ -1615,7 +1615,7 @@ class Cseries:
             default = 'default' if is_default else ''
             print(f'{name:15.15} {default:8} {url}')
 
-    def set_default_upstream(self, name):
+    def upstream_set_default(self, name):
         """Set the default upstream target
 
         Args:

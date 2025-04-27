@@ -211,9 +211,9 @@ def upstream(args, test_db=None):
             cser.upstream_add(args.remote_name, args.url)
         elif args.subcmd == 'default':
             if args.unset:
-                cser.set_default_upstream(None)
+                cser.upstream_set_default(None)
             elif args.remote_name:
-                cser.set_default_upstream(args.remote_name)
+                cser.upstream_set_default(args.remote_name)
             else:
                 result = cser.get_default_upstream()
                 print(result if result else 'unset')

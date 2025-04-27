@@ -3146,7 +3146,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         cser = self.get_cser()
 
         with self.assertRaises(ValueError) as exc:
-            cser.set_default_upstream('us')
+            cser.upstream_set_default('us')
         self.assertEqual("No such upstream 'us'", str(exc.exception))
 
         cser.upstream_add('us', 'https://one')
@@ -3154,12 +3154,12 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         self.assertIsNone(cser.get_default_upstream())
 
-        cser.set_default_upstream('us')
+        cser.upstream_set_default('us')
         self.assertEqual('us', cser.get_default_upstream())
 
-        cser.set_default_upstream('us')
+        cser.upstream_set_default('us')
 
-        cser.set_default_upstream('ci')
+        cser.upstream_set_default('ci')
         self.assertEqual('ci', cser.get_default_upstream())
 
         with terminal.capture() as (out, err):
@@ -3169,7 +3169,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.assertEqual('us                       https://one', lines[0])
         self.assertEqual('ci              default  git@two', lines[1])
 
-        cser.set_default_upstream(None)
+        cser.upstream_set_default(None)
         self.assertIsNone(cser.get_default_upstream())
 
     def test_upstream_default_cmdline(self):
@@ -3213,7 +3213,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         cser.upstream_add('us', 'https://one')
         cser.upstream_add('ci', 'git@two')
 
-        cser.set_default_upstream('us')
+        cser.upstream_set_default('us')
         cser.delete_upstream('us')
         self.assertIsNone(cser.get_default_upstream())
 
