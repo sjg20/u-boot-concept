@@ -1690,7 +1690,7 @@ class Cseries:
         if dry_run:
             tout.info('Dry run completed')
 
-    def remove_version(self, name, version, dry_run=False):
+    def series_version_remove(self, name, version, dry_run=False):
         """Remove a version of a series from the database
 
         Args:

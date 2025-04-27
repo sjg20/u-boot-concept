@@ -3658,14 +3658,14 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         cor = self.check_series_remove_multiple()
         cser = next(cor)
 
-        cser.remove_version('first', 1, dry_run=True)
+        cser.series_version_remove('first', 1, dry_run=True)
         cser = next(cor)
 
-        cser.remove_version('first', 1)
+        cser.series_version_remove('first', 1)
         cser = next(cor)
 
         with self.assertRaises(ValueError) as exc:
-            cser.remove_version('first', 2, dry_run=True)
+            cser.series_version_remove('first', 2, dry_run=True)
         self.assertEqual(
             "Series 'first' only has one version: remove the series",
             str(exc.exception))
