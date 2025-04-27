@@ -178,7 +178,7 @@ class TestCseries(unittest.TestCase, TestCommon):
         self.assertEqual('first', slist['first'].name)
         self.assertEqual('my description', slist['first'].desc)
 
-        plist = cser.get_ser_ver_list()
+        plist = cser._get_ser_ver_list()
         self.assertEqual(1, len(plist))
         self.assertEqual((1, 1, 1, None, None, None, None), plist[0])
 
@@ -231,7 +231,7 @@ class TestCseries(unittest.TestCase, TestCommon):
         self.assertEqual('first', slist['first'].name)
 
         # We should have just one entry, with version 2
-        plist = cser.get_ser_ver_list()
+        plist = cser._get_ser_ver_list()
         self.assertEqual(1, len(plist))
         self.assertEqual((1, 1, 2, None, None, None, None), plist[0])
 
@@ -278,7 +278,7 @@ class TestCseries(unittest.TestCase, TestCommon):
         self.assertEqual('first', slist['first'].name)
 
         # We should have two entries, one of each version
-        plist = cser.get_ser_ver_list()
+        plist = cser._get_ser_ver_list()
         self.assertEqual(2, len(plist))
         self.assertEqual((1, 1, 2, None, None, None, None), plist[0])
         self.assertEqual((2, 1, 1, None, None, None, None), plist[1])
@@ -1026,7 +1026,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                 "Setting link for series 'first' v2 to 2345",
                 out.getvalue().splitlines()[-1])
 
-        plist = cser.get_ser_ver_list()
+        plist = cser._get_ser_ver_list()
         self.assertEqual(2, len(plist))
         self.assertEqual((1, 1, 1, None, None, None, None), plist[0])
         self.assertEqual((2, 1, 2, '2345', None, None, None), plist[1])
@@ -1054,7 +1054,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                 "Setting link for series 'first' v2 to 2345",
                 out.getvalue().splitlines()[-1])
 
-        plist = cser.get_ser_ver_list()
+        plist = cser._get_ser_ver_list()
         self.assertEqual(2, len(plist))
         self.assertEqual((1, 1, 1, '1234', None, None, None), plist[0])
         self.assertEqual((2, 1, 2, '2345', None, None, None), plist[1])
@@ -1111,7 +1111,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                 f"Setting link for series 'second' v1 to {self.SERIES_ID_SECOND_V1}",
                 out.getvalue().splitlines()[-1])
 
-        plist = cser.get_ser_ver_list()
+        plist = cser._get_ser_ver_list()
         self.assertEqual(2, len(plist))
         self.assertEqual((1, 1, 1, None, None, None, None), plist[0])
         self.assertEqual(
@@ -1417,7 +1417,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             slist = cser._get_series_dict()
             self.assertEqual(1, len(slist))
 
-            plist = cser.get_ser_ver_list()
+            plist = cser._get_ser_ver_list()
             self.assertEqual(2, len(plist))
             self.assertEqual((1, 1, 1, None, None, None, None), plist[0])
             self.assertEqual((2, 1, 2, None, None, None, None), plist[1])
@@ -1483,7 +1483,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.assertEqual('Dry run completed', next(itr))
 
         # Make sure that nothing was added
-        plist = cser.get_ser_ver_list()
+        plist = cser._get_ser_ver_list()
         self.assertEqual(1, len(plist))
         self.assertEqual((1, 1, 1, None, None, None, None), plist[0])
 
@@ -2099,7 +2099,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                                 'Dry run completed', out.getvalue().strip())
             self.assertEqual({'first'}, cser._get_series_dict().keys())
 
-            plist = cser.get_ser_ver_list()
+            plist = cser._get_ser_ver_list()
             self.assertEqual(2, len(plist))
             self.assertEqual((1, 1, 2, None, None, None, None), plist[0])
             self.assertEqual((2, 1, 1, None, None, None, None), plist[1])
@@ -2111,7 +2111,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             self.assertEqual("Removed version 1 from series 'first'",
                             out.getvalue().strip())
             self.assertEqual({'first'}, cser._get_series_dict().keys())
-            plist = cser.get_ser_ver_list()
+            plist = cser._get_ser_ver_list()
             self.assertEqual(1, len(plist))
             pclist = cser.get_pcommit_dict()
             self.assertEqual(2, len(pclist))
@@ -2120,7 +2120,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             yield cser
             self.assertEqual({'first'}, cser._get_series_dict().keys())
 
-            plist = cser.get_ser_ver_list()
+            plist = cser._get_ser_ver_list()
             self.assertEqual(1, len(plist))
             self.assertEqual((1, 1, 2, None, None, None, None), plist[0])
 
@@ -2130,14 +2130,14 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             self.assertEqual("Removed series 'first'\nDry run completed",
                              out.getvalue().strip())
             self.assertTrue(cser._get_series_dict())
-            self.assertTrue(cser.get_ser_ver_list())
+            self.assertTrue(cser._get_ser_ver_list())
 
         with self.stage('remove series'):
             with terminal.capture() as (out, _):
                 yield cser
             self.assertEqual("Removed series 'first'", out.getvalue().strip())
             self.assertFalse(cser._get_series_dict())
-            self.assertFalse(cser.get_ser_ver_list())
+            self.assertFalse(cser._get_ser_ver_list())
 
         yield False
 

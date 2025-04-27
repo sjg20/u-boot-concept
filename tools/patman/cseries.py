@@ -274,7 +274,7 @@ class Cseries:
             sdict[idnum] = ser
         return sdict
 
-    def get_ser_ver_list(self):
+    def _get_ser_ver_list(self):
         """Get a list of patchwork entries from the database
 
         Return:
@@ -293,7 +293,7 @@ class Cseries:
             key (int): ser_ver id
             value (SER_VER): Information about one ser_ver record
         """
-        svlist = self.get_ser_ver_list()
+        svlist = self._get_ser_ver_list()
         svdict = {}
         for sver in svlist:
             svdict[sver.idnum] = sver
@@ -762,7 +762,7 @@ class Cseries:
 
         if link_all_versions:
             for svid, ser_id, version, link, _, _, _ in \
-                    self.get_ser_ver_list():
+                    self._get_ser_ver_list():
                 ser = sdict[ser_id]
 
                 pwc = self.get_pcommit_dict(svid)
@@ -2130,7 +2130,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
 
         if sync_all_versions:
             for svid, series_id, version, link, _, _, desc in \
-                    self.get_ser_ver_list():
+                    self._get_ser_ver_list():
                 ser_ver = svdict[svid]
                 if link:
                     to_fetch[svid] = patchwork.STATE_REQ(
