@@ -961,7 +961,7 @@ class Cseries(cser_helper.CseriesHelper):
         for seq, pcm in to_remove.items():
             _show_item('+', seq, pcm.subject)
 
-        self.db.execute('DELETE FROM pcommit WHERE svid = ?', (svid,))
+        self.db.pcommit_delete(svid)
         self._add_series_commits(ser, svid)
         if not dry_run:
             self.commit()
@@ -1074,8 +1074,7 @@ class Cseries(cser_helper.CseriesHelper):
                 gitutil.rename_branch(old_branch, branch, self.gitdir)
 
         # Change the series name; nothing needs to change in ser_ver
-        self.db.execute('UPDATE series SET name = ? WHERE id = ?',
-                        (name, old_ser.idnum))
+        self.db.series_set_name(old_ser.idnum, name)
 
         if not dry_run:
             self.commit()

@@ -330,8 +330,18 @@ class Database:
                 unarchived
         """
         self.execute(
-            f'UPDATE series SET archived = {int(archived)} WHERE '
-            f'id = {series_idnum}')
+            'UPDATE series SET archived = ? WHERE id = ?',
+            (archived, series_idnum))
+
+    def series_set_name(self, series_idnum, name):
+        """Update name for a series
+
+        Args:
+            series_idnum (int): ID num of the series
+            name (str): new name to use
+        """
+        self.execute(
+            'UPDATE series SET name = ? WHERE id = ?', (name, series_idnum))
 
     # ser_ver functions
 
