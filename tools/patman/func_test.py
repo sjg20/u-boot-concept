@@ -2390,7 +2390,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.assertEqual("Setting link for series 'first' v2 to 2345",
                          lines[5])
 
-        self.assertEqual('2345', cser.get_link('first', 2))
+        self.assertEqual('2345', cser.link_get('first', 2))
 
         series = patchstream.get_metadata_for_list('first2', self.gitdir, 2)
         self.assertEqual('2:2345', series.links)
@@ -2444,7 +2444,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                       out.getvalue())
 
         with self.assertRaises(ValueError) as exc:
-            cser.get_link('first', 4)
+            cser.link_get('first', 4)
         self.assertEqual("Series 'first' does not have a version 4",
                          str(exc.exception))
 
@@ -2452,7 +2452,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             cser.increment('first')
 
         with self.assertRaises(ValueError) as exc:
-            cser.get_link('first', 4)
+            cser.link_get('first', 4)
         self.assertEqual("Series 'first' does not have a version 4",
                          str(exc.exception))
 

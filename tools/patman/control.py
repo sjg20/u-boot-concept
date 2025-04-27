@@ -140,7 +140,7 @@ def do_series(args, test_db=None, pwork=None):
         elif args.subcmd == 'dec':
             cser.decrement(args.series, args.dry_run)
         elif args.subcmd == 'get-link':
-            link = cser.get_link(args.series, args.version)
+            link = cser.link_get(args.series, args.version)
             print(link)
         elif args.subcmd == 'inc':
             cser.increment(args.series, args.dry_run)

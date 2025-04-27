@@ -643,7 +643,7 @@ class Cseries:
         self.commit()
         tout.info(f"Setting link for series '{ser.name}' v{version} to {link}")
 
-    def get_link(self, series, version):
+    def link_get(self, series, version):
         """Get the patchwork link for a version of a series
 
         Args:
@@ -2388,7 +2388,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             version (str): Version number to open
         """
         ser, version = self.parse_series_and_version(name, version)
-        link = self.get_link(ser.name, version)
+        link = self.link_get(ser.name, version)
         pwork.url = 'https://patchwork.ozlabs.org'
         url = self.loop.run_until_complete(pwork.get_series_url(link))
         print(f'Opening {url}')
