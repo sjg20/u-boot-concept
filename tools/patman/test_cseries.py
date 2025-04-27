@@ -1084,7 +1084,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                 cser.series_add('first', '', allow_unmarked=True)
                 cser.series_add('second', allow_unmarked=True)
 
-        with self.stage('autolink first'):
+        with self.stage('autolink unset'):
             yield cser, pwork
         self.db_open()
 
@@ -1094,8 +1094,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.assertEqual(
             (2, 2, 1, f'{self.SERIES_ID_SECOND_V1}', None, None, None),
             plist[1])
-        with self.stage('autolink first'):
-            yield cser
+        yield None
 
     def test_series_autolink(self):
         """Test linking a cseries to its patchwork series by description"""
@@ -1107,13 +1106,14 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.assertIn("Series 'first' has an empty description",
                       str(exc.exception))
 
+        # autolink unset
         with terminal.capture() as (out, _):
             cser.link_auto(pwork, 'second', None, True)
         self.assertEqual(
             f"Setting link for series 'second' v1 to {self.SERIES_ID_SECOND_V1}",
             out.getvalue().splitlines()[-1])
 
-        cser = next(cor)
+        self.assertFalse(next(cor))
         cor.close()
 
     def test_series_autolink_cmdline(self):
@@ -1123,13 +1123,21 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.db_close()
 
         with terminal.capture() as (out, _):
+            self.run_args('series', '-s', 'first', 'autolink', expected_ret=1,
+                          pwork=pwork)
+        self.assertEqual(
+            "patman: ValueError: Series 'first' has an empty description",
+            out.getvalue().strip())
+
+        # autolink unset
+        with terminal.capture() as (out, _):
             self.run_args('series', '-s', 'second', 'autolink', '-u',
                           pwork=pwork)
         self.assertEqual(
             f"Setting link for series 'second' v1 to {self.SERIES_ID_SECOND_V1}",
             out.getvalue().splitlines()[-1])
 
-        next(cor)
+        self.assertFalse(next(cor))
         cor.close()
 
     def _autolink_setup(self):
