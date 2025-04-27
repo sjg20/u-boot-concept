@@ -566,7 +566,6 @@ class Cseries(cser_helper.CseriesHelper):
             print(f'{name:16.16} {ser.desc:41.41} {stat.rjust(8)}  {vlist}')
         print(border)
 
-
     def remove(self, name, dry_run=False):
         """Remove a series from the database
 
@@ -590,7 +589,7 @@ class Cseries(cser_helper.CseriesHelper):
         if dry_run:
             tout.info('Dry run completed')
 
-    def series_version_remove(self, name, version, dry_run=False):
+    def version_remove(self, name, version, dry_run=False):
         """Remove a version of a series from the database
 
         Args:

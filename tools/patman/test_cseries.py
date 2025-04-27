@@ -2146,16 +2146,16 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         cser = next(cor)
 
         # Do a dry-run removal
-        cser.series_version_remove('first', 1, dry_run=True)
+        cser.version_remove('first', 1, dry_run=True)
         cser = next(cor)
 
         # Now remove for real
-        cser.series_version_remove('first', 1)
+        cser.version_remove('first', 1)
         cser = next(cor)
 
         # Remove only version
         with self.assertRaises(ValueError) as exc:
-            cser.series_version_remove('first', 2, dry_run=True)
+            cser.version_remove('first', 2, dry_run=True)
         self.assertEqual(
             "Series 'first' only has one version: remove the series",
             str(exc.exception))
