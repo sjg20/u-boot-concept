@@ -171,7 +171,7 @@ def do_series(args, test_db=None, pwork=None):
             cser.send_series(pwork, args.series, args.autolink,
                              args.autolink_wait, args)
         elif args.subcmd == 'set-link':
-            cser.set_link(args.series, args.version, args.link, args.update)
+            cser.link_set(args.series, args.version, args.link, args.update)
         elif args.subcmd == 'status':
             cser.series_status(pwork, args.series, args.version,
                                args.show_comments, args.show_cover_comments)

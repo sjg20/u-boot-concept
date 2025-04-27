@@ -2365,7 +2365,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             cser.series_add('first', '', allow_unmarked=True)
 
         with self.assertRaises(ValueError) as exc:
-            cser.set_link('first', 2, '1234', True)
+            cser.link_set('first', 2, '1234', True)
         self.assertEqual("Series 'first' does not have a version 2",
                          str(exc.exception))
 
@@ -2375,7 +2375,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.assertTrue(repo.lookup_branch('first2'))
 
         with terminal.capture() as (out, _):
-            cser.set_link('first', 2, '2345', True)
+            cser.link_set('first', 2, '2345', True)
 
         lines = out.getvalue().splitlines()
         self.assertEqual(6, len(lines))
@@ -2416,11 +2416,11 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         gitutil.checkout('second', self.gitdir, work_tree=self.tmpdir,
                          force=True)
         with terminal.capture():
-            cser.set_link('first', 1, '16', True)
+            cser.link_set('first', 1, '16', True)
 
         # Overwrite the link
         with terminal.capture():
-            cser.set_link('first', 1, '17', True)
+            cser.link_set('first', 1, '17', True)
 
         series2 = patchstream.get_metadata_for_list('first', self.gitdir, count)
         self.assertEqual('1:17', series2.links)
@@ -2523,7 +2523,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         # Set link with detected version
         with terminal.capture() as (out, _):
-            cser.set_link('second', None, f'{SERIES_ID_SECOND_V1}', True)
+            cser.link_set('second', None, f'{SERIES_ID_SECOND_V1}', True)
         self.assertEqual(
             "Setting link for series 'second' v1 to 456",
             out.getvalue().splitlines()[-1])
@@ -2564,7 +2564,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         # Set link with detected name
         with self.assertRaises(ValueError) as exc:
-            cser.set_link(None, 2, '2345', True)
+            cser.link_set(None, 2, '2345', True)
         self.assertEqual(
             "Series 'first' does not have a version 2", str(exc.exception))
 
@@ -2572,7 +2572,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             cser.increment('first')
 
         with terminal.capture() as (out, _):
-            cser.set_link(None, 2, '2345', True)
+            cser.link_set(None, 2, '2345', True)
         self.assertEqual(
                 "Setting link for series 'first' v2 to 2345",
                 out.getvalue().splitlines()[-1])
@@ -2591,7 +2591,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         # Set link with detected name and version
         with terminal.capture() as (out, _):
-            cser.set_link(None, None, '1234', True)
+            cser.link_set(None, None, '1234', True)
         self.assertEqual(
                 "Setting link for series 'first' v1 to 1234",
                 out.getvalue().splitlines()[-1])
@@ -2600,7 +2600,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             cser.increment('first')
 
         with terminal.capture() as (out, _):
-            cser.set_link(None, None, '2345', True)
+            cser.link_set(None, None, '2345', True)
         self.assertEqual(
                 "Setting link for series 'first' v2 to 2345",
                 out.getvalue().splitlines()[-1])
@@ -4007,9 +4007,9 @@ Date:   .*
                 cser.series_add('first', 'description', allow_unmarked=True)
                 cser.increment('first')
                 cser.increment('first')
-                cser.set_link('first', 1, '123', True)
-                cser.set_link('first', 2, '1234', True)
-                cser.set_link('first', 3, f'{SERIES_ID_FIRST_V3}', True)
+                cser.link_set('first', 1, '123', True)
+                cser.link_set('first', 2, '1234', True)
+                cser.link_set('first', 3, f'{SERIES_ID_FIRST_V3}', True)
                 cser.autolink(pwork, 'second', 2, True)
 
         with self.stage('no options'):

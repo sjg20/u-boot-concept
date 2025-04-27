@@ -625,7 +625,7 @@ class Cseries:
 
         return updated
 
-    def set_link(self, series_name, version, link, update_commit):
+    def link_set(self, series_name, version, link, update_commit):
         """Add / update a series-links link for a series
 
         Args:
@@ -731,7 +731,7 @@ class Cseries:
 
             self.sleep(sleep_time)
 
-        self.set_link(name, version, pws, update_commit)
+        self.link_set(name, version, pws, update_commit)
 
     def _get_autolink_dict(self, sdict, link_all_versions):
         """Get a dict of ser_vers to fetch, along with their patchwork links
