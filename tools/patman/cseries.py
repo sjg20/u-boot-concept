@@ -1644,7 +1644,7 @@ class Cseries:
             return None
         return recs[0][0]
 
-    def delete_upstream(self, name):
+    def upstream_delete(self, name):
         """Delete an upstream target
 
         Args:

@@ -218,7 +218,7 @@ def upstream(args, test_db=None):
                 result = cser.upstream_get_default()
                 print(result if result else 'unset')
         elif args.subcmd == 'delete':
-            cser.delete_upstream(args.remote_name)
+            cser.upstream_delete(args.remote_name)
         elif args.subcmd == 'list':
             cser.upstream_list()
         else:

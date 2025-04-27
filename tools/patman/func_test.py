@@ -3207,17 +3207,17 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         cser = self.get_cser()
 
         with self.assertRaises(ValueError) as exc:
-            cser.delete_upstream('us')
+            cser.upstream_delete('us')
         self.assertEqual("No such upstream 'us'", str(exc.exception))
 
         cser.upstream_add('us', 'https://one')
         cser.upstream_add('ci', 'git@two')
 
         cser.upstream_set_default('us')
-        cser.delete_upstream('us')
+        cser.upstream_delete('us')
         self.assertIsNone(cser.upstream_get_default())
 
-        cser.delete_upstream('ci')
+        cser.upstream_delete('ci')
         ulist = cser.get_upstream_dict()
         self.assertFalse(ulist)
 
