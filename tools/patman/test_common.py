@@ -11,19 +11,22 @@ import pygit2
 
 from u_boot_pylib import gitutil
 from u_boot_pylib import tools
-
-
-# Fake patchwork project ID for U-Boot
-PROJ_ID = 6
-PROJ_LINK_NAME = 'uboot'
-SERIES_ID_FIRST_V3 = 31
-SERIES_ID_SECOND_V1 = 456
-SERIES_ID_SECOND_V2 = 457
-TITLE_SECOND = 'Series for my board'
+from u_boot_pylib import tout
 
 
 class TestCommon:
     """Contains common test functions"""
+    leb = (b'Lord Edmund Blackadd\xc3\xabr <weasel@blackadder.org>'.
+           decode('utf-8'))
+
+    # Fake patchwork project ID for U-Boot
+    PROJ_ID = 6
+    PROJ_LINK_NAME = 'uboot'
+    SERIES_ID_FIRST_V3 = 31
+    SERIES_ID_SECOND_V1 = 456
+    SERIES_ID_SECOND_V2 = 457
+    TITLE_SECOND = 'Series for my board'
+
     verbosity = False
     preserve_outdirs = False
 
@@ -47,6 +50,30 @@ class TestCommon:
     def setUp(self):
         self.tmpdir = tempfile.mkdtemp(prefix='patman.')
         self.gitdir = os.path.join(self.tmpdir, '.git')
+        tout.init(tout.DEBUG if self.verbosity else tout.INFO,
+                  allow_colour=False)
+
+    def make_commit_with_file(self, subject, body, fname, text):
+        """Create a file and add it to the git repo with a new commit
+
+        Args:
+            subject (str): Subject for the commit
+            body (str): Body text of the commit
+            fname (str): Filename of file to create
+            text (str): Text to put into the file
+        """
+        path = os.path.join(self.tmpdir, fname)
+        tools.write_file(path, text, binary=False)
+        index = self.repo.index
+        index.add(fname)
+        # pylint doesn't seem to find this
+        # pylint: disable=E1101
+        author = pygit2.Signature('Test user', 'test@email.com')
+        committer = author
+        tree = index.write_tree()
+        message = subject + '\n' + body
+        self.repo.create_commit('HEAD', author, committer, message, tree,
+                                [self.repo.head.target])
 
     def make_git_tree(self):
         """Make a simple git tree suitable for testing
@@ -146,12 +173,12 @@ Here is the serial driver
 for my chip.
 
 Cover-letter:
-{TITLE_SECOND}
+{self.TITLE_SECOND}
 This series implements support
 for my glorious board.
 END
 Series-to: u-boot
-Series-links: {SERIES_ID_SECOND_V1}
+Series-links: {self.SERIES_ID_SECOND_V1}
 ''', 'serial.c', '''The code for the
 serial driver is here''')
         self.make_commit_with_file('bootm: Make it boot', '''

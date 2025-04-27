@@ -15,7 +15,6 @@ import re
 import shutil
 import sys
 import unittest
-from unittest import mock
 
 import pygit2
 from pygit2.enums import CheckoutStrategy
@@ -68,8 +67,6 @@ class Namespace:
 
 class TestFunctional(unittest.TestCase, TestCommon):
     """Functional tests for checking that patman behaves correctly"""
-    leb = (b'Lord Edmund Blackadd\xc3\xabr <weasel@blackadder.org>'.
-           decode('utf-8'))
     fred = 'Fred Bloggs <f.bloggs@napier.net>'
     joe = 'Joe Bloggs <joe@napierwallies.co.nz>'
     mary = 'Mary Bloggs <mary@napierwallies.co.nz>'
@@ -79,11 +76,6 @@ class TestFunctional(unittest.TestCase, TestCommon):
     def setUp(self):
         TestCommon.setUp(self)
         self.repo = None
-        self.cser = None
-        self.autolink_extra = None
-        tout.init(tout.DEBUG if self.verbosity else tout.INFO,
-                  allow_colour=False)
-        self.loop = asyncio.get_event_loop()
 
     def tearDown(self):
         if self.preserve_outdirs:
@@ -157,15 +149,6 @@ class TestFunctional(unittest.TestCase, TestCommon):
             shutil.copy(self._get_path(src_fname), fname)
 
         return cover_fname, fname_list
-
-    def assertFinished(self, itr):
-        """Assert that an iterator is finished
-
-        Args:
-            itr (iter): Iterator to check
-        """
-        val = [x for x in itr]
-        self.assertFalse(val)
 
     def test_basic(self):
         """Tests the basic flow of patman
@@ -430,28 +413,6 @@ Changes in v2:
         """
         state = repo.status(untracked_files='no')
         return bool(state)
-
-    def make_commit_with_file(self, subject, body, fname, text):
-        """Create a file and add it to the git repo with a new commit
-
-        Args:
-            subject (str): Subject for the commit
-            body (str): Body text of the commit
-            fname (str): Filename of file to create
-            text (str): Text to put into the file
-        """
-        path = os.path.join(self.tmpdir, fname)
-        tools.write_file(path, text, binary=False)
-        index = self.repo.index
-        index.add(fname)
-        # pylint doesn't seem to find this
-        # pylint: disable=E1101
-        author = pygit2.Signature('Test user', 'test@email.com')
-        committer = author
-        tree = index.write_tree()
-        message = subject + '\n' + body
-        self.repo.create_commit('HEAD', author, committer, message, tree,
-                                [self.repo.head.target])
 
     def test_branch(self):
         """Test creating patches from a branch"""

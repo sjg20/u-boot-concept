@@ -9,18 +9,22 @@ import os
 import re
 import tempfile
 import unittest
+from unittest import mock
 
 import pygit2
 
 from patman import cmdline
+from u_boot_pylib import cros_subprocess
 from u_boot_pylib import gitutil
 from u_boot_pylib import terminal
 from u_boot_pylib import tools
 from patman import control
 from patman import cseries
 from patman.cseries import PCOMMIT
+from patman import database
 from patman import patchstream
 from patman.patchwork import Patchwork
+from patman.test_common import TestCommon
 
 
 class Namespace:
@@ -28,10 +32,13 @@ class Namespace:
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
 
-class TestCseries(unittest.TestCase):
+
+class TestCseries(unittest.TestCase, TestCommon):
     def setUp(self):
-        self.tmpdir = tempfile.mkdtemp(prefix='patman.')
-        self.gitdir = os.path.join(self.tmpdir, '.git')
+        TestCommon.setUp(self)
+        self.autolink_extra = None
+        self.loop = asyncio.get_event_loop()
+        self.cser = None
 
     class _Stage:
         def __init__(self, name):
@@ -61,6 +68,15 @@ class TestCseries(unittest.TestCase):
             Note that the output only appears if the -N flag is used
         """
         return self._Stage(name)
+
+    def assertFinished(self, itr):
+        """Assert that an iterator is finished
+
+        Args:
+            itr (iter): Iterator to check
+        """
+        val = [x for x in itr]
+        self.assertFalse(val)
 
     def test_database_setup(self):
         """Check setting up of the series database"""
@@ -393,7 +409,7 @@ class TestCseries(unittest.TestCase):
         # Get a list of projects
         if subpath == 'projects/':
             return [
-                {'id': PROJ_ID, 'name': 'U-Boot', 'link_name': PROJ_LINK_NAME},
+                {'id': self.PROJ_ID, 'name': 'U-Boot', 'link_name': self.PROJ_LINK_NAME},
                 {'id': 9, 'name': 'other', 'link_name': 'other'}
             ]
 
@@ -404,8 +420,10 @@ class TestCseries(unittest.TestCase):
                 {'id': 56, 'name': 'contains first name', 'version': 1},
                 {'id': 43, 'name': 'has first in it', 'version': 1},
                 {'id': 1234, 'name': 'first series', 'version': 1},
-                {'id': SERIES_ID_SECOND_V1, 'name': TITLE_SECOND, 'version': 1},
-                {'id': SERIES_ID_SECOND_V2, 'name': TITLE_SECOND, 'version': 2},
+                {'id': self.SERIES_ID_SECOND_V1, 'name': self.TITLE_SECOND,
+                 'version': 1},
+                {'id': self.SERIES_ID_SECOND_V2, 'name': self.TITLE_SECOND,
+                 'version': 2},
                 {'id': 12345, 'name': 'i2c: I2C things', 'version': 1},
             ]
             if self.autolink_extra:
@@ -416,7 +434,7 @@ class TestCseries(unittest.TestCase):
         m_series = re.match(r'series/(\d+)/$', subpath)
         series_id = int(m_series.group(1)) if m_series else ''
         if series_id:
-            if series_id == SERIES_ID_SECOND_V1:
+            if series_id == self.SERIES_ID_SECOND_V1:
                 # series 'second'
                 return {
                     'patches': [
@@ -432,7 +450,7 @@ class TestCseries(unittest.TestCase):
                         'name': 'The name of the cover letter',
                     }
                 }
-            if series_id == SERIES_ID_SECOND_V2:
+            if series_id == self.SERIES_ID_SECOND_V2:
                 # series 'second2'
                 return {
                     'patches': [
@@ -448,7 +466,7 @@ class TestCseries(unittest.TestCase):
                         'name': 'The name of the cover letter',
                     }
                 }
-            if series_id == SERIES_ID_FIRST_V3:
+            if series_id == self.SERIES_ID_FIRST_V3:
                 # series 'first3'
                 return {
                     'patches': [
@@ -579,7 +597,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         """Test patchwork when adding a series which has no cover letter"""
         cser = self.get_cser()
         pwork = Patchwork.for_testing(self._fake_patchwork_cser)
-        pwork.project_set(PROJ_ID, PROJ_LINK_NAME)
+        pwork.project_set(self.PROJ_ID, self.PROJ_LINK_NAME)
 
         with terminal.capture() as (out, _):
             cser.series_add('first', 'my name for this', mark=False,
@@ -603,7 +621,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         """
         cser = self.get_cser()
         pwork = Patchwork.for_testing(self._fake_patchwork_cser)
-        pwork.project_set(PROJ_ID, PROJ_LINK_NAME)
+        pwork.project_set(self.PROJ_ID, self.PROJ_LINK_NAME)
 
         with terminal.capture() as (out, _):
             cser.series_add('first', '', allow_unmarked=True)
@@ -913,11 +931,11 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         count = 3
         series = patchstream.get_metadata('second', 0, count,
                                           git_dir=self.gitdir)
-        self.assertEqual(f'{SERIES_ID_SECOND_V1}', series.links)
+        self.assertEqual(f'{self.SERIES_ID_SECOND_V1}', series.links)
 
         # Set link with detected version
         with terminal.capture() as (out, _):
-            cser.link_set('second', None, f'{SERIES_ID_SECOND_V1}', True)
+            cser.link_set('second', None, f'{self.SERIES_ID_SECOND_V1}', True)
         self.assertEqual(
             "Setting link for series 'second' v1 to 456",
             out.getvalue().splitlines()[-1])
@@ -925,7 +943,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         # Make sure that the link was set
         series = patchstream.get_metadata('second', 0, count,
                                           git_dir=self.gitdir)
-        self.assertEqual(f'1:{SERIES_ID_SECOND_V1}', series.links)
+        self.assertEqual(f'1:{self.SERIES_ID_SECOND_V1}', series.links)
 
         with terminal.capture():
             cser.increment('second')
@@ -935,12 +953,13 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                                           git_dir=self.gitdir)
 
         pwork = Patchwork.for_testing(self._fake_patchwork_cser)
-        pwork.project_set(PROJ_ID, PROJ_LINK_NAME)
+        pwork.project_set(self.PROJ_ID, self.PROJ_LINK_NAME)
         self.assertFalse(cser.get_project())
         cser.project_set(pwork, 'U-Boot', quiet=True)
 
         self.assertEqual(
-            (SERIES_ID_SECOND_V1, None, 'second', 1, 'Series for my board'),
+            (self.SERIES_ID_SECOND_V1, None, 'second', 1,
+             'Series for my board'),
             cser.link_search(pwork, 'second', 1))
 
         with terminal.capture():
@@ -1016,19 +1035,19 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             cser.increment('second')
 
         pwork = Patchwork.for_testing(self._fake_patchwork_cser)
-        pwork.project_set(PROJ_ID, PROJ_LINK_NAME)
+        pwork.project_set(self.PROJ_ID, self.PROJ_LINK_NAME)
         self.assertFalse(cser.get_project())
         cser.project_set(pwork, 'U-Boot', quiet=True)
 
         self.assertEqual(
-            (SERIES_ID_SECOND_V1, None, 'second', 1, 'Series for my board'),
+            (self.SERIES_ID_SECOND_V1, None, 'second', 1, 'Series for my board'),
             cser.link_search(pwork, 'second', 1))
         self.assertEqual((457, None, 'second', 2, 'Series for my board'),
                          cser.link_search(pwork, 'second', 2))
         res = cser.link_search(pwork, 'second', 3)
         self.assertEqual(
             (None,
-             [{'id': SERIES_ID_SECOND_V1, 'name': 'Series for my board', 'version': 1},
+             [{'id': self.SERIES_ID_SECOND_V1, 'name': 'Series for my board', 'version': 1},
               {'id': 457, 'name': 'Series for my board', 'version': 2}],
              'second', 3, 'Series for my board'),
              res)
@@ -1039,7 +1058,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         with self.stage('setup'):
             pwork = Patchwork.for_testing(self._fake_patchwork_cser)
-            pwork.project_set(PROJ_ID, PROJ_LINK_NAME)
+            pwork.project_set(self.PROJ_ID, self.PROJ_LINK_NAME)
             self.assertFalse(cser.get_project())
             cser.project_set(pwork, 'U-Boot', quiet=True)
 
@@ -1054,7 +1073,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         plist = cser.get_ser_ver_list()
         self.assertEqual(2, len(plist))
         self.assertEqual((1, 1, 1, None, None, None, None), plist[0])
-        self.assertEqual((2, 2, 1, f'{SERIES_ID_SECOND_V1}', None, None, None),
+        self.assertEqual((2, 2, 1, f'{self.SERIES_ID_SECOND_V1}', None, None, None),
                          plist[1])
         with self.stage('autolink first'):
             yield cser
@@ -1072,7 +1091,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         with terminal.capture() as (out, _):
             cser.link_auto(pwork, 'second', None, True)
         self.assertEqual(
-                f"Setting link for series 'second' v1 to {SERIES_ID_SECOND_V1}",
+                f"Setting link for series 'second' v1 to {self.SERIES_ID_SECOND_V1}",
                 out.getvalue().splitlines()[-1])
 
         cser = next(cor)
@@ -1088,7 +1107,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             self.run_args('series', '-s', 'second', 'autolink', '-u',
                           pwork=pwork)
         self.assertEqual(
-                f"Setting link for series 'second' v1 to {SERIES_ID_SECOND_V1}",
+                f"Setting link for series 'second' v1 to {self.SERIES_ID_SECOND_V1}",
                 out.getvalue().splitlines()[-1])
 
         next(cor)
@@ -1104,7 +1123,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         cser = self.get_cser()
 
         pwork = Patchwork.for_testing(self._fake_patchwork_cser)
-        pwork.project_set(PROJ_ID, PROJ_LINK_NAME)
+        pwork.project_set(self.PROJ_ID, self.PROJ_LINK_NAME)
         self.assertFalse(cser.get_project())
         cser.project_set(pwork, 'U-Boot', quiet=True)
 
@@ -1130,26 +1149,26 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.assertEqual(
             ('first', 2, None, 'first series', 'not found'), next(items))
         self.assertEqual(
-            ('second', 1, f'{SERIES_ID_SECOND_V1}', 'Series for my board',
-             f'already:{SERIES_ID_SECOND_V1}'),
+            ('second', 1, f'{self.SERIES_ID_SECOND_V1}', 'Series for my board',
+             f'already:{self.SERIES_ID_SECOND_V1}'),
             next(items))
         self.assertEqual('Dry run completed', out.getvalue().splitlines()[-1])
 
         # A second dry run should do exactly the same thing
         with terminal.capture() as (out2, _):
             summary2 = cser.link_auto_all(pwork, update_commit=True,
-                                         link_all_versions=True,
-                                         replace_existing=False, dry_run=True,
-                                         show_summary=False)
+                                          link_all_versions=True,
+                                          replace_existing=False, dry_run=True,
+                                          show_summary=False)
         self.assertEqual(out.getvalue(), out2.getvalue())
         self.assertEqual(summary, summary2)
 
         # Now do it for real
         with terminal.capture():
             summary = cser.link_auto_all(pwork, update_commit=True,
-                                        link_all_versions=True,
-                                        replace_existing=False, dry_run=False,
-                                        show_summary=False)
+                                         link_all_versions=True,
+                                         replace_existing=False, dry_run=False,
+                                         show_summary=False)
 
         # Check the link was updated
         pdict = cser.get_ser_ver_dict()
@@ -1164,16 +1183,16 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         cser, pwork = self._autolink_setup()
         with terminal.capture():
             summary = cser.link_auto_all(pwork, update_commit=True,
-                                        link_all_versions=False,
-                                        replace_existing=False, dry_run=False,
-                                        show_summary=False)
+                                         link_all_versions=False,
+                                         replace_existing=False, dry_run=False,
+                                         show_summary=False)
         self.assertEqual(2, len(summary))
         items = iter(summary.values())
         self.assertEqual(
             ('first', 2, None, 'first series', 'not found'), next(items))
         self.assertEqual(
-            ('second', 1, f'{SERIES_ID_SECOND_V1}', 'Series for my board',
-             f'already:{SERIES_ID_SECOND_V1}'),
+            ('second', 1, f'{self.SERIES_ID_SECOND_V1}', 'Series for my board',
+             f'already:{self.SERIES_ID_SECOND_V1}'),
             next(items))
 
     def test_series_autolink_no_update(self):
@@ -1181,9 +1200,9 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         cser, pwork = self._autolink_setup()
         with terminal.capture():
             cser.link_auto_all(pwork, update_commit=False,
-                              link_all_versions=True, replace_existing=False,
-                              dry_run=False,
-                              show_summary=False)
+                               link_all_versions=True, replace_existing=False,
+                               dry_run=False,
+                               show_summary=False)
 
         series = patchstream.get_metadata_for_list('first', self.gitdir, 2)
         self.assertNotIn('links', series)
@@ -1193,9 +1212,9 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         cser, pwork = self._autolink_setup()
         with terminal.capture():
             summary = cser.link_auto_all(pwork, update_commit=True,
-                                        link_all_versions=True,
-                                        replace_existing=True, dry_run=False,
-                                        show_summary=False)
+                                         link_all_versions=True,
+                                         replace_existing=True, dry_run=False,
+                                         show_summary=False)
         self.assertEqual(3, len(summary))
         items = iter(summary.values())
         linked = next(items)
@@ -1204,8 +1223,8 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.assertEqual(
             ('first', 2, None, 'first series', 'not found'), next(items))
         self.assertEqual(
-            ('second', 1, f'{SERIES_ID_SECOND_V1}', 'Series for my board',
-             f'linked:{SERIES_ID_SECOND_V1}'),
+            ('second', 1, f'{self.SERIES_ID_SECOND_V1}', 'Series for my board',
+             f'linked:{self.SERIES_ID_SECOND_V1}'),
             next(items))
 
     def test_series_autolink_cmdline(self):
@@ -1278,7 +1297,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             next(itr))
         self.assertEqual(
             f'second                 1  Series for my board                       '
-            f'already:{SERIES_ID_SECOND_V1}',
+            f'already:{self.SERIES_ID_SECOND_V1}',
             next(itr))
         self.assertTrue(next(itr).startswith('--'))
         self.assertFinished(itr)
@@ -1384,7 +1403,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
     def test_series_inc_cmdline(self):
         """Test incrementing the version with cmdline"""
         cor = self.check_series_inc()
-        cser = next(cor)
+        next(cor)
 
         self.run_args('series', '-s', 'first', 'inc', pwork=True)
 
@@ -1714,7 +1733,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.assertFalse(pcdict)
 
     def test_series_add_mark_cmdline(self):
-        """Test marking a cseries with Change-Id fields using the command line"""
+        """Test marking a cseries with Change-Id fields using the cmdline"""
         cser = self.get_cser()
 
         with terminal.capture() as (out, _):
@@ -1944,7 +1963,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.assertIn('Marked commits 2/2', out.getvalue())
 
         # Use the --allow-marked flag to make it succeed
-        cser = next(cor)
+        next(cor)
         self.run_args('series', '-s', 'first', 'mark', '--allow-marked',
                       pwork=True)
         self.assertFalse(next(cor))
@@ -2108,7 +2127,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         with terminal.capture() as (out, _):
             cser.project_set(pwork, 'U-Boot')
         self.assertEqual(
-            f"Project 'U-Boot' patchwork-ID {PROJ_ID} link-name uboot",
+            f"Project 'U-Boot' patchwork-ID {self.PROJ_ID} link-name uboot",
             out.getvalue().strip())
 
     def test_patchwork_get_project(self):
@@ -2119,12 +2138,12 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         with terminal.capture() as (out, _):
             cser.project_set(pwork, 'U-Boot')
         self.assertEqual(
-            f"Project 'U-Boot' patchwork-ID {PROJ_ID} link-name uboot",
+            f"Project 'U-Boot' patchwork-ID {self.PROJ_ID} link-name uboot",
             out.getvalue().strip())
 
         name, pwid, link_name = cser.get_project()
         self.assertEqual('U-Boot', name)
-        self.assertEqual(PROJ_ID, pwid)
+        self.assertEqual(self.PROJ_ID, pwid)
         self.assertEqual('uboot', link_name)
 
     def test_patchwork_get_project_cmdline(self):
@@ -2138,7 +2157,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             self.run_args('-P', 'https://url', 'patchwork', 'set-project',
                           'U-Boot', pwork=pwork)
         self.assertEqual(
-            f"Project 'U-Boot' patchwork-ID {PROJ_ID} link-name uboot",
+            f"Project 'U-Boot' patchwork-ID {self.PROJ_ID} link-name uboot",
             out.getvalue().strip())
 
         name, pwid, link_name = cser.get_project()
@@ -2149,7 +2168,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         with terminal.capture() as (out, _):
             self.run_args('-P', 'https://url', 'patchwork', 'get-project')
         self.assertEqual(
-            f"Project 'U-Boot' patchwork-ID {PROJ_ID} link-name uboot",
+            f"Project 'U-Boot' patchwork-ID {self.PROJ_ID} link-name uboot",
             out.getvalue().strip())
 
     def check_series_list_patches(self):
@@ -2295,7 +2314,7 @@ Date:   .*
         lines = out.getvalue().splitlines()
         self.assertEqual(
             f"Updating series 'second' version 1 from link "
-            f"'{SERIES_ID_SECOND_V1}'",
+            f"'{self.SERIES_ID_SECOND_V1}'",
             lines[0])
         self.assertEqual('3 patches updated (7 requests)', lines[1])
         self.assertEqual('Dry run completed', lines[2])
@@ -2313,7 +2332,7 @@ Date:   .*
         itr = iter(lines)
         self.assertEqual(
             f"Updating series 'second' version 1 from link "
-            f"'{SERIES_ID_SECOND_V1}'",
+            f"'{self.SERIES_ID_SECOND_V1}'",
             next(itr))
         self.assertEqual('  1 video: Some video improvements', next(itr))
         self.assertEqual('  + Reviewed-by: Fred Bloggs <fred@bloggs.com>',
@@ -2408,7 +2427,7 @@ Date:   .*
                 cser.increment('first')
                 cser.link_set('first', 1, '123', True)
                 cser.link_set('first', 2, '1234', True)
-                cser.link_set('first', 3, f'{SERIES_ID_FIRST_V3}', True)
+                cser.link_set('first', 3, f'{self.SERIES_ID_FIRST_V3}', True)
                 cser.link_auto(pwork, 'second', 2, True)
 
         with self.stage('no options'):
@@ -2773,7 +2792,7 @@ Date:   .*
         cser = self.get_cser()
         pwork = Patchwork.for_testing(self._fake_patchwork_cser)
         self.assertFalse(cser.get_project())
-        pwork.project_set(PROJ_ID, PROJ_LINK_NAME)
+        pwork.project_set(self.PROJ_ID, self.PROJ_LINK_NAME)
 
         with terminal.capture():
             cser.series_add('second', allow_unmarked=True)
@@ -2934,8 +2953,6 @@ Date:   .*
         with terminal.capture() as (out, err):
             self.run_args('series', '-n', '-s', 'second3', 'send',
                           '--no-autolink', pwork=pwork)
-        lines = out.getvalue().splitlines()
-        err_lines = err.getvalue().splitlines()
         self.assertIn('Send a total of 3 patches with a cover letter',
                       out.getvalue())
         self.assertIn('video.c:1: warning: Missing or malformed SPDX-License-Identifier tag in line 1',
@@ -2980,7 +2997,7 @@ Date:   .*
         for i in range(7):
             self.assertEqual(
                 "Possible matches for 'second' v3 desc 'Series for my board':",
-                 next(itr), f'failed at i={i}')
+                next(itr), f'failed at i={i}')
             self.assertEqual('  Link  Version  Description', next(itr))
             self.assertEqual('   456        1  Series for my board', next(itr))
             self.assertEqual('   457        2  Series for my board', next(itr))

@@ -54,9 +54,8 @@ def run_patman():
         result = test_util.run_test_suites(
             'patman', False, args.verbose, args.no_capture,
             args.test_preserve_dirs, None, to_run, None,
-            [test_checkpatch.TestPatch, func_test.TestFunctional, 'settings',]
-             )
-            #test_cseries.TestCseries]
+            [test_checkpatch.TestPatch, func_test.TestFunctional, 'settings',
+             test_cseries.TestCseries])
         sys.exit(0 if result.wasSuccessful() else 1)
 
     # Process commits, produce patches files, check them, email them
