@@ -3407,42 +3407,68 @@ Date:   .*
         """Test changing a version of a series to a different version number"""
         cser = self.get_cser()
 
-        with terminal.capture() as (out, _):
-            cser.add('first', 'my description', allow_unmarked=True)
+        with self.stage('setup'):
+            with terminal.capture() as (out, _):
+                cser.add('first', 'my description', allow_unmarked=True)
 
-        # Check changing a non-existent version
-        with self.assertRaises(ValueError) as exc:
-            cser.version_change('first', 2, 3, dry_run=True)
-        self.assertEqual("Series 'first' does not have a version 2",
-                         str(exc.exception))
+        with self.stage('non-existent version'):
+            # Check changing a non-existent version
+            with self.assertRaises(ValueError) as exc:
+                cser.version_change('first', 2, 3, dry_run=True)
+            self.assertEqual("Series 'first' does not have a version 2",
+                            str(exc.exception))
 
         # Change v1 to v2 (dry run)
-        self.assertTrue(gitutil.check_branch('first', self.gitdir))
-        cser.version_change('first', 1, 3, dry_run=True)
-        self.assertTrue(gitutil.check_branch('first', self.gitdir))
-        self.assertFalse(gitutil.check_branch('first3', self.gitdir))
+        with self.stage('v1 -> 2 dry run'):
+            with terminal.capture():
+                self.assertTrue(gitutil.check_branch('first', self.gitdir))
+                cser.version_change('first', 1, 3, dry_run=True)
+                self.assertTrue(gitutil.check_branch('first', self.gitdir))
+                self.assertFalse(gitutil.check_branch('first3', self.gitdir))
 
-        # Check that nothing actually happened
-        series = patchstream.get_metadata('first', 0, 2, git_dir=self.gitdir)
-        self.assertNotIn('version', series)
+                # Check that nothing actually happened
+                series = patchstream.get_metadata('first', 0, 2, git_dir=self.gitdir)
+                self.assertNotIn('version', series)
 
-        svlist = cser._get_ser_ver_list()
-        self.assertEqual(1, len(svlist))
-        item = svlist[0]
-        self.assertEqual(1, item.version)
+                svlist = cser._get_ser_ver_list()
+                self.assertEqual(1, len(svlist))
+                item = svlist[0]
+                self.assertEqual(1, item.version)
 
-        # Change v1 to v2 (for real)
-        self.assertTrue(gitutil.check_branch('first', self.gitdir))
-        cser.version_change('first', 1, 3)
-        self.assertTrue(gitutil.check_branch('first', self.gitdir))
-        self.assertTrue(gitutil.check_branch('first3', self.gitdir))
+        with self.stage('increment twice'):
+            # Increment so that we get first3
+            with terminal.capture():
+                cser.increment('first')
+                cser.increment('first')
 
-        series = patchstream.get_metadata('first3', 0, 2, git_dir=self.gitdir)
-        self.assertIn('version', series)
-        self.assertEqual('3', series.version)
+        with self.stage('existing version'):
+            # Check changing to an existing version
+            with self.assertRaises(ValueError) as exc:
+                cser.version_change('first', 1, 3, dry_run=True)
+            self.assertEqual("Series 'first' already has a v3: 1 2 3",
+                            str(exc.exception))
 
-        svlist = cser._get_ser_ver_list()
-        self.assertEqual(1, len(svlist))
-        item = svlist[0]
-        self.assertEqual(3, item.version)
+        # Change v1 to v4 (for real)
+        with self.stage('v1 -> 4'):
+            with terminal.capture():
+                self.assertTrue(gitutil.check_branch('first', self.gitdir))
+                cser.version_change('first', 1, 4)
+                self.assertTrue(gitutil.check_branch('first', self.gitdir))
+                self.assertTrue(gitutil.check_branch('first4', self.gitdir))
 
+                series = patchstream.get_metadata('first4', 0, 2, git_dir=self.gitdir)
+                self.assertIn('version', series)
+                self.assertEqual('4', series.version)
+
+                svdict = cser._get_ser_ver_dict()
+                self.assertEqual(3, len(svdict))
+                item = svdict[item.idnum]
+                self.assertEqual(4, item.version)
+
+        with self.stage('increment'):
+            # Now try to increment first again
+            with terminal.capture():
+                cser.increment('first')
+
+                ser = cser._get_series_by_name('first')
+                self.assertIn(5, cser._get_version_list(ser.idnum))

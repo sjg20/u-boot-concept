@@ -1108,10 +1108,16 @@ class Cseries(cser_helper.CseriesHelper):
         name = ser.name
 
         versions = self._ensure_version(ser, version)
+        vstr = list(map(str, versions))
         if version not in versions:
             raise ValueError(
                 f"Series '{ser.name}' does not have v{version}: "
-                f"{' '.join(versions)}")
+                f"{' '.join(vstr)}")
+
+        if new_version in versions:
+            raise ValueError(
+                f"Series '{ser.name}' already has a v{new_version}: "
+                f"{' '.join(vstr)}")
 
         new_name = self._join_name_version(ser.name, new_version)
 
