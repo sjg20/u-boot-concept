@@ -158,7 +158,7 @@ def do_series(args, test_db=None, pwork=None):
             cser.progress(args.series, args.show_all_versions,
                           args.list_patches)
         elif args.subcmd == 'remove':
-            cser.remove_series(args.series, dry_run=args.dry_run)
+            cser.series_remove(args.series, dry_run=args.dry_run)
         elif args.subcmd == 'remove-version':
             cser.remove_version(args.series, args.version, dry_run=args.dry_run)
         elif args.subcmd == 'rename':

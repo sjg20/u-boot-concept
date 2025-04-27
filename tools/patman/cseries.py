@@ -1657,7 +1657,7 @@ class Cseries:
             raise ValueError(f"No such upstream '{name}'")
         self.commit()
 
-    def remove_series(self, name, dry_run=False):
+    def series_remove(self, name, dry_run=False):
         """Remove a series from the database
 
         Args:

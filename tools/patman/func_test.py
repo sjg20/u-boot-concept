@@ -1916,7 +1916,7 @@ second line.'''
 
         # Remove the series and add it again with just two commits
         with terminal.capture():
-            cser.remove_series('third4')
+            cser.series_remove('third4')
 
         with terminal.capture() as (out, _):
             cser.series_add('third4', 'The glorious third series', mark=False,
@@ -3560,7 +3560,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         cser = self.get_cser()
 
         with self.assertRaises(ValueError) as exc:
-            cser.remove_series('first')
+            cser.series_remove('first')
         self.assertEqual("No such series 'first'", str(exc.exception))
 
         with terminal.capture() as (out, _):
@@ -3570,7 +3570,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.assertEqual(2, len(pclist))
 
         with terminal.capture() as (out, _):
-            cser.remove_series('first')
+            cser.series_remove('first')
         self.assertEqual("Removed series 'first'", out.getvalue().strip())
         self.assertFalse(cser.get_series_dict())
 
@@ -3592,7 +3592,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.assertTrue(cser.get_series_dict())
 
         with terminal.capture() as (out, _):
-            cser.remove_series('first')
+            cser.series_remove('first')
         self.assertEqual("Removed series 'first'", out.getvalue().strip())
         self.assertFalse(cser.get_series_dict())
 
@@ -3671,10 +3671,10 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             str(exc.exception))
         cser = next(cor)
 
-        cser.remove_series('first', dry_run=True)
+        cser.series_remove('first', dry_run=True)
         cser = next(cor)
 
-        cser.remove_series('first')
+        cser.series_remove('first')
         cser = next(cor)
 
         cor.close()
