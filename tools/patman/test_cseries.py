@@ -991,7 +991,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         pwork = Patchwork.for_testing(self._fake_patchwork_cser)
         pwork.project_set(self.PROJ_ID, self.PROJ_LINK_NAME)
-        self.assertFalse(cser.get_project())
+        self.assertFalse(cser.project_get())
         cser.project_set(pwork, 'U-Boot', quiet=True)
 
         self.assertEqual(
@@ -1073,7 +1073,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         pwork = Patchwork.for_testing(self._fake_patchwork_cser)
         pwork.project_set(self.PROJ_ID, self.PROJ_LINK_NAME)
-        self.assertFalse(cser.get_project())
+        self.assertFalse(cser.project_get())
         cser.project_set(pwork, 'U-Boot', quiet=True)
 
         self.assertEqual(
@@ -1098,7 +1098,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         with self.stage('setup'):
             pwork = Patchwork.for_testing(self._fake_patchwork_cser)
             pwork.project_set(self.PROJ_ID, self.PROJ_LINK_NAME)
-            self.assertFalse(cser.get_project())
+            self.assertFalse(cser.project_get())
             cser.project_set(pwork, 'U-Boot', quiet=True)
 
             with terminal.capture():
@@ -1165,7 +1165,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         pwork = Patchwork.for_testing(self._fake_patchwork_cser)
         pwork.project_set(self.PROJ_ID, self.PROJ_LINK_NAME)
-        self.assertFalse(cser.get_project())
+        self.assertFalse(cser.project_get())
         cser.project_set(pwork, 'U-Boot', quiet=True)
 
         with terminal.capture():
@@ -2215,27 +2215,27 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             f"Project 'U-Boot' patchwork-ID {self.PROJ_ID} link-name uboot",
             out.getvalue().strip())
 
-    def test_patchwork_get_project(self):
+    def test_patchwork_project_get(self):
         """Test setting the project ID"""
         cser = self.get_cser()
         pwork = Patchwork.for_testing(self._fake_patchwork_cser)
-        self.assertFalse(cser.get_project())
+        self.assertFalse(cser.project_get())
         with terminal.capture() as (out, _):
             cser.project_set(pwork, 'U-Boot')
         self.assertEqual(
             f"Project 'U-Boot' patchwork-ID {self.PROJ_ID} link-name uboot",
             out.getvalue().strip())
 
-        name, pwid, link_name = cser.get_project()
+        name, pwid, link_name = cser.project_get()
         self.assertEqual('U-Boot', name)
         self.assertEqual(self.PROJ_ID, pwid)
         self.assertEqual('uboot', link_name)
 
-    def test_patchwork_get_project_cmdline(self):
+    def test_patchwork_project_get_cmdline(self):
         """Test setting the project ID"""
         cser = self.get_cser()
 
-        self.assertFalse(cser.get_project())
+        self.assertFalse(cser.project_get())
 
         pwork = Patchwork.for_testing(self._fake_patchwork_cser)
         with terminal.capture() as (out, _):
@@ -2245,7 +2245,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             f"Project 'U-Boot' patchwork-ID {self.PROJ_ID} link-name uboot",
             out.getvalue().strip())
 
-        name, pwid, link_name = cser.get_project()
+        name, pwid, link_name = cser.project_get()
         self.assertEqual('U-Boot', name)
         self.assertEqual(6, pwid)
         self.assertEqual('uboot', link_name)
@@ -2398,7 +2398,7 @@ Date:   .*
         cser = self.get_cser()
         with self.stage('setup'):
             pwork = Patchwork.for_testing(self._fake_patchwork_cser)
-            self.assertFalse(cser.get_project())
+            self.assertFalse(cser.project_get())
             cser.project_set(pwork, 'U-Boot', quiet=True)
 
             with terminal.capture() as (out, _):
@@ -2920,7 +2920,7 @@ Date:   .*
         """Test opening a series in a web browser"""
         cser = self.get_cser()
         pwork = Patchwork.for_testing(self._fake_patchwork_cser)
-        self.assertFalse(cser.get_project())
+        self.assertFalse(cser.project_get())
         pwork.project_set(self.PROJ_ID, self.PROJ_LINK_NAME)
 
         with terminal.capture():

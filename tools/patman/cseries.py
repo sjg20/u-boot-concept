@@ -533,6 +533,57 @@ class Cseries(cser_helper.CseriesHelper):
             print(f'{name:16.16} {ser.desc:41.41} {stat.rjust(8)}  {vlist}')
         print(border)
 
+
+    def series_remove(self, name, dry_run=False):
+        """Remove a series from the database
+
+        Args:
+            name (str): Name of series to remove, or None to use current one
+            dry_run (bool): True to do a dry run
+        """
+        ser = self._parse_series(name)
+        name = ser.name
+        if not ser.idnum:
+            raise ValueError(f"No such series '{name}'")
+
+        self.db.ser_ver_remove(ser.idnum, None)
+        if not dry_run:
+            self.commit()
+        else:
+            self.rollback()
+
+        self.commit()
+        tout.info(f"Removed series '{name}'")
+        if dry_run:
+            tout.info('Dry run completed')
+
+    def series_version_remove(self, name, version, dry_run=False):
+        """Remove a version of a series from the database
+
+        Args:
+            name (str): Name of series to remove, or None to use current one
+            version (int): Version number to remove
+            dry_run (bool): True to do a dry run
+        """
+        ser, version = self._parse_series_and_version(name, version)
+        name = ser.name
+
+        versions = self._ensure_version(ser, version)
+
+        if versions == [version]:
+            raise ValueError(
+                f"Series '{ser.name}' only has one version: remove the series")
+
+        self.db.ser_ver_remove(ser.idnum, version)
+        if not dry_run:
+            self.commit()
+        else:
+            self.rollback()
+
+        tout.info(f"Removed version {version} from series '{name}'")
+        if dry_run:
+            tout.info('Dry run completed')
+
     def series_mark(self, in_name, allow_marked=False, dry_run=False):
         """Add Change-Id tags to a series
 
@@ -609,6 +660,75 @@ class Cseries(cser_helper.CseriesHelper):
             tout.info('Dry run completed')
         return vals.oid
 
+    def series_sync(self, pwork, series, version, show_comments,
+                    show_cover_comments, gather_tags, dry_run=False):
+        ser, version = self._parse_series_and_version(series, version)
+        self._ensure_version(ser, version)
+        svid, link = self.get_series_svid_link(ser.idnum, version)
+        if not link:
+            raise ValueError(
+                "No patchwork link is available: use 'patman series autolink'")
+        tout.info(
+            f"Updating series '{ser.name}' version {version} "
+            f"from link '{link}'")
+
+        loop = asyncio.get_event_loop()
+        with pwork.collect_stats() as stats:
+            cover, patches = loop.run_until_complete(self.do_series_sync(
+                pwork, svid, link, ser.name, version, show_comments,
+                show_cover_comments, gather_tags, dry_run))
+
+        with terminal.pager():
+            updated, updated_cover = self._sync_one(
+                svid, ser.name, version, link, show_comments,
+                show_cover_comments, gather_tags, cover, patches, dry_run)
+            tout.info(f"{updated} patch{'es' if updated != 1 else ''}"
+                      f"{' and cover letter' if updated_cover else ''} "
+                      f'updated ({stats.request_count} requests)')
+
+            if not dry_run:
+                self.commit()
+            else:
+                self.rollback()
+                tout.info('Dry run completed')
+
+    def series_sync_all(self, pwork, show_comments, show_cover_comments,
+                        sync_all_versions, gather_tags, dry_run=False):
+        to_fetch, missing = self._get_fetch_dict(sync_all_versions)
+
+        loop = asyncio.get_event_loop()
+        result, requests = loop.run_until_complete(self._do_series_sync_all(
+                pwork, show_cover_comments, to_fetch))
+
+        with terminal.pager():
+            tot_updated = 0
+            tot_cover = 0
+            add_newline = False
+            for (svid, sync), (cover, patches) in zip(to_fetch.items(),
+                                                      result):
+                if add_newline:
+                    tout.info('')
+                tout.info(f"Syncing '{sync.series_name}' v{sync.version}")
+                updated, updated_cover = self._sync_one(
+                    svid, sync.series_name, sync.version, sync.link,
+                    show_comments, show_cover_comments, gather_tags, cover,
+                    patches, dry_run)
+                tot_updated += updated
+                tot_cover += updated_cover
+                add_newline = gather_tags
+
+            tout.info('')
+            tout.info(
+                f"{tot_updated} patch{'es' if tot_updated != 1 else ''} and "
+                f"{tot_cover} cover letter{'s' if tot_cover != 1 else ''} "
+                f'updated, {missing} missing '
+                f"link{'s' if missing != 1 else ''} ({requests} requests)")
+            if not dry_run:
+                self.commit()
+            else:
+                self.rollback()
+                tout.info('Dry run completed')
+
     def upstream_add(self, name, url):
         """Add a new upstream tree
 
@@ -657,57 +777,6 @@ class Cseries(cser_helper.CseriesHelper):
         """
         self.db.upstream_delete(name)
         self.commit()
-
-    def series_remove(self, name, dry_run=False):
-        """Remove a series from the database
-
-        Args:
-            name (str): Name of series to remove, or None to use current one
-            dry_run (bool): True to do a dry run
-        """
-        ser = self._parse_series(name)
-        name = ser.name
-        if not ser.idnum:
-            raise ValueError(f"No such series '{name}'")
-
-        self.db.ser_ver_remove(ser.idnum, None)
-        if not dry_run:
-            self.commit()
-        else:
-            self.rollback()
-
-        self.commit()
-        tout.info(f"Removed series '{name}'")
-        if dry_run:
-            tout.info('Dry run completed')
-
-    def series_version_remove(self, name, version, dry_run=False):
-        """Remove a version of a series from the database
-
-        Args:
-            name (str): Name of series to remove, or None to use current one
-            version (int): Version number to remove
-            dry_run (bool): True to do a dry run
-        """
-        ser, version = self._parse_series_and_version(name, version)
-        name = ser.name
-
-        versions = self._ensure_version(ser, version)
-
-        if versions == [version]:
-            raise ValueError(
-                f"Series '{ser.name}' only has one version: remove the series")
-
-        self.db.ser_ver_remove(ser.idnum, version)
-        if not dry_run:
-            self.commit()
-        else:
-            self.rollback()
-
-        tout.info(f"Removed version {version} from series '{name}'")
-        if dry_run:
-            tout.info('Dry run completed')
-
     def project_set(self, pwork, name, quiet=False):
         """Set the name of the project
 
@@ -730,7 +799,7 @@ class Cseries(cser_helper.CseriesHelper):
             tout.info(f"Project '{name}' patchwork-ID {proj_id} "
                       f'link-name {link_name}')
 
-    def get_project(self):
+    def project_get(self):
         """Get the details of the project
 
         Returns:
@@ -841,75 +910,6 @@ class Cseries(cser_helper.CseriesHelper):
             ValueError: There is no matching idnum/version
         """
         return self.db.ser_ver_get_for_series(series_id, version)
-
-    def series_sync(self, pwork, series, version, show_comments,
-                    show_cover_comments, gather_tags, dry_run=False):
-        ser, version = self._parse_series_and_version(series, version)
-        self._ensure_version(ser, version)
-        svid, link = self.get_series_svid_link(ser.idnum, version)
-        if not link:
-            raise ValueError(
-                "No patchwork link is available: use 'patman series autolink'")
-        tout.info(
-            f"Updating series '{ser.name}' version {version} "
-            f"from link '{link}'")
-
-        loop = asyncio.get_event_loop()
-        with pwork.collect_stats() as stats:
-            cover, patches = loop.run_until_complete(self.do_series_sync(
-                pwork, svid, link, ser.name, version, show_comments,
-                show_cover_comments, gather_tags, dry_run))
-
-        with terminal.pager():
-            updated, updated_cover = self._sync_one(
-                svid, ser.name, version, link, show_comments,
-                show_cover_comments, gather_tags, cover, patches, dry_run)
-            tout.info(f"{updated} patch{'es' if updated != 1 else ''}"
-                      f"{' and cover letter' if updated_cover else ''} "
-                      f'updated ({stats.request_count} requests)')
-
-            if not dry_run:
-                self.commit()
-            else:
-                self.rollback()
-                tout.info('Dry run completed')
-
-    def series_sync_all(self, pwork, show_comments, show_cover_comments,
-                        sync_all_versions, gather_tags, dry_run=False):
-        to_fetch, missing = self._get_fetch_dict(sync_all_versions)
-
-        loop = asyncio.get_event_loop()
-        result, requests = loop.run_until_complete(self._do_series_sync_all(
-                pwork, show_cover_comments, to_fetch))
-
-        with terminal.pager():
-            tot_updated = 0
-            tot_cover = 0
-            add_newline = False
-            for (svid, sync), (cover, patches) in zip(to_fetch.items(),
-                                                      result):
-                if add_newline:
-                    tout.info('')
-                tout.info(f"Syncing '{sync.series_name}' v{sync.version}")
-                updated, updated_cover = self._sync_one(
-                    svid, sync.series_name, sync.version, sync.link,
-                    show_comments, show_cover_comments, gather_tags, cover,
-                    patches, dry_run)
-                tot_updated += updated
-                tot_cover += updated_cover
-                add_newline = gather_tags
-
-            tout.info('')
-            tout.info(
-                f"{tot_updated} patch{'es' if tot_updated != 1 else ''} and "
-                f"{tot_cover} cover letter{'s' if tot_cover != 1 else ''} "
-                f'updated, {missing} missing '
-                f"link{'s' if missing != 1 else ''} ({requests} requests)")
-            if not dry_run:
-                self.commit()
-            else:
-                self.rollback()
-                tout.info('Dry run completed')
 
     def progress(self, series, show_all_versions, list_patches):
         """Show progress information for all versions in a series
