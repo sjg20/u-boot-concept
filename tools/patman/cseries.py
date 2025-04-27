@@ -1094,3 +1094,42 @@ class Cseries(cser_helper.CseriesHelper):
         tout.info(f"Removed version {version} from series '{name}'")
         if dry_run:
             tout.info('Dry run completed')
+
+    def version_change(self, name, version, new_version, dry_run=False):
+        """Change a version of a series to be a different version
+
+        Args:
+            name (str): Name of series to remove, or None to use current one
+            version (int): Version number to change
+            new_version (int): New version
+            dry_run (bool): True to do a dry run
+        """
+        ser, version = self._parse_series_and_version(name, version)
+        name = ser.name
+
+        versions = self._ensure_version(ser, version)
+        if version not in versions:
+            raise ValueError(
+                f"Series '{ser.name}' does not have v{version}: "
+                f"{' '.join(versions)}")
+
+        new_name = self._join_name_version(ser.name, new_version)
+
+        svid = self.get_series_svid(ser.idnum, version)
+        pwc = self.get_pcommit_dict(svid)
+        count = len(pwc.values())
+        series = patchstream.get_metadata(name, 0, count, git_dir=self.gitdir)
+
+        self._update_series(name, series, version, new_name, dry_run,
+                            add_vers=new_version, switch=True)
+        self.db.ser_ver_set_version(svid, new_version)
+
+        if not dry_run:
+            self.commit()
+        else:
+            self.rollback()
+
+        tout.info(f"Changed version {version} in series '{ser.name}' "
+                  f"to {new_version} named '{new_name}'")
+        if dry_run:
+            tout.info('Dry run completed')

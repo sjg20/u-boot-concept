@@ -402,7 +402,7 @@ class TestCseries(unittest.TestCase, TestCommon):
         # Now try again with --force-version which should force version 1
         with terminal.capture() as (out, err):
             cser.add('first', 'my description', allow_unmarked=True,
-                            force_version=True)
+                     force_version=True)
         itr = iter(out.getvalue().splitlines())
         self.assertEqual(
             "Adding series 'first' v1: mark False allow_unmarked True",
@@ -3402,3 +3402,47 @@ Date:   .*
         self.assertEqual(
             "Cannot rename: branches missing: first3: branches exist: newname2",
             str(exc.exception))
+
+    def test_version_change(self):
+        """Test changing a version of a series to a different version number"""
+        cser = self.get_cser()
+
+        with terminal.capture() as (out, _):
+            cser.add('first', 'my description', allow_unmarked=True)
+
+        # Check changing a non-existent version
+        with self.assertRaises(ValueError) as exc:
+            cser.version_change('first', 2, 3, dry_run=True)
+        self.assertEqual("Series 'first' does not have a version 2",
+                         str(exc.exception))
+
+        # Change v1 to v2 (dry run)
+        self.assertTrue(gitutil.check_branch('first', self.gitdir))
+        cser.version_change('first', 1, 3, dry_run=True)
+        self.assertTrue(gitutil.check_branch('first', self.gitdir))
+        self.assertFalse(gitutil.check_branch('first3', self.gitdir))
+
+        # Check that nothing actually happened
+        series = patchstream.get_metadata('first', 0, 2, git_dir=self.gitdir)
+        self.assertNotIn('version', series)
+
+        svlist = cser._get_ser_ver_list()
+        self.assertEqual(1, len(svlist))
+        item = svlist[0]
+        self.assertEqual(1, item.version)
+
+        # Change v1 to v2 (for real)
+        self.assertTrue(gitutil.check_branch('first', self.gitdir))
+        cser.version_change('first', 1, 3)
+        self.assertTrue(gitutil.check_branch('first', self.gitdir))
+        self.assertTrue(gitutil.check_branch('first3', self.gitdir))
+
+        series = patchstream.get_metadata('first3', 0, 2, git_dir=self.gitdir)
+        self.assertIn('version', series)
+        self.assertEqual('3', series.version)
+
+        svlist = cser._get_ser_ver_list()
+        self.assertEqual(1, len(svlist))
+        item = svlist[0]
+        self.assertEqual(3, item.version)
+

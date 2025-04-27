@@ -23,7 +23,7 @@ LATEST = 3
 
 # Information about a series/version record
 SER_VER = namedtuple(
-    'ser_ver',
+    'SER_VER',
     'idnum,series_id,version,link,cover_id,cover_num_comments,name')
 
 # Record from the pcommit table:
@@ -36,7 +36,7 @@ SER_VER = namedtuple(
 # patch_id (int): Patchwork's patch ID for this patch
 # num_comments (int): Number of comments attached to the commit
 PCOMMIT = namedtuple(
-    'pcommit',
+    'PCOMMIT',
     'idnum,seq,subject,svid,change_id,state,patch_id,num_comments')
 
 
@@ -500,6 +500,12 @@ class Database:
                          (info.name, info.idnum))
 
         return self.rowcount() != 0
+
+    def ser_ver_set_version(self, svid, version):
+        self.execute(
+            'UPDATE ser_ver SET version = ? WHERE id = ?', (version, svid))
+        if self.rowcount() != 1:
+            raise ValueError(f'No ser_ver updated (svid {svid})')
 
     def ser_ver_add(self, series_idnum, version, link=None):
         """Add a new ser_ver record
