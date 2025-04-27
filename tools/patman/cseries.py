@@ -368,7 +368,7 @@ class Cseries:
             int: Version number, e.g. 2
             str: Message to show
         """
-        ser, version = self.parse_series_and_version(name, None)
+        ser, version = self._parse_series_and_version(name, None)
         if not name:
             name = self._get_branch_name(ser.name, version)
 
@@ -636,7 +636,7 @@ class Cseries:
             update_commit (bool): True to update the current commit with the
                 link
         """
-        ser, version = self.parse_series_and_version(series_name, version)
+        ser, version = self._parse_series_and_version(series_name, version)
         self._ensure_version(ser, version)
 
         self._set_link(ser.idnum, ser.name, version, link, update_commit)
@@ -653,7 +653,7 @@ class Cseries:
         Return:
             str: Patchwork link as a string, e.g. '12325'
         """
-        ser, version = self.parse_series_and_version(series, version)
+        ser, version = self._parse_series_and_version(series, version)
         self._ensure_version(ser, version)
 
         res = self.db.execute('SELECT link FROM ser_ver WHERE '
@@ -943,7 +943,7 @@ class Cseries:
             ser.name = name
         return ser
 
-    def parse_series_and_version(self, in_name, in_version):
+    def _parse_series_and_version(self, in_name, in_version):
         """Parse the name and version of a series, or detect from current branch
 
         Figures out the name from in_name, or if that is None, from the current
@@ -1698,7 +1698,7 @@ class Cseries:
             version (int): Version number to remove
             dry_run (bool): True to do a dry run
         """
-        ser, version = self.parse_series_and_version(name, version)
+        ser, version = self._parse_series_and_version(name, version)
         name = ser.name
 
         versions = self._ensure_version(ser, version)
@@ -1920,7 +1920,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             str: cover_id
             int: cover_num_comments
         """
-        ser, version = self.parse_series_and_version(series, version)
+        ser, version = self._parse_series_and_version(series, version)
         if not ser.idnum:
             raise ValueError(f"Unknown series '{series}'")
         self._ensure_version(ser, version)
@@ -2080,7 +2080,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
 
     def series_sync(self, pwork, series, version, show_comments,
                     show_cover_comments, gather_tags, dry_run=False):
-        ser, version = self.parse_series_and_version(series, version)
+        ser, version = self._parse_series_and_version(series, version)
         self._ensure_version(ser, version)
         svid, link = self.get_series_svid_link(ser.idnum, version)
         if not link:
@@ -2387,7 +2387,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             name (str): Name of series to open
             version (str): Version number to open
         """
-        ser, version = self.parse_series_and_version(name, version)
+        ser, version = self._parse_series_and_version(name, version)
         link = self.link_get(ser.name, version)
         pwork.url = 'https://patchwork.ozlabs.org'
         url = self.loop.run_until_complete(pwork.get_series_url(link))
@@ -2544,7 +2544,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             autolink_wait (int): Number of seconds to wait for the autolink to
                 succeed
         """
-        ser, version = self.parse_series_and_version(name, None)
+        ser, version = self._parse_series_and_version(name, None)
         # if not name:
             # name = self._get_branch_name(ser.name, version)
         if not ser.idnum:
@@ -2589,7 +2589,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             name (str): new name to use (must not include version number)
             dry_run (bool): True to do a dry run
         """
-        old_ser, _ =  self.parse_series_and_version(series, None)
+        old_ser, _ =  self._parse_series_and_version(series, None)
         if not old_ser.idnum:
             raise ValueError(f"Series '{old_ser.name}' not found in database")
         if old_ser.name != series:

@@ -4396,30 +4396,30 @@ Date:   .*
         self.assertEqual(('fred', None), cseries.split_name_version('fred'))
         self.assertEqual(('mary', 2), cseries.split_name_version('mary2'))
 
-        ser, version = cser.parse_series_and_version(None, None)
+        ser, version = cser._parse_series_and_version(None, None)
         self.assertEqual('first', ser.name)
         self.assertEqual(1, version)
 
-        ser, version = cser.parse_series_and_version('first', None)
+        ser, version = cser._parse_series_and_version('first', None)
         self.assertEqual('first', ser.name)
         self.assertEqual(1, version)
 
-        ser, version = cser.parse_series_and_version('first', 2)
+        ser, version = cser._parse_series_and_version('first', 2)
         self.assertEqual('first', ser.name)
         self.assertEqual(2, version)
 
         with self.assertRaises(ValueError) as exc:
-            cser.parse_series_and_version('123', 2)
+            cser._parse_series_and_version('123', 2)
         self.assertEqual(
             "Series name '123' cannot be a number, use '<name><version>'",
             str(exc.exception))
 
         with self.assertRaises(ValueError) as exc:
-            cser.parse_series_and_version('first', 100)
+            cser._parse_series_and_version('first', 100)
         self.assertEqual("Version 100 exceeds 99", str(exc.exception))
 
         with self.assertRaises(ValueError) as exc:
-            cser.parse_series_and_version('mary3', 4)
+            cser._parse_series_and_version('mary3', 4)
         self.assertEqual(
             'Version mismatch: -V has 4 but branch name indicates 3',
             str(exc.exception))
@@ -4430,7 +4430,7 @@ Date:   .*
         repo.set_head(commit.oid)
 
         with self.assertRaises(ValueError) as exc:
-            cser.parse_series_and_version(None, None)
+            cser._parse_series_and_version(None, None)
         self.assertEqual('No branch detected: please use -s <series>',
                          str(exc.exception))
 
@@ -4440,11 +4440,11 @@ Date:   .*
         target = self.repo.lookup_reference('refs/heads/second2')
         self.repo.checkout(target, strategy=pygit2.GIT_CHECKOUT_FORCE)
 
-        ser, version = cser.parse_series_and_version(None, None)
+        ser, version = cser._parse_series_and_version(None, None)
         self.assertEqual('second', ser.name)
         self.assertEqual(2, version)
 
-        ser, version = cser.parse_series_and_version('second2', None)
+        ser, version = cser._parse_series_and_version('second2', None)
         self.assertEqual('second', ser.name)
         self.assertEqual(2, version)
 
