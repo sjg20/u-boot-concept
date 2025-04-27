@@ -357,7 +357,7 @@ class TestCseries(unittest.TestCase, TestCommon):
 
         # Remove the series and add it again with just two commits
         with terminal.capture():
-            cser.series_remove('third4')
+            cser.remove('third4')
 
         with terminal.capture() as (out, _):
             cser.add('third4', 'The glorious third series', mark=False,
@@ -2035,7 +2035,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         with self.stage('remove non-existent series'):
             with self.assertRaises(ValueError) as exc:
-                cser.series_remove('first')
+                cser.remove('first')
             self.assertEqual("No such series 'first'", str(exc.exception))
 
         with self.stage('add'):
@@ -2047,7 +2047,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         with self.stage('remove'):
             with terminal.capture() as (out, _):
-                cser.series_remove('first')
+                cser.remove('first')
             self.assertEqual("Removed series 'first'", out.getvalue().strip())
             self.assertFalse(cser.db.series_get_dict())
 
@@ -2072,7 +2072,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         with self.stage('remove'):
             with terminal.capture() as (out, _):
-                cser.series_remove('first')
+                cser.remove('first')
             self.assertEqual("Removed series 'first'", out.getvalue().strip())
             self.assertFalse(cser.db.series_get_dict())
 
@@ -2162,11 +2162,11 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         cser = next(cor)
 
         # Remove series (dry run)
-        cser.series_remove('first', dry_run=True)
+        cser.remove('first', dry_run=True)
         cser = next(cor)
 
         # Remove series (real)
-        cser.series_remove('first')
+        cser.remove('first')
 
         self.assertFalse(next(cor))
         cor.close()

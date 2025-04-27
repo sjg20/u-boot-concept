@@ -567,7 +567,7 @@ class Cseries(cser_helper.CseriesHelper):
         print(border)
 
 
-    def series_remove(self, name, dry_run=False):
+    def remove(self, name, dry_run=False):
         """Remove a series from the database
 
         Args:
