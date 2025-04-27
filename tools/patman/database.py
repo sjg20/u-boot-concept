@@ -491,6 +491,23 @@ class Database:
 
     # pcommit functions
 
+    def pcommit_get_list(self, find_svid=None):
+        """Get a dict of pcommits entries from the database
+
+        Args:
+            find_svid (int): If not None, finds the records associated with a
+                particular series and version; otherwise returns all records
+
+        Return:
+            list of PCOMMIT: pcommit records
+        """
+        query = ('SELECT id, seq, subject, svid, change_id, state, patch_id, '
+                 'num_comments FROM pcommit')
+        if find_svid is not None:
+            query += f' WHERE svid = {find_svid}'
+        res = self.execute(query)
+        return [PCOMMIT(*rec) for rec in res.fetchall()]
+
     def pcommit_add_list(self, svid, pcommits):
         """Add records to the pcommit table
 
