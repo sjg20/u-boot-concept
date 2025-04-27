@@ -166,7 +166,7 @@ class TestCseries(unittest.TestCase, TestCommon):
         self.assertFalse(cser.db.series_get_dict())
 
         with terminal.capture() as (out, _):
-            cser.series_add('first', 'my description', allow_unmarked=True)
+            cser.add('first', 'my description', allow_unmarked=True)
         lines = out.getvalue().strip().splitlines()
         self.assertEqual(
             "Adding series 'first' v1: mark False allow_unmarked True",
@@ -199,7 +199,7 @@ class TestCseries(unittest.TestCase, TestCommon):
         self.assertFalse(cser.db.series_get_dict())
 
         with terminal.capture() as (out, _):
-            cser.series_add('second', allow_unmarked=True)
+            cser.add('second', allow_unmarked=True)
         lines = out.getvalue().strip().splitlines()
         self.assertEqual(
             "Adding series 'second' v1: mark False allow_unmarked True",
@@ -219,7 +219,7 @@ class TestCseries(unittest.TestCase, TestCommon):
         repo.config.set_multivar('branch.first2.merge', '', 'refs/heads/base')
 
         with terminal.capture() as (out, _):
-            cser.series_add('first2', 'description', allow_unmarked=True)
+            cser.add('first2', 'description', allow_unmarked=True)
         lines = out.getvalue().splitlines()
         self.assertEqual(
             "Adding series 'first' v2: mark False allow_unmarked True",
@@ -255,7 +255,7 @@ class TestCseries(unittest.TestCase, TestCommon):
 
         # Add first2 initially
         with terminal.capture() as (out, _):
-            cser.series_add(None, 'description', allow_unmarked=True)
+            cser.add(None, 'description', allow_unmarked=True)
         lines = out.getvalue().splitlines()
         self.assertEqual(
             "Adding series 'first' v2: mark False allow_unmarked True",
@@ -265,7 +265,7 @@ class TestCseries(unittest.TestCase, TestCommon):
 
         # Now add first: it should be added as a new version
         with terminal.capture() as (out, _):
-            cser.series_add('first', 'description', allow_unmarked=True)
+            cser.add('first', 'description', allow_unmarked=True)
         lines = out.getvalue().splitlines()
         self.assertEqual(
             "Adding series 'first' v1: mark False allow_unmarked True",
@@ -288,17 +288,17 @@ class TestCseries(unittest.TestCase, TestCommon):
         """Test adding a series twice"""
         cser = self.get_cser()
         with terminal.capture() as (out, _):
-            cser.series_add(None, 'description', allow_unmarked=True)
+            cser.add(None, 'description', allow_unmarked=True)
 
         with terminal.capture() as (out, _):
-            cser.series_add(None, 'description', allow_unmarked=True)
+            cser.add(None, 'description', allow_unmarked=True)
         self.assertIn("Series 'first' v1 already exists",
                       out.getvalue().strip())
 
         self.add_first2(False)
 
         with terminal.capture() as (out, _):
-            cser.series_add(None, 'description', allow_unmarked=True)
+            cser.add(None, 'description', allow_unmarked=True)
         lines = out.getvalue().splitlines()
         self.assertEqual(
             "Added v2 to existing series 'first' (2 commits)", lines[1])
@@ -308,11 +308,11 @@ class TestCseries(unittest.TestCase, TestCommon):
         cser = self.get_cser()
         self.add_first2(True)
         with terminal.capture() as (out, _):
-            cser.series_add(None, 'description', allow_unmarked=True)
+            cser.add(None, 'description', allow_unmarked=True)
         self.assertIn("Added series 'first' v2", out.getvalue().strip())
 
         with terminal.capture() as (out, _):
-            cser.series_add('first', 'description', allow_unmarked=True)
+            cser.add('first', 'description', allow_unmarked=True)
         self.assertIn("Added v1 to existing series 'first'",
                       out.getvalue().strip())
 
@@ -329,7 +329,7 @@ class TestCseries(unittest.TestCase, TestCommon):
         with terminal.capture() as (out, _):
             self.run_args('series', '-s', 'first', 'add', '-M',
                           '-D', 'description', pwork=True)
-            cser.series_add('first', 'description', allow_unmarked=True)
+            cser.add('first', 'description', allow_unmarked=True)
         self.assertIn("Added v1 to existing series 'first'",
                       out.getvalue().strip())
 
@@ -337,7 +337,7 @@ class TestCseries(unittest.TestCase, TestCommon):
         """Test adding a series which is v4 but has no earlier version"""
         cser = self.get_cser()
         with terminal.capture() as (out, _):
-            cser.series_add('third4', 'The glorious third series', mark=False,
+            cser.add('third4', 'The glorious third series', mark=False,
                             allow_unmarked=True)
         lines = out.getvalue().splitlines()
         self.assertEqual(
@@ -360,7 +360,7 @@ class TestCseries(unittest.TestCase, TestCommon):
             cser.series_remove('third4')
 
         with terminal.capture() as (out, _):
-            cser.series_add('third4', 'The glorious third series', mark=False,
+            cser.add('third4', 'The glorious third series', mark=False,
                             allow_unmarked=True, end='third4~2')
         lines = out.getvalue().splitlines()
         self.assertEqual(
@@ -394,14 +394,14 @@ class TestCseries(unittest.TestCase, TestCommon):
 
         with self.assertRaises(ValueError) as exc:
             with terminal.capture():
-                cser.series_add('first', 'my description', allow_unmarked=True)
+                cser.add('first', 'my description', allow_unmarked=True)
         self.assertEqual(
             "Series name 'first' suggests version 1 but Series-version tag "
             'indicates 2 (see --force-version)', str(exc.exception))
 
         # Now try again with --force-version which should force version 1
         with terminal.capture() as (out, err):
-            cser.series_add('first', 'my description', allow_unmarked=True,
+            cser.add('first', 'my description', allow_unmarked=True,
                             force_version=True)
         itr = iter(out.getvalue().splitlines())
         self.assertEqual(
@@ -641,7 +641,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         pwork.project_set(self.PROJ_ID, self.PROJ_LINK_NAME)
 
         with terminal.capture() as (out, _):
-            cser.series_add('first', 'my name for this', mark=False,
+            cser.add('first', 'my name for this', mark=False,
                             allow_unmarked=True)
         self.assertIn("Added series 'first' v1 (2 commits)", out.getvalue())
 
@@ -666,8 +666,8 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             pwork.project_set(self.PROJ_ID, self.PROJ_LINK_NAME)
 
             with terminal.capture() as (out, _):
-                cser.series_add('first', '', allow_unmarked=True)
-                cser.series_add('second', allow_unmarked=True)
+                cser.add('first', '', allow_unmarked=True)
+                cser.add('second', allow_unmarked=True)
 
             series = patchstream.get_metadata_for_list('second', self.gitdir, 3)
             self.assertEqual('456', series.links)
@@ -813,7 +813,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                          force=True)
 
         with terminal.capture() as (out, _):
-            cser.series_add('first', '', allow_unmarked=True)
+            cser.add('first', '', allow_unmarked=True)
 
         with self.assertRaises(ValueError) as exc:
             cser.link_set('first', 2, '1234', True)
@@ -886,7 +886,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                          force=True)
 
         with terminal.capture() as (out, _):
-            cser.series_add('first', '', allow_unmarked=True)
+            cser.add('first', '', allow_unmarked=True)
 
         with terminal.capture() as (out, _):
             self.run_args('series', '-s', 'first', '-V', '4', 'set-link', '-u',
@@ -962,7 +962,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         cser = self.get_cser()
 
         with terminal.capture() as (out, _):
-            cser.series_add('second', allow_unmarked=True)
+            cser.add('second', allow_unmarked=True)
 
         # Make sure that the link is there
         count = 3
@@ -1010,7 +1010,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         cser = self.get_cser()
 
         with terminal.capture() as (out, _):
-            cser.series_add('first', '', allow_unmarked=True)
+            cser.add('first', '', allow_unmarked=True)
 
         # Set link with detected name
         with self.assertRaises(ValueError) as exc:
@@ -1037,7 +1037,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         cser = self.get_cser()
 
         with terminal.capture() as (out, _):
-            cser.series_add('first', '', allow_unmarked=True)
+            cser.add('first', '', allow_unmarked=True)
 
         # Set link with detected name and version
         with terminal.capture() as (out, _):
@@ -1065,7 +1065,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         cser = self.get_cser()
 
         with terminal.capture() as (out, _):
-            cser.series_add('second', allow_unmarked=True)
+            cser.add('second', allow_unmarked=True)
 
         with terminal.capture():
             cser.increment('second')
@@ -1102,8 +1102,8 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             cser.project_set(pwork, 'U-Boot', quiet=True)
 
             with terminal.capture():
-                cser.series_add('first', '', allow_unmarked=True)
-                cser.series_add('second', allow_unmarked=True)
+                cser.add('first', '', allow_unmarked=True)
+                cser.add('second', allow_unmarked=True)
 
         with self.stage('autolink unset'):
             with terminal.capture() as (out, _):
@@ -1169,8 +1169,8 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         cser.project_set(pwork, 'U-Boot', quiet=True)
 
         with terminal.capture():
-            cser.series_add('first', 'first series', allow_unmarked=True)
-            cser.series_add('second', allow_unmarked=True)
+            cser.add('first', 'first series', allow_unmarked=True)
+            cser.add('second', allow_unmarked=True)
             cser.increment('first')
         return cser, pwork
 
@@ -1348,7 +1348,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         cser = self.get_cser()
         with self.stage('setup'):
             with terminal.capture():
-                cser.series_add('first', '', allow_unmarked=True)
+                cser.add('first', '', allow_unmarked=True)
 
             # Check the series is visible in the list
             slist = cser.db.series_get_dict()
@@ -1406,7 +1406,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
                             force=True)
             with terminal.capture() as (out, _):
-                cser.series_add('first', '', allow_unmarked=True)
+                cser.add('first', '', allow_unmarked=True)
 
         with self.stage('increment'):
             with terminal.capture() as (out, _):
@@ -1456,7 +1456,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
                          force=True)
         with terminal.capture() as (out, _):
-            cser.series_add('first', '', allow_unmarked=True)
+            cser.add('first', '', allow_unmarked=True)
 
         repo = pygit2.init_repository(self.gitdir)
         upstream = repo.lookup_branch('base')
@@ -1474,7 +1474,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
                          force=True)
         with terminal.capture() as (out, _):
-            cser.series_add('first', '', allow_unmarked=True)
+            cser.add('first', '', allow_unmarked=True)
 
         with terminal.capture() as (out, _):
             cser.increment('first', dry_run=True)
@@ -1496,7 +1496,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
                          force=True)
         with terminal.capture() as (out, _):
-            cser.series_add('first', '', allow_unmarked=True)
+            cser.add('first', '', allow_unmarked=True)
 
         pclist = cser.get_pcommit_dict()
         self.assertEqual(2, len(pclist))
@@ -1701,7 +1701,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         cser = self.get_cser()
 
         with terminal.capture() as (out, _):
-            cser.series_add('first', '', mark=True)
+            cser.add('first', '', mark=True)
 
         pcdict = cser.get_pcommit_dict()
 
@@ -1726,12 +1726,12 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         # TODO: check that it requires a clean tree
         tools.write_file(os.path.join(self.tmpdir, 'fname'), b'123')
         with terminal.capture() as (out, _):
-            cser.series_add('first', '', mark=True)
+            cser.add('first', '', mark=True)
 
         tools.write_file(os.path.join(self.tmpdir, 'i2c.c'), b'123')
         with self.assertRaises(ValueError) as exc:
             with terminal.capture() as (out, _):
-                cser.series_add('first', '', mark=True)
+                cser.add('first', '', mark=True)
         self.assertEqual(
             "Modified files exist: use 'git status' to check: [' M i2c.c']",
             str(exc.exception))
@@ -1741,7 +1741,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         cser = self.get_cser()
 
         with terminal.capture() as (out, _):
-            cser.series_add('first', '', mark=True, dry_run=True)
+            cser.add('first', '', mark=True, dry_run=True)
         itr = iter(out.getvalue().splitlines())
         self.assertEqual(
             "Adding series 'first' v1: mark True allow_unmarked False",
@@ -1759,13 +1759,13 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         # Doing another dry run should produce the same result
         with terminal.capture() as (out2, _):
-            cser.series_add('first', '', mark=True, dry_run=True)
+            cser.add('first', '', mark=True, dry_run=True)
         self.assertEqual(out.getvalue(), out2.getvalue())
 
         tools.write_file(os.path.join(self.tmpdir, 'i2c.c'), b'123')
         with terminal.capture() as (out, _):
             with self.assertRaises(ValueError) as exc:
-                cser.series_add('first', '', mark=True, dry_run=True)
+                cser.add('first', '', mark=True, dry_run=True)
         self.assertEqual(
             "Modified files exist: use 'git status' to check: [' M i2c.c']",
             str(exc.exception))
@@ -1861,7 +1861,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         # mark commits
         cser = next(cor)
-        cser.series_add('first', '', mark=True)
+        cser.add('first', '', mark=True)
 
         # unmark: dry run
         cser = next(cor)
@@ -1911,7 +1911,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         """Test unmarking with Change-Id fields not last in the commit"""
         cser = self.get_cser()
         with terminal.capture():
-            cser.series_add('first', '', allow_unmarked=True)
+            cser.add('first', '', allow_unmarked=True)
 
         # Add some change IDs in the middle of the commit message
         with terminal.capture():
@@ -2040,7 +2040,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         with self.stage('add'):
             with terminal.capture() as (out, _):
-                cser.series_add('first', '', mark=True)
+                cser.add('first', '', mark=True)
             self.assertTrue(cser.db.series_get_dict())
             pclist = cser.get_pcommit_dict()
             self.assertEqual(2, len(pclist))
@@ -2067,7 +2067,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         with self.stage('add'):
             with terminal.capture() as (out, _):
-                cser.series_add('first', '', mark=True)
+                cser.add('first', '', mark=True)
             self.assertTrue(cser.db.series_get_dict())
 
         with self.stage('remove'):
@@ -2084,8 +2084,8 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             self.add_first2(True)
 
             with terminal.capture() as (out, _):
-                cser.series_add(None, '', mark=True)
-                cser.series_add('first', '', mark=True)
+                cser.add(None, '', mark=True)
+                cser.add('first', '', mark=True)
             self.assertTrue(cser.db.series_get_dict())
             pclist = cser.get_pcommit_dict()
             self.assertEqual(4, len(pclist))
@@ -2262,8 +2262,8 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         with self.stage('setup'):
             with terminal.capture() as (out, _):
-                cser.series_add(None, '', allow_unmarked=True)
-                cser.series_add('second', allow_unmarked=True)
+                cser.add(None, '', allow_unmarked=True)
+                cser.add('second', allow_unmarked=True)
                 target = self.repo.lookup_reference('refs/heads/second')
                 self.repo.checkout(target, strategy=pygit2.GIT_CHECKOUT_FORCE)
                 cser.increment('second')
@@ -2322,8 +2322,8 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         """Test listing the patches for a series"""
         cser = self.get_cser()
         with terminal.capture():
-            cser.series_add(None, '', allow_unmarked=True)
-            cser.series_add('second', allow_unmarked=True)
+            cser.add(None, '', allow_unmarked=True)
+            cser.add('second', allow_unmarked=True)
             target = self.repo.lookup_reference('refs/heads/second')
             self.repo.checkout(target, strategy=pygit2.GIT_CHECKOUT_FORCE)
             cser.increment('second')
@@ -2402,7 +2402,7 @@ Date:   .*
             cser.project_set(pwork, 'U-Boot', quiet=True)
 
             with terminal.capture() as (out, _):
-                cser.series_add('second', 'description', allow_unmarked=True)
+                cser.add('second', 'description', allow_unmarked=True)
 
             ser = cser._get_series_by_name('second')
             pwid = cser.get_series_svid(ser.idnum, 1)
@@ -2529,7 +2529,7 @@ Date:   .*
             cser, pwork = self.setup_second(False)
 
             with terminal.capture():
-                cser.series_add('first', 'description', allow_unmarked=True)
+                cser.add('first', 'description', allow_unmarked=True)
                 cser.increment('first')
                 cser.increment('first')
                 cser.link_set('first', 1, '123', True)
@@ -2924,7 +2924,7 @@ Date:   .*
         pwork.project_set(self.PROJ_ID, self.PROJ_LINK_NAME)
 
         with terminal.capture():
-            cser.series_add('second', allow_unmarked=True)
+            cser.add('second', allow_unmarked=True)
             cser.increment('second')
             cser.link_auto(pwork, 'second', 2, True)
             cser.series_sync(pwork, 'second', 2, False, False, False)
@@ -3273,7 +3273,7 @@ Date:   .*
         cser = self.get_cser()
         with self.stage('setup'):
             with terminal.capture() as (out, _):
-                cser.series_add('first', 'my name', allow_unmarked=True)
+                cser.add('first', 'my name', allow_unmarked=True)
 
             # Remember the old series
             old = cser._get_series_by_name('first')
@@ -3353,7 +3353,7 @@ Date:   .*
         """Test renaming when it is not allowed"""
         cser = self.get_cser()
         with terminal.capture():
-            cser.series_add('first', 'my name', allow_unmarked=True)
+            cser.add('first', 'my name', allow_unmarked=True)
             cser.increment('first')
             cser.increment('first')
 
@@ -3380,7 +3380,7 @@ Date:   .*
                          str(exc.exception))
 
         with terminal.capture():
-            cser.series_add('second', 'another name', allow_unmarked=True)
+            cser.add('second', 'another name', allow_unmarked=True)
             cser.increment('second')
 
         with self.assertRaises(ValueError) as exc:

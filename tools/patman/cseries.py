@@ -237,6 +237,40 @@ class Cseries(cser_helper.CseriesHelper):
 
         return summary
 
+    def project_set(self, pwork, name, quiet=False):
+        """Set the name of the project
+
+        Args:
+            pwork (Patchwork): Patchwork object to use
+            name (str): Name of the project to use in patchwork
+            quiet (bool): True to skip writing the message
+        """
+        res = self.loop.run_until_complete(pwork.get_projects())
+        proj_id = None
+        for proj in res:
+            if proj['name'] == name:
+                proj_id = proj['id']
+                link_name = proj['link_name']
+        if not proj_id:
+            raise ValueError(f"Unknown project name '{name}'")
+        self.db.settings_update(name, proj_id, link_name)
+        self.commit()
+        if not quiet:
+            tout.info(f"Project '{name}' patchwork-ID {proj_id} "
+                      f'link-name {link_name}')
+
+    def project_get(self):
+        """Get the details of the project
+
+        Returns:
+            tuple or None if there are no settings:
+                name (str): Project name, e.g. 'U-Boot'
+                proj_id (int): Patchworks project ID for this project
+                link_name (str): Patchwork's link-name for the project
+        """
+        return self.db.settings_get()
+
+
     def increment(self, series_name, dry_run=False):
         """Increment a series to the next version and create a new branch
 
@@ -319,7 +353,7 @@ class Cseries(cser_helper.CseriesHelper):
         else:
             self.rollback()
 
-    def series_add(self, branch_name, desc=None, mark=False,
+    def add(self, branch_name, desc=None, mark=False,
                    allow_unmarked=False, end=None, force_version=False,
                    dry_run=False):
         """Add a series (or new version of a series) to the database
@@ -777,38 +811,6 @@ class Cseries(cser_helper.CseriesHelper):
         """
         self.db.upstream_delete(name)
         self.commit()
-    def project_set(self, pwork, name, quiet=False):
-        """Set the name of the project
-
-        Args:
-            pwork (Patchwork): Patchwork object to use
-            name (str): Name of the project to use in patchwork
-            quiet (bool): True to skip writing the message
-        """
-        res = self.loop.run_until_complete(pwork.get_projects())
-        proj_id = None
-        for proj in res:
-            if proj['name'] == name:
-                proj_id = proj['id']
-                link_name = proj['link_name']
-        if not proj_id:
-            raise ValueError(f"Unknown project name '{name}'")
-        self.db.settings_update(name, proj_id, link_name)
-        self.commit()
-        if not quiet:
-            tout.info(f"Project '{name}' patchwork-ID {proj_id} "
-                      f'link-name {link_name}')
-
-    def project_get(self):
-        """Get the details of the project
-
-        Returns:
-            tuple or None if there are no settings:
-                name (str): Project name, e.g. 'U-Boot'
-                proj_id (int): Patchworks project ID for this project
-                link_name (str): Patchwork's link-name for the project
-        """
-        return self.db.settings_get()
 
     def build_col(self, state, prefix='', base_str=None):
         """Build a patch-state string with colour
