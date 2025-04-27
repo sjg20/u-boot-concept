@@ -231,7 +231,7 @@ class Database:
         return [Series.from_fields(idnum=idnum, name=name, desc=desc)
                 for idnum, name, desc in res.fetchall()]
 
-    def get_series_dict(self, include_archived=False):
+    def series_get_dict(self, include_archived=False):
         """Get a dict of Series objects from the database
 
         Args:
@@ -247,7 +247,7 @@ class Database:
             sdict[ser.name] = ser
         return sdict
 
-    def get_series_dict_by_id(self, include_archived=False):
+    def series_get_dict_by_id(self, include_archived=False):
         """Get a dict of Series objects from the database
 
         Return:

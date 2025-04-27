@@ -1266,7 +1266,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         """
         missing = 0
         svdict = self._get_ser_ver_dict()
-        sdict = self.db.get_series_dict_by_id()
+        sdict = self.db.series_get_dict_by_id()
         to_fetch = {}
 
         if sync_all_versions:
