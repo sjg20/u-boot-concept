@@ -3105,12 +3105,12 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
     def test_upstream_add(self):
         cser = self.get_cser()
 
-        cser.add_upstream('us', 'https://one')
+        cser.upstream_add('us', 'https://one')
         ulist = cser.get_upstream_dict()
         self.assertEqual(1, len(ulist))
         self.assertEqual(('https://one', None), ulist['us'])
 
-        cser.add_upstream('ci', 'git@two')
+        cser.upstream_add('ci', 'git@two')
         ulist = cser.get_upstream_dict()
         self.assertEqual(2, len(ulist))
         self.assertEqual(('https://one', None), ulist['us'])
@@ -3118,7 +3118,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         # Try to add a duplicate
         with self.assertRaises(ValueError) as exc:
-            cser.add_upstream('ci', 'git@three')
+            cser.upstream_add('ci', 'git@three')
         self.assertEqual("Upstream 'ci' already exists", str(exc.exception))
 
         with terminal.capture() as (out, err):
@@ -3149,8 +3149,8 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             cser.set_default_upstream('us')
         self.assertEqual("No such upstream 'us'", str(exc.exception))
 
-        cser.add_upstream('us', 'https://one')
-        cser.add_upstream('ci', 'git@two')
+        cser.upstream_add('us', 'https://one')
+        cser.upstream_add('ci', 'git@two')
 
         self.assertIsNone(cser.get_default_upstream())
 
@@ -3210,8 +3210,8 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             cser.delete_upstream('us')
         self.assertEqual("No such upstream 'us'", str(exc.exception))
 
-        cser.add_upstream('us', 'https://one')
-        cser.add_upstream('ci', 'git@two')
+        cser.upstream_add('us', 'https://one')
+        cser.upstream_add('ci', 'git@two')
 
         cser.set_default_upstream('us')
         cser.delete_upstream('us')

@@ -208,7 +208,7 @@ def upstream(args, test_db=None):
     try:
         cser.open_database()
         if args.subcmd == 'add':
-            cser.add_upstream(args.remote_name, args.url)
+            cser.upstream_add(args.remote_name, args.url)
         elif args.subcmd == 'default':
             if args.unset:
                 cser.set_default_upstream(None)

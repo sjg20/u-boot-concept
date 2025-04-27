@@ -129,7 +129,7 @@ def add_series_args(subparsers):
             '-w', '--autolink-wait', type=int, default=0,
             help='Number of seconds to wait for patchwork to get a sent series')
 
-    def _add_upstream(parser):
+    def _upstream_add(parser):
         parser.add_argument('-U', '--upstream', help='Commit to end before')
 
     def _add_gather(parser):
@@ -161,7 +161,7 @@ def add_series_args(subparsers):
         help='Change the Series-version on a series to match its branch')
     _add_mark(add)
     _add_allow_unmarked(add)
-    _add_upstream(add)
+    _upstream_add(add)
 
     series_subparsers.add_parser('archive')
 
@@ -209,7 +209,7 @@ def add_series_args(subparsers):
     scan = series_subparsers.add_parser('scan')
     _add_mark(scan)
     _add_allow_unmarked(scan)
-    _add_upstream(scan)
+    _upstream_add(scan)
 
     ssend = series_subparsers.add_parser('send')
     add_send_args(ssend)

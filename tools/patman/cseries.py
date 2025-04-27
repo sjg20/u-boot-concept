@@ -1588,7 +1588,7 @@ class Cseries:
             tout.info('Dry run completed')
         return vals.oid
 
-    def add_upstream(self, name, url):
+    def upstream_add(self, name, url):
         """Add a new upstream tree
 
         Args:
