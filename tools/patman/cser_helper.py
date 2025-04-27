@@ -56,11 +56,6 @@ SHORTEN_STATE = {
     'changes-requested': 'changes',
 }
 
-# Information about a series/version record
-SER_VER = namedtuple(
-    'ser_ver',
-    'idnum,series_id,version,link,cover_id,cover_num_comments,name')
-
 # Summary info returned from Cseries.link_auto_all()
 AUTOLINK = namedtuple('autolink', 'name,version,link,desc,result')
 
@@ -236,11 +231,7 @@ class CseriesHelper:
         Return:
             list of SER_VER
         """
-        res = self.db.execute(
-            'SELECT id, series_id, version, link, cover_id, cover_num_comments, '
-            'name FROM ser_ver')
-        items = res.fetchall()
-        return [SER_VER(*x) for x in items]
+        return self.db.ser_ver_get_list()
 
     def _get_ser_ver_dict(self):
         """Get a dict of patchwork entries from the database

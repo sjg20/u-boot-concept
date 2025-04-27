@@ -10,7 +10,7 @@ To adjsut the schema, increment LATEST, create a migrate_to_v<x>() function
 and write some code in migrate_to() to call it.
 """
 
-from collections import OrderedDict
+from collections import namedtuple, OrderedDict
 import os
 import sqlite3
 
@@ -20,6 +20,11 @@ from patman.series import Series
 
 # Schema version (version 0 means there is no database yet)
 LATEST = 3
+
+# Information about a series/version record
+SER_VER = namedtuple(
+    'ser_ver',
+    'idnum,series_id,version,link,cover_id,cover_num_comments,name')
 
 
 class Database:
@@ -411,7 +416,6 @@ class Database:
                 f'No matching series for id {series_idnum} version {version}')
         return recs[0]
 
-
     def ser_ver_get_ids_for_series(self, series_idnum, version=None):
         """Get a list of ser_ver records for a given series ID
 
@@ -430,6 +434,18 @@ class Database:
             res = self.execute(
                 'SELECT id FROM ser_ver WHERE series_id = ?', (series_idnum,))
         return [i for i in res.fetchall()[0]]
+
+    def ser_ver_get_list(self):
+        """Get a list of patchwork entries from the database
+
+        Return:
+            list of SER_VER
+        """
+        res = self.execute(
+            'SELECT id, series_id, version, link, cover_id, '
+            'cover_num_comments,name FROM ser_ver')
+        items = res.fetchall()
+        return [SER_VER(*x) for x in items]
 
     def ser_ver_remove(self, series_idnum, version=None, remove_pcommits=True,
                        remove_series=True):
