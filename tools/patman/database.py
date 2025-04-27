@@ -376,3 +376,11 @@ class Database:
             self.execute(
                 'INSERT INTO pcommit (svid, seq, subject, change_id) VALUES '
                 '(?, ?, ?, ?)', (svid, pcm.seq, pcm.subject, pcm.change_id))
+
+    def pcommit_delete(self, svid):
+        """Delete pcommit records for a given ser_ver ID
+
+        Args_:
+            svid (int): ser_ver ID num of records to delete
+        """
+        self.execute('DELETE FROM pcommit WHERE svid = ?', (svid,))
