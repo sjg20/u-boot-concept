@@ -318,10 +318,7 @@ class Cseries(cser_helper.CseriesHelper):
         ser = self._parse_series(series)
         if not ser.idnum:
             raise ValueError(f"Series '{ser.name}' not found in database")
-        ser.archived = archived
-        self.db.execute(
-            f'UPDATE series SET archived = {int(archived)} WHERE '
-            f'id = {ser.idnum}')
+        self.db.set_archived(ser.idnum, archived)
         self.commit()
 
     def series_list(self):

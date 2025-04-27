@@ -290,7 +290,8 @@ class Database:
         Raises:
             ValueError: Multiple matches are found
         """
-        res = self.execute('SELECT link FROM ser_ver WHERE '
+        res = self.execute(
+            'SELECT link FROM ser_ver WHERE '
             f"series_id = {series_idnum} AND version = '{version}'")
         recs = res.fetchall()
         if not recs:
@@ -298,3 +299,15 @@ class Database:
         if len(recs) > 1:
             raise ValueError('Expected one match, but multiple matches found')
         return recs[0][0]
+
+    def set_archived(self, series_idnum, archived):
+        """Update archive flag for a series
+
+        Args:
+            series_idnum (int): ID num of the series
+            archived (bool): Whether to mark the series as archived or
+                unarchived
+        """
+        self.execute(
+            f'UPDATE series SET archived = {int(archived)} WHERE '
+            f'id = {series_idnum}')
