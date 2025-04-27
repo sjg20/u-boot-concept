@@ -139,7 +139,7 @@ class Cseries(cser_helper.CseriesHelper):
         """
         ser, version = self._parse_series_and_version(series, version)
         self._ensure_version(ser, version)
-        return self.db.link_get(ser.idnum, version)
+        return self.db.ser_ver_get_link(ser.idnum, version)
 
     def link_search(self, pwork, series, version):
         """Search patch for the link for a series
@@ -318,7 +318,7 @@ class Cseries(cser_helper.CseriesHelper):
         ser = self._parse_series(series)
         if not ser.idnum:
             raise ValueError(f"Series '{ser.name}' not found in database")
-        self.db.set_archived(ser.idnum, archived)
+        self.db.series_set_archived(ser.idnum, archived)
         self.commit()
 
     def series_list(self):
@@ -370,21 +370,13 @@ class Cseries(cser_helper.CseriesHelper):
         new_name = self._join_name_version(ser.name, vers)
 
         self._update_series(branch_name, series, max_vers, new_name, dry_run,
-                           add_vers=vers, switch=on_branch)
+                            add_vers=vers, switch=on_branch)
 
         old_svid = self.get_series_svid(ser.idnum, max_vers)
         pcd = self.get_pcommit_dict(old_svid)
 
-        self.db.execute(
-            'INSERT INTO ser_ver (series_id, version) VALUES (?, ?)',
-            (ser.idnum, vers))
-        svid = self.lastrowid()
-
-        for pcm in pcd.values():
-            self.db.execute(
-                'INSERT INTO pcommit (svid, seq, subject, change_id) VALUES '
-                '(?, ?, ?, ?)', (svid, pcm.seq, pcm.subject, pcm.change_id))
-
+        svid = self.db.ser_ver_add(ser.idnum, vers)
+        self.db.pcommit_add_list(svid, pcd.values())
         if not dry_run:
             self.commit()
         else:

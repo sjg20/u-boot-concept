@@ -277,7 +277,7 @@ class Database:
             return None
         return recs[0][0]
 
-    def link_get(self, series_idnum, version):
+    def ser_ver_get_link(self, series_idnum, version):
         """Get the link for a series version
 
         Args:
@@ -300,7 +300,7 @@ class Database:
             raise ValueError('Expected one match, but multiple matches found')
         return recs[0][0]
 
-    def set_archived(self, series_idnum, archived):
+    def series_set_archived(self, series_idnum, archived):
         """Update archive flag for a series
 
         Args:
@@ -311,3 +311,31 @@ class Database:
         self.execute(
             f'UPDATE series SET archived = {int(archived)} WHERE '
             f'id = {series_idnum}')
+
+    def ser_ver_add(self, series_idnum, version):
+        """Add a new ser_ver record
+
+        Args:
+            series_idnum (int): ID num of the series which is getting a new
+                version
+            version (int): Version number to add
+
+        Return:
+            int: ID num of the new ser_ver record
+        """
+        self.execute(
+            'INSERT INTO ser_ver (series_id, version) VALUES (?, ?)',
+            (series_idnum, version))
+        return self.lastrowid()
+
+    def pcommit_add_list(self, svid, pcommits):
+        """Add records to the pcommit table
+
+        Args:
+            svid (int): ser_ver ID num
+            pcommits (list of PCOMMIT)
+        """
+        for pcm in pcommits:
+            self.execute(
+                'INSERT INTO pcommit (svid, seq, subject, change_id) VALUES '
+                '(?, ?, ?, ?)', (svid, pcm.seq, pcm.subject, pcm.change_id))
