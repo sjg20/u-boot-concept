@@ -132,20 +132,30 @@ class TestCseries(unittest.TestCase, TestCommon):
         return self.get_database()
 
     def db_close(self):
+        """Close the database if open"""
         if self.cser and self.cser.db.cur:
             self.cser.close_database()
             return True
         return False
 
     def db_open(self):
+        """Open the database if closed"""
         if self.cser and not self.cser.db.cur:
             self.cser.open_database()
 
-    def run_args(self, *argv, expected_ret=0, pwork=None):
+    def run_args(self, *argv, expect_ret=0, pwork=None):
+        """Run patman with the given arguments
+
+        Args:
+            argv (list of str): List of arguments, excluding 'patman'
+            expect_ret (int): Expected return code, used to check errors
+            pwork (Patchwork): Patchwork object to use when executing the
+                command
+        """
         was_open = self.db_close()
         args = cmdline.parse_args(['-D'] + list(argv), config_fname=False)
         exit_code = control.do_patman(args, self.tmpdir, pwork)
-        self.assertEqual(expected_ret, exit_code)
+        self.assertEqual(expect_ret, exit_code)
         if was_open:
             self.db_open()
 
@@ -181,8 +191,6 @@ class TestCseries(unittest.TestCase, TestCommon):
         self.assertEqual(
             PCOMMIT(2, 1, 'spi: SPI fixes', 1, None, None, None, None),
             pclist[2])
-
-        self.db_close()
 
     def test_series_not_checked_out(self):
         """Test adding a new cseries when a different one is checked out"""
@@ -707,7 +715,6 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             'second           Series for my board                            1/3  1 2',
             lines[3])
         self.assertTrue(lines[4].startswith('--'))
-        self.db_close()
 
     def test_do_series_add(self):
         """Add a new cseries"""
@@ -737,8 +744,6 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             'first            my-description                                 -/2  1',
             lines[2])
 
-        self.db_close()
-
     def test_do_series_add_cmdline(self):
         """Add a new cseries using the cmdline"""
         self.make_git_tree()
@@ -753,7 +758,6 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.assertTrue(ser)
         self.assertEqual('first', ser.name)
         self.assertEqual('my-description', ser.desc)
-        self.db_close()
 
     def test_do_series_add_auto(self):
         """Add a new cseries without any arguments"""
@@ -873,8 +877,6 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                                                     count)
         self.assertEqual('1:17', series2.links)
 
-        self.db_close()
-
     def test_series_link_cmdline(self):
         """Test adding a patchwork link to a cseries using the cmdline"""
         cser = self.get_cser()
@@ -887,7 +889,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         with terminal.capture() as (out, _):
             self.run_args('series', '-s', 'first', '-V', '4', 'set-link', '-u',
-                          '1234', expected_ret=1, pwork=True)
+                          '1234', expect_ret=1, pwork=True)
         self.assertIn("Series 'first' does not have a version 4",
                       out.getvalue())
 
@@ -928,7 +930,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         with terminal.capture() as (out, _):
             self.run_args('series', '-s', 'first', '-V', '5', 'get-link',
-                          expected_ret=1, pwork=True)
+                          expect_ret=1, pwork=True)
 
         self.assertIn("Series 'first' does not have a version 5",
                       out.getvalue())
@@ -953,8 +955,6 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         with terminal.capture() as (out, _):
             self.run_args('series', 'get-link', pwork=True)
         self.assertIn('1234', out.getvalue())
-
-        self.db_close()
 
     def test_series_link_auto_version(self):
         """Test finding the patchwork link for a cseries automatically"""
@@ -1110,7 +1110,6 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             self.assertEqual(
                 f"Setting link for series 'second' v1 to {self.SERIES_ID_SECOND_V1}",
                 out.getvalue().splitlines()[-1])
-        self.db_open()
 
         plist = cser.get_ser_ver_list()
         self.assertEqual(2, len(plist))
@@ -1140,10 +1139,9 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         """Test linking to patchwork series by description on cmdline"""
         cor = self.check_series_autolink()
         _, pwork = next(cor)
-        self.db_close()
 
         with terminal.capture() as (out, _):
-            self.run_args('series', '-s', 'first', 'autolink', expected_ret=1,
+            self.run_args('series', '-s', 'first', 'autolink', expect_ret=1,
                           pwork=pwork)
         self.assertEqual(
             "patman: ValueError: Series 'first' has an empty description",
@@ -1374,7 +1372,6 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             # cser.set_archived('first', False)
             slist = cser.get_series_dict()
             self.assertEqual(1, len(slist))
-            self.db_close()
 
         yield False
 
@@ -1585,8 +1582,6 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.assertEqual('us                       https://one', lines[0])
         self.assertEqual('ci                       git@two', lines[1])
 
-        self.db_close()
-
     def test_upstream_add_cmdline(self):
         """Test adding an upsream wtih cmdline"""
         with terminal.capture() as (out, err):
@@ -1597,8 +1592,6 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         lines = out.getvalue().splitlines()
         self.assertEqual(1, len(lines))
         self.assertEqual('us                       https://one', lines[0])
-
-        self.db_close()
 
     def test_upstream_default(self):
         """Operation of the default upstream"""
@@ -1634,7 +1627,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
     def test_upstream_default_cmdline(self):
         """Operation of the default upstream on cmdline"""
         with terminal.capture() as (out, _):
-            self.run_args('upstream', 'default', 'us', expected_ret=1)
+            self.run_args('upstream', 'default', 'us', expect_ret=1)
         self.assertEqual("patman: ValueError: No such upstream 'us'",
                          out.getvalue().strip().splitlines()[-1])
 
@@ -1685,7 +1678,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
     def test_upstream_delete_cmdline(self):
         """Test deleting an upstream"""
         with terminal.capture() as (out, _):
-            self.run_args('upstream', 'delete', 'us', expected_ret=1)
+            self.run_args('upstream', 'delete', 'us', expect_ret=1)
         self.assertEqual("patman: ValueError: No such upstream 'us'",
                          out.getvalue().strip().splitlines()[-1])
 
@@ -1695,7 +1688,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.run_args('upstream', 'default', 'us')
         self.run_args('upstream', 'delete', 'us')
         with terminal.capture() as (out, _):
-            self.run_args('upstream', 'default', 'us', expected_ret=1)
+            self.run_args('upstream', 'default', 'us', expect_ret=1)
         self.assertEqual("patman: ValueError: No such upstream 'us'",
                          out.getvalue().strip())
 
@@ -1811,7 +1804,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         with terminal.capture() as (out, _):
             self.run_args('series', '-s', 'first', 'add',
-                          '-D', 'my-description', expected_ret=1, pwork=True)
+                          '-D', 'my-description', expect_ret=1, pwork=True)
         last_line = out.getvalue().splitlines()[-2]
         self.assertEqual(
             'patman: ValueError: 2 commit(s) are unmarked; please use -m or -M',
@@ -1892,7 +1885,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         # check the allow_unmarked flag
         with terminal.capture() as (out, _):
-            self.run_args('series', 'unmark', expected_ret=1, pwork=True)
+            self.run_args('series', 'unmark', expect_ret=1, pwork=True)
         self.assertIn('Unmarked commits 2/2', out.getvalue())
 
         # mark commits
@@ -2027,7 +2020,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         # Try to mark again, which should fail
         with terminal.capture() as (out, _):
-            self.run_args('series', '-s', 'first', 'mark', expected_ret=1,
+            self.run_args('series', '-s', 'first', 'mark', expect_ret=1,
                           pwork=True)
         self.assertIn('Marked commits 2/2', out.getvalue())
 
@@ -2068,7 +2061,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         with self.stage('remove non-existent series'):
             with terminal.capture() as (out, _):
-                self.run_args('series', '-s', 'first', 'remove', expected_ret=1,
+                self.run_args('series', '-s', 'first', 'remove', expect_ret=1,
                             pwork=True)
             self.assertEqual("patman: ValueError: No such series 'first'",
                             out.getvalue().strip())
@@ -2197,7 +2190,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         # Remove only version
         with terminal.capture() as (out, _):
             self.run_args('series', '-n', '-s', 'first', '-V', '2',
-                          'remove-version', expected_ret=1, pwork=True)
+                          'remove-version', expect_ret=1, pwork=True)
         self.assertIn(
             "Series 'first' only has one version: remove the series",
             out.getvalue().strip())
@@ -2798,11 +2791,11 @@ Date:   .*
     def test_series_progress(self):
         """Test showing progress for a cseries"""
         self.setup_second()
+        self.db_close()
 
         with self.stage('latest versions'):
             args = Namespace(subcmd='progress', series='second',
                             show_all_versions=False, list_patches=True)
-            self.db_close()
             with terminal.capture() as (out, _):
                 control.do_series(args, test_db=self.tmpdir, pwork=True)
             lines = iter(out.getvalue().splitlines())
@@ -2835,9 +2828,9 @@ Date:   .*
     def test_series_progress_all(self):
         """Test showing progress for all cseries"""
         self.setup_second()
+        self.db_close()
 
         with self.stage('progress with patches'):
-            self.db_close()
             args = Namespace(subcmd='progress', series=None,
                             show_all_versions=False, list_patches=True)
             with terminal.capture() as (out, _):
@@ -3346,10 +3339,8 @@ Date:   .*
         next(cor)
 
         # Rename (dry run)
-        self.db_close()
         self.run_args('series', '-n', '-s', 'first', 'rename', '-N', 'newname',
                       pwork=True)
-        self.db_open()
         next(cor)
 
         # Rename (real)
