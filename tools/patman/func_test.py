@@ -3397,19 +3397,19 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         # check the allow_unmarked flag
         with terminal.capture():
             with self.assertRaises(ValueError) as exc:
-                cser.unmark_series('first', dry_run=True)
+                cser.series_unmark('first', dry_run=True)
         self.assertEqual('Unmarked commits 2/2', str(exc.exception))
 
         cser = next(cor)
         cser.series_add('first', '', mark=True)
 
         cser = next(cor)
-        cser.unmark_series('first', dry_run=True)
+        cser.series_unmark('first', dry_run=True)
 
         cser = next(cor)
-        cser.unmark_series('first')
+        cser.series_unmark('first')
         cser = next(cor)
-        cser.unmark_series('first', allow_unmarked=True)
+        cser.series_unmark('first', allow_unmarked=True)
 
         self.assertFalse(next(cor))
 
@@ -3456,7 +3456,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                 vals.msg = '\n'.join(lines[:2] + extra + lines[2:]) + '\n'
 
         with terminal.capture():
-            cser.unmark_series('first')
+            cser.series_unmark('first')
 
         # We should get back the original commit message
         series = patchstream.get_metadata('first', 0, 2, git_dir=self.gitdir)
