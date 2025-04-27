@@ -305,6 +305,38 @@ class Database:
             raise ValueError(f'No series found (id {idnum} len {len(recs)})')
         return recs[0]
 
+    def series_get_dict(self, include_archived=False):
+        """Get a dict of Series objects from the database
+
+        Args:
+            include_archived (bool): True to include archives series
+
+        Return:
+            OrderedDict:
+                key: series name
+                value: Series with idnum, name and desc filled out
+        """
+        sdict = OrderedDict()
+        for ser in self._get_series_list(include_archived):
+            sdict[ser.name] = ser
+        return sdict
+
+    def series_get_version_list(self, series_idnum):
+        """Get a list of the versions available for a series
+
+        Args:
+            series_idnum (int): ID of series to look up
+
+        Return:
+            str: List of versions
+        """
+        res = self.execute('SELECT version FROM ser_ver WHERE series_id = ?',
+                           (series_idnum,))
+        recs = res.fetchall()
+        print('recs', recs)
+        assert len(recs)
+        return recs
+
     def series_add(self, name, desc):
         """Add a new series record
 
@@ -346,22 +378,6 @@ class Database:
         if self.rowcount() != 1:
             self.rollback()
             raise ValueError(f"No such series '{name}'")
-
-    def series_get_dict(self, include_archived=False):
-        """Get a dict of Series objects from the database
-
-        Args:
-            include_archived (bool): True to include archives series
-
-        Return:
-            OrderedDict:
-                key: series name
-                value: Series with idnum, name and desc filled out
-        """
-        sdict = OrderedDict()
-        for ser in self._get_series_list(include_archived):
-            sdict[ser.name] = ser
-        return sdict
 
     def series_set_archived(self, series_idnum, archived):
         """Update archive flag for a series

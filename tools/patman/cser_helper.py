@@ -541,10 +541,7 @@ class CseriesHelper:
         """
         if idnum is None:
             raise ValueError('Unknown series idnum')
-        res = self.db.execute('SELECT version FROM ser_ver WHERE '
-            f"series_id = {idnum}")
-        recs = res.fetchall()
-        return [item[0] for item in recs]
+        return self.db.series_get_version_list(idnum)
 
     def _join_name_version(self, in_name, version):
         """Convert a series name plus a version into a branch name
