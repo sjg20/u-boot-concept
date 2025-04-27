@@ -37,70 +37,6 @@ class Cseries(cser_helper.CseriesHelper):
         """
         super().__init__(topdir, colour)
 
-    def series_add(self, branch_name, desc=None, mark=False,
-                   allow_unmarked=False, end=None, force_version=False,
-                   dry_run=False):
-        """Add a series (or new version of a series) to the database
-
-        Args:
-            branch_name (str): Name of branch to sync, or None for current one
-            desc (str): Description to use, or None to use the series subject
-            mark (str): True to mark each commit with a change ID
-            allow_unmarked (str): True to not require each commit to be marked
-            end (str): Add only commits up to but exclu
-            force_version (bool): True if ignore a Series-version tag that
-                doesn't match its branch name
-            dry_run (bool): True to do a dry run
-        """
-        name, ser, version, msg = self._prep_series(branch_name, end)
-        tout.info(f"Adding series '{ser.name}' v{version}: mark {mark} "
-                  f'allow_unmarked {allow_unmarked}')
-        if msg:
-            tout.info(msg)
-        if desc is None:
-            if not ser.cover:
-                raise ValueError(f"Branch '{name}' has no cover letter - "
-                                 'please provide description')
-            desc = ser.cover[0]
-
-        ser = self._handle_mark(name, ser, version, mark, allow_unmarked,
-                                force_version, dry_run)
-        link = ser.get_link_for_version(version)
-
-        msg = 'Added'
-        added = False
-        series_id = self.db.series_find_by_name(ser.name)
-        if not series_id:
-            series_id = self.db.series_add(ser.name, desc)
-            added = True
-            msg += f" series '{ser.name}'"
-
-        if version not in self._get_version_list(series_id):
-            svid = self.db.ser_ver_add(series_id, version, link)
-            msg += f" v{version}"
-            if not added:
-                msg += f" to existing series '{ser.name}'"
-            added = True
-
-            self._add_series_commits(ser, svid)
-            count = len(ser.commits)
-            msg += f" ({count} commit{'s' if count > 1 else ''})"
-        if not added:
-            tout.info(f"Series '{ser.name}' v{version} already exists")
-            msg = None
-        elif not dry_run:
-            self.commit()
-        else:
-            self.rollback()
-            series_id = None
-        ser.desc = desc
-        ser.idnum = series_id
-
-        if msg:
-            tout.info(msg)
-        if dry_run:
-            tout.info('Dry run completed')
-
     def link_set(self, series_name, version, link, update_commit):
         """Add / update a series-links link for a series
 
@@ -301,41 +237,6 @@ class Cseries(cser_helper.CseriesHelper):
 
         return summary
 
-    def set_archived(self, series, archived):
-        """Set whether a series is archived or not
-
-        Args:
-            series (str): Name of series to use, or None to use current branch
-            archived (bool): Whether to mark the series as archived or
-                unarchived
-        """
-        ser = self._parse_series(series, include_archived=True)
-        if not ser.idnum:
-            raise ValueError(f"Series '{ser.name}' not found in database")
-        self.db.series_set_archived(ser.idnum, archived)
-        self.commit()
-
-    def series_list(self):
-        """List all series
-
-        Lines all series along with their description, number of patches
-        accepted and  the available versions
-        """
-        sdict = self.db.series_get_dict()
-        print(f"{'Name':15}  {'Description':40}  Accepted  Versions")
-        border = f"{'-' * 15}  {'-' * 40}  --------  {'-' * 15}"
-        print(border)
-        for name in sorted(sdict):
-            ser = sdict[name]
-            versions = self._get_version_list(ser.idnum)
-            stat = self._series_get_version_stats(
-                ser.idnum, self._series_max_version(ser.idnum))[0]
-
-            vlist = ' '.join([str(ver) for ver in sorted(versions)])
-
-            print(f'{name:16.16} {ser.desc:41.41} {stat.rjust(8)}  {vlist}')
-        print(border)
-
     def increment(self, series_name, dry_run=False):
         """Increment a series to the next version and create a new branch
 
@@ -417,6 +318,105 @@ class Cseries(cser_helper.CseriesHelper):
             self.commit()
         else:
             self.rollback()
+
+    def series_add(self, branch_name, desc=None, mark=False,
+                   allow_unmarked=False, end=None, force_version=False,
+                   dry_run=False):
+        """Add a series (or new version of a series) to the database
+
+        Args:
+            branch_name (str): Name of branch to sync, or None for current one
+            desc (str): Description to use, or None to use the series subject
+            mark (str): True to mark each commit with a change ID
+            allow_unmarked (str): True to not require each commit to be marked
+            end (str): Add only commits up to but exclu
+            force_version (bool): True if ignore a Series-version tag that
+                doesn't match its branch name
+            dry_run (bool): True to do a dry run
+        """
+        name, ser, version, msg = self._prep_series(branch_name, end)
+        tout.info(f"Adding series '{ser.name}' v{version}: mark {mark} "
+                  f'allow_unmarked {allow_unmarked}')
+        if msg:
+            tout.info(msg)
+        if desc is None:
+            if not ser.cover:
+                raise ValueError(f"Branch '{name}' has no cover letter - "
+                                 'please provide description')
+            desc = ser.cover[0]
+
+        ser = self._handle_mark(name, ser, version, mark, allow_unmarked,
+                                force_version, dry_run)
+        link = ser.get_link_for_version(version)
+
+        msg = 'Added'
+        added = False
+        series_id = self.db.series_find_by_name(ser.name)
+        if not series_id:
+            series_id = self.db.series_add(ser.name, desc)
+            added = True
+            msg += f" series '{ser.name}'"
+
+        if version not in self._get_version_list(series_id):
+            svid = self.db.ser_ver_add(series_id, version, link)
+            msg += f" v{version}"
+            if not added:
+                msg += f" to existing series '{ser.name}'"
+            added = True
+
+            self._add_series_commits(ser, svid)
+            count = len(ser.commits)
+            msg += f" ({count} commit{'s' if count > 1 else ''})"
+        if not added:
+            tout.info(f"Series '{ser.name}' v{version} already exists")
+            msg = None
+        elif not dry_run:
+            self.commit()
+        else:
+            self.rollback()
+            series_id = None
+        ser.desc = desc
+        ser.idnum = series_id
+
+        if msg:
+            tout.info(msg)
+        if dry_run:
+            tout.info('Dry run completed')
+
+    def set_archived(self, series, archived):
+        """Set whether a series is archived or not
+
+        Args:
+            series (str): Name of series to use, or None to use current branch
+            archived (bool): Whether to mark the series as archived or
+                unarchived
+        """
+        ser = self._parse_series(series, include_archived=True)
+        if not ser.idnum:
+            raise ValueError(f"Series '{ser.name}' not found in database")
+        self.db.series_set_archived(ser.idnum, archived)
+        self.commit()
+
+    def series_list(self):
+        """List all series
+
+        Lines all series along with their description, number of patches
+        accepted and  the available versions
+        """
+        sdict = self.db.series_get_dict()
+        print(f"{'Name':15}  {'Description':40}  Accepted  Versions")
+        border = f"{'-' * 15}  {'-' * 40}  --------  {'-' * 15}"
+        print(border)
+        for name in sorted(sdict):
+            ser = sdict[name]
+            versions = self._get_version_list(ser.idnum)
+            stat = self._series_get_version_stats(
+                ser.idnum, self._series_max_version(ser.idnum))[0]
+
+            vlist = ' '.join([str(ver) for ver in sorted(versions)])
+
+            print(f'{name:16.16} {ser.desc:41.41} {stat.rjust(8)}  {vlist}')
+        print(border)
 
     def series_mark(self, in_name, allow_marked=False, dry_run=False):
         """Add Change-Id tags to a series
