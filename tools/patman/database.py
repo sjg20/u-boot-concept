@@ -350,6 +350,19 @@ class Database:
             (series_idnum, version, link))
         return self.lastrowid()
 
+    def ser_ver_delete(self, series_idnum, version):
+        """Delete a ser_ver record
+
+        Removes the record which has the given series ID num and version
+
+        Args:
+            series_idnum (int): ID num of the series
+            version (int): Version number
+        """
+        self.execute(
+            'DELETE FROM ser_ver WHERE series_id = ? and version = ?',
+            (series_idnum, version))
+
     # pcommit functions
 
     def pcommit_add_list(self, svid, pcommits):

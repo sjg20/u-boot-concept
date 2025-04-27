@@ -414,9 +414,7 @@ class Cseries(cser_helper.CseriesHelper):
 
         old_svid = self.get_series_svid(ser.idnum, max_vers)
 
-        self.db.execute(
-            'DELETE FROM ser_ver WHERE series_id = ? and version = ?',
-            (ser.idnum, max_vers))
+        self.db.ser_ver_delete(ser.idnum, max_vers)
         self.db.execute(
             'DELETE FROM pcommit WHERE svid = ?', (old_svid,))
         if not dry_run:
