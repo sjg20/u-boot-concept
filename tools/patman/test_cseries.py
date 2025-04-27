@@ -634,22 +634,6 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         raise ValueError(f'Fake Patchwork does not understand: {subpath}')
 
-    def test_series_add_no_cover(self):
-        """Test patchwork when adding a series which has no cover letter"""
-        cser = self.get_cser()
-        pwork = Patchwork.for_testing(self._fake_patchwork_cser)
-        pwork.project_set(self.PROJ_ID, self.PROJ_LINK_NAME)
-
-        with terminal.capture() as (out, _):
-            cser.add('first', 'my name for this', mark=False,
-                            allow_unmarked=True)
-        self.assertIn("Added series 'first' v1 (2 commits)", out.getvalue())
-
-        with terminal.capture() as (out, _):
-            cser.link_auto(pwork, 'first', 1, True)
-        self.assertIn("Setting link for series 'first' v1 to 12345",
-                      out.getvalue())
-
     def setup_second(self, do_sync=True):
         """Set up the 'second' series synced with the fake patchwork
 
@@ -694,6 +678,22 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                 self.assertEqual(2, len(lines))
 
         return cser, pwork
+
+    def test_series_add_no_cover(self):
+        """Test patchwork when adding a series which has no cover letter"""
+        cser = self.get_cser()
+        pwork = Patchwork.for_testing(self._fake_patchwork_cser)
+        pwork.project_set(self.PROJ_ID, self.PROJ_LINK_NAME)
+
+        with terminal.capture() as (out, _):
+            cser.add('first', 'my name for this', mark=False,
+                            allow_unmarked=True)
+        self.assertIn("Added series 'first' v1 (2 commits)", out.getvalue())
+
+        with terminal.capture() as (out, _):
+            cser.link_auto(pwork, 'first', 1, True)
+        self.assertIn("Setting link for series 'first' v1 to 12345",
+                      out.getvalue())
 
     def test_series_list(self):
         """Test listing cseries"""

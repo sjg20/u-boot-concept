@@ -37,9 +37,8 @@ class Cseries(cser_helper.CseriesHelper):
         """
         super().__init__(topdir, colour)
 
-    def add(self, branch_name, desc=None, mark=False,
-                   allow_unmarked=False, end=None, force_version=False,
-                   dry_run=False):
+    def add(self, branch_name, desc=None, mark=False, allow_unmarked=False,
+            end=None, force_version=False, dry_run=False):
         """Add a series (or new version of a series) to the database
 
         Args:
@@ -770,6 +769,79 @@ class Cseries(cser_helper.CseriesHelper):
         if dry_run:
             tout.info('Dry run completed')
 
+    def scan(self, branch_name, mark=False, allow_unmarked=False, end=None,
+             dry_run=False):
+        """Scan a branch and make updates to the database if it has changed
+
+        Args:
+            branch_name (str): Name of branch to sync, or None for current one
+            mark (str): True to mark each commit with a change ID
+            allow_unmarked (str): True to not require each commit to be marked
+            end (str): Add only commits up to but exclu
+            dry_run (bool): True to do a dry run
+        """
+        def _show_item(oper, seq, subject):
+            col = None
+            if oper == '+':
+                col = self.col.GREEN
+            elif oper == '-':
+                col = self.col.RED
+            out = self.col.build(col, subject) if col else subject
+            tout.info(f'{oper} {seq:3} {out}')
+
+        name, ser, version, msg = self._prep_series(branch_name, end)
+        svid = self.get_ser_ver(ser.idnum, version)[0]
+        pcdict = self.get_pcommit_dict(svid)
+
+        tout.info(
+            f"Syncing series '{name}' v{version}: mark {mark} "
+            f'allow_unmarked {allow_unmarked}')
+        if msg:
+            tout.info(msg)
+
+        ser = self._handle_mark(name, ser, version, mark, allow_unmarked,
+                                False, dry_run)
+
+        # First check for new patches that are not in the database
+        to_add = dict(enumerate(ser.commits))
+        for pcm in pcdict.values():
+            tout.debug(f'pcm {pcm.subject}')
+            i = self._find_matched_commit(to_add, pcm)
+            if i is not None:
+                del to_add[i]
+
+        # Now check for patches in the database that are not in the branch
+        to_remove = dict(enumerate(pcdict.values()))
+        for cmt in ser.commits:
+            tout.debug(f'cmt {cmt.subject}')
+            i = self._find_matched_patch(to_remove, cmt)
+            if i is not None:
+                del to_remove[i]
+
+        for seq, cmt in enumerate(ser.commits):
+            if seq in to_remove:
+                _show_item('-', seq, to_remove[seq].subject)
+                del to_remove[seq]
+            if seq in to_add:
+                _show_item('+', seq, to_add[seq].subject)
+                del to_add[seq]
+            else:
+                _show_item(' ', seq, cmt.subject)
+        seq = len(ser.commits)
+        for cmt in to_add.items():
+            _show_item('+', seq, cmt.subject)
+            seq += 1
+        for seq, pcm in to_remove.items():
+            _show_item('+', seq, pcm.subject)
+
+        self.db.pcommit_delete(svid)
+        self._add_series_commits(ser, svid)
+        if not dry_run:
+            self.commit()
+        else:
+            self.rollback()
+            tout.info('Dry run completed')
+
     def send(self, pwork, name, autolink, autolink_wait, args):
         """Send out a series
 
@@ -861,79 +933,6 @@ class Cseries(cser_helper.CseriesHelper):
         pad = ' ' * (10 - len(out))
         col_state = self.col.build(col, prefix + out, bright)
         return col_state, pad
-
-    def scan(self, branch_name, mark=False, allow_unmarked=False, end=None,
-             dry_run=False):
-        """Scan a branch and make updates to the database if it has changed
-
-        Args:
-            branch_name (str): Name of branch to sync, or None for current one
-            mark (str): True to mark each commit with a change ID
-            allow_unmarked (str): True to not require each commit to be marked
-            end (str): Add only commits up to but exclu
-            dry_run (bool): True to do a dry run
-        """
-        def _show_item(oper, seq, subject):
-            col = None
-            if oper == '+':
-                col = self.col.GREEN
-            elif oper == '-':
-                col = self.col.RED
-            out = self.col.build(col, subject) if col else subject
-            tout.info(f'{oper} {seq:3} {out}')
-
-        name, ser, version, msg = self._prep_series(branch_name, end)
-        svid = self.get_ser_ver(ser.idnum, version)[0]
-        pcdict = self.get_pcommit_dict(svid)
-
-        tout.info(
-            f"Syncing series '{name}' v{version}: mark {mark} "
-            f'allow_unmarked {allow_unmarked}')
-        if msg:
-            tout.info(msg)
-
-        ser = self._handle_mark(name, ser, version, mark, allow_unmarked,
-                                False, dry_run)
-
-        # First check for new patches that are not in the database
-        to_add = dict(enumerate(ser.commits))
-        for pcm in pcdict.values():
-            tout.debug(f'pcm {pcm.subject}')
-            i = self._find_matched_commit(to_add, pcm)
-            if i is not None:
-                del to_add[i]
-
-        # Now check for patches in the database that are not in the branch
-        to_remove = dict(enumerate(pcdict.values()))
-        for cmt in ser.commits:
-            tout.debug(f'cmt {cmt.subject}')
-            i = self._find_matched_patch(to_remove, cmt)
-            if i is not None:
-                del to_remove[i]
-
-        for seq, cmt in enumerate(ser.commits):
-            if seq in to_remove:
-                _show_item('-', seq, to_remove[seq].subject)
-                del to_remove[seq]
-            if seq in to_add:
-                _show_item('+', seq, to_add[seq].subject)
-                del to_add[seq]
-            else:
-                _show_item(' ', seq, cmt.subject)
-        seq = len(ser.commits)
-        for cmt in to_add.items():
-            _show_item('+', seq, cmt.subject)
-            seq += 1
-        for seq, pcm in to_remove.items():
-            _show_item('+', seq, pcm.subject)
-
-        self.db.pcommit_delete(svid)
-        self._add_series_commits(ser, svid)
-        if not dry_run:
-            self.commit()
-        else:
-            self.rollback()
-            tout.info('Dry run completed')
 
     def summary(self, series):
         """Show summary information for all series
