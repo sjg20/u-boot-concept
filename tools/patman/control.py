@@ -168,7 +168,7 @@ def do_series(args, test_db=None, pwork=None):
                       allow_unmarked=args.allow_unmarked, end=args.upstream,
                       dry_run=args.dry_run)
         elif args.subcmd == 'send':
-            cser.send_series(pwork, args.series, args.autolink,
+            cser.send(pwork, args.series, args.autolink,
                              args.autolink_wait, args)
         elif args.subcmd == 'set-link':
             cser.link_set(args.series, args.version, args.link, args.update)

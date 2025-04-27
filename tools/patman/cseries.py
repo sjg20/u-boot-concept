@@ -270,7 +270,6 @@ class Cseries(cser_helper.CseriesHelper):
         """
         return self.db.settings_get()
 
-
     def increment(self, series_name, dry_run=False):
         """Increment a series to the next version and create a new branch
 
@@ -417,7 +416,7 @@ class Cseries(cser_helper.CseriesHelper):
         if dry_run:
             tout.info('Dry run completed')
 
-    def send_series(self, pwork, name, autolink, autolink_wait, args):
+    def send(self, pwork, name, autolink, autolink_wait, args):
         """Send out a series
 
         Args:
