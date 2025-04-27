@@ -571,6 +571,20 @@ class Database:
             self.rollback()
             raise ValueError(f"No such upstream '{name}'")
 
+    def upstream_get_dict(self):
+        """Get a list of upstream entries from the database
+
+        Return:
+            OrderedDict:
+                key (str): upstream name
+                value (str): url
+        """
+        res = self.execute('SELECT name, url, is_default FROM upstream')
+        udict = OrderedDict()
+        for name, url, is_default in res.fetchall():
+            udict[name] = url, is_default
+        return udict
+
     # settings functions
 
     def settings_update(self, name, proj_id, link_name):

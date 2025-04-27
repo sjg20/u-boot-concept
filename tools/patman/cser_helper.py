@@ -254,11 +254,7 @@ class CseriesHelper:
                 key (str): upstream name
                 value (str): url
         """
-        res = self.db.execute('SELECT name, url, is_default FROM upstream')
-        udict = OrderedDict()
-        for name, url, is_default in res.fetchall():
-            udict[name] = url, is_default
-        return udict
+        return self.db.upstream_get_dict()
 
     def get_pcommit_dict(self, find_svid=None):
         """Get a dict of pcommits entries from the database
