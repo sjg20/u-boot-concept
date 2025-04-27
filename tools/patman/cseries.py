@@ -101,6 +101,43 @@ class Cseries(cser_helper.CseriesHelper):
         if dry_run:
             tout.info('Dry run completed')
 
+    def decrement(self, series, dry_run=False):
+        """Decrement a series to the previous version and delete the branch
+
+        Args:
+            series (str): Name of series to use, or None to use current branch
+            dry_run (bool): True to do a dry run
+        """
+        ser = self._parse_series(series)
+        if not ser.idnum:
+            raise ValueError(f"Series '{ser.name}' not found in database")
+
+        max_vers = self._series_max_version(ser.idnum)
+        if max_vers < 2:
+            raise ValueError(f"Series '{ser.name}' only has one version")
+
+        tout.info(f"Removing series '{ser.name}' v{max_vers}")
+
+        new_max = max_vers - 1
+
+        repo = pygit2.init_repository(self.gitdir)
+        if not dry_run:
+            name = self._get_branch_name(ser.name, new_max)
+            branch = repo.lookup_branch(name)
+            repo.checkout(branch)
+
+            del_name = f'{ser.name}{max_vers}'
+            del_branch = repo.lookup_branch(del_name)
+            branch_oid = del_branch.peel(pygit2.GIT_OBJ_COMMIT).oid
+            del_branch.delete()
+            print(f"Deleted branch '{del_name}' {oid(branch_oid)}")
+
+        self.db.ser_ver_remove(ser.idnum, max_vers)
+        if not dry_run:
+            self.commit()
+        else:
+            self.rollback()
+
     def increment(self, series_name, dry_run=False):
         """Increment a series to the next version and create a new branch
 
@@ -145,43 +182,6 @@ class Cseries(cser_helper.CseriesHelper):
         tout.info(f'Added new branch {new_name}')
         if dry_run:
             tout.info('Dry run completed')
-
-    def decrement(self, series, dry_run=False):
-        """Decrement a series to the previous version and delete the branch
-
-        Args:
-            series (str): Name of series to use, or None to use current branch
-            dry_run (bool): True to do a dry run
-        """
-        ser = self._parse_series(series)
-        if not ser.idnum:
-            raise ValueError(f"Series '{ser.name}' not found in database")
-
-        max_vers = self._series_max_version(ser.idnum)
-        if max_vers < 2:
-            raise ValueError(f"Series '{ser.name}' only has one version")
-
-        tout.info(f"Removing series '{ser.name}' v{max_vers}")
-
-        new_max = max_vers - 1
-
-        repo = pygit2.init_repository(self.gitdir)
-        if not dry_run:
-            name = self._get_branch_name(ser.name, new_max)
-            branch = repo.lookup_branch(name)
-            repo.checkout(branch)
-
-            del_name = f'{ser.name}{max_vers}'
-            del_branch = repo.lookup_branch(del_name)
-            branch_oid = del_branch.peel(pygit2.GIT_OBJ_COMMIT).oid
-            del_branch.delete()
-            print(f"Deleted branch '{del_name}' {oid(branch_oid)}")
-
-        self.db.ser_ver_remove(ser.idnum, max_vers)
-        if not dry_run:
-            self.commit()
-        else:
-            self.rollback()
 
     def link_set(self, series_name, version, link, update_commit):
         """Add / update a series-links link for a series
@@ -383,6 +383,27 @@ class Cseries(cser_helper.CseriesHelper):
 
         return summary
 
+    def list(self):
+        """List all series
+
+        Lines all series along with their description, number of patches
+        accepted and  the available versions
+        """
+        sdict = self.db.series_get_dict()
+        print(f"{'Name':15}  {'Description':40}  Accepted  Versions")
+        border = f"{'-' * 15}  {'-' * 40}  --------  {'-' * 15}"
+        print(border)
+        for name in sorted(sdict):
+            ser = sdict[name]
+            versions = self._get_version_list(ser.idnum)
+            stat = self._series_get_version_stats(
+                ser.idnum, self._series_max_version(ser.idnum))[0]
+
+            vlist = ' '.join([str(ver) for ver in sorted(versions)])
+
+            print(f'{name:16.16} {ser.desc:41.41} {stat.rjust(8)}  {vlist}')
+        print(border)
+
     def project_set(self, pwork, name, quiet=False):
         """Set the name of the project
 
@@ -416,49 +437,28 @@ class Cseries(cser_helper.CseriesHelper):
         """
         return self.db.settings_get()
 
-    def send(self, pwork, name, autolink, autolink_wait, args):
-        """Send out a series
+    def remove(self, name, dry_run=False):
+        """Remove a series from the database
 
         Args:
-            pwork (Patchwork): Patchwork object to use
-            series (str): Series name to search for, or None for current series
-                that is checked out
-            autolink (bool): True to auto-link the series after sending
-            args: 'send' arguments provided
-            autolink_wait (int): Number of seconds to wait for the autolink to
-                succeed
+            name (str): Name of series to remove, or None to use current one
+            dry_run (bool): True to do a dry run
         """
-        ser, version = self._parse_series_and_version(name, None)
+        ser = self._parse_series(name)
+        name = ser.name
         if not ser.idnum:
-            raise ValueError(f"Series '{ser.name}' not found in database")
+            raise ValueError(f"No such series '{name}'")
 
-        args.branch = self._get_branch_name(ser.name, version)
-        send.send(args, git_dir=self.gitdir, cwd=self.topdir)
+        self.db.ser_ver_remove(ser.idnum, None)
+        if not dry_run:
+            self.commit()
+        else:
+            self.rollback()
 
-        if not args.dry_run and autolink:
-            self.link_auto(pwork, name, version, True, wait_s=autolink_wait)
-
-    def status(self, pwork, series, version, show_comments,
-                      show_cover_comments=False, single_thread=False):
-        """Show the series status from patchwork
-
-        Args:
-            pwork (Patchwork): Patchwork object to use
-            series (str): Name of series to use, or None to use current branch
-            version (int): Version number, or None to detect from name
-            show_comments (bool): Show all comments on each patch
-            show_cover_comments (bool): Show all comments on the cover letter
-            single_thread (bool): Avoid using the threads
-        """
-        branch, series, version, _, _, link, _, _ = self._get_patches(
-            series, version)
-        if not link:
-            raise ValueError(
-                f"Series '{series.name}' v{version} has no patchwork link: "
-                f"Try 'patman series -s {branch} autolink'")
-        status.check_and_report_status(
-            series, link, branch, None, False, show_comments,
-            show_cover_comments, pwork, self.gitdir, single_thread)
+        self.commit()
+        tout.info(f"Removed series '{name}'")
+        if dry_run:
+            tout.info('Dry run completed')
 
     def rename(self, series, name, dry_run=False):
         """Rename a series
@@ -531,6 +531,50 @@ class Cseries(cser_helper.CseriesHelper):
         if dry_run:
             tout.info('Dry run completed')
 
+    def send(self, pwork, name, autolink, autolink_wait, args):
+        """Send out a series
+
+        Args:
+            pwork (Patchwork): Patchwork object to use
+            series (str): Series name to search for, or None for current series
+                that is checked out
+            autolink (bool): True to auto-link the series after sending
+            args: 'send' arguments provided
+            autolink_wait (int): Number of seconds to wait for the autolink to
+                succeed
+        """
+        ser, version = self._parse_series_and_version(name, None)
+        if not ser.idnum:
+            raise ValueError(f"Series '{ser.name}' not found in database")
+
+        args.branch = self._get_branch_name(ser.name, version)
+        send.send(args, git_dir=self.gitdir, cwd=self.topdir)
+
+        if not args.dry_run and autolink:
+            self.link_auto(pwork, name, version, True, wait_s=autolink_wait)
+
+    def status(self, pwork, series, version, show_comments,
+                      show_cover_comments=False, single_thread=False):
+        """Show the series status from patchwork
+
+        Args:
+            pwork (Patchwork): Patchwork object to use
+            series (str): Name of series to use, or None to use current branch
+            version (int): Version number, or None to detect from name
+            show_comments (bool): Show all comments on each patch
+            show_cover_comments (bool): Show all comments on the cover letter
+            single_thread (bool): Avoid using the threads
+        """
+        branch, series, version, _, _, link, _, _ = self._get_patches(
+            series, version)
+        if not link:
+            raise ValueError(
+                f"Series '{series.name}' v{version} has no patchwork link: "
+                f"Try 'patman series -s {branch} autolink'")
+        status.check_and_report_status(
+            series, link, branch, None, False, show_comments,
+            show_cover_comments, pwork, self.gitdir, single_thread)
+
     def set_archived(self, series, archived):
         """Set whether a series is archived or not
 
@@ -544,50 +588,6 @@ class Cseries(cser_helper.CseriesHelper):
             raise ValueError(f"Series '{ser.name}' not found in database")
         self.db.series_set_archived(ser.idnum, archived)
         self.commit()
-
-    def list(self):
-        """List all series
-
-        Lines all series along with their description, number of patches
-        accepted and  the available versions
-        """
-        sdict = self.db.series_get_dict()
-        print(f"{'Name':15}  {'Description':40}  Accepted  Versions")
-        border = f"{'-' * 15}  {'-' * 40}  --------  {'-' * 15}"
-        print(border)
-        for name in sorted(sdict):
-            ser = sdict[name]
-            versions = self._get_version_list(ser.idnum)
-            stat = self._series_get_version_stats(
-                ser.idnum, self._series_max_version(ser.idnum))[0]
-
-            vlist = ' '.join([str(ver) for ver in sorted(versions)])
-
-            print(f'{name:16.16} {ser.desc:41.41} {stat.rjust(8)}  {vlist}')
-        print(border)
-
-    def remove(self, name, dry_run=False):
-        """Remove a series from the database
-
-        Args:
-            name (str): Name of series to remove, or None to use current one
-            dry_run (bool): True to do a dry run
-        """
-        ser = self._parse_series(name)
-        name = ser.name
-        if not ser.idnum:
-            raise ValueError(f"No such series '{name}'")
-
-        self.db.ser_ver_remove(ser.idnum, None)
-        if not dry_run:
-            self.commit()
-        else:
-            self.rollback()
-
-        self.commit()
-        tout.info(f"Removed series '{name}'")
-        if dry_run:
-            tout.info('Dry run completed')
 
     def version_remove(self, name, version, dry_run=False):
         """Remove a version of a series from the database
@@ -761,55 +761,6 @@ class Cseries(cser_helper.CseriesHelper):
                 self.rollback()
                 tout.info('Dry run completed')
 
-    def upstream_add(self, name, url):
-        """Add a new upstream tree
-
-        Args:
-            name (str): Name of the tree
-            url (str): URL for the tree
-        """
-        self.db.upstream_add(name, url)
-        self.commit()
-
-    def upstream_list(self):
-        """List the upstream repos
-
-        Shows a list of the repos, obtained from the database
-        """
-        udict = self.get_upstream_dict()
-
-        for name, items in udict.items():
-            url, is_default = items
-            default = 'default' if is_default else ''
-            print(f'{name:15.15} {default:8} {url}')
-
-    def upstream_set_default(self, name):
-        """Set the default upstream target
-
-        Args:
-            name (str): Name of the upstream remote to set as default, or None
-                for none
-        """
-        self.db.upstream_set_default(name)
-        self.commit()
-
-    def upstream_get_default(self):
-        """Get the default upstream target
-
-        Return:
-            str: Name of the upstream remote to set as default, or None if none
-        """
-        return self.db.upstream_get_default()
-
-    def upstream_delete(self, name):
-        """Delete an upstream target
-
-        Args:
-            name (str): Name of the upstream remote to delete
-        """
-        self.db.upstream_delete(name)
-        self.commit()
-
     def build_col(self, state, prefix='', base_str=None):
         """Build a patch-state string with colour
 
@@ -911,6 +862,58 @@ class Cseries(cser_helper.CseriesHelper):
         """
         return self.db.ser_ver_get_for_series(series_id, version)
 
+    def open(self, pwork, name, version):
+        """Open the patchwork page for a series
+
+        Args:
+            pwork (Patchwork): Patchwork object to use
+            name (str): Name of series to open
+            version (str): Version number to open
+        """
+        ser, version = self._parse_series_and_version(name, version)
+        link = self.link_get(ser.name, version)
+        pwork.url = 'https://patchwork.ozlabs.org'
+        url = self.loop.run_until_complete(pwork.get_series_url(link))
+        print(f'Opening {url}')
+
+        # With Firefox, GTK produces lots of warnings, so suppress them
+        # Gtk-Message: 06:48:20.692: Failed to load module "xapp-gtk3-module"
+        # Gtk-Message: 06:48:20.692: Not loading module "atk-bridge": The
+        # functionality is provided by GTK natively. Please try to not load it.
+        # Gtk-Message: 06:48:20.692: Failed to load module "appmenu-gtk-module"
+        # Gtk-Message: 06:48:20.692: Failed to load module "appmenu-gtk-module"
+        # [262145, Main Thread] WARNING: GTK+ module /snap/firefox/5987/
+        #  gnome-platform/usr/lib/gtk-2.0/modules/libcanberra-gtk-module.so
+        #  cannot be loaded.
+        # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same
+        #  process #  is not supported.: 'glib warning', file /build/firefox/
+        #  parts/firefox/build/toolkit/xre/nsSigHandlers.cpp:201
+        #
+        # (firefox_firefox:262145): Gtk-WARNING **: 06:48:20.728: GTK+ module
+        #  /snap/firefox/5987/gnome-platform/usr/lib/gtk-2.0/modules/
+        #  libcanberra-gtk-module.so cannot be loaded.
+        # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same
+        #  process is not supported.
+        # Gtk-Message: 06:48:20.728: Failed to load module
+        #  "canberra-gtk-module"
+        # [262145, Main Thread] WARNING: GTK+ module /snap/firefox/5987/
+        #  gnome-platform/usr/lib/gtk-2.0/modules/libcanberra-gtk-module.so
+        #  cannot be loaded.
+        # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same
+        #  process is not supported.: 'glib warning', file /build/firefox/
+        #  parts/firefox/build/toolkit/xre/nsSigHandlers.cpp:201
+        #
+        # (firefox_firefox:262145): Gtk-WARNING **: 06:48:20.729: GTK+ module
+        #   /snap/firefox/5987/gnome-platform/usr/lib/gtk-2.0/modules/
+        #   libcanberra-gtk-module.so cannot be loaded.
+        # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same
+        #  process is not supported.
+        # Gtk-Message: 06:48:20.729: Failed to load module
+        #  "canberra-gtk-module"
+        # ATTENTION: default value of option mesa_glthread overridden by
+        # environment.
+        cros_subprocess.Popen(['xdg-open', url])
+
     def progress(self, series, show_all_versions, list_patches):
         """Show progress information for all versions in a series
 
@@ -970,58 +973,6 @@ class Cseries(cser_helper.CseriesHelper):
         sdict = self.db.series_get_dict()
         for ser in sdict.values():
             self._summary_one(ser)
-
-    def open(self, pwork, name, version):
-        """Open the patchwork page for a series
-
-        Args:
-            pwork (Patchwork): Patchwork object to use
-            name (str): Name of series to open
-            version (str): Version number to open
-        """
-        ser, version = self._parse_series_and_version(name, version)
-        link = self.link_get(ser.name, version)
-        pwork.url = 'https://patchwork.ozlabs.org'
-        url = self.loop.run_until_complete(pwork.get_series_url(link))
-        print(f'Opening {url}')
-
-        # With Firefox, GTK produces lots of warnings, so suppress them
-        # Gtk-Message: 06:48:20.692: Failed to load module "xapp-gtk3-module"
-        # Gtk-Message: 06:48:20.692: Not loading module "atk-bridge": The
-        # functionality is provided by GTK natively. Please try to not load it.
-        # Gtk-Message: 06:48:20.692: Failed to load module "appmenu-gtk-module"
-        # Gtk-Message: 06:48:20.692: Failed to load module "appmenu-gtk-module"
-        # [262145, Main Thread] WARNING: GTK+ module /snap/firefox/5987/
-        #  gnome-platform/usr/lib/gtk-2.0/modules/libcanberra-gtk-module.so
-        #  cannot be loaded.
-        # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same
-        #  process #  is not supported.: 'glib warning', file /build/firefox/
-        #  parts/firefox/build/toolkit/xre/nsSigHandlers.cpp:201
-        #
-        # (firefox_firefox:262145): Gtk-WARNING **: 06:48:20.728: GTK+ module
-        #  /snap/firefox/5987/gnome-platform/usr/lib/gtk-2.0/modules/
-        #  libcanberra-gtk-module.so cannot be loaded.
-        # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same
-        #  process is not supported.
-        # Gtk-Message: 06:48:20.728: Failed to load module
-        #  "canberra-gtk-module"
-        # [262145, Main Thread] WARNING: GTK+ module /snap/firefox/5987/
-        #  gnome-platform/usr/lib/gtk-2.0/modules/libcanberra-gtk-module.so
-        #  cannot be loaded.
-        # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same
-        #  process is not supported.: 'glib warning', file /build/firefox/
-        #  parts/firefox/build/toolkit/xre/nsSigHandlers.cpp:201
-        #
-        # (firefox_firefox:262145): Gtk-WARNING **: 06:48:20.729: GTK+ module
-        #   /snap/firefox/5987/gnome-platform/usr/lib/gtk-2.0/modules/
-        #   libcanberra-gtk-module.so cannot be loaded.
-        # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same
-        #  process is not supported.
-        # Gtk-Message: 06:48:20.729: Failed to load module
-        #  "canberra-gtk-module"
-        # ATTENTION: default value of option mesa_glthread overridden by
-        # environment.
-        cros_subprocess.Popen(['xdg-open', url])
 
     def scan(self, branch_name, mark=False, allow_unmarked=False, end=None,
              dry_run=False):
@@ -1095,3 +1046,53 @@ class Cseries(cser_helper.CseriesHelper):
         else:
             self.rollback()
             tout.info('Dry run completed')
+
+    def upstream_add(self, name, url):
+        """Add a new upstream tree
+
+        Args:
+            name (str): Name of the tree
+            url (str): URL for the tree
+        """
+        self.db.upstream_add(name, url)
+        self.commit()
+
+    def upstream_list(self):
+        """List the upstream repos
+
+        Shows a list of the repos, obtained from the database
+        """
+        udict = self.get_upstream_dict()
+
+        for name, items in udict.items():
+            url, is_default = items
+            default = 'default' if is_default else ''
+            print(f'{name:15.15} {default:8} {url}')
+
+    def upstream_set_default(self, name):
+        """Set the default upstream target
+
+        Args:
+            name (str): Name of the upstream remote to set as default, or None
+                for none
+        """
+        self.db.upstream_set_default(name)
+        self.commit()
+
+    def upstream_get_default(self):
+        """Get the default upstream target
+
+        Return:
+            str: Name of the upstream remote to set as default, or None if none
+        """
+        return self.db.upstream_get_default()
+
+    def upstream_delete(self, name):
+        """Delete an upstream target
+
+        Args:
+            name (str): Name of the upstream remote to delete
+        """
+        self.db.upstream_delete(name)
+        self.commit()
+
