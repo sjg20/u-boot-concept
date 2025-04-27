@@ -382,7 +382,7 @@ class Cseries:
                 'Cannot detect branch automatically: Perhaps use -U <upstream-commit> ?')
 
         series = patchstream.get_metadata(name, 0, count, git_dir=self.gitdir)
-        self.copy_db_fields_to(series, ser)
+        self._copy_db_fields_to(series, ser)
         msg = None
         if end:
             repo = pygit2.init_repository(self.gitdir)
@@ -392,7 +392,7 @@ class Cseries:
 
         return name, series, version, msg
 
-    def copy_db_fields_to(self, series, in_series):
+    def _copy_db_fields_to(self, series, in_series):
         """Copy over fields used by Cseries from one series to another
 
         This copes desc, idnum and name
@@ -442,7 +442,7 @@ class Cseries:
             series = patchstream.get_metadata(branch_name, 0,
                                               len(series.commits),
                                               git_dir=self.gitdir)
-            self.copy_db_fields_to(series, in_series)
+            self._copy_db_fields_to(series, in_series)
 
         if mark:
             add_oid = self._mark_series(branch_name, series, dry_run=dry_run)
@@ -450,7 +450,7 @@ class Cseries:
             # Collect the commits again, as the hashes have changed
             series = patchstream.get_metadata(add_oid, 0, len(series.commits),
                                               git_dir=self.gitdir)
-            self.copy_db_fields_to(series, in_series)
+            self._copy_db_fields_to(series, in_series)
 
         bad_count = 0
         for commit in series.commits:
@@ -462,7 +462,7 @@ class Cseries:
 
         return series
 
-    def add_series(self, branch_name, desc=None, mark=False,
+    def series_add(self, branch_name, desc=None, mark=False,
                    allow_unmarked=False, end=None, force_version=False,
                    dry_run=False):
         """Add a series to the database
@@ -513,7 +513,7 @@ class Cseries:
                 msg += f" to existing series '{ser.name}'"
             added = True
 
-            self.add_series_commits(ser, svid)
+            self._add_series_commits(ser, svid)
             count = len(ser.commits)
             msg += f" ({count} commit{'s' if count > 1 else ''})"
         if not added:
@@ -532,7 +532,7 @@ class Cseries:
         if dry_run:
             tout.info('Dry run completed')
 
-    def add_series_commits(self, series, svid):
+    def _add_series_commits(self, series, svid):
         """Add a commits from a series into the database
 
         Args:
@@ -769,7 +769,7 @@ class Cseries:
                 branch = self.join_name_version(ser.name, version)
                 series = patchstream.get_metadata(branch, 0, count,
                                                   git_dir=self.gitdir)
-                self.copy_db_fields_to(series, ser)
+                self._copy_db_fields_to(series, ser)
 
                 to_fetch[svid] = ser_id, series.name, version, link, series
         else:
@@ -786,7 +786,7 @@ class Cseries:
                 branch = self.join_name_version(ser.name, version)
                 series = patchstream.get_metadata(branch, 0, count,
                                                   git_dir=self.gitdir)
-                self.copy_db_fields_to(series, ser)
+                self._copy_db_fields_to(series, ser)
 
                 to_fetch[svid] = (ser_id, series.name, version, svinfo.link,
                                   series)
@@ -1931,7 +1931,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         count = len(pwc)
         branch = self.join_name_version(ser.name, version)
         series = patchstream.get_metadata(branch, 0, count, git_dir=self.gitdir)
-        self.copy_db_fields_to(series, ser)
+        self._copy_db_fields_to(series, ser)
 
         return branch, series, version, pwc, name, link, cover_id, num_comments
 
@@ -2525,7 +2525,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             _show_item('+', seq, pcm.subject)
 
         self.db.execute('DELETE FROM pcommit WHERE svid = ?', (svid,))
-        self.add_series_commits(ser, svid)
+        self._add_series_commits(ser, svid)
         if not dry_run:
             self.commit()
         else:

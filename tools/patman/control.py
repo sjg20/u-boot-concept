@@ -124,7 +124,7 @@ def do_series(args, test_db=None, pwork=None):
             _, proj_id, link_name = cser.get_project()
             pwork.set_project(proj_id, link_name)
         if args.subcmd == 'add':
-            cser.add_series(args.series, args.desc,
+            cser.series_add(args.series, args.desc,
                             mark=args.mark, allow_unmarked=args.allow_unmarked,
                             end=args.upstream, dry_run=args.dry_run)
         elif args.subcmd == 'archive':
