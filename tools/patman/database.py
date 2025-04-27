@@ -277,6 +277,10 @@ class Database:
             'SELECT id FROM series WHERE '
             f"name = '{name}' AND archived = 0")
         recs = res.fetchall()
+
+        # This shouldn't happen
+        assert len(recs) <= 1, 'Expected one match, but multiple found'
+
         if len(recs) != 1:
             return None
         return recs[0][0]

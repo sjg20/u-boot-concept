@@ -406,16 +406,12 @@ class CseriesHelper:
         Return:
             Series: Object containing series info, or None if none
         """
-        res = self.db.execute(
-            f"SELECT id, name, desc FROM series WHERE name = '{name}'")
-        recs = res.fetchall()
-        if not recs:
+        idnum = self.db.series_find_by_name(name)
+        if not idnum:
             return None
-        if len(recs) > 1:
-            raise ValueError('Expected one match, but multiple matches found')
-        ser = Series()
-        ser.idnum, ser.name, ser.desc = recs[0]
-        return ser
+        name, desc = self.db.series_get_info(idnum)
+
+        return Series.from_fields(idnum, name, desc)
 
     def _get_branch_name(self, name, version):
         """Get the branch name for a particular version
