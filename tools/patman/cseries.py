@@ -1049,7 +1049,7 @@ class Cseries:
             print(f'{name:16.16} {ser.desc:41.41} {stat.rjust(8)}  {vlist}')
         print(border)
 
-    def update_series(self, name, series, max_vers, new_name=None,
+    def update_series(self, branch_name, series, max_vers, new_name=None,
                       dry_run=False, add_vers=None, add_link=None,
                       add_rtags=None, switch=False):
         """Rewrite a series to update the Series-version/Series-links lines
@@ -1057,7 +1057,7 @@ class Cseries:
         This updates the series in git; it does not update the database
 
         Args:
-            name (str): Name of the branch to process
+            branch_name (str): Name of the branch to process
             series (Series): Series object
             max_vers (int): Version number of the series being updated
             new_name (str or None): New name, if a new branch is to be created
@@ -1077,7 +1077,7 @@ class Cseries:
         """
         added_version = False
         added_link = False
-        for vals in self._process_series(name, series, new_name, switch,
+        for vals in self._process_series(branch_name, series, new_name, switch,
                                          dry_run):
             out = []
             for line in vals.msg.splitlines():
@@ -1087,7 +1087,7 @@ class Cseries:
                     if ('version' in series and
                         int(series.version) != max_vers):
                         tout.warning(
-                            f'Branch {name}: Series-version tag '
+                            f'Branch {branch_name}: Series-version tag '
                             f'{series.version} does not match expected version '
                             f'{max_vers}')
                     if add_vers:
@@ -1243,10 +1243,10 @@ class Cseries:
             name (str): (Possibly new) name of branch to process
             Pygit2.branch: Original branch, for later use
         """
-        upstream_name = gitutil.get_upstream(self.gitdir, name)[0]
+        upstream_guess = gitutil.get_upstream(self.gitdir, name)[0]
 
         tout.debug(f"_process_series name '{name}' new_name '{new_name}' "
-                   f"upstream_name '{upstream_name}'")
+                   f"upstream_guess '{upstream_guess}'")
         dirty = gitutil.check_dirty(self.gitdir, self.topdir)
         if dirty:
             raise ValueError(
@@ -1254,13 +1254,22 @@ class Cseries:
         repo = pygit2.init_repository(self.gitdir)
 
         commit = None
-        try:
-            upstream = repo.lookup_reference(upstream_name)
-            upstream_name = upstream.name
-            commit = upstream.peel(pygit2.GIT_OBJ_COMMIT)
-        except KeyError:
+        upstream_name = None
+        if upstream_guess:
+            try:
+                print(f'repo {repo} name {name} guess {upstream_guess}')
+                upstream = repo.lookup_reference(upstream_guess)
+                upstream_name = upstream.name
+                commit = upstream.peel(pygit2.GIT_OBJ_COMMIT)
+            except KeyError:
+                pass
+            except pygit2.InvalidSpecError as exc:
+                print(f"Error '{exc}'")
+                pass
+        if not upstream_name:
             upstream_name = f'{name}~{count}'
             commit = repo.revparse_single(upstream_name)
+
         branch = repo.lookup_branch(name)
 
         # rebase = repo.rebase(branch, upstream)
@@ -2019,8 +2028,8 @@ Please use 'patman series -s {branch} scan' to resolve this''')
 
             _, new_rtag_list, cover, patches = status.show_status(
                 cover, patches, series, link, branch, show_comments,
-                show_cover_comments, self.col)
-            self.update_series(series_name, series, version, None, dry_run,
+                show_cover_comments, self.col, warnings_on_stderr=False)
+            self.update_series(branch, series, version, None, dry_run,
                                add_rtags=new_rtag_list)
 
         updated = 0
@@ -2188,31 +2197,33 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         result, requests = loop.run_until_complete(self.do_series_sync_all(
                 pwork, show_cover_comments, to_fetch))
 
-        tot_updated = 0
-        tot_cover = 0
-        add_newline = False
-        for (svid, sync), (cover, patches) in zip(to_fetch.items(), result):
-            if add_newline:
-                tout.info('')
-            tout.info(f"Syncing '{sync.series_name}' v{sync.version}")
-            updated, updated_cover = self._sync_one(
-                svid, sync.series_name, sync.version, sync.link, show_comments,
-                show_cover_comments, gather_tags, cover, patches, dry_run)
-            tot_updated += updated
-            tot_cover += updated_cover
-            add_newline = gather_tags
+        with terminal.pager():
+            tot_updated = 0
+            tot_cover = 0
+            add_newline = False
+            for (svid, sync), (cover, patches) in zip(to_fetch.items(), result):
+                if add_newline:
+                    tout.info('')
+                tout.info(f"Syncing '{sync.series_name}' v{sync.version}")
+                updated, updated_cover = self._sync_one(
+                    svid, sync.series_name, sync.version, sync.link,
+                    show_comments, show_cover_comments, gather_tags, cover,
+                    patches, dry_run)
+                tot_updated += updated
+                tot_cover += updated_cover
+                add_newline = gather_tags
 
-        tout.info('')
-        tout.info(
-            f"{tot_updated} patch{'es' if tot_updated != 1 else ''} and "
-            f"{tot_cover} cover letter{'s' if tot_cover != 1 else ''} "
-            f'updated, {missing} missing '
-            f"link{'s' if missing != 1 else ''} ({requests} requests)")
-        if not dry_run:
-            self.commit()
-        else:
-            self.rollback()
-            tout.info('Dry run completed')
+            tout.info('')
+            tout.info(
+                f"{tot_updated} patch{'es' if tot_updated != 1 else ''} and "
+                f"{tot_cover} cover letter{'s' if tot_cover != 1 else ''} "
+                f'updated, {missing} missing '
+                f"link{'s' if missing != 1 else ''} ({requests} requests)")
+            if not dry_run:
+                self.commit()
+            else:
+                self.rollback()
+                tout.info('Dry run completed')
 
     def series_max_version(self, idnum):
         """Find the latest version of a series

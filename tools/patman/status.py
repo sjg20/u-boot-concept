@@ -177,7 +177,8 @@ def compare_with_series(series, patches):
 
 
 def show_status(cover, patches, series, link, branch,
-                  show_comments, show_cover_comments, col):
+                  show_comments, show_cover_comments, col,
+                  warnings_on_stderr=True):
     """Check the status of a series on Patchwork
 
     This finds review tags and comments for a series in Patchwork, displaying
@@ -214,7 +215,7 @@ def show_status(cover, patches, series, link, branch,
 
     patch_for_commit, _, warnings = compare_with_series(series, compare)
     for warn in warnings:
-        tout.warning(warn)
+        tout.do_output(tout.WARNING if warnings_on_stderr else tout.INFO, warn)
 
     for seq, pw_patch in enumerate(patches):
         compare[seq].patch = pw_patch
@@ -229,7 +230,7 @@ def show_status(cover, patches, series, link, branch,
 
     num_to_add = 0
 
-    if cover:
+    if cover and show_cover_comments:
         terminal.tprint(f'Cov {cover.name}', colour=col.BLACK, col=col,
                         bright=False, back=col.YELLOW)
         for seq, comment in enumerate(cover.comments):

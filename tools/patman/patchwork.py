@@ -179,7 +179,7 @@ class Patchwork:
         Raises:
             ValueError: the URL could not be read
         """
-        print('subpath', subpath)
+        # print('subpath', subpath)
         self.request_count += 1
         if self.fake_request:
             return self.fake_request(subpath)
