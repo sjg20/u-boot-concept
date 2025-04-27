@@ -412,10 +412,7 @@ class Cseries(cser_helper.CseriesHelper):
             del_branch.delete()
             print(f"Deleted branch '{del_name}' {oid(branch_oid)}")
 
-        old_svid = self.get_series_svid(ser.idnum, max_vers)
-
-        self.db.ser_ver_delete(ser.idnum, max_vers)
-        self.db.pcommit_delete(old_svid)
+        self.db.ser_ver_remove(ser.idnum, max_vers)
         if not dry_run:
             self.commit()
         else:
@@ -534,12 +531,7 @@ class Cseries(cser_helper.CseriesHelper):
         Return:
             str: Name of the upstream remote to set as default, or None if none
         """
-        res = self.db.execute(
-            "SELECT name FROM upstream WHERE is_default = 1")
-        recs = res.fetchall()
-        if len(recs) != 1:
-            return None
-        return recs[0][0]
+        return self.db.upstream_get_default()
 
     def upstream_delete(self, name):
         """Delete an upstream target
@@ -547,11 +539,7 @@ class Cseries(cser_helper.CseriesHelper):
         Args:
             name (str): Name of the upstream remote to delete
         """
-        self.db.execute(
-            f"DELETE FROM upstream WHERE name = '{name}'")
-        if self.rowcount() != 1:
-            self.rollback()
-            raise ValueError(f"No such upstream '{name}'")
+        self.db.upstream_delete(name)
         self.commit()
 
     def series_remove(self, name, dry_run=False):
@@ -563,20 +551,10 @@ class Cseries(cser_helper.CseriesHelper):
         """
         ser = self._parse_series(name)
         name = ser.name
-
-        res = self.db.execute(
-            f"DELETE FROM series WHERE name = '{name}'")
-        if self.rowcount() != 1:
-            self.rollback()
+        if not ser.idnum:
             raise ValueError(f"No such series '{name}'")
 
-        res = self.db.execute('SELECT id FROM ser_ver WHERE series_id = ?',
-                               (ser.idnum,))
-        recs = [str(i) for i in res.fetchall()[0]]
-        vals = ', '.join(recs[0])
-        res = self.db.execute(f'DELETE FROM pcommit WHERE svid IN ({vals})')
-        res = self.db.execute('DELETE FROM ser_ver WHERE series_id = ?',
-                               (ser.idnum,))
+        self.db.ser_ver_remove(ser.idnum, None)
         if not dry_run:
             self.commit()
         else:

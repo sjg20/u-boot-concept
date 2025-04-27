@@ -250,6 +250,31 @@ class Database:
             f"VALUES ('{name}', '{desc}', 0)")
         return self.lastrowid()
 
+    def series_remove(self, idnum, dry_run=False):
+        """Remove a series from the database
+
+        The series must exist
+
+        Args:
+            idnum (int): ID num of series to remove
+        """
+        self.execute('DELETE FROM series WHERE id = ?', (idnum,))
+        assert self.rowcount() == 1
+
+    def series_remove_by_name(self, name, dry_run=False):
+        """Remove a series from the database
+
+        Args:
+            name (str): Name of series to remove
+
+        Raises:
+            ValueError: Series does not exist (database is rolled back)
+        """
+        self.execute('DELETE FROM series WHERE name = ?', (name,))
+        if self.rowcount() != 1:
+            self.rollback()
+            raise ValueError(f"No such series '{name}'")
+
     def series_get_dict(self, include_archived=False):
         """Get a dict of Series objects from the database
 
@@ -350,18 +375,53 @@ class Database:
             (series_idnum, version, link))
         return self.lastrowid()
 
-    def ser_ver_delete(self, series_idnum, version):
+    def ser_ver_get_for_series(self, series_idnum, version=None):
+        """Get a list of ser_ver records for a given series ID
+
+        Args:
+            series_idnum (int): ID num of the series to search
+            version (int): Version number to search fo, or None for all
+
+        Return:
+            list of int: List of svids for the matching records
+        """
+        if version:
+            res = self.execute(
+                'SELECT id FROM ser_ver WHERE series_id = ? AND version = ?',
+                (series_idnum, version))
+        else:
+            res = self.execute(
+                'SELECT id FROM ser_ver WHERE series_id = ?', (series_idnum,))
+        return [i for i in res.fetchall()[0]]
+
+    def ser_ver_remove(self, series_idnum, version=None, remove_pcommits=True,
+                       remove_series=True):
         """Delete a ser_ver record
 
         Removes the record which has the given series ID num and version
 
         Args:
             series_idnum (int): ID num of the series
-            version (int): Version number
+            version (int): Version number, or None to remove all versions
+            remove_pcommits (bool): True to remove associated pcommits too
+            remove_series (bool): True to remove the series if versions is None
         """
-        self.execute(
-            'DELETE FROM ser_ver WHERE series_id = ? and version = ?',
-            (series_idnum, version))
+        if remove_pcommits:
+            # Figure out svids to delete
+            svids = self.ser_ver_get_for_series(series_idnum, version)
+
+            self.pcommit_delete_list(svids)
+
+        if version:
+            self.execute(
+                'DELETE FROM ser_ver WHERE series_id = ? AND version = ?',
+                (series_idnum, version))
+        else:
+            self.execute(
+                'DELETE FROM ser_ver WHERE series_id = ?',
+                (series_idnum,))
+        if not version and remove_series:
+            self.series_remove(series_idnum)
 
     # pcommit functions
 
@@ -384,6 +444,15 @@ class Database:
             svid (int): ser_ver ID num of records to delete
         """
         self.execute('DELETE FROM pcommit WHERE svid = ?', (svid,))
+
+    def pcommit_delete_list(self, svid_list):
+        """Delete pcommit records for a given set of ser_ver IDs
+
+        Args_:
+            svid (list int): ser_ver ID nums of records to delete
+        """
+        vals = ', '.join([str(x) for x in svid_list])
+        self.execute('DELETE FROM pcommit WHERE svid IN (?)', (vals,))
 
     # upstream functions
 
@@ -411,7 +480,8 @@ class Database:
             name (str): Name of the upstream remote to set as default, or None
 
         Raises:
-            ValueError if more than one name matches (should not happen)
+            ValueError if more than one name matches (should not happen);
+                database is rolled back
         """
         self.execute("UPDATE upstream SET is_default = 0")
         if name is not None:
@@ -420,3 +490,30 @@ class Database:
             if self.rowcount() != 1:
                 self.rollback()
                 raise ValueError(f"No such upstream '{name}'")
+
+    def upstream_get_default(self):
+        """Get the name of the default upstream
+
+        Return:
+            str: Default-upstream name, or None if there is no default
+        """
+        res = self.execute(
+            "SELECT name FROM upstream WHERE is_default = 1")
+        recs = res.fetchall()
+        if len(recs) != 1:
+            return None
+        return recs[0][0]
+
+    def upstream_delete(self, name):
+        """Delete an upstream target
+
+        Args:
+            name (str): Name of the upstream remote to delete
+
+        Raises:
+            ValueError: Upstream does not exist (database is rolled back)
+        """
+        self.execute(f"DELETE FROM upstream WHERE name = '{name}'")
+        if self.rowcount() != 1:
+            self.rollback()
+            raise ValueError(f"No such upstream '{name}'")
