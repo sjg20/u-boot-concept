@@ -176,9 +176,8 @@ def compare_with_series(series, patches):
     return patch_for_commit, commit_for_patch, warnings
 
 
-def show_status(cover, patches, series, link, branch,
-                  show_comments, show_cover_comments, col,
-                  warnings_on_stderr=True):
+def do_show_status(cover, patches, series, link, branch, show_comments,
+                   show_cover_comments, col, warnings_on_stderr=True):
     """Check the status of a series on Patchwork
 
     This finds review tags and comments for a series in Patchwork, displaying
@@ -334,8 +333,8 @@ def create_branch(series, new_rtag_list, branch, dest_branch, overwrite,
     return num_added
 
 
-def check_status(cover, patches, series, link, branch, dest_branch, force,
-                       show_comments, show_cover_comments, test_repo=None):
+def show_status(cover, patches, series, link, branch, dest_branch, force,
+                show_comments, show_cover_comments, test_repo=None):
     """Check the status of a series on Patchwork
 
     This finds review tags and comments for a series in Patchwork, displaying
@@ -356,7 +355,7 @@ def check_status(cover, patches, series, link, branch, dest_branch, force,
     col = terminal.Color()
     with terminal.pager():
         check_patch_count(len(series.commits), len(patches))
-        num_to_add, new_rtag_list, _, _ = show_status(
+        num_to_add, new_rtag_list, _, _ = do_show_status(
             cover, patches, series, link, branch, show_comments,
             show_cover_comments, col)
 
@@ -388,28 +387,27 @@ def check_patch_count(num_commits, num_patches):
                      f'series has {num_commits}')
 
 
-async def _check_and_report_status(series, link, branch, dest_branch, force,
-                       show_comments, show_cover_comments, pwork,
-                       test_repo=None):
+async def check_status(series, link, branch, dest_branch, force,
+                       show_cover_comments, pwork, test_repo=None):
     async with aiohttp.ClientSession() as client:
         cover, patches = await pwork._series_get_state(
             client, link, True, show_cover_comments)
     return cover, patches
 
 
-def check_and_report_status(series, link, branch, dest_branch, force,
-                           show_comments, show_cover_comments, pwork,
-                           test_repo=None, single_thread=False):
+def check_and_show_status(series, link, branch, dest_branch, force,
+                          show_comments, show_cover_comments, pwork,
+                          test_repo=None, single_thread=False):
     if single_thread:
-        cover, patches = asyncio.run(_check_and_report_status(
-            series, link, branch, dest_branch, force, show_comments,
-            show_cover_comments, pwork, test_repo=test_repo))
+        cover, patches = asyncio.run(check_status(
+            series, link, branch, dest_branch, force, show_cover_comments,
+            pwork, test_repo=test_repo))
     else:
         loop = asyncio.get_event_loop()
-        cover, patches = loop.run_until_complete(_check_and_report_status(
-                series, link, branch, dest_branch,  force, show_comments,
-                show_cover_comments, pwork, test_repo=test_repo))
+        cover, patches = loop.run_until_complete(check_status(
+                series, link, branch, dest_branch, force, show_cover_comments,
+                pwork, test_repo=test_repo))
 
-    check_status(
+    show_status(
         cover, patches, series, link, branch, dest_branch,  force,
         show_comments, show_cover_comments, test_repo=test_repo)
