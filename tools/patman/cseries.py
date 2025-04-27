@@ -531,7 +531,7 @@ class Cseries(cser_helper.CseriesHelper):
         if dry_run:
             tout.info('Dry run completed')
 
-    def series_set_archived(self, series, archived):
+    def set_archived(self, series, archived):
         """Set whether a series is archived or not
 
         Args:
