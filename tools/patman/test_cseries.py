@@ -3205,7 +3205,7 @@ Date:   .*
         # version should produce the same output
         with self.stage('status second2: single-threaded'):
             with terminal.capture() as (out, _):
-                cser.series_status(pwork, 'second', 2, False,
+                cser.status(pwork, 'second', 2, False,
                                    single_thread=True)
             self._check_status(out, False, False)
             self.loop = asyncio.new_event_loop()
@@ -3213,20 +3213,20 @@ Date:   .*
 
         with self.stage('status second2 (normal)'):
             with terminal.capture() as (out2, _):
-                cser.series_status(pwork, 'second', 2, False,
+                cser.status(pwork, 'second', 2, False,
                                    single_thread=False)
             self.assertEqual(out.getvalue(), out2.getvalue())
             self._check_status(out, False, False)
 
         with self.stage('with comments'):
             with terminal.capture() as (out, _):
-                cser.series_status(pwork, 'second', 2, show_comments=True,
+                cser.status(pwork, 'second', 2, show_comments=True,
                                 single_thread=False)
             self._check_status(out, True, False)
 
         with self.stage('with comments and cover comments'):
             with terminal.capture() as (out, _):
-                cser.series_status(pwork, 'second', 2, show_comments=True,
+                cser.status(pwork, 'second', 2, show_comments=True,
                                 show_cover_comments=True, single_thread=False)
             self._check_status(out, True, True)
 
@@ -3242,12 +3242,12 @@ Date:   .*
 
         with self.stage('status second2 (normal)'):
             with terminal.capture() as (out, _):
-                cser.series_status(pwork, 'second', 2, show_comments=True)
+                cser.status(pwork, 'second', 2, show_comments=True)
             self._check_status(out, True, False)
 
         with self.stage('with comments and cover comments'):
             with terminal.capture() as (out, _):
-                cser.series_status(pwork, 'second', 2, show_comments=True,
+                cser.status(pwork, 'second', 2, show_comments=True,
                                    show_cover_comments=True)
             self._check_status(out, True, True)
 

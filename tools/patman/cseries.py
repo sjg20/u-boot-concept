@@ -438,7 +438,7 @@ class Cseries(cser_helper.CseriesHelper):
         if not args.dry_run and autolink:
             self.link_auto(pwork, name, version, True, wait_s=autolink_wait)
 
-    def series_status(self, pwork, series, version, show_comments,
+    def status(self, pwork, series, version, show_comments,
                       show_cover_comments=False, single_thread=False):
         """Show the series status from patchwork
 
