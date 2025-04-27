@@ -26,6 +26,19 @@ SER_VER = namedtuple(
     'ser_ver',
     'idnum,series_id,version,link,cover_id,cover_num_comments,name')
 
+# Record from the pcommit table:
+# idnum (int): record ID
+# seq (int): Patch sequence in series (0 is first)
+# subject (str): patch subject
+# svid (int): ID of series/version record in ser_ver table
+# change_id (str): Change-ID value
+# status (str): Current status in patchwork
+# patch_id (int): Patchwork's patch ID for this patch
+# num_comments (int): Number of comments attached to the commit
+PCOMMIT = namedtuple(
+    'pcommit',
+    'idnum,seq,subject,svid,change_id,state,patch_id,num_comments')
+
 
 class Database:
     """Database of information used by patman"""

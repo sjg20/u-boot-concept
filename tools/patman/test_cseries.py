@@ -20,7 +20,7 @@ from u_boot_pylib import tools
 from patman import control
 from patman import cser_helper
 from patman import cseries
-from patman.cser_helper import PCOMMIT
+from patman.database import PCOMMIT
 from patman import database
 from patman import patchstream
 from patman.patchwork import Patchwork

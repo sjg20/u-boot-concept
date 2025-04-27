@@ -23,7 +23,7 @@ from u_boot_pylib import terminal
 from u_boot_pylib import tout
 
 from patman import patchstream
-from patman.database import Database
+from patman.database import Database, PCOMMIT
 from patman import patchwork
 from patman.series import Series
 from patman import status
@@ -34,19 +34,6 @@ CHANGE_ID_TAG = 'Change-Id'
 
 # Length of hash to display
 HASH_LEN = 10
-
-# Record from the pcommit table:
-# idnum (int): record ID
-# seq (int): Patch sequence in series (0 is first)
-# subject (str): patch subject
-# svid (int): ID of series/version record in ser_ver table
-# change_id (str): Change-ID value
-# status (str): Current status in patchwork
-# patch_id (int): Patchwork's patch ID for this patch
-# num_comments (int): Number of comments attached to the commit
-PCOMMIT = namedtuple(
-    'pcommit',
-    'idnum,seq,subject,svid,change_id,state,patch_id,num_comments')
 
 # Shorter version of some states, to save horizontal space
 SHORTEN_STATE = {
