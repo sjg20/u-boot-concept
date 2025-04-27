@@ -651,37 +651,38 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             Cseries: New Cseries object
             pwork: Patchwork object
         """
-        cser = self.get_cser()
-        pwork = Patchwork.for_testing(self._fake_patchwork_cser)
-        pwork.project_set(self.PROJ_ID, self.PROJ_LINK_NAME)
+        with self.stage('setup second'):
+            cser = self.get_cser()
+            pwork = Patchwork.for_testing(self._fake_patchwork_cser)
+            pwork.project_set(self.PROJ_ID, self.PROJ_LINK_NAME)
 
-        with terminal.capture() as (out, _):
-            cser.series_add('first', '', allow_unmarked=True)
-            cser.series_add('second', allow_unmarked=True)
-
-        series = patchstream.get_metadata_for_list('second', self.gitdir, 3)
-        self.assertEqual('456', series.links)
-
-        with terminal.capture() as (out, _):
-            cser.increment('second')
-
-        series = patchstream.get_metadata_for_list('second', self.gitdir, 3)
-        self.assertEqual('456', series.links)
-
-        series = patchstream.get_metadata_for_list('second2', self.gitdir, 3)
-        self.assertEqual('1:456', series.links)
-
-        if do_sync:
             with terminal.capture() as (out, _):
-                cser.link_auto(pwork, 'second', 2, True)
+                cser.series_add('first', '', allow_unmarked=True)
+                cser.series_add('second', allow_unmarked=True)
+
+            series = patchstream.get_metadata_for_list('second', self.gitdir, 3)
+            self.assertEqual('456', series.links)
+
             with terminal.capture() as (out, _):
-                cser.series_sync(pwork, 'second', 2, False, True, False)
-            lines = out.getvalue().splitlines()
-            self.assertEqual(
-                "Updating series 'second' version 2 from link '457'", lines[0])
-            self.assertEqual('3 patches and cover letter updated (8 requests)',
-                             lines[1])
-            self.assertEqual(2, len(lines))
+                cser.increment('second')
+
+            series = patchstream.get_metadata_for_list('second', self.gitdir, 3)
+            self.assertEqual('456', series.links)
+
+            series = patchstream.get_metadata_for_list('second2', self.gitdir, 3)
+            self.assertEqual('1:456', series.links)
+
+            if do_sync:
+                with terminal.capture() as (out, _):
+                    cser.link_auto(pwork, 'second', 2, True)
+                with terminal.capture() as (out, _):
+                    cser.series_sync(pwork, 'second', 2, False, True, False)
+                lines = out.getvalue().splitlines()
+                self.assertEqual(
+                    "Updating series 'second' version 2 from link '457'", lines[0])
+                self.assertEqual('3 patches and cover letter updated (8 requests)',
+                                lines[1])
+                self.assertEqual(2, len(lines))
 
         return cser, pwork
 
@@ -2517,20 +2518,16 @@ Date:   .*
         _, pwork = next(cor)
 
         # sync (dry_run)
-        self.db_close()
         self.run_args(
             'series', '-n', '-s', 'second', 'sync', '-G', pwork=pwork)
-        self.db_open()
 
         # gather (dry_run)
         _, pwork = next(cor)
         self.run_args('series', '-n', '-s', 'second', 'sync', pwork=pwork)
-        self.db_close()
 
         # gather (real)
         _, pwork = next(cor)
         self.run_args('series', '-s', 'second', 'sync', pwork=pwork)
-        self.db_open()
 
         self.assertFalse(next(cor))
 
@@ -2732,28 +2729,39 @@ Date:   .*
         cser.series_sync_all(pwork, False, False, False, True, dry_run=True)
         cser, pwork = next(cor)
 
-        # gather, patch comments,!dry_run
+        # gather, patch comments, !dry_run
         cser.series_sync_all(pwork, True, False, True, True)
+
         self.assertFalse(next(cor))
 
     def test_series_sync_all_cmdline(self):
         """Sync all series at once using cmdline"""
         cor = self.check_series_sync_all()
-
         cser, pwork = next(cor)
+
+        # no options
         self.run_args('series', '-n', '-s', 'second', 'sync-all', '-G',
                       pwork=pwork)
-
         cser, pwork = next(cor)
+
+        # gather
         self.run_args('series', '-n', '-s', 'second', 'sync-all', pwork=pwork)
-
         cser, pwork = next(cor)
+
+        # gather, patch comments, !dry_run
         self.run_args('series',  '-s', 'second', 'sync-all', '-a', '-c',
                       pwork=pwork)
 
         self.assertFalse(next(cor))
 
     def _check_second(self, itr, show_all):
+        """Check output from a 'progress' command
+
+        Args:
+            itr (Iterator): Contains the output lines to check
+            show_all (bool): True if all versions are being shown, not just
+                latest
+        """
         self.assertEqual('second: Series for my board (versions: 1 2)',
                          next(itr))
         if show_all:
@@ -2791,21 +2799,28 @@ Date:   .*
         """Test showing progress for a cseries"""
         self.setup_second()
 
-        args = Namespace(subcmd='progress', series='second',
-                         show_all_versions=False, list_patches=True)
-        self.db_close()
-        with terminal.capture() as (out, _):
-            control.do_series(args, test_db=self.tmpdir, pwork=True)
-        lines = iter(out.getvalue().splitlines())
-        self._check_second(lines, False)
+        with self.stage('latest versions'):
+            args = Namespace(subcmd='progress', series='second',
+                            show_all_versions=False, list_patches=True)
+            self.db_close()
+            with terminal.capture() as (out, _):
+                control.do_series(args, test_db=self.tmpdir, pwork=True)
+            lines = iter(out.getvalue().splitlines())
+            self._check_second(lines, False)
 
-        args.show_all_versions = True
-        with terminal.capture() as (out, _):
-            control.do_series(args, test_db=self.tmpdir, pwork=True)
-        lines = iter(out.getvalue().splitlines())
-        self._check_second(lines, True)
+        with self.stage('all versions'):
+            args.show_all_versions = True
+            with terminal.capture() as (out, _):
+                control.do_series(args, test_db=self.tmpdir, pwork=True)
+            lines = iter(out.getvalue().splitlines())
+            self._check_second(lines, True)
 
     def _check_first(self, itr):
+        """Check output from the progress command
+
+        Args:
+            itr (Iterator): Contains the output lines to check
+        """
         self.assertEqual('first:  (versions: 1)', next(itr))
         self.assertEqual("Branch 'first' (total 2): 2:unknown", next(itr))
         self.assertIn('PatchId', next(itr))
@@ -2821,21 +2836,23 @@ Date:   .*
         """Test showing progress for all cseries"""
         self.setup_second()
 
-        self.db_close()
-        args = Namespace(subcmd='progress', series=None,
-                         show_all_versions=False, list_patches=True)
-        with terminal.capture() as (out, _):
-            control.do_series(args, test_db=self.tmpdir, pwork=True)
-        lines = iter(out.getvalue().splitlines())
-        self._check_first(lines)
-        self._check_second(lines, False)
+        with self.stage('progress with patches'):
+            self.db_close()
+            args = Namespace(subcmd='progress', series=None,
+                            show_all_versions=False, list_patches=True)
+            with terminal.capture() as (out, _):
+                control.do_series(args, test_db=self.tmpdir, pwork=True)
+            lines = iter(out.getvalue().splitlines())
+            self._check_first(lines)
+            self._check_second(lines, False)
 
-        args.show_all_versions = True
-        with terminal.capture() as (out, _):
-            control.do_series(args, test_db=self.tmpdir, pwork=True)
-        lines = iter(out.getvalue().splitlines())
-        self._check_first(lines)
-        self._check_second(lines, True)
+        with self.stage('all versions'):
+            args.show_all_versions = True
+            with terminal.capture() as (out, _):
+                control.do_series(args, test_db=self.tmpdir, pwork=True)
+            lines = iter(out.getvalue().splitlines())
+            self._check_first(lines)
+            self._check_second(lines, True)
 
     def test_series_progress_no_patches(self):
         """Test showing progress for all cseries without patches"""
@@ -2890,6 +2907,7 @@ Date:   .*
         self.assertFinished(itr)
 
     def test_series_summary(self):
+        """Test showing a summary of series status"""
         self.setup_second()
 
         self.db_close()
@@ -2907,6 +2925,7 @@ Date:   .*
         self.assertEqual('second         1/3  Series for my board', lines[3])
 
     def test_series_open(self):
+        """Test opening a series in a web browser"""
         cser = self.get_cser()
         pwork = Patchwork.for_testing(self._fake_patchwork_cser)
         self.assertFalse(cser.get_project())
@@ -3146,6 +3165,11 @@ Date:   .*
             "Setting link for series 'second' v3 to 500", next(itr))
 
     def _check_status(self, out, has_comments, has_cover_comments):
+        """Check output from the status command
+
+        Args:
+            itr (Iterator): Contains the output lines to check
+        """
         itr = iter(out.getvalue().splitlines())
         if has_cover_comments:
             self.assertEqual('Cov The name of the cover letter', next(itr))
@@ -3186,47 +3210,53 @@ Date:   .*
 
         # Use single threading for easy debugging, but the multithreaded
         # version should produce the same output
-        with terminal.capture() as (out, _):
-            cser.series_status(pwork, 'second', 2, False, single_thread=True)
-        self._check_status(out, False, False)
-        self.loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(self.loop)
+        with self.stage('status second2: single-threaded'):
+            with terminal.capture() as (out, _):
+                cser.series_status(pwork, 'second', 2, False,
+                                   single_thread=True)
+            self._check_status(out, False, False)
+            self.loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(self.loop)
 
-        with terminal.capture() as (out2, _):
-            cser.series_status(pwork, 'second', 2, False, single_thread=False)
-        self.assertEqual(out.getvalue(), out2.getvalue())
-        self._check_status(out, False, False)
+        with self.stage('status second2 (normal)'):
+            with terminal.capture() as (out2, _):
+                cser.series_status(pwork, 'second', 2, False,
+                                   single_thread=False)
+            self.assertEqual(out.getvalue(), out2.getvalue())
+            self._check_status(out, False, False)
 
-        with terminal.capture() as (out, _):
-            cser.series_status(pwork, 'second', 2, show_comments=True,
-                               single_thread=False)
-        self._check_status(out, True, False)
+        with self.stage('with comments'):
+            with terminal.capture() as (out, _):
+                cser.series_status(pwork, 'second', 2, show_comments=True,
+                                single_thread=False)
+            self._check_status(out, True, False)
 
-        with terminal.capture() as (out, _):
-            cser.series_status(pwork, 'second', 2, show_comments=True,
-                               show_cover_comments=True, single_thread=False)
-        self._check_status(out, True, True)
+        with self.stage('with comments and cover comments'):
+            with terminal.capture() as (out, _):
+                cser.series_status(pwork, 'second', 2, show_comments=True,
+                                show_cover_comments=True, single_thread=False)
+            self._check_status(out, True, True)
 
     def test_series_status_cmdline(self):
         """Test getting the status of a series, including comments"""
         cser, pwork = self.setup_second()
 
-        # Use single threading for easy debugging, but the multithreaded
-        # version should produce the same output
-        with terminal.capture() as (out, _):
-            self.run_args('series', '-s' 'second', '-V', '2', 'status',
-                          pwork=pwork)
-        self._check_status(out, False, False)
+        with self.stage('status second2'):
+            with terminal.capture() as (out, _):
+                self.run_args('series', '-s' 'second', '-V', '2', 'status',
+                              pwork=pwork)
+            self._check_status(out, False, False)
 
-        with terminal.capture() as (out, _):
-            cser.series_status(pwork, 'second', 2, show_comments=True,
-                               single_thread=False)
-        self._check_status(out, True, False)
+        with self.stage('status second2 (normal)'):
+            with terminal.capture() as (out, _):
+                cser.series_status(pwork, 'second', 2, show_comments=True)
+            self._check_status(out, True, False)
 
-        with terminal.capture() as (out, _):
-            cser.series_status(pwork, 'second', 2, show_comments=True,
-                               show_cover_comments=True, single_thread=False)
-        self._check_status(out, True, True)
+        with self.stage('with comments and cover comments'):
+            with terminal.capture() as (out, _):
+                cser.series_status(pwork, 'second', 2, show_comments=True,
+                                   show_cover_comments=True)
+            self._check_status(out, True, True)
 
     def test_series_no_subcmd(self):
         """Test handling of things without a subcommand"""
@@ -3248,49 +3278,53 @@ Date:   .*
 
     def check_series_rename(self):
         cser = self.get_cser()
-        with terminal.capture() as (out, _):
-            cser.series_add('first', 'my name', allow_unmarked=True)
+        with self.stage('setup'):
+            with terminal.capture() as (out, _):
+                cser.series_add('first', 'my name', allow_unmarked=True)
 
-        # Remember the old series
-        old = cser._get_series_by_name('first')
+            # Remember the old series
+            old = cser._get_series_by_name('first')
 
-        self.assertEqual('first', gitutil.get_branch(self.gitdir))
-        with terminal.capture() as (out, _):
-            cser.increment('first')
-        self.assertEqual('first2', gitutil.get_branch(self.gitdir))
+            self.assertEqual('first', gitutil.get_branch(self.gitdir))
+            with terminal.capture() as (out, _):
+                cser.increment('first')
+            self.assertEqual('first2', gitutil.get_branch(self.gitdir))
 
-        with terminal.capture() as (out, _):
-            cser.increment('first')
-        self.assertEqual('first3', gitutil.get_branch(self.gitdir))
+            with terminal.capture() as (out, _):
+                cser.increment('first')
+            self.assertEqual('first3', gitutil.get_branch(self.gitdir))
 
         # Do the dry run
-        with terminal.capture() as (out, _):
-            yield cser
-        lines = out.getvalue().splitlines()
-        itr = iter(lines)
-        self.assertEqual("Renaming branch 'first' to 'newname'", next(itr))
-        self.assertEqual("Renaming branch 'first2' to 'newname2'", next(itr))
-        self.assertEqual("Renaming branch 'first3' to 'newname3'", next(itr))
-        self.assertEqual("Renamed series 'first' to 'newname'", next(itr))
-        self.assertEqual("Dry run completed", next(itr))
-        self.assertFinished(itr)
+        with self.stage('rename - dry run'):
+            with terminal.capture() as (out, _):
+                yield cser
+            lines = out.getvalue().splitlines()
+            itr = iter(lines)
+            self.assertEqual("Renaming branch 'first' to 'newname'", next(itr))
+            self.assertEqual("Renaming branch 'first2' to 'newname2'", next(itr))
+            self.assertEqual("Renaming branch 'first3' to 'newname3'", next(itr))
+            self.assertEqual("Renamed series 'first' to 'newname'", next(itr))
+            self.assertEqual("Dry run completed", next(itr))
+            self.assertFinished(itr)
 
-        # Check nothing changed
-        self.assertEqual('first3', gitutil.get_branch(self.gitdir))
-        sdict = cser.get_series_dict()
-        self.assertIn('first', sdict)
+            # Check nothing changed
+            self.assertEqual('first3', gitutil.get_branch(self.gitdir))
+            sdict = cser.get_series_dict()
+            self.assertIn('first', sdict)
 
         # Now do it for real
-        with terminal.capture() as (out2, _):
-            yield cser
-        lines2 = out2.getvalue().splitlines()
-        self.assertEqual(lines[:-1], lines2)
+        with self.stage('rename - real'):
+            with terminal.capture() as (out2, _):
+                yield cser
+            lines2 = out2.getvalue().splitlines()
+            self.assertEqual(lines[:-1], lines2)
 
-        self.assertEqual('newname3', gitutil.get_branch(self.gitdir))
+            self.assertEqual('newname3', gitutil.get_branch(self.gitdir))
 
-        # Check the series ID did not change
-        ser = cser._get_series_by_name('newname')
-        self.assertEqual(old.idnum, ser.idnum)
+            # Check the series ID did not change
+            ser = cser._get_series_by_name('newname')
+            self.assertEqual(old.idnum, ser.idnum)
+
         yield None
 
     def test_series_rename(self):
@@ -3298,9 +3332,11 @@ Date:   .*
         cor = self.check_series_rename()
         cser = next(cor)
 
+        # Rename (dry run)
         cser.series_rename('first', 'newname', dry_run=True)
         cser = next(cor)
 
+        # Rename (real)
         cser.series_rename('first', 'newname')
         self.assertFalse(next(cor))
 
@@ -3309,11 +3345,14 @@ Date:   .*
         cor = self.check_series_rename()
         next(cor)
 
+        # Rename (dry run)
         self.db_close()
         self.run_args('series', '-n', '-s', 'first', 'rename', '-N', 'newname',
                       pwork=True)
         self.db_open()
         next(cor)
+
+        # Rename (real)
         self.run_args('series', '-s', 'first', 'rename', '-N', 'newname',
                       pwork=True)
 
