@@ -525,13 +525,7 @@ class Cseries(cser_helper.CseriesHelper):
             name (str): Name of the upstream remote to set as default, or None
                 for none
         """
-        self.db.execute("UPDATE upstream SET is_default = 0")
-        if name is not None:
-            self.db.execute(
-                f"UPDATE upstream SET is_default = 1 WHERE name = '{name}'")
-            if self.rowcount() != 1:
-                self.rollback()
-                raise ValueError(f"No such upstream '{name}'")
+        self.db.upstream_set_default(name)
         self.commit()
 
     def upstream_get_default(self):

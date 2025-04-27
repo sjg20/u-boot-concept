@@ -399,7 +399,24 @@ class Database:
         """
         try:
             self.execute(
-                f"INSERT INTO upstream (name, url) VALUES ('{name}', '{url}')")
+                'INSERT INTO upstream (name, url) VALUES (?, ?)', (name, url))
         except sqlite3.IntegrityError as exc:
             if 'UNIQUE constraint failed: upstream.name' in str(exc):
                 raise ValueError(f"Upstream '{name}' already exists") from exc
+
+    def upstream_set_default(self, name):
+        """Mark (only) the given upstream as the default
+
+        Args:
+            name (str): Name of the upstream remote to set as default, or None
+
+        Raises:
+            ValueError if more than one name matches (should not happen)
+        """
+        self.execute("UPDATE upstream SET is_default = 0")
+        if name is not None:
+            self.execute(
+                'UPDATE upstream SET is_default = 1 WHERE name = ?', (name,))
+            if self.rowcount() != 1:
+                self.rollback()
+                raise ValueError(f"No such upstream '{name}'")
