@@ -383,7 +383,122 @@ class Cseries(cser_helper.CseriesHelper):
         if dry_run:
             tout.info('Dry run completed')
 
-    def set_archived(self, series, archived):
+    def send_series(self, pwork, name, autolink, autolink_wait, args):
+        """Send out a series
+
+        Args:
+            pwork (Patchwork): Patchwork object to use
+            series (str): Series name to search for, or None for current series
+                that is checked out
+            autolink (bool): True to auto-link the series after sending
+            args: 'send' arguments provided
+            autolink_wait (int): Number of seconds to wait for the autolink to
+                succeed
+        """
+        ser, version = self._parse_series_and_version(name, None)
+        if not ser.idnum:
+            raise ValueError(f"Series '{ser.name}' not found in database")
+
+        args.branch = self._get_branch_name(ser.name, version)
+        send.send(args, git_dir=self.gitdir, cwd=self.topdir)
+
+        if not args.dry_run and autolink:
+            self.link_auto(pwork, name, version, True, wait_s=autolink_wait)
+
+    def series_status(self, pwork, series, version, show_comments,
+                      show_cover_comments=False, single_thread=False):
+        """Show the series status from patchwork
+
+        Args:
+            pwork (Patchwork): Patchwork object to use
+            series (str): Name of series to use, or None to use current branch
+            version (int): Version number, or None to detect from name
+            show_comments (bool): Show all comments on each patch
+            show_cover_comments (bool): Show all comments on the cover letter
+            single_thread (bool): Avoid using the threads
+        """
+        branch, series, version, _, _, link, _, _ = self._get_patches(
+            series, version)
+        if not link:
+            raise ValueError(
+                f"Series '{series.name}' v{version} has no patchwork link: "
+                f"Try 'patman series -s {branch} autolink'")
+        status.check_and_report_status(
+            series, link, branch, None, False, show_comments,
+            show_cover_comments, pwork, self.gitdir, single_thread)
+
+    def series_rename(self, series, name, dry_run=False):
+        """Rename a series
+
+        Renames a series and changes the name of any branches which match
+        versions present in the database
+
+        Args:
+            series (str): Name of series to use, or None to use current branch
+            name (str): new name to use (must not include version number)
+            dry_run (bool): True to do a dry run
+        """
+        old_ser, _ = self._parse_series_and_version(series, None)
+        if not old_ser.idnum:
+            raise ValueError(f"Series '{old_ser.name}' not found in database")
+        if old_ser.name != series:
+            raise ValueError(f"Invalid series name '{series}': "
+                             'did you use the branch name?')
+        chk, _ = cser_helper.split_name_version(name)
+        if chk != name:
+            raise ValueError(
+                f"Invalid series name '{name}': did you use the branch name?")
+        if chk == old_ser.name:
+            raise ValueError(
+                f"Cannot rename series '{old_ser.name}' to itself")
+        if self._get_series_by_name(name):
+            raise ValueError(f"Cannot rename: series '{name}' already exists")
+
+        versions = self._get_version_list(old_ser.idnum)
+        missing = []
+        exists = []
+        todo = {}
+        for ver in versions:
+            ok = True
+            old_branch = self._get_branch_name(old_ser.name, ver)
+            if not gitutil.check_branch(old_branch, self.gitdir):
+                missing.append(old_branch)
+                ok = False
+
+            branch = self._get_branch_name(name, ver)
+            if gitutil.check_branch(branch, self.gitdir):
+                exists.append(branch)
+                ok = False
+
+            if ok:
+                todo[ver] = [old_branch, branch]
+
+        if missing or exists:
+            msg = 'Cannot rename'
+            if missing:
+                msg += f": branches missing: {', '.join(missing)}"
+            if exists:
+                msg += f": branches exist: {', '.join(exists)}"
+            raise ValueError(msg)
+
+        for old_branch, branch in todo.values():
+            tout.info(f"Renaming branch '{old_branch}' to '{branch}'")
+            if not dry_run:
+                gitutil.rename_branch(old_branch, branch, self.gitdir)
+
+        # Change the series name; nothing needs to change in ser_ver
+        self.db.series_set_name(old_ser.idnum, name)
+
+        if not dry_run:
+            self.commit()
+        else:
+            self.rollback()
+
+        tout.info(f"Renamed series '{series}' to '{name}'")
+        if dry_run:
+            tout.info('Dry run completed')
+
+    def series_set_archived(self, series, archived):
         """Set whether a series is archived or not
 
         Args:
@@ -979,119 +1094,4 @@ class Cseries(cser_helper.CseriesHelper):
             self.commit()
         else:
             self.rollback()
-            tout.info('Dry run completed')
-
-    def send_series(self, pwork, name, autolink, autolink_wait, args):
-        """Send out a series
-
-        Args:
-            pwork (Patchwork): Patchwork object to use
-            series (str): Series name to search for, or None for current series
-                that is checked out
-            autolink (bool): True to auto-link the series after sending
-            args: 'send' arguments provided
-            autolink_wait (int): Number of seconds to wait for the autolink to
-                succeed
-        """
-        ser, version = self._parse_series_and_version(name, None)
-        if not ser.idnum:
-            raise ValueError(f"Series '{ser.name}' not found in database")
-
-        args.branch = self._get_branch_name(ser.name, version)
-        send.send(args, git_dir=self.gitdir, cwd=self.topdir)
-
-        if not args.dry_run and autolink:
-            self.link_auto(pwork, name, version, True, wait_s=autolink_wait)
-
-    def series_status(self, pwork, series, version, show_comments,
-                      show_cover_comments=False, single_thread=False):
-        """Show the series status from patchwork
-
-        Args:
-            pwork (Patchwork): Patchwork object to use
-            series (str): Name of series to use, or None to use current branch
-            version (int): Version number, or None to detect from name
-            show_comments (bool): Show all comments on each patch
-            show_cover_comments (bool): Show all comments on the cover letter
-            single_thread (bool): Avoid using the threads
-        """
-        branch, series, version, _, _, link, _, _ = self._get_patches(
-            series, version)
-        if not link:
-            raise ValueError(
-                f"Series '{series.name}' v{version} has no patchwork link: "
-                f"Try 'patman series -s {branch} autolink'")
-        status.check_and_report_status(
-            series, link, branch, None, False, show_comments,
-            show_cover_comments, pwork, self.gitdir, single_thread)
-
-    def series_rename(self, series, name, dry_run=False):
-        """Rename a series
-
-        Renames a series and changes the name of any branches which match
-        versions present in the database
-
-        Args:
-            series (str): Name of series to use, or None to use current branch
-            name (str): new name to use (must not include version number)
-            dry_run (bool): True to do a dry run
-        """
-        old_ser, _ = self._parse_series_and_version(series, None)
-        if not old_ser.idnum:
-            raise ValueError(f"Series '{old_ser.name}' not found in database")
-        if old_ser.name != series:
-            raise ValueError(f"Invalid series name '{series}': "
-                             'did you use the branch name?')
-        chk, _ = cser_helper.split_name_version(name)
-        if chk != name:
-            raise ValueError(
-                f"Invalid series name '{name}': did you use the branch name?")
-        if chk == old_ser.name:
-            raise ValueError(
-                f"Cannot rename series '{old_ser.name}' to itself")
-        if self._get_series_by_name(name):
-            raise ValueError(f"Cannot rename: series '{name}' already exists")
-
-        versions = self._get_version_list(old_ser.idnum)
-        missing = []
-        exists = []
-        todo = {}
-        for ver in versions:
-            ok = True
-            old_branch = self._get_branch_name(old_ser.name, ver)
-            if not gitutil.check_branch(old_branch, self.gitdir):
-                missing.append(old_branch)
-                ok = False
-
-            branch = self._get_branch_name(name, ver)
-            if gitutil.check_branch(branch, self.gitdir):
-                exists.append(branch)
-                ok = False
-
-            if ok:
-                todo[ver] = [old_branch, branch]
-
-        if missing or exists:
-            msg = 'Cannot rename'
-            if missing:
-                msg += f": branches missing: {', '.join(missing)}"
-            if exists:
-                msg += f": branches exist: {', '.join(exists)}"
-            raise ValueError(msg)
-
-        for old_branch, branch in todo.values():
-            tout.info(f"Renaming branch '{old_branch}' to '{branch}'")
-            if not dry_run:
-                gitutil.rename_branch(old_branch, branch, self.gitdir)
-
-        # Change the series name; nothing needs to change in ser_ver
-        self.db.series_set_name(old_ser.idnum, name)
-
-        if not dry_run:
-            self.commit()
-        else:
-            self.rollback()
-
-        tout.info(f"Renamed series '{series}' to '{name}'")
-        if dry_run:
             tout.info('Dry run completed')

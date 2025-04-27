@@ -1380,9 +1380,9 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         cser = next(cor)
 
         # Archive it and make sure it is invisible
-        cser.set_archived('first', True)
+        cser.series_set_archived('first', True)
         cser = next(cor)
-        cser.set_archived('first', False)
+        cser.series_set_archived('first', False)
         self.assertFalse(next(cor))
         cor.close()
 

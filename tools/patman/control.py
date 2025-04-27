@@ -128,7 +128,7 @@ def do_series(args, test_db=None, pwork=None):
                             mark=args.mark, allow_unmarked=args.allow_unmarked,
                             end=args.upstream, dry_run=args.dry_run)
         elif args.subcmd == 'archive':
-            cser.set_archived(args.series, True)
+            cser.series_set_archived(args.series, True)
         elif args.subcmd == 'autolink':
             cser.link_auto(pwork, args.series, args.version, args.update,
                               args.autolink_wait)
@@ -186,7 +186,7 @@ def do_series(args, test_db=None, pwork=None):
                 pwork, args.show_comments, args.show_cover_comments,
                 args.sync_all_versions, args.gather_tags, args.dry_run)
         elif args.subcmd == 'unarchive':
-            cser.set_archived(args.series, False)
+            cser.series_set_archived(args.series, False)
         elif args.subcmd == 'unmark':
             cser.series_unmark(args.series, args.allow_unmarked,
                                dry_run=args.dry_run)
