@@ -130,10 +130,10 @@ def do_series(args, test_db=None, pwork=None):
         elif args.subcmd == 'archive':
             cser.set_archived(args.series, True)
         elif args.subcmd == 'autolink':
-            cser.autolink(pwork, args.series, args.version, args.update,
+            cser.link_auto(pwork, args.series, args.version, args.update,
                               args.autolink_wait)
         elif args.subcmd == 'autolink-all':
-            cser.autolink_all(pwork, update_commit=args.update,
+            cser.link_auto_all(pwork, update_commit=args.update,
                               link_all_versions=args.link_all_versions,
                               replace_existing=args.replace_existing,
                               dry_run=args.dry_run, show_summary=True)

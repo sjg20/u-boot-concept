@@ -2193,7 +2193,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.assertIn("Added series 'first' v1 (2 commits)", out.getvalue())
 
         with terminal.capture() as (out, _):
-            cser.autolink(pwork, 'first', 1, True)
+            cser.link_auto(pwork, 'first', 1, True)
         self.assertIn("Setting link for series 'first' v1 to 12345",
                       out.getvalue())
 
@@ -2229,7 +2229,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         if do_sync:
             with terminal.capture() as (out, _):
-                cser.autolink(pwork, 'second', 2, True)
+                cser.link_auto(pwork, 'second', 2, True)
             with terminal.capture() as (out, _):
                 cser.series_sync(pwork, 'second', 2, False, True, False)
             lines = out.getvalue().splitlines()
@@ -2671,12 +2671,12 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         cser, pwork = next(cor)
 
         with self.assertRaises(ValueError) as exc:
-            cser.autolink(pwork, 'first', None, True)
+            cser.link_auto(pwork, 'first', None, True)
         self.assertIn("Series 'first' has an empty description",
                       str(exc.exception))
 
         with terminal.capture() as (out, _):
-            cser.autolink(pwork, 'second', None, True)
+            cser.link_auto(pwork, 'second', None, True)
         self.assertEqual(
                 f"Setting link for series 'second' v1 to {SERIES_ID_SECOND_V1}",
                 out.getvalue().splitlines()[-1])
@@ -2720,11 +2720,11 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             cser.increment('first')
         return cser, pwork
 
-    def test_series_autolink_all(self):
+    def test_series_link_auto_all(self):
         """Test linking all cseries to their patchwork series by description"""
         cser, pwork = self._autolink_setup()
         with terminal.capture() as (out, _):
-            summary = cser.autolink_all(pwork, update_commit=True,
+            summary = cser.link_auto_all(pwork, update_commit=True,
                                         link_all_versions=True,
                                         replace_existing=False, dry_run=True,
                                         show_summary=False)
@@ -2743,7 +2743,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         # A second dry run should do exactly the same thing
         with terminal.capture() as (out2, _):
-            summary2 = cser.autolink_all(pwork, update_commit=True,
+            summary2 = cser.link_auto_all(pwork, update_commit=True,
                                          link_all_versions=True,
                                          replace_existing=False, dry_run=True,
                                          show_summary=False)
@@ -2752,7 +2752,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         # Now do it for real
         with terminal.capture():
-            summary = cser.autolink_all(pwork, update_commit=True,
+            summary = cser.link_auto_all(pwork, update_commit=True,
                                         link_all_versions=True,
                                         replace_existing=False, dry_run=False,
                                         show_summary=False)
@@ -2769,7 +2769,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         """Test linking the lastest versions"""
         cser, pwork = self._autolink_setup()
         with terminal.capture():
-            summary = cser.autolink_all(pwork, update_commit=True,
+            summary = cser.link_auto_all(pwork, update_commit=True,
                                         link_all_versions=False,
                                         replace_existing=False, dry_run=False,
                                         show_summary=False)
@@ -2786,7 +2786,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         """Test linking the lastest versions without updating commits"""
         cser, pwork = self._autolink_setup()
         with terminal.capture():
-            cser.autolink_all(pwork, update_commit=False,
+            cser.link_auto_all(pwork, update_commit=False,
                               link_all_versions=True, replace_existing=False,
                               dry_run=False,
                               show_summary=False)
@@ -2798,7 +2798,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         """Test linking the lastest versions without updating commits"""
         cser, pwork = self._autolink_setup()
         with terminal.capture():
-            summary = cser.autolink_all(pwork, update_commit=True,
+            summary = cser.link_auto_all(pwork, update_commit=True,
                                         link_all_versions=True,
                                         replace_existing=True, dry_run=False,
                                         show_summary=False)
@@ -2821,7 +2821,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         the actual operation.
         """
         cser, pwork = self._autolink_setup()
-        with (mock.patch.object(cseries.Cseries, 'autolink_all',
+        with (mock.patch.object(cseries.Cseries, 'link_auto_all',
                                 return_value=None) as method):
             self.run_args('series', 'autolink-all', pwork=True)
         method.assert_called_once_with(True, update_commit=False,
@@ -2829,7 +2829,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                                        replace_existing=False, dry_run=False,
                                        show_summary=True)
 
-        with (mock.patch.object(cseries.Cseries, 'autolink_all',
+        with (mock.patch.object(cseries.Cseries, 'link_auto_all',
                                 return_value=None) as method):
             self.run_args('series', 'autolink-all', '-a', pwork=True)
         method.assert_called_once_with(True, update_commit=False,
@@ -2837,7 +2837,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                                        replace_existing=False, dry_run=False,
                                        show_summary=True)
 
-        with (mock.patch.object(cseries.Cseries, 'autolink_all',
+        with (mock.patch.object(cseries.Cseries, 'link_auto_all',
                                 return_value=None) as method):
             self.run_args('series', 'autolink-all', '-a', '-r', pwork=True)
         method.assert_called_once_with(True, update_commit=False,
@@ -2845,7 +2845,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                                        replace_existing=True, dry_run=False,
                                        show_summary=True)
 
-        with (mock.patch.object(cseries.Cseries, 'autolink_all',
+        with (mock.patch.object(cseries.Cseries, 'link_auto_all',
                                 return_value=None) as method):
             self.run_args('series', '-n', 'autolink-all', '-r', pwork=True)
         method.assert_called_once_with(True, update_commit=False,
@@ -2853,7 +2853,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                                        replace_existing=True, dry_run=True,
                                        show_summary=True)
 
-        with (mock.patch.object(cseries.Cseries, 'autolink_all',
+        with (mock.patch.object(cseries.Cseries, 'link_auto_all',
                                 return_value=None) as method):
             self.run_args('series', 'autolink-all', '-u', pwork=True)
         method.assert_called_once_with(True, update_commit=True,
@@ -4010,7 +4010,7 @@ Date:   .*
                 cser.link_set('first', 1, '123', True)
                 cser.link_set('first', 2, '1234', True)
                 cser.link_set('first', 3, f'{SERIES_ID_FIRST_V3}', True)
-                cser.autolink(pwork, 'second', 2, True)
+                cser.link_auto(pwork, 'second', 2, True)
 
         with self.stage('no options'):
             with terminal.capture() as (out, _):
@@ -4376,7 +4376,7 @@ Date:   .*
         with terminal.capture():
             cser.series_add('second', allow_unmarked=True)
             cser.increment('second')
-            cser.autolink(pwork, 'second', 2, True)
+            cser.link_auto(pwork, 'second', 2, True)
             cser.series_sync(pwork, 'second', 2, False, False, False)
 
         with mock.patch.object(cros_subprocess.Popen, '__init__',
@@ -4573,7 +4573,7 @@ Date:   .*
 
         cser.set_fake_time(h_sleep)
         with terminal.capture() as (out, _):
-            cser.autolink(pwork, 'second3', 3, True, 200)
+            cser.link_auto(pwork, 'second3', 3, True, 200)
         itr = iter(out.getvalue().splitlines())
         for i in range(7):
             self.assertEqual(
