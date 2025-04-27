@@ -389,7 +389,7 @@ class TestCseries(unittest.TestCase, TestCommon):
 
         with terminal.capture():
             _, ser, max_vers, _ = cser._prep_series('first')
-            cser.update_series('first', ser, max_vers, None, False, add_vers=2)
+            cser._update_series('first', ser, max_vers, None, False, add_vers=2)
 
         with self.assertRaises(ValueError) as exc:
             with terminal.capture():
@@ -1211,7 +1211,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                                          show_summary=False)
 
         # Check the link was updated
-        pdict = cser.get_ser_ver_dict()
+        pdict = cser._get_ser_ver_dict()
         svid = list(summary)[0]
         self.assertEqual('1234', pdict[svid].link)
 
@@ -1511,7 +1511,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         # Add a version; now there should be two
         with terminal.capture() as (out, _):
             cser.increment('first')
-        svdict = cser.get_ser_ver_dict()
+        svdict = cser._get_ser_ver_dict()
         self.assertEqual(2, len(svdict))
 
         pclist = cser.get_pcommit_dict()
@@ -1520,7 +1520,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         # Remove version two, using dry run (i.e. no effect)
         with terminal.capture() as (out, _):
             cser.decrement('first', dry_run=True)
-        svdict = cser.get_ser_ver_dict()
+        svdict = cser._get_ser_ver_dict()
         self.assertEqual(2, len(svdict))
 
         repo = pygit2.init_repository(self.gitdir)
@@ -1540,7 +1540,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.assertEqual(
             f"Deleted branch 'first2' {str(branch_oid)[:10]}", lines[1])
 
-        svdict = cser.get_ser_ver_dict()
+        svdict = cser._get_ser_ver_dict()
         self.assertEqual(1, len(svdict))
 
         pclist = cser.get_pcommit_dict()
