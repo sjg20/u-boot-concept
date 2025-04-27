@@ -1631,7 +1631,7 @@ class Cseries:
                 raise ValueError(f"No such upstream '{name}'")
         self.commit()
 
-    def get_default_upstream(self):
+    def upstream_get_default(self):
         """Get the default upstream target
 
         Return:

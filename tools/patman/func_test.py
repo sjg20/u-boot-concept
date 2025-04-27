@@ -3152,15 +3152,15 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         cser.upstream_add('us', 'https://one')
         cser.upstream_add('ci', 'git@two')
 
-        self.assertIsNone(cser.get_default_upstream())
+        self.assertIsNone(cser.upstream_get_default())
 
         cser.upstream_set_default('us')
-        self.assertEqual('us', cser.get_default_upstream())
+        self.assertEqual('us', cser.upstream_get_default())
 
         cser.upstream_set_default('us')
 
         cser.upstream_set_default('ci')
-        self.assertEqual('ci', cser.get_default_upstream())
+        self.assertEqual('ci', cser.upstream_get_default())
 
         with terminal.capture() as (out, err):
             cser.upstream_list()
@@ -3170,7 +3170,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.assertEqual('ci              default  git@two', lines[1])
 
         cser.upstream_set_default(None)
-        self.assertIsNone(cser.get_default_upstream())
+        self.assertIsNone(cser.upstream_get_default())
 
     def test_upstream_default_cmdline(self):
         with terminal.capture() as (out, _):
@@ -3215,7 +3215,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         cser.upstream_set_default('us')
         cser.delete_upstream('us')
-        self.assertIsNone(cser.get_default_upstream())
+        self.assertIsNone(cser.upstream_get_default())
 
         cser.delete_upstream('ci')
         ulist = cser.get_upstream_dict()

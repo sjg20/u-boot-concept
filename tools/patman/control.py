@@ -215,7 +215,7 @@ def upstream(args, test_db=None):
             elif args.remote_name:
                 cser.upstream_set_default(args.remote_name)
             else:
-                result = cser.get_default_upstream()
+                result = cser.upstream_get_default()
                 print(result if result else 'unset')
         elif args.subcmd == 'delete':
             cser.delete_upstream(args.remote_name)
