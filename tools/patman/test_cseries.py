@@ -2932,7 +2932,7 @@ Date:   .*
         with mock.patch.object(cros_subprocess.Popen, '__init__',
                                return_value=None) as method:
             with terminal.capture() as (out, _):
-                cser.open_series(pwork, 'second2', 2)
+                cser.open(pwork, 'second2', 2)
 
         url = 'https://patchwork.ozlabs.org/project/uboot/list/?series=457&state=*&archive=both'
         method.assert_called_once_with(['xdg-open', url])

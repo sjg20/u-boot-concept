@@ -973,7 +973,7 @@ class Cseries(cser_helper.CseriesHelper):
         for ser in sdict.values():
             self._summary_one(ser)
 
-    def open_series(self, pwork, name, version):
+    def open(self, pwork, name, version):
         """Open the patchwork page for a series
 
         Args:

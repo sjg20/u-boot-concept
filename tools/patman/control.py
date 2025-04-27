@@ -147,7 +147,7 @@ def do_series(args, test_db=None, pwork=None):
         elif args.subcmd == 'list':
             cser.series_list()
         elif args.subcmd == 'open':
-            cser.open_series(pwork, args.series, args.version)
+            cser.open(pwork, args.series, args.version)
         elif args.subcmd == 'mark':
             cser.series_mark(args.series, args.allow_marked,
                              dry_run=args.dry_run)
