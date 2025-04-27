@@ -190,6 +190,9 @@ def do_series(args, test_db=None, pwork=None):
         elif args.subcmd == 'unmark':
             cser.unmark(args.series, args.allow_unmarked,
                                dry_run=args.dry_run)
+        elif args.subcmd == 'version-change':
+            cser.version_change(args.series, args.version, args.new_version,
+                                dry_run=args.dry_run)
         else:
             raise ValueError(f"Unknown series subcommand '{args.subcmd}'")
     finally:

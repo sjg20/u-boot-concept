@@ -1114,6 +1114,9 @@ class Cseries(cser_helper.CseriesHelper):
                 f"Series '{ser.name}' does not have v{version}: "
                 f"{' '.join(vstr)}")
 
+        if not new_version:
+            raise ValueError('Please provide a new version number')
+
         if new_version in versions:
             raise ValueError(
                 f"Series '{ser.name}' already has a v{new_version}: "

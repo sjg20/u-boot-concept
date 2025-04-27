@@ -249,6 +249,11 @@ def add_series_args(subparsers):
     unm = series_subparsers.add_parser('unmark')
     _add_allow_unmarked(unm)
 
+    ver = series_subparsers.add_parser(
+        'version-change', help='Change a version to a different version')
+    ver.add_argument('--new-version', type=int,
+                     help='New version number to change this one too')
+
     return series
 
 

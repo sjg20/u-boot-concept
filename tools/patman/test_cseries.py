@@ -3418,6 +3418,12 @@ Date:   .*
             self.assertEqual("Series 'first' does not have a version 2",
                             str(exc.exception))
 
+        with self.stage('new version missing'):
+            with self.assertRaises(ValueError) as exc:
+                cser.version_change('first', None, None, dry_run=True)
+            self.assertEqual("Please provide a new version number",
+                            str(exc.exception))
+
         # Change v1 to v2 (dry run)
         with self.stage('v1 -> 2 dry run'):
             with terminal.capture():
@@ -3472,3 +3478,18 @@ Date:   .*
 
                 ser = cser._get_series_by_name('first')
                 self.assertIn(5, cser._get_version_list(ser.idnum))
+
+    def test_version_change_cmdline(self):
+        """Check changing a version on the cmdline"""
+        cser = self.get_cser()
+        with (mock.patch.object(cseries.Cseries, 'version_change',
+                                return_value=None) as method):
+            self.run_args('series', '-s', 'first', 'version-change',
+                          pwork=True)
+        method.assert_called_once_with('first', None, None, dry_run=False)
+
+        with (mock.patch.object(cseries.Cseries, 'version_change',
+                                return_value=None) as method):
+            self.run_args('series', '-s', 'first', 'version-change',
+                          '--new-version', '3', pwork=True)
+        method.assert_called_once_with('first', None, 3, dry_run=False)
