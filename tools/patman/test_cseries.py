@@ -162,7 +162,7 @@ class TestCseries(unittest.TestCase, TestCommon):
     def test_series_add(self):
         """Test adding a new cseries"""
         cser = self.get_cser()
-        self.assertFalse(cser.get_series_dict())
+        self.assertFalse(cser._get_series_dict())
 
         with terminal.capture() as (out, _):
             cser.series_add('first', 'my description', allow_unmarked=True)
@@ -173,7 +173,7 @@ class TestCseries(unittest.TestCase, TestCommon):
         self.assertEqual("Added series 'first' v1 (2 commits)", lines[1])
         self.assertEqual(2, len(lines))
 
-        slist = cser.get_series_dict()
+        slist = cser._get_series_dict()
         self.assertEqual(1, len(slist))
         self.assertEqual('first', slist['first'].name)
         self.assertEqual('my description', slist['first'].desc)
@@ -195,7 +195,7 @@ class TestCseries(unittest.TestCase, TestCommon):
     def test_series_not_checked_out(self):
         """Test adding a new cseries when a different one is checked out"""
         cser = self.get_cser()
-        self.assertFalse(cser.get_series_dict())
+        self.assertFalse(cser._get_series_dict())
 
         with terminal.capture() as (out, _):
             cser.series_add('second', allow_unmarked=True)
@@ -209,7 +209,7 @@ class TestCseries(unittest.TestCase, TestCommon):
     def test_series_add_manual(self):
         """Test adding a new cseries with a version number"""
         cser = self.get_cser()
-        self.assertFalse(cser.get_series_dict())
+        self.assertFalse(cser._get_series_dict())
 
         repo = pygit2.init_repository(self.gitdir)
         first_target = repo.revparse_single('first')
@@ -226,7 +226,7 @@ class TestCseries(unittest.TestCase, TestCommon):
         self.assertEqual("Added series 'first' v2 (2 commits)", lines[1])
         self.assertEqual(2, len(lines))
 
-        slist = cser.get_series_dict()
+        slist = cser._get_series_dict()
         self.assertEqual(1, len(slist))
         self.assertEqual('first', slist['first'].name)
 
@@ -273,7 +273,7 @@ class TestCseries(unittest.TestCase, TestCommon):
             "Added v1 to existing series 'first' (2 commits)", lines[1])
         self.assertEqual(2, len(lines))
 
-        slist = cser.get_series_dict()
+        slist = cser._get_series_dict()
         self.assertEqual(1, len(slist))
         self.assertEqual('first', slist['first'].name)
 
@@ -345,7 +345,7 @@ class TestCseries(unittest.TestCase, TestCommon):
         self.assertEqual("Added series 'third' v4 (4 commits)", lines[1])
         self.assertEqual(2, len(lines))
 
-        sdict = cser.get_series_dict()
+        sdict = cser._get_series_dict()
         self.assertIn('third', sdict)
         chk = sdict['third']
         self.assertEqual('third', chk['name'])
@@ -370,7 +370,7 @@ class TestCseries(unittest.TestCase, TestCommon):
             'Ending before .* main: Change to the main program')
         self.assertEqual("Added series 'third' v4 (2 commits)", lines[2])
 
-        sdict = cser.get_series_dict()
+        sdict = cser._get_series_dict()
         self.assertIn('third', sdict)
         chk = sdict['third']
         self.assertEqual('third', chk['name'])
@@ -385,7 +385,7 @@ class TestCseries(unittest.TestCase, TestCommon):
         This updates branch 'first' to have version 2, then tries to add it.
         """
         cser = self.get_cser()
-        self.assertFalse(cser.get_series_dict())
+        self.assertFalse(cser._get_series_dict())
 
         with terminal.capture():
             _, ser, max_vers, _ = cser._prep_series('first')
@@ -726,7 +726,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             control.do_series(args, test_db=self.tmpdir, pwork=True)
 
         cser = self.get_database()
-        slist = cser.get_series_dict()
+        slist = cser._get_series_dict()
         self.assertEqual(1, len(slist))
         ser = slist.get('first')
         self.assertTrue(ser)
@@ -752,7 +752,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                           '-D', 'my-description', pwork=True)
 
         cser = self.get_database()
-        slist = cser.get_series_dict()
+        slist = cser._get_series_dict()
         self.assertEqual(1, len(slist))
         ser = slist.get('first')
         self.assertTrue(ser)
@@ -773,7 +773,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             control.do_series(args, test_db=self.tmpdir, pwork=True)
 
         cser = self.get_database()
-        slist = cser.get_series_dict()
+        slist = cser._get_series_dict()
         self.assertEqual(1, len(slist))
         ser = slist.get('second')
         self.assertTrue(ser)
@@ -1350,7 +1350,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                 cser.series_add('first', '', allow_unmarked=True)
 
             # Check the series is visible in the list
-            slist = cser.get_series_dict()
+            slist = cser._get_series_dict()
             self.assertEqual(1, len(slist))
             self.assertEqual('first', slist['first'].name)
 
@@ -1358,11 +1358,11 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             # Archive it and make sure it is invisible
             yield cser
             # cser.set_archived('first', True)
-            slist = cser.get_series_dict()
+            slist = cser._get_series_dict()
             self.assertFalse(slist)
 
             # ...unless we include archived items
-            slist = cser.get_series_dict(include_archived=True)
+            slist = cser._get_series_dict(include_archived=True)
             self.assertEqual(1, len(slist))
             self.assertEqual('first', slist['first'].name)
 
@@ -1370,7 +1370,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             # or we unarchive it
             yield cser
             # cser.set_archived('first', False)
-            slist = cser.get_series_dict()
+            slist = cser._get_series_dict()
             self.assertEqual(1, len(slist))
 
         yield False
@@ -1414,7 +1414,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                 yield cser
             self._check_inc(out)
 
-            slist = cser.get_series_dict()
+            slist = cser._get_series_dict()
             self.assertEqual(1, len(slist))
 
             plist = cser.get_ser_ver_list()
@@ -1465,7 +1465,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         with terminal.capture() as (out, _):
             cser.increment('first')
 
-        slist = cser.get_series_dict()
+        slist = cser._get_series_dict()
         self.assertEqual(1, len(slist))
 
     def test_series_inc_dryrun(self):
@@ -2042,7 +2042,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         with self.stage('add'):
             with terminal.capture() as (out, _):
                 cser.series_add('first', '', mark=True)
-            self.assertTrue(cser.get_series_dict())
+            self.assertTrue(cser._get_series_dict())
             pclist = cser.get_pcommit_dict()
             self.assertEqual(2, len(pclist))
 
@@ -2050,7 +2050,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             with terminal.capture() as (out, _):
                 cser.series_remove('first')
             self.assertEqual("Removed series 'first'", out.getvalue().strip())
-            self.assertFalse(cser.get_series_dict())
+            self.assertFalse(cser._get_series_dict())
 
             pclist = cser.get_pcommit_dict()
             self.assertFalse(len(pclist))
@@ -2069,13 +2069,13 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         with self.stage('add'):
             with terminal.capture() as (out, _):
                 cser.series_add('first', '', mark=True)
-            self.assertTrue(cser.get_series_dict())
+            self.assertTrue(cser._get_series_dict())
 
         with self.stage('remove'):
             with terminal.capture() as (out, _):
                 cser.series_remove('first')
             self.assertEqual("Removed series 'first'", out.getvalue().strip())
-            self.assertFalse(cser.get_series_dict())
+            self.assertFalse(cser._get_series_dict())
 
     def check_series_remove_multiple(self):
         """Check for removing a series with more than one version"""
@@ -2087,7 +2087,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             with terminal.capture() as (out, _):
                 cser.series_add(None, '', mark=True)
                 cser.series_add('first', '', mark=True)
-            self.assertTrue(cser.get_series_dict())
+            self.assertTrue(cser._get_series_dict())
             pclist = cser.get_pcommit_dict()
             self.assertEqual(4, len(pclist))
 
@@ -2097,7 +2097,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                 yield cser
             self.assertEqual("Removed version 1 from series 'first'\n"
                                 'Dry run completed', out.getvalue().strip())
-            self.assertEqual({'first'}, cser.get_series_dict().keys())
+            self.assertEqual({'first'}, cser._get_series_dict().keys())
 
             plist = cser.get_ser_ver_list()
             self.assertEqual(2, len(plist))
@@ -2110,7 +2110,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                 yield cser
             self.assertEqual("Removed version 1 from series 'first'",
                             out.getvalue().strip())
-            self.assertEqual({'first'}, cser.get_series_dict().keys())
+            self.assertEqual({'first'}, cser._get_series_dict().keys())
             plist = cser.get_ser_ver_list()
             self.assertEqual(1, len(plist))
             pclist = cser.get_pcommit_dict()
@@ -2118,7 +2118,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         with self.stage('remove only version'):
             yield cser
-            self.assertEqual({'first'}, cser.get_series_dict().keys())
+            self.assertEqual({'first'}, cser._get_series_dict().keys())
 
             plist = cser.get_ser_ver_list()
             self.assertEqual(1, len(plist))
@@ -2129,14 +2129,14 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                 yield cser
             self.assertEqual("Removed series 'first'\nDry run completed",
                              out.getvalue().strip())
-            self.assertTrue(cser.get_series_dict())
+            self.assertTrue(cser._get_series_dict())
             self.assertTrue(cser.get_ser_ver_list())
 
         with self.stage('remove series'):
             with terminal.capture() as (out, _):
                 yield cser
             self.assertEqual("Removed series 'first'", out.getvalue().strip())
-            self.assertFalse(cser.get_series_dict())
+            self.assertFalse(cser._get_series_dict())
             self.assertFalse(cser.get_ser_ver_list())
 
         yield False
@@ -3302,7 +3302,7 @@ Date:   .*
 
             # Check nothing changed
             self.assertEqual('first3', gitutil.get_branch(self.gitdir))
-            sdict = cser.get_series_dict()
+            sdict = cser._get_series_dict()
             self.assertIn('first', sdict)
 
         # Now do it for real

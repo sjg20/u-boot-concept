@@ -67,8 +67,9 @@ SER_VER = namedtuple(
 # Summary info returned from Cseries.link_auto_all()
 AUTOLINK = namedtuple('autolink', 'name,version,link,desc,result')
 
+
 def oid(oid_val):
-    """Convert a string into a shortened hash
+    """Convert a hash string into a shortened hash
 
     The number of hex digits git uses for showing hashes depends on the size of
     the repo. For the purposes of showing hashes to the user in lists, we use a
@@ -232,7 +233,7 @@ class Cseries:
         else:
             time.sleep(time_s)
 
-    def get_series_dict(self, include_archived=False):
+    def _get_series_dict(self, include_archived=False):
         """Get a dict of Series objects from the database
 
         Args:
@@ -254,7 +255,7 @@ class Cseries:
             sdict[name] = ser
         return sdict
 
-    def get_series_dict_by_id(self, include_archived=False):
+    def _get_series_dict_by_id(self, include_archived=False):
         """Get a dict of Series objects from the database
 
         Return:
@@ -812,7 +813,7 @@ class Cseries:
                 key (int): ser_ver ID
                 value (AUTOLINK): result of autolinking on this ser_ver
         """
-        sdict = self.get_series_dict_by_id()
+        sdict = self._get_series_dict_by_id()
         all_ser_vers = self._get_autolink_dict(sdict, link_all_versions)
 
         # Get rid of things without a description
@@ -1034,7 +1035,7 @@ class Cseries:
         Lines all series along with their description, number of patches
         accepted and  the available versions
         """
-        sdict = self.get_series_dict()
+        sdict = self._get_series_dict()
         print(f"{'Name':15}  {'Description':40}  Accepted  Versions")
         border = f"{'-' * 15}  {'-' * 40}  --------  {'-' * 15}"
         print(border)
@@ -2124,7 +2125,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         """
         missing = 0
         svdict = self.get_ser_ver_dict()
-        sdict = self.get_series_dict_by_id()
+        sdict = self._get_series_dict_by_id()
         to_fetch = {}
 
         if sync_all_versions:
@@ -2318,7 +2319,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
 
             total_patches = 0
             total_series = 0
-            sdict = self.get_series_dict()
+            sdict = self._get_series_dict()
             border = None
             if not list_patches:
                 print(self.col.build(
@@ -2375,7 +2376,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             self._summary_one(self._parse_series(series))
             return
 
-        sdict = self.get_series_dict()
+        sdict = self._get_series_dict()
         for ser in sdict.values():
             self._summary_one(ser)
 
