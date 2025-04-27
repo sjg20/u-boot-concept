@@ -328,43 +328,43 @@ class TestFunctional(unittest.TestCase):
         cc_lines = open(cc_file, encoding='utf-8').read().splitlines()
         os.remove(cc_file)
 
-        lines = iter(out[0].getvalue().splitlines())
+        itr = iter(out[0].getvalue().splitlines())
         self.assertEqual('Cleaned %s patches' % len(series.commits),
-                         next(lines))
-        self.assertEqual('Change log missing for v2', next(lines))
-        self.assertEqual('Change log missing for v3', next(lines))
-        self.assertEqual('Change log for unknown version v4', next(lines))
-        self.assertEqual("Alias 'pci' not found", next(lines))
-        while next(lines) != 'Cc processing complete':
+                         next(itr))
+        self.assertEqual('Change log missing for v2', next(itr))
+        self.assertEqual('Change log missing for v3', next(itr))
+        self.assertEqual('Change log for unknown version v4', next(itr))
+        self.assertEqual("Alias 'pci' not found", next(itr))
+        while next(itr) != 'Cc processing complete':
             pass
-        self.assertIn('Dry run', next(lines))
-        self.assertEqual('', next(lines))
-        self.assertIn('Send a total of %d patches' % count, next(lines))
-        prev = next(lines)
+        self.assertIn('Dry run', next(itr))
+        self.assertEqual('', next(itr))
+        self.assertIn('Send a total of %d patches' % count, next(itr))
+        prev = next(itr)
         for i, commit in enumerate(series.commits):
             self.assertEqual('   %s' % args[i], prev)
             while True:
-                prev = next(lines)
+                prev = next(itr)
                 if 'Cc:' not in prev:
                     break
         self.assertEqual('To:	  u-boot@lists.denx.de', prev)
-        self.assertEqual('Cc:	  %s' % stefan, next(lines))
-        self.assertEqual('Version:  3', next(lines))
-        self.assertEqual('Prefix:\t  RFC', next(lines))
-        self.assertEqual('Postfix:\t  some-branch', next(lines))
-        self.assertEqual('Cover: 4 lines', next(lines))
-        self.assertEqual('      Cc:  %s' % self.fred, next(lines))
-        self.assertEqual('      Cc:  %s' % self.joe, next(lines))
+        self.assertEqual('Cc:	  %s' % stefan, next(itr))
+        self.assertEqual('Version:  3', next(itr))
+        self.assertEqual('Prefix:\t  RFC', next(itr))
+        self.assertEqual('Postfix:\t  some-branch', next(itr))
+        self.assertEqual('Cover: 4 lines', next(itr))
+        self.assertEqual('      Cc:  %s' % self.fred, next(itr))
+        self.assertEqual('      Cc:  %s' % self.joe, next(itr))
         self.assertEqual('      Cc:  %s' % self.leb,
-                         next(lines))
-        self.assertEqual('      Cc:  %s' % mel, next(lines))
-        self.assertEqual('      Cc:  %s' % rick, next(lines))
+                         next(itr))
+        self.assertEqual('      Cc:  %s' % mel, next(itr))
+        self.assertEqual('      Cc:  %s' % rick, next(itr))
         expected = ('Git command: git send-email --annotate '
                     '--in-reply-to="%s" --to u-boot@lists.denx.de '
                     '--cc "%s" --cc-cmd "%s send --cc-cmd %s" %s %s'
                     % (in_reply_to, stefan, sys.argv[0], cc_file, cover_fname,
                        ' '.join(args)))
-        self.assertEqual(expected, next(lines))
+        self.assertEqual(expected, next(itr))
 
         self.assertEqual(('%s %s\0%s' % (args[0], rick, stefan)), cc_lines[0])
         self.assertEqual(
@@ -405,15 +405,15 @@ Simon Glass (2):
 base-commit: 1a44532
 branch: mybranch
 '''
-        lines = open(cover_fname, encoding='utf-8').read().splitlines()
+        itr = open(cover_fname, encoding='utf-8').read().splitlines()
         self.assertEqual(
             'Subject: [RFC PATCH some-branch v3 0/2] test: A test patch series',
-            lines[3])
-        self.assertEqual(expected.splitlines(), lines[7:])
+            itr[3])
+        self.assertEqual(expected.splitlines(), itr[7:])
 
         for i, fname in enumerate(args):
-            lines = open(fname, encoding='utf-8').read().splitlines()
-            subject = [line for line in lines if line.startswith('Subject')]
+            itr = open(fname, encoding='utf-8').read().splitlines()
+            subject = [line for line in itr if line.startswith('Subject')]
             self.assertEqual('Subject: [RFC %d/%d]' % (i + 1, count),
                              subject[0][:18])
 
@@ -447,7 +447,7 @@ Changes in v2:
 
             if expected:
                 expected = expected.splitlines()
-                self.assertEqual(expected, lines[start:(start+len(expected))])
+                self.assertEqual(expected, itr[start:(start+len(expected))])
 
     def test_base_commit(self):
         """Test adding a base commit with no cover letter"""
