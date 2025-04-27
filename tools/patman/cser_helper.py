@@ -1150,11 +1150,10 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 continue
             patch = patches[seq]
             if patch.id:
-                self.db.execute(
-                    'UPDATE pcommit SET '
-                    'patch_id = ?, state = ?, num_comments = ? WHERE id = ?',
-                    (patch.id, patch.state, len(patch.comments), item.idnum))
-                updated += self.rowcount()
+                if self.db.pcommit_update(
+                    PCOMMIT(item.idnum, seq, None, None, None, patch.state,
+                            patch.id, len(patch.comments))):
+                    updated += 1
         if cover:
             self.db.execute(
                 'UPDATE ser_ver SET cover_id = ?, cover_num_comments = ?, '

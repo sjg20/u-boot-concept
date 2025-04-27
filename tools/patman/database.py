@@ -32,7 +32,7 @@ SER_VER = namedtuple(
 # subject (str): patch subject
 # svid (int): ID of series/version record in ser_ver table
 # change_id (str): Change-ID value
-# status (str): Current status in patchwork
+# state (str): Current status in patchwork
 # patch_id (int): Patchwork's patch ID for this patch
 # num_comments (int): Number of comments attached to the commit
 PCOMMIT = namedtuple(
@@ -621,6 +621,22 @@ class Database:
         """
         vals = ', '.join([str(x) for x in svid_list])
         self.execute('DELETE FROM pcommit WHERE svid IN (?)', (vals,))
+
+    def pcommit_update(self, pcm):
+        """Update a pcommit record
+
+        Args:
+            pcm (PCOMMIT): Information to write; only the idnum, state,
+                patch_id and num_comments are used
+
+        Return:
+            True if the data was written
+        """
+        self.execute(
+            'UPDATE pcommit SET '
+            'patch_id = ?, state = ?, num_comments = ? WHERE id = ?',
+            (pcm.patch_id, pcm.state, pcm.num_comments, pcm.idnum))
+        return self.rowcount() > 0
 
     # upstream functions
 
