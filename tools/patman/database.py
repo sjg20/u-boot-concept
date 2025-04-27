@@ -469,6 +469,36 @@ class Database:
             (str(link), series_idnum, version))
         return self.rowcount() != 0
 
+    def ser_ver_set_info(self, info):
+        """Set the info for a series version
+
+        Args:
+            info (SER_VER): Info to set. Only two options are supported:
+                1: svid,cover_id,cover_num_comments,name
+                2: svid,name
+
+        Return:
+            bool: True if the record was found and updated, else False
+        """
+        assert info.idnum is not None
+        if info.cover_id:
+            assert info.series_id is None
+            self.execute(
+                'UPDATE ser_ver SET cover_id = ?, cover_num_comments = ?, '
+                'name = ? WHERE id = ?',
+                (info.cover_id, info.cover_num_comments, info.name,
+                 info.idnum))
+        else:
+            assert not info.cover_id
+            assert not info.cover_num_comments
+            assert not info.series_id
+            assert not info.version
+            assert not info.link
+            self.execute('UPDATE ser_ver SET name = ? WHERE id = ?',
+                         (info.name, info.idnum))
+
+        return self.rowcount() != 0
+
     def ser_ver_add(self, series_idnum, version, link=None):
         """Add a new ser_ver record
 

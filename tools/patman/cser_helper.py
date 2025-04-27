@@ -23,7 +23,7 @@ from u_boot_pylib import terminal
 from u_boot_pylib import tout
 
 from patman import patchstream
-from patman.database import Database, PCOMMIT
+from patman.database import Database, PCOMMIT, SER_VER
 from patman import patchwork
 from patman.series import Series
 from patman import status
@@ -1142,7 +1142,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 cover, patches, series, link, branch, show_comments,
                 show_cover_comments, self.col, warnings_on_stderr=False)
             self._update_series(branch, series, version, None, dry_run,
-                               add_rtags=new_rtag_list)
+                                add_rtags=new_rtag_list)
 
         updated = 0
         for seq, item in enumerate(pwc.values()):
@@ -1155,13 +1155,11 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                             patch.id, len(patch.comments))):
                     updated += 1
         if cover:
-            self.db.execute(
-                'UPDATE ser_ver SET cover_id = ?, cover_num_comments = ?, '
-                'name = ? WHERE id = ?',
-                (cover.id, cover.num_comments, cover.name, svid))
+            info = SER_VER(svid, None, None, None, cover.id,
+                           cover.num_comments, cover.name)
         else:
-            self.db.execute('UPDATE ser_ver SET name = ? WHERE id = ?',
-                            (patches[0].name, svid))
+            info = SER_VER(svid, None, None, None, None, None, patches[0].name)
+        self.db.ser_ver_set_info(info)
 
         return updated, 1 if cover else 0
 
