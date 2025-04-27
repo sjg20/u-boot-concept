@@ -251,6 +251,56 @@ class Database:
 
     # series functions
 
+    def series_get_dict_by_id(self, include_archived=False):
+        """Get a dict of Series objects from the database
+
+        Return:
+            OrderedDict:
+                key: series ID
+                value: Series with idnum, name and desc filled out
+        """
+        sdict = OrderedDict()
+        for ser in self._get_series_list(include_archived):
+            sdict[ser.idnum] = ser
+        return sdict
+
+    def series_find_by_name(self, name):
+        """Find a series and return its details
+
+        Args:
+            name (str): Name to search for
+
+        Returns:
+            idnum, or None if not found
+        """
+        res = self.execute(
+            'SELECT id FROM series WHERE '
+            f"name = '{name}' AND archived = 0")
+        recs = res.fetchall()
+        if len(recs) != 1:
+            return None
+        return recs[0][0]
+
+    def series_get_info(self, idnum):
+        """Get information for a series from the database
+
+        Args:
+            idnum (int): Series ID to look up
+
+        Return: tuple:
+            str: Series name
+            str: Series description
+
+        Raises:
+            ValueError: Series is not found
+        """
+        res = self.execute('SELECT name, desc FROM series WHERE id = ?',
+                           (idnum,))
+        recs = res.fetchall()
+        if len(recs) != 1:
+            raise ValueError(f'No series found (id {idnum} len {len(recs)})')
+        return recs[0]
+
     def series_add(self, name, desc):
         """Add a new series record
 
@@ -308,36 +358,6 @@ class Database:
         for ser in self._get_series_list(include_archived):
             sdict[ser.name] = ser
         return sdict
-
-    def series_get_dict_by_id(self, include_archived=False):
-        """Get a dict of Series objects from the database
-
-        Return:
-            OrderedDict:
-                key: series ID
-                value: Series with idnum, name and desc filled out
-        """
-        sdict = OrderedDict()
-        for ser in self._get_series_list(include_archived):
-            sdict[ser.idnum] = ser
-        return sdict
-
-    def series_find_by_name(self, name):
-        """Find a series and return its details
-
-        Args:
-            name (str): Name to search for
-
-        Returns:
-            idnum, or None if not found
-        """
-        res = self.execute(
-            'SELECT id FROM series WHERE '
-            f"name = '{name}' AND archived = 0")
-        recs = res.fetchall()
-        if len(recs) != 1:
-            return None
-        return recs[0][0]
 
     def series_set_archived(self, series_idnum, archived):
         """Update archive flag for a series

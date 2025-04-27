@@ -268,16 +268,15 @@ class CseriesHelper:
 
         Args:
             idnum (int): Series ID to look up
+
         Return: tuple:
             str: Series name
             str: Series description
+
+        Raises:
+            ValueError: Series is not found
         """
-        res = self.db.execute('SELECT name, desc FROM series WHERE id = ?',
-                              (idnum,))
-        recs = res.fetchall()
-        if len(recs) != 1:
-            raise ValueError(f'No series found (id {idnum} len {len(recs)})')
-        return recs[0]
+        return self.db.series_get_info(idnum)
 
     def _prep_series(self, name, end=None):
         """Prepare to work with a series
