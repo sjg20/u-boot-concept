@@ -533,7 +533,9 @@ class Database:
 
         Args:
             svid (int): ser_ver ID num
-            pcommits (list of PCOMMIT)
+            pcommits (list of PCOMMIT): Only seq, subject, change_id are
+                uses; svid comes from the argument passed in and the others
+                are assumed to be obtained from patchwork later
         """
         for pcm in pcommits:
             self.execute(

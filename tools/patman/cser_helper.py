@@ -391,11 +391,11 @@ class CseriesHelper:
             series (Series): Series containing commits to add
             svid (int): ser_ver-table ID to use for each commit
         """
-        for seq, commit in enumerate(series.commits):
-            self.db.execute(
-                'INSERT INTO pcommit (svid, seq, subject, change_id) '
-                'VALUES (?, ?, ?, ?)',
-                (str(svid), seq, commit.subject, commit.change_id))
+        to_add = [PCOMMIT(None, seq, commit.subject, None, commit.change_id,
+                          None, None, None)
+                  for seq, commit in enumerate(series.commits)]
+
+        self.db.pcommit_add_list(svid, to_add)
 
     def _get_series_by_name(self, name):
         """Get a Series object from the database by name
