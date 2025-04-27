@@ -728,6 +728,9 @@ class CseriesHelper:
 
         This function must be called before _finish_commit()
 
+        Note that this uses a cherry-pick method, creating a new tree_id each
+        time, so can make source-code changes
+
         Args:
             repo (pygit2.repo): Repo to use
             cmt (Commit): Commit to apply
@@ -749,11 +752,12 @@ class CseriesHelper:
     def _finish_commit(self, repo, tree_id, commit, cur, msg=None):
         """Complete a commit
 
-        This must be called after _pick_commit()
+        This must be called after _pick_commit().
 
         Args:
             repo (pygit2.repo): Repo to use
-            tree_id (pygit2.oid): Oid of index with source-changes applied
+            tree_id (pygit2.oid): Oid of index with source-changes applied; if
+                None then the existing commit.tree_id is used
             commit (pygit2.oid): Old commit being cherry-picked
             cur (pygit2.reference): Reference to parent to use for the commit
             msg (str): Commit subject and message; None to use commit.message
@@ -767,8 +771,7 @@ class CseriesHelper:
         return repo.head
 
     def _finish_process(self, repo, branch, name, cur, old_head, new_name=None,
-                        switch=False, dry_run=False,
-                        quiet=False):
+                        switch=False, dry_run=False, quiet=False):
         """Finish processing commits
 
         Args:
@@ -776,6 +779,8 @@ class CseriesHelper:
             branch (pygit2.branch): Branch returned by _prepare_process()
             name (str): Name of the branch to process
             new_name (str or None): New name, if a new branch is being created
+            switch (bool): True to switch to the new branch after processing;
+                otherwise HEAD remains at the original branch, as amended
             dry_run (bool): True to do a dry run, restoring the original tree
                 afterwards
             quiet (bool): True to avoid output (used for testing)
@@ -817,6 +822,12 @@ class CseriesHelper:
         This is similar to the gerrit script:
         git var GIT_COMMITTER_IDENT ; echo "$refhash" ; cat "README"; }
             | git hash-object --stdin)
+
+        Args:
+            commit (pygit2.commit): Commit to process
+
+        Return:
+            Change ID in hex format
         """
         sig = commit.committer
         val = hashlib.sha1()
@@ -829,14 +840,19 @@ class CseriesHelper:
     def _filter_commits(self, name, series, seq_to_drop):
         """Filter commits to drop one
 
+        This function rebases the current branch, dropping a single commit,
+        thus changing the resulting code in the tree.
+
         Args:
             name (str): Name of the branch to process
             series (Series): Series object
             seq_to_drop (int): Commit sequence to drop; commits are numbered
-                from 0, which is the one after the upstream branch, to count - 1
+                from 0, which is the one after the upstream branch, to
+                count - 1
         """
         count = len(series.commits)
-        repo, cur, branch, name, commit, commits, old_head = self._prepare_process(name, count, quiet=True)
+        (repo, cur, branch, name, commit, commits,
+         old_head) = self._prepare_process(name, count, quiet=True)
         repo.checkout_tree(commit, strategy=CheckoutStrategy.FORCE |
                            CheckoutStrategy.RECREATE_MISSING)
         repo.set_head(commit.oid)
@@ -848,12 +864,31 @@ class CseriesHelper:
 
     def _process_series(self, name, series, new_name=None, switch=False,
                         dry_run=False):
-        """Rewrite a series
+        """Rewrite a series commit messages, leaving code alone
+
+        This uses a 'vals' namespace to pass things to the controlling
+        function.
+
+        Each time _process_series() yields, it sets up:
+            commit (Commit): The pygit2 commit that is being processed
+            msg (str): Commit message, which can be modified
+            info (str): Initially empty; the controlling function can add a
+                short message here which will be shown to the user
+            final (bool): True if this is the last commit to apply
+            seq (int): Current sequence number in the commits to apply (0,,n-1)
+
+            It also sets git HEAD at the commit before this commit being
+            processed
+
+        The function can change msg and info, e.g. to add or remove tags from
+        the commit.
 
         Args:
             name (str): Name of the branch to process
             series (Series): Series object
             new_name (str or None): New name, if a new branch is to be created
+            switch (bool): True to switch to the new branch after processing;
+                otherwise HEAD remains at the original branch, as amended
             dry_run (bool): True to do a dry run, restoring the original tree
                 afterwards
 
@@ -868,9 +903,8 @@ class CseriesHelper:
         tout.info(f"Processing {count} commits from branch '{name}'")
         for seq, cmt in enumerate(series.commits):
             commit = commits[seq]
-            vals.cherry = commit
+            vals.commit = commit
             vals.msg = commit.message
-            vals.skip = False
             vals.info = ''
             vals.final = seq == len(series.commits) - 1
             vals.seq = seq
@@ -898,7 +932,7 @@ class CseriesHelper:
         vals = None
         for vals in self._process_series(name, series, dry_run=dry_run):
             if CHANGE_ID_TAG not in vals.msg:
-                change_id = self._make_change_id(vals.cherry)
+                change_id = self._make_change_id(vals.commit)
                 vals.msg = vals.msg + f'\n{CHANGE_ID_TAG}: {change_id}'
                 tout.detail("   - adding mark")
                 vals.info = 'marked'
@@ -921,7 +955,6 @@ class CseriesHelper:
             new_name (str or None): New name, if a new branch is to be created
             dry_run (bool): True to do a dry run, restoring the original tree
                 afterwards
-            vers (int or None): Version number to add to the series, if any
             add_vers (int or None): Version number to add to the series, if any
             add_link (str or None): Link to add to the series, if any
             add_rtags (list of dict): List of review tags to add, one item for
@@ -929,6 +962,8 @@ class CseriesHelper:
                 key: Response tag (e.g. 'Reviewed-by')
                 value: Set of people who gave that response, each a name/email
                     string
+            switch (bool): True to switch to the new branch after processing;
+                otherwise HEAD remains at the original branch, as amended
 
         Return:
             pygit.oid: oid of the new branch

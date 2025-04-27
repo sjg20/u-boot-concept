@@ -1920,7 +1920,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             for vals in cser._process_series(name, ser):
                 old_msgs.append(vals.msg)
                 lines = vals.msg.splitlines()
-                change_id = cser._make_change_id(vals.cherry)
+                change_id = cser._make_change_id(vals.commit)
                 extra = [f'{cser_helper.CHANGE_ID_TAG}: {change_id}']
                 vals.msg = '\n'.join(lines[:2] + extra + lines[2:]) + '\n'
 
