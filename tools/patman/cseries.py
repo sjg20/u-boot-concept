@@ -503,12 +503,7 @@ class Cseries(cser_helper.CseriesHelper):
             name (str): Name of the tree
             url (str): URL for the tree
         """
-        try:
-            self.db.execute(
-                f"INSERT INTO upstream (name, url) VALUES ('{name}', '{url}')")
-        except sqlite3.IntegrityError as exc:
-            if 'UNIQUE constraint failed: upstream.name' in str(exc):
-                raise ValueError(f"Upstream '{name}' already exists") from exc
+        self.db.upstream_add(name, url)
         self.commit()
 
     def upstream_list(self):

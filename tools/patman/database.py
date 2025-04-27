@@ -384,3 +384,22 @@ class Database:
             svid (int): ser_ver ID num of records to delete
         """
         self.execute('DELETE FROM pcommit WHERE svid = ?', (svid,))
+
+    # upstream functions
+
+    def upstream_add(self, name, url):
+        """Add a new upstream record
+
+        Args:
+            name (str): Name of the tree
+            url (str): URL for the tree
+
+        Raises:
+            ValueError if the name already exists in the database
+        """
+        try:
+            self.execute(
+                f"INSERT INTO upstream (name, url) VALUES ('{name}', '{url}')")
+        except sqlite3.IntegrityError as exc:
+            if 'UNIQUE constraint failed: upstream.name' in str(exc):
+                raise ValueError(f"Upstream '{name}' already exists") from exc
