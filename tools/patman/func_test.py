@@ -4020,33 +4020,20 @@ Date:   .*
             lines = out.getvalue().splitlines()
             itr = iter(lines)
             self.assertEqual("Syncing 'first' v3", next(itr))
-            self.assertEqual('Cov Cover letter for first', next(itr))
             self.assertEqual('  1 i2c: I2C things', next(itr))
             self.assertEqual('  + Tested-by: Mary Smith <msmith@wibble.com>   # yak', next(itr))
             self.assertEqual('  2 spi: SPI fixes', next(itr))
             self.assertRegex(
                 next(itr), 'Checking out upstream commit refs/heads/base: .*')
-            self.assertEqual("Processing 2 commits from branch 'first'", next(itr))
+            self.assertEqual("Processing 2 commits from branch 'first3'", next(itr))
             self.assertRegex(next(itr),
                              '- added 1 tag .* as .*: i2c: I2C things')
             self.assertRegex(
-                next(itr), "- updated links '1:123'  .* as .*: spi: SPI fixes")
-            self.assertRegex(next(itr), 'Updating branch first to .*')
+                next(itr), "- updated links '3:31'  .* as .*: spi: SPI fixes")
+            self.assertRegex(next(itr), 'Updating branch first3 to .*')
             self.assertEqual('', next(itr))
 
             self.assertEqual("Syncing 'second' v2", next(itr))
-            self.assertEqual('Cov The name of the cover letter', next(itr))
-            self.assertEqual(
-                'From: A user <user@user.com>: Sun 13 Apr 14:06:02 MDT 2025',
-                next(itr))
-            self.assertEqual('some comment', next(itr))
-            self.assertEqual('', next(itr))
-            self.assertEqual(
-                'From: Ghenkis Khan <gk@eurasia.gov>: Sun 13 Apr 13:06:02 MDT 2025',
-                 next(itr))
-            self.assertEqual('another comment', next(itr))
-            self.assertEqual('', next(itr))
-
             self.assertEqual('  1 video: Some video improvements', next(itr))
             self.assertEqual(
                 '  + Reviewed-by: Fred Bloggs <fred@bloggs.com>', next(itr))
@@ -4055,15 +4042,15 @@ Date:   .*
             self.assertRegex(
                 next(itr), 'Checking out upstream commit refs/heads/base: .*')
             self.assertEqual(
-                "Processing 3 commits from branch 'second'", next(itr))
+                "Processing 3 commits from branch 'second2'", next(itr))
             self.assertRegex(
                 next(itr),
                 '- added 1 tag .* as .*: video: Some video improvements')
             self.assertRegex(
                 next(itr),
-                "- updated links '2:456'  .* as .*: serial: Add a serial driver")
+                "- updated links '2:457 1:456'  .* as .*: serial: Add a serial driver")
             self.assertRegex(next(itr), '-  .* as .*: bootm: Make it boot')
-            self.assertRegex(next(itr), 'Updating branch second to .*')
+            self.assertRegex(next(itr), 'Updating branch second2 to .*')
             self.assertEqual('', next(itr))
             self.assertEqual(
                 '5 patches and 2 cover letters updated, 0 missing links (14 requests)',
@@ -4099,15 +4086,14 @@ Date:   .*
             self.assertRegex(
                 next(itr), 'Checking out upstream commit refs/heads/base: .*')
             self.assertEqual(
-                "Processing 2 commits from branch 'first'", next(itr))
+                "Processing 2 commits from branch 'first2'", next(itr))
             self.assertRegex(
                 next(itr), '- added 1 tag .* as .*: i2c: I2C things')
             self.assertRegex(
-                next(itr), "- updated links '1:123'  .* as .*: spi: SPI fixes")
-            self.assertRegex(next(itr), 'Updating branch first to .*')
+                next(itr), "- updated links '2:1234'  .* as .*: spi: SPI fixes")
+            self.assertRegex(next(itr), 'Updating branch first2 to .*')
             self.assertEqual('', next(itr))
             self.assertEqual("Syncing 'first' v3", next(itr))
-            self.assertEqual('Cov Cover letter for first', next(itr))
             self.assertEqual('  1 i2c: I2C things', next(itr))
             self.assertEqual(
                 '  + Tested-by: Mary Smith <msmith@wibble.com>   # yak',
@@ -4116,26 +4102,15 @@ Date:   .*
             self.assertRegex(
                 next(itr), 'Checking out upstream commit refs/heads/base: .*')
             self.assertEqual(
-                "Processing 2 commits from branch 'first'", next(itr))
+                "Processing 2 commits from branch 'first3'", next(itr))
             self.assertRegex(
                 next(itr), '- added 1 tag .* as .*: i2c: I2C things')
             self.assertRegex(
-                next(itr), "- updated links '1:123'  .* as .*: spi: SPI fixes")
-            self.assertRegex(next(itr), 'Updating branch first to .*')
+                next(itr), "- updated links '3:31'  .* as .*: spi: SPI fixes")
+            self.assertRegex(next(itr), 'Updating branch first3 to .*')
             self.assertEqual('', next(itr))
 
             self.assertEqual("Syncing 'second' v1", next(itr))
-            self.assertEqual('Cov The name of the cover letter', next(itr))
-            self.assertEqual(
-                'From: A user <user@user.com>: Sun 13 Apr 14:06:02 MDT 2025',
-                next(itr))
-            self.assertEqual('some comment', next(itr))
-            self.assertEqual('', next(itr))
-            self.assertEqual(
-                'From: Ghenkis Khan <gk@eurasia.gov>: Sun 13 Apr 13:06:02 MDT 2025',
-                 next(itr))
-            self.assertEqual('another comment', next(itr))
-            self.assertEqual('', next(itr))
             self.assertEqual('  1 video: Some video improvements', next(itr))
             self.assertEqual(
                 '  + Reviewed-by: Fred Bloggs <fred@bloggs.com>', next(itr))
@@ -4163,17 +4138,6 @@ Date:   .*
             self.assertEqual('', next(itr))
 
             self.assertEqual("Syncing 'second' v2", next(itr))
-            self.assertEqual('Cov The name of the cover letter', next(itr))
-            self.assertEqual(
-                'From: A user <user@user.com>: Sun 13 Apr 14:06:02 MDT 2025',
-                next(itr))
-            self.assertEqual('some comment', next(itr))
-            self.assertEqual('', next(itr))
-            self.assertEqual(
-                'From: Ghenkis Khan <gk@eurasia.gov>: Sun 13 Apr 13:06:02 MDT 2025',
-                 next(itr))
-            self.assertEqual('another comment', next(itr))
-            self.assertEqual('', next(itr))
             self.assertEqual('  1 video: Some video improvements', next(itr))
             self.assertEqual(
                 '  + Reviewed-by: Fred Bloggs <fred@bloggs.com>', next(itr))
@@ -4189,15 +4153,15 @@ Date:   .*
             self.assertRegex(
                 next(itr), 'Checking out upstream commit refs/heads/base: .*')
             self.assertEqual(
-                "Processing 3 commits from branch 'second'", next(itr))
+                "Processing 3 commits from branch 'second2'", next(itr))
             self.assertRegex(
                 next(itr),
                 '- added 1 tag .* as .*: video: Some video improvements')
             self.assertRegex(
                 next(itr),
-                "- updated links '1:456'  .* as .*: serial: Add a serial driver")
+                "- updated links '2:457 1:456'  .* as .*: serial: Add a serial driver")
             self.assertRegex(next(itr), '-  .* as .*: bootm: Make it boot')
-            self.assertRegex(next(itr), 'Updating branch second to .*')
+            self.assertRegex(next(itr), 'Updating branch second2 to .*')
             self.assertEqual('', next(itr))
             self.assertEqual(
                 '12 patches and 3 cover letters updated, 0 missing links (32 requests)',

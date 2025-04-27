@@ -1257,7 +1257,6 @@ class Cseries:
         upstream_name = None
         if upstream_guess:
             try:
-                print(f'repo {repo} name {name} guess {upstream_guess}')
                 upstream = repo.lookup_reference(upstream_guess)
                 upstream_name = upstream.name
                 commit = upstream.peel(pygit2.GIT_OBJ_COMMIT)
