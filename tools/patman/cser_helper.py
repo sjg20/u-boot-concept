@@ -151,22 +151,6 @@ class CseriesHelper:
         """Roll back changes to the database"""
         self.db.rollback()
 
-    def lastrowid(self):
-        """Get the last row-ID reported by the database
-
-        Return:
-            int: Value for lastrowid
-        """
-        return self.db.lastrowid()
-
-    def rowcount(self):
-        """Get the row-count reported by the database
-
-        Return:
-            int: Value for rowcount
-        """
-        return self.db.rowcount()
-
     def set_fake_time(self, fake_sleep):
         """Setup the fake timer
 
@@ -1304,7 +1288,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
 
         return ordered, missing
 
-    async def _series_sync_all(self, client, pwork, show_cover_comments,
+    async def _sync_all(self, client, pwork, show_cover_comments,
                                to_fetch):
         """Sync all series status from patchwork
 
@@ -1327,7 +1311,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
     async def _do_series_sync_all(self, pwork, show_cover_comments,
                                   to_fetch):
         async with aiohttp.ClientSession() as client:
-            return await self._series_sync_all(
+            return await self._sync_all(
                 client, pwork, show_cover_comments, to_fetch)
 
     def _progress_one(self, ser, show_all_versions, list_patches, state_totals):
