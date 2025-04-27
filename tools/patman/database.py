@@ -328,14 +328,12 @@ class Database:
             series_idnum (int): ID of series to look up
 
         Return:
-            str: List of versions
+            str: List of versions, which may be empty if the series is in the
+                process of being added
         """
         res = self.execute('SELECT version FROM ser_ver WHERE series_id = ?',
                            (series_idnum,))
-        recs = res.fetchall()
-        print('recs', recs)
-        assert len(recs)
-        return recs
+        return [x[0] for x in res.fetchall()]
 
     def series_add(self, name, desc):
         """Add a new series record

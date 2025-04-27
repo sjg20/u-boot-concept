@@ -42,7 +42,7 @@ class Cseries(cser_helper.CseriesHelper):
     def series_add(self, branch_name, desc=None, mark=False,
                    allow_unmarked=False, end=None, force_version=False,
                    dry_run=False):
-        """Add a series to the database
+        """Add a series (or new version of a series) to the database
 
         Args:
             branch_name (str): Name of branch to sync, or None for current one
