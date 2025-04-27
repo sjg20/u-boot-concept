@@ -1256,39 +1256,39 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         terminal.set_print_test_mode()
         status.check_and_report_status(
             series, '1234', None, None, False, False, False, pwork)
-        lines = iter(terminal.get_print_test_lines())
+        itr = iter(terminal.get_print_test_lines())
         col = terminal.Color()
         self.assertEqual(terminal.PrintLine('  1 Subject 1', col.YELLOW),
-                         next(lines))
+                         next(itr))
         self.assertEqual(
             terminal.PrintLine('    Reviewed-by: ', col.GREEN, newline=False,
                                bright=False),
-            next(lines))
+            next(itr))
         self.assertEqual(terminal.PrintLine(self.joe, col.WHITE, bright=False),
-                         next(lines))
+                         next(itr))
 
         self.assertEqual(terminal.PrintLine('  2 Subject 2', col.YELLOW),
-                         next(lines))
+                         next(itr))
         self.assertEqual(
             terminal.PrintLine('    Reviewed-by: ', col.GREEN, newline=False,
                                bright=False),
-            next(lines))
+            next(itr))
         self.assertEqual(terminal.PrintLine(self.fred, col.WHITE, bright=False),
-                         next(lines))
+                         next(itr))
         self.assertEqual(
             terminal.PrintLine('    Tested-by: ', col.GREEN, newline=False,
                                bright=False),
-            next(lines))
+            next(itr))
         self.assertEqual(terminal.PrintLine(self.leb, col.WHITE, bright=False),
-                         next(lines))
+                         next(itr))
         self.assertEqual(
             terminal.PrintLine('  + Reviewed-by: ', col.GREEN, newline=False),
-            next(lines))
+            next(itr))
         self.assertEqual(terminal.PrintLine(self.mary, col.WHITE),
-                         next(lines))
+                         next(itr))
         self.assertEqual(terminal.PrintLine(
             '1 new response available in patchwork (use -d to write them to a new branch)',
-            None), next(lines))
+            None), next(itr))
 
     def _fake_patchwork3(self, subpath):
         """Fake Patchwork server for the function below
@@ -1373,11 +1373,11 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         status.check_and_report_status(
             series, '1234', branch, dest_branch, False, False, False, pwork,
             repo)
-        lines = terminal.get_print_test_lines()
-        self.assertEqual(12, len(lines))
+        itr = terminal.get_print_test_lines()
+        self.assertEqual(12, len(itr))
         self.assertEqual(
             "4 responses added from patchwork into new branch 'first2'",
-            lines[11].text)
+            itr[11].text)
 
         # Check that the destination branch has the new tags
         new_series = patchstream.get_metadata_for_list(dest_branch, gitdir,
@@ -1393,18 +1393,18 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         # Now check the actual test of the first commit message. We expect to
         # see the new tags immediately below the old ones.
         stdout = patchstream.get_list(dest_branch, count=count, git_dir=gitdir)
-        lines = iter([line.strip() for line in stdout.splitlines()
+        itr = iter([line.strip() for line in stdout.splitlines()
                       if '-by:' in line])
 
         # First patch should have the review tag
-        self.assertEqual('Reviewed-by: %s' % self.joe, next(lines))
+        self.assertEqual('Reviewed-by: %s' % self.joe, next(itr))
 
         # Second patch should have the sign-off then the tested-by and two
         # reviewed-by tags
-        self.assertEqual('Signed-off-by: %s' % self.leb, next(lines))
-        self.assertEqual('Reviewed-by: %s' % self.fred, next(lines))
-        self.assertEqual('Reviewed-by: %s' % self.mary, next(lines))
-        self.assertEqual('Tested-by: %s' % self.leb, next(lines))
+        self.assertEqual('Signed-off-by: %s' % self.leb, next(itr))
+        self.assertEqual('Reviewed-by: %s' % self.fred, next(itr))
+        self.assertEqual('Reviewed-by: %s' % self.mary, next(itr))
+        self.assertEqual('Tested-by: %s' % self.leb, next(itr))
 
     def test_parse_snippets(self):
         """Test parsing of review snippets"""
@@ -1577,75 +1577,75 @@ Reviewed-by: %s
         pwork = Patchwork.for_testing(self._fake_patchwork2)
         status.check_and_report_status(
             series, '1234', None, None, False, True, False, pwork)
-        lines = iter(terminal.get_print_test_lines())
+        itr = iter(terminal.get_print_test_lines())
         col = terminal.Color()
         self.assertEqual(terminal.PrintLine('  1 Subject 1', col.YELLOW),
-                         next(lines))
+                         next(itr))
         self.assertEqual(
             terminal.PrintLine('  + Reviewed-by: ', col.GREEN, newline=False),
-            next(lines))
-        self.assertEqual(terminal.PrintLine(self.joe, col.WHITE), next(lines))
+            next(itr))
+        self.assertEqual(terminal.PrintLine(self.joe, col.WHITE), next(itr))
 
         self.assertEqual(terminal.PrintLine('Review: %s' % self.joe, col.RED),
-                         next(lines))
-        self.assertEqual(terminal.PrintLine('    Hi Fred,', None), next(lines))
-        self.assertEqual(terminal.PrintLine('', None), next(lines))
+                         next(itr))
+        self.assertEqual(terminal.PrintLine('    Hi Fred,', None), next(itr))
+        self.assertEqual(terminal.PrintLine('', None), next(itr))
         self.assertEqual(terminal.PrintLine('    > File: file.c', col.MAGENTA),
-                         next(lines))
+                         next(itr))
         self.assertEqual(terminal.PrintLine('    > Some code', col.MAGENTA),
-                         next(lines))
+                         next(itr))
         self.assertEqual(terminal.PrintLine('    > and more code', col.MAGENTA),
-                         next(lines))
+                         next(itr))
         self.assertEqual(terminal.PrintLine(
-            '    Here is my comment above the above...', None), next(lines))
-        self.assertEqual(terminal.PrintLine('', None), next(lines))
+            '    Here is my comment above the above...', None), next(itr))
+        self.assertEqual(terminal.PrintLine('', None), next(itr))
 
         self.assertEqual(terminal.PrintLine('  2 Subject 2', col.YELLOW),
-                         next(lines))
+                         next(itr))
         self.assertEqual(
             terminal.PrintLine('  + Reviewed-by: ', col.GREEN, newline=False),
-            next(lines))
+            next(itr))
         self.assertEqual(terminal.PrintLine(self.fred, col.WHITE),
-                         next(lines))
+                         next(itr))
         self.assertEqual(
             terminal.PrintLine('  + Reviewed-by: ', col.GREEN, newline=False),
-            next(lines))
+            next(itr))
         self.assertEqual(terminal.PrintLine(self.mary, col.WHITE),
-                         next(lines))
+                         next(itr))
         self.assertEqual(
             terminal.PrintLine('  + Tested-by: ', col.GREEN, newline=False),
-            next(lines))
+            next(itr))
         self.assertEqual(terminal.PrintLine(self.leb, col.WHITE),
-                         next(lines))
+                         next(itr))
 
         self.assertEqual(terminal.PrintLine('Review: %s' % self.fred, col.RED),
-                         next(lines))
-        self.assertEqual(terminal.PrintLine('    Hi Fred,', None), next(lines))
-        self.assertEqual(terminal.PrintLine('', None), next(lines))
+                         next(itr))
+        self.assertEqual(terminal.PrintLine('    Hi Fred,', None), next(itr))
+        self.assertEqual(terminal.PrintLine('', None), next(itr))
         self.assertEqual(terminal.PrintLine(
-            '    > File: tools/patman/commit.py', col.MAGENTA), next(lines))
+            '    > File: tools/patman/commit.py', col.MAGENTA), next(itr))
         self.assertEqual(terminal.PrintLine(
-            '    > Line: 41 / 41: class Commit:', col.MAGENTA), next(lines))
+            '    > Line: 41 / 41: class Commit:', col.MAGENTA), next(itr))
         self.assertEqual(terminal.PrintLine(
-            '    > +        return self.subject', col.MAGENTA), next(lines))
+            '    > +        return self.subject', col.MAGENTA), next(itr))
         self.assertEqual(terminal.PrintLine(
-            '    > +', col.MAGENTA), next(lines))
+            '    > +', col.MAGENTA), next(itr))
         self.assertEqual(
             terminal.PrintLine('    >      def add_change(self, version, info):',
                                col.MAGENTA),
-            next(lines))
+            next(itr))
         self.assertEqual(terminal.PrintLine(
             '    >          """Add a new change line to the change list for a version.',
-            col.MAGENTA), next(lines))
+            col.MAGENTA), next(itr))
         self.assertEqual(terminal.PrintLine(
-            '    >', col.MAGENTA), next(lines))
+            '    >', col.MAGENTA), next(itr))
         self.assertEqual(terminal.PrintLine(
-            '    A comment', None), next(lines))
-        self.assertEqual(terminal.PrintLine('', None), next(lines))
+            '    A comment', None), next(itr))
+        self.assertEqual(terminal.PrintLine('', None), next(itr))
 
         self.assertEqual(terminal.PrintLine(
             '4 new responses available in patchwork (use -d to write them to a new branch)',
-            None), next(lines))
+            None), next(itr))
 
     def test_insert_tags(self):
         """Test inserting of review tags"""
@@ -1962,23 +1962,23 @@ second line.'''
         with terminal.capture() as (out, err):
             cser.add_series('first', 'my description', allow_unmarked=True,
                             force_version=True)
-        lines = iter(out.getvalue().splitlines())
+        itr = iter(out.getvalue().splitlines())
         self.assertEqual(
             "Adding series 'first' v1: mark False allow_unmarked True",
-            next(lines))
+            next(itr))
         self.assertRegex(
-            next(lines), 'Checking out upstream commit refs/heads/base: .*')
+            next(itr), 'Checking out upstream commit refs/heads/base: .*')
         self.assertEqual(
-            "Processing 2 commits from branch 'first'", next(lines))
-        self.assertRegex(next(lines),
+            "Processing 2 commits from branch 'first'", next(itr))
+        self.assertRegex(next(itr),
                          '-  .* as .*: i2c: I2C things')
         self.assertRegex(
-            next(lines),
+            next(itr),
             '- deleted version 1  .* as .*: spi: SPI fixes')
-        self.assertRegex(next(lines), 'Updating branch first to .*')
-        self.assertEqual("Added series 'first' v1 (2 commits)", next(lines))
+        self.assertRegex(next(itr), 'Updating branch first to .*')
+        self.assertEqual("Added series 'first' v1 (2 commits)", next(itr))
         try:
-            self.assertEqual('extra line', next(lines))
+            self.assertEqual('extra line', next(itr))
         except StopIteration:
             pass
 
@@ -2338,17 +2338,17 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         Args:
             out (StringIO): Text to check
         """
-        lines = iter(out.getvalue().splitlines())
+        itr = iter(out.getvalue().splitlines())
 
-        self.assertEqual("Increment 'first' v1: 2 patches", next(lines))
-        self.assertRegex(next(lines), 'Checking out upstream commit .*')
+        self.assertEqual("Increment 'first' v1: 2 patches", next(itr))
+        self.assertRegex(next(itr), 'Checking out upstream commit .*')
         self.assertEqual("Processing 2 commits from branch 'first2'",
-                         next(lines))
-        self.assertRegex(next(lines), '-  .* as .*: i2c: I2C things')
-        self.assertRegex(next(lines), '- added version 2 .* as .*: spi: SPI fixes')
-        self.assertRegex(next(lines), 'Updating branch first2 to .*')
-        self.assertEqual('Added new branch first2', next(lines))
-        return lines
+                         next(itr))
+        self.assertRegex(next(itr), '-  .* as .*: i2c: I2C things')
+        self.assertRegex(next(itr), '- added version 2 .* as .*: spi: SPI fixes')
+        self.assertRegex(next(itr), 'Updating branch first2 to .*')
+        self.assertEqual('Added new branch first2', next(itr))
+        return itr
 
     def test_series_link(self):
         """Test adding a patchwork link to a cseries"""
@@ -2643,17 +2643,18 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         """Common code for autolink tests"""
         cser = self.get_cser()
 
-        pwork = Patchwork.for_testing(self._fake_patchwork_cser)
-        pwork.set_project(PROJ_ID, PROJ_LINK_NAME)
-        self.assertFalse(cser.get_project())
-        cser.set_project(pwork, 'U-Boot', quiet=True)
+        with self.stage('setup'):
+            pwork = Patchwork.for_testing(self._fake_patchwork_cser)
+            pwork.set_project(PROJ_ID, PROJ_LINK_NAME)
+            self.assertFalse(cser.get_project())
+            cser.set_project(pwork, 'U-Boot', quiet=True)
 
-        with terminal.capture():
-            cser.add_series('first', '', allow_unmarked=True)
-            cser.add_series('second', allow_unmarked=True)
+            with terminal.capture():
+                cser.add_series('first', '', allow_unmarked=True)
+                cser.add_series('second', allow_unmarked=True)
 
-        yield cser, pwork
-
+        with self.stage('autolink first'):
+            yield cser, pwork
         self.db_open()
 
         plist = cser.get_ser_ver_list()
@@ -2661,7 +2662,8 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.assertEqual((1, 1, 1, None, None, None, None), plist[0])
         self.assertEqual((2, 2, 1, f'{SERIES_ID_SECOND_V1}', None, None, None),
                          plist[1])
-        yield cser
+        with self.stage('autolink first'):
+            yield cser
 
     def test_series_autolink(self):
         """Test linking a cseries to its patchwork series by description"""
@@ -2862,59 +2864,63 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         # Now do a real one to check the patchwork handling and output
         with terminal.capture() as (out, _):
             self.run_args('series', 'autolink-all', '-a', pwork=pwork)
-        lines = iter(out.getvalue().splitlines())
+        itr = iter(out.getvalue().splitlines())
         self.assertEqual(
             '1 series linked, 1 already linked, 1 not found (3 requests)',
-             next(lines))
-        self.assertEqual('', next(lines))
+             next(itr))
+        self.assertEqual('', next(itr))
         self.assertEqual(
             'Name             Version  Description                               '
             'Result',
-            next(lines))
-        self.assertTrue(next(lines).startswith('--'))
+            next(itr))
+        self.assertTrue(next(itr).startswith('--'))
         self.assertEqual(
             'first                  1  first series                              '
             'linked:1234',
-            next(lines))
+            next(itr))
         self.assertEqual(
             'first                  2  first series                              '
             'not found',
-            next(lines))
+            next(itr))
         self.assertEqual(
             f'second                 1  Series for my board                       '
             f'already:{SERIES_ID_SECOND_V1}',
-            next(lines))
-        self.assertTrue(next(lines).startswith('--'))
-        self.assertFinished(lines)
+            next(itr))
+        self.assertTrue(next(itr).startswith('--'))
+        self.assertFinished(itr)
 
     def check_series_archive(self):
         """Coroutine to run the archive test"""
         cser = self.get_cser()
-        with terminal.capture():
-            cser.add_series('first', '', allow_unmarked=True)
+        with self.stage('setup'):
+            with terminal.capture():
+                cser.add_series('first', '', allow_unmarked=True)
 
-        # Check the series is visible in the list
-        slist = cser.get_series_dict()
-        self.assertEqual(1, len(slist))
-        self.assertEqual('first', slist['first'].name)
+            # Check the series is visible in the list
+            slist = cser.get_series_dict()
+            self.assertEqual(1, len(slist))
+            self.assertEqual('first', slist['first'].name)
 
-        # Archive it and make sure it is invisible
-        yield cser
-        # cser.set_archived('first', True)
-        slist = cser.get_series_dict()
-        self.assertFalse(slist)
+        with self.stage('archive'):
+            # Archive it and make sure it is invisible
+            yield cser
+            # cser.set_archived('first', True)
+            slist = cser.get_series_dict()
+            self.assertFalse(slist)
 
-        # ...unless we include archived items
-        slist = cser.get_series_dict(include_archived=True)
-        self.assertEqual(1, len(slist))
-        self.assertEqual('first', slist['first'].name)
+            # ...unless we include archived items
+            slist = cser.get_series_dict(include_archived=True)
+            self.assertEqual(1, len(slist))
+            self.assertEqual('first', slist['first'].name)
 
-        # or we unarchive it
-        yield cser
-        # cser.set_archived('first', False)
-        slist = cser.get_series_dict()
-        self.assertEqual(1, len(slist))
-        self.db_close()
+        with self.stage('unarchive'):
+            # or we unarchive it
+            yield cser
+            # cser.set_archived('first', False)
+            slist = cser.get_series_dict()
+            self.assertEqual(1, len(slist))
+            self.db_close()
+
         yield cser
 
     def test_series_archive(self):
@@ -3020,8 +3026,8 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         with terminal.capture() as (out, _):
             cser.increment('first', dry_run=True)
-        lines = self._check_inc(out)
-        self.assertEqual('Dry run completed', next(lines))
+        itr = self._check_inc(out)
+        self.assertEqual('Dry run completed', next(itr))
 
         # Make sure that nothing was added
         plist = cser.get_ser_ver_list()
@@ -3282,20 +3288,20 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         with terminal.capture() as (out, _):
             cser.add_series('first', '', mark=True, dry_run=True)
-        lines = iter(out.getvalue().splitlines())
+        itr = iter(out.getvalue().splitlines())
         self.assertEqual(
             "Adding series 'first' v1: mark True allow_unmarked False",
-            next(lines))
+            next(itr))
         self.assertRegex(
-            next(lines), 'Checking out upstream commit refs/heads/base: .*')
+            next(itr), 'Checking out upstream commit refs/heads/base: .*')
         self.assertEqual("Processing 2 commits from branch 'first'",
-                         next(lines))
-        self.assertRegex(next(lines), r'- marked .* as .*: i2c: I2C things')
-        self.assertRegex(next(lines), '- marked .* as .*: spi: SPI fixes')
-        self.assertRegex(next(lines), 'Updating branch first to .*')
+                         next(itr))
+        self.assertRegex(next(itr), r'- marked .* as .*: i2c: I2C things')
+        self.assertRegex(next(itr), '- marked .* as .*: spi: SPI fixes')
+        self.assertRegex(next(itr), 'Updating branch first to .*')
         self.assertEqual("Added series 'first' v1 (2 commits)",
-                         next(lines))
-        self.assertEqual('Dry run completed', next(lines))
+                         next(itr))
+        self.assertEqual('Dry run completed', next(itr))
 
         # Doing another dry run should produce the same result
         with terminal.capture() as (out2, _):
@@ -3360,18 +3366,18 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         with terminal.capture() as (out, _):
             yield cser
 
-        lines = iter(out.getvalue().splitlines())
+        itr = iter(out.getvalue().splitlines())
         self.assertEqual(
             "Unmarking series 'first': allow_unmarked False",
-            next(lines))
+            next(itr))
         self.assertRegex(
-            next(lines), 'Checking out upstream commit refs/heads/base: .*')
+            next(itr), 'Checking out upstream commit refs/heads/base: .*')
         self.assertEqual("Processing 2 commits from branch 'first'",
-                         next(lines))
-        self.assertRegex(next(lines), '- unmarked .* as .*: i2c: I2C things')
-        self.assertRegex(next(lines), '- unmarked .* as .*: spi: SPI fixes')
-        self.assertRegex(next(lines), 'Updating branch first to .*')
-        self.assertEqual('Dry run completed', next(lines))
+                         next(itr))
+        self.assertRegex(next(itr), '- unmarked .* as .*: i2c: I2C things')
+        self.assertRegex(next(itr), '- unmarked .* as .*: spi: SPI fixes')
+        self.assertRegex(next(itr), 'Updating branch first to .*')
+        self.assertEqual('Dry run completed', next(itr))
 
         with terminal.capture() as (out, _):
             yield cser
@@ -3764,20 +3770,20 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         with terminal.capture() as (out, _):
             yield cser
-        lines = iter(out.getvalue().splitlines())
-        self.assertEqual("Branch 'first' (total 2): 2:unknown", next(lines))
-        self.assertIn('PatchId', next(lines))
-        self.assertRegex(next(lines), r'  0 .* i2c: I2C things')
-        self.assertRegex(next(lines), r'  1 .* spi: SPI fixes')
+        itr = iter(out.getvalue().splitlines())
+        self.assertEqual("Branch 'first' (total 2): 2:unknown", next(itr))
+        self.assertIn('PatchId', next(itr))
+        self.assertRegex(next(itr), r'  0 .* i2c: I2C things')
+        self.assertRegex(next(itr), r'  1 .* spi: SPI fixes')
 
         with terminal.capture() as (out, _):
             yield cser
-        lines = iter(out.getvalue().splitlines())
-        self.assertEqual("Branch 'second2' (total 3): 3:unknown", next(lines))
-        self.assertIn('PatchId', next(lines))
-        self.assertRegex(next(lines), '  0 .* video: Some video improvements')
-        self.assertRegex(next(lines), '  1 .* serial: Add a serial driver')
-        self.assertRegex(next(lines), '  2 .* bootm: Make it boot')
+        itr = iter(out.getvalue().splitlines())
+        self.assertEqual("Branch 'second2' (total 3): 3:unknown", next(itr))
+        self.assertIn('PatchId', next(itr))
+        self.assertRegex(next(itr), '  0 .* video: Some video improvements')
+        self.assertRegex(next(itr), '  1 .* serial: Add a serial driver')
+        self.assertRegex(next(itr), '  2 .* bootm: Make it boot')
         yield cser
 
     def test_series_list_patches(self):
@@ -3852,9 +3858,9 @@ Date:   .*
  spi.c | 3 +++
  1 file changed, 3 insertions(+)
 '''
-        lines = iter(out.getvalue().splitlines())
+        itr = iter(out.getvalue().splitlines())
         for seq, eline in enumerate(expect.splitlines()):
-            line = next(lines).rstrip()
+            line = next(itr).rstrip()
             if '*' in eline:
                 self.assertRegex(line, eline, f'line {seq + 1}')
             else:
@@ -4208,38 +4214,38 @@ Date:   .*
 
         self.assertFalse(next(cor))
 
-    def _check_second(self, lines, show_all):
+    def _check_second(self, itr, show_all):
         self.assertEqual('second: Series for my board (versions: 1 2)',
-                         next(lines))
+                         next(itr))
         if show_all:
             self.assertEqual("Branch 'second' (total 3): 3:unknown",
-                             next(lines))
-            self.assertIn('PatchId', next(lines))
+                             next(itr))
+            self.assertIn('PatchId', next(itr))
             self.assertRegex(
-                next(lines),
+                next(itr),
                 '  0 unknown      -         .* video: Some video improvements')
             self.assertRegex(
-                next(lines),
+                next(itr),
                 '  1 unknown      -         .* serial: Add a serial driver')
             self.assertRegex(
-                next(lines),
+                next(itr),
                 '  2 unknown      -         .* bootm: Make it boot')
-            self.assertEqual('', next(lines))
+            self.assertEqual('', next(itr))
         self.assertEqual(
             "Branch 'second2' (total 3): 1:accepted 1:changes 1:rejected",
-            next(lines))
-        self.assertIn('PatchId', next(lines))
+            next(itr))
+        self.assertIn('PatchId', next(itr))
         self.assertEqual(
             'Cov              2     139            The name of the cover letter',
-            next(lines))
+            next(itr))
         self.assertRegex(
-            next(lines),
+            next(itr),
             '  0 accepted     2     110 .* video: Some video improvements')
         self.assertRegex(
-            next(lines),
+            next(itr),
             '  1 changes            111 .* serial: Add a serial driver')
         self.assertRegex(
-            next(lines),
+            next(itr),
             '  2 rejected     3     112 .* bootm: Make it boot')
 
     def test_series_progress(self):
@@ -4260,17 +4266,17 @@ Date:   .*
         lines = iter(out.getvalue().splitlines())
         self._check_second(lines, True)
 
-    def _check_first(self, lines):
-        self.assertEqual('first:  (versions: 1)', next(lines))
-        self.assertEqual("Branch 'first' (total 2): 2:unknown", next(lines))
-        self.assertIn('PatchId', next(lines))
+    def _check_first(self, itr):
+        self.assertEqual('first:  (versions: 1)', next(itr))
+        self.assertEqual("Branch 'first' (total 2): 2:unknown", next(itr))
+        self.assertIn('PatchId', next(itr))
         self.assertRegex(
-            next(lines),
+            next(itr),
             '  0 unknown      -        .* i2c: I2C things')
         self.assertRegex(
-            next(lines),
+            next(itr),
             '  1 unknown      -        .* spi: SPI fixes')
-        self.assertEqual('', next(lines))
+        self.assertEqual('', next(itr))
 
     def test_series_progress_all(self):
         """Test showing progress for all cseries"""
@@ -4298,23 +4304,23 @@ Date:   .*
 
         with terminal.capture() as (out, _):
             self.run_args('series', 'progress', pwork=True)
-        lines = iter(out.getvalue().splitlines())
+        itr = iter(out.getvalue().splitlines())
         self.assertEqual(
             'Name             Description                               Count  Status',
-            next(lines))
-        self.assertTrue(next(lines).startswith('--'))
+            next(itr))
+        self.assertTrue(next(itr).startswith('--'))
         self.assertEqual(
             'first                                                          2  2:unknown',
-            next(lines))
+            next(itr))
         self.assertEqual(
             'second2          The name of the cover letter                  3  '
             '1:accepted 1:changes 1:rejected',
-            next(lines))
-        self.assertTrue(next(lines).startswith('--'))
+            next(itr))
+        self.assertTrue(next(itr).startswith('--'))
         self.assertEqual(
             ['2', 'series', '5', '2:unknown', '1:accepted', '1:changes', '1:rejected'],
-            next(lines).split())
-        self.assertFinished(lines)
+            next(itr).split())
+        self.assertFinished(itr)
 
     def test_series_progress_all_no_patches(self):
         """Test showing progress for all cseries versions without patches"""
@@ -4323,26 +4329,26 @@ Date:   .*
         with terminal.capture() as (out, _):
             self.run_args('series', 'progress', '--show-all-versions',
                           pwork=True)
-        lines = iter(out.getvalue().splitlines())
+        itr = iter(out.getvalue().splitlines())
         self.assertEqual(
             'Name             Description                               Count  Status',
-            next(lines))
-        self.assertTrue(next(lines).startswith('--'))
+            next(itr))
+        self.assertTrue(next(itr).startswith('--'))
         self.assertEqual(
             'first                                                          2  2:unknown',
-            next(lines))
+            next(itr))
         self.assertEqual(
             'second                                                         3  3:unknown',
-            next(lines))
+            next(itr))
         self.assertEqual(
             'second2          The name of the cover letter                  3  '
             '1:accepted 1:changes 1:rejected',
-            next(lines))
-        self.assertTrue(next(lines).startswith('--'))
+            next(itr))
+        self.assertTrue(next(itr).startswith('--'))
         self.assertEqual(
             ['3', 'series', '8', '5:unknown', '1:accepted', '1:changes', '1:rejected'],
-            next(lines).split())
-        self.assertFinished(lines)
+            next(itr).split())
+        self.assertFinished(itr)
 
     def test_series_summary(self):
         self.setup_second()
@@ -4568,69 +4574,69 @@ Date:   .*
         cser.set_fake_time(h_sleep)
         with terminal.capture() as (out, _):
             cser.autolink(pwork, 'second3', 3, True, 200)
-        lines = iter(out.getvalue().splitlines())
+        itr = iter(out.getvalue().splitlines())
         for i in range(7):
             self.assertEqual(
                 "Possible matches for 'second' v3 desc 'Series for my board':",
-                 next(lines), f'failed at i={i}')
-            self.assertEqual('  Link  Version  Description', next(lines))
-            self.assertEqual('   456        1  Series for my board', next(lines))
-            self.assertEqual('   457        2  Series for my board', next(lines))
-            self.assertEqual('Sleeping for 20 seconds', next(lines))
-        self.assertEqual('Link completed after 140 seconds', next(lines))
+                 next(itr), f'failed at i={i}')
+            self.assertEqual('  Link  Version  Description', next(itr))
+            self.assertEqual('   456        1  Series for my board', next(itr))
+            self.assertEqual('   457        2  Series for my board', next(itr))
+            self.assertEqual('Sleeping for 20 seconds', next(itr))
+        self.assertEqual('Link completed after 140 seconds', next(itr))
         self.assertRegex(
-            next(lines), 'Checking out upstream commit refs/heads/base: .*')
+            next(itr), 'Checking out upstream commit refs/heads/base: .*')
         self.assertEqual(
-            "Processing 3 commits from branch 'second3'", next(lines))
+            "Processing 3 commits from branch 'second3'", next(itr))
         self.assertRegex(
-            next(lines),
+            next(itr),
             "-  .* as .*: video: Some video improvements")
         self.assertRegex(
-            next(lines),
+            next(itr),
             "- added links '3:500 2:457 1:456'  .* as .*: serial: Add a serial driver")
         self.assertRegex(
-            next(lines),
+            next(itr),
             "- added version 3 .* as .*: bootm: Make it boot")
         self.assertRegex(
-            next(lines),
+            next(itr),
             "Updating branch second3 to .*")
         self.assertEqual(
-            "Setting link for series 'second' v3 to 500", next(lines))
+            "Setting link for series 'second' v3 to 500", next(itr))
 
     def _check_status(self, out, has_comments, has_cover_comments):
-        lines = iter(out.getvalue().splitlines())
+        itr = iter(out.getvalue().splitlines())
         if has_cover_comments:
-            self.assertEqual('Cov The name of the cover letter', next(lines))
+            self.assertEqual('Cov The name of the cover letter', next(itr))
             self.assertEqual(
                 'From: A user <user@user.com>: Sun 13 Apr 14:06:02 MDT 2025',
-                next(lines))
-            self.assertEqual('some comment', next(lines))
-            self.assertEqual('', next(lines))
+                next(itr))
+            self.assertEqual('some comment', next(itr))
+            self.assertEqual('', next(itr))
 
             self.assertEqual(
                 'From: Ghenkis Khan <gk@eurasia.gov>: Sun 13 Apr 13:06:02 MDT 2025',
-                next(lines))
-            self.assertEqual('another comment', next(lines))
-            self.assertEqual('', next(lines))
+                next(itr))
+            self.assertEqual('another comment', next(itr))
+            self.assertEqual('', next(itr))
 
-        self.assertEqual('  1 video: Some video improvements', next(lines))
+        self.assertEqual('  1 video: Some video improvements', next(itr))
         self.assertEqual('  + Reviewed-by: Fred Bloggs <fred@bloggs.com>',
-                         next(lines))
+                         next(itr))
         if has_comments:
             self.assertEqual(
-                'Review: Fred Bloggs <fred@bloggs.com>', next(lines))
-            self.assertEqual('    > This was my original patch', next(lines))
-            self.assertEqual('    > which is being quoted', next(lines))
+                'Review: Fred Bloggs <fred@bloggs.com>', next(itr))
+            self.assertEqual('    > This was my original patch', next(itr))
+            self.assertEqual('    > which is being quoted', next(itr))
             self.assertEqual(
                 '    I like the approach here and I would love to see more of it.',
-                next(lines))
-            self.assertEqual('', next(lines))
+                next(itr))
+            self.assertEqual('', next(itr))
 
-        self.assertEqual('  2 serial: Add a serial driver', next(lines))
-        self.assertEqual('  3 bootm: Make it boot', next(lines))
+        self.assertEqual('  2 serial: Add a serial driver', next(itr))
+        self.assertEqual('  3 bootm: Make it boot', next(itr))
         self.assertEqual(
             '1 new response available in patchwork (use -d to write them to a new branch)',
-            next(lines))
+            next(itr))
 
     def test_series_status(self):
         """Test getting the status of a series, including comments"""
