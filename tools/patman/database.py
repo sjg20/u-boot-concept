@@ -141,7 +141,8 @@ class Database:
     def _migrate_to_v3(self):
         """Store the number of cover-letter comments in the schema"""
         self.cur.execute('ALTER TABLE ser_ver ADD COLUMN cover_id')
-        self.cur.execute('ALTER TABLE ser_ver ADD COLUMN cover_num_comments INTEGER')
+        self.cur.execute('ALTER TABLE ser_ver ADD COLUMN cover_num_comments '
+                         'INTEGER')
         self.cur.execute('ALTER TABLE ser_ver ADD COLUMN name')
 
     def migrate_to(self, dest_version):
@@ -172,8 +173,9 @@ class Database:
             # Save the new version if we have a schema_version table
             if version > 1:
                 self.cur.execute('DELETE FROM schema_version')
-                self.cur.execute('INSERT INTO schema_version (version) VALUES (?)',
-                                 (version,))
+                self.cur.execute(
+                    'INSERT INTO schema_version (version) VALUES (?)',
+                    (version,))
             self.commit()
 
     def get_schema_version(self):

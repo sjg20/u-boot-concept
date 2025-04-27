@@ -300,8 +300,8 @@ class CseriesHelper:
 
         count = gitutil.count_commits_to_branch(name, self.gitdir, end)
         if not count:
-            raise ValueError(
-                'Cannot detect branch automatically: Perhaps use -U <upstream-commit> ?')
+            raise ValueError('Cannot detect branch automatically: '
+                             'Perhaps use -U <upstream-commit> ?')
 
         series = patchstream.get_metadata(name, 0, count, git_dir=self.gitdir)
         self._copy_db_fields_to(series, ser)
@@ -358,7 +358,8 @@ class CseriesHelper:
             tout.warning(msg)
             tout.warning(f'Updating Series-version tag to version {version}')
             self._update_series(branch_name, series, int(series.version),
-                               new_name=None, dry_run=dry_run, add_vers=version)
+                                new_name=None, dry_run=dry_run,
+                                add_vers=version)
 
             # Collect the commits again, as the hashes have changed
             series = patchstream.get_metadata(branch_name, 0,
@@ -582,13 +583,13 @@ class CseriesHelper:
         return ser
 
     def _parse_series_and_version(self, in_name, in_version):
-        """Parse the name and version of a series, or detect from current branch
+        """Parse name and version of a series, or detect from current branch
 
         Figures out the name from in_name, or if that is None, from the current
             branch.
 
-        Uses the version in_version, or if that is None, uses the int at the end
-        of the name (e.g. 'series' is version 1, 'series4' is version 4)
+        Uses the version in_version, or if that is None, uses the int at the
+        end of the name (e.g. 'series' is version 1, 'series4' is version 4)
 
         Args:
             in_name (str or None): name of series
@@ -608,12 +609,14 @@ class CseriesHelper:
                 raise ValueError('No branch detected: please use -s <series>')
         name, version = split_name_version(name)
         if not name:
-            raise ValueError(f"Series name '{in_name}' cannot be a number, use '<name><version>'")
+            raise ValueError(f"Series name '{in_name}' cannot be a number, "
+                             f"use '<name><version>'")
         if not version:
             version = in_version
         if in_version and version != in_version:
             raise ValueError(
-                f"Version mismatch: -V has {in_version} but branch name indicates {version}")
+                f"Version mismatch: -V has {in_version} but branch name "
+                f'indicates {version}')
         if not version:
             version = 1
         if version > 99:
@@ -671,7 +674,8 @@ class CseriesHelper:
         dirty = gitutil.check_dirty(self.gitdir, self.topdir)
         if dirty:
             raise ValueError(
-                f"Modified files exist: use 'git status' to check: {dirty[:5]}")
+                f"Modified files exist: use 'git status' to check: "
+                f'{dirty[:5]}')
         repo = pygit2.init_repository(self.gitdir)
 
         commit = None
@@ -693,7 +697,8 @@ class CseriesHelper:
         branch = repo.lookup_branch(name)
         if not quiet:
             tout.info(
-                f"Checking out upstream commit {upstream_name}: {oid(commit.oid)}")
+                f'Checking out upstream commit {upstream_name}: '
+                f'{oid(commit.oid)}')
 
         old_head = repo.head
         if old_head.shorthand == name:
@@ -785,15 +790,11 @@ class CseriesHelper:
             tout.info(f"Updating branch {name} to {str(target.oid)[:HASH_LEN]}")
         if dry_run:
             if new_name:
-                # repo.checkout(branch.name)
                 repo.head.set_target(branch.target)
             else:
                 branch_oid = branch.peel(pygit2.GIT_OBJ_COMMIT).oid
-                # repo.checkout_tree(repo.get(branch_oid))
-                # repo.checkout_tree(repo.get(branch_oid))
                 repo.head.set_target(branch_oid)
             repo.head.set_target(branch.target)
-            # print('branch', branch.name)
             repo.set_head(branch.name)
         else:
             if new_name:
@@ -802,20 +803,9 @@ class CseriesHelper:
                     new_branch.upstream = branch.upstream
                 branch = new_branch
             else:
-                # branch.set_target(target.oid)
-                # print('cur', cur, cur.target)
                 branch.set_target(cur.target)
-                # branch = cur
-            # repo.checkout(branch)
-            # print('cur', cur.oid)
             repo.set_head(branch.name)
-            # print('branch', branch.name)
         if old_head:
-            #print('switch', switch)
-            #print('2old_head', old_head, repo.head)
-            #print('old_head name', old_head.name)
-            # ref = repo.lookup_branch(old_head)
-            # repo.set_head(repo.head)
             if not switch:
                 repo.set_head(old_head.name)
         return target
@@ -949,7 +939,7 @@ class CseriesHelper:
                 m_links = re.match('Series-links:(.*)', line)
                 if m_ver and add_vers:
                     if ('version' in series and
-                        int(series.version) != max_vers):
+                            int(series.version) != max_vers):
                         tout.warning(
                             f'Branch {branch_name}: Series-version tag '
                             f'{series.version} does not match expected version '
@@ -962,8 +952,6 @@ class CseriesHelper:
                             out.append(f'Series-version: {add_vers}')
                     added_version = True
                 elif m_links:
-                    # print('ver', max_vers, add_vers)
-                    #if add_link is not None:
                     links = series.get_links(m_links.group(1), max_vers)
                     if add_link:
                         links[max_vers] = add_link
@@ -1181,12 +1169,13 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         return await pwork._series_get_state(
             client, link, True, show_cover_comments)
 
-    async def do_series_sync(self, pwork, svid, link, series, version, show_comments,
-                             show_cover_comments, gather_tags, dry_run):
+    async def do_series_sync(self, pwork, svid, link, series, version,
+                             show_comments, show_cover_comments, gather_tags,
+                             dry_run):
         async with aiohttp.ClientSession() as client:
-            return await self._series_sync(client, pwork, svid, link, series, version,
-                                    show_comments, show_cover_comments,
-                                    gather_tags, dry_run)
+            return await self._series_sync(
+                client, pwork, svid, link, series,  version, show_comments,
+                show_cover_comments, gather_tags, dry_run)
 
     def _get_fetch_dict(self, sync_all_versions):
         """Get a dict of ser_vers to fetch, along with their patchwork links

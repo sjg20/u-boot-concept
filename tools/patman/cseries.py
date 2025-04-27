@@ -6,9 +6,7 @@
 """
 
 import asyncio
-from collections import OrderedDict, defaultdict, namedtuple
-import re
-import sqlite3
+from collections import OrderedDict, defaultdict
 
 import pygit2
 
@@ -61,8 +59,8 @@ class Cseries(cser_helper.CseriesHelper):
             tout.info(msg)
         if desc is None:
             if not ser.cover:
-                raise ValueError(
-                    f"Branch '{name}' has no cover letter - please provide description")
+                raise ValueError(f"Branch '{name}' has no cover letter - "
+                                 'please provide description')
             desc = ser.cover[0]
 
         ser = self._handle_mark(name, ser, version, mark, allow_unmarked,
@@ -188,7 +186,8 @@ class Cseries(cser_helper.CseriesHelper):
                 pwork, series, version)
             if pws:
                 if wait_s:
-                    tout.info(f'Link completed after {self.get_time() - start} seconds')
+                    tout.info('Link completed after '
+                              f'{self.get_time() - start} seconds')
                 break
 
             print(f"Possible matches for '{name}' v{version} desc '{desc}':")
@@ -204,7 +203,7 @@ class Cseries(cser_helper.CseriesHelper):
         self.link_set(name, version, pws, update_commit)
 
     def link_auto_all(self, pwork, update_commit, link_all_versions,
-                     replace_existing, dry_run, show_summary=True):
+                      replace_existing, dry_run, show_summary=True):
         """Automatically find a series link by looking in patchwork
 
         Args:
@@ -265,7 +264,8 @@ class Cseries(cser_helper.CseriesHelper):
         summary = OrderedDict()
         for svid in sorted(all_ser_vers, key=lambda k: all_ser_vers[k][1:2]):
             _, name, version, link, ser = all_ser_vers[svid]
-            summary[svid] = AUTOLINK(name, version, link, ser.desc, state[svid])
+            summary[svid] = AUTOLINK(name, version, link, ser.desc,
+                                     state[svid])
 
         if show_summary:
             msg = f'{updated} series linked'
@@ -463,7 +463,8 @@ class Cseries(cser_helper.CseriesHelper):
             pygit.oid: oid of the new branch
         """
         name, ser, _, _ = self._prep_series(name)
-        tout.info(f"Unmarking series '{name}': allow_unmarked {allow_unmarked}")
+        tout.info(
+            f"Unmarking series '{name}': allow_unmarked {allow_unmarked}")
 
         if not allow_unmarked:
             bad = []
@@ -611,7 +612,8 @@ class Cseries(cser_helper.CseriesHelper):
         self.db.settings_update(name, proj_id, link_name)
         self.commit()
         if not quiet:
-            tout.info(f"Project '{name}' patchwork-ID {proj_id} link-name {link_name}")
+            tout.info(f"Project '{name}' patchwork-ID {proj_id} "
+                      f'link-name {link_name}')
 
     def get_project(self):
         """Get the details of the project
@@ -644,8 +646,8 @@ class Cseries(cser_helper.CseriesHelper):
             col = self.col.GREEN
         elif state in ['changes-requested']:
             col = self.col.CYAN
-        elif state in ['rejected', 'deferred', 'not-applicable',
-                        'superseded', 'handled-elsewhere']:
+        elif state in ['rejected', 'deferred', 'not-applicable', 'superseded',
+                       'handled-elsewhere']:
             col = self.col.RED
         elif not state:
             state = 'unknown'
@@ -734,21 +736,22 @@ class Cseries(cser_helper.CseriesHelper):
             raise ValueError(
                 "No patchwork link is available: use 'patman series autolink'")
         tout.info(
-            f"Updating series '{ser.name}' version {version} from link '{link}'")
+            f"Updating series '{ser.name}' version {version} "
+            f"from link '{link}'")
 
         loop = asyncio.get_event_loop()
         with pwork.collect_stats() as stats:
             cover, patches = loop.run_until_complete(self.do_series_sync(
-                pwork, svid, link, ser.name, version, show_comments, show_cover_comments,
-                gather_tags, dry_run))
+                pwork, svid, link, ser.name, version, show_comments,
+                show_cover_comments, gather_tags, dry_run))
 
         with terminal.pager():
             updated, updated_cover = self._sync_one(
-                svid, ser.name, version, link, show_comments, show_cover_comments,
-                gather_tags, cover, patches, dry_run)
+                svid, ser.name, version, link, show_comments,
+                show_cover_comments, gather_tags, cover, patches, dry_run)
             tout.info(f"{updated} patch{'es' if updated != 1 else ''}"
-                      f"{' and cover letter' if updated_cover else ''} updated "
-                      f'({stats.request_count} requests)')
+                      f"{' and cover letter' if updated_cover else ''} "
+                      f'updated ({stats.request_count} requests)')
 
             if not dry_run:
                 self.commit()
@@ -756,9 +759,8 @@ class Cseries(cser_helper.CseriesHelper):
                 self.rollback()
                 tout.info('Dry run completed')
 
-    def series_sync_all(self, pwork, show_comments,
-                               show_cover_comments, sync_all_versions,
-                               gather_tags, dry_run=False):
+    def series_sync_all(self, pwork, show_comments, show_cover_comments,
+                        sync_all_versions, gather_tags, dry_run=False):
         to_fetch, missing = self._get_fetch_dict(sync_all_versions)
 
         loop = asyncio.get_event_loop()
@@ -769,7 +771,8 @@ class Cseries(cser_helper.CseriesHelper):
             tot_updated = 0
             tot_cover = 0
             add_newline = False
-            for (svid, sync), (cover, patches) in zip(to_fetch.items(), result):
+            for (svid, sync), (cover, patches) in zip(to_fetch.items(),
+                                                      result):
                 if add_newline:
                     tout.info('')
                 tout.info(f"Syncing '{sync.series_name}' v{sync.version}")
@@ -805,8 +808,9 @@ class Cseries(cser_helper.CseriesHelper):
         with terminal.pager():
             state_totals = defaultdict(int)
             if series is not None:
-                self._progress_one(self._parse_series(series), show_all_versions,
-                                   list_patches, state_totals)
+                self._progress_one(self._parse_series(series),
+                                   show_all_versions, list_patches,
+                                   state_totals)
                 return
 
             total_patches = 0
@@ -869,32 +873,39 @@ class Cseries(cser_helper.CseriesHelper):
         # With Firefox, GTK produces lots of warnings, so suppress them
         # Gtk-Message: 06:48:20.692: Failed to load module "xapp-gtk3-module"
         # Gtk-Message: 06:48:20.692: Not loading module "atk-bridge": The
-        #  functionality is provided by GTK natively. Please try to not load it.
+        # functionality is provided by GTK natively. Please try to not load it.
         # Gtk-Message: 06:48:20.692: Failed to load module "appmenu-gtk-module"
         # Gtk-Message: 06:48:20.692: Failed to load module "appmenu-gtk-module"
-        # [262145, Main Thread] WARNING: GTK+ module /snap/firefox/5987/gnome-platform
-        #  /usr/lib/gtk-2.0/modules/libcanberra-gtk-module.so cannot be loaded.
-        # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same process
-        #   is not supported.: 'glib warning', file /build/firefox/parts/firefox/
-        #   build/toolkit/xre/nsSigHandlers.cpp:201
+        # [262145, Main Thread] WARNING: GTK+ module /snap/firefox/5987/
+        #  gnome-platform/usr/lib/gtk-2.0/modules/libcanberra-gtk-module.so
+        #  cannot be loaded.
+        # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same
+        #  process #  is not supported.: 'glib warning', file /build/firefox/
+        #  parts/firefox/build/toolkit/xre/nsSigHandlers.cpp:201
         #
         # (firefox_firefox:262145): Gtk-WARNING **: 06:48:20.728: GTK+ module
-        #   /snap/firefox/5987/gnome-platform/usr/lib/gtk-2.0/modules/libcanberra-gtk-module.so
-        #   cannot be loaded.
-        # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same process is not supported.
-        # Gtk-Message: 06:48:20.728: Failed to load module "canberra-gtk-module"
-        # [262145, Main Thread] WARNING: GTK+ module /snap/firefox/5987/gnome-platform/
-        #   usr/lib/gtk-2.0/modules/libcanberra-gtk-module.so cannot be loaded.
-        # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same process is not
-        #   supported.: 'glib warning', file /build/firefox/parts/firefox/build/
-        #   toolkit/xre/nsSigHandlers.cpp:201
+        #  /snap/firefox/5987/gnome-platform/usr/lib/gtk-2.0/modules/
+        #  libcanberra-gtk-module.so cannot be loaded.
+        # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same
+        #  process is not supported.
+        # Gtk-Message: 06:48:20.728: Failed to load module
+        #  "canberra-gtk-module"
+        # [262145, Main Thread] WARNING: GTK+ module /snap/firefox/5987/
+        #  gnome-platform/usr/lib/gtk-2.0/modules/libcanberra-gtk-module.so
+        #  cannot be loaded.
+        # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same
+        #  process is not supported.: 'glib warning', file /build/firefox/
+        #  parts/firefox/build/toolkit/xre/nsSigHandlers.cpp:201
         #
         # (firefox_firefox:262145): Gtk-WARNING **: 06:48:20.729: GTK+ module
         #   /snap/firefox/5987/gnome-platform/usr/lib/gtk-2.0/modules/
         #   libcanberra-gtk-module.so cannot be loaded.
-        # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same process is not supported.
-        # Gtk-Message: 06:48:20.729: Failed to load module "canberra-gtk-module"
-        # ATTENTION: default value of option mesa_glthread overridden by environment.
+        # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same
+        #  process is not supported.
+        # Gtk-Message: 06:48:20.729: Failed to load module
+        #  "canberra-gtk-module"
+        # ATTENTION: default value of option mesa_glthread overridden by
+        # environment.
         cros_subprocess.Popen(['xdg-open', url])
 
     def scan(self, branch_name, mark=False, allow_unmarked=False, end=None,
@@ -922,7 +933,8 @@ class Cseries(cser_helper.CseriesHelper):
         pcdict = self.get_pcommit_dict(svid)
 
         tout.info(
-            f"Syncing series '{name}' v{version}: mark {mark} allow_unmarked {allow_unmarked}")
+            f"Syncing series '{name}' v{version}: mark {mark} "
+            f'allow_unmarked {allow_unmarked}')
         if msg:
             tout.info(msg)
 
@@ -982,8 +994,6 @@ class Cseries(cser_helper.CseriesHelper):
                 succeed
         """
         ser, version = self._parse_series_and_version(name, None)
-        # if not name:
-            # name = self._get_branch_name(ser.name, version)
         if not ser.idnum:
             raise ValueError(f"Series '{ser.name}' not found in database")
 
@@ -1026,18 +1036,19 @@ class Cseries(cser_helper.CseriesHelper):
             name (str): new name to use (must not include version number)
             dry_run (bool): True to do a dry run
         """
-        old_ser, _ =  self._parse_series_and_version(series, None)
+        old_ser, _ = self._parse_series_and_version(series, None)
         if not old_ser.idnum:
             raise ValueError(f"Series '{old_ser.name}' not found in database")
         if old_ser.name != series:
-            raise ValueError(
-                f"Invalid series name '{series}': did you use the branch name?")
+            raise ValueError(f"Invalid series name '{series}': "
+                             'did you use the branch name?')
         chk, _ = cser_helper.split_name_version(name)
         if chk != name:
             raise ValueError(
                 f"Invalid series name '{name}': did you use the branch name?")
         if chk == old_ser.name:
-            raise ValueError(f"Cannot rename series '{old_ser.name}' to itself")
+            raise ValueError(
+                f"Cannot rename series '{old_ser.name}' to itself")
         if self._get_series_by_name(name):
             raise ValueError(f"Cannot rename: series '{name}' already exists")
 
