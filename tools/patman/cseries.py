@@ -64,7 +64,7 @@ SER_VER = namedtuple(
     'ser_ver',
     'idnum,series_id,version,link,cover_id,cover_num_comments,name')
 
-# Summary info returned from Cseries.autolink_all()
+# Summary info returned from Cseries.link_auto_all()
 AUTOLINK = namedtuple('autolink', 'name,version,link,desc,result')
 
 def oid(oid_val):
@@ -503,7 +503,7 @@ class Cseries:
             added = True
             msg += f" series '{ser.name}'"
 
-        if version not in self.get_version_list(series_id):
+        if version not in self._get_version_list(series_id):
             self.db.execute(
                 'INSERT INTO ser_ver (series_id, version, link) VALUES '
                 '(?, ?, ?)', (series_id, version, link))
@@ -584,7 +584,7 @@ class Cseries:
         Returns:
             list of int: List of versions
         """
-        versions = self.get_version_list(ser.idnum)
+        versions = self._get_version_list(ser.idnum)
         if version not in versions:
             raise ValueError(
                 f"Series '{ser.name}' does not have a version {version}")
@@ -766,7 +766,7 @@ class Cseries:
 
                 pwc = self.get_pcommit_dict(svid)
                 count = len(pwc)
-                branch = self.join_name_version(ser.name, version)
+                branch = self._join_name_version(ser.name, version)
                 series = patchstream.get_metadata(branch, 0, count,
                                                   git_dir=self.gitdir)
                 self._copy_db_fields_to(series, ser)
@@ -783,7 +783,7 @@ class Cseries:
 
                 pwc = self.get_pcommit_dict(svid)
                 count = len(pwc)
-                branch = self.join_name_version(ser.name, version)
+                branch = self._join_name_version(ser.name, version)
                 series = patchstream.get_metadata(branch, 0, count,
                                                   git_dir=self.gitdir)
                 self._copy_db_fields_to(series, ser)
@@ -890,7 +890,7 @@ class Cseries:
 
         return summary
 
-    def get_version_list(self, idnum):
+    def _get_version_list(self, idnum):
         """Get a list of the versions available for a series
 
         Args:
@@ -906,7 +906,7 @@ class Cseries:
         recs = res.fetchall()
         return [item[0] for item in recs]
 
-    def join_name_version(self, in_name, version):
+    def _join_name_version(self, in_name, version):
         """Convert a series name plus a version into a branch name
 
         For example:
@@ -924,7 +924,7 @@ class Cseries:
             return in_name
         return f'{in_name}{version}'
 
-    def parse_series(self, name):
+    def _parse_series(self, name):
         """Parse the name of a series, or detect it from the current branch
 
         Args:
@@ -994,7 +994,7 @@ class Cseries:
             archived (bool): Whether to mark the series as archived or
                 unarchived
         """
-        ser = self.parse_series(series)
+        ser = self._parse_series(series)
         if not ser.idnum:
             raise ValueError(f"Series '{ser.name}' not found in database")
         ser.archived = archived
@@ -1040,7 +1040,7 @@ class Cseries:
         print(border)
         for name in sorted(sdict):
             ser = sdict[name]
-            versions = self.get_version_list(ser.idnum)
+            versions = self._get_version_list(ser.idnum)
             stat = self.series_get_version_stats(
                 ser.idnum, self.series_max_version(ser.idnum))[0]
 
@@ -1140,7 +1140,7 @@ class Cseries:
                 branch
             dry_run (bool): True to do a dry run
         """
-        ser = self.parse_series(series_name)
+        ser = self._parse_series(series_name)
         if not ser.idnum:
             raise ValueError(f"Series '{ser.name}' not found in database")
 
@@ -1157,7 +1157,7 @@ class Cseries:
 
         # Create a new branch
         vers = max_vers + 1
-        new_name = self.join_name_version(ser.name, vers)
+        new_name = self._join_name_version(ser.name, vers)
 
         self.update_series(branch_name, series, max_vers, new_name, dry_run,
                            add_vers=vers, switch=on_branch)
@@ -1192,7 +1192,7 @@ class Cseries:
             series (str): Name of series to use, or None to use current branch
             dry_run (bool): True to do a dry run
         """
-        ser = self.parse_series(series)
+        ser = self._parse_series(series)
         if not ser.idnum:
             raise ValueError(f"Series '{ser.name}' not found in database")
 
@@ -1664,7 +1664,7 @@ class Cseries:
             name (str): Name of series to remove, or None to use current one
             dry_run (bool): True to do a dry run
         """
-        ser = self.parse_series(name)
+        ser = self._parse_series(name)
         name = ser.name
 
         res = self.db.execute(
@@ -1929,7 +1929,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         pwc = self.get_pcommit_dict(svid)
 
         count = len(pwc)
-        branch = self.join_name_version(ser.name, version)
+        branch = self._join_name_version(ser.name, version)
         series = patchstream.get_metadata(branch, 0, count, git_dir=self.gitdir)
         self._copy_db_fields_to(series, ser)
 
@@ -2021,7 +2021,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         pwc = self.get_pcommit_dict(svid)
         if gather_tags:
             count = len(pwc)
-            branch = self.join_name_version(series_name, version)
+            branch = self._join_name_version(series_name, version)
             series = patchstream.get_metadata(branch, 0, count,
                                               git_dir=self.gitdir)
 
@@ -2271,7 +2271,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         name, desc = self.get_series_info(ser.idnum)
         coloured = self.col.build(self.col.BLACK, desc, bright=False,
                                   back=self.col.YELLOW)
-        versions = self.get_version_list(ser.idnum)
+        versions = self._get_version_list(ser.idnum)
         vstr = list(map(str, versions))
 
         if list_patches:
@@ -2286,7 +2286,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 print()
             _, pwc = self.series_get_version_stats(ser.idnum, ver)
             count = len(pwc)
-            branch = self.join_name_version(ser.name, ver)
+            branch = self._join_name_version(ser.name, ver)
             series = patchstream.get_metadata(branch, 0, count,
                                               git_dir=self.gitdir)
             _, _, cover_id, num_comments, name = self.get_ser_ver(ser.idnum,
@@ -2312,7 +2312,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         with terminal.pager():
             state_totals = defaultdict(int)
             if series is not None:
-                self._progress_one(self.parse_series(series), show_all_versions,
+                self._progress_one(self._parse_series(series), show_all_versions,
                                    list_patches, state_totals)
                 return
 
@@ -2372,7 +2372,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         print(f"{'Name':17}  Status  Description")
         print(f"{'-' * 17}  {'-' * 6}  {'-' * 30}")
         if series is not None:
-            self._summary_one(self.parse_series(series))
+            self._summary_one(self._parse_series(series))
             return
 
         sdict = self.get_series_dict()
@@ -2604,7 +2604,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         if self._get_series_by_name(name):
             raise ValueError(f"Cannot rename: series '{name}' already exists")
 
-        versions = self.get_version_list(old_ser.idnum)
+        versions = self._get_version_list(old_ser.idnum)
         missing = []
         exists = []
         todo = {}
