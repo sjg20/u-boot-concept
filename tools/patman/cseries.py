@@ -616,7 +616,7 @@ class Cseries(cser_helper.CseriesHelper):
         if dry_run:
             tout.info('Dry run completed')
 
-    def series_mark(self, in_name, allow_marked=False, dry_run=False):
+    def mark(self, in_name, allow_marked=False, dry_run=False):
         """Add Change-Id tags to a series
 
         Args:

@@ -1961,7 +1961,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         with self.stage('mark twice'):
             with terminal.capture():
                 with self.assertRaises(ValueError) as exc:
-                    cser.series_mark('first', dry_run=False)
+                    cser.mark('first', dry_run=False)
             self.assertEqual('Marked commits 2/2', str(exc.exception))
 
         # Use the --marked flag to make it succeed
@@ -1986,21 +1986,21 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         # Start with a dry run, which should do nothing
         cser = next(cor)
-        cser.series_mark('first', dry_run=True)
+        cser.mark('first', dry_run=True)
 
         # Now do a real run
         cser = next(cor)
-        cser.series_mark('first', dry_run=False)
+        cser.mark('first', dry_run=False)
 
         # Try to mark again, which should fail
         with terminal.capture():
             with self.assertRaises(ValueError) as exc:
-                cser.series_mark('first', dry_run=False)
+                cser.mark('first', dry_run=False)
         self.assertEqual('Marked commits 2/2', str(exc.exception))
 
         # Use the --allow-marked flag to make it succeed
         cser = next(cor)
-        cser.series_mark('first', allow_marked=True, dry_run=False)
+        cser.mark('first', allow_marked=True, dry_run=False)
 
         self.assertFalse(next(cor))
 
