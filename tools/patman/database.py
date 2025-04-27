@@ -333,20 +333,21 @@ class Database:
             raise ValueError('Expected one match, but multiple matches found')
         return recs[0][0]
 
-    def ser_ver_add(self, series_idnum, version):
+    def ser_ver_add(self, series_idnum, version, link=None):
         """Add a new ser_ver record
 
         Args:
             series_idnum (int): ID num of the series which is getting a new
                 version
             version (int): Version number to add
+            link (str): Patchwork link, or None if not known
 
         Return:
             int: ID num of the new ser_ver record
         """
         self.execute(
-            'INSERT INTO ser_ver (series_id, version) VALUES (?, ?)',
-            (series_idnum, version))
+            'INSERT INTO ser_ver (series_id, version, link) VALUES (?, ?, ?)',
+            (series_idnum, version, link))
         return self.lastrowid()
 
     # pcommit functions

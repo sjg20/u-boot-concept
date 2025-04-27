@@ -78,10 +78,7 @@ class Cseries(cser_helper.CseriesHelper):
             msg += f" series '{ser.name}'"
 
         if version not in self._get_version_list(series_id):
-            self.db.execute(
-                'INSERT INTO ser_ver (series_id, version, link) VALUES '
-                '(?, ?, ?)', (series_id, version, link))
-            svid = self.lastrowid()
+            svid = self.db.ser_ver_add(series_id, version, link)
             msg += f" v{version}"
             if not added:
                 msg += f" to existing series '{ser.name}'"
