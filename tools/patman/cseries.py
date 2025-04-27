@@ -453,6 +453,24 @@ class Cseries(cser_helper.CseriesHelper):
             print(f'{name:16.16} {ser.desc:41.41} {stat.rjust(8)}  {vlist}')
         print(border)
 
+    def list_patches(self, series, version, show_commit=False,
+                     show_patch=False):
+        """List patches in a series
+
+        Args:
+            series (str): Name of series to use, or None to use current branch
+            version (int): Version number, or None to detect from name
+            show_commit (bool): True to show the commit and diffstate
+            show_patch (bool): True to show the patch
+        """
+        branch, series, version, pwc, name, _, cover_id, num_comments = (
+            self._get_patches(series, version))
+        with terminal.pager():
+            state_totals = defaultdict(int)
+            self._list_patches(branch, pwc, series, name, cover_id,
+                               num_comments, show_commit, show_patch, True,
+                               state_totals)
+
     def mark(self, in_name, allow_marked=False, dry_run=False):
         """Add Change-Id tags to a series
 
@@ -528,6 +546,102 @@ class Cseries(cser_helper.CseriesHelper):
         if dry_run:
             tout.info('Dry run completed')
         return vals.oid
+
+    def open(self, pwork, name, version):
+        """Open the patchwork page for a series
+
+        Args:
+            pwork (Patchwork): Patchwork object to use
+            name (str): Name of series to open
+            version (str): Version number to open
+        """
+        ser, version = self._parse_series_and_version(name, version)
+        link = self.link_get(ser.name, version)
+        pwork.url = 'https://patchwork.ozlabs.org'
+        url = self.loop.run_until_complete(pwork.get_series_url(link))
+        print(f'Opening {url}')
+
+        # With Firefox, GTK produces lots of warnings, so suppress them
+        # Gtk-Message: 06:48:20.692: Failed to load module "xapp-gtk3-module"
+        # Gtk-Message: 06:48:20.692: Not loading module "atk-bridge": The
+        # functionality is provided by GTK natively. Please try to not load it.
+        # Gtk-Message: 06:48:20.692: Failed to load module "appmenu-gtk-module"
+        # Gtk-Message: 06:48:20.692: Failed to load module "appmenu-gtk-module"
+        # [262145, Main Thread] WARNING: GTK+ module /snap/firefox/5987/
+        #  gnome-platform/usr/lib/gtk-2.0/modules/libcanberra-gtk-module.so
+        #  cannot be loaded.
+        # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same
+        #  process #  is not supported.: 'glib warning', file /build/firefox/
+        #  parts/firefox/build/toolkit/xre/nsSigHandlers.cpp:201
+        #
+        # (firefox_firefox:262145): Gtk-WARNING **: 06:48:20.728: GTK+ module
+        #  /snap/firefox/5987/gnome-platform/usr/lib/gtk-2.0/modules/
+        #  libcanberra-gtk-module.so cannot be loaded.
+        # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same
+        #  process is not supported.
+        # Gtk-Message: 06:48:20.728: Failed to load module
+        #  "canberra-gtk-module"
+        # [262145, Main Thread] WARNING: GTK+ module /snap/firefox/5987/
+        #  gnome-platform/usr/lib/gtk-2.0/modules/libcanberra-gtk-module.so
+        #  cannot be loaded.
+        # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same
+        #  process is not supported.: 'glib warning', file /build/firefox/
+        #  parts/firefox/build/toolkit/xre/nsSigHandlers.cpp:201
+        #
+        # (firefox_firefox:262145): Gtk-WARNING **: 06:48:20.729: GTK+ module
+        #   /snap/firefox/5987/gnome-platform/usr/lib/gtk-2.0/modules/
+        #   libcanberra-gtk-module.so cannot be loaded.
+        # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same
+        #  process is not supported.
+        # Gtk-Message: 06:48:20.729: Failed to load module
+        #  "canberra-gtk-module"
+        # ATTENTION: default value of option mesa_glthread overridden by
+        # environment.
+        cros_subprocess.Popen(['xdg-open', url])
+
+    def progress(self, series, show_all_versions, list_patches):
+        """Show progress information for all versions in a series
+
+        Args:
+            series (str): Name of series to use, or None to show progress for
+                all series
+            show_all (bool): True to show all versions of a series, False to
+                show only the final version
+        """
+        with terminal.pager():
+            state_totals = defaultdict(int)
+            if series is not None:
+                self._progress_one(self._parse_series(series),
+                                   show_all_versions, list_patches,
+                                   state_totals)
+                return
+
+            total_patches = 0
+            total_series = 0
+            sdict = self.db.series_get_dict()
+            border = None
+            if not list_patches:
+                print(self.col.build(
+                    self.col.MAGENTA,
+                    f"{'Name':16} {'Description':41} Count  {'Status'}"))
+                border = f"{'-' * 15}  {'-' * 40}  -----  {'-' * 15}"
+                print(border)
+            for name in sorted(sdict):
+                ser = sdict[name]
+                num_series, num_patches = self._progress_one(
+                    ser, show_all_versions, list_patches, state_totals)
+                if list_patches:
+                    print()
+                total_series += num_series
+                total_patches += num_patches
+            if not list_patches:
+                print(border)
+                total = f'{total_series} series'
+                out = ''
+                for state, freq in state_totals.items():
+                    out += ' ' + self._build_col(state, f'{freq}:')[0]
+
+                print(f"{total:15}  {'':40}  {total_patches:5} {out}")
 
     def project_set(self, pwork, name, quiet=False):
         """Set the name of the project
@@ -714,103 +828,7 @@ class Cseries(cser_helper.CseriesHelper):
             series, link, branch, None, False, show_comments,
             show_cover_comments, pwork, self.gitdir, single_thread)
 
-    def version_remove(self, name, version, dry_run=False):
-        """Remove a version of a series from the database
-
-        Args:
-            name (str): Name of series to remove, or None to use current one
-            version (int): Version number to remove
-            dry_run (bool): True to do a dry run
-        """
-        ser, version = self._parse_series_and_version(name, version)
-        name = ser.name
-
-        versions = self._ensure_version(ser, version)
-
-        if versions == [version]:
-            raise ValueError(
-                f"Series '{ser.name}' only has one version: remove the series")
-
-        self.db.ser_ver_remove(ser.idnum, version)
-        if not dry_run:
-            self.commit()
-        else:
-            self.rollback()
-
-        tout.info(f"Removed version {version} from series '{name}'")
-        if dry_run:
-            tout.info('Dry run completed')
-
-    def sync(self, pwork, series, version, show_comments,
-                    show_cover_comments, gather_tags, dry_run=False):
-        ser, version = self._parse_series_and_version(series, version)
-        self._ensure_version(ser, version)
-        svid, link = self.get_series_svid_link(ser.idnum, version)
-        if not link:
-            raise ValueError(
-                "No patchwork link is available: use 'patman series autolink'")
-        tout.info(
-            f"Updating series '{ser.name}' version {version} "
-            f"from link '{link}'")
-
-        loop = asyncio.get_event_loop()
-        with pwork.collect_stats() as stats:
-            cover, patches = loop.run_until_complete(self.do_series_sync(
-                pwork, svid, link, ser.name, version, show_comments,
-                show_cover_comments, gather_tags, dry_run))
-
-        with terminal.pager():
-            updated, updated_cover = self._sync_one(
-                svid, ser.name, version, link, show_comments,
-                show_cover_comments, gather_tags, cover, patches, dry_run)
-            tout.info(f"{updated} patch{'es' if updated != 1 else ''}"
-                      f"{' and cover letter' if updated_cover else ''} "
-                      f'updated ({stats.request_count} requests)')
-
-            if not dry_run:
-                self.commit()
-            else:
-                self.rollback()
-                tout.info('Dry run completed')
-
-    def sync_all(self, pwork, show_comments, show_cover_comments,
-                        sync_all_versions, gather_tags, dry_run=False):
-        to_fetch, missing = self._get_fetch_dict(sync_all_versions)
-
-        loop = asyncio.get_event_loop()
-        result, requests = loop.run_until_complete(self._do_series_sync_all(
-                pwork, show_cover_comments, to_fetch))
-
-        with terminal.pager():
-            tot_updated = 0
-            tot_cover = 0
-            add_newline = False
-            for (svid, sync), (cover, patches) in zip(to_fetch.items(),
-                                                      result):
-                if add_newline:
-                    tout.info('')
-                tout.info(f"Syncing '{sync.series_name}' v{sync.version}")
-                updated, updated_cover = self._sync_one(
-                    svid, sync.series_name, sync.version, sync.link,
-                    show_comments, show_cover_comments, gather_tags, cover,
-                    patches, dry_run)
-                tot_updated += updated
-                tot_cover += updated_cover
-                add_newline = gather_tags
-
-            tout.info('')
-            tout.info(
-                f"{tot_updated} patch{'es' if tot_updated != 1 else ''} and "
-                f"{tot_cover} cover letter{'s' if tot_cover != 1 else ''} "
-                f'updated, {missing} missing '
-                f"link{'s' if missing != 1 else ''} ({requests} requests)")
-            if not dry_run:
-                self.commit()
-            else:
-                self.rollback()
-                tout.info('Dry run completed')
-
-    def build_col(self, state, prefix='', base_str=None):
+    def _build_col(self, state, prefix='', base_str=None):
         """Build a patch-state string with colour
 
         Args:
@@ -843,120 +861,6 @@ class Cseries(cser_helper.CseriesHelper):
         pad = ' ' * (10 - len(out))
         col_state = self.col.build(col, prefix + out, bright)
         return col_state, pad
-
-    def list_patches(self, series, version, show_commit=False,
-                     show_patch=False):
-        """List patches in a series
-
-        Args:
-            series (str): Name of series to use, or None to use current branch
-            version (int): Version number, or None to detect from name
-            show_commit (bool): True to show the commit and diffstate
-            show_patch (bool): True to show the patch
-        """
-        branch, series, version, pwc, name, _, cover_id, num_comments = (
-            self._get_patches(series, version))
-        with terminal.pager():
-            state_totals = defaultdict(int)
-            self._list_patches(branch, pwc, series, name, cover_id,
-                               num_comments, show_commit, show_patch, True,
-                               state_totals)
-
-    def open(self, pwork, name, version):
-        """Open the patchwork page for a series
-
-        Args:
-            pwork (Patchwork): Patchwork object to use
-            name (str): Name of series to open
-            version (str): Version number to open
-        """
-        ser, version = self._parse_series_and_version(name, version)
-        link = self.link_get(ser.name, version)
-        pwork.url = 'https://patchwork.ozlabs.org'
-        url = self.loop.run_until_complete(pwork.get_series_url(link))
-        print(f'Opening {url}')
-
-        # With Firefox, GTK produces lots of warnings, so suppress them
-        # Gtk-Message: 06:48:20.692: Failed to load module "xapp-gtk3-module"
-        # Gtk-Message: 06:48:20.692: Not loading module "atk-bridge": The
-        # functionality is provided by GTK natively. Please try to not load it.
-        # Gtk-Message: 06:48:20.692: Failed to load module "appmenu-gtk-module"
-        # Gtk-Message: 06:48:20.692: Failed to load module "appmenu-gtk-module"
-        # [262145, Main Thread] WARNING: GTK+ module /snap/firefox/5987/
-        #  gnome-platform/usr/lib/gtk-2.0/modules/libcanberra-gtk-module.so
-        #  cannot be loaded.
-        # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same
-        #  process #  is not supported.: 'glib warning', file /build/firefox/
-        #  parts/firefox/build/toolkit/xre/nsSigHandlers.cpp:201
-        #
-        # (firefox_firefox:262145): Gtk-WARNING **: 06:48:20.728: GTK+ module
-        #  /snap/firefox/5987/gnome-platform/usr/lib/gtk-2.0/modules/
-        #  libcanberra-gtk-module.so cannot be loaded.
-        # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same
-        #  process is not supported.
-        # Gtk-Message: 06:48:20.728: Failed to load module
-        #  "canberra-gtk-module"
-        # [262145, Main Thread] WARNING: GTK+ module /snap/firefox/5987/
-        #  gnome-platform/usr/lib/gtk-2.0/modules/libcanberra-gtk-module.so
-        #  cannot be loaded.
-        # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same
-        #  process is not supported.: 'glib warning', file /build/firefox/
-        #  parts/firefox/build/toolkit/xre/nsSigHandlers.cpp:201
-        #
-        # (firefox_firefox:262145): Gtk-WARNING **: 06:48:20.729: GTK+ module
-        #   /snap/firefox/5987/gnome-platform/usr/lib/gtk-2.0/modules/
-        #   libcanberra-gtk-module.so cannot be loaded.
-        # GTK+ 2.x symbols detected. Using GTK+ 2.x and GTK+ 3 in the same
-        #  process is not supported.
-        # Gtk-Message: 06:48:20.729: Failed to load module
-        #  "canberra-gtk-module"
-        # ATTENTION: default value of option mesa_glthread overridden by
-        # environment.
-        cros_subprocess.Popen(['xdg-open', url])
-
-    def progress(self, series, show_all_versions, list_patches):
-        """Show progress information for all versions in a series
-
-        Args:
-            series (str): Name of series to use, or None to show progress for
-                all series
-            show_all (bool): True to show all versions of a series, False to
-                show only the final version
-        """
-        with terminal.pager():
-            state_totals = defaultdict(int)
-            if series is not None:
-                self._progress_one(self._parse_series(series),
-                                   show_all_versions, list_patches,
-                                   state_totals)
-                return
-
-            total_patches = 0
-            total_series = 0
-            sdict = self.db.series_get_dict()
-            border = None
-            if not list_patches:
-                print(self.col.build(
-                    self.col.MAGENTA,
-                    f"{'Name':16} {'Description':41} Count  {'Status'}"))
-                border = f"{'-' * 15}  {'-' * 40}  -----  {'-' * 15}"
-                print(border)
-            for name in sorted(sdict):
-                ser = sdict[name]
-                num_series, num_patches = self._progress_one(
-                    ser, show_all_versions, list_patches, state_totals)
-                if list_patches:
-                    print()
-                total_series += num_series
-                total_patches += num_patches
-            if not list_patches:
-                print(border)
-                total = f'{total_series} series'
-                out = ''
-                for state, freq in state_totals.items():
-                    out += ' ' + self.build_col(state, f'{freq}:')[0]
-
-                print(f"{total:15}  {'':40}  {total_patches:5} {out}")
 
     def scan(self, branch_name, mark=False, allow_unmarked=False, end=None,
              dry_run=False):
@@ -1047,6 +951,75 @@ class Cseries(cser_helper.CseriesHelper):
         for ser in sdict.values():
             self._summary_one(ser)
 
+    def sync(self, pwork, series, version, show_comments,
+                    show_cover_comments, gather_tags, dry_run=False):
+        ser, version = self._parse_series_and_version(series, version)
+        self._ensure_version(ser, version)
+        svid, link = self.get_series_svid_link(ser.idnum, version)
+        if not link:
+            raise ValueError(
+                "No patchwork link is available: use 'patman series autolink'")
+        tout.info(
+            f"Updating series '{ser.name}' version {version} "
+            f"from link '{link}'")
+
+        loop = asyncio.get_event_loop()
+        with pwork.collect_stats() as stats:
+            cover, patches = loop.run_until_complete(self.do_series_sync(
+                pwork, svid, link, ser.name, version, show_comments,
+                show_cover_comments, gather_tags, dry_run))
+
+        with terminal.pager():
+            updated, updated_cover = self._sync_one(
+                svid, ser.name, version, link, show_comments,
+                show_cover_comments, gather_tags, cover, patches, dry_run)
+            tout.info(f"{updated} patch{'es' if updated != 1 else ''}"
+                      f"{' and cover letter' if updated_cover else ''} "
+                      f'updated ({stats.request_count} requests)')
+
+            if not dry_run:
+                self.commit()
+            else:
+                self.rollback()
+                tout.info('Dry run completed')
+
+    def sync_all(self, pwork, show_comments, show_cover_comments,
+                        sync_all_versions, gather_tags, dry_run=False):
+        to_fetch, missing = self._get_fetch_dict(sync_all_versions)
+
+        loop = asyncio.get_event_loop()
+        result, requests = loop.run_until_complete(self._do_series_sync_all(
+                pwork, show_cover_comments, to_fetch))
+
+        with terminal.pager():
+            tot_updated = 0
+            tot_cover = 0
+            add_newline = False
+            for (svid, sync), (cover, patches) in zip(to_fetch.items(),
+                                                      result):
+                if add_newline:
+                    tout.info('')
+                tout.info(f"Syncing '{sync.series_name}' v{sync.version}")
+                updated, updated_cover = self._sync_one(
+                    svid, sync.series_name, sync.version, sync.link,
+                    show_comments, show_cover_comments, gather_tags, cover,
+                    patches, dry_run)
+                tot_updated += updated
+                tot_cover += updated_cover
+                add_newline = gather_tags
+
+            tout.info('')
+            tout.info(
+                f"{tot_updated} patch{'es' if tot_updated != 1 else ''} and "
+                f"{tot_cover} cover letter{'s' if tot_cover != 1 else ''} "
+                f'updated, {missing} missing '
+                f"link{'s' if missing != 1 else ''} ({requests} requests)")
+            if not dry_run:
+                self.commit()
+            else:
+                self.rollback()
+                tout.info('Dry run completed')
+
     def upstream_add(self, name, url):
         """Add a new upstream tree
 
@@ -1096,3 +1069,29 @@ class Cseries(cser_helper.CseriesHelper):
         self.db.upstream_delete(name)
         self.commit()
 
+    def version_remove(self, name, version, dry_run=False):
+        """Remove a version of a series from the database
+
+        Args:
+            name (str): Name of series to remove, or None to use current one
+            version (int): Version number to remove
+            dry_run (bool): True to do a dry run
+        """
+        ser, version = self._parse_series_and_version(name, version)
+        name = ser.name
+
+        versions = self._ensure_version(ser, version)
+
+        if versions == [version]:
+            raise ValueError(
+                f"Series '{ser.name}' only has one version: remove the series")
+
+        self.db.ser_ver_remove(ser.idnum, version)
+        if not dry_run:
+            self.commit()
+        else:
+            self.rollback()
+
+        tout.info(f"Removed version {version} from series '{name}'")
+        if dry_run:
+            tout.info('Dry run completed')

@@ -1090,7 +1090,7 @@ Database: '{item.subject}'
 Branch:   '{cmt.subject}
 Please use 'patman series -s {branch} scan' to resolve this''')
 
-            col_state, pad = self.build_col(item.state)
+            col_state, pad = self._build_col(item.state)
             patch_id = item.patch_id if item.patch_id else ''
             if item.num_comments:
                 comments = str(item.num_comments)
@@ -1111,7 +1111,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             states[item.state] += 1
         out = ''
         for state, freq in states.items():
-            out += ' ' + self.build_col(state, f'{freq}:')[0]
+            out += ' ' + self._build_col(state, f'{freq}:')[0]
             state_totals[state] += freq
         name = ''
         if not list_patches:
@@ -1361,7 +1361,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                     'handled-elsewhere']:
             if val in states:
                 state = val
-        state_str, pad = self.build_col(state, base_str=name)
+        state_str, pad = self._build_col(state, base_str=name)
         print(f"{state_str}{pad}  {stats.rjust(6)}  {desc}")
 
     def _find_matched_commit(self, commits, pcm):
