@@ -231,6 +231,25 @@ class Database:
         return [Series.from_fields(idnum=idnum, name=name, desc=desc)
                 for idnum, name, desc in res.fetchall()]
 
+    # series functions
+
+    def series_add(self, name, desc):
+        """Add a new series record
+
+        The new record is set to not archived
+
+        Args:
+            name (str): Series name
+            desc (str): Series description
+
+        Return:
+            int: ID num of the new series record
+        """
+        self.execute(
+            'INSERT INTO series (name, desc, archived) '
+            f"VALUES ('{name}', '{desc}', 0)")
+        return self.lastrowid()
+
     def series_get_dict(self, include_archived=False):
         """Get a dict of Series objects from the database
 
@@ -277,6 +296,20 @@ class Database:
             return None
         return recs[0][0]
 
+    def series_set_archived(self, series_idnum, archived):
+        """Update archive flag for a series
+
+        Args:
+            series_idnum (int): ID num of the series
+            archived (bool): Whether to mark the series as archived or
+                unarchived
+        """
+        self.execute(
+            f'UPDATE series SET archived = {int(archived)} WHERE '
+            f'id = {series_idnum}')
+
+    # ser_ver functions
+
     def ser_ver_get_link(self, series_idnum, version):
         """Get the link for a series version
 
@@ -300,18 +333,6 @@ class Database:
             raise ValueError('Expected one match, but multiple matches found')
         return recs[0][0]
 
-    def series_set_archived(self, series_idnum, archived):
-        """Update archive flag for a series
-
-        Args:
-            series_idnum (int): ID num of the series
-            archived (bool): Whether to mark the series as archived or
-                unarchived
-        """
-        self.execute(
-            f'UPDATE series SET archived = {int(archived)} WHERE '
-            f'id = {series_idnum}')
-
     def ser_ver_add(self, series_idnum, version):
         """Add a new ser_ver record
 
@@ -327,6 +348,8 @@ class Database:
             'INSERT INTO ser_ver (series_id, version) VALUES (?, ?)',
             (series_idnum, version))
         return self.lastrowid()
+
+    # pcommit functions
 
     def pcommit_add_list(self, svid, pcommits):
         """Add records to the pcommit table

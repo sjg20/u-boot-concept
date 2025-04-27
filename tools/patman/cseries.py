@@ -73,10 +73,7 @@ class Cseries(cser_helper.CseriesHelper):
         added = False
         series_id = self.db.series_find_by_name(ser.name)
         if not series_id:
-            self.db.execute(
-                'INSERT INTO series (name, desc, archived) '
-                f"VALUES ('{ser.name}', '{desc}', 0)")
-            series_id = self.lastrowid()
+            series_id = self.db.series_add(ser.name, desc)
             added = True
             msg += f" series '{ser.name}'"
 
