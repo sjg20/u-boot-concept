@@ -485,7 +485,7 @@ class Cseries(cser_helper.CseriesHelper):
             tout.info('Dry run completed')
         return new_oid
 
-    def series_unmark(self, name, allow_unmarked=False, dry_run=False):
+    def unmark(self, name, allow_unmarked=False, dry_run=False):
         """Remove Change-Id tags from a series
 
         Args:

@@ -188,7 +188,7 @@ def do_series(args, test_db=None, pwork=None):
         elif args.subcmd == 'unarchive':
             cser.set_archived(args.series, False)
         elif args.subcmd == 'unmark':
-            cser.series_unmark(args.series, args.allow_unmarked,
+            cser.unmark(args.series, args.allow_unmarked,
                                dry_run=args.dry_run)
         else:
             raise ValueError(f"Unknown series subcommand '{args.subcmd}'")
