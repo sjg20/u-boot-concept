@@ -237,7 +237,7 @@ class Cseries(cser_helper.CseriesHelper):
                 key (int): ser_ver ID
                 value (AUTOLINK): result of autolinking on this ser_ver
         """
-        sdict = self._get_series_dict_by_id()
+        sdict = self.db.get_series_dict_by_id()
         all_ser_vers = self._get_autolink_dict(sdict, link_all_versions)
 
         # Get rid of things without a description
@@ -338,7 +338,7 @@ class Cseries(cser_helper.CseriesHelper):
         Lines all series along with their description, number of patches
         accepted and  the available versions
         """
-        sdict = self._get_series_dict()
+        sdict = self.db.get_series_dict()
         print(f"{'Name':15}  {'Description':40}  Accepted  Versions")
         border = f"{'-' * 15}  {'-' * 40}  --------  {'-' * 15}"
         print(border)
@@ -888,7 +888,7 @@ class Cseries(cser_helper.CseriesHelper):
 
             total_patches = 0
             total_series = 0
-            sdict = self._get_series_dict()
+            sdict = self.db.get_series_dict()
             border = None
             if not list_patches:
                 print(self.col.build(
@@ -925,7 +925,7 @@ class Cseries(cser_helper.CseriesHelper):
             self._summary_one(self._parse_series(series))
             return
 
-        sdict = self._get_series_dict()
+        sdict = self.db.get_series_dict()
         for ser in sdict.values():
             self._summary_one(ser)
 

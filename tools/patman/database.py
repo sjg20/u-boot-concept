@@ -10,11 +10,13 @@ To adjsut the schema, increment LATEST, create a migrate_to_v<x>() function
 and write some code in migrate_to() to call it.
 """
 
+from collections import OrderedDict
 import os
 import sqlite3
 
 from u_boot_pylib import tools
 from u_boot_pylib import tout
+from patman.series import Series
 
 # Schema version (version 0 means there is no database yet)
 LATEST = 3
@@ -213,3 +215,47 @@ class Database:
             int: Value for rowcount
         """
         return self.cur.rowcount
+
+    def get_series_dict(self, include_archived=False):
+        """Get a dict of Series objects from the database
+
+        Args:
+            include_archived (bool): True to include archives series
+
+        Return:
+            OrderedDict:
+                key: series name
+                value: Series with idnum, name and desc filled out
+        """
+        res = self.execute(
+            'SELECT id, name, desc FROM series ' +
+            ('WHERE archived = 0' if not include_archived else ''))
+        sdict = OrderedDict()
+        for idnum, name, desc in res.fetchall():
+            ser = Series()
+            ser.idnum = idnum
+            ser.name = name
+            ser.desc = desc
+            sdict[name] = ser
+        return sdict
+
+    def get_series_dict_by_id(self, include_archived=False):
+        """Get a dict of Series objects from the database
+
+        Return:
+            OrderedDict:
+                key: series ID
+                value: Series with idnum, name and desc filled out
+        """
+        res = self.execute(
+            'SELECT id, name, desc FROM series ' +
+            ('WHERE archived = 0' if not include_archived else ''))
+        sdict = OrderedDict()
+        for idnum, name, desc in res.fetchall():
+            ser = Series()
+            ser.idnum = idnum
+            ser.name = name
+            ser.desc = desc
+            sdict[idnum] = ser
+        return sdict
+

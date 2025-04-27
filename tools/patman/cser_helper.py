@@ -230,47 +230,6 @@ class CseriesHelper:
         else:
             time.sleep(time_s)
 
-    def _get_series_dict(self, include_archived=False):
-        """Get a dict of Series objects from the database
-
-        Args:
-            include_archived (bool): True to include archives series
-
-        Return:
-            OrderedDict:
-                key: series name
-                value: Series with idnum, name and desc filled out
-        """
-        res = self.db.execute('SELECT id, name, desc FROM series ' +
-            ('WHERE archived = 0' if not include_archived else ''))
-        sdict = OrderedDict()
-        for idnum, name, desc in res.fetchall():
-            ser = Series()
-            ser.idnum = idnum
-            ser.name = name
-            ser.desc = desc
-            sdict[name] = ser
-        return sdict
-
-    def _get_series_dict_by_id(self, include_archived=False):
-        """Get a dict of Series objects from the database
-
-        Return:
-            OrderedDict:
-                key: series ID
-                value: Series with idnum, name and desc filled out
-        """
-        res = self.db.execute('SELECT id, name, desc FROM series ' +
-            ('WHERE archived = 0' if not include_archived else ''))
-        sdict = OrderedDict()
-        for idnum, name, desc in res.fetchall():
-            ser = Series()
-            ser.idnum = idnum
-            ser.name = name
-            ser.desc = desc
-            sdict[idnum] = ser
-        return sdict
-
     def _find_series_by_name(self, name):
         """Find a series and return its details
 
@@ -1307,7 +1266,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         """
         missing = 0
         svdict = self._get_ser_ver_dict()
-        sdict = self._get_series_dict_by_id()
+        sdict = self.db.get_series_dict_by_id()
         to_fetch = {}
 
         if sync_all_versions:
