@@ -3326,11 +3326,11 @@ Date:   .*
         cser = next(cor)
 
         # Rename (dry run)
-        cser.series_rename('first', 'newname', dry_run=True)
+        cser.rename('first', 'newname', dry_run=True)
         cser = next(cor)
 
         # Rename (real)
-        cser.series_rename('first', 'newname')
+        cser.rename('first', 'newname')
         self.assertFalse(next(cor))
 
     def test_series_rename_cmdline(self):
@@ -3358,24 +3358,24 @@ Date:   .*
             cser.increment('first')
 
         with self.assertRaises(ValueError) as exc:
-            cser.series_rename('first', 'first')
+            cser.rename('first', 'first')
         self.assertEqual("Cannot rename series 'first' to itself",
                          str(exc.exception))
 
         with self.assertRaises(ValueError) as exc:
-            cser.series_rename('first2', 'newname')
+            cser.rename('first2', 'newname')
         self.assertEqual(
             "Invalid series name 'first2': did you use the branch name?",
             str(exc.exception))
 
         with self.assertRaises(ValueError) as exc:
-            cser.series_rename('first', 'newname2')
+            cser.rename('first', 'newname2')
         self.assertEqual(
             "Invalid series name 'newname2': did you use the branch name?",
             str(exc.exception))
 
         with self.assertRaises(ValueError) as exc:
-            cser.series_rename('first', 'second')
+            cser.rename('first', 'second')
         self.assertEqual("Cannot rename: branches exist: second",
                          str(exc.exception))
 
@@ -3384,21 +3384,21 @@ Date:   .*
             cser.increment('second')
 
         with self.assertRaises(ValueError) as exc:
-            cser.series_rename('first', 'second')
+            cser.rename('first', 'second')
         self.assertEqual("Cannot rename: series 'second' already exists",
                          str(exc.exception))
 
         # Rename second2 so that it gets in the way of the rename
         gitutil.rename_branch('second2', 'newname2', self.gitdir)
         with self.assertRaises(ValueError) as exc:
-            cser.series_rename('first', 'newname')
+            cser.rename('first', 'newname')
         self.assertEqual("Cannot rename: branches exist: newname2",
                          str(exc.exception))
 
         # Rename first3 and make sure it stops the rename
         gitutil.rename_branch('first3', 'tempbranch', self.gitdir)
         with self.assertRaises(ValueError) as exc:
-            cser.series_rename('first', 'newname')
+            cser.rename('first', 'newname')
         self.assertEqual(
             "Cannot rename: branches missing: first3: branches exist: newname2",
             str(exc.exception))

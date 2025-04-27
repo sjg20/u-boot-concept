@@ -460,7 +460,7 @@ class Cseries(cser_helper.CseriesHelper):
             series, link, branch, None, False, show_comments,
             show_cover_comments, pwork, self.gitdir, single_thread)
 
-    def series_rename(self, series, name, dry_run=False):
+    def rename(self, series, name, dry_run=False):
         """Rename a series
 
         Renames a series and changes the name of any branches which match
