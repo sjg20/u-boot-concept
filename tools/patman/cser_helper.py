@@ -230,23 +230,6 @@ class CseriesHelper:
         else:
             time.sleep(time_s)
 
-    def _find_series_by_name(self, name):
-        """Find a series and return its details
-
-        Args:
-            name (str): Name to search for
-
-        Returns:
-            idnum, or None if not found
-        """
-        res = self.db.execute(
-            'SELECT id FROM series WHERE '
-            f"name = '{name}' AND archived = 0")
-        recs = res.fetchall()
-        if len(recs) != 1:
-            return None
-        return recs[0][0]
-
     def _get_ser_ver_list(self):
         """Get a list of patchwork entries from the database
 

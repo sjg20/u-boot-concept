@@ -71,7 +71,7 @@ class Cseries(cser_helper.CseriesHelper):
 
         msg = 'Added'
         added = False
-        series_id = self._find_series_by_name(ser.name)
+        series_id = self.db.series_find_by_name(ser.name)
         if not series_id:
             self.db.execute(
                 'INSERT INTO series (name, desc, archived) '
@@ -139,15 +139,7 @@ class Cseries(cser_helper.CseriesHelper):
         """
         ser, version = self._parse_series_and_version(series, version)
         self._ensure_version(ser, version)
-
-        res = self.db.execute('SELECT link FROM ser_ver WHERE '
-            f"series_id = {ser.idnum} AND version = '{version}'")
-        recs = res.fetchall()
-        if not recs:
-            return None
-        if len(recs) > 1:
-            raise ValueError('Expected one match, but multiple matches found')
-        return recs[0][0]
+        return self.db.link_get(ser.idnum, version)
 
     def link_search(self, pwork, series, version):
         """Search patch for the link for a series

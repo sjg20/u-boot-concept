@@ -259,3 +259,42 @@ class Database:
         for ser in self._get_series_list(include_archived):
             sdict[ser.idnum] = ser
         return sdict
+
+    def series_find_by_name(self, name):
+        """Find a series and return its details
+
+        Args:
+            name (str): Name to search for
+
+        Returns:
+            idnum, or None if not found
+        """
+        res = self.execute(
+            'SELECT id FROM series WHERE '
+            f"name = '{name}' AND archived = 0")
+        recs = res.fetchall()
+        if len(recs) != 1:
+            return None
+        return recs[0][0]
+
+    def link_get(self, series_idnum, version):
+        """Get the link for a series version
+
+        Args:
+            series_idnum (int): ID num of the series
+            version (int): Version number to search for
+
+        Return:
+            str: Patchwork link as a string, e.g. '12325', or None if none
+
+        Raises:
+            ValueError: Multiple matches are found
+        """
+        res = self.execute('SELECT link FROM ser_ver WHERE '
+            f"series_id = {series_idnum} AND version = '{version}'")
+        recs = res.fetchall()
+        if not recs:
+            return None
+        if len(recs) > 1:
+            raise ValueError('Expected one match, but multiple matches found')
+        return recs[0][0]
