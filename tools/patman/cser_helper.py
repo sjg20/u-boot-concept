@@ -36,7 +36,7 @@ CHANGE_ID_TAG = 'Change-Id'
 HASH_LEN = 10
 
 # Record from the pcommit table:
-# id (int): record ID
+# idnum (int): record ID
 # seq (int): Patch sequence in series (0 is first)
 # subject (str): patch subject
 # svid (int): ID of series/version record in ser_ver table
@@ -46,7 +46,7 @@ HASH_LEN = 10
 # num_comments (int): Number of comments attached to the commit
 PCOMMIT = namedtuple(
     'pcommit',
-    'id,seq,subject,svid,change_id,state,patch_id,num_comments')
+    'idnum,seq,subject,svid,change_id,state,patch_id,num_comments')
 
 # Shorter version of some states, to save horizontal space
 SHORTEN_STATE = {
@@ -1183,7 +1183,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 self.db.execute(
                     'UPDATE pcommit SET '
                     'patch_id = ?, state = ?, num_comments = ? WHERE id = ?',
-                    (patch.id, patch.state, len(patch.comments), item.id))
+                    (patch.id, patch.state, len(patch.comments), item.idnum))
                 updated += self.rowcount()
         if cover:
             self.db.execute(
