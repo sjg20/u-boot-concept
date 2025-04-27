@@ -3892,7 +3892,7 @@ Date:   .*
         with terminal.capture() as (out, _):
             cser.series_add('second', 'description', allow_unmarked=True)
 
-        ser = cser.get_series_by_name('second')
+        ser = cser._get_series_by_name('second')
         pwid = cser.get_series_svid(ser.idnum, 1)
 
         # First do a dry run
@@ -4710,7 +4710,7 @@ Date:   .*
             cser.series_add('first', 'my name', allow_unmarked=True)
 
         # Remember the old series
-        old = cser.get_series_by_name('first')
+        old = cser._get_series_by_name('first')
 
         self.assertEqual('first', gitutil.get_branch(self.gitdir))
         with terminal.capture() as (out, _):
@@ -4747,7 +4747,7 @@ Date:   .*
         self.assertEqual('newname3', gitutil.get_branch(self.gitdir))
 
         # Check the series ID did not change
-        ser = cser.get_series_by_name('newname')
+        ser = cser._get_series_by_name('newname')
         self.assertEqual(old.idnum, ser.idnum)
         yield None
 

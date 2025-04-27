@@ -545,7 +545,7 @@ class Cseries:
                 'VALUES (?, ?, ?, ?)',
                 (str(svid), seq, commit.subject, commit.change_id))
 
-    def get_series_by_name(self, name):
+    def _get_series_by_name(self, name):
         """Get a Series object from the database by name
 
         Args:
@@ -937,7 +937,7 @@ class Cseries:
         if not name:
             name = gitutil.get_branch(self.gitdir)
         name, _ = split_name_version(name)
-        ser = self.get_series_by_name(name)
+        ser = self._get_series_by_name(name)
         if not ser:
             ser = Series()
             ser.name = name
@@ -980,7 +980,7 @@ class Cseries:
             version = 1
         if version > 99:
             raise ValueError(f"Version {version} exceeds 99")
-        ser = self.get_series_by_name(name)
+        ser = self._get_series_by_name(name)
         if not ser:
             ser = Series()
             ser.name = name
@@ -2601,7 +2601,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 f"Invalid series name '{name}': did you use the branch name?")
         if chk == old_ser.name:
             raise ValueError(f"Cannot rename series '{old_ser.name}' to itself")
-        if self.get_series_by_name(name):
+        if self._get_series_by_name(name):
             raise ValueError(f"Cannot rename: series '{name}' already exists")
 
         versions = self.get_version_list(old_ser.idnum)
