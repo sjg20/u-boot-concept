@@ -160,10 +160,12 @@ class TestFunctional(unittest.TestCase):
             self.name = name
 
         def __enter__(self):
-            print(f"--- starting '{self.name}'")
+            if not terminal.USE_CAPTURE:
+                print(f"--- starting '{self.name}'")
 
         def __exit__(self, exc_type, exc_val, exc_tb):
-            print(f"--- finished '{self.name}'\n")
+            if not terminal.USE_CAPTURE:
+                print(f"--- finished '{self.name}'\n")
 
     def stage(self, name):
         """Context manager to count requests across a range of patchwork calls
@@ -177,6 +179,8 @@ class TestFunctional(unittest.TestCase):
         Usage:
             with self.stage('name'):
                 ...do things
+
+            Note that the output only appears if the -N flag is used
         """
         return self._Stage(name)
 
