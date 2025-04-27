@@ -1003,7 +1003,7 @@ class Cseries:
             f'id = {ser.idnum}')
         self.commit()
 
-    def series_get_version_stats(self, idnum, vers):
+    def _series_get_version_stats(self, idnum, vers):
         """Get the stats for a series
 
         Args:
@@ -1041,7 +1041,7 @@ class Cseries:
         for name in sorted(sdict):
             ser = sdict[name]
             versions = self._get_version_list(ser.idnum)
-            stat = self.series_get_version_stats(
+            stat = self._series_get_version_stats(
                 ser.idnum, self.series_max_version(ser.idnum))[0]
 
             vlist = ' '.join([str(ver) for ver in sorted(versions)])
@@ -2284,7 +2284,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 continue
             if add_blank_line:
                 print()
-            _, pwc = self.series_get_version_stats(ser.idnum, ver)
+            _, pwc = self._series_get_version_stats(ser.idnum, ver)
             count = len(pwc)
             branch = self._join_name_version(ser.name, ver)
             series = patchstream.get_metadata(branch, 0, count,
@@ -2352,7 +2352,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         """
         max_vers = self.series_max_version(ser.idnum)
         name, desc = self.get_series_info(ser.idnum)
-        stats, pwc = self.series_get_version_stats(ser.idnum, max_vers)
+        stats, pwc = self._series_get_version_stats(ser.idnum, max_vers)
         states = {x.state for x in pwc.values()}
         state = 'accepted'
         for val in ['awaiting-upstream', 'changes-requested', 'rejected',
