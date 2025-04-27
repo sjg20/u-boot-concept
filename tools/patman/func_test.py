@@ -2185,7 +2185,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         """Test patchwork when adding a series which has no cover letter"""
         cser = self.get_cser()
         pwork = Patchwork.for_testing(self._fake_patchwork_cser)
-        pwork.set_project(PROJ_ID, PROJ_LINK_NAME)
+        pwork.project_set(PROJ_ID, PROJ_LINK_NAME)
 
         with terminal.capture() as (out, _):
             cser.series_add('first', 'my name for this', mark=False,
@@ -2209,7 +2209,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         """
         cser = self.get_cser()
         pwork = Patchwork.for_testing(self._fake_patchwork_cser)
-        pwork.set_project(PROJ_ID, PROJ_LINK_NAME)
+        pwork.project_set(PROJ_ID, PROJ_LINK_NAME)
 
         with terminal.capture() as (out, _):
             cser.series_add('first', '', allow_unmarked=True)
@@ -2541,9 +2541,9 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                                           git_dir=self.gitdir)
 
         pwork = Patchwork.for_testing(self._fake_patchwork_cser)
-        pwork.set_project(PROJ_ID, PROJ_LINK_NAME)
+        pwork.project_set(PROJ_ID, PROJ_LINK_NAME)
         self.assertFalse(cser.get_project())
-        cser.set_project(pwork, 'U-Boot', quiet=True)
+        cser.project_set(pwork, 'U-Boot', quiet=True)
 
         self.assertEqual(
             (SERIES_ID_SECOND_V1, None, 'second', 1, 'Series for my board'),
@@ -2622,9 +2622,9 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             cser.increment('second')
 
         pwork = Patchwork.for_testing(self._fake_patchwork_cser)
-        pwork.set_project(PROJ_ID, PROJ_LINK_NAME)
+        pwork.project_set(PROJ_ID, PROJ_LINK_NAME)
         self.assertFalse(cser.get_project())
-        cser.set_project(pwork, 'U-Boot', quiet=True)
+        cser.project_set(pwork, 'U-Boot', quiet=True)
 
         self.assertEqual(
             (SERIES_ID_SECOND_V1, None, 'second', 1, 'Series for my board'),
@@ -2645,9 +2645,9 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         with self.stage('setup'):
             pwork = Patchwork.for_testing(self._fake_patchwork_cser)
-            pwork.set_project(PROJ_ID, PROJ_LINK_NAME)
+            pwork.project_set(PROJ_ID, PROJ_LINK_NAME)
             self.assertFalse(cser.get_project())
-            cser.set_project(pwork, 'U-Boot', quiet=True)
+            cser.project_set(pwork, 'U-Boot', quiet=True)
 
             with terminal.capture():
                 cser.series_add('first', '', allow_unmarked=True)
@@ -2710,9 +2710,9 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         cser = self.get_cser()
 
         pwork = Patchwork.for_testing(self._fake_patchwork_cser)
-        pwork.set_project(PROJ_ID, PROJ_LINK_NAME)
+        pwork.project_set(PROJ_ID, PROJ_LINK_NAME)
         self.assertFalse(cser.get_project())
-        cser.set_project(pwork, 'U-Boot', quiet=True)
+        cser.project_set(pwork, 'U-Boot', quiet=True)
 
         with terminal.capture():
             cser.series_add('first', 'first series', allow_unmarked=True)
@@ -3712,7 +3712,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         cser = self.get_cser()
         pwork = Patchwork.for_testing(self._fake_patchwork_cser)
         with terminal.capture() as (out, _):
-            cser.set_project(pwork, 'U-Boot')
+            cser.project_set(pwork, 'U-Boot')
         self.assertEqual(
             f"Project 'U-Boot' patchwork-ID {PROJ_ID} link-name uboot",
             out.getvalue().strip())
@@ -3723,7 +3723,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         pwork = Patchwork.for_testing(self._fake_patchwork_cser)
         self.assertFalse(cser.get_project())
         with terminal.capture() as (out, _):
-            cser.set_project(pwork, 'U-Boot')
+            cser.project_set(pwork, 'U-Boot')
         self.assertEqual(
             f"Project 'U-Boot' patchwork-ID {PROJ_ID} link-name uboot",
             out.getvalue().strip())
@@ -3887,7 +3887,7 @@ Date:   .*
         cser = self.get_cser()
         pwork = Patchwork.for_testing(self._fake_patchwork_cser)
         self.assertFalse(cser.get_project())
-        cser.set_project(pwork, 'U-Boot', quiet=True)
+        cser.project_set(pwork, 'U-Boot', quiet=True)
 
         with terminal.capture() as (out, _):
             cser.series_add('second', 'description', allow_unmarked=True)
@@ -4371,7 +4371,7 @@ Date:   .*
         cser = self.get_cser()
         pwork = Patchwork.for_testing(self._fake_patchwork_cser)
         self.assertFalse(cser.get_project())
-        pwork.set_project(PROJ_ID, PROJ_LINK_NAME)
+        pwork.project_set(PROJ_ID, PROJ_LINK_NAME)
 
         with terminal.capture():
             cser.series_add('second', allow_unmarked=True)

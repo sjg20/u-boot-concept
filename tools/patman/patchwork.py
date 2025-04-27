@@ -359,7 +359,7 @@ class Patchwork:
 
         return results, self.request_count
 
-    def set_project(self, project_id, link_name):
+    def project_set(self, project_id, link_name):
         """Set the project ID
 
         The patchwork server has multiple projects. This allows the ID and

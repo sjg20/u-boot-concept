@@ -494,7 +494,7 @@ class Cseries:
 
         msg = 'Added'
         added = False
-        series_id = self.find_series_by_name(ser.name)
+        series_id = self._find_series_by_name(ser.name)
         if not series_id:
             self.db.execute(
                 'INSERT INTO series (name, desc, archived) '
@@ -1721,7 +1721,7 @@ class Cseries:
         if dry_run:
             tout.info('Dry run completed')
 
-    def find_series_by_name(self, name):
+    def _find_series_by_name(self, name):
         """Find a series and return its details
 
         Args:
@@ -1738,7 +1738,7 @@ class Cseries:
             return None
         return recs[0][0]
 
-    def set_project(self, pwork, name, quiet=False):
+    def project_set(self, pwork, name, quiet=False):
         """Set the name of the project
 
         Args:

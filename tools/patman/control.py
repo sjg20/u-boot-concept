@@ -122,7 +122,7 @@ def do_series(args, test_db=None, pwork=None):
                 raise ValueError(
                     "Please set project ID with 'patman patchwork set-project'")
             _, proj_id, link_name = cser.get_project()
-            pwork.set_project(proj_id, link_name)
+            pwork.project_set(proj_id, link_name)
         if args.subcmd == 'add':
             cser.series_add(args.series, args.desc,
                             mark=args.mark, allow_unmarked=args.allow_unmarked,
@@ -241,7 +241,7 @@ def patchwork(args, test_db=None, pwork=None):
         if args.subcmd == 'set-project':
             if not pwork:
                 pwork = Patchwork(args.patchwork_url)
-            cser.set_project(pwork, args.project_name)
+            cser.project_set(pwork, args.project_name)
         elif args.subcmd == 'get-project':
             info = cser.get_project()
             if not info:
