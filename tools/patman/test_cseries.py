@@ -33,6 +33,25 @@ class Namespace:
 
 
 class TestCseries(unittest.TestCase, TestCommon):
+    """Test cases for the Cseries class
+
+    In some cases there are tests for both direct Cseries calls and for
+    accessing the feature via the cmdline. It is possible to do this with mocks
+    but it is a bit painful to catch all cases that way. The approach here is
+    to create a check_...() function which yields back to the test routines to
+    make the call or run the command. The check_...() function typically yields
+    a Cseries while it is working and False when it is done, allowing the test
+    to check that everything is finished.
+
+    Some subcommands don't have command tests, if it would be duplicative. Some
+    tests avoid using the check_...() function and just write the test out
+    twice, if it would be too confusing to use a coroutine.
+
+    Note the -N flag which sort-of disables capturing of output, although in
+    fact it is still captured, just output at the end. When debugging the code
+    you may need to temporarily comment out the 'with terminal.capture()'
+    parts.
+    """
     def setUp(self):
         TestCommon.setUp(self)
         self.autolink_extra = None
@@ -1085,7 +1104,11 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                 cser.series_add('second', allow_unmarked=True)
 
         with self.stage('autolink unset'):
-            yield cser, pwork
+            with terminal.capture() as (out, _):
+                yield cser, pwork
+            self.assertEqual(
+                f"Setting link for series 'second' v1 to {self.SERIES_ID_SECOND_V1}",
+                out.getvalue().splitlines()[-1])
         self.db_open()
 
         plist = cser.get_ser_ver_list()
@@ -1107,11 +1130,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                       str(exc.exception))
 
         # autolink unset
-        with terminal.capture() as (out, _):
-            cser.link_auto(pwork, 'second', None, True)
-        self.assertEqual(
-            f"Setting link for series 'second' v1 to {self.SERIES_ID_SECOND_V1}",
-            out.getvalue().splitlines()[-1])
+        cser.link_auto(pwork, 'second', None, True)
 
         self.assertFalse(next(cor))
         cor.close()
@@ -1130,12 +1149,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             out.getvalue().strip())
 
         # autolink unset
-        with terminal.capture() as (out, _):
-            self.run_args('series', '-s', 'second', 'autolink', '-u',
-                          pwork=pwork)
-        self.assertEqual(
-            f"Setting link for series 'second' v1 to {self.SERIES_ID_SECOND_V1}",
-            out.getvalue().splitlines()[-1])
+        self.run_args('series', '-s', 'second', 'autolink', '-u', pwork=pwork)
 
         self.assertFalse(next(cor))
         cor.close()
@@ -1361,7 +1375,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             self.assertEqual(1, len(slist))
             self.db_close()
 
-        yield cser
+        yield False
 
     def test_series_archive(self):
         """Test marking a series as archived"""
@@ -1372,7 +1386,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         cser.set_archived('first', True)
         cser = next(cor)
         cser.set_archived('first', False)
-        cser = next(cor)
+        self.assertFalse(next(cor))
         cor.close()
 
     def test_series_archive_cmdline(self):
@@ -1384,38 +1398,40 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.run_args('series', '-s', 'first', 'archive', pwork=True)
         next(cor)
         self.run_args('series', '-s', 'first', 'unarchive', pwork=True)
-        next(cor)
+        self.assertFalse(next(cor))
         cor.close()
 
     def check_series_inc(self):
         """Coroutine to run the increment test"""
         cser = self.get_cser()
 
-        gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
-                         force=True)
-        with terminal.capture() as (out, _):
-            cser.series_add('first', '', allow_unmarked=True)
+        with self.stage('setup'):
+            gitutil.checkout('first', self.gitdir, work_tree=self.tmpdir,
+                            force=True)
+            with terminal.capture() as (out, _):
+                cser.series_add('first', '', allow_unmarked=True)
 
-        with terminal.capture() as (out, _):
-            yield cser
-        self._check_inc(out)
+        with self.stage('increment'):
+            with terminal.capture() as (out, _):
+                yield cser
+            self._check_inc(out)
 
-        slist = cser.get_series_dict()
-        self.assertEqual(1, len(slist))
+            slist = cser.get_series_dict()
+            self.assertEqual(1, len(slist))
 
-        plist = cser.get_ser_ver_list()
-        self.assertEqual(2, len(plist))
-        self.assertEqual((1, 1, 1, None, None, None, None), plist[0])
-        self.assertEqual((2, 1, 2, None, None, None, None), plist[1])
+            plist = cser.get_ser_ver_list()
+            self.assertEqual(2, len(plist))
+            self.assertEqual((1, 1, 1, None, None, None, None), plist[0])
+            self.assertEqual((2, 1, 2, None, None, None, None), plist[1])
 
-        series = patchstream.get_metadata_for_list('first2', self.gitdir, 1)
-        self.assertEqual('2', series.version)
+            series = patchstream.get_metadata_for_list('first2', self.gitdir, 1)
+            self.assertEqual('2', series.version)
 
-        series = patchstream.get_metadata_for_list('first', self.gitdir, 1)
-        self.assertNotIn('version', series)
+            series = patchstream.get_metadata_for_list('first', self.gitdir, 1)
+            self.assertNotIn('version', series)
 
-        self.assertEqual('first2', gitutil.get_branch(self.gitdir))
-        yield cser
+            self.assertEqual('first2', gitutil.get_branch(self.gitdir))
+        yield None
 
     def test_series_inc(self):
         """Test incrementing the version"""
@@ -1423,7 +1439,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         cser = next(cor)
 
         cser.increment('first')
-        cser = next(cor)
+        self.assertFalse(next(cor))
 
         cor.close()
 
@@ -1433,8 +1449,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         next(cor)
 
         self.run_args('series', '-s', 'first', 'inc', pwork=True)
-
-        next(cor)
+        self.assertFalse(next(cor))
         cor.close()
 
     def test_series_inc_no_upstream(self):
@@ -1543,6 +1558,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                          str(exc.exception))
 
     def test_upstream_add(self):
+        """Test adding an upsream"""
         cser = self.get_cser()
 
         cser.upstream_add('us', 'https://one')
@@ -1571,6 +1587,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.db_close()
 
     def test_upstream_add_cmdline(self):
+        """Test adding an upsream wtih cmdline"""
         with terminal.capture() as (out, err):
             self.run_args('upstream', 'add', 'us', 'https://one')
 
@@ -1583,6 +1600,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.db_close()
 
     def test_upstream_default(self):
+        """Operation of the default upstream"""
         cser = self.get_cser()
 
         with self.assertRaises(ValueError) as exc:
@@ -1613,6 +1631,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.assertIsNone(cser.upstream_get_default())
 
     def test_upstream_default_cmdline(self):
+        """Operation of the default upstream on cmdline"""
         with terminal.capture() as (out, _):
             self.run_args('upstream', 'default', 'us', expected_ret=1)
         self.assertEqual("patman: ValueError: No such upstream 'us'",
@@ -1644,6 +1663,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.assertEqual('unset', out.getvalue().strip())
 
     def test_upstream_delete(self):
+        """Test operation of the default upstream"""
         cser = self.get_cser()
 
         with self.assertRaises(ValueError) as exc:
@@ -1662,6 +1682,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.assertFalse(ulist)
 
     def test_upstream_delete_cmdline(self):
+        """Test deleting an upstream"""
         with terminal.capture() as (out, _):
             self.run_args('upstream', 'delete', 'us', expected_ret=1)
         self.assertEqual("patman: ValueError: No such upstream 'us'",
@@ -1798,13 +1819,16 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
     def check_series_unmark(self):
         """Checker for unmarking tests"""
         cser = self.get_cser()
-        yield cser
-
-        with terminal.capture() as (out, _):
+        with self.stage('unmarked commits'):
             yield cser
 
-        with terminal.capture() as (out, _):
-            yield cser
+        with self.stage('mark commits'):
+            with terminal.capture() as (out, _):
+                yield cser
+
+        with self.stage('unmark: dry run'):
+            with terminal.capture() as (out, _):
+                yield cser
 
         itr = iter(out.getvalue().splitlines())
         self.assertEqual(
@@ -1819,13 +1843,15 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.assertRegex(next(itr), 'Updating branch first to .*')
         self.assertEqual('Dry run completed', next(itr))
 
-        with terminal.capture() as (out, _):
-            yield cser
-        self.assertIn('- unmarked', out.getvalue())
+        with self.stage('unmark'):
+            with terminal.capture() as (out, _):
+                yield cser
+            self.assertIn('- unmarked', out.getvalue())
 
-        with terminal.capture() as (out, _):
-            yield cser
-        self.assertIn('- no mark', out.getvalue())
+        with self.stage('unmark: allow unmarked'):
+            with terminal.capture() as (out, _):
+                yield cser
+            self.assertIn('- no mark', out.getvalue())
 
         yield None
 
@@ -1840,14 +1866,19 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                 cser.series_unmark('first', dry_run=True)
         self.assertEqual('Unmarked commits 2/2', str(exc.exception))
 
+        # mark commits
         cser = next(cor)
         cser.series_add('first', '', mark=True)
 
+        # unmark: dry run
         cser = next(cor)
         cser.series_unmark('first', dry_run=True)
 
+        # unmark
         cser = next(cor)
         cser.series_unmark('first')
+
+        # unmark: allow unmarked
         cser = next(cor)
         cser.series_unmark('first', allow_unmarked=True)
 
@@ -1863,15 +1894,20 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             self.run_args('series', 'unmark', expected_ret=1, pwork=True)
         self.assertIn('Unmarked commits 2/2', out.getvalue())
 
+        # mark commits
         next(cor)
         self.run_args('series', '-s', 'first', 'add',  '-D', '', '--mark',
                       pwork=True)
 
+        # unmark: dry run
         next(cor)
         self.run_args('series', '-s', 'first', '-n', 'unmark', pwork=True)
 
+        # unmark
         next(cor)
         self.run_args('series', '-s', 'first', 'unmark', pwork=True)
+
+        # unmark: allow unmarked
         next(cor)
         self.run_args('series', '-s', 'first', 'unmark', '--allow-unmarked',
                       pwork=True)
@@ -1909,40 +1945,45 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         yield cser
 
         # Start with a dry run, which should do nothing
-        with terminal.capture():
-            yield cser
+        with self.stage('dry run'):
+            with terminal.capture():
+                yield cser
 
-        series = patchstream.get_metadata_for_list('first', self.gitdir, 2)
-        self.assertEqual(2, len(series.commits))
-        self.assertFalse(series.commits[0].change_id)
-        self.assertFalse(series.commits[1].change_id)
+            series = patchstream.get_metadata_for_list('first', self.gitdir, 2)
+            self.assertEqual(2, len(series.commits))
+            self.assertFalse(series.commits[0].change_id)
+            self.assertFalse(series.commits[1].change_id)
 
         # Now do a real run
-        with terminal.capture():
-            yield cser
+        with self.stage('real run'):
+            with terminal.capture():
+                yield cser
 
-        series = patchstream.get_metadata_for_list('first', self.gitdir, 2)
-        self.assertEqual(2, len(series.commits))
-        self.assertTrue(series.commits[0].change_id)
-        self.assertTrue(series.commits[1].change_id)
+            series = patchstream.get_metadata_for_list('first', self.gitdir, 2)
+            self.assertEqual(2, len(series.commits))
+            self.assertTrue(series.commits[0].change_id)
+            self.assertTrue(series.commits[1].change_id)
 
         # Try to mark again, which should fail
-        with terminal.capture():
-            with self.assertRaises(ValueError) as exc:
-                cser.series_mark('first', dry_run=False)
-        self.assertEqual('Marked commits 2/2', str(exc.exception))
+        with self.stage('mark twice'):
+            with terminal.capture():
+                with self.assertRaises(ValueError) as exc:
+                    cser.series_mark('first', dry_run=False)
+            self.assertEqual('Marked commits 2/2', str(exc.exception))
 
         # Use the --marked flag to make it succeed
-        with terminal.capture():
-            yield cser
-        self.assertEqual('Marked commits 2/2', str(exc.exception))
+        with self.stage('mark twice with --marked'):
+            with terminal.capture():
+                yield cser
+            self.assertEqual('Marked commits 2/2', str(exc.exception))
 
-        series2 = patchstream.get_metadata_for_list('first', self.gitdir, 2)
-        self.assertEqual(2, len(series2.commits))
-        self.assertEqual(series.commits[0].change_id,
-                         series2.commits[0].change_id)
-        self.assertEqual(series.commits[1].change_id,
-                         series2.commits[1].change_id)
+            series2 = patchstream.get_metadata_for_list('first', self.gitdir, 2)
+            self.assertEqual(2, len(series2.commits))
+            self.assertEqual(series.commits[0].change_id,
+                            series2.commits[0].change_id)
+            self.assertEqual(series.commits[1].change_id,
+                            series2.commits[1].change_id)
+
         yield None
 
     def test_series_mark(self):
@@ -1953,11 +1994,10 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         # Start with a dry run, which should do nothing
         cser = next(cor)
         cser.series_mark('first', dry_run=True)
-        cser = next(cor)
 
         # Now do a real run
+        cser = next(cor)
         cser.series_mark('first', dry_run=False)
-        return
 
         # Try to mark again, which should fail
         with terminal.capture():
@@ -1968,6 +2008,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         # Use the --allow-marked flag to make it succeed
         cser = next(cor)
         cser.series_mark('first', allow_marked=True, dry_run=False)
+
         self.assertFalse(next(cor))
 
     def test_series_mark_cmdline(self):
@@ -1978,9 +2019,9 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         # Start with a dry run, which should do nothing
         next(cor)
         self.run_args('series', '-n', '-s', 'first', 'mark', pwork=True)
-        next(cor)
 
         # Now do a real run
+        next(cor)
         self.run_args('series', '-s', 'first', 'mark', pwork=True)
 
         # Try to mark again, which should fail
@@ -1999,111 +2040,127 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         """Test removing a series"""
         cser = self.get_cser()
 
-        with self.assertRaises(ValueError) as exc:
-            cser.series_remove('first')
-        self.assertEqual("No such series 'first'", str(exc.exception))
+        with self.stage('remove non-existent series'):
+            with self.assertRaises(ValueError) as exc:
+                cser.series_remove('first')
+            self.assertEqual("No such series 'first'", str(exc.exception))
 
-        with terminal.capture() as (out, _):
-            cser.series_add('first', '', mark=True)
-        self.assertTrue(cser.get_series_dict())
-        pclist = cser.get_pcommit_dict()
-        self.assertEqual(2, len(pclist))
+        with self.stage('add'):
+            with terminal.capture() as (out, _):
+                cser.series_add('first', '', mark=True)
+            self.assertTrue(cser.get_series_dict())
+            pclist = cser.get_pcommit_dict()
+            self.assertEqual(2, len(pclist))
 
-        with terminal.capture() as (out, _):
-            cser.series_remove('first')
-        self.assertEqual("Removed series 'first'", out.getvalue().strip())
-        self.assertFalse(cser.get_series_dict())
+        with self.stage('remove'):
+            with terminal.capture() as (out, _):
+                cser.series_remove('first')
+            self.assertEqual("Removed series 'first'", out.getvalue().strip())
+            self.assertFalse(cser.get_series_dict())
 
-        pclist = cser.get_pcommit_dict()
-        self.assertFalse(len(pclist))
+            pclist = cser.get_pcommit_dict()
+            self.assertFalse(len(pclist))
 
     def test_series_remove_cmdline(self):
         """Test removing a series using the command line"""
         cser = self.get_cser()
 
-        with terminal.capture() as (out, _):
-            self.run_args('series', '-s', 'first', 'remove', expected_ret=1,
-                          pwork=True)
-        self.assertEqual("patman: ValueError: No such series 'first'",
-                         out.getvalue().strip())
+        with self.stage('remove non-existent series'):
+            with terminal.capture() as (out, _):
+                self.run_args('series', '-s', 'first', 'remove', expected_ret=1,
+                            pwork=True)
+            self.assertEqual("patman: ValueError: No such series 'first'",
+                            out.getvalue().strip())
 
-        with terminal.capture() as (out, _):
-            cser.series_add('first', '', mark=True)
-        self.assertTrue(cser.get_series_dict())
+        with self.stage('add'):
+            with terminal.capture() as (out, _):
+                cser.series_add('first', '', mark=True)
+            self.assertTrue(cser.get_series_dict())
 
-        with terminal.capture() as (out, _):
-            cser.series_remove('first')
-        self.assertEqual("Removed series 'first'", out.getvalue().strip())
-        self.assertFalse(cser.get_series_dict())
+        with self.stage('remove'):
+            with terminal.capture() as (out, _):
+                cser.series_remove('first')
+            self.assertEqual("Removed series 'first'", out.getvalue().strip())
+            self.assertFalse(cser.get_series_dict())
 
     def check_series_remove_multiple(self):
         """Check for removing a series with more than one version"""
         cser = self.get_cser()
 
-        self.add_first2(True)
+        with self.stage('setup'):
+            self.add_first2(True)
 
-        with terminal.capture() as (out, _):
-            cser.series_add(None, '', mark=True)
-            cser.series_add('first', '', mark=True)
-        self.assertTrue(cser.get_series_dict())
-        pclist = cser.get_pcommit_dict()
-        self.assertEqual(4, len(pclist))
+            with terminal.capture() as (out, _):
+                cser.series_add(None, '', mark=True)
+                cser.series_add('first', '', mark=True)
+            self.assertTrue(cser.get_series_dict())
+            pclist = cser.get_pcommit_dict()
+            self.assertEqual(4, len(pclist))
 
         # Do a dry-run removal
-        with terminal.capture() as (out, _):
-            yield cser
-        self.assertEqual("Removed version 1 from series 'first'\n"
-                         'Dry run completed', out.getvalue().strip())
-        self.assertEqual({'first'}, cser.get_series_dict().keys())
+        with self.stage('dry run'):
+            with terminal.capture() as (out, _):
+                yield cser
+            self.assertEqual("Removed version 1 from series 'first'\n"
+                                'Dry run completed', out.getvalue().strip())
+            self.assertEqual({'first'}, cser.get_series_dict().keys())
 
-        plist = cser.get_ser_ver_list()
-        self.assertEqual(2, len(plist))
-        self.assertEqual((1, 1, 2, None, None, None, None), plist[0])
-        self.assertEqual((2, 1, 1, None, None, None, None), plist[1])
+            plist = cser.get_ser_ver_list()
+            self.assertEqual(2, len(plist))
+            self.assertEqual((1, 1, 2, None, None, None, None), plist[0])
+            self.assertEqual((2, 1, 1, None, None, None, None), plist[1])
 
         # Now remove for real
-        with terminal.capture() as (out, _):
+        with self.stage('real'):
+            with terminal.capture() as (out, _):
+                yield cser
+            self.assertEqual("Removed version 1 from series 'first'",
+                            out.getvalue().strip())
+            self.assertEqual({'first'}, cser.get_series_dict().keys())
+            plist = cser.get_ser_ver_list()
+            self.assertEqual(1, len(plist))
+            pclist = cser.get_pcommit_dict()
+            self.assertEqual(2, len(pclist))
+
+        with self.stage('remove only version'):
             yield cser
-        self.assertEqual("Removed version 1 from series 'first'",
-                         out.getvalue().strip())
-        self.assertEqual({'first'}, cser.get_series_dict().keys())
-        plist = cser.get_ser_ver_list()
-        self.assertEqual(1, len(plist))
-        pclist = cser.get_pcommit_dict()
-        self.assertEqual(2, len(pclist))
+            self.assertEqual({'first'}, cser.get_series_dict().keys())
 
-        yield cser
-        self.assertEqual({'first'}, cser.get_series_dict().keys())
+            plist = cser.get_ser_ver_list()
+            self.assertEqual(1, len(plist))
+            self.assertEqual((1, 1, 2, None, None, None, None), plist[0])
 
-        plist = cser.get_ser_ver_list()
-        self.assertEqual(1, len(plist))
-        self.assertEqual((1, 1, 2, None, None, None, None), plist[0])
+        with self.stage('remove series (dry run'):
+            with terminal.capture() as (out, _):
+                yield cser
+            self.assertEqual("Removed series 'first'\nDry run completed",
+                             out.getvalue().strip())
+            self.assertTrue(cser.get_series_dict())
+            self.assertTrue(cser.get_ser_ver_list())
 
-        with terminal.capture() as (out, _):
-            yield cser
-        self.assertEqual("Removed series 'first'\nDry run completed",
-                         out.getvalue().strip())
-        self.assertTrue(cser.get_series_dict())
-        self.assertTrue(cser.get_ser_ver_list())
+        with self.stage('remove series'):
+            with terminal.capture() as (out, _):
+                yield cser
+            self.assertEqual("Removed series 'first'", out.getvalue().strip())
+            self.assertFalse(cser.get_series_dict())
+            self.assertFalse(cser.get_ser_ver_list())
 
-        with terminal.capture() as (out, _):
-            yield cser
-        self.assertEqual("Removed series 'first'", out.getvalue().strip())
-        self.assertFalse(cser.get_series_dict())
-        self.assertFalse(cser.get_ser_ver_list())
-        yield cser
+        yield False
 
     def test_series_remove_multiple(self):
         """Test removing a series with more than one version"""
         cor = self.check_series_remove_multiple()
         cser = next(cor)
 
+        # Do a dry-run removal
         cser.series_version_remove('first', 1, dry_run=True)
         cser = next(cor)
 
+        # Now remove for real
         cser.series_version_remove('first', 1)
         cser = next(cor)
 
+        # Remove only version
         with self.assertRaises(ValueError) as exc:
             cser.series_version_remove('first', 2, dry_run=True)
         self.assertEqual(
@@ -2111,12 +2168,14 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             str(exc.exception))
         cser = next(cor)
 
+        # Remove series (dry run)
         cser.series_remove('first', dry_run=True)
         cser = next(cor)
 
+        # Remove series (real)
         cser.series_remove('first')
-        cser = next(cor)
 
+        self.assertFalse(next(cor))
         cor.close()
 
     def test_series_remove_multiple_cmdline(self):
@@ -2124,14 +2183,17 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         cor = self.check_series_remove_multiple()
         next(cor)
 
+        # Do a dry-run removal
         self.run_args('series', '-n', '-s', 'first', '-V', '1',
                       'remove-version', pwork=True)
         next(cor)
 
+        # Now remove for real
         self.run_args('series', '-s', 'first', '-V', '1', 'remove-version',
                       pwork=True)
         next(cor)
 
+        # Remove only version
         with terminal.capture() as (out, _):
             self.run_args('series', '-n', '-s', 'first', '-V', '2',
                           'remove-version', expected_ret=1, pwork=True)
@@ -2140,11 +2202,14 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             out.getvalue().strip())
         next(cor)
 
+        # Remove series (dry run)
         self.run_args('series', '-n', '-s', 'first', 'remove', pwork=True)
         next(cor)
 
+        # Remove series (real)
         self.run_args('series', '-s', 'first', 'remove', pwork=True)
 
+        self.assertFalse(next(cor))
         cor.close()
 
     def test_patchwork_set_project(self):
@@ -2201,50 +2266,63 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
     def check_series_list_patches(self):
         """Test listing the patches for a series"""
         cser = self.get_cser()
-        with terminal.capture() as (out, _):
-            cser.series_add(None, '', allow_unmarked=True)
-            cser.series_add('second', allow_unmarked=True)
-            target = self.repo.lookup_reference('refs/heads/second')
-            self.repo.checkout(target, strategy=pygit2.GIT_CHECKOUT_FORCE)
-            cser.increment('second')
 
-        with terminal.capture() as (out, _):
-            yield cser
-        itr = iter(out.getvalue().splitlines())
-        self.assertEqual("Branch 'first' (total 2): 2:unknown", next(itr))
-        self.assertIn('PatchId', next(itr))
-        self.assertRegex(next(itr), r'  0 .* i2c: I2C things')
-        self.assertRegex(next(itr), r'  1 .* spi: SPI fixes')
+        with self.stage('setup'):
+            with terminal.capture() as (out, _):
+                cser.series_add(None, '', allow_unmarked=True)
+                cser.series_add('second', allow_unmarked=True)
+                target = self.repo.lookup_reference('refs/heads/second')
+                self.repo.checkout(target, strategy=pygit2.GIT_CHECKOUT_FORCE)
+                cser.increment('second')
 
-        with terminal.capture() as (out, _):
-            yield cser
-        itr = iter(out.getvalue().splitlines())
-        self.assertEqual("Branch 'second2' (total 3): 3:unknown", next(itr))
-        self.assertIn('PatchId', next(itr))
-        self.assertRegex(next(itr), '  0 .* video: Some video improvements')
-        self.assertRegex(next(itr), '  1 .* serial: Add a serial driver')
-        self.assertRegex(next(itr), '  2 .* bootm: Make it boot')
-        yield cser
+        with self.stage('list first'):
+            with terminal.capture() as (out, _):
+                yield cser
+            itr = iter(out.getvalue().splitlines())
+            self.assertEqual("Branch 'first' (total 2): 2:unknown", next(itr))
+            self.assertIn('PatchId', next(itr))
+            self.assertRegex(next(itr), r'  0 .* i2c: I2C things')
+            self.assertRegex(next(itr), r'  1 .* spi: SPI fixes')
+
+        with self.stage('list second2'):
+            with terminal.capture() as (out, _):
+                yield cser
+            itr = iter(out.getvalue().splitlines())
+            self.assertEqual("Branch 'second2' (total 3): 3:unknown", next(itr))
+            self.assertIn('PatchId', next(itr))
+            self.assertRegex(next(itr), '  0 .* video: Some video improvements')
+            self.assertRegex(next(itr), '  1 .* serial: Add a serial driver')
+            self.assertRegex(next(itr), '  2 .* bootm: Make it boot')
+
+        yield None
 
     def test_series_list_patches(self):
         """Test listing the patches for a series"""
         cor = self.check_series_list_patches()
         cser = next(cor)
+
+        # list first
         cser.list_patches('first', 1)
         cser = next(cor)
+
+        # list second2
         cser.list_patches('second2', 2)
-        cser = next(cor)
+        self.assertFalse(next(cor))
         cor.close()
 
     def test_series_list_patches_cmdline(self):
         """Test listing the patches for a series using the cmdline"""
         cor = self.check_series_list_patches()
-        cser = next(cor)
+        next(cor)
+
+        # list first
         self.run_args('series',  '-s', 'first', 'patches', pwork=True)
-        cser.list_patches('first', 1)
-        cser = next(cor)
-        cser.list_patches('second2', 2)
-        cser = next(cor)
+        next(cor)
+
+        # list second2
+        self.run_args('series',  '-s', 'second', '-V' , '2', 'patches',
+                      pwork=True)
+        self.assertFalse(next(cor))
         cor.close()
 
     def test_series_list_patches_detail(self):
@@ -2325,121 +2403,135 @@ Date:   .*
     def check_series_sync(self):
         """Checker for syncing a series"""
         cser = self.get_cser()
-        pwork = Patchwork.for_testing(self._fake_patchwork_cser)
-        self.assertFalse(cser.get_project())
-        cser.project_set(pwork, 'U-Boot', quiet=True)
+        with self.stage('setup'):
+            pwork = Patchwork.for_testing(self._fake_patchwork_cser)
+            self.assertFalse(cser.get_project())
+            cser.project_set(pwork, 'U-Boot', quiet=True)
 
-        with terminal.capture() as (out, _):
-            cser.series_add('second', 'description', allow_unmarked=True)
+            with terminal.capture() as (out, _):
+                cser.series_add('second', 'description', allow_unmarked=True)
 
-        ser = cser._get_series_by_name('second')
-        pwid = cser.get_series_svid(ser.idnum, 1)
+            ser = cser._get_series_by_name('second')
+            pwid = cser.get_series_svid(ser.idnum, 1)
 
         # First do a dry run
-        with terminal.capture() as (out, _):
-            yield cser, pwork
-        lines = out.getvalue().splitlines()
-        self.assertEqual(
-            f"Updating series 'second' version 1 from link "
-            f"'{self.SERIES_ID_SECOND_V1}'",
-            lines[0])
-        self.assertEqual('3 patches updated (7 requests)', lines[1])
-        self.assertEqual('Dry run completed', lines[2])
-        self.assertEqual(3, len(lines))
+        with self.stage('sync: dry run'):
+            with terminal.capture() as (out, _):
+                yield cser, pwork
+            lines = out.getvalue().splitlines()
+            self.assertEqual(
+                f"Updating series 'second' version 1 from link "
+                f"'{self.SERIES_ID_SECOND_V1}'",
+                lines[0])
+            self.assertEqual('3 patches updated (7 requests)', lines[1])
+            self.assertEqual('Dry run completed', lines[2])
+            self.assertEqual(3, len(lines))
 
-        pwc = cser.get_pcommit_dict(pwid)
-        self.assertIsNone(pwc[0].state)
-        self.assertIsNone(pwc[1].state)
-        self.assertIsNone(pwc[2].state)
+            pwc = cser.get_pcommit_dict(pwid)
+            self.assertIsNone(pwc[0].state)
+            self.assertIsNone(pwc[1].state)
+            self.assertIsNone(pwc[2].state)
 
         # Now try it again, gathering tags
-        with terminal.capture() as (out, _):
-            yield cser, pwork
-        lines = out.getvalue().splitlines()
-        itr = iter(lines)
-        self.assertEqual(
-            f"Updating series 'second' version 1 from link "
-            f"'{self.SERIES_ID_SECOND_V1}'",
-            next(itr))
-        self.assertEqual('  1 video: Some video improvements', next(itr))
-        self.assertEqual('  + Reviewed-by: Fred Bloggs <fred@bloggs.com>',
-                         next(itr))
-        self.assertEqual('  2 serial: Add a serial driver', next(itr))
-        self.assertEqual('  3 bootm: Make it boot', next(itr))
+        with self.stage('gather: dry run'):
+            with terminal.capture() as (out, _):
+                yield cser, pwork
+            lines = out.getvalue().splitlines()
+            itr = iter(lines)
+            self.assertEqual(
+                f"Updating series 'second' version 1 from link "
+                f"'{self.SERIES_ID_SECOND_V1}'",
+                next(itr))
+            self.assertEqual('  1 video: Some video improvements', next(itr))
+            self.assertEqual('  + Reviewed-by: Fred Bloggs <fred@bloggs.com>',
+                            next(itr))
+            self.assertEqual('  2 serial: Add a serial driver', next(itr))
+            self.assertEqual('  3 bootm: Make it boot', next(itr))
 
-        self.assertRegex(
-            next(itr), 'Checking out upstream commit refs/heads/base: .*')
-        self.assertEqual("Processing 3 commits from branch 'second'",
-                         next(itr))
-        self.assertRegex(
-            next(itr),
-            "- added 1 tag .* as .*: video: Some video improvements")
-        self.assertRegex(next(itr), "- .* as .*: serial: Add a serial driver")
-        self.assertRegex(next(itr), "- .* as .*: bootm: Make it boot")
-        self.assertRegex(next(itr), "Updating branch second to .*")
-        self.assertEqual('3 patches updated (7 requests)', next(itr))
-        self.assertEqual('Dry run completed', next(itr))
-        self.assertFinished(itr)
+            self.assertRegex(
+                next(itr), 'Checking out upstream commit refs/heads/base: .*')
+            self.assertEqual("Processing 3 commits from branch 'second'",
+                            next(itr))
+            self.assertRegex(
+                next(itr),
+                "- added 1 tag .* as .*: video: Some video improvements")
+            self.assertRegex(next(itr), "- .* as .*: serial: Add a serial driver")
+            self.assertRegex(next(itr), "- .* as .*: bootm: Make it boot")
+            self.assertRegex(next(itr), "Updating branch second to .*")
+            self.assertEqual('3 patches updated (7 requests)', next(itr))
+            self.assertEqual('Dry run completed', next(itr))
+            self.assertFinished(itr)
 
-        # Make sure that no tags were added to the branch
-        series = patchstream.get_metadata_for_list('second', self.gitdir, 3)
-        for cmt in series.commits:
-            self.assertFalse(cmt.rtags,
-                             'Commit {cmt.subject} rtags {cmt.rtags}')
+            # Make sure that no tags were added to the branch
+            series = patchstream.get_metadata_for_list('second', self.gitdir, 3)
+            for cmt in series.commits:
+                self.assertFalse(cmt.rtags,
+                                'Commit {cmt.subject} rtags {cmt.rtags}')
 
         # Now do it for real
-        with terminal.capture() as (out, _):
-            yield cser, pwork
-        lines2 = out.getvalue().splitlines()
-        self.assertEqual(lines2, lines[:-1])
+        with self.stage('gather: real'):
+            with terminal.capture() as (out, _):
+                yield cser, pwork
+            lines2 = out.getvalue().splitlines()
+            self.assertEqual(lines2, lines[:-1])
 
-        # Make sure that the tags were added to the branch
-        series = patchstream.get_metadata_for_list('second', self.gitdir, 3)
-        self.assertEqual(
-            {'Reviewed-by': {'Fred Bloggs <fred@bloggs.com>'}},
-            series.commits[0].rtags)
-        self.assertFalse(series.commits[1].rtags)
-        self.assertFalse(series.commits[2].rtags)
+            # Make sure that the tags were added to the branch
+            series = patchstream.get_metadata_for_list('second', self.gitdir, 3)
+            self.assertEqual(
+                {'Reviewed-by': {'Fred Bloggs <fred@bloggs.com>'}},
+                series.commits[0].rtags)
+            self.assertFalse(series.commits[1].rtags)
+            self.assertFalse(series.commits[2].rtags)
 
-        # Make sure the status was updated
-        pwc = cser.get_pcommit_dict(pwid)
-        self.assertEqual('accepted', pwc[0].state)
-        self.assertEqual('changes-requested', pwc[1].state)
-        self.assertEqual('rejected', pwc[2].state)
+            # Make sure the status was updated
+            pwc = cser.get_pcommit_dict(pwid)
+            self.assertEqual('accepted', pwc[0].state)
+            self.assertEqual('changes-requested', pwc[1].state)
+            self.assertEqual('rejected', pwc[2].state)
+
         yield None
 
     def test_series_sync(self):
         """Test syncing a series"""
         cor = self.check_series_sync()
         cser, pwork = next(cor)
+
+        # sync (dry_run)
         cser.series_sync(pwork, 'second', None, False, False, False,
                          dry_run=True)
-
         cser, pwork = next(cor)
+
+        # gather (dry_run)
         cser.series_sync(pwork, 'second', None, False, False, True,
                          dry_run=True)
-        return
-
         cser, pwork = next(cor)
+
+        # gather (real)
         cser.series_sync(pwork, 'second', None, False, False, True)
+
         self.assertFalse(next(cor))
 
     def test_series_sync_cmdline(self):
         """Test syncing a series with cmdline"""
         cor = self.check_series_sync()
         _, pwork = next(cor)
+
+        # sync (dry_run)
         self.db_close()
         self.run_args(
             'series', '-n', '-s', 'second', 'sync', '-G', pwork=pwork)
         self.db_open()
 
+        # gather (dry_run)
         _, pwork = next(cor)
         self.run_args('series', '-n', '-s', 'second', 'sync', pwork=pwork)
         self.db_close()
 
+        # gather (real)
         _, pwork = next(cor)
         self.run_args('series', '-s', 'second', 'sync', pwork=pwork)
         self.db_open()
+
         self.assertFalse(next(cor))
 
     def check_series_sync_all(self):
