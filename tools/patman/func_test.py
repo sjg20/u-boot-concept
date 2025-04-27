@@ -17,20 +17,13 @@ import sys
 import unittest
 
 import pygit2
-from pygit2.enums import CheckoutStrategy
 
-from u_boot_pylib import cros_subprocess
 from u_boot_pylib import gitutil
 from u_boot_pylib import terminal
 from u_boot_pylib import tools
-from u_boot_pylib import tout
 
-from patman import cmdline
 from patman.commit import Commit
 from patman import control
-from patman import cseries
-from patman.cseries import PCOMMIT
-from patman import database
 from patman import patchstream
 from patman.patchstream import PatchStream
 from patman import patchwork
@@ -39,7 +32,6 @@ from patman import send
 from patman.series import Series
 from patman import settings
 from patman import status
-from patman import test_common
 from patman.test_common import TestCommon
 
 
@@ -215,7 +207,8 @@ class TestFunctional(unittest.TestCase, TestCommon):
         """
         process_tags = True
         ignore_bad_tags = False
-        stefan = b'Stefan Br\xc3\xbcns <stefan.bruens@rwth-aachen.de>'.decode('utf-8')
+        stefan = (b'Stefan Br\xc3\xbcns <stefan.bruens@rwth-aachen.de>'
+                  .decode('utf-8'))
         rick = 'Richard III <richard@palace.gov>'
         mel = b'Lord M\xc3\xablchett <clergy@palace.gov>'.decode('utf-8')
         add_maintainers = [stefan, rick]
@@ -376,7 +369,8 @@ Changes in v2:
     def test_base_commit(self):
         """Test adding a base commit with no cover letter"""
         orig_text = self._get_text('test01.txt')
-        pos = orig_text.index('commit 5ab48490f03051875ab13d288a4bf32b507d76fd')
+        pos = orig_text.index(
+            'commit 5ab48490f03051875ab13d288a4bf32b507d76fd')
         text = orig_text[:pos]
         series = patchstream.get_metadata_for_test(text)
         series.base_commit = Commit('1a44532')
@@ -522,7 +516,7 @@ Tested-by: %s
 Serie-version: 2
 '''
         with self.assertRaises(ValueError) as exc:
-            pstrm = PatchStream.process_text(text)
+            PatchStream.process_text(text)
         self.assertEqual("Line 3: Invalid tag = 'Serie-version: 2'",
                          str(exc.exception))
 
@@ -600,9 +594,9 @@ index c072e54..942244f 100644
 --- a/lib/fdtdec.c
 +++ b/lib/fdtdec.c
 @@ -1200,7 +1200,8 @@ int fdtdec_setup_mem_size_base(void)
- 	}
+ \t}
 
- 	gd->ram_size = (phys_size_t)(res.end - res.start + 1);
+ \tgd->ram_size = (phys_size_t)(res.end - res.start + 1);
 -	debug("%s: Initial DRAM size %llx\n", __func__, (u64)gd->ram_size);
 +	debug("%s: Initial DRAM size %llx\n", __func__,
 +	      (unsigned long long)gd->ram_size);
@@ -778,8 +772,6 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         patch2.subject = 'Subject 2'
         patch3 = patchwork.Patch('3')
         patch3.subject = 'Subject 2'
-
-        pwork = Patchwork(None)
 
         series = Series()
         series.commits = [commit1]
@@ -968,8 +960,8 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
             'Reviewed-by': {self.mary, self.fred},
             'Tested-by': {self.leb}})
 
-        # Now add some tags to the commit, which means they should not appear as
-        # 'new' tags when scanning comments
+        # Now add some tags to the commit, which means they should not appear
+        # as 'new' tags when scanning comments
         new_rtag_list = [None] * count
         commit1.rtags = {'Reviewed-by': {self.joe}}
         new_rtag_list, review_list = self.find_new_rtags(
@@ -1015,8 +1007,8 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
             terminal.PrintLine('    Reviewed-by: ', col.GREEN, newline=False,
                                bright=False),
             next(itr))
-        self.assertEqual(terminal.PrintLine(self.fred, col.WHITE, bright=False),
-                         next(itr))
+        self.assertEqual(terminal.PrintLine(self.fred, col.WHITE,
+                                            bright=False), next(itr))
         self.assertEqual(
             terminal.PrintLine('    Tested-by: ', col.GREEN, newline=False,
                                bright=False),
@@ -1136,7 +1128,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         # see the new tags immediately below the old ones.
         stdout = patchstream.get_list(dest_branch, count=count, git_dir=gitdir)
         itr = iter([line.strip() for line in stdout.splitlines()
-                      if '-by:' in line])
+                    if '-by:' in line])
 
         # First patch should have the review tag
         self.assertEqual('Reviewed-by: %s' % self.joe, next(itr))
@@ -1222,8 +1214,9 @@ line8
               'And another comment'],
              ['> File: file.c',
               '> Line: 153 / 143: def check_patch(fname, show_types=False):',
-              '>  and more code', '> +Addition here', '> +Another addition here',
-              '>  codey', '>  more codey', 'and another thing in same file'],
+              '>  and more code', '> +Addition here',
+              '> +Another addition here', '>  codey', '>  more codey',
+              'and another thing in same file'],
              ['> File: file.c', '> Line: 253 / 243',
               '>  with no function context', 'one more thing'],
              ['> File: tools/patman/main.py', '> +line of code',
@@ -1336,7 +1329,8 @@ Reviewed-by: %s
                          next(itr))
         self.assertEqual(terminal.PrintLine('    > Some code', col.MAGENTA),
                          next(itr))
-        self.assertEqual(terminal.PrintLine('    > and more code', col.MAGENTA),
+        self.assertEqual(terminal.PrintLine('    > and more code',
+                                            col.MAGENTA),
                          next(itr))
         self.assertEqual(terminal.PrintLine(
             '    Here is my comment above the above...', None), next(itr))
@@ -1373,8 +1367,9 @@ Reviewed-by: %s
         self.assertEqual(terminal.PrintLine(
             '    > +', col.MAGENTA), next(itr))
         self.assertEqual(
-            terminal.PrintLine('    >      def add_change(self, version, info):',
-                               col.MAGENTA),
+            terminal.PrintLine(
+                '    >      def add_change(self, version, info):',
+                col.MAGENTA),
             next(itr))
         self.assertEqual(terminal.PrintLine(
             '    >          """Add a new change line to the change list for a version.',

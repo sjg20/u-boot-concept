@@ -7,14 +7,10 @@
 
 import aiohttp
 import asyncio
-from collections import namedtuple, defaultdict
-from itertools import repeat
+from collections import namedtuple
 import re
-import requests
 
 from u_boot_pylib import terminal
-from u_boot_pylib import tout
-from patman.patchstream import PatchStream
 
 # Information passed to series_get_states()
 # link (str): Patchwork link for series
@@ -156,7 +152,8 @@ class Patchwork:
         """Set up a new patchwork handler
 
         Args:
-            url (str): URL of patchwork server, e.g. 'https://patchwork.ozlabs.org'
+            url (str): URL of patchwork server, e.g.
+                'https://patchwork.ozlabs.org'
         """
         self.url = url
         self.fake_request = None
@@ -191,13 +188,13 @@ class Patchwork:
                 try:
                     async with client.get(full_url) as response:
                         if response.status != 200:
-                            raise ValueError("Could not read URL '%s'" % full_url)
+                            raise ValueError(
+                                f"Could not read URL '{full_url}'")
                         return await response.json()
-                    break;
+                    break
                 except aiohttp.client_exceptions.ServerDisconnectedError:
                     if i == RETRIES:
                         raise
-
 
     @staticmethod
     def for_testing(func):
@@ -804,7 +801,7 @@ On Tue, 4 Mar 2025 at 06:09, Simon Glass <sjg@chromium.org> wrote:
         if read_comments:
             # Returns a list of Patch objects
             tasks = [self._get_patch_status(client, patch_list[i]['id'])
-                                            for i in range(count)]
+                     for i in range(count)]
 
             patch_status = await asyncio.gather(*tasks)
             for patch_data, status in zip(patch_list, patch_status):

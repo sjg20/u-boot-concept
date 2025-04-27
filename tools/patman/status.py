@@ -19,6 +19,7 @@ from u_boot_pylib import tout
 from patman import patchstream
 from patman import patchwork
 
+
 def to_int(vals):
     """Convert a list of strings into integers, using 0 if not an integer
 
@@ -95,6 +96,7 @@ def process_reviews(content, comment_data, base_rtags):
                 new_rtags[tag].add(who)
     return new_rtags, reviews
 
+
 def show_responses(col, rtags, indent, is_new):
     """Show rtags collected
 
@@ -102,7 +104,8 @@ def show_responses(col, rtags, indent, is_new):
         col (terminal.Colour): Colour object to use
         rtags (dict): review tags to show
             key: Response tag (e.g. 'Reviewed-by')
-            value: Set of people who gave that response, each a name/email string
+            value: Set of people who gave that response, each a name/email
+                string
         indent (str): Indentation string to write before each line
         is_new (bool): True if this output should be highlighted
 
@@ -114,8 +117,8 @@ def show_responses(col, rtags, indent, is_new):
         people = rtags[tag]
         for who in sorted(people):
             terminal.tprint(indent + '%s %s: ' % ('+' if is_new else ' ', tag),
-                           newline=False, colour=col.GREEN, bright=is_new,
-                           col=col)
+                            newline=False, colour=col.GREEN, bright=is_new,
+                            col=col)
             terminal.tprint(who, colour=col.WHITE, bright=is_new, col=col)
             count += 1
     return count
@@ -156,7 +159,6 @@ def compare_with_series(series, patches):
             warnings.append("Cannot find patch for commit %d ('%s')" %
                             (seq + 1, cmt.subject))
 
-
     # Check the names match
     commit_for_patch = {}
     all_commits = set(series.commits)
@@ -176,9 +178,8 @@ def compare_with_series(series, patches):
     return patch_for_commit, commit_for_patch, warnings
 
 
-def show_status(cover, patches, series, link, branch,
-                  show_comments, show_cover_comments, col,
-                  warnings_on_stderr=True):
+def show_status(cover, patches, series, link, branch, show_comments,
+                show_cover_comments, col, warnings_on_stderr=True):
     """Check the status of a series on Patchwork
 
     This finds review tags and comments for a series in Patchwork, displaying
@@ -192,6 +193,7 @@ def show_status(cover, patches, series, link, branch,
         show_cover_comments (bool): True to show the comments on the
             letter
         col (terminal.Colour): Colour object
+        warnings_on_stderr (bool): Show warnings on stderr (instead of stdout)
 
     Return: tuple:
         int: Number of new review tags to add
@@ -246,7 +248,7 @@ def show_status(cover, patches, series, link, branch,
         if not patch:
             continue
         terminal.tprint('%3d %s' % (patch.seq, patch.subject[:50]),
-                       colour=col.YELLOW, col=col)
+                        colour=col.YELLOW, col=col)
         cmt = series.commits[seq]
         base_rtags = cmt.rtags
         new_rtags = new_rtag_list[seq]
@@ -335,7 +337,7 @@ def create_branch(series, new_rtag_list, branch, dest_branch, overwrite,
 
 
 def check_status(cover, patches, series, link, branch, dest_branch, force,
-                       show_comments, show_cover_comments, test_repo=None):
+                 show_comments, show_cover_comments, test_repo=None):
     """Check the status of a series on Patchwork
 
     This finds review tags and comments for a series in Patchwork, displaying
@@ -349,8 +351,7 @@ def check_status(cover, patches, series, link, branch, dest_branch, force,
         dest_branch (str): Name of new branch to create, or None
         force (bool): True to force overwriting dest_branch if it exists
         show_comments (bool): True to show the comments on each patch
-        show_cover_comments (bool): True to show the comments on the
-            letter
+        show_cover_comments (bool): True to show the comments on the letter
         test_repo (pygit2.Repository): Repo to use (use None unless testing)
     """
     col = terminal.Color()
@@ -389,8 +390,8 @@ def check_patch_count(num_commits, num_patches):
 
 
 async def _check_and_report_status(series, link, branch, dest_branch, force,
-                       show_comments, show_cover_comments, pwork,
-                       test_repo=None):
+                                   show_comments, show_cover_comments, pwork,
+                                   test_repo=None):
     async with aiohttp.ClientSession() as client:
         cover, patches = await pwork._series_get_state(
             client, link, True, show_cover_comments)
@@ -398,8 +399,8 @@ async def _check_and_report_status(series, link, branch, dest_branch, force,
 
 
 def check_and_report_status(series, link, branch, dest_branch, force,
-                           show_comments, show_cover_comments, pwork,
-                           test_repo=None, single_thread=False):
+                            show_comments, show_cover_comments, pwork,
+                            test_repo=None, single_thread=False):
     if single_thread:
         cover, patches = asyncio.run(_check_and_report_status(
             series, link, branch, dest_branch, force, show_comments,

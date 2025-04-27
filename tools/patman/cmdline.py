@@ -41,18 +41,19 @@ class ErrorCatchingArgumentParser(argparse.ArgumentParser):
 
 
 def add_send_args(par):
-    par.add_argument('-c', '--count', dest='count', type=int,
-        default=-1, help='Automatically create patches from top n commits')
+    par.add_argument('-c', '--count', dest='count', type=int, default=-1,
+                     help='Automatically create patches from top n commits')
     par.add_argument('-e', '--end', type=int, default=0,
-        help='Commits to skip at end of patch list')
+                     help='Commits to skip at end of patch list')
     par.add_argument('-i', '--ignore-errors', action='store_true',
-           dest='ignore_errors', default=False,
-           help='Send patches email even if patch errors are found')
-    par.add_argument('-l', '--limit-cc', dest='limit', type=int, default=None,
-           help='Limit the cc list to LIMIT entries [default: %(default)s]')
+                     dest='ignore_errors', default=False,
+                     help='Send patches email even if patch errors are found')
+    par.add_argument(
+        '-l', '--limit-cc', dest='limit', type=int, default=None,
+        help='Limit the cc list to LIMIT entries [default: %(default)s]')
     par.add_argument('-m', '--no-maintainers', action='store_false',
-           dest='add_maintainers', default=True,
-           help="Don't cc the file maintainers automatically")
+                     dest='add_maintainers', default=True,
+                     help="Don't cc the file maintainers automatically")
     par.add_argument(
         '--get-maintainer-script', dest='get_maintainer_script', type=str,
         action='store',
@@ -60,36 +61,36 @@ def add_send_args(par):
                              'get_maintainer.pl') + ' --norolestats',
         help='File name of the get_maintainer.pl (or compatible) script.')
     par.add_argument('-r', '--in-reply-to', type=str, action='store',
-                      help="Message ID that this series is in reply to")
-    par.add_argument('-s', '--start', dest='start', type=int,
-        default=0, help='Commit to start creating patches from (0 = HEAD)')
+                     help="Message ID that this series is in reply to")
+    par.add_argument('-s', '--start', dest='start', type=int, default=0,
+                     help='Commit to start creating patches from (0 = HEAD)')
     par.add_argument('-t', '--ignore-bad-tags', action='store_true',
-                      default=False,
-                      help='Ignore bad tags / aliases (default=warn)')
+                     default=False,
+                     help='Ignore bad tags / aliases (default=warn)')
     par.add_argument('-T', '--thread', action='store_true', dest='thread',
-                      default=False, help='Create patches as a single thread')
+                     default=False, help='Create patches as a single thread')
     par.add_argument('--no-binary', action='store_true', dest='ignore_binary',
-                      default=False,
-                      help="Do not output contents of changes in binary files")
+                     default=False,
+                     help="Do not output contents of changes in binary files")
     par.add_argument('--no-check', action='store_false', dest='check_patch',
-                      default=True,
-                      help="Don't check for patch compliance")
+                     default=True,
+                     help="Don't check for patch compliance")
     par.add_argument(
         '--tree', dest='check_patch_use_tree', default=False,
         action='store_true',
         help=("Set `tree` to True. If `tree` is False then we'll pass "
               "'--no-tree' to checkpatch (default: tree=%(default)s)"))
     par.add_argument('--no-tree', dest='check_patch_use_tree',
-                      action='store_false', help="Set `tree` to False")
+                     action='store_false', help="Set `tree` to False")
     par.add_argument(
         '--no-tags', action='store_false', dest='process_tags', default=True,
         help="Don't process subject tags as aliases")
     par.add_argument('--no-signoff', action='store_false', dest='add_signoff',
-                      default=True, help="Don't add Signed-off-by to patches")
+                     default=True, help="Don't add Signed-off-by to patches")
     par.add_argument('--smtp-server', type=str,
-                      help="Specify the SMTP server to 'git send-email'")
+                     help="Specify the SMTP server to 'git send-email'")
     par.add_argument('--keep-change-id', action='store_true',
-                      help='Preserve Change-Id tags in patches to send.')
+                     help='Preserve Change-Id tags in patches to send.')
 
 
 def _add_show_comments(parser):
@@ -117,8 +118,9 @@ def add_series_args(subparsers):
                             help="Don't require commits to be marked")
 
     def _add_mark(parser):
-        parser.add_argument('-m', '--mark', action='store_true',
-                            help='Mark unmarked commits with a Change-Id field')
+        parser.add_argument(
+            '-m', '--mark', action='store_true',
+            help='Mark unmarked commits with a Change-Id field')
 
     def _add_update(parser):
         parser.add_argument('-u', '--update', action='store_true',
@@ -127,7 +129,7 @@ def add_series_args(subparsers):
     def _add_wait(parser):
         parser.add_argument(
             '-w', '--autolink-wait', type=int, default=0,
-            help='Number of seconds to wait for patchwork to get a sent series')
+            help='Seconds to wait for patchwork to get a sent series')
 
     def _upstream_add(parser):
         parser.add_argument('-U', '--upstream', help='Commit to end before')
@@ -142,8 +144,9 @@ def add_series_args(subparsers):
     series.defaults_cmds = [
         ['set-link', 'fred'],
     ]
-    series.add_argument('-n', '--dry-run', action='store_true', dest='dry_run',
-            default=False, help="Do a dry run (create but don't email patches)")
+    series.add_argument(
+        '-n', '--dry-run', action='store_true', dest='dry_run', default=False,
+        help="Do a dry run (create but don't email patches)")
     series.add_argument('-s', '--series', help='Name of series')
     series.add_argument('-V', '--version', type=int,
                         help='Version number to link')
@@ -213,8 +216,8 @@ def add_series_args(subparsers):
 
     ssend = series_subparsers.add_parser('send')
     add_send_args(ssend)
-    ssend.add_argument('--no-autolink', action='store_false', default=True,
-        dest='autolink',
+    ssend.add_argument(
+        '--no-autolink', action='store_false', default=True, dest='autolink',
         help='Monitor patchwork after sending so the series can be autolinked')
     _add_wait(ssend)
 
@@ -261,9 +264,11 @@ def setup_parser():
 
     # parser = argparse.ArgumentParser(epilog=epilog)
     parser = ErrorCatchingArgumentParser(epilog=epilog)
-    parser.add_argument('-D', '--debug', action='store_true',
+    parser.add_argument(
+        '-D', '--debug', action='store_true',
         help='Enabling debugging (provides a full traceback on error)')
-    parser.add_argument('-N', '--no-capture', action='store_true',
+    parser.add_argument(
+        '-N', '--no-capture', action='store_true',
         help='Disable capturing of console output in tests')
     parser.add_argument('-p', '--project', default=project.detect_project(),
                         help="Project name; affects default option values and "
@@ -284,12 +289,15 @@ def setup_parser():
     subparsers = parser.add_subparsers(dest='cmd')
     send = subparsers.add_parser(
         'send', help='Format, check and email patches (default command)')
-    send.add_argument('-b', '--branch', type=str,
+    send.add_argument(
+        '-b', '--branch', type=str,
         help="Branch to process (by default, the current branch)")
-    send.add_argument('-n', '--dry-run', action='store_true', dest='dry_run',
-           default=False, help="Do a dry run (create but don't email patches)")
-    send.add_argument('--cc-cmd', dest='cc_cmd', type=str, action='store',
-           default=None, help='Output cc list for patch file (used by git)')
+    send.add_argument(
+        '-n', '--dry-run', action='store_true', dest='dry_run',
+        default=False, help="Do a dry run (create but don't email patches)")
+    send.add_argument(
+        '--cc-cmd', dest='cc_cmd', type=str, action='store',
+        default=None, help='Output cc list for patch file (used by git)')
     add_send_args(send)
     send.add_argument('patchfiles', nargs='*')
 
@@ -318,13 +326,15 @@ def setup_parser():
     ]
     upstream_subparsers = upstream.add_subparsers(dest='subcmd')
     uadd = upstream_subparsers.add_parser('add')
+    uadd.add_argument('remote_name',
+                      help="Git remote name used for this upstream, e.g. 'us'")
     uadd.add_argument(
-        'remote_name', help="Git remote name used for this upstream, e.g. 'us'")
-    uadd.add_argument(
-        'url', help="URL to use for this upstream, e.g. 'https://gitlab.denx.de/u-boot/u-boot.git'")
+        'url', help='URL to use for this upstream, e.g. '
+                    "'https://gitlab.denx.de/u-boot/u-boot.git'")
     udel = upstream_subparsers.add_parser('delete')
     udel.add_argument(
-        'remote_name', help="Git remote name used for this upstream, e.g. 'us'")
+        'remote_name',
+        help="Git remote name used for this upstream, e.g. 'us'")
     upstream_subparsers.add_parser('list')
     udef = upstream_subparsers.add_parser('default')
     udef.add_argument('-u', '--unset', action='store_true',
@@ -374,19 +384,18 @@ def parse_args(argv=None, config_fname=None, parsers=None):
     if not argv:
         argv = sys.argv[1:]
 
-    defaults = {}
     # print('argv', argv)
     args, rest = parser.parse_known_args(argv)
     if hasattr(args, 'project'):
-        defaults = settings.Setup(parser, args.project, argv, config_fname)
+        settings.Setup(parser, args.project, argv, config_fname)
         args, rest = parser.parse_known_args(argv)
 
     # If we have a command, it is safe to parse all arguments
     if args.cmd:
         args = parser.parse_args(argv)
     else:
-        # No command, so insert it after the known arguments and before the ones
-        # that presumably relate to the 'send' subcommand
+        # No command, so insert it after the known arguments and before the
+        # ones that presumably relate to the 'send' subcommand
         nargs = len(rest)
         argv = argv[:-nargs] + ['send'] + rest
         args = parser.parse_args(argv)
@@ -397,7 +406,6 @@ def parse_args(argv=None, config_fname=None, parsers=None):
         # args.allow_unmarked = defaults['allow_unmarked']
 
     if args.cmd in ['series', 'upstream', 'patchwork'] and not args.subcmd:
-        subparser = parsers[args.cmd]
         parser.parse_args([args.cmd, '--help'])
 
     return args

@@ -7,7 +7,6 @@
 import asyncio
 import os
 import re
-import tempfile
 import unittest
 from unittest import mock
 
@@ -221,7 +220,7 @@ class TestCseries(unittest.TestCase, TestCommon):
         repo.checkout(target, strategy=pygit2.GIT_CHECKOUT_FORCE)
 
     def test_series_add_different(self):
-        """Test adding a different vers. of a series from the checked out one"""
+        """Test adding a different version of a series from that checked out"""
         cser = self.get_cser()
 
         self.add_first2(True)
@@ -314,7 +313,8 @@ class TestCseries(unittest.TestCase, TestCommon):
                             allow_unmarked=True)
         lines = out.getvalue().splitlines()
         self.assertEqual(
-            "Adding series 'third' v4: mark False allow_unmarked True", lines[0])
+            "Adding series 'third' v4: mark False allow_unmarked True",
+            lines[0])
         self.assertEqual("Added series 'third' v4 (4 commits)", lines[1])
         self.assertEqual(2, len(lines))
 
@@ -412,7 +412,8 @@ class TestCseries(unittest.TestCase, TestCommon):
         # Get a list of projects
         if subpath == 'projects/':
             return [
-                {'id': self.PROJ_ID, 'name': 'U-Boot', 'link_name': self.PROJ_LINK_NAME},
+                {'id': self.PROJ_ID, 'name': 'U-Boot',
+                 'link_name': self.PROJ_LINK_NAME},
                 {'id': 9, 'name': 'other', 'link_name': 'other'}
             ]
 
@@ -441,9 +442,11 @@ class TestCseries(unittest.TestCase, TestCommon):
                 # series 'second'
                 return {
                     'patches': [
-                        {'id': '10', 'name': '[PATCH,1/3] video: Some video improvements',
+                        {'id': '10',
+                         'name': '[PATCH,1/3] video: Some video improvements',
                          'content': ''},
-                        {'id': '11', 'name': '[PATCH,2/3] serial: Add a serial driver',
+                        {'id': '11',
+                         'name': '[PATCH,2/3] serial: Add a serial driver',
                          'content': ''},
                         {'id': '12', 'name': '[PATCH,3/3] bootm: Make it boot',
                          'content': ''},
@@ -457,11 +460,15 @@ class TestCseries(unittest.TestCase, TestCommon):
                 # series 'second2'
                 return {
                     'patches': [
-                        {'id': '110', 'name': '[PATCH,v2,1/3] video: Some video improvements',
+                        {'id': '110',
+                         'name':
+                             '[PATCH,v2,1/3] video: Some video improvements',
                          'content': ''},
-                        {'id': '111', 'name': '[PATCH,v2,2/3] serial: Add a serial driver',
+                        {'id': '111',
+                         'name': '[PATCH,v2,2/3] serial: Add a serial driver',
                          'content': ''},
-                        {'id': '112', 'name': '[PATCH,v2,3/3] bootm: Make it boot',
+                        {'id': '112',
+                         'name': '[PATCH,v2,3/3] bootm: Make it boot',
                          'content': ''},
                     ],
                     'cover_letter': {
@@ -509,7 +516,8 @@ class TestCseries(unittest.TestCase, TestCommon):
         if patch_id:
             if patch_id in [10, 110]:
                 return {'state': 'accepted',
-                        'content': 'Reviewed-by: Fred Bloggs <fred@bloggs.com>'}
+                        'content':
+                            'Reviewed-by: Fred Bloggs <fred@bloggs.com>'}
             if patch_id in [11, 111]:
                 return {'state': 'changes-requested', 'content': ''}
             if patch_id in [12, 112]:
@@ -529,7 +537,8 @@ class TestCseries(unittest.TestCase, TestCommon):
                 return [
                     {'id': 1, 'content': ''},
                     {'id': 2,
-                     'content': '''On some date Mary Smith <msmith@wibble.com> wrote:
+                     'content':
+                         '''On some date Mary Smith <msmith@wibble.com> wrote:
 > This was my original patch
 > which is being quoted
 
@@ -541,7 +550,7 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
                          'name': 'Fred Bloggs',
                          'email': 'fred@bloggs.com',
                          }
-                    },
+                     },
                 ]
             if patch_id in [11, 111]:
                 return []
@@ -553,7 +562,8 @@ Reviewed-by: Fred Bloggs <fred@bloggs.com>
                 ]
             if patch_id == 20:
                 return [
-                    {'id': 7, 'content': '''On some date Alex Miller <alex@country.org> wrote:
+                    {'id': 7, 'content':
+                     '''On some date Alex Miller <alex@country.org> wrote:
 
 > Sometimes we need to create a patch.
 > This is one of those times
@@ -661,7 +671,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.setup_second()
 
         self.db_close()
-        args = Namespace(subcmd='list', extra=[])
+        args = Namespace(subcmd='list')
         with terminal.capture() as (out, _):
             control.do_series(args, test_db=self.tmpdir, pwork=True)
         lines = out.getvalue().splitlines()
@@ -732,7 +742,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         # Use the 'second' branch, which has a cover letter
         gitutil.checkout('second', self.gitdir, work_tree=self.tmpdir,
                          force=True)
-        args = Namespace(subcmd='add', extra=[], series=None, mark=False,
+        args = Namespace(subcmd='add', series=None, mark=False,
                          allow_unmarked=True, upstream=None, dry_run=False,
                          desc=None)
         with terminal.capture():
@@ -760,7 +770,8 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.assertEqual("Processing 2 commits from branch 'first2'",
                          next(itr))
         self.assertRegex(next(itr), '-  .* as .*: i2c: I2C things')
-        self.assertRegex(next(itr), '- added version 2 .* as .*: spi: SPI fixes')
+        self.assertRegex(
+            next(itr), '- added version 2 .* as .*: spi: SPI fixes')
         self.assertRegex(next(itr), 'Updating branch first2 to .*')
         self.assertEqual('Added new branch first2', next(itr))
         return itr
@@ -816,7 +827,8 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.assertEqual(
             first, repo.lookup_branch('first').peel(pygit2.GIT_OBJ_COMMIT).oid)
         count = 2
-        series1 = patchstream.get_metadata_for_list('first', self.gitdir, count)
+        series1 = patchstream.get_metadata_for_list('first', self.gitdir,
+                                                    count)
         self.assertFalse('links' in series1)
         self.assertFalse('version' in series1)
 
@@ -837,7 +849,8 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         with terminal.capture():
             cser.link_set('first', 1, '17', True)
 
-        series2 = patchstream.get_metadata_for_list('first', self.gitdir, count)
+        series2 = patchstream.get_metadata_for_list('first', self.gitdir,
+                                                    count)
         self.assertEqual('1:17', series2.links)
 
         self.db_close()
@@ -853,7 +866,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             cser.series_add('first', '', allow_unmarked=True)
 
         with terminal.capture() as (out, _):
-            self.run_args('series', '-s', 'first', '-V', '4', 'set-link','-u',
+            self.run_args('series', '-s', 'first', '-V', '4', 'set-link', '-u',
                           '1234', expected_ret=1, pwork=True)
         self.assertIn("Series 'first' does not have a version 4",
                       out.getvalue())
@@ -877,7 +890,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         with terminal.capture() as (out, _):
             self.run_args('series', '-s', 'first', '-V', '4', 'set-link', '-u',
-                      '1234', pwork=True)
+                          '1234', pwork=True)
         lines = out.getvalue().splitlines()
         self.assertRegex(
             lines[-3],
@@ -999,7 +1012,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.assertEqual((2, 1, 2, '2345', None, None, None), plist[1])
 
     def test_series_link_auto_name_version(self):
-        """Test finding patchwork link for a cseries with auto name + version"""
+        """Find patchwork link for a cseries with auto name + version"""
         cser = self.get_cser()
 
         with terminal.capture() as (out, _):
@@ -1043,17 +1056,19 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         cser.project_set(pwork, 'U-Boot', quiet=True)
 
         self.assertEqual(
-            (self.SERIES_ID_SECOND_V1, None, 'second', 1, 'Series for my board'),
+            (self.SERIES_ID_SECOND_V1, None, 'second', 1,
+             'Series for my board'),
             cser.link_search(pwork, 'second', 1))
         self.assertEqual((457, None, 'second', 2, 'Series for my board'),
                          cser.link_search(pwork, 'second', 2))
         res = cser.link_search(pwork, 'second', 3)
         self.assertEqual(
             (None,
-             [{'id': self.SERIES_ID_SECOND_V1, 'name': 'Series for my board', 'version': 1},
+             [{'id': self.SERIES_ID_SECOND_V1, 'name': 'Series for my board',
+               'version': 1},
               {'id': 457, 'name': 'Series for my board', 'version': 2}],
              'second', 3, 'Series for my board'),
-             res)
+            res)
 
     def check_series_autolink(self):
         """Common code for autolink tests"""
@@ -1076,8 +1091,9 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         plist = cser.get_ser_ver_list()
         self.assertEqual(2, len(plist))
         self.assertEqual((1, 1, 1, None, None, None, None), plist[0])
-        self.assertEqual((2, 2, 1, f'{self.SERIES_ID_SECOND_V1}', None, None, None),
-                         plist[1])
+        self.assertEqual(
+            (2, 2, 1, f'{self.SERIES_ID_SECOND_V1}', None, None, None),
+            plist[1])
         with self.stage('autolink first'):
             yield cser
 
@@ -1094,8 +1110,8 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         with terminal.capture() as (out, _):
             cser.link_auto(pwork, 'second', None, True)
         self.assertEqual(
-                f"Setting link for series 'second' v1 to {self.SERIES_ID_SECOND_V1}",
-                out.getvalue().splitlines()[-1])
+            f"Setting link for series 'second' v1 to {self.SERIES_ID_SECOND_V1}",
+            out.getvalue().splitlines()[-1])
 
         cser = next(cor)
         cor.close()
@@ -1110,8 +1126,8 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             self.run_args('series', '-s', 'second', 'autolink', '-u',
                           pwork=pwork)
         self.assertEqual(
-                f"Setting link for series 'second' v1 to {self.SERIES_ID_SECOND_V1}",
-                out.getvalue().splitlines()[-1])
+            f"Setting link for series 'second' v1 to {self.SERIES_ID_SECOND_V1}",
+            out.getvalue().splitlines()[-1])
 
         next(cor)
         cor.close()
@@ -1141,9 +1157,9 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         cser, pwork = self._autolink_setup()
         with terminal.capture() as (out, _):
             summary = cser.link_auto_all(pwork, update_commit=True,
-                                        link_all_versions=True,
-                                        replace_existing=False, dry_run=True,
-                                        show_summary=False)
+                                         link_all_versions=True,
+                                         replace_existing=False, dry_run=True,
+                                         show_summary=False)
         self.assertEqual(3, len(summary))
         items = iter(summary.values())
         linked = next(items)
@@ -1230,7 +1246,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
              f'linked:{self.SERIES_ID_SECOND_V1}'),
             next(items))
 
-    def test_series_autolink_cmdline(self):
+    def test_series_autolink_extra(self):
         """Test command-line operation
 
         This just uses mocks for now since we can rely on the direct tests for
@@ -1283,7 +1299,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         itr = iter(out.getvalue().splitlines())
         self.assertEqual(
             '1 series linked, 1 already linked, 1 not found (3 requests)',
-             next(itr))
+            next(itr))
         self.assertEqual('', next(itr))
         self.assertEqual(
             'Name             Version  Description                               '
@@ -1354,13 +1370,13 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
     def test_series_archive_cmdline(self):
         """Test marking a series as archived with cmdline"""
         cor = self.check_series_archive()
-        cser = next(cor)
+        next(cor)
 
         # Archive it and make sure it is invisible
         self.run_args('series', '-s', 'first', 'archive', pwork=True)
-        cser = next(cor)
+        next(cor)
         self.run_args('series', '-s', 'first', 'unarchive', pwork=True)
-        cser = next(cor)
+        next(cor)
         cor.close()
 
     def check_series_inc(self):
@@ -1949,12 +1965,12 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
     def test_series_mark_cmdline(self):
         """Test marking a cseries, i.e. adding Change-Id fields"""
         cor = self.check_series_mark()
-        cser = next(cor)
+        next(cor)
 
         # Start with a dry run, which should do nothing
-        cser = next(cor)
+        next(cor)
         self.run_args('series', '-n', '-s', 'first', 'mark', pwork=True)
-        cser = next(cor)
+        next(cor)
 
         # Now do a real run
         self.run_args('series', '-s', 'first', 'mark', pwork=True)
@@ -2098,15 +2114,15 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
     def test_series_remove_multiple_cmdline(self):
         """Test removing a series with more than one version on cmdline"""
         cor = self.check_series_remove_multiple()
-        cser = next(cor)
+        next(cor)
 
         self.run_args('series', '-n', '-s', 'first', '-V', '1',
                       'remove-version', pwork=True)
-        cser = next(cor)
+        next(cor)
 
         self.run_args('series', '-s', 'first', '-V', '1', 'remove-version',
                       pwork=True)
-        cser = next(cor)
+        next(cor)
 
         with terminal.capture() as (out, _):
             self.run_args('series', '-n', '-s', 'first', '-V', '2',
@@ -2114,10 +2130,10 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.assertIn(
             "Series 'first' only has one version: remove the series",
             out.getvalue().strip())
-        cser = next(cor)
+        next(cor)
 
         self.run_args('series', '-n', '-s', 'first', 'remove', pwork=True)
-        cser = next(cor)
+        next(cor)
 
         self.run_args('series', '-s', 'first', 'remove', pwork=True)
 
@@ -2397,8 +2413,7 @@ Date:   .*
         return
 
         cser, pwork = next(cor)
-        cser.series_sync(pwork, 'second', None, False, False, True,
-                             False)
+        cser.series_sync(pwork, 'second', None, False, False, True)
         self.assertFalse(next(cor))
 
     def test_series_sync_cmdline(self):
@@ -2676,7 +2691,7 @@ Date:   .*
         """Test showing progress for a cseries"""
         self.setup_second()
 
-        args = Namespace(subcmd='progress', series='second', extra=[],
+        args = Namespace(subcmd='progress', series='second',
                          show_all_versions=False, list_patches=True)
         self.db_close()
         with terminal.capture() as (out, _):
@@ -2707,7 +2722,7 @@ Date:   .*
         self.setup_second()
 
         self.db_close()
-        args = Namespace(subcmd='progress', series=None, extra=[],
+        args = Namespace(subcmd='progress', series=None,
                          show_all_versions=False, list_patches=True)
         with terminal.capture() as (out, _):
             control.do_series(args, test_db=self.tmpdir, pwork=True)
@@ -2778,7 +2793,7 @@ Date:   .*
         self.setup_second()
 
         self.db_close()
-        args = Namespace(subcmd='summary', series=None, extra=[])
+        args = Namespace(subcmd='summary', series=None)
         with terminal.capture() as (out, _):
             control.do_series(args, test_db=self.tmpdir, pwork=True)
         lines = out.getvalue().splitlines()
@@ -2958,13 +2973,17 @@ Date:   .*
                           '--no-autolink', pwork=pwork)
         self.assertIn('Send a total of 3 patches with a cover letter',
                       out.getvalue())
-        self.assertIn('video.c:1: warning: Missing or malformed SPDX-License-Identifier tag in line 1',
-                      err.getvalue())
-        self.assertIn('<patch>:19: warning: added, moved or deleted file(s), does MAINTAINERS need updating?',
-                      err.getvalue())
+        self.assertIn(
+            'video.c:1: warning: Missing or malformed SPDX-License-Identifier tag in line 1',
+
+            err.getvalue())
+        self.assertIn(
+            '<patch>:19: warning: added, moved or deleted file(s), does MAINTAINERS need updating?',
+            err.getvalue())
         self.assertIn('bootm.c:1: check: Avoid CamelCase: <Fix>',
                       err.getvalue())
-        self.assertIn('Cc:  Anatolij Gustschin <agust@denx.de>', out.getvalue())
+        self.assertIn(
+            'Cc:  Anatolij Gustschin <agust@denx.de>', out.getvalue())
 
         self.assertTrue(os.path.exists(os.path.join(
             self.tmpdir, '0001-video-Some-video-improvements.patch')))
@@ -2977,7 +2996,8 @@ Date:   .*
         """Test sending a series and then adding its link to the database"""
         def h_sleep(time_s):
             if cser.get_time() > 100:
-                self.autolink_extra = {'id': 500, 'name': 'Series for my board',
+                self.autolink_extra = {'id': 500,
+                                       'name': 'Series for my board',
                                        'version': 3}
             cser.inc_fake_time(time_s)
 
@@ -3064,8 +3084,8 @@ Date:   .*
         """Test getting the status of a series, including comments"""
         cser, pwork = self.setup_second()
 
-        # Use single threading for easy debugging, but the multithreaded version
-        # should produce the same output
+        # Use single threading for easy debugging, but the multithreaded
+        # version should produce the same output
         with terminal.capture() as (out, _):
             cser.series_status(pwork, 'second', 2, False, single_thread=True)
         self._check_status(out, False, False)
@@ -3091,8 +3111,8 @@ Date:   .*
         """Test getting the status of a series, including comments"""
         cser, pwork = self.setup_second()
 
-        # Use single threading for easy debugging, but the multithreaded version
-        # should produce the same output
+        # Use single threading for easy debugging, but the multithreaded
+        # version should produce the same output
         with terminal.capture() as (out, _):
             self.run_args('series', '-s' 'second', '-V', '2', 'status',
                           pwork=pwork)

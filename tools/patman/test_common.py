@@ -39,9 +39,9 @@ class TestCommon:
 
         Args:
             preserve_indir: not used
-            preserve_outdir: Preserve the output directories used by tests. Each
-                test has its own, so this is normally only useful when running a
-                single test.
+            preserve_outdir: Preserve the output directories used by tests.
+                Each test has its own, so this is normally only useful when
+                running a single test.
             toolpath: not used
         """
         cls.preserve_outdirs = preserve_outdirs
@@ -234,7 +234,8 @@ and a little more''')
 
         repo.branches.local.create('third4', third_target)
         repo.config.set_multivar('branch.third4.remote', '', '.')
-        repo.config.set_multivar('branch.third4.merge', '', 'refs/heads/second')
+        repo.config.set_multivar('branch.third4.merge', '',
+                                 'refs/heads/second')
 
         target = repo.lookup_reference('refs/heads/first')
         repo.checkout(target, strategy=pygit2.GIT_CHECKOUT_FORCE)
