@@ -1513,7 +1513,7 @@ class Cseries:
 
         return vals.oid
 
-    def mark_series(self, in_name, allow_marked=False, dry_run=False):
+    def series_mark(self, in_name, allow_marked=False, dry_run=False):
         """Add Change-Id tags to a series
 
         Args:

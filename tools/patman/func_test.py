@@ -3489,7 +3489,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         # Try to mark again, which should fail
         with terminal.capture():
             with self.assertRaises(ValueError) as exc:
-                cser.mark_series('first', dry_run=False)
+                cser.series_mark('first', dry_run=False)
         self.assertEqual('Marked commits 2/2', str(exc.exception))
 
         # Use the --marked flag to make it succeed
@@ -3512,22 +3512,22 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         # Start with a dry run, which should do nothing
         cser = next(cor)
-        cser.mark_series('first', dry_run=True)
+        cser.series_mark('first', dry_run=True)
         cser = next(cor)
 
         # Now do a real run
-        cser.mark_series('first', dry_run=False)
+        cser.series_mark('first', dry_run=False)
         return
 
         # Try to mark again, which should fail
         with terminal.capture():
             with self.assertRaises(ValueError) as exc:
-                cser.mark_series('first', dry_run=False)
+                cser.series_mark('first', dry_run=False)
         self.assertEqual('Marked commits 2/2', str(exc.exception))
 
         # Use the --allow-marked flag to make it succeed
         cser = next(cor)
-        cser.mark_series('first', allow_marked=True, dry_run=False)
+        cser.series_mark('first', allow_marked=True, dry_run=False)
         self.assertFalse(next(cor))
 
     def test_series_mark_cmdline(self):
