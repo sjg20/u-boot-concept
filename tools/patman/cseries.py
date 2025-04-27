@@ -183,6 +183,55 @@ class Cseries(cser_helper.CseriesHelper):
         if dry_run:
             tout.info('Dry run completed')
 
+    def get_series_svid(self, series_id, version):
+        """Get the patchwork ID of a series version
+
+        Args:
+            series_id (int): id of the series to look up
+            version (int): version number to look up
+
+        Return:
+            str: link found
+
+        Raises:
+            ValueError: No matching series found
+        """
+        return self.get_series_svid_link(series_id, version)[0]
+
+    def get_series_svid_link(self, series_id, version):
+        """Get the patchwork ID of a series version
+
+        Args:
+            series_id (int): series ID to look up
+            version (int): version number to look up
+
+        Return:
+            tuple:
+                int: record id
+                str: link
+        """
+        recs = self.get_ser_ver(series_id, version)
+        return recs[0:2]
+
+    def get_ser_ver(self, series_id, version):
+        """Get the patchwork details for a series version
+
+        Args:
+            series_id (int): series ID to look up
+            version (int): version number to look up
+
+        Return: tuple:
+            int: record id
+            str: link
+            str: cover_id
+            int: cover_num_comments
+            str: cover-letter name
+
+        Raises:
+            ValueError: There is no matching idnum/version
+        """
+        return self.db.ser_ver_get_for_series(series_id, version)
+
     def link_set(self, series_name, version, link, update_commit):
         """Add / update a series-links link for a series
 
@@ -404,6 +453,82 @@ class Cseries(cser_helper.CseriesHelper):
             print(f'{name:16.16} {ser.desc:41.41} {stat.rjust(8)}  {vlist}')
         print(border)
 
+    def mark(self, in_name, allow_marked=False, dry_run=False):
+        """Add Change-Id tags to a series
+
+        Args:
+            in_name (str): Name of the series to unmark
+            allow_marked (bool): Allow commits to be (already) marked
+            dry_run (bool): True to do a dry run, restoring the original tree
+                afterwards
+
+        Return:
+            pygit.oid: oid of the new branch
+        """
+        name, ser, _, _ = self._prep_series(in_name)
+        tout.info(f"Marking series '{name}': allow_marked {allow_marked}")
+
+        if not allow_marked:
+            bad = []
+            for cmt in ser.commits:
+                if cmt.change_id:
+                    bad.append(cmt)
+            if bad:
+                print(f'{len(bad)} commit(s) already have marks')
+                for cmt in bad:
+                    print(f' - {oid(cmt.hash)} {cmt.subject}')
+                raise ValueError(
+                    f'Marked commits {len(bad)}/{len(ser.commits)}')
+        new_oid = self._mark_series(in_name, ser, dry_run=dry_run)
+
+        if dry_run:
+            tout.info('Dry run completed')
+        return new_oid
+
+    def series_unmark(self, name, allow_unmarked=False, dry_run=False):
+        """Remove Change-Id tags from a series
+
+        Args:
+            name (str): Name of the series to unmark
+            allow_unmarked (bool): Allow commits to be (already) unmarked
+            dry_run (bool): True to do a dry run, restoring the original tree
+                afterwards
+
+        Return:
+            pygit.oid: oid of the new branch
+        """
+        name, ser, _, _ = self._prep_series(name)
+        tout.info(
+            f"Unmarking series '{name}': allow_unmarked {allow_unmarked}")
+
+        if not allow_unmarked:
+            bad = []
+            for cmt in ser.commits:
+                if not cmt.change_id:
+                    bad.append(cmt)
+            if bad:
+                print(f'{len(bad)} commit(s) are missing marks')
+                for cmt in bad:
+                    print(f' - {oid(cmt.hash)} {cmt.subject}')
+                raise ValueError(
+                    f'Unmarked commits {len(bad)}/{len(ser.commits)}')
+        vals = None
+        for vals in self._process_series(name, ser, dry_run=dry_run):
+            if cser_helper.CHANGE_ID_TAG in vals.msg:
+                lines = vals.msg.splitlines()
+                updated = [line for line in lines
+                           if not line.startswith(cser_helper.CHANGE_ID_TAG)]
+                vals.msg = '\n'.join(updated)
+
+                tout.detail("   - removing mark")
+                vals.info = 'unmarked'
+            else:
+                vals.info = 'no mark'
+
+        if dry_run:
+            tout.info('Dry run completed')
+        return vals.oid
+
     def project_set(self, pwork, name, quiet=False):
         """Set the name of the project
 
@@ -553,6 +678,20 @@ class Cseries(cser_helper.CseriesHelper):
         if not args.dry_run and autolink:
             self.link_auto(pwork, name, version, True, wait_s=autolink_wait)
 
+    def set_archived(self, series, archived):
+        """Set whether a series is archived or not
+
+        Args:
+            series (str): Name of series to use, or None to use current branch
+            archived (bool): Whether to mark the series as archived or
+                unarchived
+        """
+        ser = self._parse_series(series, include_archived=True)
+        if not ser.idnum:
+            raise ValueError(f"Series '{ser.name}' not found in database")
+        self.db.series_set_archived(ser.idnum, archived)
+        self.commit()
+
     def status(self, pwork, series, version, show_comments,
                       show_cover_comments=False, single_thread=False):
         """Show the series status from patchwork
@@ -574,20 +713,6 @@ class Cseries(cser_helper.CseriesHelper):
         status.check_and_report_status(
             series, link, branch, None, False, show_comments,
             show_cover_comments, pwork, self.gitdir, single_thread)
-
-    def set_archived(self, series, archived):
-        """Set whether a series is archived or not
-
-        Args:
-            series (str): Name of series to use, or None to use current branch
-            archived (bool): Whether to mark the series as archived or
-                unarchived
-        """
-        ser = self._parse_series(series, include_archived=True)
-        if not ser.idnum:
-            raise ValueError(f"Series '{ser.name}' not found in database")
-        self.db.series_set_archived(ser.idnum, archived)
-        self.commit()
 
     def version_remove(self, name, version, dry_run=False):
         """Remove a version of a series from the database
@@ -615,82 +740,6 @@ class Cseries(cser_helper.CseriesHelper):
         tout.info(f"Removed version {version} from series '{name}'")
         if dry_run:
             tout.info('Dry run completed')
-
-    def mark(self, in_name, allow_marked=False, dry_run=False):
-        """Add Change-Id tags to a series
-
-        Args:
-            in_name (str): Name of the series to unmark
-            allow_marked (bool): Allow commits to be (already) marked
-            dry_run (bool): True to do a dry run, restoring the original tree
-                afterwards
-
-        Return:
-            pygit.oid: oid of the new branch
-        """
-        name, ser, _, _ = self._prep_series(in_name)
-        tout.info(f"Marking series '{name}': allow_marked {allow_marked}")
-
-        if not allow_marked:
-            bad = []
-            for cmt in ser.commits:
-                if cmt.change_id:
-                    bad.append(cmt)
-            if bad:
-                print(f'{len(bad)} commit(s) already have marks')
-                for cmt in bad:
-                    print(f' - {oid(cmt.hash)} {cmt.subject}')
-                raise ValueError(
-                    f'Marked commits {len(bad)}/{len(ser.commits)}')
-        new_oid = self._mark_series(in_name, ser, dry_run=dry_run)
-
-        if dry_run:
-            tout.info('Dry run completed')
-        return new_oid
-
-    def series_unmark(self, name, allow_unmarked=False, dry_run=False):
-        """Remove Change-Id tags from a series
-
-        Args:
-            name (str): Name of the series to unmark
-            allow_unmarked (bool): Allow commits to be (already) unmarked
-            dry_run (bool): True to do a dry run, restoring the original tree
-                afterwards
-
-        Return:
-            pygit.oid: oid of the new branch
-        """
-        name, ser, _, _ = self._prep_series(name)
-        tout.info(
-            f"Unmarking series '{name}': allow_unmarked {allow_unmarked}")
-
-        if not allow_unmarked:
-            bad = []
-            for cmt in ser.commits:
-                if not cmt.change_id:
-                    bad.append(cmt)
-            if bad:
-                print(f'{len(bad)} commit(s) are missing marks')
-                for cmt in bad:
-                    print(f' - {oid(cmt.hash)} {cmt.subject}')
-                raise ValueError(
-                    f'Unmarked commits {len(bad)}/{len(ser.commits)}')
-        vals = None
-        for vals in self._process_series(name, ser, dry_run=dry_run):
-            if cser_helper.CHANGE_ID_TAG in vals.msg:
-                lines = vals.msg.splitlines()
-                updated = [line for line in lines
-                           if not line.startswith(cser_helper.CHANGE_ID_TAG)]
-                vals.msg = '\n'.join(updated)
-
-                tout.detail("   - removing mark")
-                vals.info = 'unmarked'
-            else:
-                vals.info = 'no mark'
-
-        if dry_run:
-            tout.info('Dry run completed')
-        return vals.oid
 
     def sync(self, pwork, series, version, show_comments,
                     show_cover_comments, gather_tags, dry_run=False):
@@ -813,55 +862,6 @@ class Cseries(cser_helper.CseriesHelper):
                                num_comments, show_commit, show_patch, True,
                                state_totals)
 
-    def get_series_svid(self, series_id, version):
-        """Get the patchwork ID of a series version
-
-        Args:
-            series_id (int): id of the series to look up
-            version (int): version number to look up
-
-        Return:
-            str: link found
-
-        Raises:
-            ValueError: No matching series found
-        """
-        return self.get_series_svid_link(series_id, version)[0]
-
-    def get_series_svid_link(self, series_id, version):
-        """Get the patchwork ID of a series version
-
-        Args:
-            series_id (int): series ID to look up
-            version (int): version number to look up
-
-        Return:
-            tuple:
-                int: record id
-                str: link
-        """
-        recs = self.get_ser_ver(series_id, version)
-        return recs[0:2]
-
-    def get_ser_ver(self, series_id, version):
-        """Get the patchwork details for a series version
-
-        Args:
-            series_id (int): series ID to look up
-            version (int): version number to look up
-
-        Return: tuple:
-            int: record id
-            str: link
-            str: cover_id
-            int: cover_num_comments
-            str: cover-letter name
-
-        Raises:
-            ValueError: There is no matching idnum/version
-        """
-        return self.db.ser_ver_get_for_series(series_id, version)
-
     def open(self, pwork, name, version):
         """Open the patchwork page for a series
 
@@ -958,22 +958,6 @@ class Cseries(cser_helper.CseriesHelper):
 
                 print(f"{total:15}  {'':40}  {total_patches:5} {out}")
 
-    def summary(self, series):
-        """Show summary information for all series
-
-        Args:
-            series (str): Name of series to use
-        """
-        print(f"{'Name':17}  Status  Description")
-        print(f"{'-' * 17}  {'-' * 6}  {'-' * 30}")
-        if series is not None:
-            self._summary_one(self._parse_series(series))
-            return
-
-        sdict = self.db.series_get_dict()
-        for ser in sdict.values():
-            self._summary_one(ser)
-
     def scan(self, branch_name, mark=False, allow_unmarked=False, end=None,
              dry_run=False):
         """Scan a branch and make updates to the database if it has changed
@@ -1046,6 +1030,22 @@ class Cseries(cser_helper.CseriesHelper):
         else:
             self.rollback()
             tout.info('Dry run completed')
+
+    def summary(self, series):
+        """Show summary information for all series
+
+        Args:
+            series (str): Name of series to use
+        """
+        print(f"{'Name':17}  Status  Description")
+        print(f"{'-' * 17}  {'-' * 6}  {'-' * 30}")
+        if series is not None:
+            self._summary_one(self._parse_series(series))
+            return
+
+        sdict = self.db.series_get_dict()
+        for ser in sdict.values():
+            self._summary_one(ser)
 
     def upstream_add(self, name, url):
         """Add a new upstream tree
