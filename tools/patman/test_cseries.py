@@ -3029,7 +3029,7 @@ Date:   .*
             'first                                                          2  2:unknown',
             next(itr))
         self.assertEqual(
-            'second                                                         3  3:unknown',
+            'second           Series for my board                           3  3:unknown',
             next(itr))
         self.assertEqual(
             'second2          The name of the cover letter                  3  '

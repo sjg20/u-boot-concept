@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# # -*- coding: utf-8 -*-
 # SPDX-License-Identifier:	GPL-2.0+
 #
 # Copyright 2017 Google, Inc
@@ -13,9 +13,9 @@ import pathlib
 import re
 import shutil
 import sys
-import tempfile
 import unittest
 
+import aiohttp
 import pygit2
 
 from u_boot_pylib import command
@@ -36,6 +36,8 @@ from patman.test_common import TestCommon
 PATMAN_DIR = pathlib.Path(__file__).parent
 TEST_DATA_DIR = PATMAN_DIR / 'test/'
 
+# pylint: disable=protected-access
+
 
 @contextlib.contextmanager
 def directory_excursion(directory):
@@ -46,6 +48,11 @@ def directory_excursion(directory):
         yield
     finally:
         os.chdir(current)
+
+
+class Namespace:
+    def __init__(self, **kwargs):
+        self.__dict__.update(kwargs)
 
 
 class TestFunctional(unittest.TestCase, TestCommon):
@@ -385,152 +392,6 @@ Changes in v2:
         self.assertEqual('base-commit: 1a44532', lines[pos + 3])
         self.assertEqual('branch: mybranch', lines[pos + 4])
 
-    def make_commit_with_file(self, subject, body, fname, text):
-        """Create a file and add it to the git repo with a new commit
-
-        Args:
-            subject (str): Subject for the commit
-            body (str): Body text of the commit
-            fname (str): Filename of file to create
-            text (str): Text to put into the file
-        """
-        path = os.path.join(self.tmpdir, fname)
-        tools.write_file(path, text, binary=False)
-        index = self.repo.index
-        index.add(fname)
-        # pylint doesn't seem to find this
-        # pylint: disable=E1101
-        author = pygit2.Signature('Test user', 'test@email.com')
-        committer = author
-        tree = index.write_tree()
-        message = subject + '\n' + body
-        self.repo.create_commit('HEAD', author, committer, message, tree,
-                                [self.repo.head.target])
-
-    def make_git_tree(self):
-        """Make a simple git tree suitable for testing
-
-        It has three branches:
-            'base' has two commits: PCI, main
-            'first' has base as upstream and two more commits: I2C, SPI
-            'second' has base as upstream and three more: video, serial, bootm
-
-        Returns:
-            pygit2.Repository: repository
-        """
-        repo = pygit2.init_repository(self.gitdir)
-        self.repo = repo
-        new_tree = repo.TreeBuilder().write()
-
-        common = ['git', f'--git-dir={self.gitdir}', 'config']
-        tools.run(*(common + ['user.name', 'Dummy']), cwd=self.gitdir)
-        tools.run(*(common + ['user.email', 'dumdum@dummy.com']),
-                  cwd=self.gitdir)
-
-        # pylint doesn't seem to find this
-        # pylint: disable=E1101
-        author = pygit2.Signature('Test user', 'test@email.com')
-        committer = author
-        _ = repo.create_commit('HEAD', author, committer, 'Created master',
-                               new_tree, [])
-
-        self.make_commit_with_file('Initial commit', '''
-Add a README
-
-''', 'README', '''This is the README file
-describing this project
-in very little detail''')
-
-        self.make_commit_with_file('pci: PCI implementation', '''
-Here is a basic PCI implementation
-
-''', 'pci.c', '''This is a file
-it has some contents
-and some more things''')
-        self.make_commit_with_file('main: Main program', '''
-Hello here is the second commit.
-''', 'main.c', '''This is the main file
-there is very little here
-but we can always add more later
-if we want to
-
-Series-to: u-boot
-Series-cc: Barry Crump <bcrump@whataroa.nz>
-''')
-        base_target = repo.revparse_single('HEAD')
-        self.make_commit_with_file('i2c: I2C things', '''
-This has some stuff to do with I2C
-''', 'i2c.c', '''And this is the file contents
-with some I2C-related things in it''')
-        self.make_commit_with_file('spi: SPI fixes', '''
-SPI needs some fixes
-and here they are
-
-Signed-off-by: %s
-
-Series-to: u-boot
-Commit-notes:
-title of the series
-This is the cover letter for the series
-with various details
-END
-''' % self.leb, 'spi.c', '''Some fixes for SPI in this
-file to make SPI work
-better than before''')
-        first_target = repo.revparse_single('HEAD')
-
-        target = repo.revparse_single('HEAD~2')
-        # pylint doesn't seem to find this
-        # pylint: disable=E1101
-        repo.reset(target.oid, pygit2.enums.ResetMode.HARD)
-        self.make_commit_with_file('video: Some video improvements', '''
-Fix up the video so that
-it looks more purple. Purple is
-a very nice colour.
-''', 'video.c', '''More purple here
-Purple and purple
-Even more purple
-Could not be any more purple''')
-        self.make_commit_with_file('serial: Add a serial driver', f'''
-Here is the serial driver
-for my chip.
-
-Cover-letter:
-{self.TITLE_SECOND}
-This series implements support
-for my glorious board.
-END
-Series-to: u-boot
-Series-links: {self.SERIES_ID_SECOND_V1}
-''', 'serial.c', '''The code for the
-serial driver is here''')
-        self.make_commit_with_file('bootm: Make it boot', '''
-This makes my board boot
-with a fix to the bootm
-command
-''', 'bootm.c', '''Fix up the bootm
-command to make the code as
-complicated as possible''')
-        second_target = repo.revparse_single('HEAD')
-
-        repo.branches.local.create('first', first_target)
-        repo.config.set_multivar('branch.first.remote', '', '.')
-        repo.config.set_multivar('branch.first.merge', '', 'refs/heads/base')
-
-        repo.branches.local.create('second', second_target)
-        repo.config.set_multivar('branch.second.remote', '', '.')
-        repo.config.set_multivar('branch.second.merge', '', 'refs/heads/base')
-
-        repo.branches.local.create('base', base_target)
-
-        target = repo.lookup_reference('refs/heads/first')
-        repo.checkout(target, strategy=pygit2.GIT_CHECKOUT_FORCE)
-        target = repo.revparse_single('HEAD')
-        repo.reset(target.oid, pygit2.enums.ResetMode.HARD)
-
-        self.assertFalse(gitutil.check_dirty(self.gitdir, self.tmpdir))
-        return repo
-
     def test_branch(self):
         """Test creating patches from a branch"""
         repo = self.make_git_tree()
@@ -798,12 +659,25 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
                     {'id': '1', 'name': 'Some patch'}]}
         raise ValueError('Fake Patchwork does not understand: %s' % subpath)
 
+    async def async_collect_patches(self, link, pwork, read_comments,
+                                    read_cover_comments):
+        async with aiohttp.ClientSession() as client:
+            return await pwork.series_get_state(
+                client, link, read_comments, read_cover_comments)
+
+    def collect_patches(self, link, pwork, read_comments,
+                        read_cover_comments):
+        loop = asyncio.get_event_loop()
+        return loop.run_until_complete(self.async_collect_patches(
+            link, pwork, read_comments, read_cover_comments))
+
     def test_status_mismatch(self):
         """Test Patchwork patches not matching the series"""
         pwork = patchwork.Patchwork.for_testing(self._fake_patchwork)
         with terminal.capture() as (_, err):
             loop = asyncio.get_event_loop()
-            patches = loop.run_until_complete(status.check_status(1234, pwork))
+            _, patches = loop.run_until_complete(status.check_status(1234,
+                                                                     pwork))
             status.check_patch_count(0, len(patches))
         self.assertIn('Warning: Patchwork reports 1 patches, series has 0',
                       err.getvalue())
@@ -812,11 +686,11 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         """Test handling a single patch in Patchwork"""
         pwork = patchwork.Patchwork.for_testing(self._fake_patchwork)
         loop = asyncio.get_event_loop()
-        patches = loop.run_until_complete(status.check_status(1234, pwork))
+        _, patches = loop.run_until_complete(status.check_status(1234, pwork))
         self.assertEqual(1, len(patches))
         patch = patches[0]
         self.assertEqual('1', patch.id)
-        self.assertEqual('Some patch', patch.raw_subject)
+        self.assertEqual('Some patch', patch.series_data['name'])
 
     def test_parse_subject(self):
         """Test parsing of the patch subject"""
@@ -846,6 +720,14 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         self.assertEqual(2, patch.seq)
         self.assertEqual(2, patch.count)
         self.assertEqual(None, patch.prefix)
+        self.assertEqual(None, patch.version)
+
+        # With PATCH prefix
+        patch.parse_subject('[PATCH,2/5] Testing')
+        self.assertEqual('Testing', patch.subject)
+        self.assertEqual(2, patch.seq)
+        self.assertEqual(5, patch.count)
+        self.assertEqual('PATCH', patch.prefix)
         self.assertEqual(None, patch.version)
 
         # RFC patch
@@ -981,6 +863,57 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
             return patch.comments
         raise ValueError('Fake Patchwork does not understand: %s' % subpath)
 
+    async def _find_new_responses(self, patch, pwork):
+        async with aiohttp.ClientSession() as client:
+            return await pwork._get_patch_status(client, patch.id)
+
+    def xfind_new_responses(self, patch, pwork):
+        """Find new rtags collected by patchwork that we don't know about"""
+        loop = asyncio.get_event_loop()
+        pat = loop.run_until_complete(self._find_new_responses(patch, pwork))
+
+        new_rtag_list, review_list = pwork.process_reviews(
+            pat.data['content'], pat.comments, self.commits[0].rtags)
+        return new_rtag_list, review_list
+
+    async def _find_responses(self, client, patch, pwork):
+        """Find new rtags collected by patchwork that we don't know about
+
+        This is designed to be run in parallel, once for each commit/patch
+
+        Args:
+            client (aiohttp.ClientSession): Session to use
+            patch (Patch): Corresponding Patch object for this patch
+            pwork (Patchwork): Patchwork class to handle communications
+
+        Return: tuple:
+            new_rtags (dict)
+                key: Response tag (e.g. 'Reviewed-by')
+                value: Set of people who gave that response, each a name/email
+                    string
+            list of Review: List of reviews for the patch
+        """
+        if not patch:
+            return
+
+        # Get the content for the patch email itself as well as all comments
+        pat = await pwork._get_patch_status(client, patch.id)
+        return pat.data, pat.comments
+
+    async def find_responses(self, patch, pwork):
+        async with aiohttp.ClientSession() as client:
+            return await self._find_responses(client, patch, pwork)
+
+    def find_new_responses(self, patch, pwork):
+        loop = asyncio.get_event_loop()
+        return loop.run_until_complete(self.find_responses(patch, pwork))
+
+    def find_new_rtags(self, patch, rtags, pwork):
+        patch_data, comment_data = self.find_new_responses(patch, pwork)
+        new_rtag_list, review_list = status.process_reviews(
+            patch_data['content'], comment_data, rtags)
+        return new_rtag_list, review_list
+
     def test_find_new_responses(self):
         """Test operation of find_new_responses()"""
         commit1 = Commit('abcd')
@@ -995,6 +928,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         comment1a = {'content': 'Reviewed-by: %s\n' % self.joe}
 
         patch1.comments = [comment1a]
+        patch1.state = 'new'
 
         patch2 = patchwork.Patch('2')
         patch2.parse_subject('[2/2] Subject 2')
@@ -1005,6 +939,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
                        (self.mary, self.leb)}
         comment2b = {'content': 'Reviewed-by: %s' % self.fred}
         patch2.comments = [comment2a, comment2b]
+        patch2.state = 'new'
 
         # This test works by setting up commits and patch for use by the fake
         # Rest API function _fake_patchwork2(). It calls various functions in
@@ -1054,7 +989,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         terminal.set_print_test_mode()
         pwork = patchwork.Patchwork.for_testing(self._fake_patchwork2)
         status.check_and_show_status(series, '1234', None, None, False, False,
-                                     pwork)
+                                     False, pwork)
         itr = iter(terminal.get_print_test_lines())
         col = terminal.Color()
         self.assertEqual(terminal.PrintLine('  1 Subject 1', col.YELLOW),
@@ -1135,6 +1070,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         comment1a = {'content': 'Reviewed-by: %s\n' % self.joe}
 
         patch1.comments = [comment1a]
+        patch1.state = 'new'
 
         patch2 = patchwork.Patch('2')
         patch2.parse_subject('[2/2] %s' % series.commits[1].subject)
@@ -1146,6 +1082,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         comment2b = {
             'content': 'Reviewed-by: %s' % self.fred}
         patch2.comments = [comment2a, comment2b]
+        patch2.state = 'new'
 
         # This test works by setting up patches for use by the fake Rest API
         # function _fake_patchwork3(). The fake patch comments above should
@@ -1167,8 +1104,9 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
 
         terminal.set_print_test_mode()
         pwork = patchwork.Patchwork.for_testing(self._fake_patchwork3)
-        status.check_and_show_status(series, '1234', branch, dest_branch,
-                                     False, False, pwork, repo)
+        status.check_and_show_status(
+            series, '1234', branch, dest_branch, False, False, False, pwork,
+            repo)
         lines = terminal.get_print_test_lines()
         self.assertEqual(12, len(lines))
         self.assertEqual(
@@ -1320,6 +1258,7 @@ Reviewed-by: %s
 ''' % self.joe}
 
         patch1.comments = [comment1a]
+        patch1.state = 'new'
 
         patch2 = patchwork.Patch('2')
         patch2.parse_subject('[2/2] Subject 2')
@@ -1349,6 +1288,7 @@ A comment
 Reviewed-by: %s
 ''' % self.fred}
         patch2.comments = [comment2a, comment2b]
+        patch2.state = 'new'
 
         # This test works by setting up commits and patch for use by the fake
         # Rest API function _fake_patchwork2(). It calls various functions in
@@ -1370,8 +1310,8 @@ Reviewed-by: %s
         series.commits = [commit1, commit2]
         terminal.set_print_test_mode()
         pwork = patchwork.Patchwork.for_testing(self._fake_patchwork2)
-        status.check_and_show_status(series, '1234', None, None, False, True,
-                                     pwork)
+        status.check_and_show_status(
+            series, '1234', None, None, False, True, False, pwork)
         itr = iter(terminal.get_print_test_lines())
         col = terminal.Color()
         self.assertEqual(terminal.PrintLine('  1 Subject 1', col.YELLOW),

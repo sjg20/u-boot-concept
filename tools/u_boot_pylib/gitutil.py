@@ -775,6 +775,116 @@ def check_dirty(git_dir=None, work_tree=None):
     return command.output(*cmd).splitlines()
 
 
+def check_branch(name, git_dir=None):
+    """Check if a branch exists
+
+    Args:
+        name (str): Name of the branch to check
+        git_dir (str): Path to git repository (None to use default)
+    """
+    cmd = ['git']
+    if git_dir:
+        cmd += ['--git-dir', git_dir]
+    cmd += ['branch', '--list', name]
+
+    # This produces '  <name>' or '* <name>'
+    out = command.output(*cmd).rstrip()
+    return out[2:] == name
+
+
+def rename_branch(old_name, name, git_dir=None):
+    """Check if a branch exists
+
+    Args:
+        old_name (str): Name of the branch to rename
+        name (str): New name for the branch
+        git_dir (str): Path to git repository (None to use default)
+
+    Return:
+        str: Output from command
+    """
+    cmd = ['git']
+    if git_dir:
+        cmd += ['--git-dir', git_dir]
+    cmd += ['branch', '--move', old_name, name]
+
+    # This produces '  <name>' or '* <name>'
+    return command.output(*cmd).rstrip()
+
+
+def get_commit_message(commit, git_dir=None):
+    """Gets the commit message for a commit
+
+    Args:
+        commit (str): commit to check
+        git_dir (str): Path to git repository (None to use default)
+
+    Return:
+        list of str: Lines from the commit message
+    """
+    cmd = ['git']
+    if git_dir:
+        cmd += ['--git-dir', git_dir]
+    cmd += ['show', '--quiet', commit]
+
+    out = command.output(*cmd)
+    # the header is followed by a blank line
+    lines = out.splitlines()
+    empty = lines.index('')
+    msg = lines[empty + 1:]
+    unindented = [line[4:] for line in msg]
+
+    return unindented
+
+
+def show_commit(commit, msg=True, diffstat=False, patch=False, colour=True,
+                git_dir=None):
+    """Runs 'git show' and returns the output
+
+    Args:
+        commit (str): commit to check
+        diffstat (bool): True to include the diffstat
+        msg (bool): Show the commit message
+        patch (bool): True to include the patch
+        git_dir (str): Path to git repository (None to use default)
+
+    Return:
+        list of str: Lines from the commit message
+    """
+    cmd = ['git']
+    if git_dir:
+        cmd += ['--git-dir', git_dir]
+    cmd += ['show', '--quiet']
+    if colour:
+        cmd.append('--color')
+    if not msg:
+        cmd.append('--oneline')
+    if diffstat:
+        cmd.append('--stat')
+    if patch:
+        cmd.append('--patch')
+    cmd.append(commit)
+
+    return command.output(*cmd)
+
+
+def tag(name, git_dir=None):
+    """Check if a branch exists
+
+    Args:
+        name (str): Name of the branch to check
+        git_dir (str): Path to git repository (None to use default)
+    """
+    cmd = ['git']
+    if git_dir:
+        cmd += ['--git-dir', git_dir]
+    cmd += ['branch', '--list', name]
+
+    # This produces '  <name>' or '* <name>'
+    out = command.output(*cmd).rstrip()
+    return out[2:] == name
+
+
 if __name__ == "__main__":
     import doctest
 

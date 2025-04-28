@@ -1290,7 +1290,7 @@ class CseriesHelper:
         """
         missing = 0
         svdict = self._get_ser_ver_dict()
-        sdict = self.db.series_get_dict_by_id()
+        sdict = self.db.series_get_dict_by_id(True)
         to_fetch = {}
 
         if sync_all_versions:
