@@ -790,7 +790,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         series = Series()
 
         with terminal.capture() as (_, err):
-            status.collect_patches(series, 1234, None, self._fake_patchwork)
+            status.collect_patches(1234, None, self._fake_patchwork)
         self.assertIn('Warning: Patchwork reports 1 patches, series has 0',
                       err.getvalue())
 
@@ -799,7 +799,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         series = Series()
         series.commits = [Commit('abcd')]
 
-        patches = status.collect_patches(series, 1234, None,
+        patches = status.collect_patches(1234, None,
                                          self._fake_patchwork)
         self.assertEqual(1, len(patches))
         patch = patches[0]
@@ -1045,8 +1045,8 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         series = Series()
         series.commits = [commit1, commit2]
         terminal.set_print_test_mode()
-        status.check_patchwork_status(series, '1234', None, None, False, False,
-                                      None, self._fake_patchwork2)
+        status.check_and_show_status('1234', None, None, False, False,
+                                     None, self._fake_patchwork2)
         lines = iter(terminal.get_print_test_lines())
         col = terminal.Color()
         self.assertEqual(terminal.PrintLine('  1 Subject 1', col.BLUE),
@@ -1159,9 +1159,9 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         # <unittest.result.TestResult run=8 errors=0 failures=0>
 
         terminal.set_print_test_mode()
-        status.check_patchwork_status(series, '1234', branch, dest_branch,
-                                      False, False, None, self._fake_patchwork3,
-                                      repo)
+        status.check_and_show_status('1234', branch, dest_branch,
+                                     False, False, None, self._fake_patchwork3,
+                                     repo)
         lines = terminal.get_print_test_lines()
         self.assertEqual(12, len(lines))
         self.assertEqual(
@@ -1361,8 +1361,8 @@ Reviewed-by: %s
         series = Series()
         series.commits = [commit1, commit2]
         terminal.set_print_test_mode()
-        status.check_patchwork_status(series, '1234', None, None, False, True,
-                                      None, self._fake_patchwork2)
+        status.check_and_show_status('1234', None, None, False, True,
+                                     None, self._fake_patchwork2)
         lines = iter(terminal.get_print_test_lines())
         col = terminal.Color()
         self.assertEqual(terminal.PrintLine('  1 Subject 1', col.BLUE),

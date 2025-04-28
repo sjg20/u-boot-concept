@@ -295,7 +295,7 @@ def create_branch(series, new_rtag_list, branch, dest_branch, overwrite,
     return num_added
 
 def check_status(series, series_id, show_comments, url,
-                 rest_api=call_rest_api):
+                 rest_api=call_rest_api, test_repo=None):
     """Check the status of a series on Patchwork
 
     This finds review tags and comments for a series in Patchwork, displaying
@@ -311,6 +311,7 @@ def check_status(series, series_id, show_comments, url,
         url (str): URL of patchwork server, e.g. 'https://patchwork.ozlabs.org'
         rest_api (function): API function to call to access Patchwork, for
             testing
+        test_repo (pygit2.Repository): Repo to use (use None unless testing)
 
     Return:
         tuple:
@@ -410,8 +411,8 @@ def show_status(series, branch, dest_branch, force, patches, patch_for_commit,
 
 
 def check_and_show_status(series, link, branch, dest_branch, force,
-                          show_comments, url):
+                          show_comments, url, test_repo=None):
     patches, patch_for_commit, new_rtag_list, review_list = check_status(
-        series, link, show_comments, url)
+        series, link, show_comments, url, test_repo)
     show_status(series, branch, dest_branch, force, patches, patch_for_commit,
                 show_comments, new_rtag_list, review_list)
