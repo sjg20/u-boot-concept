@@ -20,8 +20,6 @@ from patman.commit import Commit
 from patman import control
 from patman import patchstream
 from patman.patchstream import PatchStream
-from patman import patchwork
-from patman import send
 from patman.series import Series
 from patman import settings
 from u_boot_pylib import gitutil
@@ -554,7 +552,7 @@ complicated as possible''')
             self.assertEqual(2, gitutil.count_commits_to_branch(None))
             col = terminal.Color()
             with terminal.capture() as _:
-                _, cover_fname, patch_files = send.prepare_patches(
+                _, cover_fname, patch_files = control.prepare_patches(
                     col, branch=None, count=-1, start=0, end=0,
                     ignore_binary=False, signoff=True)
             self.assertIsNone(cover_fname)
@@ -563,7 +561,7 @@ complicated as possible''')
             # Check that it can detect a different branch
             self.assertEqual(3, gitutil.count_commits_to_branch('second'))
             with terminal.capture() as _:
-                series, cover_fname, patch_files = send.prepare_patches(
+                series, cover_fname, patch_files = control.prepare_patches(
                     col, branch='second', count=-1, start=0, end=0,
                     ignore_binary=False, signoff=True)
             self.assertIsNotNone(cover_fname)
@@ -582,7 +580,7 @@ complicated as possible''')
 
             # Check that it can skip patches at the end
             with terminal.capture() as _:
-                _, cover_fname, patch_files = send.prepare_patches(
+                _, cover_fname, patch_files = control.prepare_patches(
                     col, branch='second', count=-1, start=0, end=1,
                     ignore_binary=False, signoff=True)
             self.assertIsNotNone(cover_fname)
@@ -790,7 +788,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         series = Series()
 
         with terminal.capture() as (_, err):
-            status.collect_patches(1234, None, self._fake_patchwork)
+            status.collect_patches(series, 1234, None, self._fake_patchwork)
         self.assertIn('Warning: Patchwork reports 1 patches, series has 0',
                       err.getvalue())
 
@@ -799,7 +797,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         series = Series()
         series.commits = [Commit('abcd')]
 
-        patches = status.collect_patches(1234, None,
+        patches = status.collect_patches(series, 1234, None,
                                          self._fake_patchwork)
         self.assertEqual(1, len(patches))
         patch = patches[0]
@@ -808,7 +806,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
 
     def test_parse_subject(self):
         """Test parsing of the patch subject"""
-        patch = patchwork.Patch('1')
+        patch = status.Patch('1')
 
         # Simple patch not in a series
         patch.parse_subject('Testing')
@@ -877,11 +875,11 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         commit3 = Commit('3456')
         commit3.subject = 'Subject 2'
 
-        patch1 = patchwork.Patch('1')
+        patch1 = status.Patch('1')
         patch1.subject = 'Subject 1'
-        patch2 = patchwork.Patch('2')
+        patch2 = status.Patch('2')
         patch2.subject = 'Subject 2'
-        patch3 = patchwork.Patch('3')
+        patch3 = status.Patch('3')
         patch3.subject = 'Subject 2'
 
         series = Series()
@@ -977,7 +975,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         commit2 = Commit('ef12')
         commit2.subject = 'Subject 2'
 
-        patch1 = patchwork.Patch('1')
+        patch1 = status.Patch('1')
         patch1.parse_subject('[1/2] Subject 1')
         patch1.name = patch1.raw_subject
         patch1.content = 'This is my patch content'
@@ -985,7 +983,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
 
         patch1.comments = [comment1a]
 
-        patch2 = patchwork.Patch('2')
+        patch2 = status.Patch('2')
         patch2.parse_subject('[2/2] Subject 2')
         patch2.name = patch2.raw_subject
         patch2.content = 'Some other patch content'
@@ -1045,8 +1043,8 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         series = Series()
         series.commits = [commit1, commit2]
         terminal.set_print_test_mode()
-        status.check_and_show_status('1234', None, None, False, False,
-                                     None, self._fake_patchwork2)
+        status.check_patchwork_status(series, '1234', None, None, False, False,
+                                      None, self._fake_patchwork2)
         lines = iter(terminal.get_print_test_lines())
         col = terminal.Color()
         self.assertEqual(terminal.PrintLine('  1 Subject 1', col.BLUE),
@@ -1121,7 +1119,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         series = patchstream.get_metadata_for_list(branch, gitdir, count)
         self.assertEqual(2, len(series.commits))
 
-        patch1 = patchwork.Patch('1')
+        patch1 = status.Patch('1')
         patch1.parse_subject('[1/2] %s' % series.commits[0].subject)
         patch1.name = patch1.raw_subject
         patch1.content = 'This is my patch content'
@@ -1129,7 +1127,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
 
         patch1.comments = [comment1a]
 
-        patch2 = patchwork.Patch('2')
+        patch2 = status.Patch('2')
         patch2.parse_subject('[2/2] %s' % series.commits[1].subject)
         patch2.name = patch2.raw_subject
         patch2.content = 'Some other patch content'
@@ -1159,9 +1157,9 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         # <unittest.result.TestResult run=8 errors=0 failures=0>
 
         terminal.set_print_test_mode()
-        status.check_and_show_status('1234', branch, dest_branch,
-                                     False, False, None, self._fake_patchwork3,
-                                     repo)
+        status.check_patchwork_status(series, '1234', branch, dest_branch,
+                                      False, False, None, self._fake_patchwork3,
+                                      repo)
         lines = terminal.get_print_test_lines()
         self.assertEqual(12, len(lines))
         self.assertEqual(
@@ -1292,7 +1290,7 @@ line8
         commit2 = Commit('ef12')
         commit2.subject = 'Subject 2'
 
-        patch1 = patchwork.Patch('1')
+        patch1 = status.Patch('1')
         patch1.parse_subject('[1/2] Subject 1')
         patch1.name = patch1.raw_subject
         patch1.content = 'This is my patch content'
@@ -1313,7 +1311,7 @@ Reviewed-by: %s
 
         patch1.comments = [comment1a]
 
-        patch2 = patchwork.Patch('2')
+        patch2 = status.Patch('2')
         patch2.parse_subject('[2/2] Subject 2')
         patch2.name = patch2.raw_subject
         patch2.content = 'Some other patch content'
@@ -1361,8 +1359,8 @@ Reviewed-by: %s
         series = Series()
         series.commits = [commit1, commit2]
         terminal.set_print_test_mode()
-        status.check_and_show_status('1234', None, None, False, True,
-                                     None, self._fake_patchwork2)
+        status.check_patchwork_status(series, '1234', None, None, False, True,
+                                      None, self._fake_patchwork2)
         lines = iter(terminal.get_print_test_lines())
         col = terminal.Color()
         self.assertEqual(terminal.PrintLine('  1 Subject 1', col.BLUE),
