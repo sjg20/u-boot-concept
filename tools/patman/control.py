@@ -8,9 +8,7 @@ This module provides various functions called by the main program to implement
 the features of patman.
 """
 
-import os
 import re
-import sys
 import traceback
 
 try:
@@ -22,7 +20,7 @@ except ImportError:
 from u_boot_pylib import gitutil
 from u_boot_pylib import terminal
 from u_boot_pylib import tools
-from patman import checkpatch
+from patman.patchwork import Patchwork
 from patman import patchstream
 from patman import send
 
@@ -99,8 +97,9 @@ def patchwork_status(branch, count, start, end, dest_branch, force,
     # Import this here to avoid failing on other commands if the dependencies
     # are not present
     from patman import status
+    pwork = Patchwork(url)
     status.check_and_show_status(series, found[0], branch, dest_branch, force,
-                                 show_comments, url)
+                                 show_comments, pwork)
 
 
 def do_patman(args):
