@@ -67,6 +67,78 @@ def process_reviews(content, comment_data, base_rtags):
     return new_rtags, reviews
 
 
+def process_reviews(content, comment_data, base_rtags):
+    """Process and return review data
+
+    Args:
+        content (str): Content text of the patch itself - see pwork.get_patch()
+        comment_data (list of dict): Comments for the patch - see
+            pwork._get_patch_comments()
+        base_rtags (dict): base review tags (before any comments)
+            key: Response tag (e.g. 'Reviewed-by')
+            value: Set of people who gave that response, each a name/email
+                string
+
+    Return: tuple:
+        dict: new review tags (noticed since the base_rtags)
+            key: Response tag (e.g. 'Reviewed-by')
+            value: Set of people who gave that response, each a name/email
+                string
+        list of patchwork.Review: reviews received on the patch
+    """
+    pstrm = patchstream.PatchStream.process_text(content, True)
+    rtags = defaultdict(set)
+    for response, people in pstrm.commit.rtags.items():
+        rtags[response].update(people)
+
+    reviews = []
+    for comment in comment_data:
+        pstrm = patchstream.PatchStream.process_text(comment['content'], True)
+        if pstrm.snippets:
+            submitter = comment['submitter']
+            person = f"{submitter['name']} <{submitter['email']}>"
+            reviews.append(patchwork.Review(person, pstrm.snippets))
+        for response, people in pstrm.commit.rtags.items():
+            rtags[response].update(people)
+
+    # Find the tags that are not in the commit
+    new_rtags = defaultdict(set)
+    for tag, people in rtags.items():
+        for who in people:
+            is_new = (tag not in base_rtags or
+                      who not in base_rtags[tag])
+            if is_new:
+                new_rtags[tag].add(who)
+    return new_rtags, reviews
+
+
+def show_responses(col, rtags, indent, is_new):
+    """Show rtags collected
+
+    Args:
+        col (terminal.Colour): Colour object to use
+        rtags (dict): review tags to show
+            key: Response tag (e.g. 'Reviewed-by')
+            value: Set of people who gave that response, each a name/email
+                string
+        indent (str): Indentation string to write before each line
+        is_new (bool): True if this output should be highlighted
+
+    Returns:
+        int: Number of review tags displayed
+    """
+    count = 0
+    for tag in sorted(rtags.keys()):
+        people = rtags[tag]
+        for who in sorted(people):
+            terminal.tprint(indent + '%s %s: ' % ('+' if is_new else ' ', tag),
+                            newline=False, colour=col.GREEN, bright=is_new,
+                            col=col)
+            terminal.tprint(who, colour=col.WHITE, bright=is_new, col=col)
+            count += 1
+    return count
+
+
 def compare_with_series(series, patches):
     """Compare a list of patches with a series it came from
 
@@ -74,7 +146,7 @@ def compare_with_series(series, patches):
 
     Args:
         series (Series): Series to compare against
-        patches (:type: list of Patch): list of Patch objects to compare with
+        patches (list of Patch): list of Patch objects to compare with
 
     Returns:
         tuple
@@ -145,6 +217,7 @@ def show_responses(col, rtags, indent, is_new):
             terminal.tprint(who, colour=col.WHITE, bright=is_new, col=col)
             count += 1
     return count
+
 
 def create_branch(series, new_rtag_list, branch, dest_branch, overwrite,
                   repo=None):
@@ -224,18 +297,20 @@ def check_patch_count(num_commits, num_patches):
                      f'series has {num_commits}')
 
 
-def do_show_status(patches, series, branch, show_comments, col,
-                    warnings_on_stderr=True):
+def do_show_status(series, cover, patches, show_comments, show_cover_comments,
+                   col, warnings_on_stderr=True):
     """Check the status of a series on Patchwork
 
     This finds review tags and comments for a series in Patchwork, displaying
     them to show what is new compared to the local series.
 
     Args:
-        patches (list of Patch): Patch objects in the series
         series (Series): Series object for the existing branch
-        branch (str): Existing branch to update, or None
+        cover (COVER): Cover letter info, or None if none
+        patches (list of Patch): Patches sorted by sequence number
         show_comments (bool): True to show the comments on each patch
+        show_cover_comments (bool): True to show the comments on the
+            letter
         col (terminal.Colour): Colour object
 
     Return: tuple:
@@ -245,7 +320,6 @@ def do_show_status(patches, series, branch, show_comments, col,
             key: Response tag (e.g. 'Reviewed-by')
             value: Set of people who gave that response, each a name/email
                 string
-        list of PATCH objects
     """
     compare = []
     for pw_patch in patches:
@@ -274,13 +348,26 @@ def do_show_status(patches, series, branch, show_comments, col,
                 new_rtag_list[i], review_list[i] = process_reviews(
                     patch_data['content'], comment_data,
                     series.commits[i].rtags)
-        num_to_add = _do_show_status(series, patch_for_commit, show_comments, new_rtag_list,
-                       review_list, col)
-    return num_to_add, new_rtag_list, patches
+        num_to_add = _do_show_status(
+            series, cover, patch_for_commit, show_comments,
+            show_cover_comments, new_rtag_list, review_list, col)
+
+    return num_to_add, new_rtag_list
 
 
-def _do_show_status(series, patch_for_commit, show_comments, new_rtag_list,
-                   review_list, col):
+def _do_show_status(series, cover, patch_for_commit, show_comments,
+                    show_cover_comments, new_rtag_list, review_list, col):
+    if cover and show_cover_comments:
+        terminal.tprint(f'Cov {cover.name}', colour=col.BLACK, col=col,
+                        bright=False, back=col.YELLOW)
+        for seq, comment in enumerate(cover.comments):
+            submitter = comment['submitter']
+            person = '%s <%s>' % (submitter['name'], submitter['email'])
+            terminal.tprint(f'From: {person}: {comment['date']}',
+                            colour=col.RED, col=col)
+            print(comment['content'])
+            print()
+
     num_to_add = 0
     for seq, cmt in enumerate(series.commits):
         patch = patch_for_commit.get(seq)
@@ -309,26 +396,29 @@ def _do_show_status(series, patch_for_commit, show_comments, new_rtag_list,
     return num_to_add
 
 
-def show_status(series, branch, dest_branch, force, patches, show_comments,
-                test_repo=None):
+def show_status(series, branch, dest_branch, force, cover, patches,
+                show_comments, show_cover_comments, test_repo=None):
     """Check the status of a series on Patchwork
 
     This finds review tags and comments for a series in Patchwork, displaying
     them to show what is new compared to the local series.
 
     Args:
+        client (aiohttp.ClientSession): Session to use
         series (Series): Series object for the existing branch
         branch (str): Existing branch to update, or None
         dest_branch (str): Name of new branch to create, or None
         force (bool): True to force overwriting dest_branch if it exists
+        cover (COVER): Cover letter info, or None if none
         patches (list of Patch): Patches sorted by sequence number
         show_comments (bool): True to show the comments on each patch
+        show_cover_comments (bool): True to show the comments on the letter
         test_repo (pygit2.Repository): Repo to use (use None unless testing)
     """
     col = terminal.Color()
     check_patch_count(len(series.commits), len(patches))
-    num_to_add, new_rtag_list, _ = do_show_status(
-        patches, series, branch, show_comments, col)
+    num_to_add, new_rtag_list = do_show_status(
+        series, cover, patches, show_comments, show_cover_comments, col)
 
     if not dest_branch and num_to_add:
         msg = ' (use -d to write them to a new branch)'
@@ -346,7 +436,8 @@ def show_status(series, branch, dest_branch, force, patches, show_comments,
             f"from patchwork into new branch '{dest_branch}'")
 
 
-async def check_status(link, pwork, read_comments=False):
+async def check_status(link, pwork, read_comments=False,
+                       read_cover_comments=False):
     """Set up an HTTP session and get the required state
 
     Args:
@@ -354,16 +445,18 @@ async def check_status(link, pwork, read_comments=False):
         pwork (Patchwork): Patchwork object to use for reading
         read_comments (bool): True to read comments and state for each patch
 
-    Return: tuple:
-        list of Patch objects
+        Return: tuple:
+            COVER object, or None if none or not read_cover_comments
+            list of PATCH objects
     """
     async with aiohttp.ClientSession() as client:
-        patches = await pwork.series_get_state(client, link, read_comments)
-    return patches
+        return await pwork._series_get_state(client, link, read_comments,
+                                             read_cover_comments)
 
 
 def check_and_show_status(series, link, branch, dest_branch, force,
-                          show_comments, pwork, test_repo=None):
+                          show_comments, show_cover_comments, pwork,
+                          test_repo=None):
     """Read the series status from patchwork and show it to the user
 
     Args:
@@ -373,10 +466,13 @@ def check_and_show_status(series, link, branch, dest_branch, force,
         dest_branch (str): Name of new branch to create, or None
         force (bool): True to force overwriting dest_branch if it exists
         show_comments (bool): True to show the comments on each patch
+        show_cover_comments (bool): True to show the comments on the letter
         pwork (Patchwork): Patchwork object to use for reading
         test_repo (pygit2.Repository): Repo to use (use None unless testing)
     """
-    patches = asyncio.run(check_status(link, pwork, True))
+    loop = asyncio.get_event_loop()
+    cover, patches = loop.run_until_complete(check_status(
+        link, pwork, True, show_cover_comments))
 
-    show_status(series, branch, dest_branch, force, patches, show_comments,
-                test_repo=test_repo)
+    show_status(series, branch, dest_branch, force, cover, patches,
+                show_comments, show_cover_comments, test_repo=test_repo)
