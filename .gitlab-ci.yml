@@ -12,7 +12,7 @@ default:
     - ${DEFAULT_TAG}
   # Grab our configured image.  The source for this is found
   # in the u-boot tree at tools/docker/Dockerfile
-  image: ${MIRROR_DOCKER}/trini/u-boot-gitlab-ci-runner:jammy-20240911.1-08Dec2024
+  image: ${MIRROR_DOCKER}/trini/u-boot-gitlab-ci-runner:jammy-20250404-24Apr2025
   services:
     - name: container-$(CI_JOB_ID)
       command: ["--rm"]
@@ -36,6 +36,7 @@ stages:
     # qemu_arm64_lwip_defconfig is the same as qemu_arm64 but with NET_LWIP enabled.
     # The test config and the boardenv file from qemu_arm64 can be re-used so create symlinks
     - ln -s conf.qemu_arm64_na /tmp/uboot-test-hooks/bin/travis-ci/conf.qemu_arm64_lwip_na
+    - ln -s u_boot_boardenv_qemu_arm64_na.py /tmp/uboot-test-hooks/py/travis-ci/u_boot_boardenv_qemu_arm64_lwip_na.py
     - ln -s travis-ci /tmp/uboot-test-hooks/bin/`hostname`
     - ln -s travis-ci /tmp/uboot-test-hooks/py/`hostname`
     - if [[ "${TEST_PY_BD}" == "qemu-riscv32_spl" ]]; then
@@ -51,6 +52,11 @@ stages:
         wget -O /tmp/fip.bin https://artifacts.codelinaro.org/artifactory/linaro-419-sbsa-ref/latest/tf-a/fip.bin;
         export BINMAN_INDIRS=/tmp;
       fi
+    # Prepare python environment
+    - python3 -m venv /tmp/venv;
+      . /tmp/venv/bin/activate;
+      pip install -r test/py/requirements.txt -r tools/binman/requirements.txt
+        -r tools/buildman/requirements.txt -r tools/u_boot_pylib/requirements.txt
 
   after_script:
     - cp -v /tmp/${TEST_PY_BD}/*.{html,css,xml} .
@@ -86,9 +92,6 @@ stages:
         /opt/coreboot/cbfstool ${UBOOT_TRAVIS_BUILD_DIR}/coreboot.rom remove -n fallback/payload;
         /opt/coreboot/cbfstool ${UBOOT_TRAVIS_BUILD_DIR}/coreboot.rom add-flat-binary -f ${UBOOT_TRAVIS_BUILD_DIR}/u-boot.bin -n fallback/payload -c LZMA -l 0x1110000 -e 0x1110000;
       fi
-    - virtualenv -p /usr/bin/python3 /tmp/venv
-    - . /tmp/venv/bin/activate
-    - pip install -r test/py/requirements.txt
     # "${var:+"-k $var"}" expands to "" if $var is empty, "-k $var" if not
     - export PATH=/opt/qemu/bin:/tmp/uboot-test-hooks/bin:${PATH};
       export PYTHONPATH=/tmp/uboot-test-hooks/py/travis-ci;
@@ -101,6 +104,7 @@ stages:
     paths:
       - "*.html"
       - "*.css"
+      - results.xml
     reports:
       junit: results.xml
     expire_in: 1 week
@@ -115,9 +119,13 @@ build all 32bit ARM platforms:
   tags:
     - single
   script:
+    # Prepare python environment
+    - python3 -m venv /tmp/venv;
+      . /tmp/venv/bin/activate;
+      pip install -r tools/binman/requirements.txt
+        -r tools/buildman/requirements.txt
     - ret=0;
       git config --global --add safe.directory "${CI_PROJECT_DIR}";
-      pip install -r tools/buildman/requirements.txt;
       ./tools/buildman/buildman -o /tmp -PEWM arm -x aarch64 || ret=$?;
       if [[ $ret -ne 0 ]]; then
         ./tools/buildman/buildman -o /tmp -seP;
@@ -129,8 +137,11 @@ build all 64bit ARM platforms:
   tags:
     - single
   script:
-    - virtualenv -p /usr/bin/python3 /tmp/venv
-    - . /tmp/venv/bin/activate
+    # Prepare python environment
+    - python3 -m venv /tmp/venv;
+      . /tmp/venv/bin/activate;
+      pip install -r tools/binman/requirements.txt
+        -r tools/buildman/requirements.txt
     - ret=0;
       git config --global --add safe.directory "${CI_PROJECT_DIR}";
       pip install -r tools/buildman/requirements.txt;
@@ -145,6 +156,11 @@ build all PowerPC platforms:
   tags:
     - single
   script:
+    # Prepare python environment
+    - python3 -m venv /tmp/venv;
+      . /tmp/venv/bin/activate;
+      pip install -r tools/binman/requirements.txt
+        -r tools/buildman/requirements.txt
     - ret=0;
       git config --global --add safe.directory "${CI_PROJECT_DIR}";
       ./tools/buildman/buildman -o /tmp -P -E -W powerpc || ret=$?;
@@ -160,6 +176,11 @@ build all other platforms:
   tags:
     - single
   script:
+    # Prepare python environment
+    - python3 -m venv /tmp/venv;
+      . /tmp/venv/bin/activate;
+      pip install -r tools/binman/requirements.txt
+        -r tools/buildman/requirements.txt
     - ret=0;
       git config --global --add safe.directory "${CI_PROJECT_DIR}";
       ./tools/buildman/buildman -o /tmp -PEWM -x arm,powerpc,xtensa || ret=$?;
@@ -189,7 +210,7 @@ check for new CONFIG symbols outside Kconfig:
 docs:
   extends: .testsuites
   script:
-    - virtualenv -p /usr/bin/python3 /tmp/venvhtml
+    - python3 -m venv /tmp/venvhtml
     - . /tmp/venvhtml/bin/activate
     - pip install -r doc/sphinx/requirements.txt
     - make htmldocs KDOC_WERROR=1
@@ -218,10 +239,11 @@ Run binman, buildman, dtoc, Kconfig and patman testsuites:
       git config --global user.email trini@konsulko.com;
       git config --global --add safe.directory "${CI_PROJECT_DIR}";
       export USER=gitlab;
-      virtualenv -p /usr/bin/python3 /tmp/venv;
+      python3 -m venv /tmp/venv;
       . /tmp/venv/bin/activate;
-      pip install -r test/py/requirements.txt;
-      pip install -r tools/buildman/requirements.txt;
+      pip install -r test/py/requirements.txt -r tools/binman/requirements.txt
+        -r tools/buildman/requirements.txt -r tools/patman/requirements.txt
+        -r tools/u_boot_pylib/requirements.txt;
       export UBOOT_TRAVIS_BUILD_DIR=/tmp/tools-only;
       export PYTHONPATH="${UBOOT_TRAVIS_BUILD_DIR}/scripts/dtc/pylibfdt";
       export PATH="${UBOOT_TRAVIS_BUILD_DIR}/scripts/dtc:${PATH}";
@@ -230,6 +252,7 @@ Run binman, buildman, dtoc, Kconfig and patman testsuites:
         --board tools-only;
       set -e;
       export TOOLPATH="--toolpath ${UBOOT_TRAVIS_BUILD_DIR}/tools --toolpath /opt/coreboot";
+      ./tools/binman/binman ${TOOLPATH} tool -f missing;
       ./tools/binman/binman ${TOOLPATH} test;
       ./tools/binman/binman ${TOOLPATH} test -T;
       ./tools/buildman/buildman -t;
@@ -244,9 +267,11 @@ Run pylint:
     - single
   script:
     - git config --global --add safe.directory "${CI_PROJECT_DIR}"
-    - pip install -r test/py/requirements.txt
-    - pip install -r tools/buildman/requirements.txt
-    - pip install asteval pylint==2.12.2 pyopenssl
+    - python3 -m venv /tmp/venv
+    - . /tmp/venv/bin/activate
+    - pip install -r test/py/requirements.txt -r tools/binman/requirements.txt
+        -r tools/buildman/requirements.txt -r tools/patman/requirements.txt
+        -r tools/u_boot_pylib/requirements.txt asteval pylint==3.3.4 pyopenssl
     - export PATH=${PATH}:~/.local/bin
     - echo "[MASTER]" >> .pylintrc
     - echo "load-plugins=pylint.extensions.docparams" >> .pylintrc
@@ -284,7 +309,7 @@ sandbox test.py:
 sandbox with clang test.py:
   variables:
     TEST_PY_BD: "sandbox"
-    OVERRIDE: "-O clang-17"
+    OVERRIDE: "-O clang-18"
   <<: *buildman_and_testpy_dfn
 
 sandbox64 test.py:
@@ -295,7 +320,12 @@ sandbox64 test.py:
 sandbox64 with clang test.py:
   variables:
     TEST_PY_BD: "sandbox64"
-    OVERRIDE: "-O clang-17"
+    OVERRIDE: "-O clang-18"
+  <<: *buildman_and_testpy_dfn
+
+sandbox64_lwip test.py:
+  variables:
+    TEST_PY_BD: "sandbox64_lwip"
   <<: *buildman_and_testpy_dfn
 
 sandbox_spl test.py:
@@ -335,13 +365,6 @@ sandbox trace_test.py:
 evb-ast2500 test.py:
   variables:
     TEST_PY_BD: "evb-ast2500"
-    TEST_PY_TEST_SPEC: "not sleep"
-    TEST_PY_ID: "--id qemu"
-  <<: *buildman_and_testpy_dfn
-
-evb-ast2600 test.py:
-  variables:
-    TEST_PY_BD: "evb-ast2600"
     TEST_PY_TEST_SPEC: "not sleep"
     TEST_PY_ID: "--id qemu"
   <<: *buildman_and_testpy_dfn
@@ -529,6 +552,7 @@ xilinx_versal_virt test.py:
     TEST_PY_BD: "xilinx_versal_virt"
     TEST_PY_TEST_SPEC: "not sleep"
     TEST_PY_ID: "--id qemu"
+    OVERRIDE: "-a ~CONFIG_USB_DWC3"
   <<: *buildman_and_testpy_dfn
 
 xtfpga test.py:
@@ -555,6 +579,7 @@ coreboot test.py:
     - if: $SJG_LAB != "1"
       when: manual
       allow_failure: true
+  dependencies: []
   tags: [ 'lab' ]
   script:
     # Environment:
