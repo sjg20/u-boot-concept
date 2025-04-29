@@ -107,8 +107,10 @@ mkdir ${dir}/tests
 cd ${dir}
 
 # Make sure the tools are up to date
-python3 -m pip install --upgrade build
-python3 -m pip install --upgrade twine
+if ! sudo apt install python3-build twine; then
+	python3 -m pip install --upgrade build
+	python3 -m pip install --upgrade twine
+fi
 
 # Build the PyPi package
 python3 -m build
