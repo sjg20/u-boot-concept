@@ -14,11 +14,11 @@ dependencies = [
     "patch-manager >= 0.0.6"
 ]
 description = "Buildman build tool for U-Boot"
+license = "GPL-2.0-or-later"
 readme = "README.rst"
 requires-python = ">=3.7"
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
     "Operating System :: OS Independent",
 ]
 
