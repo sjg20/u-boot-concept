@@ -4,7 +4,6 @@
 #define __NET_COMMON_H__
 
 #include <asm/cache.h>
-#include <command.h>
 #include <env.h>
 #include <hexdump.h>
 #include <linux/if_ether.h>
@@ -12,6 +11,8 @@
 #include <linux/types.h>
 #include <rand.h>
 #include <time.h>
+
+struct cmd_tbl;
 
 #define DEBUG_NET_PKT_TRACE 0	/* Trace all packet data */
 
