@@ -19,7 +19,7 @@
 #include <linux/linkage.h>
 #include <linux/string.h>
 #include <linux/types.h>
-#ifndef USE_HOSTCC
+#if !defined(USE_HOSTCC) && CONFIG_EFI_APP
 #include <net.h>
 #endif
 
@@ -509,7 +509,7 @@ struct efi_media_plat {
 	struct efi_device_path *device_path;
 };
 
-#ifndef USE_HOSTCC
+#if !defined(USE_HOSTCC) && CONFIG_EFI_APP
 /*
  * EFI attributes of the udevice handled by efi_net driver
  *
