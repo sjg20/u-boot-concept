@@ -242,30 +242,33 @@ int do_bootvx(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 		 * The following parameters are only needed if 'bootdev'
 		 * is an ethernet device, otherwise they are optional.
 		 */
-		tmp = env_get("ipaddr");
-		if (tmp) {
-			ptr += sprintf(build_buf + ptr, "e=%s", tmp);
-			tmp = env_get("netmask");
+		if (IS_ENABLED(CONFIG_NET) || IS_ENABLED(CONFIG_NET_LWIP)) {
+			tmp = env_get("ipaddr");
 			if (tmp) {
-				u32 mask = env_get_ip("netmask").s_addr;
-				ptr += sprintf(build_buf + ptr,
-					       ":%08x ", ntohl(mask));
-			} else {
-				ptr += sprintf(build_buf + ptr, " ");
+				ptr += sprintf(build_buf + ptr, "e=%s", tmp);
+				tmp = env_get("netmask");
+				if (tmp) {
+					u32 mask = env_get_ip("netmask").s_addr;
+
+					ptr += sprintf(build_buf + ptr,
+						       ":%08x ", ntohl(mask));
+				} else {
+					ptr += sprintf(build_buf + ptr, " ");
+				}
 			}
+
+			tmp = env_get("serverip");
+			if (tmp)
+				ptr += sprintf(build_buf + ptr, "h=%s ", tmp);
+
+			tmp = env_get("gatewayip");
+			if (tmp)
+				ptr += sprintf(build_buf + ptr, "g=%s ", tmp);
+
+			tmp = env_get("hostname");
+			if (tmp)
+				ptr += sprintf(build_buf + ptr, "tn=%s ", tmp);
 		}
-
-		tmp = env_get("serverip");
-		if (tmp)
-			ptr += sprintf(build_buf + ptr, "h=%s ", tmp);
-
-		tmp = env_get("gatewayip");
-		if (tmp)
-			ptr += sprintf(build_buf + ptr, "g=%s ", tmp);
-
-		tmp = env_get("hostname");
-		if (tmp)
-			ptr += sprintf(build_buf + ptr, "tn=%s ", tmp);
 
 		tmp = env_get("othbootargs");
 		if (tmp) {
