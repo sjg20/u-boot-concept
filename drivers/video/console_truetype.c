@@ -952,6 +952,8 @@ static int truetype_set_cursor_visible(struct udevice *dev, bool visible,
 		line += vid_priv->line_length;
 	}
 
+	video_damage(dev->parent, x, y, width, height);
+
 	return video_sync(vid, true);
 }
 
