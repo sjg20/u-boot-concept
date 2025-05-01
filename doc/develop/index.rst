@@ -85,6 +85,7 @@ Testing
    tests_writing
    tests_sandbox
    binman_tests
+   test_hooks
 
 Refactoring
 -----------
