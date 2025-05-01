@@ -1,0 +1,43 @@
+# Copyright 2019 Google LLC. All rights reserved.
+# Copyright 2024 Konsulko Group. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+
+set -e
+
+build=${U_BOOT_BUILD_DIR}
+
+echo "Writing to ${mount_dir} from build at ${build}"
+
+sudo cp -v ${build}/u-boot.bin ${mount_dir}/u-boot.bin
+
+echo "enable_uart=1" | sudo tee ${mount_dir}/config.txt
+echo "kernel=u-boot.bin" | sudo tee -a ${mount_dir}/config.txt
+
+case "${board_type}" in
+rpi_3|rpi_3b|rpi_3_b_plus|rpi_4|rpi_arm64)
+    echo "arm_64bit=1" | sudo tee -a ${mount_dir}/config.txt
+    ;;
+esac
+
+case "${board_ident}" in
+3-32-pl011)
+    echo "dtoverlay=pi3-miniuart-bt" | sudo tee -a ${mount_dir}/config.txt
+    ;;
+esac
