@@ -1516,6 +1516,7 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 			hub-emul {
+				/* See SANDBOX_NUM_PORTS if you need more ports */
 				compatible = "sandbox,usb-hub";
 				#address-cells = <1>;
 				#size-cells = <0>;
@@ -1537,8 +1538,14 @@
 					sandbox,filepath = "testflash2.bin";
 				};
 
-				keyb@3 {
+				flash-stick@3 {
 					reg = <3>;
+					compatible = "sandbox,usb-flash";
+					sandbox,filepath = "flash3.img";
+				};
+
+				keyb@4 {
+					reg = <4>;
 					compatible = "sandbox,usb-keyb";
 				};
 
