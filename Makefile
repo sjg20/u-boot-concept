@@ -832,13 +832,13 @@ KBUILD_HOSTCFLAGS += $(if $(CONFIG_TOOLS_DEBUG),-g)
 UBOOTINCLUDE    := \
 	-Iinclude \
 	$(if $(KBUILD_SRC), -I$(srctree)/include) \
-	$(if $(CONFIG_MBEDTLS_LIB), \
+	$(if $(CONFIG_$(XPL_)MBEDTLS_LIB), \
 		"-DMBEDTLS_CONFIG_FILE=\"mbedtls_def_config.h\"" \
 		-I$(srctree)/lib/mbedtls \
 		-I$(srctree)/lib/mbedtls/port \
 		-I$(srctree)/lib/mbedtls/external/mbedtls \
 		-I$(srctree)/lib/mbedtls/external/mbedtls/include) \
-	$(if $(CONFIG_$(XPL_)SYS_THUMB_BUILD), \
+	$(if $(CONFIG_$(PHASE_)SYS_THUMB_BUILD), \
 		$(if $(CONFIG_HAS_THUMB2), \
 			$(if $(CONFIG_CPU_V7M), \
 				-I$(srctree)/arch/arm/thumb1/include), \
@@ -875,7 +875,7 @@ libs-y += disk/
 libs-y += drivers/
 libs-$(CONFIG_SYS_FSL_DDR) += drivers/ddr/fsl/
 libs-$(CONFIG_SYS_FSL_MMDC) += drivers/ddr/fsl/
-libs-$(CONFIG_$(XPL_)ALTERA_SDRAM) += drivers/ddr/altera/
+libs-$(CONFIG_$(PHASE_)ALTERA_SDRAM) += drivers/ddr/altera/
 libs-y += drivers/usb/cdns3/
 libs-y += drivers/usb/dwc3/
 libs-y += drivers/usb/common/

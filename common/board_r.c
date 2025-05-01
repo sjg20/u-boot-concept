@@ -458,7 +458,7 @@ static int initr_malloc_bootparams(void)
 }
 #endif
 
-#if defined(CONFIG_CMD_NET)
+#if CONFIG_IS_ENABLED(NET) || CONFIG_IS_ENABLED(NET_LWIP)
 static int initr_net(void)
 {
 	puts("Net:   ");
@@ -723,7 +723,7 @@ static init_fnc_t init_sequence_r[] = {
 #ifdef CONFIG_PCI_ENDPOINT
 	pci_ep_init,
 #endif
-#if defined(CONFIG_CMD_NET)
+#if CONFIG_IS_ENABLED(NET) || CONFIG_IS_ENABLED(NET_LWIP)
 	INIT_FUNC_WATCHDOG_RESET
 	initr_net,
 #endif

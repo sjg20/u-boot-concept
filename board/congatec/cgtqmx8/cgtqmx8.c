@@ -3,7 +3,8 @@
  * Copyright 2018 congatec AG
  * Copyright (C) 2019 Oliver Graute <oliver.graute@kococonnector.com>
  */
-#include <config.h>
+
+#include <env.h>
 #include <errno.h>
 #include <linux/libfdt.h>
 #include <fsl_esdhc.h>

@@ -119,37 +119,35 @@ def spi_pre_commands(ubman, freq):
         pytest.fail('Not recognized the SPI flash part name')
 
     m = re.search('page size (.+?) Bytes', output)
-    if m:
-        try:
-            page_size = int(m.group(1))
-        except ValueError:
-            pytest.fail('Not recognized the SPI page size')
+    assert m
+    try:
+        page_size = int(m.group(1))
+    except ValueError:
+        pytest.fail('Not recognized the SPI page size')
 
     m = re.search('erase size (.+?) KiB', output)
-    if m:
-        try:
-            erase_size = int(m.group(1))
-        except ValueError:
-            pytest.fail('Not recognized the SPI erase size')
-
+    assert m
+    try:
+        erase_size = int(m.group(1))
         erase_size *= 1024
+    except ValueError:
+        pytest.fail('Not recognized the SPI erase size')
 
     m = re.search('total (.+?) MiB', output)
-    if m:
-        try:
-            total_size = int(m.group(1))
-        except ValueError:
-            pytest.fail('Not recognized the SPI total size')
-
+    assert m
+    try:
+        total_size = int(m.group(1))
         total_size *= 1024 * 1024
+    except ValueError:
+        pytest.fail('Not recognized the SPI total size')
 
     m = re.search('Detected (.+?) with', output)
-    if m:
-        try:
-            flash_part = m.group(1)
-            assert flash_part == part_name
-        except ValueError:
-            pytest.fail('Not recognized the SPI flash part')
+    assert m
+    try:
+        flash_part = m.group(1)
+        assert flash_part == part_name
+    except ValueError:
+        pytest.fail('Not recognized the SPI flash part')
 
     global SPI_DATA
     SPI_DATA = {
@@ -704,5 +702,34 @@ def test_spi_negative(ubman):
         flash_ops(
             ubman, 'read', start, size, res_area, 1, error_msg, EXPECTED_READ
         )
+
+        # Start reading from the reserved area
+        m = re.search(r'reserved\[0\]\s*\[(0x.+)-(0x.+)\]', output)
+        if not m or int(m.group(1), 16) == 0:
+            ubman.log.info('No reserved area is defined or start addr is 0x0!')
+        else:
+            rstart_area = int(m.group(1), 16)
+            rend_area = int(m.group(2), 16)
+
+            # Case 1: Start reading from the middle of the reserved area
+            r_size = rend_area - rstart_area
+            r_area = rstart_area + r_size
+            flash_ops(
+                ubman, 'read', start, size, r_area, 1, error_msg, EXPECTED_READ
+            )
+
+            # Case 2: Start reading from before the reserved area to cross-over
+            # the reserved area
+            rstart_area = rstart_area - int(size/2)
+            flash_ops(
+                ubman, 'read', start, size, rstart_area, 1, error_msg, EXPECTED_READ
+            )
+
+            # Case 3: Start reading till after the reserved area to cross-over
+            # the reserved area
+            rend_area = rend_area - int(size/2)
+            flash_ops(
+                ubman, 'read', start, size, rend_area, 1, error_msg, EXPECTED_READ
+            )
 
         i = i + 1

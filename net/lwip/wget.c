@@ -352,7 +352,11 @@ static int wget_loop(struct udevice *udev, ulong dst_addr, char *uri)
 
 int wget_with_dns(ulong dst_addr, char *uri)
 {
-	eth_set_current();
+	int ret;
+
+	ret = net_lwip_eth_start();
+	if (ret < 0)
+		return ret;
 
 	if (!wget_info)
 		wget_info = &default_wget_info;

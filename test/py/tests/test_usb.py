@@ -242,7 +242,7 @@ def test_usb_part(ubman):
                     elif part_type == '83':
                         print('ext(2/4) detected')
                         output = ubman.run_command(
-                            'fstype usb %d:%d' % i, part_id
+                            'fstype usb %d:%d' % (i, part_id)
                         )
                         if 'ext2' in output:
                             part_ext2.append(part_id)
@@ -580,6 +580,8 @@ def test_usb_load(ubman):
                     elif fs in ['ext4', 'ext2']:
                         file, size, expected_crc32 = \
                             usb_ext4load_ext4write(ubman, fs, x, part)
+                    else:
+                        raise Exception('Unsupported filesystem type %s' % fs)
 
                     offset = random.randrange(128, 1024, 128)
                     output = ubman.run_command(

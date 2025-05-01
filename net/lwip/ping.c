@@ -121,7 +121,7 @@ static int ping_loop(struct udevice *udev, const ip_addr_t *addr)
 
 	netif = net_lwip_new_netif(udev);
 	if (!netif)
-		return CMD_RET_FAILURE;
+		return -ENODEV;
 
 	printf("Using %s device\n", udev->name);
 
@@ -168,10 +168,13 @@ int do_ping(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	if (!ipaddr_aton(argv[1], &addr))
 		return CMD_RET_USAGE;
 
-	eth_set_current();
-
-	if (ping_loop(eth_get_dev(), &addr) < 0)
-		return CMD_RET_FAILURE;
+restart:
+	if (net_lwip_eth_start() < 0 || ping_loop(eth_get_dev(), &addr) < 0) {
+		if (net_start_again() == 0)
+			goto restart;
+		else
+			return CMD_RET_FAILURE;
+	}
 
 	return CMD_RET_SUCCESS;
 }

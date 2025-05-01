@@ -2158,13 +2158,13 @@ config WGET_HTTPS
 	depends on CMD_WGET
 	depends on PROT_TCP_LWIP
 	depends on MBEDTLS_LIB
-        select SHA256
-        select RSA
-        select ASYMMETRIC_KEY_TYPE
-        select ASYMMETRIC_PUBLIC_KEY_SUBTYPE
-        select X509_CERTIFICATE_PARSER
-        select PKCS7_MESSAGE_PARSER
-	select MBEDTLS_LIB_CRYPTO
+	depends on DM_RNG
+	select SHA256
+	select RSA
+	select ASYMMETRIC_KEY_TYPE
+	select ASYMMETRIC_PUBLIC_KEY_SUBTYPE
+	select X509_CERTIFICATE_PARSER
+	select PKCS7_MESSAGE_PARSER
 	select MBEDTLS_LIB_TLS
 	select RSA_VERIFY_WITH_PKEY
 	select X509_CERTIFICATE_PARSER

@@ -4,14 +4,14 @@
 #define __NET_COMMON_H__
 
 #include <asm/cache.h>
-#include <command.h>
-#include <env.h>
 #include <hexdump.h>
 #include <linux/if_ether.h>
 #include <linux/sizes.h>
 #include <linux/types.h>
 #include <rand.h>
 #include <time.h>
+
+struct cmd_tbl;
 
 #define DEBUG_NET_PKT_TRACE 0	/* Trace all packet data */
 
@@ -463,12 +463,12 @@ int update_tftp(ulong addr, char *interface, char *devstring);
  *	0 to 255
  * Return: IP address, or 0 if invalid
  */
-static inline struct in_addr env_get_ip(char *var)
-{
-	return string_to_ip(env_get(var));
-}
+struct in_addr env_get_ip(char *var);
 
 int net_init(void);
+
+/* Called when a network operation fails to know if it should be re-tried */
+int net_start_again(void);
 
 /* NET compatibility */
 enum proto_t;
@@ -518,6 +518,18 @@ int netboot_run(enum proto_t proto, ulong addr, const char *fname, ulong size,
  * not found
  */
 int dhcp_run(ulong addr, const char *fname, bool autoload);
+
+
+/**
+ * do_ping - Run the ping command
+ *
+ * @cmdtp: Unused
+ * @flag: Command flags (CMD_FLAG_...)
+ * @argc: Number of arguments
+ * @argv: List of arguments
+ * Return: result (see enum command_ret_t)
+ */
+int do_ping(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[]);
 
 /**
  * do_tftpb - Run the tftpboot command
