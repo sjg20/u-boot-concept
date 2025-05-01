@@ -118,6 +118,7 @@ int do_booti(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 		bmi.conf_fdt = argv[2];
 	bmi.boot_progress = true;
 	bmi.cmd_name = "booti";
+	bmi.ignore_bootm_len = true;
 	/* do not set up argc and argv[] since nothing uses them */
 
 	if (booti_start(&bmi))
