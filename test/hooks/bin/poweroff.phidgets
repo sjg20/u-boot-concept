@@ -1,0 +1,37 @@
+# Copyright (c) 2015-2018, NVIDIA CORPORATION. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+
+export LD_LIBRARY_PATH="${phidgets_dir}/lib:${LD_LIBRARY_PATH}"
+
+# Put board into recovery so it doesn't boot
+"${phidgets_dir}/bin/phidgets-relay" ${phidgets_serial} ${phidgets_relay_recovery} 1
+sleep 0.25
+# Pulse power button to ensure board is on
+"${phidgets_dir}/bin/phidgets-relay" ${phidgets_serial} ${phidgets_relay_power} 1
+sleep 0.75
+"${phidgets_dir}/bin/phidgets-relay" ${phidgets_serial} ${phidgets_relay_power} 0
+sleep 0.25
+# Hold power button to turn board off
+"${phidgets_dir}/bin/phidgets-relay" ${phidgets_serial} ${phidgets_relay_power} 1
+sleep 15
+"${phidgets_dir}/bin/phidgets-relay" ${phidgets_serial} ${phidgets_relay_power} 0
+sleep 0.25
+# Release recovery
+"${phidgets_dir}/bin/phidgets-relay" ${phidgets_serial} ${phidgets_relay_recovery} 0
