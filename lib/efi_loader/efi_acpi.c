@@ -5,7 +5,7 @@
  *  Copyright (C) 2018, Bin Meng <bmeng.cn@gmail.com>
  */
 
-#define LOG_CATEGORY LOGC_EFI
+#define LOG_CATEGORY LOGC_ACPI
 
 #include <bloblist.h>
 #include <efi_loader.h>

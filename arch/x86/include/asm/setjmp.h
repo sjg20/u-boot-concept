@@ -5,8 +5,8 @@
  * From Linux arch/um/sys-i386/setjmp.S
  */
 
-#ifndef _ASM_SETJMP_H_
-#define _ASM_SETJMP_H_	1
+#ifndef __setjmp_h
+#define __setjmp_h
 
 #ifdef CONFIG_X86_64
 
@@ -34,4 +34,9 @@ struct jmp_buf_data {
 
 #endif
 
-#endif /* _ASM_SETJMP_H_ */
+typedef struct jmp_buf_data jmp_buf[1];
+
+int setjmp(jmp_buf env);
+void longjmp(jmp_buf env, int val);
+
+#endif

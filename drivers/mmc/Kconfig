@@ -4,8 +4,6 @@ config MMC
 	bool "MMC/SD/SDIO card support"
 	default ARM || PPC || SANDBOX
 	select DM_MMC if DM
-	select BLK if DM
-	select DM_MMC
 	help
 	  This selects MultiMediaCard, Secure Digital and Secure
 	  Digital I/O support.

@@ -3,7 +3,6 @@
 
 #include <command.h>
 #include <console.h>
-#include <log.h>
 #include <dm/device.h>
 #include <linux/delay.h>
 #include <linux/errno.h>
@@ -113,18 +112,11 @@ static int dhcp_loop(struct udevice *udev)
 int do_dhcp(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {
 	int ret;
-	struct udevice *dev;
 
 	if (net_lwip_eth_start() < 0)
 		return CMD_RET_FAILURE;
 
-	dev = eth_get_dev();
-	if (!dev) {
-		log_err("No network device\n");
-		return CMD_RET_FAILURE;
-	}
-
-	ret = dhcp_loop(dev);
+	ret = dhcp_loop(eth_get_dev());
 	if (ret)
 		return ret;
 

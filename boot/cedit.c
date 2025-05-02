@@ -78,15 +78,12 @@ int cedit_arange(struct expo *exp, struct video_priv *vpriv, uint scene_id)
 
 	y = 100;
 	list_for_each_entry(obj, &scn->obj_head, sibling) {
-		bool add_gap = true;
-
 		switch (obj->type) {
 		case SCENEOBJT_NONE:
 		case SCENEOBJT_IMAGE:
 		case SCENEOBJT_TEXT:
 		case SCENEOBJT_BOX:
 		case SCENEOBJT_TEXTEDIT:
-			add_gap = false;
 			break;
 		case SCENEOBJT_MENU:
 			scene_obj_set_pos(scn, obj->id, 50, y);
@@ -101,8 +98,7 @@ int cedit_arange(struct expo *exp, struct video_priv *vpriv, uint scene_id)
 			y += obj->dims.y;
 			break;
 		}
-		if (add_gap)
-			y += theme->menuitem_gap_y;
+		y += theme->menuitem_gap_y;
 	}
 	ret = scene_arrange(scn);
 	if (ret)

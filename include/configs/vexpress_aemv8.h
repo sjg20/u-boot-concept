@@ -154,18 +154,6 @@
 #define FUNC_MMC(func)
 #endif
 
-#if CONFIG_IS_ENABLED(CMD_PXE)
-#define BOOT_TARGET_PXE(func) func(PXE, pxe, na)
-#else
-#define BOOT_TARGET_PXE(func)
-#endif
-
-#if CONFIG_IS_ENABLED(CMD_DHCP)
-#define BOOT_TARGET_DHCP(func) func(DHCP, dhcp, na)
-#else
-#define BOOT_TARGET_DHCP(func)
-#endif
-
 /*
  * Boot by loading an Android image, or kernel, initrd and FDT through
  * semihosting into DRAM.
@@ -202,8 +190,8 @@
 	func(SATA, sata, 0)		\
 	func(SATA, sata, 1)		\
 	FUNC_VIRTIO(func)		\
-	BOOT_TARGET_PXE(func)		\
-	BOOT_TARGET_DHCP(func)		\
+	func(PXE, pxe, na)		\
+	func(DHCP, dhcp, na)		\
 	func(AFS, afs, na)
 
 #define VEXPRESS_KERNEL_ADDR		0x80080000
@@ -226,8 +214,8 @@
 	func(MEM, mem, na)		\
 	FUNC_VIRTIO(func)		\
 	FUNC_MMC(func)			\
-	BOOT_TARGET_PXE(func)		\
-	BOOT_TARGET_DHCP(func)
+	func(PXE, pxe, na)		\
+	func(DHCP, dhcp, na)
 
 #define VEXPRESS_KERNEL_ADDR		0x80080000
 #define VEXPRESS_PXEFILE_ADDR		0x8fa00000
@@ -248,8 +236,8 @@
 #define BOOT_TARGET_DEVICES(func)	\
 	func(MEM, mem, na)		\
 	FUNC_VIRTIO(func)		\
-	BOOT_TARGET_PXE(func)		\
-	BOOT_TARGET_DHCP(func)
+	func(PXE, pxe, na)		\
+	func(DHCP, dhcp, na)
 
 #define VEXPRESS_KERNEL_ADDR		0x00200000
 #define VEXPRESS_PXEFILE_ADDR		0x0fb00000

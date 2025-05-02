@@ -23,27 +23,6 @@
 
 #include "tpm-utils.h"
 
-static int tpm2_update_active_banks(struct udevice *dev)
-{
-	struct tpm_chip_priv *priv = dev_get_uclass_priv(dev);
-	struct tpml_pcr_selection pcrs;
-	int ret, i;
-
-	ret = tpm2_get_pcr_info(dev, &pcrs);
-	if (ret)
-		return ret;
-
-	priv->active_bank_count = 0;
-	for (i = 0; i < pcrs.count; i++) {
-		if (!tpm2_is_active_bank(&pcrs.selection[i]))
-			continue;
-		priv->active_banks[priv->active_bank_count] = pcrs.selection[i].hash;
-		priv->active_bank_count++;
-	}
-
-	return 0;
-}
-
 u32 tpm2_startup(struct udevice *dev, enum tpm2_startup_types mode)
 {
 	const u8 command_v2[12] = {
@@ -62,7 +41,7 @@ u32 tpm2_startup(struct udevice *dev, enum tpm2_startup_types mode)
 	if (ret && ret != TPM2_RC_INITIALIZE)
 		return ret;
 
-	return tpm2_update_active_banks(dev);
+	return 0;
 }
 
 u32 tpm2_self_test(struct udevice *dev, enum tpm2_yes_no full_test)
@@ -90,10 +69,8 @@ u32 tpm2_auto_start(struct udevice *dev)
 
 		rc = tpm2_self_test(dev, TPMI_YES);
 	}
-	if (rc)
-		return rc;
 
-	return tpm2_update_active_banks(dev);
+	return rc;
 }
 
 u32 tpm2_clear(struct udevice *dev, u32 handle, const char *pw,
@@ -220,7 +197,7 @@ u32 tpm2_pcr_extend(struct udevice *dev, u32 index, u32 algorithm,
 	if (!digest)
 		return -EINVAL;
 
-	if (!tpm2_check_active_banks(dev)) {
+	if (!tpm2_allow_extend(dev)) {
 		log_err("Cannot extend PCRs if all the TPM enabled algorithms are not supported\n");
 		return -EINVAL;
 	}
@@ -870,7 +847,7 @@ u32 tpm2_enable_nvcommits(struct udevice *dev, uint vendor_cmd,
 	return 0;
 }
 
-bool tpm2_is_active_bank(struct tpms_pcr_selection *selection)
+bool tpm2_is_active_pcr(struct tpms_pcr_selection *selection)
 {
 	int i;
 
@@ -907,18 +884,6 @@ const char *tpm2_algorithm_name(enum tpm2_algorithms algo)
 	return "";
 }
 
-bool tpm2_algorithm_supported(enum tpm2_algorithms algo)
-{
-	size_t i;
-
-	for (i = 0; i < ARRAY_SIZE(hash_algo_list); ++i) {
-		if (hash_algo_list[i].hash_alg == algo)
-			return hash_algo_list[i].supported;
-	}
-
-	return false;
-}
-
 u16 tpm2_algorithm_to_len(enum tpm2_algorithms algo)
 {
 	size_t i;
@@ -931,7 +896,7 @@ u16 tpm2_algorithm_to_len(enum tpm2_algorithms algo)
 	return 0;
 }
 
-bool tpm2_check_active_banks(struct udevice *dev)
+bool tpm2_allow_extend(struct udevice *dev)
 {
 	struct tpml_pcr_selection pcrs;
 	size_t i;
@@ -942,33 +907,10 @@ bool tpm2_check_active_banks(struct udevice *dev)
 		return false;
 
 	for (i = 0; i < pcrs.count; i++) {
-		if (tpm2_is_active_bank(&pcrs.selection[i]) &&
-		    !tpm2_algorithm_supported(pcrs.selection[i].hash))
+		if (tpm2_is_active_pcr(&pcrs.selection[i]) &&
+		    !tpm2_algorithm_to_len(pcrs.selection[i].hash))
 			return false;
 	}
 
 	return true;
-}
-
-void tpm2_print_active_banks(struct udevice *dev)
-{
-	struct tpml_pcr_selection pcrs;
-	size_t i;
-	int rc;
-
-	rc = tpm2_get_pcr_info(dev, &pcrs);
-	if (rc) {
-		log_err("Can't retrieve active PCRs\n");
-		return;
-	}
-
-	for (i = 0; i < pcrs.count; i++) {
-		if (tpm2_is_active_bank(&pcrs.selection[i])) {
-			const char *str;
-
-			str = tpm2_algorithm_name(pcrs.selection[i].hash);
-			if (str)
-				log_info("%s\n", str);
-		}
-	}
 }

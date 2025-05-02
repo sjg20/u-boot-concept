@@ -8,10 +8,8 @@
 import re
 import os
 from subprocess import call, check_call, check_output, CalledProcessError
-from subprocess import DEVNULL
 
-def mk_fs(config, fs_type, size, prefix, src_dir=None, size_gran = 0x100000,
-          fs_img=None, quiet=False):
+def mk_fs(config, fs_type, size, prefix, src_dir=None, size_gran = 0x100000):
     """Create a file system volume
 
     Args:
@@ -21,15 +19,12 @@ def mk_fs(config, fs_type, size, prefix, src_dir=None, size_gran = 0x100000,
         prefix (str): Prefix string of volume's file name
         src_dir (str): Root directory to use, or None for none
         size_gran (int): Size granularity of file system image in bytes
-        fs_img (str or None): Filename for image, or None to invent one
-        quiet (bool): Suppress non-error output
 
     Raises:
         CalledProcessError: if any error occurs when creating the filesystem
     """
-    if not fs_img:
-        leaf = f'{prefix}.{fs_type}.img'
-        fs_img = os.path.join(config.persistent_data_dir, leaf)
+    fs_img = f'{prefix}.{fs_type}.img'
+    fs_img = os.path.join(config.persistent_data_dir, fs_img)
 
     if fs_type == 'fat12':
         mkfs_opt = '-F 12'
@@ -63,17 +58,14 @@ def mk_fs(config, fs_type, size, prefix, src_dir=None, size_gran = 0x100000,
         check_call(f'rm -f {fs_img}', shell=True)
         check_call(f'truncate -s $(( {size_gran} * {count} )) {fs_img}',
                    shell=True)
-        check_call(f'mkfs.{fs_lnxtype} {mkfs_opt} {fs_img}', shell=True,
-                   stdout=DEVNULL if quiet else None)
+        check_call(f'mkfs.{fs_lnxtype} {mkfs_opt} {fs_img}', shell=True)
         if fs_type == 'ext4':
             sb_content = check_output(f'tune2fs -l {fs_img}',
                                       shell=True).decode()
             if 'metadata_csum' in sb_content:
                 check_call(f'tune2fs -O ^metadata_csum {fs_img}', shell=True)
         elif fs_lnxtype == 'vfat' and src_dir:
-            flags = f"-smpQ{'' if quiet else 'v'}"
-            check_call(f'mcopy -i {fs_img} {flags} {src_dir}/* ::/',
-                       shell=True)
+            check_call(f'mcopy -i {fs_img} -vsmpQ {src_dir}/* ::/', shell=True)
         elif fs_lnxtype == 'exfat' and src_dir:
             check_call(f'fattools cp {src_dir}/* {fs_img}', shell=True)
         return fs_img

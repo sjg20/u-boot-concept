@@ -109,8 +109,6 @@ class PatchStream:
         self.recent_unquoted = queue.Queue()
         self.was_quoted = None
         self.insert_base_commit = insert_base_commit
-        self.lines = []                  # All lines in a commit message
-        self.msg = None                  # Full commit message including subject
 
     @staticmethod
     def process_text(text, is_comment=False):
@@ -192,22 +190,11 @@ class PatchStream:
         """
         self.commit.add_rtag(rtag_type, who)
 
-    def _close_commit(self, skip_last_line):
-        """Save the current commit into our commit list, and reset our state
-
-        Args:
-            skip_last_line (bool): True to omit the final line of self.lines
-                when building the commit message. This is normally the blank
-                line between two commits, except at the end of the log, where
-                there is no blank line
-        """
+    def _close_commit(self):
+        """Save the current commit into our commit list, and reset our state"""
         if self.commit and self.is_log:
-            # Skip the blank line before the subject
-            lines = self.lines[:-1] if skip_last_line else self.lines
-            self.commit.msg = '\n'.join(lines[1:]) + '\n'
             self.series.AddCommit(self.commit)
             self.commit = None
-            self.lines = []
         # If 'END' is missing in a 'Cover-letter' section, and that section
         # happens to show up at the very end of the commit message, this is
         # the chance for us to fix it up.
@@ -358,8 +345,6 @@ class PatchStream:
                 self.state += 1
         elif commit_match:
             self.state = STATE_MSG_HEADER
-        if self.state != STATE_MSG_HEADER:
-            self.lines.append(line)
 
         # If a tag is detected, or a new commit starts
         if series_tag_match or commit_tag_match or change_id_match or \
@@ -514,7 +499,7 @@ class PatchStream:
 
         # Detect the start of a new commit
         elif commit_match:
-            self._close_commit(True)
+            self._close_commit()
             self.commit = commit.Commit(commit_match.group(1))
 
         # Detect tags in the commit message
@@ -594,7 +579,7 @@ class PatchStream:
         """Close out processing of this patch stream"""
         self._finalise_snippet()
         self._finalise_change()
-        self._close_commit(False)
+        self._close_commit()
         if self.lines_after_test:
             self._add_warn('Found %d lines after TEST=' % self.lines_after_test)
 
@@ -769,7 +754,7 @@ def get_metadata_for_list(commit_range, git_dir=None, count=None,
     pst.finalise()
     return series
 
-def get_metadata(branch, start, count, git_dir=None):
+def get_metadata(branch, start, count):
     """Reads out patch series metadata from the commits
 
     This does a 'git log' on the relevant commits and pulls out the tags we
@@ -784,9 +769,8 @@ def get_metadata(branch, start, count, git_dir=None):
         Series: Object containing information about the commits.
     """
     top = f"{branch if branch else 'HEAD'}~{start}"
-    series = get_metadata_for_list(top, git_dir, count)
-    series.base_commit = commit.Commit(
-        gitutil.get_hash(f'{top}~{count}', git_dir))
+    series = get_metadata_for_list(top, None, count)
+    series.base_commit = commit.Commit(gitutil.get_hash(f'{top}~{count}'))
     series.branch = branch or gitutil.get_branch()
     series.top = top
     return series
@@ -808,7 +792,7 @@ def get_metadata_for_test(text):
     return series
 
 def fix_patch(backup_dir, fname, series, cmt, keep_change_id=False,
-              insert_base_commit=False, cwd=None):
+              insert_base_commit=False):
     """Fix up a patch file, by adding/removing as required.
 
     We remove our tags from the patch file, insert changes lists, etc.
@@ -823,12 +807,10 @@ def fix_patch(backup_dir, fname, series, cmt, keep_change_id=False,
         cmt (Commit): Commit object for this patch file
         keep_change_id (bool): Keep the Change-Id tag.
         insert_base_commit (bool): True to add the base commit to the end
-        cwd (str): Directory containing filename, or None for current
 
     Return:
         list: A list of errors, each str, or [] if all ok.
     """
-    fname = os.path.join(cwd or '', fname)
     handle, tmpname = tempfile.mkstemp()
     outfd = os.fdopen(handle, 'w', encoding='utf-8')
     infd = open(fname, 'r', encoding='utf-8')
@@ -845,8 +827,7 @@ def fix_patch(backup_dir, fname, series, cmt, keep_change_id=False,
     shutil.move(tmpname, fname)
     return cmt.warn
 
-def fix_patches(series, fnames, keep_change_id=False, insert_base_commit=False,
-                cwd=None):
+def fix_patches(series, fnames, keep_change_id=False, insert_base_commit=False):
     """Fix up a list of patches identified by filenames
 
     The patch files are processed in place, and overwritten.
@@ -856,7 +837,6 @@ def fix_patches(series, fnames, keep_change_id=False, insert_base_commit=False,
         fnames (:type: list of str): List of patch files to process
         keep_change_id (bool): Keep the Change-Id tag.
         insert_base_commit (bool): True to add the base commit to the end
-        cwd (str): Directory containing the patch files, or None for current
     """
     # Current workflow creates patches, so we shouldn't need a backup
     backup_dir = None  #tempfile.mkdtemp('clean-patch')
@@ -867,7 +847,7 @@ def fix_patches(series, fnames, keep_change_id=False, insert_base_commit=False,
         cmt.count = count
         result = fix_patch(backup_dir, fname, series, cmt,
                            keep_change_id=keep_change_id,
-                           insert_base_commit=insert_base_commit, cwd=cwd)
+                           insert_base_commit=insert_base_commit)
         if result:
             print('%d warning%s for %s:' %
                   (len(result), 's' if len(result) > 1 else '', fname))
@@ -877,16 +857,14 @@ def fix_patches(series, fnames, keep_change_id=False, insert_base_commit=False,
         count += 1
     print('Cleaned %d patch%s' % (count, 'es' if count > 1 else ''))
 
-def insert_cover_letter(fname, series, count, cwd=None):
+def insert_cover_letter(fname, series, count):
     """Inserts a cover letter with the required info into patch 0
 
     Args:
         fname (str): Input / output filename of the cover letter file
         series (Series): Series object
         count (int): Number of patches in the series
-        cwd (str): Directory containing filename, or None for current
     """
-    fname = os.path.join(cwd or '', fname)
     fil = open(fname, 'r')
     lines = fil.readlines()
     fil.close()

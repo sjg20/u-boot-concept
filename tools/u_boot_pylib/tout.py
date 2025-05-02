@@ -9,7 +9,7 @@ import sys
 from u_boot_pylib import terminal
 
 # Output verbosity levels that we support
-FATAL, ERROR, WARNING, NOTICE, INFO, DETAIL, DEBUG = range(7)
+ERROR, WARNING, NOTICE, INFO, DETAIL, DEBUG = range(6)
 
 in_progress = False
 
@@ -42,12 +42,12 @@ def user_is_present():
     Returns:
         True if it thinks the user is there, and False otherwise
     """
-    return stdout_is_tty and verbose > ERROR
+    return stdout_is_tty and verbose > 0
 
 def clear_progress():
     """Clear any active progress message on the terminal."""
     global in_progress
-    if verbose > ERROR and stdout_is_tty and in_progress:
+    if verbose > 0 and stdout_is_tty and in_progress:
         _stdout.write('\r%s\r' % (" " * len (_progress)))
         _stdout.flush()
         in_progress = False
@@ -60,7 +60,7 @@ def progress(msg, warning=False, trailer='...'):
         warning: True if this is a warning."""
     global in_progress
     clear_progress()
-    if verbose > ERROR:
+    if verbose > 0:
         _progress = msg + trailer
         if stdout_is_tty:
             col = _color.YELLOW if warning else _color.GREEN
@@ -87,8 +87,6 @@ def _output(level, msg, color=None):
             print(msg, file=sys.stderr)
         else:
             print(msg)
-    if level == FATAL:
-        sys.exit(1)
 
 def do_output(level, msg):
     """Output a message to the terminal.
@@ -99,14 +97,6 @@ def do_output(level, msg):
         msg; Message to display.
     """
     _output(level, msg)
-
-def fatal(msg):
-    """Display an error message and exit
-
-    Args:
-        msg; Message to display.
-    """
-    _output(FATAL, msg, _color.RED)
 
 def error(msg):
     """Display an error message
@@ -163,13 +153,13 @@ def user_output(msg):
     Args:
         msg; Message to display.
     """
-    _output(ERROR, msg)
+    _output(0, msg)
 
 def init(_verbose=WARNING, stdout=sys.stdout, allow_colour=True):
     """Initialize a new output object.
 
     Args:
-        verbose: Verbosity level (0-6).
+        verbose: Verbosity level (0-4).
         stdout: File to use for stdout.
     """
     global verbose, _progress, _color, _stdout, stdout_is_tty

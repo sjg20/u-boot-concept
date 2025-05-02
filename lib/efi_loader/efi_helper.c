@@ -4,7 +4,6 @@
  */
 
 #define LOG_CATEGORY LOGC_EFI
-
 #include <bootm.h>
 #include <env.h>
 #include <image.h>
@@ -454,18 +453,30 @@ efi_status_t efi_env_set_load_options(efi_handle_t handle,
  */
 static efi_status_t copy_fdt(void **fdtp)
 {
-	unsigned long fdt_pages;
+	unsigned long fdt_ram_start = -1L, fdt_pages;
 	efi_status_t ret = 0;
 	void *fdt, *new_fdt;
 	u64 new_fdt_addr;
 	uint fdt_size;
+	int i;
+
+	for (i = 0; i < CONFIG_NR_DRAM_BANKS; i++) {
+		u64 ram_start = gd->bd->bi_dram[i].start;
+		u64 ram_size = gd->bd->bi_dram[i].size;
+
+		if (!ram_size)
+			continue;
+
+		if (ram_start < fdt_ram_start)
+			fdt_ram_start = ram_start;
+	}
 
 	/*
 	 * Give us at least 12 KiB of breathing room in case the device tree
 	 * needs to be expanded later.
 	 */
 	fdt = *fdtp;
-	fdt_pages = efi_size_in_pages(fdt_totalsize(fdt) + CONFIG_SYS_FDT_PAD);
+	fdt_pages = efi_size_in_pages(fdt_totalsize(fdt) + 0x3000);
 	fdt_size = fdt_pages << EFI_PAGE_SHIFT;
 
 	ret = efi_allocate_pages(EFI_ALLOCATE_ANY_PAGES,
@@ -600,35 +611,6 @@ efi_status_t efi_install_fdt(void *fdt)
 	}
 
 	return EFI_SUCCESS;
-}
-
-/**
- * efi_install_initrd() - install initrd
- *
- * Install the initrd located at @initrd using the EFI_LOAD_FILE2
- * protocol.
- *
- * @initrd:	address of initrd or NULL if none is provided
- * @initrd_sz:	size of initrd
- * Return:	status code
- */
-efi_status_t efi_install_initrd(void *initrd, size_t initd_sz)
-{
-	efi_status_t ret;
-	struct efi_device_path *dp_initrd;
-
-	if (!initrd)
-		return EFI_SUCCESS;
-
-	dp_initrd = efi_dp_from_mem(EFI_LOADER_DATA, initrd, initd_sz);
-	if (!dp_initrd)
-		return EFI_OUT_OF_RESOURCES;
-
-	ret = efi_initrd_register(dp_initrd);
-	if (ret != EFI_SUCCESS)
-		efi_free_pool(dp_initrd);
-
-	return ret;
 }
 
 /**

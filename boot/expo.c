@@ -315,6 +315,7 @@ int expo_setup_theme(struct expo *exp, ofnode node)
 			&theme->menu_title_margin_x);
 	ofnode_read_u32(node, "textline-label-margin-x",
 			&theme->textline_label_margin_x);
+	printf("margin %d\n", theme->textline_label_margin_x);
 	theme->white_on_black = ofnode_read_bool(node, "white-on-black");
 
 	ret = expo_apply_theme(exp);

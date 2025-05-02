@@ -2,8 +2,6 @@
 # Copyright (c) 2011 The Chromium OS Authors.
 #
 
-"""Basic utilities for running the git command-line tool from Python"""
-
 import os
 import sys
 
@@ -15,7 +13,7 @@ USE_NO_DECORATE = True
 
 
 def log_cmd(commit_range, git_dir=None, oneline=False, reverse=False,
-            count=None, decorate=False):
+            count=None):
     """Create a command to perform a 'git log'
 
     Args:
@@ -24,8 +22,6 @@ def log_cmd(commit_range, git_dir=None, oneline=False, reverse=False,
         oneline (bool): True to use --oneline, else False
         reverse (bool): True to reverse the log (--reverse)
         count (int or None): Number of commits to list, or None for no limit
-        decorate (bool): True to use --decorate
-
     Return:
         List containing command and arguments to run
     """
@@ -35,10 +31,8 @@ def log_cmd(commit_range, git_dir=None, oneline=False, reverse=False,
     cmd += ['--no-pager', 'log', '--no-color']
     if oneline:
         cmd.append('--oneline')
-    if USE_NO_DECORATE and not decorate:
+    if USE_NO_DECORATE:
         cmd.append('--no-decorate')
-    if decorate:
-        cmd.append('--decorate')
     if reverse:
         cmd.append('--reverse')
     if count is not None:
@@ -53,7 +47,7 @@ def log_cmd(commit_range, git_dir=None, oneline=False, reverse=False,
     return cmd
 
 
-def count_commits_to_branch(branch, git_dir=None, end=None):
+def count_commits_to_branch(branch):
     """Returns number of commits between HEAD and the tracking branch.
 
     This looks back to the tracking branch and works out the number of commits
@@ -61,22 +55,16 @@ def count_commits_to_branch(branch, git_dir=None, end=None):
 
     Args:
         branch (str or None): Branch to count from (None for current branch)
-        git_dir (str): Path to git repository (None to use default)
-        end (str): End commit to stop before
 
     Return:
         Number of patches that exist on top of the branch
     """
-    if end:
-        rev_range = f'{end}..{branch}'
-    elif branch:
-        us, msg = get_upstream(git_dir or '.git', branch)
-        if not us:
-            raise ValueError(msg)
+    if branch:
+        us, _ = get_upstream('.git', branch)
         rev_range = f'{us}..{branch}'
     else:
         rev_range = '@{upstream}..'
-    cmd = log_cmd(rev_range, git_dir=git_dir, oneline=True)
+    cmd = log_cmd(rev_range, oneline=True)
     result = command.run_one(*cmd, capture=True, capture_stderr=True,
                              oneline=True, raise_on_error=False)
     if result.return_code:
@@ -96,11 +84,9 @@ def name_revision(commit_hash):
         Name of revision, if any, else None
     """
     stdout = command.output_one_line('git', 'name-rev', commit_hash)
-    if not stdout:
-        return None
 
     # We expect a commit, a space, then a revision name
-    name = stdout.split()[1].strip()
+    name = stdout.split(' ')[1].strip()
     return name
 
 
@@ -120,21 +106,18 @@ def guess_upstream(git_dir, branch):
             Name of upstream branch (e.g. 'upstream/master') or None if none
             Warning/error message, or None if none
     """
-    cmd = log_cmd(branch, git_dir=git_dir, oneline=True, count=100,
-                  decorate=True)
+    cmd = log_cmd(branch, git_dir=git_dir, oneline=True, count=100)
     result = command.run_one(*cmd, capture=True, capture_stderr=True,
                              raise_on_error=False)
     if result.return_code:
         return None, f"Branch '{branch}' not found"
     for line in result.stdout.splitlines()[1:]:
-        parts = line.split(maxsplit=1)
-        if len(parts) >= 2 and parts[1].startswith('('):
-            commit_hash = parts[0]
-            name = name_revision(commit_hash)
-            if '~' not in name and '^' not in name:
-                if name.startswith('remotes/'):
-                    name = name[8:]
-                return name, f"Guessing upstream as '{name}'"
+        commit_hash = line.split(' ')[0]
+        name = name_revision(commit_hash)
+        if '~' not in name and '^' not in name:
+            if name.startswith('remotes/'):
+                name = name[8:]
+            return name, f"Guessing upstream as '{name}'"
     return None, f"Cannot find a suitable upstream for branch '{branch}'"
 
 
@@ -338,8 +321,7 @@ def prune_worktrees(git_dir):
         raise OSError(f'git worktree prune: {result.stderr}')
 
 
-def create_patches(branch, start, count, ignore_binary, series, signoff=True,
-                   git_dir=None, cwd=None):
+def create_patches(branch, start, count, ignore_binary, series, signoff=True):
     """Create a series of patches from the top of the current branch.
 
     The patch files are written to the current directory using
@@ -352,16 +334,11 @@ def create_patches(branch, start, count, ignore_binary, series, signoff=True,
         ignore_binary (bool): Don't generate patches for binary files
         series (Series): Series object for this series (set of patches)
         signoff (bool): True to add signoff lines automatically
-        git_dir (str): Path to git repository (None to use default)
-        cwd (str): Path to use for git operations
     Return:
         Filename of cover letter (None if none)
         List of filenames of patch files
     """
-    cmd = ['git']
-    if git_dir:
-        cmd += ['--git-dir', git_dir]
-    cmd += ['format-patch', '-M']
+    cmd = ['git', 'format-patch', '-M']
     if signoff:
         cmd.append('--signoff')
     if ignore_binary:
@@ -374,7 +351,7 @@ def create_patches(branch, start, count, ignore_binary, series, signoff=True,
     brname = branch or 'HEAD'
     cmd += [f'{brname}~{start + count}..{brname}~{start}']
 
-    stdout = command.run_list(cmd, cwd=cwd)
+    stdout = command.run_list(cmd)
     files = stdout.splitlines()
 
     # We have an extra file if there is a cover letter
@@ -419,6 +396,7 @@ def build_email_list(in_list, alias, tag=None, warn_on_error=True):
     >>> build_email_list(['john', 'mary'], alias, 'Cc')
     ['Cc j.bloggs@napier.co.nz', 'Cc Mary Poppins <m.poppins@cloud.net>']
     """
+    quote = '"' if tag and tag[0] == '-' else ''
     raw = []
     for item in in_list:
         raw += lookup_email(item, alias, warn_on_error=warn_on_error)
@@ -427,7 +405,7 @@ def build_email_list(in_list, alias, tag=None, warn_on_error=True):
         if item not in result:
             result.append(item)
     if tag:
-        return [x for email in result for x in (tag, email)]
+        return [f'{tag} {quote}{email}{quote}' for email in result]
     return result
 
 
@@ -459,7 +437,7 @@ def check_suppress_cc_config():
 
 def email_patches(series, cover_fname, args, dry_run, warn_on_error, cc_fname,
                   alias, self_only=False, in_reply_to=None, thread=False,
-                  smtp_server=None, cwd=None):
+                  smtp_server=None):
     """Email a patch series.
 
     Args:
@@ -479,7 +457,6 @@ def email_patches(series, cover_fname, args, dry_run, warn_on_error, cc_fname,
         thread (bool): True to add --thread to git send-email (make
             all patches reply to cover-letter or first patch in series)
         smtp_server (str or None): SMTP server to use to send patches
-        cwd (str): Path to use for patch files (None to use current dir)
 
     Returns:
         Git command that was/would be run
@@ -522,8 +499,9 @@ send --cc-cmd cc-fname" cover p1 p2'
     """
     to = build_email_list(series.get('to'), alias, '--to', warn_on_error)
     if not to:
-        if not command.output('git', 'config', 'sendemail.to',
-                              raise_on_error=False):
+        git_config_to = command.output('git', 'config', 'sendemail.to',
+                                       raise_on_error=False)
+        if not git_config_to:
             print("No recipient.\n"
                   "Please add something like this to a commit\n"
                   "Series-to: Fred Bloggs <f.blogs@napier.co.nz>\n"
@@ -546,14 +524,14 @@ send --cc-cmd cc-fname" cover p1 p2'
 
     cmd += to
     cmd += cc
-    cmd += ['--cc-cmd', f'{sys.argv[0]} send --cc-cmd {cc_fname}']
+    cmd += ['--cc-cmd', f'"{sys.argv[0]} send --cc-cmd {cc_fname}"']
     if cover_fname:
         cmd.append(cover_fname)
     cmd += args
+    cmdstr = ' '.join(cmd)
     if not dry_run:
-        command.run(*cmd, capture=False, capture_stderr=False, cwd=cwd)
-    return' '.join([f'"{x}"' if ' ' in x and '"' not in x else x
-                    for x in cmd])
+        os.system(cmdstr)
+    return cmdstr
 
 
 def lookup_email(lookup_name, alias, warn_on_error=True, level=0):
@@ -644,7 +622,7 @@ def get_top_level():
     """Return name of top-level directory for this git repo.
 
     Returns:
-        str: Full path to git top-level directory, or None if not found
+        str: Full path to git top-level directory
 
     This test makes sure that we are running tests in the right subdir
 
@@ -652,12 +630,7 @@ def get_top_level():
             os.path.join(get_top_level(), 'tools', 'patman')
     True
     """
-    result = command.run_one(
-        'git', 'rev-parse', '--show-toplevel', oneline=True, capture=True,
-        capture_stderr=True, raise_on_error=False)
-    if result.return_code:
-        return None
-    return result.stdout.strip()
+    return command.output_one_line('git', 'rev-parse', '--show-toplevel')
 
 
 def get_alias_file():
@@ -675,7 +648,7 @@ def get_alias_file():
     if os.path.isabs(fname):
         return fname
 
-    return os.path.join(get_top_level() or '', fname)
+    return os.path.join(get_top_level(), fname)
 
 
 def get_default_user_name():
@@ -722,21 +695,17 @@ def setup():
                        .return_code == 0)
 
 
-def get_hash(spec, git_dir=None):
+def get_hash(spec):
     """Get the hash of a commit
 
     Args:
         spec (str): Git commit to show, e.g. 'my-branch~12'
-        git_dir (str): Path to git repository (None to use default)
 
     Returns:
         str: Hash of commit
     """
-    cmd = ['git']
-    if git_dir:
-        cmd += ['--git-dir', git_dir]
-    cmd += ['show', '-s', '--pretty=format:%H', spec]
-    return command.output_one_line(*cmd)
+    return command.output_one_line('git', 'show', '-s', '--pretty=format:%H',
+                                   spec)
 
 
 def get_head():
@@ -748,136 +717,16 @@ def get_head():
     return get_hash('HEAD')
 
 
-def get_branch(git_dir=None):
+def get_branch():
     """Get the branch we are currently on
 
     Return:
         str: branch name, or None if none
-        git_dir (str): Path to git repository (None to use default)
     """
-    cmd = ['git']
-    if git_dir:
-        cmd += ['--git-dir', git_dir]
-    cmd += ['rev-parse', '--abbrev-ref', 'HEAD']
-    out = command.output_one_line(*cmd, raise_on_error=False)
+    out = command.output_one_line('git', 'rev-parse', '--abbrev-ref', 'HEAD')
     if out == 'HEAD':
         return None
     return out
-
-
-def check_dirty(git_dir=None, work_tree=None):
-    """Check if the tree is dirty
-
-    Args:
-        git_dir (str): Path to git repository (None to use default)
-        work_tree (str): Git worktree to use, or None if none
-
-    Return:
-        str: List of dirty filenames and state
-    """
-    cmd = ['git']
-    if git_dir:
-        cmd += ['--git-dir', git_dir]
-    if work_tree:
-        cmd += ['--work-tree', work_tree]
-    cmd += ['status', '--porcelain', '--untracked-files=no']
-    return command.output(*cmd).splitlines()
-
-
-def check_branch(name, git_dir=None):
-    """Check if a branch exists
-
-    Args:
-        name (str): Name of the branch to check
-        git_dir (str): Path to git repository (None to use default)
-    """
-    cmd = ['git']
-    if git_dir:
-        cmd += ['--git-dir', git_dir]
-    cmd += ['branch', '--list', name]
-
-    # This produces '  <name>' or '* <name>'
-    out = command.output(*cmd).rstrip()
-    return out[2:] == name
-
-
-def rename_branch(old_name, name, git_dir=None):
-    """Check if a branch exists
-
-    Args:
-        old_name (str): Name of the branch to rename
-        name (str): New name for the branch
-        git_dir (str): Path to git repository (None to use default)
-
-    Return:
-        str: Output from command
-    """
-    cmd = ['git']
-    if git_dir:
-        cmd += ['--git-dir', git_dir]
-    cmd += ['branch', '--move', old_name, name]
-
-    # This produces '  <name>' or '* <name>'
-    return command.output(*cmd).rstrip()
-
-
-def get_commit_message(commit, git_dir=None):
-    """Gets the commit message for a commit
-
-    Args:
-        commit (str): commit to check
-        git_dir (str): Path to git repository (None to use default)
-
-    Return:
-        list of str: Lines from the commit message
-    """
-    cmd = ['git']
-    if git_dir:
-        cmd += ['--git-dir', git_dir]
-    cmd += ['show', '--quiet', commit]
-
-    out = command.output(*cmd)
-    # the header is followed by a blank line
-    lines = out.splitlines()
-    empty = lines.index('')
-    msg = lines[empty + 1:]
-    unindented = [line[4:] for line in msg]
-
-    return unindented
-
-
-def show_commit(commit, msg=True, diffstat=False, patch=False, colour=True,
-                git_dir=None):
-    """Runs 'git show' and returns the output
-
-    Args:
-        commit (str): commit to check
-        msg (bool): Show the commit message
-        diffstat (bool): True to include the diffstat
-        patch (bool): True to include the patch
-        colour (bool): True to force use of colour
-        git_dir (str): Path to git repository (None to use default)
-
-    Return:
-        list of str: Lines from the commit message
-    """
-    cmd = ['git']
-    if git_dir:
-        cmd += ['--git-dir', git_dir]
-    cmd += ['show']
-    if colour:
-        cmd.append('--color')
-    if not msg:
-        cmd.append('--oneline')
-    if diffstat:
-        cmd.append('--stat')
-    else:
-        cmd.append('--quiet')
-    if patch:
-        cmd.append('--patch')
-    cmd.append(commit)
-
-    return command.output(*cmd)
 
 
 if __name__ == "__main__":

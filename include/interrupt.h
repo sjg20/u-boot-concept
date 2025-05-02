@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 
-#include <setjmp.h>
+#include <asm/setjmp.h>
 
 /**
  * struct resume_data - data for resume after interrupt

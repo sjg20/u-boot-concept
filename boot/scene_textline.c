@@ -72,7 +72,8 @@ int scene_textline_calc_dims(struct scene_obj_textline *tline)
 		return log_msg_ret("dim", -ENOENT);
 
 	ret = vidconsole_nominal(scn->expo->cons, txt->gen.font_name,
-				 txt->gen.font_size, tline->max_chars, &bbox);
+				 scn_fscale(scn, txt->gen.font_size),
+				 tline->max_chars, &bbox);
 	if (ret)
 		return log_msg_ret("nom", ret);
 
@@ -98,33 +99,27 @@ int scene_textline_arrange(struct scene *scn, struct expo_arrange_info *arr,
 	x = tline->obj.req_bbox.x0;
 	y = tline->obj.req_bbox.y0;
 	if (tline->label_id) {
-		struct scene_obj *edit;
-
 		ret = scene_obj_set_pos(scn, tline->label_id, x, y);
 		if (ret < 0)
 			return log_msg_ret("tit", ret);
 
-		x += arr->label_width + theme->textline_label_margin_x;
-		ret = scene_obj_set_pos(scn, tline->edit_id, x, y);
+		ret = scene_obj_set_pos(scn, tline->edit_id,
+					x + arr->label_width +
+					theme->textline_label_margin_x, y);
 		if (ret < 0)
-			return log_msg_ret("til", ret);
+			return log_msg_ret("tit", ret);
 
-		edit = scene_obj_find(scn, tline->edit_id, SCENEOBJT_NONE);
-		if (!edit)
-			return log_msg_ret("tie", -ENOENT);
-		x += edit->dims.x;
-		y += edit->dims.y;
+		ret = scene_obj_get_hw(scn, tline->label_id, NULL);
+		if (ret < 0)
+			return log_msg_ret("hei", ret);
+
+		y += ret * 2;
 	}
 
 	point = scn->highlight_id == tline->obj.id;
 	point &= !open;
 	scene_obj_flag_clrset(scn, tline->edit_id, SCENEOF_POINT,
 			      point ? SCENEOF_POINT : 0);
-
-	tline->obj.dims.x = x - tline->obj.req_bbox.x0;
-	tline->obj.dims.y = y - tline->obj.req_bbox.y0;
-	scene_obj_set_size(scn, tline->obj.id, tline->obj.dims.x,
-			   tline->obj.dims.y);
 
 	return 0;
 }
@@ -195,7 +190,7 @@ int scene_textline_render_deps(struct scene *scn,
 		if (txt->gen.font_name || txt->gen.font_size) {
 			ret = vidconsole_select_font(cons,
 						     txt->gen.font_name,
-						     txt->gen.font_size);
+						     scn_fscale(scn, txt->gen.font_size));
 		} else {
 			ret = vidconsole_select_font(cons, NULL, 0);
 		}

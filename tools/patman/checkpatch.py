@@ -22,7 +22,7 @@ RE_NOTE = re.compile(r'NOTE: (.*)')
 
 
 def find_check_patch():
-    top_level = gitutil.get_top_level() or ''
+    top_level = gitutil.get_top_level()
     try_list = [
         os.getcwd(),
         os.path.join(os.getcwd(), '..', '..'),
@@ -187,8 +187,7 @@ def check_patch_parse(checkpatch_output, verbose=False):
     return result
 
 
-def check_patch(fname, verbose=False, show_types=False, use_tree=False,
-                cwd=None):
+def check_patch(fname, verbose=False, show_types=False, use_tree=False):
     """Run checkpatch.pl on a file and parse the results.
 
     Args:
@@ -197,7 +196,6 @@ def check_patch(fname, verbose=False, show_types=False, use_tree=False,
             parsed
         show_types: Tell checkpatch to show the type (number) of each message
         use_tree (bool): If False we'll pass '--no-tree' to checkpatch.
-        cwd (str): Path to use for patch files (None to use current dir)
 
     Returns:
         namedtuple containing:
@@ -219,9 +217,7 @@ def check_patch(fname, verbose=False, show_types=False, use_tree=False,
         args.append('--no-tree')
     if show_types:
         args.append('--show-types')
-    output = command.output(
-        *args, os.path.join(cwd or '', fname), raise_on_error=False,
-        capture_stderr=not use_tree)
+    output = command.output(*args, fname, raise_on_error=False)
 
     return check_patch_parse(output, verbose)
 
@@ -244,7 +240,7 @@ def get_warning_msg(col, msg_type, fname, line, msg):
     line_str = '' if line is None else '%d' % line
     return '%s:%s: %s: %s\n' % (fname, line_str, msg_type, msg)
 
-def check_patches(verbose, args, use_tree, cwd):
+def check_patches(verbose, args, use_tree):
     '''Run the checkpatch.pl script on each patch'''
     error_count, warning_count, check_count = 0, 0, 0
     col = terminal.Color()
@@ -252,8 +248,7 @@ def check_patches(verbose, args, use_tree, cwd):
     with concurrent.futures.ThreadPoolExecutor(max_workers=16) as executor:
         futures = []
         for fname in args:
-            f = executor.submit(check_patch, fname, verbose, use_tree=use_tree,
-                                cwd=cwd)
+            f = executor.submit(check_patch, fname, verbose, use_tree=use_tree)
             futures.append(f)
 
         for fname, f in zip(args, futures):

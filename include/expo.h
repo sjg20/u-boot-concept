@@ -170,6 +170,9 @@ struct expo_string {
  * @id: ID number of the scene
  * @title_id: String ID of title of the scene (allocated)
  * @highlight_id: ID of highlighted object, if any
+ * @xscale: Value (* SCALE_FRAC_DIV) to multiply req coordinates by to get the
+ *	display coords. (xdisplay = xreq * xscale / SCALE_FRAC_DIV)
+ *
  * @cls: cread state to use for input
  * @buf: Buffer for input
  * @entry_save: Buffer to hold vidconsole text-entry information
@@ -182,6 +185,9 @@ struct scene {
 	uint id;
 	uint title_id;
 	uint highlight_id;
+	uint xscale;
+	uint yscale;
+	uint fscale;
 	struct cli_line_state cls;
 	struct abuf buf;
 	struct abuf entry_save;
@@ -519,7 +525,7 @@ struct scene_obj_txtedit {
 /**
  * struct expo_arrange_info - Information used when arranging a scene
  *
- * @label_width: Maximum width of labels in scene
+ * @label_width: Maximum width of labels in scene in pixels (unscaled)
  */
 struct expo_arrange_info {
 	int label_width;
@@ -652,7 +658,7 @@ int expo_render(struct expo *exp);
  * Updates any menus in the current scene so that their objects are in the right
  * place. Does nothing if there is no scene
  *
- * @exp: Expo to arrange
+ * @scn: Scene to arrange
  * Returns: 0 if OK, -ve on error
  */
 int expo_arrange(struct expo *exp);
@@ -853,9 +859,6 @@ int scene_txted_set_font(struct scene *scn, uint id, const char *font_name,
 /**
  * scene_obj_set_pos() - Set the postion of an object
  *
- * The given position is marked as 'requested' and will be applied when the
- * scene is next arranged
- *
  * @scn: Scene to update
  * @id: ID of object to update
  * @x: x position, in pixels from left side
@@ -866,9 +869,6 @@ int scene_obj_set_pos(struct scene *scn, uint id, int x, int y);
 
 /**
  * scene_obj_set_size() - Set the size of an object
- *
- * The given size is marked as 'requested' and will be applied when the scene
- * is next arranged
  *
  * @scn: Scene to update
  * @id: ID of object to update
@@ -881,9 +881,6 @@ int scene_obj_set_size(struct scene *scn, uint id, int w, int h);
 /**
  * scene_obj_set_width() - Set the width of an object
  *
- * The given width is marked as 'requested' and will be applied when the scene
- * is next arranged
- *
  * @scn: Scene to update
  * @id: ID of object to update
  * @w: width in pixels
@@ -893,9 +890,6 @@ int scene_obj_set_width(struct scene *scn, uint id, int w);
 
 /**
  * scene_obj_set_bbox() - Set the bounding box of an object
- *
- * The given bounding box is marked as 'requested' and will be applied when the
- * scene is next arranged
  *
  * @scn: Scene to update
  * @id: ID of object to update
@@ -990,8 +984,8 @@ int scene_menu_get_cur_item(struct scene *scn, uint id);
  *
  * @scn: Scene to check
  * @id: ID of menu object to check
- * @widthp: If non-NULL, returns width of object in pixels
- * Returns: Height of object in pixels
+ * @widthp: If non-NULL, returns width of object in pixels (unscaled)
+ * Returns: Height of object in pixels (unscaled)
  */
 int scene_obj_get_hw(struct scene *scn, uint id, int *widthp);
 
@@ -1043,7 +1037,7 @@ int expo_send_key(struct expo *exp, int key);
 int expo_action_get(struct expo *exp, struct expo_action *act);
 
 /**
- * expo_setup_theme() - Read a theme from a node and apply it to an expo
+ * expo_setup_theme() - Read a theme from a node and and apply it to an expo
  *
  * @exp: Expo to update
  * @node: Node containing the theme

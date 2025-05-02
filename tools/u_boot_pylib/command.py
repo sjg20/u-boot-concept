@@ -203,7 +203,7 @@ def run_one(*cmd, **kwargs):
     return run_pipe([cmd], **kwargs)
 
 
-def run_list(cmd, **kwargs):
+def run_list(cmd):
     """Run a command and return its output
 
     Args:
@@ -211,9 +211,8 @@ def run_list(cmd, **kwargs):
 
     Returns:
         str: output of command
-        **kwargs (dict of args): Extra arguments to pass in
     """
-    return run_pipe([cmd], capture=True, **kwargs).stdout
+    return run_pipe([cmd], capture=True).stdout
 
 
 def stop_all():

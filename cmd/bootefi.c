@@ -211,7 +211,7 @@ static int do_bootefi(struct cmd_tbl *cmdtp, int flag, int argc,
 		}
 	}
 
-	ret = efi_binary_run(image_buf, size, fdt, NULL, 0);
+	ret = efi_binary_run(image_buf, size, fdt);
 
 	if (ret != EFI_SUCCESS)
 		return CMD_RET_FAILURE;

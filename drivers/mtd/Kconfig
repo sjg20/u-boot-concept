@@ -34,7 +34,7 @@ config MTD_CONCAT
 
 config MTD_BLOCK
 	bool "Enable block device access to MTD devices"
-	select BLK
+	depends on BLK
 	help
 	  Enable support for block device access to MTD devices
 	  using blk_ops abstraction.

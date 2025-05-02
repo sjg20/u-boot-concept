@@ -480,7 +480,7 @@ static efi_status_t try_load_from_uri_path(struct efi_device_path_uri *uridp,
 	}
 
 	image_addr = hextoul(s, NULL);
-	err = wget_do_request(image_addr, uridp->uri);
+	err = wget_with_dns(image_addr, uridp->uri);
 	if (err < 0) {
 		ret = EFI_INVALID_PARAMETER;
 		goto err;
@@ -672,12 +672,12 @@ static efi_status_t try_load_entry(u16 n, efi_handle_t *handle,
 
 	/* try to register load file2 for initrd's */
 	if (IS_ENABLED(CONFIG_EFI_LOAD_FILE2_INITRD)) {
-		ret = efi_initrd_register(NULL);
+		ret = efi_initrd_register();
 		if (ret != EFI_SUCCESS)
 			goto error;
 	}
 
-	log_info("Booting: Label: %ls Device path: %pD\n", lo.label, lo.file_path);
+	log_info("Booting: %ls\n", lo.label);
 
 	/* Ignore the optional data in auto-generated boot options */
 	if (size >= sizeof(efi_guid_t) &&

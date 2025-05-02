@@ -100,10 +100,6 @@ int do_trace(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	case 's':
 		trace_print_stats();
 		break;
-	case 'w':
-		if (trace_wipe())
-			return CMD_RET_FAILURE;
-		break;
 	default:
 		return CMD_RET_USAGE;
 	}
@@ -117,7 +113,6 @@ U_BOOT_CMD(
 	"stats                        - display tracing statistics\n"
 	"trace pause                        - pause tracing\n"
 	"trace resume                       - resume tracing\n"
-	"trace wipe                         - wipe traces\n"
 	"trace funclist [<addr> <size>]     - dump function list into buffer\n"
 	"trace calls  [<addr> <size>]       "
 		"- dump function call trace into buffer"

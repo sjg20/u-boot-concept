@@ -40,13 +40,8 @@ struct wget_ctx {
 
 static void wget_lwip_fill_info(struct pbuf *hdr, u16_t hdr_len, u32_t hdr_cont_len)
 {
-	if (wget_info->headers) {
-		if (hdr_len < MAX_HTTP_HEADERS_SIZE)
-			pbuf_copy_partial(hdr, (void *)wget_info->headers, hdr_len, 0);
-		else
-			hdr_len = 0;
-		wget_info->headers[hdr_len] = 0;
-	}
+	if (wget_info->headers && hdr_len < MAX_HTTP_HEADERS_SIZE)
+		pbuf_copy_partial(hdr, (void *)wget_info->headers, hdr_len, 0);
 	wget_info->hdr_cont_len = (u32)hdr_cont_len;
 }
 
@@ -180,7 +175,7 @@ static int parse_legacy_arg(char *arg, char *nurl, size_t rem)
 
 	if (rem < n)
 		return -1;
-	strncpy(p, server, n);
+	strlcpy(p, server, n);
 	p += n;
 	rem -= n;
 	if (rem < 1)
@@ -191,7 +186,7 @@ static int parse_legacy_arg(char *arg, char *nurl, size_t rem)
 	n = strlen(path);
 	if (rem < n)
 		return -1;
-	strncpy(p, path, n);
+	strlcpy(p, path, n);
 	p += n;
 	rem -= n;
 	if (rem < 1)
@@ -260,9 +255,10 @@ static void httpc_result_cb(void *arg, httpc_result_t httpc_result,
 	printf("%u bytes transferred in %lu ms (", rx_content_len, elapsed);
 	print_size(rx_content_len / elapsed * 1000, "/s)\n");
 	printf("Bytes transferred = %lu (%lx hex)\n", ctx->size, ctx->size);
-	if (wget_info->set_bootdev)
-		efi_set_bootdev("Http", ctx->server_name, ctx->path, map_sysmem(ctx->saved_daddr, 0),
+	if (wget_info->set_bootdev) {
+		efi_set_bootdev("Net", "", ctx->path, map_sysmem(ctx->saved_daddr, 0),
 				rx_content_len);
+	}
 	wget_lwip_set_file_size(rx_content_len);
 	if (env_set_hex("filesize", rx_content_len) ||
 	    env_set_hex("fileaddr", ctx->saved_daddr)) {
@@ -287,6 +283,7 @@ static err_t httpc_headers_done_cb(httpc_state_t *connection, void *arg, struct 
 
 static int wget_loop(struct udevice *udev, ulong dst_addr, char *uri)
 {
+	char server_name[SERVER_NAME_SIZE];
 #if defined CONFIG_WGET_HTTPS
 	altcp_allocator_t tls_allocator;
 #endif
@@ -295,6 +292,7 @@ static int wget_loop(struct udevice *udev, ulong dst_addr, char *uri)
 	struct netif *netif;
 	struct wget_ctx ctx;
 	char *path;
+	u16 port;
 	bool is_https;
 
 	ctx.daddr = dst_addr;
@@ -304,7 +302,7 @@ static int wget_loop(struct udevice *udev, ulong dst_addr, char *uri)
 	ctx.prevsize = 0;
 	ctx.start_time = 0;
 
-	if (parse_url(uri, ctx.server_name, &ctx.port, &path, &is_https))
+	if (parse_url(uri, server_name, &port, &path, &is_https))
 		return CMD_RET_USAGE;
 
 	netif = net_lwip_new_netif(udev);
@@ -316,7 +314,7 @@ static int wget_loop(struct udevice *udev, ulong dst_addr, char *uri)
 	if (is_https) {
 		tls_allocator.alloc = &altcp_tls_alloc;
 		tls_allocator.arg =
-			altcp_tls_create_config_client(NULL, 0, ctx.server_name);
+			altcp_tls_create_config_client(NULL, 0, server_name);
 
 		if (!tls_allocator.arg) {
 			log_err("error: Cannot create a TLS connection\n");
@@ -352,7 +350,7 @@ static int wget_loop(struct udevice *udev, ulong dst_addr, char *uri)
 	return -1;
 }
 
-int wget_do_request(ulong dst_addr, char *uri)
+int wget_with_dns(ulong dst_addr, char *uri)
 {
 	int ret;
 
@@ -390,7 +388,7 @@ int do_wget(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
 		return CMD_RET_FAILURE;
 
 	wget_info = &default_wget_info;
-	if (wget_do_request(dst_addr, nurl))
+	if (wget_with_dns(dst_addr, nurl))
 		return CMD_RET_FAILURE;
 
 	return CMD_RET_SUCCESS;

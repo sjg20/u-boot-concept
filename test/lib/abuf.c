@@ -455,11 +455,11 @@ static int lib_test_abuf_init_size(struct unit_test_state *uts)
 	ut_assertnonnull(buf.data);
 	ut_asserteq(TEST_DATA_LEN, buf.size);
 	ut_asserteq(true, buf.alloced);
-	abuf_uninit(&buf);
 
 	/* Check for memory leaks */
 	ut_assertok(ut_check_delta(start));
 
+	abuf_uninit(&buf);
 	return 0;
 }
 LIB_TEST(lib_test_abuf_init_size, 0);

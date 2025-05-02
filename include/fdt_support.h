@@ -213,14 +213,12 @@ int board_rng_seed(struct abuf *buf);
 /**
  * board_fdt_chosen_bootargs() - Arbitrarily amend fdt kernel command line
  *
- * @fdt_ba: FDT chosen/bootargs from the kernel image if available
- *
  * This is used for late modification of kernel command line arguments just
  * before they are added into the /chosen node in flat device tree.
  *
  * @return: pointer to kernel command line arguments in memory
  */
-const char *board_fdt_chosen_bootargs(const struct fdt_property *fdt_ba);
+char *board_fdt_chosen_bootargs(void);
 
 /*
  * The keystone2 SOC requires all 32 bit aliased addresses to be converted
@@ -441,20 +439,6 @@ int fdt_valid(struct fdt_header **blobp);
  * @nr_cells_name: Name to lookup, e.g. "#address-cells"
  */
 int fdt_get_cells_len(const void *blob, char *nr_cells_name);
-
-/**
- * fdt_fixup_pmem_region() - add a pmem node on the device tree
- *
- * This functions adds/updates a pmem node to the device tree.
- * Usually used with EFI installers to preserve installer
- * images
- *
- * @fdt:	device tree provided by caller
- * @addr:	start address of the pmem node
- * @size:	size of the memory of the pmem node
- * Return:	0 on success or < 0 on failure
- */
-int fdt_fixup_pmem_region(void *fdt, u64 pmem_start, u64 pmem_size);
 
 #endif /* !USE_HOSTCC */
 

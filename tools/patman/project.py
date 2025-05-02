@@ -18,8 +18,7 @@ def detect_project():
     """
     top_level = gitutil.get_top_level()
 
-    if (not top_level or
-            os.path.exists(os.path.join(top_level, "include", "u-boot"))):
+    if os.path.exists(os.path.join(top_level, "include", "u-boot")):
         return "u-boot"
     elif os.path.exists(os.path.join(top_level, "kernel")):
         return "linux"

@@ -16,7 +16,6 @@
 #include <log.h>
 #include <malloc.h>
 #include <mapmem.h>
-#include <net.h>
 
 static struct efi_device_path *bootefi_image_path;
 static struct efi_device_path *bootefi_device_path;
@@ -48,31 +47,13 @@ void efi_clear_bootdev(void)
 	image_size = 0;
 }
 
-/**
- * calculate_paths() - Calculate the device and image patch from strings
- *
- * @dev:		device, e.g. "MMC"
- * @devnr:		number of the device, e.g. "1:2"
- * @path:		path to file loaded
- * @device_pathp:	returns EFI device path
- * @image_pathp:	returns EFI image path
- * Return: EFI_SUCCESS on success, else error code
- */
-static efi_status_t calculate_paths(const char *dev, const char *devnr,
-				    const char *path,
-				    struct efi_device_path **device_pathp,
-				    struct efi_device_path **image_pathp)
+efi_status_t calculate_paths(const char *dev, const char *devnr, const char *path,
+			     struct efi_device_path **device_pathp,
+			     struct efi_device_path **image_pathp)
+
 {
 	struct efi_device_path *image, *device;
 	efi_status_t ret;
-
-#if IS_ENABLED(CONFIG_NETDEVICES)
-	if (!strcmp(dev, "Net") || !strcmp(dev, "Http")) {
-		ret = efi_net_new_dp(dev, devnr, eth_get_dev());
-		if (ret != EFI_SUCCESS)
-			return ret;
-	}
-#endif
 
 	ret = efi_dp_from_name(dev, devnr, path, &device, &image);
 	if (ret != EFI_SUCCESS)
@@ -161,21 +142,21 @@ void efi_set_bootdev(const char *dev, const char *devnr, const char *path,
  *
  * @source_buffer:	memory address of the UEFI image
  * @source_size:	size of the UEFI image
- * @dp_dev:		EFI device-path
- * @dp_img:		EFI image-path
+ * @device:		EFI device-path
+ * @image:		EFI image-path
  * Return:		status code
  */
 static efi_status_t efi_run_image(void *source_buffer, efi_uintn_t source_size,
-				  struct efi_device_path *dp_dev,
-				  struct efi_device_path *dp_img)
+				  struct efi_device_path *device,
+				  struct efi_device_path *image)
 {
 	efi_handle_t handle;
 	struct efi_device_path *msg_path, *file_path;
 	efi_status_t ret;
 	u16 *load_options;
 
-	file_path = efi_dp_concat(dp_dev, dp_img, 0);
-	msg_path = dp_img;
+	file_path = efi_dp_concat(device, image, 0);
+	msg_path = image;
 
 	log_info("Booting %pD\n", msg_path);
 
@@ -198,26 +179,9 @@ out:
 	return ret;
 }
 
-/**
- * efi_binary_run_dp() - run loaded UEFI image
- *
- * @image:	memory address of the UEFI image
- * @size:	size of the UEFI image
- * @fdt:	device-tree
- * @initrd:	initrd
- * @initrd_sz:	initrd size
- * @dp_dev:	EFI device-path
- * @dp_img:	EFI image-path
- *
- * Execute an EFI binary image loaded at @image.
- * @size may be zero if the binary is loaded with U-Boot load command.
- *
- * Return:	status code
- */
-static efi_status_t efi_binary_run_dp(void *image, size_t size, void *fdt,
-				      void *initrd, size_t initrd_sz,
-				      struct efi_device_path *dp_dev,
-				      struct efi_device_path *dp_img)
+static efi_status_t efi_binary_run_(void *image_ptr, size_t size, void *fdt,
+				    struct efi_device_path *device,
+				    struct efi_device_path *image)
 {
 	efi_status_t ret;
 
@@ -233,11 +197,7 @@ static efi_status_t efi_binary_run_dp(void *image, size_t size, void *fdt,
 	if (ret != EFI_SUCCESS)
 		return ret;
 
-	ret = efi_install_initrd(initrd, initrd_sz);
-	if (ret != EFI_SUCCESS)
-		return ret;
-
-	return efi_run_image(image, size, dp_dev, dp_img);
+	return efi_run_image(image_ptr, size, device, image);
 }
 
 /**
@@ -246,15 +206,13 @@ static efi_status_t efi_binary_run_dp(void *image, size_t size, void *fdt,
  * @image:	memory address of the UEFI image
  * @size:	size of the UEFI image
  * @fdt:	device-tree
- * @initrd:	initrd
- * @initrd_sz:	initrd size
  *
  * Execute an EFI binary image loaded at @image.
  * @size may be zero if the binary is loaded with U-Boot load command.
  *
  * Return:	status code
  */
-efi_status_t efi_binary_run(void *image, size_t size, void *fdt, void *initrd, size_t initrd_sz)
+efi_status_t efi_binary_run(void *image, size_t size, void *fdt)
 {
 	efi_handle_t mem_handle = NULL;
 	struct efi_device_path *file_path = NULL;
@@ -278,15 +236,12 @@ efi_status_t efi_binary_run(void *image, size_t size, void *fdt, void *initrd, s
 							       file_path, NULL);
 		if (ret != EFI_SUCCESS)
 			goto out;
-
-		bootefi_device_path = file_path;
-		bootefi_image_path = NULL;
 	} else {
 		log_debug("Loaded from disk\n");
 	}
 
-	ret = efi_binary_run_dp(image, size, fdt, initrd, initrd_sz, bootefi_device_path,
-				bootefi_image_path);
+	ret = efi_binary_run_(image, size, fdt, bootefi_device_path,
+			      bootefi_image_path);
 out:
 	if (mem_handle) {
 		efi_status_t r;
@@ -367,7 +322,7 @@ efi_status_t efi_bootflow_run(struct bootflow *bflow)
 		log_debug("Booting with external fdt\n");
 		fdt = map_sysmem(bflow->fdt_addr, 0);
 	}
-	ret = efi_binary_run_dp(bflow->buf, bflow->size, fdt, NULL, 0, device, image);
+	ret = efi_binary_run_(bflow->buf, bflow->size, fdt, device, image);
 
 	return ret;
 }

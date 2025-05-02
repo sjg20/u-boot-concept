@@ -100,8 +100,6 @@ void trace_set_enabled(int enabled);
 
 int trace_early_init(void);
 
-int trace_wipe(void);
-
 /**
  * Init the trace system
  *

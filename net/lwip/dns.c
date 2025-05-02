@@ -56,7 +56,7 @@ static int dns_loop(struct udevice *udev, const char *name, const char *var)
 
 	netif = net_lwip_new_netif(udev);
 	if (!netif)
-		return CMD_RET_FAILURE;
+		return -1;
 
 	dns_init();
 

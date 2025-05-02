@@ -5,8 +5,6 @@
  * Copyright (c) 2020 AKASHI Takahiro, Linaro Limited
  */
 
-#define LOG_CATEGORY LOGC_EFI
-
 #include <charset.h>
 #include <efi_loader.h>
 #include <malloc.h>

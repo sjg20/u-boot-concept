@@ -13,14 +13,9 @@ import pathlib
 import re
 import shutil
 import sys
+import tempfile
 import unittest
 
-import pygit2
-
-from u_boot_pylib import command
-from u_boot_pylib import gitutil
-from u_boot_pylib import terminal
-from u_boot_pylib import tools
 
 from patman.commit import Commit
 from patman import control
@@ -29,8 +24,13 @@ from patman.patchstream import PatchStream
 from patman import patchwork
 from patman import send
 from patman.series import Series
+from patman import settings
+from u_boot_pylib import gitutil
+from u_boot_pylib import terminal
+from u_boot_pylib import tools
+
+import pygit2
 from patman import status
-from patman.test_common import TestCommon
 
 PATMAN_DIR = pathlib.Path(__file__).parent
 TEST_DATA_DIR = PATMAN_DIR / 'test/'
@@ -47,22 +47,46 @@ def directory_excursion(directory):
         os.chdir(current)
 
 
-class TestFunctional(unittest.TestCase, TestCommon):
+class TestFunctional(unittest.TestCase):
     """Functional tests for checking that patman behaves correctly"""
+    leb = (b'Lord Edmund Blackadd\xc3\xabr <weasel@blackadder.org>'.
+           decode('utf-8'))
     fred = 'Fred Bloggs <f.bloggs@napier.net>'
     joe = 'Joe Bloggs <joe@napierwallies.co.nz>'
     mary = 'Mary Bloggs <mary@napierwallies.co.nz>'
     commits = None
     patches = None
+    verbosity = False
+    preserve_outdirs = False
+
+    @classmethod
+    def setup_test_args(cls, preserve_indir=False, preserve_outdirs=False,
+                        toolpath=None, verbosity=None, no_capture=False):
+        """Accept arguments controlling test execution
+
+        Args:
+            preserve_indir: not used
+            preserve_outdir: Preserve the output directories used by tests.
+                Each test has its own, so this is normally only useful when
+                running a single test.
+            toolpath: not used
+        """
+        cls.preserve_outdirs = preserve_outdirs
+        cls.toolpath = toolpath
+        cls.verbosity = verbosity
+        cls.no_capture = no_capture
 
     def setUp(self):
-        TestCommon.setUp(self)
+        self.tmpdir = tempfile.mkdtemp(prefix='patman.')
+        self.gitdir = os.path.join(self.tmpdir, 'git')
         self.repo = None
-        self._patman_pathname = sys.argv[0]
-        self._patman_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
 
     def tearDown(self):
-        TestCommon.tearDown(self)
+        if self.preserve_outdirs:
+            print(f'Output dir: {self.tmpdir}')
+        else:
+            shutil.rmtree(self.tmpdir)
+        terminal.set_print_test_mode(False)
 
     @staticmethod
     def _get_path(fname):
@@ -199,8 +223,7 @@ class TestFunctional(unittest.TestCase, TestCommon):
         """
         process_tags = True
         ignore_bad_tags = False
-        stefan = (b'Stefan Br\xc3\xbcns <stefan.bruens@rwth-aachen.de>'
-                  .decode('utf-8'))
+        stefan = b'Stefan Br\xc3\xbcns <stefan.bruens@rwth-aachen.de>'.decode('utf-8')
         rick = 'Richard III <richard@palace.gov>'
         mel = b'Lord M\xc3\xablchett <clergy@palace.gov>'.decode('utf-8')
         add_maintainers = [stefan, rick]
@@ -234,46 +257,46 @@ class TestFunctional(unittest.TestCase, TestCommon):
                 series, cover_fname, args, dry_run, not ignore_bad_tags,
                 cc_file, alias, in_reply_to=in_reply_to, thread=None)
             series.ShowActions(args, cmd, process_tags, alias)
-        cc_lines = tools.read_file(cc_file, binary=False).splitlines()
+        cc_lines = open(cc_file, encoding='utf-8').read().splitlines()
         os.remove(cc_file)
 
-        itr = iter(out[0].getvalue().splitlines())
+        lines = iter(out[0].getvalue().splitlines())
         self.assertEqual('Cleaned %s patches' % len(series.commits),
-                         next(itr))
-        self.assertEqual('Change log missing for v2', next(itr))
-        self.assertEqual('Change log missing for v3', next(itr))
-        self.assertEqual('Change log for unknown version v4', next(itr))
-        self.assertEqual("Alias 'pci' not found", next(itr))
-        while next(itr) != 'Cc processing complete':
+                         next(lines))
+        self.assertEqual('Change log missing for v2', next(lines))
+        self.assertEqual('Change log missing for v3', next(lines))
+        self.assertEqual('Change log for unknown version v4', next(lines))
+        self.assertEqual("Alias 'pci' not found", next(lines))
+        while next(lines) != 'Cc processing complete':
             pass
-        self.assertIn('Dry run', next(itr))
-        self.assertEqual('', next(itr))
-        self.assertIn('Send a total of %d patches' % count, next(itr))
-        prev = next(itr)
-        for i in range(len(series.commits)):
+        self.assertIn('Dry run', next(lines))
+        self.assertEqual('', next(lines))
+        self.assertIn('Send a total of %d patches' % count, next(lines))
+        prev = next(lines)
+        for i, commit in enumerate(series.commits):
             self.assertEqual('   %s' % args[i], prev)
             while True:
-                prev = next(itr)
+                prev = next(lines)
                 if 'Cc:' not in prev:
                     break
         self.assertEqual('To:	  u-boot@lists.denx.de', prev)
-        self.assertEqual('Cc:	  %s' % stefan, next(itr))
-        self.assertEqual('Version:  3', next(itr))
-        self.assertEqual('Prefix:\t  RFC', next(itr))
-        self.assertEqual('Postfix:\t  some-branch', next(itr))
-        self.assertEqual('Cover: 4 lines', next(itr))
-        self.assertEqual('      Cc:  %s' % self.fred, next(itr))
-        self.assertEqual('      Cc:  %s' % self.joe, next(itr))
+        self.assertEqual('Cc:	  %s' % stefan, next(lines))
+        self.assertEqual('Version:  3', next(lines))
+        self.assertEqual('Prefix:\t  RFC', next(lines))
+        self.assertEqual('Postfix:\t  some-branch', next(lines))
+        self.assertEqual('Cover: 4 lines', next(lines))
+        self.assertEqual('      Cc:  %s' % self.fred, next(lines))
+        self.assertEqual('      Cc:  %s' % self.joe, next(lines))
         self.assertEqual('      Cc:  %s' % self.leb,
-                         next(itr))
-        self.assertEqual('      Cc:  %s' % mel, next(itr))
-        self.assertEqual('      Cc:  %s' % rick, next(itr))
+                         next(lines))
+        self.assertEqual('      Cc:  %s' % mel, next(lines))
+        self.assertEqual('      Cc:  %s' % rick, next(lines))
         expected = ('Git command: git send-email --annotate '
-                    '--in-reply-to="%s" --to u-boot@lists.denx.de '
+                    '--in-reply-to="%s" --to "u-boot@lists.denx.de" '
                     '--cc "%s" --cc-cmd "%s send --cc-cmd %s" %s %s'
                     % (in_reply_to, stefan, sys.argv[0], cc_file, cover_fname,
                        ' '.join(args)))
-        self.assertEqual(expected, next(itr))
+        self.assertEqual(expected, next(lines))
 
         self.assertEqual(('%s %s\0%s' % (args[0], rick, stefan)), cc_lines[0])
         self.assertEqual(
@@ -314,14 +337,14 @@ Simon Glass (2):
 base-commit: 1a44532
 branch: mybranch
 '''
-        lines = tools.read_file(cover_fname, binary=False).splitlines()
+        lines = open(cover_fname, encoding='utf-8').read().splitlines()
         self.assertEqual(
             'Subject: [RFC PATCH some-branch v3 0/2] test: A test patch series',
             lines[3])
         self.assertEqual(expected.splitlines(), lines[7:])
 
         for i, fname in enumerate(args):
-            lines = tools.read_file(fname, binary=False).splitlines()
+            lines = open(fname, encoding='utf-8').read().splitlines()
             subject = [line for line in lines if line.startswith('Subject')]
             self.assertEqual('Subject: [RFC %d/%d]' % (i + 1, count),
                              subject[0][:18])
@@ -361,8 +384,7 @@ Changes in v2:
     def test_base_commit(self):
         """Test adding a base commit with no cover letter"""
         orig_text = self._get_text('test01.txt')
-        pos = orig_text.index(
-            'commit 5ab48490f03051875ab13d288a4bf32b507d76fd')
+        pos = orig_text.index('commit 5ab48490f03051875ab13d288a4bf32b507d76fd')
         text = orig_text[:pos]
         series = patchstream.get_metadata_for_test(text)
         series.base_commit = Commit('1a44532')
@@ -384,6 +406,139 @@ Changes in v2:
         self.assertEqual('base-commit: 1a44532', lines[pos + 3])
         self.assertEqual('branch: mybranch', lines[pos + 4])
 
+    def make_commit_with_file(self, subject, body, fname, text):
+        """Create a file and add it to the git repo with a new commit
+
+        Args:
+            subject (str): Subject for the commit
+            body (str): Body text of the commit
+            fname (str): Filename of file to create
+            text (str): Text to put into the file
+        """
+        path = os.path.join(self.gitdir, fname)
+        tools.write_file(path, text, binary=False)
+        index = self.repo.index
+        index.add(fname)
+        # pylint doesn't seem to find this
+        # pylint: disable=E1101
+        author = pygit2.Signature('Test user', 'test@email.com')
+        committer = author
+        tree = index.write_tree()
+        message = subject + '\n' + body
+        self.repo.create_commit('HEAD', author, committer, message, tree,
+                                [self.repo.head.target])
+
+    def make_git_tree(self):
+        """Make a simple git tree suitable for testing
+
+        It has three branches:
+            'base' has two commits: PCI, main
+            'first' has base as upstream and two more commits: I2C, SPI
+            'second' has base as upstream and three more: video, serial, bootm
+
+        Returns:
+            pygit2.Repository: repository
+        """
+        repo = pygit2.init_repository(self.gitdir)
+        self.repo = repo
+        new_tree = repo.TreeBuilder().write()
+
+        # pylint doesn't seem to find this
+        # pylint: disable=E1101
+        author = pygit2.Signature('Test user', 'test@email.com')
+        committer = author
+        _ = repo.create_commit('HEAD', author, committer, 'Created master',
+                               new_tree, [])
+
+        self.make_commit_with_file('Initial commit', '''
+Add a README
+
+''', 'README', '''This is the README file
+describing this project
+in very little detail''')
+
+        self.make_commit_with_file('pci: PCI implementation', '''
+Here is a basic PCI implementation
+
+''', 'pci.c', '''This is a file
+it has some contents
+and some more things''')
+        self.make_commit_with_file('main: Main program', '''
+Hello here is the second commit.
+''', 'main.c', '''This is the main file
+there is very little here
+but we can always add more later
+if we want to
+
+Series-to: u-boot
+Series-cc: Barry Crump <bcrump@whataroa.nz>
+''')
+        base_target = repo.revparse_single('HEAD')
+        self.make_commit_with_file('i2c: I2C things', '''
+This has some stuff to do with I2C
+''', 'i2c.c', '''And this is the file contents
+with some I2C-related things in it''')
+        self.make_commit_with_file('spi: SPI fixes', '''
+SPI needs some fixes
+and here they are
+
+Signed-off-by: %s
+
+Series-to: u-boot
+Commit-notes:
+title of the series
+This is the cover letter for the series
+with various details
+END
+''' % self.leb, 'spi.c', '''Some fixes for SPI in this
+file to make SPI work
+better than before''')
+        first_target = repo.revparse_single('HEAD')
+
+        target = repo.revparse_single('HEAD~2')
+        # pylint doesn't seem to find this
+        # pylint: disable=E1101
+        repo.reset(target.oid, pygit2.GIT_CHECKOUT_FORCE)
+        self.make_commit_with_file('video: Some video improvements', '''
+Fix up the video so that
+it looks more purple. Purple is
+a very nice colour.
+''', 'video.c', '''More purple here
+Purple and purple
+Even more purple
+Could not be any more purple''')
+        self.make_commit_with_file('serial: Add a serial driver', '''
+Here is the serial driver
+for my chip.
+
+Cover-letter:
+Series for my board
+This series implements support
+for my glorious board.
+END
+Series-links: 183237
+''', 'serial.c', '''The code for the
+serial driver is here''')
+        self.make_commit_with_file('bootm: Make it boot', '''
+This makes my board boot
+with a fix to the bootm
+command
+''', 'bootm.c', '''Fix up the bootm
+command to make the code as
+complicated as possible''')
+        second_target = repo.revparse_single('HEAD')
+
+        repo.branches.local.create('first', first_target)
+        repo.config.set_multivar('branch.first.remote', '', '.')
+        repo.config.set_multivar('branch.first.merge', '', 'refs/heads/base')
+
+        repo.branches.local.create('second', second_target)
+        repo.config.set_multivar('branch.second.remote', '', '.')
+        repo.config.set_multivar('branch.second.merge', '', 'refs/heads/base')
+
+        repo.branches.local.create('base', base_target)
+        return repo
+
     def test_branch(self):
         """Test creating patches from a branch"""
         repo = self.make_git_tree()
@@ -394,7 +549,7 @@ Changes in v2:
         control.setup()
         orig_dir = os.getcwd()
         try:
-            os.chdir(self.tmpdir)
+            os.chdir(self.gitdir)
 
             # Check that it can detect the current branch
             self.assertEqual(2, gitutil.count_commits_to_branch(None))
@@ -409,7 +564,7 @@ Changes in v2:
             # Check that it can detect a different branch
             self.assertEqual(3, gitutil.count_commits_to_branch('second'))
             with terminal.capture() as _:
-                _, cover_fname, patch_files = send.prepare_patches(
+                series, cover_fname, patch_files = send.prepare_patches(
                     col, branch='second', count=-1, start=0, end=0,
                     ignore_binary=False, signoff=True)
             self.assertIsNotNone(cover_fname)
@@ -446,7 +601,7 @@ Changes in v2:
     def test_custom_get_maintainer_script(self):
         """Validate that a custom get_maintainer script gets used."""
         self.make_git_tree()
-        with directory_excursion(self.tmpdir):
+        with directory_excursion(self.gitdir):
             # Setup git.
             os.environ['GIT_CONFIG_GLOBAL'] = '/dev/null'
             os.environ['GIT_CONFIG_SYSTEM'] = '/dev/null'
@@ -454,18 +609,19 @@ Changes in v2:
             tools.run('git', 'config', 'user.email', 'dumdum@dummy.com')
             tools.run('git', 'branch', 'upstream')
             tools.run('git', 'branch', '--set-upstream-to=upstream')
-
-            # Setup patman configuration.
-            tools.write_file('.patman', '[settings]\n'
-                             'get_maintainer_script: dummy-script.sh\n'
-                             'check_patch: False\n'
-                             'add_maintainers: True\n', binary=False)
-            tools.write_file('dummy-script.sh',
-                             '#!/usr/bin/env python3\n'
-                             'print("hello@there.com")\n', binary=False)
-            os.chmod('dummy-script.sh', 0x555)
             tools.run('git', 'add', '.')
             tools.run('git', 'commit', '-m', 'new commit')
+
+            # Setup patman configuration.
+            with open('.patman', 'w', buffering=1) as f:
+                f.write('[settings]\n'
+                        'get_maintainer_script: dummy-script.sh\n'
+                        'check_patch: False\n'
+                        'add_maintainers: True\n')
+            with open('dummy-script.sh', 'w', buffering=1) as f:
+                f.write('#!/usr/bin/env python\n'
+                        'print("hello@there.com")\n')
+            os.chmod('dummy-script.sh', 0x555)
 
             # Finally, do the test
             with terminal.capture():
@@ -495,7 +651,7 @@ Tested-by: %s
 Serie-version: 2
 '''
         with self.assertRaises(ValueError) as exc:
-            PatchStream.process_text(text)
+            pstrm = PatchStream.process_text(text)
         self.assertEqual("Line 3: Invalid tag = 'Serie-version: 2'",
                          str(exc.exception))
 
@@ -573,9 +729,9 @@ index c072e54..942244f 100644
 --- a/lib/fdtdec.c
 +++ b/lib/fdtdec.c
 @@ -1200,7 +1200,8 @@ int fdtdec_setup_mem_size_base(void)
- \t}
+ 	}
 
- \tgd->ram_size = (phys_size_t)(res.end - res.start + 1);
+ 	gd->ram_size = (phys_size_t)(res.end - res.start + 1);
 -	debug("%s: Initial DRAM size %llx\n", __func__, (u64)gd->ram_size);
 +	debug("%s: Initial DRAM size %llx\n", __func__,
 +	      (unsigned long long)gd->ram_size);
@@ -611,41 +767,6 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         finally:
             os.chdir(orig_dir)
 
-    def run_patman(self, *args):
-        """Run patman using the provided arguments
-
-        This runs the patman executable from scratch, as opposed to calling
-        the control.do_patman() function.
-
-        Args:
-            args (list of str): Arguments to pass (excluding argv[0])
-
-        Return:
-            CommandResult: Result of execution
-        """
-        all_args = [self._patman_pathname] + list(args)
-        return command.run_one(*all_args, capture=True, capture_stderr=True)
-
-    def test_full_help(self):
-        """Test getting full help"""
-        command.TEST_RESULT = None
-        result = self.run_patman('-H')
-        help_file = os.path.join(self._patman_dir, 'README.rst')
-        # Remove possible extraneous strings
-        extra = '::::::::::::::\n' + help_file + '\n::::::::::::::\n'
-        gothelp = result.stdout.replace(extra, '')
-        self.assertEqual(len(gothelp), os.path.getsize(help_file))
-        self.assertEqual(0, len(result.stderr))
-        self.assertEqual(0, result.return_code)
-
-    def test_help(self):
-        """Test getting help with commands and arguments"""
-        command.TEST_RESULT = None
-        result = self.run_patman('-h')
-        self.assertTrue(len(result.stdout) > 1000)
-        self.assertEqual(0, len(result.stderr))
-        self.assertEqual(0, result.return_code)
-
     @staticmethod
     def _fake_patchwork(subpath):
         """Fake Patchwork server for the function below
@@ -668,9 +789,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         """Test Patchwork patches not matching the series"""
         pwork = patchwork.Patchwork.for_testing(self._fake_patchwork)
         with terminal.capture() as (_, err):
-            loop = asyncio.get_event_loop()
-            _, patches = loop.run_until_complete(status.check_status(1234,
-                                                                     pwork))
+            patches = asyncio.run(status.check_status(1234, pwork))
             status.check_patch_count(0, len(patches))
         self.assertIn('Warning: Patchwork reports 1 patches, series has 0',
                       err.getvalue())
@@ -678,8 +797,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
     def test_status_read_patch(self):
         """Test handling a single patch in Patchwork"""
         pwork = patchwork.Patchwork.for_testing(self._fake_patchwork)
-        loop = asyncio.get_event_loop()
-        _, patches = loop.run_until_complete(status.check_status(1234, pwork))
+        patches = asyncio.run(status.check_status(1234, pwork))
         self.assertEqual(1, len(patches))
         patch = patches[0]
         self.assertEqual('1', patch.id)
@@ -713,14 +831,6 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         self.assertEqual(2, patch.seq)
         self.assertEqual(2, patch.count)
         self.assertEqual(None, patch.prefix)
-        self.assertEqual(None, patch.version)
-
-        # With PATCH prefix
-        patch.parse_subject('[PATCH,2/5] Testing')
-        self.assertEqual('Testing', patch.subject)
-        self.assertEqual(2, patch.seq)
-        self.assertEqual(5, patch.count)
-        self.assertEqual('PATCH', patch.prefix)
         self.assertEqual(None, patch.version)
 
         # RFC patch
@@ -887,6 +997,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         # things behaves as expected
         self.commits = [commit1, commit2]
         self.patches = [patch1, patch2]
+        count = 2
 
         # Check that the tags are picked up on the first patch
         new_rtags, _ = status.process_reviews(patch1.content, patch1.comments,
@@ -929,40 +1040,40 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         terminal.set_print_test_mode()
         pwork = patchwork.Patchwork.for_testing(self._fake_patchwork2)
         status.check_and_show_status(series, '1234', None, None, False, False,
-                                     False, pwork)
-        itr = iter(terminal.get_print_test_lines())
+                                     pwork)
+        lines = iter(terminal.get_print_test_lines())
         col = terminal.Color()
         self.assertEqual(terminal.PrintLine('  1 Subject 1', col.YELLOW),
-                         next(itr))
+                         next(lines))
         self.assertEqual(
             terminal.PrintLine('    Reviewed-by: ', col.GREEN, newline=False,
                                bright=False),
-            next(itr))
+            next(lines))
         self.assertEqual(terminal.PrintLine(self.joe, col.WHITE, bright=False),
-                         next(itr))
+                         next(lines))
 
         self.assertEqual(terminal.PrintLine('  2 Subject 2', col.YELLOW),
-                         next(itr))
+                         next(lines))
         self.assertEqual(
             terminal.PrintLine('    Reviewed-by: ', col.GREEN, newline=False,
                                bright=False),
-            next(itr))
-        self.assertEqual(terminal.PrintLine(self.fred, col.WHITE,
-                                            bright=False), next(itr))
+            next(lines))
+        self.assertEqual(terminal.PrintLine(self.fred, col.WHITE, bright=False),
+                         next(lines))
         self.assertEqual(
             terminal.PrintLine('    Tested-by: ', col.GREEN, newline=False,
                                bright=False),
-            next(itr))
+            next(lines))
         self.assertEqual(terminal.PrintLine(self.leb, col.WHITE, bright=False),
-                         next(itr))
+                         next(lines))
         self.assertEqual(
             terminal.PrintLine('  + Reviewed-by: ', col.GREEN, newline=False),
-            next(itr))
+            next(lines))
         self.assertEqual(terminal.PrintLine(self.mary, col.WHITE),
-                         next(itr))
+                         next(lines))
         self.assertEqual(terminal.PrintLine(
             '1 new response available in patchwork (use -d to write them to a new branch)',
-            None), next(itr))
+            None), next(lines))
 
     def _fake_patchwork3(self, subpath):
         """Fake Patchwork server for the function below
@@ -996,7 +1107,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         branch = 'first'
         dest_branch = 'first2'
         count = 2
-        gitdir = self.gitdir
+        gitdir = os.path.join(self.gitdir, '.git')
 
         # Set up the test git tree. We use branch 'first' which has two commits
         # in it
@@ -1042,9 +1153,8 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
 
         terminal.set_print_test_mode()
         pwork = patchwork.Patchwork.for_testing(self._fake_patchwork3)
-        status.check_and_show_status(
-            series, '1234', branch, dest_branch, False, False, False, pwork,
-            repo)
+        status.check_and_show_status(series, '1234', branch, dest_branch,
+                                     False, False, pwork, repo)
         lines = terminal.get_print_test_lines()
         self.assertEqual(12, len(lines))
         self.assertEqual(
@@ -1065,18 +1175,18 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         # Now check the actual test of the first commit message. We expect to
         # see the new tags immediately below the old ones.
         stdout = patchstream.get_list(dest_branch, count=count, git_dir=gitdir)
-        itr = iter([line.strip() for line in stdout.splitlines()
-                    if '-by:' in line])
+        lines = iter([line.strip() for line in stdout.splitlines()
+                      if '-by:' in line])
 
         # First patch should have the review tag
-        self.assertEqual('Reviewed-by: %s' % self.joe, next(itr))
+        self.assertEqual('Reviewed-by: %s' % self.joe, next(lines))
 
         # Second patch should have the sign-off then the tested-by and two
         # reviewed-by tags
-        self.assertEqual('Signed-off-by: %s' % self.leb, next(itr))
-        self.assertEqual('Reviewed-by: %s' % self.fred, next(itr))
-        self.assertEqual('Reviewed-by: %s' % self.mary, next(itr))
-        self.assertEqual('Tested-by: %s' % self.leb, next(itr))
+        self.assertEqual('Signed-off-by: %s' % self.leb, next(lines))
+        self.assertEqual('Reviewed-by: %s' % self.fred, next(lines))
+        self.assertEqual('Reviewed-by: %s' % self.mary, next(lines))
+        self.assertEqual('Tested-by: %s' % self.leb, next(lines))
 
     def test_parse_snippets(self):
         """Test parsing of review snippets"""
@@ -1152,9 +1262,8 @@ line8
               'And another comment'],
              ['> File: file.c',
               '> Line: 153 / 143: def check_patch(fname, show_types=False):',
-              '>  and more code', '> +Addition here',
-              '> +Another addition here', '>  codey', '>  more codey',
-              'and another thing in same file'],
+              '>  and more code', '> +Addition here', '> +Another addition here',
+              '>  codey', '>  more codey', 'and another thing in same file'],
              ['> File: file.c', '> Line: 253 / 243',
               '>  with no function context', 'one more thing'],
              ['> File: tools/patman/main.py', '> +line of code',
@@ -1246,79 +1355,77 @@ Reviewed-by: %s
         series.commits = [commit1, commit2]
         terminal.set_print_test_mode()
         pwork = patchwork.Patchwork.for_testing(self._fake_patchwork2)
-        status.check_and_show_status(
-            series, '1234', None, None, False, True, False, pwork)
-        itr = iter(terminal.get_print_test_lines())
+        status.check_and_show_status(series, '1234', None, None, False, True,
+                                     pwork)
+        lines = iter(terminal.get_print_test_lines())
         col = terminal.Color()
         self.assertEqual(terminal.PrintLine('  1 Subject 1', col.YELLOW),
-                         next(itr))
+                         next(lines))
         self.assertEqual(
             terminal.PrintLine('  + Reviewed-by: ', col.GREEN, newline=False),
-            next(itr))
-        self.assertEqual(terminal.PrintLine(self.joe, col.WHITE), next(itr))
+            next(lines))
+        self.assertEqual(terminal.PrintLine(self.joe, col.WHITE), next(lines))
 
         self.assertEqual(terminal.PrintLine('Review: %s' % self.joe, col.RED),
-                         next(itr))
-        self.assertEqual(terminal.PrintLine('    Hi Fred,', None), next(itr))
-        self.assertEqual(terminal.PrintLine('', None), next(itr))
+                         next(lines))
+        self.assertEqual(terminal.PrintLine('    Hi Fred,', None), next(lines))
+        self.assertEqual(terminal.PrintLine('', None), next(lines))
         self.assertEqual(terminal.PrintLine('    > File: file.c', col.MAGENTA),
-                         next(itr))
+                         next(lines))
         self.assertEqual(terminal.PrintLine('    > Some code', col.MAGENTA),
-                         next(itr))
-        self.assertEqual(terminal.PrintLine('    > and more code',
-                                            col.MAGENTA),
-                         next(itr))
+                         next(lines))
+        self.assertEqual(terminal.PrintLine('    > and more code', col.MAGENTA),
+                         next(lines))
         self.assertEqual(terminal.PrintLine(
-            '    Here is my comment above the above...', None), next(itr))
-        self.assertEqual(terminal.PrintLine('', None), next(itr))
+            '    Here is my comment above the above...', None), next(lines))
+        self.assertEqual(terminal.PrintLine('', None), next(lines))
 
         self.assertEqual(terminal.PrintLine('  2 Subject 2', col.YELLOW),
-                         next(itr))
+                         next(lines))
         self.assertEqual(
             terminal.PrintLine('  + Reviewed-by: ', col.GREEN, newline=False),
-            next(itr))
+            next(lines))
         self.assertEqual(terminal.PrintLine(self.fred, col.WHITE),
-                         next(itr))
+                         next(lines))
         self.assertEqual(
             terminal.PrintLine('  + Reviewed-by: ', col.GREEN, newline=False),
-            next(itr))
+            next(lines))
         self.assertEqual(terminal.PrintLine(self.mary, col.WHITE),
-                         next(itr))
+                         next(lines))
         self.assertEqual(
             terminal.PrintLine('  + Tested-by: ', col.GREEN, newline=False),
-            next(itr))
+            next(lines))
         self.assertEqual(terminal.PrintLine(self.leb, col.WHITE),
-                         next(itr))
+                         next(lines))
 
         self.assertEqual(terminal.PrintLine('Review: %s' % self.fred, col.RED),
-                         next(itr))
-        self.assertEqual(terminal.PrintLine('    Hi Fred,', None), next(itr))
-        self.assertEqual(terminal.PrintLine('', None), next(itr))
+                         next(lines))
+        self.assertEqual(terminal.PrintLine('    Hi Fred,', None), next(lines))
+        self.assertEqual(terminal.PrintLine('', None), next(lines))
         self.assertEqual(terminal.PrintLine(
-            '    > File: tools/patman/commit.py', col.MAGENTA), next(itr))
+            '    > File: tools/patman/commit.py', col.MAGENTA), next(lines))
         self.assertEqual(terminal.PrintLine(
-            '    > Line: 41 / 41: class Commit:', col.MAGENTA), next(itr))
+            '    > Line: 41 / 41: class Commit:', col.MAGENTA), next(lines))
         self.assertEqual(terminal.PrintLine(
-            '    > +        return self.subject', col.MAGENTA), next(itr))
+            '    > +        return self.subject', col.MAGENTA), next(lines))
         self.assertEqual(terminal.PrintLine(
-            '    > +', col.MAGENTA), next(itr))
+            '    > +', col.MAGENTA), next(lines))
         self.assertEqual(
-            terminal.PrintLine(
-                '    >      def add_change(self, version, info):',
-                col.MAGENTA),
-            next(itr))
+            terminal.PrintLine('    >      def add_change(self, version, info):',
+                               col.MAGENTA),
+            next(lines))
         self.assertEqual(terminal.PrintLine(
             '    >          """Add a new change line to the change list for a version.',
-            col.MAGENTA), next(itr))
+            col.MAGENTA), next(lines))
         self.assertEqual(terminal.PrintLine(
-            '    >', col.MAGENTA), next(itr))
+            '    >', col.MAGENTA), next(lines))
         self.assertEqual(terminal.PrintLine(
-            '    A comment', None), next(itr))
-        self.assertEqual(terminal.PrintLine('', None), next(itr))
+            '    A comment', None), next(lines))
+        self.assertEqual(terminal.PrintLine('', None), next(lines))
 
         self.assertEqual(terminal.PrintLine(
             '4 new responses available in patchwork (use -d to write them to a new branch)',
-            None), next(itr))
+            None), next(lines))
 
     def test_insert_tags(self):
         """Test inserting of review tags"""

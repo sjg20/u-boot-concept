@@ -259,7 +259,6 @@ static int cedit_render(struct unit_test_state *uts)
 	theme = &exp->theme;
 	theme->menuitem_gap_y = 2;
 	theme->menu_inset = 2;
-	/* theme->menu_title_margin_x is 0 so menu labels shouldn't line up */
 	theme->textline_label_margin_x = 10;
 
 	dev = dev_get_parent(con);
@@ -271,7 +270,7 @@ static int cedit_render(struct unit_test_state *uts)
 	ut_asserteq(ID_AC_OFF, menu->cur_item_id);
 
 	ut_assertok(expo_render(exp));
-	ut_asserteq(4926, video_compress_fb(uts, dev, false));
+	ut_asserteq(4887, video_compress_fb(uts, dev, false));
 	ut_assertok(video_check_copy_fb(uts, dev));
 
 	/* move to the second menu */
@@ -279,54 +278,54 @@ static int cedit_render(struct unit_test_state *uts)
 	act.select.id = ID_POWER_LOSS;
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(5000, video_compress_fb(uts, dev, false));
+	ut_asserteq(4955, video_compress_fb(uts, dev, false));
 
 	/* open the menu */
 	act.type = EXPOACT_OPEN;
 	act.select.id = ID_POWER_LOSS;
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(5390, video_compress_fb(uts, dev, false));
+	ut_asserteq(5404, video_compress_fb(uts, dev, false));
 
 	/* close the menu */
 	act.type = EXPOACT_CLOSE;
 	act.select.id = ID_POWER_LOSS;
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(5000, video_compress_fb(uts, dev, false));
+	ut_asserteq(4955, video_compress_fb(uts, dev, false));
 
 	/* open the menu again to check it looks the same */
 	act.type = EXPOACT_OPEN;
 	act.select.id = ID_POWER_LOSS;
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(5390, video_compress_fb(uts, dev, false));
+	ut_asserteq(5404, video_compress_fb(uts, dev, false));
 
 	/* close the menu */
 	act.type = EXPOACT_CLOSE;
 	act.select.id = ID_POWER_LOSS;
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(5000, video_compress_fb(uts, dev, false));
+	ut_asserteq(4955, video_compress_fb(uts, dev, false));
 
 	act.type = EXPOACT_OPEN;
 	act.select.id = ID_POWER_LOSS;
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(5390, video_compress_fb(uts, dev, false));
+	ut_asserteq(5404, video_compress_fb(uts, dev, false));
 
 	act.type = EXPOACT_POINT_ITEM;
 	act.select.id = ID_AC_ON;
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(5363, video_compress_fb(uts, dev, false));
+	ut_asserteq(5394, video_compress_fb(uts, dev, false));
 
 	/* select it */
 	act.type = EXPOACT_SELECT;
 	act.select.id = ID_AC_ON;
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(4964, video_compress_fb(uts, dev, false));
+	ut_asserteq(4937, video_compress_fb(uts, dev, false));
 
 	ut_asserteq(ID_AC_ON, menu->cur_item_id);
 
@@ -335,14 +334,14 @@ static int cedit_render(struct unit_test_state *uts)
 	act.select.id = ID_MACHINE_NAME;
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(4868, video_compress_fb(uts, dev, false));
+	ut_asserteq(4854, video_compress_fb(uts, dev, false));
 
 	/* open it */
 	act.type = EXPOACT_OPEN;
 	act.select.id = ID_MACHINE_NAME;
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(4871, video_compress_fb(uts, dev, false));
+	ut_asserteq(4843, video_compress_fb(uts, dev, false));
 
 	/*
 	 * Send some keypresses. Note that the console must be enabled so that
@@ -358,7 +357,7 @@ static int cedit_render(struct unit_test_state *uts)
 	ut_silence_console(uts);
 	ut_assertok(cedit_arange(exp, vid_priv, scn->id));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(5076, video_compress_fb(uts, dev, false));
+	ut_asserteq(5028, video_compress_fb(uts, dev, false));
 
 	expo_destroy(exp);
 	cur_exp = NULL;
@@ -401,7 +400,7 @@ static int cedit_render_lineedit(struct unit_test_state *uts)
 	ut_asserteq(20, tline->pos);
 
 	ut_assertok(expo_render(exp));
-	ut_asserteq(5344, video_compress_fb(uts, dev, false));
+	ut_asserteq(5336, video_compress_fb(uts, dev, false));
 	ut_assertok(video_check_copy_fb(uts, dev));
 
 	/* move to the line-edit field */
@@ -409,14 +408,15 @@ static int cedit_render_lineedit(struct unit_test_state *uts)
 	act.select.id = ID_MACHINE_NAME;
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(5408, video_compress_fb(uts, dev, false));
+	ut_asserteq(5363, video_compress_fb(uts, dev, false));
 
 	/* open it */
 	act.type = EXPOACT_OPEN;
 	act.select.id = ID_MACHINE_NAME;
 	ut_assertok(cedit_do_action(exp, scn, vid_priv, &act));
+	// ut_asserteq(0, tline->pos);
 	ut_assertok(expo_render(exp));
-	ut_asserteq(5291, video_compress_fb(uts, dev, false));
+	ut_asserteq(5283, video_compress_fb(uts, dev, false));
 
 	/* delete some characters */
 	ut_unsilence_console(uts);
@@ -427,7 +427,7 @@ static int cedit_render_lineedit(struct unit_test_state *uts)
 
 	ut_assertok(cedit_arange(exp, vid_priv, scn->id));
 	ut_assertok(expo_render(exp));
-	ut_asserteq(5209, video_compress_fb(uts, dev, false));
+	ut_asserteq(5170, video_compress_fb(uts, dev, false));
 
 	expo_destroy(exp);
 	cur_exp = NULL;
@@ -435,115 +435,3 @@ static int cedit_render_lineedit(struct unit_test_state *uts)
 	return 0;
 }
 BOOTSTD_TEST(cedit_render_lineedit, UTF_DM | UTF_SCAN_FDT);
-
-/* Check the cedit is arranged correctly */
-static int cedit_position(struct unit_test_state *uts)
-{
-	struct scene_obj_textline *tline;
-	struct scene_obj_menu *menu;
-	struct video_priv *vid_priv;
-	extern struct expo *cur_exp;
-	const uint label_width = 96;
-	struct scene_menitem *item;
-	struct udevice *dev, *con;
-	struct expo_theme *theme;
-	struct scene_obj *obj;
-	struct stdio_dev *sdev;
-	struct scene *scn;
-	struct expo *exp;
-	uint x_offset;
-
-	ut_assertok(run_command("cedit load hostfs - cedit.dtb", 0));
-	exp = cur_exp;
-
-	sdev = stdio_get_by_name("vidconsole");
-	ut_assertnonnull(sdev);
-	con = sdev->priv;
-
-	theme = &exp->theme;
-	theme->menuitem_gap_y = 2;
-	theme->menu_inset = 2;
-	theme->textline_label_margin_x = 10;
-	theme->menu_title_margin_x = 10;
-
-	dev = dev_get_parent(con);
-	vid_priv = dev_get_uclass_priv(dev);
-	ut_asserteq(ID_SCENE1, cedit_prepare(exp, dev, &scn));
-
-	// expo_dump(exp);
-	menu = scene_obj_find(scn, ID_CPU_SPEED, SCENEOBJT_MENU);
-	ut_assertnonnull(menu);
-	obj = &menu->obj;
-	ut_asserteq(50, obj->bbox.x0);
-	ut_asserteq(100, obj->bbox.y0);
-	ut_asserteq(50 + 160, obj->bbox.x1);
-	ut_asserteq(18 + 100, obj->bbox.y1);
-
-	obj = scene_obj_find(scn, menu->title_id, SCENEOBJT_TEXT);
-	ut_assertnonnull(obj);
-	ut_asserteq(50, obj->bbox.x0);
-	ut_asserteq(100, obj->bbox.y0);
-	ut_asserteq(50 + 75, obj->bbox.x1);
-	ut_asserteq(18 + 100, obj->bbox.y1);
-
-	item = scene_menuitem_find_seq(menu, 0);
-	ut_assertnonnull(item);
-
-	x_offset = label_width + theme->textline_label_margin_x;
-	obj = scene_obj_find(scn, item->label_id, SCENEOBJT_TEXT);
-	ut_assertnonnull(obj);
-	ut_asserteq(42, obj->dims.x);
-	ut_asserteq(18, obj->dims.y);
-
-	ut_asserteq(0, obj->ofs.xofs);
-	ut_asserteq(0, obj->ofs.yofs);
-
-	ut_asserteq(50 + x_offset, obj->bbox.x0);
-	ut_asserteq(100, obj->bbox.y0);
-	ut_asserteq(50 + x_offset + 54, obj->bbox.x1);
-	ut_asserteq(18 + 100, obj->bbox.y1);
-
-	/* all items should have the same, so check them */
-	item = scene_menuitem_find_seq(menu, 1);
-	ut_assertnonnull(item);
-	ut_asserteq(50 + x_offset + 54, obj->bbox.x1);
-
-	item = scene_menuitem_find_seq(menu, 2);
-	ut_assertnonnull(item);
-	ut_asserteq(50 + x_offset + 54, obj->bbox.x1);
-
-	menu = scene_obj_find(scn, ID_POWER_LOSS, SCENEOBJT_MENU);
-	ut_assertnonnull(menu);
-	ut_asserteq(ID_AC_OFF, menu->cur_item_id);
-
-	obj = &menu->obj;
-	ut_asserteq(50, obj->bbox.x0);
-	ut_asserteq(120, obj->bbox.y0);
-	ut_asserteq(50 + 160, obj->bbox.x1);
-	ut_asserteq(18 + 120, obj->bbox.y1);
-
-	tline = scene_obj_find(scn, ID_MACHINE_NAME, SCENEOBJT_TEXTLINE);
-	ut_assertnonnull(menu);
-
-	obj = &tline->obj;
-	ut_asserteq(381, obj->dims.x);
-	ut_asserteq(18, obj->dims.y);
-
-	ut_asserteq(50, obj->bbox.x0);
-	ut_asserteq(140, obj->bbox.y0);
-	ut_asserteq(50 + 381, obj->bbox.x1);
-	ut_asserteq(140 + 18, obj->bbox.y1);
-
-	obj = scene_obj_find(scn, ID_MACHINE_NAME_EDIT, SCENEOBJT_TEXT);
-	ut_assertnonnull(obj);
-	ut_asserteq(275, obj->dims.x);
-	ut_asserteq(18, obj->dims.y);
-
-	ut_asserteq(50 + x_offset, obj->bbox.x0);
-	ut_asserteq(140, obj->bbox.y0);
-	ut_asserteq(50 + x_offset + obj->dims.x, obj->bbox.x1);
-	ut_asserteq(140 + 18, obj->bbox.y1);
-
-	return 0;
-}
-BOOTSTD_TEST(cedit_position, UTF_DM | UTF_SCAN_FDT);

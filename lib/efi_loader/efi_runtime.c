@@ -5,8 +5,6 @@
  *  Copyright (c) 2016 Alexander Graf
  */
 
-#define LOG_CATEGORY LOGC_EFI
-
 #include <command.h>
 #include <cpu_func.h>
 #include <dm.h>

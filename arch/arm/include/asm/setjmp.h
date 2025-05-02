@@ -4,11 +4,13 @@
  * (C) Copyright 2016 Alexander Graf <agraf@suse.de>
  */
 
-#ifndef _ASM_SETJMP_H_
-#define _ASM_SETJMP_H_	1
+#ifndef _SETJMP_H_
+#define _SETJMP_H_	1
 
-#include <asm-generic/int-ll64.h>
-
+/*
+ * This really should be opaque, but the EFI implementation wrongly
+ * assumes that a 'struct jmp_buf_data' is defined.
+ */
 struct jmp_buf_data {
 #if defined(__aarch64__)
 	u64  regs[13];
@@ -17,4 +19,9 @@ struct jmp_buf_data {
 #endif
 };
 
-#endif /* _ASM_SETJMP_H_ */
+typedef struct jmp_buf_data jmp_buf[1];
+
+int setjmp(jmp_buf jmp);
+void longjmp(jmp_buf jmp, int ret);
+
+#endif /* _SETJMP_H_ */

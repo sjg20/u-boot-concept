@@ -25,27 +25,13 @@ class Series(dict):
     """Holds information about a patch series, including all tags.
 
     Vars:
-        cc (list of str): Aliases/emails to Cc all patches to
-        to (list of str): Aliases/emails to send patches to
-        commits (list of Commit): Commit objects, one for each patch
-        cover (list of str): Lines in the cover letter
-        notes (list of str): Lines in the notes
-        changes: (dict) List of changes for each version:
-            key (int): version number
-            value: tuple:
-                commit (Commit): Commit this relates to, or None if related to a
-                    cover letter
-                info (str): change lines for this version (separated by \n)
-        allow_overwrite (bool): Allow tags to overwrite an existing tag
-        base_commit (Commit): Commit object at the base of this series
-        branch (str): Branch name of this series
-        desc (str): Description of the series (cover-letter title)
-        idnum (int or None): Database rowid
-        name (str): Series name, typically the branch name without any numeric
-            suffix
-        _generated_cc (dict) written in MakeCcFile()
-            key: name of patch file
-            value: list of email addresses
+        cc: List of aliases/emails to Cc all patches to
+        commits: List of Commit objects, one for each patch
+        cover: List of lines in the cover letter
+        notes: List of lines in the notes
+        changes: (dict) List of changes for each version, The key is
+            the integer version number
+        allow_overwrite: Allow tags to overwrite an existing tag
     """
     def __init__(self):
         self.cc = []
@@ -58,9 +44,10 @@ class Series(dict):
         self.allow_overwrite = False
         self.base_commit = None
         self.branch = None
-        self.desc = ''
-        self.idnum = None
-        self.name = None
+
+        # Written in MakeCcFile()
+        #  key: name of patch file
+        #  value: list of email addresses
         self._generated_cc = {}
 
     # These make us more like a dictionary
@@ -69,14 +56,6 @@ class Series(dict):
 
     def __getattr__(self, name):
         return self[name]
-
-    @staticmethod
-    def from_fields(idnum, name, desc):
-        ser = Series()
-        ser.idnum = idnum
-        ser.name = name
-        ser.desc = desc
-        return ser
 
     def AddTag(self, commit, line, name, value):
         """Add a new Series-xxx tag along with its value.
@@ -266,7 +245,7 @@ class Series(dict):
 
     def GetCcForCommit(self, commit, process_tags, warn_on_error,
                        add_maintainers, limit, get_maintainer_script,
-                       all_skips, alias, cwd):
+                       all_skips, alias):
         """Get the email CCs to use with a particular commit
 
         Uses subject tags and get_maintainers.pl script to find people to cc
@@ -289,7 +268,6 @@ class Series(dict):
             alias (dict): Alias dictionary
                 key: alias
                 value: list of aliases or email addresses
-            cwd (str): Path to use for patch filenames (None to use current dir)
 
         Returns:
             list of str: List of email addresses to cc
@@ -303,8 +281,8 @@ class Series(dict):
         if type(add_maintainers) == type(cc):
             cc += add_maintainers
         elif add_maintainers:
-            fname = os.path.join(cwd or '', commit.patch)
-            cc += get_maintainer.get_maintainer(get_maintainer_script, fname)
+            cc += get_maintainer.get_maintainer(get_maintainer_script,
+                                                commit.patch)
         all_skips |= set(cc) & set(settings.bounces)
         cc = list(set(cc) - set(settings.bounces))
         if limit is not None:
@@ -312,8 +290,7 @@ class Series(dict):
         return cc
 
     def MakeCcFile(self, process_tags, cover_fname, warn_on_error,
-                   add_maintainers, limit, get_maintainer_script, alias,
-                   cwd=None):
+                   add_maintainers, limit, get_maintainer_script, alias):
         """Make a cc file for us to use for per-commit Cc automation
 
         Also stores in self._generated_cc to make ShowActions() faster.
@@ -332,7 +309,6 @@ class Series(dict):
             alias (dict): Alias dictionary
                 key: alias
                 value: list of aliases or email addresses
-            cwd (str): Path to use for patch filenames (None to use current dir)
         Return:
             Filename of temp file created
         """
@@ -348,7 +324,7 @@ class Series(dict):
                 commit.future = executor.submit(
                     self.GetCcForCommit, commit, process_tags, warn_on_error,
                     add_maintainers, limit, get_maintainer_script, all_skips,
-                    alias, cwd)
+                    alias)
 
             # Show progress any commits that are taking forever
             lastlen = 0
@@ -396,10 +372,8 @@ class Series(dict):
         This will later appear in the change log.
 
         Args:
-            version (int): version number to add change list to
-            commit (Commit): Commit this relates to, or None if related to a
-                cover letter
-            info (str): change lines for this version (separated by \n)
+            version: version number to add change list to
+            info: change line for this version
         """
         if not self.changes.get(version):
             self.changes[version] = []
@@ -430,58 +404,3 @@ class Series(dict):
         if self.get('postfix'):
            postfix = ' %s' % self['postfix']
         return '%s%sPATCH%s%s' % (git_prefix, prefix, postfix, version)
-
-    def get_links(self, links_str=None, cur_version=None):
-        """Look up the patchwork links for each version
-
-        Args:
-            links_str (str): Links string to parse, or None to use self.links
-            cur_version (int): Default version to assume for un-versioned links,
-                or None to use self.version
-
-        Return:
-            dict:
-                key (int): Version number
-                value (str): Link string
-        """
-        if links_str is None:
-            links_str = self.links if 'links' in self else ''
-        if cur_version is None:
-            cur_version = int(self.version) if 'version' in self else 1
-        assert isinstance(cur_version, int)
-        links = {}
-        for item in links_str.split():
-            if ':' in item:
-                version, link = item.split(':')
-                links[int(version)] = link
-            else:
-                links[cur_version] = item
-        return links
-
-    def build_links(self, links):
-        """Build a string containing the links
-
-        Args:
-            links (dict):
-                key (int): Version number
-                value (str): Link string
-
-        Return:
-            str: Link string, e.g. '2:4433 1:2872'
-        """
-        out = ''
-        for vers in sorted(links.keys(), reverse=True):
-            out += f' {vers}:{links[vers]}'
-        return out[1:]
-
-    def get_link_for_version(self, find_vers, links_str=None):
-        """Look up the patchwork link for a particular version
-
-        Args:
-            find_vers (int): Version to find
-            links_str (str): Links string to parse, or None to use self.links
-
-        Return:
-            str: Series-links entry for that version, or None if not found
-        """
-        return self.get_links(links_str).get(find_vers)

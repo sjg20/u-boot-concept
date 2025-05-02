@@ -5,8 +5,6 @@
  * Copyright (c) 2017 Rob Clark
  */
 
-#define LOG_CATEGORY LOGC_EFI
-
 #include <charset.h>
 #include <efi_loader.h>
 #include <log.h>
