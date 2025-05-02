@@ -30,15 +30,13 @@ stages:
   rules:
     - when: always
   before_script:
-    # Clone uboot-test-hooks
     - git config --global --add safe.directory "${CI_PROJECT_DIR}"
-    - git clone --depth=1 https://source.denx.de/u-boot/u-boot-test-hooks /tmp/uboot-test-hooks
     # qemu_arm64_lwip_defconfig is the same as qemu_arm64 but with NET_LWIP enabled.
     # The test config and the boardenv file from qemu_arm64 can be re-used so create symlinks
-    - ln -s conf.qemu_arm64_na /tmp/uboot-test-hooks/bin/travis-ci/conf.qemu_arm64_lwip_na
-    - ln -s u_boot_boardenv_qemu_arm64_na.py /tmp/uboot-test-hooks/py/travis-ci/u_boot_boardenv_qemu_arm64_lwip_na.py
-    - ln -s travis-ci /tmp/uboot-test-hooks/bin/`hostname`
-    - ln -s travis-ci /tmp/uboot-test-hooks/py/`hostname`
+    - ln -s conf.qemu_arm64_na test/hooks/bin/travis-ci/conf.qemu_arm64_lwip_na
+    - ln -s u_boot_boardenv_qemu_arm64_na.py test/hooks/py/travis-ci/u_boot_boardenv_qemu_arm64_lwip_na.py
+    - ln -s travis-ci test/hooks/bin/`hostname`
+    - ln -s travis-ci test/hooks/py/`hostname`
     - if [[ "${TEST_PY_BD}" == "qemu-riscv32_spl" ]]; then
         wget -O - https://github.com/riscv-software-src/opensbi/releases/download/v1.3.1/opensbi-1.3.1-rv-bin.tar.xz | tar -C /tmp -xJ;
         export OPENSBI=/tmp/opensbi-1.3.1-rv-bin/share/opensbi/ilp32/generic/firmware/fw_dynamic.bin;
@@ -60,7 +58,7 @@ stages:
 
   after_script:
     - cp -v /tmp/${TEST_PY_BD}/*.{html,css,xml} .
-    - rm -rf /tmp/uboot-test-hooks /tmp/venv
+    - rm -rf /tmp/venv
   script:
     # If we've been asked to use clang only do one configuration.
     - export UBOOT_TRAVIS_BUILD_DIR=/tmp/${TEST_PY_BD}
@@ -100,8 +98,8 @@ stages:
         export PATH=/opt/Base_RevC_AEMvA_pkg/models/Linux64_GCC-9.3:${PATH};
       fi
     # "${var:+"-k $var"}" expands to "" if $var is empty, "-k $var" if not
-    - export PATH=/opt/qemu/bin:/tmp/uboot-test-hooks/bin:${PATH};
-      export PYTHONPATH=/tmp/uboot-test-hooks/py/travis-ci;
+    - export PATH=/opt/qemu/bin:test/hooks/bin:${PATH};
+      export PYTHONPATH=test/hooks/py/travis-ci;
       ./test/py/test.py -ra --bd ${TEST_PY_BD} ${TEST_PY_ID} ${TEST_PY_EXTRA}
         ${TEST_PY_TEST_SPEC:+"-k ${TEST_PY_TEST_SPEC}"}
         --build-dir "$UBOOT_TRAVIS_BUILD_DIR"
