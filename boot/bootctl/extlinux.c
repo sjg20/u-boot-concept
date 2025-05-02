@@ -32,16 +32,19 @@ static int extlinux_next(struct udevice *dev, struct oslist_iter *iter,
 	if (!iter->active) {
 		bootstd_clear_glob();
 		iter->active = true;
-		LOGR("eso", bootmeth_set_order("extlinux"));
+		ret = bootmeth_set_order("extlinux");
+		if (ret)
+			return log_msg_ret("eso", ret);
 		ret = bootflow_scan_first(NULL, NULL, &iter->bf_iter,
 					  BOOTFLOWIF_HUNT, &info->bflow);
 		if (ret)
-			LOGR("esf", ret);
+			return log_msg_ret("esf", ret);
 	} else {
 		ret = bootflow_scan_next(&iter->bf_iter, &info->bflow);
 		if (ret) {
 			iter->active = false;
-			LOGR("esn", ret);
+			if (ret)
+				return log_msg_ret("esn", ret);
 		}
 	}
 

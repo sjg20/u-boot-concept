@@ -95,9 +95,10 @@ static struct payload {
 	const char *name;
 	enum bootflow_img_t type;
 } payload_info[PAYLOADT_COUNT] = {
-	[PAYLOADT_OS]		= {"os", IH_TYPE_KERNEL},
-	[PAYLOADT_INITRD]	= {"initrd", IH_TYPE_RAMDISK},
-	[PAYLOADT_FDT]		= {"fdt", IH_TYPE_FLATDT},
+	[PAYLOADT_OS]		= {"os", (enum bootflow_img_t)IH_TYPE_KERNEL},
+	[PAYLOADT_INITRD]	= {"initrd",
+				         (enum bootflow_img_t)IH_TYPE_RAMDISK},
+	[PAYLOADT_FDT]		= {"fdt", (enum bootflow_img_t)IH_TYPE_FLATDT},
 	[PAYLOADT_CMDLINE]	= {"cmdline", BFI_CMDLINE},
 };
 
@@ -121,8 +122,9 @@ static int simple_start(struct udevice *dev)
 		if ((ulong)blob != ALIGN((ulong)blob, 1 << ALIGN_LOG2))
 			return log_msg_ret("spf", -EBADF);
 
-		LOGR("msr", bloblist_resize(BLOBLISTT_TPM_EVLOG,
-					    priv->tpm_log_size));
+		ret = bloblist_resize(BLOBLISTT_TPM_EVLOG, priv->tpm_log_size);
+		if (ret)
+			return log_msg_ret("msr", ret);
 	} else {
 		blob = bloblist_add(BLOBLISTT_TPM_EVLOG, priv->tpm_log_size,
 				    ALIGN_LOG2);
@@ -132,9 +134,13 @@ static int simple_start(struct udevice *dev)
 
 	elog->log = blob;
 	elog->log_size = priv->tpm_log_size;
-	LOGR("spi", tcg2_log_init(tpm, elog));
+	ret = tcg2_log_init(tpm, elog);
+	if (ret)
+		return log_msg_ret("spi", ret);
 
-	LOGR("spa", tpm_auto_start(tpm));
+	ret = tpm_auto_start(tpm);
+	if (ret)
+		return log_msg_ret("spa", ret);
 
 	ret = tcg2_measure_event(tpm, elog, 0, EV_S_CRTM_VERSION,
 				 strlen(version_string) + 1, version_string);
@@ -178,6 +184,7 @@ static int simple_process(struct udevice *dev, const struct osinfo *osinfo,
 		struct measure_info info;
 		const char *typename;
 		const void *ptr;
+		int ret;
 
 		log_debug("measuring %s\n", payload_info[step->type].name);
 		img = bootflow_img_find(bflow, type);
@@ -212,9 +219,11 @@ static int simple_process(struct udevice *dev, const struct osinfo *osinfo,
 		 * Really the TPM code this should be integrated with the hash.h
 		 * code too, rather than having parallel tables.
 		 */
-		LOGR("stc", tcg2_measure_data(priv->tpm, elog, 8, img->size,
-					      ptr, EV_COMPACT_HASH,
-					      strlen(typename) + 1, typename));
+		ret = tcg2_measure_data(priv->tpm, elog, 8, img->size, ptr,
+					EV_COMPACT_HASH, strlen(typename) + 1
+					, typename);
+		if (ret)
+			return log_msg_ret("stc", ret);
 		log_debug("Measured '%s'\n", bootflow_img_type_name(type));
 
 		info.img = img;
@@ -302,8 +311,9 @@ static int measure_of_to_plat(struct udevice *dev)
 		for (i = 0; i < count; i++) {
 			const char *name;
 
-			LOGR("mtA", ofnode_read_string_index(node, "algos", i,
-							     &name));
+			ret = ofnode_read_string_index(node, "algos", i, &name);
+			if (ret)
+				return log_msg_ret("mta", ret);
 			for (j = 0, found = -1;
 			     j < ARRAY_SIZE(algo_name); j++) {
 				if (!strcmp(algo_name[j], name))

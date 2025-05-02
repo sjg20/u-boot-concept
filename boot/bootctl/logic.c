@@ -28,24 +28,36 @@ enum {
 static int logic_prepare(struct udevice *dev)
 {
 	struct logic_priv *priv = dev_get_priv(dev);
+	int ret;
 
 	/* figure out the UI to use */
-	LOGR("bgd", bootctl_get_dev(UCLASS_BOOTCTL_UI, &priv->ui));
+	ret = bootctl_get_dev(UCLASS_BOOTCTL_UI, &priv->ui);
+	if (ret)
+		return log_msg_ret("bgd", ret);
 
 	/* figure out the measurement to use */
-	if (priv->opt_measure)
-		LOGR("bgs", bootctl_get_dev(UCLASS_BOOTCTL_MEASURE,
-					    &priv->meas));
+	if (priv->opt_measure) {
+		ret = bootctl_get_dev(UCLASS_BOOTCTL_MEASURE,
+					    &priv->meas);
+		if (ret)
+			return log_msg_ret("bgs", ret);
+	}
 
 	/* figure out at least one oslist driver to use */
-	LOGR("bgo", uclass_first_device_err(UCLASS_BOOTCTL_OSLIST,
-					    &priv->oslist));
+	ret = uclass_first_device_err(UCLASS_BOOTCTL_OSLIST, &priv->oslist);
+	if (ret)
+		return log_msg_ret("bgo", ret);
 
 	/* figure out the state to use */
-	LOGR("bgs", bootctl_get_dev(UCLASS_BOOTCTL_STATE, &priv->state));
+	ret = bootctl_get_dev(UCLASS_BOOTCTL_STATE, &priv->state);
+	if (ret)
+		return log_msg_ret("bgs", ret);
 
-	if (priv->opt_labels)
-		LOGR("blo", bootdev_set_order(priv->opt_labels));
+	if (priv->opt_labels) {
+		ret = bootdev_set_order(priv->opt_labels);
+		if (ret)
+			return log_msg_ret("blo", ret);
+	}
 
 
 	return 0;
@@ -54,6 +66,7 @@ static int logic_prepare(struct udevice *dev)
 static int logic_start(struct udevice *dev)
 {
 	struct logic_priv *priv = dev_get_priv(dev);
+	int ret;
 
 	if (priv->opt_persist_state) {
 		int ret;
@@ -66,7 +79,9 @@ static int logic_start(struct udevice *dev)
 			priv->state_loaded = true;
 	}
 
-	LOGR("bds", bc_ui_show(priv->ui));
+	ret = bc_ui_show(priv->ui);
+	if (ret)
+		return log_msg_ret("bds", ret);
 
 	priv->start_time = get_timer(0);
 	if (priv->opt_autoboot) {
@@ -78,8 +93,11 @@ static int logic_start(struct udevice *dev)
 	if (priv->opt_default_os)
 		bc_state_read_str(priv->state, "default", &priv->default_os);
 
-	if (priv->opt_measure)
-		LOGR("pme", bc_measure_start(priv->meas));
+	if (priv->opt_measure) {
+		ret = bc_measure_start(priv->meas);
+		if (ret)
+			return log_msg_ret("pme", ret);
+	}
 
 	/* start scanning for OSes */
 	bc_oslist_setup_iter(&priv->iter);
@@ -127,7 +145,9 @@ static int prepare_for_boot(struct udevice *dev, struct osinfo *osinfo)
 	if (priv->opt_measure) {
 		struct alist result;
 
-		LOGR("pme", bc_measure_process(priv->meas, osinfo, &result));
+		ret = bc_measure_process(priv->meas, osinfo, &result);
+		if (ret)
+			return log_msg_ret("pbp", ret);
 		show_measures(&result);
 
 		/* TODO: pass these measurements on to OS */
@@ -146,8 +166,11 @@ static int prepare_for_boot(struct udevice *dev, struct osinfo *osinfo)
 static int read_images(struct udevice *dev, struct osinfo *osinfo)
 {
 	struct bootflow *bflow = &osinfo->bflow;
+	int ret;
 
-	LOGR("rea", bootflow_read_all(bflow));
+	ret = bootflow_read_all(bflow);
+	if (ret)
+		return log_msg_ret("rea", ret);
 	log_debug("Images read: %d\n", bflow->images.count);
 
 	return 0;
@@ -164,7 +187,9 @@ static int logic_poll(struct udevice *dev)
 	if (priv->scanning) {
 		ret = bc_oslist_next(priv->oslist, &priv->iter, &info);
 		if (!ret) {
-			LOGR("bda", bc_ui_add(priv->ui, &info));
+			ret = bc_ui_add(priv->ui, &info);
+			if (ret)
+				return log_msg_ret("bda", ret);
 			priv->refresh = true;
 		} else {
 			/* No more OSes from this driver, try the next */
@@ -185,7 +210,9 @@ static int logic_poll(struct udevice *dev)
 	}
 
 	if (priv->refresh) {
-		LOGR("bdr", bc_ui_render(priv->ui));
+		ret = bc_ui_render(priv->ui);
+		if (ret)
+			return log_msg_ret("bdr", ret);
 		priv->refresh = false;
 	}
 
@@ -212,9 +239,13 @@ static int logic_poll(struct udevice *dev)
 		 * this
 		 */
 		ret = read_images(dev, os);
-		if (ret && ret != -ENOSYS)
-			LOGR("lri", ret);
-		LOGR("lpb", prepare_for_boot(dev, os));
+		if (ret && ret != -ENOSYS) {
+			if (ret)
+				return log_msg_ret("lri", ret);
+		}
+		ret = prepare_for_boot(dev, os);
+		if (ret)
+			return log_msg_ret("lpb", ret);
 
 		/* debugging */
 		// return -ESHUTDOWN;

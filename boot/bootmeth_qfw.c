@@ -35,7 +35,9 @@ static int qfw_read_bootflow(struct udevice *dev, struct bootflow *bflow)
 	ulong load, initrd;
 	int ret;
 
-	LOGR("qrb", uclass_first_device_err(UCLASS_QFW, &qfw_dev));
+	ret = uclass_first_device_err(UCLASS_QFW, &qfw_dev);
+	if (ret)
+		return log_msg_ret("qrb", ret);
 
 	log_debug("starting, bootdev %p\n", qfw_dev);
 	load = env_get_hex("kernel_addr_r", 0);

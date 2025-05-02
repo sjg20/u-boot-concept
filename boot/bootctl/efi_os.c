@@ -32,16 +32,18 @@ static int efifile_next(struct udevice *dev, struct oslist_iter *iter,
 	if (!iter->active) {
 		bootstd_clear_glob();
 		iter->active = true;
-		LOGR("eso", bootmeth_set_order("efi"));
+		ret = bootmeth_set_order("efi");
+		if (ret)
+			return log_msg_ret("esf", ret);
 		ret = bootflow_scan_first(NULL, NULL, &iter->bf_iter,
 					  BOOTFLOWIF_HUNT, &info->bflow);
 		if (ret)
-			LOGR("Esf", ret);
+			return log_msg_ret("Esf", ret);
 	} else {
 		ret = bootflow_scan_next(&iter->bf_iter, &info->bflow);
 		if (ret) {
 			iter->active = false;
-			LOGR("Esn", ret);
+			return log_msg_ret("Esn", ret);
 		}
 	}
 
