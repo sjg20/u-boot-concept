@@ -6,6 +6,7 @@
 
 """Functional tests for checking that patman behaves correctly"""
 
+import asyncio
 import contextlib
 import os
 import pathlib
@@ -20,12 +21,13 @@ from patman.commit import Commit
 from patman import control
 from patman import patchstream
 from patman.patchstream import PatchStream
+from patman import patchwork
+from patman import send
 from patman.series import Series
 from patman import settings
 from u_boot_pylib import gitutil
 from u_boot_pylib import terminal
 from u_boot_pylib import tools
-from u_boot_pylib.test_util import capture_sys_output
 
 import pygit2
 from patman import status
@@ -54,6 +56,25 @@ class TestFunctional(unittest.TestCase):
     mary = 'Mary Bloggs <mary@napierwallies.co.nz>'
     commits = None
     patches = None
+    verbosity = False
+    preserve_outdirs = False
+
+    @classmethod
+    def setup_test_args(cls, preserve_indir=False, preserve_outdirs=False,
+                        toolpath=None, verbosity=None, no_capture=False):
+        """Accept arguments controlling test execution
+
+        Args:
+            preserve_indir: not used
+            preserve_outdir: Preserve the output directories used by tests.
+                Each test has its own, so this is normally only useful when
+                running a single test.
+            toolpath: not used
+        """
+        cls.preserve_outdirs = preserve_outdirs
+        cls.toolpath = toolpath
+        cls.verbosity = verbosity
+        cls.no_capture = no_capture
 
     def setUp(self):
         self.tmpdir = tempfile.mkdtemp(prefix='patman.')
@@ -61,7 +82,10 @@ class TestFunctional(unittest.TestCase):
         self.repo = None
 
     def tearDown(self):
-        shutil.rmtree(self.tmpdir)
+        if self.preserve_outdirs:
+            print(f'Output dir: {self.tmpdir}')
+        else:
+            shutil.rmtree(self.tmpdir)
         terminal.set_print_test_mode(False)
 
     @staticmethod
@@ -153,7 +177,7 @@ class TestFunctional(unittest.TestCase):
             Commit-changes: 2
             - Changes only for this commit
 
-'            Cover-changes: 4
+            Cover-changes: 4
             - Some notes for the cover letter
 
             Cover-letter:
@@ -221,7 +245,7 @@ class TestFunctional(unittest.TestCase):
         cover_fname, args = self._create_patches_for_test(series)
         get_maintainer_script = str(pathlib.Path(__file__).parent.parent.parent
                                     / 'get_maintainer.pl') + ' --norolestats'
-        with capture_sys_output() as out:
+        with terminal.capture() as out:
             patchstream.fix_patches(series, args)
             if cover_fname and series.get('cover'):
                 patchstream.insert_cover_letter(cover_fname, series, count)
@@ -367,7 +391,7 @@ Changes in v2:
         series.branch = 'mybranch'
         cover_fname, args = self._create_patches_for_test(series)
         self.assertFalse(cover_fname)
-        with capture_sys_output() as out:
+        with terminal.capture() as out:
             patchstream.fix_patches(series, args, insert_base_commit=True)
         self.assertEqual('Cleaned 1 patch\n', out[0].getvalue())
         lines = tools.read_file(args[0], binary=False).splitlines()
@@ -530,8 +554,8 @@ complicated as possible''')
             # Check that it can detect the current branch
             self.assertEqual(2, gitutil.count_commits_to_branch(None))
             col = terminal.Color()
-            with capture_sys_output() as _:
-                _, cover_fname, patch_files = control.prepare_patches(
+            with terminal.capture() as _:
+                _, cover_fname, patch_files = send.prepare_patches(
                     col, branch=None, count=-1, start=0, end=0,
                     ignore_binary=False, signoff=True)
             self.assertIsNone(cover_fname)
@@ -539,8 +563,8 @@ complicated as possible''')
 
             # Check that it can detect a different branch
             self.assertEqual(3, gitutil.count_commits_to_branch('second'))
-            with capture_sys_output() as _:
-                series, cover_fname, patch_files = control.prepare_patches(
+            with terminal.capture() as _:
+                series, cover_fname, patch_files = send.prepare_patches(
                     col, branch='second', count=-1, start=0, end=0,
                     ignore_binary=False, signoff=True)
             self.assertIsNotNone(cover_fname)
@@ -558,8 +582,8 @@ complicated as possible''')
                 self.assertNotIn(b'base-commit:', tools.read_file(fname))
 
             # Check that it can skip patches at the end
-            with capture_sys_output() as _:
-                _, cover_fname, patch_files = control.prepare_patches(
+            with terminal.capture() as _:
+                _, cover_fname, patch_files = send.prepare_patches(
                     col, branch='second', count=-1, start=0, end=1,
                     ignore_binary=False, signoff=True)
             self.assertIsNotNone(cover_fname)
@@ -600,7 +624,7 @@ complicated as possible''')
             os.chmod('dummy-script.sh', 0x555)
 
             # Finally, do the test
-            with capture_sys_output():
+            with terminal.capture():
                 output = tools.run(PATMAN_DIR / 'patman', '--dry-run')
                 # Assert the email address is part of the dry-run
                 # output.
@@ -744,14 +768,13 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
             os.chdir(orig_dir)
 
     @staticmethod
-    def _fake_patchwork(url, subpath):
+    def _fake_patchwork(subpath):
         """Fake Patchwork server for the function below
 
         This handles accessing a series, providing a list consisting of a
         single patch
 
         Args:
-            url (str): URL of patchwork server
             subpath (str): URL subpath to use
         """
         re_series = re.match(r'series/(\d*)/$', subpath)
@@ -764,20 +787,17 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
 
     def test_status_mismatch(self):
         """Test Patchwork patches not matching the series"""
-        series = Series()
-
-        with capture_sys_output() as (_, err):
-            status.collect_patches(series, 1234, None, self._fake_patchwork)
+        pwork = patchwork.Patchwork.for_testing(self._fake_patchwork)
+        with terminal.capture() as (_, err):
+            patches = asyncio.run(status.check_status(1234, pwork))
+            status.check_patch_count(0, len(patches))
         self.assertIn('Warning: Patchwork reports 1 patches, series has 0',
                       err.getvalue())
 
     def test_status_read_patch(self):
         """Test handling a single patch in Patchwork"""
-        series = Series()
-        series.commits = [Commit('abcd')]
-
-        patches = status.collect_patches(series, 1234, None,
-                                         self._fake_patchwork)
+        pwork = patchwork.Patchwork.for_testing(self._fake_patchwork)
+        patches = asyncio.run(status.check_status(1234, pwork))
         self.assertEqual(1, len(patches))
         patch = patches[0]
         self.assertEqual('1', patch.id)
@@ -785,7 +805,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
 
     def test_parse_subject(self):
         """Test parsing of the patch subject"""
-        patch = status.Patch('1')
+        patch = patchwork.Patch('1')
 
         # Simple patch not in a series
         patch.parse_subject('Testing')
@@ -854,11 +874,11 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         commit3 = Commit('3456')
         commit3.subject = 'Subject 2'
 
-        patch1 = status.Patch('1')
+        patch1 = patchwork.Patch('1')
         patch1.subject = 'Subject 1'
-        patch2 = status.Patch('2')
+        patch2 = patchwork.Patch('2')
         patch2.subject = 'Subject 2'
-        patch3 = status.Patch('3')
+        patch3 = patchwork.Patch('3')
         patch3.subject = 'Subject 2'
 
         series = Series()
@@ -920,14 +940,13 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
                           "Cannot find commit for patch 3 ('Subject 2')"],
                          warnings)
 
-    def _fake_patchwork2(self, url, subpath):
+    def _fake_patchwork2(self, subpath):
         """Fake Patchwork server for the function below
 
         This handles accessing series, patches and comments, providing the data
         in self.patches to the caller
 
         Args:
-            url (str): URL of patchwork server
             subpath (str): URL subpath to use
         """
         re_series = re.match(r'series/(\d*)/$', subpath)
@@ -954,7 +973,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         commit2 = Commit('ef12')
         commit2.subject = 'Subject 2'
 
-        patch1 = status.Patch('1')
+        patch1 = patchwork.Patch('1')
         patch1.parse_subject('[1/2] Subject 1')
         patch1.name = patch1.raw_subject
         patch1.content = 'This is my patch content'
@@ -962,7 +981,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
 
         patch1.comments = [comment1a]
 
-        patch2 = status.Patch('2')
+        patch2 = patchwork.Patch('2')
         patch2.parse_subject('[2/2] Subject 2')
         patch2.name = patch2.raw_subject
         patch2.content = 'Some other patch content'
@@ -979,36 +998,33 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         self.commits = [commit1, commit2]
         self.patches = [patch1, patch2]
         count = 2
-        new_rtag_list = [None] * count
-        review_list = [None, None]
 
         # Check that the tags are picked up on the first patch
-        status.find_new_responses(new_rtag_list, review_list, 0, commit1,
-                                  patch1, None, self._fake_patchwork2)
-        self.assertEqual(new_rtag_list[0], {'Reviewed-by': {self.joe}})
+        new_rtags, _ = status.process_reviews(patch1.content, patch1.comments,
+                                              commit1.rtags)
+        self.assertEqual(new_rtags, {'Reviewed-by': {self.joe}})
 
         # Now the second patch
-        status.find_new_responses(new_rtag_list, review_list, 1, commit2,
-                                  patch2, None, self._fake_patchwork2)
-        self.assertEqual(new_rtag_list[1], {
+        new_rtags, _ = status.process_reviews(patch2.content, patch2.comments,
+                                              commit2.rtags)
+        self.assertEqual(new_rtags, {
             'Reviewed-by': {self.mary, self.fred},
             'Tested-by': {self.leb}})
 
         # Now add some tags to the commit, which means they should not appear as
         # 'new' tags when scanning comments
-        new_rtag_list = [None] * count
         commit1.rtags = {'Reviewed-by': {self.joe}}
-        status.find_new_responses(new_rtag_list, review_list, 0, commit1,
-                                  patch1, None, self._fake_patchwork2)
-        self.assertEqual(new_rtag_list[0], {})
+        new_rtags, _ = status.process_reviews(patch1.content, patch1.comments,
+                                              commit1.rtags)
+        self.assertEqual(new_rtags, {})
 
         # For the second commit, add Ed and Fred, so only Mary should be left
         commit2.rtags = {
             'Tested-by': {self.leb},
             'Reviewed-by': {self.fred}}
-        status.find_new_responses(new_rtag_list, review_list, 1, commit2,
-                                  patch2, None, self._fake_patchwork2)
-        self.assertEqual(new_rtag_list[1], {'Reviewed-by': {self.mary}})
+        new_rtags, _ = status.process_reviews(patch2.content, patch2.comments,
+                                              commit2.rtags)
+        self.assertEqual(new_rtags, {'Reviewed-by': {self.mary}})
 
         # Check that the output patches expectations:
         #   1 Subject 1
@@ -1022,11 +1038,12 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         series = Series()
         series.commits = [commit1, commit2]
         terminal.set_print_test_mode()
-        status.check_patchwork_status(series, '1234', None, None, False, False,
-                                      None, self._fake_patchwork2)
+        pwork = patchwork.Patchwork.for_testing(self._fake_patchwork2)
+        status.check_and_show_status(series, '1234', None, None, False, False,
+                                     pwork)
         lines = iter(terminal.get_print_test_lines())
         col = terminal.Color()
-        self.assertEqual(terminal.PrintLine('  1 Subject 1', col.BLUE),
+        self.assertEqual(terminal.PrintLine('  1 Subject 1', col.YELLOW),
                          next(lines))
         self.assertEqual(
             terminal.PrintLine('    Reviewed-by: ', col.GREEN, newline=False,
@@ -1035,7 +1052,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         self.assertEqual(terminal.PrintLine(self.joe, col.WHITE, bright=False),
                          next(lines))
 
-        self.assertEqual(terminal.PrintLine('  2 Subject 2', col.BLUE),
+        self.assertEqual(terminal.PrintLine('  2 Subject 2', col.YELLOW),
                          next(lines))
         self.assertEqual(
             terminal.PrintLine('    Reviewed-by: ', col.GREEN, newline=False,
@@ -1058,14 +1075,13 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
             '1 new response available in patchwork (use -d to write them to a new branch)',
             None), next(lines))
 
-    def _fake_patchwork3(self, url, subpath):
+    def _fake_patchwork3(self, subpath):
         """Fake Patchwork server for the function below
 
         This handles accessing series, patches and comments, providing the data
         in self.patches to the caller
 
         Args:
-            url (str): URL of patchwork server
             subpath (str): URL subpath to use
         """
         re_series = re.match(r'series/(\d*)/$', subpath)
@@ -1098,7 +1114,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         series = patchstream.get_metadata_for_list(branch, gitdir, count)
         self.assertEqual(2, len(series.commits))
 
-        patch1 = status.Patch('1')
+        patch1 = patchwork.Patch('1')
         patch1.parse_subject('[1/2] %s' % series.commits[0].subject)
         patch1.name = patch1.raw_subject
         patch1.content = 'This is my patch content'
@@ -1106,7 +1122,7 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
 
         patch1.comments = [comment1a]
 
-        patch2 = status.Patch('2')
+        patch2 = patchwork.Patch('2')
         patch2.parse_subject('[2/2] %s' % series.commits[1].subject)
         patch2.name = patch2.raw_subject
         patch2.content = 'Some other patch content'
@@ -1136,9 +1152,9 @@ diff --git a/lib/efi_loader/efi_memory.c b/lib/efi_loader/efi_memory.c
         # <unittest.result.TestResult run=8 errors=0 failures=0>
 
         terminal.set_print_test_mode()
-        status.check_patchwork_status(series, '1234', branch, dest_branch,
-                                      False, False, None, self._fake_patchwork3,
-                                      repo)
+        pwork = patchwork.Patchwork.for_testing(self._fake_patchwork3)
+        status.check_and_show_status(series, '1234', branch, dest_branch,
+                                     False, False, pwork, repo)
         lines = terminal.get_print_test_lines()
         self.assertEqual(12, len(lines))
         self.assertEqual(
@@ -1269,7 +1285,7 @@ line8
         commit2 = Commit('ef12')
         commit2.subject = 'Subject 2'
 
-        patch1 = status.Patch('1')
+        patch1 = patchwork.Patch('1')
         patch1.parse_subject('[1/2] Subject 1')
         patch1.name = patch1.raw_subject
         patch1.content = 'This is my patch content'
@@ -1290,7 +1306,7 @@ Reviewed-by: %s
 
         patch1.comments = [comment1a]
 
-        patch2 = status.Patch('2')
+        patch2 = patchwork.Patch('2')
         patch2.parse_subject('[2/2] Subject 2')
         patch2.name = patch2.raw_subject
         patch2.content = 'Some other patch content'
@@ -1338,11 +1354,12 @@ Reviewed-by: %s
         series = Series()
         series.commits = [commit1, commit2]
         terminal.set_print_test_mode()
-        status.check_patchwork_status(series, '1234', None, None, False, True,
-                                      None, self._fake_patchwork2)
+        pwork = patchwork.Patchwork.for_testing(self._fake_patchwork2)
+        status.check_and_show_status(series, '1234', None, None, False, True,
+                                     pwork)
         lines = iter(terminal.get_print_test_lines())
         col = terminal.Color()
-        self.assertEqual(terminal.PrintLine('  1 Subject 1', col.BLUE),
+        self.assertEqual(terminal.PrintLine('  1 Subject 1', col.YELLOW),
                          next(lines))
         self.assertEqual(
             terminal.PrintLine('  + Reviewed-by: ', col.GREEN, newline=False),
@@ -1363,7 +1380,7 @@ Reviewed-by: %s
             '    Here is my comment above the above...', None), next(lines))
         self.assertEqual(terminal.PrintLine('', None), next(lines))
 
-        self.assertEqual(terminal.PrintLine('  2 Subject 2', col.BLUE),
+        self.assertEqual(terminal.PrintLine('  2 Subject 2', col.YELLOW),
                          next(lines))
         self.assertEqual(
             terminal.PrintLine('  + Reviewed-by: ', col.GREEN, newline=False),

@@ -41,6 +41,9 @@ def parse_args():
         help='Commits to skip at end of patch list')
     parser.add_argument('-D', '--debug', action='store_true',
         help='Enabling debugging (provides a full traceback on error)')
+    parser.add_argument(
+        '-N', '--no-capture', action='store_true',
+        help='Disable capturing of console output in tests')
     parser.add_argument('-p', '--project', default=project.detect_project(),
                         help="Project name; affects default option values and "
                         "aliases [default: %(default)s]")
@@ -52,6 +55,9 @@ def parse_args():
     parser.add_argument(
         '-v', '--verbose', action='store_true', dest='verbose', default=False,
         help='Verbose output of errors and warnings')
+    parser.add_argument(
+        '-X', '--test-preserve-dirs', action='store_true',
+        help='Preserve and display test-created directories')
     parser.add_argument(
         '-H', '--full-help', action='store_true', dest='full_help',
         default=False, help='Display the README file')
@@ -124,6 +130,8 @@ def parse_args():
         help='Name of branch to create with collected responses')
     status.add_argument('-f', '--force', action='store_true',
                         help='Force overwriting an existing branch')
+    status.add_argument('-T', '--single-thread', action='store_true',
+                        help='Disable multithreading when reading patchwork')
 
     # Parse options twice: first to get the project and second to handle
     # defaults properly (which depends on project)
