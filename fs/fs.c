@@ -5,6 +5,7 @@
 
 #define LOG_CATEGORY LOGC_CORE
 
+#include <abuf.h>
 #include <bootstd.h>
 #include <command.h>
 #include <config.h>
@@ -1128,41 +1129,35 @@ int do_fs_types(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
 	return CMD_RET_SUCCESS;
 }
 
-int fs_read_alloc(const char *fname, ulong size, uint align, void **bufp)
+int fs_read_alloc(const char *fname, ulong size, uint align, struct abuf *buf)
 {
 	loff_t bytes_read;
-	ulong addr;
-	char *buf;
 	int ret;
 
 	if (!align)
 		align = ARCH_DMA_MINALIGN;
 
-	buf = memalign(align, size + 1);
-	if (!buf)
+	if (!abuf_init_size(buf, size + 1))
 		return log_msg_ret("buf", -ENOMEM);
-	addr = map_to_sysmem(buf);
+	buf->size--;
 
-	ret = fs_read(fname, addr, 0, size, &bytes_read);
+	ret = fs_read(fname, abuf_addr(buf), 0, size, &bytes_read);
 	if (ret) {
-		free(buf);
+		abuf_uninit(buf);
 		return log_msg_ret("read", ret);
 	}
 	if (size != bytes_read)
 		return log_msg_ret("bread", -EIO);
-	buf[size] = '\0';
-
-	*bufp = buf;
+	((char *)buf->data)[size] = '\0';
 
 	return 0;
 }
 
 int fs_load_alloc(const char *ifname, const char *dev_part_str,
-		  const char *fname, ulong max_size, ulong align, void **bufp,
-		  ulong *sizep)
+		  const char *fname, ulong max_size, ulong align,
+		  struct abuf *buf)
 {
 	loff_t size;
-	void *buf;
 	int ret;
 
 	if (fs_set_blk_dev(ifname, dev_part_str, FS_TYPE_ANY))
@@ -1178,11 +1173,9 @@ int fs_load_alloc(const char *ifname, const char *dev_part_str,
 	if (fs_set_blk_dev(ifname, dev_part_str, FS_TYPE_ANY))
 		return log_msg_ret("set", -ENOMEDIUM);
 
-	ret = fs_read_alloc(fname, size, align, &buf);
+	ret = fs_read_alloc(fname, size, align, buf);
 	if (ret)
 		return log_msg_ret("al", ret);
-	*sizep = size;
-	*bufp = buf;
 
 	return 0;
 }

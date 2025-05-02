@@ -195,27 +195,25 @@ static int iter_incr(struct bootflow_iter *iter)
 	if (iter->err == BF_NO_MORE_DEVICES)
 		return BF_NO_MORE_DEVICES;
 
-	if (iter->err != BF_NO_MORE_PARTS) {
-		/* Get the next boothmethod */
-		if (++iter->cur_method < iter->num_methods) {
-			iter->method = iter->method_order[iter->cur_method];
-			return 0;
-		}
+	/* Get the next boothmethod */
+	if (++iter->cur_method < iter->num_methods) {
+		iter->method = iter->method_order[iter->cur_method];
+		return 0;
+	}
+
+	/*
+	 * If we have finished scanning the global bootmeths, start the
+	 * normal bootdev scan
+	 */
+	if (IS_ENABLED(CONFIG_BOOTMETH_GLOBAL) && global) {
+		iter->num_methods = iter->first_glob_method;
+		iter->doing_global = false;
 
 		/*
-		 * If we have finished scanning the global bootmeths, start the
-		 * normal bootdev scan
+		 * Don't move to the next dev as we haven't tried this
+		 * one yet!
 		 */
-		if (IS_ENABLED(CONFIG_BOOTMETH_GLOBAL) && global) {
-			iter->num_methods = iter->first_glob_method;
-			iter->doing_global = false;
-
-			/*
-			 * Don't move to the next dev as we haven't tried this
-			 * one yet!
-			 */
-			inc_dev = false;
-		}
+		inc_dev = false;
 	}
 
 	if (iter->flags & BOOTFLOWIF_SINGLE_PARTITION)
@@ -290,7 +288,8 @@ static int iter_incr(struct bootflow_iter *iter)
 				 * bootdev_find_by_label() where this flag is
 				 * set up
 				 */
-				if (iter->method_flags &
+				method_flags = iter->method_flags;
+				if (method_flags &
 				    BOOTFLOW_METHF_SINGLE_UCLASS) {
 					scan_next_in_uclass(&dev);
 					log_debug("looking for next device %s: %s\n",

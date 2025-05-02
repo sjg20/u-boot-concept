@@ -861,7 +861,7 @@ static int check_font(struct unit_test_state *uts, struct scene *scn, uint id,
 	txt = scene_obj_find(scn, id, SCENEOBJT_TEXT);
 	ut_assertnonnull(txt);
 
-	ut_asserteq(font_size, txt->font_size);
+	ut_asserteq(font_size, txt->gen.font_size);
 
 	return 0;
 }
@@ -881,9 +881,10 @@ static int bootflow_menu_theme(struct unit_test_state *uts)
 	ut_assertok(scan_mmc4_bootdev(uts));
 
 	ut_assertok(bootflow_menu_new(&exp));
+	ut_assertok(bootflow_menu_add_all(exp));
 	node = ofnode_path("/bootstd/theme");
 	ut_assert(ofnode_valid(node));
-	ut_assertok(bootflow_menu_apply_theme(exp, node));
+	ut_assertok(expo_apply_theme(exp, node));
 
 	scn = expo_lookup_scene_id(exp, MAIN);
 	ut_assertnonnull(scn);
@@ -894,8 +895,8 @@ static int bootflow_menu_theme(struct unit_test_state *uts)
 	 *
 	 * Check both menu items, since there are two bootflows
 	 */
-	ut_assertok(check_font(uts, scn, OBJ_PROMPT, font_size));
-	ut_assertok(check_font(uts, scn, OBJ_POINTER, font_size));
+	for (i = OBJ_PROMPT1A; i <= OBJ_AUTOBOOT; i++)
+		ut_assertok(check_font(uts, scn, i, font_size));
 	for (i = 0; i < 2; i++) {
 		ut_assertok(check_font(uts, scn, ITEM_DESC + i, font_size));
 		ut_assertok(check_font(uts, scn, ITEM_KEY + i, font_size));
@@ -1298,7 +1299,7 @@ static int bootflow_efi(struct unit_test_state *uts)
 
 	ut_assertok(run_command("bootflow scan", 0));
 	ut_assert_skip_to_line(
-		"Bus usb@1: scanning bus usb@1 for devices... 5 USB Device(s) found");
+		"Bus usb@1: scanning bus usb@1 for devices... 6 USB Device(s) found");
 
 	ut_assertok(run_command("bootflow list", 0));
 
@@ -1307,9 +1308,11 @@ static int bootflow_efi(struct unit_test_state *uts)
 	ut_assert_nextlinen("---");
 	ut_assert_nextlinen("  0  extlinux");
 	ut_assert_nextlinen(
-		"  1  efi          ready   usb_mass_    1  usb_mass_storage.lun0.boo /EFI/BOOT/BOOTSBOX.EFI");
+		"  1  efi          ready   usb_mass_    1  hub1.p2.usb_mass_storage. /EFI/BOOT/BOOTSBOX.EFI");
+	ut_assert_nextlinen(
+		"  2  extlinux     ready   usb_mass_    1  hub1.p4.usb_mass_storage. /extlinux/extlinux.conf");
 	ut_assert_nextlinen("---");
-	ut_assert_skip_to_line("(2 bootflows, 2 valid)");
+	ut_assert_skip_to_line("(3 bootflows, 3 valid)");
 	ut_assert_console_end();
 
 	ut_assertok(run_command("bootflow select 1", 0));
@@ -1323,7 +1326,7 @@ static int bootflow_efi(struct unit_test_state *uts)
 
 	ut_asserteq(1, run_command("bootflow boot", 0));
 	ut_assert_nextline(
-		"** Booting bootflow 'usb_mass_storage.lun0.bootdev.part_1' with efi");
+		"** Booting bootflow 'hub1.p2.usb_mass_storage.lun0.bootdev.part_1' with efi");
 	if (IS_ENABLED(CONFIG_LOGF_FUNC))
 		ut_assert_skip_to_line("       efi_run_image() Booting /\\EFI\\BOOT\\BOOTSBOX.EFI");
 	else
