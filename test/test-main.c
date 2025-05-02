@@ -77,6 +77,7 @@ void ut_set_state(struct unit_test_state *uts)
 void ut_init_state(struct unit_test_state *uts)
 {
 	memset(uts, '\0', sizeof(*uts));
+	uts->soft_fail = test_soft_fail();
 }
 
 void ut_uninit_state(struct unit_test_state *uts)

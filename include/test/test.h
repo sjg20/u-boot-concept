@@ -51,6 +51,7 @@ struct ut_stats {
  * @runs_per_test: Number of times to run each test (typically 1)
  * @force_run: true to run tests marked with the UTF_MANUAL flag
  * @old_bloblist: stores the old gd->bloblist pointer
+ * @soft_fail: continue execution of the test even after it fails
  * @expect_str: Temporary string used to hold expected string value
  * @actual_str: Temporary string used to hold actual string value
  */
@@ -76,6 +77,7 @@ struct unit_test_state {
 	int runs_per_test;
 	bool force_run;
 	void *old_bloblist;
+	bool soft_fail;
 	char expect_str[512];
 	char actual_str[512];
 };
@@ -296,6 +298,17 @@ static inline bool test_flattree_test_enabled(void)
 	return !state->no_flattree_tests;
 #else
 	return true;
+#endif
+}
+
+static inline bool test_soft_fail(void)
+{
+#ifdef CONFIG_SANDBOX
+	struct sandbox_state *state = state_get_current();
+
+	return state->soft_fail;
+#else
+	return false;
 #endif
 }
 
