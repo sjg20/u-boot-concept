@@ -103,6 +103,7 @@ struct sandbox_state {
 	bool upl;			/* Enable Universal Payload (UPL) */
 	bool native;			/* Adjust to reflect host arch */
 	bool no_flattree_tests;		/* Don't run second set of DM tests */
+	bool soft_fail;			/* Continue on failure */
 
 	/* Pointer to information for each SPI bus/cs */
 	struct sandbox_spi_info spi[CONFIG_SANDBOX_SPI_MAX_BUS]
