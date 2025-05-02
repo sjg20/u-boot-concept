@@ -936,6 +936,15 @@ F:	drivers/block/blkmap.c
 F:	include/blkmap.h
 F:	test/dm/blkmap.c
 
+BLOBLIST
+M:	Simon Glass <sjg@chromium.org>
+S:	Maintained
+F:	cmd/bloblist.c
+F:	common/bloblist.c
+F:	doc/develop/bloblist.rst
+F:	include/bloblist.h
+F:	test/common/bloblist.c
+
 BOOTSTD
 M:	Simon Glass <sjg@chromium.org>
 S:	Maintained
