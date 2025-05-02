@@ -102,16 +102,19 @@ class Series(dict):
         commit.check_tags()
         self.commits.append(commit)
 
-    def ShowActions(self, args, cmd, process_tags):
+    def ShowActions(self, args, cmd, process_tags, alias):
         """Show what actions we will/would perform
 
         Args:
             args: List of patch files we created
             cmd: The git command we would have run
             process_tags: Process tags as if they were aliases
+            alias (dict): Alias dictionary
+                key: alias
+                value: list of aliases or email addresses
         """
-        to_set = set(gitutil.build_email_list(self.to));
-        cc_set = set(gitutil.build_email_list(self.cc));
+        to_set = set(gitutil.build_email_list(self.to, alias));
+        cc_set = set(gitutil.build_email_list(self.cc, alias));
 
         col = terminal.Color()
         print('Dry run, so not doing much. But I would do this:')
@@ -140,7 +143,8 @@ class Series(dict):
         print('Postfix:\t ', self.get('postfix'))
         if self.cover:
             print('Cover: %d lines' % len(self.cover))
-            cover_cc = gitutil.build_email_list(self.get('cover_cc', ''))
+            cover_cc = gitutil.build_email_list(self.get('cover_cc', ''),
+                                                alias)
             all_ccs = itertools.chain(cover_cc, *self._generated_cc.values())
             for email in sorted(set(all_ccs) - to_set - cc_set):
                     print('      Cc: ', email)
@@ -241,7 +245,7 @@ class Series(dict):
 
     def GetCcForCommit(self, commit, process_tags, warn_on_error,
                        add_maintainers, limit, get_maintainer_script,
-                       all_skips):
+                       all_skips, alias):
         """Get the email CCs to use with a particular commit
 
         Uses subject tags and get_maintainers.pl script to find people to cc
@@ -261,15 +265,18 @@ class Series(dict):
             all_skips (set of str): Updated to include the set of bouncing email
                 addresses that were dropped from the output. This is essentially
                 a return value from this function.
+            alias (dict): Alias dictionary
+                key: alias
+                value: list of aliases or email addresses
 
         Returns:
             list of str: List of email addresses to cc
         """
         cc = []
         if process_tags:
-            cc += gitutil.build_email_list(commit.tags,
+            cc += gitutil.build_email_list(commit.tags, alias,
                                            warn_on_error=warn_on_error)
-        cc += gitutil.build_email_list(commit.cc_list,
+        cc += gitutil.build_email_list(commit.cc_list, alias,
                                        warn_on_error=warn_on_error)
         if type(add_maintainers) == type(cc):
             cc += add_maintainers
@@ -283,7 +290,7 @@ class Series(dict):
         return cc
 
     def MakeCcFile(self, process_tags, cover_fname, warn_on_error,
-                   add_maintainers, limit, get_maintainer_script):
+                   add_maintainers, limit, get_maintainer_script, alias):
         """Make a cc file for us to use for per-commit Cc automation
 
         Also stores in self._generated_cc to make ShowActions() faster.
@@ -299,6 +306,9 @@ class Series(dict):
             limit (int): Limit the length of the Cc list (None if no limit)
             get_maintainer_script (str): The file name of the get_maintainer.pl
                 script (or compatible).
+            alias (dict): Alias dictionary
+                key: alias
+                value: list of aliases or email addresses
         Return:
             Filename of temp file created
         """
@@ -313,7 +323,8 @@ class Series(dict):
                 commit.seq = i
                 commit.future = executor.submit(
                     self.GetCcForCommit, commit, process_tags, warn_on_error,
-                    add_maintainers, limit, get_maintainer_script, all_skips)
+                    add_maintainers, limit, get_maintainer_script, all_skips,
+                    alias)
 
             # Show progress any commits that are taking forever
             lastlen = 0
@@ -344,7 +355,8 @@ class Series(dict):
             print(col.build(col.YELLOW, f'Skipping "{x}"'))
 
         if cover_fname:
-            cover_cc = gitutil.build_email_list(self.get('cover_cc', ''))
+            cover_cc = gitutil.build_email_list(
+                self.get('cover_cc', ''), alias)
             cover_cc = list(set(cover_cc + all_ccs))
             if limit is not None:
                 cover_cc = cover_cc[:limit]

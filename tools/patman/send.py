@@ -10,6 +10,7 @@ import sys
 
 from patman import checkpatch
 from patman import patchstream
+from patman import settings
 from u_boot_pylib import gitutil
 from u_boot_pylib import terminal
 
@@ -86,21 +87,22 @@ def email_patches(col, series, cover_fname, patch_files, process_tags, its_a_go,
         smtp_server (str): SMTP server to use to send patches (None for default)
     """
     cc_file = series.MakeCcFile(process_tags, cover_fname, not ignore_bad_tags,
-                                add_maintainers, limit, get_maintainer_script)
+                                add_maintainers, limit, get_maintainer_script,
+                                settings.alias)
 
     # Email the patches out (giving the user time to check / cancel)
     cmd = ''
     if its_a_go:
         cmd = gitutil.email_patches(
             series, cover_fname, patch_files, dry_run, not ignore_bad_tags,
-            cc_file, in_reply_to=in_reply_to, thread=thread,
+            cc_file, settings.alias, in_reply_to=in_reply_to, thread=thread,
             smtp_server=smtp_server)
     else:
         print(col.build(col.RED, "Not sending emails due to errors/warnings"))
 
     # For a dry run, just show our actions as a sanity check
     if dry_run:
-        series.ShowActions(patch_files, cmd, process_tags)
+        series.ShowActions(patch_files, cmd, process_tags, settings.alias)
         if not its_a_go:
             print(col.build(col.RED, "Email would not be sent"))
 

@@ -230,7 +230,7 @@ class TestFunctional(unittest.TestCase):
         dry_run = True
         in_reply_to = mel
         count = 2
-        settings.alias = {
+        alias = {
             'fdt': ['simon'],
             'u-boot': ['u-boot@lists.denx.de'],
             'simon': [self.leb],
@@ -252,11 +252,11 @@ class TestFunctional(unittest.TestCase):
             series.DoChecks()
             cc_file = series.MakeCcFile(process_tags, cover_fname,
                                         not ignore_bad_tags, add_maintainers,
-                                        None, get_maintainer_script)
+                                        None, get_maintainer_script, alias)
             cmd = gitutil.email_patches(
                 series, cover_fname, args, dry_run, not ignore_bad_tags,
-                cc_file, in_reply_to=in_reply_to, thread=None)
-            series.ShowActions(args, cmd, process_tags)
+                cc_file, alias, in_reply_to=in_reply_to, thread=None)
+            series.ShowActions(args, cmd, process_tags, alias)
         cc_lines = open(cc_file, encoding='utf-8').read().splitlines()
         os.remove(cc_file)
 
