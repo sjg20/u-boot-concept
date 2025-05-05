@@ -563,7 +563,7 @@ static int scene_txt_render(struct expo *exp, struct udevice *dev,
 		inset = exp->popup ? menu_inset : 0;
 		vidconsole_push_colour(cons, fore, back, &old);
 		video_fill_part(dev, x - inset, y,
-				obj->bbox.x1, obj->bbox.y1,
+				obj->bbox.x1 + inset, obj->bbox.y1,
 				vid_priv->colour_bg);
 	}
 

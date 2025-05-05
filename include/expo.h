@@ -83,6 +83,8 @@ struct expo_action {
  * @menuitem_gap_y: Gap between menu items in pixels
  * @menu_title_margin_x: Gap between right side of menu title and left size of
  *	menu label
+ * @textline_label_margin_x: Gap between right side of textline prompt and left
+ *	side of editable text
  * @white_on_black: True to use white-on-black for the expo, false for
  *	black-on-white
  */
@@ -91,6 +93,7 @@ struct expo_theme {
 	u32 menu_inset;
 	u32 menuitem_gap_y;
 	u32 menu_title_margin_x;
+	u32 textline_label_margin_x;
 	bool white_on_black;
 };
 

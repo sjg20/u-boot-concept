@@ -313,6 +313,8 @@ int expo_setup_theme(struct expo *exp, ofnode node)
 	ofnode_read_u32(node, "menuitem-gap-y", &theme->menuitem_gap_y);
 	ofnode_read_u32(node, "menu-title-margin-x",
 			&theme->menu_title_margin_x);
+	ofnode_read_u32(node, "textline-label-margin-x",
+			&theme->textline_label_margin_x);
 	theme->white_on_black = ofnode_read_bool(node, "white-on-black");
 
 	ret = expo_apply_theme(exp);

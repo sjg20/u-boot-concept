@@ -49,13 +49,14 @@ void scene_textline_calc_bbox(struct scene_obj_textline *tline,
 			      struct vidconsole_bbox *edit_bbox)
 {
 	const struct expo_theme *theme = &tline->obj.scene->expo->theme;
+	int inset = theme->menu_inset;
 
 	bbox->valid = false;
-	scene_bbox_union(tline->obj.scene, tline->label_id, 0, bbox);
-	scene_bbox_union(tline->obj.scene, tline->edit_id, 0, bbox);
+	scene_bbox_union(tline->obj.scene, tline->label_id, inset, bbox);
+	scene_bbox_union(tline->obj.scene, tline->edit_id, inset, bbox);
 
 	edit_bbox->valid = false;
-	scene_bbox_union(tline->obj.scene, tline->edit_id, theme->menu_inset,
+	scene_bbox_union(tline->obj.scene, tline->edit_id, inset,
 			 edit_bbox);
 }
 
@@ -89,6 +90,7 @@ int scene_textline_arrange(struct scene *scn, struct expo_arrange_info *arr,
 			   struct scene_obj_textline *tline)
 {
 	const bool open = tline->obj.flags & SCENEOF_OPEN;
+	const struct expo_theme *theme = &scn->expo->theme;
 	bool point;
 	int x, y;
 	int ret;
@@ -96,25 +98,33 @@ int scene_textline_arrange(struct scene *scn, struct expo_arrange_info *arr,
 	x = tline->obj.req_bbox.x0;
 	y = tline->obj.req_bbox.y0;
 	if (tline->label_id) {
+		struct scene_obj *edit;
+
 		ret = scene_obj_set_pos(scn, tline->label_id, x, y);
 		if (ret < 0)
 			return log_msg_ret("tit", ret);
 
-		ret = scene_obj_set_pos(scn, tline->edit_id, x + 200, y);
+		x += arr->label_width + theme->textline_label_margin_x;
+		ret = scene_obj_set_pos(scn, tline->edit_id, x, y);
 		if (ret < 0)
-			return log_msg_ret("tit", ret);
+			return log_msg_ret("til", ret);
 
-		ret = scene_obj_get_hw(scn, tline->label_id, NULL);
-		if (ret < 0)
-			return log_msg_ret("hei", ret);
-
-		y += ret * 2;
+		edit = scene_obj_find(scn, tline->edit_id, SCENEOBJT_NONE);
+		if (!edit)
+			return log_msg_ret("tie", -ENOENT);
+		x += edit->dims.x;
+		y += edit->dims.y;
 	}
 
 	point = scn->highlight_id == tline->obj.id;
 	point &= !open;
 	scene_obj_flag_clrset(scn, tline->edit_id, SCENEOF_POINT,
 			      point ? SCENEOF_POINT : 0);
+
+	tline->obj.dims.x = x - tline->obj.req_bbox.x0;
+	tline->obj.dims.y = y - tline->obj.req_bbox.y0;
+	scene_obj_set_size(scn, tline->obj.id, tline->obj.dims.x,
+			   tline->obj.dims.y);
 
 	return 0;
 }

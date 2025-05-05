@@ -297,8 +297,7 @@ int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 		 * Put the label on the left, then leave a space for the
 		 * pointer, then the key and the description
 		 */
-		ret = scene_obj_set_pos(scn, item->label_id,
-					x + theme->menu_inset, y);
+		ret = scene_obj_set_pos(scn, item->label_id, x, y);
 		if (ret < 0)
 			return log_msg_ret("nam", ret);
 		scene_obj_set_hide(scn, item->label_id,
@@ -348,11 +347,11 @@ int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 
 	list_for_each_entry(item, &menu->item_head, sibling) {
 		scene_obj_set_width(menu->obj.scene, item->label_id,
-				    dims[SCENEBB_label].x + theme->menu_inset);
+				    dims[SCENEBB_label].x);
 		scene_obj_set_width(menu->obj.scene, item->key_id,
-				    dims[SCENEBB_key].x + theme->menu_inset);
+				    dims[SCENEBB_key].x);
 		scene_obj_set_width(menu->obj.scene, item->desc_id,
-				    dims[SCENEBB_desc].x + theme->menu_inset);
+				    dims[SCENEBB_desc].x);
 	}
 
 	if (sel_id)
