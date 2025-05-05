@@ -253,12 +253,13 @@ int scene_obj_set_pos(struct scene *scn, uint id, int x, int y)
 	obj = scene_obj_find(scn, id, SCENEOBJT_NONE);
 	if (!obj)
 		return log_msg_ret("find", -ENOENT);
-	w = obj->bbox.x1 - obj->bbox.x0;
-	h = obj->bbox.y1 - obj->bbox.y0;
-	obj->bbox.x0 = x;
-	obj->bbox.y0 = y;
-	obj->bbox.x1 = obj->bbox.x0 + w;
-	obj->bbox.y1 = obj->bbox.y0 + h;
+	w = obj->req_bbox.x1 - obj->req_bbox.x0;
+	h = obj->req_bbox.y1 - obj->req_bbox.y0;
+	obj->req_bbox.x0 = x;
+	obj->req_bbox.y0 = y;
+	obj->req_bbox.x1 = obj->req_bbox.x0 + w;
+	obj->req_bbox.y1 = obj->req_bbox.y0 + h;
+	obj->flags |= SCENEOF_SYNC_POS;
 
 	return 0;
 }
@@ -270,9 +271,10 @@ int scene_obj_set_size(struct scene *scn, uint id, int w, int h)
 	obj = scene_obj_find(scn, id, SCENEOBJT_NONE);
 	if (!obj)
 		return log_msg_ret("find", -ENOENT);
-	obj->bbox.x1 = obj->bbox.x0 + w;
-	obj->bbox.y1 = obj->bbox.y0 + h;
-	obj->flags |= SCENEOF_SIZE_VALID;
+	log_debug("obj %s w %d h %d\n", obj->name, w, h);
+	obj->req_bbox.x1 = obj->req_bbox.x0 + w;
+	obj->req_bbox.y1 = obj->req_bbox.y0 + h;
+	obj->flags |= SCENEOF_SIZE_VALID | SCENEOF_SYNC_SIZE;
 
 	return 0;
 }
@@ -284,7 +286,8 @@ int scene_obj_set_width(struct scene *scn, uint id, int w)
 	obj = scene_obj_find(scn, id, SCENEOBJT_NONE);
 	if (!obj)
 		return log_msg_ret("find", -ENOENT);
-	obj->bbox.x1 = obj->bbox.x0 + w;
+	obj->req_bbox.x1 = obj->req_bbox.x0 + w;
+	obj->flags |= SCENEOF_SYNC_WIDTH;
 
 	return 0;
 }
@@ -297,11 +300,11 @@ int scene_obj_set_bbox(struct scene *scn, uint id, int x0, int y0, int x1,
 	obj = scene_obj_find(scn, id, SCENEOBJT_NONE);
 	if (!obj)
 		return log_msg_ret("find", -ENOENT);
-	obj->bbox.x0 = x0;
-	obj->bbox.y0 = y0;
-	obj->bbox.x1 = x1;
-	obj->bbox.y1 = y1;
-	obj->flags |= SCENEOF_SIZE_VALID;
+	obj->req_bbox.x0 = x0;
+	obj->req_bbox.y0 = y0;
+	obj->req_bbox.x1 = x1;
+	obj->req_bbox.y1 = y1;
+	obj->flags |= SCENEOF_SIZE_VALID | SCENEOF_SYNC_BBOX;
 
 	return 0;
 }
@@ -448,7 +451,8 @@ int scene_obj_get_hw(struct scene *scn, uint id, int *widthp)
 		}
 
 		limit = obj->flags & SCENEOF_SIZE_VALID ?
-			obj->bbox.x1 - obj->bbox.x0 : -1;
+			obj->req_bbox.x1 - obj->req_bbox.x0 : -1;
+		log_debug("obj %s limit %d\n", obj->name, limit);
 
 		ret = vidconsole_measure(scn->expo->cons, gen->font_name,
 					 gen->font_size, str, limit, &bbox,
@@ -819,6 +823,9 @@ int scene_arrange(struct scene *scn)
 		}
 		}
 	}
+	ret = scene_sync_bbox(scn);
+	if (ret)
+		return log_msg_ret("saf", ret);
 
 	return 0;
 }
@@ -1029,6 +1036,41 @@ int scene_obj_calc_bbox(struct scene_obj *obj, struct vidconsole_bbox bbox[])
 					 &bbox[SCENEBB_label]);
 		break;
 	}
+	}
+
+	return 0;
+}
+
+int scene_sync_bbox(struct scene *scn)
+{
+	struct scene_obj *obj;
+
+	list_for_each_entry(obj, &scn->obj_head, sibling) {
+		int req_width = obj->req_bbox.x1 - obj->req_bbox.x0;
+		int req_height = obj->req_bbox.y1 - obj->req_bbox.y0;
+
+		if (obj->flags & SCENEOF_SYNC_POS) {
+			if (obj->flags & SCENEOF_SIZE_VALID) {
+				int width = obj->bbox.x1 - obj->bbox.x0;
+				int height = obj->bbox.y1 - obj->bbox.y0;
+
+				obj->bbox.x1 = obj->req_bbox.x0 + width;
+				obj->bbox.y1 = obj->req_bbox.y0 + height;
+			}
+			obj->bbox.x0 = obj->req_bbox.x0;
+			obj->bbox.y0 = obj->req_bbox.y0;
+		}
+
+		if (obj->flags & SCENEOF_SYNC_SIZE) {
+			obj->bbox.x1 = obj->bbox.x0 + req_width;
+			obj->bbox.y1 = obj->bbox.y0 + req_height;
+		}
+		if (obj->flags & SCENEOF_SYNC_WIDTH)
+			obj->bbox.x1 = obj->bbox.x0 + req_width;
+		if (obj->flags & SCENEOF_SYNC_BBOX)
+			obj->bbox = obj->req_bbox;
+		obj->flags &= ~(SCENEOF_SYNC_POS | SCENEOF_SYNC_SIZE |
+				SCENEOF_SYNC_WIDTH | SCENEOF_SYNC_BBOX);
 	}
 
 	return 0;

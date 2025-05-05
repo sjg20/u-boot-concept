@@ -93,16 +93,14 @@ int scene_textline_arrange(struct scene *scn, struct expo_arrange_info *arr,
 	int x, y;
 	int ret;
 
-	x = tline->obj.bbox.x0;
-	y = tline->obj.bbox.y0;
+	x = tline->obj.req_bbox.x0;
+	y = tline->obj.req_bbox.y0;
 	if (tline->label_id) {
-		ret = scene_obj_set_pos(scn, tline->label_id,
-					tline->obj.bbox.x0, y);
+		ret = scene_obj_set_pos(scn, tline->label_id, x, y);
 		if (ret < 0)
 			return log_msg_ret("tit", ret);
 
-		ret = scene_obj_set_pos(scn, tline->edit_id,
-					tline->obj.bbox.x0 + 200, y);
+		ret = scene_obj_set_pos(scn, tline->edit_id, x + 200, y);
 		if (ret < 0)
 			return log_msg_ret("tit", ret);
 
