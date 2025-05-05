@@ -671,17 +671,35 @@ static int expo_render_image(struct unit_test_state *uts)
 	/* reset back to normal */
 	scene_obj_set_bbox(scn, OBJ_MENU, 50, 400, 50 + 160, 400 + 160);
 
+	/* make sure the preview for the first item is not shown */
+	obj = scene_obj_find(scn, ITEM1_PREVIEW, SCENEOBJT_NONE);
+	ut_assertnonnull(obj);
+	ut_assert(obj->flags & SCENEOF_HIDE);
+
 	/* render it */
 	expo_set_scene_id(exp, SCENE1);
 	ut_assertok(expo_render(exp));
+	ut_asserteq(18786, video_compress_fb(uts, dev, false));
 
 	ut_asserteq(0, scn->highlight_id);
 	ut_assertok(scene_arrange(scn));
 	ut_asserteq(0, scn->highlight_id);
+	ut_assertok(expo_render(exp));
+	ut_asserteq(20433, video_compress_fb(uts, dev, false));
+
+	ut_assertok(scene_arrange(scn));
+	ut_assertok(expo_render(exp));
+	ut_asserteq(20433, video_compress_fb(uts, dev, false));
 
 	scene_set_highlight_id(scn, OBJ_MENU);
+	ut_asserteq(OBJ_MENU, scn->highlight_id);
+	ut_assertok(scene_menu_select_item(scn, OBJ_MENU, ITEM1));
 	ut_assertok(scene_arrange(scn));
 	ut_asserteq(OBJ_MENU, scn->highlight_id);
+
+	/* make sure the preview for the first item is now shown */
+	ut_assert(!(obj->flags & SCENEOF_HIDE));
+
 	ut_assertok(expo_render(exp));
 	ut_asserteq(20433, video_compress_fb(uts, dev, false));
 
