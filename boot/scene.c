@@ -1062,7 +1062,6 @@ int scene_calc_dims(struct scene *scn, bool do_menus)
 int scene_apply_theme(struct scene *scn, struct expo_theme *theme)
 {
 	struct scene_obj *obj;
-	int ret;
 
 	/* Avoid error-checking optional items */
 	scene_txt_set_font(scn, scn->title_id, NULL, theme->font_size);
@@ -1085,10 +1084,6 @@ int scene_apply_theme(struct scene *scn, struct expo_theme *theme)
 			break;
 		}
 	}
-
-	ret = scene_arrange(scn);
-	if (ret)
-		return log_msg_ret("arr", ret);
 
 	return 0;
 }
