@@ -884,7 +884,7 @@ static int bootflow_menu_theme(struct unit_test_state *uts)
 	ut_assertok(bootflow_menu_add_all(exp));
 	node = ofnode_path("/bootstd/theme");
 	ut_assert(ofnode_valid(node));
-	ut_assertok(expo_apply_theme(exp, node));
+	ut_assertok(expo_setup_theme(exp, node));
 
 	scn = expo_lookup_scene_id(exp, MAIN);
 	ut_assertnonnull(scn);

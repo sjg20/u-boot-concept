@@ -302,7 +302,7 @@ static int expo_object_attr(struct unit_test_state *uts)
 
 	node = ofnode_path("/bootstd/theme");
 	ut_assert(ofnode_valid(node));
-	ut_assertok(expo_apply_theme(exp, node));
+	ut_assertok(expo_setup_theme(exp, node));
 	ut_asserteq(30, txt->gen.font_size);
 
 	expo_destroy(exp);
