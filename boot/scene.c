@@ -1043,18 +1043,8 @@ int scene_calc_dims(struct scene *scn)
 				}
 				break;
 			}
-			case SCENEOBJT_MENU: {
-				struct scene_obj_menu *menu;
-
-				if (do_menus) {
-					menu = (struct scene_obj_menu *)obj;
-
-					ret = scene_menu_calc_dims(menu);
-					if (ret)
-						return log_msg_ret("men", ret);
-				}
+			case SCENEOBJT_MENU:
 				break;
-			}
 			case SCENEOBJT_TEXTLINE: {
 				struct scene_obj_textline *tline;
 
