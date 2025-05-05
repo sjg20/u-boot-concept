@@ -140,11 +140,10 @@ int cedit_prepare(struct expo *exp, struct udevice *vid_dev,
 	scn = expo_lookup_scene_id(exp, scene_id);
 	scene_highlight_first(scn);
 
-	cedit_arange(exp, vid_priv, scene_id);
-
 	ret = expo_calc_dims(exp);
 	if (ret)
 		return log_msg_ret("dim", ret);
+	cedit_arange(exp, vid_priv, scene_id);
 
 	*scnp = scn;
 
