@@ -582,11 +582,15 @@ int video_get_ysize(struct udevice *dev)
 	extern u8 __splash_ ## _name ## _end[]
 
 #define SPLASH_START(_name)	__splash_ ## _name ## _begin
+#define SPLASH_END(_name)	__splash_ ## _name ## _end
 
 SPLASH_DECL(u_boot_logo);
 
-void *video_get_u_boot_logo(void)
+void *video_get_u_boot_logo(int *sizep)
 {
+	if (sizep)
+		*sizep = SPLASH_END(u_boot_logo) - SPLASH_START(u_boot_logo);
+
 	return SPLASH_START(u_boot_logo);
 }
 

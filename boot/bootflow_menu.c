@@ -67,7 +67,7 @@ int bootflow_menu_new(struct expo **expp)
 				  SCENEOB_DISPLAY_MAX, 30);
 	ret |= scene_obj_set_halign(scn, OBJ_MENU_TITLE, SCENEOA_CENTRE);
 
-	logo = video_get_u_boot_logo();
+	logo = video_get_u_boot_logo(NULL);
 	if (logo) {
 		ret |= scene_img(scn, "ulogo", OBJ_U_BOOT_LOGO, logo, NULL);
 		ret |= scene_obj_set_pos(scn, OBJ_U_BOOT_LOGO, 1165, 100);

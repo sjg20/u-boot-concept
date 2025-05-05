@@ -463,13 +463,15 @@ BOOTSTD_TEST(expo_object_menu, UTF_DM | UTF_SCAN_FDT);
 static int expo_render_image(struct unit_test_state *uts)
 {
 	struct scene_obj_menu *menu;
+	struct abuf buf, logo_copy;
 	struct scene *scn, *scn2;
 	struct abuf orig, *text;
 	struct expo_action act;
 	struct scene_obj *obj;
 	struct udevice *dev;
 	struct expo *exp;
-	int id;
+	int id, size;
+	void *logo;
 
 	ut_assertok(uclass_first_device_err(UCLASS_VIDEO, &dev));
 
@@ -478,7 +480,8 @@ static int expo_render_image(struct unit_test_state *uts)
 	ut_assert(id > 0);
 	ut_assertok(expo_set_display(exp, dev));
 
-	id = scene_img(scn, "logo", OBJ_LOGO, video_get_u_boot_logo(), NULL);
+	id = scene_img(scn, "logo", OBJ_LOGO, video_get_u_boot_logo(NULL),
+		       NULL);
 	ut_assert(id > 0);
 	ut_assertok(scene_obj_set_pos(scn, OBJ_LOGO, 50, 20));
 
@@ -526,8 +529,18 @@ static int expo_render_image(struct unit_test_state *uts)
 	id = scene_txt_str(scn, "item1-key", ITEM1_KEY, STR_ITEM1_KEY, "1",
 			   NULL);
 	ut_assert(id > 0);
-	id = scene_img(scn, "item1-preview", ITEM1_PREVIEW,
-		       video_get_u_boot_logo(), NULL);
+
+	/*
+	 * hack the logo to change the palette and use that for item2 so we can
+	 * tell them apart
+	 */
+	logo = video_get_u_boot_logo(&size);
+	abuf_init_const(&buf, logo, size);
+	ut_assert(abuf_copy(&buf, &logo_copy));
+	memset(logo_copy.data + 0x70, '\x45', 0x20);
+
+	id = scene_img(scn, "item1-preview", ITEM1_PREVIEW, logo_copy.data,
+		       NULL);
 	id = scene_menuitem(scn, OBJ_MENU, "item1", ITEM1, ITEM1_KEY,
 			    ITEM1_LABEL, ITEM1_DESC, ITEM1_PREVIEW, 0, NULL);
 	ut_assert(id > 0);
@@ -542,7 +555,7 @@ static int expo_render_image(struct unit_test_state *uts)
 			   NULL);
 	ut_assert(id > 0);
 	id = scene_img(scn, "item2-preview", ITEM2_PREVIEW,
-		       video_get_u_boot_logo(), NULL);
+		       video_get_u_boot_logo(NULL), NULL);
 	ut_assert(id > 0);
 
 	id = scene_menuitem(scn, OBJ_MENU, "item2", ITEM2, ITEM2_KEY,
@@ -670,8 +683,7 @@ static int expo_render_image(struct unit_test_state *uts)
 	ut_assertok(scene_arrange(scn));
 	ut_asserteq(OBJ_MENU, scn->highlight_id);
 	ut_assertok(expo_render(exp));
-
-	ut_asserteq(19704, video_compress_fb(uts, dev, false));
+	ut_asserteq(20433, video_compress_fb(uts, dev, false));
 
 	/* move down */
 	ut_assertok(expo_send_key(exp, BKEY_DOWN));
@@ -761,6 +773,9 @@ static int expo_render_image(struct unit_test_state *uts)
 	ut_assert_nextline("       2  Now         Lord Percy");
 
 	ut_assert_console_end();
+
+	abuf_uninit(&buf);
+	abuf_uninit(&logo_copy);
 
 	expo_destroy(exp);
 
