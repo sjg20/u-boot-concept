@@ -120,7 +120,7 @@
 		graphical = "if-available";
 		textual = "if-available";
 #ifndef CONFIG_SANDBOX
-		logo = /incbin/("/scratch/sglass/cosarm/src/third_party/u-boot/files/boot/bootctl/canonical.bmp");
+		logo = /incbin/("/home/sglass/u/boot/bootctl/canonical.bmp");
 #endif
 	};
 };
