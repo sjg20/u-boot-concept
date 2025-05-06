@@ -119,8 +119,6 @@
 		compatible = "bootctl,simple-ui", "bootctl,ui";
 		graphical = "if-available";
 		textual = "if-available";
-#ifndef CONFIG_SANDBOX
 		logo = /incbin/("/home/sglass/u/boot/bootctl/canonical.bmp");
-#endif
 	};
 };
