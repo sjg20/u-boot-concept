@@ -293,6 +293,7 @@ def do_patman(args, test_db=None, pwork=None):
             if not args.process_tags:
                 args.ignore_bad_tags = True
             do_send(args)
+        return 0
 
     ret_code = 0
     try:
