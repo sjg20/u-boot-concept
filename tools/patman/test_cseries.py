@@ -2975,6 +2975,10 @@ Date:   .*
             'Version mismatch: -V has 4 but branch name indicates 3',
             str(exc.exception))
 
+        ser, version = cser._parse_series_and_version('mary', 4)
+        self.assertEqual('mary', ser.name)
+        self.assertEqual(4, version)
+
         # Move off the branch and check for a sensible error
         commit = repo.revparse_single('first~')
         repo.checkout_tree(commit)

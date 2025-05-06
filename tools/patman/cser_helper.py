@@ -595,7 +595,7 @@ class CseriesHelper:
         if not name:
             raise ValueError(f"Series name '{in_name}' cannot be a number, "
                              f"use '<name><version>'")
-        if in_version:
+        if in_version and (not version or version == 1):
             version = in_version
         if in_version and version != in_version:
             raise ValueError(
