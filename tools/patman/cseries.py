@@ -431,7 +431,7 @@ class Cseries(cser_helper.CseriesHelper):
 
         return summary
 
-    def list(self):
+    def series_list(self):
         """List all series
 
         Lines all series along with their description, number of patches

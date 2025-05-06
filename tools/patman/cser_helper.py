@@ -1114,7 +1114,8 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             cov = 'Cov' if cover_id else ''
             print(self.col.build(
                 self.col.WHITE,
-                f"{cov:14} {comments.rjust(3)} {cover_id or '':7}            {desc}",
+                f"{cov:14} {comments.rjust(3)} {cover_id or '':7}            "
+                f'{desc or series.desc}',
                 bright=False))
         for seq in range(count):
             line = lines[seq]
@@ -1353,10 +1354,10 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             branch = self._join_name_version(ser.name, ver)
             series = patchstream.get_metadata(branch, 0, count,
                                               git_dir=self.gitdir)
-            _, _, cover_id, num_comments, name = self.get_ser_ver(ser.idnum,
+            _, _, cover_id, num_comments, desc = self.get_ser_ver(ser.idnum,
                                                                   ver)
 
-            self._list_patches(branch, pwc, series, name, cover_id,
+            self._list_patches(branch, pwc, series, desc, cover_id,
                                num_comments, False, False, list_patches,
                                state_totals)
             add_blank_line = list_patches
