@@ -271,6 +271,10 @@ def patchwork(args, test_db=None, pwork=None):
         cser.close_database()
 
 def do_patman(args, test_db=None, pwork=None):
+    if args.full_help:
+        with resources.path('patman', 'README.rst') as readme:
+            tools.print_full_help(str(readme))
+        return 0
     if args.cmd == 'send':
         # Called from git with a patch filename as argument
         # Printout a list of additional CC recipients for this patch
@@ -284,10 +288,6 @@ def do_patman(args, test_db=None, pwork=None):
                             cca = cca.strip()
                             if cca:
                                 print(cca)
-
-        elif args.full_help:
-            with resources.path('patman', 'README.rst') as readme:
-                tools.print_full_help(str(readme))
         else:
             # If we are not processing tags, no need to warning about bad ones
             if not args.process_tags:
