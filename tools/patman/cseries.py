@@ -610,15 +610,20 @@ class Cseries(cser_helper.CseriesHelper):
         with terminal.pager():
             state_totals = defaultdict(int)
             if series is not None:
-                self._progress_one(self._parse_series(series),
-                                   show_all_versions, list_patches,
-                                   state_totals)
+                _, _, need_scan = self._progress_one(
+                    self._parse_series(series), show_all_versions,
+                    list_patches, state_totals)
+                if need_scan:
+                    tout.warning(
+                        'Inconsistent commit-subject: Please use '
+                        "'patman series -s <branch> scan' to resolve this")
                 return
 
             total_patches = 0
             total_series = 0
             sdict = self.db.series_get_dict()
             border = None
+            total_need_scan = 0
             if not list_patches:
                 print(self.col.build(
                     self.col.MAGENTA,
@@ -627,8 +632,9 @@ class Cseries(cser_helper.CseriesHelper):
                 print(border)
             for name in sorted(sdict):
                 ser = sdict[name]
-                num_series, num_patches = self._progress_one(
+                num_series, num_patches, need_scan = self._progress_one(
                     ser, show_all_versions, list_patches, state_totals)
+                total_need_scan += need_scan
                 if list_patches:
                     print()
                 total_series += num_series
@@ -639,8 +645,15 @@ class Cseries(cser_helper.CseriesHelper):
                 out = ''
                 for state, freq in state_totals.items():
                     out += ' ' + self._build_col(state, f'{freq}:')[0]
+                if total_need_scan:
+                    out = '*' + out[1:]
 
                 print(f"{total:15}  {'':40}  {total_patches:5} {out}")
+                if total_need_scan:
+                    tout.warning(
+                        f'Series marked * ({total_need_scan}) have commit '
+                        'subjects which mismatch their patches and need to be '
+                        'scanned')
 
     def project_set(self, pwork, name, quiet=False):
         """Set the name of the project

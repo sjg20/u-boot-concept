@@ -595,7 +595,7 @@ class CseriesHelper:
         if not name:
             raise ValueError(f"Series name '{in_name}' cannot be a number, "
                              f"use '<name><version>'")
-        if not version:
+        if in_version:
             version = in_version
         if in_version and version != in_version:
             raise ValueError(
@@ -1060,19 +1060,20 @@ class CseriesHelper:
             state_totals (dict): Holds totals for each state across all patches
                 key (str): state name
                 value (int): Number of patches in that state
+
+        Return:
+            bool: True if OK, False if any commit subjects don't match their
+                patchwork subjects
         """
         lines = []
         states = defaultdict(int)
         count = len(pwc)
+        ok = True
         for seq, item in enumerate(pwc.values()):
             if series:
                 cmt = series.commits[seq]
                 if cmt.subject != item.subject:
-                    tout.warning(f'''Inconsistent commit-subject:
-Commit: {cmt.hash}
-Database: '{item.subject}'
-Branch:   '{cmt.subject}
-Please use 'patman series -s {branch} scan' to resolve this''')
+                    ok = False
 
             col_state, pad = self._build_col(item.state)
             patch_id = item.patch_id if item.patch_id else ''
@@ -1101,8 +1102,10 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         if not list_patches:
             name = desc or ''
             name = self.col.build(self.col.YELLOW, name[:41].ljust(41))
+            if not ok:
+                out = '*' + out[1:]
             print(f"{branch:16} {name} {len(pwc):5} {out}")
-            return
+            return ok
         print(f"Branch '{branch}' (total {len(pwc)}):{out}{name}")
 
         print(self.col.build(
@@ -1130,6 +1133,8 @@ Please use 'patman series -s {branch} scan' to resolve this''')
                 if seq != count - 1:
                     print()
                     print()
+
+        return ok
 
     def _find_matched_commit(self, commits, pcm):
         """Find a commit in a list of possible matches
@@ -1331,6 +1336,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         Return: tuple
             int: Number of series shown
             int: Number of patches shown
+            int: Number of version which need a 'scan'
         """
         max_vers = self._series_max_version(ser.idnum)
         name, desc = self._get_series_info(ser.idnum)
@@ -1344,6 +1350,7 @@ Please use 'patman series -s {branch} scan' to resolve this''')
         add_blank_line = False
         total_series = 0
         total_patches = 0
+        need_scan = 0
         for ver in versions:
             if not show_all_versions and ver != max_vers:
                 continue
@@ -1357,13 +1364,15 @@ Please use 'patman series -s {branch} scan' to resolve this''')
             _, _, cover_id, num_comments, desc = self.get_ser_ver(ser.idnum,
                                                                   ver)
 
-            self._list_patches(branch, pwc, series, desc, cover_id,
-                               num_comments, False, False, list_patches,
-                               state_totals)
+            ok = self._list_patches(
+                branch, pwc, series, desc, cover_id, num_comments,
+                False, False, list_patches, state_totals)
+            if not ok:
+                need_scan += 1
             add_blank_line = list_patches
             total_series += 1
             total_patches += count
-        return total_series, total_patches
+        return total_series, total_patches, need_scan
 
     def _summary_one(self, ser):
         """Show summary information for the latest version in a series
