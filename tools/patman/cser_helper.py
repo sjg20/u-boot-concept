@@ -895,8 +895,11 @@ class CseriesHelper:
             yield vals
 
             cur = self._finish_commit(repo, None, commit, cur, vals.msg)
-            tout.info(f'- {vals.info} {oid(cmt.hash)} as {oid(cur.target)}: '
-                      f'{cmt}')
+            msg = vals.info.strip()
+            if msg:
+                msg += ' '
+            tout.info(
+                f'- {msg}{oid(cmt.hash)} as {oid(cur.target)}: {cmt}')
         target = self._finish_process(repo, branch, name, cur, old_head,
                                       new_name, switch, dry_run)
         vals.oid = target.oid
@@ -969,9 +972,9 @@ class CseriesHelper:
                             f'{max_vers}')
                     if add_vers:
                         if add_vers == 1:
-                            vals.info += f'deleted version {add_vers} '
+                            vals.info += f'rm v{add_vers} '
                         else:
-                            vals.info += f'added version {add_vers} '
+                            vals.info += f'add v{add_vers} '
                             out.append(f'Series-version: {add_vers}')
                     added_version = True
                 elif m_links:
@@ -980,20 +983,20 @@ class CseriesHelper:
                         links[max_vers] = add_link
                     new_links = series.build_links(links)
                     if add_link:
-                        vals.info += f"added links '{new_links}' "
+                        vals.info += f"add links '{new_links}' "
                     else:
-                        vals.info += f"updated links '{new_links}' "
+                        vals.info += f"upd links '{new_links}' "
                     out.append(f'Series-links: {new_links}')
                     added_link = True
                 else:
                     out.append(line)
             if vals.final:
                 if not added_version and add_vers and add_vers > 1:
-                    vals.info += f'added version {add_vers} '
+                    vals.info += f'add v{add_vers} '
                     out.append(f'Series-version: {add_vers}')
                 if not added_link and add_link:
                     new_links = f'{max_vers}:{add_link}'
-                    vals.info += f"added links '{new_links}' "
+                    vals.info += f"add links '{new_links}' "
                     out.append(f'Series-links: {new_links}')
 
             vals.msg = '\n'.join(out) + '\n'
