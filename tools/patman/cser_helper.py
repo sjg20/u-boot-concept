@@ -886,6 +886,9 @@ class CseriesHelper:
         vals = SimpleNamespace()
         vals.final = False
         tout.info(f"Processing {count} commits from branch '{name}'")
+
+        # Record the message lines
+        lines = []
         for seq, cmt in enumerate(series.commits):
             commit = commits[seq]
             vals.commit = commit
@@ -896,11 +899,14 @@ class CseriesHelper:
             yield vals
 
             cur = self._finish_commit(repo, None, commit, cur, vals.msg)
-            msg = vals.info.strip()
-            if msg:
-                msg += ' '
-            tout.info(
-                f'- {msg}{oid(cmt.hash)} as {oid(cur.target)}: {cmt}')
+            lines.append([vals.info.strip(),
+                          f'{oid(cmt.hash)} as {oid(cur.target)}: {cmt}'])
+
+        max_len = max(len(info) for info, rest in lines) + 1
+        for info, rest in lines:
+            if info:
+                info += ':'
+            tout.info(f'- {info.ljust(max_len)} {rest}')
         target = self._finish_process(repo, branch, name, cur, old_head,
                                       new_name, switch, dry_run)
         vals.oid = target.oid
