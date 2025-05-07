@@ -26,6 +26,13 @@ ALIASES = {
     'status': ['st'],
     'patchwork': ['pw'],
     'upstream': ['us'],
+
+    # Series aliases
+    'archive': ['ar'],
+    'autolink': ['au'],
+    'open': ['o'],
+    'progress': ['p', 'pr', 'prog'],
+    'rm-version': ['rmv'],
     }
 
 
@@ -204,9 +211,10 @@ def add_series_subparser(subparsers):
     _add_allow_unmarked(add)
     _upstream_add(add)
 
-    series_subparsers.add_parser('archive')
+    series_subparsers.add_parser('archive', aliases=ALIASES['archive'])
 
-    auto = series_subparsers.add_parser('autolink')
+    auto = series_subparsers.add_parser('autolink',
+                                        aliases=ALIASES['autolink'])
     _add_update(auto)
     _add_wait(auto, 0)
 
@@ -227,7 +235,7 @@ def add_series_subparser(subparsers):
                      default=False,
                      help="Don't require commits to be unmarked")
 
-    series_subparsers.add_parser('open')
+    series_subparsers.add_parser('open', aliases=ALIASES['open'])
     pat = series_subparsers.add_parser(
         'patches', epilog='Show a list of patches and optional details')
     pat.add_argument('-t', '--commit', action='store_true',
@@ -235,7 +243,9 @@ def add_series_subparser(subparsers):
     pat.add_argument('-p', '--patch', action='store_true',
                      help='Show the patch body')
 
-    prog = series_subparsers.add_parser('progress')
+    prog = series_subparsers.add_parser('progress',
+
+                                        aliases=ALIASES['progress'])
     prog.add_argument('-a', '--show-all-versions', action='store_true',
                       help='Show all series versions, not just the latest')
     prog.add_argument('-l', '--list-patches', action='store_true',
@@ -244,8 +254,8 @@ def add_series_subparser(subparsers):
     ren = series_subparsers.add_parser('rename')
     ren.add_argument('-N', '--new-name', help='New name for the series')
 
-    series_subparsers.add_parser('remove')
-    series_subparsers.add_parser('remove-version')
+    series_subparsers.add_parser('rm')
+    series_subparsers.add_parser('rm-version', aliases=ALIASES['rm-version'])
 
     scan = series_subparsers.add_parser('scan')
     _add_mark(scan)
@@ -480,6 +490,8 @@ def parse_args(argv=None, config_fname=None, parsers=None):
     for full, aliases in ALIASES.items():
         if args.cmd in aliases:
             args.cmd = full
+        if 'subcmd' in args and args.subcmd in aliases:
+            args.subcmd = full
     if args.cmd in ['series', 'upstream', 'patchwork'] and not args.subcmd:
         parser.parse_args([args.cmd, '--help'])
 

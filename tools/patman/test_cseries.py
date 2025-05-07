@@ -2060,7 +2060,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         with self.stage('remove non-existent series'):
             with terminal.capture() as (out, _):
-                self.run_args('series', '-s', 'first', 'remove', expect_ret=1,
+                self.run_args('series', '-s', 'first', 'rm', expect_ret=1,
                             pwork=True)
             self.assertEqual("patman: ValueError: No such series 'first'",
                             out.getvalue().strip())
@@ -2177,30 +2177,30 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         next(cor)
 
         # Do a dry-run removal
-        self.run_args('series', '-n', '-s', 'first', '-V', '1',
-                      'remove-version', pwork=True)
+        self.run_args('series', '-n', '-s', 'first', '-V', '1', 'rm-version',
+                      pwork=True)
         next(cor)
 
         # Now remove for real
-        self.run_args('series', '-s', 'first', '-V', '1', 'remove-version',
+        self.run_args('series', '-s', 'first', '-V', '1', 'rm-version',
                       pwork=True)
         next(cor)
 
         # Remove only version
         with terminal.capture() as (out, _):
             self.run_args('series', '-n', '-s', 'first', '-V', '2',
-                          'remove-version', expect_ret=1, pwork=True)
+                          'rm-version', expect_ret=1, pwork=True)
         self.assertIn(
             "Series 'first' only has one version: remove the series",
             out.getvalue().strip())
         next(cor)
 
         # Remove series (dry run)
-        self.run_args('series', '-n', '-s', 'first', 'remove', pwork=True)
+        self.run_args('series', '-n', '-s', 'first', 'rm', pwork=True)
         next(cor)
 
         # Remove series (real)
-        self.run_args('series', '-s', 'first', 'remove', pwork=True)
+        self.run_args('series', '-s', 'first', 'rm', pwork=True)
 
         self.assertFalse(next(cor))
         cor.close()
