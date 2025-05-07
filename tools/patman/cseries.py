@@ -123,7 +123,11 @@ class Cseries(cser_helper.CseriesHelper):
         if not dry_run:
             name = self._get_branch_name(ser.name, new_max)
             branch = repo.lookup_branch(name)
-            repo.checkout(branch)
+            try:
+                repo.checkout(branch)
+            except pygit2.GitError:
+                tout.warning(f"Failed to checkout branch {name}")
+                raise
 
             del_name = f'{ser.name}{max_vers}'
             del_branch = repo.lookup_branch(del_name)

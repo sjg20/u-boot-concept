@@ -955,6 +955,23 @@ class CseriesHelper:
         Return:
             pygit.oid: oid of the new branch
         """
+        def _do_version():
+            if add_vers:
+                if add_vers == 1:
+                    vals.info += f'rm v{add_vers} '
+                else:
+                    vals.info += f'add v{add_vers} '
+                    out.append(f'Series-version: {add_vers}')
+
+        def _do_links():
+            if add_link:
+                if 'add' not in vals.info:
+                    vals.info += 'add '
+                vals.info += f"links '{new_links}' "
+            else:
+                vals.info += f"upd links '{new_links}' "
+            out.append(f'Series-links: {new_links}')
+
         added_version = False
         added_link = False
         for vals in self._process_series(branch_name, series, new_name, switch,
@@ -970,34 +987,23 @@ class CseriesHelper:
                             f'Branch {branch_name}: Series-version tag '
                             f'{series.version} does not match expected version '
                             f'{max_vers}')
-                    if add_vers:
-                        if add_vers == 1:
-                            vals.info += f'rm v{add_vers} '
-                        else:
-                            vals.info += f'add v{add_vers} '
-                            out.append(f'Series-version: {add_vers}')
+                    _do_version()
                     added_version = True
                 elif m_links:
                     links = series.get_links(m_links.group(1), max_vers)
                     if add_link:
                         links[max_vers] = add_link
                     new_links = series.build_links(links)
-                    if add_link:
-                        vals.info += f"add links '{new_links}' "
-                    else:
-                        vals.info += f"upd links '{new_links}' "
-                    out.append(f'Series-links: {new_links}')
+                    _do_links()
                     added_link = True
                 else:
                     out.append(line)
             if vals.final:
                 if not added_version and add_vers and add_vers > 1:
-                    vals.info += f'add v{add_vers} '
-                    out.append(f'Series-version: {add_vers}')
+                    _do_version()
                 if not added_link and add_link:
                     new_links = f'{max_vers}:{add_link}'
-                    vals.info += f"add links '{new_links}' "
-                    out.append(f'Series-links: {new_links}')
+                    _do_links()
 
             vals.msg = '\n'.join(out) + '\n'
             if add_rtags and add_rtags[vals.seq]:

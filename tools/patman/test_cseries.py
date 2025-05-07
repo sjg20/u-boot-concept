@@ -413,10 +413,9 @@ class TestCseries(unittest.TestCase, TestCommon):
         self.assertEqual(
             "Processing 2 commits from branch 'first'", next(itr))
         self.assertRegex(next(itr),
-                         '-  .* as .*: i2c: I2C things')
-        self.assertRegex(
-            next(itr),
-            '- deleted version 1  .* as .*: spi: SPI fixes')
+                         f'- {HASH_RE} as {HASH_RE}: i2c: I2C things')
+        self.assertRegex(next(itr),
+                         f'- rm v1 {HASH_RE} as {HASH_RE}: spi: SPI fixes')
         self.assertRegex(next(itr), 'Updating branch first to .*')
         self.assertEqual("Added series 'first' v1 (2 commits)", next(itr))
         try:
@@ -838,8 +837,9 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                          lines[1])
         self.assertRegex(lines[2],
                          f'- {HASH_RE} as {HASH_RE}: i2c: I2C things')
-        self.assertRegex(lines[3],
-                         f'- add v2 {HASH_RE} as {HASH_RE}: spi: SPI fixes')
+        self.assertRegex(
+            lines[3],
+            f"- add v2 links '2:2345' {HASH_RE} as {HASH_RE}: spi: SPI fixes")
         self.assertRegex(lines[4], 'Updating branch first2 to .*')
         self.assertEqual("Setting link for series 'first' v2 to 2345",
                          lines[5])
@@ -2450,7 +2450,7 @@ Date:   .*
                             next(itr))
             self.assertRegex(
                 next(itr),
-                f'- add 1 tag {HASH_RE} as {HASH_RE}: video: Some video improvements')
+                f'- added 1 tag {HASH_RE} as {HASH_RE}: video: Some video improvements')
             self.assertRegex(next(itr), "- .* as .*: serial: Add a serial driver")
             self.assertRegex(next(itr), "- .* as .*: bootm: Make it boot")
             self.assertRegex(next(itr), "Updating branch second to .*")
