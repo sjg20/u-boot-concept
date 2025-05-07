@@ -777,7 +777,8 @@ class CseriesHelper:
         # Update the branch
         target = repo.revparse_single('HEAD')
         if not quiet:
-            tout.info(f"Updating branch {name} to {str(target.oid)[:HASH_LEN]}")
+            tout.info(f'Updating branch {name} from {oid(branch.target)} to '
+                      f'{str(target.oid)[:HASH_LEN]}')
         if dry_run:
             if new_name:
                 repo.head.set_target(branch.target)

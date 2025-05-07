@@ -416,7 +416,8 @@ class TestCseries(unittest.TestCase, TestCommon):
                          f'- {HASH_RE} as {HASH_RE}: i2c: I2C things')
         self.assertRegex(next(itr),
                          f'- rm v1 {HASH_RE} as {HASH_RE}: spi: SPI fixes')
-        self.assertRegex(next(itr), 'Updating branch first to .*')
+        self.assertRegex(next(itr),
+                         f'Updating branch first from {HASH_RE} to {HASH_RE}')
         self.assertEqual("Added series 'first' v1 (2 commits)", next(itr))
         try:
             self.assertEqual('extra line', next(itr))
@@ -798,7 +799,8 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                          f'- {HASH_RE} as {HASH_RE}: i2c: I2C things')
         self.assertRegex(next(itr),
                          f'- add v2 {HASH_RE} as {HASH_RE}: spi: SPI fixes')
-        self.assertRegex(next(itr), 'Updating branch first2 to .*')
+        self.assertRegex(
+            next(itr), f'Updating branch first2 from {HASH_RE} to {HASH_RE}')
         self.assertEqual('Added new branch first2', next(itr))
         return itr
 
@@ -840,7 +842,8 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.assertRegex(
             lines[3],
             f"- add v2 links '2:2345' {HASH_RE} as {HASH_RE}: spi: SPI fixes")
-        self.assertRegex(lines[4], 'Updating branch first2 to .*')
+        self.assertRegex(
+            lines[4], f'Updating branch first2 from {HASH_RE} to {HASH_RE}')
         self.assertEqual("Setting link for series 'first' v2 to 2345",
                          lines[5])
 
@@ -1755,7 +1758,8 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                          next(itr))
         self.assertRegex(next(itr), r'- marked .* as .*: i2c: I2C things')
         self.assertRegex(next(itr), '- marked .* as .*: spi: SPI fixes')
-        self.assertRegex(next(itr), 'Updating branch first to .*')
+        self.assertRegex(
+            next(itr), f'Updating branch first from {HASH_RE} to {HASH_RE}')
         self.assertEqual("Added series 'first' v1 (2 commits)",
                          next(itr))
         self.assertEqual('Dry run completed', next(itr))
@@ -1836,7 +1840,8 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                          next(itr))
         self.assertRegex(next(itr), '- unmarked .* as .*: i2c: I2C things')
         self.assertRegex(next(itr), '- unmarked .* as .*: spi: SPI fixes')
-        self.assertRegex(next(itr), 'Updating branch first to .*')
+        self.assertRegex(
+            next(itr), f'Updating branch first from {HASH_RE} to {HASH_RE}')
         self.assertEqual('Dry run completed', next(itr))
 
         with self.stage('unmark'):
@@ -2453,7 +2458,9 @@ Date:   .*
                 f'- added 1 tag {HASH_RE} as {HASH_RE}: video: Some video improvements')
             self.assertRegex(next(itr), "- .* as .*: serial: Add a serial driver")
             self.assertRegex(next(itr), "- .* as .*: bootm: Make it boot")
-            self.assertRegex(next(itr), "Updating branch second to .*")
+            self.assertRegex(
+                next(itr),
+                f'Updating branch second from {HASH_RE} to {HASH_RE}')
             self.assertEqual('3 patches updated (7 requests)', next(itr))
             self.assertEqual('Dry run completed', next(itr))
             self.assertFinished(itr)
@@ -2570,7 +2577,9 @@ Date:   .*
             self.assertRegex(
                 next(itr),
                 f"- upd links '3:31' {HASH_RE} as {HASH_RE}: spi: SPI fixes")
-            self.assertRegex(next(itr), 'Updating branch first3 to .*')
+            self.assertRegex(
+                next(itr),
+                f'Updating branch first3 from {HASH_RE} to {HASH_RE}')
             self.assertEqual('', next(itr))
 
             self.assertEqual("Syncing 'second' v2", next(itr))
@@ -2591,7 +2600,9 @@ Date:   .*
                 f"- upd links '2:457 1:456' {HASH_RE} as {HASH_RE}: serial: Add a serial driver")
             self.assertRegex(next(itr),
                              f'- {HASH_RE} as {HASH_RE}: bootm: Make it boot')
-            self.assertRegex(next(itr), 'Updating branch second2 to .*')
+            self.assertRegex(
+                next(itr),
+                f'Updating branch second2 from {HASH_RE} to {HASH_RE}')
             self.assertEqual('', next(itr))
             self.assertEqual(
                 '5 patches and 2 cover letters updated, 0 missing links (14 requests)',
@@ -2617,7 +2628,9 @@ Date:   .*
             self.assertRegex(
                 next(itr),
                 f"- upd links '1:123' {HASH_RE} as {HASH_RE}: spi: SPI fixes")
-            self.assertRegex(next(itr), 'Updating branch first to .*')
+            self.assertRegex(
+                next(itr),
+                f'Updating branch first from {HASH_RE} to {HASH_RE}')
             self.assertEqual('', next(itr))
 
             self.assertEqual("Syncing 'first' v2", next(itr))
@@ -2635,7 +2648,9 @@ Date:   .*
             self.assertRegex(
                 next(itr),
                 f"- upd links '2:1234' {HASH_RE} as {HASH_RE}: spi: SPI fixes")
-            self.assertRegex(next(itr), 'Updating branch first2 to .*')
+            self.assertRegex(
+                next(itr),
+                f'Updating branch first2 from {HASH_RE} to {HASH_RE}')
             self.assertEqual('', next(itr))
             self.assertEqual("Syncing 'first' v3", next(itr))
             self.assertEqual('  1 i2c: I2C things', next(itr))
@@ -2652,7 +2667,9 @@ Date:   .*
             self.assertRegex(
                 next(itr),
                 f"- upd links '3:31' {HASH_RE} as {HASH_RE}: spi: SPI fixes")
-            self.assertRegex(next(itr), 'Updating branch first3 to .*')
+            self.assertRegex(
+                next(itr),
+                f'Updating branch first3 from {HASH_RE} to {HASH_RE}')
             self.assertEqual('', next(itr))
 
             self.assertEqual("Syncing 'second' v1", next(itr))
@@ -2681,7 +2698,9 @@ Date:   .*
                 f"- upd links '1:456' {HASH_RE} as {HASH_RE}: serial: Add a serial driver")
             self.assertRegex(next(itr),
                              f'- {HASH_RE} as {HASH_RE}: bootm: Make it boot')
-            self.assertRegex(next(itr), 'Updating branch second to .*')
+            self.assertRegex(
+                next(itr),
+                f'Updating branch second from {HASH_RE} to {HASH_RE}')
             self.assertEqual('', next(itr))
 
             self.assertEqual("Syncing 'second' v2", next(itr))
@@ -2709,7 +2728,9 @@ Date:   .*
                 f"- upd links '2:457 1:456' {HASH_RE} as {HASH_RE}: serial: Add a serial driver")
             self.assertRegex(next(itr),
                              f'- {HASH_RE} as {HASH_RE}: bootm: Make it boot')
-            self.assertRegex(next(itr), 'Updating branch second2 to .*')
+            self.assertRegex(
+                next(itr),
+                f'Updating branch second2 from {HASH_RE} to {HASH_RE}')
             self.assertEqual('', next(itr))
             self.assertEqual(
                 '12 patches and 3 cover letters updated, 0 missing links (32 requests)',
@@ -3166,7 +3187,7 @@ Date:   .*
             next(itr), f'- add v3 {HASH_RE} as {HASH_RE}: bootm: Make it boot')
         self.assertRegex(
             next(itr),
-            "Updating branch second3 to .*")
+            f'Updating branch second3 from {HASH_RE} to {HASH_RE}')
         self.assertEqual(
             "Setting link for series 'second' v3 to 500", next(itr))
 
