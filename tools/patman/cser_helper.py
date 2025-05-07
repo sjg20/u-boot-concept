@@ -595,12 +595,12 @@ class CseriesHelper:
         if not name:
             raise ValueError(f"Series name '{in_name}' cannot be a number, "
                              f"use '<name><version>'")
-        if in_version and (not version or version == 1):
+        if in_version:
+            if version and version != in_version:
+                tout.warning(
+                    f"Version mismatch: -V has {in_version} but branch name "
+                    f'indicates {version}')
             version = in_version
-        if in_version and version != in_version:
-            raise ValueError(
-                f"Version mismatch: -V has {in_version} but branch name "
-                f'indicates {version}')
         if not version:
             version = 1
         if version > 99:
@@ -900,7 +900,7 @@ class CseriesHelper:
 
             cur = self._finish_commit(repo, None, commit, cur, vals.msg)
             lines.append([vals.info.strip(),
-                          f'{oid(cmt.hash)} as {oid(cur.target)}: {cmt}'])
+                          f'{oid(cmt.hash)} as {oid(cur.target)} {cmt}'])
 
         max_len = max(len(info) for info, rest in lines) + 1
         for info, rest in lines:
