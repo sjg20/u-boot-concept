@@ -304,9 +304,9 @@ def do_patman(args, test_db=None, pwork=None):
                              args.patchwork_url)
         elif args.cmd == 'series':
             do_series(args, test_db, pwork)
-        elif args.cmd in ('upstream', 'us'):
+        elif args.cmd == 'upstream':
             upstream(args, test_db)
-        elif args.cmd in ('patchwork', 'pw'):
+        elif args.cmd == 'patchwork':
             patchwork(args, test_db, pwork)
     except Exception as exc:
         terminal.tprint(f'patman: {type(exc).__name__}: {exc}',

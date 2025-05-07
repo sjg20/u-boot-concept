@@ -20,6 +20,14 @@ from patman import settings
 PATMAN_DIR = pathlib.Path(__file__).parent
 HAS_TESTS = os.path.exists(PATMAN_DIR / "func_test.py")
 
+# Aliases for subcommands
+ALIASES = {
+    'series': ['s', 'ser'],
+    'status': ['st'],
+    'patchwork': ['pw'],
+    'upstream': ['us'],
+    }
+
 
 class ErrorCatchingArgumentParser(argparse.ArgumentParser):
     def __init__(self, **kwargs):
@@ -33,11 +41,11 @@ class ErrorCatchingArgumentParser(argparse.ArgumentParser):
         else:
             super().error(message)
 
-    def exit(self):
+    def exit(self, status=0, message=None):
         if self.catch_error:
             self.exit_state = True
         else:
-            super().exit()
+            super().exit(status, message)
 
 
 def add_send_args(par):
@@ -103,8 +111,31 @@ def _add_show_cover_comments(parser):
                         help='Show comments from the cover letter')
 
 
-def add_series_args(subparsers):
-    """Add the 'series' subparsers
+def add_patchwork_subparser(subparsers):
+    """Add the 'patchwork' subparser
+
+    Args:
+        subparsers (argparse action): Subparser parent
+
+    Return:
+        ArgumentParser: patchwork subparser
+    """
+    patchwork = subparsers.add_parser(
+        'patchwork', aliases=ALIASES['patchwork'],
+        help='Manage patchwork connection')
+    patchwork.defaults_cmds = [
+        ['set-project', 'U-Boot'],
+    ]
+    patchwork_subparsers = patchwork.add_subparsers(dest='subcmd')
+    patchwork_subparsers.add_parser('get-project')
+    uset = patchwork_subparsers.add_parser('set-project')
+    uset.add_argument(
+        'project_name', help="Patchwork project name, e.g. 'U-Boot'")
+    return patchwork
+
+
+def add_series_subparser(subparsers):
+    """Add the 'series' subparser
 
     Args:
         subparsers (argparse action): Subparser parent
@@ -146,7 +177,8 @@ def add_series_args(subparsers):
             action='store_false',
             help="Don't gather review/test tags / update local series")
 
-    series = subparsers.add_parser('series', help='Manage series of patches')
+    series = subparsers.add_parser('series', aliases=ALIASES['series'],
+                                   help='Manage series of patches')
     series.defaults_cmds = [
         ['set-link', 'fred'],
     ]
@@ -263,6 +295,88 @@ def add_series_args(subparsers):
     return series
 
 
+def add_send_subparser(subparsers):
+    """Add the 'send' subparser
+
+    Args:
+        subparsers (argparse action): Subparser parent
+
+    Return:
+        ArgumentParser: send subparser
+    """
+    send = subparsers.add_parser(
+        'send', help='Format, check and email patches (default command)')
+    send.add_argument(
+        '-b', '--branch', type=str,
+        help="Branch to process (by default, the current branch)")
+    send.add_argument(
+        '-n', '--dry-run', action='store_true', dest='dry_run',
+        default=False, help="Do a dry run (create but don't email patches)")
+    send.add_argument(
+        '--cc-cmd', dest='cc_cmd', type=str, action='store',
+        default=None, help='Output cc list for patch file (used by git)')
+    add_send_args(send)
+    send.add_argument('patchfiles', nargs='*')
+    return send
+
+
+def add_status_subparser(subparsers):
+    """Add the 'status' subparser
+
+    Args:
+        subparsers (argparse action): Subparser parent
+
+    Return:
+        ArgumentParser: status subparser
+    """
+    status = subparsers.add_parser('status', aliases=ALIASES['status'],
+                                   help='Check status of patches in patchwork')
+    _add_show_comments(status)
+    status.add_argument(
+        '-d', '--dest-branch', type=str,
+        help='Name of branch to create with collected responses')
+    status.add_argument('-f', '--force', action='store_true',
+                        help='Force overwriting an existing branch')
+    status.add_argument('-T', '--single-thread', action='store_true',
+                        help='Disable multithreading when reading patchwork')
+    return status
+
+
+def add_upstream_subparser(subparsers):
+    """Add the 'status' subparser
+
+    Args:
+        subparsers (argparse action): Subparser parent
+
+    Return:
+        ArgumentParser: status subparser
+    """
+    upstream = subparsers.add_parser('upstream', aliases=ALIASES['upstream'],
+                                     help='Manage upstream destinations')
+    upstream.defaults_cmds = [
+        ['add', 'us', 'http://fred'],
+        ['delete', 'us'],
+    ]
+    upstream_subparsers = upstream.add_subparsers(dest='subcmd')
+    uadd = upstream_subparsers.add_parser('add')
+    uadd.add_argument('remote_name',
+                      help="Git remote name used for this upstream, e.g. 'us'")
+    uadd.add_argument(
+        'url', help='URL to use for this upstream, e.g. '
+                    "'https://gitlab.denx.de/u-boot/u-boot.git'")
+    udel = upstream_subparsers.add_parser('delete')
+    udel.add_argument(
+        'remote_name',
+        help="Git remote name used for this upstream, e.g. 'us'")
+    upstream_subparsers.add_parser('list')
+    udef = upstream_subparsers.add_parser('default')
+    udef.add_argument('-u', '--unset', action='store_true',
+                      help='Unset the default upstream')
+    udef.add_argument('remote_name', nargs='?',
+                      help="Git remote name used for this upstream, e.g. 'us'")
+    return upstream
+
+
 def setup_parser():
     """Parse command line arguments from sys.argv[]
 
@@ -298,19 +412,11 @@ def setup_parser():
         default=False, help='Display the README file')
 
     subparsers = parser.add_subparsers(dest='cmd')
-    send = subparsers.add_parser(
-        'send', help='Format, check and email patches (default command)')
-    send.add_argument(
-        '-b', '--branch', type=str,
-        help="Branch to process (by default, the current branch)")
-    send.add_argument(
-        '-n', '--dry-run', action='store_true', dest='dry_run',
-        default=False, help="Do a dry run (create but don't email patches)")
-    send.add_argument(
-        '--cc-cmd', dest='cc_cmd', type=str, action='store',
-        default=None, help='Output cc list for patch file (used by git)')
-    add_send_args(send)
-    send.add_argument('patchfiles', nargs='*')
+    add_send_subparser(subparsers)
+    patchwork = add_patchwork_subparser(subparsers)
+    series = add_series_subparser(subparsers)
+    add_status_subparser(subparsers)
+    upstream = add_upstream_subparser(subparsers)
 
     # Only add the 'test' action if the test data files are available.
     if HAS_TESTS:
@@ -318,53 +424,6 @@ def setup_parser():
         test_parser.add_argument('testname', type=str, default=None, nargs='?',
                                  help="Specify the test to run")
 
-    status = subparsers.add_parser('status',
-                                   help='Check status of patches in patchwork')
-    _add_show_comments(status)
-    status.add_argument(
-        '-d', '--dest-branch', type=str,
-        help='Name of branch to create with collected responses')
-    status.add_argument('-f', '--force', action='store_true',
-                        help='Force overwriting an existing branch')
-    status.add_argument('-T', '--single-thread', action='store_true',
-                        help='Disable multithreading when reading patchwork')
-
-    series = add_series_args(subparsers)
-
-    upstream = subparsers.add_parser('upstream', aliases=['us'],
-                                     help='Manage upstream destinations')
-    upstream.defaults_cmds = [
-        ['add', 'us', 'http://fred'],
-        ['delete', 'us'],
-    ]
-    upstream_subparsers = upstream.add_subparsers(dest='subcmd')
-    uadd = upstream_subparsers.add_parser('add')
-    uadd.add_argument('remote_name',
-                      help="Git remote name used for this upstream, e.g. 'us'")
-    uadd.add_argument(
-        'url', help='URL to use for this upstream, e.g. '
-                    "'https://gitlab.denx.de/u-boot/u-boot.git'")
-    udel = upstream_subparsers.add_parser('delete')
-    udel.add_argument(
-        'remote_name',
-        help="Git remote name used for this upstream, e.g. 'us'")
-    upstream_subparsers.add_parser('list')
-    udef = upstream_subparsers.add_parser('default')
-    udef.add_argument('-u', '--unset', action='store_true',
-                      help='Unset the default upstream')
-    udef.add_argument('remote_name', nargs='?',
-                      help="Git remote name used for this upstream, e.g. 'us'")
-
-    patchwork = subparsers.add_parser('patchwork', aliases=['pw'],
-                                      help='Manage patchwork connection')
-    patchwork.defaults_cmds = [
-        ['set-project', 'U-Boot'],
-    ]
-    patchwork_subparsers = patchwork.add_subparsers(dest='subcmd')
-    patchwork_subparsers.add_parser('get-project')
-    uset = patchwork_subparsers.add_parser('set-project')
-    uset.add_argument(
-        'project_name', help="Patchwork project name, e.g. 'U-Boot'")
     parsers = {
         'main': parser,
         'series': series,
@@ -397,7 +456,6 @@ def parse_args(argv=None, config_fname=None, parsers=None):
     if not argv:
         argv = sys.argv[1:]
 
-    # print('argv', argv)
     args, rest = parser.parse_known_args(argv)
     if hasattr(args, 'project'):
         settings.Setup(parser, args.project, argv, config_fname)
@@ -418,6 +476,10 @@ def parse_args(argv=None, config_fname=None, parsers=None):
         # print('val', defaults['allow_unmarked'])
         # args.allow_unmarked = defaults['allow_unmarked']
 
+    # Resolve aliases
+    for full, aliases in ALIASES.items():
+        if args.cmd in aliases:
+            args.cmd = full
     if args.cmd in ['series', 'upstream', 'patchwork'] and not args.subcmd:
         parser.parse_args([args.cmd, '--help'])
 
