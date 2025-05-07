@@ -184,10 +184,10 @@ def send(args, git_dir=None, cwd=None):
     ok = ok and gitutil.check_suppress_cc_config()
 
     its_a_go = ok or args.ignore_errors
-    email_patches(
+    cmd = email_patches(
         col, series, cover_fname, patch_files, args.process_tags,
         its_a_go, args.ignore_bad_tags, args.add_maintainers,
         args.get_maintainer_script, args.limit, args.dry_run,
         args.in_reply_to, args.thread, args.smtp_server, cwd=cwd)
 
-    return its_a_go and not args.dry_run
+    return cmd and its_a_go and not args.dry_run

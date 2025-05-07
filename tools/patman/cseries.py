@@ -650,7 +650,7 @@ class Cseries(cser_helper.CseriesHelper):
 
                 print(f"{total:15}  {'':40}  {total_patches:5} {out}")
                 if total_need_scan:
-                    tout.warning(
+                    tout.info(
                         f'Series marked * ({total_need_scan}) have commit '
                         'subjects which mismatch their patches and need to be '
                         'scanned')
