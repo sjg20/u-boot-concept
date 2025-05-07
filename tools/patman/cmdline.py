@@ -228,7 +228,7 @@ def add_series_subparser(subparsers):
     series_subparsers.add_parser('dec')
     series_subparsers.add_parser('get-link')
     series_subparsers.add_parser('inc')
-    series_subparsers.add_parser('list')
+    series_subparsers.add_parser('ls')
 
     mar = series_subparsers.add_parser('mark')
     mar.add_argument('-m', '--allow-marked', action='store_true',

@@ -700,7 +700,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.setup_second()
 
         self.db_close()
-        args = Namespace(subcmd='list')
+        args = Namespace(subcmd='ls')
         with terminal.capture() as (out, _):
             control.do_series(args, test_db=self.tmpdir, pwork=True)
         lines = out.getvalue().splitlines()
@@ -735,7 +735,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.assertEqual('my-description', ser.desc)
 
         self.db_close()
-        args.subcmd = 'list'
+        args.subcmd = 'ls'
         with terminal.capture() as (out, _):
             control.do_series(args, test_db=self.tmpdir, pwork=True)
         lines = out.getvalue().splitlines()

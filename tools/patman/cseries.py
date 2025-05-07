@@ -872,9 +872,9 @@ class Cseries(cser_helper.CseriesHelper):
             raise ValueError(f"Series '{ser.name}' not found in database")
 
         args.branch = self._get_branch_name(ser.name, version)
-        send.send(args, git_dir=self.gitdir, cwd=self.topdir)
+        likely_sent = send.send(args, git_dir=self.gitdir, cwd=self.topdir)
 
-        if not args.dry_run and autolink:
+        if likely_sent and autolink:
             print(f'Autolinking with Patchwork ({autolink_wait} seconds)')
             self.link_auto(pwork, name, version, True, wait_s=autolink_wait)
 

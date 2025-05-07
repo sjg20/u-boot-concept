@@ -138,19 +138,19 @@ def do_series(args, test_db=None, pwork=None):
             _, proj_id, link_name = cser.project_get()
             pwork.project_set(proj_id, link_name)
         if args.subcmd == 'add':
-            cser.add(args.series, args.desc,
-                            mark=args.mark, allow_unmarked=args.allow_unmarked,
-                            end=args.upstream, dry_run=args.dry_run)
+            cser.add(args.series, args.desc, mark=args.mark,
+                     allow_unmarked=args.allow_unmarked, end=args.upstream,
+                     dry_run=args.dry_run)
         elif args.subcmd == 'archive':
             cser.set_archived(args.series, True)
         elif args.subcmd == 'autolink':
             cser.link_auto(pwork, args.series, args.version, args.update,
-                              args.autolink_wait)
+                           args.autolink_wait)
         elif args.subcmd == 'autolink-all':
             cser.link_auto_all(pwork, update_commit=args.update,
-                              link_all_versions=args.link_all_versions,
-                              replace_existing=args.replace_existing,
-                              dry_run=args.dry_run, show_summary=True)
+                               link_all_versions=args.link_all_versions,
+                               replace_existing=args.replace_existing,
+                               dry_run=args.dry_run, show_summary=True)
         elif args.subcmd == 'dec':
             cser.decrement(args.series, args.dry_run)
         elif args.subcmd == 'get-link':
@@ -158,13 +158,12 @@ def do_series(args, test_db=None, pwork=None):
             print(link)
         elif args.subcmd == 'inc':
             cser.increment(args.series, args.dry_run)
-        elif args.subcmd == 'list':
+        elif args.subcmd == 'ls':
             cser.series_list()
         elif args.subcmd == 'open':
             cser.open(pwork, args.series, args.version)
         elif args.subcmd == 'mark':
-            cser.mark(args.series, args.allow_marked,
-                             dry_run=args.dry_run)
+            cser.mark(args.series, args.allow_marked, dry_run=args.dry_run)
         elif args.subcmd == 'patches':
             cser.list_patches(args.series, args.version, args.commit,
                               args.patch)
@@ -182,19 +181,19 @@ def do_series(args, test_db=None, pwork=None):
                       allow_unmarked=args.allow_unmarked, end=args.upstream,
                       dry_run=args.dry_run)
         elif args.subcmd == 'send':
-            cser.send(pwork, args.series, args.autolink,
-                             args.autolink_wait, args)
+            cser.send(pwork, args.series, args.autolink, args.autolink_wait,
+                      args)
         elif args.subcmd == 'set-link':
             cser.link_set(args.series, args.version, args.link, args.update)
         elif args.subcmd == 'status':
-            cser.status(pwork, args.series, args.version,
-                               args.show_comments, args.show_cover_comments)
+            cser.status(pwork, args.series, args.version, args.show_comments,
+                        args.show_cover_comments)
         elif args.subcmd == 'summary':
             cser.summary(args.series)
         elif args.subcmd == 'sync':
-            cser.sync(pwork, args.series, args.version,
-                             args.show_comments, args.show_cover_comments,
-                             args.gather_tags, dry_run=args.dry_run)
+            cser.sync(pwork, args.series, args.version, args.show_comments,
+                      args.show_cover_comments, args.gather_tags,
+                      dry_run=args.dry_run)
         elif args.subcmd == 'sync-all':
             cser.sync_all(
                 pwork, args.show_comments, args.show_cover_comments,
@@ -202,8 +201,7 @@ def do_series(args, test_db=None, pwork=None):
         elif args.subcmd == 'unarchive':
             cser.set_archived(args.series, False)
         elif args.subcmd == 'unmark':
-            cser.unmark(args.series, args.allow_unmarked,
-                               dry_run=args.dry_run)
+            cser.unmark(args.series, args.allow_unmarked, dry_run=args.dry_run)
         elif args.subcmd == 'version-change':
             cser.version_change(args.series, args.version, args.new_version,
                                 dry_run=args.dry_run)
