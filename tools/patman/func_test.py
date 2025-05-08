@@ -31,6 +31,7 @@ from patman import patchwork
 from patman import send
 from patman.series import Series
 from patman import status
+from patman.test_common import TestCommon
 
 PATMAN_DIR = pathlib.Path(__file__).parent
 TEST_DATA_DIR = PATMAN_DIR / 'test/'
@@ -47,52 +48,22 @@ def directory_excursion(directory):
         os.chdir(current)
 
 
-class TestFunctional(unittest.TestCase):
+class TestFunctional(unittest.TestCase, TestCommon):
     """Functional tests for checking that patman behaves correctly"""
-    leb = (b'Lord Edmund Blackadd\xc3\xabr <weasel@blackadder.org>'.
-           decode('utf-8'))
     fred = 'Fred Bloggs <f.bloggs@napier.net>'
     joe = 'Joe Bloggs <joe@napierwallies.co.nz>'
     mary = 'Mary Bloggs <mary@napierwallies.co.nz>'
     commits = None
     patches = None
-    verbosity = False
-    preserve_outdirs = False
-
-    # Fake patchwork info for testing
-    SERIES_ID_SECOND_V1 = 456
-    TITLE_SECOND = 'Series for my board'
-
-    @classmethod
-    def setup_test_args(cls, preserve_indir=False, preserve_outdirs=False,
-                        toolpath=None, verbosity=None, no_capture=False):
-        """Accept arguments controlling test execution
-
-        Args:
-            preserve_indir: not used
-            preserve_outdir: Preserve the output directories used by tests.
-                Each test has its own, so this is normally only useful when
-                running a single test.
-            toolpath: not used
-        """
-        cls.preserve_outdirs = preserve_outdirs
-        cls.toolpath = toolpath
-        cls.verbosity = verbosity
-        cls.no_capture = no_capture
 
     def setUp(self):
-        self.tmpdir = tempfile.mkdtemp(prefix='patman.')
-        self.gitdir = os.path.join(self.tmpdir, '.git')
+        TestCommon.setUp(self)
         self.repo = None
         self._patman_pathname = sys.argv[0]
         self._patman_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
 
     def tearDown(self):
-        if self.preserve_outdirs:
-            print(f'Output dir: {self.tmpdir}')
-        else:
-            shutil.rmtree(self.tmpdir)
-        terminal.set_print_test_mode(False)
+        TestCommon.tearDown(self)
 
     @staticmethod
     def _get_path(fname):
