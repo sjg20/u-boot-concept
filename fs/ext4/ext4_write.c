@@ -607,6 +607,7 @@ int ext4fs_init(void)
 	int i;
 	uint32_t real_free_blocks = 0;
 	struct ext_filesystem *fs = get_fs();
+	size_t alloc_size;
 
 	/* check for a reasonable block size, no more than 64K */
 	if (LOG2_BLOCK_SIZE(ext4fs_root) > 16)
@@ -643,7 +644,9 @@ int ext4fs_init(void)
 	}
 
 	/* load all the available bitmap block of the partition */
-	fs->blk_bmaps = zalloc(fs->no_blkgrp * sizeof(char *));
+	if (check_mul_overflow(fs->no_blkgrp, sizeof(char *), &alloc_size))
+		goto fail;
+	fs->blk_bmaps = zalloc(alloc_size);
 	if (!fs->blk_bmaps)
 		goto fail;
 	for (i = 0; i < fs->no_blkgrp; i++) {
@@ -663,7 +666,7 @@ int ext4fs_init(void)
 	}
 
 	/* load all the available inode bitmap of the partition */
-	fs->inode_bmaps = zalloc(fs->no_blkgrp * sizeof(unsigned char *));
+	fs->inode_bmaps = zalloc(alloc_size);
 	if (!fs->inode_bmaps)
 		goto fail;
 	for (i = 0; i < fs->no_blkgrp; i++) {
