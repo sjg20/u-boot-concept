@@ -116,6 +116,8 @@ int ext4fs_get_bgdtable(void)
 		return -1;
 	gdsize_total = ROUND(alloc_size, fs->blksz);
 	fs->no_blk_pergdt = gdsize_total / fs->blksz;
+	if (!fs->no_blk_pergdt)
+		return -1;
 
 	/* allocate memory for gdtable */
 	fs->gdtable = zalloc(gdsize_total);
