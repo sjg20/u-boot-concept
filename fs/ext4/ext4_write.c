@@ -125,7 +125,7 @@ int ext4fs_get_bgdtable(void)
 		return -ENOMEM;
 	/* read the group descriptor table */
 	status = ext4fs_devread((lbaint_t)fs->gdtable_blkno * fs->sect_perblk,
-				0, fs->blksz * fs->no_blk_pergdt, fs->gdtable);
+				0, gdsize_total, fs->gdtable);
 	if (status == 0)
 		goto fail;
 
