@@ -608,6 +608,10 @@ int ext4fs_init(void)
 	uint32_t real_free_blocks = 0;
 	struct ext_filesystem *fs = get_fs();
 
+	/* check for a reasonable block size, no more than 64K */
+	if (LOG2_BLOCK_SIZE(ext4fs_root) > 16)
+		goto fail;
+
 	/* populate fs */
 	fs->blksz = EXT2_BLOCK_SIZE(ext4fs_root);
 	fs->sect_perblk = fs->blksz >> fs->dev_desc->log2blksz;
