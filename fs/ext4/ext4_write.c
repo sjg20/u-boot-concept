@@ -615,6 +615,8 @@ int ext4fs_init(void)
 	/* populate fs */
 	fs->blksz = EXT2_BLOCK_SIZE(ext4fs_root);
 	fs->sect_perblk = fs->blksz >> fs->dev_desc->log2blksz;
+	if (!fs->sect_perblk)
+		goto fail;
 
 	/* get the superblock */
 	fs->sb = zalloc(SUPERBLOCK_SIZE);
