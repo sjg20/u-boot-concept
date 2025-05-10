@@ -25,6 +25,7 @@
 #include <malloc.h>
 #include <memalign.h>
 #include <part.h>
+#include <linux/overflow.h>
 #include <linux/stat.h>
 #include <div64.h>
 #include "ext4_common.h"
@@ -111,7 +112,8 @@ int ext4fs_get_bgdtable(void)
 	size_t alloc_size;
 	int gdsize_total;
 
-	alloc_size = fs->no_blkgrp * fs->gdsize;
+	if (check_mul_overflow(fs->no_blkgrp, fs->gdsize, &alloc_size))
+		return -1;
 	gdsize_total = ROUND(alloc_size, fs->blksz);
 	fs->no_blk_pergdt = gdsize_total / fs->blksz;
 
