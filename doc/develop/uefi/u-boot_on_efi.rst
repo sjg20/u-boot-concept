@@ -97,9 +97,8 @@ that EFI does not support booting a 64-bit application from a 32-bit
 EFI (or vice versa). Also it will often fail to print an error message if
 you get this wrong.
 
-You may find the script `scripts/build-efi.py` helpful for building and testing
-U-Boot on UEFI on QEMU. It also includes links to UEFI binaries dating from
-2021.
+You may find the script `scripts/build-efi` helpful for building and testing
+U-Boot on UEFI on QEMU.
 
 See `Example run`_ for an example run.
 
@@ -202,7 +201,7 @@ Example run
 
 This shows running with serial enabled (see `include/configs/efi-x86_app.h`)::
 
-   $ scripts/build-efi.py -wsPr
+   $ scripts/build-efi -wsPr
    Packaging efi-x86_app32
    Running qemu-system-i386
 
