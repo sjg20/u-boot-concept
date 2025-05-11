@@ -1127,6 +1127,7 @@ W:	https://docs.u-boot.org/en/latest/board/emulation/script.html
 F:	configs/qemu_x86*
 F:	doc/board/emulation/script.rst
 F:	scripts/build-qemu.sh
+F:	scripts/build_helper.py
 
 ENVIRONMENT
 M:	Joe Hershberger <joe.hershberger@ni.com>
