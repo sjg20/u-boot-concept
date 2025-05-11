@@ -48,34 +48,6 @@ void efi_clear_bootdev(void)
 	image_size = 0;
 }
 
-efi_status_t calculate_paths(const char *dev, const char *devnr, const char *path,
-			     struct efi_device_path **device_pathp,
-			     struct efi_device_path **image_pathp)
-
-{
-	struct efi_device_path *image, *device;
-	efi_status_t ret;
-
-	ret = efi_dp_from_name(dev, devnr, path, &device, &image);
-	if (ret != EFI_SUCCESS)
-		return ret;
-
-	*device_pathp = device;
-	if (image) {
-		/* FIXME: image should not contain device */
-		struct efi_device_path *image_tmp = image;
-
-		efi_dp_split_file_path(image, &device, &image);
-		free(image_tmp);
-	}
-	*image_pathp = image;
-	log_debug("- boot device %pD\n", device);
-	if (image)
-		log_debug("- image %pD\n", image);
-
-	return EFI_SUCCESS;
-}
-
 /**
  * efi_set_bootdev() - set boot device
  *
@@ -139,69 +111,6 @@ void efi_set_bootdev(const char *dev, const char *devnr, const char *path,
 }
 
 /**
- * efi_run_image() - run loaded UEFI image
- *
- * @source_buffer:	memory address of the UEFI image
- * @source_size:	size of the UEFI image
- * @device:		EFI device-path
- * @image:		EFI image-path
- * Return:		status code
- */
-static efi_status_t efi_run_image(void *source_buffer, efi_uintn_t source_size,
-				  struct efi_device_path *device,
-				  struct efi_device_path *image)
-{
-	efi_handle_t handle;
-	struct efi_device_path *msg_path, *file_path;
-	efi_status_t ret;
-	u16 *load_options;
-
-	file_path = efi_dp_concat(device, image, 0);
-	msg_path = image;
-
-	log_info("Booting %pD\n", msg_path);
-
-	ret = EFI_CALL(efi_load_image(false, efi_root, file_path, source_buffer,
-				      source_size, &handle));
-	if (ret != EFI_SUCCESS) {
-		log_err("Loading image failed\n");
-		goto out;
-	}
-
-	/* Transfer environment variable as load options */
-	ret = efi_env_set_load_options(handle, "bootargs", &load_options);
-	if (ret != EFI_SUCCESS)
-		goto out;
-
-	ret = do_bootefi_exec(handle, load_options);
-
-out:
-
-	return ret;
-}
-
-static efi_status_t efi_binary_run_(void *image_ptr, size_t size, void *fdt,
-				    struct efi_device_path *device,
-				    struct efi_device_path *image)
-{
-	efi_status_t ret;
-
-	/* Initialize EFI drivers */
-	ret = efi_init_obj_list();
-	if (ret != EFI_SUCCESS) {
-		log_err("Error: Cannot initialize UEFI sub-system, r = %lu\n",
-			ret & ~EFI_ERROR_MASK);
-		return -1;
-	}
-
-	ret = efi_install_fdt(fdt);
-	if (ret != EFI_SUCCESS)
-		return ret;
-
-	return efi_run_image(image_ptr, size, device, image);
-}
-
-/**
  * efi_binary_run() - run loaded UEFI image
  *
  * @image:	memory address of the UEFI image
@@ -241,8 +150,8 @@ efi_status_t efi_binary_run(void *image, size_t size, void *fdt)
 		log_debug("Loaded from disk\n");
 	}
 
-	ret = efi_binary_run_(image, size, fdt, bootefi_device_path,
-			      bootefi_image_path);
+	ret = efi_binary_run_dp(image, size, fdt, bootefi_device_path,
+				bootefi_image_path);
 out:
 	if (mem_handle) {
 		efi_status_t r;
@@ -253,77 +162,6 @@ out:
 			log_err("Uninstalling protocol interfaces failed\n");
 	}
 	free(file_path);
-
-	return ret;
-}
-
-/**
- * calc_dev_name() - Calculate the device name to give to EFI
- *
- * If not supported, this shows an error.
- *
- * Return name, or NULL if not supported
- */
-static const char *calc_dev_name(struct bootflow *bflow)
-{
-	const struct udevice *media_dev;
-
-	media_dev = dev_get_parent(bflow->dev);
-
-	if (!bflow->blk) {
-		if (device_get_uclass_id(media_dev) == UCLASS_ETH)
-			return "Net";
-
-		log_err("Cannot boot EFI app on media '%s'\n",
-			dev_get_uclass_name(media_dev));
-
-		return NULL;
-	}
-
-	if (device_get_uclass_id(media_dev) == UCLASS_MASS_STORAGE)
-		return "usb";
-
-	return blk_get_uclass_name(device_get_uclass_id(media_dev));
-}
-
-efi_status_t efi_bootflow_run(struct bootflow *bflow)
-{
-	struct efi_device_path *device, *image;
-	const struct udevice *media_dev;
-	struct blk_desc *desc = NULL;
-	const char *dev_name;
-	char devnum_str[9];
-	efi_status_t ret;
-	void *fdt;
-
-	media_dev = dev_get_parent(bflow->dev);
-	if (bflow->blk) {
-		desc = dev_get_uclass_plat(bflow->blk);
-
-		snprintf(devnum_str, sizeof(devnum_str), "%x:%x",
-			 desc ? desc->devnum : dev_seq(media_dev), bflow->part);
-	} else {
-		*devnum_str = '\0';
-	}
-
-	dev_name = calc_dev_name(bflow);
-	log_debug("dev_name '%s' devnum_str '%s' fname '%s' media_dev '%s'\n",
-		  dev_name, devnum_str, bflow->fname, media_dev->name);
-	if (!dev_name)
-		return EFI_UNSUPPORTED;
-	ret = calculate_paths(dev_name, devnum_str, bflow->fname, &device,
-			      &image);
-	if (ret)
-		return EFI_UNSUPPORTED;
-
-	if (bflow->flags & BOOTFLOWF_USE_BUILTIN_FDT) {
-		log_debug("Booting with built-in fdt\n");
-		fdt = EFI_FDT_USE_INTERNAL;
-	} else {
-		log_debug("Booting with external fdt\n");
-		fdt = map_sysmem(bflow->fdt_addr, 0);
-	}
-	ret = efi_binary_run_(bflow->buf, bflow->size, fdt, device, image);
 
 	return ret;
 }

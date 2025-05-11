@@ -155,9 +155,6 @@ static inline void efi_set_bootdev(const char *dev, const char *devnr,
 	EFI_GUID(0xb2ac5fc9, 0x92b7, 0x4acd, \
 		 0xae, 0xac, 0x11, 0xe8, 0x18, 0xc3, 0x13, 0x0c)
 
-/* Use internal device tree when starting UEFI application */
-#define EFI_FDT_USE_INTERNAL NULL
-
 /* Root node */
 extern efi_handle_t efi_root;
 
@@ -1228,8 +1225,6 @@ efi_status_t efi_load_option_dp_join(struct efi_device_path **dp,
 				     size_t *dp_size,
 				     struct efi_device_path *initrd_dp,
 				     struct efi_device_path *fdt_dp);
-
-int efi_get_distro_fdt_name(char *fname, int size, int seq);
 
 void efi_load_distro_fdt(efi_handle_t handle, void **fdt, efi_uintn_t *fdt_size);
 

@@ -560,6 +560,9 @@ extern char _binary_u_boot_bin_start[], _binary_u_boot_bin_end[], _binary_u_boot
 				EFI_VARIABLE_APPEND_WRITE | \
 				EFI_VARIABLE_ENHANCED_AUTHENTICATED_ACCESS)
 
+/* Use internal device tree when starting UEFI application */
+#define EFI_FDT_USE_INTERNAL NULL
+
 /**
  * efi_get_priv() - Get access to the EFI-private information
  *
@@ -727,5 +730,39 @@ static inline bool efi_use_host_arch(void)
  * Return: Architecture value
  */
 int efi_get_pxe_arch(void);
+
+/**
+ * efi_get_distro_fdt_name() - get the filename for reading the .dtb file
+ *
+ * @fname:	buffer for filename
+ * @size:	buffer size
+ * @seq:	sequence number, to cycle through options (0=first)
+ *
+ * Returns:
+ * 0 on success,
+ * -ENOENT if the "fdtfile" env var does not exist,
+ * -EINVAL if there are no more options,
+ * -EALREADY if the control FDT should be used
+ */
+int efi_get_distro_fdt_name(char *fname, int size, int seq);
+
+efi_status_t calculate_paths(const char *dev, const char *devnr, const char *path,
+			     struct efi_device_path **device_pathp,
+			     struct efi_device_path **image_pathp);
+
+
+/**
+ * efi_binary_run_dp() - run UEFI image given device paths
+ *
+ * @image_ptr:		pointer to UEFI image
+ * @size:		size of the UEFI image
+ * @fdt:		FDT pointer
+ * @device:		EFI device-path
+ * @image:		EFI image-path
+ * Return:		status code
+ */
+efi_status_t efi_binary_run_dp(void *image_ptr, size_t size, void *fdt,
+			       struct efi_device_path *device,
+			       struct efi_device_path *image);
 
 #endif /* _LINUX_EFI_H */

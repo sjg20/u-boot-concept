@@ -77,7 +77,9 @@ CPPFLAGS_crt0-efi-$(EFIARCH).o += $(CFLAGS_EFI)
 ifeq ($(CONFIG_EFI_APP),y)
 
 PLATFORM_CPPFLAGS += $(CFLAGS_EFI)
-LDFLAGS_FINAL += -znocombreloc -shared
+# --gc-sections
+LDFLAGS_FINAL += -znocombreloc -shared --no-undefined
+#  --no-undefined
 LDSCRIPT := $(LDSCRIPT_EFI)
 
 else
