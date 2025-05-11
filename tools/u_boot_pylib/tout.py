@@ -9,7 +9,7 @@ import sys
 from u_boot_pylib import terminal
 
 # Output verbosity levels that we support
-ERROR, WARNING, NOTICE, INFO, DETAIL, DEBUG = range(6)
+FATAL, ERROR, WARNING, NOTICE, INFO, DETAIL, DEBUG = range(7)
 
 in_progress = False
 
@@ -87,6 +87,8 @@ def _output(level, msg, color=None):
             print(msg, file=sys.stderr)
         else:
             print(msg)
+    if level == FATAL:
+        sys.exit(1)
 
 def do_output(level, msg):
     """Output a message to the terminal.
@@ -97,6 +99,14 @@ def do_output(level, msg):
         msg; Message to display.
     """
     _output(level, msg)
+
+def fatal(msg):
+    """Display an error message and exit
+
+    Args:
+        msg; Message to display.
+    """
+    _output(FATAL, msg, _color.RED)
 
 def error(msg):
     """Display an error message
