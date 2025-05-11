@@ -38,18 +38,19 @@ class Helper:
             tools.write_file(fname, '''# U-Boot QEMU-scripts config
 
 [DEFAULT]
-# Image-output filename
-image_file = try.img
-
-# Image directory (for prebuilt UEFI-images)
-image_dir = ~/dev/uefi
-
 # Set ubdir to the build directory where you build U-Boot out-of-tree
 # We avoid in-tree build because it gets confusing trying different builds
+# Each board gets a build in a separate subdir
 build_dir = /tmp/b
+
+# Image directory (for OS images)
+image_dir = ~/dev/os
 
 # Build the kernel with: make O=/tmp/kernel
 bzimage = /tmp/kernel/arch/x86/boot/bzImage
+
+# EFI image-output filename
+efi_image_file = try.img
 
 # Directory where OVMF-pure-efi.i386.fd etc. are kept
 efi_dir = ~/dev/efi
@@ -59,10 +60,6 @@ sct_dir = ~/dev/efi/sct
 
 # Directory where the SCT image is temporarily mounted for modification
 sct_mnt = /mnt/sct
-
-# Directory containing Tianocore builds (e.g. OVMF-pure-efi.x64.fd)
-tianocore_dir = ~/dev/efi/tianocore
-
 ''', binary=False)
         self.settings.read(fname)
 
