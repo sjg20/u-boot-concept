@@ -5,6 +5,7 @@
 
 #define LOG_CATEGORY LOGC_EFI
 #include <bootm.h>
+#include <efi_device_path.h>
 #include <env.h>
 #include <image.h>
 #include <log.h>

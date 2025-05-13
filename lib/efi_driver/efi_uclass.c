@@ -18,6 +18,7 @@
  */
 
 #include <dm.h>
+#include <efi_device_path.h>
 #include <efi_driver.h>
 #include <log.h>
 #include <malloc.h>

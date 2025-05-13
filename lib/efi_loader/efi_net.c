@@ -15,6 +15,7 @@
  * Reset():	 EfiSimpleNetworkInitialized -> EfiSimpleNetworkInitialized
  */
 
+#include <efi_device_path.h>
 #include <efi_loader.h>
 #include <malloc.h>
 #include <net.h>

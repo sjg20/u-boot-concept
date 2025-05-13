@@ -12,6 +12,7 @@
 #include <charset.h>
 #include <dm.h>
 #include <efi.h>
+#include <efi_device_path.h>
 #include <log.h>
 #include <malloc.h>
 #include <mapmem.h>
