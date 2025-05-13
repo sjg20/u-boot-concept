@@ -728,4 +728,19 @@ static inline bool efi_use_host_arch(void)
  */
 int efi_get_pxe_arch(void);
 
+/**
+ * efi_get_distro_fdt_name() - get the filename for reading the .dtb file
+ *
+ * @fname:	buffer for filename
+ * @size:	buffer size
+ * @seq:	sequence number, to cycle through options (0=first)
+ *
+ * Returns:
+ * 0 on success,
+ * -ENOENT if the "fdtfile" env var does not exist,
+ * -EINVAL if there are no more options,
+ * -EALREADY if the control FDT should be used
+ */
+int efi_get_distro_fdt_name(char *fname, int size, int seq);
+
 #endif /* _LINUX_EFI_H */

@@ -34,9 +34,15 @@ obj-y	+= northbridge-uclass.o
 obj-$(CONFIG_I8259_PIC) += i8259.o
 obj-$(CONFIG_I8254_TIMER) += i8254.o
 obj-$(CONFIG_PINCTRL_ICH6) += pinctrl_ich6.o
+
+ifndef CONFIG_EFI_APP
 obj-y	+= pirq_routing.o
+endif
+
 obj-y	+= relocate.o
+ifndef CONFIG_EFI_APP
 obj-y += physmem.o
+endif
 obj-$(CONFIG_INTEL_MID) += pmu.o
 obj-$(CONFIG_X86_RAMTEST) += ramtest.o
 obj-$(CONFIG_INTEL_MID) += scu.o
@@ -44,7 +50,7 @@ obj-y	+= sections.o
 obj-y += sfi.o
 obj-y	+= acpi.o
 obj-$(CONFIG_HAVE_ACPI_RESUME) += acpi_s3.o
-ifndef CONFIG_QEMU
+ifeq ($(CONFIG_QEMU)$(CONFIG_EFI_APP),)
 obj-y += acpigen.o
 obj-$(CONFIG_$(PHASE_)GENERATE_ACPI_TABLE) += acpi_table.o
 endif

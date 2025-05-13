@@ -40,7 +40,9 @@ AFLAGS_call32.o := -fpic -fshort-wchar \
 extra-y += call32.o
 endif
 
+ifndef CONFIG_EFI_APP
 obj-y += intel_common/
+endif
 obj-$(CONFIG_INTEL_APOLLOLAKE) += apollolake/
 obj-$(CONFIG_INTEL_BAYTRAIL) += baytrail/
 obj-$(CONFIG_INTEL_BRASWELL) += braswell/
