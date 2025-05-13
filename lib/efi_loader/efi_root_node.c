@@ -11,8 +11,6 @@
 #include <efi_dt_fixup.h>
 #include <efi_loader.h>
 
-const efi_guid_t efi_u_boot_guid = U_BOOT_GUID;
-
 efi_handle_t efi_root = NULL;
 
 struct efi_root_dp {
