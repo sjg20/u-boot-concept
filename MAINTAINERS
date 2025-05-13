@@ -1073,7 +1073,7 @@ F:	configs/efi-x86_app*
 F:	doc/develop/uefi/u-boot_on_efi.rst
 F:	drivers/block/efi-media-uclass.c
 F:	drivers/block/sb_efi_media.c
-F:	lib/efi/
+F:	lib/efi_client/
 F:	scripts/build-efi
 F:	test/dm/efi_media.c
 
