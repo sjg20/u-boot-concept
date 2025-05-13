@@ -7,6 +7,7 @@
  */
 
 #define LOG_CATEGORY UCLASS_BOOTSTD
+#define LOG_DEBUG
 
 #include <bootdev.h>
 #include <bootflow.h>
@@ -110,11 +111,16 @@ static int distro_efi_try_bootflow_files(struct udevice *dev,
 		return -ENOENT;
 	}
 
+	log_debug("fname1\n");
 	strcpy(fname, EFI_DIRNAME);
+	log_debug("fname2\n");
+	log_debug("fname3 %p\n", efi_get_basename());
 	strcat(fname, efi_get_basename());
+	log_debug("getting blk %p\n", bflow->blk);
 
 	if (bflow->blk)
 		 desc = dev_get_uclass_plat(bflow->blk);
+	log_debug("try file %s\n", fname);
 	ret = bootmeth_try_file(bflow, desc, NULL, fname);
 	if (ret) {
 		log_debug("File '%s' not found (desc devnum %d)\n", fname,
