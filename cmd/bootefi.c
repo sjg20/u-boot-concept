@@ -83,8 +83,8 @@ static efi_status_t bootefi_test_prepare
 		return ret;
 
 failure:
-	efi_free_pool(test_device_path);
-	efi_free_pool(test_image_path);
+	free(test_device_path);
+	free(test_image_path);
 	/* TODO: not sure calling clear function is necessary */
 	efi_clear_bootdev();
 	return ret;
@@ -109,8 +109,8 @@ static int do_efi_selftest(void)
 	/* Execute the test */
 	ret = EFI_CALL(efi_selftest(&image_obj->header, &systab));
 	free(loaded_image_info->load_options);
-	efi_free_pool(test_device_path);
-	efi_free_pool(test_image_path);
+	free(test_device_path);
+	free(test_image_path);
 	if (ret != EFI_SUCCESS)
 		efi_delete_handle(&image_obj->header);
 	else
