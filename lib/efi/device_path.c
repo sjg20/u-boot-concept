@@ -23,6 +23,16 @@
 #include <asm-generic/unaligned.h>
 #include <linux/compat.h> /* U16_MAX */
 
+const efi_guid_t efi_global_variable_guid = EFI_GLOBAL_VARIABLE_GUID;
+const efi_guid_t efi_guid_device_path = EFI_DEVICE_PATH_PROTOCOL_GUID;
+const efi_guid_t efi_guid_loaded_image = EFI_LOADED_IMAGE_PROTOCOL_GUID;
+const efi_guid_t efi_guid_loaded_image_device_path =
+		EFI_LOADED_IMAGE_DEVICE_PATH_PROTOCOL_GUID;
+const efi_guid_t efi_simple_file_system_protocol_guid =
+		EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
+const efi_guid_t efi_file_info_guid = EFI_FILE_INFO_GUID;
+const efi_guid_t efi_u_boot_guid = U_BOOT_GUID;
+
 /* template EFI_DP_END node: */
 const struct efi_device_path EFI_DP_END = {
 	.type     = DEVICE_PATH_TYPE_END,
