@@ -591,9 +591,9 @@ config BOOTMETH_EXTLINUX_PXE
 
 	  This provides a way to try out standard boot on an existing boot flow.
 
-config BOOTMETH_EFILOADER
+config BOOTMETH_EFI
 	bool "Bootdev support for EFI boot"
-	depends on EFI_BINARY_EXEC
+	depends on EFI_BINARY_EXEC || EFI_APP
 	imply CMD_TFTPBOOT if CMD_NET
 	default y
 	help
@@ -662,7 +662,7 @@ config BOOTMETH_DISTRO
 	select BOOTMETH_SCRIPT if CMDLINE # E.g. Armbian uses scripts
 	select BOOTMETH_EXTLINUX  # E.g. Debian uses these
 	select BOOTMETH_EXTLINUX_PXE if CMD_PXE && CMD_NET && DM_ETH
-	select BOOTMETH_EFILOADER if EFI_BINARY_EXEC # E.g. Ubuntu uses this
+	select BOOTMETH_EFI if EFI_BINARY_EXEC # E.g. Ubuntu uses this
 
 config SPL_BOOTMETH_VBE
 	bool "Bootdev support for Verified Boot for Embedded (SPL)"
