@@ -560,6 +560,9 @@ extern char _binary_u_boot_bin_start[], _binary_u_boot_bin_end[], _binary_u_boot
 				EFI_VARIABLE_APPEND_WRITE | \
 				EFI_VARIABLE_ENHANCED_AUTHENTICATED_ACCESS)
 
+/* Use internal device tree when starting UEFI application */
+#define EFI_FDT_USE_INTERNAL NULL
+
 /**
  * efi_get_priv() - Get access to the EFI-private information
  *
@@ -742,5 +745,9 @@ int efi_get_pxe_arch(void);
  * -EALREADY if the control FDT should be used
  */
 int efi_get_distro_fdt_name(char *fname, int size, int seq);
+
+efi_status_t calculate_paths(const char *dev, const char *devnr, const char *path,
+			     struct efi_device_path **device_pathp,
+			     struct efi_device_path **image_pathp);
 
 #endif /* _LINUX_EFI_H */

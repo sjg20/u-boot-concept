@@ -78,7 +78,8 @@ ifeq ($(CONFIG_EFI_APP),y)
 
 PLATFORM_CPPFLAGS += $(CFLAGS_EFI)
 # --gc-sections
-LDFLAGS_FINAL += -znocombreloc -shared --no-undefined
+LDFLAGS_FINAL += -znocombreloc -shared
+#--no-undefined
 LDSCRIPT := $(LDSCRIPT_EFI)
 
 else

@@ -2,8 +2,6 @@
 #
 # (C) Copyright 2015 Google, Inc
 
-obj-y += basename.o
-
 obj-$(CONFIG_EFI_APP) += efi_app.o efi.o efi_app_init.o efi_vars.o efi_dtb.o
 obj-$(CONFIG_EFI_APP) += sdram.o
 obj-$(CONFIG_EFI_STUB) += efi_info.o
