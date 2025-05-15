@@ -1074,7 +1074,7 @@ F:	doc/develop/uefi/u-boot_on_efi.rst
 F:	drivers/block/efi-media-uclass.c
 F:	drivers/block/sb_efi_media.c
 F:	lib/efi/
-F:	scripts/build-efi.py
+F:	scripts/build-efi
 F:	test/dm/efi_media.c
 
 EFI LOGGING
@@ -1126,7 +1126,8 @@ S:	Maintained
 W:	https://docs.u-boot.org/en/latest/board/emulation/script.html
 F:	configs/qemu_x86*
 F:	doc/board/emulation/script.rst
-F:	scripts/build-qemu.sh
+F:	scripts/build-qemu
+F:	scripts/build_helper.py
 
 ENVIRONMENT
 M:	Joe Hershberger <joe.hershberger@ni.com>
