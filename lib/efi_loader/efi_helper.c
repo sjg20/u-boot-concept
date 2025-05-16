@@ -4,6 +4,7 @@
  */
 
 #define LOG_CATEGORY LOGC_EFI
+
 #include <bootm.h>
 #include <env.h>
 #include <image.h>
@@ -453,30 +454,18 @@ efi_status_t efi_env_set_load_options(efi_handle_t handle,
  */
 static efi_status_t copy_fdt(void **fdtp)
 {
-	unsigned long fdt_ram_start = -1L, fdt_pages;
+	unsigned long fdt_pages;
 	efi_status_t ret = 0;
 	void *fdt, *new_fdt;
 	u64 new_fdt_addr;
 	uint fdt_size;
-	int i;
-
-	for (i = 0; i < CONFIG_NR_DRAM_BANKS; i++) {
-		u64 ram_start = gd->bd->bi_dram[i].start;
-		u64 ram_size = gd->bd->bi_dram[i].size;
-
-		if (!ram_size)
-			continue;
-
-		if (ram_start < fdt_ram_start)
-			fdt_ram_start = ram_start;
-	}
 
 	/*
 	 * Give us at least 12 KiB of breathing room in case the device tree
 	 * needs to be expanded later.
 	 */
 	fdt = *fdtp;
-	fdt_pages = efi_size_in_pages(fdt_totalsize(fdt) + 0x3000);
+	fdt_pages = efi_size_in_pages(fdt_totalsize(fdt) + CONFIG_SYS_FDT_PAD);
 	fdt_size = fdt_pages << EFI_PAGE_SHIFT;
 
 	ret = efi_allocate_pages(EFI_ALLOCATE_ANY_PAGES,
