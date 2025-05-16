@@ -750,4 +750,19 @@ efi_status_t calculate_paths(const char *dev, const char *devnr, const char *pat
 			     struct efi_device_path **device_pathp,
 			     struct efi_device_path **image_pathp);
 
+
+/**
+ * efi_binary_run_dp() - run UEFI image given device paths
+ *
+ * @image_ptr:		pointer to UEFI image
+ * @size:		size of the UEFI image
+ * @fdt:		FDT pointer
+ * @device:		EFI device-path
+ * @image:		EFI image-path
+ * Return:		status code
+ */
+efi_status_t efi_binary_run_dp(void *image_ptr, size_t size, void *fdt,
+			       struct efi_device_path *device,
+			       struct efi_device_path *image);
+
 #endif /* _LINUX_EFI_H */

@@ -5,3 +5,4 @@
 
 obj-y += basename.o
 obj-y += device_path.o
+obj-y += run.o

@@ -111,69 +111,6 @@ void efi_set_bootdev(const char *dev, const char *devnr, const char *path,
 }
 
 /**
- * efi_run_image() - run loaded UEFI image
- *
- * @source_buffer:	memory address of the UEFI image
- * @source_size:	size of the UEFI image
- * @device:		EFI device-path
- * @image:		EFI image-path
- * Return:		status code
- */
-static efi_status_t efi_run_image(void *source_buffer, efi_uintn_t source_size,
-				  struct efi_device_path *device,
-				  struct efi_device_path *image)
-{
-	efi_handle_t handle;
-	struct efi_device_path *msg_path, *file_path;
-	efi_status_t ret;
-	u16 *load_options;
-
-	file_path = efi_dp_concat(device, image, 0);
-	msg_path = image;
-
-	log_info("Booting %pD\n", msg_path);
-
-	ret = EFI_CALL(efi_load_image(false, efi_root, file_path, source_buffer,
-				      source_size, &handle));
-	if (ret != EFI_SUCCESS) {
-		log_err("Loading image failed\n");
-		goto out;
-	}
-
-	/* Transfer environment variable as load options */
-	ret = efi_env_set_load_options(handle, "bootargs", &load_options);
-	if (ret != EFI_SUCCESS)
-		goto out;
-
-	ret = do_bootefi_exec(handle, load_options);
-
-out:
-
-	return ret;
-}
-
-static efi_status_t efi_binary_run_(void *image_ptr, size_t size, void *fdt,
-				    struct efi_device_path *device,
-				    struct efi_device_path *image)
-{
-	efi_status_t ret;
-
-	/* Initialize EFI drivers */
-	ret = efi_init_obj_list();
-	if (ret != EFI_SUCCESS) {
-		log_err("Error: Cannot initialize UEFI sub-system, r = %lu\n",
-			ret & ~EFI_ERROR_MASK);
-		return -1;
-	}
-
-	ret = efi_install_fdt(fdt);
-	if (ret != EFI_SUCCESS)
-		return ret;
-
-	return efi_run_image(image_ptr, size, device, image);
-}
-
-/**
  * efi_binary_run() - run loaded UEFI image
  *
  * @image:	memory address of the UEFI image
@@ -213,8 +150,8 @@ efi_status_t efi_binary_run(void *image, size_t size, void *fdt)
 		log_debug("Loaded from disk\n");
 	}
 
-	ret = efi_binary_run_(image, size, fdt, bootefi_device_path,
-			      bootefi_image_path);
+	ret = efi_binary_run_dp(image, size, fdt, bootefi_device_path,
+				bootefi_image_path);
 out:
 	if (mem_handle) {
 		efi_status_t r;
