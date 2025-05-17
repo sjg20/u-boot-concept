@@ -13,12 +13,6 @@ SECTIONS
 	image_base = .;
 	.hash : { *(.hash) }	/* this MUST come first, EFI expects it */
 	. = ALIGN(4096);
-	.eh_frame : {
-		*(.eh_frame)
-	}
-
-	. = ALIGN(4096);
-
 	.text : {
 		*(.text)
 		*(.text.*)
@@ -26,21 +20,21 @@ SECTIONS
 	}
 
 	. = ALIGN(4096);
-
 	.reloc : {
 		*(.reloc)
 	}
 
 	. = ALIGN(4096);
-
 	.data : {
 		*(.rodata*)
-		*(.got.plt)
-		*(.got)
 		*(.data*)
 		*(.sdata)
-		/* the EFI loader doesn't seem to like a .bss section, so we stick
-		 * it all into .data: */
+		*(.got.plt)
+		*(.got)
+		/*
+		 * the EFI loader doesn't seem to like a .bss section, so we
+		 * stick it all into .data:
+		 */
 		*(.sbss)
 		*(.scommon)
 		*(.dynbss)
@@ -57,8 +51,8 @@ SECTIONS
 
 	. = ALIGN(4096);
 	.dynamic : { *(.dynamic) }
-	. = ALIGN(4096);
 
+	. = ALIGN(4096);
 	.rela : {
 		*(.rela.data*)
 		*(.rela.got)
@@ -72,10 +66,9 @@ SECTIONS
 	.dynstr : { *(.dynstr) }
 	. = ALIGN(4096);
 
-        /DISCARD/ : { *(.eh_frame) }
-
-	.ignored.reloc : {
+	/DISCARD/ : {
 		*(.rela.reloc)
+		*(.eh_frame)
 		*(.note.GNU-stack)
 	}
 
