@@ -338,6 +338,45 @@ Additionally something like (sda is assumed as disk device):
 	append  root=/dev/sda2 console=tty0 console=ttyS0,115200n8 rootwait rw
 
 
+Debugging
+---------
+
+Debugging the app is not straightforward since it is relocated by the UEFI
+firmware before it is run.
+
+See
+`Debugging UEFI applications with GDB <https://wiki.osdev.org/Debugging_UEFI_applications_with_GDB>`_
+for details.
+
+Within U-Boot, enable `CONFIG_EFI_APP_DEBUG` which will cause U-Boot to write
+deadbeef to address `10000` which you can catch with gdb.
+
+In gdb the procedure is something like this, for a 64-bit machine::
+
+  # Enable CONFIG_EFI_APP_DEBUG in the build
+  $ grep CONFIG_EFI_APP_DEBUG .config
+  CONFIG_EFI_APP_DEBUG=y
+
+  $ gdb u-boot
+  # Connect to the target; here we assume 'qemu -Ss' has been started
+  (gdb) target remote localhost:1234
+
+  # Set a watchpoint for the marker write
+  (gdb) watch *(unsigned long *)0x10000 == 0xdeadbeef
+  (gdb) continue
+
+  # Execution will break as soon as the marker is written.
+  # Now, fetch the relocated base address:
+  (gdb) set $base = *(unsigned long long *)0x10008
+  (gdb) add-symbol-file u-boot -o $base
+
+  # Now you can set other breakpoints as needed
+
+For a 32-bit machine, use `unsigned long` for the cast when setting `$base`
+
+The address of 0x10000 is defined by `GDB_ADDR` which you can change in the
+code if needed.
+
 
 Future work
 -----------

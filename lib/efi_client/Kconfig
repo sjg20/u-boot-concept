@@ -70,14 +70,24 @@ config EFI_STUB_64BIT
 
 endchoice
 
+if EFI_APP
+
 config EFI_RAM_SIZE
 	hex "Amount of EFI RAM for U-Boot"
-	depends on EFI_APP
 	default 0x10000000
 	help
 	  Set the amount of EFI RAM which is claimed by U-Boot for its own
 	  use. U-Boot allocates this from EFI on start-up (along with a few
 	  other smaller amounts) and it can never be increased after that.
 	  It is used as the RAM size in with U-Boot.
+
+config EFI_APP_DEBUG
+	bool "Enable GDB debugging"
+	help
+	  Enable this to allow GDB to stop the app at an early stage, so it is
+	  possible to set the symbol offset. Since the app is relocated to an
+	  unknown address, breakpoints will only work if this is done.
+
+endif  # EFI_APP
 
 endmenu
