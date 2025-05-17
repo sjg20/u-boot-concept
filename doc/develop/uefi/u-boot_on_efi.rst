@@ -44,7 +44,9 @@ Build Instructions
 ------------------
 First choose a board that has EFI support and obtain an EFI implementation
 for that board. It will be either 32-bit or 64-bit. Alternatively, you can
-opt for using QEMU [1] and the OVMF [2], as detailed below.
+opt for using `QEMU <http://www.qemu.org>`_ and the
+`OVMF <https://github.com/tianocore/tianocore.github.io/wiki/OVMF>`_, as
+detailed below.
 
 To build U-Boot as an EFI application, enable CONFIG_EFI_CLIENT and
 CONFIG_EFI_APP. The efi-x86_app32 and efi-x86_app64 configs are set up for
@@ -341,8 +343,6 @@ Future work
 -----------
 This work could be extended in a number of ways:
 
-- Add ARM support
-
 - Figure out how to solve the interrupt problem
 
 - Add more drivers to the application side (e.g.USB, environment access).
@@ -372,6 +372,3 @@ common/cmd_efi.c
 Ben Stoltz, Simon Glass
 Google, Inc
 July 2015
-
-* [1] http://www.qemu.org
-* [2] https://github.com/tianocore/tianocore.github.io/wiki/OVMF
