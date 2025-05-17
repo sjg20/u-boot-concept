@@ -18,6 +18,31 @@
 #include <efi.h>
 #include <efi_api.h>
 
+enum {
+	/* magic number to trigger gdb breakpoint */
+	GDB_MAGIC	= 0xdeadbeef,
+
+	/* breakpoint address */
+	GDB_ADDR	= 0x10000,
+};
+
+/**
+ * struct gdb_marker - structure to simplify debugging with gdb
+ *
+ * This struct is placed in memory and accessed to trigger a breakpoint in
+ * gdb.
+ *
+ * @magic: Magic number (GDB_MAGIC)
+ * @base: Base address of the app
+ */
+struct gdb_marker {
+	union {
+		u32 magic;
+		u64 space;
+	};
+	void *base;
+};
+
 static struct efi_priv *global_priv;
 
 struct efi_priv *efi_get_priv(void)
@@ -115,6 +140,17 @@ int efi_init(struct efi_priv *priv, const char *banner, efi_handle_t image,
 	}
 	priv->loaded_image = loaded_image;
 	priv->image_data_type = loaded_image->image_data_type;
+
+	if (IS_ENABLED(CONFIG_EFI_APP_DEBUG)) {
+		struct gdb_marker *marker = (struct gdb_marker *)GDB_ADDR;
+		char buf[64];
+
+		marker->base = priv->loaded_image->image_base;
+		snprintf(buf, sizeof(buf), "\ngdb marker at %p base %p\n",
+			 marker, marker->base);
+		efi_puts(priv, buf);
+		marker->magic = 0xdeadbeef;
+	}
 
 	return 0;
 }
