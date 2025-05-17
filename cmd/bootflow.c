@@ -156,6 +156,7 @@ static int do_bootflow_scan(struct cmd_tbl *cmdtp, int flag, int argc,
 	struct bootflow bflow;
 	bool all = false, boot = false, errors = false, no_global = false;
 	bool list = false, no_hunter = false, menu = false, text_mode = false;
+	bool any_part = false;
 	int num_valid = 0;
 	const char *label = NULL;
 	bool has_args;
@@ -176,6 +177,7 @@ static int do_bootflow_scan(struct cmd_tbl *cmdtp, int flag, int argc,
 			list = strchr(argv[1], 'l');
 			no_hunter = strchr(argv[1], 'H');
 			menu = strchr(argv[1], 'm');
+			any_part = strchr(argv[1], 'p');
 			text_mode = strchr(argv[1], 't');
 			argc--;
 			argv++;
@@ -194,7 +196,9 @@ static int do_bootflow_scan(struct cmd_tbl *cmdtp, int flag, int argc,
 
 	std->cur_bootflow = NULL;
 
-	flags = BOOTFLOWIF_ONLY_BOOTABLE;
+	flags = 0;
+	if (!any_part)
+		flags |= BOOTFLOWIF_ONLY_BOOTABLE;
 	if (list)
 		flags |= BOOTFLOWIF_SHOW;
 	if (all)
@@ -620,7 +624,7 @@ static int do_bootflow_cmdline(struct cmd_tbl *cmdtp, int flag, int argc,
 
 U_BOOT_LONGHELP(bootflow,
 #ifdef CONFIG_CMD_BOOTFLOW_FULL
-	"scan [-abeGHlmt] [bdev]  - scan for valid bootflows (-l list, -a all,\n"
+	"scan [-abeGHlmpt] [bdev]  - scan for valid bootflows (-l list, -a all,\n"
 	"   -e errors, -b boot, -G no global, -H no hunters\n"
 	"   -m menu, -t text-only\n"
 	"bootflow list [-e]             - list scanned bootflows (-e errors)\n"
