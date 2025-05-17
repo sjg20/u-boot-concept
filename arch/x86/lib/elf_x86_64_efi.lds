@@ -21,7 +21,7 @@ SECTIONS
 
 	. = ALIGN(4096);
 	.reloc : {
-		*(.reloc)
+		KEEP(*(.reloc))
 	}
 
 	. = ALIGN(4096);
@@ -44,7 +44,7 @@ SECTIONS
 
 		/* U-Boot lists and device tree */
 		. = ALIGN(8);
-		*(SORT(__u_boot_list*));
+		KEEP(*(SORT(__u_boot_list*)));
 		. = ALIGN(8);
 		*(.dtb*);
 	}
@@ -65,6 +65,7 @@ SECTIONS
 	. = ALIGN(4096);
 	.dynstr : { *(.dynstr) }
 	. = ALIGN(4096);
+	_end = .;
 
 	/DISCARD/ : {
 		*(.rela.reloc)
