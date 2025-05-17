@@ -12,13 +12,13 @@ It assumes that
 So far the script supports only ARM and x86
 """
 
-import sys
-import os
 import argparse
+import os
+from pathlib import Path
 import subprocess
+import sys
 import shlex
 import time
-from pathlib import Path
 
 from build_helper import Helper
 
@@ -57,8 +57,6 @@ def parse_args():
         help='Use KVM (Kernel-based Virtual Machine) for acceleration')
     parser.add_argument('-o', '--os', metavar='NAME', choices=['ubuntu'],
                         help='Run a specified Operating System')
-    parser.add_argument('-v', '--verbose', action='store_true',
-                        help='Show executed commands')
     parser.add_argument('-r', '--run', action='store_true',
                         help='Run QEMU with the built/specified image')
     parser.add_argument('-x', '--xpl', action='store_true',
@@ -72,6 +70,8 @@ def parse_args():
     parser.add_argument(
         '-S', '--sct-seq',
         help='SCT sequence-file to be written into the SCT image if -e')
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        help='Show executed commands')
     parser.add_argument('-w', '--word-32bit', action='store_true',
                         help='Use 32-bit version for the build/architecture')
 
@@ -154,7 +154,7 @@ class BuildQemu:
             self.qemu_extra.extend(['-machine', 'virt'])
             if not args.kvm:
                 self.qemu_extra.extend(['-accel', 'tcg'])
-            qemu_arch = 'arm'
+            os_arch = 'arm'
             if self.bitness == 64:
                 if args.xpl:
                     self.board = 'qemu_arm64_spl'
@@ -162,22 +162,22 @@ class BuildQemu:
                     self.board = 'qemu_arm64'
                 self.qemu = 'qemu-system-aarch64'
                 self.qemu_extra.extend(['-cpu', 'cortex-a57'])
-                qemu_arch = 'arm64'
+                os_arch = 'arm64'
         elif args.arch == 'x86':
             self.board = 'qemu-x86'
             default_bios = 'u-boot.rom'
             self.qemu = 'qemu-system-i386'
-            qemu_arch = 'i386'  # For OS image naming
+            os_arch = 'i386'  # For OS image naming
             if self.bitness == 64:
                 self.board = 'qemu-x86_64'
                 self.qemu = 'qemu-system-x86_64'
-                qemu_arch = 'amd64'
+                os_arch = 'amd64'
         else:
             raise ValueError(f"Invalid arch '{args.arch}'")
 
         self.os_path = None
         if args.os == 'ubuntu':
-            img_name = (f'{args.os}-{args.release}-desktop-{qemu_arch}.iso')
+            img_name = (f'{args.os}-{args.release}-desktop-{os_arch}.iso')
             self.os_path = self.imagedir / args.os / img_name
 
         self.build_dir = self.ubdir / self.board
