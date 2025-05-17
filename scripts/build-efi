@@ -17,6 +17,7 @@ Use ~/.build-efi to configure the various paths used by this script.
 
 from argparse import ArgumentParser
 import os
+from pathlib import Path
 import shutil
 
 from build_helper import Helper
@@ -47,12 +48,17 @@ def parse_args():
                         help='Add a kernel')
     parser.add_argument('-O', '--old', action='store_true',
                         help='Use old EFI app build (before 32/64 split)')
+    parser.add_argument('-o', '--os', metavar='NAME', choices=['ubuntu'],
+                        help='Run a specified Operating System')
     parser.add_argument('-p', '--payload', action='store_true',
                         help='Package up the payload')
     parser.add_argument('-P', '--partition', action='store_true',
                         help='Create a partition table')
     parser.add_argument('-r', '--run', action='store_true',
                         help='Run QEMU with the image')
+    parser.add_argument(
+        '-R', '--release', default='24.04.1',
+        help='Select OS release version (e.g, 24.04) Default: 24.04.1')
     parser.add_argument('-s', '--serial', action='store_true',
                         help='Run QEMU with serial only (no display)')
     parser.add_argument('-w', '--word', action='store_true',
@@ -73,6 +79,7 @@ class BuildEfi:
         self.img = self.helper.get_setting('efi_image_file', 'efi.img')
         self.build_dir = self.helper.get_setting("build_dir", '/tmp')
         self.args = args
+        self.imagedir = Path(self.helper.get_setting('image_dir', '~/dev'))
 
     def run_qemu(self, bitness, serial_only):
         """Run QEMU
@@ -84,6 +91,7 @@ class BuildEfi:
         extra = []
         efi_dir = self.helper.get_setting('efi_dir')
         if self.args.arm:
+            os_arch = 'arm64'
             qemu_arch = 'aarch64'
             extra += ['--machine', 'virt', '-cpu', 'max']
             bios = os.path.join(efi_dir, 'OVMF-pure-efi.aarch64.fd.64m')
@@ -99,9 +107,11 @@ class BuildEfi:
             if bitness == 64:
                 qemu_arch = 'x86_64'
                 bios = 'OVMF-pure-efi.x64.fd'
+                os_arch = 'amd64'
             else:
                 qemu_arch = 'i386'
                 bios = 'OVMF-pure-efi.i386.fd'
+                os_arch = 'i386'
             extra += ['-bios', os.path.join(efi_dir, bios)]
             extra += ['-drive', f'id=disk,file={self.img},if=none,format=raw']
             extra += ['-device', 'ahci,id=ahci']
@@ -118,11 +128,28 @@ class BuildEfi:
         if self.args.kvm:
             extra.extend(['-enable-kvm', '-cpu', 'host'])
 
+        os_path = None
+        if self.args.os == 'ubuntu':
+            img_name = f'{self.args.os}-{self.args.release}-desktop-{os_arch}.iso'
+            os_path = self.imagedir / self.args.os / img_name
+            if not os_path.exists():
+                tout.error(f'OS image {os_path} specified but not found')
+            else:
+                extra.extend([
+                    '-drive',
+                    f'if=virtio,file={os_path},format=raw,id=hd0,readonly=on'])
+
         print(f'Running {qemu}{serial_msg}')
 
         # Use 512MB since U-Boot EFI likes to have 256MB to play with
+        if self.args.os:
+            mem = '4G'
+            extra.extend(['-smp', '4'])
+        else:
+            mem = '512'
+
         cmd = [qemu]
-        cmd += '-m', '512'
+        cmd += '-m', mem
         cmd += '-nic', 'none'
         cmd += extra
         command.run(*cmd)
