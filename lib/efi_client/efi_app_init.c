@@ -342,9 +342,11 @@ int board_early_init_r(void)
 		ret = setup_block();
 		if (ret)
 			return ret;
-		ret = setup_net();
-		if (ret)
-			return ret;
+		if (IS_ENABLED(CONFIG_NET)) {
+			ret = setup_net();
+			if (ret)
+				return ret;
+		}
 		ret = setup_tpm();
 		if (ret)
 			return ret;
