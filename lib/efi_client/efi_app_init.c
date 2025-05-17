@@ -347,9 +347,11 @@ int board_early_init_r(void)
 			if (ret)
 				return ret;
 		}
-		ret = setup_tpm();
-		if (ret)
-			return ret;
+		if (IS_ENABLED(CONFIG_TPM)) {
+			ret = setup_tpm();
+			if (ret)
+				return ret;
+		}
 	}
 
 	return 0;
