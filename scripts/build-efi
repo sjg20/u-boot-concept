@@ -25,6 +25,7 @@ from build_helper import Helper
 # pylint: disable=C0413
 from u_boot_pylib import command
 from u_boot_pylib import tools
+from u_boot_pylib import tout
 
 
 def parse_args():
@@ -61,6 +62,8 @@ def parse_args():
         help='Select OS release version (e.g, 24.04) Default: 24.04.1')
     parser.add_argument('-s', '--serial', action='store_true',
                         help='Run QEMU with serial only (no display)')
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        help='Show executed commands')
     parser.add_argument('-w', '--word', action='store_true',
                         help='Use word version (32-bit) rather than 64-bit')
 
@@ -152,6 +155,7 @@ class BuildEfi:
         cmd += '-m', mem
         cmd += '-nic', 'none'
         cmd += extra
+        tout.info(' '.join(cmd))
         command.run(*cmd)
 
     def setup_files(self, build, build_type, dst):
@@ -202,5 +206,8 @@ class BuildEfi:
 
 
 if __name__ == "__main__":
-    efi = BuildEfi(parse_args())
+    args = parse_args()
+    tout.init(tout.INFO if args.verbose else tout.WARNING)
+
+    efi = BuildEfi(args)
     efi.start()
