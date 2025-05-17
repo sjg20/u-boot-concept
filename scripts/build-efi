@@ -113,13 +113,18 @@ class BuildEfi:
         else:  # x86
             if bitness == 64:
                 qemu_arch = 'x86_64'
-                bios = 'OVMF-pure-efi.x64.fd'
+                bios = 'OVMF_CODE_4M.fd'
                 os_arch = 'amd64'
             else:
                 qemu_arch = 'i386'
                 bios = 'OVMF-pure-efi.i386.fd'
                 os_arch = 'i386'
-            extra += ['-bios', os.path.join(efi_dir, bios)]
+            bios = os.path.join(efi_dir, bios)
+            var_store = os.path.join(efi_dir, 'OVMF_VARS_4M.fd')
+            extra += [
+                '-drive', f'if=pflash,format=raw,file={bios},readonly=on',
+                '-drive', f'if=pflash,format=raw,file={var_store}'
+                ]
             extra += ['-drive', f'id=disk,file={self.img},if=none,format=raw']
             extra += ['-device', 'ahci,id=ahci']
             extra += ['-device', 'ide-hd,drive=disk,bus=ahci.0']
