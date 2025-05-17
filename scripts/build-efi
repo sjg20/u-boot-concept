@@ -40,9 +40,9 @@ def parse_args():
                         help='Run on ARM architecture')
     parser.add_argument('-B', '--no-build', action='store_true',
                         help="Don't build (an existing build must be present")
-    parser.add_argument('-k', '--kernel', action='store_true',
+    parser.add_argument('-K', '--kernel', action='store_true',
                         help='Add a kernel')
-    parser.add_argument('-o', '--old', action='store_true',
+    parser.add_argument('-O', '--old', action='store_true',
                         help='Use old EFI app build (before 32/64 split)')
     parser.add_argument('-p', '--payload', action='store_true',
                         help='Package up the payload')
