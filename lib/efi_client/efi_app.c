@@ -31,6 +31,16 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+int copy_uboot_to_ram(void)
+{
+	return 0;
+}
+
+int do_elf_reloc_fixups(void)
+{
+	return 0;
+}
+
 int efi_init_obj_list(void)
 {
 	return EFI_SUCCESS;
