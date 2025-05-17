@@ -40,6 +40,9 @@ def parse_args():
                         help='Run on ARM architecture')
     parser.add_argument('-B', '--no-build', action='store_true',
                         help="Don't build (an existing build must be present")
+    parser.add_argument(
+        '-k', '--kvm', action='store_true',
+        help='Use KVM (Kernel-based Virtual Machine) for acceleration')
     parser.add_argument('-K', '--kernel', action='store_true',
                         help='Add a kernel')
     parser.add_argument('-O', '--old', action='store_true',
@@ -112,6 +115,9 @@ class BuildEfi:
                 extra += ['-device', 'virtio-gpu-pci']
             extra += ['-serial', 'mon:stdio']
             serial_msg = ''
+        if self.args.kvm:
+            extra.extend(['-enable-kvm', '-cpu', 'host'])
+
         print(f'Running {qemu}{serial_msg}')
 
         # Use 512MB since U-Boot EFI likes to have 256MB to play with
