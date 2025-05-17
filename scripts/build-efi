@@ -42,6 +42,8 @@ def parse_args():
                         help='Run on ARM architecture')
     parser.add_argument('-B', '--no-build', action='store_true',
                         help="Don't build (an existing build must be present")
+    parser.add_argument('-d', '--disk',
+                        help='Root disk image file to use with QEMU')
     parser.add_argument(
         '-k', '--kvm', action='store_true',
         help='Use KVM (Kernel-based Virtual Machine) for acceleration')
@@ -142,10 +144,19 @@ class BuildEfi:
                     '-drive',
                     f'if=virtio,file={os_path},format=raw,id=hd0,readonly=on'])
 
+        img_fname = Path(self.args.disk) if self.args.disk else None
+        if img_fname:
+            if img_fname.exists():
+                extra.extend([
+                    '-drive',
+                    f'if=virtio,file={img_fname},format=raw,id=hd1'])
+            else:
+                tout.warning(f"Disk image '{img_fname}' not found")
+
         print(f'Running {qemu}{serial_msg}')
 
         # Use 512MB since U-Boot EFI likes to have 256MB to play with
-        if self.args.os:
+        if self.args.os or self.args.disk:
             mem = '4G'
             extra.extend(['-smp', '4'])
         else:
