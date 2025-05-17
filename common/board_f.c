@@ -740,7 +740,7 @@ static int fix_fdt(void)
 
 static int jump_to_copy(void)
 {
-	if (gd->flags & GD_FLG_SKIP_RELOC)
+	if (IS_ENABLED(CONFIG_EFI_APP) || (gd->flags & GD_FLG_SKIP_RELOC))
 		return 0;
 	/*
 	 * x86 is special, but in a nice way. It uses a trampoline which
