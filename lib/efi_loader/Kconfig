@@ -587,6 +587,6 @@ config BOOTEFI_TESTAPP_COMPILE
 
 endif
 
-source "lib/efi/Kconfig"
+source "lib/efi_client/Kconfig"
 
 endmenu
