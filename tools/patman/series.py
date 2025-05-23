@@ -25,13 +25,23 @@ class Series(dict):
     """Holds information about a patch series, including all tags.
 
     Vars:
-        cc: List of aliases/emails to Cc all patches to
-        commits: List of Commit objects, one for each patch
-        cover: List of lines in the cover letter
-        notes: List of lines in the notes
-        changes: (dict) List of changes for each version, The key is
-            the integer version number
-        allow_overwrite: Allow tags to overwrite an existing tag
+        cc (list of str): Aliases/emails to Cc all patches to
+        to (list of str): Aliases/emails to send patches to
+        commits (list of Commit): Commit objects, one for each patch
+        cover (list of str): Lines in the cover letter
+        notes (list of str): Lines in the notes
+        changes: (dict) List of changes for each version:
+            key (int): version number
+            value: tuple:
+                commit (Commit): Commit this relates to, or None if related to a
+                    cover letter
+                info (str): change lines for this version (separated by \n)
+        allow_overwrite (bool): Allow tags to overwrite an existing tag
+        base_commit (Commit): Commit object at the base of this series
+        branch (str): Branch name of this series
+        _generated_cc (dict) written in MakeCcFile()
+            key: name of patch file
+            value: list of email addresses
     """
     def __init__(self):
         self.cc = []
@@ -44,10 +54,6 @@ class Series(dict):
         self.allow_overwrite = False
         self.base_commit = None
         self.branch = None
-
-        # Written in MakeCcFile()
-        #  key: name of patch file
-        #  value: list of email addresses
         self._generated_cc = {}
 
     # These make us more like a dictionary
@@ -245,7 +251,7 @@ class Series(dict):
 
     def GetCcForCommit(self, commit, process_tags, warn_on_error,
                        add_maintainers, limit, get_maintainer_script,
-                       all_skips, alias):
+                       all_skips, alias, cwd):
         """Get the email CCs to use with a particular commit
 
         Uses subject tags and get_maintainers.pl script to find people to cc
@@ -268,6 +274,7 @@ class Series(dict):
             alias (dict): Alias dictionary
                 key: alias
                 value: list of aliases or email addresses
+            cwd (str): Path to use for patch filenames (None to use current dir)
 
         Returns:
             list of str: List of email addresses to cc
@@ -281,8 +288,8 @@ class Series(dict):
         if type(add_maintainers) == type(cc):
             cc += add_maintainers
         elif add_maintainers:
-            cc += get_maintainer.get_maintainer(get_maintainer_script,
-                                                commit.patch)
+            fname = os.path.join(cwd or '', commit.patch)
+            cc += get_maintainer.get_maintainer(get_maintainer_script, fname)
         all_skips |= set(cc) & set(settings.bounces)
         cc = list(set(cc) - set(settings.bounces))
         if limit is not None:
@@ -290,7 +297,8 @@ class Series(dict):
         return cc
 
     def MakeCcFile(self, process_tags, cover_fname, warn_on_error,
-                   add_maintainers, limit, get_maintainer_script, alias):
+                   add_maintainers, limit, get_maintainer_script, alias,
+                   cwd=None):
         """Make a cc file for us to use for per-commit Cc automation
 
         Also stores in self._generated_cc to make ShowActions() faster.
@@ -309,6 +317,7 @@ class Series(dict):
             alias (dict): Alias dictionary
                 key: alias
                 value: list of aliases or email addresses
+            cwd (str): Path to use for patch filenames (None to use current dir)
         Return:
             Filename of temp file created
         """
@@ -324,7 +333,7 @@ class Series(dict):
                 commit.future = executor.submit(
                     self.GetCcForCommit, commit, process_tags, warn_on_error,
                     add_maintainers, limit, get_maintainer_script, all_skips,
-                    alias)
+                    alias, cwd)
 
             # Show progress any commits that are taking forever
             lastlen = 0
@@ -372,8 +381,10 @@ class Series(dict):
         This will later appear in the change log.
 
         Args:
-            version: version number to add change list to
-            info: change line for this version
+            version (int): version number to add change list to
+            commit (Commit): Commit this relates to, or None if related to a
+                cover letter
+            info (str): change lines for this version (separated by \n)
         """
         if not self.changes.get(version):
             self.changes[version] = []
