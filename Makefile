@@ -1687,8 +1687,8 @@ EFI_STUB_ARCH := $(if $(CONFIG_ARM64),arm64,$(if $(CONFIG_X86_64),x86,$(ARCH)))
 quiet_cmd_u-boot_payload ?= LD      $@
       cmd_u-boot_payload ?= $(LD) $(LDFLAGS_EFI_PAYLOAD) -o $@ \
       -T u-boot-payload.lds $(if $(CONFIG_X86),arch/x86/cpu/call32.o,) \
-      lib/efi/efi.o lib/efi/efi_stub_$(EFI_STUB_ARCH).o u-boot.bin.o \
-      $(addprefix arch/$(ARCH)/lib/,$(EFISTUB))
+      lib/efi_client/efi.o lib/efi_client/efi_stub_$(EFI_STUB_ARCH).o \
+      u-boot.bin.o $(addprefix arch/$(ARCH)/lib/,$(EFISTUB))
 
 quiet_cmd_u-boot_payload_arm64.efi ?= OBJCOPY $@
       cmd_u-boot_payload_arm64.efi ?= $(OBJCOPY) -O binary u-boot-payload $@
