@@ -1,6 +1,6 @@
-// SPDX-License-Identifier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Copyright (c) 2020, Linaro Limited
+ * Copyright (c) 2022, Heinrich Schuchardt <xypron.glpk@gmx.de>
  */
 
 #define LOG_CATEGORY LOGC_EFI
@@ -11,6 +11,12 @@
 #include <errno.h>
 
 #undef BOOTEFI_NAME
+
+/*
+ * The constants below come from:
+ *
+ * https://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml#processor-architecture
+ */
 
 #if HOST_ARCH == HOST_ARCH_X86_64
 #define HOST_BOOTEFI_NAME "BOOTX64.EFI"
