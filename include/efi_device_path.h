@@ -13,7 +13,7 @@
 struct blk_desc;
 struct efi_load_option;
 
-/**
+/*
  * END - Template end node for EFI device paths.
  *
  * Represents the terminating node of an EFI device path.
