@@ -68,7 +68,7 @@ static const struct {
 } list_guid[] = {
 #ifndef USE_HOSTCC
 #if defined(CONFIG_PARTITION_TYPE_GUID) || defined(CONFIG_CMD_EFIDEBUG) || \
-	defined(CONFIG_EFI)
+	defined(CONFIG_EFI_CLIENT)
 	{"EFI System Partition", PARTITION_SYSTEM_GUID},
 #endif
 #ifdef CONFIG_PARTITION_TYPE_GUID
@@ -85,7 +85,7 @@ static const struct {
 	{"cros-fw",	PARTITION_CROS_FIRMWARE},
 	{"cros-rsrv",	PARTITION_CROS_RESERVED},
 #endif
-#if defined(CONFIG_CMD_EFIDEBUG) || defined(CONFIG_EFI)
+#if defined(CONFIG_CMD_EFIDEBUG) || defined(CONFIG_EFI_CLIENT)
 	{
 		"Device Path",
 		EFI_DEVICE_PATH_PROTOCOL_GUID,
@@ -268,7 +268,7 @@ static const struct {
 		EFI_CERT_TYPE_PKCS7_GUID,
 	},
 #endif
-#if defined(CONFIG_CMD_EFIDEBUG) || defined(CONFIG_EFI)
+#if defined(CONFIG_CMD_EFIDEBUG) || defined(CONFIG_EFI_CLIENT)
 	{ "EFI_LZMA_COMPRESSED", EFI_LZMA_COMPRESSED },
 	{ "EFI_DXE_SERVICES", EFI_DXE_SERVICES },
 	{ "EFI_HOB_LIST", EFI_HOB_LIST },
