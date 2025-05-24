@@ -21,8 +21,6 @@ from u_boot_pylib import gitutil
 from u_boot_pylib import terminal
 from u_boot_pylib import tools
 from u_boot_pylib import tout
-from patman import cseries
-from patman import cser_helper
 from patman import patchstream
 from patman.patchwork import Patchwork
 from patman import send
@@ -73,6 +71,8 @@ def patchwork_status(branch, count, start, end, dest_branch, force,
     Raises:
         ValueError: if the branch has no Series-link value
     """
+    from patman import cser_helper
+
     if not branch:
         branch = gitutil.get_branch()
     if count == -1:
@@ -124,6 +124,8 @@ def do_series(args, test_db=None, pwork=None, cser=None):
             needed
         cser (Cseries): Cseries object to use, None to create one
     """
+    from patman import cseries
+
     if not cser:
         cser = cseries.Cseries(test_db)
     needs_patchwork = [
@@ -226,6 +228,8 @@ def upstream(args, test_db=None):
         test_db (str or None): Directory containing the test database, None to
             use the normal one
     """
+    from patman import cseries
+
     cser = cseries.Cseries(test_db)
     try:
         cser.open_database()
@@ -257,6 +261,8 @@ def patchwork(args, test_db=None, pwork=None):
             use the normal one
         pwork (Patchwork): Patchwork object to use
     """
+    from patman import cseries
+
     cser = cseries.Cseries(test_db)
     try:
         cser.open_database()
