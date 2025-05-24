@@ -386,13 +386,16 @@ class Cseries(cser_helper.CseriesHelper):
 
         return summary
 
-    def series_list(self):
+    def series_list(self, include_archived=False):
         """List all series
 
         Lines all series along with their description, number of patches
-        accepted and  the available versions
+        accepted and the available versions
+
+        Args:
+            include_archived (bool): True to include archived series also
         """
-        sdict = self.db.series_get_dict()
+        sdict = self.db.series_get_dict(include_archived)
         print(f"{'Name':15}  {'Description':40}  Accepted  Versions")
         border = f"{'-' * 15}  {'-' * 40}  --------  {'-' * 15}"
         print(border)

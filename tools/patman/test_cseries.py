@@ -737,6 +737,30 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
             '     1/3  1 2', lines[3])
         self.assertTrue(lines[4].startswith('--'))
 
+    def test_series_list_archived(self):
+        """Archive a series and test listing it"""
+        self.setup_second()
+        self.cser.archive('first')
+        with terminal.capture() as (out, _):
+            self.run_args('series', 'ls', pwork=True)
+        lines = out.getvalue().splitlines()
+        self.assertEqual(4, len(lines))
+        self.assertEqual(
+            'second           Series for my board                       '
+            '     1/3  1 2', lines[2])
+
+        # Now list including archived series
+        with terminal.capture() as (out, _):
+            self.run_args('series', 'ls', '--include-archived', pwork=True)
+        lines = out.getvalue().splitlines()
+        self.assertEqual(5, len(lines))
+        self.assertEqual(
+            'first                                                      '
+            '     -/2  1', lines[2])
+        self.assertEqual(
+            'second           Series for my board                       '
+            '     1/3  1 2', lines[3])
+
     def test_do_series_add(self):
         """Add a new cseries"""
         self.make_git_tree()
