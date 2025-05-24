@@ -38,7 +38,7 @@ class Cseries(cser_helper.CseriesHelper):
         super().__init__(topdir, colour)
 
     def add(self, branch_name, desc=None, mark=False, allow_unmarked=False,
-            end=None, force_version=False, dry_run=False):
+            end=None, use_commit=False, force_version=False, dry_run=False):
         """Add a series (or new version of a series) to the database
 
         Args:
@@ -47,6 +47,10 @@ class Cseries(cser_helper.CseriesHelper):
             mark (str): True to mark each commit with a change ID
             allow_unmarked (str): True to not require each commit to be marked
             end (str): Add only commits up to but exclu
+            use_commit (bool)): True to use the first commit's subject as the
+                series description, if none is available in the series or
+                provided in 'desc')
+
             force_version (bool): True if ignore a Series-version tag that
                 doesn't match its branch name
             dry_run (bool): True to do a dry run
@@ -58,9 +62,14 @@ class Cseries(cser_helper.CseriesHelper):
             tout.info(msg)
         if desc is None:
             if not ser.cover:
-                raise ValueError(f"Branch '{name}' has no cover letter - "
-                                 'please provide description')
-            desc = ser['cover'][0]
+                if use_commit and ser.commits:
+                    desc = ser.commits[0].subject
+                    tout.info(f"Using description from first commit: '{desc}'")
+                else:
+                    raise ValueError(f"Branch '{name}' has no cover letter - "
+                                    'please provide description')
+            if not desc:
+                desc = ser['cover'][0]
 
         ser = self._handle_mark(name, ser, version, mark, allow_unmarked,
                                 force_version, dry_run)

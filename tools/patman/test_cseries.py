@@ -199,7 +199,7 @@ class TestCseries(unittest.TestCase, TestCommon):
             Pcommit(2, 1, 'spi: SPI fixes', 1, None, None, None, None),
             pclist[2])
 
-    def test_series_not_checked_out(self):
+    def test_series_add_not_checked_out(self):
         """Test adding a new cseries when a different one is checked out"""
         cser = self.get_cser()
         self.assertFalse(cser.db.series_get_dict())
@@ -441,6 +441,38 @@ class TestCseries(unittest.TestCase, TestCommon):
         # Since this is v1 the Series-version tag should have been removed
         series = patchstream.get_metadata('first', 0, 2, git_dir=self.gitdir)
         self.assertNotIn('version', series)
+
+    def test_series_add_no_desc(self):
+        """Test adding a cseries with no cover letter"""
+        cser = self.get_cser()
+        self.assertFalse(cser.db.series_get_dict())
+
+        with self.assertRaises(ValueError) as exc:
+            with terminal.capture() as (out, _):
+                cser.add('first', allow_unmarked=True)
+        self.assertEqual(
+            "Branch 'first' has no cover letter - please provide description",
+            str(exc.exception))
+
+        with terminal.capture() as (out, _):
+            self.run_args('series', '-s', 'first', 'add', '--use-commit',
+                        '--allow-unmarked', pwork=True)
+        lines = out.getvalue().splitlines()
+        self.assertEqual(
+            "Adding series 'first' v1: mark False allow_unmarked True",
+            lines[0])
+        self.assertEqual(
+            "Using description from first commit: 'i2c: I2C things'",
+            lines[1])
+        self.assertEqual("Added series 'first' v1 (2 commits)", lines[2])
+        self.assertEqual(3, len(lines))
+
+        sdict = cser.db.series_get_dict()
+        self.assertEqual(1, len(sdict))
+        ser = sdict.get('first')
+        self.assertTrue(ser)
+        self.assertEqual('first', ser.name)
+        self.assertEqual('i2c: I2C things', ser.desc)
 
     def _fake_patchwork_cser(self, subpath):
         """Fake Patchwork server for the function below
@@ -766,7 +798,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.make_git_tree()
         args = Namespace(subcmd='add', desc='my-description', series='first',
                          mark=False, allow_unmarked=True, upstream=None,
-                         dry_run=False)
+                         use_commit=False, dry_run=False)
         with terminal.capture() as (out, _):
             control.do_series(args, test_db=self.tmpdir, pwork=True)
 
@@ -814,7 +846,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
                          force=True)
         args = Namespace(subcmd='add', series=None, mark=False,
                          allow_unmarked=True, upstream=None, dry_run=False,
-                         desc=None)
+                         desc=None, use_commit=False)
         with terminal.capture():
             control.do_series(args, test_db=self.tmpdir, pwork=True)
 
