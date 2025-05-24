@@ -184,7 +184,7 @@ def do_series(args, test_db=None, pwork=None, cser=None):
                               args.patch)
         elif args.subcmd == 'progress':
             cser.progress(args.series, args.show_all_versions,
-                          args.list_patches)
+                          args.list_patches, args.include_archived)
         elif args.subcmd == 'rm':
             cser.remove(args.series, dry_run=args.dry_run)
         elif args.subcmd == 'rm-version':

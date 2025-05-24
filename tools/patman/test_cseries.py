@@ -720,7 +720,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
         self.setup_second()
 
         self.db_close()
-        args = Namespace(subcmd='ls')
+        args = Namespace(subcmd='ls', include_archived=False)
         with terminal.capture() as (out, _):
             control.do_series(args, test_db=self.tmpdir, pwork=True)
         lines = out.getvalue().splitlines()
@@ -780,6 +780,7 @@ Tested-by: Mary Smith <msmith@wibble.com>   # yak
 
         self.db_close()
         args.subcmd = 'ls'
+        args.include_archived = False
         with terminal.capture() as (out, _):
             control.do_series(args, test_db=self.tmpdir, pwork=True)
         lines = out.getvalue().splitlines()
@@ -2996,7 +2997,8 @@ Date:   .*
 
         with self.stage('latest versions'):
             args = Namespace(subcmd='progress', series='second',
-                             show_all_versions=False, list_patches=True)
+                             show_all_versions=False, list_patches=True,
+                             include_archived=False)
             with terminal.capture() as (out, _):
                 control.do_series(args, test_db=self.tmpdir, pwork=True)
             lines = iter(out.getvalue().splitlines())
@@ -3033,7 +3035,8 @@ Date:   .*
 
         with self.stage('progress with patches'):
             args = Namespace(subcmd='progress', series=None,
-                             show_all_versions=False, list_patches=True)
+                             show_all_versions=False, list_patches=True,
+                             include_archived=False)
             with terminal.capture() as (out, _):
                 control.do_series(args, test_db=self.tmpdir, pwork=True)
             lines = iter(out.getvalue().splitlines())
@@ -3047,6 +3050,35 @@ Date:   .*
             lines = iter(out.getvalue().splitlines())
             self._check_first(lines)
             self._check_second(lines, True)
+
+    def test_series_progress_all_archived(self):
+        """Test showing progress for all cseries including archived ones"""
+        self.setup_second()
+        self.cser.archive('first')
+
+        with self.stage('progress without archived'):
+            with terminal.capture() as (out, _):
+                self.run_args('series', 'progress', pwork=True)
+            itr = iter(out.getvalue().splitlines())
+            self.assertEqual(
+                'Name             Description                               Count  Status',
+                next(itr))
+            self.assertTrue(next(itr).startswith('--'))
+            self.assertEqual(
+                'second2          The name of the cover letter              '
+                '    3  1:accepted 1:changes 1:rejected', next(itr))
+
+        with self.stage('progress with archived'):
+            with terminal.capture() as (out, _):
+                self.run_args('series', 'progress', '--include-archived',
+                              pwork=True)
+            lines = out.getvalue().splitlines()
+            self.assertEqual(
+                'first                                                      '
+                '    2  2:unknown', lines[2])
+            self.assertEqual(
+                'second2          The name of the cover letter              '
+                '    3  1:accepted 1:changes 1:rejected', lines[3])
 
     def test_series_progress_no_patches(self):
         """Test showing progress for all cseries without patches"""

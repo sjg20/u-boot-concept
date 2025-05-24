@@ -289,6 +289,7 @@ def add_series_subparser(subparsers):
                       help='Show all series versions, not just the latest')
     prog.add_argument('-l', '--list-patches', action='store_true',
                       help='List patch subject and status')
+    _add_archived(prog)
 
     ren = series_subparsers.add_parser('rename')
     ren.add_argument('-N', '--new-name', help='New name for the series')
