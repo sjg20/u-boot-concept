@@ -740,14 +740,17 @@ static int cr50_i2c_open(struct udevice *dev)
 	char buf[80];
 	int ret;
 
+	printf("process reset\n");
 	ret = process_reset(dev);
 	if (ret)
 		return log_msg_ret("reset", ret);
 
+	printf("claim locality\n");
 	ret = claim_locality(dev, 0);
 	if (ret)
 		return log_msg_ret("claim", ret);
 
+	printf("get_desc\n");
 	cr50_i2c_get_desc(dev, buf, sizeof(buf));
 	log_debug("%s\n", buf);
 
