@@ -83,7 +83,7 @@ def split_name_version(in_name):
             str: series name
             int: series version, or None if there is none in in_name
     """
-    m_ver = re.match(r'([^0-9]*)(\d*)', in_name)
+    m_ver = re.match(r'([^0-9]*)(\d*)$', in_name)
     version = None
     if m_ver:
         name = m_ver.group(1)
