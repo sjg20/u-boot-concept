@@ -200,10 +200,10 @@ static int do_tpm_get_capability(struct cmd_tbl *cmdtp, int flag, int argc,
 	if (argc != 5)
 		return CMD_RET_USAGE;
 
-	capability = hextoul(argv[1], NULL, 0);
-	property = hextoul(argv[2], NULL, 0);
-	data = map_sysmem(hextoul(argv[3], NULL, 0), 0);
-	count = hextoul(argv[4], NULL, 0);
+	capability = hextoul(argv[1], NULL);
+	property = hextoul(argv[2], NULL);
+	data = map_sysmem(hextoul(argv[3], NULL), 0);
+	count = hextoul(argv[4], NULL);
 
 	rc = tpm2_get_capability(dev, capability, property, data, count);
 	if (rc)
