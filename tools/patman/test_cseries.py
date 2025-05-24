@@ -3255,6 +3255,10 @@ Date:   .*
         self.assertEqual('No branch detected: please use -s <series>',
                          str(exc.exception))
 
+        name, version = patchstream.split_name_version('x86a')
+        self.assertEqual('x86a', name)
+        self.assertEqual(None, version)
+
     def test_name_version_extra(self):
         """More tests for some corner cases"""
         cser, _ = self.setup_second()
