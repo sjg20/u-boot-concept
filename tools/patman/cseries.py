@@ -556,7 +556,8 @@ class Cseries(cser_helper.CseriesHelper):
         # environment.
         cros_subprocess.Popen(['xdg-open', url])
 
-    def progress(self, series, show_all_versions, list_patches):
+    def progress(self, series, show_all_versions, list_patches,
+                 include_archived):
         """Show progress information for all versions in a series
 
         Args:
@@ -566,6 +567,7 @@ class Cseries(cser_helper.CseriesHelper):
                 False to show only the final version
             list_patches (bool): True to list all patches for each series,
                 False to just show the series summary on a single line
+            include_archived (bool): True to include archived series also
         """
         with terminal.pager():
             state_totals = defaultdict(int)
@@ -581,7 +583,7 @@ class Cseries(cser_helper.CseriesHelper):
 
             total_patches = 0
             total_series = 0
-            sdict = self.db.series_get_dict()
+            sdict = self.db.series_get_dict(include_archived)
             border = None
             total_need_scan = 0
             if not list_patches:
@@ -593,7 +595,8 @@ class Cseries(cser_helper.CseriesHelper):
             for name in sorted(sdict):
                 ser = sdict[name]
                 num_series, num_patches, need_scan = self._progress_one(
-                    ser, show_all_versions, list_patches, state_totals)
+                    ser, show_all_versions, list_patches, state_totals,
+                    not include_archived)
                 total_need_scan += need_scan
                 if list_patches:
                     print()

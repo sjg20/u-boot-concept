@@ -1156,6 +1156,7 @@ class CseriesHelper:
         states = defaultdict(int)
         count = len(pwc)
         ok = True
+        cmt = None
         for seq, item in enumerate(pwc.values()):
             if series:
                 cmt = series.commits[seq]
@@ -1178,7 +1179,8 @@ class CseriesHelper:
                 subject = item.subject
 
             line = (f'{seq:3} {col_state}{pad} {comments.rjust(3)} '
-                    f'{patch_id:7} {oid(cmt.hash)} {subject}')
+                    f"{patch_id:7} {oid(cmt.hash) if cmt else ' ' * HASH_LEN} "
+                    f'{subject}')
             lines.append(line)
             states[item.state] += 1
         out = ''
@@ -1187,7 +1189,7 @@ class CseriesHelper:
             state_totals[state] += freq
         name = ''
         if not list_patches:
-            name = desc or series.desc
+            name = desc or (series.desc if series else '')
             name = self.col.build(self.col.YELLOW, name[:41].ljust(41))
             if not ok:
                 out = '*' + out[1:]
@@ -1402,7 +1404,7 @@ class CseriesHelper:
             return await self._sync_all(client, pwork, to_fetch)
 
     def _progress_one(self, ser, show_all_versions, list_patches,
-                      state_totals):
+                      state_totals, use_metadata=True):
         """Show progress information for all versions in a series
 
         Args:
@@ -1414,6 +1416,8 @@ class CseriesHelper:
             state_totals (dict): Holds totals for each state across all patches
                 key (str): state name
                 value (int): Number of patches in that state
+            use_metadata (bool): True to read the series metadata from the
+                branch
 
         Return: tuple
             int: Number of series shown
@@ -1441,10 +1445,12 @@ class CseriesHelper:
             _, pwc = self._series_get_version_stats(ser.idnum, ver)
             count = len(pwc)
             branch = self._join_name_version(ser.name, ver)
-            series = patchstream.get_metadata(branch, 0, count,
-                                              git_dir=self.gitdir)
+            series = None
+            if use_metadata:
+                series = patchstream.get_metadata(branch, 0, count,
+                                                  git_dir=self.gitdir)
+                self._copy_db_fields_to(series, ser)
             svinfo = self.get_ser_ver(ser.idnum, ver)
-            self._copy_db_fields_to(series, ser)
 
             ok = self._list_patches(
                 branch, pwc, series, svinfo.name, svinfo.cover_id,
