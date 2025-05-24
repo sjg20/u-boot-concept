@@ -71,8 +71,6 @@ def patchwork_status(branch, count, start, end, dest_branch, force,
     Raises:
         ValueError: if the branch has no Series-link value
     """
-    from patman import cser_helper
-
     if not branch:
         branch = gitutil.get_branch()
     if count == -1:
@@ -94,7 +92,7 @@ def patchwork_status(branch, count, start, end, dest_branch, force,
     if not links:
         raise ValueError("Branch has no Series-links value")
 
-    _, version = cser_helper.split_name_version(branch)
+    _, version = patchstream.split_name_version(branch)
     link = series.get_link_for_version(version, links)
     if not link:
         raise ValueError('Series-links has no link for v{version}')

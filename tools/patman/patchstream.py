@@ -69,6 +69,31 @@ STATE_PATCH_HEADER = 2      # In patch header (after the subject)
 STATE_DIFFS = 3             # In the diff part (past --- line)
 
 
+def split_name_version(in_name):
+    """Split a branch name into its series name and its version
+
+    For example:
+        'series' returns ('series', 1)
+        'series3' returns ('series', 3)
+    Args:
+        in_name (str): Name to parse
+
+    Return:
+        tuple:
+            str: series name
+            int: series version, or None if there is none in in_name
+    """
+    m_ver = re.match(r'([^0-9]*)(\d*)', in_name)
+    version = None
+    if m_ver:
+        name = m_ver.group(1)
+        if m_ver.group(2):
+            version = int(m_ver.group(2))
+    else:
+        name = in_name
+    return name, version
+
+
 class PatchStream:
     """Class for detecting/injecting tags in a patch or series of patches
 
