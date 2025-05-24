@@ -3123,8 +3123,8 @@ Date:   .*
         repo = self.repo
 
         self.assertEqual(('fred', None),
-                         cser_helper.split_name_version('fred'))
-        self.assertEqual(('mary', 2), cser_helper.split_name_version('mary2'))
+                         patchstream.split_name_version('fred'))
+        self.assertEqual(('mary', 2), patchstream.split_name_version('mary2'))
 
         ser, version = cser._parse_series_and_version(None, None)
         self.assertEqual('first', ser.name)

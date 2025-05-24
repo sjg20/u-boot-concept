@@ -64,31 +64,6 @@ def oid(oid_val):
     return str(oid_val)[:HASH_LEN]
 
 
-def split_name_version(in_name):
-    """Split a branch name into its series name and its version
-
-    For example:
-        'series' returns ('series', 1)
-        'series3' returns ('series', 3)
-    Args:
-        in_name (str): Name to parse
-
-    Return:
-        tuple:
-            str: series name
-            int: series version, or None if there is none in in_name
-    """
-    m_ver = re.match(r'([^0-9]*)(\d*)', in_name)
-    version = None
-    if m_ver:
-        name = m_ver.group(1)
-        if m_ver.group(2):
-            version = int(m_ver.group(2))
-    else:
-        name = in_name
-    return name, version
-
-
 class CseriesHelper:
     """Helper functions for Cseries
 
@@ -577,7 +552,7 @@ class CseriesHelper:
         """
         if not name:
             name = gitutil.get_branch(self.gitdir)
-        name, _ = split_name_version(name)
+        name, _ = patchstream.split_name_version(name)
         ser = self.get_series_by_name(name, include_archived)
         if not ser:
             ser = Series()
@@ -609,7 +584,7 @@ class CseriesHelper:
             name = gitutil.get_branch(self.gitdir)
             if not name:
                 raise ValueError('No branch detected: please use -s <series>')
-        name, version = split_name_version(name)
+        name, version = patchstream.split_name_version(name)
         if not name:
             raise ValueError(f"Series name '{in_name}' cannot be a number, "
                              f"use '<name><version>'")

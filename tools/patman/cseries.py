@@ -686,7 +686,7 @@ class Cseries(cser_helper.CseriesHelper):
         if old_ser.name != series:
             raise ValueError(f"Invalid series name '{series}': "
                              'did you use the branch name?')
-        chk, _ = cser_helper.split_name_version(name)
+        chk, _ = patchstream.split_name_version(name)
         if chk != name:
             raise ValueError(
                 f"Invalid series name '{name}': did you use the branch name?")
