@@ -495,6 +495,10 @@ class CseriesHelper:
             # Get a list of links to fetch
             for svid, ser_id, version in max_vers:
                 svinfo = svdict[svid]
+
+                # Handle archived series
+                if ser_id not in sdict:
+                    continue
                 ser = sdict[ser_id]
 
                 pwc = self.get_pcommit_dict(svid)
