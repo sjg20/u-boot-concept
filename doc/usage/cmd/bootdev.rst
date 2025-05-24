@@ -13,7 +13,7 @@ Synopsis
 
     bootdev list [-p]        - list all available bootdevs (-p to probe)
     bootdev hunt [-l|<spec>] - use hunt drivers to find bootdevs
-    bootdev order [clear] | [<spec> ...]  - view or update bootdev order
+    bootdev order [-c] | [<spec> ...]  - view or update bootdev order
     bootdev select <bm>      - select a bootdev by name
     bootdev info [-p]        - show information about a bootdev
 
@@ -85,11 +85,11 @@ bootdev order
 This allows the bootdev order to be examined or set. With no argument the
 current ordering is shown, one item per line.
 
-The argument can either be 'clear' or a space-separated list of labels. Each
-label can be the name of a bootdev (e.g. "mmc1.bootdev"), a bootdev sequence
-number ("3") or a media uclass ("mmc") with an optional sequence number (mmc2).
+The argument is a space-separated list of labels. Each label can be the name of
+a bootdev (e.g. "mmc1.bootdev"), a bootdev sequence number ("3") or a media
+uclass ("mmc") with an optional sequence number (mmc2).
 
-Use `bootdev order clear` to clear any ordering and use the default.
+Use `bootdev order -c` to clear any ordering and use the default.
 
 By default, the ordering is defined by the `boot_targets` environment variable
 or, failing that, the bootstd node in the devicetree ("bootdev-order" property).

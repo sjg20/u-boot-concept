@@ -148,7 +148,7 @@ static int do_bootdev_order(struct cmd_tbl *cmdtp, int flag, int argc,
 	if (ret)
 		return ret;
 	if (argc == 2) {
-		if (!strncmp(argv[1], "clear", strlen(argv[1]))) {
+		if (!strcmp(argv[1], "-c")) {
 			bootdev_set_order(NULL);
 
 			return 0;
@@ -176,7 +176,7 @@ static int do_bootdev_order(struct cmd_tbl *cmdtp, int flag, int argc,
 U_BOOT_LONGHELP(bootdev,
 	"list [-p]         - list all available bootdevs (-p to probe)\n"
 	"bootdev hunt [-l|<spec>]  - use hunt drivers to find bootdevs\n"
-	"bootdev order [clear] | [<spec>,...]  - view or update bootdev order\n"
+	"bootdev order [-c] | [<spec>,...]  - view or update bootdev order\n"
 	"bootdev select <bd>       - select a bootdev by name | label | seq\n"
 	"bootdev info [-p]         - show information about a bootdev (-p to probe)");
 

@@ -793,7 +793,7 @@ static int bootdev_test_cmd_order(struct unit_test_state *uts)
 	ut_assert_nextline("mmc1");
 	ut_assert_console_end();
 
-	ut_assertok(run_command("bootdev order clear", 0));
+	ut_assertok(run_command("bootdev order -c", 0));
 	ut_assertok(run_command("bootdev order", 0));
 	ut_assert_nextline("No ordering");
 	ut_assert_console_end();
