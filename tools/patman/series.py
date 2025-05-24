@@ -39,6 +39,10 @@ class Series(dict):
         allow_overwrite (bool): Allow tags to overwrite an existing tag
         base_commit (Commit): Commit object at the base of this series
         branch (str): Branch name of this series
+        desc (str): Description of the series (cover-letter title)
+        idnum (int or None): Database rowid
+        name (str): Series name, typically the branch name without any numeric
+            suffix
         _generated_cc (dict) written in MakeCcFile()
             key: name of patch file
             value: list of email addresses
@@ -54,6 +58,9 @@ class Series(dict):
         self.allow_overwrite = False
         self.base_commit = None
         self.branch = None
+        self.desc = ''
+        self.idnum = None
+        self.name = None
         self._generated_cc = {}
 
     # These make us more like a dictionary
@@ -62,6 +69,14 @@ class Series(dict):
 
     def __getattr__(self, name):
         return self[name]
+
+    @staticmethod
+    def from_fields(idnum, name, desc):
+        ser = Series()
+        ser.idnum = idnum
+        ser.name = name
+        ser.desc = desc
+        return ser
 
     def AddTag(self, commit, line, name, value):
         """Add a new Series-xxx tag along with its value.
@@ -415,3 +430,58 @@ class Series(dict):
         if self.get('postfix'):
            postfix = ' %s' % self['postfix']
         return '%s%sPATCH%s%s' % (git_prefix, prefix, postfix, version)
+
+    def get_links(self, links_str=None, cur_version=None):
+        """Look up the patchwork links for each version
+
+        Args:
+            links_str (str): Links string to parse, or None to use self.links
+            cur_version (int): Default version to assume for un-versioned links,
+                or None to use self.version
+
+        Return:
+            dict:
+                key (int): Version number
+                value (str): Link string
+        """
+        if links_str is None:
+            links_str = self.links if 'links' in self else ''
+        if cur_version is None:
+            cur_version = int(self.version) if 'version' in self else 1
+        assert isinstance(cur_version, int)
+        links = {}
+        for item in links_str.split():
+            if ':' in item:
+                version, link = item.split(':')
+                links[int(version)] = link
+            else:
+                links[cur_version] = item
+        return links
+
+    def build_links(self, links):
+        """Build a string containing the links
+
+        Args:
+            links (dict):
+                key (int): Version number
+                value (str): Link string
+
+        Return:
+            str: Link string, e.g. '2:4433 1:2872'
+        """
+        out = ''
+        for vers in sorted(links.keys(), reverse=True):
+            out += f' {vers}:{links[vers]}'
+        return out[1:]
+
+    def get_link_for_version(self, find_vers, links_str=None):
+        """Look up the patchwork link for a particular version
+
+        Args:
+            find_vers (int): Version to find
+            links_str (str): Links string to parse, or None to use self.links
+
+        Return:
+            str: Series-links entry for that version, or None if not found
+        """
+        return self.get_links(links_str).get(find_vers)

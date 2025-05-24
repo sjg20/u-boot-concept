@@ -2,6 +2,8 @@
 # Copyright (c) 2011 The Chromium OS Authors.
 #
 
+"""Basic utilities for running the git command-line tool from Python"""
+
 import os
 import sys
 
@@ -22,6 +24,8 @@ def log_cmd(commit_range, git_dir=None, oneline=False, reverse=False,
         oneline (bool): True to use --oneline, else False
         reverse (bool): True to reverse the log (--reverse)
         count (int or None): Number of commits to list, or None for no limit
+        decorate (bool): True to use --decorate
+
     Return:
         List containing command and arguments to run
     """
@@ -518,9 +522,8 @@ send --cc-cmd cc-fname" cover p1 p2'
     """
     to = build_email_list(series.get('to'), alias, '--to', warn_on_error)
     if not to:
-        git_config_to = command.output('git', 'config', 'sendemail.to',
-                                       raise_on_error=False)
-        if not git_config_to:
+        if not command.output('git', 'config', 'sendemail.to',
+                              raise_on_error=False):
             print("No recipient.\n"
                   "Please add something like this to a commit\n"
                   "Series-to: Fred Bloggs <f.blogs@napier.co.nz>\n"
@@ -549,9 +552,8 @@ send --cc-cmd cc-fname" cover p1 p2'
     cmd += args
     if not dry_run:
         command.run(*cmd, capture=False, capture_stderr=False, cwd=cwd)
-    cmdstr = ' '.join([f'"{x}"' if ' ' in x and not '"' in x else x
-                       for x in cmd])
-    return cmdstr
+    return' '.join([f'"{x}"' if ' ' in x and '"' not in x else x
+                    for x in cmd])
 
 
 def lookup_email(lookup_name, alias, warn_on_error=True, level=0):
@@ -642,7 +644,7 @@ def get_top_level():
     """Return name of top-level directory for this git repo.
 
     Returns:
-        str: Full path to git top-level directory
+        str: Full path to git top-level directory, or None if not found
 
     This test makes sure that we are running tests in the right subdir
 
@@ -650,7 +652,12 @@ def get_top_level():
             os.path.join(get_top_level(), 'tools', 'patman')
     True
     """
-    return command.output_one_line('git', 'rev-parse', '--show-toplevel')
+    result = command.run_one(
+        'git', 'rev-parse', '--show-toplevel', oneline=True, capture=True,
+        capture_stderr=True, raise_on_error=False)
+    if result.return_code:
+        return None
+    return result.stdout.strip()
 
 
 def get_alias_file():
@@ -668,7 +675,7 @@ def get_alias_file():
     if os.path.isabs(fname):
         return fname
 
-    return os.path.join(get_top_level(), fname)
+    return os.path.join(get_top_level() or '', fname)
 
 
 def get_default_user_name():
@@ -720,6 +727,7 @@ def get_hash(spec, git_dir=None):
 
     Args:
         spec (str): Git commit to show, e.g. 'my-branch~12'
+        git_dir (str): Path to git repository (None to use default)
 
     Returns:
         str: Hash of commit
@@ -762,6 +770,7 @@ def check_dirty(git_dir=None, work_tree=None):
 
     Args:
         git_dir (str): Path to git repository (None to use default)
+        work_tree (str): Git worktree to use, or None if none
 
     Return:
         str: List of dirty filenames and state
@@ -773,6 +782,102 @@ def check_dirty(git_dir=None, work_tree=None):
         cmd += ['--work-tree', work_tree]
     cmd += ['status', '--porcelain', '--untracked-files=no']
     return command.output(*cmd).splitlines()
+
+
+def check_branch(name, git_dir=None):
+    """Check if a branch exists
+
+    Args:
+        name (str): Name of the branch to check
+        git_dir (str): Path to git repository (None to use default)
+    """
+    cmd = ['git']
+    if git_dir:
+        cmd += ['--git-dir', git_dir]
+    cmd += ['branch', '--list', name]
+
+    # This produces '  <name>' or '* <name>'
+    out = command.output(*cmd).rstrip()
+    return out[2:] == name
+
+
+def rename_branch(old_name, name, git_dir=None):
+    """Check if a branch exists
+
+    Args:
+        old_name (str): Name of the branch to rename
+        name (str): New name for the branch
+        git_dir (str): Path to git repository (None to use default)
+
+    Return:
+        str: Output from command
+    """
+    cmd = ['git']
+    if git_dir:
+        cmd += ['--git-dir', git_dir]
+    cmd += ['branch', '--move', old_name, name]
+
+    # This produces '  <name>' or '* <name>'
+    return command.output(*cmd).rstrip()
+
+
+def get_commit_message(commit, git_dir=None):
+    """Gets the commit message for a commit
+
+    Args:
+        commit (str): commit to check
+        git_dir (str): Path to git repository (None to use default)
+
+    Return:
+        list of str: Lines from the commit message
+    """
+    cmd = ['git']
+    if git_dir:
+        cmd += ['--git-dir', git_dir]
+    cmd += ['show', '--quiet', commit]
+
+    out = command.output(*cmd)
+    # the header is followed by a blank line
+    lines = out.splitlines()
+    empty = lines.index('')
+    msg = lines[empty + 1:]
+    unindented = [line[4:] for line in msg]
+
+    return unindented
+
+
+def show_commit(commit, msg=True, diffstat=False, patch=False, colour=True,
+                git_dir=None):
+    """Runs 'git show' and returns the output
+
+    Args:
+        commit (str): commit to check
+        msg (bool): Show the commit message
+        diffstat (bool): True to include the diffstat
+        patch (bool): True to include the patch
+        colour (bool): True to force use of colour
+        git_dir (str): Path to git repository (None to use default)
+
+    Return:
+        list of str: Lines from the commit message
+    """
+    cmd = ['git']
+    if git_dir:
+        cmd += ['--git-dir', git_dir]
+    cmd += ['show']
+    if colour:
+        cmd.append('--color')
+    if not msg:
+        cmd.append('--oneline')
+    if diffstat:
+        cmd.append('--stat')
+    else:
+        cmd.append('--quiet')
+    if patch:
+        cmd.append('--patch')
+    cmd.append(commit)
+
+    return command.output(*cmd)
 
 
 if __name__ == "__main__":
