@@ -395,6 +395,7 @@ u32 tpm2_get_capability(struct udevice *dev, u32 capability, u32 property,
 	properties_off = sizeof(u16) + sizeof(u32) + sizeof(u32) +
 			 sizeof(u8) + sizeof(u32);
 	memcpy(buf, &response[properties_off], response_len - properties_off);
+	printf("result size %lx\n", response_len - properties_off);
 
 	return 0;
 }
