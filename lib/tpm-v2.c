@@ -81,17 +81,21 @@ u32 tpm2_auto_start(struct udevice *dev)
 {
 	u32 rc;
 
+	printf("self test1\n");
 	rc = tpm2_self_test(dev, TPMI_YES);
 
 	if (rc == TPM2_RC_INITIALIZE) {
+		printf("startup\n");
 		rc = tpm2_startup(dev, TPM2_SU_CLEAR);
 		if (rc)
 			return rc;
 
+		printf("self test2\n");
 		rc = tpm2_self_test(dev, TPMI_YES);
 	}
 	if (rc)
 		return rc;
+	printf("update active\n");
 
 	return tpm2_update_active_banks(dev);
 }
