@@ -126,7 +126,7 @@ __maybe_unused static int bootflow_handle_menu(struct bootstd_priv *std,
 				return log_msg_ret("bhr", ret);
 		}
 		ret = bootflow_menu_poll(exp, &seq);
-	} while (ret == -EAGAIN || ret == -ERESTART);
+	} while (ret == -EAGAIN || ret == -ERESTART || ret == -EREMCHG);
 
 	if (ret == -EPIPE) {
 		printf("Nothing chosen\n");
