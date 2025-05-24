@@ -83,12 +83,18 @@ struct expo_action {
  * @menuitem_gap_y: Gap between menu items in pixels
  * @menu_title_margin_x: Gap between right side of menu title and left size of
  *	menu label
+ * @textline_label_margin_x: Gap between right side of textline prompt and left
+ *	side of editable text
+ * @white_on_black: True to use white-on-black for the expo, false for
+ *	black-on-white
  */
 struct expo_theme {
 	u32 font_size;
 	u32 menu_inset;
 	u32 menuitem_gap_y;
 	u32 menu_title_margin_x;
+	u32 textline_label_margin_x;
+	bool white_on_black;
 };
 
 /**
@@ -281,12 +287,20 @@ enum scene_obj_align {
  * can be selected)
  * @SCENEOF_SIZE_VALID: object's size (width/height) is valid, so any adjustment
  * to x0/y0 should maintain the width/height of the object
+ * @SCENEOF_SYNC_POS: object's position has changed
+ * @SCENEOF_SYNC_SIZE: object's size (width/height) has changed
+ * @SCENEOF_SYNC_WIDTH: object's widget has changed
+ * @SCENEOF_SYNC_BBOX: object's bounding box has changed
  */
 enum scene_obj_flags_t {
 	SCENEOF_HIDE	= 1 << 0,
 	SCENEOF_POINT	= 1 << 1,
 	SCENEOF_OPEN	= 1 << 2,
 	SCENEOF_SIZE_VALID	= BIT(3),
+	SCENEOF_SYNC_POS		= BIT(4),
+	SCENEOF_SYNC_SIZE	= BIT(5),
+	SCENEOF_SYNC_WIDTH	= BIT(6),
+	SCENEOF_SYNC_BBOX	= BIT(7),
 };
 
 enum {
@@ -301,9 +315,12 @@ enum {
  * @name: Name of the object (allocated)
  * @id: ID number of the object
  * @type: Type of this object
- * @bbox: Bounding box for this object
- * @ofs: Offset from x0, y0 where the object is drawn
- * @dims: Dimensions of the text/image (may be smaller than bbox)
+ * @req_bbox: Requested bounding box for this object, synced to @bbox when scene is
+ * arranged
+ * @bbox: Bounding box for this object (internal use only)
+ * @ofs: Offset from x0, y0 where the object is drawn (internal use only)
+ * @dims: Dimensions of the text/image; may be smaller than bbox
+ * (internal use only)
  * @horiz: Horizonal alignment
  * @vert: Vertical alignment
  * @flags: Flags for this object
@@ -316,6 +333,7 @@ struct scene_obj {
 	char *name;
 	uint id;
 	enum scene_obj_t type;
+	struct scene_obj_bbox req_bbox;
 	struct scene_obj_bbox bbox;
 	struct scene_obj_offset ofs;
 	struct scene_obj_dims dims;
@@ -391,6 +409,7 @@ struct scene_obj_txt {
  * @title_id: ID of the title text, or 0 if none
  * @cur_item_id: ID of the current menu item, or 0 if none
  * @pointer_id: ID of the object pointing to the current selection
+ * @pointer_xofs: x position of pointer relative to the left side of the menu
  * @item_head: List of items in the menu
  */
 struct scene_obj_menu {
@@ -398,6 +417,7 @@ struct scene_obj_menu {
 	uint title_id;
 	uint cur_item_id;
 	uint pointer_id;
+	int pointer_xofs;
 	struct list_head item_head;
 };
 
@@ -620,6 +640,17 @@ int expo_first_scene_id(struct expo *exp);
 int expo_render(struct expo *exp);
 
 /**
+ * expo_arrange() - Arrange the current scene to deal with object sizes
+ *
+ * Updates any menus in the current scene so that their objects are in the right
+ * place. Does nothing if there is no scene
+ *
+ * @exp: Expo to arrange
+ * Returns: 0 if OK, -ve on error
+ */
+int expo_arrange(struct expo *exp);
+
+/**
  * expo_set_text_mode() - Controls whether the expo renders in text mode
  *
  * @exp: Expo to update
@@ -804,6 +835,9 @@ int scene_txted_set_font(struct scene *scn, uint id, const char *font_name,
 /**
  * scene_obj_set_pos() - Set the postion of an object
  *
+ * The given position is marked as 'requested' and will be applied when the
+ * scene is next arranged
+ *
  * @scn: Scene to update
  * @id: ID of object to update
  * @x: x position, in pixels from left side
@@ -814,6 +848,9 @@ int scene_obj_set_pos(struct scene *scn, uint id, int x, int y);
 
 /**
  * scene_obj_set_size() - Set the size of an object
+ *
+ * The given size is marked as 'requested' and will be applied when the scene
+ * is next arranged
  *
  * @scn: Scene to update
  * @id: ID of object to update
@@ -826,6 +863,9 @@ int scene_obj_set_size(struct scene *scn, uint id, int w, int h);
 /**
  * scene_obj_set_width() - Set the width of an object
  *
+ * The given width is marked as 'requested' and will be applied when the scene
+ * is next arranged
+ *
  * @scn: Scene to update
  * @id: ID of object to update
  * @w: width in pixels
@@ -835,6 +875,9 @@ int scene_obj_set_width(struct scene *scn, uint id, int w);
 
 /**
  * scene_obj_set_bbox() - Set the bounding box of an object
+ *
+ * The given bounding box is marked as 'requested' and will be applied when the
+ * scene is next arranged
  *
  * @scn: Scene to update
  * @id: ID of object to update
@@ -982,12 +1025,23 @@ int expo_send_key(struct expo *exp, int key);
 int expo_action_get(struct expo *exp, struct expo_action *act);
 
 /**
- * expo_apply_theme() - Apply a theme to an expo
+ * expo_setup_theme() - Read a theme from a node and apply it to an expo
  *
  * @exp: Expo to update
  * @node: Node containing the theme
+ * Returns: 0 if OK, -ve on error
  */
-int expo_apply_theme(struct expo *exp, ofnode node);
+int expo_setup_theme(struct expo *exp, ofnode node);
+
+/**
+ * expo_apply_theme() - Apply an expo's theme
+ *
+ * The theme to be applied must be set up exp->theme
+ *
+ * @exp: Expo to update
+ * Returns: 0 if OK, -ve on error
+ */
+int expo_apply_theme(struct expo *exp);
 
 /**
  * expo_build() - Build an expo from an FDT description

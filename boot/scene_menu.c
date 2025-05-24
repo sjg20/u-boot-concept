@@ -102,7 +102,8 @@ static int update_pointers(struct scene_obj_menu *menu, uint id, bool point)
 		label = scene_obj_find(scn, item->label_id, SCENEOBJT_NONE);
 
 		ret = scene_obj_set_pos(scn, menu->pointer_id,
-					menu->obj.bbox.x0 + 200, label->bbox.y0);
+					menu->obj.req_bbox.x0 +
+					menu->pointer_xofs, label->req_bbox.y0);
 		if (ret < 0)
 			return log_msg_ret("ptr", ret);
 	}
@@ -191,59 +192,58 @@ void scene_menu_calc_bbox(struct scene_obj_menu *menu,
 	bbox[SCENEBB_label].y1 -= theme->menuitem_gap_y;
 }
 
-int scene_menu_calc_dims(struct scene_obj_menu *menu)
+static void scene_menu_calc_dims(struct scene *scn, struct scene_obj_menu *menu,
+				 struct scene_obj_dims *dims)
 {
-	struct vidconsole_bbox bbox[SCENEBB_count], *cur;
 	const struct scene_menitem *item;
 
-	scene_menu_calc_bbox(menu, bbox);
-
-	/* Make all field types the same width */
 	list_for_each_entry(item, &menu->item_head, sibling) {
-		cur = &bbox[SCENEBB_label];
-		if (cur->valid)
-			scene_obj_set_width(menu->obj.scene, item->label_id,
-					    cur->x1 - cur->x0);
-		cur = &bbox[SCENEBB_key];
-		if (cur->valid)
-			scene_obj_set_width(menu->obj.scene, item->key_id,
-					    cur->x1 - cur->x0);
-		cur = &bbox[SCENEBB_desc];
-		if (cur->valid)
-			scene_obj_set_width(menu->obj.scene, item->desc_id,
-					    cur->x1 - cur->x0);
+		struct scene_obj_dims local;
+
+		local.x = 0;
+		local.y = 0;
+		scene_dims_union(menu->obj.scene, item->label_id, &local);
+		scene_dims_union(menu->obj.scene, item->key_id, &local);
+		scene_dims_union(menu->obj.scene, item->desc_id, &local);
+		scene_dims_union(menu->obj.scene, item->preview_id, &local);
+		scene_dims_join(&local, &dims[SCENEBB_all]);
+
+		/* Get the dimensions all individual fields */
+		scene_dims_union(menu->obj.scene, item->label_id,
+				 &dims[SCENEBB_label]);
+		scene_dims_union(menu->obj.scene, item->key_id,
+				 &dims[SCENEBB_key]);
+		scene_dims_union(menu->obj.scene, item->desc_id,
+				 &dims[SCENEBB_desc]);
 	}
-
-	cur = &bbox[SCENEBB_all];
-	if (cur->valid) {
-		menu->obj.dims.x = cur->x1 - cur->x0;
-		menu->obj.dims.y = cur->y1 - cur->y0;
-
-		menu->obj.bbox.x1 = cur->x1;
-		menu->obj.bbox.y1 = cur->y1;
-	}
-
-	return 0;
 }
 
 int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 		       struct scene_obj_menu *menu)
 {
 	const bool open = menu->obj.flags & SCENEOF_OPEN;
+	struct scene_obj_dims dims[SCENEBB_count], pointer_dims;
 	struct expo *exp = scn->expo;
 	const bool stack = exp->popup;
 	const struct expo_theme *theme = &exp->theme;
 	struct scene_menitem *item;
 	uint sel_id;
-	int x, y;
+	int startx, x, y;
 	int ret;
 
-	x = menu->obj.bbox.x0;
-	y = menu->obj.bbox.y0;
+	memset(&pointer_dims, '\0', sizeof(pointer_dims));
+	menu->obj.dims.x = 0;
+	menu->obj.dims.y = 0;
+
+	memset(dims, '\0', sizeof(dims));
+	scene_menu_calc_dims(scn, menu, dims);
+
+	startx = menu->obj.req_bbox.x0;
+	y = menu->obj.req_bbox.y0;
 	if (menu->title_id) {
 		int width;
 
-		ret = scene_obj_set_pos(scn, menu->title_id, menu->obj.bbox.x0, y);
+		ret = scene_obj_set_pos(scn, menu->title_id, startx, y);
 		if (ret < 0)
 			return log_msg_ret("tit", ret);
 
@@ -252,9 +252,19 @@ int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 			return log_msg_ret("hei", ret);
 
 		if (stack)
-			x += arr->label_width + theme->menu_title_margin_x;
+			startx += arr->label_width + theme->menu_title_margin_x;
 		else
 			y += ret * 2;
+	}
+
+	if (menu->pointer_id) {
+		const struct scene_obj *obj;
+
+		obj = scene_obj_find(scn, menu->pointer_id, SCENEOBJT_NONE);
+		if (!obj)
+			return log_msg_ret("obj", -ENOENT);
+
+		pointer_dims = obj->dims;
 	}
 
 	/*
@@ -268,6 +278,7 @@ int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 		bool selected;
 		int height;
 
+		x = startx;
 		ret = scene_obj_get_hw(scn, item->label_id, NULL);
 		if (ret < 0)
 			return log_msg_ret("get", ret);
@@ -286,21 +297,28 @@ int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 		 * Put the label on the left, then leave a space for the
 		 * pointer, then the key and the description
 		 */
-		ret = scene_obj_set_pos(scn, item->label_id,
-					x + theme->menu_inset, y);
+		ret = scene_obj_set_pos(scn, item->label_id, x, y);
 		if (ret < 0)
 			return log_msg_ret("nam", ret);
 		scene_obj_set_hide(scn, item->label_id,
 				   stack && !open && !selected);
+		x += 200;
+
+		/* space for the pointer */
+		if (pointer_dims.x) {
+			menu->pointer_xofs = x - startx;
+			x += 12 + pointer_dims.x + 9;
+		}
 
 		if (item->key_id) {
-			ret = scene_obj_set_pos(scn, item->key_id, x + 230, y);
+			ret = scene_obj_set_pos(scn, item->key_id, x, y);
 			if (ret < 0)
 				return log_msg_ret("key", ret);
+			x += 50;
 		}
 
 		if (item->desc_id) {
-			ret = scene_obj_set_pos(scn, item->desc_id, x + 280, y);
+			ret = scene_obj_set_pos(scn, item->desc_id, x, y);
 			if (ret < 0)
 				return log_msg_ret("des", ret);
 		}
@@ -322,15 +340,25 @@ int scene_menu_arrange(struct scene *scn, struct expo_arrange_info *arr,
 				return log_msg_ret("hid", ret);
 		}
 
+		menu->obj.dims.x = 160;
 		if (!stack || open)
 			y += height + theme->menuitem_gap_y;
 	}
 
+	list_for_each_entry(item, &menu->item_head, sibling) {
+		scene_obj_set_width(menu->obj.scene, item->label_id,
+				    dims[SCENEBB_label].x);
+		scene_obj_set_width(menu->obj.scene, item->key_id,
+				    dims[SCENEBB_key].x);
+		scene_obj_set_width(menu->obj.scene, item->desc_id,
+				    dims[SCENEBB_desc].x);
+	}
+
 	if (sel_id)
 		menu_point_to_item(menu, sel_id);
-	menu->obj.bbox.x1 = menu->obj.bbox.x0 + menu->obj.dims.x;
-	menu->obj.bbox.y1 = menu->obj.bbox.y0 + menu->obj.dims.y;
-	menu->obj.flags |= SCENEOF_SIZE_VALID;
+	menu->obj.dims.y = dims[SCENEBB_all].y;
+	scene_obj_set_size(scn, menu->obj.id, menu->obj.dims.x,
+			   menu->obj.dims.y);
 
 	return 0;
 }

@@ -67,7 +67,7 @@ int bootflow_menu_new(struct expo **expp)
 				  SCENEOB_DISPLAY_MAX, 30);
 	ret |= scene_obj_set_halign(scn, OBJ_MENU_TITLE, SCENEOA_CENTRE);
 
-	logo = video_get_u_boot_logo();
+	logo = video_get_u_boot_logo(NULL);
 	if (logo) {
 		ret |= scene_img(scn, "ulogo", OBJ_U_BOOT_LOGO, logo, NULL);
 		ret |= scene_obj_set_pos(scn, OBJ_U_BOOT_LOGO, 1165, 100);
@@ -249,9 +249,7 @@ int bootflow_menu_setup(struct bootstd_priv *std, bool text_mode,
 int bootflow_menu_start(struct bootstd_priv *std, bool text_mode,
 			struct expo **expp)
 {
-	struct scene *scn;
 	struct expo *exp;
-	uint scene_id;
 	int ret;
 
 	ret = bootflow_menu_setup(std, text_mode, &exp);
@@ -263,7 +261,7 @@ int bootflow_menu_start(struct bootstd_priv *std, bool text_mode,
 		return log_msg_ret("bma", ret);
 
 	if (ofnode_valid(std->theme)) {
-		ret = expo_apply_theme(exp, std->theme);
+		ret = expo_setup_theme(exp, std->theme);
 		if (ret)
 			return log_msg_ret("thm", ret);
 	}
@@ -272,15 +270,7 @@ int bootflow_menu_start(struct bootstd_priv *std, bool text_mode,
 	if (ret)
 		return log_msg_ret("bmd", ret);
 
-	ret = expo_first_scene_id(exp);
-	if (ret < 0)
-		return log_msg_ret("scn", ret);
-	scene_id = ret;
-	scn = expo_lookup_scene_id(exp, scene_id);
-
-	scene_set_highlight_id(scn, OBJ_MENU);
-
-	ret = scene_arrange(scn);
+	ret = expo_arrange(exp);
 	if (ret)
 		return log_msg_ret("arr", ret);
 

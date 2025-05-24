@@ -150,14 +150,7 @@ int expo_calc_dims(struct expo *exp)
 		return log_msg_ret("dim", -ENOTSUPP);
 
 	list_for_each_entry(scn, &exp->scene_head, sibling) {
-		/*
-		 * Do the menus last so that all the menus' text objects
-		 * are dimensioned
-		 */
-		ret = scene_calc_dims(scn, false);
-		if (ret)
-			return log_msg_ret("scn", ret);
-		ret = scene_calc_dims(scn, true);
+		ret = scene_calc_dims(scn);
 		if (ret)
 			return log_msg_ret("scn", ret);
 	}
@@ -185,14 +178,10 @@ struct scene *expo_lookup_scene_id(struct expo *exp, uint scene_id)
 int expo_set_scene_id(struct expo *exp, uint scene_id)
 {
 	struct scene *scn;
-	int ret;
 
 	scn = expo_lookup_scene_id(exp, scene_id);
 	if (!scn)
 		return log_msg_ret("id", -ENOENT);
-	ret = scene_arrange(scn);
-	if (ret)
-		return log_msg_ret("arr", ret);
 
 	exp->scene_id = scene_id;
 
@@ -209,6 +198,25 @@ int expo_first_scene_id(struct expo *exp)
 	scn = list_first_entry(&exp->scene_head, struct scene, sibling);
 
 	return scn->id;
+}
+
+int expo_arrange(struct expo *exp)
+{
+	struct scene *scn;
+	int ret;
+
+	if (!exp->scene_id)
+		return 0;
+
+	scn = expo_lookup_scene_id(exp, exp->scene_id);
+	if (!scn)
+		return log_msg_ret("scn", -ENOENT);
+
+	ret = scene_arrange(scn);
+	if (ret)
+		return log_msg_ret("ear", ret);
+
+	return 0;
 }
 
 int expo_render(struct expo *exp)
@@ -273,11 +281,28 @@ int expo_action_get(struct expo *exp, struct expo_action *act)
 	return act->type == EXPOACT_NONE ? -EAGAIN : 0;
 }
 
-int expo_apply_theme(struct expo *exp, ofnode node)
+int expo_apply_theme(struct expo *exp)
 {
-	struct scene *scn;
 	struct expo_theme *theme = &exp->theme;
-	bool white_on_black;
+	struct scene *scn;
+
+	if (exp->display)
+		video_set_white_on_black(exp->display, theme->white_on_black);
+
+	list_for_each_entry(scn, &exp->scene_head, sibling) {
+		int ret;
+
+		ret = scene_apply_theme(scn, theme);
+		if (ret)
+			return log_msg_ret("asn", ret);
+	}
+
+	return 0;
+}
+
+int expo_setup_theme(struct expo *exp, ofnode node)
+{
+	struct expo_theme *theme = &exp->theme;
 	int ret;
 
 	log_debug("Applying theme %s\n", ofnode_get_name(node));
@@ -288,15 +313,13 @@ int expo_apply_theme(struct expo *exp, ofnode node)
 	ofnode_read_u32(node, "menuitem-gap-y", &theme->menuitem_gap_y);
 	ofnode_read_u32(node, "menu-title-margin-x",
 			&theme->menu_title_margin_x);
-	white_on_black = ofnode_read_bool(node, "white-on-black");
-	if (exp->display)
-		video_set_white_on_black(exp->display, white_on_black);
+	ofnode_read_u32(node, "textline-label-margin-x",
+			&theme->textline_label_margin_x);
+	theme->white_on_black = ofnode_read_bool(node, "white-on-black");
 
-	list_for_each_entry(scn, &exp->scene_head, sibling) {
-		ret = scene_apply_theme(scn, theme);
-		if (ret)
-			return log_msg_ret("app", ret);
-	}
+	ret = expo_apply_theme(exp);
+	if (ret)
+		return log_msg_ret("asn", ret);
 
 	return 0;
 }

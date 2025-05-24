@@ -277,8 +277,8 @@ static int expo_object_attr(struct unit_test_state *uts)
 	ut_assert(id > 0);
 
 	ut_assertok(scene_obj_set_pos(scn, OBJ_LOGO, 123, 456));
-	ut_asserteq(123, img->obj.bbox.x0);
-	ut_asserteq(456, img->obj.bbox.y0);
+	ut_asserteq(123, img->obj.req_bbox.x0);
+	ut_asserteq(456, img->obj.req_bbox.y0);
 
 	ut_asserteq(-ENOENT, scene_obj_set_pos(scn, OBJ_TEXT2, 0, 0));
 
@@ -302,7 +302,7 @@ static int expo_object_attr(struct unit_test_state *uts)
 
 	node = ofnode_path("/bootstd/theme");
 	ut_assert(ofnode_valid(node));
-	ut_assertok(expo_apply_theme(exp, node));
+	ut_assertok(expo_setup_theme(exp, node));
 	ut_asserteq(30, txt->gen.font_size);
 
 	expo_destroy(exp);
@@ -367,8 +367,8 @@ static int expo_object_menu(struct unit_test_state *uts)
 	ut_asserteq(0, menu->pointer_id);
 
 	ut_assertok(scene_obj_set_pos(scn, OBJ_MENU, 50, 400));
-	ut_asserteq(50, menu->obj.bbox.x0);
-	ut_asserteq(400, menu->obj.bbox.y0);
+	ut_asserteq(50, menu->obj.req_bbox.x0);
+	ut_asserteq(400, menu->obj.req_bbox.y0);
 
 	id = scene_txt_str(scn, "title", OBJ_MENU_TITLE, STR_MENU_TITLE,
 			   "Main Menu", &tit);
@@ -421,13 +421,13 @@ static int expo_object_menu(struct unit_test_state *uts)
 	ut_asserteq(menu->obj.bbox.x0, name1->obj.bbox.x0);
 	ut_asserteq(menu->obj.bbox.y0 + 32, name1->obj.bbox.y0);
 
-	ut_asserteq(menu->obj.bbox.x0 + 230, key1->obj.bbox.x0);
-	ut_asserteq(menu->obj.bbox.y0 + 32, key1->obj.bbox.y0);
-
 	ut_asserteq(menu->obj.bbox.x0 + 200, ptr->obj.bbox.x0);
 	ut_asserteq(menu->obj.bbox.y0 + 32, ptr->obj.bbox.y0);
 
-	ut_asserteq(menu->obj.bbox.x0 + 280, desc1->obj.bbox.x0);
+	ut_asserteq(menu->obj.bbox.x0 + 229, key1->obj.bbox.x0);
+	ut_asserteq(menu->obj.bbox.y0 + 32, key1->obj.bbox.y0);
+
+	ut_asserteq(menu->obj.bbox.x0 + 279, desc1->obj.bbox.x0);
 	ut_asserteq(menu->obj.bbox.y0 + 32, desc1->obj.bbox.y0);
 
 	ut_asserteq(-4, prev1->obj.bbox.x0);
@@ -463,13 +463,15 @@ BOOTSTD_TEST(expo_object_menu, UTF_DM | UTF_SCAN_FDT);
 static int expo_render_image(struct unit_test_state *uts)
 {
 	struct scene_obj_menu *menu;
+	struct abuf buf, logo_copy;
 	struct scene *scn, *scn2;
 	struct abuf orig, *text;
 	struct expo_action act;
 	struct scene_obj *obj;
 	struct udevice *dev;
 	struct expo *exp;
-	int id;
+	int id, size;
+	void *logo;
 
 	ut_assertok(uclass_first_device_err(UCLASS_VIDEO, &dev));
 
@@ -478,7 +480,8 @@ static int expo_render_image(struct unit_test_state *uts)
 	ut_assert(id > 0);
 	ut_assertok(expo_set_display(exp, dev));
 
-	id = scene_img(scn, "logo", OBJ_LOGO, video_get_u_boot_logo(), NULL);
+	id = scene_img(scn, "logo", OBJ_LOGO, video_get_u_boot_logo(NULL),
+		       NULL);
 	ut_assert(id > 0);
 	ut_assertok(scene_obj_set_pos(scn, OBJ_LOGO, 50, 20));
 
@@ -520,14 +523,24 @@ static int expo_render_image(struct unit_test_state *uts)
 	id = scene_txt_str(scn, "label1", ITEM1_LABEL, STR_ITEM1_LABEL, "Play",
 			   NULL);
 	ut_assert(id > 0);
-	id = scene_txt_str(scn, "item1 txt", ITEM1_DESC, STR_ITEM1_DESC,
+	id = scene_txt_str(scn, "item1-txt", ITEM1_DESC, STR_ITEM1_DESC,
 			   "Lord Melchett", NULL);
 	ut_assert(id > 0);
 	id = scene_txt_str(scn, "item1-key", ITEM1_KEY, STR_ITEM1_KEY, "1",
 			   NULL);
 	ut_assert(id > 0);
-	id = scene_img(scn, "item1-preview", ITEM1_PREVIEW,
-		       video_get_u_boot_logo(), NULL);
+
+	/*
+	 * hack the logo to change the palette and use that for item2 so we can
+	 * tell them apart
+	 */
+	logo = video_get_u_boot_logo(&size);
+	abuf_init_const(&buf, logo, size);
+	ut_assert(abuf_copy(&buf, &logo_copy));
+	memset(logo_copy.data + 0x70, '\x45', 0x20);
+
+	id = scene_img(scn, "item1-preview", ITEM1_PREVIEW, logo_copy.data,
+		       NULL);
 	id = scene_menuitem(scn, OBJ_MENU, "item1", ITEM1, ITEM1_KEY,
 			    ITEM1_LABEL, ITEM1_DESC, ITEM1_PREVIEW, 0, NULL);
 	ut_assert(id > 0);
@@ -535,14 +548,14 @@ static int expo_render_image(struct unit_test_state *uts)
 	id = scene_txt_str(scn, "label2", ITEM2_LABEL, STR_ITEM2_LABEL, "Now",
 			   NULL);
 	ut_assert(id > 0);
-	id = scene_txt_str(scn, "item2 txt", ITEM2_DESC, STR_ITEM2_DESC,
+	id = scene_txt_str(scn, "item2-txt", ITEM2_DESC, STR_ITEM2_DESC,
 			   "Lord Percy", NULL);
 	ut_assert(id > 0);
 	id = scene_txt_str(scn, "item2-key", ITEM2_KEY, STR_ITEM2_KEY, "2",
 			   NULL);
 	ut_assert(id > 0);
 	id = scene_img(scn, "item2-preview", ITEM2_PREVIEW,
-		       video_get_u_boot_logo(), NULL);
+		       video_get_u_boot_logo(NULL), NULL);
 	ut_assert(id > 0);
 
 	id = scene_menuitem(scn, OBJ_MENU, "item2", ITEM2, ITEM2_KEY,
@@ -575,7 +588,6 @@ static int expo_render_image(struct unit_test_state *uts)
 	/* render without a scene */
 	ut_asserteq(-ECHILD, expo_render(exp));
 
-	ut_assertok(expo_calc_dims(exp));
 	ut_assertok(scene_arrange(scn));
 
 	/* check dimensions of text */
@@ -648,30 +660,47 @@ static int expo_render_image(struct unit_test_state *uts)
 	ut_asserteq(400 + 160, obj->bbox.y1);
 
 	scene_obj_set_width(scn, OBJ_MENU, 170);
-	ut_asserteq(50 + 170, obj->bbox.x1);
+	ut_asserteq(50 + 170, obj->req_bbox.x1);
 	scene_obj_set_bbox(scn, OBJ_MENU, 60, 410, 50 + 160, 400 + 160);
-	ut_asserteq(60, obj->bbox.x0);
-	ut_asserteq(410, obj->bbox.y0);
-	ut_asserteq(50 + 160, obj->bbox.x1);
-	ut_asserteq(400 + 160, obj->bbox.y1);
+	ut_asserteq(60, obj->req_bbox.x0);
+	ut_asserteq(410, obj->req_bbox.y0);
+	ut_asserteq(50 + 160, obj->req_bbox.x1);
+	ut_asserteq(400 + 160, obj->req_bbox.y1);
 
 	/* reset back to normal */
 	scene_obj_set_bbox(scn, OBJ_MENU, 50, 400, 50 + 160, 400 + 160);
 
+	/* make sure the preview for the first item is not shown */
+	obj = scene_obj_find(scn, ITEM1_PREVIEW, SCENEOBJT_NONE);
+	ut_assertnonnull(obj);
+	ut_assert(obj->flags & SCENEOF_HIDE);
+
 	/* render it */
 	expo_set_scene_id(exp, SCENE1);
 	ut_assertok(expo_render(exp));
+	ut_asserteq(18786, video_compress_fb(uts, dev, false));
 
 	ut_asserteq(0, scn->highlight_id);
 	ut_assertok(scene_arrange(scn));
 	ut_asserteq(0, scn->highlight_id);
+	ut_assertok(expo_render(exp));
+	ut_asserteq(20433, video_compress_fb(uts, dev, false));
+
+	ut_assertok(scene_arrange(scn));
+	ut_assertok(expo_render(exp));
+	ut_asserteq(20433, video_compress_fb(uts, dev, false));
 
 	scene_set_highlight_id(scn, OBJ_MENU);
+	ut_asserteq(OBJ_MENU, scn->highlight_id);
+	ut_assertok(scene_menu_select_item(scn, OBJ_MENU, ITEM1));
 	ut_assertok(scene_arrange(scn));
 	ut_asserteq(OBJ_MENU, scn->highlight_id);
-	ut_assertok(expo_render(exp));
 
-	ut_asserteq(19704, video_compress_fb(uts, dev, false));
+	/* make sure the preview for the first item is now shown */
+	ut_assert(!(obj->flags & SCENEOF_HIDE));
+
+	ut_assertok(expo_render(exp));
+	ut_asserteq(20433, video_compress_fb(uts, dev, false));
 
 	/* move down */
 	ut_assertok(expo_send_key(exp, BKEY_DOWN));
@@ -762,6 +791,9 @@ static int expo_render_image(struct unit_test_state *uts)
 
 	ut_assert_console_end();
 
+	abuf_uninit(&buf);
+	abuf_uninit(&logo_copy);
+
 	expo_destroy(exp);
 
 	return 0;
@@ -787,7 +819,7 @@ static int expo_test_build(struct unit_test_state *uts)
 
 	ut_asserteq_str("name", exp->name);
 	ut_asserteq(0, exp->scene_id);
-	ut_asserteq(ID_DYNAMIC_START + 24, exp->next_id);
+	ut_asserteq(ID_DYNAMIC_START + 23, exp->next_id);
 	ut_asserteq(false, exp->popup);
 
 	/* check the scene */

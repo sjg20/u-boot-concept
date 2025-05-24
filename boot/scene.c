@@ -253,12 +253,13 @@ int scene_obj_set_pos(struct scene *scn, uint id, int x, int y)
 	obj = scene_obj_find(scn, id, SCENEOBJT_NONE);
 	if (!obj)
 		return log_msg_ret("find", -ENOENT);
-	w = obj->bbox.x1 - obj->bbox.x0;
-	h = obj->bbox.y1 - obj->bbox.y0;
-	obj->bbox.x0 = x;
-	obj->bbox.y0 = y;
-	obj->bbox.x1 = obj->bbox.x0 + w;
-	obj->bbox.y1 = obj->bbox.y0 + h;
+	w = obj->req_bbox.x1 - obj->req_bbox.x0;
+	h = obj->req_bbox.y1 - obj->req_bbox.y0;
+	obj->req_bbox.x0 = x;
+	obj->req_bbox.y0 = y;
+	obj->req_bbox.x1 = obj->req_bbox.x0 + w;
+	obj->req_bbox.y1 = obj->req_bbox.y0 + h;
+	obj->flags |= SCENEOF_SYNC_POS;
 
 	return 0;
 }
@@ -270,9 +271,10 @@ int scene_obj_set_size(struct scene *scn, uint id, int w, int h)
 	obj = scene_obj_find(scn, id, SCENEOBJT_NONE);
 	if (!obj)
 		return log_msg_ret("find", -ENOENT);
-	obj->bbox.x1 = obj->bbox.x0 + w;
-	obj->bbox.y1 = obj->bbox.y0 + h;
-	obj->flags |= SCENEOF_SIZE_VALID;
+	log_debug("obj %s w %d h %d\n", obj->name, w, h);
+	obj->req_bbox.x1 = obj->req_bbox.x0 + w;
+	obj->req_bbox.y1 = obj->req_bbox.y0 + h;
+	obj->flags |= SCENEOF_SIZE_VALID | SCENEOF_SYNC_SIZE;
 
 	return 0;
 }
@@ -284,7 +286,8 @@ int scene_obj_set_width(struct scene *scn, uint id, int w)
 	obj = scene_obj_find(scn, id, SCENEOBJT_NONE);
 	if (!obj)
 		return log_msg_ret("find", -ENOENT);
-	obj->bbox.x1 = obj->bbox.x0 + w;
+	obj->req_bbox.x1 = obj->req_bbox.x0 + w;
+	obj->flags |= SCENEOF_SYNC_WIDTH;
 
 	return 0;
 }
@@ -297,11 +300,11 @@ int scene_obj_set_bbox(struct scene *scn, uint id, int x0, int y0, int x1,
 	obj = scene_obj_find(scn, id, SCENEOBJT_NONE);
 	if (!obj)
 		return log_msg_ret("find", -ENOENT);
-	obj->bbox.x0 = x0;
-	obj->bbox.y0 = y0;
-	obj->bbox.x1 = x1;
-	obj->bbox.y1 = y1;
-	obj->flags |= SCENEOF_SIZE_VALID;
+	obj->req_bbox.x0 = x0;
+	obj->req_bbox.y0 = y0;
+	obj->req_bbox.x1 = x1;
+	obj->req_bbox.y1 = y1;
+	obj->flags |= SCENEOF_SIZE_VALID | SCENEOF_SYNC_BBOX;
 
 	return 0;
 }
@@ -448,7 +451,8 @@ int scene_obj_get_hw(struct scene *scn, uint id, int *widthp)
 		}
 
 		limit = obj->flags & SCENEOF_SIZE_VALID ?
-			obj->bbox.x1 - obj->bbox.x0 : -1;
+			obj->req_bbox.x1 - obj->req_bbox.x0 : -1;
+		log_debug("obj %s limit %d\n", obj->name, limit);
 
 		ret = vidconsole_measure(scn->expo->cons, gen->font_name,
 					 gen->font_size, str, limit, &bbox,
@@ -559,7 +563,7 @@ static int scene_txt_render(struct expo *exp, struct udevice *dev,
 		inset = exp->popup ? menu_inset : 0;
 		vidconsole_push_colour(cons, fore, back, &old);
 		video_fill_part(dev, x - inset, y,
-				obj->bbox.x1, obj->bbox.y1,
+				obj->bbox.x1 + inset, obj->bbox.y1,
 				vid_priv->colour_bg);
 	}
 
@@ -737,6 +741,31 @@ int scene_calc_arrange(struct scene *scn, struct expo_arrange_info *arr)
 	return 0;
 }
 
+/**
+ * scene_set_default_bbox() - Set a default for each object's size
+ *
+ * If there is not already a size, use the dims property to set one
+ */
+static int scene_set_default_bbox(struct scene *scn)
+{
+	struct scene_obj *obj;
+
+	list_for_each_entry(obj, &scn->obj_head, sibling) {
+		switch (obj->type) {
+		case SCENEOBJT_IMAGE:
+		case SCENEOBJT_TEXT:
+			if (!(obj->flags & SCENEOF_SIZE_VALID)) {
+				scene_obj_set_size(scn, obj->id, obj->dims.x,
+						   obj->dims.y);
+			}
+		default:
+			break;
+		}
+	}
+
+	return 0;
+}
+
 int scene_arrange(struct scene *scn)
 {
 	struct expo_arrange_info arr;
@@ -753,6 +782,12 @@ int scene_arrange(struct scene *scn)
 		ysize = priv->ysize;
 	}
 
+	ret = scene_calc_dims(scn);
+	if (ret)
+		return log_msg_ret("scd", ret);
+	ret = scene_set_default_bbox(scn);
+	if (ret)
+		return log_msg_ret("sce", ret);
 	ret = scene_calc_arrange(scn, &arr);
 	if (ret < 0)
 		return log_msg_ret("arr", ret);
@@ -788,6 +823,9 @@ int scene_arrange(struct scene *scn)
 		}
 		}
 	}
+	ret = scene_sync_bbox(scn);
+	if (ret)
+		return log_msg_ret("saf", ret);
 
 	return 0;
 }
@@ -1003,56 +1041,86 @@ int scene_obj_calc_bbox(struct scene_obj *obj, struct vidconsole_bbox bbox[])
 	return 0;
 }
 
-int scene_calc_dims(struct scene *scn, bool do_menus)
+int scene_sync_bbox(struct scene *scn)
 {
 	struct scene_obj *obj;
-	int ret;
 
 	list_for_each_entry(obj, &scn->obj_head, sibling) {
-		switch (obj->type) {
-		case SCENEOBJT_NONE:
-		case SCENEOBJT_TEXT:
-		case SCENEOBJT_BOX:
-		case SCENEOBJT_TEXTEDIT:
-		case SCENEOBJT_IMAGE: {
-			int width;
+		int req_width = obj->req_bbox.x1 - obj->req_bbox.x0;
+		int req_height = obj->req_bbox.y1 - obj->req_bbox.y0;
 
-			if (!do_menus) {
-				ret = scene_obj_get_hw(scn, obj->id, &width);
-				if (ret < 0)
-					return log_msg_ret("get", ret);
-				obj->dims.x = width;
-				obj->dims.y = ret;
-				if (!(obj->flags & SCENEOF_SIZE_VALID)) {
-					obj->bbox.x1 = obj->bbox.x0 + width;
-					obj->bbox.y1 = obj->bbox.y0 + ret;
-					obj->flags |= SCENEOF_SIZE_VALID;
-				}
+		if (obj->flags & SCENEOF_SYNC_POS) {
+			if (obj->flags & SCENEOF_SIZE_VALID) {
+				int width = obj->bbox.x1 - obj->bbox.x0;
+				int height = obj->bbox.y1 - obj->bbox.y0;
+
+				obj->bbox.x1 = obj->req_bbox.x0 + width;
+				obj->bbox.y1 = obj->req_bbox.y0 + height;
 			}
-			break;
+			obj->bbox.x0 = obj->req_bbox.x0;
+			obj->bbox.y0 = obj->req_bbox.y0;
 		}
-		case SCENEOBJT_MENU: {
-			struct scene_obj_menu *menu;
 
-			if (do_menus) {
-				menu = (struct scene_obj_menu *)obj;
+		if (obj->flags & SCENEOF_SYNC_SIZE) {
+			obj->bbox.x1 = obj->bbox.x0 + req_width;
+			obj->bbox.y1 = obj->bbox.y0 + req_height;
+		}
+		if (obj->flags & SCENEOF_SYNC_WIDTH)
+			obj->bbox.x1 = obj->bbox.x0 + req_width;
+		if (obj->flags & SCENEOF_SYNC_BBOX)
+			obj->bbox = obj->req_bbox;
+		obj->flags &= ~(SCENEOF_SYNC_POS | SCENEOF_SYNC_SIZE |
+				SCENEOF_SYNC_WIDTH | SCENEOF_SYNC_BBOX);
+	}
 
-				ret = scene_menu_calc_dims(menu);
+	return 0;
+}
+
+int scene_calc_dims(struct scene *scn)
+{
+	struct scene_obj *obj;
+	int ret, i;
+
+	/*
+	 * Do the menus last so that all the menus' text objects
+	 * are dimensioned. Many objects are referenced by a menu and the size
+	 * and position is set by the menu
+	 */
+	for (i = 0; i < 2; i++) {
+		bool do_menus = i;
+
+		list_for_each_entry(obj, &scn->obj_head, sibling) {
+			switch (obj->type) {
+			case SCENEOBJT_NONE:
+			case SCENEOBJT_TEXT:
+			case SCENEOBJT_BOX:
+			case SCENEOBJT_TEXTEDIT:
+			case SCENEOBJT_IMAGE: {
+				int width;
+
+				if (!do_menus) {
+					ret = scene_obj_get_hw(scn, obj->id,
+							       &width);
+					if (ret < 0)
+						return log_msg_ret("get", ret);
+					obj->dims.x = width;
+					obj->dims.y = ret;
+				}
+				break;
+			}
+			case SCENEOBJT_MENU:
+				break;
+			case SCENEOBJT_TEXTLINE: {
+				struct scene_obj_textline *tline;
+
+				tline = (struct scene_obj_textline *)obj;
+				ret = scene_textline_calc_dims(tline);
 				if (ret)
 					return log_msg_ret("men", ret);
+
+				break;
 			}
-			break;
-		}
-		case SCENEOBJT_TEXTLINE: {
-			struct scene_obj_textline *tline;
-
-			tline = (struct scene_obj_textline *)obj;
-			ret = scene_textline_calc_dims(tline);
-			if (ret)
-				return log_msg_ret("men", ret);
-
-			break;
-		}
+			}
 		}
 	}
 
@@ -1062,7 +1130,6 @@ int scene_calc_dims(struct scene *scn, bool do_menus)
 int scene_apply_theme(struct scene *scn, struct expo_theme *theme)
 {
 	struct scene_obj *obj;
-	int ret;
 
 	/* Avoid error-checking optional items */
 	scene_txt_set_font(scn, scn->title_id, NULL, theme->font_size);
@@ -1085,10 +1152,6 @@ int scene_apply_theme(struct scene *scn, struct expo_theme *theme)
 			break;
 		}
 	}
-
-	ret = scene_arrange(scn);
-	if (ret)
-		return log_msg_ret("arr", ret);
 
 	return 0;
 }
@@ -1208,6 +1271,26 @@ int scene_bbox_union(struct scene *scn, uint id, int inset,
 	local.y1 = obj->bbox.y1;
 	local.valid = true;
 	scene_bbox_join(&local, inset, bbox);
+
+	return 0;
+}
+
+void scene_dims_join(struct scene_obj_dims *src, struct scene_obj_dims *dst)
+{
+	dst->x = max(dst->x, src->x);
+	dst->y = max(dst->y, src->y);
+}
+
+int scene_dims_union(struct scene *scn, uint id, struct scene_obj_dims *dims)
+{
+	struct scene_obj *obj;
+
+	if (!id)
+		return 0;
+	obj = scene_obj_find(scn, id, SCENEOBJT_NONE);
+	if (!obj)
+		return log_msg_ret("obj", -ENOENT);
+	scene_dims_join(&obj->dims, dims);
 
 	return 0;
 }

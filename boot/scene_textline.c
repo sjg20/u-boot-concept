@@ -49,20 +49,20 @@ void scene_textline_calc_bbox(struct scene_obj_textline *tline,
 			      struct vidconsole_bbox *edit_bbox)
 {
 	const struct expo_theme *theme = &tline->obj.scene->expo->theme;
+	int inset = theme->menu_inset;
 
 	bbox->valid = false;
-	scene_bbox_union(tline->obj.scene, tline->label_id, 0, bbox);
-	scene_bbox_union(tline->obj.scene, tline->edit_id, 0, bbox);
+	scene_bbox_union(tline->obj.scene, tline->label_id, inset, bbox);
+	scene_bbox_union(tline->obj.scene, tline->edit_id, inset, bbox);
 
 	edit_bbox->valid = false;
-	scene_bbox_union(tline->obj.scene, tline->edit_id, theme->menu_inset,
+	scene_bbox_union(tline->obj.scene, tline->edit_id, inset,
 			 edit_bbox);
 }
 
 int scene_textline_calc_dims(struct scene_obj_textline *tline)
 {
-	struct scene_obj *obj = &tline->obj;
-	struct scene *scn = obj->scene;
+	struct scene *scn = tline->obj.scene;
 	struct vidconsole_bbox bbox;
 	struct scene_obj_txt *txt;
 	int ret;
@@ -77,16 +77,10 @@ int scene_textline_calc_dims(struct scene_obj_textline *tline)
 		return log_msg_ret("nom", ret);
 
 	if (bbox.valid) {
+		struct scene_obj *obj = &txt->obj;
+
 		obj->dims.x = bbox.x1 - bbox.x0;
 		obj->dims.y = bbox.y1 - bbox.y0;
-		if (!(obj->flags & SCENEOF_SIZE_VALID)) {
-			obj->bbox.x1 = obj->bbox.x0 + obj->dims.x;
-			obj->bbox.y1 = obj->bbox.y0 + obj->dims.y;
-			obj->flags |= SCENEOF_SIZE_VALID;
-		}
-		scene_obj_set_size(scn, tline->edit_id,
-				   obj->bbox.x1 - obj->bbox.x0,
-				   obj->bbox.y1 - obj->bbox.y0);
 	}
 
 	return 0;
@@ -96,34 +90,41 @@ int scene_textline_arrange(struct scene *scn, struct expo_arrange_info *arr,
 			   struct scene_obj_textline *tline)
 {
 	const bool open = tline->obj.flags & SCENEOF_OPEN;
+	const struct expo_theme *theme = &scn->expo->theme;
 	bool point;
 	int x, y;
 	int ret;
 
-	x = tline->obj.bbox.x0;
-	y = tline->obj.bbox.y0;
+	x = tline->obj.req_bbox.x0;
+	y = tline->obj.req_bbox.y0;
 	if (tline->label_id) {
-		ret = scene_obj_set_pos(scn, tline->label_id,
-					tline->obj.bbox.x0, y);
+		struct scene_obj *edit;
+
+		ret = scene_obj_set_pos(scn, tline->label_id, x, y);
 		if (ret < 0)
 			return log_msg_ret("tit", ret);
 
-		ret = scene_obj_set_pos(scn, tline->edit_id,
-					tline->obj.bbox.x0 + 200, y);
+		x += arr->label_width + theme->textline_label_margin_x;
+		ret = scene_obj_set_pos(scn, tline->edit_id, x, y);
 		if (ret < 0)
-			return log_msg_ret("tit", ret);
+			return log_msg_ret("til", ret);
 
-		ret = scene_obj_get_hw(scn, tline->label_id, NULL);
-		if (ret < 0)
-			return log_msg_ret("hei", ret);
-
-		y += ret * 2;
+		edit = scene_obj_find(scn, tline->edit_id, SCENEOBJT_NONE);
+		if (!edit)
+			return log_msg_ret("tie", -ENOENT);
+		x += edit->dims.x;
+		y += edit->dims.y;
 	}
 
 	point = scn->highlight_id == tline->obj.id;
 	point &= !open;
 	scene_obj_flag_clrset(scn, tline->edit_id, SCENEOF_POINT,
 			      point ? SCENEOF_POINT : 0);
+
+	tline->obj.dims.x = x - tline->obj.req_bbox.x0;
+	tline->obj.dims.y = y - tline->obj.req_bbox.y0;
+	scene_obj_set_size(scn, tline->obj.id, tline->obj.dims.x,
+			   tline->obj.dims.y);
 
 	return 0;
 }
