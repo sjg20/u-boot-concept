@@ -744,17 +744,14 @@ static int cr50_i2c_open(struct udevice *dev)
 	if (priv->locality != -1)
 		return -EBUSY;
 
-	printf("process reset\n");
 	ret = process_reset(dev);
 	if (ret)
 		return log_msg_ret("reset", ret);
 
-	printf("claim locality\n");
 	ret = claim_locality(dev, 0);
 	if (ret)
 		return log_msg_ret("claim", ret);
 
-	printf("get_desc\n");
 	cr50_i2c_get_desc(dev, buf, sizeof(buf));
 	log_debug("%s\n", buf);
 
@@ -887,7 +884,7 @@ static int cr50_i2c_probe(struct udevice *dev)
 	}
 	priv->vendor = vendor;
 	priv->locality = -1;
-	printf("Cr50 ready\n");
+	log_debug("Cr50 ready\n");
 
 	return 0;
 }
