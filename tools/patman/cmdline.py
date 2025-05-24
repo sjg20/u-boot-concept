@@ -138,6 +138,11 @@ def _add_show_cover_comments(parser):
                         help='Show comments from the cover letter')
 
 
+def _add_archived(parser):
+    parser.add_argument('-A', '--include-archived', action='store_true',
+                        help='Show archived series as well')
+
+
 def add_patchwork_subparser(subparsers):
     """Add the 'patchwork' subparser
 
@@ -262,7 +267,8 @@ def add_series_subparser(subparsers):
 
     series_subparsers.add_parser('get-link')
     series_subparsers.add_parser('inc')
-    series_subparsers.add_parser('ls')
+    ls = series_subparsers.add_parser('ls')
+    _add_archived(ls)
 
     mar = series_subparsers.add_parser('mark')
     mar.add_argument('-m', '--allow-marked', action='store_true',
