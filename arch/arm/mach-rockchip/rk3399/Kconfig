@@ -143,9 +143,6 @@ config ROCKCHIP_STIMER_BASE
 config SYS_SOC
 	default "rk3399"
 
-config ROCKCHIP_COMMON_STACK_ADDR
-	default y
-
 config SYS_MALLOC_F_LEN
 	default 0x4000 if !SPL_SHARES_INIT_SP_ADDR
 
