@@ -65,6 +65,7 @@ mkenvimage-objs := mkenvimage.o os_support.o generated/lib/crc32.o
 
 hostprogs-y += dumpimage mkimage fit_info fit_check_sign
 hostprogs-$(CONFIG_TOOLS_LIBCRYPTO) += fdt_add_pubkey
+hostprogs-$(CONFIG_TOOLS_LIBCRYPTO) += preload_check_sign
 
 ifneq ($(CONFIG_CMD_BOOTEFI_SELFTEST)$(CONFIG_FWU_MDATA_GPT_BLK),)
 hostprogs-y += file2include
@@ -94,6 +95,8 @@ HOSTCFLAGS_ecdsa-libcrypto.o += \
 
 AES_OBJS-$(CONFIG_TOOLS_LIBCRYPTO) := $(addprefix generated/lib/aes/, \
 					aes-encrypt.o aes-decrypt.o)
+
+PRELOAD_OBJS-$(CONFIG_TOOLS_LIBCRYPTO) := generated/boot/image-pre-load.o
 
 # Cryptographic helpers and image types that depend on openssl/libcrypto
 LIBCRYPTO_OBJS-$(CONFIG_TOOLS_LIBCRYPTO) := \
