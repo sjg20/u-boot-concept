@@ -67,11 +67,8 @@ static const struct {
 	efi_guid_t guid;
 } list_guid[] = {
 #ifndef USE_HOSTCC
-#if defined(CONFIG_PARTITION_TYPE_GUID) || defined(CONFIG_CMD_EFIDEBUG) || \
-	defined(CONFIG_EFI)
-	{"EFI System Partition", PARTITION_SYSTEM_GUID},
-#endif
 #ifdef CONFIG_PARTITION_TYPE_GUID
+	{"system",	PARTITION_SYSTEM_GUID},
 	{"mbr",		LEGACY_MBR_PARTITION_GUID},
 	{"msft",	PARTITION_MSFT_RESERVED_GUID},
 	{"data",	PARTITION_BASIC_DATA_GUID},
@@ -85,7 +82,7 @@ static const struct {
 	{"cros-fw",	PARTITION_CROS_FIRMWARE},
 	{"cros-rsrv",	PARTITION_CROS_RESERVED},
 #endif
-#if defined(CONFIG_CMD_EFIDEBUG) || defined(CONFIG_EFI_CLIENT)
+#if defined(CONFIG_CMD_EFIDEBUG) || defined(CONFIG_EFI)
 	{
 		"Device Path",
 		EFI_DEVICE_PATH_PROTOCOL_GUID,
@@ -185,6 +182,10 @@ static const struct {
 	{
 		"TCG2",
 		EFI_TCG2_PROTOCOL_GUID,
+		},
+	{
+		"System Partition",
+		PARTITION_SYSTEM_GUID
 	},
 	{
 		"Firmware Management",
@@ -268,7 +269,7 @@ static const struct {
 		EFI_CERT_TYPE_PKCS7_GUID,
 	},
 #endif
-#if defined(CONFIG_CMD_EFIDEBUG) || defined(CONFIG_EFI_CLIENT)
+#if defined(CONFIG_CMD_EFIDEBUG) || defined(CONFIG_EFI)
 	{ "EFI_LZMA_COMPRESSED", EFI_LZMA_COMPRESSED },
 	{ "EFI_DXE_SERVICES", EFI_DXE_SERVICES },
 	{ "EFI_HOB_LIST", EFI_HOB_LIST },

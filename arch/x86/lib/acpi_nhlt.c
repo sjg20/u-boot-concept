@@ -414,7 +414,7 @@ int nhlt_serialise_oem_overrides(struct acpi_ctx *ctx, struct nhlt *nhlt,
 	cur.start = (void *)header;
 	nhlt_serialise_endpoints(nhlt, &cur);
 
-	acpi_update_checksum(header);
+	header->checksum = table_compute_checksum(header, sz);
 	nhlt_free_resources(nhlt);
 	assert(cur.buf - cur.start == sz);
 

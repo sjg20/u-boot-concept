@@ -6,42 +6,42 @@
  * Aneesh V <aneesh@ti.com>
  */
 
-#include <binman_sym.h>
+#include <config.h>
 #include <bloblist.h>
-#include <bootcount.h>
+#include <binman_sym.h>
 #include <bootstage.h>
 #include <dm.h>
-#include <fat.h>
-#include <fdt_support.h>
 #include <handoff.h>
 #include <hang.h>
-#include <image.h>
 #include <init.h>
 #include <irq_func.h>
 #include <log.h>
-#include <malloc.h>
 #include <mapmem.h>
-#include <nand.h>
-#include <passage.h>
 #include <serial.h>
 #include <spl.h>
 #include <spl_load.h>
 #include <system-constants.h>
+#include <asm/global_data.h>
+#include <asm-generic/gpio.h>
+#include <nand.h>
+#include <fat.h>
+#include <u-boot/crc.h>
 #if CONFIG_IS_ENABLED(BANNER_PRINT)
 #include <timestamp.h>
 #endif
 #include <version.h>
-#include <video.h>
-#include <wdt.h>
-#include <asm-generic/gpio.h>
-#include <asm/global_data.h>
-#include <asm/u-boot.h>
+#include <image.h>
+#include <malloc.h>
+#include <mapmem.h>
 #include <dm/root.h>
 #include <dm/util.h>
 #include <dm/device-internal.h>
 #include <dm/uclass-internal.h>
 #include <linux/compiler.h>
-#include <u-boot/crc.h>
+#include <fdt_support.h>
+#include <bootcount.h>
+#include <wdt.h>
+#include <video.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 DECLARE_BINMAN_MAGIC_SYM;
@@ -66,11 +66,6 @@ binman_sym_declare(ulong, u_boot_vpl_any, size);
 #endif
 
 #endif /* BINMAN_UBOOT_SYMBOLS */
-
-#if CONFIG_IS_ENABLED(PASSAGE_ADD_DTB)
-binman_sym_declare(ulong, u_boot_dtb, image_pos);
-binman_sym_declare(ulong, u_boot_dtb, size);
-#endif
 
 /* Define board data structure */
 static struct bd_info bdata __attribute__ ((section(".data")));
@@ -397,30 +392,15 @@ int spl_load(struct spl_image_info *spl_image,
 }
 #endif
 
-__weak void __noreturn jump_to_image(struct spl_image_info *spl_image)
+__weak void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
 {
-	ulong bloblist = 0;
+	typedef void __noreturn (*image_entry_noargs_t)(void);
+
+	image_entry_noargs_t image_entry =
+		(image_entry_noargs_t)spl_image->entry_point;
 
 	debug("image entry point: 0x%lx\n", spl_image->entry_point);
-
-	if (CONFIG_IS_ENABLED(PASSAGE_OUT)) {
-		const void *fdt;
-
-		bloblist = bloblist_get_base();
-		fdt = bloblist_find(BLOBLISTT_CONTROL_FDT, 0);
-
-		log_debug("passage: sending bloblist %lx dtb %lx\n",
-			  bloblist, (ulong)map_to_sysmem(fdt));
-		arch_passage_entry(spl_image->entry_point,
-				   map_to_sysmem(gd_bloblist()),
-				   map_to_sysmem(fdt));
-	} else {
-		typedef void __noreturn (*image_entry_noargs_t)(void);
-
-		image_entry_noargs_t image_entry =
-			(image_entry_noargs_t)spl_image->entry_point;
-		image_entry();
-	}
+	image_entry();
 }
 
 #if CONFIG_IS_ENABLED(HANDOFF)
@@ -433,8 +413,7 @@ static int setup_spl_handoff(void)
 {
 	struct spl_handoff *ho;
 
-	ho = bloblist_ensure(BLOBLISTT_U_BOOT_SPL_HANDOFF,
-			     sizeof(struct spl_handoff));
+	ho = bloblist_ensure(BLOBLISTT_U_BOOT_SPL_HANDOFF, sizeof(struct spl_handoff));
 	if (!ho)
 		return -ENOENT;
 
@@ -451,8 +430,7 @@ static int write_spl_handoff(void)
 	struct spl_handoff *ho;
 	int ret;
 
-	ho = bloblist_find(BLOBLISTT_U_BOOT_SPL_HANDOFF,
-			   sizeof(struct spl_handoff));
+	ho = bloblist_find(BLOBLISTT_U_BOOT_SPL_HANDOFF, sizeof(struct spl_handoff));
 	if (!ho)
 		return -ENOENT;
 	handoff_save_dram(ho);
@@ -468,33 +446,6 @@ static inline int setup_spl_handoff(void) { return 0; }
 static inline int write_spl_handoff(void) { return 0; }
 
 #endif /* HANDOFF */
-
-/**
- * Write the devicetree for the next phase into the passage
- *
- * For now we assume the next phase is U-Boot proper
- *
- * @return 0 on success,  -ENOSPC if it is missing and could not be added due to
- *	lack of space, or -ESPIPE it exists but has the wrong size
- */
-static int passage_write_dtb(void)
-{
-	if (CONFIG_IS_ENABLED(PASSAGE_ADD_DTB)) {
-		ulong start = binman_sym(ulong, u_boot_dtb, image_pos);
-		ulong size = binman_sym(ulong, u_boot_dtb, size);
-		void *dtb;
-		int ret;
-
-		log_debug("passage: Adding control dtb size %lx\n", size);
-		ret = bloblist_ensure_size(BLOBLISTT_CONTROL_FDT, size, 0,
-					   (void **)&dtb);
-		if (ret)
-			return ret;
-		memcpy(dtb, map_sysmem(start, size), size);
-	}
-
-	return 0;
-}
 
 /**
  * get_bootstage_id() - Get the bootstage ID to emit
@@ -734,7 +685,7 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 		BOOT_DEVICE_NONE,
 		BOOT_DEVICE_NONE,
 	};
-	spl_jump_to_image_t jumper = &jump_to_image;
+	spl_jump_to_image_t jump_to_image = &jump_to_image_no_args;
 	struct spl_image_info spl_image;
 	int ret, os;
 
@@ -828,20 +779,20 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 	} else if (CONFIG_IS_ENABLED(ATF) && os == IH_OS_ARM_TRUSTED_FIRMWARE) {
 		debug("Jumping to U-Boot via ARM Trusted Firmware\n");
 		spl_fixup_fdt(spl_image_fdt_addr(&spl_image));
-		jumper = &spl_invoke_atf;
+		jump_to_image = &spl_invoke_atf;
 	} else if (CONFIG_IS_ENABLED(OPTEE_IMAGE) && os == IH_OS_TEE) {
 		debug("Jumping to U-Boot via OP-TEE\n");
 		spl_board_prepare_for_optee(spl_image_fdt_addr(&spl_image));
-		jumper = &jump_to_image_optee;
+		jump_to_image = &jump_to_image_optee;
 	} else if (CONFIG_IS_ENABLED(OPENSBI) && os == IH_OS_OPENSBI) {
 		debug("Jumping to U-Boot via RISC-V OpenSBI\n");
-		jumper = &spl_invoke_opensbi;
+		jump_to_image = &spl_invoke_opensbi;
 	} else if (CONFIG_IS_ENABLED(OS_BOOT) && os == IH_OS_LINUX) {
 		debug("Jumping to Linux\n");
 		if (IS_ENABLED(CONFIG_SPL_OS_BOOT))
 			spl_fixup_fdt((void *)SPL_PAYLOAD_ARGS_ADDR);
 		spl_board_prepare_for_linux();
-		jumper = &jump_to_image_linux;
+		jump_to_image = &jump_to_image_linux;
 	} else {
 		debug("Unsupported OS image.. Jumping nevertheless..\n");
 	}
@@ -881,11 +832,6 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 			hang();
 		}
 	}
-	if (CONFIG_IS_ENABLED(PASSAGE_ADD_DTB)) {
-		ret = passage_write_dtb();
-		if (ret)
-			printf(PHASE_PROMPT "Write DTB failed (err=%d)\n", ret);
-	}
 	if (CONFIG_IS_ENABLED(BLOBLIST)) {
 		ret = bloblist_finish();
 		if (ret)
@@ -898,7 +844,7 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 	if (CONFIG_IS_ENABLED(RELOC_LOADER)) {
 		int ret;
 
-		ret = spl_reloc_jump(&spl_image, jumper);
+		ret = spl_reloc_jump(&spl_image, jump_to_image);
 		if (ret) {
 			if (xpl_phase() == PHASE_VPL)
 				printf("jump failed %d\n", ret);
@@ -906,7 +852,7 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 		}
 	}
 
-	jumper(&spl_image);
+	jump_to_image(&spl_image);
 }
 
 /*

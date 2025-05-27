@@ -277,7 +277,6 @@ config CMD_BOOTD
 
 config CMD_BOOTM
 	bool "bootm"
-	depends on BOOT
 	default y
 	help
 	  Boot an application image from the memory.
@@ -339,19 +338,73 @@ config CMD_BOOTSTD
 
 	  This command is not necessary for bootstd to work.
 
+config BOOTM_EFI
+	bool "Support booting UEFI FIT images"
+	depends on EFI_BINARY_EXEC && CMD_BOOTM && FIT
+	default y
+	help
+	  Support booting UEFI FIT images via the bootm command.
+
+config BOOTM_ELF
+	bool "Support booting ELF images"
+	depends on CMD_BOOTM && LIB_ELF
+	default y if LIB_ELF
+	help
+	  Support booting ELF images via the bootm command.
+
 config CMD_BOOTZ
 	bool "bootz"
-	depends on BOOT
 	help
 	  Boot the Linux zImage
 
 config CMD_BOOTI
 	bool "booti"
-	depends on BOOT
 	depends on ARM64 || RISCV || SANDBOX
 	default y
 	help
 	  Boot an AArch64 Linux Kernel image from memory.
+
+config BOOTM_LINUX
+	bool "Support booting Linux OS images"
+	depends on CMD_BOOTM || CMD_BOOTZ || CMD_BOOTI
+	default y
+	help
+	  Support booting the Linux kernel directly via a command such as bootm
+	  or booti or bootz.
+
+config BOOTM_NETBSD
+	bool "Support booting NetBSD (non-EFI) loader images"
+	depends on CMD_BOOTM
+	default y
+	help
+	  Support booting NetBSD via the bootm command.
+
+config BOOTM_OPENRTOS
+	bool "Support booting OPENRTOS / FreeRTOS images"
+	depends on CMD_BOOTM
+	help
+	  Support booting OPENRTOS / FreeRTOS via the bootm command.
+
+config BOOTM_OSE
+	bool "Support booting Enea OSE images"
+	depends on (ARM && (ARM64 || CPU_V7A || CPU_V7R) || SANDBOX || PPC || X86)
+	depends on CMD_BOOTM
+	help
+	  Support booting Enea OSE images via the bootm command.
+
+config BOOTM_PLAN9
+	bool "Support booting Plan9 OS images"
+	depends on CMD_BOOTM
+	default y
+	help
+	  Support booting Plan9 images via the bootm command.
+
+config BOOTM_RTEMS
+	bool "Support booting RTEMS OS images"
+	depends on CMD_BOOTM
+	default y
+	help
+	  Support booting RTEMS images via the bootm command.
 
 config CMD_SEAMA
 	bool "Support read SEAMA NAND images"
@@ -375,6 +428,13 @@ config CMD_VBE
 	  available methods, looking at the state and changing which method
 	  is used to boot. Updating the parameters is not currently
 	  supported.
+
+config BOOTM_VXWORKS
+	bool "Support booting VxWorks OS images"
+	depends on CMD_BOOTM
+	default y
+	help
+	  Support booting VxWorks images via the bootm command.
 
 config CMD_BOOTEFI
 	bool "bootefi"
@@ -1809,10 +1869,9 @@ config DHCP6_ENTERPRISE_ID
 
 endif
 
-if CMD_BOOTP
-
 config BOOTP_MAY_FAIL
 	bool "Allow for the BOOTP/DHCP server to not be found"
+	depends on CMD_BOOTP
 	help
 	  If the DHCP server is not found after the configured retry count, the
 	  call will fail instead of starting over.  This can be used to fail
@@ -1822,19 +1881,23 @@ config BOOTP_MAY_FAIL
 config BOOTP_BOOTPATH
 	bool "Request & store 'rootpath' from BOOTP/DHCP server"
 	default y
+	depends on CMD_BOOTP
 	help
 	  Even though the config is called BOOTP_BOOTPATH, it stores the
 	  path in the variable 'rootpath'.
 
 config BOOTP_VENDOREX
 	bool "Support vendor extensions from BOOTP/DHCP server"
+	depends on CMD_BOOTP
 
 config BOOTP_BOOTFILESIZE
 	bool "Request & store 'bootfilesize' from BOOTP/DHCP server"
+	depends on CMD_BOOTP
 
 config BOOTP_DNS
 	bool "Request & store 'dnsip' from BOOTP/DHCP server"
 	default y
+	depends on CMD_BOOTP
 	help
 	  The primary DNS server is stored as 'dnsip'. If two servers are
 	  returned, you must set BOOTP_DNS2 to store that second server IP
@@ -1854,15 +1917,18 @@ config BOOTP_DNS2
 config BOOTP_GATEWAY
 	bool "Request & store 'gatewayip' from BOOTP/DHCP server"
 	default y
+	depends on CMD_BOOTP
 
 config BOOTP_HOSTNAME
 	bool "Request & store 'hostname' from BOOTP/DHCP server"
 	default y
+	depends on CMD_BOOTP
 	help
 	  The name may or may not be qualified with the local domain name.
 
 config BOOTP_PREFER_SERVERIP
 	bool "serverip variable takes precedent over DHCP server IP."
+	depends on CMD_BOOTP
 	help
 	  By default a BOOTP/DHCP reply will overwrite the 'serverip' variable.
 
@@ -1873,21 +1939,31 @@ config BOOTP_PREFER_SERVERIP
 config BOOTP_SUBNETMASK
 	bool "Request & store 'netmask' from BOOTP/DHCP server"
 	default y
+	depends on CMD_BOOTP
 
 config BOOTP_NISDOMAIN
 	bool "Request & store 'nisdomain' from BOOTP/DHCP server"
+	depends on CMD_BOOTP
 
 config BOOTP_NTPSERVER
 	bool "Request & store 'ntpserverip' from BOOTP/DHCP server"
+	depends on CMD_BOOTP
 
 config BOOTP_TIMEOFFSET
 	bool "Request & store 'timeoffset' from BOOTP/DHCP server"
-	depends on CMD_SNTP
+	depends on CMD_BOOTP && CMD_SNTP
+
+config CMD_PCAP
+	bool "pcap capture"
+	help
+	  Selecting this will allow capturing all Ethernet packets and store
+	  them in physical memory in a PCAP formated file,
+	  later to be analyzed by PCAP reader application (IE. WireShark).
 
 config BOOTP_PXE
 	bool "Send PXE client arch to BOOTP/DHCP server"
 	default y
-	depends on CMD_PXE
+	depends on CMD_BOOTP && CMD_PXE
 	help
 	  Supported for ARM, ARM64, and x86 for now.
 
@@ -1904,19 +1980,11 @@ config BOOTP_PXE_DHCP_OPTION
 
 config BOOTP_VCI_STRING
 	string
+	depends on CMD_BOOTP
 	default "U-Boot.armv7" if CPU_V7A || CPU_V7M || CPU_V7R
 	default "U-Boot.armv8" if ARM64
 	default "U-Boot.arm" if ARM
 	default "U-Boot"
-
-endif  # CMD_BOOTP
-
-config CMD_PCAP
-	bool "pcap capture"
-	help
-	  Selecting this will allow capturing all Ethernet packets and store
-	  them in physical memory in a PCAP formated file,
-	  later to be analyzed by PCAP reader application (IE. WireShark).
 
 config CMD_TFTPPUT
 	bool "tftp put"

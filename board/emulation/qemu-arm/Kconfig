@@ -1,4 +1,7 @@
-if ARCH_QEMU && !TARGET_QEMU_ARM_SBSA
+if TARGET_QEMU_ARM_32BIT || TARGET_QEMU_ARM_64BIT
+
+config TEXT_BASE
+	default 0x00000000
 
 config BOARD_SPECIFIC_OPTIONS # dummy
 	def_bool y
@@ -9,18 +12,10 @@ config BOARD_SPECIFIC_OPTIONS # dummy
 	imply VIRTIO_PCI
 	imply VIRTIO_NET
 	imply VIRTIO_BLK
-	select SUPPORT_SPL
 
 config PRE_CON_BUF_ADDR
 	hex
 	default 0x40100000
-
-endif
-
-if TARGET_QEMU_ARM_32BIT || TARGET_QEMU_ARM_64BIT
-
-config TEXT_BASE
-	default 0x00000000
 
 endif
 
@@ -29,19 +24,5 @@ config BOARD_SPECIFIC_OPTIONS
 	imply SYS_MTDPARTS_RUNTIME
 	imply SET_DFU_ALT_INFO
 
-endif
-
-if TARGET_QEMU_ARM_32BIT_SPL || TARGET_QEMU_ARM_64BIT_SPL
-
-config SPL_TEXT_BASE
-	default 0x00000000
-
-config TEXT_BASE
-	default 0x00010000
-
-config SPL_MAX_SIZE
-	default 0x00010000
-
-endif
-
 source "board/emulation/common/Kconfig"
+endif

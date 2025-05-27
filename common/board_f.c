@@ -37,7 +37,6 @@
 #include <serial.h>
 #include <spl.h>
 #include <sysreset.h>
-#include <time.h>
 #include <timer.h>
 #include <trace.h>
 #include <upl.h>
@@ -233,7 +232,7 @@ static int show_dram_config(void)
 
 	print_size(gd->ram_size, "");
 	if (!sizes_near(gd->ram_size, size)) {
-		printf(" (total ");
+		printf(" (effective ");
 		print_size(size, ")");
 	}
 	board_add_ram_info(0);
@@ -668,14 +667,11 @@ static int reloc_bootstage(void)
 static int reloc_bloblist(void)
 {
 #ifdef CONFIG_BLOBLIST
-	int size = bloblist_get_size();
-	int new_size = CONFIG_BLOBLIST_SIZE_RELOC;
-
-	if (!new_size)
-		new_size = size;
-
-	/* Relocate only if we are supposed to send it */
-	if ((gd->flags & GD_FLG_SKIP_RELOC) && size == new_size) {
+	/*
+	 * Relocate only if we are supposed to send it
+	 */
+	if ((gd->flags & GD_FLG_SKIP_RELOC) &&
+	    CONFIG_BLOBLIST_SIZE == CONFIG_BLOBLIST_SIZE_RELOC) {
 		debug("Not relocating bloblist\n");
 		return 0;
 	}
@@ -729,7 +725,7 @@ static int setup_reloc(void)
 	return 0;
 }
 
-#if CONFIG_IS_ENABLED(OF_BOARD_FIXUP)
+#ifdef CONFIG_OF_BOARD_FIXUP
 static int fix_fdt(void)
 {
 	return board_fix_fdt((void *)gd->fdt_blob);
@@ -741,7 +737,7 @@ static int fix_fdt(void)
 
 static int jump_to_copy(void)
 {
-	if (IS_ENABLED(CONFIG_EFI_APP) || (gd->flags & GD_FLG_SKIP_RELOC))
+	if (gd->flags & GD_FLG_SKIP_RELOC)
 		return 0;
 	/*
 	 * x86 is special, but in a nice way. It uses a trampoline which
@@ -852,88 +848,81 @@ static int initf_upl(void)
 	return 0;
 }
 
-static void initcall_run_f(void)
-{
-	/*
-	 * Please do not add logic to this function (variables, if (), etc.).
-	 * For simplicity it should remain an ordered list of function calls.
-	 */
-	INITCALL(setup_mon_len);
-#if CONFIG_IS_ENABLED(OF_CONTROL)
-	INITCALL(fdtdec_setup);
+static const init_fnc_t init_sequence_f[] = {
+	setup_mon_len,
+#ifdef CONFIG_OF_CONTROL
+	fdtdec_setup,
 #endif
-#if CONFIG_IS_ENABLED(TRACE_EARLY)
-	INITCALL(trace_early_init);
+#ifdef CONFIG_TRACE_EARLY
+	trace_early_init,
 #endif
-	INITCALL(initf_malloc);
-	INITCALL(initf_upl);
-	INITCALL(log_init);
-	INITCALL(initf_bootstage); /* uses its own timer, so does not need DM */
-	INITCALL(event_init);
-#ifdef CONFIG_BLOBLIST
-	INITCALL(bloblist_init);
+	initf_malloc,
+	initf_upl,
+	log_init,
+	initf_bootstage,	/* uses its own timer, so does not need DM */
+	event_init,
+	bloblist_maybe_init,
+	setup_spl_handoff,
+#if defined(CONFIG_CONSOLE_RECORD_INIT_F)
+	console_record_init,
 #endif
-	INITCALL(setup_spl_handoff);
-#if CONFIG_IS_ENABLED(CONSOLE_RECORD_INIT_F)
-	INITCALL(console_record_init);
-#endif
-	INITCALL_EVT(EVT_FSP_INIT_F);
-	INITCALL(arch_cpu_init);	/* basic arch cpu dependent setup */
-	INITCALL(mach_cpu_init);	/* SoC/machine dependent CPU setup */
-	INITCALL(initf_dm);
-#if CONFIG_IS_ENABLED(BOARD_EARLY_INIT_F)
-	INITCALL(board_early_init_f);
+	INITCALL_EVENT(EVT_FSP_INIT_F),
+	arch_cpu_init,		/* basic arch cpu dependent setup */
+	mach_cpu_init,		/* SoC/machine dependent CPU setup */
+	initf_dm,
+#if defined(CONFIG_BOARD_EARLY_INIT_F)
+	board_early_init_f,
 #endif
 #if defined(CONFIG_PPC) || defined(CONFIG_SYS_FSL_CLK) || defined(CONFIG_M68K)
 	/* get CPU and bus clocks according to the environment variable */
-	INITCALL(get_clocks);		/* get CPU and bus clocks (etc.) */
+	get_clocks,		/* get CPU and bus clocks (etc.) */
 #endif
 #if !defined(CONFIG_M68K) || (defined(CONFIG_M68K) && !defined(CONFIG_MCFTMR))
-	INITCALL(timer_init);		/* initialize timer */
+	timer_init,		/* initialize timer */
 #endif
-#if CONFIG_IS_ENABLED(BOARD_POSTCLK_INIT)
-	INITCALL(board_postclk_init);
+#if defined(CONFIG_BOARD_POSTCLK_INIT)
+	board_postclk_init,
 #endif
-	INITCALL(env_init);		/* initialize environment */
-	INITCALL(init_baud_rate);	/* initialze baudrate settings */
-	INITCALL(serial_init);		/* serial communications setup */
-	INITCALL(console_init_f);	/* stage 1 init of console */
-	INITCALL(display_options);	/* say that we are here */
-	INITCALL(display_text_info);	/* show debugging info if required */
-	INITCALL(checkcpu);
-#if CONFIG_IS_ENABLED(SYSRESET)
-	INITCALL(print_resetinfo);
+	env_init,		/* initialize environment */
+	init_baud_rate,		/* initialze baudrate settings */
+	serial_init,		/* serial communications setup */
+	console_init_f,		/* stage 1 init of console */
+	display_options,	/* say that we are here */
+	display_text_info,	/* show debugging info if required */
+	checkcpu,
+#if defined(CONFIG_SYSRESET)
+	print_resetinfo,
 #endif
-	/* display cpu info (and speed) */
-#if CONFIG_IS_ENABLED(DISPLAY_CPUINFO)
-	INITCALL(print_cpuinfo);
+#if defined(CONFIG_DISPLAY_CPUINFO)
+	print_cpuinfo,		/* display cpu info (and speed) */
 #endif
-#if CONFIG_IS_ENABLED(DTB_RESELECT)
-	INITCALL(embedded_dtb_select);
+#if defined(CONFIG_DTB_RESELECT)
+	embedded_dtb_select,
 #endif
-#if CONFIG_IS_ENABLED(DISPLAY_BOARDINFO)
-	INITCALL(show_board_info);
+#if defined(CONFIG_DISPLAY_BOARDINFO)
+	show_board_info,
 #endif
-	WATCHDOG_INIT();
-	INITCALL_EVT(EVT_MISC_INIT_F);
-	WATCHDOG_RESET();
+	INIT_FUNC_WATCHDOG_INIT
+	INITCALL_EVENT(EVT_MISC_INIT_F),
+	INIT_FUNC_WATCHDOG_RESET
 #if CONFIG_IS_ENABLED(SYS_I2C_LEGACY)
-	INITCALL(init_func_i2c);
+	init_func_i2c,
 #endif
-	INITCALL(announce_dram_init);
-	INITCALL(dram_init);		/* configure available RAM banks */
-#if CONFIG_IS_ENABLED(POST)
-	INITCALL(post_init_f);
+	announce_dram_init,
+	dram_init,		/* configure available RAM banks */
+#ifdef CONFIG_POST
+	post_init_f,
 #endif
-	WATCHDOG_RESET();
+	INIT_FUNC_WATCHDOG_RESET
 #if defined(CFG_SYS_DRAM_TEST)
-	INITCALL(testdram);
+	testdram,
 #endif /* CFG_SYS_DRAM_TEST */
-	WATCHDOG_RESET();
-#if CONFIG_IS_ENABLED(POST)
-	INITCALL(init_post);
+	INIT_FUNC_WATCHDOG_RESET
+
+#ifdef CONFIG_POST
+	init_post,
 #endif
-	WATCHDOG_RESET();
+	INIT_FUNC_WATCHDOG_RESET
 	/*
 	 * Now that we have DRAM mapped and working, we can
 	 * relocate the code and continue running from DRAM.
@@ -946,51 +935,48 @@ static void initcall_run_f(void)
 	 *  - monitor code
 	 *  - board info struct
 	 */
-	INITCALL(setup_dest_addr);
-#if CONFIG_IS_ENABLED(OF_BOARD_FIXUP) && \
-    !CONFIG_IS_ENABLED(OF_INITIAL_DTB_READONLY)
-	INITCALL(fix_fdt);
+	setup_dest_addr,
+#if defined(CONFIG_OF_BOARD_FIXUP) && !defined(CONFIG_OF_INITIAL_DTB_READONLY)
+	fix_fdt,
 #endif
 #ifdef CFG_PRAM
-	INITCALL(reserve_pram);
+	reserve_pram,
 #endif
-	INITCALL(reserve_round_4k);
-	INITCALL(setup_relocaddr_from_bloblist);
-	INITCALL(arch_reserve_mmu);
-	INITCALL(reserve_video);
-	INITCALL(reserve_trace);
-	INITCALL(reserve_uboot);
-	INITCALL(reserve_malloc);
-	INITCALL(reserve_board);
-	INITCALL(reserve_global_data);
-	INITCALL(reserve_fdt);
-#if CONFIG_IS_ENABLED(OF_BOARD_FIXUP) && \
-    CONFIG_IS_ENABLED(OF_INITIAL_DTB_READONLY)
-	INITCALL(reloc_fdt);
-	INITCALL(fix_fdt);
+	reserve_round_4k,
+	setup_relocaddr_from_bloblist,
+	arch_reserve_mmu,
+	reserve_video,
+	reserve_trace,
+	reserve_uboot,
+	reserve_malloc,
+	reserve_board,
+	reserve_global_data,
+	reserve_fdt,
+#if defined(CONFIG_OF_BOARD_FIXUP) && defined(CONFIG_OF_INITIAL_DTB_READONLY)
+	reloc_fdt,
+	fix_fdt,
 #endif
-	INITCALL(reserve_bootstage);
-	INITCALL(reserve_bloblist);
-	INITCALL(reserve_arch);
-	INITCALL(reserve_stacks);
-	INITCALL(dram_init_banksize);
-	INITCALL(show_dram_config);
-	WATCHDOG_RESET();
-	INITCALL(setup_bdinfo);
-	INITCALL(display_new_sp);
-	WATCHDOG_RESET();
-#if !CONFIG_IS_ENABLED(OF_BOARD_FIXUP) || \
-    !CONFIG_IS_ENABLED(INITIAL_DTB_READONLY)
-	INITCALL(reloc_fdt);
+	reserve_bootstage,
+	reserve_bloblist,
+	reserve_arch,
+	reserve_stacks,
+	dram_init_banksize,
+	show_dram_config,
+	INIT_FUNC_WATCHDOG_RESET
+	setup_bdinfo,
+	display_new_sp,
+	INIT_FUNC_WATCHDOG_RESET
+#if !defined(CONFIG_OF_BOARD_FIXUP) || !defined(CONFIG_OF_INITIAL_DTB_READONLY)
+	reloc_fdt,
 #endif
-	INITCALL(reloc_bootstage);
-	INITCALL(reloc_bloblist);
-	INITCALL(setup_reloc);
-#if CONFIG_IS_ENABLED(X86) || CONFIG_IS_ENABLED(ARC)
-	INITCALL(copy_uboot_to_ram);
-	INITCALL(do_elf_reloc_fixups);
+	reloc_bootstage,
+	reloc_bloblist,
+	setup_reloc,
+#if defined(CONFIG_X86) || defined(CONFIG_ARC)
+	copy_uboot_to_ram,
+	do_elf_reloc_fixups,
 #endif
-	INITCALL(clear_bss);
+	clear_bss,
 	/*
 	 * Deregister all cyclic functions before relocation, so that
 	 * gd->cyclic_list does not contain any references to pre-relocation
@@ -1000,11 +986,12 @@ static void initcall_run_f(void)
 	 * This should happen as late as possible so that the window where a
 	 * watchdog device is not serviced is as small as possible.
 	 */
-	INITCALL(cyclic_unregister_all);
-#if !CONFIG_IS_ENABLED(ARM) && !CONFIG_IS_ENABLED(SANDBOX)
-	INITCALL(jump_to_copy);
+	cyclic_unregister_all,
+#if !defined(CONFIG_ARM) && !defined(CONFIG_SANDBOX)
+	jump_to_copy,
 #endif
-}
+	NULL,
+};
 
 void board_init_f(ulong boot_flags)
 {
@@ -1014,7 +1001,8 @@ void board_init_f(ulong boot_flags)
 	gd->flags &= ~GD_FLG_HAVE_CONSOLE;
 	gd->boardf = &boardf;
 
-	initcall_run_f();
+	if (initcall_run_list(init_sequence_f))
+		hang();
 
 #if !defined(CONFIG_ARM) && !defined(CONFIG_SANDBOX) && \
 		!defined(CONFIG_EFI_APP) && !CONFIG_IS_ENABLED(X86_64) && \
@@ -1028,8 +1016,8 @@ void board_init_f(ulong boot_flags)
 /*
  * For now this code is only used on x86.
  *
- * Run init functions which are run when U-Boot is executing from Flash with a
- * semi-limited 'C' environment.
+ * init_sequence_f_r is the list of init functions which are run when
+ * U-Boot is executing from Flash with a semi-limited 'C' environment.
  * The following limitations must be considered when implementing an
  * '_f_r' function:
  *  - 'static' variables are read-only
@@ -1042,16 +1030,18 @@ void board_init_f(ulong boot_flags)
  * NOTE: At present only x86 uses this route, but it is intended that
  * all archs will move to this when generic relocation is implemented.
  */
-static void initcall_run_f_r(void)
-{
+static const init_fnc_t init_sequence_f_r[] = {
 #if !CONFIG_IS_ENABLED(X86_64)
-	INITCALL(init_cache_f_r);
+	init_cache_f_r,
 #endif
-}
+
+	NULL,
+};
 
 void board_init_f_r(void)
 {
-	initcall_run_f_r();
+	if (initcall_run_list(init_sequence_f_r))
+		hang();
 
 	/*
 	 * The pre-relocation drivers may be using memory that has now gone

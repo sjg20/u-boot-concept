@@ -9,7 +9,6 @@
  */
 
 #include <blk.h>
-#include <bootdev.h>
 #include <dm.h>
 #include <efi.h>
 #include <efi_api.h>
@@ -80,31 +79,6 @@ static const struct blk_ops efi_blk_ops = {
 	.write	= efi_bl_write,
 };
 
-static int efi_bootdev_bind(struct udevice *dev)
-{
-	struct bootdev_uc_plat *ucp = dev_get_uclass_plat(dev);
-
-	ucp->prio = BOOTDEVP_3_INTERNAL_SLOW;
-
-	return 0;
-}
-
-struct bootdev_ops efi_bootdev_ops = {
-};
-
-static const struct udevice_id efi_bootdev_ids[] = {
-	{ .compatible = "u-boot,bootdev-efi" },
-	{ }
-};
-
-U_BOOT_DRIVER(efi_bootdev) = {
-	.name		= "efi_bootdev",
-	.id		= UCLASS_BOOTDEV,
-	.ops		= &efi_bootdev_ops,
-	.bind		= efi_bootdev_bind,
-	.of_match	= efi_bootdev_ids,
-};
-
 U_BOOT_DRIVER(efi_block) = {
 	.name		= "efi_block",
 	.id		= UCLASS_BLK,
@@ -128,10 +102,6 @@ static int efi_media_bind(struct udevice *dev)
 	}
 	blk_plat = dev_get_plat(blk);
 	blk_plat->blkio = plat->blkio;
-
-	ret = bootdev_setup_for_sibling_blk(blk, "efi_bootdev");
-	if (ret)
-		return log_msg_ret("emb", ret);
 
 	return 0;
 }

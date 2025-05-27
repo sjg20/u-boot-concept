@@ -10,7 +10,7 @@
 #include <dm.h>
 #include <env.h>
 #include <part.h>
-#if defined(CONFIG_EFI_CLIENT) || defined(CONFIG_EFI_APP)
+#if defined(CONFIG_EFI) || defined(CONFIG_EFI_APP)
 #include <efi.h>
 #include <efi_api.h>
 
@@ -51,7 +51,7 @@ static bool partition_is_on_device(const struct efi_device_path *device,
 
 static int part_find(int argc, char *const argv[])
 {
-#if defined(CONFIG_EFI_CLIENT) || defined(CONFIG_EFI_APP)
+#if defined(CONFIG_EFI) || defined(CONFIG_EFI_APP)
 	efi_guid_t efi_devpath_guid = EFI_DEVICE_PATH_PROTOCOL_GUID;
 	struct efi_device_path *loaded_image_path = NULL;
 	struct efi_boot_services *boot = efi_get_boot();
@@ -70,7 +70,7 @@ static int part_find(int argc, char *const argv[])
 	if (argc != 2)
 		return CMD_RET_USAGE;
 
-#if defined(CONFIG_EFI_CLIENT) || defined(CONFIG_EFI_APP)
+#if defined(CONFIG_EFI) || defined (CONFIG_EFI_APP)
 	part_self = !strncmp(argv[1], "self", 6);
 	if (part_self) {
 		ret = boot->handle_protocol(priv->loaded_image->device_handle,
@@ -95,7 +95,7 @@ static int part_find(int argc, char *const argv[])
 			if (udev->driver != entry)
 				continue;
 			desc = dev_get_uclass_plat(udev);
-#if defined(CONFIG_EFI_CLIENT) || defined(CONFIG_EFI_APP)
+#if defined(CONFIG_EFI) || defined(CONFIG_EFI_APP)
 			if (part_self) {
 				if (desc->if_type == IF_TYPE_EFI_MEDIA) {
 					struct efi_media_plat *plat =
@@ -131,7 +131,7 @@ static int part_find(int argc, char *const argv[])
 						return CMD_RET_SUCCESS;
 					}
 				}
-#if defined(CONFIG_EFI_CLIENT) || defined(CONFIG_EFI_APP)
+#if defined(CONFIG_EFI) || defined(CONFIG_EFI_APP)
 			}
 #endif
 		}

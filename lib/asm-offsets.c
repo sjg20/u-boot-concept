@@ -48,13 +48,5 @@ int main(void)
 	DEFINE(GD_ENV_ADDR, offsetof(struct global_data, env_addr));
 #endif
 
-#if CONFIG_IS_ENABLED(PASSAGE_IN)
-	DEFINE(GD_PASSAGE_MACH, offsetof(struct global_data, passage_mach));
-	DEFINE(GD_PASSAGE_BLOBLIST,
-	       offsetof(struct global_data, passage_bloblist));
-	DEFINE(GD_PASSAGE_DTB,
-	       offsetof(struct global_data, passage_dtb));
-#endif
-
 	return 0;
 }

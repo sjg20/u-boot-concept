@@ -152,9 +152,6 @@ int dram_init_banksize(void)
 int board_fdt_blob_setup(void **fdtp)
 {
 	/* QEMU loads a generated DTB for us at the start of RAM. */
-	if (CONFIG_IS_ENABLED(OF_PASSAGE))
-		return -EEXIST;
-
 	*fdtp = (void *)CFG_SYS_SDRAM_BASE;
 
 	return 0;

@@ -6,9 +6,11 @@
 ifndef CONFIG_XPL_BUILD
 
 obj-$(CONFIG_BOOT_RETRY) += bootretry.o
-obj-$(CONFIG_BOOT) += bootm.o bootm_os.o
+obj-$(CONFIG_CMD_BOOTM) += bootm.o bootm_os.o
+obj-$(CONFIG_CMD_BOOTZ) += bootm.o bootm_os.o
+obj-$(CONFIG_CMD_BOOTI) += bootm.o bootm_os.o
 
-obj-$(CONFIG_PXE_UTILS) += pxe_utils.o
+obj-$(CONFIG_PXE_UTILS) += bootm.o pxe_utils.o
 
 endif
 
@@ -28,7 +30,7 @@ obj-$(CONFIG_$(PHASE_)BOOTSTD_PROG) += prog_boot.o
 obj-$(CONFIG_$(PHASE_)BOOTMETH_EXTLINUX) += ext_pxe_common.o bootmeth_extlinux.o
 obj-$(CONFIG_$(PHASE_)BOOTMETH_EXTLINUX_PXE) += ext_pxe_common.o bootmeth_pxe.o
 obj-$(CONFIG_$(PHASE_)BOOTMETH_EFILOADER) += bootmeth_efi.o
-obj-$(CONFIG_$(PHASE_)BOOTMETH_CROS) += bootmeth_cros.o
+obj-$(CONFIG_$(PHASE_)BOOTMETH_CROS) += bootm.o bootm_os.o bootmeth_cros.o
 obj-$(CONFIG_$(PHASE_)BOOTMETH_FEL) += bootmeth_fel.o
 obj-$(CONFIG_$(PHASE_)BOOTMETH_QFW) += bootmeth_qfw.o
 obj-$(CONFIG_$(PHASE_)BOOTMETH_SANDBOX) += bootmeth_sandbox.o

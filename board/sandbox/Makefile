@@ -2,5 +2,4 @@
 #
 # Copyright (c) 2011 The Chromium OS Authors.
 
-obj-y	+= sandbox.o
-obj-y	+= stdpass_check.o
+obj-y	:= sandbox.o

@@ -94,12 +94,6 @@ ENTRY(_main)
 	bl	debug_uart_init
 #endif
 
-#if CONFIG_IS_ENABLED(PASSAGE_IN)
-	str	x19, [x18, #GD_PASSAGE_MACH]
-	str	x20, [x18, #GD_PASSAGE_DTB]
-	str	x21, [x18, #GD_PASSAGE_BLOBLIST]
-#endif
-
 	mov	x0, #0
 	bl	board_init_f
 

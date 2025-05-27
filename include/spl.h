@@ -441,8 +441,6 @@ binman_sym_extern(ulong, u_boot_spl_any, image_pos);
 binman_sym_extern(ulong, u_boot_spl_any, size);
 binman_sym_extern(ulong, u_boot_vpl_any, image_pos);
 binman_sym_extern(ulong, u_boot_vpl_any, size);
-binman_sym_extern(ulong, u_boot_dtb, image_pos);
-binman_sym_extern(ulong, u_boot_dtb, size);
 
 /**
  * spl_get_image_pos() - get the image position of the next phase
@@ -867,7 +865,7 @@ int spl_load_image_fat_os(struct spl_image_info *spl_image,
 			  struct spl_boot_device *bootdev,
 			  struct blk_desc *block_dev, int partition);
 
-void __noreturn jump_to_image(struct spl_image_info *spl_image);
+void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image);
 
 /* SPL EXT image functions */
 int spl_load_image_ext(struct spl_image_info *spl_image,

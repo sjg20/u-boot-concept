@@ -113,12 +113,6 @@ ENTRY(_main)
 	mov	r9, r0
 	bl	board_init_f_init_reserve
 
-#if CONFIG_IS_ENABLED(PASSAGE_IN)
-	str	r6, [r9, #GD_PASSAGE_MACH]
-	str	r7, [r9, #GD_PASSAGE_DTB]
-	str	r8, [r9, #GD_PASSAGE_BLOBLIST]
-#endif
-
 #if defined(CONFIG_DEBUG_UART) && CONFIG_IS_ENABLED(SERIAL)
 	bl	debug_uart_init
 #endif

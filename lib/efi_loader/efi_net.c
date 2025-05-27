@@ -17,7 +17,6 @@
 
 #define LOG_CATEGORY LOGC_EFI
 
-#include <efi_device_path.h>
 #include <efi_loader.h>
 #include <dm.h>
 #include <linux/sizes.h>

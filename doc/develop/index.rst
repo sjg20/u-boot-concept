@@ -52,7 +52,6 @@ Implementation
    smbios
    spl
    falcon
-   std_passage
    uefi/index
    vbe
    version
@@ -86,7 +85,6 @@ Testing
    tests_writing
    tests_sandbox
    binman_tests
-   test_hooks
 
 Refactoring
 -----------

@@ -367,7 +367,7 @@ config USE_HOB
 
 config HAVE_FSP
 	bool "Add an Firmware Support Package binary"
-	depends on !EFI_CLIENT
+	depends on !EFI
 	select USE_HOB
 	select HAS_ROM
 	help
@@ -515,7 +515,7 @@ config FSP_BROKEN_HOB
 
 config ENABLE_MRC_CACHE
 	bool "Enable MRC cache"
-	depends on !EFI_CLIENT && !SYS_COREBOOT
+	depends on !EFI && !SYS_COREBOOT
 	help
 	  Enable this feature to cause MRC data to be cached in NV storage
 	  to be used for speeding up boot time on future reboots and/or
@@ -754,7 +754,7 @@ config HAVE_P2SB
 	  devices.
 
 menu "System tables"
-	depends on !EFI_CLIENT && !SYS_COREBOOT
+	depends on !EFI && !SYS_COREBOOT
 
 config GENERATE_PIRQ_TABLE
 	bool "Generate a PIRQ table"
@@ -1071,7 +1071,6 @@ config SPL_COREBOOT_SYSINFO
 
 config ZBOOT
 	bool "Support the zImage format"
-	depends on BOOT
 	default y
 	help
 	  Enable this to support booting the x86-specific zImage format. This

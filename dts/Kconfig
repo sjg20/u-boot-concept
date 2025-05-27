@@ -159,14 +159,6 @@ config OF_EMBED
 	  and development only and is not recommended for production devices.
 	  Boards in the mainline U-Boot tree should not use it.
 
-config OF_PASSAGE
-	bool "DTB is provided by a standard passage, in a bloblist"
-	help
-	  Select this to read the devicetree using the standard passage
-	  mechanism, i.e. from a previous phase in bloblist using arch-specific
-	  register conventions. If enabled, the previous phase must provide
-	  the devicetree, or U-Boot will not function correctly.
-
 endchoice
 
 config OF_INITIAL_DTB_READONLY
@@ -213,13 +205,8 @@ config OF_HAS_PRIOR_STAGE
 	  development purposes, but it is not recommended, and likely will not
 	  even work, for production systems.
 
-	  Note: This option can be disabled for QEMU using QEMU_MANUAL_DTB thus
-	  allowing QEMU to support FIT validation, where the devicetree must
-	  include a public key.
-
-	  See also this for context:
-
-	  https://patchwork.kernel.org/project/qemu-devel/patch/20210926183410.256484-1-sjg@chromium.org/#24481799
+	  Note: This option must be set in Kconfig and cannot be enabled or
+	  disabled in the board's defconfig file.
 
 config OF_OMIT_DTB
 	bool "Omit the device tree output when building"

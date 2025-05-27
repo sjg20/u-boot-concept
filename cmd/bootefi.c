@@ -9,7 +9,6 @@
 
 #include <command.h>
 #include <efi.h>
-#include <efi_device_path.h>
 #include <efi_loader.h>
 #include <exports.h>
 #include <log.h>

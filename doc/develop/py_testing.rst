@@ -314,8 +314,6 @@ via `$PATH`. These scripts implement certain actions on behalf of the test
 suite. This keeps the test suite simple and isolated from system variances
 unrelated to U-Boot features.
 
-For more details see :doc:`test_hooks`.
-
 Hook scripts
 ~~~~~~~~~~~~
 
@@ -406,9 +404,9 @@ saving wear on the flash chip(s).
 Examples
 ''''''''
 
-The directory `test/hooks` contains some working example hook
+https://source.denx.de/u-boot/u-boot-test-hooks contains some working example hook
 scripts, and may be useful as a reference when implementing hook scripts for
-your platform. These scripts are considered part of U-Boot itself.
+your platform. These scripts are not considered part of U-Boot itself.
 
 Board-type-specific configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -471,16 +469,16 @@ instances of:
 Complete invocation example
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Assuming that you have installed U-Boot `$UBOOT`, any new hooks into
-`$UBOOT/test/hooks/bin` and any new configuration Python modules into
-`$UBOOT/test/hooks/py`, then you would likely invoke the test script as follows:
+Assuming that you have installed the hook scripts into $HOME/ubtest/bin, and
+any required environment configuration Python modules into $HOME/ubtest/py,
+then you would likely invoke the test script as follows:
 
 If U-Boot has already been built:
 
 .. code-block:: bash
 
-    PATH=$UBOOT/test/hooks/bin:$PATH \
-    PYTHONPATH=$UBOOT/test/hooks/py/${HOSTNAME}:${PYTHONPATH} \
+    PATH=$HOME/ubtest/bin:$PATH \
+    PYTHONPATH=${HOME}/ubtest/py/${HOSTNAME}:${PYTHONPATH} \
     ./test/py/test.py --bd seaboard
 
 If you want the test script to compile U-Boot for you too, then you likely
@@ -490,7 +488,7 @@ follows:
 .. code-block:: bash
 
     CROSS_COMPILE=arm-none-eabi- \
-    PATH=$UBOOT/test/hooks/bin:$PATH \
+    PATH=$HOME/ubtest/bin:$PATH \
     PYTHONPATH=${HOME}/ubtest/py/${HOSTNAME}:${PYTHONPATH} \
     ./test/py/test.py --bd seaboard --build
 
@@ -498,8 +496,8 @@ or, using buildman to handle it:
 
 .. code-block:: bash
 
-    PATH=$UBOOT/test/hooks/bin:$PATH \
-    PYTHONPATH=$UBOOT/test/hooks/py/${HOSTNAME}:${PYTHONPATH} \
+    PATH=$HOME/ubtest/bin:$PATH \
+    PYTHONPATH=${HOME}/ubtest/py/${HOSTNAME}:${PYTHONPATH} \
     ./test/py/test.py --bd seaboard --build --buildman
 
 Writing tests

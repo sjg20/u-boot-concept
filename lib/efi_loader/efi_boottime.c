@@ -11,7 +11,6 @@
 #include <div64.h>
 #include <dm/device.h>
 #include <dm/root.h>
-#include <efi_device_path.h>
 #include <efi_loader.h>
 #include <irq_func.h>
 #include <log.h>

@@ -317,7 +317,6 @@ config SPL_ACPI
 config GENERATE_ACPI_TABLE
 	bool "Generate an ACPI (Advanced Configuration and Power Interface) table"
 	depends on ACPI
-	select BLOBLIST
 	select QFW if QEMU
 	help
 	  The Advanced Configuration and Power Interface (ACPI) specification
@@ -1073,7 +1072,7 @@ config VPL_OF_LIBFDT_ASSUME_MASK
 	  unsafe execution. See FDT_ASSUME_PERFECT, etc. in libfdt_internal.h
 
 menu "System tables"
-	depends on (!EFI_CLIENT && !SYS_COREBOOT) || (ARM && EFI_LOADER)
+	depends on (!EFI && !SYS_COREBOOT) || (ARM && EFI_LOADER)
 
 config BLOBLIST_TABLES
 	bool "Put tables in a bloblist"

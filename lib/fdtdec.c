@@ -19,7 +19,6 @@
 #include <log.h>
 #include <malloc.h>
 #include <net.h>
-#include <passage.h>
 #include <spl.h>
 #include <env.h>
 #include <errno.h>
@@ -91,7 +90,7 @@ static const char *const fdt_src_name[] = {
 	[FDTSRC_BOARD] = "board",
 	[FDTSRC_EMBED] = "embed",
 	[FDTSRC_ENV] = "env",
-	[FDTSRC_PASSAGE] = "passage",
+	[FDTSRC_BLOBLIST] = "bloblist",
 };
 
 const char *fdtdec_get_srcname(void)
@@ -1675,17 +1674,20 @@ int fdtdec_setup(void)
 	int ret;
 
 	/* The devicetree is typically appended to U-Boot */
-	if (CONFIG_IS_ENABLED(OF_PASSAGE)) {
-		if (!passage_valid()) {
-			printf("Previous phase failed to provide standard passage\n");
+	if (CONFIG_IS_ENABLED(OF_BLOBLIST)) {
+		ret = bloblist_maybe_init();
+		if (ret)
+			return ret;
+		gd->fdt_blob = bloblist_find(BLOBLISTT_CONTROL_FDT, 0);
+		if (!gd->fdt_blob) {
+			printf("Not FDT found in bloblist\n");
 			bloblist_show_list();
 			return -ENOENT;
 		}
-		gd->fdt_blob = map_sysmem(gd_passage_dtb(), 0);
-		gd->fdt_src = FDTSRC_PASSAGE;
+		gd->fdt_src = FDTSRC_BLOBLIST;
+		bloblist_show_list();
 		log_debug("Devicetree is in bloblist at %p\n", gd->fdt_blob);
 	} else {
-		/* The devicetree is typically appended to U-Boot */
 		if (IS_ENABLED(CONFIG_OF_SEPARATE)) {
 			gd->fdt_blob = fdt_find_separate();
 			gd->fdt_src = FDTSRC_SEPARATE;

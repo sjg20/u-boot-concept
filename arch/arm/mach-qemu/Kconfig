@@ -14,15 +14,6 @@ config TARGET_QEMU_ARM_32BIT
 	select CPU_V7A
 	select SYS_ARCH_TIMER
 
-config TARGET_QEMU_ARM_32BIT_SPL
-	bool "ARMv7-A, 32bit with SPL"
-	select ARCH_SUPPORT_PSCI
-	select BOARD_LATE_INIT
-	select CPU_V7A
-	select SYS_ARCH_TIMER
-	select SPL
-	select BINMAN
-
 config TARGET_QEMU_ARM_64BIT
 	bool "ARMv8, 64bit"
 	select ARM64
@@ -35,18 +26,9 @@ config TARGET_QEMU_ARM_SBSA
 	select BOARD_LATE_INIT
 	select ENABLE_ARM_SOC_BOOT0_HOOK
 	select MISC_INIT_R
-
-config TARGET_QEMU_ARM_64BIT_SPL
-	bool "ARMv8, 64bit with SPL"
-	select ARM64
-	select BOARD_LATE_INIT
-	select SPL
-	select BINMAN
-
 endchoice
 
-if TARGET_QEMU_ARM_32BIT || TARGET_QEMU_ARM_64BIT || \
-	TARGET_QEMU_ARM_32BIT_SPL || TARGET_QEMU_ARM_64BIT_SPL
+if TARGET_QEMU_ARM_32BIT || TARGET_QEMU_ARM_64BIT
 
 config SYS_BOARD
 	default "qemu-arm"

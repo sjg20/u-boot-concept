@@ -196,7 +196,9 @@ int acpi_add_table(struct acpi_ctx *ctx, void *table)
 					(sizeof(u32) * (i + 1));
 
 		/* Re-calculate checksum */
-		acpi_update_checksum(&rsdt->header);
+		rsdt->header.checksum = 0;
+		rsdt->header.checksum = table_compute_checksum((u8 *)rsdt,
+							       rsdt->header.length);
 	}
 
 	if (ctx->xsdt) {
@@ -227,7 +229,9 @@ int acpi_add_table(struct acpi_ctx *ctx, void *table)
 					(sizeof(u64) * (i + 1));
 
 		/* Re-calculate checksum */
-		acpi_update_checksum(&xsdt->header);
+		xsdt->header.checksum = 0;
+		xsdt->header.checksum = table_compute_checksum((u8 *)xsdt,
+							       xsdt->header.length);
 	}
 
 	return 0;
@@ -265,14 +269,12 @@ int acpi_write_fadt(struct acpi_ctx *ctx, const struct acpi_writer *entry)
 
 	acpi_fill_fadt(fadt);
 
-	acpi_update_checksum(header);
+	header->checksum = table_compute_checksum(fadt, header->length);
 
 	return acpi_add_fadt(ctx, fadt);
 }
 
-#ifndef CONFIG_QFW_ACPI
 ACPI_WRITER(5fadt, "FADT", acpi_write_fadt, 0);
-#endif
 
 int acpi_write_madt(struct acpi_ctx *ctx, const struct acpi_writer *entry)
 {
@@ -300,16 +302,14 @@ int acpi_write_madt(struct acpi_ctx *ctx, const struct acpi_writer *entry)
 	if (IS_ENABLED(CONFIG_ACPI_PARKING_PROTOCOL))
 		acpi_write_park(madt);
 
-	acpi_update_checksum(header);
+	header->checksum = table_compute_checksum((void *)madt, header->length);
 	acpi_add_table(ctx, madt);
 	ctx->current = (void *)madt + madt->header.length;
 
 	return 0;
 }
 
-#ifndef CONFIG_QFW_ACPI
 ACPI_WRITER(5madt, "MADT", acpi_write_madt, 0);
-#endif
 
 void acpi_create_dbg2(struct acpi_dbg2_header *dbg2,
 		      int port_type, int port_subtype,
@@ -371,7 +371,7 @@ void acpi_create_dbg2(struct acpi_dbg2_header *dbg2,
 	/* Update structure lengths and checksum */
 	device->length = current - (uintptr_t)device;
 	header->length = current - (uintptr_t)dbg2;
-	acpi_update_checksum(header);
+	header->checksum = table_compute_checksum(dbg2, header->length);
 }
 
 int acpi_write_dbg2_pci_uart(struct acpi_ctx *ctx, struct udevice *dev,
@@ -546,7 +546,7 @@ static int acpi_write_spcr(struct acpi_ctx *ctx, const struct acpi_writer *entry
 		spcr->baud_rate = 0;
 
 	/* Fix checksum */
-	acpi_update_checksum(header);
+	header->checksum = table_compute_checksum((void *)spcr, header->length);
 
 	acpi_add_table(ctx, spcr);
 	acpi_inc(ctx, spcr->header.length);
@@ -756,7 +756,7 @@ static int acpi_write_iort(struct acpi_ctx *ctx, const struct acpi_writer *entry
 
 	/* (Re)calculate length and checksum */
 	iort->header.length = ctx->current - (void *)iort;
-	acpi_update_checksum(&iort->header);
+	iort->header.checksum = table_compute_checksum((void *)iort, iort->header.length);
 	log_debug("IORT at %p, length %x\n", iort, iort->header.length);
 
 	/* Drop the table if it is empty */

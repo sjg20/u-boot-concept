@@ -11,7 +11,7 @@ Synopsis
 
 ::
 
-    bootflow scan [-abeGHlmt] [bootdev]
+    bootflow scan [-abelGH] [bootdev]
     bootflow list [-e]
     bootflow select [<num|name>]
     bootflow info [-ds]
@@ -62,6 +62,11 @@ Flags are:
     Used with -l to also show errors for each bootflow. The shows detailed error
     information for each bootflow that failed to make it to the `loaded` state.
 
+-l
+    List bootflows while scanning. This is helpful when you want to see what
+    is happening during scanning. Use it with the `-b` flag to see which
+    bootdev and bootflows are being tried.
+
 -G
     Skip global bootmeths when scanning. By default these are tried first, but
     this flag disables them.
@@ -71,17 +76,9 @@ Flags are:
     priority or label is tried, to see if more bootdevs can be discovered, but
     this flag disables that process.
 
--l
-    List bootflows while scanning. This is helpful when you want to see what
-    is happening during scanning. Use it with the `-b` flag to see which
-    bootdev and bootflows are being tried.
-
 -m
     Show a menu of available bootflows for the user to select. When used with
     -b it then boots the one that was selected, if any.
-
--t
-    If used with `-m`, show the menu in text mode.
 
 The optional argument specifies a particular bootdev to scan. This can either be
 the name of a bootdev or its sequence number (both shown with `bootdev list`).

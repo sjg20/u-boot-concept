@@ -11,7 +11,6 @@
 #include <bloblist.h>
 #include <cpu.h>
 #include <dm.h>
-#include <intel_gnvs.h>
 #include <acpi/acpigen.h>
 #include <asm/acpigen.h>
 #include <asm/acpi_table.h>
@@ -24,6 +23,7 @@
 #include <asm/mpspec.h>
 #include <asm/smm.h>
 #include <asm/turbo.h>
+#include <asm/intel_gnvs.h>
 #include <asm/arch/iomap.h>
 #include <asm/arch/pm.h>
 #include <asm/arch/systemagent.h>

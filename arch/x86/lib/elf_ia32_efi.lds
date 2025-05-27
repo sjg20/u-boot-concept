@@ -13,12 +13,12 @@ SECTIONS
 	image_base = .;
 	.hash : { *(.hash) }	/* this MUST come first, EFI expects it */
 	. = ALIGN(4096);
-	.text : {
+	.text :
+	{
 		*(.text)
 		*(.text.*)
 		*(.gnu.linkonce.t.*)
 	}
-
 	. = ALIGN(4096);
 	.sdata :
 	{
@@ -29,9 +29,9 @@ SECTIONS
 		*(.sbss)
 		*(.scommon)
 	}
-
 	. = ALIGN(4096);
-	.data : {
+	.data :
+	{
 		*(.rodata*)
 		*(.data)
 		*(.data1)
@@ -51,14 +51,13 @@ SECTIONS
 
 		/* U-Boot lists and device tree */
 		. = ALIGN(8);
-		KEEP(*(SORT(__u_boot_list*)));
+		*(SORT(__u_boot_list*));
 		. = ALIGN(8);
 		*(.dtb*);
 	}
 
 	. = ALIGN(4096);
-	.dynamic : { *(.dynamic) }
-
+	.dynamic  : { *(.dynamic) }
 	. = ALIGN(4096);
 	.rel :
 	{
@@ -72,20 +71,18 @@ SECTIONS
 		*(.data.rel*)
 		*(.rel__u_boot_list*)
 	}
-
 	. = ALIGN(4096);
-	.reloc : {	/* This is the PECOFF .reloc section! */
-		KEEP(*(.reloc))
+		.reloc :	/* This is the PECOFF .reloc section! */
+	{
+	*(.reloc)
 	}
-
 	. = ALIGN(4096);
-	.dynsym : { *(.dynsym) }
+	.dynsym   : { *(.dynsym) }
 	. = ALIGN(4096);
-	.dynstr : { *(.dynstr) }
+	.dynstr   : { *(.dynstr) }
 	. = ALIGN(4096);
-	_end = .;
-
-	/DISCARD/ : {
+	/DISCARD/ :
+	{
 		*(.rel.reloc)
 		*(.eh_frame)
 		*(.note.GNU-stack)

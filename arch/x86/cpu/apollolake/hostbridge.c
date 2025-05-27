@@ -298,7 +298,7 @@ static int apl_acpi_hb_write_tables(const struct udevice *dev,
 
 	/* (Re)calculate length and checksum */
 	header->length = ctx->current - (void *)dmar;
-	acpi_update_checksum(header);
+	header->checksum = table_compute_checksum((void *)dmar, header->length);
 
 	acpi_align(ctx);
 	acpi_add_table(ctx, dmar);

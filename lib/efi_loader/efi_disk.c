@@ -11,7 +11,6 @@
 #include <dm.h>
 #include <dm/device-internal.h>
 #include <dm/tag.h>
-#include <efi_device_path.h>
 #include <event.h>
 #include <efi_driver.h>
 #include <efi_loader.h>
