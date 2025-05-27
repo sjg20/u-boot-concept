@@ -1675,6 +1675,7 @@ int fdtdec_setup(void)
 	 * The necessary test is whether the previous phase passed a bloblist,
 	 * not whether this phase creates one.
 	 */
+#if 0
 	if (CONFIG_IS_ENABLED(BLOBLIST) &&
 	    (xpl_prev_phase() != PHASE_TPL ||
 	     IS_ENABLED(CONFIG_TPL_BLOBLIST))) {
@@ -1692,6 +1693,7 @@ int fdtdec_setup(void)
 			}
 		}
 	}
+#endif
 
 	/* Otherwise, the devicetree is typically appended to U-Boot */
 	if (ret) {
