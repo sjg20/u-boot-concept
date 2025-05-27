@@ -27,6 +27,7 @@ struct fdt_region;
 #include <linux/kconfig.h>
 
 #define IMAGE_INDENT_STRING	""
+#define BIT(nr)			(1UL << (nr))
 
 #else
 
@@ -34,6 +35,7 @@ struct fdt_region;
 #include <asm/u-boot.h>
 #include <command.h>
 #include <linker_lists.h>
+#include <linux/bitops.h>
 
 #define IMAGE_INDENT_STRING	"   "
 
@@ -343,6 +345,61 @@ struct image_info {
 	uint8_t		arch;			/* CPU architecture */
 };
 
+/**
+ * enum bootm_state - States which the bootm machine goes through (in order)
+ *
+ * @BOOTM_STATE_START: Set up the state structure (struct bootm_headers)
+ * @BOOTM_STATE_PRE_LOAD: Do any neceessary processing before images are read.
+ *	For now this just implements a whole-image signature, if enabled. See
+ *	CONFIG_IMAGE_PRE_LOAD_SIG
+ * @BOOTM_STATE_FINDOS: Determine the operatiing system to be loaded
+ * @BOOTM_STATE_FINDOTHER: Find any other images to be loaded, e.g.
+ *	device tree / ramdisk
+ *
+ * Note: After this state the OS, ramdisk, devicetree, etc. should be determined
+ * and be present in struct bootm_headers, i.e. from now on the state should
+ * only consider those images.
+ *
+ * @BOOTM_STATE_MEASURE: Measure images to the TPM, if enabled
+ * @BOOTM_STATE_LOADOS: Load the OS into the correct place in memory
+ * @BOOTM_STATE_RAMDISK: Relocate any ramdisk into the correct place in memory
+ * @BOOTM_STATE_FDT: Load any device tree into the correct place in memory
+ * @BOOTM_STATE_OS_CMDLINE: Set up the command line for the OS
+ *
+ * Note: After this state all images should be in the correct place in memory,
+ * ready for execution. This includes decompression, relocations, etc. From now
+ * only images can be modified but not loaded/moved.
+ *
+ * @BOOTM_STATE_OS_BD_T: Write U-Boot's bd_info information so the OS can use
+ *	it; only used on PowerPC
+ * @BOOTM_STATE_OS_PREP: Set up tables needed by the OS: this includes
+ *	devicetree fix-ups and moving to the final location, command line (if
+ *	not done in the @BOOTM_STATE_OS_CMDLINE state), setting up ATAGS (only
+ *	used with very old kernels). After this point, we should be ready to
+ *	jump to the OS without any further changes to images in memory
+ * @BOOTM_STATE_OS_FAKE_GO: Fake a jump to the OS; this does everything except
+ *	actually jumping to the OS. It can be useful for tracing or for
+ *	bootstage timing, but is not used in production code.
+ * @BOOTM_STATE_OS_GO: Jump to the OS. Note that this stage should *only* shut
+ *	down any active drivers and do the actual jump. Loading and relocating
+ *	images must have happened in earlier stages
+ */
+enum bootm_state {
+	BOOTM_STATE_START		= BIT(0),
+	BOOTM_STATE_PRE_LOAD		= BIT(1),
+	BOOTM_STATE_FINDOS		= BIT(2),
+	BOOTM_STATE_FINDOTHER		= BIT(3),
+	BOOTM_STATE_MEASURE		= BIT(4),
+	BOOTM_STATE_LOADOS		= BIT(5),
+	BOOTM_STATE_RAMDISK		= BIT(6),
+	BOOTM_STATE_FDT			= BIT(7),
+	BOOTM_STATE_OS_CMDLINE		= BIT(8),
+	BOOTM_STATE_OS_BD_T		= BIT(9),
+	BOOTM_STATE_OS_PREP		= BIT(10),
+	BOOTM_STATE_OS_FAKE_GO		= BIT(11),
+	BOOTM_STATE_OS_GO		= BIT(12),
+};
+
 /*
  * Legacy and FIT format headers used by do_bootm() and do_bootm_<os>()
  * routines.
@@ -397,21 +454,7 @@ struct bootm_headers {
 #endif
 
 	int		verify;		/* env_get("verify")[0] != 'n' */
-
-#define BOOTM_STATE_START	0x00000001
-#define BOOTM_STATE_FINDOS	0x00000002
-#define BOOTM_STATE_FINDOTHER	0x00000004
-#define BOOTM_STATE_LOADOS	0x00000008
-#define BOOTM_STATE_RAMDISK	0x00000010
-#define BOOTM_STATE_FDT		0x00000020
-#define BOOTM_STATE_OS_CMDLINE	0x00000040
-#define BOOTM_STATE_OS_BD_T	0x00000080
-#define BOOTM_STATE_OS_PREP	0x00000100
-#define BOOTM_STATE_OS_FAKE_GO	0x00000200	/* 'Almost' run the OS */
-#define BOOTM_STATE_OS_GO	0x00000400
-#define BOOTM_STATE_PRE_LOAD	0x00000800
-#define BOOTM_STATE_MEASURE	0x00001000
-	int		state;
+	enum bootm_state state;
 };
 
 extern struct bootm_headers images;
