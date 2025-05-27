@@ -94,6 +94,8 @@ ENTRY(_main)
 
 #if defined(CONFIG_DEBUG_UART) && CONFIG_IS_ENABLED(SERIAL)
 	bl	debug_uart_init
+	mov	x0, #0x41
+	bl	printch
 #endif
 
 	mov	x0, #0
