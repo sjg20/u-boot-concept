@@ -40,22 +40,22 @@ static int do_imls(struct cmd_tbl *cmdtp, int flag, int argc,
 /* we overload the cmd field with our state machine info instead of a
  * function pointer */
 static struct cmd_tbl cmd_bootm_sub[] = {
-	U_BOOT_CMD_MKENT(start, 0, 1, (void *)BOOTM_STATE_START, "", ""),
-	U_BOOT_CMD_MKENT(loados, 0, 1, (void *)BOOTM_STATE_LOADOS, "", ""),
+	U_BOOT_CMD_MKENT(start, 0, 1, (void *)BOOTMS_START, "", ""),
+	U_BOOT_CMD_MKENT(loados, 0, 1, (void *)BOOTMS_LOADOS, "", ""),
 #ifdef CONFIG_CMD_BOOTM_PRE_LOAD
-	U_BOOT_CMD_MKENT(preload, 0, 1, (void *)BOOTM_STATE_PRE_LOAD, "", ""),
+	U_BOOT_CMD_MKENT(preload, 0, 1, (void *)BOOTMS_PRE_LOAD, "", ""),
 #endif
 #ifdef CONFIG_SYS_BOOT_RAMDISK_HIGH
-	U_BOOT_CMD_MKENT(ramdisk, 0, 1, (void *)BOOTM_STATE_RAMDISK, "", ""),
+	U_BOOT_CMD_MKENT(ramdisk, 0, 1, (void *)BOOTMS_RAMDISK, "", ""),
 #endif
 #ifdef CONFIG_OF_LIBFDT
-	U_BOOT_CMD_MKENT(fdt, 0, 1, (void *)BOOTM_STATE_FDT, "", ""),
+	U_BOOT_CMD_MKENT(fdt, 0, 1, (void *)BOOTMS_FDT, "", ""),
 #endif
-	U_BOOT_CMD_MKENT(cmdline, 0, 1, (void *)BOOTM_STATE_OS_CMDLINE, "", ""),
-	U_BOOT_CMD_MKENT(bdt, 0, 1, (void *)BOOTM_STATE_OS_BD_T, "", ""),
-	U_BOOT_CMD_MKENT(prep, 0, 1, (void *)BOOTM_STATE_OS_PREP, "", ""),
-	U_BOOT_CMD_MKENT(fake, 0, 1, (void *)BOOTM_STATE_OS_FAKE_GO, "", ""),
-	U_BOOT_CMD_MKENT(go, 0, 1, (void *)BOOTM_STATE_OS_GO, "", ""),
+	U_BOOT_CMD_MKENT(cmdline, 0, 1, (void *)BOOTMS_OS_CMDLINE, "", ""),
+	U_BOOT_CMD_MKENT(bdt, 0, 1, (void *)BOOTMS_OS_BD_T, "", ""),
+	U_BOOT_CMD_MKENT(prep, 0, 1, (void *)BOOTMS_OS_PREP, "", ""),
+	U_BOOT_CMD_MKENT(fake, 0, 1, (void *)BOOTMS_OS_FAKE_GO, "", ""),
+	U_BOOT_CMD_MKENT(go, 0, 1, (void *)BOOTMS_OS_GO, "", ""),
 };
 
 #if defined(CONFIG_CMD_BOOTM_PRE_LOAD)
@@ -85,19 +85,19 @@ static int do_bootm_subcommand(struct cmd_tbl *cmdtp, int flag, int argc,
 
 	if (c) {
 		state = (long)c->cmd;
-		if (state == BOOTM_STATE_START)
-			state |= BOOTM_STATE_PRE_LOAD | BOOTM_STATE_FINDOS |
-				 BOOTM_STATE_FINDOTHER;
+		if (state == BOOTMS_START)
+			state |= BOOTMS_PRE_LOAD | BOOTMS_FINDOS |
+				 BOOTMS_FINDOTHER;
 #if defined(CONFIG_CMD_BOOTM_PRE_LOAD)
-		if (state == BOOTM_STATE_PRE_LOAD)
-			state |= BOOTM_STATE_START;
+		if (state == BOOTMS_PRE_LOAD)
+			state |= BOOTMS_START;
 #endif
 	} else {
 		/* Unrecognized command */
 		return CMD_RET_USAGE;
 	}
 
-	if (((state & BOOTM_STATE_START) != BOOTM_STATE_START) &&
+	if (((state & BOOTMS_START) != BOOTMS_START) &&
 	    images.state >= state) {
 		printf("Trying to execute a command out of order\n");
 		return CMD_RET_USAGE;
@@ -120,7 +120,7 @@ static int do_bootm_subcommand(struct cmd_tbl *cmdtp, int flag, int argc,
 	ret = bootm_run_states(&bmi, state);
 
 #if defined(CONFIG_CMD_BOOTM_PRE_LOAD)
-	if (!ret && (state & BOOTM_STATE_PRE_LOAD))
+	if (!ret && (state & BOOTMS_PRE_LOAD))
 		env_set_hex("loadaddr_verified",
 			    bootm_get_addr(argc, argv) + image_load_offset);
 #endif

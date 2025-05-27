@@ -79,7 +79,7 @@ static void boot_prep_linux(struct bootm_headers *images)
 static void boot_jump_linux(struct bootm_headers *images, int flag)
 {
 	void (*kernel)(ulong hart, void *dtb);
-	int fake = (flag & BOOTM_STATE_OS_FAKE_GO);
+	int fake = (flag & BOOTMS_OS_FAKE_GO);
 #ifdef CONFIG_SMP
 	int ret;
 #endif
@@ -111,15 +111,15 @@ int do_bootm_linux(int flag, struct bootm_info *bmi)
 	struct bootm_headers *images = bmi->images;
 
 	/* No need for those on RISC-V */
-	if (flag & BOOTM_STATE_OS_BD_T || flag & BOOTM_STATE_OS_CMDLINE)
+	if (flag & BOOTMS_OS_BD_T || flag & BOOTMS_OS_CMDLINE)
 		return -1;
 
-	if (flag & BOOTM_STATE_OS_PREP) {
+	if (flag & BOOTMS_OS_PREP) {
 		boot_prep_linux(images);
 		return 0;
 	}
 
-	if (flag & (BOOTM_STATE_OS_GO | BOOTM_STATE_OS_FAKE_GO)) {
+	if (flag & (BOOTMS_OS_GO | BOOTMS_OS_FAKE_GO)) {
 		boot_jump_linux(images, flag);
 		return 0;
 	}

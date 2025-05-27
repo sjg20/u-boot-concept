@@ -53,7 +53,7 @@ static void boot_jump_linux(struct bootm_headers *images, int flag)
 {
 	ulong kernel_entry;
 	unsigned int r0, r2;
-	int fake = (flag & BOOTM_STATE_OS_FAKE_GO);
+	int fake = (flag & BOOTMS_OS_FAKE_GO);
 
 	kernel_entry = images->ep;
 
@@ -84,13 +84,13 @@ int do_bootm_linux(int flag, struct bootm_info *bmi)
 	struct bootm_headers *images = bmi->images;
 
 	/* No need for those on ARC */
-	if ((flag & BOOTM_STATE_OS_BD_T) || (flag & BOOTM_STATE_OS_CMDLINE))
+	if ((flag & BOOTMS_OS_BD_T) || (flag & BOOTMS_OS_CMDLINE))
 		return -1;
 
-	if (flag & BOOTM_STATE_OS_PREP)
+	if (flag & BOOTMS_OS_PREP)
 		return boot_prep_linux(images);
 
-	if (flag & (BOOTM_STATE_OS_GO | BOOTM_STATE_OS_FAKE_GO)) {
+	if (flag & (BOOTMS_OS_GO | BOOTMS_OS_FAKE_GO)) {
 		boot_jump_linux(images, flag);
 		return 0;
 	}

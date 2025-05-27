@@ -68,10 +68,10 @@ int do_bootm_linux(int flag, struct bootm_info *bmi)
 {
 	struct bootm_headers *images = bmi->images;
 
-	if (flag & BOOTM_STATE_OS_PREP)
+	if (flag & BOOTMS_OS_PREP)
 		return boot_prep_linux(images);
 
-	if (flag & (BOOTM_STATE_OS_GO | BOOTM_STATE_OS_FAKE_GO)) {
+	if (flag & (BOOTMS_OS_GO | BOOTMS_OS_FAKE_GO)) {
 		bootstage_mark(BOOTSTAGE_ID_RUN_OS);
 		printf("## Transferring control to Linux (at address %08lx)...\n",
 		       images->ep);

@@ -253,7 +253,7 @@ static int bootm_start(void)
 	images.verify = env_get_yesno("verify");
 
 	bootstage_mark_name(BOOTSTAGE_ID_BOOTM_START, "bootm_start");
-	images.state = BOOTM_STATE_START;
+	images.state = BOOTMS_START;
 
 	return 0;
 }
@@ -760,7 +760,7 @@ static int bootm_load_os(struct bootm_info *bmi, int boot_progress)
 			return BOOTM_ERR_RESET;
 		}
 
-		/* Handle BOOTM_STATE_LOADOS */
+		/* Handle BOOTMS_LOADOS */
 		if (relocated_addr != load) {
 			printf("Moving Image from 0x%lx to 0x%lx, end=0x%lx\n",
 			       load, relocated_addr,
@@ -1052,16 +1052,16 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 	 * Work through the states and see how far we get. We stop on
 	 * any error.
 	 */
-	if (states & BOOTM_STATE_START)
+	if (states & BOOTMS_START)
 		ret = bootm_start();
 
-	if (!ret && (states & BOOTM_STATE_PRE_LOAD))
+	if (!ret && (states & BOOTMS_PRE_LOAD))
 		ret = bootm_pre_load(bmi->addr_img);
 
-	if (!ret && (states & BOOTM_STATE_FINDOS))
+	if (!ret && (states & BOOTMS_FINDOS))
 		ret = bootm_find_os(bmi->cmd_name, bmi->addr_img);
 
-	if (!ret && (states & BOOTM_STATE_FINDOTHER)) {
+	if (!ret && (states & BOOTMS_FINDOTHER)) {
 		ulong img_addr;
 
 		img_addr = bmi->addr_img ? hextoul(bmi->addr_img, NULL)
@@ -1071,11 +1071,11 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 	}
 
 	if (IS_ENABLED(CONFIG_MEASURED_BOOT) && !ret &&
-	    (states & BOOTM_STATE_MEASURE))
+	    (states & BOOTMS_MEASURE))
 		bootm_measure(images);
 
 	/* Load the OS */
-	if (!ret && (states & BOOTM_STATE_LOADOS)) {
+	if (!ret && (states & BOOTMS_LOADOS)) {
 		iflag = bootm_disable_interrupts();
 		board_fixup_os(&images->os);
 		ret = bootm_load_os(bmi, 0);
@@ -1087,7 +1087,7 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 
 	/* Relocate the ramdisk */
 #ifdef CONFIG_SYS_BOOT_RAMDISK_HIGH
-	if (!ret && (states & BOOTM_STATE_RAMDISK)) {
+	if (!ret && (states & BOOTMS_RAMDISK)) {
 		ulong rd_len = images->rd_end - images->rd_start;
 
 		ret = boot_ramdisk_high(images->rd_start, rd_len,
@@ -1100,7 +1100,7 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 	}
 #endif
 #if CONFIG_IS_ENABLED(OF_LIBFDT) && CONFIG_IS_ENABLED(LMB)
-	if (!ret && (states & BOOTM_STATE_FDT)) {
+	if (!ret && (states & BOOTMS_FDT)) {
 		boot_fdt_add_mem_rsv_regions(images->ft_addr);
 		ret = boot_relocate_fdt(&images->ft_addr, &images->ft_len);
 	}
@@ -1110,9 +1110,9 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 	if (ret)
 		return ret;
 	boot_fn = bootm_os_get_boot_func(images->os.os);
-	need_boot_fn = states & (BOOTM_STATE_OS_CMDLINE |
-			BOOTM_STATE_OS_BD_T | BOOTM_STATE_OS_PREP |
-			BOOTM_STATE_OS_FAKE_GO | BOOTM_STATE_OS_GO);
+	need_boot_fn = states & (BOOTMS_OS_CMDLINE |
+			BOOTMS_OS_BD_T | BOOTMS_OS_PREP |
+			BOOTMS_OS_FAKE_GO | BOOTMS_OS_GO);
 	if (boot_fn == NULL && need_boot_fn) {
 		if (iflag)
 			enable_interrupts();
@@ -1123,11 +1123,11 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 	}
 
 	/* Call various other states that are not generally used */
-	if (!ret && (states & BOOTM_STATE_OS_CMDLINE))
-		ret = boot_fn(BOOTM_STATE_OS_CMDLINE, bmi);
-	if (!ret && (states & BOOTM_STATE_OS_BD_T))
-		ret = boot_fn(BOOTM_STATE_OS_BD_T, bmi);
-	if (!ret && (states & BOOTM_STATE_OS_PREP)) {
+	if (!ret && (states & BOOTMS_OS_CMDLINE))
+		ret = boot_fn(BOOTMS_OS_CMDLINE, bmi);
+	if (!ret && (states & BOOTMS_OS_BD_T))
+		ret = boot_fn(BOOTMS_OS_BD_T, bmi);
+	if (!ret && (states & BOOTMS_OS_PREP)) {
 		int flags = 0;
 		/* For Linux OS do all substitutions at console processing */
 		if (images->os.os == IH_OS_LINUX)
@@ -1138,15 +1138,15 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 			ret = CMD_RET_FAILURE;
 			goto err;
 		}
-		ret = boot_fn(BOOTM_STATE_OS_PREP, bmi);
+		ret = boot_fn(BOOTMS_OS_PREP, bmi);
 	}
 
 #ifdef CONFIG_TRACE
 	/* Pretend to run the OS, then run a user command */
-	if (!ret && (states & BOOTM_STATE_OS_FAKE_GO)) {
+	if (!ret && (states & BOOTMS_OS_FAKE_GO)) {
 		char *cmd_list = env_get("fakegocmd");
 
-		ret = boot_selected_os(BOOTM_STATE_OS_FAKE_GO, bmi, boot_fn);
+		ret = boot_selected_os(BOOTMS_OS_FAKE_GO, bmi, boot_fn);
 		if (!ret && cmd_list)
 			ret = run_command_list(cmd_list, -1, 0);
 	}
@@ -1159,8 +1159,8 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 	}
 
 	/* Now run the OS! We hope this doesn't return */
-	if (!ret && (states & BOOTM_STATE_OS_GO))
-		ret = boot_selected_os(BOOTM_STATE_OS_GO, bmi, boot_fn);
+	if (!ret && (states & BOOTMS_OS_GO))
+		ret = boot_selected_os(BOOTMS_OS_GO, bmi, boot_fn);
 
 	/* Deal with any fallout */
 err:
@@ -1182,10 +1182,10 @@ int boot_run(struct bootm_info *bmi, const char *cmd, int extra_states)
 	int states;
 
 	bmi->cmd_name = cmd;
-	states = BOOTM_STATE_MEASURE | BOOTM_STATE_OS_PREP |
-		BOOTM_STATE_OS_FAKE_GO | BOOTM_STATE_OS_GO;
+	states = BOOTMS_MEASURE | BOOTMS_OS_PREP |
+		BOOTMS_OS_FAKE_GO | BOOTMS_OS_GO;
 	if (IS_ENABLED(CONFIG_SYS_BOOT_RAMDISK_HIGH))
-		states |= BOOTM_STATE_RAMDISK;
+		states |= BOOTMS_RAMDISK;
 	states |= extra_states;
 
 	log_debug("cmd '%s' states %x addr_img '%s' conf_ramdisk '%s' conf_fdt '%s' images %p\n",
@@ -1197,9 +1197,9 @@ int boot_run(struct bootm_info *bmi, const char *cmd, int extra_states)
 
 int bootm_run(struct bootm_info *bmi)
 {
-	return boot_run(bmi, "bootm", BOOTM_STATE_START | BOOTM_STATE_FINDOS |
-			BOOTM_STATE_PRE_LOAD | BOOTM_STATE_FINDOTHER |
-			BOOTM_STATE_LOADOS);
+	return boot_run(bmi, "bootm", BOOTMS_START | BOOTMS_FINDOS |
+			BOOTMS_PRE_LOAD | BOOTMS_FINDOTHER |
+			BOOTMS_LOADOS);
 }
 
 int bootz_run(struct bootm_info *bmi)
@@ -1208,7 +1208,7 @@ int bootz_run(struct bootm_info *bmi)
 	ulong zi_start, zi_end;
 	int ret;
 
-	ret = bootm_run_states(bmi, BOOTM_STATE_START);
+	ret = bootm_run_states(bmi, BOOTMS_START);
 	if (ret)
 		return ret;
 
@@ -1222,7 +1222,7 @@ int bootz_run(struct bootm_info *bmi)
 	lmb_reserve(images->ep, zi_end - zi_start);
 
 	/*
-	 * Handle the BOOTM_STATE_FINDOTHER state ourselves as we do not
+	 * Handle the BOOTMS_FINDOTHER state ourselves as we do not
 	 * have a header that provide this informaiton.
 	 */
 	if (bootm_find_images(images->ep, bmi->conf_ramdisk, bmi->conf_fdt,
@@ -1230,7 +1230,7 @@ int bootz_run(struct bootm_info *bmi)
 		return -EINVAL;
 
 	/*
-	 * We are doing the BOOTM_STATE_LOADOS state ourselves, so must
+	 * We are doing the BOOTMS_LOADOS state ourselves, so must
 	 * disable interrupts ourselves
 	 */
 	bootm_disable_interrupts();
@@ -1244,9 +1244,9 @@ int booti_run(struct bootm_info *bmi)
 {
 	bmi->ignore_bootm_len = true;
 
-	return boot_run(bmi, "booti", BOOTM_STATE_START | BOOTM_STATE_FINDOS |
-			BOOTM_STATE_PRE_LOAD | BOOTM_STATE_FINDOTHER |
-			BOOTM_STATE_LOADOS);
+	return boot_run(bmi, "booti", BOOTMS_START | BOOTMS_FINDOS |
+			BOOTMS_PRE_LOAD | BOOTMS_FINDOTHER |
+			BOOTMS_LOADOS);
 }
 
 int bootm_boot_start(ulong addr, const char *cmdline)
@@ -1256,14 +1256,14 @@ int bootm_boot_start(ulong addr, const char *cmdline)
 	int states;
 	int ret;
 
-	states = BOOTM_STATE_START | BOOTM_STATE_FINDOS | BOOTM_STATE_PRE_LOAD |
-		BOOTM_STATE_FINDOTHER | BOOTM_STATE_LOADOS |
-		BOOTM_STATE_OS_PREP | BOOTM_STATE_OS_FAKE_GO |
-		BOOTM_STATE_OS_GO;
+	states = BOOTMS_START | BOOTMS_FINDOS | BOOTMS_PRE_LOAD |
+		BOOTMS_FINDOTHER | BOOTMS_LOADOS |
+		BOOTMS_OS_PREP | BOOTMS_OS_FAKE_GO |
+		BOOTMS_OS_GO;
 	if (IS_ENABLED(CONFIG_SYS_BOOT_RAMDISK_HIGH))
-		states |= BOOTM_STATE_RAMDISK;
+		states |= BOOTMS_RAMDISK;
 	if (IS_ENABLED(CONFIG_PPC) || IS_ENABLED(CONFIG_MIPS))
-		states |= BOOTM_STATE_OS_CMDLINE;
+		states |= BOOTMS_OS_CMDLINE;
 	images.state |= states;
 
 	snprintf(addr_str, sizeof(addr_str), "%lx", addr);

@@ -33,7 +33,7 @@ static int booti_start(struct bootm_info *bmi)
 	unsigned long decomp_len;
 	int ctype;
 
-	ret = bootm_run_states(bmi, BOOTM_STATE_START);
+	ret = bootm_run_states(bmi, BOOTMS_START);
 
 	/* Setup Linux kernel Image entry point */
 	if (!bmi->addr_img) {
@@ -76,7 +76,7 @@ static int booti_start(struct bootm_info *bmi)
 	if (ret)
 		return 1;
 
-	/* Handle BOOTM_STATE_LOADOS */
+	/* Handle BOOTMS_LOADOS */
 	if (relocated_addr != ld) {
 		printf("Moving Image from 0x%lx to 0x%lx, end=0x%lx\n", ld,
 		       relocated_addr, relocated_addr + image_size);
@@ -90,7 +90,7 @@ static int booti_start(struct bootm_info *bmi)
 	lmb_reserve(images->ep, le32_to_cpu(image_size));
 
 	/*
-	 * Handle the BOOTM_STATE_FINDOTHER state ourselves as we do not
+	 * Handle the BOOTMS_FINDOTHER state ourselves as we do not
 	 * have a header that provide this informaiton.
 	 */
 	if (bootm_find_images(image_load_addr, bmi->conf_ramdisk, bmi->conf_fdt,
@@ -125,7 +125,7 @@ int do_booti(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 		return 1;
 
 	/*
-	 * We are doing the BOOTM_STATE_LOADOS state ourselves, so must
+	 * We are doing the BOOTMS_LOADOS state ourselves, so must
 	 * disable interrupts ourselves
 	 */
 	bootm_disable_interrupts();
@@ -136,10 +136,10 @@ int do_booti(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	else if (IS_ENABLED(CONFIG_ARM64))
 		images.os.arch = IH_ARCH_ARM64;
 
-	states = BOOTM_STATE_MEASURE | BOOTM_STATE_OS_PREP |
-		BOOTM_STATE_OS_FAKE_GO | BOOTM_STATE_OS_GO;
+	states = BOOTMS_MEASURE | BOOTMS_OS_PREP |
+		BOOTMS_OS_FAKE_GO | BOOTMS_OS_GO;
 	if (IS_ENABLED(CONFIG_SYS_BOOT_RAMDISK_HIGH))
-		states |= BOOTM_STATE_RAMDISK;
+		states |= BOOTMS_RAMDISK;
 
 	ret = bootm_run_states(&bmi, states);
 

@@ -73,7 +73,7 @@ static int do_bootm_netbsd(int flag, struct bootm_info *bmi)
 	ulong kernel_data, kernel_len;
 	char *cmdline;
 
-	if (flag != BOOTM_STATE_OS_GO)
+	if (flag != BOOTMS_OS_GO)
 		return 0;
 
 #if defined(CONFIG_FIT)
@@ -142,7 +142,7 @@ static int do_bootm_rtems(int flag, struct bootm_info *bmi)
 	struct bootm_headers *images = bmi->images;
 	void (*entry_point)(struct bd_info *);
 
-	if (flag != BOOTM_STATE_OS_GO)
+	if (flag != BOOTMS_OS_GO)
 		return 0;
 
 #if defined(CONFIG_FIT)
@@ -175,7 +175,7 @@ static int do_bootm_ose(int flag, struct bootm_info *bmi)
 	struct bootm_headers *images = bmi->images;
 	void (*entry_point)(void);
 
-	if (flag != BOOTM_STATE_OS_GO)
+	if (flag != BOOTMS_OS_GO)
 		return 0;
 
 #if defined(CONFIG_FIT)
@@ -209,7 +209,7 @@ static int do_bootm_plan9(int flag, struct bootm_info *bmi)
 	void (*entry_point)(void);
 	char *s;
 
-	if (flag != BOOTM_STATE_OS_GO)
+	if (flag != BOOTMS_OS_GO)
 		return 0;
 
 #if defined(CONFIG_FIT)
@@ -314,7 +314,7 @@ static int do_bootm_vxworks_legacy(int flag, struct bootm_info *bmi)
 {
 	struct bootm_headers *images = bmi->images;
 
-	if (flag != BOOTM_STATE_OS_GO)
+	if (flag != BOOTMS_OS_GO)
 		return 0;
 
 	do_bootvx_fdt(images);
@@ -345,11 +345,11 @@ int do_bootm_vxworks(int flag, struct bootm_info *bmi)
 	}
 
 	if (std_dtb) {
-		if (flag & BOOTM_STATE_OS_PREP)
+		if (flag & BOOTMS_OS_PREP)
 			printf("   Using standard DTB\n");
 		return do_bootm_linux(flag, bmi);
 	} else {
-		if (flag & BOOTM_STATE_OS_PREP)
+		if (flag & BOOTMS_OS_PREP)
 			printf("   !!! WARNING !!! Using legacy DTB\n");
 		return do_bootm_vxworks_legacy(flag, bmi);
 	}
@@ -364,7 +364,7 @@ static int do_bootm_qnxelf(int flag, struct bootm_info *bmi)
 	char str[16];
 	int dcache;
 
-	if (flag != BOOTM_STATE_OS_GO)
+	if (flag != BOOTMS_OS_GO)
 		return 0;
 
 #if defined(CONFIG_FIT)
@@ -399,7 +399,7 @@ static int do_bootm_elf(int flag, struct bootm_info *bmi)
 {
 	Bootelf_flags flags = { .autostart = 1 };
 
-	if (flag != BOOTM_STATE_OS_GO)
+	if (flag != BOOTMS_OS_GO)
 		return 0;
 
 	bootelf(bmi->images->ep, flags, 0, NULL);
@@ -414,7 +414,7 @@ static int do_bootm_integrity(int flag, struct bootm_info *bmi)
 	struct bootm_headers *images = bmi->images;
 	void (*entry_point)(void);
 
-	if (flag != BOOTM_STATE_OS_GO)
+	if (flag != BOOTMS_OS_GO)
 		return 0;
 
 #if defined(CONFIG_FIT)
@@ -447,7 +447,7 @@ static int do_bootm_openrtos(int flag, struct bootm_info *bmi)
 	struct bootm_headers *images = bmi->images;
 	void (*entry_point)(void);
 
-	if (flag != BOOTM_STATE_OS_GO)
+	if (flag != BOOTMS_OS_GO)
 		return 0;
 
 	entry_point = (void (*)(void))images->ep;
@@ -492,7 +492,7 @@ static int do_bootm_efi(int flag, struct bootm_info *bmi)
 	int ret;
 	void *image_buf;
 
-	if (flag != BOOTM_STATE_OS_GO)
+	if (flag != BOOTMS_OS_GO)
 		return 0;
 
 	/* We expect to return */
@@ -578,7 +578,7 @@ int boot_selected_os(int state, struct bootm_info *bmi, boot_os_fn *boot_fn)
 	/* Stand-alone may return when 'autostart' is 'no' */
 	if (bmi->images->os.type == IH_TYPE_STANDALONE ||
 	    IS_ENABLED(CONFIG_SANDBOX) ||
-	    state == BOOTM_STATE_OS_FAKE_GO) /* We expect to return */
+	    state == BOOTMS_OS_FAKE_GO) /* We expect to return */
 		return 0;
 	bootstage_error(BOOTSTAGE_ID_BOOT_OS_RETURNED);
 	debug("\n## Control returned to monitor - resetting...\n");

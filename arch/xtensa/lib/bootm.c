@@ -141,7 +141,7 @@ int do_bootm_linux(int flag, struct bootm_info *bmi)
 	ulong initrd_start, initrd_end;
 	char *commandline = env_get("bootargs");
 
-	if (!(flag & (BOOTM_STATE_OS_GO | BOOTM_STATE_OS_FAKE_GO)))
+	if (!(flag & (BOOTMS_OS_GO | BOOTMS_OS_FAKE_GO)))
 		return 0;
 
 	show_boot_progress(15);
@@ -180,7 +180,7 @@ int do_bootm_linux(int flag, struct bootm_info *bmi)
 
 	flush_dcache_range((unsigned long)params_start, (unsigned long)params);
 
-	if (flag & BOOTM_STATE_OS_FAKE_GO)
+	if (flag & BOOTMS_OS_FAKE_GO)
 		return 0;
 
 	/*

@@ -295,7 +295,7 @@ static void boot_jump_linux(struct bootm_headers *images, int flag)
 #ifdef CONFIG_ARM64
 	void (*kernel_entry)(void *fdt_addr, void *res0, void *res1,
 			void *res2);
-	int fake = (flag & BOOTM_STATE_OS_FAKE_GO);
+	int fake = (flag & BOOTMS_OS_FAKE_GO);
 
 	kernel_entry = (void (*)(void *fdt_addr, void *res0, void *res1,
 				void *res2))images->ep;
@@ -335,7 +335,7 @@ static void boot_jump_linux(struct bootm_headers *images, int flag)
 	char *s;
 	void (*kernel_entry)(int zero, int arch, uint params);
 	unsigned long r2;
-	int fake = (flag & BOOTM_STATE_OS_FAKE_GO);
+	int fake = (flag & BOOTMS_OS_FAKE_GO);
 
 	kernel_entry = (void (*)(int, int, uint))images->ep;
 #ifdef CONFIG_CPU_V7M
@@ -385,15 +385,15 @@ int do_bootm_linux(int flag, struct bootm_info *bmi)
 	struct bootm_headers *images = bmi->images;
 
 	/* No need for those on ARM */
-	if (flag & BOOTM_STATE_OS_BD_T || flag & BOOTM_STATE_OS_CMDLINE)
+	if (flag & BOOTMS_OS_BD_T || flag & BOOTMS_OS_CMDLINE)
 		return -1;
 
-	if (flag & BOOTM_STATE_OS_PREP) {
+	if (flag & BOOTMS_OS_PREP) {
 		boot_prep_linux(images);
 		return 0;
 	}
 
-	if (flag & (BOOTM_STATE_OS_GO | BOOTM_STATE_OS_FAKE_GO)) {
+	if (flag & (BOOTMS_OS_GO | BOOTMS_OS_FAKE_GO)) {
 		boot_jump_linux(images, flag);
 		return 0;
 	}

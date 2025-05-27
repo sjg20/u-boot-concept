@@ -119,7 +119,7 @@ void bootm_init(struct bootm_info *bmi);
  *  - loaded (first part of) image to header load address,
  *  - disabled interrupts.
  *
- * @flag: Flags indicating what to do (BOOTM_STATE_...)
+ * @flag: Flags indicating what to do (BOOTMS_...)
  * @bmi: Bootm information
  * Return: 1 on error. On success the OS boots so this function does
  * not return.
@@ -180,7 +180,7 @@ int bootm_measure(struct bootm_headers *images);
  * bootm_run_states() - Execute selected states of the bootm command.
  *
  * Note that if states contains more than one flag it MUST contain
- * BOOTM_STATE_START, since this handles the addr_fit, conf_ramdisk and conf_fit
+ * BOOTMS_START, since this handles the addr_fit, conf_ramdisk and conf_fit
  * members of @bmi
  *
  * Also note that aside from boot_os_fn functions and bootm_load_os, no other
@@ -188,9 +188,9 @@ int bootm_measure(struct bootm_headers *images);
  * value, without special handling.
  *
  * @bmi: bootm information
- * @states	Mask containing states to run (BOOTM_STATE_...)
+ * @states	Mask containing states to run (BOOTMS_...)
  * Return: 0 if ok, something else on error. Some errors will cause this
- *	function to perform a reboot! If states contains BOOTM_STATE_OS_GO
+ *	function to perform a reboot! If states contains BOOTMS_OS_GO
  *	then the intent is to boot an OS, so this function will not return
  *	unless the image type is standalone.
  */
