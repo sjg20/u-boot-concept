@@ -204,7 +204,7 @@ static int boot_reloc_fdt(struct bootm_headers *images)
 	 * In case of legacy uImage's, relocation of FDT is already done
 	 * by bootm_run_states() and should not repeated in 'bootm prep'.
 	 */
-	if (images->state & BOOTM_STATE_FDT) {
+	if (images->state & BOOTMS_FDT) {
 		debug("## FDT already relocated\n");
 		return 0;
 	}
@@ -290,7 +290,7 @@ int do_bootm_linux(int flag, struct bootm_info *bmi)
 	struct bootm_headers *images = bmi->images;
 
 	/* No need for those on MIPS */
-	if (flag & BOOTM_STATE_OS_BD_T)
+	if (flag & BOOTMS_OS_BD_T)
 		return -1;
 
 	/*
@@ -298,15 +298,15 @@ int do_bootm_linux(int flag, struct bootm_info *bmi)
 	 * done after relocation of ramdisk to always pass correct values
 	 * for rd_start and rd_size to Linux kernel.
 	 */
-	if (flag & BOOTM_STATE_OS_CMDLINE)
+	if (flag & BOOTMS_OS_CMDLINE)
 		return 0;
 
-	if (flag & BOOTM_STATE_OS_PREP) {
+	if (flag & BOOTMS_OS_PREP) {
 		boot_prep_linux(images);
 		return 0;
 	}
 
-	if (flag & (BOOTM_STATE_OS_GO | BOOTM_STATE_OS_FAKE_GO)) {
+	if (flag & (BOOTMS_OS_GO | BOOTMS_OS_FAKE_GO)) {
 		boot_jump_linux(images);
 		return 0;
 	}

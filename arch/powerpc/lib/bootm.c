@@ -185,17 +185,17 @@ int do_bootm_linux(int flag, struct bootm_info *bmi)
 	struct bootm_headers *images = bmi->images;
 	int	ret;
 
-	if (flag & BOOTM_STATE_OS_CMDLINE) {
+	if (flag & BOOTMS_OS_CMDLINE) {
 		boot_cmdline_linux(images);
 		return 0;
 	}
 
-	if (flag & BOOTM_STATE_OS_BD_T) {
+	if (flag & BOOTMS_OS_BD_T) {
 		boot_bd_t_linux(images);
 		return 0;
 	}
 
-	if (flag & BOOTM_STATE_OS_PREP) {
+	if (flag & BOOTMS_OS_PREP) {
 		boot_prep_linux(images);
 		return 0;
 	}

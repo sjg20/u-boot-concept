@@ -35,10 +35,10 @@ int do_bootm_linux(int flag, struct bootm_info *bmi)
 	/*
 	 * allow the PREP bootm subcommand, it is required for bootm to work
 	 */
-	if (flag & BOOTM_STATE_OS_PREP)
+	if (flag & BOOTMS_OS_PREP)
 		return 0;
 
-	if ((flag != 0) && (flag != BOOTM_STATE_OS_GO))
+	if (flag && flag != BOOTMS_OS_GO)
 		return 1;
 
 	/* allocate space for kernel copy of board info */
