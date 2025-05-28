@@ -61,6 +61,8 @@ def parse_args():
                         help='Show executed commands')
     parser.add_argument('-r', '--run', action='store_true',
                         help='Run QEMU with the built/specified image')
+    parser.add_argument('-x', '--xpl', action='store_true',
+                        help='Use xPL image rather than U-Boot proper')
     parser.add_argument(
         '-R', '--release', default='24.04.1',
         help='Select OS release version (e.g, 24.04) Default: 24.04.1')
@@ -142,15 +144,22 @@ class BuildQemu:
 
         # arch-specific setup
         if args.arch == 'arm':
-            self.board = 'qemu_arm'
-            default_bios = 'u-boot.bin'
+            if args.xpl:
+                self.board = 'qemu_arm_spl'
+                default_bios = 'image.bin'
+            else:
+                self.board = 'qemu_arm'
+                default_bios = 'u-boot.bin'
             self.qemu = 'qemu-system-arm'
             self.qemu_extra.extend(['-machine', 'virt'])
             if not args.kvm:
                 self.qemu_extra.extend(['-accel', 'tcg'])
             qemu_arch = 'arm'
             if self.bitness == 64:
-                self.board = 'qemu_arm64'
+                if args.xpl:
+                    self.board = 'qemu_arm64_spl'
+                else:
+                    self.board = 'qemu_arm64'
                 self.qemu = 'qemu-system-aarch64'
                 self.qemu_extra.extend(['-cpu', 'cortex-a57'])
                 qemu_arch = 'arm64'
