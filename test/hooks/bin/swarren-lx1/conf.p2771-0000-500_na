@@ -1,0 +1,32 @@
+# Copyright (c) 2015-2018, NVIDIA CORPORATION. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+
+console_dev=/dev/console-p2771-0000
+power_impl=pm342
+flash_impl=recovery_l4t
+recovery_impl=pm342
+flash_l4t="${HOME}/ubtest-l4t-r28.1-p2771-0000"
+flash_l4t_uboot_path=bootloader/t186ref/p2771-0000/500/
+flash_l4t_board=jetson-tx2
+reset_impl=pm342
+nv_board_automation_bin="${HOME}/ubtest-nvidia-board-automation"
+pm342_serial=SRW-1
+board_usb_dev=/dev/usbdev-p2771-0000
+board_usb_port_path=3-2
