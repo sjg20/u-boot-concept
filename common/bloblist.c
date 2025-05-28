@@ -580,14 +580,6 @@ int bloblist_init(void)
 	return 0;
 }
 
-int bloblist_maybe_init(void)
-{
-	if (CONFIG_IS_ENABLED(BLOBLIST) && !(gd->flags & GD_FLG_BLOBLIST_READY))
-		return bloblist_init();
-
-	return 0;
-}
-
 int bloblist_check_reg_conv(ulong rfdt, ulong rzero, ulong rsig, ulong xlist)
 {
 	u64 version = BLOBLIST_REGCONV_VER;
