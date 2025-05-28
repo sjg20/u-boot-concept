@@ -302,6 +302,7 @@ efi_status_t efi_initrd_register(struct efi_device_path *dp_initrd)
 			return ret;
 	}
 
+#ifndef CONFIG_EFI_APP
 	ret = efi_install_multiple_protocol_interfaces(&efi_initrd_handle,
 						       /* initramfs */
 						       &efi_guid_device_path, &dp_lf2_handle,
@@ -309,15 +310,30 @@ efi_status_t efi_initrd_register(struct efi_device_path *dp_initrd)
 						       &efi_guid_load_file2_protocol,
 						       &efi_lf2_protocol,
 						       NULL);
+#else
+	ret = efi_get_priv()->boot->install_multiple_protocol_interfaces(&efi_initrd_handle,
+						       /* initramfs */
+						       &efi_guid_device_path, &dp_lf2_handle,
+						       /* LOAD_FILE2 */
+						       &efi_guid_load_file2_protocol,
+						       &efi_lf2_protocol,
+						       NULL);
+#endif						       
 	if (ret != EFI_SUCCESS) {
 		log_err("installing EFI_LOAD_FILE2_PROTOCOL failed\n");
 		return ret;
 	}
 
+#ifndef CONFIG_EFI_APP
 	ret = efi_create_event(EVT_NOTIFY_SIGNAL, TPL_CALLBACK,
 			       efi_initrd_return_notify, NULL,
 			       &efi_guid_event_group_return_to_efibootmgr,
 			       &event);
+#else
+	ret = efi_get_priv()->boot->create_event(EVT_NOTIFY_SIGNAL, TPL_CALLBACK,
+			       efi_initrd_return_notify, NULL,
+			       &event);
+#endif			       
 	if (ret != EFI_SUCCESS)
 		log_err("Creating event failed\n");
 

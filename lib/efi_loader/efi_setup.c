@@ -199,7 +199,7 @@ int efi_init_early(void)
 	ret = efi_root_node_register();
 	if (ret != EFI_SUCCESS)
 		goto out;
-
+#ifndef CONFIG_EFI_APP
 	ret = efi_console_register();
 	if (ret != EFI_SUCCESS)
 		goto out;
@@ -208,7 +208,7 @@ int efi_init_early(void)
 	ret = efi_driver_init();
 	if (ret != EFI_SUCCESS)
 		goto out;
-
+#endif
 	return 0;
 out:
 	/* never re-init UEFI subsystem */
@@ -240,7 +240,7 @@ static efi_status_t efi_start_obj_list(void)
 efi_status_t efi_init_obj_list(void)
 {
 	efi_status_t ret = EFI_SUCCESS;
-
+#ifndef CONFIG_EFI_APP
 	/* Initialize only once, but start every time if correctly initialized*/
 	if (efi_obj_list_initialized == OBJ_LIST_INITIALIZED)
 		return efi_start_obj_list();
@@ -358,10 +358,11 @@ efi_status_t efi_init_obj_list(void)
 		if (ret != EFI_SUCCESS)
 			goto out;
 	}
+#endif	
 	ret = efi_watchdog_register();
 	if (ret != EFI_SUCCESS)
 		goto out;
-
+#ifdef CONFIG_EFI_APP
 	ret = efi_init_capsule();
 	if (ret != EFI_SUCCESS)
 		goto out;
@@ -379,6 +380,7 @@ efi_status_t efi_init_obj_list(void)
 		goto out;
 
 	ret = efi_start_obj_list();
+#endif	
 out:
 	efi_obj_list_initialized = ret;
 	return ret;

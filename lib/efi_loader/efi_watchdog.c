@@ -47,11 +47,20 @@ efi_status_t efi_set_watchdog(unsigned long timeout)
 
 	if (timeout)
 		/* Reset watchdog */
+#ifndef CONFIG_EFI_APP		
 		r = efi_set_timer(watchdog_timer_event, EFI_TIMER_RELATIVE,
 				  EFI_SECONDS_TO_100NS * timeout);
+#else
+		r = efi_get_priv()->boot->set_timer(watchdog_timer_event, EFI_TIMER_RELATIVE, 
+						    EFI_SECONDS_TO_100NS * timeout);
+#endif				  
 	else
 		/* Deactivate watchdog */
+#ifndef CONFIG_EFI_APP		
 		r = efi_set_timer(watchdog_timer_event, EFI_TIMER_STOP, 0);
+#else
+		r = efi_get_priv()->boot->set_timer(watchdog_timer_event, EFI_TIMER_STOP, 0);
+#endif		
 	return r;
 }
 
@@ -69,9 +78,14 @@ efi_status_t efi_watchdog_register(void)
 	/*
 	 * Create a timer event.
 	 */
+#ifndef CONFIG_EFI_APP
 	r = efi_create_event(EVT_TIMER | EVT_NOTIFY_SIGNAL, TPL_CALLBACK,
 			     efi_watchdog_timer_notify, NULL, NULL,
 			     &watchdog_timer_event);
+#else
+	r = efi_get_priv()->boot->create_event(EVT_TIMER | EVT_NOTIFY_SIGNAL, TPL_CALLBACK,
+			     efi_watchdog_timer_notify, NULL, &watchdog_timer_event);
+#endif			     
 	if (r != EFI_SUCCESS) {
 		printf("ERROR: Failed to register watchdog event\n");
 		return r;

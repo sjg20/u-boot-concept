@@ -717,6 +717,7 @@ static __efi_runtime void efi_relocate_runtime_table(ulong offset)
 /* Relocate EFI runtime to uboot_reloc_base = offset */
 void efi_runtime_relocate(ulong offset, struct efi_mem_desc *map)
 {
+#ifndef CONFIG_EFI_APP
 #ifdef IS_RELA
 	struct elf_rela *rel = (void *)__efi_runtime_rel_start;
 #else
@@ -792,6 +793,7 @@ void efi_runtime_relocate(ulong offset, struct efi_mem_desc *map)
 	 */
 	if (!CONFIG_IS_ENABLED(X86))
 		invalidate_icache_all();
+#endif
 }
 
 /**

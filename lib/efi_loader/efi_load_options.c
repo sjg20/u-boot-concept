@@ -26,14 +26,22 @@ efi_status_t efi_set_load_options(efi_handle_t handle,
 				  void *load_options)
 {
 	struct efi_loaded_image *loaded_image_info;
-	struct efi_handler *handler;
 	efi_status_t ret;
 
+#ifndef CONFIG_EFI_APP
+	struct efi_handler *handler;
 	ret = efi_search_protocol(handle, &efi_guid_loaded_image, &handler);
+#else	
+	ret = efi_get_priv()->boot->open_protocol(handle, &efi_guid_loaded_image, (void**)&loaded_image_info, 
+						  efi_root, NULL, EFI_OPEN_PROTOCOL_GET_PROTOCOL);
+#endif	
+	
 	if (ret != EFI_SUCCESS)
 		return EFI_INVALID_PARAMETER;
 
+#ifndef CONFIG_EFI_APP
 	loaded_image_info = handler->protocol_interface;
+#endif
 	loaded_image_info->load_options = load_options;
 	loaded_image_info->load_options_size = load_options_size;
 

@@ -30,6 +30,7 @@ struct efi_root_dp {
  */
 efi_status_t efi_root_node_register(void)
 {
+#ifndef CONFIG_EFI_APP
 	efi_status_t ret;
 	struct efi_root_dp *dp;
 
@@ -87,4 +88,8 @@ efi_status_t efi_root_node_register(void)
 		 NULL);
 	efi_root->type = EFI_OBJECT_TYPE_U_BOOT_FIRMWARE;
 	return ret;
+#else
+	efi_root = efi_get_priv()->parent_image;
+	return EFI_SUCCESS;
+#endif
 }

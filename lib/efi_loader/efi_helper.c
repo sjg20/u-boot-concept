@@ -553,7 +553,11 @@ efi_status_t efi_install_initrd(void *initrd, size_t initd_sz)
 
 	ret = efi_initrd_register(dp_initrd);
 	if (ret != EFI_SUCCESS)
+#ifndef CONFIG_EFI_APP
 		efi_free_pool(dp_initrd);
+#else
+		efi_get_priv()->boot->free_pool(dp_initrd);
+#endif
 
 	return ret;
 }
@@ -595,7 +599,11 @@ efi_status_t do_bootefi_exec(efi_handle_t handle, void *load_options)
 	}
 
 	/* Call our payload! */
+#ifndef CONFIG_EFI_APP
 	ret = EFI_CALL(efi_start_image(handle, &exit_data_size, &exit_data));
+#else
+	ret = efi_get_priv()->boot->start_image(handle, &exit_data_size, &exit_data);
+#endif
 	if (ret != EFI_SUCCESS) {
 		log_err("## Application failed, r = %lu\n",
 			ret & ~EFI_ERROR_MASK);

@@ -180,8 +180,14 @@ static efi_status_t efi_run_image(void *source_buffer, efi_uintn_t source_size,
 
 	log_info("Booting %pD\n", msg_path);
 
+#ifndef CONFIG_EFI_APP
 	ret = EFI_CALL(efi_load_image(false, efi_root, file_path, source_buffer,
 				      source_size, &handle));
+#else
+	ret = efi_get_priv()->boot->load_image(false, efi_root, file_path, 
+					       source_buffer, source_size, &handle);
+#endif
+		      
 	if (ret != EFI_SUCCESS) {
 		log_err("Loading image failed\n");
 		goto out;
@@ -228,12 +234,12 @@ static efi_status_t efi_binary_run_dp(void *image, size_t size, void *fdt,
 		log_err("Error: Cannot initialize UEFI sub-system, r = %lu\n",
 			ret & ~EFI_ERROR_MASK);
 		return -1;
-	}
-
+	}	
+#ifndef CONFIG_EFI_APP
 	ret = efi_install_fdt(fdt);
 	if (ret != EFI_SUCCESS)
 		return ret;
-
+#endif
 	ret = efi_install_initrd(initrd, initrd_sz);
 	if (ret != EFI_SUCCESS)
 		return ret;
