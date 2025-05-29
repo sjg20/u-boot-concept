@@ -417,6 +417,18 @@ qemu_arm_sbsa test.py:
     TEST_PY_TEST_SPEC: "not sleep"
   <<: *buildman_and_testpy_dfn
 
+qemu_arm spl_test.py:
+  variables:
+    TEST_PY_BD: "qemu_arm_spl"
+    TEST_PY_TEST_SPEC: "test_passage"
+  <<: *buildman_and_testpy_dfn
+
+qemu_arm64 spl_test.py:
+  variables:
+    TEST_PY_BD: "qemu_arm64_spl"
+    TEST_PY_TEST_SPEC: "test_passage"
+  <<: *buildman_and_testpy_dfn
+
 qemu_m68k test.py:
   variables:
     TEST_PY_BD: "M5208EVBE"

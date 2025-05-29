@@ -5,5 +5,15 @@ F:	board/emulation/qemu-arm/
 F:	board/emulation/common/
 F:	include/configs/qemu-arm.h
 F:	include/configs/qemu-sbsa.h
-F:	configs/qemu_arm*
+F:	configs/qemu_arm_defconfig
+F:	configs/qemu_arm64_acpi_defconfig
+F:	configs/qemu_arm64_defconfig
 F:	configs/qemu-arm-sbsa_defconfig
+
+QEMU ARM 'VIRT' BOARD SPL
+M:	Tuomas Tynkkynen <tuomas.tynkkynen@iki.fi>
+S:	Maintained
+F:	board/emulation/qemu-arm/
+F:	board/emulation/common/
+F:	configs/qemu_arm_spl_defconfig
+F:	configs/qemu_arm64_spl_defconfig

@@ -667,11 +667,14 @@ static int reloc_bootstage(void)
 static int reloc_bloblist(void)
 {
 #ifdef CONFIG_BLOBLIST
-	/*
-	 * Relocate only if we are supposed to send it
-	 */
-	if ((gd->flags & GD_FLG_SKIP_RELOC) &&
-	    CONFIG_BLOBLIST_SIZE == CONFIG_BLOBLIST_SIZE_RELOC) {
+	int size = bloblist_get_size();
+	int new_size = CONFIG_BLOBLIST_SIZE_RELOC;
+
+	if (!new_size)
+		new_size = size;
+
+	/* Relocate only if we are supposed to send it */
+	if ((gd->flags & GD_FLG_SKIP_RELOC) && size == new_size) {
 		debug("Not relocating bloblist\n");
 		return 0;
 	}
@@ -861,7 +864,9 @@ static const init_fnc_t init_sequence_f[] = {
 	log_init,
 	initf_bootstage,	/* uses its own timer, so does not need DM */
 	event_init,
-	bloblist_maybe_init,
+#ifdef CONFIG_BLOBLIST
+	bloblist_init,
+#endif
 	setup_spl_handoff,
 #if defined(CONFIG_CONSOLE_RECORD_INIT_F)
 	console_record_init,

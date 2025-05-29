@@ -17,6 +17,7 @@
 #include <command.h>
 #include <cpu_func.h>
 #include <irq_func.h>
+#include <passage.h>
 #include <asm/system.h>
 #include <asm/cache.h>
 #include <asm/armv7.h>
@@ -86,4 +87,21 @@ int cleanup_before_linux(void)
 void allow_unaligned(void)
 {
 	v7_arch_cp15_allow_unaligned();
+}
+
+void __noreturn arch_passage_entry(ulong entry_addr, ulong bloblist, ulong fdt)
+{
+	typedef void __noreturn (*passage_entry_t)(ulong zero1, ulong mach,
+						   ulong fdt, ulong bloblist);
+	passage_entry_t entry = (passage_entry_t)entry_addr;
+
+	/*
+	 * Register   Contents
+	 * r0         0
+	 * r1         010fb10b (indicates standard passage v1)
+	 * r2         Address of devicetree
+	 * r3         Address of bloblist
+	 * lr         Return address
+	 */
+	entry(0, passage_mach_version(), fdt, bloblist);
 }
