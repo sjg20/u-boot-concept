@@ -13,6 +13,7 @@ Synopsis
 ::
 
     bootefi <image_addr>[:<image_size>] [<fdt_addr>]
+    bootefi <image_addr>[:<image_size>] fit_addr[#<conf>[#extra-conf]]
     bootefi bootmgr [<fdt_addr>]
     bootefi hello [<fdt_addr>]
     bootefi selftest [<fdt_addr>]
@@ -59,6 +60,11 @@ fdt_addr
     environment variable $fdt_addr is used as first fallback, the address of
     U-Boot's internal device-tree $fdtcontroladdr as second fallback.
     When using ACPI no device-tree shall be specified.
+
+fit_addr
+    Address of a :doc:`../fit/index` and optional configuration specifiers for
+    the devicetree to use. The devicetree is loaded from the selected (or
+    default) configuration.
 
 image_size
     Size of the UEFI binary file. This argument is only needed if *image_addr*
