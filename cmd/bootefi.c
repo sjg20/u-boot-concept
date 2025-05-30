@@ -120,6 +120,62 @@ static int do_efi_selftest(void)
 }
 
 /**
+ * locate_fdt() - Figure out the FDT to use, either from an arg or FIT
+ *
+ * @arg: Argument to process
+ * @fdtp: Returns devicetree located, on success
+ * Return: 0 on success, -ve on error
+ *
+ *
+ * The argument is in one of two formats:
+ *
+ *	fit_addr
+ *	fit_addr[#<conf>[#extra-conf]]
+ *
+ * In the first case, a pointer to the given address is simply returned. In the
+ * second case, the FIT is scanned to select the correct FDT, which is then
+ * returned
+ */
+static int locate_fdt(const char *arg, void **fdtp)
+{
+	ulong addr;
+	void *buf;
+	char *ep;
+
+	addr = hextoul(arg, &ep);
+	buf = map_sysmem(addr, 0);
+	if (CONFIG_IS_ENABLED(FIT)) {
+
+		/* if it's not a valid FIT, bail out */
+		if (fit_check_format(buf, IMAGE_SIZE_INVAL)) {
+			/*
+			 * complain if it looks like the user is trying to use
+			 * a FIT
+			 */
+			if (*ep == '#')
+				return -EINVAL;
+			*fdtp = buf;
+		} else {
+			struct bootm_headers images = {};
+			ulong size;
+			char *fdt;
+			int ret;
+
+			/* read the devicetree from the FIT */
+			ret = boot_get_fdt(NULL, arg, IH_ARCH_DEFAULT, &images,
+					   &fdt, &size);
+			if (ret)
+				return ret;
+			*fdtp = fdt;
+		}
+	} else {
+		*fdtp = buf;
+	}
+
+	return 0;
+}
+
+/**
  * do_bootefi() - execute `bootefi` command
  *
  * @cmdtp:	table entry describing command
@@ -142,10 +198,13 @@ static int do_bootefi(struct cmd_tbl *cmdtp, int flag, int argc,
 		return CMD_RET_USAGE;
 
 	if (argc > 2) {
-		uintptr_t fdt_addr;
+		int eret;
 
-		fdt_addr = hextoul(argv[2], NULL);
-		fdt = map_sysmem(fdt_addr, 0);
+		eret = locate_fdt(argv[2], &fdt);
+		if (eret) {
+			log_err("Cannot obtain devicetree (err %dE)\n", eret);
+			return CMD_RET_FAILURE;
+		}
 	} else {
 		fdt = EFI_FDT_USE_INTERNAL;
 	}
