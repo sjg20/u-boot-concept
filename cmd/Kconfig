@@ -369,7 +369,7 @@ config CMD_BOOTI
 
 config BOOTM_LINUX
 	bool "Support booting Linux OS images"
-	depends on CMD_BOOTM || CMD_BOOTZ || CMD_BOOTI
+	depends on BOOT
 	default y
 	help
 	  Support booting the Linux kernel directly via a command such as bootm
