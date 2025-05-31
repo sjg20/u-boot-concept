@@ -10,6 +10,7 @@
 #define LOG_CATEGORY UCLASS_HOST
 
 #include <blk.h>
+#include <bootdev.h>
 #include <dm.h>
 #include <malloc.h>
 #include <part.h>
@@ -100,6 +101,31 @@ int host_attach_file(struct udevice *dev, const char *filename)
 
 	return ops->attach_file(dev, filename);
 }
+
+static int host_bootdev_bind(struct udevice *dev)
+{
+	struct bootdev_uc_plat *ucp = dev_get_uclass_plat(dev);
+
+	ucp->prio = BOOTDEVP_2_INTERNAL_FAST;
+
+	return 0;
+}
+
+static struct bootdev_ops host_bootdev_ops = {
+};
+
+static const struct udevice_id host_bootdev_ids[] = {
+	{ .compatible = "u-boot,bootdev-host" },
+	{ }
+};
+
+U_BOOT_DRIVER(host_bootdev) = {
+	.name		= "host_bootdev",
+	.id		= UCLASS_BOOTDEV,
+	.ops		= &host_bootdev_ops,
+	.bind		= host_bootdev_bind,
+	.of_match	= host_bootdev_ids,
+};
 
 int host_create_attach_file(const char *label, const char *filename,
 			    bool removable, unsigned long blksz,
