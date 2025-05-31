@@ -277,6 +277,7 @@ config CMD_BOOTD
 
 config CMD_BOOTM
 	bool "bootm"
+	depends on BOOT
 	default y
 	help
 	  Boot an application image from the memory.
