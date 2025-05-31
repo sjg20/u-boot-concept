@@ -98,7 +98,117 @@ Command-line Options
 Various options are available, mostly for test purposes. Use -h to see
 available options. Some of these are described below:
 
+--autoboot_keyed
+  Use this to enable keyed autoboot. Sandbox disables this function by default
+  even if CONFIG_AUTOBOOT_KEYED is enabled, since it interfers with tests and
+  normal usage
+
+-b. boot
+  The distro boot feature doesn't run by default on sandbox, since it normally
+  not vert useful. For the distro_bootcmds to succeed, quite a bit of setup is
+  required (e.g. network configured or host image bound), so running them
+  by default isn't that useful. Note that standard boot has surplanted
+  distro boot in any case.
+
+-c, --command [<cmd>;]<cmd>
+  To execute commands directly, use the -c option. You can specify a single
+  command, or multiple commands separated by a semicolon, as is normal in
+  U-Boot. Be careful with quoting as the shell will normally process and
+  swallow quotes. When -c is used, U-Boot exits after the command is complete,
+  but you can force it to go to interactive mode instead with -i.
+
+-d, --fdt <device_tree>
+  A device tree binary file can be provided with -d. If you edit the source
+  (it is stored at arch/sandbox/dts/sandbox.dts) you must rebuild U-Boot to
+  recreate the binary file.
+
+-D, --default_fdt
+  To use the default device tree, use -D.
+
+-f, --soft_fail
+  Continue running a unit test even after failure. This can be useful during
+  development, when a unit tests contains a number of mostly independent
+  asserts.
+
+-F, --noflat
+  Normally sandbox runs driver model tests first with livetree (if enabled),
+  then with flattree. This is useful because the devicetree code used in each
+  case is different. This flag disables the flattree run, so that the tests only
+  run once. This is useful when iterating on a test where the test result is
+  the same in both cases.
+
+-h
+  Show help about options
+
+-i, --interative
+  Go to interactive mode after executing the commands specified by -c.
+
+-j, --jump <filename>
+  Indicates that sandbox is being executed from another U-Boot executable, which
+  has been written to a temporary file on disk. This can happen when U-Boot is
+  packed into a firmware file and is extracted and run from SPL. The SPL phase
+  writes an elf file containing the extracted portion, then execs it. This
+  argument provides the filename, so it can be removed before U-Boot exits.
+
+-k, --double_lcd
+  Doubles the size of the emulated LCD, so that it appears bigger. This can be
+  useful on large or high-resolution displays.
+
+-l, --show_lcd
+  Show the LCD emulation window.
+
+-L, --log_evel <level>
+  Sets the default logging level. This has no effect `CONFIG_LOG` is enabled.
+  The levels are in `enum log_level_t` in `log.h`. For example `-L 7` will show
+  all log statements at LOGL_DEBUG and below. The higher the number, the more
+  info is shown.
+
+-m, --memory <filename>
+  Sets the location of the file which holds sandbox's emulated RAM. This can be
+  read and written across phases, so that sandbox behaves like a normal board.
+
+-n, --ignore_missing
+  Ignore missing state on read, used with `-s`. This causes sandbox to continue
+  execution even if there is no state file. If `-w` is used then the state will
+  be written on exit.
+
+-N, --native
+  Use native mode when selecting EFI filenames and bootp identifiers. Normally
+  sandbox uses its own values, but this option forces it to use the underlying
+  architecture's values. For example, the default bootfile is normally
+  'BOOTSBOX.EFI' on all platforms. Using -N on a 64-bit x86 platform would
+  change the default bootfile to 'BOOTX64.EFI'
+
+-p, --program <filename>
+  Provides the program name that was originally executed to start sandbox.
+  Where the program contains multiple phases packed into a single image (e.g.
+  TPL, VPL, SPL, U-Boot), this provides the name of the original program, so
+  that each phase can locate the correct executable for the next phase. Since
+  each program is extracted from the original image and executed (see -j), this
+  is the only way that subsequent phases can locate the full image.
+
+-r, --read
+  Read driver state from a dtb file. In conjunction with `-w`, this allows
+  sandbox to save and restore emulated hardware state (such as a TPM) across
+  each U-Boot phase.
+
+--rm_memory
+  Remove the memory file when starting up. This only has any effect if `-m` is
+  used.
+
+-s, --state <filename>
+  Provides the filename of the state file. This is in devicetree format, with a
+  node for each device which has written its state on exit. The file can be used
+  to persist state across multiple test runs, or it can be used within a single
+  run consisting of multiple U-Boot phases.
+
+-S, --signals
+  Handle signals in sandbox itself, rather than letting the controlling process
+  handle them. Sandbox will then catch SIGILL, SIGBUS and SIGSEGV and report
+  these errors itself.
+
 -t, --terminal <arg>
+
   The terminal is normally in what is called 'raw-with-sigs' mode. This means
   that you can use arrow keys for command editing and history, but if you
   press Ctrl-C, U-Boot will exit instead of handling this as a keypress.
@@ -106,29 +216,26 @@ available options. Some of these are described below:
   (where the terminal is in cooked mode and cursor keys will not work, Ctrl-C
   will exit).
 
--l
-  Show the LCD emulation window.
-
--d <device_tree>
-  A device tree binary file can be provided with -d. If you edit the source
-  (it is stored at arch/sandbox/dts/sandbox.dts) you must rebuild U-Boot to
-  recreate the binary file.
-
--D
-  To use the default device tree, use -D.
-
--T
+-T, --test_fdt
   To use the test device tree, use -T.
 
--c [<cmd>;]<cmd>
-  To execute commands directly, use the -c option. You can specify a single
-  command, or multiple commands separated by a semicolon, as is normal in
-  U-Boot. Be careful with quoting as the shell will normally process and
-  swallow quotes. When -c is used, U-Boot exits after the command is complete,
-  but you can force it to go to interactive mode instead with -i.
+--upl
+  Enable support for Universal Payload Specification. This adjusts SPL to set
+  up a SPL handof and pass it to U-Boot proper. This requires `-m` to be used,
+  since the handoff information is provided in emulated RAM.
 
--i
-  Go to interactive mode after executing the commands specified by -c.
+-u, --unittests
+  Run SPL unittests. Normally when running `u-boot-spl` the tests are not
+  executed, since it interferes with normal operation.
+
+-v, --verbose
+  Show console output from tests. Normally this is suppressed.
+
+-w, --write
+  Write driver state to state file on exit. In conjunction with `-r`, this allows
+  sandbox to save and restore emulated hardware state (such as a TPM) across
+  each U-Boot phase.
+
 
 Environment Variables
 ---------------------
