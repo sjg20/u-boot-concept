@@ -355,11 +355,13 @@ config BOOTM_ELF
 
 config CMD_BOOTZ
 	bool "bootz"
+	depends on BOOT
 	help
 	  Boot the Linux zImage
 
 config CMD_BOOTI
 	bool "booti"
+	depends on BOOT
 	depends on ARM64 || RISCV || SANDBOX
 	default y
 	help
