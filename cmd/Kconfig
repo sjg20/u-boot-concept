@@ -339,13 +339,6 @@ config CMD_BOOTSTD
 
 	  This command is not necessary for bootstd to work.
 
-config BOOTM_EFI
-	bool "Support booting UEFI FIT images"
-	depends on EFI_BINARY_EXEC && CMD_BOOTM && FIT
-	default y
-	help
-	  Support booting UEFI FIT images via the bootm command.
-
 config CMD_BOOTZ
 	bool "bootz"
 	depends on BOOT
