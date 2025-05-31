@@ -12,6 +12,7 @@
 #include <init.h>
 #include <log.h>
 #include <os.h>
+#include <sandbox_host.h>
 #include <sort.h>
 #include <spl.h>
 #include <asm/getopt.h>
@@ -22,6 +23,7 @@
 #include <asm/state.h>
 #include <dm/root.h>
 #include <linux/ctype.h>
+#include <linux/log2.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -478,6 +480,20 @@ static int sandbox_cmdline_cb_soft_fail(struct sandbox_state *state,
 SANDBOX_CMDLINE_OPT_SHORT(soft_fail, 'f', 0,
 			  "continue test execution even after it fails");
 
+static int sandbox_cmdline_cb_bind(struct sandbox_state *state, const char *arg)
+{
+	if (state->num_binds >= SB_MAX_BINDS) {
+		printf("Too many binds (max %x)\n", SB_MAX_BINDS);
+		return 1;
+	}
+	state->binds[state->num_binds++] = arg;
+
+	return 0;
+}
+SANDBOX_CMDLINE_OPT_SHORT(
+	bind, 'B', 1,
+	"bind 'host' device to file <label>:<filename>[:hex_blksz[:rem]]");
+
 void state_show(struct sandbox_state *state)
 {
 	char **p;
@@ -509,6 +525,52 @@ void sandbox_reset(void)
 	/* Restart U-Boot */
 	os_relaunch(os_argv);
 }
+
+static int last_stage_init(void)
+{
+	struct sandbox_state *state = state_get_current();
+	int i;
+
+	for (i = 0; i < state->num_binds; i++) {
+		const char *label, *fname, *blksz, *flags;
+		const char *bind = state->binds[i];
+		char str[256], *p = str;
+		uint blksz_val = 0x200;
+		struct udevice *dev;
+		int ret;
+
+		strlcpy(str, bind, sizeof(str));
+
+		label = strsep(&p, ":");
+		fname = strsep(&p, ":");
+		blksz = strsep(&p, ":");
+		flags = strsep(&p, ":");
+		if (blksz)
+			blksz_val = hextoul(blksz, NULL);
+		if (!is_power_of_2(blksz_val)) {
+			printf("Block size %x must be a power of two\n",
+			       blksz_val);
+			return -EINVAL;
+		}
+		if (flags && !strcmp("rem", flags)) {
+			printf("Invalid flag '%s': use 'rem' for removable\n",
+			       flags);
+			return -EINVAL;
+		}
+
+		ret = host_create_attach_file(label, fname, flags, blksz_val,
+					      &dev);
+		if (ret) {
+			printf("Cannot create device / bind file\n");
+			return ret;
+		}
+		printf("host %s: attached '%s' blksz %x removable %d\n",
+		       label, fname, blksz_val, flags != NULL);
+	}
+
+	return 0;
+}
+EVENT_SPY_SIMPLE(EVT_LAST_STAGE_INIT, last_stage_init);
 
 int sandbox_main(int argc, char *argv[])
 {

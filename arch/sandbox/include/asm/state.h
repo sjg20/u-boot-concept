@@ -11,6 +11,10 @@
 #include <linux/list.h>
 #include <linux/stringify.h>
 
+enum {
+	SB_MAX_BINDS	= 4,
+};
+
 /**
  * Selects the behavior of the serial terminal.
  *
@@ -119,6 +123,8 @@ struct sandbox_state {
 
 	void *other_fdt_buf;		/* 'other' FDT blob used by tests */
 	int other_size;			/* size of other FDT blob */
+	const char *binds[SB_MAX_BINDS]; /* list of -B arguments */
+	int num_binds;			/* number of -B arguments */
 
 	/*
 	 * This struct is getting large.
