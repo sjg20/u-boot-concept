@@ -110,6 +110,18 @@ available options. Some of these are described below:
   by default isn't that useful. Note that standard boot has surplanted
   distro boot in any case.
 
+-B, --bind <label>:<filename>[:hex_blksz[:rem]]
+  Bind a file to a device in sandbox. This allows a disk image to be accessed
+  from within sandbox, e.g. for testing filesystems. The 'host bind' command
+  can be used, so long as `CONFIG_CMDLINE` is enabled, but this flag can
+  sometimes be useful in scripts.
+
+  Typically a unique number as the label. The filename is delimited by colon.
+  After that an optional hex blocksize can be provided (e.g. 200 for a normally
+  512-byte block) and 'rem' can be used to mark the device as removeable.
+
+  Example: -B 0:root.img:200:rem
+
 -c, --command [<cmd>;]<cmd>
   To execute commands directly, use the -c option. You can specify a single
   command, or multiple commands separated by a semicolon, as is normal in
