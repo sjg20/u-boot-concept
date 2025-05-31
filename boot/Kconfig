@@ -385,6 +385,14 @@ endif # VPL
 
 endif # FIT
 
+config BOOT
+	bool
+	default y
+	help
+	  Enables the main boot functionality, called 'bootm' in the code. This
+	  is used by commands like bootm, bootz, and booti to effect a boot.
+	  If CMDLINE is disabled, booting is still possible via standard boot.
+
 config PXE_UTILS
 	bool
 	select MENU
@@ -419,6 +427,7 @@ config BOOT_DEFAULTS
 	bool  # Common defaults for standard boot and distroboot
 	select BOOT_DEFAULTS_FEATURES
 	select BOOT_DEFAULTS_CMDS if CMDLINE
+	select BOOT
 	help
 	  These are not required but are commonly needed to support a good
 	  selection of booting methods. Enable this to improve the capability
