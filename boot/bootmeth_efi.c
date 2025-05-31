@@ -298,6 +298,9 @@ static int distro_efi_boot(struct udevice *dev, struct bootflow *bflow)
 
 	}
 
+	if (IS_ENABLED(CONFIG_EFI_APP))
+		return efi_boot(setup_base, entry, image_64bit);
+
 	if (efi_bootflow_run(bflow))
 		return log_msg_ret("run", -EINVAL);
 

@@ -220,7 +220,7 @@ int efi_store_memory_map(struct efi_priv *priv)
 	return 0;
 }
 
-int efi_call_exit_boot_services(void)
+int efi_call_exit_boot_services(bool use_memmap_size)
 {
 	struct efi_priv *priv = efi_get_priv();
 	const struct efi_boot_services *boot = priv->boot;
@@ -228,7 +228,23 @@ int efi_call_exit_boot_services(void)
 	u32 version;
 	efi_status_t ret;
 
-	size = priv->memmap_alloc;
+	if (use_memmap_size) {
+		size = priv->memmap_alloc;
+	} else {
+		size = 0;
+		ret = boot->get_memory_map(&size, NULL, &priv->memmap_key,
+					&priv->memmap_desc_size,
+					&priv->memmap_version);
+		if (ret != EFI_BUFFER_TOO_SMALL) {
+			printf("Failed to get memory-map size: %ld\n", ret);
+			return ret;
+		}
+		priv->memmap_desc = efi_malloc(priv, size, &ret);
+		if (!priv->memmap_desc) {
+			printf("Failed to allocate memory descriptor\n");
+			return -ENOMEM;
+		}
+	}
 	ret = boot->get_memory_map(&size, priv->memmap_desc,
 				   &priv->memmap_key,
 				   &priv->memmap_desc_size, &version);

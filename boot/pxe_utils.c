@@ -616,7 +616,7 @@ static int label_run_boot(struct pxe_context *ctx, struct pxe_label *label,
 	 */
 	fmt = genimg_get_format_comp(buf);
 
-	if (IS_ENABLED(CONFIG_CMD_BOOTM) && (fmt == IMAGE_FORMAT_FIT ||
+	if (IS_ENABLED(CONFIG_BOOT) && (fmt == IMAGE_FORMAT_FIT ||
 	    fmt == IMAGE_FORMAT_LEGACY)) {
 		log_debug("using bootm\n");
 		ret = bootm_run(&bmi);

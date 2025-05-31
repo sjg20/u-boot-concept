@@ -668,9 +668,12 @@ int efi_store_memory_map(struct efi_priv *priv);
  *
  * Tell EFI we don't want their boot services anymore
  *
+ * @use_memmap_size: true if there has been no memory allocation since
+ * efi_store_memory_map() was called; false if no assumptions can be made
+ *
  * Return: 0 if OK, non-zero on error
  */
-int efi_call_exit_boot_services(void);
+int efi_call_exit_boot_services(bool use_memmap_size);
 
 /**
  * efi_get_mmap() - Get the memory map from EFI

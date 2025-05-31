@@ -16,6 +16,7 @@
 
 #include <bootm.h>
 #include <command.h>
+#include <efi.h>
 #include <env.h>
 #include <init.h>
 #include <irq_func.h>
@@ -222,7 +223,6 @@ struct boot_params *load_zimage(char *image, unsigned long kernel_size,
 	else
 		*load_addressp = ZIMAGE_LOAD_ADDR;
 
-	printf("Building boot_params at %lx\n", (ulong)setup_base);
 	memset(setup_base, 0, sizeof(*setup_base));
 	setup_base->hdr = params->hdr;
 
@@ -297,10 +297,6 @@ int setup_zimage(struct boot_params *setup_base, char *cmd_line, int auto_boot,
 	if (bootproto >= 0x0200) {
 		hdr->type_of_loader = 0x80;	/* U-Boot version 0 */
 		if (initrd_addr) {
-			printf("Initial RAM disk at linear address "
-			       "%lx, size %lx (%ld bytes)\n",
-			       initrd_addr, initrd_size, initrd_size);
-
 			hdr->ramdisk_image = initrd_addr;
 			setup_base->ext_ramdisk_image = 0;
 			setup_base->ext_ramdisk_size = 0;
@@ -345,9 +341,6 @@ int setup_zimage(struct boot_params *setup_base, char *cmd_line, int auto_boot,
 				return ret;
 			}
 		}
-		printf("Kernel command line: \"");
-		puts(cmd_line);
-		printf("\"\n");
 	}
 
 	if (IS_ENABLED(CONFIG_INTEL_MID) && bootproto >= 0x0207)
@@ -418,7 +411,14 @@ int zboot_go(struct bootm_info *bmi)
 	bool image_64bit;
 	ulong entry;
 	int ret;
-
+/*
+	if (IS_ENABLED(CONFIG_EFI_APP)) {
+		printf("Exiting boot-services\n");
+		ret = efi_call_exit_boot_services(false);
+		if (ret)
+			return ret;
+	}
+*/
 	disable_interrupts();
 
 	entry = bmi->load_address;

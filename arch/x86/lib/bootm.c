@@ -184,6 +184,7 @@ int efi_boot(ulong setup_base, ulong entry, bool image_64bit)
 	hdr->type_of_loader = 0x80; /* U-Boot, from Linux Documentation/x86/boot.rst */
 
 	hf = (handover_func)(entry + hdr->handover_offset + offset);
+	printf("hf %p hdr %p\n", hf, hdr);
 	asm volatile ("cli");
 	priv->loaded_image->image_base = (char *)entry;
 	hf(priv->parent_image, priv->sys_table, params);
@@ -197,7 +198,16 @@ int boot_linux_kernel(ulong setup_base, ulong entry, bool image_64bit)
 #ifdef CONFIG_SYS_COREBOOT
 	timestamp_add_now(TS_U_BOOT_START_KERNEL);
 #endif
+/*
+	if (IS_ENABLED(CONFIG_EFI_APP)) {
+		int ret;
 
+		printf("Exiting boot-services\n");
+		ret = efi_call_exit_boot_services(false);
+		if (ret)
+			return ret;
+	}
+*/
 	if (IS_ENABLED(CONFIG_EFI_APP))
 		return efi_boot(setup_base, entry, image_64bit);
 
