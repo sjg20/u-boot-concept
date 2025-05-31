@@ -241,8 +241,7 @@ static int efi_sysreset_request(struct udevice *dev, enum sysreset_t type)
 /*
  * Attempt to relocate the kernel to somewhere the firmware isn't using
  */
-#define PAGE_SIZE_BITS 12
-void board_fixup_os(struct image_info *os)
+int board_fixup_os(void *ctx, struct event *evt)
 {
 	int pages;
 	ulong load_addr;
@@ -250,28 +249,32 @@ void board_fixup_os(struct image_info *os)
 	efi_status_t status;
 	struct efi_priv *priv = efi_get_priv();
 	struct efi_boot_services *boot = priv->boot;
+	struct event_os_load *os_load = &evt->data.os_load;
 
-	pages = (os->image_len + ((1 << PAGE_SIZE_BITS) - 1)) >> PAGE_SIZE_BITS;
+	pages = DIV_ROUND_UP(os_load->size, EFI_PAGE_SIZE);
 
-	addr = os->load;
+	addr = os_load->addr;
 
 	/* Try to allocate at the preferred address */
 	status = boot->allocate_pages(EFI_ALLOCATE_ADDRESS, EFI_LOADER_DATA,
 				      pages, &addr);
-	if (status == EFI_SUCCESS)
-		return;
+	if (!status)
+		return 0;
 
 	/* That failed, so try allocating anywhere there's enough room */
 	status = boot->allocate_pages(EFI_ALLOCATE_ANY_PAGES, EFI_LOADER_DATA, pages, &addr);
-	if (status == EFI_SUCCESS) {
-		/* Make sure bootm knows where we loaded the image */
-		os->load = addr;
-		return;
+	if (status) {
+		printf("Failed to alloc %lx bytes at %lx: %lx\n", os_load->size,
+		       load_addr, status);
+		return -EFAULT;
 	}
 
-	printf("Failed to alloc %lx bytes at %lx: %lx\n", os->image_len, load_addr,
-	       status);
+	/* Make sure bootm knows where we loaded the image */
+	os_load->addr = addr;
+
+	return 0;
 }
+EVENT_SPY_FULL(EVT_BOOT_OS_ADDR, board_fixup_os);
 
 static const struct udevice_id efi_sysreset_ids[] = {
 	{ .compatible = "efi,reset" },
