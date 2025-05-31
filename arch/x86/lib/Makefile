@@ -16,7 +16,7 @@ obj-$(CONFIG_X86_32BIT_INIT) += string.o
 endif
 
 ifndef CONFIG_XPL_BUILD
-obj-$(CONFIG_CMD_BOOTM) += bootm.o
+obj-$(CONFIG_BOOT) += bootm.o
 endif
 obj-y	+= cmd_boot.o
 obj-$(CONFIG_$(PHASE_)COREBOOT_SYSINFO)	+= coreboot/
