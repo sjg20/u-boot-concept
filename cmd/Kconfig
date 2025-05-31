@@ -1947,19 +1947,10 @@ config BOOTP_TIMEOFFSET
 	bool "Request & store 'timeoffset' from BOOTP/DHCP server"
 	depends on CMD_SNTP
 
-endif  # CMD_BOOTP
-
-config CMD_PCAP
-	bool "pcap capture"
-	help
-	  Selecting this will allow capturing all Ethernet packets and store
-	  them in physical memory in a PCAP formated file,
-	  later to be analyzed by PCAP reader application (IE. WireShark).
-
 config BOOTP_PXE
 	bool "Send PXE client arch to BOOTP/DHCP server"
 	default y
-	depends on CMD_BOOTP && CMD_PXE
+	depends on CMD_PXE
 	help
 	  Supported for ARM, ARM64, and x86 for now.
 
@@ -1976,11 +1967,19 @@ config BOOTP_PXE_DHCP_OPTION
 
 config BOOTP_VCI_STRING
 	string
-	depends on CMD_BOOTP
 	default "U-Boot.armv7" if CPU_V7A || CPU_V7M || CPU_V7R
 	default "U-Boot.armv8" if ARM64
 	default "U-Boot.arm" if ARM
 	default "U-Boot"
+
+endif  # CMD_BOOTP
+
+config CMD_PCAP
+	bool "pcap capture"
+	help
+	  Selecting this will allow capturing all Ethernet packets and store
+	  them in physical memory in a PCAP formated file,
+	  later to be analyzed by PCAP reader application (IE. WireShark).
 
 config CMD_TFTPPUT
 	bool "tftp put"
