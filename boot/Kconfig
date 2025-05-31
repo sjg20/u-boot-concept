@@ -395,6 +395,13 @@ config BOOT
 
 if BOOT
 
+config BOOTM_ELF
+	bool "Support booting ELF images"
+	depends on LIB_ELF
+	default y
+	help
+	  Support booting ELF images via the bootm command.
+
 config BOOTM_LINUX
 	bool "Support booting Linux OS images"
 	depends on BOOT
