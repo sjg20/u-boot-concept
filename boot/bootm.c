@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0+
-11;rgb:3030/0a0a/2424/*
+/*
  * (C) Copyright 2000-2009
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  */
