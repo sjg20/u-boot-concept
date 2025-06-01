@@ -48,6 +48,9 @@ const char *const type_name[] = {
 
 	/* main loop events */
 	"main_loop",
+
+	/* booting */
+	"boot_os_addr",
 };
 
 _Static_assert(ARRAY_SIZE(type_name) == EVT_COUNT, "event type_name size");
