@@ -154,6 +154,14 @@ enum event_t {
 	EVT_MAIN_LOOP,
 
 	/**
+	 * @EVT_BOOT_OS_ADDR:
+	 * Triggered immediately before the OS is loaded into its final address
+	 * in memory. This even may be used to relocate the OS, e.g. by updating
+	 * the provided load address
+	 */
+	EVT_BOOT_OS_ADDR,
+
+	/**
 	 * @EVT_COUNT:
 	 * This constants holds the maximum event number + 1 and is used when
 	 * looping over all event classes.
@@ -203,6 +211,20 @@ union event_data {
 		oftree tree;
 		struct bootm_headers *images;
 	} ft_fixup;
+
+	/**
+	 * struct event_os_reloc - select the final OS address
+	 *
+	 * This is used for EVT_BOOT_OS_ADDR
+	 *
+	 * @addr: On entry, indicates the address to which the OS will be
+	 * loaded; on exit, the new load address
+	 * @size: The OS size, in bytes
+	 */
+	struct event_os_load {
+		ulong addr;
+		ulong size;
+	} os_load;
 };
 
 /**
