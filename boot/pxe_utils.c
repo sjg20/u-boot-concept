@@ -629,7 +629,7 @@ static int label_run_boot(struct pxe_context *ctx, struct pxe_label *label,
 		log_debug("using bootz\n");
 		ret = bootz_run(&bmi);
 	/* Try booting an x86_64 Linux kernel image */
-	} else if (IS_ENABLED(CONFIG_CMD_ZBOOT)) {
+	} else if (IS_ENABLED(CONFIG_ZBOOT)) {
 		log_debug("using zboot\n");
 		ret = zboot_run(&bmi);
 	}
