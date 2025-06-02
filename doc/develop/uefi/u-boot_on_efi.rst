@@ -44,7 +44,9 @@ Build Instructions
 ------------------
 First choose a board that has EFI support and obtain an EFI implementation
 for that board. It will be either 32-bit or 64-bit. Alternatively, you can
-opt for using QEMU [1] and the OVMF [2], as detailed below.
+opt for using `QEMU <http://www.qemu.org>`_ and the
+`OVMF <https://github.com/tianocore/tianocore.github.io/wiki/OVMF>`_, as
+detailed below.
 
 To build U-Boot as an EFI application, enable CONFIG_EFI_CLIENT and
 CONFIG_EFI_APP. The efi-x86_app32 and efi-x86_app64 configs are set up for
@@ -336,12 +338,49 @@ Additionally something like (sda is assumed as disk device):
 	append  root=/dev/sda2 console=tty0 console=ttyS0,115200n8 rootwait rw
 
 
+Debugging
+---------
+
+Debugging the app is not straightforward since it is relocated by the UEFI
+firmware before it is run.
+
+See
+`Debugging UEFI applications with GDB <https://wiki.osdev.org/Debugging_UEFI_applications_with_GDB>`_
+for details.
+
+Within U-Boot, enable `CONFIG_EFI_APP_DEBUG` which will cause U-Boot to write
+deadbeef to address `10000` which you can catch with gdb.
+
+In gdb the procedure is something like this, for a 64-bit machine::
+
+  # Enable CONFIG_EFI_APP_DEBUG in the build
+  $ grep CONFIG_EFI_APP_DEBUG .config
+  CONFIG_EFI_APP_DEBUG=y
+
+  $ gdb u-boot
+  # Connect to the target; here we assume 'qemu -Ss' has been started
+  (gdb) target remote localhost:1234
+
+  # Set a watchpoint for the marker write
+  (gdb) watch *(unsigned long *)0x10000 == 0xdeadbeef
+  (gdb) continue
+
+  # Execution will break as soon as the marker is written.
+  # Now, fetch the relocated base address:
+  (gdb) set $base = *(unsigned long long *)0x10008
+  (gdb) add-symbol-file u-boot -o $base
+
+  # Now you can set other breakpoints as needed
+
+For a 32-bit machine, use `unsigned long` for the cast when setting `$base`
+
+The address of 0x10000 is defined by `GDB_ADDR` which you can change in the
+code if needed.
+
 
 Future work
 -----------
 This work could be extended in a number of ways:
-
-- Add ARM support
 
 - Figure out how to solve the interrupt problem
 
@@ -372,6 +411,3 @@ common/cmd_efi.c
 Ben Stoltz, Simon Glass
 Google, Inc
 July 2015
-
-* [1] http://www.qemu.org
-* [2] https://github.com/tianocore/tianocore.github.io/wiki/OVMF

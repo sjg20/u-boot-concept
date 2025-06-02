@@ -13,12 +13,6 @@ SECTIONS
 	image_base = .;
 	.hash : { *(.hash) }	/* this MUST come first, EFI expects it */
 	. = ALIGN(4096);
-	.eh_frame : {
-		*(.eh_frame)
-	}
-
-	. = ALIGN(4096);
-
 	.text : {
 		*(.text)
 		*(.text.*)
@@ -26,21 +20,21 @@ SECTIONS
 	}
 
 	. = ALIGN(4096);
-
 	.reloc : {
-		*(.reloc)
+		KEEP(*(.reloc))
 	}
 
 	. = ALIGN(4096);
-
 	.data : {
 		*(.rodata*)
-		*(.got.plt)
-		*(.got)
 		*(.data*)
 		*(.sdata)
-		/* the EFI loader doesn't seem to like a .bss section, so we stick
-		 * it all into .data: */
+		*(.got.plt)
+		*(.got)
+		/*
+		 * the EFI loader doesn't seem to like a .bss section, so we
+		 * stick it all into .data:
+		 */
 		*(.sbss)
 		*(.scommon)
 		*(.dynbss)
@@ -50,15 +44,15 @@ SECTIONS
 
 		/* U-Boot lists and device tree */
 		. = ALIGN(8);
-		*(SORT(__u_boot_list*));
+		KEEP(*(SORT(__u_boot_list*)));
 		. = ALIGN(8);
 		*(.dtb*);
 	}
 
 	. = ALIGN(4096);
 	.dynamic : { *(.dynamic) }
-	. = ALIGN(4096);
 
+	. = ALIGN(4096);
 	.rela : {
 		*(.rela.data*)
 		*(.rela.got)
@@ -71,11 +65,11 @@ SECTIONS
 	. = ALIGN(4096);
 	.dynstr : { *(.dynstr) }
 	. = ALIGN(4096);
+	_end = .;
 
-        /DISCARD/ : { *(.eh_frame) }
-
-	.ignored.reloc : {
+	/DISCARD/ : {
 		*(.rela.reloc)
+		*(.eh_frame)
 		*(.note.GNU-stack)
 	}
 

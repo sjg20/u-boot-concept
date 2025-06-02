@@ -35,8 +35,11 @@ obj-$(CONFIG_I8259_PIC) += i8259.o
 obj-$(CONFIG_I8254_TIMER) += i8254.o
 obj-$(CONFIG_PINCTRL_ICH6) += pinctrl_ich6.o
 obj-y	+= pirq_routing.o
+
+ifndef CONFIG_EFI_APP
 obj-y	+= relocate.o
 obj-y += physmem.o
+endif
 obj-$(CONFIG_INTEL_MID) += pmu.o
 obj-$(CONFIG_X86_RAMTEST) += ramtest.o
 obj-$(CONFIG_INTEL_MID) += scu.o

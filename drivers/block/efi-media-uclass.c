@@ -9,6 +9,6 @@
 
 UCLASS_DRIVER(efi_media) = {
 	.id		= UCLASS_EFI_MEDIA,
-	.name		= "efi_media",
+	.name		= "efi",
 	.flags		= DM_UC_FLAG_SEQ_ALIAS,
 };

@@ -308,7 +308,7 @@ static int setup_tpm(void)
 
 		plat->handle = handle[i];
 		plat->proto = proto;
-		ret = device_bind(dm_root(), DM_DRIVER_GET(efi_net), "efi_tpm",
+		ret = device_bind(dm_root(), DM_DRIVER_GET(efi_tpm), "efi_tpm",
 				  plat, ofnode_null(), &dev);
 		if (ret) {
 			log_warning("- bind TPM %d failed (ret=0x%x)\n", i,
@@ -342,12 +342,16 @@ int board_early_init_r(void)
 		ret = setup_block();
 		if (ret)
 			return ret;
-		ret = setup_net();
-		if (ret)
-			return ret;
-		ret = setup_tpm();
-		if (ret)
-			return ret;
+		if (IS_ENABLED(CONFIG_NET)) {
+			ret = setup_net();
+			if (ret)
+				return ret;
+		}
+		if (IS_ENABLED(CONFIG_TPM)) {
+			ret = setup_tpm();
+			if (ret)
+				return ret;
+		}
 	}
 
 	return 0;
