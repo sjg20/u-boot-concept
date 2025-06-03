@@ -29,6 +29,6 @@
 # Original exception was:
 #
 
-exec labgrid-client -r "${target}" -a query -n \
+exec labgrid-client -r "${target}" ${vars} -a query -n \
 	UBootProviderDriver:board,board_extra,source_dir,build_dir,build_dir_extra${config_arg} \
 	2>/dev/null
