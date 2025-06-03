@@ -617,7 +617,7 @@ coreboot test.py:
     - export SRC="$(pwd)"
     - export OUT="${SRC}/build/${BOARD}"
     - export PATH=$PATH:~/bin
-    - export PATH=$PATH:/vid/software/devel/ubtest/u-boot-test-hooks/bin
+    - export PATH=$PATH:test/hooks/bin
 
     # Load it on the device
     - ret=0
