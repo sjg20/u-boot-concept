@@ -1071,6 +1071,7 @@ config SPL_COREBOOT_SYSINFO
 
 config ZBOOT
 	bool "Support the zImage format"
+	depends on BOOT
 	default y
 	help
 	  Enable this to support booting the x86-specific zImage format. This

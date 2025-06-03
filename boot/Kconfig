@@ -385,6 +385,75 @@ endif # VPL
 
 endif # FIT
 
+config BOOT
+	bool
+	default y
+	help
+	  Enables the main boot functionality, called 'bootm' in the code. This
+	  is used by commands like bootm, bootz, and booti to effect a boot.
+	  If CMDLINE is disabled, booting is still possible via standard boot.
+
+if BOOT
+
+config BOOTM_EFI
+	bool "Support booting UEFI FIT images"
+	depends on EFI_BINARY_EXEC && FIT
+	default y
+	help
+	  Support booting UEFI FIT images via the bootm command.
+
+config BOOTM_ELF
+	bool "Support booting ELF images"
+	depends on LIB_ELF
+	default y
+	help
+	  Support booting ELF images via the bootm command.
+
+config BOOTM_LINUX
+	bool "Support booting Linux OS images"
+	depends on BOOT
+	default y
+	help
+	  Support booting the Linux kernel directly via a command such as bootm
+	  or booti or bootz.
+
+config BOOTM_NETBSD
+	bool "Support booting NetBSD (non-EFI) loader images"
+	default y
+	help
+	  Support booting NetBSD via the bootm command.
+
+config BOOTM_OPENRTOS
+	bool "Support booting OPENRTOS / FreeRTOS images"
+	help
+	  Support booting OPENRTOS / FreeRTOS via the bootm command.
+
+config BOOTM_OSE
+	bool "Support booting Enea OSE images"
+	depends on ARM && (ARM64 || CPU_V7A || CPU_V7R) || SANDBOX || PPC || X86
+	help
+	  Support booting Enea OSE images via the bootm command.
+
+config BOOTM_PLAN9
+	bool "Support booting Plan9 OS images"
+	default y
+	help
+	  Support booting Plan9 images via the bootm command.
+
+config BOOTM_RTEMS
+	bool "Support booting RTEMS OS images"
+	default y
+	help
+	  Support booting RTEMS images via the bootm command.
+
+config BOOTM_VXWORKS
+	bool "Support booting VxWorks OS images"
+	default y
+	help
+	  Support booting VxWorks images via the bootm command.
+
+endif  # BOOT
+
 config PXE_UTILS
 	bool
 	select MENU
@@ -398,6 +467,7 @@ config BOOT_DEFAULTS_FEATURES
 	imply USB_STORAGE
 	imply EFI_PARTITION
 	imply ISO_PARTITION
+	imply FS_EXT4
 
 config BOOT_DEFAULTS_CMDS
 	bool
@@ -419,6 +489,7 @@ config BOOT_DEFAULTS
 	bool  # Common defaults for standard boot and distroboot
 	select BOOT_DEFAULTS_FEATURES
 	select BOOT_DEFAULTS_CMDS if CMDLINE
+	select BOOT
 	help
 	  These are not required but are commonly needed to support a good
 	  selection of booting methods. Enable this to improve the capability
