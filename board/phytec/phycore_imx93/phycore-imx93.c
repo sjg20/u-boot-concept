@@ -14,6 +14,7 @@
 #include <asm/mach-imx/boot_mode.h>
 #include <env.h>
 #include <fdt_support.h>
+#include <dm/ofnode.h>
 
 #include "../common/imx93_som_detection.h"
 
@@ -74,8 +75,9 @@ err:
 	printf("Could not detect eMMC VDD-IO. Fall back to default.\n");
 }
 
-int board_fix_fdt(void *blob)
+int phytec_fix_fdt(void *ctx, struct event *event)
 {
+	void *blob = oftree_lookup_fdt(event->data.ft_fixup_f.tree);
 	struct phytec_eeprom_data data;
 
 	phytec_eeprom_data_setup(&data, 2, EEPROM_ADDR);
@@ -84,6 +86,7 @@ int board_fix_fdt(void *blob)
 
 	return 0;
 }
+EVENT_SPY_FULL(EVT_FT_FIXUP_F, phytec_fix_fdt);
 
 int ft_board_setup(void *blob, struct bd_info *bd)
 {

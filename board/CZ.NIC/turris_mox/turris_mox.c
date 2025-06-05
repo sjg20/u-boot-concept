@@ -67,8 +67,9 @@ int board_fit_config_name_match(const char *name)
 }
 
 #if defined(CONFIG_OF_BOARD_FIXUP)
-int board_fix_fdt(void *blob)
+static int turris_mox_fix_fdt(void *ctx, struct event *event)
 {
+	void *blob = oftree_lookup_fdt(event->data.ft_fixup_f.tree);
 	enum fdt_status status_pcie, status_eth1;
 	u8 topology[MAX_MOX_MODULES];
 	int i, size, ret;
@@ -159,6 +160,7 @@ int board_fix_fdt(void *blob)
 
 	return 0;
 }
+EVENT_SPY_FULL(EVT_FT_FIXUP_F, turris_mox_fix_fdt);
 #endif
 
 int board_init(void)

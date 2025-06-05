@@ -5,6 +5,7 @@
 
 #include <cpu_func.h>
 #include <env.h>
+#include <event.h>
 #include <init.h>
 #include <net.h>
 #include <asm/arch/clock.h>
@@ -318,8 +319,9 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 #endif
 
 #ifdef CONFIG_USB_EHCI_MX7
-int board_fix_fdt(void *rw_fdt_blob)
+static int colibri_fix_fdt(void *ctx, struct event *event)
 {
+	void *rw_fdt_blob = oftree_lookup_fdt(event->data.ft_fixup_f.tree);
 	int ret;
 
 	/* i.MX 7Solo has only one single USB OTG1 but no USB host port */
@@ -342,6 +344,7 @@ int board_fix_fdt(void *rw_fdt_blob)
 
 	return 0;
 }
+EVENT_SPY_FULL(EVT_FT_FIXUP_F, colibri_fix_fdt);
 
 #if defined(CONFIG_BOARD_LATE_INIT)
 int board_late_init(void)

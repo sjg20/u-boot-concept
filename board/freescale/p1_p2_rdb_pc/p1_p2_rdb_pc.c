@@ -471,11 +471,15 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 }
 #endif
 
-#ifdef CONFIG_OF_BOARD_FIXUP
-int board_fix_fdt(void *blob)
+#if CONFIG_IS_ENABLED(OF_BOARD_FIXUP)
+static int freescale_fix_fdt(void *ctx, struct event *event)
 {
+	void *blob = oftree_lookup_fdt(event->data.ft_fixup_f.tree);
+
 	p1_p2_rdb_pc_fix_fdt_model(blob);
 	fix_max6370_watchdog(blob);
+
 	return 0;
 }
+EVENT_SPY_FULL(EVT_FT_FIXUP_F, freescale_fix_fdt);
 #endif
