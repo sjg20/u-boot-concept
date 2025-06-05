@@ -640,13 +640,21 @@ static int init_post(void)
 }
 #endif
 
-static int reloc_fdt(void)
+static int reloc_and_fix_fdt(void)
 {
 	if (!IS_ENABLED(CONFIG_OF_EMBED)) {
 		if (gd->boardf->new_fdt) {
 			memcpy(gd->boardf->new_fdt, gd->fdt_blob,
 			       fdt_totalsize(gd->fdt_blob));
 			gd->fdt_blob = gd->boardf->new_fdt;
+		}
+
+		if (IS_ENABLED(CONFIG_OF_BOARD_FIXUP)) {
+			int ret;
+
+			ret = board_fix_fdt((void *)gd->fdt_blob);
+			if (ret)
+				return ret;
 		}
 	}
 
@@ -728,13 +736,6 @@ static int setup_reloc(void)
 
 	return 0;
 }
-
-#if CONFIG_IS_ENABLED(OF_BOARD_FIXUP)
-static int fix_fdt(void)
-{
-	return board_fix_fdt((void *)gd->fdt_blob);
-}
-#endif
 
 /* ARM calls relocate_code from its crt0.S */
 #if !defined(CONFIG_ARM) && !defined(CONFIG_SANDBOX)
@@ -970,10 +971,7 @@ static void initcall_run_f(void)
 	INITCALL(setup_bdinfo);
 	INITCALL(display_new_sp);
 	WATCHDOG_RESET();
-	INITCALL(reloc_fdt);
-#if CONFIG_IS_ENABLED(OF_BOARD_FIXUP)
-	INITCALL(fix_fdt);
-#endif
+	INITCALL(reloc_and_fix_fdt);
 	INITCALL(reloc_bootstage);
 	INITCALL(reloc_bloblist);
 	INITCALL(setup_reloc);
