@@ -5,6 +5,7 @@
 
 #include <dm.h>
 #include <fdt_support.h>
+#include <init.h>
 #include <ram.h>
 #include <asm/gpio.h>
 
@@ -188,7 +189,7 @@ static int get_mix_fdt_node(const void *fdt, int search_node, int search_index)
  *
  *  returns:		Zero on success, error otherwise.
  */
-static int fdt_fix_mix(const void *fdt)
+static int fdt_fix_mix(void *fdt)
 {
 	int node;
 	int next_node;
@@ -226,7 +227,7 @@ static int fdt_fix_mix(const void *fdt)
 			}
 		}
 
-		lmac_phandle = fdt_create_phandle((void *)fdt, lmac_fdt_node);
+		lmac_phandle = fdt_create_phandle(fdt, lmac_fdt_node);
 
 		/* Get the fdt mix node corresponding to this lmac */
 		mix_fdt_node = get_mix_fdt_node(fdt, env_node, env_lmac);
@@ -235,7 +236,7 @@ static int fdt_fix_mix(const void *fdt)
 
 		/* Point the mix to the lmac */
 		fdt_getprop(fdt, mix_fdt_node, "cavium,mac-handle", &len);
-		fdt_setprop_inplace((void *)fdt, mix_fdt_node,
+		fdt_setprop_inplace(fdt, mix_fdt_node,
 				    "cavium,mac-handle", &lmac_phandle, len);
 	}
 
@@ -254,7 +255,7 @@ static int fdt_fix_mix(const void *fdt)
 			reg = fdt_getprop(fdt, node, "cavium,mac-handle", &len);
 			if (reg) {
 				if (*reg == 0xffff)
-					fdt_nop_node((void *)fdt, node);
+					fdt_nop_node(fdt, node);
 			}
 		}
 	}
@@ -278,7 +279,7 @@ static void kill_fdt_phy(void *fdt, int offset, void *arg)
 	}
 }
 
-void __fixup_xcv(void)
+void __fixup_xcv(void *fdt)
 {
 	unsigned long bgx = env_get_ulong("bgx_for_rgmii", 10,
 					  (unsigned long)-1);
@@ -293,13 +294,13 @@ void __fixup_xcv(void)
 		debug("%s: trimming bgx %lu with key %s\n",
 		      __func__, bgx, fdt_key);
 
-		octeon_fdt_patch_rename((void *)gd->fdt_blob, fdt_key,
-					"cavium,xcv-trim", true, NULL, NULL);
+		octeon_fdt_patch_rename(fdt, fdt_key, "cavium,xcv-trim", true,
+					NULL, NULL);
 	}
 }
 
 /* QLM0 - QLM6 */
-void __fixup_fdt(void)
+void __fixup_fdt(void *fdt)
 {
 	int qlm;
 	int speed = 0;
@@ -410,18 +411,18 @@ void __fixup_fdt(void)
 		sprintf(fdt_key, "%d,%s", qlm, type_str);
 		debug("Patching qlm %d for %s for mode %d%s\n", qlm, fdt_key, mode,
 		      no_phy[qlm] ? ", removing PHY" : "");
-		octeon_fdt_patch_rename((void *)gd->fdt_blob, fdt_key, NULL, true,
+		octeon_fdt_patch_rename(fdt, fdt_key, NULL, true,
 					no_phy[qlm] ? kill_fdt_phy : NULL, NULL);
 	}
 }
 
-int board_fix_fdt(void)
+int board_fix_fdt(void *fdt)
 {
-	__fixup_fdt();
-	__fixup_xcv();
+	__fixup_fdt(fdt);
+	__fixup_xcv(fdt);
 
 	/* Fix the mix ports */
-	fdt_fix_mix(gd->fdt_blob);
+	fdt_fix_mix(fdt);
 
 	return 0;
 }
