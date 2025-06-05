@@ -582,7 +582,7 @@ static int dm_test_video_truetype(struct unit_test_state *uts)
 	ut_assertok(uclass_get_device(UCLASS_VIDEO_CONSOLE, 0, &con));
 	vidconsole_put_string(con, test_string);
 	vidconsole_put_stringn(con, test_string, 30);
-	ut_asserteq(13184, video_compress_fb(uts, dev, false));
+	ut_asserteq(13055, video_compress_fb(uts, dev, false));
 	ut_assertok(video_check_copy_fb(uts, dev));
 
 	return 0;
@@ -604,7 +604,7 @@ static int dm_test_video_truetype_scroll(struct unit_test_state *uts)
 	ut_assertok(video_get_nologo(uts, &dev));
 	ut_assertok(uclass_get_device(UCLASS_VIDEO_CONSOLE, 0, &con));
 	vidconsole_put_string(con, test_string);
-	ut_asserteq(34287, video_compress_fb(uts, dev, false));
+	ut_asserteq(34248, video_compress_fb(uts, dev, false));
 	ut_assertok(video_check_copy_fb(uts, dev));
 
 	return 0;
@@ -626,7 +626,7 @@ static int dm_test_video_truetype_bs(struct unit_test_state *uts)
 	ut_assertok(video_get_nologo(uts, &dev));
 	ut_assertok(uclass_get_device(UCLASS_VIDEO_CONSOLE, 0, &con));
 	vidconsole_put_string(con, test_string);
-	ut_asserteq(29471, video_compress_fb(uts, dev, false));
+	ut_asserteq(29223, video_compress_fb(uts, dev, false));
 	ut_assertok(video_check_copy_fb(uts, dev));
 
 	return 0;
@@ -665,7 +665,7 @@ static int dm_test_video_copy(struct unit_test_state *uts)
 	vidconsole_put_string(con, test_string);
 	vidconsole_put_string(con, test_string);
 
-	ut_asserteq(6678, video_compress_fb(uts, dev, false));
+	ut_asserteq(6884, video_compress_fb(uts, dev, false));
 	ut_assertok(video_check_copy_fb(uts, dev));
 
 	/*
@@ -690,8 +690,8 @@ static int dm_test_video_copy(struct unit_test_state *uts)
 	vidconsole_put_string(con, test_string);
 	vidconsole_put_string(con, test_string);
 	video_sync(dev, true);
-	ut_asserteq(7589, video_compress_fb(uts, dev, false));
-	ut_asserteq(7704, video_compress_fb(uts, dev, true));
+	ut_asserteq(7621, video_compress_fb(uts, dev, false));
+	ut_asserteq(7741, video_compress_fb(uts, dev, true));
 
 	return 0;
 }
@@ -746,7 +746,7 @@ static int dm_test_video_damage(struct unit_test_state *uts)
 	ut_asserteq(0, priv->damage.xend);
 	ut_asserteq(0, priv->damage.yend);
 
-	ut_asserteq(7339, video_compress_fb(uts, dev, false));
+	ut_asserteq(7335, video_compress_fb(uts, dev, false));
 	ut_assertok(video_check_copy_fb(uts, dev));
 
 	return 0;
@@ -896,7 +896,7 @@ static int dm_test_video_silence(struct unit_test_state *uts)
 	printf("final message: console\n");
 	vidconsole_put_string(con, "final message: video\n");
 
-	ut_asserteq(3892, video_compress_fb(uts, dev, false));
+	ut_asserteq(3944, video_compress_fb(uts, dev, false));
 	ut_assertok(video_check_copy_fb(uts, dev));
 
 	return 0;

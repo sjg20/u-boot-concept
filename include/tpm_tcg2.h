@@ -345,4 +345,13 @@ void tcg2_platform_startup_error(struct udevice *dev, int rc);
  */
 u32 tcg2_algorithm_to_mask(enum tpm2_algorithms);
 
+/**
+ * tcg2_log_init() - Set up the elog
+ *
+ * @dev: TPM device, used to find the number of PCRs
+ * @elog	Platform event log
+ * Return: zero on success, negative errno otherwise
+ */
+int tcg2_log_init(struct udevice *dev, struct tcg2_event_log *elog);
+
 #endif /* __TPM_TCG_V2_H */

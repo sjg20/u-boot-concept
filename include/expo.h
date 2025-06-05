@@ -65,12 +65,15 @@ enum expoact_type {
  * @type: Action type (EXPOACT_NONE if there is no action)
  * @select: Used for EXPOACT_POINT_ITEM and EXPOACT_SELECT
  * @select.id: ID number of the object affected.
+ * @select.changed: true if the selection has changed since last time (only
+ * valid for EXPOACT_POINT_ITEM)
  */
 struct expo_action {
 	enum expoact_type type;
 	union {
 		struct {
 			int id;
+			bool changed;
 		} select;
 	};
 };
@@ -109,6 +112,8 @@ struct expo_theme {
  * @scene_id: Current scene ID (0 if none)
  * @next_id: Next ID number to use, for automatic allocation
  * @action: Action selected by user. At present only one is supported, with the
+ * @req_width: Requested width of the display
+ * @req_height: Requested height of the display
  * type set to EXPOACT_NONE if there is no action
  * @text_mode: true to use text mode for the menu (no vidconsole)
  * @popup: true to use popup menus, instead of showing all items
@@ -128,6 +133,8 @@ struct expo {
 	uint scene_id;
 	uint next_id;
 	struct expo_action action;
+	int req_width;
+	int req_height;
 	bool text_mode;
 	bool popup;
 	bool show_highlight;
@@ -361,7 +368,7 @@ static inline bool scene_obj_can_highlight(const struct scene_obj *obj)
  */
 struct scene_obj_img {
 	struct scene_obj obj;
-	char *data;
+	const char *data;
 };
 
 /**
@@ -700,6 +707,17 @@ void scene_highlight_first(struct scene *scn);
  * @id: ID of object to highlight
  */
 void scene_set_highlight_id(struct scene *scn, uint id);
+
+/**
+ * scene_img_set_data() - Set the image data for an image object
+ *
+ * @scn: Scene to update
+ * @id: ID of existing image obejct
+ * @data: Image data to use
+ * @size: Size of image data
+ * Returns: 0 if OK, -ENOENT if @id is invalid
+ */
+int scene_img_set_data(struct scene *scn, uint id, const void *data, int size);
 
 /**
  * scene_set_open() - Set whether an item is open or not
@@ -1080,5 +1098,18 @@ int cb_expo_build(struct expo **expp);
  *	went wrong
  */
 int expo_poll(struct expo *exp, struct expo_action *act);
+
+/**
+ * expo_req_size() - Request a size for the expo display
+ *
+ * Set the width and height of the display, so far as requested positions and
+ * size are concerned. The actual display may be larger or smaller, in which
+ * case expo scales the objects to fit
+ *
+ * @exp: Expo to update
+ * @width: Requested display width
+ * @height: Requested display height
+ */
+void expo_req_size(struct expo *exp, int width, int height);
 
 #endif /*__EXPO_H */

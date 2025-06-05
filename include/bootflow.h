@@ -647,6 +647,17 @@ const char *bootflow_img_type_name(enum bootflow_img_t type);
 struct bootflow_img *bootflow_img_add(struct bootflow *bflow, const char *fname,
 				      enum bootflow_img_t type, ulong addr,
 				      ulong size);
+
+/**
+ * bootflow_img_find() - Find the first image of a given type
+ *
+ * @bflow: Bootflow to search
+ * @type: Image type to search for
+ * Return: Pointer to image, or NULL if not found
+ */
+const struct bootflow_img *bootflow_img_find(const struct bootflow *bflow,
+					     enum bootflow_img_t type);
+
 /**
  * bootflow_get_seq() - Get the sequence number of a bootflow
  *
@@ -688,7 +699,9 @@ int bootflow_menu_start(struct bootstd_priv *std, bool text_mode,
  * @exp: Expo to poll
  * @seqp: Returns the bootflow chosen or currently pointed to (numbered from 0)
  * Return: 0 if a bootflow was chosen, -EAGAIN if nothing is chosen yet, -EPIPE
- *	if the user quit, -ERESTART if the expo needs refreshing
+ *	if the user quit, -EREMCHG if the expo needs refreshing, -ERESTART if
+ *	the user tried to move to a new selection but was unable (e.g. already
+ *	at the top and tried to move up)
  */
 int bootflow_menu_poll(struct expo *exp, int *seqp);
 

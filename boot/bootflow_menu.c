@@ -49,6 +49,7 @@ int bootflow_menu_new(struct expo **expp)
 	ret = expo_new("bootflows", priv, &exp);
 	if (ret)
 		return log_msg_ret("exp", ret);
+	expo_req_size(exp, 1366, 768);
 
 	ret = scene_new(exp, "main", MAIN, &scn);
 	if (ret < 0)
@@ -309,6 +310,8 @@ int bootflow_menu_poll(struct expo *exp, int *seqp)
 		ret = scene_menu_select_item(scn, OBJ_MENU, act.select.id);
 		if (ret)
 			return log_msg_ret("bmp", ret);
+		if (act.select.changed)
+			return -EREMCHG;
 		return -ERESTART;
 	}
 	case EXPOACT_QUIT:

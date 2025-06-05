@@ -20,6 +20,7 @@ config EFI_APP
 	bool "Support running as an EFI application"
 	depends on X86 || ARM
 	select CHARSET
+	select EVENT
 	help
 	  Build U-Boot as an application which can be started from EFI. This
 	  is useful for examining a platform in the early stages of porting
