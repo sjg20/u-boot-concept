@@ -5,6 +5,7 @@
  */
 
 #include <config.h>
+#include <event.h>
 #include <fdt_support.h>
 #include <init.h>
 #include <net.h>
@@ -177,8 +178,9 @@ int misc_init_r(void)
  * TODO: currently doesn't work because rw_fdt_blob points to a
  * NOR flash address. This needs some changes in board_init_f.
  */
-int board_fix_fdt(void *rw_fdt_blob)
+int malta_fix_fdt(void *ctx, struct event *event)
 {
+	void *rw_fdt_blob = oftree_lookup_fdt(event->data.ft_fixup_f.tree);
 	int node = -1;
 
 	switch (malta_sys_con()) {
@@ -193,6 +195,7 @@ int board_fix_fdt(void *rw_fdt_blob)
 
 	return fdt_status_okay(rw_fdt_blob, node);
 }
+EVENT_SPY_FULL(EVT_FT_FIXUP_F, malta_fix_fdt);
 #endif
 
 int board_early_init_r(void)

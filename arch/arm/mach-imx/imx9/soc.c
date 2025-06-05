@@ -668,8 +668,10 @@ static int low_drive_freq_update(void *blob)
 
 #if defined(CONFIG_OF_BOARD_FIXUP) && !defined(CONFIG_TARGET_PHYCORE_IMX93)
 #ifndef CONFIG_XPL_BUILD
-int board_fix_fdt(void *fdt)
+static int mx9_fix_fdt(void *ctx, struct event *event)
 {
+	void *fdt = oftree_lookup_fdt(event->data.ft_fixup_f.tree);
+
 	/* Update dtb clocks for low drive mode */
 	if (is_voltage_mode(VOLT_LOW_DRIVE)) {
 		int nodeoff;
@@ -691,6 +693,7 @@ int board_fix_fdt(void *fdt)
 
 	return 0;
 }
+EVENT_SPY_FULL(EVT_FT_FIXUP_F, mx9_fix_fdt);
 #endif
 #endif
 

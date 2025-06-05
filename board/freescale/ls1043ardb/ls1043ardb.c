@@ -381,8 +381,10 @@ void nand_fixup(void)
 }
 
 #if IS_ENABLED(CONFIG_OF_BOARD_FIXUP)
-int board_fix_fdt(void *blob)
+static int freescale_fix_fdt(void *ctx, struct event *event)
 {
+	void *blob = oftree_lookup_fdt(event->data.ft_fixup_f.tree);
+
 	/* nand driver fix up */
 	nand_fixup();
 
@@ -391,6 +393,7 @@ int board_fix_fdt(void *blob)
 
 	return 0;
 }
+EVENT_SPY_FULL(EVT_FT_FIXUP_F, freescale_fix_fdt);
 #endif
 
 u8 flash_read8(void *addr)

@@ -74,8 +74,9 @@ int board_early_init_f(void)
 }
 
 #ifdef CONFIG_OF_BOARD_FIXUP
-int board_fix_fdt(void *fdt)
+static int freescale_fix_fdt(void *ctx, struct event *event)
 {
+	void *fdt = oftree_lookup_fdt(event->data.ft_fixup_f.tree);
 	char *reg_names, *reg_name;
 	int names_len, old_name_len, new_name_len, remaining_names_len;
 	struct str_map {
@@ -141,6 +142,7 @@ int board_fix_fdt(void *fdt)
 		fdt_fixup_board_phy_revc(fdt);
 	return 0;
 }
+EVENT_SPY_FULL(EVT_FT_FIXUP_F, freescale_fix_fdt);
 #endif
 
 #if defined(CONFIG_TARGET_LX2160AQDS) || defined(CONFIG_TARGET_LX2162AQDS)
