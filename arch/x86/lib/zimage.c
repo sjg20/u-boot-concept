@@ -13,6 +13,7 @@
  */
 
 #define LOG_CATEGORY	LOGC_BOOT
+#define LOG_DEBUG
 
 #include <bootm.h>
 #include <command.h>

@@ -202,6 +202,10 @@ void abuf_init_set(struct abuf *abuf, void *data, size_t size);
  */
 void abuf_init_const(struct abuf *abuf, const void *data, size_t size);
 
+void abuf_init_const_addr(struct abuf *abuf, ulong addr, size_t size);
+
+void abuf_set_addr(struct abuf *abuf, ulong addr);
+
 /**
  * abuf_init_size() - Set up an allocated abuf
  *

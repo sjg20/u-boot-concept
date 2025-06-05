@@ -4,6 +4,8 @@
  * (C) Copyright 2021 Asherah Connor <ashe@kivikakk.ee>
  */
 
+#define LOG_DEBUG
+
 #include <abuf.h>
 #include <dm.h>
 #include <env.h>
@@ -157,8 +159,8 @@ static int qemu_fwcfg_read_info(struct udevice *qfw_dev, ulong *setupp,
 	return 0;
 }
 
-int qemu_fwcfg_setup_kernel(struct udevice *qfw_dev, ulong load_addr,
-			    ulong initrd_addr)
+int qemu_fwcfg_setup_kernel(struct udevice *qfw_dev, struct abuf *kern,
+			    struct abuf *initrd)
 {
 	ulong setup_size, kernel_size, initrd_size;
 	struct abuf cmdline;
@@ -172,7 +174,7 @@ int qemu_fwcfg_setup_kernel(struct udevice *qfw_dev, ulong load_addr,
 		return log_msg_ret("qsk", ret);
 	}
 
-	ptr = map_sysmem(load_addr, 0);
+	ptr = map_sysmem(abuf_addr(kern), 0);
 	if (setup_size) {
 		qfw_read_entry(qfw_dev, FW_CFG_SETUP_DATA, setup_size, ptr);
 		ptr += setup_size;
@@ -181,7 +183,7 @@ int qemu_fwcfg_setup_kernel(struct udevice *qfw_dev, ulong load_addr,
 	qfw_read_entry(qfw_dev, FW_CFG_KERNEL_DATA, kernel_size, ptr);
 	env_set_hex("filesize", kernel_size);
 
-	ptr = map_sysmem(initrd_addr, 0);
+	ptr = map_sysmem(abuf_addr(initrd), 0);
 	if (!initrd_size) {
 		printf("warning: no initrd available\n");
 	} else {
@@ -189,6 +191,7 @@ int qemu_fwcfg_setup_kernel(struct udevice *qfw_dev, ulong load_addr,
 		ptr += initrd_size;
 		env_set_hex("filesize", initrd_size);
 	}
+	initrd->size = initrd_size;
 
 	if (cmdline.data) {
 		/*
@@ -202,10 +205,11 @@ int qemu_fwcfg_setup_kernel(struct udevice *qfw_dev, ulong load_addr,
 	}
 	abuf_uninit(&cmdline);
 
-	printf("loading kernel to address %lx size %lx", load_addr,
-	       kernel_size);
+	printf("loading kernel to address %lx size %zx", abuf_addr(kern),
+	       kern->size);
 	if (initrd_size)
-		printf(" initrd %lx size %lx\n", initrd_addr, initrd_size);
+		printf(" initrd %lx size %lx\n", abuf_addr(initrd),
+		       initrd_size);
 	else
 		printf("\n");
 

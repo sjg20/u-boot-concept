@@ -3,6 +3,7 @@
  * (C) Copyright 2015 Miao Yan <yanmiaobest@gmail.com>
  */
 
+#include <abuf.h>
 #include <command.h>
 #include <env.h>
 #include <errno.h>
@@ -51,6 +52,7 @@ static int qemu_fwcfg_do_load(struct cmd_tbl *cmdtp, int flag,
 			      int argc, char *const argv[])
 {
 	char *env;
+	struct abuf kern, initrd;
 	ulong load_addr;
 	ulong initrd_addr;
 
@@ -80,7 +82,10 @@ static int qemu_fwcfg_do_load(struct cmd_tbl *cmdtp, int flag,
 		return CMD_RET_FAILURE;
 	}
 
-	return qemu_fwcfg_setup_kernel(qfw_dev, load_addr, initrd_addr);
+	abuf_init_const_addr(&kern, load_addr, 0);
+	abuf_init_const_addr(&initrd, initrd_addr, 0);
+
+	return qemu_fwcfg_setup_kernel(qfw_dev, &kern, &initrd);
 }
 
 static struct cmd_tbl fwcfg_commands[] = {

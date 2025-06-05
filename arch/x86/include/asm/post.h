@@ -31,6 +31,7 @@
 #define POST_DRAM		0x30
 #define POST_LAPIC		0x31
 #define POST_OS_RESUME		0x40
+#define POST_BOOT		0x42
 
 #define POST_RAM_FAILURE	0xea
 #define POST_BIST_FAILURE	0xeb

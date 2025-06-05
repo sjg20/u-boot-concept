@@ -24,6 +24,7 @@
 #include <asm/bootparam.h>
 #include <asm/cpu.h>
 #include <asm/byteorder.h>
+#include <asm/post.h>
 #include <asm/zimage.h>
 #ifdef CONFIG_SYS_COREBOOT
 #include <asm/arch/timestamp.h>
@@ -190,6 +191,16 @@ int efi_boot(ulong setup_base, ulong entry, bool image_64bit)
 	return -EFAULT;
 }
 
+/* IO ports for different exit points */
+#define LINUX_EXIT_PORT 0xf4
+#define FW_EXIT_PORT    0xf5
+
+/* Exit point values */
+#define FW_START    1
+#define LINUX_START_FWCFG 2
+#define LINUX_START_BOOT  3
+#define LINUX_START_PVHBOOT  4
+
 int boot_linux_kernel(ulong setup_base, ulong entry, bool image_64bit)
 {
 	bootm_announce_and_cleanup();
@@ -200,6 +211,8 @@ int boot_linux_kernel(ulong setup_base, ulong entry, bool image_64bit)
 
 	if (IS_ENABLED(CONFIG_EFI_APP))
 		return efi_boot(setup_base, entry, image_64bit);
+
+	post_code(POST_BOOT);
 
 	if (image_64bit) {
 		if (!cpu_has_64bit()) {

@@ -3,6 +3,7 @@
  * Copyright (C) 2015, Bin Meng <bmeng.cn@gmail.com>
  */
 
+#define LOG_DEBUG
 #define LOG_CATEGORY	LOGC_ARCH
 
 #include <efi_loader.h>

@@ -8,6 +8,8 @@
 
 #include <linux/list.h>
 
+struct abuf;
+
 /*
  * List of firmware configuration item selectors. The official source of truth
  * for these is the QEMU source itself; see
@@ -322,11 +324,12 @@ int qemu_cpu_fixup(void);
  * Loads kernel data to 'load_addr', initrd to 'initrd_addr' and kernel command
  * line using qemu fw_cfg interface
  *
- * @load_addr: Load address for kernel
- * @initrd_addr: Load address for ramdisk
+ * @qfw_dev: UCLASS_QFW device
+ * @kern: Kernel load address (size is set up by this function)
+ * @initrd: Initrd load address (size is set up by this function)
  * @return 0 if OK, -ENOENT if no kernel
  */
-int qemu_fwcfg_setup_kernel(struct udevice *qfw_dev, ulong load_addr,
-			    ulong initrd_addr);
+int qemu_fwcfg_setup_kernel(struct udevice *qfw_dev, struct abuf *kern,
+			    struct abuf *initrd);
 
 #endif

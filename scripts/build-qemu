@@ -52,11 +52,17 @@ def parse_args():
                         help='Run UEFI Self-Certification Test (SCT)')
     parser.add_argument('-E', '--use-tianocore', action='store_true',
                         help='Run Tianocore (OVMF) instead of U-Boot')
+    parser.add_argument('-I', '--initrd',
+                        help='Initial ramdisk to run using -initrd')
     parser.add_argument(
         '-k', '--kvm', action='store_true',
         help='Use KVM (Kernel-based Virtual Machine) for acceleration')
+    parser.add_argument('-K', '--kernel',
+                        help='Kernel to run using -kernel')
     parser.add_argument('-o', '--os', metavar='NAME', choices=['ubuntu'],
                         help='Run a specified Operating System')
+    parser.add_argument('-Q', '--use-qboot', action='store_true',
+                        help='Run qboot instead of U-Boot')
     parser.add_argument('-r', '--run', action='store_true',
                         help='Run QEMU with the built/specified image')
     parser.add_argument('-x', '--xpl', action='store_true',
@@ -92,6 +98,7 @@ class BuildQemu:
         self.sctdir = Path(self.helper.get_setting('sct_dir', '~/dev/efi/sct'))
         self.tiano = Path(self.helper.get_setting('tianocore_dir',
                                                   '~/dev/tiano'))
+        self.qboot = Path(self.helper.get_setting('qboot_dir', '~/dev/qboot'))
         self.mnt = Path(self.helper.get_setting('sct_mnt', '/mnt/sct'))
 
         self.bitness = 32 if args.word_32bit else 64
@@ -137,6 +144,12 @@ class BuildQemu:
             if not bios_override.exists():
                 tout.fatal(
                     'Error: Tianocore BIOS specified (-E) but not found at '
+                    f'{bios_override}')
+        elif args.use_qboot:
+            bios_override = Path(self.qboot, 'bios.bin')
+            if not bios_override.exists():
+                tout.fatal(
+                    'Error: qboot BIOS specified (-Q) but not found at '
                     f'{bios_override}')
 
         self.seq_fname = Path(args.sct_seq) if args.sct_seq else None
@@ -287,9 +300,9 @@ class BuildQemu:
         qemu_cmd.extend(self.kvm_params)
         qemu_cmd.extend(['-m', self.mem])
 
-        if not self.args.sct_run:
-            qemu_cmd.extend(['-netdev', 'user,id=net0,hostfwd=tcp::2222-:22',
-                             '-device', 'virtio-net-pci,netdev=net0'])
+        # if not self.args.sct_run:
+        #     qemu_cmd.extend(['-netdev', 'user,id=net0,hostfwd=tcp::2222-:22',
+        #                      '-device', 'virtio-net-pci,netdev=net0'])
 
         # Display and Serial
         # If -e (sct_run) is used, "-display none" is in qemu_extra
@@ -300,6 +313,17 @@ class BuildQemu:
             qemu_cmd.extend(['-display', 'none'])
         if not any(item.startswith('-serial') for item in self.qemu_extra):
             qemu_cmd.extend(['-serial', 'mon:stdio'])
+
+        if self.args.kernel:
+            qemu_cmd.extend(['-kernel', self.args.kernel])
+        if self.args.initrd:
+            qemu_cmd.extend(['-initrd', self.args.initrd])
+
+        if self.args.use_qboot:
+            qemu_cmd.extend([
+                '-append',
+                'console=ttyS0,115200,8n1 '
+                    'root=/dev/disk/by-uuid/bcfdda4a-8249-4f40-9f0f-7c1a76b6cbe8'])
 
         # Add other parameters gathered from options
         qemu_cmd.extend(self.qemu_extra)

@@ -183,6 +183,18 @@ void abuf_init_const(struct abuf *abuf, const void *data, size_t size)
 	abuf_init_set(abuf, (void *)data, size);
 }
 
+#ifndef USE_HOSTCC
+void abuf_init_const_addr(struct abuf *abuf, ulong addr, size_t size)
+{
+	return abuf_init_const(abuf, map_sysmem(addr, size), size);
+}
+
+void abuf_set_addr(struct abuf *abuf, ulong addr)
+{
+	abuf->data = map_sysmem(addr, abuf->size);
+}
+#endif
+
 void abuf_init_move(struct abuf *abuf, void *data, size_t size)
 {
 	abuf_init_set(abuf, data, size);

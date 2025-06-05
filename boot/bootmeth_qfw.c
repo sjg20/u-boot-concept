@@ -8,9 +8,11 @@
 
 #define LOG_CATEGORY UCLASS_BOOTSTD
 
+#include <abuf.h>
 #include <command.h>
 #include <bootdev.h>
 #include <bootflow.h>
+#include <bootm.h>
 #include <bootmeth.h>
 #include <env.h>
 #include <qfw.h>
@@ -31,20 +33,32 @@ static int qfw_check(struct udevice *dev, struct bootflow_iter *iter)
 static int qfw_read_bootflow(struct udevice *dev, struct bootflow *bflow)
 {
 	struct udevice *qfw_dev = dev_get_parent(bflow->dev);
-	ulong load, initrd;
+	struct abuf kern, initrd;
 	int ret;
 
-	load = env_get_hex("kernel_addr_r", 0);
-	initrd = env_get_hex("ramdisk_addr_r", 0);
-	log_debug("setup kernel %s %lx %lx\n", qfw_dev->name, load, initrd);
+	abuf_init_const_addr(&kern, env_get_hex("kernel_addr_r", 0), 0);
+	abuf_init_const_addr(&initrd, env_get_hex("ramdisk_addr_r", 0), 0);
+	log_debug("setup kernel %s %lx %lx\n", qfw_dev->name, abuf_addr(&kern),
+		  abuf_addr(&initrd));
 	bflow->name = strdup("qfw");
 	if (!bflow->name)
 		return log_msg_ret("name", -ENOMEM);
 
-	ret = qemu_fwcfg_setup_kernel(qfw_dev, load, initrd);
+	ret = qemu_fwcfg_setup_kernel(qfw_dev, &kern, &initrd);
 	log_debug("setup kernel result %d\n", ret);
 	if (ret)
 		return log_msg_ret("cmd", -EIO);
+
+	if (!bootflow_img_add(bflow, "qfw-kern",
+			      (enum bootflow_img_t)IH_TYPE_KERNEL,
+			      abuf_addr(&kern), kern.size))
+		return log_msg_ret("qke", -ENOMEM);
+
+	if (initrd.size &&
+	    !bootflow_img_add(bflow, "qfw-initrd",
+			      (enum bootflow_img_t)IH_TYPE_RAMDISK,
+			      abuf_addr(&initrd), initrd.size))
+		return log_msg_ret("qrd", -ENOMEM);
 
 	bflow->state = BOOTFLOWST_READY;
 
@@ -60,13 +74,23 @@ static int qfw_read_file(struct udevice *dev, struct bootflow *bflow,
 
 static int qfw_boot(struct udevice *dev, struct bootflow *bflow)
 {
+	const struct bootflow_img *kern, *initrd;
 	int ret;
+
+	kern = bootflow_img_find(bflow, (enum bootflow_img_t)IH_TYPE_KERNEL);
+	initrd = bootflow_img_find(bflow, (enum bootflow_img_t)IH_TYPE_RAMDISK);
+	if (!kern)
+		return log_msg_ret("qbk", -ENOENT);
 
 	ret = run_command("booti ${kernel_addr_r} ${ramdisk_addr_r}:${filesize} ${fdtcontroladdr}",
 			  0);
 	if (ret) {
 		ret = run_command("bootz ${kernel_addr_r} ${ramdisk_addr_r}:${filesize} "
 				  "${fdtcontroladdr}", 0);
+	}
+	if (ret) {
+		ret = zboot_run_args(kern->addr, kern->size,
+			initrd->addr, initrd->size, 0, NULL);
 	}
 
 	return ret ? -EIO : 0;
