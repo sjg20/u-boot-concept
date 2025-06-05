@@ -169,12 +169,6 @@ config OF_PASSAGE
 
 endchoice
 
-config OF_INITIAL_DTB_READONLY
-	bool "Initial DTB for DT control is read-only"
-	help
-	  If initial DTB for DT control is read-only (e.g. points to
-	  memory-mapped flash memory), then set this option.
-
 config OF_BLOBLIST
 	bool "DTB is provided by a bloblist"
 	help
