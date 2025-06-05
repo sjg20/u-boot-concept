@@ -42,7 +42,7 @@ config OF_BOARD_FIXUP
 	  In certain circumstances it is necessary to be able to modify
 	  U-Boot's device tree (e.g. to delete device from it). This option
 	  make the Device Tree writeable and provides a board-specific
-	  "board_fix_fdt" callback (called during pre-relocation time), which
+	  EVT_FT_FIXUP_F event spy (called during pre-relocation time), which
 	  enables the board initialization to modifiy the Device Tree. The
 	  modified copy is subsequently used by U-Boot after relocation.
 
