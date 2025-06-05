@@ -4,6 +4,7 @@
  */
 
 #include <dm.h>
+#include <event.h>
 #include <fdt_support.h>
 #include <init.h>
 #include <ram.h>
@@ -416,8 +417,10 @@ void __fixup_fdt(void *fdt)
 	}
 }
 
-int board_fix_fdt(void *fdt)
+static int octeon_fix_fdt(void *ctx, struct event *event)
 {
+	void *fdt = oftree_lookup_fdt(event->data.ft_fixup_f.tree);
+
 	__fixup_fdt(fdt);
 	__fixup_xcv(fdt);
 
@@ -426,6 +429,7 @@ int board_fix_fdt(void *fdt)
 
 	return 0;
 }
+EVENT_SPY_FULL(EVT_FT_FIXUP_F, octeon_fix_fdt);
 
 /*
  * Here is the description of the parameters that are passed to QLM

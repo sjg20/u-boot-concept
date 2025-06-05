@@ -7,6 +7,7 @@
 
 #include <dm.h>
 #include <env.h>
+#include <event.h>
 #include <fdtdec.h>
 #include <fdt_support.h>
 #include <i2c_eeprom.h>
@@ -212,11 +213,14 @@ static int configure_phy_reset_gpios(void *blob)
 }
 
 #if defined(CONFIG_OF_BOARD_FIXUP)
-int board_fix_fdt(void *blob)
+static int variscite_fix_fdt(void *ctx, struct event *event)
 {
+	void *blob = oftree_lookup_fdt(event->data.ft_fixup_f.tree);
+
 	/* Fix U-Boot device tree: */
 	return configure_phy_reset_gpios(blob);
 }
+EVENT_SPY_FULL(EVT_FT_FIXUP_F, variscite_fix_fdt);
 #endif /* CONFIG_OF_BOARD_FIXUP */
 
 #if defined(CONFIG_OF_BOARD_SETUP)

@@ -650,9 +650,12 @@ static int reloc_and_fix_fdt(void)
 		}
 
 		if (IS_ENABLED(CONFIG_OF_BOARD_FIXUP)) {
+			struct event_ft_fixup_f fixup;
 			int ret;
 
-			ret = board_fix_fdt((void *)gd->fdt_blob);
+			fixup.tree = oftree_from_fdt((void *)gd->fdt_blob);
+			ret = event_notify(EVT_FT_FIXUP_F, &fixup,
+					   sizeof(fixup));
 			if (ret)
 				return ret;
 		}

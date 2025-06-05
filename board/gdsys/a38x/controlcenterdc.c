@@ -247,8 +247,9 @@ int board_late_init(void)
 	return 0;
 }
 
-int board_fix_fdt(void *rw_fdt_blob)
+static int gdsys_fix_fdt(void *ctx, struct event *event)
 {
+	void *blob = oftree_lookup_fdt(event->data.ft_fixup_f.tree);
 	struct udevice *bus = NULL;
 	uint k;
 	char name[64];
@@ -266,11 +267,12 @@ int board_fix_fdt(void *rw_fdt_blob)
 			 "/soc/internal-regs/i2c@11000/pca9698@%02x", k);
 
 		if (!dm_i2c_simple_probe(bus, k))
-			fdt_disable_by_ofname(rw_fdt_blob, name);
+			fdt_disable_by_ofname(blob, name);
 	}
 
 	return 0;
 }
+EVENT_SPY_FULL(EVT_FT_FIXUP_F, gdsys_fix_fdt);
 
 #ifndef CONFIG_XPL_BUILD
 static int last_stage_init(void)
