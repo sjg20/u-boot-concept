@@ -105,14 +105,31 @@ bool qfw_file_iter_end(struct fw_cfg_file_iter *iter)
 	return iter->entry == iter->end;
 }
 
+/**
+ * qfw_read_size() - Read the size of an entry
+ *
+ * @sel: Selector value, e.g. FW_CFG_SETUP_SIZE, FW_CFG_CMDLINE_SIZE
+ * Return: Size of the entry
+ */
+static ulong qfw_read_size(struct udevice *qfw_dev, enum fw_cfg_selector sel)
+{
+	u32 size = 0;
+
+	qfw_read_entry(qfw_dev, sel, 4, &size);
+
+	return size;
+}
+
 int qemu_fwcfg_setup_kernel(struct udevice *qfw_dev, ulong load_addr,
 			    ulong initrd_addr)
 {
 	u32 setup_size, kernel_size, cmdline_size, initrd_size;
 	char *ptr;
 
-	qfw_read_entry(qfw_dev, FW_CFG_SETUP_SIZE, 4, &setup_size);
-	qfw_read_entry(qfw_dev, FW_CFG_KERNEL_SIZE, 4, &kernel_size);
+	setup_size = qfw_read_size(qfw_dev, FW_CFG_SETUP_SIZE);
+	kernel_size = qfw_read_size(qfw_dev, FW_CFG_KERNEL_SIZE);
+	initrd_size = qfw_read_size(qfw_dev, FW_CFG_INITRD_SIZE);
+	cmdline_size = qfw_read_size(qfw_dev, FW_CFG_CMDLINE_SIZE);
 
 	if (!kernel_size) {
 		printf("fatal: no kernel available\n");
@@ -131,7 +148,6 @@ int qemu_fwcfg_setup_kernel(struct udevice *qfw_dev, ulong load_addr,
 	env_set_hex("filesize", le32_to_cpu(kernel_size));
 
 	ptr = map_sysmem(initrd_addr, 0);
-	qfw_read_entry(qfw_dev, FW_CFG_INITRD_SIZE, 4, &initrd_size);
 	if (!initrd_size) {
 		printf("warning: no initrd available\n");
 	} else {
@@ -141,7 +157,6 @@ int qemu_fwcfg_setup_kernel(struct udevice *qfw_dev, ulong load_addr,
 		env_set_hex("filesize", le32_to_cpu(initrd_size));
 	}
 
-	qfw_read_entry(qfw_dev, FW_CFG_CMDLINE_SIZE, 4, &cmdline_size);
 	if (cmdline_size) {
 		qfw_read_entry(qfw_dev, FW_CFG_CMDLINE_DATA,
 			       le32_to_cpu(cmdline_size), ptr);
