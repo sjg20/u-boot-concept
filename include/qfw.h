@@ -8,6 +8,8 @@
 
 #include <linux/list.h>
 
+struct abuf;
+
 /*
  * List of firmware configuration item selectors. The official source of truth
  * for these is the QEMU source itself; see
@@ -316,12 +318,33 @@ bool qfw_file_iter_end(struct fw_cfg_file_iter *iter);
  */
 int qemu_cpu_fixup(void);
 
+/**
+ * qemu_fwcfg_read_info() - See if QEMU has provided kernel, etc.
+ *
+ * Read info about the kernel and cmdline
+ *
+ * @qfw_dev: UCLASS_QFW device
+ * @setupp: Returns the size of the setup area on succes
+ * @kernp: Returns kernel size on success
+ * @initrd: Returns initrd size on success
+ * @cmdline: Set to the cmdline in the image (allocated by this function, must
+ *	be freed by the caller)
+ * @setup_addrp: Address for the setup block, as requested by QEMU
+ *
+ * Return 0 on success, -ENOENT if there is no kernel provided, -ENOMEM if there
+ * was no memory for the cmdline
+ */
+int qemu_fwcfg_read_info(struct udevice *qfw_dev, ulong *setupp, ulong *kernp,
+			 ulong *initrdp, struct abuf *cmdline,
+			 ulong *setup_addrp);
+
 /*
  * qemu_fwcfg_setup_kernel() - Prepare the kernel for zboot
  *
  * Loads kernel data to 'load_addr', initrd to 'initrd_addr' and kernel command
  * line using qemu fw_cfg interface
  *
+ * @qfw_dev: UCLASS_QFW device
  * @load_addr: Load address for kernel
  * @initrd_addr: Load address for ramdisk
  * @return 0 if OK, -ENOENT if no kernel
