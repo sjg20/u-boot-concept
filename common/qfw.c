@@ -4,6 +4,7 @@
  * (C) Copyright 2021 Asherah Connor <ashe@kivikakk.ee>
  */
 
+#include <abuf.h>
 #include <dm.h>
 #include <env.h>
 #include <mapmem.h>
@@ -120,20 +121,42 @@ static ulong qfw_read_size(struct udevice *qfw_dev, enum fw_cfg_selector sel)
 	return le32_to_cpu(size);
 }
 
+int qemu_fwcfg_read_info(struct udevice *qfw_dev, ulong *setupp, ulong *kernp,
+			 ulong *initrdp, struct abuf *cmdline,
+			 ulong *setup_addrp)
+{
+	uint cmdline_size;
+
+	*setupp = qfw_read_size(qfw_dev, FW_CFG_SETUP_SIZE);
+	*kernp = qfw_read_size(qfw_dev, FW_CFG_KERNEL_SIZE);
+	*initrdp = qfw_read_size(qfw_dev, FW_CFG_INITRD_SIZE);
+	cmdline_size = qfw_read_size(qfw_dev, FW_CFG_CMDLINE_SIZE);
+	if (!*kernp)
+		return -ENOENT;
+
+	*setup_addrp = qfw_read_size(qfw_dev, FW_CFG_SETUP_ADDR);
+
+	if (!abuf_init_size(cmdline, cmdline_size))
+		return log_msg_ret("qri", -ENOMEM);
+	qfw_read_entry(qfw_dev, FW_CFG_CMDLINE_DATA, cmdline_size,
+		       cmdline->data);
+
+	return 0;
+}
+
 int qemu_fwcfg_setup_kernel(struct udevice *qfw_dev, ulong load_addr,
 			    ulong initrd_addr)
 {
-	ulong setup_size, kernel_size, initrd_size, cmdline_size;
+	ulong setup_size, kernel_size, initrd_size, setup_addr;
+	struct abuf cmdline;
 	char *ptr;
+	int ret;
 
-	setup_size = qfw_read_size(qfw_dev, FW_CFG_SETUP_SIZE);
-	kernel_size = qfw_read_size(qfw_dev, FW_CFG_KERNEL_SIZE);
-	initrd_size = qfw_read_size(qfw_dev, FW_CFG_INITRD_SIZE);
-	cmdline_size = qfw_read_size(qfw_dev, FW_CFG_CMDLINE_SIZE);
-
-	if (!kernel_size) {
+	ret = qemu_fwcfg_read_info(qfw_dev, &setup_size, &initrd_size,
+				   &kernel_size, &cmdline, &setup_addr);
+	if (ret) {
 		printf("fatal: no kernel available\n");
-		return -ENOENT;
+		return log_msg_ret("qsk", ret);
 	}
 
 	ptr = map_sysmem(load_addr, 0);
@@ -154,17 +177,17 @@ int qemu_fwcfg_setup_kernel(struct udevice *qfw_dev, ulong load_addr,
 		env_set_hex("filesize", initrd_size);
 	}
 
-	if (cmdline_size) {
-		qfw_read_entry(qfw_dev, FW_CFG_CMDLINE_DATA, cmdline_size, ptr);
+	if (cmdline.data) {
 		/*
 		 * if kernel cmdline only contains '\0', (e.g. no -append
 		 * when invoking qemu), do not update bootargs
 		 */
 		if (*ptr) {
-			if (env_set("bootargs", ptr) < 0)
+			if (env_set("bootargs", cmdline.data) < 0)
 				printf("warning: unable to change bootargs\n");
 		}
 	}
+	abuf_uninit(&cmdline);
 
 	printf("loading kernel to address %lx size %lx", load_addr,
 	       kernel_size);
