@@ -13,7 +13,7 @@
  * for these is the QEMU source itself; see
  * https://github.com/qemu/qemu/blob/master/hw/nvram/fw_cfg.c
  */
-enum {
+enum fw_cfg_selector {
 	FW_CFG_SIGNATURE	= 0x00,
 	FW_CFG_ID		= 0x01,
 	FW_CFG_UUID		= 0x02,
