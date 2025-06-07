@@ -617,7 +617,7 @@ coreboot test.py:
     - export SRC="$(pwd)"
     - export OUT="${SRC}/build/${BOARD}"
     - export PATH=$PATH:~/bin
-    - export PATH=$PATH:/vid/software/devel/ubtest/u-boot-test-hooks/bin
+    - export PATH=$PATH:test/hooks/bin
 
     # Load it on the device
     - ret=0
@@ -625,6 +625,10 @@ coreboot test.py:
     - export strategy="-s uboot -e off"
     - export USE_LABGRID_SJG=1
     # export verbose="-v"
+    - export vars=
+    - if [[ -n "${ADJUST}" ]]; then
+        vars="-V build-adjust ${ADJUST}";
+      fi
     - ${SRC}/test/py/test.py --role ${ROLE} --build-dir "${OUT}"
         --capture=tee-sys -k "not bootstd ${TEST_PY_TEST_SPEC}" || ret=$?
     - U_BOOT_BOARD_IDENTITY="${ROLE}" u-boot-test-release || true
@@ -739,6 +743,7 @@ pine64:
 rpi4:
   variables:
     ROLE: rpi4
+    ADJUST: SPI:CMD_SPI:TPM:DM_SPI:SOFT_SPI:CMD_TPM:TPM2_TIS_SPI
   <<: *lab_dfn
 
 rpi0:
