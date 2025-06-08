@@ -144,12 +144,25 @@ int qemu_fwcfg_read_info(struct udevice *qfw_dev, ulong *setupp, ulong *kernp,
 	return 0;
 }
 
+void qemu_fwcfg_read_files(struct udevice *qfw_dev, const struct abuf *setup,
+			   const struct abuf *kern, const struct abuf *initrd)
+{
+	if (setup->size) {
+		qfw_read_entry(qfw_dev, FW_CFG_SETUP_DATA, setup->size,
+			       setup->data);
+	}
+	qfw_read_entry(qfw_dev, FW_CFG_KERNEL_DATA, kern->size, kern->data);
+	if (initrd->size) {
+		qfw_read_entry(qfw_dev, FW_CFG_INITRD_DATA, initrd->size,
+			       initrd->data);
+	}
+}
+
 int qemu_fwcfg_setup_kernel(struct udevice *qfw_dev, ulong load_addr,
 			    ulong initrd_addr)
 {
 	ulong setup_size, kernel_size, initrd_size, setup_addr;
-	struct abuf cmdline;
-	char *ptr;
+	struct abuf cmdline, setup, kern, initrd;
 	int ret;
 
 	ret = qemu_fwcfg_read_info(qfw_dev, &setup_size, &initrd_size,
@@ -159,40 +172,37 @@ int qemu_fwcfg_setup_kernel(struct udevice *qfw_dev, ulong load_addr,
 		return log_msg_ret("qsk", ret);
 	}
 
-	ptr = map_sysmem(load_addr, 0);
-	if (setup_size) {
-		qfw_read_entry(qfw_dev, FW_CFG_SETUP_DATA, setup_size, ptr);
-		ptr += setup_size;
-	}
+	/* put the kernel after any setup image */
+	abuf_init_const_addr(&setup, load_addr, 0);
+	abuf_init_const_addr(&kern, load_addr + setup_size, 0);
 
-	qfw_read_entry(qfw_dev, FW_CFG_KERNEL_DATA, kernel_size, ptr);
-	env_set_hex("filesize", kernel_size);
+	abuf_init_const_addr(&initrd, initrd_addr, 0);
+	qemu_fwcfg_read_files(qfw_dev, &setup, &kern, &initrd);
 
-	ptr = map_sysmem(initrd_addr, 0);
-	if (!initrd_size) {
+	env_set_hex("filesize", kern.size);
+
+	if (!initrd_size)
 		printf("warning: no initrd available\n");
-	} else {
-		qfw_read_entry(qfw_dev, FW_CFG_INITRD_DATA, initrd_size, ptr);
-		ptr += initrd_size;
+	else
 		env_set_hex("filesize", initrd_size);
-	}
 
 	if (cmdline.data) {
 		/*
 		 * if kernel cmdline only contains '\0', (e.g. no -append
 		 * when invoking qemu), do not update bootargs
 		 */
-		if (*ptr) {
+		if (*(char *)cmdline.data) {
 			if (env_set("bootargs", cmdline.data) < 0)
 				printf("warning: unable to change bootargs\n");
 		}
 	}
 	abuf_uninit(&cmdline);
 
-	printf("loading kernel to address %lx size %lx", load_addr,
-	       kernel_size);
+	printf("loading kernel to address %lx size %zx", abuf_addr(&kern),
+	       kern.size);
 	if (initrd_size)
-		printf(" initrd %lx size %lx\n", initrd_addr, initrd_size);
+		printf(" initrd %lx size %lx\n", abuf_addr(&initrd),
+		       initrd_size);
 	else
 		printf("\n");
 
