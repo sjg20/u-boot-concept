@@ -13,8 +13,8 @@ provided by the QEMU `-kernel` argument, the initial ramdisk provided by
 memory ready for booting.
 
 When the bootflow is booted, the bootmeth tries the `booti` command first, then
-falls back to the `bootz` command. U-Boot's 'control' devicetree is passed
-through to the kernel.
+falls back to the `bootz` command, then `zboot`. U-Boot's 'control' devicetree
+is passed through to the kernel on non-x86 devices.
 
 The `bootflow read` command is supported, so it is possible to read the files
 and then check the kernel command-line before using `bootflow boot` to boot.
