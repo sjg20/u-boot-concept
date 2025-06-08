@@ -52,9 +52,13 @@ def parse_args():
                         help='Run UEFI Self-Certification Test (SCT)')
     parser.add_argument('-E', '--use-tianocore', action='store_true',
                         help='Run Tianocore (OVMF) instead of U-Boot')
+    parser.add_argument('-I', '--initrd',
+                        help='Initial ramdisk to run using -initrd')
     parser.add_argument(
         '-k', '--kvm', action='store_true',
         help='Use KVM (Kernel-based Virtual Machine) for acceleration')
+    parser.add_argument('-K', '--kernel',
+                        help='Kernel to run using -kernel')
     parser.add_argument('-o', '--os', metavar='NAME', choices=['ubuntu'],
                         help='Run a specified Operating System')
     parser.add_argument('-r', '--run', action='store_true',
@@ -300,6 +304,11 @@ class BuildQemu:
             qemu_cmd.extend(['-display', 'none'])
         if not any(item.startswith('-serial') for item in self.qemu_extra):
             qemu_cmd.extend(['-serial', 'mon:stdio'])
+
+        if self.args.kernel:
+            qemu_cmd.extend(['-kernel', self.args.kernel])
+        if self.args.initrd:
+            qemu_cmd.extend(['-initrd', self.args.initrd])
 
         # Add other parameters gathered from options
         qemu_cmd.extend(self.qemu_extra)
