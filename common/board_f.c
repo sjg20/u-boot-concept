@@ -95,7 +95,10 @@ __weak void board_add_ram_info(int use_default)
 
 static int init_baud_rate(void)
 {
+#ifdef CONFIG_SERIAL
 	gd->baudrate = env_get_ulong("baudrate", 10, CONFIG_BAUDRATE);
+#endif
+
 	return 0;
 }
 

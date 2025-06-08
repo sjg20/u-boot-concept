@@ -1413,7 +1413,7 @@ static int parse_pxefile_top(struct pxe_context *ctx, char *p, unsigned long bas
 		err = 0;
 		switch (t.type) {
 		case T_MENU:
-			cfg->prompt = 1;
+			// cfg->prompt = 1;
 			err = parse_menu(ctx, &p, cfg,
 					 base + ALIGN(strlen(b) + 1, 4),
 					 nest_level);
@@ -1460,6 +1460,7 @@ static int parse_pxefile_top(struct pxe_context *ctx, char *p, unsigned long bas
 
 		case T_PROMPT:
 			err = parse_integer(&p, &cfg->prompt);
+			cfg->prompt = 0;
 			// Do not fail if prompt configuration is undefined
 			if (err <  0)
 				eol_or_eof(&p);
@@ -1732,6 +1733,7 @@ struct pxe_menu *pxe_prepare(struct pxe_context *ctx, ulong pxefile_addr_r,
 
 	if (prompt)
 		cfg->prompt = prompt;
+	cfg->prompt = 0;
 
 	return cfg;
 }
