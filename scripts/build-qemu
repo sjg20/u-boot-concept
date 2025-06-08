@@ -76,6 +76,12 @@ def parse_args():
     parser.add_argument(
         '-S', '--sct-seq',
         help='SCT sequence-file to be written into the SCT image if -e')
+    parser.add_argument(
+        '-t', '--root',
+        help='Pass the given root device to linux via root=xxx')
+    parser.add_argument(
+        '-U', '--uuid',
+        help='Pass the given root device to linux via root=/dev/disk/by-uuid/')
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='Show executed commands')
     parser.add_argument('-w', '--word-32bit', action='store_true',
@@ -316,6 +322,10 @@ class BuildQemu:
 
         if self.args.enable_console:
             cmdline.append('console=ttyS0,115200,8n1')
+        if self.args.root:
+            cmdline.append(f'root={self.args.root}')
+        if self.args.uuid:
+            cmdline.append(f'root=/dev/disk/by-uuid/{self.args.uuid}')
 
         if cmdline:
             qemu_cmd.extend(['-append'] + [' '.join(cmdline)])
