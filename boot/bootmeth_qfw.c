@@ -141,13 +141,36 @@ static int qfw_read_all(struct udevice *dev, struct bootflow *bflow)
 
 static int qfw_boot(struct udevice *dev, struct bootflow *bflow)
 {
+	const struct bootflow_img *simg, *kimg, *rimg;
+	char conf_fdt[20], conf_ramdisk[40], addr_img_str[20];
+	struct bootm_info bmi;
 	int ret;
+
+	/* read the files if not already done */
+	ret = qfw_read_files(dev, bflow, false, &simg, &kimg, &rimg);
+	if (!kimg)
+		return log_msg_ret("qkf", -EINVAL);
+
+	ret = booti_run(&bmi);
+	bootm_init(&bmi);
+	snprintf(conf_fdt, sizeof(conf_fdt), "%lx",
+		 (ulong)map_to_sysmem(gd->fdt_blob));
+	snprintf(addr_img_str, sizeof(addr_img_str), "%lx", kimg->addr);
+	bmi.addr_img = addr_img_str;
+	snprintf(conf_ramdisk, sizeof(conf_ramdisk), "%lx:%lx", rimg->addr,
+		 rimg->size);
+	bmi.conf_ramdisk = conf_ramdisk;
 
 	ret = run_command("booti ${kernel_addr_r} ${ramdisk_addr_r}:${filesize} ${fdtcontroladdr}",
 			  0);
 	if (ret) {
 		ret = run_command("bootz ${kernel_addr_r} ${ramdisk_addr_r}:${filesize} "
 				  "${fdtcontroladdr}", 0);
+	}
+	if (ret && simg) {
+		ret = zboot_run_args(kimg->addr, kimg->size,
+				     rimg->addr, rimg->size, simg->addr,
+				     *bflow->cmdline ? bflow->cmdline : NULL);
 	}
 
 	return ret ? -EIO : 0;
