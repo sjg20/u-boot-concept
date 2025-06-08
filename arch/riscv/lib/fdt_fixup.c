@@ -10,6 +10,7 @@
 #include <log.h>
 #include <mapmem.h>
 #include <asm/global_data.h>
+#include <dm/ofnode.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -118,8 +119,9 @@ int riscv_board_reserved_mem_fixup(void *fdt)
 }
 
 #ifdef CONFIG_OF_BOARD_FIXUP
-int board_fix_fdt(void *fdt)
+static int riscv_fix_fdt(void *ctx, struct event *event)
 {
+	void *fdt = oftree_lookup_fdt(event->data.ft_fixup_f.tree);
 	int err;
 
 	err = riscv_board_reserved_mem_fixup(fdt);
@@ -130,6 +132,7 @@ int board_fix_fdt(void *fdt)
 
 	return 0;
 }
+EVENT_SPY_FULL(EVT_FT_FIXUP_F, riscv_fix_fdt);
 #endif
 
 int arch_fixup_fdt(void *blob)

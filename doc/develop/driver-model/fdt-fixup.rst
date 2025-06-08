@@ -61,14 +61,27 @@ Implementation
 --------------
 
 To take advantage of the pre-relocation device tree manipulation mechanism,
-boards have to implement the function board_fix_fdt, which has the following
-signature:
+boards have to implement a spy for the EVT_FT_FIXUP_F:
 
 .. code-block:: c
 
-   int board_fix_fdt (void *rw_fdt_blob)
+   #include <event.h>
 
-The passed-in void pointer is a writeable pointer to the device tree, which can
+   static int myboard_fix_fdt(void *ctx, struct event *event)
+   {
+      void *blob = oftree_lookup_fdt(event->data.ft_fixup_f.tree);
+
+      // Modify blob here
+
+      return 0;
+   }
+   EVENT_SPY_FULL(EVT_FT_FIXUP_F, myboard_fix_fdt);
+
+For this to build successfuly, you will need to select or imply EVENT in
+Kconfig. It may already be done for your board due to other features.
+
+The event provides an oftree, converted to a writeable pointer to the device
+tree, in the declaration of `blob` above. This pointer can
 be used to manipulate the device tree using e.g. functions from
 include/fdt_support.h. The return value should either be 0 in case of
 successful execution of the device tree manipulation or something else for a
@@ -84,7 +97,7 @@ to be called::
 
 +----------------------------------------------------------+
 | WARNING: The actual manipulation of the device tree has  |
-| to be the _last_ set of operations in board_fix_fdt!     |
+| to be the _last_ set of operations in myboard_fix_fdt!   |
 | Since the pre-relocation driver model does not adapt to  |
 | changes made to the device tree either, its references   |
 | into the device tree will be invalid after manipulating  |
@@ -97,7 +110,7 @@ following:
 
 .. code-block:: c
 
-	int board_fix_fdt(void *rw_fdt_blob)
+	static int myboard_fix_fdt(void *ctx, struct event *event)
 	{
 		/*
 		 * Collect information about device's hardware and store
@@ -118,7 +131,7 @@ Example
 -------
 
 The controlcenterdc board (board/gdsys/a38x/controlcenterdc.c) features a
-board_fix_fdt function, in which six GPIO expanders (which might be present or
+EVT_FT_FIXUP_F function, in which six GPIO expanders (which might be present or
 not, since they are on daughter boards) on a I2C bus are queried for, and
 subsequently deactivated in the device tree if they are not present.
 
@@ -128,5 +141,5 @@ it is safe to call it after the tree has already been manipulated.
 Work to be done
 ---------------
 
-* The application of device tree overlay should be possible in board_fixup_fdt,
-  but has not been tested at this stage.
+* The application of device tree overlay should be possible in the fixup
+  function, but has not been tested at this stage.

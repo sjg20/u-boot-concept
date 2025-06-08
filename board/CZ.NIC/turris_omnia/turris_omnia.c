@@ -9,6 +9,7 @@
 
 #include <config.h>
 #include <env.h>
+#include <event.h>
 #include <i2c.h>
 #include <init.h>
 #include <log.h>
@@ -1241,8 +1242,10 @@ static void fixup_atsha_node(void *blob)
 #endif
 
 #if IS_ENABLED(CONFIG_OF_BOARD_FIXUP)
-int board_fix_fdt(void *blob)
+static int turris_omnia_fix_fdt(void *ctx, struct event *event)
 {
+	void *blob = oftree_lookup_fdt(event->data.ft_fixup_f.tree);
+
 	if (omnia_mcu_has_feature(FEAT_PERIPH_MCU)) {
 		fixup_mcu_gpio_in_pcie_nodes(blob);
 		fixup_mcu_gpio_in_phy_wan_node(blob);
@@ -1255,6 +1258,7 @@ int board_fix_fdt(void *blob)
 
 	return 0;
 }
+EVENT_SPY_FULL(EVT_FT_FIXUP_F, turris_omnia_fix_fdt);
 #endif
 
 int board_init(void)

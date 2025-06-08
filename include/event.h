@@ -134,6 +134,24 @@ enum event_t {
 	EVT_FPGA_LOAD,
 
 	/**
+	 * @EVT_FT_FIXUP_F:
+	 * Triggered early in U-Boot after the devicetree has been moved to
+	 * its new post-relocation location. This event can be used to update
+	 * the devicetree before it is used (post-relocation) by driver model,
+	 * etc.
+	 *
+	 * The amount of space available for new nodes and properties is
+	 * defined by CONFIG_SYS_FDT_PAD
+	 *
+	 * If an error encountered while updating, -EINVAL should be returned,
+	 * or -ENOSPC if the event spy runs out of space.
+	 *
+	 * The parameter is of type struct event_ft_fixup which contains the
+	 * address of the device-tree to fix up.
+	 */
+	EVT_FT_FIXUP_F,
+
+	/**
 	 * @EVT_FT_FIXUP:
 	 * This event is triggered during device-tree fix up after all
 	 * other device-tree fixups have been executed.
@@ -225,6 +243,15 @@ union event_data {
 		ulong addr;
 		ulong size;
 	} os_load;
+
+	/**
+	 * struct event_ft_fixup_f - FDT fixup before relocation
+	 *
+	 * @tree: tree to update
+	 */
+	struct event_ft_fixup_f {
+		oftree tree;
+	} ft_fixup_f;
 };
 
 /**

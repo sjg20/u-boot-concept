@@ -640,13 +640,24 @@ static int init_post(void)
 }
 #endif
 
-static int reloc_fdt(void)
+static int reloc_and_fix_fdt(void)
 {
 	if (!IS_ENABLED(CONFIG_OF_EMBED)) {
 		if (gd->boardf->new_fdt) {
 			memcpy(gd->boardf->new_fdt, gd->fdt_blob,
 			       fdt_totalsize(gd->fdt_blob));
 			gd->fdt_blob = gd->boardf->new_fdt;
+		}
+
+		if (IS_ENABLED(CONFIG_OF_BOARD_FIXUP)) {
+			struct event_ft_fixup_f fixup;
+			int ret;
+
+			fixup.tree = oftree_from_fdt((void *)gd->fdt_blob);
+			ret = event_notify(EVT_FT_FIXUP_F, &fixup,
+					   sizeof(fixup));
+			if (ret)
+				return ret;
 		}
 	}
 
@@ -728,13 +739,6 @@ static int setup_reloc(void)
 
 	return 0;
 }
-
-#if CONFIG_IS_ENABLED(OF_BOARD_FIXUP)
-static int fix_fdt(void)
-{
-	return board_fix_fdt((void *)gd->fdt_blob);
-}
-#endif
 
 /* ARM calls relocate_code from its crt0.S */
 #if !defined(CONFIG_ARM) && !defined(CONFIG_SANDBOX)
@@ -947,10 +951,6 @@ static void initcall_run_f(void)
 	 *  - board info struct
 	 */
 	INITCALL(setup_dest_addr);
-#if CONFIG_IS_ENABLED(OF_BOARD_FIXUP) && \
-    !CONFIG_IS_ENABLED(OF_INITIAL_DTB_READONLY)
-	INITCALL(fix_fdt);
-#endif
 #ifdef CFG_PRAM
 	INITCALL(reserve_pram);
 #endif
@@ -964,11 +964,6 @@ static void initcall_run_f(void)
 	INITCALL(reserve_board);
 	INITCALL(reserve_global_data);
 	INITCALL(reserve_fdt);
-#if CONFIG_IS_ENABLED(OF_BOARD_FIXUP) && \
-    CONFIG_IS_ENABLED(OF_INITIAL_DTB_READONLY)
-	INITCALL(reloc_fdt);
-	INITCALL(fix_fdt);
-#endif
 	INITCALL(reserve_bootstage);
 	INITCALL(reserve_bloblist);
 	INITCALL(reserve_arch);
@@ -979,10 +974,7 @@ static void initcall_run_f(void)
 	INITCALL(setup_bdinfo);
 	INITCALL(display_new_sp);
 	WATCHDOG_RESET();
-#if !CONFIG_IS_ENABLED(OF_BOARD_FIXUP) || \
-    !CONFIG_IS_ENABLED(INITIAL_DTB_READONLY)
-	INITCALL(reloc_fdt);
-#endif
+	INITCALL(reloc_and_fix_fdt);
 	INITCALL(reloc_bootstage);
 	INITCALL(reloc_bloblist);
 	INITCALL(setup_reloc);
