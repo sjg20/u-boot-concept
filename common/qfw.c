@@ -159,6 +159,21 @@ static int qemu_fwcfg_read_info(struct udevice *qfw_dev, ulong *setupp,
 	return 0;
 }
 
+int qemu_fwcfg_calc_info(struct udevice *qfw_dev, struct abuf *setup,
+			 struct abuf *kern, struct abuf *initrd,
+			 struct abuf *cmdline)
+{
+	ulong setup_size, kernel_size, initrd_size;
+	struct abuf cmdline;
+	char *ptr;
+	int ret;
+
+	ret = qemu_fwcfg_read_info(qfw_dev, &setup_size, &initrd_size,
+				   &kernel_size, &cmdline);
+
+	return 0;
+}
+
 int qemu_fwcfg_setup_kernel(struct udevice *qfw_dev, struct abuf *kern,
 			    struct abuf *initrd)
 {

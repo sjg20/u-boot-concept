@@ -69,6 +69,9 @@ static int qfw_read_file(struct udevice *dev, struct bootflow *bflow,
 			 const char *file_path, ulong addr,
 			 enum bootflow_img_t type, ulong *sizep)
 {
+	int qemu_fwcfg_setup_kernel(struct udevice *qfw_dev, struct abuf *kern,
+			    struct abuf *initrd)
+
 	return -ENOSYS;
 }
 
