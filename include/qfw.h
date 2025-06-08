@@ -338,6 +338,20 @@ int qemu_fwcfg_read_info(struct udevice *qfw_dev, ulong *setupp, ulong *kernp,
 			 ulong *initrdp, struct abuf *cmdline,
 			 ulong *setup_addrp);
 
+/**
+ * qemu_fwcfg_read_files() - Read files from a qfw
+ *
+ * Reads kernel and optional setup/initrd images. For each image, the abuf
+ * controls how many bytes are read and the address into which they are read
+ *
+ * @qfw_dev: UCLASS_QFW device
+ * @setup: Buffer into which to read setup (skipped if setup->size is 0)
+ * @kern: Buffer into which to read kernel
+ * @initrd: Buffer into which to read initrd (skipped if initrd->size is 0)
+ */
+void qemu_fwcfg_read_files(struct udevice *qfw_dev, const struct abuf *setup,
+			   const struct abuf *kern, const struct abuf *initrd);
+
 /*
  * qemu_fwcfg_setup_kernel() - Prepare the kernel for zboot
  *
