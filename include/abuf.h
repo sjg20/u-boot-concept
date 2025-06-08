@@ -203,6 +203,18 @@ void abuf_init_set(struct abuf *abuf, void *data, size_t size);
 void abuf_init_const(struct abuf *abuf, const void *data, size_t size);
 
 /**
+ * abuf_init_const_addr() - Set up a new buffer at a given address
+ *
+ * This is similar to abuf_init_const() except that it takes an address instead
+ * of a pointer. Note that the abuf is unallocated.
+ *
+ * @abuf: abuf to set up
+ * @addr: Address to use
+ * @size: Size of buffer
+ */
+void abuf_init_const_addr(struct abuf *abuf, ulong addr, size_t size);
+
+/**
  * abuf_init_size() - Set up an allocated abuf
  *
  * Init a new abuf and allocate its size.
