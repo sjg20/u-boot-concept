@@ -44,6 +44,8 @@ def parse_args():
                         help='Select architecture (arm, x86) Default: arm')
     parser.add_argument('-B', '--no-build', action='store_true',
                         help="Don't build; assume a build exists")
+    parser.add_argument('-C', '--enable-console', action='store_true',
+                        help="Enable linux console (x86 only)")
     parser.add_argument('-d', '--disk',
                         help='Root disk image file to use with QEMU')
     parser.add_argument('-D', '--share-dir', metavar='DIR',
@@ -285,6 +287,8 @@ class BuildQemu:
         if not self.bios.exists():
             tout.fatal(f"Error: BIOS file '{self.bios}' not found")
 
+        cmdline = []
+
         qemu_cmd = [str(self.qemu)]
         if self.bios:
             qemu_cmd.extend(['-bios', str(self.bios)])
@@ -309,6 +313,12 @@ class BuildQemu:
             qemu_cmd.extend(['-kernel', self.args.kernel])
         if self.args.initrd:
             qemu_cmd.extend(['-initrd', self.args.initrd])
+
+        if self.args.enable_console:
+            cmdline.append('console=ttyS0,115200,8n1')
+
+        if cmdline:
+            qemu_cmd.extend(['-append'] + [' '.join(cmdline)])
 
         # Add other parameters gathered from options
         qemu_cmd.extend(self.qemu_extra)
