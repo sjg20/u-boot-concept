@@ -16,5 +16,8 @@ When the bootflow is booted, the bootmeth tries the `booti` command first, then
 falls back to the `bootz` command. U-Boot's 'control' devicetree is passed
 through to the kernel.
 
+The `bootflow read` command is supported, so it is possible to read the files
+and then check the kernel command-line before using `bootflow boot` to boot.
+
 The compatible string "u-boot,qfw-bootmeth" is used for the driver. It is
 present if `CONFIG_QFW` is enabled.
