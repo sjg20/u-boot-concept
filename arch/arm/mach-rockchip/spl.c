@@ -3,6 +3,7 @@
  * (C) Copyright 2019 Rockchip Electronics Co., Ltd
  */
 
+#include <bloblist.h>
 #include <cpu_func.h>
 #include <debug_uart.h>
 #include <dm.h>
@@ -60,6 +61,9 @@ const char *board_spl_was_booted_from(void)
 u32 spl_boot_device(void)
 {
 	u32 boot_device = BOOT_DEVICE_MMC1;
+
+	if (IS_ENABLED(CONFIG_VPL))
+		return BOOT_DEVICE_VBE;
 
 #if defined(CONFIG_TARGET_CHROMEBOOK_JERRY) || \
 		defined(CONFIG_TARGET_CHROMEBIT_MICKEY) || \
@@ -130,6 +134,19 @@ void board_init_f(ulong dummy)
 
 void spl_board_prepare_for_boot(void)
 {
+	/*
+	 * TF-A is executed after SPL and before U-Boot. It removes our access
+	 * to the SRAM. So move the bloblist to RAM.
+	 */
+	if (xpl_phase() == PHASE_SPL && CONFIG_IS_ENABLED(BLOBLIST_RELOC)) {
+		ulong addr = CONFIG_IF_ENABLED_INT(BLOBLIST_RELOC,
+						   BLOBLIST_RELOC_ADDR);
+
+		log_debug("Relocating bloblist %p to %lx\n", gd_bloblist(),
+			  addr);
+		bloblist_reloc(map_sysmem(addr, 0), bloblist_get_total_size());
+	}
+
 	if (!IS_ENABLED(CONFIG_ARM64) || CONFIG_IS_ENABLED(SYS_DCACHE_OFF))
 		return;
 

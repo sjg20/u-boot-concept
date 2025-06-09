@@ -255,17 +255,18 @@ config ROCKCHIP_RK3399
 	select ARM64
 	select SUPPORT_SPL
 	select SUPPORT_TPL
+	select SUPPORT_VPL
 	select SPL
 	select SPL_ATF
 	select SPL_BOARD_INIT if SPL
 	select SPL_LOAD_FIT
-	select SPL_CLK if SPL
+	select SPL_CLK if SPL && !VPL
 	select SPL_PINCTRL if SPL
 	select SPL_RAM if SPL
 	select SPL_REGMAP if SPL
 	select SPL_SYSCON if SPL
 	select TPL_HAVE_INIT_STACK if TPL
-	select SPL_SEPARATE_BSS
+	select VPL_HAVE_INIT_STACK if VPL
 	select CLK
 	select FIT
 	select PINCTRL
@@ -301,10 +302,11 @@ config ROCKCHIP_RK3399
 	imply SYS_BOOTCOUNT_SINGLEWORD if BOOTCOUNT_LIMIT
 	imply TPL_CLK
 	imply TPL_DM
+	imply TPL_DM_MMC if VPL
 	imply TPL_LIBCOMMON_SUPPORT
 	imply TPL_LIBGENERIC_SUPPORT
 	imply TPL_OF_CONTROL
-	imply TPL_RAM
+	imply TPL_RAM if !VPL
 	imply TPL_REGMAP
 	imply TPL_ROCKCHIP_COMMON_BOARD
 	imply TPL_SERIAL
@@ -569,7 +571,7 @@ config SPL_ROCKCHIP_BACK_TO_BROM
 
 config TPL_ROCKCHIP_BACK_TO_BROM
 	bool "TPL returns to bootrom"
-	default y
+	default y if !VPL
 	select ROCKCHIP_BROM_HELPER if !ROCKCHIP_RK3066
 	select TPL_BOOTROM_SUPPORT
 	depends on TPL
@@ -601,6 +603,16 @@ config TPL_ROCKCHIP_COMMON_BOARD
 	  init and back to bootrom, and SPL as Trust ATF/U-Boot loader. TPL
 	  common board is a basic TPL board init which can be shared for most
 	  of SoCs to avoid copy-paste for different SoCs.
+
+config VPL_ROCKCHIP_COMMON_BOARD
+	bool "Rockchip VPL common board file"
+	depends on VPL
+	default y
+	help
+	  Enable the VPL phase for rockchip, which selects which SPL/U-Boot
+	  will be used on each boot. With this flow, used by Verified Boot for
+	  Embedded (VBE), TPL is loaded by the boot ROM. Then TPL loads VPL,
+	  VPL loads SPL and SPL loads U-Boot.
 
 config ROCKCHIP_EXTERNAL_TPL
 	bool "Use external TPL binary"
@@ -699,6 +711,9 @@ config TPL_ROCKCHIP_EARLYRETURN_TO_BROM
 
 config SPL_MMC
 	default y if !SPL_ROCKCHIP_BACK_TO_BROM
+
+config TPL_MMC
+	default y if !TPL_ROCKCHIP_BACK_TO_BROM
 
 config ROCKCHIP_SPI_IMAGE
 	bool "Build a SPI image for rockchip"
