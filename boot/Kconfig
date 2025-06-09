@@ -557,7 +557,7 @@ config BOOTSTD_DEFAULTS
 	bool "Select some common defaults for standard boot"
 	depends on BOOTSTD
 	select BOOT_DEFAULTS
-	select BOOTMETH_DISTRO
+	imply BOOTMETH_DISTRO
 	help
 	  These are not required but are commonly needed to support a good
 	  selection of booting methods. Enable this to improve the capability
@@ -731,9 +731,9 @@ config BOOTMETH_VBE
 config BOOTMETH_DISTRO
 	bool  # Options needed to boot any distro
 	select BOOTMETH_SCRIPT if CMDLINE # E.g. Armbian uses scripts
-	select BOOTMETH_EXTLINUX  # E.g. Debian uses these
+	imply BOOTMETH_EXTLINUX  # E.g. Debian uses these
 	select BOOTMETH_EXTLINUX_PXE if CMD_PXE && CMD_NET && DM_ETH
-	select BOOTMETH_EFILOADER if EFI_BINARY_EXEC # E.g. Ubuntu uses this
+	imply BOOTMETH_EFILOADER if EFI_BINARY_EXEC # E.g. Ubuntu uses this
 
 config SPL_BOOTMETH_VBE
 	bool "Bootdev support for Verified Boot for Embedded (SPL)"
