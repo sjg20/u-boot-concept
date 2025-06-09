@@ -12,7 +12,7 @@ Synopsis
 
 ::
 
-    bootefi <image_addr>[:<image_size>] [<fdt_addr>]
+    bootefi <image_addr>[:<image_size>] [<ramdisk_addr>] [<fdt_addr>]
     bootefi bootmgr [<fdt_addr>]
     bootefi hello [<fdt_addr>]
     bootefi selftest [<fdt_addr>]
@@ -51,11 +51,20 @@ The value of the environment variable *bootargs* is converted from UTF-8 to
 UTF-16 and passed as load options in the loaded image protocol to the UEFI
 binary.
 
+Note: The 'bootefi' command accepts one, two or three arguments. When two
+arguments are provided, the second one is interpreted as `fdt_addr`. When three
+are provided, the second one is interpreted as `ramdisk_addr` and the third as
+`fdt_addr`.
+
 image_addr
     Address of the UEFI binary.
 
+ramdisk_addr
+    Address of the ramdisk or '-'. If no address is specified, a ramdisk is not
+    used when booting.
+
 fdt_addr
-    Address of the device-tree or '-'. If no address is specifiy, the
+    Address of the device-tree or '-'. If no address is specified, the
     environment variable $fdt_addr is used as first fallback, the address of
     U-Boot's internal device-tree $fdtcontroladdr as second fallback.
     When using ACPI no device-tree shall be specified.
