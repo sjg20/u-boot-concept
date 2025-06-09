@@ -1,0 +1,7 @@
+.. SPDX-License-Identifier: GPL-2.0-or-later
+
+The `contrib` directory contains software / files which have been contributed
+to the U-Boot project but are not maintained by the core developers.
+
+Note to contributors: Each item must have at least an entry in this file. Be
+sure to add the appropriate GPL-2.0-or-later SPDX tag to files.
