@@ -998,10 +998,10 @@ struct bootflow_img *bootflow_img_add(struct bootflow *bflow, const char *fname,
 	return ptr;
 }
 
-const struct bootflow_img *bootflow_img_find(const struct bootflow *bflow,
-					     enum bootflow_img_t type)
+struct bootflow_img *bootflow_img_findw(const struct bootflow *bflow,
+					enum bootflow_img_t type)
 {
-	const struct bootflow_img *img;
+	struct bootflow_img *img;
 
 	alist_for_each(img, &bflow->images) {
 		if (img->type == type)
