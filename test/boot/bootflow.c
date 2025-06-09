@@ -1417,6 +1417,7 @@ static int bootstd_images(struct unit_test_state *uts)
 	const struct legacy_img_hdr *hdr;
 	const struct bootflow_img *img;
 	const struct bootflow *bflow;
+	struct bootflow_img *wimg;
 	struct bootstd_priv *std;
 	const char **old_order;
 	struct udevice *dev;
@@ -1503,6 +1504,15 @@ static int bootstd_images(struct unit_test_state *uts)
 	ut_asserteq(bflow->logo_size, img->size);
 
 	ut_assertnull(bootflow_img_find(bflow, BFI_CMDLINE));
+
+	/* check we can update an image size */
+	wimg = bootflow_img_findw(bflow, (enum bootflow_img_t)IH_TYPE_SCRIPT);
+	ut_assertnonnull(wimg);
+	wimg->size = 123;
+
+	img = bootflow_img_find(bflow, (enum bootflow_img_t)IH_TYPE_SCRIPT);
+	ut_assertnonnull(img);
+	ut_asserteq(123, img->size);
 
 	ut_assert_console_end();
 
