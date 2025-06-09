@@ -133,22 +133,37 @@ static int do_bootefi(struct cmd_tbl *cmdtp, int flag, int argc,
 {
 	efi_status_t ret;
 	char *p;
-	void *fdt, *image_buf;
-	unsigned long addr, size;
+	void *fdt, *ramdisk = NULL, *image_buf;
+	unsigned long addr, size, rd_len = 0, fdt_addr = 0;
 	void *image_addr;
 	size_t image_size;
+	uint fdt_arg = 2;
+	const char *arg;
 
 	if (argc < 2)
 		return CMD_RET_USAGE;
 
 	if (argc > 2) {
-		uintptr_t fdt_addr;
+		ulong addr = hextoul(argv[2], NULL);
+		char *end = strchr(argv[2], ':');
 
-		fdt_addr = hextoul(argv[2], NULL);
-		fdt = map_sysmem(fdt_addr, 0);
-	} else {
-		fdt = EFI_FDT_USE_INTERNAL;
+		/* is this a ramdisk parameter? */
+		if (end) {
+			rd_len = hextoul(++end, NULL);
+			ramdisk = map_sysmem(addr, rd_len);
+			fdt_arg = 3;
+		} else if (argc > 3) {
+			return CMD_RET_USAGE;
+		}
 	}
+	arg = cmd_arg_get(argc, argv, fdt_arg);
+	if (arg)
+		fdt_addr = hextoul(arg, NULL);
+
+	if (fdt_addr)
+		fdt = map_sysmem(fdt_addr, 0);
+	else
+		fdt = EFI_FDT_USE_INTERNAL;
 
 	if (IS_ENABLED(CONFIG_CMD_BOOTEFI_BOOTMGR) &&
 	    !strcmp(argv[1], "bootmgr")) {
@@ -212,7 +227,7 @@ static int do_bootefi(struct cmd_tbl *cmdtp, int flag, int argc,
 		}
 	}
 
-	ret = efi_binary_run(image_buf, size, fdt, NULL, 0);
+	ret = efi_binary_run(image_buf, size, fdt, ramdisk, rd_len);
 
 	if (ret != EFI_SUCCESS)
 		return CMD_RET_FAILURE;
@@ -221,7 +236,7 @@ static int do_bootefi(struct cmd_tbl *cmdtp, int flag, int argc,
 }
 
 U_BOOT_LONGHELP(bootefi,
-	"<image address>[:<image size>] [<fdt address>]\n"
+	"<image address>[:<image size>] [<ramdisk_address>:<size>] [<fdt address>]\n"
 	"  - boot EFI payload\n"
 #ifdef CONFIG_CMD_BOOTEFI_HELLO
 	"bootefi hello\n"
