@@ -113,3 +113,11 @@ Historical documentation
    :maxdepth: 2
 
    historical/index
+
+Contributions
+-------------
+
+.. toctree::
+   :maxdepth: 2
+
+   contrib/README
