@@ -172,9 +172,12 @@ int qemu_fwcfg_setup_kernel(struct udevice *qfw_dev, ulong load_addr,
 		return log_msg_ret("qsk", ret);
 	}
 
-	/* put the kernel after any setup image */
-	abuf_init_const_addr(&setup, load_addr, 0);
-	abuf_init_const_addr(&kern, load_addr + setup_size, 0);
+	/*
+	 * always put the setup area where QEMU wants it, since it includes
+	 * absolute pointers to itself
+	 */
+	abuf_init_const_addr(&setup, setup_addr, 0);
+	abuf_init_const_addr(&kern, load_addr, 0);
 
 	abuf_init_const_addr(&initrd, initrd_addr, 0);
 	qemu_fwcfg_read_files(qfw_dev, &setup, &kern, &initrd);
