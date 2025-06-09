@@ -161,13 +161,12 @@ static int qfw_boot(struct udevice *dev, struct bootflow *bflow)
 		 rimg->size);
 	bmi.conf_ramdisk = conf_ramdisk;
 
-	ret = run_command("booti ${kernel_addr_r} ${ramdisk_addr_r}:${filesize} ${fdtcontroladdr}",
-			  0);
-	if (ret) {
-		ret = run_command("bootz ${kernel_addr_r} ${ramdisk_addr_r}:${filesize} "
-				  "${fdtcontroladdr}", 0);
-	}
-	if (ret && simg) {
+	ret = -ENOENT;
+	if (IS_ENABLED(CONFIG_CMD_BOOTI))
+		ret = booti_run(&bmi);
+	if (ret && IS_ENABLED(CONFIG_CMD_BOOTZ))
+		ret = bootz_run(&bmi);
+	if (ret && IS_ENABLED(CONFIG_ZBOOT) && simg) {
 		ret = zboot_run_args(kimg->addr, kimg->size,
 				     rimg->addr, rimg->size, simg->addr,
 				     *bflow->cmdline ? bflow->cmdline : NULL);

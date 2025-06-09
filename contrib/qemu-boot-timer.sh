@@ -27,7 +27,7 @@
 # That shows a time of 17.7 milliseconds for qboot itself
 
 # Enable this to boot qboot instead of U-Boot
-#QBOOT=-QBs
+#QBOOT=-QB
 
 # Linux version to boot (read from /boot)
 version=6.8.0-60-generic
@@ -61,7 +61,7 @@ PERF_PID=$!
 sleep 1
 cd ~/u
 ./scripts/build-qemu -a x86 ${QBOOT} -rs -v -K /boot/vmlinuz-${version} \
-	-k -d root.img -I /boot/initrd.img-${version} -C -U ${uuid} \
+	-k -d root.img -I /boot/initrd.img-${version} -C -U ${uuid} -s \
 	2>&1 >/tmp/qemu.log &
 
 while [[ -z "$QEMU_PID" ]]; do
