@@ -94,6 +94,20 @@ int cmdsock_process(void)
 	return 0;
 }
 
+int cmdsock_putc(int ch)
+{
+	reply(csi->out, "putc %x\n", ch);
+
+	return 0;
+}
+
+int cmdsock_puts(const char *s)
+{
+	reply(csi->out, "puts %zx %s\n", strlen(s), s);
+
+	return 0;
+}
+
 void cmdsock_init(struct membuf *in, struct membuf *out)
 {
 	csi->in = in;
