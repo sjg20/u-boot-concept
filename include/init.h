@@ -277,8 +277,12 @@ struct global_data;
 void arch_setup_gd(struct global_data *gd_ptr);
 
 /* common/board_r.c */
+#ifndef CONFIG_CMDSOCK
 void board_init_r(struct global_data *id, ulong dest_addr)
 	__attribute__ ((noreturn));
+#else
+void board_init_r(struct global_data *id, ulong dest_addr);
+#endif
 
 int cpu_init_r(void);
 int mac_read_from_eeprom(void);
