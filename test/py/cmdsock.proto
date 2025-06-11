@@ -1,0 +1,23 @@
+syntax = "proto2";
+
+import "nanopb.proto";
+
+message StartReq {
+  optional string name = 1 [(nanopb).max_size = 80];
+}
+
+message StartResp {
+  required int32 version = 1;
+}
+
+message Puts {
+  required string str = 1 [(nanopb).max_size = 256];
+}
+
+message Message {
+  oneof kind {
+    StartReq start_req = 2;
+    StartResp start_resp = 3;
+    Puts puts = 4;
+  }
+}

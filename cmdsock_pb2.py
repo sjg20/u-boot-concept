@@ -1,0 +1,1 @@
+test/py/cmdsock_pb2.py

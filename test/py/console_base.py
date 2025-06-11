@@ -32,6 +32,7 @@ pattern_lab_mode = re.compile('{lab mode.*}')
 # Timeout before expecting the console to be ready (in milliseconds)
 TIMEOUT_MS = 30000                  # Standard timeout
 TIMEOUT_CMD_MS = 10000              # Command-echo timeout
+TIMEOUT_CMDSOCK_MS = 2000           # Output from sandbox should be fast
 
 # Timeout for board preparation in lab mode. This needs to be enough to build
 # U-Boot, write it to the board and then boot the board. Since this process is
@@ -308,9 +309,10 @@ class ConsoleBase():
 
         This is for internal use only.
         """
+        print('_wait_for_boot_prompt')
         try:
             self.log.info('Waiting for U-Boot to be ready')
-
+            self.start_uboot()
             if not self.lab_mode:
                 self._wait_for_banner(loop_num)
                 self.u_boot_version_string = self.after
@@ -337,6 +339,9 @@ class ConsoleBase():
 
         finally:
             self.log.timestamp()
+
+    def start_uboot(self):
+        """Start U-Boot - subclasses can handle this"""
 
     def _wait_for_banner(self, loop_num):
         """Wait for a U-Boot banner to appear on the console
@@ -582,12 +587,14 @@ class ConsoleBase():
                 to be reset while the 1st boot process after main boot before
                 prompt. False by default.
         """
+        print('ensure spawned')
         if self.p:
             # Reset the console timeout value as some tests may change
             # its default value during the execution
             if not self.config.gdbserver:
                 self.timeout = TIMEOUT_MS
             return
+
         try:
             self.log.start_section('Starting U-Boot')
             self.at_prompt = False
@@ -603,6 +610,8 @@ class ConsoleBase():
             if not self.config.gdbserver:
                 self.timeout = TIMEOUT_MS
             self.logfile_read = self.logstream
+            if self.config.cmdsock:
+                self.timeout = TIMEOUT_CMDSOCK_MS
             if self.config.use_running_system:
                 # Send an empty command to set up the 'expect' logic. This has
                 # the side effect of ensuring that there was no partial command
@@ -613,7 +622,7 @@ class ConsoleBase():
                     loop_num = 2
                 else:
                     loop_num = 1
-                self._wait_for_boot_prompt(loop_num = loop_num)
+                self._wait_for_boot_prompt(loop_num=loop_num)
             self.at_prompt = True
             self.at_prompt_logevt = self.logstream.logfile.cur_evt
         except Exception as ex:
@@ -757,8 +766,17 @@ class ConsoleBase():
                 events = self.poll.poll(poll_maxwait)
                 if not events:
                     raise Timeout()
-                c = self.p.receive(1024)
-                self.add_input(c)
+                for fd, event_mask in events:
+                    if fd == self.p.fd:
+                        c = self.p.receive(1024)
+                        self.add_input(c)
+                    elif fd == self.cmdsock.sock:
+                        msg = self.cmdsock.xfer(event_mask)
+                        if msg:
+                            print('got', msg, msg.WhichOneof('kind'))
+                            if msg.WhichOneof('kind') == 'puts':
+                                print('returning', msg.puts.str)
+                                return msg.puts.str
         finally:
             if self.logfile_read:
                 self.logfile_read.flush()
