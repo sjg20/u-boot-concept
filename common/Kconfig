@@ -743,6 +743,15 @@ config BOARD_LATE_INIT
 	  So this config enable the late init code with the help of board_late_init
 	  function which should defined on respective boards.
 
+config CMDSOCK
+	bool "Support receiving remove commands"
+	depends on SANDBOX
+	default y
+	help
+	  This provides a unix-domain socket which can be used to receive
+	  commands to process. This allows tests to control sandbox more
+	  efficiently than using a pipe with the terminal interface.
+
 config CLOCKS
 	bool "Call set_cpu_clk_info"
 	depends on ARM
