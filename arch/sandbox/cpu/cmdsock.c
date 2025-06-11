@@ -94,7 +94,7 @@ int cmdsock_poll(struct membuf *in, struct membuf *out)
 	if (FD_ISSET(client_fd, &readfds)) {
 		len = membuf_putraw(in, BUFSIZE, false, &ptr);
 		if (len) {
-			// printf("can read %d\n", len);
+			os_printf("can read %d\n", len);
 			len = read(client_fd, ptr, len);
 			// printf("read %d\n", len);
 			if (!len)
@@ -106,7 +106,7 @@ int cmdsock_poll(struct membuf *in, struct membuf *out)
 	if (FD_ISSET(client_fd, &writefds)) {
 		len = membuf_getraw(out, BUFSIZE, false, &ptr);
 		if (len) {
-			// printf("write %d\n", len);
+			os_printf("write %d\n", len);
 			len = write(client_fd, ptr, len);
 			if (!len)
 				goto disconnect;

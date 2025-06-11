@@ -12,6 +12,7 @@ serial console of real hardware.
 
 from collections import namedtuple
 import re
+import select
 import sys
 import time
 import pytest
@@ -31,6 +32,7 @@ pattern_lab_mode = re.compile('{lab mode.*}')
 # Timeout before expecting the console to be ready (in milliseconds)
 TIMEOUT_MS = 30000                  # Standard timeout
 TIMEOUT_CMD_MS = 10000              # Command-echo timeout
+TIMEOUT_CMDSOCK_MS = 2000           # Output from sandbox should be fast
 
 # Timeout for board preparation in lab mode. This needs to be enough to build
 # U-Boot, write it to the board and then boot the board. Since this process is
@@ -253,6 +255,7 @@ class ConsoleBase():
         self.logfile_read = None
         # http://stackoverflow.com/questions/7857352/python-regex-to-match-vt100-escape-sequences
         self.re_vt100 = re.compile(r'(\x1b\[|\x9b)[^@-_]*[@-_]|\x1b[@-_]', re.I)
+        self.poll = None
 
         self.eval_patterns()
 
@@ -304,9 +307,10 @@ class ConsoleBase():
 
         This is for internal use only.
         """
+        print('_wait_for_boot_prompt')
         try:
             self.log.info('Waiting for U-Boot to be ready')
-
+            self.start_uboot()
             if not self.lab_mode:
                 self._wait_for_banner(loop_num)
                 self.u_boot_version_string = self.after
@@ -333,6 +337,9 @@ class ConsoleBase():
 
         finally:
             self.log.timestamp()
+
+    def start_uboot(self):
+        """Start U-Boot - only does anything for cmdsock"""
 
     def _wait_for_banner(self, loop_num):
         """Wait for a U-Boot banner to appear on the console
@@ -578,16 +585,23 @@ class ConsoleBase():
                 to be reset while the 1st boot process after main boot before
                 prompt. False by default.
         """
+        print('ensure spawned')
         if self.p:
             # Reset the console timeout value as some tests may change
             # its default value during the execution
             if not self.config.gdbserver:
                 self.timeout = TIMEOUT_MS
             return
+
         try:
             self.log.start_section('Starting U-Boot')
             self.at_prompt = False
             self.p = self.get_spawn()
+            self.poll = select.poll()
+            self.poll.register(self.p.fd, select.POLLIN | select.POLLPRI |
+                               select.POLLERR | select.POLLHUP |
+                               select.POLLNVAL)
+
             # Real targets can take a long time to scroll large amounts of
             # text if LCD is enabled. This value may need tweaking in the
             # future, possibly per-test to be optimal. This works for 'help'
@@ -595,6 +609,8 @@ class ConsoleBase():
             if not self.config.gdbserver:
                 self.timeout = TIMEOUT_MS
             self.logfile_read = self.logstream
+            if self.config.cmdsock:
+                self.timeout = TIMEOUT_CMDSOCK_MS
             if self.config.use_running_system:
                 # Send an empty command to set up the 'expect' logic. This has
                 # the side effect of ensuring that there was no partial command
@@ -605,7 +621,7 @@ class ConsoleBase():
                     loop_num = 2
                 else:
                     loop_num = 1
-                self._wait_for_boot_prompt(loop_num = loop_num)
+                self._wait_for_boot_prompt(loop_num=loop_num)
             self.at_prompt = True
             self.at_prompt_logevt = self.logstream.logfile.cur_evt
         except Exception as ex:
@@ -735,7 +751,7 @@ class ConsoleBase():
                 earliest_pi, poll_maxwait = self.find_match(patterns, tstart_s)
                 if poll_maxwait is False:
                     return earliest_pi
-                events = self.p.poll.poll(poll_maxwait)
+                events = self.poll.poll(poll_maxwait)
                 if not events:
                     raise Timeout()
                 c = self.p.receive(1024)
