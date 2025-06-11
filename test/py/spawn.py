@@ -180,11 +180,11 @@ class Spawn:
 
         if os.WIFEXITED(status):
             self.exit_code = os.WEXITSTATUS(status)
-            self.exit_info = 'status %d' % self.exit_code
+            self.exit_info = f'status {self.exit_code}'
         elif os.WIFSIGNALED(status):
             signum = os.WTERMSIG(status)
             self.exit_code = -signum
-            self.exit_info = 'signal %d (%s)' % (signum, signal.Signals(signum).name)
+            self.exit_info = f'signal {signum} ({signal.Signals(signum).name})'
         self.waited = True
         return False, self.exit_code, self.exit_info
 
