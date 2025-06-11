@@ -2,17 +2,17 @@
 # Copyright (c) 2015 Stephen Warren
 # Copyright (c) 2015-2016, NVIDIA CORPORATION. All rights reserved.
 
-# Common logic to interact with U-Boot via the console. This class provides
-# the interface that tests use to execute U-Boot shell commands and wait for
-# their results. Sub-classes exist to perform board-type-specific setup
-# operations, such as spawning a sub-process for Sandbox, or attaching to the
-# serial console of real hardware.
+"""Common logic to interact with U-Boot via the console.
 
-import multiplexed_log
-import os
-import pytest
+Provides the interface that tests use to execute U-Boot shell commands and wait
+for their results. Sub-classes exist to perform board-type-specific setup
+operations, such as spawning a sub-process for Sandbox, or attaching to the
+serial console of real hardware.
+"""
+
 import re
 import sys
+
 import spawn
 from spawn import BootFail, Timeout, Unexpected, handle_exception
 
@@ -40,6 +40,11 @@ TIMEOUT_CMD_MS = 10000              # Command-echo timeout
 # situations.
 TIMEOUT_PREPARE_MS = 3 * 60 * 1000
 
+# Named patterns we can look for in the console output. These can indicate an
+# error has occurred
+# Tuple:
+#    str: name of pattern
+#    re.Pattern: Regex to check this pattern in the console output
 bad_pattern_defs = (
     ('spl_signon', pattern_u_boot_spl_signon),
     ('main_signon', pattern_u_boot_main_signon),
@@ -49,7 +54,8 @@ bad_pattern_defs = (
     ('error_please_reset', pattern_error_please_reset),
 )
 
-class ConsoleDisableCheck(object):
+
+class ConsoleDisableCheck():
     """Context manager (for Python's with statement) that temporarily disables
     the specified console output error check. This is useful when deliberately
     executing a command that is known to trigger one of the error checks, in
@@ -69,7 +75,8 @@ class ConsoleDisableCheck(object):
         self.console.disable_check_count[self.check_type] -= 1
         self.console.eval_bad_patterns()
 
-class ConsoleEnableCheck(object):
+
+class ConsoleEnableCheck():
     """Context manager (for Python's with statement) that temporarily enables
     the specified console output error check. This is useful when executing a
     command that might raise an extra bad pattern, beyond the default bad
@@ -81,8 +88,10 @@ class ConsoleEnableCheck(object):
         self.console = console
         self.check_type = check_type
         self.check_pattern = check_pattern
+        self.default_bad_patterns = None
 
     def __enter__(self):
+        # pylint:disable=W0603
         global bad_pattern_defs
         self.default_bad_patterns = bad_pattern_defs
         bad_pattern_defs += ((self.check_type, self.check_pattern),)
@@ -90,12 +99,14 @@ class ConsoleEnableCheck(object):
         self.console.eval_bad_patterns()
 
     def __exit__(self, extype, value, traceback):
+        # pylint:disable=W0603
         global bad_pattern_defs
         bad_pattern_defs = self.default_bad_patterns
         self.console.disable_check_count = {pat[PAT_ID]: 0 for pat in bad_pattern_defs}
         self.console.eval_bad_patterns()
 
-class ConsoleSetupTimeout(object):
+
+class ConsoleSetupTimeout():
     """Context manager (for Python's with statement) that temporarily sets up
     timeout for specific command. This is useful when execution time is greater
     then default 30s."""
@@ -111,7 +122,8 @@ class ConsoleSetupTimeout(object):
     def __exit__(self, extype, value, traceback):
         self.p.timeout = self.orig_timeout
 
-class ConsoleBase(object):
+
+class ConsoleBase():
     """The interface through which test functions interact with the U-Boot
     console. This primarily involves executing shell commands, capturing their
     results, and checking for common error conditions. Some common utilities
@@ -132,11 +144,7 @@ class ConsoleBase(object):
                 should be set less than the UART RX FIFO size to avoid
                 overflow, assuming that U-Boot can't keep up with full-rate
                 traffic at the baud rate.
-
-        Returns:
-            Nothing.
         """
-
         self.log = log
         self.config = config
         self.max_fifo_fill = max_fifo_fill
@@ -153,16 +161,19 @@ class ConsoleBase(object):
         self.at_prompt = False
         self.at_prompt_logevt = None
         self.lab_mode = False
+        self.u_boot_version_string = None
 
     def get_spawn(self):
-        # This is not called, ssubclass must define this.
-        # Return a value to avoid:
-        #   console_base.py:348:12: E1128: Assigning result of a function
-        #   call, where the function returns None (assignment-from-none)
+        """This is not called, ssubclass must define this.
+
+        Return a value to avoid:
+           console_base.py:348:12: E1128: Assigning result of a function
+           call, where the function returns None (assignment-from-none)
+        """
         return spawn.Spawn([])
 
-
     def eval_bad_patterns(self):
+        """Set up lists of regexes for patterns we don't expect on console"""
         self.bad_patterns = [pat[PAT_RE] for pat in bad_pattern_defs \
             if self.disable_check_count[pat[PAT_ID]] == 0]
         self.bad_pattern_ids = [pat[PAT_ID] for pat in bad_pattern_defs \
@@ -177,11 +188,7 @@ class ConsoleBase(object):
 
         Args:
             None.
-
-        Returns:
-            Nothing.
         """
-
         if self.p:
             self.log.start_section('Stopping U-Boot')
             close_type = self.p.close()
@@ -195,12 +202,14 @@ class ConsoleBase(object):
         This tells us that we will get a 'lab ready' message when the board is
         ready for use. We don't need to look for signon messages.
         """
-        self.log.info(f'test.py: Lab mode is active')
+        self.log.info('test.py: Lab mode is active')
         self.p.timeout = TIMEOUT_PREPARE_MS
         self.lab_mode = True
 
-    def wait_for_boot_prompt(self, loop_num = 1):
-        """Wait for the boot up until command prompt. This is for internal use only.
+    def _wait_for_boot_prompt(self, loop_num=1):
+        """Wait for the boot up until command prompt.
+
+        This is for internal use only.
         """
         try:
             self.log.info('Waiting for U-Boot to be ready')
@@ -217,7 +226,7 @@ class ConsoleBase(object):
                     if m == 1:
                         self.set_lab_mode()
                         break
-                    elif m != 0:
+                    if m != 0:
                         raise BootFail('Bad pattern found on SPL console: ' +
                                        self.bad_pattern_ids[m - 1])
                     env_spl_banner_times -= 1
@@ -238,10 +247,10 @@ class ConsoleBase(object):
                 if m == 0:
                     self.log.info(f'Found ready prompt {m}')
                     break
-                elif m == 1:
+                if m == 1:
                     m = pattern_ready_prompt.search(self.p.after)
                     self.u_boot_version_string = m.group(2)
-                    self.log.info(f'Lab: Board is ready')
+                    self.log.info('Lab: Board is ready')
                     self.p.timeout = TIMEOUT_MS
                     break
                 if m == 2:
@@ -251,13 +260,13 @@ class ConsoleBase(object):
                 if not self.lab_mode:
                     raise BootFail('Missing prompt / ready message on console: ' +
                                    self.bad_pattern_ids[m - 3])
-            self.log.info(f'U-Boot is ready')
+            self.log.info('U-Boot is ready')
 
         finally:
             self.log.timestamp()
 
     def run_command(self, cmd, wait_for_echo=True, send_nl=True,
-            wait_for_prompt=True, wait_for_reboot=False):
+                    wait_for_prompt=True, wait_for_reboot=False):
         """Execute a command via the U-Boot console.
 
         The command is always sent to U-Boot.
@@ -277,27 +286,25 @@ class ConsoleBase(object):
         running command such as "ums".
 
         Args:
-            cmd: The command to send.
-            wait_for_echo: Boolean indicating whether to wait for U-Boot to
+            cmd (str): The command to send.
+            wait_for_echo (bool): Indicates whether to wait for U-Boot to
                 echo the command text back to its output.
-            send_nl: Boolean indicating whether to send a newline character
+            send_nl (bool): Indicates whether to send a newline character
                 after the command string.
-            wait_for_prompt: Boolean indicating whether to wait for the
+            wait_for_prompt (bool): Indicates whether to wait for the
                 command prompt to be sent by U-Boot. This typically occurs
                 immediately after the command has been executed.
-            wait_for_reboot: Boolean indication whether to wait for the
-                reboot U-Boot. If this sets True, wait_for_prompt must also
-                be True.
+            wait_for_reboot (bool): Indicates whether to wait U-Boot ro reboot.
+                If True, wait_for_prompt must also be True.
 
         Returns:
             If wait_for_prompt == False:
-                Nothing.
+                Empty string.
             Else:
                 The output from U-Boot during command execution. In other
                 words, the text U-Boot emitted between the point it echod the
                 command string and emitted the subsequent command prompts.
         """
-
         if self.at_prompt and \
                 self.at_prompt_logevt != self.logstream.logfile.cur_evt:
             self.logstream.write(self.prompt, implicit=True)
@@ -324,12 +331,13 @@ class ConsoleBase(object):
                     m = self.p.expect([chunk] + self.bad_patterns)
                     if m != 0:
                         self.at_prompt = False
-                        raise BootFail(f"Failed to get echo on console (cmd '{cmd}':rem '{rem}'): " +
-                                        self.bad_pattern_ids[m - 1])
+                        raise BootFail('Failed to get echo on console '
+                                       f"(cmd '{cmd}':rem '{rem}'): " +
+                                       self.bad_pattern_ids[m - 1])
             if not wait_for_prompt:
-                return
+                return ''
             if wait_for_reboot:
-                self.wait_for_boot_prompt()
+                self._wait_for_boot_prompt()
             else:
                 m = self.p.expect([self.prompt_compiled] + self.bad_patterns)
                 if m != 0:
@@ -352,6 +360,7 @@ class ConsoleBase(object):
             raise
         finally:
             self.log.timestamp()
+        return ''
 
     def run_command_list(self, cmds):
         """Run a list of commands.
@@ -360,7 +369,7 @@ class ConsoleBase(object):
         for each command in a list.
 
         Args:
-            cmd: List of commands (each a string).
+            cmds (list of str): List of commands
         Returns:
             A list of output strings from each command, one element for each
             command.
@@ -403,14 +412,10 @@ class ConsoleBase(object):
         location in the log file.
 
         Args:
-            text: The text to wait for; either a string (containing raw text,
-                not a regular expression) or an re object.
-
-        Returns:
-            Nothing.
+            text (str or re): The text to wait for; either a string (containing
+                raw text, not a regular expression) or an re object.
         """
-
-        if type(text) == type(''):
+        if isinstance(text, str):
             text = re.escape(text)
         m = self.p.expect([text] + self.bad_patterns)
         if m != 0:
@@ -428,14 +433,7 @@ class ConsoleBase(object):
         exists. In such a case, it is useful to log U-Boot's console output
         in case U-Boot printed clues as to why the host-side even did not
         occur. This function will do that.
-
-        Args:
-            None.
-
-        Returns:
-            Nothing.
         """
-
         # If we are already not connected to U-Boot, there's nothing to drain.
         # This should only happen when a previous call to run_command() or
         # wait_for() failed (and hence the output has already been logged), or
@@ -474,14 +472,10 @@ class ConsoleBase(object):
         This is an internal function and should not be called directly.
 
         Args:
-            expect_reset: Boolean indication whether this boot is expected
+            expect_reset (bool): Indicates whether this boot is expected
                 to be reset while the 1st boot process after main boot before
                 prompt. False by default.
-
-        Returns:
-            Nothing.
         """
-
         if self.p:
             # Reset the console timeout value as some tests may change
             # its default value during the execution
@@ -509,7 +503,7 @@ class ConsoleBase(object):
                     loop_num = 2
                 else:
                     loop_num = 1
-                self.wait_for_boot_prompt(loop_num = loop_num)
+                self._wait_for_boot_prompt(loop_num = loop_num)
             self.at_prompt = True
             self.at_prompt_logevt = self.logstream.logfile.cur_evt
         except Exception as ex:
@@ -527,14 +521,7 @@ class ConsoleBase(object):
         connection with a fresh U-Boot instance.
 
         This is an internal function and should not be called directly.
-
-        Args:
-            None.
-
-        Returns:
-            Nothing.
         """
-
         try:
             if self.p:
                 self.p.close()
@@ -564,13 +551,12 @@ class ConsoleBase(object):
         duplicating the signon text regex in a test function.
 
         Args:
-            text: The command output text to check.
+            text (str): The command output text to check.
 
-        Returns:
-            Nothing. An exception is raised if the validation fails.
+        Raises:
+            Assertion if the validation fails.
         """
-
-        assert(self.u_boot_version_string in text)
+        assert self.u_boot_version_string in text
 
     def disable_check(self, check_type):
         """Temporarily disable an error check of U-Boot's output.
@@ -579,13 +565,12 @@ class ConsoleBase(object):
         temporarily disables a particular console output error check.
 
         Args:
-            check_type: The type of error-check to disable. Valid values may
-            be found in self.disable_check_count above.
+            check_type (str): The type of error-check to disable, see
+                bad_pattern_defs
 
         Returns:
             A context manager object.
         """
-
         return ConsoleDisableCheck(self, check_type)
 
     def enable_check(self, check_type, check_pattern):
@@ -596,14 +581,14 @@ class ConsoleBase(object):
         arguments form a new element of bad_pattern_defs defined above.
 
         Args:
-            check_type: The type of error-check or bad pattern to enable.
-            check_pattern: The regexes for text error pattern or bad pattern
+            check_type (str): The type of error-check to disable, see
+                bad_pattern_defs
+            check_pattern (re.Pattern): Regex for text error / bad pattern
                 to be checked.
 
         Returns:
             A context manager object.
         """
-
         return ConsoleEnableCheck(self, check_type, check_pattern)
 
     def temporary_timeout(self, timeout):
@@ -613,10 +598,9 @@ class ConsoleBase(object):
         temporarily change timeout.
 
         Args:
-            timeout: Time in milliseconds.
+            timeout (int): Time in milliseconds.
 
         Returns:
             A context manager object.
         """
-
         return ConsoleSetupTimeout(self, timeout)
