@@ -86,6 +86,8 @@ def pytest_addoption(parser):
         help='Compile U-Boot before running tests')
     parser.addoption('--buildman', default=False, action='store_true',
         help='Use buildman to build U-Boot (assuming --build is given)')
+    parser.addoption('--cmdsock', default=False, action='store_true',
+        help='Enable communcation with sandbox via a named socket')
     parser.addoption('--gdbserver', default=None,
         help='Run sandbox under gdbserver. The argument is the channel '+
         'over which gdbserver should communicate, e.g. localhost:1234')
@@ -268,8 +270,12 @@ def pytest_configure(config):
     mkdir_p(persistent_data_dir)
 
     gdbserver = config.getoption('gdbserver')
-    if gdbserver and not board_type.startswith('sandbox'):
-        raise Exception('--gdbserver only supported with sandbox targets')
+    cmdsock = config.getoption('cmdsock')
+    if not board_type.startswith('sandbox'):
+        if gdbserver:
+            raise ValueError('--gdbserver only supported with sandbox targets')
+        if cmdsock:
+            raise ValueError('--cmdsock only supported with sandbox targets')
 
     import multiplexed_log
     log = multiplexed_log.Logfile(result_dir + '/test-log.html')
@@ -337,6 +343,7 @@ def pytest_configure(config):
     ubconfig.connection_ok = True
     ubconfig.timing = config.getoption('timing')
     ubconfig.role = config.getoption('role')
+    ubconfig.cmdsock = cmdsock
 
     env_vars = (
         'board_type',
