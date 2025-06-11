@@ -91,19 +91,17 @@ class ConsoleEnableCheck():
         self.default_bad_patterns = None
 
     def __enter__(self):
-        # pylint:disable=W0603
-        global PATTERNS
-        self.default_bad_patterns = PATTERNS
-        PATTERNS += ((self.check_type, self.check_pattern),)
-        self.console.disable_check_count = {pat.name: 0 for pat in PATTERNS}
-        self.console.eval_patterns()
+        cons = self.console
+        self.default_bad_patterns = cons.avail_patterns
+        cons.avail_patterns.append((self.check_type, self.check_pattern))
+        cons.disable_check_count = {pat.name: 0 for pat in PATTERNS}
+        cons.eval_patterns()
 
     def __exit__(self, extype, value, traceback):
-        # pylint:disable=W0603
-        global PATTERNS
-        PATTERNS = self.default_bad_patterns
-        self.console.disable_check_count = {pat.name: 0 for pat in PATTERNS}
-        self.console.eval_patterns()
+        cons = self.console
+        cons.avail_patterns = self.default_bad_patterns
+        cons.disable_check_count = {pat.name: 0 for pat in PATTERNS}
+        cons.eval_patterns()
 
 
 class ConsoleSetupTimeout():
@@ -151,6 +149,8 @@ class ConsoleBase():
             prompt (str): Prompt string expected from U-Boot
             p (spawn.Spawn): Means of communicating with running U-Boot via a
                 console
+            avail_patterns (list of NamedPattern): Normally the same as
+                PATTERNS but can be adjusted by tests
             disable_check_count: dict of 'nest counts' for patterns
                 key (str): NamedPattern.name
                 value (int): 0 if not disabled, >0 for the number of 'requests
@@ -175,7 +175,8 @@ class ConsoleBase():
         self.prompt = self.config.buildconfig['config_sys_prompt'][1:-1]
         self.prompt_compiled = re.compile('^' + re.escape(self.prompt), re.MULTILINE)
         self.p = None
-        self.disable_check_count = {pat.name: 0 for pat in PATTERNS}
+        self.avail_patterns = PATTERNS
+        self.disable_check_count = {pat.name: 0 for pat in self.avail_patterns}
         self.at_prompt = False
         self.at_prompt_logevt = None
         self.lab_mode = False
@@ -194,9 +195,9 @@ class ConsoleBase():
 
     def eval_patterns(self):
         """Set up lists of regexes for patterns we don't expect on console"""
-        self.bad_patterns = [pat.pattern for pat in PATTERNS
+        self.bad_patterns = [pat.pattern for pat in self.avail_patterns
                              if not self.disable_check_count[pat.name]]
-        self.bad_pattern_ids = [pat.name for pat in PATTERNS
+        self.bad_pattern_ids = [pat.name for pat in self.avail_patterns
                                 if not self.disable_check_count[pat.name]]
 
     def close(self):
