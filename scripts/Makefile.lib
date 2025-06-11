@@ -162,15 +162,21 @@ __cpp_flags     = $(call flags,_cpp_flags)
 endif
 endif
 
-# Modified for U-Boot: LINUXINCLUDE -> UBOOTINCLUDE
-c_flags        = -Wp,-MD,$(depfile) $(NOSTDINC_FLAGS) $(UBOOTINCLUDE)     \
-		 $(__c_flags) $(modkern_cflags)                           \
+# Handle special sandbox files which need to be built with system headers
+use_syshdrs = $(filter $(basetarget).o, $(CFLAGS_USE_SYSHDRS))
+nostdinc	= $(if $(use_syshdrs),,$(NOSTDINC_FLAGS))
+ubootinclude	= $(if $(use_syshdrs),$(patsubst -I%,-idirafter%,\
+			$(UBOOTINCLUDE)),$(UBOOTINCLUDE))
+
+# Modified for U-Boot: NOSTDINC_FLAGS -> nostdinc and LINUXINCLUDE -> ubootinclude
+c_flags        = -Wp,-MD,$(depfile) $(nostdinc) $(ubootinclude)     \
+		 $(__c_flags) $(modkern_cflags)                     \
 		 $(basename_flags) $(modname_flags)
 
-a_flags        = -Wp,-MD,$(depfile) $(NOSTDINC_FLAGS) $(UBOOTINCLUDE)     \
+a_flags        = -Wp,-MD,$(depfile) $(nostdinc) $(ubootinclude)     \
 		 $(__a_flags) $(modkern_aflags)
 
-cpp_flags      = -Wp,-MD,$(depfile) $(NOSTDINC_FLAGS) $(UBOOTINCLUDE)     \
+cpp_flags      = -Wp,-MD,$(depfile) $(nostdinc) $(ubootinclude)     \
 		 $(__cpp_flags)
 
 ld_flags       = $(KBUILD_LDFLAGS) $(ldflags-y) $(LDFLAGS_$(@F))
