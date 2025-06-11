@@ -9,6 +9,7 @@
  * Marius Groeger <mgroeger@sysgo.de>
  */
 
+#include <cmdsock.h>
 #include <config.h>
 #include <api.h>
 #include <bootstage.h>
@@ -741,7 +742,8 @@ static void initcall_run_r(void)
 #if defined(CFG_PRAM)
 	INITCALL(initr_mem);
 #endif
-	INITCALL(run_main_loop);
+	if (!cmdsock_active())
+		INITCALL(run_main_loop);
 }
 
 void board_init_r(gd_t *new_gd, ulong dest_addr)
@@ -770,6 +772,11 @@ void board_init_r(gd_t *new_gd, ulong dest_addr)
 	gd->flags &= ~GD_FLG_LOG_READY;
 
 	initcall_run_r();
+
+#ifdef CONFIG_CMDSOCK
+	if (cmdsock_active())
+		return;
+#endif
 
 	/* NOTREACHED - run_main_loop() does not return */
 	hang();
