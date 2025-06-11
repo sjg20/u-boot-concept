@@ -34,7 +34,7 @@ import time
 import traceback
 import pytest
 
-import pytest
+from cmdsock import Cmdsock
 
 # Character to send (twice) to exit the terminal
 EXIT_CHAR = 0x1d    # FS (Ctrl + ])
@@ -121,11 +121,30 @@ class Spawn:
         self.logfile_read = None
         # http://stackoverflow.com/questions/7857352/python-regex-to-match-vt100-escape-sequences
         self.re_vt100 = re.compile(r'(\x1b\[|\x9b)[^@-_]*[@-_]|\x1b[@-_]', re.I)
-        self.cmdsock = cmdsock
+        self.cmdsock = None
+        self.poll = select.poll()
+        self.fd = None
 
-        self.spawn_pty(args, cwd)
+        # self.spawn_pty(args, cwd)
+        self.spawn_cmdsock(args, cwd)
+        if cmdsock:
+            self.cmdsock = Cmdsock(cmdsock, self.poll)
+        print('Spawn, cmdsock', cmdsock)
+
+    def spawn_cmdsock(self, args, cwd):
+        self.pid = os.fork()
+        if self.pid == 0:
+            try:
+                os.execvp(args[0], args)
+            except:
+                self.close()
+                raise
 
     def spawn_pty(self, args, cwd):
+        """Spawn sandbox as a process connected via PTYs
+
+        Sandbox's serial input and output are used to control it.
+        """
         (self.pid, self.fd) = pty.fork()
         if self.pid == 0:
             try:
@@ -160,7 +179,6 @@ class Spawn:
                 new[6][termios.VTIME] = 0
                 termios.tcsetattr(self.fd, termios.TCSANOW, new)
 
-            self.poll = select.poll()
             self.poll.register(self.fd, select.POLLIN | select.POLLPRI | select.POLLERR |
                                select.POLLHUP | select.POLLNVAL)
         except:
@@ -218,9 +236,11 @@ class Spawn:
         Args:
             data (str): The data to send to the process.
         """
+        # if self.cmdsock:
+            # self.cmdsock.xfer()
         os.write(self.fd, data.encode(errors='replace'))
 
-    def receive(self, num_bytes):
+    def receive(self, events, num_bytes):
         """Receive data from the sub-process's stdin.
 
         Args:
@@ -232,19 +252,33 @@ class Spawn:
         Raises:
             ValueError if U-Boot died
         """
-        try:
-            c = os.read(self.fd, num_bytes).decode(errors='replace')
-        except OSError as err:
-            # With sandbox, try to detect when U-Boot exits when it
-            # shouldn't and explain why. This is much more friendly than
-            # just dying with an I/O error
-            if self.decode_signal and err.errno == 5:  # I/O error
-                alive, _, info = self.checkalive()
-                if alive:
-                    raise err
-                raise ValueError(f'U-Boot exited with {info}') from err
-            raise
-        return c
+        # print('receive', self.cmdsock)
+        for fd, event_mask in events:
+            if fd != self.fd:
+                # print('cmdsock')
+                msg = self.cmdsock.xfer(event_mask)
+                if msg:
+                    print('got', msg, msg.WhichOneof('kind'))
+                    if msg.WhichOneof('kind') == 'puts':
+                        print('returning', msg.puts.str)
+                        return msg.puts.str
+
+            if fd == self.fd:
+                try:
+                    c = os.read(self.fd, num_bytes).decode(errors='replace')
+                except OSError as err:
+                    # With sandbox, try to detect when U-Boot exits when it
+                    # shouldn't and explain why. This is much more friendly than
+                    # just dying with an I/O error
+                    if self.decode_signal and err.errno == 5:  # I/O error
+                        alive, _, info = self.checkalive()
+                        if alive:
+                            raise err
+                        raise ValueError('U-Boot exited with %s' % info)
+                    raise
+                print('c', c)
+                # return c
+        return ''
 
     def close(self):
         """Close the stdio connection to the sub-process.

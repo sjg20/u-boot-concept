@@ -31,6 +31,7 @@ pattern_lab_mode = re.compile('{lab mode.*}')
 # Timeout before expecting the console to be ready (in milliseconds)
 TIMEOUT_MS = 30000                  # Standard timeout
 TIMEOUT_CMD_MS = 10000              # Command-echo timeout
+TIMEOUT_CMDSOCK_MS = 2000           # Output from sandbox should be fast
 
 # Timeout for board preparation in lab mode. This needs to be enough to build
 # U-Boot, write it to the board and then boot the board. Since this process is
@@ -238,9 +239,10 @@ class ConsoleBase():
 
         This is for internal use only.
         """
+        print('_wait_for_boot_prompt')
         try:
             self.log.info('Waiting for U-Boot to be ready')
-
+            self.start_uboot()
             if not self.lab_mode:
                 self._wait_for_banner(loop_num)
                 self.u_boot_version_string = self.after
@@ -267,6 +269,9 @@ class ConsoleBase():
 
         finally:
             self.log.timestamp()
+
+    def start_uboot(self):
+        """Start U-Boot - only does anything for cmdsock"""
 
     def _wait_for_banner(self, loop_num):
         """Wait for a U-Boot banner to appear on the console
@@ -512,6 +517,7 @@ class ConsoleBase():
                 to be reset while the 1st boot process after main boot before
                 prompt. False by default.
         """
+        print('ensure spawned')
         if self.p:
             # Reset the console timeout value as some tests may change
             # its default value during the execution
@@ -526,7 +532,9 @@ class ConsoleBase():
             # text if LCD is enabled. This value may need tweaking in the
             # future, possibly per-test to be optimal. This works for 'help'
             # on board 'seaboard'.
-            if not self.config.gdbserver:
+            if self.config.cmdsock:
+                self.p.timeout = TIMEOUT_CMDSOCK_MS
+            elif not self.config.gdbserver:
                 self.p.timeout = TIMEOUT_MS
             self.p.logfile_read = self.logstream
             if self.config.use_running_system:
@@ -539,7 +547,7 @@ class ConsoleBase():
                     loop_num = 2
                 else:
                     loop_num = 1
-                self._wait_for_boot_prompt(loop_num = loop_num)
+                self._wait_for_boot_prompt(loop_num=loop_num)
             self.at_prompt = True
             self.at_prompt_logevt = self.logstream.logfile.cur_evt
         except Exception as ex:
