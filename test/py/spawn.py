@@ -98,7 +98,7 @@ class Spawn:
         output: accumulated output from expect()
     """
 
-    def __init__(self, args, cwd=None, decode_signal=False):
+    def __init__(self, args, cwd=None, decode_signal=False, cmdsock=None):
         """Spawn (fork/exec) the sub-process.
 
         Args:
@@ -108,6 +108,8 @@ class Spawn:
                 no change.
             decode_signal (bool): True to indicate the exception number when
                 something goes wrong
+            cmdsock (str): Name of unix-domain socket to use to communcate with
+                U-Boot (instead of a pyt to stdin/stdout)
 
         Returns:
             Nothing.
@@ -119,7 +121,11 @@ class Spawn:
         self.logfile_read = None
         # http://stackoverflow.com/questions/7857352/python-regex-to-match-vt100-escape-sequences
         self.re_vt100 = re.compile(r'(\x1b\[|\x9b)[^@-_]*[@-_]|\x1b[@-_]', re.I)
+        self.cmdsock = cmdsock
 
+        self.spawn_pty(args, cwd)
+
+    def spawn_pty(self, args, cwd):
         (self.pid, self.fd) = pty.fork()
         if self.pid == 0:
             try:
