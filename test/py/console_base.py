@@ -307,33 +307,9 @@ class ConsoleBase():
         """
         try:
             self.log.info('Waiting for U-Boot to be ready')
-            bcfg = self.config.buildconfig
-            config_spl_serial = bcfg.get('config_spl_serial', 'n') == 'y'
-            env_spl_skipped = self.config.env.get('env__spl_skipped', False)
-            env_spl_banner_times = self.config.env.get('env__spl_banner_times', 1)
 
-            while not self.lab_mode and loop_num > 0:
-                loop_num -= 1
-                while config_spl_serial and not env_spl_skipped and env_spl_banner_times > 0:
-                    m = self.expect([pattern_u_boot_spl_signon,
-                                       pattern_lab_mode] + self.bad_patterns)
-                    if m == 1:
-                        self.set_lab_mode()
-                        break
-                    if m != 0:
-                        raise BootFail('Bad pattern found on SPL console: ' +
-                                       self.bad_pattern_ids[m - 1])
-                    env_spl_banner_times -= 1
-
-                if not self.lab_mode:
-                    m = self.expect([pattern_u_boot_main_signon,
-                                       pattern_lab_mode] + self.bad_patterns)
-                    if m == 1:
-                        self.set_lab_mode()
-                    elif m != 0:
-                        raise BootFail('Bad pattern found on console: ' +
-                                       self.bad_pattern_ids[m - 1])
             if not self.lab_mode:
+                self._wait_for_banner(loop_num)
                 self.u_boot_version_string = self.after
             while True:
                 m = self.expect([self.prompt_compiled, pattern_ready_prompt,
@@ -358,6 +334,39 @@ class ConsoleBase():
 
         finally:
             self.log.timestamp()
+
+    def _wait_for_banner(self, loop_num):
+        """Wait for a U-Boot banner to appear on the console
+
+        Args:
+            loop_num (int): Number of times to expect a banner (used for when
+                U-Boot is expected to start up and then reset itself)
+        """
+        bcfg = self.config.buildconfig
+        config_spl_serial = bcfg.get('config_spl_serial', 'n') == 'y'
+        env_spl_skipped = self.config.env.get('env__spl_skipped', False)
+        env_spl_banner_times = self.config.env.get('env__spl_banner_times', 1)
+        while loop_num > 0:
+            loop_num -= 1
+            while config_spl_serial and not env_spl_skipped and env_spl_banner_times > 0:
+                m = self.expect([pattern_u_boot_spl_signon,
+                                   pattern_lab_mode] + self.bad_patterns)
+                if m == 1:
+                    self.set_lab_mode()
+                    break
+                if m != 0:
+                    raise BootFail('Bad pattern found on SPL console: ' +
+                                   self.bad_pattern_ids[m - 1])
+                env_spl_banner_times -= 1
+
+            if not self.lab_mode:
+                m = self.expect([pattern_u_boot_main_signon,
+                                   pattern_lab_mode] + self.bad_patterns)
+                if m == 1:
+                    self.set_lab_mode()
+                elif m != 0:
+                    raise BootFail('Bad pattern found on console: ' +
+                                   self.bad_pattern_ids[m - 1])
 
     def run_command(self, cmd, wait_for_echo=True, send_nl=True,
                     wait_for_prompt=True, wait_for_reboot=False):
