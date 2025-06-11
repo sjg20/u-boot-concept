@@ -108,6 +108,7 @@ struct sandbox_state {
 	bool native;			/* Adjust to reflect host arch */
 	bool no_flattree_tests;		/* Don't run second set of DM tests */
 	bool soft_fail;			/* Continue on failure */
+	const char *cmdsock_name;	/* Name of command-socket, or NULL */
 
 	/* Pointer to information for each SPI bus/cs */
 	struct sandbox_spi_info spi[CONFIG_SANDBOX_SPI_MAX_BUS]

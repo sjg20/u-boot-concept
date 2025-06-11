@@ -3,6 +3,7 @@
  * Copyright (c) 2011-2012 The Chromium OS Authors.
  */
 
+#include <cmdsock.h>
 #include <config.h>
 #include <cli.h>
 #include <command.h>
@@ -494,6 +495,20 @@ SANDBOX_CMDLINE_OPT_SHORT(
 	bind, 'B', 1,
 	"bind 'host' device to file <label>:<filename>[:hex_blksz[:rem]]");
 
+static int sandbox_cmdline_cb_cmdsock(struct sandbox_state *state,
+				      const char *arg)
+{
+	if (state->num_binds >= SB_MAX_BINDS) {
+		printf("Too many binds (max %x)\n", SB_MAX_BINDS);
+		return 1;
+	}
+	state->cmdsock_name = arg;
+
+	return 0;
+}
+SANDBOX_CMDLINE_OPT_SHORT(
+	cmdsock, 'C', 1, "Create a socket to allow communicate with sandbox");
+
 void state_show(struct sandbox_state *state)
 {
 	char **p;
@@ -663,10 +678,14 @@ int sandbox_main(int argc, char *argv[])
 	/* sandbox test: log functions called before log_init in board_init_f */
 	log_debug("debug: %s\n", __func__);
 
-	/* Do pre- and post-relocation init */
-	board_init_f(gd->flags);
+	if (cmdsock_active()) {
+		sandbox_cmdsock_loop();
+	} else {
+		/* Do pre- and post-relocation init */
+		board_init_f(gd->flags);
 
-	board_init_r(gd->new_gd, 0);
+		board_init_r(gd->new_gd, 0);
+	}
 
 	/* NOTREACHED - board_init_r() does not return */
 	return 0;
