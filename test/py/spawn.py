@@ -3,19 +3,36 @@
 
 """
 Logic to spawn a sub-process and interact with its stdio.
+
+This is used by console_board and console_sandbox
+
+- console_board (for real hardware): Spawns 'u-boot-test-console' and provides
+    access to the console input/output
+- console_sandbox (for sandbox): Spawns 'u-boot' and provides access to the
+    console input/output
+
+In both cases, Spawn provides a way to send console commands and receive the
+response from U-Boot. An expect() function helps to simplify things for the
+higher levels.
+
+The code in this file should be generic, i.e. not specific to sandbox or real
+hardware.
+
+Within the console_*py files, self.p is used to refer to the Spawn() object,
+perhaps short for 'process'.
 """
 
 import io
 import os
 import re
 import pty
-import pytest
 import signal
 import select
 import sys
 import termios
 import time
 import traceback
+import pytest
 
 # Character to send (twice) to exit the terminal
 EXIT_CHAR = 0x1d    # FS (Ctrl + ])
@@ -83,9 +100,10 @@ class Spawn:
         """Spawn (fork/exec) the sub-process.
 
         Args:
-            args: array of processs arguments. argv[0] is the command to
-              execute.
-            cwd: the directory to run the process in, or None for no change.
+            args (list of str): processs arguments. argv[0] is the command to
+                execute.
+            cwd (str or None): the directory to run the process in, or None for
+                no change.
             decode_signal (bool): True to indicate the exception number when
                 something goes wrong
 
@@ -128,7 +146,7 @@ class Spawn:
                 isatty = os.isatty(sys.stdout.fileno())
 
             # with --capture=tee-sys we cannot call fileno()
-            except io.UnsupportedOperation as exc:
+            except io.UnsupportedOperation:
                 pass
             if isatty:
                 new = termios.tcgetattr(self.fd)
@@ -152,12 +170,8 @@ class Spawn:
         """Send unix signal "sig" to the child process.
 
         Args:
-            sig: The signal number to send.
-
-        Returns:
-            Nothing.
+            sig (int): The signal number to send
         """
-
         os.kill(self.pid, sig)
 
     def checkalive(self):
@@ -169,7 +183,6 @@ class Spawn:
                 0 if process is alive, else exit code of process
                 string describing what happened ('' or 'status/signal n')
         """
-
         if self.waited:
             return False, self.exit_code, self.exit_info
 
@@ -191,11 +204,8 @@ class Spawn:
     def isalive(self):
         """Determine whether the child process is still running.
 
-        Args:
-            None.
-
         Returns:
-            Boolean indicating whether process is alive.
+            bool: indicating whether process is alive
         """
         return self.checkalive()[0]
 
@@ -203,12 +213,8 @@ class Spawn:
         """Send data to the sub-process's stdin.
 
         Args:
-            data: The data to send to the process.
-
-        Returns:
-            Nothing.
+            data (str): The data to send to the process.
         """
-
         os.write(self.fd, data.encode(errors='replace'))
 
     def receive(self, num_bytes):
@@ -233,7 +239,7 @@ class Spawn:
                 alive, _, info = self.checkalive()
                 if alive:
                     raise err
-                raise ValueError('U-Boot exited with %s' % info)
+                raise ValueError(f'U-Boot exited with {info}') from err
             raise
         return c
 
@@ -244,30 +250,28 @@ class Spawn:
         supplied list of patterns, or for a timeout to occur.
 
         Args:
-            patterns: A list of strings or regex objects that we expect to
+            patterns (list of str or regex.Regex): Patterns we expect to
                 see in the sub-process' stdout.
 
         Returns:
-            The index within the patterns array of the pattern the process
+            int: index within the patterns array of the pattern the process
             emitted.
 
         Notable exceptions:
             Timeout, if the process did not emit any of the patterns within
             the expected time.
         """
-
-        for pi in range(len(patterns)):
-            if type(patterns[pi]) == type(''):
-                patterns[pi] = re.compile(patterns[pi])
+        for pi, pat in enumerate(patterns):
+            if isinstance(pat, str):
+                patterns[pi] = re.compile(pat)
 
         tstart_s = time.time()
         try:
             while True:
                 earliest_m = None
                 earliest_pi = None
-                for pi in range(len(patterns)):
-                    pattern = patterns[pi]
-                    m = pattern.search(self.buf)
+                for pi, pat in enumerate(patterns):
+                    m = pat.search(self.buf)
                     if not m:
                         continue
                     if earliest_m and m.start() >= earliest_m.start():
