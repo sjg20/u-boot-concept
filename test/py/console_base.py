@@ -135,15 +135,35 @@ class ConsoleBase():
         Can only usefully be called by sub-classes.
 
         Args:
-            log: A multiplexed_log.Logfile object, to which the U-Boot output
-                will be logged.
-            config: A configuration data structure, as built by conftest.py.
-            max_fifo_fill: The maximum number of characters to send to U-Boot
+            log (multiplexed_log.Logfile): Log to which the U-Boot output is
+                logged.
+            config (ArbitraryAttributeContainer): ubman_fix.config, as built by
+                conftest.py.
+            max_fifo_fill (int): The max number of characters to send to U-Boot
                 command-line before waiting for U-Boot to echo the characters
                 back. For UART-based HW without HW flow control, this value
                 should be set less than the UART RX FIFO size to avoid
                 overflow, assuming that U-Boot can't keep up with full-rate
                 traffic at the baud rate.
+
+        Properties:
+            logstream (LogfileStream): Log stream being used
+            prompt (str): Prompt string expected from U-Boot
+            p (spawn.Spawn): Means of communicating with running U-Boot via a
+                console
+            disable_check_count: dict of 'nest counts' for patterns
+                key (str): NamedPattern.name
+                value (int): 0 if not disabled, >0 for the number of 'requests
+                    to disable' that have been received for this pattern
+            at_prompt (bool): True if the running U-Boot is at a prompt and
+                thus ready to receive commands
+            at_prompt_logevt (int): Logstream event number when the prompt was
+                detected. This is used to avoid logging the prompt twice
+            lab_mode (bool): True if the lab is responsible for getting U-Boot
+                to a prompt, i.e. able to process commands on the console
+            u_boot_version_string (str): Version string obtained from U-Boot as
+                it booted. In lab mode this is provided by
+                pattern_ready_prompt
         """
         self.log = log
         self.config = config
@@ -162,6 +182,8 @@ class ConsoleBase():
         self.at_prompt_logevt = None
         self.lab_mode = False
         self.u_boot_version_string = None
+
+        self.eval_bad_patterns()
 
     def get_spawn(self):
         """This is not called, ssubclass must define this.
