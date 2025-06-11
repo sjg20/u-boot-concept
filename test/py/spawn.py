@@ -45,7 +45,7 @@ class Spawn:
         output: accumulated output from expect()
     """
 
-    def __init__(self, args, cwd=None, decode_signal=False):
+    def __init__(self, args, cwd=None, decode_signal=False, cmdsock=None):
         """Spawn (fork/exec) the sub-process.
 
         Args:
@@ -55,6 +55,8 @@ class Spawn:
                 no change.
             decode_signal (bool): True to indicate the exception number when
                 something goes wrong
+            cmdsock (str): Name of unix-domain socket to use to communcate with
+                U-Boot (instead of a pyt to stdin/stdout)
 
         Returns:
             Nothing.
@@ -63,7 +65,11 @@ class Spawn:
         self.waited = False
         self.exit_code = 0
         self.exit_info = ''
+        self.cmdsock = cmdsock
 
+        self.spawn_pty(args, cwd)
+
+    def spawn_pty(self, args, cwd):
         (self.pid, self.fd) = pty.fork()
         if self.pid == 0:
             try:
