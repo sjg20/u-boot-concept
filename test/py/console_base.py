@@ -45,7 +45,7 @@ NamedPattern = namedtuple('PATTERN', 'name,pattern')
 
 # Named patterns we can look for in the console output. These can indicate an
 # error has occurred
-bad_pattern_defs = (
+PATTERNS = (
     NamedPattern('spl_signon', pattern_u_boot_spl_signon),
     NamedPattern('main_signon', pattern_u_boot_main_signon),
     NamedPattern('stop_autoboot_prompt', pattern_stop_autoboot_prompt),
@@ -69,11 +69,11 @@ class ConsoleDisableCheck():
 
     def __enter__(self):
         self.console.disable_check_count[self.check_type] += 1
-        self.console.eval_bad_patterns()
+        self.console.eval_patterns()
 
     def __exit__(self, extype, value, traceback):
         self.console.disable_check_count[self.check_type] -= 1
-        self.console.eval_bad_patterns()
+        self.console.eval_patterns()
 
 
 class ConsoleEnableCheck():
@@ -92,18 +92,18 @@ class ConsoleEnableCheck():
 
     def __enter__(self):
         # pylint:disable=W0603
-        global bad_pattern_defs
-        self.default_bad_patterns = bad_pattern_defs
-        bad_pattern_defs += ((self.check_type, self.check_pattern),)
-        self.console.disable_check_count = {pat.name: 0 for pat in bad_pattern_defs}
-        self.console.eval_bad_patterns()
+        global PATTERNS
+        self.default_bad_patterns = PATTERNS
+        PATTERNS += ((self.check_type, self.check_pattern),)
+        self.console.disable_check_count = {pat.name: 0 for pat in PATTERNS}
+        self.console.eval_patterns()
 
     def __exit__(self, extype, value, traceback):
         # pylint:disable=W0603
-        global bad_pattern_defs
-        bad_pattern_defs = self.default_bad_patterns
-        self.console.disable_check_count = {pat.name: 0 for pat in bad_pattern_defs}
-        self.console.eval_bad_patterns()
+        global PATTERNS
+        PATTERNS = self.default_bad_patterns
+        self.console.disable_check_count = {pat.name: 0 for pat in PATTERNS}
+        self.console.eval_patterns()
 
 
 class ConsoleSetupTimeout():
@@ -175,15 +175,13 @@ class ConsoleBase():
         self.prompt = self.config.buildconfig['config_sys_prompt'][1:-1]
         self.prompt_compiled = re.compile('^' + re.escape(self.prompt), re.MULTILINE)
         self.p = None
-        self.disable_check_count = {pat.name: 0 for pat in bad_pattern_defs}
-        self.eval_bad_patterns()
-
+        self.disable_check_count = {pat.name: 0 for pat in PATTERNS}
         self.at_prompt = False
         self.at_prompt_logevt = None
         self.lab_mode = False
         self.u_boot_version_string = None
 
-        self.eval_bad_patterns()
+        self.eval_patterns()
 
     def get_spawn(self):
         """This is not called, ssubclass must define this.
@@ -194,11 +192,11 @@ class ConsoleBase():
         """
         return spawn.Spawn([])
 
-    def eval_bad_patterns(self):
+    def eval_patterns(self):
         """Set up lists of regexes for patterns we don't expect on console"""
-        self.bad_patterns = [pat.pattern for pat in bad_pattern_defs
+        self.bad_patterns = [pat.pattern for pat in PATTERNS
                              if not self.disable_check_count[pat.name]]
-        self.bad_pattern_ids = [pat.name for pat in bad_pattern_defs
+        self.bad_pattern_ids = [pat.name for pat in PATTERNS
                                 if not self.disable_check_count[pat.name]]
 
     def close(self):
