@@ -10,6 +10,7 @@ operations, such as spawning a sub-process for Sandbox, or attaching to the
 serial console of real hardware.
 """
 
+from collections import namedtuple
 import re
 import sys
 
@@ -26,9 +27,6 @@ pattern_error_please_reset = re.compile('### ERROR ### Please RESET the board ##
 pattern_ready_prompt = re.compile('{lab ready in (.*)s: (.*)}')
 pattern_lab_mode = re.compile('{lab mode.*}')
 
-PAT_ID = 0
-PAT_RE = 1
-
 # Timeout before expecting the console to be ready (in milliseconds)
 TIMEOUT_MS = 30000                  # Standard timeout
 TIMEOUT_CMD_MS = 10000              # Command-echo timeout
@@ -40,18 +38,20 @@ TIMEOUT_CMD_MS = 10000              # Command-echo timeout
 # situations.
 TIMEOUT_PREPARE_MS = 3 * 60 * 1000
 
-# Named patterns we can look for in the console output. These can indicate an
-# error has occurred
-# Tuple:
+# Named pattern used by this module:
 #    str: name of pattern
 #    re.Pattern: Regex to check this pattern in the console output
+NamedPattern = namedtuple('PATTERN', 'name,pattern')
+
+# Named patterns we can look for in the console output. These can indicate an
+# error has occurred
 bad_pattern_defs = (
-    ('spl_signon', pattern_u_boot_spl_signon),
-    ('main_signon', pattern_u_boot_main_signon),
-    ('stop_autoboot_prompt', pattern_stop_autoboot_prompt),
-    ('unknown_command', pattern_unknown_command),
-    ('error_notification', pattern_error_notification),
-    ('error_please_reset', pattern_error_please_reset),
+    NamedPattern('spl_signon', pattern_u_boot_spl_signon),
+    NamedPattern('main_signon', pattern_u_boot_main_signon),
+    NamedPattern('stop_autoboot_prompt', pattern_stop_autoboot_prompt),
+    NamedPattern('unknown_command', pattern_unknown_command),
+    NamedPattern('error_notification', pattern_error_notification),
+    NamedPattern('error_please_reset', pattern_error_please_reset),
 )
 
 
@@ -95,14 +95,14 @@ class ConsoleEnableCheck():
         global bad_pattern_defs
         self.default_bad_patterns = bad_pattern_defs
         bad_pattern_defs += ((self.check_type, self.check_pattern),)
-        self.console.disable_check_count = {pat[PAT_ID]: 0 for pat in bad_pattern_defs}
+        self.console.disable_check_count = {pat.name: 0 for pat in bad_pattern_defs}
         self.console.eval_bad_patterns()
 
     def __exit__(self, extype, value, traceback):
         # pylint:disable=W0603
         global bad_pattern_defs
         bad_pattern_defs = self.default_bad_patterns
-        self.console.disable_check_count = {pat[PAT_ID]: 0 for pat in bad_pattern_defs}
+        self.console.disable_check_count = {pat.name: 0 for pat in bad_pattern_defs}
         self.console.eval_bad_patterns()
 
 
@@ -175,7 +175,7 @@ class ConsoleBase():
         self.prompt = self.config.buildconfig['config_sys_prompt'][1:-1]
         self.prompt_compiled = re.compile('^' + re.escape(self.prompt), re.MULTILINE)
         self.p = None
-        self.disable_check_count = {pat[PAT_ID]: 0 for pat in bad_pattern_defs}
+        self.disable_check_count = {pat.name: 0 for pat in bad_pattern_defs}
         self.eval_bad_patterns()
 
         self.at_prompt = False
@@ -196,10 +196,10 @@ class ConsoleBase():
 
     def eval_bad_patterns(self):
         """Set up lists of regexes for patterns we don't expect on console"""
-        self.bad_patterns = [pat[PAT_RE] for pat in bad_pattern_defs \
-            if self.disable_check_count[pat[PAT_ID]] == 0]
-        self.bad_pattern_ids = [pat[PAT_ID] for pat in bad_pattern_defs \
-            if self.disable_check_count[pat[PAT_ID]] == 0]
+        self.bad_patterns = [pat.pattern for pat in bad_pattern_defs
+                             if not self.disable_check_count[pat.name]]
+        self.bad_pattern_ids = [pat.name for pat in bad_pattern_defs
+                                if not self.disable_check_count[pat.name]]
 
     def close(self):
         """Terminate the connection to the U-Boot console.
