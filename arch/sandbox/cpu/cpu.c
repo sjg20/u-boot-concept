@@ -6,6 +6,7 @@
 #define LOG_CATEGORY	LOGC_SANDBOX
 
 #include <bootstage.h>
+#include <cmdsock.h>
 #include <cpu_func.h>
 #include <errno.h>
 #include <log.h>
@@ -449,4 +450,42 @@ int sandbox_load_other_fdt(void **fdtp, int *sizep)
 	*fdtp = fdt;
 
 	return 0;
+}
+
+void sandbox_cmdsock_loop(void)
+{
+	struct sandbox_state *state = state_get_current();
+	struct membuf in, out;
+	int ret;
+
+	if (!state->cmdsock_name)
+		return;
+
+	ret = cmdsock_start(state->cmdsock_name);
+	if (ret)
+		goto done;
+
+	membuf_init(&in, os_malloc(CMDSOCK_BUF_SIZE), CMDSOCK_BUF_SIZE);
+	membuf_init(&out, os_malloc(CMDSOCK_BUF_SIZE), CMDSOCK_BUF_SIZE);
+	if (!in.start || !out.start) {
+		printf("Out of memory for cmdsock buffers\n");
+		goto done;
+	}
+	cmdsock_init(&in, &out);
+	do {
+		ret = cmdsock_poll(&in, &out);
+		cmdsock_process();
+	} while (!ret);
+
+	cmdsock_stop();
+
+done:
+	os_exit(1);
+}
+
+bool cmdsock_active(void)
+{
+	struct sandbox_state *state = state_get_current();
+
+	return state->cmdsock_name;
 }
