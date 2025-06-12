@@ -664,13 +664,13 @@ void efi_putc(struct efi_priv *priv, const char ch);
 int efi_store_memory_map(struct efi_priv *priv);
 
 /**
- * efi_call_exit_boot_services() - Handle the exit-boot-service procedure
+ * efi_stub_exit_boot_services() - Handle the exit-boot-service procedure
  *
  * Tell EFI we don't want their boot services anymore
  *
  * Return: 0 if OK, non-zero on error
  */
-int efi_call_exit_boot_services(void);
+int efi_stub_exit_boot_services(void);
 
 /**
  * efi_get_mmap() - Get the memory map from EFI
