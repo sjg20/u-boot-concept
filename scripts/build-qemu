@@ -69,7 +69,6 @@ class BuildQemu:
 
         self.helper = build_helper.Helper(args)
         self.helper.read_settings()
-        self.imagedir = Path(self.helper.get_setting('image_dir', '~/dev'))
         self.ubdir = Path(self.helper.get_setting('build_dir', '/tmp/b'))
         self.sctdir = Path(self.helper.get_setting('sct_dir', '~/dev/efi/sct'))
         self.tiano = Path(self.helper.get_setting('tianocore_dir',
@@ -158,11 +157,6 @@ class BuildQemu:
                 self.qemu = 'qemu-system-x86_64'
         else:
             raise ValueError(f"Invalid arch '{args.arch}'")
-
-        self.os_path = None
-        if args.os == 'ubuntu':
-            img_name = (f'{args.os}-{args.release}-desktop-{self.helper.os_arch}.iso')
-            self.os_path = self.imagedir / args.os / img_name
 
         self.build_dir = self.ubdir / self.board
         self.bios = (bios_override if bios_override
@@ -289,12 +283,6 @@ class BuildQemu:
 
         # Add other parameters gathered from options
         qemu_cmd.extend(self.qemu_extra)
-        if self.os_path:
-            if not self.os_path.exists():
-                tout.error(f'OS image {self.os_path} specified but not found')
-            qemu_cmd.extend([
-                '-drive',
-                f'if=virtio,file={self.os_path},format=raw,id=hd0,readonly=on'])
 
         if self.img_fname:
             if self.img_fname.exists():
