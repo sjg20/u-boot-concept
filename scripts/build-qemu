@@ -41,8 +41,6 @@ def parse_args():
         description='Build and/or run U-Boot with QEMU',
         formatter_class=argparse.RawTextHelpFormatter)
     build_helper.add_common_args(parser)
-    parser.add_argument('-a', '--arch', default='arm', choices=['arm', 'x86'],
-                        help='Select architecture (arm, x86) Default: arm')
     parser.add_argument('-C', '--enable-console', action='store_true',
                         help="Enable linux console (x86 only)")
     parser.add_argument('-D', '--share-dir', metavar='DIR',

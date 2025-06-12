@@ -115,6 +115,8 @@ def add_common_args(parser):
     Args:
         parser (argparse.ArgumentParser): Parser to modify
     """
+    parser.add_argument('-a', '--arch', default='arm', choices=['arm', 'x86'],
+                        help='Select architecture (arm, x86) Default: arm')
     parser.add_argument('-B', '--no-build', action='store_true',
                         help="Don't build; assume a build exists")
     parser.add_argument('-d', '--disk',
