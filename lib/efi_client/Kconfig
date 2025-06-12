@@ -30,7 +30,8 @@ config EFI_APP
 	  to EFI.
 
 config EFI_STUB
-# 	select POSITION_INDEPENDENT if ARM
+	select POSITION_INDEPENDENT if ARM
+	# check
 	bool "Support running as an EFI payload"
 
 endchoice
