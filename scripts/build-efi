@@ -209,9 +209,13 @@ class BuildEfi:
             self.run_qemu(bitness, args.serial_only)
 
 
-if __name__ == "__main__":
+def main():
+    """Parse arguments and start the program"""
     args = parse_args()
     tout.init(tout.INFO if args.verbose else tout.WARNING)
 
-    efi = BuildEfi(args)
-    efi.start()
+    qemu = BuildEfi(args)
+    qemu.start()
+
+if __name__ == '__main__':
+    main()
