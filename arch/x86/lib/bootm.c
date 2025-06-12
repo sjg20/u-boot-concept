@@ -199,10 +199,13 @@ int boot_linux_kernel(ulong setup_base, ulong entry, bool image_64bit)
 	timestamp_add_now(TS_U_BOOT_START_KERNEL);
 #endif
 
-	if (IS_ENABLED(CONFIG_EFI_APP))
-		return efi_boot(setup_base, entry, image_64bit);
+	// if (IS_ENABLED(CONFIG_EFI_APP))
+		// return efi_boot(setup_base, entry, image_64bit);
 
 	post_code(POST_BOOT);
+
+	if (IS_ENABLED(CONFIG_EFI_APP))
+		efi_stub_exit_boot_services();
 
 	if (image_64bit) {
 		if (!cpu_has_64bit()) {
