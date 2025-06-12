@@ -20,7 +20,7 @@ import sys
 import shlex
 import time
 
-from build_helper import Helper
+import build_helper
 
 OUR_PATH = os.path.dirname(os.path.realpath(__file__))
 OUR1_PATH = os.path.dirname(OUR_PATH)
@@ -40,14 +40,11 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description='Build and/or run U-Boot with QEMU',
         formatter_class=argparse.RawTextHelpFormatter)
+    build_helper.add_common_args(parser)
     parser.add_argument('-a', '--arch', default='arm', choices=['arm', 'x86'],
                         help='Select architecture (arm, x86) Default: arm')
-    parser.add_argument('-B', '--no-build', action='store_true',
-                        help="Don't build; assume a build exists")
     parser.add_argument('-C', '--enable-console', action='store_true',
                         help="Enable linux console (x86 only)")
-    parser.add_argument('-d', '--disk',
-                        help='Root disk image file to use with QEMU')
     parser.add_argument('-D', '--share-dir', metavar='DIR',
                         help='Directory to share into the guest via virtiofs')
     parser.add_argument('-e', '--sct-run', action='store_true',
@@ -56,25 +53,12 @@ def parse_args():
                         help='Run Tianocore (OVMF) instead of U-Boot')
     parser.add_argument('-I', '--initrd',
                         help='Initial ramdisk to run using -initrd')
-    parser.add_argument(
-        '-k', '--kvm', action='store_true',
-        help='Use KVM (Kernel-based Virtual Machine) for acceleration')
     parser.add_argument('-K', '--kernel',
                         help='Kernel to run using -kernel')
-    parser.add_argument('-o', '--os', metavar='NAME', choices=['ubuntu'],
-                        help='Run a specified Operating System')
     parser.add_argument('-Q', '--use-qboot', action='store_true',
                         help='Run qboot instead of U-Boot')
-    parser.add_argument('-r', '--run', action='store_true',
-                        help='Run QEMU with the built/specified image')
     parser.add_argument('-x', '--xpl', action='store_true',
                         help='Use xPL image rather than U-Boot proper')
-    parser.add_argument(
-        '-R', '--release', default='24.04.1',
-        help='Select OS release version (e.g, 24.04) Default: 24.04.1')
-    parser.add_argument(
-        '-s', '--serial-only', action='store_true',
-        help='Use serial console only (no graphical display for QEMU)')
     parser.add_argument(
         '-S', '--sct-seq',
         help='SCT sequence-file to be written into the SCT image if -e')
@@ -86,8 +70,6 @@ def parse_args():
         help='Pass the given root device to linux via root=/dev/disk/by-uuid/')
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='Show executed commands')
-    parser.add_argument('-w', '--word-32bit', action='store_true',
-                        help='Use 32-bit version for the build/architecture')
 
     return parser.parse_args()
 
@@ -99,7 +81,7 @@ class BuildQemu:
         """Set up arguments and configure paths"""
         self.args = args
 
-        self.helper = Helper()
+        self.helper = build_helper.Helper()
         self.helper.read_settings()
         self.imagedir = Path(self.helper.get_setting('image_dir', '~/dev'))
         self.ubdir = Path(self.helper.get_setting('build_dir', '/tmp/b'))
