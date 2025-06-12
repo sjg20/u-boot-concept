@@ -107,3 +107,29 @@ sct_mnt = /mnt/sct
                     input=f'type=c, size={size_mb-1}M, start=1M,bootable')
             else:
                 shutil.copy2(tmp.name, fname)
+
+
+def add_common_args(parser):
+    """Add some arguments which are common to build-efi/qemu scripts
+
+    Args:
+        parser (argparse.ArgumentParser): Parser to modify
+    """
+    parser.add_argument('-B', '--no-build', action='store_true',
+                        help="Don't build; assume a build exists")
+    parser.add_argument('-d', '--disk',
+                        help='Root disk image file to use with QEMU')
+    parser.add_argument(
+        '-k', '--kvm', action='store_true',
+        help='Use KVM (Kernel-based Virtual Machine) for acceleration')
+    parser.add_argument('-o', '--os', metavar='NAME', choices=['ubuntu'],
+                        help='Run a specified Operating System')
+    parser.add_argument('-r', '--run', action='store_true',
+                        help='Run QEMU with the image')
+    parser.add_argument(
+        '-R', '--release', default='24.04.1',
+        help='Select OS release version (e.g, 24.04) Default: 24.04.1')
+    parser.add_argument('-s', '--serial-only', action='store_true',
+                        help='Run QEMU with serial only (no display)')
+    parser.add_argument('-w', '--word-32bit', action='store_true',
+                        help='Use 32-bit version for the build/architecture')
