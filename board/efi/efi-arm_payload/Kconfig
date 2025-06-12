@@ -1,0 +1,23 @@
+if TARGET_EFI_ARM_PAYLOAD64
+
+config SYS_BOARD
+	default "efi-arm_payload"
+
+config SYS_VENDOR
+	default "efi"
+
+config SYS_SOC
+	default "efi"
+
+config TEXT_BASE
+	default 0x00200000
+
+config BOARD_SPECIFIC_OPTIONS # dummy
+	def_bool y
+	select BOARD_EARLY_INIT_R
+	imply SYS_NS16550
+
+config SYS_LDSCRIPT
+	default "arch/arm/lib/elf_aarch64_efi.lds"
+
+endif

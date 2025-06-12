@@ -1,0 +1,6 @@
+EFI-ARM_PAYLOAD BOARD
+M:	Simon Glass <sjg@chromium.org>
+S:	Maintained
+F:	board/efi/Kconfig
+F:	board/efi/efi-arm_payload/
+F:	configs/efi-arm_payload64_defconfig
