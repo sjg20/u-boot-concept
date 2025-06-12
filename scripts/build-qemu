@@ -432,8 +432,7 @@ class BuildQemu:
 
 
 def main():
-    """Parses arguments and initiates the BuildQemu process
-    """
+    """Parse arguments and start the program"""
     args = parse_args()
     tout.init(tout.INFO if args.verbose else tout.WARNING)
 
