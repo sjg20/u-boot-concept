@@ -13,6 +13,15 @@
 #include <efi_api.h>
 #include <efi_stub.h>
 
+/*
+ * true if we must use the hardware UART directory (EFI not available). This
+ * is normally false, meaning that character output is sent to the efi_putc()
+ * routine. Once exit-boot-services is called, we must either not use character
+ * output at all, or use a hardware UART directly, if there is a driver
+ * available.
+ */
+bool use_hw_uart;
+
 int efi_stub_exit_boot_services(void)
 {
 	struct efi_priv *priv = efi_get_priv();

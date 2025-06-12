@@ -100,4 +100,7 @@ int setup_info_table(struct efi_priv *priv, int size);
 void add_entry_addr(struct efi_priv *priv, enum efi_entry_t type, void *ptr1,
 		    int size1, void *ptr2, int size2);
 
+/* true if we must use the hardware UART directory (EFI not available) */
+extern bool use_hw_uart;
+
 #endif /* _EFI_STUB_H */
