@@ -8,6 +8,7 @@
 #ifndef _EFI_STUB_H
 #define _EFI_STUB_H
 
+#include <efi.h>
 #include <linux/types.h>
 
 struct efi_priv;
@@ -99,6 +100,25 @@ int setup_info_table(struct efi_priv *priv, int size);
  */
 void add_entry_addr(struct efi_priv *priv, enum efi_entry_t type, void *ptr1,
 		    int size1, void *ptr2, int size2);
+
+/**
+ * arch_efi_main_init() - Set up the stub ready for use
+ *
+ * @priv: Pointer to private information
+ * @boot: Boot-services table
+ * Return: 0 if OK, or EFI error code
+ */
+efi_status_t arch_efi_main_init(struct efi_priv *priv,
+				struct efi_boot_services *boot);
+
+/**
+ * arch_efi_jump_to_payload() - Jump to the U-Boot payload
+ *
+ * Jumps to U-Boot in an arch-specific way
+ *
+ * @priv: Pointer to private information
+ */
+void arch_efi_jump_to_payload(struct efi_priv *priv);
 
 /* true if we must use the hardware UART directory (EFI not available) */
 extern bool use_hw_uart;
