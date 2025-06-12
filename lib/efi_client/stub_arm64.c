@@ -203,7 +203,7 @@ efi_status_t EFIAPI efi_main(efi_handle_t image,
 	table.sys_table = (ulong)sys_table;
 	add_entry_addr(priv, EFIET_SYS_TABLE, &table, sizeof(table), NULL, 0);
 
-	ret = efi_call_exit_boot_services();
+	ret = efi_stub_exit_boot_services();
 	if (ret)
 		return ret;
 
