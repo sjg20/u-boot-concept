@@ -156,11 +156,10 @@ efi_status_t EFIAPI efi_main_common(efi_handle_t image,
 	}
 	efi_set_priv(priv);
 
-#ifdef CONFIG_X86
 	ret = arch_efi_main_init(priv, boot);
 	if (ret)
 		return ret;
-#endif
+
 	ret = efi_store_memory_map(priv);
 	if (ret)
 		return ret;
@@ -207,9 +206,7 @@ efi_status_t EFIAPI efi_main_common(efi_handle_t image,
 	printhex8(priv->info->total_size);
 	putc('\n');
 #endif
-#ifdef CONFIG_X86
 	arch_efi_jump_to_payload(priv);
-#endif
 
 	return EFI_LOAD_ERROR;
 }
