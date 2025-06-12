@@ -142,7 +142,7 @@ config GICV3_SUPPORT_GIC600
 
 config STATIC_RELA
 	bool
-	default y if ARM64 && !EFI_APP
+	default y if ARM64 && !EFI_CLIENT
 
 config DMA_ADDR_T_64BIT
 	bool
