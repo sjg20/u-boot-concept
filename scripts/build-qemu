@@ -67,7 +67,7 @@ class BuildQemu:
         """Set up arguments and configure paths"""
         self.args = args
 
-        self.helper = build_helper.Helper()
+        self.helper = build_helper.Helper(args)
         self.helper.read_settings()
         self.imagedir = Path(self.helper.get_setting('image_dir', '~/dev'))
         self.ubdir = Path(self.helper.get_setting('build_dir', '/tmp/b'))
@@ -77,7 +77,6 @@ class BuildQemu:
         self.qboot = Path(self.helper.get_setting('qboot_dir', '~/dev/qboot'))
         self.mnt = Path(self.helper.get_setting('sct_mnt', '/mnt/sct'))
 
-        self.bitness = 32 if args.word_32bit else 64
         self.qemu_extra = []
         self.mem = '512M'  # Default QEMU memory
 
@@ -143,30 +142,26 @@ class BuildQemu:
             self.qemu_extra.extend(['-machine', 'virt'])
             if not args.kvm:
                 self.qemu_extra.extend(['-accel', 'tcg'])
-            os_arch = 'arm'
-            if self.bitness == 64:
+            if self.helper.bitness == 64:
                 if args.xpl:
                     self.board = 'qemu_arm64_spl'
                 else:
                     self.board = 'qemu_arm64'
                 self.qemu = 'qemu-system-aarch64'
                 self.qemu_extra.extend(['-cpu', 'cortex-a57'])
-                os_arch = 'arm64'
         elif args.arch == 'x86':
             self.board = 'qemu-x86'
             default_bios = 'u-boot.rom'
             self.qemu = 'qemu-system-i386'
-            os_arch = 'i386'  # For OS image naming
-            if self.bitness == 64:
+            if self.helper.bitness == 64:
                 self.board = 'qemu-x86_64'
                 self.qemu = 'qemu-system-x86_64'
-                os_arch = 'amd64'
         else:
             raise ValueError(f"Invalid arch '{args.arch}'")
 
         self.os_path = None
         if args.os == 'ubuntu':
-            img_name = (f'{args.os}-{args.release}-desktop-{os_arch}.iso')
+            img_name = (f'{args.os}-{args.release}-desktop-{self.helper.os_arch}.iso')
             self.os_path = self.imagedir / args.os / img_name
 
         self.build_dir = self.ubdir / self.board
