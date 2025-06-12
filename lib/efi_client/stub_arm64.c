@@ -18,8 +18,6 @@
 #include <linux/err.h>
 #include <linux/types.h>
 
-static bool ebs_called;
-
 void _debug_uart_putc(int ch)
 {
 	struct efi_priv *priv = efi_get_priv();
@@ -31,7 +29,7 @@ void _debug_uart_putc(int ch)
 	 * NOTE: for development it is possible to re-implement
 	 * your boards debug uart here like in efi_stub.c for x86.
 	 */
-	if (!ebs_called)
+	if (!use_hw_uart)
 		efi_putc(priv, ch);
 }
 
@@ -68,7 +66,7 @@ efi_status_t EFIAPI efi_main(efi_handle_t image,
 	efi_guid_t efi_gop_guid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
 	efi_status_t ret;
 
-	ebs_called = false;
+	use_hw_uart = false;
 
 	ret = efi_init(priv, "Payload", image, sys_table);
 	if (ret) {
@@ -117,7 +115,7 @@ efi_status_t EFIAPI efi_main(efi_handle_t image,
 		return ret;
 
 	/* The EFI console won't work now :( */
-	ebs_called = true;
+	use_hw_uart = true;
 
 	map.version = priv->memmap_version;
 	map.desc_size = priv->memmap_desc_size;
