@@ -113,17 +113,6 @@ class BuildEfi:
         if self.args.kvm:
             extra.extend(['-enable-kvm', '-cpu', 'host'])
 
-        os_path = None
-        if self.args.os == 'ubuntu':
-            img_name = f'{self.args.os}-{self.args.release}-desktop-{self.helper.os_arch}.iso'
-            os_path = self.imagedir / self.args.os / img_name
-            if not os_path.exists():
-                tout.error(f'OS image {os_path} specified but not found')
-            else:
-                extra.extend([
-                    '-drive',
-                    f'if=virtio,file={os_path},format=raw,id=hd0,readonly=on'])
-
         img_fname = Path(self.args.disk) if self.args.disk else None
         if img_fname:
             if img_fname.exists():

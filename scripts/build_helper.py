@@ -7,6 +7,7 @@
 import configparser
 import contextlib
 import os
+from pathlib import Path
 import shutil
 import subprocess
 import sys
@@ -22,6 +23,7 @@ sys.path.insert(2, os.path.join(OUR1_PATH, 'test/py/tests'))
 
 from u_boot_pylib import command
 from u_boot_pylib import tools
+from u_boot_pylib import tout
 import fs_helper
 
 
@@ -75,6 +77,7 @@ sct_dir = ~/dev/efi/sct
 sct_mnt = /mnt/sct
 ''', binary=False)
         self.settings.read(fname)
+        self.imagedir = Path(self.get_setting('image_dir', '~/dev'))
 
     def get_setting(self, name, fallback=None):
         """Get a setting by name
@@ -145,6 +148,17 @@ sct_mnt = /mnt/sct
 
         if cmdline:
             cmd.extend(['-append'] + [' '.join(cmdline)])
+
+        os_path = None
+        if args.os == 'ubuntu':
+            img_name = f'{args.os}-{args.release}-desktop-{self.os_arch}.iso'
+            os_path = self.imagedir / args.os / img_name
+            if not os_path.exists():
+                tout.error(f'OS image {os_path} specified but not found')
+            else:
+                cmd.extend([
+                    '-drive',
+                    f'if=virtio,file={os_path},format=raw,id=hd0,readonly=on'])
 
 
 def add_common_args(parser):
