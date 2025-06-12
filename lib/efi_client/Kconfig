@@ -4,6 +4,7 @@ menu "U-Boot as UEFI application"
 config EFI_CLIENT
 	bool "Support running U-Boot from EFI"
 	depends on X86 || ARM
+	imply DISPLAY_BOARDINFO
 	imply X86_TSC_READ_BASE
 	select EFI
 	help
