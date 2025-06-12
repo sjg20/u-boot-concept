@@ -128,13 +128,13 @@ static void efi_copy_code(struct efi_priv *priv)
 }
 
 /**
- * efi_main_common() - Start an EFI image
+ * efi_main() - Start an EFI image
  *
  * This function is called by our EFI start-up code. It handles running
  * U-Boot. If it returns, EFI will continue.
  */
-efi_status_t EFIAPI efi_main_common(efi_handle_t image,
-				    struct efi_system_table *sys_table)
+efi_status_t EFIAPI efi_main(efi_handle_t image,
+			     struct efi_system_table *sys_table)
 {
 	struct efi_priv local_priv, *priv = &local_priv;
 	struct efi_boot_services *boot = sys_table->boottime;
