@@ -11,6 +11,7 @@
 #include <debug_uart.h>
 #include <efi.h>
 #include <efi_api.h>
+#include <efi_stub.h>
 
 int efi_stub_exit_boot_services(void)
 {
@@ -34,4 +35,78 @@ int efi_stub_exit_boot_services(void)
 		return ret;
 
 	return 0;
+}
+
+void *memcpy(void *dest, const void *src, size_t size)
+{
+	unsigned char *dptr = dest;
+	const unsigned char *ptr = src;
+	const unsigned char *end = src + size;
+
+	while (ptr < end)
+		*dptr++ = *ptr++;
+
+	return dest;
+}
+
+void *memset(void *inptr, int ch, size_t size)
+{
+	char *ptr = inptr;
+	char *end = ptr + size;
+
+	while (ptr < end)
+		*ptr++ = ch;
+
+	return ptr;
+}
+
+int setup_info_table(struct efi_priv *priv, int size)
+{
+	struct efi_info_hdr *info;
+	efi_status_t ret;
+
+	/* Get some memory for our info table */
+	priv->info_size = size;
+	info = efi_malloc(priv, priv->info_size, &ret);
+	if (ret) {
+		printhex2(ret);
+		puts(" No memory for info table: ");
+		return ret;
+	}
+
+	memset(info, '\0', sizeof(*info));
+	info->version = EFI_TABLE_VERSION;
+	info->hdr_size = sizeof(*info);
+	priv->info = info;
+	priv->next_hdr = (char *)info + info->hdr_size;
+
+	return 0;
+}
+
+/**
+ * add_entry_addr() - Add a new entry to the efi_info list
+ *
+ * This adds an entry, consisting of a tag and two lots of data. This avoids the
+ * caller having to coalesce the data first
+ *
+ * @priv: Pointer to our private information which contains the list
+ * @type: Type of the entry to add
+ * @ptr1: Pointer to first data block to add
+ * @size1: Size of first data block in bytes (can be 0)
+ * @ptr2: Pointer to second data block to add
+ * @size2: Size of second data block in bytes (can be 0)
+ */
+void add_entry_addr(struct efi_priv *priv, enum efi_entry_t type, void *ptr1,
+		    int size1, void *ptr2, int size2)
+{
+	struct efi_entry_hdr *hdr = priv->next_hdr;
+
+	hdr->type = type;
+	hdr->size = size1 + size2;
+	hdr->addr = 0;
+	hdr->link = ALIGN(sizeof(*hdr) + hdr->size, 16);
+	priv->next_hdr += hdr->link;
+	memcpy(hdr + 1, ptr1, size1);
+	memcpy((void *)(hdr + 1) + size1, ptr2, size2);
+	priv->info->total_size = (ulong)priv->next_hdr - (ulong)priv->info;
 }
