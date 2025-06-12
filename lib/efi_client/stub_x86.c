@@ -220,9 +220,3 @@ void arch_efi_jump_to_payload(struct efi_priv *priv)
 {
 	jump_to_uboot(priv->x86_cs32, priv->jump_addr, (ulong)priv->info);
 }
-
-efi_status_t EFIAPI efi_main(efi_handle_t image,
-			     struct efi_system_table *sys_table)
-{
-	return efi_main_common(image, sys_table);
-}

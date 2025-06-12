@@ -74,9 +74,3 @@ void arch_efi_jump_to_payload(struct efi_priv *priv)
 
 	((func_t)priv->jump_addr)((phys_addr_t)priv->info, 0, 0, 0);
 }
-
-efi_status_t EFIAPI efi_main(efi_handle_t image,
-			     struct efi_system_table *sys_table)
-{
-	return efi_main_common(image, sys_table);
-}
