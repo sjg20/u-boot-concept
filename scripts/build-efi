@@ -152,6 +152,7 @@ class BuildEfi:
         cmd = [qemu]
         cmd += '-m', mem
         cmd += '-nic', 'none'
+        self.helper.add_qemu_args(self.args, cmd)
         cmd += extra
         tout.info(' '.join(cmd))
         command.run(*cmd)
