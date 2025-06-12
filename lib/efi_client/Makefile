@@ -7,22 +7,22 @@ obj-$(CONFIG_EFI_APP) += sdram.o
 obj-$(CONFIG_EFI_STUB) += efi_info.o
 
 ifeq ($(CONFIG_ARM64),y)
-efi_stub.o := efi_stub_arm64.o
+stub_obj := efi_stub_arm64.o
 else
-efi_stub.o := efi_stub_x86.o
+stub_obj := efi_stub_x86.o
 
 ifeq ($(CONFIG_EFI_STUB_64BIT),y) # && !CONFIG_ARM64
-CFLAGS_REMOVE_$(efi_stub.o) := -march=i386 -m32
-CFLAGS_$(efi_stub.o) := -m64
+CFLAGS_REMOVE_$(stub_obj) := -march=i386 -m32
+CFLAGS_$(stub_obj) := -m64
 CFLAGS_REMOVE_efi.o := -march=i386 -m32
 CFLAGS_efi.o := -fpic -m64
 endif
 endif
 
-CFLAGS_REMOVE_$(efi_stub.o) += -mregparm=3
-CFLAGS_$(efi_stub.o) += -fpic -fshort-wchar
+CFLAGS_REMOVE_$(stub_obj) += -mregparm=3
+CFLAGS_$(stub_obj) += -fpic -fshort-wchar
 CFLAGS_REMOVE_efi.o += -mregparm=3
 CFLAGS_efi.o += -fpic -fshort-wchar
 
-$(info removing flags $(CFLAGS_REMOVE_$(efi_stub.o)))
-extra-$(CONFIG_EFI_STUB) += $(efi_stub.o) efi.o
+$(info removing flags $(CFLAGS_REMOVE_$(stub_obj)))
+extra-$(CONFIG_EFI_STUB) += $(stub_obj) efi.o
