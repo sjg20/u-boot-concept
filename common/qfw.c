@@ -4,6 +4,7 @@
  * (C) Copyright 2021 Asherah Connor <ashe@kivikakk.ee>
  */
 
+#include <abuf.h>
 #include <dm.h>
 #include <env.h>
 #include <mapmem.h>
@@ -105,62 +106,106 @@ bool qfw_file_iter_end(struct fw_cfg_file_iter *iter)
 	return iter->entry == iter->end;
 }
 
+/**
+ * qfw_read_size() - Read the size of an entry
+ *
+ * @sel: Selector value, e.g. FW_CFG_SETUP_SIZE, FW_CFG_CMDLINE_SIZE
+ * Return: Size of the entry
+ */
+static ulong qfw_read_size(struct udevice *qfw_dev, enum fw_cfg_selector sel)
+{
+	u32 size = 0;
+
+	qfw_read_entry(qfw_dev, sel, 4, &size);
+
+	return le32_to_cpu(size);
+}
+
+int qemu_fwcfg_read_info(struct udevice *qfw_dev, ulong *setupp, ulong *kernp,
+			 ulong *initrdp, struct abuf *cmdline,
+			 ulong *setup_addrp)
+{
+	uint cmdline_size;
+
+	*setupp = qfw_read_size(qfw_dev, FW_CFG_SETUP_SIZE);
+	*kernp = qfw_read_size(qfw_dev, FW_CFG_KERNEL_SIZE);
+	*initrdp = qfw_read_size(qfw_dev, FW_CFG_INITRD_SIZE);
+	cmdline_size = qfw_read_size(qfw_dev, FW_CFG_CMDLINE_SIZE);
+	if (!*kernp)
+		return -ENOENT;
+
+	*setup_addrp = qfw_read_size(qfw_dev, FW_CFG_SETUP_ADDR);
+
+	if (!abuf_init_size(cmdline, cmdline_size))
+		return log_msg_ret("qri", -ENOMEM);
+	qfw_read_entry(qfw_dev, FW_CFG_CMDLINE_DATA, cmdline_size,
+		       cmdline->data);
+
+	return 0;
+}
+
+void qemu_fwcfg_read_files(struct udevice *qfw_dev, const struct abuf *setup,
+			   const struct abuf *kern, const struct abuf *initrd)
+{
+	if (setup->size) {
+		qfw_read_entry(qfw_dev, FW_CFG_SETUP_DATA, setup->size,
+			       setup->data);
+	}
+	qfw_read_entry(qfw_dev, FW_CFG_KERNEL_DATA, kern->size, kern->data);
+	if (initrd->size) {
+		qfw_read_entry(qfw_dev, FW_CFG_INITRD_DATA, initrd->size,
+			       initrd->data);
+	}
+}
+
 int qemu_fwcfg_setup_kernel(struct udevice *qfw_dev, ulong load_addr,
 			    ulong initrd_addr)
 {
-	char *data_addr;
-	u32 setup_size, kernel_size, cmdline_size, initrd_size;
+	ulong setup_size, kernel_size, initrd_size, setup_addr;
+	struct abuf cmdline, setup, kern, initrd;
+	int ret;
 
-	qfw_read_entry(qfw_dev, FW_CFG_SETUP_SIZE, 4, &setup_size);
-	qfw_read_entry(qfw_dev, FW_CFG_KERNEL_SIZE, 4, &kernel_size);
-
-	if (!kernel_size) {
+	ret = qemu_fwcfg_read_info(qfw_dev, &setup_size, &initrd_size,
+				   &kernel_size, &cmdline, &setup_addr);
+	if (ret) {
 		printf("fatal: no kernel available\n");
-		return -ENOENT;
+		return log_msg_ret("qsk", ret);
 	}
 
-	data_addr = map_sysmem(load_addr, 0);
-	if (setup_size) {
-		qfw_read_entry(qfw_dev, FW_CFG_SETUP_DATA,
-			       le32_to_cpu(setup_size), data_addr);
-		data_addr += le32_to_cpu(setup_size);
-	}
+	/*
+	 * always put the setup area where QEMU wants it, since it includes
+	 * absolute pointers to itself
+	 */
+	abuf_init_const_addr(&setup, setup_addr, 0);
+	abuf_init_const_addr(&kern, load_addr, 0);
 
-	qfw_read_entry(qfw_dev, FW_CFG_KERNEL_DATA,
-		       le32_to_cpu(kernel_size), data_addr);
-	data_addr += le32_to_cpu(kernel_size);
-	env_set_hex("filesize", le32_to_cpu(kernel_size));
+	abuf_init_const_addr(&initrd, initrd_addr, 0);
+	qemu_fwcfg_read_files(qfw_dev, &setup, &kern, &initrd);
 
-	data_addr = map_sysmem(initrd_addr, 0);
-	qfw_read_entry(qfw_dev, FW_CFG_INITRD_SIZE, 4, &initrd_size);
-	if (!initrd_size) {
+	env_set_hex("filesize", kern.size);
+
+	if (!initrd_size)
 		printf("warning: no initrd available\n");
-	} else {
-		qfw_read_entry(qfw_dev, FW_CFG_INITRD_DATA,
-			       le32_to_cpu(initrd_size), data_addr);
-		data_addr += le32_to_cpu(initrd_size);
-		env_set_hex("filesize", le32_to_cpu(initrd_size));
-	}
+	else
+		env_set_hex("filesize", initrd_size);
 
-	qfw_read_entry(qfw_dev, FW_CFG_CMDLINE_SIZE, 4, &cmdline_size);
-	if (cmdline_size) {
-		qfw_read_entry(qfw_dev, FW_CFG_CMDLINE_DATA,
-			       le32_to_cpu(cmdline_size), data_addr);
+	if (cmdline.data) {
 		/*
 		 * if kernel cmdline only contains '\0', (e.g. no -append
 		 * when invoking qemu), do not update bootargs
 		 */
-		if (*data_addr) {
-			if (env_set("bootargs", data_addr) < 0)
+		if (*(char *)cmdline.data) {
+			if (env_set("bootargs", cmdline.data) < 0)
 				printf("warning: unable to change bootargs\n");
 		}
 	}
+	abuf_uninit(&cmdline);
 
-	printf("loading kernel to address %lx size %x", load_addr,
-	       le32_to_cpu(kernel_size));
+	printf("loading kernel to address %lx size %zx", abuf_addr(&kern),
+	       kern.size);
 	if (initrd_size)
-		printf(" initrd %lx size %x\n", initrd_addr,
-		       le32_to_cpu(initrd_size));
+		printf(" initrd %lx size %lx\n", abuf_addr(&initrd),
+		       initrd_size);
 	else
 		printf("\n");
 

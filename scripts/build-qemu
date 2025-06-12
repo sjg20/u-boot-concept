@@ -44,6 +44,8 @@ def parse_args():
                         help='Select architecture (arm, x86) Default: arm')
     parser.add_argument('-B', '--no-build', action='store_true',
                         help="Don't build; assume a build exists")
+    parser.add_argument('-C', '--enable-console', action='store_true',
+                        help="Enable linux console (x86 only)")
     parser.add_argument('-d', '--disk',
                         help='Root disk image file to use with QEMU')
     parser.add_argument('-D', '--share-dir', metavar='DIR',
@@ -52,11 +54,17 @@ def parse_args():
                         help='Run UEFI Self-Certification Test (SCT)')
     parser.add_argument('-E', '--use-tianocore', action='store_true',
                         help='Run Tianocore (OVMF) instead of U-Boot')
+    parser.add_argument('-I', '--initrd',
+                        help='Initial ramdisk to run using -initrd')
     parser.add_argument(
         '-k', '--kvm', action='store_true',
         help='Use KVM (Kernel-based Virtual Machine) for acceleration')
+    parser.add_argument('-K', '--kernel',
+                        help='Kernel to run using -kernel')
     parser.add_argument('-o', '--os', metavar='NAME', choices=['ubuntu'],
                         help='Run a specified Operating System')
+    parser.add_argument('-Q', '--use-qboot', action='store_true',
+                        help='Run qboot instead of U-Boot')
     parser.add_argument('-r', '--run', action='store_true',
                         help='Run QEMU with the built/specified image')
     parser.add_argument('-x', '--xpl', action='store_true',
@@ -70,6 +78,12 @@ def parse_args():
     parser.add_argument(
         '-S', '--sct-seq',
         help='SCT sequence-file to be written into the SCT image if -e')
+    parser.add_argument(
+        '-t', '--root',
+        help='Pass the given root device to linux via root=xxx')
+    parser.add_argument(
+        '-U', '--uuid',
+        help='Pass the given root device to linux via root=/dev/disk/by-uuid/')
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='Show executed commands')
     parser.add_argument('-w', '--word-32bit', action='store_true',
@@ -92,6 +106,7 @@ class BuildQemu:
         self.sctdir = Path(self.helper.get_setting('sct_dir', '~/dev/efi/sct'))
         self.tiano = Path(self.helper.get_setting('tianocore_dir',
                                                   '~/dev/tiano'))
+        self.qboot = Path(self.helper.get_setting('qboot_dir', '~/dev/qboot'))
         self.mnt = Path(self.helper.get_setting('sct_mnt', '/mnt/sct'))
 
         self.bitness = 32 if args.word_32bit else 64
@@ -137,6 +152,12 @@ class BuildQemu:
             if not bios_override.exists():
                 tout.fatal(
                     'Error: Tianocore BIOS specified (-E) but not found at '
+                    f'{bios_override}')
+        elif args.use_qboot:
+            bios_override = Path(self.qboot, 'bios.bin')
+            if not bios_override.exists():
+                tout.fatal(
+                    'Error: qboot BIOS specified (-Q) but not found at '
                     f'{bios_override}')
 
         self.seq_fname = Path(args.sct_seq) if args.sct_seq else None
@@ -281,13 +302,15 @@ class BuildQemu:
         if not self.bios.exists():
             tout.fatal(f"Error: BIOS file '{self.bios}' not found")
 
+        cmdline = []
+
         qemu_cmd = [str(self.qemu)]
         if self.bios:
             qemu_cmd.extend(['-bios', str(self.bios)])
         qemu_cmd.extend(self.kvm_params)
         qemu_cmd.extend(['-m', self.mem])
 
-        if not self.args.sct_run:
+        if not self.args.sct_run and not self.qboot:
             qemu_cmd.extend(['-netdev', 'user,id=net0,hostfwd=tcp::2222-:22',
                              '-device', 'virtio-net-pci,netdev=net0'])
 
@@ -300,6 +323,21 @@ class BuildQemu:
             qemu_cmd.extend(['-display', 'none'])
         if not any(item.startswith('-serial') for item in self.qemu_extra):
             qemu_cmd.extend(['-serial', 'mon:stdio'])
+
+        if self.args.kernel:
+            qemu_cmd.extend(['-kernel', self.args.kernel])
+        if self.args.initrd:
+            qemu_cmd.extend(['-initrd', self.args.initrd])
+
+        if self.args.enable_console:
+            cmdline.append('console=ttyS0,115200,8n1')
+        if self.args.root:
+            cmdline.append(f'root={self.args.root}')
+        if self.args.uuid:
+            cmdline.append(f'root=/dev/disk/by-uuid/{self.args.uuid}')
+
+        if cmdline:
+            qemu_cmd.extend(['-append'] + [' '.join(cmdline)])
 
         # Add other parameters gathered from options
         qemu_cmd.extend(self.qemu_extra)

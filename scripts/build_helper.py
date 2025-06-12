@@ -34,7 +34,7 @@ class Helper:
         self.settings = configparser.ConfigParser()
         fname = f'{os.getenv("HOME")}/.u_boot_qemu'
         if not os.path.exists(fname):
-            print('No config file found: {fname}\nCreating one...\n')
+            print(f'No config file found: {fname}\nCreating one...\n')
             tools.write_file(fname, '''# U-Boot QEMU-scripts config
 
 [DEFAULT]

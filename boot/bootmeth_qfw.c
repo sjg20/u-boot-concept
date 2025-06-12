@@ -8,11 +8,14 @@
 
 #define LOG_CATEGORY UCLASS_BOOTSTD
 
+#include <abuf.h>
 #include <command.h>
 #include <bootdev.h>
 #include <bootflow.h>
+#include <bootm.h>
 #include <bootmeth.h>
 #include <env.h>
+#include <mapmem.h>
 #include <qfw.h>
 #include <dm.h>
 
@@ -31,22 +34,82 @@ static int qfw_check(struct udevice *dev, struct bootflow_iter *iter)
 static int qfw_read_bootflow(struct udevice *dev, struct bootflow *bflow)
 {
 	struct udevice *qfw_dev = dev_get_parent(bflow->dev);
-	ulong load, initrd;
+	ulong setup, kern, ramdisk, setup_addr;
+	size_t cmdline_size;
+	struct abuf cmdline;
 	int ret;
 
-	load = env_get_hex("kernel_addr_r", 0);
-	initrd = env_get_hex("ramdisk_addr_r", 0);
-	log_debug("setup kernel %s %lx %lx\n", qfw_dev->name, load, initrd);
+	/* Get the size of each region */
+	ret = qemu_fwcfg_read_info(qfw_dev, &setup, &kern, &ramdisk, &cmdline,
+				   &setup_addr);
+	if (ret)
+		return log_msg_ret("qri", ret);
+	bflow->cmdline = abuf_uninit_move(&cmdline, &cmdline_size);
+
 	bflow->name = strdup("qfw");
 	if (!bflow->name)
 		return log_msg_ret("name", -ENOMEM);
 
-	ret = qemu_fwcfg_setup_kernel(qfw_dev, load, initrd);
-	log_debug("setup kernel result %d\n", ret);
-	if (ret)
-		return log_msg_ret("cmd", -EIO);
-
+	/*
+	 * create images for each; only cmdline has the actual data; the others
+	 * only have a size for now, since the data has yet not been read
+	 */
+	if (!bootflow_img_add(bflow, "setup",
+			      (enum bootflow_img_t)IH_TYPE_X86_SETUP,
+			      setup_addr, setup))
+		return log_msg_ret("cri", -ENOMEM);
+	if (!bootflow_img_add(bflow, "kernel",
+			      (enum bootflow_img_t)IH_TYPE_KERNEL, 0, kern))
+		return log_msg_ret("qrk", -ENOMEM);
+	if (ramdisk && !bootflow_img_add(bflow, "ramdisk",
+					 (enum bootflow_img_t)IH_TYPE_RAMDISK,
+					 0, ramdisk))
+		return log_msg_ret("qrr", -ENOMEM);
+	if (!bootflow_img_add(bflow, "cmdline", BFI_CMDLINE,
+			      map_to_sysmem(bflow->cmdline), cmdline_size))
+		return log_msg_ret("qrc", -ENOMEM);
 	bflow->state = BOOTFLOWST_READY;
+
+	return 0;
+}
+
+static int qfw_read_files(struct udevice *dev, struct bootflow *bflow,
+			  bool re_read, const struct bootflow_img **simgp,
+			  const struct bootflow_img **kimgp,
+			  const struct bootflow_img **rimgp)
+{
+	struct udevice *qfw_dev = dev_get_parent(bflow->dev);
+	struct bootflow_img *kimg, *rimg;
+	struct abuf setup, kern, ramdisk;
+	const struct bootflow_img *simg;
+
+	simg = bootflow_img_find(bflow, (enum bootflow_img_t)IH_TYPE_X86_SETUP);
+	kimg = bootflow_img_findw(bflow, (enum bootflow_img_t)IH_TYPE_KERNEL);
+	rimg = bootflow_img_findw(bflow, (enum bootflow_img_t)IH_TYPE_RAMDISK);
+	if (!kimg)
+		return log_msg_ret("qfs", -EINVAL);
+
+	/* read files only if not already read */
+	if (re_read || !kimg->addr) {
+		abuf_init_const_addr(&setup, simg ? simg->addr : 0,
+				     simg ? simg->size : 0);
+		abuf_init_const_addr(&kern, env_get_hex("kernel_addr_r", 0),
+				     kimg->size);
+		abuf_init_const_addr(&ramdisk, env_get_hex("ramdisk_addr_r", 0),
+				     rimg ? rimg->size : 0);
+
+		qemu_fwcfg_read_files(qfw_dev, &setup, &kern, &ramdisk);
+		kimg->addr = abuf_addr(&kern);
+		if (rimg)
+			rimg->addr = abuf_addr(&ramdisk);
+	}
+
+	if (simgp)
+		*simgp = simg;
+	if (kimgp)
+		*kimgp = kimg;
+	if (rimgp)
+		*rimgp = rimg;
 
 	return 0;
 }
@@ -58,15 +121,55 @@ static int qfw_read_file(struct udevice *dev, struct bootflow *bflow,
 	return -ENOSYS;
 }
 
-static int qfw_boot(struct udevice *dev, struct bootflow *bflow)
+#if CONFIG_IS_ENABLED(BOOTSTD_FULL)
+static int qfw_read_all(struct udevice *dev, struct bootflow *bflow)
 {
+	struct bootflow_img *kimg;
 	int ret;
 
-	ret = run_command("booti ${kernel_addr_r} ${ramdisk_addr_r}:${filesize} ${fdtcontroladdr}",
-			  0);
-	if (ret) {
-		ret = run_command("bootz ${kernel_addr_r} ${ramdisk_addr_r}:${filesize} "
-				  "${fdtcontroladdr}", 0);
+	kimg = bootflow_img_findw(bflow, (enum bootflow_img_t)IH_TYPE_KERNEL);
+	if (!kimg)
+		return log_msg_ret("qra", -ENOENT);
+
+	ret = qfw_read_files(dev, bflow, true, NULL, NULL, NULL);
+	if (ret)
+		return log_msg_ret("qrA", ret);
+
+	return 0;
+}
+#endif
+
+static int qfw_boot(struct udevice *dev, struct bootflow *bflow)
+{
+	const struct bootflow_img *simg, *kimg, *rimg;
+	char conf_fdt[20], conf_ramdisk[40], addr_img_str[20];
+	struct bootm_info bmi;
+	int ret;
+
+	/* read the files if not already done */
+	ret = qfw_read_files(dev, bflow, false, &simg, &kimg, &rimg);
+	if (!kimg)
+		return log_msg_ret("qkf", -EINVAL);
+
+	ret = booti_run(&bmi);
+	bootm_init(&bmi);
+	snprintf(conf_fdt, sizeof(conf_fdt), "%lx",
+		 (ulong)map_to_sysmem(gd->fdt_blob));
+	snprintf(addr_img_str, sizeof(addr_img_str), "%lx", kimg->addr);
+	bmi.addr_img = addr_img_str;
+	snprintf(conf_ramdisk, sizeof(conf_ramdisk), "%lx:%lx", rimg->addr,
+		 rimg->size);
+	bmi.conf_ramdisk = conf_ramdisk;
+
+	ret = -ENOENT;
+	if (IS_ENABLED(CONFIG_CMD_BOOTI))
+		ret = booti_run(&bmi);
+	if (ret && IS_ENABLED(CONFIG_CMD_BOOTZ))
+		ret = bootz_run(&bmi);
+	if (ret && IS_ENABLED(CONFIG_ZBOOT) && simg) {
+		ret = zboot_run_args(kimg->addr, kimg->size,
+				     rimg->addr, rimg->size, simg->addr,
+				     *bflow->cmdline ? bflow->cmdline : NULL);
 	}
 
 	return ret ? -EIO : 0;
@@ -85,6 +188,9 @@ static struct bootmeth_ops qfw_bootmeth_ops = {
 	.check		= qfw_check,
 	.read_bootflow	= qfw_read_bootflow,
 	.read_file	= qfw_read_file,
+#if CONFIG_IS_ENABLED(BOOTSTD_FULL)
+	.read_all	= qfw_read_all,
+#endif
 	.boot		= qfw_boot,
 };
 

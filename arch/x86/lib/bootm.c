@@ -24,6 +24,7 @@
 #include <asm/bootparam.h>
 #include <asm/cpu.h>
 #include <asm/byteorder.h>
+#include <asm/post.h>
 #include <asm/zimage.h>
 #ifdef CONFIG_SYS_COREBOOT
 #include <asm/arch/timestamp.h>
@@ -200,6 +201,8 @@ int boot_linux_kernel(ulong setup_base, ulong entry, bool image_64bit)
 
 	if (IS_ENABLED(CONFIG_EFI_APP))
 		return efi_boot(setup_base, entry, image_64bit);
+
+	post_code(POST_BOOT);
 
 	if (image_64bit) {
 		if (!cpu_has_64bit()) {
