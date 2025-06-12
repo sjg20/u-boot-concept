@@ -474,6 +474,7 @@ static inline struct efi_mem_desc *efi_get_next_mem_desc(
  * @info_size: Size of the info list @info in bytes
  * @next_hdr: Pointer to where to put the next header when adding to the list
  * @jump_addr: Address to jump to to start U-Boot
+ * @x86_cs32: x86 code-segment to use for U-Boot
  */
 struct efi_priv {
 	efi_handle_t parent_image;
@@ -498,6 +499,7 @@ struct efi_priv {
 	unsigned int info_size;
 	void *next_hdr;
 	ulong jump_addr;
+	int x86_cs32;
 };
 
 /*
