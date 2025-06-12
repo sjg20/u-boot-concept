@@ -26,8 +26,21 @@ import fs_helper
 
 
 class Helper:
-    def __init__(self):
+    def __init__(self, args):
         self.settings = None
+        self.imagedir = None
+        self.args = args
+        self.bitness = 32 if args.word_32bit else 64
+        if self.args.arch == 'arm':
+            if self.bitness == 64:
+                self.os_arch = 'arm64'
+            else:
+                self.os_arch = 'arm'
+        else:  # x86
+            if self.bitness == 64:
+                self.os_arch = 'amd64'
+            else:
+                self.os_arch = 'i386'
 
     def read_settings(self):
         """Get settings from the settings file"""
