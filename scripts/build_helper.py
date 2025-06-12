@@ -73,23 +73,6 @@ sct_mnt = /mnt/sct
         raw = self.settings.get('DEFAULT', name, fallback=fallback)
         return os.path.expandvars(os.path.expanduser(raw))
 
-    def stage(self, name):
-        """Context manager to count requests across a range of patchwork calls
-
-        Args:
-            name (str): Stage name
-
-        Return:
-            _Stage: contect object
-
-        Usage:
-            with self.stage('name'):
-                ...do things
-
-            Note that the output only appears if the -N flag is used
-        """
-        return self._Stage(name)
-
     @contextlib.contextmanager
     def make_disk(self, fname, size_mb=20, fs_type='ext4', use_part=False):
         """Create a raw disk image with files on it
