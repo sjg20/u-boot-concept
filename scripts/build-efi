@@ -58,24 +58,22 @@ def parse_args():
 class BuildEfi:
     """Class to collect together the various bits of state while running"""
     def __init__(self, args):
-        self.helper = build_helper.Helper()
+        self.helper = build_helper.Helper(args)
         self.helper.read_settings()
         self.img = self.helper.get_setting('efi_image_file', 'efi.img')
         self.build_dir = self.helper.get_setting("build_dir", '/tmp')
         self.args = args
         self.imagedir = Path(self.helper.get_setting('image_dir', '~/dev'))
 
-    def run_qemu(self, bitness, serial_only):
+    def run_qemu(self, serial_only):
         """Run QEMU
 
         Args:
-            bitness (int): Bitness to use, 32 or 64
             serial_only (bool): True to run without a display
         """
         extra = []
         efi_dir = self.helper.get_setting('efi_dir')
         if self.args.arch == 'arm':
-            os_arch = 'arm64'
             qemu_arch = 'aarch64'
             extra += ['--machine', 'virt', '-cpu', 'max']
             bios = os.path.join(efi_dir, 'OVMF-pure-efi.aarch64.fd.64m')
@@ -88,14 +86,12 @@ class BuildEfi:
                       f'id=hd0,file={self.img},if=none,format=raw',
                       '-device', 'virtio-blk-device,drive=hd0']
         else:  # x86
-            if bitness == 64:
+            if self.helper.bitness == 64:
                 qemu_arch = 'x86_64'
                 bios = 'OVMF_CODE_4M.fd'
-                os_arch = 'amd64'
             else:
                 qemu_arch = 'i386'
                 bios = 'OVMF-pure-efi.i386.fd'
-                os_arch = 'i386'
             bios = os.path.join(efi_dir, bios)
             var_store = os.path.join(efi_dir, 'OVMF_VARS_4M.fd')
             extra += [
@@ -119,7 +115,7 @@ class BuildEfi:
 
         os_path = None
         if self.args.os == 'ubuntu':
-            img_name = f'{self.args.os}-{self.args.release}-desktop-{os_arch}.iso'
+            img_name = f'{self.args.os}-{self.args.release}-desktop-{self.helper.os_arch}.iso'
             os_path = self.imagedir / self.args.os / img_name
             if not os_path.exists():
                 tout.error(f'OS image {os_path} specified but not found')
@@ -182,15 +178,14 @@ class BuildEfi:
     def start(self):
         """This does all the work"""
         args = self.args
-        bitness = 32 if args.word_32bit else 64
         arch = 'arm' if self.args.arch == 'arm' else 'x86'
         build_type = 'payload' if args.payload else 'app'
-        build = f'efi-{arch}_{build_type}{bitness}'
+        build = f'efi-{arch}_{build_type}{self.helper.bitness}'
 
         if not args.no_build:
             self.do_build(build)
 
-        if args.old and bitness == 32:
+        if args.old and self.helper.bitness == 32:
             build = f'efi-{arch}_{build_type}'
 
         with self.helper.make_disk(self.img, fs_type='vfat',
@@ -201,7 +196,7 @@ class BuildEfi:
                 command.run('cp', bzimage, f'{dirpath}/vmlinuz')
 
         if args.run:
-            self.run_qemu(bitness, args.serial_only)
+            self.run_qemu(args.serial_only)
 
 
 def main():
