@@ -104,7 +104,7 @@ PLATFORM_CPPFLAGS += $(patsubst %,-I$(srctree)/%include,$(machdirs))
 
 libs-y += $(machdirs)
 
-ifndef CONFIG_EFI_APP
+ifndef CONFIG_EFI_CLIENT
 head-y := arch/arm/cpu/$(CPU)/start.o
 endif
 

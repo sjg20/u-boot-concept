@@ -62,9 +62,20 @@ config TARGET_EFI_ARM_APP64
 	  starts once the RAM, video and CPU are fully running.
 	  U-Boot is loaded as an application from EFI.
 
+config TARGET_EFI_ARM_PAYLOAD64
+	bool "64-bit efi payload"
+	select SYS_CUSTOM_LDSCRIPT
+	select ARM64
+	help
+	  This target is used for running U-Boot on top of EFI. In
+	  this case EFI does the early initialisation, and U-Boot
+	  takes over once the RAM, video and CPU are fully running.
+	  U-Boot is loaded as a payload from EFI.
+
 endchoice
 
 source "board/efi/efi-arm_app/Kconfig"
+source "board/efi/efi-arm_payload/Kconfig"
 
 endif  # ARM
 

@@ -7,7 +7,7 @@ lib-$(CONFIG_USE_PRIVATE_LIBGCC) += ashldi3.o ashrdi3.o lshrdi3.o \
 				    lib1funcs.o uldivmod.o div0.o \
 				    div64.o muldi3.o
 
-ifndef CONFIG_EFI_APP
+ifndef CONFIG_EFI_CLIENT
 ifdef CONFIG_CPU_V7M
 obj-y	+= vectors_m.o crt0.o
 else ifdef CONFIG_ARM64
@@ -21,18 +21,18 @@ obj-y   += setjmp_aarch64.o
 else
 obj-y   += setjmp.o
 endif  # ARM64
-endif  # CONFIG_EFI_APP
+endif  # EFI_CLIENT
 
 ifndef CONFIG_XPL_BUILD
-ifndef CONFIG_EFI_APP
+ifndef CONFIG_EFI_CLIENT
 ifdef CONFIG_ARM64
 obj-y	+= relocate_64.o
 else
 obj-y	+= relocate.o
 endif  # ARM64
-endif  # EFI_APP
+endif  # EFI_CLIENT
 
-obj-$(CONFIG_EFI_APP) += $(EFI_CRT0) $(EFI_RELOC)
+obj-$(CONFIG_EFI_CLIENT) += $(EFI_CRT0) $(EFI_RELOC)
 
 obj-$(CONFIG_CPU_V7M) += cmd_boot.o
 obj-$(CONFIG_OF_LIBFDT) += bootm-fdt.o
