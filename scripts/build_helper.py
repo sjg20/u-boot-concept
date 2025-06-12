@@ -108,6 +108,31 @@ sct_mnt = /mnt/sct
             else:
                 shutil.copy2(tmp.name, fname)
 
+    def add_qemu_args(self, args, cmd):
+        """Add QEMU arguments according to the selected options
+
+        This helps in creating the command-line used to run QEMU.
+
+        Args:
+            args (list of str): Existing arguments to add to
+            cmd (argparse.Namespace): Program arguments
+        """
+        cmdline = []
+        if args.kernel:
+            cmd.extend(['-kernel', args.kernel])
+        if args.initrd:
+            cmd.extend(['-initrd', args.initrd])
+
+        if args.enable_console:
+            cmdline.append('console=ttyS0,115200,8n1')
+        if args.root:
+            cmdline.append(f'root={args.root}')
+        if args.uuid:
+            cmdline.append(f'root=/dev/disk/by-uuid/{args.uuid}')
+
+        if cmdline:
+            cmd.extend(['-append'] + [' '.join(cmdline)])
+
 
 def add_common_args(parser):
     """Add some arguments which are common to build-efi/qemu scripts
@@ -119,11 +144,17 @@ def add_common_args(parser):
                         help='Select architecture (arm, x86) Default: arm')
     parser.add_argument('-B', '--no-build', action='store_true',
                         help="Don't build; assume a build exists")
+    parser.add_argument('-C', '--enable-console', action='store_true',
+                        help="Enable linux console (x86 only)")
     parser.add_argument('-d', '--disk',
                         help='Root disk image file to use with QEMU')
+    parser.add_argument('-I', '--initrd',
+                        help='Initial ramdisk to run using -initrd')
     parser.add_argument(
         '-k', '--kvm', action='store_true',
         help='Use KVM (Kernel-based Virtual Machine) for acceleration')
+    parser.add_argument('-K', '--kernel',
+                        help='Kernel to run using -kernel')
     parser.add_argument('-o', '--os', metavar='NAME', choices=['ubuntu'],
                         help='Run a specified Operating System')
     parser.add_argument('-r', '--run', action='store_true',
@@ -133,5 +164,11 @@ def add_common_args(parser):
         help='Select OS release version (e.g, 24.04) Default: 24.04.1')
     parser.add_argument('-s', '--serial-only', action='store_true',
                         help='Run QEMU with serial only (no display)')
+    parser.add_argument(
+        '-t', '--root',
+        help='Pass the given root device to linux via root=xxx')
+    parser.add_argument(
+        '-U', '--uuid',
+        help='Pass the given root device to linux via root=/dev/disk/by-uuid/')
     parser.add_argument('-w', '--word-32bit', action='store_true',
                         help='Use 32-bit version for the build/architecture')
