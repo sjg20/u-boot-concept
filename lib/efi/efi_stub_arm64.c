@@ -169,6 +169,8 @@ efi_status_t EFIAPI efi_main(efi_handle_t image,
 	}
 	efi_set_priv(priv);
 
+	printhex8((ulong)_binary_u_boot_bin_size);
+
 	phys_addr_t reloc_addr = ULONG_MAX;
 	ret = boot->allocate_pages(EFI_ALLOCATE_MAX_ADDRESS, EFI_LOADER_CODE,
 				   (phys_addr_t)_binary_u_boot_bin_size / EFI_PAGE_SIZE,
