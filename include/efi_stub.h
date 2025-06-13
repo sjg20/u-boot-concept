@@ -120,9 +120,6 @@ efi_status_t arch_efi_main_init(struct efi_priv *priv,
  */
 void arch_efi_jump_to_payload(struct efi_priv *priv);
 
-efi_status_t EFIAPI efi_main_common(efi_handle_t image,
-				    struct efi_system_table *sys_table);
-
 /* true if we must use the hardware UART directory (EFI not available) */
 extern bool use_hw_uart;
 
