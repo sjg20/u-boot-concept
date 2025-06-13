@@ -5,6 +5,7 @@
  * Inspired by cmd_ext_common.c, cmd_fat.c.
  */
 
+#include <dm.h>
 #include <command.h>
 #include <fs_cmd.h>
 
@@ -152,3 +153,55 @@ U_BOOT_CMD(
 	"    - renames/moves a file/directory in 'dev' on 'interface' from\n"
 	"      'old_path' to 'new_path'"
 );
+
+static int do_fs_mount(struct cmd_tbl *cmdtp, int flag, int argc,
+		       char *const argv[])
+{
+	struct udevice *dev;
+	int ret;
+
+	if (argc < 2)
+		return CMD_RET_USAGE;
+
+	ret = fs_get_by_name(argv[1], &dev);
+	if (ret) {
+		printf("Failed (err %dE)\n", ret);
+
+		return CMD_RET_FAILURE;
+	}
+
+	/* probing mounts the device */
+
+	return 0;
+}
+
+static int do_fs_ls(struct cmd_tbl *cmdtp, int flag, int argc,
+		    char *const argv[])
+{
+	struct udevice *dev;
+	int ret;
+
+	ret = uclass_first_device_err(UCLASS_FS, &dev);
+	// ret = fs_get_by_name(cmd_arg1(argc, argv), &dev);
+	if (ret) {
+		printf("No filesystem (err %dE)\n", ret);
+
+		return CMD_RET_FAILURE;
+	}
+
+	ret = fs_ls(dev, cmd_arg1(argc, argv));
+	if (ret) {
+		printf("Error %dE\n", ret);
+		return CMD_RET_FAILURE;
+	}
+
+	return 0;
+}
+
+U_BOOT_LONGHELP(fs,
+	"mount <name> <mount_point> - mount a named filesystem\n"
+	"ls [<dirpath>]   - show files in a directory");
+
+U_BOOT_CMD_WITH_SUBCMDS(fs, "Filesystems", fs_help_text,
+	U_BOOT_SUBCMD_MKENT(mount, 2, 1, do_fs_mount),
+	U_BOOT_SUBCMD_MKENT(ls, 2, 1, do_fs_ls));

@@ -4,6 +4,8 @@
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 # Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
 
+obj-$(CONFIG_FS) += fs.o
+
 ifdef CONFIG_XPL_BUILD
 obj-$(CONFIG_SPL_LEGACY_FS) += fs_legacy.o
 obj-$(CONFIG_SPL_FS_FAT) += fat/
@@ -12,6 +14,9 @@ obj-$(CONFIG_SPL_FS_CBFS) += cbfs/
 obj-$(CONFIG_SPL_FS_SQUASHFS) += squashfs/
 else
 obj-$(CONFIG_FS_LEGACY) += fs_legacy.o
+
+obj-$(CONFIG_DM_FILE) += file-uclass.o
+obj-$(CONFIG_DM_FS) += fs-uclass.o
 
 obj-$(CONFIG_FS_BTRFS) += btrfs/
 obj-$(CONFIG_FS_CBFS) += cbfs/

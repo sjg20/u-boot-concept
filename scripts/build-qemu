@@ -131,7 +131,8 @@ class BuildQemu:
                            'required for -e')
             self.qemu_extra.extend([
                 '-drive', f'file={sct_image_path},format=raw,if=none,id=vda',
-                '-device', 'virtio-blk-pci,drive=vda,bootindex=1'])
+                '-device', 'virtio-blk-pci,drive=vda,bootindex=1,disable-legacy=true,disable-modern=false'])
+
             # Basic networking for SCT, if needed
             self.qemu_extra.extend([
                 '-device', 'virtio-net-pci,netdev=net0',

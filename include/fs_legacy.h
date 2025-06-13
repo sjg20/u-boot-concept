@@ -12,6 +12,15 @@ struct abuf;
 
 struct blk_desc;
 
+enum {
+	/* Maximum length of the filesystem name */
+	FS_MAX_NAME_LEN		= 128,
+};
+
+struct fs_plat {
+	char name[FS_MAX_NAME_LEN];
+};
+
 /*
  * Tell the fs layer which block device and partition to use for future
  * commands. This also internally identifies the filesystem that is present
@@ -84,7 +93,7 @@ const char *fs_get_type_name(void);
  *
  * Returns 0 on success. Returns non-zero on error.
  */
-int fs_ls(const char *dirname);
+int fs_legacy_ls(const char *dirname);
 
 /*
  * Determine whether a file exists
@@ -103,7 +112,8 @@ int fs_exists(const char *filename);
 int fs_size(const char *filename, loff_t *size);
 
 /**
- * fs_read() - read file from the partition previously set by fs_set_blk_dev()
+ * fs_legacy_read() - read file from the partition previously set by
+ *	fs_set_blk_dev()
  *
  * Note that not all filesystem drivers support either or both of offset != 0
  * and len != 0.
@@ -115,8 +125,8 @@ int fs_size(const char *filename, loff_t *size);
  * @actread:	returns the actual number of bytes read
  * Return:	0 if OK with valid @actread, -1 on error conditions
  */
-int fs_read(const char *filename, ulong addr, loff_t offset, loff_t len,
-	    loff_t *actread);
+int fs_legacy_read(const char *filename, ulong addr, loff_t offset, loff_t len,
+		   loff_t *actread);
 
 /**
  * fs_write() - write file to the partition previously set by fs_set_blk_dev()
@@ -239,5 +249,6 @@ int fs_read_alloc(const char *fname, ulong size, uint align, struct abuf *buf);
 int fs_load_alloc(const char *ifname, const char *dev_part_str,
 		  const char *fname, ulong max_size, ulong align,
 		  struct abuf *buf);
+
 
 #endif /* _FS_H */

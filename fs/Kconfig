@@ -4,13 +4,29 @@
 
 menu "File systems"
 
+config FS
+	bool "Support for filesystems"
+	default y if SANDBOX || VENDOR_EMULATION
+	depends on EXPERT
+	help
+	  Provides an interface for filesystems, allowing them to be
+	  persistently mounted. Filesystem can contain files and directory.
+
+config FILE
+	bool "Support for files"
+	default y if SANDBOX || VENDOR_EMULATION
+	help
+	  Provides an interface for files, allowing them to be opened, read,
+	  written and modified. Files are children of a filesystem device
+	  (UCLASS_FS). Note that a UCLASS_FILE device is only created when it
+	  is opened.
+
 config FS_LEGACY
 	def_bool y
 	help
 	  Enables legacy support for filesystems. This provides an interface
 	  which can talk to one filesystem at a time, with the filesystem being
 	  re-mounted on each operation.
-
 
 source "fs/btrfs/Kconfig"
 

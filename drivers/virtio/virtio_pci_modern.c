@@ -6,6 +6,8 @@
  * Ported from Linux drivers/virtio/virtio_pci*.c
  */
 
+#define LOG_CATEGORY	UCLASS_VIRTIO
+
 #include <dm.h>
 #include <log.h>
 #include <virtio_types.h>
@@ -494,6 +496,8 @@ static int virtio_pci_probe(struct udevice *udev)
 	struct virtio_pci_cap common_cap, notify_cap, device_cap;
 	int offset;
 
+	printf("here\n");
+	log_debug("probe %04x:%04x\n", pplat->vendor, pplat->device);
 	/* We only own devices >= 0x1040 and <= 0x107f: leave the rest. */
 	if (pplat->device < 0x1040 || pplat->device > 0x107f)
 		return -ENODEV;

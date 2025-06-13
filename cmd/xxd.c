@@ -59,7 +59,7 @@ static int do_xxd(struct cmd_tbl *cmdtp, int flag, int argc,
 	if (fs_set_blk_dev(ifname, dev, FS_TYPE_ANY))
 		return CMD_RET_FAILURE;
 
-	if (fs_read(file, addr, 0, 0, &file_size)) {
+	if (fs_legacy_read(file, addr, 0, 0, &file_size)) {
 		log_err("Cannot read file: ifname=%s dev=%s file=%s\n", ifname, dev, file);
 		return CMD_RET_FAILURE;
 	}

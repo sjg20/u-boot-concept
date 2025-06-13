@@ -156,7 +156,7 @@ static int virtio_blk_bind(struct udevice *dev)
 	desc->part_type = PART_TYPE_UNKNOWN;
 	/*
 	 * virtio mmio transport supplies string identification for us,
-	 * while pci trnasport uses a 2-byte subvendor value.
+	 * while pci transport uses a 2-byte subvendor value.
 	 */
 	if (uc_priv->vendor >> 16)
 		sprintf(desc->vendor, "%s", (char *)&uc_priv->vendor);

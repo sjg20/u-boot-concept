@@ -277,7 +277,7 @@ static int virtio_pci_notify(struct udevice *udev, struct virtqueue *vq)
 	return 0;
 }
 
-static int virtio_pci_bind(struct udevice *udev)
+static int virtio_pci_bind_legacy(struct udevice *udev)
 {
 	static unsigned int num_devs;
 	char name[20];
@@ -289,7 +289,7 @@ static int virtio_pci_bind(struct udevice *udev)
 	return 0;
 }
 
-static int virtio_pci_probe(struct udevice *udev)
+static int virtio_pci_probe_legacy(struct udevice *udev)
 {
 	struct pci_child_plat *pplat = dev_get_parent_plat(udev);
 	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(udev);
@@ -348,8 +348,8 @@ U_BOOT_DRIVER(virtio_pci_legacy) = {
 	.name	= VIRTIO_PCI_DRV_NAME,
 	.id	= UCLASS_VIRTIO,
 	.ops	= &virtio_pci_ops,
-	.bind	= virtio_pci_bind,
-	.probe	= virtio_pci_probe,
+	.bind	= virtio_pci_bind_legacy,
+	.probe	= virtio_pci_probe_legacy,
 	.priv_auto	= sizeof(struct virtio_pci_priv),
 };
 

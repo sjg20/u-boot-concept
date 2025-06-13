@@ -10,6 +10,7 @@
 #include <command.h>
 #include <config.h>
 #include <display_options.h>
+#include <dm.h>
 #include <errno.h>
 #include <env.h>
 #include <lmb.h>
@@ -535,7 +536,7 @@ int fs_uuid(char *uuid_str)
 	return info->uuid(uuid_str);
 }
 
-int fs_ls(const char *dirname)
+int fs_legacy_ls(const char *dirname)
 {
 	int ret;
 
@@ -638,7 +639,7 @@ static int _fs_read(const char *filename, ulong addr, loff_t offset, loff_t len,
 	return ret;
 }
 
-int fs_read(const char *filename, ulong addr, loff_t offset, loff_t len,
+int fs_legacy_read(const char *filename, ulong addr, loff_t offset, loff_t len,
 	    loff_t *actread)
 {
 	return _fs_read(filename, addr, offset, len, 0, actread);
@@ -896,7 +897,7 @@ int do_ls(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[],
 	if (fs_set_blk_dev(argv[1], cmd_arg2(argc, argv), fstype))
 		return 1;
 
-	if (fs_ls(argc >= 4 ? argv[3] : "/"))
+	if (fs_legacy_ls(argc >= 4 ? argv[3] : "/"))
 		return 1;
 
 	return 0;
@@ -1141,7 +1142,7 @@ int fs_read_alloc(const char *fname, ulong size, uint align, struct abuf *buf)
 		return log_msg_ret("buf", -ENOMEM);
 	buf->size--;
 
-	ret = fs_read(fname, abuf_addr(buf), 0, size, &bytes_read);
+	ret = fs_legacy_read(fname, abuf_addr(buf), 0, size, &bytes_read);
 	if (ret) {
 		abuf_uninit(buf);
 		return log_msg_ret("read", ret);
@@ -1178,4 +1179,11 @@ int fs_load_alloc(const char *ifname, const char *dev_part_str,
 		return log_msg_ret("al", ret);
 
 	return 0;
+}
+
+int fs_ls(struct udevice *dev, const char *dirname)
+{
+	struct fs_ops *ops = fs_get_ops(dev);
+
+	return ops->ls(dev, dirname);
 }
