@@ -1703,13 +1703,13 @@ u-boot-payload: u-boot.bin.o u-boot-payload.lds FORCE
 	$(call if_changed,u-boot_payload)
 
 OBJCOPYFLAGS_u-boot-payload.efi := $(OBJCOPYFLAGS_EFI)
-ifeq ($(CONFIG_X86),y)
+# ifeq ($(CONFIG_X86),y)
 u-boot-payload.efi: u-boot-payload FORCE
 	$(call if_changed,zobjcopy)
-else
-u-boot-payload.efi: u-boot-payload FORCE
-	$(call if_changed,u-boot_payload_$(EFI_STUB_ARCH).efi)
-endif
+# else
+# u-boot-payload.efi: u-boot-payload FORCE
+# 	$(call if_changed,u-boot_payload_$(EFI_STUB_ARCH).efi)
+# endif
 
 u-boot-img.bin: spl/u-boot-spl.bin u-boot.img FORCE
 	$(call if_changed,cat)
