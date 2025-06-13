@@ -169,6 +169,16 @@ efi_status_t EFIAPI efi_main(efi_handle_t image,
 	}
 	efi_set_priv(priv);
 
+	printch(' ');
+	printhex8((ulong)&ebs_called);
+	printch(' ');
+	printhex2(ebs_called);
+	printch(' ');
+	ebs_called = true;
+	printhex2(ebs_called);
+	printch(' ');
+	printhex8((ulong)&_binary_u_boot_bin_size);
+	printch(' ');
 	printhex8((ulong)_binary_u_boot_bin_size);
 
 	phys_addr_t reloc_addr = ULONG_MAX;
