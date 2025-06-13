@@ -47,6 +47,8 @@ def parse_args():
                         help='Package up the payload instead of the app')
     parser.add_argument('-P', '--partition', action='store_true',
                         help='Create a partition table')
+    parser.add_argument('-u', '--u-boot',
+                        help='Specify the u-boot-payload.efi file to use')
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='Show executed commands')
 
@@ -151,9 +153,12 @@ class BuildEfi:
             dst (str): Destination directory
         """
         print(f'Packaging {build}')
-        fname = f'u-boot-{build_type}.efi'
-        tools.write_file(f'{dst}/startup.nsh', f'fs0:{fname}', binary=False)
-        shutil.copy(f'{self.build_dir}/{build}/{fname}', dst)
+        pathname = f'{self.build_dir}/{build}/u-boot-{build_type}.efi'
+        if self.args.u_boot:
+            pathname = self.args.u_boot
+        leaf = os.path.basename(pathname)
+        tools.write_file(f'{dst}/startup.nsh', f'fs0:{leaf}', binary=False)
+        shutil.copy(pathname, dst)
 
     def do_build(self, build):
         """Build U-Boot for the selected board"""
