@@ -31,8 +31,6 @@
 #error "This file needs to be ported for use on architectures"
 #endif
 
-static bool use_uart;
-
 struct __packed desctab_info {
 	uint16_t limit;
 	uint64_t addr;
@@ -67,7 +65,7 @@ void putc(const char ch)
 	if (ch == '\n')
 		putc('\r');
 
-	if (use_uart) {
+	if (use_hw_uart) {
 		struct ns16550 *com_port = (struct ns16550 *)0x3f8;
 
 		while ((inb((ulong)&com_port->lsr) & UART_LSR_THRE) == 0)
@@ -262,7 +260,7 @@ efi_status_t EFIAPI efi_main(efi_handle_t image,
 		return ret;
 
 	/* The EFI UART won't work now, switch to a debug one */
-	use_uart = true;
+	use_hw_uart = true;
 
 	map.version = priv->memmap_version;
 	map.desc_size = priv->memmap_desc_size;
