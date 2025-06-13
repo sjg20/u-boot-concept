@@ -7,9 +7,9 @@ obj-$(CONFIG_EFI_APP) += sdram.o
 obj-$(CONFIG_EFI_STUB) += efi_info.o
 
 ifeq ($(CONFIG_ARM64),y)
-stub_obj := efi_stub_arm64.o
+stub_obj := stub_arm64.o
 else
-stub_obj := efi_stub_x86.o
+stub_obj := stub_x86.o
 
 ifeq ($(CONFIG_EFI_STUB_64BIT),y) # && !CONFIG_ARM64
 CFLAGS_REMOVE_$(stub_obj) := -march=i386 -m32
