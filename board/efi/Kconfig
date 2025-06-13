@@ -64,7 +64,7 @@ config TARGET_EFI_ARM_APP64
 
 config TARGET_EFI_ARM_PAYLOAD64
 	bool "64-bit efi payload"
-	select SYS_CUSTOM_LDSCRIPT
+# 	select SYS_CUSTOM_LDSCRIPT
 	select ARM64
 	help
 	  This target is used for running U-Boot on top of EFI. In

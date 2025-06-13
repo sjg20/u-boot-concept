@@ -3,7 +3,7 @@
 # (C) Copyright 2000-2003
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 
-ifndef CONFIG_EFI_CLIENT
+ifndef CONFIG_EFI_APP
 extra-y	:= start.o
 endif
 
@@ -15,7 +15,7 @@ ifndef CONFIG_$(PHASE_)SYS_DCACHE_OFF
 obj-y	+= cache_v8.o
 obj-y	+= cache.o
 endif
-ifneq ($(CONFIG_XPL_BUILD)$(CONFIG_EFI_CLIENT),)
+ifneq ($(CONFIG_XPL_BUILD)$(CONFIG_EFI_APP),)
 obj-$(CONFIG_ARMV8_SPL_EXCEPTION_VECTORS) += exceptions.o
 else
 obj-y	+= exceptions.o

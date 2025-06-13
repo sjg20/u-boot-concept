@@ -14,10 +14,10 @@ config TEXT_BASE
 
 config BOARD_SPECIFIC_OPTIONS # dummy
 	def_bool y
-	select BOARD_EARLY_INIT_R
 	imply SYS_NS16550
+	imply LIB_UUID
 
-config SYS_LDSCRIPT
-	default "arch/arm/lib/elf_aarch64_efi.lds"
+#config SYS_LDSCRIPT
+#	default "arch/arm/lib/elf_aarch64_efi.lds"
 
 endif
