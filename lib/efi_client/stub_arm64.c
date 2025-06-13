@@ -29,7 +29,7 @@ void _debug_uart_putc(int ch)
 	 * NOTE: for development it is possible to re-implement
 	 * your boards debug uart here like in efi_stub.c for x86.
 	 */
-	if (!use_hw_uart)
+	// if (!use_hw_uart)
 		efi_putc(priv, ch);
 }
 
@@ -54,6 +54,7 @@ efi_status_t arch_efi_main_init(struct efi_priv *priv,
 	phys_addr_t reloc_addr = ULONG_MAX;
 	int ret;
 
+	printhex8((ulong)_binary_u_boot_bin_size);
 	ret = boot->allocate_pages(EFI_ALLOCATE_MAX_ADDRESS, EFI_LOADER_CODE,
 				   (phys_addr_t)_binary_u_boot_bin_size / EFI_PAGE_SIZE,
 				   &reloc_addr);
