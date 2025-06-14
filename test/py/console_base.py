@@ -778,6 +778,7 @@ class ConsoleBase():
                 if poll_maxwait is False:
                     return earliest_pi
                 events = self.poll.poll(poll_maxwait)
+                print('events', events)
                 if not events:
                     raise Timeout()
                 for fd, event_mask in events:

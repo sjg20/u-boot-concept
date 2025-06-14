@@ -125,13 +125,17 @@ class Cmdsock:
         self.chan = None
         self.stub = None
 
-    def connect_to_sandbox(self):
+    def connect_to_sandbox(self, poll):
         """Connect to sandbox over the cmdsock"""
         # self.chan = grpc.insecure_channel(f'unix://{self.sock_name}')
         # self.stub = cmdsock_pb2_grpc.CmdsockStub(chan)
 
         max_retries = 20
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        poll.register(self.sock, select.POLLIN |
+                               select.POLLOUT | select.POLLPRI |
+                               select.POLLERR | select.POLLHUP |
+                               select.POLLNVAL)
         for i in range(max_retries):
             try:
                 self.sock.connect(self.sock_name)
@@ -156,53 +160,34 @@ class Cmdsock:
     def xfer(self, event_mask):
         """Poll the socket to send/receive data"""
         sock = self.sock
-        # print('poll')
+        print(' poll', event_mask, 'in', event_mask & select.POLLIN,
+              'out', event_mask & select.POLLOUT)
         # can_read, can_write, xcpt = select.select([sock], [sock], [sock])
         # print('poll done')
         if event_mask & select.POLLIN:
+            print('  can recv')
             data = sock.recv(BUF_SIZE)
             if not data:
                 self.fail('socket closed')
             print(f'wrote {len(data)} bytes into inq')
             self.inq.write(data)
-            print('recv', data)
+            print('  xfer recv', data)
         if event_mask & select.POLLOUT and self.outq.available:
+            print('  can send')
             data = self.outq.read(BUF_SIZE)
-            assert data
-            sock.send(data)
-            if not data:
-                self.fail('socket closed')
+            if data:
+                sock.send(data)
         # if sock in xcpt:
             # self.fail('socket exception')
-        msg = self.recv()
-        if not msg:
-            return None
-        return msg
+        while True:
+            print('  call recv')
+            msg = self.get_next_msg()
+            if not msg:
+                break
+            yield msg
+        print('poll done')
 
-    def poll_for_output(self, fd, event_mask):
-        """Poll file descriptor for console output
-
-        This can be overriden by subclasses, e.g. console_sandbox
-
-        Args:
-            fd (int): File descriptor to check
-            event_mask (select.poll bitmask): Event(s) which occured
-
-        Return:
-            str: Output (which may be an empty string if there is none)
-        """
-        if fd != self.sock:
-            return ''
-
-        msg = self.xfer(event_mask)
-        if msg:
-            print('got', msg, msg.WhichOneof('kind'))
-            if msg.WhichOneof('kind') == 'puts':
-                print('returning', msg.puts.str)
-                return msg.puts.str
-        return ''
-
-    def recv(self):
+    def get_next_msg(self):
         # data = self.inq.read(BUF_SIZE)
         # print('data', data)
         '''
@@ -216,6 +201,7 @@ class Cmdsock:
                 return rest
         '''
         data = self.inq.look(BUF_SIZE)
+        print('   get_next_msg', data)
         if not data:
             return None
         print('recv data', len(data))
@@ -244,7 +230,7 @@ class Cmdsock:
             msg (cmdsock_pb2 object): Data to send
         """
         data = msg.SerializeToString()
-        print('send', len(data))
+        print('send', len(data), data)
         self.outq.write(data)
 
     def start(self):

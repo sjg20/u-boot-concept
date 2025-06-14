@@ -65,11 +65,7 @@ class ConsoleSandbox(ConsoleBase):
 
         # Connect the cmdsock
         if self.cmdsock:
-            self.cmdsock.connect_to_sandbox()
-            self.poll.register(self.cmdsock.sock, select.POLLIN |
-                               select.POLLOUT | select.POLLPRI |
-                               select.POLLERR | select.POLLHUP |
-                               select.POLLNVAL)
+            self.cmdsock.connect_to_sandbox(self.poll)
 
         return spawn
 
@@ -86,16 +82,16 @@ class ConsoleSandbox(ConsoleBase):
 
         Args:
             fd (int): File descriptor to check
-            event_mask (select.poll bitmask): Event(s) which occured
+            event_mask (int): Event(s) which occured
 
         Return:
             str: Output (which may be an empty string if there is none)
         """
-        if fd != self.cmdsock.sock:
+        print('poll', fd, self.cmdsock.sock.fileno(), event_mask)
+        if fd != self.cmdsock.sock.fileno():
             return ''
 
-        msg = self.cmdsock.xfer(event_mask)
-        if msg:
+        for msg in self.cmdsock.xfer(event_mask):
             print('got', msg, msg.WhichOneof('kind'))
             if msg.WhichOneof('kind') == 'puts':
                 print('returning', msg.puts.str)
