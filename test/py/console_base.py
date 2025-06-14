@@ -743,32 +743,9 @@ class ConsoleBase():
         tstart_s = time.time()
         try:
             while True:
-                earliest_m = None
-                earliest_pi = None
-                for pi, pat in enumerate(patterns):
-                    m = pat.search(self.buf)
-                    if not m:
-                        continue
-                    if earliest_m and m.start() >= earliest_m.start():
-                        continue
-                    earliest_m = m
-                    earliest_pi = pi
-                if earliest_m:
-                    pos = earliest_m.start()
-                    posafter = earliest_m.end()
-                    self.before = self.buf[:pos]
-                    self.after = self.buf[pos:posafter]
-                    self.output += self.buf[:posafter]
-                    self.buf = self.buf[posafter:]
+                earliest_pi, poll_maxwait = self.find_match(patterns, tstart_s)
+                if poll_maxwait is False:
                     return earliest_pi
-                tnow_s = time.time()
-                if self.timeout:
-                    tdelta_ms = (tnow_s - tstart_s) * 1000
-                    poll_maxwait = self.timeout - tdelta_ms
-                    if tdelta_ms > self.timeout:
-                        raise Timeout()
-                else:
-                    poll_maxwait = None
                 events = self.p.poll.poll(poll_maxwait)
                 if not events:
                     raise Timeout()
@@ -783,6 +760,50 @@ class ConsoleBase():
         finally:
             if self.logfile_read:
                 self.logfile_read.flush()
+
+    def find_match(self, patterns, tstart_s):
+        """Find a match in the current buffer
+
+        Args:
+            patterns (list of str or regex.Regex): Patterns we expect to
+                see in buf
+            tstart_s (float): Time when this 'expect' started, used to decide
+                when to time out
+
+        Return:
+            tuple:
+                int: pattern index of the earliest match in the buffer, if
+                    found, else None if no match
+                int: maximum time to wait for new output, or None to wait
+                    forever
+        """
+        earliest_m = None
+        earliest_pi = None
+        for pi, pat in enumerate(patterns):
+            m = pat.search(self.buf)
+            if not m:
+                continue
+            if earliest_m and m.start() >= earliest_m.start():
+                continue
+            earliest_m = m
+            earliest_pi = pi
+        if earliest_m:
+            pos = earliest_m.start()
+            posafter = earliest_m.end()
+            self.before = self.buf[:pos]
+            self.after = self.buf[pos:posafter]
+            self.output += self.buf[:posafter]
+            self.buf = self.buf[posafter:]
+            return earliest_pi, False
+        tnow_s = time.time()
+        if self.timeout:
+            tdelta_ms = (tnow_s - tstart_s) * 1000
+            poll_maxwait = self.timeout - tdelta_ms
+            if tdelta_ms > self.timeout:
+                raise Timeout()
+        else:
+            poll_maxwait = None
+        return None, poll_maxwait
 
     def get_expect_output(self):
         """Return the output read by expect()
