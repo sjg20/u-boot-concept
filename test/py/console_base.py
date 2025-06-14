@@ -164,15 +164,15 @@ class ConsoleSetupTimeout():
     then default 30s."""
 
     def __init__(self, console, timeout):
-        self.p = console.p
-        self.orig_timeout = self.p.timeout
-        self.p.timeout = timeout
+        self.console = console
+        self.orig_timeout = self.console.timeout
+        self.console.timeout = timeout
 
     def __enter__(self):
         return self
 
     def __exit__(self, extype, value, traceback):
-        self.p.timeout = self.orig_timeout
+        self.console.timeout = self.orig_timeout
 
 
 class ConsoleBase():
@@ -296,7 +296,7 @@ class ConsoleBase():
         ready for use. We don't need to look for signon messages.
         """
         self.log.info('test.py: Lab mode is active')
-        self.p.timeout = TIMEOUT_PREPARE_MS
+        self.timeout = TIMEOUT_PREPARE_MS
         self.lab_mode = True
 
     def _wait_for_boot_prompt(self, loop_num=1):
@@ -320,7 +320,7 @@ class ConsoleBase():
                     m = pattern_ready_prompt.search(self.after)
                     self.u_boot_version_string = m.group(2)
                     self.log.info('Lab: Board is ready')
-                    self.p.timeout = TIMEOUT_MS
+                    self.timeout = TIMEOUT_MS
                     break
                 if m == 2:
                     self.log.info(f'Found autoboot prompt {m}')
@@ -543,10 +543,10 @@ class ConsoleBase():
         if not self.p:
             return
 
-        orig_timeout = self.p.timeout
+        orig_timeout = self.timeout
         try:
             # Drain the log for a relatively short time.
-            self.p.timeout = 1000
+            self.timeout = 1000
             # Wait for something U-Boot will likely never send. This will
             # cause the console output to be read and logged.
             self.expect(['This should never match U-Boot output'])
@@ -563,7 +563,7 @@ class ConsoleBase():
             # correctly terminate any log sections, etc.
             pass
         finally:
-            self.p.timeout = orig_timeout
+            self.timeout = orig_timeout
 
     def ensure_spawned(self, expect_reset=False):
         """Ensure a connection to a correctly running U-Boot instance.
@@ -582,7 +582,7 @@ class ConsoleBase():
             # Reset the console timeout value as some tests may change
             # its default value during the execution
             if not self.config.gdbserver:
-                self.p.timeout = TIMEOUT_MS
+                self.timeout = TIMEOUT_MS
             return
         try:
             self.log.start_section('Starting U-Boot')
@@ -593,7 +593,7 @@ class ConsoleBase():
             # future, possibly per-test to be optimal. This works for 'help'
             # on board 'seaboard'.
             if not self.config.gdbserver:
-                self.p.timeout = TIMEOUT_MS
+                self.timeout = TIMEOUT_MS
             self.logfile_read = self.logstream
             if self.config.use_running_system:
                 # Send an empty command to set up the 'expect' logic. This has
