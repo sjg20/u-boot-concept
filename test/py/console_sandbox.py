@@ -8,8 +8,10 @@ Logic to interact with the sandbox port of U-Boot, running as a sub-process.
 
 import os
 import time
-from spawn import Spawn
+import cmdsock
 from console_base import ConsoleBase
+from spawn import Spawn
+
 
 class ConsoleSandbox(ConsoleBase):
     """Represents a connection to a sandbox U-Boot console, executed as a sub-
@@ -26,6 +28,7 @@ class ConsoleSandbox(ConsoleBase):
         super().__init__(log, config, max_fifo_fill=1024)
         self.sandbox_flags = []
         self.use_dtb = True
+        self.cmdsock = None
 
     def get_spawn(self):
         """Connect to a fresh U-Boot instance.
@@ -56,13 +59,19 @@ class ConsoleSandbox(ConsoleBase):
         if self.config.cmdsock:
             cmdsock_fname = os.path.join(self.config.result_dir, 'cmd.sock')
             cmd += ['--cmdsock', cmdsock_fname]
-        return Spawn(cmd, cwd=self.config.source_dir, decode_signal=True)
+            self.cmdsock = cmdsock.Cmdsock(cmdsock_fname)
+        spawn = Spawn(cmd, cwd=self.config.source_dir, decode_signal=True)
+
+        # Connect the cmdsock
+        if self.cmdsock:
+            self.cmdsock.connect_to_sandbox()
+
+        return spawn
 
     def start_uboot(self):
         print('start u-boot')
-        if self.p.cmdsock:
-            self.p.cmdsock.connect_to_sandbox()
-            self.p.cmdsock.start()
+        if self.cmdsock:
+            self.cmdsock.start()
 
     def restart_uboot_with_flags(self, flags, expect_reset=False, use_dtb=True):
         """Run U-Boot with the given command-line flags

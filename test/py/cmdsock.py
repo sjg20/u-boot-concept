@@ -108,12 +108,11 @@ class FifoFileBuffer():
 class Cmdsock:
     """Manage the cmdsock with a running U-Boot"""
 
-    def __init__(self, sock_name, poll):
+    def __init__(self, sock_name):
         """Set up a connection to sandbox via a command-socket
 
         Args:
             name (str): Filename of socket
-            poll (poll.poll): Poll object to register with
 
         Properties:
             sock_name (str): Socket name
@@ -122,7 +121,6 @@ class Cmdsock:
         self.sock_name = sock_name
         self.sock = None
         self.inq = FifoFileBuffer('inq')
-        self.poll = poll
         self.outq = FifoFileBuffer('outq')
         self.chan = None
         self.stub = None

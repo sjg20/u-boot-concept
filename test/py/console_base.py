@@ -255,7 +255,7 @@ class ConsoleBase():
         self.logfile_read = None
         # http://stackoverflow.com/questions/7857352/python-regex-to-match-vt100-escape-sequences
         self.re_vt100 = re.compile(r'(\x1b\[|\x9b)[^@-_]*[@-_]|\x1b[@-_]', re.I)
-        self.poll = None
+        self.poll = select.poll()
 
         self.eval_patterns()
 
@@ -339,7 +339,7 @@ class ConsoleBase():
             self.log.timestamp()
 
     def start_uboot(self):
-        """Start U-Boot - only does anything for cmdsock"""
+        """Start U-Boot - subclasses can handle this"""
 
     def _wait_for_banner(self, loop_num):
         """Wait for a U-Boot banner to appear on the console
@@ -597,7 +597,6 @@ class ConsoleBase():
             self.log.start_section('Starting U-Boot')
             self.at_prompt = False
             self.p = self.get_spawn()
-            self.poll = select.poll()
             self.poll.register(self.p.fd, select.POLLIN | select.POLLPRI |
                                select.POLLERR | select.POLLHUP |
                                select.POLLNVAL)
@@ -754,8 +753,17 @@ class ConsoleBase():
                 events = self.poll.poll(poll_maxwait)
                 if not events:
                     raise Timeout()
-                c = self.p.receive(1024)
-                self.add_input(c)
+                for fd, event_mask in events:
+                    if fd == self.p.fd:
+                        c = self.p.receive(1024)
+                        self.add_input(c)
+                    elif fd == self.fd:
+                        msg = self.cmdsock.xfer(event_mask)
+                        if msg:
+                            print('got', msg, msg.WhichOneof('kind'))
+                            if msg.WhichOneof('kind') == 'puts':
+                                print('returning', msg.puts.str)
+                                return msg.puts.str
         finally:
             if self.logfile_read:
                 self.logfile_read.flush()
