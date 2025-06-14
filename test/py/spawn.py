@@ -69,6 +69,16 @@ class Spawn:
         self.exit_info = ''
         self.fd = None
 
+        self.spawn_pty(args, cwd)
+
+    def spawn_pty(self, args, cwd):
+        """Spawn a new process and attach to it via a PTY
+
+            args (list of str): processs arguments. argv[0] is the command to
+                execute.
+            cwd (str or None): the directory to run the process in, or None for
+                no change.
+        """
         (self.pid, self.fd) = pty.fork()
         if self.pid == 0:
             try:
