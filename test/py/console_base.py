@@ -637,6 +637,16 @@ class ConsoleBase():
             pass
         self.p = None
 
+    def shutdown_required(self):
+        """Called to shut down the running U-Boot
+
+        Some tests make changes to U-Boot which cannot be undone within the
+        test, such as booting an operating system. This function shuts down
+        U-Boot so that a new one will be started for any future tests
+        """
+        self.drain_console()
+        self.cleanup_spawn()
+
     def restart_uboot(self, expect_reset=False):
         """Shut down and restart U-Boot."""
         self.cleanup_spawn()

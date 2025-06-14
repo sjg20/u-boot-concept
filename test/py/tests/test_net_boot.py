@@ -194,8 +194,7 @@ def test_net_tftpboot_boot(ubman):
             # This forces the console object to be shutdown, so any subsequent
             # test will reset the board back into U-Boot. We want to force this
             # no matter whether the kernel boot passed or failed.
-            ubman.drain_console()
-            ubman.cleanup_spawn()
+            ubman.shutdown_required()
 
 def setup_pxe_boot(ubman):
     f = ubman.config.env.get('env__net_pxe_bootable_file', None)
@@ -257,8 +256,7 @@ def test_net_pxe_boot(ubman):
             ubman.run_command(pxe_boot_cmd, wait_for_prompt=False)
             ubman.wait_for(pattern)
         finally:
-            ubman.drain_console()
-            ubman.cleanup_spawn()
+            ubman.shutdown_required()
 
 @pytest.mark.buildconfigspec('cmd_pxe')
 def test_net_pxe_boot_config(ubman):
@@ -336,8 +334,7 @@ def test_net_pxe_boot_config(ubman):
 
             ubman.wait_for(pattern)
         finally:
-            ubman.drain_console()
-            ubman.cleanup_spawn()
+            ubman.shutdown_required()
 
 @pytest.mark.buildconfigspec('cmd_pxe')
 def test_net_pxe_boot_config_invalid(ubman):
@@ -396,5 +393,4 @@ def test_net_pxe_boot_config_invalid(ubman):
 
             ubman.wait_for(pattern)
         finally:
-            ubman.drain_console()
-            ubman.cleanup_spawn()
+            ubman.shutdown_required()
