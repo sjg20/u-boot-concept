@@ -750,16 +750,24 @@ class ConsoleBase():
                 if not events:
                     raise Timeout()
                 c = self.p.receive(1024)
-                if self.logfile_read:
-                    self.logfile_read.write(c)
-                self.buf += c
-                # count=0 is supposed to be the default, which indicates
-                # unlimited substitutions, but in practice the version of
-                # Python in Ubuntu 14.04 appears to default to count=2!
-                self.buf = self.re_vt100.sub('', self.buf, count=1000000)
+                self.add_input(c)
         finally:
             if self.logfile_read:
                 self.logfile_read.flush()
+
+    def add_input(self, chars):
+        """Add character to the input buffer so they can be processed
+
+        Args:
+            chars (str): Character to add to the buffer
+        """
+        if self.logfile_read:
+            self.logfile_read.write(chars)
+        self.buf += chars
+        # count=0 is supposed to be the default, which indicates
+        # unlimited substitutions, but in practice the version of
+        # Python in Ubuntu 14.04 appears to default to count=2!
+        self.buf = self.re_vt100.sub('', self.buf, count=1000000)
 
     def find_match(self, patterns, tstart_s):
         """Find a match in the current buffer
