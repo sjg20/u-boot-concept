@@ -13,9 +13,10 @@ serial console of real hardware.
 from collections import namedtuple
 import re
 import sys
+import time
+import pytest
 
 import spawn
-from spawn import BootFail, Timeout, Unexpected, handle_exception
 
 # Regexes for text we expect U-Boot to send to the console.
 pattern_u_boot_spl_signon = re.compile('(U-Boot Concept SPL \\d{4}\\.\\d{2}[^\r\n]*\\))')
@@ -53,6 +54,59 @@ PATTERNS = (
     NamedPattern('error_notification', pattern_error_notification),
     NamedPattern('error_please_reset', pattern_error_please_reset),
 )
+
+
+class Timeout(Exception):
+    """An exception sub-class that indicates that a timeout occurred."""
+
+
+class BootFail(Exception):
+    """An exception sub-class that indicates that a boot failure occurred.
+
+    This is used when a bad pattern is seen when waiting for the boot prompt.
+    It is regarded as fatal, to avoid trying to boot the again and again to no
+    avail.
+    """
+
+
+class Unexpected(Exception):
+    """An exception sub-class that indicates that unexpected test was seen."""
+
+
+def handle_exception(ubconfig, console, log, err, name, fatal, output=''):
+    """Handle an exception from the console
+
+    Exceptions can occur when there is unexpected output or due to the board
+    crashing or hanging. Some exceptions are likely fatal, where retrying will
+    just chew up time to no available. In those cases it is best to cause
+    further tests be skipped.
+
+    Args:
+        ubconfig (ArbitraryAttributeContainer): ubconfig object
+        log (Logfile): Place to log errors
+        console (ConsoleBase): Console to clean up, if fatal
+        err (Exception): Exception which was thrown
+        name (str): Name of problem, to log
+        fatal (bool): True to abort all tests
+        output (str): Extra output to report on boot failure. This can show the
+           target's console output as it tried to boot
+    """
+    msg = f'{name}: '
+    if fatal:
+        msg += 'Marking connection bad - no other tests will run'
+    else:
+        msg += 'Assuming that lab is healthy'
+    print(msg)
+    log.error(msg)
+    log.error(f'Error: {err}')
+
+    if output:
+        msg += f'; output {output}'
+
+    if fatal:
+        ubconfig.connection_ok = False
+        console.cleanup_spawn()
+        pytest.exit(msg)
 
 
 class ConsoleDisableCheck():
@@ -164,6 +218,17 @@ class ConsoleBase():
             u_boot_version_string (str): Version string obtained from U-Boot as
                 it booted. In lab mode this is provided by
                 pattern_ready_prompt
+            buf (str): Buffer of characters received from the console, still to
+                be processed
+            output (str); All data received from the console
+            before (str): Data before the matching string
+            after (str): String which patches the expected output
+            timeout (str): Timeout in seconds before giving up and aborting the
+                test
+            logfile_read (multiplexed_log.Logfile): Logfile used for logging
+                output
+            re_vt100 (re.Regex): Regex for filtering out vt100 characters
+            output: accumulated output from expect()
         """
         self.log = log
         self.config = config
@@ -181,6 +246,14 @@ class ConsoleBase():
         self.at_prompt_logevt = None
         self.lab_mode = False
         self.u_boot_version_string = None
+        self.buf = ''
+        self.output = ''
+        self.before = ''
+        self.after = ''
+        self.timeout = None
+        self.logfile_read = None
+        # http://stackoverflow.com/questions/7857352/python-regex-to-match-vt100-escape-sequences
+        self.re_vt100 = re.compile(r'(\x1b\[|\x9b)[^@-_]*[@-_]|\x1b[@-_]', re.I)
 
         self.eval_patterns()
 
@@ -242,7 +315,7 @@ class ConsoleBase():
             while not self.lab_mode and loop_num > 0:
                 loop_num -= 1
                 while config_spl_serial and not env_spl_skipped and env_spl_banner_times > 0:
-                    m = self.p.expect([pattern_u_boot_spl_signon,
+                    m = self.expect([pattern_u_boot_spl_signon,
                                        pattern_lab_mode] + self.bad_patterns)
                     if m == 1:
                         self.set_lab_mode()
@@ -253,7 +326,7 @@ class ConsoleBase():
                     env_spl_banner_times -= 1
 
                 if not self.lab_mode:
-                    m = self.p.expect([pattern_u_boot_main_signon,
+                    m = self.expect([pattern_u_boot_main_signon,
                                        pattern_lab_mode] + self.bad_patterns)
                     if m == 1:
                         self.set_lab_mode()
@@ -261,15 +334,15 @@ class ConsoleBase():
                         raise BootFail('Bad pattern found on console: ' +
                                        self.bad_pattern_ids[m - 1])
             if not self.lab_mode:
-                self.u_boot_version_string = self.p.after
+                self.u_boot_version_string = self.after
             while True:
-                m = self.p.expect([self.prompt_compiled, pattern_ready_prompt,
+                m = self.expect([self.prompt_compiled, pattern_ready_prompt,
                     pattern_stop_autoboot_prompt] + self.bad_patterns)
                 if m == 0:
                     self.log.info(f'Found ready prompt {m}')
                     break
                 if m == 1:
-                    m = pattern_ready_prompt.search(self.p.after)
+                    m = pattern_ready_prompt.search(self.after)
                     self.u_boot_version_string = m.group(2)
                     self.log.info('Lab: Board is ready')
                     self.p.timeout = TIMEOUT_MS
@@ -349,7 +422,7 @@ class ConsoleBase():
                         continue
                     chunk = re.escape(chunk)
                     chunk = chunk.replace('\\\n', '[\r\n]')
-                    m = self.p.expect([chunk] + self.bad_patterns)
+                    m = self.expect([chunk] + self.bad_patterns)
                     if m != 0:
                         self.at_prompt = False
                         raise BootFail('Failed to get echo on console '
@@ -360,7 +433,7 @@ class ConsoleBase():
             if wait_for_reboot:
                 self._wait_for_boot_prompt()
             else:
-                m = self.p.expect([self.prompt_compiled] + self.bad_patterns)
+                m = self.expect([self.prompt_compiled] + self.bad_patterns)
                 if m != 0:
                     self.at_prompt = False
                     raise BootFail('Missing prompt on console: ' +
@@ -369,7 +442,7 @@ class ConsoleBase():
             self.at_prompt_logevt = self.logstream.logfile.cur_evt
             # Only strip \r\n; space/TAB might be significant if testing
             # indentation.
-            return self.p.before.strip('\r\n')
+            return self.before.strip('\r\n')
         except Timeout as exc:
             handle_exception(self.config, self, self.log, exc,
                              f"Lab failure: Timeout executing '{cmd}'", True)
@@ -438,7 +511,7 @@ class ConsoleBase():
         """
         if isinstance(text, str):
             text = re.escape(text)
-        m = self.p.expect([text] + self.bad_patterns)
+        m = self.expect([text] + self.bad_patterns)
         if m != 0:
             raise Unexpected(
                 "Unexpected pattern found on console (exp '{text}': " +
@@ -468,7 +541,7 @@ class ConsoleBase():
             self.p.timeout = 1000
             # Wait for something U-Boot will likely never send. This will
             # cause the console output to be read and logged.
-            self.p.expect(['This should never match U-Boot output'])
+            self.expect(['This should never match U-Boot output'])
         except:
             # We expect a timeout, since U-Boot won't print what we waited
             # for. Squash it when it happens.
@@ -513,7 +586,7 @@ class ConsoleBase():
             # on board 'seaboard'.
             if not self.config.gdbserver:
                 self.p.timeout = TIMEOUT_MS
-            self.p.logfile_read = self.logstream
+            self.logfile_read = self.logstream
             if self.config.use_running_system:
                 # Send an empty command to set up the 'expect' logic. This has
                 # the side effect of ensuring that there was no partial command
@@ -562,7 +635,7 @@ class ConsoleBase():
             The output produced by ensure_spawed(), as a string.
         """
         if self.p:
-            return self.p.get_expect_output()
+            return self.get_expect_output()
         return None
 
     def validate_version_string_in_text(self, text):
@@ -627,8 +700,75 @@ class ConsoleBase():
         return ConsoleSetupTimeout(self, timeout)
 
     def expect(self, patterns):
-        """Call the Spawn.expect() function
+        """Wait for the sub-process to emit specific data.
 
-        This is provided as a way for tests to check board output.
+        This function waits for the process to emit one pattern from the
+        supplied list of patterns, or for a timeout to occur.
+
+        Args:
+            patterns (list of str or regex.Regex): Patterns we expect to
+                see in the sub-process' stdout.
+
+        Returns:
+            int: index within the patterns array of the pattern the process
+            emitted.
+
+        Notable exceptions:
+            Timeout, if the process did not emit any of the patterns within
+            the expected time.
         """
-        self.p.expect(patterns)
+        for pi, pat in enumerate(patterns):
+            if isinstance(pat, str):
+                patterns[pi] = re.compile(pat)
+
+        tstart_s = time.time()
+        try:
+            while True:
+                earliest_m = None
+                earliest_pi = None
+                for pi, pat in enumerate(patterns):
+                    m = pat.search(self.buf)
+                    if not m:
+                        continue
+                    if earliest_m and m.start() >= earliest_m.start():
+                        continue
+                    earliest_m = m
+                    earliest_pi = pi
+                if earliest_m:
+                    pos = earliest_m.start()
+                    posafter = earliest_m.end()
+                    self.before = self.buf[:pos]
+                    self.after = self.buf[pos:posafter]
+                    self.output += self.buf[:posafter]
+                    self.buf = self.buf[posafter:]
+                    return earliest_pi
+                tnow_s = time.time()
+                if self.timeout:
+                    tdelta_ms = (tnow_s - tstart_s) * 1000
+                    poll_maxwait = self.timeout - tdelta_ms
+                    if tdelta_ms > self.timeout:
+                        raise Timeout()
+                else:
+                    poll_maxwait = None
+                events = self.p.poll.poll(poll_maxwait)
+                if not events:
+                    raise Timeout()
+                c = self.p.receive(1024)
+                if self.logfile_read:
+                    self.logfile_read.write(c)
+                self.buf += c
+                # count=0 is supposed to be the default, which indicates
+                # unlimited substitutions, but in practice the version of
+                # Python in Ubuntu 14.04 appears to default to count=2!
+                self.buf = self.re_vt100.sub('', self.buf, count=1000000)
+        finally:
+            if self.logfile_read:
+                self.logfile_read.flush()
+
+    def get_expect_output(self):
+        """Return the output read by expect()
+
+        Returns:
+            The output processed by expect(), as a string.
+        """
+        return self.output
