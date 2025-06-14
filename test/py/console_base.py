@@ -12,6 +12,7 @@ serial console of real hardware.
 
 from collections import namedtuple
 import re
+import select
 import sys
 import time
 import pytest
@@ -254,6 +255,7 @@ class ConsoleBase():
         self.logfile_read = None
         # http://stackoverflow.com/questions/7857352/python-regex-to-match-vt100-escape-sequences
         self.re_vt100 = re.compile(r'(\x1b\[|\x9b)[^@-_]*[@-_]|\x1b[@-_]', re.I)
+        self.poll = select.poll()
 
         self.eval_patterns()
 
@@ -285,6 +287,7 @@ class ConsoleBase():
         """
         if self.p:
             self.log.start_section('Stopping U-Boot')
+            self.poll.unregister(self.p.fd)
             close_type = self.p.close()
             self.log.info(f'Close type: {close_type}')
             self.log.end_section('Stopping U-Boot')
@@ -589,6 +592,10 @@ class ConsoleBase():
             self.log.start_section('Starting U-Boot')
             self.at_prompt = False
             self.p = self.get_spawn()
+            self.poll.register(self.p.fd, select.POLLIN | select.POLLPRI |
+                               select.POLLERR | select.POLLHUP |
+                               select.POLLNVAL)
+
             # Real targets can take a long time to scroll large amounts of
             # text if LCD is enabled. This value may need tweaking in the
             # future, possibly per-test to be optimal. This works for 'help'
@@ -627,6 +634,7 @@ class ConsoleBase():
         """
         try:
             if self.p:
+                self.poll.unregister(self.p.fd)
                 self.p.close()
         except:
             pass
@@ -746,7 +754,7 @@ class ConsoleBase():
                 earliest_pi, poll_maxwait = self.find_match(patterns, tstart_s)
                 if poll_maxwait is False:
                     return earliest_pi
-                events = self.p.poll.poll(poll_maxwait)
+                events = self.poll.poll(poll_maxwait)
                 if not events:
                     raise Timeout()
                 c = self.p.receive(1024)

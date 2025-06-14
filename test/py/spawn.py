@@ -53,6 +53,13 @@ class Spawn:
             decode_signal (bool): True to indicate the exception number when
                 something goes wrong
 
+        Properties:
+            waited (bool): True if wait() has been called on the process
+            exit_code (int): Exit code from the process
+            exit_info (str): More information about what caused the process to
+                exit. For sandbox it tries to figure out the signal number
+            fd (int): File descriptor, or None if the process is not running
+
         Returns:
             Nothing.
         """
@@ -60,6 +67,7 @@ class Spawn:
         self.waited = False
         self.exit_code = 0
         self.exit_info = ''
+        self.fd = None
 
         (self.pid, self.fd) = pty.fork()
         if self.pid == 0:
@@ -94,10 +102,6 @@ class Spawn:
                 new[6][termios.VMIN] = 0
                 new[6][termios.VTIME] = 0
                 termios.tcsetattr(self.fd, termios.TCSANOW, new)
-
-            self.poll = select.poll()
-            self.poll.register(self.fd, select.POLLIN | select.POLLPRI | select.POLLERR |
-                               select.POLLHUP | select.POLLNVAL)
         except:
             if old:
                 termios.tcsetattr(self.fd, termios.TCSANOW, old)
