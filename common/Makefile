@@ -22,7 +22,8 @@ obj-y += board_r.o
 obj-$(CONFIG_DISPLAY_BOARDINFO) += board_info.o
 obj-$(CONFIG_DISPLAY_BOARDINFO_LATE) += board_info.o
 
-obj-$(CONFIG_CMDSOCK) += cmdsock.o
+obj-$(CONFIG_CMDSOCK) += cmdsock.o cmdsock.pb.o
+obj-$(CONFIG_CMDSOCK) += pb_decode.o pb_encode.o pb_common.o
 
 obj-$(CONFIG_MII) += miiphyutil.o
 obj-$(CONFIG_CMD_MII) += miiphyutil.o
