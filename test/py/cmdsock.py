@@ -157,6 +157,21 @@ class Cmdsock:
         """
         raise ValueError(f'Failed {msg}')
 
+    def xfer_data(self, event_mask):
+        if event_mask & select.POLLIN:
+            # print('  can recv')
+            data = self.sock.recv(BUF_SIZE)
+            if not data:
+                self.fail('socket closed')
+            print(f'wrote {len(data)} bytes into inq')
+            self.inq.write(data)
+            # print('  xfer recv', data)
+        if event_mask & select.POLLOUT and self.outq.available:
+            # print('  can send')
+            data = self.outq.read(BUF_SIZE)
+            if data:
+                self.sock.send(data)
+
     def xfer(self, event_mask):
         """Poll the socket to send/receive data"""
         sock = self.sock
@@ -177,15 +192,18 @@ class Cmdsock:
             data = self.outq.read(BUF_SIZE)
             if data:
                 sock.send(data)
+        return self.get_msgs()
         # if sock in xcpt:
             # self.fail('socket exception')
+        # print('poll done')
+
+    def get_msgs(self):
         while True:
             # print('  call recv')
             msg = self.get_next_msg()
             if not msg:
                 break
             yield msg
-        # print('poll done')
 
     def get_next_msg(self):
         # data = self.inq.read(BUF_SIZE)
@@ -230,7 +248,7 @@ class Cmdsock:
             msg (cmdsock_pb2 object): Data to send
         """
         data = msg.SerializeToString()
-        print('send', len(data), data)
+        # print('send', len(data), data)
         self.outq.write(data)
 
     def start(self):

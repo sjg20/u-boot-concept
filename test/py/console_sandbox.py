@@ -9,10 +9,12 @@ Logic to interact with the sandbox port of U-Boot, running as a sub-process.
 import os
 import select
 import time
-from console_base import ConsoleBase
+from console_base import ConsoleBase, Timeout
 from spawn import Spawn
 import cmdsock
 
+
+TIMEOUT = 2
 
 class ConsoleSandbox(ConsoleBase):
     """Represents a connection to a sandbox U-Boot console, executed as a sub-
@@ -75,6 +77,29 @@ class ConsoleSandbox(ConsoleBase):
             self.cmdsock.start()
             # print('self.poll', self.cmdsock.sock, self.poll)
 
+    def wait_ready(self):
+        if not self.cmdsock:
+            super().wait_ready()
+            return
+        tstart_s = time.time()
+        while True:
+            events = self.poll.poll(TIMEOUT)
+            if not events:
+                raise Timeout()
+            for fd, event_mask in events:
+                if fd == self.p.fd:
+                    c = self.p.receive(1024)
+                    self.add_input(c)
+                elif fd == self.cmdsock.sock.fileno():
+                    self.cmdsock.xfer_data(event_mask)
+            for msg in self.cmdsock.get_msgs():
+                print('kind', msg.WhichOneof('kind'))
+                # if msg.WhichOneof('kind') == 'start_resp':
+            tnow_s = time.time()
+            tdelta_ms = (tnow_s - tstart_s) * 1000
+            if tdelta_ms > TIMEOUT:
+                raise Timeout()
+
     def poll_for_output(self, fd, event_mask):
         """Poll file descriptor for console output
 
@@ -97,7 +122,6 @@ class ConsoleSandbox(ConsoleBase):
                 print('returning', msg.puts.str)
                 return msg.puts.str
         return ''
-
 
     def restart_uboot_with_flags(self, flags, expect_reset=False, use_dtb=True):
         """Run U-Boot with the given command-line flags

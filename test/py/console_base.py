@@ -15,6 +15,7 @@ import re
 import select
 import sys
 import time
+import traceback
 import pytest
 
 import spawn
@@ -98,8 +99,12 @@ def handle_exception(ubconfig, console, log, err, name, fatal, output=''):
         msg += 'Marking connection bad - no other tests will run'
     else:
         msg += 'Assuming that lab is healthy'
-    print(msg)
+    print('msg', msg)
     log.error(msg)
+    print('err', err)
+    # tb = traceback.extract_stack()
+    # log.info('\n'.join(traceback.format_list(tb)))
+    raise ValueError('fred') from err
     log.error(f'Error: {err}')
 
     if output:
@@ -316,29 +321,32 @@ class ConsoleBase():
             if not self.lab_mode:
                 self._wait_for_banner(loop_num)
                 self.u_boot_version_string = self.after
-            while True:
-                m = self.expect([self.prompt_compiled, pattern_ready_prompt,
-                    pattern_stop_autoboot_prompt] + self.bad_patterns)
-                if m == 0:
-                    self.log.info(f'Found ready prompt {m}')
-                    break
-                if m == 1:
-                    m = pattern_ready_prompt.search(self.after)
-                    self.u_boot_version_string = m.group(2)
-                    self.log.info('Lab: Board is ready')
-                    self.timeout = TIMEOUT_MS
-                    break
-                if m == 2:
-                    self.log.info(f'Found autoboot prompt {m}')
-                    self.p.send(' ')
-                    continue
-                if not self.lab_mode:
-                    raise BootFail('Missing prompt / ready message on console: ' +
-                                   self.bad_pattern_ids[m - 3])
+            self.wait_ready()
             self.log.info('U-Boot is ready')
 
         finally:
             self.log.timestamp()
+
+    def wait_ready(self):
+        while True:
+            m = self.expect([self.prompt_compiled, pattern_ready_prompt,
+                pattern_stop_autoboot_prompt] + self.bad_patterns)
+            if m == 0:
+                self.log.info(f'Found ready prompt {m}')
+                break
+            if m == 1:
+                m = pattern_ready_prompt.search(self.after)
+                self.u_boot_version_string = m.group(2)
+                self.log.info('Lab: Board is ready')
+                self.timeout = TIMEOUT_MS
+                break
+            if m == 2:
+                self.log.info(f'Found autoboot prompt {m}')
+                self.p.send(' ')
+                continue
+            if not self.lab_mode:
+                raise BootFail('Missing prompt / ready message on console: ' +
+                               self.bad_pattern_ids[m - 3])
 
     def start_uboot(self):
         """Start U-Boot - subclasses can handle this"""
@@ -625,13 +633,10 @@ class ConsoleBase():
                 self._wait_for_boot_prompt(loop_num=loop_num)
             self.at_prompt = True
             self.at_prompt_logevt = self.logstream.logfile.cur_evt
-        except Exception as ex:
-            self.log.error(str(ex))
-            self.cleanup_spawn()
-            raise
         finally:
             self.log.timestamp()
             self.log.end_section('Starting U-Boot')
+        print('done')
 
     def cleanup_spawn(self):
         """Shut down all interaction with the U-Boot instance.

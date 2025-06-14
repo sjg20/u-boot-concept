@@ -520,6 +520,7 @@ def ubman(request):
     except OSError as err:
         handle_exception(ubconfig, ubman_fix, log, err, 'Lab failure', True)
     except Timeout as err:
+        print('uerr', err)
         handle_exception(ubconfig, ubman_fix, log, err, 'Lab timeout', True)
     except BootFail as err:
         handle_exception(ubconfig, ubman_fix, log, err, 'Boot fail', True,
