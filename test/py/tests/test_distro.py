@@ -68,9 +68,9 @@ def test_distro_script(ubman):
         ubman.run_command('boot', wait_for_prompt=False)
 
     # This is the start of userspace
-    ubman.p.expect(['Welcome to TDX Wayland'])
+    ubman.expect(['Welcome to TDX Wayland'])
 
     # Shortly later, we should see this banner
-    ubman.p.expect(['Colibri-iMX8X_Reference-Multimedia-Image'])
+    ubman.expect(['Colibri-iMX8X_Reference-Multimedia-Image'])
 
     ubman.restart_uboot()

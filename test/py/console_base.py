@@ -13,6 +13,7 @@ serial console of real hardware.
 from collections import namedtuple
 import re
 import sys
+import time
 import pytest
 
 import spawn
@@ -295,7 +296,7 @@ class ConsoleBase():
             while not self.lab_mode and loop_num > 0:
                 loop_num -= 1
                 while config_spl_serial and not env_spl_skipped and env_spl_banner_times > 0:
-                    m = self.p.expect([pattern_u_boot_spl_signon,
+                    m = self.expect([pattern_u_boot_spl_signon,
                                        pattern_lab_mode] + self.bad_patterns)
                     if m == 1:
                         self.set_lab_mode()
@@ -306,7 +307,7 @@ class ConsoleBase():
                     env_spl_banner_times -= 1
 
                 if not self.lab_mode:
-                    m = self.p.expect([pattern_u_boot_main_signon,
+                    m = self.expect([pattern_u_boot_main_signon,
                                        pattern_lab_mode] + self.bad_patterns)
                     if m == 1:
                         self.set_lab_mode()
@@ -316,7 +317,7 @@ class ConsoleBase():
             if not self.lab_mode:
                 self.u_boot_version_string = self.p.after
             while True:
-                m = self.p.expect([self.prompt_compiled, pattern_ready_prompt,
+                m = self.expect([self.prompt_compiled, pattern_ready_prompt,
                     pattern_stop_autoboot_prompt] + self.bad_patterns)
                 if m == 0:
                     self.log.info(f'Found ready prompt {m}')
@@ -402,7 +403,7 @@ class ConsoleBase():
                         continue
                     chunk = re.escape(chunk)
                     chunk = chunk.replace('\\\n', '[\r\n]')
-                    m = self.p.expect([chunk] + self.bad_patterns)
+                    m = self.expect([chunk] + self.bad_patterns)
                     if m != 0:
                         self.at_prompt = False
                         raise BootFail('Failed to get echo on console '
@@ -413,7 +414,7 @@ class ConsoleBase():
             if wait_for_reboot:
                 self._wait_for_boot_prompt()
             else:
-                m = self.p.expect([self.prompt_compiled] + self.bad_patterns)
+                m = self.expect([self.prompt_compiled] + self.bad_patterns)
                 if m != 0:
                     self.at_prompt = False
                     raise BootFail('Missing prompt on console: ' +
@@ -491,7 +492,7 @@ class ConsoleBase():
         """
         if isinstance(text, str):
             text = re.escape(text)
-        m = self.p.expect([text] + self.bad_patterns)
+        m = self.expect([text] + self.bad_patterns)
         if m != 0:
             raise Unexpected(
                 "Unexpected pattern found on console (exp '{text}': " +
@@ -521,7 +522,7 @@ class ConsoleBase():
             self.p.timeout = 1000
             # Wait for something U-Boot will likely never send. This will
             # cause the console output to be read and logged.
-            self.p.expect(['This should never match U-Boot output'])
+            self.expect(['This should never match U-Boot output'])
         except:
             # We expect a timeout, since U-Boot won't print what we waited
             # for. Squash it when it happens.
@@ -680,8 +681,67 @@ class ConsoleBase():
         return ConsoleSetupTimeout(self, timeout)
 
     def expect(self, patterns):
-        """Call the Spawn.expect() function
+        """Wait for the sub-process to emit specific data.
 
-        This is provided as a way for tests to check board output.
+        This function waits for the process to emit one pattern from the
+        supplied list of patterns, or for a timeout to occur.
+
+        Args:
+            patterns (list of str or regex.Regex): Patterns we expect to
+                see in the sub-process' stdout.
+
+        Returns:
+            int: index within the patterns array of the pattern the process
+            emitted.
+
+        Notable exceptions:
+            Timeout, if the process did not emit any of the patterns within
+            the expected time.
         """
-        self.p.expect(patterns)
+        for pi, pat in enumerate(patterns):
+            if isinstance(pat, str):
+                patterns[pi] = re.compile(pat)
+
+        tstart_s = time.time()
+        try:
+            while True:
+                earliest_m = None
+                earliest_pi = None
+                for pi, pat in enumerate(patterns):
+                    m = pat.search(self.p.buf)
+                    if not m:
+                        continue
+                    if earliest_m and m.start() >= earliest_m.start():
+                        continue
+                    earliest_m = m
+                    earliest_pi = pi
+                if earliest_m:
+                    pos = earliest_m.start()
+                    posafter = earliest_m.end()
+                    self.p.before = self.p.buf[:pos]
+                    self.p.after = self.p.buf[pos:posafter]
+                    self.p.output += self.p.buf[:posafter]
+                    self.p.buf = self.p.buf[posafter:]
+                    return earliest_pi
+                tnow_s = time.time()
+                if self.p.timeout:
+                    tdelta_ms = (tnow_s - tstart_s) * 1000
+                    poll_maxwait = self.p.timeout - tdelta_ms
+                    if tdelta_ms > self.p.timeout:
+                        raise Timeout()
+                else:
+                    poll_maxwait = None
+                events = self.p.poll.poll(poll_maxwait)
+                if not events:
+                    raise Timeout()
+                c = self.p.receive(1024)
+                if self.p.logfile_read:
+                    self.p.logfile_read.write(c)
+                self.p.buf += c
+                # count=0 is supposed to be the default, which indicates
+                # unlimited substitutions, but in practice the version of
+                # Python in Ubuntu 14.04 appears to default to count=2!
+                self.p.buf = self.p.re_vt100.sub('', self.p.buf, count=1000000)
+        finally:
+            if self.p.logfile_read:
+                self.p.logfile_read.flush()
