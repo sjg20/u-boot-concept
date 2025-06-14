@@ -16,14 +16,14 @@ def test_distro(ubman):
 
     with ubman.log.section('Grub'):
         # Wait for grub to come up and offset a menu
-        ubman.p.expect(['Try or Install Ubuntu'])
+        ubman.expect(['Try or Install Ubuntu'])
 
         # Press 'e' to edit the command line
         ubman.log.info("Pressing 'e'")
         ubman.run_command('e', wait_for_prompt=False, send_nl=False)
 
         # Wait until we see the editor appear
-        ubman.p.expect(['/casper/initrd'])
+        ubman.expect(['/casper/initrd'])
 
         # Go down to the 'linux' line. Avoid using down-arrow as that includes
         # an Escape character, which may be parsed by Grub as such, causing it
@@ -48,15 +48,15 @@ def test_distro(ubman):
         # Tell grub to boot
         ubman.log.info("boot")
         ubman.ctrl('X')
-        ubman.p.expect(['Booting a command list'])
+        ubman.expect(['Booting a command list'])
 
     with ubman.log.section('Linux'):
         # Linux should start immediately
-        ubman.p.expect(['Linux version'])
+        ubman.expect(['Linux version'])
 
     with ubman.log.section('Ubuntu'):
         # Shortly later, we should see this banner
-        ubman.p.expect(['Welcome to .*Ubuntu 24.04.1 LTS.*!'])
+        ubman.expect(['Welcome to .*Ubuntu 24.04.1 LTS.*!'])
 
     ubman.restart_uboot()
 
