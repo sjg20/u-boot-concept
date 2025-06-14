@@ -274,9 +274,8 @@ class ConsoleBase():
         """
         return spawn.Spawn([])
 
-    def handle_xfer(self, fd, event_mask):
+    def handle_xfer(self):
         """Allows subclasses to transfer using their own file descriptors"""
-        pass
 
     def eval_patterns(self):
         """Set up lists of regexes for patterns we don't expect on console"""
@@ -325,6 +324,7 @@ class ConsoleBase():
             if not self.lab_mode:
                 self._wait_for_banner(loop_num)
                 self.u_boot_version_string = self.after
+                print('!!u_boot_version_string', self.u_boot_version_string)
             self.wait_ready()
             self.log.info('U-Boot is ready')
 
@@ -760,7 +760,6 @@ class ConsoleBase():
         """
         return ''
     '''
-
     def expect(self, patterns):
         """Wait for the sub-process to emit specific data.
 
@@ -789,6 +788,7 @@ class ConsoleBase():
                 earliest_pi, poll_maxwait = self.find_match(patterns, tstart_s)
                 if poll_maxwait is False:
                     return earliest_pi
+                self.handle_xfer()
                 events = self.poll.poll(poll_maxwait)
                 # print('events', events)
                 if not events and not self.config.no_timeouts:
@@ -798,10 +798,14 @@ class ConsoleBase():
                         c = self.p.receive(1024)
                         self.add_input(c)
                     else:
-                        self.handle_xfer(fd, event_mask)
+                        self.xfer_data(fd, event_mask)
+                self.handle_xfer()
         finally:
             if self.logfile_read:
                 self.logfile_read.flush()
+
+    def xfer_data(self, fd, event_mask):
+        pass
 
     def add_input(self, chars):
         """Add character to the input buffer so they can be processed
@@ -812,6 +816,7 @@ class ConsoleBase():
         if self.logfile_read:
             self.logfile_read.write(chars)
         self.buf += chars
+        print(f'add: {chars}')
         # count=0 is supposed to be the default, which indicates
         # unlimited substitutions, but in practice the version of
         # Python in Ubuntu 14.04 appears to default to count=2!

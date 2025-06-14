@@ -25,6 +25,7 @@ import io
 
 BUF_SIZE = 4096
 
+SOCK = 0
 
 # https://stackoverflow.com/questions/10917581/efficient-fifo-queue-for-arbitrarily-sized-chunks-of-bytes-in-python/10917767#10917767
 class FifoFileBuffer():
@@ -124,6 +125,9 @@ class Cmdsock:
         self.outq = FifoFileBuffer('outq')
         self.chan = None
         self.stub = None
+        global SOCK
+        assert SOCK == 0
+        SOCK + 1
 
     def connect_to_sandbox(self, poll):
         """Connect to sandbox over the cmdsock"""
@@ -172,34 +176,6 @@ class Cmdsock:
             if data:
                 self.sock.send(data)
 
-    def xfer(self, event_mask):
-        """Poll the socket to send/receive data"""
-        sock = self.sock
-        # print(' poll', event_mask, 'in', event_mask & select.POLLIN,
-              # 'out', event_mask & select.POLLOUT)
-        # can_read, can_write, xcpt = select.select([sock], [sock], [sock])
-        # print('poll done')
-        if event_mask & select.POLLIN:
-            # print('  can recv')
-            data = sock.recv(BUF_SIZE)
-            if not data:
-                self.fail('socket closed')
-            print(f'wrote {len(data)} bytes into inq')
-            self.inq.write(data)
-            # print('  xfer recv', data)
-        if event_mask & select.POLLOUT and self.outq.available:
-            # print('  can send')
-            data = self.outq.read(BUF_SIZE)
-            if data:
-                sock.send(data)
-
-        if event_mask & (select.POLLPRI | select.POLLERR | select.POLLHUP |
-                         select.POLLNVAL):
-            raise ValueError('sock died {event_mask:x}')
-        # if sock in xcpt:
-            # self.fail('socket exception')
-        # print('poll done')
-
     def get_msgs(self):
         while True:
             # print('  call recv')
@@ -225,7 +201,7 @@ class Cmdsock:
         # print('   get_next_msg', data)
         if not data:
             return None
-        # print('recv data', len(data))
+        print('recv data', len(data))
         try:
             size, pos = _DecodeVarint32(data, 0)
         except IndexError:
