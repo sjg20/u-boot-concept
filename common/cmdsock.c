@@ -30,6 +30,7 @@ DECLARE_GLOBAL_DATA_PTR;
 
 static struct cmdsock info, *csi = &info;
 
+#if 0
 static int __attribute__ ((format (__printf__, 2, 3)))
 	reply(struct membuf *out, const char *fmt, ...)
 {
@@ -59,6 +60,8 @@ static int __attribute__ ((format (__printf__, 2, 3)))
 
 	return 0;
 }
+#endif
+
 #if 0
 static bool encode_string(pb_ostream_t *stream, const pb_field_iter_t *field, void *const *arg) {
   const char *str = (const char*)*arg;
@@ -94,6 +97,38 @@ static bool decode_string(pb_istream_t *stream, const pb_field_iter_t *field,
   return true;
 }
 #endif
+
+static int reply_start_resp(void)
+{
+        Message msg = Message_init_zero;
+	char *cmd;
+	int len;
+
+	len = membuf_putraw(csi->out, BUF_SIZE, false, &cmd);
+
+	msg.which_kind = Message_start_resp_tag;
+	msg.kind.start_resp.version = 1;
+
+	pb_ostream_t stream = pb_ostream_from_buffer(cmd, len);
+        if (!pb_encode_ex(&stream, Message_fields, &msg, PB_ENCODE_DELIMITED)) {
+		os_printf("Failed to encode message\n");
+#ifndef PB_NO_ERRMSG
+		os_printf("msg %s\n", stream.errmsg);
+#endif
+		os_exit(1);
+		return -EIO;
+	}
+
+        len = stream.bytes_written;
+	// os_printf("wrote %d bytes\n", len);
+	membuf_putraw(csi->out, len, true, &cmd);
+
+	// done = true;
+	// cmdsock_process();
+	cmdsock_poll(csi->in, csi->out);
+
+	return 0;
+}
 
 int cmdsock_process(void)
 {
@@ -139,6 +174,7 @@ int cmdsock_process(void)
 		os_printf("start: %s\n", msg.kind.start_req.name);
 		board_init_f(gd->flags);
 		board_init_r(gd->new_gd, 0);
+		reply_start_resp();
 		break;
 	}
 #if 0

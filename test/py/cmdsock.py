@@ -192,7 +192,6 @@ class Cmdsock:
             data = self.outq.read(BUF_SIZE)
             if data:
                 sock.send(data)
-        return self.get_msgs()
         # if sock in xcpt:
             # self.fail('socket exception')
         # print('poll done')
@@ -238,7 +237,7 @@ class Cmdsock:
         msg = cmdsock_pb2.Message()
         msg.ParseFromString(data[pos:])
         # google.protobuf.message.DecodeError
-        print('msgx', msg, data)
+        # print('msgx', msg, data)
         return msg
 
     def send(self, msg):

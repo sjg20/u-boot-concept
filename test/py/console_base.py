@@ -784,7 +784,7 @@ class ConsoleBase():
                     return earliest_pi
                 events = self.poll.poll(poll_maxwait)
                 # print('events', events)
-                if not events:
+                if not events and not self.config.no_timeouts:
                     raise Timeout()
                 for fd, event_mask in events:
                     if fd == self.p.fd:
@@ -849,7 +849,7 @@ class ConsoleBase():
         if self.timeout:
             tdelta_ms = (tnow_s - tstart_s) * 1000
             poll_maxwait = self.timeout - tdelta_ms
-            if tdelta_ms > self.timeout:
+            if tdelta_ms > self.timeout and not self.config.no_timeouts:
                 raise Timeout()
         else:
             poll_maxwait = None

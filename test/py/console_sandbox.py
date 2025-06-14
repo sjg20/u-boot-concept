@@ -32,6 +32,7 @@ class ConsoleSandbox(ConsoleBase):
         self.sandbox_flags = []
         self.use_dtb = True
         self.cmdsock = None
+        self.ready = False
 
     def get_spawn(self):
         """Connect to a fresh U-Boot instance.
@@ -81,6 +82,7 @@ class ConsoleSandbox(ConsoleBase):
         if not self.cmdsock:
             super().wait_ready()
             return
+        print('special wait ready')
         tstart_s = time.time()
         while True:
             events = self.poll.poll(TIMEOUT)
@@ -92,13 +94,16 @@ class ConsoleSandbox(ConsoleBase):
                     self.add_input(c)
                 elif fd == self.cmdsock.sock.fileno():
                     self.cmdsock.xfer_data(event_mask)
+            print('--- checking')
             for msg in self.cmdsock.get_msgs():
                 print('kind', msg.WhichOneof('kind'))
-                # if msg.WhichOneof('kind') == 'start_resp':
+                if msg.WhichOneof('kind') == 'start_resp':
+                    break
             tnow_s = time.time()
             tdelta_ms = (tnow_s - tstart_s) * 1000
             if tdelta_ms > TIMEOUT:
                 raise Timeout()
+        print('got start_resp')
 
     def poll_for_output(self, fd, event_mask):
         """Poll file descriptor for console output
@@ -114,14 +119,20 @@ class ConsoleSandbox(ConsoleBase):
         """
         # print('poll', fd, self.cmdsock.sock.fileno(), event_mask)
         if fd != self.cmdsock.sock.fileno():
-            return ''
+            return ValueError(
+                f'Internal error: fd {fd} fileno {self.cmdsock.sock.fileno()}')
 
-        for msg in self.cmdsock.xfer(event_mask):
-            print('got', msg, msg.WhichOneof('kind'))
-            if msg.WhichOneof('kind') == 'puts':
-                print('returning', msg.puts.str)
-                return msg.puts.str
-        return ''
+        self.cmdsock.xfer(event_mask)
+        text = ''
+        for msg in self.cmdsock.get_msgs():
+            print('\ngot', msg.WhichOneof('kind'))
+            kind = msg.WhichOneof('kind')
+            if kind == 'puts':
+                # print('returning', msg.puts.str)
+                text += msg.puts.str
+            elif kind == 'start_resp':
+                self.ready = True
+        return text
 
     def restart_uboot_with_flags(self, flags, expect_reset=False, use_dtb=True):
         """Run U-Boot with the given command-line flags

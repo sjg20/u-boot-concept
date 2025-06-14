@@ -94,6 +94,8 @@ def pytest_addoption(parser):
     parser.addoption('--role', help='U-Boot board role (for Labgrid-sjg)')
     parser.addoption('--use-running-system', default=False, action='store_true',
         help="Assume that U-Boot is ready and don't wait for a prompt")
+    parser.addoption('-T', '--no-timeouts', default=False, action='store_true',
+                     help='Disable timeouts; wait forever')
     parser.addoption('--timing', default=False, action='store_true',
                      help='Show info on test timing')
 
@@ -344,6 +346,7 @@ def pytest_configure(config):
     ubconfig.timing = config.getoption('timing')
     ubconfig.role = config.getoption('role')
     ubconfig.cmdsock = cmdsock
+    ubconfig.no_timeouts = config.getoption('no_timeouts')
 
     env_vars = (
         'board_type',
