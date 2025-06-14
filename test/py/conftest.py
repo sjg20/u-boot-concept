@@ -312,6 +312,8 @@ def pytest_configure(config):
             log.info(f"Loaded {module}")
 
         if not_found:
+            paths = '\n'.join(sys.path)
+            log.info(f"PYTHONPATH: {paths}")
             log.warning(f"Failed to find modules: {' '.join(not_found)}")
 
     ubconfig.buildconfig = dict()
