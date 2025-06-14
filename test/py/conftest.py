@@ -388,9 +388,9 @@ def generate_ut_subtest(metafunc, fixture_name, sym_path):
     """
     fn = ubman_fix.config.build_dir + sym_path
     try:
-        with open(fn, 'rt') as f:
+        with open('wef' + fn, 'rt') as f:
             lines = f.readlines()
-    except:
+    except FileNotFoundError:
         lines = []
     lines.sort()
 
@@ -447,10 +447,9 @@ def generate_config(metafunc, fixture_name):
         # values to use instead.
         vals = subconfig.get(fixture_name+ 's', [])
     def fixture_id(index, val):
-        try:
+        if 'fixture_id' in val:
             return val['fixture_id']
-        except:
-            return fixture_name + str(index)
+        return fixture_name + str(index)
     ids = [fixture_id(index, val) for (index, val) in enumerate(vals)]
     metafunc.parametrize(fixture_name, vals, ids=ids)
 
@@ -518,6 +517,9 @@ def ubman(request):
     if not ubconfig.connection_ok:
         pytest.skip('Cannot get target connection')
         return None
+    ubman_fix.ensure_spawned()
+    print('done')
+    sys.exit(1)
     try:
         ubman_fix.ensure_spawned()
     except OSError as err:

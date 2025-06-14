@@ -132,10 +132,6 @@ class Cmdsock:
 
         max_retries = 20
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        poll.register(self.sock, select.POLLIN |
-                               select.POLLOUT | select.POLLPRI |
-                               select.POLLERR | select.POLLHUP |
-                               select.POLLNVAL)
         for i in range(max_retries):
             try:
                 self.sock.connect(self.sock_name)
@@ -148,6 +144,10 @@ class Cmdsock:
                     raise ValueError(
                         'Error connecting to U-Boot sandbox') from exc
         print('connected fd', self.sock)
+        poll.register(self.sock, select.POLLIN |
+                               select.POLLOUT | select.POLLPRI |
+                               select.POLLERR | select.POLLHUP |
+                               select.POLLNVAL)
 
     def fail(self, msg):
         """Report a socket failure
@@ -192,6 +192,10 @@ class Cmdsock:
             data = self.outq.read(BUF_SIZE)
             if data:
                 sock.send(data)
+
+        if event_mask & (select.POLLPRI | select.POLLERR | select.POLLHUP |
+                         select.POLLNVAL):
+            raise ValueError('sock died {event_mask:x}')
         # if sock in xcpt:
             # self.fail('socket exception')
         # print('poll done')

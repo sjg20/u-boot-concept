@@ -274,6 +274,10 @@ class ConsoleBase():
         """
         return spawn.Spawn([])
 
+    def handle_xfer(self, fd, event_mask):
+        """Allows subclasses to transfer using their own file descriptors"""
+        pass
+
     def eval_patterns(self):
         """Set up lists of regexes for patterns we don't expect on console"""
         self.bad_patterns = [pat.pattern for pat in self.avail_patterns
@@ -328,6 +332,7 @@ class ConsoleBase():
             self.log.timestamp()
 
     def wait_ready(self):
+        raise ValueError('wrong wait_ready')
         while True:
             m = self.expect([self.prompt_compiled, pattern_ready_prompt,
                 pattern_stop_autoboot_prompt] + self.bad_patterns)
@@ -567,7 +572,7 @@ class ConsoleBase():
             # Wait for something U-Boot will likely never send. This will
             # cause the console output to be read and logged.
             self.expect(['This should never match U-Boot output'])
-        except:
+        except Timeout:
             # We expect a timeout, since U-Boot won't print what we waited
             # for. Squash it when it happens.
             #
@@ -740,6 +745,7 @@ class ConsoleBase():
         """
         return ConsoleSetupTimeout(self, timeout)
 
+    '''
     def poll_for_output(self, fd, event_mask):
         """Poll file descriptor for console output
 
@@ -753,6 +759,7 @@ class ConsoleBase():
             str: Output (which may be an empty string if there is none)
         """
         return ''
+    '''
 
     def expect(self, patterns):
         """Wait for the sub-process to emit specific data.
@@ -791,8 +798,7 @@ class ConsoleBase():
                         c = self.p.receive(1024)
                         self.add_input(c)
                     else:
-                        c = self.poll_for_output(fd, event_mask)
-                        self.add_input(c)
+                        self.handle_xfer(fd, event_mask)
         finally:
             if self.logfile_read:
                 self.logfile_read.flush()

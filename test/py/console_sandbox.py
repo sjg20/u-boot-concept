@@ -14,7 +14,7 @@ from spawn import Spawn
 import cmdsock
 
 
-TIMEOUT = 2
+TIMEOUT = 4
 
 class ConsoleSandbox(ConsoleBase):
     """Represents a connection to a sandbox U-Boot console, executed as a sub-
@@ -80,12 +80,20 @@ class ConsoleSandbox(ConsoleBase):
 
     def wait_ready(self):
         if not self.cmdsock:
+            raise ValueError(f'bad wait ready {self.ready}')
             super().wait_ready()
             return
-        print('special wait ready')
+        print('special wait ready', self.ready, id(self))
+        # raise ValueError(f'wait ready {self.ready}')
         tstart_s = time.time()
-        while True:
+        while not self.ready:
+            tnow_s = time.time()
+            print('now', tnow_s, self.ready)
+            tdelta_ms = (tnow_s - tstart_s) * 1000
+            if tdelta_ms > TIMEOUT:
+                raise Timeout()
             events = self.poll.poll(TIMEOUT)
+            print('events', events)
             if not events:
                 raise Timeout()
             for fd, event_mask in events:
@@ -93,18 +101,34 @@ class ConsoleSandbox(ConsoleBase):
                     c = self.p.receive(1024)
                     self.add_input(c)
                 elif fd == self.cmdsock.sock.fileno():
-                    self.cmdsock.xfer_data(event_mask)
-            print('--- checking')
-            for msg in self.cmdsock.get_msgs():
-                print('kind', msg.WhichOneof('kind'))
-                if msg.WhichOneof('kind') == 'start_resp':
-                    break
-            tnow_s = time.time()
-            tdelta_ms = (tnow_s - tstart_s) * 1000
-            if tdelta_ms > TIMEOUT:
-                raise Timeout()
+                    self.handle_xfer(fd, event_mask)
+            # print('--- checking')
+            # for msg in self.cmdsock.get_msgs():
+            #     print('kind', msg.WhichOneof('kind'))
+            #     if msg.WhichOneof('kind') == 'start_resp':
+            #         break
         print('got start_resp')
+        raise ValueError('ready')
 
+    def handle_xfer(self, fd, event_mask):
+        if fd != self.cmdsock.sock.fileno():
+            return ValueError(
+                f'Internal error: fd {fd} fileno {self.cmdsock.sock.fileno()}')
+        self.cmdsock.xfer(event_mask)
+        for msg in self.cmdsock.get_msgs():
+            print('\ngot', msg.WhichOneof('kind'))
+            kind = msg.WhichOneof('kind')
+            if kind == 'puts':
+                # print('returning', msg.puts.str)
+                self.add_input(msg.puts.str)
+            elif kind == 'start_resp':
+                self.ready = True
+                print('\n**& ready', self.ready, id(self))
+                # raise ValueError('start_resp')
+            else:
+                raise ValueError(f"Unknown kind '{kind}'")
+
+    '''
     def poll_for_output(self, fd, event_mask):
         """Poll file descriptor for console output
 
@@ -125,14 +149,15 @@ class ConsoleSandbox(ConsoleBase):
         self.cmdsock.xfer(event_mask)
         text = ''
         for msg in self.cmdsock.get_msgs():
-            print('\ngot', msg.WhichOneof('kind'))
+            # print('\ngot', msg.WhichOneof('kind'))
             kind = msg.WhichOneof('kind')
             if kind == 'puts':
                 # print('returning', msg.puts.str)
-                text += msg.puts.str
+                self.add_input(msg.puts.str)
             elif kind == 'start_resp':
                 self.ready = True
         return text
+    '''
 
     def restart_uboot_with_flags(self, flags, expect_reset=False, use_dtb=True):
         """Run U-Boot with the given command-line flags

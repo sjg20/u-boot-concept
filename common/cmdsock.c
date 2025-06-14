@@ -192,8 +192,8 @@ int cmdsock_process(void)
 		reply(csi->out, "invalid %d\n", -ENOENT);
 	}
 #endif
-	if (ret)
-		csi->have_err = ret;
+	// if (ret)
+		// csi->have_err = ret;
 
 	return 0;
 }
