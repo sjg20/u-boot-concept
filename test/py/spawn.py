@@ -24,7 +24,6 @@ perhaps short for 'process'.
 
 import io
 import os
-import re
 import pty
 import signal
 import select
@@ -40,9 +39,6 @@ EXIT_CHAR = 0x1d    # FS (Ctrl + ])
 class Spawn:
     """Represents the stdio of a freshly created sub-process. Commands may be
     sent to the process, and responses waited for.
-
-    Members:
-        output: accumulated output from expect()
     """
 
     def __init__(self, args, cwd=None, decode_signal=False):
@@ -63,13 +59,6 @@ class Spawn:
         self.waited = False
         self.exit_code = 0
         self.exit_info = ''
-        self.buf = ''
-        self.output = ''
-        self.logfile_read = None
-        self.before = ''
-        self.after = ''
-        # http://stackoverflow.com/questions/7857352/python-regex-to-match-vt100-escape-sequences
-        self.re_vt100 = re.compile(r'(\x1b\[|\x9b)[^@-_]*[@-_]|\x1b[@-_]', re.I)
 
         (self.pid, self.fd) = pty.fork()
         if self.pid == 0:
@@ -221,11 +210,3 @@ class Spawn:
             time.sleep(0.1)
 
         return 'timeout'
-
-    def get_expect_output(self):
-        """Return the output read by expect()
-
-        Returns:
-            The output processed by expect(), as a string.
-        """
-        return self.output

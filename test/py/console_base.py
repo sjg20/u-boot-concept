@@ -218,8 +218,16 @@ class ConsoleBase():
             u_boot_version_string (str): Version string obtained from U-Boot as
                 it booted. In lab mode this is provided by
                 pattern_ready_prompt
+            buf (str): Buffer of characters received from the console, still to
+                be processed
+            output (str); All data received from the console
+            before (str): Data before the matching string
+            after (str): String which patches the expected output
             timeout (str): Timeout in seconds before giving up and aborting the
                 test
+            logfile_read (multiplexed_log.Logfile): Logfile used for logging
+                output
+            re_vt100 (re.Regex): Regex for filtering out vt100 characters
         """
         self.log = log
         self.config = config
@@ -237,17 +245,29 @@ class ConsoleBase():
         self.at_prompt_logevt = None
         self.lab_mode = False
         self.u_boot_version_string = None
-        self.timeout = None
+        self.reset()
+        # http://stackoverflow.com/questions/7857352/python-regex-to-match-vt100-escape-sequences
+        self.re_vt100 = re.compile(r'(\x1b\[|\x9b)[^@-_]*[@-_]|\x1b[@-_]', re.I)
 
         self.eval_patterns()
 
+    def reset(self):
+        """Reset all settings as we are about to spawn a new connection"""
+        self.buf = ''
+        self.output = ''
+        self.before = ''
+        self.after = ''
+        self.timeout = None
+        self.logfile_read = None
+
     def get_spawn(self):
-        """This is not called, ssubclass must define this.
+        """This must be called by subclasses, to reset the system
 
         Return a value to avoid:
            console_base.py:348:12: E1128: Assigning result of a function
            call, where the function returns None (assignment-from-none)
         """
+        self.reset()
         return spawn.Spawn([])
 
     def eval_patterns(self):
@@ -318,7 +338,7 @@ class ConsoleBase():
                         raise BootFail('Bad pattern found on console: ' +
                                        self.bad_pattern_ids[m - 1])
             if not self.lab_mode:
-                self.u_boot_version_string = self.p.after
+                self.u_boot_version_string = self.after
             while True:
                 m = self.expect([self.prompt_compiled, pattern_ready_prompt,
                     pattern_stop_autoboot_prompt] + self.bad_patterns)
@@ -326,7 +346,7 @@ class ConsoleBase():
                     self.log.info(f'Found ready prompt {m}')
                     break
                 if m == 1:
-                    m = pattern_ready_prompt.search(self.p.after)
+                    m = pattern_ready_prompt.search(self.after)
                     self.u_boot_version_string = m.group(2)
                     self.log.info('Lab: Board is ready')
                     self.timeout = TIMEOUT_MS
@@ -426,7 +446,7 @@ class ConsoleBase():
             self.at_prompt_logevt = self.logstream.logfile.cur_evt
             # Only strip \r\n; space/TAB might be significant if testing
             # indentation.
-            return self.p.before.strip('\r\n')
+            return self.before.strip('\r\n')
         except Timeout as exc:
             handle_exception(self.config, self, self.log, exc,
                              f"Lab failure: Timeout executing '{cmd}'", True)
@@ -571,7 +591,7 @@ class ConsoleBase():
             # on board 'seaboard'.
             if not self.config.gdbserver:
                 self.timeout = TIMEOUT_MS
-            self.p.logfile_read = self.logstream
+            self.logfile_read = self.logstream
             if self.config.use_running_system:
                 # Send an empty command to set up the 'expect' logic. This has
                 # the side effect of ensuring that there was no partial command
@@ -620,7 +640,7 @@ class ConsoleBase():
             The output produced by ensure_spawed(), as a string.
         """
         if self.p:
-            return self.p.get_expect_output()
+            return self.get_expect_output()
         return None
 
     def validate_version_string_in_text(self, text):
@@ -712,7 +732,7 @@ class ConsoleBase():
                 earliest_m = None
                 earliest_pi = None
                 for pi, pat in enumerate(patterns):
-                    m = pat.search(self.p.buf)
+                    m = pat.search(self.buf)
                     if not m:
                         continue
                     if earliest_m and m.start() >= earliest_m.start():
@@ -722,10 +742,10 @@ class ConsoleBase():
                 if earliest_m:
                     pos = earliest_m.start()
                     posafter = earliest_m.end()
-                    self.p.before = self.p.buf[:pos]
-                    self.p.after = self.p.buf[pos:posafter]
-                    self.p.output += self.p.buf[:posafter]
-                    self.p.buf = self.p.buf[posafter:]
+                    self.before = self.buf[:pos]
+                    self.after = self.buf[pos:posafter]
+                    self.output += self.buf[:posafter]
+                    self.buf = self.buf[posafter:]
                     return earliest_pi
                 tnow_s = time.time()
                 if self.timeout:
@@ -739,13 +759,21 @@ class ConsoleBase():
                 if not events:
                     raise Timeout()
                 c = self.p.receive(1024)
-                if self.p.logfile_read:
-                    self.p.logfile_read.write(c)
-                self.p.buf += c
+                if self.logfile_read:
+                    self.logfile_read.write(c)
+                self.buf += c
                 # count=0 is supposed to be the default, which indicates
                 # unlimited substitutions, but in practice the version of
                 # Python in Ubuntu 14.04 appears to default to count=2!
-                self.p.buf = self.p.re_vt100.sub('', self.p.buf, count=1000000)
+                self.buf = self.re_vt100.sub('', self.buf, count=1000000)
         finally:
-            if self.p.logfile_read:
-                self.p.logfile_read.flush()
+            if self.logfile_read:
+                self.logfile_read.flush()
+
+    def get_expect_output(self):
+        """Return the output read by expect()
+
+        Returns:
+            The output processed by expect(), as a string.
+        """
+        return self.output

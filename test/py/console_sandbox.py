@@ -35,6 +35,7 @@ class ConsoleSandbox(ConsoleBase):
         Returns:
             A spawn.Spawn object that is attached to U-Boot.
         """
+        super().get_spawn()
         bcfg = self.config.buildconfig
         config_spl = bcfg.get('config_spl', 'n') == 'y'
         config_vpl = bcfg.get('config_vpl', 'n') == 'y'
