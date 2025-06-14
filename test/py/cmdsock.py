@@ -160,32 +160,32 @@ class Cmdsock:
     def xfer(self, event_mask):
         """Poll the socket to send/receive data"""
         sock = self.sock
-        print(' poll', event_mask, 'in', event_mask & select.POLLIN,
-              'out', event_mask & select.POLLOUT)
+        # print(' poll', event_mask, 'in', event_mask & select.POLLIN,
+              # 'out', event_mask & select.POLLOUT)
         # can_read, can_write, xcpt = select.select([sock], [sock], [sock])
         # print('poll done')
         if event_mask & select.POLLIN:
-            print('  can recv')
+            # print('  can recv')
             data = sock.recv(BUF_SIZE)
             if not data:
                 self.fail('socket closed')
             print(f'wrote {len(data)} bytes into inq')
             self.inq.write(data)
-            print('  xfer recv', data)
+            # print('  xfer recv', data)
         if event_mask & select.POLLOUT and self.outq.available:
-            print('  can send')
+            # print('  can send')
             data = self.outq.read(BUF_SIZE)
             if data:
                 sock.send(data)
         # if sock in xcpt:
             # self.fail('socket exception')
         while True:
-            print('  call recv')
+            # print('  call recv')
             msg = self.get_next_msg()
             if not msg:
                 break
             yield msg
-        print('poll done')
+        # print('poll done')
 
     def get_next_msg(self):
         # data = self.inq.read(BUF_SIZE)
@@ -201,10 +201,10 @@ class Cmdsock:
                 return rest
         '''
         data = self.inq.look(BUF_SIZE)
-        print('   get_next_msg', data)
+        # print('   get_next_msg', data)
         if not data:
             return None
-        print('recv data', len(data))
+        # print('recv data', len(data))
         try:
             size, pos = _DecodeVarint32(data, 0)
         except IndexError:

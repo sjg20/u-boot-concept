@@ -73,7 +73,7 @@ class ConsoleSandbox(ConsoleBase):
         print('start u-boot')
         if self.cmdsock:
             self.cmdsock.start()
-            print('self.poll', self.cmdsock.sock, self.poll)
+            # print('self.poll', self.cmdsock.sock, self.poll)
 
     def poll_for_output(self, fd, event_mask):
         """Poll file descriptor for console output
@@ -87,7 +87,7 @@ class ConsoleSandbox(ConsoleBase):
         Return:
             str: Output (which may be an empty string if there is none)
         """
-        print('poll', fd, self.cmdsock.sock.fileno(), event_mask)
+        # print('poll', fd, self.cmdsock.sock.fileno(), event_mask)
         if fd != self.cmdsock.sock.fileno():
             return ''
 
