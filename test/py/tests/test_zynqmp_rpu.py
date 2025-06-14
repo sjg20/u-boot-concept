@@ -218,5 +218,4 @@ def test_zynqmp_rpu_app_load_negative(ubman):
         disable_cpus(ubman, cpu_nums)
         # This forces the console object to be shutdown, so any subsequent test
         # will reset the board back into U-Boot.
-        ubman.drain_console()
-        ubman.cleanup_spawn()
+        ubman.shutdown_required()
