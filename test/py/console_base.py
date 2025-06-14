@@ -735,6 +735,20 @@ class ConsoleBase():
         """
         return ConsoleSetupTimeout(self, timeout)
 
+    def poll_for_output(self, fd, event_mask):
+        """Poll file descriptor for console output
+
+        This can be overriden by subclasses, e.g. console_sandbox
+
+        Args:
+            fd (int): File descriptor to check
+            event_mask (select.poll bitmask): Event(s) which occured
+
+        Return:
+            str: Output (which may be an empty string if there is none)
+        """
+        return ''
+
     def expect(self, patterns):
         """Wait for the sub-process to emit specific data.
 
@@ -770,13 +784,9 @@ class ConsoleBase():
                     if fd == self.p.fd:
                         c = self.p.receive(1024)
                         self.add_input(c)
-                    elif fd == self.cmdsock.sock:
-                        msg = self.cmdsock.xfer(event_mask)
-                        if msg:
-                            print('got', msg, msg.WhichOneof('kind'))
-                            if msg.WhichOneof('kind') == 'puts':
-                                print('returning', msg.puts.str)
-                                return msg.puts.str
+                    else:
+                        c = self.poll_for_output(fd, event_mask)
+                        self.add_input(c)
         finally:
             if self.logfile_read:
                 self.logfile_read.flush()

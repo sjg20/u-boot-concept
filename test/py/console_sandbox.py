@@ -7,10 +7,11 @@ Logic to interact with the sandbox port of U-Boot, running as a sub-process.
 """
 
 import os
+import select
 import time
-import cmdsock
 from console_base import ConsoleBase
 from spawn import Spawn
+import cmdsock
 
 
 class ConsoleSandbox(ConsoleBase):
@@ -65,6 +66,10 @@ class ConsoleSandbox(ConsoleBase):
         # Connect the cmdsock
         if self.cmdsock:
             self.cmdsock.connect_to_sandbox()
+            self.poll.register(self.cmdsock.sock, select.POLLIN |
+                               select.POLLOUT | select.POLLPRI |
+                               select.POLLERR | select.POLLHUP |
+                               select.POLLNVAL)
 
         return spawn
 
@@ -72,6 +77,31 @@ class ConsoleSandbox(ConsoleBase):
         print('start u-boot')
         if self.cmdsock:
             self.cmdsock.start()
+            print('self.poll', self.cmdsock.sock, self.poll)
+
+    def poll_for_output(self, fd, event_mask):
+        """Poll file descriptor for console output
+
+        This can be overriden by subclasses, e.g. console_sandbox
+
+        Args:
+            fd (int): File descriptor to check
+            event_mask (select.poll bitmask): Event(s) which occured
+
+        Return:
+            str: Output (which may be an empty string if there is none)
+        """
+        if fd != self.cmdsock.sock:
+            return ''
+
+        msg = self.cmdsock.xfer(event_mask)
+        if msg:
+            print('got', msg, msg.WhichOneof('kind'))
+            if msg.WhichOneof('kind') == 'puts':
+                print('returning', msg.puts.str)
+                return msg.puts.str
+        return ''
+
 
     def restart_uboot_with_flags(self, flags, expect_reset=False, use_dtb=True):
         """Run U-Boot with the given command-line flags
@@ -101,6 +131,7 @@ class ConsoleSandbox(ConsoleBase):
         Args:
             sig (int): Unix signal to send to the process
         """
+        self.poll.unregister(self.cmdsock.sock)
         self.log.action(f'kill {sig}')
         self.p.kill(sig)
 

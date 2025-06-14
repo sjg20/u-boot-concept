@@ -144,9 +144,6 @@ class Cmdsock:
                     raise ValueError(
                         'Error connecting to U-Boot sandbox') from exc
         print('connected fd', self.sock)
-        self.poll.register(self.sock, select.POLLIN | select.POLLOUT | select.POLLPRI |
-                           select.POLLERR | select.POLLHUP | select.POLLNVAL)
-        print('self.poll', self.sock, self.poll)
 
     def fail(self, msg):
         """Report a socket failure
@@ -181,6 +178,29 @@ class Cmdsock:
         if not msg:
             return None
         return msg
+
+    def poll_for_output(self, fd, event_mask):
+        """Poll file descriptor for console output
+
+        This can be overriden by subclasses, e.g. console_sandbox
+
+        Args:
+            fd (int): File descriptor to check
+            event_mask (select.poll bitmask): Event(s) which occured
+
+        Return:
+            str: Output (which may be an empty string if there is none)
+        """
+        if fd != self.sock:
+            return ''
+
+        msg = self.xfer(event_mask)
+        if msg:
+            print('got', msg, msg.WhichOneof('kind'))
+            if msg.WhichOneof('kind') == 'puts':
+                print('returning', msg.puts.str)
+                return msg.puts.str
+        return ''
 
     def recv(self):
         # data = self.inq.read(BUF_SIZE)
