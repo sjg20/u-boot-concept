@@ -27,10 +27,10 @@ def test_exception_reset(ubman):
     """Test that SIGILL causes a reset."""
 
     ubman.run_command('exception undefined', wait_for_prompt=False)
-    m = ubman.p.expect(['resetting ...', 'U-Boot'])
+    m = ubman.expect(['resetting ...', 'U-Boot'])
     if m != 0:
         raise Exception('SIGILL did not lead to reset')
-    m = ubman.p.expect(['U-Boot', '=>'])
+    m = ubman.expect(['U-Boot', '=>'])
     if m != 0:
         raise Exception('SIGILL did not lead to reset')
     ubman.restart_uboot()

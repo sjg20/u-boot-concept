@@ -318,7 +318,7 @@ def test_net_pxe_boot_config(ubman):
             # should not boot it and come out to u-boot prompt
             ubman.wait_for('Enter choice:')
             ubman.run_command(local_label, wait_for_prompt=False)
-            expected_str = ubman.p.expect([exp_str_local])
+            expected_str = ubman.expect([exp_str_local])
             assert (
                 expected_str == 0
             ), f'Expected string: {exp_str_local} did not match!'
@@ -329,7 +329,7 @@ def test_net_pxe_boot_config(ubman):
             ubman.run_command(pxe_boot_cmd, wait_for_prompt=False)
             ubman.wait_for('Enter choice:')
             ubman.run_command(empty_label, wait_for_prompt=False)
-            expected_str = ubman.p.expect([exp_str_empty])
+            expected_str = ubman.expect([exp_str_empty])
             assert (
                 expected_str == 0
             ), f'Expected string: {exp_str_empty} did not match!'
@@ -389,7 +389,7 @@ def test_net_pxe_boot_config_invalid(ubman):
             # label and if it fails it should load the default label to boot
             ubman.wait_for('Enter choice:')
             ubman.run_command(invalid_label, wait_for_prompt=False)
-            expected_str = ubman.p.expect([exp_str_invalid])
+            expected_str = ubman.expect([exp_str_invalid])
             assert (
                 expected_str == 0
             ), f'Expected string: {exp_str_invalid} did not match!'

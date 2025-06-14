@@ -625,3 +625,10 @@ class ConsoleBase():
             A context manager object.
         """
         return ConsoleSetupTimeout(self, timeout)
+
+    def expect(self, patterns):
+        """Call the Spawn.expect() function
+
+        This is provided as a way for tests to check board output.
+        """
+        self.p.expect(patterns)

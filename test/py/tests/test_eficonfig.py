@@ -62,7 +62,7 @@ def test_efi_eficonfig(ubman):
                                    wait_for_echo=False, send_nl=False)
         if expect_str is not None:
             for i in expect_str:
-                ubman.p.expect([i])
+                ubman.expect([i])
 
     def press_up_down_enter_and_wait(up_count, down_count, enter, expect_str):
         # press UP key
@@ -80,7 +80,7 @@ def test_efi_eficonfig(ubman):
         # wait expected output
         if expect_str is not None:
             for i in expect_str:
-                ubman.p.expect([i])
+                ubman.expect([i])
 
     def press_escape_key(wait_prompt):
         ubman.run_command(cmd='\x1b', wait_for_prompt=wait_prompt, wait_for_echo=False, send_nl=False)
@@ -92,7 +92,7 @@ def test_efi_eficonfig(ubman):
     def check_current_is_maintenance_menu():
         for i in ('UEFI Maintenance Menu', 'Add Boot Option', 'Edit Boot Option',
                   'Change Boot Order', 'Delete Boot Option', 'Quit'):
-            ubman.p.expect([i])
+            ubman.expect([i])
 
     """ Unit test for "eficonfig" command
     The menu-driven interface is used to set up UEFI load options.
@@ -117,12 +117,12 @@ def test_efi_eficonfig(ubman):
         ubman.run_command('eficonfig', wait_for_prompt=False)
         for i in ('UEFI Maintenance Menu', 'Add Boot Option', 'Edit Boot Option',
                   'Change Boot Order', 'Delete Boot Option', 'Quit'):
-            ubman.p.expect([i])
+            ubman.expect([i])
         # Select "Add Boot Option"
         press_enter_key(False)
         for i in ('Add Boot Option', 'Description:', 'File', 'Initrd File', 'Optional Data',
                   'Save', 'Quit'):
-            ubman.p.expect([i])
+            ubman.expect([i])
         press_escape_key(False)
         check_current_is_maintenance_menu()
         # return to U-Boot console
@@ -140,7 +140,7 @@ def test_efi_eficonfig(ubman):
         # Change the Boot Order
         press_up_down_enter_and_wait(0, 2, True, 'Quit')
         for i in ('host 0:1', 'Save', 'Quit'):
-            ubman.p.expect([i])
+            ubman.expect([i])
         # disable auto generated boot option for succeeding test
         ubman.run_command(cmd=' ', wait_for_prompt=False,
                                        wait_for_echo=False, send_nl=False)
@@ -182,7 +182,7 @@ def test_efi_eficonfig(ubman):
         send_user_input_and_wait('nocolor', None)
         for i in ('Description: test 1', 'File: host 0:1/initrddump.efi',
                   'Initrd File: host 0:1/initrd-1.img', 'Optional Data: nocolor', 'Save', 'Quit'):
-            ubman.p.expect([i])
+            ubman.expect([i])
 
         # Save the Boot Option
         press_up_down_enter_and_wait(0, 4, True, None)
@@ -231,7 +231,7 @@ def test_efi_eficonfig(ubman):
         send_user_input_and_wait('nocolor', None)
         for i in ('Description: test 2', 'File: host 0:1/initrddump.efi',
                   'Initrd File: host 0:1/initrd-2.img', 'Optional Data: nocolor', 'Save', 'Quit'):
-            ubman.p.expect([i])
+            ubman.expect([i])
 
         # Save the Boot Option
         press_up_down_enter_and_wait(0, 4, True, 'Quit')
@@ -243,7 +243,7 @@ def test_efi_eficonfig(ubman):
         ubman.run_command(cmd='+', wait_for_prompt=False,
                                        wait_for_echo=False, send_nl=False)
         for i in ('test 2', 'test 1', 'host 0:1', 'Save', 'Quit'):
-            ubman.p.expect([i])
+            ubman.expect([i])
         # Save the BootOrder
         press_up_down_enter_and_wait(0, 3, True, None)
         check_current_is_maintenance_menu()
@@ -265,12 +265,12 @@ def test_efi_eficonfig(ubman):
         press_up_down_enter_and_wait(0, 2, True, None)
         # Check the current BootOrder
         for i in ('test 2', 'test 1', 'host 0:1', 'Save', 'Quit'):
-            ubman.p.expect([i])
+            ubman.expect([i])
         # move 'test 2' to the second entry
         ubman.run_command(cmd='-', wait_for_prompt=False,
                                        wait_for_echo=False, send_nl=False)
         for i in ('test 1', 'test 2', 'host 0:1', 'Save', 'Quit'):
-            ubman.p.expect([i])
+            ubman.expect([i])
         # Save the BootOrder
         press_up_down_enter_and_wait(0, 2, True, None)
         check_current_is_maintenance_menu()
@@ -291,12 +291,12 @@ def test_efi_eficonfig(ubman):
         press_up_down_enter_and_wait(0, 3, True, None)
         # Check the current BootOrder
         for i in ('test 1', 'test 2', 'Quit'):
-            ubman.p.expect([i])
+            ubman.expect([i])
 
         # Delete 'test 2'
         press_up_down_enter_and_wait(0, 1, True, None)
         for i in ('test 1', 'Quit'):
-            ubman.p.expect([i])
+            ubman.expect([i])
         press_escape_key(False)
         check_current_is_maintenance_menu()
         # Return to U-Boot console
@@ -310,11 +310,11 @@ def test_efi_eficonfig(ubman):
         press_up_down_enter_and_wait(0, 1, True, None)
         # Check the current BootOrder
         for i in ('test 1', 'Quit'):
-            ubman.p.expect([i])
+            ubman.expect([i])
         press_up_down_enter_and_wait(0, 0, True, None)
         for i in ('Description: test 1', 'File: host 0:1/initrddump.efi',
                   'Initrd File: host 0:1/initrd-1.img', 'Optional Data: nocolor', 'Save', 'Quit'):
-            ubman.p.expect([i])
+            ubman.expect([i])
 
         # Press the enter key to select 'Description:' entry, then enter Description
         press_up_down_enter_and_wait(0, 0, True, 'Enter description:')
@@ -343,7 +343,7 @@ def test_efi_eficonfig(ubman):
         send_user_input_and_wait('', None)
         for i in ('Description: test 3', 'File: host 0:1/initrddump.efi',
                   'Initrd File: host 0:1/initrd-2.img', 'Optional Data:', 'Save', 'Quit'):
-            ubman.p.expect([i])
+            ubman.expect([i])
 
         # Save the Boot Option
         press_up_down_enter_and_wait(0, 4, True, 'Quit')
@@ -367,7 +367,7 @@ def test_efi_eficonfig(ubman):
         press_up_down_enter_and_wait(0, 3, True, None)
         # Check the current BootOrder
         for i in ('test 3', 'Quit'):
-            ubman.p.expect([i])
+            ubman.expect([i])
 
         # Delete 'test 3'
         press_up_down_enter_and_wait(0, 0, True, 'Quit')

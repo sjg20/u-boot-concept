@@ -61,7 +61,7 @@ def check_env(ubman, var_name, var_value):
         assert ret_code(ubman).endswith('0')
     else:
         ubman.p.send(f'printenv {var_name}\n')
-        output = ubman.p.expect(['not defined'])
+        output = ubman.expect(['not defined'])
         assert output == 0
         assert ret_code(ubman).endswith('1')
 
