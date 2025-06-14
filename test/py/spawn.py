@@ -32,60 +32,9 @@ import sys
 import termios
 import time
 import traceback
-import pytest
 
 # Character to send (twice) to exit the terminal
 EXIT_CHAR = 0x1d    # FS (Ctrl + ])
-
-class Timeout(Exception):
-    """An exception sub-class that indicates that a timeout occurred."""
-
-class BootFail(Exception):
-    """An exception sub-class that indicates that a boot failure occurred.
-
-    This is used when a bad pattern is seen when waiting for the boot prompt.
-    It is regarded as fatal, to avoid trying to boot the again and again to no
-    avail.
-    """
-
-class Unexpected(Exception):
-    """An exception sub-class that indicates that unexpected test was seen."""
-
-
-def handle_exception(ubconfig, console, log, err, name, fatal, output=''):
-    """Handle an exception from the console
-
-    Exceptions can occur when there is unexpected output or due to the board
-    crashing or hanging. Some exceptions are likely fatal, where retrying will
-    just chew up time to no available. In those cases it is best to cause
-    further tests be skipped.
-
-    Args:
-        ubconfig (ArbitraryAttributeContainer): ubconfig object
-        log (Logfile): Place to log errors
-        console (ConsoleBase): Console to clean up, if fatal
-        err (Exception): Exception which was thrown
-        name (str): Name of problem, to log
-        fatal (bool): True to abort all tests
-        output (str): Extra output to report on boot failure. This can show the
-           target's console output as it tried to boot
-    """
-    msg = f'{name}: '
-    if fatal:
-        msg += 'Marking connection bad - no other tests will run'
-    else:
-        msg += 'Assuming that lab is healthy'
-    print(msg)
-    log.error(msg)
-    log.error(f'Error: {err}')
-
-    if output:
-        msg += f'; output {output}'
-
-    if fatal:
-        ubconfig.connection_ok = False
-        console.cleanup_spawn()
-        pytest.exit(msg)
 
 
 class Spawn:
@@ -114,14 +63,6 @@ class Spawn:
         self.waited = False
         self.exit_code = 0
         self.exit_info = ''
-        self.buf = ''
-        self.output = ''
-        self.logfile_read = None
-        self.before = ''
-        self.after = ''
-        self.timeout = None
-        # http://stackoverflow.com/questions/7857352/python-regex-to-match-vt100-escape-sequences
-        self.re_vt100 = re.compile(r'(\x1b\[|\x9b)[^@-_]*[@-_]|\x1b[@-_]', re.I)
 
         (self.pid, self.fd) = pty.fork()
         if self.pid == 0:
@@ -243,72 +184,6 @@ class Spawn:
             raise
         return c
 
-    def expect(self, patterns):
-        """Wait for the sub-process to emit specific data.
-
-        This function waits for the process to emit one pattern from the
-        supplied list of patterns, or for a timeout to occur.
-
-        Args:
-            patterns (list of str or regex.Regex): Patterns we expect to
-                see in the sub-process' stdout.
-
-        Returns:
-            int: index within the patterns array of the pattern the process
-            emitted.
-
-        Notable exceptions:
-            Timeout, if the process did not emit any of the patterns within
-            the expected time.
-        """
-        for pi, pat in enumerate(patterns):
-            if isinstance(pat, str):
-                patterns[pi] = re.compile(pat)
-
-        tstart_s = time.time()
-        try:
-            while True:
-                earliest_m = None
-                earliest_pi = None
-                for pi, pat in enumerate(patterns):
-                    m = pat.search(self.buf)
-                    if not m:
-                        continue
-                    if earliest_m and m.start() >= earliest_m.start():
-                        continue
-                    earliest_m = m
-                    earliest_pi = pi
-                if earliest_m:
-                    pos = earliest_m.start()
-                    posafter = earliest_m.end()
-                    self.before = self.buf[:pos]
-                    self.after = self.buf[pos:posafter]
-                    self.output += self.buf[:posafter]
-                    self.buf = self.buf[posafter:]
-                    return earliest_pi
-                tnow_s = time.time()
-                if self.timeout:
-                    tdelta_ms = (tnow_s - tstart_s) * 1000
-                    poll_maxwait = self.timeout - tdelta_ms
-                    if tdelta_ms > self.timeout:
-                        raise Timeout()
-                else:
-                    poll_maxwait = None
-                events = self.poll.poll(poll_maxwait)
-                if not events:
-                    raise Timeout()
-                c = self.receive(1024)
-                if self.logfile_read:
-                    self.logfile_read.write(c)
-                self.buf += c
-                # count=0 is supposed to be the default, which indicates
-                # unlimited substitutions, but in practice the version of
-                # Python in Ubuntu 14.04 appears to default to count=2!
-                self.buf = self.re_vt100.sub('', self.buf, count=1000000)
-        finally:
-            if self.logfile_read:
-                self.logfile_read.flush()
-
     def close(self):
         """Close the stdio connection to the sub-process.
 
@@ -339,11 +214,3 @@ class Spawn:
             time.sleep(0.1)
 
         return 'timeout'
-
-    def get_expect_output(self):
-        """Return the output read by expect()
-
-        Returns:
-            The output processed by expect(), as a string.
-        """
-        return self.output

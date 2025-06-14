@@ -25,7 +25,7 @@ import re
 from _pytest.runner import runtestprotocol
 import subprocess
 import sys
-from spawn import BootFail, Timeout, Unexpected, handle_exception
+from console_base import BootFail, Timeout, Unexpected, handle_exception
 import time
 
 # Globals: The HTML log file, and the top-level fixture
