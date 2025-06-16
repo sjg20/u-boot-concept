@@ -631,6 +631,10 @@ int sandbox_main(int argc, char *argv[])
 	gd->arch.text_base = text_base;
 
 	state = state_get_current();
+
+	/* set up console output */
+	state->stdout_fd = 1;
+
 	if (os_parse_args(state, argc, argv))
 		return 1;
 

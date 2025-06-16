@@ -37,9 +37,10 @@ void sandbox_serial_endisable(bool enabled)
 /**
  * output_ansi_colour() - Output an ANSI colour code
  *
+ * @fd: File descriptor to use for stdout
  * @colour: Colour to output (0-7)
  */
-static void output_ansi_colour(int colour)
+static void output_ansi_colour(int fd, int colour)
 {
 	char ansi_code[] = "\x1b[1;3Xm";
 
@@ -47,7 +48,12 @@ static void output_ansi_colour(int colour)
 	os_write(1, ansi_code, sizeof(ansi_code) - 1);
 }
 
-static void output_ansi_reset(void)
+/**
+ * output_ansi_reset() - Reset ANSI state
+ *
+ * @fd: File descriptor to use for stdout
+ */
+static void output_ansi_reset(int fd)
 {
 	os_write(1, "\x1b[0m", 4);
 }
@@ -71,14 +77,15 @@ static int sandbox_serial_probe(struct udevice *dev)
 static int sandbox_serial_remove(struct udevice *dev)
 {
 	struct sandbox_serial_plat *plat = dev_get_plat(dev);
+	struct sandbox_state *state = state_get_current();
 
 	if (plat->colour != -1)
-		output_ansi_reset();
+		output_ansi_reset(state->stdout_fd);
 
 	return 0;
 }
 
-static void sandbox_print_color(struct udevice *dev)
+static void sandbox_print_color(struct udevice *dev, int fd)
 {
 	struct sandbox_serial_priv *priv = dev_get_priv(dev);
 	struct sandbox_serial_plat *plat = dev_get_plat(dev);
@@ -87,20 +94,21 @@ static void sandbox_print_color(struct udevice *dev)
 	if (!CONFIG_IS_ENABLED(OF_PLATDATA) && priv->start_of_line &&
 	    plat->colour != -1) {
 		priv->start_of_line = false;
-		output_ansi_colour(plat->colour);
+		output_ansi_colour(fd, plat->colour);
 	}
 }
 
 static int sandbox_serial_putc(struct udevice *dev, const char ch)
 {
 	struct sandbox_serial_priv *priv = dev_get_priv(dev);
+	struct sandbox_state *state = state_get_current();
 
 	if (ch == '\n')
 		priv->start_of_line = true;
 
 	if (sandbox_serial_enabled) {
-		sandbox_print_color(dev);
-		os_write(1, &ch, 1);
+		sandbox_print_color(dev, state->stdout_fd);
+		os_write(state->stdout_fd, &ch, 1);
 	}
 	_sandbox_serial_written += 1;
 	return 0;
@@ -110,14 +118,15 @@ static ssize_t sandbox_serial_puts(struct udevice *dev, const char *s,
 				   size_t len)
 {
 	struct sandbox_serial_priv *priv = dev_get_priv(dev);
+	struct sandbox_state *state = state_get_current();
 	ssize_t ret;
 
 	if (len && s[len - 1] == '\n')
 		priv->start_of_line = true;
 
 	if (sandbox_serial_enabled) {
-		sandbox_print_color(dev);
-		ret = os_write(1, s, len);
+		sandbox_print_color(dev, state->stdout_fd);
+		ret = os_write(state->stdout_fd, s, len);
 		if (ret < 0)
 			return ret;
 	} else {
