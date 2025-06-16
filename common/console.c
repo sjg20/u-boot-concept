@@ -759,11 +759,11 @@ void puts(const char *s)
 
 	console_record_puts(s);
 
-	if (cmdsock_active() && !cmdsock_puts(s))
-		return;
-
 	/* sandbox can send characters to stdout before it has a console */
 	if (IS_ENABLED(CONFIG_SANDBOX) && !(gd->flags & GD_FLG_SERIAL_READY)) {
+		if (cmdsock_connected() && !cmdsock_puts(s))
+			return;
+
 		os_puts(s);
 		return;
 	}
