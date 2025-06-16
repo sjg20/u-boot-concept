@@ -246,8 +246,8 @@ class ConsoleSandbox(ConsoleBase):
     def run_command(self, cmd, wait_for_echo=True, send_nl=True,
                     wait_for_prompt=True, wait_for_reboot=False):
         if not self.cmdsock:
-            result = super().run_command(cmd, wait_for_echo, send_nl,
-                                         wait_for_prompt, wait_for_reboot)
+            return super().run_command(cmd, wait_for_echo, send_nl,
+                                       wait_for_prompt, wait_for_reboot)
 
         # print('running')
         self.buf = ''
