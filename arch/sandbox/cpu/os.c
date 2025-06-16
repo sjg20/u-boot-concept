@@ -69,11 +69,14 @@ ssize_t os_write(int fd, const void *buf, size_t count)
 
 int os_printf(const char *fmt, ...)
 {
+	struct sandbox_state *state = state_get_current();
+
+	// os_write(state->stdout_fd, &ch, 1);
 	va_list args;
-	int i;
+	int i = 0;
 
 	va_start(args, fmt);
-	i = vfprintf(stdout, fmt, args);
+	// i = vfprintf(stdout, fmt, args);
 	va_end(args);
 
 	return i;

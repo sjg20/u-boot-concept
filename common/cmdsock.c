@@ -172,7 +172,7 @@ int cmdsock_process(void)
 		}
 		resp.which_kind = Message_start_resp_tag;
 		resp.kind.start_resp.version = 1;
-		os_printf("start done\n");
+		os_printf("start done: %s\n", req.kind.start_req.name);
 		break;
 	case Message_run_cmd_req_tag:
 		ret = run_command(req.kind.run_cmd_req.cmd,
