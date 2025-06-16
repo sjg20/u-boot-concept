@@ -1780,6 +1780,7 @@
 
 	pinctrl-single-pins {
 		compatible = "pinctrl-single";
+		bootph-some-ram;
 		reg = <0x0000 0x238>;
 		#pinctrl-cells = <1>;
 		pinctrl-single,register-width = <32>;
@@ -1799,6 +1800,7 @@
 		};
 
 		pinmux_uart0_pins: pinmux_uart0_pins {
+			bootph-some-ram;
 			pinctrl-single,pins = <
 				0x70 0x30
 				0x74 0x00
