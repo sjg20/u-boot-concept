@@ -92,7 +92,7 @@ class ConsoleSandbox(ConsoleBase):
             tnow_s = time.time()
             # print('now', tnow_s, self.ready)
             tdelta_ms = (tnow_s - tstart_s) * 1000
-            self.handle_xfer()
+            self.process_incoming()
             # print('###ready', self.ready)
             if tdelta_ms > TIMEOUT_MS:
                 raise Timeout()
@@ -119,7 +119,7 @@ class ConsoleSandbox(ConsoleBase):
         if fd == self.cmdsock.sock.fileno():
             self.cmdsock.xfer_data(event_mask)
 
-    def handle_xfer(self):
+    def process_incoming(self):
         if not self.cmdsock:
             return
         for msg in self.cmdsock.get_msgs():

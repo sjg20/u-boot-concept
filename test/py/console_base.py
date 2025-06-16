@@ -273,7 +273,7 @@ class ConsoleBase():
         """
         return spawn.Spawn([])
 
-    def handle_xfer(self):
+    def process_incoming(self):
         """Allows subclasses to transfer using their own file descriptors"""
 
     def eval_patterns(self):
@@ -784,9 +784,9 @@ class ConsoleBase():
                 earliest_pi, poll_maxwait = self.find_match(patterns, tstart_s)
                 if poll_maxwait is False:
                     return earliest_pi
-                self.handle_xfer()
+                self.process_incoming()
                 self.xfer(poll_maxwait)
-                self.handle_xfer()
+                self.process_incoming()
         finally:
             if self.logfile_read:
                 self.logfile_read.flush()
