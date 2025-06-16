@@ -98,19 +98,15 @@ static bool decode_string(pb_istream_t *stream, const pb_field_iter_t *field,
 }
 #endif
 
-static int reply_start_resp(void)
+static int reply(Message *msg)
 {
-        Message msg = Message_init_zero;
 	char *cmd;
 	int len;
 
 	len = membuf_putraw(csi->out, BUF_SIZE, false, &cmd);
 
-	msg.which_kind = Message_start_resp_tag;
-	msg.kind.start_resp.version = 1;
-
 	pb_ostream_t stream = pb_ostream_from_buffer(cmd, len);
-        if (!pb_encode_ex(&stream, Message_fields, &msg, PB_ENCODE_DELIMITED)) {
+        if (!pb_encode_ex(&stream, Message_fields, msg, PB_ENCODE_DELIMITED)) {
 		os_printf("Failed to encode message\n");
 #ifndef PB_NO_ERRMSG
 		os_printf("msg %s\n", stream.errmsg);
@@ -132,9 +128,11 @@ static int reply_start_resp(void)
 
 int cmdsock_process(void)
 {
-        Message msg = Message_init_zero;
-	char *cmd;
+        Message req = Message_init_zero;
+        Message resp = Message_init_zero;
 	int len, ret, used;
+	bool send_resp = true;
+	char *cmd;
 
 	if (csi->have_err) {
 		// ret = reply(csi->out, "fatal_err %d\n", ret);
@@ -145,41 +143,41 @@ int cmdsock_process(void)
 
 	/* see if there are commands to process */
 	len = membuf_getraw(csi->in, BUF_SIZE, false, &cmd);
-	// len = membuf_getraw(, str, sizeof(str), '\0', false);
 	if (!len)
 		return 0;
 
 	pb_istream_t stream = pb_istream_from_buffer(cmd, len);
 
-	// msg.puts.str.arg = (void*) &puts_str;
-	// msg.puts.str.funcs.decode = decode_string;
-
-	// ptr = buf;
-	if (!pb_decode(&stream, Message_fields, &msg)) {
+	if (!pb_decode(&stream, Message_fields, &req)) {
 		os_printf("Decoding failed: %s\n", PB_GET_ERROR(&stream));
 		return 1;
 	}
 
 	used = len - stream.bytes_left;
 	len = membuf_getraw(csi->in, used, true, &cmd);
-	// printf("bytes_left %zx len %x\n", stream.bytes_left, len);
-	// printf("avail %d len %d\n", membuf_avail(csi->in), len);
 	if (!len)
 		return 0;
 
 	if (_DEBUG)
-		os_printf("cmd: %d\n", msg.kind);
-	switch (msg.which_kind) {
+		os_printf("cmd: %d\n", req.kind);
+	switch (req.which_kind) {
 	case Message_start_req_tag:
-		os_printf("start: %s\n", msg.kind.start_req.name);
+		os_printf("start: %s\n", req.kind.start_req.name);
 		board_init_f(gd->flags);
 		board_init_r(gd->new_gd, 0);
-		reply_start_resp();
+		resp.which_kind = Message_start_resp_tag;
+		resp.kind.start_resp.version = 1;
 		break;
 	case Message_run_cmd_req_tag:
-		ret = run_command(msg.kind.run_cmd_req.cmd,
-				  msg.kind.run_cmd_req.flag);
+		ret = run_command(req.kind.run_cmd_req.cmd,
+				  req.kind.run_cmd_req.flag);
 		break;
+	}
+
+	if (send_resp) {
+		ret = reply(&resp);
+		if (ret)
+			return ret;
 	}
 
 #if 0
@@ -266,4 +264,3 @@ void cmdsock_init(struct membuf *in, struct membuf *out)
 	csi->in = in;
 	csi->out = out;
 }
-
