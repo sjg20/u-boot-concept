@@ -517,9 +517,6 @@ def ubman(request):
     if not ubconfig.connection_ok:
         pytest.skip('Cannot get target connection')
         return None
-    ubman_fix.ensure_spawned()
-    print('done')
-    sys.exit(1)
     try:
         ubman_fix.ensure_spawned()
     except OSError as err:
