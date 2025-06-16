@@ -134,3 +134,8 @@ void cmdsock_stop(void)
 		close(client_fd);
 	close(server_fd);
 }
+
+bool cmdsock_connected(void)
+{
+	return client_fd;
+}

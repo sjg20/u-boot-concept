@@ -123,11 +123,18 @@ int cmdsock_puts(const char *s);
 #ifdef CONFIG_CMDSOCK
 
 /**
- * cmdsock_active() - Check if a cmdsock is active
+ * cmdsock_active() - Check if the cmdsock feature active
  *
- * Return: true if the feature is enabled and a socket is being used, else false
+ * Return: true if the feature is enabled, else false
  */
 bool cmdsock_active(void);
+
+/**
+ * cmdsock_connected() - Check if a cmdsock is connected
+ *
+ * Return: true if cmdsock socket is connected
+ */
+bool cmdsock_connected(void);
 
 #else
 
@@ -135,6 +142,12 @@ static inline bool cmdsock_active(void)
 {
 	return false;
 }
+
+static inline bool cmdsock_connected(void)
+{
+	return false;
+}
+
 #endif
 
 #endif
