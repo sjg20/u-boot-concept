@@ -161,11 +161,18 @@ int cmdsock_process(void)
 		os_printf("cmd: %d\n", req.kind);
 	switch (req.which_kind) {
 	case Message_start_req_tag:
-		// os_printf("start: %s\n", req.kind.start_req.name);
-		board_init_f(gd->flags);
-		board_init_r(gd->new_gd, 0);
+		os_printf("start: %s\n", req.kind.start_req.name);
+		if (csi->inited) {
+			resp.kind.start_resp.errcode = -EALREADY;
+		} else {
+			board_init_f(gd->flags);
+			board_init_r(gd->new_gd, 0);
+			resp.kind.start_resp.errcode = 0;
+			csi->inited = true;
+		}
 		resp.which_kind = Message_start_resp_tag;
 		resp.kind.start_resp.version = 1;
+		os_printf("start done\n");
 		break;
 	case Message_run_cmd_req_tag:
 		ret = run_command(req.kind.run_cmd_req.cmd,
@@ -250,6 +257,8 @@ int cmdsock_puts(const char *s)
         len = stream.bytes_written;
 	// os_printf("wrote %d bytes\n", len);
 	membuf_putraw(csi->out, len, true, &cmd);
+
+	os_printf("puts: '%s'\n", s);
 
 	// done = true;
 	// cmdsock_process();

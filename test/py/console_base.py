@@ -295,7 +295,8 @@ class ConsoleBase():
         """
         if self.p:
             self.log.start_section('Stopping U-Boot')
-            self.poll.unregister(self.p.fd)
+            if self.p.fd:
+                self.poll.unregister(self.p.fd)
             close_type = self.p.close()
             self.log.info(f'Close type: {close_type}')
             self.log.end_section('Stopping U-Boot')
@@ -608,9 +609,10 @@ class ConsoleBase():
             self.log.start_section('Starting U-Boot')
             self.at_prompt = False
             self.p = self.get_spawn()
-            self.poll.register(self.p.fd, select.POLLIN | select.POLLPRI |
-                               select.POLLERR | select.POLLHUP |
-                               select.POLLNVAL)
+            if self.p.fd:
+                self.poll.register(self.p.fd, select.POLLIN | select.POLLPRI |
+                                   select.POLLERR | select.POLLHUP |
+                                   select.POLLNVAL)
 
             # Real targets can take a long time to scroll large amounts of
             # text if LCD is enabled. This value may need tweaking in the

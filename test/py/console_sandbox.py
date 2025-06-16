@@ -35,6 +35,7 @@ class ConsoleSandbox(ConsoleBase):
         self.use_dtb = True
         self.cmdsock = None
         self.ready = False
+        self.cmd_result = None
 
     def get_spawn(self):
         """Connect to a fresh U-Boot instance.
@@ -115,6 +116,8 @@ class ConsoleSandbox(ConsoleBase):
             #         break
         # print('xxgot start_resp')
         # raise ValueError('ready')
+        print('ready')
+        self.buf = ''
 
     def xfer_data(self, fd, event_mask):
         if fd == self.cmdsock.sock.fileno():
@@ -127,7 +130,7 @@ class ConsoleSandbox(ConsoleBase):
             # print('\ngot', msg.WhichOneof('kind'))
             kind = msg.WhichOneof('kind')
             if kind == 'puts':
-                # print('returning', msg.puts.str)
+                print(f"1returning '{msg.puts.str}'")
                 self.add_input(msg.puts.str)
             elif kind == 'start_resp':
                 self.ready = True
@@ -135,8 +138,8 @@ class ConsoleSandbox(ConsoleBase):
                 # READY = True
                 # print('\n**& ready', self.ready, id(self))
                 # raise ValueError('start_resp' + self.buf)
-            elif kind == 'cmd_resp':
-                self.result = msg.cmd_resp.result
+            elif kind == 'run_cmd_resp':
+                self.cmd_result = msg.run_cmd_resp.result
             else:
                 raise ValueError(f"Unknown kind '{kind}'")
 
@@ -148,7 +151,7 @@ class ConsoleSandbox(ConsoleBase):
                 kind = msg.WhichOneof('kind')
                 # print(f"wait for '{find_kind}': got '{kind}'")
                 if kind == 'puts':
-                    # print('returning', msg.puts.str)
+                    print(f"2returning '{msg.puts.str}'")
                     self.add_input(msg.puts.str)
                 elif kind == find_kind:
                     return msg
@@ -240,11 +243,20 @@ class ConsoleSandbox(ConsoleBase):
     def run_command(self, cmd, wait_for_echo=True, send_nl=True,
                     wait_for_prompt=True, wait_for_reboot=False):
         if not self.cmdsock:
-            return super().run_command(cmd, wait_for_echo, send_nl,
-                                       wait_for_prompt, wait_for_reboot)
+            result = super().run_command(cmd, wait_for_echo, send_nl,
+                                         wait_for_prompt, wait_for_reboot)
 
         # print('running')
         self.buf = ''
         self.cmdsock.run_command(cmd)
         self.wait_for('run_cmd_resp')
-        return self.buf
+
+        # Only strip \r\n; space/TAB might be significant if testing
+        # indentation.
+        return self.buf.strip('\r\n')
+
+    def drain_console(self):
+        if not self.cmdsock:
+            super().drain_console()
+            return
+        self.xfer(0)

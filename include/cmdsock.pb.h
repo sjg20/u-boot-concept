@@ -17,6 +17,7 @@ typedef struct _StartReq {
 
 typedef struct _StartResp {
     int32_t version;
+    int32_t errcode;
 } StartResp;
 
 typedef struct _Puts {
@@ -50,13 +51,13 @@ extern "C" {
 
 /* Initializer values for message structs */
 #define StartReq_init_default                    {false, ""}
-#define StartResp_init_default                   {0}
+#define StartResp_init_default                   {0, 0}
 #define Puts_init_default                        {""}
 #define RunCmdReq_init_default                   {"", 0}
 #define RunCmdResp_init_default                  {0}
 #define Message_init_default                     {0, {StartReq_init_default}}
 #define StartReq_init_zero                       {false, ""}
-#define StartResp_init_zero                      {0}
+#define StartResp_init_zero                      {0, 0}
 #define Puts_init_zero                           {""}
 #define RunCmdReq_init_zero                      {"", 0}
 #define RunCmdResp_init_zero                     {0}
@@ -65,6 +66,7 @@ extern "C" {
 /* Field tags (for use in manual encoding/decoding) */
 #define StartReq_name_tag                        1
 #define StartResp_version_tag                    1
+#define StartResp_errcode_tag                    2
 #define Puts_str_tag                             1
 #define RunCmdReq_cmd_tag                        1
 #define RunCmdReq_flag_tag                       2
@@ -82,7 +84,8 @@ X(a, STATIC,   OPTIONAL, STRING,   name,              1)
 #define StartReq_DEFAULT NULL
 
 #define StartResp_FIELDLIST(X, a) \
-X(a, STATIC,   REQUIRED, INT32,    version,           1)
+X(a, STATIC,   REQUIRED, INT32,    version,           1) \
+X(a, STATIC,   REQUIRED, INT32,    errcode,           2)
 #define StartResp_CALLBACK NULL
 #define StartResp_DEFAULT NULL
 
@@ -138,7 +141,7 @@ extern const pb_msgdesc_t Message_msg;
 #define RunCmdReq_size                           269
 #define RunCmdResp_size                          11
 #define StartReq_size                            81
-#define StartResp_size                           11
+#define StartResp_size                           22
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -26,11 +26,13 @@ struct membuf;
  *
  * @have_err: 0 if OK, -ve if there is an error code pending which needs to be
  *	sent to the client
+ * @started: true if U-Boot ha already run the init sequence
  * @in: Input buffer, for traffic from the client
  * @out: Output buffer, for traffic to the client
  */
 struct cmdsock {
 	bool have_err;
+	bool inited;
 	struct membuf *in;
 	struct membuf *out;
 };

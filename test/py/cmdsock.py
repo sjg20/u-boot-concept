@@ -219,7 +219,7 @@ class Cmdsock:
         msg = cmdsock_pb2.Message()
         msg.ParseFromString(data[pos:])
         # google.protobuf.message.DecodeError
-        # print('msgx', msg, data)
+        # print(f"msgx '{msg}' data '{data}'")
         return msg
 
     def send(self, msg):
