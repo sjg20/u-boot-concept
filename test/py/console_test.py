@@ -71,8 +71,8 @@ class TestConsole(unittest.TestCase):
         ubc = Ubconfig(self.tmpdir, cmdsock=True)
         ubc.no_timeouts = True
         ubc.redir_dev = '/tmp/ttyV0'
-        ubc.no_launch = True
-        ubc.no_timeouts = True
+        # ubc.no_launch = True
+        # ubc.no_timeouts = True
 
         cons = console_sandbox.ConsoleSandbox(ubc.log, ubc)
 

@@ -93,6 +93,9 @@ def pytest_addoption(parser):
     parser.addoption('--gdbserver', default=None,
         help='Run sandbox under gdbserver. The argument is the channel '+
         'over which gdbserver should communicate, e.g. localhost:1234')
+    parser.addoption(
+        '--redir-dev',
+        help='Redirect U-Boot Redirect console output to a file/device')
     parser.addoption('--role', help='U-Boot board role (for Labgrid-sjg)')
     parser.addoption('--use-running-system', default=False, action='store_true',
         help="Assume that U-Boot is ready and don't wait for a prompt")
@@ -276,13 +279,17 @@ def pytest_configure(config):
     gdbserver = config.getoption('gdbserver')
     cmdsock = config.getoption('cmdsock')
     no_launch = config.getoption('no_launch')
+    redir_dev = config.getoption('redir_dev')
     if not board_type.startswith('sandbox'):
         if gdbserver:
             raise ValueError('--gdbserver only supported with sandbox targets')
         if cmdsock:
             raise ValueError('--cmdsock only supported with sandbox targets')
-    if not cmdsock and no_launch:
-        raise ValueError('--no-launch is only supported with cmdsock')
+    if not cmdsock:
+        if no_launch:
+            raise ValueError('--no-launch is only supported with cmdsock')
+        if redir_dev:
+            raise ValueError('--redir-dev is only supported with cmdsock')
 
     import multiplexed_log
     log = multiplexed_log.Logfile(result_dir + '/test-log.html')
@@ -353,6 +360,7 @@ def pytest_configure(config):
     ubconfig.cmdsock = cmdsock
     ubconfig.no_launch = no_launch
     ubconfig.no_timeouts = config.getoption('no_timeouts')
+    ubconfig.redir_dev = redir_dev
 
     env_vars = (
         'board_type',

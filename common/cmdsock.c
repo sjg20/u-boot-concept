@@ -242,7 +242,7 @@ int cmdsock_puts(const char *s, int len)
 	if (len >= sizeof(msg.kind.puts.str))
 		len = sizeof(msg.kind.puts.str) - 1;
 	msg.which_kind = Message_puts_tag;
-	strlcpy(msg.kind.puts.str, s, len);
+	strlcpy(msg.kind.puts.str, s, len + 1);
 	// msg.puts.str.funcs.encode = encode_string;
 	// msg.puts.str.arg = (char *)s;
 
