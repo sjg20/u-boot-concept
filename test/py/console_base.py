@@ -785,20 +785,24 @@ class ConsoleBase():
                 if poll_maxwait is False:
                     return earliest_pi
                 self.handle_xfer()
-                events = self.poll.poll(poll_maxwait)
-                # print('events', events)
-                if not events and not self.config.no_timeouts:
-                    raise Timeout()
-                for fd, event_mask in events:
-                    if fd == self.p.fd:
-                        c = self.p.receive(1024)
-                        self.add_input(c)
-                    else:
-                        self.xfer_data(fd, event_mask)
+                self.xfer(poll_maxwait)
                 self.handle_xfer()
         finally:
             if self.logfile_read:
                 self.logfile_read.flush()
+
+    def xfer(self, poll_maxwait):
+        """Receive console data; send/receive cmdsock data if enabled"""
+        events = self.poll.poll(poll_maxwait)
+        # print('events', events)
+        if not events and not self.config.no_timeouts:
+            raise Timeout()
+        for fd, event_mask in events:
+            if fd == self.p.fd:
+                c = self.p.receive(1024)
+                self.add_input(c)
+            else:
+                self.xfer_data(fd, event_mask)
 
     def xfer_data(self, fd, event_mask):
         pass
