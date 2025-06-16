@@ -12,11 +12,26 @@ import console_sandbox
 import multiplexed_log
 
 class Ubconfig():
-    def __init__(self):
+    def __init__(self, tmpdir, cmdsock=None):
         # Set up a dummy build config
+        self.tmpdir = tmpdir
         self.buildconfig = {
-            'config_sys_prompt': '=>',
+            'config_sys_prompt': '"=>"',
             }
+        self.gdbserver = None
+        #self.build_dir = os.path.join(self.tmpdir, 'build')
+        self.build_dir = '/tmp/b/sandbox'
+        self.dtb = '/tmp/b/sandbox/arch/sandbox/dts/test.dtb'
+        self.cmdsock = cmdsock
+        self.source_dir = os.path.join(self.tmpdir, 'source')
+        if not os.path.exists(self.source_dir):
+            os.mkdir(self.source_dir)
+        self.use_running_system = False
+        self.env = {}
+        self.result_dir = os.path.join(self.tmpdir, 'results')
+        if not os.path.exists(self.result_dir):
+            os.mkdir(self.result_dir)
+        self.log = multiplexed_log.Logfile(self.result_dir + '/test-log.html')
 
 
 class TestConsole(unittest.TestCase):
@@ -27,18 +42,36 @@ class TestConsole(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Set up things used by most/all tests"""
-        cls.tmpdir= tempfile.mkdtemp(prefix='ctest.')
+        # cls.tmpdir = tempfile.mkdtemp(prefix='ctest.')
+        cls.tmpdir = '/tmp/test'
 
-    def test_andbox(self):
-        result_dir = os.path.join(self.tmpdir, 'results')
-        os.mkdir(result_dir)
-        log = multiplexed_log.Logfile(result_dir + '/test-log.html')
+    def test_sandbox(self):
 
         # Create a fixture for to use, a basic version of ubconfig
-        ubc = Ubconfig()
+        ubc = Ubconfig(self.tmpdir)
 
-        cons = console_sandbox.ConsoleSandbox(log, ubc)
-        log.close()
+        cons = console_sandbox.ConsoleSandbox(ubc.log, ubc)
+
+        cons.ensure_spawned()
+
+        val = cons.run_command('echo fred')
+        self.assertEqual('fred', val)
+
+        ubc.log.close()
+        cons.cleanup_spawn()
+
+    def test_sandbox_cmdsock(self):
+        # Create a fixture for to use, a basic version of ubconfig
+        ubc = Ubconfig(self.tmpdir, cmdsock=True)
+
+        cons = console_sandbox.ConsoleSandbox(ubc.log, ubc)
+
+        cons.ensure_spawned()
+
+        val = cons.run_command('echo fred')
+        self.assertEqual('fred', val)
+
+        ubc.log.close()
         cons.cleanup_spawn()
 
 if __name__ == "__main__":

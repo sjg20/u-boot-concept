@@ -104,7 +104,6 @@ def handle_exception(ubconfig, console, log, err, name, fatal, output=''):
     print('err', err)
     # tb = traceback.extract_stack()
     # log.info('\n'.join(traceback.format_list(tb)))
-    raise ValueError('fred') from err
     log.error(f'Error: {err}')
 
     if output:
@@ -324,7 +323,6 @@ class ConsoleBase():
             if not self.lab_mode:
                 self._wait_for_banner(loop_num)
                 self.u_boot_version_string = self.after
-                print('!!u_boot_version_string', self.u_boot_version_string)
             self.wait_ready()
             self.log.info('U-Boot is ready')
 
@@ -332,7 +330,6 @@ class ConsoleBase():
             self.log.timestamp()
 
     def wait_ready(self):
-        raise ValueError('wrong wait_ready')
         while True:
             m = self.expect([self.prompt_compiled, pattern_ready_prompt,
                 pattern_stop_autoboot_prompt] + self.bad_patterns)
@@ -600,7 +597,6 @@ class ConsoleBase():
                 to be reset while the 1st boot process after main boot before
                 prompt. False by default.
         """
-        print('ensure spawned')
         if self.p:
             # Reset the console timeout value as some tests may change
             # its default value during the execution
@@ -816,7 +812,7 @@ class ConsoleBase():
         if self.logfile_read:
             self.logfile_read.write(chars)
         self.buf += chars
-        print(f'add: {chars}')
+        # print(f'add: {chars}')
         # count=0 is supposed to be the default, which indicates
         # unlimited substitutions, but in practice the version of
         # Python in Ubuntu 14.04 appears to default to count=2!

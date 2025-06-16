@@ -82,7 +82,6 @@ class ConsoleSandbox(ConsoleBase):
 
     def wait_ready(self):
         if not self.cmdsock:
-            raise ValueError(f'bad wait ready {self.ready}')
             super().wait_ready()
             return
         print('special wait ready', self.ready, id(self))
@@ -93,7 +92,7 @@ class ConsoleSandbox(ConsoleBase):
             # print('now', tnow_s, self.ready)
             tdelta_ms = (tnow_s - tstart_s) * 1000
             self.handle_xfer()
-            print('###ready', self.ready)
+            # print('###ready', self.ready)
             if tdelta_ms > TIMEOUT:
                 raise Timeout()
             # raise ValueError(f'handle {self.ready} {READY}')
@@ -120,6 +119,8 @@ class ConsoleSandbox(ConsoleBase):
             self.cmdsock.xfer_data(event_mask)
 
     def handle_xfer(self):
+        if not self.cmdsock:
+            return
         for msg in self.cmdsock.get_msgs():
             # print('\ngot', msg.WhichOneof('kind'))
             kind = msg.WhichOneof('kind')
