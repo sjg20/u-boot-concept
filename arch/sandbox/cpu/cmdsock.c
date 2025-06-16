@@ -75,6 +75,7 @@ int cmdsock_poll(struct membuf *in, struct membuf *out)
 		client_fd = accept(server_fd, (struct sockaddr *)&addr, &len);
 		if (client_fd == -1) {
 			perror("accept");
+			client_fd = 0;
 			return 0;
 		}
 		os_printf("cmdsock: connected\n");
