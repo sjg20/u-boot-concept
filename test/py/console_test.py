@@ -70,6 +70,7 @@ class TestConsole(unittest.TestCase):
         # Create a fixture for to use, a basic version of ubconfig
         ubc = Ubconfig(self.tmpdir, cmdsock=True)
         ubc.no_timeouts = True
+        ubc.redir_dev = '/tmp/ttyV0'
 
         cons = console_sandbox.ConsoleSandbox(ubc.log, ubc)
 

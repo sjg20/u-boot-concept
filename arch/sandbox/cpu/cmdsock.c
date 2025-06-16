@@ -39,7 +39,7 @@ int cmdsock_start(const char *path)
 		goto err_sock;
 	}
 
-	os_printf("cmdsock: listening on fd %d at %s\n", server_fd, path);
+	printf("cmdsock: listening on fd %d at %s\n", server_fd, path);
 
 	return 0;
 
@@ -79,7 +79,7 @@ int cmdsock_poll(struct membuf *in, struct membuf *out)
 			perror("accept");
 			return 0;
 		}
-		os_printf("cmdsock: connected\n");
+		printf("cmdsock: connected\n");
 		client_fd = fd;
 
 		return 0;
