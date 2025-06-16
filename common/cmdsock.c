@@ -161,7 +161,7 @@ int cmdsock_process(void)
 		os_printf("cmd: %d\n", req.kind);
 	switch (req.which_kind) {
 	case Message_start_req_tag:
-		os_printf("start: %s\n", req.kind.start_req.name);
+		// os_printf("start: %s\n", req.kind.start_req.name);
 		board_init_f(gd->flags);
 		board_init_r(gd->new_gd, 0);
 		resp.which_kind = Message_start_resp_tag;

@@ -79,7 +79,7 @@ class FifoFileBuffer():
 
     def write(self, data):
         """Appends data to buffer"""
-        print(f'append {self.name} {len(data)}')
+        # print(f'append {self.name} {len(data)}')
         if self.size < self.available + len(data):
             # Expand buffer
             new_buf = BytesIO()
@@ -103,7 +103,7 @@ class FifoFileBuffer():
             self.buf.seek(0)
             self.buf.write(data[written:])
         self.buf.seek(read_fp)
-        print(f'available {self.name} {self.available}')
+        # print(f'available {self.name} {self.available}')
 
 
 class Cmdsock:
@@ -140,7 +140,7 @@ class Cmdsock:
             time.sleep(.2)
             try:
                 self.sock.connect(self.sock_name)
-                print('tries left', max_retries)
+                # print('tries left', max_retries)
                 break
             except socket.error as exc:
                 pass
@@ -149,7 +149,7 @@ class Cmdsock:
                 if not max_retries:
                     raise ValueError(
                         'Error connecting to U-Boot sandbox') from exc
-        print('connected fd', self.sock)
+        # print('connected fd', self.sock)
         poll.register(self.sock, select.POLLIN |
                                select.POLLOUT | select.POLLPRI |
                                select.POLLERR | select.POLLHUP |
@@ -169,7 +169,7 @@ class Cmdsock:
             data = self.sock.recv(BUF_SIZE)
             if not data:
                 self.fail('socket closed')
-            print(f'wrote {len(data)} bytes into inq')
+            # print(f'wrote {len(data)} bytes into inq')
             self.inq.write(data)
             # print('  xfer recv', data)
         if event_mask & select.POLLOUT and self.outq.available:
@@ -203,7 +203,7 @@ class Cmdsock:
         # print('   get_next_msg', data)
         if not data:
             return None
-        print('recv data', len(data))
+        # print('recv data', len(data))
         try:
             size, pos = _DecodeVarint32(data, 0)
         except IndexError:

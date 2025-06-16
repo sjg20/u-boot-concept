@@ -53,7 +53,7 @@ class ConsoleSandbox(ConsoleBase):
             fname = '/tpl/u-boot-tpl'
         else:
             fname = '/spl/u-boot-spl' if config_spl else '/u-boot'
-        print(fname)
+        # print(fname)
         cmd = []
         if self.config.gdbserver:
             cmd += ['gdbserver', self.config.gdbserver]
@@ -76,7 +76,7 @@ class ConsoleSandbox(ConsoleBase):
         return spawn
 
     def start_uboot(self):
-        print('start u-boot')
+        # print('start u-boot')
         if self.cmdsock:
             self.cmdsock.start()
             # print('self.poll', self.cmdsock.sock, self.poll)
@@ -85,7 +85,7 @@ class ConsoleSandbox(ConsoleBase):
         if not self.cmdsock:
             super().wait_ready()
             return
-        print('special wait ready', self.ready, id(self))
+        # print('special wait ready', self.ready, id(self))
         # raise ValueError(f'wait ready {self.ready}')
         tstart_s = time.time()
         while not self.ready:
@@ -112,7 +112,7 @@ class ConsoleSandbox(ConsoleBase):
             #     print('kind', msg.WhichOneof('kind'))
             #     if msg.WhichOneof('kind') == 'start_resp':
             #         break
-        print('xxgot start_resp')
+        # print('xxgot start_resp')
         # raise ValueError('ready')
 
     def xfer_data(self, fd, event_mask):
@@ -132,7 +132,7 @@ class ConsoleSandbox(ConsoleBase):
                 self.ready = True
                 # global READY
                 # READY = True
-                print('\n**& ready', self.ready, id(self))
+                # print('\n**& ready', self.ready, id(self))
                 # raise ValueError('start_resp' + self.buf)
             elif kind == 'cmd_resp':
                 self.result = msg.cmd_resp.result
@@ -145,7 +145,7 @@ class ConsoleSandbox(ConsoleBase):
             self.xfer(TIMEOUT_MS)
             for msg in self.cmdsock.get_msgs():
                 kind = msg.WhichOneof('kind')
-                print(f"wait for '{find_kind}': got '{kind}'")
+                # print(f"wait for '{find_kind}': got '{kind}'")
                 if kind == 'puts':
                     # print('returning', msg.puts.str)
                     self.add_input(msg.puts.str)
@@ -243,7 +243,7 @@ class ConsoleSandbox(ConsoleBase):
                                 wait_for_reboot)
             return
 
-        print('running')
+        # print('running')
         self.buf = ''
         self.cmdsock.run_command(cmd)
         self.wait_for('run_cmd_resp')

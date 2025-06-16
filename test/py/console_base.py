@@ -99,9 +99,9 @@ def handle_exception(ubconfig, console, log, err, name, fatal, output=''):
         msg += 'Marking connection bad - no other tests will run'
     else:
         msg += 'Assuming that lab is healthy'
-    print('msg', msg)
+    # print('msg', msg)
     log.error(msg)
-    print('err', err)
+    # print('err', err)
     # tb = traceback.extract_stack()
     # log.info('\n'.join(traceback.format_list(tb)))
     log.error(f'Error: {err}')
@@ -316,7 +316,7 @@ class ConsoleBase():
 
         This is for internal use only.
         """
-        print('_wait_for_boot_prompt')
+        # print('_wait_for_boot_prompt')
         try:
             self.log.info('Waiting for U-Boot to be ready')
             self.start_uboot()
@@ -637,7 +637,7 @@ class ConsoleBase():
         finally:
             self.log.timestamp()
             self.log.end_section('Starting U-Boot')
-        print('done')
+        # print('done')
 
     def cleanup_spawn(self):
         """Shut down all interaction with the U-Boot instance.
@@ -824,7 +824,7 @@ class ConsoleBase():
         # unlimited substitutions, but in practice the version of
         # Python in Ubuntu 14.04 appears to default to count=2!
         self.buf = self.re_vt100.sub('', self.buf, count=1000000)
-        print(f'add_input >>>{self.buf}<<<')
+        # print(f'add_input >>>{self.buf}<<<')
 
     def find_match(self, patterns, tstart_s):
         """Find a match in the current buffer
