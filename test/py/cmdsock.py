@@ -247,5 +247,6 @@ class Cmdsock:
     def run_command(self, cmd):
         msg = cmdsock_pb2.Message()
         msg.run_cmd_req.cmd = cmd
+        msg.run_cmd_req.flag = 0
         # print('send msg', msg)
         self.send(msg)

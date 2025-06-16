@@ -14,11 +14,12 @@ message Puts {
   required string str = 1 [(nanopb).max_size = 256];
 }
 
-message CmdReq {
+message RunCmdReq {
   required string cmd = 1 [(nanopb).max_size = 256];
+  required int32 flag = 2;
 }
 
-message CmdResp {
+message RunCmdResp {
   required int32 resuit = 1;
 }
 
@@ -27,5 +28,7 @@ message Message {
     StartReq start_req = 2;
     StartResp start_resp = 3;
     Puts puts = 4;
+    RunCmdReq run_cmd_req = 5;
+    RunCmdReq run_cmd_resp = 6;
   }
 }

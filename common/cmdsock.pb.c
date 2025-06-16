@@ -15,6 +15,12 @@ PB_BIND(StartResp, StartResp, AUTO)
 PB_BIND(Puts, Puts, 2)
 
 
+PB_BIND(RunCmdReq, RunCmdReq, 2)
+
+
+PB_BIND(RunCmdResp, RunCmdResp, AUTO)
+
+
 PB_BIND(Message, Message, 2)
 
 

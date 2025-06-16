@@ -23,12 +23,23 @@ typedef struct _Puts {
     char str[256];
 } Puts;
 
+typedef struct _RunCmdReq {
+    char cmd[256];
+    int32_t flag;
+} RunCmdReq;
+
+typedef struct _RunCmdResp {
+    int32_t resuit;
+} RunCmdResp;
+
 typedef struct _Message {
     pb_size_t which_kind;
     union _Message_kind {
         StartReq start_req;
         StartResp start_resp;
         Puts puts;
+        RunCmdReq run_cmd_req;
+        RunCmdReq run_cmd_resp;
     } kind;
 } Message;
 
@@ -41,19 +52,28 @@ extern "C" {
 #define StartReq_init_default                    {false, ""}
 #define StartResp_init_default                   {0}
 #define Puts_init_default                        {""}
+#define RunCmdReq_init_default                   {"", 0}
+#define RunCmdResp_init_default                  {0}
 #define Message_init_default                     {0, {StartReq_init_default}}
 #define StartReq_init_zero                       {false, ""}
 #define StartResp_init_zero                      {0}
 #define Puts_init_zero                           {""}
+#define RunCmdReq_init_zero                      {"", 0}
+#define RunCmdResp_init_zero                     {0}
 #define Message_init_zero                        {0, {StartReq_init_zero}}
 
 /* Field tags (for use in manual encoding/decoding) */
 #define StartReq_name_tag                        1
 #define StartResp_version_tag                    1
 #define Puts_str_tag                             1
+#define RunCmdReq_cmd_tag                        1
+#define RunCmdReq_flag_tag                       2
+#define RunCmdResp_resuit_tag                    1
 #define Message_start_req_tag                    2
 #define Message_start_resp_tag                   3
 #define Message_puts_tag                         4
+#define Message_run_cmd_req_tag                  5
+#define Message_run_cmd_resp_tag                 6
 
 /* Struct field encoding specification for nanopb */
 #define StartReq_FIELDLIST(X, a) \
@@ -71,31 +91,52 @@ X(a, STATIC,   REQUIRED, STRING,   str,               1)
 #define Puts_CALLBACK NULL
 #define Puts_DEFAULT NULL
 
+#define RunCmdReq_FIELDLIST(X, a) \
+X(a, STATIC,   REQUIRED, STRING,   cmd,               1) \
+X(a, STATIC,   REQUIRED, INT32,    flag,              2)
+#define RunCmdReq_CALLBACK NULL
+#define RunCmdReq_DEFAULT NULL
+
+#define RunCmdResp_FIELDLIST(X, a) \
+X(a, STATIC,   REQUIRED, INT32,    resuit,            1)
+#define RunCmdResp_CALLBACK NULL
+#define RunCmdResp_DEFAULT NULL
+
 #define Message_FIELDLIST(X, a) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (kind,start_req,kind.start_req),   2) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (kind,start_resp,kind.start_resp),   3) \
-X(a, STATIC,   ONEOF,    MESSAGE,  (kind,puts,kind.puts),   4)
+X(a, STATIC,   ONEOF,    MESSAGE,  (kind,puts,kind.puts),   4) \
+X(a, STATIC,   ONEOF,    MESSAGE,  (kind,run_cmd_req,kind.run_cmd_req),   5) \
+X(a, STATIC,   ONEOF,    MESSAGE,  (kind,run_cmd_resp,kind.run_cmd_resp),   6)
 #define Message_CALLBACK NULL
 #define Message_DEFAULT NULL
 #define Message_kind_start_req_MSGTYPE StartReq
 #define Message_kind_start_resp_MSGTYPE StartResp
 #define Message_kind_puts_MSGTYPE Puts
+#define Message_kind_run_cmd_req_MSGTYPE RunCmdReq
+#define Message_kind_run_cmd_resp_MSGTYPE RunCmdReq
 
 extern const pb_msgdesc_t StartReq_msg;
 extern const pb_msgdesc_t StartResp_msg;
 extern const pb_msgdesc_t Puts_msg;
+extern const pb_msgdesc_t RunCmdReq_msg;
+extern const pb_msgdesc_t RunCmdResp_msg;
 extern const pb_msgdesc_t Message_msg;
 
 /* Defines for backwards compatibility with code written before nanopb-0.4.0 */
 #define StartReq_fields &StartReq_msg
 #define StartResp_fields &StartResp_msg
 #define Puts_fields &Puts_msg
+#define RunCmdReq_fields &RunCmdReq_msg
+#define RunCmdResp_fields &RunCmdResp_msg
 #define Message_fields &Message_msg
 
 /* Maximum encoded size of messages (where known) */
 #define CMDSOCK_PB_H_MAX_SIZE                    Message_size
-#define Message_size                             261
+#define Message_size                             272
 #define Puts_size                                258
+#define RunCmdReq_size                           269
+#define RunCmdResp_size                          11
 #define StartReq_size                            81
 #define StartResp_size                           11
 

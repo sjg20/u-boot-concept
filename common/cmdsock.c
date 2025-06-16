@@ -176,7 +176,12 @@ int cmdsock_process(void)
 		board_init_r(gd->new_gd, 0);
 		reply_start_resp();
 		break;
+	case Message_run_cmd_req_tag:
+		ret = run_command(msg.kind.run_cmd_req.cmd,
+				  msg.kind.run_cmd_req.flag);
+		break;
 	}
+
 #if 0
 	p = str;
 	cmd = strsep(&p, " ");

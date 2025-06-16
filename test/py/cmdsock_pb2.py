@@ -14,7 +14,7 @@ _sym_db = _symbol_database.Default()
 import nanopb_pb2 as nanopb__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x15test/py/cmdsock.proto\x1a\x0cnanopb.proto\"\x1f\n\x08StartReq\x12\x13\n\x04name\x18\x01 \x01(\tB\x05\x92?\x02\x08P\"\x1c\n\tStartResp\x12\x0f\n\x07version\x18\x01 \x02(\x05\"\x1b\n\x04Puts\x12\x13\n\x03str\x18\x01 \x02(\tB\x06\x92?\x03\x08\x80\x02\"j\n\x07Message\x12\x1e\n\tstart_req\x18\x02 \x01(\x0b\x32\t.StartReqH\x00\x12 \n\nstart_resp\x18\x03 \x01(\x0b\x32\n.StartRespH\x00\x12\x15\n\x04puts\x18\x04 \x01(\x0b\x32\x05.PutsH\x00\x42\x06\n\x04kind')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x15test/py/cmdsock.proto\x1a\x0cnanopb.proto\"\x1f\n\x08StartReq\x12\x13\n\x04name\x18\x01 \x01(\tB\x05\x92?\x02\x08P\"\x1c\n\tStartResp\x12\x0f\n\x07version\x18\x01 \x02(\x05\"\x1b\n\x04Puts\x12\x13\n\x03str\x18\x01 \x02(\tB\x06\x92?\x03\x08\x80\x02\".\n\tRunCmdReq\x12\x13\n\x03\x63md\x18\x01 \x02(\tB\x06\x92?\x03\x08\x80\x02\x12\x0c\n\x04\x66lag\x18\x02 \x02(\x05\"\x1c\n\nRunCmdResp\x12\x0e\n\x06resuit\x18\x01 \x02(\x05\"\xb1\x01\n\x07Message\x12\x1e\n\tstart_req\x18\x02 \x01(\x0b\x32\t.StartReqH\x00\x12 \n\nstart_resp\x18\x03 \x01(\x0b\x32\n.StartRespH\x00\x12\x15\n\x04puts\x18\x04 \x01(\x0b\x32\x05.PutsH\x00\x12!\n\x0brun_cmd_req\x18\x05 \x01(\x0b\x32\n.RunCmdReqH\x00\x12\"\n\x0crun_cmd_resp\x18\x06 \x01(\x0b\x32\n.RunCmdReqH\x00\x42\x06\n\x04kind')
 
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'test.py.cmdsock_pb2', globals())
@@ -25,12 +25,18 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _STARTREQ.fields_by_name['name']._serialized_options = b'\222?\002\010P'
   _PUTS.fields_by_name['str']._options = None
   _PUTS.fields_by_name['str']._serialized_options = b'\222?\003\010\200\002'
+  _RUNCMDREQ.fields_by_name['cmd']._options = None
+  _RUNCMDREQ.fields_by_name['cmd']._serialized_options = b'\222?\003\010\200\002'
   _STARTREQ._serialized_start=39
   _STARTREQ._serialized_end=70
   _STARTRESP._serialized_start=72
   _STARTRESP._serialized_end=100
   _PUTS._serialized_start=102
   _PUTS._serialized_end=129
-  _MESSAGE._serialized_start=131
-  _MESSAGE._serialized_end=237
+  _RUNCMDREQ._serialized_start=131
+  _RUNCMDREQ._serialized_end=177
+  _RUNCMDRESP._serialized_start=179
+  _RUNCMDRESP._serialized_end=207
+  _MESSAGE._serialized_start=210
+  _MESSAGE._serialized_end=387
 # @@protoc_insertion_point(module_scope)
