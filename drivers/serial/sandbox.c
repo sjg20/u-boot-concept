@@ -46,7 +46,7 @@ static void output_ansi_colour(int fd, int colour)
 	char ansi_code[] = "\x1b[1;3Xm";
 
 	ansi_code[5] = '0' + colour;
-	os_write(1, ansi_code, sizeof(ansi_code) - 1);
+	os_write(fd, ansi_code, sizeof(ansi_code) - 1);
 }
 
 /**
@@ -56,7 +56,7 @@ static void output_ansi_colour(int fd, int colour)
  */
 static void output_ansi_reset(int fd)
 {
-	os_write(1, "\x1b[0m", 4);
+	os_write(fd, "\x1b[0m", 4);
 }
 
 static int sandbox_serial_probe(struct udevice *dev)
@@ -91,7 +91,7 @@ static void sandbox_print_color(struct udevice *dev, int fd)
 	struct sandbox_serial_priv *priv = dev_get_priv(dev);
 	struct sandbox_serial_plat *plat = dev_get_plat(dev);
 
-	/* With of-platdata we don't real the colour correctly, so disable it */
+	/* With of-platdata we don't read the colour correctly, so disable it */
 	if (!CONFIG_IS_ENABLED(OF_PLATDATA) && priv->start_of_line &&
 	    plat->colour != -1) {
 		priv->start_of_line = false;
