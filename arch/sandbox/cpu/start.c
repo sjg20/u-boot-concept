@@ -638,6 +638,17 @@ int sandbox_main(int argc, char *argv[])
 	if (os_parse_args(state, argc, argv))
 		return 1;
 
+	if (state->redir_dev) {
+		int fd = os_open(state->redir_dev, OS_O_WRONLY);
+
+		if (fd == -1) {
+			printf("Failed to open redir device '%s'\n",
+			       state->redir_dev);
+		} else {
+			state->stdout_fd = fd;
+		}
+	}
+
 	if (state->ram_buf_fname) {
 		ret = os_read_ram_buf(state->ram_buf_fname);
 		if (ret) {
