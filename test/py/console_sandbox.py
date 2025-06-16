@@ -66,7 +66,8 @@ class ConsoleSandbox(ConsoleBase):
             cmdsock_fname = os.path.join(self.config.result_dir, 'cmd.sock')
             cmd += ['--cmdsock', cmdsock_fname]
             self.cmdsock = cmdsock.Cmdsock(cmdsock_fname)
-        spawn = Spawn(cmd, cwd=self.config.source_dir, decode_signal=True)
+        spawn = Spawn(cmd, cwd=self.config.source_dir, decode_signal=True,
+                      no_launch=self.config.no_launch)
 
         # Connect the cmdsock
         if self.cmdsock:
@@ -239,9 +240,8 @@ class ConsoleSandbox(ConsoleBase):
     def run_command(self, cmd, wait_for_echo=True, send_nl=True,
                     wait_for_prompt=True, wait_for_reboot=False):
         if not self.cmdsock:
-            super().run_command(cmd, wait_for_echo, send_nl, wait_for_prompt,
-                                wait_for_reboot)
-            return
+            return super().run_command(cmd, wait_for_echo, send_nl,
+                                       wait_for_prompt, wait_for_reboot)
 
         # print('running')
         self.buf = ''

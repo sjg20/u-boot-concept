@@ -11,6 +11,7 @@ def test_shell_execute(ubman):
     """Test any shell command."""
 
     response = ubman.run_command('echo hello')
+    print(f"got response '{response}'")
     assert response.strip() == 'hello'
 
 def test_shell_semicolon_two(ubman):

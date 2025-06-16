@@ -88,6 +88,8 @@ def pytest_addoption(parser):
         help='Use buildman to build U-Boot (assuming --build is given)')
     parser.addoption('--cmdsock', default=False, action='store_true',
         help='Enable communcation with sandbox via a named socket')
+    parser.addoption('--no-launch', default=False, action='store_true',
+        help='Connect to a running U-Boot (requires --cmdsock)')
     parser.addoption('--gdbserver', default=None,
         help='Run sandbox under gdbserver. The argument is the channel '+
         'over which gdbserver should communicate, e.g. localhost:1234')
@@ -273,11 +275,14 @@ def pytest_configure(config):
 
     gdbserver = config.getoption('gdbserver')
     cmdsock = config.getoption('cmdsock')
+    no_launch = config.getoption('no_launch')
     if not board_type.startswith('sandbox'):
         if gdbserver:
             raise ValueError('--gdbserver only supported with sandbox targets')
         if cmdsock:
             raise ValueError('--cmdsock only supported with sandbox targets')
+    if not cmdsock and no_launch:
+        raise ValueError('--no-launch is only supported with cmdsock')
 
     import multiplexed_log
     log = multiplexed_log.Logfile(result_dir + '/test-log.html')
@@ -346,6 +351,7 @@ def pytest_configure(config):
     ubconfig.timing = config.getoption('timing')
     ubconfig.role = config.getoption('role')
     ubconfig.cmdsock = cmdsock
+    ubconfig.no_launch = no_launch
     ubconfig.no_timeouts = config.getoption('no_timeouts')
 
     env_vars = (

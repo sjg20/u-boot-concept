@@ -148,7 +148,7 @@ class Cmdsock:
                 max_retries -= 1
                 if not max_retries:
                     raise ValueError(
-                        'Error connecting to U-Boot sandbox') from exc
+                        f'Error connecting to U-Boot sandbox at {self.sock_name}')
         # print('connected fd', self.sock)
         poll.register(self.sock, select.POLLIN |
                                select.POLLOUT | select.POLLPRI |

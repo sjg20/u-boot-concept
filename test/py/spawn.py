@@ -42,7 +42,7 @@ class Spawn:
     sent to the process, and responses waited for.
     """
 
-    def __init__(self, args, cwd=None, decode_signal=False):
+    def __init__(self, args, cwd=None, decode_signal=False, no_launch=False):
         """Spawn (fork/exec) the sub-process.
 
         Args:
@@ -69,7 +69,8 @@ class Spawn:
         self.exit_info = ''
         self.fd = None
 
-        self.spawn_pty(args, cwd)
+        if not no_launch:
+            self.spawn_pty(args, cwd)
 
     def spawn_pty(self, args, cwd):
         """Spawn a new process and attach to it via a PTY
