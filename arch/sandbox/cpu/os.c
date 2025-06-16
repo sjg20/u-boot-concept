@@ -745,7 +745,9 @@ int os_get_filesize(const char *fname, long long *size)
 
 void os_putc(int ch)
 {
-	os_write(1, &ch, 1);
+	struct sandbox_state *state = state_get_current();
+
+	os_write(state->stdout_fd, &ch, 1);
 }
 
 void os_puts(const char *str)
