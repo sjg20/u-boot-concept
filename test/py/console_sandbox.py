@@ -67,6 +67,9 @@ class ConsoleSandbox(ConsoleBase):
             cmdsock_fname = os.path.join(self.config.result_dir, 'cmd.sock')
             cmd += ['--cmdsock', cmdsock_fname]
             self.cmdsock = cmdsock.Cmdsock(cmdsock_fname)
+            if self.config.redir_dev:
+                cmd += ['-R', self.config.redir_dev]
+        print('cmd', cmd)
         spawn = Spawn(cmd, cwd=self.config.source_dir, decode_signal=True,
                       no_launch=self.config.no_launch)
 
