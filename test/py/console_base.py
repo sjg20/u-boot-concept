@@ -449,9 +449,7 @@ class ConsoleBase():
                         continue
                     chunk = re.escape(chunk)
                     chunk = chunk.replace('\\\n', '[\r\n]')
-                    print('call expect')
                     m = self.expect([chunk] + self.bad_patterns)
-                    print(f'm {m}')
                     if m != 0:
                         self.at_prompt = False
                         raise BootFail('Failed to get echo on console '
@@ -462,9 +460,7 @@ class ConsoleBase():
             if wait_for_reboot:
                 self._wait_for_boot_prompt()
             else:
-                print('call expect')
                 m = self.expect([self.prompt_compiled] + self.bad_patterns)
-                print(f'm {m} self.before {self.before}')
                 if m != 0:
                     self.at_prompt = False
                     raise BootFail('Missing prompt on console: ' +
@@ -473,9 +469,7 @@ class ConsoleBase():
             self.at_prompt_logevt = self.logstream.logfile.cur_evt
             # Only strip \r\n; space/TAB might be significant if testing
             # indentation.
-            val = self.before.strip('\r\n')
-            print(f"returning val '{val}'")
-            return val
+            return self.before.strip('\r\n')
         except Timeout as exc:
             handle_exception(self.config, self, self.log, exc,
                              f"Lab failure: Timeout executing '{cmd}'", True)
@@ -789,7 +783,6 @@ class ConsoleBase():
             while True:
                 earliest_pi, poll_maxwait = self.find_match(patterns, tstart_s)
                 if poll_maxwait is False:
-                    print(f'returning earliest_pi {earliest_pi} poll_maxwait {poll_maxwait}')
                     return earliest_pi
                 self.xfer(poll_maxwait)
                 self.process_incoming()
@@ -851,7 +844,6 @@ class ConsoleBase():
         """
         earliest_m = None
         earliest_pi = None
-        print(f'find_match >>>{self.buf}<<<')
         for pi, pat in enumerate(patterns):
             m = pat.search(self.buf)
             if not m:
@@ -864,7 +856,6 @@ class ConsoleBase():
             pos = earliest_m.start()
             posafter = earliest_m.end()
             self.before = self.buf[:pos]
-            print(f'pos {pos} posafter {posafter} before {self.before}')
             self.after = self.buf[pos:posafter]
             self.output += self.buf[:posafter]
             self.buf = self.buf[posafter:]
