@@ -718,6 +718,8 @@ void putc(const char c)
 
 	/* sandbox can send characters to stdout before it has a console */
 	if (IS_ENABLED(CONFIG_SANDBOX) && !(gd->flags & GD_FLG_SERIAL_READY)) {
+		if (cmdsock_connected() && !cmdsock_putc(c))
+			return;
 		os_putc(c);
 		return;
 	}
