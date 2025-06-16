@@ -129,22 +129,24 @@ class Cmdsock:
         assert SOCK == 0
         SOCK + 1
 
-    def connect_to_sandbox(self, poll):
+    def connect_to_sandbox(self, poll, no_timeout=False):
         """Connect to sandbox over the cmdsock"""
         # self.chan = grpc.insecure_channel(f'unix://{self.sock_name}')
         # self.stub = cmdsock_pb2_grpc.CmdsockStub(chan)
 
         max_retries = 20
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        for i in range(max_retries):
+        while max_retries:
+            time.sleep(.2)
             try:
                 self.sock.connect(self.sock_name)
-                print('tries', i)
+                print('tries left', max_retries)
                 break
             except socket.error as exc:
-                if i < max_retries:
-                    time.sleep(.2)
-                else:
+                pass
+            if not no_timeout:
+                max_retries -= 1
+                if not max_retries:
                     raise ValueError(
                         'Error connecting to U-Boot sandbox') from exc
         print('connected fd', self.sock)
@@ -239,6 +241,11 @@ class Cmdsock:
         # desc = cmdsock_pb2.Example.DESCRIPTOR
         msg = cmdsock_pb2.Message()
         msg.start_req.name = 'pytest'
-        print('send msg', msg)
+        # print('send msg', msg)
+        self.send(msg)
 
+    def run_command(self, cmd):
+        msg = cmdsock_pb2.Message()
+        msg.run_cmd_req.cmd = cmd
+        # print('send msg', msg)
         self.send(msg)

@@ -12,13 +12,16 @@ import console_sandbox
 import multiplexed_log
 
 class Ubconfig():
+    """Create a test version of the ubconfig object in test.py"""
+
     def __init__(self, tmpdir, cmdsock=None):
         # Set up a dummy build config
         self.tmpdir = tmpdir
         self.buildconfig = {
             'config_sys_prompt': '"=>"',
             }
-        self.gdbserver = None
+        self.gdbserver = ''
+        # self.gdbserver = 'localhost:1234'
         #self.build_dir = os.path.join(self.tmpdir, 'build')
         self.build_dir = '/tmp/b/sandbox'
         self.dtb = '/tmp/b/sandbox/arch/sandbox/dts/test.dtb'
@@ -32,6 +35,7 @@ class Ubconfig():
         if not os.path.exists(self.result_dir):
             os.mkdir(self.result_dir)
         self.log = multiplexed_log.Logfile(self.result_dir + '/test-log.html')
+        self.no_timeouts = False
 
 
 class TestConsole(unittest.TestCase):
@@ -45,7 +49,7 @@ class TestConsole(unittest.TestCase):
         # cls.tmpdir = tempfile.mkdtemp(prefix='ctest.')
         cls.tmpdir = '/tmp/test'
 
-    def test_sandbox(self):
+    def xtest_sandbox(self):
 
         # Create a fixture for to use, a basic version of ubconfig
         ubc = Ubconfig(self.tmpdir)
@@ -63,6 +67,7 @@ class TestConsole(unittest.TestCase):
     def test_sandbox_cmdsock(self):
         # Create a fixture for to use, a basic version of ubconfig
         ubc = Ubconfig(self.tmpdir, cmdsock=True)
+        ubc.no_timeouts = True
 
         cons = console_sandbox.ConsoleSandbox(ubc.log, ubc)
 

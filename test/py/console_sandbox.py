@@ -14,9 +14,9 @@ from spawn import Spawn
 import cmdsock
 
 
-TIMEOUT = 4
+TIMEOUT_MS = 1 * 1000
 
-READY = 0
+# READY = 0
 
 class ConsoleSandbox(ConsoleBase):
     """Represents a connection to a sandbox U-Boot console, executed as a sub-
@@ -70,7 +70,8 @@ class ConsoleSandbox(ConsoleBase):
 
         # Connect the cmdsock
         if self.cmdsock:
-            self.cmdsock.connect_to_sandbox(self.poll)
+            self.cmdsock.connect_to_sandbox(self.poll,
+                                            bool(self.config.gdbserver))
 
         return spawn
 
@@ -93,10 +94,10 @@ class ConsoleSandbox(ConsoleBase):
             tdelta_ms = (tnow_s - tstart_s) * 1000
             self.handle_xfer()
             # print('###ready', self.ready)
-            if tdelta_ms > TIMEOUT:
+            if tdelta_ms > TIMEOUT_MS:
                 raise Timeout()
             # raise ValueError(f'handle {self.ready} {READY}')
-            events = self.poll.poll(TIMEOUT)
+            events = self.poll.poll(TIMEOUT_MS)
             # print('events', events)
             if not events:
                 raise Timeout()
@@ -129,8 +130,8 @@ class ConsoleSandbox(ConsoleBase):
                 self.add_input(msg.puts.str)
             elif kind == 'start_resp':
                 self.ready = True
-                global READY
-                READY = True
+                # global READY
+                # READY = True
                 print('\n**& ready', self.ready, id(self))
                 # raise ValueError('start_resp' + self.buf)
             else:
@@ -217,3 +218,11 @@ class ConsoleSandbox(ConsoleBase):
             time.sleep(0.1)
         p.close()
         return ret
+
+    def run_command(self, cmd, wait_for_echo=True, send_nl=True,
+                    wait_for_prompt=True, wait_for_reboot=False):
+        if not self.cmdsock:
+            super().run_command(cmd, wait_for_echo, send_nl, wait_for_prompt,
+                                wait_for_reboot)
+            return
+        self.cmdsock.run_command(cmd)

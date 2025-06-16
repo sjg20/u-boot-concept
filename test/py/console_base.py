@@ -32,7 +32,7 @@ pattern_lab_mode = re.compile('{lab mode.*}')
 
 # Timeout before expecting the console to be ready (in milliseconds)
 TIMEOUT_MS = 30000                  # Standard timeout
-TIMEOUT_CMD_MS = 10000              # Command-echo timeout
+TIMEOUT_CMD_MS = 1000               # cmdsock timeout
 TIMEOUT_CMDSOCK_MS = 2000           # Output from sandbox should be fast
 
 # Timeout for board preparation in lab mode. This needs to be enough to build

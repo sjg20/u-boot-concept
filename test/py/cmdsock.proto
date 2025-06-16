@@ -14,6 +14,14 @@ message Puts {
   required string str = 1 [(nanopb).max_size = 256];
 }
 
+message CmdReq {
+  required string cmd = 1 [(nanopb).max_size = 256];
+}
+
+message CmdResp {
+  required int32 resuit = 1;
+}
+
 message Message {
   oneof kind {
     StartReq start_req = 2;

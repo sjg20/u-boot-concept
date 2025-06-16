@@ -42,6 +42,7 @@ static inline bool use_hush_old(void)
  */
 int run_command(const char *cmd, int flag)
 {
+	os_printf("cmd: %s\n", cmd);
 #if !IS_ENABLED(CONFIG_HUSH_PARSER)
 	/*
 	 * cli_run_command can return 0 or 1 for success, so clean up
