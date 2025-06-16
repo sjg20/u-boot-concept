@@ -99,7 +99,7 @@ class ConsoleSandbox(ConsoleBase):
             tdelta_ms = (tnow_s - tstart_s) * 1000
             self.process_incoming()
             # print('###ready', self.ready)
-            if tdelta_ms > TIMEOUT_MS:
+            if tdelta_ms > TIMEOUT_MS and not self.config.no_timeouts:
                 raise Timeout()
             # raise ValueError(f'handle {self.ready} {READY}')
             events = self.poll.poll(TIMEOUT_MS)

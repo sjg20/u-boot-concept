@@ -134,7 +134,9 @@ static ssize_t sandbox_serial_puts(struct udevice *dev, const char *s,
 	if (sandbox_serial_enabled) {
 		ret = 0;
 
-		if (!cmdsock_connected() || cmdsock_puts(s)) {
+		if (cmdsock_connected()) {
+			ret = cmdsock_puts(s, len);
+		} else {
 			sandbox_print_color(dev, state->stdout_fd);
 			ret = os_write(state->stdout_fd, s, len);
 			if (ret < 0)

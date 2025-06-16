@@ -116,9 +116,10 @@ int cmdsock_putc(int ch);
  * This must only be called if cmdsock_active()
  *
  * @str: String to send
+ * @len: Number of bytes of string to send
  * Return: 0 on success (always)
  */
-int cmdsock_puts(const char *s);
+int cmdsock_puts(const char *s, int len);
 
 #ifdef CONFIG_CMDSOCK
 

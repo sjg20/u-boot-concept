@@ -216,7 +216,7 @@ int cmdsock_putc(int ch)
 	return 0;
 }
 
-int cmdsock_puts(const char *s)
+int cmdsock_puts(const char *s, int len)
 {
 	// static bool done;
 
@@ -232,19 +232,21 @@ int cmdsock_puts(const char *s)
 	};
 #endif
 	char *cmd;
-	int len;
+	int spc;
 
 	// if (done)
 		// return 0;
-	len = membuf_putraw(csi->out, BUF_SIZE, false, &cmd);
-	// os_printf("len %d\n");
+	spc = membuf_putraw(csi->out, BUF_SIZE, false, &cmd);
+	// os_printf("spc %d\n");
 
+	if (len >= sizeof(msg.kind.puts.str))
+		len = sizeof(msg.kind.puts.str) - 1;
 	msg.which_kind = Message_puts_tag;
-	strlcpy(msg.kind.puts.str, s, sizeof(msg.kind.puts.str));
+	strlcpy(msg.kind.puts.str, s, len);
 	// msg.puts.str.funcs.encode = encode_string;
 	// msg.puts.str.arg = (char *)s;
 
-	pb_ostream_t stream = pb_ostream_from_buffer(cmd, len);
+	pb_ostream_t stream = pb_ostream_from_buffer(cmd, spc);
         if (!pb_encode_ex(&stream, Message_fields, &msg, PB_ENCODE_DELIMITED)) {
 		os_printf("Failed to encode message\n");
 #ifndef PB_NO_ERRMSG
@@ -254,9 +256,9 @@ int cmdsock_puts(const char *s)
 		return -EIO;
 	}
 
-        len = stream.bytes_written;
-	// os_printf("wrote %d bytes\n", len);
-	membuf_putraw(csi->out, len, true, &cmd);
+        spc = stream.bytes_written;
+	// os_printf("wrote %d bytes\n", spc);
+	membuf_putraw(csi->out, spc, true, &cmd);
 
 	os_printf("puts: '%s'\n", s);
 
@@ -266,7 +268,7 @@ int cmdsock_puts(const char *s)
 
 	// reply(csi->out, "puts %zx %s\n", strlen(s), s);
 
-	return 0;
+	return len;
 }
 
 void cmdsock_init(struct membuf *in, struct membuf *out)
