@@ -36,6 +36,7 @@ class Ubconfig():
             os.mkdir(self.result_dir)
         self.log = multiplexed_log.Logfile(self.result_dir + '/test-log.html')
         self.no_timeouts = False
+        self.no_launch = False
 
 
 class TestConsole(unittest.TestCase):

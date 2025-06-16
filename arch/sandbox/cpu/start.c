@@ -498,16 +498,22 @@ SANDBOX_CMDLINE_OPT_SHORT(
 static int sandbox_cmdline_cb_cmdsock(struct sandbox_state *state,
 				      const char *arg)
 {
-	if (state->num_binds >= SB_MAX_BINDS) {
-		printf("Too many binds (max %x)\n", SB_MAX_BINDS);
-		return 1;
-	}
 	state->cmdsock_name = arg;
 
 	return 0;
 }
 SANDBOX_CMDLINE_OPT_SHORT(
 	cmdsock, 'C', 1, "Create a socket to allow communicate with sandbox");
+
+static int sandbox_cmdline_cb_redir(struct sandbox_state *state,
+				    const char *arg)
+{
+	state->redir_dev = arg;
+
+	return 0;
+}
+SANDBOX_CMDLINE_OPT_SHORT(
+	redir, 'R', 1, "Redirect console output to a file/device");
 
 void state_show(struct sandbox_state *state)
 {

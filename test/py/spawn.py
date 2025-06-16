@@ -209,6 +209,8 @@ class Spawn:
         """
         # For Labgrid-sjg, ask it is exit gracefully, so it can transition the
         # board to the final state (like 'off') before exiting.
+        if not self.fd:
+            return
         if os.environ.get('USE_LABGRID_SJG'):
             self.send(chr(EXIT_CHAR) * 2)
 
