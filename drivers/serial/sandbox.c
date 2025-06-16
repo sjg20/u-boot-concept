@@ -9,6 +9,7 @@
  * U-Boot.
  */
 
+#include <cmdsock.h>
 #include <console.h>
 #include <dm.h>
 #include <os.h>
@@ -107,8 +108,14 @@ static int sandbox_serial_putc(struct udevice *dev, const char ch)
 		priv->start_of_line = true;
 
 	if (sandbox_serial_enabled) {
-		sandbox_print_color(dev, state->stdout_fd);
-		os_write(state->stdout_fd, &ch, 1);
+		if (!cmdsock_connected() || cmdsock_putc(ch)) {
+			int ret;
+
+			sandbox_print_color(dev, state->stdout_fd);
+			ret = os_write(state->stdout_fd, &ch, 1);
+			if (ret < 0)
+				return ret;
+		}
 	}
 	_sandbox_serial_written += 1;
 	return 0;

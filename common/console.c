@@ -716,9 +716,6 @@ void putc(const char c)
 
 	console_record_putc(c);
 
-	if (cmdsock_active() && !cmdsock_putc(c))
-		return;
-
 	/* sandbox can send characters to stdout before it has a console */
 	if (IS_ENABLED(CONFIG_SANDBOX) && !(gd->flags & GD_FLG_SERIAL_READY)) {
 		os_putc(c);
