@@ -20,7 +20,7 @@ message RunCmdReq {
 }
 
 message RunCmdResp {
-  required int32 resuit = 1;
+  required int32 result = 1;
 }
 
 message Message {
@@ -29,6 +29,6 @@ message Message {
     StartResp start_resp = 3;
     Puts puts = 4;
     RunCmdReq run_cmd_req = 5;
-    RunCmdReq run_cmd_resp = 6;
+    RunCmdResp run_cmd_resp = 6;
   }
 }

@@ -134,8 +134,25 @@ class ConsoleSandbox(ConsoleBase):
                 # READY = True
                 print('\n**& ready', self.ready, id(self))
                 # raise ValueError('start_resp' + self.buf)
+            elif kind == 'cmd_resp':
+                self.result = msg.cmd_resp.result
             else:
                 raise ValueError(f"Unknown kind '{kind}'")
+
+    def wait_for(self, find_kind):
+        """Wait for a particular reply"""
+        while True:
+            self.xfer(TIMEOUT_MS)
+            for msg in self.cmdsock.get_msgs():
+                kind = msg.WhichOneof('kind')
+                print(f"wait for '{find_kind}': got '{kind}'")
+                if kind == 'puts':
+                    # print('returning', msg.puts.str)
+                    self.add_input(msg.puts.str)
+                elif kind == find_kind:
+                    return msg
+                else:
+                    raise ValueError(f"Unknown kind '{kind}'")
 
     '''
     def poll_for_output(self, fd, event_mask):
@@ -225,4 +242,9 @@ class ConsoleSandbox(ConsoleBase):
             super().run_command(cmd, wait_for_echo, send_nl, wait_for_prompt,
                                 wait_for_reboot)
             return
+
+        print('running')
+        self.buf = ''
         self.cmdsock.run_command(cmd)
+        self.wait_for('run_cmd_resp')
+        return self.buf

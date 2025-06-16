@@ -29,7 +29,7 @@ typedef struct _RunCmdReq {
 } RunCmdReq;
 
 typedef struct _RunCmdResp {
-    int32_t resuit;
+    int32_t result;
 } RunCmdResp;
 
 typedef struct _Message {
@@ -39,7 +39,7 @@ typedef struct _Message {
         StartResp start_resp;
         Puts puts;
         RunCmdReq run_cmd_req;
-        RunCmdReq run_cmd_resp;
+        RunCmdResp run_cmd_resp;
     } kind;
 } Message;
 
@@ -68,7 +68,7 @@ extern "C" {
 #define Puts_str_tag                             1
 #define RunCmdReq_cmd_tag                        1
 #define RunCmdReq_flag_tag                       2
-#define RunCmdResp_resuit_tag                    1
+#define RunCmdResp_result_tag                    1
 #define Message_start_req_tag                    2
 #define Message_start_resp_tag                   3
 #define Message_puts_tag                         4
@@ -98,7 +98,7 @@ X(a, STATIC,   REQUIRED, INT32,    flag,              2)
 #define RunCmdReq_DEFAULT NULL
 
 #define RunCmdResp_FIELDLIST(X, a) \
-X(a, STATIC,   REQUIRED, INT32,    resuit,            1)
+X(a, STATIC,   REQUIRED, INT32,    result,            1)
 #define RunCmdResp_CALLBACK NULL
 #define RunCmdResp_DEFAULT NULL
 
@@ -114,7 +114,7 @@ X(a, STATIC,   ONEOF,    MESSAGE,  (kind,run_cmd_resp,kind.run_cmd_resp),   6)
 #define Message_kind_start_resp_MSGTYPE StartResp
 #define Message_kind_puts_MSGTYPE Puts
 #define Message_kind_run_cmd_req_MSGTYPE RunCmdReq
-#define Message_kind_run_cmd_resp_MSGTYPE RunCmdReq
+#define Message_kind_run_cmd_resp_MSGTYPE RunCmdResp
 
 extern const pb_msgdesc_t StartReq_msg;
 extern const pb_msgdesc_t StartResp_msg;

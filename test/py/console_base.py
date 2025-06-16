@@ -784,7 +784,6 @@ class ConsoleBase():
                 earliest_pi, poll_maxwait = self.find_match(patterns, tstart_s)
                 if poll_maxwait is False:
                     return earliest_pi
-                self.process_incoming()
                 self.xfer(poll_maxwait)
                 self.process_incoming()
         finally:
@@ -807,6 +806,10 @@ class ConsoleBase():
     def xfer_data(self, fd, event_mask):
         pass
 
+    def send_receive(self, poll_maxwait=TIMEOUT_CMD_MS):
+        self.xfer(poll_maxwait)
+        self.process_incoming()
+
     def add_input(self, chars):
         """Add character to the input buffer so they can be processed
 
@@ -821,6 +824,7 @@ class ConsoleBase():
         # unlimited substitutions, but in practice the version of
         # Python in Ubuntu 14.04 appears to default to count=2!
         self.buf = self.re_vt100.sub('', self.buf, count=1000000)
+        print(f'add_input >>>{self.buf}<<<')
 
     def find_match(self, patterns, tstart_s):
         """Find a match in the current buffer

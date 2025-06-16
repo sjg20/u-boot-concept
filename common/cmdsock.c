@@ -5,7 +5,6 @@
  * Copyright 2025 Simon Glass <sjg@chromium.org>
  */
 
-#define LOG_DEBUG
 #define LOG_CATEGORY	LOGC_TEST
 
 #include <cmdsock.h>
@@ -171,6 +170,8 @@ int cmdsock_process(void)
 	case Message_run_cmd_req_tag:
 		ret = run_command(req.kind.run_cmd_req.cmd,
 				  req.kind.run_cmd_req.flag);
+		resp.which_kind = Message_run_cmd_resp_tag;
+		resp.kind.run_cmd_resp.result = ret;
 		break;
 	}
 
