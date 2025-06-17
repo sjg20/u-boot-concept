@@ -158,7 +158,7 @@ class ConsoleSandbox(ConsoleBase):
                     self.add_input(msg.puts.str)
                 elif kind == find_kind:
                     return msg
-                else:
+                elif kind not in ['start_resp']:
                     raise ValueError(f"Unknown kind '{kind}'")
 
     '''

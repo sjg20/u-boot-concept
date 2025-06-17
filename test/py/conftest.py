@@ -88,6 +88,9 @@ def pytest_addoption(parser):
         help='Use buildman to build U-Boot (assuming --build is given)')
     parser.addoption('--cmdsock', default=False, action='store_true',
         help='Enable communcation with sandbox via a named socket')
+    parser.addoption(
+        '--allow-exceptions', '-E', default=False, action='store_true',
+        help='Avoid catching exceptions with test failures')
     parser.addoption('--no-launch', default=False, action='store_true',
         help='Connect to a running U-Boot (requires --cmdsock)')
     parser.addoption('--gdbserver', default=None,
@@ -361,6 +364,7 @@ def pytest_configure(config):
     ubconfig.no_launch = no_launch
     ubconfig.no_timeouts = config.getoption('no_timeouts')
     ubconfig.redir_dev = redir_dev
+    ubconfig.allow_exceptions = config.getoption('allow_exceptions')
 
     env_vars = (
         'board_type',
@@ -531,6 +535,9 @@ def ubman(request):
     if not ubconfig.connection_ok:
         pytest.skip('Cannot get target connection')
         return None
+    if ubman_fix.config.allow_exceptions:
+        ubman_fix.ensure_spawned()
+        return ubman_fix
     try:
         ubman_fix.ensure_spawned()
     except OSError as err:
@@ -905,20 +912,23 @@ def pytest_runtest_protocol(item, nextitem):
     test_list.append(item.name)
     tests_not_run.remove(item.name)
 
-    try:
+    if ubman_fix.config.allow_exceptions:
         msg_log(msg)
-    except:
-        # If something went wrong with logging, it's better to let the test
-        # process continue, which may report other exceptions that triggered
-        # the logging issue (e.g. ubman_fix.log wasn't created). Hence, just
-        # squash the exception. If the test setup failed due to e.g. syntax
-        # error somewhere else, this won't be seen. However, once that issue
-        # is fixed, if this exception still exists, it will then be logged as
-        # part of the test's stdout.
-        import traceback
-        print('Exception occurred while logging runtest status:')
-        traceback.print_exc()
-        # FIXME: Can we force a test failure here?
+    else:
+        try:
+            msg_log(msg)
+        except:
+            # If something went wrong with logging, it's better to let the test
+            # process continue, which may report other exceptions that triggered
+            # the logging issue (e.g. ubman_fix.log wasn't created). Hence, just
+            # squash the exception. If the test setup failed due to e.g. syntax
+            # error somewhere else, this won't be seen. However, once that issue
+            # is fixed, if this exception still exists, it will then be logged
+            # as part of the test's stdout.
+            import traceback
+            print('Exception occurred while logging runtest status:')
+            traceback.print_exc()
+            # FIXME: Can we force a test failure here?
 
     log.end_section(item.name)
 
