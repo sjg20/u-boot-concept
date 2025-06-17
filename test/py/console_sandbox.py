@@ -37,7 +37,7 @@ class ConsoleSandbox(ConsoleBase):
         self.cmdsock = None
         self.ready = False
         self.cmd_result = None
-        self.hello = None
+        self.version = None
 
     def get_spawn(self):
         """Connect to a fresh U-Boot instance.
@@ -81,8 +81,8 @@ class ConsoleSandbox(ConsoleBase):
                                             bool(self.config.gdbserver))
             banner = self.wait_for_banner()
             msg = self.wait_for_kind('hello')
-            self.hello = msg.hello.msg
-            print(f'Connected: {self.hello}')
+            self.version = msg.hello.version
+            print(f'Connected: cmdsock version {self.version}')
 
         return spawn
 
