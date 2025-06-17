@@ -51,9 +51,9 @@ class TestConsole(unittest.TestCase):
         # cls.tmpdir = tempfile.mkdtemp(prefix='ctest.')
         cls.tmpdir = '/tmp/test'
 
-    def xtest_sandbox(self):
-
-        # Create a fixture for to use, a basic version of ubconfig
+    def test_sandbox(self):
+        """Test sandbox running via a pty"""
+        # Create a fixture to use, a basic version of ubconfig
         ubc = Ubconfig(self.tmpdir)
 
         cons = console_sandbox.ConsoleSandbox(ubc.log, ubc)
@@ -67,7 +67,7 @@ class TestConsole(unittest.TestCase):
         cons.cleanup_spawn()
 
     def test_sandbox_cmdsock(self):
-        # Create a fixture for to use, a basic version of ubconfig
+        # Create a fixture to use, a basic version of ubconfig
         ubc = Ubconfig(self.tmpdir, cmdsock=True)
         ubc.no_timeouts = True
         ubc.redir_dev = '/tmp/ttyV0'
@@ -83,6 +83,25 @@ class TestConsole(unittest.TestCase):
 
         ubc.log.close()
         cons.cleanup_spawn()
+
+    def test_sandbox_printenv(self):
+        """Check that the printenv command can be used"""
+        ubc = Ubconfig(self.tmpdir, cmdsock=True)
+        ubc.no_timeouts = True
+        ubc.redir_dev = '/tmp/ttyV0'
+        # ubc.no_launch = True
+        # ubc.no_timeouts = True
+
+        cons = console_sandbox.ConsoleSandbox(ubc.log, ubc)
+
+        cons.ensure_spawned()
+
+        val = cons.run_command('printenv')
+        self.assertEqual('fred', val)
+
+        ubc.log.close()
+        cons.cleanup_spawn()
+
 
 if __name__ == "__main__":
     unittest.main()

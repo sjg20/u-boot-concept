@@ -14,7 +14,8 @@ from spawn import Spawn
 import cmdsock
 
 
-TIMEOUT_MS = 1 * 1000
+#TIMEOUT_MS = 1 * 1000
+TIMEOUT_MS = 500 * 1000
 
 # READY = 0
 

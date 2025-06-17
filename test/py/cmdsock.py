@@ -163,12 +163,29 @@ class Cmdsock:
         """
         raise ValueError(f'Failed {msg}')
 
+    def get_eventmask_str(self, mask):
+        bits = {
+            select.POLLIN: 'in',
+            select.POLLPRI: 'pri',
+            select.POLLOUT: 'out',
+            select.POLLERR: 'err',
+            select.POLLHUP: 'hup',
+            select.POLLNVAL: 'inval',
+            }
+
+        out = []
+        for bit, name in bits.items():
+            if mask & bit:
+                out.append(name)
+        return ' '.join(out)
+
     def xfer_data(self, event_mask):
+        print(f'event_mask: {event_mask:x} {self.get_eventmask_str(event_mask)}')
+        if event_mask & select.POLLHUP:
+            self.fail('socket closed')
         if event_mask & select.POLLIN:
-            # print('  can recv')
             data = self.sock.recv(BUF_SIZE)
-            if not data:
-                self.fail('socket closed')
+            print('  can recv', data)
             # print(f'wrote {len(data)} bytes into inq')
             self.inq.write(data)
             # print('  xfer recv', data)

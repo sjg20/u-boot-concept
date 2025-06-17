@@ -122,14 +122,14 @@ int cmdsock_poll(struct membuf *in, struct membuf *out)
 disconnect:
 	close(client_fd);
 	client_fd = 0;
-	os_printf("cmdsock: disconnected\n");
+	printf("cmdsock: disconnected\n");
 
 	return 0;
 }
 
 void cmdsock_stop(void)
 {
-	os_printf("cmdsock: closing\n");
+	printf("cmdsock: closing\n");
 	if (client_fd)
 		close(client_fd);
 	close(server_fd);

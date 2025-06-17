@@ -5,6 +5,7 @@
  * Copyright 2025 Simon Glass <sjg@chromium.org>
  */
 
+#define LOG_DEBUG
 #define LOG_CATEGORY	LOGC_TEST
 
 #include <cmdsock.h>
@@ -42,18 +43,18 @@ static int __attribute__ ((format (__printf__, 2, 3)))
 	len = vsnprintf(ptr, space - 1, fmt, args);
 	va_end(args);
 	if (!len) {
-		os_printf("error: empty reply\n");
+		printf("error: empty reply\n");
 		csi->have_err = -EINVAL;
 		return -EINVAL;
 	}
 	if (len >= space - 1) {
-		os_printf("error: no space for reply (space %d len %d)\n",
+		printf("error: no space for reply (space %d len %d)\n",
 			  space, len);
 		csi->have_err = -ENOSPC;
 		return -ENOSPC;
 	}
 	if (_DEBUG)
-		os_printf("reply: %s\n", ptr);
+		printf("reply: %s\n", ptr);
 	ptr[len - 1] = '\n';
 	membuf_putraw(out, len, true, &ptr);
 
@@ -102,20 +103,21 @@ static int reply(Message *msg)
 	char *cmd;
 	int len;
 
+	log_debug("reply kind %d\n", msg->which_kind);
 	len = membuf_putraw(csi->out, BUF_SIZE, false, &cmd);
 
 	pb_ostream_t stream = pb_ostream_from_buffer(cmd, len);
         if (!pb_encode_ex(&stream, Message_fields, msg, PB_ENCODE_DELIMITED)) {
-		os_printf("Failed to encode message\n");
+		printf("Failed to encode message\n");
 #ifndef PB_NO_ERRMSG
-		os_printf("msg %s\n", stream.errmsg);
+		printf("msg %s\n", stream.errmsg);
 #endif
 		os_exit(1);
 		return -EIO;
 	}
 
         len = stream.bytes_written;
-	// os_printf("wrote %d bytes\n", len);
+	// printf("wrote %d bytes\n", len);
 	membuf_putraw(csi->out, len, true, &cmd);
 
 	// done = true;
@@ -148,7 +150,7 @@ int cmdsock_process(void)
 	pb_istream_t stream = pb_istream_from_buffer(cmd, len);
 
 	if (!pb_decode(&stream, Message_fields, &req)) {
-		os_printf("Decoding failed: %s\n", PB_GET_ERROR(&stream));
+		printf("Decoding failed: %s\n", PB_GET_ERROR(&stream));
 		return 1;
 	}
 
@@ -158,10 +160,10 @@ int cmdsock_process(void)
 		return 0;
 
 	if (_DEBUG)
-		os_printf("cmd: %d\n", req.kind);
+		printf("cmd: %d\n", req.which_kind);
 	switch (req.which_kind) {
 	case Message_start_req_tag:
-		os_printf("start: %s\n", req.kind.start_req.name);
+		printf("start: %s\n", req.kind.start_req.name);
 		if (csi->inited) {
 			resp.kind.start_resp.errcode = -EALREADY;
 		} else {
@@ -172,7 +174,7 @@ int cmdsock_process(void)
 		}
 		resp.which_kind = Message_start_resp_tag;
 		resp.kind.start_resp.version = 1;
-		os_printf("start done: %s\n", req.kind.start_req.name);
+		printf("start done: %s\n", req.kind.start_req.name);
 		break;
 	case Message_run_cmd_req_tag:
 		ret = run_command(req.kind.run_cmd_req.cmd,
@@ -237,7 +239,7 @@ int cmdsock_puts(const char *s, int len)
 	// if (done)
 		// return 0;
 	spc = membuf_putraw(csi->out, BUF_SIZE, false, &cmd);
-	// os_printf("spc %d\n");
+	// printf("spc %d\n");
 
 	if (len >= sizeof(msg.kind.puts.str))
 		len = sizeof(msg.kind.puts.str) - 1;
@@ -248,19 +250,19 @@ int cmdsock_puts(const char *s, int len)
 
 	pb_ostream_t stream = pb_ostream_from_buffer(cmd, spc);
         if (!pb_encode_ex(&stream, Message_fields, &msg, PB_ENCODE_DELIMITED)) {
-		os_printf("Failed to encode message\n");
+		printf("Failed to encode message\n");
 #ifndef PB_NO_ERRMSG
-		os_printf("msg %s\n", stream.errmsg);
+		printf("msg %s\n", stream.errmsg);
 #endif
 		os_exit(1);
 		return -EIO;
 	}
 
         spc = stream.bytes_written;
-	// os_printf("wrote %d bytes\n", spc);
+	// printf("wrote %d bytes\n", spc);
 	membuf_putraw(csi->out, spc, true, &cmd);
 
-	os_printf("puts: '%s'\n", s);
+	printf("puts: '%s'\n", s);
 
 	// done = true;
 	// cmdsock_process();
@@ -275,4 +277,5 @@ void cmdsock_init(struct membuf *in, struct membuf *out)
 {
 	csi->in = in;
 	csi->out = out;
+	log_debug("cmdsock_init\n");
 }
