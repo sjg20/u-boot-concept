@@ -799,7 +799,7 @@ class ConsoleBase():
         if not events and not self.config.no_timeouts:
             raise Timeout()
         for fd, event_mask in events:
-            if fd == self.p.fd:
+            if self.p and fd == self.p.fd:
                 c = self.p.receive(1024)
                 self.add_input(c)
             else:

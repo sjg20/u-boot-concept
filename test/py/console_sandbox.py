@@ -37,6 +37,7 @@ class ConsoleSandbox(ConsoleBase):
         self.cmdsock = None
         self.ready = False
         self.cmd_result = None
+        self.hello = None
 
     def get_spawn(self):
         """Connect to a fresh U-Boot instance.
@@ -78,6 +79,10 @@ class ConsoleSandbox(ConsoleBase):
         if self.cmdsock:
             self.cmdsock.connect_to_sandbox(self.poll,
                                             bool(self.config.gdbserver))
+            banner = self.wait_for_banner()
+            msg = self.wait_for_kind('hello')
+            self.hello = msg.hello.msg
+            print(f'Connected: {self.hello}')
 
         return spawn
 
@@ -87,24 +92,25 @@ class ConsoleSandbox(ConsoleBase):
             self.cmdsock.start()
             # print('self.poll', self.cmdsock.sock, self.poll)
 
+    def wait_for_banner(self):
+        banner = None
+        while not banner:
+            self.xfer(TIMEOUT_MS)
+            banner = self.cmdsock.read_banner()
+        return banner
+
     def wait_ready(self):
         if not self.cmdsock:
             super().wait_ready()
             return
-        # print('special wait ready', self.ready, id(self))
-        # raise ValueError(f'wait ready {self.ready}')
         tstart_s = time.time()
         while not self.ready:
             tnow_s = time.time()
-            # print('now', tnow_s, self.ready)
             tdelta_ms = (tnow_s - tstart_s) * 1000
             self.process_incoming()
-            # print('###ready', self.ready)
             if tdelta_ms > TIMEOUT_MS and not self.config.no_timeouts:
                 raise Timeout()
-            # raise ValueError(f'handle {self.ready} {READY}')
             events = self.poll.poll(TIMEOUT_MS)
-            # print('events', events)
             if not events:
                 raise Timeout()
             for fd, event_mask in events:
@@ -113,13 +119,7 @@ class ConsoleSandbox(ConsoleBase):
                     self.add_input(c)
                 else:
                     self.xfer_data(fd, event_mask)
-            # print('--- checking')
-            # for msg in self.cmdsock.get_msgs():
-            #     print('kind', msg.WhichOneof('kind'))
-            #     if msg.WhichOneof('kind') == 'start_resp':
-            #         break
-        # print('xxgot start_resp')
-        # raise ValueError('ready')
+
         print('ready')
         self.buf = ''
 
@@ -152,9 +152,11 @@ class ConsoleSandbox(ConsoleBase):
 
     def wait_for_kind(self, find_kind):
         """Wait for a particular reply"""
-        while True:
+        msg = None
+        while not msg:
             self.xfer(TIMEOUT_MS)
             msg = self.process_incoming(find_kind)
+        return msg
 
     '''
     def poll_for_output(self, fd, event_mask):

@@ -23,10 +23,14 @@
 #include <vsprintf.h>
 #include <asm/global_data.h>
 #include <cmdsock.pb.h>
+#include <linux/stringify.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#define BUF_SIZE	4096
+#define CMDSOCK_VERSION		1
+#define CMDSOCK_WELCOME		"hello cmdsock version " \
+					__stringify(CMDSOCK_VERSION) "1\n"
+#define BUF_SIZE		4096
 
 static struct cmdsock info, *csi = &info;
 
@@ -148,9 +152,9 @@ int cmdsock_process(enum cmdsock_poll_t status)
 
 	/* if there is a new client, send hello */
 	if (status == CMDSOCKPR_NEW_CLIENT) {
-		resp.which_kind = Hello_msg_tag;
-		strlcpy(resp.kind.hello.msg, "cmdsock version 1 hello",
-			sizeof(req.kind.hello.msg));
+		resp.which_kind = Message_hello_tag;
+		membuf_put(csi->out, CMDSOCK_WELCOME, strlen(CMDSOCK_WELCOME));
+		req.kind.hello.version = CMDSOCK_VERSION;
 		ret = reply(&resp);
 		if (ret)
 			goto fail;

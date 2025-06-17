@@ -3,7 +3,7 @@ syntax = "proto2";
 import "nanopb.proto";
 
 message Hello {
-  required string msg = 1 [(nanopb).max_size = 80];
+  required int32 version = 1;
 }
 
 message StartReq {

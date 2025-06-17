@@ -155,6 +155,22 @@ class Cmdsock:
                                select.POLLERR | select.POLLHUP |
                                select.POLLNVAL)
 
+    def read_banner(self):
+        data = self.inq.look(BUF_SIZE)
+        if not data:
+            return None
+        print('data1', data)
+
+        p = data.index(b'\n')
+        if not p:
+            return None
+        to_read = p + 1
+        data = self.inq.read(to_read)
+        print('data2', data, data[p])
+        if data[p] != 0xa:  # newline
+            raise ValueError("Internal error with 'hello' from server")
+        return data[:p]
+
     def fail(self, msg):
         """Report a socket failure
 

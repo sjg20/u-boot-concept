@@ -11,7 +11,7 @@
 
 /* Struct definitions */
 typedef struct _Hello {
-    char msg[80];
+    int32_t version;
 } Hello;
 
 typedef struct _StartReq {
@@ -55,14 +55,14 @@ extern "C" {
 #endif
 
 /* Initializer values for message structs */
-#define Hello_init_default                       {""}
+#define Hello_init_default                       {0}
 #define StartReq_init_default                    {false, ""}
 #define StartResp_init_default                   {0, 0}
 #define Puts_init_default                        {""}
 #define RunCmdReq_init_default                   {"", 0}
 #define RunCmdResp_init_default                  {0}
 #define Message_init_default                     {0, {Hello_init_default}}
-#define Hello_init_zero                          {""}
+#define Hello_init_zero                          {0}
 #define StartReq_init_zero                       {false, ""}
 #define StartResp_init_zero                      {0, 0}
 #define Puts_init_zero                           {""}
@@ -71,7 +71,7 @@ extern "C" {
 #define Message_init_zero                        {0, {Hello_init_zero}}
 
 /* Field tags (for use in manual encoding/decoding) */
-#define Hello_msg_tag                            1
+#define Hello_version_tag                        1
 #define StartReq_name_tag                        1
 #define StartResp_version_tag                    1
 #define StartResp_errcode_tag                    2
@@ -88,7 +88,7 @@ extern "C" {
 
 /* Struct field encoding specification for nanopb */
 #define Hello_FIELDLIST(X, a) \
-X(a, STATIC,   REQUIRED, STRING,   msg,               1)
+X(a, STATIC,   REQUIRED, INT32,    version,           1)
 #define Hello_CALLBACK NULL
 #define Hello_DEFAULT NULL
 
@@ -154,7 +154,7 @@ extern const pb_msgdesc_t Message_msg;
 
 /* Maximum encoded size of messages (where known) */
 #define CMDSOCK_PB_H_MAX_SIZE                    Message_size
-#define Hello_size                               81
+#define Hello_size                               11
 #define Message_size                             272
 #define Puts_size                                258
 #define RunCmdReq_size                           269
