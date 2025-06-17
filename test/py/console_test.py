@@ -126,7 +126,7 @@ class TestConsole(unittest.TestCase):
         cons.ensure_spawned()
 
         self.maxDiff = None
-        val = cons.run_command('printenv')
+        resp = cons.run_command('printenv')
         self.assertEqual('''arch=sandbox
 baudrate=115200
 board=sandbox
@@ -163,7 +163,9 @@ stdin=serial,cros-ec-keyb,usbkbd
 stdout=serial,vidconsole
 usb_ignorelist=0x1050:*,
 
-Environment size: 756/8188 bytes''', '\n'.join(val.splitlines()))
+Environment size: 756/8188 bytes''', '\n'.join(resp.splitlines()))
+        resp = cons.run_command('printenv board_name')
+        self.assertEqual('board_name=sandbox', resp)
 
         ubc.log.close()
         cons.cleanup_spawn()

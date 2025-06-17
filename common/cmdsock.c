@@ -113,8 +113,11 @@ static bool decode_string(pb_istream_t *stream, const pb_field_iter_t *field,
 
 static int reply(Message *msg)
 {
+	bool old_capture = csi->capture;
 	char *cmd;
 	int len;
+
+	csi->capture = false;
 
 	len = membuf_putraw(csi->out, BUF_SIZE, false, &cmd);
 	log_debug("reply kind %s len %d\n", kind_name[msg->which_kind], len);
@@ -136,6 +139,7 @@ static int reply(Message *msg)
 	// done = true;
 	// cmdsock_process();
 	cmdsock_poll(csi->in, csi->out);
+	csi->capture = old_capture;
 
 	return 0;
 }
@@ -262,8 +266,9 @@ int cmdsock_putc(int ch)
 
 int cmdsock_puts(const char *s, int len)
 {
-	// static bool done;
+	bool old_capture = csi->capture;
 
+	// static bool done;
 	if (!csi->capture)
 		return -1;
 	csi->capture = false;
@@ -315,7 +320,7 @@ int cmdsock_puts(const char *s, int len)
 	cmdsock_poll(csi->in, csi->out);
 
 	// reply(csi->out, "puts %zx %s\n", strlen(s), s);
-	csi->capture = true;
+	csi->capture = old_capture;
 
 	return len;
 }
@@ -334,7 +339,11 @@ void cmdsock_run(struct membuf *in, struct membuf *out)
 	cmdsock_init(in, out);
 	printf("cmdsock: entering loop\n");
 	do {
+		bool old_capture = csi->capture;
+
 		ret = cmdsock_poll(in, out);
+		csi->capture = old_capture;
+
 		cmdsock_process(ret);
 
 	} while (ret != CMDSOCKPR_LISTEN_ERR && ret != CMDSOCKPR_ACCEPT_ERR);
