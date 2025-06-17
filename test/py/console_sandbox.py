@@ -131,7 +131,7 @@ class ConsoleSandbox(ConsoleBase):
         if not self.cmdsock:
             return
         for msg in self.cmdsock.get_msgs():
-            print('\ngot', msg.WhichOneof('kind'))
+            print('got', msg.WhichOneof('kind'))
             kind = msg.WhichOneof('kind')
             if kind == find_kind:
                 return msg
@@ -154,8 +154,9 @@ class ConsoleSandbox(ConsoleBase):
         """Wait for a particular reply"""
         msg = None
         while not msg:
-            self.xfer(TIMEOUT_MS)
             msg = self.process_incoming(find_kind)
+            if not msg:
+                self.xfer(TIMEOUT_MS)
         return msg
 
     '''
@@ -236,7 +237,7 @@ class ConsoleSandbox(ConsoleBase):
             ret = not p.isalive()
             if ret:
                 break
-            time.sleep(0.1)
+            # time.sleep(0.1)
         p.close()
         return ret
 
@@ -245,7 +246,8 @@ class ConsoleSandbox(ConsoleBase):
         if not self.cmdsock:
             return super().run_command(cmd, wait_for_echo, send_nl,
                                        wait_for_prompt, wait_for_reboot)
-
+        if not self.ready:
+            raise ValueError('U-Boot is ready (no start_resp received)')
         # print('running')
         self.buf = ''
         self.cmdsock.run_command(cmd)

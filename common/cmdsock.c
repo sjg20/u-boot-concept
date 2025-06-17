@@ -40,7 +40,7 @@ static const char *const kind_name[] = {
 	[Message_start_resp_tag]	= "start_resp",
 	[Message_puts_tag]		= "puts",
 	[Message_run_cmd_req_tag]	= "run_cmd_req",
-	[Message_run_cmd_resp_tag]	= "run_cmd_respon",
+	[Message_run_cmd_resp_tag]	= "run_cmd_resp",
 };
 
 #if 0
@@ -116,8 +116,8 @@ static int reply(Message *msg)
 	char *cmd;
 	int len;
 
-	log_debug("reply kind %d\n", msg->which_kind);
 	len = membuf_putraw(csi->out, BUF_SIZE, false, &cmd);
+	log_debug("reply kind %s len %d\n", kind_name[msg->which_kind], len);
 
 	pb_ostream_t stream = pb_ostream_from_buffer(cmd, len);
         if (!pb_encode_ex(&stream, Message_fields, msg, PB_ENCODE_DELIMITED)) {
@@ -214,7 +214,7 @@ int cmdsock_process(enum cmdsock_poll_t status)
 		resp.kind.run_cmd_resp.result = ret;
 		break;
 	default:
-		printf("Unknown message kind %d\n", req.which_kind);
+		printf("Unknown message kind %s\n", kind_name[req.which_kind]);
 		goto fail;
 	}
 

@@ -108,9 +108,11 @@ static int sandbox_serial_putc(struct udevice *dev, const char ch)
 		priv->start_of_line = true;
 
 	if (sandbox_serial_enabled) {
-		if (!cmdsock_connected() || cmdsock_putc(ch)) {
-			int ret;
+		int ret = -EAGAIN;
 
+		if (cmdsock_connected())
+			ret = cmdsock_putc(ch);
+		if (ret) {
 			sandbox_print_color(dev, state->stdout_fd);
 			ret = os_write(state->stdout_fd, &ch, 1);
 			if (ret < 0)
@@ -132,11 +134,11 @@ static ssize_t sandbox_serial_puts(struct udevice *dev, const char *s,
 		priv->start_of_line = true;
 
 	if (sandbox_serial_enabled) {
-		ret = 0;
+		ret = -EAGAIN;
 
-		if (cmdsock_connected()) {
+		if (cmdsock_connected())
 			ret = cmdsock_puts(s, len);
-		} else {
+		if (ret < 0) {
 			sandbox_print_color(dev, state->stdout_fd);
 			ret = os_write(state->stdout_fd, s, len);
 			if (ret < 0)
@@ -146,6 +148,7 @@ static ssize_t sandbox_serial_puts(struct udevice *dev, const char *s,
 		ret = len;
 	}
 	_sandbox_serial_written += ret;
+
 	return ret;
 }
 

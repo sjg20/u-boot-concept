@@ -69,8 +69,10 @@ class FifoFileBuffer():
         """Looks ahead in the buffer"""
         cur_pos = self.buf.tell()
         avail = self.available
-        size = min(avail, size)
-        result = self.buf.read(size)
+
+        result = self.read(size)
+        # size = min(avail, size)
+        # result = self.buf.read(size)
         self.buf.seek(cur_pos)
         self.available = avail
         # print(f'look {self.name} {len(result)}')
@@ -80,6 +82,7 @@ class FifoFileBuffer():
     def write(self, data):
         """Appends data to buffer"""
         # print(f'append {self.name} {len(data)}')
+        orig_avail = self.available
         if self.size < self.available + len(data):
             # Expand buffer
             new_buf = BytesIO()
@@ -103,6 +106,7 @@ class FifoFileBuffer():
             self.buf.seek(0)
             self.buf.write(data[written:])
         self.buf.seek(read_fp)
+        assert self.available == orig_avail + len(data)
         # print(f'available {self.name} {self.available}')
 
 
@@ -202,7 +206,7 @@ class Cmdsock:
             self.fail('socket closed')
         if event_mask & select.POLLIN:
             data = self.sock.recv(BUF_SIZE)
-            # print('  can recv', data)
+            print('  can recv', data)
             # print(f'wrote {len(data)} bytes into inq')
             self.inq.write(data)
             # print('  xfer recv', data)
@@ -235,22 +239,32 @@ class Cmdsock:
                 return rest
         '''
         data = self.inq.look(BUF_SIZE)
+        data2 = self.inq.look(BUF_SIZE)
+        assert data == data2
+
         # print('   get_next_msg', data)
+        time.sleep(.05)
         if not data:
+            print('no data', data)
             return None
         # print('recv data', len(data))
         try:
             size, pos = _DecodeVarint32(data, 0)
         except IndexError:
             # Need more data for the length prefix
+            print('need more', len(data), data)
             return None
+        print('pos', pos, size)
         to_read = pos + size
         if len(data) < to_read:
             # Need more data for message
             # print('need more2')
+            print('need more2', len(data), data)
             return None
 
         data = self.inq.read(to_read)
+        data2 = self.inq.look(BUF_SIZE)
+        print(f'to_read {to_read} data: {data}         remaining {data2}')
         msg = cmdsock_pb2.Message()
         msg.ParseFromString(data[pos:])
         # google.protobuf.message.DecodeError
