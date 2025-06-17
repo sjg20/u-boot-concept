@@ -120,20 +120,26 @@ static int reply(Message *msg)
 
 	csi->capture = false;
 
-	len = membuf_putraw(csi->out, BUF_SIZE, false, &cmd);
-	log_debug("reply kind %s len %d\n", kind_name[msg->which_kind], len);
+	do {
+		len = membuf_putraw(csi->out, BUF_SIZE, false, &cmd);
+		log_debug("reply kind %s len %d\n", kind_name[msg->which_kind],
+			  len);
 
-	pb_ostream_t stream = pb_ostream_from_buffer(cmd, len);
-        if (!pb_encode_ex(&stream, Message_fields, msg, PB_ENCODE_DELIMITED)) {
+		pb_ostream_t stream = pb_ostream_from_buffer(cmd, len);
+	        if (pb_encode_ex(&stream, Message_fields, msg,
+				 PB_ENCODE_DELIMITED)) {
+		        len = stream.bytes_written;
+			break;
+		}
 		printf("Failed to encode message\n");
 #ifndef PB_NO_ERRMSG
 		printf("msg %s\n", stream.errmsg);
 #endif
-		os_exit(1);
-		return -EIO;
-	}
+		// return -EIO;
 
-        len = stream.bytes_written;
+		cmdsock_poll(csi->in, csi->out);
+	} while (true);
+
 	// printf("wrote %d bytes\n", len);
 	membuf_putraw(csi->out, len, true, &cmd);
 
@@ -271,6 +277,7 @@ int cmdsock_putc(int ch)
 int cmdsock_puts(const char *s, int len)
 {
 	bool old_capture = csi->capture;
+	int ret;
 
 	// static bool done;
 	if (!csi->capture)
@@ -289,11 +296,11 @@ int cmdsock_puts(const char *s, int len)
 	};
 #endif
 	char *cmd;
-	int spc;
+	// int spc;
 
 	// if (done)
 		// return 0;
-	spc = membuf_putraw(csi->out, BUF_SIZE, false, &cmd);
+	// spc = membuf_putraw(csi->out, BUF_SIZE, false, &cmd);
 	// printf("spc %d\n");
 
 	if (len >= sizeof(msg.kind.puts.str))
@@ -303,6 +310,12 @@ int cmdsock_puts(const char *s, int len)
 	// msg.puts.str.funcs.encode = encode_string;
 	// msg.puts.str.arg = (char *)s;
 
+	ret = reply(&msg);
+	if (ret) {
+		printf("Failed to send reply\n");
+		os_exit(1);
+	}
+#if 0
 	pb_ostream_t stream = pb_ostream_from_buffer(cmd, spc);
         if (!pb_encode_ex(&stream, Message_fields, &msg, PB_ENCODE_DELIMITED)) {
 		printf("Failed to encode message\n");
@@ -322,6 +335,7 @@ int cmdsock_puts(const char *s, int len)
 	// done = true;
 	// cmdsock_process();
 	// cmdsock_poll(csi->in, csi->out);
+#endif
 
 	// reply(csi->out, "puts %zx %s\n", strlen(s), s);
 	csi->capture = old_capture;
