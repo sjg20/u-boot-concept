@@ -34,6 +34,15 @@ DECLARE_GLOBAL_DATA_PTR;
 
 static struct cmdsock info, *csi = &info;
 
+static const char *const kind_name[] = {
+	[Message_hello_tag]		= "hello",
+	[Message_start_req_tag] 	= "start_req",
+	[Message_start_resp_tag]	= "start_resp",
+	[Message_puts_tag]		= "puts",
+	[Message_run_cmd_req_tag]	= "run_cmd_req",
+	[Message_run_cmd_resp_tag]	= "run_cmd_respon",
+};
+
 #if 0
 static int __attribute__ ((format (__printf__, 2, 3)))
 	reply(struct membuf *out, const char *fmt, ...)
@@ -178,7 +187,7 @@ int cmdsock_process(enum cmdsock_poll_t status)
 	if (!len)
 		goto done;
 
-	log_debug("cmd: %d\n", req.which_kind);
+	log_debug("cmd: %s\n", kind_name[req.which_kind]);
 	switch (req.which_kind) {
 	case Message_start_req_tag:
 		printf("start: %s\n", req.kind.start_req.name);
@@ -204,6 +213,9 @@ int cmdsock_process(enum cmdsock_poll_t status)
 		resp.which_kind = Message_run_cmd_resp_tag;
 		resp.kind.run_cmd_resp.result = ret;
 		break;
+	default:
+		printf("Unknown message kind %d\n", req.which_kind);
+		goto fail;
 	}
 
 	if (send_resp) {

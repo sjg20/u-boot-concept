@@ -71,7 +71,7 @@ class ConsoleSandbox(ConsoleBase):
             self.cmdsock = cmdsock.Cmdsock(cmdsock_fname)
             if self.config.redir_dev:
                 cmd += ['-R', self.config.redir_dev]
-        print('cmd', cmd)
+        # print('cmd', cmd)
         spawn = Spawn(cmd, cwd=self.config.source_dir, decode_signal=True,
                       no_launch=self.config.no_launch)
 
@@ -87,7 +87,7 @@ class ConsoleSandbox(ConsoleBase):
         return spawn
 
     def start_uboot(self):
-        # print('start u-boot')
+        print('start u-boot')
         if self.cmdsock:
             self.cmdsock.start()
             # print('self.poll', self.cmdsock.sock, self.poll)
@@ -120,7 +120,7 @@ class ConsoleSandbox(ConsoleBase):
                 else:
                     self.xfer_data(fd, event_mask)
 
-        print('ready')
+        # print('ready')
         self.buf = ''
 
     def xfer_data(self, fd, event_mask):
@@ -131,12 +131,12 @@ class ConsoleSandbox(ConsoleBase):
         if not self.cmdsock:
             return
         for msg in self.cmdsock.get_msgs():
-            # print('\ngot', msg.WhichOneof('kind'))
+            print('\ngot', msg.WhichOneof('kind'))
             kind = msg.WhichOneof('kind')
             if kind == find_kind:
                 return msg
             if kind == 'puts':
-                print(f"1returning '{msg.puts.str}'")
+                # print(f"1returning '{msg.puts.str}'")
                 self.add_input(msg.puts.str)
             elif kind == 'start_resp':
                 self.ready = True

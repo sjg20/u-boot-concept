@@ -159,14 +159,14 @@ class Cmdsock:
         data = self.inq.look(BUF_SIZE)
         if not data:
             return None
-        print('data1', data)
+        # print('data1', data)
 
         p = data.index(b'\n')
         if not p:
             return None
         to_read = p + 1
         data = self.inq.read(to_read)
-        print('data2', data, data[p])
+        # print('data2', data, data[p])
         if data[p] != 0xa:  # newline
             raise ValueError("Internal error with 'hello' from server")
         return data[:p]
@@ -202,7 +202,7 @@ class Cmdsock:
             self.fail('socket closed')
         if event_mask & select.POLLIN:
             data = self.sock.recv(BUF_SIZE)
-            print('  can recv', data)
+            # print('  can recv', data)
             # print(f'wrote {len(data)} bytes into inq')
             self.inq.write(data)
             # print('  xfer recv', data)
