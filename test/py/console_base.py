@@ -826,6 +826,7 @@ class ConsoleBase():
                 from U-Boot itself, since we already receive any required output
                 via the cmdsock
         """
+        # print('chars', chars.replace('\n', '#'))
         if self.logfile_read:
             self.logfile_read.write(chars)
         if not log_only:

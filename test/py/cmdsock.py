@@ -141,10 +141,9 @@ class Cmdsock:
         max_retries = 20
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         while max_retries:
-            time.sleep(.2)
             try:
                 self.sock.connect(self.sock_name)
-                # print('tries left', max_retries)
+                print('tries left', max_retries)
                 break
             except socket.error as exc:
                 pass
@@ -153,6 +152,7 @@ class Cmdsock:
                 if not max_retries:
                     raise ValueError(
                         f'Error connecting to U-Boot sandbox at {self.sock_name}')
+            time.sleep(.2)
         # print('connected fd', self.sock)
         poll.register(self.sock, select.POLLIN |
                                select.POLLOUT | select.POLLPRI |

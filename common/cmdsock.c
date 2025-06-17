@@ -10,6 +10,7 @@
 
 #include <cmdsock.h>
 #include <command.h>
+#include <display_options.h>
 #include <errno.h>
 #include <init.h>
 #include <log.h>
@@ -196,6 +197,9 @@ int cmdsock_process(enum cmdsock_poll_t status)
 	case Message_start_req_tag:
 		printf("start: %s\n", req.kind.start_req.name);
 		if (csi->inited) {
+			csi->capture = true;
+			display_options();
+			csi->capture = false;
 			resp.kind.start_resp.errcode = -EALREADY;
 		} else {
 			csi->capture = true;
@@ -313,11 +317,11 @@ int cmdsock_puts(const char *s, int len)
 	// printf("wrote %d bytes\n", spc);
 	membuf_putraw(csi->out, spc, true, &cmd);
 
-	printf("puts: '%s'\n", s);
+	printf("puts: '%.*s'\n", len, s);
 
 	// done = true;
 	// cmdsock_process();
-	cmdsock_poll(csi->in, csi->out);
+	// cmdsock_poll(csi->in, csi->out);
 
 	// reply(csi->out, "puts %zx %s\n", strlen(s), s);
 	csi->capture = old_capture;

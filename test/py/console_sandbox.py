@@ -87,7 +87,7 @@ class ConsoleSandbox(ConsoleBase):
         return spawn
 
     def start_uboot(self):
-        print('start u-boot')
+        # print('start u-boot')
         if self.cmdsock:
             self.cmdsock.start()
             # print('self.poll', self.cmdsock.sock, self.poll)
