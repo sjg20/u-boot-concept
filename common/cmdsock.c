@@ -294,9 +294,25 @@ int cmdsock_puts(const char *s, int len)
 	return len;
 }
 
-void cmdsock_init(struct membuf *in, struct membuf *out)
+static void cmdsock_init(struct membuf *in, struct membuf *out)
 {
 	csi->in = in;
 	csi->out = out;
 	log_debug("cmdsock_init\n");
+}
+
+void cmdsock_run(struct membuf *in, struct membuf *out)
+{
+	int ret;
+
+	cmdsock_init(in, out);
+	printf("cmdsock: entering loop\n");
+	do {
+		ret = cmdsock_poll(in, out);
+		cmdsock_process();
+
+	} while (ret != CMDSOCKPR_LISTEN_ERR && ret != CMDSOCKPR_ACCEPT_ERR);
+	printf("cmdsock: exited loop, err %d\n", ret);
+
+	cmdsock_stop();
 }

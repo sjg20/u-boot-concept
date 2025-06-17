@@ -92,14 +92,15 @@ void cmdsock_stop(void);
 void sandbox_cmdsock_loop(void);
 
 /**
- * cmdsock_init() - Set up a cmdsock
+ * cmdsock_run() - Set up and run a cmdsock
  *
- * Registers the input and output buffers to use with the cmdsock
+ * Registers the input and output buffers to use with the cmdsock. Runs the
+ * cmdsock poll loop until done
  *
  * @in: Input buffer, for traffic from the client
  * @out: Output buffer, for traffic to the client
  */
-void cmdsock_init(struct membuf *in, struct membuf *out);
+void cmdsock_run(struct membuf *in, struct membuf *out);
 
 /**
  * cmdsock_process() - Check for available commands and process them

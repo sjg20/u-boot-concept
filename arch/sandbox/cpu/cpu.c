@@ -471,17 +471,7 @@ void sandbox_cmdsock_loop(void)
 		printf("Out of memory for cmdsock buffers\n");
 		goto done;
 	}
-	cmdsock_init(&in, &out);
-
-	printf("cmdsock: entering loop\n");
-	do {
-		ret = cmdsock_poll(&in, &out);
-		cmdsock_process();
-
-	} while (ret != CMDSOCKPR_LISTEN_ERR && ret != CMDSOCKPR_ACCEPT_ERR);
-	printf("cmdsock: exited loop, err %d\n", ret);
-
-	cmdsock_stop();
+	cmdsock_run(&in, &out);
 
 done:
 	os_exit(1);
