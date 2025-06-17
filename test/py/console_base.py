@@ -792,7 +792,7 @@ class ConsoleBase():
             if self.logfile_read:
                 self.logfile_read.flush()
 
-    def xfer(self, poll_maxwait):
+    def _xfer(self, poll_maxwait, log_only=False):
         """Receive console data; send/receive cmdsock data if enabled"""
         events = self.poll.poll(poll_maxwait)
         # print('events', events)
@@ -801,9 +801,12 @@ class ConsoleBase():
         for fd, event_mask in events:
             if self.p and fd == self.p.fd:
                 c = self.p.receive(1024)
-                self.add_input(c)
+                self.add_input(c, log_only)
             else:
                 self.xfer_data(fd, event_mask)
+
+    def xfer(self, poll_maxwait):
+        self._xfer(poll_maxwait)
 
     def xfer_data(self, fd, event_mask):
         pass
@@ -812,21 +815,27 @@ class ConsoleBase():
         self.xfer(poll_maxwait)
         self.process_incoming()
 
-    def add_input(self, chars):
+    def add_input(self, chars, log_only):
         """Add character to the input buffer so they can be processed
 
         Args:
             chars (str): Character to add to the buffer
+            log_only (bool): Just log the data, don't consider it to be input
+                for the 'expect' functionality. This is used when cmdsock is
+                active and we don't want to include debugging or other output
+                from U-Boot itself, since we already receive any required output
+                via the cmdsock
         """
         if self.logfile_read:
             self.logfile_read.write(chars)
-        self.buf += chars
-        # print(f'add: {chars}')
-        # count=0 is supposed to be the default, which indicates
-        # unlimited substitutions, but in practice the version of
-        # Python in Ubuntu 14.04 appears to default to count=2!
-        self.buf = self.re_vt100.sub('', self.buf, count=1000000)
-        # print(f'add_input >>>{self.buf}<<<')
+        if not log_only:
+            self.buf += chars
+            # print(f'add: {chars}')
+            # count=0 is supposed to be the default, which indicates
+            # unlimited substitutions, but in practice the version of
+            # Python in Ubuntu 14.04 appears to default to count=2!
+            self.buf = self.re_vt100.sub('', self.buf, count=1000000)
+            # print(f'add_input >>>{self.buf}<<<')
 
     def find_match(self, patterns, tstart_s):
         """Find a match in the current buffer

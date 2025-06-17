@@ -116,12 +116,16 @@ class ConsoleSandbox(ConsoleBase):
             for fd, event_mask in events:
                 if fd == self.p.fd:
                     c = self.p.receive(1024)
-                    self.add_input(c)
+                    self.add_input(c, True)
                 else:
                     self.xfer_data(fd, event_mask)
 
         # print('ready')
         self.buf = ''
+
+    def xfer(self, poll_maxwait):
+        """Receive console data; send/receive cmdsock data if enabled"""
+        self._xfer(poll_maxwait, bool(self.cmdsock))
 
     def xfer_data(self, fd, event_mask):
         if fd == self.cmdsock.sock.fileno():
@@ -137,7 +141,7 @@ class ConsoleSandbox(ConsoleBase):
                 return msg
             if kind == 'puts':
                 # print(f"1returning '{msg.puts.str}'")
-                self.add_input(msg.puts.str)
+                self.add_input(msg.puts.str, False)
             elif kind == 'start_resp':
                 self.ready = True
                 # global READY
