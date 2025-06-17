@@ -50,7 +50,7 @@ err:
 	return -1;
 }
 
-int cmdsock_poll(struct membuf *in, struct membuf *out)
+enum cmdsock_poll_t cmdsock_poll(struct membuf *in, struct membuf *out)
 {
 	fd_set readfds, writefds;
 	struct sockaddr_un addr;
@@ -67,24 +67,23 @@ int cmdsock_poll(struct membuf *in, struct membuf *out)
 		FD_SET(server_fd, &readfds);
 		ret = select(server_fd + 1, &readfds, NULL, NULL, NULL);
 		if (ret == -1) {
-			perror("select");
-			cmdsock_stop();
-			return -1;
+			printf("error: %s\n", strerror(errno));
+			return CMDSOCKPR_LISTEN_ERR;
 		}
 		if (!ret)
-			return 0;
+			return CMDSOCKPR_OK;
 
 		/* received an incoming connection */
 		len = sizeof(addr);
 		fd = accept(server_fd, (struct sockaddr *)&addr, &len);
 		if (fd == -1) {
-			perror("accept");
-			return 0;
+			printf("error: %s\n", strerror(errno));
+			return CMDSOCKPR_ACCEPT_ERR;
 		}
 		printf("cmdsock: connected\n");
 		client_fd = fd;
 
-		return 0;
+		return CMDSOCKPR_NEW_CLIENT;
 	}
 
 	FD_SET(client_fd, &readfds);
@@ -92,8 +91,7 @@ int cmdsock_poll(struct membuf *in, struct membuf *out)
 	ret = select(client_fd + 1, &readfds, &writefds, NULL, NULL);
 	if (ret == -1) {
 		printf("error: %s\n", strerror(errno));
-		cmdsock_stop();
-		return -ECONNABORTED;
+		return CMDSOCKPR_SELECT_ERR;
 	}
 
 	if (FD_ISSET(client_fd, &readfds)) {
@@ -119,14 +117,14 @@ int cmdsock_poll(struct membuf *in, struct membuf *out)
 		}
 	}
 
-	return 0;
+	return CMDSOCKPR_OK;
 
 disconnect:
 	close(client_fd);
 	client_fd = 0;
 	printf("cmdsock: disconnected\n");
 
-	return 0;
+	return CMDSOCKPR_DISCONNECT;
 }
 
 void cmdsock_stop(void)

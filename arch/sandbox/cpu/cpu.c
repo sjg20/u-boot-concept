@@ -477,8 +477,9 @@ void sandbox_cmdsock_loop(void)
 	do {
 		ret = cmdsock_poll(&in, &out);
 		cmdsock_process();
-	} while (!ret);
-	printf("cmdsock: exited loop\n");
+
+	} while (ret != CMDSOCKPR_LISTEN_ERR && ret != CMDSOCKPR_ACCEPT_ERR);
+	printf("cmdsock: exited loop, err %d\n", ret);
 
 	cmdsock_stop();
 

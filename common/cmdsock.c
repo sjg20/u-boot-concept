@@ -133,42 +133,48 @@ int cmdsock_process(void)
         Message resp = Message_init_zero;
 	int len, ret, used;
 	bool send_resp = true;
+	bool old_capture;
 	char *cmd;
+
+	old_capture = csi->capture;
+	csi->capture = false;
 
 	if (csi->have_err) {
 		// ret = reply(csi->out, "fatal_err %d\n", ret);
 		// if (!ret)
 			// csi->have_err = false;
-		return 0;
+		goto done;
 	}
 
 	/* see if there are commands to process */
 	len = membuf_getraw(csi->in, BUF_SIZE, false, &cmd);
 	if (!len)
-		return 0;
+		goto done;
 
 	pb_istream_t stream = pb_istream_from_buffer(cmd, len);
 
+	log_debug("processing\n");
 	if (!pb_decode(&stream, Message_fields, &req)) {
-		printf("Decoding failed: %s\n", PB_GET_ERROR(&stream));
-		return 1;
+		log_err("Decoding failed: %s\n", PB_GET_ERROR(&stream));
+		goto fail;
 	}
 
 	used = len - stream.bytes_left;
 	len = membuf_getraw(csi->in, used, true, &cmd);
 	if (!len)
-		return 0;
+		goto done;
 
-	if (_DEBUG)
-		printf("cmd: %d\n", req.which_kind);
+	log_debug("cmd: %d\n", req.which_kind);
 	switch (req.which_kind) {
 	case Message_start_req_tag:
 		printf("start: %s\n", req.kind.start_req.name);
 		if (csi->inited) {
 			resp.kind.start_resp.errcode = -EALREADY;
 		} else {
+			csi->capture = true;
 			board_init_f(gd->flags);
 			board_init_r(gd->new_gd, 0);
+			csi->capture = false;
 			resp.kind.start_resp.errcode = 0;
 			csi->inited = true;
 		}
@@ -177,8 +183,10 @@ int cmdsock_process(void)
 		printf("start done: %s\n", req.kind.start_req.name);
 		break;
 	case Message_run_cmd_req_tag:
+		csi->capture = true;
 		ret = run_command(req.kind.run_cmd_req.cmd,
 				  req.kind.run_cmd_req.flag);
+		csi->capture = false;
 		resp.which_kind = Message_run_cmd_resp_tag;
 		resp.kind.run_cmd_resp.result = ret;
 		break;
@@ -187,7 +195,7 @@ int cmdsock_process(void)
 	if (send_resp) {
 		ret = reply(&resp);
 		if (ret)
-			return ret;
+			goto fail;
 	}
 
 #if 0
@@ -207,12 +215,20 @@ int cmdsock_process(void)
 #endif
 	// if (ret)
 		// csi->have_err = ret;
+done:
+	csi->capture = old_capture;
 
 	return 0;
+fail:
+	printf("cmdsock fail\n");
+	csi->capture = old_capture;
+	return -EINVAL;
 }
 
 int cmdsock_putc(int ch)
 {
+	if (!csi->capture)
+		return -1;
 	// reply(csi->out, "putc %x\n", ch);
 
 	return 0;
@@ -221,6 +237,10 @@ int cmdsock_putc(int ch)
 int cmdsock_puts(const char *s, int len)
 {
 	// static bool done;
+
+	if (!csi->capture)
+		return -1;
+	csi->capture = false;
 
         Message msg = Message_init_zero;
 
@@ -269,6 +289,7 @@ int cmdsock_puts(const char *s, int len)
 	cmdsock_poll(csi->in, csi->out);
 
 	// reply(csi->out, "puts %zx %s\n", strlen(s), s);
+	csi->capture = true;
 
 	return len;
 }

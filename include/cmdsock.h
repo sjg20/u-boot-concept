@@ -26,15 +26,26 @@ struct membuf;
  *
  * @have_err: 0 if OK, -ve if there is an error code pending which needs to be
  *	sent to the client
- * @started: true if U-Boot ha already run the init sequence
+ * @started: true if U-Boot has already run the init sequence
+ * @capture: true to send U-Boot stdout over the cmdsock
  * @in: Input buffer, for traffic from the client
  * @out: Output buffer, for traffic to the client
  */
 struct cmdsock {
 	bool have_err;
 	bool inited;
+	bool capture;
 	struct membuf *in;
 	struct membuf *out;
+};
+
+enum cmdsock_poll_t {
+	CMDSOCKPR_OK,
+	CMDSOCKPR_LISTEN_ERR,
+	CMDSOCKPR_ACCEPT_ERR,
+	CMDSOCKPR_SELECT_ERR,
+	CMDSOCKPR_NEW_CLIENT,
+	CMDSOCKPR_DISCONNECT,
 };
 
 /**
@@ -46,8 +57,9 @@ struct cmdsock {
  *
  * @in: Input buffer, for traffic from the client
  * @out: Output buffer, for traffic to the client
+ * Return: Result of poll, or -ve on error
  */
-int cmdsock_poll(struct membuf *in, struct membuf *out);
+enum cmdsock_poll_t cmdsock_poll(struct membuf *in, struct membuf *out);
 
 /**
  * cmdsock_start() - Start the command socket
