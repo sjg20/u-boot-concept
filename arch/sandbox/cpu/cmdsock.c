@@ -58,7 +58,7 @@ enum cmdsock_poll_t cmdsock_poll(struct membuf *in, struct membuf *out)
 	char *ptr;
 	int ret;
 
-	printf("poll\n");
+	// printf("poll\n");
 	FD_ZERO(&readfds);
 	FD_ZERO(&writefds);
 	if (!client_fd) {

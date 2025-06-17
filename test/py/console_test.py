@@ -11,6 +11,10 @@ import unittest
 import console_sandbox
 import multiplexed_log
 
+BUILD_DIR = '/tmp/b/sandbox'
+DTB_FILE = f'{BUILD_DIR}/arch/sandbox/dts/test.dtb'
+
+
 class Ubconfig():
     """Create a test version of the ubconfig object in test.py"""
 
@@ -23,8 +27,8 @@ class Ubconfig():
         self.gdbserver = ''
         # self.gdbserver = 'localhost:1234'
         #self.build_dir = os.path.join(self.tmpdir, 'build')
-        self.build_dir = '/tmp/b/sandbox'
-        self.dtb = '/tmp/b/sandbox/arch/sandbox/dts/test.dtb'
+        self.build_dir = BUILD_DIR
+        self.dtb = DTB_FILE
         self.cmdsock = cmdsock
         self.source_dir = os.path.join(self.tmpdir, 'source')
         if not os.path.exists(self.source_dir):
@@ -71,10 +75,36 @@ class TestConsole(unittest.TestCase):
         ubc = Ubconfig(self.tmpdir, cmdsock=True)
         ubc.no_timeouts = True
         ubc.redir_dev = '/tmp/ttyV0'
+
+        cons = console_sandbox.ConsoleSandbox(ubc.log, ubc)
+        cons.ensure_spawned()
+
+        val = cons.run_command('echo fred')
+        self.assertEqual('fred', val)
+
+        ubc.log.close()
+        cons.cleanup_spawn()
+
+    def test_sandbox_cmdsock_nolaunch(self):
+        # Create a fixture to use, a basic version of ubconfig
+        ubc = Ubconfig(self.tmpdir, cmdsock=True)
+        ubc.no_timeouts = True
+        ubc.redir_dev = '/tmp/ttyV0'
         ubc.no_launch = True
         # ubc.no_timeouts = True
 
         cons = console_sandbox.ConsoleSandbox(ubc.log, ubc)
+
+        args = [f'{BUILD_DIR}/u-boot', '-v', '-d', DTB_FILE,
+                '--cmdsock', f'{ubc.result_dir}/cmd.sock', '-R', '/tmp/ttyV0']
+        print('args', args)
+        pid = os.fork()
+        if pid == 0:
+            try:
+                os.execvp(args[0], args)
+            except Exception as exc:
+                raise ValueError(f'Child exception: {str(exc)}') from exc
+            os._exit(0)
 
         cons.ensure_spawned()
 
@@ -93,7 +123,6 @@ class TestConsole(unittest.TestCase):
         # ubc.no_timeouts = True
 
         cons = console_sandbox.ConsoleSandbox(ubc.log, ubc)
-
         cons.ensure_spawned()
 
         val = cons.run_command('printenv')
