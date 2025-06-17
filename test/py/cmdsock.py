@@ -200,13 +200,13 @@ class Cmdsock:
         return ' '.join(out)
 
     def xfer_data(self, event_mask):
-        if event_mask != select.POLLOUT:
-            print(f'event_mask: {event_mask:x} {self.get_eventmask_str(event_mask)}')
+        # if event_mask != select.POLLOUT:
+            # print(f'event_mask: {event_mask:x} {self.get_eventmask_str(event_mask)}')
         if event_mask & select.POLLHUP:
             self.fail('socket closed')
         if event_mask & select.POLLIN:
             data = self.sock.recv(BUF_SIZE)
-            print('  can recv', data)
+            # print('  can recv', data)
             # print(f'wrote {len(data)} bytes into inq')
             self.inq.write(data)
             # print('  xfer recv', data)
@@ -243,28 +243,28 @@ class Cmdsock:
         assert data == data2
 
         # print('   get_next_msg', data)
-        time.sleep(.05)
+        # time.sleep(.05)
         if not data:
-            print('no data', data)
+            # print('no data', data)
             return None
         # print('recv data', len(data))
         try:
             size, pos = _DecodeVarint32(data, 0)
         except IndexError:
             # Need more data for the length prefix
-            print('need more', len(data), data)
+            # print('need more', len(data), data)
             return None
-        print('pos', pos, size)
+        # print('pos', pos, size)
         to_read = pos + size
         if len(data) < to_read:
             # Need more data for message
             # print('need more2')
-            print('need more2', len(data), data)
+            # print('need more2', len(data), data)
             return None
 
         data = self.inq.read(to_read)
         data2 = self.inq.look(BUF_SIZE)
-        print(f'to_read {to_read} data: {data}         remaining {data2}')
+        # print(f'to_read {to_read} data: {data}         remaining {data2}')
         msg = cmdsock_pb2.Message()
         msg.ParseFromString(data[pos:])
         # google.protobuf.message.DecodeError

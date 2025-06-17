@@ -131,7 +131,7 @@ class ConsoleSandbox(ConsoleBase):
         if not self.cmdsock:
             return
         for msg in self.cmdsock.get_msgs():
-            print('got', msg.WhichOneof('kind'))
+            # print('got', msg.WhichOneof('kind'))
             kind = msg.WhichOneof('kind')
             if kind == find_kind:
                 return msg
@@ -237,7 +237,7 @@ class ConsoleSandbox(ConsoleBase):
             ret = not p.isalive()
             if ret:
                 break
-            # time.sleep(0.1)
+            time.sleep(0.1)
         p.close()
         return ret
 
