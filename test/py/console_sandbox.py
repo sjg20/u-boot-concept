@@ -111,7 +111,7 @@ class ConsoleSandbox(ConsoleBase):
                 if fd == self.p.fd:
                     c = self.p.receive(1024)
                     self.add_input(c)
-                elif fd == self.cmdsock.sock.fileno():
+                else:
                     self.xfer_data(fd, event_mask)
             # print('--- checking')
             # for msg in self.cmdsock.get_msgs():

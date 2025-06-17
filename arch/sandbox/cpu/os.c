@@ -70,16 +70,17 @@ ssize_t os_write(int fd, const void *buf, size_t count)
 int os_printf(const char *fmt, ...)
 {
 	struct sandbox_state *state = state_get_current();
+	char str[CONFIG_SYS_PBSIZE];
 
-	// os_write(state->stdout_fd, &ch, 1);
 	va_list args;
-	int i = 0;
+	int len = 0;
 
 	va_start(args, fmt);
-	// i = vfprintf(stdout, fmt, args);
+	len = vsnprintf(str, sizeof(str), fmt, args);
 	va_end(args);
+	len = os_write(state->stdout_fd, str, strlen(str));
 
-	return i;
+	return len;
 }
 
 off_t os_lseek(int fd, off_t offset, int whence)

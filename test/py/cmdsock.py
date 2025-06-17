@@ -180,7 +180,8 @@ class Cmdsock:
         return ' '.join(out)
 
     def xfer_data(self, event_mask):
-        print(f'event_mask: {event_mask:x} {self.get_eventmask_str(event_mask)}')
+        if event_mask != select.POLLOUT:
+            print(f'event_mask: {event_mask:x} {self.get_eventmask_str(event_mask)}')
         if event_mask & select.POLLHUP:
             self.fail('socket closed')
         if event_mask & select.POLLIN:
@@ -193,6 +194,7 @@ class Cmdsock:
             # print('  can send')
             data = self.outq.read(BUF_SIZE)
             if data:
+                print(f'event_mask: {event_mask:x} {self.get_eventmask_str(event_mask)}')
                 self.sock.send(data)
 
     def get_msgs(self):

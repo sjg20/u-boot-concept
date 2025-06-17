@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -57,6 +58,7 @@ int cmdsock_poll(struct membuf *in, struct membuf *out)
 	char *ptr;
 	int ret;
 
+	printf("poll\n");
 	FD_ZERO(&readfds);
 	FD_ZERO(&writefds);
 	if (!client_fd) {
@@ -89,9 +91,9 @@ int cmdsock_poll(struct membuf *in, struct membuf *out)
 	FD_SET(client_fd, &writefds);
 	ret = select(client_fd + 1, &readfds, &writefds, NULL, NULL);
 	if (ret == -1) {
-		perror("select");
+		printf("error: %s\n", strerror(errno));
 		cmdsock_stop();
-		return -1;
+		return -ECONNABORTED;
 	}
 
 	if (FD_ISSET(client_fd, &readfds)) {
@@ -99,7 +101,7 @@ int cmdsock_poll(struct membuf *in, struct membuf *out)
 		if (len) {
 			// os_printf("sb: can read %d\n", len);
 			len = read(client_fd, ptr, len);
-			// os_printf("sb: read %d\n", len);
+			printf("sb: read %d\n", len);
 			if (!len)
 				goto disconnect;
 			membuf_putraw(in, len, true, &ptr);
@@ -109,7 +111,7 @@ int cmdsock_poll(struct membuf *in, struct membuf *out)
 	if (FD_ISSET(client_fd, &writefds)) {
 		len = membuf_getraw(out, BUFSIZE, false, &ptr);
 		if (len) {
-			// os_printf("sb: write %d\n", len);
+			printf("sb: write %d\n", len);
 			len = write(client_fd, ptr, len);
 			if (!len)
 				goto disconnect;

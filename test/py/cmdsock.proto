@@ -2,6 +2,10 @@ syntax = "proto2";
 
 import "nanopb.proto";
 
+message Hello {
+  required string msg = 1 [(nanopb).max_size = 80];
+}
+
 message StartReq {
   optional string name = 1 [(nanopb).max_size = 80];
 }
@@ -26,6 +30,7 @@ message RunCmdResp {
 
 message Message {
   oneof kind {
+    Hello hello = 1;
     StartReq start_req = 2;
     StartResp start_resp = 3;
     Puts puts = 4;

@@ -472,10 +472,13 @@ void sandbox_cmdsock_loop(void)
 		goto done;
 	}
 	cmdsock_init(&in, &out);
+
+	printf("cmdsock: entering loop\n");
 	do {
 		ret = cmdsock_poll(&in, &out);
 		cmdsock_process();
 	} while (!ret);
+	printf("cmdsock: exited loop\n");
 
 	cmdsock_stop();
 
