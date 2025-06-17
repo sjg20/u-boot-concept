@@ -105,9 +105,10 @@ void cmdsock_run(struct membuf *in, struct membuf *out);
 /**
  * cmdsock_process() - Check for available commands and process them
  *
+ * @status: Return value from last call to cmdsock_poll()
  * Return: 0 (always)
  */
-int cmdsock_process(void);
+int cmdsock_process(enum cmdsock_poll_t status);
 
 /**
  * cmdsock_putc() - Handle writing a character

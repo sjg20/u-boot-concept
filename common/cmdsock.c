@@ -127,7 +127,7 @@ static int reply(Message *msg)
 	return 0;
 }
 
-int cmdsock_process(void)
+int cmdsock_process(enum cmdsock_poll_t status)
 {
         Message req = Message_init_zero;
         Message resp = Message_init_zero;
@@ -144,6 +144,16 @@ int cmdsock_process(void)
 		// if (!ret)
 			// csi->have_err = false;
 		goto done;
+	}
+
+	/* if there is a new client, send hello */
+	if (status == CMDSOCKPR_NEW_CLIENT) {
+		resp.which_kind = Hello_msg_tag;
+		strlcpy(resp.kind.hello.msg, "cmdsock version 1 hello",
+			sizeof(req.kind.hello.msg));
+		ret = reply(&resp);
+		if (ret)
+			goto fail;
 	}
 
 	/* see if there are commands to process */
@@ -303,13 +313,13 @@ static void cmdsock_init(struct membuf *in, struct membuf *out)
 
 void cmdsock_run(struct membuf *in, struct membuf *out)
 {
-	int ret;
+	enum cmdsock_poll_t ret;
 
 	cmdsock_init(in, out);
 	printf("cmdsock: entering loop\n");
 	do {
 		ret = cmdsock_poll(in, out);
-		cmdsock_process();
+		cmdsock_process(ret);
 
 	} while (ret != CMDSOCKPR_LISTEN_ERR && ret != CMDSOCKPR_ACCEPT_ERR);
 	printf("cmdsock: exited loop, err %d\n", ret);

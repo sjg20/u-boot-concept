@@ -127,12 +127,14 @@ class ConsoleSandbox(ConsoleBase):
         if fd == self.cmdsock.sock.fileno():
             self.cmdsock.xfer_data(event_mask)
 
-    def process_incoming(self):
+    def process_incoming(self, find_kind=None):
         if not self.cmdsock:
             return
         for msg in self.cmdsock.get_msgs():
             # print('\ngot', msg.WhichOneof('kind'))
             kind = msg.WhichOneof('kind')
+            if kind == find_kind:
+                return msg
             if kind == 'puts':
                 print(f"1returning '{msg.puts.str}'")
                 self.add_input(msg.puts.str)
@@ -146,21 +148,13 @@ class ConsoleSandbox(ConsoleBase):
                 self.cmd_result = msg.run_cmd_resp.result
             else:
                 raise ValueError(f"Unknown kind '{kind}'")
+        return None
 
-    def wait_for(self, find_kind):
+    def wait_for_kind(self, find_kind):
         """Wait for a particular reply"""
         while True:
             self.xfer(TIMEOUT_MS)
-            for msg in self.cmdsock.get_msgs():
-                kind = msg.WhichOneof('kind')
-                # print(f"wait for '{find_kind}': got '{kind}'")
-                if kind == 'puts':
-                    print(f"2returning '{msg.puts.str}'")
-                    self.add_input(msg.puts.str)
-                elif kind == find_kind:
-                    return msg
-                elif kind not in ['start_resp']:
-                    raise ValueError(f"Unknown kind '{kind}'")
+            msg = self.process_incoming(find_kind)
 
     '''
     def poll_for_output(self, fd, event_mask):
@@ -253,7 +247,7 @@ class ConsoleSandbox(ConsoleBase):
         # print('running')
         self.buf = ''
         self.cmdsock.run_command(cmd)
-        self.wait_for('run_cmd_resp')
+        self.wait_for_kind('run_cmd_resp')
 
         # Only strip \r\n; space/TAB might be significant if testing
         # indentation.

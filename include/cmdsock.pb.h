@@ -10,6 +10,10 @@
 #endif
 
 /* Struct definitions */
+typedef struct _Hello {
+    char msg[80];
+} Hello;
+
 typedef struct _StartReq {
     bool has_name;
     char name[80];
@@ -36,6 +40,7 @@ typedef struct _RunCmdResp {
 typedef struct _Message {
     pb_size_t which_kind;
     union _Message_kind {
+        Hello hello;
         StartReq start_req;
         StartResp start_resp;
         Puts puts;
@@ -50,20 +55,23 @@ extern "C" {
 #endif
 
 /* Initializer values for message structs */
+#define Hello_init_default                       {""}
 #define StartReq_init_default                    {false, ""}
 #define StartResp_init_default                   {0, 0}
 #define Puts_init_default                        {""}
 #define RunCmdReq_init_default                   {"", 0}
 #define RunCmdResp_init_default                  {0}
-#define Message_init_default                     {0, {StartReq_init_default}}
+#define Message_init_default                     {0, {Hello_init_default}}
+#define Hello_init_zero                          {""}
 #define StartReq_init_zero                       {false, ""}
 #define StartResp_init_zero                      {0, 0}
 #define Puts_init_zero                           {""}
 #define RunCmdReq_init_zero                      {"", 0}
 #define RunCmdResp_init_zero                     {0}
-#define Message_init_zero                        {0, {StartReq_init_zero}}
+#define Message_init_zero                        {0, {Hello_init_zero}}
 
 /* Field tags (for use in manual encoding/decoding) */
+#define Hello_msg_tag                            1
 #define StartReq_name_tag                        1
 #define StartResp_version_tag                    1
 #define StartResp_errcode_tag                    2
@@ -71,6 +79,7 @@ extern "C" {
 #define RunCmdReq_cmd_tag                        1
 #define RunCmdReq_flag_tag                       2
 #define RunCmdResp_result_tag                    1
+#define Message_hello_tag                        1
 #define Message_start_req_tag                    2
 #define Message_start_resp_tag                   3
 #define Message_puts_tag                         4
@@ -78,6 +87,11 @@ extern "C" {
 #define Message_run_cmd_resp_tag                 6
 
 /* Struct field encoding specification for nanopb */
+#define Hello_FIELDLIST(X, a) \
+X(a, STATIC,   REQUIRED, STRING,   msg,               1)
+#define Hello_CALLBACK NULL
+#define Hello_DEFAULT NULL
+
 #define StartReq_FIELDLIST(X, a) \
 X(a, STATIC,   OPTIONAL, STRING,   name,              1)
 #define StartReq_CALLBACK NULL
@@ -106,6 +120,7 @@ X(a, STATIC,   REQUIRED, INT32,    result,            1)
 #define RunCmdResp_DEFAULT NULL
 
 #define Message_FIELDLIST(X, a) \
+X(a, STATIC,   ONEOF,    MESSAGE,  (kind,hello,kind.hello),   1) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (kind,start_req,kind.start_req),   2) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (kind,start_resp,kind.start_resp),   3) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (kind,puts,kind.puts),   4) \
@@ -113,12 +128,14 @@ X(a, STATIC,   ONEOF,    MESSAGE,  (kind,run_cmd_req,kind.run_cmd_req),   5) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (kind,run_cmd_resp,kind.run_cmd_resp),   6)
 #define Message_CALLBACK NULL
 #define Message_DEFAULT NULL
+#define Message_kind_hello_MSGTYPE Hello
 #define Message_kind_start_req_MSGTYPE StartReq
 #define Message_kind_start_resp_MSGTYPE StartResp
 #define Message_kind_puts_MSGTYPE Puts
 #define Message_kind_run_cmd_req_MSGTYPE RunCmdReq
 #define Message_kind_run_cmd_resp_MSGTYPE RunCmdResp
 
+extern const pb_msgdesc_t Hello_msg;
 extern const pb_msgdesc_t StartReq_msg;
 extern const pb_msgdesc_t StartResp_msg;
 extern const pb_msgdesc_t Puts_msg;
@@ -127,6 +144,7 @@ extern const pb_msgdesc_t RunCmdResp_msg;
 extern const pb_msgdesc_t Message_msg;
 
 /* Defines for backwards compatibility with code written before nanopb-0.4.0 */
+#define Hello_fields &Hello_msg
 #define StartReq_fields &StartReq_msg
 #define StartResp_fields &StartResp_msg
 #define Puts_fields &Puts_msg
@@ -136,6 +154,7 @@ extern const pb_msgdesc_t Message_msg;
 
 /* Maximum encoded size of messages (where known) */
 #define CMDSOCK_PB_H_MAX_SIZE                    Message_size
+#define Hello_size                               81
 #define Message_size                             272
 #define Puts_size                                258
 #define RunCmdReq_size                           269
