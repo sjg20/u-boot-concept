@@ -190,7 +190,7 @@ static int do_fs_ls(struct cmd_tbl *cmdtp, int flag, int argc,
 		return CMD_RET_FAILURE;
 	}
 
-	ret = fs_ls(dev, cmd_arg1(argc, argv));
+	// ret = fs_ls(dev, cmd_arg1(argc, argv));
 	if (ret) {
 		printf("Error %dE\n", ret);
 		return CMD_RET_FAILURE;

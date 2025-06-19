@@ -23,14 +23,14 @@ struct fs_plat {
 
 struct fs_ops {
 	int (*lookup_dir)(struct udevice *dev, const char *path,
-			  struct udevice *dirp);
+			  struct udevice **dirp);
 };
 
 /* Get access to a filesystem's operations */
 #define fs_get_ops(dev)		((struct fs_ops *)(dev)->driver->ops)
 
 /** List a directory */
-int fs_ls(struct udevice *dev, const char *dirname);
+int fs_lookup_dir(struct udevice *dev, const char *path, struct udevice **dirp);
 
 /*
 int fs_read(struct udevice *dev, const char *dirname);

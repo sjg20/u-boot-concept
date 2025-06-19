@@ -8,16 +8,17 @@
 #ifndef __DIR_H
 #define __DIR_H
 
+struct fs_dir_stream;
 struct udevice;
 
 struct dir_ops {
-	int (*open)(struct udevice *dev, const char *path);
+	int (*open)(struct udevice *dev, struct fs_dir_stream **dirsp);
 };
 
 /* Get access to a directory's operations */
-#define fs_get_ops(dev)		((struct fs_ops *)(dev)->driver->ops)
+#define dir_get_ops(dev)		((struct dir_ops *)(dev)->driver->ops)
 
 /** Open a directory to read its contents */
-int dir_open(struct udevice *dev, const char *dirname);
+int dir_open(struct udevice *dev, struct fs_dir_stream **dirsp);
 
 #endif

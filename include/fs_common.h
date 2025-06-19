@@ -69,6 +69,9 @@ struct fs_dirent {
  * @part:	partition number
  */
 struct fs_dir_stream {
+#ifdef CONFIG_FS
+	struct udevice *dev;
+#endif
 	struct blk_desc *desc;
 	int part;
 };

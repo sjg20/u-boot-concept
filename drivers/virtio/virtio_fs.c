@@ -271,7 +271,7 @@ static int _virtio_fs_probe(struct udevice *dev)
 	return 0;
 }
 
-static int virtio_fs_ls(struct udevice *dev, const char *path)
+int virtio_fs_ls(struct udevice *dev, const char *path)
 {
 	struct fuse_entry_out entry;
 	struct fuse_open_out out;
@@ -369,6 +369,12 @@ static int virtio_fs_ls(struct udevice *dev, const char *path)
 	return 0;
 }
 
+static int virtio_fs_lookup_dir(struct udevice *dev, const char *path,
+				struct udevice **dirp)
+{
+	return 0;
+}
+
 static int virtio_fs_remove(struct udevice *dev)
 {
 	return 0;
@@ -389,7 +395,7 @@ static int virtio_fs_bind(struct udevice *dev)
 }
 
 static const struct fs_ops virtio_fs_ops = {
-	// .ls	= virtio_fs_ls,
+	.lookup_dir	= virtio_fs_lookup_dir,
 };
 
 static const struct udevice_id virtio_fs_ids[] = {

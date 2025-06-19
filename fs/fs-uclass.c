@@ -9,14 +9,13 @@
 #include <fs.h>
 #include <dm/device-internal.h>
 
-#if 0
 int fs_ls(struct udevice *dev, const char *dirname)
 {
-	struct fs_ops *ops = fs_get_ops(dev);
+	return -ENOSYS;
+	// struct fs_ops *ops = fs_get_ops(dev);
 
-	return ops->o(dev, dirname);
+	// return ops->o(dev, dirname);
 }
-#endif
 
 int fs_get_by_name(const char *name, struct udevice **devp)
 {
@@ -39,6 +38,13 @@ int fs_get_by_name(const char *name, struct udevice **devp)
 	}
 
 	return -ENOENT;
+}
+
+int fs_lookup_dir(struct udevice *dev, const char *path, struct udevice **dirp)
+{
+	struct fs_ops *ops = fs_get_ops(dev);
+
+	return ops->lookup_dir(dev, path, dirp);
 }
 
 UCLASS_DRIVER(fs) = {
