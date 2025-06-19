@@ -5,21 +5,11 @@
 #ifndef _FS_H
 #define _FS_H
 
+#include <fs_common.h>
 #include <rtc.h>
 
 struct abuf;
 struct cmd_tbl;
-
-#define FS_TYPE_ANY	0
-#define FS_TYPE_FAT	1
-#define FS_TYPE_EXT	2
-#define FS_TYPE_SANDBOX	3
-#define FS_TYPE_UBIFS	4
-#define FS_TYPE_BTRFS	5
-#define FS_TYPE_SQUASHFS 6
-#define FS_TYPE_EROFS   7
-#define FS_TYPE_SEMIHOSTING 8
-#define FS_TYPE_EXFAT   9
 
 struct blk_desc;
 
@@ -166,55 +156,6 @@ int fs_read(const char *filename, ulong addr, loff_t offset, loff_t len,
  */
 int fs_write(const char *filename, ulong addr, loff_t offset, loff_t len,
 	     loff_t *actwrite);
-
-/*
- * Directory entry types, matches the subset of DT_x in posix readdir()
- * which apply to u-boot.
- */
-#define FS_DT_DIR  4         /* directory */
-#define FS_DT_REG  8         /* regular file */
-#define FS_DT_LNK  10        /* symbolic link */
-
-#define FS_DIRENT_NAME_LEN	CONFIG_IS_ENABLED(FS_EXFAT, (1024), (256))
-
-/**
- * struct fs_dirent - directory entry
- *
- * A directory entry, returned by fs_readdir(). Returns information
- * about the file/directory at the current directory entry position.
- */
-struct fs_dirent {
-	/** @type:		one of FS_DT_x (not a mask) */
-	unsigned int type;
-	/** @size:		file size */
-	loff_t size;
-	/** @attr:		attribute flags (FS_ATTR_*) */
-	u32 attr;
-	/** @create_time:	time of creation */
-	struct rtc_time create_time;
-	/** @access_time:	time of last access */
-	struct rtc_time access_time;
-	/** @change_time:	time of last modification */
-	struct rtc_time change_time;
-	/** @name:		file name */
-	char name[FS_DIRENT_NAME_LEN];
-};
-
-/**
- * struct fs_dir_stream - Structure representing an opened directory
- *
- * Struct fs_dir_stream should be treated opaque to the user of fs layer.
- * The fields @desc and @part are used by the fs layer.
- * File system drivers pass additional private fields with the pointers
- * to this structure.
- *
- * @desc:	block device descriptor
- * @part:	partition number
- */
-struct fs_dir_stream {
-	struct blk_desc *desc;
-	int part;
-};
 
 /**
  * fs_opendir - Open a directory
