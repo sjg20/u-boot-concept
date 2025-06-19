@@ -1180,10 +1180,3 @@ int fs_load_alloc(const char *ifname, const char *dev_part_str,
 
 	return 0;
 }
-
-int fs_ls(struct udevice *dev, const char *dirname)
-{
-	struct fs_ops *ops = fs_get_ops(dev);
-
-	return ops->ls(dev, dirname);
-}

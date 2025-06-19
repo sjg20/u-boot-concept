@@ -12,15 +12,6 @@ struct abuf;
 
 struct blk_desc;
 
-enum {
-	/* Maximum length of the filesystem name */
-	FS_MAX_NAME_LEN		= 128,
-};
-
-struct fs_plat {
-	char name[FS_MAX_NAME_LEN];
-};
-
 /*
  * Tell the fs layer which block device and partition to use for future
  * commands. This also internally identifies the filesystem that is present

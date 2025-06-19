@@ -9,6 +9,13 @@
 #include <fs.h>
 #include <dm/device-internal.h>
 
+int fs_ls(struct udevice *dev, const char *dirname)
+{
+	struct fs_ops *ops = fs_get_ops(dev);
+
+	return ops->ls(dev, dirname);
+}
+
 int fs_get_by_name(const char *name, struct udevice **devp)
 {
 	struct udevice *dev;

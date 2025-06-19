@@ -12,6 +12,15 @@
 
 struct udevice;
 
+enum {
+	/* Maximum length of the filesystem name */
+	FS_MAX_NAME_LEN		= 128,
+};
+
+struct fs_plat {
+	char name[FS_MAX_NAME_LEN];
+};
+
 struct fs_ops {
 	int (*ls)(struct udevice *dev, const char *path);
 };
