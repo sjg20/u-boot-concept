@@ -9,7 +9,7 @@
 #include <command.h>
 #include <env.h>
 #include <errno.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <fdt_support.h>
 #include <image.h>
 #include <log.h>

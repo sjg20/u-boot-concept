@@ -5,7 +5,7 @@
  */
 
 #include <stdio.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <malloc.h>
 #include <os.h>
 #include <semihosting.h>

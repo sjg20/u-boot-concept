@@ -13,7 +13,7 @@
 #include <malloc.h>
 #include <mapmem.h>
 #include <dm.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <efi.h>
 #include <efi_api.h>
 #include <efi_load_initrd.h>

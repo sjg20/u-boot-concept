@@ -26,7 +26,7 @@
 #include <misc.h>
 #include <power-domain.h>
 #include <timer.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <spl.h>
 #include <timer.h>
 #include <reset.h>

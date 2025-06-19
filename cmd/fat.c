@@ -10,7 +10,7 @@
 #include <command.h>
 #include <mapmem.h>
 #include <fat.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <part.h>
 #include <asm/cache.h>
 

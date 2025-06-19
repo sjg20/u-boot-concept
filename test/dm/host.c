@@ -6,7 +6,7 @@
 
 #include <blk.h>
 #include <dm.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <os.h>
 #include <sandbox_host.h>
 #include <asm/test.h>

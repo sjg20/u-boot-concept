@@ -9,7 +9,7 @@
 
 #include <config.h>
 #include <command.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <init.h>
 #include <asm/global_data.h>
 #include <asm/io.h>

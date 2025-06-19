@@ -6,7 +6,7 @@
 #include <config.h>
 #include <command.h>
 #include <fdtdec.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <log.h>
 #include <mapmem.h>
 #include <memalign.h>

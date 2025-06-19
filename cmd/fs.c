@@ -6,7 +6,7 @@
  */
 
 #include <command.h>
-#include <fs.h>
+#include <fs_legacy.h>
 
 static int do_size_wrapper(struct cmd_tbl *cmdtp, int flag, int argc,
 			   char *const argv[])

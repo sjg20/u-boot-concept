@@ -14,7 +14,7 @@
 #include <command.h>
 #include <dm.h>
 #include <extlinux.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <log.h>
 #include <malloc.h>
 #include <mapmem.h>

@@ -20,7 +20,7 @@
 #include <nand.h>
 #include <scsi.h>
 #include <usb.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <mmc.h>
 #ifdef CONFIG_BLK
 #include <blk.h>

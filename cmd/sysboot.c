@@ -2,7 +2,7 @@
 
 #include <command.h>
 #include <env.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <pxe_utils.h>
 #include <vsprintf.h>
 

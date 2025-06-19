@@ -11,7 +11,7 @@
 #include <command.h>
 #include <dm.h>
 #include <expo.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <malloc.h>
 #include <mapmem.h>
 #include <dm/ofnode.h>

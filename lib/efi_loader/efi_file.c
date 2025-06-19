@@ -12,7 +12,7 @@
 #include <log.h>
 #include <malloc.h>
 #include <mapmem.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <part.h>
 
 /* GUID for file system information */

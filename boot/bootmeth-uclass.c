@@ -13,7 +13,7 @@
 #include <bootstd.h>
 #include <dm.h>
 #include <env_internal.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <malloc.h>
 #include <mapmem.h>
 #include <dm/uclass-internal.h>

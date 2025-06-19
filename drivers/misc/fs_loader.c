@@ -10,7 +10,7 @@
 #include <env.h>
 #include <errno.h>
 #include <blk.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <fs_loader.h>
 #include <log.h>
 #include <asm/global_data.h>

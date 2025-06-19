@@ -4,7 +4,7 @@
  */
 
 #include <bootcount.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <mapmem.h>
 
 #define BC_MAGIC	0xbd

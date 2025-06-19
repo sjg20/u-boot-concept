@@ -9,7 +9,7 @@
 #ifndef _FAT_H_
 #define _FAT_H_
 
-#include <fs.h>
+#include <fs_legacy.h>
 #include <asm/byteorder.h>
 #include <asm/cache.h>
 
