@@ -4,7 +4,7 @@
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 # Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
 
-obj-$(CONFIG_FS) += dir-uclass.o fs-uclass.o
+obj-$(CONFIG_FS) += dir.o dir-uclass.o fs-uclass.o
 
 ifdef CONFIG_XPL_BUILD
 obj-$(CONFIG_SPL_LEGACY_FS) += fs_legacy.o

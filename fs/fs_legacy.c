@@ -3,6 +3,7 @@
  * Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
  */
 
+#define LOG_DEBUG
 #define LOG_CATEGORY LOGC_CORE
 
 #include <abuf.h>
@@ -70,9 +71,11 @@ static int fs_ls_generic(const char *dirname)
 	struct fs_dirent *dent;
 	int nfiles = 0, ndirs = 0;
 
+	log_debug("gd_opendir\n");
 	dirs = fs_opendir(dirname);
 	if (!dirs)
 		return -errno;
+	log_debug("fs_readdir\n");
 
 	while ((dent = fs_readdir(dirs))) {
 		if (dent->type == FS_DT_DIR) {
@@ -412,7 +415,7 @@ static struct fstype_info fstypes[] = {
 	{
 		.fstype = FS_TYPE_VIRTIO,
 		.name = "virtio",
-		.null_dev_desc_ok = false,
+		.null_dev_desc_ok = true,
 		.probe = virtio_fs_probe,
 		.opendir = virtio_fs_opendir,
 		.readdir = virtio_fs_readdir,
@@ -508,6 +511,7 @@ int fs_set_blk_dev(const char *ifname, const char *dev_part_str, int fstype)
 		if (!fs_dev_desc && !info->null_dev_desc_ok)
 			continue;
 
+		log_debug("probe %s\n", info->name);
 		if (!info->probe(fs_dev_desc, &fs_partition)) {
 			fs_type = info->fstype;
 			fs_dev_part = part;
@@ -917,9 +921,11 @@ int do_ls(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[],
 	if (argc > 4)
 		return CMD_RET_USAGE;
 
+	log_debug("fs_set_blk_dev()\n");
 	if (fs_set_blk_dev(argv[1], cmd_arg2(argc, argv), fstype))
 		return 1;
 
+	log_debug("fs_legacy_ls()\n");
 	if (fs_legacy_ls(argc >= 4 ? argv[3] : "/"))
 		return 1;
 

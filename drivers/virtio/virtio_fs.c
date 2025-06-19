@@ -16,6 +16,7 @@
  * Licensed under the GPL-2.0+ license.
  */
 
+#include <dir.h>
 #include <dm.h>
 #include <fs.h>
 #include <log.h>
@@ -23,6 +24,8 @@
 #include <virtio.h>
 #include <virtio_fs.h>
 #include <virtio_ring.h>
+#include <dm/device-internal.h>
+#include <dm/lists.h>
 #include <linux/fuse.h>
 
 #define VIRTIO_FS_TAG_SIZE	36
@@ -52,8 +55,20 @@ struct virtio_fs_priv {
 	struct virtio_device	*vdev;
 	struct virtqueue	*vq;
 	struct virtio_fs_config	config;
+	u64 root_inode;
 	int next_id;
-	// u64 root_ino;
+};
+
+/**
+ * struct virtio_fs_dir_priv - Information about a directory
+ *
+ * @inode: Associated inode for the directory
+ * @path: Path of this directory, e.g. '/fred/mary', or NULL for the root
+ * directory
+ */
+struct virtio_fs_dir_priv {
+	u64 inode;
+	char *path;
 };
 
 static int virtio_fs_xfer(struct udevice *dev, struct fuse_in_header *inhdr,
@@ -369,9 +384,142 @@ int virtio_fs_ls(struct udevice *dev, const char *path)
 	return 0;
 }
 
+static int virtio_fs_dir_open(struct udevice *dev, struct fs_dir_stream **dirsp)
+{
+	return 0;
+}
+
+static int virtio_fs_dir_remove(struct udevice *dev)
+{
+	struct virtio_fs_dir_priv *dir_priv = dev_get_priv(dev);
+
+	if (dir_priv->path) {
+		int ret;
+
+		ret = virtio_fs_forget(dev, dir_priv->inode);
+		if (ret)
+			return log_msg_ret("vfr", ret);
+	}
+
+	return 0;
+}
+
+static struct dir_ops virtio_fs_dir_ops = {
+	.open	= virtio_fs_dir_open,
+};
+
+static const struct udevice_id dir_ids[] = {
+	{ .compatible = "virtio-fs,directory" },
+	{ }
+};
+
+U_BOOT_DRIVER(virtio_fs_dir) = {
+	.name	= "virtio_fs_dir",
+	.id	= UCLASS_DIR,
+	.of_match = dir_ids,
+	.remove	= virtio_fs_dir_remove,
+	.ops	= &virtio_fs_dir_ops,
+	.priv_auto	= sizeof(struct virtio_fs_dir_priv),
+	.flags	= DM_FLAG_ACTIVE_DMA,
+};
+
 static int virtio_fs_lookup_dir(struct udevice *dev, const char *path,
 				struct udevice **dirp)
 {
+	struct virtio_fs_priv *priv = dev_get_priv(dev);
+	struct virtio_fs_dir_priv *dir_priv;
+	struct fuse_entry_out entry;
+	char dev_name[30], *str, *dup_path;
+	struct udevice *dir;
+	u64 inode;
+	int ret;
+
+	inode = priv->root_inode;
+	if (path && strcmp("/", path)) {
+		log_debug("looking up path '%s' (inode %lld)\n", path, inode);
+		ret = virtio_fs_lookup(dev, inode, path, &entry);
+		if (ret) {
+			log_err("Failed to lookup directory '%s': %d\n", path,
+				ret);
+			return ret;
+		}
+		inode = entry.nodeid;
+	}
+
+	snprintf(dev_name, sizeof(dev_name), "%s.dir", dev->name);
+	str = strdup(dev_name);
+	if (!str)
+		goto no_dev_name;
+	dup_path = strdup(path);
+	if (!str)
+		goto no_dev_path;
+
+	ret = device_bind_driver(dev, "virtio_fs_dir", str, &dir);
+	if (ret)
+		goto no_bind;
+	device_set_name_alloced(dir);
+
+	ret = device_probe(dir);
+	if (ret)
+		goto no_probe;
+
+	dir_priv = dev_get_priv(dir);
+	dir_priv->inode = inode;
+	dir_priv->path = dup_path;
+
+no_probe:
+	device_unbind(dir);
+no_bind:
+	free(dup_path);
+no_dev_path:
+	free(str);
+no_dev_name:
+	if (path)
+		ret = virtio_fs_forget(dev, inode);
+
+	return 0;
+}
+
+static int virtio_fs_mount(struct udevice *dev)
+{
+	struct fs_priv *uc_priv = dev_get_uclass_priv(dev);
+	struct virtio_fs_priv *priv = dev_get_priv(dev);
+	struct fuse_entry_out entry;
+	int ret;
+
+	if (uc_priv->mounted)
+		return log_msg_ret("vfi", -EISCONN);
+
+	ret = virtio_fs_init(dev);
+	if (ret)
+		return log_msg_ret("vfi", ret);
+
+	ret = virtio_fs_lookup(dev, FUSE_ROOT_ID, ".", &entry);
+	if (ret) {
+		log_err("Failed to lookup root directory: %d\n", ret);
+		return ret;
+	}
+	log_debug("directory found, ino=%lld\n", entry.nodeid);
+
+	priv->root_inode = entry.nodeid;
+	uc_priv->mounted = true;
+
+	return 0;
+}
+
+static int virtio_fs_unmount(struct udevice *dev)
+{
+	struct fs_priv *uc_priv = dev_get_uclass_priv(dev);
+	struct virtio_fs_priv *priv = dev_get_priv(dev);
+	int ret;
+
+	if (!uc_priv->mounted)
+		return log_msg_ret("vfu", -ENOTCONN);
+
+	ret = virtio_fs_forget(dev, priv->root_inode);
+	if (ret)
+		return log_msg_ret("vff", ret);
+
 	return 0;
 }
 
@@ -395,6 +543,8 @@ static int virtio_fs_bind(struct udevice *dev)
 }
 
 static const struct fs_ops virtio_fs_ops = {
+	.mount		= virtio_fs_mount,
+	.unmount	= virtio_fs_unmount,
 	.lookup_dir	= virtio_fs_lookup_dir,
 };
 

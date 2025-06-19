@@ -21,7 +21,39 @@ struct fs_plat {
 	char name[FS_MAX_NAME_LEN];
 };
 
+/**
+ * struct fs_priv - Private information for the FS devices
+ *
+ * @mounted: true if mounted
+ */
+struct fs_priv {
+	bool mounted;
+};
+
 struct fs_ops {
+	/**
+	 * mount() - Mount the filename
+	 *
+	 * @dev: Filesystem device
+	 * Return 0 if OK, -EISCONN if already mounted, other -ve on error
+	 */
+	int (*mount)(struct udevice *dev);
+
+	/**
+	 * unmount() - Unmount the filename
+	 *
+	 * @dev: Filesystem device
+	 * Return 0 if OK, -ENOTCONN if not mounted, other -ve on error
+	 */
+	int (*unmount)(struct udevice *dev);
+
+	/**
+	 * lookup_dir() - Look up a directory on a filesystem
+	 *
+	 * @dev: Filesystem device
+	 * @path: Path to look up, empty for the root
+	 * @dirp: Returns associated directory device, creating if necessary
+	 */
 	int (*lookup_dir)(struct udevice *dev, const char *path,
 			  struct udevice **dirp);
 };
