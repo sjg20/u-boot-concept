@@ -8,7 +8,7 @@
  */
 
 #include <command.h>
-#include <fs_legacy.h>
+#include <fs_cmd.h>
 #include <squashfs.h>
 
 static int do_sqfs_ls(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
