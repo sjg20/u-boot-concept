@@ -4,6 +4,14 @@
 
 menu "File systems"
 
+config FS_LEGACY
+	def_bool y
+	help
+	  Enables legacy support for filesystems. This provides an interface
+	  which can talk to one filesystem at a time, with the filesystem being
+	  re-mounted on each operation.
+
+
 source "fs/btrfs/Kconfig"
 
 source "fs/cbfs/Kconfig"
