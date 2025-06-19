@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0
 /*
  * U-Boot Virtio-FS Driver
  *
@@ -23,6 +24,21 @@
 #include <virtio_fs.h>
 #include <virtio_ring.h>
 #include <linux/fuse.h>
+
+#define VIRTIO_FS_TAG_SIZE	36
+
+/**
+ * struct virtio_fs_config - Configuration info for virtio-fs
+ *
+ * Modelled on Linux v6.15 include/uapi/linux/type.h
+ *
+ * @tag: filesystem name padded with NUL
+ */
+struct __packed virtio_fs_config {
+	u8 tag[VIRTIO_FS_TAG_SIZE];
+	__le32 unused1;
+	__le32 unused2;
+};
 
 /*
  * Driver-private data
@@ -129,8 +145,8 @@ static int virtio_fs_forget(struct udevice *dev, u64 nodeid)
 	return 0;
 }
 
-static int virtio_fs_opendir(struct udevice *dev, u64 nodeid,
-			     struct fuse_open_out *out)
+static int _virtio_fs_opendir(struct udevice *dev, u64 nodeid,
+			      struct fuse_open_out *out)
 {
 	struct fuse_in_header inhdr = {};
 	struct fuse_open_in in = {};
@@ -152,8 +168,8 @@ static int virtio_fs_opendir(struct udevice *dev, u64 nodeid,
 	return 0;
 }
 
-static int virtio_fs_readdir(struct udevice *dev, u64 nodeid, u64 fh,
-			     u64 offset, void *buf, int size, int *out_sizep)
+static int _virtio_fs_readdir(struct udevice *dev, u64 nodeid, u64 fh,
+			      u64 offset, void *buf, int size, int *out_sizep)
 {
 	struct fuse_in_header inhdr = {};
 	struct fuse_read_in in = {};
@@ -187,7 +203,7 @@ static int virtio_fs_readdir(struct udevice *dev, u64 nodeid, u64 fh,
 	return 0;
 }
 
-static int virtio_fs_releasedir(struct udevice *dev, u64 nodeid, u64 fh)
+static int _virtio_fs_releasedir(struct udevice *dev, u64 nodeid, u64 fh)
 {
 	struct fuse_in_header inhdr = {};
 	struct fuse_release_in in = {};
@@ -238,7 +254,7 @@ static int virtio_fs_init(struct udevice *dev)
 	return 0;
 }
 
-static int virtio_fs_probe(struct udevice *dev)
+static int _virtio_fs_probe(struct udevice *dev)
 {
 	struct virtio_fs_priv *priv = dev_get_priv(dev);
 	int ret;
@@ -246,13 +262,7 @@ static int virtio_fs_probe(struct udevice *dev)
 	virtio_cread_bytes(dev, 0, &priv->tag, VIRTIO_FS_TAG_SIZE);
 	priv->tag[VIRTIO_FS_TAG_SIZE] = '\0';
 
-	virtio_cread(dev, struct virtio_fs_config, num_request_queues,
-		     &priv->num_queues);
-	virtio_cread(dev, struct virtio_fs_config, notify_buf_size,
-		     &priv->notify_buf_size);
-
-	log_debug("tag %s num_queues %d notify_buf_size %x\n", priv->tag,
-		  priv->num_queues, priv->notify_buf_size);
+	log_debug("tag %s\n", priv->tag);
 
 	ret = virtio_find_vqs(dev, 1, &priv->vq);
 	if (ret)
@@ -298,7 +308,7 @@ static int virtio_fs_ls(struct udevice *dev, const char *path)
 		pinode = rinode;
 	}
 
-	ret = virtio_fs_opendir(dev, pinode, &out);
+	ret = _virtio_fs_opendir(dev, pinode, &out);
 	if (ret) {
 		log_err("Failed to open root directory: %d\n", ret);
 		return ret;
@@ -311,8 +321,8 @@ static int virtio_fs_ls(struct udevice *dev, const char *path)
 	printf("%10s  Type  Name\n", "Size");
 	ret = 0;
 	do {
-		ret = virtio_fs_readdir(dev, pinode, fh, offset, buf,
-					sizeof(buf), &size);
+		ret = _virtio_fs_readdir(dev, pinode, fh, offset, buf,
+					 sizeof(buf), &size);
 		if (ret) {
 			log_err("Failed to read directory: %d\n", ret);
 			break;
@@ -340,7 +350,7 @@ static int virtio_fs_ls(struct udevice *dev, const char *path)
 	} while (1);
 
 	log_debug("releasedir\n");
-	ret = virtio_fs_releasedir(dev, pinode, fh);
+	ret = _virtio_fs_releasedir(dev, pinode, fh);
 	if (ret) {
 		log_err("Failed to release directory: %d\n", ret);
 		return ret;
@@ -379,7 +389,7 @@ static int virtio_fs_bind(struct udevice *dev)
 }
 
 static const struct fs_ops virtio_fs_ops = {
-	.ls	= virtio_fs_ls,
+	// .ls	= virtio_fs_ls,
 };
 
 static const struct udevice_id virtio_fs_ids[] = {
@@ -393,7 +403,7 @@ U_BOOT_DRIVER(virtio_fs) = {
 	.of_match = virtio_fs_ids,
 	.ops	= &virtio_fs_ops,
 	.bind	= virtio_fs_bind,
-	.probe	= virtio_fs_probe,
+	.probe	= _virtio_fs_probe,
 	.remove	= virtio_fs_remove,
 	.priv_auto	= sizeof(struct virtio_fs_priv),
 	.flags	= DM_FLAG_ACTIVE_DMA,

@@ -22,7 +22,8 @@ struct fs_plat {
 };
 
 struct fs_ops {
-	int (*ls)(struct udevice *dev, const char *path);
+	int (*lookup_dir)(struct udevice *dev, const char *path,
+			  struct udevice *dirp);
 };
 
 /* Get access to a filesystem's operations */
