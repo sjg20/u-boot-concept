@@ -61,7 +61,9 @@ struct fs_ops {
 /* Get access to a filesystem's operations */
 #define fs_get_ops(dev)		((struct fs_ops *)(dev)->driver->ops)
 
-/** List a directory */
+int fs_mount(struct udevice *dev);
+int unmount(struct udevice *dev);
+
 int fs_lookup_dir(struct udevice *dev, const char *path, struct udevice **dirp);
 
 /*

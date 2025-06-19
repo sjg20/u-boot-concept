@@ -19,9 +19,8 @@
 
 static struct udevice *fs_dev;
 
-int virtio_fs_opendir(const char *filename, struct fs_dir_stream **dirsp)
+int virtio_fs_opendir(const char *filename, struct fs_dir_stream **strmp)
 {
-	struct fs_dir_stream *strm;
 	struct udevice *dev;
 	int ret;
 
@@ -31,23 +30,26 @@ int virtio_fs_opendir(const char *filename, struct fs_dir_stream **dirsp)
 		return log_msg_ret("vld", ret);
 
 	log_debug("open %s\n", dev->name);
-	ret = dir_open(dev, dirsp);
+	ret = dir_open(dev, strmp);
 	if (ret)
 		return log_msg_ret("vdo", ret);
-
-	log_debug("strean\n");
-	strm = calloc(1, sizeof(struct fs_dir_stream));
-	if (!strm)
-		return log_msg_ret("vds", -ENOMEM);
 
 	return 0;
 }
 
-int virtio_fs_readdir(struct fs_dir_stream *dirs, struct fs_dirent **dentp)
+int virtio_fs_readdir(struct fs_dir_stream *strm, struct fs_dirent **dentp)
 {
-	// ret = dir_read(dev, dirsp);
+	int ret;
 
-	// struct udevice *dev
+	log_debug("read %p\n", strm);
+	log_debug("read dev %p\n", strm->dev);
+	log_debug("read name %s\n", strm->dev->name);
+
+	ret = dir_read(strm->dev, strm, dentp);
+	if (ret)
+		return log_msg_ret("vrd", ret);
+	log_debug("read done\n");
+
 	return 0;
 }
 
@@ -69,6 +71,12 @@ int virtio_fs_probe(struct blk_desc *fs_dev_desc,
 		printf("No filesystem (err %dE)\n", ret);
 		return ret;
 	}
+	ret = fs_mount(dev);
+	if (ret) {
+		printf("Cannot mount filesystem (err %dE)\n", ret);
+		return ret;
+	}
+
 	fs_dev = dev;
 
 	return 0;

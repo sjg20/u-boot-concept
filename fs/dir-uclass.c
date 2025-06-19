@@ -5,14 +5,28 @@
  * Copyright 2025 Simon Glass <sjg@chromium.org>
  */
 
+#define LOG_DEBUG
+#define LOG_CATEGORY	UCLASS_DIR
+
 #include <dm.h>
 #include <dir.h>
 
-int dir_open(struct udevice *dev, struct fs_dir_stream **dirsp)
+int dir_open(struct udevice *dev, struct fs_dir_stream **strmp)
 {
 	struct dir_ops *ops = dir_get_ops(dev);
 
-	return ops->open(dev, dirsp);
+	return ops->open(dev, strmp);
+}
+
+int dir_read(struct udevice *dev, struct fs_dir_stream *strm,
+	     struct fs_dirent **dentp)
+{
+	struct dir_ops *ops = dir_get_ops(dev);
+
+	log_debug("dir_read %s\n", dev->name);
+	log_debug("dir_read %p\n", ops);
+
+	return ops->read(dev, strm, dentp);
 }
 
 UCLASS_DRIVER(dir) = {

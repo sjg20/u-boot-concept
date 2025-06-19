@@ -717,9 +717,16 @@ struct fs_dirent *fs_readdir(struct fs_dir_stream *dirs)
 	struct fs_dirent *dirent;
 	int ret;
 
-	fs_set_blk_dev_with_part(dirs->desc, dirs->part);
+	log_debug("set_blk %p %d\n", dirs->desc, dirs->part);
+	if (dirs->desc)
+		fs_set_blk_dev_with_part(dirs->desc, dirs->part);
+	else
+		fs_type = FS_TYPE_VIRTIO;
+	log_debug("info\n");
 	info = fs_get_info(fs_type);
 
+	log_debug("readdir %p\n", info);
+	log_debug("readdir name %s\n", info->name);
 	ret = info->readdir(dirs, &dirent);
 	fs_close();
 	if (ret) {

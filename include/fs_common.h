@@ -65,6 +65,7 @@ struct fs_dirent {
  * File system drivers pass additional private fields with the pointers
  * to this structure.
  *
+ * @dev:	dir device (UCLASS_DIR)
  * @desc:	block device descriptor
  * @part:	partition number
  */

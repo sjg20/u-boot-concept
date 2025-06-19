@@ -47,6 +47,20 @@ int fs_lookup_dir(struct udevice *dev, const char *path, struct udevice **dirp)
 	return ops->lookup_dir(dev, path, dirp);
 }
 
+int fs_mount(struct udevice *dev)
+{
+	struct fs_ops *ops = fs_get_ops(dev);
+
+	return ops->mount(dev);
+}
+
+int fs_unmount(struct udevice *dev)
+{
+	struct fs_ops *ops = fs_get_ops(dev);
+
+	return ops->unmount(dev);
+}
+
 UCLASS_DRIVER(fs) = {
 	.name	= "fs",
 	.id	= UCLASS_FS,

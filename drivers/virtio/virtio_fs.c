@@ -16,6 +16,9 @@
  * Licensed under the GPL-2.0+ license.
  */
 
+#define LOG_DEBUG
+#define LOG_CATEGORY	UCLASS_VIRTIO
+
 #include <dir.h>
 #include <dm.h>
 #include <fs.h>
@@ -401,11 +404,13 @@ static int virtio_fs_dir_open(struct udevice *dev, struct fs_dir_stream **dirsp)
 		log_err("Failed to open root directory: %d\n", ret);
 		return ret;
 	}
+	strm->dev = dev;
 	strm->fh = out.fh;
 	log_debug("fh %llx open_flags %x backing_id %x\n", strm->fh,
 		  out.open_flags, out.backing_id);
 
 	strm->offset = 0;
+	*dirsp = strm;
 
 	return 0;
 }
@@ -421,6 +426,7 @@ int virtio_fs_dir_read(struct udevice *dev, struct fs_dir_stream *strm,
 	char buf[0x100];
 	int ret, size;
 
+	log_debug("virtio_fs_dir_read\n");
 	ret = _virtio_fs_readdir(dev, dir_priv->inode, strm->fh, strm->offset,
 				 buf, sizeof(buf), &size);
 	if (ret) {
