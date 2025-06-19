@@ -5,7 +5,7 @@
 # Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
 
 ifdef CONFIG_XPL_BUILD
-obj-$(CONFIG_SPL_FS_LOADER) += fs_legacy.o
+obj-$(CONFIG_SPL_LEGACY_FS) += fs_legacy.o
 obj-$(CONFIG_SPL_FS_FAT) += fat/
 obj-$(CONFIG_SPL_FS_EXT4) += ext4/
 obj-$(CONFIG_SPL_FS_CBFS) += cbfs/
