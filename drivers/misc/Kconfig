@@ -624,7 +624,7 @@ config FS_LOADER
 	  The consumer driver would then use this loader to program whatever,
 	  ie. the FPGA device.
 
-config SPL_FS_LOADER
+config SPL_LEGACY_FS
 	bool "Enable loader driver for file system in SPL"
 	depends on SPL
 	help
