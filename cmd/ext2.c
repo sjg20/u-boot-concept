@@ -20,7 +20,7 @@
  * Ext2fs support
  */
 #include <command.h>
-#include <fs.h>
+#include <fs_legacy.h>
 
 static int do_ext2ls(struct cmd_tbl *cmdtp, int flag, int argc,
 		     char *const argv[])

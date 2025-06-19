@@ -14,7 +14,7 @@
 #include <config.h>
 #include <exports.h>
 #include <fat.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <log.h>
 #include <asm/byteorder.h>
 #include <asm/unaligned.h>

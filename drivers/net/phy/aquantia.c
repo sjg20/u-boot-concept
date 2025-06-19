@@ -15,7 +15,7 @@
 #include <u-boot/crc.h>
 #include <malloc.h>
 #include <asm/byteorder.h>
-#include <fs.h>
+#include <fs_legacy.h>
 
 #define AQUNTIA_10G_CTL		0x20
 #define AQUNTIA_VENDOR_P1	0xc400

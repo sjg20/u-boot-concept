@@ -6,7 +6,7 @@
 
 #include <command.h>
 #include <display_options.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <malloc.h>
 #include <mapmem.h>
 

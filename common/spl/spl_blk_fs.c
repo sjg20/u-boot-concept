@@ -8,7 +8,7 @@
 #include <spl.h>
 #include <spl_load.h>
 #include <image.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <asm/cache.h>
 #include <asm/io.h>
 

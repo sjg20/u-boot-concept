@@ -15,7 +15,7 @@
 #include <event.h>
 #include <efi_driver.h>
 #include <efi_loader.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <log.h>
 #include <part.h>
 #include <malloc.h>

@@ -7,7 +7,7 @@
 #include <ext_common.h>
 #include <ext4fs.h>
 #include <fat.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <memalign.h>
 #include <spl.h>
 #include <asm/io.h>

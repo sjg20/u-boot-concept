@@ -11,7 +11,7 @@
 #include <bootflow.h>
 #include <bootmeth.h>
 #include <bootstd.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <log.h>
 #include <malloc.h>
 #include <part.h>

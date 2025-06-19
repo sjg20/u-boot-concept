@@ -8,7 +8,7 @@
 #include <fastboot-internal.h>
 #include <fb_mmc.h>
 #include <fb_nand.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <part.h>
 #include <version.h>
 #include <vsprintf.h>

@@ -19,7 +19,7 @@
 #include <part.h>
 #include <ext4fs.h>
 #include <fat.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <sandboxfs.h>
 #include <semihostingfs.h>
 #include <time.h>

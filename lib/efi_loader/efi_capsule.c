@@ -13,7 +13,7 @@
 #include <efi_variable.h>
 #include <env.h>
 #include <fdtdec.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <fwu.h>
 #include <hang.h>
 #include <malloc.h>

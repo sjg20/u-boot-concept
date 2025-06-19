@@ -8,7 +8,7 @@
 #define LOG_CATEGORY LOGC_EFI
 
 #include <charset.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <log.h>
 #include <malloc.h>
 #include <mapmem.h>

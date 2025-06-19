@@ -8,7 +8,7 @@
 #include <config.h>
 #include <command.h>
 #include <env.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <lmb.h>
 #include <asm/global_data.h>
 

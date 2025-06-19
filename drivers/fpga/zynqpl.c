@@ -13,7 +13,7 @@
 #include <time.h>
 #include <asm/cache.h>
 #include <asm/io.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <zynqpl.h>
 #include <linux/delay.h>
 #include <linux/sizes.h>

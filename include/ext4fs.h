@@ -27,7 +27,7 @@
 #ifndef __EXT4__
 #define __EXT4__
 #include <ext_common.h>
-#include <fs.h>
+#include <fs_legacy.h>
 
 struct disk_partition;
 

@@ -15,7 +15,7 @@
 #include <bootstd.h>
 #include <dm.h>
 #include <env.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <image.h>
 #include <malloc.h>
 #include <mapmem.h>

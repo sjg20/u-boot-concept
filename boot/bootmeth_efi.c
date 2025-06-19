@@ -15,7 +15,7 @@
 #include <dm.h>
 #include <efi.h>
 #include <efi_loader.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <malloc.h>
 #include <mapmem.h>
 #include <mmc.h>

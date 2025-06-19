@@ -10,7 +10,7 @@
 #include <command.h>
 #include <env.h>
 #include <fpga.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <gzip.h>
 #include <image.h>
 #include <log.h>

@@ -10,7 +10,7 @@
 #define __EROFS_FS_H
 
 #include <asm/unaligned.h>
-#include <fs.h>
+#include <fs_legacy.h>
 #include <part.h>
 #include <stdint.h>
 #include <compiler.h>

@@ -10,7 +10,7 @@
 #include <bootflow.h>
 #include <bootmeth.h>
 #include <dm.h>
-#include <fs.h>
+#include <fs_legacy.h>
 
 static int host_get_bootflow(struct udevice *dev, struct bootflow_iter *iter,
 			     struct bootflow *bflow)
