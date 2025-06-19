@@ -386,6 +386,79 @@ int virtio_fs_ls(struct udevice *dev, const char *path)
 
 static int virtio_fs_dir_open(struct udevice *dev, struct fs_dir_stream **dirsp)
 {
+	struct virtio_fs_dir_priv *dir_priv = dev_get_priv(dev);
+	struct udevice *fs = dev_get_parent(dev);
+	struct fs_dir_stream *strm;
+	struct fuse_open_out out;
+	int ret;
+
+	strm = malloc(sizeof(struct fs_dir_stream));
+	if (!strm)
+		return log_msg_ret("vso", -ENOMEM);
+
+	ret = _virtio_fs_opendir(fs, dir_priv->inode, &out);
+	if (ret) {
+		log_err("Failed to open root directory: %d\n", ret);
+		return ret;
+	}
+	strm->fh = out.fh;
+	log_debug("fh %llx open_flags %x backing_id %x\n", strm->fh,
+		  out.open_flags, out.backing_id);
+
+	strm->offset = 0;
+
+	return 0;
+}
+
+int virtio_fs_dir_read(struct udevice *dev, struct fs_dir_stream *strm,
+		       struct fs_dirent **dentp)
+{
+	struct virtio_fs_dir_priv *dir_priv = dev_get_priv(dev);
+	struct fuse_direntplus *ent;
+	struct fs_dirent *rec;
+	size_t reclen;
+	struct fuse_attr *attr;
+	char buf[0x100];
+	int ret, size;
+
+	ret = _virtio_fs_readdir(dev, dir_priv->inode, strm->fh, strm->offset,
+				 buf, sizeof(buf), &size);
+	if (ret) {
+		log_err("Failed to read directory: %d\n", ret);
+		return ret;
+	}
+
+	if (!size)
+		return log_msg_ret("vde", -ENOENT);
+
+	log_debug("virtio-fs: size %x\n", size);
+
+	ent = (struct fuse_direntplus *)buf;
+
+	/* this shouldn't happen, but just to be sure... */
+	if (size < FUSE_NAME_OFFSET)
+		return -ENOSPC;
+
+	reclen = FUSE_DIRENTPLUS_SIZE(ent);
+	attr = &ent->entry_out.attr;
+
+	printf("%10llx  %4d  %.*s%s\n", attr->size,
+		       ent->dirent.type, ent->dirent.namelen,
+		       ent->dirent.name,
+		       ent->dirent.type == FS_DT_DIR ? "/" :
+		       ent->dirent.type == FS_DT_LNK ? " >" : "");
+	strm->offset = ent->dirent.off;
+
+	rec = calloc(1, sizeof(struct fs_dirent));
+	if (!rec)
+		return log_msg_ret("vde", -ENOMEM);
+	rec->type = ent->dirent.type;
+	rec->size = attr->size;
+	rec->attr = attr->flags;
+	strlcpy(rec->name, ent->dirent.name,
+		min((int)ent->dirent.namelen, FS_DIRENT_NAME_LEN));
+	*dentp = rec;
+
 	return 0;
 }
 
@@ -406,6 +479,7 @@ static int virtio_fs_dir_remove(struct udevice *dev)
 
 static struct dir_ops virtio_fs_dir_ops = {
 	.open	= virtio_fs_dir_open,
+	.read	= virtio_fs_dir_read,
 };
 
 static const struct udevice_id dir_ids[] = {
@@ -447,6 +521,7 @@ static int virtio_fs_lookup_dir(struct udevice *dev, const char *path,
 	}
 
 	snprintf(dev_name, sizeof(dev_name), "%s.dir", dev->name);
+	ret = -ENOMEM;
 	str = strdup(dev_name);
 	if (!str)
 		goto no_dev_name;
@@ -467,6 +542,10 @@ static int virtio_fs_lookup_dir(struct udevice *dev, const char *path,
 	dir_priv->inode = inode;
 	dir_priv->path = dup_path;
 
+	*dirp = dir;
+
+	return 0;
+
 no_probe:
 	device_unbind(dir);
 no_bind:
@@ -477,7 +556,7 @@ no_dev_name:
 	if (path)
 		ret = virtio_fs_forget(dev, inode);
 
-	return 0;
+	return ret;
 }
 
 static int virtio_fs_mount(struct udevice *dev)

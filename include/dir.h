@@ -8,11 +8,15 @@
 #ifndef __DIR_H
 #define __DIR_H
 
+struct fs_dirent;
 struct fs_dir_stream;
 struct udevice;
 
 struct dir_ops {
 	int (*open)(struct udevice *dev, struct fs_dir_stream **dirsp);
+
+	int (*read)(struct udevice *dev, struct fs_dir_stream *dirs,
+		    struct fs_dirent **dentp);
 };
 
 /* Get access to a directory's operations */

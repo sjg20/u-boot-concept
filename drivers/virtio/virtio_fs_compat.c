@@ -30,7 +30,7 @@ int virtio_fs_opendir(const char *filename, struct fs_dir_stream **dirsp)
 	if (ret)
 		return log_msg_ret("vld", ret);
 
-	log_debug("open\n");
+	log_debug("open %s\n", dev->name);
 	ret = dir_open(dev, dirsp);
 	if (ret)
 		return log_msg_ret("vdo", ret);
