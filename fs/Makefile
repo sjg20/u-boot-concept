@@ -5,13 +5,13 @@
 # Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
 
 ifdef CONFIG_XPL_BUILD
-obj-$(CONFIG_SPL_FS_LOADER) += fs.o
+obj-$(CONFIG_SPL_FS_LOADER) += fs_legacy.o
 obj-$(CONFIG_SPL_FS_FAT) += fat/
 obj-$(CONFIG_SPL_FS_EXT4) += ext4/
 obj-$(CONFIG_SPL_FS_CBFS) += cbfs/
 obj-$(CONFIG_SPL_FS_SQUASHFS) += squashfs/
 else
-obj-y				+= fs.o
+obj-y += fs_legacy.o
 
 obj-$(CONFIG_FS_BTRFS) += btrfs/
 obj-$(CONFIG_FS_CBFS) += cbfs/
