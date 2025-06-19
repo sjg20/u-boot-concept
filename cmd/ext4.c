@@ -34,7 +34,7 @@
 #include <ext4fs.h>
 #include <linux/stat.h>
 #include <malloc.h>
-#include <fs_legacy.h>
+#include <fs_cmd.h>
 
 #if defined(CONFIG_CMD_USB) && defined(CONFIG_USB_STORAGE)
 #include <usb.h>

@@ -6,6 +6,7 @@
  */
 
 #include <command.h>
+#include <fs_cmd.h>
 #include <fs_legacy.h>
 
 static int do_fs_uuid_wrapper(struct cmd_tbl *cmdtp, int flag, int argc,

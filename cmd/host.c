@@ -5,7 +5,7 @@
 
 #include <command.h>
 #include <dm.h>
-#include <fs_legacy.h>
+#include <fs_cmd.h>
 #include <part.h>
 #include <sandbox_host.h>
 #include <dm/device_compat.h>
