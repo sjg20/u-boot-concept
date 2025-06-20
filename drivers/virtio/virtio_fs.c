@@ -470,11 +470,32 @@ int virtio_fs_dir_read(struct udevice *dev, struct fs_dir_stream *strm,
 	return 0;
 }
 
+static int virtio_fs_dir_close(struct udevice *dev, struct fs_dir_stream *strm)
+{
+	struct virtio_fs_dir_priv *dir_priv = dev_get_priv(dev);
+	struct udevice *fs = dev_get_parent(dev);
+	int ret;
+
+	log_debug("close\n");
+	ret = _virtio_fs_releasedir(fs, dir_priv->inode, strm->fh);
+	log_debug("ret %d\n", ret);
+	if (ret) {
+		log_err("Failed to release directory: %d\n", ret);
+		return ret;
+	}
+
+	log_debug("free\n", ret);
+	free(strm);
+	log_debug("close done\n", ret);
+
+	return 0;
+}
+
 static int virtio_fs_dir_remove(struct udevice *dev)
 {
 	struct virtio_fs_dir_priv *dir_priv = dev_get_priv(dev);
 
-	if (dir_priv->path) {
+	if (*dir_priv->path) {
 		int ret;
 
 		ret = virtio_fs_forget(dev, dir_priv->inode);
@@ -488,6 +509,7 @@ static int virtio_fs_dir_remove(struct udevice *dev)
 static struct dir_ops virtio_fs_dir_ops = {
 	.open	= virtio_fs_dir_open,
 	.read	= virtio_fs_dir_read,
+	.close	= virtio_fs_dir_close,
 };
 
 static const struct udevice_id dir_ids[] = {
@@ -513,11 +535,13 @@ static int virtio_fs_lookup_dir(struct udevice *dev, const char *path,
 	struct fuse_entry_out entry;
 	char dev_name[30], *str, *dup_path;
 	struct udevice *dir;
+	bool has_path;
 	u64 inode;
 	int ret;
 
+	has_path = path && strcmp("/", path);
 	inode = priv->root_inode;
-	if (path && strcmp("/", path)) {
+	if (has_path) {
 		log_debug("looking up path '%s' (inode %lld)\n", path, inode);
 		ret = virtio_fs_lookup(dev, inode, path, &entry);
 		if (ret) {
@@ -533,7 +557,7 @@ static int virtio_fs_lookup_dir(struct udevice *dev, const char *path,
 	str = strdup(dev_name);
 	if (!str)
 		goto no_dev_name;
-	dup_path = strdup(path);
+	dup_path = strdup(has_path ? path : "");
 	if (!str)
 		goto no_dev_path;
 

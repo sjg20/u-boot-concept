@@ -17,6 +17,8 @@ struct dir_ops {
 
 	int (*read)(struct udevice *dev, struct fs_dir_stream *strm,
 		    struct fs_dirent **dentp);
+
+	int (*close)(struct udevice *dev, struct fs_dir_stream *strm);
 };
 
 /* Get access to a directory's operations */
@@ -27,5 +29,7 @@ int dir_open(struct udevice *dev, struct fs_dir_stream **strmp);
 
 int dir_read(struct udevice *dev, struct fs_dir_stream *strm,
 	     struct fs_dirent **dentp);
+
+int dir_close(struct udevice *dev, struct fs_dir_stream *strm);
 
 #endif

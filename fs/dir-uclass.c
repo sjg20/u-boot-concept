@@ -29,6 +29,15 @@ int dir_read(struct udevice *dev, struct fs_dir_stream *strm,
 	return ops->read(dev, strm, dentp);
 }
 
+int dir_close(struct udevice *dev, struct fs_dir_stream *strm)
+{
+	struct dir_ops *ops = dir_get_ops(dev);
+
+	log_debug("dir_close %s\n", dev->name);
+
+	return ops->close(dev, strm);
+}
+
 UCLASS_DRIVER(dir) = {
 	.name	= "dir",
 	.id	= UCLASS_DIR,

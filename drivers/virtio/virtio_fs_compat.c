@@ -53,8 +53,13 @@ int virtio_fs_readdir(struct fs_dir_stream *strm, struct fs_dirent **dentp)
 	return 0;
 }
 
-void virtio_fs_closedir(struct fs_dir_stream *dirs)
+void virtio_fs_closedir(struct fs_dir_stream *strm)
 {
+	int ret;
+
+	ret = dir_close(strm->dev, strm);
+	if (ret)
+		log_err("dir_close() failed: %dE\n", ret);
 }
 
 int virtio_fs_probe(struct blk_desc *fs_dev_desc,

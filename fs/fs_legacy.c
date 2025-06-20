@@ -744,7 +744,10 @@ void fs_closedir(struct fs_dir_stream *dirs)
 	if (!dirs)
 		return;
 
-	fs_set_blk_dev_with_part(dirs->desc, dirs->part);
+	if (dirs->desc)
+		fs_set_blk_dev_with_part(dirs->desc, dirs->part);
+	else
+		fs_type = FS_TYPE_VIRTIO;
 	info = fs_get_info(fs_type);
 
 	info->closedir(dirs);
