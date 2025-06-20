@@ -42,9 +42,10 @@ static int virtio_fs_dir_open(struct udevice *dev, struct fs_dir_stream **dirsp)
 	if (!strm)
 		return log_msg_ret("vso", -ENOMEM);
 
+	log_debug("opening inode %lld\n", dir_priv->inode);
 	ret = virtio_fs_opendir(fs, dir_priv->inode, &strm->fh);
 	if (ret) {
-		log_err("Failed to open root directory: %d\n", ret);
+		log_err("Failed to open directory: %d\n", ret);
 		return ret;
 	}
 	strm->dev = dev;
@@ -178,6 +179,7 @@ int virtio_fs_lookup_dir(struct udevice *fsdev, const char *path,
 	u64 inode;
 	int ret;
 
+	inode = FUSE_ROOT_ID;
 	has_path = path && strcmp("/", path);
 	if (has_path) {
 		log_debug("looking up path '%s'\n", path);

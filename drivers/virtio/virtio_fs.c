@@ -139,6 +139,8 @@ int virtio_fs_lookup(struct udevice *dev, const char *name, u64 *entryp)
 {
 	struct virtio_fs_priv *priv = dev_get_priv(dev);
 
+	log_debug("dev '%s': lookup in inode %llx name '%s'\n", dev->name,
+		  priv->root_inode, name);
 	return virtio_fs_lookup_(dev, priv->root_inode, name, entryp);
 }
 
