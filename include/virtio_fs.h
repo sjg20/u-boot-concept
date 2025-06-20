@@ -52,6 +52,7 @@ void virtio_fs_compat_closedir(struct fs_dir_stream *strm);
  *
  * @fs_dev_desc: Block device (not used, can be NULL)
  * @fs_partition: Partition (not used, can be NULL)
+ * Return: 0 if OK, -ve on error
  */
 int virtio_fs_compat_probe(struct blk_desc *fs_dev_desc,
 			   struct disk_partition *fs_partition);

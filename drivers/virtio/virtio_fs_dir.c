@@ -90,13 +90,6 @@ int virtio_fs_dir_read(struct udevice *dev, struct fs_dir_stream *strm,
 
 	reclen = FUSE_DIRENTPLUS_SIZE(ent);
 	attr = &ent->entry_out.attr;
-#if 0
-	printf("%10llx  %4d  %.*s%s\n", attr->size,
-		       ent->dirent.type, ent->dirent.namelen,
-		       ent->dirent.name,
-		       ent->dirent.type == FS_DT_DIR ? "/" :
-		       ent->dirent.type == FS_DT_LNK ? " >" : "");
-#endif
 	strm->offset = ent->dirent.off;
 
 	rec = calloc(1, sizeof(struct fs_dirent));
@@ -106,7 +99,7 @@ int virtio_fs_dir_read(struct udevice *dev, struct fs_dir_stream *strm,
 	rec->size = attr->size;
 	rec->attr = attr->flags;
 	strlcpy(rec->name, ent->dirent.name,
-		min((int)ent->dirent.namelen, FS_DIRENT_NAME_LEN));
+		min((int)ent->dirent.namelen + 1, FS_DIRENT_NAME_LEN));
 	*dentp = rec;
 
 	return 0;

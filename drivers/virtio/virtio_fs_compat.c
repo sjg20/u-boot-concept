@@ -72,7 +72,7 @@ int virtio_fs_compat_probe(struct blk_desc *fs_dev_desc,
 		return ret;
 	}
 	ret = fs_mount(dev);
-	if (ret) {
+	if (ret && ret != -EISCONN) {
 		printf("Cannot mount filesystem (err %dE)\n", ret);
 		return ret;
 	}

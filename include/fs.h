@@ -32,7 +32,7 @@ struct fs_priv {
 
 struct fs_ops {
 	/**
-	 * mount() - Mount the filename
+	 * mount() - Mount the filesystem
 	 *
 	 * @dev: Filesystem device
 	 * Return 0 if OK, -EISCONN if already mounted, other -ve on error
@@ -40,7 +40,7 @@ struct fs_ops {
 	int (*mount)(struct udevice *dev);
 
 	/**
-	 * unmount() - Unmount the filename
+	 * unmount() - Unmount the filesystem
 	 *
 	 * @dev: Filesystem device
 	 * Return 0 if OK, -ENOTCONN if not mounted, other -ve on error
@@ -51,8 +51,9 @@ struct fs_ops {
 	 * lookup_dir() - Look up a directory on a filesystem
 	 *
 	 * @dev: Filesystem device
-	 * @path: Path to look up, empty for the root
+	 * @path: Path to look up, empty or "/" for the root
 	 * @dirp: Returns associated directory device, creating if necessary
+	 * Return 0 if OK, -ENOENT, other -ve on error
 	 */
 	int (*lookup_dir)(struct udevice *dev, const char *path,
 			  struct udevice **dirp);
@@ -61,15 +62,39 @@ struct fs_ops {
 /* Get access to a filesystem's operations */
 #define fs_get_ops(dev)		((struct fs_ops *)(dev)->driver->ops)
 
+/**
+ * fs_mount() - Mount the filesystem
+ *
+ * @dev: Filesystem device
+ * Return 0 if OK, -EISCONN if already mounted, other -ve on error
+ */
 int fs_mount(struct udevice *dev);
+
+/**
+ * fs_unmount() - Unmount the filesystem
+ *
+ * @dev: Filesystem device
+ * Return 0 if OK, -ENOTCONN if not mounted, other -ve on error
+ */
 int unmount(struct udevice *dev);
 
+/**
+ * fs_lookup_dir() - Look up a directory on a filesystem
+ *
+ * @dev: Filesystem device
+ * @path: Path to look up, empty or "/" for the root
+ * @dirp: Returns associated directory device, creating if necessary
+ * Return 0 if OK, -ENOENT, other -ve on error
+ */
 int fs_lookup_dir(struct udevice *dev, const char *path, struct udevice **dirp);
 
-/*
-int fs_read(struct udevice *dev, const char *dirname);
-*/
-
+/**
+ * fs_get_by_name() - Find a filesystem given its name
+ *
+ * @name: Filesystem name, e.g. 'root'
+ * @devp: Returns UCLASS_FS device on success
+ * Return 0 if OK, -ENOENT, other -ve on error
+ */
 int fs_get_by_name(const char *name, struct udevice **devp);
 
 #endif

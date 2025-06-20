@@ -11,10 +11,9 @@
 
 int fs_ls(struct udevice *dev, const char *dirname)
 {
-	return -ENOSYS;
-	// struct fs_ops *ops = fs_get_ops(dev);
+	/* not yet implement */
 
-	// return ops->o(dev, dirname);
+	return -ENOSYS;
 }
 
 int fs_get_by_name(const char *name, struct udevice **devp)
