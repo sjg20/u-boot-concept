@@ -16,7 +16,6 @@
  * Licensed under the GPL-2.0+ license.
  */
 
-#define LOG_DEBUG
 #define LOG_CATEGORY	UCLASS_VIRTIO
 
 #include <dir.h>
@@ -449,12 +448,13 @@ int virtio_fs_dir_read(struct udevice *dev, struct fs_dir_stream *strm,
 
 	reclen = FUSE_DIRENTPLUS_SIZE(ent);
 	attr = &ent->entry_out.attr;
-
+#if 0
 	printf("%10llx  %4d  %.*s%s\n", attr->size,
 		       ent->dirent.type, ent->dirent.namelen,
 		       ent->dirent.name,
 		       ent->dirent.type == FS_DT_DIR ? "/" :
 		       ent->dirent.type == FS_DT_LNK ? " >" : "");
+#endif
 	strm->offset = ent->dirent.off;
 
 	rec = calloc(1, sizeof(struct fs_dirent));
@@ -484,9 +484,9 @@ static int virtio_fs_dir_close(struct udevice *dev, struct fs_dir_stream *strm)
 		return ret;
 	}
 
-	log_debug("free\n", ret);
+	log_debug("free\n");
 	free(strm);
-	log_debug("close done\n", ret);
+	log_debug("close done\n");
 
 	return 0;
 }

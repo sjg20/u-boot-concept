@@ -3,7 +3,6 @@
  * Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
  */
 
-#define LOG_DEBUG
 #define LOG_CATEGORY LOGC_CORE
 
 #include <abuf.h>

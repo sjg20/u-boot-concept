@@ -5,7 +5,6 @@
  * Copyright 2025 Simon Glass <sjg@chromium.org>
  */
 
-#define LOG_DEBUG
 #define LOG_CATEGORY	UCLASS_DIR
 
 #include <dm.h>

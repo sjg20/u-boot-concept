@@ -7,7 +7,6 @@
  *
  */
 
-#define LOG_DEBUG
 #define LOG_CATEGORY	UCLASS_VIRTIO
 
 #include <dir.h>
