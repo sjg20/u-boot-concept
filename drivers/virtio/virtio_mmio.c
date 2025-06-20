@@ -168,7 +168,7 @@ static int virtio_mmio_get_features(struct udevice *udev, u64 *features)
 static int virtio_mmio_set_features(struct udevice *udev)
 {
 	struct virtio_mmio_priv *priv = dev_get_priv(udev);
-	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(udev);
+	struct virtio_dev_plat *uc_priv = dev_get_uclass_priv(udev);
 
 	/* Make sure there is are no mixed devices */
 	if (priv->version == 2 && uc_priv->legacy) {
@@ -295,7 +295,7 @@ static void virtio_mmio_del_vq(struct virtqueue *vq)
 
 static int virtio_mmio_del_vqs(struct udevice *udev)
 {
-	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(udev);
+	struct virtio_dev_plat *uc_priv = dev_get_uclass_priv(udev);
 	struct virtqueue *vq, *n;
 
 	list_for_each_entry_safe(vq, n, &uc_priv->vqs, list)
@@ -347,7 +347,7 @@ static int virtio_mmio_of_to_plat(struct udevice *udev)
 static int virtio_mmio_probe(struct udevice *udev)
 {
 	struct virtio_mmio_priv *priv = dev_get_priv(udev);
-	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(udev);
+	struct virtio_dev_plat *uc_priv = dev_get_uclass_priv(udev);
 	u32 magic;
 
 	/* Check magic value */

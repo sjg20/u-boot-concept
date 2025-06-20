@@ -477,13 +477,14 @@ int blk_get_device_part_str(const char *ifname, const char *dev_part_str,
 	if (!strcmp(ifname, "hostfs")) {
 		strcpy((char *)info->type, BOOT_PART_TYPE);
 		strcpy((char *)info->name, "Host filesystem");
-
+		info->fs_type = FS_TYPE_SANDBOX;
 		return 0;
 	}
 #endif
 	if (IS_ENABLED(CONFIG_VIRTIO_FS) && !strcmp(ifname, "virtiofs")) {
 		strcpy((char *)info->type, BOOT_PART_TYPE);
 		strcpy((char *)info->name, "Virtio filesystem");
+		info->fs_type = FS_TYPE_VIRTIO;
 
 		return 0;
 	}

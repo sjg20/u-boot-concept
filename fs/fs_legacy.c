@@ -509,6 +509,9 @@ int fs_set_blk_dev(const char *ifname, const char *dev_part_str, int fstype)
 
 		if (!fs_dev_desc && !info->null_dev_desc_ok)
 			continue;
+		if (fs_partition.fs_type &&
+				fs_partition.fs_type != info->fstype)
+			continue;
 
 		log_debug("probe %s\n", info->name);
 		if (!info->probe(fs_dev_desc, &fs_partition)) {

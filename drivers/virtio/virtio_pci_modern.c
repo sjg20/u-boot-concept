@@ -234,7 +234,7 @@ static int virtio_pci_get_features(struct udevice *udev, u64 *features)
 static int virtio_pci_set_features(struct udevice *udev)
 {
 	struct virtio_pci_priv *priv = dev_get_priv(udev);
-	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(udev);
+	struct virtio_dev_plat *uc_priv = dev_get_uclass_priv(udev);
 
 	if (!__virtio_test_bit(udev, VIRTIO_F_VERSION_1)) {
 		debug("virtio: device uses modern interface but does not have VIRTIO_F_VERSION_1\n");
@@ -320,7 +320,7 @@ static void virtio_pci_del_vq(struct virtqueue *vq)
 
 static int virtio_pci_del_vqs(struct udevice *udev)
 {
-	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(udev);
+	struct virtio_dev_plat *uc_priv = dev_get_uclass_priv(udev);
 	struct virtqueue *vq, *n;
 
 	list_for_each_entry_safe(vq, n, &uc_priv->vqs, list)
@@ -488,7 +488,7 @@ static int virtio_pci_bind(struct udevice *udev)
 static int virtio_pci_probe(struct udevice *udev)
 {
 	struct pci_child_plat *pplat = dev_get_parent_plat(udev);
-	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(udev);
+	struct virtio_dev_plat *uc_priv = dev_get_uclass_priv(udev);
 	struct virtio_pci_priv *priv = dev_get_priv(udev);
 	u16 subvendor;
 	u8 revision;

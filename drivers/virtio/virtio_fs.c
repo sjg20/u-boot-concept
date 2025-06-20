@@ -343,14 +343,14 @@ static int virtio_fs_remove(struct udevice *dev)
 
 static int virtio_fs_bind(struct udevice *dev)
 {
-	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(dev->parent);
-	struct fs_plat *uc_plat = dev_get_uclass_priv(dev);
+	struct virtio_dev_plat *virtio_plat = dev_get_uclass_plat(dev->parent);
+	struct fs_plat *plat = dev_get_uclass_plat(dev);
 
 	static_assert(VIRTIO_FS_TAG_SIZE < FS_MAX_NAME_LEN);
-	uc_plat->name[VIRTIO_FS_TAG_SIZE] = '\0';
+	plat->name[VIRTIO_FS_TAG_SIZE] = '\0';
 
 	/* Indicate what driver features we support */
-	virtio_driver_features_init(uc_priv, NULL, 0, NULL, 0);
+	virtio_driver_features_init(virtio_plat, NULL, 0, NULL, 0);
 
 	return 0;
 }

@@ -1696,6 +1696,10 @@
 
 	sandbox_virtio2 {
 		compatible = "sandbox,virtio2";
+
+		virtio-fs {
+			compatible = "virtio,fs";
+		};
 	};
 
 	sandbox-virtio-blk {

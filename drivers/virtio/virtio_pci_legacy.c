@@ -178,7 +178,7 @@ static int virtio_pci_get_features(struct udevice *udev, u64 *features)
 static int virtio_pci_set_features(struct udevice *udev)
 {
 	struct virtio_pci_priv *priv = dev_get_priv(udev);
-	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(udev);
+	struct virtio_dev_plat *uc_priv = dev_get_uclass_priv(udev);
 
 	/* Make sure we don't have any features > 32 bits! */
 	WARN_ON((u32)uc_priv->features != uc_priv->features);
@@ -239,7 +239,7 @@ static void virtio_pci_del_vq(struct virtqueue *vq)
 
 static int virtio_pci_del_vqs(struct udevice *udev)
 {
-	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(udev);
+	struct virtio_dev_plat *uc_priv = dev_get_uclass_priv(udev);
 	struct virtqueue *vq, *n;
 
 	list_for_each_entry_safe(vq, n, &uc_priv->vqs, list)
@@ -292,7 +292,7 @@ static int virtio_pci_bind_legacy(struct udevice *udev)
 static int virtio_pci_probe_legacy(struct udevice *udev)
 {
 	struct pci_child_plat *pplat = dev_get_parent_plat(udev);
-	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(udev);
+	struct virtio_dev_plat *uc_priv = dev_get_uclass_priv(udev);
 	struct virtio_pci_priv *priv = dev_get_priv(udev);
 	u16 subvendor, subdevice;
 	u8 revision;

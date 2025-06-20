@@ -50,7 +50,7 @@ DM_TEST(dm_test_virtio_base, UTF_SCAN_PDATA | UTF_SCAN_FDT);
 static int dm_test_virtio_all_ops(struct unit_test_state *uts)
 {
 	struct udevice *bus, *dev;
-	struct virtio_dev_priv *uc_priv;
+	struct virtio_dev_plat *uc_priv;
 	uint offset = 0, len = 0, nvqs = 1;
 	void *buffer = NULL;
 	u8 status;
@@ -128,7 +128,7 @@ DM_TEST(dm_test_virtio_remove, UTF_SCAN_PDATA | UTF_SCAN_FDT);
 static int dm_test_virtio_ring(struct unit_test_state *uts)
 {
 	struct udevice *bus, *dev;
-	struct virtio_dev_priv *uc_priv;
+	struct virtio_dev_plat *uc_priv;
 	struct virtqueue *vq;
 	struct virtio_sg sg[2];
 	struct virtio_sg *sgs[2];

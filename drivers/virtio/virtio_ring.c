@@ -290,7 +290,7 @@ static struct virtqueue *__vring_new_virtqueue(unsigned int index,
 	unsigned int i;
 	struct virtqueue *vq;
 	struct vring_desc_shadow *vring_desc_shadow;
-	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(udev);
+	struct virtio_dev_plat *uc_priv = dev_get_uclass_priv(udev);
 	struct udevice *vdev = uc_priv->vdev;
 
 	vq = malloc(sizeof(*vq));
@@ -334,7 +334,7 @@ struct virtqueue *vring_create_virtqueue(unsigned int index, unsigned int num,
 					 unsigned int vring_align,
 					 struct udevice *udev)
 {
-	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(udev);
+	struct virtio_dev_plat *uc_priv = dev_get_uclass_priv(udev);
 	struct udevice *vdev = uc_priv->vdev;
 	struct virtqueue *vq;
 	void *queue = NULL;
