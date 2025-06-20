@@ -419,6 +419,7 @@ int virtio_fs_dir_read(struct udevice *dev, struct fs_dir_stream *strm,
 		       struct fs_dirent **dentp)
 {
 	struct virtio_fs_dir_priv *dir_priv = dev_get_priv(dev);
+	struct udevice *fs = dev_get_parent(dev);
 	struct fuse_direntplus *ent;
 	struct fs_dirent *rec;
 	size_t reclen;
@@ -426,8 +427,9 @@ int virtio_fs_dir_read(struct udevice *dev, struct fs_dir_stream *strm,
 	char buf[0x100];
 	int ret, size;
 
-	log_debug("virtio_fs_dir_read\n");
-	ret = _virtio_fs_readdir(dev, dir_priv->inode, strm->fh, strm->offset,
+	log_debug("virtio_fs_dir_read %lld strm %p\n", dir_priv->inode, strm);
+	log_debug("offset %lld\n", strm->offset);
+	ret = _virtio_fs_readdir(fs, dir_priv->inode, strm->fh, strm->offset,
 				 buf, sizeof(buf), &size);
 	if (ret) {
 		log_err("Failed to read directory: %d\n", ret);
