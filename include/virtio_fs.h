@@ -8,10 +8,52 @@ struct disk_partition;
 struct fs_dirent;
 struct fs_dir_stream;
 
-int virtio_fs_opendir(const char *filename, struct fs_dir_stream **dirsp);
-int virtio_fs_readdir(struct fs_dir_stream *dirs, struct fs_dirent **dentp);
-void virtio_fs_closedir(struct fs_dir_stream *dirs);
-int virtio_fs_probe(struct blk_desc *fs_dev_desc,
-		    struct disk_partition *fs_partition);
+/**
+ * virtio_fs_compat_opendir() - Open a directory
+ *
+ * This is a compatibility interface for struct fstype_info
+ *
+ * @fname: Path to directory to open
+ * @strmp: Returns an allocated pointer to the new stream
+ * Return 0 if OK, -ve on error
+ */
+int virtio_fs_compat_opendir(const char *fname, struct fs_dir_stream **strmp);
+
+/**
+ * virtio_fs_compat_readdir() - Read a single directory entry
+ *
+ * This is a compatibility interface for struct fstype_info
+ *
+ * @strm: Directory stream as created by virtio_fs_compat_opendir()
+ * @dentp: Return an allocated entry on success
+ * Return: 0 if OK, -ENOENT if no more entries, other -ve value on other error
+ */
+int virtio_fs_compat_readdir(struct fs_dir_stream *strm,
+			     struct fs_dirent **dentp);
+
+/**
+ * virtio_fs_compat_closedir() - Stop reading the directory
+ *
+ * This is a compatibility interface for struct fstype_info
+ *
+ * Frees @strm and releases the directory
+ *
+ * @strm: Directory stream as created by virtio_fs_compat_opendir()
+ */
+void virtio_fs_compat_closedir(struct fs_dir_stream *strm);
+
+/**
+ * virtio_fs_compat_probe() - Probe for a virtio-fs filesystem
+ *
+ * This is a compatibility interface for struct fstype_info
+ *
+ * For now, this just locates the first available UCLASS_FS device and sets a
+ * global variable to it, for use by the above virtio_fs_compat_...() functions.
+ *
+ * @fs_dev_desc: Block device (not used, can be NULL)
+ * @fs_partition: Partition (not used, can be NULL)
+ */
+int virtio_fs_compat_probe(struct blk_desc *fs_dev_desc,
+			   struct disk_partition *fs_partition);
 
 #endif
