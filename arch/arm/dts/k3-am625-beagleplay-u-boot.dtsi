@@ -179,6 +179,9 @@
 				};
 			};
 		};
+
+		fdtmap {
+		};
 	};
 
 	u-boot_unsigned {
@@ -228,6 +231,9 @@
 					fdt = "fdt-0";
 				};
 			};
+		};
+
+		fdtmap {
 		};
 	};
 };

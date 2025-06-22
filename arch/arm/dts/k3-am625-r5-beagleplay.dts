@@ -120,6 +120,8 @@
 			filename = "combined-dm-cfg.bin";
 			type = "blob-ext";
 		};
+		fdtmap {
+		};
 
 	};
 };
