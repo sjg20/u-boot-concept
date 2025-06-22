@@ -110,14 +110,14 @@ static int simple_ui_show(struct udevice *dev)
 	ret = expo_edit_str(priv->expo, STR_MENU_TITLE, NULL, &buf);
 	if (ret)
 		return log_msg_ret("set", ret);
-	abuf_printf(buf, "Sourceboot (boot schema)");
+	abuf_printf(buf, "U-Boot Menu");
 
 	if (priv->logo) {
 		ret = scene_img_set_data(scn, OBJ_U_BOOT_LOGO,
 					       priv->logo, priv->logo_size);
 		if (ret)
 			return log_msg_ret("log", ret);
-		ret = scene_obj_set_pos(scn, OBJ_U_BOOT_LOGO, 1135, 10);
+		ret = scene_obj_set_pos(scn, OBJ_U_BOOT_LOGO, 1167, 100);
 		if (ret)
 			return log_msg_ret("lop", ret);
 	}

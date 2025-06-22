@@ -71,7 +71,7 @@ int bootflow_menu_new(struct expo **expp)
 	logo = video_get_u_boot_logo(NULL);
 	if (logo) {
 		ret |= scene_img(scn, "ulogo", OBJ_U_BOOT_LOGO, logo, NULL);
-		ret |= scene_obj_set_pos(scn, OBJ_U_BOOT_LOGO, 1145, 100);
+		// ret |= scene_obj_set_pos(scn, OBJ_U_BOOT_LOGO, 1145, 100);
 	}
 
 	ret |= scene_txt_str(scn, "prompt1a", OBJ_PROMPT1A, STR_PROMPT1A,

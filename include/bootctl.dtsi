@@ -119,6 +119,6 @@
 		compatible = "bootctl,simple-ui", "bootctl,ui";
 		graphical = "if-available";
 		textual = "if-available";
-		logo = /incbin/("/home/sglass/u/boot/bootctl/canonical.bmp");
+		logo = /incbin/("/home/sglass/u/drivers/video/u_boot_logo.bmp");
 	};
 };
