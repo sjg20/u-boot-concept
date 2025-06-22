@@ -51,6 +51,7 @@ mount -o remount,mode=755 /sys/kernel/debug/tracing
 EOF
 
 # Start recording
+echo "starting perf"
 sleep 1
 cd $DIR
 sudo perf record -a -e kvm:kvm_entry -e kvm:kvm_pio -e sched:sched_process_exec \
@@ -60,16 +61,23 @@ PERF_PID=$!
 # Run QEWU with qboot or U-Boot (builds U-Boot automatically)
 sleep 1
 cd ~/u
-./scripts/build-qemu -a x86 ${QBOOT} -rs -v -K /boot/vmlinuz-${version} \
-	-k -d root.img -I /boot/initrd.img-${version} -C -U ${uuid} -s \
+echo "building U-Boot"
+./scripts/build-qemu -a x86 ${QBOOT} -s -v -K /boot/vmlinuz-${version} \
+	-k -d root.img -I /boot/initrd.img-${version} -C -U ${uuid} \
+	2>&1 >/tmp/qemu.log
+
+echo "running U-Boot in QEMU"
+./scripts/build-qemu -a x86 ${QBOOT} -rsB -v -K /boot/vmlinuz-${version} \
+	-k -d root.img -I /boot/initrd.img-${version} -C -U ${uuid} \
 	2>&1 >/tmp/qemu.log &
 
 while [[ -z "$QEMU_PID" ]]; do
 	QEMU_PID=$(pgrep qemu-system-x86)
 done
 
-# Wait for it to boot
-sleep 5
+# Wait for it to boot (increase this on slow machines)
+echo "waiting for a bit"
+sleep 2
 
 # Kill QEMU and the perf process
 kill $QEMU_PID
@@ -86,5 +94,6 @@ sudo chmod a+r $PERF_DATA
 perf script -g python 2>/dev/null
 
 # Run our script which looks for timing points and prints the results
+echo "parsing perf results"
 perf script -s ~/perf-script.py -s ${DIR}/perf-script/qemu-perf-script.py \
 	-i $PERF_DATA
