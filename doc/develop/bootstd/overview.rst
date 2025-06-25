@@ -795,8 +795,8 @@ partitions on bootdevs and using bootmeths to find bootflows.
 
 How about bootdevs which are not block devices? They are handled by the same
 methods as above, but with a different implementation. For example, the bootmeth
-for PXE boot (over a network) uses `tftp` to read files rather than `fs_read()`.
-But other than that it is very similar.
+for PXE boot (over a network) uses `tftp` to read files rather than
+`fs_legacy_read()`. But other than that it is very similar.
 
 
 Tests

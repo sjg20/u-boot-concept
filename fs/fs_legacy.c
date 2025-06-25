@@ -638,8 +638,8 @@ static int _fs_read(const char *filename, ulong addr, loff_t offset, loff_t len,
 	return ret;
 }
 
-int fs_read(const char *filename, ulong addr, loff_t offset, loff_t len,
-	    loff_t *actread)
+int fs_legacy_read(const char *filename, ulong addr, loff_t offset, loff_t len,
+		   loff_t *actread)
 {
 	return _fs_read(filename, addr, offset, len, 0, actread);
 }
@@ -1141,7 +1141,7 @@ int fs_read_alloc(const char *fname, ulong size, uint align, struct abuf *buf)
 		return log_msg_ret("buf", -ENOMEM);
 	buf->size--;
 
-	ret = fs_read(fname, abuf_addr(buf), 0, size, &bytes_read);
+	ret = fs_legacy_read(fname, abuf_addr(buf), 0, size, &bytes_read);
 	if (ret) {
 		abuf_uninit(buf);
 		return log_msg_ret("read", ret);

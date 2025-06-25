@@ -155,8 +155,8 @@ static int aquantia_read_fw(u8 **fw_addr, size_t *fw_length)
 	if (ret < 0)
 		goto cleanup;
 
-	ret = fs_read(CONFIG_PHY_AQUANTIA_FW_NAME, (ulong)addr, 0, length,
-		      &read);
+	ret = fs_legacy_read(CONFIG_PHY_AQUANTIA_FW_NAME, (ulong)addr, 0,
+			     length, &read);
 	if (ret < 0)
 		goto cleanup;
 
