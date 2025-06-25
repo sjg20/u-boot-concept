@@ -146,7 +146,7 @@ void virtio_add_status(struct udevice *vdev, u8 status)
 
 int virtio_finalize_features(struct udevice *vdev)
 {
-	struct virtio_dev_plat *uc_priv = dev_get_uclass_plat(vdev->parent);
+	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(vdev->parent);
 	u8 status;
 	int ret;
 
@@ -169,16 +169,16 @@ int virtio_finalize_features(struct udevice *vdev)
 	return 0;
 }
 
-void virtio_driver_features_init(struct virtio_dev_plat *plat,
+void virtio_driver_features_init(struct virtio_dev_priv *priv,
 				 const u32 *feature,
 				 u32 feature_size,
 				 const u32 *feature_legacy,
 				 u32 feature_legacy_size)
 {
-	plat->feature_table = feature;
-	plat->feature_table_size = feature_size;
-	plat->feature_table_legacy = feature_legacy;
-	plat->feature_table_size_legacy = feature_legacy_size;
+	priv->feature_table = feature;
+	priv->feature_table_size = feature_size;
+	priv->feature_table_legacy = feature_legacy;
+	priv->feature_table_size_legacy = feature_legacy_size;
 }
 
 int virtio_init(void)
@@ -211,19 +211,19 @@ static int virtio_uclass_pre_probe(struct udevice *udev)
 
 static int virtio_uclass_post_probe(struct udevice *udev)
 {
-	struct virtio_dev_plat *uc_plat = dev_get_uclass_plat(udev);
+	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(udev);
 	char dev_name[30], *str;
 	struct udevice *vdev;
 	const char *name;
 	int ret;
 
-	if (uc_plat->device >= VIRTIO_ID_MAX_NUM) {
+	if (uc_priv->device >= VIRTIO_ID_MAX_NUM) {
 		debug("(%s): virtio device ID %d exceeds maximum num\n",
-		      udev->name, uc_plat->device);
+		      udev->name, uc_priv->device);
 		return 0;
 	}
 
-	name = virtio_drv_name[uc_plat->device];
+	name = virtio_drv_name[uc_priv->device];
 	if (!name) {
 		debug("(%s): underlying virtio device driver unavailable\n",
 		      udev->name);
@@ -246,20 +246,20 @@ static int virtio_uclass_post_probe(struct udevice *udev)
 	}
 	device_set_name_alloced(vdev);
 
-	if (uc_plat->device == VIRTIO_ID_BLOCK && !IS_ENABLED(CONFIG_SANDBOX)) {
+	if (uc_priv->device == VIRTIO_ID_BLOCK && !IS_ENABLED(CONFIG_SANDBOX)) {
 		ret = bootdev_setup_for_sibling_blk(vdev, "virtio_bootdev");
 		if (ret)
 			return log_msg_ret("bootdev", ret);
 	}
 
-	INIT_LIST_HEAD(&uc_plat->vqs);
+	INIT_LIST_HEAD(&uc_priv->vqs);
 
 	return 0;
 }
 
 static int virtio_uclass_child_pre_probe(struct udevice *vdev)
 {
-	struct virtio_dev_plat *uc_plat = dev_get_uclass_plat(vdev->parent);
+	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(vdev->parent);
 	u64 device_features;
 	u64 driver_features;
 	u64 driver_features_legacy;
@@ -277,7 +277,7 @@ static int virtio_uclass_child_pre_probe(struct udevice *vdev)
 	 * Save the real virtio device (eg: virtio-net, virtio-blk) to
 	 * the transport (parent) device's uclass priv for future use.
 	 */
-	uc_plat->vdev = vdev;
+	uc_priv->vdev = vdev;
 
 	/*
 	 * We always start by resetting the device, in case a previous driver
@@ -295,22 +295,22 @@ static int virtio_uclass_child_pre_probe(struct udevice *vdev)
 	debug("(%s) plain device features supported %016llx\n",
 	      vdev->name, device_features);
 	if (!(device_features & (1ULL << VIRTIO_F_VERSION_1)))
-		uc_plat->legacy = true;
+		uc_priv->legacy = true;
 
 	/* Figure out what features the driver supports */
 	driver_features = 0;
-	for (i = 0; i < uc_plat->feature_table_size; i++) {
-		unsigned int f = uc_plat->feature_table[i];
+	for (i = 0; i < uc_priv->feature_table_size; i++) {
+		unsigned int f = uc_priv->feature_table[i];
 
 		WARN_ON(f >= 64);
 		driver_features |= (1ULL << f);
 	}
 
 	/* Some drivers have a separate feature table for virtio v1.0 */
-	if (uc_plat->feature_table_legacy) {
+	if (uc_priv->feature_table_legacy) {
 		driver_features_legacy = 0;
-		for (i = 0; i < uc_plat->feature_table_size_legacy; i++) {
-			unsigned int f = uc_plat->feature_table_legacy[i];
+		for (i = 0; i < uc_priv->feature_table_size_legacy; i++) {
+			unsigned int f = uc_priv->feature_table_legacy[i];
 
 			WARN_ON(f >= 64);
 			driver_features_legacy |= (1ULL << f);
@@ -319,12 +319,12 @@ static int virtio_uclass_child_pre_probe(struct udevice *vdev)
 		driver_features_legacy = driver_features;
 	}
 
-	if (uc_plat->legacy) {
+	if (uc_priv->legacy) {
 		debug("(%s): legacy virtio device\n", vdev->name);
-		uc_plat->features = driver_features_legacy & device_features;
+		uc_priv->features = driver_features_legacy & device_features;
 	} else {
 		debug("(%s): v1.0 complaint virtio device\n", vdev->name);
-		uc_plat->features = driver_features & device_features;
+		uc_priv->features = driver_features & device_features;
 	}
 
 	/* Transport features always preserved to pass to finalize_features */
@@ -334,7 +334,7 @@ static int virtio_uclass_child_pre_probe(struct udevice *vdev)
 			__virtio_set_bit(vdev->parent, i);
 
 	debug("(%s) final negotiated features supported %016llx\n",
-	      vdev->name, uc_plat->features);
+	      vdev->name, uc_priv->features);
 	ret = virtio_finalize_features(vdev);
 	if (ret)
 		goto err;
@@ -388,7 +388,7 @@ UCLASS_DRIVER(virtio) = {
 	.post_probe = virtio_uclass_post_probe,
 	.child_pre_probe = virtio_uclass_child_pre_probe,
 	.child_post_probe = virtio_uclass_child_post_probe,
-	.per_device_plat_auto	= sizeof(struct virtio_dev_plat),
+	.per_device_auto	= sizeof(struct virtio_dev_priv),
 };
 
 struct bootdev_ops virtio_bootdev_ops = {

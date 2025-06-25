@@ -79,9 +79,9 @@ static int virtio_sandbox_get_features(struct udevice *udev, u64 *features)
 static int virtio_sandbox_set_features(struct udevice *udev)
 {
 	struct virtio_sandbox_priv *priv = dev_get_priv(udev);
-	struct virtio_dev_plat *uc_plat = dev_get_uclass_plat(udev);
+	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(udev);
 
-	priv->driver_features = uc_plat->features;
+	priv->driver_features = uc_priv->features;
 
 	return 0;
 }
@@ -123,10 +123,10 @@ static void virtio_sandbox_del_vq(struct virtqueue *vq)
 
 static int virtio_sandbox_del_vqs(struct udevice *udev)
 {
-	struct virtio_dev_plat *uc_plat = dev_get_uclass_plat(udev);
+	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(udev);
 	struct virtqueue *vq, *n;
 
-	list_for_each_entry_safe(vq, n, &uc_plat->vqs, list)
+	list_for_each_entry_safe(vq, n, &uc_priv->vqs, list)
 		virtio_sandbox_del_vq(vq);
 
 	return 0;
@@ -156,13 +156,13 @@ static int virtio_sandbox_notify(struct udevice *udev, struct virtqueue *vq)
 static int virtio_sandbox_probe(struct udevice *udev)
 {
 	struct virtio_sandbox_priv *priv = dev_get_priv(udev);
-	struct virtio_dev_plat *uc_plat = dev_get_uclass_plat(udev);
+	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(udev);
 
 	/* fake some information for testing */
 	priv->device_features = BIT_ULL(VIRTIO_F_VERSION_1);
-	uc_plat->device = dev_read_u32_default(udev, "virtio-type",
+	uc_priv->device = dev_read_u32_default(udev, "virtio-type",
 					       VIRTIO_ID_RNG);
-	uc_plat->vendor = ('u' << 24) | ('b' << 16) | ('o' << 8) | 't';
+	uc_priv->vendor = ('u' << 24) | ('b' << 16) | ('o' << 8) | 't';
 
 	return 0;
 }

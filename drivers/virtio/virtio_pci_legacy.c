@@ -178,13 +178,13 @@ static int virtio_pci_get_features(struct udevice *udev, u64 *features)
 static int virtio_pci_set_features(struct udevice *udev)
 {
 	struct virtio_pci_priv *priv = dev_get_priv(udev);
-	struct virtio_dev_plat *uc_plat = dev_get_uclass_plat(udev);
+	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(udev);
 
 	/* Make sure we don't have any features > 32 bits! */
-	WARN_ON((u32)uc_plat->features != uc_plat->features);
+	WARN_ON((u32)uc_priv->features != uc_priv->features);
 
 	/* We only support 32 feature bits */
-	iowrite32(uc_plat->features, priv->ioaddr + VIRTIO_PCI_GUEST_FEATURES);
+	iowrite32(uc_priv->features, priv->ioaddr + VIRTIO_PCI_GUEST_FEATURES);
 
 	return 0;
 }
@@ -239,10 +239,10 @@ static void virtio_pci_del_vq(struct virtqueue *vq)
 
 static int virtio_pci_del_vqs(struct udevice *udev)
 {
-	struct virtio_dev_plat *uc_plat = dev_get_uclass_plat(udev);
+	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(udev);
 	struct virtqueue *vq, *n;
 
-	list_for_each_entry_safe(vq, n, &uc_plat->vqs, list)
+	list_for_each_entry_safe(vq, n, &uc_priv->vqs, list)
 		virtio_pci_del_vq(vq);
 
 	return 0;
@@ -292,7 +292,7 @@ static int virtio_pci_bind(struct udevice *udev)
 static int virtio_pci_probe(struct udevice *udev)
 {
 	struct pci_child_plat *pplat = dev_get_parent_plat(udev);
-	struct virtio_dev_plat *uc_plat = dev_get_uclass_plat(udev);
+	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(udev);
 	struct virtio_pci_priv *priv = dev_get_priv(udev);
 	u16 subvendor, subdevice;
 	u8 revision;
@@ -315,8 +315,8 @@ static int virtio_pci_probe(struct udevice *udev)
 	 */
 	dm_pci_read_config16(udev, PCI_SUBSYSTEM_ID, &subdevice);
 	dm_pci_read_config16(udev, PCI_SUBSYSTEM_VENDOR_ID, &subvendor);
-	uc_plat->device = subdevice;
-	uc_plat->vendor = subvendor;
+	uc_priv->device = subdevice;
+	uc_priv->vendor = subvendor;
 
 	priv->ioaddr = dm_pci_map_bar(udev, PCI_BASE_ADDRESS_0, 0, 0,
 				      PCI_REGION_TYPE, PCI_REGION_IO);
@@ -326,7 +326,7 @@ static int virtio_pci_probe(struct udevice *udev)
 	      udev->name, (ulong)priv->ioaddr);
 
 	debug("(%s): device (%d) vendor (%08x) version (%d)\n", udev->name,
-	      uc_plat->device, uc_plat->vendor, revision);
+	      uc_priv->device, uc_priv->vendor, revision);
 
 	return 0;
 }

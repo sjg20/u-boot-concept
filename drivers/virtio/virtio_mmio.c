@@ -168,20 +168,20 @@ static int virtio_mmio_get_features(struct udevice *udev, u64 *features)
 static int virtio_mmio_set_features(struct udevice *udev)
 {
 	struct virtio_mmio_priv *priv = dev_get_priv(udev);
-	struct virtio_dev_plat *uc_plat = dev_get_uclass_plat(udev);
+	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(udev);
 
 	/* Make sure there is are no mixed devices */
-	if (priv->version == 2 && uc_plat->legacy) {
+	if (priv->version == 2 && uc_priv->legacy) {
 		debug("New virtio-mmio devices (version 2) must provide VIRTIO_F_VERSION_1 feature!\n");
 		return -EINVAL;
 	}
 
 	writel(1, priv->base + VIRTIO_MMIO_DRIVER_FEATURES_SEL);
-	writel((u32)(uc_plat->features >> 32),
+	writel((u32)(uc_priv->features >> 32),
 	       priv->base + VIRTIO_MMIO_DRIVER_FEATURES);
 
 	writel(0, priv->base + VIRTIO_MMIO_DRIVER_FEATURES_SEL);
-	writel((u32)uc_plat->features,
+	writel((u32)uc_priv->features,
 	       priv->base + VIRTIO_MMIO_DRIVER_FEATURES);
 
 	return 0;
@@ -295,10 +295,10 @@ static void virtio_mmio_del_vq(struct virtqueue *vq)
 
 static int virtio_mmio_del_vqs(struct udevice *udev)
 {
-	struct virtio_dev_plat *uc_plat = dev_get_uclass_plat(udev);
+	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(udev);
 	struct virtqueue *vq, *n;
 
-	list_for_each_entry_safe(vq, n, &uc_plat->vqs, list)
+	list_for_each_entry_safe(vq, n, &uc_priv->vqs, list)
 		virtio_mmio_del_vq(vq);
 
 	return 0;
@@ -347,7 +347,7 @@ static int virtio_mmio_of_to_plat(struct udevice *udev)
 static int virtio_mmio_probe(struct udevice *udev)
 {
 	struct virtio_mmio_priv *priv = dev_get_priv(udev);
-	struct virtio_dev_plat *uc_plat = dev_get_uclass_plat(udev);
+	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(udev);
 	u32 magic;
 
 	/* Check magic value */
@@ -366,21 +366,21 @@ static int virtio_mmio_probe(struct udevice *udev)
 	}
 
 	/* Check device ID */
-	uc_plat->device = readl(priv->base + VIRTIO_MMIO_DEVICE_ID);
-	if (uc_plat->device == 0) {
+	uc_priv->device = readl(priv->base + VIRTIO_MMIO_DEVICE_ID);
+	if (uc_priv->device == 0) {
 		/*
 		 * virtio-mmio device with an ID 0 is a (dummy) placeholder
 		 * with no function. End probing now with no error reported.
 		 */
 		return 0;
 	}
-	uc_plat->vendor = readl(priv->base + VIRTIO_MMIO_VENDOR_ID);
+	uc_priv->vendor = readl(priv->base + VIRTIO_MMIO_VENDOR_ID);
 
 	if (priv->version == 1)
 		writel(PAGE_SIZE, priv->base + VIRTIO_MMIO_GUEST_PAGE_SIZE);
 
 	debug("(%s): device (%d) vendor (%08x) version (%d)\n", udev->name,
-	      uc_plat->device, uc_plat->vendor, priv->version);
+	      uc_priv->device, uc_priv->vendor, priv->version);
 
 	return 0;
 }

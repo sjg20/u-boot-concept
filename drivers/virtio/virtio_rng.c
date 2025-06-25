@@ -58,10 +58,10 @@ static int virtio_rng_read(struct udevice *dev, void *data, size_t len)
 
 static int virtio_rng_bind(struct udevice *dev)
 {
-	struct virtio_dev_plat *uc_plat = dev_get_uclass_plat(dev->parent);
+	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(dev->parent);
 
 	/* Indicate what driver features we support */
-	virtio_driver_features_init(uc_plat, NULL, 0, NULL, 0);
+	virtio_driver_features_init(uc_priv, NULL, 0, NULL, 0);
 
 	return 0;
 }

@@ -290,8 +290,8 @@ static struct virtqueue *__vring_new_virtqueue(unsigned int index,
 	unsigned int i;
 	struct virtqueue *vq;
 	struct vring_desc_shadow *vring_desc_shadow;
-	struct virtio_dev_plat *uc_plat = dev_get_uclass_plat(udev);
-	struct udevice *vdev = uc_plat->vdev;
+	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(udev);
+	struct udevice *vdev = uc_priv->vdev;
 
 	vq = malloc(sizeof(*vq));
 	if (!vq)
@@ -312,7 +312,7 @@ static struct virtqueue *__vring_new_virtqueue(unsigned int index,
 	vq->avail_flags_shadow = 0;
 	vq->avail_idx_shadow = 0;
 	vq->num_added = 0;
-	list_add_tail(&vq->list, &uc_plat->vqs);
+	list_add_tail(&vq->list, &uc_priv->vqs);
 
 	vq->event = virtio_has_feature(vdev, VIRTIO_RING_F_EVENT_IDX);
 
@@ -334,8 +334,8 @@ struct virtqueue *vring_create_virtqueue(unsigned int index, unsigned int num,
 					 unsigned int vring_align,
 					 struct udevice *udev)
 {
-	struct virtio_dev_plat *uc_plat = dev_get_uclass_plat(udev);
-	struct udevice *vdev = uc_plat->vdev;
+	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(udev);
+	struct udevice *vdev = uc_priv->vdev;
 	struct virtqueue *vq;
 	void *queue = NULL;
 	struct bounce_buffer *bbs = NULL;

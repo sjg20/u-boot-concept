@@ -143,7 +143,7 @@ static void virtio_net_stop(struct udevice *dev)
 
 static int virtio_net_write_hwaddr(struct udevice *dev)
 {
-	struct virtio_dev_plat *uc_plat = dev_get_uclass_plat(dev->parent);
+	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(dev->parent);
 	struct eth_pdata *pdata = dev_get_plat(dev);
 	int i;
 
@@ -151,7 +151,7 @@ static int virtio_net_write_hwaddr(struct udevice *dev)
 	 * v1.0 compliant device's MAC address is set through control channel,
 	 * which we don't support for now.
 	 */
-	if (!uc_plat->legacy)
+	if (!uc_priv->legacy)
 		return -ENOSYS;
 
 	for (i = 0; i < sizeof(pdata->enetaddr); i++) {
@@ -181,10 +181,10 @@ static int virtio_net_read_rom_hwaddr(struct udevice *dev)
 
 static int virtio_net_bind(struct udevice *dev)
 {
-	struct virtio_dev_plat *uc_plat = dev_get_uclass_plat(dev->parent);
+	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(dev->parent);
 
 	/* Indicate what driver features we support */
-	virtio_driver_features_init(uc_plat, feature, ARRAY_SIZE(feature),
+	virtio_driver_features_init(uc_priv, feature, ARRAY_SIZE(feature),
 				    feature_legacy, ARRAY_SIZE(feature_legacy));
 
 	return 0;
@@ -193,7 +193,7 @@ static int virtio_net_bind(struct udevice *dev)
 static int virtio_net_probe(struct udevice *dev)
 {
 	struct virtio_net_priv *priv = dev_get_priv(dev);
-	struct virtio_dev_plat *uc_plat = dev_get_uclass_plat(dev->parent);
+	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(dev->parent);
 	int ret;
 
 	ret = virtio_find_vqs(dev, 2, priv->vqs);
@@ -207,7 +207,7 @@ static int virtio_net_probe(struct udevice *dev)
 	 * VIRTIO_NET_F_MRG_RXBUF was negotiated. Without that feature
 	 * the structure was 2 bytes shorter.
 	 */
-	if (uc_plat->legacy)
+	if (uc_priv->legacy)
 		priv->net_hdr_len = sizeof(struct virtio_net_hdr);
 	else
 		priv->net_hdr_len = sizeof(struct virtio_net_hdr_v1);
