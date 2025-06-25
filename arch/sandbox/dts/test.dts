@@ -574,6 +574,10 @@
 		compatible = "denx,u-boot-devres-test";
 	};
 
+	fs {
+		compatible = "sandbox,fs";
+	};
+
 	another-test {
 		reg = <0 2>;
 		compatible = "denx,u-boot-fdt-test";
@@ -1696,6 +1700,10 @@
 
 	sandbox_virtio2 {
 		compatible = "sandbox,virtio2";
+
+		virtio-fs {
+			compatible = "virtio,fs";
+		};
 	};
 
 	sandbox-virtio-blk {

@@ -1,13 +1,23 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
+ * Provides access to the host filesystem from sandbox
+ *
  * Copyright (c) 2012, Google Inc.
  */
 
+#include <dm.h>
 #include <stdio.h>
+#include <fs.h>
 #include <fs_legacy.h>
 #include <malloc.h>
 #include <os.h>
 #include <sandboxfs.h>
+
+/**
+ * struct sandbox_fs_priv - Private info about the sandbox filesystem
+ */
+struct sandbox_fs_priv {
+};
 
 int sandbox_fs_set_blk_dev(struct blk_desc *rbdd, struct disk_partition *info)
 {
@@ -142,3 +152,52 @@ int fs_write_sandbox(const char *filename, void *buf, loff_t offset,
 
 	return ret;
 }
+
+static int sandbox_fs_mount(struct udevice *dev)
+{
+	struct fs_priv *uc_priv = dev_get_uclass_priv(dev);
+
+	if (uc_priv->mounted)
+		return log_msg_ret("vfi", -EISCONN);
+
+	uc_priv->mounted = true;
+
+	return 0;
+}
+
+static int sandbox_fs_unmount(struct udevice *dev)
+{
+	struct fs_priv *uc_priv = dev_get_uclass_priv(dev);
+
+	if (!uc_priv->mounted)
+		return log_msg_ret("vfu", -ENOTCONN);
+
+	uc_priv->mounted = false;
+
+	return 0;
+}
+
+static int sandbox_fs_remove(struct udevice *dev)
+{
+	return 0;
+}
+
+static const struct fs_ops sandbox_fs_ops = {
+	.mount		= sandbox_fs_mount,
+	.unmount	= sandbox_fs_unmount,
+};
+
+static const struct udevice_id sandbox_fs_ids[] = {
+	{ .compatible = "sandbox,fs" },
+	{ }
+};
+
+U_BOOT_DRIVER(sandbox_fs) = {
+	.name	= "sandbox_fs",
+	.id	= UCLASS_FS,
+	.of_match = sandbox_fs_ids,
+	.ops	= &sandbox_fs_ops,
+	.remove	= sandbox_fs_remove,
+	.priv_auto	= sizeof(struct sandbox_fs_priv),
+	.flags	= DM_FLAG_ACTIVE_DMA,
+};
