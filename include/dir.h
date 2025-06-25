@@ -126,4 +126,16 @@ int dir_close(struct udevice *dev, struct fs_dir_stream *strm);
 int dir_add_probe(struct udevice *fsdev, struct driver *drv, const char *path,
 		  struct udevice **devp);
 
+/**
+ * dir_open_file() - Create a new file device for a file
+ *
+ * @dev: Directory device (UCLASS_DIR)
+ * @leaf: Filename within the directory
+ * @flags: Open-mode flags to use
+ * @filp: Returns the UCLASS_FILE device
+ * Return: 0 if OK, -ve on error
+ */
+int dir_open_file(struct udevice *dev, const char *leaf,
+		  enum dir_open_flags_t oflags, struct udevice **filp);
+
 #endif

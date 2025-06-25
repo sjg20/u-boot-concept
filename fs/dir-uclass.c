@@ -104,6 +104,16 @@ int dir_close(struct udevice *dev, struct fs_dir_stream *strm)
 	return 0;
 }
 
+int dir_open_file(struct udevice *dev, const char *leaf,
+		  enum dir_open_flags_t oflags, struct udevice **filp)
+{
+	struct dir_ops *ops = dir_get_ops(dev);
+
+	log_debug("dir_open_file %s\n", dev->name);
+
+	return ops->open_file(dev, leaf, oflags, filp);
+}
+
 UCLASS_DRIVER(dir) = {
 	.name	= "dir",
 	.id	= UCLASS_DIR,
