@@ -1203,6 +1203,7 @@ F:	include/file.h
 F:	include/fpga.h
 F:	include/fs.h
 F:	include/iovec.h
+F:	include/linux/fuse.h
 F:	test/dm/fpga.c
 
 FLATTENED DEVICE TREE
