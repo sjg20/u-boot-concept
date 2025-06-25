@@ -320,6 +320,16 @@ const char *os_dirent_get_typename(enum os_dirent_t type);
 int os_get_filesize(const char *fname, long long *size);
 
 /**
+ * os_get_filetype() - get the type of a file
+ *
+ * @fname: Filename to check
+ * Return: -ve error code if the file does not exist, OS_FILET_REG for a regular
+ * file, OS_FILET_DIR for a directory, OS_FILET_LNK for a link, or
+ * OS_FILET_UNKNOWN for some other type of file
+ */
+int os_get_filetype(const char *fname);
+
+/**
  * os_putc() - write a character to the controlling OS terminal
  *
  * This bypasses the U-Boot console support and writes directly to the OS
