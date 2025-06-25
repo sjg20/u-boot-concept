@@ -39,6 +39,7 @@ obj-$(CONFIG_DM_REBOOT_MODE) += reboot-mode.o
 obj-$(CONFIG_CLK) += clk.o clk_ccf.o
 obj-$(CONFIG_CPU) += cpu.o
 obj-$(CONFIG_CROS_EC) += cros_ec.o
+obj-$(CONFIG_FS) += fs.o
 obj-$(CONFIG_PWM_CROS_EC) += cros_ec_pwm.o
 obj-$(CONFIG_$(PHASE_)DEVRES) += devres.o
 obj-$(CONFIG_DMA) += dma.o

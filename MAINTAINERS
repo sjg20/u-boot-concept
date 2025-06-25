@@ -1186,7 +1186,9 @@ FILESYSTEM LAYER
 M:	Simon Glass <sjg@chromium.org>
 S:	Maintained
 F:	fs/fs-uclass.c
+F:	fs/sandbox/sandboxfs.c
 F:	include/fs.h
+F:	test/dm/fs.c
 
 FPGA
 M:	Michal Simek <michal.simek@amd.com>

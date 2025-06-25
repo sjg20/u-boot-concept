@@ -365,7 +365,7 @@ static int bootdev_test_prio(struct unit_test_state *uts)
 	ut_asserteq(0, bootflow_scan_next(&iter, &bflow));
 
 	ut_asserteq(-ENODEV, bootflow_scan_next(&iter, &bflow));
-	ut_asserteq(8, iter.num_devs);
+	ut_asserteq(9, iter.num_devs);
 	ut_asserteq_str("hub1.p1.usb_mass_storage.lun0.bootdev",
 			iter.dev_used[0]->name);
 	ut_asserteq_str("mmc2.bootdev", iter.dev_used[1]->name);
@@ -753,6 +753,9 @@ static int bootdev_test_next_prio(struct unit_test_state *uts)
 	ut_assertok(bootdev_next_prio(&iter, &dev));
 	ut_asserteq_str("mmc0.bootdev", dev->name);
 	ut_assert_console_end();
+
+	ut_assertok(bootdev_next_prio(&iter, &dev));
+	ut_assert_nextline("Hunting with: fs");
 
 	ut_assertok(bootdev_next_prio(&iter, &dev));
 	ut_asserteq_str("spi.bin@0.bootdev", dev->name);

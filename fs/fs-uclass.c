@@ -5,7 +5,6 @@
  * Copyright 2025 Simon Glass <sjg@chromium.org>
  */
 
-#define LOG_DEBUG
 #define LOG_CATEGORY	UCLASS_FS
 
 #include <bootdev.h>
@@ -44,6 +43,9 @@ static int fs_get_bootflow(struct udevice *dev, struct bootflow_iter *iter,
 	int ret;
 
 	log_debug("get_bootflow fs '%s'\n", fsdev->name);
+
+	/* for now, always fail here as we don't have FS support in bootmeths */
+	return -ENOENT;
 
 	ret = bootmeth_check(bflow->method, iter);
 	if (ret)
