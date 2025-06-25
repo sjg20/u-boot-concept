@@ -477,7 +477,8 @@ int blk_get_device_part_str(const char *ifname, const char *dev_part_str,
 	if (!strcmp(ifname, "hostfs")) {
 		strcpy((char *)info->type, BOOT_PART_TYPE);
 		strcpy((char *)info->name, "Host filesystem");
-
+		info->fs_type = IS_ENABLED(CONFIG_SANDBOX) ? FS_TYPE_SANDBOX :
+			FS_TYPE_SEMIHOSTING;
 		return 0;
 	}
 #endif
