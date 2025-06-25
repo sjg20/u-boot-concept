@@ -6,6 +6,7 @@
 
 obj-$(CONFIG_$(PHASE_)FS_LEGACY) += fs_legacy.o fs_internal.o
 obj-$(CONFIG_$(PHASE_)FS) += fs-uclass.o
+obj-$(CONFIG_$(PHASE_)DIR) += dir-uclass.o
 
 ifdef CONFIG_XPL_BUILD
 obj-$(CONFIG_SPL_FS_FAT) += fat/

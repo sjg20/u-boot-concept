@@ -54,6 +54,17 @@ struct fs_ops {
 	 * Return 0 if OK, -ENOTCONN if not mounted, other -ve on error
 	 */
 	int (*unmount)(struct udevice *dev);
+
+	/**
+	 * lookup_dir() - Look up a directory on a filesystem
+	 *
+	 * @dev: Filesystem device
+	 * @path: Path to look up, empty or "/" for the root
+	 * @dirp: Returns associated directory device, creating if necessary
+	 * Return 0 if OK, -ENOENT, other -ve on error
+	 */
+	int (*lookup_dir)(struct udevice *dev, const char *path,
+			  struct udevice **dirp);
 };
 
 /* Get access to a filesystem's operations */
@@ -74,5 +85,15 @@ int fs_mount(struct udevice *dev);
  * Return 0 if OK, -ENOTCONN if not mounted, other -ve on error
  */
 int fs_unmount(struct udevice *dev);
+
+/**
+ * fs_lookup_dir() - Look up a directory on a filesystem
+ *
+ * @dev: Filesystem device
+ * @path: Path to look up, empty or "/" for the root
+ * @dirp: Returns associated directory device, creating if necessary
+ * Return 0 if OK, -ENOENT, other -ve on error
+ */
+int fs_lookup_dir(struct udevice *dev, const char *path, struct udevice **dirp);
 
 #endif
