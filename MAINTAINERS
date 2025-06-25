@@ -1182,6 +1182,12 @@ F:	net/fastboot_tcp.c
 F:	net/fastboot_udp.c
 F:	test/dm/fastboot.c
 
+FILESYSTEM LAYER
+M:	Simon Glass <sjg@chromium.org>
+S:	Maintained
+F:	fs/fs-uclass.c
+F:	include/fs.h
+
 FPGA
 M:	Michal Simek <michal.simek@amd.com>
 S:	Maintained

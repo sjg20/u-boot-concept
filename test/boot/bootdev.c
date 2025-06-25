@@ -390,6 +390,7 @@ static int bootdev_test_hunter(struct unit_test_state *uts)
 	ut_assert_nextlinen("----");
 	ut_assert_nextline("   6        ethernet         eth_bootdev");
 	ut_assert_nextline("   1        simple_bus       (none)");
+	ut_assert_nextline("   3        fs               fs_bootdev");
 	ut_assert_nextline("   5        ide              ide_bootdev");
 	ut_assert_nextline("   2        mmc              mmc_bootdev");
 	ut_assert_nextline("   4        nvme             nvme_bootdev");
@@ -447,6 +448,7 @@ static int bootdev_test_cmd_hunt(struct unit_test_state *uts)
 	/* This is the extension feature which has no uclass at present */
 	ut_assert_nextline("Hunting with: simple_bus");
 	ut_assert_nextline("Found 2 extension board(s).");
+	ut_assert_nextline("Hunting with: fs");
 	ut_assert_nextline("Hunting with: ide");
 
 	/* mmc hunter has already been used so should not run again */
@@ -468,6 +470,7 @@ static int bootdev_test_cmd_hunt(struct unit_test_state *uts)
 	ut_assert_nextlinen("----");
 	ut_assert_nextline("   6     *  ethernet         eth_bootdev");
 	ut_assert_nextline("   1     *  simple_bus       (none)");
+	ut_assert_nextline("   3     *  fs               fs_bootdev");
 	ut_assert_nextline("   5     *  ide              ide_bootdev");
 	ut_assert_nextline("   2     *  mmc              mmc_bootdev");
 	ut_assert_nextline("   4     *  nvme             nvme_bootdev");

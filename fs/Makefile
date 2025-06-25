@@ -5,6 +5,7 @@
 # Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
 
 obj-$(CONFIG_$(PHASE_)FS_LEGACY) += fs_legacy.o fs_internal.o
+obj-$(CONFIG_$(PHASE_)FS) += fs-uclass.o
 
 ifdef CONFIG_XPL_BUILD
 obj-$(CONFIG_SPL_FS_FAT) += fat/

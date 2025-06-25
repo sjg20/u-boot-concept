@@ -24,10 +24,11 @@
 enum {
 	HUNTER_ETH	= 0,
 	HUNTER_SIMPLE_BUS,
-	HUNTER_MMC	= 3,
-	HUNTER_SCSI	= 6,
-	HUNTER_USB	= 8,
-	HUNTER_COUNT	= 10,
+	HUNTER_FS	= 3,
+	HUNTER_MMC,		/* ID of MMC hunter */
+	HUNTER_SCSI	= 7,	/* ID of SCSI hunter */
+	HUNTER_USB	= 9,	/* ID of USB hunter */
+	HUNTER_COUNT	= 11,
 	HUNTER_MAX	= HUNTER_COUNT - 1,
 };
 
