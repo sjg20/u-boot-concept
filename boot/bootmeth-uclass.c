@@ -421,7 +421,7 @@ int bootmeth_common_read_file(struct udevice *dev, struct bootflow *bflow,
 	if (ret)
 		return log_msg_ret("fs", ret);
 
-	ret = fs_read(file_path, addr, 0, 0, &len_read);
+	ret = fs_legacy_read(file_path, addr, 0, 0, &len_read);
 	if (ret)
 		return ret;
 	*sizep = len_read;

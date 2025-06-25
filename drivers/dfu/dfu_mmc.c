@@ -128,7 +128,8 @@ static int mmc_file_op(enum dfu_op op, struct dfu_entity *dfu,
 
 	switch (op) {
 	case DFU_OP_READ:
-		ret = fs_read(dfu->name, (size_t)buf, offset, *len, &size);
+		ret = fs_legacy_read(dfu->name, (size_t)buf, offset, *len,
+				     &size);
 		if (ret) {
 			puts("dfu: fs_read error!\n");
 			return ret;

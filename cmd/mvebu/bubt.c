@@ -311,7 +311,7 @@ static size_t mmc_read_file(const char *file_name)
 	}
 
 	/* Perfrom file read */
-	rc = fs_read(file_name, get_load_addr(), 0, 0, &act_read);
+	rc = fs_legacy_read(file_name, get_load_addr(), 0, 0, &act_read);
 	if (rc)
 		return 0;
 
@@ -448,7 +448,7 @@ static size_t sata_read_file(const char *file_name)
 	}
 
 	/* Perfrom file read */
-	rc = fs_read(file_name, get_load_addr(), 0, 0, &act_read);
+	rc = fs_legacy_read(file_name, get_load_addr(), 0, 0, &act_read);
 	if (rc)
 		return 0;
 
@@ -624,7 +624,7 @@ static size_t usb_read_file(const char *file_name)
 	}
 
 	/* Perfrom file read */
-	rc = fs_read(file_name, get_load_addr(), 0, 0, &act_read);
+	rc = fs_legacy_read(file_name, get_load_addr(), 0, 0, &act_read);
 	if (rc)
 		return 0;
 

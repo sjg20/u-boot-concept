@@ -61,8 +61,9 @@ ulong bootcount_load(void)
 		return 0;
 	}
 
-	ret = fs_read(CONFIG_SYS_BOOTCOUNT_FS_NAME, CONFIG_SYS_BOOTCOUNT_ADDR,
-		      0, sizeof(bootcount_ext_t), &len_read);
+	ret = fs_legacy_read(CONFIG_SYS_BOOTCOUNT_FS_NAME,
+			     CONFIG_SYS_BOOTCOUNT_ADDR, 0,
+			     sizeof(bootcount_ext_t), &len_read);
 	if (ret != 0 || len_read != sizeof(bootcount_ext_t)) {
 		puts("Error loading bootcount\n");
 		return 0;

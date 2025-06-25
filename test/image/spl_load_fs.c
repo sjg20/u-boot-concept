@@ -282,8 +282,9 @@ static int spl_test_fs(struct unit_test_state *uts, const char *test_name,
 	data_read = malloc_cache_aligned(data_size);
 	ut_assertnonnull(data_read);
 	ut_assertok(fs_set_blk_dev_with_part(dev_desc, 0));
-	ut_assertok(fs_read("/" CONFIG_SPL_FS_LOAD_PAYLOAD_NAME,
-			    virt_to_phys(data_read), 0, data_size, &actread));
+	ut_assertok(fs_legacy_read("/" CONFIG_SPL_FS_LOAD_PAYLOAD_NAME,
+				   virt_to_phys(data_read), 0, data_size,
+				   &actread));
 	ut_asserteq(data_size, actread);
 	ut_asserteq_mem(data_write, data_read, data_size);
 

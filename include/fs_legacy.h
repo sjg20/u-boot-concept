@@ -53,7 +53,7 @@ int fs_set_blk_dev_with_part(struct blk_desc *desc, int part);
  * fs_set_blk_dev() or fs_set_dev_with_part().
  *
  * Many file functions implicitly call fs_close(), e.g. fs_closedir(),
- * fs_exist(), fs_ln(), fs_ls(), fs_mkdir(), fs_read(), fs_size(), fs_write(),
+ * fs_exist(), fs_ln(), fs_ls(), fs_mkdir(), fs_legacy_read(), fs_size(), fs_write(),
  * fs_unlink(), fs_rename().
  */
 void fs_close(void);
@@ -103,7 +103,8 @@ int fs_exists(const char *filename);
 int fs_size(const char *filename, loff_t *size);
 
 /**
- * fs_read() - read file from the partition previously set by fs_set_blk_dev()
+ * fs_legacy_read() - read file from the partition previously set by
+ *	fs_set_blk_dev()
  *
  * Note that not all filesystem drivers support either or both of offset != 0
  * and len != 0.
@@ -115,8 +116,8 @@ int fs_size(const char *filename, loff_t *size);
  * @actread:	returns the actual number of bytes read
  * Return:	0 if OK with valid @actread, -1 on error conditions
  */
-int fs_read(const char *filename, ulong addr, loff_t offset, loff_t len,
-	    loff_t *actread);
+int fs_legacy_read(const char *filename, ulong addr, loff_t offset, loff_t len,
+		   loff_t *actread);
 
 /**
  * fs_write() - write file to the partition previously set by fs_set_blk_dev()
