@@ -105,7 +105,7 @@ static int sandbox_scsi_probe(struct udevice *dev)
 
 	if (priv->pathname) {
 		priv->fd = os_open(priv->pathname, OS_O_RDONLY);
-		if (priv->fd != -1) {
+		if (priv->fd >= 0) {
 			ret = os_get_filesize(priv->pathname, &info->file_size);
 			if (ret)
 				return log_msg_ret("sz", ret);
