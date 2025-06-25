@@ -14,6 +14,13 @@
 #include <fs.h>
 #include <dm/device-internal.h>
 
+int fs_lookup_dir(struct udevice *dev, const char *path, struct udevice **dirp)
+{
+	struct fs_ops *ops = fs_get_ops(dev);
+
+	return ops->lookup_dir(dev, path, dirp);
+}
+
 int fs_mount(struct udevice *dev)
 {
 	struct fs_ops *ops = fs_get_ops(dev);

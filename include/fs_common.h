@@ -61,10 +61,14 @@ struct fs_dirent {
  * File system drivers pass additional private fields with the pointers
  * to this structure.
  *
+ * @dev:	dir device (UCLASS_DIR)
  * @desc:	block device descriptor
  * @part:	partition number
  */
 struct fs_dir_stream {
+#ifdef CONFIG_FS
+	struct udevice *dev;
+#endif
 	struct blk_desc *desc;
 	int part;
 };

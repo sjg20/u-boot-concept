@@ -5,6 +5,7 @@
 # Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
 
 obj-$(CONFIG_$(PHASE_)FS) += fs-uclass.o
+obj-$(CONFIG_$(PHASE_)DIR) += dir-uclass.o
 
 ifdef CONFIG_XPL_BUILD
 obj-$(CONFIG_SPL_LEGACY_FS) += fs_legacy.o

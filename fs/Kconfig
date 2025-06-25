@@ -12,6 +12,14 @@ config FS
 	  Provides an interface for filesystems, allowing them to be
 	  persistently mounted. Filesystem can contain files and directory.
 
+config DIR
+	bool "Support for directories"
+	depends on FS
+	default y if SANDBOX || VENDOR_EMULATION
+	help
+	  Provides an interface for directories within filesystems, allowing
+	  them to be listed.
+
 config FS_LEGACY
 	def_bool y
 	help
