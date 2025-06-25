@@ -84,7 +84,7 @@ const char *fs_get_type_name(void);
  *
  * Returns 0 on success. Returns non-zero on error.
  */
-int fs_ls(const char *dirname);
+int fs_legacy_ls(const char *dirname);
 
 /*
  * Determine whether a file exists

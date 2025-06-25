@@ -10,6 +10,7 @@
 #include <command.h>
 #include <config.h>
 #include <display_options.h>
+#include <dm.h>
 #include <errno.h>
 #include <env.h>
 #include <lmb.h>
@@ -69,9 +70,11 @@ static int fs_ls_generic(const char *dirname)
 	struct fs_dirent *dent;
 	int nfiles = 0, ndirs = 0;
 
+	log_debug("gd_opendir\n");
 	dirs = fs_opendir(dirname);
 	if (!dirs)
 		return -errno;
+	log_debug("fs_readdir\n");
 
 	while ((dent = fs_readdir(dirs))) {
 		if (dent->type == FS_DT_DIR) {
@@ -562,7 +565,7 @@ int fs_uuid(char *uuid_str)
 	return info->uuid(uuid_str);
 }
 
-int fs_ls(const char *dirname)
+int fs_legacy_ls(const char *dirname)
 {
 	int ret;
 
@@ -641,9 +644,12 @@ static int _fs_read(const char *filename, ulong addr, loff_t offset, loff_t len,
 	void *buf;
 	int ret;
 
+	log_debug("filename '%s' addr %lx offset %llx len %llx lmb %d\n",
+		  filename, addr, offset, len, do_lmb_check);
 #if CONFIG_IS_ENABLED(LMB)
 	if (do_lmb_check) {
 		ret = fs_read_lmb_check(filename, addr, offset, len, info);
+		log_debug("lmb ret %d\n", ret);
 		if (ret)
 			return ret;
 	}
@@ -716,9 +722,16 @@ struct fs_dirent *fs_readdir(struct fs_dir_stream *dirs)
 	struct fs_dirent *dirent;
 	int ret;
 
-	fs_set_blk_dev_with_part(dirs->desc, dirs->part);
+	log_debug("set_blk %p %d\n", dirs->desc, dirs->part);
+	if (dirs->desc)
+		fs_set_blk_dev_with_part(dirs->desc, dirs->part);
+	else
+		fs_type = FS_TYPE_VIRTIO;
+	log_debug("info\n");
 	info = fs_get_info(fs_type);
 
+	log_debug("readdir %p\n", info);
+	log_debug("readdir name %s\n", info->name);
 	ret = info->readdir(dirs, &dirent);
 	fs_close();
 	if (ret) {
@@ -736,7 +749,10 @@ void fs_closedir(struct fs_dir_stream *dirs)
 	if (!dirs)
 		return;
 
-	fs_set_blk_dev_with_part(dirs->desc, dirs->part);
+	if (dirs->desc)
+		fs_set_blk_dev_with_part(dirs->desc, dirs->part);
+	else
+		fs_type = FS_TYPE_VIRTIO;
 	info = fs_get_info(fs_type);
 
 	info->closedir(dirs);
@@ -920,10 +936,12 @@ int do_ls(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[],
 	if (argc > 4)
 		return CMD_RET_USAGE;
 
+	log_debug("fs_set_blk_dev()\n");
 	if (fs_set_blk_dev(argv[1], cmd_arg2(argc, argv), fstype))
 		return 1;
 
-	if (fs_ls(argc >= 4 ? argv[3] : "/"))
+	log_debug("fs_legacy_ls()\n");
+	if (fs_legacy_ls(argc >= 4 ? argv[3] : "/"))
 		return 1;
 
 	return 0;

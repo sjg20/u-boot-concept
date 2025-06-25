@@ -351,11 +351,14 @@ int dm_init_and_scan(bool pre_reloc_only)
 {
 	int ret;
 
+	printf("stack %p\n", &ret);
+	printch('d');
 	ret = dm_init(CONFIG_IS_ENABLED(OF_LIVE));
 	if (ret) {
 		dm_warn("dm_init() failed: %d\n", ret);
 		return ret;
 	}
+	printch('e');
 	if (!CONFIG_IS_ENABLED(OF_PLATDATA_INST)) {
 		ret = dm_scan(pre_reloc_only);
 		if (ret) {
@@ -363,6 +366,7 @@ int dm_init_and_scan(bool pre_reloc_only)
 			return ret;
 		}
 	}
+	printch('f');
 	if (CONFIG_IS_ENABLED(DM_EVENT)) {
 		ret = event_notify_null(gd->flags & GD_FLG_RELOC ?
 					EVT_DM_POST_INIT_R :
@@ -370,6 +374,8 @@ int dm_init_and_scan(bool pre_reloc_only)
 		if (ret)
 			return log_msg_ret("ev", ret);
 	}
+	printch('g');
+	// while (1);
 
 	return 0;
 }

@@ -19,6 +19,7 @@
 #include <dm/util.h>
 #include <fdtdec.h>
 #include <linux/compiler.h>
+#include <spl.h>
 
 struct driver *lists_driver_lookup_name(const char *name)
 {
@@ -196,6 +197,30 @@ static int driver_check_compatible(const struct udevice_id *of_match,
 	return -ENOENT;
 }
 
+static void check_it(void)
+{
+	struct driver *driver = ll_entry_start(struct driver, driver);
+	const int n_ents = ll_entry_count(struct driver, driver);
+	struct driver *entry;
+
+	if (is_xpl())
+		return;
+	log_debug("check entries %u:\n", n_ents);
+	for (entry = driver; entry != driver + n_ents; entry++) {
+		log_debug("- entry %p entry->of_match %p", entry,
+			  entry->of_match);
+		if (entry->of_match &&
+		    ((ulong)entry->of_match < 0x1100000 ||
+		     (ulong)entry->of_match > 0x1300000)) {
+			printf("  bad!\n");
+			print_buffer((ulong)entry, entry, 1, 0x40, 0);
+		} else {
+			printf("\n");
+		}
+	}
+	log_debug("- done check\n", entry);
+}
+
 int lists_bind_fdt(struct udevice *parent, ofnode node, struct udevice **devp,
 		   struct driver *drv, bool pre_reloc_only)
 {
@@ -232,26 +257,34 @@ int lists_bind_fdt(struct udevice *parent, ofnode node, struct udevice **devp,
 	 * compatible string in order such that we match in order of priority
 	 * from the first string to the last.
 	 */
+	check_it();
 	for (i = 0; i < compat_length; i += strlen(compat) + 1) {
 		compat = compat_list + i;
 		log_debug("   - attempt to match compatible string '%s'\n",
 			  compat);
 
 		id = NULL;
+		log_debug("drv %p\n", drv);
 		for (entry = driver; entry != driver + n_ents; entry++) {
+			log_debug("- entry %p entry->of_match %p ", entry,
+				  entry->of_match);
 			if (drv) {
 				if (drv != entry)
 					continue;
 				if (!entry->of_match)
 					break;
 			}
+			log_debug("check...");
 			ret = driver_check_compatible(entry->of_match, &id,
 						      compat);
+			log_debug("done\n");
 			if (!ret)
 				break;
 		}
+		log_debug("- done entry %p\n", entry);
 		if (entry == driver + n_ents)
 			continue;
+		log_debug("- found\n");
 
 		if (pre_reloc_only) {
 			if (!ofnode_pre_reloc(node) &&

@@ -152,7 +152,7 @@ void board_init_f_init_reserve(ulong base)
 		board_init_f_init_stack_protection_addr(base);
 
 	/* next alloc will be higher by one GD plus 16-byte alignment */
-	base += roundup(sizeof(struct global_data), 16);
+	base = roundup(base + sizeof(struct global_data), 16);
 
 	/*
 	 * record early malloc arena start.

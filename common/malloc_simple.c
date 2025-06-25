@@ -5,6 +5,7 @@
  * Copyright (c) 2014 Google, Inc
  */
 
+#define LOG_DEBUG
 #define LOG_CATEGORY LOGC_ALLOC
 
 #include <log.h>
@@ -21,9 +22,12 @@ static void *alloc_simple(size_t bytes, int align)
 	ulong addr, new_ptr;
 	void *ptr;
 
+	// bytes *= 2;
+
 	addr = ALIGN(gd->malloc_base + gd->malloc_ptr, align);
 	new_ptr = addr + bytes - gd->malloc_base;
-	log_debug("size=%lx, ptr=%lx, limit=%x: ", (ulong)bytes, new_ptr,
+	log_debug("malloc_base %lx stk %p size=%lx, ptr=%lx, limit=%x: ", gd->malloc_base, &ptr, (ulong)bytes,
+		  new_ptr,
 		  gd->malloc_limit);
 	if (new_ptr > gd->malloc_limit) {
 		log_err("alloc space exhausted ptr %lx limit %x\n", new_ptr,

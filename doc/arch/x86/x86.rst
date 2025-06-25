@@ -475,6 +475,34 @@ CONFIG_GENERATE_SMBIOS_TABLE option. The easiest way to provide the values to
 use is via the device tree. For details see
 :download:`smbios.txt <../../device-tree-bindings/sysinfo/smbios.txt>`.
 
+Memory Map
+----------
+
+The x86 memory map is fairly varied between devices, but the following table
+<<<<<<< HEAD
+shows a few common elements, taken from qemu-x86_64:
+=======
+shows a few common elements:
+>>>>>>> 7a88634ea62 (wip)
+
+========   ========================   ==========================================
+Addr       Config                     Usage
+========   ========================   ==========================================
+       0   -                          Bottom of stack for first phase (e.g. SPL)
+   10000   CONFIG_SYS_CAR_ADDR
+                                      top of initial SPL stack
+   1b3e0   struct global_data         global_data
+   1b7f0   SPL_SYS_MALLOC_F_LEN       early-malloc() region
+   20000   CONFIG_SYS_CAR_ADDR +      Top of cache-as-RAM memory
+              CONFIG_SYS_CAR_SIZE
+   20000   CONFIG_BLOBLIST_ADDR       Blob list
+   80000   PAGETABLE_BASE             Base address of page tables (24K)
+   f0000   CONFIG_ROM_TABLE_ADDR      Base address of ROM tables
+  110000   see x86_spl_init()         Stack top after early-SPL execution
+========   ========================   ==========================================
+
+If you are looking at the memory map in xPL, see x86_spl_init() for the logic.
+
 TODO List
 ---------
 - Audio

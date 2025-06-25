@@ -89,7 +89,7 @@
  * virtio scatter-gather struct
  *
  * @addr:		sg buffer address
- * @lengh:		sg buffer length
+ * @length:		sg buffer length
  */
 struct virtio_sg {
 	void *addr;

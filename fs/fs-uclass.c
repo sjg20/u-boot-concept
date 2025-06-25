@@ -14,6 +14,36 @@
 #include <fs.h>
 #include <dm/device-internal.h>
 
+int fs_ls(struct udevice *dev, const char *dirname)
+{
+	/* not yet implement */
+
+	return -ENOSYS;
+}
+
+int fs_get_by_name(const char *name, struct udevice **devp)
+{
+	struct udevice *dev;
+	struct uclass *uc;
+
+	uclass_id_foreach_dev(UCLASS_FS, dev, uc) {
+		struct fs_plat *uc_plat = dev_get_uclass_plat(dev);
+
+		if (!strcmp(name, uc_plat->name)) {
+			int ret;
+
+			ret = device_probe(dev);
+			if (ret)
+				return log_msg_ret("fgn", ret);
+			*devp = dev;
+
+			return 0;
+		}
+	}
+
+	return -ENOENT;
+}
+
 int fs_split_path(const char *fname, char **subdirp, const char **leafp)
 {
 	char *subdir, *p;

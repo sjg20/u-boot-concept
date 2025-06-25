@@ -14,6 +14,7 @@
 .type _start, @function
 _start:
 	/* Set up memory using the existing stack */
+	andl	$(~0xf), %eax
 	mov	%rsp, %rdi
 	call	board_init_f_alloc_reserve
 	mov	%rax, %rsp

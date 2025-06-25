@@ -804,8 +804,11 @@ static int initf_dm(void)
 #if defined(CONFIG_DM) && CONFIG_IS_ENABLED(SYS_MALLOC_F)
 	int ret;
 
+	printch('a');
+	printf("b");
 	bootstage_start(BOOTSTAGE_ID_ACCUM_DM_F, "dm_f");
 	ret = dm_init_and_scan(true);
+	printch('z');
 	bootstage_accum(BOOTSTAGE_ID_ACCUM_DM_F);
 	if (ret)
 		return ret;
@@ -862,6 +865,8 @@ static void initcall_run_f(void)
 	 * Please do not add logic to this function (variables, if (), etc.).
 	 * For simplicity it should remain an ordered list of function calls.
 	 */
+	// ok
+
 	INITCALL(setup_mon_len);
 #if CONFIG_IS_ENABLED(OF_CONTROL)
 	INITCALL(fdtdec_setup);
@@ -874,6 +879,7 @@ static void initcall_run_f(void)
 	INITCALL(log_init);
 	INITCALL(initf_bootstage); /* uses its own timer, so does not need DM */
 	INITCALL(event_init);
+	// ok
 #ifdef CONFIG_BLOBLIST
 	INITCALL(bloblist_init);
 #endif
@@ -881,10 +887,17 @@ static void initcall_run_f(void)
 #if CONFIG_IS_ENABLED(CONSOLE_RECORD_INIT_F)
 	INITCALL(console_record_init);
 #endif
+	// ok
+
 	INITCALL_EVT(EVT_FSP_INIT_F);
 	INITCALL(arch_cpu_init);	/* basic arch cpu dependent setup */
+	// ok
+
 	INITCALL(mach_cpu_init);	/* SoC/machine dependent CPU setup */
+	// bad
 	INITCALL(initf_dm);
+	// bad
+
 #if CONFIG_IS_ENABLED(BOARD_EARLY_INIT_F)
 	INITCALL(board_early_init_f);
 #endif
@@ -898,6 +911,7 @@ static void initcall_run_f(void)
 #if CONFIG_IS_ENABLED(BOARD_POSTCLK_INIT)
 	INITCALL(board_postclk_init);
 #endif
+	//bad
 	INITCALL(env_init);		/* initialize environment */
 	INITCALL(init_baud_rate);	/* initialze baudrate settings */
 	INITCALL(serial_init);		/* serial communications setup */
@@ -998,6 +1012,30 @@ static void initcall_run_f(void)
 #endif
 }
 
+static void check_it(void)
+{
+	struct driver *driver = ll_entry_start(struct driver, driver);
+	const int n_ents = ll_entry_count(struct driver, driver);
+	struct driver *entry;
+
+	if (is_xpl())
+		return;
+	printf("check entries %u:\n", n_ents);
+	for (entry = driver; entry != driver + n_ents; entry++) {
+		printf("- entry %p entry->of_match %p", entry,
+			  entry->of_match);
+		if (entry->of_match &&
+		    ((ulong)entry->of_match < 0x1100000 ||
+		     (ulong)entry->of_match > 0x1300000)) {
+			printf("  bad!\n");
+			print_buffer((ulong)entry, entry, 1, 0x40, 0);
+		} else {
+			printf("\n");
+		}
+	}
+	printf("- done check\n");
+}
+
 void board_init_f(ulong boot_flags)
 {
 	struct board_f boardf;
@@ -1010,6 +1048,8 @@ void board_init_f(ulong boot_flags)
 	printf("hi %d\n", n_ents);
 	if (abs(n_ents) > 100)
 		hang();
+
+	check_it();
 
 	initcall_run_f();
 

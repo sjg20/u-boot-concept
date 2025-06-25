@@ -97,6 +97,15 @@ int fs_unmount(struct udevice *dev);
 int fs_lookup_dir(struct udevice *dev, const char *path, struct udevice **dirp);
 
 /**
+ * fs_get_by_name() - Find a filesystem given its name
+ *
+ * @name: Filesystem name, e.g. 'root'
+ * @devp: Returns UCLASS_FS device on success
+ * Return 0 if OK, -ENOENT, other -ve on error
+ */
+int fs_get_by_name(const char *name, struct udevice **devp);
+
+/**
  * fs_split_path() - Get a list of subdirs in a filename
  *
  * For example, "/path/to/fred" returns an alist containing allocated strings

@@ -481,7 +481,13 @@ int blk_get_device_part_str(const char *ifname, const char *dev_part_str,
 		return 0;
 	}
 #endif
+	if (IS_ENABLED(CONFIG_VIRTIO_FS) && !strcmp(ifname, "virtiofs")) {
+		strcpy((char *)info->type, BOOT_PART_TYPE);
+		strcpy((char *)info->name, "Virtio filesystem");
+		info->fs_type = FS_TYPE_VIRTIO;
 
+		return 0;
+	}
 #if IS_ENABLED(CONFIG_CMD_UBIFS) && !IS_ENABLED(CONFIG_XPL_BUILD)
 	/*
 	 * Special-case ubi, ubi goes through a mtd, rather than through

@@ -18,11 +18,11 @@ if QEMU
 
 config SYS_CAR_ADDR
 	hex
-	default 0x10000
+	default 0x20000
 
 config SYS_CAR_SIZE
 	hex
-	default 0x10000
+	default 0x20000
 
 config ACPI_PM1_BASE
 	hex

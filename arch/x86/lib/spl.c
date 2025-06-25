@@ -3,6 +3,7 @@
  * Copyright (c) 2016 Google, Inc
  */
 
+#define LOG_DEBUG
 #define LOG_CATEGORY	LOGC_BOOT
 
 #include <cpu_func.h>
@@ -71,7 +72,7 @@ static int x86_spl_init(void)
 #ifndef CONFIG_TPL
 	/*
 	 * TODO(sjg@chromium.org): We use this area of RAM for the stack
-	 * and global_data in SPL. Once U-Boot starts up and releocates it
+	 * and global_data in SPL. Once U-Boot starts up and relocates it
 	 * is not needed. We could make this a CONFIG option or perhaps
 	 * place it immediately below CONFIG_TEXT_BASE.
 	 */
@@ -156,7 +157,7 @@ static int x86_spl_init(void)
 	gd->new_gd = (struct global_data *)ptr;
 	memcpy(gd->new_gd, gd, sizeof(*gd));
 
-	log_debug("logging\n");
+	log_debug("new gd at %p\n", gd->new_gd);
 	/*
 	 * Make sure logging is disabled when we switch, since the log system
 	 * list head will move
@@ -218,7 +219,8 @@ void board_init_f(ulong flags)
 	}
 	board_init_r(gd, 0);
 #else
-	/* Uninit CAR and jump to board_init_f_r() */
+	/* Uninit CAR and jump to board_init_f_r() below */
+	log_debug("trampoline with sp=%lx\n", gd->start_addr_sp);
 	board_init_f_r_trampoline(gd->start_addr_sp);
 #endif
 }
@@ -261,6 +263,12 @@ static int spl_board_load_image(struct spl_image_info *spl_image,
 
 	if (spl_image->load_addr != spl_get_image_pos()) {
 		/* Copy U-Boot from ROM */
+		log_debug("copy to %lx-%lx from %lx-%lx size %lx\n",
+			  spl_image->load_addr,
+		          spl_image->load_addr + spl_get_image_size(),
+			  spl_get_image_pos(),
+			  spl_get_image_pos() + spl_get_image_size(),
+			  spl_get_image_size());
 		memcpy((void *)spl_image->load_addr,
 		       (void *)spl_get_image_pos(), spl_get_image_size());
 	}
@@ -281,7 +289,7 @@ void __noreturn jump_to_image(struct spl_image_info *spl_image)
 {
 	int ret;
 
-	log_debug("Jumping to 64-bit U-Boot\n");
+	log_debug("Jumping to 64-bit U-Boot at %lx\n", spl_image->entry_point);
 	ret = cpu_jump_to_64bit_uboot(spl_image->entry_point);
 	debug("ret=%d\n", ret);
 	hang();
