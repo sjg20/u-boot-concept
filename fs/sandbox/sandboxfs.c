@@ -5,6 +5,7 @@
  * Copyright (c) 2012, Google Inc.
  */
 
+#include <dir.h>
 #include <dm.h>
 #include <stdio.h>
 #include <fs.h>
@@ -14,9 +15,22 @@
 #include <sandboxfs.h>
 
 /**
+ * struct sandbox_dir_priv - Private info about sandbox directories
+ *
+ * @head: List of directory entries, or NULL if not known
+ * @ptr: Current position in the list
+ */
+struct sandbox_dir_priv {
+	struct os_dirent_node *head, *ptr;
+};
+
+/**
  * struct sandbox_fs_priv - Private info about the sandbox filesystem
+ *
+ * @entries: List of directory entries, or NULL if not scanned yet
  */
 struct sandbox_fs_priv {
+	struct os_dirent_node *entries;
 };
 
 int sandbox_fs_set_blk_dev(struct blk_desc *rbdd, struct disk_partition *info)
@@ -177,6 +191,103 @@ static int sandbox_fs_unmount(struct udevice *dev)
 	return 0;
 }
 
+static int sandbox_dir_open(struct udevice *dev, struct fs_dir_stream *strm)
+{
+	struct sandbox_dir_priv *priv = dev_get_priv(dev);
+	struct dir_uc_priv *dir_uc_priv = dev_get_uclass_priv(dev);
+	int ret;
+
+	ret = os_dirent_ls(dir_uc_priv->path, &priv->head);
+	if (ret) {
+		log_err("Failed to open directory: %d\n", ret);
+		return ret;
+	}
+	priv->ptr = priv->head;
+
+	return 0;
+}
+
+int sandbox_dir_read(struct udevice *dev, struct fs_dir_stream *strm,
+		     struct fs_dirent *dent)
+{
+	struct sandbox_dir_priv *dir_priv = dev_get_priv(dev);
+	struct os_dirent_node *ptr = dir_priv->ptr;
+
+	if (!ptr)
+		return log_msg_ret("sdr", -ENOENT);
+
+	if (ptr->type == OS_FILET_REG)
+		dent->type = FS_DT_REG;
+	else if (ptr->type == OS_FILET_DIR)
+		dent->type = FS_DT_DIR;
+	else if (ptr->type == OS_FILET_LNK)
+		dent->type = FS_DT_LNK;
+	dent->size = ptr->size;
+	strlcpy(dent->name, ptr->name, FS_DIRENT_NAME_LEN);
+	dir_priv->ptr = ptr->next;
+
+	return 0;
+}
+
+static int sandbox_dir_close(struct udevice *dev, struct fs_dir_stream *strm)
+{
+	struct sandbox_dir_priv *dir_priv = dev_get_priv(dev);
+
+	log_debug("close\n");
+	os_dirent_free(dir_priv->head);
+	dir_priv->ptr = NULL;
+
+	log_debug("close done\n");
+
+	return 0;
+}
+
+static struct dir_ops sandbox_dir_ops = {
+	.open	= sandbox_dir_open,
+	.read	= sandbox_dir_read,
+	.close	= sandbox_dir_close,
+};
+
+static const struct udevice_id dir_ids[] = {
+	{ .compatible = "virtio-fs,directory" },
+	{ }
+};
+
+U_BOOT_DRIVER(sandbox_dir) = {
+	.name	= "sandbox_dir",
+	.id	= UCLASS_DIR,
+	.of_match = dir_ids,
+	.ops	= &sandbox_dir_ops,
+	.priv_auto	= sizeof(struct sandbox_dir_priv),
+	.flags	= DM_FLAG_ACTIVE_DMA,
+};
+
+static int sandbox_fs_lookup_dir(struct udevice *dev, const char *path,
+				 struct udevice **dirp)
+{
+	struct udevice *dir;
+	int ftype;
+	int ret;
+
+	ftype = os_get_filetype(path ?: "/");
+	if (ftype < 0)
+		return ftype;
+	if (ftype != OS_FILET_DIR)
+		return log_msg_ret("sld", -ENOTDIR);
+
+	log_debug("looking up path '%s'\n", path);
+
+	ret = dir_add_probe(dev, DM_DRIVER_GET(sandbox_dir), path, &dir);
+	if (ret)
+		return log_msg_ret("slD", ret);
+
+	log_debug("added new dir '%s'\n", path);
+
+	*dirp = dir;
+
+	return 0;
+}
+
 static int sandbox_fs_remove(struct udevice *dev)
 {
 	return 0;
@@ -185,6 +296,7 @@ static int sandbox_fs_remove(struct udevice *dev)
 static const struct fs_ops sandbox_fs_ops = {
 	.mount		= sandbox_fs_mount,
 	.unmount	= sandbox_fs_unmount,
+	.lookup_dir	= sandbox_fs_lookup_dir,
 };
 
 static const struct udevice_id sandbox_fs_ids[] = {

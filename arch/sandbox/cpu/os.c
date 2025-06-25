@@ -743,6 +743,25 @@ int os_get_filesize(const char *fname, long long *size)
 	return 0;
 }
 
+int os_get_filetype(const char *fname)
+{
+	struct stat buf;
+	int ret;
+
+	ret = stat(fname, &buf);
+	if (ret)
+		return -errno;
+
+	if (buf.st_mode & S_IFREG)
+		return OS_FILET_REG;
+	if (buf.st_mode & S_IFDIR)
+		return OS_FILET_DIR;
+	if (buf.st_mode & S_IFLNK)
+		return OS_FILET_LNK;
+
+	return OS_FILET_UNKNOWN;
+}
+
 void os_putc(int ch)
 {
 	os_write(1, &ch, 1);
