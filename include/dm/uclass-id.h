@@ -65,6 +65,7 @@ enum uclass_id {
 	UCLASS_ETH,		/* Ethernet device */
 	UCLASS_ETH_PHY,		/* Ethernet PHY device */
 	UCLASS_EXTCON,		/* External Connector Class */
+	UCLASS_FILE,		/* File on a filesystem */
 	UCLASS_FFA,		/* Arm Firmware Framework for Armv8-A */
 	UCLASS_FIRMWARE,	/* Firmware */
 	UCLASS_FPGA,		/* FPGA device */
