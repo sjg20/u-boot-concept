@@ -822,7 +822,7 @@ static int part_create_block_devices(struct udevice *blk_dev)
 	for (count = 0, part = 1; part <= MAX_SEARCH_PARTITIONS; part++) {
 		if (part_get_info(desc, part, &info))
 			continue;
-		snprintf(devname, sizeof(devname), "%s:%d", blk_dev->name,
+		snprintf(devname, sizeof(devname), "%s:%x", blk_dev->name,
 			 part);
 
 		ret = device_bind_driver(blk_dev, "blk_partition",
