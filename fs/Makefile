@@ -4,6 +4,8 @@
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 # Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
 
+obj-$(CONFIG_$(PHASE_)FS) += fs-uclass.o
+
 ifdef CONFIG_XPL_BUILD
 obj-$(CONFIG_SPL_LEGACY_FS) += fs_legacy.o
 obj-$(CONFIG_SPL_FS_FAT) += fat/

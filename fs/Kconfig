@@ -4,6 +4,14 @@
 
 menu "File systems"
 
+config FS
+	bool "Support for filesystems"
+	default y if SANDBOX || VENDOR_EMULATION
+	depends on EXPERT
+	help
+	  Provides an interface for filesystems, allowing them to be
+	  persistently mounted. Filesystem can contain files and directory.
+
 config FS_LEGACY
 	def_bool y
 	help

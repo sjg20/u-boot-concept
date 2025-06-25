@@ -1,0 +1,78 @@
+/* SPDX-License-Identifier: GPL-2.0 */
+/*
+ * U-Boot Filesystem layer
+ *
+ * Models a filesystem which can be mounted and unmounted. It also allows a
+ * directory to be looked up.
+ *
+ * Copyright 2025 Simon Glass <sjg@chromium.org>
+ */
+
+#ifndef __FS_H
+#define __FS_H
+
+#include <fs_common.h>
+
+struct udevice;
+
+enum {
+	/* Maximum length of the filesystem name */
+	FS_MAX_NAME_LEN		= 128,
+};
+
+/**
+ * struct fs_plat - Filesystem information
+ *
+ * @name: Name of the filesystem, or empty if not available
+ */
+struct fs_plat {
+	char name[FS_MAX_NAME_LEN];
+};
+
+/**
+ * struct fs_priv - Private information for the FS devices
+ *
+ * @mounted: true if mounted
+ */
+struct fs_priv {
+	bool mounted;
+};
+
+struct fs_ops {
+	/**
+	 * mount() - Mount the filesystem
+	 *
+	 * @dev: Filesystem device
+	 * Return 0 if OK, -EISCONN if already mounted, other -ve on error
+	 */
+	int (*mount)(struct udevice *dev);
+
+	/**
+	 * unmount() - Unmount the filesystem
+	 *
+	 * @dev: Filesystem device
+	 * Return 0 if OK, -ENOTCONN if not mounted, other -ve on error
+	 */
+	int (*unmount)(struct udevice *dev);
+};
+
+/* Get access to a filesystem's operations */
+#define fs_get_ops(dev)		((struct fs_ops *)(dev)->driver->ops)
+
+/**
+ * fs_mount() - Mount the filesystem
+ *
+ * @dev: Filesystem device
+ * Return 0 if OK, -EISCONN if already mounted, other -ve on error
+ */
+int fs_mount(struct udevice *dev);
+
+/**
+ * fs_unmount() - Unmount the filesystem
+ *
+ * @dev: Filesystem device
+ * Return 0 if OK, -ENOTCONN if not mounted, other -ve on error
+ */
+int fs_unmount(struct udevice *dev);
+
+#endif
