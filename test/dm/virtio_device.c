@@ -50,7 +50,7 @@ DM_TEST(dm_test_virtio_base, UTF_SCAN_PDATA | UTF_SCAN_FDT);
 static int dm_test_virtio_all_ops(struct unit_test_state *uts)
 {
 	struct udevice *bus, *dev;
-	struct virtio_dev_priv *uc_priv;
+	struct virtio_dev_plat *uc_plat;
 	uint offset = 0, len = 0, nvqs = 1;
 	void *buffer = NULL;
 	u8 status;
@@ -67,12 +67,12 @@ static int dm_test_virtio_all_ops(struct unit_test_state *uts)
 	ut_assertnonnull(dev);
 
 	/*
-	 * fake the virtio device probe by filling in uc_priv->vdev
+	 * fake the virtio device probe by filling in uc_plat->vdev
 	 * which is used by virtio_find_vqs/virtio_del_vqs.
 	 */
-	uc_priv = dev_get_uclass_priv(bus);
-	ut_assertnonnull(uc_priv);
-	uc_priv->vdev = dev;
+	uc_plat = dev_get_uclass_priv(bus);
+	ut_assertnonnull(uc_plat);
+	uc_plat->vdev = dev;
 
 	/* test virtio_xxx APIs */
 	ut_assertok(virtio_get_config(dev, offset, buffer, len));
@@ -128,7 +128,7 @@ DM_TEST(dm_test_virtio_remove, UTF_SCAN_PDATA | UTF_SCAN_FDT);
 static int dm_test_virtio_ring(struct unit_test_state *uts)
 {
 	struct udevice *bus, *dev;
-	struct virtio_dev_priv *uc_priv;
+	struct virtio_dev_plat *uc_plat;
 	struct virtqueue *vq;
 	struct virtio_sg sg[2];
 	struct virtio_sg *sgs[2];
@@ -147,9 +147,9 @@ static int dm_test_virtio_ring(struct unit_test_state *uts)
 	 * fake the virtio device probe by filling in uc_priv->vdev
 	 * which is used by virtio_find_vqs/virtio_del_vqs.
 	 */
-	uc_priv = dev_get_uclass_priv(bus);
-	ut_assertnonnull(uc_priv);
-	uc_priv->vdev = dev;
+	uc_plat = dev_get_uclass_priv(bus);
+	ut_assertnonnull(uc_plat);
+	uc_plat->vdev = dev;
 
 	/* prepare the scatter-gather buffer */
 	sg[0].addr = buffer[0];

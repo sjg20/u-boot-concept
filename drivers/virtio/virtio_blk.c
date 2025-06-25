@@ -138,7 +138,7 @@ static ulong virtio_blk_erase(struct udevice *dev, lbaint_t start,
 
 static int virtio_blk_bind(struct udevice *dev)
 {
-	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(dev->parent);
+	struct virtio_dev_plat *uc_plat = dev_get_uclass_plat(dev->parent);
 	struct blk_desc *desc = dev_get_uclass_plat(dev);
 	int devnum;
 
@@ -156,16 +156,16 @@ static int virtio_blk_bind(struct udevice *dev)
 	desc->part_type = PART_TYPE_UNKNOWN;
 	/*
 	 * virtio mmio transport supplies string identification for us,
-	 * while pci trnasport uses a 2-byte subvendor value.
+	 * while pci transport uses a 2-byte subvendor value.
 	 */
-	if (uc_priv->vendor >> 16)
-		sprintf(desc->vendor, "%s", (char *)&uc_priv->vendor);
+	if (uc_plat->vendor >> 16)
+		sprintf(desc->vendor, "%s", (char *)&uc_plat->vendor);
 	else
-		sprintf(desc->vendor, "%04x", uc_priv->vendor);
+		sprintf(desc->vendor, "%04x", uc_plat->vendor);
 	desc->bdev = dev;
 
 	/* Indicate what driver features we support */
-	virtio_driver_features_init(uc_priv, feature, ARRAY_SIZE(feature),
+	virtio_driver_features_init(uc_plat, feature, ARRAY_SIZE(feature),
 				    NULL, 0);
 
 	return 0;

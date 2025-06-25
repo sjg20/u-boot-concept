@@ -232,7 +232,7 @@ static int virtio_pci_get_features(struct udevice *udev, u64 *features)
 static int virtio_pci_set_features(struct udevice *udev)
 {
 	struct virtio_pci_priv *priv = dev_get_priv(udev);
-	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(udev);
+	struct virtio_dev_plat *uc_plat = dev_get_uclass_plat(udev);
 
 	if (!__virtio_test_bit(udev, VIRTIO_F_VERSION_1)) {
 		debug("virtio: device uses modern interface but does not have VIRTIO_F_VERSION_1\n");
@@ -240,9 +240,9 @@ static int virtio_pci_set_features(struct udevice *udev)
 	}
 
 	iowrite32(0, &priv->common->guest_feature_select);
-	iowrite32((u32)uc_priv->features, &priv->common->guest_feature);
+	iowrite32((u32)uc_plat->features, &priv->common->guest_feature);
 	iowrite32(1, &priv->common->guest_feature_select);
-	iowrite32(uc_priv->features >> 32, &priv->common->guest_feature);
+	iowrite32(uc_plat->features >> 32, &priv->common->guest_feature);
 
 	return 0;
 }
@@ -318,10 +318,10 @@ static void virtio_pci_del_vq(struct virtqueue *vq)
 
 static int virtio_pci_del_vqs(struct udevice *udev)
 {
-	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(udev);
+	struct virtio_dev_plat *uc_plat = dev_get_uclass_plat(udev);
 	struct virtqueue *vq, *n;
 
-	list_for_each_entry_safe(vq, n, &uc_priv->vqs, list)
+	list_for_each_entry_safe(vq, n, &uc_plat->vqs, list)
 		virtio_pci_del_vq(vq);
 
 	return 0;
@@ -486,7 +486,7 @@ static int virtio_pci_bind(struct udevice *udev)
 static int virtio_pci_probe(struct udevice *udev)
 {
 	struct pci_child_plat *pplat = dev_get_parent_plat(udev);
-	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(udev);
+	struct virtio_dev_plat *uc_plat = dev_get_uclass_plat(udev);
 	struct virtio_pci_priv *priv = dev_get_priv(udev);
 	u16 subvendor;
 	u8 revision;
@@ -502,9 +502,9 @@ static int virtio_pci_probe(struct udevice *udev)
 	dm_pci_read_config8(udev, PCI_REVISION_ID, &revision);
 
 	/* Modern devices: simply use PCI device id, but start from 0x1040. */
-	uc_priv->device = pplat->device - 0x1040;
+	uc_plat->device = pplat->device - 0x1040;
 	dm_pci_read_config16(udev, PCI_SUBSYSTEM_VENDOR_ID, &subvendor);
-	uc_priv->vendor = subvendor;
+	uc_plat->vendor = subvendor;
 
 	/* Check for a common config: if not, use legacy mode (bar 0) */
 	common = virtio_pci_find_capability(udev, VIRTIO_PCI_CAP_COMMON_CFG,
@@ -570,7 +570,7 @@ static int virtio_pci_probe(struct udevice *udev)
 	dm_pci_read_config32(udev, offset, &priv->notify_offset_multiplier);
 
 	debug("(%s): device (%d) vendor (%08x) version (%d)\n", udev->name,
-	      uc_priv->device, uc_priv->vendor, revision);
+	      uc_plat->device, uc_plat->vendor, revision);
 
 	return 0;
 }

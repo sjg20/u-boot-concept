@@ -197,7 +197,7 @@ struct dm_virtio_ops {
 #define virtio_get_ops(dev)	((struct dm_virtio_ops *)(dev)->driver->ops)
 
 /**
- * virtio uclass per device private data
+ * struct virtio_dev_plat - virtio uclass per-device plat data
  *
  * @vqs:			virtualqueue for the virtio device
  * @vdev:			the real virtio device underneath
@@ -210,7 +210,7 @@ struct dm_virtio_ops {
  * @feature_table_legacy:	same as feature_table but working in legacy mode
  * @feature_table_size_legacy:	number of entries in feature table legacy array
  */
-struct virtio_dev_priv {
+struct virtio_dev_plat {
 	struct list_head vqs;
 	struct udevice *vdev;
 	bool legacy;
@@ -353,13 +353,13 @@ int virtio_finalize_features(struct udevice *vdev);
  * later virtio transport uclass driver can utilize the driver supplied features
  * to negotiate with the device on the final supported features.
  *
- * @priv:		virtio uclass per device private data
+ * @plat:		virtio uclass per-device private data
  * @feature:		an array of feature supported by the driver
  * @feature_size:	number of entries in the feature table array
  * @feature_legacy:	same as feature_table but working in legacy mode
  * @feature_legacy_size:number of entries in feature table legacy array
  */
-void virtio_driver_features_init(struct virtio_dev_priv *priv,
+void virtio_driver_features_init(struct virtio_dev_plat *plat,
 				 const u32 *feature,
 				 u32 feature_size,
 				 const u32 *feature_legacy,
@@ -431,7 +431,7 @@ static inline __virtio64 __cpu_to_virtio64(bool little_endian, u64 val)
  */
 static inline bool __virtio_test_bit(struct udevice *udev, unsigned int fbit)
 {
-	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(udev);
+	struct virtio_dev_plat *uc_plat = dev_get_uclass_plat(udev);
 
 	/* Did you forget to fix assumptions on max features? */
 	if (__builtin_constant_p(fbit))
@@ -439,7 +439,7 @@ static inline bool __virtio_test_bit(struct udevice *udev, unsigned int fbit)
 	else
 		WARN_ON(fbit >= 64);
 
-	return uc_priv->features & BIT_ULL(fbit);
+	return uc_plat->features & BIT_ULL(fbit);
 }
 
 /**
@@ -452,7 +452,7 @@ static inline bool __virtio_test_bit(struct udevice *udev, unsigned int fbit)
  */
 static inline void __virtio_set_bit(struct udevice *udev, unsigned int fbit)
 {
-	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(udev);
+	struct virtio_dev_plat *uc_plat = dev_get_uclass_plat(udev);
 
 	/* Did you forget to fix assumptions on max features? */
 	if (__builtin_constant_p(fbit))
@@ -460,7 +460,7 @@ static inline void __virtio_set_bit(struct udevice *udev, unsigned int fbit)
 	else
 		WARN_ON(fbit >= 64);
 
-	uc_priv->features |= BIT_ULL(fbit);
+	uc_plat->features |= BIT_ULL(fbit);
 }
 
 /**
@@ -473,7 +473,7 @@ static inline void __virtio_set_bit(struct udevice *udev, unsigned int fbit)
  */
 static inline void __virtio_clear_bit(struct udevice *udev, unsigned int fbit)
 {
-	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(udev);
+	struct virtio_dev_plat *uc_plat = dev_get_uclass_plat(udev);
 
 	/* Did you forget to fix assumptions on max features? */
 	if (__builtin_constant_p(fbit))
@@ -481,7 +481,7 @@ static inline void __virtio_clear_bit(struct udevice *udev, unsigned int fbit)
 	else
 		WARN_ON(fbit >= 64);
 
-	uc_priv->features &= ~BIT_ULL(fbit);
+	uc_plat->features &= ~BIT_ULL(fbit);
 }
 
 /**
@@ -512,9 +512,9 @@ static inline bool virtio_legacy_is_little_endian(void)
 
 static inline bool virtio_is_little_endian(struct udevice *vdev)
 {
-	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(vdev->parent);
+	struct virtio_dev_plat *uc_plat = dev_get_uclass_plat(vdev->parent);
 
-	return !uc_priv->legacy || virtio_legacy_is_little_endian();
+	return !uc_plat->legacy || virtio_legacy_is_little_endian();
 }
 
 /* Memory accessors */
