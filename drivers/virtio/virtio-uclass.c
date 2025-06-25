@@ -230,7 +230,7 @@ static int virtio_uclass_post_probe(struct udevice *udev)
 		return 0;
 	}
 
-	snprintf(dev_name, sizeof(dev_name), "%s#%d", name, dev_seq(udev));
+	snprintf(dev_name, sizeof(dev_name), "%s#%x", name, dev_seq(udev));
 	str = strdup(dev_name);
 	if (!str)
 		return -ENOMEM;
