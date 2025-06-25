@@ -257,14 +257,6 @@ static int virtio_uclass_post_probe(struct udevice *udev)
 	return 0;
 }
 
-static int virtio_uclass_child_post_bind(struct udevice *vdev)
-{
-	/* Acknowledge that we've seen the device */
-	virtio_add_status(vdev, VIRTIO_CONFIG_S_ACKNOWLEDGE);
-
-	return 0;
-}
-
 static int virtio_uclass_child_pre_probe(struct udevice *vdev)
 {
 	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(vdev->parent);
@@ -277,6 +269,9 @@ static int virtio_uclass_child_pre_probe(struct udevice *vdev)
 	/* bootdevs are not virtio devices */
 	if (device_get_uclass_id(vdev) == UCLASS_BOOTDEV)
 		return 0;
+
+	/* Acknowledge that we've seen the device */
+	virtio_add_status(vdev, VIRTIO_CONFIG_S_ACKNOWLEDGE);
 
 	/*
 	 * Save the real virtio device (eg: virtio-net, virtio-blk) to
@@ -391,7 +386,6 @@ UCLASS_DRIVER(virtio) = {
 	.flags	= DM_UC_FLAG_SEQ_ALIAS,
 	.pre_probe = virtio_uclass_pre_probe,
 	.post_probe = virtio_uclass_post_probe,
-	.child_post_bind = virtio_uclass_child_post_bind,
 	.child_pre_probe = virtio_uclass_child_pre_probe,
 	.child_post_probe = virtio_uclass_child_post_probe,
 	.per_device_auto	= sizeof(struct virtio_dev_priv),
