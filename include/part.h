@@ -7,6 +7,7 @@
 #define _PART_H
 
 #include <blk.h>
+#include <fs_common.h>
 #include <ide.h>
 #include <u-boot/uuid.h>
 #include <linker_lists.h>
@@ -84,6 +85,7 @@ struct disk_partition {
 #ifdef CONFIG_DOS_PARTITION
 	uchar	sys_ind;	/* partition type			*/
 #endif
+	enum fs_type_t fs_type;	/* type used for hostfs and virtio-fs */
 };
 
 /* Accessors for struct disk_partition field ->uuid */
