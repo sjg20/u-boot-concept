@@ -35,6 +35,7 @@
 #include <squashfs.h>
 #include <erofs.h>
 #include <exfat.h>
+#include <virtio_fs.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -404,6 +405,28 @@ static struct fstype_info fstypes[] = {
 		.unlink = exfat_fs_unlink,
 		.mkdir = exfat_fs_mkdir,
 		.rename = exfat_fs_rename,
+	},
+#endif
+#if IS_ENABLED(CONFIG_VIRTIO_FS)
+	{
+		.fstype = FS_TYPE_VIRTIO,
+		.name = "virtio",
+		.null_dev_desc_ok = true,
+		.probe = virtio_fs_compat_probe,
+		.opendir = virtio_fs_compat_opendir,
+		.readdir = virtio_fs_compat_readdir,
+		.ls = fs_ls_generic,
+		.read = virtio_fs_compat_read,
+		.size = virtio_fs_compat_size,
+		.close = fs_close_unsupported,
+		.closedir = virtio_fs_compat_closedir,
+		.exists = fs_exists_unsupported,
+		.uuid = fs_uuid_unsupported,
+		.write = fs_write_unsupported,
+		.ln = fs_ln_unsupported,
+		.unlink = fs_unlink_unsupported,
+		.mkdir = fs_mkdir_unsupported,
+		.rename = fs_rename_unsupported,
 	},
 #endif
 	{
