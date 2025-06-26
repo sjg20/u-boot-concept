@@ -68,6 +68,8 @@ struct fs_dirent {
 struct fs_dir_stream {
 #ifdef CONFIG_FS
 	struct udevice *dev;
+	u64 fh;
+	u64 offset;
 #endif
 	struct blk_desc *desc;
 	int part;

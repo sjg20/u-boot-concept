@@ -409,6 +409,7 @@ static int virtio_fs_unmount(struct udevice *dev)
 static const struct fs_ops virtio_fs_ops = {
 	.mount		= virtio_fs_mount,
 	.unmount	= virtio_fs_unmount,
+	.lookup_dir	= virtio_fs_setup_dir,
 };
 
 static const struct udevice_id virtio_fs_ids[] = {
