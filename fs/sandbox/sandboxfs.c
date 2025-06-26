@@ -7,7 +7,7 @@
 
 #include <dir.h>
 #include <dm.h>
-#include <stdio.h>
+#include <file.h>
 #include <fs.h>
 #include <fs_legacy.h>
 #include <malloc.h>
@@ -22,6 +22,15 @@
  */
 struct sandbox_dir_priv {
 	struct os_dirent_node *head, *ptr;
+};
+
+/**
+ * struct sandbox_dir_priv - Private info about sandbox directories
+ *
+ * @fd: File descriptor for the file
+ */
+struct file_priv {
+	int fd;
 };
 
 /**
@@ -242,10 +251,99 @@ static int sandbox_dir_close(struct udevice *dev, struct fs_dir_stream *strm)
 	return 0;
 }
 
+static ssize_t sandbox_read_iter(struct udevice *dev, struct iov_iter *iter,
+				 loff_t pos)
+{
+	struct file_priv *priv = dev_get_priv(dev);
+	ssize_t ret;
+
+	log_debug("start dev '%s' len %lx\n", dev->name, iter->count);
+	ret = os_lseek(priv->fd, pos, OS_SEEK_SET);
+	if (ret < 0)
+		return log_msg_ret("vfs", ret);
+
+	ret = os_read(priv->fd, iter_iov_ptr(iter), iter_iov_avail(iter));
+	if (ret < 0)
+		return log_msg_ret("vfr", ret);
+	iter_advance(iter, ret);
+	log_debug("read %lx bytes\n", ret);
+
+	return ret;
+}
+
+static struct file_ops sandbox_file_ops = {
+	.read_iter	= sandbox_read_iter,
+};
+
+static const struct udevice_id file_ids[] = {
+	{ .compatible = "virtio-fs,file" },
+	{ }
+};
+
+U_BOOT_DRIVER(sandbox_file) = {
+	.name	= "sandbox_file",
+	.id	= UCLASS_FILE,
+	.of_match = file_ids,
+	.ops	= &sandbox_file_ops,
+	.priv_auto	= sizeof(struct file_priv),
+	.flags	= DM_FLAG_ACTIVE_DMA,
+};
+
+static int sandbox_dir_open_file(struct udevice *dir, const char *leaf,
+				 enum dir_open_flags_t oflags,
+				 struct udevice **filp)
+{
+	struct dir_uc_priv *uc_priv = dev_get_uclass_priv(dir);
+	char pathname[FILE_MAX_PATH_LEN];
+	struct file_priv *priv;
+	int mode, fd, ftype, ret;
+	struct udevice *dev;
+	off_t size;
+
+	snprintf(pathname, sizeof(pathname), "%s/%s", uc_priv->path, leaf);
+	ftype = os_get_filetype(pathname);
+	if (ftype < 0)
+		return log_msg_ret("soF", ftype);
+	if (ftype != OS_FILET_REG)
+		return log_msg_ret("sOf", -EINVAL);
+
+	if (oflags == DIR_O_RDONLY)
+		mode = OS_O_RDONLY;
+	else if (oflags == DIR_O_WRONLY)
+		mode = OS_O_WRONLY | OS_O_CREAT;
+	else if (oflags == DIR_O_RDWR)
+		mode = OS_O_RDWR;
+	else
+		return log_msg_ret("som", -EINVAL);
+
+	ret = os_open(pathname, mode);
+	if (ret < 0)
+		return log_msg_ret("sOm", ret);
+	fd = ret;
+
+	size = os_filesize(fd);
+	if (size < 0)
+		return log_msg_ret("sos", ret);
+
+	ret = file_add_probe(dir, DM_DRIVER_GET(sandbox_file), leaf, size,
+			     oflags, &dev);
+	if (ret) {
+		os_close(fd);
+		return log_msg_ret("sof", ret);
+	}
+
+	priv = dev_get_priv(dev);
+	priv->fd = fd;
+	*filp = dev;
+
+	return 0;
+}
+
 static struct dir_ops sandbox_dir_ops = {
 	.open	= sandbox_dir_open,
 	.read	= sandbox_dir_read,
 	.close	= sandbox_dir_close,
+	.open_file	= sandbox_dir_open_file,
 };
 
 static const struct udevice_id dir_ids[] = {
