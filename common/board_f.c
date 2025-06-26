@@ -1006,6 +1006,11 @@ void board_init_f(ulong boot_flags)
 	gd->flags &= ~GD_FLG_HAVE_CONSOLE;
 	gd->boardf = &boardf;
 
+	const int n_ents = ll_entry_count(struct driver, driver);
+	printf("hi %d\n", n_ents);
+	if (abs(n_ents) > 100)
+		hang();
+
 	initcall_run_f();
 
 #if !defined(CONFIG_ARM) && !defined(CONFIG_SANDBOX) && \
