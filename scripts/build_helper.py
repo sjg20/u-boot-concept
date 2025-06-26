@@ -127,6 +127,21 @@ sct_mnt = /mnt/sct
             else:
                 shutil.copy2(tmp.name, fname)
 
+    def add_drive(self, lun, fname, cmd):
+        iface = 'virtio'
+        drive = 'hd0'
+        if lun is not None:
+            iface = 'none'
+            drive = f'hd{lun}'
+            cmd.extend([
+                '-device',
+                f'virtio-scsi-pci,id=scsi{lun},{MODERN_PCI}',
+                '-device',
+                f'scsi-hd,bus=scsi{lun}.0,scsi-id=0,lun={lun},drive={drive}'])
+        cmd.extend([
+            '-drive',
+            f'if={iface},file={fname},format=raw,id={drive}'])
+
     def add_qemu_args(self, args, cmd):
         """Add QEMU arguments according to the selected options
 
@@ -165,17 +180,11 @@ sct_mnt = /mnt/sct
 
         if self.img_fname:
             if self.img_fname.exists():
-                iface = 'none' if args.scsi else 'virtio'
-                if args.scsi:
-                    cmd.extend([
-                        '-device',
-                        f'virtio-scsi-pci,id=scsi0,{MODERN_PCI}',
-                        '-device', 'scsi-hd,bus=scsi0.0,drive=hd0'])
-                cmd.extend([
-                    '-drive',
-                    f'if={iface},file={self.img_fname},format=raw,id=hd0'])
+                self.add_drive(1 if args.scsi else None, self.img_fname, cmd)
+                # self.add_drive(0 if args.scsi else None, 'README', cmd)
             else:
                 tout.warning(f"Disk image '{self.img_fname}' not found")
+
 
 def add_common_args(parser):
     """Add some arguments which are common to build-efi/qemu scripts
