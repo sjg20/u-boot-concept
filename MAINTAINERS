@@ -1854,6 +1854,7 @@ F:	include/video*.h
 
 VirtIO
 M:	Bin Meng <bmeng.cn@gmail.com>
+M:	Simon Glass <sjg@chromium.org>
 S:	Maintained
 F:	drivers/virtio/
 F:	cmd/virtio.c

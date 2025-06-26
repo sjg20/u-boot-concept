@@ -30,6 +30,7 @@
 #define VIRTIO_NET_DRV_NAME	"virtio-net"
 #define VIRTIO_BLK_DRV_NAME	"virtio-blk"
 #define VIRTIO_RNG_DRV_NAME	"virtio-rng"
+#define VIRTIO_FS_DRV_NAME	"virtio-fs"
 
 /* Status byte for guest to report progress, and synchronize features */
 
