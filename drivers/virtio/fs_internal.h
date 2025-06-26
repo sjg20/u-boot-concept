@@ -162,4 +162,21 @@ long virtio_fs_read(struct udevice *dev, u64 nodeid, u64 fh, u64 offset,
 int virtio_fs_setup_dir(struct udevice *fsdev, const char *path,
 			struct udevice **devp);
 
+/**
+ * virtio_fs_setup_file() - Look up and open a file, creating a new device
+ *
+ * Sets up a new open file: performs a lookup for the file within a given
+ * directory, opens it via FUSE, then probes and adds a new 'file' device to
+ * represent the opened file
+ *
+ * @dir: The directory device in which to look for the file
+ * @leaf: The name of the file to open (the leaf name)
+ * @oflags: Open flags to use when opening the file
+ * @devp: On success, returns a pointer to the newly created file device
+ * Return: 0 on success, -ve on error
+ */
+int virtio_fs_setup_file(struct udevice *dir, const char *leaf,
+			enum dir_open_flags_t flags,
+			struct udevice **devp);
+
 #endif

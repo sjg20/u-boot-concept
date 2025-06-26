@@ -108,6 +108,22 @@ static int virtio_fs_dir_close(struct udevice *dev, struct fs_dir_stream *strm)
 	return 0;
 }
 
+static int open_file(struct udevice *dev, const char *leaf,
+		     enum dir_open_flags_t oflags, struct udevice **filp)
+{
+	struct udevice *fil;
+	int ret;
+
+	log_debug("open_file '%s'\n", leaf);
+	ret = virtio_fs_setup_file(dev, leaf, oflags, &fil);
+	log_debug("ret %d\n", ret);
+	if (ret)
+		return log_msg_ret("dof", ret);
+	*filp = fil;
+
+	return 0;
+}
+
 static int virtio_fs_dir_remove(struct udevice *dev)
 {
 	struct virtio_fs_dir_priv *dir_priv = dev_get_priv(dev);
@@ -127,6 +143,7 @@ static struct dir_ops virtio_fs_dir_ops = {
 	.open	= virtio_fs_dir_open,
 	.read	= virtio_fs_dir_read,
 	.close	= virtio_fs_dir_close,
+	.open_file	= open_file,
 };
 
 static const struct udevice_id dir_ids[] = {
