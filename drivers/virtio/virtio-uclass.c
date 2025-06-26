@@ -192,6 +192,9 @@ static int virtio_uclass_pre_probe(struct udevice *udev)
 {
 	struct dm_virtio_ops *ops;
 
+	if (IS_ENABLED(CONFIG_SANDBOX))
+		return 0;
+
 	ops = (struct dm_virtio_ops *)(udev->driver->ops);
 
 	/*
