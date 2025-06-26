@@ -7,6 +7,9 @@
 
 #include <rtc.h>
 
+/**
+ * @FS_TYPE_VIRTIO: virtio-fs for access to the host filesystem from QEMU
+ */
 enum fs_type_t {
 	FS_TYPE_ANY = 0,
 	FS_TYPE_FAT,
@@ -18,6 +21,7 @@ enum fs_type_t {
 	FS_TYPE_EROFS,
 	FS_TYPE_SEMIHOSTING,
 	FS_TYPE_EXFAT,
+	FS_TYPE_VIRTIO,
 };
 
 /*
