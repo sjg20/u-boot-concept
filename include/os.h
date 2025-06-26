@@ -71,7 +71,7 @@ off_t os_filesize(int fd);
  *
  * @pathname:	Pathname of file to open
  * @flags:	Flags, like OS_O_RDONLY, OS_O_RDWR
- * Return:	file descriptor, or -1 on error
+ * Return:	file descriptor, or -errno on error
  */
 int os_open(const char *pathname, int flags);
 

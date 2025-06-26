@@ -39,11 +39,11 @@ static int host_sb_attach_file(struct udevice *dev, const char *filename)
 		return ret;
 
 	fd = os_open(filename, OS_O_RDWR);
-	if (fd == -1) {
+	if (fd < 0) {
 		printf("Failed to access host backing file '%s', trying read-only\n",
 		       filename);
 		fd = os_open(filename, OS_O_RDONLY);
-		if (fd == -1) {
+		if (fd < 0) {
 			printf("- still failed\n");
 			return log_msg_ret("open", -ENOENT);
 		}
