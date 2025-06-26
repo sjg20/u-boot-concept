@@ -786,12 +786,12 @@ int dev_get_dma_range(const struct udevice *dev, phys_addr_t *cpu,
 int dev_read_alias_highest_id(const char *stem);
 
 /**
- * dev_get_child_count() - get the child count of a device
+ * dev_read_child_count() - get the child count of a device
  *
  * @dev: device to use for interation (`struct udevice *`)
  * Return: the count of child subnode
  */
-int dev_get_child_count(const struct udevice *dev);
+int dev_read_child_count(const struct udevice *dev);
 
 /**
  * dev_read_pci_bus_range - Read PCI bus-range resource
@@ -1243,7 +1243,7 @@ static inline int dev_read_alias_highest_id(const char *stem)
 	return fdtdec_get_alias_highest_id(gd->fdt_blob, stem);
 }
 
-static inline int dev_get_child_count(const struct udevice *dev)
+static inline int dev_read_child_count(const struct udevice *dev)
 {
 	return ofnode_get_child_count(dev_ofnode(dev));
 }
