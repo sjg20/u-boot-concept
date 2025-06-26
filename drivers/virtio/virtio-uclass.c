@@ -30,6 +30,7 @@ static const char *const virtio_drv_name[VIRTIO_ID_MAX_NUM] = {
 	[VIRTIO_ID_NET]		= VIRTIO_NET_DRV_NAME,
 	[VIRTIO_ID_BLOCK]	= VIRTIO_BLK_DRV_NAME,
 	[VIRTIO_ID_RNG]		= VIRTIO_RNG_DRV_NAME,
+	[VIRTIO_ID_FS]		= VIRTIO_FS_DRV_NAME,
 };
 
 int virtio_get_config(struct udevice *vdev, unsigned int offset,
@@ -266,6 +267,7 @@ static int virtio_uclass_child_pre_probe(struct udevice *vdev)
 	int i;
 	int ret;
 
+	printf("pre_probe\n");
 	/* bootdevs are not virtio devices */
 	if (device_get_uclass_id(vdev) == UCLASS_BOOTDEV)
 		return 0;
