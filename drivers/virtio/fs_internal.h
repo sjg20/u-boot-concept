@@ -146,4 +146,20 @@ u64 virtio_fs_get_root(struct udevice *dev);
 long virtio_fs_read(struct udevice *dev, u64 nodeid, u64 fh, u64 offset,
 		    void *buf, uint size);
 
+/**
+ * virtio_fs_setup_dir() - Look up a directory and create a device for it
+ *
+ * Looks up a path to find the corresponding inode in the virtio-fs filesystem,
+ * then creates and probes a new 'directory' device to represent it.
+ *
+ * If the path is the root (NULL or "/"), it uses the root inode directly.
+ *
+ * @fsdev: The virtio-fs filesystem device
+ * @path: The path of the directory to set up (e.g., "/boot" or "/")
+ * @devp: On success, returns a pointer to the newly created directory device
+ * Return: 0 on success, -ve on error
+ */
+int virtio_fs_setup_dir(struct udevice *fsdev, const char *path,
+			struct udevice **devp);
+
 #endif
