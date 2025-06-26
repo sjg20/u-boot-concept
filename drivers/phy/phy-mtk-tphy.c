@@ -840,7 +840,7 @@ static int mtk_tphy_probe(struct udevice *dev)
 	ofnode subnode;
 	int index = 0;
 
-	tphy->nphys = dev_get_child_count(dev);
+	tphy->nphys = dev_read_child_count(dev);
 
 	tphy->phys = devm_kcalloc(dev, tphy->nphys, sizeof(*tphy->phys),
 				  GFP_KERNEL);

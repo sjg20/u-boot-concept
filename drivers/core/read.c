@@ -438,7 +438,7 @@ fdt_addr_t dev_read_addr_pci(const struct udevice *dev, fdt_size_t *sizep)
 	return addr;
 }
 
-int dev_get_child_count(const struct udevice *dev)
+int dev_read_child_count(const struct udevice *dev)
 {
 	return ofnode_get_child_count(dev_ofnode(dev));
 }
