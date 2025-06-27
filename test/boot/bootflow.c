@@ -802,7 +802,7 @@ static int bootflow_cmd_hunt_single(struct unit_test_state *uts)
 	ut_assert_console_end();
 
 	/* check that the hunter was used */
-	ut_asserteq(BIT(MMC_HUNTER) | BIT(1), std->hunters_used);
+	ut_asserteq(BIT(HUNTER_MMC) | BIT(1), std->hunters_used);
 
 	return 0;
 }
@@ -824,7 +824,7 @@ static int bootflow_cmd_hunt_label(struct unit_test_state *uts)
 	ut_assertok(run_command("bootflow scan -l mmc", 0));
 
 	/* check that the hunter was used */
-	ut_asserteq(BIT(MMC_HUNTER) | BIT(1), std->hunters_used);
+	ut_asserteq(BIT(HUNTER_MMC) | BIT(1), std->hunters_used);
 
 	/* check that we got the mmc1 bootflow */
 	ut_assert_nextline("Scanning for bootflows with label 'mmc'");

@@ -20,9 +20,15 @@
 #define TEST_VERSION		"U-Boot v2022.04-local2"
 #define TEST_VERNUM		0x00010002
 
+/* IDs for hunters, which is dependent on their binding order */
 enum {
-	MAX_HUNTER	= 9,
-	MMC_HUNTER	= 3,	/* ID of MMC hunter */
+	HUNTER_ETH	= 0,
+	HUNTER_SIMPLE_BUS,
+	HUNTER_MMC	= 3,
+	HUNTER_SCSI	= 6,
+	HUNTER_USB	= 8,
+	HUNTER_COUNT	= 10,
+	HUNTER_MAX	= HUNTER_COUNT - 1,
 };
 
 struct unit_test_state;
