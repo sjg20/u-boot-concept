@@ -344,13 +344,14 @@ static int virtio_mmio_of_to_plat(struct udevice *udev)
 	return 0;
 }
 
-static int virtio_mmio_probe(struct udevice *udev)
+int virtio_mmio_probe(struct udevice *udev)
 {
 	struct virtio_mmio_priv *priv = dev_get_priv(udev);
 	struct virtio_dev_priv *uc_priv = dev_get_uclass_priv(udev);
 	u32 magic;
 
 	/* Check magic value */
+	log_debug("probe %p\n", priv->base);
 	magic = readl(priv->base + VIRTIO_MMIO_MAGIC_VALUE);
 	if (magic != ('v' | 'i' << 8 | 'r' << 16 | 't' << 24)) {
 		debug("(%s): wrong magic value 0x%08x!\n", udev->name, magic);
@@ -379,13 +380,13 @@ static int virtio_mmio_probe(struct udevice *udev)
 	if (priv->version == 1)
 		writel(PAGE_SIZE, priv->base + VIRTIO_MMIO_GUEST_PAGE_SIZE);
 
-	debug("(%s): device (%d) vendor (%08x) version (%d)\n", udev->name,
+	debug("(%s): device (%04x) vendor (%04x) version (%d)\n", udev->name,
 	      uc_priv->device, uc_priv->vendor, priv->version);
 
 	return 0;
 }
 
-static const struct dm_virtio_ops virtio_mmio_ops = {
+const struct dm_virtio_ops virtio_mmio_ops = {
 	.get_config	= virtio_mmio_get_config,
 	.set_config	= virtio_mmio_set_config,
 	.generation	= virtio_mmio_generation,
