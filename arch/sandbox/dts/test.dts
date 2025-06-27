@@ -1704,6 +1704,14 @@
 		virtio-type = <VIRTIO_ID_BLOCK>;
 	};
 
+	virtio-blk {
+		compatible = "sandbox,virtio-blk-emul";
+
+		mmio {
+			compatible = "sandbox,virtio-emul";
+		};
+	};
+
 	sandbox_scmi {
 		compatible = "sandbox,scmi-devices";
 		power-domains = <&pwrdom_scmi 2>;
