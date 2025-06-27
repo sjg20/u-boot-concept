@@ -6,6 +6,7 @@
 
 #define LOG_CATEGORY	LOGC_SANDBOX
 
+#include <alist.h>
 #include <errno.h>
 #include <log.h>
 #include <malloc.h>
@@ -231,9 +232,20 @@ void sandbox_map_list(void)
 	}
 }
 
+static bool in_range(const struct sandbox_mmio *mmio, const void *addr)
+{
+	return addr >= mmio->base && addr < mmio->base + mmio->size;
+}
+
 unsigned long sandbox_read(const void *addr, enum sandboxio_size_t size)
 {
 	struct sandbox_state *state = state_get_current();
+	const struct sandbox_mmio *mmio;
+
+	alist_for_each(mmio, &state->mmio) {
+		if (in_range(mmio, addr))
+			return mmio->h_read(mmio->ctx, addr, size);
+	}
 
 	if (!state->allow_memio)
 		return 0;
@@ -255,6 +267,14 @@ unsigned long sandbox_read(const void *addr, enum sandboxio_size_t size)
 void sandbox_write(void *addr, unsigned int val, enum sandboxio_size_t size)
 {
 	struct sandbox_state *state = state_get_current();
+	const struct sandbox_mmio *mmio;
+
+	alist_for_each(mmio, &state->mmio) {
+		if (in_range(mmio, addr)) {
+			mmio->h_write(mmio->ctx, addr, val, size);
+			return;
+		}
+	}
 
 	if (!state->allow_memio)
 		return;
@@ -285,4 +305,33 @@ void sandbox_set_enable_memio(bool enable)
 void sandbox_set_enable_pci_map(int enable)
 {
 	enable_pci_map = enable;
+}
+
+int sandbox_mmio_add(void *base, ulong size, sandbox_mmio_read_func h_read,
+		     sandbox_mmio_write_func h_write, void *ctx)
+{
+	struct sandbox_state *state = state_get_current();
+	struct sandbox_mmio mmio;
+
+	mmio.base = base;
+	mmio.size = size;
+	mmio.h_read = h_read;
+	mmio.h_write = h_write;
+	mmio.ctx = ctx;
+	if (!alist_add(&state->mmio, mmio))
+		return -ENOMEM;
+
+	return 0;
+}
+
+void sandbox_mmio_remove(void *ctx)
+{
+	struct sandbox_state *state = state_get_current();
+	struct sandbox_mmio *from, *to;
+
+	alist_for_each_filter(from, to, &state->mmio) {
+		if (from->ctx != ctx)
+			*to++ = *from;
+	}
+	alist_update_end(&state->mmio, to);
 }
