@@ -63,8 +63,8 @@ def check_single_list(display_name, symbols, max_name_len):
         # Print the concise, column-formatted check line
         name_col = f"{display_name}"
         symbols_col = f"{len(symbols)}"
-        size_col = f"{expected_gap:x}"
-        print(f"{name_col:<{max_name_len + 2}}  {symbols_col:<12}  {size_col}", file=sys.stderr)
+        size_col = f"0x{expected_gap:x}"
+        print(f"{name_col:<{max_name_len + 2}}  {symbols_col:>12}  {size_col:>17}", file=sys.stderr)
 
     except StatisticsError:
         print(f"\n!!! ANOMALY DETECTED IN LIST '{display_name}' !!!", file=sys.stderr)
@@ -137,7 +137,7 @@ def discover_and_check_all_lists(elf_path):
 
     max_name_len = max(len(name) for name in display_names.values()) if display_names else 0
 
-    print(f"\n{'List Name':<{max_name_len + 2}}  {'# Symbols':<12}  {'Struct Size (hex)'}", file=sys.stderr)
+    print(f"\n{'List Name':<{max_name_len + 2}}  {'# Symbols':>12}  {'Struct Size (hex)':>17}", file=sys.stderr)
     print(f"{'-' * (max_name_len + 2)}  {'-' * 12}  {'-' * 17}", file=sys.stderr)
 
     overall_anomaly_found = False
