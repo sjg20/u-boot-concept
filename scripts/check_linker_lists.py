@@ -25,8 +25,9 @@ import argparse
 from statistics import mode, StatisticsError
 from collections import defaultdict, namedtuple
 
-# Define data structures for clarity
+# Information about the gap between two consecutive symbols
 Gap = namedtuple('Gap', ['gap', 'prev_sym', 'next_sym'])
+# Holds all the analysis results from checking the lists
 Results = namedtuple('Results', [
     'total_problems', 'total_symbols', 'all_lines', 'max_name_len',
     'list_count'])
@@ -56,22 +57,10 @@ def check_single_list(name, symbols, max_name_len):
         addr2, name2 = symbols[i+1]
         gaps.append(Gap(gap=addr2 - addr1, prev_sym=name1, next_sym=name2))
 
-    try:
-        expected_gap = mode(g.gap for g in gaps)
-        lines.append(
-            f"{name:<{max_name_len + 2}}  {len(symbols):>12}  "
-            f"{f'0x{expected_gap:x}':>17}")
-
-    except StatisticsError:
-        lines.append(f"\n!!! PROBLEM DETECTED IN LIST '{name}' !!!")
-        lines.append(
-            '  Error: Could not determine a common element size. '
-            'All gaps are unique')
-        for g in gaps:
-            lines.append(
-                f"  - Gap of 0x{g.gap:x} bytes between {g.prev_sym} "
-                f"and {g.next_sym}")
-        return len(gaps), lines
+    expected_gap = mode(g.gap for g in gaps)
+    lines.append(
+        f"{name:<{max_name_len + 2}}  {len(symbols):>12}  "
+        f"{f'0x{expected_gap:x}':>17}")
 
     problem_count = 0
     for g in gaps:
@@ -158,8 +147,7 @@ def collect_data(lists):
         total_symbols=total_symbols,
         all_lines=all_lines,
         max_name_len=max_name_len,
-        list_count=len(lists),
-    )
+        list_count=len(lists))
 
 def show_output(results, verbose):
     '''Print the collected results to stderr based on verbosity
