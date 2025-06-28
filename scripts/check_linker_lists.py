@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 #
-# check_list_alignment.py: A script to auto-discover and verify the uniform
+# check_list_alignment.py: Auto-discover and verify the uniform
 # spacing of all U-Boot linker list symbols.
 #
-# This script analyzes the symbol table of a U-Boot ELF file to ensure that
+# Analyze the symbol table of a U-Boot ELF file to ensure that
 # all entries in all linker-generated lists are separated by a consistent
-# number of bytes. It is designed to detect problems caused by linker-inserted
+# number of bytes. Detect problems caused by linker-inserted
 # alignment padding.
 #
-# By default, it produces no output if no problems are found.
+# By default, produce no output if no problems are found.
 # Use the -v flag to force output even on success.
 #
 # Exit Codes:
@@ -27,7 +27,7 @@ from collections import defaultdict
 
 def check_single_list(display_name, symbols, max_name_len):
     """
-    Checks alignment for a single list and returns its findings.
+    Check alignment for a single list and return its findings.
 
     Args:
         display_name (str): The cleaned-up name of the list for display.
@@ -73,7 +73,7 @@ def check_single_list(display_name, symbols, max_name_len):
 
 def discover_and_check_all_lists(elf_path, verbose):
     """
-    Runs `nm`, discovers all linker lists, checks each one, and prints output
+    Run `nm`, discover all linker lists, check each one, and print output
     only if problems are found or verbose mode is enabled.
     """
     cmd = ['nm', '-n', elf_path]
@@ -151,10 +151,10 @@ def discover_and_check_all_lists(elf_path, verbose):
     return 0
 
 def main():
-    """ Main entry point of the script. """
+    """Main entry point of the script."""
     epilog_text = """
-This script auto-discovers all linker-generated lists in a U-Boot ELF file
-(e.g., for drivers, commands, etc.) and verifies their integrity. It checks
+Auto-discover all linker-generated lists in a U-Boot ELF file
+(e.g., for drivers, commands, etc.) and verify their integrity. Check
 that all elements in a given list are separated by a consistent number of
 bytes.
 
