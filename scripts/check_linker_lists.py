@@ -167,7 +167,7 @@ def show_output(results, verbose):
         eprint(f"\nSUCCESS: All discovered lists have consistent alignment")
 
 def main():
-    """Main entry point of the script"""
+    """Main entry point of the script, returns an exit code"""
     epilog_text = """
 Auto-discover all linker-generated lists in a U-Boot ELF file
 (e.g., for drivers, commands, etc.) and verify their integrity. Check
@@ -192,18 +192,17 @@ list is a simple, contiguous array of same-sized structs.
 
     lists = run_nm_and_get_lists(args.elf_path)
     if lists is None:
-        sys.exit(2)  # Error running nm
+        return 2  # Error running nm
 
     if not lists:
         if args.verbose:
             eprint("Success: No U-Boot linker lists found to check")
-        sys.exit(0)
+        return 0
 
     results = collect_data(lists)
     show_output(results, args.verbose)
 
-    exit_code = 3 if results['total_problems'] > 0 else 0
-    sys.exit(exit_code)
+    return 3 if results['total_problems'] > 0 else 0
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
