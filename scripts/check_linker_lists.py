@@ -130,7 +130,7 @@ def discover_and_check_all_lists(elf_path):
 
     max_name_len = max(len(name) for name in display_names.values()) if display_names else 0
 
-    print(f"\n{'List Name':<{max_name_len + 2}}  {'# Symbols':>12}  {'Struct Size (hex)':>17}", file=sys.stderr)
+    print(f"{'List Name':<{max_name_len + 2}}  {'# Symbols':>12}  {'Struct Size (hex)':>17}", file=sys.stderr)
     print(f"{'-' * (max_name_len + 2)}  {'-' * 12}  {'-' * 17}", file=sys.stderr)
 
     total_anomalies = 0
