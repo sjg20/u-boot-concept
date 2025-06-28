@@ -74,13 +74,8 @@ def check_single_list(display_name, symbols, max_name_len):
         return len(gaps)
 
     anomaly_count = 0
-    first_anomaly_printed = False
     for g in gaps:
         if g['gap'] != expected_gap:
-            if not first_anomaly_printed:
-                # This check ensures the "ANOMALY DETECTED" header is printed only once per list
-                print(f"!!! ANOMALY DETECTED IN LIST '{display_name}' !!!", file=sys.stderr)
-                first_anomaly_printed = True
             anomaly_count += 1
             print(f"  - Inconsistent gap (0x{g['gap']:x}) before symbol: {g['next_sym']}", file=sys.stderr)
 
@@ -130,7 +125,7 @@ def discover_and_check_all_lists(elf_path):
 
     max_name_len = max(len(name) for name in display_names.values()) if display_names else 0
 
-    print(f"{'List Name':<{max_name_len + 2}}  {'# Symbols':>12}  {'Struct Size (hex)':>17}", file=sys.stderr)
+    print(f"\n{'List Name':<{max_name_len + 2}}  {'# Symbols':>12}  {'Struct Size (hex)':>17}", file=sys.stderr)
     print(f"{'-' * (max_name_len + 2)}  {'-' * 12}  {'-' * 17}", file=sys.stderr)
 
     total_anomalies = 0
