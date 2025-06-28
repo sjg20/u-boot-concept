@@ -51,7 +51,13 @@ def check_single_list(list_name, symbols):
         # Not enough symbols to find a gap, so it's trivially correct.
         return False
 
-    print(f"\nChecking list '{list_name}' ({len(symbols)} symbols)...", file=sys.stderr)
+    # Create a cleaner display name for the output by stripping the common prefix.
+    display_name = list_name
+    prefix_to_strip = '_u_boot_list_2_'
+    if list_name.startswith(prefix_to_strip):
+        display_name = list_name[len(prefix_to_strip):]
+
+    print(f"\nChecking list '{display_name}' ({len(symbols)} symbols)...", file=sys.stderr)
 
     # Calculate the size difference between each consecutive symbol
     gaps = []
@@ -66,7 +72,7 @@ def check_single_list(list_name, symbols):
         expected_gap = mode(g['gap'] for g in gaps)
         print(f"Determined expected element size (mode) = {expected_gap} bytes (0x{expected_gap:x})", file=sys.stderr)
     except StatisticsError:
-        print(f"!!! ANOMALY DETECTED IN LIST '{list_name}' !!!", file=sys.stderr)
+        print(f"!!! ANOMALY DETECTED IN LIST '{display_name}' !!!", file=sys.stderr)
         print("  Error: Could not determine a common element size. All gaps are unique.", file=sys.stderr)
         for g in gaps:
             print(f"  - Gap of {g['gap']:>4} (0x{g['gap']:x}) bytes between {g['prev_sym']} and {g['next_sym']}", file=sys.stderr)
@@ -77,7 +83,7 @@ def check_single_list(list_name, symbols):
     for g in gaps:
         if g['gap'] != expected_gap:
             if not anomaly_found: # Print header only once
-                print(f"\n!!! ANOMALY DETECTED IN LIST '{list_name}' !!!", file=sys.stderr)
+                print(f"\n!!! ANOMALY DETECTED IN LIST '{display_name}' !!!", file=sys.stderr)
             anomaly_found = True
             print(f"  - Inconsistent gap found between symbols:", file=sys.stderr)
             print(f"    -> {g['prev_sym']}", file=sys.stderr)
