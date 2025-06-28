@@ -5,17 +5,17 @@
 #
 # This script analyzes the symbol table of a U-Boot ELF file to ensure that
 # all entries in all linker-generated lists are separated by a consistent
-# number of bytes. It is designed to detect anomalies caused by linker-inserted
+# number of bytes. It is designed to detect problems caused by linker-inserted
 # alignment padding.
 #
-# By default, it produces no output if no anomalies are found.
+# By default, it produces no output if no problems are found.
 # Use the -v flag to force output even on success.
 #
 # Exit Codes:
-#   0: Success. No alignment anomalies were found.
+#   0: Success. No alignment problems were found.
 #   1: Usage Error. The script was not called with the correct arguments.
 #   2: Execution Error. Failed to run `nm` or the ELF file was not found.
-#   3: Anomaly Found. An inconsistent gap was detected in at least one list.
+#   3: Problem Found. An inconsistent gap was detected in at least one list.
 #
 
 import sys
@@ -35,7 +35,7 @@ def check_single_list(display_name, symbols, max_name_len):
         max_name_len (int): The max length of list names for column formatting.
 
     Returns:
-        tuple: (anomaly_count, list_of_output_lines)
+        tuple: (problem_count, list_of_output_lines)
     """
     output_lines = []
     if len(symbols) < 2:
@@ -56,25 +56,25 @@ def check_single_list(display_name, symbols, max_name_len):
         output_lines.append(f"{name_col:<{max_name_len + 2}}  {symbols_col:>12}  {size_col:>17}")
 
     except StatisticsError:
-        output_lines.append(f"\n!!! ANOMALY DETECTED IN LIST '{display_name}' !!!")
+        output_lines.append(f"\n!!! PROBLEM DETECTED IN LIST '{display_name}' !!!")
         output_lines.append("  Error: Could not determine a common element size. All gaps are unique.")
         for g in gaps:
             output_lines.append(f"  - Gap of 0x{g['gap']:x} bytes between {g['prev_sym']} and {g['next_sym']}")
         return len(gaps), output_lines
 
-    anomaly_count = 0
+    problem_count = 0
     for g in gaps:
         if g['gap'] != expected_gap:
-            anomaly_count += 1
+            problem_count += 1
             output_lines.append(f"  - Bad gap (0x{g['gap']:x}) before symbol: {g['next_sym']}")
 
-    return anomaly_count, output_lines
+    return problem_count, output_lines
 
 
 def discover_and_check_all_lists(elf_path, verbose):
     """
     Runs `nm`, discovers all linker lists, checks each one, and prints output
-    only if anomalies are found or verbose mode is enabled.
+    only if problems are found or verbose mode is enabled.
     """
     cmd = ['nm', '-n', elf_path]
     try:
@@ -117,19 +117,19 @@ def discover_and_check_all_lists(elf_path, verbose):
     max_name_len = max(len(name) for name in display_names.values()) if display_names else 0
 
     # --- Data Collection Phase ---
-    total_anomalies = 0
+    total_problems = 0
     total_symbols = 0
     all_output_lines = []
     for list_name in sorted(discovered_lists.keys()):
         symbols = discovered_lists[list_name]
         total_symbols += len(symbols)
         display_name = display_names[list_name]
-        anomaly_count, output_lines = check_single_list(display_name, symbols, max_name_len)
-        total_anomalies += anomaly_count
+        problem_count, output_lines = check_single_list(display_name, symbols, max_name_len)
+        total_problems += problem_count
         all_output_lines.extend(output_lines)
 
     # --- Output Phase ---
-    if total_anomalies > 0 or verbose:
+    if total_problems > 0 or verbose:
         print(f"{'List Name':<{max_name_len + 2}}  {'# Symbols':>12}  {'Struct Size (hex)':>17}", file=sys.stderr)
         print(f"{'-' * (max_name_len + 2)}  {'-' * 12}  {'-' * 17}", file=sys.stderr)
         for line in all_output_lines:
@@ -141,8 +141,8 @@ def discover_and_check_all_lists(elf_path, verbose):
         footer_symbols_col = f"{total_symbols}"
         print(f"{footer_name_col:<{max_name_len + 2}}  {footer_symbols_col:>12}", file=sys.stderr)
 
-    if total_anomalies > 0:
-        print(f"\nFAILURE: Found {total_anomalies} alignment anomalies.", file=sys.stderr)
+    if total_problems > 0:
+        print(f"\nFAILURE: Found {total_problems} alignment problems.", file=sys.stderr)
         return 3
 
     if verbose:
@@ -158,7 +158,7 @@ This script auto-discovers all linker-generated lists in a U-Boot ELF file
 that all elements in a given list are separated by a consistent number of
 bytes.
 
-Anomalies typically indicate that the linker has inserted alignment padding
+Problems typically indicate that the linker has inserted alignment padding
 between two elements in a list, which can break U-Boot's assumption that the
 list is a simple, contiguous array of same-sized structs.
 """
