@@ -10,8 +10,14 @@
 #define __ALIST_H
 
 #include <stdbool.h>
-#include <linux/bitops.h>
+
+#ifdef USE_HOSTCC
+#include <sys/types.h>
+#include <stdint.h>
+#else
 #include <linux/types.h>
+#endif
+#define BIT(nr)			(1UL << (nr))
 
 /**
  * struct alist - object list that can be allocated and freed
@@ -41,10 +47,10 @@
  */
 struct alist {
 	void *data;
-	u16 obj_size;
-	u16 count;
-	u16 alloc;
-	u16 flags;
+	unsigned short obj_size;
+	unsigned short count;
+	unsigned short alloc;
+	unsigned short flags;
 };
 
 /**

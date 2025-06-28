@@ -3,6 +3,7 @@
  * Copyright (c) 2011-2012 The Chromium OS Authors.
  */
 
+#include <alist.h>
 #include <bloblist.h>
 #include <config.h>
 #include <errno.h>
@@ -485,6 +486,7 @@ int state_init(void)
 		printf("Out of memory\n");
 		os_exit(1);
 	}
+	alist_init_struct(&state->mmio, struct sandbox_mmio);
 
 	state_reset_for_test(state);
 	/*

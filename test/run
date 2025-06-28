@@ -13,6 +13,9 @@ run_test() {
 	[ $? -ne 0 ] && failures=$((failures+1))
 }
 
+# Clean up things the Makefile created
+unset MAKE MAKEFLAGS MAKELEVEL MAKEOVERRIDES MAKE_TERMERR MAKE_TERMOUT
+
 # Select test attributes
 ut_mark_expr=test_ut
 if [ "$1" = "quick" ]; then

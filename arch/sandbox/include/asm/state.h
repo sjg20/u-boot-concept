@@ -6,10 +6,13 @@
 #ifndef __SANDBOX_STATE_H
 #define __SANDBOX_STATE_H
 
+#include <alist.h>
 #include <sysreset.h>
 #include <stdbool.h>
 #include <linux/list.h>
 #include <linux/stringify.h>
+
+enum sandboxio_size_t;
 
 enum {
 	SB_MAX_BINDS	= 4,
@@ -66,6 +69,69 @@ struct sandbox_mapmem_entry {
 	uint refcnt;
 	void *ptr;
 	struct list_head sibling_node;
+};
+
+/**
+ * sandbox_read() - Read function for sandbox_mmio
+ *
+ * @addr: Pointer to read from
+ * @size: Access size of read
+ * Return: Value obtained
+ */
+typedef long (*sandbox_mmio_read_func)(void *ctx, const void *addr,
+				       enum sandboxio_size_t size);
+
+/**
+ * sandbox_write() - Write function for sandbox_mmio
+ *
+ * @addr: Pointer to write to
+ * @val: Value to write
+ * @size: Access size of write
+ */
+typedef void (*sandbox_mmio_write_func)(void *ctx, void *addr, unsigned int val,
+					enum sandboxio_size_t size);
+
+/**
+ * sandbox_mmio_add() - Add a new MMIO region
+ *
+ * Register a new set of read/write functions to be called for a particular
+ *	memory region
+ *
+ * @base: Base pointer for region
+ * @size: Size of region
+ * @h_read: Read handler
+ * @h_write: Write handler
+ * @ctx: Context pointer to passed to read/write functions
+ */
+int sandbox_mmio_add(void *base, ulong size, sandbox_mmio_read_func h_read,
+		     sandbox_mmio_write_func h_write, void *ctx);
+
+/**
+ * sandbox_mmio_remove() - Remove an MMIO region
+ *
+ * All regions with the given @ctx are removed
+ *
+ * @ctx: Context to search for
+ */
+void sandbox_mmio_remove(void *ctx);
+
+/**
+ * struct sandbox_mmio - defines a region of memory-mapped I/O
+ *
+ * This allows accesses to a region of memory to go through provided functions
+ *
+ * @base: Base pointer of region
+ * @size: Size of region
+ * @h_read: Read handler
+ * @h_write: Write handler
+ * @ctx: Context pointer provided when registering
+ */
+struct sandbox_mmio {
+	void *base;
+	ulong size;
+	sandbox_mmio_read_func h_read;
+	sandbox_mmio_write_func h_write;
+	void *ctx;
 };
 
 /* The complete state of the test system */
@@ -126,6 +192,7 @@ struct sandbox_state {
 	const char *binds[SB_MAX_BINDS]; /* list of -B arguments */
 	int num_binds;			/* number of -B arguments */
 
+	struct alist mmio;		/* list of struct sandbox_mmio */
 	/*
 	 * This struct is getting large.
 	 *

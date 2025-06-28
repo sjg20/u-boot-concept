@@ -8,6 +8,7 @@
 
 #include <alist.h>
 #include <display_options.h>
+#include <log.h>
 #include <malloc.h>
 #include <stdio.h>
 #include <string.h>
