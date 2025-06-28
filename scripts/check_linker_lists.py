@@ -78,7 +78,14 @@ def check_single_list(name, symbols, max_name_len):
     return problem_count, lines
 
 def run_nm_and_get_lists(elf_path):
-    '''Run `nm` and parse the output to discover all linker lists'''
+    '''Run `nm` and parse the output to discover all linker lists
+
+    Args:
+        elf_path (str): The path to the ELF file to process
+
+    Returns:
+        dict or None: A dictionary of discovered lists, or None on error
+    '''
     cmd = ['nm', '-n', elf_path]
     try:
         proc = subprocess.run(cmd, capture_output=True, text=True, check=True)
@@ -113,7 +120,14 @@ def run_nm_and_get_lists(elf_path):
     return lists
 
 def collect_data(lists):
-    '''Collect alignment check data for all lists'''
+    '''Collect alignment check data for all lists
+
+    Args:
+        lists (dict): A dictionary of lists and their symbols
+
+    Returns:
+        dict: A dictionary containing the analysis results
+    '''
     names = {}
     prefix_to_strip = '_u_boot_list_2_'
     for list_name in lists.keys():
@@ -143,7 +157,12 @@ def collect_data(lists):
     }
 
 def show_output(results, verbose):
-    '''Print the collected results to stderr based on verbosity'''
+    '''Print the collected results to stderr based on verbosity
+
+    Args:
+        results (dict): The analysis results from collect_data()
+        verbose (bool): True to print output even on success
+    '''
     total_problems = results['total_problems']
     if total_problems == 0 and not verbose:
         return
@@ -164,7 +183,7 @@ def show_output(results, verbose):
     if total_problems > 0:
         eprint(f'\nFAILURE: Found {total_problems} alignment problems')
     elif verbose:
-        eprint('\nSUCCESS: All discovered lists have consistent alignment')
+        eprint(f'\nSUCCESS: All discovered lists have consistent alignment')
 
 def main():
     '''Main entry point of the script, returns an exit code'''
