@@ -23,7 +23,13 @@ import subprocess
 import re
 import argparse
 from statistics import mode, StatisticsError
-from collections import defaultdict
+from collections import defaultdict, namedtuple
+
+# Define data structures for clarity
+Gap = namedtuple('Gap', ['gap', 'prev_sym', 'next_sym'])
+Results = namedtuple('Results', [
+    'total_problems', 'total_symbols', 'all_lines', 'max_name_len',
+    'list_count'])
 
 def eprint(*args, **kwargs):
     '''Print to stderr'''
@@ -48,11 +54,10 @@ def check_single_list(name, symbols, max_name_len):
     for i in range(len(symbols) - 1):
         addr1, name1 = symbols[i]
         addr2, name2 = symbols[i+1]
-        gap = addr2 - addr1
-        gaps.append({'gap': gap, 'prev_sym': name1, 'next_sym': name2})
+        gaps.append(Gap(gap=addr2 - addr1, prev_sym=name1, next_sym=name2))
 
     try:
-        expected_gap = mode(g['gap'] for g in gaps)
+        expected_gap = mode(g.gap for g in gaps)
         lines.append(
             f"{name:<{max_name_len + 2}}  {len(symbols):>12}  "
             f"{f'0x{expected_gap:x}':>17}")
@@ -64,16 +69,16 @@ def check_single_list(name, symbols, max_name_len):
             'All gaps are unique')
         for g in gaps:
             lines.append(
-                f"  - Gap of 0x{g['gap']:x} bytes between {g['prev_sym']} "
-                f"and {g['next_sym']}")
+                f"  - Gap of 0x{g.gap:x} bytes between {g.prev_sym} "
+                f"and {g.next_sym}")
         return len(gaps), lines
 
     problem_count = 0
     for g in gaps:
-        if g['gap'] != expected_gap:
+        if g.gap != expected_gap:
             problem_count += 1
             lines.append(
-                f"  - Bad gap (0x{g['gap']:x}) before symbol: {g['next_sym']}")
+                f"  - Bad gap (0x{g.gap:x}) before symbol: {g.next_sym}")
 
     return problem_count, lines
 
@@ -126,7 +131,7 @@ def collect_data(lists):
         lists (dict): A dictionary of lists and their symbols
 
     Returns:
-        dict: A dictionary containing the analysis results
+        Results: A namedtuple containing the analysis results
     '''
     names = {}
     prefix_to_strip = '_u_boot_list_2_'
@@ -148,40 +153,38 @@ def collect_data(lists):
         total_problems += problem_count
         all_lines.extend(lines)
 
-    return {
-        'total_problems': total_problems,
-        'total_symbols': total_symbols,
-        'all_lines': all_lines,
-        'max_name_len': max_name_len,
-        'list_count': len(lists),
-    }
+    return Results(
+        total_problems=total_problems,
+        total_symbols=total_symbols,
+        all_lines=all_lines,
+        max_name_len=max_name_len,
+        list_count=len(lists),
+    )
 
 def show_output(results, verbose):
     '''Print the collected results to stderr based on verbosity
 
     Args:
-        results (dict): The analysis results from collect_data()
+        results (Results): The analysis results from collect_data()
         verbose (bool): True to print output even on success
     '''
-    total_problems = results['total_problems']
-    if total_problems == 0 and not verbose:
+    if results.total_problems == 0 and not verbose:
         return
 
-    max_name_len = results['max_name_len']
-    header = (f"{'List Name':<{max_name_len + 2}}  {'# Symbols':>12}  "
+    header = (f"{'List Name':<{results.max_name_len + 2}}  {'# Symbols':>12}  "
                 f"{'Struct Size (hex)':>17}")
     eprint(header)
-    eprint(f"{'-' * (max_name_len + 2)}  {'-' * 12}  {'-' * 17}")
-    for line in results['all_lines']:
+    eprint(f"{'-' * (results.max_name_len + 2)}  {'-' * 12}  {'-' * 17}")
+    for line in results.all_lines:
         eprint(line)
 
     # Print footer
-    eprint(f"{'-' * (max_name_len + 2)}  {'-' * 12}")
-    eprint(f"{f'{results['list_count']} lists':<{max_name_len + 2}}  "
-            f"{results['total_symbols']:>12}")
+    eprint(f"{'-' * (results.max_name_len + 2)}  {'-' * 12}")
+    eprint(f"{f'{results.list_count} lists':<{results.max_name_len + 2}}  "
+            f"{results.total_symbols:>12}")
 
-    if total_problems > 0:
-        eprint(f'\nFAILURE: Found {total_problems} alignment problems')
+    if results.total_problems > 0:
+        eprint(f'\nFAILURE: Found {results.total_problems} alignment problems')
     elif verbose:
         eprint('\nSUCCESS: All discovered lists have consistent alignment')
 
@@ -221,7 +224,7 @@ list is a simple, contiguous array of same-sized structs.
     results = collect_data(lists)
     show_output(results, args.verbose)
 
-    return 3 if results['total_problems'] > 0 else 0
+    return 3 if results.total_problems > 0 else 0
 
 if __name__ == '__main__':
     sys.exit(main())
