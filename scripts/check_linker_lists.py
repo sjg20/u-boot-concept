@@ -53,12 +53,9 @@ def check_single_list(name, symbols, max_name_len):
 
     try:
         expected_gap = mode(g['gap'] for g in gaps)
-        name_col = f"{name}"
-        symbols_col = f"{len(symbols)}"
-        size_col = f"0x{expected_gap:x}"
         lines.append(
-            f"{name_col:<{max_name_len + 2}}  {symbols_col:>12}  "
-            f"{size_col:>17}")
+            f"{name:<{max_name_len + 2}}  {len(symbols):>12}  "
+            f"{f'0x{expected_gap:x}':>17}")
 
     except StatisticsError:
         lines.append(f"\n!!! PROBLEM DETECTED IN LIST '{name}' !!!")
@@ -156,9 +153,8 @@ def discover_and_check_all_lists(elf_path, verbose):
 
         # Print footer
         eprint(f"{'-' * (max_name_len + 2)}  {'-' * 12}")
-        name_col = f"{len(lists)} lists"
-        symbols_col = f"{total_symbols}"
-        eprint(f"{name_col:<{max_name_len + 2}}  {symbols_col:>12}")
+        eprint(f"{f'{len(lists)} lists':<{max_name_len + 2}}  "
+               f"{total_symbols:>12}")
 
     if total_problems > 0:
         eprint(f"\nFAILURE: Found {total_problems} alignment problems")
@@ -192,10 +188,4 @@ list is a simple, contiguous array of same-sized structs.
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='Print detailed output even on success')
 
-    args = parser.parse_args()
-
-    exit_code = discover_and_check_all_lists(args.elf_path, args.verbose)
-    sys.exit(exit_code)
-
-if __name__ == "__main__":
-    main()
+    args = pars
